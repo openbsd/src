@@ -10,7 +10,6 @@
 use autodie;
 use strict;
 use warnings;
-no  warnings 'experimental::autoderef';
 use File::Find;
 use ExtUtils::MM_Unix;
 use version;
@@ -155,14 +154,14 @@ my $delta_data = make_corelist_delta(
 my $versions_in_release = "    " . $perl_vnum . " => {\n";
 $versions_in_release .= "        delta_from => $delta_data->{delta_from},\n";
 $versions_in_release .= "        changed => {\n";
-foreach my $key (sort keys $delta_data->{changed}) {
+foreach my $key (sort keys $delta_data->{changed}->%*) {
   $versions_in_release .= sprintf "            %-24s=> %s,\n", "'$key'",
       defined $delta_data->{changed}{$key} ? "'"
         . $delta_data->{changed}{$key} . "'" : "undef";
 }
 $versions_in_release .= "        },\n";
 $versions_in_release .= "        removed => {\n";
-for my $key (sort keys($delta_data->{removed} || {})) {
+for my $key (sort keys %{ $delta_data->{removed} || {} }) {
   $versions_in_release .= sprintf "            %-24s=> %s,\n", "'$key'", 1;
 }
 $versions_in_release .= "        }\n";
@@ -261,14 +260,14 @@ $corelist =~ s/^%upstream .*? ;$/$upstream_stanza/ismx;
   my $deprecated_stanza = "    " . $perl_vnum . " => {\n";
   $deprecated_stanza .= "        delta_from => $delta_data->{delta_from},\n";
   $deprecated_stanza .= "        changed => {\n";
-  foreach my $key (sort keys $delta_data->{changed}) {
+  foreach my $key (sort keys $delta_data->{changed}->%*) {
     $deprecated_stanza .= sprintf "            %-24s=> %s,\n", "'$key'",
         defined $delta_data->{changed}{$key} ? "'"
           . $delta_data->{changed}{$key} . "'" : "undef";
   }
   $deprecated_stanza .= "        },\n";
   $deprecated_stanza .= "        removed => {\n";
-  for my $key (sort keys($delta_data->{removed} || {})) {
+  for my $key (sort keys %{ $delta_data->{removed} || {} }) {
     $deprecated_stanza .= sprintf "           %-24s=> %s,\n", "'$key'", 1;
   }
   $deprecated_stanza .= "        }\n";
@@ -312,14 +311,14 @@ my $delta_utils = make_coreutils_delta($perl_vnum, \%utils);
 my $utilities_in_release = "    " . $perl_vnum . " => {\n";
 $utilities_in_release .= "        delta_from => $delta_utils->{delta_from},\n";
 $utilities_in_release .= "        changed => {\n";
-foreach my $key (sort keys $delta_utils->{changed}) {
+foreach my $key (sort keys $delta_utils->{changed}->%*) {
   $utilities_in_release .= sprintf "            %-24s=> %s,\n", "'$key'",
       defined $delta_utils->{changed}{$key} ? "'"
         . $delta_utils->{changed}{$key} . "'" : "undef";
 }
 $utilities_in_release .= "        },\n";
 $utilities_in_release .= "        removed => {\n";
-for my $key (sort keys($delta_utils->{removed} || {})) {
+for my $key (sort keys %{ $delta_utils->{removed} || {} }) {
   $utilities_in_release .= sprintf "            %-24s=> %s,\n", "'$key'", 1;
 }
 $utilities_in_release .= "        }\n";
@@ -366,18 +365,17 @@ sub make_corelist_delta {
   my %deltas;
   # Search for the release with the least amount of changes (this avoids having
   # to ask for where this perl was branched from).
-  for my $previous (reverse sort keys %$existing) {
+  for my $previous (reverse sort { $a <=> $b } keys %$existing) {
     # Shouldn't happen, but ensure we don't load weird data...
-    next if $previous > $version || $previous == $version && $previous eq $version;
-
+    next if $previous > $version || $previous == $version;
     my $delta = $deltas{$previous} = {};
     ($delta->{changed}, $delta->{removed}) = calculate_delta(
       $existing->{$previous}, \%versions);
   }
 
   my $smallest = (sort {
-      ((keys($deltas{$a}->{changed}) + keys($deltas{$a}->{removed})) <=>
-       (keys($deltas{$b}->{changed}) + keys($deltas{$b}->{removed}))) ||
+      ((keys($deltas{$a}->{changed}->%*) + keys($deltas{$a}->{removed}->%*)) <=>
+       (keys($deltas{$b}->{changed}->%*) + keys($deltas{$b}->{removed}->%*))) ||
       $b <=> $a
     } keys %deltas)[0];
 
@@ -400,9 +398,9 @@ sub make_coreutils_delta {
   my %deltas;
   # Search for the release with the least amount of changes (this avoids having
   # to ask for where this perl was branched from).
-  for my $previous (reverse sort keys %Module::CoreList::Utils::utilities) {
+  for my $previous (reverse sort { $a <=> $b } keys %Module::CoreList::Utils::utilities) {
     # Shouldn't happen, but ensure we don't load weird data...
-    next if $previous > $version || $previous == $version && $previous eq $version;
+    next if $previous > $version || $previous == $version;
 
     my $delta = $deltas{$previous} = {};
     ($delta->{changed}, $delta->{removed}) = calculate_delta(
@@ -410,8 +408,8 @@ sub make_coreutils_delta {
   }
 
   my $smallest = (sort {
-      ((keys($deltas{$a}->{changed}) + keys($deltas{$a}->{removed})) <=>
-       (keys($deltas{$b}->{changed}) + keys($deltas{$b}->{removed}))) ||
+      ((keys($deltas{$a}->{changed}->%*) + keys($deltas{$a}->{removed}->%*)) <=>
+       (keys($deltas{$b}->{changed}->%*) + keys($deltas{$b}->{removed}->%*))) ||
       $b <=> $a
     } keys %deltas)[0];
 
@@ -427,13 +425,13 @@ sub calculate_delta {
   my($from, $to) = @_;
   my(%changed, %removed);
 
-  for my $package(keys $from) {
+  for my $package(keys %$from) {
     if(not exists $to->{$package}) {
       $removed{$package} = 1;
     }
   }
 
-  for my $package(keys $to) {
+  for my $package(keys %$to) {
     if(!exists $from->{$package}
         || (defined $from->{$package} && !defined $to->{$package})
         || (!defined $from->{$package} && defined $to->{$package})

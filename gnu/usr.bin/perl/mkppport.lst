@@ -8,6 +8,6 @@
 cpan/DB_File
 cpan/IPC-SysV
 cpan/Scalar-List-Utils
-cpan/Time-HiRes
 cpan/Win32API-File
 dist/PathTools
+dist/Time-HiRes

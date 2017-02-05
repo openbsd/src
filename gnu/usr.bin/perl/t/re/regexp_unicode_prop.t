@@ -9,6 +9,7 @@ use warnings;
 use 5.010;
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
     skip_all_if_miniperl("no dynamic loading on miniperl, no File::Spec (used by charnames)");
 }
@@ -64,20 +65,19 @@ my @CLASSES = (
     # It's ok to repeat class names.
     #
     InLatin1Supplement        =>
-               $::IS_EBCDIC ? ['!\x{7f}',  '\x{80}',            '!\x{100}']
-                            : ['!\x{7f}',  '\x{80}',  '\x{ff}', '!\x{100}'],
+                            ['!\N{U+7f}',  '\N{U+80}',  '\N{U+ff}', '!\x{100}'],
     InLatinExtendedA          =>
-                            ['!\x{7f}', '!\x{80}', '!\x{ff}',  '\x{100}'],
+                            ['!\N{U+7f}', '!\N{U+80}', '!\N{U+ff}',  '\x{100}'],
 
     #
     # Properties are case-insensitive, and may have whitespace,
     # dashes and underscores.
     #
-   'in-latin1_SUPPLEMENT'     => ['\x{80}', 
+   'in-latin1_SUPPLEMENT'     => ['\N{U+80}',
                                   '\N{LATIN SMALL LETTER Y WITH DIAERESIS}'],
    '  ^  In Latin 1 Supplement  '
-                              => ['!\x{80}', '\N{COFFIN}'],
-   'latin-1   supplement'     => ['\x{80}', "0xDF"],
+                              => ['!\N{U+80}', '\N{COFFIN}'],
+   'latin-1   supplement'     => ['\N{U+80}', "0xDF"],
 
 );
 
@@ -105,7 +105,7 @@ my @USER_DEFINED_PROPERTIES = (
 my @USER_CASELESS_PROPERTIES = (
    #
    # User defined properties which differ depending on /i.  Second entry is
-   # false regularly, true under /i
+   # false normally, true under /i
    #
    'IsMyUpper'                => ["M", "!m" ],
 );
@@ -153,12 +153,10 @@ while (my ($class, $chars) = each %SHORT_PROPERTIES) {
     push @{$d {IsWord}}  => map {$class =~ /^[LMN]/ || $_ eq "_"
                                                      ? $_ : "!$_"} @$chars;
     push @{$d {IsSpace}} => map {$class =~ /^Z/ ||
-                                 length ($_) == 1 && ord ($_) >= 0x09
-                                                  && ord ($_) <= 0x0D
+                                 length ($_) == 1 && utf8::native_to_unicode(ord ($_)) >= 0x09
+                                                  && utf8::native_to_unicode(ord ($_)) <= 0x0D
                                                      ? $_ : "!$_"} @$chars;
 }
-
-delete $d {IsASCII} if $::IS_EBCDIC;
 
 push @CLASSES => "# Short properties"        => %SHORT_PROPERTIES,
                  "# POSIX like properties"   => %d,
@@ -176,6 +174,7 @@ for (my $i = 0; $i < @CLASSES; $i += 2) {
 $count += 4 * @ILLEGAL_PROPERTIES;
 $count += 4 * grep {length $_ == 1} @ILLEGAL_PROPERTIES;
 $count += 8 * @USER_CASELESS_PROPERTIES;
+$count += 1;    # Test for pkg:IsMyLower
 
 plan(tests => $count);
 
@@ -242,9 +241,16 @@ sub run_tests {
     }
 
 
-    my $pat = qr /^Can't find Unicode property definition/;
     print "# Illegal properties\n";
     foreach my $p (@ILLEGAL_PROPERTIES) {
+        my $pat;
+        if ($p =~ /::/) {
+            $pat = qr /^Illegal user-defined property name/;
+        }
+        else {
+            $pat = qr /^Can't find Unicode property definition/;
+        }
+
         undef $@;
         my $r = eval "'a' =~ /\\p{$p}/; 1";
         is($r, undef, "Unknown Unicode property \\p{$p}");
@@ -266,7 +272,7 @@ sub run_tests {
     }
 
     print "# User-defined properties with /i differences\n";
-    foreach my $class (shift @USER_CASELESS_PROPERTIES) {
+    while (my $class = shift @USER_CASELESS_PROPERTIES) {
         my $chars_ref = shift @USER_CASELESS_PROPERTIES;
         my @in      =                       grep {!/^!./} @$chars_ref;
         my @out     = map {s/^!(?=.)//; $_} grep { /^!./} @$chars_ref;
@@ -312,14 +318,16 @@ sub InNotKana {<<'--'}
 +utf8::IsCn
 --
 
-sub InConsonant {<<'--'}   # Not EBCDIC-aware.
-0061 007f
--0061
--0065
--0069
--006f
--0075
---
+sub InConsonant {
+
+    my $return = "+utf8::Lowercase\n&utf8::ASCII\n";
+    $return .= sprintf("-%X\n", ord "a");
+    $return .= sprintf("-%X\n", ord "e");
+    $return .= sprintf("-%X\n", ord "i");
+    $return .= sprintf("-%X\n", ord "o");
+    $return .= sprintf("-%X\n", ord "u");
+    return $return;
+}
 
 sub IsSyriac1 {<<'--'}
 0712    072C
@@ -336,12 +344,31 @@ sub IsAsciiHexAndDash {<<'--'}
 
 sub IsMyUpper {
     my $caseless = shift;
-    if ($caseless) {
-        return "0041\t005A\n0061\t007A"
+    return "+utf8::"
+           . (($caseless)
+               ? 'Alphabetic'
+               : 'Uppercase')
+           . "\n&utf8::ASCII";
+}
+
+{   # This has to be done here and not like the others, because we have to
+    # make sure that the property is not known until after the regex is
+    # compiled.  It was previously getting confused about the pkg and /i
+    # combination
+
+    my $mylower = qr/\p{pkg::IsMyLower}/i;
+
+    sub pkg::IsMyLower {
+        my $caseless = shift;
+        return "+utf8::"
+            . (($caseless)
+                ? 'Alphabetic'
+                : 'Lowercase')
+            . "\n&utf8::ASCII";
     }
-    else {
-        return "0041\t005A"
-    }
+
+    like("A", $mylower, "Not available until runtime user-defined property with pkg:: and /i works");
+
 }
 
 # Verify that can use user-defined properties inside another one

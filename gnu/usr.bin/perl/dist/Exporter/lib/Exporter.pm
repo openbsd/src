@@ -9,7 +9,7 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.71';
+our $VERSION = '5.72';
 our (%Cache);
 
 sub as_heavy {
@@ -223,7 +223,7 @@ right. Specifications are in the form:
 
     [!]name         This name only
     [!]:DEFAULT     All names in @EXPORT
-    [!]:tag         All names in $EXPORT_TAGS{tag} anonymous list
+    [!]:tag         All names in $EXPORT_TAGS{tag} anonymous array
     [!]/pattern/    All names in @EXPORT and @EXPORT_OK which match
 
 A leading ! indicates that matching names should be deleted from the

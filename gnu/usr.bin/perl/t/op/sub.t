@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
-plan( tests => 36 );
+plan(tests => 63);
 
 sub empty_sub {}
 
@@ -41,7 +41,7 @@ is(scalar(@test), 0, 'Didnt return anything');
     ok(eq_array(\@a, [34,35]), "yes without args");
 }
 
-# [perl #81944] return should always copy
+# [perl #91844] return should always copy
 {
     $foo{bar} = 7;
     for my $x ($foo{bar}) {
@@ -63,6 +63,13 @@ is(scalar(@test), 0, 'Didnt return anything');
       'result of shift is copied when returned';
     isnt \sub { ()=\@_; return shift }->($x), \$x,
       'result of shift is copied when explicitly returned';
+
+    $foo{bar} = 7;
+    my $r = \$foo{bar};
+    sub {
+        $$r++;
+        isnt($_[0], $$r, "result of delete(helem) is copied: practical test");
+    }->(sub { delete $foo{bar} }->());
 }
 
 fresh_perl_is
@@ -147,31 +154,6 @@ is eval {
     Munchy(Crunchy);
 } || $@, 2, 'freeing ops does not make sub(){42} immutable';
 
-# [perl #79908]
-{
-    my $x = 5;
-    *_79908 = sub (){$x};
-    $x = 7;
-    TODO: {
-        local $TODO = "Should be fixed with a deprecation cycle, see 'How about having a recommended way to add constant subs dynamically?' on p5p";
-        is eval "_79908", 7, 'sub(){$x} does not break closures';
-    }
-    isnt eval '\_79908', \$x, 'sub(){$x} returns a copy';
-
-    # Test another thing that was broken by $x inlinement
-    my $y;
-    no warnings 'once';
-    local *time = sub():method{$y};
-    my $w;
-    local $SIG{__WARN__} = sub { $w .= shift };
-    eval "()=time";
-    TODO: {
-        local $TODO = "Should be fixed with a deprecation cycle, see 'How about having a recommended way to add constant subs dynamically?' on p5p";
-        is $w, undef,
-          '*keyword = sub():method{$y} does not cause ambiguity warnings';
-    }
-}
-
 # &xsub when @_ has nonexistent elements
 {
     no warnings "uninitialized";
@@ -223,6 +205,61 @@ ok !exists $INC{"re.pm"}, 're.pm not loaded yet';
       'Pure-Perl sub clobbering sub whose DESTROY assigns to the glob';
 }
 
+# [perl #122107] previously this would return
+#  Subroutine BEGIN redefined at (eval 2) line 2.
+fresh_perl_is(<<'EOS', "", { stderr => 1 },
+use strict; use warnings; eval q/use File::{Spec}/; eval q/use File::Spec/;
+EOS
+	       "check special blocks are cleared on error");
+
+use constant { constant1 => 1, constant2 => 2 };
+{
+    my $w;
+    local $SIG{__WARN__} = sub { $w++ };
+    eval 'sub constant1; sub constant2($)';
+    is eval '&constant1', '1',
+      'stub re-declaration of constant with no prototype';
+    is eval '&constant2', '2',
+      'stub re-declaration of constant with wrong prototype';
+    is $w, 2, 'two warnings from the above';
+}
+
+package _122845 {
+    our $depth = 0;
+    my $parent; # just to make the sub a closure
+
+    sub {
+	local $depth = $depth + 1;
+	our $ok++, return if $depth == 2;
+
+	()= $parent;  # just to make the sub a closure
+	our $whatever; # this causes the crash
+
+	CORE::__SUB__->();
+    }->();
+};
+is $_122845::ok, 1,
+  '[perl #122845] no crash in closure recursion with our-vars';
+
+() = *predeclared; # vivify the glob at compile time
+sub predeclared; # now we have a CV stub with no body (incorporeal? :-)
+sub predeclared {
+    CORE::state $x = 42;
+    sub inside_predeclared {
+	is eval '$x', 42, 'eval q/$var/ in named sub in predeclared sub';
+    }
+}
+predeclared(); # set $x to 42
+$main::x = $main::x = "You should not see this.";
+inside_predeclared(); # run test
+
+# RT #126845: this used to fail an assertion in Perl_newATTRSUB_x()
+eval 'sub rt126845_1 (); sub rt126845_1 () :lvalue';
+pass("RT #126845: stub with prototype, then with attribute");
+
+eval 'sub rt126845_2 (); sub rt126845_2 () :lvalue {}';
+pass("RT #126845: stub with prototype, then definition with attribute");
+
 # RT #124156 death during unwinding causes crash
 # the tie allows us to trigger another die while cleaning up the stack
 # from an earlier die.
@@ -272,3 +309,109 @@ ok !exists $INC{"re.pm"}, 're.pm not loaded yet';
     ::is($@, "outer\n", "RT124156 depth");
     ::is($destroyed, 1, "RT124156 freed cv");
 }
+
+# trapping dying while popping a scope needs to have the right pad at all
+# times. Localising a tied array then dying in STORE raises an exception
+# while leaving g(). Note that using an object and destructor wouldn't be
+# sufficient since DESTROY is called with call_sv(...,G_EVAL).
+# We make sure that the first item in every sub's pad is a lexical with
+# different values per sub.
+
+{
+    package tie_exception;
+    sub TIEARRAY { my $x = 4; bless [0] }
+    sub FETCH    { my $x = 5; 1 }
+    sub STORE    { my $x = 6; die if $_[0][0]; $_[0][0] = 1 }
+
+    my $y;
+    sub f { my $x = 7; eval { g() }; $y = $x }
+    sub g {
+        my $x = 8;
+        my @a;
+        tie @a, "tie_exception";
+        local $a[0];
+    }
+
+    f();
+    ::is($y, 7, "tie_exception");
+}
+
+
+# check that return pops extraneous stuff from the stack
+
+sub check_ret {
+    # the extra scopes push contexts and extra SVs on the stack
+    {
+        my @a = map $_ + 20, @_;
+        for ('x') {
+            return if defined $_[0] && $_[0] < 0;
+        }
+        for ('y') {
+            check_ret(1, do { (2,3,4, return @a ? @a[0..$#a] : ()) }, 4.5);
+        }
+    }
+}
+
+is(scalar check_ret(),          undef, "check_ret() scalar");
+is(scalar check_ret(5),         25,    "check_ret(5) scalar");
+is(scalar check_ret(5,6),       26,    "check_ret(5,6) scalar");
+is(scalar check_ret(5,6,7),     27,    "check_ret(5,6,7) scalar");
+is(scalar check_ret(5,6,7,8),   28,    "check_ret(5,6,7,8) scalar");
+is(scalar check_ret(5,6,7,8,9), 29,    "check_ret(5,6,7,8,9) scalar");
+
+is(scalar check_ret(-1),        undef, "check_ret(-1) scalar");
+is(scalar check_ret(-1,5),      undef, "check_ret(-1,5) scalar");
+
+is(join('-', 10, check_ret()),          "10",                "check_ret() list");
+is(join('-', 10, check_ret(5)),         "10-25",             "check_ret(5) list");
+is(join('-', 10, check_ret(5,6)),       "10-25-26",          "check_ret(5,6) list");
+is(join('-', 10, check_ret(5,6,7)),     "10-25-26-27",       "check_ret(5,6,7) list");
+is(join('-', 10, check_ret(5,6,7,8)),   "10-25-26-27-28",    "check_ret(5,6,7,8) list");
+is(join('-', 10, check_ret(5,6,7,8,9)), "10-25-26-27-28-29", "check_ret(5,6,7,8,9) list");
+
+is(join('-', 10, check_ret(-1)),        "10",  "check_ret(-1) list");
+is(join('-', 10, check_ret(-1,5)),      "10",  "check_ret(-1,5) list");
+
+# a sub without nested scopes that still leaves rubbish on the stack
+# which needs popping
+{
+    my @res = sub {
+        my $false;
+        # conditional leaves rubbish on stack
+        return @_ unless $false and $false;
+        1;
+    }->('a','b');
+    is(join('-', @res), "a-b", "unnested rubbish");
+}
+
+# a sub should copy returned PADTMPs
+
+{
+    sub f99 { $_[0] . "x" };
+    my $a = [ f99(1), f99(2) ];
+    is("@$a", "1x 2x", "PADTMPs copied on return");
+}
+
+# A sub should FREETMPS on exit
+# RT #124248
+
+{
+    package p124248;
+    my $d = 0;
+    sub DESTROY { $d++ }
+    sub f { ::is($d, 1, "RT 124248"); }
+    sub g { !!(my $x = bless []); }
+    f(g());
+}
+
+# return should have the right PL_curpm while copying its return args
+
+sub curpm {
+    "b" =~ /(.)/;
+    {
+        "c" =~ /(.)/;
+        return $1;
+    }
+}
+"a" =~ /(.)/;
+is(curpm(), 'c', 'return and PL_curpm');

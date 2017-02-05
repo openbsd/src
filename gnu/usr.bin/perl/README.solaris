@@ -637,7 +637,7 @@ also seems to have become broken in in SunOS 4.x.  Therefore the default
 is to build Perl statically.
 
 Running the test suite in SunOS 4.1 is a bit tricky since the
-F<lib/Tie/File/t/09_gen_rs> test hangs (subtest #51, FWIW) for some
+F<dist/Tie-File/t/09_gen_rs.t> test hangs (subtest #51, FWIW) for some
 unknown reason.  Just stop the test and kill that particular Perl
 process.
 
@@ -694,7 +694,8 @@ but if one patiently waits, one gets these results:
  uni/tr_eucjp.t                    29  7424     6   12 200.00%  1-6
  uni/tr_sjis.t                     29  7424     6   12 200.00%  1-6
  56 tests and 467 subtests skipped.
- Failed 27/811 test scripts, 96.67% okay. 1383/75399 subtests failed, 98.17% okay.
+ Failed 27/811 test scripts, 96.67% okay. 1383/75399 subtests failed,
+   98.17% okay.
 
 The alarm() test failure is caused by system() apparently blocking
 alarm().  That is probably a libc bug, and given that SunOS 4.x

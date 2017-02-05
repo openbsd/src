@@ -11,13 +11,33 @@
 
 =provides
 
+mg_findext
+sv_unmagicext
+
 __UNDEFINED__
 /sv_\w+_mg/
 sv_magic_portable
+MUTABLE_PTR
+MUTABLE_SV
 
 =implementation
 
 __UNDEFINED__  SvGETMAGIC(x) STMT_START { if (SvGMAGICAL(x)) mg_get(x); } STMT_END
+
+/* Some random bits for sv_unmagicext. These should probably be pulled in for
+   real and organized at some point */
+
+__UNDEFINED__  HEf_SVKEY   -2
+
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define MUTABLE_PTR(p) ({ void *_p = (p); _p; })
+#else
+#  define MUTABLE_PTR(p) ((void *) (p))
+#endif
+
+#define MUTABLE_SV(p)   ((SV *)MUTABLE_PTR(p))
+
+/* end of random bits */
 
 __UNDEFINED__  PERL_MAGIC_sv              '\0'
 __UNDEFINED__  PERL_MAGIC_overload        'A'
@@ -200,7 +220,208 @@ __UNDEFINED__  SvVSTRING_mg(sv)  (SvMAGICAL(sv) ? mg_find(sv, PERL_MAGIC_vstring
 
 #endif
 
+#if !defined(mg_findext)
+#if { NEED mg_findext }
+
+MAGIC *
+mg_findext(SV * sv, int type, const MGVTBL *vtbl) {
+    if (sv) {
+        MAGIC *mg;
+
+#ifdef AvPAD_NAMELIST
+        assert(!(SvTYPE(sv) == SVt_PVAV && AvPAD_NAMELIST(sv)));
+#endif
+
+        for (mg = SvMAGIC (sv); mg; mg = mg->mg_moremagic) {
+            if (mg->mg_type == type && mg->mg_virtual == vtbl)
+                return mg;
+        }
+    }
+
+    return NULL;
+}
+
+#endif
+#endif
+
+#if !defined(sv_unmagicext)
+#if { NEED sv_unmagicext }
+
+int
+sv_unmagicext(pTHX_ SV *const sv, const int type, MGVTBL *vtbl)
+{
+    MAGIC* mg;
+    MAGIC** mgp;
+
+    if (SvTYPE(sv) < SVt_PVMG || !SvMAGIC(sv))
+	return 0;
+    mgp = &(SvMAGIC(sv));
+    for (mg = *mgp; mg; mg = *mgp) {
+	const MGVTBL* const virt = mg->mg_virtual;
+	if (mg->mg_type == type && virt == vtbl) {
+	    *mgp = mg->mg_moremagic;
+	    if (virt && virt->svt_free)
+		virt->svt_free(aTHX_ sv, mg);
+	    if (mg->mg_ptr && mg->mg_type != PERL_MAGIC_regex_global) {
+		if (mg->mg_len > 0)
+		    Safefree(mg->mg_ptr);
+		else if (mg->mg_len == HEf_SVKEY) /* Questionable on older perls... */
+		    SvREFCNT_dec(MUTABLE_SV(mg->mg_ptr));
+		else if (mg->mg_type == PERL_MAGIC_utf8)
+		    Safefree(mg->mg_ptr);
+            }
+	    if (mg->mg_flags & MGf_REFCOUNTED)
+		SvREFCNT_dec(mg->mg_obj);
+	    Safefree(mg);
+	}
+	else
+	    mgp = &mg->mg_moremagic;
+    }
+    if (SvMAGIC(sv)) {
+	if (SvMAGICAL(sv))	/* if we're under save_magic, wait for restore_magic; */
+	    mg_magical(sv);	/*    else fix the flags now */
+    }
+    else {
+	SvMAGICAL_off(sv);
+	SvFLAGS(sv) |= (SvFLAGS(sv) & (SVp_IOK|SVp_NOK|SVp_POK)) >> PRIVSHIFT;
+    }
+    return 0;
+}
+
+#endif
+#endif
+
+=xsinit
+
+#define NEED_mg_findext
+#define NEED_sv_unmagicext
+
+#ifndef STATIC
+#define STATIC static
+#endif
+
+STATIC MGVTBL null_mg_vtbl = {
+    NULL, /* get */
+    NULL, /* set */
+    NULL, /* len */
+    NULL, /* clear */
+    NULL, /* free */
+#if MGf_COPY
+    NULL, /* copy */
+#endif /* MGf_COPY */
+#if MGf_DUP
+    NULL, /* dup */
+#endif /* MGf_DUP */
+#if MGf_LOCAL
+    NULL, /* local */
+#endif /* MGf_LOCAL */
+};
+
+STATIC MGVTBL other_mg_vtbl = {
+    NULL, /* get */
+    NULL, /* set */
+    NULL, /* len */
+    NULL, /* clear */
+    NULL, /* free */
+#if MGf_COPY
+    NULL, /* copy */
+#endif /* MGf_COPY */
+#if MGf_DUP
+    NULL, /* dup */
+#endif /* MGf_DUP */
+#if MGf_LOCAL
+    NULL, /* local */
+#endif /* MGf_LOCAL */
+};
+
 =xsubs
+
+SV *
+new_with_other_mg(package, ...)
+    SV *package
+  PREINIT:
+    HV *self;
+    HV *stash;
+    SV *self_ref;
+    const char *data = "hello\0";
+    MAGIC *mg;
+  CODE:
+    self = newHV();
+    stash = gv_stashpv(SvPV_nolen(package), 0);
+
+    self_ref = newRV_noinc((SV*)self);
+
+    sv_magic((SV*)self, NULL, PERL_MAGIC_ext, data, strlen(data));
+    mg = mg_find((SV*)self, PERL_MAGIC_ext);
+    if (mg)
+      mg->mg_virtual = &other_mg_vtbl;
+    else
+      croak("No mg!");
+
+    RETVAL = sv_bless(self_ref, stash);
+  OUTPUT:
+    RETVAL
+
+SV *
+new_with_mg(package, ...)
+    SV *package
+  PREINIT:
+    HV *self;
+    HV *stash;
+    SV *self_ref;
+    const char *data = "hello\0";
+    MAGIC *mg;
+  CODE:
+    self = newHV();
+    stash = gv_stashpv(SvPV_nolen(package), 0);
+
+    self_ref = newRV_noinc((SV*)self);
+
+    sv_magic((SV*)self, NULL, PERL_MAGIC_ext, data, strlen(data));
+    mg = mg_find((SV*)self, PERL_MAGIC_ext);
+    if (mg)
+      mg->mg_virtual = &null_mg_vtbl;
+    else
+      croak("No mg!");
+
+    RETVAL = sv_bless(self_ref, stash);
+  OUTPUT:
+    RETVAL
+
+void
+remove_null_magic(self)
+    SV *self
+  PREINIT:
+    HV *obj;
+  PPCODE:
+    obj = (HV*) SvRV(self);
+
+    sv_unmagicext((SV*)obj, PERL_MAGIC_ext, &null_mg_vtbl);
+
+void
+remove_other_magic(self)
+    SV *self
+  PREINIT:
+    HV *obj;
+  PPCODE:
+    obj = (HV*) SvRV(self);
+
+    sv_unmagicext((SV*)obj, PERL_MAGIC_ext, &other_mg_vtbl);
+
+void
+as_string(self)
+    SV *self
+  PREINIT:
+    HV *obj;
+    MAGIC *mg;
+  PPCODE:
+    obj = (HV*) SvRV(self);
+
+    if ((mg = mg_findext((SV*)obj, PERL_MAGIC_ext, &null_mg_vtbl))) {
+        XPUSHs(sv_2mortal(newSVpv(mg->mg_ptr, strlen(mg->mg_ptr))));
+    } else {
+        XPUSHs(sv_2mortal(newSVpvs("Sorry, your princess is in another castle.")));
+    }
 
 void
 sv_catpv_mg(sv, string)
@@ -304,6 +525,9 @@ sv_magic_portable(sv)
 #if { VERSION >= 5.004 }
                 sv_magic_portable(sv, 0, '~', foo, 0);
                 mg = mg_find(sv, '~');
+                if (!mg)
+                  croak("No mg!");
+
                 RETVAL = mg->mg_ptr == foo;
 #else
                 sv_magic(sv, 0, '~', (char *) foo, strlen(foo));
@@ -314,7 +538,31 @@ sv_magic_portable(sv)
         OUTPUT:
                 RETVAL
 
-=tests plan => 15
+=tests plan => 23
+
+# Find proper magic
+ok(my $obj1 = Devel::PPPort->new_with_mg());
+ok(Devel::PPPort::as_string($obj1), 'hello');
+
+# Find with no magic
+my $obj = bless {}, 'Fake::Class';
+ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+
+# Find with other magic (not the magic we are looking for)
+ok($obj = Devel::PPPort->new_with_other_mg());
+ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+
+# Okay, attempt to remove magic that isn't there
+Devel::PPPort::remove_other_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), 'hello');
+
+# Remove magic that IS there
+Devel::PPPort::remove_null_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+
+# Removing when no magic present
+Devel::PPPort::remove_null_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 use Tie::Hash;
 my %h;

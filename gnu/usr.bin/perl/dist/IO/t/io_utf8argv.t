@@ -5,20 +5,29 @@ BEGIN {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;
     }
-    require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
+    require($ENV{PERL_CORE} ? "../../t/test.pl" : "../t/test.pl");
 }
 
 use utf8;
 
+skip_all("EBCDIC platform; testing not core")
+                                           if $::IS_EBCDIC && ! $ENV{PERL_CORE};
 
 plan(tests => 2);
 
+my $bytes =
+            "\xce\x9c\xe1\xbd\xb7\xce\xb1\x20\xcf\x80\xe1\xbd\xb1\xcf\x80\xce".
+            "\xb9\xce\xb1\x2c\x20\xce\xbc\xe1\xbd\xb0\x20\xcf\x80\xce\xbf\xce".
+            "\xb9\xe1\xbd\xb0\x20\xcf\x80\xe1\xbd\xb1\xcf\x80\xce\xb9\xce\xb1".
+            "\xcd\xbe\x0a";
+
+if ($::IS_EBCDIC) {
+    require($ENV{PERL_CORE} ? "../../t/charset_tools.pl" : "../t/charset_tools.pl");
+    $bytes = byte_utf8a_to_utf8n($bytes)
+}
+
 open my $fh, ">:raw", 'io_utf8argv';
-print $fh
-   "\xce\x9c\xe1\xbd\xb7\xce\xb1\x20\xcf\x80\xe1\xbd\xb1\xcf\x80\xce".
-   "\xb9\xce\xb1\x2c\x20\xce\xbc\xe1\xbd\xb0\x20\xcf\x80\xce\xbf\xce".
-   "\xb9\xe1\xbd\xb0\x20\xcf\x80\xe1\xbd\xb1\xcf\x80\xce\xb9\xce\xb1".
-   "\xcd\xbe\x0a";
+print $fh $bytes;
 close $fh or die "close: $!";
 
 

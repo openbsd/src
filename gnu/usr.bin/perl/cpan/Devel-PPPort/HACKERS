@@ -287,9 +287,9 @@ That's it.
 =head2 Submitting Patches
 
 If you've added some functionality to C<Devel::PPPort>, please
-consider submitting a patch with your work to either the author
-(E<lt>mhx@cpan.orgE<gt>) or to the CPAN Request Tracker at
-L<http://rt.cpan.org>.
+consider submitting a patch with your work to GitHub here:
+L<https://github.com/mhx/Devel-PPPort/issues/>, or by sending a
+Pull Request.
 
 When submitting patches, please only add the relevant changes
 and don't include the differences of the generated files. You

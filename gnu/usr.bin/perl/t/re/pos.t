@@ -2,9 +2,6 @@
 
 # Make sure pos / resetting pos on failed match works
 
-use strict;
-use warnings;
-
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
@@ -12,6 +9,9 @@ BEGIN {
 }
 
 plan tests => 8;
+
+use strict;
+use warnings;
 
 ##  Early bailout of pp_match because matchlen > stringlen
 

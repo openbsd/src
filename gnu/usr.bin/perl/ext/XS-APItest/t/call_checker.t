@@ -1,11 +1,14 @@
 use warnings;
 use strict;
-use Test::More tests => 76;
+use Test::More tests => 78;
 
 use XS::APItest;
 
-XS::APItest::test_cv_getset_call_checker();
-ok 1;
+{
+    local $TODO = $^O eq "cygwin" ? "[perl #78502] function pointers don't match on cygwin" : "";
+    ok( eval { XS::APItest::test_cv_getset_call_checker(); 1 })
+      or diag $@;
+}
 
 my @z = ();
 my @a = qw(a);
@@ -161,6 +164,8 @@ is $foo_ret, 9;
 sub MODIFY_CODE_ATTRIBUTES { cv_set_call_checker_lists($_[1]); () }
 BEGIN {
   *foo2 = sub($$) :Attr { $foo_got = [ @_ ]; return "z"; };
+  my $foo = 3;
+  *foo3 = sub() :Attr { $foo };
 }
 
 $foo_got = undef;
@@ -168,6 +173,10 @@ eval q{$foo_ret = foo2(@b, @c);};
 is $@, "";
 is_deeply $foo_got, [ qw(a b), qw(a b c) ];
 is $foo_ret, "z";
+
+eval q{$foo_ret = foo3(@b, @c);};
+is $@, "";
+is $foo_ret, 3;
 
 cv_set_call_checker_lists(\&foo);
 undef &foo;

@@ -1,6 +1,6 @@
 #!./perl
 
-BEGIN { chdir 't'; @INC = '../lib'; require './test.pl' }
+BEGIN { chdir 't' if -d 't'; @INC = '../lib'; require './test.pl' }
 
 plan 13;
 

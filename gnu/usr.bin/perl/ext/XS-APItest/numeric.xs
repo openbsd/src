@@ -14,3 +14,48 @@ grok_number(number)
 	PUSHs(sv_2mortal(newSViv(result)));
 	if (result & IS_NUMBER_IN_UV)
 	    PUSHs(sv_2mortal(newSVuv(value)));
+
+void
+grok_number_flags(number, flags)
+	SV *number
+	U32 flags
+    PREINIT:
+	STRLEN len;
+	const char *pv = SvPV(number, len);
+	UV value;
+	int result;
+    PPCODE:
+	EXTEND(SP,2);
+	result = grok_number_flags(pv, len, &value, flags);
+	PUSHs(sv_2mortal(newSViv(result)));
+	if (result & IS_NUMBER_IN_UV)
+	    PUSHs(sv_2mortal(newSVuv(value)));
+
+void
+grok_atoUV(number, endsv)
+	SV *number
+	SV *endsv
+    PREINIT:
+	STRLEN len;
+	const char *pv = SvPV(number, len);
+	UV value = 0xdeadbeef;
+	bool result;
+	const char* endptr;
+    PPCODE:
+	EXTEND(SP,2);
+	if (endsv == &PL_sv_undef) {
+          result = grok_atoUV(pv, &value, NULL);
+        } else {
+          result = grok_atoUV(pv, &value, &endptr);
+        }
+	PUSHs(result ? &PL_sv_yes : &PL_sv_no);
+	PUSHs(sv_2mortal(newSVuv(value)));
+	if (endsv == &PL_sv_undef) {
+          PUSHs(sv_2mortal(newSVpvn(NULL, 0)));
+	} else {
+	  if (endptr) {
+	    PUSHs(sv_2mortal(newSViv(endptr - pv)));
+	  } else {
+	    PUSHs(sv_2mortal(newSViv(0)));
+	  }
+	}

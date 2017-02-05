@@ -9,7 +9,7 @@ BEGIN {
     @INC = qw(. ../lib);
     $SIG{__WARN__} = sub { $warns++; warn $_[0] };
 }
-require 'test.pl';
+require './test.pl';
 plan( tests => 27 );
 
 my $unix_mode = 1;

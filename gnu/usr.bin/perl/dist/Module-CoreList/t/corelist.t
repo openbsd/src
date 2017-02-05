@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Module::CoreList;
-use Test::More tests => 32;
+use Test::More tests => 34;
 
 BEGIN { require_ok('Module::CoreList'); }
 
@@ -105,6 +105,12 @@ is(Module::CoreList::removed_from('CPANPLUS::inc'), 5.010001,
 
     cmp_ok($warnings_count, '==', 0,
            "an undefined version does not produce warnings rt#123556");
+
+    ok(keys %{$Module::CoreList::version{5.023002}} > 0,
+       "have recent enough data to test for deep recursion warnings");
+
+    cmp_ok($warnings_count, '==', 0,
+           "no deep recursion warnings for newer perl versions");
 }
 
 ok(! defined(Module::CoreList->find_version()),

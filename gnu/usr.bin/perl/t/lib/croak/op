@@ -1,9 +1,24 @@
 __END__
+# NAME join,
+join,
+EXPECT
+Not enough arguments for join or string at - line 1, near "join,"
+Execution of - aborted due to compilation errors.
+########
 # NAME my $<special>
 my $!;
 EXPECT
 Can't use global $! in "my" at - line 1, near "my $!"
 Execution of - aborted due to compilation errors.
+########
+# NAME my $<non-ASCII> doesn't output garbage
+# \xB6 is same character in all three EBCDIC pages and Latin1
+use open ":std", ":utf8";
+eval qq|my \$\xb6;|; # ¶ in Latin-1, and EBCDIC 1047, 037, POSIX-BC
+print $@;
+exit 1;
+EXPECT
+Can't use global $¶ in "my" at (eval 1) line 1, near "my $¶"
 ########
 # NAME OP_HELEM fields
 package Foo;
@@ -62,6 +77,18 @@ EXPECT
 Can't declare do block in "my" at - line 1, at EOF
 Execution of - aborted due to compilation errors.
 ########
+# NAME ($_, state $x) = ...
+($_, CORE::state $x) = ();
+EXPECT
+Initialization of state variables in list context currently forbidden at - line 1, near ");"
+Execution of - aborted due to compilation errors.
+########
+# NAME my $y; ($y, state $x) = ...
+my $y; ($y, CORE::state $x) = ();
+EXPECT
+Initialization of state variables in list context currently forbidden at - line 1, near ");"
+Execution of - aborted due to compilation errors.
+########
 # NAME delete BAD
 delete $x;
 EXPECT
@@ -82,3 +109,45 @@ exists argument is not a HASH or ARRAY element or a subroutine at - line 1.
 exists &foo()
 EXPECT
 exists argument is not a subroutine name at - line 1.
+########
+# NAME push BAREWORD
+push FRED;
+EXPECT
+Type of arg 1 to push must be array (not constant item) at - line 1, near "FRED;"
+Execution of - aborted due to compilation errors.
+########
+# NAME pop BAREWORD
+pop FRED;
+EXPECT
+Type of arg 1 to pop must be array (not constant item) at - line 1, near "FRED;"
+Execution of - aborted due to compilation errors.
+########
+# NAME shift BAREWORD
+shift FRED;
+EXPECT
+Type of arg 1 to shift must be array (not constant item) at - line 1, near "FRED;"
+Execution of - aborted due to compilation errors.
+########
+# NAME unshift BAREWORD
+unshift FRED;
+EXPECT
+Type of arg 1 to unshift must be array (not constant item) at - line 1, near "FRED;"
+Execution of - aborted due to compilation errors.
+########
+# NAME keys BAREWORD
+@a = keys FRED ;
+EXPECT
+Type of arg 1 to keys must be hash (not constant item) at - line 1, near "FRED ;"
+Execution of - aborted due to compilation errors.
+########
+# NAME values BAREWORD
+@a = values FRED ;
+EXPECT
+Type of arg 1 to values must be hash (not constant item) at - line 1, near "FRED ;"
+Execution of - aborted due to compilation errors.
+########
+# NAME each BAREWORD
+@a = each FRED ;
+EXPECT
+Type of arg 1 to each must be hash (not constant item) at - line 1, near "FRED ;"
+Execution of - aborted due to compilation errors.

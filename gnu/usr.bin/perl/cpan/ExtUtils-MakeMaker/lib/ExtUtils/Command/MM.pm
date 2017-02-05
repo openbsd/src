@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 
 our @EXPORT  = qw(test_harness pod2man perllocal_install uninstall
                   warn_if_old_packlist test_s cp_nonempty);
-our $VERSION = '6.98_01';
+our $VERSION = '7.10_02';
 
 my $Is_VMS = $^O eq 'VMS';
 
@@ -116,8 +116,9 @@ sub pod2man {
                 'section|s=s', 'release|r=s', 'center|c=s',
                 'date|d=s', 'fixed=s', 'fixedbold=s', 'fixeditalic=s',
                 'fixedbolditalic=s', 'official|o', 'quotes|q=s', 'lax|l',
-                'name|n=s', 'perm_rw=i'
+                'name|n=s', 'perm_rw=i', 'utf8|u'
     );
+    delete $options{utf8} unless $Pod::Man::VERSION >= 2.17;
 
     # If there's no files, don't bother going further.
     return 0 unless @ARGV;
@@ -130,6 +131,9 @@ sub pod2man {
     # This isn't a valid Pod::Man option and is only accepted for backwards
     # compatibility.
     delete $options{lax};
+    my $count = scalar @ARGV / 2;
+    my $plural = $count == 1 ? 'document' : 'documents';
+    print "Manifying $count pod $plural\n";
 
     do {{  # so 'next' works
         my ($pod, $man) = splice(@ARGV, 0, 2);
@@ -137,8 +141,6 @@ sub pod2man {
         next if ((-e $man) &&
                  (mtime($man) > mtime($pod)) &&
                  (mtime($man) > mtime("Makefile")));
-
-        print "Manifying $man\n";
 
         my $parser = Pod::Man->new(%options);
         $parser->parse_from_file($pod, $man)

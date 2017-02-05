@@ -72,7 +72,7 @@ our @EXPORT_OK = qw(
 	YESSTR
 );
 
-our $VERSION = '0.11';
+our $VERSION = '0.13';
 
 XSLoader::load();
 
@@ -166,7 +166,7 @@ you can wrap the import in an eval like this:
         I18N::Langinfo->import(qw(langinfo CODESET));
         $codeset = langinfo(CODESET()); # note the ()
     };
-    if (!$@) { ... failed ... }
+    if ($@) { ... failed ... }
 
 =head2 EXPORT
 

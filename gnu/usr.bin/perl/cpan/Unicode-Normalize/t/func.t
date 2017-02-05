@@ -39,19 +39,25 @@ ok(1);
 sub _pack_U { Unicode::Normalize::pack_U(@_) }
 sub hexU { _pack_U map hex, split ' ', shift }
 
+# This won't work on EBCDIC platforms prior to v5.8.0, which is when this
+# translation function was defined
+*to_native = (defined &utf8::unicode_to_native)
+             ? \&utf8::unicode_to_native
+             : sub { return shift };
+
 #########################
 
-ok(getCombinClass(   0),   0);
-ok(getCombinClass(  41),   0);
-ok(getCombinClass(  65),   0);
+ok(getCombinClass( to_native(0)),   0);
+ok(getCombinClass(to_native(41)),   0);
+ok(getCombinClass(to_native(65)),   0);
 ok(getCombinClass( 768), 230);
 ok(getCombinClass(1809),  36);
 
-ok(getCanon(   0), undef);
-ok(getCanon(0x29), undef);
-ok(getCanon(0x41), undef);
-ok(getCanon(0x00C0), _pack_U(0x0041, 0x0300));
-ok(getCanon(0x00EF), _pack_U(0x0069, 0x0308));
+ok(getCanon(to_native(   0)), undef);
+ok(getCanon(to_native(0x29)), undef);
+ok(getCanon(to_native(0x41)), undef);
+ok(getCanon(to_native(0x00C0)), _pack_U(0x0041, 0x0300));
+ok(getCanon(to_native(0x00EF)), _pack_U(0x0069, 0x0308));
 ok(getCanon(0x304C), _pack_U(0x304B, 0x3099));
 ok(getCanon(0x1EA4), _pack_U(0x0041, 0x0302, 0x0301));
 ok(getCanon(0x1F82), _pack_U(0x03B1, 0x0313, 0x0300, 0x0345));
@@ -64,11 +70,11 @@ ok(getCanon(0xFA2D), _pack_U(0x9DB4));
 
 # 20
 
-ok(getCompat(   0), undef);
-ok(getCompat(0x29), undef);
-ok(getCompat(0x41), undef);
-ok(getCompat(0x00C0), _pack_U(0x0041, 0x0300));
-ok(getCompat(0x00EF), _pack_U(0x0069, 0x0308));
+ok(getCompat(to_native(   0)), undef);
+ok(getCompat(to_native(0x29)), undef);
+ok(getCompat(to_native(0x41)), undef);
+ok(getCompat(to_native(0x00C0)), _pack_U(0x0041, 0x0300));
+ok(getCompat(to_native(0x00EF)), _pack_U(0x0069, 0x0308));
 ok(getCompat(0x304C), _pack_U(0x304B, 0x3099));
 ok(getCompat(0x1EA4), _pack_U(0x0041, 0x0302, 0x0301));
 ok(getCompat(0x1F82), _pack_U(0x03B1, 0x0313, 0x0300, 0x0345));
@@ -81,17 +87,17 @@ ok(getCompat(0xFA2D), _pack_U(0x9DB4));
 
 # 34
 
-ok(getComposite(   0,    0), undef);
-ok(getComposite(   0, 0x29), undef);
-ok(getComposite(0x29,    0), undef);
-ok(getComposite(0x29, 0x29), undef);
-ok(getComposite(   0, 0x41), undef);
-ok(getComposite(0x41,    0), undef);
-ok(getComposite(0x41, 0x41), undef);
-ok(getComposite(12, 0x0300), undef);
-ok(getComposite(0x0055, 0xFF00), undef);
-ok(getComposite(0x0041, 0x0300), 0x00C0);
-ok(getComposite(0x0055, 0x0300), 0x00D9);
+ok(getComposite(to_native(   0), to_native(   0)), undef);
+ok(getComposite(to_native(   0), to_native(0x29)), undef);
+ok(getComposite(to_native(0x29), to_native(   0)), undef);
+ok(getComposite(to_native(0x29), to_native(0x29)), undef);
+ok(getComposite(to_native(   0), to_native(0x41)), undef);
+ok(getComposite(to_native(0x41), to_native(   0)), undef);
+ok(getComposite(to_native(0x41), to_native(0x41)), undef);
+ok(getComposite(to_native(12), to_native(0x0300)), undef);
+ok(getComposite(to_native(0x0055), 0xFF00), undef);
+ok(getComposite(to_native(0x0041), 0x0300), to_native(0x00C0));
+ok(getComposite(to_native(0x0055), 0x0300), to_native(0x00D9));
 ok(getComposite(0x0112, 0x0300), 0x1E14);
 ok(getComposite(0x1100, 0x1161), 0xAC00);
 ok(getComposite(0x1100, 0x1173), 0xADF8);
@@ -120,11 +126,11 @@ sub uprops {
   return $r;
 }
 
-ok(uprops(0x0000), 'xsnfbdmckyg'); # NULL
-ok(uprops(0x0029), 'xsnfbdmckyg'); # RIGHT PARENTHESIS
-ok(uprops(0x0041), 'xsnfbdmckyg'); # LATIN CAPITAL LETTER A
-ok(uprops(0x00A0), 'xsnfbdmcKyG'); # NO-BREAK SPACE
-ok(uprops(0x00C0), 'xsnfbDmcKyg'); # LATIN CAPITAL LETTER A WITH GRAVE
+ok(uprops(to_native(0x0000)), 'xsnfbdmckyg'); # NULL
+ok(uprops(to_native(0x0029)), 'xsnfbdmckyg'); # RIGHT PARENTHESIS
+ok(uprops(to_native(0x0041)), 'xsnfbdmckyg'); # LATIN CAPITAL LETTER A
+ok(uprops(to_native(0x00A0)), 'xsnfbdmcKyG'); # NO-BREAK SPACE
+ok(uprops(to_native(0x00C0)), 'xsnfbDmcKyg'); # LATIN CAPITAL LETTER A WITH GRAVE
 ok(uprops(0x0300), 'xsnfBdMckYg'); # COMBINING GRAVE ACCENT
 ok(uprops(0x0344), 'xsNFbDmCKyG'); # COMBINING GREEK DIALYTIKA TONOS
 ok(uprops(0x0387), 'xSnFbDmCKyG'); # GREEK ANO TELEIA
@@ -266,12 +272,13 @@ ok(normalize('NFC', $2), "ABC");
 # a string with initial zero should be treated like a number
 
 # LATIN CAPITAL LETTER A WITH GRAVE
-ok(getCombinClass("0192"), 0);
-ok(getCanon ("0192"), _pack_U(0x41, 0x300));
-ok(getCompat("0192"), _pack_U(0x41, 0x300));
-ok(getComposite("065", "0768"), 192);
-ok(isNFD_NO ("0192"));
-ok(isNFKD_NO("0192"));
+ok(getCombinClass(sprintf("0%d", to_native(192))), 0);
+ok(getCanon (sprintf("0%d", to_native(192))), _pack_U(0x41, 0x300));
+ok(getCompat(sprintf("0%d", to_native(192))), _pack_U(0x41, 0x300));
+my $lead_zero = sprintf "0%d", to_native(65);
+ok(getComposite($lead_zero, "0768"), to_native(192));
+ok(isNFD_NO (sprintf("0%d", to_native(192))));
+ok(isNFKD_NO(sprintf("0%d", to_native(192))));
 
 # DEVANAGARI LETTER QA
 ok(isExclusion("02392"));

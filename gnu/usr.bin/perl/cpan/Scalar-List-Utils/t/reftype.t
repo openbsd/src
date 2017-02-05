@@ -1,22 +1,12 @@
 #!./perl
 
-BEGIN {
-    unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Config; import Config;
-	keys %Config; # Silence warning
-	if ($Config{extensions} !~ /\bList\/Util\b/) {
-	    print "1..0 # Skip: List::Util was not built\n";
-	    exit 0;
-	}
-    }
-}
+use strict;
+use warnings;
 
 use Test::More tests => 32;
 
 use Scalar::Util qw(reftype);
-use vars qw($t $y $x *F);
+use vars qw(*F);
 use Symbol qw(gensym);
 
 # Ensure we do not trigger and tied methods
@@ -26,7 +16,8 @@ my $RE = $] < 5.011 ? 'SCALAR' : 'REGEXP';
 my $s = []; # SvTYPE($s) is SVt_RV, and SvROK($s) is true
 $s = undef; # SvTYPE($s) is SVt_RV, but SvROK($s) is false
 
-@test = (
+my $t;
+my @test = (
  [ undef, 1,		'number'	],
  [ undef, 'A',		'string'	],
  [ HASH   => {},	'HASH ref'	],
@@ -41,7 +32,7 @@ $s = undef; # SvTYPE($s) is SVt_RV, but SvROK($s) is false
  [ $RE    => qr/x/,     'REGEEXP'       ],
 );
 
-foreach $test (@test) {
+foreach my $test (@test) {
   my($type,$what, $n) = @$test;
 
   is( reftype($what), $type, $n);
@@ -60,6 +51,7 @@ sub TIEHANDLE { bless {} }
 sub DESTROY {}
 
 sub AUTOLOAD {
+  our $AUTOLOAD;
   warn "$AUTOLOAD called";
   exit 1; # May be in an eval
 }

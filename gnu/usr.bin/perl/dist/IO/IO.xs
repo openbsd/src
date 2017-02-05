@@ -61,6 +61,10 @@ typedef FILE * OutputStream;
 #  define dVAR dNOOP
 #endif
 
+#ifndef OpSIBLING
+#  define OpSIBLING(o) (o)->op_sibling
+#endif
+
 static int not_here(const char *s) __attribute__noreturn__;
 static int
 not_here(const char *s)
@@ -102,13 +106,19 @@ not_here(const char *s)
 static int
 io_blocking(pTHX_ InputStream f, int block)
 {
+    int fd = -1;
 #if defined(HAS_FCNTL)
     int RETVAL;
-    if(!f) {
+    if (!f) {
 	errno = EBADF;
 	return -1;
     }
-    RETVAL = fcntl(PerlIO_fileno(f), F_GETFL, 0);
+    fd = PerlIO_fileno(f);
+    if (fd < 0) {
+      errno = EBADF;
+      return -1;
+    }
+    RETVAL = fcntl(fd, F_GETFL, 0);
     if (RETVAL >= 0) {
 	int mode = RETVAL;
 	int newmode = mode;
@@ -143,7 +153,7 @@ io_blocking(pTHX_ InputStream f, int block)
 	}
 #endif
 	if (newmode != mode) {
-	    const int ret = fcntl(PerlIO_fileno(f),F_SETFL,newmode);
+            const int ret = fcntl(fd, F_SETFL, newmode);
 	    if (ret < 0)
 		RETVAL = ret;
 	}
@@ -154,7 +164,7 @@ io_blocking(pTHX_ InputStream f, int block)
     if (block >= 0) {
 	unsigned long flags = !block;
 	/* ioctl claims to take char* but really needs a u_long sized buffer */
-	const int ret = ioctl(PerlIO_fileno(f), FIONBIO, (char*)&flags);
+	const int ret = ioctl(fd, FIONBIO, (char*)&flags);
 	if (ret != 0)
 	    return -1;
 	/* Win32 has no way to get the current blocking status of a socket.
@@ -185,7 +195,7 @@ static OP *
 io_ck_lineseq(pTHX_ OP *o)
 {
     OP *kid = cBINOPo->op_first;
-    for (; kid; kid = kid->op_sibling)
+    for (; kid; kid = OpSIBLING(kid))
 	if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE)
 	    kid->op_ppaddr = io_pp_nextstate;
     return o;
@@ -309,7 +319,10 @@ PPCODE:
 #ifdef HAS_POLL
     const int nfd = (items - 1) / 2;
     SV *tmpsv = NEWSV(999,nfd * sizeof(struct pollfd));
-    struct pollfd *fds = (struct pollfd *)SvPVX(tmpsv);
+    /* We should pass _some_ valid pointer even if nfd is zero, but it
+     * doesn't matter what it is, since we're telling it to not check any fds.
+     */
+    struct pollfd *fds = nfd ? (struct pollfd *)SvPVX(tmpsv) : (struct pollfd *)tmpsv;
     int i,j,ret;
     for(i=1, j=0  ; j < nfd ; j++) {
 	fds[j].fd = SvIV(ST(i));
@@ -524,9 +537,15 @@ fsync(arg)
 	handle = IoOFP(sv_2io(arg));
 	if (!handle)
 	    handle = IoIFP(sv_2io(arg));
-	if(handle)
-	    RETVAL = fsync(PerlIO_fileno(handle));
-	else {
+	if (handle) {
+	    int fd = PerlIO_fileno(handle);
+	    if (fd >= 0) {
+		RETVAL = fsync(fd);
+	    } else {
+		RETVAL = -1;
+		errno = EBADF;
+	    }
+	} else {
 	    RETVAL = -1;
 	    errno = EINVAL;
 	}
@@ -556,12 +575,17 @@ sockatmark (sock)
    PREINIT:
      int fd;
    CODE:
-   {
      fd = PerlIO_fileno(sock);
+     if (fd < 0) {
+       errno = EBADF;
+       RETVAL = -1;
+     }
 #ifdef HAS_SOCKATMARK
-     RETVAL = sockatmark(fd);
+     else {
+       RETVAL = sockatmark(fd);
+     }
 #else
-     {
+     else {
        int flag = 0;
 #   ifdef SIOCATMARK
 #     if defined(NETWARE) || defined(WIN32)
@@ -576,7 +600,6 @@ sockatmark (sock)
        RETVAL = flag;
      }
 #endif
-   }
    OUTPUT:
      RETVAL
 

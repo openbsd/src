@@ -1,4 +1,60 @@
 __END__
+# NAME foo found where operator expected
+myfunc 1,2,3
+EXPECT
+Number found where operator expected at - line 1, near "myfunc 1"
+	(Do you need to predeclare myfunc?)
+syntax error at - line 1, near "myfunc 1"
+Execution of - aborted due to compilation errors.
+########
+# NAME foo found where operator expected (after strict error, w/fatal warnings)
+use warnings FATAL => 'all';
+use strict;
+$foo;
+myfunc 1,2,3
+EXPECT
+Global symbol "$foo" requires explicit package name (did you forget to declare "my $foo"?) at - line 3.
+Number found where operator expected at - line 4, near "myfunc 1"
+	(Do you need to predeclare myfunc?)
+syntax error at - line 4, near "myfunc 1"
+Execution of - aborted due to compilation errors.
+########
+# NAME (Missing operator before ${?) [perl #123737]
+0${
+EXPECT
+Scalar found where operator expected at - line 1, near "0${"
+	(Missing operator before ${?)
+syntax error at - line 1, near "0$"
+Missing right curly or square bracket at - line 1, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME (Missing operator before $#{?) [perl #123737]
+0$#{
+EXPECT
+Array length found where operator expected at - line 1, near "0$#{"
+	(Missing operator before $#{?)
+syntax error at - line 1, near "0$#"
+Missing right curly or square bracket at - line 1, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME (Missing operator before @foo) [perl #123737]
+0@foo
+EXPECT
+Array found where operator expected at - line 1, near "0@foo"
+	(Missing operator before @foo?)
+syntax error at - line 1, near "0@foo
+"
+Execution of - aborted due to compilation errors.
+########
+# NAME (Missing operator before @{) [perl #123737]
+0@{
+EXPECT
+Array found where operator expected at - line 1, near "0@{"
+	(Missing operator before @{?)
+syntax error at - line 1, near "0@"
+Missing right curly or square bracket at - line 1, at end of line
+Execution of - aborted due to compilation errors.
+########
 # NAME Unterminated here-doc in string eval
 eval "<<foo"; die $@
 EXPECT
@@ -9,11 +65,36 @@ eval "s//<<foo/e"; die $@
 EXPECT
 Can't find string terminator "foo" anywhere before EOF at (eval 1) line 1.
 ########
+# NAME Unterminated here-doc in string
+"${<<foo"; # Used to give ‘Attempt to free blah blah blah’
+EXPECT
+Can't find string terminator "foo" anywhere before EOF at - line 1.
+########
+# NAME Unterminated qw//
+qw/
+EXPECT
+Can't find string terminator "/" anywhere before EOF at - line 1.
+########
+# NAME Unterminated q//
+qw/
+EXPECT
+Can't find string terminator "/" anywhere before EOF at - line 1.
+########
+# NAME Unterminated ''
+'
+EXPECT
+Can't find string terminator "'" anywhere before EOF at - line 1.
+########
 # NAME /\N{/
 /\N{/
 EXPECT
 Missing right brace on \N{} or unescaped left brace after \N at - line 1, within pattern
 Execution of - aborted due to compilation errors.
+########
+# NAME map{for our *a...
+map{for our *a (1..10) {$_.=$x}}
+EXPECT
+Missing $ on loop variable at - line 1.
 ########
 # NAME Missing name in "my sub"
 use feature 'lexical_subs'; my sub;
@@ -33,6 +114,17 @@ state sub;
 EXPECT
 The lexical_subs feature is experimental at - line 2.
 Missing name in "state sub" at - line 2.
+########
+# NAME my sub pack::foo
+use feature 'lexical_subs', 'state';
+my sub foo::bar;
+state sub foo::bear;
+EXPECT
+The lexical_subs feature is experimental at - line 2.
+The lexical_subs feature is experimental at - line 3.
+"my" subroutine &foo::bar can't be in a package at - line 2, near "my sub foo::bar"
+"state" subroutine &foo::bear can't be in a package at - line 3, near "state sub foo::bear"
+Execution of - aborted due to compilation errors.
 ########
 # NAME Integer constant overloading returning undef
 use overload;
@@ -130,22 +222,83 @@ Constant(qq): Call to &{$^H{qr}} did not return a defined value at - line 3, wit
 Constant(q): Call to &{$^H{qr}} did not return a defined value at - line 3, within pattern
 Execution of - aborted due to compilation errors.
 ########
+# NAME Failed constant overloading should not cause a double free
+use overload;
+BEGIN { overload::constant q => sub {}; undef *^H }
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+undef(1,2);
+"a"
+EXPECT
+Too many arguments for undef operator at - line 3, near "2)"
+Too many arguments for undef operator at - line 4, near "2)"
+Too many arguments for undef operator at - line 5, near "2)"
+Too many arguments for undef operator at - line 6, near "2)"
+Too many arguments for undef operator at - line 7, near "2)"
+Too many arguments for undef operator at - line 8, near "2)"
+Too many arguments for undef operator at - line 9, near "2)"
+Too many arguments for undef operator at - line 10, near "2)"
+Too many arguments for undef operator at - line 11, near "2)"
+Constant(q) unknown at - line 12, near ""a""
+- has too many errors.
+########
 # NAME Unterminated delimiter for here document
 <<"foo
 EXPECT
 Unterminated delimiter for here document at - line 1.
 ########
-# NAME Unterminated qw//
-qw/
+# NAME my (our $x) errors
+my (our $x);
 EXPECT
-Can't find string terminator "/" anywhere before EOF at - line 1.
+Can't redeclare "our" in "my" at - line 1, at end of line
+Execution of - aborted due to compilation errors.
 ########
-# NAME Unterminated q//
-qw/
+# NAME our (my $x) errors
+our (my $x);
 EXPECT
-Can't find string terminator "/" anywhere before EOF at - line 1.
+Can't redeclare "my" in "our" at - line 1, at end of line
+Execution of - aborted due to compilation errors.
 ########
-# NAME Unterminated ''
-'
+# NAME state (my $x) errors
+use feature 'state';
+state (my $x);
 EXPECT
-Can't find string terminator "'" anywhere before EOF at - line 1.
+Can't redeclare "my" in "state" at - line 2, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME our (state $x) errors
+use feature 'state';
+our (state $x);
+EXPECT
+Can't redeclare "state" in "our" at - line 2, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME my (my $x) errors
+my (my $x, $y, $z);
+EXPECT
+Can't redeclare "my" in "my" at - line 1, at end of line
+Execution of - aborted due to compilation errors.
+########
+# NAME our (our $x) errors
+our ($x, our($y), $z);
+EXPECT
+Can't redeclare "our" in "our" at - line 1, near ", "
+Execution of - aborted due to compilation errors.
+########
+# NAME state (state $x) errors
+use feature 'state';
+state ($x, $y, state $z);
+EXPECT
+Can't redeclare "state" in "state" at - line 2, near ", "
+Execution of - aborted due to compilation errors.
+########
+# NAME BEGIN <> [perl #125341]
+BEGIN <>
+EXPECT
+Illegal declaration of subroutine BEGIN at - line 1.

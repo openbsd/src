@@ -1198,9 +1198,9 @@ contains the following statement will compile with only B<xsubpp> version
 
 This keyword can be used when an XSUB requires special cleanup procedures
 before it terminates.  When the CLEANUP:  keyword is used it must follow
-any CODE:, PPCODE:, or OUTPUT: blocks which are present in the XSUB.  The
-code specified for the cleanup block will be added as the last statements
-in the XSUB.
+any CODE:, or OUTPUT: blocks which are present in the XSUB.  The code
+specified for the cleanup block will be added as the last statements in
+the XSUB.
 
 =head2 The POSTCALL: Keyword
 
@@ -1257,9 +1257,13 @@ to make it a string is recommended if long version numbers are used.
 
 The PROTOTYPES: keyword corresponds to B<xsubpp>'s C<-prototypes> and
 C<-noprototypes> options.  This keyword overrides the command line options.
-Prototypes are enabled by default.  When prototypes are enabled XSUBs will
+Prototypes are disabled by default.  When prototypes are enabled, XSUBs will
 be given Perl prototypes.  This keyword may be used multiple times in an XS
 module to enable and disable prototypes for different parts of the module.
+Note that B<xsubpp> will nag you if you don't explicitly enable or disable
+prototypes, with:
+
+    Please specify prototyping behavior for Foo.xs (see perlxs manual)
 
 To enable prototypes:
 
@@ -2141,13 +2145,18 @@ this model, the less likely conflicts will occur.
 
 One area where there has been conflict is in regards to C locales.  (See
 L<perllocale>.)  perl, with one exception and unless told otherwise,
-sets up the underlying locale the program is running in to that passed
-into it from the environment.  As of v5.20, this underlying locale is
-completely hidden from pure perl code outside the lexical scope of
-C<S<use locale>>; except a couple of function calls in the POSIX
-module of necessity use it.  But the underlying locale, with that one
-exception is exposed to XS code, affecting all C library routines whose
-behavior is locale-dependent.   The exception is the
+sets up the underlying locale the program is running in to the locale
+passed
+into it from the environment.  This is an important difference from a
+generic C language program, where the underlying locale is the "C"
+locale unless the program changes it.  As of v5.20, this underlying
+locale is completely hidden from pure perl code outside the lexical
+scope of C<S<use locale>> except for a couple of function calls in the
+POSIX module which of necessity use it.  But the underlying locale, with
+that
+one exception is exposed to XS code, affecting all C library routines
+whose behavior is locale-dependent.  Your XS code better not assume that
+the underlying locale is "C".  The exception is the
 L<C<LC_NUMERIC>|perllocale/Category LC_NUMERIC: Numeric Formatting>
 locale category, and the reason it is an exception is that experience
 has shown that it can be problematic for XS code, whereas we have not
@@ -2174,16 +2183,20 @@ may call a C library function that is.  Hopefully the man page for such
 a function will indicate that dependency, but the documentation is
 imperfect.
 
-The current locale is exposed to XS code except possibly C<LC_NUMERIC>.
-There have not been reports of problems with these other categories.
+The current locale is exposed to XS code except possibly C<LC_NUMERIC>
+(explained in the next paragraph).
+There have not been reports of problems with the other categories.
+Perl initializes things on start-up so that the current locale is the
+one which is indicated by the user's environment in effect at that time.
+See L<perllocale/ENVIRONMENT>.
 
-Up through v5.20, Perl initializes things on start-up so that
-C<LC_NUMERIC> is set to the "C" locale.  But if any code anywhere
-changes it, it will stay changed.  This means that your module can't
+However, up through v5.20, Perl initialized things on start-up so that
+C<LC_NUMERIC> was set to the "C" locale.  But if any code anywhere
+changed it, it would stay changed.  This means that your module can't
 count on C<LC_NUMERIC> being something in particular, and you can't
 expect floating point numbers (including version strings) to have dots
 in them.  If you don't allow for a non-dot, your code could break if
-anyone anywhere changes the locale.  For this reason, v5.22 is changing
+anyone anywhere changed the locale.  For this reason, v5.22 changed
 the behavior so that Perl tries to keep C<LC_NUMERIC> in the "C" locale
 except around the operations internally where it should be something
 else.  Misbehaving XS code will always be able to change the locale
@@ -2201,15 +2214,13 @@ C<Gtk>.  This can cause problems for the perl core and other modules.
 Starting in v5.20.1, calling the function
 L<sync_locale()|perlapi/sync_locale> from XS should be sufficient to
 avoid most of these problems.  Prior to this, you need a pure Perl
-segment that does this:
+statement that does this:
 
  POSIX::setlocale(LC_ALL, POSIX::setlocale(LC_ALL));
 
-Macros are provided for XS code to temporarily change to use the
-underlying C<LC_NUMERIC> locale when necessary.  An API is being
-developed for this, but has not yet been nailed down, but will be during
-the course of v5.21.  Send email to L<mailto:perl5-porters@perl.org> for
-guidance.
+In the event that your XS code may need the underlying C<LC_NUMERIC>
+locale, there are macros available to access this; see
+L<perlapi/Locale-related functions and macros>.
 
 =back
 

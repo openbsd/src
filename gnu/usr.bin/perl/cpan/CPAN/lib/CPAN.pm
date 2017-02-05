@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 use strict;
 package CPAN;
-$CPAN::VERSION = '2.05_01';
+$CPAN::VERSION = '2.11_01';
 $CPAN::VERSION =~ s/_//;
 
 # we need to run chdir all over and we would get at wrong libraries
@@ -318,7 +318,6 @@ Enter 'h' for help.
 
 },
                                  $CPAN::VERSION,
-                                 $rl_avail
                                 )
     }
     my($continuation) = "";
@@ -919,6 +918,9 @@ sub getcwd {Cwd::getcwd();}
 #-> sub CPAN::fastcwd ;
 sub fastcwd {Cwd::fastcwd();}
 
+#-> sub CPAN::getdcwd ;
+sub getdcwd {Cwd::getdcwd();}
+
 #-> sub CPAN::backtickcwd ;
 sub backtickcwd {my $cwd = `cwd`; chomp $cwd; $cwd}
 
@@ -1020,6 +1022,18 @@ sub has_usable {
                             },
                            ],
 
+               'CPAN::Meta::Requirements' => [
+                            sub {
+                                require CPAN::Meta::Requirements;
+                                unless (CPAN::Version->vge(CPAN::Meta::Requirements->VERSION, 2.120920)) {
+                                    for ("Will not use CPAN::Meta::Requirements, need version 2.120920\n") {
+                                        $CPAN::Frontend->mywarn($_);
+                                        die $_;
+                                    }
+                                }
+                            },
+                           ],
+
                LWP => [ # we frequently had "Can't locate object
                         # method "new" via package "LWP::UserAgent" at
                         # (eval 69) line 2006
@@ -1103,6 +1117,20 @@ sub has_usable {
         }
     }
     return $HAS_USABLE->{$mod} = 1;
+}
+
+sub frontend {
+    shift;
+    $CPAN::Frontend = shift if @_;
+    $CPAN::Frontend;
+}
+
+sub use_inst {
+    my ($self, $module) = @_;
+
+    unless ($self->has_inst($module)) {
+        $self->frontend->mydie("$module not installed, cannot continue");
+    }
 }
 
 #-> sub CPAN::has_inst
@@ -1620,7 +1648,7 @@ in html or plain text format.
 =item C<ls> globbing_expression
 
 The first form lists all distribution files in and below an author's
-CPAN directory as stored in the CHECKUMS files distributed on
+CPAN directory as stored in the CHECKSUMS files distributed on
 CPAN. The listing recurses into subdirectories.
 
 The second form limits or expands the output with shell
@@ -1869,7 +1897,7 @@ separated):
 
 Modules know their associated Distribution objects. They always refer
 to the most recent official release. Developers may mark their releases
-as unstable development versions (by inserting an unserscore into the
+as unstable development versions (by inserting an underscore into the
 module version number which will also be reflected in the distribution
 name when you run 'make dist'), so the really hottest and newest
 distribution is not always the default.  If a module Foo circulates
@@ -1926,6 +1954,39 @@ The usual shell redirection symbols C< | > and C<< > >> are recognized
 by the cpan shell B<only when surrounded by whitespace>. So piping to
 pager or redirecting output into a file works somewhat as in a normal
 shell, with the stipulation that you must type extra spaces.
+
+=head2 Plugin support ***EXPERIMENTAL***
+
+Plugins are objects that implement any of currently eight methods:
+
+  pre_get
+  post_get
+  pre_make
+  post_make
+  pre_test
+  post_test
+  pre_install
+  post_install
+
+The C<plugin_list> configuration parameter holds a list of strings of
+the form
+
+  Modulename=arg0,arg1,arg2,arg3,...
+
+At run time, each listed plugin is instantiated as a singleton object
+by running the equivalent of this pseudo code:
+
+  my $plugin = <string representation from config>;
+  <generate Modulename and arguments from $plugin>;
+  my $p = $instance{$plugin} ||= Modulename->new($arg0,$arg1,...);
+
+The generated singletons are kept around from instantiation until the
+end of the shell session. <plugin_list> can be reconfigured at any
+time at run time. While the cpan shell is running, it checks all
+activated plugins at each of the 8 reference points listed above and
+runs the respective method if it is implemented for that object. The
+method is called with the active CPAN::Distribution object passed in
+as an argument.
 
 =head1 CONFIGURATION
 
@@ -2095,6 +2156,8 @@ currently defined:
   patch              path to external prg
   patches_dir        local directory containing patch files
   perl5lib_verbosity verbosity level for PERL5LIB additions
+  plugin_list        list of active hooks (see Plugin support above
+                     and the CPAN::Plugin module)
   prefer_external_tar
                      per default all untar operations are done with
                      Archive::Tar; by setting this variable to true
@@ -2206,6 +2269,10 @@ Calls Cwd::getcwd
 
 Calls Cwd::fastcwd
 
+=item getdcwd
+
+Calls Cwd::getdcwd
+
 =item backtickcwd
 
 Calls the external command cwd.
@@ -2276,8 +2343,7 @@ C<ask/no>, CPAN.pm asks the user and sets the default accordingly.
 
 =head2 Configuration for individual distributions (I<Distroprefs>)
 
-(B<Note:> This feature has been introduced in CPAN.pm 1.8854 and is
-still considered beta quality)
+(B<Note:> This feature has been introduced in CPAN.pm 1.8854)
 
 Distributions on CPAN usually behave according to what we call the
 CPAN mantra. Or since the advent of Module::Build we should talk about
@@ -3377,6 +3443,11 @@ loaded:
 
 See the source for details.
 
+=item use_inst($module)
+
+Similary to L<has_inst()> tries to load optional library but also dies if
+library is not available
+
 =item has_usable($module)
 
 Returns true if the module is installed and in a usable state. Only
@@ -3388,6 +3459,12 @@ source for details.
 The constructor for all the singletons used to represent modules,
 distributions, authors, and bundles. If the object already exists, this
 method returns the object; otherwise, it calls the constructor.
+
+=item frontend()
+
+=item frontend($new_frontend)
+
+Getter/setter for frontend object. Method just allows to subclass CPAN.pm.
 
 =back
 

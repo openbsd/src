@@ -13,9 +13,7 @@
 
 #define PERLIO_NOT_STDIO 0
 
-#if !defined(PERLIO_IS_STDIO)
 #define PerlIO FILE
-#endif
 
 #define wince_private
 #include "errno.h"
@@ -52,12 +50,6 @@
 #define EXECF_SPAWN_NOWAIT 3
 
 #if defined(PERL_IMPLICIT_SYS)
-#  undef win32_get_privlib
-#  define win32_get_privlib g_win32_get_privlib
-#  undef win32_get_sitelib
-#  define win32_get_sitelib g_win32_get_sitelib
-#  undef win32_get_vendorlib
-#  define win32_get_vendorlib g_win32_get_vendorlib
 #  undef do_spawn
 #  define do_spawn g_do_spawn
 #  undef getlogin
@@ -146,7 +138,7 @@ get_regstr_from(HKEY hkey, const char *valuename, SV **svp)
 	if (retval == ERROR_SUCCESS && type == REG_SZ) {
 	    dTHX;
 	    if (!*svp)
-		*svp = sv_2mortal(newSVpvn("",0));
+		*svp = sv_2mortal(newSVpvs(""));
 	    SvGROW(*svp, datalen);
 	    retval = XCERegQueryValueExA(handle, valuename, 0, NULL,
 				     (PBYTE)SvPVX(*svp), &datalen);
@@ -226,8 +218,8 @@ get_emd_part(SV **prev_pathp, STRLEN *const len, char *trailing_path, ...)
 	/* directory exists */
 	dTHX;
 	if (!*prev_pathp)
-	    *prev_pathp = sv_2mortal(newSVpvn("",0));
-	sv_catpvn(*prev_pathp, ";", 1);
+	    *prev_pathp = sv_2mortal(newSVpvs(""));
+	sv_catpvs(*prev_pathp, ";");
 	sv_catpv(*prev_pathp, mod_name);
 	if(len)
 	    *len = SvCUR(*prev_pathp);
@@ -238,7 +230,7 @@ get_emd_part(SV **prev_pathp, STRLEN *const len, char *trailing_path, ...)
 }
 
 char *
-win32_get_privlib(const char *pl, STRLEN *const len)
+win32_get_privlib(WIN32_NO_REGISTRY_M_(const char *pl) STRLEN *const len)
 {
     dTHX;
     char *stdlib = "lib";
@@ -286,7 +278,7 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname,
     if (!sv1) {
 	sv1 = sv2;
     } else if (sv2) {
-	sv_catpvn(sv1, ";", 1);
+	sv_catpvs(sv1, ";");
 	sv_catsv(sv1, sv2);
     }
 
@@ -1127,7 +1119,7 @@ do_raise(pTHX_ int sig)
 	    }
 	}
     }
-    /* Tell caller to exit thread/process as approriate */
+    /* Tell caller to exit thread/process as appropriate */
     return 1;
 }
 
@@ -2713,6 +2705,7 @@ Perl_win32_term(void)
     OP_REFCNT_TERM;
     PERLIO_TERM;
     MALLOC_TERM;
+    LOCALE_TERM;
 }
 
 void

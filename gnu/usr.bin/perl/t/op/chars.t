@@ -76,15 +76,13 @@ $c = "\c^";
 is (ord($c), 30, '\c^');
 $c = "\c_";
 is (ord($c), 31, '\c_');
-$c = "\c?";
 
 # '\c?' is an outlier, and is treated differently on each platform.
 # It's DEL on ASCII, and APC on EBCDIC
-is (ord($c), ((ord('^') == 95 || ord('^') == 175) # 1047 or 0037
-               ? 255
-               : ord('^') == 106    # Posix-BC
-                 ? 95
-                 : 127),
+$c = "\c?";
+is (ord($c), ($::IS_ASCII)
+             ? 127
+             : utf8::unicode_to_native(0x9F),
               '\c?');
 $c = '';
 is (ord($c), 0, 'ord("") is 0');

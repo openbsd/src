@@ -1,3 +1,7 @@
+/*
+ * ex: set ts=8 sts=4 sw=4 et:
+ */
+
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"
@@ -10,6 +14,10 @@
 #ifdef I_UNISTD
 #   include <unistd.h>
 #endif
+
+/* For special handling of os390 sysplexed systems */
+#define SYSNAME "$SYSNAME"
+#define SYSNAME_LEN (sizeof(SYSNAME) - 1)
 
 /* The realpath() implementation from OpenBSD 3.9 to 4.2 (realpath.c 1.13)
  * Renamed here to bsd_realpath() to avoid library conflicts.
@@ -68,144 +76,159 @@ char *
 bsd_realpath(const char *path, char resolved[MAXPATHLEN])
 {
 	char *p, *q, *s;
-	size_t left_len, resolved_len;
+	size_t remaining_len, resolved_len;
 	unsigned symlinks;
 	int serrno;
-	char left[MAXPATHLEN], next_token[MAXPATHLEN];
+	char remaining[MAXPATHLEN], next_token[MAXPATHLEN];
 
 	serrno = errno;
 	symlinks = 0;
 	if (path[0] == '/') {
-		resolved[0] = '/';
-		resolved[1] = '\0';
-		if (path[1] == '\0')
-			return (resolved);
-		resolved_len = 1;
-		left_len = my_strlcpy(left, path + 1, sizeof(left));
+            resolved[0] = '/';
+            resolved[1] = '\0';
+            if (path[1] == '\0')
+                    return (resolved);
+            resolved_len = 1;
+            remaining_len = my_strlcpy(remaining, path + 1, sizeof(remaining));
 	} else {
-		if (getcwd(resolved, MAXPATHLEN) == NULL) {
-			my_strlcpy(resolved, ".", MAXPATHLEN);
-		return (NULL);
+            if (getcwd(resolved, MAXPATHLEN) == NULL) {
+                my_strlcpy(resolved, ".", MAXPATHLEN);
+                return (NULL);
+            }
+            resolved_len = strlen(resolved);
+            remaining_len = my_strlcpy(remaining, path, sizeof(remaining));
 	}
-		resolved_len = strlen(resolved);
-		left_len = my_strlcpy(left, path, sizeof(left));
-	}
-	if (left_len >= sizeof(left) || resolved_len >= MAXPATHLEN) {
-		errno = ENAMETOOLONG;
-		return (NULL);
+	if (remaining_len >= sizeof(remaining) || resolved_len >= MAXPATHLEN) {
+            errno = ENAMETOOLONG;
+            return (NULL);
 	}
 
 	/*
-	 * Iterate over path components in 'left'.
+	 * Iterate over path components in 'remaining'.
 	 */
-	while (left_len != 0) {
-		/*
-		 * Extract the next path component and adjust 'left'
-		 * and its length.
-		 */
-		p = strchr(left, '/');
-		s = p ? p : left + left_len;
-		if ((STRLEN)(s - left) >= (STRLEN)sizeof(next_token)) {
-			errno = ENAMETOOLONG;
-			return (NULL);
-			}
-		memcpy(next_token, left, s - left);
-		next_token[s - left] = '\0';
-		left_len -= s - left;
-		if (p != NULL)
-			memmove(left, s + 1, left_len + 1);
-		if (resolved[resolved_len - 1] != '/') {
-			if (resolved_len + 1 >= MAXPATHLEN) {
-				errno = ENAMETOOLONG;
-				return (NULL);
-		}
-			resolved[resolved_len++] = '/';
-			resolved[resolved_len] = '\0';
-	}
-		if (next_token[0] == '\0')
-			continue;
-		else if (strcmp(next_token, ".") == 0)
-			continue;
-		else if (strcmp(next_token, "..") == 0) {
-			/*
-			 * Strip the last path component except when we have
-			 * single "/"
-			 */
-			if (resolved_len > 1) {
-				resolved[resolved_len - 1] = '\0';
-				q = strrchr(resolved, '/') + 1;
-				*q = '\0';
-				resolved_len = q - resolved;
-			}
-			continue;
-    }
+	while (remaining_len != 0) {
 
-	/*
-		 * Append the next path component and lstat() it. If
-		 * lstat() fails we still can return successfully if
-		 * there are no more path components left.
-	 */
-		resolved_len = my_strlcat(resolved, next_token, MAXPATHLEN);
-		if (resolved_len >= MAXPATHLEN) {
-			errno = ENAMETOOLONG;
-			return (NULL);
-		}
+            /*
+             * Extract the next path component and adjust 'remaining'
+             * and its length.
+             */
+
+            p = strchr(remaining, '/');
+            s = p ? p : remaining + remaining_len;
+            if ((STRLEN)(s - remaining) >= (STRLEN)sizeof(next_token)) {
+                errno = ENAMETOOLONG;
+                return (NULL);
+            }
+            memcpy(next_token, remaining, s - remaining);
+            next_token[s - remaining] = '\0';
+            remaining_len -= s - remaining;
+            if (p != NULL)
+                memmove(remaining, s + 1, remaining_len + 1);
+            if (resolved[resolved_len - 1] != '/') {
+                if (resolved_len + 1 >= MAXPATHLEN) {
+                    errno = ENAMETOOLONG;
+                    return (NULL);
+                }
+                resolved[resolved_len++] = '/';
+                resolved[resolved_len] = '\0';
+            }
+            if (next_token[0] == '\0')
+                continue;
+            else if (strcmp(next_token, ".") == 0)
+                continue;
+            else if (strcmp(next_token, "..") == 0) {
+                /*
+                 * Strip the last path component except when we have
+                 * single "/"
+                 */
+                if (resolved_len > 1) {
+                    resolved[resolved_len - 1] = '\0';
+                    q = strrchr(resolved, '/') + 1;
+                    *q = '\0';
+                    resolved_len = q - resolved;
+                }
+                continue;
+            }
+
+            /*
+             * Append the next path component and lstat() it. If
+             * lstat() fails we still can return successfully if
+             * there are no more path components left.
+             */
+            resolved_len = my_strlcat(resolved, next_token, MAXPATHLEN);
+            if (resolved_len >= MAXPATHLEN) {
+                errno = ENAMETOOLONG;
+                return (NULL);
+            }
 #if defined(HAS_LSTAT) && defined(HAS_READLINK) && defined(HAS_SYMLINK)
-		{
-			struct stat sb;
-			if (lstat(resolved, &sb) != 0) {
-				if (errno == ENOENT && p == NULL) {
-					errno = serrno;
-					return (resolved);
-				}
-				return (NULL);
-			}
-			if (S_ISLNK(sb.st_mode)) {
-				int slen;
-				char symlink[MAXPATHLEN];
-				
-				if (symlinks++ > MAXSYMLINKS) {
-					errno = ELOOP;
-					return (NULL);
-				}
-				slen = readlink(resolved, symlink, sizeof(symlink) - 1);
-				if (slen < 0)
-					return (NULL);
-				symlink[slen] = '\0';
-				if (symlink[0] == '/') {
-					resolved[1] = 0;
-					resolved_len = 1;
-				} else if (resolved_len > 1) {
-					/* Strip the last path component. */
-					resolved[resolved_len - 1] = '\0';
-					q = strrchr(resolved, '/') + 1;
-					*q = '\0';
-					resolved_len = q - resolved;
-				}
+            {
+                struct stat sb;
+                if (lstat(resolved, &sb) != 0) {
+                    if (errno == ENOENT && p == NULL) {
+                        errno = serrno;
+                        return (resolved);
+                    }
+                    return (NULL);
+                }
+                if (S_ISLNK(sb.st_mode)) {
+                    int slen;
+                    char symlink[MAXPATHLEN];
 
-	/*
-				 * If there are any path components left, then
-				 * append them to symlink. The result is placed
-				 * in 'left'.
-	 */
-				if (p != NULL) {
-					if (symlink[slen - 1] != '/') {
-						if ((STRLEN)(slen + 1) >= (STRLEN)sizeof(symlink)) {
-							errno = ENAMETOOLONG;
-							return (NULL);
-						}
-						symlink[slen] = '/';
-						symlink[slen + 1] = 0;
-					}
-					left_len = my_strlcat(symlink, left, sizeof(symlink));
-					if (left_len >= sizeof(left)) {
-						errno = ENAMETOOLONG;
-						return (NULL);
-					}
-				}
-				left_len = my_strlcpy(left, symlink, sizeof(left));
-			}
-		}
+                    if (symlinks++ > MAXSYMLINKS) {
+                        errno = ELOOP;
+                        return (NULL);
+                    }
+                    slen = readlink(resolved, symlink, sizeof(symlink) - 1);
+                    if (slen < 0)
+                        return (NULL);
+                    symlink[slen] = '\0';
+#  ifdef EBCDIC /* XXX Probably this should be only os390 */
+                    /* Replace all instances of $SYSNAME/foo simply by /foo */
+                    if (slen > SYSNAME_LEN + strlen(next_token)
+                        && strnEQ(symlink, SYSNAME, SYSNAME_LEN)
+                        && *(symlink + SYSNAME_LEN) == '/'
+                        && strEQ(symlink + SYSNAME_LEN + 1, next_token))
+                    {
+                        goto not_symlink;
+                    }
+#  endif
+                    if (symlink[0] == '/') {
+                        resolved[1] = 0;
+                        resolved_len = 1;
+                    } else if (resolved_len > 1) {
+                        /* Strip the last path component. */
+                        resolved[resolved_len - 1] = '\0';
+                        q = strrchr(resolved, '/') + 1;
+                        *q = '\0';
+                        resolved_len = q - resolved;
+                    }
+
+                    /*
+                     * If there are any path components left, then
+                     * append them to symlink. The result is placed
+                     * in 'remaining'.
+                     */
+                    if (p != NULL) {
+                        if (symlink[slen - 1] != '/') {
+                            if ((STRLEN)(slen + 1) >= (STRLEN)sizeof(symlink)) {
+                                errno = ENAMETOOLONG;
+                                return (NULL);
+                            }
+                            symlink[slen] = '/';
+                            symlink[slen + 1] = 0;
+                        }
+                        remaining_len = my_strlcat(symlink, remaining, sizeof(symlink));
+                        if (remaining_len >= sizeof(remaining)) {
+                            errno = ENAMETOOLONG;
+                            return (NULL);
+                        }
+                    }
+                    remaining_len = my_strlcpy(remaining, symlink, sizeof(remaining));
+                }
+#  ifdef EBCDIC
+              not_symlink: ;
+#  endif
+            }
 #endif
 	}
 
@@ -214,7 +237,7 @@ bsd_realpath(const char *path, char resolved[MAXPATHLEN])
 	 * is a single "/".
 	 */
 	if (resolved_len > 1 && resolved[resolved_len - 1] == '/')
-		resolved[resolved_len - 1] = '\0';
+            resolved[resolved_len - 1] = '\0';
 	return (resolved);
 }
 #endif

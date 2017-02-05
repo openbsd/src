@@ -234,7 +234,7 @@ use Storable ();
 	isa_ok( $thawed->[1], 'My::GoodAttach::MultipleReferences' );
 
 	is($thawed->[0], $thawed->[1], 'References to the same object are attached properly');
-	is($thawed->[1]{id}, $obj->{id}, 'Object with multiple references attchached properly');
+	is($thawed->[1]{id}, $obj->{id}, 'Object with multiple references attached properly');
 
     package My::GoodAttach::MultipleReferences;
 

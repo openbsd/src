@@ -26,9 +26,6 @@
 #endif
 
 START_EXTERN_C
-extern char *	g_win32_get_privlib(const char *pl, STRLEN *const len);
-extern char *	g_win32_get_sitelib(const char *pl, STRLEN *const len);
-extern char *	g_win32_get_vendorlib(const char *pl, STRLEN *const len);
 extern char *	g_getlogin(void);
 END_EXTERN_C
 
@@ -332,7 +329,7 @@ PerlMemIsLocked(struct IPerlMem* piPerl)
     return IPERL2HOST(piPerl)->IsLocked();
 }
 
-struct IPerlMem perlMem =
+const struct IPerlMem perlMem =
 {
     PerlMemMalloc,
     PerlMemRealloc,
@@ -386,7 +383,7 @@ PerlMemSharedIsLocked(struct IPerlMem* piPerl)
     return IPERL2HOST(piPerl)->IsLockedShared();
 }
 
-struct IPerlMem perlMemShared =
+const struct IPerlMem perlMemShared =
 {
     PerlMemSharedMalloc,
     PerlMemSharedRealloc,
@@ -440,7 +437,7 @@ PerlMemParseIsLocked(struct IPerlMem* piPerl)
     return IPERL2HOST(piPerl)->IsLockedParse();
 }
 
-struct IPerlMem perlMemParse =
+const struct IPerlMem perlMemParse =
 {
     PerlMemParseMalloc,
     PerlMemParseRealloc,
@@ -517,22 +514,22 @@ PerlEnvOsId(struct IPerlEnv* piPerl)
 }
 
 char*
-PerlEnvLibPath(struct IPerlEnv* piPerl, const char *pl, STRLEN *const len)
+PerlEnvLibPath(struct IPerlEnv* piPerl, WIN32_NO_REGISTRY_M_(const char *pl) STRLEN *const len)
 {
-    return g_win32_get_privlib(pl, len);
+    return win32_get_privlib(WIN32_NO_REGISTRY_M_(pl) len);
 }
 
 char*
 PerlEnvSiteLibPath(struct IPerlEnv* piPerl, const char *pl, STRLEN *const len)
 {
-    return g_win32_get_sitelib(pl, len);
+    return win32_get_sitelib(pl, len);
 }
 
 char*
 PerlEnvVendorLibPath(struct IPerlEnv* piPerl, const char *pl,
 		     STRLEN *const len)
 {
-    return g_win32_get_vendorlib(pl, len);
+    return win32_get_vendorlib(pl, len);
 }
 
 void
@@ -541,7 +538,7 @@ PerlEnvGetChildIO(struct IPerlEnv* piPerl, child_IO_table* ptr)
     win32_get_child_IO(ptr);
 }
 
-struct IPerlEnv perlEnv =
+const struct IPerlEnv perlEnv =
 {
     PerlEnvGetenv,
     PerlEnvPutenv,
@@ -869,7 +866,7 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 #endif
 }
 
-struct IPerlStdIO perlStdIO =
+const struct IPerlStdIO perlStdIO =
 {
     PerlStdIOStdin,
     PerlStdIOStdout,
@@ -1080,7 +1077,7 @@ PerlLIOWrite(struct IPerlLIO* piPerl, int handle, const void *buffer, unsigned i
     return win32_write(handle, buffer, count);
 }
 
-struct IPerlLIO perlLIO =
+const struct IPerlLIO perlLIO =
 {
     PerlLIOAccess,
     PerlLIOChmod,
@@ -1181,7 +1178,7 @@ PerlDirMapPathW(struct IPerlDir* piPerl, const WCHAR* path)
     return IPERL2HOST(piPerl)->MapPathW(path);
 }
 
-struct IPerlDir perlDir =
+const struct IPerlDir perlDir =
 {
     PerlDirMakedir,
     PerlDirChdir,
@@ -1467,7 +1464,7 @@ PerlSockIoctlsocket(struct IPerlSock* piPerl, SOCKET s, long cmd, u_long *argp)
     return win32_ioctlsocket(s, cmd, argp);
 }
 
-struct IPerlSock perlSock =
+const struct IPerlSock perlSock =
 {
     PerlSockHtonl,
     PerlSockHtons,
@@ -1759,8 +1756,10 @@ restart:
 		SvREFCNT_dec(PL_curstash);
 		PL_curstash = (HV *)SvREFCNT_inc(PL_defstash);
 	    }
-	    if (PL_endav && !PL_minus_c)
+	    if (PL_endav && !PL_minus_c) {
+		PERL_SET_PHASE(PERL_PHASE_END);
 		call_list(oldscope, PL_endav);
+	    }
 	    status = STATUS_EXIT;
 	    break;
 	case 3:
@@ -1899,7 +1898,7 @@ PerlProcLastHost(struct IPerlProc* piPerl)
  return h->LastHost();
 }
 
-struct IPerlProc perlProc =
+const struct IPerlProc perlProc =
 {
     PerlProcAbort,
     PerlProcCrypt,

@@ -3,7 +3,7 @@ package Module::CoreList::TieHashDelta;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '5.20150822_01';
+$VERSION = '5.20170114_24';
 
 sub TIEHASH {
     my ($class, $changed, $removed, $parent) = @_;
@@ -48,6 +48,9 @@ sub FIRSTKEY {
     my ($self) = @_;
 
     if (not $self->{keys_inflated}) {
+        # exceeds the warning limit of 100 calls since 5.23.2
+        no warnings 'recursion';
+
         # This inflates the whole set of hashes... Somewhat expensive, but saves
         # many tied hash calls later.
         my @parent_keys;

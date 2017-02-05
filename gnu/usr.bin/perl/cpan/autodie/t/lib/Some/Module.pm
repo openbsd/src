@@ -1,7 +1,7 @@
 package Some::Module;
 use strict;
 use warnings;
-use base qw(Exporter);
+use Exporter 5.57 'import';
 
 our @EXPORT_OK = qw(some_sub);
 

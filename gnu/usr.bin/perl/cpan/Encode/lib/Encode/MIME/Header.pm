@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = ( q$Revision: 2.15 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.19 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 use Encode qw(find_encoding encode_utf8 decode_utf8);
 use MIME::Base64;
 use Carp;
@@ -39,15 +39,14 @@ sub perlio_ok   { 0 }
 sub decode($$;$) {
     use utf8;
     my ( $obj, $str, $chk ) = @_;
-
     # zap spaces between encoded words
     $str =~ s/\?=\s+=\?/\?==\?/gos;
-
+    
     # multi-line header to single line
     $str =~ s/(?:\r\n|[\r\n])[ \t]//gos;
 
     1 while ( $str =~
-        s/(=\?[-0-9A-Za-z_]+\?[Qq]\?)(.*?)\?=\1(.*?\?=)/$1$2$3/ )
+              s/(=\?[-0-9A-Za-z_]+\?[Qq]\?)([^?]*?)\?=\1([^?]*?\?=)/$1$2$3/ )
       ;    # Concat consecutive QP encoded mime headers
            # Fixes breaking inside multi-byte characters
 
@@ -108,20 +107,20 @@ my $re_encoded_word = qr{
 
 my $re_especials = qr{$re_encoded_word|$especials}xo;
 
+# cf:
+#    https://rt.cpan.org/Ticket/Display.html?id=88717
+#    https://www.ietf.org/rfc/rfc0822.txt
+my $re_linear_white_space = qr{(?:[ \t]|\r\n?)};
+
 sub encode($$;$) {
     my ( $obj, $str, $chk ) = @_;
     my @line = ();
     for my $line ( split /\r\n|[\r\n]/o, $str ) {
         my ( @word, @subline );
-        for my $word ( split /($re_especials)/o, $line ) {
-            if (   $word =~ /[^\x00-\x7f]/o
-                or $word =~ /^$re_encoded_word$/o )
-            {
-                push @word, $obj->_encode($word);
-            }
-            else {
-                push @word, $word;
-            }
+        if ($line =~ /\A([\w\-]+:\s+)(.*)\z/o) {
+            push @word, $1, $obj->_encode($2); # "X-Header-Name: ..."
+        } else {
+            push @word, $obj->_encode($line);  # anything else
         }
         my $subline = '';
         for my $word (@word) {
@@ -136,10 +135,10 @@ sub encode($$;$) {
             $subline .= $word;
         }
         length($subline) and push @subline, $subline;
-        push @line, join( "\n " => @subline );
+        push @line, join( "\n " => grep !/^$/, @subline );
     }
     $_[1] = '' if $chk;
-    return join( "\n", @line );
+    return (substr($str, 0, 0) . join( "\n", @line ));
 }
 
 use constant HEAD   => '=?UTF-8?';

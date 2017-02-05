@@ -71,8 +71,8 @@ instead there is an intentionally simpler library, F<t/test.pl>. However,
 quite a few tests in F<t/> have not been refactored to use it. Refactoring
 any of these tests, one at a time, is a useful thing TODO.
 
-The subdirectories F<base>, F<cmd> and F<comp>, that contain the most
-basic tests, should be excluded from this task.
+The subdirectories F<base>, F<cmd>, F<comp> and F<opbasic>, that contain the
+most basic tests, should be excluded from this task.
 
 =head2 Automate perldelta generation
 
@@ -267,7 +267,7 @@ do a normal C<Configure>, but include Devel::Cover as a module to install
 
 =item *
 
-    cd t; HARNESS_PERL_SWITCHES=-MDevel::Cover ./perl -I../lib harness
+ cd t; HARNESS_PERL_SWITCHES=-MDevel::Cover ./perl -I../lib harness
 
 =item *
 
@@ -467,7 +467,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.20.3.
+options would be nice for perl 5.24.1.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -549,19 +549,12 @@ Maybe create a utility that checks after each libperl.a creation that
 none of the above (nor sprintf(), vsprintf(), or *SHUDDER* gets())
 ever creep back to libperl.a.
 
-  nm libperl.a | ./miniperl -alne '$o = $F[0] if /:$/;
-    print "$o $F[1]" if $F[0] eq "U" && $F[1] =~ /^(?:strn?c(?:at|py)|v?sprintf|gets)$/'
+ nm libperl.a | ./miniperl -alne '$o = $F[0] if /:$/;
+   print "$o $F[1]" if $F[0] eq "U" && $F[1]
+                              =~ /^(?:strn?c(?:at|py)|v?sprintf|gets)$/'
 
 Note, of course, that this will only tell whether B<your> platform
 is using those naughty interfaces.
-
-=head2 -D_FORTIFY_SOURCE=2
-
-Recent glibcs support C<-D_FORTIFY_SOURCE=2> which gives
-protection against various kinds of buffer overflow problems.
-It should probably be used for compiling Perl whenever available,
-Configure and/or hints files should be adjusted to probe for the
-availability of these feature and enable it as appropriate.
 
 =head2 Arenas for GPs? For MAGIC?
 
@@ -801,11 +794,11 @@ extended.
 
 Change 25773 notes
 
-    /* Need to check SvMAGICAL, as during global destruction it may be that
-       AvARYLEN(av) has been freed before av, and hence the SvANY() pointer
-       is now part of the linked list of SV heads, rather than pointing to
-       the original body.  */
-    /* FIXME - audit the code for other bugs like this one.  */
+ /* Need to check SvMAGICAL, as during global destruction it may be that
+    AvARYLEN(av) has been freed before av, and hence the SvANY() pointer
+    is now part of the linked list of SV heads, rather than pointing to
+    the original body.  */
+ /* FIXME - audit the code for other bugs like this one.  */
 
 adding the C<SvMAGICAL> check to
 
@@ -898,7 +891,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2008-09/msg00573.html>
 
 =head2 strict as warnings
 
-See L<http://markmail.org/message/vbrupaslr3bybmvk>, where Josua ben Jore
+See L<http://markmail.org/message/vbrupaslr3bybmvk>, where Joshua ben Jore
 writes:  I've been of the opinion that everything strict.pm does ought to be
 able to considered just warnings that have been promoted to 'FATAL'.
 
@@ -1113,8 +1106,8 @@ most common and the most confusing). Ideally this code
 
 would produce this output
 
-    Use of uninitialized value $undef in addition (+) at wrong.pl line 4.
-    Use of uninitialized value $undef in addition (+) at wrong.pl line 7.
+ Use of uninitialized value $undef in addition (+) at wrong.pl line 4.
+ Use of uninitialized value $undef in addition (+) at wrong.pl line 7.
 
 (rather than lines 4 and 5), but this would seem to require every OP to carry
 (at least) line number information.
@@ -1177,7 +1170,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.20.3"
+of 5.24.1"
 
 =head2 make ithreads more robust
 

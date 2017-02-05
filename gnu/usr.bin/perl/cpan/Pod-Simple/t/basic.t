@@ -7,7 +7,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 30 };
+BEGIN { plan tests => 31 };
 
 #use Pod::Simple::Debug (6);
 
@@ -87,6 +87,10 @@ ok( Pod::Simple::XMLOutStream->_out("=head1 Chacha\n\nFoo\n"),
     '<Document><head1>Chacha</head1><Para>Foo</Para></Document>'
 );
 
+# Make sure an obviously invalid Pod tag is invalid.
+ok( Pod::Simple::XMLOutStream->_out("=F\0blah\n\nwhatever\n"),
+    qq{<Document\ncontentless="1"></Document>}
+);
 
 print "# Wrapping up... one for the road...\n";
 ok 1;

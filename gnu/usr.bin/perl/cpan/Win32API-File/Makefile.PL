@@ -63,7 +63,7 @@ sub MY::postamble
     return   unless  %attribs;
 
     # Don't require these here if we just C<return> above:
-    eval "use ExtUtils::Myconst2perl qw(ParseAttribs); 1"   or  die "$@";
+    eval "use lib 'inc'; use ExtUtils::Myconst2perl qw(ParseAttribs); 1"   or  die "$@";
     eval "use ExtUtils::MakeMaker qw(neatvalue); 1"   or  die "$@";
 
     # If only one module, can skip one level of indirection:

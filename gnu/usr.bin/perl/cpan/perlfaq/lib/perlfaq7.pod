@@ -2,6 +2,10 @@
 
 perlfaq7 - General Perl Language Issues
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section deals with general Perl language issues that don't
@@ -201,7 +205,7 @@ transfer the module to you.
 
 If you can not reach the author for some reason contact
 the PAUSE admins at modules@perl.org who may be able to help,
-but each case it treated separately.
+but each case is treated separately.
 
 =over 4
 

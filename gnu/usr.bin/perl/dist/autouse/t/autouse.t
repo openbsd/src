@@ -8,22 +8,26 @@ BEGIN {
     }
 }
 
-use Test::More tests => 15;
-
+my ($ok1, $ok2);
 BEGIN {
     require autouse;
     eval {
         "autouse"->import('Scalar::Util' => 'Scalar::Util::set_prototype(&$)');
     };
-    ok( !$@, "Function from package with custom 'import()' correctly imported" );
+    $ok1 = !$@;
 
     eval {
         "autouse"->import('Scalar::Util' => 'Foo::min');
     };
-    ok( $@, qr/^autouse into different package attempted/ );
+    $ok2 = $@;
 
     "autouse"->import('Scalar::Util' => qw(isdual set_prototype(&$)));
 }
+
+use Test::More tests => 15;
+
+ok( $ok1, "Function from package with custom 'import()' correctly imported" );
+like( $ok2, qr/^autouse into different package attempted/, "Catch autouse into different package" );
 
 ok( isdual($!),
     "Function imported via 'autouse' performs as expected");
@@ -92,8 +96,7 @@ SKIP: {
        'no redefinition warning when clobbering autouse stub via *a=\&b';
 }
 SKIP: {
-    skip "Fails from 5.10 to 5.15.5 (perl bug)", 1
-	if $] < 5.0150051 and $] > 5.0099;
+    skip "Fails in 5.15.5 and below (perl bug)", 1 if $] < 5.0150051;
     use Config;
     skip "no B", 1 unless $Config{extensions} =~ /\bB\b/;
     use warnings; local $^W = 1; no warnings 'once';

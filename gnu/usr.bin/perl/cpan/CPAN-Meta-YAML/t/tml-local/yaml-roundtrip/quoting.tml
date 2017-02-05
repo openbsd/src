@@ -131,4 +131,9 @@ slash3: '\\foo\\\\'
 [ "A\\B \\C" ]
 
 
-
+=== Single Dash
+--- yaml
+---
+foo: '-'
+--- perl
+[ { foo => '-' } ]

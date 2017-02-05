@@ -15,20 +15,20 @@ X<subroutine, declaration> X<sub>
 
     sub NAME BLOCK		  # A declaration and a definition.
     sub NAME(PROTO) BLOCK	  #  ditto, but with prototypes
-    sub NAME SIG BLOCK            #  with signature
+    sub NAME(SIG) BLOCK           #  with a signature instead
     sub NAME : ATTRS BLOCK	  #  with attributes
     sub NAME(PROTO) : ATTRS BLOCK #  with prototypes and attributes
-    sub NAME : ATTRS SIG BLOCK    #  with attributes and signature
+    sub NAME(SIG) : ATTRS BLOCK   #  with a signature and attributes
 
 To define an anonymous subroutine at runtime:
 X<subroutine, anonymous>
 
     $subref = sub BLOCK;		 # no proto
     $subref = sub (PROTO) BLOCK;	 # with proto
-    $subref = sub SIG BLOCK;             # with signature
+    $subref = sub (SIG) BLOCK;           # with signature
     $subref = sub : ATTRS BLOCK;	 # with attributes
     $subref = sub (PROTO) : ATTRS BLOCK; # with proto and attributes
-    $subref = sub : ATTRS SIG BLOCK;     # with attribs and signature
+    $subref = sub (SIG) : ATTRS BLOCK;   # with signature and attributes
 
 To import subroutines:
 X<import>
@@ -239,7 +239,7 @@ your subroutine's name.
       return($x * __SUB__->( $x - 1 ) );
     };
 
-The behaviour of C<__SUB__> within a regex code block (such as C</(?{...})/>)
+The behavior of C<__SUB__> within a regex code block (such as C</(?{...})/>)
 is subject to change.
 
 Subroutines whose names are in all upper case are reserved to the Perl
@@ -258,11 +258,11 @@ C<AUTOLOAD>
 
 =item documented in L<perlmod>
 
-C<CLONE>, C<CLONE_SKIP>, 
+C<CLONE>, C<CLONE_SKIP>
 
 =item documented in L<perlobj>
 
-C<DESTROY>
+C<DESTROY>, C<DOES>
 
 =item documented in L<perltie>
 
@@ -318,8 +318,9 @@ disabled.
 
 The signature is part of a subroutine's body.  Normally the body of a
 subroutine is simply a braced block of code.  When using a signature,
-the signature is a parenthesised list that goes immediately before
-the braced block.  The signature declares lexical variables that are
+the signature is a parenthesised list that goes immediately after
+the subroutine name (or, for anonymous subroutines, immediately after
+the C<sub> keyword).  The signature declares lexical variables that are
 in scope for the block.  When the subroutine is called, the signature
 takes control first.  It populates the signature variables from the
 list of arguments that were passed.  If the argument list doesn't meet
@@ -489,13 +490,12 @@ a signature.  They do different jobs: the prototype affects compilation
 of calls to the subroutine, and the signature puts argument values into
 lexical variables at runtime.  You can therefore write
 
-    sub foo :prototype($$) ($left, $right) {
+    sub foo ($left, $right) : prototype($$) {
 	return $left + $right;
     }
 
-The prototype attribute, and any other attributes, must come before
-the signature.  The signature always immediately precedes the block of
-the subroutine's body.
+The prototype attribute, and any other attributes, come after 
+the signature.
 
 =head2 Private Variables via my()
 X<my> X<variable, lexical> X<lexical> X<lexical variable> X<scope, lexical>
@@ -514,9 +514,10 @@ evolving.  The current semantics and interface are subject to change.
 See L<attributes> and L<Attribute::Handlers>.
 
 The C<my> operator declares the listed variables to be lexically
-confined to the enclosing block, conditional (C<if/unless/elsif/else>),
-loop (C<for/foreach/while/until/continue>), subroutine, C<eval>,
-or C<do/require/use>'d file.  If more than one value is listed, the
+confined to the enclosing block, conditional
+(C<if>/C<unless>/C<elsif>/C<else>), loop
+(C<for>/C<foreach>/C<while>/C<until>/C<continue>), subroutine, C<eval>,
+or C<do>/C<require>/C<use>'d file.  If more than one value is listed, the
 list must be placed in parentheses.  All listed elements must be
 legal lvalues.  Only alphanumeric identifiers may be lexically
 scoped--magical built-ins like C<$/> must currently be C<local>ized
@@ -897,7 +898,7 @@ to safely reuse $_ in a subroutine.
 B<WARNING>: Localization of tied arrays and hashes does not currently
 work as described.
 This will be fixed in a future release of Perl; in the meantime, avoid
-code that relies on any particular behaviour of localising tied arrays
+code that relies on any particular behavior of localising tied arrays
 or hashes (localising individual elements is still okay).
 See L<perl58delta/"Localising Tied Arrays and Hashes Is Broken"> for more
 details.
@@ -1090,9 +1091,6 @@ any previous C<my sub;> or C<state sub;> declaration.
     sub baz {		# define the "my" sub
 	baz();		# recursive call
     }
-
-It is a known bug that lexical subroutines cannot be used as the C<SUBNAME>
-argument to C<sort>.  This will be fixed in a future version of Perl.
 
 =head3 C<state sub> vs C<my sub>
 
@@ -1293,7 +1291,7 @@ of all their former last elements:
 
     sub popmany {
 	my $aref;
-	my @retlist = ();
+	my @retlist;
 	foreach $aref ( @_ ) {
 	    push @retlist, pop @$aref;
 	}
@@ -1398,8 +1396,8 @@ using function prototyping.  This can be declared in either the PROTO
 section or with a L<prototype attribute|attributes/Built-in Attributes>.
 If you declare either of
 
-    sub mypush (+@)
-    sub mypush :prototype(+@)
+    sub mypush (\@@)
+    sub mypush :prototype(\@@)
 
 then C<mypush()> takes arguments exactly like C<push()> does.
 
@@ -1436,9 +1434,9 @@ corresponding built-in.
    sub mysyswrite ($$$;$)  mysyswrite $buf, 0, length($buf) - $off, $off
    sub myreverse (@)	   myreverse $a, $b, $c
    sub myjoin ($@)	   myjoin ":", $a, $b, $c
-   sub mypop (+)	   mypop @array
-   sub mysplice (+$$@)	   mysplice @array, 0, 2, @pushme
-   sub mykeys (+)	   mykeys %{$hashref}
+   sub mypop (\@)	   mypop @array
+   sub mysplice (\@$$@)	   mysplice @array, 0, 2, @pushme
+   sub mykeys (\[%@])	   mykeys %{$hashref}
    sub myopen (*;$)	   myopen HANDLE, $name
    sub mypipe (**)	   mypipe READHANDLE, WRITEHANDLE
    sub mygrep (&@)	   mygrep { /foo/ } $a, $b, $c
@@ -1642,11 +1640,12 @@ The following functions would all be inlined:
     sub N () { int(OPT_BAZ) / 3 }
 
     sub FOO_SET () { 1 if FLAG_MASK & FLAG_FOO }
+    sub FOO_SET2 () { if (FLAG_MASK & FLAG_FOO) { 1 } }
 
-Be aware that these will not be inlined; as they contain inner scopes,
-the constant folding doesn't reduce them to a single constant:
-
-    sub foo_set () { if (FLAG_MASK & FLAG_FOO) { 1 } }
+(Be aware that the last example was not always inlined in Perl 5.20 and
+earlier, which did not behave consistently with subroutines containing
+inner scopes.)  You can countermand inlining by using an explicit
+C<return>:
 
     sub baz_val () {
 	if (OPT_BAZ) {
@@ -1656,6 +1655,7 @@ the constant folding doesn't reduce them to a single constant:
 	    return 42;
 	}
     }
+    sub bonk_val () { return 12345 }
 
 As alluded to earlier you can also declare inlined subs dynamically at
 BEGIN time if their body consists of a lexically-scoped scalar which
@@ -1685,6 +1685,39 @@ normal lexical variable, e.g. this will print C<79907>, not C<79908>:
     }
     print RT_79908(); # prints 79907
 
+As of Perl 5.22, this buggy behavior, while preserved for backward
+compatibility, is detected and emits a deprecation warning.  If you want
+the subroutine to be inlined (with no warning), make sure the variable is
+not used in a context where it could be modified aside from where it is
+declared.
+
+    # Fine, no warning
+    BEGIN {
+        my $x = 54321;
+        *INLINED = sub () { $x };
+    }
+    # Warns.  Future Perl versions will stop inlining it.
+    BEGIN {
+        my $x;
+        $x = 54321;
+        *ALSO_INLINED = sub () { $x };
+    }
+
+Perl 5.22 also introduces the experimental "const" attribute as an
+alternative.  (Disable the "experimental::const_attr" warnings if you want
+to use it.)  When applied to an anonymous subroutine, it forces the sub to
+be called when the C<sub> expression is evaluated.  The return value is
+captured and turned into a constant subroutine:
+
+    my $x = 54321;
+    *INLINED = sub : const { $x };
+    $x++;
+
+The return value of C<INLINED> in this example will always be 54321,
+regardless of later modifications to $x.  You can also put any arbitrary
+code inside the sub, at it will be executed immediately and its return
+value captured the same way.
+
 If you really want a subroutine with a C<()> prototype that returns a
 lexical variable you can easily force it to not be inlined by adding
 an explicit C<return>:
@@ -1697,7 +1730,7 @@ an explicit C<return>:
     print RT_79908(); # prints 79908
 
 The easiest way to tell if a subroutine was inlined is by using
-L<B::Deparse>, consider this example of two subroutines returning
+L<B::Deparse>.  Consider this example of two subroutines returning
 C<1>, one with a C<()> prototype causing it to be inlined, and one
 without (with deparse output truncated for clarity):
 
@@ -1730,7 +1763,8 @@ of the function will still be using the old value of the function.  If
 you need to be able to redefine the subroutine, you need to ensure
 that it isn't inlined, either by dropping the C<()> prototype (which
 changes calling semantics, so beware) or by thwarting the inlining
-mechanism in some other way, e.g. by adding an explicit C<return>:
+mechanism in some other way, e.g. by adding an explicit C<return>, as
+mentioned above:
 
     sub not_inlined () { return 23 }
 

@@ -28,12 +28,13 @@ information.
 Here are the statistics for Perl 5.005_62 on my system:
 
  Failed Test  Status Wstat Total Fail  Failed  List of failed
- -------------------------------------------------------------------------
+ -----------------------------------------------------------------------
  lib/anydbm.t                 12    1   8.33%  12
  pragma/warnings             333    1   0.30%  215
 
  8 tests and 24 subtests skipped.
- Failed 2/229 test scripts, 99.13% okay. 2/10850 subtests failed, 99.98% okay.
+ Failed 2/229 test scripts, 99.13% okay. 2/10850 subtests failed,
+     99.98% okay.
 
 There are quite a few systems out there that do worse!
 

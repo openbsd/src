@@ -56,7 +56,7 @@ typedef struct yy_parser {
     U8		lex_defer;	/* state after determined token */
     U8		lex_dojoin;	/* doing an array interpolation
 				   1 = @{...}  2 = ->@ */
-    U8		lex_expect;	/* expect after determined token */
+    U8		lex_expect;	/* UNUSED */
     U8		expect;		/* how to interpret ambiguous tokens */
     I32		lex_formbrack;	/* bracket count at outer format level */
     OP		*lex_inpat;	/* in pattern $) and $| are special */
@@ -98,28 +98,9 @@ typedef struct yy_parser {
     AV		*rsfp_filters;	/* holds chain of active source filters */
     U8		form_lex_state;	/* remember lex_state when parsing fmt */
 
-#ifdef PERL_MAD
-    SV		*endwhite;
-    I32		faketokens;
-    I32		lasttoke;
-    SV		*nextwhite;
-    I32		realtokenstart;
-    SV		*skipwhite;
-    SV		*thisclose;
-    MADPROP *	thismad;
-    SV		*thisopen;
-    SV		*thisstuff;
-    SV		*thistoken;
-    SV		*thiswhite;
-
-/* What we know when we're in LEX_KNOWNEXT state. */
-    NEXTTOKE	nexttoke[5];	/* value of next token, if any */
-    I32		curforce;
-#else
     YYSTYPE	nextval[5];	/* value of next token, if any */
     I32		nexttype[5];	/* type of next token */
-    I32		nexttoke;
-#endif
+    U32		nexttoke;
 
     COP		*saved_curcop;	/* the previous PL_curcop */
     char	tokenbuf[256];
@@ -130,6 +111,7 @@ typedef struct yy_parser {
     PERL_BITFIELD16	in_pod:1;      /* lexer is within a =pod section */
     PERL_BITFIELD16	filtered:1;    /* source filters in evalbytes */
     PERL_BITFIELD16	saw_infix_sigil:1; /* saw & or * or % operator */
+    PERL_BITFIELD16	parsed_sub:1;  /* last thing parsed was a sub */
 } yy_parser;
 
 /* flags for lexer API */
@@ -167,11 +149,5 @@ enum {
 };
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

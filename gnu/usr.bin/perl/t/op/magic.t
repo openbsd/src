@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan (tests => 187);
+    plan (tests => 192);
 }
 
 # Test that defined() returns true for magic variables created on the fly,
@@ -26,7 +26,7 @@ BEGIN {
 	# avoid using any global vars here:
 	if ($v =~ s/^\^(?=.)//) {
 	    for(substr $v, 0, 1) {
-		$_ = chr ord() - 64;
+		$_ = chr(utf8::native_to_unicode(ord($_)) - 64);
 	    }
 	}
 	SKIP:
@@ -429,8 +429,9 @@ EOP
     chomp(my $argv0 = $maybe_ps->("ps h $$"));
     chomp(my $prctl = $maybe_ps->("ps hc $$"));
 
-    like($argv0, $name, "Set process name through argv[0] ($argv0)");
-    like($prctl, substr($name, 0, 15), "Set process name through prctl() ($prctl)");
+    like($argv0, qr/$name/, "Set process name through argv[0] ($argv0)");
+    my $name_substr = substr($name, 0, 15);
+    like($prctl, qr/$name_substr/, "Set process name through prctl() ($prctl)");
   }
 }
 
@@ -674,11 +675,40 @@ is ${^MPEN}, undef, '${^MPEN} starts undefined';
 # This one used to croak due to that missing break:
 is ++${^MPEN}, 1, '${^MPEN} can be incremented';
 
+eval { ${^E_NCODING} = 1 };
+like $@, qr/^Modification of a /, 'Setting ${^E_NCODING} croaks';
+$_ = ${^E_NCODING};
+pass('can read ${^E_NCODING} without blowing up');
+is $_, undef, '${^E_NCODING} is undef';
+
+{
+    my $warned = 0;
+    local $SIG{__WARN__} = sub { ++$warned if $_[0] =~ /Use of uninitialized value in unshift/; print "# @_"; };
+    unshift @RT12608::A::ISA, qw(RT12608::B RT12608::C);
+    is $warned, 0, '[perl #126082] unshifting onto @ISA doesn\'t trigger set magic for each item';
+}
+
+{
+    my $warned = 0;
+    local $SIG{__WARN__} = sub { ++$warned if $_[0] =~ /Use of uninitialized value in unshift/; print "# @_"; };
+
+    my $x; tie $x, 'RT12608::F';
+    unshift @RT12608::X::ISA, $x, "RT12608::Z";
+    is $warned, 0, '[perl #126082] PL_delaymagic correctly/saved restored when pushing/unshifting onto @ISA';
+
+    package RT12608::F;
+    use parent 'Tie::Scalar';
+    sub TIESCALAR { bless {}; }
+    sub FETCH { push @RT12608::G::ISA, "RT12608::H"; "RT12608::Y"; }
+}
+
 # ^^^^^^^^^ New tests go here ^^^^^^^^^
 
 SKIP: {
-    skip("%ENV manipulations fail or aren't safe on $^O", 19)
+    skip("%ENV manipulations fail or aren't safe on $^O", 20)
 	if $Is_Dos;
+    skip "Win32 needs XS for env/shell tests", 20
+        if $Is_MSWin32 && is_miniperl;
 
  SKIP: {
 	skip("clearing \%ENV is not safe when running under valgrind or on VMS")

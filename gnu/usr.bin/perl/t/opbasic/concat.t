@@ -22,7 +22,7 @@ sub ok {
     return $ok;
 }
 
-print "1..30\n";
+print "1..31\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -163,3 +163,9 @@ sub beq { use bytes; $_[0] eq $_[1]; }
     $x .= "-append-";
     ok($x eq "ab-append-", "Appending to something initialized using constant folding");
 }
+
+# [perl #124160]
+package o { use overload "." => sub { $_[0] }, fallback => 1 }
+$o = bless [], "o";
+ok(ref(CORE::state $y = "a $o b") eq 'o',
+  'state $y = "foo $bar baz" does not stringify; only concats');

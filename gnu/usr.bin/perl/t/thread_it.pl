@@ -31,10 +31,12 @@ note('running tests in a new thread');
 # recurses heavily, and busts the default stack size (65536 on PA-RISC)
 # On Mac OS X under gcc and g++, the default stack size is also too small.
 # Ditto on VMS, although threshold varies by platform and -Dusevmsdebug.
+# Same on AIX
 my $curr = threads->create({
                             stack_size => $^O eq 'hpux'   ? 524288 :
                                           $^O eq 'darwin' ? 1000000:
-                                          $^O eq 'VMS'    ? 150000 : 0,
+                                          $^O eq 'VMS'    ? 150000 :
+                                          $^O eq 'aix'    ? 1000000 : 0,
                            }, sub {
 			       run_tests();
 			       return defined &curr_test ? curr_test() : ()

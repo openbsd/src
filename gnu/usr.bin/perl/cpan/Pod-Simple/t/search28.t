@@ -27,9 +27,7 @@ print "# CWD: $cwd\n";
 sub source_path {
     my $file = shift;
     if ($ENV{PERL_CORE}) {
-        my $updir = File::Spec->updir;
-        my $dir = File::Spec->catdir($updir, 'lib', 'Pod', 'Simple', 't');
-        return File::Spec->catdir ($dir, $file);
+        return "../lib/Pod/Simple/t/$file";
     } else {
         return $file;
     }
@@ -72,8 +70,19 @@ $p =~ s/, +/,\n/g;
 $p =~ s/^/#  /mg;
 print $p;
 
+my $ascii_order;
+if(     -e ($ascii_order = source_path('ascii_order.pl'))) {
+  #
+} elsif(-e ($ascii_order = File::Spec->catfile($cwd, 't', 'ascii_order.pl'))) {
+  #
+} else {
+  die "Can't find ascii_order.pl";
+}
+
+require $ascii_order;
+
 {
-my $names = join "|", sort values %$where2name;
+my $names = join "|", sort ascii_order values %$where2name;
 ok $names, "Zonk::Pronk|perlzuk|zikzik";
 }
 

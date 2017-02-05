@@ -22,7 +22,9 @@
 #undef MAGIC
 #endif
 
+#define PERL_EXT
 #include "EXTERN.h"
+#define PERL_IN_DL_HPUX_XS
 #include "perl.h"
 #include "XSUB.h"
 
@@ -93,7 +95,7 @@ dl_load_file(filename, flags=0)
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s): ", filename));
     obj = shl_load(filename, bind_type, 0L);
 
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", obj));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%p\n", (void*)obj));
 end:
     ST(0) = sv_newmortal() ;
     if (obj == NULL)
@@ -107,7 +109,7 @@ dl_unload_file(libref)
     void *	libref
   CODE:
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_unload_file(%lx):\n", PTR2ul(libref)));
-    RETVAL = (shl_unload(libref) == 0 ? 1 : 0);
+    RETVAL = (shl_unload((shl_t)libref) == 0 ? 1 : 0);
     if (!RETVAL)
 	SaveError(aTHX_ "%s", Strerror(errno));
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " retval = %d\n", RETVAL));
@@ -116,9 +118,10 @@ dl_unload_file(libref)
 
 
 void
-dl_find_symbol(libhandle, symbolname)
+dl_find_symbol(libhandle, symbolname, ign_err=0)
     void *	libhandle
     char *	symbolname
+    int   	ign_err
     PREINIT:
     shl_t obj = (shl_t) libhandle;
     void *symaddr = NULL;
@@ -135,15 +138,15 @@ dl_find_symbol(libhandle, symbolname)
     errno = 0;
 
     status = shl_findsym(&obj, symbolname, TYPE_PROCEDURE, &symaddr);
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref(PROCEDURE) = %x\n", symaddr));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref(PROCEDURE) = %p\n", (void*)symaddr));
 
     if (status == -1 && errno == 0) {	/* try TYPE_DATA instead */
 	status = shl_findsym(&obj, symbolname, TYPE_DATA, &symaddr);
-	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref(DATA) = %x\n", symaddr));
+	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "  symbolref(DATA) = %p\n", (void*)symaddr));
     }
 
     if (status == -1) {
-	SaveError(aTHX_ "%s",(errno) ? Strerror(errno) : "Symbol not found") ;
+	if (!ign_err) SaveError(aTHX_ "%s",(errno) ? Strerror(errno) : "Symbol not found") ;
     } else {
 	sv_setiv( ST(0), PTR2IV(symaddr) );
     }
@@ -163,18 +166,18 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *	symref 
     const char *	filename
     CODE:
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%x)\n",
-	    perl_name, symref));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%p)\n",
+                            perl_name, (void*)symref));
     ST(0) = sv_2mortal(newRV((SV*)newXS_flags(perl_name,
 					      (void(*)(pTHX_ CV *))symref,
 					      filename, NULL,
 					      XS_DYNAMIC_FILENAME)));
 
-char *
+SV *
 dl_error()
     CODE:
     dMY_CXT;
-    RETVAL = dl_last_error ;
+    RETVAL = newSVsv(MY_CXT.x_dl_last_error);
     OUTPUT:
     RETVAL
 
@@ -191,7 +194,7 @@ CLONE(...)
      * using Perl variables that belong to another thread, we create our 
      * own for this thread.
      */
-    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    MY_CXT.x_dl_last_error = newSVpvs("");
     dl_resolve_using = get_av("DynaLoader::dl_resolve_using", GV_ADDMULTI);
 
 #endif

@@ -1,13 +1,13 @@
 package ExtUtils::CBuilder;
-
+$ExtUtils::CBuilder::VERSION = '0.280225';
 use File::Spec ();
 use File::Path ();
 use File::Basename ();
 use Perl::OSType qw/os_type/;
 
-use vars qw($VERSION @ISA);
-$VERSION = '0.280217';
-$VERSION = eval $VERSION;
+use warnings;
+use strict;
+use vars qw(@ISA);
 
 # We only use this once - don't waste a symbol table entry on it.
 # More importantly, don't make it an inheritable method.
@@ -20,17 +20,18 @@ my $load = sub {
 
 {
   my @package = split /::/, __PACKAGE__;
-  
+
   my $ostype = os_type();
 
   if (grep {-e File::Spec->catfile($_, @package, 'Platform', $^O) . '.pm'} @INC) {
-    $load->(__PACKAGE__ . "::Platform::$^O");
-    
-  } elsif ( $ostype && grep {-e File::Spec->catfile($_, @package, 'Platform', $ostype) . '.pm'} @INC) {
-    $load->(__PACKAGE__ . "::Platform::$ostype");
-    
+      $load->(__PACKAGE__ . "::Platform::$^O");
+
+  } elsif ( $ostype &&
+            grep {-e File::Spec->catfile($_, @package, 'Platform', $ostype) . '.pm'} @INC) {
+      $load->(__PACKAGE__ . "::Platform::$ostype");
+
   } else {
-    $load->(__PACKAGE__ . "::Base");
+      $load->(__PACKAGE__ . "::Base");
   }
 }
 

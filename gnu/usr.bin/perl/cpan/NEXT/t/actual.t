@@ -33,5 +33,5 @@ my $foo = {};
 bless($foo,"A");
 
 eval{ $foo->test }
-	? fail("Didn't die on missing ancestor") 
+	? fail("Didn't die on missing ancestor")
 	: pass("Correctly dies after full traversal");

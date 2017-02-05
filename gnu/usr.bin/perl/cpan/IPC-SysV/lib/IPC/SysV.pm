@@ -18,7 +18,7 @@ use Config;
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = '2.04';
+$VERSION = '2.06_01';
 
 # To support new constants, just add them to @EXPORT_OK
 # and the C/XS code will be generated automagically.
@@ -129,7 +129,7 @@ but your system might have more.
 =item ftok( PATH, ID )
 
 Return a key based on PATH and ID, which can be used as a key for
-C<msgget>, C<semget> and C<shmget>. See L<ftok>.
+C<msgget>, C<semget> and C<shmget>. See L<ftok(3)>.
 
 If ID is omitted, it defaults to C<1>. If a single character is
 given for ID, the numeric value of that character is used.
@@ -137,14 +137,14 @@ given for ID, the numeric value of that character is used.
 =item shmat( ID, ADDR, FLAG )
 
 Attach the shared memory segment identified by ID to the address
-space of the calling process. See L<shmat>.
+space of the calling process. See L<shmat(2)>.
 
 ADDR should be C<undef> unless you really know what you're doing.
 
 =item shmdt( ADDR )
 
 Detach the shared memory segment located at the address specified
-by ADDR from the address space of the calling process. See L<shmdt>.
+by ADDR from the address space of the calling process. See L<shmdt(2)>.
 
 =item memread( ADDR, VAR, POS, SIZE )
 
@@ -163,7 +163,7 @@ successful, or false if there is an error.
 
 =head1 SEE ALSO
 
-L<IPC::Msg>, L<IPC::Semaphore>, L<IPC::SharedMem>, L<ftok>, L<shmat>, L<shmdt>
+L<IPC::Msg>, L<IPC::Semaphore>, L<IPC::SharedMem>, L<ftok(3)>, L<shmat(2)>, L<shmdt(2)>
 
 =head1 AUTHORS
 

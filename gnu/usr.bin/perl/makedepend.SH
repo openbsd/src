@@ -141,34 +141,46 @@ for file in `$cat .clist`; do
     #          && defined(BAR) /* comment */ \
     #          && defined(BAZ) /* comment */ \
     #               etc.
-    # This code processes these latter situations first; it assumes there is
-    # at most one straightforward comment per continued preprocessor line.  (It
-    # would be easier to handle more general cases if sed had a non-greedy '*'
-    # quantifier; but typically preprocessor directive lines are rather
-    # simple.)  The continuation line is joined, and the process repeated on
-    # the enlarged line as long as there are continuations.  At the end, if
-    # there are any comments remaining, they should be like the first situation,
-    # and can just be deleted.  (Subsequent lines of the comment are irrelevant
-    # and get dropped.)
-    ( $echo "#line 2 \"$file\""; \
-      $sed -n <$file \
-	-e "/^${filebase}_init(/q" \
-        -e ': testcont'               \
-	-e '/^[	 ]*#/s|/\*.*\*/||'    \
-        -e '/\\$/{'                   \
-            -e 'N'                    \
-            -e 'b testcont'           \
-        -e '}'                        \
-        -e 's/\\\n/ /g'               \
-	-e '/^#line/d' \
-	-e '/^[	 ]*#/{' \
-	-e 's|/\*.*$||' \
-	-e p \
+    # Also, in lines like
+    #      #defined FOO(a,b)    a/**/b
+    # the comment may be important and so needs to be retained.
+    # This code processes the single-line comments first; it assumes there is
+    # at most one straightforward comment per continued preprocessor line,
+    # replacing each non-empty comment (and its surrounding white space) by a
+    # single space.  (sed only has a greedy '*' quantifier, so this doesn't
+    # work right if there are multiple comments per line, and strings can look
+    # like comments to it; both are unlikely in a preprocessor statement.) Any
+    # continuation line is joined, and the process repeated on the enlarged
+    # line as long as there are continuations.  At the end, if there are any
+    # comments remaining, they are either completely empty or are like the
+    # first situation.  The latter are just deleted by first deleting to the
+    # end of line (including preceding white space) things that start with '/*'
+    # and the next char isn't a '*'; then things that start with '/**', but the
+    # next char isn't a '/'.  (Subsequent lines of the comment are irrelevant
+    # and get dropped.)  At the end, we unjoin very long lines to avoid
+    # preprocessor limitations
+    ( $echo "#line 2 \"$file\"";                               \
+      $sed -n <$file                                           \
+	-e "/^${filebase}_init(/q"                             \
+        -e ': tstcont'                                         \
+	-e '/^[ 	]*#/s|[ 	]*/\*..*\*/[ 	]*| |' \
+        -e '/\\$/{'                                            \
+            -e 'N'                                             \
+            -e 'b tstcont'                                     \
+        -e '}'                                                 \
+	-e 's/\\\n//g'                                         \
+	-e '/^#line/d'                                         \
+	-e '/^[ 	]*#/{'                                 \
+	    -e 's|[ 	]*/\*[^*].*$||'                        \
+	    -e 's|[ 	]*/\*\*[^/].*$||'                      \
+            -e 's/.\{255\}/&\\\n/g'                           \
+	    -e p                                               \
 	-e '}' ) >UU/$file.c
 
-    if [ "$osname" = os390 -a "$file" = perly.c ]; then
-        $echo '#endif' >>UU/$file.c
-    fi
+    # We're not sure why this was there; the #endif is extraneous on modern z/OS
+    #if [ "$osname" = os390 -a "$file" = perly.c ]; then
+    #   $echo '#endif' >>UU/$file.c
+    #fi
 
     if [ "$osname" = os390 ]; then
         $cppstdin $finc -I. $cppflags $cppminus <UU/$file.c |

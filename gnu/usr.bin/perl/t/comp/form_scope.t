@@ -136,8 +136,8 @@ write;
 sub _13 {
     my $x;
 format STDOUT13 =
-@* - formats closing over redefined subs
-ref \$x eq 'SCALAR' ? "ok 13" : "not ok 13";
+@* - formats closing over redefined subs (got @*)
+ref \$x eq 'SCALAR' ? "ok 13" : "not ok 13", ref \$x;
 .
 }
 undef &_13;

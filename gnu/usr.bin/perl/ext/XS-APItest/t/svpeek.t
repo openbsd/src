@@ -27,8 +27,9 @@ if ($^O eq 'VMS') {
 }
   is (DPeek ($|),    'PVMG(1)',			'$|');
 
-  "abc" =~ m/(b)/;	# Don't know why these magic vars have this content
-like (DPeek ($1), qr'^PVMG\("',			' $1');
+  "abc" =~ m/b/;	# Don't know why these magic vars have this content
+  () = $1 || '';
+  is (DPeek ($1),    'PVMG()',			' $1');
   is (DPeek ($`),    'PVMG()',			' $`');
   is (DPeek ($&),    'PVMG()',			' $&');
   is (DPeek ($'),    'PVMG()',			" \$'");
@@ -65,12 +66,15 @@ if ($^O eq 'vos') {
   $VAR = "";
   is (DPeek ($VAR),	'PVIV(""\0)',		' $VAR ""');
   is (DPeek (\$VAR),	'\PVIV(""\0)',		'\$VAR ""');
-  $VAR = "\xa8";
-  is (DPeek ($VAR),	'PVIV("\250"\0)',	' $VAR "\xa8"');
-  is (DPeek (\$VAR),	'\PVIV("\250"\0)',	'\$VAR "\xa8"');
-  $VAR = "a\x0a\x{20ac}";
-  is (DPeek ($VAR), 'PVIV("a\n\342\202\254"\0) [UTF8 "a\n\x{20ac}"]',
+  $VAR = "\xdf";    # \xdf works for both ASCII and EBCDIC
+  is (DPeek ($VAR),	'PVIV("\337"\0)',	' $VAR "\xdf"');
+  is (DPeek (\$VAR),	'\PVIV("\337"\0)',	'\$VAR "\xdf"');
+  SKIP: {
+    skip("ASCII-centric tests", 1) if ord "A" == 193;
+    $VAR = "a\x0a\x{20ac}";
+    is (DPeek ($VAR), 'PVIV("a\n\342\202\254"\0) [UTF8 "a\n\x{20ac}"]',
 					' $VAR "a\x0a\x{20ac}"');
+  }
   $VAR = sub { "VAR" };
   is (DPeek ($VAR),	'\CV(__ANON__)',	' $VAR sub { "VAR" }');
   is (DPeek (\$VAR),	'\\\CV(__ANON__)',	'\$VAR sub { "VAR" }');

@@ -1,7 +1,7 @@
 package Locale::Codes::Constants;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2014 Sullivan Beck
+# Copyright (c) 2010-2015 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -17,7 +17,7 @@ require Exporter;
 our($VERSION,@ISA,@EXPORT);
 our(%ALL_CODESETS);
 
-$VERSION='3.30';
+$VERSION='3.37';
 @ISA     = qw(Exporter);
 @EXPORT  = qw(LOCALE_CODE_ALPHA_2
               LOCALE_CODE_ALPHA_3

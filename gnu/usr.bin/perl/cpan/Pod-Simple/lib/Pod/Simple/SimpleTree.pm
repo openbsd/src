@@ -1,12 +1,11 @@
 
-
 require 5;
 package Pod::Simple::SimpleTree;
 use strict;
 use Carp ();
 use Pod::Simple ();
 use vars qw( $ATTR_PAD @ISA $VERSION $SORT_ATTRS);
-$VERSION = '3.28';
+$VERSION = '3.32';
 BEGIN {
   @ISA = ('Pod::Simple');
   *DEBUG = \&Pod::Simple::DEBUG unless defined &DEBUG;
@@ -19,31 +18,31 @@ __PACKAGE__->_accessorize(
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub _handle_element_start { # self, tagname, attrhash
-  DEBUG > 2 and print "Handling $_[1] start-event\n";
+  DEBUG > 2 and print STDERR "Handling $_[1] start-event\n";
   my $x = [$_[1], $_[2]];
   if($_[0]{'_currpos'}) {
     push    @{ $_[0]{'_currpos'}[0] }, $x; # insert in parent's child-list
     unshift @{ $_[0]{'_currpos'} },    $x; # prefix to stack
   } else {
-    DEBUG and print " And oo, it gets to be root!\n";
+    DEBUG and print STDERR " And oo, it gets to be root!\n";
     $_[0]{'_currpos'} = [   $_[0]{'root'} = $x   ];
       # first event!  set to stack, and set as root.
   }
-  DEBUG > 3 and print "Stack is now: ",
+  DEBUG > 3 and print STDERR "Stack is now: ",
     join(">", map $_->[0], @{$_[0]{'_currpos'}}), "\n";
   return;
 }
 
 sub _handle_element_end { # self, tagname
-  DEBUG > 2 and print "Handling $_[1] end-event\n";
+  DEBUG > 2 and print STDERR "Handling $_[1] end-event\n";
   shift @{$_[0]{'_currpos'}};
-  DEBUG > 3 and print "Stack is now: ",
+  DEBUG > 3 and print STDERR "Stack is now: ",
     join(">", map $_->[0], @{$_[0]{'_currpos'}}), "\n";
   return;
 }
 
 sub _handle_text { # self, text
-  DEBUG > 2 and print "Handling $_[1] text-event\n";
+  DEBUG > 2 and print STDERR "Handling $_[1] text-event\n";
   push @{ $_[0]{'_currpos'}[0] }, $_[1];
   return;
 }
@@ -51,7 +50,7 @@ sub _handle_text { # self, text
 
 # A bit of evil from the black box...  please avert your eyes, kind souls.
 sub _traverse_treelet_bit {
-  DEBUG > 2 and print "Handling $_[1] paragraph event\n";
+  DEBUG > 2 and print STDERR "Handling $_[1] paragraph event\n";
   my $self = shift;
   push @{ $self->{'_currpos'}[0] }, [@_];
   return;
@@ -121,7 +120,7 @@ the form: C<[ I<elementname>, \%attributes, I<...subnodes...> ]>.
 See the example tree dump in the Synopsis, above.
 
 Every text node in the tree is represented by a simple (non-ref)
-string scalar.  So you can test C<ref($node)> to see whather you have
+string scalar.  So you can test C<ref($node)> to see whether you have
 an element node or just a text node.
 
 The top node in the tree is C<[ 'Document', \%attributes,
@@ -143,8 +142,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

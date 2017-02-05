@@ -213,6 +213,30 @@ case "$usemorebits" in
     $define|true|[yY]*) use64bitint="$define"; uselongdouble="$define" ;;
     esac
 
+# There is a weird pre-C99 long double (a struct of four uin32_t)
+# in HP-UX 10.20 but beyond strtold() there's no support for them
+# for example in <math.h>.
+case "$uselongdouble" in
+    $define|true|[yY]*)
+	if [ "$xxOsRevMajor" -lt 11 ]; then
+	    cat <<EOM >&4
+
+*** uselongdouble (or usemorebits) is not supported on HP-UX $xxOsRevMajor.
+*** You need at least HP-UX 11.0.
+*** Cannot continue, aborting.
+EOM
+	    exit 1
+	fi
+	;;
+    esac
+
+# Configure long double scan will detect the HP-UX 10.20 "long double"
+# (a struct of four uin32_t) and think it is IEEE quad.  Make it not so.
+if [ "$xxOsRevMajor" -lt 11 ]; then
+    d_longdbl="$undef"
+    longdblsize=8 # Make it double.
+fi
+
 case "$archname" in
     IA64*)
 	# While here, override so=sl auto-detection
@@ -377,6 +401,8 @@ EOM
 regexec_cflags=''
 doop_cflags=''
 op_cflags=''
+opmini_cflags=''
+perlmain_cflags=''
     fi
 
 case "$ccisgcc" in
@@ -427,6 +453,21 @@ case "$ccisgcc" in
 		    ;;
 	    esac
 	case "$archname" in
+	    PA-RISC2.0)
+		case "$ccversion" in
+		    B.11.11.*)
+			# opmini.c and op.c with +O2 makes the compiler die
+			# of internal error, for perlmain.c only +O0 (no opt)
+                        # works.
+			case "$optimize" in
+			*O2*)	opt=`echo "$optimize" | sed -e 's/O2/O1/'`
+				opmini_cflags="optimize=\"$opt\""
+				op_cflags="optimize=\"$opt\""
+				perlmain_cflags="optimize=\"\""
+				;;
+			esac
+		    esac
+		;;
 	    IA64*)
 		case "$ccversion" in
 		    B3910B*A.06.0[12345])
@@ -557,6 +598,14 @@ EOCBU
 cat >UU/uselargefiles.cbu <<'EOCBU'
 # This script UU/uselargefiles.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use large files.
+
+case "$archname:$use64bitall:$use64bitint" in
+    *-LP64*:undef:define)
+	archname=`echo "$archname" | sed 's/-LP64/-64int/'`
+	echo "Archname changed to $archname"
+	;;
+    esac
+
 case "$uselargefiles" in
     ""|$define|true|[yY]*)
 	# there are largefile flags available via getconf(1)
@@ -744,3 +793,22 @@ case "$d_oldpthreads" in
 	d_strerror_r_proto='undef'
 	;;
     esac
+
+# H.Merijn says it's not 1998 anymore: ODBM is not needed,
+# and it seems to be buggy in HP-UX anyway.
+i_dbm=undef
+
+# In HP-UXes prior to 11.23 strtold() returned a HP-UX
+# specific union called long_double, not a C99 long double.
+case "`grep 'double strtold.const' /usr/include/stdlib.h`" in
+*"long double strtold"*) ;; # strtold should be safe.
+*) echo "Looks like your strtold() is non-standard..." >&4
+   d_strtold=undef ;;
+esac
+
+# In pre-11 HP-UXes there really isn't isfinite(), despite what
+# Configure might think. (There is finite(), though.)
+case "`grep 'isfinite' /usr/include/math.h`" in
+*"isfinite"*) ;;
+*) d_isfinite=undef ;;
+esac

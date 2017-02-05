@@ -7,13 +7,13 @@ BEGIN {
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
+    require 'test.pl';
 }
 
 use warnings;
 use strict;
-use Test::More;
 
-my $tests = 20; # not counting those in the __DATA__ section
+my $tests = 46; # not counting those in the __DATA__ section
 
 use B::Deparse;
 my $deparse = B::Deparse->new();
@@ -45,8 +45,7 @@ while (<DATA>) {
     die "Missing name in test $_" unless defined $desc;
 
     if ($meta{skip}) {
-	# Like this to avoid needing a label SKIP:
-	Test::More->builder->skip($meta{skip});
+	SKIP: { skip($meta{skip}) };
 	next;
     }
 
@@ -64,7 +63,7 @@ while (<DATA>) {
 	    new B::Deparse split /,/, $meta{options}
 	: $deparse;
 
-    my $coderef = eval "$meta{context};\n" . <<'EOC' . "sub {$input}";
+    my $coderef = eval "$meta{context};\n" . <<'EOC' . "sub {$input\n}";
 # Tell B::Deparse about our ambient pragmas
 my ($hint_bits, $warning_bits, $hinthash);
 BEGIN {
@@ -77,6 +76,7 @@ $deparse->ambient_pragmas (
 );
 EOC
 
+    local $::TODO = $meta{todo};
     if ($@) {
 	is($@, "", "compilation of $desc");
     }
@@ -87,9 +87,21 @@ EOC
 	$regex =~ s/\s+/\\s+/g;
 	$regex = '^\{\s*' . $regex . '\s*\}$';
 
-	local $::TODO = $meta{todo};
         like($deparsed, qr/$regex/, $desc);
     }
+}
+
+# Reset the ambient pragmas
+{
+    my ($b, $w, $h);
+    BEGIN {
+        ($b, $w, $h) = ($^H, ${^WARNING_BITS}, \%^H);
+    }
+    $deparse->ambient_pragmas (
+        hint_bits    => $b,
+        warning_bits => $w,
+        '%^H'        => $h,
+    );
 }
 
 use constant 'c', 'stuff';
@@ -112,19 +124,18 @@ $a = `$^X $path "-MO=Deparse" -anlwi.bak -e 1 2>&1`;
 $a =~ s/-e syntax OK\n//g;
 $a =~ s/.*possible typo.*\n//;	   # Remove warning line
 $a =~ s/.*-i used with no filenames.*\n//;	# Remove warning line
-$a =~ s{\\340\\242}{\\s} if (ord("\\") == 224); # EBCDIC, cp 1047 or 037
-$a =~ s{\\274\\242}{\\s} if (ord("\\") == 188); # $^O eq 'posix-bc'
-$b = <<'EOF';
+$b = quotemeta <<'EOF';
 BEGIN { $^I = ".bak"; }
 BEGIN { $^W = 1; }
 BEGIN { $/ = "\n"; $\ = "\n"; }
-LINE: while (defined($_ = <ARGV>)) {
+LINE: while (defined($_ = readline ARGV)) {
     chomp $_;
     our(@F) = split(' ', $_, 0);
     '???';
 }
 EOF
-is($a, $b,
+$b =~ s/our\\\(\\\@F\\\)/our[( ]\@F\\)?/; # accept both our @F and our(@F)
+like($a, qr/$b/,
    'command line flags deparse as BEGIN blocks setting control variables');
 
 $a = `$^X $path "-MO=Deparse" -e "use constant PI => 4" 2>&1`;
@@ -229,13 +240,13 @@ like($a, qr/-e syntax OK/,
 
 # [perl #93990]
 @] = ();
-is($deparse->coderef2text(sub{ print "@{]}" }),
+is($deparse->coderef2text(sub{ print "foo@{]}" }),
 q<{
-    print "@{]}";
+    print "foo@{]}";
 }>, 'curly around to interpolate "@{]}"');
-is($deparse->coderef2text(sub{ print "@{-}" }),
+is($deparse->coderef2text(sub{ print "foo@{-}" }),
 q<{
-    print "@-";
+    print "foo@-";
 }>, 'no need to curly around to interpolate "@-"');
 
 # Strict hints in %^H are mercilessly suppressed
@@ -270,6 +281,41 @@ x(); z()
 .
 EOCODH
 
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path, '-T' ],
+           prog => "format =\n\@\n\$;\n.\n"),
+   <<'EOCODM', '$; on format line';
+format STDOUT =
+@
+$;
+.
+EOCODM
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse,-l', $path ],
+           prog => "format =\n\@\n\$foo\n.\n"),
+   <<'EOCODM', 'formats with -l';
+format STDOUT =
+@
+$foo
+.
+EOCODM
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+           prog => "{ my \$x; format =\n\@\n\$x\n.\n}"),
+   <<'EOCODN', 'formats nested inside blocks';
+{
+    my $x;
+    format STDOUT =
+@
+$x
+.
+}
+EOCODN
+
+# CORE::format
+$a = readpipe qq`$^X $path "-MO=Deparse" -e "use feature q|:all|;`
+             .qq` my sub format; CORE::format =" -e. 2>&1`;
+like($a, qr/CORE::format/, 'CORE::format when lex format sub is in scope');
+
 # literal big chars under 'use utf8'
 is($deparse->coderef2text(sub{ use utf8; /€/; }),
 '{
@@ -277,6 +323,204 @@ is($deparse->coderef2text(sub{ use utf8; /€/; }),
 }',
 "qr/euro/");
 
+# STDERR when deparsing sub calls
+# For a short while the output included 'While deparsing'
+$a = `$^X $path "-MO=Deparse" -e "foo()" 2>&1`;
+$a =~ s/-e syntax OK\n//g;
+is($a, <<'EOCODI', 'no extra output when deparsing foo()');
+foo();
+EOCODI
+
+# Sub calls compiled before importation
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'BEGIN {
+                       require Test::More;
+                       Test::More::->import;
+                       is(*foo, *foo)
+                     }'),
+     qr/&is\(/,
+    'sub calls compiled before importation of prototype subs';
+
+# [perl #121050] Prototypes with whitespace
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+           prog => <<'EOCODO'),
+sub _121050(\$ \$) { }
+_121050($a,$b);
+sub _121050empty( ) {}
+() = _121050empty() + 1;
+EOCODO
+   <<'EOCODP', '[perl #121050] prototypes with whitespace';
+sub _121050 (\$ \$) {
+    
+}
+_121050 $a, $b;
+sub _121050empty ( ) {
+    
+}
+() = _121050empty + 1;
+EOCODP
+
+# CORE::no
+$a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
+             .qq`"use feature q|:all|; my sub no; CORE::no less" 2>&1`;
+like($a, qr/my sub no;\nCORE::no less;/,
+    'CORE::no after my sub no');
+
+# CORE::use
+$a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
+             .qq`"use feature q|:all|; my sub use; CORE::use less" 2>&1`;
+like($a, qr/my sub use;\nCORE::use less;/,
+    'CORE::use after my sub use');
+
+# CORE::__DATA__
+$a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
+             .qq`"use feature q|:all|; my sub __DATA__; `
+             .qq`CORE::__DATA__" 2>&1`;
+like($a, qr/my sub __DATA__;\n.*\nCORE::__DATA__/s,
+    'CORE::__DATA__ after my sub __DATA__');
+
+# sub declarations
+$a = readpipe qq`$^X $path "-MO=Deparse" -e "sub foo{}" 2>&1`;
+like($a, qr/sub foo\s*\{\s+\}/, 'sub declarations');
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+           prog => 'sub f($); sub f($){}'),
+     qr/sub f\s*\(\$\)\s*\{\s*\}/,
+    'predeclared prototyped subs';
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+           prog => 'use Scalar::Util q-weaken-;
+                    sub f($);
+                    BEGIN { weaken($_=\$::{f}) }'),
+     qr/sub f\s*\(\$\)\s*;/,
+    'prototyped stub with weak reference to the stash entry';
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+           prog => 'sub f () { 42 }'),
+     qr/sub f\s*\(\)\s*\{\s*42;\s*\}/,
+    'constant perl sub declaration';
+
+# BEGIN blocks
+SKIP : {
+    skip "BEGIN output is wrong on old perls", 1 if $] < 5.021006;
+    my $prog = '
+      BEGIN { pop }
+      {
+        BEGIN { pop }
+        {
+          no overloading;
+          {
+            BEGIN { pop }
+            die
+          }
+        }
+      }';
+    $prog =~ s/\n//g;
+    $a = readpipe qq`$^X $path "-MO=Deparse" -e "$prog" 2>&1`;
+    $a =~ s/-e syntax OK\n//g;
+    is($a, <<'EOCODJ', 'BEGIN blocks');
+sub BEGIN {
+    pop @ARGV;
+}
+{
+    sub BEGIN {
+        pop @ARGV;
+    }
+    {
+        no overloading;
+        {
+            sub BEGIN {
+                pop @ARGV;
+            }
+            die;
+        }
+    }
+}
+EOCODJ
+}
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ], prog => '
+      {
+        {
+          die;
+          BEGIN { pop }
+        }
+        BEGIN { pop }
+      }
+      BEGIN { pop }
+  '), <<'EOCODL', 'BEGIN blocks at the end of their enclosing blocks';
+{
+    {
+        die;
+        sub BEGIN {
+            pop @ARGV;
+        }
+    }
+    sub BEGIN {
+        pop @ARGV;
+    }
+}
+sub BEGIN {
+    pop @ARGV;
+}
+EOCODL
+
+# BEGIN blocks should not be called __ANON__
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'sub BEGIN { } CHECK { delete $::{BEGIN} }'),
+     qr/sub BEGIN/, 'anonymised BEGIN';
+
+# [perl #115066]
+my $prog = 'use constant FOO => do { 1 }; no overloading; die';
+$a = readpipe qq`$^X $path "-MO=-qq,Deparse" -e "$prog" 2>&1`;
+is($a, <<'EOCODK', '[perl #115066] use statements accidentally nested');
+use constant ('FOO', do {
+    1
+});
+no overloading;
+die;
+EOCODK
+
+# BEGIN blocks inside predeclared subs
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => '
+                 sub run_tests;
+                 run_tests();
+                 sub run_tests { BEGIN { } die }'),
+     qr/sub run_tests \{\s*sub BEGIN/,
+    'BEGIN block inside predeclared sub';
+
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'package foo; use overload qr=>sub{}'),
+     qr/package foo;\s*use overload/,
+    'package, then use';
+
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'use feature lexical_subs=>; my sub f;sub main::f{}'),
+     qr/^sub main::f \{/m,
+    'sub decl when lex sub is in scope';
+
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'sub foo{foo()}'),
+     qr/^sub foo \{\s+foo\(\)/m,
+    'recursive sub';
+
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'use feature lexical_subs=>state=>;
+                      state sub sb5; sub { sub sb5 { } }'),
+     qr/sub \{\s*\(\);\s*sub sb5 \{/m,
+    'state sub in anon sub but declared outside';
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+             prog => 'BEGIN { $::{f}=\!0 }'),
+   "sub BEGIN {\n    \$main::{'f'} = \\1;\n}\n",
+   '&PL_sv_yes constant (used to croak)';
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path, '-T' ],
+           prog => '$x =~ (1?/$a/:0)'),
+  '$x =~ ($_ =~ /$a/);'."\n",
+  '$foo =~ <branch-folded match> under taint mode';
+
+unlike runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path, '-w' ],
+               prog => 'BEGIN { undef &foo }'),
+       qr'Use of uninitialized value',
+      'no warnings for undefined sub';
 
 done_testing($tests);
 
@@ -292,11 +536,19 @@ tr/\x{345}/\x{370}/;
 1;
 ####
 # Constants in a block
+# CONTEXT no warnings;
 {
-    no warnings;
     '???';
     2;
 }
+####
+# List of constants in void context
+# CONTEXT no warnings;
+(1,2,3);
+0;
+>>>>
+'???', '???', '???';
+0;
 ####
 # Lexical and simple arithmetic
 my $test;
@@ -307,6 +559,9 @@ $test /= 2 if ++$test;
 ####
 # list x
 -((1, 2) x 2);
+####
+# Assignment to list x
+((undef) x 3) = undef;
 ####
 # lvalue sub
 {
@@ -324,6 +579,10 @@ $test /= 2 if ++$test;
     ;
 }
 ####
+# anonsub attrs at statement start
+my $x = do { +sub : lvalue { my $y; } };
+my $z = do { foo: +sub : method { my $a; } };
+####
 # block with continue
 {
     234;
@@ -339,17 +598,69 @@ print $main::x;
 # lexical and package arrays
 my @x;
 print $main::x[1];
+print \my @a;
 ####
 # lexical and package hashes
 my %x;
 $x{warn()};
 ####
+# our (LIST)
+our($foo, $bar, $baz);
+####
+# CONTEXT { package Dog } use feature "state";
+# variables with declared classes
+my Dog $spot;
+our Dog $spotty;
+state Dog $spotted;
+my Dog @spot;
+our Dog @spotty;
+state Dog @spotted;
+my Dog %spot;
+our Dog %spotty;
+state Dog %spotted;
+my Dog ($foo, @bar, %baz);
+our Dog ($phoo, @barr, %bazz);
+state Dog ($fough, @barre, %bazze);
+####
+# local our
+local our $rhubarb;
+local our($rhu, $barb);
+####
 # <>
 my $foo;
-$_ .= <ARGV> . <$foo>;
+$_ .= <> . <ARGV> . <$foo>;
+<$foo>;
+<${foo}>;
+<$ foo>;
+>>>>
+my $foo;
+$_ .= readline(ARGV) . readline(ARGV) . readline($foo);
+readline $foo;
+glob $foo;
+glob $foo;
+####
+# readline
+readline 'FH';
+readline *$_;
+readline *{$_};
+readline ${"a"};
+>>>>
+readline 'FH';
+readline *$_;
+readline *{$_;};
+readline ${'a';};
+####
+# <<>>
+$_ = <<>>;
 ####
 # \x{}
 my $foo = "Ab\x{100}\200\x{200}\237Cd\000Ef\x{1000}\cA\x{2000}\cZ";
+my $bar = "\x{100}";
+####
+# Latin-1 chars
+# TODO ? ord("A") != 65 && "EBCDIC"
+my $baz = "B\366\x{100}";
+my $bba = qr/B\366\x{100}/;
 ####
 # s///e
 s/x/'y';/e;
@@ -384,6 +695,18 @@ for (my $i = 0; $i < 2; ++$i) {
     my $z = 1;
 }
 ####
+# 3-argument for with inverted condition
+for (my $i; not $i;) {
+    die;
+}
+for (my $i; not $i; ++$i) {
+    die;
+}
+for (my $a; not +($1 || 2) ** 2;) {
+    die;
+}
+Something_to_put_the_loop_in_void_context();
+####
 # while/continue
 my $i;
 while ($i) { my $z = 1; } continue { $i = 99; }
@@ -411,11 +734,6 @@ foreach my $i (1, 2) {
     my $z = 1;
 }
 ####
-# foreach
-foreach my $i (1, 2) {
-    my $z = 1;
-}
-####
 # foreach with our
 foreach our $i (1, 2) {
     my $z = 1;
@@ -425,6 +743,17 @@ foreach our $i (1, 2) {
 my $i;
 foreach our $i (1, 2) {
     my $z = 1;
+}
+####
+# foreach with state
+# CONTEXT use feature "state";
+foreach state $i (1, 2) {
+    state $z = 1;
+}
+####
+# foreach with sub call
+foreach $_ (hcaerof()) {
+    ();
 }
 ####
 # reverse sort
@@ -450,6 +779,12 @@ print $_ foreach (reverse 1, 2..5);
 # bug #38684
 our @ary;
 @ary = split(' ', 'foo', 0);
+####
+# Split to our array
+our @array = split(//, 'foo', 0);
+####
+# Split to my array
+my @array  = split(//, 'foo', 0);
 ####
 # bug #40055
 do { () }; 
@@ -503,6 +838,14 @@ our @bar;
 (foo { @bar } 1), foo();
 foo { @bar } 1 xor foo();
 ####
+# indirops with blocks
+# CONTEXT use 5.01;
+print {*STDOUT;} 'foo';
+printf {*STDOUT;} 'foo';
+say {*STDOUT;} 'foo';
+system {'foo';} '-foo';
+exec {'foo';} '-foo';
+####
 # SKIP ?$] < 5.010 && "say not implemented on this Perl version"
 # CONTEXT use feature ':5.10';
 # say
@@ -518,7 +861,7 @@ say 'foo';
 use 5.10.0;
 say 'foo';
 >>>>
-no feature;
+no feature ':all';
 use feature ':5.10';
 say 'foo';
 ####
@@ -536,7 +879,7 @@ say 'foo';
 use 5.10.0;
 say 'foo';
 >>>>
-no feature;
+no feature ':all';
 use feature ':5.10';
 say 'foo';
 ####
@@ -563,7 +906,7 @@ __SUB__;
 use 5.15.0;
 __SUB__;
 >>>>
-no feature;
+no feature ':all';
 use feature ':5.16';
 __SUB__;
 ####
@@ -581,7 +924,7 @@ __SUB__;
 use 5.15.0;
 __SUB__;
 >>>>
-no feature;
+no feature ':all';
 use feature ':5.16';
 __SUB__;
 ####
@@ -922,6 +1265,24 @@ print /$s[1]/;
 # /$#a/
 print /$#main::a/;
 ####
+# /@array/
+our @a;
+my @b;
+print /@a/;
+print /@b/;
+print qr/@a/;
+print qr/@b/;
+####
+# =~ QR_CONSTANT
+use constant QR_CONSTANT => qr/a/soupmix;
+'' =~ QR_CONSTANT;
+>>>>
+'' =~ /a/impsux;
+####
+# $lexical =~ //
+my $x;
+$x =~ //;
+####
 # [perl #91318] /regexp/applaud
 print /a/a, s/b/c/a;
 print /a/aa, s/b/c/aa;
@@ -956,26 +1317,130 @@ print /a/u, s/b/c/u;
     print /a/d, s/b/c/d;
 }
 {
-    no feature;
+    no feature ':all';
     use feature ':5.12';
     print /a/d, s/b/c/d;
 }
 ####
+# all the flags (qr//)
+$_ = qr/X/m;
+$_ = qr/X/s;
+$_ = qr/X/i;
+$_ = qr/X/x;
+$_ = qr/X/p;
+$_ = qr/X/o;
+$_ = qr/X/u;
+$_ = qr/X/a;
+$_ = qr/X/l;
+$_ = qr/X/n;
+####
+use feature 'unicode_strings';
+$_ = qr/X/d;
+####
+# all the flags (m//)
+/X/m;
+/X/s;
+/X/i;
+/X/x;
+/X/p;
+/X/o;
+/X/u;
+/X/a;
+/X/l;
+/X/n;
+/X/g;
+/X/cg;
+####
+use feature 'unicode_strings';
+/X/d;
+####
+# all the flags (s///)
+s/X//m;
+s/X//s;
+s/X//i;
+s/X//x;
+s/X//p;
+s/X//o;
+s/X//u;
+s/X//a;
+s/X//l;
+s/X//n;
+s/X//g;
+s/X/'';/e;
+s/X//r;
+####
+use feature 'unicode_strings';
+s/X//d;
+####
+# all the flags (tr///)
+tr/X/Y/c;
+tr/X//d;
+tr/X//s;
+tr/X//r;
+####
 # [perl #119807] s//\(3)/ge should not warn when deparsed (\3 warns)
 s/foo/\(3);/eg;
 ####
-# Test @threadsv_names under 5005threads
-foreach $' (1, 2) {
-    sleep $';
-}
+# [perl #115256]
+"" =~ /a(?{ print q|
+|})/;
+>>>>
+'' =~ /a(?{ print "\n"; })/;
+####
+# [perl #123217]
+$_ = qr/(??{<<END})/
+f.o
+b.r
+END
+>>>>
+$_ = qr/(??{ "f.o\nb.r\n"; })/;
+####
+# More regexp code block madness
+my($b, @a);
+/(?{ die $b; })/;
+/a(?{ die $b; })a/;
+/$a(?{ die $b; })/;
+/@a(?{ die $b; })/;
+/(??{ die $b; })/;
+/a(??{ die $b; })a/;
+/$a(??{ die $b; })/;
+/@a(??{ die $b; })/;
+qr/(?{ die $b; })/;
+qr/a(?{ die $b; })a/;
+qr/$a(?{ die $b; })/;
+qr/@a(?{ die $b; })/;
+qr/(??{ die $b; })/;
+qr/a(??{ die $b; })a/;
+qr/$a(??{ die $b; })/;
+qr/@a(??{ die $b; })/;
+s/(?{ die $b; })//;
+s/a(?{ die $b; })a//;
+s/$a(?{ die $b; })//;
+s/@a(?{ die $b; })//;
+s/(??{ die $b; })//;
+s/a(??{ die $b; })a//;
+s/$a(??{ die $b; })//;
+s/@a(??{ die $b; })//;
+####
+# /(?x)<newline><tab>/
+/(?x)
+	/;
 ####
 # y///r
-tr/a/b/r;
+tr/a/b/r + $a =~ tr/p/q/r;
+####
+# y///d in list [perl #119815]
+() = tr/a//d;
 ####
 # [perl #90898]
 <a,>;
+glob 'a,';
+>>>>
+glob 'a,';
+glob 'a,';
 ####
 # [perl #91008]
+# SKIP ?$] >= 5.023 && "autoderef deleted in this Perl version"
 # CONTEXT no warnings 'experimental::autoderef';
 each $@;
 keys $~;
@@ -1011,8 +1476,8 @@ CORE::evalbytes '';
 # CONTEXT no warnings 'experimental::smartmatch';
 use feature (sprintf(":%vd", $^V));
 use 1;
+CORE::say $_;
 CORE::state $x;
-CORE::say $x;
 CORE::given ($x) {
     CORE::when (3) {
         continue;
@@ -1024,8 +1489,8 @@ CORE::given ($x) {
 CORE::evalbytes '';
 () = CORE::__SUB__;
 >>>>
+CORE::say $_;
 CORE::state $x;
-CORE::say $x;
 CORE::given ($x) {
     CORE::when (3) {
         continue;
@@ -1042,8 +1507,8 @@ CORE::evalbytes '';
 # feature features when feature has been disabled by use VERSION
 use feature (sprintf(":%vd", $^V));
 use 1;
+CORE::say $_;
 CORE::state $x;
-CORE::say $x;
 CORE::given ($x) {
     CORE::when (3) {
         continue;
@@ -1055,10 +1520,10 @@ CORE::given ($x) {
 CORE::evalbytes '';
 () = CORE::__SUB__;
 >>>>
-no feature;
+no feature ':all';
 use feature ':default';
+CORE::say $_;
 CORE::state $x;
-CORE::say $x;
 CORE::given ($x) {
     CORE::when (3) {
         continue;
@@ -1069,6 +1534,58 @@ CORE::given ($x) {
 }
 CORE::evalbytes '';
 () = CORE::__SUB__;
+####
+# SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
+# lexical subroutines and keywords of the same name
+# CONTEXT use feature 'lexical_subs', 'switch'; no warnings 'experimental';
+my sub default;
+my sub else;
+my sub elsif;
+my sub for;
+my sub foreach;
+my sub given;
+my sub if;
+my sub m;
+my sub no;
+my sub package;
+my sub q;
+my sub qq;
+my sub qr;
+my sub qx;
+my sub require;
+my sub s;
+my sub sub;
+my sub tr;
+my sub unless;
+my sub until;
+my sub use;
+my sub when;
+my sub while;
+CORE::default { die; }
+CORE::if ($1) { die; }
+CORE::if ($1) { die; }
+CORE::elsif ($1) { die; }
+CORE::else { die; }
+CORE::for (die; $1; die) { die; }
+CORE::foreach $_ (1 .. 10) { die; }
+die CORE::foreach (1);
+CORE::given ($1) { die; }
+CORE::m[/];
+CORE::m?/?;
+CORE::package foo;
+CORE::no strict;
+() = (CORE::q['], CORE::qq["$_], CORE::qr//, CORE::qx[`]);
+CORE::require 1;
+CORE::s///;
+() = CORE::sub { die; } ;
+CORE::tr///;
+CORE::unless ($1) { die; }
+CORE::until ($1) { die; }
+die CORE::until $1;
+CORE::use strict;
+CORE::when ($1 ~~ $2) { die; }
+CORE::while ($1) { die; }
+die CORE::while $1;
 ####
 # Feature hints
 use feature 'current_sub', 'evalbytes';
@@ -1082,10 +1599,10 @@ print;
 >>>>
 use feature 'current_sub', 'evalbytes';
 print $_;
-no feature;
+no feature ':all';
 use feature ':default';
 print $_;
-no feature;
+no feature ':all';
 use feature ':5.12';
 print $_;
 no feature 'unicode_strings';
@@ -1096,7 +1613,7 @@ my @x;
 @x = ($#{`}, $#{~}, $#{!}, $#{@}, $#{$}, $#{%}, $#{^}, $#{&}, $#{*});
 @x = ($#{(}, $#{)}, $#{[}, $#{{}, $#{]}, $#{}}, $#{'}, $#{"}, $#{,});
 @x = ($#{<}, $#{.}, $#{>}, $#{/}, $#{?}, $#{=}, $#+, $#{\}, $#{|}, $#-);
-@x = ($#{;}, $#{:});
+@x = ($#{;}, $#{:}, $#{1}), $#_;
 ####
 # ${#} interpolated
 # It's a known TODO that warnings are deparsed as bits, not textually.
@@ -1108,6 +1625,7 @@ no warnings;
 /${|}/;
 /${)}/;
 /${(}${|}${)}/;
+/@{+}@{-}/;
 ####
 # ()[...]
 my(@a) = ()[()];
@@ -1188,6 +1706,18 @@ CORE::do({});
 () = (-r $_) + 3;
 () = (-w $_) + 3;
 () = (-x $_) + 3;
+####
+# require(foo()) and do(foo())
+require (foo());
+do (foo());
+goto (foo());
+CORE::dump (foo());
+last (foo());
+next (foo());
+redo (foo());
+####
+# require vstring
+require v5.16;
 ####
 # [perl #97476] not() *does* follow the llafr
 $_ = ($a xor not +($1 || 2) ** 2);
@@ -1336,9 +1866,9 @@ my($m7, undef, $m8) = (1, 2, 3);
 ($m7, undef, $m8) = (1, 2, 3);
 ####
 # 'our/local' works with padrange op
-no strict;
 our($z, @z);
 our $o1;
+no strict;
 local $o11;
 $o1 = 1;
 local $o1 = 1;
@@ -1358,8 +1888,7 @@ our($o7, undef, $o8) = (1, 2, 3);
 local($o7, undef, $o8) = (1, 2, 3);
 ####
 # 'state' works with padrange op
-no strict;
-use feature 'state';
+# CONTEXT no strict; use feature 'state';
 state($z, @z);
 state $s1;
 $s1 = 1;
@@ -1374,7 +1903,7 @@ state($s3, $s4);
 #@z = ($s7, undef, $s8);
 ($s7, undef, $s8) = (1, 2, 3);
 ####
-# anon lists with padrange
+# anon arrays with padrange
 my($a, $b);
 my $c = [$a, $b];
 my $d = {$a, $b};
@@ -1411,32 +1940,170 @@ $a x= $b;
 my($a, $b, $c) = @_;
 ####
 # SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
-# TODO unimplemented in B::Deparse; RT #116553
 # lexical subroutine
 use feature 'lexical_subs';
 no warnings "experimental::lexical_subs";
 my sub f {}
 print f();
+>>>>
+use feature 'lexical_subs';
+BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x15"}
+my sub f {
+    BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
+    
+}
+BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
+print f();
 ####
 # SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
-# TODO unimplemented in B::Deparse; RT #116553
 # lexical "state" subroutine
 use feature 'state', 'lexical_subs';
 no warnings 'experimental::lexical_subs';
 state sub f {}
 print f();
+>>>>
+use feature 'lexical_subs';
+BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x15"}
+CORE::state sub f {
+    BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
+    use feature 'state';
+    
+}
+BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
+use feature 'state';
+print f();
+####
+# SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
+# lexical subroutine scoping
+# CONTEXT use feature 'lexical_subs'; no warnings 'experimental::lexical_subs';
+{
+  {
+    my sub a { die; }
+    {
+      foo();
+      my sub b;
+      b ;
+      main::b();
+      &main::b;
+      &main::b();
+      my $b = \&main::b;
+      sub b { $b; }
+    }
+  }
+  b();
+}
+####
+# self-referential lexical subroutine
+# CONTEXT use feature 'lexical_subs', 'state'; no warnings 'experimental::lexical_subs';
+();
+state sub sb2;
+sub sb2 {
+    sb2 ;
+}
+####
+# lexical subroutine with outer declaration and inner definition
+# CONTEXT use feature 'lexical_subs'; no warnings 'experimental::lexical_subs';
+();
+my sub f;
+my sub g {
+    ();
+    sub f { }
+}
+####
+# TODO only partially fixed
+# lexical state subroutine with outer declaration and inner definition
+# CONTEXT use feature 'lexical_subs', 'state'; no warnings 'experimental::lexical_subs';
+();
+state sub sb4;
+state sub a {
+    ();
+    sub sb4 { }
+}
+state sub sb5;
+sub {
+    ();
+    sub sb5 { }
+} ;
 ####
 # Elements of %# should not be confused with $#{ array }
 () = ${#}{'foo'};
 ####
-# [perl #121050] Prototypes with whitespace
-sub _121050(\$ \$) { }
-_121050($a,$b);
-sub _121050empty( ) {}
-() = _121050empty() + 1;
+# $; [perl #123357]
+$_ = $;;
+do {
+    $;
+};
+####
+# Ampersand calls and scalar context
+# OPTIONS -P
+package prototest;
+sub foo($$);
+foo(bar(),baz());
 >>>>
-_121050 $a, $b;
-() = _121050empty + 1;
+package prototest;
+&foo(scalar bar(), scalar baz());
+####
+# coderef2text and prototyped sub calls [perl #123435]
+is 'foo', 'oo';
+####
+# prototypes with unary precedence
+package prototest;
+sub dollar($) {}
+sub optdollar(;$) {}
+sub optoptdollar(;;$) {}
+sub splat(*) {}
+sub optsplat(;*) {}
+sub optoptsplat(;;*) {}
+sub bar(_) {}
+sub optbar(;_) {}
+sub optoptbar(;;_) {}
+sub plus(+) {}
+sub optplus(;+) {}
+sub optoptplus(;;+) {}
+sub wack(\$) {}
+sub optwack(;\$) {}
+sub optoptwack(;;\$) {}
+sub wackbrack(\[$]) {}
+sub optwackbrack(;\[$]) {}
+sub optoptwackbrack(;;\[$]) {}
+dollar($a < $b);
+optdollar($a < $b);
+optoptdollar($a < $b);
+splat($a < $b);     # Some of these deparse with ‘&’; if that changes, just
+optsplat($a < $b);  # change the tests.
+optoptsplat($a < $b);
+bar($a < $b);
+optbar($a < $b);
+optoptbar($a < $b);
+plus($a < $b);
+optplus($a < $b);
+optoptplus($a < $b);
+wack($a = $b);
+optwack($a = $b);
+optoptwack($a = $b);
+wackbrack($a = $b);
+optwackbrack($a = $b);
+optoptwackbrack($a = $b);
+>>>>
+package prototest;
+dollar($a < $b);
+optdollar($a < $b);
+optoptdollar($a < $b);
+&splat($a < $b);
+&optsplat($a < $b);
+&optoptsplat($a < $b);
+bar($a < $b);
+optbar($a < $b);
+optoptbar($a < $b);
+&plus($a < $b);
+&optplus($a < $b);
+&optoptplus($a < $b);
+&wack(\($a = $b));
+&optwack(\($a = $b));
+&optoptwack(\($a = $b));
+&wackbrack(\($a = $b));
+&optwackbrack(\($a = $b));
+&optoptwackbrack(\($a = $b));
 ####
 # ensure aelemfast works in the range -128..127 and that there's no
 # funky edge cases
@@ -1447,3 +2114,377 @@ $x = $a[1] + $a[126] + $a[127] + $a[128] + $a[255] + $a[256];
 my @b;
 $x = $b[-256] + $b[-255] + $b[-129] + $b[-128] + $b[-127] + $b[-1] + $b[0];
 $x = $b[1] + $b[126] + $b[127] + $b[128] + $b[255] + $b[256];
+####
+# 'm' must be preserved in m??
+m??;
+####
+# \(@array) and \(..., (@array), ...)
+my(@array, %hash, @a, @b, %c, %d);
+() = \(@array);
+() = \(%hash);
+() = \(@a, (@b), (%c), %d);
+() = \(@Foo::array);
+() = \(%Foo::hash);
+() = \(@Foo::a, (@Foo::b), (%Foo::c), %Foo::d);
+####
+# subs synonymous with keywords
+main::our();
+main::pop();
+state();
+use feature 'state';
+main::state();
+####
+# lvalue references
+# CONTEXT use feature "state", 'refaliasing', 'lexical_subs'; no warnings 'experimental';
+our $x;
+\$x = \$x;
+my $m;
+\$m = \$x;
+\my $n = \$x;
+(\$x) = @_;
+\($x) = @_;
+\($m) = @_;
+(\$m) = @_;
+\my($p) = @_;
+(\my $r) = @_;
+\($x, my $a) = @{[\$x, \$x]};
+(\$x, \my $b) = @{[\$x, \$x]};
+\local $x = \3;
+\local($x) = \3;
+\state $c = \3;
+\state($d) = \3;
+\our $e = \3;
+\our($f) = \3;
+\$_[0] = foo();
+\($_[1]) = foo();
+my @a;
+\$a[0] = foo();
+\($a[1]) = foo();
+\local($a[1]) = foo();
+\@a[0,1] = foo();
+\(@a[2,3]) = foo();
+\local @a[0,1] = (\$a)x2;
+\$_{a} = foo();
+\($_{b}) = foo();
+my %h;
+\$h{a} = foo();
+\($h{b}) = foo();
+\local $h{a} = \$x;
+\local($h{b}) = \$x;
+\@h{'a','b'} = foo();
+\(@h{2,3}) = foo();
+\local @h{'a','b'} = (\$x)x2;
+\@_ = foo();
+\@a = foo();
+(\@_) = foo();
+(\@a) = foo();
+\my @c = foo();
+(\my @d) = foo();
+\(@_) = foo();
+\(@a) = foo();
+\my(@g) = foo();
+\local @_ = \@_;
+(\local @_) = \@_;
+\state @e = [1..3];
+\state(@f) = \3;
+\our @i = [1..3];
+\our(@h) = \3;
+\%_ = foo();
+\%h = foo();
+(\%_) = foo();
+(\%h) = foo();
+\my %c = foo();
+(\my %d) = foo();
+\local %_ = \%h;
+(\local %_) = \%h;
+\state %y = {1,2};
+\our %z = {1,2};
+(\our %zz) = {1,2};
+\&a = foo();
+(\&a) = foo();
+\(&a) = foo();
+{
+  my sub a;
+  \&a = foo();
+  (\&a) = foo();
+  \(&a) = foo();
+}
+(\$_, $_) = \(1, 2);
+$_ == 3 ? \$_ : $_ = \3;
+$_ == 3 ? \$_ : \$x = \3;
+\($_ == 3 ? $_ : $x) = \3;
+for \my $topic (\$1, \$2) {
+    die;
+}
+for \state $topic (\$1, \$2) {
+    die;
+}
+for \our $topic (\$1, \$2) {
+    die;
+}
+for \$_ (\$1, \$2) {
+    die;
+}
+for \my @a ([1,2], [3,4]) {
+    die;
+}
+for \state @a ([1,2], [3,4]) {
+    die;
+}
+for \our @a ([1,2], [3,4]) {
+    die;
+}
+for \@_ ([1,2], [3,4]) {
+    die;
+}
+for \my %a ({5,6}, {7,8}) {
+    die;
+}
+for \our %a ({5,6}, {7,8}) {
+    die;
+}
+for \state %a ({5,6}, {7,8}) {
+    die;
+}
+for \%_ ({5,6}, {7,8}) {
+    die;
+}
+{
+    my sub a;
+    for \&a (sub { 9; }, sub { 10; }) {
+        die;
+    }
+}
+for \&a (sub { 9; }, sub { 10; }) {
+    die;
+}
+>>>>
+our $x;
+\$x = \$x;
+my $m;
+\$m = \$x;
+\my $n = \$x;
+(\$x) = @_;
+(\$x) = @_;
+(\$m) = @_;
+(\$m) = @_;
+(\my $p) = @_;
+(\my $r) = @_;
+(\$x, \my $a) = @{[\$x, \$x];};
+(\$x, \my $b) = @{[\$x, \$x];};
+\local $x = \3;
+(\local $x) = \3;
+\state $c = \3;
+(\state $d) = \3;
+\our $e = \3;
+(\our $f) = \3;
+\$_[0] = foo();
+(\$_[1]) = foo();
+my @a;
+\$a[0] = foo();
+(\$a[1]) = foo();
+(\local $a[1]) = foo();
+(\@a[0, 1]) = foo();
+(\@a[2, 3]) = foo();
+(\local @a[0, 1]) = (\$a) x 2;
+\$_{'a'} = foo();
+(\$_{'b'}) = foo();
+my %h;
+\$h{'a'} = foo();
+(\$h{'b'}) = foo();
+\local $h{'a'} = \$x;
+(\local $h{'b'}) = \$x;
+(\@h{'a', 'b'}) = foo();
+(\@h{2, 3}) = foo();
+(\local @h{'a', 'b'}) = (\$x) x 2;
+\@_ = foo();
+\@a = foo();
+(\@_) = foo();
+(\@a) = foo();
+\my @c = foo();
+(\my @d) = foo();
+(\(@_)) = foo();
+(\(@a)) = foo();
+(\(my @g)) = foo();
+\local @_ = \@_;
+(\local @_) = \@_;
+\state @e = [1..3];
+(\(state @f)) = \3;
+\our @i = [1..3];
+(\(our @h)) = \3;
+\%_ = foo();
+\%h = foo();
+(\%_) = foo();
+(\%h) = foo();
+\my %c = foo();
+(\my %d) = foo();
+\local %_ = \%h;
+(\local %_) = \%h;
+\state %y = {1, 2};
+\our %z = {1, 2};
+(\our %zz) = {1, 2};
+\&a = foo();
+(\&a) = foo();
+(\&a) = foo();
+{
+  my sub a;
+  \&a = foo();
+  (\&a) = foo();
+  (\&a) = foo();
+}
+(\$_, $_) = \(1, 2);
+$_ == 3 ? \$_ : $_ = \3;
+$_ == 3 ? \$_ : \$x = \3;
+($_ == 3 ? \$_ : \$x) = \3;
+foreach \my $topic (\$1, \$2) {
+    die;
+}
+foreach \state $topic (\$1, \$2) {
+    die;
+}
+foreach \our $topic (\$1, \$2) {
+    die;
+}
+foreach \$_ (\$1, \$2) {
+    die;
+}
+foreach \my @a ([1, 2], [3, 4]) {
+    die;
+}
+foreach \state @a ([1, 2], [3, 4]) {
+    die;
+}
+foreach \our @a ([1, 2], [3, 4]) {
+    die;
+}
+foreach \@_ ([1, 2], [3, 4]) {
+    die;
+}
+foreach \my %a ({5, 6}, {7, 8}) {
+    die;
+}
+foreach \our %a ({5, 6}, {7, 8}) {
+    die;
+}
+foreach \state %a ({5, 6}, {7, 8}) {
+    die;
+}
+foreach \%_ ({5, 6}, {7, 8}) {
+    die;
+}
+{
+    my sub a;
+    foreach \&a (sub { 9; } , sub { 10; } ) {
+        die;
+    }
+}
+foreach \&a (sub { 9; } , sub { 10; } ) {
+    die;
+}
+####
+# join $foo, pos
+my $foo;
+$_ = join $foo, pos
+>>>>
+my $foo;
+$_ = join('???', pos $_);
+####
+# exists $a[0]
+our @a;
+exists $a[0];
+####
+# my @a; exists $a[0]
+my @a;
+exists $a[0];
+####
+# delete $a[0]
+our @a;
+delete $a[0];
+####
+# my @a; delete $a[0]
+my @a;
+delete $a[0];
+####
+# $_[0][$_[1]]
+$_[0][$_[1]];
+####
+# f($a[0]);
+my @a;
+f($a[0]);
+####
+#qr/\Q$h{'key'}\E/;
+my %h;
+qr/\Q$h{'key'}\E/;
+####
+# my $x = "$h{foo}";
+my %h;
+my $x = "$h{'foo'}";
+####
+# weird constant hash key
+my %h;
+my $x = $h{"\000\t\x{100}"};
+####
+# multideref and packages
+package foo;
+my(%bar) = ('a', 'b');
+our(@bar) = (1, 2);
+$bar{'k'} = $bar[200];
+$main::bar{'k'} = $main::bar[200];
+$foo::bar{'k'} = $foo::bar[200];
+package foo2;
+$bar{'k'} = $bar[200];
+$main::bar{'k'} = $main::bar[200];
+$foo::bar{'k'} = $foo::bar[200];
+>>>>
+package foo;
+my(%bar) = ('a', 'b');
+our(@bar) = (1, 2);
+$bar{'k'} = $bar[200];
+$main::bar{'k'} = $main::bar[200];
+$foo::bar{'k'} = $bar[200];
+package foo2;
+$bar{'k'} = $foo::bar[200];
+$main::bar{'k'} = $main::bar[200];
+$foo::bar{'k'} = $foo::bar[200];
+####
+# multideref and local
+my %h;
+local $h{'foo'}[0] = 1;
+####
+# multideref and exists
+my(%h, $i);
+my $e = exists $h{'foo'}[$i];
+####
+# multideref and delete
+my(%h, $i);
+my $e = delete $h{'foo'}[$i];
+####
+# multideref with leading expression
+my $r;
+my $x = ($r // [])->{'foo'}[0];
+####
+# multideref with complex middle index
+my(%h, $i, $j, $k);
+my $x = $h{'foo'}[$i + $j]{$k};
+####
+# chdir
+chdir 'file';
+chdir FH;
+chdir;
+####
+# 5.22 bitops
+# CONTEXT use feature "bitwise"; no warnings "experimental::bitwise";
+$_ = $_ | $_;
+$_ = $_ & $_;
+$_ = $_ ^ $_;
+$_ = ~$_;
+$_ = $_ |. $_;
+$_ = $_ &. $_;
+$_ = $_ ^. $_;
+$_ = ~.$_;
+$_ |= $_;
+$_ &= $_;
+$_ ^= $_;
+$_ |.= $_;
+$_ &.= $_;
+$_ ^.= $_;

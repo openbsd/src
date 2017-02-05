@@ -1,5 +1,5 @@
 package autodie::test::missing;
-use base qw(autodie);
+use parent qw(autodie);
 
 sub exception_class {
     return "autodie::test::missing::exception";  # Doesn't exist!

@@ -9,8 +9,8 @@ sub readFile
     my ($filename) = @_ ;
     my ($string) = '' ;
 
-    open (F, "<$filename") 
-	or die "Cannot open $filename: $!\n" ;
+    open (F, "<", $filename)
+	or die "Cannot read $filename: $!\n" ;
     while (<F>)
       { $string .= $_ }
     close F ;
@@ -20,8 +20,8 @@ sub readFile
 sub writeFile
 {
     my($filename, @strings) = @_ ;
-    open (F, ">$filename") 
-	or die "Cannot open $filename: $!\n" ;
+    open (F, ">", $filename)
+	or die "Cannot write $filename: $!\n" ;
     binmode(F) if $filename =~ /bin$/i;
     foreach (@strings)
       { print F }

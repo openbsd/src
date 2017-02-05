@@ -73,12 +73,12 @@ for file do
     dl) ;;
     doio) ;;
     doop) ;;
+    dquote) ;;
     dump) ;;
     globals) ;;
     gv) ;;
     hv) ;;
     locale) ;;
-    madly) ;;
     main) ;;
     malloc) ;;
     mg) ;;
@@ -103,6 +103,7 @@ for file do
     scope) ;;
     sv) ;;
     taint) ;;
+    time64) ;;
     toke) ;;
     universal) ;;
     usersub) ;;

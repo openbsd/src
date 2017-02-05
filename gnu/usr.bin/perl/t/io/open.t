@@ -10,7 +10,7 @@ $|  = 1;
 use warnings;
 use Config;
 
-plan tests => 153;
+plan tests => 156;
 
 my $Perl = which_perl();
 
@@ -438,23 +438,29 @@ pass("no crash when open autovivifies glob in freed package");
         is($WARN, '', "ignore warning on embedded nul with no warnings syscalls");
     }
 
-    use Errno 'ENOENT';
-    # check handling of multiple arguments, which the original patch
-    # mis-handled
-    $! = 0;
-    is (unlink($fn, $fn), 0, "check multiple arguments to unlink");
-    is($!+0, ENOENT, "check errno");
-    $! = 0;
-    is (chmod(0644, $fn, $fn), 0, "check multiple arguments to chmod");
-    is($!+0, ENOENT, "check errno");
-    $! = 0;
-    is (utime(time, time, $fn, $fn), 0, "check multiple arguments to utime");
-    is($!+0, ENOENT, "check errno");
     SKIP: {
-        skip "no chown", 2 unless $Config{d_chown};
+        if (is_miniperl && !eval 'require Errno') {
+            skip "Errno not built yet", 8;
+        }
+        require Errno;
+        import Errno 'ENOENT';
+        # check handling of multiple arguments, which the original patch
+        # mis-handled
         $! = 0;
-        is(chown(-1, -1, $fn, $fn), 0, "check multiple arguments to chown");
-        is($!+0, ENOENT, "check errno");
+        is (unlink($fn, $fn), 0, "check multiple arguments to unlink");
+        is($!+0, &ENOENT, "check errno");
+        $! = 0;
+        is (chmod(0644, $fn, $fn), 0, "check multiple arguments to chmod");
+        is($!+0, &ENOENT, "check errno");
+        $! = 0;
+        is (utime(time, time, $fn, $fn), 0, "check multiple arguments to utime");
+        is($!+0, &ENOENT, "check errno");
+        SKIP: {
+            skip "no chown", 2 unless $Config{d_chown};
+            $! = 0;
+            is(chown(-1, -1, $fn, $fn), 0, "check multiple arguments to chown");
+            is($!+0, &ENOENT, "check errno");
+        }
     }
 
     is (unlink($fn), 0, "unlink fails with \\0 in name");
@@ -470,6 +476,14 @@ pass("no crash when open autovivifies glob in freed package");
     is((stat $temp)[9], $final_mtime, "nothing changes its mtime");
 }
 
+# [perl #125115] Dup to closed filehandle creates file named GLOB(0x...)
+{
+    ok(open(my $fh, "<", "TEST"), "open a handle");
+    ok(close $fh, "and close it again");
+    ok(!open(my $fh2,  ">&", $fh), "should fail to dup the closed handle");
+    # clean up if we failed
+    unlink "$fh";
+}
 
 package OverloadTest;
 use overload '""' => sub { ${$_[0]} };

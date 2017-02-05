@@ -18,3 +18,5 @@ save_pushptr                   # U
 save_pushptrptr                # U
 sv_insert_flags                # U
 DEFSV_set                      # added by devel/scanprov
+MUTABLE_PTR                    # added by devel/scanprov
+MUTABLE_SV                     # added by devel/scanprov

@@ -12,12 +12,17 @@ use strict;
 use warnings;
 require 't/test.pl';
 
-open(my $fh, '<', 'Porting/README.pod') or die("Can't open Porting/README.pod: $!");
-
-my @porting_files = grep { !/~\z/ } glob("Porting/*");
+my @porting_files;
+open my $man, "MANIFEST" or die "Can't open MANIFEST: $!";
+while(<$man>) {
+    /^Porting\// and s/[\t\n].*//s, push @porting_files, $_;
+}
+close $man or die "Can't close MANIFEST: $!";
 # It seems that dying here is nicer than having several dozen failing tests
 # later.  But that assumes one will see the message from die.
 die "Can't get contents of Porting/ directory.\n" unless @porting_files > 1;
+
+open(my $fh, '<', 'Porting/README.pod') or die("Can't open Porting/README.pod: $!");
 
 my (@current_order, @sorted_order, %files_in_pod);
 while(<$fh>) {
@@ -31,7 +36,6 @@ while(<$fh>) {
 
 for my $file (@porting_files) {
     $file =~ s!^Porting/!!;
-    $file =~ s/\.\z// if $^O eq 'VMS';
     next if $file =~ /^perl[0-9]+delta\.pod$/;
     ok(exists($files_in_pod{$file}), "$file is mentioned in Porting/README.pod");
     delete $files_in_pod{$file};
@@ -48,6 +52,8 @@ eval {
 };
 
 if(@sorted_order) {
+    local $::TODO;
+    $::TODO = "Unicode::Collate not working on EBCDIC" if $::IS_EBCDIC || $::IS_EBCDIC;
     ok(eq_array(\@current_order, \@sorted_order), "Files are referenced in order") or
         print_right_order();
 }

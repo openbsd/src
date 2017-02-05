@@ -33,10 +33,7 @@ print "# CWD: $cwd\n";
 sub source_path {
     my $file = shift;
     if ($ENV{PERL_CORE}) {
-        require File::Spec;
-        my $updir = File::Spec->updir;
-        my $dir = File::Spec->catdir($updir, 'lib', 'Pod', 'Simple', 't');
-        return File::Spec->catdir ($dir, $file);
+        return "../lib/Pod/Simple/t/$file";
     } else {
         return $file;
     }
@@ -66,13 +63,25 @@ $p =~ s/, +/,\n/g;
 $p =~ s/^/#  /mg;
 print $p;
 
+my $ascii_order;
+if(     -e ($ascii_order = source_path('ascii_order.pl'))) {
+  #
+} elsif(-e ($ascii_order = File::Spec->catfile($cwd, 't', 'ascii_order.pl'))) {
+  #
+} else {
+    print STDERR __FILE__, ": ", __LINE__, ": ascii_order='$ascii_order'; curdir=", $cwd, "; ", File::Spec->catfile($cwd, 't', 'ascii_order.pl'), "\n";
+  die "Can't find ascii_order.pl";
+}
+
+require $ascii_order;
+
 {
-my $names = join "|", sort values %$where2name;
+my $names = join "|", sort ascii_order values %$where2name;
 ok $names, "Blorm|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|squaa|squaa::Glunk|squaa::Vliff|zikzik";
 }
 
 {
-my $names = join "|", sort keys %$name2where;
+my $names = join "|", sort ascii_order keys %$name2where;
 ok $names, "Blorm|Zonk::Pronk|hinkhonk::Glunk|hinkhonk::Vliff|perlflif|perlthng|squaa|squaa::Glunk|squaa::Vliff|zikzik";
 }
 
@@ -93,12 +102,12 @@ $p =~ s/^/#  /mg;
 print $p;
 
 {
-my $names = join "|", sort values %$where2name;
+my $names = join "|", sort ascii_order values %$where2name;
 ok $names, "Blorm|squaa|zikzik";
 }
 
 {
-my $names = join "|", sort keys %$name2where;
+my $names = join "|", sort ascii_order keys %$name2where;
 ok $names, "Blorm|squaa|zikzik";
 }
 

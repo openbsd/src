@@ -50,7 +50,7 @@ SKIP: {
 
  $dir = catdir getcwd(), "thrext$$" . int rand() * 100000;
 
- rmtree($dir);
+ rmtree($dir) if -d $dir;
  mkdir($dir);
 
  # Create a dir structure like this:

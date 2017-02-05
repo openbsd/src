@@ -1,8 +1,8 @@
-# CJKRadicals-6.3.0.txt
-# Date: 2012-12-03, 01:57:00 GMT [RC, KW, LI]
+# CJKRadicals-8.0.0.txt
+# Date: 2015-02-19, 00:30:00 GMT [RC, KW, LI]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UAX #38: Unicode Han Database (Unihan),
 # at http://www.unicode.org/reports/tr38/
@@ -10,23 +10,23 @@
 # Mapping from radical numbers to characters.
 #
 # This data file provides a mapping from the radical numbers used
-# in the kRSUnicode property to the corresponding character
-# in the Kangxi Radicals block or the CJK Radicals Supplement block, as
-# well as to a CJK unified ideograph which is formed from that radical
-# only.
+# in the kRSUnicode property to the corresponding character in
+# the Kangxi Radicals block or the CJK Radicals Supplement block,
+# as well as to a CJK unified ideograph which is formed from that
+# radical only.
 #
 # There is one line per radical number. Each line contains three
 # fields, separated by a semicolon (';'). The first field is the
-# radical number. The second field is the CJK radical character. The third
-# field is the CJK unified ideograph.
+# radical number. The second field is the CJK radical character.
+# The third field is the CJK unified ideograph.
 #
 # Radical numbers match the regular expression [1-9][0-9]{0,2}\'?
 # and in particular they can end with a U+0027 ' APOSTROPHE.
 #
 # This file was created for Unicode 5.2 by Richard Cook.
 # Updated for Unicode 6.0 by Richard Cook.
-# Updated for Unicode 6.1 and 6.2 by Ken Whistler.
-# Updated for Unicode 6.3 by Ken Whistler and Laurentiu Iancu.
+# Updated for Unicode 6.1 and 6.2 by Ken Whistler,
+# and for subsequent versions by Ken Whistler and Laurentiu Iancu.
 #
 # ####################################################
 

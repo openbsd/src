@@ -131,7 +131,7 @@ POSIX = POSIX
 #: __DEBUG__: builds images with full VMS debugger support
 .ifdef __DEBUG__
 DBGCCFLAGS = /List/Debug/NoOpt$(DBGSPECFLAGS)
-DBGLINKFLAGS = /Trace/Debug/Map/Full/Cross
+DBGLINKFLAGS = /Trace/Debug/Map=$(MMS$TARGET_NAME).MAP/Full/Cross
 DBG = DBG
 .else
 DBGCCFLAGS = /NoList
@@ -166,11 +166,9 @@ MTHREADLINKFLAGS =
 # C preprocessor manifest "DEBUGGING" ==> perl -D, not the VMS debugger
 .IFDEF LARGEFILE
 CFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)/Define=$(LARGEFILE)
-X2PCFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)/Define=(PERL_FOR_X2P,$(LARGEFILE))
 CORECFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)/Define=(PERL_CORE,$(LARGEFILE))
 .ELSE
 CFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)
-X2PCFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)/Define=PERL_FOR_X2P
 CORECFLAGS = $(XTRACCFLAGS)$(DBGCCFLAGS)$(FLAGS)/Define=PERL_CORE
 .ENDIF
 
@@ -228,17 +226,17 @@ FULLLIBS2 = $(LIBS2)|$(THRLIBS1)|$(THRLIBS2)
 
 #### End of system configuration section. ####
 
-c0 = $(MALLOC_C) av.c caretx.c deb.c doio.c doop.c dump.c globals.c gv.c hv.c mro.c
+c0 = $(MALLOC_C) av.c caretx.c deb.c doio.c doop.c dquote.c dump.c globals.c gv.c hv.c mro_core.c
 c1 = mg.c locale.c mathoms.c miniperlmain.c numeric.c op.c pad.c perl.c perlapi.c perlio.c
 c2 = perly.c pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c regcomp.c regexec.c reentr.c
-c3 = run.c scope.c sv.c taint.c toke.c universal.c utf8.c util.c vms.c keywords.c
+c3 = run.c scope.c sv.c taint.c time64.c toke.c universal.c utf8.c util.c vms.c keywords.c
 c = $(c0) $(c1) $(c2) $(c3)
 
 obj0 = perl$(O)
-obj1 = $(MALLOC_O) av$(O) caretx$(O) deb$(O) doio$(O) doop$(O) dump$(O) mro$(O) globals$(O) gv$(O) hv$(O) 
+obj1 = $(MALLOC_O) av$(O) caretx$(O) deb$(O) doio$(O) doop$(O) dquote$(O) dump$(O) mro_core$(O) globals$(O) gv$(O) hv$(O)
 obj2 = keywords$(O) locale$(O) mathoms$(O) mg$(O) miniperlmain$(O) numeric$(O) op$(O) pad$(O) perlapi$(O) perlio$(O) 
 obj3 = perly$(O) pp$(O) pp_ctl$(O) pp_hot$(O) reentr$(O) pp_pack$(O) pp_sort$(O) pp_sys$(O) regcomp$(O) 
-obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
+obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) time64$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
 
 mini_obj = perlmini$(O) $(obj1) $(obj2) $(obj3) $(obj4)
 obj = $(obj0) $(obj1) $(obj2) $(obj3) $(obj4)
@@ -287,21 +285,13 @@ utils1 = [.utils]perldoc.com [.utils]c2ph.com [.utils]h2ph.com
 utils2 = [.utils]h2xs.com [.utils]libnetcfg.com [.lib]perlbug.com [.utils]json_pp.com
 utils3 = [.utils]perlivp.com [.lib]splain.com [.utils]pl2pm.com [.utils]xsubpp.com [.utils]pod2html.com [.utils]instmodsh.com
 utils4 = [.utils]enc2xs.com [.utils]piconv.com [.utils]cpan.com [.utils]prove.com [.utils]ptar.com [.utils]ptardiff.com [.utils]shasum.com
-utils5 = [.utils]corelist.com [.utils]config_data.com [.utils]ptargrep.com [.utils]zipdetails.com
+utils5 = [.utils]corelist.com [.utils]ptargrep.com [.utils]zipdetails.com [.utils]encguess.com
 
-.ifdef NOX2P
 all : base extras archcorefiles preplibrary [.pod]perltoc.pod
 	@ QUALIFIERS := $(MMSQUALIFIERS)
 	@ QUALIFIERS = QUALIFIERS - """" - """"
 	@ write sys$output " "
 	@ write sys$output " Everything is up to date. '$(MMS)''QUALIFIERS' test' to run test suite."
-.else
-all : base extras x2p archcorefiles preplibrary [.pod]perltoc.pod
-	@ QUALIFIERS := $(MMSQUALIFIERS)
-	@ QUALIFIERS = QUALIFIERS - """" - """"
-	@ write sys$output " "
-	@ write sys$output " Everything is up to date. '$(MMS)''QUALIFIERS' test' to run test suite."
-.endif
 
 git_version.h : $(MINIPERL_EXE) make_patchnum.pl
         $(MINIPERL) make_patchnum.pl
@@ -314,12 +304,10 @@ libmods : $(LIBPREREQ)
 	@ $(NOOP)
 utils : $(utils1) $(utils2) $(utils3) $(utils4) $(utils5)
 	@ $(NOOP)
-x2p : [.x2p]$(DBG)a2p$(E) [.x2p]s2p.com [.x2p]find2perl.com 
-	@ $(NOOP)
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5203delta.pod
+PERLDELTA_CURRENT = [.pod]perl5241delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
@@ -409,8 +397,7 @@ generate_uudmap$(O) : generate_uudmap.c mg_raw.h
         $(CC) $(CORECFLAGS) $(MMS$SOURCE)
 
 # The following files are built in one go by gen_shrfls.pl:
-#  perlshr_attr.opt, $(DBG)perlshr_bld.opt - VAX and AXP
-#  perlshr_gbl*.mar, perlshr_gbl*$(O) - VAX only
+#  perlshr_attr.opt, $(DBG)perlshr_bld.opt - AXP and IA64
 # The song and dance with gen_shrfls.opt accommodates DCL's line length limit.
 $(DBG)perlshr_xtras.ts : perl.h config.h vmsish.h proto.h [.vms]gen_shrfls.pl $(MINIPERL_EXE) $(MAKEFILE) $(CRTL)
 	@ $(MINIPERL) makedef.pl "PLATFORM=vms" > makedef.lis
@@ -473,9 +460,6 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 [.utils]shasum.com : [.utils]shasum.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
-[.utils]config_data.com : [.utils]config_data.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
 [.utils]corelist.com : [.utils]corelist.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
@@ -486,6 +470,9 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]enc2xs.com : [.utils]enc2xs.PL $(ARCHDIR)Config.pm
+	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
+
+[.utils]encguess.com : [.utils]encguess.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]h2ph.com : [.utils]h2ph.PL $(ARCHDIR)Config.pm
@@ -514,12 +501,6 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 	Copy/NoConfirm/Log [.utils]splain.com [.lib]
 
-[.x2p]find2perl.com : [.x2p]find2perl.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.x2p]s2p.com : [.x2p]s2p.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
 [.utils]xsubpp.com : [.utils]xsubpp.PL $(ARCHDIR)Config.pm nonxsext
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
@@ -528,35 +509,6 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 
 [.utils]pod2html.com : [.utils]pod2html.PL $(ARCHDIR)Config.pm nonxsext
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-# Rename catches problem with some DECC versions in which object file is
-# placed in current default dir, not same one as source file.
-[.x2p]$(DBG)a2p$(E) : [.x2p]a2p$(O), [.x2p]hash$(O), [.x2p]str$(O), [.x2p]util$(O), [.x2p]walk$(O)
-	@ If F$Search("hash$(O)").nes."" Then Rename/NoLog hash$(O),str$(O),util$(O),walk$(O) [.x2p]
-	Link $(LINKFLAGS) /Exe=$(MMS$TARGET) $(MMS$SOURCE_LIST) $(CRTLOPTS)
-
-# Accommodate buggy cpp in some version of DECC, which chokes on illegal
-# filespec "y.tab.c", and broken gcc cpp, which doesn't start #include ""
-# search in same dir as source file
-[.x2p]a2p$(O) : [.x2p]a2p.c [.x2p]a2py.c [.x2p]INTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h config.h handy.h vmsish.h $(MINIPERL_EXE)
-	$(MINIPERL) -pe "s/^#line\s+(\d+)\s+\Q""y.tab.c""/#line $1 ""y_tab.c""/;" $(MMS$SOURCE) >$(MMS$TARGET_NAME)_vms.c
-	$(CC) $(X2PCFLAGS) /Object=$(MMS$TARGET)/Include=([.x2p],[],"./x2p") $(MMS$TARGET_NAME)_vms.c
-	Delete/Log/NoConfirm $(MMS$TARGET_NAME)_vms.c;
-
-# gcc cpp broken -- doesn't look in directory of source file for #include ""
-.ifdef GNUC
-[.x2p]hash$(O) : [.x2p]hash.c
-	$(CC) $(X2PCFLAGS) /Include=[.x2p] $(MMS$SOURCE)
-
-[.x2p]str$(O) : [.x2p]str.c
-	$(CC) $(X2PCFLAGS) /Include=[.x2p] $(MMS$SOURCE)
-
-[.x2p]util$(O) : [.x2p]util.c
-	$(CC) $(X2PCFLAGS) /Include=[.x2p] $(MMS$SOURCE)
-
-[.x2p]walk$(O) : [.x2p]walk.c
-	$(CC) $(X2PCFLAGS) /Include=[.x2p] $(MMS$SOURCE)
-.endif
 
 preplibrary : $(MINIPERL_EXE) $(LIBPREREQ) 
 	@ $(NOOP)
@@ -628,8 +580,8 @@ archify : all
 	Delete/Log/NoConfirm [.lib.auto...]*.*;*/exclude=(*.al,*.ix,*.dir)
 	Delete/Log/NoConfirm [.lib]Config.pm;*
 	Delete/Log/NoConfirm [.lib]Config_heavy.pl;*
-	Copy/Log/NoConfirm *$(E);,[.x2p]$(DBG)a2p$(E); $(ARCHDIR)
-	Delete/Log/NoConfirm Perl*$(E);*,[.x2p]$(DBG)a2p$(E);*
+	Copy/Log/NoConfirm *$(E);, $(ARCHDIR)
+	Delete/Log/NoConfirm Perl*$(E);*
 	@ QUALIFIERS := $(MMSQUALIFIERS)
 	@ QUALIFIERS = QUALIFIERS - """" - """"
 	@ Write Sys$Output "Architecture-specific setup completed."
@@ -658,7 +610,7 @@ $(ARCHAUTO)time.stamp :
 
 .ifdef LINK_ONLY
 .else
-# We need an action line here for broken older versions of MMS which
+# We need(ed?) an action line here for broken older versions of MMS which
 # otherwise conclude that they should be compiling [.x2p]utils.c :-(
 #util$(O) : util.c
 #	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
@@ -673,13 +625,15 @@ doio$(O) : doio.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 doop$(O) : doop.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+dquote$(O) : dquote.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 dump$(O) : dump.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 globals$(O) : globals.c $(generated_headers) $(h)
         $(CC) $(CORECFLAGS) $(MMS$SOURCE)
 gv$(O) : gv.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
-mro$(O) : mro.c $(h)
+mro_core$(O) : mro_core.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 hv$(O) : hv.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
@@ -737,6 +691,8 @@ sv$(O) : sv.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 taint$(O) : taint.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+time64$(O) : time64.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 toke$(O) : toke.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 universal$(O) : universal.c $(h)
@@ -747,18 +703,6 @@ util$(O) : util.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 vms$(O) : vms.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
-
-[.x2p]hash$(O) : [.x2p]hash.c [.x2p]EXTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h [.x2p]util.h config.h handy.h vmsish.h
-	$(CC) $(X2PCFLAGS) $(MMS$SOURCE)
-
-[.x2p]str$(O) : [.x2p]str.c [.x2p]EXTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h [.x2p]util.h config.h handy.h vmsish.h
-	$(CC) $(X2PCFLAGS) $(MMS$SOURCE)
-
-[.x2p]util$(O) : [.x2p]util.c [.x2p]EXTERN.h [.x2p]INTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h [.x2p]util.h config.h handy.h vmsish.h
-	$(CC) $(X2PCFLAGS) $(MMS$SOURCE)
-
-[.x2p]walk$(O) : [.x2p]walk.c [.x2p]EXTERN.h [.x2p]a2p.h [.x2p]hash.h [.x2p]str.h [.x2p]util.h config.h handy.h vmsish.h
-	$(CC) $(X2PCFLAGS) $(MMS$SOURCE)
 
 # End of automatically generated make dependencies
 .endif # !LINK_ONLY
@@ -824,7 +768,6 @@ tidy : cleanlis
 	- If F$Search("[.lib]*.com;-1").nes."" Then Purge/NoConfirm/Log [.lib]*.com
 	- If F$Search("[.pod]*.com;-1").nes."" Then Purge/NoConfirm/Log [.pod]*.com
 	- If F$Search("[.utils]*.com;-1").nes."" Then Purge/NoConfirm/Log [.utils]*.com
-	- If F$Search("[.x2p]*.com;-1").nes."" Then Purge/NoConfirm/Log [.x2p]*.com
 	- If F$Search("[.lib]buildcustomize.pl;-1").nes."" Then Purge/NoConfirm/Log [.lib]buildcustomize.pl
 
 clean : tidy cleantest
@@ -874,7 +817,6 @@ realclean : clean
 	- If F$Search("[.lib...].exists").nes."" Then Delete/NoConfirm/Log [.lib...].exists;*
 	- If F$Search("[.pod]*.com").nes."" Then Delete/NoConfirm/Log [.pod]*.com;*
 	- If F$Search("[.utils]*.com").nes."" Then Delete/NoConfirm/Log [.utils]*.com;*
-	- If F$Search("[.x2p]*.com").nes."" Then Delete/NoConfirm/Log [.x2p]*.com;*
 	- If F$Search("$(ARCHDIR)Config.pm").nes."" Then Delete/NoConfirm/Log $(ARCHDIR)Config.pm;*
 	- If F$Search("$(ARCHDIR)Config_heavy.pl").nes."" Then Delete/NoConfirm/Log $(ARCHDIR)Config_heavy.pl;*
 	- If F$Search("[.utils]perldoc.com").nes."" Then Delete/NoConfirm/Log [.utils]perldoc.com;*

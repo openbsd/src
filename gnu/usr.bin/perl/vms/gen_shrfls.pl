@@ -18,11 +18,6 @@
 #        against PerlShr.Exe, since cc places global vars in SHR,WRT psects
 #        by default.
 #    PerlShr_Bld.Opt - declares universal symbols for PerlShr.Exe
-#    Perlshr_Gbl*.Mar, Perlshr_Gbl*.Obj (VAX  only) - declares global symbols
-#        for global vars (done here because gcc can't globaldef) and creates
-#        transfer vectors for routines on a VAX.
-#    PerlShr_Gbl.Opt (VAX only) - list of PerlShr_Gbl*.Obj, used for input
-#        to the linker when building PerlShr.Exe.
 #
 # To do:
 #   - figure out a good way to collect global vars in one psect, given that
@@ -55,15 +50,6 @@ if ($ARGV[0] eq '-f') {
 }
 
 my $cc_cmd = shift @ARGV; # no longer used to run the preprocessor
-
-# Someday, we'll have $GetSyI built into perl . . .
-my $isvax = `\$ Write Sys\$Output \(F\$GetSyI(\"HW_MODEL\") .LE. 1024 .AND. F\$GetSyI(\"HW_MODEL\") .GT. 0\)`;
-chomp $isvax;
-print "\$isvax: \\$isvax\\\n" if $debug;
-
-my $isi64 = `\$ Write Sys\$Output \(F\$GetSyI(\"HW_MODEL\") .GE. 4096)`;
-chomp $isi64;
-print "\$isi64: \\$isi64\\\n" if $debug;
 
 print "Input \$cc_cmd: \\$cc_cmd\\\n" if $debug;
 my $docc = ($cc_cmd !~ /^~~/);
@@ -155,56 +141,18 @@ foreach (split /\s+/, $extnames) {
 my $marord = 1;
 open(OPTBLD,'>', "${dir}${dbgprefix}perlshr_bld.opt")
   or die "$0: Can't write to ${dir}${dbgprefix}perlshr_bld.opt: $!\n";
-if ($isvax) {
-  open(MAR, '>', "${dir}perlshr_gbl${marord}.mar")
-    or die "$0: Can't write to ${dir}perlshr_gbl${marord}.mar: $!\n";
-  print MAR "\t.title perlshr_gbl$marord\n";
-}
 
 unless ($isgcc) {
-  if ($isi64) {
-    print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,NOEXE,RD,NOWRT,SHR\n";
-    print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,NOEXE,RD,WRT,NOSHR\n";
-  }
-  else {
-    print OPTBLD "PSECT_ATTR=\$GLOBAL_RO_VARS,PIC,NOEXE,RD,NOWRT,SHR\n";
-    print OPTBLD "PSECT_ATTR=\$GLOBAL_RW_VARS,PIC,NOEXE,RD,WRT,NOSHR\n";
-  }
   print OPTBLD "PSECT_ATTR=LIB\$INITIALIZE,GBL,NOEXE,NOWRT,NOSHR,LONG\n";
 }
 print OPTBLD "case_sensitive=yes\n" if $care_about_case;
 my $count = 0;
 foreach my $var (sort (keys %vars)) {
-  if ($isvax) { print OPTBLD "UNIVERSAL=$var\n"; }
-  else { print OPTBLD "SYMBOL_VECTOR=($var=DATA)\n"; }
-  # This hack brought to you by the lack of a globaldef in gcc.
-  if ($isgcc) {
-    if ($count++ > 200) {  # max 254 psects/file
-      print MAR "\t.end\n";
-      close MAR;
-      $marord++;
-      open(MAR, '>', "${dir}perlshr_gbl${marord}.mar")
-        or die "$0: Can't write to ${dir}perlshr_gbl${marord}.mar: $!\n";
-      print MAR "\t.title perlshr_gbl$marord\n";
-      $count = 0;
-    }
-    print MAR "\t.psect ${var},long,pic,ovr,rd,wrt,noexe,noshr\n";
-    print MAR "\t${var}::	.blkl 1\n";
-  }
+  print OPTBLD "SYMBOL_VECTOR=($var=DATA)\n";
 }
 
-print MAR "\t.psect \$transfer_vec,pic,rd,nowrt,exe,shr\n" if ($isvax);
 foreach my $func (sort keys %fcns) {
-  if ($isvax) {
-    print MAR "\t.transfer $func\n";
-    print MAR "\t.mask $func\n";
-    print MAR "\tjmp G\^${func}+2\n";
-  }
-  else { print OPTBLD "SYMBOL_VECTOR=($func=PROCEDURE)\n"; }
-}
-if ($isvax) {
-  print MAR "\t.end\n";
-  close MAR;
+  print OPTBLD "SYMBOL_VECTOR=($func=PROCEDURE)\n";
 }
 
 open(OPTATTR, '>', "${dir}perlshr_attr.opt")
@@ -226,31 +174,6 @@ close OPTATTR;
 
 my $incstr = 'PERL,GLOBALS';
 my (@symfiles, $drvrname);
-if ($isvax) {
-  $drvrname = "Compile_shrmars.tmp_".time;
-  open (DRVR,'>', $drvrname) or die "$0: Can't write to $drvrname: $!\n";
-  print DRVR "\$ Set NoOn\n";  
-  print DRVR "\$ Delete/NoLog/NoConfirm $drvrname;\n";
-  print DRVR "\$ old_proc_vfy = F\$Environment(\"VERIFY_PROCEDURE\")\n";
-  print DRVR "\$ old_img_vfy = F\$Environment(\"VERIFY_IMAGE\")\n";
-  print DRVR "\$ MCR $^X -e \"\$ENV{'LIBPERL_RDT'} = (stat('$libperl'))[9]\"\n";
-  print DRVR "\$ Set Verify\n";
-  print DRVR "\$ If F\$Search(\"$libperl\").eqs.\"\" Then Library/Object/Create $libperl\n";
-  do {
-    push(@symfiles,"perlshr_gbl$marord");
-    print DRVR "\$ Macro/NoDebug/Object=PerlShr_Gbl${marord}$objsuffix PerlShr_Gbl$marord.Mar\n";
-    print DRVR "\$ Library/Object/Replace/Log $libperl PerlShr_Gbl${marord}$objsuffix\n";
-  } while (--$marord); 
-  # We had to have a working miniperl to run this program; it's probably the
-  # one we just built.  It depended on LibPerl, which will be changed when
-  # the PerlShr_Gbl* modules get inserted, so miniperl will be out of date,
-  # and so, therefore, will all of its dependents . . .
-  # We touch LibPerl here so it'll be back 'in date', and we won't rebuild
-  # miniperl etc., and therefore LibPerl, the next time we invoke MM[KS].
-  print DRVR "\$ old_proc_vfy = F\$Verify(old_proc_vfy,old_img_vfy)\n";
-  print DRVR "\$ MCR $^X -e \"utime 0, \$ENV{'LIBPERL_RDT'}, '$libperl'\"\n";
-  close DRVR;
-}
 
 # Initial hack to permit building of compatible shareable images for a
 # given version of Perl.
@@ -276,8 +199,6 @@ if ($ENV{PERLSHR_USE_GSMATCH}) {
     my $minor = int(($] * 1000 - $major) * 100 + 0.5) & 0xFF;  # range 0..255
     print OPTBLD "GSMATCH=LEQUAL,$major,$minor\n";
   }
-  print OPTBLD 'CLUSTER=$$TRANSFER_VECTOR,,',
-               map(",$_$objsuffix",@symfiles), "\n" if $isvax;
 }
 elsif (@symfiles) { $incstr .= ',' . join(',',@symfiles); }
 # Include object modules and RTLs in options file
@@ -288,8 +209,6 @@ open(RTLOPT,$rtlopt) or die "$0: Can't read options file $rtlopt: $!\n";
 while (<RTLOPT>) { print OPTBLD; }
 close RTLOPT;
 close OPTBLD;
-
-exec "\$ \@$drvrname" if $isvax;
 
 
 # Symbol shortening Copyright (c) 2012 Craig A. Berry

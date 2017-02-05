@@ -15,12 +15,15 @@ $| = 1;
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = ('../lib','.');
+    @INC = ('../lib','.','../ext/re');
     require Config; import Config;
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
+    require './loc_tools.pl';
+    skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
+    skip_all_without_unicode_tables();
 }
 
-plan tests => 727;  # Update this when adding/deleting tests.
+plan tests => 789;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -509,13 +512,7 @@ sub run_tests {
         is(qr/\b\v$/,     '(?^:\b\v$)', 'qr/\b\v$/');
     }
 
-    SKIP: {   # Test that charset modifier work, and are interpolated
-        if (
-            !$Config::Config{d_setlocale}
-        || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-        ) {
-            skip "no locale support", 13
-        }
+    {   # Test that charset modifier work, and are interpolated
         is(qr/\b\v$/, '(?^:\b\v$)', 'Verify no locale, no unicode_strings gives default modifier');
         is(qr/(?l:\b\v$)/, '(?^:(?l:\b\v$))', 'Verify infix l modifier compiles');
         is(qr/(?u:\b\v$)/, '(?^:(?u:\b\v$))', 'Verify infix u modifier compiles');
@@ -526,13 +523,9 @@ sub run_tests {
         my $locale;
 
       SKIP: {
-            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
 
-            BEGIN {
-                if($Config{d_setlocale}) {
-                    require locale; import locale;
-                }
-            }
+            use locale;
             $locale = qr/\b\v$/;
             is($locale,    '(?^l:\b\v$)', 'Verify has l modifier when compiled under use locale');
             no locale;
@@ -544,28 +537,23 @@ sub run_tests {
         is(qr/abc$dual/,    '(?^u:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
 
       SKIP: {
-            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
+            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
 
             is(qr/abc$locale/,    '(?^u:abc(?^l:\b\v$))', 'Verify retains l when interpolated under unicode_strings');
         }
 
         no feature 'unicode_strings';
       SKIP: {
-            skip 'No locale testing without d_setlocale', 1 if(!$Config{d_setlocale});
-
+            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
             is(qr/abc$locale/,    '(?^:abc(?^l:\b\v$))', 'Verify retains l when interpolated outside locale and unicode strings');
         }
 
         is(qr/def$unicode/,    '(?^:def(?^u:\b\v$))', 'Verify retains u when interpolated outside locale and unicode strings');
 
       SKIP: {
-            skip 'No locale testing without d_setlocale', 2 if(!$Config{d_setlocale});
+            skip 'Locales not available', 2 unless locales_enabled('LC_CTYPE');
 
-             BEGIN {
-                if($Config{d_setlocale}) {
-                    require locale; import locale;
-                }
-            }
+             use locale;
             is(qr/abc$dual/,    '(?^l:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
             is(qr/abc$unicode/,    '(?^l:abc(?^u:\b\v$))', 'Verify retains u when interpolated under locale');
         }
@@ -1111,7 +1099,7 @@ sub run_tests {
     }
     {
         # we are actually testing that we dont die when executing these patterns
-        my $e = "B\x{f6}ck";
+        my $e = "B" . uni_to_native("\x{f6}") . "ck";
         ok(!utf8::is_utf8($e), "got a latin string - rt75680");
 
         ok($e !~ m/.*?[x]$/, "latin string against /.*?[x]\$/ - rt75680");
@@ -1138,13 +1126,10 @@ sub run_tests {
 
     }
 
-    SKIP: {   # Some constructs with Latin1 characters cause a utf8 string not
-              # to match itself in non-utf8
-        if ($::IS_EBCDIC) {
-            skip "Needs to be customized to run on EBCDIC", 6;
-        }
-        my $c = "\xc0";
-        my $pattern = my $utf8_pattern = qr/((\xc0)+,?)/;
+    {   # Some constructs with Latin1 characters cause a utf8 string not
+        # to match itself in non-utf8
+        my $c = uni_to_native("\xc0");
+        my $pattern = my $utf8_pattern = qr/(($c)+,?)/;
         utf8::upgrade($utf8_pattern);
         ok $c =~ $pattern, "\\xc0 =~ $pattern; Neither pattern nor target utf8";
         ok $c =~ /$pattern/i, "\\xc0 =~ /$pattern/i; Neither pattern nor target utf8";
@@ -1157,13 +1142,10 @@ sub run_tests {
         ok $c =~ /$utf8_pattern/i, "\\xc0 =~ /$pattern/i; Both target and pattern utf8";
     }
 
-    SKIP: {   # Make sure can override the formatting
-        if ($::IS_EBCDIC) {
-            skip "Needs to be customized to run on EBCDIC", 2;
-        }
+    {   # Make sure can override the formatting
         use feature 'unicode_strings';
-        ok "\xc0" =~ /\w/, 'Under unicode_strings: "\xc0" =~ /\w/';
-        ok "\xc0" !~ /(?d:\w)/, 'Under unicode_strings: "\xc0" !~ /(?d:\w)/';
+        ok uni_to_native("\xc0") =~ /\w/, 'Under unicode_strings: "\xc0" =~ /\w/';
+        ok uni_to_native("\xc0") !~ /(?d:\w)/, 'Under unicode_strings: "\xc0" !~ /(?d:\w)/';
     }
 
     {
@@ -1306,7 +1288,8 @@ EOP
 
     { # [perl #111174]
         use re '/u';
-        like "\xe0", qr/(?i:\xc0)/, "(?i: shouldn't lose the passed in /u";
+        my $A_grave = uni_to_native("\xc0");
+        like uni_to_native("\xe0"), qr/(?i:$A_grave)/, "(?i: shouldn't lose the passed in /u";
         use re '/a';
         unlike "\x{100}", qr/(?i:\w)/, "(?i: shouldn't lose the passed in /a";
         use re '/aa';
@@ -1318,7 +1301,7 @@ EOP
 	# consider the UTF8ness of the previous and current pattern
 	# string, as well as the physical bytes of the pattern string
 
-	for my $s ("\xc4\x80", "\x{100}") {
+	for my $s (byte_utf8a_to_utf8n("\xc4\x80"), "\x{100}") {
 	    ok($s =~ /^$s$/, "re-compile check is UTF8-aware");
 	}
     }
@@ -1377,11 +1360,12 @@ EOP
         # EXACTish node
         ;
         ;
-        ok("\x{017F}\x{017F}" =~ qr/^[\x{00DF}]?$/i, "[] to EXACTish optimization");
+        my $sharp_s = uni_to_native("\xdf");
+        ok("\x{017F}\x{017F}" =~ qr/^[$sharp_s]?$/i, "[] to EXACTish optimization");
     }
 
     {
-        for my $char (":", "\x{f7}", "\x{2010}") {
+        for my $char (":", uni_to_native("\x{f7}"), "\x{2010}") {
             my $utf8_char = $char;
             utf8::upgrade($utf8_char);
             my $display = $char;
@@ -1407,13 +1391,6 @@ EOP
 
 	my $text = "Perl";
 	ok("Perl" =~ /P.*$/i, '#116148');
-    }
-
-    { # 117327: Sequence (?#...) not recognized in regex
-      # The space between the '(' and '?' is now deprecated; this test should
-      # be removed when the deprecation is made fatal.
-        no warnings;
-        like("ab", qr/a( ?#foo)b/x);
     }
 
     { # 118297: Mixing up- and down-graded strings in regex
@@ -1504,61 +1481,43 @@ EOP
 	   'undefining *^R within (??{}) does not result in a crash';
     }
 
-    {
-        # [perl #120446]
-        # this code should be virtually instantaneous. If it takes 10s of
-        # seconds, there a bug in intuit_start.
-        # (this test doesn't actually test for slowness - that involves
-        # too much danger of false positives on loaded machines - but by
-        # putting it here, hopefully someone might notice if it suddenly
-        # runs slowly)
-        my $s = ('a' x 1_000_000) . 'b';
-        my $i = 0;
-        for (1..10_000) {
-            pos($s) = $_;
-            $i++ if $s =~/\Gb/g;
+    SKIP: {   # Test literal range end point special handling
+        unless ($::IS_EBCDIC) {
+            skip "Valid only for EBCDIC", 24;
         }
-        is($i, 0, "RT 120446: mustn't run slowly");
-    }
 
-    {
-        # [perl #120692]
-        # these tests should be virtually instantaneous. If they take 10s of
-        # seconds, there's a bug in intuit_start.
+        like("\x89", qr/[i-j]/, '"\x89" should match [i-j]');
+        unlike("\x8A", qr/[i-j]/, '"\x8A" shouldnt match [i-j]');
+        unlike("\x90", qr/[i-j]/, '"\x90" shouldnt match [i-j]');
+        like("\x91", qr/[i-j]/, '"\x91" should match [i-j]');
 
-        my $s = 'ab' x 1_000_000;
-        utf8::upgrade($s);
-        1 while $s =~ m/\Ga+ba+b/g;
-        pass("RT#120692 \\G mustn't run slowly");
+        like("\x89", qr/[i-\N{LATIN SMALL LETTER J}]/, '"\x89" should match [i-\N{LATIN SMALL LETTER J}]');
+        unlike("\x8A", qr/[i-\N{LATIN SMALL LETTER J}]/, '"\x8A" shouldnt match [i-\N{LATIN SMALL LETTER J}]');
+        unlike("\x90", qr/[i-\N{LATIN SMALL LETTER J}]/, '"\x90" shouldnt match [i-\N{LATIN SMALL LETTER J}]');
+        like("\x91", qr/[i-\N{LATIN SMALL LETTER J}]/, '"\x91" should match [i-\N{LATIN SMALL LETTER J}]');
 
-        $s=~ /^a{1,2}x/ for  1..10_000;
-        pass("RT#120692 a{1,2} mustn't run slowly");
+        like("\x89", qr/[i-\N{U+6A}]/, '"\x89" should match [i-\N{U+6A}]');
+        unlike("\x8A", qr/[i-\N{U+6A}]/, '"\x8A" shouldnt match [i-\N{U+6A}]');
+        unlike("\x90", qr/[i-\N{U+6A}]/, '"\x90" shouldnt match [i-\N{U+6A}]');
+        like("\x91", qr/[i-\N{U+6A}]/, '"\x91" should match [i-\N{U+6A}]');
 
-        $s=~ /ab.{1,2}x/;
-        pass("RT#120692 ab.{1,2} mustn't run slowly");
+        like("\x89", qr/[\N{U+69}-\N{U+6A}]/, '"\x89" should match [\N{U+69}-\N{U+6A}]');
+        unlike("\x8A", qr/[\N{U+69}-\N{U+6A}]/, '"\x8A" shouldnt match [\N{U+69}-\N{U+6A}]');
+        unlike("\x90", qr/[\N{U+69}-\N{U+6A}]/, '"\x90" shouldnt match [\N{U+69}-\N{U+6A}]');
+        like("\x91", qr/[\N{U+69}-\N{U+6A}]/, '"\x91" should match [\N{U+69}-\N{U+6A}]');
 
-        $s = "-a-bc" x 250_000;
-        $s .= "1a1bc";
-        utf8::upgrade($s);
-        ok($s =~ /\da\d{0,30000}bc/, "\\d{30000}");
+        like("\x89", qr/[i-\x{91}]/, '"\x89" should match [i-\x{91}]');
+        like("\x8A", qr/[i-\x{91}]/, '"\x8A" should match [i-\x{91}]');
+        like("\x90", qr/[i-\x{91}]/, '"\x90" should match [i-\x{91}]');
+        like("\x91", qr/[i-\x{91}]/, '"\x91" should match [i-\x{91}]');
 
-        $s = "-ab\n" x 250_000;
-        $s .= "abx";
-        ok($s =~ /^ab.*x/m, "distant float with /m");
-
-        my $r = qr/^abcd/;
-        $s = "abcd-xyz\n" x 500_000;
-        $s =~ /$r\d{1,2}xyz/m for 1..200;
-        pass("BOL within //m  mustn't run slowly");
-
-        $s = "abcdefg" x 1_000_000;
-        $s =~ /(?-m:^)abcX?fg/m for 1..100;
-        pass("BOL within //m  mustn't skip absolute anchored check");
-
-        $s = "abcdefg" x 1_000_000;
-        $s =~ /^XX\d{1,10}cde/ for 1..100;
-        pass("abs anchored float string should fail quickly");
-
+        # Need to use eval, because tries to compile on ASCII platforms even
+        # though the tests are skipped, and fails because 0x89-j is an illegal
+        # range there.
+        like("\x89", eval 'qr/[\x{89}-j]/', '"\x89" should match [\x{89}-j]');
+        like("\x8A", eval 'qr/[\x{89}-j]/', '"\x8A" should match [\x{89}-j]');
+        like("\x90", eval 'qr/[\x{89}-j]/', '"\x90" should match [\x{89}-j]');
+        like("\x91", eval 'qr/[\x{89}-j]/', '"\x91" should match [\x{89}-j]');
     }
 
     # These are based on looking at the code in regcomp.c
@@ -1570,7 +1529,7 @@ EOP
                             qr/\d?c/d
                             qr/\w?c/l
                             qr/\s?c/a
-                            qr/[[:alpha:]]?c/u
+                            qr/[[:lower:]]?c/u
     )) {
       SKIP: {
         skip "no re-debug under miniperl" if is_miniperl;
@@ -1586,12 +1545,78 @@ EOP
         like "\x{AA}", qr/a?[\W_]/d, "\\W with /d synthetic start class works";
     }
 
+    SKIP: {
+        skip("Tests are ASCII-centric, some would fail on EBCDIC", 12) if $::IS_EBCDIC;
 
+        # Verify that the very last Latin-1 U+00FF
+        # (LATIN SMALL LETTER Y WITH DIAERESIS)
+        # and its UPPER counterpart (U+0178 which is pure Unicode),
+        # and likewise for the very first pure Unicode
+        # (LATIN CAPITAL LETTER A WITH MACRON) fold-match properly,
+        # and there are no off-by-one logic errors in the transition zone.
+
+        ok("\xFF" =~ /\xFF/i, "Y WITH DIAERESIS l =~ l");
+        ok("\xFF" =~ /\x{178}/i, "Y WITH DIAERESIS l =~ u");
+        ok("\x{178}" =~ /\xFF/i, "Y WITH DIAERESIS u =~ l");
+        ok("\x{178}" =~ /\x{178}/i, "Y WITH DIAERESIS u =~ u");
+
+        # U+00FF with U+05D0 (non-casing Hebrew letter).
+        ok("\xFF\x{5D0}" =~ /\xFF\x{5D0}/i, "Y WITH DIAERESIS l =~ l");
+        ok("\xFF\x{5D0}" =~ /\x{178}\x{5D0}/i, "Y WITH DIAERESIS l =~ u");
+        ok("\x{178}\x{5D0}" =~ /\xFF\x{5D0}/i, "Y WITH DIAERESIS u =~ l");
+        ok("\x{178}\x{5D0}" =~ /\x{178}\x{5D0}/i, "Y WITH DIAERESIS u =~ u");
+
+        # U+0100.
+        ok("\x{100}" =~ /\x{100}/i, "A WITH MACRON u =~ u");
+        ok("\x{100}" =~ /\x{101}/i, "A WITH MACRON u =~ l");
+        ok("\x{101}" =~ /\x{100}/i, "A WITH MACRON l =~ u");
+        ok("\x{101}" =~ /\x{101}/i, "A WITH MACRON l =~ l");
+    }
+
+    {
+        use utf8;
+        ok("abc" =~ /abc/x, "NEL is white-space under /x");
+    }
+
+    {
+        ok('a(b)c' =~ qr(a\(b\)c), "'\\(' is a literal in qr(...)");
+        ok('a[b]c' =~ qr[a\[b\]c], "'\\[' is a literal in qr[...]");
+        ok('a{3}c' =~ qr{a\{3\}c},  # Only failed when { could be a meta
+              "'\\{' is a literal in qr{...}, where it could be a quantifier");
+
+        # This one is for completeness
+        ok('a<b>c' =~ qr<a\<b\>c>, "'\\<' is a literal in qr<...>)");
+    }
 
     {   # Was getting optimized into EXACT (non-folding node)
         my $x = qr/[x]/i;
         utf8::upgrade($x);
         like("X", qr/$x/, "UTF-8 of /[x]/i matches upper case");
+    }
+
+    {   # make sure we get an error when \p{} cannot load Unicode tables
+        fresh_perl_like(<<'        prog that cannot load uni tables',
+            BEGIN {
+                @INC = '../lib';
+                require utf8; require 'utf8_heavy.pl';
+                @INC = ();
+            }
+            $name = 'A B';
+            if ($name =~ /(\p{IsUpper}) (\p{IsUpper})/){
+                print "It's good! >$1< >$2<\n";
+            } else {
+                print "It's not good...\n";
+            }
+        prog that cannot load uni tables
+                  qr/^Can't locate unicore\/Heavy\.pl(?x:
+                   )|^Can't find Unicode property definition/,
+                  undef,
+                 '\p{} should not fail silently when uni tables evanesce');
+    }
+
+    {   # Special handling of literal-ended ranges in [...] was breaking this
+        use utf8;
+        like("ÿ", qr/[ÿ-ÿ]/, "\"ÿ\" should match [ÿ-ÿ]");
     }
 
     {	# [perl #123539]
@@ -1609,13 +1634,57 @@ EOP
 		ok($match, "[bbb...] resolved as character class, not subscript");
 	}
 
+	{	# [perl #123755]
+		for my $pat ('(??', '(?P', '(?i-') {
+			eval qq{ qr/$pat/ };
+			ok(1, "qr/$pat/ did not crash");
+			eval qq{ qr/${pat}\x{123}/ };
+			my $e = $@;
+			like($e, qr{\x{123}},
+				"qr/${pat}x/ shows x in error even if it's a wide character");
+		}
+	}
+
+	{
+		# Expect one of these sizes to cause overflow and wrap to negative
+		for my $bits (32, 64) {
+			my $wrapneg = 2 ** ($bits - 2) * 3;
+			for my $sign ('', '-') {
+				my $pat = sprintf "qr/(?%s%u)/", $sign, $wrapneg;
+				eval $pat;
+				ok(1, "big backref $pat did not crash");
+			}
+		}
+	}
+        {
+            # Test that we handle qr/\8888888/ and variants without an infinite loop,
+            # we use a test within a test so we can todo it, and make sure we don't
+            # infinite loop our tests.
+            # NOTE - Do not put quotes in the code!
+            # NOTE - We have to triple escape the backref in the pattern below.
+            my $code='
+                BEGIN{require q(test.pl);}
+                watchdog(3);
+                for my $len (1 .. 20) {
+                    my $eights= q(8) x $len;
+                    eval qq{ qr/\\\\$eights/ };
+                }
+                print q(No infinite loop here!);
+            ';
+            fresh_perl_is($code, "No infinite loop here!", {},
+                "test that we handle things like m/\\888888888/ without infinite loops" );
+        }
+
         {   # Test that we handle some malformed UTF-8 without looping [perl
             # #123562]
 
             my $code='
                 BEGIN{require q(test.pl);}
                 use Encode qw(_utf8_on);
-                my $malformed = "a\x80\n";
+                # \x80 and \x41 are continuation bytes in their respective
+                # character sets
+                my $malformed = (ord("A") == 65) ? "a\x80\n" : "a\x41\n";
+                utf8::downgrade($malformed);
                 _utf8_on($malformed);
                 watchdog(3);
                 $malformed =~ /(\n\r|\r)$/;
@@ -1623,6 +1692,71 @@ EOP
             ';
             fresh_perl_like($code, qr/Malformed UTF-8 character/, {},
                 "test that we handle some UTF-8 malformations without looping" );
+        }
+
+	{
+		# [perl #123843] hits SEGV trying to compile this pattern
+		my $match;
+		eval q{ ($match) = ("xxyxxyxy" =~ m{(x+(y(?1))*)}) };
+		ok(1, "compiled GOSUB in CURLYM ok");
+		is($match, 'xxyxxyx', "matched GOSUB in CURLYM");
+	}
+
+	{
+		# [perl #123852] doesn't avoid all the capture-related work with
+		# //n, leading to possible memory corruption
+		eval q{ qr{()(?1)}n };
+		my $error = $@;
+		ok(1, "qr{()(?1)}n didn't crash");
+		like($error, qr{Reference to nonexistent group},
+				'gave appropriate error for qr{()(?1)}n');
+	}
+
+	{
+            # [perl #126406] panic with unmatchable quantifier
+            my $code='
+                no warnings "regexp";
+                "" =~ m/(.0\N{6,0}0\N{6,0}000000000000000000000000000000000)/;
+            ';
+            fresh_perl_is($code, "", {},
+                            "perl [#126406] panic");
+	}
+        {
+            my $bug="[perl #126182]"; # test for infinite pattern recursion
+            for my $tuple (
+                    [ 'q(a)=~/(.(?2))((?<=(?=(?1)).))/', "died", "look ahead left recursion fails fast" ],
+                    [ 'q(aa)=~/(?R)a/', "died", "left-recursion fails fast", ],
+                    [ 'q(bbaa)=~/(?&x)(?(DEFINE)(?<x>(?&y)*a)(?<y>(?&x)*b))/',
+                        "died", "inter-cyclic optional left recursion dies" ],
+                    [ 'q(abc) =~ /a((?1)?)c/', "died", "optional left recursion dies" ],
+                    [ 'q(abc) =~ /a((?1)??)c/', "died", "min mod left recursion dies" ],
+                    [ 'q(abc) =~ /a((?1)*)c/', "died", "* left recursion dies" ],
+                    [ 'q(abc) =~ /a((?1)+)c/', "died", "+ left recursion dies" ],
+                    [ 'q(abc) =~ /a((?1){0,3})c/', "died", "{0,3} left recursion fails fast" ],
+
+                    [ 'q(aaabbb)=~/a(?R)?b/', "matched", "optional self recursion works" ],
+                    [ '"((5maa-maa)(maa-3maa))" =~ /(\\\\((?:[^()]++|(?0))*+\\\\))/', "matched",
+                        "recursion and possessive captures", "((5maa-maa)(maa-3maa))"],
+                    [ '"((5maa-maa)(maa-3maa))" =~ /(\\\\((?:[^()]++|(?1))*+\\\\))/', "matched",
+                        "recursion and possessive captures", "((5maa-maa)(maa-3maa))"],
+                    [ '"((5maa-maa)(maa-3maa))" =~ /(\\\\((?:[^()]+|(?0))*\\\\))/', "matched",
+                        "recursion and possessive captures", "((5maa-maa)(maa-3maa))"],
+                    [ '"((5maa-maa)(maa-3maa))" =~ /(\\\\((?:[^()]+|(?1))*\\\\))/', "matched",
+                        "recursion and possessive captures", "((5maa-maa)(maa-3maa))"],
+            ) {
+                my ($expr, $expect, $test_name, $cap1)= @$tuple;
+                # avoid quotes in this code!
+                my $code='
+                    BEGIN{require q(test.pl);}
+                    watchdog(3);
+                    my $status= eval(q{ !(' . $expr . ') ? q(failed) : ' .
+                        ($cap1 ? '($1 ne q['.$cap1.']) ? qq(badmatch:$1) : ' : '') .
+                        ' q(matched) })
+                                || ( ( $@ =~ /Infinite recursion/ ) ? qq(died) : q(strange-death) );
+                    print $status;
+                ';
+                fresh_perl_is($code, $expect, {}, "$bug - $test_name" );
+            }
         }
 } # End of sub run_tests
 

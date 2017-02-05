@@ -12,7 +12,7 @@ use warnings;
 
 # mro.pm versions < 1.00 reserved for MRO::Compat
 #  for partial back-compat to 5.[68].x
-our $VERSION = '1.16';
+our $VERSION = '1.18';
 
 sub import {
     mro::set_mro(scalar(caller), $_[1]) if $_[1];

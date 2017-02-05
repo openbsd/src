@@ -7,7 +7,7 @@
 # it probably needs expanding at some point to cover other stuff.
 
 BEGIN {
-    chdir 't';
+    chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
 }

@@ -37,6 +37,7 @@ STMT_END
 UTF8_MAXBYTES
 WIDEST_UTYPE
 XSRETURN
+HeUTF8
 
 =implementation
 
@@ -271,7 +272,11 @@ __UNDEFINED__ isXDIGIT(c)       isxdigit(c)
 # endif
 
 #ifdef HAS_QUAD
-# define WIDEST_UTYPE U64TYPE
+# ifdef U64TYPE
+#  define WIDEST_UTYPE U64TYPE
+# else
+#  define WIDEST_UTYPE Quad_t
+# endif
 #else
 # define WIDEST_UTYPE U32
 #endif
@@ -285,6 +290,15 @@ __UNDEFINED__ isPUNCT(c)        (((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <
 __UNDEFINED__ isXDIGIT(c)       (isDIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #endif
 
+/* Until we figure out how to support this in older perls... */
+#if { VERSION >= 5.8.0 }
+
+__UNDEFINED__ HeUTF8(he)        ((HeKLEN(he) == HEf_SVKEY) ?            \
+                                 SvUTF8(HeKEY_sv(he)) :                 \
+                                 (U32)HeKUTF8(he))
+
+#endif
+
 =xsmisc
 
 typedef XSPROTO(XSPROTO_test_t);
@@ -296,6 +310,8 @@ XS(XS_Devel__PPPort_dXSTARG)
   dXSARGS;
   dXSTARG;
   IV iv;
+
+  PERL_UNUSED_VAR(cv);
   SP -= items;
   iv = SvIV(ST(0)) + 1;
   PUSHi(iv);
@@ -309,6 +325,8 @@ XS(XS_Devel__PPPort_dAXMARK)
   dAXMARK;
   dITEMS;
   IV iv;
+
+  PERL_UNUSED_VAR(cv);
   SP -= items;
   iv = SvIV(ST(0)) - 1;
   mPUSHi(iv);
@@ -485,7 +503,33 @@ Perl_ppaddr_t(string)
                 LEAVE;
                 XSRETURN(1);
 
-=tests plan => 39
+#if { VERSION >= 5.8.0 }
+
+void
+check_HeUTF8(utf8_key)
+        SV *utf8_key;
+        PREINIT:
+                HV *hash;
+                HE *ent;
+                STRLEN klen;
+                char *key;
+        PPCODE:
+                hash = newHV();
+
+                key = SvPV(utf8_key, klen);
+                if (SvUTF8(utf8_key)) klen *= -1;
+                hv_store(hash, key, klen, newSVpvs("string"), 0);
+                hv_iterinit(hash);
+                ent = hv_iternext(hash);
+                if (ent) {
+                    mXPUSHp((HeUTF8(ent) == 0 ? "norm" : "utf8"), 4);
+                }
+                hv_undef(hash);
+
+
+#endif
+
+=tests plan => 41
 
 use vars qw($my_sv @my_av %my_hv);
 
@@ -496,7 +540,7 @@ $_ = "Fred";
 ok(&Devel::PPPort::DEFSV(), "Fred");
 ok(&Devel::PPPort::UNDERBAR(), "Fred");
 
-if ($] >= 5.009002) {
+if ($] >= 5.009002 && $] < 5.023) {
   eval q{
     no warnings "deprecated";
     no if $^V > v5.17.9, warnings => "experimental::lexical_topic";
@@ -565,3 +609,13 @@ ok(Devel::PPPort::SVf('abc'), $] >= 5.004 ? '[abc]' : 'abc');
 ok(&Devel::PPPort::Perl_ppaddr_t("FOO"), "foo");
 
 ok(&Devel::PPPort::ptrtests(), 63);
+
+if ($] >= 5.009000) {
+  eval q{
+    ok(&Devel::PPPort::check_HeUTF8("hello"), "norm");
+    ok(&Devel::PPPort::check_HeUTF8("\N{U+263a}"), "utf8");
+  };
+} else {
+  ok(1, 1);
+  ok(1, 1);
+}

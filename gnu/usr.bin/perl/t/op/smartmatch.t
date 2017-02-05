@@ -1,14 +1,16 @@
 #!./perl
 
 BEGIN {
-    chdir 't';
-    @INC = '../lib';
+    chdir 't' if -d 't';
     require './test.pl';
+    set_up_inc('../lib');
 }
 use strict;
 use warnings;
 no warnings 'uninitialized';
 no warnings 'experimental::smartmatch';
+
+++$|;
 
 use Tie::Array;
 use Tie::Hash;
@@ -74,7 +76,7 @@ my %keyandmore = map { $_ => 0 } @keyandmore;
 my %fooormore = map { $_ => 0 } @fooormore;
 
 # Load and run the tests
-plan tests => 349;
+plan tests => 349+2;
 
 while (<DATA>) {
   SKIP: {
@@ -130,6 +132,55 @@ sub fatal {die "fatal sub\n"}
 sub FALSE() { 0 }
 sub TRUE() { 1 }
 sub NOT_DEF() { undef }
+
+{
+  # [perl #123860]
+  # this can but might not crash
+  # This can but might not crash
+  #
+  # The second smartmatch would leave a &PL_sv_no on the stack for
+  # each key it checked in %!, this could then cause various types of
+  # crash or assertion failure.
+  #
+  # This isn't guaranteed to crash, but if the stack issue is
+  # re-introduced it will probably crash in one of the many smoke
+  # builds.
+  fresh_perl_is('print (q(x) ~~ q(x)) | (/x/ ~~ %!)', "1",
+		{ switches => [ "-MErrno", "-M-warnings=experimental::smartmatch" ] },
+		 "don't fill the stack with rubbish");
+}
+
+{
+    # [perl #123860] continued;
+    # smartmatch was failing to SPAGAIN after pushing an SV and calling
+    # pp_match, which may have resulted in the stack being realloced
+    # in the meantime. Test this by filling the stack with pregressively
+    # larger amounts of data. At some point the stack will get realloced.
+    my @a = qw(x);
+    my %h = qw(x 1);
+    my @args;
+    my $x = 1;
+    my $bad = -1;
+    for (1..1000)  {
+        push @args, $_;
+        my $exp_n  = join '-',  (@args, $x == 0);
+        my $exp_y  = join '-',  (@args, $x == 1);
+
+        my $got_an = join '-',  (@args, (/X/ ~~ @a));
+        my $got_ay = join '-',  (@args, (/x/ ~~ @a));
+        my $got_hn = join '-',  (@args, (/X/ ~~ %h));
+        my $got_hy = join '-',  (@args, (/x/ ~~ %h));
+
+        if (   $exp_n ne $got_an || $exp_n ne $got_hn
+            || $exp_y ne $got_ay || $exp_y ne $got_hy
+        ) {
+            $bad = $_;
+            last;
+        }
+    }
+    is($bad, -1, "RT 123860: stack realloc");
+}
+
 
 # Prefix character :
 #   - expected to match

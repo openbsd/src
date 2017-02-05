@@ -496,14 +496,19 @@ For packing floating point numbers you have the choice between the
 pack codes C<f>, C<d>, C<F> and C<D>. C<f> and C<d> pack into (or unpack
 from) single-precision or double-precision representation as it is provided
 by your system. If your systems supports it, C<D> can be used to pack and
-unpack extended-precision floating point values (C<long double>), which
-can offer even more resolution than C<f> or C<d>. C<F> packs an C<NV>,
-which is the floating point type used by Perl internally. (There
-is no such thing as a network representation for reals, so if you want
-to send your real numbers across computer boundaries, you'd better stick
-to ASCII representation, unless you're absolutely sure what's on the other
-end of the line. For the even more adventuresome, you can use the byte-order
-modifiers from the previous section also on floating point codes.)
+unpack (C<long double>) values, which can offer even more resolution
+than C<f> or C<d>.  B<Note that there are different long double formats.>
+
+C<F> packs an C<NV>, which is the floating point type used by Perl
+internally.
+
+There is no such thing as a network representation for reals, so if
+you want to send your real numbers across computer boundaries, you'd
+better stick to text representation, possibly using the hexadecimal
+float format (avoiding the decimal conversion loss), unless you're
+absolutely sure what's on the other end of the line. For the even more
+adventuresome, you can use the byte-order modifiers from the previous
+section also on floating point codes.
 
 
 

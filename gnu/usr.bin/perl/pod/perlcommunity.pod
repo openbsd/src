@@ -61,14 +61,22 @@ websites, so only a few of the community's largest are mentioned here.
 
 =item L<http://perl.com/>
 
-Run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>, among other
-Perl-related literature), perl.com provides current Perl news, articles, and
-resources for Perl developers as well as a directory of other useful websites.
+Originally run by O'Reilly Media (the publisher of L<the Camel Book|perlbook>,
+this site provides quality articles mostly about technical details of Perl.
 
 =item L<http://blogs.perl.org/>
 
 Many members of the community have a Perl-related blog on this site. If
 you'd like to join them, you can sign up for free.
+
+=item L<http://perlsphere.net/>
+
+Perlsphere is one of several aggregators of Perl-related blog feeds.
+
+=item L<http://perlweekly.com/>
+
+Perl Weekly is a weekly mailing list that keeps you up to date on conferences,
+releases and notable blog posts.
 
 =item L<http://use.perl.org/>
 
@@ -94,6 +102,11 @@ community which allows everyone to grow and learn from each other."
 Stack Overflow is a free question-and-answer site for programmers. It's not
 focussed solely on Perl, but it does have an active group of users who do
 their best to help people with their Perl programming questions.
+
+=item L<http://prepan.org/>
+
+PrePAN is used as a place to discuss modules that you're considering uploading
+to the CPAN.  You can get feedback on their design before you upload.
 
 =back
 

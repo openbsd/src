@@ -156,7 +156,7 @@ sub corelist_delta {
   };
 
   my @unclaimedModules = qw/AnyDBM_File B B::Concise B::Deparse Benchmark Class::Struct Config::Extensions DB DBM_Filter Devel::Peek DirHandle DynaLoader English Errno ExtUtils::Embed ExtUtils::Miniperl ExtUtils::Typemaps ExtUtils::XSSymSet Fcntl File::Basename File::Compare File::Copy File::DosGlob File::Find File::Glob File::stat FileCache FileHandle FindBin GDBM_File Getopt::Std Hash::Util Hash::Util::FieldHash I18N::Langinfo IPC::Open3 NDBM_File ODBM_File Opcode PerlIO PerlIO::encoding PerlIO::mmap PerlIO::scalar PerlIO::via Pod::Functions Pod::Html POSIX SDBM_File SelectSaver Symbol Sys::Hostname Thread Tie::Array Tie::Handle Tie::Hash Tie::Hash::NamedCapture Tie::Memoize Tie::Scalar Tie::StdHandle Tie::SubstrHash Time::gmtime Time::localtime Time::tm Unicode::UCD UNIVERSAL User::grent User::pwent VMS::DCLsym VMS::Filespec VMS::Stdio XS::Typemap Win32CORE/;
-  my @unclaimedPragmata = qw/_charnames arybase attributes blib bytes charnames deprecate diagnostics encoding feature fields filetest inc::latest integer less locale mro open ops overload overloading re sigtrap sort strict subs utf8 vars vmsish/;
+  my @unclaimedPragmata = qw/arybase attributes blib bytes charnames deprecate diagnostics encoding feature fields filetest inc::latest integer less locale mro open ops overload overloading re sigtrap sort strict subs utf8 vars vmsish/;
   my @unclaimed = (@unclaimedModules, @unclaimedPragmata);
 
   my %distToModules = (
@@ -446,7 +446,7 @@ sub do_check {
   sub add_to_section {
     my ( $section, $data, $title ) = @_;
 
-    #undef is a valid version name in Module::CoreList so supress warnings about concatenating undef values
+    #undef is a valid version name in Module::CoreList so suppress warnings about concatenating undef values
     no warnings 'uninitialized';
     for ( values %{ $data->{$title} } ) {
       my ( $mod, $old_v, $new_v ) = @{$_};
@@ -479,7 +479,7 @@ sub do_check {
 
     # if we could not parse the module name, it will be uninitalized
     # in sort. This is not a problem as it will just result in these
-    # sections being placed near the begining of the section
+    # sections being placed near the beginning of the section
     no warnings 'uninitialized';
     $section->{items} =
       [ sort { lc $a->{name} cmp lc $b->{name} } @{ $section->{items} } ];

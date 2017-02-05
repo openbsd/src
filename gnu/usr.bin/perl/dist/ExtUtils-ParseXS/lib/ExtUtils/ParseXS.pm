@@ -11,7 +11,7 @@ use Symbol;
 
 our $VERSION;
 BEGIN {
-  $VERSION = '3.24_01';
+  $VERSION = '3.31';
 }
 use ExtUtils::ParseXS::Constants $VERSION;
 use ExtUtils::ParseXS::CountLines $VERSION;
@@ -579,7 +579,7 @@ EOF
           } );
         }
         else {
-          print "\t$class *";
+          print "\t" . map_type($self, "$class *");
           $self->{var_types}->{"THIS"} = "$class *";
           $self->generate_init( {
             type          => "$class *",
@@ -797,12 +797,15 @@ EOF
 #
 EOF
 
-    $self->{newXS} = "newXS";
     $self->{proto} = "";
-
+    unless($self->{ProtoThisXSUB}) {
+      $self->{newXS} = "newXS_deffile";
+      $self->{file} = "";
+    }
+    else {
     # Build the prototype string for the xsub
-    if ($self->{ProtoThisXSUB}) {
       $self->{newXS} = "newXSproto_portable";
+      $self->{file} = ", file";
 
       if ($self->{ProtoThisXSUB} eq 2) {
         # User has specified empty prototype
@@ -831,14 +834,14 @@ EOF
       foreach my $xname (sort keys %{ $self->{XsubAliases} }) {
         my $value = $self->{XsubAliases}{$xname};
         push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $self->{newXS}(\"$xname\", XS_$self->{Full_func_name}, file$self->{proto});
+#        cv = $self->{newXS}(\"$xname\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        XSANY.any_i32 = $value;
 EOF
       }
     }
     elsif (@{ $self->{Attributes} }) {
       push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}, file$self->{proto});
+#        cv = $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        apply_attrs_string("$self->{Package}", cv, "@{ $self->{Attributes} }", 0);
 EOF
     }
@@ -847,18 +850,18 @@ EOF
         my $value = $self->{Interfaces}{$yname};
         $yname = "$self->{Package}\::$yname" unless $yname =~ /::/;
         push(@{ $self->{InitFileCode} }, Q(<<"EOF"));
-#        cv = $self->{newXS}(\"$yname\", XS_$self->{Full_func_name}, file$self->{proto});
+#        cv = $self->{newXS}(\"$yname\", XS_$self->{Full_func_name}$self->{file}$self->{proto});
 #        $self->{interface_macro_set}(cv,$value);
 EOF
       }
     }
-    elsif($self->{newXS} eq 'newXS'){ # work around P5NCI's empty newXS macro
+    elsif($self->{newXS} eq 'newXS_deffile'){ # work around P5NCI's empty newXS macro
       push(@{ $self->{InitFileCode} },
-       "        $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}, file$self->{proto});\n");
+       "        $self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
     else {
       push(@{ $self->{InitFileCode} },
-       "        (void)$self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}, file$self->{proto});\n");
+       "        (void)$self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
   } # END 'PARAGRAPH' 'while' loop
 
@@ -876,7 +879,7 @@ EOF
     /* Making a sub named "$self->{Package}::()" allows the package */
     /* to be findable via fetchmethod(), and causes */
     /* overload::Overloaded("$self->{Package}") to return true. */
-    (void)$self->{newXS}("$self->{Package}::()", XS_$self->{Packid}_nil, file$self->{proto});
+    (void)$self->{newXS}("$self->{Package}::()", XS_$self->{Packid}_nil$self->{file}$self->{proto});
 MAKE_FETCHMETHOD_WORK
   }
 
@@ -891,11 +894,13 @@ EOF
   print Q(<<"EOF");
 #XS_EXTERNAL(boot_$self->{Module_cname}); /* prototype to pass -Wmissing-prototypes */
 #XS_EXTERNAL(boot_$self->{Module_cname})
-EOF
-
-  print Q(<<"EOF");
 #[[
+##if PERL_VERSION_LE(5, 21, 5)
 #    dVAR; dXSARGS;
+##else
+#    dVAR; ${\($self->{WantVersionChk} ?
+     'dXSBOOTARGSXSAPIVERCHK;' : 'dXSBOOTARGSAPIVERCHK;')}
+##endif
 EOF
 
   #Under 5.8.x and lower, newXS is declared in proto.h as expecting a non-const
@@ -909,6 +914,8 @@ EOF
 ##else
 #    const char* file = __FILE__;
 ##endif
+#
+#    PERL_UNUSED_VAR(file);
 EOF
 
   print Q("#\n");
@@ -916,15 +923,26 @@ EOF
   print Q(<<"EOF");
 #    PERL_UNUSED_VAR(cv); /* -W */
 #    PERL_UNUSED_VAR(items); /* -W */
-##ifdef XS_APIVERSION_BOOTCHECK
-#    XS_APIVERSION_BOOTCHECK;
-##endif
 EOF
 
-  print Q(<<"EOF") if $self->{WantVersionChk};
+  if( $self->{WantVersionChk}){
+    print Q(<<"EOF") ;
+##if PERL_VERSION_LE(5, 21, 5)
 #    XS_VERSION_BOOTCHECK;
-#
+##  ifdef XS_APIVERSION_BOOTCHECK
+#    XS_APIVERSION_BOOTCHECK;
+##  endif
+##endif
+
 EOF
+  } else {
+    print Q(<<"EOF") ;
+##if PERL_VERSION_LE(5, 21, 5) && defined(XS_APIVERSION_BOOTCHECK)
+#  XS_APIVERSION_BOOTCHECK;
+##endif
+
+EOF
+  }
 
   print Q(<<"EOF") if defined $self->{XsubAliases} or defined $self->{interfaces};
 #    {
@@ -960,14 +978,15 @@ EOF
   }
 
   print Q(<<'EOF');
-##if (PERL_REVISION == 5 && PERL_VERSION >= 9)
-#  if (PL_unitcheckav)
-#       call_list(PL_scopestack_ix, PL_unitcheckav);
-##endif
-EOF
-
-  print Q(<<"EOF");
+##if PERL_VERSION_LE(5, 21, 5)
+##  if PERL_VERSION_GE(5, 9, 0)
+#    if (PL_unitcheckav)
+#        call_list(PL_scopestack_ix, PL_unitcheckav);
+##  endif
 #    XSRETURN_YES;
+##else
+#    Perl_xs_boot_epilog(aTHX_ ax);
+##endif
 #]]
 #
 EOF
@@ -1322,7 +1341,7 @@ sub OVERLOAD_handler {
       $self->{Overload} = 1 unless $self->{Overload};
       my $overload = "$self->{Package}\::(".$1;
       push(@{ $self->{InitFileCode} },
-       "        (void)$self->{newXS}(\"$overload\", XS_$self->{Full_func_name}, file$self->{proto});\n");
+       "        (void)$self->{newXS}(\"$overload\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
   }
 }
@@ -1558,6 +1577,25 @@ sub QuoteArgs {
   return join (' ', ($cmd, @args));
 }
 
+# code copied from CPAN::HandleConfig::safe_quote
+#  - that has doc saying leave if start/finish with same quote, but no code
+# given text, will conditionally quote it to protect from shell
+{
+  my ($quote, $use_quote) = $^O eq 'MSWin32'
+      ? (q{"}, q{"})
+      : (q{"'}, q{'});
+  sub _safe_quote {
+      my ($self, $command) = @_;
+      # Set up quote/default quote
+      if (defined($command)
+          and $command =~ /\s/
+          and $command !~ /[$quote]/) {
+          return qq{$use_quote$command$use_quote}
+      }
+      return $command;
+  }
+}
+
 sub INCLUDE_COMMAND_handler {
   my $self = shift;
   $_ = shift;
@@ -1579,7 +1617,8 @@ sub INCLUDE_COMMAND_handler {
 
   # If $^X is used in INCLUDE_COMMAND, we know it's supposed to be
   # the same perl interpreter as we're currently running
-  s/^\s*\$\^X/$^X/;
+  my $X = $self->_safe_quote($^X); # quotes if has spaces
+  s/^\s*\$\^X/$X/;
 
   # open the new file
   open ($self->{FH}, "-|", $_)
@@ -1848,7 +1887,10 @@ sub generate_init {
 
   my $typem = $typemaps->get_typemap(ctype => $type);
   my $xstype = $typem->xstype;
-  $xstype =~ s/OBJ$/REF/ if $self->{func_name} =~ /DESTROY$/;
+  #this is an optimization from perl 5.0 alpha 6, class check is skipped
+  #T_REF_IV_REF is missing since it has no untyped analog at the moment
+  $xstype =~ s/OBJ$/REF/ || $xstype =~ s/^T_REF_IV_PTR$/T_PTRREF/
+    if $self->{func_name} =~ /DESTROY$/;
   if ($xstype eq 'T_PV' and exists $self->{lengthof}->{$var}) {
     print "\t$var" unless $printed_name;
     print " = ($type)SvPV($arg, STRLEN_length_of_$var);\n";
@@ -2002,36 +2044,78 @@ sub generate_output {
       print "\t\tSvSETMAGIC(ST(ix_$var));\n" if $do_setmagic;
     }
     elsif ($var eq 'RETVAL') {
+      my $orig_arg = $arg;
+      my $indent;
+      my $use_RETVALSV = 1;
+      my $do_mortal = 0;
+      my $do_copy_tmp = 1;
+      my $pre_expr;
+      local $eval_vars->{arg} = $arg = 'RETVALSV';
       my $evalexpr = $self->eval_output_typemap_code("qq\a$expr\a", $eval_vars);
+
       if ($expr =~ /^\t\Q$arg\E = new/) {
         # We expect that $arg has refcnt 1, so we need to
         # mortalize it.
-        print $evalexpr;
-        print "\tsv_2mortal(ST($num));\n";
-        print "\tSvSETMAGIC(ST($num));\n" if $do_setmagic;
+        $do_mortal = 1;
       }
       # If RETVAL is immortal, don't mortalize it. This code is not perfect:
       # It won't detect a func or expression that only returns immortals, for
       # example, this RE must be tried before next elsif.
       elsif ($evalexpr =~ /^\t\Q$arg\E\s*=\s*(boolSV\(|(&PL_sv_yes|&PL_sv_no|&PL_sv_undef)\s*;)/) {
-        print $evalexpr;
+        $do_copy_tmp = 0; #$arg will be a ST(X), no SV* RETVAL, no RETVALSV
+        $use_RETVALSV = 0;
       }
       elsif ($evalexpr =~ /^\s*\Q$arg\E\s*=/) {
         # We expect that $arg has refcnt >=1, so we need
         # to mortalize it!
-        print $evalexpr;
-        print "\tsv_2mortal(ST(0));\n";
-        print "\tSvSETMAGIC(ST(0));\n" if $do_setmagic;
+        $use_RETVALSV = 0 if $ntype eq "SVPtr";#reuse SV* RETVAL vs open new block
+        $do_mortal = 1;
       }
       else {
         # Just hope that the entry would safely write it
         # over an already mortalized value. By
-        # coincidence, something like $arg = &sv_undef
+        # coincidence, something like $arg = &PL_sv_undef
         # works too, but should be caught above.
-        print "\tST(0) = sv_newmortal();\n";
-        print $evalexpr;
+        $pre_expr = "RETVALSV = sv_newmortal();\n";
         # new mortals don't have set magic
+        $do_setmagic = 0;
       }
+      if($use_RETVALSV) {
+        print "\t{\n\t    SV * RETVALSV;\n";
+        $indent = "\t    ";
+      } else {
+        $indent = "\t";
+      }
+      print $indent.$pre_expr if $pre_expr;
+
+      if($use_RETVALSV) {
+        #take control of 1 layer of indent, may or may not indent more
+        $evalexpr =~ s/^(\t|        )/$indent/gm;
+        #"\t    \t" doesn't draw right in some IDEs
+        #break down all \t into spaces
+        $evalexpr =~ s/\t/        /g;
+        #rebuild back into \t'es, \t==8 spaces, indent==4 spaces
+        $evalexpr =~ s/        /\t/g;
+      }
+      else {
+        if($do_mortal || $do_setmagic) {
+        #typemap entry evaled with RETVALSV, if we aren't using RETVALSV replace
+          $evalexpr =~ s/RETVALSV/RETVAL/g; #all uses with RETVAL for prettier code
+        }
+        else { #if no extra boilerplate (no mortal, no set magic) is needed
+            #after $evalexport, get rid of RETVALSV's visual cluter and change
+          $evalexpr =~ s/RETVALSV/$orig_arg/g;#the lvalue to ST(X)
+        }
+      }
+      #stop "	RETVAL = RETVAL;" for SVPtr type
+      print $evalexpr if $evalexpr !~ /^\s*RETVAL = RETVAL;$/;
+      print $indent.'RETVAL'.($use_RETVALSV ? 'SV':'')
+            .' = sv_2mortal(RETVAL'.($use_RETVALSV ? 'SV':'').");\n" if $do_mortal;
+      print $indent.'SvSETMAGIC(RETVAL'.($use_RETVALSV ? 'SV':'').");\n" if $do_setmagic;
+      #dont do "RETVALSV = boolSV(RETVAL); ST(0) = RETVALSV;", it is visual clutter
+      print $indent."$orig_arg = RETVAL".($use_RETVALSV ? 'SV':'').";\n"
+        if $do_mortal || $do_setmagic || $do_copy_tmp;
+      print "\t}\n" if $use_RETVALSV;
     }
     elsif ($do_push) {
       print "\tPUSHs(sv_newmortal());\n";

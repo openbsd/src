@@ -220,6 +220,6 @@ foreach (qw/ EXPORT_LIST PERL_ARCHIVE PERL_ARCHIVE_AFTER /)
     $t->cflags();
 
     # Brief bug where CCFLAGS was being blown away
-    is( $t->{CCFLAGS}, '-DMY_THING',    'cflags retains CCFLAGS' );
+    like( $t->{CCFLAGS}, qr/\-DMY_THING/,    'cflags retains CCFLAGS' );
 }
 

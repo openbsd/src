@@ -593,6 +593,8 @@ void sendMTFValues ( EState* s )
    }
    AssertH( selCtr == nSelectors, 3007 );
 
+   (void)nBytes; /* only set, not used */
+
    if (s->verbosity >= 3)
       VPrintf1( "codes %d\n", s->numZ-nBytes );
 }

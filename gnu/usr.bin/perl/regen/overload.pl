@@ -3,7 +3,7 @@
 # Regenerate (overwriting only if changed):
 #
 #    overload.h
-#    overload.c
+#    overload.inc
 #    lib/overload/numbers.pm
 #
 # from information stored in the DATA section of this file.
@@ -34,7 +34,7 @@ my ($c, $h) = map {
     open_new($_, '>',
 	     { by => 'regen/overload.pl', file => $_, style => '*',
 	       copyright => [1997, 1998, 2000, 2001, 2005 .. 2007, 2011] });
-} 'overload.c', 'overload.h';
+} 'overload.inc', 'overload.h';
 
 mkdir("lib/overload", 0777) unless -d 'lib/overload';
 my $p = open_new('lib/overload/numbers.pm', '>',
@@ -178,13 +178,20 @@ rshift		(>>
 rshift_ass	(>>=
 band		(&
 band_ass	(&=
+sband		(&.
+sband_ass	(&.=
 bor		(|
 bor_ass		(|=
+sbor		(|.
+sbor_ass	(|.=
 bxor		(^
 bxor_ass	(^=
+sbxor		(^.
+sbxor_ass	(^.=
 ncmp		(<=>
 scmp		(cmp
 compl		(~
+scompl		(~.
 atan2		(atan2
 cos		(cos
 sin		(sin

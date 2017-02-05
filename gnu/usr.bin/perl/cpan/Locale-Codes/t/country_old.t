@@ -91,7 +91,7 @@ $tests = "
 
 gb
    ~
-   United Kingdom
+   United Kingdom of Great Britain and Northern Ireland
 
 rename_country x1 NewName ~ 0
 
@@ -103,7 +103,7 @@ rename_country gb NewName LOCALE_CODE_ALPHA_3 ~ 0
 
 gb
    ~
-   United Kingdom
+   United Kingdom of Great Britain and Northern Ireland
 
 rename_country gb NewName ~ 1
 

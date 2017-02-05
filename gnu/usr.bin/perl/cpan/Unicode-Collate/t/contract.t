@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..74\n"; }
+BEGIN { $| = 1; print "1..118\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -179,7 +179,9 @@ ok($kjeSup->eq("\x{40C}", "\x{41A}\x{301}"));
 # 44
 
 our $tibetanEntry = <<'ENTRIES';
-0000  ; [.0000.0000.0000.0000] # [0000] NULL (in 6429)
+0000           ; [.0000.0000.0000.0000] # [0000] NULL (in 6429)
+0FB2           ; [.205B.0020.0002.0FB2] # TIBETAN SUBJOINED LETTER RA
+0FB3           ; [.205E.0020.0002.0FB3] # TIBETAN SUBJOINED LETTER LA
 0F71           ; [.206D.0020.0002.0F71] # TIBETAN VOWEL SIGN AA
 0F72           ; [.206E.0020.0002.0F72] # TIBETAN VOWEL SIGN I
 0F73           ; [.206F.0020.0002.0F73] # TIBETAN VOWEL SIGN II
@@ -215,6 +217,7 @@ if (!$@) {
     my $tibNFD = Unicode::Collate->new(
 	table => undef,
 	entry => $tibetanEntry,
+	UCA_Version => 24,
     );
 
     # VOCALIC RR
@@ -251,8 +254,43 @@ if (!$@) {
     ok($tibNFD->eq("\x{F79}\0\x{334}", "\x{FB3}\x{F80}\x{F71}\0\x{334}"));
 # 72
 
+    my $a1 = "\x{FB2}\x{334}\x{F81}";
+    my $b1 = "\x{F77}\0\x{334}";
+    my $a2 = "\x{FB2}\x{334}\x{F81}";
+    my $b2 = "\x{FB2}\x{F80}\0\x{334}\x{F71}";
+
+    for my $v (qw/20 22 24 26 28/) {
+	my $tib = Unicode::Collate->new(
+	    table => undef,
+	    entry => $tibetanEntry,
+	    UCA_Version => $v,
+	);
+	my $long = 22 <= $v && $v <= 24;
+	ok($tib->cmp($a1, $b1), $long ? 0 : -1);
+	ok($tib->cmp($a2, $b2), $long ? 1 : 0);
+
+	$tib->change(long_contraction => 0);
+	ok($tib->cmp($a1, $b1), -1);
+	ok($tib->cmp($a2, $b2),  0);
+
+	$tib->change(long_contraction => 1);
+	ok($tib->cmp($a1, $b1), 0);
+	ok($tib->cmp($a2, $b2), 1);
+    }
+# 102
+
+    # UCA_Version => 22
+    ok($tibNFD->cmp($a1, $b1), 0);
+    ok($tibNFD->cmp($a2, $b2), 1);
+
+    $tibNFD->change(UCA_Version => 26); # not affect long_contraction
+    ok($tibNFD->cmp($a1, $b1), 0);
+    ok($tibNFD->cmp($a2, $b2), 1);
+# 106
+
     my $discontNFD = Unicode::Collate->new(
 	table => undef,
+	UCA_Version => 22,
 	entry => <<'ENTRIES',
 0000  ; [.0000.0000.0000.0000] # [0000] NULL (in 6429)
 0301  ; [.0000.0032.0002.0301] # COMBINING ACUTE ACCENT
@@ -265,9 +303,27 @@ if (!$@) {
 ENTRIES
     );
 
-    ok($discontNFD->eq("A\x{327}\x{301}\0\x{334}", "A\x{334}\x{327}\x{301}"));
-    ok($discontNFD->eq("A\x{300}\0\x{327}",        "A\x{327}\x{300}"));
+    ok($discontNFD->eq("A\x{334}\x{327}\x{301}", "A\x{327}\x{301}\0\x{334}"));
+    ok($discontNFD->eq("A\x{327}\x{300}",        "A\x{300}\0\x{327}"));
+
+    $discontNFD->change(long_contraction => 0);
+    ok($discontNFD->lt("A\x{334}\x{327}\x{301}", "A\x{327}\x{301}\0\x{334}"));
+    ok($discontNFD->eq("A\x{334}\x{327}\x{301}", "A\0\x{327}\x{301}\x{334}"));
+    ok($discontNFD->eq("A\x{327}\x{300}",        "A\x{300}\0\x{327}"));
+
+    $discontNFD->change(level => 1);
+    ok($discontNFD->gt("A\x{327}\x{300}", "A\x{327}\0\x{300}"));
+
+    # discontiguous
+    ok($discontNFD->lt("A\x{334}\x{327}\x{301}", "A\x{327}\x{301}\0\x{334}"));
+    ok($discontNFD->lt("A\x{334}\x{327}\x{301}", "A\x{300}"));
+    ok($discontNFD->eq("A\x{334}\x{327}\x{301}", "A"));
+
+    # contiguous
+    ok($discontNFD->eq("A\x{327}\x{301}", "A\x{327}\x{301}\0\x{334}"));
+    ok($discontNFD->lt("A\x{327}\x{301}", "A\x{300}"));
+    ok($discontNFD->gt("A\x{327}\x{301}", "A"));
 } else {
-    ok(1) for 1..30;
+    ok(1) for 1..74;
 }
-# 74
+# 118

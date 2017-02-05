@@ -14,7 +14,8 @@ WriteMakefile(
     VERSION_FROM => 'DynaLoader_pm.PL',
     PL_FILES	=> {'DynaLoader_pm.PL'=>'DynaLoader.pm'},
     PM		=> {'DynaLoader.pm' => '$(INST_LIBDIR)/DynaLoader.pm'},
-    depend      => {'DynaLoader$(OBJ_EXT)' => 'dlutils.c'},
+    depend      => {	'DynaLoader$(OBJ_EXT)' => 'dlutils.c',
+			'DynaLoader.c' => 'DynaLoader.xs'},
     clean	=> {FILES => 'DynaLoader.c DynaLoader.xs DynaLoader.pm'},
 );
 
@@ -64,8 +65,8 @@ sub MY::static {
 
     return "
 $object : \$(FIRST_MAKEFILE) \$(OBJECT)
-	#\$(RM_RF) $object
-	#\$(CP) \$(OBJECT) $object
+	\$(RM_RF) $object
+	\$(CP) \$(OBJECT) $object
 
 static :: $object
 ";

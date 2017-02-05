@@ -15,13 +15,11 @@ my @files = sort grep { /^\w/ } $data_dir->read;
 
 for my $f ( sort @files ) {
   my $path = File::Spec->catfile('t','data-fixable',$f);
-  my $meta = eval { CPAN::Meta->load_file( $path ) };
-  ok( defined $meta, "load_file('$f')" ) or diag $@;
+  ok( eval { CPAN::Meta->load_file( $path ) }, "load_file('$f')" ) or diag $@;
   my $string = _slurp($path);
   my $method =  $path =~ /\.json/ ? "load_json_string" : "load_yaml_string";
-  my $meta2 = eval { CPAN::Meta->$method( $string, { fix_errors => 1 } ) };
-  ok( defined $meta2, "$method(slurp('$f'))" ) or diag $@;
+  ok( eval { CPAN::Meta->$method( $string, { fix_errors => 1 } ) }, "$method(slurp('$f'))" ) or diag $@;
 }
 
 done_testing;
-
+# vim: ts=2 sts=2 sw=2 et:

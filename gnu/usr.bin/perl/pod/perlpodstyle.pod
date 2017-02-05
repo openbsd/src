@@ -280,16 +280,18 @@ The current version is always available from its web site at
 
 =head1 AUTHOR
 
-Russ Allbery <rra@stanford.edu>, with large portions of this documentation
+Russ Allbery <rra@cpan.org>, with large portions of this documentation
 taken from the documentation of the original B<pod2man> implementation by
 Larry Wall and Tom Christiansen.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010 Russ Allbery
-<rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2015 Russ Allbery
+<rra@cpan.org>
 
-This documentation is free software; you may redistribute it and/or modify
-it under the same terms as Perl itself.
+Copying and distribution of this file, with or without modification, are
+permitted in any medium without royalty provided the copyright notice and
+this notice are preserved.  This file is offered as-is, without any
+warranty.
 
 =cut

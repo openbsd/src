@@ -1,5 +1,4 @@
 5.010001
-HeUTF8                         # U
 croak_xs_usage                 # U
 mro_get_from_name              # U
 mro_get_private_data           # U

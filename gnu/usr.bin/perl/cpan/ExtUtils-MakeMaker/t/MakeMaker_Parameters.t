@@ -15,54 +15,52 @@ use Test::More;
 
 my $mm = bless {}, "MM";
 
-sub extract_params {
-    my $text = join "\n", @_;
-
-    $text =~ s{^\s* \# \s+ MakeMaker\ Parameters: \s*\n}{}x;
-    $text =~ s{^#}{}gms;
-    $text =~ s{\n}{,\n}g;
-
-    no strict 'subs';
-    return { eval "$text" };
+sub process_cmp {
+  my ($args, $expected, $label) = @_;
+  my $got = join '',
+    map "$_\n", $mm->_MakeMaker_Parameters_section($args || ());
+  $got =~ s/^#\s*MakeMaker Parameters:\n+//;
+  is $got, $expected, $label;
 }
 
-sub test_round_trip {
-    my $args = shift;
-    my $want = @_ ? shift : $args;
-
-    my $have = extract_params($mm->_MakeMaker_Parameters_section($args));
-
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
-    is_deeply $have, $want or diag explain $have, "\n", $want;
-}
-
-is join("", $mm->_MakeMaker_Parameters_section()), <<'EXPECT', "nothing";
-#   MakeMaker Parameters:
+process_cmp undef, '', 'nothing';
+process_cmp { NAME => "Foo" }, <<'EXPECT', "name only";
+#     NAME => q[Foo]
+EXPECT
+process_cmp
+  { NAME => "Foo", PREREQ_PM => { "Foo::Bar" => 0 } }, <<'EXPECT', "PREREQ v0";
+#     NAME => q[Foo]
+#     PREREQ_PM => { Foo::Bar=>q[0] }
+EXPECT
+process_cmp
+  { NAME => "Foo", PREREQ_PM => { "Foo::Bar" => 1.23 } },
+  <<'EXPECT', "PREREQ v-non-0";
+#     NAME => q[Foo]
+#     PREREQ_PM => { Foo::Bar=>q[1.23] }
 EXPECT
 
-test_round_trip({ NAME => "Foo" });
-test_round_trip({ NAME => "Foo", PREREQ_PM => { "Foo::Bar" => 0 } });
-test_round_trip({ NAME => "Foo", PREREQ_PM => { "Foo::Bar" => 1.23 } });
+process_cmp
+  {
+    NAME                => "Foo",
+    PREREQ_PM           => { "Foo::Bar" => 1.23 },
+    BUILD_REQUIRES      => { "Baz"      => 0.12 },
+  },
+  <<'EXPECT', "BUILD_REQUIRES";
+#     BUILD_REQUIRES => { Baz=>q[0.12] }
+#     NAME => q[Foo]
+#     PREREQ_PM => { Baz=>q[0.12], Foo::Bar=>q[1.23] }
+EXPECT
 
-# Test the special case for BUILD_REQUIRES
-{
-    my $have = {
-        NAME                => "Foo",
-        PREREQ_PM           => { "Foo::Bar" => 1.23 },
-        BUILD_REQUIRES      => { "Baz"      => 0.12 },
-    };
-
-    my $want = {
-        NAME                => "Foo",
-        PREREQ_PM           => {
-            "Foo::Bar"  => 1.23,
-            "Baz"       => 0.12,
-        },
-        BUILD_REQUIRES      => { "Baz"      => 0.12 },
-    };
-
-    test_round_trip( $have, $want );
-}
+process_cmp
+  {
+    NAME                => "Foo",
+    PREREQ_PM           => { "Foo::Bar" => 1.23, Long => 1.45, Short => 0 },
+    BUILD_REQUIRES      => { "Baz"      => 0.12 },
+  },
+  <<'EXPECT', "ensure sorting";
+#     BUILD_REQUIRES => { Baz=>q[0.12] }
+#     NAME => q[Foo]
+#     PREREQ_PM => { Baz=>q[0.12], Foo::Bar=>q[1.23], Long=>q[1.45], Short=>q[0] }
+EXPECT
 
 done_testing();
-

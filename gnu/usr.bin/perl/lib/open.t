@@ -5,6 +5,7 @@ BEGIN {
 	@INC = '../lib';
 	require Config; import Config;
 	require './test.pl';
+	require './charset_tools.pl';
 }
 
 plan 23;
@@ -181,8 +182,10 @@ EOE
     }
 }
 SKIP: {
-    skip("no perlio", 2) unless (find PerlIO::Layer 'perlio');
-    skip("no Encode", 2) unless $Config{extensions} =~ m{\bEncode\b};
+    skip("no perlio", 1) unless (find PerlIO::Layer 'perlio');
+    skip("no Encode", 1) unless $Config{extensions} =~ m{\bEncode\b};
+    skip("EBCDIC platform doesnt have 'use encoding' used by open ':locale'", 1)
+                                                                if $::IS_EBCDIC;
 
     eval q[use Encode::Alias;use open ":std", ":locale"];
     is($@, '', 'can use :std and :locale');
@@ -191,19 +194,25 @@ SKIP: {
 {
     local $ENV{PERL_UNICODE};
     delete $ENV{PERL_UNICODE};
+    local $TODO;
+    $TODO = "Encode not working on EBCDIC" if $::IS_EBCDIC;
     is runperl(
          progs => [
             'use open q\:encoding(UTF-8)\, q-:std-;',
             'use open q\:encoding(UTF-8)\;',
             'if(($_ = <STDIN>) eq qq-\x{100}\n-) { print qq-stdin ok\n- }',
             'else { print qq-got -, join(q q q, map ord, split//), "\n" }',
-            'print STDOUT qq-\x{ff}\n-;',
-            'print STDERR qq-\x{ff}\n-;',
+            'print STDOUT qq-\x{fe}\n-;',
+            'print STDERR qq-\x{fe}\n-;',
          ],
-         stdin => "\xc4\x80\n",
+         stdin => byte_utf8a_to_utf8n("\xc4\x80") . "\n",
          stderr => 1,
        ),
-       "stdin ok\n\xc3\xbf\n\xc3\xbf\n",
+       "stdin ok\n"
+        . byte_utf8a_to_utf8n("\xc3\xbe")
+        . "\n"
+        . byte_utf8a_to_utf8n("\xc3\xbe")
+        . "\n",
        "use open without :std does not affect standard handles",
     ;
 }

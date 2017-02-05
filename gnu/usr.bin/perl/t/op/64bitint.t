@@ -355,4 +355,109 @@ cmp_ok($q, '==', -9223372036854775806);
     unlike($q, qr/[e.]/, 'Should not be floating point');
 }
 
+# trigger various attempts to negate IV_MIN
+
+cmp_ok  0x8000000000000000 / -0x8000000000000000, '==', -1, '(IV_MAX+1) / IV_MIN';
+cmp_ok -0x8000000000000000 /  0x8000000000000000, '==', -1, 'IV_MIN / (IV_MAX+1)';
+cmp_ok  0x8000000000000000 / -1, '==', -0x8000000000000000, '(IV_MAX+1) / -1';
+cmp_ok                   0 % -0x8000000000000000, '==',  0, '0 % IV_MIN';
+cmp_ok -0x8000000000000000 % -0x8000000000000000, '==',  0, 'IV_MIN % IV_MIN';
+
+# check addition/subtraction with values 1 bit below max ranges
+{
+    my $a_3ff = 0x3fffffffffffffff;
+    my $a_400 = 0x4000000000000000;
+    my $a_7fe = 0x7ffffffffffffffe;
+    my $a_7ff = 0x7fffffffffffffff;
+    my $a_800 = 0x8000000000000000;
+
+    my $m_3ff = -$a_3ff;
+    my $m_400 = -$a_400;
+    my $m_7fe = -$a_7fe;
+    my $m_7ff = -$a_7ff;
+
+    cmp_ok $a_3ff, '==',  4611686018427387903, "1bit  a_3ff";
+    cmp_ok $m_3ff, '==', -4611686018427387903, "1bit -a_3ff";
+    cmp_ok $a_400, '==',  4611686018427387904, "1bit  a_400";
+    cmp_ok $m_400, '==', -4611686018427387904, "1bit -a_400";
+    cmp_ok $a_7fe, '==',  9223372036854775806, "1bit  a_7fe";
+    cmp_ok $m_7fe, '==', -9223372036854775806, "1bit -a_7fe";
+    cmp_ok $a_7ff, '==',  9223372036854775807, "1bit  a_7ff";
+    cmp_ok $m_7ff, '==', -9223372036854775807, "1bit -a_7ff";
+    cmp_ok $a_800, '==',  9223372036854775808, "1bit  a_800";
+
+    cmp_ok $a_3ff + $a_3ff, '==',  $a_7fe, "1bit  a_3ff +  a_3ff";
+    cmp_ok $m_3ff + $a_3ff, '==',       0, "1bit -a_3ff +  a_3ff";
+    cmp_ok $a_3ff + $m_3ff, '==',       0, "1bit  a_3ff + -a_3ff";
+    cmp_ok $m_3ff + $m_3ff, '==',  $m_7fe, "1bit -a_3ff + -a_3ff";
+
+    cmp_ok $a_3ff - $a_3ff, '==',       0, "1bit  a_3ff -  a_3ff";
+    cmp_ok $m_3ff - $a_3ff, '==',  $m_7fe, "1bit -a_3ff -  a_3ff";
+    cmp_ok $a_3ff - $m_3ff, '==',  $a_7fe, "1bit  a_3ff - -a_3ff";
+    cmp_ok $m_3ff - $m_3ff, '==',       0, "1bit -a_3ff - -a_3ff";
+
+    cmp_ok $a_3ff + $a_400, '==',  $a_7ff, "1bit  a_3ff +  a_400";
+    cmp_ok $m_3ff + $a_400, '==',       1, "1bit -a_3ff +  a_400";
+    cmp_ok $a_3ff + $m_400, '==',      -1, "1bit  a_3ff + -a_400";
+    cmp_ok $m_3ff + $m_400, '==',  $m_7ff, "1bit -a_3ff + -a_400";
+
+    cmp_ok $a_3ff - $a_400, '==',      -1, "1bit  a_3ff -  a_400";
+    cmp_ok $m_3ff - $a_400, '==',  $m_7ff, "1bit -a_3ff -  a_400";
+    cmp_ok $a_3ff - $m_400, '==',  $a_7ff, "1bit  a_3ff - -a_400";
+    cmp_ok $m_3ff - $m_400, '==',       1, "1bit -a_3ff - -a_400";
+
+    cmp_ok $a_400 + $a_3ff, '==',  $a_7ff, "1bit  a_400 +  a_3ff";
+    cmp_ok $m_400 + $a_3ff, '==',      -1, "1bit -a_400 +  a_3ff";
+    cmp_ok $a_400 + $m_3ff, '==',       1, "1bit  a_400 + -a_3ff";
+    cmp_ok $m_400 + $m_3ff, '==',  $m_7ff, "1bit -a_400 + -a_3ff";
+
+    cmp_ok $a_400 - $a_3ff, '==',       1, "1bit  a_400 -  a_3ff";
+    cmp_ok $m_400 - $a_3ff, '==',  $m_7ff, "1bit -a_400 -  a_3ff";
+    cmp_ok $a_400 - $m_3ff, '==',  $a_7ff, "1bit  a_400 - -a_3ff";
+    cmp_ok $m_400 - $m_3ff, '==',      -1, "1bit -a_400 - -a_3ff";
+}
+
+# check multiplication with values using approx half the total bits
+{
+    my $a  =         0xffffffff;
+    my $aa = 0xfffffffe00000001;
+    my $m  = -$a;
+    my $mm = -$aa;
+
+    cmp_ok $a,      '==',            4294967295, "halfbits   a";
+    cmp_ok $m,      '==',           -4294967295, "halfbits  -a";
+    cmp_ok $aa,     '==',  18446744065119617025, "halfbits  aa";
+    cmp_ok $mm,     '==', -18446744065119617025, "halfbits -aa";
+    cmp_ok $a * $a, '==',                   $aa, "halfbits  a *  a";
+    cmp_ok $m * $a, '==',                   $mm, "halfbits -a *  a";
+    cmp_ok $a * $m, '==',                   $mm, "halfbits  a * -a";
+    cmp_ok $m * $m, '==',                   $aa, "halfbits -a * -a";
+}
+
+# check multiplication where the 2 args multiply to 2^62 .. 2^65
+
+{
+    my $exp62 = (2**62);
+    my $exp63 = (2**63);
+    my $exp64 = (2**64);
+    my $exp65 = (2**65);
+    cmp_ok $exp62, '==',  4611686018427387904, "2**62";
+    cmp_ok $exp63, '==',  9223372036854775808, "2**63";
+    cmp_ok $exp64, '==', 18446744073709551616, "2**64";
+    cmp_ok $exp65, '==', 36893488147419103232, "2**65";
+
+    my @exp = ($exp62, $exp63, $exp64, $exp65);
+    for my $i (0..63) {
+        for my $x (0..3) {
+            my $j = 62 - $i + $x;
+            next if $j < 0 or $j > 63;
+
+            my $a = (1 << $i);
+            my $b = (1 << $j);
+            my $c = $a * $b;
+            cmp_ok $c, '==', $exp[$x], "(1<<$i) * (1<<$j)";
+        }
+    }
+}
+
 done_testing();

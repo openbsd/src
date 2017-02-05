@@ -75,10 +75,10 @@ EOF
 
 # Don't change this to add new bison versions without testing that the generated
 # files actually work :-) Win32 in particular may not like them. :-(
-unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567])\b/) { die <<EOF; }
+unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567]|3\.[0])\b/) { die <<EOF; }
 
-You have the wrong version of bison in your path; currently 1.875
-2.0, 2.1, 2.3, 2.4, 2.5, 2.6 or 2.7 is required.  Try installing
+You have the wrong version of bison in your path; currently versions
+1.875, 2.0-2.7 or 3.0 are known toi work.  Try installing
     http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz
 or similar.  Your bison identifies itself as:
 
@@ -118,6 +118,18 @@ unlink $tmpc_file;
 # C<#line 188 "perlytmp.h"> gets picked up by make depend, so remove them.
 
 open my $tmph_fh, '<', $tmph_file or die "Can't open $tmph_file: $!\n";
+
+# add integer-encoded #def of the bison version
+
+{
+    $version =~ /^(\d+)\.(\d+)/
+        or die "Can't handle bison version format: '$version'";
+    my ($v1,$v2) = ($1,$2);
+    die "Unexpectedly large bison version '$v1'"    if $v1 > 99;
+    die "Unexpectedly large bison subversion '$v2'" if $v2 > 9999;
+
+    printf $h_fh "#define PERL_BISON_VERSION %2d%04d\n\n", $v1, $v2;
+}
 
 my $endcore_done = 0;
 # Token macros need to be generated manually from bison 2.4 on
@@ -175,18 +187,21 @@ foreach ($act_fh, $tab_fh, $h_fh) {
 exit 0;
 
 
+# extract the tables and actions from the generated .c file
+
 sub extract {
     my $clines = shift;
     my $tablines;
     my $actlines;
 
+    my $last_table = $version >= 3 ? 'yyr2' : 'yystos';
     $clines =~ m@
 	(?:
 	    ^/* YYFINAL[^\n]+\n		#optional comment
 	)?
 	\# \s* define \s* YYFINAL	# first #define
 	.*?				# other defines + most tables
-	yystos\[\]\s*=			# start of last table
+	$last_table\[\]\s*=		# start of last table
 	.*?
 	}\s*;				# end of last table
     @xms
@@ -194,27 +209,12 @@ sub extract {
     $tablines = $&;
 
 
+    # extract all the cases in the big action switch statement
+
     $clines =~ m@
-	switch \s* \( \s* \w+ \s* \) \s* { \s*
-	(
-	    case \s* \d+ \s* :
-	    \s*
-	    (?: \s* /\* .*? \*/ \s* )*	# optional C-comments
-	    \s*
-	    \#line [^\n]+"\Q$y_file\E"
-	    .*?
-	)
-	}
-	\s*
-	(?: \s* /\* .*? \*/ \s* )*	# optional C-comments
-	\s*
-	(
-	    \#line[^\n]+\.c"
-	|
-	    \#line[^\n]+\.simple"
-	|
-	    YY_SYMBOL_PRINT
-	)
+	switch \s* \( \s* yyn \s* \) \s* { \s*
+            ( .*?  default: \s* break; \s* )
+        }
     @xms
 	or die "Can't extract actions from $tmpc_file\n";
     $actlines = $1;
@@ -272,7 +272,7 @@ sub make_type_tab {
     my $default_token;
     open my $fh, '<', $y_file or die "Can't open $y_file: $!\n";
     while (<$fh>) {
-	if (/(\$\d+)\s*=/) {
+	if (/(\$\d+)\s*=[^=]/) {
 	    warn "$y_file:$.: dangerous assignment to $1: $_";
 	}
 
@@ -311,7 +311,7 @@ sub make_type_tab {
 		{ "toketype_" .
 		    (defined $tokens{$1} ? $tokens{$1} : $default_token)
 		}ge;
-    $fields =~ s/, \s* (?:0|YY_NULL) \s* $//x
+    $fields =~ s/, \s* (?:0|YY_NULL|YY_NULLPTR) \s* $//x
 	or die "make_type_tab: couldn't delete trailing ',0'\n";
 
     return 
@@ -326,6 +326,9 @@ sub make_type_tab {
 
 
 sub my_system {
+    if ($Verbose) {
+        print "executing: @_\n";
+    }
     system(@_);
     if ($? == -1) {
 	die "failed to execute command '@_': $!\n";

@@ -22,11 +22,83 @@ September, December). I will also check on request, so if a code
 changes that you use, feel free to contact me.  Any time there are new
 codes, I will add them to the module and release a new version.
 
-=head1 VERSION 3.33  (planned 2014-12-01; sbeck)
+=head1 VERSION 3.41  (planned 2016-12-01; sbeck)
 
-=head1 VERSION 3.32  (planned 2014-09-01; sbeck)
+=head1 VERSION 3.40  (planned 2016-09-01; sbeck)
 
-=head1 VERSION 3.31  (planned 2014-06-01; sbeck)
+=head1 VERSION 3.39  (planned 2016-06-01; sbeck)
+
+=head1 VERSION 3.38  (planned 2016-03-01; sbeck)
+
+=head1 VERSION 3.37  (2015-12-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.36  (2015-09-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<(!) Removed alias_code function>
+
+The alias_code function was preserved for backward compatibility, but
+has been deprecated since 3.20.  It has been removed.
+
+=back
+
+=head1 VERSION 3.35  (2015-06-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Documentation improvements>
+
+Many changes to the formatting in the documentation to improve it.  Suggested
+by Pete Houston.
+
+=back
+
+=head1 VERSION 3.34  (2015-03-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.33  (2014-12-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Filled out LOCALE_LANG_TERM codeset>
+
+The terminologic language codes only included codes from languages where
+the ISO specified both a bibliographic code and a terminologic code.  If
+both are not specified, the better solution was to use the code for both
+code sets.  Prompted by a suggestion by Jarkko Hietaniemi.
+
+=item B<Moved repository to GitHub>
+
+Suggested by Gabor Szabo.
+
+=back
+
+=head1 VERSION 3.32  (2014-09-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.31  (2014-06-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Bug fixes>
+
+Fixed a bug in the scripts used to extract data from spreadsheets
+that prevented the SHP currency code from being found.  RT 94229
+
+=back
 
 =head1 VERSION 3.30  (2014-03-04; sbeck)
 
@@ -700,7 +772,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 =head1 COPYRIGHT
 
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2014 Sullivan Beck
+   Copyright (c) 2010-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

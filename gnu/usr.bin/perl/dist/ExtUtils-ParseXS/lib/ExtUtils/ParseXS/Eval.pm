@@ -2,7 +2,7 @@ package ExtUtils::ParseXS::Eval;
 use strict;
 use warnings;
 
-our $VERSION = '3.24_01';
+our $VERSION = '3.31';
 
 =head1 NAME
 

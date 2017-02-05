@@ -123,6 +123,8 @@ END_EXTERN_C
 #define PL_hints_mutex		(*Perl_Ghints_mutex_ptr(NULL))
 #undef  PL_keyword_plugin
 #define PL_keyword_plugin	(*Perl_Gkeyword_plugin_ptr(NULL))
+#undef  PL_locale_mutex
+#define PL_locale_mutex		(*Perl_Glocale_mutex_ptr(NULL))
 #undef  PL_malloc_mutex
 #define PL_malloc_mutex		(*Perl_Gmalloc_mutex_ptr(NULL))
 #undef  PL_mmap_page_size

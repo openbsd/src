@@ -5,7 +5,7 @@ use warnings;
 use vars qw($TODO $Level $using_open);
 require "test.pl";
 
-our $VERSION = '0.11';
+our $VERSION = '0.13';
 
 # now export checkOptree, and those test.pl functions used by tests
 our @EXPORT = qw( checkOptree plan skip skip_all pass is like unlike
@@ -652,14 +652,14 @@ sub mkCheckRex {
 	    : $cmp eq '==' ? $] == $version
 	    : $cmp eq '>=' ? $] >= $version
 	    : $cmp eq '>'  ? $] >  $version
-	    : die("bad comparision '$cmp' in string [$str]\n")
+	    : die("bad comparison '$cmp' in string [$str]\n")
 	 and !$cmp2 || (
 	      $cmp2 eq '<'  ? $] <  $v2
 	    : $cmp2 eq '<=' ? $] <= $v2
 	    : $cmp2 eq '==' ? $] == $v2
 	    : $cmp2 eq '>=' ? $] >= $v2
 	    : $cmp2 eq '>'  ? $] >  $v2
-	    : die("bad comparision '$cmp2' in string [$str]\n")
+	    : die("bad comparison '$cmp2' in string [$str]\n")
 	  )
 	) {
 	    $repl = "$line\n";
@@ -669,6 +669,8 @@ sub mkCheckRex {
 
     $tc->{wantstr} = $str;
 
+    # make UNOP_AUX flag type literal
+    $str =~ s/<\+>/<\\+>/;
     # make targ args wild
     $str =~ s/\[t\d+\]/[t\\d+]/msg;
 

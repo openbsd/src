@@ -603,7 +603,7 @@ you're doing and unless you really benefit from using C<UTF-16>.
   ISO-IR-165    [RFC1345]
   VISCII
   GB 12345
-  GB 18030 (**)  (see links bellow)
+  GB 18030 (**)  (see links below)
   EUC-TW   (**)
 
 are totally valid encodings but not registered at IANA.

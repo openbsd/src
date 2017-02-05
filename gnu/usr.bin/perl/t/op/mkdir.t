@@ -6,11 +6,11 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 22;
+plan tests => 17;
 
 unless (eval {
     require File::Path;
-    File::Path::rmtree('blurfl');
+    File::Path::rmtree('blurfl') if -d 'blurfl';
     1
 }) {
     diag("$0 may fail if its temporary directory remains from a previous run");
@@ -22,13 +22,25 @@ unless (eval {
 $ENV{'LC_ALL'} = 'C';
 $ENV{LANGUAGE} = 'C'; # GNU locale extension
 
+sub errno_or_skip {
+    SKIP: {
+	if (is_miniperl && !eval { local $!; require Errno }) {
+	    skip "Errno not built yet", 1;
+	}
+	eval "ok($_[0])";
+    }
+}
+
 ok(mkdir('blurfl',0777));
 ok(!mkdir('blurfl',0777));
-ok($!{EEXIST} || $! =~ /cannot move|exist|denied|unknown/i);
+errno_or_skip('$!{EEXIST} || $! =~ /cannot move|exist|denied|unknown/i');
 ok(-d 'blurfl');
 ok(rmdir('blurfl'));
 ok(!rmdir('blurfl'));
-ok($!{ENOENT} || $! =~ /cannot find|such|exist|not found|not a directory|unknown/i);
+errno_or_skip('
+    $!{ENOENT}
+       || $! =~ /cannot find|such|exist|not found|not a directory|unknown/i
+');
 ok(mkdir('blurfl'));
 ok(rmdir('blurfl'));
 
@@ -46,13 +58,3 @@ ok(-d);
 ok(rmdir);
 ok(!-d);
 $_ = 'lfrulb';
-
-{
-    no warnings 'experimental::lexical_topic';
-    my $_ = 'blurfl';
-    ok(mkdir);
-    ok(-d);
-    ok(-d 'blurfl');
-    ok(!-d 'lfrulb');
-    ok(rmdir);
-}

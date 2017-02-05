@@ -10,9 +10,9 @@ perlmacosx - Perl under Mac OS X
 
 This document briefly describes Perl under Mac OS X.
 
-  curl -O http://www.cpan.org/src/perl-5.20.3.tar.gz
-  tar -xzf perl-5.20.3.tar.gz
-  cd perl-5.20.3
+  curl -O http://www.cpan.org/src/perl-5.24.1.tar.gz
+  tar -xzf perl-5.24.1.tar.gz
+  cd perl-5.24.1
   ./Configure -des -Dprefix=/usr/local/
   make
   make test
@@ -20,7 +20,7 @@ This document briefly describes Perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.20.3 as of this writing) builds without changes
+The latest Perl release (5.24.1 as of this writing) builds without changes
 under all versions of Mac OS X from 10.3 "Panther" onwards. 
 
 In order to build your own version of Perl you will need 'make',
@@ -63,7 +63,7 @@ on a file server and used by many Macs.
 
 First, export the path to the SDK into the build environment:
 
-    export SDK=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
+ export SDK=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk
 
 Please make sure the SDK version (i.e. the numbers right before '.sdk')
 matches your system's (in this case, Mac OS X 10.8 "Mountain Lion"), as it is
@@ -100,11 +100,12 @@ Mac OS X 10.5 "Leopard" and above do not require the 'u' variant.
 In addition to the compiler flags used to select the SDK, also add the flags
 for creating a universal binary:
 
-    ./Configure -Accflags="-arch i686 -arch ppc -nostdinc -B$SDK/usr/include/gcc \
-                           -B$SDK/usr/lib/gcc -isystem$SDK/usr/include \
-                           -F$SDK/System/Library/Frameworks" \
-                -Aldflags="-arch i686 -arch ppc -Wl,-syslibroot,$SDK" \
-                -de
+ ./Configure -Accflags="-arch i686 -arch ppc -nostdinc               \
+                         -B$SDK/usr/include/gcc                      \
+                        -B$SDK/usr/lib/gcc -isystem$SDK/usr/include  \
+                        -F$SDK/System/Library/Frameworks"            \
+             -Aldflags="-arch i686 -arch ppc -Wl,-syslibroot,$SDK"   \
+             -de
 
 Keep in mind that these compiler and linker settings will also be used when
 building CPAN modules. For XS modules to be compiled as a universal binary, any

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = ( q$Revision: 2.9 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.15 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load( __PACKAGE__, $VERSION );
@@ -176,7 +176,15 @@ simply treated as a normal character (ZERO WIDTH NO-BREAK SPACE).
 
 When BE or LE is omitted during decode(), it checks if BOM is at the
 beginning of the string; if one is found, the endianness is set to
-what the BOM says.  If no BOM is found, the routine dies.
+what the BOM says.  
+
+=item *
+
+Default Byte Order
+
+When no BOM is found, Encode 2.76 and blow croaked.  Since Encode
+2.77, it falls back to BE accordingly to RFC2781 and the Unicode
+Standard version 8.0
 
 =item *
 

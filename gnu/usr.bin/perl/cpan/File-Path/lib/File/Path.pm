@@ -8,30 +8,38 @@ use File::Basename ();
 use File::Spec     ();
 
 BEGIN {
-    if ($] < 5.006) {
+    if ( $] < 5.006 ) {
+
         # can't say 'opendir my $dh, $dirname'
         # need to initialise $dh
-        eval "use Symbol";
+        eval 'use Symbol';
     }
 }
 
 use Exporter ();
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION   = '2.09';
+$VERSION   = '2.12_01';
+$VERSION   = eval $VERSION;
 @ISA       = qw(Exporter);
 @EXPORT    = qw(mkpath rmtree);
 @EXPORT_OK = qw(make_path remove_tree);
 
-my $Is_VMS     = $^O eq 'VMS';
-my $Is_MacOS   = $^O eq 'MacOS';
+BEGIN {
+  for (qw(VMS MacOS MSWin32 os2)) {
+    no strict 'refs';
+    *{"_IS_\U$_"} = $^O eq $_ ? sub () { 1 } : sub () { 0 };
+  }
 
-# These OSes complain if you want to remove a file that you have no
-# write permission to:
-my $Force_Writeable = grep {$^O eq $_} qw(amigaos dos epoc MSWin32 MacOS os2);
+  # These OSes complain if you want to remove a file that you have no
+  # write permission to:
+  *_FORCE_WRITABLE = (
+    grep { $^O eq $_ } qw(amigaos dos epoc MSWin32 MacOS os2)
+  ) ? sub () { 1 } : sub () { 0 };
 
-# Unix-like systems need to stat each directory in order to detect
-# race condition. MS-Windows is immune to this particular attack.
-my $Need_Stat_Check = !($^O eq 'MSWin32');
+  # Unix-like systems need to stat each directory in order to detect
+  # race condition. MS-Windows is immune to this particular attack.
+  *_NEED_STAT_CHECK = !(_IS_MSWIN32()) ? sub () { 1 } : sub () { 0 };
+}
 
 sub _carp {
     require Carp;
@@ -48,109 +56,152 @@ sub _error {
     my $message = shift;
     my $object  = shift;
 
-    if ($arg->{error}) {
+    if ( $arg->{error} ) {
         $object = '' unless defined $object;
         $message .= ": $!" if $!;
-        push @{${$arg->{error}}}, {$object => $message};
+        push @{ ${ $arg->{error} } }, { $object => $message };
     }
     else {
-        _carp(defined($object) ? "$message for $object: $!" : "$message: $!");
+        _carp( defined($object) ? "$message for $object: $!" : "$message: $!" );
     }
 }
 
+sub __is_arg {
+    my ($arg) = @_;
+
+    # If client code blessed an array ref to HASH, this will not work
+    # properly. We could have done $arg->isa() wrapped in eval, but
+    # that would be expensive. This implementation should suffice.
+    # We could have also used Scalar::Util:blessed, but we choose not
+    # to add this dependency
+    return ( ref $arg eq 'HASH' );
+}
+
 sub make_path {
-    push @_, {} unless @_ and UNIVERSAL::isa($_[-1],'HASH');
+    push @_, {} unless @_ and __is_arg( $_[-1] );
     goto &mkpath;
 }
 
 sub mkpath {
-    my $old_style = !(@_ and UNIVERSAL::isa($_[-1],'HASH'));
+    my $old_style = !( @_ and __is_arg( $_[-1] ) );
 
     my $arg;
     my $paths;
 
     if ($old_style) {
-        my ($verbose, $mode);
-        ($paths, $verbose, $mode) = @_;
-        $paths = [$paths] unless UNIVERSAL::isa($paths,'ARRAY');
+        my ( $verbose, $mode );
+        ( $paths, $verbose, $mode ) = @_;
+        $paths = [$paths] unless UNIVERSAL::isa( $paths, 'ARRAY' );
         $arg->{verbose} = $verbose;
-        $arg->{mode}    = defined $mode ? $mode : 0777;
+        $arg->{mode} = defined $mode ? $mode : oct '777';
     }
     else {
+        my %args_permitted = map { $_ => 1 } ( qw|
+            chmod
+            error
+            group
+            mask
+            mode
+            owner
+            uid
+            user
+            verbose
+        | );
+        my @bad_args = ();
         $arg = pop @_;
-        $arg->{mode}      = delete $arg->{mask} if exists $arg->{mask};
-        $arg->{mode}      = 0777 unless exists $arg->{mode};
-        ${$arg->{error}}  = [] if exists $arg->{error};
-        $arg->{owner}     = delete $arg->{user} if exists $arg->{user};
-        $arg->{owner}     = delete $arg->{uid}  if exists $arg->{uid};
-        if (exists $arg->{owner} and $arg->{owner} =~ /\D/) {
-            my $uid = (getpwnam $arg->{owner})[2];
-            if (defined $uid) {
+        for my $k (sort keys %{$arg}) {
+            push @bad_args, $k unless $args_permitted{$k};
+        }
+        _carp("Unrecognized option(s) passed to make_path(): @bad_args")
+            if @bad_args;
+        $arg->{mode} = delete $arg->{mask} if exists $arg->{mask};
+        $arg->{mode} = oct '777' unless exists $arg->{mode};
+        ${ $arg->{error} } = [] if exists $arg->{error};
+        $arg->{owner} = delete $arg->{user} if exists $arg->{user};
+        $arg->{owner} = delete $arg->{uid}  if exists $arg->{uid};
+        if ( exists $arg->{owner} and $arg->{owner} =~ /\D/ ) {
+            my $uid = ( getpwnam $arg->{owner} )[2];
+            if ( defined $uid ) {
                 $arg->{owner} = $uid;
             }
             else {
-                _error($arg, "unable to map $arg->{owner} to a uid, ownership not changed");
+                _error( $arg,
+"unable to map $arg->{owner} to a uid, ownership not changed"
+                );
                 delete $arg->{owner};
             }
         }
-        if (exists $arg->{group} and $arg->{group} =~ /\D/) {
-            my $gid = (getgrnam $arg->{group})[2];
-            if (defined $gid) {
+        if ( exists $arg->{group} and $arg->{group} =~ /\D/ ) {
+            my $gid = ( getgrnam $arg->{group} )[2];
+            if ( defined $gid ) {
                 $arg->{group} = $gid;
             }
             else {
-                _error($arg, "unable to map $arg->{group} to a gid, group ownership not changed");
+                _error( $arg,
+"unable to map $arg->{group} to a gid, group ownership not changed"
+                );
                 delete $arg->{group};
             }
         }
-        if (exists $arg->{owner} and not exists $arg->{group}) {
-            $arg->{group} = -1; # chown will leave group unchanged
+        if ( exists $arg->{owner} and not exists $arg->{group} ) {
+            $arg->{group} = -1;    # chown will leave group unchanged
         }
-        if (exists $arg->{group} and not exists $arg->{owner}) {
-            $arg->{owner} = -1; # chown will leave owner unchanged
+        if ( exists $arg->{group} and not exists $arg->{owner} ) {
+            $arg->{owner} = -1;    # chown will leave owner unchanged
         }
         $paths = [@_];
     }
-    return _mkpath($arg, $paths);
+    return _mkpath( $arg, $paths );
 }
 
 sub _mkpath {
     my $arg   = shift;
     my $paths = shift;
 
-    my(@created,$path);
-    foreach $path (@$paths) {
+    my ( @created );
+    foreach my $path ( @{$paths} ) {
         next unless defined($path) and length($path);
-        $path .= '/' if $^O eq 'os2' and $path =~ /^\w:\z/s; # feature of CRT 
+        $path .= '/' if _IS_OS2 and $path =~ /^\w:\z/s; # feature of CRT
+
         # Logic wants Unix paths, so go with the flow.
-        if ($Is_VMS) {
+        if (_IS_VMS) {
             next if $path eq '/';
             $path = VMS::Filespec::unixify($path);
         }
         next if -d $path;
         my $parent = File::Basename::dirname($path);
-        unless (-d $parent or $path eq $parent) {
-            push(@created,_mkpath($arg, [$parent]));
+        unless ( -d $parent or $path eq $parent ) {
+            push( @created, _mkpath( $arg, [$parent] ) );
         }
         print "mkdir $path\n" if $arg->{verbose};
-        if (mkdir($path,$arg->{mode})) {
-            push(@created, $path);
-            if (exists $arg->{owner}) {
-				# NB: $arg->{group} guaranteed to be set during initialisation
-                if (!chown $arg->{owner}, $arg->{group}, $path) {
-                    _error($arg, "Cannot change ownership of $path to $arg->{owner}:$arg->{group}");
+        if ( mkdir( $path, $arg->{mode} ) ) {
+            push( @created, $path );
+            if ( exists $arg->{owner} ) {
+
+                # NB: $arg->{group} guaranteed to be set during initialisation
+                if ( !chown $arg->{owner}, $arg->{group}, $path ) {
+                    _error( $arg,
+"Cannot change ownership of $path to $arg->{owner}:$arg->{group}"
+                    );
+                }
+            }
+            if ( exists $arg->{chmod} ) {
+                if ( !chmod $arg->{chmod}, $path ) {
+                    _error( $arg,
+                        "Cannot change permissions of $path to $arg->{chmod}" );
                 }
             }
         }
         else {
             my $save_bang = $!;
-            my ($e, $e1) = ($save_bang, $^E);
+            my ( $e, $e1 ) = ( $save_bang, $^E );
             $e .= "; $e1" if $e ne $e1;
+
             # allow for another process to have created it meanwhile
-            if (!-d $path) {
+            if ( ! -d $path ) {
                 $! = $save_bang;
-                if ($arg->{error}) {
-                    push @{${$arg->{error}}}, {$path => $e};
+                if ( $arg->{error} ) {
+                    push @{ ${ $arg->{error} } }, { $path => $e };
                 }
                 else {
                     _croak("mkdir $path: $e");
@@ -162,15 +213,15 @@ sub _mkpath {
 }
 
 sub remove_tree {
-    push @_, {} unless @_ and UNIVERSAL::isa($_[-1],'HASH');
+    push @_, {} unless @_ and __is_arg( $_[-1] );
     goto &rmtree;
 }
 
 sub _is_subdir {
-    my($dir, $test) = @_;
+    my ( $dir, $test ) = @_;
 
-    my($dv, $dd) = File::Spec->splitpath($dir, 1);
-    my($tv, $td) = File::Spec->splitpath($test, 1);
+    my ( $dv, $dd ) = File::Spec->splitpath( $dir,  1 );
+    my ( $tv, $td ) = File::Spec->splitpath( $test, 1 );
 
     # not on same volume
     return 0 if $dv ne $tv;
@@ -181,33 +232,46 @@ sub _is_subdir {
     # @t can't be a subdir if it's shorter than @d
     return 0 if @t < @d;
 
-    return join('/', @d) eq join('/', splice @t, 0, +@d);
+    return join( '/', @d ) eq join( '/', splice @t, 0, +@d );
 }
 
 sub rmtree {
-    my $old_style = !(@_ and UNIVERSAL::isa($_[-1],'HASH'));
+    my $old_style = !( @_ and __is_arg( $_[-1] ) );
 
     my $arg;
     my $paths;
 
     if ($old_style) {
-        my ($verbose, $safe);
-        ($paths, $verbose, $safe) = @_;
+        my ( $verbose, $safe );
+        ( $paths, $verbose, $safe ) = @_;
         $arg->{verbose} = $verbose;
-        $arg->{safe}    = defined $safe    ? $safe    : 0;
+        $arg->{safe} = defined $safe ? $safe : 0;
 
-        if (defined($paths) and length($paths)) {
-            $paths = [$paths] unless UNIVERSAL::isa($paths,'ARRAY');
+        if ( defined($paths) and length($paths) ) {
+            $paths = [$paths] unless UNIVERSAL::isa( $paths, 'ARRAY' );
         }
         else {
-            _carp ("No root path(s) specified\n");
+            _carp("No root path(s) specified\n");
             return 0;
         }
     }
     else {
+        my %args_permitted = map { $_ => 1 } ( qw|
+            error
+            keep_root
+            result
+            safe
+            verbose
+        | );
+        my @bad_args = ();
         $arg = pop @_;
-        ${$arg->{error}}  = [] if exists $arg->{error};
-        ${$arg->{result}} = [] if exists $arg->{result};
+        for my $k (sort keys %{$arg}) {
+            push @bad_args, $k unless $args_permitted{$k};
+        }
+        _carp("Unrecognized option(s) passed to remove_tree(): @bad_args")
+            if @bad_args;
+        ${ $arg->{error} }  = [] if exists $arg->{error};
+        ${ $arg->{result} } = [] if exists $arg->{result};
         $paths = [@_];
     }
 
@@ -216,28 +280,30 @@ sub rmtree {
 
     my @clean_path;
     $arg->{cwd} = getcwd() or do {
-        _error($arg, "cannot fetch initial working directory");
+        _error( $arg, "cannot fetch initial working directory" );
         return 0;
     };
-    for ($arg->{cwd}) { /\A(.*)\Z/; $_ = $1 } # untaint
+    for ( $arg->{cwd} ) { /\A(.*)\Z/s; $_ = $1 }    # untaint
 
     for my $p (@$paths) {
+
         # need to fixup case and map \ to / on Windows
-        my $ortho_root = $^O eq 'MSWin32' ? _slash_lc($p)          : $p;
-        my $ortho_cwd  = $^O eq 'MSWin32' ? _slash_lc($arg->{cwd}) : $arg->{cwd};
+        my $ortho_root = _IS_MSWIN32 ? _slash_lc($p) : $p;
+        my $ortho_cwd =
+          _IS_MSWIN32 ? _slash_lc( $arg->{cwd} ) : $arg->{cwd};
         my $ortho_root_length = length($ortho_root);
-        $ortho_root_length-- if $^O eq 'VMS'; # don't compare '.' with ']'
-        if ($ortho_root_length && _is_subdir($ortho_root, $ortho_cwd)) {
+        $ortho_root_length-- if _IS_VMS;   # don't compare '.' with ']'
+        if ( $ortho_root_length && _is_subdir( $ortho_root, $ortho_cwd ) ) {
             local $! = 0;
-            _error($arg, "cannot remove path when cwd is $arg->{cwd}", $p);
+            _error( $arg, "cannot remove path when cwd is $arg->{cwd}", $p );
             next;
         }
 
-        if ($Is_MacOS) {
-            $p  = ":$p" unless $p =~ /:/;
-            $p .= ":"   unless $p =~ /:\z/;
+        if (_IS_MACOS) {
+            $p = ":$p" unless $p =~ /:/;
+            $p .= ":" unless $p =~ /:\z/;
         }
-        elsif ($^O eq 'MSWin32') {
+        elsif ( _IS_MSWIN32 ) {
             $p =~ s{[/\\]\z}{};
         }
         else {
@@ -246,12 +312,12 @@ sub rmtree {
         push @clean_path, $p;
     }
 
-    @{$arg}{qw(device inode perm)} = (lstat $arg->{cwd})[0,1] or do {
-        _error($arg, "cannot stat initial working directory", $arg->{cwd});
+    @{$arg}{qw(device inode perm)} = ( lstat $arg->{cwd} )[ 0, 1 ] or do {
+        _error( $arg, "cannot stat initial working directory", $arg->{cwd} );
         return 0;
     };
 
-    return _rmtree($arg, \@clean_path);
+    return _rmtree( $arg, \@clean_path );
 }
 
 sub _rmtree {
@@ -262,74 +328,94 @@ sub _rmtree {
     my $curdir = File::Spec->curdir();
     my $updir  = File::Spec->updir();
 
-    my (@files, $root);
-    ROOT_DIR:
-    foreach $root (@$paths) {
+    my ( @files, $root );
+  ROOT_DIR:
+    foreach my $root (@$paths) {
+
         # since we chdir into each directory, it may not be obvious
         # to figure out where we are if we generate a message about
         # a file name. We therefore construct a semi-canonical
         # filename, anchored from the directory being unlinked (as
         # opposed to being truly canonical, anchored from the root (/).
 
-        my $canon = $arg->{prefix}
-            ? File::Spec->catfile($arg->{prefix}, $root)
-            : $root
-        ;
+        my $canon =
+          $arg->{prefix}
+          ? File::Spec->catfile( $arg->{prefix}, $root )
+          : $root;
 
-        my ($ldev, $lino, $perm) = (lstat $root)[0,1,2] or next ROOT_DIR;
+        my ( $ldev, $lino, $perm ) = ( lstat $root )[ 0, 1, 2 ]
+          or next ROOT_DIR;
 
         if ( -d _ ) {
-            $root = VMS::Filespec::vmspath(VMS::Filespec::pathify($root)) if $Is_VMS;
+            $root = VMS::Filespec::vmspath( VMS::Filespec::pathify($root) )
+              if _IS_VMS;
 
-            if (!chdir($root)) {
+            if ( !chdir($root) ) {
+
                 # see if we can escalate privileges to get in
                 # (e.g. funny protection mask such as -w- instead of rwx)
-                $perm &= 07777;
-                my $nperm = $perm | 0700;
-                if (!($arg->{safe} or $nperm == $perm or chmod($nperm, $root))) {
-                    _error($arg, "cannot make child directory read-write-exec", $canon);
+                $perm &= oct '7777';
+                my $nperm = $perm | oct '700';
+                if (
+                    !(
+                           $arg->{safe}
+                        or $nperm == $perm
+                        or chmod( $nperm, $root )
+                    )
+                  )
+                {
+                    _error( $arg,
+                        "cannot make child directory read-write-exec", $canon );
                     next ROOT_DIR;
                 }
-                elsif (!chdir($root)) {
-                    _error($arg, "cannot chdir to child", $canon);
+                elsif ( !chdir($root) ) {
+                    _error( $arg, "cannot chdir to child", $canon );
                     next ROOT_DIR;
                 }
             }
 
-            my ($cur_dev, $cur_inode, $perm) = (stat $curdir)[0,1,2] or do {
-                _error($arg, "cannot stat current working directory", $canon);
+            my ( $cur_dev, $cur_inode, $perm ) = ( stat $curdir )[ 0, 1, 2 ]
+              or do {
+                _error( $arg, "cannot stat current working directory", $canon );
                 next ROOT_DIR;
-            };
+              };
 
-            if ($Need_Stat_Check) {
-                ($ldev eq $cur_dev and $lino eq $cur_inode)
-                    or _croak("directory $canon changed before chdir, expected dev=$ldev ino=$lino, actual dev=$cur_dev ino=$cur_inode, aborting.");
+            if (_NEED_STAT_CHECK) {
+                ( $ldev eq $cur_dev and $lino eq $cur_inode )
+                  or _croak(
+"directory $canon changed before chdir, expected dev=$ldev ino=$lino, actual dev=$cur_dev ino=$cur_inode, aborting."
+                  );
             }
 
-            $perm &= 07777; # don't forget setuid, setgid, sticky bits
-            my $nperm = $perm | 0700;
+            $perm &= oct '7777';    # don't forget setuid, setgid, sticky bits
+            my $nperm = $perm | oct '700';
 
             # notabene: 0700 is for making readable in the first place,
             # it's also intended to change it to writable in case we have
-            # to recurse in which case we are better than rm -rf for 
+            # to recurse in which case we are better than rm -rf for
             # subtrees with strange permissions
 
-            if (!($arg->{safe} or $nperm == $perm or chmod($nperm, $curdir))) {
-                _error($arg, "cannot make directory read+writeable", $canon);
+            if (
+                !(
+                       $arg->{safe}
+                    or $nperm == $perm
+                    or chmod( $nperm, $curdir )
+                )
+              )
+            {
+                _error( $arg, "cannot make directory read+writeable", $canon );
                 $nperm = $perm;
             }
 
             my $d;
             $d = gensym() if $] < 5.006;
-            if (!opendir $d, $curdir) {
-                _error($arg, "cannot opendir", $canon);
+            if ( !opendir $d, $curdir ) {
+                _error( $arg, "cannot opendir", $canon );
                 @files = ();
             }
             else {
-                no strict 'refs';
-                if (!defined ${"\cTAINT"} or ${"\cTAINT"}) {
-                    # Blindly untaint dir names if taint mode is
-                    # active, or any perl < 5.006
+                if ( !defined ${^TAINT} or ${^TAINT} ) {
+                    # Blindly untaint dir names if taint mode is active
                     @files = map { /\A(.*)\z/s; $1 } readdir $d;
                 }
                 else {
@@ -338,63 +424,85 @@ sub _rmtree {
                 closedir $d;
             }
 
-            if ($Is_VMS) {
+            if (_IS_VMS) {
+
                 # Deleting large numbers of files from VMS Files-11
                 # filesystems is faster if done in reverse ASCIIbetical order.
                 # include '.' to '.;' from blead patch #31775
-                @files = map {$_ eq '.' ? '.;' : $_} reverse @files;
+                @files = map { $_ eq '.' ? '.;' : $_ } reverse @files;
             }
 
-            @files = grep {$_ ne $updir and $_ ne $curdir} @files;
+            @files = grep { $_ ne $updir and $_ ne $curdir } @files;
 
             if (@files) {
+
                 # remove the contained files before the directory itself
                 my $narg = {%$arg};
-                @{$narg}{qw(device inode cwd prefix depth)}
-                    = ($cur_dev, $cur_inode, $updir, $canon, $arg->{depth}+1);
-                $count += _rmtree($narg, \@files);
+                @{$narg}{qw(device inode cwd prefix depth)} =
+                  ( $cur_dev, $cur_inode, $updir, $canon, $arg->{depth} + 1 );
+                $count += _rmtree( $narg, \@files );
             }
 
             # restore directory permissions of required now (in case the rmdir
             # below fails), while we are still in the directory and may do so
             # without a race via '.'
-            if ($nperm != $perm and not chmod($perm, $curdir)) {
-                _error($arg, "cannot reset chmod", $canon);
+            if ( $nperm != $perm and not chmod( $perm, $curdir ) ) {
+                _error( $arg, "cannot reset chmod", $canon );
             }
 
             # don't leave the client code in an unexpected directory
-            chdir($arg->{cwd})
-                or _croak("cannot chdir to $arg->{cwd} from $canon: $!, aborting.");
+            chdir( $arg->{cwd} )
+              or
+              _croak("cannot chdir to $arg->{cwd} from $canon: $!, aborting.");
 
             # ensure that a chdir upwards didn't take us somewhere other
             # than we expected (see CVE-2002-0435)
-            ($cur_dev, $cur_inode) = (stat $curdir)[0,1]
-                or _croak("cannot stat prior working directory $arg->{cwd}: $!, aborting.");
+            ( $cur_dev, $cur_inode ) = ( stat $curdir )[ 0, 1 ]
+              or _croak(
+                "cannot stat prior working directory $arg->{cwd}: $!, aborting."
+              );
 
-            if ($Need_Stat_Check) {
-                ($arg->{device} eq $cur_dev and $arg->{inode} eq $cur_inode)
-                    or _croak("previous directory $arg->{cwd} changed before entering $canon, expected dev=$ldev ino=$lino, actual dev=$cur_dev ino=$cur_inode, aborting.");
+            if (_NEED_STAT_CHECK) {
+                ( $arg->{device} eq $cur_dev and $arg->{inode} eq $cur_inode )
+                  or _croak(  "previous directory $arg->{cwd} "
+                            . "changed before entering $canon, "
+                            . "expected dev=$ldev ino=$lino, "
+                            . "actual dev=$cur_dev ino=$cur_inode, aborting."
+                  );
             }
 
-            if ($arg->{depth} or !$arg->{keep_root}) {
-                if ($arg->{safe} &&
-                    ($Is_VMS ? !&VMS::Filespec::candelete($root) : !-w $root)) {
+            if ( $arg->{depth} or !$arg->{keep_root} ) {
+                if ( $arg->{safe}
+                    && ( _IS_VMS
+                        ? !&VMS::Filespec::candelete($root)
+                        : !-w $root ) )
+                {
                     print "skipped $root\n" if $arg->{verbose};
                     next ROOT_DIR;
                 }
-                if ($Force_Writeable and !chmod $perm | 0700, $root) {
-                    _error($arg, "cannot make directory writeable", $canon);
+                if ( _FORCE_WRITABLE and !chmod $perm | oct '700', $root ) {
+                    _error( $arg, "cannot make directory writeable", $canon );
                 }
                 print "rmdir $root\n" if $arg->{verbose};
-                if (rmdir $root) {
-                    push @{${$arg->{result}}}, $root if $arg->{result};
+                if ( rmdir $root ) {
+                    push @{ ${ $arg->{result} } }, $root if $arg->{result};
                     ++$count;
                 }
                 else {
-                    _error($arg, "cannot remove directory", $canon);
-                    if ($Force_Writeable && !chmod($perm, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
-                    ) {
-                        _error($arg, sprintf("cannot restore permissions to 0%o",$perm), $canon);
+                    _error( $arg, "cannot remove directory", $canon );
+                    if (
+                        _FORCE_WRITABLE
+                        && !chmod( $perm,
+                            ( _IS_VMS ? VMS::Filespec::fileify($root) : $root )
+                        )
+                      )
+                    {
+                        _error(
+                            $arg,
+                            sprintf( "cannot restore permissions to 0%o",
+                                $perm ),
+                            $canon
+                        );
                     }
                 }
             }
@@ -402,36 +510,47 @@ sub _rmtree {
         else {
             # not a directory
             $root = VMS::Filespec::vmsify("./$root")
-                if $Is_VMS
-                   && !File::Spec->file_name_is_absolute($root)
-                   && ($root !~ m/(?<!\^)[\]>]+/);  # not already in VMS syntax
+              if _IS_VMS
+              && !File::Spec->file_name_is_absolute($root)
+              && ( $root !~ m/(?<!\^)[\]>]+/ );    # not already in VMS syntax
 
-            if ($arg->{safe} &&
-                ($Is_VMS ? !&VMS::Filespec::candelete($root)
-                         : !(-l $root || -w $root)))
+            if (
+                $arg->{safe}
+                && (
+                    _IS_VMS
+                    ? !&VMS::Filespec::candelete($root)
+                    : !( -l $root || -w $root )
+                )
+              )
             {
                 print "skipped $root\n" if $arg->{verbose};
                 next ROOT_DIR;
             }
 
-            my $nperm = $perm & 07777 | 0600;
-            if ($Force_Writeable and $nperm != $perm and not chmod $nperm, $root) {
-                _error($arg, "cannot make file writeable", $canon);
+            my $nperm = $perm & oct '7777' | oct '600';
+            if (    _FORCE_WRITABLE
+                and $nperm != $perm
+                and not chmod $nperm, $root )
+            {
+                _error( $arg, "cannot make file writeable", $canon );
             }
             print "unlink $canon\n" if $arg->{verbose};
+
             # delete all versions under VMS
-            for (;;) {
-                if (unlink $root) {
-                    push @{${$arg->{result}}}, $root if $arg->{result};
+            for ( ; ; ) {
+                if ( unlink $root ) {
+                    push @{ ${ $arg->{result} } }, $root if $arg->{result};
                 }
                 else {
-                    _error($arg, "cannot unlink file", $canon);
-                    $Force_Writeable and chmod($perm, $root) or
-                        _error($arg, sprintf("cannot restore permissions to 0%o",$perm), $canon);
+                    _error( $arg, "cannot unlink file", $canon );
+                    _FORCE_WRITABLE and chmod( $perm, $root )
+                      or _error( $arg,
+                        sprintf( "cannot restore permissions to 0%o", $perm ),
+                        $canon );
                     last;
                 }
                 ++$count;
-                last unless $Is_VMS && lstat $root;
+                last unless _IS_VMS && lstat $root;
             }
         }
     }
@@ -439,6 +558,7 @@ sub _rmtree {
 }
 
 sub _slash_lc {
+
     # fix up slashes and case on MSWin32 so that we can determine that
     # c:\path\to\dir is underneath C:/Path/To
     my $path = shift;
@@ -447,6 +567,7 @@ sub _slash_lc {
 }
 
 1;
+
 __END__
 
 =head1 NAME
@@ -455,35 +576,37 @@ File::Path - Create or remove directory trees
 
 =head1 VERSION
 
-This document describes version 2.09 of File::Path, released
-2013-01-17.
+This document describes version 2.12 of File::Path.
 
 =head1 SYNOPSIS
 
   use File::Path qw(make_path remove_tree);
 
-  make_path('foo/bar/baz', '/zug/zwang');
-  make_path('foo/bar/baz', '/zug/zwang', {
+  @created = make_path('foo/bar/baz', '/zug/zwang');
+  @created = make_path('foo/bar/baz', '/zug/zwang', {
       verbose => 1,
       mode => 0711,
   });
+  make_path('foo/bar/baz', '/zug/zwang', {
+      chmod => 0777,
+  });
 
-  remove_tree('foo/bar/baz', '/zug/zwang');
-  remove_tree('foo/bar/baz', '/zug/zwang', {
+  $removed_count = remove_tree('foo/bar/baz', '/zug/zwang');
+  $removed_count = remove_tree('foo/bar/baz', '/zug/zwang', {
       verbose => 1,
       error  => \my $err_list,
   });
 
   # legacy (interface promoted before v2.00)
-  mkpath('/foo/bar/baz');
-  mkpath('/foo/bar/baz', 1, 0711);
-  mkpath(['/foo/bar/baz', 'blurfl/quux'], 1, 0711);
-  rmtree('foo/bar/baz', 1, 1);
-  rmtree(['foo/bar/baz', 'blurfl/quux'], 1, 1);
+  @created = mkpath('/foo/bar/baz');
+  @created = mkpath('/foo/bar/baz', 1, 0711);
+  @created = mkpath(['/foo/bar/baz', 'blurfl/quux'], 1, 0711);
+  $removed_count = rmtree('foo/bar/baz', 1, 1);
+  $removed_count = rmtree(['foo/bar/baz', 'blurfl/quux'], 1, 1);
 
   # legacy (interface promoted before v2.06)
-  mkpath('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
-  rmtree('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
+  @created = mkpath('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
+  $removed_count = rmtree('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
 
 =head1 DESCRIPTION
 
@@ -522,6 +645,13 @@ the permissions will not be modified.
 
 C<mask> is recognised as an alias for this parameter.
 
+=item chmod => $num
+
+Takes a numeric mode to apply to each created directory (not
+modified by the current C<umask>). If the directory already exists
+(and thus does not need to be created), the permissions will
+not be modified.
+
 =item verbose => $bool
 
 If present, will cause C<make_path> to print the name of each directory
@@ -535,7 +665,7 @@ be used to store any errors that are encountered.  See the L</"ERROR
 HANDLING"> section for more information.
 
 If this parameter is not used, certain error conditions may raise
-a fatal error that will cause the program will halt, unless trapped
+a fatal error that will cause the program to halt, unless trapped
 in an C<eval> block.
 
 =item owner => $owner
@@ -550,7 +680,7 @@ as username is assumed. An error will be issued if the username cannot be
 mapped to a uid, or the uid does not exist, or the process lacks the
 privileges to change ownership.
 
-Ownwership of directories that already exist will not be changed.
+Ownership of directories that already exist will not be changed.
 
 C<user> and C<uid> are aliases of C<owner>.
 
@@ -562,7 +692,7 @@ as group name is assumed. An error will be issued if the group name cannot be
 mapped to a gid, or the gid does not exist, or the process lacks the
 privileges to change group ownership.
 
-Group ownwership of directories that already exist will not be changed.
+Group ownership of directories that already exist will not be changed.
 
     make_path '/var/tmp/webcache', {owner=>'nobody', group=>'nogroup'};
 
@@ -586,11 +716,14 @@ return value of the function is otherwise identical to make_path().
 
 The C<remove_tree> function deletes the given directories and any
 files and subdirectories they might contain, much like the Unix
-command C<rm -r> or C<del /s> on Windows.
+command C<rm -r> or the Windows commands C<rmdir /s> and C<rd /s>. The
+only exception to the function similarity is C<remove_tree> accepts
+only directories whereas C<rm -r> also accepts files.
 
 The function accepts a list of directories to be
 removed. Its behaviour may be tuned by an optional hashref
-appearing as the last parameter on the call.
+appearing as the last parameter on the call.  If an empty string is
+passed to C<remove_tree>, an error will occur.
 
 The functions returns the number of files successfully deleted.
 
@@ -671,9 +804,12 @@ remove_tree().
 
 =item B<NOTE:>
 
-The following error handling mechanism is considered
-experimental and is subject to change pending feedback from
-users.
+The following error handling mechanism is consistent throughout all
+code paths EXCEPT in cases where the ROOT node is nonexistent.  In
+version 2.11 the maintainers attempted to rectify this inconsistency
+but too many downstream modules encountered problems.  In such case,
+if you require root node evaluation or error checking prior to calling
+C<make_path> or C<remove_tree>, you should take additional precautions.
 
 =back
 
@@ -709,7 +845,7 @@ An example usage looks like:
 
 Note that if no errors are encountered, C<$err> will reference an
 empty array.  This means that C<$err> will always end up TRUE; so you
-need to test C<@$err> to determine if errors occured.
+need to test C<@$err> to determine if errors occurred.
 
 =head2 NOTES
 
@@ -947,15 +1083,43 @@ to examining directory trees.
 
 =back
 
-=head1 BUGS
+=head1 BUGS AND LIMITATIONS
 
-Please report all bugs on the RT queue:
+The following describes F<File::Path> limitations and how to report bugs.
+
+=head2 MULTITHREAD APPLICATIONS
+
+F<File::Path> B<rmtree> and B<remove_tree> will not work with multithreaded
+applications due to its use of B<chdir>.  At this time, no warning or error
+results and you will certainly encounter unexpected results.
+
+The implementation that surfaces this limitation may change in a future
+release.
+
+=head2 NFS Mount Points
+
+F<File::Path> is not responsible for triggering the automounts, mirror mounts,
+and the contents of network mounted filesystems.  If your NFS implementation
+requires an action to be performed on the filesystem in order for
+F<File::Path> to perform operations, it is strongly suggested you assure
+filesystem availability by reading the root of the mounted filesystem.
+
+=head2 REPORTING BUGS
+
+Please report all bugs on the RT queue, either via the web interface:
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=File-Path>
 
+or by email:
+
+    bug-File-Path@rt.cpan.org
+
+In either case, please B<attach> patches to the bug report rather than
+including them inline in the web post or the body of the email.
+
 You can also send pull requests to the Github repository:
 
-L<https://github.com/dland/File-Path>
+L<https://github.com/rpcme/File-Path>
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -969,13 +1133,36 @@ Gisle Aas made a number of improvements to the documentation for
 
 =head1 AUTHORS
 
-Tim Bunce and Charles Bailey. Currently maintained by David Landgren
-<F<david@landgren.net>>.
+Prior authors and maintainers: Tim Bunce, Charles Bailey, and
+David Landgren <F<david@landgren.net>>.
+
+Current maintainers are Richard Elberger <F<riche@cpan.org>> and
+James (Jim) Keenan <F<jkeenan@cpan.org>>.
+
+=head1 CONTRIBUTORS
+
+Contributors to File::Path, in alphabetical order.
+
+=over 1
+
+=item <F<bulkdd@cpan.org>>
+
+=item Craig A. Berry <F<craigberry@mac.com>>
+
+=item Richard Elberger <F<riche@cpan.org>>
+
+=item Ryan Yee <F<ryee@cpan.org>>
+
+=item Skye Shaw <F<shaw@cpan.org>>
+
+=item Tom Lutz <F<tommylutz@gmail.com>>
+
+=back
 
 =head1 COPYRIGHT
 
-This module is copyright (C) Charles Bailey, Tim Bunce and
-David Landgren 1995-2013. All rights reserved.
+This module is copyright (C) Charles Bailey, Tim Bunce, David Landgren,
+James Keenan, and Richard Elberger 1995-2015. All rights reserved.
 
 =head1 LICENSE
 

@@ -10,11 +10,11 @@ TAP::Formatter::File::Session - Harness output delegate for file output
 
 =head1 VERSION
 
-Version 3.30
+Version 3.36
 
 =cut
 
-our $VERSION = '3.30_01';
+our $VERSION = '3.36_01';
 
 =head1 DESCRIPTION
 
@@ -85,19 +85,7 @@ sub close_test {
         $self->_output_test_failure($parser);
     }
     else {
-        my $time_report = '';
-        if ( $formatter->timer ) {
-            my $start_time = $parser->start_time;
-            my $end_time   = $parser->end_time;
-            if ( defined $start_time and defined $end_time ) {
-                my $elapsed = $end_time - $start_time;
-                $time_report
-                  = $self->time_is_hires
-                  ? sprintf( ' %8d ms', $elapsed * 1000 )
-                  : sprintf( ' %8s s', $elapsed || '<1' );
-            }
-        }
-
+        my $time_report = $self->time_report($formatter, $parser);
         $formatter->_output( $pretty
               . ( $self->{results} ? "\n" . $self->{results} : "" )
               . $self->_make_ok_line($time_report) );

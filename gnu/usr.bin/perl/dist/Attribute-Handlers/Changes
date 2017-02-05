@@ -169,3 +169,9 @@ t Revision history for Perl extension Attribute-Handlers
 0.96	Fri Mar  7 08:30:00 CET 2014
 	- Documentation fixes
         - Replace use of base.pm with parent.pm
+
+0.97	Sun Jun  1 12:00:00 GMT 2015
+	- fixes to deal with CVs without GVs
+
+0.99 Fri Jul 24 18:44:48 EDT 2015
+  - CPAN release of v0.97 code

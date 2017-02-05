@@ -107,6 +107,13 @@ isnt($@, '');
 is($cpt->reval("2 + 2"), 4);
 
 my $test = $TB->current_test() + 1;
+$cpt->reval("
+    my \$todo = \$] < 5.021007 ? ' # TODO' : '';
+    print defined wantarray
+	? qq'not ok $test\$todo\n'
+	: qq'ok $test\$todo\n'
+");
+++$test;
 my $t_scalar = $cpt->reval("print wantarray ? 'not ok $test\n' : 'ok $test\n'");
 ++$test;
 my @t_array  = $cpt->reval("print wantarray ? 'ok $test\n' : 'not ok $test\n'; (2,3,4)");

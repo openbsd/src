@@ -5,7 +5,7 @@
 # see if the count increases.
 
 BEGIN {
-    chdir 't';
+    chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
 
@@ -15,7 +15,7 @@ BEGIN {
 
 use Config;
 
-plan tests => 128;
+plan tests => 131;
 
 # run some code N times. If the number of SVs at the end of loop N is
 # greater than (N-1)*delta at the end of loop 1, we've got a leak
@@ -479,3 +479,61 @@ leak(2,0,sub{eval{require untohunothu}}, 'requiring nonexistent module');
 # [perl #120939]
 use constant const_av_xsub_leaked => 1 .. 3;
 leak(5, 0, sub { scalar &const_av_xsub_leaked }, "const_av_sub in scalar context");
+
+# check that OP_MULTIDEREF doesn't leak when compiled and then freed
+
+eleak(2, 0, <<'EOF', 'OP_MULTIDEREF');
+no strict;
+no warnings;
+my ($x, @a, %h, $r, $k, $i);
+$x = $a[0]{foo}{$k}{$i};
+$x = $h[0]{foo}{$k}{$i};
+$x = $r->[0]{foo}{$k}{$i};
+$x = $mdr::a[0]{foo}{$mdr::k}{$mdr::i};
+$x = $mdr::h[0]{foo}{$mdr::k}{$mdr::i};
+$x = $mdr::r->[0]{foo}{$mdr::k}{$mdr::i};
+EOF
+
+# un-localizing a tied (or generally magic) item could leak if the things
+# called by mg_set() died
+
+{
+    package MG_SET;
+
+    sub TIESCALAR {  bless [] }
+    sub FETCH { 1; }
+    my $do_die = 0;
+    sub STORE { die if $do_die; }
+
+    sub f {
+        local $s;
+        tie $s, 'MG_SET';
+        local $s;
+        $do_die = 1;
+    }
+    sub g {
+        eval { my $x = f(); };
+    }
+
+    ::leak(5,0, \&g, "MG_SET");
+}
+
+# check that @_ isn't leaked when dieing while goto'ing a new sub
+
+{
+    package my_goto;
+    sub TIEARRAY { bless [] }
+    sub FETCH { 1 }
+    sub STORE { die if $_[0][0]; $_[0][0] = 1 }
+
+    sub f { eval { g() } }
+    sub g {
+        my @a;
+        tie @a, "my_goto";
+        local $a[0];
+        goto &h;
+    }
+    sub h {}
+
+    ::leak(5, 0, \&f, q{goto shouldn't leak @_});
+}

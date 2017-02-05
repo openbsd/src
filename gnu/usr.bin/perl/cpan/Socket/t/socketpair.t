@@ -35,6 +35,11 @@ BEGIN {
 	    }
 	    warn "Something unexpectedly hung during testing";
 	    kill "INT", $parent or die "Kill failed: $!";
+	    if( $^O eq "cygwin" ) {
+		# sometimes the above isn't enough on cygwin
+		sleep 1; # wait a little, it might have worked after all
+		system( "/bin/kill -f $parent; echo die $parent" );
+	    }
 	    exit 1;
 	}
     }

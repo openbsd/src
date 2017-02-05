@@ -10,6 +10,8 @@ plan(skip_all => "POSIX is unavailable")
 require POSIX;
 require Symbol;
 require File::Temp;
+unshift @INC, "../../t";
+require 'loc_tools.pl';
 
 use constant NOT_HERE => 'this-file-should-not-exist';
 
@@ -20,6 +22,24 @@ my $temp_file = $temp_fh->filename;
 # localtime and gmtime in time.t.
 # exit, fork, waitpid, sleep in waitpid.t
 # errno in posix.t
+
+if (locales_enabled('LC_MESSAGES')) {
+    my $non_english_locale;
+    local $! = 1;
+    my $english_message = "$!"; # Should be C locale since not in scope of
+                                # "use locale"
+    for $non_english_locale (find_locales(&POSIX::LC_MESSAGES,
+                                          'reasonable_locales_only'))
+    {
+        use locale;
+        setlocale(&POSIX::LC_MESSAGES, $non_english_locale);
+        $! = 1;
+        last if "$!" ne $english_message;
+    }
+
+    # If we found a locale whose message wasn't in English, we have
+    # setlocale() to it.
+}
 
 is(POSIX::abs(-42), 42, 'abs');
 is(POSIX::abs(-3.14), 3.14, 'abs');
@@ -115,8 +135,10 @@ is(POSIX::sprintf('%o', 42), '52', 'sprintf');
 is(POSIX::sqrt(256), 16, 'sqrt');
 is_deeply([POSIX::stat($temp_file)], [stat $temp_file], 'stat');
 {
+    use locale;
     local $! = 2;
     my $error = "$!";
+    no locale;
     is(POSIX::strerror(2), $error, 'strerror');
 }
 

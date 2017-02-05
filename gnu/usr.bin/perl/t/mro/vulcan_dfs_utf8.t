@@ -9,6 +9,8 @@ require q(./test.pl); plan(tests => 1);
 
 =pod
 
+=encoding UTF-8
+
 example taken from: L<http://www.opendylan.org/books/drm/Method_Dispatch>
 
          옵젳Ṯ

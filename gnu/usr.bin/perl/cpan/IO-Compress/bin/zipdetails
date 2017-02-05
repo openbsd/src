@@ -178,7 +178,7 @@ my %Extras = (
 
        );
 
-my $VERSION = "1.06_01" ;
+my $VERSION = "1.06" ;
 
 my $FH;
 

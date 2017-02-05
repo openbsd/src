@@ -25,7 +25,8 @@
  * only after that the Perl ones.  Otherwise you will get a lot
  * trouble because of Symbian's New(), Copy(), etc definitions. */
 
-#define DL_SYMBIAN_XS
+#define PERL_EXT
+#define PERL_IN_DL_SYMBIAN_XS
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -162,8 +163,8 @@ dl_load_file(filename, flags=0)
     if (h && h->error == KErrNone)
 	sv_setiv(ST(0), PTR2IV(h));
     else
-	PerlIO_printf(Perl_debug_log, "(dl_load_file %s %d)",
-                      filename, h ? h->error : -1);
+        SaveError(aTHX_ "(dl_load_file %s %d)"
+                        filename, h ? h->error : -1);
 }
 
 
@@ -177,20 +178,23 @@ dl_unload_file(libhandle)
 
 
 void
-dl_find_symbol(libhandle, symbolname)
+dl_find_symbol(libhandle, symbolname, ign_err=0)
     void *	libhandle
     char *	symbolname
+    int	        ign_err
     PREINIT:
     void *sym;
     CODE:
     PerlSymbianLibHandle* h = (PerlSymbianLibHandle*)libhandle;
     sym = dlsym(libhandle, symbolname);
     ST(0) = sv_newmortal();
-    if (sym)
+    if (sym) {
        sv_setiv(ST(0), PTR2IV(sym));
-    else
-       PerlIO_printf(Perl_debug_log, "(dl_find_symbol %s %d)",
+    } else {
+       if (!ign_err)
+           SaveError(aTHX_ "(dl_find_symbol %s %d)",
                      symbolname, h ? h->error : -1);
+    }
 
 
 void
@@ -213,11 +217,11 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 					      XS_DYNAMIC_FILENAME)));
 
 
-char *
+SV *
 dl_error()
     CODE:
     dMY_CXT;
-    RETVAL = dl_last_error;
+    RETVAL = newSVsv(MY_CXT.x_dl_last_error);
     OUTPUT:
     RETVAL
 
@@ -234,7 +238,7 @@ CLONE(...)
      * using Perl variables that belong to another thread, we create our 
      * own for this thread.
      */
-    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    MY_CXT.x_dl_last_error = newSVpvs("");
 
 #endif
 

@@ -10,7 +10,7 @@ use File::Path ();
 use File::Spec ();
 use CPAN::Mirrors ();
 use vars qw($VERSION $auto_config);
-$VERSION = "5.5306_01";
+$VERSION = "5.5307";
 
 =head1 NAME
 
@@ -198,6 +198,7 @@ alternatives can be configured according to the following table:
     cwd         Cwd::cwd
     getcwd      Cwd::getcwd
     fastcwd     Cwd::fastcwd
+    getdcwd     Cwd::getdcwd
     backtickcwd external command cwd
 
 Preferred method for determining the current working directory?
@@ -1134,6 +1135,17 @@ sub init {
     }
 
     #
+    #= how plugins work
+    #
+
+    # XXX MISSING: my_array_prompt to be used with plugins. We did something like this near
+    #     git log -p fd68f8f5e33f4cecea4fdb7abc5ee19c12f138f0..test-notest-test-dependency
+    # Need to do similar steps for plugin_list. As long as we do not support it here, people
+    # must use the cpan shell prompt to write something like
+    #     o conf plugin_list push CPAN::Plugin::Specfile=dir,/tmp/foo-20141013,...
+    #     o conf commit
+
+    #
     #= how FTP works
     #
 
@@ -1144,7 +1156,7 @@ sub init {
     #
 
     my_prompt_loop(getcwd => 'cwd', $matcher,
-                   'cwd|getcwd|fastcwd|backtickcwd');
+                   'cwd|getcwd|fastcwd|getdcwd|backtickcwd');
 
     #
     #= the CPAN shell itself (prompt, color)

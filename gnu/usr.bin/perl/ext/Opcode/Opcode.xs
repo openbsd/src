@@ -13,7 +13,9 @@ typedef struct {
     HV *	x_op_named_bits;	/* cache shared for whole process */
     SV *	x_opset_all;		/* mask with all bits set	*/
     IV		x_opset_len;		/* length of opmasks in bytes	*/
-    int		x_opcode_debug;
+#ifdef OPCODE_DEBUG
+    int		x_opcode_debug;		/* unused warn() emitting debugging code */
+#endif
 } my_cxt_t;
 
 START_MY_CXT
@@ -21,7 +23,12 @@ START_MY_CXT
 #define op_named_bits		(MY_CXT.x_op_named_bits)
 #define opset_all		(MY_CXT.x_opset_all)
 #define opset_len		(MY_CXT.x_opset_len)
-#define opcode_debug		(MY_CXT.x_opcode_debug)
+#ifdef OPCODE_DEBUG
+#  define opcode_debug		(MY_CXT.x_opcode_debug)
+#else
+ /* no API to turn this on at runtime, so constant fold the code away */
+#  define opcode_debug		0
+#endif
 
 static SV  *new_opset (pTHX_ SV *old_opset);
 static int  verify_opset (pTHX_ SV *opset, int fatal);
@@ -220,7 +227,9 @@ static void
 opmask_addlocal(pTHX_ SV *opset, char *op_mask_buf) /* Localise PL_op_mask then opmask_add() */
 {
     char *orig_op_mask = PL_op_mask;
+#ifdef OPCODE_DEBUG
     dMY_CXT;
+#endif
 
     SAVEVPTR(PL_op_mask);
     /* XXX casting to an ordinary function ptr from a member function ptr
@@ -310,15 +319,20 @@ PPCODE:
     dummy_hv = save_hash(PL_incgv);
     GvHV(PL_incgv) = (HV*)SvREFCNT_inc(GvHV(gv_HVadd(gv_fetchpvs("INC",GV_ADD,SVt_PVHV))));
 
-    /* Invalidate ISA and method caches */
+    /* Invalidate class and method caches */
     ++PL_sub_generation;
     hv_clear(PL_stashcache);
 
     PUSHMARK(SP);
-    perl_call_sv(codesv, GIMME|G_EVAL|G_KEEPERR); /* use callers context */
+    /* use caller’s context */
+    perl_call_sv(codesv, GIMME_V|G_EVAL|G_KEEPERR);
     sv_free( (SV *) dummy_hv);  /* get rid of what save_hash gave us*/
     SPAGAIN; /* for the PUTBACK added by xsubpp */
     LEAVE;
+
+    /* Invalidate again */
+    ++PL_sub_generation;
+    hv_clear(PL_stashcache);
 
 
 int
@@ -520,7 +534,7 @@ CODE:
 void
 opcodes()
 PPCODE:
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
 	croak("opcodes in list context not yet implemented"); /* XXX */
     }
     else {

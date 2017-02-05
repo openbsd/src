@@ -3,7 +3,8 @@ use warnings;
 
 package Perl::OSType;
 # ABSTRACT: Map Perl operating system names to generic types
-our $VERSION = '1.007'; # VERSION
+
+our $VERSION = '1.009';
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -30,6 +31,7 @@ my %OSTYPES = qw(
   darwin      Unix
   machten     Unix
   midnightbsd Unix
+  minix       Unix
   mirbsd      Unix
   next        Unix
   openbsd     Unix
@@ -38,6 +40,7 @@ my %OSTYPES = qw(
   nto         Unix
   svr4        Unix
   svr5        Unix
+  sco         Unix
   sco_sv      Unix
   unicos      Unix
   unicosmk    Unix
@@ -93,7 +96,7 @@ Perl::OSType - Map Perl operating system names to generic types
 
 =head1 VERSION
 
-version 1.007
+version 1.009
 
 =head1 SYNOPSIS
 
@@ -154,7 +157,7 @@ L<Devel::CheckOS>
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<https://github.com/dagolden/Perl-OSType/issues>.
+at L<https://github.com/Perl-Toolchain-Gang/Perl-OSType/issues>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -162,9 +165,9 @@ You will be notified automatically of any progress on your issue.
 This is open source software.  The code repository is available for
 public review and contribution under the terms of the license.
 
-L<https://github.com/dagolden/Perl-OSType>
+L<https://github.com/Perl-Toolchain-Gang/Perl-OSType>
 
-  git clone https://github.com/dagolden/Perl-OSType.git
+  git clone https://github.com/Perl-Toolchain-Gang/Perl-OSType.git
 
 =head1 AUTHOR
 
@@ -172,7 +175,13 @@ David Golden <dagolden@cpan.org>
 
 =head1 CONTRIBUTORS
 
+=for stopwords Chris 'BinGOs' Williams Jonas B. Nielsen Owain G. Ainsworth Paul Green Piotr Roszatycki
+
 =over 4
+
+=item *
+
+Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
 =item *
 
@@ -194,7 +203,7 @@ Piotr Roszatycki <piotr.roszatycki@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2014 by David Golden.
+This software is copyright (c) 2015 by David Golden.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

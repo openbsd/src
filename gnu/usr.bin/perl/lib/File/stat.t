@@ -13,7 +13,7 @@ use File::Temp qw( tempfile tempdir );
 
 use File::stat;
 
-my (undef, $file) = tempfile();
+my (undef, $file) = tempfile(UNLINK => 1);
 
 {
     my @stat = CORE::stat $file;
@@ -186,9 +186,4 @@ SKIP:
 
 done_testing;
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

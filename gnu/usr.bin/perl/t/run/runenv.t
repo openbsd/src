@@ -99,12 +99,12 @@ try({PERL5OPT => '-Mstrict'}, ['-I../lib', '-e', 'print $::x'],
 
 try({PERL5OPT => '-Mstrict'}, ['-I../lib', '-e', 'print $x'],
     "", 
-    qq{Global symbol "\$x" requires explicit package name at -e line 1.\nExecution of -e aborted due to compilation errors.\n});
+    qq{Global symbol "\$x" requires explicit package name (did you forget to declare "my \$x"?) at -e line 1.\nExecution of -e aborted due to compilation errors.\n});
 
 # Fails in 5.6.0
 try({PERL5OPT => '-Mstrict -w'}, ['-I../lib', '-e', 'print $x'],
     "", 
-    qq{Global symbol "\$x" requires explicit package name at -e line 1.\nExecution of -e aborted due to compilation errors.\n});
+    qq{Global symbol "\$x" requires explicit package name (did you forget to declare "my \$x"?) at -e line 1.\nExecution of -e aborted due to compilation errors.\n});
 
 # Fails in 5.6.0
 try({PERL5OPT => '-w -Mstrict'}, ['-I../lib', '-e', 'print $::x'],

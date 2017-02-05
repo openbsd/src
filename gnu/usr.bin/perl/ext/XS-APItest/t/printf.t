@@ -1,3 +1,11 @@
+BEGIN {
+  require Config; import Config;
+  if ($Config{usequadmath}) {
+     print "1..0 # Skip: usequadmath\n";
+     exit(0);
+  }
+}
+
 use Test::More tests => 11;
 
 BEGIN { use_ok('XS::APItest') };

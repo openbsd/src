@@ -21,7 +21,7 @@ my @out = (
 	"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
 );
 
-my $numtests = 8 + scalar @out;
+my $numtests = 9 + scalar @out;
 print "1..$numtests\n";
 
 	# attempt to use an invalid algorithm, and check for failure
@@ -100,6 +100,24 @@ $fh->close;
 print "not " unless $sha->new(1)->addfile($tempfile, "p")->hexdigest eq
 	"d449e19c1b0b0c191294c8dc9fa2e4a6ff77fc51";
 print "ok ", $testnum++, "\n";
+
+	# test addfile "universal newlines" mode
+
+$fh = FileHandle->new($tempfile, "w");
+binmode($fh);
+print $fh "MacOS\r" . "MSDOS\r\n" . "UNIX\n" . "Quirky\r\r\n";
+$fh->close;
+
+my $d = $sha->new(1)->addfile($tempfile, "U")->hexdigest;
+if ($d eq "f4c6855783c737c7e224873c90e80a9df5c2bc97") {
+	print "ok ", $testnum++, "\n";
+}
+elsif ($d eq "42335d4a517a5e31399e948e9d842bafd9194d8f") {
+	print "ok ", $testnum++, " # skip:  flaky -T\n";
+}
+else {
+	print "not ok ", $testnum++, "\n";
+}
 
 	# test addfile BITS mode
 

@@ -168,9 +168,9 @@ is liable to generate zombies.    If this matters to you, you'll
 need to do your own fork() and exec(), and kill the errant child process.
 
 For more complex signal handling, you might see the standard POSIX
-module.  Lamentably, this is almost entirely undocumented, but
-the F<t/lib/posix.t> file from the Perl source distribution has some
-examples in it.
+module.  Lamentably, this is almost entirely undocumented, but the
+F<ext/POSIX/t/sigaction.t> file from the Perl source distribution has
+some examples in it.
 
 =head2 Handling the SIGHUP Signal in Daemons
 
@@ -316,8 +316,9 @@ Instead of setting C<$SIG{ALRM}>:
 
 try something like the following:
 
-  use POSIX qw(SIGALRM);
-  POSIX::sigaction(SIGALRM, POSIX::SigAction->new(sub { die "alarm" }))
+ use POSIX qw(SIGALRM);
+ POSIX::sigaction(SIGALRM,
+                  POSIX::SigAction->new(sub { die "alarm" }))
           || die "Error setting SIGALRM handler: $!\n";
 
 Another way to disable the safe signal behavior locally is to use
@@ -515,17 +516,17 @@ containing the directory from which it was launched, and redirect its
 standard file descriptors from and to F</dev/null> so that random
 output doesn't wind up on the user's terminal.
 
-    use POSIX "setsid";
+ use POSIX "setsid";
 
-    sub daemonize {
-        chdir("/")                      || die "can't chdir to /: $!";
-        open(STDIN,  "< /dev/null")     || die "can't read /dev/null: $!";
-        open(STDOUT, "> /dev/null")     || die "can't write to /dev/null: $!";
-        defined(my $pid = fork())       || die "can't fork: $!";
-        exit if $pid;                   # non-zero now means I am the parent
-        (setsid() != -1)                || die "Can't start a new session: $!";
-        open(STDERR, ">&STDOUT")        || die "can't dup stdout: $!";
-    }
+ sub daemonize {
+     chdir("/")                  || die "can't chdir to /: $!";
+     open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
+     open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
+     defined(my $pid = fork())   || die "can't fork: $!";
+     exit if $pid;               # non-zero now means I am the parent
+     (setsid() != -1)            || die "Can't start a new session: $!";
+     open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
+ }
 
 The fork() has to come before the setsid() to ensure you aren't a
 process group leader; the setsid() will fail if you are.  If your
@@ -812,70 +813,70 @@ this together by hand.  This example only talks to itself, but you could
 reopen the appropriate handles to STDIN and STDOUT and call other processes.
 (The following example lacks proper error checking.)
 
-    #!/usr/bin/perl -w
-    # pipe1 - bidirectional communication using two pipe pairs
-    #         designed for the socketpair-challenged
-    use IO::Handle;               # thousands of lines just for autoflush :-(
-    pipe(PARENT_RDR, CHILD_WTR);  # XXX: check failure?
-    pipe(CHILD_RDR,  PARENT_WTR); # XXX: check failure?
-    CHILD_WTR->autoflush(1);
-    PARENT_WTR->autoflush(1);
+ #!/usr/bin/perl -w
+ # pipe1 - bidirectional communication using two pipe pairs
+ #         designed for the socketpair-challenged
+ use IO::Handle;             # thousands of lines just for autoflush :-(
+ pipe(PARENT_RDR, CHILD_WTR);  # XXX: check failure?
+ pipe(CHILD_RDR,  PARENT_WTR); # XXX: check failure?
+ CHILD_WTR->autoflush(1);
+ PARENT_WTR->autoflush(1);
 
-    if ($pid = fork()) {
-        close PARENT_RDR;
-        close PARENT_WTR;
-        print CHILD_WTR "Parent Pid $$ is sending this\n";
-        chomp($line = <CHILD_RDR>);
-        print "Parent Pid $$ just read this: '$line'\n";
-        close CHILD_RDR; close CHILD_WTR;
-        waitpid($pid, 0);
-    } else {
-        die "cannot fork: $!" unless defined $pid;
-        close CHILD_RDR;
-        close CHILD_WTR;
-        chomp($line = <PARENT_RDR>);
-        print "Child Pid $$ just read this: '$line'\n";
-        print PARENT_WTR "Child Pid $$ is sending this\n";
-        close PARENT_RDR;
-        close PARENT_WTR;
-        exit(0);
-    }
+ if ($pid = fork()) {
+     close PARENT_RDR;
+     close PARENT_WTR;
+     print CHILD_WTR "Parent Pid $$ is sending this\n";
+     chomp($line = <CHILD_RDR>);
+     print "Parent Pid $$ just read this: '$line'\n";
+     close CHILD_RDR; close CHILD_WTR;
+     waitpid($pid, 0);
+ } else {
+     die "cannot fork: $!" unless defined $pid;
+     close CHILD_RDR;
+     close CHILD_WTR;
+     chomp($line = <PARENT_RDR>);
+     print "Child Pid $$ just read this: '$line'\n";
+     print PARENT_WTR "Child Pid $$ is sending this\n";
+     close PARENT_RDR;
+     close PARENT_WTR;
+     exit(0);
+ }
 
 But you don't actually have to make two pipe calls.  If you
 have the socketpair() system call, it will do this all for you.
 
-    #!/usr/bin/perl -w
-    # pipe2 - bidirectional communication using socketpair
-    #   "the best ones always go both ways"
+ #!/usr/bin/perl -w
+ # pipe2 - bidirectional communication using socketpair
+ #   "the best ones always go both ways"
 
-    use Socket;
-    use IO::Handle;  # thousands of lines just for autoflush :-(
+ use Socket;
+ use IO::Handle;  # thousands of lines just for autoflush :-(
 
-    # We say AF_UNIX because although *_LOCAL is the
-    # POSIX 1003.1g form of the constant, many machines
-    # still don't have it.
-    socketpair(CHILD, PARENT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
-                                ||  die "socketpair: $!";
+ # We say AF_UNIX because although *_LOCAL is the
+ # POSIX 1003.1g form of the constant, many machines
+ # still don't have it.
+ socketpair(CHILD, PARENT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)
+                             ||  die "socketpair: $!";
 
-    CHILD->autoflush(1);
-    PARENT->autoflush(1);
+ CHILD->autoflush(1);
+ PARENT->autoflush(1);
 
-    if ($pid = fork()) {
-        close PARENT;
-        print CHILD "Parent Pid $$ is sending this\n";
-        chomp($line = <CHILD>);
-        print "Parent Pid $$ just read this: '$line'\n";
-        close CHILD;
-        waitpid($pid, 0);
-    } else {
-        die "cannot fork: $!" unless defined $pid;
-        close CHILD;
-        chomp($line = <PARENT>);
-        print "Child Pid $$ just read this: '$line'\n";
-        print PARENT "Child Pid $$ is sending this\n";
-        close PARENT;
-        exit(0);
-    }
+ if ($pid = fork()) {
+     close PARENT;
+     print CHILD "Parent Pid $$ is sending this\n";
+     chomp($line = <CHILD>);
+     print "Parent Pid $$ just read this: '$line'\n";
+     close CHILD;
+     waitpid($pid, 0);
+ } else {
+     die "cannot fork: $!" unless defined $pid;
+     close CHILD;
+     chomp($line = <PARENT>);
+     print "Child Pid $$ just read this: '$line'\n";
+     print PARENT "Child Pid $$ is sending this\n";
+     close PARENT;
+     exit(0);
+ }
 
 =head1 Sockets: Client/Server Communication
 
@@ -954,133 +955,133 @@ the appropriate interface on multihomed hosts.  If you want sit
 on a particular interface (like the external side of a gateway
 or firewall machine), fill this in with your real address instead.
 
-    #!/usr/bin/perl -Tw
-    use strict;
-    BEGIN { $ENV{PATH} = "/usr/bin:/bin" }
-    use Socket;
-    use Carp;
-    my $EOL = "\015\012";
+ #!/usr/bin/perl -Tw
+ use strict;
+ BEGIN { $ENV{PATH} = "/usr/bin:/bin" }
+ use Socket;
+ use Carp;
+ my $EOL = "\015\012";
 
-    sub logmsg { print "$0 $$: @_ at ", scalar localtime(), "\n" }
+ sub logmsg { print "$0 $$: @_ at ", scalar localtime(), "\n" }
 
-    my $port  = shift || 2345;
-    die "invalid port" unless if $port =~ /^ \d+ $/x;
+ my $port  = shift || 2345;
+ die "invalid port" unless $port =~ /^ \d+ $/x;
 
-    my $proto = getprotobyname("tcp");
+ my $proto = getprotobyname("tcp");
 
-    socket(Server, PF_INET, SOCK_STREAM, $proto)    || die "socket: $!";
-    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
-                                                    || die "setsockopt: $!";
-    bind(Server, sockaddr_in($port, INADDR_ANY))    || die "bind: $!";
-    listen(Server, SOMAXCONN)                       || die "listen: $!";
+ socket(Server, PF_INET, SOCK_STREAM, $proto)   || die "socket: $!";
+ setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
+                                                || die "setsockopt: $!";
+ bind(Server, sockaddr_in($port, INADDR_ANY))   || die "bind: $!";
+ listen(Server, SOMAXCONN)                      || die "listen: $!";
 
-    logmsg "server started on port $port";
+ logmsg "server started on port $port";
 
-    my $paddr;
+ my $paddr;
 
-    $SIG{CHLD} = \&REAPER;
+ for ( ; $paddr = accept(Client, Server); close Client) {
+     my($port, $iaddr) = sockaddr_in($paddr);
+     my $name = gethostbyaddr($iaddr, AF_INET);
 
-    for ( ; $paddr = accept(Client, Server); close Client) {
-        my($port, $iaddr) = sockaddr_in($paddr);
-        my $name = gethostbyaddr($iaddr, AF_INET);
+     logmsg "connection from $name [",
+             inet_ntoa($iaddr), "]
+             at port $port";
 
-        logmsg "connection from $name [",
-                inet_ntoa($iaddr), "]
-                at port $port";
-
-        print Client "Hello there, $name, it's now ",
-                        scalar localtime(), $EOL;
-    }
+     print Client "Hello there, $name, it's now ",
+                     scalar localtime(), $EOL;
+ }
 
 And here's a multitasking version.  It's multitasked in that
 like most typical servers, it spawns (fork()s) a slave server to
 handle the client request so that the master server can quickly
 go back to service a new client.
 
-    #!/usr/bin/perl -Tw
-    use strict;
-    BEGIN { $ENV{PATH} = "/usr/bin:/bin" }
-    use Socket;
-    use Carp;
-    my $EOL = "\015\012";
+ #!/usr/bin/perl -Tw
+ use strict;
+ BEGIN { $ENV{PATH} = "/usr/bin:/bin" }
+ use Socket;
+ use Carp;
+ my $EOL = "\015\012";
 
-    sub spawn;  # forward declaration
-    sub logmsg { print "$0 $$: @_ at ", scalar localtime(), "\n" }
+ sub spawn;  # forward declaration
+ sub logmsg { print "$0 $$: @_ at ", scalar localtime(), "\n" }
 
-    my $port  = shift || 2345;
-    die "invalid port" unless $port =~ /^ \d+ $/x;
+ my $port  = shift || 2345;
+ die "invalid port" unless $port =~ /^ \d+ $/x;
 
-    my $proto = getprotobyname("tcp");
+ my $proto = getprotobyname("tcp");
 
-    socket(Server, PF_INET, SOCK_STREAM, $proto)    || die "socket: $!";
-    setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
-                                                    || die "setsockopt: $!";
-    bind(Server, sockaddr_in($port, INADDR_ANY))    || die "bind: $!";
-    listen(Server, SOMAXCONN)                       || die "listen: $!";
+ socket(Server, PF_INET, SOCK_STREAM, $proto)   || die "socket: $!";
+ setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
+                                                || die "setsockopt: $!";
+ bind(Server, sockaddr_in($port, INADDR_ANY))   || die "bind: $!";
+ listen(Server, SOMAXCONN)                      || die "listen: $!";
 
-    logmsg "server started on port $port";
+ logmsg "server started on port $port";
 
-    my $waitedpid = 0;
-    my $paddr;
+ my $waitedpid = 0;
+ my $paddr;
 
-    use POSIX ":sys_wait_h";
-    use Errno;
+ use POSIX ":sys_wait_h";
+ use Errno;
 
-    sub REAPER {
-        local $!;   # don't let waitpid() overwrite current error
-        while ((my $pid = waitpid(-1, WNOHANG)) > 0 && WIFEXITED($?)) {
-            logmsg "reaped $waitedpid" . ($? ? " with exit $?" : "");
-        }
-        $SIG{CHLD} = \&REAPER;  # loathe SysV
-    }
+ sub REAPER {
+     local $!;   # don't let waitpid() overwrite current error
+     while ((my $pid = waitpid(-1, WNOHANG)) > 0 && WIFEXITED($?)) {
+         logmsg "reaped $waitedpid" . ($? ? " with exit $?" : "");
+     }
+     $SIG{CHLD} = \&REAPER;  # loathe SysV
+ }
 
-    $SIG{CHLD} = \&REAPER;
+ $SIG{CHLD} = \&REAPER;
 
-    while (1) {
-        $paddr = accept(Client, Server) || do {
-            # try again if accept() returned because got a signal
-            next if $!{EINTR};
-            die "accept: $!";
-        };
-        my ($port, $iaddr) = sockaddr_in($paddr);
-        my $name = gethostbyaddr($iaddr, AF_INET);
+ while (1) {
+     $paddr = accept(Client, Server) || do {
+         # try again if accept() returned because got a signal
+         next if $!{EINTR};
+         die "accept: $!";
+     };
+     my ($port, $iaddr) = sockaddr_in($paddr);
+     my $name = gethostbyaddr($iaddr, AF_INET);
 
-        logmsg "connection from $name [",
-               inet_ntoa($iaddr),
-               "] at port $port";
+     logmsg "connection from $name [",
+            inet_ntoa($iaddr),
+            "] at port $port";
 
-        spawn sub {
-            $| = 1;
-            print "Hello there, $name, it's now ", scalar localtime(), $EOL;
-            exec "/usr/games/fortune"       # XXX: "wrong" line terminators
-                or confess "can't exec fortune: $!";
-        };
-        close Client;
-    }
+     spawn sub {
+         $| = 1;
+         print "Hello there, $name, it's now ",
+               scalar localtime(),
+               $EOL;
+         exec "/usr/games/fortune"       # XXX: "wrong" line terminators
+             or confess "can't exec fortune: $!";
+     };
+     close Client;
+ }
 
-    sub spawn {
-        my $coderef = shift;
+ sub spawn {
+     my $coderef = shift;
 
-        unless (@_ == 0 && $coderef && ref($coderef) eq "CODE") {
-            confess "usage: spawn CODEREF";
-        }
+     unless (@_ == 0 && $coderef && ref($coderef) eq "CODE") {
+         confess "usage: spawn CODEREF";
+     }
 
-        my $pid;
-        unless (defined($pid = fork())) {
-            logmsg "cannot fork: $!";
-            return;
-        }
-        elsif ($pid) {
-            logmsg "begat $pid";
-            return; # I'm the parent
-        }
-        # else I'm the child -- go spawn
+     my $pid;
+     unless (defined($pid = fork())) {
+         logmsg "cannot fork: $!";
+         return;
+     }
+     elsif ($pid) {
+         logmsg "begat $pid";
+         return; # I'm the parent
+     }
+     # else I'm the child -- go spawn
 
-        open(STDIN,  "<&Client")    || die "can't dup client to stdin";
-        open(STDOUT, ">&Client")    || die "can't dup client to stdout";
-        ## open(STDERR, ">&STDOUT") || die "can't dup stdout to stderr";
-        exit($coderef->());
-    }
+     open(STDIN,  "<&Client")    || die "can't dup client to stdin";
+     open(STDOUT, ">&Client")    || die "can't dup client to stdout";
+     ## open(STDERR, ">&STDOUT") || die "can't dup stdout to stderr";
+     exit($coderef->());
+ }
 
 This server takes the trouble to clone off a child version via fork()
 for each incoming request.  That way it can handle many requests at
@@ -1296,7 +1297,7 @@ that the server there cares to provide.
                         PeerAddr => "localhost",
                         PeerPort => "daytime(13)",
                     )
-                  || die "can't connect to daytime service on localhost";
+                 || die "can't connect to daytime service on localhost";
     while (<$remote>) { print }
 
 When you run this program, you should get something back that
@@ -1571,15 +1572,16 @@ Here's the code.  We'll
    $client->autoflush(1);
    print $client "Welcome to $0; type help for command list.\n";
    $hostinfo = gethostbyaddr($client->peeraddr);
-   printf "[Connect from %s]\n", $hostinfo ? $hostinfo->name : $client->peerhost;
+   printf "[Connect from %s]\n",
+          $hostinfo ? $hostinfo->name : $client->peerhost;
    print $client "Command? ";
    while ( <$client>) {
-     next unless /\S/;       # blank line
-     if    (/quit|exit/i)    { last                                      }
-     elsif (/date|time/i)    { printf $client "%s\n", scalar localtime() }
-     elsif (/who/i )         { print  $client `who 2>&1`                 }
-     elsif (/cookie/i )      { print  $client `/usr/games/fortune 2>&1`  }
-     elsif (/motd/i )        { print  $client `cat /etc/motd 2>&1`       }
+     next unless /\S/;     # blank line
+     if    (/quit|exit/i)  { last                                      }
+     elsif (/date|time/i)  { printf $client "%s\n", scalar localtime() }
+     elsif (/who/i )       { print  $client `who 2>&1`                 }
+     elsif (/cookie/i )    { print  $client `/usr/games/fortune 2>&1`  }
+     elsif (/motd/i )      { print  $client `cat /etc/motd 2>&1`       }
      else {
        print $client "Commands: quit date who cookie motd\n";
      }
@@ -1612,49 +1614,49 @@ will check many of them asynchronously by simulating a multicast and then
 using select() to do a timed-out wait for I/O.  To do something similar
 with TCP, you'd have to use a different socket handle for each host.
 
-    #!/usr/bin/perl -w
-    use strict;
-    use Socket;
-    use Sys::Hostname;
+ #!/usr/bin/perl -w
+ use strict;
+ use Socket;
+ use Sys::Hostname;
 
-    my ( $count, $hisiaddr, $hispaddr, $histime,
-         $host, $iaddr, $paddr, $port, $proto,
-         $rin, $rout, $rtime, $SECS_OF_70_YEARS);
+ my ( $count, $hisiaddr, $hispaddr, $histime,
+      $host, $iaddr, $paddr, $port, $proto,
+      $rin, $rout, $rtime, $SECS_OF_70_YEARS);
 
-    $SECS_OF_70_YEARS = 2_208_988_800;
+ $SECS_OF_70_YEARS = 2_208_988_800;
 
-    $iaddr = gethostbyname(hostname());
-    $proto = getprotobyname("udp");
-    $port = getservbyname("time", "udp");
-    $paddr = sockaddr_in(0, $iaddr); # 0 means let kernel pick
+ $iaddr = gethostbyname(hostname());
+ $proto = getprotobyname("udp");
+ $port = getservbyname("time", "udp");
+ $paddr = sockaddr_in(0, $iaddr); # 0 means let kernel pick
 
-    socket(SOCKET, PF_INET, SOCK_DGRAM, $proto)   || die "socket: $!";
-    bind(SOCKET, $paddr)                          || die "bind: $!";
+ socket(SOCKET, PF_INET, SOCK_DGRAM, $proto)   || die "socket: $!";
+ bind(SOCKET, $paddr)                          || die "bind: $!";
 
-    $| = 1;
-    printf "%-12s %8s %s\n",  "localhost", 0, scalar localtime();
-    $count = 0;
-    for $host (@ARGV) {
-        $count++;
-        $hisiaddr = inet_aton($host)              || die "unknown host";
-        $hispaddr = sockaddr_in($port, $hisiaddr);
-        defined(send(SOCKET, 0, 0, $hispaddr))    || die "send $host: $!";
-    }
+ $| = 1;
+ printf "%-12s %8s %s\n",  "localhost", 0, scalar localtime();
+ $count = 0;
+ for $host (@ARGV) {
+     $count++;
+     $hisiaddr = inet_aton($host)              || die "unknown host";
+     $hispaddr = sockaddr_in($port, $hisiaddr);
+     defined(send(SOCKET, 0, 0, $hispaddr))    || die "send $host: $!";
+ }
 
-    $rin = "";
-    vec($rin, fileno(SOCKET), 1) = 1;
+ $rin = "";
+ vec($rin, fileno(SOCKET), 1) = 1;
 
-    # timeout after 10.0 seconds
-    while ($count && select($rout = $rin, undef, undef, 10.0)) {
-        $rtime = "";
-        $hispaddr = recv(SOCKET, $rtime, 4, 0)    || die "recv: $!";
-        ($port, $hisiaddr) = sockaddr_in($hispaddr);
-        $host = gethostbyaddr($hisiaddr, AF_INET);
-        $histime = unpack("N", $rtime) - $SECS_OF_70_YEARS;
-        printf "%-12s ", $host;
-        printf "%8d %s\n", $histime - time(), scalar localtime($histime);
-        $count--;
-    }
+ # timeout after 10.0 seconds
+ while ($count && select($rout = $rin, undef, undef, 10.0)) {
+     $rtime = "";
+     $hispaddr = recv(SOCKET, $rtime, 4, 0)    || die "recv: $!";
+     ($port, $hisiaddr) = sockaddr_in($hispaddr);
+     $host = gethostbyaddr($hisiaddr, AF_INET);
+     $histime = unpack("N", $rtime) - $SECS_OF_70_YEARS;
+     printf "%-12s ", $host;
+     printf "%8d %s\n", $histime - time(), scalar localtime($histime);
+     $count--;
+ }
 
 This example does not include any retries and may consequently fail to
 contact a reachable host. The most prominent reason for this is congestion

@@ -3,15 +3,20 @@ use warnings;
 use Test::More tests => 3;
 use Module::Metadata;
 
-*fh_from_string = $] < 5.008
-  ? require IO::Scalar && sub ($) {
-    IO::Scalar->new(\$_[0]);
-  }
-  : sub ($) {
-    open my $fh, '<', \$_[0];
-    $fh
-  }
-;
+BEGIN {
+  *fh_from_string = $] < 5.008
+    ? require IO::Scalar && sub ($) {
+      IO::Scalar->new(\$_[0]);
+    }
+    # hide in an eval'd string so Perl::MinimumVersion doesn't clutch its pearls
+    : eval <<'EVAL'
+    sub ($) {
+      open my $fh, '<', \$_[0];
+      $fh
+    }
+EVAL
+  ;
+}
 
 {
     my $src = <<'...';

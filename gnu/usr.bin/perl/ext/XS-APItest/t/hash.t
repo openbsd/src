@@ -20,7 +20,7 @@ sub test_fetch_absent;
 my $utf8_for_258 = chr 258;
 utf8::encode $utf8_for_258;
 
-my @testkeys = ('N', chr 198, chr 256);
+my @testkeys = ('N', chr utf8::unicode_to_native(198), chr 256);
 my @keys = (@testkeys, $utf8_for_258);
 
 foreach (@keys) {
@@ -102,11 +102,21 @@ foreach my $in ("", "N", "a\0b") {
 	foreach my $upgrade_n (0, 1) {
 	    my (%hash, %placebo);
 	    XS::APItest::Hash::bitflip_hash(\%hash);
-	    foreach my $new (["7", 65, 67, 80],
-			     ["8", 163, 171, 215],
+	    foreach my $new (["7", utf8::unicode_to_native(65),
+                                   utf8::unicode_to_native(67),
+                                   utf8::unicode_to_native(80)
+                             ],
+			     ["8", utf8::unicode_to_native(163),
+                                   utf8::unicode_to_native(171),
+                                   utf8::unicode_to_native(215)
+                             ],
 			     ["U", 2603, 2604, 2604],
-			    ) {
-		foreach my $code (78, 240, 256, 1336) {
+                ) {
+		foreach my $code (utf8::unicode_to_native(78),
+                                  utf8::unicode_to_native(240),
+                                  256,
+                                  1336
+                ) {
 		    my $key = chr $code;
 		    # This is the UTF-8 byte sequence for the key.
 		    my $key_utf8 = $key;
@@ -396,7 +406,7 @@ sub test_U_hash {
 sub main_tests {
   my ($keys, $testkeys, $description) = @_;
   foreach my $key (@$testkeys) {
-    my $lckey = ($key eq chr 198) ? chr 230 : lc $key;
+    my $lckey = ($key eq chr utf8::unicode_to_native(198)) ? chr utf8::unicode_to_native(230) : lc $key;
     my $unikey = $key;
     utf8::encode $unikey;
 
@@ -571,6 +581,7 @@ sub rot13 {
 }
 
 sub bitflip {
-    my @results = map {join '', map {chr(32 ^ ord $_)} split '', $_} @_;
+    my $flip_bit = ord("A") ^ ord("a");
+    my @results = map {join '', map {chr($flip_bit ^ ord $_)} split '', $_} @_;
     wantarray ? @results : $results[0];
 }

@@ -2,7 +2,8 @@
 
 BEGIN {
     chdir 't';
-    unshift @INC, "../lib";
+    @INC = "../lib";
+    # Do not require test.pl, this file has its own framework.
 }
 
 use strict;
@@ -24,7 +25,7 @@ BEGIN {
     }
     if ($^O eq 'dec_osf') {
         print "1..0 # $^O cannot handle this test\n";
-        exit 0;
+        exit(0);
     }
     require '../regen/regen_lib.pl';
 }
@@ -1028,9 +1029,29 @@ package My::Pod::Checker {      # Extend Pod::Checker
         if ($_[0] && ($page = $_[0][1]{'-page'})) {
             my $node = $_[0][1]{'-node'};
 
-            # If the hyperlink is to an interior node of another page, save it
-            # so that we can see if we need to parse normally skipped files.
-            $has_referred_to_node{$page} = 1 if $node;
+            if ($node) {
+                $_[0][1]{'-node'} = $node = do {
+                    my $expand_seq = sub {
+                        my (undef, $seq) = @_;
+                        my $arg = join '', $seq->parse_tree->children;
+                        if ($seq->name eq 'E') {
+                            $arg =
+                                $arg eq 'sol'    ? '/' :
+                                $arg eq 'verbar' ? '|' :
+                                $arg eq 'lt'     ? '<' :
+                                $arg eq 'gt'     ? '>' :
+                                die "Not implemented: E<$arg>";
+                        }
+                        return $arg;
+                    };
+                    my $ptree = $self->parse_text({ -expand_seq => $expand_seq }, $node, $_[0][0]);
+                    join '', $ptree->children
+                };
+
+                # If the hyperlink is to an interior node of another page, save it
+                # so that we can see if we need to parse normally skipped files.
+                $has_referred_to_node{$page} = 1;
+            }
 
             # Ignore certain placeholder links in perldelta.  Check if the
             # link is page-level, and also check if to a node within the page
@@ -1130,13 +1151,13 @@ package Tie_Array_to_FH {  # So printing actually goes to an array
 }
 
 
-my %filename_to_checker; # Map a filename to it's pod checker object
-my %id_to_checker;      # Map a checksum to it's pod checker object
-my %nodes;              # key is filename, values are nodes in that file.
-my %nodes_first_word;   # same, but value is first word of each node
-my %valid_modules;      # List of modules known to exist outside us.
-my %digests;            # checksums of files, whose names are the keys
-my %filename_to_pod;    # Map a filename to its pod NAME
+my %filename_to_checker; # Map a filename to its pod checker object
+my %id_to_checker;       # Map a checksum to its pod checker object
+my %nodes;               # key is filename, values are nodes in that file.
+my %nodes_first_word;    # same, but value is first word of each node
+my %valid_modules;       # List of modules known to exist outside us.
+my %digests;             # checksums of files, whose names are the keys
+my %filename_to_pod;     # Map a filename to its pod NAME
 my %files_with_unknown_issues;
 my %files_with_fixes;
 
@@ -1428,6 +1449,11 @@ sub is_pod_file {
                 # name
                 if ($contents =~ /\G    # continue from the line after =head1
                                   \s*   # ignore any empty lines
+
+                                  # ignore =for paragraphs followed by empty
+                                  # lines
+                                  (?: ^ =for .*? \n (?: [^\s]*? \n )* \s* )*
+
                                   ^ \s* ( \S+?) \s* (?: [,-] | $ )/mx) {
                     my $name = $1;
                     $checker->name($name);
@@ -1479,49 +1505,49 @@ else { # No input files -- go find all the possibilities.
 plan (tests => scalar @files) if ! $regen;
 
 
- # Sort file names so we get consistent results, and to put cpan last,
- # preceeded by the ones that we don't generally parse.  This is because both
- # these classes are generally parsed only if there is a link to the interior
- # of them, and we have to parse all others first to guarantee that they don't
- # have such a link. 'lib' files come just before these, as some of these are
- # duplicates of others.  We already have figured this out when gathering the
- # data as a special case for all such files, but this, while unnecessary,
- # puts the derived file last in the output.  'readme' files come before those,
- # as those also could be duplicates of others, which are considered the
- # primary ones.  These currently aren't figured out when gathering data, so
- # are done here.
- @files = sort { if ($a =~ /^cpan/) {
-                    return 1 if $b !~ /^cpan/;
-                    return lc $a cmp lc $b;
-                }
-                elsif ($b =~ /^cpan/) {
-                    return -1;
-                }
-                elsif ($a =~ /$only_for_interior_links_re/) {
-                    return 1 if $b !~ /$only_for_interior_links_re/;
-                    return lc $a cmp lc $b;
-                }
-                elsif ($b =~ /$only_for_interior_links_re/) {
-                    return -1;
-                }
-                elsif ($a =~ /^lib/) {
-                    return 1 if $b !~ /^lib/;
-                    return lc $a cmp lc $b;
-                }
-                elsif ($b =~ /^lib/) {
-                    return -1;
-                } elsif ($a =~ /\breadme\b/i) {
-                    return 1 if $b !~ /\breadme\b/i;
-                    return lc $a cmp lc $b;
-                }
-                elsif ($b =~ /\breadme\b/i) {
-                    return -1;
-                }
-                else {
-                    return lc $a cmp lc $b;
-                }
-            }
-            @files;
+# Sort file names so we get consistent results, and to put cpan last,
+# preceded by the ones that we don't generally parse.  This is because both
+# these classes are generally parsed only if there is a link to the interior
+# of them, and we have to parse all others first to guarantee that they don't
+# have such a link. 'lib' files come just before these, as some of these are
+# duplicates of others.  We already have figured this out when gathering the
+# data as a special case for all such files, but this, while unnecessary,
+# puts the derived file last in the output.  'readme' files come before those,
+# as those also could be duplicates of others, which are considered the
+# primary ones.  These currently aren't figured out when gathering data, so
+# are done here.
+@files = sort { if ($a =~ /^cpan/) {
+                   return 1 if $b !~ /^cpan/;
+                   return lc $a cmp lc $b;
+               }
+               elsif ($b =~ /^cpan/) {
+                   return -1;
+               }
+               elsif ($a =~ /$only_for_interior_links_re/) {
+                   return 1 if $b !~ /$only_for_interior_links_re/;
+                   return lc $a cmp lc $b;
+               }
+               elsif ($b =~ /$only_for_interior_links_re/) {
+                   return -1;
+               }
+               elsif ($a =~ /^lib/) {
+                   return 1 if $b !~ /^lib/;
+                   return lc $a cmp lc $b;
+               }
+               elsif ($b =~ /^lib/) {
+                   return -1;
+               } elsif ($a =~ /\breadme\b/i) {
+                   return 1 if $b !~ /\breadme\b/i;
+                   return lc $a cmp lc $b;
+               }
+               elsif ($b =~ /\breadme\b/i) {
+                   return -1;
+               }
+               else {
+                   return lc $a cmp lc $b;
+               }
+           }
+           @files;
 
 # Now go through all the files and parse them
 FILE:
@@ -1620,6 +1646,7 @@ foreach my $filename (@files) {
                 $same = $prior_contents eq $contents;
             }
 
+            use File::Basename 'basename';
             if ($same) {
                 $checker->set_skip("The pod of $filename is a duplicate of "
                                     . "the pod for $prior_filename");
@@ -1634,6 +1661,11 @@ foreach my $filename (@files) {
                 $checker->set_skip("CPAN is upstream for $filename");
             } elsif ( $filename =~ /^utils/ or $prior_filename =~ /^utils/ ) {
                 $checker->set_skip("$filename copy is in utils/");
+            } elsif ($prior_filename =~ /^(?:cpan|ext|dist)/
+                     && $filename !~ /^(?:cpan|ext|dist)/
+                     && basename($prior_filename) eq basename($filename))
+            {
+                $checker->set_skip("$filename: Need to run make?");
             } else { # Here have two pods with identical names that differ
                 $prior_checker->poderror(
                         { -msg => $duplicate_name,
@@ -1711,12 +1743,7 @@ foreach my $filename (@files) {
         # could be a link target.  Count how many there are of the same name.
         foreach my $node ($checker->linkable_nodes) {
             next FILE if ! $node;        # Can be empty is like '=item *'
-            if (exists $nodes{$name}{$node}) {
-                $nodes{$name}{$node}++;
-            }
-            else {
-                $nodes{$name}{$node} = 1;
-            }
+            $nodes{$name}{$node}++;
 
             # Experiments have shown that cpan search can figure out the
             # target of a link even if the exact wording is incorrect, as long
@@ -1755,10 +1782,6 @@ if (! $has_input_files) {
 
                 # If link is only to the page-level, already have it
                 next if ! $node;
-
-                # Transform pod language to what we are expecting
-                $node =~ s,E<sol>,/,g;
-                $node =~ s/E<verbar>/|/g;
 
                 # If link is to a node that exists in the file, is ok
                 if ($nodes{$linked_to_page}{$node}) {
@@ -1911,7 +1934,7 @@ foreach my $filename (@files) {
 }
 
 if (! $regen
-    && ! ok (keys %known_problems == 0, "The known problems database includes no references to non-existent files"))
+    && ! ok (keys %known_problems == 0, "The known problems database ($data_dir/known_pod_issues.dat) includes no references to non-existent files"))
 {
     note("The following files were not found: "
          . join ", ", keys %known_problems);

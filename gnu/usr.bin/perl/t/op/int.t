@@ -4,9 +4,10 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
+    require Config;
 }
 
-plan 15;
+plan 17;
 
 # compile time evaluation
 
@@ -71,3 +72,14 @@ cmp_ok($y, '==', 4745162525730, 'compile time division, result of about 42 bits'
 $y = 279964589018079;
 $y = int($y/59);
 cmp_ok($y, '==', 4745162525730, 'run time divison, result of about 42 bits');
+
+SKIP:
+{   # see #126635
+    my $large;
+    $large = eval "0xffff_ffff" if $Config::Config{ivsize} == 4;
+    $large = eval "0xffff_ffff_ffff_ffff" if $Config::Config{ivsize} == 8;
+    $large or skip "Unusual ivsize", 1;
+    for my $x ($large, -1) {
+        cmp_ok($x, "==", int($x), "check $x == int($x)");
+    }
+}

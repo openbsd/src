@@ -12,11 +12,17 @@ if ($Config{sig_name} =~ /\bRTMIN\b/ && $Config{sig_name} =~ /\bRTMAX\b/) {
 
 my @libs;
 if ($^O ne 'MSWin32' && $^O ne 'freemint') {
-    @libs = ('LIBS' => ["-lm -lposix -lcposix"]);
+    push @libs, qw(m posix cposix);
+}
+if ($^O eq 'solaris') {
+    push @libs, qw(sunmath);
+}
+if ($^O eq 'aix' && $Config{uselongdouble}) {
+    push @libs, qw(c128);
 }
 WriteMakefile(
     NAME	=> 'POSIX',
-    @libs,
+    @libs ? ( 'LIBS' => [ join(" ", map { "-l$_" } @libs) ] ) : (),
     XSPROTOARG	=> '-noprototypes',	# XXX remove later?
     VERSION_FROM => 'lib/POSIX.pm',
     ABSTRACT_FROM => 'lib/POSIX.pod',
@@ -88,6 +94,12 @@ END
 #endif
                            '});
 
+push @names,
+  {name=>"INFINITY", type=>"NV", value=>"NV_INF", not_constant=>1},
+  {name=>"NAN", type=>"NV", value=>"NV_NAN", not_constant=>1},
+  {name=>"Inf", type=>"NV", value=>"NV_INF", not_constant=>1},
+  {name=>"NaN", type=>"NV", value=>"NV_NAN", not_constant=>1};
+
 push @names, {name=>$_, type=>"UV"}
   foreach (qw(SA_NOCLDSTOP SA_NOCLDWAIT SA_NODEFER SA_ONSTACK SA_RESETHAND
              SA_RESTART SA_SIGINFO UCHAR_MAX UINT_MAX ULONG_MAX USHRT_MAX));
@@ -101,12 +113,32 @@ push @names, {name=>$_, type=>"NV"}
 	      FLT_MIN_10_EXP FLT_MIN_EXP FLT_RADIX LDBL_DIG LDBL_MANT_DIG
 	      LDBL_MAX_10_EXP LDBL_MAX_EXP LDBL_MIN_10_EXP LDBL_MIN_EXP));
 
+push @names, {name=>$_, type=>"NV"}
+  foreach (qw(FP_ILOGB0 FP_ILOGBNAN FP_INFINITE FP_NAN FP_NORMAL
+              FP_SUBNORMAL FP_ZERO M_1_PI M_2_PI M_2_SQRTPI M_E M_LN10 M_LN2
+              M_LOG10E M_LOG2E M_PI M_PI_2 M_PI_4 M_SQRT1_2 M_SQRT2));
+
+push @names, {name=>$_, type=>"IV"}
+  foreach (qw(FE_DOWNWARD FE_TONEAREST FE_TOWARDZERO FE_UPWARD));
+
 push @names, {name=>$_, type=>"IV", default=>["IV", "0"]}
   foreach (qw(_POSIX_ARG_MAX _POSIX_CHILD_MAX _POSIX_CHOWN_RESTRICTED
               _POSIX_LINK_MAX _POSIX_MAX_CANON _POSIX_MAX_INPUT _POSIX_NAME_MAX
               _POSIX_NGROUPS_MAX _POSIX_NO_TRUNC _POSIX_OPEN_MAX
               _POSIX_PATH_MAX _POSIX_PIPE_BUF _POSIX_SSIZE_MAX
               _POSIX_STREAM_MAX _POSIX_TZNAME_MAX _POSIX_VDISABLE _POSIX_VERSION
+             ));
+push @names, {name=>$_, type =>"IV"},
+  foreach (qw(ILL_ILLOPC ILL_ILLOPN ILL_ILLADR ILL_ILLTRP ILL_PRVOPC ILL_PRVREG
+              ILL_COPROC ILL_BADSTK
+              FPE_INTDIV FPE_INTOVF FPE_FLTDIV FPE_FLTOVF FPE_FLTUND
+              FPE_FLTRES FPE_FLTINV FPE_FLTSUB
+              SEGV_MAPERR SEGV_ACCERR
+              BUS_ADRALN BUS_ADRERR BUS_OBJERR
+              TRAP_BRKPT TRAP_TRACE
+              CLD_EXITED CLD_KILLED CLD_DUMPED CLD_TRAPPED CLD_STOPPED CLD_CONTINUED
+              POLL_IN POLL_OUT POLL_MSG POLL_ERR POLL_PRI POLL_HUP
+              SI_USER SI_QUEUE SI_TIMER SI_ASYNCIO SI_MESGQ
              ));
 
 if ($rt_signals) {
@@ -117,6 +149,22 @@ if ($rt_signals) {
     # would actually compile.
     push @names, {name=>"SIGRTMAX", macro=>0},
     {name=>"SIGRTMIN", macro=>0},
+}
+
+if ($^O eq 'MSWin32') {
+    push @names, qw(
+	WSAEINTR WSAEBADF WSAEACCES WSAEFAULT WSAEINVAL WSAEMFILE WSAEWOULDBLOCK
+	WSAEINPROGRESS WSAEALREADY WSAENOTSOCK WSAEDESTADDRREQ WSAEMSGSIZE
+	WSAEPROTOTYPE WSAENOPROTOOPT WSAEPROTONOSUPPORT WSAESOCKTNOSUPPORT
+	WSAEOPNOTSUPP WSAEPFNOSUPPORT WSAEAFNOSUPPORT WSAEADDRINUSE
+	WSAEADDRNOTAVAIL WSAENETDOWN WSAENETUNREACH WSAENETRESET WSAECONNABORTED
+	WSAECONNRESET WSAENOBUFS WSAEISCONN WSAENOTCONN WSAESHUTDOWN
+	WSAETOOMANYREFS WSAETIMEDOUT WSAECONNREFUSED WSAELOOP WSAENAMETOOLONG
+	WSAEHOSTDOWN WSAEHOSTUNREACH WSAENOTEMPTY WSAEPROCLIM WSAEUSERS
+	WSAEDQUOT WSAESTALE WSAEREMOTE WSAEDISCON WSAENOMORE WSAECANCELLED
+	WSAEINVALIDPROCTABLE WSAEINVALIDPROVIDER WSAEPROVIDERFAILEDINIT
+	WSAEREFUSED
+    );
 }
 
 WriteConstants(

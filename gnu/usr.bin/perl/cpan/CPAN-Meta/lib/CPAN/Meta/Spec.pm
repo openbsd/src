@@ -7,7 +7,8 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::Spec;
-our $VERSION = '2.140640'; # VERSION
+
+our $VERSION = '2.150005';
 
 1;
 
@@ -28,7 +29,7 @@ CPAN::Meta::Spec - specification for CPAN distribution metadata
 
 =head1 VERSION
 
-version 2.140640
+version 2.150005
 
 =head1 SYNOPSIS
 
@@ -289,11 +290,17 @@ etc.) as part of its configuration.  This field should be set to a false
 value to indicate that prerequisites included in metadata may be
 considered final and valid for static analysis.
 
+Note: when this field is true, post-configuration prerequisites are not
+guaranteed to bear any relation whatsoever to those stated in the metadata,
+and relying on them doing so is an error. See also
+L</Prerequisites for dynamically configured distributions> in the implementors'
+notes.
+
 This field explicitly B<does not> indicate whether installation may be
 safely performed without using a Makefile or Build file, as there may be
 special files to install or custom installation targets (e.g. for
 dual-life modules that exist on CPAN as well as in the Perl core).  This
-field only defines whether prerequisites are complete as given in the
+field only defines whether or not prerequisites are exactly as given in the
 metadata.
 
 =head3 generated_by
@@ -520,7 +527,10 @@ Example:
 
 This Map describes any files, directories, packages, and namespaces that
 are private to the packaging or implementation of the distribution and
-should be ignored by indexing or search tools.
+should be ignored by indexing or search tools. Note that this is a list of
+exclusions, and the spec does not define what to I<include> - see
+L</Indexing distributions a la PAUSE> in the implementors notes for more
+information.
 
 Valid subkeys are as follows:
 
@@ -690,7 +700,8 @@ have a Map with the following valid subkeys:
 
 This field is required.  It must contain a Unix-style relative file path
 from the root of the distribution directory to a file that contains or
-generates the package.
+generates the package.  It may be given as C<META.yml> or C<META.json>
+to claim a package for indexing without needing a C<*.pm>.
 
 =item version
 
@@ -1102,6 +1113,52 @@ and version prerequisite C<$prereq>:
 
 If the values of C<$mod> and C<$prereq> have not been scrubbed, however,
 this presents security implications.
+
+=head2 Prerequisites for dynamically configured distributions
+
+When C<dynamic_config> is true, it is an error to presume that the
+prerequisites given in distribution metadata will have any relationship
+whatsoever to the actual prerequisites of the distribution.
+
+In practice, however, one can generally expect such prerequisites to be
+one of two things:
+
+=over 4
+
+=item *
+
+The minimum prerequisites for the distribution, to which dynamic configuration will only add items
+
+=item *
+
+Whatever the distribution configured with on the releaser's machine at release time
+
+=back
+
+The second case often turns out to have identical results to the first case,
+albeit only by accident.
+
+As such, consumers may use this data for informational analysis, but
+presenting it to the user as canonical or relying on it as such is
+invariably the height of folly.
+
+=head2 Indexing distributions a la PAUSE
+
+While no_index tells you what must be ignored when indexing, this spec holds
+no opinion on how you should get your initial candidate list of things to
+possibly index. For "normal" distributions you might consider simply indexing
+the contents of lib/, but there are many fascinating oddities on CPAN and
+many dists from the days when it was normal to put the main .pm file in the
+root of the distribution archive - so PAUSE currently indexes all .pm and .PL
+files that are not either (a) specifically excluded by no_index (b) in
+C<inc>, C<xt>, or C<t> directories, or common 'mistake' directories such as
+C<perl5>.
+
+Or: If you're trying to be PAUSE-like, make sure you skip C<inc>, C<xt> and
+C<t> as well as anything marked as no_index.
+
+Also remember: If the META file contains a provides field, you shouldn't be
+indexing anything in the first place - just use that.
 
 =head1 SEE ALSO
 

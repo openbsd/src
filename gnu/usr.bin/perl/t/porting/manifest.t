@@ -72,6 +72,7 @@ close $m or die $!;
 
 # Test that MANIFEST is properly sorted
 SKIP: {
+    skip("Sorting order is different under EBCDIC", 1) if $::IS_EBCDIC || $::IS_EBCDIC;
     skip("'Porting/manisort' not found", 1) if (! -f 'Porting/manisort');
 
     my $result = runperl('progfile' => 'Porting/manisort',
@@ -88,9 +89,12 @@ SKIP: {
     skip("git ls-files didnt work",3)
         if !@repo;
     is( 0+@repo, 0+@files, "git ls-files gives the same number of files as MANIFEST lists");
-    my %repo= map { $_ => 1 } @repo;
-    my %mani= map { $_ => 1 } @files;
-    is( 0+keys %mani, 0+@files, "no duplicate files in MANIFEST");
+    my %repo;
+    ++$repo{$_} for @repo;
+    my %mani;
+    ++$mani{$_} for @files;
+    is( 0+keys %mani, 0+@files, "no duplicate files in MANIFEST")
+      or diag(join("\n  ", "Duplicates:",grep $mani{$_} > 1, keys %mani));
     delete $mani{$_} for @repo;
     delete $repo{$_} for @files;
     my @not_in_mani= keys %repo;

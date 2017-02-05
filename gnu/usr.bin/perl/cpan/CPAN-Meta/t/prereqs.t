@@ -161,4 +161,4 @@ is_deeply($prereq->as_string_hash, $prereq_struct, "round-trip okay");
 }
 
 done_testing;
-
+# vim: ts=2 sts=2 sw=2 et :

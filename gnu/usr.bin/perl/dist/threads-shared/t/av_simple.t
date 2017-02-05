@@ -27,7 +27,7 @@ sub ok {
 
 BEGIN {
     $| = 1;
-    print("1..44\n");   ### Number of tests that will be run ###
+    print("1..47\n");   ### Number of tests that will be run ###
 };
 
 use threads;
@@ -129,6 +129,16 @@ ok(37, !defined delete($foo[0]), "Check that delete works from a thread");
 }
 
 ok(44, is_shared(@foo), "Check for sharing");
+
+# RT #122950
+
+@foo = ('a'..'z');
+$#foo = 2;
+
+ok(45, $#foo == 2,        "\$#foo assignment: \$#");
+ok(46, @foo  == 3,        "\$#foo assignment: scalar");
+ok(47, "@foo" eq "a b c", "\$#foo assignment: array interpolation");
+
 
 exit(0);
 

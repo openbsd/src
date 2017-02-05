@@ -5,8 +5,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc(qw '../lib ../cpan/Perl-OSType/lib');
 }
 
 plan(tests => 53 + 27*14);
@@ -223,11 +223,18 @@ for my $op (split //, "rwxoRWXOezsfdlpSbctugkTMBAC") {
 
     my ($exp, $is) = (1, "is");
     if (
-	!$fcntl_not_available and (
-        $op eq "u" and not eval { Fcntl::S_ISUID() } or
-        $op eq "g" and not eval { Fcntl::S_ISGID() } or
-        $op eq "k" and not eval { Fcntl::S_ISVTX() }
+	(
+	  !$fcntl_not_available and
+	  (
+	    $op eq "u" and not eval { Fcntl::S_ISUID() } or
+	    $op eq "g" and not eval { Fcntl::S_ISGID() } or
+	    $op eq "k" and not eval { Fcntl::S_ISVTX() }
+	  )
 	)
+	||
+	# the Fcntl test is meaningless in miniperl and
+	# S_ISVTX isn't available on Win32
+	( $^O eq 'MSWin32' && $op eq 'k' && is_miniperl )
     ) {
         ($exp, $is) = (0, "not");
     }

@@ -12,7 +12,12 @@
 /* proto member is unused in version, it is used in CORE by non version xsubs */
 #  define VXSXSDP(x)
 #endif
-#define VXS(name) XS(VXSp(name)); XS(VXSp(name))
+
+#ifndef XS_INTERNAL
+#  define XS_INTERNAL(name) static XSPROTO(name)
+#endif
+
+#define VXS(name) XS_INTERNAL(VXSp(name)); XS_INTERNAL(VXSp(name))
 
 /* uses PUSHs, so SP must be at start, PUSHs sv on Perl stack, then returns from
    xsub; this is a little more machine code/tailcall friendly than mPUSHs(foo);
@@ -86,7 +91,6 @@ typedef char HVNAME;
 
 VXS(universal_version)
 {
-    dVAR;
     dXSARGS;
     HV *pkg;
     GV **gvp;
@@ -185,7 +189,6 @@ VXS(universal_version)
 
 VXS(version_new)
 {
-    dVAR;
     dXSARGS;
     SV *vs;
     SV *rv;
@@ -225,7 +228,6 @@ VXS(version_new)
     default:
     case 0:
         Perl_croak_nocontext("Usage: version::new(class, version)");
-        break;
     }
 
     svarg0 = ST(0);
@@ -267,7 +269,6 @@ VXS(version_new)
 
 VXS(version_stringify)
 {
-     dVAR;
      dXSARGS;
      if (items < 1)
 	 croak_xs_usage(cv, "lobj, ...");
@@ -282,7 +283,6 @@ VXS(version_stringify)
 
 VXS(version_numify)
 {
-     dVAR;
      dXSARGS;
      if (items < 1)
 	 croak_xs_usage(cv, "lobj, ...");
@@ -296,7 +296,6 @@ VXS(version_numify)
 
 VXS(version_normal)
 {
-     dVAR;
      dXSARGS;
      if (items != 1)
 	 croak_xs_usage(cv, "ver");
@@ -311,7 +310,6 @@ VXS(version_normal)
 
 VXS(version_vcmp)
 {
-     dVAR;
      dXSARGS;
      if (items < 1)
 	 croak_xs_usage(cv, "lobj, ...");
@@ -347,7 +345,6 @@ VXS(version_vcmp)
 
 VXS(version_boolean)
 {
-    dVAR;
     dXSARGS;
     SV *lobj;
     if (items < 1)
@@ -368,7 +365,6 @@ VXS(version_boolean)
 
 VXS(version_noop)
 {
-    dVAR;
     dXSARGS;
     if (items < 1)
 	croak_xs_usage(cv, "lobj, ...");
@@ -383,7 +379,6 @@ static
 void
 S_version_check_key(pTHX_ CV * cv, const char * key, int keylen)
 {
-    dVAR;
     dXSARGS;
     if (items != 1)
 	croak_xs_usage(cv, "lobj");
@@ -408,7 +403,6 @@ VXS(version_is_alpha)
 
 VXS(version_qv)
 {
-    dVAR;
     dXSARGS;
     PERL_UNUSED_ARG(cv);
     SP -= items;

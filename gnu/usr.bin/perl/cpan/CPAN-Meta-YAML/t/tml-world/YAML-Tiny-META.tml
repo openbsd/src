@@ -1,5 +1,5 @@
-=== CPAN::Meta::YAML
-# Testing CPAN::Meta::YAML's own META.yml file -- at least as of some time ago
+=== YAML::Tiny
+# Testing YAML::Tiny's own META.yml file -- at least as of some time ago
 --- yaml
 abstract: Read/Write YAML files with as little code as possible
 author: 'Adam Kennedy <cpan@ali.as>'

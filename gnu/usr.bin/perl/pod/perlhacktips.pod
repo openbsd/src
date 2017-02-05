@@ -79,7 +79,7 @@ If you want to have arrays of constant strings, note carefully the
 right combination of C<const>s:
 
     static const char * const yippee[] =
-	{"hi", "ho", "silver"};
+        {"hi", "ho", "silver"};
 
 There is a way to completely hide any modifiable globals (they are all
 moved to heap), the compilation setting
@@ -143,7 +143,7 @@ as many as possible of the C<-std=c89>, C<-ansi>, C<-pedantic>, and a
 selection of C<-W> flags (see cflags.SH).
 
 Also study L<perlport> carefully to avoid any bad assumptions about the
-operating system, filesystems, and so forth.
+operating system, filesystems, character set, and so forth.
 
 You may once in a while try a "make microperl" to see whether we can
 still compile Perl with just the bare minimum of interfaces.  (See
@@ -173,7 +173,7 @@ NUM2PTR().)
 
 =item *
 
-Casting between data function pointers and data pointers
+Casting between function pointers and data pointers
 
 Technically speaking casting between function pointers and data
 pointers is unportable and undefined, but practically speaking it seems
@@ -201,7 +201,7 @@ guaranteed to be B<int> or B<long>.  If you really explicitly need
 Assuming one can dereference any type of pointer for any type of data
 
   char *p = ...;
-  long pony = *p;    /* BAD */
+  long pony = *(long *)p;    /* BAD */
 
 Many platforms, quite rightly so, will give you a core dump instead of
 a pony if the p happens not to be correctly aligned.
@@ -275,16 +275,32 @@ Assuming the character set is ASCIIish
 Perl can compile and run under EBCDIC platforms.  See L<perlebcdic>.
 This is transparent for the most part, but because the character sets
 differ, you shouldn't use numeric (decimal, octal, nor hex) constants
-to refer to characters.  You can safely say 'A', but not 0x41.  You can
-safely say '\n', but not \012.  If a character doesn't have a trivial
-input form, you should add it to the list in
-F<regen/unicode_constants.pl>, and have Perl create #defines for you,
+to refer to characters.  You can safely say C<'A'>, but not C<0x41>.
+You can safely say C<'\n'>, but not C<\012>.  However, you can use
+macros defined in F<utf8.h> to specify any code point portably.
+C<LATIN1_TO_NATIVE(0xDF)> is going to be the code point that means
+LATIN SMALL LETTER SHARP S on whatever platform you are running on (on
+ASCII platforms it compiles without adding any extra code, so there is
+zero performance hit on those).  The acceptable inputs to
+C<LATIN1_TO_NATIVE> are from C<0x00> through C<0xFF>.  If your input
+isn't guaranteed to be in that range, use C<UNICODE_TO_NATIVE> instead.
+C<NATIVE_TO_LATIN1> and C<NATIVE_TO_UNICODE> translate the opposite
+direction.
+
+If you need the string representation of a character that doesn't have a
+mnemonic name in C, you should add it to the list in
+F<regen/unicode_constants.pl>, and have Perl create C<#define>'s for you,
 based on the current platform.
+
+Note that the C<isI<FOO>> and C<toI<FOO>> macros in F<handy.h> work
+properly on native code points and strings.
 
 Also, the range 'A' - 'Z' in ASCII is an unbroken sequence of 26 upper
 case alphabetic characters.  That is not true in EBCDIC.  Nor for 'a' to
 'z'.  But '0' - '9' is an unbroken range in both systems.  Don't assume
-anything about other ranges.
+anything about other ranges.  (Note that special handling of ranges in
+regular expression patterns and transliterations makes it appear to Perl
+code that the aforementioned ranges are all unbroken.)
 
 Many of the comments in the existing code ignore the possibility of
 EBCDIC, and may be wrong therefore, even if the code works.  This is
@@ -293,11 +309,11 @@ able to handle EBCDIC without having to change pre-existing code.
 
 UTF-8 and UTF-EBCDIC are two different encodings used to represent
 Unicode code points as sequences of bytes.  Macros  with the same names
-(but different definitions) in C<utf8.h> and C<utfebcdic.h> are used to
+(but different definitions) in F<utf8.h> and F<utfebcdic.h> are used to
 allow the calling code to think that there is only one such encoding.
 This is almost always referred to as C<utf8>, but it means the EBCDIC
 version as well.  Again, comments in the code may well be wrong even if
-the code itself is right.  For example, the concept of C<invariant
+the code itself is right.  For example, the concept of UTF-8 C<invariant
 characters> differs between ASCII and EBCDIC.  On ASCII platforms, only
 characters that do not have the high-order bit set (i.e.  whose ordinals
 are strict ASCII, 0 - 127) are invariant, and the documentation and
@@ -307,6 +323,31 @@ EBCDIC machines, but as long as the code itself uses the
 C<NATIVE_IS_INVARIANT()> macro appropriately, it works, even if the
 comments are wrong.
 
+As noted in L<perlhack/TESTING>, when writing test scripts, the file
+F<t/charset_tools.pl> contains some helpful functions for writing tests
+valid on both ASCII and EBCDIC platforms.  Sometimes, though, a test
+can't use a function and it's inconvenient to have different test
+versions depending on the platform.  There are 20 code points that are
+the same in all 4 character sets currently recognized by Perl (the 3
+EBCDIC code pages plus ISO 8859-1 (ASCII/Latin1)).  These can be used in
+such tests, though there is a small possibility that Perl will become
+available in yet another character set, breaking your test.  All but one
+of these code points are C0 control characters.  The most significant
+controls that are the same are C<\0>, C<\r>, and C<\N{VT}> (also
+specifiable as C<\cK>, C<\x0B>, C<\N{U+0B}>, or C<\013>).  The single
+non-control is U+00B6 PILCROW SIGN.  The controls that are the same have
+the same bit pattern in all 4 character sets, regardless of the UTF8ness
+of the string containing them.  The bit pattern for U+B6 is the same in
+all 4 for non-UTF8 strings, but differs in each when its containing
+string is UTF-8 encoded.  The only other code points that have some sort
+of sameness across all 4 character sets are the pair 0xDC and 0xFC.
+Together these represent upper- and lowercase LATIN LETTER U WITH
+DIAERESIS, but which is upper and which is lower may be reversed: 0xDC
+is the capital in Latin1 and 0xFC is the small letter, while 0xFC is the
+capital in EBCDIC and 0xDC is the small one.  This factoid may be
+exploited in writing case insensitive tests that are the same across all
+4 character sets.
+
 =item *
 
 Assuming the character set is just ASCII
@@ -314,9 +355,9 @@ Assuming the character set is just ASCII
 ASCII is a 7 bit encoding, but bytes have 8 bits in them.  The 128 extra
 characters have different meanings depending on the locale.  Absent a
 locale, currently these extra characters are generally considered to be
-unassigned, and this has presented some problems.  This is being changed
-starting in 5.12 so that these characters will be considered to be
-Latin-1 (ISO-8859-1).
+unassigned, and this has presented some problems.  This has being
+changed starting in 5.12 so that these characters can be considered to
+be Latin-1 (ISO-8859-1).
 
 =item *
 
@@ -560,6 +601,10 @@ temporarily try the following:
 But in any case, try to keep the features and operating systems
 separate.
 
+A good resource on the predefined macros for various operating
+systems, compilers, and so forth is
+L<http://sourceforge.net/p/predef/wiki/Home/>
+
 =item *
 
 Assuming the contents of static memory pointed to by the return values
@@ -655,6 +700,22 @@ create a string that isn't valid UTF-8 if the current underlying locale
 of the program is UTF-8.  What happens is that the C<%s> and its operand are
 simply skipped without any notice.
 L<https://sourceware.org/bugzilla/show_bug.cgi?id=6530>.
+
+=item *
+
+Do not use atoi()
+
+Use grok_atoUV() instead.  atoi() has ill-defined behavior on overflows,
+and cannot be used for incremental parsing.  It is also affected by locale,
+which is bad.
+
+=item *
+
+Do not use strtol() or strtoul()
+
+Use grok_atoUV() instead.  strtol() or strtoul() (or their IV/UV-friendly
+macro disguises, Strtol() and Strtoul(), or Atol() and Atoul() are
+affected by locale, which is bad.
 
 =back
 
@@ -773,7 +834,7 @@ Prints the C definition of the argument given.
   (gdb) ptype PL_op
   type = struct op {
       OP *op_next;
-      OP *op_sibling;
+      OP *op_sibparent;
       OP *(*op_ppaddr)(void);
       PADOFFSET op_targ;
       unsigned int op_type : 9;
@@ -912,11 +973,11 @@ similar output to L<B::Debug|B::Debug>.
 
 =head2 Using gdb to look at specific parts of a program
 
-With the example above, you knew to look for C<Perl_pp_add>, but what if 
-there were multiple calls to it all over the place, or you didn't know what 
+With the example above, you knew to look for C<Perl_pp_add>, but what if
+there were multiple calls to it all over the place, or you didn't know what
 the op was you were looking for?
 
-One way to do this is to inject a rare call somewhere near what you're looking 
+One way to do this is to inject a rare call somewhere near what you're looking
 for.  For example, you could add C<study> before your method:
 
     study;
@@ -926,7 +987,7 @@ And in gdb do:
     (gdb) break Perl_pp_study
 
 And then step until you hit what you're
-looking for.  This works well in a loop 
+looking for.  This works well in a loop
 if you want to only break at certain iterations:
 
     for my $c (1..100) {
@@ -935,7 +996,7 @@ if you want to only break at certain iterations:
 
 =head2 Using gdb to look at what the parser/lexer are doing
 
-If you want to see what perl is doing when parsing/lexing your code, you can 
+If you want to see what perl is doing when parsing/lexing your code, you can
 use C<BEGIN {}>:
 
     print "Before\n";
@@ -949,7 +1010,7 @@ And in gdb:
 If you want to see what the parser/lexer is doing inside of C<if> blocks and
 the like you need to be a little trickier:
 
-    if ($a && $b && do { BEGIN { study } 1 } && $c) { ... } 
+    if ($a && $b && do { BEGIN { study } 1 } && $c) { ... }
 
 =head1 SOURCE CODE STATIC ANALYSIS
 
@@ -982,6 +1043,17 @@ Coverity (http://www.coverity.com/) is a product similar to lint and as
 a testbed for their product they periodically check several open source
 projects, and they give out accounts to open source developers to the
 defect databases.
+
+There is Coverity setup for the perl5 project:
+L<https://scan.coverity.com/projects/perl5>
+
+=head2 HP-UX cadvise (Code Advisor)
+
+HP has a C/C++ static analyzer product for HP-UX caller Code Advisor.
+(Link not given here because the URL is horribly long and seems horribly
+unstable; use the search engine of your choice to find it.)  The use of
+the C<cadvise_cc> recipe with C<Configure ... -Dcc=./cadvise_cc>
+(see cadvise "User Guide") is recommended; as is the use of C<+wall>.
 
 =head2 cpd (cut-and-paste detector)
 
@@ -1110,10 +1182,26 @@ C<-Accflags=-DDL_UNLOAD_ALL_AT_EXIT>.
 
 The valgrind tool can be used to find out both memory leaks and illegal
 heap memory accesses.  As of version 3.3.0, Valgrind only supports Linux
-on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and x86-64).  The
+on x86, x86-64 and PowerPC and Darwin (OS X) on x86 and x86-64.  The
 special "test.valgrind" target can be used to run the tests under
 valgrind.  Found errors and memory leaks are logged in files named
-F<testfile.valgrind>.
+F<testfile.valgrind> and by default output is displayed inline.
+
+Example usage:
+
+    make test.valgrind
+
+Since valgrind adds significant overhead, tests will take much longer to
+run.  The valgrind tests support being run in parallel to help with this:
+
+    TEST_JOBS=9 make test.valgrind
+
+Note that the above two invocations will be very verbose as reachable
+memory and leak-checking is enabled by default.  If you want to just see
+pure errors, try:
+
+    VG_OPTS='-q --leak-check=no --show-reachable=no' TEST_JOBS=9 \
+        make test.valgrind
 
 Valgrind also provides a cachegrind tool, invoked on perl as:
 
@@ -1323,7 +1411,7 @@ variable PERL_DESTRUCT_LEVEL to a non-zero value.  The t/TEST wrapper
 does set this to 2, and this is what you need to do too, if you don't
 want to see the "global leaks": For example, for running under valgrind
 
-	env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib t/foo/bar.t
+    env PERL_DESTRUCT_LEVEL=2 valgrind ./perl -Ilib t/foo/bar.t
 
 (Note: the mod_perl apache module uses also this environment variable
 for its own purposes and extended its semantics.  Refer to the mod_perl
@@ -1363,17 +1451,18 @@ C<-DPERL_MEM_LOG> instead.
 
 =head2 PERL_MEM_LOG
 
-If compiled with C<-DPERL_MEM_LOG>, both memory and SV allocations go
-through logging functions, which is handy for breakpoint setting.
+If compiled with C<-DPERL_MEM_LOG> (C<-Accflags=-DPERL_MEM_LOG>), both
+memory and SV allocations go through logging functions, which is
+handy for breakpoint setting.
 
-Unless C<-DPERL_MEM_LOG_NOIMPL> is also compiled, the logging functions
-read $ENV{PERL_MEM_LOG} to determine whether to log the event, and if
-so how:
+Unless C<-DPERL_MEM_LOG_NOIMPL> (C<-Accflags=-DPERL_MEM_LOG_NOIMPL>) is
+also compiled, the logging functions read $ENV{PERL_MEM_LOG} to
+determine whether to log the event, and if so how:
 
-    $ENV{PERL_MEM_LOG} =~ /m/		Log all memory ops
-    $ENV{PERL_MEM_LOG} =~ /s/		Log all SV ops
-    $ENV{PERL_MEM_LOG} =~ /t/		include timestamp in Log
-    $ENV{PERL_MEM_LOG} =~ /^(\d+)/	write to FD given (default is 2)
+    $ENV{PERL_MEM_LOG} =~ /m/           Log all memory ops
+    $ENV{PERL_MEM_LOG} =~ /s/           Log all SV ops
+    $ENV{PERL_MEM_LOG} =~ /t/           include timestamp in Log
+    $ENV{PERL_MEM_LOG} =~ /^(\d+)/      write to FD given (default is 2)
 
 Memory logging is somewhat similar to C<-Dm> but is independent of
 C<-DDEBUGGING>, and at a higher level; all uses of Newx(), Renew(), and
@@ -1420,6 +1509,87 @@ Alternatively edit the init file interactively via: 3rd mouse button ->
 New Display -> Edit Menu
 
 Note: you can define up to 20 conversion shortcuts in the gdb section.
+
+=head2 C backtrace
+
+On some platforms Perl supports retrieving the C level backtrace
+(similar to what symbolic debuggers like gdb do).
+
+The backtrace returns the stack trace of the C call frames,
+with the symbol names (function names), the object names (like "perl"),
+and if it can, also the source code locations (file:line).
+
+The supported platforms are Linux, and OS X (some *BSD might
+work at least partly, but they have not yet been tested).
+
+This feature hasn't been tested with multiple threads, but it will
+only show the backtrace of the thread doing the backtracing.
+
+The feature needs to be enabled with C<Configure -Dusecbacktrace>.
+
+The C<-Dusecbacktrace> also enables keeping the debug information when
+compiling/linking (often: C<-g>).  Many compilers/linkers do support
+having both optimization and keeping the debug information.  The debug
+information is needed for the symbol names and the source locations.
+
+Static functions might not be visible for the backtrace.
+
+Source code locations, even if available, can often be missing or
+misleading if the compiler has e.g. inlined code.  Optimizer can
+make matching the source code and the object code quite challenging.
+
+=over 4
+
+=item Linux
+
+You B<must> have the BFD (-lbfd) library installed, otherwise C<perl> will
+fail to link.  The BFD is usually distributed as part of the GNU binutils.
+
+Summary: C<Configure ... -Dusecbacktrace>
+and you need C<-lbfd>.
+
+=item OS X
+
+The source code locations are supported B<only> if you have
+the Developer Tools installed.  (BFD is B<not> needed.)
+
+Summary: C<Configure ... -Dusecbacktrace>
+and installing the Developer Tools would be good.
+
+=back
+
+Optionally, for trying out the feature, you may want to enable
+automatic dumping of the backtrace just before a warning or croak (die)
+message is emitted, by adding C<-Accflags=-DUSE_C_BACKTRACE_ON_ERROR>
+for Configure.
+
+Unless the above additional feature is enabled, nothing about the
+backtrace functionality is visible, except for the Perl/XS level.
+
+Furthermore, even if you have enabled this feature to be compiled,
+you need to enable it in runtime with an environment variable:
+C<PERL_C_BACKTRACE_ON_ERROR=10>.  It must be an integer higher
+than zero, telling the desired frame count.
+
+Retrieving the backtrace from Perl level (using for example an XS
+extension) would be much less exciting than one would hope: normally
+you would see C<runops>, C<entersub>, and not much else.  This API is
+intended to be called B<from within> the Perl implementation, not from
+Perl level execution.
+
+The C API for the backtrace is as follows:
+
+=over 4
+
+=item get_c_backtrace
+
+=item free_c_backtrace
+
+=item get_c_backtrace_dump
+
+=item dump_c_backtrace
+
+=back
 
 =head2 Poison
 

@@ -253,6 +253,10 @@
 #     define PERL_MAYBE_ALIVE	1
 #endif
 
+#ifndef MYMALLOC
+#  error "MYMALLOC is not defined"
+#endif
+
 #ifndef MUTEX_LOCK
 #  define MUTEX_LOCK(l)
 #endif 
@@ -995,27 +999,9 @@ get_emergency_buffer(IV *size)
     return pv;
 }
 
-/* Returns 0 on success, -1 on bad alignment, -2 if not implemented */
-int
-set_emergency_buffer(char *b, IV size)
-{
-    if (PTR2UV(b) & (NEEDED_ALIGNMENT - 1))
-	return -1;
-    if (MallocCfg[MallocCfg_emergency_buffer_prepared_size])
-	add_to_chain((void*)emergency_buffer_prepared,
-		     MallocCfg[MallocCfg_emergency_buffer_prepared_size], 0);
-    emergency_buffer_prepared = b;
-    MallocCfg[MallocCfg_emergency_buffer_prepared_size] = size;
-    return 0;
-}
 #    define GET_EMERGENCY_BUFFER(p)	get_emergency_buffer(p)
 #  else		/* NO_MALLOC_DYNAMIC_CFG */
 #    define GET_EMERGENCY_BUFFER(p)	NULL
-int
-set_emergency_buffer(char *b, IV size)
-{
-    return -1;
-}
 #  endif
 
 static Malloc_t
@@ -1074,7 +1060,7 @@ emergency_sbrk(MEM_SIZE size)
   do_croak:
     MALLOC_UNLOCK;
     emergency_sbrk_croak("Out of memory during request for %"UVuf" bytes, total sbrk() is %"UVuf" bytes", (UV)size, (UV)(goodsbrk + sbrk_slack));
-    assert(0); /* NOTREACHED */
+    NOT_REACHED; /* NOTREACHED */
     return NULL;
 }
 
@@ -1083,7 +1069,7 @@ emergency_sbrk(MEM_SIZE size)
 #endif	/* defined PERL_EMERGENCY_SBRK */
 
 /* Don't use PerlIO buffered writes as they allocate memory. */
-#define MYMALLOC_WRITE2STDERR(s) PerlLIO_write(PerlIO_fileno(PerlIO_stderr()),s,strlen(s))
+#define MYMALLOC_WRITE2STDERR(s) PERL_UNUSED_RESULT(PerlLIO_write(PerlIO_fileno(PerlIO_stderr()),s,strlen(s)))
 
 #ifdef DEBUGGING
 #undef ASSERT
@@ -1542,7 +1528,7 @@ getpages(MEM_SIZE needed, int *nblksp, int bucket)
 		
 	if (add) {
 	    DEBUG_m(PerlIO_printf(Perl_debug_log, 
-				  "sbrk(%ld) to fix non-continuous/off-page sbrk:\n\t%ld for alignement,\t%ld were assumed to come from the tail of the previous sbrk\n",
+				  "sbrk(%ld) to fix non-continuous/off-page sbrk:\n\t%ld for alignment,\t%ld were assumed to come from the tail of the previous sbrk\n",
 				  (long)add, (long) slack,
 				  (long) sbrked_remains));
 	    newcp = (char *)sbrk(add);
@@ -1842,7 +1828,7 @@ Perl_mfree(Malloc_t where)
 		if (bad_free_warn == -1) {
 		    dTHX;
 		    char *pbf = PerlEnv_getenv("PERL_BADFREE");
-		    bad_free_warn = (pbf) ? atoi(pbf) : 1;
+		    bad_free_warn = (pbf) ? strNE("0", pbf) : 1;
 		}
 		if (!bad_free_warn)
 		    return;
@@ -1940,7 +1926,7 @@ Perl_realloc(void *mp, size_t nbytes)
 		if (bad_free_warn == -1) {
 		    dTHX;
 		    char *pbf = PerlEnv_getenv("PERL_BADFREE");
-		    bad_free_warn = (pbf) ? atoi(pbf) : 1;
+		    bad_free_warn = (pbf) ? strNE("0", pbf) : 1;
 		}
 		if (!bad_free_warn)
 		    return NULL;
@@ -2309,7 +2295,7 @@ Perl_dump_mstats(pTHX_ const char *s)
 
 #ifdef USE_PERL_SBRK
 
-#   if defined(NeXT) || defined(__NeXT__) || defined(PURIFY)
+#   if defined(PURIFY)
 #      define PERL_SBRK_VIA_MALLOC
 #   endif
 
@@ -2380,11 +2366,5 @@ Perl_sbrk(int size)
 #endif /* ! defined USE_PERL_SBRK */
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

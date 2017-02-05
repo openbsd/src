@@ -2,13 +2,15 @@ use utf8;
 use strict;
 use warnings;
 use lib 't/lib/';
-use Test::More 0.99;
+use Test::More 0.88;
+use SubtestCompat;
 use TestBridge;
 use TestUtils;
 
 use CPAN::Meta::YAML;
 use File::Basename qw/basename/;
-use File::Temp qw/tempfile/;
+use File::Spec::Functions 'catfile';
+use File::Temp 0.19; # newdir
 
 #--------------------------------------------------------------------------#
 # Error conditions
@@ -44,9 +46,9 @@ for my $c ( @cases ) {
         @warnings = ();
 
         # get a tempfile name to write to
-        my ($fh, $tempfile) = tempfile("YAML-Tiny-test-XXXXXXXX", TMPDIR => 1 );
-        my $short_tempfile = basename($tempfile);
-        close $fh; # avoid locks on windows
+        my $tempdir = File::Temp->newdir("YTXXXXXX", TMPDIR => 1 );
+        my $short_tempfile = 'output';
+        my $tempfile = catfile($tempdir, $short_tempfile);
 
         # CPAN::Meta::YAML->write
         ok( CPAN::Meta::YAML->new($c)->write($tempfile),

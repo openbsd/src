@@ -21,14 +21,14 @@ There are actually two distinct kinds of version objects:
 
 =over 4
 
-=item Decimal Versions
+=item Decimal versions
 
 Any version which "looks like a number", see L<Decimal Versions>.  This
 also includes versions with a single decimal point and a single embedded
 underscore, see L<Alpha Versions>, even though these must be quoted
 to preserve the underscore formatting.
 
-=item Dotted-Decimal Versions
+=item Dotted-Decimal versions
 
 Also referred to as "Dotted-Integer", these contains more than one decimal
 point and may have an optional embedded underscore, see L<Dotted-Decimal

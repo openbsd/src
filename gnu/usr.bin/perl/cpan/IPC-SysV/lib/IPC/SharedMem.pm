@@ -15,7 +15,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.04';
+$VERSION = '2.06_01';
 
 # Figure out if we have support for native sized types
 my $N = do { my $foo = eval { pack "L!", 0 }; $@ ? '' : '!' };
@@ -235,12 +235,12 @@ of these fields see you system documentation.
 Permanently attach to the shared memory segment. When a C<IPC::SharedMem>
 object is attached, it will use L<memread> and L<memwrite> instead of
 L<shmread> and L<shmwrite> for accessing the shared memory segment.
-Returns true if successful, or false on error. See L<shmat>.
+Returns true if successful, or false on error. See L<shmat(2)>.
 
 =item detach
 
 Detach from the shared memory segment that previously has been attached
-to. Returns true if successful, or false on error. See L<shmdt>.
+to. Returns true if successful, or false on error. See L<shmdt(2)>.
 
 =item addr
 

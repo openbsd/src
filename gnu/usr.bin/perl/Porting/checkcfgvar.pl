@@ -34,6 +34,8 @@ GetOptions (
     "tap"	=> \$tap,
     ) or usage (1);
 
+$default and $default =~ s/^'(.*)'$/$1/; # Will be quoted on generation
+
 require 'regen/regen_lib.pl' if $opt_r;
 
 my $MASTER_CFG = "config_h.SH";

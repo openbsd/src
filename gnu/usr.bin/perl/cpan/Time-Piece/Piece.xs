@@ -67,7 +67,7 @@ my_init_tm(struct tm *ptm)        /* see mktime, strftime and asctime    */
 #else
 /* use core version from util.c in 5.8.0 and later */
 # define my_init_tm init_tm
-#endif 
+#endif
 
 #ifdef WIN32
 
@@ -153,8 +153,22 @@ fix_win32_tzenv(void)
     if (crt_tz_env == NULL)
         crt_tz_env = "";
     if (strcmp(perl_tz_env, crt_tz_env) != 0) {
-        newenv = (char*)malloc((strlen(perl_tz_env) + 4) * sizeof(char));
+        STRLEN perl_tz_env_len = strlen(perl_tz_env);
+        newenv = (char*)malloc((perl_tz_env_len + 4) * sizeof(char));
         if (newenv != NULL) {
+/* putenv with old MS CRTs will cause a double free internally if you delete
+   an env var with the CRT env that doesn't exist in Win32 env (perl %ENV only
+   modifies the Win32 env, not CRT env), so always create the env var in Win32
+   env before deleting it with CRT env api, so the error branch never executes
+   in __crtsetenv after SetEnvironmentVariableA executes inside __crtsetenv.
+
+   VC 9/2008 and up dont have this bug, older VC (msvcrt80.dll and older) and
+   mingw (msvcrt.dll) have it see [perl #125529]
+*/
+#if !(_MSC_VER >= 1500)
+            if(!perl_tz_env_len)
+                SetEnvironmentVariableA("TZ", "");
+#endif
             sprintf(newenv, "TZ=%s", perl_tz_env);
             putenv(newenv);
             if (oldenv != NULL)
@@ -312,6 +326,7 @@ my_mini_mktime(struct tm *ptm)
 #       define strncasecmp(x,y,n) strnicmp(x,y,n)
 #   endif
 
+/* strptime.c    0.1 (Powerdog) 94/03/27 */
 /* strptime copied from freebsd with the following copyright: */
 /*
  * Copyright (c) 1994 Powerdog Industries.  All rights reserved.
@@ -319,18 +334,14 @@ my_mini_mktime(struct tm *ptm)
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer
  *    in the documentation and/or other materials provided with the
  *    distribution.
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgement:
- *      This product includes software developed by Powerdog Industries.
- * 4. The name of Powerdog Industries may not be used to endorse or
- *    promote products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY POWERDOG INDUSTRIES ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -343,15 +354,11 @@ my_mini_mktime(struct tm *ptm)
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * The views and conclusions contained in the software and documentation
+ * are those of the authors and should not be interpreted as representing
+ * official policies, either expressed or implied, of Powerdog Industries.
  */
- 
-#ifndef lint
-#ifndef NOID
-static char copyright[] =
-"@(#) Copyright (c) 1994 Powerdog Industries.  All rights reserved.";
-static char sccsid[] = "@(#)strptime.c	0.1 (Powerdog) 94/03/27";
-#endif /* !defined NOID */
-#endif /* not lint */
 
 #include <time.h>
 #include <ctype.h>
@@ -366,7 +373,7 @@ struct lc_time_T {
     const char *    month[12];
     const char *    wday[7];
     const char *    weekday[7];
-    const char *    X_fmt;     
+    const char *    X_fmt;
     const char *    x_fmt;
     const char *    c_fmt;
     const char *    am;
@@ -685,7 +692,7 @@ label:
 
 		case 'A':
 		case 'a':
-			for (i = 0; i < asizeof(Locale->weekday); i++) {
+			for (i = 0; i < (int)asizeof(Locale->weekday); i++) {
 				if (c == 'A') {
 					len = strlen(Locale->weekday[i]);
 					if (strncasecmp(buf,
@@ -700,7 +707,7 @@ label:
 						break;
 				}
 			}
-			if (i == asizeof(Locale->weekday))
+			if (i == (int)asizeof(Locale->weekday))
 				return 0;
 
 			tm->tm_wday = i;
@@ -779,7 +786,7 @@ label:
 		case 'B':
 		case 'b':
 		case 'h':
-			for (i = 0; i < asizeof(Locale->month); i++) {
+			for (i = 0; i < (int)asizeof(Locale->month); i++) {
 				if (Oalternative) {
 					if (c == 'B') {
 						len = strlen(Locale->alt_month[i]);
@@ -804,7 +811,7 @@ label:
 					}
 				}
 			}
-			if (i == asizeof(Locale->month))
+			if (i == (int)asizeof(Locale->month))
 				return 0;
 
 			tm->tm_mon = i;
@@ -896,7 +903,7 @@ label:
 			const char *cp;
 			char *zonestr;
 
-			for (cp = buf; *cp && isupper((unsigned char)*cp); ++cp) 
+			for (cp = buf; *cp && isupper((unsigned char)*cp); ++cp)
                             {/*empty*/}
 			if (cp - buf) {
 				zonestr = (char *)malloc(cp - buf + 1);
@@ -970,6 +977,7 @@ push_common_tm(pTHX_ SV ** SP, struct tm *mytm)
 	PUSHs(newSViv(mytm->tm_year));
 	PUSHs(newSViv(mytm->tm_wday));
 	PUSHs(newSViv(mytm->tm_yday));
+	PUSHs(newSViv(mytm->tm_isdst));
 	return SP;
 }
 
@@ -986,11 +994,8 @@ return_11part_tm(pTHX_ SV ** SP, struct tm *mytm)
        my_mini_mktime(mytm);
 
   /* warn("tm: %d-%d-%d %d:%d:%d\n", mytm.tm_year, mytm.tm_mon, mytm.tm_mday, mytm.tm_hour, mytm.tm_min, mytm.tm_sec); */
-
        EXTEND(SP, 11);
        SP = push_common_tm(aTHX_ SP, mytm);
-       /* isdst */
-       PUSHs(newSViv(0));
        /* epoch */
        PUSHs(newSViv(0));
        /* islocal */
@@ -1013,37 +1018,24 @@ MODULE = Time::Piece     PACKAGE = Time::Piece
 PROTOTYPES: ENABLE
 
 void
-_strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
-    char *        fmt
-    int        sec
-    int        min
-    int        hour
-    int        mday
-    int        mon
-    int        year
-    int        wday
-    int        yday
-    int        isdst
+_strftime(fmt, epoch, islocal = 1)
+    char *      fmt
+    time_t      epoch
+    int         islocal
     CODE:
     {
         char tmpbuf[128];
         struct tm mytm;
-        int len;
-        memset(&mytm, 0, sizeof(mytm));
-        my_init_tm(&mytm);    /* XXX workaround - see my_init_tm() above */
-        mytm.tm_sec = sec;
-        mytm.tm_min = min;
-        mytm.tm_hour = hour;
-        mytm.tm_mday = mday;
-        mytm.tm_mon = mon;
-        mytm.tm_year = year;
-        mytm.tm_wday = wday;
-        mytm.tm_yday = yday;
-        mytm.tm_isdst = isdst;
-        my_mini_mktime(&mytm);
+        size_t len;
+
+        if(islocal == 1)
+            mytm = *localtime(&epoch);
+        else
+            mytm = *gmtime(&epoch);
+
         len = strftime(tmpbuf, sizeof tmpbuf, fmt, &mytm);
         /*
-        ** The following is needed to handle to the situation where 
+        ** The following is needed to handle to the situation where
         ** tmpbuf overflows.  Basically we want to allocate a buffer
         ** and try repeatedly.  The reason why it is so complicated
         ** is that getting a return value of 0 from strftime can indicate
@@ -1107,6 +1099,7 @@ _strptime ( string, format )
   PPCODE:
        t = 0;
        mytm = *gmtime(&t);
+       mytm.tm_isdst = -1; /* -1 means we don't know */
        got_GMT = 0;
 
        remainder = (char *)_strptime(aTHX_ string, format, &mytm, &got_GMT);
@@ -1149,7 +1142,7 @@ _crt_localtime(time_t sec)
         if(ix) mytm = *gmtime(&sec);
         else mytm = *localtime(&sec);
         /* Need to get: $s,$n,$h,$d,$m,$y */
-        
+
         EXTEND(SP, 9);
         SP = push_common_tm(aTHX_ SP, &mytm);
         PUSHs(newSViv(mytm.tm_isdst));

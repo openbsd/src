@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use vars qw(@array @r $k $v $c);
 
-plan tests => 63;
+plan tests => 65;
 
 @array = qw(crunch zam bloop);
 
@@ -187,3 +187,11 @@ for (; $k = each(@array) ;) {
     # Explicit reset
     while (each @array) { }
 }
+
+my $a = 7;
+*a = sub  { \@_ }->($a);
+($a, $b) = each our @a;
+is "$a $b", "0 7", 'each in list assignment';
+$a = 7;
+($a, $b) = (3, values @a);
+is "$a $b", "3 7", 'values in list assignment';

@@ -6,7 +6,7 @@ use strict;
 use Carp ();
 use Pod::Simple ();
 use vars qw( @ISA $VERSION );
-$VERSION = '3.28';
+$VERSION = '3.32';
 @ISA = ('Pod::Simple');
 
 sub new {
@@ -25,10 +25,8 @@ sub _handle_element_start {
 }
 
 sub _handle_text {
-  if( chr(65) eq 'A' ) {     # in ASCIIworld
-    $_[1] =~ tr/\xAD//d;
-    $_[1] =~ tr/\xA0/ /;
-  }
+  $_[1] =~ s/$Pod::Simple::shy//g;
+  $_[1] =~ s/$Pod::Simple::nbsp/ /g;
   print {$_[0]{'output_fh'}} $_[1];
   return;
 }
@@ -75,8 +73,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

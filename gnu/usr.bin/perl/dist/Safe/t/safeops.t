@@ -56,7 +56,7 @@ foreach (@op) {
     if ($_->[2]) {
 	testop @$_;
     } else {
-	local our $TODO = "No test yet for $_->[1]";
+	local our $TODO = "No test yet for $_->[0] ($_->[1])";
 	fail();
     }
 }
@@ -235,6 +235,7 @@ exists		exists $h{Key}
 rv2hv		%h
 helem		$h{kEy}
 hslice		@h{kEy}
+multideref	SKIP (set by optimizer)
 unpack		unpack
 pack		pack
 split		split /foo/
@@ -446,7 +447,6 @@ egrent		endgrent
 getlogin	getlogin
 syscall		syscall
 lock		SKIP
-threadsv	SKIP
 setstate	SKIP
 method_named	$x->y()
 dor		$x // $y

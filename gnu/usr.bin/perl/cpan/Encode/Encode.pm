@@ -1,10 +1,10 @@
 #
-# $Id: Encode.pm,v 2.60 2014/04/29 16:26:49 dankogai Exp dankogai $
+# $Id: Encode.pm,v 2.80 2016/01/25 14:54:01 dankogai Exp $
 #
 package Encode;
 use strict;
 use warnings;
-our $VERSION = sprintf "%d.%02d", q$Revision: 2.60_01 $ =~ /(\d+)/g;
+our $VERSION = sprintf "%d.%02d_01", q$Revision: 2.80 $ =~ /(\d+)/g;
 use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 use XSLoader ();
 XSLoader::load( __PACKAGE__, $VERSION );
@@ -158,7 +158,20 @@ sub encode($$;$) {
         require Carp;
         Carp::croak("Unknown encoding '$name'");
     }
-    my $octets = $enc->encode( $string, $check );
+    # For Unicode, warnings need to be caught and re-issued at this level
+    # so that callers can disable utf8 warnings lexically.
+    my $octets;
+    if ( ref($enc) eq 'Encode::Unicode' ) {
+        my $warn = '';
+        {
+            local $SIG{__WARN__} = sub { $warn = shift };
+            $octets = $enc->encode( $string, $check );
+        }
+        warnings::warnif('utf8', $warn) if length $warn;
+    }
+    else {
+        $octets = $enc->encode( $string, $check );
+    }
     $_[1] = $string if $check and !ref $check and !( $check & LEAVE_SRC() );
     return $octets;
 }
@@ -174,7 +187,20 @@ sub decode($$;$) {
         require Carp;
         Carp::croak("Unknown encoding '$name'");
     }
-    my $string = $enc->decode( $octets, $check );
+    # For Unicode, warnings need to be caught and re-issued at this level
+    # so that callers can disable utf8 warnings lexically.
+    my $string;
+    if ( ref($enc) eq 'Encode::Unicode' ) {
+        my $warn = '';
+        {
+            local $SIG{__WARN__} = sub { $warn = shift };
+            $string = $enc->decode( $octets, $check );
+        }
+        warnings::warnif('utf8', $warn) if length $warn;
+    }
+    else {
+        $string = $enc->decode( $octets, $check );
+    }
     $_[1] = $octets if $check and !ref $check and !( $check & LEAVE_SRC() );
     return $string;
 }
@@ -287,7 +313,11 @@ sub predefine_encodings {
         $Encode::Encoding{Unicode} =
           bless { Name => "Internal" } => "Encode::Internal";
     }
-
+    {
+        # https://rt.cpan.org/Public/Bug/Display.html?id=103253
+        package Encode::XS;
+        push @Encode::XS::ISA, 'Encode::Encoding';
+    }
     {
 
         # was in Encode::utf8
@@ -459,7 +489,7 @@ If the $string is C<undef>, then C<undef> is returned.
 
 This function returns the string that results from decoding the scalar
 value I<OCTETS>, assumed to be a sequence of octets in I<ENCODING>, into
-Perl's internal form.  The returns the resulting string.  As with encode(),
+Perl's internal form.  As with encode(),
 I<ENCODING> can be either a canonical name or an alias. For encoding names
 and aliases, see L</"Defining Aliases">; for I<CHECK>, see L</"Handling
 Malformed Data">.
@@ -549,7 +579,7 @@ Also note that:
 
   from_to($octets, $from, $to, $check);
 
-is equivalent t:o
+is equivalent to:
 
   $octets = encode($to, decode($from, $octets), $check);
 
@@ -676,7 +706,7 @@ In the first version above, you let the appropriate encoding layer
 handle the conversion.  In the second, you explicitly translate
 from one encoding to the other.
 
-Unfortunately, it may be that encodings are C<PerlIO>-savvy.  You can check
+Unfortunately, it may be that encodings are not C<PerlIO>-savvy.  You can check
 to see whether your encoding is supported by C<PerlIO> by invoking the
 C<perlio_ok> method on it:
 
@@ -812,7 +842,7 @@ Acts like C<FB_PERLQQ> but U+I<XXXX> is used instead of C<\x{I<XXXX>}>.
 
 Even the fallback for C<decode> must return octets, which are
 then decoded with the character encoding that C<decode> accepts. So for
-example if you wish to decode octests as UTF-8, and use ISO-8859-15 as
+example if you wish to decode octets as UTF-8, and use ISO-8859-15 as
 a fallback for bytes that are not valid UTF-8, you could write
 
     $str = decode 'UTF-8', $octets, sub {
@@ -1031,7 +1061,7 @@ who submitted code to the project.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2013 Dan Kogai I<< <dankogai@cpan.org> >>.
+Copyright 2002-2014 Dan Kogai I<< <dankogai@cpan.org> >>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

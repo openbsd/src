@@ -48,7 +48,7 @@ WriteMakefile(
         resources   => {
             repository  => 'git://perl5.git.perl.org/perl.git',
             license     => 'http://dev.perl.org/licenses/',
-            homepage    => 'https://metacpan.org/module/Math::BigInt',
+            homepage    => 'https://metacpan.org/module/XSLoader',
             irc         => 'irc://irc.perl.org/#p5p',
             mailinglist => 'http://lists.perl.org/list/perl5-porters.html',
             bugtracker  => "https://rt.perl.org/rt3/Search/Results.html?Query=Queue='perl5' AND Content LIKE 'module=XSLoader' AND (Status='open' OR Status='new' OR Status='stalled')",

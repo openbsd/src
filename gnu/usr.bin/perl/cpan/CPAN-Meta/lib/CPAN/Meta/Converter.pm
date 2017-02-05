@@ -2,31 +2,46 @@ use 5.006;
 use strict;
 use warnings;
 package CPAN::Meta::Converter;
-our $VERSION = '2.140640'; # VERSION
 
-# =head1 SYNOPSIS
-#
-#   my $struct = decode_json_file('META.json');
-#
-#   my $cmc = CPAN::Meta::Converter->new( $struct );
-#
-#   my $new_struct = $cmc->convert( version => "2" );
-#
-# =head1 DESCRIPTION
-#
-# This module converts CPAN Meta structures from one form to another.  The
-# primary use is to convert older structures to the most modern version of
-# the specification, but other transformations may be implemented in the
-# future as needed.  (E.g. stripping all custom fields or stripping all
-# optional fields.)
-#
-# =cut
+our $VERSION = '2.150005';
+
+#pod =head1 SYNOPSIS
+#pod
+#pod   my $struct = decode_json_file('META.json');
+#pod
+#pod   my $cmc = CPAN::Meta::Converter->new( $struct );
+#pod
+#pod   my $new_struct = $cmc->convert( version => "2" );
+#pod
+#pod =head1 DESCRIPTION
+#pod
+#pod This module converts CPAN Meta structures from one form to another.  The
+#pod primary use is to convert older structures to the most modern version of
+#pod the specification, but other transformations may be implemented in the
+#pod future as needed.  (E.g. stripping all custom fields or stripping all
+#pod optional fields.)
+#pod
+#pod =cut
 
 use CPAN::Meta::Validator;
 use CPAN::Meta::Requirements;
-use version 0.88 ();
 use Parse::CPAN::Meta 1.4400 ();
-use List::Util 1.33 qw/all/;
+
+# To help ExtUtils::MakeMaker bootstrap CPAN::Meta::Requirements on perls
+# before 5.10, we fall back to the EUMM bundled compatibility version module if
+# that's the only thing available.  This shouldn't ever happen in a normal CPAN
+# install of CPAN::Meta::Requirements, as version.pm will be picked up from
+# prereqs and be available at runtime.
+
+BEGIN {
+  eval "use version ()"; ## no critic
+  if ( my $err = $@ ) {
+    eval "use ExtUtils::MakeMaker::version" or die $err; ## no critic
+  }
+}
+
+# Perl 5.10.0 didn't have "is_qv" in version.pm
+*_is_qv = version->can('is_qv') ? sub { $_[0]->is_qv } : sub { exists $_[0]->{qv} };
 
 sub _dclone {
   my $ref = shift;
@@ -36,12 +51,14 @@ sub _dclone {
   # right thing for typical things that might be there, like version objects,
   # Path::Class objects, etc.
   no warnings 'once';
-  local *UNIVERSAL::TO_JSON = sub { return "$_[0]" };
+  no warnings 'redefine';
+  local *UNIVERSAL::TO_JSON = sub { "$_[0]" };
 
-  my $backend = Parse::CPAN::Meta->json_backend();
-  return $backend->new->utf8->decode(
-    $backend->new->utf8->allow_blessed->convert_blessed->encode($ref)
-  );
+  my $json = Parse::CPAN::Meta->json_backend()->new
+      ->utf8
+      ->allow_blessed
+      ->convert_blessed;
+  $json->decode($json->encode($ref))
 }
 
 my %known_specs = (
@@ -247,11 +264,11 @@ sub _downgrade_license {
   }
   elsif( ref $element eq 'ARRAY' ) {
     if ( @$element > 1) {
-      if ( all { $is_open_source{ $license_downgrade_map{lc $_} || 'unknown' } } @$element ) {
-        return 'open_source';
+      if (grep { !$is_open_source{ $license_downgrade_map{lc $_} || 'unknown' } } @$element) {
+        return 'unknown';
       }
       else {
-        return 'unknown';
+        return 'open_source';
       }
     }
     elsif ( @$element == 1 ) {
@@ -303,11 +320,11 @@ sub _no_index_1_2 {
 
   # common mistake: files -> file
   if ( exists $no_index->{files} ) {
-    $no_index->{file} = delete $no_index->{file};
+    $no_index->{file} = delete $no_index->{files};
   }
   # common mistake: modules -> module
   if ( exists $no_index->{modules} ) {
-    $no_index->{module} = delete $no_index->{module};
+    $no_index->{module} = delete $no_index->{modules};
   }
   return _convert($no_index, $no_index_spec_1_2);
 }
@@ -331,11 +348,11 @@ sub _no_index_directory {
   }
   # common mistake: files -> file
   if ( exists $element->{files} ) {
-    $element->{file} = delete $element->{file};
+    $element->{file} = delete $element->{files};
   }
   # common mistake: modules -> module
   if ( exists $element->{modules} ) {
-    $element->{module} = delete $element->{module};
+    $element->{module} = delete $element->{modules};
   }
   my $spec = $version == 2 ? $no_index_spec_2 : $no_index_spec_1_3;
   return _convert($element, $spec);
@@ -362,7 +379,7 @@ sub _clean_version {
   # XXX check defined $v and not just $v because version objects leak memory
   # in boolean context -- dagolden, 2012-02-03
   if ( defined $v ) {
-    return $v->is_qv ? $v->normal : $element;
+    return _is_qv($v) ? $v->normal : $element;
   }
   else {
     return 0;
@@ -371,9 +388,11 @@ sub _clean_version {
 
 sub _bad_version_hook {
   my ($v) = @_;
+  $v =~ s{^\s*}{};
+  $v =~ s{\s*$}{};
   $v =~ s{[a-z]+$}{}; # strip trailing alphabetics
-  my $vobj = eval { version->parse($v) };
-  return defined($vobj) ? $vobj : version->parse(0); # or give up
+  my $vobj = eval { version->new($v) };
+  return defined($vobj) ? $vobj : version->new(0); # or give up
 }
 
 sub _version_map {
@@ -682,7 +701,7 @@ sub _resources_1_2 {
   my (undef, undef, $meta) = @_;
   my $resources = $meta->{resources} || {};
   if ( $meta->{license_url} && ! $resources->{license} ) {
-    $resources->{license} = $meta->license_url
+    $resources->{license} = $meta->{license_url}
       if _is_urlish($meta->{license_url});
   }
   return unless keys %$resources;
@@ -740,12 +759,15 @@ sub _provides {
 }
 
 sub _convert {
-  my ($data, $spec, $to_version) = @_;
+  my ($data, $spec, $to_version, $is_fragment) = @_;
 
   my $new_data = {};
   for my $key ( keys %$spec ) {
     next if $key eq ':custom' || $key eq ':drop';
     next unless my $fcn = $spec->{$key};
+    if ( $is_fragment && $key eq 'generated_by' ) {
+      $fcn = \&_keep;
+    }
     die "spec for '$key' is not a coderef"
       unless ref $fcn && ref $fcn eq 'CODE';
     my $new_value = $fcn->($data->{$key}, $key, $data, $to_version);
@@ -783,7 +805,7 @@ my %up_convert = (
     # CHANGED TO MANDATORY
     'dynamic_config'      => \&_keep_or_one,
     # ADDED MANDATORY
-    'release_status'      => \&_release_status_from_version,
+    'release_status'      => \&_release_status,
     # PRIOR OPTIONAL
     'keywords'            => \&_keep,
     'no_index'            => \&_no_index_directory,
@@ -1230,27 +1252,80 @@ my %cleanup = (
   },
 );
 
+# for a given field in a spec version, what fields will it feed
+# into in the *latest* spec (i.e. v2); meta-spec omitted because
+# we always expect a meta-spec to be generated
+my %fragments_generate = (
+  '2' => {
+    'abstract'            =>   'abstract',
+    'author'              =>   'author',
+    'generated_by'        =>   'generated_by',
+    'license'             =>   'license',
+    'name'                =>   'name',
+    'version'             =>   'version',
+    'dynamic_config'      =>   'dynamic_config',
+    'release_status'      =>   'release_status',
+    'keywords'            =>   'keywords',
+    'no_index'            =>   'no_index',
+    'optional_features'   =>   'optional_features',
+    'provides'            =>   'provides',
+    'resources'           =>   'resources',
+    'description'         =>   'description',
+    'prereqs'             =>   'prereqs',
+  },
+  '1.4' => {
+    'abstract'            => 'abstract',
+    'author'              => 'author',
+    'generated_by'        => 'generated_by',
+    'license'             => 'license',
+    'name'                => 'name',
+    'version'             => 'version',
+    'build_requires'      => 'prereqs',
+    'conflicts'           => 'prereqs',
+    'distribution_type'   => 'distribution_type',
+    'dynamic_config'      => 'dynamic_config',
+    'keywords'            => 'keywords',
+    'no_index'            => 'no_index',
+    'optional_features'   => 'optional_features',
+    'provides'            => 'provides',
+    'recommends'          => 'prereqs',
+    'requires'            => 'prereqs',
+    'resources'           => 'resources',
+    'configure_requires'  => 'prereqs',
+  },
+);
+# this is not quite true but will work well enough
+# as 1.4 is a superset of earlier ones
+$fragments_generate{$_} = $fragments_generate{'1.4'} for qw/1.3 1.2 1.1 1.0/;
+
 #--------------------------------------------------------------------------#
 # Code
 #--------------------------------------------------------------------------#
 
-# =method new
-#
-#   my $cmc = CPAN::Meta::Converter->new( $struct );
-#
-# The constructor should be passed a valid metadata structure but invalid
-# structures are accepted.  If no meta-spec version is provided, version 1.0 will
-# be assumed.
-#
-# =cut
+#pod =method new
+#pod
+#pod   my $cmc = CPAN::Meta::Converter->new( $struct );
+#pod
+#pod The constructor should be passed a valid metadata structure but invalid
+#pod structures are accepted.  If no meta-spec version is provided, version 1.0 will
+#pod be assumed.
+#pod
+#pod Optionally, you can provide a C<default_version> argument after C<$struct>:
+#pod
+#pod   my $cmc = CPAN::Meta::Converter->new( $struct, default_version => "1.4" );
+#pod
+#pod This is only needed when converting a metadata fragment that does not include a
+#pod C<meta-spec> field.
+#pod
+#pod =cut
 
 sub new {
-  my ($class,$data) = @_;
+  my ($class,$data,%args) = @_;
 
   # create an attributes hash
   my $self = {
     'data'    => $data,
-    'spec'    => _extract_spec_version($data),
+    'spec'    => _extract_spec_version($data, $args{default_version}),
   };
 
   # create the object
@@ -1258,11 +1333,11 @@ sub new {
 }
 
 sub _extract_spec_version {
-    my ($data) = @_;
+    my ($data, $default) = @_;
     my $spec = $data->{'meta-spec'};
 
     # is meta-spec there and valid?
-    return "1.0" unless defined $spec && ref $spec eq 'HASH'; # before meta-spec?
+    return( $default || "1.0" ) unless defined $spec && ref $spec eq 'HASH'; # before meta-spec?
 
     # does the version key look like a valid version?
     my $v = $spec->{version};
@@ -1274,72 +1349,75 @@ sub _extract_spec_version {
     # otherwise, use heuristics: look for 1.x vs 2.0 fields
     return "2" if exists $data->{prereqs};
     return "1.4" if exists $data->{configure_requires};
-    return "1.2"; # when meta-spec was first defined
+    return( $default || "1.2" ); # when meta-spec was first defined
 }
 
-# =method convert
-#
-#   my $new_struct = $cmc->convert( version => "2" );
-#
-# Returns a new hash reference with the metadata converted to a different form.
-# C<convert> will die if any conversion/standardization still results in an
-# invalid structure.
-#
-# Valid parameters include:
-#
-# =over
-#
-# =item *
-#
-# C<version> -- Indicates the desired specification version (e.g. "1.0", "1.1" ... "1.4", "2").
-# Defaults to the latest version of the CPAN Meta Spec.
-#
-# =back
-#
-# Conversion proceeds through each version in turn.  For example, a version 1.2
-# structure might be converted to 1.3 then 1.4 then finally to version 2. The
-# conversion process attempts to clean-up simple errors and standardize data.
-# For example, if C<author> is given as a scalar, it will converted to an array
-# reference containing the item. (Converting a structure to its own version will
-# also clean-up and standardize.)
-#
-# When data are cleaned and standardized, missing or invalid fields will be
-# replaced with sensible defaults when possible.  This may be lossy or imprecise.
-# For example, some badly structured META.yml files on CPAN have prerequisite
-# modules listed as both keys and values:
-#
-#   requires => { 'Foo::Bar' => 'Bam::Baz' }
-#
-# These would be split and each converted to a prerequisite with a minimum
-# version of zero.
-#
-# When some mandatory fields are missing or invalid, the conversion will attempt
-# to provide a sensible default or will fill them with a value of 'unknown'.  For
-# example a missing or unrecognized C<license> field will result in a C<license>
-# field of 'unknown'.  Fields that may get an 'unknown' include:
-#
-# =for :list
-# * abstract
-# * author
-# * license
-#
-# =cut
+#pod =method convert
+#pod
+#pod   my $new_struct = $cmc->convert( version => "2" );
+#pod
+#pod Returns a new hash reference with the metadata converted to a different form.
+#pod C<convert> will die if any conversion/standardization still results in an
+#pod invalid structure.
+#pod
+#pod Valid parameters include:
+#pod
+#pod =over
+#pod
+#pod =item *
+#pod
+#pod C<version> -- Indicates the desired specification version (e.g. "1.0", "1.1" ... "1.4", "2").
+#pod Defaults to the latest version of the CPAN Meta Spec.
+#pod
+#pod =back
+#pod
+#pod Conversion proceeds through each version in turn.  For example, a version 1.2
+#pod structure might be converted to 1.3 then 1.4 then finally to version 2. The
+#pod conversion process attempts to clean-up simple errors and standardize data.
+#pod For example, if C<author> is given as a scalar, it will converted to an array
+#pod reference containing the item. (Converting a structure to its own version will
+#pod also clean-up and standardize.)
+#pod
+#pod When data are cleaned and standardized, missing or invalid fields will be
+#pod replaced with sensible defaults when possible.  This may be lossy or imprecise.
+#pod For example, some badly structured META.yml files on CPAN have prerequisite
+#pod modules listed as both keys and values:
+#pod
+#pod   requires => { 'Foo::Bar' => 'Bam::Baz' }
+#pod
+#pod These would be split and each converted to a prerequisite with a minimum
+#pod version of zero.
+#pod
+#pod When some mandatory fields are missing or invalid, the conversion will attempt
+#pod to provide a sensible default or will fill them with a value of 'unknown'.  For
+#pod example a missing or unrecognized C<license> field will result in a C<license>
+#pod field of 'unknown'.  Fields that may get an 'unknown' include:
+#pod
+#pod =for :list
+#pod * abstract
+#pod * author
+#pod * license
+#pod
+#pod =cut
 
 sub convert {
   my ($self, %args) = @_;
   my $args = { %args };
 
   my $new_version = $args->{version} || $HIGHEST;
+  my $is_fragment = $args->{is_fragment};
 
   my ($old_version) = $self->{spec};
   my $converted = _dclone($self->{data});
 
   if ( $old_version == $new_version ) {
-    $converted = _convert( $converted, $cleanup{$old_version}, $old_version );
-    my $cmv = CPAN::Meta::Validator->new( $converted );
-    unless ( $cmv->is_valid ) {
-      my $errs = join("\n", $cmv->errors);
-      die "Failed to clean-up $old_version metadata. Errors:\n$errs\n";
+    $converted = _convert( $converted, $cleanup{$old_version}, $old_version, $is_fragment );
+    unless ( $args->{is_fragment} ) {
+      my $cmv = CPAN::Meta::Validator->new( $converted );
+      unless ( $cmv->is_valid ) {
+        my $errs = join("\n", $cmv->errors);
+        die "Failed to clean-up $old_version metadata. Errors:\n$errs\n";
+      }
     }
     return $converted;
   }
@@ -1349,11 +1427,13 @@ sub convert {
       next if $vers[$i] > $old_version;
       last if $vers[$i+1] < $new_version;
       my $spec_string = "$vers[$i+1]-from-$vers[$i]";
-      $converted = _convert( $converted, $down_convert{$spec_string}, $vers[$i+1] );
-      my $cmv = CPAN::Meta::Validator->new( $converted );
-      unless ( $cmv->is_valid ) {
-        my $errs = join("\n", $cmv->errors);
-        die "Failed to downconvert metadata to $vers[$i+1]. Errors:\n$errs\n";
+      $converted = _convert( $converted, $down_convert{$spec_string}, $vers[$i+1], $is_fragment );
+      unless ( $args->{is_fragment} ) {
+        my $cmv = CPAN::Meta::Validator->new( $converted );
+        unless ( $cmv->is_valid ) {
+          my $errs = join("\n", $cmv->errors);
+          die "Failed to downconvert metadata to $vers[$i+1]. Errors:\n$errs\n";
+        }
       }
     }
     return $converted;
@@ -1364,22 +1444,50 @@ sub convert {
       next if $vers[$i] < $old_version;
       last if $vers[$i+1] > $new_version;
       my $spec_string = "$vers[$i+1]-from-$vers[$i]";
-      $converted = _convert( $converted, $up_convert{$spec_string}, $vers[$i+1] );
-      my $cmv = CPAN::Meta::Validator->new( $converted );
-      unless ( $cmv->is_valid ) {
-        my $errs = join("\n", $cmv->errors);
-        die "Failed to upconvert metadata to $vers[$i+1]. Errors:\n$errs\n";
+      $converted = _convert( $converted, $up_convert{$spec_string}, $vers[$i+1], $is_fragment );
+      unless ( $args->{is_fragment} ) {
+        my $cmv = CPAN::Meta::Validator->new( $converted );
+        unless ( $cmv->is_valid ) {
+          my $errs = join("\n", $cmv->errors);
+          die "Failed to upconvert metadata to $vers[$i+1]. Errors:\n$errs\n";
+        }
       }
     }
     return $converted;
   }
 }
 
+#pod =method upgrade_fragment
+#pod
+#pod   my $new_struct = $cmc->upgrade_fragment;
+#pod
+#pod Returns a new hash reference with the metadata converted to the latest version
+#pod of the CPAN Meta Spec.  No validation is done on the result -- you must
+#pod validate after merging fragments into a complete metadata document.
+#pod
+#pod Available since version 2.141170.
+#pod
+#pod =cut
+
+sub upgrade_fragment {
+  my ($self) = @_;
+  my ($old_version) = $self->{spec};
+  my %expected =
+    map {; $_ => 1 }
+    grep { defined }
+    map { $fragments_generate{$old_version}{$_} }
+    keys %{ $self->{data} };
+  my $converted = $self->convert( version => $HIGHEST, is_fragment => 1 );
+  for my $key ( keys %$converted ) {
+    next if $key =~ /^x_/i || $key eq 'meta-spec';
+    delete $converted->{$key} unless $expected{$key};
+  }
+  return $converted;
+}
+
 1;
 
 # ABSTRACT: Convert CPAN distribution metadata structures
-
-__END__
 
 =pod
 
@@ -1391,7 +1499,7 @@ CPAN::Meta::Converter - Convert CPAN distribution metadata structures
 
 =head1 VERSION
 
-version 2.140640
+version 2.150005
 
 =head1 SYNOPSIS
 
@@ -1418,6 +1526,13 @@ optional fields.)
 The constructor should be passed a valid metadata structure but invalid
 structures are accepted.  If no meta-spec version is provided, version 1.0 will
 be assumed.
+
+Optionally, you can provide a C<default_version> argument after C<$struct>:
+
+  my $cmc = CPAN::Meta::Converter->new( $struct, default_version => "1.4" );
+
+This is only needed when converting a metadata fragment that does not include a
+C<meta-spec> field.
 
 =head2 convert
 
@@ -1476,6 +1591,16 @@ license
 
 =back
 
+=head2 upgrade_fragment
+
+  my $new_struct = $cmc->upgrade_fragment;
+
+Returns a new hash reference with the metadata converted to the latest version
+of the CPAN Meta Spec.  No validation is done on the result -- you must
+validate after merging fragments into a complete metadata document.
+
+Available since version 2.141170.
+
 =head1 BUGS
 
 Please report any bugs or feature using the CPAN Request Tracker.
@@ -1507,3 +1632,8 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
+
+__END__
+
+
+# vim: ts=2 sts=2 sw=2 et :

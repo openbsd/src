@@ -11,29 +11,29 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with two or more question marks will only be releases if
 deemed necessary by the Pumpking.
 
+=head2 Perl 5.24
+
+Code freezes (which happen in the 5.23.X series)
+
+  2016-01-20  5.23.7 ✓        Contentious changes freeze
+  2016-02-20  5.23.8 ✓        User-visible changes freeze
+  2016-03-20  5.23.9 ✓        Full code freeze
+  2016-05-20  5.24.0          Stable release!
+
 =head2 Perl 5.22
 
-Code freezes (which happen in the 5.21.X series)
-
-  2015-01-20  5.21.8          Contentious changes freeze
-  2015-02-20  5.21.9          User-visible changes freeze
-  2015-03-20  5.21.10         Full code freeze
-  2015-05-20  5.22.0          Stable release!
+  2015-06-01  5.22.0 ✓        Ricardo Signes
+  2015-12-13  5.22.1 ✓        Steve Hay
+  2016-04-29  5.22.2 ✓        Steve Hay
+  2016-??-??  5.22.3          ??
 
 =head2 Perl 5.20
 
   2014-05-27  5.20.0 ✓        Ricardo Signes
   2014-09-14  5.20.1 ✓        Steve Hay
-  2015-01-??  5.20.2          Steve Hay
-
-=head2 Perl 5.18
-
-  2013-05-18  5.18.0 ✓        Ricardo Signes
-  2013-08-12  5.18.1 ✓        Ricardo Signes
-  2014-01-06  5.18.2 ✓        Ricardo Signes
-  2014-10-01  5.18.3 ✓        Ricardo Signes
-  2014-10-01  5.18.4 ✓        Ricardo Signes
-  2015-??-??  5.18.5          ??
+  2015-02-14  5.20.2 ✓        Steve Hay
+  2015-09-12  5.20.3 ✓        Steve Hay
+  2016-??-??  5.20.4          ??
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -49,22 +49,34 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.21
+=head2 Perl 5.23
 
-  2014-05-20  5.21.0 ✓        Ricardo Signes
-  2014-06-20  5.21.1 ✓        Matthew Horsfall
-  2014-07-20  5.21.2 ✓        Abigail
-  2014-08-20  5.21.3 ✓        Peter Martini
-  2014-09-20  5.21.4 ✓        Steve Hay
-  2014-10-20  5.21.5 ✓        Abigail
-  2014-11-20  5.21.6 ✓        Chris "BinGOs" Williams
-  2014-12-20  5.21.7 ✓        Max Maischein
-  2015-01-20  5.21.8 ✓        Matthew Horsfall
-  2015-02-20  5.21.9          ?
-  2015-03-20  5.21.10         ?
-  2015-04-20  5.21.11         ?
+  2015-06-20  5.23.0 ✓        Ricardo Signes
+  2015-07-20  5.23.1 ✓        Matthew Horsfall
+  2015-08-20  5.23.2 ✓        Matthew Horsfall
+  2015-09-20  5.23.3 ✓        Peter Martini
+  2015-10-20  5.23.4 ✓        Steve Hay
+  2015-11-20  5.23.5 ✓        Abigail
+  2015-12-20  5.23.6 ✓        David Golden
+  2016-01-20  5.23.7 ✓        Stevan Little
+  2016-02-20  5.23.8 ✓        Sawyer X
+  2016-03-20  5.23.9 ✓        Abigail
 
-(RC0 for 5.22.0 will be released once we think that all the blockers have been
+(RC0 for 5.24.0 will be released once we think that all the blockers have been
+addressed.  This typically means some time in April or May.)
+
+=head2 Perl 5.25
+
+  2016-05-20  5.25.0          Ricardo Signes
+  2016-06-20  5.25.1          Matthew Horsfall
+  2016-07-20  5.25.2          Steve Hay
+  2016-08-20  5.25.3          BinGOs
+  2016-09-20  5.25.4          Stevan Little
+  2016-10-20  5.25.5          Sawyer X
+  2016-11-20  5.25.6          ?
+  2016-12-20  5.25.7          ?
+
+(RC0 for 5.24.0 will be released once we think that all the blockers have been
 addressed.  This typically means some time in April or May.)
 
 =head1 VICTIMS
@@ -76,30 +88,30 @@ and can't find a substitute amongst this list, mail p5p.
 (Please do not add any names to this list without prior
 consent of the Pumpking.)
 
-Abigail <abigail@abigail.be>
-Aristotle Pagaltzis <pagaltzis@gmx.de>
-Ask Bjørn Hansen <ask@perl.org>
-Chris Williams <bingos@cpan.org>
-Dave Cross <dave@perlhacks.com>
-Dave Rolsky <autarch@urth.org>
-David Golden <dagolden@cpan.org>
-Florian Ragwitz <rafl@debian.org>
-Jesse Luehrs <doy@cpan.org>
-Jesse Vincent <jesse@cpan.org>
-Leon Brocard <acme@astray.com>
-Matt Trout <mst@shadowcat.co.uk>
-Matthew Horsfall <wolfsage@gmail.com>
-Max Maischein <corion@cpan.org>
-Peter Martini <petercmartini@gmail.com>
-Philippe Bruhat <book@cpan.org>
-Ricardo Signes <rjbs@cpan.org>
-Stevan Little <stevan.little@iinteractive.com>
-Steve Hay <steve.m.hay@googlemail.com>
-Tatsuhiko Miyagawa <miyagawa@bulknews.net>
-Tony Cook <tony@develop-help.com>
-Yves Orton <demerphq@gmail.com>
-Zefram <zefram@fysh.org>
-Ævar Arnfjörð Bjarmason <avar@cpan.org>
+  Abigail <abigail@abigail.be>
+  Aristotle Pagaltzis <pagaltzis@gmx.de>
+  Ask Bjørn Hansen <ask@perl.org>
+  Chris Williams <bingos@cpan.org>
+  Dave Cross <dave@perlhacks.com>
+  Dave Rolsky <autarch@urth.org>
+  David Golden <dagolden@cpan.org>
+  Florian Ragwitz <rafl@debian.org>
+  Jesse Luehrs <doy@cpan.org>
+  Jesse Vincent <jesse@cpan.org>
+  Leon Brocard <acme@astray.com>
+  Matt Trout <mst@shadowcat.co.uk>
+  Matthew Horsfall <wolfsage@gmail.com>
+  Max Maischein <corion@cpan.org>
+  Peter Martini <petercmartini@gmail.com>
+  Philippe Bruhat <book@cpan.org>
+  Ricardo Signes <rjbs@cpan.org>
+  Stevan Little <stevan@cpan.org>
+  Steve Hay <steve.m.hay@googlemail.com>
+  Tatsuhiko Miyagawa <miyagawa@bulknews.net>
+  Tony Cook <tony@develop-help.com>
+  Yves Orton <demerphq@gmail.com>
+  Zefram <zefram@fysh.org>
+  Ævar Arnfjörð Bjarmason <avar@cpan.org>
 
 =head1 AUTHOR
 

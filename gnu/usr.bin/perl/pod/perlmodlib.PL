@@ -37,9 +37,6 @@ my %exceptions = (
     'abbrev' => 'Text::Abbrev',
     'carp' => 'Carp',
     'getopt' => 'Getopt::Std',
-    'B<CGI::Carp>' => 'CGI::Carp',
-    'ModuleInfo' => 'Module::Build::ModuleInfo',
-    '$notes_name' => 'Module::Build::Notes',
     'Encode::MIME::NAME' => 'Encode::MIME::Name',
     'libnetFAQ' => 'Net::libnetFAQ',
 );
@@ -1226,7 +1223,6 @@ Module names should begin with a capital letter.
 Having 57 modules all called Sort will not make life easy for anyone
 (though having 23 called Sort::Quick is only marginally better :-).
 Imagine someone trying to install your module alongside many others.
-If in any doubt ask for suggestions in comp.lang.perl.misc.
 
 If you are developing a suite of related modules/classes it's good
 practice to use nested classes with a common prefix as this will
@@ -1247,6 +1243,12 @@ To be portable each component of a module name should be limited to
 11 characters. If it might be used on MS-DOS then try to ensure each is
 unique in the first 8 characters. Nested modules make this easier.
 
+For additional guidance on the naming of modules, please consult:
+
+    http://pause.perl.org/pause/query?ACTION=pause_namingmodules
+
+or send mail to the <module-authors@perl.org> mailing list.
+
 =item  *
 
 Have you got it right?
@@ -1256,8 +1258,9 @@ picked an interface design that will cause problems later? Have
 you picked the most appropriate name? Do you have any questions?
 
 The best way to know for sure, and pick up many helpful suggestions,
-is to ask someone who knows. Comp.lang.perl.misc is read by just about
-all the people who develop modules and it's the best place to ask.
+is to ask someone who knows. The <module-authors@perl.org> mailing list
+is useful for this purpose; it's also accessible via news interface as
+perl.module-authors at nntp.perl.org.
 
 All you need to do is post a short summary of the module, its
 purpose and interfaces. A few lines on each of the main methods is

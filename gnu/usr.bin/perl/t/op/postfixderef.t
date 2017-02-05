@@ -11,39 +11,12 @@ this file contains all dereferencing tests from ref.t but using postfix instead 
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
-    require 'test.pl';
+    require './test.pl';
 }
 
 use strict qw(refs subs);
 
-plan(125);
-
-{
-    no warnings qw 'deprecated syntax';
-    eval '[]->$*';
-    like $@, qr/Can't call method/, '->$* outside of feature scope';
-    eval '[]->@*';
-    like $@, qr/syntax error/, '->@* outside of feature scope';
-    eval '[]->@[1]';
-    like $@, qr/syntax error/, '->@[ outside of feature scope';
-    eval '[]->@{1}';
-    like $@, qr/syntax error/, '->@{ outside of feature scope';
-    eval '[]->%*';
-    like $@, qr/syntax error/, '->%* outside of feature scope';
-    eval '[]->%[1]';
-    like $@, qr/syntax error/, '->%[ outside of feature scope';
-    eval '[]->%{1}';
-    like $@, qr/syntax error/, '->%{ outside of feature scope';
-    eval '[]->&*';
-    like $@, qr/syntax error/, '->&* outside of feature scope';
-    eval '[]->**';
-    like $@, qr/syntax error/, '->** outside of feature scope';
-    eval '[]->*{';
-    like $@, qr/syntax error/, '->*{ outside of feature scope';
-}
-
-use feature 'postderef';
-no warnings 'experimental::postderef';
+plan(115);
 
 {
     no strict 'refs';
@@ -96,7 +69,7 @@ $x = "Good";
 is ($refref->$*->$*, 'Good'); # is ($$$refref, 'Good');
 
 
-# Test nested anonymous lists.
+# Test nested anonymous arrays.
 
 $ref = [[],2,[3,4,5,]];
 is (scalar $ref->@*, 3); # is (scalar @$ref, 3);

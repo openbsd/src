@@ -3,11 +3,12 @@ package Digest::SHA;
 require 5.003000;
 
 use strict;
+use warnings;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use Fcntl;
 use integer;
 
-$VERSION = '5.88_01';
+$VERSION = '5.95_01';
 
 require Exporter;
 require DynaLoader;
@@ -28,16 +29,12 @@ require DynaLoader;
 	sha512224	sha512224_base64	sha512224_hex
 	sha512256	sha512256_base64	sha512256_hex);
 
-# If possible, inherit from Digest::base
+# Inherit from Digest::base if possible
 
 eval {
 	require Digest::base;
 	push(@ISA, 'Digest::base');
 };
-
-*addfile   = \&Addfile;
-*hexdigest = \&Hexdigest;
-*b64digest = \&B64digest;
 
 # The following routines aren't time-critical, so they can be left in Perl
 
@@ -45,35 +42,17 @@ sub new {
 	my($class, $alg) = @_;
 	$alg =~ s/\D+//g if defined $alg;
 	if (ref($class)) {	# instance method
-		unless (defined($alg) && ($alg != $class->algorithm)) {
-			sharewind($$class);
+		if (!defined($alg) || ($alg == $class->algorithm)) {
+			sharewind($class);
 			return($class);
 		}
-		if ($$class) { shaclose($$class); $$class = undef }
-		return unless $$class = shaopen($alg);
-		return($class);
+		return shainit($class, $alg) ? $class : undef;
 	}
 	$alg = 1 unless defined $alg;
-	my $state = shaopen($alg) || return;
-	my $self = \$state;
-	bless($self, $class);
-	return($self);
+	return $class->newSHA($alg);
 }
 
-sub DESTROY {
-	my $self = shift;
-	if ($$self) { shaclose($$self); $$self = undef }
-}
-
-sub clone {
-	my $self = shift;
-	my $state = shadup($$self) || return;
-	my $copy = \$state;
-	bless($copy, ref($self));
-	return($copy);
-}
-
-*reset = \&new;
+BEGIN { *reset = \&new }
 
 sub add_bits {
 	my($self, $data, $nbits) = @_;
@@ -82,7 +61,7 @@ sub add_bits {
 		$data = pack("B*", $data);
 	}
 	$nbits = length($data) * 8 if $nbits > length($data) * 8;
-	shawrite($data, $nbits, $$self);
+	shawrite($data, $nbits, $self);
 	return($self);
 }
 
@@ -90,48 +69,53 @@ sub _bail {
 	my $msg = shift;
 
 	$msg .= ": $!";
-        require Carp;
-        Carp::croak($msg);
+	require Carp;
+	Carp::croak($msg);
 }
 
-sub _addfile {  # this is "addfile" from Digest::base 1.00
-    my ($self, $handle) = @_;
+{
+	my $_can_T_filehandle;
 
-    my $n;
-    my $buf = "";
+	sub _istext {
+		local *FH = shift;
+		my $file = shift;
 
-    while (($n = read($handle, $buf, 4096))) {
-        $self->add($buf);
-    }
-    _bail("Read failed") unless defined $n;
-
-    $self;
-}
-
-my $_can_T_filehandle;
-
-sub _istext {
-	local *FH = shift;
-	my $file = shift;
-
-	if (! defined $_can_T_filehandle) {
-		local $^W = 0;
-		eval { -T FH };
-		$_can_T_filehandle = $@ ? 0 : 1;
+		if (! defined $_can_T_filehandle) {
+			local $^W = 0;
+			my $istext = eval { -T FH };
+			$_can_T_filehandle = $@ ? 0 : 1;
+			return $_can_T_filehandle ? $istext : -T $file;
+		}
+		return $_can_T_filehandle ? -T FH : -T $file;
 	}
-	return $_can_T_filehandle ? -T FH : -T $file;
 }
 
-sub Addfile {
+sub _addfile {
+	my ($self, $handle) = @_;
+
+	my $n;
+	my $buf = "";
+
+	while (($n = read($handle, $buf, 4096))) {
+		$self->add($buf);
+	}
+	_bail("Read failed") unless defined $n;
+
+	$self;
+}
+
+sub addfile {
 	my ($self, $file, $mode) = @_;
 
 	return(_addfile($self, $file)) unless ref(\$file) eq 'SCALAR';
 
 	$mode = defined($mode) ? $mode : "";
-	my ($binary, $portable, $BITS) = map { $_ eq $mode } ("b", "p", "0");
+	my ($binary, $UNIVERSAL, $BITS, $portable) =
+		map { $_ eq $mode } ("b", "U", "0", "p");
 
 		## Always interpret "-" to mean STDIN; otherwise use
 		## sysopen to handle full range of POSIX file names
+
 	local *FH;
 	$file eq '-' and open(FH, '< -')
 		or sysopen(FH, $file, O_RDONLY)
@@ -148,18 +132,18 @@ sub Addfile {
 		return($self);
 	}
 
-	binmode(FH) if $binary || $portable;
-	unless ($portable && _istext(*FH, $file)) {
-		$self->_addfile(*FH);
-		close(FH);
-		return($self);
+	binmode(FH) if $binary || $portable || $UNIVERSAL;
+	if ($UNIVERSAL && _istext(*FH, $file)) {
+		$self->_addfileuniv(*FH);
 	}
-
-	while (<FH>) {
-		s/\015?\015\012/\012/g;		# DOS/Windows
-		s/\015/\012/g;			# early MacOS
-		$self->add($_);
+	elsif ($portable && _istext(*FH, $file)) {
+		while (<FH>) {
+			s/\015?\015\012/\012/g;
+			s/\015/\012/g;
+			$self->add($_);
+		}
 	}
+	else { $self->_addfilebin(*FH) }
 	close(FH);
 
 	$self;
@@ -192,8 +176,7 @@ sub getstate {
 }
 
 sub putstate {
-	my $class = shift;
-	my $state = shift;
+	my($class, $state) = @_;
 
 	my %s = ();
 	for (split(/\n/, $state)) {
@@ -218,27 +201,17 @@ sub putstate {
 		$s{'blockcnt'} < ($s{'alg'} <= 256 ? 512 : 1024) or return;
 	}
 
-	my $state_packed = (
+	my $packed_state = (
 		pack("H*", $s{'H'}) .
 		pack("H*", $s{'block'}) .
-		pack("N", $s{'blockcnt'}) .
-		pack("N", $s{'lenhh'}) .
-		pack("N", $s{'lenhl'}) .
-		pack("N", $s{'lenlh'}) .
-		pack("N", $s{'lenll'})
+		pack("N",  $s{'blockcnt'}) .
+		pack("N",  $s{'lenhh'}) .
+		pack("N",  $s{'lenhl'}) .
+		pack("N",  $s{'lenlh'}) .
+		pack("N",  $s{'lenll'})
 	);
 
-	if (ref($class)) {	# instance method
-		if ($$class) { shaclose($$class); $$class = undef }
-		return unless $$class = shaopen($s{'alg'});
-		return $class->_putstate($state_packed);
-	}
-	else {
-		my $sha = shaopen($s{'alg'}) or return;
-		my $self = \$sha;
-		bless($self, $class);
-		return $self->_putstate($state_packed);
-	}
+	return $class->new($s{'alg'})->_putstate($packed_state);
 }
 
 sub dump {
@@ -555,10 +528,10 @@ common string representations of the algorithm (e.g. "sha256",
 "SHA-384").  If the argument is missing, SHA-1 will be used by
 default.
 
-Invoking I<new> as an instance method will not create a new object;
-instead, it will simply reset the object to the initial state
-associated with I<$alg>.  If the argument is missing, the object
-will continue using the same algorithm that was selected at creation.
+Invoking I<new> as an instance method will reset the object to the
+initial state associated with I<$alg>.  If the argument is missing,
+the object will continue using the same algorithm that was selected
+at creation.
 
 =item B<reset($alg)>
 
@@ -615,6 +588,15 @@ So, the following two statements do the same thing:
 	$sha->add_bits("111100001010");
 	$sha->add_bits("\xF0\xA0", 12);
 
+Note that SHA-1 and SHA-2 use I<most-significant-bit ordering>
+for their internal state.  This means that
+
+	$sha3->add_bits("110");
+
+is equivalent to
+
+	$sha3->add_bits("1")->add_bits("1")->add_bits("0");
+
 =item B<addfile(*FILE)>
 
 Reads from I<FILE> until EOF, and appends that data to the current
@@ -631,22 +613,31 @@ argument to one of the following values:
 
 	"b"	read file in binary mode
 
-	"p"	use portable mode
+	"U"	use universal newlines
 
 	"0"	use BITS mode
 
-The "p" mode ensures that the digest value of I<$filename> will be the
-same when computed on different operating systems.  It accomplishes
-this by internally translating all newlines in text files to UNIX format
-before calculating the digest.  Binary files are read in raw mode with
-no translation whatsoever.
+	"p"	use portable mode (to be deprecated)
+
+The "U" mode is modeled on Python's "Universal Newlines" concept, whereby
+DOS and Mac OS line terminators are converted internally to UNIX newlines
+before processing.  This ensures consistent digest values when working
+simultaneously across multiple file systems.  B<The "U" mode influences
+only text files>, namely those passing Perl's I<-T> test; binary files
+are processed with no translation whatsoever.
+
+The "p" mode differs from "U" only in that it treats "\r\r\n" as a single
+newline, a quirky feature designed to accommodate legacy applications that
+occasionally added an extra carriage return before DOS line terminators.
+The "p" mode will be phased out eventually in favor of the cleaner and
+more well-established Universal Newlines concept.
 
 The BITS mode ("0") interprets the contents of I<$filename> as a logical
 stream of bits, where each ASCII '0' or '1' character represents a 0 or
 1 bit, respectively.  All other characters are ignored.  This provides
-a convenient way to calculate the digest values of partial-byte data by
-using files, rather than having to write programs using the I<add_bits>
-method.
+a convenient way to calculate the digest values of partial-byte data
+by using files, rather than having to write separate programs employing
+the I<add_bits> method.
 
 =item B<getstate>
 
@@ -691,9 +682,6 @@ Like I<digest>, this method is a read-once operation.  Call
 I<$sha-E<gt>clone-E<gt>hexdigest> if it's necessary to preserve
 the original digest state.
 
-This method is inherited if L<Digest::base> is installed on your
-system.  Otherwise, a functionally equivalent substitute is used.
-
 =item B<b64digest>
 
 Returns the digest encoded as a Base64 string.
@@ -701,9 +689,6 @@ Returns the digest encoded as a Base64 string.
 Like I<digest>, this method is a read-once operation.  Call
 I<$sha-E<gt>clone-E<gt>b64digest> if it's necessary to preserve
 the original digest state.
-
-This method is inherited if L<Digest::base> is installed on your
-system.  Otherwise, a functionally equivalent substitute is used.
 
 It's important to note that the resulting string does B<not> contain
 the padding characters typical of Base64 encodings.  This omission is
@@ -801,6 +786,7 @@ L<http://csrc.nist.gov/publications/fips/fips198/fips-198a.pdf>
 The author is particularly grateful to
 
 	Gisle Aas
+	H. Merijn Brand
 	Sean Burke
 	Chris Carey
 	Alexandr Ciornii
@@ -810,7 +796,9 @@ The author is particularly grateful to
 	Jeffrey Friedl
 	Robert Gilmour
 	Brian Gladman
+	Jarkko Hietaniemi
 	Adam Kennedy
+	Mark Lawrence
 	Andy Lester
 	Alex Muntada
 	Steve Peters
@@ -825,7 +813,7 @@ darkness and moored it in so perfect a calm and in so brilliant a light"
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003-2014 Mark Shelor
+Copyright (C) 2003-2015 Mark Shelor
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

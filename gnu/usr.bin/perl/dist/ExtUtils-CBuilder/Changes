@@ -1,5 +1,56 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280225 - 2016-01-04
+
+  Fixed:
+
+  - New location of libperl on Win32 when building core (RT #126632)
+
+0.280224 - 2015-10-09
+
+  Enhncements:
+
+  - Use warnings/strict on all modules.
+
+0.280223 - 2015-06-02
+
+  Fixed:
+
+  - Impose deterministic order on cpp-definition options.
+    Heretofore, ExtUtils::CBuilder put cpp-definition options
+    into the cc command line in non-deterministic order. This
+    produced noise when diffing build logs.
+    Make this order deterministic.  (RT #124106)
+    
+  Added:
+
+  - Add tests for ascii-betical order in t/04-base.t.
+
+0.280220 - 2014-09-27
+
+  Fixed:
+
+  - Added missing 'use Config' from 'android.pm' (thanks Debian community)
+
+0.280219 - 2014-09-01
+
+  Fixed:
+
+  - Fixed regression on Android (thanks to Brian Fraser)
+
+0.280218 - 2014-09-01
+
+  Fixed:
+
+  - Mispelled 'starup' key in BCC support was fixed. #79574
+  - Fixed the version in the PM file (thanks to Jim Keenan)
+
+0.280217 - 2014-08-22
+
+  Fixed:
+
+  - Quoted perl path for Windows support #98245 [Alberto Simões] 
+
 0.280216 - 2014-03-07
 
   Added:
@@ -356,7 +407,7 @@ Revision history for Perl extension ExtUtils::CBuilder.
    somehow never got into this copy. [Steve Hay]
 
  - Added a new 'defines' parameter to compile(), which gives a
-   platform-independant way to specify various -Dfoo=bar (or the
+   platform-independent way to specify various -Dfoo=bar (or the
    equivalent) compiler defines. [Randy W. Sims]
 
 0.14  Mon Sep 19 13:40:37 CDT 2005

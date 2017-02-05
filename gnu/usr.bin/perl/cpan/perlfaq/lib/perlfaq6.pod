@@ -2,6 +2,10 @@
 
 perlfaq6 - Regular Expressions
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section is surprisingly small because the rest of the FAQ is
@@ -546,7 +550,7 @@ The output shows that Perl found the two major groups:
         <brackets in <nested brackets> >
         <another group <nested once <nested twice> > >
 
-With a little extra work, you can get the all of the groups in angle
+With a little extra work, you can get all of the groups in angle
 brackets even if they are in other angle brackets too. Each time you
 get a balanced match, remove its outer delimiter (that's the one you
 just matched so don't match it again) and add it to a queue of strings
@@ -584,7 +588,7 @@ to process. Keep doing that until you get no matches:
     }
 
 The output shows all of the groups. The outermost matches show up
-first and the nested matches so up later:
+first and the nested matches show up later:
 
     Found:
         <brackets in <nested brackets> >

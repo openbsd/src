@@ -6,7 +6,7 @@ use vars qw[$VERSION %utilities];
 use Module::CoreList;
 use Module::CoreList::TieHashDelta;
 
-$VERSION = '5.20150822_01';
+$VERSION = '5.20170114_24';
 
 sub utilities {
     my $perl = shift;
@@ -1080,6 +1080,146 @@ my %delta = (
         removed => {
         }
     },
+    5.023003 => {
+        delta_from => 5.023002,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023004 => {
+        delta_from => 5.023003,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023005 => {
+        delta_from => 5.023004,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.022001 => {
+        delta_from => 5.022,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023006 => {
+        delta_from => 5.023005,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023007 => {
+        delta_from => 5.023006,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023008 => {
+        delta_from => 5.023007,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.023009 => {
+        delta_from => 5.023008,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.022002 => {
+        delta_from => 5.022001,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.024000 => {
+        delta_from => 5.023009,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025000 => {
+        delta_from => 5.024000,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025001 => {
+        delta_from => 5.025000,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025002 => {
+        delta_from => 5.025001,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025003 => {
+        delta_from => 5.025002,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025004 => {
+        delta_from => 5.025003,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025005 => {
+        delta_from => 5.025004,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025006 => {
+        delta_from => 5.025005,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025007 => {
+        delta_from => 5.025006,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.025008 => {
+        delta_from => 5.025007,
+        changed => {
+        },
+        removed => {
+        }
+    },
+    5.024001 => {
+        delta_from => 5.024000,
+        changed => {
+        },
+        removed => {
+        }
+    },
 );
 
 for my $version (sort { $a <=> $b } keys %delta) {
@@ -1126,8 +1266,11 @@ Module::CoreList::Utils - what utilities shipped with versions of perl
 
  print $Module::CoreList::Utils::utilities{5.009003}{ptar}; # prints 1
 
- print Module::CoreList::Utils->first_release('corelist');           # prints 5.008009
- print Module::CoreList::Utils->first_release_by_date('corelist');   # prints 5.009002
+ print Module::CoreList::Utils->first_release('corelist');
+ # prints 5.008009
+
+ print Module::CoreList::Utils->first_release_by_date('corelist');
+ # prints 5.009002
 
 =head1 DESCRIPTION
 

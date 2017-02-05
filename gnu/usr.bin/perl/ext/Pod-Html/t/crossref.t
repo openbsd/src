@@ -66,7 +66,7 @@ __DATA__
 
 <p><a href="#item1">&quot;item1&quot;</a></p>
 
-<p><a href="#non-existant-section">&quot;non existant section&quot;</a></p>
+<p><a href="#non-existent-section">&quot;non existent section&quot;</a></p>
 
 <p><a href="/[RELCURRENTWORKINGDIRECTORY]/testdir/test.lib/var-copy.html">var-copy</a></p>
 

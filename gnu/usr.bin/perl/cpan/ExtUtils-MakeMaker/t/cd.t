@@ -26,6 +26,7 @@ my @cd_args = ($dir, "command1", "command2");
 
     {
         local *make = sub { "nmake" };
+        $mm->_clear_maketype_cache;
 
         my @dirs = (File::Spec->updir) x 2;
         my $expected_updir = File::Spec->catdir(@dirs);
@@ -34,22 +35,23 @@ my @cd_args = ($dir, "command1", "command2");
 qq{cd $dir
 	command1
 	command2
-	cd $expected_updir};
+	cd $expected_updir}, 'nmake';
     }
 
     {
         local *make = sub { "dmake" };
+        $mm->_clear_maketype_cache;
 
         ::is $mm->cd(@cd_args),
 qq{cd $dir && command1
-	cd $dir && command2};
+	cd $dir && command2}, 'dmake';
     }
 }
 
 {
     is +ExtUtils::MM_Unix->cd(@cd_args),
 qq{cd $dir && command1
-	cd $dir && command2};
+	cd $dir && command2}, 'Unix';
 }
 
 SKIP: {
@@ -61,5 +63,5 @@ q{startdir = F$Environment("Default")
 	Set Default [.some.dir]
 	command1
 	command2
-	Set Default 'startdir'};
+	Set Default 'startdir'}, 'VMS';
 }

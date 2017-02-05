@@ -8,13 +8,13 @@ BEGIN {
 
 use strict;
 
-plan 13;
+plan 28;
 
 sub context {
   local $::Level = $::Level + 1;
-  my ( $cona, $testnum ) = @_;
+  my ( $cona, $name ) = @_;
   my $conb = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
-  is $cona, $conb;
+  is $conb, $cona, $name;
 }
 
 context('V');
@@ -50,5 +50,31 @@ $a = eval $qcontext;
 is $q, 'S';
 @a = eval $qcontext;
 is $q, 'A';
+
+# Test with various ops that the right context is used at the end of a sub-
+# routine (run-time context).
+$::t = 1;
+$::f = 0;
+$::u = undef;
+sub or_context { $::f || context(shift, "rhs of || at sub exit") }
+or_context('V');
+$_ = or_context('S');
+() = or_context('A');
+sub and_context { $::t && context(shift, "rhs of && at sub exit") }
+and_context('V');
+$_ = and_context('S');
+() = and_context('A');
+sub dor_context { $::u // context(shift, "rhs of // at sub exit") }
+dor_context('V');
+$_ = dor_context('S');
+() = dor_context('A');
+sub cond_middle_cx { $::t ? context(shift, "mid of ?: at sub exit") : 0 }
+cond_middle_cx('V');
+$_ = cond_middle_cx('S');
+() = cond_middle_cx('A');
+sub cond_rhs_cx { $::f ? 0 : context(shift, "rhs of ?: at sub exit") }
+cond_rhs_cx('V');
+$_ = cond_rhs_cx('S');
+() = cond_rhs_cx('A');
 
 1;

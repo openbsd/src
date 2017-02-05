@@ -22,6 +22,7 @@ use strict;
 use warnings;
 use Carp;
 use File::Spec;
+use SelectSaver;
 
 BEGIN {
     unless ('A' eq pack('U', 0x41)) {
@@ -37,9 +38,15 @@ our $PACKAGE = 'Unicode::Normalize, mkheader';
 our $prefix = "UNF_";
 our $structname = "${prefix}complist";
 
-sub pack_U {
-    return pack('U*', @_);
-}
+# Starting in v5.20, the tables in lib/unicore are built using the platform's
+# native character set for code points 0-255.
+*pack_U = ($] ge 5.020)
+          ? sub { return pack('W*', @_).pack('U*'); } # The empty pack returns
+                                                      # an empty UTF-8 string,
+                                                      # so the effect is to
+                                                      # force the return into
+                                                      # being UTF-8.
+          : sub { return pack('U*', @_); };
 
 # %Canon and %Compat will be ($codepoint => $hexstring) after _U_stringify()
 our %Comp1st;	# $codepoint => $listname  : may be composed with a next char.
@@ -64,7 +71,10 @@ our $Decomp = do "unicore/Decomposition.pl"
     || do "unicode/Decomposition.pl"
     || croak "$PACKAGE: Decomposition.pl not found";
 
-# CompositionExclusions.txt since Unicode 3.2.0
+# CompositionExclusions.txt since Unicode 3.2.0.  If this ever changes, it
+# would be better to get the values from Unicode::UCD rather than hard-code
+# them here, as that will protect from having to make fixes for future
+# changes.
 our @CompEx = qw(
     0958 0959 095A 095B 095C 095D 095E 095F 09DC 09DD 09DF 0A33 0A36
     0A59 0A5A 0A5B 0A5E 0B5C 0B5D 0F43 0F4D 0F52 0F57 0F5C 0F69 0F76
@@ -254,6 +264,9 @@ my @boolfunc = (
     },
 );
 
+my $orig_fh = SelectSaver->new;
+{
+
 my $file = "unfexc.h";
 open FH, ">$file" or croak "$PACKAGE: $file can't be made";
 binmode FH; select FH;
@@ -399,6 +412,8 @@ EOF
     print "};\n\n";
     close FH;
 }
+
+}   # End of block for SelectSaver
 
 1;
 __END__

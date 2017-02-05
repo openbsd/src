@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.12 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.18 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -134,10 +134,64 @@ my %opt;
 # -o <output> to specify the output file name (else it's the first arg)
 # -f <inlist> to give a file with a list of input files (else use the args)
 # -n <name> to name the encoding (else use the basename of the input file.
-getopts('CM:SQqOo:f:n:',\%opt);
+getopts('CM:SQqOo:f:n:v',\%opt);
 
 $opt{M} and make_makefile_pl($opt{M}, @ARGV);
 $opt{C} and make_configlocal_pm($opt{C}, @ARGV);
+$opt{v} ||= $ENV{ENC2XS_VERBOSE};
+
+sub verbose {
+    print STDERR @_ if $opt{v};
+}
+sub verbosef {
+    printf STDERR @_ if $opt{v};
+}
+
+
+# ($cpp, $static, $sized) = compiler_info($declaration)
+#
+# return some information about the compiler and compile options we're using:
+#
+#   $declaration - true if we're doing a declaration rather than a definition.
+#
+#   $cpp    - we're using C++
+#   $static - ok to declare the arrays as static
+#   $sized  - the array declarations should be sized
+
+sub compiler_info {
+    my ($declaration) = @_;
+
+    my $ccflags = $Config{ccflags};
+    if (defined $Config{ccwarnflags}) {
+        $ccflags .= " " . $Config{ccwarnflags};
+    }
+    my $compat   = $ccflags =~ /\Q-Wc++-compat/;
+    my $pedantic = $ccflags =~ /-pedantic/;
+
+    my $cpp      = ($Config{d_cplusplus} || '') eq 'define';
+
+    # The encpage_t tables contain recursive and mutually recursive
+    # references. To allow them to compile under C++ and some restrictive
+    # cc options, it may be necessary to make the tables non-static/const
+    # (thus moving them from the text to the data segment) and/or not
+    # include the size in the declaration.
+
+    my $static = !(
+                        $cpp
+                     || ($compat && $pedantic)
+                     || ($^O eq 'MacOS' && $declaration)
+                  );
+
+    # -Wc++-compat on its own warns if the array declaration is sized.
+    # The easiest way to avoid this warning is simply not to include
+    # the size in the declaration.
+    # With -pedantic as well, the issue doesn't arise because $static
+    # above becomes false.
+    my $sized  = $declaration && !($compat && !$pedantic);
+
+    return ($cpp, $static, $sized);
+}
+
 
 # This really should go first, else the die here causes empty (non-erroneous)
 # output files to be written.
@@ -185,6 +239,7 @@ END
 
   if ($cname =~ /(\w+)\.xs$/)
    {
+    print C "#define PERL_NO_GET_CONTEXT\n";
     print C "#include <EXTERN.h>\n";
     print C "#include <perl.h>\n";
     print C "#include <XSUB.h>\n";
@@ -252,7 +307,7 @@ foreach my $enc (sort cmp_name @encfiles)
 
 if ($doC)
  {
-  print STDERR "Writing compiled form\n";
+  verbose "Writing compiled form\n";
   foreach my $name (sort cmp_name keys %encoding)
    {
     my ($e2u,$u2e,$erep,$min_el,$max_el) = @{$encoding{$name}};
@@ -271,9 +326,10 @@ if ($doC)
 
     # push(@{$encoding{$name}},outstring(\*C,$e2u->{Cname}.'_def',$erep));
    }
-  my $cpp = ($Config{d_cplusplus} || '') eq 'define';
-  my $exta = $cpp ? 'extern "C" ' : "static";
-  my $extb = $cpp ? 'extern "C" ' : "";
+  my ($cpp) = compiler_info(0);
+  my $ext  = $cpp ? 'extern "C"' : "extern";
+  my $exta = $cpp ? 'extern "C"' : "static";
+  my $extb = $cpp ? 'extern "C"' : "";
   foreach my $enc (sort cmp_name keys %encoding)
    {
     # my ($e2u,$u2e,$rep,$min_el,$max_el,$rsym) = @{$encoding{$enc}};
@@ -300,7 +356,7 @@ if ($doC)
    {
     my $sym = "${enc}_encoding";
     $sym =~ s/\W+/_/g;
-    print H "extern encode_t $sym;\n";
+    print H "${ext} encode_t $sym;\n";
     print D " Encode_XSEncoding(aTHX_ &$sym);\n";
    }
 
@@ -347,10 +403,10 @@ END
 
   my $perc_saved    = $saved/($strings + $saved) * 100;
   my $perc_subsaved = $subsave/($strings + $subsave) * 100;
-  printf STDERR "%d bytes in string tables\n",$strings;
-  printf STDERR "%d bytes (%.3g%%) saved spotting duplicates\n",
+  verbosef "%d bytes in string tables\n",$strings;
+  verbosef "%d bytes (%.3g%%) saved spotting duplicates\n",
     $saved, $perc_saved              if $saved;
-  printf STDERR "%d bytes (%.3g%%) saved using substrings\n",
+  verbosef "%d bytes (%.3g%%) saved using substrings\n",
     $subsave, $perc_subsaved         if $subsave;
  }
 elsif ($doEnc)
@@ -698,10 +754,10 @@ sub addstrings
   }
  if ($a->{'Forward'})
   {
-   my $cpp = ($Config{d_cplusplus} || '') eq 'define';
-   my $var = $^O eq 'MacOS' || $cpp ? 'extern' : 'static';
-   my $const = $cpp ? '' : 'const';
-   print $fh "$var $const encpage_t $name\[",scalar(@{$a->{'Entries'}}),"];\n";
+   my ($cpp, $static, $sized) = compiler_info(1);
+   my $var   = $static ? 'static const' : 'extern';
+   my $count = $sized ? scalar(@{$a->{'Entries'}}) : '';
+   print $fh "$var encpage_t $name\[$count];\n";
   }
  $a->{'DoneStrings'} = 1;
  foreach my $b (@{$a->{'Entries'}})
@@ -764,7 +820,7 @@ sub outbigstring
   }
 
   $strings = length $string_acc;
-  my $cpp = ($Config{d_cplusplus} || '') eq 'define';
+  my ($cpp) = compiler_info(0);
   my $var = $cpp ? '' : 'static';
   my $definition = "\n$var const U8 $name\[$strings] = { " .
     join(',',unpack "C*",$string_acc);
@@ -791,10 +847,9 @@ sub outtable
    my ($s,$e,$out,$t,$end,$l) = @$b;
    outtable($fh,$t,$bigname) unless $t->{'Done'};
   }
- my $cpp = ($Config{d_cplusplus} || '') eq 'define';
- my $var = $cpp ? '' : 'static';
- my $const = $cpp ? '' : 'const';
- print $fh "\n$var $const encpage_t $name\[",
+ my ($cpp, $static) = compiler_info(0);
+ my $var = $static ? 'static const ' : '';
+ print $fh "\n${var}encpage_t $name\[",
    scalar(@{$a->{'Entries'}}), "] = {\n";
  foreach my $b (@{$a->{'Entries'}})
   {
@@ -1001,9 +1056,9 @@ sub make_configlocal_pm {
 	$mod =~ s/.*\bEncode\b/Encode/o;
 	$mod =~ s/\.pm\z//o;
 	$mod =~ s,/,::,og;
-	warn qq{ require $mod;\n};
 	eval qq{ require $mod; };
-	$@ and die "Can't require $mod: $@\n";
+        return if $@;
+        warn qq{ require $mod;\n};
 	for my $enc ( Encode->encodings() ) {
 	    no warnings;
 	    $in_core{$enc}                   and next;
@@ -1017,7 +1072,7 @@ sub make_configlocal_pm {
         $_ModLines .=
           qq(\$Encode::ExtModule{'$enc'} = "$LocalMod{$enc}";\n);
     }
-    warn $_ModLines;
+    warn $_ModLines if $_ModLines;
     $_LocalVer = _mkversion();
     $_E2X      = find_e2x();
     $_Inc      = $INC{"Encode.pm"};

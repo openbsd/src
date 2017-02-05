@@ -24,7 +24,7 @@ BEGIN {
 }
 
 my $symlink_exists = eval { symlink("",""); 1 };
-my $test_count = 102;
+my $test_count = 111;
 $test_count += 127 if $symlink_exists;
 $test_count += 26 if $^O eq 'MSWin32';
 $test_count += 2 if $^O eq 'MSWin32' and $symlink_exists;
@@ -66,6 +66,16 @@ my $orig_dir = cwd();
 cleanup();
 
 ##### Sanity checks #####
+# Do find() and finddepth() work correctly with an empty list of
+# directories?
+{
+    ok(eval { find(\&noop_wanted); 1 },
+       "'find' successfully returned for an empty list of directories");
+
+    ok(eval { finddepth(\&noop_wanted); 1 },
+       "'finddepth' successfully returned for an empty list of directories");
+}
+
 # Do find() and finddepth() work correctly in the directory
 # from which we start?  (Test presumes the presence of 'taint.t' in same
 # directory as this test file.)
@@ -79,6 +89,46 @@ $::count_taint = 0;
 finddepth({wanted => sub { ++$::count_taint if $_ eq 'taint.t'; } },
     File::Spec->curdir);
 is($::count_taint, 1, "'finddepth' found exactly 1 file named 'taint.t'");
+
+##### RT #122547 #####
+# Do find() and finddepth() correctly warn on invalid options?
+{
+    my $bad_option = 'foobar';
+    my $second_bad_option = 'really_foobar';
+
+    $::count_taint = 0;
+    local $SIG{__WARN__} = sub { $warn_msg = $_[0]; };
+    {
+        find(
+            {
+                wanted => sub { ++$::count_taint if $_ eq 'taint.t'; },
+                $bad_option => undef,
+            },
+            File::Spec->curdir
+        );
+    };
+    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
+    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
+    is($::count_taint, 1, "count_taint incremented");
+    undef $warn_msg;
+
+    $::count_taint = 0;
+    {
+        finddepth(
+            {
+                wanted => sub { ++$::count_taint if $_ eq 'taint.t'; },
+                $bad_option => undef,
+                $second_bad_option => undef,
+            },
+            File::Spec->curdir
+        );
+    };
+    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
+    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
+    like($warn_msg, qr/$second_bad_option/s, "Got warning for $second_bad_option");
+    is($::count_taint, 1, "count_taint incremented");
+    undef $warn_msg;
+}
 
 my $FastFileTests_OK = 0;
 

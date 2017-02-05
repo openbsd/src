@@ -4,15 +4,6 @@
 # test the same and that /\s/ and /\S/ are opposites, and that
 # /[\s]/ and /[\S]/ are also opposites, for \s/\S and \d/\D and 
 # \w/\W.
-use strict;
-use warnings;
-use 5.010;
-
-
-sub run_tests;
-
-$| = 1;
-
 
 BEGIN {
     chdir 't' if -d 't';
@@ -20,8 +11,15 @@ BEGIN {
     require './test.pl';
 }
 
+use strict;
+use warnings;
+use 5.010;
 
 plan tests => 9;  # Update this when adding/deleting tests.
+
+sub run_tests;
+
+$| = 1;
 
 run_tests() unless caller;
 

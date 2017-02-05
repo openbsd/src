@@ -507,8 +507,6 @@ sub __prime_state {
         }
     }
     close $master or my_die("close pod/perl.pod: $!");
-    # This has to be special-cased somewhere. Turns out this is cleanest:
-    push @{$state{master}}, ['a2p', 'x2p/a2p.pod', {toc_omit => 1}];
 
     my_die("perl.pod sets flags for unknown pods: "
            . join ' ', sort keys %flag_set)
@@ -667,9 +665,4 @@ sub get_pod_metadata {
 
 1;
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

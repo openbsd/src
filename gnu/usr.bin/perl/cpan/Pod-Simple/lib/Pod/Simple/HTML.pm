@@ -1,4 +1,3 @@
-
 require 5;
 package Pod::Simple::HTML;
 use strict;
@@ -10,8 +9,7 @@ use vars qw(
   $Doctype_decl  $Content_decl
 );
 @ISA = ('Pod::Simple::PullParser');
-$VERSION = '3.28';
-
+$VERSION = '3.32';
 BEGIN {
   if(defined &DEBUG) { } # no-op
   elsif( defined &Pod::Simple::DEBUG ) { *DEBUG = \&Pod::Simple::DEBUG }
@@ -75,6 +73,7 @@ __PACKAGE__->_accessorize(
  'html_header_before_title',
  'html_header_after_title',
  'html_footer',
+ 'top_anchor',
 
  'index', # whether to add an index at the top of each page
     # (actually it's a table-of-contents, but we'll call it an index,
@@ -189,7 +188,7 @@ sub new {
   $new->accept_targets( 'html', 'HTML' );
   $new->accept_codes('VerbatimFormatted');
   $new->accept_codes(@_to_accept);
-  DEBUG > 2 and print "To accept: ", join(' ',@_to_accept), "\n";
+  DEBUG > 2 and print STDERR "To accept: ", join(' ',@_to_accept), "\n";
 
   $new->perldoc_url_prefix(  $Perldoc_URL_Prefix  );
   $new->perldoc_url_postfix( $Perldoc_URL_Postfix );
@@ -209,6 +208,7 @@ sub new {
     "<!-- start doc -->\n",
   );
   $new->html_footer( qq[\n<!-- end doc -->\n\n</body></html>\n] );
+  $new->top_anchor( "<a name='___top' class='dummyTopAnchor' ></a>\n" );
 
   $new->{'Tagmap'} = {%Tagmap};
 
@@ -232,7 +232,7 @@ sub __adjust_html_h_levels {
 
 sub batch_mode_page_object_init {
   my($self, $batchconvobj, $module, $infile, $outfile, $depth) = @_;
-  DEBUG and print "Initting $self\n  for $module\n",
+  DEBUG and print STDERR "Initting $self\n  for $module\n",
     "  in $infile\n  out $outfile\n  depth $depth\n";
   $self->batch_mode(1);
   $self->batch_mode_current_level($depth);
@@ -255,12 +255,12 @@ sub do_beginning {
   
   if(defined $self->force_title) {
     $title = $self->force_title;
-    DEBUG and print "Forcing title to be $title\n";
+    DEBUG and print STDERR "Forcing title to be $title\n";
   } else {
     # Actually try looking for the title in the document:
     $title = $self->get_short_title();
     unless($self->content_seen) {
-      DEBUG and print "No content seen in search for title.\n";
+      DEBUG and print STDERR "No content seen in search for title.\n";
       return;
     }
     $self->{'Title'} = $title;
@@ -270,7 +270,7 @@ sub do_beginning {
     } else {
       $title = $self->default_title;    
       $title = '' unless defined $title;
-      DEBUG and print "Title defaults to $title\n";
+      DEBUG and print STDERR "Title defaults to $title\n";
     }
   }
 
@@ -305,14 +305,14 @@ sub do_beginning {
     $after,
   ;
 
-  DEBUG and print "Returning from do_beginning...\n";
+  DEBUG and print STDERR "Returning from do_beginning...\n";
   return 1;
 }
 
 sub _add_top_anchor {
   my($self, $text_r) = @_;
   unless($$text_r and $$text_r =~ m/name=['"]___top['"]/) { # a hack
-    $$text_r .= "<a name='___top' class='dummyTopAnchor' ></a>\n";
+    $$text_r .= $self->top_anchor || '';
   }
   return;
 }
@@ -368,9 +368,9 @@ sub do_middle {
     my $index = $self->index_as_html();
     if( $$out =~ s/$sneakytag/$index/s ) {
       # Expected case
-      DEBUG and print "Inserted ", length($index), " bytes of index HTML into $out.\n";
+      DEBUG and print STDERR "Inserted ", length($index), " bytes of index HTML into $out.\n";
     } else {
-      DEBUG and print "Odd, couldn't find where to insert the index in the output!\n";
+      DEBUG and print STDERR "Odd, couldn't find where to insert the index in the output!\n";
       # I don't think this should ever happen.
     }
     return 1;
@@ -502,7 +502,7 @@ sub _do_middle_main_loop {
         if(defined $name) {
           my $esc = esc(  $self->section_name_tidy( $name ) );
           print $fh qq[name="$esc"];
-          DEBUG and print "Linearized ", scalar(@to_unget),
+          DEBUG and print STDERR "Linearized ", scalar(@to_unget),
            " tokens as \"$name\".\n";
           push @{ $self->{'PSHTML_index_points'} }, [$tagname, $name]
            if $ToIndex{ $tagname };
@@ -510,7 +510,7 @@ sub _do_middle_main_loop {
             #  just their content), but ahwell.
            
         } else {  # ludicrously long, so nevermind
-          DEBUG and print "Linearized ", scalar(@to_unget),
+          DEBUG and print STDERR "Linearized ", scalar(@to_unget),
            " tokens, but it was too long, so nevermind.\n";
         }
         print $fh "\n>";
@@ -523,8 +523,10 @@ sub _do_middle_main_loop {
           $self->unget_token($next);
           next;
         }
-        DEBUG and print "    raw text ", $next->text, "\n";
-        print $fh "\n" . $next->text . "\n";
+        DEBUG and print STDERR "    raw text ", $next->text, "\n";
+        # The parser sometimes preserves newlines and sometimes doesn't!
+        (my $text = $next->text) =~ s/\n\z//;
+        print $fh $text, "\n";
         next;
        
       } else {
@@ -606,7 +608,7 @@ sub do_man_link {
   $frag = $self->section_escape($frag)
    if defined $frag and length($frag .= ''); # (stringify)
 
-  DEBUG and print "Resolving \"$to/$frag\"\n\n";
+  DEBUG and print STDERR "Resolving \"$to/$frag\"\n\n";
 
   return $self->resolve_man_page_link($to, $frag);
 }
@@ -625,18 +627,18 @@ sub do_pod_link {
   $section = $self->section_escape($section)
    if defined $section and length($section .= ''); # (stringify)
 
-  DEBUG and printf "Resolving \"%s\" \"%s\"...\n",
+  DEBUG and printf STDERR "Resolving \"%s\" \"%s\"...\n",
    $to || "(nil)",  $section || "(nil)";
    
   {
     # An early hack:
     my $complete_url = $self->resolve_pod_link_by_table($to, $section);
     if( $complete_url ) {
-      DEBUG > 1 and print "resolve_pod_link_by_table(T,S) gives ",
+      DEBUG > 1 and print STDERR "resolve_pod_link_by_table(T,S) gives ",
         $complete_url, "\n  (Returning that.)\n";
       return $complete_url;
     } else {
-      DEBUG > 4 and print " resolve_pod_link_by_table(T,S)", 
+      DEBUG > 4 and print STDERR " resolve_pod_link_by_table(T,S)",
        " didn't return anything interesting.\n";
     }
   }
@@ -646,15 +648,15 @@ sub do_pod_link {
     my $there = $self->resolve_pod_link_by_table($to);
     if(defined $there and length $there) {
       DEBUG > 1
-       and print "resolve_pod_link_by_table(T) gives $there\n";
+       and print STDERR "resolve_pod_link_by_table(T) gives $there\n";
     } else {
       $there = 
         $self->resolve_pod_page_link($to, $section);
          # (I pass it the section value, but I don't see a
          #  particular reason it'd use it.)
-      DEBUG > 1 and print "resolve_pod_page_link gives ", $to || "(nil)", "\n";
+      DEBUG > 1 and print STDERR "resolve_pod_page_link gives ", $there || "(nil)", "\n";
       unless( defined $there and length $there ) {
-        DEBUG and print "Can't resolve $to\n";
+        DEBUG and print STDERR "Can't resolve $to\n";
         return undef;
       }
       # resolve_pod_page_link returning undef is how it
@@ -663,18 +665,18 @@ sub do_pod_link {
     $to = $there;
   }
 
-  #DEBUG and print "So far [", $to||'nil', "] [", $section||'nil', "]\n";
+  #DEBUG and print STDERR "So far [", $to||'nil', "] [", $section||'nil', "]\n";
 
   my $out = (defined $to and length $to) ? $to : '';
   $out .= "#" . $section if defined $section and length $section;
   
   unless(length $out) { # sanity check
-    DEBUG and printf "Oddly, couldn't resolve \"%s\" \"%s\"...\n",
+    DEBUG and printf STDERR "Oddly, couldn't resolve \"%s\" \"%s\"...\n",
      $to || "(nil)",  $section || "(nil)";
     return undef;
   }
 
-  DEBUG and print "Resolved to $out\n";
+  DEBUG and print STDERR "Resolved to $out\n";
   return $out;  
 }
 
@@ -693,7 +695,11 @@ sub section_name_tidy {
   $section =~ s/^\s+//;
   $section =~ s/\s+$//;
   $section =~ tr/ /_/;
-  $section =~ tr/\x00-\x1F\x80-\x9F//d if 'A' eq chr(65); # drop crazy characters
+  if ($] ge 5.006) {
+    $section =~ s/[[:cntrl:][:^ascii:]]//g; # drop crazy characters
+  } elsif ('A' eq chr(65)) { # But not on early EBCDIC
+    $section =~ tr/\x00-\x1F\x80-\x9F//d;
+  }
   $section = $self->unicode_escape_url($section);
   $section = '_' unless length $section;
   return $section;
@@ -712,12 +718,13 @@ sub general_url_escape {
   # A pretty conservative escaping, behoovey even for query components
   #  of a URL (see RFC 2396)
   
-  $string =~ s/([^-_\.!~*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/sprintf('%%%02X',ord($1))/eg;
+  if ($] ge 5.007_003) {
+    $string =~ s/([^-_\.!~*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/sprintf('%%%02X',utf8::native_to_unicode(ord($1)))/eg;
+  } else { # Is broken for non-ASCII platforms on early perls
+    $string =~ s/([^-_\.!~*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/sprintf('%%%02X',ord($1))/eg;
+  }
    # Yes, stipulate the list without a range, so that this can work right on
    #  all charsets that this module happens to run under.
-   # Altho, hmm, what about that ord?  Presumably that won't work right
-   #  under non-ASCII charsets.  Something should be done
-   #  about that, I guess?
   
   return $string;
 }
@@ -750,16 +757,16 @@ sub resolve_pod_page_link_singleton_mode {
 
 sub resolve_pod_page_link_batch_mode {
   my($self, $to) = @_;
-  DEBUG > 1 and print " During batch mode, resolving $to ...\n";
+  DEBUG > 1 and print STDERR " During batch mode, resolving $to ...\n";
   my @path = grep length($_), split m/::/s, $to, -1;
   unless( @path ) { # sanity
-    DEBUG and print "Very odd!  Splitting $to gives (nil)!\n";
+    DEBUG and print STDERR "Very odd!  Splitting $to gives (nil)!\n";
     return undef;
   }
   $self->batch_mode_rectify_path(\@path);
   my $out = join('/', map $self->pagepath_url_escape($_), @path)
     . $HTML_EXTENSION;
-  DEBUG > 1 and print " => $out\n";
+  DEBUG > 1 and print STDERR " => $out\n";
   return $out;
 }
 
@@ -849,21 +856,28 @@ sub esc { # a function.
       @_ = splice @_; # break aliasing
     } else {
       my $x = shift;
-      $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg;
+      if ($] ge 5.007_003) {
+        $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(utf8::native_to_unicode(ord($1))).';'/eg;
+      } else { # Is broken for non-ASCII platforms on early perls
+        $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg;
+      }
       return $x;
     }
   }
   foreach my $x (@_) {
     # Escape things very cautiously:
-    $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg
-     if defined $x;
+    if (defined $x) {
+      if ($] ge 5.007_003) {
+        $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(utf8::native_to_unicode(ord($1))).';'/eg
+      } else { # Is broken for non-ASCII platforms on early perls
+        $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg
+      }
+    }
     # Leave out "- so that "--" won't make it thru in X-generated comments
     #  with text in them.
 
     # Yes, stipulate the list without a range, so that this can work right on
     #  all charsets that this module happens to run under.
-    # Altho, hmm, what about that ord?  Presumably that won't work right
-    #  under non-ASCII charsets.  Something should be done about that.
   }
   return @_;
 }
@@ -969,7 +983,7 @@ Set the content-type in the HTML head: (defaults to ISO-8859-1)
 
   $Pod::Simple::HTML::Content_decl =  q{<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >};
 
-Set the value that will be ebedded in the opening tags of F, C tags and verbatim text.
+Set the value that will be embedded in the opening tags of F, C tags and verbatim text.
 F maps to <em>, C maps to <code>, Verbatim text maps to <pre> (Computerese defaults to "")
 
   $Pod::Simple::HTML::Computerese =  ' class="some_class_name';
@@ -989,6 +1003,13 @@ and including the opening <title> tag. The following call will set it to be a si
 file:
 
   $p->html_header_before_title('<html><head><title>');
+
+=head2 top_anchor
+
+By default Pod::Simple::HTML adds a dummy anchor at the top of the HTML.
+You can change it by calling
+
+  $p->top_anchor('<a name="zz" >');
 
 =head2 html_h_level
 
@@ -1091,8 +1112,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

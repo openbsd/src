@@ -4,275 +4,220 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-perlamiga - Perl under Amiga OS
+perlamiga - Perl under AmigaOS 4.1
 
 =head1 NOTE
 
-B<Perl 5.8.0 cannot be built in AmigaOS.  You can use either the
-maintenance release Perl 5.6.1 or the development release Perl 5.7.2
-in AmigaOS.  See L</"PERL 5.8.0 BROKEN IN AMIGAOS"> if you want to help
-fixing this problem.>
+This is a port of Perl 5.22.1, it is a fresh port and not in any way
+compatible with my previous ports of Perl 5.8 and 5.16.3. This means
+you will need to reinstall / rebuild any third party modules you have
+installed.
+
+newlib.library version 53.28 or greater is required.
 
 =head1 SYNOPSIS
 
-One can read this document in the following formats:
+Once perl is installed you can read this document in the following way
 
-	man perlamiga
-	multiview perlamiga.guide
+	sh -c "perldoc perlamiga"
 
-to list some (not all may be available simultaneously), or it may
-be read I<as is>: either as F<README.amiga>, or F<pod/perlamiga.pod>.
-
-A recent version of perl for the Amiga can be found at the Geek Gadgets
-section of the Aminet:
-
-      http://www.aminet.net/~aminet/dev/gg
+or you may read I<as is>: either as F<README.amiga>, or F<pod/perlamiga.pod>.
 
 =cut
 
-Contents
- 
- perlamiga - Perl under Amiga OS
-
-       NAME 
-       SYNOPSIS 
-       DESCRIPTION 
-         -  Prerequisites 
+       NAME
+       SYNOPSIS
+       DESCRIPTION
+         -  Prerequisites
          -  Starting Perl programs under AmigaOS
          -  Shortcomings of Perl under AmigaOS
-       INSTALLATION 
-       Accessing documentation 
-         -  Manpages 
-         -  HTML 
-         -  GNU info files 
-         -  LaTeX docs 
-       BUILD 
-         -  Build Prerequisites 
-         -  Getting the perl source 
-         -  Application of the patches 
-         -  Making 
-         -  Testing 
-         -  Installing the built perl 
-       AUTHOR 
-       SEE ALSO 
+       INSTALLATION
+       CHANGES
 
 =head1 DESCRIPTION
 
-=head2 Prerequisites for Compiling Perl on AmigaOS
+=head2 Prerequisites for running Perl 5.22.1 under AmigaOS 4.1
 
 =over 6
 
-=item B<Unix emulation for AmigaOS: ixemul.library>
+=item B<AmigaOS 4.1 update 6 with all updates applied as of 9th October 2013>
 
-You need the Unix emulation for AmigaOS, whose most important part is
-B<ixemul.library>. For a minimum setup, get the latest versions
-of the following packages from the Aminet archives
-( L<http://www.aminet.net/~aminet/> ):
+The most important of which is:
 
-	ixemul-bin
-	ixemul-env-bin
-	pdksh-bin
+=item B<newlib.library version 53.28 or greater>
 
-Note also that this is a minimum setup; you might want to add other
-packages of B<ADE> (the I<Amiga Developers Environment>).
+=item B<AmigaOS SDK>
 
-=item B<Version of Amiga OS>
+Perl installs into the SDK directory structure and expects many of the
+build tools present in the SDK to be available. So for the best results
+install the SDK first.
 
-You need at the very least AmigaOS version 2.0. Recommended is version 3.1.
+=item B<abc-shell>
+
+If you do not have the SDK installed you must at least have abc-shell
+installed or some other suitable sh port. This is required to run
+external commands and should be available as 'sh' in your path.
 
 =back
 
-=head2 Starting Perl programs under AmigaOS
+=head2 Starting Perl programs under AmigaOS 4.1
 
-Start your Perl program F<foo> with arguments C<arg1 arg2 arg3> the
-same way as on any other platform, by
+Perl may be run from the AmigaOS shell but for best results should be
+run under abc-shell.  (abc-shell handles file globbing, pattern
+expansion, and sets up environment variables in the UN*Xy way that
+Perl expects.)
 
-	perl foo arg1 arg2 arg3
+For example:
 
-If you want to specify perl options C<-my_opts> to the perl itself (as
-opposed to your program), use
+	New Shell process 10
+	10.AmigaOS4:> sh
+	/AmigaOS4>perl path:to/myprog arg1 arrg2 arg3
 
-	perl -my_opts foo arg1 arg2 arg3
+Abc-shell can also launch programs via the #! syntax at the start of
+the program file, it's best use the form #!SDK:Local/C/perl so that
+the AmigaOS shell may also find perl in the same way. AmigaOS requires
+the script bit to be set for this to work
 
-Alternately, you can try to get a replacement for the system's B<Execute>
-command that honors the #!/usr/bin/perl syntax in scripts and set the s-Bit
-of your scripts. Then you can invoke your scripts like under UNIX with
+	10.AmigaOS4:> sh
+	/AmigaOS4>myprog arg1 arrg2 arg3
 
-	foo arg1 arg2 arg3
-
-(Note that having *nixish full path to perl F</usr/bin/perl> is not
-necessary, F<perl> would be enough, but having full path would make it
-easier to use your script under *nix.)
-
-=head2 Shortcomings of Perl under AmigaOS
-
-Perl under AmigaOS lacks some features of perl under UNIX because of
-deficiencies in the UNIX-emulation, most notably:
+=head2 Limitations of Perl under AmigaOS 4.1
 
 =over 6
 
-=item *
+=item B<Nested Piped programs can crash when run from older abc-shells>
 
-fork()
+abc-shell version 53.2 has a bug that can cause crashes in the
+subprocesses used to run piped programs, if a later version is
+available you should install it instead.
 
-=item * 
+=item B<Incorrect or unexpected command line unescaping>
 
-some features of the UNIX filesystem regarding link count and file dates
+newlib.library 53.30 and earlier incorrectly unescape slashed escape
+sequences e.g. \" \n \t etc requiring unusual extra escaping.
 
-=item *
+=item B<Starting subprocesses via open has limitations>
 
-inplace operation (the -i switch) without backup file
+	open FH, "command |"
 
-=item *
+Subprocesses started with open use a minimal popen() routine and
+therefore they do not return pids usable with waitpid etc.
 
-umask() works, but the correct permissions are only set when the file is
-finally close()d
+=item If you find any other limitations or bugs then let me know.
+
+Please report bugs in this version of perl to andy@broad.ology.org.uk
+in the first instance.
 
 =back
 
 =head1 INSTALLATION
 
-Change to the installation directory (most probably ADE:), and
-extract the binary distribution:
+This guide assumes you have obtained a prebuilt archive from os4depot.net.
 
-lha -mraxe x perl-$VERSION-bin.lha
+Unpack the main archive to a temporary location (RAM: is fine).
 
-or
+Execute the provided install script from shell or via its icon.
 
-tar xvzpf perl-$VERSION-bin.tgz
+You B<must not> attempt to install by hand.
 
-(Of course you need lha or tar and gunzip for this.)
+Once installed you may delete the temporary archive.
 
-For installation of the Unix emulation, read the appropriate docs.
+This approach will preserve links in the installation without creating
+duplicate binaries.
 
-=head1 Accessing documentation
+If you have the earlier ports perl 5.16 or 5.8 installed you may like
+to rename your perl executable to perl516 or perl58 or something
+similar before the installation of 5.22.1, this will allow you to use
+both versions at the same time.
 
-=head2 Manpages for Perl on AmigaOS
+=head1 Amiga Specific Modules
 
-If you have C<man> installed on your system, and you installed perl
-manpages, use something like this:
+=head2 Amiga::ARexx
 
-	man perlfunc
-	man less
-	man ExtUtils.MakeMaker
+The Amiga::ARexx module allows you to easily create a perl based ARexx
+host or to send ARexx commands to other programs.
 
-to access documentation for different components of Perl. Start with
+Try C<perldoc Amiga::ARexx> for more info.
 
-	man perl
+=head2 Amiga::Exec
 
-Note: You have to modify your man.conf file to search for manpages
-in the /ade/lib/perl5/man/man3 directory, or the man pages for the
-perl library will not be found. 
+The Amiga::Exec module introduces support for Wait().
 
-Note that dot (F<.>) is used as a package separator for documentation
-for packages, and as usual, sometimes you need to give the section - C<3>
-above - to avoid shadowing by the I<less(1) manpage>.
+Try C<perldoc Amiga::Exec> for more info.
 
+=head1 BUILDING
 
-=head2 Perl HTML Documentation on AmigaOS
+To build perl under AmigaOS from the patched sources you will need to
+have a recent version of the SDK. Version 53.29 is recommended,
+earlier versions will probably work too.
 
-If you have some WWW browser available, you can build B<HTML> docs.
-Cd to directory with F<.pod> files, and do like this
+With the help of Jarkko Hietaniemi the Configure system has been tweaked to
+run under abc-shell so the recommend build process is as follows.
 
-	cd /ade/lib/perl5/pod
-	pod2html
+	stack 2000000
+	sh Configure -de
+	gmake
 
-After this you can direct your browser the file F<perl.html> in this
-directory, and go ahead with reading docs.
+This will build the default setup that installs under SDK:local/newlib/lib/
 
-Alternatively you may be able to get these docs prebuilt from C<CPAN>.
+=head1 CHANGES
 
-=head2 Perl GNU Info Files on AmigaOS
+=over 6
 
-Users of C<Emacs> would appreciate it very much, especially with
-C<CPerl> mode loaded. You need to get latest C<pod2info> from C<CPAN>,
-or, alternately, prebuilt info pages.
+=item B<August 2015>
 
-=head2 Perl LaTeX Documentation on AmigaOS
+=over 2
 
-Can be constructed using C<pod2latex>.
+=item Port to Perl 5.22
 
-=head1 BUILDING PERL ON AMIGAOS
+=item Add handling of NIL: to afstat()
 
-Here we discuss how to build Perl under AmigaOS.
+=item Fix inheritance of environment variables by subprocesses.
 
-=head2 Build Prerequisites for Perl on AmigaOS
+=item Fix exec, and exit in "forked" subprocesses.
 
-You need to have the latest B<ixemul> (Unix emulation for Amiga)
-from Aminet.
+=item Fix issue with newlib's unlink, which could cause infinite loops.
 
-=head2 Getting the Perl Source for AmigaOS
+=item Add flock() emulation using IDOS->LockRecord thanks to Tony Cook
+for the suggestion.
 
-You can either get the latest perl-for-amiga source from Ninemoons
-and extract it with:
+=item Fix issue where kill was using the wrong kind of process ID
 
-  tar xvzpf perl-$VERSION-src.tgz
+=back
 
-or get the official source from CPAN:
+=item B<27th November 2013>
 
-  http://www.cpan.org/src/5.0
+=over 2
 
-Extract it like this
+=item Create new installation system based on installperl links
+and Amiga protection bits now set correctly.
 
-  tar xvzpf perl-$VERSION.tar.gz
+=item Pod now defaults to text.
 
-You will see a message about errors while extracting F<Configure>. This
-is normal and expected. (There is a conflict with a similarly-named file
-F<configure>, but it causes no harm.)
+=item File::Spec should now recognise an Amiga style absolute path as well
+as an Unix style one. Relative paths must always be Unix style.
 
-=head2 Making Perl on AmigaOS
+=back
 
-Remember to use a hefty wad of stack (I use 2000000)
+=item B<20th November 2013>
 
-  sh configure.gnu --prefix=/gg
+=over 2
 
-Now type
+=item Configured to use SDK:Local/C/perl to start standard scripts
 
-  make depend
+=item Added Amiga::Exec module with support for Wait() and AmigaOS signal numbers.
 
-Now!
+=back
 
-  make
+=item B<10th October 13>
 
-=head2 Testing Perl on AmigaOS
+First release of port to 5.16.3.
 
-Now run
-
-  make test
-
-Some tests will be skipped because they need the fork() function:
-
-F<io/pipe.t>, F<op/fork.t>, F<lib/filehand.t>, F<lib/open2.t>, F<lib/open3.t>, 
-F<lib/io_pipe.t>, F<lib/io_sock.t>
-
-=head2 Installing the built Perl on AmigaOS
-
-Run
-
-  make install
-
-=head1 PERL 5.8.0 BROKEN IN AMIGAOS
-
-As told above, Perl 5.6.1 was still good in AmigaOS, as was 5.7.2.
-After Perl 5.7.2 (change #11423, see the Changes file, and the file
-pod/perlhack.pod for how to get the individual changes) Perl dropped
-its internal support for vfork(), and that was very probably the step
-that broke AmigaOS (since the ixemul library has only vfork).  
-The build finally fails when the ext/DynaLoader is being built, and
-PERL ends up as "0" in the produced Makefile, trying to run "0" does
-not quite work.  Also, executing miniperl in backticks seems to
-generate nothing: very probably related to the (v)fork problems.
-B<Fixing the breakage requires someone quite familiar with the ixemul
-library, and how one is supposed to run external commands in AmigaOS
-without fork().>
-
-=head1 AUTHORS
-
-Norbert Pueschel, pueschel@imsdd.meb.uni-bonn.de
-Jan-Erik Karlsson, trg@privat.utfors.se
+=back
 
 =head1 SEE ALSO
 
-perl(1).
+You like this port?  See L<http://www.broad.ology.org.uk/amiga/>
+for how you can help.
 
 =cut

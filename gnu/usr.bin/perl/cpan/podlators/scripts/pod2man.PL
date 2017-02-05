@@ -1,49 +1,60 @@
-#!perl
+#!/usr/bin/perl
+#
+# Special wrapper script to generate the actual pod2man script.  This is
+# required for proper start-up code on non-UNIX platforms, and is used inside
+# Perl core.
 
-use Config;
-use File::Basename qw(&basename &dirname);
-use Cwd;
+use 5.006;
+use strict;
+use warnings;
 
-# List explicitly here the variables you want Configure to
-# generate.  Metaconfig only looks for shell variables, so you
-# have to mention them as if they were shell variables, not
-# %Config entries.  Thus you write
+use Config qw(%Config);
+use Cwd qw(cwd);
+use File::Basename qw(basename dirname);
+
+# List explicitly here the variables you want Configure to generate.
+# Metaconfig only looks for shell variables, so you have to mention them as if
+# they were shell variables, not %Config entries.  Thus you write
 #  $startperl
 # to ensure Configure will look for $Config{startperl}.
 
 # This forces PL files to create target in same directory as PL file.
 # This is so that make depend always knows where to find PL derivatives.
-$origdir = cwd;
-chdir dirname($0);
-$file = basename($0, '.PL');
-$file .= '.com' if $^O eq 'VMS';
+chdir(dirname($0)) or die "Cannot change directories: $!\n";
+my $file = basename($0, '.PL');
+if ($^O eq 'VMS') {
+    $file .= '.com';
+}
 
-open OUT,">$file" or die "Can't create $file: $!";
-
+# Create the generated script.
+## no critic (InputOutput::RequireBriefOpen)
+## no critic (InputOutput::RequireCheckedSyscalls)
+open(my $out, '>', $file) or die "Cannot create $file: $!\n";
 print "Extracting $file (with variable substitutions)\n";
+## use critic
 
-# In this section, perl variables will be expanded during extraction.
-# You can use $Config{...} to use Configure variables.
-
-print OUT <<"!GROK!THIS!";
+# In this section, Perl variables will be expanded during extraction.  You can
+# use $Config{...} to use Configure variables.
+print {$out} <<"PREAMBLE" or die "Cannot write to $file: $!\n";
 $Config{startperl}
     eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
         if \$running_under_some_shell;
-!GROK!THIS!
+PREAMBLE
 
-# In the following, perl variables are not expanded during extraction.
-
-print OUT <<'!NO!SUBS!';
+# In the following, Perl variables are not expanded during extraction.
+print {$out} <<'SCRIPT_BODY' or die "Cannot write to $file: $!\n";
 
 # pod2man -- Convert POD data to formatted *roff input.
 #
-# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013
-#     Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013, 2014, 2015,
+#     2016 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-require 5.004;
+use 5.006;
+use strict;
+use warnings;
 
 use Getopt::Long qw(GetOptions);
 use Pod::Man ();
@@ -62,12 +73,11 @@ my $stdin;
 # Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
-$options{utf8} = 1;
 Getopt::Long::config ('bundling_override');
 GetOptions (\%options, 'center|c=s', 'date|d=s', 'errors=s', 'fixed=s',
             'fixedbold=s', 'fixeditalic=s', 'fixedbolditalic=s', 'help|h',
             'lax|l', 'name|n=s', 'nourls', 'official|o', 'quotes|q=s',
-            'release|r:s', 'section|s=s', 'stderr', 'verbose|v', 'utf8|u!')
+            'release|r=s', 'section|s=s', 'stderr', 'verbose|v', 'utf8|u')
     or exit 1;
 pod2usage (0) if $options{help};
 
@@ -113,9 +123,9 @@ exit $status;
 __END__
 
 =for stopwords
-en em --stderr stderr --utf8 --no-utf8 UTF-8
-overdo markup MT-LEVEL Allbery Solaris
-URL troff troff-specific formatters uppercased Christiansen --nourls
+en em --stderr stderr --utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris
+URL troff troff-specific formatters uppercased Christiansen --nourls UTC
+prepend
 
 =head1 NAME
 
@@ -126,8 +136,8 @@ pod2man - Convert POD data to formatted *roff input
 pod2man [B<--center>=I<string>] [B<--date>=I<string>] [B<--errors>=I<style>]
     [B<--fixed>=I<font>] [B<--fixedbold>=I<font>] [B<--fixeditalic>=I<font>]
     [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--nourls>]
-    [B<--official>] [B<--quotes>=I<quotes>] [B<--release>[=I<version>]]
-    [B<--section>=I<manext>] [B<--stderr>] [B<--no-utf8>] [B<--verbose>]
+    [B<--official>] [B<--quotes>=I<quotes>] [B<--release>=I<version>]
+    [B<--section>=I<manext>] [B<--stderr>] [B<--utf8>] [B<--verbose>]
     [I<input> [I<output>] ...]
 
 pod2man B<--help>
@@ -171,16 +181,18 @@ complete information.
 
 =item B<-c> I<string>, B<--center>=I<string>
 
-Sets the centered page header to I<string>.  The default is "User
-Contributed Perl Documentation", but also see B<--official> below.
+Sets the centered page header for the C<.TH> macro to I<string>.  The
+default is "User Contributed Perl Documentation", but also see
+B<--official> below.
 
 =item B<-d> I<string>, B<--date>=I<string>
 
-Set the left-hand footer string to this value.  By default, the modification
-date of the input file will be used, or the current date if input comes from
-C<STDIN>.
+Set the left-hand footer string for the C<.TH> macro to I<string>.  By
+default, the modification date of the input file will be used, or the
+current date if input comes from C<STDIN>, and will be based on UTC (so
+that the output will be reproducible regardless of local time zone).
 
-=item B<-errors>=I<style>
+=item B<--errors>=I<style>
 
 Set the error handling style.  C<die> says to throw an exception on any
 POD formatting error.  C<stderr> says to report errors on standard error,
@@ -226,16 +238,23 @@ Accepted for backward compatibility; this option no longer does anything.
 
 =item B<-n> I<name>, B<--name>=I<name>
 
-Set the name of the manual page to I<name>.  Without this option, the manual
-name is set to the uppercased base name of the file being converted unless
-the manual section is 3, in which case the path is parsed to see if it is a
-Perl module path.  If it is, a path like C<.../lib/Pod/Man.pm> is converted
-into a name like C<Pod::Man>.  This option, if given, overrides any
-automatic determination of the name.
+Set the name of the manual page for the C<.TH> macro to I<name>.  Without
+this option, the manual name is set to the uppercased base name of the
+file being converted unless the manual section is 3, in which case the
+path is parsed to see if it is a Perl module path.  If it is, a path like
+C<.../lib/Pod/Man.pm> is converted into a name like C<Pod::Man>.  This
+option, if given, overrides any automatic determination of the name.
 
-Note that this option is probably not useful when converting multiple POD
-files at once.  The convention for Unix man pages for commands is for the
-man page title to be in all-uppercase even if the command isn't.
+Although one does not have to follow this convention, be aware that the
+convention for UNIX man pages for commands is for the man page title to be
+in all-uppercase, even if the command isn't.
+
+This option is probably not useful when converting multiple POD files at
+once.
+
+When converting POD source from standard input, this option is required,
+since there's otherwise no way to know what to use as the name of the
+manual page.
 
 =item B<--nourls>
 
@@ -261,24 +280,27 @@ Perl release, if B<--center> is not also given.
 
 Sets the quote marks used to surround CE<lt>> text to I<quotes>.  If
 I<quotes> is a single character, it is used as both the left and right
-quote; if I<quotes> is two characters, the first character is used as the
-left quote and the second as the right quoted; and if I<quotes> is four
-characters, the first two are used as the left quote and the second two as
-the right quote.
+quote.  Otherwise, it is split in half, and the first half of the string
+is used as the left quote and the second is used as the right quote.
 
 I<quotes> may also be set to the special value C<none>, in which case no
 quote marks are added around CE<lt>> text (but the font is still changed for
 troff output).
 
-=item B<-r>, B<--release>
+=item B<-r> I<version>, B<--release>=I<version>
 
-Set the centered footer.  By default, this is the version of Perl you run
-B<pod2man> under.  Note that some system an macro sets assume that the
-centered footer will be a modification date and will prepend something like
-"Last modified: "; if this is the case, you may want to set B<--release> to
-the last modified date and B<--date> to the version number.
+Set the centered footer for the C<.TH> macro to I<version>.  By default,
+this is set to the version of Perl you run B<pod2man> under.  Setting this
+to the empty string will cause some *roff implementations to use the
+system default value.
 
-=item B<-s>, B<--section>
+Note that some system C<an> macro sets assume that the centered footer
+will be a modification date and will prepend something like "Last
+modified: ".  If this is the case for your target system, you may want to
+set B<--release> to the last modified date and B<--date> to the version
+number.
+
+=item B<-s> I<string>, B<--section>=I<string>
 
 Set the section for the C<.TH> macro.  The standard section numbering
 convention is to use 1 for user commands, 2 for system calls, 3 for
@@ -301,16 +323,26 @@ to C<--errors=stderr> and is supported for backward compatibility.
 
 =item B<-u>, B<--utf8>
 
-This option allows B<pod2man> to output literal UTF-8 characters.
-On OpenBSD, it is enabled by default and can be disabled with
-B<--no-utf8>, in which case non-ASCII characters are converted
-either to *roff escape sequences or to C<X>.
+By default, B<pod2man> produces the most conservative possible *roff
+output to try to ensure that it will work with as many different *roff
+implementations as possible.  Many *roff implementations cannot handle
+non-ASCII characters, so this means all non-ASCII characters are converted
+either to a *roff escape sequence that tries to create a properly accented
+character (at least for troff output) or to C<X>.
+
+This option says to instead output literal UTF-8 characters.  If your
+*roff implementation can handle it, this is the best output format to use
+and avoids corruption of documents containing non-ASCII characters.
+However, be warned that *roff source with literal UTF-8 characters is not
+supported by many implementations and may even result in segfaults and
+other bad behavior.
 
 Be aware that, when using this option, the input encoding of your POD
-source must be properly declared unless it is US-ASCII or Latin-1.  POD
-input without an C<=encoding> command will be assumed to be in Latin-1,
-and if it's actually in UTF-8, the output will be double-encoded.  See
-L<perlpod(1)> for more information on the C<=encoding> command.
+source should be properly declared unless it's US-ASCII.  Pod::Simple will
+attempt to guess the encoding and may be successful if it's Latin-1 or
+UTF-8, but it will warn, which by default results in a B<pod2man> failure.
+Use the C<=encoding> command to declare the encoding.  See L<perlpod(1)>
+for more information.
 
 =item B<-v>, B<--verbose>
 
@@ -371,21 +403,23 @@ Perl core distribution as of 5.6.0.
 
 =head1 AUTHOR
 
-Russ Allbery <rra@stanford.edu>, based I<very> heavily on the original
+Russ Allbery <rra@cpan.org>, based I<very> heavily on the original
 B<pod2man> by Larry Wall and Tom Christiansen.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013 Russ
-Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013, 2014,
+2015, 2016 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
 
 =cut
-!NO!SUBS!
+SCRIPT_BODY
 
-close OUT or die "Can't close $file: $!";
-chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
-exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
-chdir $origdir;
+# Finish the generation of the script.
+close($out) or die "Cannot close $file: $!\n";
+chmod(0755, $file) or die "Cannot reset permissions for $file: $!\n";
+if ($Config{'eunicefix'} ne q{:}) {
+    exec("$Config{'eunicefix'} $file");
+}

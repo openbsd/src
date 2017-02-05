@@ -139,7 +139,7 @@ watchdog(180, "process");
 {
     local $SIG{__WARN__} = sub {};   # Ignore any thread creation failure warnings
     my @t;
-    for (1..100) {
+    for (1..10) {
         my $thr = threads->create( sub { require IO });
         last if !defined($thr);      # Probably ran out of memory
         push(@t, $thr);

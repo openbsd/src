@@ -6,14 +6,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use utf8;
 use open qw( :utf8 :std );
 
-plan( tests => 58 );
+plan( tests => 49 );
 
 #These come from op/my_stash.t
 {
@@ -39,35 +39,15 @@ plan( tests => 58 );
 
 #op/stash.t
 {
-    {
-        no warnings 'deprecated';
-        ok( defined %왿ퟀⲺa::ᒫṡ::, q(stashes happen to be defined if not used) );
-        ok( defined %{"왿ퟀⲺa::ᒫṡ::"}, q(- work with hard refs too) );
-    
-        ok( defined %ᛐⲞɲe::Šꇇᚽṙᆂṗ::, q(stashes are defined if seen at compile time) );
-        ok( defined %{"ᛐⲞɲe::Šꇇᚽṙᆂṗ::"}, q(- work with hard refs too) );
-    
-        ok( defined %본go::ଶfʦbᚒƴ::, q(stashes are defined if a var is seen at compile time) );
-        ok( defined %{"본go::ଶfʦbᚒƴ::"}, q(- work with hard refs too) );
-    }
-
-    
     package ᛐⲞɲe::Šꇇᚽṙᆂṗ;
     $본go::ଶfʦbᚒƴ::scalar = 1;
     
     package main;
         
-    # now tests in eval
-    
-    ok( eval  { no warnings 'deprecated'; defined %앛hȚꟻࡃҥ:: },   'works in eval{}' );
-    ok( eval q{ no warnings 'deprecated'; defined %Ṧㄘㇹen맠ㄦ:: }, 'works in eval("")' );
-    
     # now tests with strictures
     
     {
         use strict;
-        no warnings 'deprecated';
-        ok( defined %piƓ::, q(referencing a non-existent stash doesn't produce stricture errors) );
         ok( !exists $piƓ::{bodine}, q(referencing a non-existent stash element doesn't produce stricture errors) );
     }
 

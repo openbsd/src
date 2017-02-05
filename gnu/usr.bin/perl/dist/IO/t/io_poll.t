@@ -8,7 +8,7 @@ if ($^O eq 'mpeix') {
 select(STDERR); $| = 1;
 select(STDOUT); $| = 1;
 
-print "1..10\n";
+print "1..12\n";
 
 use IO::Handle;
 use IO::Poll qw(/POLL/);
@@ -81,3 +81,12 @@ close STDIN;
 print "not "
     if $poll->poll(0.1);
 print "ok 10\n";
+
+my $wait = IO::Poll->new;
+my $now = time;
+my $zero = $wait->poll(2);
+my $diff = time - $now;
+print "not " if !defined($zero) or $zero;
+print "ok 11\n";
+print "not " unless $diff >= 2;
+print "ok 12\n";

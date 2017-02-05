@@ -39,7 +39,7 @@ values that can be loaded: an integer value (IV), an unsigned integer
 value (UV), a double (NV), a string (PV), and another scalar (SV).
 ("PV" stands for "Pointer Value".  You might think that it is misnamed
 because it is described as pointing only to strings.  However, it is
-possible to have it point to other things  For example, it could point
+possible to have it point to other things.  For example, it could point
 to an array of UVs.  But,
 using it for non-strings requires care, as the underlying assumption of
 much of the internals is that PVs are just for strings.  Often, for
@@ -341,14 +341,15 @@ copy-on-write is skipped.  First have a look at an empty string:
 Notice here the LEN is 10.  (It may differ on your platform.)  Extend the
 length of the string to one less than 10, and do a substitution:
 
-  % ./perl -Ilib -MDevel::Peek -le '$a=""; $a.="123456789"; $a=~s/.//; Dump($a)'
-  SV = PV(0x7ffa04008a70) at 0x7ffa04030390
-    REFCNT = 1
-    FLAGS = (POK,OOK,pPOK)
-    OFFSET = 1
-    PV = 0x7ffa03c05b61 ( "\1" . ) "23456789"\0
-    CUR = 8
-    LEN = 9
+ % ./perl -Ilib -MDevel::Peek -le '$a=""; $a.="123456789"; $a=~s/.//; \
+                                                            Dump($a)'
+ SV = PV(0x7ffa04008a70) at 0x7ffa04030390
+   REFCNT = 1
+   FLAGS = (POK,OOK,pPOK)
+   OFFSET = 1
+   PV = 0x7ffa03c05b61 ( "\1" . ) "23456789"\0
+   CUR = 8
+   LEN = 9
 
 Here the number of bytes chopped off (1) is shown next as the OFFSET.  The
 portion of the string between the "real" and the "fake" beginnings is
@@ -1184,14 +1185,15 @@ will be lost.
  --------------------------   ------         -------------
  \0 PERL_MAGIC_sv             vtbl_sv        Special scalar variable
  #  PERL_MAGIC_arylen         vtbl_arylen    Array length ($#ary)
- %  PERL_MAGIC_rhash          (none)         extra data for restricted
+ %  PERL_MAGIC_rhash          (none)         Extra data for restricted
                                              hashes
- &  PERL_MAGIC_proto          (none)         my sub prototype CV
+ *  PERL_MAGIC_debugvar       vtbl_debugvar  $DB::single, signal, trace
+                                             vars
  .  PERL_MAGIC_pos            vtbl_pos       pos() lvalue
- :  PERL_MAGIC_symtab         (none)         extra data for symbol
+ :  PERL_MAGIC_symtab         (none)         Extra data for symbol
                                              tables
- <  PERL_MAGIC_backref        vtbl_backref   for weak ref data
- @  PERL_MAGIC_arylen_p       (none)         to move arylen out of XPVAV
+ <  PERL_MAGIC_backref        vtbl_backref   For weak ref data
+ @  PERL_MAGIC_arylen_p       (none)         To move arylen out of XPVAV
  B  PERL_MAGIC_bm             vtbl_regexp    Boyer-Moore 
                                              (fast string search)
  c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table 
@@ -1219,7 +1221,7 @@ will be lost.
  P  PERL_MAGIC_tied           vtbl_pack      Tied array or hash
  p  PERL_MAGIC_tiedelem       vtbl_packelem  Tied array or hash element
  q  PERL_MAGIC_tiedscalar     vtbl_packelem  Tied scalar or handle
- r  PERL_MAGIC_qr             vtbl_regexp    precompiled qr// regex
+ r  PERL_MAGIC_qr             vtbl_regexp    Precompiled qr// regex
  S  PERL_MAGIC_sig            (none)         %SIG hash
  s  PERL_MAGIC_sigelem        vtbl_sigelem   %SIG hash element
  t  PERL_MAGIC_taint          vtbl_taint     Taintedness
@@ -1234,7 +1236,9 @@ will be lost.
  y  PERL_MAGIC_defelem        vtbl_defelem   Shadow "foreach" iterator
                                              variable / smart parameter
                                              vivification
- ]  PERL_MAGIC_checkcall      vtbl_checkcall inlining/mutation of call
+ \  PERL_MAGIC_lvref          vtbl_lvref     Lvalue reference
+                                             constructor
+ ]  PERL_MAGIC_checkcall      vtbl_checkcall Inlining/mutation of call
                                              to this CV
  ~  PERL_MAGIC_ext            (none)         Available for use by
                                              extensions
@@ -1362,7 +1366,7 @@ aware that the behavior may change in the future, umm, without warning.
 The perl tie function associates a variable with an object that implements
 the various GET, SET, etc methods.  To perform the equivalent of the perl
 tie function from an XSUB, you must mimic this behaviour.  The code below
-carries out the necessary steps - firstly it creates a new hash, and then
+carries out the necessary steps -- firstly it creates a new hash, and then
 creates a second hash which it blesses into the class which will implement
 the tie methods.  Lastly it ties the two hashes together, and returns a
 reference to the new tied hash.  Note that the code below does NOT call the
@@ -1495,7 +1499,7 @@ and back.
 
 =item C<SAVEFREESV(SV *sv)>
 
-The refcount of C<sv> would be decremented at the end of
+The refcount of C<sv> will be decremented at the end of
 I<pseudo-block>.  This is similar to C<sv_2mortal> in that it is also a
 mechanism for doing a delayed C<SvREFCNT_dec>.  However, while C<sv_2mortal>
 extends the lifetime of C<sv> until the beginning of the next statement,
@@ -1787,7 +1791,9 @@ by looking on its flags: lexicals have C<SVs_PADMY> set, and
 I<target>s have C<SVs_PADTMP> set.  But this has never been fully true.
 C<SVs_PADMY> could be set on a variable that no longer resides in any pad.
 While I<target>s do have C<SVs_PADTMP> set, it can also be set on variables
-that have never resided in a pad, but nonetheless act like I<target>s.
+that have never resided in a pad, but nonetheless act like I<target>s.  As
+of perl 5.21.5, the C<SVs_PADMY> flag is no longer used and is defined as
+0.  C<SvPADMY()> now returns true for anything without C<SVs_PADTMP>.
 
 The correspondence between OPs and I<target>s is not 1-to-1.  Different
 OPs in the compile tree of the unit can use the same target, if this
@@ -1975,14 +1981,36 @@ C<op_first> field but also an C<op_last> field.  The most complex type of
 op is a C<LISTOP>, which has any number of children.  In this case, the
 first child is pointed to by C<op_first> and the last child by
 C<op_last>.  The children in between can be found by iteratively
-following the C<op_sibling> pointer from the first child to the last.
+following the C<OpSIBLING> pointer from the first child to the last (but
+see below).
 
-There are also two other op types: a C<PMOP> holds a regular expression,
+There are also some other op types: a C<PMOP> holds a regular expression,
 and has no children, and a C<LOOP> may or may not have children.  If the
 C<op_children> field is non-zero, it behaves like a C<LISTOP>.  To
 complicate matters, if a C<UNOP> is actually a C<null> op after
 optimization (see L</Compile pass 2: context propagation>) it will still
 have children in accordance with its former type.
+
+Finally, there is a C<LOGOP>, or logic op. Like a C<LISTOP>, this has one
+or more children, but it doesn't have an C<op_last> field: so you have to
+follow C<op_first> and then the C<OpSIBLING> chain itself to find the
+last child. Instead it has an C<op_other> field, which is comparable to
+the C<op_next> field described below, and represents an alternate
+execution path. Operators like C<and>, C<or> and C<?> are C<LOGOP>s. Note
+that in general, C<op_other> may not point to any of the direct children
+of the C<LOGOP>.
+
+Starting in version 5.21.2, perls built with the experimental
+define C<-DPERL_OP_PARENT> add an extra boolean flag for each op,
+C<op_moresib>.  When not set, this indicates that this is the last op in an
+C<OpSIBLING> chain. This frees up the C<op_sibling> field on the last
+sibling to point back to the parent op. Under this build, that field is
+also renamed C<op_sibparent> to reflect its joint role. The macro
+C<OpSIBLING(o)> wraps this special behaviour, and always returns NULL on
+the last sibling.  With this build the C<op_parent(o)> function can be
+used to find the parent of any op. Thus for forward compatibility, you
+should always use the C<OpSIBLING(o)> macro rather than accessing
+C<op_sibling> directly.
 
 Another way to examine the tree is to use a compiler back-end module, such
 as L<B::Concise>.
@@ -2123,7 +2151,7 @@ code like
 
 creates two scopes: the first starts at the C<(> and has C<full == 1>,
 the second starts at the C<{> and has C<full == 0>.  Both end at the
-C<}>, so calls to C<start> and C<pre/post_end> will match.  Anything
+C<}>, so calls to C<start> and C<pre>/C<post_end> will match.  Anything
 pushed onto the save stack by this hook will be popped just before the
 scope ends (between the C<pre_> and C<post_end> hooks, in fact).
 
@@ -2163,7 +2191,7 @@ is probably the best way, so the effect is lexically scoped; however it
 is also possible to use the C<BhkDISABLE> and C<BhkENABLE> macros to
 temporarily switch entries on and off.  You should also be aware that
 generally speaking at least one scope will have opened before your
-extension is loaded, so you will see some C<pre/post_end> pairs that
+extension is loaded, so you will see some C<pre>/C<post_end> pairs that
 didn't have a matching C<start>.
 
 =head1 Examining internal data structures with the C<dump> functions
@@ -2236,11 +2264,18 @@ please see F<miniperlmain.c> for usage details.  You may also need
 to use C<dVAR> in your coding to "declare the global variables"
 when you are using them.  dTHX does this for you automatically.
 
-To see whether you have non-const data you can use a BSD-compatible C<nm>:
+To see whether you have non-const data you can use a BSD (or GNU)
+compatible C<nm>:
 
   nm libperl.a | grep -v ' [TURtr] '
 
-If this displays any C<D> or C<d> symbols, you have non-const data.
+If this displays any C<D> or C<d> symbols (or possibly C<C> or C<c>),
+you have non-const data.  The symbols the C<grep> removed are as follows:
+C<Tt> are I<text>, or code, the C<Rr> are I<read-only> (const) data,
+and the C<U> is <undefined>, external symbols referred to.
+
+The test F<t/porting/libperl.t> does this kind of symbol sanity
+checking on C<libperl.a>.
 
 For backward compatibility reasons defining just PERL_GLOBAL_STRUCT
 doesn't actually hide all symbols inside a big global struct: some
@@ -2633,6 +2668,9 @@ For example:
 
 The IVdf will expand to whatever is the correct format for the IVs.
 
+Note that there are different "long doubles": Perl will use
+whatever the compiler has.
+
 If you are printing addresses of pointers, use UVxf combined
 with PTR2UV(), do not use %lx or %p.
 
@@ -2692,7 +2730,7 @@ macros is faster than using C<call_*>.
 =head2 Source Documentation
 
 There's an effort going on to document the internal functions and
-automatically produce reference manuals from them - L<perlapi> is one
+automatically produce reference manuals from them -- L<perlapi> is one
 such manual which details all the functions which are available to XS
 writers.  L<perlintern> is the autogenerated manual for the functions
 which are not part of the API and are supposedly for internal use only.
@@ -2704,7 +2742,7 @@ source, like this:
  =for apidoc sv_setiv
 
  Copies an integer into the given SV.  Does not handle 'set' magic.  See
- C<sv_setiv_mg>.
+ L<perlapi/sv_setiv_mg>.
 
  =cut
  */
@@ -2763,20 +2801,27 @@ characters, and the one Perl uses is called UTF-8.  UTF-8 uses
 a variable number of bytes to represent a character.  You can learn more
 about Unicode and Perl's Unicode model in L<perlunicode>.
 
+(On EBCDIC platforms, Perl uses instead UTF-EBCDIC, which is a form of
+UTF-8 adapted for EBCDIC platforms.  Below, we just talk about UTF-8.
+UTF-EBCDIC is like UTF-8, but the details are different.  The macros
+hide the differences from you, just remember that the particular numbers
+and bit patterns presented below will differ in UTF-EBCDIC.)
+
 =head2 How can I recognise a UTF-8 string?
 
 You can't.  This is because UTF-8 data is stored in bytes just like
 non-UTF-8 data.  The Unicode character 200, (C<0xC8> for you hex types)
 capital E with a grave accent, is represented by the two bytes
 C<v196.172>.  Unfortunately, the non-Unicode string C<chr(196).chr(172)>
-has that byte sequence as well.  So you can't tell just by looking - this
+has that byte sequence as well.  So you can't tell just by looking -- this
 is what makes Unicode input an interesting problem.
 
 In general, you either have to know what you're dealing with, or you
 have to guess.  The API function C<is_utf8_string> can help; it'll tell
-you if a string contains only valid UTF-8 characters.  However, it can't
-do the work for you.  On a character-by-character basis,
-C<is_utf8_char_buf>
+you if a string contains only valid UTF-8 characters, and the chances
+of a non-UTF-8 string looking like valid UTF-8 become very small very
+quickly with increasing string length.  On a character-by-character
+basis, C<isUTF8_CHAR>
 will tell you whether the current character in a string is valid UTF-8. 
 
 =head2 How does UTF-8 represent Unicode characters?
@@ -2786,8 +2831,9 @@ character.  Characters with values 0...127 are stored in one
 byte, just like good ol' ASCII.  Character 128 is stored as
 C<v194.128>; this continues up to character 191, which is
 C<v194.191>.  Now we've run out of bits (191 is binary
-C<10111111>) so we move on; 192 is C<v195.128>.  And
+C<10111111>) so we move on; character 192 is C<v195.128>.  And
 so it goes on, moving to three bytes at character 2048.
+L<perlunicode/Unicode Encodings> has pictures of how this works.
 
 Assuming you know you're dealing with a UTF-8 string, you can find out
 how long the first character in it is with the C<UTF8SKIP> macro:
@@ -2806,7 +2852,7 @@ lightly.
 
 All bytes in a multi-byte UTF-8 character will have the high bit set,
 so you can test if you need to do something special with this
-character like this (the UTF8_IS_INVARIANT() is a macro that tests
+character like this (the C<UTF8_IS_INVARIANT()> is a macro that tests
 whether the byte is encoded as a single byte even in UTF-8):
 
     U8 *utf;
@@ -2825,7 +2871,7 @@ You can also see in that example that we use C<utf8_to_uvchr_buf> to get the
 value of the character; the inverse function C<uvchr_to_utf8> is available
 for putting a UV into UTF-8:
 
-    if (!UTF8_IS_INVARIANT(uv))
+    if (!UVCHR_IS_INVARIANT(uv))
         /* Must treat this as UTF8 */
         utf8 = uvchr_to_utf8(utf8, uv);
     else
@@ -2840,16 +2886,19 @@ for instance, if your UTF-8 string contains C<v196.172>, and you skip
 that character, you can never match a C<chr(200)> in a non-UTF-8 string.
 So don't do that!
 
+(Note that we don't have to test for invariant characters in the
+examples above.  The functions work on any well-formed UTF-8 input.
+It's just that its faster to avoid the function overhead when it's not
+needed.)
+
 =head2 How does Perl store UTF-8 strings?
 
-Currently, Perl deals with Unicode strings and non-Unicode strings
+Currently, Perl deals with UTF-8 strings and non-UTF-8 strings
 slightly differently.  A flag in the SV, C<SVf_UTF8>, indicates that the
 string is internally encoded as UTF-8.  Without it, the byte value is the
-codepoint number and vice versa (in other words, the string is encoded
-as iso-8859-1, but C<use feature 'unicode_strings'> is needed to get iso-8859-1
-semantics).  This flag is only meaningful if the SV is C<SvPOK>
-or immediately after stringification via C<SvPV> or a similar
-macro.  You can check and manipulate this flag with the
+codepoint number and vice versa.  This flag is only meaningful if the SV
+is C<SvPOK> or immediately after stringification via C<SvPV> or a
+similar macro.  You can check and manipulate this flag with the
 following macros:
 
     SvUTF8(sv)
@@ -2857,16 +2906,16 @@ following macros:
     SvUTF8_off(sv)
 
 This flag has an important effect on Perl's treatment of the string: if
-Unicode data is not properly distinguished, regular expressions,
+UTF-8 data is not properly distinguished, regular expressions,
 C<length>, C<substr> and other string handling operations will have
-undesirable results.
+undesirable (wrong) results.
 
 The problem comes when you have, for instance, a string that isn't
-flagged as UTF-8, and contains a byte sequence that could be UTF-8 -
+flagged as UTF-8, and contains a byte sequence that could be UTF-8 --
 especially when combining non-UTF-8 and UTF-8 strings.
 
-Never forget that the C<SVf_UTF8> flag is separate to the PV value; you
-need be sure you don't accidentally knock it off while you're
+Never forget that the C<SVf_UTF8> flag is separate from the PV value; you
+need to be sure you don't accidentally knock it off while you're
 manipulating SVs.  More specifically, you cannot expect to do this:
 
     SV *sv;
@@ -2884,23 +2933,44 @@ old SV has the UTF8 flag set (I<after> the C<SvPV> call), and act
 accordingly:
 
     p = SvPV(sv, len);
-    frobnicate(p);
+    is_utf8 = SvUTF8(sv);
+    frobnicate(p, is_utf8);
     nsv = newSVpvn(p, len);
-    if (SvUTF8(sv))
+    if (is_utf8)
         SvUTF8_on(nsv);
 
-In fact, your C<frobnicate> function should be made aware of whether or
-not it's dealing with UTF-8 data, so that it can handle the string
-appropriately.
+In the above, your C<frobnicate> function has been changed to be made
+aware of whether or not it's dealing with UTF-8 data, so that it can
+handle the string appropriately.
 
 Since just passing an SV to an XS function and copying the data of
 the SV is not enough to copy the UTF8 flags, even less right is just
-passing a C<char *> to an XS function.
+passing a S<C<char *>> to an XS function.
+
+For full generality, use the L<C<DO_UTF8>|perlapi/DO_UTF8> macro to see if the
+string in an SV is to be I<treated> as UTF-8.  This takes into account
+if the call to the XS function is being made from within the scope of
+L<S<C<use bytes>>|bytes>.  If so, the underlying bytes that comprise the
+UTF-8 string are to be exposed, rather than the character they
+represent.  But this pragma should only really be used for debugging and
+perhaps low-level testing at the byte level.  Hence most XS code need
+not concern itself with this, but various areas of the perl core do need
+to support it.
+
+And this isn't the whole story.  Starting in Perl v5.12, strings that
+aren't encoded in UTF-8 may also be treated as Unicode under various
+conditions (see L<perlunicode/ASCII Rules versus Unicode Rules>).
+This is only really a problem for characters whose ordinals are between
+128 and 255, and their behavior varies under ASCII versus Unicode rules
+in ways that your code cares about (see L<perlunicode/The "Unicode Bug">).
+There is no published API for dealing with this, as it is subject to
+change, but you can look at the code for C<pp_lc> in F<pp.c> for an
+example as to how it's currently done.
 
 =head2 How do I convert a string to UTF-8?
 
 If you're mixing UTF-8 and non-UTF-8 strings, it is necessary to upgrade
-one of the strings to UTF-8.  If you've got an SV, the easiest way to do
+the non-UTF-8 strings to UTF-8.  If you've got an SV, the easiest way to do
 this is:
 
     sv_utf8_upgrade(sv);
@@ -2921,6 +2991,21 @@ C<utf8_to_bytes> to go the other way, but naturally, this will fail if
 the string contains any characters above 255 that can't be represented
 in a single byte.
 
+=head2 How do I compare strings?
+
+L<perlapi/sv_cmp> and L<perlapi/sv_cmp_flags> do a lexigraphic
+comparison of two SV's, and handle UTF-8ness properly.  Note, however,
+that Unicode specifies a much fancier mechanism for collation, available
+via the L<Unicode::Collate> module.
+
+To just compare two strings for equality/non-equality, you can just use
+L<C<memEQ()>|perlapi/memEQ> and L<C<memNE()>|perlapi/memEQ> as usual,
+except the strings must be both UTF-8 or not UTF-8 encoded.
+
+To compare two strings case-insensitively, use
+L<C<foldEQ_utf8()>|perlapi/foldEQ_utf8> (the strings don't have to have
+the same UTF-8ness).
+
 =head2 Is there anything else I need to know?
 
 Not really.  Just remember these things:
@@ -2929,11 +3014,15 @@ Not really.  Just remember these things:
 
 =item *
 
-There's no way to tell if a string is UTF-8 or not.  You can tell if an SV
-is UTF-8 by looking at its C<SvUTF8> flag after stringifying it
-with C<SvPV> or a similar macro.  Don't forget to set the flag if
-something should be UTF-8.  Treat the flag as part of the PV, even though
-it's not - if you pass on the PV to somewhere, pass on the flag too.
+There's no way to tell if a S<C<char *>> or S<C<U8 *>> string is UTF-8
+or not.  But you can tell if an SV is to be treated as UTF-8 by calling
+C<DO_UTF8> on it, after stringifying it with C<SvPV> or a similar
+macro.  And, you can tell if SV is actually UTF-8 (even if it is not to
+be treated as such) by looking at its C<SvUTF8> flag (again after
+stringifying it).  Don't forget to set the flag if something should be
+UTF-8.
+Treat the flag as part of the PV, even though it's not -- if you pass on
+the PV to somewhere, pass on the flag too.
 
 =item *
 
@@ -2942,8 +3031,8 @@ unless C<UTF8_IS_INVARIANT(*s)> in which case you can use C<*s>.
 
 =item *
 
-When writing a character C<uv> to a UTF-8 string, B<always> use
-C<uvchr_to_utf8>, unless C<UTF8_IS_INVARIANT(uv))> in which case
+When writing a character UV to a UTF-8 string, B<always> use
+C<uvchr_to_utf8>, unless C<UVCHR_IS_INVARIANT(uv))> in which case
 you can use C<*s = uv>.
 
 =item *
@@ -2966,8 +3055,8 @@ C<gvsv, gvsv, add>.)
 This feature is implemented as a new op type, C<OP_CUSTOM>.  The Perl
 core does not "know" anything special about this op type, and so it will
 not be involved in any optimizations.  This also means that you can
-define your custom ops to be any op structure - unary, binary, list and
-so on - you like.
+define your custom ops to be any op structure -- unary, binary, list and
+so on -- you like.
 
 It's important to know what custom operators won't do for you.  They
 won't let you add new syntax to Perl, directly.  They won't even let you
@@ -3062,6 +3151,307 @@ I<oldop> is the previous OP optimized, whose C<op_next> points to I<o>.
 =back
 
 C<B::Generate> directly supports the creation of custom ops by name.
+
+
+=head1 Dynamic Scope and the Context Stack
+
+B<Note:> this section describes a non-public internal API that is subject
+to change without notice.
+
+=head2 Introduction to the context stack
+
+In Perl, dynamic scoping refers to the runtime nesting of things like
+subroutine calls, evals etc, as well as the entering and exiting of block
+scopes. For example, the restoring of a C<local>ised variable is
+determined by the dynamic scope.
+
+Perl tracks the dynamic scope by a data structure called the context
+stack, which is an array of C<PERL_CONTEXT> structures, and which is
+itself a big union for all the types of context. Whenever a new scope is
+entered (such as a block, a C<for> loop, or a subroutine call), a new
+context entry is pushed onto the stack. Similarly when leaving a block or
+returning from a subroutine call etc. a context is popped. Since the
+context stack represents the current dynamic scope, it can be searched.
+For example, C<next LABEL> searches back through the stack looking for a
+loop context that matches the label; C<return> pops contexts until it
+finds a sub or eval context or similar; C<caller> examines sub contexts on
+the stack.
+
+Each context entry is labelled with a context type, C<cx_type>. Typical
+context types are C<CXt_SUB>, C<CXt_EVAL> etc., as well as C<CXt_BLOCK>
+and C<CXt_NULL> which represent a basic scope (as pushed by C<pp_enter>)
+and a sort block. The type determines which part of the context union are
+valid.
+
+The main division in the context struct is between a substitution scope
+(C<CXt_SUBST>) and block scopes, which are everything else. The former is
+just used while executing C<s///e>, and won't be discussed further
+here.
+
+All the block scope types share a common base, which corresponds to
+C<CXt_BLOCK>. This stores the old values of various scope-related
+variables like C<PL_curpm>, as well as information about the current
+scope, such as C<gimme>. On scope exit, the old variables are restored.
+
+Particular block scope types store extra per-type information. For
+example, C<CXt_SUB> stores the currently executing CV, while the various
+for loop types might hold the original loop variable SV. On scope exit,
+the per-type data is processed; for example the CV has its reference count
+decremented, and the original loop variable is restored.
+
+The macro C<cxstack> returns the base of the current context stack, while
+C<cxstack_ix> is the index of the current frame within that stack.
+
+In fact, the context stack is actually part of a stack-of-stacks system;
+whenever something unusual is done such as calling a C<DESTROY> or tie
+handler, a new stack is pushed, then popped at the end.
+
+Note that the API described here changed considerably in perl 5.24; prior
+to that, big macros like C<PUSHBLOCK> and C<POPSUB> were used; in 5.24
+they were replaced by the inline static functions described below. In
+addition, the ordering and detail of how these macros/function work
+changed in many ways, often subtly. In particular they didn't handle
+saving the savestack and temps stack positions, and required additional
+C<ENTER>, C<SAVETMPS> and C<LEAVE> compared to the new functions. The
+old-style macros will not be described further.
+
+
+=head2 Pushing contexts
+
+For pushing a new context, the two basic functions are
+C<cx = cx_pushblock()>, which pushes a new basic context block and returns
+its address, and a family of similar functions with names like
+C<cx_pushsub(cx)> which populate the additional type-dependent fields in
+the C<cx> struct. Note that C<CXt_NULL> and C<CXt_BLOCK> don't have their
+own push functions, as they don't store any data beyond that pushed by
+C<cx_pushblock>.
+
+The fields of the context struct and the arguments to the C<cx_*>
+functions are subject to change between perl releases, representing
+whatever is convenient or efficient for that release.
+
+A typical context stack pushing can be found in C<pp_entersub>; the
+following shows a simplified and stripped-down example of a non-XS call,
+along with comments showing roughly what each function does.
+
+ dMARK;
+ U8 gimme      = GIMME_V;
+ bool hasargs  = cBOOL(PL_op->op_flags & OPf_STACKED);
+ OP *retop     = PL_op->op_next;
+ I32 old_ss_ix = PL_savestack_ix;
+ CV *cv        = ....;
+
+ /* ... make mortal copies of stack args which are PADTMPs here ... */
+
+ /* ... do any additional savestack pushes here ... */
+
+ /* Now push a new context entry of type 'CXt_SUB'; initially just
+  * doing the actions common to all block types: */
+
+ cx = cx_pushblock(CXt_SUB, gimme, MARK, old_ss_ix);
+
+     /* this does (approximately):
+         CXINC;              /* cxstack_ix++ (grow if necessary) */
+         cx = CX_CUR();      /* and get the address of new frame */
+         cx->cx_type        = CXt_SUB;
+         cx->blk_gimme      = gimme;
+         cx->blk_oldsp      = MARK - PL_stack_base;
+         cx->blk_oldsaveix  = old_ss_ix;
+         cx->blk_oldcop     = PL_curcop;
+         cx->blk_oldmarksp  = PL_markstack_ptr - PL_markstack;
+         cx->blk_oldscopesp = PL_scopestack_ix;
+         cx->blk_oldpm      = PL_curpm;
+         cx->blk_old_tmpsfloor = PL_tmps_floor;
+
+         PL_tmps_floor        = PL_tmps_ix;
+     */
+
+
+ /* then update the new context frame with subroutine-specific info,
+  * such as the CV about to be executed: */
+
+ cx_pushsub(cx, cv, retop, hasargs);
+
+     /* this does (approximately):
+         cx->blk_sub.cv          = cv;
+         cx->blk_sub.olddepth    = CvDEPTH(cv);
+         cx->blk_sub.prevcomppad = PL_comppad;
+         cx->cx_type            |= (hasargs) ? CXp_HASARGS : 0;
+         cx->blk_sub.retop       = retop;
+         SvREFCNT_inc_simple_void_NN(cv);
+     */
+
+Note that C<cx_pushblock()> sets two new floors: for the args stack (to
+C<MARK>) and the temps stack (to C<PL_tmps_ix>). While executing at this
+scope level, every C<nextstate> (amongst others) will reset the args and
+tmps stack levels to these floors. Note that since C<cx_pushblock> uses
+the current value of C<PL_tmps_ix> rather than it being passed as an arg,
+this dictates at what point C<cx_pushblock> should be called. In
+particular, any new mortals which should be freed only on scope exit
+(rather than at the next C<nextstate>) should be created first.
+
+Most callers of C<cx_pushblock> simply set the new args stack floor to the
+top of the previous stack frame, but for C<CXt_LOOP_LIST> it stores the
+items being iterated over on the stack, and so sets C<blk_oldsp> to the
+top of these items instead. Note that, contrary to its name, C<blk_oldsp>
+doesn't always represent the value to restore C<PL_stack_sp> to on scope
+exit.
+
+Note the early capture of C<PL_savestack_ix> to C<old_ss_ix>, which is
+later passed as an arg to C<cx_pushblock>. In the case of C<pp_entersub>,
+this is because, although most values needing saving are stored in fields
+of the context struct, an extra value needs saving only when the debugger
+is running, and it doesn't make sense to bloat the struct for this rare
+case. So instead it is saved on the savestack. Since this value gets
+calculated and saved before the context is pushed, it is necessary to pass
+the old value of C<PL_savestack_ix> to C<cx_pushblock>, to ensure that the
+saved value gets freed during scope exit.  For most users of
+C<cx_pushblock>, where nothing needs pushing on the save stack,
+C<PL_savestack_ix> is just passed directly as an arg to C<cx_pushblock>.
+
+Note that where possible, values should be saved in the context struct
+rather than on the save stack; it's much faster that way.
+
+Normally C<cx_pushblock> should be immediately followed by the appropriate
+C<cx_pushfoo>, with nothing between them; this is because if code
+in-between could die (e.g. a warning upgraded to fatal), then the context
+stack unwinding code in C<dounwind> would see (in the example above) a
+C<CXt_SUB> context frame, but without all the subroutine-specific fields
+set, and crashes would soon ensue.
+
+Where the two must be separate, initially set the type to C<CXt_NULL> or
+C<CXt_BLOCK>, and later change it to C<CXt_foo> when doing the
+C<cx_pushfoo>. This is exactly what C<pp_enteriter> does, once it's
+determined which type of loop it's pushing.
+
+=head2 Popping contexts
+
+Contexts are popped using C<cx_popsub()> etc. and C<cx_popblock()>. Note
+however, that unlike C<cx_pushblock>, neither of these functions actually
+decrement the current context stack index; this is done separately using
+C<CX_POP()>.
+
+There are two main ways that contexts are popped. During normal execution
+as scopes are exited, functions like C<pp_leave>, C<pp_leaveloop> and
+C<pp_leavesub> process and pop just one context using C<cx_popfoo> and
+C<cx_popblock>. On the other hand, things like C<pp_return> and C<next>
+may have to pop back several scopes until a sub or loop context is found,
+and exceptions (such as C<die>) need to pop back contexts until an eval
+context is found. Both of these are accomplished by C<dounwind()>, which
+is capable of processing and popping all contexts above the target one.
+
+Here is a typical example of context popping, as found in C<pp_leavesub>
+(simplified slightly):
+
+ U8 gimme;
+ PERL_CONTEXT *cx;
+ SV **oldsp;
+ OP *retop;
+
+ cx = CX_CUR();
+
+ gimme = cx->blk_gimme;
+ oldsp = PL_stack_base + cx->blk_oldsp; /* last arg of previous frame */
+
+ if (gimme == G_VOID)
+     PL_stack_sp = oldsp;
+ else
+     leave_adjust_stacks(oldsp, oldsp, gimme, 0);
+
+ CX_LEAVE_SCOPE(cx);
+ cx_popsub(cx);
+ cx_popblock(cx);
+ retop = cx->blk_sub.retop;
+ CX_POP(cx);
+
+ return retop;
+
+The steps above are in a very specific order, designed to be the reverse
+order of when the context was pushed. The first thing to do is to copy
+and/or protect any any return arguments and free any temps in the current
+scope. Scope exits like an rvalue sub normally return a mortal copy of
+their return args (as opposed to lvalue subs). It is important to make
+this copy before the save stack is popped or variables are restored, or
+bad things like the following can happen:
+
+    sub f { my $x =...; $x }  # $x freed before we get to copy it
+    sub f { /(...)/;    $1 }  # PL_curpm restored before $1 copied
+
+Although we wish to free any temps at the same time, we have to be careful
+not to free any temps which are keeping return args alive; nor to free the
+temps we have just created while mortal copying return args. Fortunately,
+C<leave_adjust_stacks()> is capable of making mortal copies of return args,
+shifting args down the stack, and only processing those entries on the
+temps stack that are safe to do so.
+
+In void context no args are returned, so it's more efficient to skip
+calling C<leave_adjust_stacks()>. Also in void context, a C<nextstate> op
+is likely to be imminently called which will do a C<FREETMPS>, so there's
+no need to do that either.
+
+The next step is to pop savestack entries: C<CX_LEAVE_SCOPE(cx)> is just
+defined as C<<LEAVE_SCOPE(cx->blk_oldsaveix)>>. Note that during the
+popping, it's possible for perl to call destructors, call C<STORE> to undo
+localisations of tied vars, and so on. Any of these can die or call
+C<exit()>. In this case, C<dounwind()> will be called, and the current
+context stack frame will be re-processed. Thus it is vital that all steps
+in popping a context are done in such a way to support reentrancy.  The
+other alternative, of decrementing C<cxstack_ix> I<before> processing the
+frame, would lead to leaks and the like if something died halfway through,
+or overwriting of the current frame.
+
+C<CX_LEAVE_SCOPE> itself is safely re-entrant: if only half the savestack
+items have been popped before dying and getting trapped by eval, then the
+C<CX_LEAVE_SCOPE>s in C<dounwind> or C<pp_leaveeval> will continue where
+the first one left off.
+
+The next step is the type-specific context processing; in this case
+C<cx_popsub>. In part, this looks like:
+
+    cv = cx->blk_sub.cv;
+    CvDEPTH(cv) = cx->blk_sub.olddepth;
+    cx->blk_sub.cv = NULL;
+    SvREFCNT_dec(cv);
+
+where its processing the just-executed CV. Note that before it decrements
+the CV's reference count, it nulls the C<blk_sub.cv>. This means that if
+it re-enters, the CV won't be freed twice. It also means that you can't
+rely on such type-specific fields having useful values after the return
+from C<cx_popfoo>.
+
+Next, C<cx_popblock> restores all the various interpreter vars to their
+previous values or previous high water marks; it expands to:
+
+    PL_markstack_ptr = PL_markstack + cx->blk_oldmarksp;
+    PL_scopestack_ix = cx->blk_oldscopesp;
+    PL_curpm         = cx->blk_oldpm;
+    PL_curcop        = cx->blk_oldcop;
+    PL_tmps_floor    = cx->blk_old_tmpsfloor;
+
+Note that it I<doesn't> restore C<PL_stack_sp>; as mentioned earlier,
+which value to restore it to depends on the context type (specifically
+C<for (list) {}>), and what args (if any) it returns; and that will
+already have been sorted out earlier by C<leave_adjust_stacks()>.
+
+Finally, the context stack pointer is actually decremented by C<CX_POP(cx)>.
+After this point, it's possible that that the current context frame could
+be overwritten by other contexts being pushed. Although things like ties
+and C<DESTROY> are supposed to work within a new context stack, it's best
+not to assume this. Indeed on debugging builds, C<CX_POP(cx)> deliberately
+sets C<cx> to null to detect code that is still relying on the field
+values in that context frame. Note in the C<pp_leavesub()> example above,
+we grab C<blk_sub.retop> I<before> calling C<CX_POP>.
+
+=head2 Redoing contexts
+
+Finally, there is C<cx_topblock(cx)>, which acts like a super-C<nextstate>
+as regards to resetting various vars to their base values. It is used in
+places like C<pp_next>, C<pp_redo> and C<pp_goto> where rather than
+exiting a scope, we want to re-initialise the scope. As well as resetting
+C<PL_stack_sp> like C<nextstate>, it also resets C<PL_markstack_ptr>,
+C<PL_scopestack_ix> and C<PL_curpm>. Note that it doesn't do a
+C<FREETMPS>.
+
 
 =head1 AUTHORS
 

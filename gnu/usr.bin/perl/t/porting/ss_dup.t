@@ -3,7 +3,7 @@
 @TODO = qw [ SAVEt_SAVESWITCHSTACK ];
 @TODO{@TODO} = ();
 
-BEGIN { chdir 't'; unshift @INC, "../lib"; require './test.pl' }
+BEGIN { chdir 't'; @INC = "../lib"; require './test.pl' }
 use Config;
 
 if ( $Config{usecrosscompile} ) {

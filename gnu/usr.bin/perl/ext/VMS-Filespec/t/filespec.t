@@ -34,6 +34,8 @@ foreach $test (@tests) {
   ($arg,$func,$expect2,$expect5) = split(/(?<!\\)\s+/,$test);
 
   $arg =~ s/\\//g; # to get whitespace into the argument escape with \
+  $expect2 =~ s/\\//g;
+  $expect5 =~ s/\\//g;
   $expect2 = undef if $expect2 eq 'undef';
   $expect2 = undef if $expect2 eq '^';
   $expect5 = undef if $expect5 eq 'undef';
@@ -106,6 +108,9 @@ __some_:<__where_.__over_>__the_.__rainbow_    unixify /__some_/__where_/__over_
 [...]	unixify		.../	^
 __lyrics_:[__are_.__very_^.__sappy_]__but_^.__rhymes_^.__are_.__true_    unixify   /__lyrics_/__are_/__very_.__sappy_/__but_.__rhymes_.__are_.__true_ ^
 [.$(macro)]	unixify	$(macro)/ ^
+^+foo.tmp	unixify +foo.tmp ^
+[-.foo^_^_bar]	unixify ../foo\ \ bar/ ^
+[]foo.tmp	unixify	./foo.tmp ^
 
 # and back again
 /__some_/__where_/__over_/__the_.__rainbow_    vmsify  __some_:[__where_.__over_]__the_.__rainbow_ ^
@@ -129,6 +134,10 @@ __some_/__where_/...   vmsify  [.__some_.__where_...] ^
 ./$(m+	vmsify	[]$^(m^+	^
 foo-bar-0^.01/	vmsify [.foo-bar-0_01] [.foo-bar-0^.01]
 \ foo.tmp	vmsify ^_foo.tmp ^
++foo.tmp	vmsify ^+foo.tmp ^
+../foo\ \ bar/	vmsify [-.foo^_^_bar] ^
+./foo.tmp	vmsify []foo.tmp ^
+
 # Fileifying directory specs
 __down_:[__the_.__garden_.__path_]     fileify __down_:[__the_.__garden_]__path_.dir;1 ^
 [.__down_.__the_.__garden_.__path_]    fileify [.__down_.__the_.__garden_]__path_.dir;1 ^

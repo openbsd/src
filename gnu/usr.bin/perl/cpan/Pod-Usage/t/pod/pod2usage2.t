@@ -248,7 +248,12 @@ ok (compare ($text, <<'EOT'), "Output test pod2usage with Pod::Find") or diag "G
 #                   -output  => $filehandle   );
 #
 #      pod2usage(   -verbose => 2,
-#                   -noperldoc => 1  )
+#                   -noperldoc => 1  );
+#
+#      pod2usage(   -verbose => 2,
+#                   -perlcmd => $path_to_perl,
+#                   -perldoc => $path_to_perldoc,
+#                   -perldocopt => $perldoc_options );
 #
 EOT
 

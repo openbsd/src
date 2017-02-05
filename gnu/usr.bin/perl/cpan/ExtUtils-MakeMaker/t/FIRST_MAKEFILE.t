@@ -21,7 +21,7 @@ perl_lib();
 
 ok( setup_recurs(), 'setup' );
 END {
-    ok( chdir File::Spec->updir );
+    ok( chdir File::Spec->updir, 'chdir updir' );
     ok( teardown_recurs(), 'teardown' );
 }
 

@@ -30,9 +30,9 @@ BEGIN {
     require 'testutil.pl' if $@;
   }
 
-  if (235) {
+  if (238) {
     load();
-    plan(tests => 235);
+    plan(tests => 238);
   }
 }
 
@@ -50,7 +50,7 @@ package main;
 
 BEGIN {
   if ($ENV{'SKIP_SLOW_TESTS'}) {
-    for (1 .. 235) {
+    for (1 .. 238) {
       skip("skip: SKIP_SLOW_TESTS", 0);
     }
     exit 0;
@@ -94,6 +94,20 @@ END {
 }
 
 ok(&Devel::PPPort::WriteFile("ppport.h"));
+
+# Check GetFileContents()
+ok(-e "ppport.h", 1);
+
+my $data;
+
+open(F, "<ppport.h") or die "Failed to open ppport.h: $!";
+while(<F>) {
+  $data .= $_;
+}
+close(F);
+
+ok(Devel::PPPort::GetFileContents("ppport.h"), $data);
+ok(Devel::PPPort::GetFileContents(), $data);
 
 sub comment
 {

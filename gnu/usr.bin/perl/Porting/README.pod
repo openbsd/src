@@ -16,6 +16,10 @@ text.
 Program to prepare dual-life distributions for insertion into the Perl 5
 F<lib/> and F<t/> directories.  Now thought to be largely superseded.
 
+=head2 F<bench.pl>
+
+Do performance analysis on the code snippets in F<t/perf/benchmarks>.
+
 =head2 F<bisect-example.sh>, F<bisect.pl> and F<bisect-runner.pl>
 
 Use C<git bisect> to pinpoint changes.
@@ -37,6 +41,11 @@ Check source code for ANSI-C violations.
 =head2 F<checkAUTHORS.pl>
 
 Used by F<t/porting/authors.t> to ensure the F<AUTHORS> list is up to date.
+
+=head2 F<checkcfguse.pl>
+
+Check where the symbols defined in the various F<config.sh>-clones
+are being used.  VMS is probably not handled properly here.
 
 =head2 F<checkcfgvar.pl>
 
@@ -123,6 +132,10 @@ F<perldelta*> files.
 =head2 F<corelist.pl>
 
 Generates info for Module::CoreList from this perl tree.
+
+=head2 F<deparse-skips.txt>
+
+List of test files to ignore/skip for deparse tests.
 
 =head2 F<epigraphs.pod>
 

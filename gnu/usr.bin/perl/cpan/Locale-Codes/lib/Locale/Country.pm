@@ -1,7 +1,7 @@
 package Locale::Country;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2014 Sullivan Beck
+# Copyright (c) 2010-2015 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -10,7 +10,7 @@ use warnings;
 use Exporter;
 
 our $VERSION;
-$VERSION='3.30';
+$VERSION='3.37';
 
 our (@ISA,@EXPORT);
 
@@ -25,8 +25,6 @@ eval "require $backend; $backend->import(); return 1;";
 }
 
 unshift (@ISA, $backend);
-
-sub alias_code                { Locale::Codes::Country::alias_code(@_) }
 
 sub rename_country            { Locale::Codes::Country::rename_country(@_) }
 sub add_country               { Locale::Codes::Country::add_country(@_) }

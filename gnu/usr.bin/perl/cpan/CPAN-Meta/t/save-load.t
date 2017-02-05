@@ -83,6 +83,16 @@ ok( -f $metafile, "save meta to file" );
 ok( my $loaded = Parse::CPAN::Meta->load_file($metafile), 'load saved file' );
 is($loaded->{name},     'Module-Build', 'name correct');
 
+like(
+  $loaded->{x_serialization_backend},
+  qr/\AJSON::PP version [0-9]/,
+  "x_serialization_backend",
+);
+
+ok(
+  ! exists $meta->{x_serialization_backend},
+  "we didn't leak x_serialization_backend up into the saved struct",
+);
 
 ok( $loaded = Parse::CPAN::Meta->load_file('t/data-test/META-1_4.yml'), 'load META-1.4' );
 is($loaded->{name},     'Module-Build', 'name correct');
@@ -98,6 +108,17 @@ ok( $loaded = Parse::CPAN::Meta->load_file($metayml), 'load saved file' );
 is( $loaded->{name},     'Module-Build', 'name correct');
 is( $loaded->{requires}{perl}, "5.006", 'prereq correct' );
 
+like(
+  $loaded->{x_serialization_backend},
+  qr/\ACPAN::Meta::YAML version [0-9]/,
+  "x_serialization_backend",
+);
+
+ok(
+  ! exists $meta->{x_serialization_backend},
+  "we didn't leak x_serialization_backend up into the saved struct",
+);
+
 # file without suffix
 
 ok( $loaded = CPAN::Meta->load_file('t/data-test/META-2.meta'), 'load_file META-2.meta' );
@@ -106,3 +127,4 @@ my $string = do { open my $fh, '<', 't/data-test/META-2.meta'; local $/; <$fh> }
 ok( $loaded = CPAN::Meta->load_string($string), 'load META-2.meta from string' );
 
 done_testing;
+# vim: ts=2 sts=2 sw=2 et :

@@ -447,7 +447,7 @@ my @tests = (
 [ "VMS->canonpath('[d1.d2.--]file')",                                   $vms_unix_rpt ? '../file.txt'  : '[000000]file'                    ],
 # During the Perl 5.8 era, FS::Unix stopped eliminating redundant path elements, so mimic that here.
 [ "VMS->canonpath('a/../../b/c.dat')",                  $vms_unix_rpt ? 'a/../../b/c.dat'              : '[-.b]c.dat'                      ],
-[ "VMS->canonpath('^<test^.new.-.caret^ escapes^>')",   '^<test^.new.-.caret^ escapes^>'                                                   ],
+[ "VMS->canonpath('^<test^.new.-.caret^ escapes^>')",   $vms_unix_rpt ? '/<test.new.-.caret escapes>' : '^<test^.new.-.caret^ escapes^>'                                                   ],
 
 [ "VMS->splitdir('')",            ''          ],
 [ "VMS->splitdir('[]')",          ''          ],
@@ -483,6 +483,8 @@ my @tests = (
 [ "VMS->abs2rel('node::volume:[t1.t2.t3]','[t1.t2.t3]')", $vms_unix_rpt ? '/node//volume/t1/t2/t3/' : 'node::volume:[t1.t2.t3]' ],
 [ "VMS->abs2rel('node::volume:[t1.t2.t4]','node::volume:[t1.t2.t3]')", $vms_unix_rpt ? '../t4/' : '[-.t4]' ],
 [ "VMS->abs2rel('node::volume:[t1.t2.t4]','[t1.t2.t3]')", $vms_unix_rpt ? '/node//volume/t1/t2/t4/' : 'node::volume:[t1.t2.t4]' ],
+[ "VMS->abs2rel('/volume/t1/t2/t3','/volume/t1')",        $vms_unix_rpt ? 't2/t3' : '[.t2]t3' ],
+[ "VMS->abs2rel('/volume/t1/t2/t3/t4','/volume/t1/xyz')", $vms_unix_rpt ? '../t2/t3/t4' : '[-.t2.t3]t4' ],
 [ "VMS->abs2rel('[t1.t2.t3]','[t1.t2.t3]')",              $vms_unix_rpt ? './' : '[]'             ],
 [ "VMS->abs2rel('[t1.t2.t3]file','[t1.t2.t3]')",          'file'                                  ],
 [ "VMS->abs2rel('[t1.t2.t3]file','[t1.t2]')",             $vms_unix_rpt ? 't3/file' : '[.t3]file' ],
@@ -493,7 +495,7 @@ my @tests = (
 [ "VMS->abs2rel('[t4.t5.t6]','[t1.t2.t3]')",              $vms_unix_rpt ? '../../../t4/t5/t6/' : '[---.t4.t5.t6]'   ],
 [ "VMS->abs2rel('[000000]','[t1.t2.t3]')",                $vms_unix_rpt ? '../../../'          : '[---]'            ],
 [ "VMS->abs2rel('a:[t1.t2.t4]','a:[t1.t2.t3]')",          $vms_unix_rpt ? '../t4/'             : '[-.t4]'           ],
-[ "VMS->abs2rel('a:[t1.t2.t4]','[t1.t2.t3]')",            $vms_unix_rpt ? '/a/t1/t2/t4/'        : 'a:[t1.t2.t4]'    ],
+[ "VMS->abs2rel('a:[t1.t2.t4]','[t1.t2.t3]')",            $vms_unix_rpt ? '/a/t1/t2/t4'        : 'a:[t1.t2.t4]'    ],
 [ "VMS->abs2rel('[a.-.b.c.-]','[t1.t2.t3]')",             $vms_unix_rpt ? '../../../b/'         : '[---.b]'         ],
 
 [ "VMS->rel2abs('[.t4]','[t1.t2.t3]')",          $vms_unix_rpt ? '/sys$disk/t1/t2/t3/t4/'    : '[t1.t2.t3.t4]'    ],

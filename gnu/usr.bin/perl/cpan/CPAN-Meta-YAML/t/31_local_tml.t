@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use lib 't/lib/';
-use Test::More 0.99;
+use Test::More 0.88;
 use TestBridge;
 use IO::Dir;
 use File::Spec::Functions qw/catdir/;

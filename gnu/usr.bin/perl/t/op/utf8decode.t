@@ -6,12 +6,14 @@ BEGIN {
     require './test.pl';
 }
 
+$|=1;
+
 {
     my $wide = v256;
     use bytes;
     my $ordwide = ord($wide);
     printf "# under use bytes ord(v256) = 0x%02x\n", $ordwide;
-    skip_all('UTF-EBCDIC (not UTF-8) used here') if $ordwide == 140;
+    skip_all('UTF-8-centric tests (not valid for UTF-EBCDIC)') if $ordwide == 140;
 
     if ($ordwide != 196) {
 	printf "# v256 starts with 0x%02x\n", $ordwide;
@@ -68,7 +70,10 @@ foreach (<DATA>) {
 		$expect = -$expect;
 		$::TODO = "Markus Kuhn states that $expect invalid sequences should be signalled";
 	    }
-	    is(scalar @warnings, $expect, "Expected number of warnings for $id seen");
+	    unless (is(scalar @warnings, $expect, "Expected number of warnings for $id seen")) {
+                note(join "", "Got:\n", @warnings);
+            }
+
 	}
     } else {
 	fail("unknown format '$_'");
@@ -79,7 +84,7 @@ done_testing();
 
 # This table is based on Markus Kuhn's UTF-8 Decode Stress Tester,
 # http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt,
-# version dated 2000-09-02.
+# version dated 2015-08-28.
 
 __DATA__
 1	Correct UTF-8
@@ -180,4 +185,68 @@ __DATA__
 5.3	Other illegal code positions
 5.3.1 y fffe	3	ef:bf:be	1	byte order mark 0xfffe
 # The ffff is legal by default since 872c91ae155f6880
-5.3.2 y ffff	3	ef:bf:bf	1	character 0xffff
+5.3.2 y ffff	3	ef:bf:bf	1	non-character 0xffff
+5.3.3 y fdd0	3	ef:b7:90	1	non-character 0xfdd0
+5.3.3 y	fdd1	3	ef:b7:91	1	non-character 0xfdd1
+5.3.3 y	fdd2	3	ef:b7:92	1	non-character 0xfdd2
+5.3.3 y	fdd3	3	ef:b7:93	1	non-character 0xfdd3
+5.3.3 y	fdd4	3	ef:b7:94	1	non-character 0xfdd4
+5.3.3 y	fdd5	3	ef:b7:95	1	non-character 0xfdd5
+5.3.3 y	fdd6	3	ef:b7:96	1	non-character 0xfdd6
+5.3.3 y	fdd7	3	ef:b7:97	1	non-character 0xfdd7
+5.3.3 y	fdd8	3	ef:b7:98	1	non-character 0xfdd8
+5.3.3 y	fdd9	3	ef:b7:99	1	non-character 0xfdd9
+5.3.3 y	fdda	3	ef:b7:9a	1	non-character 0xfdda
+5.3.3 y	fddb	3	ef:b7:9b	1	non-character 0xfddb
+5.3.3 y	fddc	3	ef:b7:9c	1	non-character 0xfddc
+5.3.3 y	fddd	3	ef:b7:9d	1	non-character 0xfddd
+5.3.3 y	fdde	3	ef:b7:9e	1	non-character 0xfdde
+5.3.3 y	fddf	3	ef:b7:9f	1	non-character 0xfddf
+5.3.3 y	fde0	3	ef:b7:a0	1	non-character 0xfde0
+5.3.3 y	fde1	3	ef:b7:a1	1	non-character 0xfde1
+5.3.3 y	fde2	3	ef:b7:a2	1	non-character 0xfde2
+5.3.3 y	fde3	3	ef:b7:a3	1	non-character 0xfde3
+5.3.3 y	fde4	3	ef:b7:a4	1	non-character 0xfde4
+5.3.3 y	fde5	3	ef:b7:a5	1	non-character 0xfde5
+5.3.3 y	fde6	3	ef:b7:a6	1	non-character 0xfde6
+5.3.3 y	fde7	3	ef:b7:a7	1	non-character 0xfde7
+5.3.3 y	fde8	3	ef:b7:a8	1	non-character 0xfde8
+5.3.3 y	fde9	3	ef:b7:a9	1	non-character 0xfde9
+5.3.3 y	fdea	3	ef:b7:aa	1	non-character 0xfdea
+5.3.3 y	fdeb	3	ef:b7:ab	1	non-character 0xfdeb
+5.3.3 y	fdec	3	ef:b7:ac	1	non-character 0xfdec
+5.3.3 y	fded	3	ef:b7:ad	1	non-character 0xfded
+5.3.3 y	fdee	3	ef:b7:ae	1	non-character 0xfdee
+5.3.3 y	fdef	3	ef:b7:af	1	non-character 0xfdef
+5.3.4 y 1fffe	4	f0:9f:bf:be	1	non-character 0x1fffe
+5.3.4 y 1ffff	4	f0:9f:bf:bf	1	non-character 0x1ffff
+5.3.4 y 2fffe	4	f0:af:bf:be	1	non-character 0x2fffe
+5.3.4 y 2ffff	4	f0:af:bf:bf	1	non-character 0x2ffff
+5.3.4 y 3fffe	4	f0:bf:bf:be	1	non-character 0x3fffe
+5.3.4 y 3ffff	4	f0:bf:bf:bf	1	non-character 0x3ffff
+5.3.4 y 4fffe	4	f1:8f:bf:be	1	non-character 0x4fffe
+5.3.4 y 4ffff	4	f1:8f:bf:bf	1	non-character 0x4ffff
+5.3.4 y 5fffe	4	f1:9f:bf:be	1	non-character 0x5fffe
+5.3.4 y 5ffff	4	f1:9f:bf:bf	1	non-character 0x5ffff
+5.3.4 y 6fffe	4	f1:af:bf:be	1	non-character 0x6fffe
+5.3.4 y 6ffff	4	f1:af:bf:bf	1	non-character 0x6ffff
+5.3.4 y 7fffe	4	f1:bf:bf:be	1	non-character 0x7fffe
+5.3.4 y 7ffff	4	f1:bf:bf:bf	1	non-character 0x7ffff
+5.3.4 y 8fffe	4	f2:8f:bf:be	1	non-character 0x8fffe
+5.3.4 y 8ffff	4	f2:8f:bf:bf	1	non-character 0x8ffff
+5.3.4 y 9fffe	4	f2:9f:bf:be	1	non-character 0x9fffe
+5.3.4 y 9ffff	4	f2:9f:bf:bf	1	non-character 0x9ffff
+5.3.4 y afffe	4	f2:af:bf:be	1	non-character 0xafffe
+5.3.4 y affff	4	f2:af:bf:bf	1	non-character 0xaffff
+5.3.4 y bfffe	4	f2:bf:bf:be	1	non-character 0xbfffe
+5.3.4 y bffff	4	f2:bf:bf:bf	1	non-character 0xbffff
+5.3.4 y cfffe	4	f3:8f:bf:be	1	non-character 0xcfffe
+5.3.4 y cffff	4	f3:8f:bf:bf	1	non-character 0xcffff
+5.3.4 y dfffe	4	f3:9f:bf:be	1	non-character 0xdfffe
+5.3.4 y dffff	4	f3:9f:bf:bf	1	non-character 0xdffff
+5.3.4 y efffe	4	f3:af:bf:be	1	non-character 0xefffe
+5.3.4 y effff	4	f3:af:bf:bf	1	non-character 0xeffff
+5.3.4 y ffffe	4	f3:bf:bf:be	1	non-character 0xffffe
+5.3.4 y fffff	4	f3:bf:bf:bf	1	non-character 0xfffff
+5.3.4 y 10fffe	4	f4:8f:bf:be	1	non-character 0x10fffe
+5.3.4 y 10ffff	4	f4:8f:bf:bf	1	non-character 0x10ffff

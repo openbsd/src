@@ -1,5 +1,6 @@
 my @symbols;
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
     skip_all_without_dynamic_extension($_) foreach qw(B Fcntl);
     # S_IFMT is a real subroutine, and acts as control

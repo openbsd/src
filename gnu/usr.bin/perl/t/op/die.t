@@ -15,8 +15,8 @@ eval {
     die if $@;
 };
 
-like($@, '^Horribly', 'die with no args propagates $@');
-like($@, 'propagated', '... and appends a phrase');
+like($@, qr/^Horribly/, 'die with no args propagates $@');
+like($@, qr/\.{3}propagated at/, '... and appends a phrase');
 
 {
     local $SIG{__DIE__} = sub { is( $_[0], "[\000]\n", 'Embedded null passed to signal handler' )};

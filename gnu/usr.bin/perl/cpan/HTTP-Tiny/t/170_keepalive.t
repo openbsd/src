@@ -59,7 +59,7 @@ new_ht();
 $h->{handle}->close;
 test_ht( "Socket closed", 0, 'http://foo.com' );
 
-for my $file ( dir_list( "t/cases", qr/^keepalive/ ) ) {
+for my $file ( dir_list( "corpus", qr/^keepalive/ ) ) {
     my $label = basename($file);
     my $data = do { local ( @ARGV, $/ ) = $file; <> };
     my ( $title, $ok, $response ) = map { trim($_) } split /--+/, $data;

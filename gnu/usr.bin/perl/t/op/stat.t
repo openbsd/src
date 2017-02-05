@@ -19,8 +19,13 @@ if(eval {require File::Spec; 1}) {
     diag("\ncontinuing, assuming '.' for current directory. Some tests will be skipped.");
 }
 
+if ($^O eq 'MSWin32') {
+    # under minitest, buildcustomize sets this to 1, which means
+    # nlinks isn't populated properly, allow nlinks tests to pass
+    ${^WIN32_SLOPPY_STAT} = 0;
+}
 
-plan tests => 113;
+plan tests => 118;
 
 my $Perl = which_perl();
 
@@ -189,7 +194,7 @@ SKIP: {
 	skip "Can't test if an admin user in miniperl", 2,
 	  if $Is_Cygwin && is_miniperl();
         skip "Can't test -r or -w meaningfully if you're superuser", 2
-          if ($Is_Cygwin ? Win32::IsAdminUser : $> == 0);
+          if ($> == 0);
 
         SKIP: {
             skip "Can't test -r meaningfully?", 1 if $Is_Dos;
@@ -472,10 +477,13 @@ like $@, qr/^The stat preceding lstat\(\) wasn't an lstat at /,
 'stat $ioref resets stat type';
 
 {
-    my @statbuf = stat STDOUT;
+    open(FOO, ">$tmpfile") || DIE("Can't open temp test file: $!");
+    my @statbuf = stat FOO;
     stat "test.pl";
-    my @lstatbuf = lstat *STDOUT{IO};
+    my @lstatbuf = lstat *FOO{IO};
     is "@lstatbuf", "@statbuf", 'lstat $ioref reverts to regular fstat';
+    close(FOO);
+    unlink $tmpfile or print "# unlink failed: $!\n";
 }
   
 SKIP: {
@@ -612,6 +620,35 @@ SKIP: {
     stat 'prepeinamehyparcheiarcheiometoonomaavto';
     stat _;
     is $w, undef, 'no unopened warning from stat _';
+}
+
+{
+    # [perl #123816]
+    # Inappropriate stacking of l?stat with filetests should either work or
+    # give a syntax error, they shouldn't crash.
+    eval { stat -t };
+    ok(1, 'can "stat -t" without crashing');
+	eval { lstat -t };
+    ok(1, 'can "lstat -t" without crashing');
+}
+
+# [perl #126064] stat stat stack busting
+is join("-", 1,2,3,(stat stat stat),4,5,6), "1-2-3-4-5-6",
+  'stat inside stat gets scalar context';
+
+# [perl #126162] stat an array should not work
+my $Errno_loaded = eval { require Errno };
+my $statfile = './op/stat.t';
+my @statarg = ($statfile, $statfile);
+ok !stat(@statarg),
+  'stat on an array of valid paths should warn and should not return any data';
+my $error = 0+$!;
+SKIP:
+{
+    skip "Errno not available", 1
+      unless $Errno_loaded;
+    is $error, &Errno::ENOENT,
+      'stat on an array of valid paths should return ENOENT';
 }
 
 END {

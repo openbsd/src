@@ -32,8 +32,10 @@ is($x, ${thaw freeze \$x});
 $x = join '', map {chr $_} (0..1023);
 is($x, ${thaw freeze \$x});
 
-# Char in the range 127-255 (probably) in utf8
-$x = chr (175) . chr (256);
+# Char in the range 127-255 (probably) in utf8.  This just won't work for
+# EBCDIC for early Perls.
+$x = ($] lt 5.007_003) ? chr(175) : chr(utf8::unicode_to_native(175))
+   . chr (256);
 chop $x;
 is($x, ${thaw freeze \$x});
 

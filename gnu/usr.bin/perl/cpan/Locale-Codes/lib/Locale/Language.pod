@@ -16,7 +16,7 @@ Locale::Language - standard codes for language identification
 
 =head1 DESCRIPTION
 
-The C<Locale::Language> module provides access to standard codes used
+This module provides access to standard codes used
 for identifying languages, such as those as defined in ISO 639.
 
 Most of the routines take an optional additional argument which
@@ -63,33 +63,33 @@ ISO 639.
 
 =over 4
 
-=item B<code2language ( CODE [,CODESET] )>
+=item B<code2language(CODE [,CODESET] [,'retired'])>
 
-=item B<language2code ( NAME [,CODESET] )>
+=item B<language2code(NAME [,CODESET] [,'retired'])>
 
-=item B<language_code2code ( CODE ,CODESET ,CODESET2 )>
+=item B<language_code2code(CODE ,CODESET ,CODESET2)>
 
-=item B<all_language_codes ( [CODESET] )>
+=item B<all_language_codes([CODESET] [,'retired'])>
 
-=item B<all_language_names ( [CODESET] )>
+=item B<all_language_names([CODESET] [,'retired'])>
 
-=item B<Locale::Language::rename_language  ( CODE ,NEW_NAME [,CODESET] )>
+=item B<Locale::Language::rename_language(CODE ,NEW_NAME [,CODESET])>
 
-=item B<Locale::Language::add_language  ( CODE ,NAME [,CODESET] )>
+=item B<Locale::Language::add_language(CODE ,NAME [,CODESET])>
 
-=item B<Locale::Language::delete_language  ( CODE [,CODESET] )>
+=item B<Locale::Language::delete_language(CODE [,CODESET])>
 
-=item B<Locale::Language::add_language_alias  ( NAME ,NEW_NAME )>
+=item B<Locale::Language::add_language_alias(NAME ,NEW_NAME)>
 
-=item B<Locale::Language::delete_language_alias  ( NAME )>
+=item B<Locale::Language::delete_language_alias(NAME)>
 
-=item B<Locale::Language::rename_language_code  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Language::rename_language_code(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Language::add_language_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Language::add_language_code_alias(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Language::delete_language_code_alias  ( CODE [,CODESET] )>
+=item B<Locale::Language::delete_language_code_alias(CODE [,CODESET])>
 
-These routines are all documented in the Locale::Codes::API man page.
+These routines are all documented in the L<Locale::Codes::API> man page.
 
 =back
 
@@ -97,23 +97,23 @@ These routines are all documented in the Locale::Codes::API man page.
 
 =over 4
 
-=item B<Locale::Codes>
+=item L<Locale::Codes>
 
 The Locale-Codes distribution.
 
-=item B<Locale::Codes::API>
+=item L<Locale::Codes::API>
 
 The list of functions supported by this module.
 
-=item B<http://www.loc.gov/standards/iso639-2/>
+=item L<http://www.loc.gov/standards/iso639-2/>
 
 Source of the ISO 639-2 codes.
 
-=item B<http://www.loc.gov/standards/iso639-5/>
+=item L<http://www.loc.gov/standards/iso639-5/>
 
 Source of the ISO 639-5 codes.
 
-=item B<http://www.iana.org/assignments/language-subtag-registry>
+=item L<http://www.iana.org/assignments/language-subtag-registry>
 
 The IANA language subtag registry.
 
@@ -129,7 +129,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2014 Sullivan Beck
+   Copyright (c) 2010-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

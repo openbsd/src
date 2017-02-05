@@ -3,7 +3,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.21_01;
+$VERSION = 1.2201;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
 @EXPORT_OK = qw(anchorify);
@@ -16,11 +16,7 @@ use File::Spec;
 use File::Spec::Unix;
 use Getopt::Long;
 use Pod::Simple::Search;
-BEGIN {
-    if($Config{d_setlocale}) {
-        require locale; import locale; # make \w work right in non-ASCII lands
-    }
-}
+use locale; # make \w work right in non-ASCII lands
 
 =head1 NAME
 

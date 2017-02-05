@@ -60,7 +60,7 @@ sub post_initialize
         if $^O eq 'MacOS' && $self->{SOURCE} !~ /\b$name\.c\b/;
     $self->{'H'} = [$self->catfile($self->updir,'Encode', 'encode.h')];
     my %xs;
-    foreach my $table (keys %tables) {
+    foreach my $table (sort keys %tables) {
     push (@{$self->{'C'}},"$table.c");
     # Do NOT add $table.h etc. to H_FILES unless we own up as to how they
     # get built.
@@ -74,6 +74,7 @@ sub post_initialize
     $self->{'clean'}{'FILES'} .= join(' ',@files);
     open(XS,">$name.xs") || die "Cannot open $name.xs:$!";
     print XS <<'END';
+#define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
@@ -128,7 +129,7 @@ sub postamble
     my $dir  = $self->catdir($self->updir,'ucm');
     my $str  = "# $name\$(OBJ_EXT) depends on .h and .exh files not .c files - but all written by enc2xs\n";
     $str    .= "$name.c : $name.xs ";
-    foreach my $table (keys %tables)
+    foreach my $table (sort keys %tables)
     {
     $str .= " $table.c";
     }
@@ -136,7 +137,7 @@ sub postamble
     $str .= "$name\$(OBJ_EXT) : $name.c\n\n";
 
     my $enc2xs = $self->catfile($self->updir,'bin', 'enc2xs');
-    foreach my $table (keys %tables)
+    foreach my $table (sort keys %tables)
     {
     my $numlines = 1;
     my $lengthsofar = length($str);

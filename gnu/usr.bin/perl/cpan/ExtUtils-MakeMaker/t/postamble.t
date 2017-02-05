@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use Config;
 use Test::More tests => 8;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
@@ -33,6 +34,11 @@ ok( chdir 'Big-Dummy', q{chdir'd to Big-Dummy} ) ||
 {
     my $warnings = '';
     local $SIG{__WARN__} = sub {
+        if ( $Config{usecrosscompile} ) {
+            # libraries might not be present on the target system
+            # when cross-compiling
+            return if $_[0] =~ /\A\QWarning (mostly harmless): No library found for \E.+/
+        }
         $warnings = join '', @_;
     };
 

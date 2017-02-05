@@ -2,6 +2,10 @@
 
 perlfaq3 - Programming Tools
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section of the FAQ answers questions related to programmer tools
@@ -495,10 +499,6 @@ The following are Win32 multilanguage editor/IDEs that support Perl:
 
 =over 4
 
-=item Codewright
-
-L<http://www.borland.com/codewright/>
-
 =item MultiEdit
 
 L<http://www.MultiEdit.com/>
@@ -525,57 +525,26 @@ powerful shell environment for Win32. Your options include
 
 =over 4
 
-=item Bash
+=item bash
 
-from the Cygwin package ( L<http://sources.redhat.com/cygwin/> )
+from the Cygwin package ( L<http://cygwin.com/> )
 
-=item Ksh
-
-from the MKS Toolkit ( L<http://www.mkssoftware.com/> ), or the Bourne shell of
-the U/WIN environment ( L<http://www.research.att.com/sw/tools/uwin/> )
-
-=item Tcsh
-
-L<ftp://ftp.astron.com/pub/tcsh/> , see also
-L<http://www.primate.wisc.edu/software/csh-tcsh-book/>
-
-=item Zsh
+=item zsh
 
 L<http://www.zsh.org/>
 
 =back
 
-MKS and U/WIN are commercial (U/WIN is free for educational and
-research purposes), Cygwin is covered by the GNU General Public
-License (but that shouldn't matter for Perl use). The Cygwin, MKS,
-and U/WIN all contain (in addition to the shells) a comprehensive set
+Cygwin is covered by the GNU General Public
+License (but that shouldn't matter for Perl use). Cygwin
+contains (in addition to the shell) a comprehensive set
 of standard Unix toolkit utilities.
-
-If you're transferring text files between Unix and Windows using FTP
-be sure to transfer them in ASCII mode so the ends of lines are
-appropriately converted.
-
-On Mac OS the MacPerl Application comes with a simple 32k text editor
-that behaves like a rudimentary IDE. In contrast to the MacPerl Application
-the MPW Perl tool can make use of the MPW Shell itself as an editor (with
-no 32k limit).
 
 =over 4
 
-=item Affrus
-
-is a full Perl development environment with full debugger support
-( L<http://www.latenightsw.com> ).
-
-=item Alpha
-
-is an editor, written and extensible in Tcl, that nonetheless has
-built-in support for several popular markup and programming languages,
-including Perl and HTML ( L<http://www.his.com/~jguyer/Alpha/Alpha8.html> ).
-
 =item BBEdit and TextWrangler
 
-are text editors for Mac OS that have a Perl sensitivity mode
+are text editors for OS X that have a Perl sensitivity mode
 ( L<http://www.barebones.com/> ).
 
 =back

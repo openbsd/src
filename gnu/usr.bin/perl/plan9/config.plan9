@@ -2055,15 +2055,7 @@
  *	available to split a long double x into a fractional part f and
  *	an integer part i such that |f| < 1.0 and (f + i) = x.
  */
-/* HAS_MODFL_POW32_BUG:
- *	This symbol, if defined, indicates that the modfl routine is
- *	broken for long doubles >= pow(2, 32).
- *	For example from 4294967303.150000 one would get 4294967302.000000
- *	and 1.150000.  The bug has been seen in certain versions of glibc,
- *	release 2.2.2 is known to be okay.
- */
 /*#define HAS_MODFL		/ **/
-/*#define HAS_MODFL_POW32_BUG		/ **/
 
 /* HAS_MPROTECT:
  *	This symbol, if defined, indicates that the mprotect system call is
@@ -2384,44 +2376,8 @@
  *	This symbol, if defined, indicates that the BSD socketpair() call is
  *	supported.
  */
-/* HAS_MSG_CTRUNC:
- *	This symbol, if defined, indicates that the MSG_CTRUNC is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_DONTROUTE:
- *	This symbol, if defined, indicates that the MSG_DONTROUTE is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_OOB:
- *	This symbol, if defined, indicates that the MSG_OOB is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PEEK:
- *	This symbol, if defined, indicates that the MSG_PEEK is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PROXY:
- *	This symbol, if defined, indicates that the MSG_PROXY is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_SCM_RIGHTS:
- *	This symbol, if defined, indicates that the SCM_RIGHTS is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
 #define	HAS_SOCKET		/**/
 #define	HAS_SOCKETPAIR	/**/
-/*#define	HAS_MSG_CTRUNC	/ **/
-/*#define	HAS_MSG_DONTROUTE	/ **/
-/*#define	HAS_MSG_OOB	/ **/
-/*#define	HAS_MSG_PEEK	/ **/
-/*#define	HAS_MSG_PROXY	/ **/
-/*#define	HAS_SCM_RIGHTS	/ **/
 
 /* HAS_SOCKS5_INIT:
  *	This symbol, if defined, indicates that the socks5_init routine is
@@ -3373,8 +3329,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.20.3"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.20.3"		/**/
+#define PRIVLIB "/sys/lib/perl/5.24.1"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/5.24.1"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3501,9 +3457,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.20.3/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.20.3/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.20.3/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/5.24.1/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/5.24.1/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/5.24.1/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.

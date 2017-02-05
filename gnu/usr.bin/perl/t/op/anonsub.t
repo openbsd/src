@@ -91,3 +91,23 @@ undef &{$x=sub{}};
 $x->();
 EXPECT
 Undefined subroutine called at - line 4.
+########
+# NAME anon constant clobbering __ANON__
+sub __ANON__ { "42\n" }
+print __ANON__;
+sub(){3};
+EXPECT
+42
+########
+# NAME undef &anon giving it a freed GV
+$_ = sub{};
+delete $::{__ANON__};
+undef &$_; # SvREFCNT_dec + inc on a GV with a refcnt of 1
+           # so now SvTYPE(CvGV(anon)) is 0xff == freed
+if (!eval { require B }) { # miniperl, presumably
+    print "__ANON__\n";
+} else {
+    print B::svref_2object($_)->GV->NAME, "\n";
+}
+EXPECT
+__ANON__

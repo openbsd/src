@@ -77,7 +77,6 @@ $!
 $!  And do it
 $   Set Message /NoFacility/NoSeverity/NoIdentification/NoText
 $   Show Process/Accounting
-$   testdir = "Directory/NoHead/NoTrail/Column=1"
 $   PerlShr_filespec = f$parse("Sys$Disk:[-]''dbg'PerlShr''exe'")
 $   Define 'dbg'Perlshr 'PerlShr_filespec'
 $   If F$Mode() .nes. "INTERACTIVE" Then Define/Nolog PERL_SKIP_TTY_TEST 1

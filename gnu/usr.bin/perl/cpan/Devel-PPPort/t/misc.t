@@ -30,9 +30,9 @@ BEGIN {
     require 'testutil.pl' if $@;
   }
 
-  if (39) {
+  if (41) {
     load();
-    plan(tests => 39);
+    plan(tests => 41);
   }
 }
 
@@ -57,7 +57,7 @@ $_ = "Fred";
 ok(&Devel::PPPort::DEFSV(), "Fred");
 ok(&Devel::PPPort::UNDERBAR(), "Fred");
 
-if ($] >= 5.009002) {
+if ($] >= 5.009002 && $] < 5.023) {
   eval q{
     no warnings "deprecated";
     no if $^V > v5.17.9, warnings => "experimental::lexical_topic";
@@ -126,4 +126,14 @@ ok(Devel::PPPort::SVf('abc'), $] >= 5.004 ? '[abc]' : 'abc');
 ok(&Devel::PPPort::Perl_ppaddr_t("FOO"), "foo");
 
 ok(&Devel::PPPort::ptrtests(), 63);
+
+if ($] >= 5.009000) {
+  eval q{
+    ok(&Devel::PPPort::check_HeUTF8("hello"), "norm");
+    ok(&Devel::PPPort::check_HeUTF8("\N{U+263a}"), "utf8");
+  };
+} else {
+  ok(1, 1);
+  ok(1, 1);
+}
 

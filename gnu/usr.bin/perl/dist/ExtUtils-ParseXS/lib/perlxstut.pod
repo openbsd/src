@@ -966,7 +966,7 @@ to have write permission into the directories where Perl is installed,
 or ask your system administrator to run the make for you.
 
 Alternately, you can specify the exact directory to place the extension's
-files by placing a "PREFIX=/destination/directory" after the make install.
+files by placing a "PREFIX=/destination/directory" after the make install
 (or in between the make and install if you have a brain-dead version of make).
 This can be very useful if you are building an extension that will eventually
 be distributed to multiple systems.  You can then just archive the files in

@@ -90,8 +90,8 @@ value that you pass it.
 =head1 Examples
 
 For examples of MRO implementations, see C<S_mro_get_linear_isa_c3()>
-and the C<BOOT:> section of F<mro/mro.xs>, and C<S_mro_get_linear_isa_dfs()>
-in F<mro.c>
+and the C<BOOT:> section of F<ext/mro/mro.xs>, and
+C<S_mro_get_linear_isa_dfs()> in F<mro_core.c>
 
 =head1 AUTHORS
 

@@ -26,7 +26,6 @@
 void
 Perl_av_reify(pTHX_ AV *av)
 {
-    dVAR;
     SSize_t key;
 
     PERL_ARGS_ASSERT_AV_REIFY;
@@ -65,7 +64,6 @@ extended.
 void
 Perl_av_extend(pTHX_ AV *av, SSize_t key)
 {
-    dVAR;
     MAGIC *mg;
 
     PERL_ARGS_ASSERT_AV_EXTEND;
@@ -87,9 +85,11 @@ void
 Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 			  SV ***arrayp)
 {
-    dVAR;
-
     PERL_ARGS_ASSERT_AV_EXTEND_GUTS;
+
+    if (key < -1) /* -1 is legal */
+        Perl_croak(aTHX_
+            "panic: av_extend_guts() negative count (%"IVdf")", (IV)key);
 
     if (key > *maxp) {
 	SV** ary;
@@ -134,14 +134,23 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 		if (key <= newmax) 
 		    goto resized;
 #endif 
-		newmax = key + *maxp / 5;
+                /* overflow-safe version of newmax = key + *maxp/5 */
+		newmax = *maxp / 5;
+                newmax = (key > SSize_t_MAX - newmax)
+                            ? SSize_t_MAX : key + newmax;
 	      resize:
 		{
 #ifdef PERL_MALLOC_WRAP /* Duplicated in pp_hot.c */
 		    static const char oom_array_extend[] =
 			"Out of memory during array extend";
 #endif
-		    MEM_WRAP_CHECK_1(newmax+1, SV*, oom_array_extend);
+                    /* it should really be newmax+1 here, but if newmax
+                     * happens to equal SSize_t_MAX, then newmax+1 is
+                     * undefined. This means technically we croak one
+                     * index lower than we should in theory; in practice
+                     * its unlikely the system has SSize_t_MAX/sizeof(SV*)
+                     * bytes to spare! */
+		    MEM_WRAP_CHECK_1(newmax, SV*, oom_array_extend);
 		}
 #ifdef STRESS_REALLOC
 		{
@@ -171,7 +180,8 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 		    static const char oom_array_extend[] =
 			"Out of memory during array extend";
 #endif
-		    MEM_WRAP_CHECK_1(newmax+1, SV*, oom_array_extend);
+                    /* see comment above about newmax+1*/
+		    MEM_WRAP_CHECK_1(newmax, SV*, oom_array_extend);
 		}
 		Newx(*allocp, newmax+1, SV*);
 		ary = *allocp + 1;
@@ -234,8 +244,6 @@ S_adjust_index(pTHX_ AV *av, const MAGIC *mg, SSize_t *keyp)
 SV**
 Perl_av_fetch(pTHX_ AV *av, SSize_t key, I32 lval)
 {
-    dVAR;
-
     PERL_ARGS_ASSERT_AV_FETCH;
     assert(SvTYPE(av) == SVt_PVAV);
 
@@ -284,7 +292,7 @@ Perl_av_fetch(pTHX_ AV *av, SSize_t key, I32 lval)
 =for apidoc av_store
 
 Stores an SV in an array.  The array index is specified as C<key>.  The
-return value will be NULL if the operation failed or if the value did not
+return value will be C<NULL> if the operation failed or if the value did not
 need to be actually stored within the array (as in the case of tied
 arrays).  Otherwise, it can be dereferenced
 to get the C<SV*> that was stored
@@ -292,7 +300,7 @@ there (= C<val>)).
 
 Note that the caller is responsible for suitably incrementing the reference
 count of C<val> before the call, and decrementing it if the function
-returned NULL.
+returned C<NULL>.
 
 Approximate Perl equivalent: C<$myarray[$key] = $val;>.
 
@@ -305,7 +313,6 @@ more information on how to use this function on tied arrays.
 SV**
 Perl_av_store(pTHX_ AV *av, SSize_t key, SV *val)
 {
-    dVAR;
     SV** ary;
 
     PERL_ARGS_ASSERT_AV_STORE;
@@ -380,7 +387,7 @@ Perl_av_store(pTHX_ AV *av, SSize_t key, SV *val)
 =for apidoc av_make
 
 Creates a new AV and populates it with a list of SVs.  The SVs are copied
-into the array, so they may be freed after the call to av_make.  The new AV
+into the array, so they may be freed after the call to C<av_make>.  The new AV
 will have a reference count of 1.
 
 Perl equivalent: C<my @new_array = ($scalar1, $scalar2, $scalar3...);>
@@ -429,11 +436,15 @@ Perl_av_make(pTHX_ SSize_t size, SV **strp)
 /*
 =for apidoc av_clear
 
-Clears an array, making it empty.  Does not free the memory the av uses to
-store its list of scalars.  If any destructors are triggered as a result,
-the av itself may be freed when this function returns.
+Frees the all the elements of an array, leaving it empty.
+The XS equivalent of C<@array = ()>.  See also L</av_undef>.
 
-Perl equivalent: C<@myarray = ();>.
+Note that it is possible that the actions of a destructor called directly
+or indirectly by freeing an element of the array could cause the reference
+count of the array itself to be reduced (e.g. by deleting an entry in the
+symbol table). So it is a possibility that the AV could have been freed
+(or even reallocated) on return from the call unless you hold a reference
+to it.
 
 =cut
 */
@@ -441,7 +452,6 @@ Perl equivalent: C<@myarray = ();>.
 void
 Perl_av_clear(pTHX_ AV *av)
 {
-    dVAR;
     SSize_t extra;
     bool real;
 
@@ -494,9 +504,13 @@ Perl_av_clear(pTHX_ AV *av)
 /*
 =for apidoc av_undef
 
-Undefines the array.  Frees the memory used by the av to store its list of
-scalars.  If any destructors are triggered as a result, the av itself may
-be freed.
+Undefines the array. The XS equivalent of C<undef(@array)>.
+
+As well as freeing all the elements of the array (like C<av_clear()>), this
+also frees the memory used by the av to store its list of scalars.
+
+See L</av_clear> for a note about the array possibly being invalid on
+return.
 
 =cut
 */
@@ -553,8 +567,8 @@ Perl_av_create_and_push(pTHX_ AV **const avp, SV *const val)
 /*
 =for apidoc av_push
 
-Pushes an SV onto the end of the array.  The array will grow automatically
-to accommodate the addition.  This takes ownership of one reference count.
+Pushes an SV (transferring control of one reference count) onto the end of the
+array.  The array will grow automatically to accommodate the addition.
 
 Perl equivalent: C<push @myarray, $elem;>.
 
@@ -564,7 +578,6 @@ Perl equivalent: C<push @myarray, $elem;>.
 void
 Perl_av_push(pTHX_ AV *av, SV *val)
 {             
-    dVAR;
     MAGIC *mg;
 
     PERL_ARGS_ASSERT_AV_PUSH;
@@ -596,7 +609,6 @@ Perl equivalent: C<pop(@myarray);>
 SV *
 Perl_av_pop(pTHX_ AV *av)
 {
-    dVAR;
     SV *retval;
     MAGIC* mg;
 
@@ -649,7 +661,7 @@ Unshift the given number of C<undef> values onto the beginning of the
 array.  The array will grow automatically to accommodate the addition.  You
 must then use C<av_store> to assign values to these new elements.
 
-Perl equivalent: C<unshift @myarray, ( (undef) x $n );>
+Perl equivalent: S<C<unshift @myarray, ( (undef) x $n );>>
 
 =cut
 */
@@ -657,7 +669,6 @@ Perl equivalent: C<unshift @myarray, ( (undef) x $n );>
 void
 Perl_av_unshift(pTHX_ AV *av, SSize_t num)
 {
-    dVAR;
     SSize_t i;
     MAGIC* mg;
 
@@ -722,7 +733,6 @@ Perl equivalent: C<shift(@myarray);>
 SV *
 Perl_av_shift(pTHX_ AV *av)
 {
-    dVAR;
     SV *retval;
     MAGIC* mg;
 
@@ -754,15 +764,11 @@ Perl_av_shift(pTHX_ AV *av)
 =for apidoc av_top_index
 
 Returns the highest index in the array.  The number of elements in the
-array is C<av_top_index(av) + 1>.  Returns -1 if the array is empty.
+array is S<C<av_top_index(av) + 1>>.  Returns -1 if the array is empty.
 
 The Perl equivalent for this is C<$#myarray>.
 
 (A slightly shorter form is C<av_tindex>.)
-
-=for apidoc av_tindex
-
-Same as L</av_top_index>.
 
 =for apidoc av_len
 
@@ -786,12 +792,12 @@ Perl_av_len(pTHX_ AV *av)
 =for apidoc av_fill
 
 Set the highest index in the array to the given number, equivalent to
-Perl's C<$#array = $fill;>.
+Perl's S<C<$#array = $fill;>>.
 
-The number of elements in the array will be C<fill + 1> after
-av_fill() returns.  If the array was previously shorter, then the
+The number of elements in the array will be S<C<fill + 1>> after
+C<av_fill()> returns.  If the array was previously shorter, then the
 additional elements appended are set to NULL.  If the array
-was longer, then the excess elements are freed.  C<av_fill(av, -1)> is
+was longer, then the excess elements are freed.  S<C<av_fill(av, -1)>> is
 the same as C<av_clear(av)>.
 
 =cut
@@ -799,7 +805,6 @@ the same as C<av_clear(av)>.
 void
 Perl_av_fill(pTHX_ AV *av, SSize_t fill)
 {
-    dVAR;
     MAGIC *mg;
 
     PERL_ARGS_ASSERT_AV_FILL;
@@ -842,8 +847,8 @@ Perl_av_fill(pTHX_ AV *av, SSize_t fill)
 
 Deletes the element indexed by C<key> from the array, makes the element mortal,
 and returns it.  If C<flags> equals C<G_DISCARD>, the element is freed and null
-is returned.  Perl equivalent: C<my $elem = delete($myarray[$idx]);> for the
-non-C<G_DISCARD> version and a void-context C<delete($myarray[$idx]);> for the
+is returned.  Perl equivalent: S<C<my $elem = delete($myarray[$idx]);>> for the
+non-C<G_DISCARD> version and a void-context S<C<delete($myarray[$idx]);>> for the
 C<G_DISCARD> version.
 
 =cut
@@ -851,7 +856,6 @@ C<G_DISCARD> version.
 SV *
 Perl_av_delete(pTHX_ AV *av, SSize_t key, I32 flags)
 {
-    dVAR;
     SV *sv;
 
     PERL_ARGS_ASSERT_AV_DELETE;
@@ -894,23 +898,23 @@ Perl_av_delete(pTHX_ AV *av, SSize_t key, I32 flags)
 	if (!AvREAL(av) && AvREIFY(av))
 	    av_reify(av);
 	sv = AvARRAY(av)[key];
+	AvARRAY(av)[key] = NULL;
 	if (key == AvFILLp(av)) {
-	    AvARRAY(av)[key] = NULL;
 	    do {
 		AvFILLp(av)--;
 	    } while (--key >= 0 && !AvARRAY(av)[key]);
 	}
-	else
-	    AvARRAY(av)[key] = NULL;
 	if (SvSMAGICAL(av))
 	    mg_set(MUTABLE_SV(av));
     }
-    if (flags & G_DISCARD) {
-	SvREFCNT_dec(sv);
-	sv = NULL;
+    if(sv != NULL) {
+	if (flags & G_DISCARD) {
+	    SvREFCNT_dec_NN(sv);
+	    return NULL;
+	}
+	else if (AvREAL(av))
+	    sv_2mortal(sv);
     }
-    else if (AvREAL(av))
-	sv = sv_2mortal(sv);
     return sv;
 }
 
@@ -920,7 +924,7 @@ Perl_av_delete(pTHX_ AV *av, SSize_t key, I32 flags)
 Returns true if the element indexed by C<key> has been initialized.
 
 This relies on the fact that uninitialized array elements are set to
-NULL.
+C<NULL>.
 
 Perl equivalent: C<exists($myarray[$key])>.
 
@@ -929,7 +933,6 @@ Perl equivalent: C<exists($myarray[$key])>.
 bool
 Perl_av_exists(pTHX_ AV *av, SSize_t key)
 {
-    dVAR;
     PERL_ARGS_ASSERT_AV_EXISTS;
     assert(SvTYPE(av) == SVt_PVAV);
 
@@ -983,7 +986,6 @@ Perl_av_exists(pTHX_ AV *av, SSize_t key)
 
 static MAGIC *
 S_get_aux_mg(pTHX_ AV *av) {
-    dVAR;
     MAGIC *mg;
 
     PERL_ARGS_ASSERT_GET_AUX_MG;
@@ -1032,11 +1034,5 @@ Perl_av_iter_p(pTHX_ AV *av) {
 }
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

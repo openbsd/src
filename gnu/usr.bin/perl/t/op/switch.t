@@ -10,7 +10,7 @@ use strict;
 use warnings;
 no warnings 'experimental::smartmatch';
 
-plan tests => 201;
+plan tests => 193;
 
 # The behaviour of the feature pragma should be tested by lib/feature.t
 # using the tests in t/lib/feature/*. This file tests the behaviour of
@@ -54,15 +54,6 @@ given(my $x = "foo") {
 $_ = "outside";
 given("inside") { check_outside1() }
 sub check_outside1 { is($_, "inside", "\$_ is not lexically scoped") }
-
-{
-    no warnings 'experimental::lexical_topic';
-    my $_ = "outside";
-    given("inside") { check_outside2() }
-    sub check_outside2 {
-	is($_, "outside", "\$_ lexically scoped (lexical \$_)")
-    }
-}
 
 # Basic string/numeric comparisons and control flow
 
@@ -397,23 +388,6 @@ sub check_outside1 { is($_, "inside", "\$_ is not lexically scoped") }
     is($ok, "twenty", $test);
 }
 
-# Make sure it still works with a lexical $_:
-{
-    no warnings 'experimental::lexical_topic';
-    my $_;
-    my $test = "explicit comparison with lexical \$_";
-    my $twenty_five = 25;
-    my $ok;
-    given($twenty_five) {
-	when ($_ ge "40") { $ok = "forty" }
-	when ($_ ge "30") { $ok = "thirty" }
-	when ($_ ge "20") { $ok = "twenty" }
-	when ($_ ge "10") { $ok = "ten" }
-	default           { $ok = "default" }
-    }
-    is($ok, "twenty", $test);
-}
-
 # Optimized-away comparisons
 {
     my $ok;
@@ -692,62 +666,6 @@ my $f = tie my $v, "FetchCounter";
 	}
 	when (1) {
 	    is($first, 1, "Explicit \$_: first");
-	    $first = 0;
-	    # Implicit break is okay
-	}
-    }
-}
-
-{
-    my $first = 1;
-    no warnings 'experimental::lexical_topic';
-    my $_;
-    for (1, "two") {
-	when ("two") {
-	    is($first, 0, "Implicitly lexical loop: second");
-	    eval {break};
-	    like($@, qr/^Can't "break" in a loop topicalizer/,
-	    	q{Can't "break" in a loop topicalizer});
-	}
-	when (1) {
-	    is($first, 1, "Implicitly lexical loop: first");
-	    $first = 0;
-	    # Implicit break is okay
-	}
-    }
-}
-
-{
-    my $first = 1;
-    no warnings 'experimental::lexical_topic';
-    my $_;
-    for $_ (1, "two") {
-	when ("two") {
-	    is($first, 0, "Implicitly lexical, explicit \$_: second");
-	    eval {break};
-	    like($@, qr/^Can't "break" in a loop topicalizer/,
-	    	q{Can't "break" in a loop topicalizer});
-	}
-	when (1) {
-	    is($first, 1, "Implicitly lexical, explicit \$_: first");
-	    $first = 0;
-	    # Implicit break is okay
-	}
-    }
-}
-
-{
-    my $first = 1;
-    no warnings 'experimental::lexical_topic';
-    for my $_ (1, "two") {
-	when ("two") {
-	    is($first, 0, "Lexical loop: second");
-	    eval {break};
-	    like($@, qr/^Can't "break" in a loop topicalizer/,
-	    	q{Can't "break" in a loop topicalizer});
-	}
-	when (1) {
-	    is($first, 1, "Lexical loop: first");
 	    $first = 0;
 	    # Implicit break is okay
 	}
@@ -1371,23 +1289,13 @@ unreified_check(undef,"");
 # must ensure $_ is initialised and cleared at start/end of given block
 
 {
-    sub f1 {
-	no warnings 'experimental::lexical_topic';
-	my $_;
-	given(3) {
-	    return sub { $_ } # close over lexical $_
-	}
-    }
-    is(f1()->(), 3, 'closed over $_');
-
     package RT94682;
 
     my $d = 0;
     sub DESTROY { $d++ };
 
     sub f2 {
-	no warnings 'experimental::lexical_topic';
-	my $_ = 5;
+	local $_ = 5;
 	given(bless [7]) {
 	    ::is($_->[0], 7, "is [7]");
 	}
@@ -1397,6 +1305,48 @@ unreified_check(undef,"");
     f2();
 }
 
+# check that 'when' handles all 'for' loop types
+
+{
+    my $i;
+
+    $i = 0;
+    for (1..3) {
+        when (1) {$i +=    1 }
+        when (2) {$i +=   10 }
+        when (3) {$i +=  100 }
+        default { $i += 1000 }
+    }
+    is($i, 111, "when in for 1..3");
+
+    $i = 0;
+    for ('a'..'c') {
+        when ('a') {$i +=    1 }
+        when ('b') {$i +=   10 }
+        when ('c') {$i +=  100 }
+        default { $i += 1000 }
+    }
+    is($i, 111, "when in for a..c");
+
+    $i = 0;
+    for (1,2,3) {
+        when (1) {$i +=    1 }
+        when (2) {$i +=   10 }
+        when (3) {$i +=  100 }
+        default { $i += 1000 }
+    }
+    is($i, 111, "when in for 1,2,3");
+
+    $i = 0;
+    my @a = (1,2,3);
+    for (@a) {
+        when (1) {$i +=    1 }
+        when (2) {$i +=   10 }
+        when (3) {$i +=  100 }
+        default { $i += 1000 }
+    }
+    is($i, 111, 'when in for @a');
+}
 
 
 # Okay, that'll do for now. The intricacies of the smartmatch

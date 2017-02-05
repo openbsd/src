@@ -14,6 +14,7 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
    my $testserver = IO::Socket::IP->new(
       ( $socktype eq "SOCK_STREAM" ? ( Listen => 1 ) : () ),
       LocalHost => "::1",
+      LocalPort => "0",
       Type      => Socket->$socktype,
    ) or die "Cannot listen on PF_INET6 - $@";
 

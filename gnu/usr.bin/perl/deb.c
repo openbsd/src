@@ -59,7 +59,6 @@ void
 Perl_vdeb(pTHX_ const char *pat, va_list *args)
 {
 #ifdef DEBUGGING
-    dVAR;
     const char* const file = PL_curcop ? OutCopFILE(PL_curcop) : "<null>";
     const char* const display_file = file ? file : "<free>";
     const long line = PL_curcop ? (long)CopLINE(PL_curcop) : 0;
@@ -83,7 +82,6 @@ I32
 Perl_debstackptrs(pTHX)
 {
 #ifdef DEBUGGING
-    dVAR;
     PerlIO_printf(Perl_debug_log,
 		  "%8"UVxf" %8"UVxf" %8"IVdf" %8"IVdf" %8"IVdf"\n",
 		  PTR2UV(PL_curstack), PTR2UV(PL_stack_base),
@@ -94,6 +92,8 @@ Perl_debstackptrs(pTHX)
 		  PTR2UV(PL_mainstack), PTR2UV(AvARRAY(PL_curstack)),
 		  PTR2UV(PL_mainstack), PTR2UV(AvFILLp(PL_curstack)),
 		  PTR2UV(AvMAX(PL_curstack)));
+#else
+    PERL_UNUSED_CONTEXT;
 #endif /* DEBUGGING */
     return 0;
 }
@@ -113,7 +113,6 @@ S_deb_stack_n(pTHX_ SV** stack_base, I32 stack_min, I32 stack_max,
 	I32 mark_min, I32 mark_max)
 {
 #ifdef DEBUGGING
-    dVAR;
     I32 i = stack_max - 30;
     const I32 *markscan = PL_markstack + mark_min;
 
@@ -136,7 +135,7 @@ S_deb_stack_n(pTHX_ SV** stack_base, I32 stack_min, I32 stack_max,
 	if (markscan <= PL_markstack + mark_max && *markscan < i) {
 	    do {
 		++markscan;
-		PerlIO_putc(Perl_debug_log, '*');
+		(void)PerlIO_putc(Perl_debug_log, '*');
 	    }
 	    while (markscan <= PL_markstack + mark_max && *markscan < i);
 	    PerlIO_printf(Perl_debug_log, "  ");
@@ -164,7 +163,6 @@ I32
 Perl_debstack(pTHX)
 {
 #ifndef SKIP_DEBUGGING
-    dVAR;
     if (CopSTASH_eq(PL_curcop, PL_debstash) && !DEBUG_J_TEST_)
 	return 0;
 
@@ -193,7 +191,8 @@ static const char * const si_names[] = {
     "DESTROY",
     "WARNHOOK",
     "DIEHOOK",
-    "REQUIRE"
+    "REQUIRE",
+    "MULTICALL"
 };
 #endif
 
@@ -204,7 +203,6 @@ void
 Perl_deb_stack_all(pTHX)
 {
 #ifdef DEBUGGING
-    dVAR;
     I32 si_ix;
     const PERL_SI *si;
 
@@ -236,7 +234,7 @@ Perl_deb_stack_all(pTHX)
 		PerlIO_printf(Perl_debug_log, "\n");
 	    else {
 
-		/* Find the current context's stack range by searching
+		/* Find the the current context's stack range by searching
 		 * forward for any higher contexts using this stack; failing
 		 * that, it will be equal to the size of the stack for old
 		 * stacks, or PL_stack_sp for the current stack
@@ -329,11 +327,5 @@ Perl_deb_stack_all(pTHX)
 }
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

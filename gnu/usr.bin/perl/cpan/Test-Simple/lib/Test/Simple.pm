@@ -4,7 +4,7 @@ use 5.006;
 
 use strict;
 
-our $VERSION = '1.001002';
+our $VERSION = '1.001014';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module 0.99;
@@ -26,7 +26,7 @@ Test::Simple - Basic utilities for writing tests.
 
 =head1 DESCRIPTION
 
-** If you are unfamiliar with testing B<read Test::Tutorial> first! **
+** If you are unfamiliar with testing B<read L<Test::Tutorial> first!> **
 
 This is an extremely simple, extremely basic module for writing tests
 suitable for CPAN modules and other pursuits.  If you wish to do more
@@ -35,7 +35,7 @@ for this one).
 
 The basic unit of Perl testing is the ok.  For each thing you want to
 test your program will print out an "ok" or "not ok" to indicate pass
-or fail.  You do this with the ok() function (see below).
+or fail.  You do this with the C<ok()> function (see below).
 
 The only other constraint is you must pre-declare how many tests you
 plan to run.  This is in case something goes horribly wrong during the
@@ -54,10 +54,10 @@ You must have a plan.
   ok( $foo eq $bar, $name );
   ok( $foo eq $bar );
 
-ok() is given an expression (in this case C<$foo eq $bar>).  If it's
+C<ok()> is given an expression (in this case C<$foo eq $bar>).  If it's
 true, the test passed.  If it's false, it didn't.  That's about it.
 
-ok() prints out either "ok" or "not ok" along with a test number (it
+C<ok()> prints out either "ok" or "not ok" along with a test number (it
 keeps track of that for you).
 
   # This produces "ok 1 - Hell not yet frozen over" (or not ok)
@@ -84,7 +84,7 @@ sub ok ($;$) {    ## no critic (Subroutines::ProhibitSubroutinePrototypes)
 
 Test::Simple will start by printing number of tests run in the form
 "1..M" (so "1..5" means you're going to run 5 tests).  This strange
-format lets Test::Harness know how many tests you plan on running in
+format lets L<Test::Harness> know how many tests you plan on running in
 case something goes horribly wrong.
 
 If all your tests passed, Test::Simple will exit with zero (which is
@@ -185,13 +185,13 @@ he wasn't in Tony's kitchen).  This is it.
 =item L<Test::More>
 
 More testing functions!  Once you outgrow Test::Simple, look at
-Test::More.  Test::Simple is 100% forward compatible with Test::More
-(i.e. you can just use Test::More instead of Test::Simple in your
+L<Test::More>.  Test::Simple is 100% forward compatible with L<Test::More>
+(i.e. you can just use L<Test::More> instead of Test::Simple in your
 programs and things will still work).
 
 =back
 
-Look in Test::More's SEE ALSO for more testing modules.
+Look in L<Test::More>'s SEE ALSO for more testing modules.
 
 
 =head1 AUTHORS
@@ -199,6 +199,13 @@ Look in Test::More's SEE ALSO for more testing modules.
 Idea by Tony Bowden and Paul Johnson, code by Michael G Schwern
 E<lt>schwern@pobox.comE<gt>, wardrobe by Calvin Klein.
 
+=head1 MAINTAINERS
+
+=over 4
+
+=item Chad Granum E<lt>exodist@cpan.orgE<gt>
+
+=back
 
 =head1 COPYRIGHT
 

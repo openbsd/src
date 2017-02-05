@@ -2,7 +2,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC, '../lib';
+    unshift @INC, '../lib';     # Do NOT make this @INC = '../lib';
     require './test.pl';	# for which_perl() etc
     plan(4);
 }

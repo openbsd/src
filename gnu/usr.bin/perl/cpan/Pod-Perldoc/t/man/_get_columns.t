@@ -4,7 +4,7 @@ use warnings;
 
 {
 package Local::ToMan;
-use base 'Pod::Perldoc::ToMan';
+use parent 'Pod::Perldoc::ToMan';
 use vars qw( $stty_text $is_linux $warning );
 no warnings 'redefine';
 no strict 'refs';

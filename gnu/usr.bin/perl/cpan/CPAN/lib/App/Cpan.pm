@@ -4,9 +4,9 @@ use strict;
 use warnings;
 use vars qw($VERSION);
 
-use if $] < 5.008 => "IO::Scalar";
+use if $] < 5.008 => 'IO::Scalar';
 
-$VERSION = '1.62_01';
+$VERSION = '1.63_01';
 
 =head1 NAME
 
@@ -22,6 +22,9 @@ App::Cpan - easily interact with CPAN from the command line
 
 	# use local::lib
 	cpan -I module_name [ module_name ... ]
+
+	# one time mirror override for faster mirrors
+	cpan -p ...
 
 	# with just the dot, install from the distribution in the
 	# current directory
@@ -135,6 +138,11 @@ List the modules by the specified authors.
 
 Make the specified modules.
 
+=item -M mirror1,mirror2,...
+
+A comma-separated list of mirrors to use for just this run. The C<-P>
+option can find them for you automatically.
+
 =item -n
 
 Do a dry run, but don't actually install anything. (unimplemented)
@@ -145,11 +153,12 @@ Show the out-of-date modules.
 
 =item -p
 
-Ping the configured mirrors
+Ping the configured mirrors and print a report
 
 =item -P
 
-Find the best mirrors you could be using (but doesn't configure them just yet)
+Find the best mirrors you could be using and use them for the current
+session.
 
 =item -r
 
@@ -208,6 +217,51 @@ and tells you about problems you might have.
 	# force install modules ( must use -i )
 	cpan -fi CGI::Minimal URI
 
+	# install modules but without testing them
+	cpan -Ti CGI::Minimal URI
+
+=head2 Environment variables
+
+There are several components in CPAN.pm that use environment variables.
+The build tools, L<ExtUtils::MakeMaker> and L<Module::Build> use some,
+while others matter to the levels above them. Some of these are specified
+by the Perl Toolchain Gang:
+
+Lancaster Concensus: L<https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/lancaster-consensus.md>
+
+Oslo Concensus: L<https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/oslo-consensus.md>
+
+=over 4
+
+=item NONINTERACTIVE_TESTING
+
+Assume no one is paying attention and skips prompts for distributions
+that do that correctly. C<cpan(1)> sets this to C<1> unless it already
+has a value (even if that value is false).
+
+=item PERL_MM_USE_DEFAULT
+
+Use the default answer for a prompted questions. C<cpan(1)> sets this
+to C<1> unless it already has a value (even if that value is false).
+
+=item CPAN_OPTS
+
+As with C<PERL5OPTS>, a string of additional C<cpan(1)> options to
+add to those you specify on the command line.
+
+=item CPANSCRIPT_LOGLEVEL
+
+The log level to use, with either the embedded, minimal logger or
+L<Log::Log4perl> if it is installed. Possible values are the same as
+the C<Log::Log4perl> levels: C<TRACE>, C<DEBUG>, C<INFO>, C<WARN>,
+C<ERROR>, and C<FATAL>. The default is C<INFO>.
+
+=item GIT_COMMAND
+
+The path to the C<git> binary to use for the Git features. The default
+is C</usr/local/bin/git>.
+
+=back
 
 =head2 Methods
 
@@ -216,7 +270,7 @@ and tells you about problems you might have.
 =cut
 
 use autouse Carp => qw(carp croak cluck);
-use CPAN ();
+use CPAN 1.80 (); # needs no test
 use Config;
 use autouse Cwd => qw(cwd);
 use autouse 'Data::Dumper' => qw(Dumper);
@@ -245,7 +299,7 @@ BEGIN { # most of this should be in methods
 use vars qw( @META_OPTIONS $Default %CPAN_METHODS @CPAN_OPTIONS  @option_order
 	%Method_table %Method_table_index );
 
-@META_OPTIONS = qw( h v V I g G C A D O l L a r p P j: J w T);
+@META_OPTIONS = qw( h v V I g G M: C A D O l L a r p P j: J w T);
 
 $Default = 'default';
 
@@ -257,6 +311,7 @@ $Default = 'default';
 	'm'      => 'make',
 	't'      => 'test',
 	'u'      => 'upgrade',
+	'T'      => 'notest',
 	);
 @CPAN_OPTIONS = grep { $_ ne $Default } sort keys %CPAN_METHODS;
 
@@ -283,8 +338,9 @@ sub GOOD_EXIT () { 0 }
 	J =>  [ \&_dump_config,       NO_ARGS, GOOD_EXIT, 'Dump configuration to stdout' ],
 	F =>  [ \&_lock_lobotomy,     NO_ARGS, GOOD_EXIT, 'Turn off CPAN.pm lock files'  ],
 	I =>  [ \&_load_local_lib,    NO_ARGS, GOOD_EXIT, 'Loading local::lib'           ],
+	M =>  [ \&_use_these_mirrors,    ARGS, GOOD_EXIT, 'Setting per session mirrors'  ],
+	P =>  [ \&_find_good_mirrors, NO_ARGS, GOOD_EXIT, 'Finding good mirrors'         ],
     w =>  [ \&_turn_on_warnings,  NO_ARGS, GOOD_EXIT, 'Turning on warnings'          ],
-    T =>  [ \&_turn_off_testing,  NO_ARGS, GOOD_EXIT, 'Turning off testing'          ],
 
 	# options that do their one thing
 	g =>  [ \&_download,          NO_ARGS, GOOD_EXIT, 'Download the latest distro'        ],
@@ -299,7 +355,6 @@ sub GOOD_EXIT () { 0 }
 	L =>  [ \&_show_author_mods,     ARGS, GOOD_EXIT, 'Showing author mods'          ],
 	a =>  [ \&_create_autobundle, NO_ARGS, GOOD_EXIT, 'Creating autobundle'          ],
 	p =>  [ \&_ping_mirrors,      NO_ARGS, GOOD_EXIT, 'Pinging mirrors'              ],
-	P =>  [ \&_find_good_mirrors, NO_ARGS, GOOD_EXIT, 'Finding good mirrors'         ],
 
 	r =>  [ \&_recompile,         NO_ARGS, GOOD_EXIT, 'Recompiling'                  ],
 	u =>  [ \&_upgrade,           NO_ARGS, GOOD_EXIT, 'Running `make test`'          ],
@@ -309,6 +364,7 @@ sub GOOD_EXIT () { 0 }
 	i =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make install`'       ],
    'm' => [ \&_default,              ARGS, GOOD_EXIT, 'Running `make`'               ],
 	t =>  [ \&_default,              ARGS, GOOD_EXIT, 'Running `make test`'          ],
+	T =>  [ \&_default,              ARGS, GOOD_EXIT, 'Installing with notest'       ],
 	);
 
 %Method_table_index = (
@@ -364,7 +420,9 @@ sub _process_setup_options
 			);
 		}
 
-	foreach my $o ( qw(F I w T) )
+	$class->_turn_off_testing if $options->{T};
+
+	foreach my $o ( qw(F I w P M) )
 		{
 		next unless exists $options->{$o};
 		$Method_table{$o}[ $Method_table_index{code} ]->( $options->{$o} );
@@ -385,13 +443,25 @@ sub _process_setup_options
 
 	my $option_count = grep { $options->{$_} } @option_order;
 	no warnings 'uninitialized';
-	$option_count -= $options->{'f'}; # don't count force
+
+	# don't count options that imply installation
+	foreach my $opt ( qw(f T) ) { # don't count force or notest
+		$option_count -= $options->{$opt};
+		}
 
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 	# if there are no options, set -i (this line fixes RT ticket 16915)
 	$options->{i}++ unless $option_count;
 	}
 
+sub _setup_environment {
+# should we override or set defaults? If this were a true interactive
+# session, we'd be in the CPAN shell.
+
+# https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/lancaster-consensus.md
+	$ENV{NONINTERACTIVE_TESTING} = 1 unless defined $ENV{NONINTERACTIVE_TESTING};
+	$ENV{PERL_MM_USE_DEFAULT}    = 1 unless defined $ENV{PERL_MM_USE_DEFAULT};
+	}
 
 =item run()
 
@@ -424,13 +494,15 @@ sub run
 
 	$class->_process_setup_options( $options );
 
+	$class->_setup_environment( $options );
+
 	OPTION: foreach my $option ( @option_order )
 		{
 		next unless $options->{$option};
 
 		my( $sub, $takes_args, $description ) =
 			map { $Method_table{$option}[ $Method_table_index{$_} ] }
-			qw( code takes_args );
+			qw( code takes_args description );
 
 		unless( ref $sub eq ref sub {} )
 			{
@@ -475,6 +547,7 @@ sub _init_logger
 
     unless( $log4perl_loaded )
         {
+        print "Loading internal null logger. Install Log::Log4perl for logging messages\n";
         $logger = Local::Null::Logger->new;
         return $logger;
         }
@@ -505,7 +578,7 @@ sub _default
 	# we'll deal with 'f' (force) later, so skip it
 	foreach my $option ( @CPAN_OPTIONS )
 		{
-		next if $option eq 'f';
+		next if ( $option eq 'f' or $option eq 'T' );
 		next unless $options->{$option};
 		$switch = $option;
 		last;
@@ -523,24 +596,30 @@ sub _default
 	my $method = $CPAN_METHODS{$switch};
 	die "CPAN.pm cannot $method!\n" unless CPAN::Shell->can( $method );
 
-	# call the CPAN::Shell method, with force if specified
+	# call the CPAN::Shell method, with force or notest if specified
 	my $action = do {
-		if( $options->{f} ) { sub { CPAN::Shell->force( $method, @_ ) } }
-		else                { sub { CPAN::Shell->$method( @_ )        } }
+		   if( $options->{f} ) { sub { CPAN::Shell->force( $method, @_ )  } }
+		elsif( $options->{T} ) { sub { CPAN::Shell->notest( $method, @_ ) } }
+		else                   { sub { CPAN::Shell->$method( @_ )         } }
 		};
 
 	# How do I handle exit codes for multiple arguments?
-	my $errors = 0;
+	my @errors = ();
 
 	foreach my $arg ( @$args )
 		{
 		_clear_cpanpm_output();
 		$action->( $arg );
 
-		$errors += defined _cpanpm_output_indicates_failure();
+		my $error = _cpanpm_output_indicates_failure();
+		push @errors, $error if $error;
 		}
 
-	$errors ? I_DONT_KNOW_WHAT_HAPPENED : HEY_IT_WORKED;
+	return do {
+		if( @errors ) { $errors[0] }
+		else { HEY_IT_WORKED }
+		};
+
 	}
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -582,21 +661,32 @@ sub _clear_cpanpm_output { $scalar = '' }
 
 sub _get_cpanpm_output   { $scalar }
 
+# These are lines I don't care about in CPAN.pm output. If I can
+# filter out the informational noise, I have a better chance to
+# catch the error signal
 my @skip_lines = (
 	qr/^\QWarning \(usually harmless\)/,
 	qr/\bwill not store persistent state\b/,
 	qr(//hint//),
 	qr/^\s+reports\s+/,
+	qr/^Try the command/,
+	qr/^\s+$/,
+	qr/^to find objects/,
+	qr/^\s*Database was generated on/,
+	qr/^Going to read/,
+	qr|^\s+i\s+/|,    # the i /Foo::Whatever/ line when it doesn't know
 	);
 
 sub _get_cpanpm_last_line
 	{
 	my $fh;
-	if ($] < 5.008) {
-		$fh = IO::Scalar->new(\ $scalar);
-        } else {
-		eval q{open $fh, "<", \\ $scalar;};
-        }
+
+	if( $] < 5.008 ) {
+		$fh = IO::Scalar->new( \ $scalar );
+		}
+	else {
+		eval q{ open $fh, '<', \\ $scalar; };
+		}
 
 	my @lines = <$fh>;
 
@@ -622,13 +712,16 @@ sub _get_cpanpm_last_line
 
 BEGIN {
 my $epic_fail_words = join '|',
-	qw( Error stop(?:ping)? problems force not unsupported fail(?:ed)? );
+	qw( Error stop(?:ping)? problems force not unsupported
+		fail(?:ed)? Cannot\s+install );
 
 sub _cpanpm_output_indicates_failure
 	{
 	my $last_line = _get_cpanpm_last_line();
 
 	my $result = $last_line =~ /\b(?:$epic_fail_words)\b/i;
+	return A_MODULE_FAILED_TO_INSTALL if $last_line =~ /\b(?:Cannot\s+install)\b/i;
+
 	$result || ();
 	}
 }
@@ -828,7 +921,6 @@ sub _is_pingable_scheme {
 sub _find_good_mirrors {
 	require CPAN::Mirrors;
 
-	my $mirrors = CPAN::Mirrors->new;
 	my $file = do {
 		my $file = 'MIRRORED.BY';
 		my $local_path = File::Spec->catfile(
@@ -841,11 +933,10 @@ sub _find_good_mirrors {
 			$local_path;
 			}
 		};
-
-	$mirrors->parse_mirrored_by( $file );
+	my $mirrors = CPAN::Mirrors->new( $file );
 
 	my @mirrors = $mirrors->best_mirrors(
-		how_many   => 3,
+		how_many   => 5,
 		verbose    => 1,
 		);
 
@@ -854,6 +945,9 @@ sub _find_good_mirrors {
 		_print_ping_report( $mirror->http );
 		}
 
+	$CPAN::Config->{urllist} = [
+		map { $_->http } @mirrors
+		];
 	}
 
 sub _print_inc_dir_report
@@ -870,9 +964,10 @@ sub _print_ping_report
 	my( $mirror ) = @_;
 
 	my $rtt = eval { _get_ping_report( $mirror ) };
+	my $result = $rtt ? sprintf "+ (%4d ms)", $rtt * 1000 : '!';
 
 	$logger->info(
-		sprintf "\t%s (%4d ms) %s", $rtt  ? '+' : '!',  $rtt * 1000, $mirror
+		sprintf "\t%s %s", $result, $mirror
 		);
 	}
 
@@ -917,6 +1012,19 @@ sub _load_local_lib # -I
 	local::lib->import;
 
 	return HEY_IT_WORKED;
+	}
+
+sub _use_these_mirrors # -M
+	{
+	$logger->debug( "Setting per session mirrors" );
+	unless( $_[0] ) {
+		$logger->die( "The -M switch requires a comma-separated list of mirrors" );
+		}
+
+	$CPAN::Config->{urllist} = [ split /,/, $_[0] ];
+
+	$logger->debug( "Mirrors are @{$CPAN::Config->{urllist}}" );
+
 	}
 
 sub _create_autobundle
@@ -1168,9 +1276,9 @@ sub _show_Details
 		print "$arg\n", "-" x 73, "\n\t";
 		print join "\n\t",
 			$module->description ? $module->description : "(no description)",
-			$module->cpan_file,
-			$module->inst_file,
-			'Installed: ' . $module->inst_version,
+			$module->cpan_file ? $module->cpan_file : "(no cpanfile)",
+			$module->inst_file ? $module->inst_file :"(no installation file)" ,
+			'Installed: ' . ($module->inst_version ? $module->inst_version : "not installed"),
 			'CPAN:      ' . $module->cpan_version . '  ' .
 				($module->uptodate ? "" : "Not ") . "up to date",
 			$author->fullname . " (" . $module->userid . ")",
@@ -1317,7 +1425,7 @@ sub _eval_version
 sub _path_to_module
 	{
 	my( $inc, $path ) = @_;
-	return if length $path< length $inc;
+	return if length $path < length $inc;
 
 	my $module_path = substr( $path, length $inc );
 	$module_path =~ s/\.pm\z//;
@@ -1359,13 +1467,9 @@ correctly if Log4perl is not installed.
 * When I capture CPAN.pm output, I need to check for errors and
 report them to the user.
 
-* Support local::lib
-
 * Warnings switch
 
 * Check then exit
-
-* ping mirrors support
 
 * no test option
 
@@ -1375,14 +1479,16 @@ report them to the user.
 
 =head1 SEE ALSO
 
-Most behaviour, including environment variables and configuration,
-comes directly from CPAN.pm.
+L<CPAN>, L<App::cpanminus>
 
 =head1 SOURCE AVAILABILITY
 
-This code is in Github:
+This code is in Github in the CPAN.pm repository:
 
-	git://github.com/briandfoy/cpan_script.git
+	https://github.com/andk/cpanpm
+
+The source used to be tracked separately in another GitHub repo,
+but the canonical source is now in the above repo.
 
 =head1 CREDITS
 
@@ -1402,7 +1508,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2013, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2014, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

@@ -29,3 +29,7 @@ t/base/ directory fail.
 Tests in the t/comp/, t/cmd/, t/run/, t/io/, t/op/ and t/uni/ directories
 should also be runnable by miniperl and not require Config.pm, but
 failures to comply will not cause TEST to abort like for t/base/.
+
+Tests in t/perf/ are designed to test performance and optimisations,
+and also contain additional tools and files designed to run outside
+of the test suite

@@ -127,15 +127,15 @@ STATIC void ptable_split(pPTBLMS_ ptable * const t) {
  t->ary = ary;
 
  for (i = 0; i < oldsize; i++, ary++) {
-  ptable_ent **curentp, **entp, *ent;
+  ptable_ent **currentp, **entp, *ent;
   if (!*ary)
    continue;
-  curentp = ary + oldsize;
+  currentp = ary + oldsize;
   for (entp = ary, ent = *ary; ent; ent = *entp) {
    if ((newsize & PTABLE_HASH(ent->key)) != i) {
     *entp     = ent->next;
-    ent->next = *curentp;
-    *curentp  = ent;
+    ent->next = *currentp;
+    *currentp  = ent;
     continue;
    } else
     entp = &ent->next;

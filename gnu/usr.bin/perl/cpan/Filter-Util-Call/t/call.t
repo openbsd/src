@@ -686,7 +686,7 @@ sub import
 {
     my ($type) = shift ;
  
-    filter_add(bless [] )
+    filter_add([])
 }
  
 sub filter

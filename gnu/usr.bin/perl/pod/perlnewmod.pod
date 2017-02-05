@@ -164,8 +164,8 @@ the caller and not your module. For instance, if you say this:
 
 the user will see something like this:
 
-    No hostname given at /usr/local/lib/perl5/site_perl/5.6.0/Net/Acme.pm
-    line 123.
+ No hostname given at
+ /usr/local/lib/perl5/site_perl/5.6.0/Net/Acme.pm line 123.
 
 which looks like your module is doing something wrong. Instead, you want
 to put the blame on the user, and say this:

@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-require "test.pl";
+require "./test.pl";
 plan( tests => 38 );
 
 # delete() on hash elements

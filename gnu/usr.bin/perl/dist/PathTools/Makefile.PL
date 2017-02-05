@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 WriteMakefile
 (
           'DISTNAME' => 'PathTools',
-	  'NAME' => 'Cwd',
+          'NAME' => 'Cwd',
           'VERSION_FROM' => 'Cwd.pm',
           'DEFINE' => join(" ",
                 "-DDOUBLE_SLASHES_SPECIAL=@{[$^O eq q(qnx) || $^O eq q(nto) ? 1 : 0]}",
@@ -20,7 +20,7 @@ WriteMakefile
                            # done_testing() is used in dist/Cwd/t/Spec.t
                            'Test::More' => 0.88,
                          },
-          'INSTALLDIRS' => 'perl',
+          ($] > 5.011) ? () : ( INSTALLDIRS => 'perl' ), # CPAN sourced versions should now install to site
           'EXE_FILES' => [],
           'PL_FILES' => {}
         )

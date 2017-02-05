@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..15\n";
+print "1..16\n";
 
 for ($i = 0; $i <= 10; $i++) {
     $x[$i] = $i;
@@ -101,3 +101,8 @@ for ("${\''}") {
     print 'ok 15 - [perl \#78194] \$_ == \$_ inside for("$x"){...}',
           "\n";
 }
+
+# [perl #123286] Lone C-style for in a block messes up the stack
+@_ = (1..3, do {for(0;0;){}}, 4..6);
+print "not " unless "@_" eq '1 2 3 0 4 5 6';
+print "ok 16 - [perl #78194] Lone C-style for in a block\n";

@@ -14,7 +14,7 @@ package Pod::Find;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.62';   ## Current version of this package
+$VERSION = '1.63';   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -56,7 +56,7 @@ so be sure to specify them in the B<use> statement if you need them:
   use Pod::Find qw(pod_find);
 
 From this version on the typical SCM (software configuration management)
-files/directories like RCS, CVS, SCCS, .svn are ignored.
+directories are ignored. These are: RCS, CVS, SCCS, .svn, .hg, .git, .sync
 
 =cut
 
@@ -226,7 +226,7 @@ sub pod_find
         File::Find::find( sub {
             my $item = $File::Find::name;
             if(-d) {
-                if($item =~ m{/(?:RCS|CVS|SCCS|\.svn)$}) {
+                if($item =~ m{/(?:RCS|CVS|SCCS|\.svn|\.hg|\.git|\.sync)$}) {
                     $File::Find::prune = 1;
                     return;
                 }

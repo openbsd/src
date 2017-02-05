@@ -82,22 +82,22 @@ This is the constructor for the class.  That means it is
 expected to return a blessed reference to a new scalar
 (probably anonymous) that it's creating.  For example:
 
-    sub TIESCALAR {
-        my $class = shift;
-        my $pid = shift || $$; # 0 means me
+ sub TIESCALAR {
+     my $class = shift;
+     my $pid = shift || $$; # 0 means me
 
-        if ($pid !~ /^\d+$/) {
-            carp "Nice::Tie::Scalar got non-numeric pid $pid" if $^W;
-            return undef;
-        }
+     if ($pid !~ /^\d+$/) {
+         carp "Nice::Tie::Scalar got non-numeric pid $pid" if $^W;
+         return undef;
+     }
 
-        unless (kill 0, $pid) { # EPERM or ERSCH, no doubt
-            carp "Nice::Tie::Scalar got bad pid $pid: $!" if $^W;
-            return undef;
-        }
+     unless (kill 0, $pid) { # EPERM or ERSCH, no doubt
+         carp "Nice::Tie::Scalar got bad pid $pid: $!" if $^W;
+         return undef;
+     }
 
-        return bless \$pid, $class;
-    }
+     return bless \$pid, $class;
+ }
 
 This tie class has chosen to return an error rather than raising an
 exception if its constructor should fail.  While this is how dbmopen() works,
@@ -138,30 +138,33 @@ argument: the new value the user is trying to assign. Don't worry about
 returning a value from STORE; the semantic of assignment returning the
 assigned value is implemented with FETCH.
 
-    sub STORE {
-        my $self = shift;
-        confess "wrong type" unless ref $self;
-        my $new_nicety = shift;
-        croak "usage error" if @_;
+ sub STORE {
+     my $self = shift;
+     confess "wrong type" unless ref $self;
+     my $new_nicety = shift;
+     croak "usage error" if @_;
 
-        if ($new_nicety < PRIO_MIN) {
-            carp sprintf
-              "WARNING: priority %d less than minimum system priority %d",
-                  $new_nicety, PRIO_MIN if $^W;
-            $new_nicety = PRIO_MIN;
-        }
+     if ($new_nicety < PRIO_MIN) {
+         carp sprintf
+           "WARNING: priority %d less than minimum system priority %d",
+               $new_nicety, PRIO_MIN if $^W;
+         $new_nicety = PRIO_MIN;
+     }
 
-        if ($new_nicety > PRIO_MAX) {
-            carp sprintf
-              "WARNING: priority %d greater than maximum system priority %d",
-                  $new_nicety, PRIO_MAX if $^W;
-            $new_nicety = PRIO_MAX;
-        }
+     if ($new_nicety > PRIO_MAX) {
+         carp sprintf
+           "WARNING: priority %d greater than maximum system priority %d",
+               $new_nicety, PRIO_MAX if $^W;
+         $new_nicety = PRIO_MAX;
+     }
 
-        unless (defined setpriority(PRIO_PROCESS, $$self, $new_nicety)) {
-            confess "setpriority failed: $!";
-        }
-    }
+     unless (defined setpriority(PRIO_PROCESS,
+                                 $$self,
+                                 $new_nicety))
+     {
+         confess "setpriority failed: $!";
+     }
+ }
 
 =item UNTIE this
 X<UNTIE>
@@ -291,17 +294,17 @@ there.
 In our example, C<undef> is really C<$self-E<gt>{ELEMSIZE}> number of
 spaces so we have a little more work to do here:
 
-    sub STORE {
-      my $self = shift;
-      my( $index, $value ) = @_;
-      if ( length $value > $self->{ELEMSIZE} ) {
-        croak "length of $value is greater than $self->{ELEMSIZE}";
-      }
-      # fill in the blanks
-      $self->EXTEND( $index ) if $index > $self->FETCHSIZE();
-      # right justify to keep element size for smaller elements
-      $self->{ARRAY}->[$index] = sprintf "%$self->{ELEMSIZE}s", $value;
-    }
+ sub STORE {
+   my $self = shift;
+   my( $index, $value ) = @_;
+   if ( length $value > $self->{ELEMSIZE} ) {
+     croak "length of $value is greater than $self->{ELEMSIZE}";
+   }
+   # fill in the blanks
+   $self->EXTEND( $index ) if $index > $self->FETCHSIZE();
+   # right justify to keep element size for smaller elements
+   $self->{ARRAY}->[$index] = sprintf "%$self->{ELEMSIZE}s", $value;
+ }
 
 Negative indexes are treated the same as with FETCH.
 
@@ -366,13 +369,13 @@ Verify that the element at index I<key> exists in the tied array I<this>.
 In our example, we will determine that if an element consists of
 C<$self-E<gt>{ELEMSIZE}> spaces only, it does not exist:
 
-    sub EXISTS {
-      my $self  = shift;
-      my $index = shift;
-      return 0 if ! defined $self->{ARRAY}->[$index] ||
-                  $self->{ARRAY}->[$index] eq ' ' x $self->{ELEMSIZE};
-      return 1;
-    }
+ sub EXISTS {
+   my $self  = shift;
+   my $index = shift;
+   return 0 if ! defined $self->{ARRAY}->[$index] ||
+               $self->{ARRAY}->[$index] eq ' ' x $self->{ELEMSIZE};
+   return 1;
+ }
 
 =item DELETE this, key
 X<DELETE>
@@ -706,19 +709,19 @@ This method is triggered when we remove an element from the hash,
 typically by using the delete() function.  Again, we'll
 be careful to check whether they really want to clobber files.
 
-    sub DELETE   {
-	carp &whowasi if $DEBUG;
+ sub DELETE   {
+     carp &whowasi if $DEBUG;
 
-	my $self = shift;
-	my $dot = shift;
-	my $file = $self->{HOME} . "/.$dot";
-	croak "@{[&whowasi]}: won't remove file $file"
-	    unless $self->{CLOBBER};
-	delete $self->{LIST}->{$dot};
-	my $success = unlink($file);
-	carp "@{[&whowasi]}: can't unlink $file: $!" unless $success;
-	$success;
-    }
+     my $self = shift;
+     my $dot = shift;
+     my $file = $self->{HOME} . "/.$dot";
+     croak "@{[&whowasi]}: won't remove file $file"
+         unless $self->{CLOBBER};
+     delete $self->{LIST}->{$dot};
+     my $success = unlink($file);
+     carp "@{[&whowasi]}: can't unlink $file: $!" unless $success;
+     $success;
+ }
 
 The value returned by DELETE becomes the return value of the call
 to delete().  If you want to emulate the normal behavior of delete(),
@@ -736,16 +739,16 @@ In our example, that would remove all the user's dot files!  It's such a
 dangerous thing that they'll have to set CLOBBER to something higher than
 1 to make it happen.
 
-    sub CLEAR    {
-	carp &whowasi if $DEBUG;
-	my $self = shift;
-	croak "@{[&whowasi]}: won't remove all dot files for $self->{USER}"
-	    unless $self->{CLOBBER} > 1;
-	my $dot;
-	foreach $dot ( keys %{$self->{LIST}}) {
-	    $self->DELETE($dot);
-	}
-    }
+ sub CLEAR    {
+     carp &whowasi if $DEBUG;
+     my $self = shift;
+     croak "@{[&whowasi]}: won't remove all dot files for $self->{USER}"
+         unless $self->{CLOBBER} > 1;
+     my $dot;
+     foreach $dot ( keys %{$self->{LIST}}) {
+         $self->DELETE($dot);
+     }
+ }
 
 =item EXISTS this, key
 X<EXISTS>
@@ -765,23 +768,30 @@ hash element for this:
 X<FIRSTKEY>
 
 This method will be triggered when the user is going
-to iterate through the hash, such as via a keys() or each()
-call.
+to iterate through the hash, such as via a keys(), values(), or each() call.
 
     sub FIRSTKEY {
 	carp &whowasi if $DEBUG;
 	my $self = shift;
-	my $a = keys %{$self->{LIST}};		# reset each() iterator
+	my $a = keys %{$self->{LIST}};  # reset each() iterator
 	each %{$self->{LIST}}
     }
+
+FIRSTKEY is always called in scalar context and it should just
+return the first key.  values(), and each() in list context,
+will call FETCH for the returned keys.
 
 =item NEXTKEY this, lastkey
 X<NEXTKEY>
 
-This method gets triggered during a keys() or each() iteration.  It has a
+This method gets triggered during a keys(), values(), or each() iteration.  It has a
 second argument which is the last key that had been accessed.  This is
-useful if you're carrying about ordering or calling the iterator from more
+useful if you're caring about ordering or calling the iterator from more
 than one sequence, or not really storing things in a hash anywhere.
+
+NEXTKEY is always called in scalar context and it should just
+return the next key.  values(), and each() in list context,
+will call FETCH for the returned keys.
 
 For our example, we're using a real hash so we'll do just the simple
 thing, but we'll have to go through the LIST field indirectly.
@@ -897,11 +907,11 @@ X<WRITE>
 This method will be called when the handle is written to via the
 C<syswrite> function.
 
-    sub WRITE {
-	$r = shift;
-	my($buf,$len,$offset) = @_;
-	print "WRITE called, \$buf=$buf, \$len=$len, \$offset=$offset";
-    }
+ sub WRITE {
+     $r = shift;
+     my($buf,$len,$offset) = @_;
+     print "WRITE called, \$buf=$buf, \$len=$len, \$offset=$offset";
+ }
 
 =item PRINT this, LIST
 X<PRINT>
@@ -910,7 +920,7 @@ This method will be triggered every time the tied handle is printed to
 with the C<print()> or C<say()> functions.  Beyond its self reference
 it also expects the list that was passed to the print function.
 
-    sub PRINT { $r = shift; $$r++; print join($,,map(uc($_),@_)),$\ }
+  sub PRINT { $r = shift; $$r++; print join($,,map(uc($_),@_)),$\ }
 
 C<say()> acts just like C<print()> except $\ will be localized to C<\n> so
 you need do nothing special to handle C<say()> in C<PRINT()>.
@@ -935,14 +945,14 @@ X<READ>
 This method will be called when the handle is read from via the C<read>
 or C<sysread> functions.
 
-    sub READ {
-	my $self = shift;
-	my $bufref = \$_[0];
-	my(undef,$len,$offset) = @_;
-	print "READ called, \$buf=$bufref, \$len=$len, \$offset=$offset";
-	# add to $$bufref, set $len to number of characters read
-	$len;
-    }
+ sub READ {
+   my $self = shift;
+   my $bufref = \$_[0];
+   my(undef,$len,$offset) = @_;
+   print "READ called, \$buf=$bufref, \$len=$len, \$offset=$offset";
+   # add to $$bufref, set $len to number of characters read
+   $len;
+ }
 
 =item READLINE this
 X<READLINE>
@@ -1171,11 +1181,12 @@ UNTIE method is passed the count of "extra" references and can issue its own
 warning if appropriate. e.g. to replicate the no UNTIE case this method can
 be used:
 
-    sub UNTIE
-    {
-     my ($obj,$count) = @_;
-     carp "untie attempted while $count inner references still exist" if $count;
-    }
+ sub UNTIE
+ {
+  my ($obj,$count) = @_;
+  carp "untie attempted while $count inner references still exist"
+                                                              if $count;
+ }
 
 =head1 SEE ALSO
 

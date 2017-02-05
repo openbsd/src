@@ -186,7 +186,7 @@ know how to understand its output.
  # cpan -i Unicode::Unihan
  use Unicode::Unihan;
  my $str = "東京";
- my $unhan = new Unicode::Unihan;
+ my $unhan = Unicode::Unihan->new;
  for my $lang (qw(Mandarin Cantonese Korean JapaneseOn JapaneseKun)) {
      printf "CJK $str in %-12s is ", $lang;
      say $unhan->$lang($str);
@@ -205,7 +205,7 @@ use the specific module:
 
  # cpan -i Lingua::JA::Romanize::Japanese
  use Lingua::JA::Romanize::Japanese;
- my $k2r = new Lingua::JA::Romanize::Japanese;
+ my $k2r = Lingua::JA::Romanize::Japanese->new;
  my $str = "東京";
  say "Japanese for $str is ", $k2r->chars($str);
 
@@ -613,7 +613,7 @@ Break up text into lines according to Unicode rules.
  use charnames qw(:full);
 
  my $para = "This is a super\N{HYPHEN}long string. " x 20;
- my $fmt = new Unicode::LineBreak;
+ my $fmt = Unicode::LineBreak->new;
  print $fmt->break($para), "\n";
 
 =head2 ℞ 42: Unicode text in DBM hashes, the tedious way
@@ -745,7 +745,7 @@ Here's that program; tested on v5.14.
  # So the Asian stuff comes out in an order that someone
  # who reads those scripts won't freak out over; the
  # CJK stuff will be in JIS X 0208 order that way.
- my $coll  = new Unicode::Collate::Locale locale => "ja";
+ my $coll  = Unicode::Collate::Locale->new(locale => "ja");
 
  for my $item ($coll->sort(keys %price)) {
      print pad(entitle($item), $width, ".");
@@ -855,4 +855,3 @@ Acknowledgement via code comment is polite but not required.
 =head1 REVISION HISTORY
 
 v1.0.0 – first public release, 2012-02-27
-

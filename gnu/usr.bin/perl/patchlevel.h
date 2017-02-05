@@ -14,8 +14,8 @@
  * exactly on the third column */
 
 #define PERL_REVISION	5		/* age */
-#define PERL_VERSION	20		/* epoch */
-#define PERL_SUBVERSION	3		/* generation */
+#define PERL_VERSION	24		/* epoch */
+#define PERL_SUBVERSION	1		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -35,7 +35,7 @@
    changing them should not be necessary.
 */
 #define PERL_API_REVISION	5
-#define PERL_API_VERSION	20
+#define PERL_API_VERSION	24
 #define PERL_API_SUBVERSION	0
 /*
    XXX Note:  The selection of non-default Configure options, such
@@ -135,9 +135,6 @@ static const char * const local_patches[] = {
 	NULL
 #ifdef PERL_GIT_UNCOMMITTED_CHANGES
 	,"uncommitted-changes"
-	,"CVE-2016-6185"
-	,"CVE-2015-8853"
-	,"CVE-2016-1238"
 #endif
 	PERL_GIT_UNPUSHED_COMMITS    	/* do not remove this line */
 	,NULL

@@ -3,7 +3,7 @@ package Digest::MD5;
 use strict;
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = '2.53';
+$VERSION = '2.54';
 
 require Exporter;
 *import = \&Exporter::import;
@@ -226,6 +226,16 @@ and '/'.
 The base64 encoded string returned is not padded to be a multiple of 4
 bytes long.  If you want interoperability with other base64 encoded
 md5 digests you might want to append the string "==" to the result.
+
+=item @ctx = $md5->context
+
+=item $md5->context(@ctx)
+
+Saves or restores the internal state.  When called with no arguments,
+returns a 3-element list: number of blocks processed, a 16-byte
+internal state buffer, then up to 63 bytes of unprocessed data.  When
+passed those same arguments, restores the state.  This is only useful
+for specialised operations.
 
 =back
 

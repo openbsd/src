@@ -61,7 +61,7 @@ our($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 require Exporter;
 require XSLoader;
 @ISA = qw(Exporter);
-$VERSION = '1.11';
+$VERSION = '1.13';
 
 XSLoader::load();
 
@@ -169,18 +169,25 @@ XSLoader::load();
 	DN_MULTISHOT
 	DN_RENAME
 	F_GETLEASE
+	F_GETPIPE_SZ
 	F_GETSIG
 	F_NOTIFY
 	F_SETLEASE
+	F_SETPIPE_SZ
 	F_SETSIG
 	LOCK_MAND
 	LOCK_READ
 	LOCK_RW
 	LOCK_WRITE
+        O_ALT_IO
+        O_EVTONLY
 	O_IGNORE_CTTY
 	O_NOATIME
 	O_NOLINK
+        O_NOSIGPIPE
 	O_NOTRANS
+        O_SYMLINK
+        O_TTY_INIT
 ), map {@{$_}} values %EXPORT_TAGS);
 
 1;

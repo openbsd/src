@@ -4,30 +4,30 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.064 qw(:Status );
-use IO::Compress::RawDeflate 2.064 ();
-use IO::Compress::Adapter::Deflate 2.064 ;
-use IO::Compress::Adapter::Identity 2.064 ;
-use IO::Compress::Zlib::Extra 2.064 ;
-use IO::Compress::Zip::Constants 2.064 ;
+use IO::Compress::Base::Common  2.069 qw(:Status );
+use IO::Compress::RawDeflate 2.069 ();
+use IO::Compress::Adapter::Deflate 2.069 ;
+use IO::Compress::Adapter::Identity 2.069 ;
+use IO::Compress::Zlib::Extra 2.069 ;
+use IO::Compress::Zip::Constants 2.069 ;
 
 use File::Spec();
 use Config;
 
-use Compress::Raw::Zlib  2.064 (); 
+use Compress::Raw::Zlib  2.069 (); 
 
 BEGIN
 {
     eval { require IO::Compress::Adapter::Bzip2 ; 
-           import  IO::Compress::Adapter::Bzip2 2.064 ; 
+           import  IO::Compress::Adapter::Bzip2 2.069 ; 
            require IO::Compress::Bzip2 ; 
-           import  IO::Compress::Bzip2 2.064 ; 
+           import  IO::Compress::Bzip2 2.069 ; 
          } ;
          
     eval { require IO::Compress::Adapter::Lzma ; 
-           import  IO::Compress::Adapter::Lzma 2.064 ; 
+           import  IO::Compress::Adapter::Lzma 2.069 ; 
            require IO::Compress::Lzma ; 
-           import  IO::Compress::Lzma 2.064 ; 
+           import  IO::Compress::Lzma 2.069 ; 
          } ;
 }
 
@@ -36,7 +36,7 @@ require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, %DEFLATE_CONSTANTS, $ZipError);
 
-$VERSION = '2.064_01';
+$VERSION = '2.069_001';
 $ZipError = '';
 
 @ISA = qw(Exporter IO::Compress::RawDeflate);
@@ -275,6 +275,9 @@ sub mkHeader
         my $x = '';
         $x .= pack "V V", 0, 0 ; # uncompressedLength   
         $x .= pack "V V", 0, 0 ; # compressedLength   
+        
+        # Zip64 needs to be first in extra field to workaround a Windows Explorer Bug
+        # See http://www.info-zip.org/phpBB3/viewtopic.php?f=3&t=440 for details
         $extra .= IO::Compress::Zlib::Extra::mkSubField(ZIP_EXTRA_ID_ZIP64, $x);
     }
 
@@ -397,13 +400,10 @@ sub mkHeader
     }
     
     $ctl .= $filename ;
-    $ctl .= $ctlExtra ;
-    $ctl .= $comment ;
 
     *$self->{ZipData}{Offset}->add32(length $hdr) ;
 
-    *$self->{ZipData}{CentralHeader} = $ctl;
-
+    *$self->{ZipData}{CentralHeader} = [ $ctl, $ctlExtra, $comment];
 
     return $hdr;
 }
@@ -420,7 +420,7 @@ sub mkTrailer
         $crc32 = pack "V", *$self->{ZipData}{CRC32};
     }
 
-    my $ctl = *$self->{ZipData}{CentralHeader} ;
+    my ($ctl, $ctlExtra, $comment) = @{ *$self->{ZipData}{CentralHeader} };   
 
     my $sizes ;
     if (! *$self->{ZipData}{Zip64}) {
@@ -433,7 +433,6 @@ sub mkTrailer
     }
 
     my $data = $crc32 . $sizes ;
-
 
     my $xtrasize  = *$self->{UnCompSize}->getPacked_V64() ; # Uncompressed size
        $xtrasize .= *$self->{CompSize}->getPacked_V64() ;   # Compressed size
@@ -456,38 +455,44 @@ sub mkTrailer
 
     substr($ctl, 16, length $crc32) = $crc32 ;
 
-    my $x = '';
+    my $zip64Payload = '';
 
-    # uncompressed length
-    if (*$self->{UnCompSize}->isAlmost64bit() || *$self->{ZipData}{Zip64} > 1) {
-        $x .= *$self->{UnCompSize}->getPacked_V64() ; 
+    # uncompressed length - only set zip64 if needed
+    if (*$self->{UnCompSize}->isAlmost64bit()) { #  || *$self->{ZipData}{Zip64}) {
+        $zip64Payload .= *$self->{UnCompSize}->getPacked_V64() ; 
     } else {
         substr($ctl, 24, 4) = *$self->{UnCompSize}->getPacked_V32() ;
     }
 
-    # compressed length
-    if (*$self->{CompSize}->isAlmost64bit() || *$self->{ZipData}{Zip64} > 1) {
-        $x .= *$self->{CompSize}->getPacked_V64() ; 
+    # compressed length - only set zip64 if needed
+    if (*$self->{CompSize}->isAlmost64bit()) { # || *$self->{ZipData}{Zip64}) {
+        $zip64Payload .= *$self->{CompSize}->getPacked_V64() ; 
     } else {
         substr($ctl, 20, 4) = *$self->{CompSize}->getPacked_V32() ;
     }
 
     # Local Header offset
-    $x .= *$self->{ZipData}{LocalHdrOffset}->getPacked_V64()
+    $zip64Payload .= *$self->{ZipData}{LocalHdrOffset}->getPacked_V64()
         if *$self->{ZipData}{LocalHdrOffset}->is64bit() ; 
 
-    # disk no - always zero, so don't need it
-    #$x .= pack "V", 0    ; 
+    # disk no - always zero, so don't need to include it.
+    #$zip64Payload .= pack "V", 0    ; 
 
-    if (length $x) {
-        my $xtra = IO::Compress::Zlib::Extra::mkSubField(ZIP_EXTRA_ID_ZIP64, $x);
-        $ctl .= $xtra ;
+    my $zip64Xtra = '';
+    
+    if (length $zip64Payload) {
+        $zip64Xtra = IO::Compress::Zlib::Extra::mkSubField(ZIP_EXTRA_ID_ZIP64, $zip64Payload);
+        
         substr($ctl, *$self->{ZipData}{ExtraOffset}, 2) = 
-             pack 'v', *$self->{ZipData}{ExtraSize} + length $xtra;
+             pack 'v', *$self->{ZipData}{ExtraSize} + length $zip64Xtra;
 
         *$self->{ZipData}{AnyZip64} = 1;
     }
 
+    # Zip64 needs to be first in extra field to workaround a Windows Explorer Bug
+    # See http://www.info-zip.org/phpBB3/viewtopic.php?f=3&t=440 for details
+    $ctl .= $zip64Xtra . $ctlExtra . $comment;
+    
     *$self->{ZipData}{Offset}->add32(length($hdr));
     *$self->{ZipData}{Offset}->add( *$self->{CompSize} );
     push @{ *$self->{ZipData}{CentralDir} }, $ctl ;
@@ -1953,7 +1958,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2015 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

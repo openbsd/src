@@ -9,7 +9,7 @@ require Exporter;
 use Carp;
 use Symbol qw(gensym qualify);
 
-$VERSION	= '1.16';
+$VERSION	= '1.20';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -246,6 +246,7 @@ sub _open3 {
 		# A tie in the parent should not be allowed to cause problems.
 		untie *STDIN;
 		untie *STDOUT;
+		untie *STDERR;
 
 		close $stat_r;
 		require Fcntl;
@@ -279,7 +280,7 @@ sub _open3 {
 		return 1 if ($_[0] eq '-');
 		exec @_ or do {
 		    local($")=(" ");
-		    croak "$Me: exec of @_ failed";
+		    croak "$Me: exec of @_ failed: $!";
 		};
 	    } and do {
                 close $stat_w;
@@ -361,7 +362,7 @@ sub open3 {
 sub spawn_with_handles {
     my $fds = shift;		# Fields: handle, mode, open_as
     my $close_in_child = shift;
-    my ($fd, $pid, @saved_fh, $saved, %saved, @errs);
+    my ($fd, %saved, @errs);
 
     foreach $fd (@$fds) {
 	$fd->{tmp_copy} = IO::Handle->new_from_fd($fd->{handle}, $fd->{mode});
@@ -372,10 +373,12 @@ sub spawn_with_handles {
 	    unless eval { $fd->{handle}->isa('IO::Handle') } ;
 	# If some of handles to redirect-to coincide with handles to
 	# redirect, we need to use saved variants:
-	$fd->{handle}->fdopen(defined fileno $fd->{open_as}
-			      ? $saved{fileno $fd->{open_as}} || $fd->{open_as}
-			      : $fd->{open_as},
-			      $fd->{mode});
+    my $open_as = $fd->{open_as};
+    my $fileno = fileno($open_as);
+    $fd->{handle}->fdopen(defined($fileno)
+                  ? $saved{$fileno} || $open_as
+                  : $open_as,
+                  $fd->{mode});
     }
     unless ($^O eq 'MSWin32') {
 	require Fcntl;
@@ -387,6 +390,7 @@ sub spawn_with_handles {
 	}
     }
 
+    my $pid;
     unless (@errs) {
 	if (FORCE_DEBUG_SPAWN) {
 	    pipe my $r, my $w or die "Pipe failed: $!";
@@ -408,7 +412,11 @@ sub spawn_with_handles {
 	} else {
 	    $pid = eval { system 1, @_ }; # 1 == P_NOWAIT
 	}
-	push @errs, "IO::Pipe: Can't spawn-NOWAIT: $!" if !$pid || $pid < 0;
+	if($@) {
+	    push @errs, "IO::Pipe: Can't spawn-NOWAIT: $@";
+	} elsif(!$pid || $pid < 0) {
+	    push @errs, "IO::Pipe: Can't spawn-NOWAIT: $!";
+	}
     }
 
     # Do this in reverse, so that STDERR is restored first:

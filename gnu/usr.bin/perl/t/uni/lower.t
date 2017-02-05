@@ -1,10 +1,18 @@
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib uni .);
-    require "case.pl";
+    unless (defined &DynaLoader::boot_DynaLoader) {
+      print("1..0 # miniperl: no Unicode::Normalize");
+      exit(0);
+    }
+    require "uni/case.pl";
 }
+
+use feature 'unicode_strings';
 
 casetest(0, # No extra tests run here,
 	"Lowercase_Mapping",
-	 sub { lc $_[0] }, sub { my $a = ""; lc ($_[0] . $a) },
-	 sub { lcfirst $_[0] }, sub { my $a = ""; lcfirst ($_[0] . $a) });
+        lc                             => sub { lc $_[0] },
+	lc_with_appended_null_arg      => sub { my $a = ""; lc ($_[0] . $a) },
+	lcfirst                        => sub { lcfirst $_[0] },
+	lcfirst_with_appended_null_arg => sub { my $a = ""; lcfirst ($_[0] . $a) }
+       );

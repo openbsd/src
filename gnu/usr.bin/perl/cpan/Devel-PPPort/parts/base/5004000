@@ -1,15 +1,8 @@
 5.004000
 GIMME_V                        # E
 G_VOID                         # E
-HEf_SVKEY                      # E
-HeHASH                         # U
-HeKEY                          # U
-HeKLEN                         # U
-HePV                           # U
-HeSVKEY                        # U
-HeSVKEY_force                  # U
+HePV                           # A
 HeSVKEY_set                    # U
-HeVAL                          # U
 PUSHu                          # U
 SvSetMagicSV                   # U
 SvSetMagicSV_nosteal           # U
@@ -21,31 +14,20 @@ SvUV                           # U
 SvUVX                          # U
 SvUVx                          # U
 XPUSHu                         # U
+block_end                      # E (Perl_block_end)
 block_gimme                    # E
+block_start                    # E (Perl_block_start)
 boolSV                         # U
 call_list                      # E
-cv_const_sv                    # E
 delimcpy                       # U
-do_open                        # E (Perl_do_open)
 gv_autoload4                   # U
-gv_efullname3                  # U
 gv_fetchmethod_autoload        # E
-gv_fullname3                   # U
-gv_stashpvn                    # E
 hv_delayfree_ent               # E
-hv_delete_ent                  # U
-hv_exists_ent                  # U
-hv_fetch_ent                   # U
 hv_free_ent                    # E
-hv_iterkeysv                   # E
-hv_ksplit                      # E
-hv_store_ent                   # U
 ibcmp_locale                   # U
+intro_my                       # E
 isPRINT                        # U
 my_failure_exit                # E
-my_memset                      # U
-my_pclose                      # E (Perl_my_pclose)
-my_popen                       # E (Perl_my_popen)
 newRV_inc                      # U
 newRV_noinc                    # E
 rsignal                        # E
@@ -57,7 +39,6 @@ start_subparse                 # E (Perl_start_subparse)
 sv_2uv                         # U
 sv_cmp_locale                  # E
 sv_derived_from                # E
-sv_gets                        # E (Perl_sv_gets)
 sv_setuv                       # E
 sv_taint                       # U
 sv_tainted                     # E
@@ -65,27 +46,6 @@ sv_untaint                     # E
 sv_vcatpvfn                    # E
 sv_vsetpvfn                    # E
 toLOWER_LC                     # U
-toUPPER                        # U
-unsharepvn                     # E
-PERL_HASH                      # added by devel/scanprov
-PERL_INT_MAX                   # added by devel/scanprov
-PERL_INT_MIN                   # added by devel/scanprov
-PERL_LONG_MAX                  # added by devel/scanprov
-PERL_LONG_MIN                  # added by devel/scanprov
-PERL_QUAD_MAX                  # added by devel/scanprov
-PERL_QUAD_MIN                  # added by devel/scanprov
-PERL_SHORT_MAX                 # added by devel/scanprov
-PERL_SHORT_MIN                 # added by devel/scanprov
-PERL_UCHAR_MAX                 # added by devel/scanprov
-PERL_UCHAR_MIN                 # added by devel/scanprov
-PERL_UINT_MAX                  # added by devel/scanprov
-PERL_UINT_MIN                  # added by devel/scanprov
-PERL_ULONG_MAX                 # added by devel/scanprov
-PERL_ULONG_MIN                 # added by devel/scanprov
-PERL_UQUAD_MAX                 # added by devel/scanprov
-PERL_UQUAD_MIN                 # added by devel/scanprov
-PERL_USHORT_MAX                # added by devel/scanprov
-PERL_USHORT_MIN                # added by devel/scanprov
 SvUVXx                         # added by devel/scanprov
 memEQ                          # added by devel/scanprov
 memNE                          # added by devel/scanprov

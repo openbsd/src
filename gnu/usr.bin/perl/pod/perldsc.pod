@@ -8,13 +8,13 @@ perldsc - Perl Data Structures Cookbook
 Perl lets us have complex data structures.  You can write something like
 this and all of a sudden, you'd have an array with three dimensions!
 
-    for $x (1 .. 10) {
-	for $y (1 .. 10) {
-	    for $z (1 .. 10) {
-		$AoA[$x][$y][$z] =
-		    $x ** $y + $z;
-	    }
-	}
+    for my $x (1 .. 10) {
+        for my $y (1 .. 10) {
+            for my $z (1 .. 10) {
+                $AoA[$x][$y][$z] =
+                    $x ** $y + $z;
+            }
+        }
     }
 
 Alas, however simple this may appear, underneath it's a much more
@@ -85,16 +85,16 @@ level.  It's just that you can I<use> it as though it were a
 two-dimensional one.  This is actually the way almost all C
 multidimensional arrays work as well.
 
-    $array[7][12]			# array of arrays
-    $array[7]{string}			# array of hashes
-    $hash{string}[7]			# hash of arrays
-    $hash{string}{'another string'}	# hash of hashes
+    $array[7][12]                       # array of arrays
+    $array[7]{string}                   # array of hashes
+    $hash{string}[7]                    # hash of arrays
+    $hash{string}{'another string'}     # hash of hashes
 
 Now, because the top level contains only references, if you try to print
 out your array in with a simple print() function, you'll get something
 that doesn't look very nice, like this:
 
-    @AoA = ( [2, 3], [4, 5, 7], [0] );
+    my @AoA = ( [2, 3], [4, 5, 7], [0] );
     print $AoA[1][2];
   7
     print @AoA;
@@ -115,26 +115,29 @@ elements or else taking a reference to the same memory location
 repeatedly.  Here's the case where you just get the count instead
 of a nested array:
 
-    for $i (1..10) {
-	@array = somefunc($i);
-	$AoA[$i] = @array;	# WRONG!
+    for my $i (1..10) {
+        my @array = somefunc($i);
+        $AoA[$i] = @array;      # WRONG!
     }
 
 That's just the simple case of assigning an array to a scalar and getting
 its element count.  If that's what you really and truly want, then you
 might do well to consider being a tad more explicit about it, like this:
 
-    for $i (1..10) {
-	@array = somefunc($i);
-	$counts[$i] = scalar @array;
+    for my $i (1..10) {
+        my @array = somefunc($i);
+        $counts[$i] = scalar @array;
     }
 
 Here's the case of taking a reference to the same memory location
 again and again:
 
-    for $i (1..10) {
-	@array = somefunc($i);
-	$AoA[$i] = \@array;	# WRONG!
+    # Either without strict or having an outer-scope my @array;
+    # declaration.
+
+    for my $i (1..10) {
+        @array = somefunc($i);
+        $AoA[$i] = \@array;     # WRONG!
     }
 
 So, what's the big problem with that?  It looks right, doesn't it?
@@ -148,12 +151,12 @@ the following C program:
 
     #include <pwd.h>
     main() {
-	struct passwd *getpwnam(), *rp, *dp;
-	rp = getpwnam("root");
-	dp = getpwnam("daemon");
+        struct passwd *getpwnam(), *rp, *dp;
+        rp = getpwnam("root");
+        dp = getpwnam("daemon");
 
-	printf("daemon name is %s\nroot name is %s\n",
-		dp->pw_name, rp->pw_name);
+        printf("daemon name is %s\nroot name is %s\n",
+                dp->pw_name, rp->pw_name);
     }
 
 Which will print
@@ -168,9 +171,12 @@ hash constructor C<{}> instead.   Here's the right way to do the preceding
 broken code fragments:
 X<[]> X<{}>
 
-    for $i (1..10) {
-	@array = somefunc($i);
-	$AoA[$i] = [ @array ];
+    # Either without strict or having an outer-scope my @array;
+    # declaration.
+
+    for my $i (1..10) {
+        @array = somefunc($i);
+        $AoA[$i] = [ @array ];
     }
 
 The square brackets make a reference to a new array with a I<copy>
@@ -180,9 +186,11 @@ you want.
 Note that this will produce something similar, but it's
 much harder to read:
 
-    for $i (1..10) {
-	@array = 0 .. $i;
-	@{$AoA[$i]} = @array;
+    # Either without strict or having an outer-scope my @array;
+    # declaration.
+    for my $i (1..10) {
+        @array = 0 .. $i;
+        @{$AoA[$i]} = @array;
     }
 
 Is it the same?  Well, maybe so--and maybe not.  The subtle difference
@@ -214,7 +222,7 @@ efficient.
 Surprisingly, the following dangerous-looking construct will
 actually work out fine:
 
-    for $i (1..10) {
+    for my $i (1..10) {
         my @array = somefunc($i);
         $AoA[$i] = \@array;
     }
@@ -235,9 +243,9 @@ do the right thing behind the scenes.
 
 In summary:
 
-    $AoA[$i] = [ @array ];	# usually best
-    $AoA[$i] = \@array;		# perilous; just how my() was that array?
-    @{ $AoA[$i] } = @array;	# way too tricky for most programmers
+    $AoA[$i] = [ @array ];     # usually best
+    $AoA[$i] = \@array;        # perilous; just how my() was that array?
+    @{ $AoA[$i] } = @array;    # way too tricky for most programmers
 
 
 =head1 CAVEAT ON PRECEDENCE
@@ -247,8 +255,8 @@ Speaking of things like C<@{$AoA[$i]}>, the following are actually the
 same thing:
 X<< -> >>
 
-    $aref->[2][2]	# clear
-    $$aref[2][2]	# confusing
+    $aref->[2][2]       # clear
+    $$aref[2][2]        # confusing
 
 That's because Perl's precedence rules on its five prefix dereferencers
 (which look like someone swearing: C<$ @ * % &>) make them bind more
@@ -279,9 +287,9 @@ also disallow accidental "symbolic dereferencing".  Therefore if you'd done
 this:
 
     my $aref = [
-	[ "fred", "barney", "pebbles", "bambam", "dino", ],
-	[ "homer", "bart", "marge", "maggie", ],
-	[ "george", "jane", "elroy", "judy", ],
+        [ "fred", "barney", "pebbles", "bambam", "dino", ],
+        [ "homer", "bart", "marge", "maggie", ],
+        [ "george", "jane", "elroy", "judy", ],
     ];
 
     print $aref[2][2];
@@ -304,21 +312,21 @@ For example, given the assignment to $AoA above, here's the debugger output:
     DB<1> x $AoA
     $AoA = ARRAY(0x13b5a0)
        0  ARRAY(0x1f0a24)
-	  0  'fred'
-	  1  'barney'
-	  2  'pebbles'
-	  3  'bambam'
-	  4  'dino'
+          0  'fred'
+          1  'barney'
+          2  'pebbles'
+          3  'bambam'
+          4  'dino'
        1  ARRAY(0x13b558)
-	  0  'homer'
-	  1  'bart'
-	  2  'marge'
-	  3  'maggie'
+          0  'homer'
+          1  'bart'
+          2  'marge'
+          3  'maggie'
        2  ARRAY(0x13b540)
-	  0  'george'
-	  1  'jane'
-	  2  'elroy'
-	  3  'judy'
+          0  'george'
+          1  'jane'
+          2  'elroy'
+          3  'judy'
 
 =head1 CODE EXAMPLES
 
@@ -454,10 +462,10 @@ X<hash of arrays> X<HoA>
 
  # print the whole thing sorted by number of members and name
  foreach $family ( sort {
-			    @{$HoA{$b}} <=> @{$HoA{$a}}
-					||
-				    $a cmp $b
-	    } keys %HoA )
+                            @{$HoA{$b}} <=> @{$HoA{$a}}
+                                        ||
+                                    $a cmp $b
+            } keys %HoA )
  {
      print "$family: ", join(", ", sort @{ $HoA{$family} }), "\n";
  }
@@ -560,19 +568,19 @@ X<hash of hashes> X<HoH>
 
  %HoH = (
         flintstones => {
-		lead      => "fred",
-		pal       => "barney",
+                lead      => "fred",
+                pal       => "barney",
         },
         jetsons     => {
-		lead      => "george",
-		wife      => "jane",
-		"his boy" => "elroy",
+                lead      => "george",
+                wife      => "jane",
+                "his boy" => "elroy",
         },
         simpsons    => {
-		lead      => "homer",
-		wife      => "marge",
-		kid       => "bart",
-	},
+                lead      => "homer",
+                wife      => "marge",
+                kid       => "bart",
+        },
  );
 
 =head2 Generation of a HASH OF HASHES
@@ -649,7 +657,9 @@ X<hash of hashes> X<HoH>
 
 
  # print the whole thing sorted by number of members
- foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$a}} } keys %HoH ) {
+ foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$a}} }
+                                                             keys %HoH )
+ {
      print "$family: { ";
      for $role ( sort keys %{ $HoH{$family} } ) {
          print "$role=$HoH{$family}{$role} ";
@@ -662,10 +672,14 @@ X<hash of hashes> X<HoH>
  for ( qw(lead wife son daughter pal pet) ) { $rank{$_} = ++$i }
 
  # now print the whole thing sorted by number of members
- foreach $family ( sort { keys %{ $HoH{$b} } <=> keys %{ $HoH{$a} } } keys %HoH ) {
+ foreach $family ( sort { keys %{ $HoH{$b} } <=> keys %{ $HoH{$a} } }
+                                                             keys %HoH )
+ {
      print "$family: { ";
      # and print these according to rank order
-     for $role ( sort { $rank{$a} <=> $rank{$b} }  keys %{ $HoH{$family} } ) {
+     for $role ( sort { $rank{$a} <=> $rank{$b} }
+                                               keys %{ $HoH{$family} } )
+     {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
@@ -681,12 +695,12 @@ Here's a sample showing how to create and use a record whose fields are of
 many different sorts:
 
      $rec = {
-	 TEXT      => $string,
-	 SEQUENCE  => [ @old_values ],
-	 LOOKUP    => { %some_table },
-	 THATCODE  => \&some_function,
-	 THISCODE  => sub { $_[0] ** $_[1] },
-	 HANDLE    => \*STDOUT,
+         TEXT      => $string,
+         SEQUENCE  => [ @old_values ],
+         LOOKUP    => { %some_table },
+         THATCODE  => \&some_function,
+         THISCODE  => sub { $_[0] ** $_[1] },
+         HANDLE    => \*STDOUT,
      };
 
      print $rec->{TEXT};

@@ -337,7 +337,7 @@ SKIP: {
                 '... should increment past lines with no events' );
                 
         ok( ! defined DB::_find_subline('sirnotappearinginthisfilm'),
-                '... should not find nonexistant sub' );
+                '... should not find nonexistent sub' );
 }
 
 # test DB::clr_breaks()

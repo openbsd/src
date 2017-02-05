@@ -2,14 +2,14 @@
 #
 # Written by Paul Marquess (pmqs@cpan.org)
 #
-#     Copyright (c) 1995-2013 Paul Marquess. All rights reserved.
+#     Copyright (c) 1995-2014 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
 #     modify it under the same terms as Perl itself.
 
 
 package DB_File::HASHINFO ;
 
-require 5.00504;
+require 5.008003;
 
 use warnings;
 use strict;
@@ -163,7 +163,7 @@ our ($db_version, $use_XSLoader, $splice_end_array_no_length, $splice_end_array,
 use Carp;
 
 
-$VERSION = "1.831" ;
+$VERSION = "1.835" ;
 $VERSION = eval $VERSION; # needed for dev releases
 
 {

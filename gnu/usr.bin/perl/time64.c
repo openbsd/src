@@ -33,12 +33,15 @@ long' type can use localtime64_r() and gmtime64_r() which correctly
 converts the time even on 32-bit systems. Whether you have 64-bit time
 values will depend on the operating system.
 
-S_localtime64_r() is a 64-bit equivalent of localtime_r().
+Perl_localtime64_r() is a 64-bit equivalent of localtime_r().
 
-S_gmtime64_r() is a 64-bit equivalent of gmtime_r().
+Perl_gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 */
 
+#include "EXTERN.h"
+#define PERL_IN_TIME64_C
+#include "perl.h"
 #include "time64.h"
 
 static const char days_in_month[2][12] = {
@@ -69,16 +72,6 @@ static const short safe_years[SOLAR_CYCLE_LENGTH] = {
     2012, 2013, 2014, 2015
 };
 
-static const char dow_year_start[SOLAR_CYCLE_LENGTH] = {
-    5, 0, 1, 2,     /* 0       2016 - 2019 */
-    3, 5, 6, 0,     /* 4  */
-    1, 3, 4, 5,     /* 8  */
-    6, 1, 2, 3,     /* 12 */
-    4, 6, 0, 1,     /* 16 */
-    2, 4, 5, 6,     /* 20      2036, 2037, 2010, 2011 */
-    0, 2, 3, 4      /* 24      2012, 2013, 2014, 2015 */
-};
-
 /* Let's assume people are going to be looking for dates in the future.
    Let's provide some cheats so you can skip ahead.
    This has a 4x speed boost when near 2008.
@@ -88,6 +81,7 @@ static const char dow_year_start[SOLAR_CYCLE_LENGTH] = {
 #define CHEAT_YEARS 108
 
 #define IS_LEAP(n)	((!(((n) + 1900) % 400) || (!(((n) + 1900) % 4) && (((n) + 1900) % 100))) != 0)
+#undef WRAP /* some <termios.h> define this */
 #define WRAP(a,b,m)	((a) = ((a) <  0  ) ? ((b)--, (a) + (m)) : (a))
 
 #ifdef USE_SYSTEM_LOCALTIME
@@ -300,8 +294,8 @@ static void S_copy_little_tm_to_big_TM(const struct tm *src, struct TM *dest) {
 #ifndef HAS_LOCALTIME_R
 /* Simulate localtime_r() to the best of our ability */
 static struct tm * S_localtime_r(const time_t *clock, struct tm *result) {
-#ifdef VMS
-    dTHX;    /* in case the following is defined as Perl_my_localtime(aTHX_ ...) */
+#ifdef __VMS
+    dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
 #endif
     const struct tm *static_result = localtime(clock);
 
@@ -321,7 +315,9 @@ static struct tm * S_localtime_r(const time_t *clock, struct tm *result) {
 #ifndef HAS_GMTIME_R
 /* Simulate gmtime_r() to the best of our ability */
 static struct tm * S_gmtime_r(const time_t *clock, struct tm *result) {
-    dTHX;    /* in case the following is defined as Perl_my_gmtime(aTHX_ ...) */
+#ifdef __VMS
+    dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
+#endif
     const struct tm *static_result = gmtime(clock);
 
     assert(result != NULL);
@@ -337,7 +333,7 @@ static struct tm * S_gmtime_r(const time_t *clock, struct tm *result) {
 }
 #endif
 
-static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
+struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
 {
     int v_tm_sec, v_tm_min, v_tm_hour, v_tm_mon, v_tm_wday;
     Time64_T v_tm_tday;
@@ -370,19 +366,19 @@ static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_zone   = (char *)"UTC";
 #endif
 
-    v_tm_sec  = (int)fmod(time, 60.0);
-    time      = time >= 0 ? floor(time / 60.0) : ceil(time / 60.0);
-    v_tm_min  = (int)fmod(time, 60.0);
-    time      = time >= 0 ? floor(time / 60.0) : ceil(time / 60.0);
-    v_tm_hour = (int)fmod(time, 24.0);
-    time      = time >= 0 ? floor(time / 24.0) : ceil(time / 24.0);
+    v_tm_sec  = (int)Perl_fmod(time, 60.0);
+    time      = time >= 0 ? Perl_floor(time / 60.0) : Perl_ceil(time / 60.0);
+    v_tm_min  = (int)Perl_fmod(time, 60.0);
+    time      = time >= 0 ? Perl_floor(time / 60.0) : Perl_ceil(time / 60.0);
+    v_tm_hour = (int)Perl_fmod(time, 24.0);
+    time      = time >= 0 ? Perl_floor(time / 24.0) : Perl_ceil(time / 24.0);
     v_tm_tday = time;
 
     WRAP (v_tm_sec, v_tm_min, 60);
     WRAP (v_tm_min, v_tm_hour, 60);
     WRAP (v_tm_hour, v_tm_tday, 24);
 
-    v_tm_wday = (int)fmod((v_tm_tday + 4.0), 7.0);
+    v_tm_wday = (int)Perl_fmod((v_tm_tday + 4.0), 7.0);
     if (v_tm_wday < 0)
         v_tm_wday += 7;
     m = v_tm_tday;
@@ -394,7 +390,7 @@ static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
 
     if (m >= 0) {
         /* Gregorian cycles, this is huge optimization for distant times */
-        cycles = (int)floor(m / (Time64_T) days_in_gregorian_cycle);
+        cycles = (int)Perl_floor(m / (Time64_T) days_in_gregorian_cycle);
         if( cycles ) {
             m -= (cycles * (Time64_T) days_in_gregorian_cycle);
             year += (cycles * years_in_gregorian_cycle);
@@ -418,7 +414,7 @@ static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
         year--;
 
         /* Gregorian cycles */
-        cycles = (int)ceil((m / (Time64_T) days_in_gregorian_cycle) + 1);
+        cycles = (int)Perl_ceil((m / (Time64_T) days_in_gregorian_cycle) + 1);
         if( cycles ) {
             m -= (cycles * (Time64_T) days_in_gregorian_cycle);
             year += (cycles * years_in_gregorian_cycle);
@@ -464,7 +460,7 @@ static struct TM *S_gmtime64_r (const Time64_T *in_time, struct TM *p)
 }
 
 
-static struct TM *S_localtime64_r (const Time64_T *time, struct TM *local_tm)
+struct TM *Perl_localtime64_r (const Time64_T *time, struct TM *local_tm)
 {
     time_t safe_time;
     struct tm safe_date;
@@ -488,7 +484,7 @@ static struct TM *S_localtime64_r (const Time64_T *time, struct TM *local_tm)
         return local_tm;
     }
 
-    if( S_gmtime64_r(time, &gm_tm) == NULL ) {
+    if( Perl_gmtime64_r(time, &gm_tm) == NULL ) {
         TIME64_TRACE1("gmtime64_r returned null for %lld\n", *time);
         return NULL;
     }

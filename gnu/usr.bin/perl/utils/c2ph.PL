@@ -80,7 +80,8 @@ c2ph, pstruct - Dump C structures as generated from C<cc -g -S> stabs
     Options:
 
     -w	wide; short for: type_width=45 member_width=35 offset_width=8
-    -x	hex; short for:  offset_fmt=x offset_width=08 size_fmt=x size_width=04
+    -x	hex; short for:  offset_fmt=x offset_width=08 size_fmt=x       \
+                                                           size_width=04
 
     -n	do not generate perl code  (default when invoked as pstruct)
     -p	generate perl code         (default when invoked as c2ph)
@@ -119,41 +120,41 @@ the format it is going to massage them into anyway, and spits out
 listings like this:
 
  struct tty {
-   int                          tty.t_locker                         000      4
-   int                          tty.t_mutex_index                    004      4
-   struct tty *                 tty.t_tp_virt                        008      4
-   struct clist                 tty.t_rawq                           00c     20
-     int                        tty.t_rawq.c_cc                      00c      4
-     int                        tty.t_rawq.c_cmax                    010      4
-     int                        tty.t_rawq.c_cfx                     014      4
-     int                        tty.t_rawq.c_clx                     018      4
-     struct tty *               tty.t_rawq.c_tp_cpu                  01c      4
-     struct tty *               tty.t_rawq.c_tp_iop                  020      4
-     unsigned char *            tty.t_rawq.c_buf_cpu                 024      4
-     unsigned char *            tty.t_rawq.c_buf_iop                 028      4
-   struct clist                 tty.t_canq                           02c     20
-     int                        tty.t_canq.c_cc                      02c      4
-     int                        tty.t_canq.c_cmax                    030      4
-     int                        tty.t_canq.c_cfx                     034      4
-     int                        tty.t_canq.c_clx                     038      4
-     struct tty *               tty.t_canq.c_tp_cpu                  03c      4
-     struct tty *               tty.t_canq.c_tp_iop                  040      4
-     unsigned char *            tty.t_canq.c_buf_cpu                 044      4
-     unsigned char *            tty.t_canq.c_buf_iop                 048      4
-   struct clist                 tty.t_outq                           04c     20
-     int                        tty.t_outq.c_cc                      04c      4
-     int                        tty.t_outq.c_cmax                    050      4
-     int                        tty.t_outq.c_cfx                     054      4
-     int                        tty.t_outq.c_clx                     058      4
-     struct tty *               tty.t_outq.c_tp_cpu                  05c      4
-     struct tty *               tty.t_outq.c_tp_iop                  060      4
-     unsigned char *            tty.t_outq.c_buf_cpu                 064      4
-     unsigned char *            tty.t_outq.c_buf_iop                 068      4
-   (*int)()                     tty.t_oproc_cpu                      06c      4
-   (*int)()                     tty.t_oproc_iop                      070      4
-   (*int)()                     tty.t_stopproc_cpu                   074      4
-   (*int)()                     tty.t_stopproc_iop                   078      4
-   struct thread *              tty.t_rsel                           07c      4
+   int                          tty.t_locker                  000      4
+   int                          tty.t_mutex_index             004      4
+   struct tty *                 tty.t_tp_virt                 008      4
+   struct clist                 tty.t_rawq                    00c     20
+     int                        tty.t_rawq.c_cc               00c      4
+     int                        tty.t_rawq.c_cmax             010      4
+     int                        tty.t_rawq.c_cfx              014      4
+     int                        tty.t_rawq.c_clx              018      4
+     struct tty *               tty.t_rawq.c_tp_cpu           01c      4
+     struct tty *               tty.t_rawq.c_tp_iop           020      4
+     unsigned char *            tty.t_rawq.c_buf_cpu          024      4
+     unsigned char *            tty.t_rawq.c_buf_iop          028      4
+   struct clist                 tty.t_canq                    02c     20
+     int                        tty.t_canq.c_cc               02c      4
+     int                        tty.t_canq.c_cmax             030      4
+     int                        tty.t_canq.c_cfx              034      4
+     int                        tty.t_canq.c_clx              038      4
+     struct tty *               tty.t_canq.c_tp_cpu           03c      4
+     struct tty *               tty.t_canq.c_tp_iop           040      4
+     unsigned char *            tty.t_canq.c_buf_cpu          044      4
+     unsigned char *            tty.t_canq.c_buf_iop          048      4
+   struct clist                 tty.t_outq                    04c     20
+     int                        tty.t_outq.c_cc               04c      4
+     int                        tty.t_outq.c_cmax             050      4
+     int                        tty.t_outq.c_cfx              054      4
+     int                        tty.t_outq.c_clx              058      4
+     struct tty *               tty.t_outq.c_tp_cpu           05c      4
+     struct tty *               tty.t_outq.c_tp_iop           060      4
+     unsigned char *            tty.t_outq.c_buf_cpu          064      4
+     unsigned char *            tty.t_outq.c_buf_iop          068      4
+   (*int)()                     tty.t_oproc_cpu               06c      4
+   (*int)()                     tty.t_oproc_iop               070      4
+   (*int)()                     tty.t_stopproc_cpu            074      4
+   (*int)()                     tty.t_stopproc_iop            078      4
+   struct thread *              tty.t_rsel                    07c      4
 
 etc.
 
@@ -202,7 +203,7 @@ them in terms of packages and functions.  Consider the following program:
 
     $ru = "\0" x &rusage'sizeof();
 
-    syscall(&SYS_getrusage, &RUSAGE_SELF, $ru)      && die "getrusage: $!";
+    syscall(&SYS_getrusage, &RUSAGE_SELF, $ru)   && die "getrusage: $!";
 
     @ru = unpack($t = &rusage'typedef(), $ru);
 
@@ -219,47 +220,46 @@ As you see, the name of the package is the name of the structure.  Regular
 fields are just their own names.  Plus the following accessor functions are
 provided for your convenience:
 
-    struct	This takes no arguments, and is merely the number of first-level
-		elements in the structure.  You would use this for indexing
-		into arrays of structures, perhaps like this
+ struct      This takes no arguments, and is merely the number of first-
+             level elements in the structure.  You would use this for
+             indexing into arrays of structures, perhaps like this
 
+                 $usec = $u[ &user'u_utimer
+                             + (&ITIMER_VIRTUAL * &itimerval'struct)
+                             + &itimerval'it_value
+                             + &timeval'tv_usec
+                           ];
 
-		    $usec = $u[ &user'u_utimer
-				+ (&ITIMER_VIRTUAL * &itimerval'struct)
-				+ &itimerval'it_value
-				+ &timeval'tv_usec
-			      ];
+ sizeof      Returns the bytes in the structure, or the member if
+             you pass it an argument, such as
 
-    sizeof   	Returns the bytes in the structure, or the member if
-	     	you pass it an argument, such as
+                 &rusage'sizeof(&rusage'ru_utime)
 
-			&rusage'sizeof(&rusage'ru_utime)
+ typedef     This is the perl format definition for passing to pack and
+             unpack.  If you ask for the typedef of a nothing, you get
+             the whole structure, otherwise you get that of the member
+             you ask for.  Padding is taken care of, as is the magic to
+             guarantee that a union is unpacked into all its aliases.
+             Bitfields are not quite yet supported however.
 
-    typedef  	This is the perl format definition for passing to pack and
-	     	unpack.  If you ask for the typedef of a nothing, you get
-	     	the whole structure, otherwise you get that of the member
-	     	you ask for.  Padding is taken care of, as is the magic to
-	     	guarantee that a union is unpacked into all its aliases.
-	     	Bitfields are not quite yet supported however.
+ offsetof    This function is the byte offset into the array of that
+             member.  You may wish to use this for indexing directly
+             into the packed structure with vec() if you're too lazy
+             to unpack it.
 
-    offsetof	This function is the byte offset into the array of that
-		member.  You may wish to use this for indexing directly
-		into the packed structure with vec() if you're too lazy
-		to unpack it.
-
-    typeof	Not to be confused with the typedef accessor function, this
-		one returns the C type of that field.  This would allow
-		you to print out a nice structured pretty print of some
-		structure without knoning anything about it beforehand.
-		No args to this one is a noop.  Someday I'll post such
-		a thing to dump out your u structure for you.
+ typeof      Not to be confused with the typedef accessor function, this
+             one returns the C type of that field.  This would allow
+             you to print out a nice structured pretty print of some
+             structure without knoning anything about it beforehand.
+             No args to this one is a noop.  Someday I'll post such
+             a thing to dump out your u structure for you.
 
 
 The way I see this being used is like basically this:
 
-	% h2ph <some_include_file.h  >  /usr/lib/perl/tmp.ph
-	% c2ph  some_include_file.h  >> /usr/lib/perl/tmp.ph
-	% install
+        % h2ph <some_include_file.h  >  /usr/lib/perl/tmp.ph
+        % c2ph  some_include_file.h  >> /usr/lib/perl/tmp.ph
+        % install
 
 It's a little tricker with c2ph because you have to get the includes right.
 I can't know this for your system, but it's not usually too terribly difficult.

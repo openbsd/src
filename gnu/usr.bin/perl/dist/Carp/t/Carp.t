@@ -3,11 +3,14 @@ no warnings "once";
 use Config;
 
 use IPC::Open3 1.0103 qw(open3);
-use Test::More tests => 60;
+use Test::More tests => 66;
 
 sub runperl {
     my(%args) = @_;
     my($w, $r);
+
+    local $ENV{PERL5LIB} = join ($Config::Config{path_sep}, @INC);
+
     my $pid = open3($w, $r, undef, $^X, "-e", $args{prog});
     close $w;
     my $output = "";
@@ -28,12 +31,30 @@ BEGIN {
 }
 
 {
-  my $str = Carp::longmess("foo");
+  my $line = __LINE__; my $str = Carp::longmess("foo");
   is(
     $str,
-    "foo at t/Carp.t line 31.\n",
+    "foo at $0 line $line.\n",
     "we don't overshoot the top stack frame",
   );
+}
+
+package MyClass;
+
+sub new { return bless +{ field => ['value1', 'SecondVal'] }; }
+
+package main;
+
+{
+    my $err = Carp::longmess(MyClass->new);
+
+    # See:
+    # https://rt.cpan.org/Public/Bug/Display.html?id=107225
+    is_deeply(
+        $err->{field},
+        ['value1', 'SecondVal',],
+        "longmess returns sth meaningful in scalar context when passed a ref.",
+    );
 }
 
 {
@@ -237,16 +258,28 @@ sub w { cluck @_ }
 
 # $Carp::MaxArgNums
 {
-    my $i    = 0;
     my $aref = [
-        qr/1234 at \S*(?i:carp.t) line \d+\.\n\s*main::w\(1, 2, 3, 4\) called at \S*(?i:carp.t) line \d+/,
-        qr/1234 at \S*(?i:carp.t) line \d+\.\n\s*main::w\(1, 2, \.\.\.\) called at \S*(?i:carp.t) line \d+/,
+        [ -1            => '(...)' ],
+        [ 0             => '(1, 2, 3, 4)' ],
+        [ '0 but true'  => '(...)' ],
+        [ 1             => '(1, ...)' ],
+        [ 3             => '(1, 2, 3, ...)' ],
+        [ 4             => '(1, 2, 3, 4)' ],
+        [ 5             => '(1, 2, 3, 4)' ],
     ];
 
     for (@$aref) {
-        local $Carp::MaxArgNums = $i++;
+        my ($arg_count, $expected_signature) = @$_;
+
+        my $expected = join('',
+            '1234 at \S*(?i:carp.t) line \d+\.\n\s*main::w',
+            quotemeta $expected_signature,
+            ' called at \S*(?i:carp.t) line \d+'
+        );
+
+        local $Carp::MaxArgNums = $arg_count;
         local $SIG{__WARN__} = sub {
-            like "@_", $_, 'MaxArgNums';
+            like "@_", qr/$expected/, "MaxArgNums=$arg_count";
         };
 
         package Z;

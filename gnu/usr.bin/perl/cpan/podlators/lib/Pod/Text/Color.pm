@@ -4,7 +4,8 @@
 # better use of color, take options changing what colors are used for what
 # text, and the like.
 #
-# Copyright 1999, 2001, 2004, 2006, 2008, 2009 Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2001, 2004, 2006, 2008, 2009, 2014
+#     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -15,17 +16,18 @@
 
 package Pod::Text::Color;
 
-require 5.004;
+use 5.006;
+use strict;
+use warnings;
 
 use Pod::Text ();
 use Term::ANSIColor qw(colored);
 
-use strict;
 use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-$VERSION = '2.07';
+$VERSION = '4.07';
 
 ##############################################################################
 # Overrides
@@ -143,11 +145,11 @@ Perl core distribution as of 5.6.0.
 
 =head1 AUTHOR
 
-Russ Allbery <rra@stanford.edu>.
+Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001, 2004, 2006, 2008, 2009 Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2001, 2004, 2006, 2008, 2009 Russ Allbery <rra@cpan.org>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

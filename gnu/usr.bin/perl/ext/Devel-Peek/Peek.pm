@@ -3,7 +3,7 @@
 
 package Devel::Peek;
 
-$VERSION = '1.16';
+$VERSION = '1.23';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -64,6 +64,16 @@ sub debug_flags (;$) {
   $out
 }
 
+sub B::Deparse::pp_Devel_Peek_Dump {
+  my ($deparse,$op,$cx) = @_;
+  my @kids = $deparse->deparse($op->first, 6);
+  my $sib = $op->first->sibling;
+  if (ref $sib ne 'B::NULL') {
+    push @kids, $deparse->deparse($sib, 6);
+  }
+  return "Devel::Peek::Dump(" . join(", ", @kids) . ")";
+}
+
 1;
 __END__
 
@@ -104,6 +114,8 @@ C<CV>.  Devel::Peek also supplies C<SvREFCNT()> which can query reference
 counts on SVs.  This document will take a passive, and safe, approach
 to data debugging and for that it will describe only the C<Dump()>
 function.
+
+All output is to STDERR.
 
 The C<Dump()> function takes one or two arguments: something to dump, and
 an optional limit for recursion and array elements (default is 4).  The

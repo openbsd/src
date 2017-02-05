@@ -121,7 +121,7 @@ my $A = \%A::;     # keep a ref
 # There should be no A::B isarev entry.
 i"A::B" => qw [], 'assigning to two superclasses at the same time';
 ok !foo->isa("A::B"),
- "A class must not inherit from its superclass’s former name";
+ "A class must not inherit from its superclass's former name";
 
 # undeffing globs
 @alpha::ISA = 'beta';

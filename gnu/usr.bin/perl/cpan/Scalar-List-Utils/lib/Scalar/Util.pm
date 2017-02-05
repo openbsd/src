@@ -8,16 +8,19 @@ package Scalar::Util;
 
 use strict;
 require Exporter;
-require List::Util; # List::Util loads the XS
 
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(
   blessed refaddr reftype weaken unweaken isweak
 
-  dualvar isdual isvstring looks_like_number openhandle readonly set_prototype tainted
+  dualvar isdual isvstring looks_like_number openhandle readonly set_prototype
+  tainted
 );
-our $VERSION    = "1.38";
+our $VERSION    = "1.42_02";
 $VERSION   = eval $VERSION;
+
+require List::Util; # List::Util loads the XS
+List::Util->VERSION( $VERSION ); # Ensure we got the right XS version (RT#100863)
 
 our @EXPORT_FAIL;
 
@@ -43,6 +46,13 @@ sub export_fail {
   }
 
   @_;
+}
+
+# set_prototype has been moved to Sub::Util with a different interface
+sub set_prototype(&$)
+{
+  my ( $code, $proto ) = @_;
+  return Sub::Util::set_prototype( $proto, $code );
 }
 
 1;
@@ -75,7 +85,9 @@ By default C<Scalar::Util> does not export any subroutines.
 
 The following functions all perform some useful activity on reference values.
 
-=head2 $pkg = blessed( $ref )
+=head2 blessed
+
+    my $pkg = blessed( $ref );
 
 If C<$ref> is a blessed reference the name of the package that it is blessed
 into is returned. Otherwise C<undef> is returned.
@@ -92,7 +104,9 @@ into is returned. Otherwise C<undef> is returned.
 Take care when using this function simply as a truth test (such as in
 C<if(blessed $ref)...>) because the package name C<"0"> is defined yet false.
 
-=head2 $addr = refaddr( $ref )
+=head2 refaddr
+
+    my $addr = refaddr( $ref );
 
 If C<$ref> is reference the internal memory address of the referenced value is
 returned as a plain integer. Otherwise C<undef> is returned.
@@ -104,7 +118,9 @@ returned as a plain integer. Otherwise C<undef> is returned.
     $obj  = bless {}, "Foo";
     $addr = refaddr $obj;               # eg 88123488
 
-=head2 $type = reftype( $ref )
+=head2 reftype
+
+    my $type = reftype( $ref );
 
 If C<$ref> is a reference the basic Perl type of the variable referenced is
 returned as a plain string (such as C<ARRAY> or C<HASH>). Otherwise C<undef>
@@ -117,9 +133,11 @@ is returned.
     $obj  = bless {}, "Foo";
     $type = reftype $obj;               # HASH
 
-=head2 weaken( REF )
+=head2 weaken
 
-The lvalue C<REF> will be turned into a weak reference. This means that it
+    weaken( $ref );
+
+The lvalue C<$ref> will be turned into a weak reference. This means that it
 will not hold a reference count on the object it references. Also when the
 reference count on that object reaches zero, the reference will be set to
 undef. This function mutates the lvalue passed as its argument and returns no
@@ -154,12 +172,16 @@ references to objects will be strong, causing the remaining objects to never be
 destroyed because there is now always a strong reference to them in the @object
 array.
 
-=head2 unweaken( REF )
+=head2 unweaken
+
+    unweaken( $ref );
+
+I<Since version 1.36.>
 
 The lvalue C<REF> will be turned from a weak reference back into a normal
 (strong) reference again. This function mutates the lvalue passed as its
 argument and returns no value. This undoes the action performed by
-C<weaken()>.
+L</weaken>.
 
 This function is slightly neater and more convenient than the
 otherwise-equivalent code
@@ -171,7 +193,9 @@ otherwise-equivalent code
 (because in particular, simply assigning a weak reference back to itself does
 not work to unweaken it; C<$REF = $REF> does not work).
 
-=head2 $weak = isweak( $ref )
+=head2 isweak
+
+    my $weak = isweak( $ref );
 
 Returns true if C<$ref> is a weak reference.
 
@@ -187,7 +211,9 @@ B<NOTE>: Copying a weak reference creates a normal, strong, reference.
 
 =head1 OTHER FUNCTIONS
 
-=head2 $var = dualvar( $num, $string )
+=head2 dualvar
+
+    my $var = dualvar( $num, $string );
 
 Returns a scalar that has the value C<$num> in a numeric context and the value
 C<$string> in a string context.
@@ -196,7 +222,11 @@ C<$string> in a string context.
     $num = $foo + 2;                    # 12
     $str = $foo . " world";             # Hello world
 
-=head2 $dual = isdual( $var )
+=head2 isdual
+
+    my $dual = isdual( $var );
+
+I<Since version 1.26.>
 
 If C<$var> is a scalar that has both numeric and string values, the result is
 true.
@@ -224,7 +254,9 @@ You can capture its numeric and string content using:
     $err = dualvar $!, $!;
     $dual = isdual($err);               # true
 
-=head2 $vstring = isvstring( $var )
+=head2 isvstring
+
+    my $vstring = isvstring( $var );
 
 If C<$var> is a scalar which was coded as a vstring the result is true.
 
@@ -232,12 +264,16 @@ If C<$var> is a scalar which was coded as a vstring the result is true.
     $fmt  = isvstring($vs) ? "%vd" : "%s"; #true
     printf($fmt,$vs);
 
-=head2 $isnum = looks_like_number( $var )
+=head2 looks_like_number
+
+    my $isnum = looks_like_number( $var );
 
 Returns true if perl thinks C<$var> is a number. See
 L<perlapi/looks_like_number>.
 
-=head2 $fh = openhandle( $fh )
+=head2 openhandle
+
+    my $fh = openhandle( $fh );
 
 Returns C<$fh> itself if C<$fh> may be used as a filehandle and is open, or is
 is a tied handle. Otherwise C<undef> is returned.
@@ -247,7 +283,9 @@ is a tied handle. Otherwise C<undef> is returned.
     $fh = openhandle(*NOTOPEN);         # undef
     $fh = openhandle("scalar");         # undef
 
-=head2 $ro = readonly( $var )
+=head2 readonly
+
+    my $ro = readonly( $var );
 
 Returns true if C<$var> is readonly.
 
@@ -256,14 +294,18 @@ Returns true if C<$var> is readonly.
     $readonly = foo($bar);              # false
     $readonly = foo(0);                 # true
 
-=head2 $code = set_prototype( $code, $prototype )
+=head2 set_prototype
+
+    my $code = set_prototype( $code, $prototype );
 
 Sets the prototype of the function given by the C<$code> reference, or deletes
 it if C<$prototype> is C<undef>. Returns the C<$code> reference itself.
 
     set_prototype \&foo, '$$';
 
-=head2 $t = tainted( $var )
+=head2 tainted
+
+    my $t = tainted( $var );
 
 Return true if C<$var> is tainted.
 
@@ -279,12 +321,12 @@ Module use may give one of the following errors during import.
 =item Weak references are not implemented in the version of perl
 
 The version of perl that you are using does not implement weak references, to
-use C<isweak> or C<weaken> you will need to use a newer release of perl.
+use L</isweak> or L</weaken> you will need to use a newer release of perl.
 
 =item Vstrings are not implemented in the version of perl
 
 The version of perl that you are using does not implement Vstrings, to use
-C<isvstring> you will need to use a newer release of perl.
+L</isvstring> you will need to use a newer release of perl.
 
 =item C<NAME> is only available with the XS version of Scalar::Util
 
@@ -312,10 +354,15 @@ Copyright (c) 1997-2007 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
-Except weaken and isweak which are
+Additionally L</weaken> and L</isweak> which are
 
 Copyright (c) 1999 Tuomas J. Lukka <lukka@iki.fi>. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as perl itself.
+
+Copyright (C) 2004, 2008  Matthijs van Duin.  All rights reserved.
+Copyright (C) 2014 cPanel Inc.  All rights reserved.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut

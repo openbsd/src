@@ -22,7 +22,7 @@
 # outer sub.  Then we test a lexical directly inside the sub that DESTROY
 # calls.  Then we repeat with formats.
 
-BEGIN { chdir 't'; require './test.pl' }
+BEGIN { chdir 't' if -d 't'; require './test.pl' }
 plan 22;
 
 sub foo {

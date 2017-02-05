@@ -740,6 +740,8 @@ L<encoding> has been upgraded from version 2.6_01 to 2.12.
 
 L<English> has been upgraded from version 1.06 to 1.09.
 
+C<$OLD_PERL_VERSION> was added as an alias of C<$]>.
+
 =item *
 
 L<Errno> has been upgraded from version 1.18 to 1.20_03.
@@ -1455,6 +1457,9 @@ workarounds and changes in different versions of Perl, has been added.
 Three L<English> variable names which have long been documented but do not
 actually exist have been removed from the documentation.  These were
 C<$OLD_PERL_VERSION>, C<$OFMT>, and C<$ARRAY_BASE>.
+
+(Actually, C<OLD_PERL_VERSION> I<does> exist, starting with this revision, but
+remained undocumented until perl 5.22.0.)
 
 =back
 
@@ -2980,7 +2985,7 @@ warnings were enabled.
 =item *
 
 Compiling a C<split> operator whose third argument is a named constant
-evaulating to 0 no longer causes the constant's value to change.
+evaluating to 0 no longer causes the constant's value to change.
 
 =item *
 

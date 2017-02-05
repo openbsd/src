@@ -97,7 +97,7 @@ stringify everything using the snippet above, but that doesn't mean
 other engines have to.
 
 The C<flags> parameter is a bitfield which indicates which of the
-C<msixp> flags the regex was compiled with.  It also contains
+C<msixpn> flags the regex was compiled with.  It also contains
 additional info, such as if C<use locale> is in effect.
 
 The C<eogc> flags are stripped out before being passed to the comp

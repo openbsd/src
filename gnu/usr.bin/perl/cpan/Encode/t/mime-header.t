@@ -1,5 +1,5 @@
 #
-# $Id: mime-header.t,v 2.6 2013/08/14 02:29:54 dankogai Exp $
+# $Id: mime-header.t,v 2.8 2016/01/25 14:54:13 dankogai Exp dankogai $
 # This script is written in utf8
 #
 BEGIN {
@@ -73,28 +73,28 @@ Subject: 漢字、カタカナ、ひらがなを含む、非常に長いタイ�
 EOS
 
 my $bheader =<<'EOS';
-From:=?UTF-8?B?IOWwj+mjvCDlvL4g?=<dankogai@dan.co.jp>
-To: dankogai@dan.co.jp (=?UTF-8?B?5bCP6aO8?==Kogai,=?UTF-8?B?IOW8vg==?==
- Dan)
-Subject:
- =?UTF-8?B?IOa8ouWtl+OAgeOCq+OCv+OCq+ODiuOAgeOBsuOCieOBjOOBquOCkuWQq+OCgA==?=
+From: =?UTF-8?B?5bCP6aO8IOW8viA8ZGFua29nYWlAZGFuLmNvLmpwPg==?=
+To: =?UTF-8?B?ZGFua29nYWlAZGFuLmNvLmpwICjlsI/po7w9S29nYWksIOW8vj1EYW4p?=
+Subject: 
+ =?UTF-8?B?5ryi5a2X44CB44Kr44K/44Kr44OK44CB44Gy44KJ44GM44Gq44KS5ZCr44KA?=
  =?UTF-8?B?44CB6Z2e5bi444Gr6ZW344GE44K/44Kk44OI44Or6KGM44GM5LiA5L2T5YWo?=
  =?UTF-8?B?5L2T44Gp44Gu44KI44GG44Gr44GX44GmRW5jb2Rl44GV44KM44KL44Gu44GL?=
  =?UTF-8?B?77yf?=
 EOS
 
 my $qheader=<<'EOS';
-From:=?UTF-8?Q?=20=E5=B0=8F=E9=A3=BC=20=E5=BC=BE=20?=<dankogai@dan.co.jp>
-To: dankogai@dan.co.jp (=?UTF-8?Q?=E5=B0=8F=E9=A3=BC?==Kogai,
- =?UTF-8?Q?=20=E5=BC=BE?==Dan)
-Subject:
- =?UTF-8?Q?=20=E6=BC=A2=E5=AD=97=E3=80=81=E3=82=AB=E3=82=BF=E3=82=AB?=
- =?UTF-8?Q?=E3=83=8A=E3=80=81=E3=81=B2=E3=82=89=E3=81=8C=E3=81=AA=E3=82=92?=
- =?UTF-8?Q?=E5=90=AB=E3=82=80=E3=80=81=E9=9D=9E=E5=B8=B8=E3=81=AB=E9=95=B7?=
- =?UTF-8?Q?=E3=81=84=E3=82=BF=E3=82=A4=E3=83=88=E3=83=AB=E8=A1=8C=E3=81=8C?=
- =?UTF-8?Q?=E4=B8=80=E4=BD=93=E5=85=A8=E4=BD=93=E3=81=A9=E3=81=AE=E3=82=88?=
- =?UTF-8?Q?=E3=81=86=E3=81=AB=E3=81=97=E3=81=A6Encode=E3=81=95?=
- =?UTF-8?Q?=E3=82=8C=E3=82=8B=E3=81=AE=E3=81=8B=EF=BC=9F?=
+From: =?UTF-8?Q?=E5=B0=8F=E9=A3=BC=20=E5=BC=BE=20=3Cdankogai=40?=
+ =?UTF-8?Q?dan=2Eco=2Ejp=3E?=
+To: =?UTF-8?Q?dankogai=40dan=2Eco=2Ejp=20=28?=
+ =?UTF-8?Q?=E5=B0=8F=E9=A3=BC=3DKogai=2C=20=E5=BC=BE=3DDan?= =?UTF-8?Q?=29?=
+Subject: 
+ =?UTF-8?Q?=E6=BC=A2=E5=AD=97=E3=80=81=E3=82=AB=E3=82=BF=E3=82=AB=E3=83=8A?=
+ =?UTF-8?Q?=E3=80=81=E3=81=B2=E3=82=89=E3=81=8C=E3=81=AA=E3=82=92=E5=90=AB?=
+ =?UTF-8?Q?=E3=82=80=E3=80=81=E9=9D=9E=E5=B8=B8=E3=81=AB=E9=95=B7=E3=81=84?=
+ =?UTF-8?Q?=E3=82=BF=E3=82=A4=E3=83=88=E3=83=AB=E8=A1=8C=E3=81=8C=E4=B8=80?=
+ =?UTF-8?Q?=E4=BD=93=E5=85=A8=E4=BD=93=E3=81=A9=E3=81=AE=E3=82=88=E3=81=86?=
+ =?UTF-8?Q?=E3=81=AB=E3=81=97=E3=81=A6Encode=E3=81=95=E3=82=8C?=
+ =?UTF-8?Q?=E3=82=8B=E3=81=AE=E3=81=8B=EF=BC=9F?=
 EOS
 
 is(Encode::decode('MIME-Header', $bheader), $dheader, "decode B");
@@ -103,8 +103,9 @@ is(Encode::encode('MIME-B', $dheader)."\n", $bheader, "encode B");
 is(Encode::encode('MIME-Q', $dheader)."\n", $qheader, "encode Q");
 
 $dheader = "What is =?UTF-8?B?w4RwZmVs?= ?";
-$bheader = "What is =?UTF-8?B?PT9VVEYtOD9CP3c0UndabVZzPz0=?= ?";
-$qheader = "What is =?UTF-8?Q?=3D=3FUTF=2D8=3FB=3Fw4RwZmVs=3F=3D?= ?";
+$bheader = "=?UTF-8?B?V2hhdCBpcyA9P1VURi04P0I/dzRSd1ptVnM/PSA/?=";
+$qheader = "=?UTF-8?Q?What=20is=20=3D=3FUTF=2D8=3FB=3Fw4R?="
+         . "\n " . "=?UTF-8?Q?wZmVs=3F=3D=20=3F?=";
 is(Encode::encode('MIME-B', $dheader), $bheader, "Double decode B");
 is(Encode::encode('MIME-Q', $dheader), $qheader, "Double decode Q");
 {
@@ -127,5 +128,5 @@ is(Encode::encode('MIME-Q', $rt42627),
    'MIME-Q encoding does not truncate trailing zeros');
 
 # RT87831
-is(Encode::encode('MIME-Header', '0'), '0', 'RT87831');
+is(Encode::encode('MIME-Header', '0'), '=?UTF-8?B?MA==?=', 'RT87831');
 __END__;

@@ -3,6 +3,11 @@
 # This test puts MakeMaker through the paces of a basic perl module
 # build, test and installation of the Big::Fat::Dummy module.
 
+# Module::Install relies on being able to patch the generated Makefile
+# to add flags to $(PERL)
+# This test includes adding ' -Iinc' to $(PERL), and checking 'make install'
+# after that works. Done here as back-compat is considered basic.
+
 BEGIN {
     unshift @INC, 't/lib';
 }
@@ -10,13 +15,16 @@ BEGIN {
 use strict;
 use Config;
 use ExtUtils::MakeMaker;
+use utf8;
 
-use Test::More
-    $ENV{PERL_CORE} && $Config{'usecrosscompile'}
-    ? (skip_all => "no toolchain installed when cross-compiling")
-    : (tests => 171);
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
+use Config;
+use Test::More;
+use ExtUtils::MM;
+plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+    ? (skip_all => "cross-compiling and make not available")
+    : (tests => 171);
 use File::Find;
 use File::Spec;
 use File::Path;
@@ -24,6 +32,28 @@ use File::Temp qw[tempdir];
 
 my $perl = which_perl();
 my $Is_VMS = $^O eq 'VMS';
+my $OLD_CP; # crude but...
+my $w32worked; # or whether we had to fallback to chcp
+if ($^O eq "MSWin32") {
+    eval { require Win32; $w32worked = $OLD_CP = Win32::GetConsoleCP() };
+    $OLD_CP = $1 if !$w32worked and qx(chcp) =~ /(\d+)$/ and $? == 0;
+    if (defined $OLD_CP) {
+        if ($w32worked) {
+            Win32::SetConsoleCP(1252)
+        } else {
+            qx(chcp 1252);
+        }
+    }
+}
+END {
+    if ($^O eq "MSWin32" and defined $OLD_CP) {
+        if ($w32worked) {
+            Win32::SetConsoleCP($OLD_CP)
+        } else {
+            qx(chcp $OLD_CP);
+        }
+    }
+}
 
 my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
 chdir $tmpdir;
@@ -43,8 +73,10 @@ END {
 ok( chdir('Big-Dummy'), "chdir'd to Big-Dummy" ) ||
   diag("chdir failed: $!");
 
-my @mpl_out = run(qq{$perl Makefile.PL "PREFIX=../dummy-install"});
-END { rmtree '../dummy-install'; }
+sub extrachar { $] > 5.008 && !$ENV{PERL_CORE} ? utf8::decode(my $c='š') : 's' }
+my $DUMMYINST = '../dummy-in'.extrachar().'tall';
+my @mpl_out = run(qq{$perl Makefile.PL "PREFIX=$DUMMYINST"});
+END { rmtree $DUMMYINST; }
 
 cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) ||
   diag(@mpl_out);
@@ -62,18 +94,18 @@ ok( -e $makefile,       'Makefile exists' );
 
 # -M is flakey on VMS
 my $mtime = (stat($makefile))[9];
-cmp_ok( $Touch_Time, '<=', $mtime,  '  its been touched' );
+cmp_ok( $Touch_Time, '<=', $mtime,  '  been touched' );
 
 END { unlink makefile_name(), makefile_backup() }
 
 my $make = make_run();
 
 {
-    # Supress 'make manifest' noise
+    # Suppress 'make manifest' noise
     local $ENV{PERL_MM_MANIFEST_VERBOSE} = 0;
     my $manifest_out = run("$make manifest");
     ok( -e 'MANIFEST',      'make manifest created a MANIFEST' );
-    ok( -s 'MANIFEST',      '  its not empty' );
+    ok( -s 'MANIFEST',      '  not empty' );
 }
 
 END { unlink 'MANIFEST'; }
@@ -122,28 +154,42 @@ like( $test_out, qr/All tests successful/,  '  successful' );
 is( $?, 0,                                  '  exited normally' ) ||
     diag $test_out;
 
+# now simulate what Module::Install does, and edit $(PERL) to add flags
+open my $fh, '<', $makefile;
+my $mtext = join '', <$fh>;
+close $fh;
+$mtext =~ s/^(\s*PERL\s*=.*)$/$1 -Iinc/m;
+open $fh, '>', $makefile;
+print $fh $mtext;
+close $fh;
 
 my $install_out = run("$make install");
 is( $?, 0, 'install' ) || diag $install_out;
 like( $install_out, qr/^Installing /m );
 
-ok( -r '../dummy-install',     '  install dir created' );
-my %files = ();
-find( sub {
-    # do it case-insensitive for non-case preserving OSs
-    my $file = lc $_;
+sub check_dummy_inst {
+    my $loc = shift;
+    my %files = ();
+    find( sub {
+	# do it case-insensitive for non-case preserving OSs
+	my $file = lc $_;
+	# VMS likes to put dots on the end of things that don't have them.
+	$file =~ s/\.$// if $Is_VMS;
+	$files{$file} = $File::Find::name;
+    }, $loc );
+    ok( $files{'dummy.pm'},     '  Dummy.pm installed' );
+    ok( $files{'liar.pm'},      '  Liar.pm installed'  );
+    ok( $files{'program'},      '  program installed'  );
+    ok( $files{'.packlist'},    '  packlist created'   );
+    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    \%files;
+}
 
-    # VMS likes to put dots on the end of things that don't have them.
-    $file =~ s/\.$// if $Is_VMS;
-
-    $files{$file} = $File::Find::name;
-}, '../dummy-install' );
-ok( $files{'dummy.pm'},     '  Dummy.pm installed' );
-ok( $files{'liar.pm'},      '  Liar.pm installed'  );
-ok( $files{'program'},      '  program installed'  );
-ok( $files{'.packlist'},    '  packlist created'   );
-ok( $files{'perllocal.pod'},'  perllocal.pod created' );
-
+SKIP: {
+    ok( -r $DUMMYINST,     '  install dir created' )
+	or skip "$DUMMYINST doesn't exist", 5;
+    check_dummy_inst($DUMMYINST);
+}
 
 SKIP: {
     skip 'VMS install targets do not preserve $(PREFIX)', 8 if $Is_VMS;
@@ -153,13 +199,7 @@ SKIP: {
     like( $install_out, qr/^Installing /m );
 
     ok( -r 'elsewhere',     '  install dir created' );
-    %files = ();
-    find( sub { $files{$_} = $File::Find::name; }, 'elsewhere' );
-    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
-    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
-    ok( $files{'program'},      '  program installed'  );
-    ok( $files{'.packlist'},    '  packlist created'   );
-    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    check_dummy_inst('elsewhere');
     rmtree('elsewhere');
 }
 
@@ -173,19 +213,10 @@ SKIP: {
     like( $install_out, qr/^Installing /m );
 
     ok( -d 'other',  '  destdir created' );
-    %files = ();
-    my $perllocal;
-    find( sub {
-        $files{$_} = $File::Find::name;
-    }, 'other' );
-    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
-    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
-    ok( $files{'program'},      '  program installed'  );
-    ok( $files{'.packlist'},    '  packlist created'   );
-    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    my $files = check_dummy_inst('other');
 
-    ok( open(PERLLOCAL, $files{'perllocal.pod'} ) ) ||
-        diag("Can't open $files{'perllocal.pod'}: $!");
+    ok( open(PERLLOCAL, $files->{'perllocal.pod'} ) ) ||
+        diag("Can't open $files->{'perllocal.pod'}: $!");
     { local $/;
       unlike(<PERLLOCAL>, qr/other/, 'DESTDIR should not appear in perllocal');
     }
@@ -214,13 +245,7 @@ SKIP: {
 
     ok( !-d 'elsewhere',       '  install dir not created' );
     ok( -d 'other/elsewhere',  '  destdir created' );
-    %files = ();
-    find( sub { $files{$_} = $File::Find::name; }, 'other/elsewhere' );
-    ok( $files{'Dummy.pm'},     '  Dummy.pm installed' );
-    ok( $files{'Liar.pm'},      '  Liar.pm installed'  );
-    ok( $files{'program'},      '  program installed'  );
-    ok( $files{'.packlist'},    '  packlist created'   );
-    ok( $files{'perllocal.pod'},'  perllocal.pod created' );
+    check_dummy_inst('other/elsewhere');
     rmtree('other');
 }
 
@@ -394,7 +419,7 @@ note "META file validity"; {
 
 
 # Make sure init_dirscan doesn't go into the distdir
-@mpl_out = run(qq{$perl Makefile.PL "PREFIX=../dummy-install"});
+@mpl_out = run(qq{$perl Makefile.PL "PREFIX=$DUMMYINST"});
 
 cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) || diag(@mpl_out);
 
@@ -412,7 +437,6 @@ is( $?, 0, 'realclean' ) || diag($realclean_out);
 
 open(STDERR, ">&SAVERR") or die $!;
 close SAVERR;
-
 
 sub _normalize {
     my $hash = shift;

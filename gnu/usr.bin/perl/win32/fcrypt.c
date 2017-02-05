@@ -1,6 +1,7 @@
 /* fcrypt.c */
 /* Copyright (C) 1993 Eric Young - see README for more details */
 #include <stdio.h>
+#include <errno.h>
 
 /* Eric Young.
  * This version of crypt has been developed from my MIT compatable
@@ -39,7 +40,7 @@ typedef struct des_ks_struct
 			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
 			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
-static unsigned long SPtrans[8][64]={
+static const unsigned long SPtrans[8][64]={
 { /* nibble 0 */
 0x00820200, 0x00020000, 0x80800000, 0x80820200,
 0x00800000, 0x80020200, 0x80020000, 0x80800000,
@@ -177,7 +178,7 @@ static unsigned long SPtrans[8][64]={
 0x00000020, 0x08208000, 0x00208020, 0x00000000,
 0x08000000, 0x08200020, 0x00008000, 0x00208020}
 };
-static unsigned long skb[8][64]={
+static const unsigned long skb[8][64]={
 { /* for C bits (numbered as per FIPS 46) 1 2 3 4 5 6 */
 0x00000000,0x00000010,0x20000000,0x20000010,
 0x00010000,0x00010010,0x20010000,0x20010010,
@@ -324,7 +325,7 @@ static unsigned long skb[8][64]={
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
 	(a)=(a)^(t)^(t>>(16-(n))))\
 
-static char shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
+static const char shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 
 static int body(
 	unsigned long *out0,
@@ -434,7 +435,7 @@ des_set_key(des_cblock *key, des_key_schedule schedule)
 		SPtrans[6][(u>>24)&0x3f];
 #endif
 
-unsigned char con_salt[128]={
+unsigned const char con_salt[128]={
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -453,7 +454,7 @@ unsigned char con_salt[128]={
 0x3D,0x3E,0x3F,0x00,0x00,0x00,0x00,0x00,
 };
 
-unsigned char cov_2char[64]={
+unsigned const char cov_2char[64]={
 0x2E,0x2F,0x30,0x31,0x32,0x33,0x34,0x35,
 0x36,0x37,0x38,0x39,0x41,0x42,0x43,0x44,
 0x45,0x46,0x47,0x48,0x49,0x4A,0x4B,0x4C,
@@ -463,6 +464,14 @@ unsigned char cov_2char[64]={
 0x6B,0x6C,0x6D,0x6E,0x6F,0x70,0x71,0x72,
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
+
+/* the salt for classic DES crypt (which is all we implement here)
+   permits [./0-9A-Za-z], since '.' and '/' immediately preceed
+   '0' we don't need individual checks for '.' and '/' 
+*/
+#define good_for_salt(c) \
+    ((c) >= '.' && (c) <= '9' || (c) >= 'A' && (c) <= 'Z' ||  \
+     (c) >= 'a' && (c) <= 'z')
 
 char *
 des_fcrypt(const char *buf, const char *salt, char *buff)
@@ -475,6 +484,11 @@ des_fcrypt(const char *buf, const char *salt, char *buff)
 	unsigned char bb[9];
 	unsigned char *b=bb;
 	unsigned char c,u;
+
+        if (!good_for_salt(salt[0]) || !good_for_salt(salt[1])) {
+            errno = EINVAL;
+            return NULL;
+        }
 
 	/* eay 25/08/92
 	 * If you call crypt("pwd","*") as often happens when you

@@ -18,7 +18,7 @@ BEGIN {
 # strict
 use strict;
 
-print "1..201\n";
+print "1..215\n";
 
 my $i = 1;
 
@@ -278,6 +278,7 @@ testing \&a_sub, '&';
 
 sub a_sub (&) {
     print "# \@_ = (",join(",",@_),")\n";
+    return unless defined $_[0];
     &{$_[0]};
 }
 
@@ -285,10 +286,26 @@ sub tmp_sub_1 { printf "ok %d\n",$i++ }
 
 a_sub { printf "ok %d\n",$i++ };
 a_sub \&tmp_sub_1;
+a_sub \(&tmp_sub_1);
 
 @array = ( \&tmp_sub_1 );
 eval 'a_sub @array';
 print "not " unless $@;
+printf "ok %d\n",$i++;
+eval 'a_sub \@array';
+print "not " unless $@ =~ /Type of arg/;
+printf "ok %d\n",$i++;
+eval 'a_sub \%hash';
+print "not " unless $@ =~ /Type of arg/;
+printf "ok %d\n",$i++;
+eval 'a_sub \$scalar';
+print "not " unless $@ =~ /Type of arg/;
+printf "ok %d\n",$i++;
+eval 'a_sub \($list, %of, @refs)';
+print "not " unless $@ =~ /Type of arg/;
+printf "ok %d\n",$i++;
+eval 'a_sub undef';
+print "not " if $@;
 printf "ok %d\n",$i++;
 
 ##
@@ -309,6 +326,17 @@ a_subx &tmp_sub_2;
 eval 'a_subx @array';
 print "not " unless $@;
 printf "ok %d\n",$i++;
+my $bad =
+    qr/Type of arg 1 to .* must be subroutine \(not subroutine entry\)/;
+eval 'a_subx &tmp_sub_2()';
+print "not " unless $@ =~ $bad;
+printf "ok %d - \\& prohibits &foo()\n",$i++;
+eval 'a_subx tmp_sub_2()';
+print "not " unless $@ =~ $bad;
+printf "ok %d - \\& prohibits foo()\n",$i++;
+eval 'a_subx tmp_sub_2';
+print "not " unless $@ =~ $bad;
+printf "ok %d - \\& prohibits foo where foo is an existing sub\n",$i++;
 
 ##
 ##
@@ -380,6 +408,11 @@ a_hash_ref %hash;
 print "not " unless $hash{'b'} == 2;
 printf "ok %d\n",$i++;
 
+%hash = ( a => 1);
+a_hash_ref +(%hash);
+print "not " unless $hash{'b'} == 2;
+printf "ok %d\n",$i++;
+
 ##
 ##
 ##
@@ -398,6 +431,16 @@ sub array_ref_plus (\@@) {
   array_ref_plus @array, @more; }
 print "not " unless @array == 4;
 print @array;
+
+@array = ('a');
+{ my @more = ('x');
+  array_ref_plus +(@array), @more; }
+print "not " unless @array == 4;
+print @array;
+
+##
+##
+##
 
 my $p;
 print "not " if defined prototype('CORE::print');
@@ -500,11 +543,11 @@ star(\*FOO, sub {
 	print "ok $i - star(\\*FOO)\n";
     }); $i++;
 star2 FOO, BAR, sub {
-    print "not " unless $_[0] eq 'FOO' and $_[1] eq 'BAR';
+    print "not " unless $_[0] eq 'FOO' and $_[1] eq 'quux';
     print "ok $i - star2 FOO, BAR\n";
 }; $i++;
 star2(Bar::BAZ, FOO, sub {
-	print "not " unless $_[0] eq 'Bar::BAZ' and $_[1] eq 'FOO';
+	print "not " unless $_[0] eq 'quuz' and $_[1] eq 'FOO';
 	print "ok $i - star2(Bar::BAZ, FOO)\n"
     }); $i++;
 star2 BAR(), FOO, sub {
@@ -843,3 +886,9 @@ print "ok ", $i++, "\n";
     print "not ok ", $i++, " # >@got<\n";
   }
 }
+
+# [perl #123514] prototype with no arguments
+$_ = sub ($$$$$$$) {};
+@_ = (1, 2, 3, prototype(), 4, 5, 6);
+print "not " unless "@_" eq '1 2 3 $$$$$$$ 4 5 6';
+print "ok ", $i++, " - [perl #123514] (got @_)\n";

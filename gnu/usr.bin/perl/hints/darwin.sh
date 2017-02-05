@@ -24,6 +24,12 @@ case "$osvers" in
     ;;
 esac
 
+# finite() deprecated in 10.9, use isfinite() instead.
+case "$osvers" in
+[1-8].*) ;;
+*) d_finite='undef' ;;
+esac
+
 # This was previously used in all but causes three cases
 # (no -Ddprefix=, -Dprefix=/usr, -Dprefix=/some/thing/else)
 # but that caused too much grief.
@@ -180,28 +186,170 @@ case "$ld" in
         ;;
 esac
 
+# From http://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc/mk/platform/Darwin.mk
+# and https://trac.macports.org/wiki/XcodeVersionInfo
+# and https://trac.macports.org/wiki/UsingTheRightCompiler
+#
+# OS, Kernel, Xcode Version
+# Note that Xcode gets updates on older systems sometimes.
+# pkgsrc generally expects that the most up-to-date xcode available for
+# an OS version is installed
+#
+# Note that Apple hijacks the clang preprocessor symbols __clang_major__
+# and __clang_minor__ so they cannot be used (easily) to detect the
+# actual clang release.  For example:
+#
+# "Yosemite 10.10.x 14.x.y 6.3 (clang 3.6 as 6.1/602.0.49)"
+#
+# means that the Xcode 6.3 provided the clang 6.3 but called it 6.1
+# (__clang_major__, __clang_minor__) and in addition the preprocessor
+# symbol __apple_build_version__ was 6020049.
+#
+# Codename        OS      Kernel  Xcode
+#
+# Cheetah         10.0.x  1.3.1
+# Puma            10.1    1.4.1
+#                 10.1.x  5.x.y
+# Jaguar          10.2.x  6.x.y
+# Panther         10.3.x  7.x.y
+# Tiger           10.4.x  8.x.y   2.0   (gcc4 4.0.0)
+#                                 2.2   (gcc4 4.0.1)
+#                                 2.2.1 (gcc 3.3)
+#                                 2.5 ?
+# Leopard         10.5.x  9.x.y   3.0   (gcc 4.0.1 default)
+#                                 3.1   (gcc 4.2.1)
+# Snow Leopard    10.6.x  10.x.y  3.2   (llvm gcc 4.2, clang 2.3 as 1.0)
+#                                 3.2.1 (clang 1.0.1 as 1.0.1/24)
+#                                 3.2.2 (clang 1.0.2 as 1.0.2/32)
+#                                 3.2.3 (clang 1.5 as 1.5/60)
+#                                 4.0.1 (clang 2.9 as 2.0/138)
+# Lion            10.7.x  11.x.y  4.1   (llvm gcc 4.2.1, clang 3.0 as 2.1/163.7.1)
+#                                 4.2   (clang 3.0 as 3.0/211.10.1)
+#                                 4.3.3 (clang 3.1 as 3.1/318.0.61)
+#                                 4.4   (clang 3.1 as 4.0/421.0.57)
+# Mountain Lion   10.8.x  12.x.y  4.5   (clang 3.1 as 4.1/421.11.65, real gcc removed, there is gcc but it's really clang)
+#                                 4.6   (clang 3.2 as 4.2/425.0.24)
+#                                 5.0   (clang 3.3 as 5.0/500.2.75)
+#                                 5.1   (clang 3.4 as 5.1/503.0.38)
+#                                 5.1.1 (clang 3.4 as 5.1/503.0.40)
+# Mavericks       10.9.x  13.x.y  6.0.1 (clang 3.5 as 6.0/600.0.51)
+#                                 6.1   (clang 3.5 as 6.0/600.0.54)
+#                                 6.1.1 (clang 3.5 as 6.0/600.0.56)
+#                                 6.2   (clang 3.5 as 6.0/600.0.57)
+# Yosemite        10.10.x 14.x.y  6.3   (clang 3.6 as 6.1/602.0.49)
+#                                 6.3.1 (clang 3.6 as 6.1/602.0.49)
+#                                 6.3.2 (clang 3.6 as 6.1/602.0.53)
+# El Capitan      10.11.x 15.x.y  7.0   (clang 3.7 as 7.0/700.0.72)
+#                                 7.1   (clang 3.7 as 7.0/700.1.76)
+#                                 7.2   (clang 3.7 as 7.0.2/700.1.81)
+#                                 7.2.1 (clang 3.7 as 7.0.2/700.1.81)
+#                                 7.3   (clang 3.7 as 7.3.0/703.0.29)
+#
+
+# Processors Supported
+#
+# PowerPC (PPC):       10.0.x - 10.5.8 (final 10.5.x)
+# PowerPC via Rosetta: 10.4.4 - 10.6.8 (final 10.6.x)
+# IA-32:               10.4.4 - 10.6.8 (though still supported on x86-64)
+# x86-64:              10.4.7 - current
+
+# MACOSX_DEPLOYMENT_TARGET selects the minimum OS level we want to support
+#
+# It is needed for OS releases before 10.6.
+#
+# https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/cross_development/Configuring/configuring.html
+#
+# If it is set, we also propagate its value to ccflags and ldflags
+# using the -mmacosx-version-min flag.  If it is not set, we use
+# the OS X release as the min value for the flag.
+
+# Adds "-mmacosx-version-min=$2" to "$1" unless it already is there.
+add_macosx_version_min () {
+  local v
+  eval "v=\$$1"
+  case " $v " in
+  *"-mmacosx-version-min"*)
+     echo "NOT adding -mmacosx-version-min=$2 to $1 ($v)" >&4
+     ;;
+  *) echo "Adding -mmacosx-version-min=$2 to $1" >&4
+     eval "$1='$v -mmacosx-version-min=$2'"
+     ;;
+  esac
+}
+
 # Perl bundles do not expect two-level namespace, added in Darwin 1.4.
 # But starting from perl 5.8.1/Darwin 7 the default is the two-level.
-case "$osvers" in
-1.[0-3].*)
+case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
+1.[0-3].*) # OS X 10.0.x
    lddlflags="${ldflags} -bundle -undefined suppress"
    ;;
-1.*)
+1.*)       # OS X 10.1
    ldflags="${ldflags} -flat_namespace"
    lddlflags="${ldflags} -bundle -undefined suppress"
    ;;
-[2-6].*)
+[2-6].*)   # OS X 10.1.x - 10.2.x (though [2-4] never existed publicly)
    ldflags="${ldflags} -flat_namespace"
    lddlflags="${ldflags} -bundle -undefined suppress"
    ;;
-*) 
+[7-9].*)   # OS X 10.3.x - 10.5.x
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    case "$ld" in
        *MACOSX_DEVELOPMENT_TARGET*) ;;
        *) ld="env MACOSX_DEPLOYMENT_TARGET=10.3 ${ld}" ;;
    esac
    ;;
+*)        # OS X 10.6.x - current
+   # The MACOSX_DEPLOYMENT_TARGET is not needed,
+   # but the -mmacosx-version-min option is always used.
+
+   # We now use MACOSX_DEPLOYMENT_TARGET, if set, as an override by
+   # capturing its value and adding it to the flags.
+    case "$MACOSX_DEPLOYMENT_TARGET" in
+    10.*)
+      add_macosx_version_min ccflags $MACOSX_DEPLOYMENT_TARGET
+      add_macosx_version_min ldflags $MACOSX_DEPLOYMENT_TARGET
+      ;;
+    '')
+      # Empty MACOSX_DEPLOYMENT_TARGET is okay.
+      ;;
+    *)
+      cat <<EOM >&4
+
+*** Unexpected MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET
+***
+*** Please either set it to 10.something, or to empty.
+
+EOM
+      exit 1
+      ;;
+    esac
+
+    # Keep the prodvers leading whitespace (Configure magic).
+    # Cannot use $osvers here since that is the kernel version.
+    # sw_vers output                 what we want
+    # "ProductVersion:    10.10.5"   "10.10"
+    # "ProductVersion:    10.11"     "10.11"
+        prodvers=`sw_vers|awk '/^ProductVersion:/{print $2}'|awk -F. '{print $1"."$2}'`
+    case "$prodvers" in
+    10.*)
+      add_macosx_version_min ccflags $prodvers
+      add_macosx_version_min ldflags $prodvers
+      ;;
+    *)
+      cat <<EOM >&4
+
+*** Unexpected product version $prodvers.
+***
+*** Try running sw_vers and see what its ProductVersion says.
+
+EOM
+      exit 1
+    esac
+
+   lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
+   ;;
 esac
+
 ldlibpthname='DYLD_LIBRARY_PATH';
 
 # useshrplib=true results in much slower startup times.
@@ -293,6 +441,11 @@ case "$usemymalloc" in
 esac
 # However sbrk() returns -1 (failure) somewhere in lib/unicore/mktables at
 # around 14M, so we need to use system malloc() as our sbrk()
+#
+# sbrk() in Darwin deprecated since Mavericks (10.9), it still exists
+# in Yosemite (10.10) but that is just an emulation, and fails for
+# allocations beyond 4MB.  One should use e.g. mmap instead (or system
+# malloc, as suggested above, that but is kind of backward).
 malloc_cflags='ccflags="-DUSE_PERL_SBRK -DPERL_SBRK_VIA_MALLOC $ccflags"'
 
 # Locales aren't feeling well.
@@ -331,6 +484,11 @@ i_dbm=undef;
 # NeilW says this should be acceptable on all darwin versions.
 ranlib='ranlib'
 
+# Catch MacPorts gcc/g++ extra libdir
+case "$($cc -v 2>&1)" in
+*"MacPorts gcc"*) loclibpth="$loclibpth /opt/local/lib/libgcc" ;;
+esac
+
 ##
 # Build process
 ##
@@ -339,3 +497,13 @@ ranlib='ranlib'
 # makefile in the same place.  Since Darwin uses GNU make, this dodges
 # the problem.
 firstmakefile=GNUmakefile;
+
+# Parts of the system call setenv(), in particular in an atfork handler.
+# This causes problems when the child tries to clean up environ[], so
+# let libc manage environ[].
+cat >> config.over <<'EOOVER'
+if test "$d_unsetenv" = "$define" -a \
+    `expr "$ccflags" : '.*-DPERL_USE_SAFE_PUTENV'` -eq 0; then
+        ccflags="$ccflags -DPERL_USE_SAFE_PUTENV"
+fi
+EOOVER

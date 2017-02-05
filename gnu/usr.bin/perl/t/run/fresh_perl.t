@@ -624,12 +624,13 @@ my @h = 1 .. 10;
 bad(@h);
 sub bad {
    undef @h;
-   print "O";
+   warn "O\n";
    print for @_;
-   print "K";
+   warn "K\n";
 }
 EXPECT
-OK
+O
+Use of freed value in iteration at - line 7.
 ########
 # Bug 20010506.041
 "abcd\x{1234}" =~ /(a)(b[c])(d+)?/i and print "ok\n";
@@ -742,6 +743,8 @@ utf8::upgrade($_); # the original code used a UTF-8 locale (affects STDIN)
 /^([[:digit:]]+)/;
 EXPECT
 ######## [perl #20667] unicode regex vs non-unicode regex
+# SKIP: !defined &DynaLoader::boot_DynaLoader && !eval 'require "unicore/Heavy.pl"'
+# (skip under miniperl if Unicode tables are not built yet)
 $toto = 'Hello';
 $toto =~ /\w/; # this line provokes the problem!
 $name = 'A B';

@@ -51,6 +51,86 @@
 # include <ws2tcpip.h>
 #endif
 
+#ifdef WIN32
+
+/* VC 6 with its original headers doesn't know about sockaddr_storage, VC 2003 does*/
+#ifndef _SS_MAXSIZE
+
+#  define _SS_MAXSIZE 128
+#  define _SS_ALIGNSIZE (sizeof(__int64))
+
+#  define _SS_PAD1SIZE (_SS_ALIGNSIZE - sizeof (short))
+#  define _SS_PAD2SIZE (_SS_MAXSIZE - (sizeof (short) + _SS_PAD1SIZE \
+                                                    + _SS_ALIGNSIZE))
+
+struct sockaddr_storage {
+    short ss_family;
+    char __ss_pad1[_SS_PAD1SIZE];
+    __int64 __ss_align;
+    char __ss_pad2[_SS_PAD2SIZE];
+};
+
+typedef int socklen_t;
+
+#define in6_addr in_addr6
+
+#define INET_ADDRSTRLEN  22
+#define INET6_ADDRSTRLEN 65
+
+#endif
+
+static int inet_pton(int af, const char *src, void *dst)
+{
+  struct sockaddr_storage ss;
+  int size = sizeof(ss);
+  ss.ss_family = af; /* per MSDN */
+
+  if (WSAStringToAddress((char*)src, af, NULL, (struct sockaddr *)&ss, &size) != 0)
+    return 0;
+
+  switch(af) {
+    case AF_INET:
+      *(struct in_addr *)dst = ((struct sockaddr_in *)&ss)->sin_addr;
+      return 1;
+    case AF_INET6:
+      *(struct in6_addr *)dst = ((struct sockaddr_in6 *)&ss)->sin6_addr;
+      return 1;
+    default:
+      WSASetLastError(WSAEAFNOSUPPORT);
+      return -1;
+  }
+}
+
+static const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)
+{
+  struct sockaddr_storage ss;
+  unsigned long s = size;
+
+  ZeroMemory(&ss, sizeof(ss));
+  ss.ss_family = af;
+
+  switch(af) {
+    case AF_INET:
+      ((struct sockaddr_in *)&ss)->sin_addr = *(struct in_addr *)src;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)&ss)->sin6_addr = *(struct in6_addr *)src;
+      break;
+    default:
+      return NULL;
+  }
+
+  /* cannot directly use &size because of strict aliasing rules */
+  if (WSAAddressToString((struct sockaddr *)&ss, sizeof(ss), NULL, dst, &s) != 0)
+    return NULL;
+  else
+    return dst;
+}
+
+#define HAS_INETPTON
+#define HAS_INETNTOP
+#endif
+
 #ifdef NETWARE
 NETDB_DEFINE_CONTEXT
 NETINET_DEFINE_CONTEXT
@@ -78,6 +158,10 @@ NETINET_DEFINE_CONTEXT
 # define INADDR_LOOPBACK	 0x7F000001
 #endif /* INADDR_LOOPBACK */
 
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 16
+#endif
+
 #ifndef C_ARRAY_LENGTH
 #define C_ARRAY_LENGTH(arr) (sizeof(arr) / sizeof(*(arr)))
 #endif /* !C_ARRAY_LENGTH */
@@ -94,8 +178,16 @@ NETINET_DEFINE_CONTEXT
 # define Newx(v,n,t) New(0,v,n,t)
 #endif /* !Newx */
 
+#ifndef SvPVx_nolen
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define SvPVx_nolen(sv) ({SV *_sv = (sv); SvPV_nolen(_sv); })
+#else /* __GNUC__ */
+#  define SvPVx_nolen(sv) ((PL_Sv = (sv)), SvPV_nolen(PL_Sv))
+#endif /* __GNU__ */
+#endif /* !SvPVx_nolen */
+
 #ifndef croak_sv
-# define croak_sv(sv)	croak(SvPV_nolen(sv))
+# define croak_sv(sv)	croak(SvPVx_nolen(sv))
 #endif
 
 #ifndef hv_stores
@@ -336,6 +428,11 @@ my_inet_aton(register const char *cp, struct in_addr *addr)
  */
 #undef interface
 
+/* STRUCT_OFFSET should have come from from perl.h, but if not,
+ * roll our own (not using offsetof() since that is C99). */
+#ifndef STRUCT_OFFSET
+#  define STRUCT_OFFSET(s,m)  (Size_t)(&(((s *)0)->m))
+#endif
 
 static int
 not_here(const char *s)
@@ -525,6 +622,7 @@ static void xs_getnameinfo(pTHX_ CV *cv)
 	SP -= items;
 
 	addr = ST(0);
+	SvGETMAGIC(addr);
 
 	if(items < 2)
 		flags = 0;
@@ -539,7 +637,7 @@ static void xs_getnameinfo(pTHX_ CV *cv)
 	want_host = !(xflags & NIx_NOHOST);
 	want_serv = !(xflags & NIx_NOSERV);
 
-	if(!SvPOK(addr))
+	if(!SvPOKp(addr))
 		croak("addr is not a string");
 
 	addr_len = SvCUR(addr);
@@ -630,10 +728,10 @@ inet_ntoa(ip_address_sv)
 	 * so let's use this sprintf() workaround everywhere.
 	 * This is also more threadsafe than using inet_ntoa(). */
 	ST(0) = sv_2mortal(Perl_newSVpvf(aTHX_ "%d.%d.%d.%d", /* IPv6? */
-					 ((addr.s_addr >> 24) & 0xFF),
-					 ((addr.s_addr >> 16) & 0xFF),
-					 ((addr.s_addr >>  8) & 0xFF),
-					 ( addr.s_addr        & 0xFF)));
+					 (int)((addr.s_addr >> 24) & 0xFF),
+					 (int)((addr.s_addr >> 16) & 0xFF),
+					 (int)((addr.s_addr >>  8) & 0xFF),
+					 (int)( addr.s_addr        & 0xFF)));
 	}
 
 void
@@ -643,10 +741,10 @@ sockaddr_family(sockaddr)
 	STRLEN sockaddr_len;
 	char *sockaddr_pv = SvPVbyte(sockaddr, sockaddr_len);
 	CODE:
-	if (sockaddr_len < offsetof(struct sockaddr, sa_data))
+	if (sockaddr_len < STRUCT_OFFSET(struct sockaddr, sa_data))
 		croak("Bad arg length for %s, length is %"UVuf", should be at least %"UVuf,
 		      "Socket::sockaddr_family", (UV)sockaddr_len,
-		      (UV)offsetof(struct sockaddr, sa_data));
+		      (UV)STRUCT_OFFSET(struct sockaddr, sa_data));
 	ST(0) = sv_2mortal(newSViv(((struct sockaddr*)sockaddr_pv)->sa_family));
 
 void
@@ -757,14 +855,14 @@ unpack_sockaddr_un(sun_sv)
 	{
 #   if defined(HAS_SOCKADDR_SA_LEN)
 		/* On *BSD sun_path not always ends with a '\0' */
-		int maxlen = addr.sun_len - 2; /* should use offsetof(struct sockaddr_un, sun_path) instead of 2 */
+		int maxlen = addr.sun_len - 2; /* should use STRUCT_OFFSET(struct sockaddr_un, sun_path) instead of 2 */
 		if (maxlen > (int)sizeof(addr.sun_path))
 		  maxlen = (int)sizeof(addr.sun_path);
 #   else
 		const int maxlen = (int)sizeof(addr.sun_path);
 #   endif
-		for (addr_len = 0; addr.sun_path[addr_len]
-		     && addr_len < maxlen; addr_len++);
+		for (addr_len = 0; addr_len < maxlen
+		     && addr.sun_path[addr_len]; addr_len++);
 	}
 
 	ST(0) = sv_2mortal(newSVpvn(addr.sun_path, addr_len));
@@ -788,10 +886,10 @@ pack_sockaddr_in(port, ip_address_sv)
 	ip_address = SvPVbyte(ip_address_sv, addrlen);
 	if (addrlen == sizeof(addr) || addrlen == 4)
 		addr.s_addr =
-		    (ip_address[0] & 0xFF) << 24 |
-		    (ip_address[1] & 0xFF) << 16 |
-		    (ip_address[2] & 0xFF) <<  8 |
-		    (ip_address[3] & 0xFF);
+		    (unsigned int)(ip_address[0] & 0xFF) << 24 |
+		    (unsigned int)(ip_address[1] & 0xFF) << 16 |
+		    (unsigned int)(ip_address[2] & 0xFF) <<  8 |
+		    (unsigned int)(ip_address[3] & 0xFF);
 	else
 		croak("Bad arg length for %s, length is %"UVuf", should be %"UVuf,
 		      "Socket::pack_sockaddr_in",
@@ -817,7 +915,7 @@ unpack_sockaddr_in(sin_sv)
 	char *	sin = SvPVbyte(sin_sv,sockaddrlen);
 	if (sockaddrlen != sizeof(addr)) {
 	    croak("Bad arg length for %s, length is %"UVuf", should be %"UVuf,
-		  "Socket::unpack_sockaddr_in", sockaddrlen, sizeof(addr));
+		  "Socket::unpack_sockaddr_in", (UV)sockaddrlen, (UV)sizeof(addr));
 	}
 	Copy(sin, &addr, sizeof(addr), char);
 	if (addr.sin_family != AF_INET) {
@@ -871,6 +969,8 @@ pack_sockaddr_in6(port, sin6_addr, scope_id=0, flowinfo=0)
 #  endif
 	ST(0) = sv_2mortal(newSVpvn((char *)&sin6, sizeof(sin6)));
 #else
+	PERL_UNUSED_VAR(port);
+	PERL_UNUSED_VAR(sin6_addr);
 	ST(0) = (SV*)not_here("pack_sockaddr_in6");
 #endif
 	}
@@ -909,6 +1009,7 @@ unpack_sockaddr_in6(sin6_sv)
 	    mPUSHs(ip_address_sv);
 	}
 #else
+	PERL_UNUSED_VAR(sin6_sv);
 	ST(0) = (SV*)not_here("pack_sockaddr_in6");
 #endif
 	}
@@ -968,6 +1069,8 @@ inet_ntop(af, ip_address_sv)
 
 	ST(0) = sv_2mortal(newSVpvn(str, strlen(str)));
 #else
+	PERL_UNUSED_VAR(af);
+	PERL_UNUSED_VAR(ip_address_sv);
 	ST(0) = (SV*)not_here("inet_ntop");
 #endif
 
@@ -1010,6 +1113,8 @@ inet_pton(af, host)
 		sv_setpvn( ST(0), (char *)&ip_address, addrlen);
 	}
 #else
+	PERL_UNUSED_VAR(af);
+	PERL_UNUSED_VAR(host);
 	ST(0) = (SV*)not_here("inet_pton");
 #endif
 
@@ -1111,6 +1216,8 @@ pack_ip_mreq_source(multiaddr, source, interface=&PL_sv_undef)
 		mreq.imr_interface.s_addr = INADDR_ANY;
 	ST(0) = sv_2mortal(newSVpvn((char *)&mreq, sizeof(mreq)));
 #else
+	PERL_UNUSED_VAR(multiaddr);
+	PERL_UNUSED_VAR(source);
 	not_here("pack_ip_mreq_source");
 #endif
 	}
@@ -1133,6 +1240,7 @@ unpack_ip_mreq_source(mreq_sv)
 	mPUSHp((char *)&mreq.imr_sourceaddr, sizeof(mreq.imr_sourceaddr));
 	mPUSHp((char *)&mreq.imr_interface, sizeof(mreq.imr_interface));
 #else
+	PERL_UNUSED_VAR(mreq_sv);
 	not_here("unpack_ip_mreq_source");
 #endif
 	}
@@ -1158,6 +1266,8 @@ pack_ipv6_mreq(multiaddr, ifindex)
 	mreq.ipv6mr_interface = ifindex;
 	ST(0) = sv_2mortal(newSVpvn((char *)&mreq, sizeof(mreq)));
 #else
+	PERL_UNUSED_VAR(multiaddr);
+	PERL_UNUSED_VAR(ifindex);
 	not_here("pack_ipv6_mreq");
 #endif
 	}
@@ -1179,6 +1289,7 @@ unpack_ipv6_mreq(mreq_sv)
 	mPUSHp((char *)&mreq.ipv6mr_multiaddr, sizeof(mreq.ipv6mr_multiaddr));
 	mPUSHi(mreq.ipv6mr_interface);
 #else
+	PERL_UNUSED_VAR(mreq_sv);
 	not_here("unpack_ipv6_mreq");
 #endif
 	}

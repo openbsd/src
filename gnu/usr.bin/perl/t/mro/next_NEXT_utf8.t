@@ -6,6 +6,7 @@ use NEXT;
 use utf8;
 use open qw( :utf8 :std );
 
+chdir 't' if -d 't';
 require './test.pl';
 plan(tests => 4);
 

@@ -1,8 +1,5 @@
   op.c		AOK
 
-     Use of my $_ is experimental
-	my $_ ;
-
      Found = in conditional, should be ==
 	1 if $a = 1 ;
 
@@ -61,38 +58,20 @@
        format FRED =
        .
  
-     Array @%s missing the @ in argument %d of %s() 
-	push fred ;
- 
-     push on reference is experimental			[ck_fun]
-     pop on reference is experimental
-     shift on reference is experimental
-     unshift on reference is experimental
-     splice on reference is experimental
- 
-     Hash %%%s missing the %% in argument %d of %s() 
-	keys joe ;
- 
      Statement unlikely to be reached
      	(Maybe you meant system() when you said exec()?
  	exec "true" ; my $a
 
-     defined(@array) is deprecated
-     	(Maybe you should just omit the defined()?)
+     Can't use defined(@array) (Maybe you should just omit the defined()?)
 	my @a ; defined @a ;
 	defined (@a = (1,2,3)) ;
 
-     defined(%hash) is deprecated
-     	(Maybe you should just omit the defined()?)
+     Can't use defined(%hash) (Maybe you should just omit the defined()?)
 	my %h ; defined %h ;
 
      "my %s" used in sort comparison
 
      $[ used in comparison (did you mean $] ?)
-
-     each on reference is experimental			[ck_each]
-     keys on reference is experimental
-     values on reference is experimental
 
      length() used on @array (did you mean "scalar(@array)"?)
      length() used on %hash (did you mean "scalar(keys %hash)"?)
@@ -108,6 +87,8 @@
 
     Use of /g modifier is meaningless in split
 
+    The bitwise feature is experimental			[Perl_ck_bitop]
+
     Possible precedence problem on bitwise %c operator	[Perl_ck_bitop]
 
     Mandatory Warnings 
@@ -120,17 +101,6 @@
     oops: oopsHV		[oopsHV]	TODO
     
 __END__
-# op.c
-use warnings 'experimental::lexical_topic' ;
-my $_;
-CORE::state $_;
-no warnings 'experimental::lexical_topic' ;
-my $_;
-CORE::state $_;
-EXPECT
-Use of my $_ is experimental at - line 3.
-Use of state $_ is experimental at - line 4.
-########
 # op.c
 use warnings 'syntax' ;
 1 if $a = 1 ;
@@ -151,6 +121,17 @@ use constant foo => 1;
 no warnings 'syntax' ;
 1 if $a = foo ;
 EXPECT
+########
+# op.c
+# NAME unless with assignment as condition
+use warnings 'syntax';
+1 unless $a = 1;
+unless ($a = 1) {
+    1;
+}
+EXPECT
+Found = in conditional, should be == at - line 3.
+Found = in conditional, should be == at - line 4.
 ########
 # op.c
 use warnings 'syntax' ;
@@ -235,12 +216,6 @@ my @s = @f{"]", "a"};
 @h{m ""};
 use constant phoo => 1..3;
 @h{+phoo}; # rv2av
-{
-    no warnings 'deprecated';
-    @h{each H};
-    @h{values H};
-    @h{keys H};
-}
 @h{sort foo};
 @h{reverse foo};
 @h{caller 0};
@@ -252,12 +227,6 @@ use constant phoo => 1..3;
 @h{localtime 0};
 @h{gmtime 0};
 @h{eval ""};
-{
-    no warnings 'experimental::autoderef';
-    @h{each $foo} if 0;
-    @h{keys $foo} if 0;
-    @h{values $foo} if 0;
-}
 
 # arrays
 @h[qw"a b c"] = 1..3;
@@ -284,12 +253,6 @@ my @s = @f["]", "a"];
 @h[m ""];
 use constant phoo => 1..3;
 @h[+phoo]; # rv2av
-{
-    no warnings 'deprecated';
-    @h[each H];
-    @h[values H];
-    @h[keys H];
-}
 @h[sort foo];
 @h[reverse foo];
 @h[caller 0];
@@ -301,12 +264,6 @@ use constant phoo => 1..3;
 @h[localtime 0];
 @h[gmtime 0];
 @h[eval ""];
-{
-    no warnings 'experimental::autoderef';
-    @h[each $foo] if 0;
-    @h[keys $foo] if 0;
-    @h[values $foo] if 0;
-}
 EXPECT
 ########
 # op.c
@@ -318,33 +275,60 @@ syntax error at - line 4, near "[]"
 Execution of - aborted due to compilation errors.
 ########
 # op.c
-my (@foo, %foo);
+my %foo;
 %main::foo->{"bar"};
+EXPECT
+OPTION fatal
+Can't use a hash as a reference at - line 3.
+########
+# op.c
+my %foo;
 %foo->{"bar"};
+EXPECT
+OPTION fatal
+Can't use a hash as a reference at - line 3.
+########
+# op.c
+my @foo;
 @main::foo->[23];
+EXPECT
+OPTION fatal
+Can't use an array as a reference at - line 3.
+########
+# op.c
+my @foo;
 @foo->[23];
+EXPECT
+OPTION fatal
+Can't use an array as a reference at - line 3.
+########
+# op.c
+my %foo;
 $main::foo = {}; %$main::foo->{"bar"};
+EXPECT
+OPTION fatal
+Can't use a hash as a reference at - line 3.
+########
+# op.c
+my %foo;
 $foo = {}; %$foo->{"bar"};
+EXPECT
+OPTION fatal
+Can't use a hash as a reference at - line 3.
+########
+# op.c
+my @foo;
 $main::foo = []; @$main::foo->[34];
-$foo = []; @$foo->[34];
-no warnings 'deprecated';
-%main::foo->{"bar"};
-%foo->{"bar"};
-@main::foo->[23];
-@foo->[23];
-$main::foo = {}; %$main::foo->{"bar"};
-$foo = {}; %$foo->{"bar"};
-$main::foo = []; @$main::foo->[34];
+EXPECT
+OPTION fatal
+Can't use an array as a reference at - line 3.
+########
+# op.c
+my @foo;
 $foo = []; @$foo->[34];
 EXPECT
-Using a hash as a reference is deprecated at - line 3.
-Using a hash as a reference is deprecated at - line 4.
-Using an array as a reference is deprecated at - line 5.
-Using an array as a reference is deprecated at - line 6.
-Using a hash as a reference is deprecated at - line 7.
-Using a hash as a reference is deprecated at - line 8.
-Using an array as a reference is deprecated at - line 9.
-Using an array as a reference is deprecated at - line 10.
+OPTION fatal
+Can't use an array as a reference at - line 3.
 ########
 # op.c
 use warnings 'void' ; no warnings 'experimental::smartmatch'; close STDIN ;
@@ -360,7 +344,7 @@ wantarray ; 		# OP_WANTARRAY
 			# OP_PADANY
 			# OP_AV2ARYLEN
 ref ;			# OP_REF
-\@a ;			# OP_REFGEN
+\(@a) ;			# OP_REFGEN
 \$a ;			# OP_SREFGEN
 defined $a ;		# OP_DEFINED
 hex $a ;		# OP_HEX
@@ -380,7 +364,7 @@ $a{0} ;			# OP_HELEM
 @a{0} ;			# OP_HSLICE
 unpack "a", "a" ;	# OP_UNPACK
 pack $a,"" ;		# OP_PACK
-join "" ;		# OP_JOIN
+join "", @_ ;		# OP_JOIN
 (@a)[0,1] ;		# OP_LSLICE
 			# OP_ANONLIST
 			# OP_ANONHASH
@@ -408,7 +392,9 @@ $a <=> $b;		# OP_NCMP
 "diatrewq";
 "igatrewq";
 use 5.015;
-__SUB__			# OP_RUNCV
+__SUB__	;		# OP_RUNCV
+[];			# OP_ANONLIST
+grep /42/, (1,2);	# OP_GREP. Not warned about (yet). Grep git logs for void_unusual to see why...
 EXPECT
 Useless use of a constant ("111") in void context at - line 2.
 Useless use of repeat (x) in void context at - line 3.
@@ -455,6 +441,7 @@ Useless use of a constant ("dsatrewq") in void context at - line 57.
 Useless use of a constant ("diatrewq") in void context at - line 58.
 Useless use of a constant ("igatrewq") in void context at - line 59.
 Useless use of __SUB__ in void context at - line 61.
+Useless use of anonymous array ([]) in void context at - line 62.
 ########
 # op.c
 use warnings 'void' ; close STDIN ;
@@ -752,10 +739,23 @@ Useless use of a constant (undef) in void context at - line 8.
 Useless use of a constant ("\"\t\n") in void context at - line 9.
 ########
 # op.c
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# Result varies depending on EBCDIC code page";
+        exit 0;
+    }
+}
 use utf8;
 use open qw( :utf8 :std );
 use warnings 'void' ;
 "àḆc"; # OP_CONST
+EXPECT
+Useless use of a constant ("\340\x{1e06}c") in void context at - line 11.
+########
+# op.c
+use utf8;
+use open qw( :utf8 :std );
+use warnings 'void' ;
 "Ẋ" . "ƴ"; # optimized to OP_CONST
 ＦＯＯ;     # Bareword optimized to OP_CONST
 use constant ů => undef;
@@ -766,14 +766,13 @@ no warnings 'void' ;
 "àḆc"; # OP_CONST
 "Ẋ" . "ƴ"; # optimized to OP_CONST
 EXPECT
-Useless use of a constant ("\340\x{1e06}c") in void context at - line 5.
-Useless use of a constant ("\x{1e8a}\x{1b4}") in void context at - line 6.
-Useless use of a constant ("\x{ff26}\x{ff2f}\x{ff2f}") in void context at - line 7.
-Useless use of a constant (undef) in void context at - line 9.
+Useless use of a constant ("\x{1e8a}\x{1b4}") in void context at - line 5.
+Useless use of a constant ("\x{ff26}\x{ff2f}\x{ff2f}") in void context at - line 6.
+Useless use of a constant (undef) in void context at - line 8.
 ########
 # op.c
 #
-use warnings 'misc' ;
+use warnings 'misc' ; use utf8;
 my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;my $d = 'test';
 @a =~ /abc/ ;
 @a2 =~ s/a/b/ ;
@@ -790,6 +789,8 @@ my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ;my $d = 'test';
 $d =~ tr/a/b/d ;
 $d2 =~ tr/a/bc/;
 $d3 =~ tr//b/c;
+$d =~ tr/α/β/d ;
+$d2 =~ tr/α/βγ/;
 {
 no warnings 'misc' ;
 my $a ; my @a = () ; my %a = () ; my $b = \@a ; my $c = \%a ; my $d = 'test';
@@ -824,14 +825,17 @@ Applying substitution (s///) to %hash will act on scalar(%hash) at - line 15.
 Applying transliteration (tr///) to %hash will act on scalar(%hash) at - line 16.
 Useless use of /d modifier in transliteration operator at - line 17.
 Replacement list is longer than search list at - line 18.
+Useless use of /d modifier in transliteration operator at - line 20.
+Replacement list is longer than search list at - line 21.
 Can't modify array dereference in substitution (s///) at - line 6, near "s/a/b/ ;"
-BEGIN not safe after errors--compilation aborted at - line 21.
+BEGIN not safe after errors--compilation aborted at - line 23.
 ########
 # op.c
 use warnings 'parenthesis' ;
 my $a, $b = (1,2);
 my @foo,%bar,	$quux; # there's a TAB here
 my $x, $y or print;
+my $p, *q;
 no warnings 'parenthesis' ;
 my $c, $d = (1,2);
 EXPECT
@@ -841,6 +845,7 @@ Parentheses missing around "my" list at - line 4.
 # op.c
 use warnings 'parenthesis' ;
 our $a, $b = (1,2);
+our $p, *q;
 no warnings 'parenthesis' ;
 our $c, $d = (1,2);
 EXPECT
@@ -850,11 +855,13 @@ Parentheses missing around "our" list at - line 3.
 use warnings 'parenthesis' ;
 local $a, $b = (1,2);
 local *f, *g;
+local $p, *q;
 no warnings 'parenthesis' ;
 local $c, $d = (1,2);
 EXPECT
 Parentheses missing around "local" list at - line 3.
 Parentheses missing around "local" list at - line 4.
+Parentheses missing around "local" list at - line 5.
 ########
 # op.c
 use warnings 'bareword' ;
@@ -1026,40 +1033,6 @@ EXPECT
 Format FRED redefined at - line 5.
 ########
 # op.c
-push FRED;
-no warnings 'deprecated' ;
-push FRED;
-EXPECT
-Array @FRED missing the @ in argument 1 of push() at - line 2.
-########
-# op.c [Perl_ck_fun]
-$fred = [];
-push $fred;
-pop $fred;
-shift $fred;
-unshift $fred;
-splice $fred;
-no warnings 'experimental::autoderef' ;
-push $fred;
-pop $fred;
-shift $fred;
-unshift $fred;
-splice $fred;
-EXPECT
-push on reference is experimental at - line 3.
-pop on reference is experimental at - line 4.
-shift on reference is experimental at - line 5.
-unshift on reference is experimental at - line 6.
-splice on reference is experimental at - line 7.
-########
-# op.c
-@a = keys FRED ;
-no warnings 'deprecated' ;
-@a = keys FRED ;
-EXPECT
-Hash %FRED missing the % in argument 1 of keys() at - line 2.
-########
-# op.c
 use warnings 'exec' ;
 exec "$^X -e 1" ; 
 my $a
@@ -1076,32 +1049,30 @@ EXPECT
 # op.c
 defined(@a);
 EXPECT
-defined(@array) is deprecated at - line 2.
-	(Maybe you should just omit the defined()?)
+OPTION fatal
+Can't use 'defined(@array)' (Maybe you should just omit the defined()?) at - line 2.
 ########
 # op.c
 my @a; defined(@a);
 EXPECT
-defined(@array) is deprecated at - line 2.
-	(Maybe you should just omit the defined()?)
+OPTION fatal
+Can't use 'defined(@array)' (Maybe you should just omit the defined()?) at - line 2.
 ########
 # op.c
 defined(@a = (1,2,3));
 EXPECT
-defined(@array) is deprecated at - line 2.
-	(Maybe you should just omit the defined()?)
 ########
 # op.c
 defined(%h);
 EXPECT
-defined(%hash) is deprecated at - line 2.
-	(Maybe you should just omit the defined()?)
+OPTION fatal
+Can't use 'defined(%hash)' (Maybe you should just omit the defined()?) at - line 2.
 ########
 # op.c
 my %h; defined(%h);
 EXPECT
-defined(%hash) is deprecated at - line 2.
-	(Maybe you should just omit the defined()?)
+OPTION fatal
+Can't use 'defined(%hash)' (Maybe you should just omit the defined()?) at - line 2.
 ########
 # op.c
 no warnings 'exec' ;
@@ -1148,6 +1119,12 @@ Prototype after '@' for main::foo : @\0 at (eval 1) line 1.
 Illegal character in prototype for main::foo : @\0 at (eval 1) line 1.
 ########
 # op.c
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# Different results on EBCDIC";
+        exit 0;
+    }
+}
 use utf8;
 use open qw( :utf8 :std );
 use warnings;
@@ -1376,20 +1353,6 @@ $[ used in numeric gt (>) (did you mean $] ?) at - line 18.
 $[ used in numeric le (<=) (did you mean $] ?) at - line 19.
 $[ used in numeric ge (>=) (did you mean $] ?) at - line 20.
 ########
-# op.c [Perl_ck_each]
-$fred = {};
-keys $fred;
-values $fred;
-each $fred;
-no warnings 'experimental::autoderef' ;
-keys $fred;
-values $fred;
-each $fred;
-EXPECT
-keys on reference is experimental at - line 3.
-values on reference is experimental at - line 4.
-each on reference is experimental at - line 5.
-########
 # op.c [Perl_ck_length]
 use warnings 'syntax' ;
 length(@a);
@@ -1503,6 +1466,81 @@ split /blah/g, "blah";
 EXPECT
 Use of /g modifier is meaningless in split at - line 4.
 ########
+use feature "bitwise";
+$_ = $_ | $_;
+$_ = $_ & $_;
+$_ = $_ ^ $_;
+$_ = ~$_;
+$_ = $_ |. $_;
+$_ = $_ &. $_;
+$_ = $_ ^. $_;
+$_ = ~.$_;
+$_ |= $_;
+$_ &= $_;
+$_ ^= $_;
+$_ |.= $_;
+$_ &.= $_;
+$_ ^.= $_;
+use warnings "experimental::bitwise";
+$_ = $_ | $_;
+$_ = $_ & $_;
+$_ = $_ ^ $_;
+$_ = ~$_;
+$_ = $_ |. $_;
+$_ = $_ &. $_;
+$_ = $_ ^. $_;
+$_ = ~.$_;
+$_ |= $_;
+$_ &= $_;
+$_ ^= $_;
+$_ |.= $_;
+$_ &.= $_;
+$_ ^.= $_;
+no warnings "experimental::bitwise";
+$_ = $_ | $_;
+$_ = $_ & $_;
+$_ = $_ ^ $_;
+$_ = ~$_;
+$_ = $_ |. $_;
+$_ = $_ &. $_;
+$_ = $_ ^. $_;
+$_ = ~.$_;
+$_ |= $_;
+$_ &= $_;
+$_ ^= $_;
+$_ |.= $_;
+$_ &.= $_;
+$_ ^.= $_;
+EXPECT
+The bitwise feature is experimental at - line 2.
+The bitwise feature is experimental at - line 3.
+The bitwise feature is experimental at - line 4.
+The bitwise feature is experimental at - line 5.
+The bitwise feature is experimental at - line 6.
+The bitwise feature is experimental at - line 7.
+The bitwise feature is experimental at - line 8.
+The bitwise feature is experimental at - line 9.
+The bitwise feature is experimental at - line 10.
+The bitwise feature is experimental at - line 11.
+The bitwise feature is experimental at - line 12.
+The bitwise feature is experimental at - line 13.
+The bitwise feature is experimental at - line 14.
+The bitwise feature is experimental at - line 15.
+The bitwise feature is experimental at - line 17.
+The bitwise feature is experimental at - line 18.
+The bitwise feature is experimental at - line 19.
+The bitwise feature is experimental at - line 20.
+The bitwise feature is experimental at - line 21.
+The bitwise feature is experimental at - line 22.
+The bitwise feature is experimental at - line 23.
+The bitwise feature is experimental at - line 24.
+The bitwise feature is experimental at - line 25.
+The bitwise feature is experimental at - line 26.
+The bitwise feature is experimental at - line 27.
+The bitwise feature is experimental at - line 28.
+The bitwise feature is experimental at - line 29.
+The bitwise feature is experimental at - line 30.
+########
 # op.c
 use warnings 'precedence';
 $a = $b & $c == $d;
@@ -1513,6 +1551,25 @@ $a = $b >= $c ^ $d;
 $a = $b <= $c | $d;
 $a = $b <=> $c & $d;
 $a &= $b == $c; $a |= $b == $c; $a ^= $b == $c; # shouldn't warn
+{
+ use experimental 'bitwise';
+ $a = $b & $c == $d;
+ $a = $b ^ $c != $d;
+ $a = $b | $c > $d;
+ $a = $b < $c & $d;
+ $a = $b >= $c ^ $d;
+ $a = $b <= $c | $d;
+ $a = $b <=> $c & $d;
+ $a &= $b == $c; $a |= $b == $c; $a ^= $b == $c; # shouldn't warn
+ $a = $b &. $c == $d;
+ $a = $b ^. $c != $d;
+ $a = $b |. $c > $d;
+ $a = $b < $c &. $d;
+ $a = $b >= $c ^. $d;
+ $a = $b <= $c |. $d;
+ $a = $b <=> $c &. $d;
+ $a &.= $b == $c; $a |.= $b == $c; $a ^.= $b == $c; # shouldn't warn
+}
 no warnings 'precedence';
 $a = $b & $c == $d;
 $a = $b ^ $c != $d;
@@ -1521,6 +1578,25 @@ $a = $b < $c & $d;
 $a = $b >= $c ^ $d;
 $a = $b <= $c | $d;
 $a = $b <=> $c & $d;
+{
+ use experimental 'bitwise';
+ $a = $b & $c == $d;
+ $a = $b ^ $c != $d;
+ $a = $b | $c > $d;
+ $a = $b < $c & $d;
+ $a = $b >= $c ^ $d;
+ $a = $b <= $c | $d;
+ $a = $b <=> $c & $d;
+ $a &= $b == $c; $a |= $b == $c; $a ^= $b == $c; # shouldn't warn
+ $a = $b &. $c == $d;
+ $a = $b ^. $c != $d;
+ $a = $b |. $c > $d;
+ $a = $b < $c &. $d;
+ $a = $b >= $c ^. $d;
+ $a = $b <= $c |. $d;
+ $a = $b <=> $c &. $d;
+ $a &.= $b == $c; $a |.= $b == $c; $a ^.= $b == $c; # shouldn't warn
+}
 EXPECT
 Possible precedence problem on bitwise & operator at - line 3.
 Possible precedence problem on bitwise ^ operator at - line 4.
@@ -1529,6 +1605,20 @@ Possible precedence problem on bitwise & operator at - line 6.
 Possible precedence problem on bitwise ^ operator at - line 7.
 Possible precedence problem on bitwise | operator at - line 8.
 Possible precedence problem on bitwise & operator at - line 9.
+Possible precedence problem on bitwise & operator at - line 13.
+Possible precedence problem on bitwise ^ operator at - line 14.
+Possible precedence problem on bitwise | operator at - line 15.
+Possible precedence problem on bitwise & operator at - line 16.
+Possible precedence problem on bitwise ^ operator at - line 17.
+Possible precedence problem on bitwise | operator at - line 18.
+Possible precedence problem on bitwise & operator at - line 19.
+Possible precedence problem on bitwise &. operator at - line 21.
+Possible precedence problem on bitwise ^. operator at - line 22.
+Possible precedence problem on bitwise |. operator at - line 23.
+Possible precedence problem on bitwise &. operator at - line 24.
+Possible precedence problem on bitwise ^. operator at - line 25.
+Possible precedence problem on bitwise |. operator at - line 26.
+Possible precedence problem on bitwise &. operator at - line 27.
 ########
 # op.c
 use integer;
@@ -1921,3 +2011,49 @@ sub bbb ($a) { 4 }
 $aaa = sub { 2 };
 $bbb = sub ($a) { 4 };
 EXPECT
+########
+use warnings 'numeric';
+my $c = -4.5;
+my $a = "y" x $c;
+my $b = "y" x -3;
+no warnings 'numeric';
+my $d = "y" x $c;
+my $e = "y" x -3;
+no warnings 'numeric';
+EXPECT
+Negative repeat count does nothing at - line 3.
+Negative repeat count does nothing at - line 4.
+########
+my $a = "inf" + 0;
+my $b = -$a;
+my $c = "nan" + 0;
+use warnings 'numeric';
+my $x = "x" x $a;
+my $y = "y" x $b;
+my $z = "z" x $c;
+no warnings 'numeric';
+my $x = "x" x $a;
+my $y = "y" x $b;
+my $z = "z" x $c;
+no warnings 'numeric';
+EXPECT
+Non-finite repeat count does nothing at - line 5.
+Non-finite repeat count does nothing at - line 6.
+Non-finite repeat count does nothing at - line 7.
+########
+# NAME warn on stat @array
+@foo = ("op/stat.t");
+stat @foo;
+my @bar = @foo;
+stat @bar;
+my $ref = \@foo;
+stat @$ref;
+use warnings 'syntax';
+stat @foo;
+stat @bar;
+stat @$ref;
+EXPECT
+Array passed to stat will be coerced to a scalar (did you want stat $foo[0]?) at - line 8.
+Array passed to stat will be coerced to a scalar (did you want stat $bar[0]?) at - line 9.
+Array passed to stat will be coerced to a scalar at - line 10.
+

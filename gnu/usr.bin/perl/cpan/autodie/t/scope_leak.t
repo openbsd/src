@@ -85,3 +85,13 @@ eval q{
 
 ok($@,"Wacky flipping of autodie in string eval should work too!");
 isa_ok($@, 'autodie::exception');
+
+eval q{
+    # RT#72053
+    use autodie;
+    { no autodie; }
+    open(my $fh, '<', NO_SUCH_FILE);
+};
+
+ok($@,"Wacky flipping of autodie in string eval should work too!");
+isa_ok($@, 'autodie::exception');

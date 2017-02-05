@@ -37,16 +37,6 @@ C<experimental::smartmatch>.
 The ticket for this feature is
 L<[perl #119317]|https://rt.perl.org/rt3/Ticket/Display.html?id=119317>.
 
-=item Lexical C<$_>
-
-Introduced in Perl 5.10.0
-
-Using this feature triggers warnings in the category
-C<experimental::lexical_topic>.
-
-The ticket for this feature is
-L<[perl #119315]|https://rt.perl.org/rt3/Ticket/Display.html?id=119315>.
-
 =item Pluggable keywords
 
 The ticket for this feature is
@@ -54,18 +44,11 @@ L<[perl #119455]|https://rt.perl.org/rt3/Ticket/Display.html?id=119455>.
 
 See L<perlapi/PL_keyword_plugin> for the mechanism.
 
-Introduced in: Perl 5.11.2
-
-=item Array and hash container functions accept references
-
-Introduced in Perl 5.14.0
-
-The ticket for this feature is
-L<[perl #119437]|https://rt.perl.org/rt3/Ticket/Display.html?id=119437>.
+Introduced in Perl 5.11.2
 
 =item Lexical subroutines
 
-Introduced in: Perl 5.18
+Introduced in Perl 5.18
 
 See also: L<perlsub/Lexical Subroutines>
 
@@ -77,7 +60,7 @@ L<[perl #120085]|https://rt.perl.org/rt3/Ticket/Display.html?id=120085>.
 
 =item Regular Expression Set Operations
 
-Introduced in: Perl 5.18
+Introduced in Perl 5.18
 
 The ticket for this feature is
 L<[perl #119451]|https://rt.perl.org/rt3/Ticket/Display.html?id=119451>.
@@ -86,10 +69,6 @@ See also: L<perlrecharclass/Extended Bracketed Character Classes>
 
 Using this feature triggers warnings in the category
 C<experimental::regex_sets>.
-
-=item C<\s> in regexp matches vertical tab
-
-Introduced in Perl 5.18
 
 =item Subroutine signatures
 
@@ -101,15 +80,50 @@ C<experimental::signatures>.
 The ticket for this feature is
 L<[perl #121481]|https://rt.perl.org/Ticket/Display.html?id=121481>.
 
-=item Postfix dereference syntax
+=item Aliasing via reference
 
-Introduced in Perl 5.20.0
+Introduced in Perl 5.22.0
 
 Using this feature triggers warnings in the category
-C<experimental::postderef>.
+C<experimental::refaliasing>.
 
 The ticket for this feature is
-L<[perl #120162]|https://rt.perl.org:443/rt3/Ticket/Display.html?id=120162>.
+L<[perl #122947]|https://rt.perl.org/rt3/Ticket/Display.html?id=122947>.
+
+See also: L<perlref/Assigning to References>
+
+=item The "const" attribute
+
+Introduced in Perl 5.22.0
+
+Using this feature triggers warnings in the category
+C<experimental::const_attr>.
+
+The ticket for this feature is
+L<[perl #123630]|https://rt.perl.org/rt3/Ticket/Display.html?id=123630>.
+
+See also: L<perlsub/Constant Functions>
+
+=item use re 'strict';
+
+Introduced in Perl 5.22.0
+
+Using this feature triggers warnings in the category
+C<experimental::re_strict>.
+
+See L<re/'strict' mode>
+
+=item String- and number-specific bitwise operators
+
+Introduced in Perl 5.22.0
+
+See also: L<perlop/Bitwise String Operators>
+
+Using this feature triggers warnings in the category
+C<experimental::bitwise>.
+
+The ticket for this feature is
+L<[perl #123707]|https://rt.perl.org/rt3/Ticket/Display.html?id=123707>.
 
 =item The <:win32> IO pseudolayer
 
@@ -215,7 +229,7 @@ See also L<perlsub>
 
 C<(*ACCEPT)>
 
-Introduced in: Perl 5.10
+Introduced in Perl 5.10
 
 Accepted in Perl 5.20.0
 
@@ -224,6 +238,16 @@ Accepted in Perl 5.20.0
 See also L<perlrun>
 
 Accepted in Perl 5.20.0
+
+=item C<\s> in regexp matches vertical tab
+
+Accepted in Perl 5.22.0
+
+=item Postfix dereference syntax
+
+Introduced in Perl 5.20.0
+
+Accepted in Perl 5.24.0
 
 =back
 
@@ -275,9 +299,29 @@ Moved from Perl 5.10.1 to CPAN
 
 The experimental C<legacy> pragma was swallowed by the C<feature> pragma.
 
-Introduced in: 5.11.2
+Introduced in Perl 5.11.2
 
-Removed in: 5.11.3
+Removed in Perl 5.11.3
+
+=item Lexical C<$_>
+
+Using this feature triggered warnings in the category
+C<experimental::lexical_topic>.
+
+Introduced in Perl 5.10.0
+
+Removed in Perl 5.24.0
+
+=item Array and hash container functions accept references
+
+Using this feature triggered warnings in the category
+C<experimental::autoderef>.
+
+Superseded by L</Postfix dereference syntax>.
+
+Introduced in Perl 5.14.0
+
+Removed in Perl 5.24.0
 
 =back
 

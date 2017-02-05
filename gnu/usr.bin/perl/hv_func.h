@@ -21,6 +21,8 @@
         || defined(PERL_HASH_FUNC_ONE_AT_A_TIME) \
         || defined(PERL_HASH_FUNC_ONE_AT_A_TIME_HARD) \
         || defined(PERL_HASH_FUNC_ONE_AT_A_TIME_OLD) \
+        || defined(PERL_HASH_FUNC_MURMUR_HASH_64A) \
+        || defined(PERL_HASH_FUNC_MURMUR_HASH_64B) \
     )
 #define PERL_HASH_FUNC_ONE_AT_A_TIME_HARD
 #endif
@@ -28,38 +30,46 @@
 #if defined(PERL_HASH_FUNC_SIPHASH)
 #   define PERL_HASH_FUNC "SIPHASH_2_4"
 #   define PERL_HASH_SEED_BYTES 16
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_siphash_2_4(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_siphash_2_4((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_SUPERFAST)
 #   define PERL_HASH_FUNC "SUPERFAST"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_superfast(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_superfast((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_MURMUR3)
 #   define PERL_HASH_FUNC "MURMUR3"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_murmur3(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_murmur3((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_DJB2)
 #   define PERL_HASH_FUNC "DJB2"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_djb2(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_djb2((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_SDBM)
 #   define PERL_HASH_FUNC "SDBM"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_sdbm(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_sdbm((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_ONE_AT_A_TIME_HARD)
 #   define PERL_HASH_FUNC "ONE_AT_A_TIME_HARD"
 #   define PERL_HASH_SEED_BYTES 8
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_one_at_a_time_hard(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_one_at_a_time_hard((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_ONE_AT_A_TIME)
 #   define PERL_HASH_FUNC "ONE_AT_A_TIME"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_one_at_a_time(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_one_at_a_time((seed),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_ONE_AT_A_TIME_OLD)
 #   define PERL_HASH_FUNC "ONE_AT_A_TIME_OLD"
 #   define PERL_HASH_SEED_BYTES 4
-#   define PERL_HASH(hash,str,len) (hash)= S_perl_hash_old_one_at_a_time(PERL_HASH_SEED,(U8*)(str),(len))
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_old_one_at_a_time((seed),(U8*)(str),(len))
+#elif defined(PERL_HASH_FUNC_MURMUR_HASH_64A)
+#   define PERL_HASH_FUNC "MURMUR_HASH_64A"
+#   define PERL_HASH_SEED_BYTES 8
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_murmur_hash_64a((seed),(U8*)(str),(len))
+#elif defined(PERL_HASH_FUNC_MURMUR_HASH_64B)
+#   define PERL_HASH_FUNC "MURMUR_HASH_64B"
+#   define PERL_HASH_SEED_BYTES 8
+#   define PERL_HASH_WITH_SEED(seed,hash,str,len) (hash)= S_perl_hash_murmur_hash_64b((seed),(U8*)(str),(len))
 #endif
 
-#ifndef PERL_HASH
+#ifndef PERL_HASH_WITH_SEED
 #error "No hash function defined!"
 #endif
 #ifndef PERL_HASH_SEED_BYTES
@@ -73,13 +83,17 @@
 #   if defined(USE_HASH_SEED) || defined(USE_HASH_SEED_EXPLICIT)
 #       define PERL_HASH_SEED PL_hash_seed
 #   elif PERL_HASH_SEED_BYTES == 4
-#       define PERL_HASH_SEED "PeRl"
+#       define PERL_HASH_SEED ((const U8 *)"PeRl")
+#   elif PERL_HASH_SEED_BYTES == 8
+#       define PERL_HASH_SEED ((const U8 *)"PeRlHaSh")
 #   elif PERL_HASH_SEED_BYTES == 16
-#       define PERL_HASH_SEED "PeRlHaShhAcKpErl"
+#       define PERL_HASH_SEED ((const U8 *)"PeRlHaShhAcKpErl")
 #   else
 #       error "No PERL_HASH_SEED definition for " PERL_HASH_FUNC
 #   endif
 #endif
+
+#define PERL_HASH(hash,str,len) PERL_HASH_WITH_SEED(PERL_HASH_SEED,hash,str,len)
 
 /*-----------------------------------------------------------------------------
  * Endianess, misalignment capabilities and util macros
@@ -88,7 +102,7 @@
  * are only needed to help derive these 3.
  *
  * U8TO32_LE(x)   Read a little endian unsigned 32-bit int
- * UNALIGNED_SAFE   Defined if READ_UINT32 works on non-word boundaries
+ * UNALIGNED_SAFE   Defined if unaligned access is safe
  * ROTL32(x,r)      Rotate x left by r bits
  */
 
@@ -102,8 +116,6 @@
                       +((const U8 *)(d))[0])
 #endif
 
-
-/* Now find best way we can to READ_UINT32 */
 #if (BYTEORDER == 0x1234 || BYTEORDER == 0x12345678) && U32SIZE == 4
   /* CPU endian matches murmurhash algorithm, so read 32-bit word directly */
   #define U8TO32_LE(ptr)   (*((U32*)(ptr)))
@@ -127,7 +139,7 @@
 #ifndef U64TYPE
 /* This probably isn't going to work, but failing with a compiler error due to
    lack of uint64_t is no worse than failing right now with an #error.  */
-#define U64TYPE uint64_t
+#define U64 uint64_t
 #endif
 #endif
 
@@ -142,7 +154,7 @@
   /* gcc recognises this code and generates a rotate instruction for CPUs with one */
   #define ROTL32(x,r)  (((U32)x << r) | ((U32)x >> (32 - r)))
   #ifdef HAS_QUAD
-    #define ROTL64(x,r)  (((U64TYPE)x << r) | ((U64TYPE)x >> (64 - r)))
+    #define ROTL64(x,r)  (((U64)x << r) | ((U64)x >> (64 - r)))
   #endif
 #endif
 
@@ -170,14 +182,14 @@
 #ifdef HAS_QUAD
 
 #define U8TO64_LE(p) \
-  (((U64TYPE)((p)[0])      ) | \
-   ((U64TYPE)((p)[1]) <<  8) | \
-   ((U64TYPE)((p)[2]) << 16) | \
-   ((U64TYPE)((p)[3]) << 24) | \
-   ((U64TYPE)((p)[4]) << 32) | \
-   ((U64TYPE)((p)[5]) << 40) | \
-   ((U64TYPE)((p)[6]) << 48) | \
-   ((U64TYPE)((p)[7]) << 56))
+  (((U64)((p)[0])      ) | \
+   ((U64)((p)[1]) <<  8) | \
+   ((U64)((p)[2]) << 16) | \
+   ((U64)((p)[3]) << 24) | \
+   ((U64)((p)[4]) << 32) | \
+   ((U64)((p)[5]) << 40) | \
+   ((U64)((p)[6]) << 48) | \
+   ((U64)((p)[7]) << 56))
 
 #define SIPROUND            \
   do {              \
@@ -192,19 +204,19 @@
 PERL_STATIC_INLINE U32
 S_perl_hash_siphash_2_4(const unsigned char * const seed, const unsigned char *in, const STRLEN inlen) {
   /* "somepseudorandomlygeneratedbytes" */
-  U64TYPE v0 = 0x736f6d6570736575ULL;
-  U64TYPE v1 = 0x646f72616e646f6dULL;
-  U64TYPE v2 = 0x6c7967656e657261ULL;
-  U64TYPE v3 = 0x7465646279746573ULL;
+  U64 v0 = UINT64_C(0x736f6d6570736575);
+  U64 v1 = UINT64_C(0x646f72616e646f6d);
+  U64 v2 = UINT64_C(0x6c7967656e657261);
+  U64 v3 = UINT64_C(0x7465646279746573);
 
-  U64TYPE b;
-  U64TYPE k0 = ((U64TYPE*)seed)[0];
-  U64TYPE k1 = ((U64TYPE*)seed)[1];
-  U64TYPE m;
+  U64 b;
+  U64 k0 = ((U64*)seed)[0];
+  U64 k1 = ((U64*)seed)[1];
+  U64 m;
   const int left = inlen & 7;
   const U8 *end = in + inlen - left;
 
-  b = ( ( U64TYPE )(inlen) ) << 56;
+  b = ( ( U64 )(inlen) ) << 56;
   v3 ^= k1;
   v2 ^= k0;
   v1 ^= k1;
@@ -221,13 +233,13 @@ S_perl_hash_siphash_2_4(const unsigned char * const seed, const unsigned char *i
 
   switch( left )
   {
-  case 7: b |= ( ( U64TYPE )in[ 6] )  << 48;
-  case 6: b |= ( ( U64TYPE )in[ 5] )  << 40;
-  case 5: b |= ( ( U64TYPE )in[ 4] )  << 32;
-  case 4: b |= ( ( U64TYPE )in[ 3] )  << 24;
-  case 3: b |= ( ( U64TYPE )in[ 2] )  << 16;
-  case 2: b |= ( ( U64TYPE )in[ 1] )  <<  8;
-  case 1: b |= ( ( U64TYPE )in[ 0] ); break;
+  case 7: b |= ( ( U64 )in[ 6] )  << 48;
+  case 6: b |= ( ( U64 )in[ 5] )  << 40;
+  case 5: b |= ( ( U64 )in[ 4] )  << 32;
+  case 4: b |= ( ( U64 )in[ 3] )  << 24;
+  case 3: b |= ( ( U64 )in[ 2] )  << 16;
+  case 2: b |= ( ( U64 )in[ 1] )  <<  8;
+  case 1: b |= ( ( U64 )in[ 0] ); break;
   case 0: break;
   }
 
@@ -552,6 +564,134 @@ S_perl_hash_old_one_at_a_time(const unsigned char * const seed, const unsigned c
     return (hash + (hash << 15));
 }
 
+#ifdef PERL_HASH_FUNC_MURMUR_HASH_64A
+/* This code is from Austin Appleby and is in the public domain.
+   Altered by Yves Orton to match Perl's hash interface, and to
+   return a 32 bit hash.
+
+   Note uses unaligned 64 bit loads - will NOT work on machines with
+   strict alignment requirements.
+
+   Also this code may not be suitable for big-endian machines.
+*/
+
+/* a 64 bit hash where we only use the low 32 bits */
+PERL_STATIC_INLINE U32
+S_perl_hash_murmur_hash_64a (const unsigned char * const seed, const unsigned char *str, const STRLEN len)
+{
+        const U64 m = UINT64_C(0xc6a4a7935bd1e995);
+        const int r = 47;
+        U64 h = *((U64*)seed) ^ len;
+        const U64 * data = (const U64 *)str;
+        const U64 * end = data + (len/8);
+        const unsigned char * data2;
+
+        while(data != end)
+        {
+            U64 k = *data++;
+
+            k *= m;
+            k ^= k >> r;
+            k *= m;
+
+            h ^= k;
+            h *= m;
+        }
+
+        data2 = (const unsigned char *)data;
+
+        switch(len & 7)
+        {
+            case 7: h ^= (U64)(data2[6]) << 48; /* fallthrough */
+            case 6: h ^= (U64)(data2[5]) << 40; /* fallthrough */
+            case 5: h ^= (U64)(data2[4]) << 32; /* fallthrough */
+            case 4: h ^= (U64)(data2[3]) << 24; /* fallthrough */
+            case 3: h ^= (U64)(data2[2]) << 16; /* fallthrough */
+            case 2: h ^= (U64)(data2[1]) << 8;  /* fallthrough */
+            case 1: h ^= (U64)(data2[0]);       /* fallthrough */
+                    h *= m;
+        };
+
+        h ^= h >> r;
+        h *= m;
+        h ^= h >> r;
+
+        /* was: return h; */
+        return h & 0xFFFFFFFF;
+}
+
+#endif
+
+#ifdef PERL_HASH_FUNC_MURMUR_HASH_64B
+/* This code is from Austin Appleby and is in the public domain.
+   Altered by Yves Orton to match Perl's hash interface and return
+   a 32 bit value
+
+   Note uses unaligned 32 bit loads - will NOT work on machines with
+   strict alignment requirements.
+
+   Also this code may not be suitable for big-endian machines.
+*/
+
+/* a 64-bit hash for 32-bit platforms where we only use the low 32 bits */
+PERL_STATIC_INLINE U32
+S_perl_hash_murmur_hash_64b (const unsigned char * const seed, const unsigned char *str, STRLEN len)
+{
+        const U32 m = 0x5bd1e995;
+        const int r = 24;
+
+        U32 h1 = ((U32 *)seed)[0] ^ len;
+        U32 h2 = ((U32 *)seed)[1];
+
+        const U32 * data = (const U32 *)str;
+
+        while(len >= 8)
+        {
+            U32 k1, k2;
+            k1 = *data++;
+            k1 *= m; k1 ^= k1 >> r; k1 *= m;
+            h1 *= m; h1 ^= k1;
+            len -= 4;
+
+            k2 = *data++;
+            k2 *= m; k2 ^= k2 >> r; k2 *= m;
+            h2 *= m; h2 ^= k2;
+            len -= 4;
+        }
+
+        if(len >= 4)
+        {
+            U32 k1 = *data++;
+            k1 *= m; k1 ^= k1 >> r; k1 *= m;
+            h1 *= m; h1 ^= k1;
+            len -= 4;
+        }
+
+        switch(len)
+        {
+            case 3: h2 ^= ((unsigned char*)data)[2] << 16;  /* fallthrough */
+            case 2: h2 ^= ((unsigned char*)data)[1] << 8;   /* fallthrough */
+            case 1: h2 ^= ((unsigned char*)data)[0];        /* fallthrough */
+                    h2 *= m;
+        };
+
+        h1 ^= h2 >> 18; h1 *= m;
+        h2 ^= h1 >> 22; h2 *= m;
+        /*
+        The following code has been removed as it is unused
+        when only the low 32 bits are used. -- Yves
+
+        h1 ^= h2 >> 17; h1 *= m;
+
+        U64 h = h1;
+
+        h = (h << 32) | h2;
+        */
+
+        return h2;
+}
+#endif
+
 /* legacy - only mod_perl should be doing this.  */
 #ifdef PERL_HASH_INTERNAL_ACCESS
 #define PERL_HASH_INTERNAL(hash,str,len) PERL_HASH(hash,str,len)
@@ -560,11 +700,5 @@ S_perl_hash_old_one_at_a_time(const unsigned char * const seed, const unsigned c
 #endif /*compile once*/
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -149,7 +149,7 @@ fresh_perl_is( # it crashes more reliably with a smaller script
      BEGIN { *baz:: = *bar::; *bar:: = *foo:: }
      # The name "bar" no langer refers to the same package
    }
-   undef &foo; # so freeing the op does not remove it from the stash’s list
+   undef &foo; # so freeing the op does not remove it from the stash\'s list
    $_ = "";
    push @_, ($_) x 10000;  # and its memory is scribbled over
    reset;  # so reset on the original package tries to reset an invalid op

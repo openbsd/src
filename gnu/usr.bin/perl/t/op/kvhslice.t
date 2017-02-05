@@ -2,13 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 # use strict;
 
-plan tests => 44;
+plan tests => 39;
 
 # simple use cases
 {
@@ -151,7 +151,7 @@ plan tests => 44;
         my $v = eval '%h{a}';
         is (scalar @warn, 1, 'warning in scalar context');
         like $warn[0],
-             qr{^%h{"a"} in scalar context better written as \$h{"a"}},
+             qr{^%h\{"a"\} in scalar context better written as \$h\{"a"\}},
             "correct warning text";
     }
     {
@@ -162,20 +162,13 @@ plan tests => 44;
         is (scalar @warn, 0, 'no warning in list context');
     }
 
-    # deprecated syntax
     {
         my $h = \%h;
-        @warn = ();
-        ok( eq_array([eval '%$h->{a}'], ['A']), 'works, but deprecated' );
-        is (scalar @warn, 1, 'one warning');
-        like $warn[0], qr{^Using a hash as a reference is deprecated},
-            "correct warning text";
+        eval '%$h->{a}';
+        like($@, qr/Can't use a hash as a reference/, 'hash reference is error' );
 
-        @warn = ();
-        ok( eq_array([eval '%$h->{"b","c"}'], [undef]), 'works, but deprecated' );
-        is (scalar @warn, 1, 'one warning');
-        like $warn[0], qr{^Using a hash as a reference is deprecated},
-            "correct warning text";
+        eval '%$h->{"b","c"}';
+        like($@, qr/Can't use a hash as a reference/, 'hash slice reference is error' );
     }
 }
 
@@ -191,17 +184,19 @@ plan tests => 44;
     ok( !exists $h{e}, "no autovivification" );
 }
 
-# keys/value/each treat argument as scalar
+# keys/value/each refuse to compile kvhslice
 {
     my %h = 'a'..'b';
     my %i = (foo => \%h);
-    no warnings 'syntax', 'experimental::autoderef';
-    my ($k,$v) = each %i{foo=>};
-    is $k, 'a', 'key returned by each %hash{key}';
-    is $v, 'b', 'val returned by each %hash{key}';
-    %h = 1..10;
-    is join('-', sort keys %i{foo=>}), '1-3-5-7-9', 'keys %hash{key}';
-    is join('-', sort values %i{foo=>}), '10-2-4-6-8', 'values %hash{key}';
+    eval '() = keys %i{foo=>}';
+    like($@, qr/Experimental keys on scalar is now forbidden/,
+         'keys %hash{key} forbidden');
+    eval '() = values %i{foo=>}';
+    like($@, qr/Experimental values on scalar is now forbidden/,
+         'values %hash{key} forbidden');
+    eval '() = each %i{foo=>}';
+    like($@, qr/Experimental each on scalar is now forbidden/,
+         'each %hash{key} forbidden');
 }
 
 # \% prototype expects hash deref

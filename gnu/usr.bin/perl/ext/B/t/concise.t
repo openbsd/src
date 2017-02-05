@@ -381,9 +381,7 @@ like($out, qr/Config::AUTOLOAD exists in stash, but has no START/,
     "coderef properly undefined");
 
 # test -stash and -src rendering
-# todo: stderr=1 puts '-e syntax OK' into $out,
-# conceivably fouling one of the lines that are tested
-$out = runperl ( switches => ["-MO=Concise,-stash=B::Concise,-src"],
+$out = runperl ( switches => ["-MO=-qq,Concise,-stash=B::Concise,-src"],
 		 prog => '-e 1', stderr => 1 );
 
 like($out, qr/FUNC: \*B::Concise::concise_cv_obj/,
@@ -399,7 +397,7 @@ $out = runperl ( switches => ["-MStorable", "-MO=Concise,-stash=Storable,-src"],
 		 prog => '-e 1', stderr => 1 );
 
 like($out, qr/FUNC: \*Storable::BIN_MAJOR/,
-     "stash rendering includes constant sub: PAD_FAKELEX_MULTI");
+     "stash rendering has constant sub: Storable::BIN_MAJOR");
 
 like($out, qr/BIN_MAJOR is a constant sub, optimized to a IV/,
      "stash rendering identifies it as constant");
@@ -457,14 +455,14 @@ $out =
  runperl(
   switches => ["-MO=Concise,-nobanner,foo"], prog=>'sub foo{}', stderr => 1
  );
-unlike $out, 'main::foo', '-nobanner';
+unlike $out, qr/main::foo/, '-nobanner';
 
 # glob
 $out =
  runperl(
   switches => ["-MO=Concise"], prog=>'glob(q{.})', stderr => 1
  );
-like $out, '\*<none>::', 'glob(q{.})';
+like $out, qr/\*<none>::/, 'glob(q{.})';
 
 # Test op_other in -debug
 $out = runperl(
@@ -486,7 +484,7 @@ EOF
 
 $end =~ s/\r\n/\n/g;
 
-like $out, $end, 'OP_AND has op_other';
+like $out, qr/$end/, 'OP_AND has op_other';
 
 # like(..) above doesn't fill in $1
 $out =~ $end;
@@ -502,6 +500,6 @@ EOF
 
 $end =~ s/<NEXT>/$next/;
 
-like $out, $end, 'OP_AND->op_other points correctly';
+like $out, qr/$end/, 'OP_AND->op_other points correctly';
 
 __END__

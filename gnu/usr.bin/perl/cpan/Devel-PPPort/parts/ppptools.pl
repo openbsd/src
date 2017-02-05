@@ -79,7 +79,7 @@ sub parse_partspec
   while (<F>) {
     /[ \t]+$/ and warn "$file:$.: warning: trailing whitespace\n";
     if ($section eq 'implementation') {
-      m!//! && !m!(?:=~|s/).*//! && !m!(?:ht|f)tp://!
+      m!//! && !m!(?:=~|s/).*//! && !m!(?:ht|f)tp(?:s)://!
           and warn "$file:$.: warning: potential C++ comment\n";
     }
     /^##/ and next;
@@ -318,6 +318,11 @@ sub parse_embed
               args  => \@args,
               cond  => ppcond(\@pps),
             };
+          }
+          elsif ($name =~ /^[^\W\d]\w*-E<gt>[^\W\d]\w*$/) {
+            # silenty ignore entries of the form
+            #    PL_parser-E<gt>linestr
+            # which documents a struct entry rather than a function
           }
           else {
             warn "mysterious name [$name] in $file, line $.\n";

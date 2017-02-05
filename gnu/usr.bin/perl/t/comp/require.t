@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '.';
-    push @INC, '../lib';
+    push @INC, '../lib', '../ext/re';
 }
 
 sub do_require {
@@ -34,7 +34,7 @@ if (grep -e, @files_to_delete) {
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 56;
+my $total_tests = 57;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -69,6 +69,10 @@ print "ok ",$i++," - require 5.005 try 4\n";
 eval { require v5.5.630; };
 print "# $@\nnot " if $@;
 print "ok ",$i++," - require 5.5.630\n";
+
+eval { require(v5.5.630); };
+print "# $@\nnot " if $@;
+print "ok ",$i++," - require(v5.5.630) with parens [perl #124153]\n";
 
 sub v5 { die }
 eval { require v5; };
@@ -243,13 +247,18 @@ EOT
     require Config;
     die "Failed to load Config for some reason"
 	unless $Config::Config{version};
-    my $ccflags = $Config::Config{ccflags};
-    die "Failed to get ccflags for some reason" unless defined $ccflags;
 
     my $simple = ++$i;
     my $pmc_older = ++$i;
     my $pmc_dies = ++$i;
-    if ($ccflags =~ /(?:^|\s)-DPERL_DISABLE_PMC\b/) {
+    my $no_pmc;
+    foreach(Config::non_bincompat_options()) {
+	if($_ eq "PERL_DISABLE_PMC"){
+	    $no_pmc = 1;
+	    last;
+	}
+    }
+    if ($no_pmc) {
 	print "# .pmc files are ignored, so test that\n";
 	write_file_not_thing('krunch.pmc', '.pmc', $pmc_older);
 	write_file('urkkk.pm', qq(print "ok $simple - urkkk.pm branch A\n"));
@@ -341,9 +350,9 @@ if (defined &DynaLoader::boot_DynaLoader) {
 # Add generic tests before this point.   #
 ##########################################
 
-# UTF-encoded things - skipped on EBCDIC machines and on UTF-8 input
+# UTF-encoded things - skipped on UTF-8 input
 
-if ($Is_EBCDIC || $Is_UTF8) { exit; }
+if ($Is_UTF8) { exit; }
 
 my %templates = (
 		 'UTF-8'    => 'C0U',

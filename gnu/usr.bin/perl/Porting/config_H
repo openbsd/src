@@ -960,8 +960,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define ARCHLIB "/pro/lib/perl5/5.20.3/i686-linux-64int-ld"		/**/
-#define ARCHLIB_EXP "/pro/lib/perl5/5.20.3/i686-linux-64int-ld"		/**/
+#define ARCHLIB "/pro/lib/perl5/5.24.1/i686-linux-64int-ld"		/**/
+#define ARCHLIB_EXP "/pro/lib/perl5/5.24.1/i686-linux-64int-ld"		/**/
 
 /* ARCHNAME:
  *	This symbol holds a string representing the architecture name.
@@ -2068,8 +2068,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/pro/lib/perl5/5.20.3"		/**/
-#define PRIVLIB_EXP "/pro/lib/perl5/5.20.3"		/**/
+#define PRIVLIB "/pro/lib/perl5/5.24.1"		/**/
+#define PRIVLIB_EXP "/pro/lib/perl5/5.24.1"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -2119,8 +2119,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define SITEARCH "/pro/lib/perl5/site_perl/5.20.3/i686-linux-64int-ld"		/**/
-#define SITEARCH_EXP "/pro/lib/perl5/site_perl/5.20.3/i686-linux-64int-ld"		/**/
+#define SITEARCH "/pro/lib/perl5/site_perl/5.24.1/i686-linux-64int-ld"		/**/
+#define SITEARCH_EXP "/pro/lib/perl5/site_perl/5.24.1/i686-linux-64int-ld"		/**/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -2142,8 +2142,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/pro/lib/perl5/site_perl/5.20.3"		/**/
-#define SITELIB_EXP "/pro/lib/perl5/site_perl/5.20.3"		/**/
+#define SITELIB "/pro/lib/perl5/site_perl/5.24.1"		/**/
+#define SITELIB_EXP "/pro/lib/perl5/site_perl/5.24.1"		/**/
 #define SITELIB_STEM "/pro/lib/perl5/site_perl"		/**/
 
 /* SSize_t:
@@ -2726,36 +2726,6 @@
  *	This symbol, if defined, indicates that the BSD socketpair() call is
  *	supported.
  */
-/* HAS_MSG_CTRUNC:
- *	This symbol, if defined, indicates that the MSG_CTRUNC is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_DONTROUTE:
- *	This symbol, if defined, indicates that the MSG_DONTROUTE is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_OOB:
- *	This symbol, if defined, indicates that the MSG_OOB is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PEEK:
- *	This symbol, if defined, indicates that the MSG_PEEK is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PROXY:
- *	This symbol, if defined, indicates that the MSG_PROXY is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_SCM_RIGHTS:
- *	This symbol, if defined, indicates that the SCM_RIGHTS is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
 /* HAS_SOCKADDR_SA_LEN:
  *	This symbol, if defined, indicates that the struct sockaddr
  *	structure has a member called sa_len, indicating the length of
@@ -2768,12 +2738,6 @@
 #define	HAS_SOCKET		/**/
 #define	HAS_SOCKETPAIR	/**/
 /*#define	HAS_SOCKADDR_SA_LEN	/ **/
-#define	HAS_MSG_CTRUNC	/**/
-#define	HAS_MSG_DONTROUTE	/**/
-#define	HAS_MSG_OOB	/**/
-#define	HAS_MSG_PEEK	/**/
-#define	HAS_MSG_PROXY	/**/
-#define	HAS_SCM_RIGHTS	/**/
 #define	HAS_SIN6_SCOPE_ID	/**/
 
 /* USE_STAT_BLOCKS:
@@ -3547,16 +3511,8 @@
  *	a prototype for the modfl() function.  Otherwise, it is up
  *	to the program to supply one.
  */
-/* HAS_MODFL_POW32_BUG:
- *	This symbol, if defined, indicates that the modfl routine is
- *	broken for long doubles >= pow(2, 32).
- *	For example from 4294967303.150000 one would get 4294967302.000000
- *	and 1.150000.  The bug has been seen in certain versions of glibc,
- *	release 2.2.2 is known to be okay.
- */
 #define HAS_MODFL		/**/
 #define HAS_MODFL_PROTO		/**/
-/*#define HAS_MODFL_POW32_BUG		/ **/
 
 /* HAS_MPROTECT:
  *	This symbol, if defined, indicates that the mprotect system call is
@@ -4132,12 +4088,6 @@
 #define PERL_PRIeldbl	"Le"	/**/
 #define PERL_SCNfldbl	"Lf"	/**/
 
-/* PERL_MAD:
- *	This symbol, if defined, indicates that the Misc Attribution
- *	Declaration code should be conditionally compiled.
- */
-/*#define	PERL_MAD		/ **/
-
 /* NEED_VA_COPY:
  *	This symbol, if defined, indicates that the system stores
  *	the variable argument list datatype, va_list, in a format
@@ -4332,7 +4282,7 @@
  *	script to make sure (one hopes) that it runs with perl and not
  *	some shell.
  */
-#define STARTPERL "#!/pro/bin/perl5.20.3"		/**/
+#define STARTPERL "#!/pro/bin/perl5.24.1"		/**/
 
 /* HAS_STDIO_STREAM_ARRAY:
  *	This symbol, if defined, tells that there is an array

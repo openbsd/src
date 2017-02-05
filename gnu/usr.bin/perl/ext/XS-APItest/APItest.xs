@@ -1,4 +1,8 @@
 #define PERL_IN_XS_APITEST
+
+/* We want to be able to test things that aren't API yet. */
+#define PERL_EXT
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -9,6 +13,61 @@ typedef PTR_TBL_t *XS__APItest__PtrTable;
 
 #define croak_fail() croak("fail at " __FILE__ " line %d", __LINE__)
 #define croak_fail_ne(h, w) croak("fail %p!=%p at " __FILE__ " line %d", (h), (w), __LINE__)
+
+#ifdef EBCDIC
+
+void
+cat_utf8a2n(SV* sv, const char * const ascii_utf8, STRLEN len)
+{
+    /* Converts variant UTF-8 text pointed to by 'ascii_utf8' of length 'len',
+     * to UTF-EBCDIC, appending that text to the text already in 'sv'.
+     * Currently doesn't work on invariants, as that is unneeded here, and we
+     * could get double translations if we did.
+     *
+     * It has the algorithm for strict UTF-8 hard-coded in to find the code
+     * point it represents, then calls uvchr_to_utf8() to convert to
+     * UTF-EBCDIC).
+     *
+     * Note that this uses code points, not characters.  Thus if the input is
+     * the UTF-8 for the code point 0xFF, the output will be the UTF-EBCDIC for
+     * 0xFF, even though that code point represents different characters on
+     * ASCII vs EBCDIC platforms. */
+
+    dTHX;
+    char * p = (char *) ascii_utf8;
+    const char * const e = p + len;
+
+    while (p < e) {
+        UV code_point;
+        U8 native_utf8[UTF8_MAXBYTES + 1];
+        U8 * char_end;
+        U8 start = (U8) *p;
+
+        /* Start bytes are the same in both UTF-8 and I8, therefore we can
+         * treat this ASCII UTF-8 byte as an I8 byte.  But PL_utf8skip[] is
+         * indexed by NATIVE_UTF8 bytes, so transform to that */
+        STRLEN char_bytes_len = PL_utf8skip[I8_TO_NATIVE_UTF8(start)];
+
+        if (start < 0xc2) {
+            croak("fail: Expecting start byte, instead got 0x%X at %s line %d",
+                                                  (U8) *p, __FILE__, __LINE__);
+        }
+        code_point = (start & (((char_bytes_len) >= 7)
+                                ? 0x00
+                                : (0x1F >> ((char_bytes_len)-2))));
+        p++;
+        while (p < e && ((( (U8) *p) & 0xC0) == 0x80)) {
+
+            code_point = (code_point << 6) | (( (U8) *p) & 0x3F);
+            p++;
+        }
+
+        char_end = uvchr_to_utf8(native_utf8, code_point);
+	sv_catpvn(sv, (char *) native_utf8, char_end - native_utf8);
+    }
+}
+
+#endif
 
 /* for my_cxt tests */
 
@@ -83,7 +142,6 @@ typedef void (freeent_function)(pTHX_ HV *, HE *);
 
 void
 test_freeent(freeent_function *f) {
-    dTHX;
     dSP;
     HV *test_hash = newHV();
     HE *victim;
@@ -131,6 +189,9 @@ test_freeent(freeent_function *f) {
     SvREFCNT_dec(test_scalar);
 }
 
+/* Not that it matters much, but it's handy for the flipped character to just
+ * be the opposite case (at least for ASCII-range and most Latin1 as well). */
+#define FLIP_BIT ('A' ^ 'a')
 
 static I32
 bitflip_key(pTHX_ IV action, SV *field) {
@@ -142,24 +203,33 @@ bitflip_key(pTHX_ IV action, SV *field) {
 	const char *p = SvPV(keysv, len);
 
 	if (len) {
-	    SV *newkey = newSV(len);
-	    char *new_p = SvPVX(newkey);
+            /* Allow for the flipped val to be longer than the original.  This
+             * is just for testing, so can afford to have some slop */
+            const STRLEN newlen = len * 2;
+
+	    SV *newkey = newSV(newlen);
+	    const char * const new_p_orig = SvPVX(newkey);
+	    char *new_p = (char *) new_p_orig;
 
 	    if (SvUTF8(keysv)) {
 		const char *const end = p + len;
 		while (p < end) {
-		    STRLEN len;
-		    UV chr = utf8_to_uvchr_buf((U8 *)p, (U8 *) end, &len);
-		    new_p = (char *)uvchr_to_utf8((U8 *)new_p, chr ^ 32);
-		    p += len;
+		    STRLEN curlen;
+		    UV chr = utf8_to_uvchr_buf((U8 *)p, (U8 *) end, &curlen);
+
+                    /* Make sure don't exceed bounds */
+                    assert(new_p - new_p_orig + curlen < newlen);
+
+		    new_p = (char *)uvchr_to_utf8((U8 *)new_p, chr ^ FLIP_BIT);
+		    p += curlen;
 		}
 		SvUTF8_on(newkey);
 	    } else {
 		while (len--)
-		    *new_p++ = *p++ ^ 32;
+		    *new_p++ = *p++ ^ FLIP_BIT;
 	    }
 	    *new_p = '\0';
-	    SvCUR_set(newkey, SvCUR(keysv));
+	    SvCUR_set(newkey, new_p - new_p_orig);
 	    SvPOK_on(newkey);
 
 	    mg->mg_obj = newkey;
@@ -260,7 +330,12 @@ rmagical_a_dummy(pTHX_ IV idx, SV *sv) {
     return 0;
 }
 
-STATIC MGVTBL rmagical_b = { 0 };
+/* We could do "= { 0 };" but some versions of gcc do warn
+ * (with -Wextra) about missing initializer, this is probably gcc
+ * being a bit too paranoid.  But since this is file-static, we can
+ * just have it without initializer, since it should get
+ * zero-initialized. */
+STATIC MGVTBL rmagical_b;
 
 STATIC void
 blockhook_csc_start(pTHX_ int full)
@@ -401,9 +476,9 @@ THX_ck_entersub_args_scalars(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
     OP *aop = cUNOPx(entersubop)->op_first;
     PERL_UNUSED_ARG(namegv);
     PERL_UNUSED_ARG(ckobj);
-    if (!aop->op_sibling)
+    if (!OpHAS_SIBLING(aop))
 	aop = cUNOPx(aop)->op_first;
-    for (aop = aop->op_sibling; aop->op_sibling; aop = aop->op_sibling) {
+    for (aop = OpSIBLING(aop); OpHAS_SIBLING(aop); aop = OpSIBLING(aop)) {
 	op_contextualize(aop, G_SCALAR);
     }
     return entersubop;
@@ -413,17 +488,20 @@ STATIC OP *
 THX_ck_entersub_multi_sum(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 {
     OP *sumop = NULL;
+    OP *parent = entersubop;
     OP *pushop = cUNOPx(entersubop)->op_first;
     PERL_UNUSED_ARG(namegv);
     PERL_UNUSED_ARG(ckobj);
-    if (!pushop->op_sibling)
+    if (!OpHAS_SIBLING(pushop)) {
+        parent = pushop;
 	pushop = cUNOPx(pushop)->op_first;
+    }
     while (1) {
-	OP *aop = pushop->op_sibling;
-	if (!aop->op_sibling)
+	OP *aop = OpSIBLING(pushop);
+	if (!OpHAS_SIBLING(aop))
 	    break;
-	pushop->op_sibling = aop->op_sibling;
-	aop->op_sibling = NULL;
+        /* cut out first arg */
+        op_sibling_splice(parent, pushop, 1, NULL);
 	op_contextualize(aop, G_SCALAR);
 	if (sumop) {
 	    sumop = newBINOP(OP_ADD, 0, sumop, aop);
@@ -450,7 +528,7 @@ test_op_list_describe_part(SV *res, OP *o)
     if (o->op_flags & OPf_KIDS) {
 	OP *k;
 	sv_catpvs(res, "[");
-	for (k = cUNOPx(o)->op_first; k; k = k->op_sibling)
+	for (k = cUNOPx(o)->op_first; k; k = OpSIBLING(k))
 	    test_op_list_describe_part(res, k);
 	sv_catpvs(res, "]");
     } else {
@@ -477,8 +555,7 @@ THX_mkUNOP(pTHX_ U32 type, OP *first)
     UNOP *unop;
     NewOp(1103, unop, 1, UNOP);
     unop->op_type   = (OPCODE)type;
-    unop->op_first  = first;
-    unop->op_flags  = OPf_KIDS;
+    op_sibling_splice((OP*)unop, NULL, 0, first);
     return (OP *)unop;
 }
 
@@ -489,10 +566,8 @@ THX_mkBINOP(pTHX_ U32 type, OP *first, OP *last)
     BINOP *binop;
     NewOp(1103, binop, 1, BINOP);
     binop->op_type      = (OPCODE)type;
-    binop->op_first     = first;
-    binop->op_flags     = OPf_KIDS;
-    binop->op_last      = last;
-    first->op_sibling   = last;
+    op_sibling_splice((OP*)binop, NULL, 0, last);
+    op_sibling_splice((OP*)binop, NULL, 0, first);
     return (OP *)binop;
 }
 
@@ -503,11 +578,9 @@ THX_mkLISTOP(pTHX_ U32 type, OP *first, OP *sib, OP *last)
     LISTOP *listop;
     NewOp(1103, listop, 1, LISTOP);
     listop->op_type     = (OPCODE)type;
-    listop->op_flags    = OPf_KIDS;
-    listop->op_first    = first;
-    first->op_sibling   = sib;
-    sib->op_sibling     = last;
-    listop->op_last     = last;
+    op_sibling_splice((OP*)listop, NULL, 0, last);
+    op_sibling_splice((OP*)listop, NULL, 0, sib);
+    op_sibling_splice((OP*)listop, NULL, 0, first);
     return (OP *)listop;
 }
 
@@ -558,19 +631,21 @@ THX_pp_establish_cleanup(pTHX)
 STATIC OP *
 THX_ck_entersub_establish_cleanup(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 {
-    OP *pushop, *argop, *estop;
+    OP *parent, *pushop, *argop, *estop;
     ck_entersub_args_proto(entersubop, namegv, ckobj);
+    parent = entersubop;
     pushop = cUNOPx(entersubop)->op_first;
-    if(!pushop->op_sibling) pushop = cUNOPx(pushop)->op_first;
-    argop = pushop->op_sibling;
-    pushop->op_sibling = argop->op_sibling;
-    argop->op_sibling = NULL;
+    if(!OpHAS_SIBLING(pushop)) {
+        parent = pushop;
+        pushop = cUNOPx(pushop)->op_first;
+    }
+    /* extract out first arg, then delete the rest of the tree */
+    argop = OpSIBLING(pushop);
+    op_sibling_splice(parent, pushop, 1, NULL);
     op_free(entersubop);
-    NewOpSz(0, estop, sizeof(UNOP));
-    estop->op_type = OP_RAND;
+
+    estop = mkUNOP(OP_RAND, argop);
     estop->op_ppaddr = THX_pp_establish_cleanup;
-    cUNOPx(estop)->op_flags = OPf_KIDS;
-    cUNOPx(estop)->op_first = argop;
     PL_hints |= HINT_BLOCK_SCOPE;
     return estop;
 }
@@ -578,13 +653,16 @@ THX_ck_entersub_establish_cleanup(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 STATIC OP *
 THX_ck_entersub_postinc(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
 {
-    OP *pushop, *argop;
+    OP *parent, *pushop, *argop;
     ck_entersub_args_proto(entersubop, namegv, ckobj);
+    parent = entersubop;
     pushop = cUNOPx(entersubop)->op_first;
-    if(!pushop->op_sibling) pushop = cUNOPx(pushop)->op_first;
-    argop = pushop->op_sibling;
-    pushop->op_sibling = argop->op_sibling;
-    argop->op_sibling = NULL;
+    if(!OpHAS_SIBLING(pushop)) {
+        parent = pushop;
+        pushop = cUNOPx(pushop)->op_first;
+    }
+    argop = OpSIBLING(pushop);
+    op_sibling_splice(parent, pushop, 1, NULL);
     op_free(entersubop);
     return newUNOP(OP_POSTINC, 0,
 	op_lvalue(op_contextualize(argop, G_SCALAR), OP_POSTINC));
@@ -598,12 +676,13 @@ THX_ck_entersub_pad_scalar(pTHX_ OP *entersubop, GV *namegv, SV *ckobj)
     SV *a0, *a1;
     ck_entersub_args_proto(entersubop, namegv, ckobj);
     pushop = cUNOPx(entersubop)->op_first;
-    if(!pushop->op_sibling) pushop = cUNOPx(pushop)->op_first;
-    argop = pushop->op_sibling;
-    if(argop->op_type != OP_CONST || argop->op_sibling->op_type != OP_CONST)
+    if(!OpHAS_SIBLING(pushop))
+        pushop = cUNOPx(pushop)->op_first;
+    argop = OpSIBLING(pushop);
+    if(argop->op_type != OP_CONST || OpSIBLING(argop)->op_type != OP_CONST)
 	croak("bad argument expression type for pad_scalar()");
     a0 = cSVOPx_sv(argop);
-    a1 = cSVOPx_sv(argop->op_sibling);
+    a1 = cSVOPx_sv(OpSIBLING(argop));
     switch(SvIV(a0)) {
 	case 1: {
 	    SV *namesv = sv_2mortal(newSVpvs("$"));
@@ -659,6 +738,9 @@ static SV *hintkey_swaplabel_sv, *hintkey_labelconst_sv;
 static SV *hintkey_arrayfullexpr_sv, *hintkey_arraylistexpr_sv;
 static SV *hintkey_arraytermexpr_sv, *hintkey_arrayarithexpr_sv;
 static SV *hintkey_arrayexprflags_sv;
+static SV *hintkey_DEFSV_sv;
+static SV *hintkey_with_vars_sv;
+static SV *hintkey_join_with_space_sv;
 static int (*next_keyword_plugin)(pTHX_ char *, STRLEN, OP **);
 
 /* low-level parser helpers */
@@ -691,16 +773,18 @@ static OP *THX_parse_var(pTHX)
 }
 
 #define push_rpn_item(o) \
-    (tmpop = (o), tmpop->op_sibling = stack, stack = tmpop)
-#define pop_rpn_item() \
-    (!stack ? (croak("RPN stack underflow"), (OP*)NULL) : \
-     (tmpop = stack, stack = stack->op_sibling, \
-      tmpop->op_sibling = NULL, tmpop))
+    op_sibling_splice(parent, NULL, 0, o);
+#define pop_rpn_item() ( \
+    (tmpop = op_sibling_splice(parent, NULL, 1, NULL)) \
+        ? tmpop : (croak("RPN stack underflow"), (OP*)NULL))
 
 #define parse_rpn_expr() THX_parse_rpn_expr(aTHX)
 static OP *THX_parse_rpn_expr(pTHX)
 {
-    OP *stack = NULL, *tmpop;
+    OP *tmpop;
+    /* fake parent for splice to mess with */
+    OP *parent = mkBINOP(OP_NULL, NULL, NULL);
+
     while(1) {
 	I32 c;
 	lex_read_space(0);
@@ -708,7 +792,9 @@ static OP *THX_parse_rpn_expr(pTHX)
 	switch(c) {
 	    case /*(*/')': case /*{*/'}': {
 		OP *result = pop_rpn_item();
-		if(stack) croak("RPN expression must return a single value");
+		if(cLISTOPx(parent)->op_first)
+                    croak("RPN expression must return a single value");
+                op_free(parent);
 		return result;
 	    } break;
 	    case '0': case '1': case '2': case '3': case '4':
@@ -944,6 +1030,106 @@ static OP *THX_parse_keyword_arrayexprflags(pTHX)
     return o ? newANONLIST(o) : newANONHASH(newOP(OP_STUB, 0));
 }
 
+#define parse_keyword_DEFSV() THX_parse_keyword_DEFSV(aTHX)
+static OP *THX_parse_keyword_DEFSV(pTHX)
+{
+    return newDEFSVOP();
+}
+
+#define sv_cat_c(a,b) THX_sv_cat_c(aTHX_ a, b)
+static void THX_sv_cat_c(pTHX_ SV *sv, U32 c) {
+    char ds[UTF8_MAXBYTES + 1], *d;
+    d = (char *)uvchr_to_utf8((U8 *)ds, c);
+    if (d - ds > 1) {
+        sv_utf8_upgrade(sv);
+    }
+    sv_catpvn(sv, ds, d - ds);
+}
+
+#define parse_keyword_with_vars() THX_parse_keyword_with_vars(aTHX)
+static OP *THX_parse_keyword_with_vars(pTHX)
+{
+    I32 c;
+    IV count;
+    int save_ix;
+    OP *vardeclseq, *body;
+
+    save_ix = block_start(TRUE);
+    vardeclseq = NULL;
+
+    count = 0;
+
+    lex_read_space(0);
+    c = lex_peek_unichar(0);
+    while (c != '{') {
+        SV *varname;
+        PADOFFSET padoff;
+
+        if (c == -1) {
+            croak("unexpected EOF; expecting '{'");
+        }
+
+        if (!isIDFIRST_uni(c)) {
+            croak("unexpected '%c'; expecting an identifier", (int)c);
+        }
+
+        varname = newSVpvs("$");
+        if (lex_bufutf8()) {
+            SvUTF8_on(varname);
+        }
+
+        sv_cat_c(varname, c);
+        lex_read_unichar(0);
+
+        while (c = lex_peek_unichar(0), c != -1 && isIDCONT_uni(c)) {
+            sv_cat_c(varname, c);
+            lex_read_unichar(0);
+        }
+
+        padoff = pad_add_name_sv(varname, padadd_NO_DUP_CHECK, NULL, NULL);
+
+        {
+            OP *my_var = newOP(OP_PADSV, OPf_MOD | (OPpLVAL_INTRO << 8));
+            my_var->op_targ = padoff;
+
+            vardeclseq = op_append_list(
+                OP_LINESEQ,
+                vardeclseq,
+                newSTATEOP(
+                    0, NULL,
+                    newASSIGNOP(
+                        OPf_STACKED,
+                        my_var, 0,
+                        newSVOP(
+                            OP_CONST, 0,
+                            newSViv(++count)
+                        )
+                    )
+                )
+            );
+        }
+
+        lex_read_space(0);
+        c = lex_peek_unichar(0);
+    }
+
+    intro_my();
+
+    body = parse_block(0);
+
+    return block_end(save_ix, op_append_list(OP_LINESEQ, vardeclseq, body));
+}
+
+#define parse_join_with_space() THX_parse_join_with_space(aTHX)
+static OP *THX_parse_join_with_space(pTHX)
+{
+    OP *delim, *args;
+
+    args = parse_listexpr(0);
+    delim = newSVOP(OP_CONST, 0, newSVpvs(" "));
+    return op_convert_list(OP_JOIN, 0, op_prepend_elem(OP_LIST, delim, args));
+}
+
 /* plugin glue */
 
 #define keyword_active(hintkey_sv) THX_keyword_active(aTHX_ hintkey_sv)
@@ -1028,6 +1214,18 @@ static int my_keyword_plugin(pTHX_
 		    keyword_active(hintkey_arrayexprflags_sv)) {
 	*op_ptr = parse_keyword_arrayexprflags();
 	return KEYWORD_PLUGIN_EXPR;
+    } else if(keyword_len == 5 && strnEQ(keyword_ptr, "DEFSV", 5) &&
+		    keyword_active(hintkey_DEFSV_sv)) {
+	*op_ptr = parse_keyword_DEFSV();
+	return KEYWORD_PLUGIN_EXPR;
+    } else if(keyword_len == 9 && strnEQ(keyword_ptr, "with_vars", 9) &&
+		    keyword_active(hintkey_with_vars_sv)) {
+	*op_ptr = parse_keyword_with_vars();
+	return KEYWORD_PLUGIN_STMT;
+    } else if(keyword_len == 15 && strnEQ(keyword_ptr, "join_with_space", 15) &&
+		    keyword_active(hintkey_join_with_space_sv)) {
+	*op_ptr = parse_join_with_space();
+	return KEYWORD_PLUGIN_EXPR;
     } else {
 	return next_keyword_plugin(aTHX_ keyword_ptr, keyword_len, op_ptr);
     }
@@ -1092,14 +1290,14 @@ addissub_myck_add(pTHX_ OP *op)
     OP *aop, *bop;
     U8 flags;
     if (!(flag_svp && SvTRUE(*flag_svp) && (op->op_flags & OPf_KIDS) &&
-	    (aop = cBINOPx(op)->op_first) && (bop = aop->op_sibling) &&
-	    !bop->op_sibling))
+	    (aop = cBINOPx(op)->op_first) && (bop = OpSIBLING(aop)) &&
+	    !OpHAS_SIBLING(bop)))
 	return addissub_nxck_add(aTHX_ op);
-    aop->op_sibling = NULL;
-    cBINOPx(op)->op_first = NULL;
-    op->op_flags &= ~OPf_KIDS;
     flags = op->op_flags;
-    op_free(op);
+    op_sibling_splice(op, NULL, 1, NULL); /* excise aop */
+    op_sibling_splice(op, NULL, 1, NULL); /* excise bop */
+    op_free(op); /* free the empty husk */
+    flags &= ~OPf_KIDS;
     return newBINOP(OP_SUBTRACT, flags, aop, bop);
 }
 
@@ -1133,6 +1331,14 @@ MODULE = XS::APItest		PACKAGE = XS::APItest
 INCLUDE: const-xs.inc
 
 INCLUDE: numeric.xs
+
+void
+assertx(int x)
+    CODE:
+        /* this only needs to compile and checks that assert() can be
+           used this way syntactically */
+	(void)(assert(x), 1);
+	(void)(x);
 
 MODULE = XS::APItest::utf8	PACKAGE = XS::APItest::utf8
 
@@ -1183,6 +1389,54 @@ test_utf8n_to_uvchr(s, len, flags)
         else {
             av_push(RETVAL, newSVuv(retlen));
         }
+
+    OUTPUT:
+        RETVAL
+
+AV *
+test_valid_utf8_to_uvchr(s)
+
+        SV *s
+    PREINIT:
+        STRLEN retlen;
+        UV ret;
+        STRLEN slen;
+
+    CODE:
+        /* Call utf8n_to_uvchr() with the inputs.  It always asks for the
+         * actual length to be returned
+         *
+         * Length to assume <s> is; not checked, so could have buffer overflow
+         */
+        RETVAL = newAV();
+        sv_2mortal((SV*)RETVAL);
+
+        ret
+         = valid_utf8_to_uvchr((U8*) SvPV(s, slen), &retlen);
+
+        /* Returns the return value in [0]; <retlen> in [1] */
+        av_push(RETVAL, newSVuv(ret));
+        av_push(RETVAL, newSVuv(retlen));
+
+    OUTPUT:
+        RETVAL
+
+SV *
+test_uvchr_to_utf8_flags(uv, flags)
+
+        SV *uv
+        SV *flags
+    PREINIT:
+        U8 dest[UTF8_MAXBYTES];
+        U8 *ret;
+
+    CODE:
+        /* Call uvchr_to_utf8_flags() with the inputs.  */
+        ret = uvchr_to_utf8_flags(dest, SvUV(uv), SvUV(flags));
+        if (! ret) {
+            XSRETURN_UNDEF;
+        }
+        RETVAL = newSVpvn((char *) dest, ret - dest);
 
     OUTPUT:
         RETVAL
@@ -1247,6 +1501,61 @@ void
 XS_APIVERSION_valid(...)
     PPCODE:
         XS_APIVERSION_BOOTCHECK;
+        XSRETURN_EMPTY;
+
+void
+xsreturn( int len )
+    PPCODE:
+        int i = 0;
+        EXTEND( SP, len );
+        for ( ; i < len; i++ ) {
+            ST(i) = sv_2mortal( newSViv(i) );
+        }
+        XSRETURN( len );
+
+void
+xsreturn_iv()
+    PPCODE:
+        XSRETURN_IV(I32_MIN + 1);
+
+void
+xsreturn_uv()
+    PPCODE:
+        XSRETURN_UV( (U32)((1U<<31) + 1) );
+
+void
+xsreturn_nv()
+    PPCODE:
+        XSRETURN_NV(0.25);
+
+void
+xsreturn_pv()
+    PPCODE:
+        XSRETURN_PV("returned");
+
+void
+xsreturn_pvn()
+    PPCODE:
+        XSRETURN_PVN("returned too much",8);
+
+void
+xsreturn_no()
+    PPCODE:
+        XSRETURN_NO;
+
+void
+xsreturn_yes()
+    PPCODE:
+        XSRETURN_YES;
+
+void
+xsreturn_undef()
+    PPCODE:
+        XSRETURN_UNDEF;
+
+void
+xsreturn_empty()
+    PPCODE:
         XSRETURN_EMPTY;
 
 MODULE = XS::APItest:Hash		PACKAGE = XS::APItest::Hash
@@ -1457,13 +1766,17 @@ common(params)
 	if ((svp = hv_fetchs(params, "hash", 0)))
 	    hash = SvUV(*svp);
 
-	if ((svp = hv_fetchs(params, "hash_pv", 0))) {
+	if (hv_fetchs(params, "hash_pv", 0)) {
+            assert(key);
 	    PERL_HASH(hash, key, klen);
 	}
-	if ((svp = hv_fetchs(params, "hash_sv", 0))) {
-	    STRLEN len;
-	    const char *const p = SvPV(keysv, len);
-	    PERL_HASH(hash, p, len);
+	if (hv_fetchs(params, "hash_sv", 0)) {
+            assert(keysv);
+            {
+              STRLEN len;
+              const char *const p = SvPV(keysv, len);
+              PERL_HASH(hash, p, len);
+            }
 	}
 
 	result = (HE *)hv_common(hv, keysv, key, klen, flags, action, val, hash);
@@ -1540,7 +1853,7 @@ void
 test_force_keys(HV *hv)
     PREINIT:
         HE *he;
-	STRLEN count = 0;
+	SSize_t count = 0;
     PPCODE:
         hv_iterinit(hv);
         he = hv_iternext(hv);
@@ -1729,12 +2042,9 @@ xop_build_optree ()
 
         kid = newSVOP(OP_CONST, 0, newSViv(42));
         
-        NewOp(1102, unop, 1, UNOP);
-        unop->op_type       = OP_CUSTOM;
+        unop = (UNOP*)mkUNOP(OP_CUSTOM, kid);
         unop->op_ppaddr     = pp_xop;
-        unop->op_flags      = OPf_KIDS;
         unop->op_private    = 0;
-        unop->op_first      = kid;
         unop->op_next       = NULL;
         kid->op_next        = (OP*)unop;
 
@@ -1763,12 +2073,9 @@ xop_from_custom_op ()
         UNOP *unop;
         XOP *xop;
 
-        NewOp(1102, unop, 1, UNOP);
-        unop->op_type       = OP_CUSTOM;
+        unop = (UNOP*)mkUNOP(OP_CUSTOM, NULL);
         unop->op_ppaddr     = pp_xop;
-        unop->op_flags      = OPf_KIDS;
         unop->op_private    = 0;
-        unop->op_first      = NULL;
         unop->op_next       = NULL;
 
         xop = Perl_custom_op_xop(aTHX_ (OP *)unop);
@@ -1945,6 +2252,39 @@ mxpushu()
 	mXPUSHu(3);
 	XSRETURN(3);
 
+
+ # test_EXTEND(): excerise the EXTEND() macro.
+ # After calling EXTEND(), it also does *(p+n) = NULL and
+ # *PL_stack_max = NULL to allow valgrind etc to spot if the stack hasn't
+ # actually been extended properly.
+ #
+ # max_offset specifies the SP to use.  It is treated as a signed offset
+ #              from PL_stack_max.
+ # nsv        is the SV holding the value of n indicating how many slots
+ #              to extend the stack by.
+ # use_ss     is a boolean indicating that n should be cast to a SSize_t
+
+void
+test_EXTEND(max_offset, nsv, use_ss)
+    IV   max_offset;
+    SV  *nsv;
+    bool use_ss;
+PREINIT:
+    SV **sp = PL_stack_max + max_offset;
+PPCODE:
+    if (use_ss) {
+        SSize_t n = (SSize_t)SvIV(nsv);
+        EXTEND(sp, n);
+        *(sp + n) = NULL;
+    }
+    else {
+        IV n = SvIV(nsv);
+        EXTEND(sp, n);
+        *(sp + n) = NULL;
+    }
+    *PL_stack_max = NULL;
+
+
 void
 call_sv_C()
 PREINIT:
@@ -2096,6 +2436,7 @@ newCONSTSUB(stash, name, flags, sv)
                break;
         }
         EXTEND(SP, 2);
+        assert(mycv);
         PUSHs( CvCONST(mycv) ? &PL_sv_yes : &PL_sv_no );
         PUSHs((SV*)CvGV(mycv));
 
@@ -2240,6 +2581,26 @@ gv_autoload_type(stash, methname, type, method)
                break;
         }
 	XPUSHs( gv ? (SV*)gv : &PL_sv_undef);
+
+SV *
+gv_const_sv(SV *name)
+    PREINIT:
+        GV *gv;
+    CODE:
+        if (SvPOK(name)) {
+	    HV *stash = gv_stashpv("main",0);
+	    HE *he = hv_fetch_ent(stash, name, 0, 0);
+	    gv = (GV *)HeVAL(he);
+        }
+	else {
+	    gv = (GV *)name;
+        }
+        RETVAL = gv_const_sv(gv);
+        if (!RETVAL)
+            XSRETURN_EMPTY;
+	RETVAL = newSVsv(RETVAL);
+    OUTPUT:
+        RETVAL
 
 void
 whichsig_type(namesv, type)
@@ -2429,7 +2790,7 @@ my_caller(level)
         ST(4) = cop_hints_fetch_pvs(cx->blk_oldcop, "foo", 0);
         ST(5) = cop_hints_fetch_pvn(cx->blk_oldcop, "foo", 3, 0, 0);
         ST(6) = cop_hints_fetch_sv(cx->blk_oldcop, 
-                sv_2mortal(newSVpvn("foo", 3)), 0, 0);
+                sv_2mortal(newSVpvs("foo")), 0, 0);
 
         hv = cop_hints_2hv(cx->blk_oldcop, 0);
         ST(7) = hv ? sv_2mortal(newRV_noinc((SV *)hv)) : &PL_sv_undef;
@@ -2749,6 +3110,11 @@ void
 test_cophh()
     PREINIT:
 	COPHH *a, *b;
+#ifdef EBCDIC
+        SV* key_sv;
+        char * key_name;
+        STRLEN key_len;
+#endif
     CODE:
 #define check_ph(EXPR) \
     	    do { if((EXPR) != &PL_sv_placeholder) croak("fail"); } while(0)
@@ -2812,24 +3178,81 @@ test_cophh()
 	check_iv(cophh_fetch_pvs(a, "foo_3", 0), 333);
 	check_iv(cophh_fetch_pvs(a, "foo_4", 0), 444);
 	check_ph(cophh_fetch_pvs(a, "foo_5", 0));
-	a = cophh_store_pvs(a, "foo_1", msviv(11111), COPHH_KEY_UTF8);
+        a = cophh_store_pvs(a, "foo_1", msviv(11111), COPHH_KEY_UTF8);
 	a = cophh_store_pvs(a, "foo_\xaa", msviv(123), 0);
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xc2\xbb", msviv(456), COPHH_KEY_UTF8);
+#else
+        /* On EBCDIC, we need to translate the UTF-8 in the ASCII test to the
+         * equivalent UTF-EBCDIC for the code page.  This is done at runtime
+         * (with the helper function in this file).  Therefore we can't use
+         * cophhh_store_pvs(), as we don't have literal string */
+        key_sv = sv_2mortal(newSVpvs("foo_"));
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc2\xbb"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(456), COPHH_KEY_UTF8);
+#endif
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xc3\x8c", msviv(789), COPHH_KEY_UTF8);
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc3\x8c"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(789), COPHH_KEY_UTF8);
+#endif
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xd9\xa6", msviv(666), COPHH_KEY_UTF8);
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xd9\xa6"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(666), COPHH_KEY_UTF8);
+#endif
 	check_iv(cophh_fetch_pvs(a, "foo_1", 0), 11111);
 	check_iv(cophh_fetch_pvs(a, "foo_1", COPHH_KEY_UTF8), 11111);
 	check_iv(cophh_fetch_pvs(a, "foo_\xaa", 0), 123);
+#ifndef EBCDIC
 	check_iv(cophh_fetch_pvs(a, "foo_\xc2\xaa", COPHH_KEY_UTF8), 123);
 	check_ph(cophh_fetch_pvs(a, "foo_\xc2\xaa", 0));
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc2\xaa"));
+	key_name = SvPV(key_sv, key_len);
+	check_iv(cophh_fetch_pvn(a, key_name, key_len, 0, COPHH_KEY_UTF8), 123);
+	check_ph(cophh_fetch_pvn(a, key_name, key_len, 0, 0));
+#endif
 	check_iv(cophh_fetch_pvs(a, "foo_\xbb", 0), 456);
+#ifndef EBCDIC
 	check_iv(cophh_fetch_pvs(a, "foo_\xc2\xbb", COPHH_KEY_UTF8), 456);
 	check_ph(cophh_fetch_pvs(a, "foo_\xc2\xbb", 0));
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc2\xbb"));
+	key_name = SvPV(key_sv, key_len);
+	check_iv(cophh_fetch_pvn(a, key_name, key_len, 0, COPHH_KEY_UTF8), 456);
+	check_ph(cophh_fetch_pvn(a, key_name, key_len, 0, 0));
+#endif
 	check_iv(cophh_fetch_pvs(a, "foo_\xcc", 0), 789);
+#ifndef EBCDIC
 	check_iv(cophh_fetch_pvs(a, "foo_\xc3\x8c", COPHH_KEY_UTF8), 789);
 	check_ph(cophh_fetch_pvs(a, "foo_\xc2\x8c", 0));
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc3\x8c"));
+	key_name = SvPV(key_sv, key_len);
+	check_iv(cophh_fetch_pvn(a, key_name, key_len, 0, COPHH_KEY_UTF8), 789);
+	check_ph(cophh_fetch_pvn(a, key_name, key_len, 0, 0));
+#endif
+#ifndef EBCDIC
 	check_iv(cophh_fetch_pvs(a, "foo_\xd9\xa6", COPHH_KEY_UTF8), 666);
 	check_ph(cophh_fetch_pvs(a, "foo_\xd9\xa6", 0));
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xd9\xa6"));
+	key_name = SvPV(key_sv, key_len);
+	check_iv(cophh_fetch_pvn(a, key_name, key_len, 0, COPHH_KEY_UTF8), 666);
+	check_ph(cophh_fetch_pvn(a, key_name, key_len, 0, 0));
+#endif
 	ENTER;
 	SAVEFREECOPHH(a);
 	LEAVE;
@@ -2864,15 +3287,41 @@ HV *
 example_cophh_2hv()
     PREINIT:
 	COPHH *a;
+#ifdef EBCDIC
+        SV* key_sv;
+        char * key_name;
+        STRLEN key_len;
+#endif
     CODE:
 #define msviv(VALUE) sv_2mortal(newSViv(VALUE))
 	a = cophh_new_empty();
 	a = cophh_store_pvs(a, "foo_0", msviv(999), 0);
 	a = cophh_store_pvs(a, "foo_1", msviv(111), 0);
 	a = cophh_store_pvs(a, "foo_\xaa", msviv(123), 0);
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xc2\xbb", msviv(456), COPHH_KEY_UTF8);
+#else
+        key_sv = sv_2mortal(newSVpvs("foo_"));
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc2\xbb"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(456), COPHH_KEY_UTF8);
+#endif
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xc3\x8c", msviv(789), COPHH_KEY_UTF8);
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xc3\x8c"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(789), COPHH_KEY_UTF8);
+#endif
+#ifndef EBCDIC
 	a = cophh_store_pvs(a, "foo_\xd9\xa6", msviv(666), COPHH_KEY_UTF8);
+#else
+        sv_setpvs(key_sv, "foo_");
+        cat_utf8a2n(key_sv, STR_WITH_LEN("\xd9\xa6"));
+	key_name = SvPV(key_sv, key_len);
+	a = cophh_store_pvn(a, key_name, key_len, 0, msviv(666), COPHH_KEY_UTF8);
+#endif
 	a = cophh_delete_pvs(a, "foo_0", 0);
 	a = cophh_delete_pvs(a, "foo_2", 0);
 	RETVAL = cophh_2hv(a, 0);
@@ -3191,9 +3640,71 @@ CODE:
 	MULTICALL;
     }
     POP_MULTICALL;
-    PERL_UNUSED_VAR(newsp);
     XSRETURN_UNDEF;
 }
+
+=pod
+
+multicall_return(): call the passed sub once in the specificed context
+and return whatever it returns
+
+=cut
+
+void
+multicall_return(block, context)
+    SV *block
+    I32 context
+PROTOTYPE: &$
+CODE:
+{
+    dSP;
+    dMULTICALL;
+    GV *gv;
+    HV *stash;
+    I32 gimme = context;
+    CV *cv;
+    AV *av;
+    SV **p;
+    SSize_t i, size;
+
+    cv = sv_2cv(block, &stash, &gv, 0);
+    if (cv == Nullcv) {
+       croak("multicall_return not a subroutine reference");
+    }
+    PUSH_MULTICALL(cv);
+
+    MULTICALL;
+
+    /* copy returned values into an array so they're not freed during
+     * POP_MULTICALL */
+
+    av = newAV();
+    SPAGAIN;
+
+    switch (context) {
+    case G_VOID:
+        break;
+
+    case G_SCALAR:
+        av_push(av, SvREFCNT_inc(TOPs));
+        break;
+
+    case G_ARRAY:
+        for (p = PL_stack_base + 1; p <= SP; p++)
+            av_push(av, SvREFCNT_inc(*p));
+        break;
+    }
+
+    POP_MULTICALL;
+
+    size = AvFILLp(av) + 1;
+    EXTEND(SP, size);
+    for (i = 0; i < size; i++)
+        ST(i) = *av_fetch(av, i, FALSE);
+    sv_2mortal((SV*)av);
+    XSRETURN(size);
+}
+
 
 #ifdef USE_ITHREADS
 
@@ -3211,11 +3722,12 @@ CODE:
     PERL_SET_CONTEXT(interp);
 
     POPSTACK_TO(PL_mainstack);
-    dounwind(-1);
+    if (cxstack_ix >= 0) {
+        dounwind(-1);
+        cx_popblock(cxstack);
+    }
     LEAVE_SCOPE(0);
-
-    while (interp->Iscopestack_ix > 1)
-        LEAVE;
+    PL_scopestack_ix = oldscope;
     FREETMPS;
 
     perl_destruct(interp);
@@ -3315,6 +3827,9 @@ BOOT:
     hintkey_arraytermexpr_sv = newSVpvs_share("XS::APItest/arraytermexpr");
     hintkey_arrayarithexpr_sv = newSVpvs_share("XS::APItest/arrayarithexpr");
     hintkey_arrayexprflags_sv = newSVpvs_share("XS::APItest/arrayexprflags");
+    hintkey_DEFSV_sv = newSVpvs_share("XS::APItest/DEFSV");
+    hintkey_with_vars_sv = newSVpvs_share("XS::APItest/with_vars");
+    hintkey_join_with_space_sv = newSVpvs_share("XS::APItest/join_with_space");
     next_keyword_plugin = PL_keyword_plugin;
     PL_keyword_plugin = my_keyword_plugin;
 }
@@ -3511,14 +4026,25 @@ test_newFOROP_without_slab()
 CODE:
     {
 	const I32 floor = start_subparse(0,0);
+	OP *o;
 	/* The slab allocator does not like CvROOT being set. */
 	CvROOT(PL_compcv) = (OP *)1;
-	op_free(newFOROP(0, 0, newOP(OP_PUSHMARK, 0), 0, 0));
+	o = newFOROP(0, 0, newOP(OP_PUSHMARK, 0), 0, 0);
+#ifdef PERL_OP_PARENT
+	if (cLOOPx(cUNOPo->op_first)->op_last->op_sibparent
+		!= cUNOPo->op_first)
+	{
+	    Perl_warn(aTHX_ "Op parent pointer is stale");
+	    RETVAL = FALSE;
+	}
+	else
+#endif
+	    /* If we do not crash before returning, the test passes. */
+	    RETVAL = TRUE;
+	op_free(o);
 	CvROOT(PL_compcv) = NULL;
 	SvREFCNT_dec(PL_compcv);
 	LEAVE_SCOPE(floor);
-	/* If we have not crashed yet, then the test passes. */
-	RETVAL = TRUE;
     }
 OUTPUT:
     RETVAL
@@ -3583,6 +4109,80 @@ alias_av(AV *av, IV ix, SV *sv)
     CODE:
 	av_store(av, ix, SvREFCNT_inc(sv));
 
+SV *
+cv_name(SVREF ref, ...)
+    CODE:
+	RETVAL = SvREFCNT_inc(cv_name((CV *)ref,
+				      items>1 && ST(1) != &PL_sv_undef
+					? ST(1)
+					: NULL,
+				      items>2 ? SvUV(ST(2)) : 0));
+    OUTPUT:
+	RETVAL
+
+void
+sv_catpvn(SV *sv, SV *sv2)
+    CODE:
+    {
+	STRLEN len;
+	const char *s = SvPV(sv2,len);
+	sv_catpvn_flags(sv,s,len, SvUTF8(sv2) ? SV_CATUTF8 : SV_CATBYTES);
+    }
+
+bool
+test_newOP_CUSTOM()
+    CODE:
+    {
+	OP *o = newLISTOP(OP_CUSTOM, 0, NULL, NULL);
+	op_free(o);
+	o = newOP(OP_CUSTOM, 0);
+	op_free(o);
+	o = newUNOP(OP_CUSTOM, 0, NULL);
+	op_free(o);
+	o = newUNOP_AUX(OP_CUSTOM, 0, NULL, NULL);
+	op_free(o);
+	o = newMETHOP(OP_CUSTOM, 0, newOP(OP_NULL,0));
+	op_free(o);
+	o = newMETHOP_named(OP_CUSTOM, 0, newSV(0));
+	op_free(o);
+	o = newBINOP(OP_CUSTOM, 0, NULL, NULL);
+	op_free(o);
+	o = newPMOP(OP_CUSTOM, 0);
+	op_free(o);
+	o = newSVOP(OP_CUSTOM, 0, newSV(0));
+	op_free(o);
+#ifdef USE_ITHREADS
+	ENTER;
+	lex_start(NULL, NULL, 0);
+	{
+	    I32 ix = start_subparse(FALSE,0);
+	    o = newPADOP(OP_CUSTOM, 0, newSV(0));
+	    op_free(o);
+	    LEAVE_SCOPE(ix);
+	}
+	LEAVE;
+#endif
+	o = newPVOP(OP_CUSTOM, 0, NULL);
+	op_free(o);
+	o = newLOGOP(OP_CUSTOM, 0, newOP(OP_NULL,0), newOP(OP_NULL,0));
+	op_free(o);
+	o = newLOOPEX(OP_CUSTOM, newOP(OP_NULL,0));
+	op_free(o);
+	RETVAL = TRUE;
+    }
+    OUTPUT:
+	RETVAL
+
+void
+test_sv_catpvf(SV *fmtsv)
+    PREINIT:
+        SV *sv;
+        char *fmt;
+    CODE:
+        fmt = SvPV_nolen(fmtsv);
+        sv = sv_2mortal(newSVpvn("", 0));
+        sv_catpvf(sv, fmt, 5, 6, 7, 8);
+
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
 int
@@ -3634,6 +4234,11 @@ ALIAS:
     sv_unmagic_bar = 1
 CODE:
     sv_unmagicext(SvRV(sv), PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo);
+
+void
+sv_magic(SV *sv, SV *thingy)
+CODE:
+    sv_magic(SvRV(sv), NULL, PERL_MAGIC_ext, (const char *)thingy, 0);
 
 UV
 test_get_vtbl()
@@ -4570,6 +5175,90 @@ test_isQUOTEMETA(UV ord)
         RETVAL
 
 UV
+test_OFFUNISKIP(UV ord)
+    CODE:
+        RETVAL = OFFUNISKIP(ord);
+    OUTPUT:
+        RETVAL
+
+bool
+test_OFFUNI_IS_INVARIANT(UV ord)
+    CODE:
+        RETVAL = OFFUNI_IS_INVARIANT(ord);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UVCHR_IS_INVARIANT(UV ord)
+    CODE:
+        RETVAL = UVCHR_IS_INVARIANT(ord);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_INVARIANT(char ch)
+    CODE:
+        RETVAL = UTF8_IS_INVARIANT(ch);
+    OUTPUT:
+        RETVAL
+
+UV
+test_UVCHR_SKIP(UV ord)
+    CODE:
+        RETVAL = UVCHR_SKIP(ord);
+    OUTPUT:
+        RETVAL
+
+UV
+test_UTF8_SKIP(char * ch)
+    CODE:
+        RETVAL = UTF8_SKIP(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_START(char ch)
+    CODE:
+        RETVAL = UTF8_IS_START(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_CONTINUATION(char ch)
+    CODE:
+        RETVAL = UTF8_IS_CONTINUATION(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_CONTINUED(char ch)
+    CODE:
+        RETVAL = UTF8_IS_CONTINUED(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_DOWNGRADEABLE_START(char ch)
+    CODE:
+        RETVAL = UTF8_IS_DOWNGRADEABLE_START(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_UTF8_IS_ABOVE_LATIN1(char ch)
+    CODE:
+        RETVAL = UTF8_IS_ABOVE_LATIN1(ch);
+    OUTPUT:
+        RETVAL
+
+bool
+test_isUTF8_POSSIBLY_PROBLEMATIC(char ch)
+    CODE:
+        RETVAL = isUTF8_POSSIBLY_PROBLEMATIC(ch);
+    OUTPUT:
+        RETVAL
+
+UV
 test_toLOWER(UV ord)
     CODE:
         RETVAL = toLOWER(ord);
@@ -4792,3 +5481,85 @@ test_toTITLE_utf8(SV * p)
         RETVAL = av;
     OUTPUT:
         RETVAL
+
+SV *
+test_Gconvert(SV * number, SV * num_digits)
+    PREINIT:
+        char buffer[100];
+        int len;
+    CODE:
+        len = (int) SvIV(num_digits);
+        if (len > 99) croak("Too long a number for test_Gconvert");
+        if (len < 0) croak("Too short a number for test_Gconvert");
+        PERL_UNUSED_RESULT(Gconvert(SvNV(number), len,
+                 0,    /* No trailing zeroes */
+                 buffer));
+        RETVAL = newSVpv(buffer, 0);
+    OUTPUT:
+        RETVAL
+
+MODULE = XS::APItest		PACKAGE = XS::APItest::Backrefs
+
+void
+apitest_weaken(SV *sv)
+    PROTOTYPE: $
+    CODE:
+        sv_rvweaken(sv);
+
+SV *
+has_backrefs(SV *sv)
+    CODE:
+        if (SvROK(sv) && sv_get_backrefs(SvRV(sv)))
+            RETVAL = &PL_sv_yes;
+        else
+            RETVAL = &PL_sv_no;
+    OUTPUT:
+        RETVAL
+
+#ifdef WIN32
+#ifdef PERL_IMPLICIT_SYS
+
+const char *
+PerlDir_mapA(const char *path)
+
+const WCHAR *
+PerlDir_mapW(const WCHAR *wpath)
+
+#endif
+
+void
+Comctl32Version()
+    PREINIT:
+        HMODULE dll;
+        VS_FIXEDFILEINFO *info;
+        UINT len;
+        HRSRC hrsc;
+        HGLOBAL ver;
+        void * vercopy;
+    PPCODE:
+        dll = GetModuleHandle("comctl32.dll"); /* must already be in proc */
+        if(!dll)
+            croak("Comctl32Version: comctl32.dll not in process???");
+        hrsc = FindResource(dll,    MAKEINTRESOURCE(VS_VERSION_INFO),
+                                    MAKEINTRESOURCE(VS_FILE_INFO));
+        if(!hrsc)
+            croak("Comctl32Version: comctl32.dll no version???");
+        ver = LoadResource(dll, hrsc);
+        len = SizeofResource(dll, hrsc);
+        vercopy = _alloca(len);
+        memcpy(vercopy, ver, len);
+        if (VerQueryValue(vercopy, "\\", (void**)&info, &len)) {
+            int dwValueMS1 = (info->dwFileVersionMS>>16);
+            int dwValueMS2 = (info->dwFileVersionMS&0xffff);
+            int dwValueLS1 = (info->dwFileVersionLS>>16);
+            int dwValueLS2 = (info->dwFileVersionLS&0xffff);
+            EXTEND(SP, 4);
+            mPUSHi(dwValueMS1);
+            mPUSHi(dwValueMS2);
+            mPUSHi(dwValueLS1);
+            mPUSHi(dwValueLS2);
+        }
+
+#endif
+
+

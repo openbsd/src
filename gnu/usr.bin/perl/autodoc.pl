@@ -15,12 +15,12 @@
 #
 # This script is invoked as part of 'make all'
 #
-# '=head1' are the only headings looked for.  If the next line after the
-# heading begins with a word character, it is considered to be the first line
-# of documentation that applies to the heading itself.  That is, it is output
-# immediately after the heading, before the first function, and not indented.
-# The next input line that is a pod directive terminates this heading-level
-# documentation.
+# '=head1' are the only headings looked for.  If the first non-blank line after
+# the heading begins with a word character, it is considered to be the first 
+# line of documentation that applies to the heading itself.  That is, it is 
+# output immediately after the heading, before the first function, and not 
+# indented. The next input line that is a pod directive terminates this 
+# heading-level documentation.
 
 use strict;
 
@@ -54,8 +54,12 @@ my $curheader = "Unknown section";
 sub autodoc ($$) { # parse a file and extract documentation info
     my($fh,$file) = @_;
     my($in, $doc, $line, $header_doc);
+
+    # Count lines easier
+    my $get_next_line = sub { $line++; return <$fh> };
+
 FUNC:
-    while (defined($in = <$fh>)) {
+    while (defined($in = $get_next_line->())) {
 	if ($in =~ /^#\s*define\s+([A-Za-z_][A-Za-z_0-9]+)\(/ &&
 	    ($file ne 'embed.h' || $file ne 'proto.h')) {
 	    $macro{$1} = $file;
@@ -64,26 +68,31 @@ FUNC:
         if ($in=~ /^=head1 (.*)/) {
             $curheader = $1;
 
-            # If the next line begins with a word char, then is the start of
-            # heading-level documentation.
-	    if (defined($doc = <$fh>)) {
+            # If the next non-space line begins with a word char, then it is
+            # the start of heading-ldevel documentation.
+	    if (defined($doc = $get_next_line->())) {
+                # Skip over empty lines
+                while ($doc =~ /^\s+$/) {
+                    if (! defined($doc = $get_next_line->())) {
+                        next FUNC;
+                    }
+                }
+
                 if ($doc !~ /^\w/) {
                     $in = $doc;
                     redo FUNC;
                 }
                 $header_doc = $doc;
-                $line++;
 
                 # Continue getting the heading-level documentation until read
                 # in any pod directive (or as a fail-safe, find a closing
                 # comment to this pod in a C language file
 HDR_DOC:
-                while (defined($doc = <$fh>)) {
+                while (defined($doc = $get_next_line->())) {
                     if ($doc =~ /^=\w/) {
                         $in = $doc;
                         redo FUNC;
                     }
-                    $line++;
 
                     if ($doc =~ m:^\s*\*/$:) {
                         warn "=cut missing? $file:$line:$doc";;
@@ -94,15 +103,13 @@ HDR_DOC:
             }
             next FUNC;
         }
-	$line++;
 	if ($in =~ /^=for\s+apidoc\s+(.*?)\s*\n/) {
 	    my $proto = $1;
 	    $proto = "||$proto" unless $proto =~ /\|/;
 	    my($flags, $ret, $name, @args) = split /\|/, $proto;
 	    my $docs = "";
 DOC:
-	    while (defined($doc = <$fh>)) {
-		$line++;
+	    while (defined($doc = $get_next_line->())) {
 		last DOC if $doc =~ /^=\w+/;
 		if ($doc =~ m:^\*/$:) {
 		    warn "=cut missing? $file:$line:$doc";;
@@ -152,6 +159,10 @@ DOC:
 		$ret = $docref->{retval};
 	    }
 
+	    if (exists $docs{$inline_where}{$curheader}{$name}) {
+                warn "$0: duplicate API entry for '$name' in $inline_where/$curheader\n";
+                next;
+            }
 	    $docs{$inline_where}{$curheader}{$name}
 		= [$flags, $docs, $ret, $file, @args];
 
@@ -249,6 +260,14 @@ removed without notice.\n\n$docs" if $flags =~ /x/;
     print $fh "=for hackers\nFound in file $file\n\n";
 }
 
+sub sort_helper {
+    # Do a case-insensitive dictionary sort, with only alphabetics
+    # significant, falling back to using everything for determinancy
+    return (uc($a =~ s/[[:^alpha:]]//r) cmp uc($b =~ s/[[:^alpha:]]//r))
+           || uc($a) cmp uc($b)
+           || $a cmp $b;
+}
+
 sub output {
     my ($podname, $header, $dochash, $missing, $footer) = @_;
     my $fh = open_new("pod/$podname.pod", undef,
@@ -258,8 +277,7 @@ sub output {
     print $fh $header;
 
     my $key;
-    # case insensitive sort, with fallback for determinacy
-    for $key (sort { uc($a) cmp uc($b) || $a cmp $b } keys %$dochash) {
+    for $key (sort sort_helper keys %$dochash) {
 	my $section = $dochash->{$key}; 
 	print $fh "\n=head1 $key\n\n";
 
@@ -271,8 +289,7 @@ sub output {
         }
 	print $fh "=over 8\n\n";
 
-	# Again, fallback for determinacy
-	for my $key (sort { uc($a) cmp uc($b) || $a cmp $b } keys %$section) {
+	for my $key (sort sort_helper keys %$section) {
 	    docout($fh, $key, $section->{$key});
 	}
 	print $fh "\n=back\n";
@@ -287,11 +304,14 @@ interfaces are subject to change.  Functions that are not listed in this
 document are not intended for public use, and should NOT be used under any
 circumstances.
 
-If you use one of the undocumented functions below, you may wish to consider
-creating and submitting documentation
-for it.  If your patch is accepted, this
-will indicate that the interface is stable (unless it is explicitly marked
-otherwise).
+If you feel you need to use one of these functions, first send email to
+L<perl5-porters@perl.org|mailto:perl5-porters@perl.org>.  It may be
+that there is a good reason for the function not being documented, and it
+should be removed from this list; or it may just be that no one has gotten
+around to documenting it.  In the latter case, you will be asked to submit a
+patch to document the function.  Once your patch is accepted, it will indicate
+that the interface is stable (unless it is explicitly marked otherwise) and
+usable by you.
 
 =over
 
@@ -376,6 +396,11 @@ not part of the public API, and should not be used by extension writers at
 all.  For these reasons, blindly using functions listed in proto.h is to be
 avoided when writing extensions.
 
+In Perl, unlike C, a string of characters may generally contain embedded
+C<NUL> characters.  Sometimes in the documentation a Perl string is referred
+to as a "buffer" to distinguish it from a C string, but sometimes they are
+both just referred to as strings.
+
 Note that all Perl API global variables must be referenced with the C<PL_>
 prefix.  Again, those not listed here are not to be used by extension writers,
 and can be changed or removed without notice; same with macros.
@@ -387,8 +412,16 @@ whose ordinal numbers are in the range 0 - 127).
 And documentation and comments may still use the term ASCII, when
 sometimes in fact the entire range from 0 - 255 is meant.
 
-Note that Perl can be compiled and run under EBCDIC (See L<perlebcdic>)
-or ASCII.  Most of the documentation (and even comments in the code)
+The non-ASCII characters below 256 can have various meanings, depending on
+various things.  (See, most notably, L<perllocale>.)  But usually the whole
+range can be referred to as ISO-8859-1.  Often, the term "Latin-1" (or
+"Latin1") is used as an equivalent for ISO-8859-1.  But some people treat
+"Latin1" as referring just to the characters in the range 128 through 255, or
+somethimes from 160 through 255.
+This documentation uses "Latin1" and "Latin-1" to refer to all 256 characters.
+
+Note that Perl can be compiled and run under either ASCII or EBCDIC (See
+L<perlebcdic>).  Most of the documentation (and even comments in the code)
 ignore the EBCDIC possibility.  
 For almost all purposes the differences are transparent.
 As an example, under EBCDIC,
@@ -397,8 +430,8 @@ whenever this documentation refers to C<utf8>
 (and variants of that name, including in function names),
 it also (essentially transparently) means C<UTF-EBCDIC>.
 But the ordinals of characters differ between ASCII, EBCDIC, and
-the UTF- encodings, and a string encoded in UTF-EBCDIC may occupy more bytes
-than in UTF-8.
+the UTF- encodings, and a string encoded in UTF-EBCDIC may occupy a different
+number of bytes than in UTF-8.
 
 The listing below is alphabetical, case insensitive.
 

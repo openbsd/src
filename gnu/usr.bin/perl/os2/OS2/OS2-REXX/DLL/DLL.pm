@@ -1,6 +1,6 @@
 package OS2::DLL;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 use Carp;
 use XSLoader;
@@ -144,11 +144,11 @@ See documentation of L<OS2::REXX> module if you need the variable pool.
 
 =head1 SYNOPSIS
 
-	use OS2::DLL;
-	$emx_dll = OS2::DLL->module('emx');
-	$emx_version = $emx_dll->emx_revision();
-	$func_emx_version = $emx_dll->wrapper_REXX('#128'); # emx_revision
-	$emx_version = $func_emx_version->();
+ use OS2::DLL;
+ $emx_dll = OS2::DLL->module('emx');
+ $emx_version = $emx_dll->emx_revision();
+ $func_emx_version = $emx_dll->wrapper_REXX('#128'); # emx_revision
+ $emx_version = $func_emx_version->();
 
 =head1 DESCRIPTION
 
@@ -266,7 +266,8 @@ If a function takes up to 20 ULONGs and returns ULONG:
 
 =item Same for a function which returns non-0 and sets system-error on error
 
- call20_Dos( $msg, $pointer, $arg0, $arg1, ...); # die("$msg: $^E") if error
+ call20_Dos( $msg, $pointer, $arg0, $arg1, ...); # die("$msg: $^E")
+                                                            if error
 
 [Good for C<Dos*> API - and rare C<Win*> calls.]
 

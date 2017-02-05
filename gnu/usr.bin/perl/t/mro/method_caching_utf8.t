@@ -1,18 +1,18 @@
 #!./perl
 
-use utf8;
-use open qw( :utf8 :std );
-use strict;
-use warnings;
-no warnings 'redefine'; # we do a lot of this
-no warnings 'prototype'; # we do a lot of this
-
 BEGIN {
     unless (-d 'blib') {
         chdir 't' if -d 't';
         @INC = '../lib';
     }
 }
+
+use utf8;
+use open qw( :utf8 :std );
+use strict;
+use warnings;
+no warnings 'redefine'; # we do a lot of this
+no warnings 'prototype'; # we do a lot of this
 
 require './test.pl';
 

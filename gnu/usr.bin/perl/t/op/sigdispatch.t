@@ -3,6 +3,7 @@
 # We assume that TestInit has been used.
 
 BEGIN {
+      chdir 't' if -d 't';
       require './test.pl';
 }
 
@@ -43,8 +44,9 @@ SKIP: {
     skip('We can\'t test blocking without sigprocmask', 17)
 	if is_miniperl() || !$Config{d_sigprocmask};
     skip("This doesn\'t work on $^O threaded builds RT#88814", 17)
-        if ($^O =~ /cygwin/ || $^O eq "openbsd" && $Config{osvers} < 5.2)
-	    && $Config{useithreads};
+        if ($^O =~ /cygwin/ && $Config{useithreads});
+    skip("This doesn\'t work on $^O version $Config{osvers} RT#88814", 17)
+        if ($^O eq "openbsd" && $Config{osvers} < 5.2);
 
     require POSIX;
     my $pending = POSIX::SigSet->new();

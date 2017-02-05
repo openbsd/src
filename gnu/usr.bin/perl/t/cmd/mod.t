@@ -32,10 +32,11 @@ if (join(' ',@y) eq '0 2 4 6 8 10 12 14 16 18 20') {
 	print "not ok 7 @y\n";
 }
 
+# Well this is fragile...
 open(foo,'./TEST') || open(foo,'TEST') || open(foo,'t/TEST');
 $x = 0;
 $x++ while <foo>;
-print $x > 50 && $x < 1000 ? "ok 8\n" : "not ok 8\n";
+print $x > 50 && $x < 2000 ? "ok 8\n" : "not ok 8\n";
 
 $x = -0.5;
 print "not " if scalar($x) < 0 and $x >= 0;

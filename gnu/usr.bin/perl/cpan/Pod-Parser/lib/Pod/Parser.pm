@@ -12,7 +12,7 @@ use strict;
 
 ## These "variables" are used as local "glob aliases" for performance
 use vars qw($VERSION @ISA %myData %myOpts @input_stack);
-$VERSION = '1.62';  ## Current version of this package
+$VERSION = '1.63';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################

@@ -20,12 +20,13 @@ my $DEBUG = 0;  # Outputs extra information for debugging this .t
 
 use strict;
 use warnings;
+no warnings 'locale';   # Plenty of these would otherwise get generated
 use Encode;
 use POSIX;
 
 # Special-cased characters in the .c's that we want to make sure get tested.
 my %be_sure_to_test = (
-        "\xDF" => 1, # LATIN_SMALL_LETTER_SHARP_S
+        chr utf8::unicode_to_native(0xDF) => 1, # LATIN_SMALL_LETTER_SHARP_S
         "\x{1E9E}" => 1, # LATIN_CAPITAL_LETTER_SHARP_S
         "\x{390}" => 1, # GREEK_SMALL_LETTER_IOTA_WITH_DIALYTIKA_AND_TONOS
         "\x{3B0}" => 1, # GREEK_SMALL_LETTER_UPSILON_WITH_DIALYTIKA_AND_TONOS
@@ -70,7 +71,7 @@ my $skip_apparently_redundant = ! $ENV{PERL_RUN_SLOW_TESTS};
 sub range_type {
     my $ord = ord shift;
 
-    return $ASCII if $ord < 128;
+    return $ASCII if utf8::native_to_unicode($ord) < 128;
     return $Latin1 if $ord < 256;
     return $Unicode;
 }
@@ -259,7 +260,7 @@ my $file="../lib/unicore/CaseFolding.txt";
 # for), and it is in the modern format (starting in Unicode 3.1.0) and it is
 # available.  This avoids being affected by potential bugs introduced by other
 # layers of Perl
-if (ord('A') == 65
+if ($::IS_ASCII
     && pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v3.1.0
     && open my $fh, "<", $file)
 {
@@ -303,7 +304,8 @@ else {  # Here, can't use the .txt file: read the Unicode rules file and
             $adjust++;
             my @to = map { $_ + $adjust } @{$invmap_ref->[$i]};
             push @{$folds{$j}}, @to;
-            my $folded_str = pack "U0U*", @to;
+            my $folded_str = join "", map { chr } @to;
+            utf8::upgrade($folded_str);
             #note (sprintf "%d: %04X: %s", __LINE__, $j, join " ",
             #    map { sprintf "%04X", $_  + $adjust } @{$invmap_ref->[$i]});
             push @{$inverse_folds{$folded_str}}, chr $j;
@@ -388,8 +390,8 @@ foreach my $to (sort { (length $a == length $b)
 }
 
 # For each range type, test additionally a character that folds to itself
-add_test(chr 0x3A, chr 0x3A);
-add_test(chr 0xF7, chr 0xF7);
+add_test(":", ":");
+add_test(chr utf8::unicode_to_native(0xF7), chr utf8::unicode_to_native(0xF7));
 add_test(chr 0x2C7, chr 0x2C7);
 
 # To cut down on the number of tests
@@ -416,24 +418,24 @@ sub prefix {
 # It doesn't return pairs like (a, a), (b, b).  Change the slice to an array
 # to do that.  This was just to have fewer tests.
 sub pairs (@) {
-    #print __LINE__, ": ", join(" XXX ", map { sprintf "%04X", $_ } @_), "\n";
+    #print STDERR __LINE__, ": ", join(" XXX ", map { sprintf "%04X", $_ } @_), "\n";
     map { prefix $_[$_], @_[0..$_-1, $_+1..$#_] } 0..$#_
 }
 
 my $utf8_locale;
 
 my @charsets = qw(d u a aa);
-if($Config{d_setlocale}) {
+if (locales_enabled('LC_CTYPE')) {
     my $current_locale = POSIX::setlocale( &POSIX::LC_CTYPE, "C") // "";
     if ($current_locale eq 'C') {
-        require locale; import locale;
+        use locale;
 
         # Some implementations don't have the 128-255 range characters all
         # mean nothing under the C locale (an example being VMS).  This is
         # legal, but since we don't know what the right answers should be,
         # skip the locale tests in that situation.
         for my $i (128 .. 255) {
-            my $char = chr($i);
+            my $char = chr(utf8::unicode_to_native($i));
             goto skip_C_locale_tests if uc($char) ne $char || lc($char) ne $char;
         }
         push @charsets, 'l';
@@ -479,23 +481,21 @@ foreach my $test (sort { numerically } keys %tests) {
     # happens to generate multi/multi, skip.
     next if @target > 1 && @pattern > 1;
 
-    # Have to convert non-utf8 chars to native char set
-    @target = map { $_ > 255 ? $_ : ord latin1_to_native(chr($_)) } @target;
-    @pattern = map { $_ > 255 ? $_ : ord latin1_to_native(chr($_)) } @pattern;
-
     # Get in hex form.
     my @x_target = map { sprintf "\\x{%04X}", $_ } @target;
     my @x_pattern = map { sprintf "\\x{%04X}", $_ } @pattern;
 
     my $target_above_latin1 = grep { $_ > 255 } @target;
     my $pattern_above_latin1 = grep { $_ > 255 } @pattern;
-    my $target_has_ascii = grep { $_ < 128 } @target;
-    my $pattern_has_ascii = grep { $_ < 128 } @pattern;
-    my $target_only_ascii = ! grep { $_ > 127 } @target;
-    my $pattern_only_ascii = ! grep { $_ > 127 } @pattern;
+    my $target_has_ascii = grep { utf8::native_to_unicode($_) < 128 } @target;
+    my $pattern_has_ascii = grep { utf8::native_to_unicode($_) < 128 } @pattern;
+    my $target_only_ascii = ! grep { utf8::native_to_unicode($_) > 127 } @target;
+    my $pattern_only_ascii = ! grep { utf8::native_to_unicode($_) > 127 } @pattern;
     my $target_has_latin1 = grep { $_ < 256 } @target;
-    my $target_has_upper_latin1 = grep { $_ < 256 && $_ > 127 } @target;
-    my $pattern_has_upper_latin1 = grep { $_ < 256 && $_ > 127 } @pattern;
+    my $target_has_upper_latin1
+                = grep { $_ < 256 && utf8::native_to_unicode($_) > 127 } @target;
+    my $pattern_has_upper_latin1
+                = grep { $_ < 256 && utf8::native_to_unicode($_) > 127 } @pattern;
     my $pattern_has_latin1 = grep { $_ < 256 } @pattern;
     my $is_self = @target == 1 && @pattern == 1 && $target[0] == $pattern[0];
 
@@ -544,7 +544,7 @@ foreach my $test (sort { numerically } keys %tests) {
           if (! $target_has_ascii) {
             foreach my $cp (@target) {
               if (exists $folds{$cp}
-                  && grep { ord_native_to_latin1($_) < 128 } @{$folds{$cp}} )
+                  && grep { utf8::native_to_unicode($_) < 128 } @{$folds{$cp}} )
               {
                   $target_has_ascii = 1;
                   last;
@@ -554,7 +554,7 @@ foreach my $test (sort { numerically } keys %tests) {
           if (! $pattern_has_ascii) {
             foreach my $cp (@pattern) {
               if (exists $folds{$cp}
-                  && grep { ord_native_to_latin1($_) < 128 } @{$folds{$cp}} )
+                  && grep { utf8::native_to_unicode($_) < 128 } @{$folds{$cp}} )
               {
                   $pattern_has_ascii = 1;
                   last;
@@ -698,7 +698,7 @@ foreach my $test (sort { numerically } keys %tests) {
           my $lhs_str = eval qq{"$lhs"}; fail($@) if $@;
           my @rhs = @x_pattern;
           my $rhs = join "", @rhs;
-          my $should_fail = (! $uni_semantics && $ord >= 128 && $ord < 256 && ! $is_self)
+          my $should_fail = (! $uni_semantics && $ord < 256 && ! $is_self && utf8::native_to_unicode($ord) >= 128)
                             || ($charset eq 'aa' && $target_has_ascii != $pattern_has_ascii)
                             || ($charset eq 'l' && $target_has_latin1 != $pattern_has_latin1);
 

@@ -1,13 +1,13 @@
 #!perl
 
 BEGIN {
-    chdir 't';
-    @INC = '../lib';
+    chdir 't' if -d 't';
     require './test.pl';
+    set_up_inc('../lib');
     *bar::is = *is;
     *bar::like = *like;
 }
-plan 126;
+plan 151;
 
 # -------------------- Errors with feature disabled -------------------- #
 
@@ -87,6 +87,37 @@ sub bar::c { 43 }
   package bar;
   my $y = if if if;
   is $y, 42, 'our subs from other packages override all keywords';
+}
+# Interaction with ‘use constant’
+{
+  our sub const; # symtab now has an undefined CV
+  BEGIN { delete $::{const} } # delete symtab entry; pad entry still exists
+  use constant const => 3; # symtab now has a scalar ref
+  # inlining this used to fail an assertion (parentheses necessary):
+  is(const, 3, 'our sub pointing to "use constant" constant');
+}
+# our sub and method confusion
+sub F::h { 4242 }
+{
+  my $called;
+  our sub h { ++$called; 4343 };
+  is((h F),4242, 'our sub symbol translation does not affect meth names');
+  undef $called;
+  print "#";
+  print h F; # follows a different path through yylex to intuit_method
+  print "\n";
+  is $called, undef, 'our sub symbol translation & meth names after print'
+}
+our sub j;
+is j
+  =>, 'j', 'name_of_our_sub <newline> =>  is parsed properly';
+sub _cmp { $a cmp $b }
+sub bar::_cmp { $b cmp $a }
+{
+  package bar;
+  our sub _cmp;
+  package main;
+  is join(" ", sort _cmp split //, 'oursub'), 'u u s r o b', 'sort our_sub'
 }
 
 # -------------------- state -------------------- #
@@ -260,6 +291,45 @@ sub make_anon_with_state_sub{
     'state subs in anon subs are cloned';
   is &$s(0), &$s(0), 'but only when the anon sub is cloned';
 }
+# Check that nested state subs close over variables properly
+{
+  is sub {
+    state sub a;
+    state sub b {
+      state sub c {
+        state $x = 42;
+        sub a { $x }
+      }
+      c();
+    }
+    b();
+    a();
+  }->(), 42, 'state sub with body defined in doubly-nested state subs';
+  is sub {
+    state sub a;
+    state sub b;
+    state sub c {
+      sub b {
+        state $x = 42;
+        sub a { $x }
+      }
+    }
+    b();
+    a();
+  }->(), 42, 'nested state subs declared in same scope';
+  state $w;
+  local $SIG{__WARN__} = sub { $w .= shift };
+  use warnings 'closure';
+  my $sub = sub {
+    state sub a;
+    sub {
+      my $x;
+      sub a { $x }
+    }
+  };
+  like $w, qr/Variable \"\$x\" is not available at /,
+      "unavailability warning when state closure is defined in anon sub";
+}
 {
   state sub BEGIN { exit };
   pass 'state subs are never special blocks';
@@ -328,6 +398,13 @@ like runperl(
   ok "quires" =~ bless([], o::), 'state sub used as overload method';
 }
 {
+  state sub foo;
+  *cvgv = \&foo;
+  local *cvgv2 = *cvgv;
+  eval 'sub cvgv2 {42}'; # uses the stub already present
+  is foo, 42, 'defining state sub body via package sub declaration';
+}
+{
   local $ENV{PERL5DB} = 'sub DB::DB{}';
   is(
     runperl(
@@ -335,7 +412,10 @@ like runperl(
      progs => [ split "\n",
       'use feature qw - lexical_subs state -;
        no warnings q-experimental::lexical_subs-;
-       sub DB::sub{ print qq|4\n|; goto $DB::sub }
+       sub DB::sub{
+         print qq|4\n| unless $DB::sub =~ DESTROY;
+         goto $DB::sub
+       }
        state sub foo {print qq|2\n|}
        foo();
       '
@@ -345,7 +425,63 @@ like runperl(
     "4\n2\n",
     'state subs and DB::sub under -d'
   );
+  is(
+    runperl(
+     switches => [ '-d' ],
+     progs => [ split "\n",
+      'use feature qw - lexical_subs state -;
+       no warnings q-experimental::lexical_subs-;
+       sub DB::goto{ print qq|4\n|; $_ = $DB::sub }
+       state sub foo {print qq|2\n|}
+       $^P|=0x80;
+       sub { goto &foo }->();
+       print $_ == \&foo ? qq|ok\n| : qq|$_\n|;
+      '
+     ],
+     stderr => 1
+    ),
+    "4\n2\nok\n",
+    'state subs and DB::goto under -d'
+  );
 }
+# This used to fail an assertion, but only as a standalone script
+is runperl(switches => ['-lXMfeature=:all'],
+           prog     => 'state sub x {}; undef &x; print defined &x',
+           stderr   => 1), "\n", 'undefining state sub';
+{
+  state sub x { is +(caller 0)[3], 'x', 'state sub name in caller' }
+  x
+}
+{
+  state sub _cmp { $b cmp $a }
+  is join(" ", sort _cmp split //, 'lexsub'), 'x u s l e b',
+    'sort state_sub LIST'
+}
+{
+  state sub handel { "" }
+  print handel, "ok ", curr_test(),
+       " - no 'No comma allowed' after state sub\n";
+  curr_test(curr_test()+1);
+}
+{
+  use utf8;
+  state sub φου;
+  eval { φου };
+  like $@, qr/^Undefined subroutine &φου called at /,
+    'state sub with utf8 name';
+}
+# This used to crash, but only as a standalone script
+is runperl(switches => ['-lXMfeature=:all'],
+           prog     => '$::x = global=>;
+                        sub x;
+                        sub x {
+                          state $x = 42;
+                          state sub x { print eval q|$x| }
+                          x()
+                        }
+                        x()',
+           stderr   => 1), "42\n",
+  'closure behaviour of state sub in predeclared package sub';
 
 # -------------------- my -------------------- #
 
@@ -653,6 +789,22 @@ like runperl(
   package mo { use overload qr => \&quire }
   ok "quires" =~ bless([], mo::), 'my sub used as overload method';
 }
+{
+  my sub foo;
+  *mcvgv = \&foo;
+  local *mcvgv2 = *mcvgv;
+  eval 'sub mcvgv2 {42}'; # uses the stub already present
+  is foo, 42, 'defining my sub body via package sub declaration';
+}
+{
+  my sub foo;
+  *mcvgv3 = \&foo;
+  local *mcvgv4 = *mcvgv3;
+  eval 'sub mcvgv4 {42}'; # uses the stub already present
+  undef *mcvgv3; undef *mcvgv4; # leaves the pad with the only reference
+}
+# We would have crashed by now if it weren’t fixed.
+pass "pad taking ownership once more of packagified my-sub";
 
 {
   local $ENV{PERL5DB} = 'sub DB::DB{}';
@@ -662,7 +814,10 @@ like runperl(
      progs => [ split "\n",
       'use feature qw - lexical_subs state -;
        no warnings q-experimental::lexical_subs-;
-       sub DB::sub{ print qq|4\n|; goto $DB::sub }
+       sub DB::sub{
+         print qq|4\n| unless $DB::sub =~ DESTROY;
+         goto $DB::sub
+       }
        my sub foo {print qq|2\n|}
        foo();
       '
@@ -672,6 +827,44 @@ like runperl(
     "4\n2\n",
     'my subs and DB::sub under -d'
   );
+}
+# This used to fail an assertion, but only as a standalone script
+is runperl(switches => ['-lXMfeature=:all'],
+           prog     => 'my sub x {}; undef &x; print defined &x',
+           stderr   => 1), "\n", 'undefining my sub';
+{
+  my sub x { is +(caller 0)[3], 'x', 'my sub name in caller' }
+  x
+}
+{
+  my sub _cmp { $b cmp $a }
+  is join(" ", sort _cmp split //, 'lexsub'), 'x u s l e b',
+    'sort my_sub LIST'
+}
+{
+  my sub handel { "" }
+  print handel,"ok ",curr_test()," - no 'No comma allowed' after my sub\n";
+  curr_test(curr_test()+1);
+}
+{
+  my $x = 43;
+  my sub y :prototype() {$x};
+  is y, 43, 'my sub that looks like constant closure';
+}
+{
+  use utf8;
+  my sub φου;
+  eval { φου };
+  like $@, qr/^Undefined subroutine &φου called at /,
+    'my sub with utf8 name';
+}
+{
+  my $w;
+  local $SIG{__WARN__} = sub { $w = shift };
+  use warnings 'closure';
+  eval 'sub stayshared { my sub x; sub notstayshared { x } } 1' or die;
+  like $w, qr/^Subroutine "&x" will not stay shared at /,
+          'Subroutine will not stay shared';
 }
 
 # -------------------- Interactions (and misc tests) -------------------- #
@@ -767,4 +960,10 @@ like runperl(
   }
   @AutoloadTest::ISA = AutoloadTestSuper::;
   AutoloadTest->blah;
+}
+
+# This used to crash because op.c:find_lexical_cv was looking at the wrong
+# CV’s OUTSIDE pointer.  [perl #124099]
+{
+  my sub h; sub{my $x; sub{h}}
 }

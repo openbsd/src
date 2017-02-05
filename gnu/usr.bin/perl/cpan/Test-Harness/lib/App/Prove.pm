@@ -3,7 +3,7 @@ package App::Prove;
 use strict;
 use warnings;
 
-use TAP::Harness;
+use TAP::Harness::Env;
 use Text::ParseWords qw(shellwords);
 use File::Spec;
 use Getopt::Long;
@@ -18,11 +18,11 @@ App::Prove - Implements the C<prove> command.
 
 =head1 VERSION
 
-Version 3.30
+Version 3.36
 
 =cut
 
-our $VERSION = '3.30_01';
+our $VERSION = '3.36_01';
 
 =head1 DESCRIPTION
 
@@ -88,7 +88,6 @@ sub _initialize {
     for my $key (@is_array) {
         $self->{$key} = [];
     }
-    $self->{harness_class} = 'TAP::Harness';
 
     for my $attr (@ATTR) {
         if ( exists $args->{$attr} ) {
@@ -98,13 +97,6 @@ sub _initialize {
         }
     }
 
-    my %env_provides_default = (
-        HARNESS_TIMER => 'timer',
-    );
-
-    while ( my ( $env, $attr ) = each %env_provides_default ) {
-        $self->{$attr} = 1 if $ENV{$env};
-    }
     $self->state_class('App::Prove::State');
     return $self;
 }
@@ -386,8 +378,9 @@ sub _get_args {
         }
         $args{rules} = { par => [@rules] };
     }
+    $args{harness_class} = $self->{harness_class} if $self->{harness_class};
 
-    return ( \%args, $self->{harness_class} );
+    return \%args;
 }
 
 sub _find_module {
@@ -533,8 +526,8 @@ sub _get_tests {
 }
 
 sub _runtests {
-    my ( $self, $args, $harness_class, @tests ) = @_;
-    my $harness = $harness_class->new($args);
+    my ( $self, $args, @tests ) = @_;
+    my $harness = TAP::Harness::Env->create($args);
 
     my $state = $self->state_manager;
 
@@ -572,8 +565,6 @@ sub _get_switches {
     elsif ( $self->warnings_warn ) {
         push @switches, '-w';
     }
-
-    push @switches, shellwords( $ENV{HARNESS_PERL_SWITCHES} ) if defined $ENV{HARNESS_PERL_SWITCHES};
 
     return @switches ? \@switches : ();
 }
@@ -643,6 +634,7 @@ current Perl.
 
 sub print_version {
     my $self = shift;
+    require TAP::Harness;
     printf(
         "TAP::Harness v%s and Perl v%vd\n",
         $TAP::Harness::VERSION, $^V

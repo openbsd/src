@@ -99,7 +99,7 @@ static const char PL_uuemap[]
 
 typedef unsigned char U8;
 
-/* This will ensure it is all zeros.  */
+/* This will ensure it is initialized to all zeros.  */
 static char PL_uudmap[256];
 static char PL_bitcount[256];
 

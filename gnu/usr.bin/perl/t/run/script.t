@@ -1,7 +1,7 @@
 #!./perl
 
 BEGIN {
-    chdir 't';
+    chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';	# for which_perl() etc
     plan(3);

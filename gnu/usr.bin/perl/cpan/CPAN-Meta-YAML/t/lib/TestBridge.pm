@@ -2,8 +2,9 @@ package TestBridge;
 
 use strict;
 use warnings;
-
-use Test::More 0.99;
+use lib 't/lib';
+use Test::More 0.88;
+use SubtestCompat;
 use TestUtils;
 use TestML::Tiny;
 
@@ -24,6 +25,7 @@ our @EXPORT = qw{
     test_perl_to_yaml
     test_dump_error
     test_load_error
+    test_load_warning
     test_yaml_json
     test_code_point
     error_like
@@ -40,14 +42,17 @@ my %ERROR = (
     E_CLASSIFY => qr{\QCPAN::Meta::YAML failed to classify the line},
 );
 
+my %WARN = (
+    E_DUPKEY   => qr{\QCPAN::Meta::YAML found a duplicate key},
+);
+
 # use XXX -with => 'YAML::XS';
 
 #--------------------------------------------------------------------------#
 # run_all_testml_files
 #
 # Iterate over all .tml files in a directory using a particular test bridge
-# code # reference.  Each file is wrapped in a subtest with a test plan
-# equal to the number of blocks.
+# code # reference.  Each file is wrapped in a subtest.
 #--------------------------------------------------------------------------#
 
 sub run_all_testml_files {
@@ -56,7 +61,6 @@ sub run_all_testml_files {
     my $code = sub {
         my ($file, $blocks) = @_;
         subtest "$label: $file" => sub {
-            plan tests => scalar @$blocks;
             $bridge->($_, @args) for @$blocks;
         };
     };
@@ -77,6 +81,9 @@ sub run_testml_file {
     $code->($file, $blocks);
 }
 
+# retrieves all the keys in @point from the $block hash, returning them in
+# order, along with $block->{Label}.
+# returns false if any keys cannot be found
 sub _testml_has_points {
     my ($block, @points) = @_;
     my @values;
@@ -194,7 +201,7 @@ sub test_perl_to_yaml {
 #--------------------------------------------------------------------------#
 # test_dump_error
 #
-# two blocks: perl, error 
+# two blocks: perl, error
 #
 # Tests that perl references result in an error when dumped
 #
@@ -225,7 +232,7 @@ sub test_dump_error {
 #--------------------------------------------------------------------------#
 # test_load_error
 #
-# two blocks: yaml, error 
+# two blocks: yaml, error
 #
 # Tests that a YAML string results in an error when loaded
 #
@@ -246,6 +253,41 @@ sub test_load_error {
         is( $result, undef, 'read_string returns undef' );
         error_like( $expected, "Got expected error" )
             or diag "YAML:\n$yaml";
+    };
+}
+
+#--------------------------------------------------------------------------#
+# test_load_warning
+#
+# two blocks: yaml, warning
+#
+# Tests that a YAML string results in warning when loaded
+#
+# The warning must be a key in the %WARN hash in this file
+#--------------------------------------------------------------------------#
+sub test_load_warning {
+    my ($block) = @_;
+
+    my ($yaml, $warning, $label) =
+      _testml_has_points($block, qw(yaml warning)) or return;
+
+    chomp $warning;
+    my $expected = $WARN{$warning};
+
+    subtest $label, sub {
+        # this is not in a sub like warning_like because of the danger of
+        # matching the regex parameter against something earlier in the stack
+        my @warnings;
+        local $SIG{__WARN__} = sub { push @warnings, shift; };
+
+        my $result = eval { CPAN::Meta::YAML->read_string( $yaml ) };
+
+        is(scalar(@warnings), 1, 'got exactly one warning');
+        like(
+            $warnings[0],
+            $expected,
+            'Got expected warning',
+        ) or diag "YAML:\n$yaml\n", 'warning: ', explain(\@warnings);
     };
 }
 

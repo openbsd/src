@@ -8,7 +8,7 @@ BEGIN {
     $|  = 1;
 }
 
-use Test::More 0.99;
+use Test::More 0.88;
 
 # Check their perl version
 ok( $] ge '5.008001', "Your perl is new enough" );

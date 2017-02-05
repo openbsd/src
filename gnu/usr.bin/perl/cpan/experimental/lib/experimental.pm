@@ -1,22 +1,49 @@
 package experimental;
-$experimental::VERSION = '0.007';
+$experimental::VERSION = '0.016';
 use strict;
 use warnings;
+use version ();
 
 use feature ();
 use Carp qw/croak carp/;
 
 my %warnings = map { $_ => 1 } grep { /^experimental::/ } keys %warnings::Offsets;
-my %features = map { $_ => 1 } keys %feature::feature;
+my %features = map { $_ => 1 } $] > 5.015006 ? keys %feature::feature : do {
+	my @features;
+	if ($] >= 5.010) {
+		push @features, qw/switch say state/;
+		push @features, 'unicode_strings' if $] > 5.011002;
+	}
+	@features;
+};
 
 my %min_version = (
-	array_base    => 5,
-	autoderef     => 5.014000,
-	lexical_topic => 5.010000,
-	regex_sets    => 5.018000,
-	smartmatch    => 5.010001,
-	signatures    => 5.019009, # change to 5.20.0 someday? -- rjbs, 2014-02-08
+	array_base      => '5',
+	autoderef       => '5.14.0',
+	bitwise         => '5.22.0',
+	current_sub     => '5.16.0',
+	evalbytes       => '5.16.0',
+	fc              => '5.16.0',
+	lexical_topic   => '5.10.0',
+	lexical_subs    => '5.18.0',
+	postderef       => '5.20.0',
+	postderef_qq    => '5.20.0',
+	refaliasing     => '5.22.0',
+	regex_sets      => '5.18.0',
+	say             => '5.10.0',
+	smartmatch      => '5.10.0',
+	signatures      => '5.20.0',
+	state           => '5.10.0',
+	switch          => '5.10.0',
+	unicode_eval    => '5.16.0',
+	unicode_strings => '5.12.0',
 );
+my %max_version = (
+	lexical_topic   => '5.23.4',
+);
+
+$_ = version->new($_) for values %min_version;
+$_ = version->new($_) for values %max_version;
 
 my %additional = (
 	postderef  => ['postderef_qq'],
@@ -37,8 +64,17 @@ sub _enable {
 	elsif (not exists $min_version{$pragma}) {
 		croak "Can't enable unknown feature $pragma";
 	}
-	elsif ($min_version{$pragma} > $]) {
-		croak "Need perl version $min_version{$pragma} or later for feature $pragma";
+	elsif ($] < $min_version{$pragma}) {
+		my $stable = $min_version{$pragma};
+		if ($stable->{version}[1] % 2) {
+			$stable = version->new(
+				"5.".($stable->{version}[1]+1).'.0'
+			);
+		}
+		croak "Need perl $stable or later for feature $pragma";
+	}
+	elsif ($] >= ($max_version{$pragma} || 7)) {
+		croak "Experimental feature $pragma has been removed from perl in version $max_version{$pragma}";
 	}
 }
 
@@ -92,7 +128,7 @@ experimental - Experimental features made easy
 
 =head1 VERSION
 
-version 0.007
+version 0.016
 
 =head1 SYNOPSIS
 
@@ -128,9 +164,31 @@ The supported features, documented further below, are:
 	lexical_topic - allow the use of lexical $_ via "my $_"
 	postderef     - allow the use of postfix dereferencing expressions, including
 	                in interpolating strings
+	refaliasing   - allow aliasing via \$x = \$y
 	regex_sets    - allow extended bracketed character classes in regexps
 	signatures    - allow subroutine signatures (for named arguments)
-	smartmatch    - allow the use of ~~, given, and when
+	smartmatch    - allow the use of ~~
+	switch        - allow the use of ~~, given, and when
+
+=head2 Ordering matters
+
+Using this pragma to 'enable an experimental feature' is another way of saying
+that this pragma will disable the warnings which would result from using that
+feature.  Therefore, the order in which pragmas are applied is important.  In
+particular, you probably want to enable experimental features I<after> you
+enable warnings:
+
+  use warnings;
+  use experimental 'smartmatch';
+
+You also need to take care with modules that enable warnings for you.  A common
+example being Moose.  In this example, warnings for the 'smartmatch' feature are
+first turned on by the warnings pragma, off by the experimental pragma and back
+on again by the Moose module (fix is to switch the last two lines):
+
+  use warnings;
+  use experimental 'smartmatch';
+  use Moose;
 
 =head2 Disclaimer
 

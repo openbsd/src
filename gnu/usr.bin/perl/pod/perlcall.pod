@@ -66,7 +66,7 @@ to invoke the Perl subroutine.
 All the I<call_*> functions have a C<flags> parameter which is
 used to pass a bit mask of options to Perl.  This bit mask operates
 identically for each of the functions.  The settings available in the
-bit mask are discussed in L<FLAG VALUES>.
+bit mask are discussed in L</FLAG VALUES>.
 
 Each of the functions will now be discussed in turn.
 
@@ -77,7 +77,7 @@ Each of the functions will now be discussed in turn.
 I<call_sv> takes two parameters. The first, C<sv>, is an SV*.
 This allows you to specify the Perl subroutine to be called either as a
 C string (which has first been converted to an SV) or a reference to a
-subroutine. The section, I<Using call_sv>, shows how you can make
+subroutine. The section, L</Using call_sv>, shows how you can make
 use of I<call_sv>.
 
 =item call_pv
@@ -96,7 +96,7 @@ to be called.  Note that the class that the method belongs to is passed
 on the Perl stack rather than in the parameter list. This class can be
 either the name of the class (for a static method) or a reference to an
 object (for a virtual method).  See L<perlobj> for more information on
-static and virtual methods and L<Using call_method> for an example
+static and virtual methods and L</Using call_method> for an example
 of using I<call_method>.
 
 =item call_argv
@@ -105,7 +105,7 @@ I<call_argv> calls the Perl subroutine specified by the C string
 stored in the C<subname> parameter. It also takes the usual C<flags>
 parameter.  The final parameter, C<argv>, consists of a NULL-terminated
 list of C strings to be passed as parameters to the Perl subroutine.
-See I<Using call_argv>.
+See L</Using call_argv>.
 
 =back
 
@@ -180,14 +180,14 @@ be either 0 or 1.
 If 0, then you have specified the G_DISCARD flag.
 
 If 1, then the item actually returned by the Perl subroutine will be
-stored on the Perl stack - the section I<Returning a Scalar> shows how
+stored on the Perl stack - the section L</Returning a Scalar> shows how
 to access this value on the stack.  Remember that regardless of how
 many items the Perl subroutine returns, only the last one will be
 accessible from the stack - think of the case where only one value is
 returned as being a list with only one element.  Any other items that
 were returned will not exist by the time control returns from the
-I<call_*> function.  The section I<Returning a list in a scalar
-context> shows an example of this behavior.
+I<call_*> function.  The section L</Returning a List in Scalar
+Context> shows an example of this behavior.
 
 
 =head2 G_ARRAY
@@ -217,7 +217,7 @@ If 0, then you have specified the G_DISCARD flag.
 
 If not 0, then it will be a count of the number of items returned by
 the subroutine. These items will be stored on the Perl stack.  The
-section I<Returning a list of values> gives an example of using the
+section L</Returning a List of Values> gives an example of using the
 G_ARRAY flag and the mechanics of accessing the returned items from the
 Perl stack.
 
@@ -232,9 +232,9 @@ context to the Perl subroutine by using either G_SCALAR or G_ARRAY.
 If you do not set this flag then it is I<very> important that you make
 sure that any temporaries (i.e., parameters passed to the Perl
 subroutine and values returned from the subroutine) are disposed of
-yourself.  The section I<Returning a Scalar> gives details of how to
-dispose of these temporaries explicitly and the section I<Using Perl to
-dispose of temporaries> discusses the specific circumstances where you
+yourself.  The section L</Returning a Scalar> gives details of how to
+dispose of these temporaries explicitly and the section L</Using Perl to
+Dispose of Temporaries> discusses the specific circumstances where you
 can ignore the problem and let Perl deal with it for you.
 
 =head2 G_NOARGS
@@ -315,7 +315,7 @@ from the stack.
 
 =back
 
-See I<Using G_EVAL> for details on using G_EVAL.
+See L</Using G_EVAL> for details on using G_EVAL.
 
 =head2 G_KEEPERR
 
@@ -350,7 +350,7 @@ may still set C<$@>.
 
 The G_KEEPERR flag was introduced in Perl version 5.002.
 
-See I<Using G_KEEPERR> for an example of a situation that warrants the
+See L</Using G_KEEPERR> for an example of a situation that warrants the
 use of this flag.
 
 =head2 Determining the Context
@@ -363,7 +363,7 @@ in a scalar context, or C<G_VOID> if in a void context (i.e., the
 return value will not be used).  An older version of this macro is
 called C<GIMME>; in a void context it returns C<G_SCALAR> instead of
 C<G_VOID>.  An example of using the C<GIMME_V> macro is shown in
-section I<Using GIMME_V>.
+section L</Using GIMME_V>.
 
 =head1 EXAMPLES
 
@@ -379,7 +379,7 @@ have made use of only the I<call_pv> function.  This has been done
 to keep the code simpler and ease you into the topic.  Wherever
 possible, if the choice is between using I<call_pv> and
 I<call_sv>, you should always try to use I<call_sv>.  See
-I<Using call_sv> for details.
+L</Using call_sv> for details.
 
 =head2 No Parameters, Nothing Returned
 
@@ -466,8 +466,9 @@ The C function required to call I<LeftString> would look like this:
         SAVETMPS;
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSVpv(a, 0)));
-        XPUSHs(sv_2mortal(newSViv(b)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSVpv(a, 0)));
+        PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
         call_pv("LeftString", G_DISCARD);
@@ -512,7 +513,7 @@ subroutine, it knows how big to make it.
 
 The C<PUSHMARK> macro tells Perl to make a mental note of the current
 stack pointer. Even if you aren't passing any parameters (like the
-example shown in the section I<No Parameters, Nothing Returned>) you
+example shown in the section L</No Parameters, Nothing Returned>) you
 must still call the C<PUSHMARK> macro before you can call any of the
 I<call_*> functions--Perl still needs to know that there are no
 parameters.
@@ -525,12 +526,16 @@ local copy, I<not> the global copy.
 
 =item 4.
 
-Next, we come to XPUSHs. This is where the parameters actually get
-pushed onto the stack. In this case we are pushing a string and an
-integer.
+Next, we come to EXTEND and PUSHs. This is where the parameters
+actually get pushed onto the stack. In this case we are pushing a
+string and an integer.
+
+Alternatively you can use the XPUSHs() macro, which combines a
+C<EXTEND(SP, 1)> and C<PUSHs()>.  This is less efficient if you're
+pushing multiple values.
 
 See L<perlguts/"XSUBs and the Argument Stack"> for details
-on how the XPUSH macros work.
+on how the PUSH macros work.
 
 =item 5.
 
@@ -559,7 +564,7 @@ beginning of the code makes sure that no other mortals are destroyed.
 Think of these macros as working a bit like C<{> and C<}> in Perl
 to limit the scope of local variables.
 
-See the section I<Using Perl to Dispose of Temporaries> for details of
+See the section L</Using Perl to Dispose of Temporaries> for details of
 an alternative to using these macros.
 
 =item 6.
@@ -600,8 +605,9 @@ function required to call it is now a bit more complex.
         SAVETMPS;
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(a)));
-        XPUSHs(sv_2mortal(newSViv(b)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSViv(a)));
+        PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
         count = call_pv("Adder", G_SCALAR);
@@ -661,10 +667,31 @@ Here is the complete list of POP macros available, along with the types
 they return.
 
     POPs	SV
-    POPp	pointer
-    POPn	double
-    POPi	integer
+    POPp	pointer (PV)
+    POPpbytex   pointer to bytes (PV)
+    POPn	double (NV)
+    POPi	integer (IV)
+    POPu        unsigned integer (UV)
     POPl	long
+    POPul       unsigned long
+
+Since these macros have side-effects don't use them as arguments to
+macros that may evaluate their argument several times, for example:
+
+  /* Bad idea, don't do this */
+  STRLEN len;
+  const char *s = SvPV(POPs, len);
+
+Instead, use a temporary:
+
+  STRLEN len;
+  SV *sv = POPs;
+  const char *s = SvPV(sv, len);
+
+or a macro that guarantees it will evaluate its arguments only once:
+
+  STRLEN len;
+  const char *s = SvPVx(POPs, len);
 
 =item 5.
 
@@ -704,8 +731,9 @@ and this is the C function
         SAVETMPS;
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(a)));
-        XPUSHs(sv_2mortal(newSViv(b)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSViv(a)));
+        PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
         count = call_pv("AddSubtract", G_ARRAY);
@@ -749,7 +777,7 @@ order.
 
 =back
 
-=head2 Returning a List in a Scalar Context
+=head2 Returning a List in Scalar Context
 
 Say the Perl subroutine in the previous section was called in a scalar
 context, like this
@@ -767,8 +795,9 @@ context, like this
         SAVETMPS;
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(a)));
-        XPUSHs(sv_2mortal(newSViv(b)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSViv(a)));
+        PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
         count = call_pv("AddSubtract", G_SCALAR);
@@ -835,8 +864,9 @@ and here is a C function to call it.
         svb = sv_2mortal(newSViv(b));
 
         PUSHMARK(SP);
-        XPUSHs(sva);
-        XPUSHs(svb);
+        EXTEND(SP, 2);
+        PUSHs(sva);
+        PUSHs(svb);
         PUTBACK;
 
         count = call_pv("Inc", G_DISCARD);
@@ -880,45 +910,48 @@ result, the subroutine calls I<die>.
 
 and some C to call it
 
-    static void
-    call_Subtract(a, b)
-    int a;
-    int b;
-    {
-        dSP;
-        int count;
+ static void
+ call_Subtract(a, b)
+ int a;
+ int b;
+ {
+     dSP;
+     int count;
+     SV *err_tmp;
 
-        ENTER;
-        SAVETMPS;
+     ENTER;
+     SAVETMPS;
 
-        PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(a)));
-        XPUSHs(sv_2mortal(newSViv(b)));
-        PUTBACK;
+     PUSHMARK(SP);
+     EXTEND(SP, 2);
+     PUSHs(sv_2mortal(newSViv(a)));
+     PUSHs(sv_2mortal(newSViv(b)));
+     PUTBACK;
 
-        count = call_pv("Subtract", G_EVAL|G_SCALAR);
+     count = call_pv("Subtract", G_EVAL|G_SCALAR);
 
-        SPAGAIN;
+     SPAGAIN;
 
-        /* Check the eval first */
-        if (SvTRUE(ERRSV))
-        {
-            printf ("Uh oh - %s\n", SvPV_nolen(ERRSV));
-            POPs;
-        }
-        else
-        {
-            if (count != 1)
-               croak("call_Subtract: wanted 1 value from 'Subtract', got %d\n",
-                        count);
+     /* Check the eval first */
+     err_tmp = ERRSV;
+     if (SvTRUE(err_tmp))
+     {
+         printf ("Uh oh - %s\n", SvPV_nolen(err_tmp));
+         POPs;
+     }
+     else
+     {
+       if (count != 1)
+        croak("call_Subtract: wanted 1 value from 'Subtract', got %d\n",
+              count);
 
-            printf ("%d - %d = %d\n", a, b, POPi);
-        }
+         printf ("%d - %d = %d\n", a, b, POPi);
+     }
 
-        PUTBACK;
-        FREETMPS;
-        LEAVE;
-    }
+     PUTBACK;
+     FREETMPS;
+     LEAVE;
+ }
 
 If I<call_Subtract> is called thus
 
@@ -943,9 +976,10 @@ I<Subtract>.
 
 The code
 
-    if (SvTRUE(ERRSV))
+    err_tmp = ERRSV;
+    if (SvTRUE(err_tmp))
     {
-        printf ("Uh oh - %s\n", SvPV_nolen(ERRSV));
+        printf ("Uh oh - %s\n", SvPV_nolen(err_tmp));
         POPs;
     }
 
@@ -953,14 +987,16 @@ is the direct equivalent of this bit of Perl
 
     print "Uh oh - $@\n" if $@;
 
-C<PL_errgv> is a perl global of type C<GV *> that points to the
-symbol table entry containing the error.  C<ERRSV> therefore
-refers to the C equivalent of C<$@>.
+C<PL_errgv> is a perl global of type C<GV *> that points to the symbol
+table entry containing the error.  C<ERRSV> therefore refers to the C
+equivalent of C<$@>.  We use a local temporary, C<err_tmp>, since
+C<ERRSV> is a macro that calls a function, and C<SvTRUE(ERRSV)> would
+end up calling that function multiple times.
 
 =item 3.
 
 Note that the stack is popped using C<POPs> in the block where
-C<SvTRUE(ERRSV)> is true.  This is necessary because whenever a
+C<SvTRUE(err_tmp)> is true.  This is necessary because whenever a
 I<call_*> function invoked with G_EVAL|G_SCALAR returns an error,
 the top of the stack holds the value I<undef>. Because we want the
 program to continue after detecting this error, it is essential that
@@ -1010,7 +1046,8 @@ will preserve the error and restore reliable error handling.
 In all the previous examples I have 'hard-wired' the name of the Perl
 subroutine to be called from C.  Most of the time though, it is more
 convenient to be able to specify the name of the Perl subroutine from
-within the Perl script.
+within the Perl script, and you'll want to use
+L<call_sv|perlapi/call_sv>.
 
 Consider the Perl code below
 
@@ -1132,6 +1169,7 @@ originally requested in the call to C<SaveSub1>.
 To get around these problems it is necessary to take a full copy of the
 SV.  The code below shows C<SaveSub2> modified to do that.
 
+    /* this isn't thread-safe */
     static SV * keepSub = (SV*)NULL;
 
     void
@@ -1159,6 +1197,11 @@ subroutine C<name> is copied to the variable C<keepSub> in one
 operation using C<newSVsv>.  Thereafter, whenever C<SaveSub2> is called,
 the existing SV, C<keepSub>, is overwritten with the new value using
 C<SvSetSV>.
+
+Note: using a static or global variable to store the SV isn't
+thread-safe.  You can either use the C<MY_CXT> mechanism documented in
+L<perlxs/Safely Storing Static Data in XS> which is fast, or store the
+values in perl global variables, using get_sv(), which is much slower.
 
 =head2 Using call_argv
 
@@ -1259,8 +1302,9 @@ the C<PrintID> and C<Display> methods from C.
         int		index
         CODE:
         PUSHMARK(SP);
-        XPUSHs(ref);
-        XPUSHs(sv_2mortal(newSViv(index)));
+        EXTEND(SP, 2);
+        PUSHs(ref);
+        PUSHs(sv_2mortal(newSViv(index)));
         PUTBACK;
 
         call_method(method, G_DISCARD);
@@ -1295,7 +1339,7 @@ currently executing.
     void
     PrintContext()
         CODE:
-        I32 gimme = GIMME_V;
+        U8 gimme = GIMME_V;
         if (gimme == G_VOID)
             printf ("Context is Void\n");
         else if (gimme == G_SCALAR)
@@ -1565,8 +1609,9 @@ and C<asynch_read_if> could look like this
             croak("Internal error...\n");
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(fh)));
-        XPUSHs(sv_2mortal(newSVpv(buffer, 0)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSViv(fh)));
+        PUSHs(sv_2mortal(newSVpv(buffer, 0)));
         PUTBACK;
 
         /* Call the Perl sub */
@@ -1787,7 +1832,7 @@ values in some cases. What we want is to be able to access the stack in
 a random order. The C<ST> macro as used when coding an XSUB is ideal
 for this purpose.
 
-The code below is the example given in the section I<Returning a List
+The code below is the example given in the section L</Returning a List
 of Values> recoded to use C<ST> instead of C<POP*>.
 
     static void
@@ -1803,8 +1848,9 @@ of Values> recoded to use C<ST> instead of C<POP*>.
         SAVETMPS;
 
         PUSHMARK(SP);
-        XPUSHs(sv_2mortal(newSViv(a)));
-        XPUSHs(sv_2mortal(newSViv(b)));
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(newSViv(a)));
+        PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
         count = call_pv("AddSubtract", G_ARRAY);
@@ -1863,7 +1909,10 @@ done inside our C code:
 
  ...
 
- SV *cvrv = eval_pv("sub { print 'You will not find me cluttering any namespace!' }", TRUE);
+ SV *cvrv
+    = eval_pv("sub {
+                print 'You will not find me cluttering any namespace!'
+               }", TRUE);
 
  ...
 
@@ -1899,7 +1948,7 @@ it. It's also inherently slower.)
 The pattern of macro calls is like this:
 
     dMULTICALL;			/* Declare local variables */
-    I32 gimme = G_SCALAR;	/* context of the call: G_SCALAR,
+    U8 gimme = G_SCALAR;	/* context of the call: G_SCALAR,
 				 * G_ARRAY, or G_VOID */
 
     PUSH_MULTICALL(cv);		/* Set up the context for calling cv,
@@ -1933,4 +1982,4 @@ and Larry Wall.
 
 =head1 DATE
 
-Version 1.3, 14th Apr 1997
+Last updated for perl 5.23.1.

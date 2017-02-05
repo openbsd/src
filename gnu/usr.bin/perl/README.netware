@@ -151,11 +151,13 @@ Run the following command at the command prompt:
 
 Example:
 
-    perl -Ic:/perl/5.6.1/lib/NetWare-x86-multi-thread -Ic:\perl\5.6.1\lib MakeFile.pl
+    perl -Ic:/perl/5.6.1/lib/NetWare-x86-multi-thread           \
+                                -Ic:\perl\5.6.1\lib MakeFile.pl
 
 or
 
-    perl -Ic:/perl/5.8.0/lib/NetWare-x86-multi-thread -Ic:\perl\5.8.0\lib MakeFile.pl
+    perl -Ic:/perl/5.8.0/lib/NetWare-x86-multi-thread           \
+                                -Ic:\perl\5.8.0\lib MakeFile.pl
 
 =item *
 
@@ -174,12 +176,14 @@ typing I<nmake install>, will copy the files onto the NetWare server.
 
 Example: You can execute the following on the command prompt.
 
-  perl -Ic:/perl/5.6.1/lib/NetWare-x86-multi-thread -Ic:\perl\5.6.1\lib MakeFile.pl
+  perl -Ic:/perl/5.6.1/lib/NetWare-x86-multi-thread             \
+                                -Ic:\perl\5.6.1\lib MakeFile.pl
   INSTALLSITELIB=i:\perl\lib
 
 or
 
-  perl -Ic:/perl/5.8.0/lib/NetWare-x86-multi-thread -Ic:\perl\5.8.0\lib MakeFile.pl
+  perl -Ic:/perl/5.8.0/lib/NetWare-x86-multi-thread             \
+                                -Ic:\perl\5.8.0\lib MakeFile.pl
   INSTALLSITELIB=i:\perl\lib
 
 =item * 

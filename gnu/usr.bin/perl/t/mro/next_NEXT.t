@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use NEXT;
 
+chdir 't' if -d 't';
 require './test.pl';
 plan(tests => 4);
 

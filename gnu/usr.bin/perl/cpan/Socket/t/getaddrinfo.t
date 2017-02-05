@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 30;
+use Test::More tests => 31;
 
 use Socket qw(:addrinfo AF_INET SOCK_STREAM IPPROTO_TCP unpack_sockaddr_in inet_aton);
 
@@ -98,6 +98,27 @@ SKIP: {
 	    diag( "  addr=" . join( ", ", map { sprintf '0x%02x', ord $_ } split m//, $r->{addr} ) );
 	}
     }
+}
+
+# Numeric addresses with AI_NUMERICHOST should pass (RT95758)
+AI_NUMERICHOST: {
+    # Here we need a port that is open to the world. Not all places have all
+    # the ports. For example Solaris by default doesn't have http/80 in
+    # /etc/services, and that would fail. Let's try a couple of commonly open
+    # ports, and hope one of them will succeed. Conversely this means that
+    # sometimes this will fail.
+    #
+    # An alternative method would be to manually parse /etc/services and look
+    # for enabled services but that's kind of yuck, too.
+    my @port = (80, 7, 22, 25, 88, 123, 110, 389, 443, 445, 873, 2049, 3306);
+    foreach my $port ( @port ) {
+	( $err, @res ) = getaddrinfo( "127.0.0.1", $port, { flags => AI_NUMERICHOST, socktype => SOCK_STREAM } );
+	if( $err == 0 ) {
+	    ok( $err == 0, "\$err == 0 for 127.0.0.1/$port/flags=AI_NUMERICHOST" );
+	    last AI_NUMERICHOST;
+	}
+    }
+    fail( "$err for 127.0.0.1/$port[-1]/flags=AI_NUMERICHOST (failed for ports @port)" );
 }
 
 # Now check that names with AI_NUMERICHOST fail

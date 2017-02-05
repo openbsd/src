@@ -3,7 +3,7 @@ package CPAN::Debug;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = "5.5001_01";
+$VERSION = "5.5001";
 # module is internal to CPAN.pm
 
 %CPAN::DEBUG = qw[

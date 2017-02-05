@@ -90,7 +90,7 @@ along. [2]
 
 This is the hardest part of testing, where do you start?  People often get
 overwhelmed at the apparent enormity of the task of testing a whole module.
-The best place to start is at the beginning.  C<Date::ICal> is an
+The best place to start is at the beginning.  L<Date::ICal> is an
 object-oriented module, and that means you start by making an object.  Test
 C<new()>.
 
@@ -176,18 +176,18 @@ Run that and you get:
     ok 8 -   year()
     # Looks like you failed 1 tests of 8.
 
-Whoops, a failure! [4] C<Test::Simple> helpfully lets us know on what line the
+Whoops, a failure! [4] L<Test::Simple> helpfully lets us know on what line the
 failure occurred, but not much else.  We were supposed to get 17, but we
 didn't.  What did we get??  Dunno.  You could re-run the test in the debugger
 or throw in some print statements to find out.
 
-Instead, switch from L<Test::Simple> to L<Test::More>.  C<Test::More>
-does everything C<Test::Simple> does, and more!  In fact, C<Test::More> does
-things I<exactly> the way C<Test::Simple> does.  You can literally swap
-C<Test::Simple> out and put C<Test::More> in its place.  That's just what
+Instead, switch from L<Test::Simple> to L<Test::More>.  L<Test::More>
+does everything L<Test::Simple> does, and more!  In fact, L<Test::More> does
+things I<exactly> the way L<Test::Simple> does.  You can literally swap
+L<Test::Simple> out and put L<Test::More> in its place.  That's just what
 we're going to do.
 
-C<Test::More> does more than C<Test::Simple>.  The most important difference at
+L<Test::More> does more than L<Test::Simple>.  The most important difference at
 this point is it provides more informative ways to say "ok".  Although you can
 write almost any test with a generic C<ok()>, it can't tell you what went
 wrong.  The C<is()> function lets us declare that something is supposed to be
@@ -210,7 +210,7 @@ the same as something else:
     is( $ical->month,   10,       '  month()' );
     is( $ical->year,    1964,     '  year()'  );
 
-"Is C<$ical-E<gt>sec> 47?"  "Is C<$ical-E<gt>min> 12?"  With C<is()> in place,
+"Is C<< $ical->sec >> 47?"  "Is C<< $ical->min >> 12?"  With C<is()> in place,
 you get more information:
 
     1..8
@@ -227,7 +227,7 @@ you get more information:
     ok 8 -   year()
     # Looks like you failed 1 tests of 8.
 
-Aha. C<$ical-E<gt>day> returned 16, but we expected 17.  A
+Aha. C<< $ical->day >> returned 16, but we expected 17.  A
 quick check shows that the code is working fine, we made a mistake
 when writing the tests.  Change it to:
 
@@ -297,7 +297,7 @@ Now we can test bunches of dates by just adding them to
 C<%ICal_Dates>.  Now that it's less work to test with more dates, you'll
 be inclined to just throw more in as you think of them.
 Only problem is, every time we add to that we have to keep adjusting
-the C<use Test::More tests =E<gt> ##> line.  That can rapidly get
+the L<< use Test::More tests => ## >> line.  That can rapidly get
 annoying.  There are ways to make this work better.
 
 First, we can calculate the plan dynamically using the C<plan()>
@@ -324,10 +324,10 @@ running some tests, don't know how many. [6]
 
     done_testing();   # reached the end safely
 
-If you don't specify a plan, C<Test::More> expects to see C<done_testing()>
+If you don't specify a plan, L<Test::More> expects to see C<done_testing()>
 before your program exits. It will warn you if you forget it. You can give
 C<done_testing()> an optional number of tests you expected to run, and if the
-number ran differs, C<Test::More> will give you another kind of warning.
+number ran differs, L<Test::More> will give you another kind of warning.
 
 
 =head2 Informative names
@@ -417,7 +417,7 @@ the test.
 A little bit of magic happens here.  When running on anything but MacOS, all
 the tests run normally.  But when on MacOS, C<skip()> causes the entire
 contents of the SKIP block to be jumped over.  It never runs.  Instead,
-C<skip()> prints special output that tells C<Test::Harness> that the tests have
+C<skip()> prints special output that tells L<Test::Harness> that the tests have
 been skipped.
 
     1..7
@@ -446,7 +446,7 @@ The tests are wholly and completely skipped. [10]  This will work.
 
 =head2 Todo tests
 
-While thumbing through the C<Date::ICal> man page, I came across this:
+While thumbing through the L<Date::ICal> man page, I came across this:
 
    ical
 
@@ -497,12 +497,12 @@ Now when you run, it's a little different:
     #          got: '20010822T201551Z'
     #     expected: '20201231Z'
 
-C<Test::More> doesn't say "Looks like you failed 1 tests of 1".  That '#
-TODO' tells C<Test::Harness> "this is supposed to fail" and it treats a
+L<Test::More> doesn't say "Looks like you failed 1 tests of 1".  That '#
+TODO' tells L<Test::Harness> "this is supposed to fail" and it treats a
 failure as a successful test.  You can write tests even before
 you've fixed the underlying code.
 
-If a TODO test passes, C<Test::Harness> will report it "UNEXPECTEDLY
+If a TODO test passes, L<Test::Harness> will report it "UNEXPECTEDLY
 SUCCEEDED".  When that happens, remove the TODO block with C<local $TODO> and
 turn it into a real test.
 
@@ -517,7 +517,7 @@ in mind, it's very important to ensure your module works under taint
 mode.
 
 It's very simple to have your tests run under taint mode.  Just throw
-a C<-T> into the C<#!> line.  C<Test::Harness> will read the switches
+a C<-T> into the C<#!> line.  L<Test::Harness> will read the switches
 in C<#!> and use them to run your tests.
 
     #!/usr/bin/perl -Tw
@@ -558,7 +558,7 @@ We'll get to testing the contents of lists later.
 
 But what happens if your test program dies halfway through?!  Since we
 didn't say how many tests we're going to run, how can we know it
-failed?  No problem, C<Test::More> employs some magic to catch that death
+failed?  No problem, L<Test::More> employs some magic to catch that death
 and turn the test into a failure, even if every test passed up to that
 point.
 
@@ -593,6 +593,14 @@ bugs!
 =head1 AUTHORS
 
 Michael G Schwern E<lt>schwern@pobox.comE<gt> and the perl-qa dancers!
+
+=head1 MAINTAINERS
+
+=over 4
+
+=item Chad Granum E<lt>exodist@cpan.orgE<gt>
+
+=back
 
 =head1 COPYRIGHT
 

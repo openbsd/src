@@ -1,0 +1,247 @@
+# List of test files to ignore/skip for deparse tests.
+#
+# This is used by t/TEST.
+# 
+# Those under DEPARSE_FAILURES are ones that we need to fix or
+# we expect to fail. These tests will still be run and checked to
+# see if they fail as expected.
+#
+# Those under DEPARSE_SKIPS we don't want to even attempt running
+# because they might do bad things to our system (memory exhaustion,
+# etc), so they will be completely skipped from the test run.
+#
+# Paths are relative from t/
+#
+# Paths that end with '/' are directories to skip entirely
+#
+# Format:
+#   __DEPARSE_FAILURES__
+#   ../path/to/test1
+#   ../path/to/test2
+#   ../dir/to/skip/
+#
+#   __DEPARSE_SKIPS__
+#   ../path/to/test3
+#   ../path/to/test4
+#
+#   # This is a comment
+#   ../path/to/test5 # More comments at end of line
+#
+#   # Blank lines okay
+
+__DEPARSE_FAILURES__
+
+../cpan/Scalar-List-Utils/t/proto.t
+../cpan/Term-ANSIColor/t/taint/basic.t
+../cpan/autodie/t/internal.t
+../cpan/AutoLoader/t/01AutoLoader.t
+../cpan/CGI/t/utf8.t
+../cpan/Encode/t/enc_data.t
+../cpan/Encode/t/encoding.t
+../cpan/Encode/t/jperl.t
+../cpan/ExtUtils-Install/t/Installapi2.t
+../cpan/ExtUtils-Install/t/Packlist.t
+../cpan/ExtUtils-MakeMaker/t/xs.t
+../cpan/ExtUtils-Manifest/t/Manifest.t
+../cpan/File-Path/t/taint.t
+../cpan/File-Temp/t/object.t
+../cpan/IO-Compress/t/050interop-gzip.t
+../cpan/IO-Compress/t/cz-08encoding.t
+../cpan/Module-Build/t/manifypods_with_utf8.t
+../cpan/Socket/t/sockaddr.t
+../cpan/Term-ANSIColor/t/taint.t
+../cpan/Test-Simple/t/Builder/carp.t
+../cpan/Test-Simple/t/fail-more.t
+../cpan/Test-Simple/t/is_deeply_fail.t
+../cpan/Test-Simple/t/plan.t
+../cpan/Test-Simple/t/plan_bad.t
+../cpan/Test-Simple/t/subtest/line_numbers.t
+../cpan/Test-Simple/t/subtest/predicate.t
+../cpan/autodie/t/00-load.t
+../cpan/autodie/t/autodie.t
+../cpan/autodie/t/blog_hints.t
+../cpan/autodie/t/caller.t
+../cpan/autodie/t/chmod.t
+../cpan/autodie/t/chown.t
+../cpan/autodie/t/context.t
+../cpan/autodie/t/context_lexical.t
+../cpan/autodie/t/crickey.t
+../cpan/autodie/t/dbmopen.t
+../cpan/autodie/t/eval_error.t
+../cpan/autodie/t/exception_class.t
+../cpan/autodie/t/exceptions.t
+../cpan/autodie/t/exec.t
+../cpan/autodie/t/filehandles.t
+../cpan/autodie/t/hints.t
+../cpan/autodie/t/hints_insist.t
+../cpan/autodie/t/hints_pod_examples.t
+../cpan/autodie/t/hints_provider_does.t
+../cpan/autodie/t/hints_provider_easy_does_it.t
+../cpan/autodie/t/hints_provider_isa.t
+../cpan/autodie/t/kill.t
+../cpan/autodie/t/lethal.t
+../cpan/autodie/t/open.t
+../cpan/autodie/t/recv.t
+../cpan/autodie/t/repeat.t
+../cpan/autodie/t/scope_leak.t
+../cpan/autodie/t/sysopen.t
+../cpan/autodie/t/user-context.t
+../cpan/autodie/t/usersub.t
+../cpan/autodie/t/utf8_open.t
+../cpan/autodie/t/utime.t
+../cpan/autodie/t/version_tag.t
+../cpan/podlators/t/basic.t
+../dist/Attribute-Handlers/t/constants.t
+../dist/Attribute-Handlers/t/data_convert.t
+../dist/Attribute-Handlers/t/linerep.t
+../dist/Attribute-Handlers/t/multi.t
+../dist/Carp/t/Carp.t
+../dist/Data-Dumper/t/dumper.t
+../dist/Exporter/t/Exporter.t
+../dist/Filter-Simple/t/data.t
+../dist/I18N-LangTags/t/50_super.t
+../dist/IO/t/io_file_export.t
+../dist/IO/t/io_multihomed.t
+../dist/IO/t/io_sel.t
+../dist/IO/t/io_udp.t
+../dist/Locale-Maketext/t/01_about_verbose.t
+../dist/Locale-Maketext/t/10_make.t
+../dist/Locale-Maketext/t/20_get.t
+../dist/Locale-Maketext/t/40_super.t
+../dist/Locale-Maketext/t/50_super.t
+../dist/Locale-Maketext/t/60_super.t
+../dist/Locale-Maketext/t/70_fail_auto.t
+../dist/Locale-Maketext/t/91_backslash.t
+../dist/Math-BigInt/t/const_mbf.t
+../dist/Math-BigInt/t/constant.t
+../dist/PathTools/t/cwd.t
+../dist/Storable/t/blessed.t
+../dist/Storable/t/croak.t
+../dist/Term-ReadLine/t/ReadLine.t
+../dist/Thread-Queue/t/08_nothreads.t
+../dist/Tie-File/t/42_offset.t
+../dist/bignum/t/big_e_pi.t
+../dist/bignum/t/bigexp.t
+../dist/bignum/t/bigint.t
+../dist/bignum/t/bignum.t
+../dist/bignum/t/bigrat.t
+../dist/bignum/t/bii_e_pi.t
+../dist/bignum/t/bir_e_pi.t
+../dist/bignum/t/in_effect.t
+../dist/bignum/t/option_a.t
+../dist/bignum/t/option_l.t
+../dist/bignum/t/option_p.t
+../dist/bignum/t/overrides.t
+../dist/bignum/t/ratopt_a.t
+../dist/bignum/t/scope_f.t
+../dist/bignum/t/scope_i.t
+../dist/bignum/t/scope_r.t
+../dist/constant/t/constant.t
+../dist/threads/t/err.t
+../dist/threads/t/exit.t
+../dist/threads/t/kill2.t
+../dist/threads/t/libc.t
+../dist/threads/t/thread.t
+../ext/B/t/b.t
+../ext/B/t/optree_constants.t
+../ext/B/t/optree_samples.t
+../ext/B/t/xref.t
+../ext/Devel-Peek/t/Peek.t
+../ext/File-Glob/t/basic.t
+../ext/File-Glob/t/taint.t
+../ext/Hash-Util/t/Util.t
+../ext/IPC-Open3/t/IPC-Open2.t
+../ext/IPC-Open3/t/IPC-Open3.t
+../ext/Opcode/t/Opcode.t
+../ext/PerlIO-via/t/via.t
+../ext/XS-APItest/t/autoload.t
+../ext/XS-APItest/t/blockhooks.t
+../ext/XS-APItest/t/call_checker.t
+../ext/XS-APItest/t/cleanup.t
+../ext/XS-APItest/t/fetch_pad_names.t
+../ext/XS-APItest/t/overload.t
+../ext/XS-APItest/t/svpeek.t
+../ext/XS-APItest/t/xsub_h.t
+../lib/DB.t
+../lib/DBM_Filter/t/01error.t
+../lib/DBM_Filter/t/02core.t
+../lib/DBM_Filter/t/compress.t
+../lib/DBM_Filter/t/encode.t
+../lib/DBM_Filter/t/int32.t
+../lib/DBM_Filter/t/null.t
+../lib/DBM_Filter/t/utf8.t
+../lib/English.t
+../lib/File/Basename.t
+../lib/charnames.t
+../lib/less.t
+../lib/overload.t
+base/lex.t                # checks regexp stringification
+comp/final_line_num.t     # tests syntax error after BEGIN block
+comp/fold.t               # mutability of folded constants
+comp/parser.t             # crazy #line directives ==> shell syntax errors
+mro/isarev.t
+mro/isarev_utf8.t
+op/attrhand.t             # Custom attrs ignored; also AH provides none
+op/attrs.t                # [perl #70205] my attrs
+op/caller.t
+op/each.t                 # utf8ness of deparsed strings
+op/getpid.t               # [perl #70205] my attrs
+op/goto.t
+op/gv.t                   # glob copy constants
+op/index.t
+op/join.t                 # mutability of folded constants
+op/length.t               # utf8ness of deparsed strings
+op/lexsub.t
+op/local.t
+op/not.t
+op/overload_integer.t
+op/override.t
+op/pack.t
+op/postfixderef.t
+op/range.t
+op/readline.t
+op/signatures.t
+op/split.t
+op/srand.t
+op/sub.t
+op/sub_lval.t
+op/switch.t
+op/symbolcache.t
+op/taint.t
+op/vec.t
+op/warn.t
+op/write.t
+porting/globvar.t
+re/overload.t             # [perl #123385] %^H output
+re/pat.t                  # [perl #90590]
+re/pat_advanced.t         # [perl #123417]
+re/pat_rt_report.t        # malformed utf8 constant; also /\c@/ -> /\c\@/
+re/reg_fold.t             # [perl #123385] %^H output
+re/regex_sets.t
+re/regexp_unicode_prop.t
+re/rxcode.t               # checks regexp stringification
+re/subst.t
+run/switchI.t             # -I on #! line is not deparsed
+run/switchd-78586.t       # -I on #! line is not deparsed
+uni/attrs.t
+uni/bless.t
+uni/greek.t
+uni/gv.t
+uni/labels.t
+uni/latin2.t
+uni/lex_utf8.t
+uni/method.t
+uni/package.t
+uni/parser.t
+uni/readline.t
+uni/select.t
+uni/stash.t
+uni/tie.t
+uni/universal.t
+
+__DEPARSE_SKIPS__
+
+op/smartkve.t                        # Gobbles up all memory...
+comp/redef.t                         # Redefinition happens at compile time
+lib/Switch/t/                        # B::Deparse doesn't support source filtering
+../lib/locale.t                      # Memory...

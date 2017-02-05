@@ -206,10 +206,6 @@ my ($embed, $core, $ext, $api) = setup_embed();
 				    $prefix, $pat, $args;
 	    }
 	}
-	if ( @nonnull ) {
-	    my @pos = map { $has_context ? "pTHX_$_" : $_ } @nonnull;
-	    push @attrs, map { sprintf( "__attribute__nonnull__(%s)", $_ ) } @pos;
-	}
 	if ( @attrs ) {
 	    $ret .= "\n";
 	    $ret .= join( "\n", map { "\t\t\t$_" } @attrs );

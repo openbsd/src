@@ -4,7 +4,7 @@ require Exporter;
 
 =head1 NAME
 
-Getopt::Std, getopt, getopts - Process single-character switches with switch clustering
+getopt, getopts - Process single-character switches with switch clustering
 
 =head1 SYNOPSIS
 
@@ -36,8 +36,8 @@ The C<getopts()> function returns true unless an invalid option was found.
 The C<getopt()> function is similar, but its argument is a string containing
 all switches that take an argument.  If no argument is provided for a switch,
 say, C<y>, the corresponding C<$opt_y> will be set to an undefined value.
-Unspecified switches are silently accepted.  B<Use of C<getopts()> is not
-recommended.>
+Unspecified switches are silently accepted.  Use of C<getopt()> is not
+recommended.
 
 Note that, if your code is running under the recommended C<use strict
 vars> pragma, you will need to declare these package variables
@@ -81,7 +81,7 @@ and version_mess() with the switches string as an argument.
 
 @ISA = qw(Exporter);
 @EXPORT = qw(getopt getopts);
-$VERSION = '1.10';
+$VERSION = '1.11';
 # uncomment the next line to disable 1.03-backward compatibility paranoia
 # $STANDARD_HELP_VERSION = 1;
 

@@ -3,7 +3,7 @@ require 5;
 package Pod::Simple::PullParserToken;
  # Base class for tokens gotten from Pod::Simple::PullParser's $parser->get_token
 @ISA = ();
-$VERSION = '3.28';
+$VERSION = '3.32';
 use strict;
 
 sub new {  # Class->new('type', stuff...);  ## Overridden in derived classes anyway
@@ -50,7 +50,7 @@ Given a $parser that's an object of class Pod::Simple::PullParser
 (or a subclass)...
 
   while(my $token = $parser->get_token) {
-    $DEBUG and print "Token: ", $token->dump, "\n";
+    $DEBUG and print STDERR "Token: ", $token->dump, "\n";
     if($token->is_start) {
       ...access $token->tagname, $token->attr, etc...
 
@@ -104,7 +104,7 @@ This returns a handy stringified value of this object.  This
 is useful for debugging, as in:
 
   while(my $token = $parser->get_token) {
-    $DEBUG and print "Token: ", $token->dump, "\n";
+    $DEBUG and print STDERR "Token: ", $token->dump, "\n";
     ...
   }
 
@@ -126,8 +126,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

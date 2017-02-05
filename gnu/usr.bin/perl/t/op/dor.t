@@ -58,7 +58,7 @@ for (qw(getc pos readline readlink undef umask <> <FOO> <$foo> -f)) {
 eval q# sub f ($) { } f $x / 2; #;
 is( $@, '', "'/' correctly parsed as arithmetic operator" );
 eval q# sub f ($):lvalue { $y } f $x /= 2; #;
-is( $@, '', "'/=' correctly parsed as assigment operator" );
+is( $@, '', "'/=' correctly parsed as assignment operator" );
 eval q# sub f ($) { } f $x /2; #;
 like( $@, qr/^Search pattern not terminated/,
     "Caught unterminated search pattern error message: empty subroutine" );

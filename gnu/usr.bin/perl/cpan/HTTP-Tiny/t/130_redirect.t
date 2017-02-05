@@ -12,7 +12,7 @@ use t::Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
 
-for my $file ( dir_list("t/cases", qr/^redirect/ ) ) {
+for my $file ( dir_list("corpus", qr/^redirect/ ) ) {
   my $label = basename($file);
   my $data = do { local (@ARGV,$/) = $file; <> };
   my ($params, @case_pairs) = split /--+\n/, $data;

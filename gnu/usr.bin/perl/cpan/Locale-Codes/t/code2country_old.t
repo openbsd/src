@@ -49,17 +49,17 @@ uk ~ _undef_
 
 BO
    ~
-   Bolivia, Plurinational State of
+   Bolivia (Plurinational State of)
 
 BO
 LOCALE_CODE_ALPHA_2
    ~
-   Bolivia, Plurinational State of
+   Bolivia (Plurinational State of)
 
 bol
 LOCALE_CODE_ALPHA_3
    ~
-   Bolivia, Plurinational State of
+   Bolivia (Plurinational State of)
 
 pk ~ Pakistan
 
@@ -67,7 +67,7 @@ sn ~ Senegal
 
 us
    ~
-   United States
+   United States of America
 
 ad ~ Andorra
 
@@ -83,7 +83,7 @@ zw ~ Zimbabwe
 
 gb
    ~
-   United Kingdom
+   United Kingdom of Great Britain and Northern Ireland
 
 kz ~ Kazakhstan
 

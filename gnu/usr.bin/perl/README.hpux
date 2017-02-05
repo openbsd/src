@@ -40,17 +40,21 @@ on /cdrom), issue this command:
 
   # swlist -s /cdrom perl
   # perl           D.5.8.8.B  5.8.8 Perl Programming Language
-    perl.Perl5-32  D.5.8.8.B  32-bit 5.8.8 Perl Programming Language with Extensions
-    perl.Perl5-64  D.5.8.8.B  64-bit 5.8.8 Perl Programming Language with Extensions
+    perl.Perl5-32  D.5.8.8.B  32-bit 5.8.8 Perl Programming Language
+                                           with Extensions
+    perl.Perl5-64  D.5.8.8.B  64-bit 5.8.8 Perl Programming Language
+                                           with Extensions
 
 To see what is installed on your system:
 
   # swlist -R perl
   # perl                    E.5.8.8.J  Perl Programming Language
-  # perl.Perl5-32           E.5.8.8.J  32-bit Perl Programming Language with Extensions
+  # perl.Perl5-32           E.5.8.8.J  32-bit Perl Programming Language
+                                       with Extensions
     perl.Perl5-32.PERL-MAN  E.5.8.8.J  32-bit Perl Man Pages for IA
     perl.Perl5-32.PERL-RUN  E.5.8.8.J  32-bit Perl Binaries for IA
-  # perl.Perl5-64           E.5.8.8.J  64-bit Perl Programming Language with Extensions
+  # perl.Perl5-64           E.5.8.8.J  64-bit Perl Programming Language
+                                       with Extensions
     perl.Perl5-64.PERL-MAN  E.5.8.8.J  64-bit Perl Man Pages for IA
     perl.Perl5-64.PERL-RUN  E.5.8.8.J  64-bit Perl Binaries for IA
 
@@ -104,7 +108,7 @@ Motorola chipset.
 
 The version of PA-RISC at the time of this document's last update is 2.0,
 which is also the last there will be. HP PA-RISC systems are usually
-refered to with model description "HP 9000". The last CPU in this series
+referred to with model description "HP 9000". The last CPU in this series
 is the PA-8900.  Support for PA-RISC architectured machines officially
 ends as shown in the following table:
 
@@ -243,7 +247,7 @@ attempt to use a PA-RISC version of Perl on an Itanium system.  This is
 because shared libraries created on an Itanium system cannot be loaded
 while running a PA-RISC executable.
 
-HP Itanium 2 systems are usually refered to with model description
+HP Itanium 2 systems are usually referred to with model description
 "HP Integrity".
 
 =head2 Itanium, Itanium 2 & Madison 6
@@ -661,6 +665,30 @@ best fix is to patch the header to match:
 
   #define INT64_C(__c)                    __CONCAT_L__(__c,l)
 
+=head1 Redeclaration of "sendpath" with a different storage class specifier
+
+The following compilation warnings may happen in HP-UX releases
+earlier than 11.31 but are harmless:
+
+ cc: "/usr/include/sys/socket.h", line 535: warning 562:
+    Redeclaration of "sendfile" with a different storage class
+    specifier: "sendfile" will have internal linkage.
+ cc: "/usr/include/sys/socket.h", line 536: warning 562:
+    Redeclaration of "sendpath" with a different storage class
+    specifier: "sendpath" will have internal linkage.
+
+They seem to be caused by broken system header files, and also other
+open source projects are seeing them.  The following HP-UX patches
+should make the warnings go away:
+
+  CR JAGae12001: PHNE_27063
+  Warning 562 on sys/socket.h due to redeclaration of prototypes
+
+  CR JAGae16787:
+  Warning 562 from socket.h sendpath/sendfile -D_FILEFFSET_BITS=64
+
+  CR JAGae73470 (11.23)
+  ER: Compiling socket.h with cc -D_FILEFFSET_BITS=64 warning 267/562
 
 =head1 Miscellaneous
 

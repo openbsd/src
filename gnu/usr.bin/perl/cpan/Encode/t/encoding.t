@@ -14,7 +14,8 @@ BEGIN {
     }
 }
 
-print "1..31\n";
+print "1..33\n";
+ 
 
 no warnings "deprecated";
 use encoding "latin1"; # ignored (overwritten by the next line)
@@ -201,4 +202,14 @@ print "ok 28\n";
     $h2{"\x{3af}"} = 42;
     print $h1{"\x{3af}"} == 41 ? "ok 30\n" : "not ok 30\n";
     print $h2{"\xdf"}    == 42 ? "ok 31\n" : "not ok 31\n";
+}
+
+# Order of finding the above-Latin1 code point should not matter: both should
+# assume Latin1/Unicode encoding
+{
+    use bytes;
+    print "not " if "\xDF\x{100}" =~ /\x{3af}\x{100}/;
+    print "ok 32\n";
+    print "not " if "\x{100}\xDF" =~ /\x{100}\x{3af}/;
+    print "ok 33\n";
 }

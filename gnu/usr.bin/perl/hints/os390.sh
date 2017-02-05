@@ -18,10 +18,10 @@
 # To get ANSI C, we need to use c89, and ld doesn't exist
 # You can override this with Configure -Dcc=gcc -Dld=ld.
 case "$cc" in
-'') cc='c89' ;;
+'') cc='c99' ;;
 esac
 case "$ld" in
-'') ld='c89' ;;
+'') ld='c99' ;;
 esac
 
 # -DMAXSIG=39 maximum signal number
@@ -33,8 +33,8 @@ esac
 # -DEBCDIC should come from Configure and need not be mentioned here.
 # Prepend your favorites with Configure -Dccflags=your_favorites
 case "$ccflags" in
-'') ccflags='-2 -Wc,XPLINK -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC' ;;
-*) ccflags="$ccflags -2 -Wc,XPLINK -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC" ;;
+'') ccflags='-qlanglvl=extended:extc89:extc99 -qlongname -qxplink -qdll -qfloat=ieee -qhaltonmsg=3296:4108 -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC -D_POSIX_SOURCE=1' ;;
+*) ccflags='$ccflags -qlanglvl=extended:extc89:extc99 -qlongname -qxplink -qdll -qfloat=ieee -qhaltonmsg=3296:4108 -DMAXSIG=39 -DOEMVS -D_OE_SOCKETS -D_XOPEN_SOURCE_EXTENDED -D_ALL_SOURCE -DYYDYNAMIC -D_POSIX_SOURCE=1' ;;
 esac
 
 # Turning on optimization breaks perl.
@@ -46,7 +46,7 @@ esac
 # To link via definition side decks we need the dll option
 # You can override this with Configure -Ucccdlflags or somesuch.
 case "$cccdlflags" in
-'') cccdlflags='-W 0,dll' ;;
+'') cccdlflags='-qxplink -qdll' ;;
 esac
 
 case "$so" in
@@ -72,7 +72,7 @@ esac
 # information at the end of the executable (=> smaller binaries).
 # Override this option with -Dldflags='whatever else you wanted'.
 case "$ldflags" in
-'') ldflags='-Wl,EDIT=NO -Wl,XPLINK,dll' ;;
+'') ldflags='-qxplink -qdll' ;;
 esac
 
 # In order to build with dynamic be sure to specify:
@@ -110,12 +110,12 @@ define)
         ;;
     esac
     libperl="libperl.$so"
-    ccflags="$ccflags -D_SHR_ENVIRON -DPERL_EXTERNAL_GLOB -Wc,dll"
-    cccdlflags='-c -Wc,XPLINK,dll,EXPORTALL'
+    ccflags="$ccflags -D_SHR_ENVIRON -DPERL_EXTERNAL_GLOB -qexportall -qdll -qxplink"
+    cccdlflags='-c -qexportall -qxplink -qdll'
     # The following will need to be modified for the installed libperl.x.
     # The modification to Config.pm is done by the installperl script after the build and test.
-    ccdlflags="-W l,XPLINK,dll `pwd`/libperl.x"
-    lddlflags="-W l,XPLINK,dll `pwd`/libperl.x"
+    ccdlflags="-qxplink -qdll `pwd`/libperl.x"
+    lddlflags="-qxplink -qdll `pwd`/libperl.x"
     ;;
 esac
 # even on static builds using LIBPATH should be OK.
@@ -167,7 +167,7 @@ esac
 
 #
 # Note that Makefile.SH employs a bare yacc command to generate 
-# perly.[hc] and a2p.[hc], hence you may wish to:
+# perly.[hc], hence you may wish to:
 #
 #    alias yacc='myyacc'
 #
@@ -219,15 +219,40 @@ fi
 # sprintf() seems to get things right(er).
 gconvert_preference=sprintf
 
-cat >config.arch<<'__CONFIG_ARCH__'
-# The '-W 0,float(ieee)' cannot be used during Configure as ldflags.
-
-ccflags="$ccflags -W 0,float(ieee)"
-
-__CONFIG_ARCH__
-
 # Configure gets these wrong for some reason.
 d_gethostbyaddr_r='undef'
 d_gethostbyname_r='undef'
 d_gethostent_r='undef'
 
+# The z/OS C compiler compiler supports the attribute keyword, but in a
+# limited manner.
+#
+# Ideally, Configure's tests should test the attributes as they are expected
+# to be used in perl, and, ideally, those tests would fail on z/OS.
+# Until then, just tell Configure to ignore the attributes.  Currently,
+# Configure thinks attributes are supported because it does not recognize
+# warning messages like this:
+#
+# INFORMATIONAL CCN4108 ./proto.h:4534  The use of keyword '__attribute__' is non-portable.
+
+d_attribute_deprecated='undef'
+d_attribute_format='undef'
+d_attribute_malloc='undef'
+d_attribute_nonnull='undef'
+d_attribute_noreturn='undef'
+d_attribute_pure='undef'
+d_attribute_unused='undef'
+d_attribute_warn_unused_result='undef'
+
+# nan() is in libm but doesn't work as expected: nan("") or nan("0")
+# returns zero, not a nan:
+# http://www-01.ibm.com/support/knowledgecenter/SSLTBW_1.12.0/com.ibm.zos.r12.bpxbd00/nan.htm%23nan?lang=en
+# contrast with e.g.
+# http://www.cplusplus.com/reference/cmath/nan-function/
+# (C++ but C99 math agrees)
+# XXX: Configure scan for proper behavior
+d_nan='undef'
+
+# Configures says this exists, but it doesn't work properly.  See
+# <54DCE073.4010100@khwilliamson.com>
+d_dir_dd_fd='undef'

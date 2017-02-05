@@ -6,9 +6,11 @@ BEGIN {
 	print "1..0\n";
 	exit 0;
     }
+    unshift @INC, "../../t";
+    require 'loc_tools.pl';
 }
 
-use Test::More tests => 115;
+use Test::More tests => 94;
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno localeconv dup dup2 lseek access);
@@ -162,7 +164,7 @@ like( getcwd(), qr/$pat/, 'getcwd' );
 SKIP: { 
     skip("strtod() not present", 2) unless $Config{d_strtod};
 
-    if ($Config{d_setlocale}) {
+    if (locales_enabled('LC_NUMERIC')) {
         $lc = &POSIX::setlocale(&POSIX::LC_NUMERIC);
         &POSIX::setlocale(&POSIX::LC_NUMERIC, 'C');
     }
@@ -172,7 +174,23 @@ SKIP: {
     cmp_ok(abs("3.14159" - $n), '<', 1e-6, 'strtod works');
     is($x, 6, 'strtod works');
 
-    &POSIX::setlocale(&POSIX::LC_NUMERIC, $lc) if $Config{d_setlocale};
+    &POSIX::setlocale(&POSIX::LC_NUMERIC, $lc) if locales_enabled('LC_NUMERIC');
+}
+
+SKIP: {
+    skip("strtold() not present", 2) unless $Config{d_strtold};
+
+    if (locales_enabled('LC_NUMERIC')) {
+        $lc = &POSIX::setlocale(&POSIX::LC_NUMERIC);
+        &POSIX::setlocale(&POSIX::LC_NUMERIC, 'C');
+    }
+
+    # we're just checking that strtold works, not how accurate it is
+    ($n, $x) = &POSIX::strtod('2.718_ISH');
+    cmp_ok(abs("2.718" - $n), '<', 1e-6, 'strtold works');
+    is($x, 4, 'strtold works');
+
+    &POSIX::setlocale(&POSIX::LC_NUMERIC, $lc) if locales_enabled('LC_NUMERIC');
 }
 
 SKIP: {
@@ -209,7 +227,7 @@ sub try_strftime {
     is($got, $expect, "validating mini_mktime() and strftime(): $expect");
 }
 
-if ($Config{d_setlocale}) {
+if (locales_enabled('LC_TIME')) {
     $lc = &POSIX::setlocale(&POSIX::LC_TIME);
     &POSIX::setlocale(&POSIX::LC_TIME, 'C');
 }
@@ -248,7 +266,7 @@ try_strftime("Fri Mar 31 00:00:00 2000 091", 0,0,0, 31,2,100);
   try_strftime("Thu Dec 30 00:00:00 1999 364", 0,0,0, -1,0,100,0,10);
 }
 
-&POSIX::setlocale(&POSIX::LC_TIME, $lc) if $Config{d_setlocale};
+&POSIX::setlocale(&POSIX::LC_TIME, $lc) if locales_enabled('LC_TIME');
 
 {
     for my $test (0, 1) {
@@ -290,45 +308,12 @@ is ($result, undef, "fgets should fail");
 like ($@, qr/^Use method IO::Handle::gets\(\) instead/,
       "check its redef message");
 
-{
-    no warnings 'deprecated';
-    # Simplistic tests for the isXXX() functions (bug #16799)
-    ok( POSIX::isalnum('1'),  'isalnum' );
-    ok(!POSIX::isalnum('*'),  'isalnum' );
-    ok( POSIX::isalpha('f'),  'isalpha' );
-    ok(!POSIX::isalpha('7'),  'isalpha' );
-    ok( POSIX::iscntrl("\cA"),'iscntrl' );
-    ok(!POSIX::iscntrl("A"),  'iscntrl' );
-    ok( POSIX::isdigit('1'),  'isdigit' );
-    ok(!POSIX::isdigit('z'),  'isdigit' );
-    ok( POSIX::isgraph('@'),  'isgraph' );
-    ok(!POSIX::isgraph(' '),  'isgraph' );
-    ok( POSIX::islower('l'),  'islower' );
-    ok(!POSIX::islower('L'),  'islower' );
-    ok( POSIX::isupper('U'),  'isupper' );
-    ok(!POSIX::isupper('u'),  'isupper' );
-    ok( POSIX::isprint('$'),  'isprint' );
-    ok(!POSIX::isprint("\n"), 'isprint' );
-    ok( POSIX::ispunct('%'),  'ispunct' );
-    ok(!POSIX::ispunct('u'),  'ispunct' );
-    ok( POSIX::isspace("\t"), 'isspace' );
-    ok(!POSIX::isspace('_'),  'isspace' );
-    ok( POSIX::isxdigit('f'), 'isxdigit' );
-    ok(!POSIX::isxdigit('g'), 'isxdigit' );
-    # metaphysical question : what should be returned for an empty string ?
-    # anyway this shouldn't segfault (bug #24554)
-    ok( POSIX::isalnum(''),   'isalnum empty string' );
-    ok( POSIX::isalnum(undef),'isalnum undef' );
-    # those functions should stringify their arguments
-    ok(!POSIX::isalpha([]),   'isalpha []' );
-    ok( POSIX::isprint([]),   'isprint []' );
-}
-
 eval { use strict; POSIX->import("S_ISBLK"); my $x = S_ISBLK };
 unlike( $@, qr/Can't use string .* as a symbol ref/, "Can import autoloaded constants" );
 
 SKIP: {
-    skip("localeconv() not present", 20) unless $Config{d_locconv};
+    skip("locales not available", 26) unless locales_enabled(qw(NUMERIC MONETARY));
+    skip("localeconv() not available", 26) unless $Config{d_locconv};
     my $conv = localeconv;
     is(ref $conv, 'HASH', 'localconv returns a hash reference');
 
@@ -359,7 +344,7 @@ SKIP: {
             int_p_sign_posn   int_n_sign_posn
         );
     }
-        
+
     foreach (@lconv) {
     SKIP: {
 	    skip("localeconv has no result for $_", 1)
@@ -415,6 +400,21 @@ SKIP: {
     skip("$^O is insufficiently POSIX", 1)
 	if $Is_W32 || $Is_VMS;
     cmp_ok($!, '==', POSIX::ENOTDIR);
+}
+
+{   # tmpnam() is deprecated
+    my @warn;
+    local $SIG{__WARN__} = sub { push @warn, "@_"; note "@_"; };
+    my $x = sub { POSIX::tmpnam() };
+    my $foo = $x->();
+    $foo = $x->();
+    is(@warn, 1, "POSIX::tmpnam() should warn only once per location");
+    like($warn[0], qr!^Calling POSIX::tmpnam\(\) is deprecated at t/posix.t line \d+\.$!,
+       "check POSIX::tmpnam warns by default");
+    no warnings "deprecated";
+    undef $warn;
+    my $foo = POSIX::tmpnam();
+    is($warn, undef, "... but the warning can be disabled");
 }
 
 # Check that output is not flushed by _exit. This test should be last

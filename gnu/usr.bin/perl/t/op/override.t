@@ -2,13 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc(qw '../lib ../cpan/Text-ParseWords/lib');
     require Config; # load these before we mess with *CORE::GLOBAL::require
     require 'Config_heavy.pl'; # since runperl will need them
 }
 
-plan tests => 35;
+plan tests => 36;
 
 #
 # This file tries to test builtin override using CORE::GLOBAL
@@ -64,17 +64,6 @@ is( $r, join($dirsep, "Foo", "Bar.pm") );
     is( $r, 'foo.pm' );
 }
 
-{
-    BEGIN {
-        # Can’t do ‘no warnings’ with CORE::GLOBAL::require overridden. :-)
-        CORE::require warnings;
-        unimport warnings 'experimental::lexical_topic';
-    }
-    my $_ = 'bar.pm';
-    require;
-    is( $r, 'bar.pm' );
-}
-
 # localizing *CORE::GLOBAL::foo should revert to finding CORE::foo
 {
     local(*CORE::GLOBAL::require);
@@ -93,14 +82,20 @@ is( <FH>	, 12 );
 is( <$fh>	, 13 );
 my $pad_fh;
 is( <$pad_fh>	, 14 );
+{
+    my $buf = ''; $buf .= <FH>;
+    is( $buf, 15, 'rcatline' );
+}
 
 # Non-global readline() override
 BEGIN { *Rgs::readline = sub (;*) { --$r }; }
 {
     package Rgs;
-    ::is( <FH>	, 13 );
-    ::is( <$fh>	, 12 );
-    ::is( <$pad_fh>	, 11 );
+    ::is( <FH>	, 14 );
+    ::is( <$fh>	, 13 );
+    ::is( <$pad_fh>	, 12 );
+    my $buf = ''; $buf .= <FH>;
+    ::is( $buf, 11, 'rcatline' );
 }
 
 # Global readpipe() override
@@ -178,7 +173,7 @@ like runperl(prog => 'use constant foo=>1; '
 
 is runperl(prog => 'use constant t=>42; '
                   .'BEGIN { *{q|CORE::GLOBAL::time|} = \&{q|t|};1}'
-                  .'print time, chr 10',
+                  .'print time, chr utf8::unicode_to_native(10)',
           stderr => 1),
    "42\n",
    'keywords respect global constant overrides';

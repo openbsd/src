@@ -134,6 +134,16 @@ a[^]b]c	adc	y	$&	adc
 \By\b	xy	y	-	-
 \by\B	yz	y	-	-
 \By\B	xyz	y	-	-
+\b		n	-	-
+\b{gcb}		n	-	-
+\b{lb}		n	-	-
+\b{sb}		n	-	-
+\b{wb}		n	-	-
+\B		y	-	-
+\B{gcb}		y	-	-
+\B{lb}		y	-	-
+\B{sb}		y	-	-
+\B{wb}		y	-	-
 \w	a	y	-	-
 \w	-	n	-	-
 \W	a	n	-	-
@@ -255,6 +265,7 @@ a[bcd]+dcdcde	adcdcde	n	-	-
 ((a)(b)c)(d)	abcd	y	$-[4]	3
 ((a)(b)c)(d)	abcd	y	$+[4]	4
 [a-zA-Z_][a-zA-Z0-9_]*	alpha	y	$&	alpha
+[_A-Z]	}	n	-	-		# This could match on EBCDIC if A-Z not excluding things in middle
 ^a(bc+|b[eh])g|.h$	abh	y	$&-$1	bh-
 (bc+d$|ef*g.|h?i(j|k))	effgz	y	$&-$1-$2	effgz-effgz-
 (bc+d$|ef*g.|h?i(j|k))	ij	y	$&-$1-$2	ij-ij-j
@@ -538,6 +549,7 @@ foo\w*\d{4}baz	foobar1234baz	y	$&	foobar1234baz
 a(?{})b	cabd	y	$&	ab
 a(?{f()+	-	c	-	Missing right curly or square bracket
 a(?{{1}+	-	c	-	Missing right curly or square bracket
+ (?{(^{})	-	c	-	syntax error
 a(?{}})b	-	c	-	
 a(?{"{"})b	ab	y	-	-
 a(?{"\{"})b	cabd	y	$&	ab
@@ -627,7 +639,7 @@ $(?<=^(a))	a	y	$1	a
 ([[:alpha:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd
 ([[:alnum:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy
 ([[:ascii:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--  ${nulnul}
-([[:cntrl:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	${nulnul}
+([[:cntrl:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	ya	$1	${nulnul}	ff is a control on EBCDIC (non-POSIX-BC), so this fails under /u rules
 ([[:digit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	01
 ([[:graph:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	ABcd01Xy__--
 ([[:lower:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	cd
@@ -652,6 +664,7 @@ $(?<=^(a))	a	y	$1	a
 ([[:^xdigit:]]+)	ABcd01Xy__--  ${nulnul}${ffff}	y	$1	Xy__--  ${nulnul}${ffff}
 [[:foo:]]	-	c	-	POSIX class [:foo:] unknown
 [[:^foo:]]	-	c	-	POSIX class [:^foo:] unknown
+'[[:^cntrl:]]+'u	a\x80	y	$&	a	\x80 was matching on EBCDIC platforms
 ((?>a+)b)	aaab	y	$1	aaab
 (?>(a+))b	aaab	y	$1	aaa
 ((?>[^()]+)|\([^()]*\))+	((abc(ade)ufh()()x	y	$&	abc(ade)ufh()()x
@@ -1056,6 +1069,7 @@ X(?:ABCF[cC]x*|ABCD|ABCF):(?:DIT|DID|DIM)	XABCFCxxxxxxxxxx:DIM	y	$&	XABCFCxxxxxx
 (?=foo)	foo	y	pos	0
 (?=foo)	XfooY	y	pos	1
 .*(?=foo)	XfooY	y	pos	1
+(?=.*P)P	aP	y	pos	2
 (?<=foo)	foo	y	pos	3
 (?<=foo)	XfooY	y	pos	4
 .*(?<=foo)	foo	y	pos	3
@@ -1097,7 +1111,7 @@ X(?<=foo.)[YZ]	..XfooXY..	y	pos	8
 (?P<n>foo)(??{ $+{n} })	snofooefoofoowaa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 (?P<=n>foo|bar|baz)	-	c	-	Group name must start with a non-digit word character
 (?P<!n>foo|bar|baz)	-	c	-	Group name must start with a non-digit word character
-(?PX<n>foo|bar|baz)	-	c	-	Sequence (?PX<...) not recognized
+(?PX<n>foo|bar|baz)	-	c	-	Sequence (?PX...) not recognized
 /(?'n'foo|bar|baz)/	snofooewa	y	$1	foo
 /(?'n'foo|bar|baz)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
 /(?'n'foo|bar|baz)(?'m'[ew]+)/	snofooewa	yM	$+{n}	foo	miniperl cannot load Tie::Hash::NamedCapture
@@ -1134,6 +1148,8 @@ X(?<=foo.)[YZ]	..XfooXY..	y	pos	8
 /(ab)+((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
 /(ab){1,100}((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
 /(ab){0,100}((?1))(fox)/	ababfox	y	$1-$2-$3	ab-ab-fox
+foo(?0)?bar	phoofoofoobarbarbarr	y	$&	foofoobarbar
+foo(?R)?bar	phoofoofoobarbarbarr	y	$&	foofoobarbar
 # possessive captures
 a++a	aaaaa	n	-	-
 a*+a	aaaaa	n	-	-
@@ -1426,6 +1442,8 @@ foo(\h)bar	foo\tbar	y	$1	\t
 # Verify that \N{U+...} forces Unicode rules
 /\N{U+41}\x{c1}/i	a\x{e1}	y	$&	a\x{e1}
 /[\N{U+41}\x{c1}]/i	\x{e1}	y	$&	\x{e1}
+'\N{U+41}'	A	y	$&	A		# Even for single quoted patterns
+/\N{}\xe4/i	\xc4	y	$&	\xc4		# Empty \N{} should change /d to /u
 
 [\s][\S]	\x{a0}\x{a0}	n	-	-	# Unicode complements should not match same character
 
@@ -1450,8 +1468,9 @@ abc\N	abc\n	n
 /[\N{U+}]/	-	Sc	-	Unmatched
 /[\N{U+}]/	-	sc	-	Syntax error in (?[...])
 /abc\N{def/	-	c	-	Missing right brace
-/\N{U+4AG3}/	-	c	-	Illegal hexadecimal digit
-/[\N{U+4AG3}]/	-	c	-	Illegal hexadecimal digit
+/\N{U+4AG3}/	-	c	-	Invalid hexadecimal number
+/[\N{U+4AG3}]/	-	Sc	-	Unmatched
+/[\N{U+4AG3}]/	-	sc	-	Syntax error in (?[...])
 
 # And verify that in single quotes which bypasses the lexer, the regex compiler
 # figures it out.
@@ -1465,17 +1484,34 @@ abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
 /abc\N {U+41}/x	-	c	-	Missing braces
 /abc\N {SPACE}/x	-	c	-	Missing braces
 
-# Verifies catches hex errors, and doesn't expose our . notation to the outside
-/\N{U+0xBEEF}/	-	c	-	Illegal hexadecimal digit
-/\N{U+BEEF.BEAD}/	-	c	-	Illegal hexadecimal digit
+# Verifies catches hex errors
+/\N{U+0xBEEF}/	-	c	-	Invalid hexadecimal number
+# Used to be an error, but not any more:
+/\N{U+BEEF.BEAD}/	-	c	-	
 
 # Verify works in single quotish context; regex compiler delivers slightly different msg
 # \N{U+BEEF.BEAD} succeeds here, because can't completely hide it from the outside.
 \N{U+0xBEEF}	-	c	-	Invalid hexadecimal number
-\c`	-	c	-	\"\\c`\" is more clearly written simply as \"\\ \"
-\c1	-	c	-	\"\\c1\" is more clearly written simply as \"q\"
-\cA	\001	y	$&	\1
-
+\c`	-	ac	-	\"\\c`\" is more clearly written simply as \"\\ \"
+\c1	-	ac	-	\"\\c1\" is more clearly written simply as \"q\"
+\c@	\0	y	$&	\0
+\cA	\001	y	$&	\001
+\cB	\002	y	$&	\002
+\cC	\003	y	$&	\003
+\cI	\011	y	$&	\011
+\cJ	\012	y	$&	\012
+\cR	\022	y	$&	\022
+\cS	\023	y	$&	\023
+\cX	\030	y	$&	\030
+\cY	\031	y	$&	\031
+\cZ	\032	y	$&	\032
+\c[	\033	y	$&	\033
+\c\X	\034X	y	$&	\034X
+\c]	\035	y	$&	\035
+\c^	\036	y	$&	\036
+\c_	\037	y	$&	\037
+\c?	\177	ay	$&	\177
+\c?	\x9F	ey	$&	\x9F		\c? is APC on EBCDIC
 \400	\x{100}	y	$&	\x{100}
 \600	\x{180}	y	$&	\x{180}
 \777	\x{1FF}	y	$&	\x{1FF}
@@ -1522,18 +1558,18 @@ a(.)\g{4294967296}	x	c	-	Reference to nonexistent group in regex
 a(.)\g{4294967297}	x	c	-	Reference to nonexistent group in regex
 a(.)\g{4294967298}	x	c	-	Reference to nonexistent group in regex
 
-(.)\2147483648	b\o{214}7483648	y	$1	b
-(.)\2147483649	b\o{214}7483649	y	$1	b
-(.)\2147483650	b\o{214}7483650	y	$1	b
-(.)\4294967296	b\o{42}94967296	y	$1	b
-(.)\4294967297	b\o{42}94967297	y	$1	b
-(.)\4294967298	b\o{42}94967298	y	$1	b
-a(.)\2147483648	ab\o{214}7483648	y	$1	b
-a(.)\2147483649	ab\o{214}7483649	y	$1	b
-a(.)\2147483650	ab\o{214}7483650	y	$1	b
-a(.)\4294967296	ab\o{42}94967296	y	$1	b
-a(.)\4294967297	ab\o{42}94967297	y	$1	b
-a(.)\4294967298	ab\o{42}94967298	y	$1	b
+(.)\2147483648	b\o{214}7483648	ya	$1	b	\d not converted to native; \o{} is
+(.)\2147483649	b\o{214}7483649	ya	$1	b	\d not converted to native; \o{} is
+(.)\2147483650	b\o{214}7483650	ya	$1	b	\d not converted to native; \o{} is
+(.)\4294967296	b\o{42}94967296	ya	$1	b	\d not converted to native; \o{} is
+(.)\4294967297	b\o{42}94967297	ya	$1	b	\d not converted to native; \o{} is
+(.)\4294967298	b\o{42}94967298	ya	$1	b	\d not converted to native; \o{} is
+a(.)\2147483648	ab\o{214}7483648	ya	$1	b	\d not converted to native; \o{} is
+a(.)\2147483649	ab\o{214}7483649	ya	$1	b	\d not converted to native; \o{} is
+a(.)\2147483650	ab\o{214}7483650	ya	$1	b	\d not converted to native; \o{} is
+a(.)\4294967296	ab\o{42}94967296	ya	$1	b	\d not converted to native; \o{} is
+a(.)\4294967297	ab\o{42}94967297	ya	$1	b	\d not converted to native; \o{} is
+a(.)\4294967298	ab\o{42}94967298	ya	$1	b	\d not converted to native; \o{} is
 
 # The below was inserting a NULL into the character class.
 [\8\9]	\000	Sn	-	-
@@ -1578,6 +1614,8 @@ a(.)\4294967298	ab\o{42}94967298	y	$1	b
 ^m?(\D)(.*)\1$	5b5	n	-	-
 ^m?(\d)(.*)\1$	5b5	y	$1	5
 ^m?(\d)(.*)\1$	aba	n	-	-
+
+^_?[^\W_0-9]\w\z	\xAA\x{100}	y	$&	\xAA\x{100}		[perl #127537]
 
 # 17F is 'Long s';  This makes sure the a's in /aa can be separate
 /s/ai	\x{17F}	y	$&	\x{17F}
@@ -1719,6 +1757,12 @@ ab[c\\\](??{"x"})]{3}d	ab\\](d	y	-	-
 ^(A)((?(?{0})abc|xyz))$	Axyz	y	$1-$2	A-xyz	-
 ^(A)((?(?{return 1})abc|xyz))$	Aabc	y	$1-$2	A-abc	-
 ^(A)((?(?{return 0})abc|xyz))$	Axyz	y	$1-$2	A-xyz	-
+
+# using 'return' in code blocks with additional scopes to pop
+^(A)(?{ { 1; return "xyz"} })B$	AB	y	$1-$^R	A-xyz	-
+^(A)((??{ { 1; return "xyz" } }))$	Axyz	y	$1-$2	A-xyz	-
+^(A)((?(?{ { 1; return 1 } })abc|xyz))$	Aabc	y	$1-$2	A-abc	-
+^(A)((?(?{ { 1; return 0 } })abc|xyz))$	Axyz	y	$1-$2	A-xyz	-
 
 # pattern modifier flags should propagate into returned (??{}) pattern
 # p,d,l not tested
@@ -1884,10 +1928,44 @@ A+(*PRUNE)BC(?{})	AAABC	y	$&	AAABC
 [bcd].{2,3}aaaa	XbXaaaaa	y	-	-
 [bcd].{2,3}aaaa	Xb\x{100}aaaaa	y	-	-
 '\Awibble\z'm	wibble	y	-	-
-/(alias|status)es$/i	Statuses	y	$1	Status	# [perl #121778]
+/(alias|status)es$/i	Statuses	y	$1	Status		# [perl #121778]
+/( (?&solution) | % ) \Z (?(DEFINE) (?<solution>7\%\ solution) )/x	7% solution	y	$1	7% solution		# [perl #122890]
 (.)(?{$~=$^N})	\x{100}	y	$~	\x{100}		# [perl #123135]
 
+/[a-z]/i	\N{KELVIN SIGN}	y	$&	\N{KELVIN SIGN}
+/[A-Z]/ia	\N{KELVIN SIGN}	y	$&	\N{KELVIN SIGN}
+/[A-Z]/iaa	\N{KELVIN SIGN}	n	-	-
+/[A-Z]/i	\N{LATIN SMALL LETTER LONG S}	y	$&	\N{LATIN SMALL LETTER LONG S}
+
+# RT #123840: these used to hang in re_intuit_start
+/w\zxy?\z/i	\x{100}a\x{80}a	n	-	-
+/w\z\R\z/i	\x{100}a\x{80}a	n	-	-
+
 /(a+){1}+a/	aaa	n	-	-		# [perl #125825]
+
+^((?(?=x)xb|ya)z)	xbz	y	$1	xbz
+^((?(?=x)xb|ya)z)	yaz	y	$1	yaz
+^((?(?!y)xb|ya)z)	xbz	y	$1	xbz
+^((?(?!y)xb|ya)z)	yaz	y	$1	yaz
+^((?(?!)xb|ya)z)	xbz	n	-	-
+^((?(?!)xb|ya)z)	yaz	y	$1	yaz		# [perl-126222]
+
+foo(*ACCEPT:foo)	foo	y	$::REGMARK	foo
+(foo(*ACCEPT:foo))	foo	y	$::REGMARK	foo
+A(*FAIL:foo)[BC]	A	n	$::REGERROR	foo
+
+\N(?#comment){SPACE}	A	c	-	Missing braces on \\N{}
+ab(?#Comment){2}c	abbc	y	$&	abbc
+\p A	A	c	-	Character following \\p must be '{' or a single-character Unicode property name		# [perl #126187
+\P:A	A	c	-	Character following \\P must be '{' or a single-character Unicode property name
+\p^	A	c	-	Character following \\p must be '{' or a single-character Unicode property name
+\PU	A	c	-	Can't find Unicode property definition \"U\"
+
+(?i	-	c	-	Sequence (?... not terminated
+(?a-x	-	c	-	Sequence (?... not terminated
+.{1}??	-	c	-	Nested quantifiers
+.{1}?+	-	c	-	Nested quantifiers
+(?:.||)(?|)000000000@	000000000@	y	$&	000000000@		#  [perl #126405]
 
 # Keep these lines at the end of the file
 # vim: softtabstop=0 noexpandtab

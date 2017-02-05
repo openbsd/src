@@ -54,7 +54,9 @@ poll(struct pollfd *fds, unsigned long nfds, int timeout)
 
     FD_ZERO(&ifd);
 
+#ifdef HAS_FSTAT
 again:
+#endif
 
     FD_ZERO(&rfd);
     FD_ZERO(&wfd);

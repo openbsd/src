@@ -10,7 +10,7 @@ BEGIN {
 
 use strict;
 
-# Two hashes one will all keys 8-bit possible (initially), other
+# Two hashes one with all 8-bit possible keys (initially), other
 # with a utf8 requiring key from the outset.
 
 my %hash8 = ( "\xff" => 0xff,
@@ -176,13 +176,10 @@ foreach ("\x7f","\xff")
 
 {
     local $/; # Slurp.
-    my $utf8      = <DATA>;
-    my $utfebcdic = <DATA>;
-    if (ord('A') == 65) {
-	eval $utf8;
-    } elsif (ord('A') == 193) {
-	eval $utfebcdic;
-    }
+    my $data = <DATA>;
+    my ($utf8, $utf1047ebcdic) = split /__SPLIT__/, $data;
+    $utf8 = $utf1047ebcdic if $::IS_EBCDIC;
+    eval $utf8;
 }
 __END__
 {
@@ -203,8 +200,8 @@ __END__
     ok !utf8::is_utf8($key), "'$key' shouldn't have utf8 flag";
   }
 }
-__END__
-{
+__SPLIT__
+{   # This is 1047 UTF-EBCDIC; won't work on other code pages.
   # See if utf8 barewords work [perl #22969]
   use utf8; # UTF-EBCDIC, really.
   my %hash = (½ää½âÀ½äâ½ää => 123);

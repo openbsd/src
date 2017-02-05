@@ -37,7 +37,7 @@ sub open_new {
     my ($final_name, $mode, $header, $force) = @_;
     my $name = $final_name . '-new';
     my $lang = $final_name =~ /\.pod$/ ? 'Pod' :
-	$final_name =~ /\.(?:c|h|tab|act)$/ ? 'C' : 'Perl';
+	$final_name =~ /\.(?:c|h|inc|tab|act)$/ ? 'C' : 'Perl';
     if ($force && -e $final_name) {
         chmod 0777, $name if $Needs_Write;
         CORE::unlink $final_name
@@ -67,7 +67,7 @@ sub close_and_rename {
     close $fh or die "Error closing $name: $!";
 
     if ($TAP) {
-        # Don't use compare beacuse if there are errors it doesn't give any
+        # Don't use compare because if there are errors it doesn't give any
         # way to generate diagnostics about what went wrong.
         # These files are small enough to read into memory.
         local $/;
@@ -182,7 +182,13 @@ sub read_only_bottom_close_and_rename {
     if ($sources) {
 	$comment = "Generated from:\n";
 	foreach my $file (sort @$sources) {
-	    my $digest = digest($file);
+            my $digest = (-e $file)
+                         ? digest($file)
+                           # Use a random number that won't match the real
+                           # digest, so will always show as out-of-date, so
+                           # Porting tests likely will fail drawing attention
+                           # to the problem.
+                         : int(rand(1_000_000));
 	    $comment .= "$digest $file\n";
 	}
     }
@@ -223,5 +229,25 @@ sub wrap {
     local $Text::Wrap::columns = shift;
     Text::Wrap::wrap(@_);
 }
+
+# return the perl version as defined in patchlevel.h.
+# (we may be being run by another perl, so $] won't be right)
+# return e.g. (5, 14, 3, "5.014003")
+
+sub perl_version {
+    my $plh = 'patchlevel.h';
+    open my $fh, "<", $plh or die "can't open '$plh': $!\n";
+    my ($v1,$v2,$v3);
+    while (<$fh>) {
+        $v1 = $1 if /PERL_REVISION\s+(\d+)/;
+        $v2 = $1 if /PERL_VERSION\s+(\d+)/;
+        $v3 = $1 if /PERL_SUBVERSION\s+(\d+)/;
+    }
+    die "can't locate PERL_REVISION in '$plh'"   unless defined $v1;
+    die "can't locate PERL_VERSION in '$plh'"    unless defined $v2;
+    die "can't locate PERL_SUBVERSION in '$plh'" unless defined $v3;
+    return ($v1,$v2,$v3, sprintf("%d.%03d%03d", $v1, $v2, $v3));
+}
+
 
 1;

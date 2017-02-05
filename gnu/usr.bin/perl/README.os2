@@ -41,7 +41,7 @@ in EMX docs).
 
 Contents (This may be a little bit obsolete)
  
- perlos2 - Perl under OS/2, DOS, Win0.3*, Win0.95 and WinNT. 
+ perlos2 - Perl under OS/2, DOS, Win0.3*, Win0.95 and WinNT.
 
       NAME
       SYNOPSIS
@@ -619,7 +619,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L<"PERLLIB_PREFIX">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.20.3/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.24.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -870,7 +870,7 @@ make sure that no copies or perl are currently running.  Later steps
 of the build may fail since an older version of F<perl.dll> loaded into
 memory may be found.  Running C<make test> becomes meaningless, since
 the test are checking a previous build of perl (this situation is detected
-and reported by F<lib/os2_base.t> test).  Do not forget to unset
+and reported by F<os2/os2_base.t> test).  Do not forget to unset
 C<PERL_EMXLOAD_SEC> in environment.
 
 Also make sure that you have F</tmp> directory on the current drive,
@@ -1002,11 +1002,12 @@ To get finer test reports, call
 
 The report with F<io/pipe.t> failing may look like this:
 
-  Failed Test  Status Wstat Total Fail  Failed  List of failed
-  ------------------------------------------------------------
-  io/pipe.t                    12    1   8.33%  9
-  7 tests skipped, plus 56 subtests skipped.
-  Failed 1/195 test scripts, 99.49% okay. 1/6542 subtests failed, 99.98% okay.
+ Failed Test  Status Wstat Total Fail  Failed  List of failed
+ ------------------------------------------------------------
+ io/pipe.t                    12    1   8.33%  9
+ 7 tests skipped, plus 56 subtests skipped.
+ Failed 1/195 test scripts, 99.49% okay. 1/6542 subtests failed,
+    99.98% okay.
 
 The reasons for most important skipped tests are:
 
@@ -1132,15 +1133,15 @@ to manually install C<Net::FTP>.
 
 Install the bundle C<Bundle::OS2_default>
 
-  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_1
+ perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_1
 
 This may take a couple of hours on 1GHz processor (when run the first time).
 And this should not be necessarily a smooth procedure.  Some modules may not
 specify required dependencies, so one may need to repeat this procedure several
 times until the results stabilize.
 
-  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_2
-  perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_3
+ perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_2
+ perl5.8.2 -MCPAN -e "install Bundle::OS2_default" < nul |& tee 00cpan_i_3
 
 Even after they stabilize, some tests may fail.
 
@@ -1415,109 +1416,134 @@ an EMX applications, e.g., if compiled with
 
 Here is the sample C file:
 
-  #define INCL_DOS
-  #define INCL_NOPM
-  /* These are needed for compile if os2.h includes os2tk.h, not os2emx.h */
-  #define INCL_DOSPROCESS
-  #include <os2.h>
+ #define INCL_DOS
+ #define INCL_NOPM
+ /* These are needed for compile if os2.h includes os2tk.h, not
+  * os2emx.h */
+ #define INCL_DOSPROCESS
+ #include <os2.h>
 
-  #include "EXTERN.h"
-  #define PERL_IN_MINIPERLMAIN_C
-  #include "perl.h"
+ #include "EXTERN.h"
+ #define PERL_IN_MINIPERLMAIN_C
+ #include "perl.h"
 
-  static char *me;
-  HMODULE handle;
+ static char *me;
+ HMODULE handle;
 
-  static void
-  die_with(char *msg1, char *msg2, char *msg3, char *msg4)
-  {
-     ULONG c;
-     char *s = " error: ";
+ static void
+ die_with(char *msg1, char *msg2, char *msg3, char *msg4)
+ {
+    ULONG c;
+    char *s = " error: ";
 
-     DosWrite(2, me, strlen(me), &c);
-     DosWrite(2, s, strlen(s), &c);
-     DosWrite(2, msg1, strlen(msg1), &c);
-     DosWrite(2, msg2, strlen(msg2), &c);
-     DosWrite(2, msg3, strlen(msg3), &c);
-     DosWrite(2, msg4, strlen(msg4), &c);
-     DosWrite(2, "\r\n", 2, &c);
-     exit(255);
-  }
+    DosWrite(2, me, strlen(me), &c);
+    DosWrite(2, s, strlen(s), &c);
+    DosWrite(2, msg1, strlen(msg1), &c);
+    DosWrite(2, msg2, strlen(msg2), &c);
+    DosWrite(2, msg3, strlen(msg3), &c);
+    DosWrite(2, msg4, strlen(msg4), &c);
+    DosWrite(2, "\r\n", 2, &c);
+    exit(255);
+ }
 
-  typedef ULONG (*fill_extLibpath_t)(int type, char *pre, char *post, int replace, char *msg);
-  typedef int (*main_t)(int type, char *argv[], char *env[]);
-  typedef int (*handler_t)(void* data, int which);
+ typedef ULONG (*fill_extLibpath_t)(int type,
+                                    char *pre,
+                                    char *post,
+                                    int replace,
+                                    char *msg);
+ typedef int (*main_t)(int type, char *argv[], char *env[]);
+ typedef int (*handler_t)(void* data, int which);
 
-  #ifndef PERL_DLL_BASENAME
-  #  define PERL_DLL_BASENAME "perl"
-  #endif
+ #ifndef PERL_DLL_BASENAME
+ #  define PERL_DLL_BASENAME "perl"
+ #endif
 
-  static HMODULE
-  load_perl_dll(char *basename)
-  {
-      char buf[300], fail[260];
-      STRLEN l, dirl;
-      fill_extLibpath_t f;
-      ULONG rc_fullname;
-      HMODULE handle, handle1;
+ static HMODULE
+ load_perl_dll(char *basename)
+ {
+     char buf[300], fail[260];
+     STRLEN l, dirl;
+     fill_extLibpath_t f;
+     ULONG rc_fullname;
+     HMODULE handle, handle1;
 
-      if (_execname(buf, sizeof(buf) - 13) != 0)
-          die_with("Can't find full path: ", strerror(errno), "", "");
-      /* XXXX Fill 'me' with new value */
-      l = strlen(buf);
-      while (l && buf[l-1] != '/' && buf[l-1] != '\\')
-          l--;
-      dirl = l - 1;
-      strcpy(buf + l, basename);
-      l += strlen(basename);
-      strcpy(buf + l, ".dll");
-      if ( (rc_fullname = DosLoadModule(fail, sizeof fail, buf, &handle)) != 0
-           && DosLoadModule(fail, sizeof fail, basename, &handle) != 0 )
-          die_with("Can't load DLL ", buf, "", "");
-      if (rc_fullname)
-          return handle;		/* was loaded with short name; all is fine */
-      if (DosQueryProcAddr(handle, 0, "fill_extLibpath", (PFN*)&f))
-          die_with(buf, ": DLL exports no symbol ", "fill_extLibpath", "");
-      buf[dirl] = 0;
-      if (f(0 /*BEGINLIBPATH*/, buf /* prepend */, NULL /* append */,
-            0 /* keep old value */, me))
-          die_with(me, ": prepending BEGINLIBPATH", "", "");
-      if (DosLoadModule(fail, sizeof fail, basename, &handle1) != 0)
-          die_with(me, ": finding perl DLL again via BEGINLIBPATH", "", "");
-      buf[dirl] = '\\';     
-      if (handle1 != handle) {
-          if (DosQueryModuleName(handle1, sizeof(fail), fail))
-              strcpy(fail, "???");
-          die_with(buf, ":\n\tperl DLL via BEGINLIBPATH is different: \n\t",
-                   fail,
-                   "\n\tYou may need to manipulate global BEGINLIBPATH and LIBPATHSTRICT"
-                   "\n\tso that the other copy is loaded via BEGINLIBPATH.");
-      }
-      return handle;
-  }
+     if (_execname(buf, sizeof(buf) - 13) != 0)
+         die_with("Can't find full path: ", strerror(errno), "", "");
+     /* XXXX Fill 'me' with new value */
+     l = strlen(buf);
+     while (l && buf[l-1] != '/' && buf[l-1] != '\\')
+         l--;
+     dirl = l - 1;
+     strcpy(buf + l, basename);
+     l += strlen(basename);
+     strcpy(buf + l, ".dll");
+     if ( (rc_fullname = DosLoadModule(fail, sizeof fail, buf, &handle))
+                                                                    != 0
+          && DosLoadModule(fail, sizeof fail, basename, &handle) != 0 )
+         die_with("Can't load DLL ", buf, "", "");
+     if (rc_fullname)
+         return handle;    /* was loaded with short name; all is fine */
+     if (DosQueryProcAddr(handle, 0, "fill_extLibpath", (PFN*)&f))
+         die_with(buf,
+                  ": DLL exports no symbol ",
+                  "fill_extLibpath",
+                  "");
+     buf[dirl] = 0;
+     if (f(0 /*BEGINLIBPATH*/, buf /* prepend */, NULL /* append */,
+           0 /* keep old value */, me))
+         die_with(me, ": prepending BEGINLIBPATH", "", "");
+     if (DosLoadModule(fail, sizeof fail, basename, &handle1) != 0)
+         die_with(me,
+                  ": finding perl DLL again via BEGINLIBPATH",
+                  "",
+                  "");
+     buf[dirl] = '\\';
+     if (handle1 != handle) {
+         if (DosQueryModuleName(handle1, sizeof(fail), fail))
+             strcpy(fail, "???");
+         die_with(buf,
+                  ":\n\tperl DLL via BEGINLIBPATH is different: \n\t",
+                  fail,
+                  "\n\tYou may need to manipulate global BEGINLIBPATH"
+                     " and LIBPATHSTRICT"
+                     "\n\tso that the other copy is loaded via"
+                     BEGINLIBPATH.");
+     }
+     return handle;
+ }
 
-  int
-  main(int argc, char **argv, char **env)
-  {
-      main_t f;
-      handler_t h;
+ int
+ main(int argc, char **argv, char **env)
+ {
+     main_t f;
+     handler_t h;
 
-      me = argv[0];
-      /**/
-      handle = load_perl_dll(PERL_DLL_BASENAME);
+     me = argv[0];
+     /**/
+     handle = load_perl_dll(PERL_DLL_BASENAME);
 
-      if (DosQueryProcAddr(handle, 0, "Perl_OS2_handler_install", (PFN*)&h))
-          die_with(PERL_DLL_BASENAME, ": DLL exports no symbol ", "Perl_OS2_handler_install", "");
-      if ( !h((void *)"~installprefix", Perlos2_handler_perllib_from)
-           || !h((void *)"~dll", Perlos2_handler_perllib_to)
-           || !h((void *)"~dll/sh/ksh.exe", Perlos2_handler_perl_sh) )
-          die_with(PERL_DLL_BASENAME, ": Can't install @INC manglers", "", "");
-
-      if (DosQueryProcAddr(handle, 0, "dll_perlmain", (PFN*)&f))
-          die_with(PERL_DLL_BASENAME, ": DLL exports no symbol ", "dll_perlmain", "");
-      return f(argc, argv, env);
-  }
-
+     if (DosQueryProcAddr(handle,
+                          0,
+                          "Perl_OS2_handler_install",
+                          (PFN*)&h))
+         die_with(PERL_DLL_BASENAME,
+                  ": DLL exports no symbol ",
+                  "Perl_OS2_handler_install",
+                  "");
+     if ( !h((void *)"~installprefix", Perlos2_handler_perllib_from)
+          || !h((void *)"~dll", Perlos2_handler_perllib_to)
+          || !h((void *)"~dll/sh/ksh.exe", Perlos2_handler_perl_sh) )
+         die_with(PERL_DLL_BASENAME,
+                  ": Can't install @INC manglers",
+                  "",
+                  "");
+     if (DosQueryProcAddr(handle, 0, "dll_perlmain", (PFN*)&f))
+         die_with(PERL_DLL_BASENAME,
+                  ": DLL exports no symbol ",
+                  "dll_perlmain",
+                  "");
+     return f(argc, argv, env);
+ }
 
 =head1 Build FAQ
 
@@ -2124,12 +2150,12 @@ points available for such linking is provided (see C<entries_ordinals>
 - and also C<PMWIN_entries> - in F<os2ish.h>).  These ordinals can be
 accessed via the APIs:
 
-  CallORD(), DeclFuncByORD(), DeclVoidFuncByORD(),
-  DeclOSFuncByORD(), DeclWinFuncByORD(), AssignFuncPByORD(),
-  DeclWinFuncByORD_CACHE(), DeclWinFuncByORD_CACHE_survive(),
-  DeclWinFuncByORD_CACHE_resetError_survive(),
-  DeclWinFunc_CACHE(), DeclWinFunc_CACHE_resetError(),
-  DeclWinFunc_CACHE_survive(), DeclWinFunc_CACHE_resetError_survive()
+ CallORD(), DeclFuncByORD(), DeclVoidFuncByORD(),
+ DeclOSFuncByORD(), DeclWinFuncByORD(), AssignFuncPByORD(),
+ DeclWinFuncByORD_CACHE(), DeclWinFuncByORD_CACHE_survive(),
+ DeclWinFuncByORD_CACHE_resetError_survive(),
+ DeclWinFunc_CACHE(), DeclWinFunc_CACHE_resetError(),
+ DeclWinFunc_CACHE_survive(), DeclWinFunc_CACHE_resetError_survive()
 
 See the header files and the C code in the supplied OS/2-related
 modules for the details on usage of these functions.
@@ -2567,7 +2593,8 @@ F<perl5shim.def-leader> with
 
 modifying the versions/names as needed.  Run
 
- perl -wnle "next if 0../EXPORTS/; print qq(  \"$1\") if /\"(\w+)\"/" perl5.def >lst
+ perl -wnle "next if 0../EXPORTS/; print qq(  \"$1\")
+                                          if /\"(\w+)\"/" perl5.def >lst
 
 in the Perl build directory (to make the DLL smaller replace perl5.def
 with the definition file for the older version of Perl if present).

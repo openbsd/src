@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.26";
+our $VERSION     = "0.32";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -23,7 +23,9 @@ my %reflags = (
     s => 1 << ($PMMOD_SHIFT + 1),
     i => 1 << ($PMMOD_SHIFT + 2),
     x => 1 << ($PMMOD_SHIFT + 3),
-    p => 1 << ($PMMOD_SHIFT + 4),
+    n => 1 << ($PMMOD_SHIFT + 5),
+    p => 1 << ($PMMOD_SHIFT + 6),
+    strict => 1 << ($PMMOD_SHIFT + 10),
 # special cases:
     d => 0,
     l => 1,
@@ -57,6 +59,7 @@ my %flags = (
     TRIEC           => 0x000004,
     DUMP            => 0x000008,
     FLAGS           => 0x000010,
+    TEST            => 0x000020,
 
     EXECUTE         => 0x00FF00,
     INTUIT          => 0x000100,
@@ -108,6 +111,17 @@ sub _load_unload {
 sub bits {
     my $on = shift;
     my $bits = 0;
+    my $turning_all_off = ! @_ && ! $on;
+    my %seen;   # Has flag already been seen?
+    if ($turning_all_off) {
+
+        # Pretend were called with certain parameters, which are best dealt
+        # with that way.
+        push @_, keys %bitmask; # taint and eval
+        push @_, 'strict';
+    }
+
+    # Process each subpragma parameter
    ARG:
     foreach my $idx (0..$#_){
         my $s=$_[$idx];
@@ -138,6 +152,31 @@ sub bits {
 	} elsif ($EXPORT_OK{$s}) {
 	    require Exporter;
 	    re->export_to_level(2, 're', $s);
+        } elsif ($s eq 'strict') {
+            if ($on) {
+                $^H{reflags} |= $reflags{$s};
+                warnings::warnif('experimental::re_strict',
+                                 "\"use re 'strict'\" is experimental");
+
+                # Turn on warnings if not already done.
+                if (! warnings::enabled('regexp')) {
+                    require warnings;
+                    warnings->import('regexp');
+                    $^H{re_strict} = 1;
+                }
+            }
+            else {
+                $^H{reflags} &= ~$reflags{$s} if $^H{reflags};
+
+                # Turn off warnings if we turned them on.
+                warnings->unimport('regexp') if $^H{re_strict};
+            }
+	    if ($^H{reflags}) {
+                $^H |= $flags_hint;
+            }
+            else {
+                $^H &= ~$flags_hint;
+            }
 	} elsif ($s =~ s/^\///) {
 	    my $reflags = $^H{reflags} || 0;
 	    my $seen_charset;
@@ -182,11 +221,12 @@ sub bits {
 		    }
 		    else {
 			delete $^H{reflags_charset}
-			 if  defined $^H{reflags_charset}
-			  && $^H{reflags_charset} == $reflags{$_};
+                                     if defined $^H{reflags_charset}
+                                        && $^H{reflags_charset} == $reflags{$_};
 		    }
 		} elsif (exists $reflags{$_}) {
-		    $on
+                    $seen{$_}++;
+                    $on
 		      ? $reflags |= $reflags{$_}
 		      : ($reflags &= ~$reflags{$_});
 		} else {
@@ -198,8 +238,8 @@ sub bits {
 		}
 	    }
 	    ($^H{reflags} = $reflags or defined $^H{reflags_charset})
-	     ? $^H |= $flags_hint
-	     : ($^H &= ~$flags_hint);
+	                    ? $^H |= $flags_hint
+	                    : ($^H &= ~$flags_hint);
 	} else {
 	    require Carp;
 	    Carp::carp("Unknown \"re\" subpragma '$s' (known ones are: ",
@@ -207,6 +247,26 @@ sub bits {
                        ")");
 	}
     }
+    if (exists $seen{'x'} && $seen{'x'} > 1
+        && (warnings::enabled("deprecated")
+            || warnings::enabled("regexp")))
+    {
+        my $message = "Having more than one /x regexp modifier is deprecated";
+        if (warnings::enabled("deprecated")) {
+            warnings::warn("deprecated", $message);
+        }
+        else {
+            warnings::warn("regexp", $message);
+        }
+    }
+
+    if ($turning_all_off) {
+        _load_unload(0);
+        $^H{reflags} = 0;
+        $^H{reflags_charset} = 0;
+        $^H &= ~$flags_hint;
+    }
+
     $bits;
 }
 
@@ -246,6 +306,8 @@ re - Perl pragma to alter regular expression behaviour
 	/foo${pat}bar/;		   # disallowed (with or without -T
                                    # switch)
     }
+
+    use re 'strict';               # Raise warnings for more conditions
 
     use re '/ix';
     "FOO" =~ / foo /; # /ix implied
@@ -307,6 +369,54 @@ interpolation.  Thus:
 
 I<is> allowed if $pat is a precompiled regular expression, even
 if $pat contains C<(?{ ... })> assertions or C<(??{ ... })> subexpressions.
+
+=head2 'strict' mode
+
+Note that this is an experimental feature which may be changed or removed in a
+future Perl release.
+
+When C<use re 'strict'> is in effect, stricter checks are applied than
+otherwise when compiling regular expressions patterns.  These may cause more
+warnings to be raised than otherwise, and more things to be fatal instead of
+just warnings.  The purpose of this is to find and report at compile time some
+things, which may be legal, but have a reasonable possibility of not being the
+programmer's actual intent.  This automatically turns on the C<"regexp">
+warnings category (if not already on) within its scope.
+
+As an example of something that is caught under C<"strict'>, but not
+otherwise, is the pattern
+
+ qr/\xABC/
+
+The C<"\x"> construct without curly braces should be followed by exactly two
+hex digits; this one is followed by three.  This currently evaluates as
+equivalent to
+
+ qr/\x{AB}C/
+
+that is, the character whose code point value is C<0xAB>, followed by the
+letter C<C>.  But since C<C> is a a hex digit, there is a reasonable chance
+that the intent was
+
+ qr/\x{ABC}/
+
+that is the single character at C<0xABC>.  Under C<'strict'> it is an error to
+not follow C<\x> with exactly two hex digits.  When not under C<'strict'> a
+warning is generated if there is only one hex digit, and no warning is raised
+if there are more than two.
+
+It is expected that what exactly C<'strict'> does will evolve over time as we
+gain experience with it.  This means that programs that compile under it in
+today's Perl may not compile, or may have more or fewer warnings, in future
+Perls.  There is no backwards compatibility promises with regards to it.  Also
+there are already proposals for an alternate syntax for enabling it.  For
+these reasons, using it will raise a C<experimental::re_strict> class warning,
+unless that category is turned off.
+
+Note that if a pattern compiled within C<'strict'> is recompiled, say by
+interpolating into another pattern, outside of C<'strict'>, it is not checked
+again for strictness.  This is because if it works under strict it must work
+under non-strict.
 
 =head2 '/flags' mode
 
@@ -396,6 +506,14 @@ Detailed info about trie compilation.
 
 Dump the final program out after it is compiled and optimised.
 
+=item FLAGS
+
+Dump the flags associated with the program
+
+=item TEST
+
+Print output intended for testing the internals of the compile process
+
 =back
 
 =item Execute related options
@@ -448,6 +566,10 @@ Enable debugging of the recursion stack in the engine. Enabling
 or disabling this option automatically does the same for debugging
 states as well. This output from this can be quite large.
 
+=item GPOS
+
+Enable debugging of the \G modifier.
+
 =item OPTIMISEM
 
 Enable enhanced optimisation debugging and start-point optimisations.
@@ -472,6 +594,7 @@ debug options.
 
 Almost definitely only useful to people hacking
 on the offsets part of the debug engine.
+
 
 =back
 

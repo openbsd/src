@@ -1,7 +1,7 @@
 #!perl
 BEGIN {
-    chdir 't';
-    unshift @INC, "../lib";
+    chdir 't' if -d 't';
+    @INC = "../lib";
 }
 
 use strict;

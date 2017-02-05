@@ -8,8 +8,11 @@ use strict;
 use File::Path;
 use File::Basename;
 use MakeMaker::Test::Utils;
+use Config;
 
-my $Is_VMS = $^O eq 'VMS';
+use ExtUtils::MM;
+my $typemap = 'type map';
+$typemap =~ s/ //g unless MM->new({NAME=>'name'})->can_dep_space;
 
 my %Files = (
              'XS-Test/lib/XS/Test.pm'     => <<'END',
@@ -27,14 +30,18 @@ bootstrap XS::Test $VERSION;
 1;
 END
 
-             'XS-Test/Makefile.PL'          => <<'END',
+             'XS-Test/Makefile.PL'          => <<END,
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
     NAME          => 'XS::Test',
     VERSION_FROM  => 'lib/XS/Test.pm',
+    TYPEMAPS      => [ '$typemap' ],
+    PERL          => "\$^X -w",
 );
 END
+
+             "XS-Test/$typemap"             => '',
 
              'XS-Test/Test.xs'              => <<'END',
 #include "EXTERN.h"

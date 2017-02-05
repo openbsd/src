@@ -34,6 +34,9 @@
 #ifdef I_FLOAT
 #include <float.h>
 #endif
+#ifdef I_FENV
+#include <fenv.h>
+#endif
 #ifdef I_LIMITS
 #include <limits.h>
 #endif
@@ -53,6 +56,1230 @@
 #ifdef I_UNISTD
 #include <unistd.h>
 #endif
+
+#if defined(USE_QUADMATH) && defined(I_QUADMATH)
+
+#  undef M_E
+#  undef M_LOG2E
+#  undef M_LOG10E
+#  undef M_LN2
+#  undef M_LN10
+#  undef M_PI
+#  undef M_PI_2
+#  undef M_PI_4
+#  undef M_1_PI
+#  undef M_2_PI
+#  undef M_2_SQRTPI
+#  undef M_SQRT2
+#  undef M_SQRT1_2
+
+#  define M_E        M_Eq
+#  define M_LOG2E    M_LOG2Eq
+#  define M_LOG10E   M_LOG10Eq
+#  define M_LN2      M_LN2q
+#  define M_LN10     M_LN10q
+#  define M_PI       M_PIq
+#  define M_PI_2     M_PI_2q
+#  define M_PI_4     M_PI_4q
+#  define M_1_PI     M_1_PIq
+#  define M_2_PI     M_2_PIq
+#  define M_2_SQRTPI M_2_SQRTPIq
+#  define M_SQRT2    M_SQRT2q
+#  define M_SQRT1_2  M_SQRT1_2q
+
+#else
+
+#  ifdef USE_LONG_DOUBLE
+#    undef M_E
+#    undef M_LOG2E
+#    undef M_LOG10E
+#    undef M_LN2
+#    undef M_LN10
+#    undef M_PI
+#    undef M_PI_2
+#    undef M_PI_4
+#    undef M_1_PI
+#    undef M_2_PI
+#    undef M_2_SQRTPI
+#    undef M_SQRT2
+#    undef M_SQRT1_2
+#    define FLOAT_C(c) CAT2(c,L)
+#  else
+#    define FLOAT_C(c) (c)
+#  endif
+
+#  ifndef M_E
+#    define M_E		FLOAT_C(2.71828182845904523536028747135266250)
+#  endif
+#  ifndef M_LOG2E
+#    define M_LOG2E	FLOAT_C(1.44269504088896340735992468100189214)
+#  endif
+#  ifndef M_LOG10E
+#    define M_LOG10E	FLOAT_C(0.434294481903251827651128918916605082)
+#  endif
+#  ifndef M_LN2
+#    define M_LN2	FLOAT_C(0.693147180559945309417232121458176568)
+#  endif
+#  ifndef M_LN10
+#    define M_LN10	FLOAT_C(2.30258509299404568401799145468436421)
+#  endif
+#  ifndef M_PI
+#    define M_PI	FLOAT_C(3.14159265358979323846264338327950288)
+#  endif
+#  ifndef M_PI_2
+#    define M_PI_2	FLOAT_C(1.57079632679489661923132169163975144)
+#  endif
+#  ifndef M_PI_4
+#    define M_PI_4	FLOAT_C(0.785398163397448309615660845819875721)
+#  endif
+#  ifndef M_1_PI
+#    define M_1_PI	FLOAT_C(0.318309886183790671537767526745028724)
+#  endif
+#  ifndef M_2_PI
+#    define M_2_PI	FLOAT_C(0.636619772367581343075535053490057448)
+#  endif
+#  ifndef M_2_SQRTPI
+#    define M_2_SQRTPI	FLOAT_C(1.12837916709551257389615890312154517)
+#  endif
+#  ifndef M_SQRT2
+#    define M_SQRT2	FLOAT_C(1.41421356237309504880168872420969808)
+#  endif
+#  ifndef M_SQRT1_2
+#    define M_SQRT1_2	FLOAT_C(0.707106781186547524400844362104849039)
+#  endif
+
+#endif
+
+#if !defined(INFINITY) && defined(NV_INF)
+#  define INFINITY NV_INF
+#endif
+
+#if !defined(NAN) && defined(NV_NAN)
+#  define NAN NV_NAN
+#endif
+
+#if !defined(Inf) && defined(NV_INF)
+#  define Inf NV_INF
+#endif
+
+#if !defined(NaN) && defined(NV_NAN)
+#  define NaN NV_NAN
+#endif
+
+/* We will have an emulation. */
+#ifndef FP_INFINITE
+#  define FP_INFINITE	0
+#  define FP_NAN	1
+#  define FP_NORMAL	2
+#  define FP_SUBNORMAL	3
+#  define FP_ZERO	4
+#endif
+
+/* We will have an emulation. */
+#ifndef FE_TONEAREST
+#  define FE_TOWARDZERO	0
+#  define FE_TONEAREST	1
+#  define FE_UPWARD	2
+#  define FE_DOWNWARD	3
+#endif
+
+/* C89 math.h:
+
+   acos asin atan atan2 ceil cos cosh exp fabs floor fmod frexp ldexp
+   log log10 modf pow sin sinh sqrt tan tanh
+
+ * Implemented in core:
+
+   atan2 cos exp log pow sin sqrt
+
+ * C99 math.h added:
+
+   acosh asinh atanh cbrt copysign erf erfc exp2 expm1 fdim fma fmax
+   fmin fpclassify hypot ilogb isfinite isgreater isgreaterequal isinf
+   isless islessequal islessgreater isnan isnormal isunordered lgamma
+   log1p log2 logb lrint lround nan nearbyint nextafter nexttoward remainder
+   remquo rint round scalbn signbit tgamma trunc
+
+   See:
+   http://pubs.opengroup.org/onlinepubs/009695399/basedefs/math.h.html
+
+ * Berkeley/SVID extensions:
+
+   j0 j1 jn y0 y1 yn
+
+ * Configure already (5.21.5) scans for:
+
+   copysign*l* fpclassify isfinite isinf isnan isnan*l* ilogb*l* signbit scalbn*l*
+
+ * For floating-point round mode (which matters for e.g. lrint and rint)
+
+   fegetround fesetround
+
+*/
+
+/* XXX Constant FP_FAST_FMA (if true, FMA is faster) */
+
+/* XXX Add ldiv(), lldiv()?  It's C99, but from stdlib.h, not math.h  */
+
+/* XXX Beware old gamma() -- one cannot know whether that is the
+ * gamma or the log of gamma, that's why the new tgamma and lgamma.
+ * Though also remember lgamma_r. */
+
+/* Certain AIX releases have the C99 math, but not in long double.
+ * The <math.h> has them, e.g. __expl128, but no library has them!
+ *
+ * Also see the comments in hints/aix.sh about long doubles. */
+
+#if defined(USE_QUADMATH) && defined(I_QUADMATH)
+#  define c99_acosh	acoshq
+#  define c99_asinh	asinhq
+#  define c99_atanh	atanhq
+#  define c99_cbrt	cbrtq
+#  define c99_copysign	copysignq
+#  define c99_erf	erfq
+#  define c99_erfc	erfcq
+/* no exp2q */
+#  define c99_expm1	expm1q
+#  define c99_fdim	fdimq
+#  define c99_fma	fmaq
+#  define c99_fmax	fmaxq
+#  define c99_fmin	fminq
+#  define c99_hypot	hypotq
+#  define c99_ilogb	ilogbq
+#  define c99_lgamma	lgammaq
+#  define c99_log1p	log1pq
+#  define c99_log2	log2q
+/* no logbq */
+#  if defined(USE_64_BIT_INT) && QUADKIND == QUAD_IS_LONG_LONG
+#    define c99_lrint	llrintq
+#    define c99_lround	llroundq
+#  else
+#    define c99_lrint	lrintq
+#    define c99_lround	lroundq
+#  endif
+#  define c99_nan	nanq
+#  define c99_nearbyint	nearbyintq
+#  define c99_nextafter	nextafterq
+/* no nexttowardq */
+#  define c99_remainder	remainderq
+#  define c99_remquo	remquoq
+#  define c99_rint	rintq
+#  define c99_round	roundq
+#  define c99_scalbn	scalbnq
+#  define c99_signbit	signbitq
+#  define c99_tgamma	tgammaq
+#  define c99_trunc	truncq
+#  define bessel_j0 j0q
+#  define bessel_j1 j1q
+#  define bessel_jn jnq
+#  define bessel_y0 y0q
+#  define bessel_y1 y1q
+#  define bessel_yn ynq
+#elif defined(USE_LONG_DOUBLE) && \
+  (defined(HAS_FREXPL) || defined(HAS_ILOGBL)) && defined(HAS_SQRTL)
+/* Use some of the Configure scans for long double math functions
+ * as the canary for all the C99 *l variants being defined. */
+#  define c99_acosh	acoshl
+#  define c99_asinh	asinhl
+#  define c99_atanh	atanhl
+#  define c99_cbrt	cbrtl
+#  define c99_copysign	copysignl
+#  define c99_erf	erfl
+#  define c99_erfc	erfcl
+#  define c99_exp2	exp2l
+#  define c99_expm1	expm1l
+#  define c99_fdim	fdiml
+#  define c99_fma	fmal
+#  define c99_fmax	fmaxl
+#  define c99_fmin	fminl
+#  define c99_hypot	hypotl
+#  define c99_ilogb	ilogbl
+#  define c99_lgamma	lgammal
+#  define c99_log1p	log1pl
+#  define c99_log2	log2l
+#  define c99_logb	logbl
+#  if defined(USE_64_BIT_INT) && QUADKIND == QUAD_IS_LONG_LONG && defined(HAS_LLRINTL)
+#    define c99_lrint	llrintl
+#  elif defined(HAS_LRINTL)
+#    define c99_lrint	lrintl
+#  endif
+#  if defined(USE_64_BIT_INT) && QUADKIND == QUAD_IS_LONG_LONG && defined(HAS_LLROUNDL)
+#    define c99_lround	llroundl
+#  elif defined(HAS_LROUNDL)
+#    define c99_lround	lroundl
+#  endif
+#  define c99_nan	nanl
+#  define c99_nearbyint	nearbyintl
+#  define c99_nextafter	nextafterl
+#  define c99_nexttoward	nexttowardl
+#  define c99_remainder	remainderl
+#  define c99_remquo	remquol
+#  define c99_rint	rintl
+#  define c99_round	roundl
+#  define c99_scalbn	scalbnl
+#  ifdef HAS_SIGNBIT /* possibly bad assumption */
+#    define c99_signbit	signbitl
+#  endif
+#  define c99_tgamma	tgammal
+#  define c99_trunc	truncl
+#else
+#  define c99_acosh	acosh
+#  define c99_asinh	asinh
+#  define c99_atanh	atanh
+#  define c99_cbrt	cbrt
+#  define c99_copysign	copysign
+#  define c99_erf	erf
+#  define c99_erfc	erfc
+#  define c99_exp2	exp2
+#  define c99_expm1	expm1
+#  define c99_fdim	fdim
+#  define c99_fma	fma
+#  define c99_fmax	fmax
+#  define c99_fmin	fmin
+#  define c99_hypot	hypot
+#  define c99_ilogb	ilogb
+#  define c99_lgamma	lgamma
+#  define c99_log1p	log1p
+#  define c99_log2	log2
+#  define c99_logb	logb
+#  if defined(USE_64_BIT_INT) && QUADKIND == QUAD_IS_LONG_LONG && defined(HAS_LLRINT)
+#    define c99_lrint	llrint
+#  else
+#    define c99_lrint	lrint
+#  endif
+#  if defined(USE_64_BIT_INT) && QUADKIND == QUAD_IS_LONG_LONG && defined(HAS_LLROUND)
+#    define c99_lround	llround
+#  else
+#    define c99_lround	lround
+#  endif
+#  define c99_nan	nan
+#  define c99_nearbyint	nearbyint
+#  define c99_nextafter	nextafter
+#  define c99_nexttoward	nexttoward
+#  define c99_remainder	remainder
+#  define c99_remquo	remquo
+#  define c99_rint	rint
+#  define c99_round	round
+#  define c99_scalbn	scalbn
+/* We already define Perl_signbit in perl.h. */
+#  ifdef HAS_SIGNBIT
+#    define c99_signbit	signbit
+#  endif
+#  define c99_tgamma	tgamma
+#  define c99_trunc	trunc
+#endif
+
+/* AIX xlc (__IBMC__) really doesn't have the following long double
+ * math interfaces (no __acoshl128 aka acoshl, etc.), see
+ * hints/aix.sh.  These are in the -lc128 but fail to be found
+ * during dynamic linking/loading.
+ *
+ * XXX1 Better Configure scans
+ * XXX2 Is this xlc version dependent? */
+#if defined(USE_LONG_DOUBLE) && defined(__IBMC__)
+#  undef c99_acosh
+#  undef c99_asinh
+#  undef c99_atanh
+#  undef c99_cbrt
+#  undef c99_copysign
+#  undef c99_exp2
+#  undef c99_expm1
+#  undef c99_fdim
+#  undef c99_fma
+#  undef c99_fmax
+#  undef c99_fmin
+#  undef c99_hypot
+#  undef c99_ilogb
+#  undef c99_lrint
+#  undef c99_lround
+#  undef c99_log1p
+#  undef c99_log2
+#  undef c99_logb
+#  undef c99_nan
+#  undef c99_nearbyint
+#  undef c99_nextafter
+#  undef c99_nexttoward
+#  undef c99_remainder
+#  undef c99_remquo
+#  undef c99_rint
+#  undef c99_round
+#  undef c99_scalbn
+#  undef c99_tgamma
+#  undef c99_trunc
+#endif
+
+#ifndef isunordered
+#  ifdef Perl_isnan
+#    define isunordered(x, y) (Perl_isnan(x) || Perl_isnan(y))
+#  elif defined(HAS_UNORDERED)
+#    define isunordered(x, y) unordered(x, y)
+#  endif
+#endif
+
+/* XXX these isgreater/isnormal/isunordered macros definitions should
+ * be moved further in the file to be part of the emulations, so that
+ * platforms can e.g. #undef c99_isunordered and have it work like
+ * it does for the other interfaces. */
+
+#if !defined(isgreater) && defined(isunordered)
+#  define isgreater(x, y)         (!isunordered((x), (y)) && (x) > (y))
+#  define isgreaterequal(x, y)    (!isunordered((x), (y)) && (x) >= (y))
+#  define isless(x, y)            (!isunordered((x), (y)) && (x) < (y))
+#  define islessequal(x, y)       (!isunordered((x), (y)) && (x) <= (y))
+#  define islessgreater(x, y)     (!isunordered((x), (y)) && \
+                                     ((x) > (y) || (y) > (x)))
+#endif
+
+/* Check both the Configure symbol and the macro-ness (like C99 promises). */ 
+#if defined(HAS_FPCLASSIFY) && defined(fpclassify)
+#  define c99_fpclassify	fpclassify
+#endif
+/* Like isnormal(), the isfinite(), isinf(), and isnan() are also C99
+   and also (sizeof-arg-aware) macros, but they are already well taken
+   care of by Configure et al, and defined in perl.h as
+   Perl_isfinite(), Perl_isinf(), and Perl_isnan(). */
+#ifdef isnormal
+#  define c99_isnormal	isnormal
+#endif
+#ifdef isgreater /* canary for all the C99 is*<cmp>* macros. */
+#  define c99_isgreater	isgreater
+#  define c99_isgreaterequal	isgreaterequal
+#  define c99_isless		isless
+#  define c99_islessequal	islessequal
+#  define c99_islessgreater	islessgreater
+#  define c99_isunordered	isunordered
+#endif
+
+/* The Great Wall of Undef where according to the definedness of HAS_FOO symbols
+ * the corresponding c99_foo wrappers are undefined.  This list doesn't include
+ * the isfoo() interfaces because they are either type-aware macros, or dealt
+ * separately, already in perl.h */
+
+#ifndef HAS_ACOSH
+#  undef c99_acosh
+#endif
+#ifndef HAS_ASINH
+#  undef c99_asinh
+#endif
+#ifndef HAS_ATANH
+#  undef c99_atanh
+#endif
+#ifndef HAS_CBRT
+#  undef c99_cbrt
+#endif
+#ifndef HAS_COPYSIGN
+#  undef c99_copysign
+#endif
+#ifndef HAS_ERF
+#  undef c99_erf
+#endif
+#ifndef HAS_ERFC
+#  undef c99_erfc
+#endif
+#ifndef HAS_EXP2
+#  undef c99_exp2
+#endif
+#ifndef HAS_EXPM1
+#  undef c99_expm1
+#endif
+#ifndef HAS_FDIM
+#  undef c99_fdim
+#endif
+#ifndef HAS_FMA
+#  undef c99_fma
+#endif
+#ifndef HAS_FMAX
+#  undef c99_fmax
+#endif
+#ifndef HAS_FMIN
+#  undef c99_fmin
+#endif
+#ifndef HAS_FPCLASSIFY
+#  undef c99_fpclassify
+#endif
+#ifndef HAS_HYPOT
+#  undef c99_hypot
+#endif
+#ifndef HAS_ILOGB
+#  undef c99_ilogb
+#endif
+#ifndef HAS_LGAMMA
+#  undef c99_lgamma
+#endif
+#ifndef HAS_LOG1P
+#  undef c99_log1p
+#endif
+#ifndef HAS_LOG2
+#  undef c99_log2
+#endif
+#ifndef HAS_LOGB
+#  undef c99_logb
+#endif
+#ifndef HAS_LRINT
+#  undef c99_lrint
+#endif
+#ifndef HAS_LROUND
+#  undef c99_lround
+#endif
+#ifndef HAS_NAN
+#  undef c99_nan
+#endif
+#ifndef HAS_NEARBYINT
+#  undef c99_nearbyint
+#endif
+#ifndef HAS_NEXTAFTER
+#  undef c99_nextafter
+#endif
+#ifndef HAS_NEXTTOWARD
+#  undef c99_nexttoward
+#endif
+#ifndef HAS_REMAINDER
+#  undef c99_remainder
+#endif
+#ifndef HAS_REMQUO
+#  undef c99_remquo
+#endif
+#ifndef HAS_RINT
+#  undef c99_rint
+#endif
+#ifndef HAS_ROUND
+#  undef c99_round
+#endif
+#ifndef HAS_SCALBN
+#  undef c99_scalbn
+#endif
+#ifndef HAS_SIGNBIT
+#  undef c99_signbit
+#endif
+#ifndef HAS_TGAMMA
+#  undef c99_tgamma
+#endif
+#ifndef HAS_TRUNC
+#  undef c99_trunc
+#endif
+
+#ifdef WIN32
+
+/* Some APIs exist under Win32 with "underbar" names. */
+#  undef c99_hypot
+#  undef c99_logb
+#  undef c99_nextafter
+#  define c99_hypot _hypot
+#  define c99_logb _logb
+#  define c99_nextafter _nextafter
+
+#  define bessel_j0 _j0
+#  define bessel_j1 _j1
+#  define bessel_jn _jn
+#  define bessel_y0 _y0
+#  define bessel_y1 _y1
+#  define bessel_yn _yn
+
+#endif
+
+/* The Bessel functions: BSD, SVID, XPG4, and POSIX.  But not C99. */
+#if defined(HAS_J0) && !defined(bessel_j0)
+#  if defined(USE_LONG_DOUBLE) && defined(HAS_J0L)
+#    define bessel_j0 j0l
+#    define bessel_j1 j1l
+#    define bessel_jn jnl
+#    define bessel_y0 y0l
+#    define bessel_y1 y1l
+#    define bessel_yn ynl
+#  else
+#    define bessel_j0 j0
+#    define bessel_j1 j1
+#    define bessel_jn jn
+#    define bessel_y0 y0
+#    define bessel_y1 y1
+#    define bessel_yn yn
+#  endif
+#endif
+
+/* Emulations for missing math APIs.
+ *
+ * Keep in mind that the point of many of these functions is that
+ * they, if available, are supposed to give more precise/more
+ * numerically stable results.
+ *
+ * See e.g. http://www.johndcook.com/math_h.html
+ */
+
+#ifndef c99_acosh
+static NV my_acosh(NV x)
+{
+  return Perl_log(x + Perl_sqrt(x * x - 1));
+}
+#  define c99_acosh my_acosh
+#endif
+
+#ifndef c99_asinh
+static NV my_asinh(NV x)
+{
+  return Perl_log(x + Perl_sqrt(x * x + 1));
+}
+#  define c99_asinh my_asinh
+#endif
+
+#ifndef c99_atanh
+static NV my_atanh(NV x)
+{
+  return (Perl_log(1 + x) - Perl_log(1 - x)) / 2;
+}
+#  define c99_atanh my_atanh
+#endif
+
+#ifndef c99_cbrt
+static NV my_cbrt(NV x)
+{
+  static const NV one_third = (NV)1.0/3;
+  return x >= 0.0 ? Perl_pow(x, one_third) : -Perl_pow(-x, one_third);
+}
+#  define c99_cbrt my_cbrt
+#endif
+
+#ifndef c99_copysign
+static NV my_copysign(NV x, NV y)
+{
+  return y >= 0 ? (x < 0 ? -x : x) : (x < 0 ? x : -x);
+}
+#  define c99_copysign my_copysign
+#endif
+
+/* XXX cosh (though c89) */
+
+#ifndef c99_erf
+static NV my_erf(NV x)
+{
+  /* http://www.johndcook.com/cpp_erf.html -- public domain */
+  NV a1 =  0.254829592;
+  NV a2 = -0.284496736;
+  NV a3 =  1.421413741;
+  NV a4 = -1.453152027;
+  NV a5 =  1.061405429;
+  NV p  =  0.3275911;
+  NV t, y;
+  int sign = x < 0 ? -1 : 1; /* Save the sign. */
+  x = PERL_ABS(x);
+
+  /* Abramowitz and Stegun formula 7.1.26 */
+  t = 1.0 / (1.0 + p * x);
+  y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1) * t * Perl_exp(-x*x);
+
+  return sign * y;
+}
+#  define c99_erf my_erf
+#endif
+
+#ifndef c99_erfc
+static NV my_erfc(NV x) {
+  /* This is not necessarily numerically stable, but better than nothing. */
+  return 1.0 - c99_erf(x);
+}
+#  define c99_erfc my_erfc
+#endif
+
+#ifndef c99_exp2
+static NV my_exp2(NV x)
+{
+  return Perl_pow((NV)2.0, x);
+}
+#  define c99_exp2 my_exp2
+#endif
+
+#ifndef c99_expm1
+static NV my_expm1(NV x)
+{
+  if (PERL_ABS(x) < 1e-5)
+    /* http://www.johndcook.com/cpp_expm1.html -- public domain.
+     * Taylor series, the first four terms (the last term quartic). */
+    /* Probably not enough for long doubles. */
+    return x * (1.0 + x * (1/2.0 + x * (1/6.0 + x/24.0)));
+  else
+    return Perl_exp(x) - 1;
+}
+#  define c99_expm1 my_expm1
+#endif
+
+#ifndef c99_fdim
+static NV my_fdim(NV x, NV y)
+{
+  return (Perl_isnan(x) || Perl_isnan(y)) ? NV_NAN : (x > y ? x - y : 0);
+}
+#  define c99_fdim my_fdim
+#endif
+
+#ifndef c99_fma
+static NV my_fma(NV x, NV y, NV z)
+{
+  return (x * y) + z;
+}
+#  define c99_fma my_fma
+#endif
+
+#ifndef c99_fmax
+static NV my_fmax(NV x, NV y)
+{
+  if (Perl_isnan(x)) {
+    return Perl_isnan(y) ? NV_NAN : y;
+  } else if (Perl_isnan(y)) {
+    return x;
+  }
+  return x > y ? x : y;
+}
+#  define c99_fmax my_fmax
+#endif
+
+#ifndef c99_fmin
+static NV my_fmin(NV x, NV y)
+{
+  if (Perl_isnan(x)) {
+    return Perl_isnan(y) ? NV_NAN : y;
+  } else if (Perl_isnan(y)) {
+    return x;
+  }
+  return x < y ? x : y;
+}
+#  define c99_fmin my_fmin
+#endif
+
+#ifndef c99_fpclassify
+
+static IV my_fpclassify(NV x)
+{
+#ifdef Perl_fp_class_inf
+  if (Perl_fp_class_inf(x))    return FP_INFINITE;
+  if (Perl_fp_class_nan(x))    return FP_NAN;
+  if (Perl_fp_class_norm(x))   return FP_NORMAL;
+  if (Perl_fp_class_denorm(x)) return FP_SUBNORMAL;
+  if (Perl_fp_class_zero(x))   return FP_ZERO;
+#  define c99_fpclassify my_fpclassify
+#endif
+  return -1;
+}
+
+#endif
+
+#ifndef c99_hypot
+static NV my_hypot(NV x, NV y)
+{
+  /* http://en.wikipedia.org/wiki/Hypot */
+  NV t;
+  x = PERL_ABS(x); /* Take absolute values. */
+  if (y == 0)
+    return x;
+  if (Perl_isnan(y))
+    return NV_INF;
+  y = PERL_ABS(y);
+  if (x < y) { /* Swap so that y is less. */
+    t = x;
+    x = y;
+    y = t;
+  }
+  t = y / x;
+  return x * Perl_sqrt(1.0 + t * t);
+}
+#  define c99_hypot my_hypot
+#endif
+
+#ifndef c99_ilogb
+static IV my_ilogb(NV x)
+{
+  return (IV)(Perl_log(x) * M_LOG2E);
+}
+#  define c99_ilogb my_ilogb
+#endif
+
+/* tgamma and lgamma emulations based on
+ * http://www.johndcook.com/cpp_gamma.html,
+ * code placed in public domain.
+ *
+ * Note that these implementations (neither the johndcook originals
+ * nor these) do NOT set the global signgam variable.  This is not
+ * necessarily a bad thing. */
+
+/* Note that the tgamma() and lgamma() implementations
+ * here depend on each other. */
+
+#if !defined(HAS_TGAMMA) || !defined(c99_tgamma)
+static NV my_tgamma(NV x);
+#  define c99_tgamma my_tgamma
+#  define USE_MY_TGAMMA
+#endif
+#if !defined(HAS_LGAMMA) || !defined(c99_lgamma)
+static NV my_lgamma(NV x);
+#  define c99_lgamma my_lgamma
+#  define USE_MY_LGAMMA
+#endif
+
+#ifdef USE_MY_TGAMMA
+static NV my_tgamma(NV x)
+{
+  const NV gamma = 0.577215664901532860606512090; /* Euler's gamma constant. */
+  if (Perl_isnan(x) || x < 0.0)
+    return NV_NAN;
+  if (x == 0.0 || x == NV_INF)
+    return x == -0.0 ? -NV_INF : NV_INF;
+
+  /* The function domain is split into three intervals:
+   * (0, 0.001), [0.001, 12), and (12, infinity) */
+
+  /* First interval: (0, 0.001)
+   * For small values, 1/tgamma(x) has power series x + gamma x^2,
+   * so in this range, 1/tgamma(x) = x + gamma x^2 with error on the order of x^3.
+   * The relative error over this interval is less than 6e-7. */
+  if (x < 0.001)
+    return 1.0 / (x * (1.0 + gamma * x));
+
+  /* Second interval: [0.001, 12) */
+  if (x < 12.0) {
+    double y = x; /* Working copy. */
+    int n = 0;
+    /* Numerator coefficients for approximation over the interval (1,2) */
+    static const NV p[] = {
+      -1.71618513886549492533811E+0,
+      2.47656508055759199108314E+1,
+      -3.79804256470945635097577E+2,
+      6.29331155312818442661052E+2,
+      8.66966202790413211295064E+2,
+      -3.14512729688483675254357E+4,
+      -3.61444134186911729807069E+4,
+      6.64561438202405440627855E+4
+    };
+    /* Denominator coefficients for approximation over the interval (1, 2) */
+    static const NV q[] = {
+      -3.08402300119738975254353E+1,
+      3.15350626979604161529144E+2,
+      -1.01515636749021914166146E+3,
+      -3.10777167157231109440444E+3,
+      2.25381184209801510330112E+4,
+      4.75584627752788110767815E+3,
+      -1.34659959864969306392456E+5,
+      -1.15132259675553483497211E+5
+    };
+    NV num = 0.0;
+    NV den = 1.0;
+    NV z;
+    NV result;
+    int i;
+
+    if (x < 1.0)
+      y += 1.0;
+    else {
+      n = (int)Perl_floor(y) - 1;
+      y -= n;
+    }
+    z = y - 1;
+    for (i = 0; i < 8; i++) {
+      num = (num + p[i]) * z;
+      den = den * z + q[i];
+    }
+    result = num / den + 1.0;
+
+    if (x < 1.0) {
+      /* Use the identity tgamma(z) = tgamma(z+1)/z
+       * The variable "result" now holds tgamma of the original y + 1
+       * Thus we use y - 1 to get back the original y. */
+      result /= (y - 1.0);
+    }
+    else {
+      /* Use the identity tgamma(z+n) = z*(z+1)* ... *(z+n-1)*tgamma(z) */
+      for (i = 0; i < n; i++)
+        result *= y++;
+    }
+
+    return result;
+  }
+
+  /* Third interval: [12, +Inf) */
+#if LDBL_MANT_DIG == 113 /* IEEE quad prec */
+  if (x > 1755.548) {
+    return NV_INF;
+  }
+#else
+  if (x > 171.624) {
+    return NV_INF;
+  }
+#endif
+
+  return Perl_exp(c99_lgamma(x));
+}
+#endif
+
+#ifdef USE_MY_LGAMMA
+static NV my_lgamma(NV x)
+{
+  if (Perl_isnan(x))
+    return NV_NAN;
+  if (x <= 0 || x == NV_INF)
+    return NV_INF;
+  if (x == 1.0 || x == 2.0)
+    return 0;
+  if (x < 12.0)
+    return Perl_log(PERL_ABS(c99_tgamma(x)));
+  /* Abramowitz and Stegun 6.1.41
+   * Asymptotic series should be good to at least 11 or 12 figures
+   * For error analysis, see Whittiker and Watson
+   * A Course in Modern Analysis (1927), page 252 */
+  {
+    static const NV c[8] = {
+      1.0/12.0,
+      -1.0/360.0,
+      1.0/1260.0,
+      -1.0/1680.0,
+      1.0/1188.0,
+      -691.0/360360.0,
+      1.0/156.0,
+      -3617.0/122400.0
+    };
+    NV z = 1.0 / (x * x);
+    NV sum = c[7];
+    static const NV half_log_of_two_pi =
+      0.91893853320467274178032973640562;
+    NV series;
+    int i;
+    for (i = 6; i >= 0; i--) {
+      sum *= z;
+      sum += c[i];
+    }
+    series = sum / x;
+    return (x - 0.5) * Perl_log(x) - x + half_log_of_two_pi + series;
+  }
+}
+#endif
+
+#ifndef c99_log1p
+static NV my_log1p(NV x)
+{
+  /* http://www.johndcook.com/cpp_log_one_plus_x.html -- public domain.
+   * Taylor series, the first four terms (the last term quartic). */
+  if (x < -1.0)
+    return NV_NAN;
+  if (x == -1.0)
+    return -NV_INF;
+  if (PERL_ABS(x) > 1e-4)
+    return Perl_log(1.0 + x);
+  else
+    /* Probably not enough for long doubles. */
+    return x * (1.0 + x * (-1/2.0 + x * (1/3.0 - x/4.0)));
+}
+#  define c99_log1p my_log1p
+#endif
+
+#ifndef c99_log2
+static NV my_log2(NV x)
+{
+  return Perl_log(x) * M_LOG2E;
+}
+#  define c99_log2 my_log2
+#endif
+
+/* XXX nextafter */
+
+/* XXX nexttoward */
+
+static int my_fegetround()
+{
+#ifdef HAS_FEGETROUND
+  return fegetround();
+#elif defined(HAS_FPGETROUND)
+  switch (fpgetround()) {
+  case FP_RN: return FE_TONEAREST;
+  case FP_RZ: return FE_TOWARDZERO;
+  case FP_RM: return FE_DOWNWARD;
+  case FP_RP: return FE_UPWARD;
+  default: return -1;
+  }
+#elif defined(FLT_ROUNDS)
+  switch (FLT_ROUNDS) {
+  case 0: return FE_TOWARDZERO;
+  case 1: return FE_TONEAREST;
+  case 2: return FE_UPWARD;
+  case 3: return FE_DOWNWARD;
+  default: return -1;
+  }
+#elif defined(__osf__) /* Tru64 */
+  switch (read_rnd()) {
+  case FP_RND_RN: return FE_TONEAREST;
+  case FP_RND_RZ: return FE_TOWARDZERO;
+  case FP_RND_RM: return FE_DOWNWARD;
+  case FP_RND_RP: return FE_UPWARD;
+  default: return -1;
+  }
+#else
+  return -1;
+#endif
+}
+
+/* Toward closest integer. */
+#define MY_ROUND_NEAREST(x) ((NV)((IV)((x) >= 0.0 ? (x) + 0.5 : (x) - 0.5)))
+
+/* Toward zero. */
+#define MY_ROUND_TRUNC(x) ((NV)((IV)(x)))
+
+/* Toward minus infinity. */
+#define MY_ROUND_DOWN(x) ((NV)((IV)((x) >= 0.0 ? (x) : (x) - 0.5)))
+
+/* Toward plus infinity. */
+#define MY_ROUND_UP(x) ((NV)((IV)((x) >= 0.0 ? (x) + 0.5 : (x))))
+
+#if (!defined(c99_nearbyint) || !defined(c99_lrint)) && defined(FE_TONEAREST)
+static NV my_rint(NV x)
+{
+#ifdef FE_TONEAREST
+  switch (my_fegetround()) {
+  case FE_TONEAREST:  return MY_ROUND_NEAREST(x);
+  case FE_TOWARDZERO: return MY_ROUND_TRUNC(x);
+  case FE_DOWNWARD:   return MY_ROUND_DOWN(x);
+  case FE_UPWARD:     return MY_ROUND_UP(x);
+  default: return NV_NAN;
+  }
+#elif defined(HAS_FPGETROUND)
+  switch (fpgetround()) {
+  case FP_RN: return MY_ROUND_NEAREST(x);
+  case FP_RZ: return MY_ROUND_TRUNC(x);
+  case FP_RM: return MY_ROUND_DOWN(x);
+  case FE_RP: return MY_ROUND_UP(x);
+  default: return NV_NAN;
+  }
+#else
+  return NV_NAN;
+#endif
+}
+#endif
+
+/* XXX nearbyint() and rint() are not really identical -- but the difference
+ * is messy: nearbyint is defined NOT to raise FE_INEXACT floating point
+ * exceptions, while rint() is defined to MAYBE raise them.  At the moment
+ * Perl is blissfully unaware of such fine detail of floating point. */
+#ifndef c99_nearbyint
+#  ifdef FE_TONEAREST
+#    define c99_nearbyrint my_rint
+#  endif
+#endif
+
+#ifndef c99_lrint
+#  ifdef FE_TONEAREST
+static IV my_lrint(NV x)
+{
+  return (IV)my_rint(x);
+}
+#    define c99_lrint my_lrint
+#  endif
+#endif
+
+#ifndef c99_lround
+static IV my_lround(NV x)
+{
+  return (IV)MY_ROUND_NEAREST(x);
+}
+#  define c99_lround my_lround
+#endif
+
+/* XXX remainder */
+
+/* XXX remquo */
+
+#ifndef c99_rint
+#  ifdef FE_TONEAREST
+#    define c99_rint my_rint
+#  endif
+#endif
+
+#ifndef c99_round
+static NV my_round(NV x)
+{
+  return MY_ROUND_NEAREST(x);
+}
+#  define c99_round my_round
+#endif
+
+#ifndef c99_scalbn
+#   if defined(Perl_ldexp) && FLT_RADIX == 2
+static NV my_scalbn(NV x, int y)
+{
+  return Perl_ldexp(x, y);
+}
+#    define c99_scalbn my_scalbn
+#  endif
+#endif
+
+/* XXX sinh (though c89) */
+
+/* tgamma -- see lgamma */
+
+/* XXX tanh (though c89) */
+
+#ifndef c99_trunc
+static NV my_trunc(NV x)
+{
+  return MY_ROUND_TRUNC(x);
+}
+#  define c99_trunc my_trunc
+#endif
+
+#undef NV_PAYLOAD_DEBUG
+
+/* NOTE: the NaN payload API implementation is hand-rolled, since the
+ * APIs are only proposed ones as of June 2015, so very few, if any,
+ * platforms have implementations yet, so HAS_SETPAYLOAD and such are
+ * unlikely to be helpful.
+ *
+ * XXX - if the core numification wants to actually generate
+ * the nan payload in "nan(123)", and maybe "nans(456)", for
+ * signaling payload", this needs to be moved to e.g. numeric.c
+ * (look for grok_infnan)
+ *
+ * Conversely, if the core stringification wants the nan payload
+ * and/or the nan quiet/signaling distinction, S_getpayload()
+ * from this file needs to be moved, to e.g. sv.c (look for S_infnan_2pv),
+ * and the (trivial) functionality of issignaling() copied
+ * (for generating "NaNS", or maybe even "NaNQ") -- or maybe there
+ * are too many formatting parameters for simple stringification?
+ */
+
+/* While it might make sense for the payload to be UV or IV,
+ * to avoid conversion loss, the proposed ISO interfaces use
+ * a floating point input, which is then truncated to integer,
+ * and only the integer part being used.  This is workable,
+ * except for: (1) the conversion loss (2) suboptimal for
+ * 32-bit integer platforms.  A workaround API for (2) and
+ * in general for bit-honesty would be an array of integers
+ * as the payload... but the proposed C API does nothing of
+ * the kind. */
+#if NVSIZE == UVSIZE
+#  define NV_PAYLOAD_TYPE UV
+#else
+#  define NV_PAYLOAD_TYPE NV
+#endif
+
+#ifdef LONGDOUBLE_DOUBLEDOUBLE
+#  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE / 2)
+#else
+#  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE)
+#endif
+
+static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
+{
+  dTHX;
+  static const U8 m[] = { NV_NAN_PAYLOAD_MASK };
+  static const U8 p[] = { NV_NAN_PAYLOAD_PERM };
+  UV a[(NVSIZE + UVSIZE - 1) / UVSIZE] = { 0 };
+  int i;
+  NV_PAYLOAD_SIZEOF_ASSERT(m);
+  NV_PAYLOAD_SIZEOF_ASSERT(p);
+  *nvp = NV_NAN;
+  /* Divide the input into the array in "base unsigned integer" in
+   * little-endian order.  Note that the integer might be smaller than
+   * an NV (if UV is U32, for example). */
+#if NVSIZE == UVSIZE
+  a[0] = payload;  /* The trivial case. */
+#else
+  {
+    NV t1 = c99_trunc(payload); /* towards zero (drop fractional) */
+#ifdef NV_PAYLOAD_DEBUG
+    Perl_warn(aTHX_ "t1 = %"NVgf" (payload %"NVgf")\n", t1, payload);
+#endif
+    if (t1 <= UV_MAX) {
+      a[0] = (UV)t1;  /* Fast path, also avoids rounding errors (right?) */
+    } else {
+      /* UVSIZE < NVSIZE or payload > UV_MAX.
+       *
+       * This may happen for example if:
+       * (1) UVSIZE == 32 and common 64-bit double NV
+       *     (32-bit system not using -Duse64bitint)
+       * (2) UVSIZE == 64 and the x86-style 80-bit long double NV
+       *     (note that here the room for payload is actually the 64 bits)
+       * (3) UVSIZE == 64 and the 128-bit IEEE 764 quadruple NV
+       *     (112 bits in mantissa, 111 bits room for payload)
+       *
+       * NOTE: this is very sensitive to correctly functioning
+       * fmod()/fmodl(), and correct casting of big-unsigned-integer to NV.
+       * If these don't work right, especially the low order bits
+       * are in danger.  For example Solaris and AIX seem to have issues
+       * here, especially if using 32-bit UVs. */
+      NV t2;
+      for (i = 0, t2 = t1; i < (int)C_ARRAY_LENGTH(a); i++) {
+        a[i] = (UV)Perl_fmod(t2, (NV)UV_MAX);
+        t2 = Perl_floor(t2 / (NV)UV_MAX);
+      }
+    }
+  }
+#endif
+#ifdef NV_PAYLOAD_DEBUG
+  for (i = 0; i < (int)C_ARRAY_LENGTH(a); i++) {
+    Perl_warn(aTHX_ "a[%d] = 0x%"UVxf"\n", i, a[i]);
+  }
+#endif
+  for (i = 0; i < (int)sizeof(p); i++) {
+    if (m[i] && p[i] < sizeof(p)) {
+      U8 s = (p[i] % UVSIZE) << 3;
+      UV u = a[p[i] / UVSIZE] & ((UV)0xFF << s);
+      U8 b = (U8)((u >> s) & m[i]);
+      ((U8 *)(nvp))[i] &= ~m[i]; /* For NaNs with non-zero payload bits. */
+      ((U8 *)(nvp))[i] |= b;
+#ifdef NV_PAYLOAD_DEBUG
+      Perl_warn(aTHX_ "set p[%2d] = %02x (i = %d, m = %02x, s = %2d, b = %02x, u = %08"UVxf")\n", i, ((U8 *)(nvp))[i], i, m[i], s, b, u);
+#endif
+      a[p[i] / UVSIZE] &= ~u;
+    }
+  }
+  if (signaling) {
+    NV_NAN_SET_SIGNALING(nvp);
+  }
+#ifdef USE_LONG_DOUBLE
+# if LONG_DOUBLEKIND == 3 || LONG_DOUBLEKIND == 4
+#  if LONG_DOUBLESIZE > 10
+  memset((char *)nvp + 10, '\0', LONG_DOUBLESIZE - 10); /* x86 long double */
+#  endif
+# endif
+#endif
+  for (i = 0; i < (int)C_ARRAY_LENGTH(a); i++) {
+    if (a[i]) {
+      Perl_warn(aTHX_ "payload lost bits (%"UVxf")", a[i]);
+      break;
+    }
+  }
+#ifdef NV_PAYLOAD_DEBUG
+  for (i = 0; i < NVSIZE; i++) {
+    PerlIO_printf(Perl_debug_log, "%02x ", ((U8 *)(nvp))[i]);
+  }
+  PerlIO_printf(Perl_debug_log, "\n");
+#endif
+}
+
+static NV_PAYLOAD_TYPE S_getpayload(NV nv)
+{
+  dTHX;
+  static const U8 m[] = { NV_NAN_PAYLOAD_MASK };
+  static const U8 p[] = { NV_NAN_PAYLOAD_PERM };
+  UV a[(NVSIZE + UVSIZE - 1) / UVSIZE] = { 0 };
+  int i;
+  NV payload;
+  NV_PAYLOAD_SIZEOF_ASSERT(m);
+  NV_PAYLOAD_SIZEOF_ASSERT(p);
+  payload = 0;
+  for (i = 0; i < (int)sizeof(p); i++) {
+    if (m[i] && p[i] < NVSIZE) {
+      U8 s = (p[i] % UVSIZE) << 3;
+      a[p[i] / UVSIZE] |= (UV)(((U8 *)(&nv))[i] & m[i]) << s;
+    }
+  }
+  for (i = (int)C_ARRAY_LENGTH(a) - 1; i >= 0; i--) {
+#ifdef NV_PAYLOAD_DEBUG
+    Perl_warn(aTHX_ "a[%d] = %"UVxf"\n", i, a[i]);
+#endif
+    payload *= UV_MAX;
+    payload += a[i];
+  }
+#ifdef NV_PAYLOAD_DEBUG
+  for (i = 0; i < NVSIZE; i++) {
+    PerlIO_printf(Perl_debug_log, "%02x ", ((U8 *)(&nv))[i]);
+  }
+  PerlIO_printf(Perl_debug_log, "\n");
+#endif
+  return payload;
+}
 
 /* XXX This comment is just to make I_TERMIO and I_SGTTY visible to
    metaconfig for future extension writers.  We don't use them in POSIX.
@@ -133,10 +1360,13 @@ char *tzname[] = { "" , "" };
 #  define setuid(a)		not_here("setuid")
 #  define setgid(a)		not_here("setgid")
 #endif	/* NETWARE */
+#ifndef USE_LONG_DOUBLE
+#  define strtold(s1,s2)	not_here("strtold")
+#endif  /* USE_LONG_DOUBLE */
 #else
 
 #  ifndef HAS_MKFIFO
-#    if defined(OS2)
+#    if defined(OS2) || defined(__amigaos4__)
 #      define mkfifo(a,b) not_here("mkfifo")
 #    else	/* !( defined OS2 ) */
 #      ifndef mkfifo
@@ -152,7 +1382,9 @@ char *tzname[] = { "" , "" };
 #  ifdef HAS_UNAME
 #    include <sys/utsname.h>
 #  endif
-#  include <sys/wait.h>
+#  ifndef __amigaos4__
+#    include <sys/wait.h>
+#  endif
 #  ifdef I_UTIME
 #    include <utime.h>
 #  endif
@@ -163,6 +1395,8 @@ typedef int SysRet;
 typedef long SysRetLong;
 typedef sigset_t* POSIX__SigSet;
 typedef HV* POSIX__SigAction;
+typedef int POSIX__SigNo;
+typedef int POSIX__Fd;
 #ifdef I_TERMIOS
 typedef struct termios* POSIX__Termios;
 #else /* Define termios types to int, and call not_here for the functions.*/
@@ -189,6 +1423,9 @@ START_EXTERN_C
 double strtod (const char *, char **);
 long strtol (const char *, char **, int);
 unsigned long strtoul (const char *, char **, int);
+#ifdef HAS_STRTOLD
+long double strtold (const char *, char **);
+#endif
 END_EXTERN_C
 #endif
 
@@ -226,6 +1463,9 @@ END_EXTERN_C
 #endif
 #ifndef HAS_STRTOD
 #define strtod(s1,s2) not_here("strtod")
+#endif
+#ifndef HAS_STRTOLD
+#define strtold(s1,s2) not_here("strtold")
 #endif
 #ifndef HAS_STRTOL
 #define strtol(s1,s2,b) not_here("strtol")
@@ -282,55 +1522,76 @@ END_EXTERN_C
 #endif
 #endif
 
-#ifdef HAS_LOCALECONV
+#ifndef HAS_LOCALECONV
+#   define localeconv() not_here("localeconv")
+#else
 struct lconv_offset {
     const char *name;
     size_t offset;
 };
 
-const struct lconv_offset lconv_strings[] = {
-    {"decimal_point",     offsetof(struct lconv, decimal_point)},
-    {"thousands_sep",     offsetof(struct lconv, thousands_sep)},
-#ifndef NO_LOCALECONV_GROUPING
-    {"grouping",          offsetof(struct lconv, grouping)},
+static const struct lconv_offset lconv_strings[] = {
+#ifdef USE_LOCALE_NUMERIC
+    {"decimal_point",     STRUCT_OFFSET(struct lconv, decimal_point)},
+    {"thousands_sep",     STRUCT_OFFSET(struct lconv, thousands_sep)},
+#  ifndef NO_LOCALECONV_GROUPING
+    {"grouping",          STRUCT_OFFSET(struct lconv, grouping)},
+#  endif
 #endif
-    {"int_curr_symbol",   offsetof(struct lconv, int_curr_symbol)},
-    {"currency_symbol",   offsetof(struct lconv, currency_symbol)},
-    {"mon_decimal_point", offsetof(struct lconv, mon_decimal_point)},
-#ifndef NO_LOCALECONV_MON_THOUSANDS_SEP
-    {"mon_thousands_sep", offsetof(struct lconv, mon_thousands_sep)},
-#endif
-#ifndef NO_LOCALECONV_MON_GROUPING
-    {"mon_grouping",      offsetof(struct lconv, mon_grouping)},
-#endif
-    {"positive_sign",     offsetof(struct lconv, positive_sign)},
-    {"negative_sign",     offsetof(struct lconv, negative_sign)},
-    {NULL, 0}
-};
-
-const struct lconv_offset lconv_integers[] = {
-    {"int_frac_digits",     offsetof(struct lconv, int_frac_digits)},
-    {"frac_digits",         offsetof(struct lconv, frac_digits)},
-    {"p_cs_precedes",       offsetof(struct lconv, p_cs_precedes)},
-    {"p_sep_by_space",      offsetof(struct lconv, p_sep_by_space)},
-    {"n_cs_precedes",       offsetof(struct lconv, n_cs_precedes)},
-    {"n_sep_by_space",      offsetof(struct lconv, n_sep_by_space)},
-    {"p_sign_posn",         offsetof(struct lconv, p_sign_posn)},
-    {"n_sign_posn",         offsetof(struct lconv, n_sign_posn)},
-#ifdef HAS_LC_MONETARY_2008
-    {"int_p_cs_precedes",   offsetof(struct lconv, int_p_cs_precedes)},
-    {"int_p_sep_by_space",  offsetof(struct lconv, int_p_sep_by_space)},
-    {"int_n_cs_precedes",   offsetof(struct lconv, int_n_cs_precedes)},
-    {"int_n_sep_by_space",  offsetof(struct lconv, int_n_sep_by_space)},
-    {"int_p_sign_posn",     offsetof(struct lconv, int_p_sign_posn)},
-    {"int_n_sign_posn",     offsetof(struct lconv, int_n_sign_posn)},
+#ifdef USE_LOCALE_MONETARY
+    {"int_curr_symbol",   STRUCT_OFFSET(struct lconv, int_curr_symbol)},
+    {"currency_symbol",   STRUCT_OFFSET(struct lconv, currency_symbol)},
+    {"mon_decimal_point", STRUCT_OFFSET(struct lconv, mon_decimal_point)},
+#  ifndef NO_LOCALECONV_MON_THOUSANDS_SEP
+    {"mon_thousands_sep", STRUCT_OFFSET(struct lconv, mon_thousands_sep)},
+#  endif
+#  ifndef NO_LOCALECONV_MON_GROUPING
+    {"mon_grouping",      STRUCT_OFFSET(struct lconv, mon_grouping)},
+#  endif
+    {"positive_sign",     STRUCT_OFFSET(struct lconv, positive_sign)},
+    {"negative_sign",     STRUCT_OFFSET(struct lconv, negative_sign)},
 #endif
     {NULL, 0}
 };
 
+#ifdef USE_LOCALE_NUMERIC
+
+/* The Linux man pages say these are the field names for the structure
+ * components that are LC_NUMERIC; the rest being LC_MONETARY */
+#   define isLC_NUMERIC_STRING(name) (strEQ(name, "decimal_point")     \
+                                      || strEQ(name, "thousands_sep")  \
+                                                                        \
+                                      /* There should be no harm done   \
+                                       * checking for this, even if     \
+                                       * NO_LOCALECONV_GROUPING */      \
+                                      || strEQ(name, "grouping"))
 #else
-#define localeconv() not_here("localeconv")
+#   define isLC_NUMERIC_STRING(name) (0)
 #endif
+
+static const struct lconv_offset lconv_integers[] = {
+#ifdef USE_LOCALE_MONETARY
+    {"int_frac_digits",   STRUCT_OFFSET(struct lconv, int_frac_digits)},
+    {"frac_digits",       STRUCT_OFFSET(struct lconv, frac_digits)},
+    {"p_cs_precedes",     STRUCT_OFFSET(struct lconv, p_cs_precedes)},
+    {"p_sep_by_space",    STRUCT_OFFSET(struct lconv, p_sep_by_space)},
+    {"n_cs_precedes",     STRUCT_OFFSET(struct lconv, n_cs_precedes)},
+    {"n_sep_by_space",    STRUCT_OFFSET(struct lconv, n_sep_by_space)},
+    {"p_sign_posn",       STRUCT_OFFSET(struct lconv, p_sign_posn)},
+    {"n_sign_posn",       STRUCT_OFFSET(struct lconv, n_sign_posn)},
+#ifdef HAS_LC_MONETARY_2008
+    {"int_p_cs_precedes",  STRUCT_OFFSET(struct lconv, int_p_cs_precedes)},
+    {"int_p_sep_by_space", STRUCT_OFFSET(struct lconv, int_p_sep_by_space)},
+    {"int_n_cs_precedes",  STRUCT_OFFSET(struct lconv, int_n_cs_precedes)},
+    {"int_n_sep_by_space", STRUCT_OFFSET(struct lconv, int_n_sep_by_space)},
+    {"int_p_sign_posn",    STRUCT_OFFSET(struct lconv, int_p_sign_posn)},
+    {"int_n_sign_posn",    STRUCT_OFFSET(struct lconv, int_n_sign_posn)},
+#endif
+#endif
+    {NULL, 0}
+};
+
+#endif /* HAS_LOCALECONV */
 
 #ifdef HAS_LONG_DOUBLE
 #  if LONG_DOUBLESIZE > NVSIZE
@@ -391,8 +1652,10 @@ restore_sigmask(pTHX_ SV *osset_sv)
       * supposed to return -1 from sigaction unless the disposition
       * was unaffected.
       */
+#if !(defined(__amigaos4__) && defined(__NEWLIB__))
      sigset_t *ossetp = (sigset_t *) SvPV_nolen( osset_sv );
      (void)sigprocmask(SIG_SETMASK, ossetp, (sigset_t *)0);
+#endif
 }
 
 static void *
@@ -515,106 +1778,6 @@ my_tzset(pTHX)
     tzset();
 }
 
-typedef int (*isfunc_t)(int);
-typedef void (*any_dptr_t)(void *);
-
-/* This needs to be ALIASed in a custom way, hence can't easily be defined as
-   a regular XSUB.  */
-static XSPROTO(is_common); /* prototype to pass -Wmissing-prototypes */
-static XSPROTO(is_common)
-{
-    dXSARGS;
-    static PTR_TBL_t * is_common_ptr_table;
-
-    if (items != 1)
-       croak_xs_usage(cv,  "charstring");
-
-    {
-	dXSTARG;
-	STRLEN	len;
-        /*int	RETVAL = 0;   YYY means uncomment this to return false on an
-                            * empty string input */
-	int	RETVAL;
-	unsigned char *s = (unsigned char *) SvPV(ST(0), len);
-	unsigned char *e = s + len;
-	isfunc_t isfunc = (isfunc_t) XSANY.any_dptr;
-
-        if (ckWARN_d(WARN_DEPRECATED)) {
-
-            /* Warn exactly once for each lexical place this function is
-             * called.  See thread at
-             * http://markmail.org/thread/jhqcag5njmx7jpyu */
-
-	    if (! is_common_ptr_table) {
-               is_common_ptr_table = ptr_table_new();
-            }
-	    if (! ptr_table_fetch(is_common_ptr_table, PL_op)) {
-                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED),
-                            "Calling POSIX::%"HEKf"() is deprecated",
-                            HEKfARG(GvNAME_HEK(CvGV(cv))));
-                ptr_table_store(is_common_ptr_table, PL_op, (void *) 1);
-            }
-        }
-
-        /*if (e > s) { YYY */
-	for (RETVAL = 1; RETVAL && s < e; s++)
-	    if (!isfunc(*s))
-		RETVAL = 0;
-        /*} YYY */
-	XSprePUSH;
-	PUSHi((IV)RETVAL);
-    }
-    XSRETURN(1);
-}
-
-MODULE = POSIX		PACKAGE = POSIX
-
-BOOT:
-{
-    CV *cv;
-    const char *file = __FILE__;
-
-
-    /* silence compiler warning about not_here() defined but not used */
-    if (0) not_here("");
-
-    /* Ensure we get the function, not a macro implementation. Like the C89
-       standard says we can...  */
-#undef isalnum
-    cv = newXS("POSIX::isalnum", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isalnum;
-#undef isalpha
-    cv = newXS("POSIX::isalpha", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isalpha;
-#undef iscntrl
-    cv = newXS("POSIX::iscntrl", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &iscntrl;
-#undef isdigit
-    cv = newXS("POSIX::isdigit", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isdigit;
-#undef isgraph
-    cv = newXS("POSIX::isgraph", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isgraph;
-#undef islower
-    cv = newXS("POSIX::islower", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &islower;
-#undef isprint
-    cv = newXS("POSIX::isprint", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isprint;
-#undef ispunct
-    cv = newXS("POSIX::ispunct", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &ispunct;
-#undef isspace
-    cv = newXS("POSIX::isspace", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isspace;
-#undef isupper
-    cv = newXS("POSIX::isupper", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isupper;
-#undef isxdigit
-    cv = newXS("POSIX::isxdigit", is_common, file);
-    XSANY.any_dptr = (any_dptr_t) &isxdigit;
-}
-
 MODULE = SigSet		PACKAGE = POSIX::SigSet		PREFIX = sig
 
 void
@@ -636,7 +1799,7 @@ new(packname = "POSIX::SigSet", ...)
 SysRet
 addset(sigset, sig)
 	POSIX::SigSet	sigset
-	int		sig
+	POSIX::SigNo	sig
    ALIAS:
 	delset = 1
    CODE:
@@ -657,7 +1820,7 @@ emptyset(sigset)
 int
 sigismember(sigset, sig)
 	POSIX::SigSet	sigset
-	int		sig
+	POSIX::SigNo	sig
 
 MODULE = Termios	PACKAGE = POSIX::Termios	PREFIX = cf
 
@@ -683,7 +1846,7 @@ new(packname = "POSIX::Termios", ...)
 SysRet
 getattr(termios_ref, fd = 0)
 	POSIX::Termios	termios_ref
-	int		fd
+	POSIX::Fd		fd
     CODE:
 	RETVAL = tcgetattr(fd, termios_ref);
     OUTPUT:
@@ -699,14 +1862,19 @@ getattr(termios_ref, fd = 0)
 SysRet
 setattr(termios_ref, fd = 0, optional_actions = DEF_SETATTR_ACTION)
 	POSIX::Termios	termios_ref
-	int		fd
+	POSIX::Fd	fd
 	int		optional_actions
     CODE:
 	/* The second argument to the call is mandatory, but we'd like to give
 	   it a useful default. 0 isn't valid on all operating systems - on
-	   Solaris (at least) TCSANOW, TCSADRAIN and TCSAFLUSH have the same
-	   values as the equivalent ioctls, TCSETS, TCSETSW and TCSETSF.  */
-	RETVAL = tcsetattr(fd, optional_actions, termios_ref);
+           Solaris (at least) TCSANOW, TCSADRAIN and TCSAFLUSH have the same
+           values as the equivalent ioctls, TCSETS, TCSETSW and TCSETSF.  */
+	if (optional_actions < 0) {
+            SETERRNO(EINVAL, LIB_INVARG);
+            RETVAL = -1;
+        } else {
+            RETVAL = tcsetattr(fd, optional_actions, termios_ref);
+        }
     OUTPUT:
 	RETVAL
 
@@ -886,7 +2054,7 @@ WEXITSTATUS(status)
 #endif
 	    break;
 	default:
-	    Perl_croak(aTHX_ "Illegal alias %d for POSIX::W*", (int)ix);
+	    croak("Illegal alias %d for POSIX::W*", (int)ix);
 	}
     OUTPUT:
 	RETVAL
@@ -907,8 +2075,16 @@ open(filename, flags = O_RDONLY, mode = 0666)
 HV *
 localeconv()
     CODE:
-#ifdef HAS_LOCALECONV
+#ifndef HAS_LOCALECONV
+	localeconv(); /* A stub to call not_here(). */
+#else
 	struct lconv *lcbuf;
+
+        /* localeconv() deals with both LC_NUMERIC and LC_MONETARY, but
+         * LC_MONETARY is already in the correct locale */
+        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+        STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
+
 	RETVAL = newHV();
 	sv_2mortal((SV*)RETVAL);
 	if ((lcbuf = localeconv())) {
@@ -916,47 +2092,108 @@ localeconv()
 	    const struct lconv_offset *integers = lconv_integers;
 	    const char *ptr = (const char *) lcbuf;
 
-	    do {
+	    while (strings->name) {
+                /* This string may be controlled by either LC_NUMERIC, or
+                 * LC_MONETARY */
+                bool is_utf8_locale
+#if defined(USE_LOCALE_NUMERIC) && defined(USE_LOCALE_MONETARY)
+                 = _is_cur_LC_category_utf8((isLC_NUMERIC_STRING(strings->name))
+                                             ? LC_NUMERIC
+                                             : LC_MONETARY);
+#elif defined(USE_LOCALE_NUMERIC)
+                 = _is_cur_LC_category_utf8(LC_NUMERIC);
+#elif defined(USE_LOCALE_MONETARY)
+                 = _is_cur_LC_category_utf8(LC_MONETARY);
+#else
+                 = FALSE;
+#endif
+
 		const char *value = *((const char **)(ptr + strings->offset));
 
-		if (value && *value)
-		    (void) hv_store(RETVAL, strings->name, strlen(strings->name),
-				    newSVpv(value, 0), 0);
-	    } while ((++strings)->name);
+		if (value && *value) {
+		    (void) hv_store(RETVAL,
+                        strings->name,
+                        strlen(strings->name),
+                        newSVpvn_utf8(value,
+                                      strlen(value),
 
-	    do {
+                                      /* We mark it as UTF-8 if a utf8 locale
+                                       * and is valid and variant under UTF-8 */
+                                      is_utf8_locale
+                                        && ! is_invariant_string((U8 *) value, 0)
+                                        && is_utf8_string((U8 *) value, 0)),
+                        0);
+                }
+                strings++;
+	    }
+
+	    while (integers->name) {
 		const char value = *((const char *)(ptr + integers->offset));
 
 		if (value != CHAR_MAX)
 		    (void) hv_store(RETVAL, integers->name,
 				    strlen(integers->name), newSViv(value), 0);
-	    } while ((++integers)->name);
+                integers++;
+            }
 	}
-#else
-	localeconv(); /* A stub to call not_here(). */
-#endif
+        RESTORE_LC_NUMERIC_STANDARD();
+#endif  /* HAS_LOCALECONV */
     OUTPUT:
 	RETVAL
 
 char *
 setlocale(category, locale = 0)
 	int		category
-	char *		locale
+	const char *    locale
     PREINIT:
 	char *		retval;
     CODE:
+#ifdef USE_LOCALE_NUMERIC
+        /* A 0 (or NULL) locale means only query what the current one is.  We
+         * have the LC_NUMERIC name saved, because we are normally switched
+         * into the C locale for it.  Switch back so an LC_ALL query will yield
+         * the correct results; all other categories don't require special
+         * handling */
+        if (locale == 0) {
+            if (category == LC_NUMERIC) {
+                XSRETURN_PV(PL_numeric_name);
+            }
+#   ifdef LC_ALL
+            else if (category == LC_ALL) {
+                SET_NUMERIC_UNDERLYING();
+            }
+#   endif
+        }
+#endif
 #ifdef WIN32    /* Use wrapper on Windows */
 	retval = Perl_my_setlocale(aTHX_ category, locale);
 #else
 	retval = setlocale(category, locale);
 #endif
+        DEBUG_L(PerlIO_printf(Perl_debug_log,
+            "%s:%d: %s\n", __FILE__, __LINE__,
+                _setlocale_debug_string(category, locale, retval)));
 	if (! retval) {
+            /* Should never happen that a query would return an error, but be
+             * sure and reset to C locale */
+            if (locale == 0) {
+                SET_NUMERIC_STANDARD();
+            }
             XSRETURN_UNDEF;
         }
+
+        /* Save retval since subsequent setlocale() calls may overwrite it. */
+        retval = savepv(retval);
+        SAVEFREEPV(retval);
+
+        /* For locale == 0, we may have switched to NUMERIC_UNDERLYING.  Switch
+         * back */
+        if (locale == 0) {
+            SET_NUMERIC_STANDARD();
+            XSRETURN_PV(retval);
+        }
         else {
-	    /* Save retval since subsequent setlocale() calls
-	     * may overwrite it. */
-	    RETVAL = savepv(retval);
+	    RETVAL = retval;
 #ifdef USE_LOCALE_CTYPE
 	    if (category == LC_CTYPE
 #ifdef LC_ALL
@@ -966,8 +2203,12 @@ setlocale(category, locale = 0)
 	    {
 		char *newctype;
 #ifdef LC_ALL
-		if (category == LC_ALL)
+		if (category == LC_ALL) {
 		    newctype = setlocale(LC_CTYPE, NULL);
+                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+                        "%s:%d: %s\n", __FILE__, __LINE__,
+                        _setlocale_debug_string(LC_CTYPE, NULL, newctype)));
+                }
 		else
 #endif
 		    newctype = RETVAL;
@@ -983,8 +2224,12 @@ setlocale(category, locale = 0)
 	    {
 		char *newcoll;
 #ifdef LC_ALL
-		if (category == LC_ALL)
+		if (category == LC_ALL) {
 		    newcoll = setlocale(LC_COLLATE, NULL);
+                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+                        "%s:%d: %s\n", __FILE__, __LINE__,
+                        _setlocale_debug_string(LC_COLLATE, NULL, newcoll)));
+                }
 		else
 #endif
 		    newcoll = RETVAL;
@@ -1000,8 +2245,12 @@ setlocale(category, locale = 0)
 	    {
 		char *newnum;
 #ifdef LC_ALL
-		if (category == LC_ALL)
+		if (category == LC_ALL) {
 		    newnum = setlocale(LC_NUMERIC, NULL);
+                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+                        "%s:%d: %s\n", __FILE__, __LINE__,
+                        _setlocale_debug_string(LC_NUMERIC, NULL, newnum)));
+                }
 		else
 #endif
 		    newnum = RETVAL;
@@ -1011,61 +2260,509 @@ setlocale(category, locale = 0)
 	}
     OUTPUT:
 	RETVAL
-    CLEANUP:
-        Safefree(RETVAL);
 
 NV
 acos(x)
 	NV		x
     ALIAS:
-	asin = 1
-	atan = 2
-	ceil = 3
-	cosh = 4
-	floor = 5
-	log10 = 6
-	sinh = 7
-	tan = 8
-	tanh = 9
+	acosh = 1
+	asin = 2
+	asinh = 3
+	atan = 4
+	atanh = 5
+	cbrt = 6
+	ceil = 7
+	cosh = 8
+	erf = 9
+	erfc = 10
+	exp2 = 11
+	expm1 = 12
+	floor = 13
+	j0 = 14
+	j1 = 15
+	lgamma = 16
+	log10 = 17
+	log1p = 18
+	log2 = 19
+	logb = 20
+	nearbyint = 21
+	rint = 22
+	round = 23
+	sinh = 24
+	tan = 25
+	tanh = 26
+	tgamma = 27
+	trunc = 28
+	y0 = 29
+	y1 = 30
     CODE:
+	PERL_UNUSED_VAR(x);
+	RETVAL = NV_NAN;
 	switch (ix) {
 	case 0:
-	    RETVAL = acos(x);
+	    RETVAL = Perl_acos(x); /* C89 math */
 	    break;
 	case 1:
-	    RETVAL = asin(x);
+#ifdef c99_acosh
+	    RETVAL = c99_acosh(x);
+#else
+	    not_here("acosh");
+#endif
 	    break;
 	case 2:
-	    RETVAL = atan(x);
+	    RETVAL = Perl_asin(x); /* C89 math */
 	    break;
 	case 3:
-	    RETVAL = ceil(x);
+#ifdef c99_asinh
+	    RETVAL = c99_asinh(x);
+#else
+	    not_here("asinh");
+#endif
 	    break;
 	case 4:
-	    RETVAL = cosh(x);
+	    RETVAL = Perl_atan(x); /* C89 math */
 	    break;
 	case 5:
-	    RETVAL = floor(x);
+#ifdef c99_atanh
+	    RETVAL = c99_atanh(x);
+#else
+	    not_here("atanh");
+#endif
 	    break;
 	case 6:
-	    RETVAL = log10(x);
+#ifdef c99_cbrt
+	    RETVAL = c99_cbrt(x);
+#else
+	    not_here("cbrt");
+#endif
 	    break;
 	case 7:
-	    RETVAL = sinh(x);
+	    RETVAL = Perl_ceil(x); /* C89 math */
 	    break;
 	case 8:
-	    RETVAL = tan(x);
+	    RETVAL = Perl_cosh(x); /* C89 math */
 	    break;
+	case 9:
+#ifdef c99_erf
+	    RETVAL = c99_erf(x);
+#else
+	    not_here("erf");
+#endif
+	    break;
+	case 10:
+#ifdef c99_erfc
+	    RETVAL = c99_erfc(x);
+#else
+	    not_here("erfc");
+#endif
+	    break;
+	case 11:
+#ifdef c99_exp2
+	    RETVAL = c99_exp2(x);
+#else
+	    not_here("exp2");
+#endif
+	    break;
+	case 12:
+#ifdef c99_expm1
+	    RETVAL = c99_expm1(x);
+#else
+	    not_here("expm1");
+#endif
+	    break;
+	case 13:
+	    RETVAL = Perl_floor(x); /* C89 math */
+	    break;
+	case 14:
+#ifdef bessel_j0
+	    RETVAL = bessel_j0(x);
+#else
+	    not_here("j0");
+#endif
+	    break;
+	case 15:
+#ifdef bessel_j1
+	    RETVAL = bessel_j1(x);
+#else
+	    not_here("j1");
+#endif
+	    break;
+	case 16:
+        /* XXX Note: the lgamma modifies a global variable (signgam),
+         * which is evil.  Some platforms have lgamma_r, which has
+         * extra output parameter instead of the global variable. */
+#ifdef c99_lgamma
+	    RETVAL = c99_lgamma(x);
+#else
+	    not_here("lgamma");
+#endif
+	    break;
+	case 17:
+	    RETVAL = log10(x); /* C89 math */
+	    break;
+	case 18:
+#ifdef c99_log1p
+	    RETVAL = c99_log1p(x);
+#else
+	    not_here("log1p");
+#endif
+	    break;
+	case 19:
+#ifdef c99_log2
+	    RETVAL = c99_log2(x);
+#else
+	    not_here("log2");
+#endif
+	    break;
+	case 20:
+#ifdef c99_logb
+	    RETVAL = c99_logb(x);
+#elif defined(c99_log2) && FLT_RADIX == 2
+	    RETVAL = Perl_floor(c99_log2(PERL_ABS(x)));
+#else
+	    not_here("logb");
+#endif
+	    break;
+	case 21:
+#ifdef c99_nearbyint
+	    RETVAL = c99_nearbyint(x);
+#else
+	    not_here("nearbyint");
+#endif
+	    break;
+	case 22:
+#ifdef c99_rint
+	    RETVAL = c99_rint(x);
+#else
+	    not_here("rint");
+#endif
+	    break;
+	case 23:
+#ifdef c99_round
+	    RETVAL = c99_round(x);
+#else
+	    not_here("round");
+#endif
+	    break;
+	case 24:
+	    RETVAL = Perl_sinh(x); /* C89 math */
+	    break;
+	case 25:
+	    RETVAL = Perl_tan(x); /* C89 math */
+	    break;
+	case 26:
+	    RETVAL = Perl_tanh(x); /* C89 math */
+	    break;
+	case 27:
+#ifdef c99_tgamma
+	    RETVAL = c99_tgamma(x);
+#else
+	    not_here("tgamma");
+#endif
+	    break;
+	case 28:
+#ifdef c99_trunc
+	    RETVAL = c99_trunc(x);
+#else
+	    not_here("trunc");
+#endif
+	    break;
+	case 29:
+#ifdef bessel_y0
+	    RETVAL = bessel_y0(x);
+#else
+	    not_here("y0");
+#endif
+	    break;
+        case 30:
 	default:
-	    RETVAL = tanh(x);
+#ifdef bessel_y1
+	    RETVAL = bessel_y1(x);
+#else
+	    not_here("y1");
+#endif
+	}
+    OUTPUT:
+	RETVAL
+
+IV
+fegetround()
+    CODE:
+#ifdef HAS_FEGETROUND
+	RETVAL = my_fegetround();
+#else
+	RETVAL = -1;
+	not_here("fegetround");
+#endif
+    OUTPUT:
+	RETVAL
+
+IV
+fesetround(x)
+	IV	x
+    CODE:
+#ifdef HAS_FEGETROUND /* canary for fesetround */
+	RETVAL = fesetround(x);
+#elif defined(HAS_FPGETROUND) /* canary for fpsetround */
+	switch (x) {
+	case FE_TONEAREST:  RETVAL = fpsetround(FP_RN); break;
+	case FE_TOWARDZERO: RETVAL = fpsetround(FP_RZ); break;
+	case FE_DOWNWARD:   RETVAL = fpsetround(FP_RM); break;
+	case FE_UPWARD:     RETVAL = fpsetround(FP_RP); break;
+        default: RETVAL = -1; break;
+	}
+#elif defined(__osf__) /* Tru64 */
+	switch (x) {
+	case FE_TONEAREST:  RETVAL = write_rnd(FP_RND_RN); break;
+	case FE_TOWARDZERO: RETVAL = write_rnd(FP_RND_RZ); break;
+	case FE_DOWNWARD:   RETVAL = write_rnd(FP_RND_RM); break;
+	case FE_UPWARD:     RETVAL = write_rnd(FP_RND_RP); break;
+        default: RETVAL = -1; break;
+	}
+#else
+	PERL_UNUSED_VAR(x);
+	RETVAL = -1;
+	not_here("fesetround");
+#endif
+    OUTPUT:
+	RETVAL
+
+IV
+fpclassify(x)
+	NV		x
+    ALIAS:
+	ilogb = 1
+	isfinite = 2
+	isinf = 3
+	isnan = 4
+	isnormal = 5
+	lrint = 6
+	lround = 7
+        signbit = 8
+    CODE:
+        PERL_UNUSED_VAR(x);
+	RETVAL = -1;
+	switch (ix) {
+	case 0:
+#ifdef c99_fpclassify
+	    RETVAL = c99_fpclassify(x);
+#else
+	    not_here("fpclassify");
+#endif
+	    break;
+	case 1:
+#ifdef c99_ilogb
+	    RETVAL = c99_ilogb(x);
+#else
+	    not_here("ilogb");
+#endif
+	    break;
+	case 2:
+	    RETVAL = Perl_isfinite(x);
+	    break;
+	case 3:
+	    RETVAL = Perl_isinf(x);
+	    break;
+	case 4:
+	    RETVAL = Perl_isnan(x);
+	    break;
+	case 5:
+#ifdef c99_isnormal
+	    RETVAL = c99_isnormal(x);
+#else
+	    not_here("isnormal");
+#endif
+	    break;
+	case 6:
+#ifdef c99_lrint
+	    RETVAL = c99_lrint(x);
+#else
+	    not_here("lrint");
+#endif
+	    break;
+	case 7:
+#ifdef c99_lround
+	    RETVAL = c99_lround(x);
+#else
+	    not_here("lround");
+#endif
+	    break;
+	case 8:
+	default:
+#ifdef Perl_signbit
+	    RETVAL = Perl_signbit(x);
+#else
+	    RETVAL = (x < 0) || (x == -0.0);
+#endif
+	    break;
 	}
     OUTPUT:
 	RETVAL
 
 NV
-fmod(x,y)
+getpayload(nv)
+	NV nv
+    CODE:
+	RETVAL = S_getpayload(nv);
+    OUTPUT:
+	RETVAL
+
+void
+setpayload(nv, payload)
+	NV nv
+	NV payload
+    CODE:
+	S_setpayload(&nv, payload, FALSE);
+    OUTPUT:
+	nv
+
+void
+setpayloadsig(nv, payload)
+	NV nv
+	NV payload
+    CODE:
+	nv = NV_NAN;
+	S_setpayload(&nv, payload, TRUE);
+    OUTPUT:
+	nv
+
+int
+issignaling(nv)
+	NV nv
+    CODE:
+	RETVAL = Perl_isnan(nv) && NV_NAN_IS_SIGNALING(&nv);
+    OUTPUT:
+	RETVAL
+
+NV
+copysign(x,y)
 	NV		x
 	NV		y
+    ALIAS:
+	fdim = 1
+	fmax = 2
+	fmin = 3
+	fmod = 4
+	hypot = 5
+	isgreater = 6
+	isgreaterequal = 7
+	isless = 8
+	islessequal = 9
+	islessgreater = 10
+	isunordered = 11
+	nextafter = 12
+	nexttoward = 13
+	remainder = 14
+    CODE:
+        PERL_UNUSED_VAR(x);
+        PERL_UNUSED_VAR(y);
+	RETVAL = NV_NAN;
+	switch (ix) {
+	case 0:
+#ifdef c99_copysign
+	    RETVAL = c99_copysign(x, y);
+#else
+	    not_here("copysign");
+#endif
+	    break;
+	case 1:
+#ifdef c99_fdim
+	    RETVAL = c99_fdim(x, y);
+#else
+	    not_here("fdim");
+#endif
+	    break;
+	case 2:
+#ifdef c99_fmax
+	    RETVAL = c99_fmax(x, y);
+#else
+	    not_here("fmax");
+#endif
+	    break;
+	case 3:
+#ifdef c99_fmin
+	    RETVAL = c99_fmin(x, y);
+#else
+	    not_here("fmin");
+#endif
+	    break;
+	case 4:
+	    RETVAL = Perl_fmod(x, y); /* C89 math */
+	    break;
+	case 5:
+#ifdef c99_hypot
+	    RETVAL = c99_hypot(x, y);
+#else
+	    not_here("hypot");
+#endif
+	    break;
+	case 6:
+#ifdef c99_isgreater
+	    RETVAL = c99_isgreater(x, y);
+#else
+	    not_here("isgreater");
+#endif
+	    break;
+	case 7:
+#ifdef c99_isgreaterequal
+	    RETVAL = c99_isgreaterequal(x, y);
+#else
+	    not_here("isgreaterequal");
+#endif
+	    break;
+	case 8:
+#ifdef c99_isless
+	    RETVAL = c99_isless(x, y);
+#else
+	    not_here("isless");
+#endif
+	    break;
+	case 9:
+#ifdef c99_islessequal
+	    RETVAL = c99_islessequal(x, y);
+#else
+	    not_here("islessequal");
+#endif
+	    break;
+	case 10:
+#ifdef c99_islessgreater
+	    RETVAL = c99_islessgreater(x, y);
+#else
+	    not_here("islessgreater");
+#endif
+	    break;
+	case 11:
+#ifdef c99_isunordered
+	    RETVAL = c99_isunordered(x, y);
+#else
+	    not_here("isunordered");
+#endif
+	    break;
+	case 12:
+#ifdef c99_nextafter
+	    RETVAL = c99_nextafter(x, y);
+#else
+	    not_here("nextafter");
+#endif
+	    break;
+	case 13:
+#ifdef c99_nexttoward
+	    RETVAL = c99_nexttoward(x, y);
+#else
+	    not_here("nexttoward");
+#endif
+	    break;
+	case 14:
+	default:
+#ifdef c99_remainder
+          RETVAL = c99_remainder(x, y);
+#else
+          not_here("remainder");
+#endif
+	    break;
+	}
+	OUTPUT:
+	    RETVAL
 
 void
 frexp(x)
@@ -1073,7 +2770,7 @@ frexp(x)
     PPCODE:
 	int expvar;
 	/* (We already know stack is long enough.) */
-	PUSHs(sv_2mortal(newSVnv(frexp(x,&expvar))));
+	PUSHs(sv_2mortal(newSVnv(Perl_frexp(x,&expvar)))); /* C89 math */
 	PUSHs(sv_2mortal(newSViv(expvar)));
 
 NV
@@ -1087,8 +2784,116 @@ modf(x)
     PPCODE:
 	NV intvar;
 	/* (We already know stack is long enough.) */
-	PUSHs(sv_2mortal(newSVnv(Perl_modf(x,&intvar))));
+	PUSHs(sv_2mortal(newSVnv(Perl_modf(x,&intvar)))); /* C89 math */
 	PUSHs(sv_2mortal(newSVnv(intvar)));
+
+void
+remquo(x,y)
+	NV		x
+	NV		y
+    PPCODE:
+#ifdef c99_remquo
+        int intvar;
+        PUSHs(sv_2mortal(newSVnv(c99_remquo(x,y,&intvar))));
+        PUSHs(sv_2mortal(newSVnv(intvar)));
+#else
+	PERL_UNUSED_VAR(x);
+	PERL_UNUSED_VAR(y);
+	not_here("remquo");
+#endif
+
+NV
+scalbn(x,y)
+	NV		x
+	IV		y
+    CODE:
+#ifdef c99_scalbn
+	RETVAL = c99_scalbn(x, y);
+#else
+	PERL_UNUSED_VAR(x);
+	PERL_UNUSED_VAR(y);
+	RETVAL = NV_NAN;
+	not_here("scalbn");
+#endif
+    OUTPUT:
+	RETVAL
+
+NV
+fma(x,y,z)
+	NV		x
+	NV		y
+	NV		z
+    CODE:
+#ifdef c99_fma
+	RETVAL = c99_fma(x, y, z);
+#else
+	PERL_UNUSED_VAR(x);
+	PERL_UNUSED_VAR(y);
+	PERL_UNUSED_VAR(z);
+	not_here("fma");
+#endif
+    OUTPUT:
+	RETVAL
+
+NV
+nan(payload = 0)
+	NV payload
+    CODE:
+#ifdef NV_NAN
+        /* If no payload given, just return the default NaN.
+         * This makes a difference in platforms where the default
+         * NaN is not all zeros. */
+	if (items == 0) {
+          RETVAL = NV_NAN;
+	} else {
+          S_setpayload(&RETVAL, payload, FALSE);
+        }
+#elif defined(c99_nan)
+	{
+	  STRLEN elen = my_snprintf(PL_efloatbuf, PL_efloatsize, "%g", nv);
+          if ((IV)elen == -1) {
+	    RETVAL = NV_NAN;
+          } else {
+            RETVAL = c99_nan(PL_efloatbuf);
+          }
+        }
+#else
+	not_here("nan");
+#endif
+    OUTPUT:
+	RETVAL
+
+NV
+jn(x,y)
+	IV		x
+	NV		y
+    ALIAS:
+	yn = 1
+    CODE:
+	RETVAL = NV_NAN;
+        switch (ix) {
+	case 0:
+#ifdef bessel_jn
+          RETVAL = bessel_jn(x, y);
+#else
+	  PERL_UNUSED_VAR(x);
+	  PERL_UNUSED_VAR(y);
+          not_here("jn");
+#endif
+            break;
+	case 1:
+	default:
+#ifdef bessel_yn
+          RETVAL = bessel_yn(x, y);
+#else
+	  PERL_UNUSED_VAR(x);
+	  PERL_UNUSED_VAR(y);
+          not_here("yn");
+#endif
+            break;
+	}
+    OUTPUT:
+	RETVAL
 
 SysRet
 sigaction(sig, optaction, oldaction = 0)
@@ -1096,10 +2901,10 @@ sigaction(sig, optaction, oldaction = 0)
 	SV *			optaction
 	POSIX::SigAction	oldaction
     CODE:
-#if defined(WIN32) || defined(NETWARE)
+#if defined(WIN32) || defined(NETWARE) || (defined(__amigaos4__) && defined(__NEWLIB__))
 	RETVAL = not_here("sigaction");
 #else
-# This code is really grody because we're trying to make the signal
+# This code is really grody because we are trying to make the signal
 # interface look beautiful, which is hard.
 
 	{
@@ -1286,7 +3091,11 @@ sigpending(sigset)
     ALIAS:
 	sigsuspend = 1
     CODE:
+#ifdef __amigaos4__
+	RETVAL = not_here("sigpending");
+#else
 	RETVAL = ix ? sigsuspend(sigset) : sigpending(sigset);
+#endif
     OUTPUT:
 	RETVAL
     CLEANUP:
@@ -1323,26 +3132,34 @@ dup2(fd1, fd2)
 	int		fd1
 	int		fd2
     CODE:
+	if (fd1 >= 0 && fd2 >= 0) {
 #ifdef WIN32
-	/* RT #98912 - More Microsoft muppetry - failing to actually implemented
-	   the well known documented POSIX behaviour for a POSIX API.
-	   http://msdn.microsoft.com/en-us/library/8syseb29.aspx   */
-	RETVAL = dup2(fd1, fd2) == -1 ? -1 : fd2;
+            /* RT #98912 - More Microsoft muppetry - failing to
+               actually implemented the well known documented POSIX
+               behaviour for a POSIX API.
+               http://msdn.microsoft.com/en-us/library/8syseb29.aspx  */
+            RETVAL = dup2(fd1, fd2) == -1 ? -1 : fd2;
 #else
-	RETVAL = dup2(fd1, fd2);
+            RETVAL = dup2(fd1, fd2);
 #endif
+        } else {
+            SETERRNO(EBADF,RMS_IFI);
+            RETVAL = -1;
+        }
     OUTPUT:
 	RETVAL
 
 SV *
 lseek(fd, offset, whence)
-	int		fd
+	POSIX::Fd	fd
 	Off_t		offset
 	int		whence
     CODE:
-	Off_t pos = PerlLIO_lseek(fd, offset, whence);
-	RETVAL = sizeof(Off_t) > sizeof(IV)
-		 ? newSVnv((NV)pos) : newSViv((IV)pos);
+	{
+              Off_t pos = PerlLIO_lseek(fd, offset, whence);
+              RETVAL = sizeof(Off_t) > sizeof(IV)
+                ? newSVnv((NV)pos) : newSViv((IV)pos);
+        }
     OUTPUT:
 	RETVAL
 
@@ -1373,7 +3190,7 @@ read(fd, buffer, nbytes)
     PREINIT:
         SV *sv_buffer = SvROK(ST(1)) ? SvRV(ST(1)) : ST(1);
     INPUT:
-        int             fd
+	POSIX::Fd	fd
         size_t          nbytes
         char *          buffer = sv_grow( sv_buffer, nbytes+1 );
     CLEANUP:
@@ -1394,11 +3211,11 @@ setsid()
 
 pid_t
 tcgetpgrp(fd)
-	int		fd
+	POSIX::Fd	fd
 
 SysRet
 tcsetpgrp(fd, pgrp_id)
-	int		fd
+	POSIX::Fd	fd
 	pid_t		pgrp_id
 
 void
@@ -1420,7 +3237,7 @@ uname()
 
 SysRet
 write(fd, buffer, nbytes)
-	int		fd
+	POSIX::Fd	fd
 	char *		buffer
 	size_t		nbytes
 
@@ -1430,8 +3247,21 @@ tmpnam()
 	STRLEN i;
 	int len;
     CODE:
-	RETVAL = newSVpvn("", 0);
+	RETVAL = newSVpvs("");
 	SvGROW(RETVAL, L_tmpnam);
+	/* Yes, we know tmpnam() is bad.  So bad that some compilers
+	 * and linkers warn against using it.  But it is here for
+	 * completeness.  POSIX.pod warns against using it.
+	 *
+	 * Then again, maybe this should be removed at some point.
+	 * No point in enabling dangerous interfaces. */
+        if (ckWARN_d(WARN_DEPRECATED)) {
+	    HV *warned = get_hv("POSIX::_warned", GV_ADD | GV_ADDMULTI);
+            if (! hv_exists(warned, (const char *)&PL_op, sizeof(PL_op))) {
+                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED), "Calling POSIX::tmpnam() is deprecated");
+                (void)hv_store(warned, (const char *)&PL_op, sizeof(PL_op), &PL_sv_yes, 0);
+            }
+        }
 	len = strlen(tmpnam(SvPV(RETVAL, i)));
 	SvCUR_set(RETVAL, len);
     OUTPUT:
@@ -1480,17 +3310,42 @@ strtod(str)
 	double num;
 	char *unparsed;
     PPCODE:
-        STORE_NUMERIC_STANDARD_FORCE_LOCAL();
+        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+        STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
 	num = strtod(str, &unparsed);
 	PUSHs(sv_2mortal(newSVnv(num)));
-	if (GIMME == G_ARRAY) {
+	if (GIMME_V == G_ARRAY) {
 	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
 	    else
 		PUSHs(&PL_sv_undef);
 	}
-        RESTORE_NUMERIC_STANDARD();
+        RESTORE_LC_NUMERIC_STANDARD();
+
+#ifdef HAS_STRTOLD
+
+void
+strtold(str)
+	char *		str
+    PREINIT:
+	long double num;
+	char *unparsed;
+    PPCODE:
+        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+        STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
+	num = strtold(str, &unparsed);
+	PUSHs(sv_2mortal(newSVnv(num)));
+	if (GIMME_V == G_ARRAY) {
+	    EXTEND(SP, 1);
+	    if (unparsed)
+		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+	    else
+		PUSHs(&PL_sv_undef);
+	}
+        RESTORE_LC_NUMERIC_STANDARD();
+
+#endif
 
 void
 strtol(str, base = 0)
@@ -1500,20 +3355,29 @@ strtol(str, base = 0)
 	long num;
 	char *unparsed;
     PPCODE:
-	num = strtol(str, &unparsed, base);
-#if IVSIZE <= LONGSIZE
-	if (num < IV_MIN || num > IV_MAX)
-	    PUSHs(sv_2mortal(newSVnv((double)num)));
-	else
+	if (base == 0 || (base >= 2 && base <= 36)) {
+            num = strtol(str, &unparsed, base);
+#if IVSIZE < LONGSIZE
+            if (num < IV_MIN || num > IV_MAX)
+                PUSHs(sv_2mortal(newSVnv((double)num)));
+            else
 #endif
-	    PUSHs(sv_2mortal(newSViv((IV)num)));
-	if (GIMME == G_ARRAY) {
-	    EXTEND(SP, 1);
-	    if (unparsed)
-		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
-	    else
-		PUSHs(&PL_sv_undef);
-	}
+                PUSHs(sv_2mortal(newSViv((IV)num)));
+            if (GIMME_V == G_ARRAY) {
+                EXTEND(SP, 1);
+                if (unparsed)
+                    PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+                else
+                    PUSHs(&PL_sv_undef);
+            }
+        } else {
+	    SETERRNO(EINVAL, LIB_INVARG);
+            PUSHs(&PL_sv_undef);
+            if (GIMME_V == G_ARRAY) {
+               EXTEND(SP, 1);
+               PUSHs(&PL_sv_undef);
+            }
+        }
 
 void
 strtoul(str, base = 0)
@@ -1523,20 +3387,31 @@ strtoul(str, base = 0)
 	unsigned long num;
 	char *unparsed;
     PPCODE:
-	num = strtoul(str, &unparsed, base);
+	PERL_UNUSED_VAR(str);
+	PERL_UNUSED_VAR(base);
+	if (base == 0 || (base >= 2 && base <= 36)) {
+            num = strtoul(str, &unparsed, base);
 #if IVSIZE <= LONGSIZE
-	if (num > IV_MAX)
-	    PUSHs(sv_2mortal(newSVnv((double)num)));
-	else
+            if (num > IV_MAX)
+                PUSHs(sv_2mortal(newSVnv((double)num)));
+            else
 #endif
-	    PUSHs(sv_2mortal(newSViv((IV)num)));
-	if (GIMME == G_ARRAY) {
-	    EXTEND(SP, 1);
-	    if (unparsed)
-		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
-	    else
-		PUSHs(&PL_sv_undef);
-	}
+                PUSHs(sv_2mortal(newSViv((IV)num)));
+            if (GIMME_V == G_ARRAY) {
+                EXTEND(SP, 1);
+                if (unparsed)
+                    PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
+                else
+                  PUSHs(&PL_sv_undef);
+            }
+	} else {
+	    SETERRNO(EINVAL, LIB_INVARG);
+            PUSHs(&PL_sv_undef);
+            if (GIMME_V == G_ARRAY) {
+               EXTEND(SP, 1);
+               PUSHs(&PL_sv_undef);
+            }
+        }
 
 void
 strxfrm(src)
@@ -1545,11 +3420,13 @@ strxfrm(src)
 	{
           STRLEN srclen;
           STRLEN dstlen;
+          STRLEN buflen;
           char *p = SvPV(src,srclen);
           srclen++;
-          ST(0) = sv_2mortal(newSV(srclen*4+1));
-          dstlen = strxfrm(SvPVX(ST(0)), p, (size_t)srclen);
-          if (dstlen > srclen) {
+          buflen = srclen * 4 + 1;
+          ST(0) = sv_2mortal(newSV(buflen));
+          dstlen = strxfrm(SvPVX(ST(0)), p, (size_t)buflen);
+          if (dstlen >= buflen) {
               dstlen++;
               SvGROW(ST(0), dstlen);
               strxfrm(SvPVX(ST(0)), p, (size_t)dstlen);
@@ -1577,27 +3454,37 @@ mkfifo(filename, mode)
 
 SysRet
 tcdrain(fd)
-	int		fd
+	POSIX::Fd	fd
     ALIAS:
 	close = 1
 	dup = 2
     CODE:
-	RETVAL = ix == 1 ? close(fd)
-	    : (ix < 1 ? tcdrain(fd) : dup(fd));
+	if (fd >= 0) {
+	    RETVAL = ix == 1 ? close(fd)
+	      : (ix < 1 ? tcdrain(fd) : dup(fd));
+	} else {
+	    SETERRNO(EBADF,RMS_IFI);
+	    RETVAL = -1;
+	}
     OUTPUT:
 	RETVAL
 
 
 SysRet
 tcflow(fd, action)
-	int		fd
+	POSIX::Fd	fd
 	int		action
     ALIAS:
 	tcflush = 1
 	tcsendbreak = 2
     CODE:
-	RETVAL = ix == 1 ? tcflush(fd, action)
-	    : (ix < 1 ? tcflow(fd, action) : tcsendbreak(fd, action));
+        if (action >= 0) {
+            RETVAL = ix == 1 ? tcflush(fd, action)
+              : (ix < 1 ? tcflow(fd, action) : tcsendbreak(fd, action));
+        } else {
+            SETERRNO(EINVAL,LIB_INVARG);
+            RETVAL = -1;
+        }
     OUTPUT:
 	RETVAL
 
@@ -1686,6 +3573,7 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
     CODE:
 	{
 	    char *buf;
+            SV *sv;
 
             /* allowing user-supplied (rather than literal) formats
              * is normally frowned upon as a potential security risk;
@@ -1693,14 +3581,30 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
             GCC_DIAG_IGNORE(-Wformat-nonliteral);
 	    buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
             GCC_DIAG_RESTORE;
+            sv = sv_newmortal();
 	    if (buf) {
-		SV *const sv = sv_newmortal();
-		sv_usepvn_flags(sv, buf, strlen(buf), SV_HAS_TRAILING_NUL);
-		if (SvUTF8(fmt)) {
+                STRLEN len = strlen(buf);
+		sv_usepvn_flags(sv, buf, len, SV_HAS_TRAILING_NUL);
+		if (SvUTF8(fmt)
+                    || (! is_invariant_string((U8*) buf, len)
+                        && is_utf8_string((U8*) buf, len)
+#ifdef USE_LOCALE_TIME
+                        && _is_cur_LC_category_utf8(LC_TIME)
+#endif
+                )) {
 		    SvUTF8_on(sv);
 		}
-		ST(0) = sv;
-	    }
+            }
+            else {  /* We can't distinguish between errors and just an empty
+                     * return; in all cases just return an empty string */
+                SvUPGRADE(sv, SVt_PV);
+                SvPV_set(sv, (char *) "");
+                SvPOK_on(sv);
+                SvCUR_set(sv, 0);
+                SvLEN_set(sv, 0);   /* Won't attempt to free the string when sv
+                                       gets destroyed */
+            }
+            ST(0) = sv;
 	}
 
 void
@@ -1737,6 +3641,7 @@ cuserid(s = 0)
 #ifdef HAS_CUSERID
   RETVAL = cuserid(s);
 #else
+  PERL_UNUSED_VAR(s);
   RETVAL = 0;
   not_here("cuserid");
 #endif
@@ -1745,7 +3650,7 @@ cuserid(s = 0)
 
 SysRetLong
 fpathconf(fd, name)
-	int		fd
+	POSIX::Fd	fd
 	int		name
 
 SysRetLong
@@ -1780,7 +3685,7 @@ sysconf(name)
 
 char *
 ttyname(fd)
-	int		fd
+	POSIX::Fd	fd
 
 void
 getcwd()
@@ -1802,6 +3707,9 @@ lchown(uid, gid, path)
         * but consistent with CORE::chown() */
        RETVAL = lchown(path, uid, gid);
 #else
+       PERL_UNUSED_VAR(uid);
+       PERL_UNUSED_VAR(gid);
+       PERL_UNUSED_VAR(path);
        RETVAL = not_here("lchown");
 #endif
     OUTPUT:

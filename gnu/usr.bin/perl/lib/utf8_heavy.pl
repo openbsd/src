@@ -20,7 +20,7 @@ sub _loose_name ($) {
     # out blanks, underscores and dashes.  The complication stems from the
     # grandfathered-in 'L_', which retains a single trailing underscore.
 
-    my $loose = $_[0] =~ s/[-\s_]//rg;
+    (my $loose = $_[0]) =~ s/[-_ \t]//g;
 
     return $loose if $loose !~ / ^ (?: is | to )? l $/x;
     return 'l_' if $_[0] =~ / l .* _ /x;    # If original had a trailing '_'
@@ -62,7 +62,7 @@ sub _loose_name ($) {
         ##     op.c:pmtrans             -- for tr/// and y///
         ##     regexec.c:regclass_swash -- for /[]/, \p, and \P
         ##     utf8.c:is_utf8_common    -- for common Unicode properties
-        ##     utf8.c:to_utf8_case      -- for lc, uc, ucfirst, etc. and //i
+        ##     utf8.c:S__to_utf8_case   -- for lc, uc, ucfirst, etc. and //i
         ##     Unicode::UCD::prop_invlist
         ##     Unicode::UCD::prop_invmap
         ##
@@ -95,9 +95,9 @@ sub _loose_name ($) {
         #   keys TYPE, BITS, EXTRAS, LIST, and NONE with values having the
         #   same meanings as the input parameters.
         #   SPECIALS contains a reference to any special-treatment hash in the
+        #       property.
         #   INVERT_IT is non-zero if the result should be inverted before use
         #   USER_DEFINED is non-zero if the result came from a user-defined
-        #       property.
         my $file; ## file to load data from, and also part of the %Cache key.
 
         # Change this to get a different set of Unicode tables
@@ -135,8 +135,11 @@ sub _loose_name ($) {
 
 
                 my $caller0 = caller(0);
-                my $caller1 = $type =~ s/(.+)::// ? $1 : $caller0 eq 'main' ?
-                'main' : caller(1);
+                my $caller1 = $type =~ s/(.+):://
+                              ? $1
+                              : $caller0 eq 'main'
+                                ? 'main'
+                                : caller(1);
 
                 if (defined $caller1 && $type =~ /^I[ns]\w+$/) {
                     my $prop = "${caller1}::$type";
@@ -172,7 +175,11 @@ sub _loose_name ($) {
                 }
                 if (miniperl) {
                     eval "require '$unicore_dir/Heavy.pl'";
-                    last GETFILE if $@;
+                    if ($@) {
+                        print STDERR __LINE__, ": '$@'\n" if DEBUG;
+                        pop @recursed if @recursed;
+                        return $type;
+                    }
                 }
                 else {
                     require "$unicore_dir/Heavy.pl";
@@ -219,7 +226,7 @@ sub _loose_name ($) {
 
                     # If the rhs looks like it is a number...
                     print STDERR __LINE__, ": table=$table\n" if DEBUG;
-                    if ($table =~ qr{ ^ [ \s 0-9 _  + / . -]+ $ }x) {
+                    if ($table =~ m{ ^ [ \s 0-9 _  + / . -]+ $ }x) {
                         print STDERR __LINE__, ": table=$table\n" if DEBUG;
 
                         # Don't allow leading nor trailing slashes 
@@ -229,7 +236,7 @@ sub _loose_name ($) {
                         }
 
                         # Split on slash, in case it is a rational, like \p{1/5}
-                        my @parts = split qr{ \s* / \s* }x, $table, -1;
+                        my @parts = split m{ \s* / \s* }x, $table, -1;
                         print __LINE__, ": $type\n" if @parts > 2 && DEBUG;
 
                         # Can have maximum of one slash
@@ -282,8 +289,8 @@ sub _loose_name ($) {
                             if ($parts[1] =~ s/^-//) {
 
                                 # If numerator is also negative, convert the
-                                # whole thing to positive, or move the minus to
-                                # the numerator
+                                # whole thing to positive, else move the minus
+                                # to the numerator
                                 if ($parts[0] !~ s/^-//) {
                                     $parts[0] = '-' . $parts[0];
                                 }
@@ -397,7 +404,11 @@ sub _loose_name ($) {
                 # If didn't find it, try again with looser matching by editing
                 # out the applicable characters on the rhs and looking up
                 # again.
+                my $strict_property_and_table;
                 if (! defined $file) {
+
+                    # This isn't used unless the name begins with 'to'
+                    $strict_property_and_table = $property_and_table =~  s/^to//r;
                     $table = _loose_name($table);
                     $property_and_table = "$prefix$table";
                     print STDERR __LINE__, ": $property_and_table\n" if DEBUG;
@@ -436,61 +447,51 @@ sub _loose_name ($) {
                 ## is to use Unicode::UCD.
                 ##
                 # Only check if caller wants non-binary
-                my $retried = 0;
-                if ($minbits != 1 && $property_and_table =~ s/^to//) {{
+                if ($minbits != 1) {
+                    if ($property_and_table =~ s/^to//) {
                     # Look input up in list of properties for which we have
-                    # mapping files.
-                    if (defined ($file =
+                    # mapping files.  First do it with the strict approach
+                        if (defined ($file = $utf8::strict_property_to_file_of{
+                                                    $strict_property_and_table}))
+                        {
+                            $type = $utf8::file_to_swash_name{$file};
+                            print STDERR __LINE__, ": type set to $type\n"
+                                                                        if DEBUG;
+                            $file = "$unicore_dir/$file.pl";
+                            last GETFILE;
+                        }
+                        elsif (defined ($file =
                           $utf8::loose_property_to_file_of{$property_and_table}))
-                    {
-                        $type = $utf8::file_to_swash_name{$file};
-                        print STDERR __LINE__, ": type set to $type\n" if DEBUG;
-                        $file = "$unicore_dir/$file.pl";
-                        last GETFILE;
-                    }   # If that fails see if there is a corresponding binary
-                        # property file
-                    elsif (defined ($file =
-                                   $utf8::loose_to_file_of{$property_and_table}))
-                    {
+                        {
+                            $type = $utf8::file_to_swash_name{$file};
+                            print STDERR __LINE__, ": type set to $type\n"
+                                                                        if DEBUG;
+                            $file = "$unicore_dir/$file.pl";
+                            last GETFILE;
+                        }   # If that fails see if there is a corresponding binary
+                            # property file
+                        elsif (defined ($file =
+                                    $utf8::loose_to_file_of{$property_and_table}))
+                        {
 
-                        # Here, there is no map file for the property we are
-                        # trying to get the map of, but this is a binary
-                        # property, and there is a file for it that can easily
-                        # be translated to a mapping.
+                            # Here, there is no map file for the property we
+                            # are trying to get the map of, but this is a
+                            # binary property, and there is a file for it that
+                            # can easily be translated to a mapping, so use
+                            # that, treating this as a binary property.
+                            # Setting 'minbits' here causes it to be stored as
+                            # such in the cache, so if someone comes along
+                            # later looking for just a binary, they get it.
+                            $minbits = 1;
 
-                        # In the case of properties that are forced to binary,
-                        # they are a combination.  We return the actual
-                        # mapping instead of the binary.  If the input is
-                        # something like 'Tocjkkiicore', it will be found in
-                        # %loose_property_to_file_of above as => 'To/kIICore'.
-                        # But the form like ToIskiicore won't be.  To fix
-                        # this, it was easiest to do it here.  These
-                        # properties are the complements of the default
-                        # property, so there is an entry in %loose_to_file_of
-                        # that is 'iskiicore' => '!kIICore/N', If we find such
-                        # an entry, strip off things and try again, which
-                        # should find the entry in %loose_property_to_file_of.
-                        # Actual binary properties that are of this form, such
-                        # as this entry: 'ishrkt' => '!Perl/Any' will also be
-                        # retried, but won't be in %loose_property_to_file_of,
-                        # and instead the next time through, it will find
-                        # 'hrkt' => '!Perl/Any' and proceed.
-                        redo if ! $retried
-                                && $file =~ /^!/
-                                && $property_and_table =~ s/^is//;
-
-                        # This is a binary property.  Setting this here causes
-                        # it to be stored as such in the cache, so if someone
-                        # comes along later looking for just a binary, they
-                        # get it.
-                        $minbits = 1;
-
-                        # The 0+ makes sure is numeric
-                        $invert_it = 0 + $file =~ s/!//;
-                        $file = "$unicore_dir/lib/$file.pl" unless $file =~ m!^#/!;
-                        last GETFILE;
+                            # The 0+ makes sure is numeric
+                            $invert_it = 0 + $file =~ s/!//;
+                            $file = "$unicore_dir/lib/$file.pl"
+                                                         unless $file =~ m!^#/!;
+                            last GETFILE;
+                        }
                     }
-                } }
+                }
 
                 ##
                 ## If we reach this line, it's because we couldn't figure
@@ -567,8 +568,8 @@ sub _loose_name ($) {
                 $list = join '', $taint,
                         map  { $_->[1] }
                         sort { $a->[0] <=> $b->[0] }
-                        map  { /^([0-9a-fA-F]+)/; [ CORE::hex($1), $_ ] }
-                        grep { /^([0-9a-fA-F]+)/ and not $seen{$1}++ } @tmp; # XXX doesn't do ranges right
+                        map  { /^([0-9a-fA-F]+)/ && !$seen{$1}++ ? [ CORE::hex($1), $_ ] : () }
+                        @tmp; # XXX doesn't do ranges right
             }
             else {
                 # mktables has gone to some trouble to make non-user defined

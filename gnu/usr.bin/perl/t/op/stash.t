@@ -7,7 +7,7 @@ BEGIN {
 
 BEGIN { require "./test.pl"; }
 
-plan( tests => 58 );
+plan( tests => 51 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
@@ -36,18 +36,6 @@ SKIP: {
   );
 }
 
-{
-    no warnings 'deprecated';
-    ok( defined %oedipa::maas::, q(stashes happen to be defined if not used) );
-    ok( defined %{"oedipa::maas::"}, q(- work with hard refs too) );
-
-    ok( defined %tyrone::slothrop::, q(stashes are defined if seen at compile time) );
-    ok( defined %{"tyrone::slothrop::"}, q(- work with hard refs too) );
-
-    ok( defined %bongo::shaftsbury::, q(stashes are defined if a var is seen at compile time) );
-    ok( defined %{"bongo::shaftsbury::"}, q(- work with hard refs too) );
-}
-
 package tyrone::slothrop;
 $bongo::shaftsbury::scalar = 1;
 
@@ -73,17 +61,10 @@ package main;
 		  );
 }
 
-# now tests in eval
-
-ok( eval  { no warnings 'deprecated'; defined %achtfaden:: },   'works in eval{}' );
-ok( eval q{ no warnings 'deprecated'; defined %schoenmaker:: }, 'works in eval("")' );
-
 # now tests with strictures
 
 {
     use strict;
-    no warnings 'deprecated';
-    ok( defined %pig::, q(referencing a non-existent stash doesn't produce stricture errors) );
     ok( !exists $pig::{bodine}, q(referencing a non-existent stash element doesn't produce stricture errors) );
 }
 
@@ -285,7 +266,7 @@ fresh_perl_is(
     ::is *$globref, "*rile::tat",
      'globs stringify the same way when stashes are moved';
     ::is ref $obj, "rile",
-     'ref() returns the same thing when an object’s stash is moved';
+     'ref() returns the same thing when an object\'s stash is moved';
     ::like "$obj", qr "^rile=ARRAY\(0x[\da-f]+\)\z",
      'objects stringify the same way when their stashes are moved';
     ::is eval '__PACKAGE__', 'rile',
@@ -299,7 +280,7 @@ fresh_perl_is(
     ::is *$globref, "*rile::tat",
      'globs stringify the same way when stashes are detached';
     ::is ref $obj, "rile",
-     'ref() returns the same thing when an object’s stash is detached';
+     'ref() returns the same thing when an object\'s stash is detached';
     ::like "$obj", qr "^rile=ARRAY\(0x[\da-f]+\)\z",
      'objects stringify the same way when their stashes are detached';
     ::is eval '__PACKAGE__', 'rile',
@@ -337,3 +318,19 @@ ok eval '
      sub foo{};
      1
   ', 'no crashing or errors when clobbering the current package';
+
+# Bareword lookup should not vivify stashes
+is runperl(
+    prog =>
+      'sub foo { print shift, qq-\n- } SUPER::foo bar if 0; foo SUPER',
+    stderr => 1,
+   ),
+   "SUPER\n",
+   'bareword lookup does not vivify stashes';
+
+is runperl(
+    prog => '%0; *bar::=*foo::=0; print qq|ok\n|',
+    stderr => 1,
+   ),
+   "ok\n",
+   '[perl #123847] no crash from *foo::=*bar::=*glob_with_hash';

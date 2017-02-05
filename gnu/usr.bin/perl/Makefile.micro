@@ -14,13 +14,13 @@ RUN =
 
 all:	microperl
 
-O = uav$(_O) udeb$(_O) udoio$(_O) udoop$(_O) udump$(_O) \
+O = uav$(_O) udeb$(_O) udoio$(_O) udoop$(_O) udquote$(_O) udump$(_O) \
 	uglobals$(_O) ugv$(_O) uhv$(_O) umro$(_O)\
 	umg$(_O) uperlmain$(_O) uop$(_O) ureentr$(_O) \
 	upad$(_O) uperl$(_O) uperlio$(_O) uperly$(_O) upp$(_O) \
 	upp_ctl$(_O) upp_hot$(_O) upp_sys$(_O) upp_pack$(_O) upp_sort$(_O) \
 	uregcomp$(_O) uregexec$(_O) urun$(_O) \
-	uscope$(_O) usv$(_O) utaint$(_O) utoke$(_O) \
+	uscope$(_O) usv$(_O) utaint$(_O) utime64$(_O) utoke$(_O) \
 	unumeric$(_O) ulocale$(_O) umathoms$(_O) \
 	uuniversal$(_O) uutf8$(_O) uutil$(_O) uperlapi$(_O) ukeywords$(_O)
 
@@ -76,6 +76,9 @@ udoio$(_O):	$(HE) doio.c
 udoop$(_O):	$(HE) doop.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) doop.c
 
+udquote$(_O):	$(HE) dquote.c regcomp.h regnodes.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) dquote.c
+
 udump$(_O):	$(HE) dump.c regcomp.h regnodes.h
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) dump.c
 
@@ -85,8 +88,8 @@ uglobals$(_O):	$(H) globals.c INTERN.h perlapi.h $(generated_headers)
 ugv$(_O):	$(HE) gv.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) gv.c
 
-umro$(_O):	$(HE) mro.c
-	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) mro.c
+umro$(_O):	$(HE) mro_core.c
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) mro_core.c
 
 uhv$(_O):	$(HE) hv.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) hv.c
@@ -153,6 +156,9 @@ usv$(_O):	$(HE) sv.c
 
 utaint$(_O):	$(HE) taint.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) taint.c
+
+utime64$(_O):	$(HE) time64.c time64.h time64_config.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) time64.c
 
 utoke$(_O):	$(HE) toke.c keywords.h
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) toke.c

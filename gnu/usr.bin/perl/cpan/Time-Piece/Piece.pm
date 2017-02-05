@@ -2,13 +2,14 @@ package Time::Piece;
 
 use strict;
 
-require Exporter;
 require DynaLoader;
 use Time::Seconds;
 use Carp;
 use Time::Local;
 
-our @ISA = qw(Exporter DynaLoader);
+our @ISA = qw(DynaLoader);
+ 
+use Exporter ();
 
 our @EXPORT = qw(
     localtime
@@ -19,7 +20,7 @@ our %EXPORT_TAGS = (
     ':override' => 'internal',
     );
 
-our $VERSION = '1.27';
+our $VERSION = '1.31';
 
 bootstrap Time::Piece $VERSION;
 
@@ -31,17 +32,19 @@ my @FULLMON_LIST = qw(January February March April May June July
 my @DAY_LIST = qw(Sun Mon Tue Wed Thu Fri Sat);
 my @FULLDAY_LIST = qw(Sunday Monday Tuesday Wednesday Thursday Friday Saturday);
 
-use constant 'c_sec' => 0;
-use constant 'c_min' => 1;
-use constant 'c_hour' => 2;
-use constant 'c_mday' => 3;
-use constant 'c_mon' => 4;
-use constant 'c_year' => 5;
-use constant 'c_wday' => 6;
-use constant 'c_yday' => 7;
-use constant 'c_isdst' => 8;
-use constant 'c_epoch' => 9;
-use constant 'c_islocal' => 10;
+use constant {
+    'c_sec' => 0,
+    'c_min' => 1,
+    'c_hour' => 2,
+    'c_mday' => 3,
+    'c_mon' => 4,
+    'c_year' => 5,
+    'c_wday' => 6,
+    'c_yday' => 7,
+    'c_isdst' => 8,
+    'c_epoch' => 9,
+    'c_islocal' => 10,
+};
 
 sub localtime {
     unshift @_, __PACKAGE__ unless eval { $_[0]->isa('Time::Piece') };
@@ -62,9 +65,9 @@ sub gmtime {
 sub new {
     my $class = shift;
     my ($time) = @_;
-    
+
     my $self;
-    
+
     if (defined($time)) {
         $self = $class->localtime($time);
     }
@@ -74,7 +77,7 @@ sub new {
     else {
         $self = $class->localtime();
     }
-    
+
     return bless $self, ref($class) || $class;
 }
 
@@ -82,6 +85,10 @@ sub parse {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my @components;
+
+    warnings::warnif("deprecated", 
+        "parse() is deprecated, use strptime() instead.");
+
     if (@_ > 1) {
         @components = @_;
     }
@@ -89,7 +96,7 @@ sub parse {
         @components = shift =~ /(\d+)$DATE_SEP(\d+)$DATE_SEP(\d+)(?:(?:T|\s+)(\d+)$TIME_SEP(\d+)(?:$TIME_SEP(\d+)))/;
         @components = reverse(@components[0..5]);
     }
-    return $class->new(_strftime("%s", @components));
+    return $class->new(_strftime("%s", timelocal(@components)));
 }
 
 sub _mktime {
@@ -98,7 +105,9 @@ sub _mktime {
            ? ref $class
            : $class;
     if (ref($time)) {
-        $time->[c_epoch] = undef;
+        my @tm_parts = (@{$time}[c_sec .. c_mon], $time->[c_year]+1900);
+        $time->[c_epoch] = $islocal ? timelocal(@tm_parts) : timegm(@tm_parts);
+
         return wantarray ? @$time : bless [@$time[0..9], $islocal], $class;
     }
     _tzset();
@@ -122,13 +131,13 @@ sub export {
       no warnings 'redefine';
       *{$to . "::$method"} = $_special_exports{$method}->($class);
     } else {
-      $class->SUPER::export($to, $method);
+      $class->Exporter::export($to, $method);
     }
   }
 }
 
 sub import {
-    # replace CORE::GLOBAL localtime and gmtime if required
+    # replace CORE::GLOBAL localtime and gmtime if passed :override
     my $class = shift;
     my %params;
     map($params{$_}++,@_,@EXPORT);
@@ -136,7 +145,7 @@ sub import {
         $class->export('CORE::GLOBAL', keys %params);
     }
     else {
-        $class->export((caller)[0], keys %params);
+        $class->export(scalar caller, keys %params);
     }
 }
 
@@ -279,7 +288,7 @@ sub isdst {
 # Thanks to Tony Olekshy <olekshy@cs.ualberta.ca> for this algorithm
 sub tzoffset {
     my $time = shift;
-    
+
     return Time::Seconds->new(0) unless $time->[c_islocal];
 
     my $epoch = $time->epoch;
@@ -447,19 +456,22 @@ sub month_last_day {
     return $MON_LAST[$_mon] + ($_mon == 1 ? _is_leap_year($year) : 0);
 }
 
+#since %z and %Z are not portable lets just
+#parse it out before calling native strftime
+#(but only if we are in UTC time)
+my %GMT_REPR = (
+    '%z' => '+0000',
+    '%Z' => 'UTC',
+);
+
 sub strftime {
     my $time = shift;
-    my $tzname = $time->[c_islocal] ? '%Z' : 'UTC';
-    my $format = @_ ? shift(@_) : "%a, %d %b %Y %H:%M:%S $tzname";
-    if (!defined $time->[c_wday]) {
-        if ($time->[c_islocal]) {
-            return _strftime($format, CORE::localtime($time->epoch));
-        }
-        else {
-            return _strftime($format, CORE::gmtime($time->epoch));
-        }
+    my $format = @_ ? shift(@_) : '%a, %d %b %Y %H:%M:%S %Z';
+    if (! $time->[c_islocal]) {
+        $format =~ s/(%.)/$GMT_REPR{$1} || $1/eg;
     }
-    return _strftime($format, (@$time)[c_sec..c_isdst]);
+
+    return _strftime($format, $time->epoch, $time->[c_islocal]);
 }
 
 sub strptime {
@@ -550,7 +562,7 @@ sub subtract {
 	# to override this function.
 	return $rhs - "$time";
     }
-    
+
     if (UNIVERSAL::isa($rhs, 'Time::Piece')) {
         return Time::Seconds->new($time->epoch - $rhs->epoch);
     }
@@ -592,9 +604,9 @@ sub compare {
 
 sub add_months {
     my ($time, $num_months) = @_;
-    
+
     croak("add_months requires a number of months") unless defined($num_months);
-    
+
     my $final_month = $time->_mon + $num_months;
     my $num_years = 0;
     if ($final_month > 11 || $final_month < 0) {
@@ -607,10 +619,10 @@ sub add_months {
             $num_years = int($final_month / 12);
         }
         $num_years-- if ($final_month < 0);
-        
+
         $final_month = $final_month % 12;
     }
-    
+
     my @vals = _mini_mktime($time->sec, $time->min, $time->hour,
                             $time->mday, $final_month, $time->year - 1900 + $num_years);
     # warn(sprintf("got %d vals: %d-%d-%d %d:%d:%d [%d]\n", scalar(@vals), reverse(@vals), $time->[c_islocal]));
@@ -701,7 +713,7 @@ following methods are available on the object:
 
     $t->week                # week number (ISO 8601)
 
-    $t->is_leap_year        # true if it its
+    $t->is_leap_year        # true if it's a leap year
     $t->month_last_day      # 28-31
 
     $t->time_separator($s)  # set the default separator (default ":")

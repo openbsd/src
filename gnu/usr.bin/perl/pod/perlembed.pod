@@ -1089,7 +1089,7 @@ When a Perl interpreter normally starts up, it tells the system it wants
 to use the system's default locale.  This is often, but not necessarily,
 the "C" or "POSIX" locale.  Absent a S<C<"use locale">> within the perl
 code, this mostly has no effect (but see L<perllocale/Not within the
-scope of any "use locale" variant>).  Also, there is not a problem if the
+scope of "use locale">).  Also, there is not a problem if the
 locale you want to use in your embedded Perl is the same as the system
 default.  However, this doesn't work if you have set up and want to use
 a locale that isn't the system default one.  Starting in Perl v5.20, you

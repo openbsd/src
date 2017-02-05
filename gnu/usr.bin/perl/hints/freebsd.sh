@@ -309,3 +309,4 @@ esac
 # Meanwhile, the following workaround should be safe on all versions
 # of FreeBSD.
 d_printf_format_null='undef'
+

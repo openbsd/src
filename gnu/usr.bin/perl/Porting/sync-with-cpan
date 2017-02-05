@@ -157,12 +157,20 @@ my @problematic = (
 );
 
 
+sub usage
+{
+    my $err = shift and select STDERR;
+    print "Usage: $0 module [args] [cpan package]\n";
+    exit $err;
+}
+
 GetOptions ('tarball=s'  =>  \my $tarball,
             'version=s'  =>  \my $version,
-             force       =>  \my $force,)
-        or  die "Failed to parse arguments";
+             force       =>  \my $force,
+             help        =>  sub { usage 0; },
+             ) or  die "Failed to parse arguments";
 
-die "Usage: $0 module [args] [cpan package]" unless @ARGV == 1 || @ARGV == 2;
+usage 1 unless @ARGV == 1 || @ARGV == 2;
 
 sub find_type_f {
     my @res;

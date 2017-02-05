@@ -8,7 +8,7 @@ sigtrap - Perl pragma to enable simple signal handling
 
 use Carp;
 
-$VERSION = 1.07;
+$VERSION = 1.08;
 $Verbose ||= 0;
 
 sub import {
@@ -99,8 +99,8 @@ sub handler_traceback {
 	    s/([\'\\])/\\$1/g;
 	    s/([^\0]*)/'$1'/
 	      unless /^(?: -?[\d.]+ | \*[\w:]* )$/x;
-	    s/([\200-\377])/sprintf("M-%c",ord($1)&0177)/eg;
-	    s/([\0-\37\177])/sprintf("^%c",ord($1)^64)/eg;
+            require 'meta_notation.pm';
+            $_ = _meta_notation($_) if /[[:^print:]]/a;
 	    push(@a, $_);
 	}
 	$w = $w ? '@ = ' : '$ = ';

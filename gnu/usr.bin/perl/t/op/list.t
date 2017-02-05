@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require "./test.pl";
 }
 
-require "test.pl";
-plan( tests => 65 );
+plan( tests => 70 );
 
 @foo = (1, 2, 3, 4);
 cmp_ok($foo[0], '==', 1, 'first elem');
@@ -146,21 +146,28 @@ cmp_ok(join('',(1,2),3,(4,5)),'eq','12345','list (..).(..)');
 
     my $size = scalar(()[1..1]);
     cmp_ok($size,'==','0','size nil');
+
+    $size = scalar(()=((1,2,3,4,5)[()])[2,3,4]);
+    is $size, 0, 'slice of empty list from complex expr is empty list';
+
+    @a = (1)[2,3,4];
+    is "@{[ map $_//'undef', @a ]}", "undef undef undef",
+       'slice beyond the end of non-empty list returns undefs';
 }
 
 {
     # perl #39882
-    sub test_zero_args {
+    sub test_two_args {
         my $test_name = shift;
-        is(scalar(@_), 0, $test_name);
+        is(scalar(@_), 2, $test_name);
     }
-    test_zero_args("simple list slice",      (10,11)[2,3]);
-    test_zero_args("grepped list slice",     grep(1, (10,11)[2,3]));
-    test_zero_args("sorted list slice",      sort((10,11)[2,3]));
-    test_zero_args("assigned list slice",    my @tmp = (10,11)[2,3]);
-    test_zero_args("do-returned list slice", do { (10,11)[2,3]; });
-    test_zero_args("list literal slice",     qw(a b)[2,3]);
-    test_zero_args("empty literal slice",    qw()[2,3]);
+    test_two_args("simple list slice",      (10,11)[2,3]);
+    test_two_args("grepped list slice",     grep(1, (10,11)[2,3]));
+    test_two_args("sorted list slice",      sort((10,11)[2,3]));
+    test_two_args("assigned list slice",    my @tmp = (10,11)[2,3]);
+    test_two_args("do-returned list slice", do { (10,11)[2,3]; });
+    test_two_args("list literal slice",     qw(a b)[2,3]);
+    is (()=qw()[2,3], 0, "empty literal slice");
 }
 
 {
@@ -194,3 +201,22 @@ sub {
 # [perl #122995] Hang when compiling while(1) in a sub-list
 # No ok() or is() necessary.
 sub foo { () = ($a, my $b, ($c, do { while(1) {} })) }
+
+# List assignment and OPpTARGET_MY
+{
+    my ($a,$b);
+    my $foo = "foo";
+    my $bar = "bar";
+    ($a,$b) = ($b = $foo."", $a = $bar . "");
+    is("$a,$b", "foo,bar", 'common vars check accounts for OPpTARGET_MY');
+}
+
+sub TIESCALAR {bless{}}
+sub FETCH {$_[0]{fetched}++}
+sub empty {}
+tie $t, "";
+() = (empty(), ($t)x10); # empty() since sub calls usually result in copies
+is(tied($t)->{fetched}, undef, 'assignment to empty list makes no copies');
+
+# this was passing a trash SV at the top of the stack to SvIV()
+ok(($0[()[()]],1), "[perl #126193] list slice with zero indexes");

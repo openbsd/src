@@ -33,7 +33,7 @@ XS(w32_CORE_all){
      * subs
      */
     const char *function  = (const char *) XSANY.any_ptr;
-    Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, newSVpvn("Win32",5), newSVnv(0.27));
+    Perl_load_module(aTHX_ PERL_LOADMOD_NOIMPORT, newSVpvs("Win32"), newSVnv(0.27));
     SetLastError(err);
     errno = saved_errno;
     /* mark and SP from caller are passed through unchanged */
@@ -46,7 +46,10 @@ XS_EXTERNAL(boot_Win32CORE)
      * and win32/buildext.pl will all generate references to it.  The function
      * should never be called though, as Win32CORE.pm doesn't use DynaLoader.
      */
+    PERL_UNUSED_ARG(cv);
 }
+
+EXTERN_C
 #if !defined(__CYGWIN__) || defined(USEIMPORTLIB)
 __declspec(dllexport)
 #endif

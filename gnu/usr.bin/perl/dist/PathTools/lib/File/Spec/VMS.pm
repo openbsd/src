@@ -4,8 +4,8 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.48_03';
-$VERSION =~ tr/_//;
+$VERSION = '3.63_01';
+$VERSION =~ tr/_//d;
 
 @ISA = qw(File::Spec::Unix);
 
@@ -147,8 +147,7 @@ sub catdir {
             return $self->SUPER::catdir($spath, $sdir)
 	}
 
-	$sdir = $self->eliminate_macros($sdir) unless $sdir =~ /^[\w\-]+\Z(?!\n)/s;
-	$rslt = $self->fixpath($self->eliminate_macros($spath)."/$sdir",1);
+	$rslt = vmspath( unixify($spath) . '/' . unixify($sdir));
 
 	# Special case for VMS absolute directory specs: these will have
 	# had device prepended during trip through Unix syntax in
@@ -198,7 +197,7 @@ sub catfile {
 	if ($spath =~ /^(?<!\^)[^\)\]\/:>]+\)\Z(?!\n)/s && basename($file) eq $file) {
 	    $rslt = "$spath$file";
 	} else {
-           $rslt = $self->eliminate_macros($spath);
+           $rslt = unixify($spath);
            $rslt .= (defined($rslt) && length($rslt) ? '/' : '') . unixify($file);
            $rslt = vmsify($rslt) unless $unix_rpt;
 	}
@@ -207,7 +206,7 @@ sub catfile {
         # Only passed a single file?
         my $xfile = (defined($file) && length($file)) ? $file : '';
 
-        $rslt = $unix_rpt ? $file : vmsify($file);
+        $rslt = $unix_rpt ? $xfile : vmsify($xfile);
     }
     return $self->canonpath($rslt) unless $unix_rpt;
 
@@ -441,13 +440,15 @@ Attempt to convert an absolute file specification to a relative specification.
 
 sub abs2rel {
     my $self = shift;
-    return vmspath(File::Spec::Unix::abs2rel( $self, @_ ))
-        if grep m{/}, @_;
-
     my($path,$base) = @_;
+
     $base = $self->_cwd() unless defined $base and length $base;
 
-    for ($path, $base) { $_ = $self->canonpath($_) }
+    # If there is no device or directory syntax on $base, make sure it
+    # is treated as a directory.
+    $base = vmspath($base) unless $base =~ m{(?<!\^)[\[<:]};
+
+    for ($path, $base) { $_ = $self->rel2abs($_) }
 
     # Are we even starting $path on the same (node::)device as $base?  Note that
     # logical paths or nodename differences may be on the "same device" 
@@ -461,9 +462,7 @@ sub abs2rel {
     
     my ($path_volume, $path_directories, $path_file) = $self->splitpath($path);
     my ($base_volume, $base_directories, $base_file) = $self->splitpath($base);
-    return $path unless lc($path_volume) eq lc($base_volume);
-
-    for ($path, $base) { $_ = $self->rel2abs($_) }
+    return $self->canonpath( $path ) unless lc($path_volume) eq lc($base_volume);
 
     # Now, remove all leading components that are the same
     my @pathchunks = $self->splitdir( $path_directories );
@@ -548,123 +547,11 @@ sub rel2abs {
 }
 
 
-# eliminate_macros() and fixpath() are MakeMaker-specific methods
-# which are used inside catfile() and catdir().  MakeMaker has its own
-# copies as of 6.06_03 which are the canonical ones.  We leave these
-# here, in peace, so that File::Spec continues to work with MakeMakers
-# prior to 6.06_03.
-# 
-# Please consider these two methods deprecated.  Do not patch them,
-# patch the ones in ExtUtils::MM_VMS instead.
-#
-# Update:  MakeMaker 6.48 is still using these routines on VMS.
-# so they need to be kept up to date with ExtUtils::MM_VMS.
-
-sub eliminate_macros {
-    my($self,$path) = @_;
-    return '' unless (defined $path) && ($path ne '');
-    $self = {} unless ref $self;
-
-    if ($path =~ /\s/) {
-      return join ' ', map { $self->eliminate_macros($_) } split /\s+/, $path;
-    }
-
-    my $npath = unixify($path);
-    # sometimes unixify will return a string with an off-by-one trailing null
-    $npath =~ s{\0$}{};
-
-    my($complex) = 0;
-    my($head,$macro,$tail);
-
-    # perform m##g in scalar context so it acts as an iterator
-    while ($npath =~ m#(.*?)\$\((\S+?)\)(.*)#gs) { 
-        if (defined $self->{$2}) {
-            ($head,$macro,$tail) = ($1,$2,$3);
-            if (ref $self->{$macro}) {
-                if (ref $self->{$macro} eq 'ARRAY') {
-                    $macro = join ' ', @{$self->{$macro}};
-                }
-                else {
-                    print "Note: can't expand macro \$($macro) containing ",ref($self->{$macro}),
-                          "\n\t(using MMK-specific deferred substitutuon; MMS will break)\n";
-                    $macro = "\cB$macro\cB";
-                    $complex = 1;
-                }
-            }
-            else { ($macro = unixify($self->{$macro})) =~ s#/\Z(?!\n)##; }
-            $npath = "$head$macro$tail";
-        }
-    }
-    if ($complex) { $npath =~ s#\cB(.*?)\cB#\${$1}#gs; }
-    $npath;
-}
-
-# Deprecated.  See the note above for eliminate_macros().
-
-# Catchall routine to clean up problem MM[SK]/Make macros.  Expands macros
-# in any directory specification, in order to avoid juxtaposing two
-# VMS-syntax directories when MM[SK] is run.  Also expands expressions which
-# are all macro, so that we can tell how long the expansion is, and avoid
-# overrunning DCL's command buffer when MM[KS] is running.
-
-# fixpath() checks to see whether the result matches the name of a
-# directory in the current default directory and returns a directory or
-# file specification accordingly.  C<$is_dir> can be set to true to
-# force fixpath() to consider the path to be a directory or false to force
-# it to be a file.
-
-sub fixpath {
-    my($self,$path,$force_path) = @_;
-    return '' unless $path;
-    $self = bless {}, $self unless ref $self;
-    my($fixedpath,$prefix,$name);
-
-    if ($path =~ /\s/) {
-      return join ' ',
-             map { $self->fixpath($_,$force_path) }
-	     split /\s+/, $path;
-    }
-
-    if ($path =~ m#^\$\([^\)]+\)\Z(?!\n)#s || $path =~ m#[/:>\]]#) { 
-        if ($force_path or $path =~ /(?:DIR\)|\])\Z(?!\n)/) {
-            $fixedpath = vmspath($self->eliminate_macros($path));
-        }
-        else {
-            $fixedpath = vmsify($self->eliminate_macros($path));
-        }
-    }
-    elsif ((($prefix,$name) = ($path =~ m#^\$\(([^\)]+)\)(.+)#s)) && $self->{$prefix}) {
-        my($vmspre) = $self->eliminate_macros("\$($prefix)");
-        # is it a dir or just a name?
-        $vmspre = ($vmspre =~ m|/| or $prefix =~ /DIR\Z(?!\n)/) ? vmspath($vmspre) : '';
-        $fixedpath = ($vmspre ? $vmspre : $self->{$prefix}) . $name;
-        $fixedpath = vmspath($fixedpath) if $force_path;
-    }
-    else {
-        $fixedpath = $path;
-        $fixedpath = vmspath($fixedpath) if $force_path;
-    }
-    # No hints, so we try to guess
-    if (!defined($force_path) and $fixedpath !~ /[:>(.\]]/) {
-        $fixedpath = vmspath($fixedpath) if -d $fixedpath;
-    }
-
-    # Trim off root dirname if it's had other dirs inserted in front of it.
-    $fixedpath =~ s/\.000000([\]>])/$1/;
-    # Special case for VMS absolute directory specs: these will have had device
-    # prepended during trip through Unix syntax in eliminate_macros(), since
-    # Unix syntax has no way to express "absolute from the top of this device's
-    # directory tree".
-    if ($path =~ /^[\[>][^.\-]/) { $fixedpath =~ s/^[^\[<]+//; }
-    $fixedpath;
-}
-
-
 =back
 
 =head1 COPYRIGHT
 
-Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+Copyright (c) 2004-14 by the Perl 5 Porters.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

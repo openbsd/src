@@ -4,6 +4,7 @@ use File::Spec;
 my $perl;
 BEGIN {
   $perl = File::Spec->rel2abs($^X);
+  $perl = qq{"$perl"}; # So it doesn't fail when there are spaces.
 }
 
 use strict;
@@ -25,14 +26,34 @@ ok( $b, "got CBuilder object" ) or diag $@;
 
 # test missing compiler
 {
-my $b1 = ExtUtils::CBuilder->new(quiet => 1);
-configure_fake_missing_compilers($b1);
-is( $b1->have_compiler, 0, "have_compiler: fake missing cc" );
+
+    my $b1 = ExtUtils::CBuilder->new(quiet => 1);
+
+    configure_fake_missing_compilers($b1);
+
+    # This will fork a child that will print
+    #    'Can't exec "djaadjfkadjkfajdf"'
+    # or similar on STDERR; so make sure fd2 is temporarily closed before
+    # the fork
+    open(my $orig_err, ">&", \*STDERR) or die "Can't dup STDERR: $!";
+    close(STDERR);
+    my $res = $b1->have_compiler;
+    open(STDERR, ">&", $orig_err) or die "Can't dup \$orig_err $!";
+    close($orig_err);
+
+    is($res, 0, "have_compiler: fake missing cc" );
 }
 {
-my $b2 = ExtUtils::CBuilder->new(quiet => 1);
-configure_fake_missing_compilers($b2);
-is( $b2->have_cplusplus, 0, "have_cplusplus: fake missing c++" );
+    my $b2 = ExtUtils::CBuilder->new(quiet => 1);
+    configure_fake_missing_compilers($b2);
+
+    open(my $orig_err, ">&", \*STDERR) or die "Can't dup STDERR: $!";
+    close(STDERR);
+    my $res = $b2->have_cplusplus;
+    open(STDERR, ">&", $orig_err) or die "Can't dup \$orig_err $!";
+    close($orig_err);
+
+    is($res, 0, "have_cplusplus: fake missing c++" );
 }
 
 # test found compiler

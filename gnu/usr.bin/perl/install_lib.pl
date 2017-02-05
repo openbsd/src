@@ -4,10 +4,11 @@
 # Probably installhtml needs to join the club.
 
 use strict;
-use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare
+use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare $Is_AmigaOS
 	    %opts $packlist);
-use subs qw(unlink link chmod chown);
+use subs qw(unlink link chmod);
 require File::Path;
+require File::Copy;
 
 BEGIN {
     require Config;
@@ -48,6 +49,7 @@ $Is_OS2 = $^O eq 'os2';
 $Is_Cygwin = $^O eq 'cygwin';
 $Is_Darwin = $^O eq 'darwin';
 $Is_NetWare = $Config{osname} eq 'NetWare';
+$Is_AmigaOS = $^O eq 'amigaos';
 
 sub unlink {
     my(@names) = @_;
@@ -57,7 +59,7 @@ sub unlink {
 
     foreach my $name (@names) {
 	next unless -e $name;
-	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin || $Is_NetWare);
+	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin || $Is_NetWare || $Is_AmigaOS);
 	print "  unlink $name\n" if $opts{verbose};
 	( CORE::unlink($name) and ++$cnt
 	  or warn "Couldn't unlink $name: $!\n" ) unless $opts{notify};
@@ -75,15 +77,16 @@ sub link {
     $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
     print $opts{verbose} ? "  ln $xfrom $xto\n" : "  $xto\n"
 	unless $opts{silent};
+    my $link = $Is_AmigaOS ? \&CORE::symlink : \&CORE::link;
     eval {
-	CORE::link($from, $to)
-	    ? $success++
-	    : ($from =~ m#^/afs/# || $to =~ m#^/afs/#)
-	      ? die "AFS"  # okay inside eval {}
-	      : die "Couldn't link $from to $to: $!\n"
-	  unless $opts{notify};
-	$packlist->{$xto} = { from => $xfrom, type => 'link' };
-    };
+      $link->($from, $to)
+        ? $success++
+          : ($from =~ m#^/afs/# || $to =~ m#^/afs/#)
+            ? die "AFS"  # okay inside eval {}
+              : die "Couldn't link $from to $to: $!\n"
+                unless $opts{notify};
+      $packlist->{$xto} = { from => $xfrom, type => 'link' };
+     };
     if ($@) {
 	warn "Replacing link() with File::Copy::copy(): $@";
 	print $opts{verbose} ? "  cp $from $xto\n" : "  $xto\n"
@@ -95,9 +98,6 @@ sub link {
 	    warn "Couldn't copy $from to $to: $!\n"
 		unless -f $to and (chmod(0666, $to), unlink $to)
 			and File::Copy::copy($from, $to) and ++$success;
-	}
-	if (defined($opts{uid}) || defined($opts{gid})) {
-	    chown($opts{uid}, $opts{gid}, $to) if $success;
 	}
 	$packlist->{$xto} = { type => 'file' };
     }
@@ -111,16 +111,6 @@ sub chmod {
     printf "  chmod %o %s\n", $mode, $name if $opts{verbose};
     CORE::chmod($mode,$name)
 	|| warn sprintf("Couldn't chmod %o %s: $!\n", $mode, $name)
-      unless $opts{notify};
-}
-
-sub chown {
-    my($uid,$gid,$name) = @_;
-
-    return if ($^O eq 'dos');
-    printf "  chown %s:%s %s\n", $uid, $gid, $name if $opts{verbose};
-    CORE::chown($uid,$gid,$name)
-	|| warn sprintf("Couldn't chown %s:%s %s: $!\n", $uid, $gid, $name)
       unless $opts{notify};
 }
 
@@ -155,8 +145,61 @@ sub safe_rename {
 }
 
 sub mkpath {
-    File::Path::make_path(shift, {owner=>$opts{uid}, group=>$opts{gid},
-        mode=>0777, verbose=>$opts{verbose}}) unless $opts{notify};
+    File::Path::mkpath(shift , $opts{verbose}, 0777) unless $opts{notify};
+}
+
+sub unixtoamiga
+{
+	my $unixpath = shift;
+
+	my @parts = split("/",$unixpath);
+	my $isdir = 0;
+	$isdir = 1 if substr($unixpath,-1) eq "/";
+
+	my $first = 1;
+	my $amigapath = "";
+
+	my $i = 0;
+
+	for($i = 0; $i <= $#parts;$i++)
+	{
+		next if $parts[$i] eq ".";
+		if($parts[$i] eq "..")
+		{
+			$parts[$i] = "/";
+		}
+		if($i == 0)
+		{
+			if($parts[$i] eq "")
+			{
+				$amigapath .= $parts[$i + 1] . ":";
+				$i++;
+				next;
+			}
+		}
+		$amigapath .= $parts[$i];
+		if($i != $#parts)
+		{
+			$amigapath .= "/" unless $parts[$i] eq "/" ;
+		}
+		else
+		{
+			if($isdir)
+			{
+				$amigapath .= "/" unless $parts[$i] eq "/" ;
+			}
+		}
+	}
+
+	return $amigapath;
+}
+
+sub amigaprotect
+{
+	my ($file,$bits) = @_;
+	print "PROTECT: File $file\n";
+	system("PROTECT $file $bits")
+	      unless $opts{notify};
 }
 
 1;

@@ -154,26 +154,40 @@ DB<1>h
 
  List/search source lines:               Control script execution:
   l [ln|sub]  List source code            T           Stack trace
-  - or .      List previous/current line  s [expr]    Single step [in expr]
-  v [line]    View around line            n [expr]    Next, steps over subs
+  - or .      List previous/current line  s [expr]    Single step
+                                                               [in expr]
+  v [line]    View around line            n [expr]    Next, steps over
+                                                                    subs
   f filename  View source in file         <CR/Enter>  Repeat last n or s
-  /pattern/ ?patt?   Search forw/backw    r           Return from subroutine
-  M           Show module versions        c [ln|sub]  Continue until position
- Debugger controls:                       L           List break/watch/actions
-  o [...]     Set debugger options        t [expr]    Toggle trace [trace expr]
-  <[<]|{[{]|>[>] [cmd] Do pre/post-prompt b [ln|event|sub] [cnd] Set breakpoint
-  ! [N|pat]   Redo a previous command     B ln|*      Delete a/all breakpoints
+  /pattern/ ?patt?   Search forw/backw    r           Return from
+                                                              subroutine
+  M           Show module versions        c [ln|sub]  Continue until
+                                                                position
+ Debugger controls:                       L           List break/watch/
+                                                                 actions
+  o [...]     Set debugger options        t [expr]    Toggle trace
+                                                            [trace expr]
+  <[<]|{[{]|>[>] [cmd] Do pre/post-prompt b [ln|event|sub] [cnd] Set
+                                                              breakpoint
+  ! [N|pat]   Redo a previous command     B ln|*      Delete a/all
+                                                             breakpoints
   H [-num]    Display last num commands   a [ln] cmd  Do cmd before line
-  = [a val]   Define/list an alias        A ln|*      Delete a/all actions
-  h [db_cmd]  Get help on command         w expr      Add a watch expression
-  h h         Complete help page          W expr|*    Delete a/all watch exprs
-  |[|]db_cmd  Send output to pager        ![!] syscmd Run cmd in a subprocess
+  = [a val]   Define/list an alias        A ln|*      Delete a/all
+                                                                 actions
+  h [db_cmd]  Get help on command         w expr      Add a watch
+                                                              expression
+  h h         Complete help page          W expr|*    Delete a/all watch
+                                                                   exprs
+  |[|]db_cmd  Send output to pager        ![!] syscmd Run cmd in a
+                                                              subprocess
   q or ^D     Quit                        R           Attempt a restart
  Data Examination:     expr     Execute perl code, also see: s,n,t expr
-  x|m expr       Evals expr in list context, dumps the result or lists methods.
+  x|m expr       Evals expr in list context, dumps the result or lists
+                                                                methods.
   p expr         Print expression (uses script's current package).
   S [[!]pat]     List subroutine names [not] matching pattern
-  V [Pk [Vars]]  List Variables in Package.  Vars can be ~pattern or !pattern.
+  V [Pk [Vars]]  List Variables in Package.  Vars can be ~pattern or
+                                                               !pattern.
   X [Vars]       Same as "V current_package [Vars]".
   y [n [Vars]]   List lexicals in higher scope <n>.  Vars same as V.
  For more help, type h cmd_letter, or run man perldebug for all docs. 
@@ -335,25 +349,25 @@ Let's make a quick object and x-plode it, first we'll start the debugger:
 it wants some form of input from STDIN, so we give it something non-committal,
 a zero:
 
-	> perl -de 0
-	Default die handler restored.
+ > perl -de 0
+ Default die handler restored.
 
-	Loading DB routines from perl5db.pl version 1.07
-	Editor support available.
+ Loading DB routines from perl5db.pl version 1.07
+ Editor support available.
 
-	Enter h or `h h' for help, or `man perldebug' for more help.
+ Enter h or `h h' for help, or `man perldebug' for more help.
 
-	main::(-e:1):   0                       
+ main::(-e:1):   0
 
 Now build an on-the-fly object over a couple of lines (note the backslash):
 
-	DB<1> $obj = bless({'unique_id'=>'123', 'attr'=> \
-	cont: 	{'col' => 'black', 'things' => [qw(this that etc)]}}, 'MY_class')
+ DB<1> $obj = bless({'unique_id'=>'123', 'attr'=> \
+ cont: 	{'col' => 'black', 'things' => [qw(this that etc)]}}, 'MY_class')
 
 And let's have a look at it:
 
   	DB<2> x $obj
-	0  MY_class=HASH(0x828ad98)
+ 0  MY_class=HASH(0x828ad98)
    		'attr' => HASH(0x828ad68)
       	'col' => 'black'
       	'things' => ARRAY(0x828abb8)
@@ -366,38 +380,38 @@ And let's have a look at it:
 Useful, huh?  You can eval nearly anything in there, and experiment with bits
 of code or regexes until the cows come home:
 
-	DB<3> @data = qw(this that the other atheism leather theory scythe)
+ DB<3> @data = qw(this that the other atheism leather theory scythe)
 
-	DB<4> p 'saw -> '.($cnt += map { print "\t:\t$_\n" } grep(/the/, sort @data))
-	atheism
-	leather
-	other
-	scythe
-	the
-	theory  
-	saw -> 6
+ DB<4> p 'saw -> '.($cnt += map { print "\t:\t$_\n" } grep(/the/, sort @data))
+ atheism
+ leather
+ other
+ scythe
+ the
+ theory
+ saw -> 6
 
 If you want to see the command History, type an 'B<H>':
 
-	DB<5> H
-	4: p 'saw -> '.($cnt += map { print "\t:\t$_\n" } grep(/the/, sort @data))
-	3: @data = qw(this that the other atheism leather theory scythe)
-	2: x $obj
-	1: $obj = bless({'unique_id'=>'123', 'attr'=>
-	{'col' => 'black', 'things' => [qw(this that etc)]}}, 'MY_class')
-	DB<5>
+ DB<5> H
+ 4: p 'saw -> '.($cnt += map { print "\t:\t$_\n" } grep(/the/, sort @data))
+ 3: @data = qw(this that the other atheism leather theory scythe)
+ 2: x $obj
+ 1: $obj = bless({'unique_id'=>'123', 'attr'=>
+ {'col' => 'black', 'things' => [qw(this that etc)]}}, 'MY_class')
+ DB<5>
 
 And if you want to repeat any previous command, use the exclamation: 'B<!>':
 
-	DB<5> !4
-	p 'saw -> '.($cnt += map { print "$_\n" } grep(/the/, sort @data))
-	atheism
-	leather
-	other
-	scythe
-	the
-	theory  
-	saw -> 12
+ DB<5> !4
+ p 'saw -> '.($cnt += map { print "$_\n" } grep(/the/, sort @data))
+ atheism
+ leather
+ other
+ scythe
+ the
+ theory
+ saw -> 12
 
 For more on references see L<perlref> and L<perlreftut>
 
@@ -407,50 +421,50 @@ For more on references see L<perlref> and L<perlreftut>
 Here's a simple program which converts between Celsius and Fahrenheit, it too
 has a problem:
 
-	#!/usr/bin/perl -w
-	use strict;
+ #!/usr/bin/perl -w
+ use strict;
 
-	my $arg = $ARGV[0] || '-c20';
+ my $arg = $ARGV[0] || '-c20';
 
-	if ($arg =~ /^\-(c|f)((\-|\+)*\d+(\.\d+)*)$/) {
-		my ($deg, $num) = ($1, $2);
-		my ($in, $out) = ($num, $num);
-		if ($deg eq 'c') {
-			$deg = 'f';
-			$out = &c2f($num);
-		} else {
-			$deg = 'c';
-			$out = &f2c($num);
-		}
-		$out = sprintf('%0.2f', $out);
-		$out =~ s/^((\-|\+)*\d+)\.0+$/$1/;
-		print "$out $deg\n";
+ if ($arg =~ /^\-(c|f)((\-|\+)*\d+(\.\d+)*)$/) {
+	my ($deg, $num) = ($1, $2);
+	my ($in, $out) = ($num, $num);
+	if ($deg eq 'c') {
+		$deg = 'f';
+		$out = &c2f($num);
 	} else {
-		print "Usage: $0 -[c|f] num\n";
+		$deg = 'c';
+		$out = &f2c($num);
 	}
-	exit;
+	$out = sprintf('%0.2f', $out);
+	$out =~ s/^((\-|\+)*\d+)\.0+$/$1/;
+	print "$out $deg\n";
+ } else {
+	print "Usage: $0 -[c|f] num\n";
+ }
+ exit;
 
-	sub f2c {
-		my $f = shift;
-		my $c = 5 * $f - 32 / 9;
-		return $c;
-	}
+ sub f2c {
+	my $f = shift;
+	my $c = 5 * $f - 32 / 9;
+	return $c;
+ }
 
-	sub c2f {
-		my $c = shift;
-		my $f = 9 * $c / 5 + 32;
-		return $f;
-	}
+ sub c2f {
+	my $c = shift;
+	my $f = 9 * $c / 5 + 32;
+	return $f;
+ }
 
 
 For some reason, the Fahrenheit to Celsius conversion fails to return the
 expected output.  This is what it does:
 
-	> temp -c0.72
-	33.30 f
+ > temp -c0.72
+ 33.30 f
 
-	> temp -f33.3
-	162.94 c
+ > temp -f33.3
+ 162.94 c
 
 Not very consistent!  We'll set a breakpoint in the code manually and run it
 under the debugger to see what's going on.  A breakpoint is a flag, to which
@@ -600,28 +614,28 @@ Actions, watch variables, stack traces etc.: on the TODO list.
 Ever wanted to know what a regex looked like?  You'll need perl compiled with
 the DEBUGGING flag for this one:
 
-	> perl -Dr -e '/^pe(a)*rl$/i'
-	Compiling REx `^pe(a)*rl$'
-	size 17 first at 2
-	rarest char
-	 at 0
-	   1: BOL(2)
-	   2: EXACTF <pe>(4)
-	   4: CURLYN[1] {0,32767}(14)
-	   6:   NOTHING(8)
-	   8:   EXACTF <a>(0)
-	  12:   WHILEM(0)
-	  13: NOTHING(14)
-	  14: EXACTF <rl>(16)
-	  16: EOL(17)
-	  17: END(0)
-	floating `'$ at 4..2147483647 (checking floating) stclass `EXACTF <pe>'
-anchored(BOL) minlen 4
-	Omitting $` $& $' support.
+  > perl -Dr -e '/^pe(a)*rl$/i'
+  Compiling REx `^pe(a)*rl$'
+  size 17 first at 2
+  rarest char
+   at 0
+     1: BOL(2)
+     2: EXACTF <pe>(4)
+     4: CURLYN[1] {0,32767}(14)
+     6:   NOTHING(8)
+     8:   EXACTF <a>(0)
+    12:   WHILEM(0)
+    13: NOTHING(14)
+    14: EXACTF <rl>(16)
+    16: EOL(17)
+    17: END(0)
+  floating `'$ at 4..2147483647 (checking floating) stclass
+    `EXACTF <pe>' anchored(BOL) minlen 4
+  Omitting $` $& $' support.
 
-	EXECUTING...
+  EXECUTING...
 
-	Freeing REx: `^pe(a)*rl$'  
+  Freeing REx: `^pe(a)*rl$'
 
 Did you really want to know? :-)
 For more gory details on getting regular expressions to work, have a look at
@@ -644,7 +658,7 @@ To watch the tail of a dynamically growing logfile, (from the command line):
 Wrapping all die calls in a handler routine can be useful to see how, and from
 where, they're being called, L<perlvar> has more information:
 
-	BEGIN { $SIG{__DIE__} = sub { require Carp; Carp::confess(@_) } }
+    BEGIN { $SIG{__DIE__} = sub { require Carp; Carp::confess(@_) } }
 
 Various useful techniques for the redirection of STDOUT and STDERR filehandles
 are explained in L<perlopentut> and L<perlfaq8>.

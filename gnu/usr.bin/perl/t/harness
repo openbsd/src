@@ -16,9 +16,14 @@ use Config;
 
 $::do_nothing = $::do_nothing = 1;
 require './TEST';
+our $Valgrind_Log;
 
 my $Verbose = 0;
 $Verbose++ while @ARGV && $ARGV[0] eq '-v' && shift;
+
+# For valgrind summary output
+my $htoolnm;
+my $hgrind_ct;
 
 if ($ARGV[0] && $ARGV[0] eq '-torture') {
     shift;
@@ -28,26 +33,6 @@ if ($ARGV[0] && $ARGV[0] eq '-torture') {
 # Let tests know they're running in the perl core.  Useful for modules
 # which live dual lives on CPAN.
 $ENV{PERL_CORE} = 1;
-
-#fudge DATA for now.
-my %datahandle = qw(
-		lib/bigint.t		1
-		lib/bigintpm.t		1
-		lib/bigfloat.t	 	1
-		lib/bigfloatpm.t	1
-		op/gv.t			1
-		lib/complex.t		1
-		lib/ph.t		1
-		lib/soundex.t		1
-		op/misc.t		1
-		op/runlevel.t		1
-		op/tie.t		1
-		op/lex_assign.t		1
-		);
-
-foreach (keys %datahandle) {
-     unlink "$_.t";
-}
 
 my (@tests, $re);
 
@@ -129,7 +114,7 @@ if (@ARGV) {
     unless (@tests) {
 	my @seq = <base/*.t>;
 
-	my @next = qw(comp run cmd io re opbasic op uni mro lib porting);
+	my @next = qw(comp run cmd io re opbasic op uni mro lib porting perf);
 	push @next, 'japh' if $torture;
 	push @next, 'win32' if $^O eq 'MSWin32';
 	push @next, 'benchmark' if $ENV{PERL_BENCHMARK};
@@ -162,8 +147,6 @@ if (@ARGV) {
 	my @last;
 	push @last,  sort { lc $a cmp lc $b }
 	    _tests_from_manifest($Config{extensions}, $Config{known_extensions});
-	push @last, <x2p/*.t>;
-
 	my %times;
 	if ($state) {
 	    # Where known, collate the elapsed times by test name
@@ -203,6 +186,14 @@ if ($^O eq 'MSWin32') {
 @tests=grep /$re/, @tests 
     if $re;
 
+# Allow eg ./perl t/harness t/op/lc.t
+for (@tests) {
+    if (-f "../$_") {
+        $_ = "../$_";
+        s{^\.\./t/}{};
+    }
+}
+
 my %options;
 
 my $type = 'perl';
@@ -216,6 +207,7 @@ my $h = TAP::Harness->new({
     color       => $color,
     jobs        => $jobs,
     verbosity   => $Verbose,
+    timer       => $ENV{HARNESS_TIMER},
     exec        => sub {
 	my ($harness, $test) = @_;
 
@@ -224,9 +216,33 @@ my $h = TAP::Harness->new({
 	    $options = $options{$test} = _scan_test($test, $type);
 	}
 
+	(local $Valgrind_Log = "$test.valgrind-current") =~ s/^.*\///;
+
 	return [ split ' ', _cmd($options, $type) ];
     },
 });
+
+# Print valgrind output after test completes
+if ($ENV{PERL_VALGRIND}) {
+    $h->callback(
+		 after_test => sub {
+		     my ($job) = @_;
+		     my $test = $job->[0];
+		     my $vfile = "$test.valgrind-current";
+	             $vfile =~ s/^.*\///;
+
+		     if ( (! -z $vfile) && open(my $voutput, '<', $vfile)) {
+			print "$test: Valgrind output:\n";
+			print "$test: $_" for <$voutput>;
+			close($voutput);
+		     }
+
+		     (local $Valgrind_Log = "$test.valgrind-current") =~ s/^.*\///;
+
+		     _check_valgrind(\$htoolnm, \$hgrind_ct, \$test);
+		 }
+		 );
+}
 
 if ($state) {
     $h->callback(
@@ -260,4 +276,5 @@ $h->callback(
 	     );
 
 my $agg = $h->runtests(@tests);
+_cleanup_valgrind(\$htoolnm, \$hgrind_ct);
 exit $agg->has_errors ? 1 : 0;

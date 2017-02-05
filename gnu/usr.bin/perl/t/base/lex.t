@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..91\n";
+print "1..104\n";
 
 $x = 'x';
 
@@ -140,8 +140,6 @@ my $test = 31;
   # The second caret here should be interpreted as an xor
   if (($^Q^XX) != 3) { print "not " } 
   print "ok $test\n"; $test++;
-#  if (($N  ^  XX()) != 3) { print "not " } 
-#  print "ok $test\n"; $test++;
 
   # These next two tests are trying to make sure that
   # $^FOO is always global; it doesn't make sense to 'my' it.
@@ -253,8 +251,9 @@ print ((exists $str{xyz::bar} ? "" : "not ")."ok $test\n"); ++$test;
 sub foo::::::bar { print "ok $test\n"; $test++ }
 foo::::::bar;
 
-eval "\$x =\xE2foo";
-if ($@ =~ /Unrecognized character \\xE2; marked by <-- HERE after \$x =<-- HERE near column 5/) { print "ok $test\n"; } else { print "not ok $test\n"; }
+# \xDF is a non-ASCII alpha on both ASCII and EBCDIC.
+eval "\$x =\xDFfoo";
+if ($@ =~ /Unrecognized character \\xDF; marked by <-- HERE after \$x =<-- HERE near column 5/) { print "ok $test\n"; } else { print "not ok $test\n"; }
 $test++;
 
 # Is "[~" scanned correctly?
@@ -385,8 +384,17 @@ eval "package v10::foo; sub test2 { return 'v10::foo' }
 print "not " unless $output eq 'v10::foo';
 print "ok $test - call a function in package v10::foo\n"; $test++;
 
-print "not " unless (1?v65:"bar") eq 'A';
+print "not " unless (1?v65:"bar") eq chr(65);
 print "ok $test - colon detection after vstring does not break ? vstring :\n"; $test++;
+
+print ((ord("A") == 65) ? v35 : v123);  # NUMBER SIGN is the same for all
+                                        # supported EBCDIC platforms
+print "not ";
+print ((ord("A") == 65) ? v10 : "\n");  # LF varies on EBCDIC, if the v123 for
+                                        # '#' works above, consider it good
+                                        # enough.
+    print "ok $test - print vstring prints the vstring\n";
+$test++;
 
 # Test pyoq ops with comments before the first delim
 q # comment
@@ -435,5 +443,82 @@ print "not " unless (time
                      =>) eq time=>;
 print "ok $test - => quotes keywords across lines\n"; $test++;
 
+# [perl #80368]
+print "not " unless eval '"a\U="' eq "a=";
+print "ok $test - [perl #80368] qq <a\\U=>\n"; $test++;
+
+sub Function_with_side_effects { $_ = "sidekick function called" }
+print "not " unless
+    (eval '${Function_with_side_effects,\$_}' || $@)
+      eq "sidekick function called";
+print "ok $test - \${...} where {...} looks like hash\n"; $test++;
+
+@_ = map{BEGIN {$_122782 = 'tst2'}; "rhu$_"} 'barb2';
+print "not " unless "@_" eq 'rhubarb2';
+print "ok $test - map{BEGIN...\n"; $test++;
+print "not " unless $_122782 eq 'tst2';
+print "ok $test - map{BEGIN...\n"; $test++;
+${
+=pod
+blah blah blah
+=cut
+\$_ } = 42;
+print "not "unless $_ == 42;
+print "ok $test - \${ <newline> =pod\n"; $test++;
+@_ = map{
+=pod
+blah blah blah
+=cut
+$_+1 } 1;
+print "not "unless "@_" eq 2;
+print "ok $test - map{ <newline> =pod\n"; $test++;
+eval { ${...}++ };
+print "not " unless $@ =~ /^Unimplemented at /;
+print "ok $test - \${...} (literal triple-dot)\n"; $test++;
+eval { () = map{...} @_ };
+print "not " unless $@ =~ /^Unimplemented at /;
+print "ok $test - map{...} (literal triple-dot)\n"; $test++;
+print "not " unless &{sub :lvalue { "a" }} eq "a";
+print "ok $test - &{sub :lvalue...}\n"; $test++;
+print "not " unless ref +(map{sub :lvalue { "a" }} 1)[0] eq "CODE";
+print "ok $test - map{sub :lvalue...}\n"; $test++;
+
 # Used to crash [perl #123711]
 0-5x-l{0};
+
+# Used to fail an assertion [perl #123617] [perl #123955]
+eval '"$a{ 1 m// }"; //';
+eval '"@0{0s 000";eval"$"';
+
+# Pending token stack overflow [perl #123677]
+{
+ local $SIG{__WARN__}=sub{};
+ eval q|s)$0{0h());qx(@0);qx(@0);qx(@0)|;
+}
+
+# Used to crash [perl #123801]
+eval q|s##[}#e|;
+
+# Used to fail an assertion [perl #123763]
+{
+ local $SIG{__WARN__}=sub{};
+ eval q|my($_);0=split|;
+ eval q|my $_; @x = split|;
+}
+
+{
+ # Used to crash [perl #124187]
+ eval q|qq{@{[{}}*sub{]]}}}=u|;
+}
+
+{
+ # Used to crash [perl #124385]
+ eval '0; qq{@{sub{]]}}}}}';
+ print "ok $test - 124385\n"; $test++;
+}
+
+{
+ # Used to crash [perl #125350]
+ eval ('qq{@{[0}*sub{]]}}}=sub{0' . "\c[");
+ print "ok $test - 125350\n"; $test++;
+}

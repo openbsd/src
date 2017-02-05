@@ -2,7 +2,7 @@ package autodie::skip;
 use strict;
 use warnings;
 
-our $VERSION = '2.23'; # VERSION
+our $VERSION = '2.29'; # VERSION
 
 # This package exists purely so people can inherit from it,
 # which isn't at all how roles are supposed to work, but it's
@@ -50,5 +50,7 @@ terms as Perl itself.
 =head1 SEE ALSO
 
 L<autodie>, L<autodie::exception>
+
+=for Pod::Coverage DOES
 
 =cut

@@ -112,7 +112,6 @@ __EOF__
         @c = map  { glob } qw(*.c);       # Find the .c files.
         @c = map  { lc } @c;              # Lowercase the names.
         @c = grep { !/malloc\.c/ } @c;    # Use the system malloc.
-        @c = grep { !/madly\.c/ } @c;     # mad is undef.
         @c = grep { !/main\.c/ } @c;      # main.c must be explicit.
         push @c, map { lc } @x;
         @c = map { s:^\.\./::; $_ } @c;    # Remove the leading ../

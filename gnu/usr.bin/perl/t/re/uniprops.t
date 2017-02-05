@@ -11,7 +11,7 @@ if ($^O eq 'dec_osf') {
 # directory.
 
 # It is skipped by default under PERL_DEBUG_READONLY_COW, but you can run
-# it directly via:  cd t; ./perl ../lib/unicore/TestProp.pl
+# it directly via:  cd t; ./perl -I../lib ../lib/unicore/TestProp.pl
 
 require Config;
 if ($Config::Config{ccflags} =~ /(?:^|\s)-DPERL_DEBUG_READONLY_COW\b/) {
@@ -20,5 +20,16 @@ if ($Config::Config{ccflags} =~ /(?:^|\s)-DPERL_DEBUG_READONLY_COW\b/) {
 }
 
 do '../lib/unicore/TestProp.pl';
+
+# Since TestProp.pl explicitly exits, we will only get here if it
+# could not load.
+if (defined &DynaLoader::boot_DynaLoader # not miniperl
+ || eval 'require "unicore/Heavy.pl"'    # or tables are built
+) {
+    die "Could not run lib/unicore/TestProp.pl: ", $@||$!;
+}
+else {
+    print "1..0 # Skip Unicode tables not built yet\n";
+}
 
 0

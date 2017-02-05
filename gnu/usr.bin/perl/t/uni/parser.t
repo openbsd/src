@@ -4,7 +4,9 @@
 # (including weird syntax errors)
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
+    skip_all_without_unicode_tables();
 }
 
 plan (tests => 52);
@@ -12,7 +14,7 @@ plan (tests => 52);
 use utf8;
 use open qw( :utf8 :std );
 
-ok *tèst, "*main::tèst", "sanity check.";
+is *tèst, "*main::tèst", "sanity check.";
 ok $::{"tèst"}, "gets the right glob in the stash.";
 
 my $glob_by_sub = sub { *ｍａｉｎ::method }->();
@@ -81,8 +83,7 @@ closedir FÒÒ;
 sub участники { 1 }
 
 ok $::{"участники"}, "non-const sub declarations generate the right glob";
-ok *{$::{"участники"}}{CODE};
-is *{$::{"участники"}}{CODE}->(), 1;
+is $::{"участники"}->(), 1;
 
 sub 原 () { 1 }
 
@@ -190,7 +191,40 @@ like( $@, qr/Bad name after Ｆｏｏ'/, 'Bad name after Ｆｏｏ\'' );
 
 {
     no warnings 'utf8';
-    my $malformed_to_be = "\x{c0}\x{a0}";   # Overlong sequence
+    my $malformed_to_be = ($::IS_EBCDIC)   # Overlong sequence
+                           ? "\x{74}\x{41}"
+                           : "\x{c0}\x{a0}";
     CORE::evalbytes "use charnames ':full'; use utf8; my \$x = \"\\N{abc$malformed_to_be}\"";
     like( $@, qr/Malformed UTF-8 character immediately after '\\N\{abc' at .* within string/, 'Malformed UTF-8 input to \N{}');
+}
+
+# RT# 124216: Perl_sv_clear: Assertion
+# If a parsing error occurred during a forced token within an interpolated
+# context, the stack unwinding failed to restore PL_lex_defer and so after
+# error recovery the state restored after the forced token was processed
+# was the wrong one, resulting in the lexer thinking we're still inside a
+# quoted string and things getting freed multiple times.
+#
+# The \x{3030} char isn't a legal var name, and this triggers the error.
+#
+# NB: this only failed if the closing quote of the interpolated string is
+# the last char of the file (i.e. no trailing \n).
+
+{
+    my $bad = "\x{3030}";
+    # Write out the individual utf8 bytes making up \x{3030}. This
+    # avoids 'Wide char in print' warnings from test.pl. (We may still
+    # get that warning when compiling the prog itself, since the
+    # error it prints to stderr contains a wide char.)
+    utf8::encode($bad);
+
+    fresh_perl_like(qq{use utf8; "\$$bad"},
+        qr/
+            \A
+            ( \QWide character in print at - line 1.\E\n )?
+            \Qsyntax error at - line 1, near \E"\$.*"\n
+            \QExecution of - aborted due to compilation errors.\E\z
+        /xm,
+
+        {stderr => 1}, "RT# 124216");
 }

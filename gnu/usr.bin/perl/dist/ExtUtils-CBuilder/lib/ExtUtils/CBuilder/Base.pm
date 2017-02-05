@@ -1,6 +1,7 @@
 package ExtUtils::CBuilder::Base;
-
+$ExtUtils::CBuilder::Base::VERSION = '0.280225';
 use strict;
+use warnings;
 use File::Spec;
 use File::Basename;
 use Cwd ();
@@ -8,9 +9,6 @@ use Config;
 use Text::ParseWords;
 use IPC::Cmd qw(can_run);
 use File::Temp qw(tempfile);
-
-use vars qw($VERSION);
-$VERSION = '0.280217';
 
 # More details about C/C++ compilers:
 # http://developers.sun.com/sunstudio/documentation/product/compiler.jsp
@@ -131,20 +129,20 @@ sub arg_exec_file {
 
 sub arg_defines {
   my ($self, %args) = @_;
-  return map "-D$_=$args{$_}", keys %args;
+  return map "-D$_=$args{$_}", sort keys %args;
 }
 
 sub compile {
   my ($self, %args) = @_;
   die "Missing 'source' argument to compile()" unless defined $args{source};
-  
+
   my $cf = $self->{config}; # For convenience
-  
+
   my $object_file = $args{object_file}
     ? $args{object_file}
     : $self->object_file($args{source});
 
-  my $include_dirs_ref = 
+  my $include_dirs_ref =
     (exists($args{include_dirs}) && ref($args{include_dirs}) ne "ARRAY")
       ? [ $args{include_dirs} ]
       : $args{include_dirs};
@@ -152,9 +150,9 @@ sub compile {
     @{ $include_dirs_ref || [] },
     $self->perl_inc(),
   );
-  
+
   my @defines = $self->arg_defines( %{$args{defines} || {}} );
-  
+
   my @extra_compiler_flags =
     $self->split_like_shell($args{extra_compiler_flags});
   my @cccdlflags = $self->split_like_shell($cf->{cccdlflags});
@@ -171,7 +169,7 @@ sub compile {
     $self->arg_object_file($object_file),
   );
   my @cc = $self->split_like_shell($args{'C++'} ? $cf->{cxx} : $cf->{cc});
-  
+
   $self->do_system(@cc, @flags, $args{source})
     or die "error building $object_file from '$args{source}'";
 
@@ -225,7 +223,7 @@ sub lib_file {
   my ($self, $dl_file, %args) = @_;
   $dl_file =~ s/\.[^.]+$//;
   $dl_file =~ tr/"//d;
-  
+
   if (defined $args{module_name} and length $args{module_name}) {
     # Need to create with the same name as DynaLoader will load with.
     require DynaLoader;
@@ -235,7 +233,7 @@ sub lib_file {
       $dl_file = File::Spec->catpath($dev, $lib_dir, $lib);
     }
   }
-  
+
   $dl_file .= ".$self->{config}{dlext}";
 
   return $dl_file;
@@ -269,7 +267,7 @@ sub prelink {
 sub _prepare_mksymlists_args {
   my $args = shift;
   ($args->{dl_file} = $args->{dl_name}) =~ s/.*::// unless $args->{dl_file};
-  
+
   my %mksymlists_args = (
     DL_VARS  => $args->{dl_vars}      || [],
     DL_FUNCS => $args->{dl_funcs}     || {},
@@ -297,16 +295,16 @@ sub _do_link {
   my ($self, $type, %args) = @_;
 
   my $cf = $self->{config}; # For convenience
-  
+
   my $objects = delete $args{objects};
   $objects = [$objects] unless ref $objects;
   my $out = $args{$type} || $self->$type($objects->[0], %args);
-  
+
   my @temp_files;
   @temp_files =
     $self->prelink(%args, dl_name => $args{module_name})
       if $args{lddl} && $self->need_prelink;
-  
+
   my @linker_flags = (
     $self->split_like_shell($args{extra_linker_flags}),
     $self->extra_link_args_after_prelink(
@@ -319,10 +317,10 @@ sub _do_link {
     : $self->arg_exec_file($out);
   my @shrp = $self->split_like_shell($cf->{shrpenv});
   my @ld = $self->split_like_shell($cf->{ld});
-  
+
   $self->do_system(@shrp, @ld, @output, @$objects, @linker_flags)
     or die "error building $out from @$objects";
-  
+
   return wantarray ? ($out, @temp_files) : $out;
 }
 
@@ -335,17 +333,17 @@ sub do_system {
 
 sub split_like_shell {
   my ($self, $string) = @_;
-  
+
   return () unless defined($string);
   return @$string if UNIVERSAL::isa($string, 'ARRAY');
   $string =~ s/^\s+|\s+$//g;
   return () unless length($string);
-  
+
   # Text::ParseWords replaces all 'escaped' characters with themselves, which completely
   # breaks paths under windows. As such, we forcibly replace backwards slashes with forward
   # slashes on windows.
   $string =~ s@\\@/@g if $^O eq 'MSWin32';
-  
+
   return Text::ParseWords::shellwords($string);
 }
 

@@ -30,7 +30,7 @@
     </item-text>
     <Para start_line="-321">
       Non-ASCII character seen before =encoding in &#39;caf&#233;&#39;. Assuming
-      ISO8859-1
+      CP1252
     </Para>
   </over-text>
 </Document>

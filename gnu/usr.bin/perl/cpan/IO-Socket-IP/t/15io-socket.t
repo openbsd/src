@@ -15,9 +15,11 @@ use IO::Socket::IP -register;
       Type      => SOCK_STREAM,
       LocalHost => "127.0.0.1",
       LocalPort => 0,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
 
-   isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET )' );
+   isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET )' ) or
+      diag( "  error was $@" );
 
    $sock = IO::Socket->new(
       Domain    => AF_INET,
@@ -40,6 +42,7 @@ SKIP: {
       Type      => SOCK_STREAM,
       LocalHost => "::1",
       LocalPort => 0,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
 
    isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET6 )' ) or

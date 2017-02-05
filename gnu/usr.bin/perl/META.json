@@ -4,7 +4,7 @@
       "perl5-porters@perl.org"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "CPAN::Meta version 2.140640",
+   "generated_by" : "CPAN::Meta version 2.150005",
    "license" : [
       "perl_5"
    ],
@@ -18,18 +18,15 @@
          "dist/Attribute-Handlers",
          "dist/autouse",
          "dist/base",
-         "dist/bignum",
          "dist/Carp",
          "dist/constant",
          "dist/Data-Dumper",
          "dist/Devel-SelfStubber",
          "dist/Dumpvalue",
+         "dist/encoding-warnings",
          "dist/Env",
          "dist/Exporter",
          "dist/ExtUtils-CBuilder",
-         "dist/ExtUtils-Command",
-         "dist/ExtUtils-Install",
-         "dist/ExtUtils-Manifest",
          "dist/ExtUtils-ParseXS",
          "dist/Filter-Simple",
          "dist/I18N-Collate",
@@ -37,9 +34,6 @@
          "dist/IO/",
          "dist/lib/",
          "dist/Locale-Maketext",
-         "dist/Math-BigInt",
-         "dist/Math-BigInt-FastCalc",
-         "dist/Math-BigRat",
          "dist/Module-CoreList",
          "dist/Net-Ping",
          "dist/PathTools",
@@ -49,14 +43,16 @@
          "dist/Storable",
          "dist/Term-Complete",
          "dist/Term-ReadLine",
+         "dist/Test",
          "dist/Text-Abbrev",
          "dist/Thread-Queue",
          "dist/Thread-Semaphore",
          "dist/threads",
          "dist/threads-shared",
          "dist/Tie-File",
+         "dist/Time-HiRes",
          "dist/XSLoader",
-         "mad",
+         "lib/perl5db",
          "win32"
       ],
       "file" : [
@@ -128,5 +124,6 @@
          "url" : "http://perl5.git.perl.org/"
       }
    },
-   "version" : "5.020003"
+   "version" : "5.024001",
+   "x_serialization_backend" : "JSON::PP version 2.27300_01"
 }

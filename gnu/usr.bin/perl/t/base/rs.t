@@ -127,13 +127,10 @@ $/ = "\n";
  # binary-incompatible previously-installed version. The eval won’t help in
  # intercepting a SIGTRAP.
  local @INC = ("../lib", "lib", @INC);
- if (not eval q/use PerlIO::scalar; use PerlIO::via::scalar; 1/) {
-  # In-memory files necessitate PerlIO::via::scalar, thus a perl with
+ if (not eval q/use PerlIO::scalar; 1/) {
+  # In-memory files necessitate PerlIO::scalar, thus a perl with
   # perlio and dynaloading enabled. miniperl won't be able to run this
   # test, so skip it
-
-  # PerlIO::via::scalar has to be tested as well.
-  # use PerlIO::scalar succeeds with ./TEST and with ./perl harness but not with ./perl
 
   for $test ($test_count .. $test_count + ($test_count_end - $test_count_start - 1)) {
     print "ok $test # skipped - Can't test in memory file with miniperl/without PerlIO::Scalar\n";
@@ -242,7 +239,8 @@ sub test_record {
   $test_count++;
 
   # Naughty straight number - should get the rest of the file
-  $/ = \0;
+  # no warnings 'deprecated'; # but not in t/base/*
+  { local $SIG{__WARN__} = sub {}; $/ = \0 }
   $bar = <FH>;
   if ($bar ne "90123456789012345678901234567890") {print "not ";}
   print "ok $test_count # \$/ = \\0\n";

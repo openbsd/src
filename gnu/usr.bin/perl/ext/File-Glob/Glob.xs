@@ -153,8 +153,8 @@ csh_glob(pTHX_ AV *entries, const char *pat, STRLEN len, bool is_utf8)
 	const char *s = NULL;
 	const char *piece = NULL;
 	SV *word = NULL;
-	int const flags =
-	    (int)SvIV(get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD));
+	SV *flags_sv = get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD);
+	int const flags = (int)SvIV(flags_sv);
 	U32 const gimme = GIMME_V;
 
 	patend = pat + len;
@@ -308,8 +308,8 @@ static bool
 doglob_iter_wrapper(pTHX_ AV *entries, const char *pattern, STRLEN len, bool is_utf8)
 {
     dSP;
-    int const flags =
-	    (int)SvIV(get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD));
+    SV * flags_sv = get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD);
+    int const flags = (int)SvIV(flags_sv);
 
     PERL_UNUSED_VAR(len); /* we use \0 termination instead */
     /* XXX we currently just use the underlying bytes of the passed SV.
@@ -375,7 +375,8 @@ PPCODE:
 	    /* remove unsupported flags */
 	    flags &= ~(GLOB_APPEND | GLOB_DOOFFS | GLOB_ALTDIRFUNC | GLOB_MAGCHAR);
 	} else {
-	    flags = (int) SvIV(get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD));
+	    SV * flags_sv = get_sv("File::Glob::DEFAULT_FLAGS", GV_ADD);
+	    flags = (int)SvIV(flags_sv);
 	}
 	
 	PUTBACK;

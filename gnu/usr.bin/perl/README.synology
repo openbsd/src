@@ -16,24 +16,24 @@ businesses and homes.
 The NAS systems are equipped with Synology Disk Storage Manager (DSM),
 which is a trimmed-down Linux system enhanced with several tools for
 managing the NAS. There are several flavours of hardware: Marvell
-Armada (ARMv5te, ARMv7l), Intel Atom (i686, x86_64), Freescale QorIQ
+Armada (ARMv5tel, ARMv7l), Intel Atom (i686, x86_64), Freescale QorIQ
 (PPC), and more. For a full list see the
 L<Synology FAQ|http://forum.synology.com/wiki/index.php/What_kind_of_CPU_does_my_NAS_have>.
 
 Since it is based on Linux, the NAS can run many popular Linux
 software packages, including Perl. In fact, Synology provides a
-ready-to-install package for Perl, albeit version 5.8.6 which should
-be considered very old.
+ready-to-install package for Perl, depending on the version of DSM
+the installed perl ranges from 5.8.6 on DSM-4.3 to 5.18.4 on DSM-5.1.
 
 There is an active user community that provides many software packages
 for the Synology DSM systems; at the time of writing this document
-they provide Perl version 5.8.8.
+they provide Perl version 5.18.4.
 
 This document describes various features of Synology DSM operating
 system that will affect how Perl 5 (hereafter just Perl) is
 configured, compiled and/or runs. It has been compiled and verified by
 Johan Vromans for the Synology DS413 (QorIQ), with feedback from
-H.Merijn Brand (DS213, ARMv5te).
+H.Merijn Brand (DS213, ARMv5tel).
 
 =head2 Setting up the build environment
 
@@ -120,7 +120,8 @@ Execute the following commands:
   ln -s libm.so.6 libm.so
   ln -s libcrypt.so.1 libcrypt.so
   ln -s libdl.so.2 libdl.so
-  cd /opt/powerpc-linux-gnuspe/lib
+  cd /opt/powerpc-linux-gnuspe/lib  (or
+                                    /opt/arm-none-linux-gnueabi/lib)
   ln -s /lib/libdl.so.2 libdl.so
 
 =back
@@ -188,12 +189,12 @@ commit 7a8f1212e5482613c8a5b0402528e3105b26ff24.
 
 =over 4
 
-=item C<ext/DynaLoader/t/DynaLoader.t>
+=item F<ext/DynaLoader/t/DynaLoader.t>
 
 One subtest fails due to the uncommon structure of the Synology file
-system. The file C</lib/glibc.so> is missing.
+system. The file F</lib/glibc.so> is missing.
 
-B<WARNING:> Do not symlink C</lib/glibc.so.6> to C</lib/glibc.so> or
+B<WARNING:> Do not symlink F</lib/glibc.so.6> to F</lib/glibc.so> or
 some system components will start to fail.
 
 =back
@@ -249,14 +250,11 @@ the programs are run.
 
 =head1 REVISION
 
-November 2013, for Synology DSM 4.3.3810.
+March 2015, for Synology DSM 5.1.5022.
 
 =head1 AUTHOR
 
 Johan Vromans <jvromans@squirrel.nl>
-
-=head1 THANKS
-
 H. Merijn Brand <h.m.brand@xs4all.nl>
 
 =cut

@@ -1,6 +1,6 @@
 package B::Debug;
 
-our $VERSION = '1.19';
+our $VERSION = '1.23';
 
 use strict;
 require 5.006;
@@ -36,7 +36,11 @@ sub _printop {
   my $op = shift;
   my $addr = ${$op} ? $op->ppaddr : '';
   $addr =~ s/^PL_ppaddr// if $addr;
-  return sprintf "0x%08x %6s %s", ${$op}, ${$op} ? class($op) : '', $addr;
+  if (${$op}) {
+    return sprintf "0x%08x %6s %s", ${$op}, class($op), $addr;
+  } else {
+    return sprintf "0x%x %6s %s", ${$op}, '', $addr;
+  }
 }
 
 sub B::OP::debug {
@@ -149,6 +153,18 @@ sub B::SVOP::debug {
     $op->B::OP::debug();
     printf "\top_sv\t\t0x%x\n", ${$op->sv};
     $op->sv->debug;
+}
+
+sub B::METHOP::debug {
+    my ($op) = @_;
+    $op->B::OP::debug();
+    if (${$op->first})  {
+      printf "\top_first\t0x%x\n", ${$op->first};
+      $op->first->debug;
+    } else {
+      printf "\top_meth_sv\t0x%x\n", ${$op->meth_sv};
+      $op->meth_sv->debug;
+    }
 }
 
 sub B::PVOP::debug {
@@ -361,7 +377,7 @@ EOT
 sub B::SPECIAL::debug {
     my $sv = shift;
     my $i = ref $sv ? $$sv : 0;
-    print exists $specialsv_name[$i] ? $specialsv_name[$i] : "", "\n";
+    print defined $specialsv_name[$i] ? $specialsv_name[$i] : "", "\n";
 }
 
 sub B::PADLIST::debug {
@@ -376,6 +392,7 @@ EOT
 sub compile {
     my $order = shift;
     B::clearsym();
+    $DB::single = 1 if defined &DB::DB;
     if ($order && $order eq "exec") {
         return sub { walkoptree_exec(main_start, "debug") }
     } else {
@@ -413,7 +430,7 @@ Reini Urban C<rurban@cpan.org>
 =head1 LICENSE
 
 Copyright (c) 1996, 1997 Malcolm Beattie
-Copyright (c) 2008, 2010, 2013 Reini Urban
+Copyright (c) 2008, 2010, 2013, 2014 Reini Urban
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of either:

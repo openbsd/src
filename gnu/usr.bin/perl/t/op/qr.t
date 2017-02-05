@@ -3,7 +3,7 @@
 use strict;
 
 BEGIN {
-    chdir 't';
+    chdir 't' if -d 't';
     require './test.pl';
 }
 
@@ -89,12 +89,12 @@ is ref \$t2, 'main', 'regexp assignment is not maledictory';
     $_ = 1.1;
     $_ = ${qr//};
     is 0+$_, 0, 'double upgraded to regexp';
-    like $w, 'numeric', 'produces non-numeric warning';
+    like $w, qr/numeric/, 'produces non-numeric warning';
     undef $w;
     $_ = 1;
     $_ = ${qr//};
     is 0+$_, 0, 'int upgraded to regexp';
-    like $w, 'numeric', 'likewise produces non-numeric warning';
+    like $w, qr/numeric/, 'likewise produces non-numeric warning';
 }
 
 sub {

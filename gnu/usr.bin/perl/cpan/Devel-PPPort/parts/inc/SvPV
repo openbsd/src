@@ -438,7 +438,6 @@ SvPV_nomg_nolen(sv)
         SV *sv
         PREINIT:
                 char *str;
-                STRLEN len;
         CODE:
                 str = SvPV_nomg_nolen(sv);
                 RETVAL = strEQ(str, "mhx") ? 61 : 0;
@@ -448,7 +447,7 @@ SvPV_nomg_nolen(sv)
 void
 SvPV_renew(sv, nlen, insv)
         SV *sv
-        IV nlen
+        STRLEN nlen
         SV *insv
         PREINIT:
                 STRLEN slen;

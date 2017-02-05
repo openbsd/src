@@ -81,6 +81,8 @@ sub init_a2c{
         'jis0208-raw'   => $ON_EBCDIC ? '' : 'jis0208-raw',
         'jis0212-raw'   => $ON_EBCDIC ? '' : 'jis0212-raw',
         'ksc5601-raw'   => $ON_EBCDIC ? '' : 'ksc5601-raw',
+        'cp65000' => 'UTF-7',
+        'cp65001' => 'utf-8-strict',
        );
 
     for my $i (1..11,13..16){

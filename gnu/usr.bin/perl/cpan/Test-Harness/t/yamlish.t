@@ -415,6 +415,25 @@ BEGIN {
             ],
             name => 'Regression: only_spaces'
         },
+        {   out => ['first','second'],
+            in  => [
+                '--- ',
+                '- first ',
+                '- second ',
+                '...'
+            ],
+            name => "Space after header for array",
+        },
+        {   out => {'key' => [{'value' => {'key2' => 'value2'}}]},
+            in  => [
+                '--- ',
+                'key: ',
+                '- value: ',
+                '    key2: value2 ',
+                '... '
+            ],
+            name => "Space after header for hash",
+        },
         {   out => [
                 undef,
                 {   'foo'  => 'bar',

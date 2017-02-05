@@ -2,7 +2,7 @@ package SelfLoader;
 use 5.008;
 use strict;
 use IO::Handle;
-our $VERSION = "1.21";
+our $VERSION = "1.23";
 
 # The following bit of eval-magic is necessary to make this work on
 # perls < 5.009005.
@@ -100,17 +100,25 @@ sub _load_stubs {
     # Protect: fork() shares the file pointer between the parent and the kid
     if(sysseek($fh, tell($fh), 0)) {
       open my $nfh, '<&', $fh or croak "reopen: $!";# dup() the fd
-      close $fh or die "close: $!";                 # autocloses, but be paranoid
+      close $fh or die "close: $!";                 # autocloses, but be
+                                                    # paranoid
       open $fh, '<&', $nfh or croak "reopen2: $!";  # dup() the fd "back"
-      close $nfh or die "close after reopen: $!";   # autocloses, but be paranoid
+      close $nfh or die "close after reopen: $!";   # autocloses, but be
+                                                    # paranoid
       $fh->untaint;
     }
     $Cache{"${currpack}::<DATA"} = 1;   # indicate package is cached
 
     local($/) = "\n";
     while(defined($line = <$fh>) and $line !~ m/^__END__/) {
-	if ($line =~ m/^\s*sub\s+([\w:]+)\s*((?:\([\\\$\@\%\&\*\;]*\))?(?:$AttrList)?)/) {
-            push(@stubs, $self->_add_to_cache($name, $currpack, \@lines, $protoype));
+	if ($line =~ m/ ^\s*                        # indentation
+	                sub\s+([\w:]+)\s*           # 'sub' and sub name
+	                (
+	                 (?:\([\\\$\@\%\&\*\;]*\))? # optional prototype sigils
+	                 (?:$AttrList)?             # optional attribute list
+	                )/x) {
+            push(@stubs, $self->_add_to_cache($name, $currpack,
+                                              \@lines, $protoype));
             $protoype = $2;
             @lines = ($line);
             if (index($1,'::') == -1) {         # simple sub name
@@ -127,7 +135,8 @@ sub _load_stubs {
                 }
             }
         } elsif ($line =~ m/^package\s+([\w:]+)/) { # A package declared
-            push(@stubs, $self->_add_to_cache($name, $currpack, \@lines, $protoype));
+            push(@stubs, $self->_add_to_cache($name, $currpack,
+                                              \@lines, $protoype));
             $self->_package_defined($line);
             $name = '';
             @lines = ();
@@ -165,7 +174,9 @@ sub _add_to_cache {
     return () unless $fullname;
     carp("Redefining sub $fullname")
       if exists $Cache{$fullname};
-    $Cache{$fullname} = join('', "\n\#line 1 \"sub $fullname\"\npackage $pack; ", @$lines);
+    $Cache{$fullname} = join('',
+                             "\n\#line 1 \"sub $fullname\"\npackage $pack; ",
+                             @$lines);
     #$Cache{$fullname} = join('', "package $pack; ",@$lines);
     print STDERR "SelfLoader cached $fullname: $Cache{$fullname}" if DEBUG;
     # return stub to be eval'd
@@ -384,54 +395,61 @@ can benefit from bug fixes.
 
 This package has the same copyright and license as the perl core:
 
-             Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-        2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
+Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
 
-			    All rights reserved.
+All rights reserved.
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of either:
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
 
-	a) the GNU General Public License as published by the Free
-	Software Foundation; either version 1, or (at your option) any
-	later version, or
+=over 4
 
-	b) the "Artistic License" which comes with this Kit.
+=item a)
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
-    the GNU General Public License or the Artistic License for more details.
+the GNU General Public License as published by the Free Software Foundation;
+either version 1, or (at your option) any later version, or
 
-    You should have received a copy of the Artistic License with this
-    Kit, in the file named "Artistic".  If not, I'll be glad to provide one.
+=item b)
 
-    You should also have received a copy of the GNU General Public License
-    along with this program in the file named "Copying". If not, write to the 
-    Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-    MA 02110-1301, USA or visit their web page on the internet at
-    http://www.gnu.org/copyleft/gpl.html.
+the "Artistic License" which comes with this Kit.
 
-    For those of you that choose to use the GNU General Public License,
-    my interpretation of the GNU General Public License is that no Perl
-    script falls under the terms of the GPL unless you explicitly put
-    said script under the terms of the GPL yourself.  Furthermore, any
-    object code linked with perl does not automatically fall under the
-    terms of the GPL, provided such object code only adds definitions
-    of subroutines and variables, and does not otherwise impair the
-    resulting interpreter from executing any standard Perl script.  I
-    consider linking in C subroutines in this manner to be the moral
-    equivalent of defining subroutines in the Perl language itself.  You
-    may sell such an object file as proprietary provided that you provide
-    or offer to provide the Perl source, as specified by the GNU General
-    Public License.  (This is merely an alternate way of specifying input
-    to the program.)  You may also sell a binary produced by the dumping of
-    a running Perl script that belongs to you, provided that you provide or
-    offer to provide the Perl source as specified by the GPL.  (The
-    fact that a Perl interpreter and your code are in the same binary file
-    is, in this case, a form of mere aggregation.)  This is my interpretation
-    of the GPL.  If you still have concerns or difficulties understanding
-    my intent, feel free to contact me.  Of course, the Artistic License
-    spells all this out for your protection, so you may prefer to use that.
+=back
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the GNU General Public License or the Artistic License for more details.
+
+You should have received a copy of the Artistic License with this
+Kit, in the file named "Artistic".  If not, I'll be glad to provide one.
+
+You should also have received a copy of the GNU General Public License
+along with this program in the file named "Copying". If not, write to the
+Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+MA 02110-1301, USA or visit their web page on the internet at
+http://www.gnu.org/copyleft/gpl.html.
+
+For those of you that choose to use the GNU General Public License,
+my interpretation of the GNU General Public License is that no Perl
+script falls under the terms of the GPL unless you explicitly put
+said script under the terms of the GPL yourself.  Furthermore, any
+object code linked with perl does not automatically fall under the
+terms of the GPL, provided such object code only adds definitions
+of subroutines and variables, and does not otherwise impair the
+resulting interpreter from executing any standard Perl script.  I
+consider linking in C subroutines in this manner to be the moral
+equivalent of defining subroutines in the Perl language itself.  You
+may sell such an object file as proprietary provided that you provide
+or offer to provide the Perl source, as specified by the GNU General
+Public License.  (This is merely an alternate way of specifying input
+to the program.)  You may also sell a binary produced by the dumping of
+a running Perl script that belongs to you, provided that you provide or
+offer to provide the Perl source as specified by the GPL.  (The
+fact that a Perl interpreter and your code are in the same binary file
+is, in this case, a form of mere aggregation.)  This is my interpretation
+of the GPL.  If you still have concerns or difficulties understanding
+my intent, feel free to contact me.  Of course, the Artistic License
+spells all this out for your protection, so you may prefer to use that.
 
 =cut

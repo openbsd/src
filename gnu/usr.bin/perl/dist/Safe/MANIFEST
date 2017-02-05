@@ -1,6 +1,8 @@
 Changes
-MANIFEST			This list of files
 Makefile.PL
+MANIFEST			This list of files
+META.json			Module JSON meta-data (added by MakeMaker)
+META.yml			Module meta-data (added by MakeMaker)
 README
 Safe.pm
 t/safe1.t
@@ -10,9 +12,8 @@ t/safeload.t
 t/safenamedcap.t
 t/safeops.t
 t/saferegexp.t
+t/safesecurity.t
 t/safesort.t
 t/safeuniversal.t
 t/safeutf8.t
 t/safewrap.t
-META.yml                                 Module meta-data (added by MakeMaker)
-META.json                                Module JSON meta-data (added by MakeMaker)

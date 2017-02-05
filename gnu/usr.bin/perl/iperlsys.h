@@ -315,10 +315,12 @@ struct IPerlStdIOInfo
 #define PerlSIO_fputs(s,f)		fputs(s,f)
 #define PerlSIO_fflush(f)		Fflush(f)
 #define PerlSIO_fgets(s, n, f)		fgets(s,n,f)
-#if defined(VMS) && defined(__DECC)
+#if defined(__VMS)
      /* Unusual definition of ungetc() here to accommodate fast_sv_gets()'
       * belief that it can mix getc/ungetc with reads from stdio buffer */
+START_EXTERN_C
      int decc$ungetc(int __c, FILE *__stream);
+END_EXTERN_C
 #    define PerlSIO_ungetc(c,f) ((c) == EOF ? EOF : \
             ((*(f) && !((*(f))->_flag & _IONBF) && \
             ((*(f))->_ptr > (*(f))->_base)) ? \
@@ -476,7 +478,7 @@ typedef char*		(*LPENVGetenv_len)(struct IPerlEnv*,
 #endif
 #ifdef WIN32
 typedef unsigned long	(*LPEnvOsID)(struct IPerlEnv*);
-typedef char*		(*LPEnvLibPath)(struct IPerlEnv*, const char*,
+typedef char*		(*LPEnvLibPath)(struct IPerlEnv*, WIN32_NO_REGISTRY_M_(const char*)
 					STRLEN *const len);
 typedef char*		(*LPEnvSiteLibPath)(struct IPerlEnv*, const char*,
 					    STRLEN *const len);
@@ -548,7 +550,7 @@ struct IPerlEnvInfo
 #define PerlEnv_os_id()						\
 	(*PL_Env->pEnvOsID)(PL_Env)
 #define PerlEnv_lib_path(str, lenp)				\
-	(*PL_Env->pLibPath)(PL_Env,(str),(lenp))
+	(*PL_Env->pLibPath)(PL_Env,WIN32_NO_REGISTRY_M_(str)(lenp))
 #define PerlEnv_sitelib_path(str, lenp)				\
 	(*PL_Env->pSiteLibPath)(PL_Env,(str),(lenp))
 #define PerlEnv_vendorlib_path(str, lenp)			\
@@ -573,7 +575,7 @@ struct IPerlEnvInfo
 
 #ifdef WIN32
 #define PerlEnv_os_id()			win32_os_id()
-#define PerlEnv_lib_path(str, lenp)	win32_get_privlib(str, lenp)
+#define PerlEnv_lib_path(str, lenp)	win32_get_privlib(WIN32_NO_REGISTRY_M_(str) lenp)
 #define PerlEnv_sitelib_path(str, lenp)	win32_get_sitelib(str, lenp)
 #define PerlEnv_vendorlib_path(str, lenp)	win32_get_vendorlib(str, lenp)
 #define PerlEnv_get_child_IO(ptr)	win32_get_child_IO(ptr)
@@ -597,6 +599,8 @@ struct IPerlEnvInfo
 */
 
 #if defined(PERL_IMPLICIT_SYS)
+
+struct utimbuf; /* prevent gcc warning about the use below */
 
 /* IPerlLIO		*/
 struct IPerlLIO;
@@ -1413,11 +1417,5 @@ struct IPerlSockInfo
 #endif	/* __Inc__IPerl___ */
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

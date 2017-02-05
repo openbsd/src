@@ -1,5 +1,5 @@
 package autodie::test::badname;
-use base qw(autodie);
+use parent qw(autodie);
 
 sub exception_class {
     return 'autodie::test::badname::$@#%';  # Doesn't exist!

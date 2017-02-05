@@ -5,10 +5,10 @@
 
 BEGIN {
     @INC = qw(. ../lib);
-    chdir 't';
+    chdir 't' if -d 't';
 }
 
-print "1..169\n";
+print "1..173\n";
 
 sub failed {
     my ($got, $expected, $name) = @_;
@@ -499,11 +499,53 @@ eval 'for my a1b $i (1) {}';
 # ng: 'Missing $ on loop variable'
 like $@, "^No such class a1b at ", 'TYPE of my of for statement';
 
+eval 'method {} {$_,undef}';
+like $@, qq/^Can't call method "method" on unblessed reference at /,
+     'method BLOCK {...} does not try to disambiguate';
+
+eval '#line 1 maggapom
+      if ($a>3) { $a ++; }
+      else {printf(1/0);}';
+is $@, "Illegal division by zero at maggapom line 2.\n",
+   'else {foo} line number (no space after {) [perl #122695]';
+
+# parentheses needed for this to fail an assertion in S_maybe_multideref
+is +(${[{a=>214}]}[0])->{a}, 214, '($array[...])->{...}';
+
+# This used to fail an assertion because of the OPf_SPECIAL flag on an
+# OP_GV that started out as an OP_CONST.  No test output is necessary, as
+# successful parsing is sufficient.
+sub FILE1 () { 1 }
+sub dummy { tell FILE1 }
+
+# More potential multideref assertion failures
+# OPf_PARENS on OP_RV2SV in subscript
+$x[($_)];
+# OPf_SPECIAL on OP_GV in subscript
+$x[FILE1->[0]];
+
 # Used to crash [perl #123542]
 eval 's /${<>{}) //';
 
 # Also used to crash [perl #123652]
 eval{$1=eval{a:}};
+
+# Used to fail assertions [perl #123753]
+eval "map+map";
+eval "grep+grep";
+
+# ALso failed an assertion [perl #123848]
+{
+ local $SIG{__WARN__} = sub{};
+ eval 'my $_; m// ~~ 0';
+}
+
+# RT #124207 syntax error during stringify can leave stringify op
+# with multiple children and assertion failures
+
+eval 'qq{@{0]}${}},{})';
+is(1, 1, "RT #124207");
+
 
 # Add new tests HERE (above this line)
 
@@ -653,4 +695,4 @@ check_line(642, 'line number after ${expr} surrounding heredoc body');
 
 
 __END__
-# Don't add new tests HERE. See note above
+# Don't add new tests HERE. See "Add new tests HERE" above.

@@ -11,7 +11,7 @@ require OS2::DLL;
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop register);
 
-$VERSION = '1.04';
+$VERSION = '1.05';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...
@@ -432,37 +432,38 @@ See C<t/rx*.t> and the next section for examples.
 
 =head1 EXAMPLE
 
-  use OS2::REXX;
+ use OS2::REXX;
 
-  sub Ender::DESTROY { $vrexx->VExit; print "Exiting...\n" }
+ sub Ender::DESTROY { $vrexx->VExit; print "Exiting...\n" }
 
-  $vrexx = OS2::REXX->load('VREXX');
-  REXX_call {			# VOpenWindow takes a stem
-    local $SIG{TERM} = sub {die}; # enable Ender::DESTROY
-    local $SIG{INT} = sub {die};	# enable Ender::DESTROY
+ $vrexx = OS2::REXX->load('VREXX');
+ REXX_call {			# VOpenWindow takes a stem
+   local $SIG{TERM} = sub {die}; # enable Ender::DESTROY
+   local $SIG{INT} = sub {die};	# enable Ender::DESTROY
 
-    $code = $vrexx->VInit;
-    print "Init code = `$code'\n";
-    die "error initializing VREXX" if $code eq 'ERROR';
+   $code = $vrexx->VInit;
+   print "Init code = `$code'\n";
+   die "error initializing VREXX" if $code eq 'ERROR';
 
-    my $ender = bless [], 'Ender'; # Call Ender::DESTROY on exit
+   my $ender = bless [], 'Ender'; # Call Ender::DESTROY on exit
 
-    print "VREXX Version ", $vrexx->VGetVersion, "\n";
+   print "VREXX Version ", $vrexx->VGetVersion, "\n";
 
-    tie %pos, 'OS2::REXX', 'POS.' or die;
-    %pos = ( LEFT   => 0, RIGHT  => 7, TOP    => 5, BOTTOM => 0 );
+   tie %pos, 'OS2::REXX', 'POS.' or die;
+   %pos = ( LEFT   => 0, RIGHT  => 7, TOP    => 5, BOTTOM => 0 );
 
-    $id = $vrexx->VOpenWindow('To disconnect:', 'WHITE', 'POS');
-    $vrexx->VForeColor($id, 'BLACK');
-    $vrexx->VSetFont($id, 'TIME', '30');
-    $tlim = time + 60;
-    while ( ($r = $tlim - time) >= 0 ) {
-      $vrexx->VClearWindow($id);
-      $vrexx->VSay($id, 100, 50, (sprintf "%02i:%02i", int($r/60), $r % 60));
-      sleep 1;
-    }
-    print "Close code = `$res'\n" if $res = $vrexx->VCloseWindow($id);
-  };
+   $id = $vrexx->VOpenWindow('To disconnect:', 'WHITE', 'POS');
+   $vrexx->VForeColor($id, 'BLACK');
+   $vrexx->VSetFont($id, 'TIME', '30');
+   $tlim = time + 60;
+   while ( ($r = $tlim - time) >= 0 ) {
+     $vrexx->VClearWindow($id);
+     $vrexx->VSay($id, 100, 50, (sprintf "%02i:%02i", int($r/60),
+                                                              $r % 60));
+     sleep 1;
+   }
+   print "Close code = `$res'\n" if $res = $vrexx->VCloseWindow($id);
+ };
 
 
 

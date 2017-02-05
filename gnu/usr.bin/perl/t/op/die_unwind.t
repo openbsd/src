@@ -1,5 +1,6 @@
 #!./perl -w
 
+chdir 't' if -d 't';
 require './test.pl';
 use strict;
 

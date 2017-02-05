@@ -2,6 +2,7 @@
 use strict;
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
 }
 use File::Copy ();

@@ -16,7 +16,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 995 + $extra ;
+    plan tests => 1002 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw(anyuncompress $AnyUncompressError)) ;
 
@@ -1583,7 +1583,7 @@ sub run
 
 
     {
-        # check setting $/ 
+        # check setting $\ 
 
         my $CompFunc = getTopFuncRef($CompressClass);
         my $UncompFunc = getTopFuncRef($UncompressClass);
@@ -1600,7 +1600,30 @@ sub run
 
     }
 
+    SKIP:
+    {
+        #95494: IO::Uncompress::Gunzip: Can no longer gunzip to in-memory file handle
+
+        skip "open filehandle to buffer not supported in Perl $]", 7
+            if $] < 5.008 ;
+        my $CompFunc = getTopFuncRef($CompressClass);
+        my $UncompFunc = getTopFuncRef($UncompressClass);
+
+        my $input = "hello world";
+        my $compressed ;
+        ok open my $fh_in1, '<', \$input ;
+        ok open my $fh_out1, '>', \$compressed ;
+        ok &$CompFunc($fh_in1 => $fh_out1), '  Compressed ok' ;
+
+        my $output;
+        ok open my $fh_in2, '<', \$compressed ;
+        ok open my $fh_out2, '>', \$output ;
+
+        ok &$UncompFunc($fh_in2 => $fh_out2), '  UnCompressed ok' ;
+        is $output, $input, "round trip ok" ;
+    }
 }
+
 # TODO add more error cases
 
 1;

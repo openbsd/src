@@ -70,7 +70,7 @@ my @CPAN  = grep { $Modules{$_}{CPAN} } keys %Modules;
 my @files = ('autodoc.pl', 'lib/unicore/mktables', 'TestInit.pm',
              'Porting/Maintainers.pm', 'Porting/perldelta_template.pod',
              map { get_module_files($_) } @CPAN);
-my @dirs  = ('cpan', 'win32', 'mad', grep { -d $_ && $_  !~ /^cpan/ } map { get_module_pat($_) } @CPAN);
+my @dirs  = ('cpan', 'win32', 'lib/perl5db', grep { -d $_ && $_  !~ /^cpan/ } map { get_module_pat($_) } @CPAN);
 
 my %dirs;
 @dirs{@dirs} = ();

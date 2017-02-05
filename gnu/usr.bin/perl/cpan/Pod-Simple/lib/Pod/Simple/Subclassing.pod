@@ -1,4 +1,3 @@
-
 =head1 NAME
 
 Pod::Simple::Subclassing -- write a formatter as a Pod::Simple subclass
@@ -38,7 +37,7 @@ generally a Pod formatter. If you just want to know about using an
 existing Pod formatter, instead see its documentation and see also the
 docs in L<Pod::Simple>.
 
-The zeroeth step in writing a Pod formatter is to make sure that there
+B<The zeroeth step> in writing a Pod formatter is to make sure that there
 isn't already a decent one in CPAN. See L<http://search.cpan.org/>, and
 run a search on the name of the format you want to render to. Also
 consider joining the Pod People list
@@ -46,32 +45,50 @@ L<http://lists.perl.org/showlist.cgi?name=pod-people> and asking whether
 anyone has a formatter for that format -- maybe someone cobbled one
 together but just hasn't released it.
 
-The first step in writing a Pod processor is to read L<perlpodspec>,
-which contains notes information on writing a Pod parser (which has been
+B<The first step> in writing a Pod processor is to read L<perlpodspec>,
+which contains information on writing a Pod parser (which has been
 largely taken care of by Pod::Simple), but also a lot of requirements
 and recommendations for writing a formatter.
 
-The second step is to actually learn the format you're planning to
+B<The second step> is to actually learn the format you're planning to
 format to -- or at least as much as you need to know to represent Pod,
 which probably isn't much.
 
-The third step is to pick which of Pod::Simple's interfaces you want to
-use -- the basic interface via Pod::Simple or L<Pod::Simple::Methody> is
-event-based, sort of like L<HTML::Parser>'s interface, or sort of like
-L<XML::Parser>'s "Handlers" interface), but L<Pod::Simple::PullParser>
-provides a token-stream interface, sort of like L<HTML::TokeParser>'s
-interface; L<Pod::Simple::SimpleTree> provides a simple tree interface,
-rather like XML::Parser's "Tree" interface. Users familiar with
-XML-handling will find one of these styles relatively familiar; but if
-you would be even more at home with XML, there are classes that produce
-an XML representation of the Pod stream, notably
-L<Pod::Simple::XMLOutStream>; you can feed the output of such a class to
-whatever XML parsing system you are most at home with.
+B<The third step> is to pick which of Pod::Simple's interfaces you want to
+use:
 
-The last step is to write your code based on how the events (or tokens,
+=over
+
+=item Pod::Simple
+
+The basic L<Pod::Simple> interface that uses C<_handle_element_start()>,
+C<_handle_element_end()> and C<_handle_text()>.
+
+=item Pod::Simple::Methody
+
+The L<Pod::Simple::Methody> interface is event-based, similar to that of
+L<HTML::Parser> or L<XML::Parser>'s "Handlers".
+
+=item Pod::Simple::PullParser
+
+L<Pod::Simple::PullParser> provides a token-stream interface, sort of
+like L<HTML::TokeParser>'s interface.
+
+=item Pod::Simple::SimpleTree
+
+L<Pod::Simple::SimpleTree> provides a simple tree interface, rather like
+L<XML::Parser>'s "Tree" interface. Users familiar with XML handling will
+be comfortable with this interface. Users interested in outputting XML,
+should look into the modules that produce an XML representation of the
+Pod stream, notably L<Pod::Simple::XMLOutStream>; you can feed the output
+of such a class to whatever XML parsing system you are most at home with.
+
+=back
+
+B<The last step> is to write your code based on how the events (or tokens,
 or tree-nodes, or the XML, or however you're parsing) will map to
-constructs in the output format. Also sure to consider how to escape
-text nodes containing arbitrary text, and also what to do with text
+constructs in the output format. Also be sure to consider how to escape
+text nodes containing arbitrary text, and what to do with text
 nodes that represent preformatted text (from verbatim sections).
 
 
@@ -255,7 +272,7 @@ produces this event structure:
 	crontab(5)
   </L>
 
-In the rare cases where a man page link has a specified, that text appears
+In the rare cases where a man page link has a section specified, that text appears
 in a I<section> attribute. For example, this Pod source:
 
   L<crontab(5)/"ENVIRONMENT">
@@ -444,7 +461,7 @@ will produce this event structure:
 	 et al.
   </head1>
 
-"=head2" thru "=head4" directives are the same, except for the element
+"=head2" through "=head4" directives are the same, except for the element
 names in the event structure.
 
 =item events with an element_name of encoding
@@ -545,7 +562,7 @@ an "<UL><LI>...</LI>...</UL>" structure), but which any processor may use.
 Note that the values for the I<number> attributes of "item-number"
 elements in a given "over-number" area I<will> start at 1 and go up by
 one each time.  If the Pod source doesn't follow that order (even though
-it really should should!), whatever numbers it has will be ignored (with
+it really should!), whatever numbers it has will be ignored (with
 the correct values being put in the I<number> attributes), and an error
 message might be issued to the user.
 
@@ -905,8 +922,8 @@ interesting, but this is included for completeness.
 
 =item C<< $parser->whine( I<linenumber>, I<complaint string> ) >>
 
-This notes a problem in the Pod, which will be reported to in the "Pod
-Errors" section of the document and/or send to STDERR, depending on the
+This notes a problem in the Pod, which will be reported in the "Pod
+Errors" section of the document and/or sent to STDERR, depending on the
 values of the attributes C<no_whining>, C<no_errata_section>, and
 C<complain_stderr>.
 
@@ -1004,7 +1021,7 @@ indented text, showing each event on its own line
 L<Pod::Simple::LinkSection> -- class for objects representing the values
 of the TODO and TODO attributes of LE<lt>...E<gt> elements
 
-L<Pod::Escapes> -- the module the Pod::Simple uses for evaluating
+L<Pod::Escapes> -- the module that Pod::Simple uses for evaluating
 EE<lt>...E<gt> content
 
 L<Pod::Simple::Text> -- a simple plaintext formatter for Pod
@@ -1027,8 +1044,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

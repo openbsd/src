@@ -2,8 +2,8 @@
 use strict;
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
-    skip_all("EBCDIC porting needed") if $::IS_EBCDIC;
     skip_all_without_perlio();
 }
 

@@ -149,5 +149,10 @@ is( $@, '', 'no errors while checking autovivification and persistence of hash r
 eval "my ()";
 is( $@, '', "eval of my() passes");
 
+# RT #126844
+# This triggered a compile-time assert failure in rpeep()
+eval 'my($a,$b),$x,my($c,$d)';
+pass("RT #126844");
+
 #Variable number of tests due to the way the while/for loops are tested now
 done_testing();

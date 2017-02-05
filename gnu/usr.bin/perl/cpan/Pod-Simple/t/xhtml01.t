@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use lib '../lib';
-use Test::More tests => 61;
+use Test::More tests => 62;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -660,6 +660,22 @@ is($results, <<"EOHTML", "Text with numeric entities");
 
 EOHTML
 
+my $html = q{<tt>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main(int argc,char *argv[]) {
+
+        printf("Hellow World\n");
+        return 0;
+
+}
+</pre>
+</tt>};
+initialize($parser, $results);
+$parser->parse_string_document("=begin html\n\n$html\n\n=end html\n");
+is($results, "$html\n\n", "Text with =begin html");
+
 SKIP: for my $use_html_entities (0, 1) {
   if ($use_html_entities and not $Pod::Simple::XHTML::HAS_HTML_ENTITIES) {
     skip("HTML::Entities not installed", 3);
@@ -692,7 +708,7 @@ This is Anna's "Answer" to the <q>Question</q>.
 =cut
 
 EOPOD
-my $T = $use_html_entities ? 84 : 'x54';
+my $T = $use_html_entities ? ord('T') : sprintf ("x%X", ord('T'));
 is($results, <<"EOHTML", 'HTML Entities should be only for specified characters');
 <p>&#$T;his is Anna's &quot;Answer&quot; to the &lt;q&gt;Question&lt;/q&gt;.</p>
 
@@ -700,7 +716,7 @@ EOHTML
 
   # Keep =encoding out of content.
   initialize($parser, $results);
-  $parser->parse_string_document("=encoding utf-8\n\n=head1 NAME\n");
+  $parser->parse_string_document("=encoding ascii\n\n=head1 NAME\n");
   is($results, <<"EOHTML", 'Encoding should not be in content')
 <h1 id="NAME">NAME</h1>
 

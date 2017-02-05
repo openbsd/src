@@ -2,7 +2,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require 'test.pl';
+    require './test.pl';
     plan(24);
 }
 

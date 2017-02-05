@@ -3,9 +3,9 @@
 # Test scoping issues with embedded code in regexps.
 
 BEGIN {
-    chdir 't';
-    @INC = qw(lib ../lib);
+    chdir 't' if -d 't';
     require './test.pl';
+    set_up_inc(qw(lib ../lib));
 }
 
 plan 48;
@@ -243,16 +243,16 @@ CODE
 pass "undef *_ in a re-eval does not cause a double free";
 
 # make sure regexp warnings are reported on the right line
-# (we don't care what warning; the 32768 limit is just one
-# that was easy to reproduce) */
-{
+# (we don't care what warning */
+SKIP: {
+    skip("no \\p{Unassigned} under miniperl", 1) if is_miniperl;
     use warnings;
     my $w;
     local $SIG{__WARN__} = sub { $w = "@_" };
     my $qr = qr/(??{'a'})/;
     my $filler = 1;
-    ("a" x 40_000) =~ /^$qr(ab*)+/; my $line = __LINE__;
-    like($w, qr/recursion limit.* line $line\b/, "warning on right line");
+    my $a = "\x{110000}" =~ /\p{Unassigned}/; my $line = __LINE__;
+    like($w, qr/Matched non-Unicode code point .* line $line\b/, "warning on right line");
 }
 
 # on immediate exit from pattern with code blocks, make sure PL_curcop is

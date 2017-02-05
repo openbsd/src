@@ -14,13 +14,17 @@ use File::Find;
 my %files;
 my $test_count = 0;
 
+# in a parallel 'make test', temporary files and directories can
+# randomly appear and disappear; don't complain about these
+no warnings 'File::Find';
+
 find({no_chdir => 1, wanted => sub {
 	   my $name = $File::Find::name;
 	   # Assumes that the path separator is exactly one character.
 	   $name =~ s/^\..//;
 
 	   # Special exemption for Makefile, makefile
-	   return if $name =~ m!\A(?:x2p/)?[Mm]akefile\z!;
+	   return if $name =~ m!\A[Mm]akefile\z!;
 
 	   if ($name eq '.git') {
 	       # Don't scan the .git directory, as its contents are outside

@@ -29,6 +29,7 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
                 q[our $VERSION = '1.23';]       => '1.23',
                 q[$CGI::VERSION='3.63']         => '3.63',
                 q[$VERSION = "1.627"; # ==> ALSO update the version in the pod text below!] => '1.627',
+                q[BEGIN { our $VERSION = '1.23' }]       => '1.23',
 
                 '$Something::VERSION == 1.0'    => undef,
                 '$Something::VERSION <= 1.0'    => undef,

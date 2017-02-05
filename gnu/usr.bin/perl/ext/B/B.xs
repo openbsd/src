@@ -8,6 +8,7 @@
  */
 
 #define PERL_NO_GET_CONTEXT
+#define PERL_EXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -21,24 +22,14 @@ typedef FILE * InputStream;
 
 static const char* const svclassnames[] = {
     "B::NULL",
-#if PERL_VERSION < 19
-    "B::BIND",
-#endif
     "B::IV",
     "B::NV",
-#if PERL_VERSION <= 10
-    "B::RV",
-#endif
     "B::PV",
-#if PERL_VERSION >= 19
     "B::INVLIST",
-#endif
     "B::PVIV",
     "B::PVNV",
     "B::PVMG",
-#if PERL_VERSION >= 11
     "B::REGEXP",
-#endif
     "B::GV",
     "B::PVLV",
     "B::AV",
@@ -60,7 +51,9 @@ typedef enum {
     OPc_PADOP,	/* 8 */
     OPc_PVOP,	/* 9 */
     OPc_LOOP,	/* 10 */
-    OPc_COP	/* 11 */
+    OPc_COP,	/* 11 */
+    OPc_METHOP,	/* 12 */
+    OPc_UNOP_AUX /* 13 */
 } opclass;
 
 static const char* const opclassnames[] = {
@@ -75,7 +68,9 @@ static const char* const opclassnames[] = {
     "B::PADOP",
     "B::PVOP",
     "B::LOOP",
-    "B::COP"	
+    "B::COP",
+    "B::METHOP",
+    "B::UNOP_AUX"
 };
 
 static const size_t opsizes[] = {
@@ -90,20 +85,33 @@ static const size_t opsizes[] = {
     sizeof(PADOP),
     sizeof(PVOP),
     sizeof(LOOP),
-    sizeof(COP)	
+    sizeof(COP),
+    sizeof(METHOP),
+    sizeof(UNOP_AUX),
 };
 
 #define MY_CXT_KEY "B::_guts" XS_VERSION
 
 typedef struct {
-    int		x_walkoptree_debug;	/* Flag for walkoptree debug hook */
     SV *	x_specialsv_list[7];
+    int		x_walkoptree_debug;	/* Flag for walkoptree debug hook */
 } my_cxt_t;
 
 START_MY_CXT
 
 #define walkoptree_debug	(MY_CXT.x_walkoptree_debug)
 #define specialsv_list		(MY_CXT.x_specialsv_list)
+
+
+static void B_init_my_cxt(pTHX_ my_cxt_t * cxt) {
+    cxt->x_specialsv_list[0] = Nullsv;
+    cxt->x_specialsv_list[1] = &PL_sv_undef;
+    cxt->x_specialsv_list[2] = &PL_sv_yes;
+    cxt->x_specialsv_list[3] = &PL_sv_no;
+    cxt->x_specialsv_list[4] = (SV *) pWARN_ALL;
+    cxt->x_specialsv_list[5] = (SV *) pWARN_NONE;
+    cxt->x_specialsv_list[6] = (SV *) pWARN_STD;
+}
 
 static opclass
 cc_opclass(pTHX_ const OP *o)
@@ -113,18 +121,16 @@ cc_opclass(pTHX_ const OP *o)
     if (!o)
 	return OPc_NULL;
 
-    if (o->op_type == 0)
+    if (o->op_type == 0) {
+	if (o->op_targ == OP_NEXTSTATE || o->op_targ == OP_DBSTATE)
+	    return OPc_COP;
 	return (o->op_flags & OPf_KIDS) ? OPc_UNOP : OPc_BASEOP;
+    }
 
     if (o->op_type == OP_SASSIGN)
 	return ((o->op_private & OPpASSIGN_BACKWARDS) ? OPc_UNOP : OPc_BINOP);
 
     if (o->op_type == OP_AELEMFAST) {
-#if PERL_VERSION <= 14
-	if (o->op_flags & OPf_SPECIAL)
-	    return OPc_BASEOP;
-	else
-#endif
 #ifdef USE_ITHREADS
 	    return OPc_PADOP;
 #else
@@ -232,6 +238,10 @@ cc_opclass(pTHX_ const OP *o)
 	    return OPc_BASEOP;
 	else
 	    return OPc_PVOP;
+    case OA_METHOP:
+	return OPc_METHOP;
+    case OA_UNOP_AUX:
+	return OPc_UNOP_AUX;
     }
     warn("can't determine class of operator %s, assuming BASEOP\n",
 	 OP_NAME(o));
@@ -528,7 +538,7 @@ walkoptree(pTHX_ OP *o, const char *method, SV *ref)
     PUTBACK;
     perl_call_method(method, G_DISCARD);
     if (o && (o->op_flags & OPf_KIDS)) {
-	for (kid = ((UNOP*)o)->op_first; kid; kid = kid->op_sibling) {
+	for (kid = ((UNOP*)o)->op_first; kid; kid = OpSIBLING(kid)) {
 	    ref = walkoptree(aTHX_ kid, method, ref);
 	}
     }
@@ -554,7 +564,7 @@ oplist(pTHX_ OP *o, SV **SP)
             continue;
 	case OP_SORT:
 	    if (o->op_flags & OPf_STACKED && o->op_flags & OPf_SPECIAL) {
-		OP *kid = cLISTOPo->op_first->op_sibling;   /* pass pushmark */
+		OP *kid = OpSIBLING(cLISTOPo->op_first);   /* pass pushmark */
 		kid = kUNOP->op_first;                      /* pass rv2gv */
 		kid = kUNOP->op_first;                      /* pass leave */
 		SP = oplist(aTHX_ kid->op_next, SP);
@@ -586,15 +596,14 @@ typedef PADOP	*B__PADOP;
 typedef PVOP	*B__PVOP;
 typedef LOOP	*B__LOOP;
 typedef COP	*B__COP;
+typedef METHOP  *B__METHOP;
 
 typedef SV	*B__SV;
 typedef SV	*B__IV;
 typedef SV	*B__PV;
 typedef SV	*B__NV;
 typedef SV	*B__PVMG;
-#if PERL_VERSION >= 11
 typedef SV	*B__REGEXP;
-#endif
 typedef SV	*B__PVLV;
 typedef SV	*B__BM;
 typedef SV	*B__RV;
@@ -611,10 +620,13 @@ typedef struct refcounted_he	*B__RHE;
 #ifdef PadlistARRAY
 typedef PADLIST	*B__PADLIST;
 #endif
+typedef PADNAMELIST *B__PADNAMELIST;
+typedef PADNAME	*B__PADNAME;
+
 
 #ifdef MULTIPLICITY
 #  define ASSIGN_COMMON_ALIAS(prefix, var) \
-    STMT_START { XSANY.any_i32 = offsetof(struct interpreter, prefix##var); } STMT_END
+    STMT_START { XSANY.any_i32 = STRUCT_OFFSET(struct interpreter, prefix##var); } STMT_END
 #else
 #  define ASSIGN_COMMON_ALIAS(prefix, var) \
     STMT_START { XSANY.any_ptr = (void *)&PL_##var; } STMT_END
@@ -654,53 +666,44 @@ static XSPROTO(intrpvar_sv_common)
 
 /* table that drives most of the B::*OP methods */
 
-struct OP_methods {
+static const struct OP_methods {
     const char *name;
     U8 namelen;
     U8    type; /* if op_offset_special, access is handled on a case-by-case basis */
     U16 offset;
 } op_methods[] = {
-  { STR_WITH_LEN("next"),    OPp,    offsetof(struct op, op_next),     },/* 0*/
-  { STR_WITH_LEN("sibling"), OPp,    offsetof(struct op, op_sibling),  },/* 1*/
-  { STR_WITH_LEN("targ"),    PADOFFSETp, offsetof(struct op, op_targ), },/* 2*/
-  { STR_WITH_LEN("flags"),   U8p,    offsetof(struct op, op_flags),    },/* 3*/
-  { STR_WITH_LEN("private"), U8p,    offsetof(struct op, op_private),  },/* 4*/
-  { STR_WITH_LEN("first"),   OPp,    offsetof(struct unop, op_first),  },/* 5*/
-  { STR_WITH_LEN("last"),    OPp,    offsetof(struct binop, op_last),  },/* 6*/
-  { STR_WITH_LEN("other"),   OPp,    offsetof(struct logop, op_other), },/* 7*/
+  { STR_WITH_LEN("next"),    OPp,    STRUCT_OFFSET(struct op, op_next),     },/* 0*/
+  { STR_WITH_LEN("sibling"), op_offset_special, 0,                          },/* 1*/
+  { STR_WITH_LEN("targ"),    PADOFFSETp, STRUCT_OFFSET(struct op, op_targ), },/* 2*/
+  { STR_WITH_LEN("flags"),   U8p,    STRUCT_OFFSET(struct op, op_flags),    },/* 3*/
+  { STR_WITH_LEN("private"), U8p,    STRUCT_OFFSET(struct op, op_private),  },/* 4*/
+  { STR_WITH_LEN("first"),   OPp,    STRUCT_OFFSET(struct unop, op_first),  },/* 5*/
+  { STR_WITH_LEN("last"),    OPp,    STRUCT_OFFSET(struct binop, op_last),  },/* 6*/
+  { STR_WITH_LEN("other"),   OPp,    STRUCT_OFFSET(struct logop, op_other), },/* 7*/
   { STR_WITH_LEN("pmreplstart"), op_offset_special, 0,                 },/* 8*/
-  { STR_WITH_LEN("redoop"),  OPp,    offsetof(struct loop, op_redoop), },/* 9*/
-  { STR_WITH_LEN("nextop"),  OPp,    offsetof(struct loop, op_nextop), },/*10*/
-  { STR_WITH_LEN("lastop"),  OPp,    offsetof(struct loop, op_lastop), },/*11*/
-  { STR_WITH_LEN("pmflags"), U32p,   offsetof(struct pmop, op_pmflags),},/*12*/
-#if PERL_VERSION >= 17
-  { STR_WITH_LEN("code_list"),OPp,   offsetof(struct pmop, op_code_list),},/*13*/
-#else
-  { STR_WITH_LEN("code_list"),op_offset_special, 0,
-#endif
-  { STR_WITH_LEN("sv"),      SVp,     offsetof(struct svop, op_sv),    },/*14*/
-  { STR_WITH_LEN("gv"),      SVp,     offsetof(struct svop, op_sv),    },/*15*/
-  { STR_WITH_LEN("padix"),   PADOFFSETp,offsetof(struct padop, op_padix),},/*16*/
-  { STR_WITH_LEN("cop_seq"), U32p,    offsetof(struct cop, cop_seq),   },/*17*/
-  { STR_WITH_LEN("line"),    line_tp, offsetof(struct cop, cop_line),  },/*18*/
-  { STR_WITH_LEN("hints"),   U32p,    offsetof(struct cop, cop_hints), },/*19*/
+  { STR_WITH_LEN("redoop"),  OPp,    STRUCT_OFFSET(struct loop, op_redoop), },/* 9*/
+  { STR_WITH_LEN("nextop"),  OPp,    STRUCT_OFFSET(struct loop, op_nextop), },/*10*/
+  { STR_WITH_LEN("lastop"),  OPp,    STRUCT_OFFSET(struct loop, op_lastop), },/*11*/
+  { STR_WITH_LEN("pmflags"), U32p,   STRUCT_OFFSET(struct pmop, op_pmflags),},/*12*/
+  { STR_WITH_LEN("code_list"),OPp,   STRUCT_OFFSET(struct pmop, op_code_list),},/*13*/
+  { STR_WITH_LEN("sv"),      SVp,     STRUCT_OFFSET(struct svop, op_sv),    },/*14*/
+  { STR_WITH_LEN("gv"),      SVp,     STRUCT_OFFSET(struct svop, op_sv),    },/*15*/
+  { STR_WITH_LEN("padix"),   PADOFFSETp,STRUCT_OFFSET(struct padop, op_padix),},/*16*/
+  { STR_WITH_LEN("cop_seq"), U32p,    STRUCT_OFFSET(struct cop, cop_seq),   },/*17*/
+  { STR_WITH_LEN("line"),    line_tp, STRUCT_OFFSET(struct cop, cop_line),  },/*18*/
+  { STR_WITH_LEN("hints"),   U32p,    STRUCT_OFFSET(struct cop, cop_hints), },/*19*/
 #ifdef USE_ITHREADS
-  { STR_WITH_LEN("pmoffset"),IVp,     offsetof(struct pmop, op_pmoffset),},/*20*/
+  { STR_WITH_LEN("pmoffset"),IVp,     STRUCT_OFFSET(struct pmop, op_pmoffset),},/*20*/
   { STR_WITH_LEN("filegv"),  op_offset_special, 0,                     },/*21*/
-  { STR_WITH_LEN("file"),    char_pp, offsetof(struct cop, cop_file),  },/*22*/
+  { STR_WITH_LEN("file"),    char_pp, STRUCT_OFFSET(struct cop, cop_file),  },/*22*/
   { STR_WITH_LEN("stash"),   op_offset_special, 0,                     },/*23*/
-#  if PERL_VERSION < 17
-  { STR_WITH_LEN("stashpv"), char_pp, offsetof(struct cop, cop_stashpv),}, /*24*/
-  { STR_WITH_LEN("stashoff"),op_offset_special, 0,                     },/*25*/
-#  else
   { STR_WITH_LEN("stashpv"), op_offset_special, 0,                     },/*24*/
-  { STR_WITH_LEN("stashoff"),PADOFFSETp,offsetof(struct cop,cop_stashoff),},/*25*/
-#  endif
+  { STR_WITH_LEN("stashoff"),PADOFFSETp,STRUCT_OFFSET(struct cop,cop_stashoff),},/*25*/
 #else
   { STR_WITH_LEN("pmoffset"),op_offset_special, 0,                     },/*20*/
-  { STR_WITH_LEN("filegv"),  SVp,     offsetof(struct cop, cop_filegv),},/*21*/
+  { STR_WITH_LEN("filegv"),  SVp,     STRUCT_OFFSET(struct cop, cop_filegv),},/*21*/
   { STR_WITH_LEN("file"),    op_offset_special, 0,                     },/*22*/
-  { STR_WITH_LEN("stash"),   SVp,     offsetof(struct cop, cop_stash), },/*23*/
+  { STR_WITH_LEN("stash"),   SVp,     STRUCT_OFFSET(struct cop, cop_stash), },/*23*/
   { STR_WITH_LEN("stashpv"), op_offset_special, 0,                     },/*24*/
   { STR_WITH_LEN("stashoff"),op_offset_special, 0,                     },/*25*/
 #endif
@@ -725,14 +728,20 @@ struct OP_methods {
   { STR_WITH_LEN("warnings"),op_offset_special, 0,                     },/*44*/
   { STR_WITH_LEN("io"),      op_offset_special, 0,                     },/*45*/
   { STR_WITH_LEN("hints_hash"),op_offset_special, 0,                   },/*46*/
-#if PERL_VERSION >= 17
   { STR_WITH_LEN("slabbed"), op_offset_special, 0,                     },/*47*/
   { STR_WITH_LEN("savefree"),op_offset_special, 0,                     },/*48*/
   { STR_WITH_LEN("static"),  op_offset_special, 0,                     },/*49*/
-#  if PERL_VERSION >= 19
   { STR_WITH_LEN("folded"),  op_offset_special, 0,                     },/*50*/
+  { STR_WITH_LEN("moresib"), op_offset_special, 0,                     },/*51*/
+  { STR_WITH_LEN("parent"),  op_offset_special, 0,                     },/*52*/
+  { STR_WITH_LEN("first"),   op_offset_special, 0,                     },/*53*/
+  { STR_WITH_LEN("meth_sv"), op_offset_special, 0,                     },/*54*/
+  { STR_WITH_LEN("pmregexp"),op_offset_special, 0,                     },/*55*/
+#  ifdef USE_ITHREADS
+  { STR_WITH_LEN("rclass"),  op_offset_special, 0,                     },/*56*/
+#  else
+  { STR_WITH_LEN("rclass"),  op_offset_special, 0,                     },/*56*/
 #  endif
-#endif
 };
 
 #include "const-c.inc"
@@ -747,15 +756,9 @@ BOOT:
 {
     CV *cv;
     const char *file = __FILE__;
+    SV *sv;
     MY_CXT_INIT;
-    specialsv_list[0] = Nullsv;
-    specialsv_list[1] = &PL_sv_undef;
-    specialsv_list[2] = &PL_sv_yes;
-    specialsv_list[3] = &PL_sv_no;
-    specialsv_list[4] = (SV *) pWARN_ALL;
-    specialsv_list[5] = (SV *) pWARN_NONE;
-    specialsv_list[6] = (SV *) pWARN_STD;
-    
+    B_init_my_cxt(aTHX_ &(MY_CXT));
     cv = newXS("B::init_av", intrpvar_sv_common, file);
     ASSIGN_COMMON_ALIAS(I, initav);
     cv = newXS("B::check_av", intrpvar_sv_common, file);
@@ -786,6 +789,12 @@ BOOT:
     ASSIGN_COMMON_ALIAS(I, warnhook);
     cv = newXS("B::diehook", intrpvar_sv_common, file);
     ASSIGN_COMMON_ALIAS(I, diehook);
+    sv = get_sv("B::OP::does_parent", GV_ADDMULTI);
+#ifdef PERL_OP_PARENT
+    sv_setsv(sv, &PL_sv_yes);
+#else
+    sv_setsv(sv, &PL_sv_no);
+#endif
 }
 
 #ifndef PL_formfeed
@@ -945,7 +954,18 @@ threadsv_names()
     PPCODE:
 
 
+#ifdef USE_ITHREADS
+void
+CLONE(...)
+PPCODE:
+    PUTBACK; /* some vars go out of scope now in machine code */
+    {
+	MY_CXT_CLONE;
+	B_init_my_cxt(aTHX_ &(MY_CXT));
+    }
+    return; /* dont execute another implied XSPP PUTBACK */
 
+#endif
 
 MODULE = B	PACKAGE = B::OP
 
@@ -1008,6 +1028,12 @@ next(o)
 	B::OP::savefree      = 48
 	B::OP::static        = 49
 	B::OP::folded        = 50
+	B::OP::moresib       = 51
+	B::OP::parent        = 52
+	B::METHOP::first     = 53
+	B::METHOP::meth_sv   = 54
+	B::PMOP::pmregexp    = 55
+	B::METHOP::rclass    = 56
     PREINIT:
 	SV *ret;
     PPCODE:
@@ -1024,7 +1050,11 @@ next(o)
 
 	if (op_methods[ix].type == op_offset_special)
 	    switch (ix) {
-	    case 8: /* pmreplstart */
+	    case 1: /* B::OP::op_sibling */
+		ret = make_op_object(aTHX_ OpSIBLING(o));
+		break;
+
+	    case 8: /* B::PMOP::pmreplstart */
 		ret = make_op_object(aTHX_
 				cPMOPo->op_type == OP_SUBST
 				    ?  cPMOPo->op_pmstashstartu.op_pmreplstart
@@ -1032,41 +1062,35 @@ next(o)
 		      );
 		break;
 #ifdef USE_ITHREADS
-	    case 21: /* filegv */
+	    case 21: /* B::COP::filegv */
 		ret = make_sv_object(aTHX_ (SV *)CopFILEGV((COP*)o));
 		break;
 #endif
 #ifndef USE_ITHREADS
-	    case 22: /* file */
+	    case 22: /* B::COP::file */
 		ret = sv_2mortal(newSVpv(CopFILE((COP*)o), 0));
 		break;
 #endif
 #ifdef USE_ITHREADS
-	    case 23: /* stash */
+	    case 23: /* B::COP::stash */
 		ret = make_sv_object(aTHX_ (SV *)CopSTASH((COP*)o));
 		break;
 #endif
-#if PERL_VERSION >= 17 || !defined USE_ITHREADS
-	    case 24: /* stashpv */
-#  if PERL_VERSION >= 17
+	    case 24: /* B::COP::stashpv */
 		ret = sv_2mortal(CopSTASH((COP*)o)
 				&& SvTYPE(CopSTASH((COP*)o)) == SVt_PVHV
 		    ? newSVhek(HvNAME_HEK(CopSTASH((COP*)o)))
 		    : &PL_sv_undef);
-#  else
-		ret = sv_2mortal(newSVpv(CopSTASHPV((COP*)o), 0));
-#  endif
 		break;
-#endif
-	    case 26: /* size */
+	    case 26: /* B::OP::size */
 		ret = sv_2mortal(newSVuv((UV)(opsizes[cc_opclass(aTHX_ o)])));
 		break;
-	    case 27: /* name */
-	    case 28: /* desc */
+	    case 27: /* B::OP::name */
+	    case 28: /* B::OP::desc */
 		ret = sv_2mortal(newSVpv(
 			    (char *)(ix == 28 ? OP_DESC(o) : OP_NAME(o)), 0));
 		break;
-	    case 29: /* ppaddr */
+	    case 29: /* B::OP::ppaddr */
 		{
 		    int i;
 		    ret = sv_2mortal(Perl_newSVpvf(aTHX_ "PL_ppaddr[OP_%s]",
@@ -1075,17 +1099,14 @@ next(o)
 			SvPVX(ret)[i] = toUPPER(SvPVX(ret)[i]);
 		}
 		break;
-	    case 30: /* type  */
-	    case 31: /* opt   */
-	    case 32: /* spare */
-#if PERL_VERSION >= 17
-	    case 47: /* slabbed  */
-	    case 48: /* savefree */
-	    case 49: /* static   */
-#if PERL_VERSION >= 19
-	    case 50: /* folded   */
-#endif
-#endif
+	    case 30: /* B::OP::type  */
+	    case 31: /* B::OP::opt   */
+	    case 32: /* B::OP::spare */
+	    case 47: /* B::OP::slabbed  */
+	    case 48: /* B::OP::savefree */
+	    case 49: /* B::OP::static   */
+	    case 50: /* B::OP::folded   */
+	    case 51: /* B::OP::moresib  */
 	    /* These are all bitfields, so we can't take their addresses */
 		ret = sv_2mortal(newSVuv((UV)(
 				      ix == 30 ? o->op_type
@@ -1094,18 +1115,19 @@ next(o)
 		                    : ix == 48 ? o->op_savefree
 		                    : ix == 49 ? o->op_static
 		                    : ix == 50 ? o->op_folded
+		                    : ix == 51 ? o->op_moresib
 		                    :            o->op_spare)));
 		break;
-	    case 33: /* children */
+	    case 33: /* B::LISTOP::children */
 		{
 		    OP *kid;
 		    UV i = 0;
-		    for (kid = ((LISTOP*)o)->op_first; kid; kid = kid->op_sibling)
+		    for (kid = ((LISTOP*)o)->op_first; kid; kid = OpSIBLING(kid))
 			i++;
 		    ret = sv_2mortal(newSVuv(i));
 		}
 		break;
-	    case 34: /* pmreplroot */
+	    case 34: /* B::PMOP::pmreplroot */
 		if (cPMOPo->op_type == OP_PUSHRE) {
 #ifdef USE_ITHREADS
 		    ret = sv_newmortal();
@@ -1124,16 +1146,16 @@ next(o)
 		}
 		break;
 #ifdef USE_ITHREADS
-	    case 35: /* pmstashpv */
+	    case 35: /* B::PMOP::pmstashpv */
 		ret = sv_2mortal(newSVpv(PmopSTASHPV(cPMOPo),0));
 		break;
 #else
-	    case 36: /* pmstash */
+	    case 36: /* B::PMOP::pmstash */
 		ret = make_sv_object(aTHX_ (SV *) PmopSTASH(cPMOPo));
 		break;
 #endif
-	    case 37: /* precomp */
-	    case 38: /* reflags */
+	    case 37: /* B::PMOP::precomp */
+	    case 38: /* B::PMOP::reflags */
 		{
 		    REGEXP *rx = PM_GETRE(cPMOPo);
 		    ret = sv_newmortal();
@@ -1149,22 +1171,17 @@ next(o)
 		    }
 		}
 		break;
-	    case 39: /* sv */
-	    case 40: /* gv */
-		/* It happens that the output typemaps for B::SV and B::GV
-		 * are identical. The "smarts" are in make_sv_object(),
-		 * which determines which class to use based on SvTYPE(),
-		 * rather than anything baked in at compile time.  */
-		if (cPADOPo->op_padix) {
-		    ret = PAD_SVl(cPADOPo->op_padix);
-		    if (ix == 40 && SvTYPE(ret) != SVt_PVGV)
-			ret = NULL;
-		} else {
-		    ret = NULL;
-		}
-		ret = make_sv_object(aTHX_ ret);
+	    case 39: /* B::PADOP::sv */
+	    case 40: /* B::PADOP::gv */
+		/* PADOPs should only be created on threaded builds.
+                 * They don't have an sv or gv field, just an op_padix
+                 * field. Leave it to the caller to retrieve padix
+                 * and look up th value in the pad. Don't do it here,
+                 * becuase PL_curpad is the pad of the caller, not the
+                 * pad of the sub the op is part of */
+		ret = make_sv_object(aTHX_ NULL);
 		break;
-	    case 41: /* pv */
+	    case 41: /* B::PVOP::pv */
 		/* OP_TRANS uses op_pv to point to a table of 256 or >=258
 		 * shorts whereas other PVOPs point to a null terminated
 		 * string.  */
@@ -1183,22 +1200,66 @@ next(o)
 		else
 		    ret = newSVpvn_flags(cPVOPo->op_pv, strlen(cPVOPo->op_pv), SVs_TEMP);
 		break;
-	    case 42: /* label */
+	    case 42: /* B::COP::label */
 		ret = sv_2mortal(newSVpv(CopLABEL(cCOPo),0));
 		break;
-	    case 43: /* arybase */
+	    case 43: /* B::COP::arybase */
 		ret = sv_2mortal(newSVuv(0));
 		break;
-	    case 44: /* warnings */
+	    case 44: /* B::COP::warnings */
 		ret = make_warnings_object(aTHX_ cCOPo);
 		break;
-	    case 45: /* io */
+	    case 45: /* B::COP::io */
 		ret = make_cop_io_object(aTHX_ cCOPo);
 		break;
-	    case 46: /* hints_hash */
+	    case 46: /* B::COP::hints_hash */
 		ret = sv_newmortal();
 		sv_setiv(newSVrv(ret, "B::RHE"),
 			PTR2IV(CopHINTHASH_get(cCOPo)));
+		break;
+	    case 52: /* B::OP::parent */
+#ifdef PERL_OP_PARENT
+		ret = make_op_object(aTHX_ op_parent(o));
+#else
+		ret = make_op_object(aTHX_ NULL);
+#endif
+		break;
+	    case 53: /* B::METHOP::first   */
+                /* METHOP struct has an op_first/op_meth_sv union
+                 * as its first extra field. How to interpret the
+                 * union depends on the op type. For the purposes of
+                 * B, we treat it as a struct with both fields present,
+                 * where one of the fields always happens to be null
+                 * (i.e. we return NULL in preference to croaking with
+                 * 'method not implemented').
+                 */
+		ret = make_op_object(aTHX_
+                            o->op_type == OP_METHOD
+                                ? cMETHOPx(o)->op_u.op_first : NULL);
+		break;
+	    case 54: /* B::METHOP::meth_sv */
+                /* see comment above about METHOP */
+		ret = make_sv_object(aTHX_
+                            o->op_type == OP_METHOD
+                                ? NULL : cMETHOPx(o)->op_u.op_meth_sv);
+		break;
+	    case 55: /* B::PMOP::pmregexp */
+		ret = make_sv_object(aTHX_ (SV *)PM_GETRE(cPMOPo));
+		break;
+	    case 56: /* B::METHOP::rclass */
+#ifdef USE_ITHREADS
+		ret = sv_2mortal(newSVuv(
+		    (o->op_type == OP_METHOD_REDIR ||
+		     o->op_type == OP_METHOD_REDIR_SUPER) ?
+		      cMETHOPx(o)->op_rclass_targ : 0
+		));
+#else
+		ret = make_sv_object(aTHX_
+		    (o->op_type == OP_METHOD_REDIR ||
+		     o->op_type == OP_METHOD_REDIR_SUPER) ?
+		      cMETHOPx(o)->op_rclass_sv : NULL
+		);
+#endif
 		break;
 	    default:
 		croak("method %s not implemented", op_methods[ix].name);
@@ -1244,6 +1305,161 @@ oplist(o)
 	B::OP		o
     PPCODE:
 	SP = oplist(aTHX_ o, SP);
+
+
+
+MODULE = B	PACKAGE = B::UNOP_AUX
+
+# UNOP_AUX class ops are like UNOPs except that they have an extra
+# op_aux pointer that points to an array of UNOP_AUX_item unions.
+# Element -1 of the array contains the length
+
+
+# return a string representation of op_aux where possible The op's CV is
+# needed as an extra arg to allow GVs and SVs moved into the pad to be
+# accessed okay.
+
+void
+string(o, cv)
+	B::OP  o
+	B::CV  cv
+    PREINIT:
+	SV *ret;
+    PPCODE:
+        switch (o->op_type) {
+        case OP_MULTIDEREF:
+            ret = multideref_stringify(o, cv);
+            break;
+        default:
+            ret = sv_2mortal(newSVpvn("", 0));
+        }
+	ST(0) = ret;
+	XSRETURN(1);
+
+
+# Return the contents of the op_aux array as a list of IV/GV/etc objects.
+# How to interpret each array element is op-dependent. The op's CV is
+# needed as an extra arg to allow GVs and SVs which have been moved into
+# the pad to be accessed okay.
+
+void
+aux_list(o, cv)
+	B::OP  o
+	B::CV  cv
+    PPCODE:
+        PERL_UNUSED_VAR(cv); /* not needed on unthreaded builds */
+        switch (o->op_type) {
+        default:
+            XSRETURN(0); /* by default, an empty list */
+
+        case OP_MULTIDEREF:
+#ifdef USE_ITHREADS
+#  define ITEM_SV(item) *av_fetch(comppad, (item)->pad_offset, FALSE);
+#else
+#  define ITEM_SV(item) UNOP_AUX_item_sv(item)
+#endif
+            {
+                UNOP_AUX_item *items = cUNOP_AUXo->op_aux;
+                UV actions = items->uv;
+                UV len = items[-1].uv;
+                SV *sv;
+                bool last = 0;
+                bool is_hash = FALSE;
+#ifdef USE_ITHREADS
+                PADLIST * const padlist = CvPADLIST(cv);
+                PAD *comppad = PadlistARRAY(padlist)[1];
+#endif
+
+                /* len should never be big enough to truncate or wrap */
+                assert(len <= SSize_t_MAX);
+                EXTEND(SP, (SSize_t)len);
+                PUSHs(sv_2mortal(newSViv(actions)));
+
+                while (!last) {
+                    switch (actions & MDEREF_ACTION_MASK) {
+
+                    case MDEREF_reload:
+                        actions = (++items)->uv;
+                        PUSHs(sv_2mortal(newSVuv(actions)));
+                        continue;
+                        NOT_REACHED; /* NOTREACHED */
+
+                    case MDEREF_HV_padhv_helem:
+                        is_hash = TRUE;
+                        /* FALLTHROUGH */
+                    case MDEREF_AV_padav_aelem:
+                        PUSHs(sv_2mortal(newSVuv((++items)->pad_offset)));
+                        goto do_elem;
+                        NOT_REACHED; /* NOTREACHED */
+
+                    case MDEREF_HV_gvhv_helem:
+                        is_hash = TRUE;
+                        /* FALLTHROUGH */
+                    case MDEREF_AV_gvav_aelem:
+                        sv = ITEM_SV(++items);
+                        PUSHs(make_sv_object(aTHX_ sv));
+                        goto do_elem;
+                        NOT_REACHED; /* NOTREACHED */
+
+                    case MDEREF_HV_gvsv_vivify_rv2hv_helem:
+                        is_hash = TRUE;
+                        /* FALLTHROUGH */
+                    case MDEREF_AV_gvsv_vivify_rv2av_aelem:
+                        sv = ITEM_SV(++items);
+                        PUSHs(make_sv_object(aTHX_ sv));
+                        goto do_vivify_rv2xv_elem;
+                        NOT_REACHED; /* NOTREACHED */
+
+                    case MDEREF_HV_padsv_vivify_rv2hv_helem:
+                        is_hash = TRUE;
+                        /* FALLTHROUGH */
+                    case MDEREF_AV_padsv_vivify_rv2av_aelem:
+                        PUSHs(sv_2mortal(newSVuv((++items)->pad_offset)));
+                        goto do_vivify_rv2xv_elem;
+                        NOT_REACHED; /* NOTREACHED */
+
+                    case MDEREF_HV_pop_rv2hv_helem:
+                    case MDEREF_HV_vivify_rv2hv_helem:
+                        is_hash = TRUE;
+                        /* FALLTHROUGH */
+                    do_vivify_rv2xv_elem:
+                    case MDEREF_AV_pop_rv2av_aelem:
+                    case MDEREF_AV_vivify_rv2av_aelem:
+                    do_elem:
+                        switch (actions & MDEREF_INDEX_MASK) {
+                        case MDEREF_INDEX_none:
+                            last = 1;
+                            break;
+                        case MDEREF_INDEX_const:
+                            if (is_hash) {
+                                sv = ITEM_SV(++items);
+                                PUSHs(make_sv_object(aTHX_ sv));
+                            }
+                            else
+                                PUSHs(sv_2mortal(newSViv((++items)->iv)));
+                            break;
+                        case MDEREF_INDEX_padsv:
+                            PUSHs(sv_2mortal(newSVuv((++items)->pad_offset)));
+                            break;
+                        case MDEREF_INDEX_gvsv:
+                            sv = ITEM_SV(++items);
+                            PUSHs(make_sv_object(aTHX_ sv));
+                            break;
+                        }
+                        if (actions & MDEREF_FLAG_last)
+                            last = 1;
+                        is_hash = FALSE;
+
+                        break;
+                    } /* switch */
+
+                    actions >>= MDEREF_SHIFT;
+                } /* while */
+                XSRETURN(len);
+
+            } /* OP_MULTIDEREF */
+        } /* switch */
+
 
 
 MODULE = B	PACKAGE = B::SV
@@ -1292,73 +1508,49 @@ MODULE = B	PACKAGE = B::IV
 #define sv_I32p		0xA0000
 #define sv_U16p		0xB0000
 
-#define IV_ivx_ix	sv_IVp | offsetof(struct xpviv, xiv_iv)
-#define IV_uvx_ix	sv_UVp | offsetof(struct xpvuv, xuv_uv)
-#define NV_nvx_ix	sv_NVp | offsetof(struct xpvnv, xnv_u.xnv_nv)
+#define IV_ivx_ix	sv_IVp | STRUCT_OFFSET(struct xpviv, xiv_iv)
+#define IV_uvx_ix	sv_UVp | STRUCT_OFFSET(struct xpvuv, xuv_uv)
+#define NV_nvx_ix	sv_NVp | STRUCT_OFFSET(struct xpvnv, xnv_u.xnv_nv)
 
-#define NV_cop_seq_range_low_ix \
-			sv_U32p | offsetof(struct xpvnv, xnv_u.xpad_cop_seq.xlow)
-#define NV_cop_seq_range_high_ix \
-			sv_U32p | offsetof(struct xpvnv, xnv_u.xpad_cop_seq.xhigh)
-#define NV_parent_pad_index_ix \
-			sv_U32p | offsetof(struct xpvnv, xnv_u.xpad_cop_seq.xlow)
-#define NV_parent_fakelex_flags_ix \
-			sv_U32p | offsetof(struct xpvnv, xnv_u.xpad_cop_seq.xhigh)
+#define PV_cur_ix	sv_STRLENp | STRUCT_OFFSET(struct xpv, xpv_cur)
+#define PV_len_ix	sv_STRLENp | STRUCT_OFFSET(struct xpv, xpv_len)
 
-#define PV_cur_ix	sv_STRLENp | offsetof(struct xpv, xpv_cur)
-#define PV_len_ix	sv_STRLENp | offsetof(struct xpv, xpv_len)
+#define PVMG_stash_ix	sv_SVp | STRUCT_OFFSET(struct xpvmg, xmg_stash)
 
-#define PVMG_stash_ix	sv_SVp | offsetof(struct xpvmg, xmg_stash)
+#define PVBM_useful_ix	sv_IVp | STRUCT_OFFSET(struct xpviv, xiv_u.xivu_iv)
 
-#if PERL_VERSION > 18
-#    define PVBM_useful_ix	sv_IVp | offsetof(struct xpviv, xiv_u.xivu_iv)
-#elif PERL_VERSION > 14
-#    define PVBM_useful_ix	sv_I32p | offsetof(struct xpvgv, xnv_u.xbm_s.xbm_useful)
-#else
-#define PVBM_useful_ix	sv_I32p | offsetof(struct xpvgv, xiv_u.xivu_i32)
-#endif
+#define PVLV_targoff_ix	sv_U32p | STRUCT_OFFSET(struct xpvlv, xlv_targoff)
+#define PVLV_targlen_ix	sv_U32p | STRUCT_OFFSET(struct xpvlv, xlv_targlen)
+#define PVLV_targ_ix	sv_SVp | STRUCT_OFFSET(struct xpvlv, xlv_targ)
+#define PVLV_type_ix	sv_char_p | STRUCT_OFFSET(struct xpvlv, xlv_type)
 
-#define PVLV_targoff_ix	sv_U32p | offsetof(struct xpvlv, xlv_targoff)
-#define PVLV_targlen_ix	sv_U32p | offsetof(struct xpvlv, xlv_targlen)
-#define PVLV_targ_ix	sv_SVp | offsetof(struct xpvlv, xlv_targ)
-#define PVLV_type_ix	sv_char_p | offsetof(struct xpvlv, xlv_type)
+#define PVGV_stash_ix	sv_SVp | STRUCT_OFFSET(struct xpvgv, xnv_u.xgv_stash)
+#define PVGV_flags_ix	sv_STRLENp | STRUCT_OFFSET(struct xpvgv, xpv_cur)
+#define PVIO_lines_ix	sv_IVp | STRUCT_OFFSET(struct xpvio, xiv_iv)
 
-#define PVGV_stash_ix	sv_SVp | offsetof(struct xpvgv, xnv_u.xgv_stash)
-#define PVGV_flags_ix	sv_STRLENp | offsetof(struct xpvgv, xpv_cur)
-#define PVIO_lines_ix	sv_IVp | offsetof(struct xpvio, xiv_iv)
+#define PVIO_page_ix	    sv_IVp | STRUCT_OFFSET(struct xpvio, xio_page)
+#define PVIO_page_len_ix    sv_IVp | STRUCT_OFFSET(struct xpvio, xio_page_len)
+#define PVIO_lines_left_ix  sv_IVp | STRUCT_OFFSET(struct xpvio, xio_lines_left)
+#define PVIO_top_name_ix    sv_char_pp | STRUCT_OFFSET(struct xpvio, xio_top_name)
+#define PVIO_top_gv_ix	    sv_SVp | STRUCT_OFFSET(struct xpvio, xio_top_gv)
+#define PVIO_fmt_name_ix    sv_char_pp | STRUCT_OFFSET(struct xpvio, xio_fmt_name)
+#define PVIO_fmt_gv_ix	    sv_SVp | STRUCT_OFFSET(struct xpvio, xio_fmt_gv)
+#define PVIO_bottom_name_ix sv_char_pp | STRUCT_OFFSET(struct xpvio, xio_bottom_name)
+#define PVIO_bottom_gv_ix   sv_SVp | STRUCT_OFFSET(struct xpvio, xio_bottom_gv)
+#define PVIO_type_ix	    sv_char_p | STRUCT_OFFSET(struct xpvio, xio_type)
+#define PVIO_flags_ix	    sv_U8p | STRUCT_OFFSET(struct xpvio, xio_flags)
 
-#define PVIO_page_ix	    sv_IVp | offsetof(struct xpvio, xio_page)
-#define PVIO_page_len_ix    sv_IVp | offsetof(struct xpvio, xio_page_len)
-#define PVIO_lines_left_ix  sv_IVp | offsetof(struct xpvio, xio_lines_left)
-#define PVIO_top_name_ix    sv_char_pp | offsetof(struct xpvio, xio_top_name)
-#define PVIO_top_gv_ix	    sv_SVp | offsetof(struct xpvio, xio_top_gv)
-#define PVIO_fmt_name_ix    sv_char_pp | offsetof(struct xpvio, xio_fmt_name)
-#define PVIO_fmt_gv_ix	    sv_SVp | offsetof(struct xpvio, xio_fmt_gv)
-#define PVIO_bottom_name_ix sv_char_pp | offsetof(struct xpvio, xio_bottom_name)
-#define PVIO_bottom_gv_ix   sv_SVp | offsetof(struct xpvio, xio_bottom_gv)
-#define PVIO_type_ix	    sv_char_p | offsetof(struct xpvio, xio_type)
-#define PVIO_flags_ix	    sv_U8p | offsetof(struct xpvio, xio_flags)
+#define PVAV_max_ix	sv_SSize_tp | STRUCT_OFFSET(struct xpvav, xav_max)
 
-#define PVAV_max_ix	sv_SSize_tp | offsetof(struct xpvav, xav_max)
+#define PVCV_stash_ix	sv_SVp | STRUCT_OFFSET(struct xpvcv, xcv_stash) 
+#define PVCV_gv_ix	sv_SVp | STRUCT_OFFSET(struct xpvcv, xcv_gv_u.xcv_gv)
+#define PVCV_file_ix	sv_char_pp | STRUCT_OFFSET(struct xpvcv, xcv_file)
+#define PVCV_outside_ix	sv_SVp | STRUCT_OFFSET(struct xpvcv, xcv_outside)
+#define PVCV_outside_seq_ix sv_U32p | STRUCT_OFFSET(struct xpvcv, xcv_outside_seq)
+#define PVCV_flags_ix	sv_U32p | STRUCT_OFFSET(struct xpvcv, xcv_flags)
 
-#define PVCV_stash_ix	sv_SVp | offsetof(struct xpvcv, xcv_stash) 
-#if PERL_VERSION > 17 || (PERL_VERSION == 17 && PERL_SUBVERSION >= 3)
-# define PVCV_gv_ix	sv_SVp | offsetof(struct xpvcv, xcv_gv_u.xcv_gv)
-#else
-# define PVCV_gv_ix	sv_SVp | offsetof(struct xpvcv, xcv_gv)
-#endif
-#define PVCV_file_ix	sv_char_pp | offsetof(struct xpvcv, xcv_file)
-#define PVCV_outside_ix	sv_SVp | offsetof(struct xpvcv, xcv_outside)
-#define PVCV_outside_seq_ix sv_U32p | offsetof(struct xpvcv, xcv_outside_seq)
-#define PVCV_flags_ix	sv_U32p | offsetof(struct xpvcv, xcv_flags)
-
-#define PVHV_max_ix	sv_STRLENp | offsetof(struct xpvhv, xhv_max)
-
-#if PERL_VERSION > 12
-#define PVHV_keys_ix	sv_STRLENp | offsetof(struct xpvhv, xhv_keys)
-#else
-#define PVHV_keys_ix	sv_IVp | offsetof(struct xpvhv, xhv_keys)
-#endif
+#define PVHV_max_ix	sv_STRLENp | STRUCT_OFFSET(struct xpvhv, xhv_max)
+#define PVHV_keys_ix	sv_STRLENp | STRUCT_OFFSET(struct xpvhv, xhv_keys)
 
 # The type checking code in B has always been identical for all SV types,
 # irrespective of whether the action is actually defined on that SV.
@@ -1370,10 +1562,6 @@ IVX(sv)
 	B::IV::IVX = IV_ivx_ix
 	B::IV::UVX = IV_uvx_ix
 	B::NV::NVX = NV_nvx_ix
-	B::NV::COP_SEQ_RANGE_LOW = NV_cop_seq_range_low_ix
-	B::NV::COP_SEQ_RANGE_HIGH = NV_cop_seq_range_high_ix
-	B::NV::PARENT_PAD_INDEX = NV_parent_pad_index_ix
-	B::NV::PARENT_FAKELEX_FLAGS = NV_parent_fakelex_flags_ix
 	B::PV::CUR = PV_cur_ix
 	B::PV::LEN = PV_len_ix
 	B::PVMG::SvSTASH = PVMG_stash_ix
@@ -1488,18 +1676,6 @@ NV
 SvNV(sv)
 	B::NV	sv
 
-#if PERL_VERSION < 11
-
-MODULE = B	PACKAGE = B::RV		PREFIX = Sv
-
-void
-SvRV(sv)
-	B::RV	sv
-    PPCODE:
-	PUSHs(make_sv_object(aTHX_ SvRV(sv)));
-
-#else
-
 MODULE = B	PACKAGE = B::REGEXP
 
 void
@@ -1507,16 +1683,21 @@ REGEX(sv)
 	B::REGEXP	sv
     ALIAS:
 	precomp = 1
+	qr_anoncv = 2
+	compflags = 3
     PPCODE:
-	if (ix) {
+	if (ix == 1) {
 	    PUSHs(newSVpvn_flags(RX_PRECOMP(sv), RX_PRELEN(sv), SVs_TEMP));
+	} else if (ix == 2) {
+	    PUSHs(make_sv_object(aTHX_ (SV *)ReANY(sv)->qr_anoncv));
 	} else {
 	    dXSTARG;
+	    if (ix)
+		PUSHu(RX_COMPFLAGS(sv));
+	    else
 	    /* FIXME - can we code this method more efficiently?  */
-	    PUSHi(PTR2IV(sv));
+		PUSHi(PTR2IV(sv));
 	}
-
-#endif
 
 MODULE = B	PACKAGE = B::PV
 
@@ -1689,9 +1870,7 @@ U32
 BmPREVIOUS(sv)
 	B::BM	sv
     CODE:
-#if PERL_VERSION >= 19
         PERL_UNUSED_VAR(sv);
-#endif
 	RETVAL = BmPREVIOUS(sv);
     OUTPUT:
         RETVAL
@@ -1701,9 +1880,7 @@ U8
 BmRARE(sv)
 	B::BM	sv
     CODE:
-#if PERL_VERSION >= 19
         PERL_UNUSED_VAR(sv);
-#endif
 	RETVAL = BmRARE(sv);
     OUTPUT:
         RETVAL
@@ -1740,16 +1917,15 @@ void*
 GvGP(gv)
 	B::GV	gv
 
-#define GP_sv_ix	(SVp << 16) | offsetof(struct gp, gp_sv)
-#define GP_io_ix	(SVp << 16) | offsetof(struct gp, gp_io)
-#define GP_cv_ix	(SVp << 16) | offsetof(struct gp, gp_cv)
-#define GP_cvgen_ix	(U32p << 16) | offsetof(struct gp, gp_cvgen)
-#define GP_refcnt_ix	(U32p << 16) | offsetof(struct gp, gp_refcnt)
-#define GP_hv_ix	(SVp << 16) | offsetof(struct gp, gp_hv)
-#define GP_av_ix	(SVp << 16) | offsetof(struct gp, gp_av)
-#define GP_form_ix	(SVp << 16) | offsetof(struct gp, gp_form)
-#define GP_egv_ix	(SVp << 16) | offsetof(struct gp, gp_egv)
-#define GP_line_ix	(line_tp << 16) | offsetof(struct gp, gp_line)
+#define GP_sv_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_sv)
+#define GP_io_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_io)
+#define GP_cv_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_cv)
+#define GP_cvgen_ix	(U32p << 16) | STRUCT_OFFSET(struct gp, gp_cvgen)
+#define GP_refcnt_ix	(U32p << 16) | STRUCT_OFFSET(struct gp, gp_refcnt)
+#define GP_hv_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_hv)
+#define GP_av_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_av)
+#define GP_form_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_form)
+#define GP_egv_ix	(SVp << 16) | STRUCT_OFFSET(struct gp, gp_egv)
 
 void
 SV(gv)
@@ -1764,7 +1940,6 @@ SV(gv)
 	AV = GP_av_ix
 	FORM = GP_form_ix
 	EGV = GP_egv_ix
-	LINE = GP_line_ix
     PREINIT:
 	GP *gp;
 	char *ptr;
@@ -1783,14 +1958,19 @@ SV(gv)
 	case U32p:
 	    ret = sv_2mortal(newSVuv(*((U32*)ptr)));
 	    break;
-	case line_tp:
-	    ret = sv_2mortal(newSVuv(*((line_t *)ptr)));
-	    break;
 	default:
 	    croak("Illegal alias 0x%08x for B::*SV", (unsigned)ix);
 	}
 	ST(0) = ret;
 	XSRETURN(1);
+
+U32
+GvLINE(gv)
+        B::GV   gv
+
+U32
+GvGPFLAGS(gv)
+        B::GV   gv
 
 void
 FILEGV(gv)
@@ -1888,6 +2068,10 @@ CvDEPTH(cv)
 B::PADLIST
 CvPADLIST(cv)
 	B::CV	cv
+    CODE:
+	RETVAL = CvISXSUB(cv) ? NULL : CvPADLIST(cv);
+    OUTPUT:
+	RETVAL
 
 #else
 
@@ -1899,6 +2083,14 @@ CvPADLIST(cv)
 
 
 #endif
+
+SV *
+CvHSCXT(cv)
+	B::CV	cv
+    CODE:
+	RETVAL = newSVuv(CvISXSUB(cv) ? PTR2UV(CvHSCXT(cv)) : 0);
+    OUTPUT:
+	RETVAL
 
 void
 CvXSUB(cv)
@@ -1925,8 +2117,6 @@ GV(cv)
     CODE:
 	ST(0) = make_sv_object(aTHX_ (SV*)CvGV(cv));
 
-#if PERL_VERSION > 17
-
 SV *
 NAME_HEK(cv)
 	B::CV cv
@@ -1934,8 +2124,6 @@ NAME_HEK(cv)
 	RETVAL = CvNAMED(cv) ? newSVhek(CvNAME_HEK(cv)) : &PL_sv_undef;
     OUTPUT:
 	RETVAL
-
-#endif
 
 MODULE = B	PACKAGE = B::HV		PREFIX = Hv
 
@@ -1953,8 +2141,12 @@ HvARRAY(hv)
     PPCODE:
 	if (HvUSEDKEYS(hv) > 0) {
 	    HE *he;
+            SSize_t extend_size;
 	    (void)hv_iterinit(hv);
-	    EXTEND(sp, HvUSEDKEYS(hv) * 2);
+            /* 2*HvUSEDKEYS() should never be big enough to truncate or wrap */
+	    assert(HvUSEDKEYS(hv) <= (SSize_t_MAX >> 1));
+            extend_size = (SSize_t)HvUSEDKEYS(hv) * 2;
+	    EXTEND(sp, extend_size);
 	    while ((he = hv_iternext(hv))) {
                 if (HeSVKEY(he)) {
                     mPUSHs(HeSVKEY(he));
@@ -1999,15 +2191,31 @@ MODULE = B	PACKAGE = B::PADLIST	PREFIX = Padlist
 SSize_t
 PadlistMAX(padlist)
 	B::PADLIST	padlist
+    ALIAS: B::PADNAMELIST::MAX = 0
+    CODE:
+        PERL_UNUSED_VAR(ix);
+	RETVAL = PadlistMAX(padlist);
+    OUTPUT:
+	RETVAL
+
+B::PADNAMELIST
+PadlistNAMES(padlist)
+	B::PADLIST	padlist
 
 void
 PadlistARRAY(padlist)
 	B::PADLIST	padlist
     PPCODE:
 	if (PadlistMAX(padlist) >= 0) {
+	    dXSTARG;
 	    PAD **padp = PadlistARRAY(padlist);
             SSize_t i;
-	    for (i = 0; i <= PadlistMAX(padlist); i++)
+	    sv_setiv(newSVrv(TARG, PadlistNAMES(padlist)
+				    ? "B::PADNAMELIST"
+				    : "B::NULL"),
+		     PTR2IV(PadlistNAMES(padlist)));
+	    XPUSHTARG;
+	    for (i = 1; i <= PadlistMAX(padlist); i++)
 		XPUSHs(make_sv_object(aTHX_ (SV *)padp[i]));
 	}
 
@@ -2016,12 +2224,17 @@ PadlistARRAYelt(padlist, idx)
 	B::PADLIST	padlist
 	SSize_t 	idx
     PPCODE:
-	if (PadlistMAX(padlist) >= 0
-	 && idx <= PadlistMAX(padlist))
+	if (idx < 0 || idx > PadlistMAX(padlist))
+	    XPUSHs(make_sv_object(aTHX_ NULL));
+	else if (!idx) {
+	    PL_stack_sp--;
+	    PUSHMARK(PL_stack_sp-1);
+	    XS_B__PADLIST_NAMES(aTHX_ cv);
+	    return;
+	}
+	else
 	    XPUSHs(make_sv_object(aTHX_
 				  (SV *)PadlistARRAY(padlist)[idx]));
-	else
-	    XPUSHs(make_sv_object(aTHX_ NULL));
 
 U32
 PadlistREFCNT(padlist)
@@ -2033,3 +2246,131 @@ PadlistREFCNT(padlist)
 	RETVAL
 
 #endif
+
+MODULE = B	PACKAGE = B::PADNAMELIST	PREFIX = Padnamelist
+
+void
+PadnamelistARRAY(pnl)
+	B::PADNAMELIST	pnl
+    PPCODE:
+	if (PadnamelistMAX(pnl) >= 0) {
+	    PADNAME **padp = PadnamelistARRAY(pnl);
+            SSize_t i = 0;
+	    for (; i <= PadnamelistMAX(pnl); i++)
+	    {
+		SV *rv = sv_newmortal();
+		sv_setiv(newSVrv(rv,padp[i] ? "B::PADNAME" : "B::SPECIAL"),
+			 PTR2IV(padp[i]));
+		XPUSHs(rv);
+	    }
+	}
+
+B::PADNAME
+PadnamelistARRAYelt(pnl, idx)
+	B::PADNAMELIST	pnl
+	SSize_t 	idx
+    CODE:
+	if (idx < 0 || idx > PadnamelistMAX(pnl))
+	    RETVAL = NULL;
+	else
+	    RETVAL = PadnamelistARRAY(pnl)[idx];
+    OUTPUT:
+	RETVAL
+
+MODULE = B	PACKAGE = B::PADNAME	PREFIX = Padname
+
+#define PN_type_ix \
+	sv_SVp | STRUCT_OFFSET(struct padname,xpadn_type_u.xpadn_typestash)
+#define PN_ourstash_ix \
+	sv_SVp | STRUCT_OFFSET(struct padname,xpadn_ourstash)
+#define PN_len_ix \
+	sv_U8p | STRUCT_OFFSET(struct padname,xpadn_len)
+#define PN_refcnt_ix \
+	sv_U32p | STRUCT_OFFSET(struct padname, xpadn_refcnt)
+#define PN_cop_seq_range_low_ix \
+	sv_U32p | STRUCT_OFFSET(struct padname, xpadn_low)
+#define PN_cop_seq_range_high_ix \
+	sv_U32p | STRUCT_OFFSET(struct padname, xpadn_high)
+#define PNL_refcnt_ix \
+	sv_U32p | STRUCT_OFFSET(struct padnamelist, xpadnl_refcnt)
+#define PL_id_ix \
+	sv_U32p | STRUCT_OFFSET(struct padlist, xpadl_id)
+#define PL_outid_ix \
+	sv_U32p | STRUCT_OFFSET(struct padlist, xpadl_outid)
+
+
+void
+PadnameTYPE(pn)
+	B::PADNAME	pn
+    ALIAS:
+	B::PADNAME::TYPE	= PN_type_ix
+	B::PADNAME::OURSTASH	= PN_ourstash_ix
+	B::PADNAME::LEN		= PN_len_ix
+	B::PADNAME::REFCNT	= PN_refcnt_ix
+	B::PADNAME::COP_SEQ_RANGE_LOW	 = PN_cop_seq_range_low_ix
+	B::PADNAME::COP_SEQ_RANGE_HIGH	 = PN_cop_seq_range_high_ix
+	B::PADNAMELIST::REFCNT	= PNL_refcnt_ix
+	B::PADLIST::id		= PL_id_ix
+	B::PADLIST::outid	= PL_outid_ix
+    PREINIT:
+	char *ptr;
+	SV *ret;
+    PPCODE:
+	ptr = (ix & 0xFFFF) + (char *)pn;
+	switch ((U8)(ix >> 16)) {
+	case (U8)(sv_SVp >> 16):
+	    ret = make_sv_object(aTHX_ *((SV **)ptr));
+	    break;
+	case (U8)(sv_U32p >> 16):
+	    ret = sv_2mortal(newSVuv(*((U32 *)ptr)));
+	    break;
+	case (U8)(sv_U8p >> 16):
+	    ret = sv_2mortal(newSVuv(*((U8 *)ptr)));
+	    break;
+	default:
+	    NOT_REACHED;
+	}
+	ST(0) = ret;
+	XSRETURN(1);
+
+SV *
+PadnamePV(pn)
+	B::PADNAME	pn
+    PREINIT:
+	dXSTARG;
+    PPCODE:
+	PERL_UNUSED_ARG(RETVAL);
+	sv_setpvn(TARG, PadnamePV(pn), PadnameLEN(pn));
+	SvUTF8_on(TARG);
+	XPUSHTARG;
+
+BOOT:
+{
+    /* Uses less memory than an ALIAS.  */
+    GV *gv = gv_fetchpvs("B::PADNAME::TYPE", 1, SVt_PVGV);
+    sv_setsv((SV *)gv_fetchpvs("B::PADNAME::SvSTASH",1,SVt_PVGV),(SV *)gv);
+    sv_setsv((SV *)gv_fetchpvs("B::PADNAME::PROTOCV",1,SVt_PVGV),(SV *)gv);
+    sv_setsv((SV *)gv_fetchpvs("B::PADNAME::PVX",1,SVt_PVGV),
+	     (SV *)gv_fetchpvs("B::PADNAME::PV" ,1,SVt_PVGV));
+    sv_setsv((SV *)gv_fetchpvs("B::PADNAME::PARENT_PAD_INDEX" ,1,SVt_PVGV),
+	     (SV *)gv_fetchpvs("B::PADNAME::COP_SEQ_RANGE_LOW",1,
+				SVt_PVGV));
+    sv_setsv((SV *)gv_fetchpvs("B::PADNAME::PARENT_FAKELEX_FLAGS",1,
+				SVt_PVGV),
+	     (SV *)gv_fetchpvs("B::PADNAME::COP_SEQ_RANGE_HIGH"  ,1,
+				SVt_PVGV));
+}
+
+U32
+PadnameFLAGS(pn)
+	B::PADNAME	pn
+    CODE:
+	RETVAL = PadnameFLAGS(pn);
+	/* backward-compatibility hack, which should be removed if the
+	   flags field becomes large enough to hold SVf_FAKE (and
+	   PADNAMEt_OUTER should be renumbered to match SVf_FAKE) */
+	STATIC_ASSERT_STMT(SVf_FAKE >= 1<<(sizeof(PadnameFLAGS((B__PADNAME)NULL)) * 8));
+	if (PadnameOUTER(pn))
+	    RETVAL |= SVf_FAKE;
+    OUTPUT:
+	RETVAL

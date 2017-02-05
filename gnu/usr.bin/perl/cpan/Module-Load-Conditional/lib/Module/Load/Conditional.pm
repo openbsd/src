@@ -22,7 +22,7 @@ BEGIN {
                         $FIND_VERSION $ERROR $CHECK_INC_HASH];
     use Exporter;
     @ISA            = qw[Exporter];
-    $VERSION        = '0.62';
+    $VERSION        = '0.64';
     $VERBOSE        = 0;
     $DEPRECATED     = 0;
     $FIND_VERSION   = 1;
@@ -313,7 +313,8 @@ sub check_install {
         $href->{uptodate} = 0 if
            exists $Module::CoreList::version{ 0+$] }{ $args->{module} } and
            Module::CoreList::is_deprecated( $args->{module} ) and
-           $Config::Config{privlibexp} eq $href->{dir};
+           $Config::Config{privlibexp} eq $href->{dir}
+           and $Config::Config{privlibexp} ne $Config::Config{sitelibexp};
     }
 
     return $href;

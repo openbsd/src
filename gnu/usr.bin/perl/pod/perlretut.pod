@@ -49,6 +49,10 @@ is harder to pronounce.  The Perl pod documentation is evenly split on
 regexp vs regex; in Perl, there is more than one way to abbreviate it.
 We'll use regexp in this tutorial.
 
+New in v5.22, L<C<use re 'strict'>|re/'strict' mode> applies stricter
+rules than otherwise when compiling regular expression patterns.  It can
+find things that, while legal, may not be what you intended.
+
 =head1 Part 1: The basics
 
 =head2 Simple word matching
@@ -454,6 +458,11 @@ character C<\w\W> or C<\W\w>:
 
 Note in the last example, the end of the string is considered a word
 boundary.
+
+For natural language processing (so that, for example, apostrophes are
+included in words), use instead C<\b{wb}>
+
+    "don't" =~ / .+? \b{wb} /x;  # matches the whole string
 
 You might wonder why C<'.'> matches everything but C<"\n"> - why not
 every character? The reason is that often one is matching against
@@ -958,6 +967,12 @@ required for some reason:
     @num = split /(a|b)+/, $x;    # @num = ('12','a','34','a','5')
     @num = split /(?:a|b)+/, $x;  # @num = ('12','34','5')
 
+In Perl 5.22 and later, all groups within a regexp can be set to
+non-capturing by using the new C</n> flag:
+
+    "hello" =~ /(hi|hello)/n; # $1 is not set!
+
+See L<perlre/"n"> for more information.
 
 =head2 Matching repetitions
 
@@ -2226,7 +2241,7 @@ a little background.
 
 In Perl regular expressions, most regexp elements 'eat up' a certain
 amount of string when they match.  For instance, the regexp element
-C<[abc}]> eats up one character of the string when it matches, in the
+C<[abc]> eats up one character of the string when it matches, in the
 sense that Perl moves to the next character position in the string
 after the match.  There are some elements, however, that don't eat up
 characters (advance the character position) if they match.  The examples
@@ -2279,10 +2294,6 @@ They evaluate true if the regexps do I<not> match:
     $x =~ /foo(?!bar)/;  # doesn't match, 'bar' follows 'foo'
     $x =~ /foo(?!baz)/;  # matches, 'baz' doesn't follow 'foo'
     $x =~ /(?<!\s)foo/;  # matches, there is no \s before 'foo'
-
-The C<\C> is unsupported in lookbehind, because the already
-treacherous definition of C<\C> would become even more so
-when going backwards.
 
 Here is an example where a string containing blank-separated words,
 numbers and single dashes is to be split into its components.

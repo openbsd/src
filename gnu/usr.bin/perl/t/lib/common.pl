@@ -6,7 +6,7 @@
 # to call cur_test() to find out how many this executed
 
 BEGIN {
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
 }
 
 use Config;

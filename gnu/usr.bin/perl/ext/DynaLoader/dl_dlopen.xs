@@ -12,6 +12,7 @@
  *                      basic FreeBSD support, removed ClearError
  * 29th February 2000 - Alan Burlison: Added functionality to close dlopen'd
  *                      files when the interpreter exits
+ * 2015-03-12         - rurban: Added optional 3rd dl_find_symbol argument
  *
  */
 
@@ -117,8 +118,10 @@
 */
 
 #define PERL_NO_GET_CONTEXT
+#define PERL_EXT
 
 #include "EXTERN.h"
+#define PERL_IN_DL_DLOPEN_XS
 #include "perl.h"
 #include "XSUB.h"
 
@@ -169,10 +172,11 @@ dl_load_file(filename, flags=0)
 #if defined(DLOPEN_WONT_DO_RELATIVE_PATHS)
     char pathbuf[PATH_MAX + 2];
     if (*filename != '/' && strchr(filename, '/')) {
-	if (getcwd(pathbuf, PATH_MAX - strlen(filename))) {
-	    my_strlcat(pathbuf, "/", sizeof(pathbuf));
-	    my_strlcat(pathbuf, filename, sizeof(pathbuf));
-	    filename = pathbuf;
+        const size_t filename_len = strlen(filename);
+        if (getcwd(pathbuf, PATH_MAX - filename_len)) {
+            const size_t path_len = strlen(pathbuf);
+            pathbuf[path_len] = '/';
+            filename = (char *) memcpy(pathbuf + path_len + 1, filename, filename_len + 1);
 	}
     }
 #endif
@@ -214,9 +218,10 @@ dl_unload_file(libref)
 
 
 void
-dl_find_symbol(libhandle, symbolname)
+dl_find_symbol(libhandle, symbolname, ign_err=0)
     void *	libhandle
     char *	symbolname
+    int	        ign_err
     PREINIT:
     void *sym;
     CODE:
@@ -229,10 +234,11 @@ dl_find_symbol(libhandle, symbolname)
     sym = dlsym(libhandle, symbolname);
     DLDEBUG(2, PerlIO_printf(Perl_debug_log,
 			     "  symbolref = %lx\n", (unsigned long) sym));
-    ST(0) = sv_newmortal() ;
-    if (sym == NULL)
-	SaveError(aTHX_ "%s",dlerror()) ;
-    else
+    ST(0) = sv_newmortal();
+    if (sym == NULL) {
+        if (!ign_err)
+	    SaveError(aTHX_ "%s", dlerror());
+    } else
 	sv_setiv( ST(0), PTR2IV(sym));
 
 
@@ -258,11 +264,11 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 					      XS_DYNAMIC_FILENAME)));
 
 
-char *
+SV *
 dl_error()
     CODE:
     dMY_CXT;
-    RETVAL = dl_last_error ;
+    RETVAL = newSVsv(MY_CXT.x_dl_last_error);
     OUTPUT:
     RETVAL
 
@@ -279,7 +285,7 @@ CLONE(...)
      * using Perl variables that belong to another thread, we create our 
      * own for this thread.
      */
-    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    MY_CXT.x_dl_last_error = newSVpvs("");
 
 #endif
 

@@ -9,7 +9,7 @@ my $MODULE;
 BEGIN {
 	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
 	eval "require $MODULE" || die $@;
-	$MODULE->import(qw(hmac_sha256_hex hmac_sha384_hex hmac_sha512_hex));
+	$MODULE->import(qw(hmac_sha256 hmac_sha384 hmac_sha512));
 }
 
 BEGIN {
@@ -44,12 +44,12 @@ my $testnum = 1;
 
 while (@data_bs512) {
 	print "not " unless
-		hmac_sha256_hex(shift @data_bs512, shift @keys_bs512)
-			eq shift @hmac256rsp;
+		hmac_sha256(shift @data_bs512, shift @keys_bs512)
+			eq pack("H*", shift @hmac256rsp);
 	print "ok ", $testnum++, "\n";
 }
 
-my $skip = hmac_sha384_hex("", "") ? 0 : 1;
+my $skip = hmac_sha384("", "") ? 0 : 1;
 
 while (@data_bs1024) {
 	if ($skip) {
@@ -59,8 +59,8 @@ while (@data_bs1024) {
 		next;
 	}
 	print "not " unless
-		hmac_sha384_hex(shift @data_bs1024, shift @keys_bs1024)
-			eq shift @hmac384rsp;
+		hmac_sha384(shift @data_bs1024, shift @keys_bs1024)
+			eq pack("H*", shift @hmac384rsp);
 	print "ok ", $testnum++, "\n";
 }
 
@@ -72,8 +72,8 @@ while (@dat2_bs1024) {
 		next;
 	}
 	print "not " unless
-		hmac_sha512_hex(shift @dat2_bs1024, shift @key2_bs1024)
-			eq shift @hmac512rsp;
+		hmac_sha512(shift @dat2_bs1024, shift @key2_bs1024)
+			eq pack("H*", shift @hmac512rsp);
 	print "ok ", $testnum++, "\n";
 }
 

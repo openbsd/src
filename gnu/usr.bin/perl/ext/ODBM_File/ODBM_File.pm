@@ -7,7 +7,7 @@ require Tie::Hash;
 require XSLoader;
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.12";
+our $VERSION = "1.14";
 
 XSLoader::load();
 

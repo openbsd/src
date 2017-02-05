@@ -18,16 +18,21 @@ if ( $^O eq "VMS" ) {
 if ($^O eq 'dec_osf') {
     skip_all("$^O cannot handle this test");
 }
+if ( $::IS_EBCDIC || $::IS_EBCDIC) {
+  skip_all( "- We don't regen on EBCDIC." );
+}
 use Config;
 if ( $Config{usecrosscompile} ) {
   skip_all( "Not all files are available during cross-compilation" );
 }
 
-my $tests = 25; # I can't see a clean way to calculate this automatically.
+my $tests = 26; # I can't see a clean way to calculate this automatically.
 
 my %skip = ("regen_perly.pl"    => [qw(perly.act perly.h perly.tab)],
             "regen/keywords.pl" => [qw(keywords.c keywords.h)],
             "regen/uconfig_h.h" => [qw(uconfig.h)],
+            "regen/mk_invlists.pl" => [qw(charclass_invlists.h)],
+            "regen/regcharclass.pl" => [qw(regcharclass.h)],
            );
 
 my @files = map {@$_} sort values %skip;
@@ -42,7 +47,9 @@ die "Can't find __END__ in regen.pl"
     if eof $fh;
 
 foreach (qw(embed_lib.pl regen_lib.pl uconfig_h.pl
-            regcharclass_multi_char_folds.pl),
+            regcharclass_multi_char_folds.pl
+            charset_translations.pl
+            ),
          map {chomp $_; $_} <$fh>) {
     ++$skip{"regen/$_"};
 }
@@ -70,6 +77,7 @@ OUTER: foreach my $file (@files) {
 	    fail("Bad line in $file: '$_'");
 	    next OUTER;
 	}
+
 	my $digest = digest($2);
 	note("$digest $2");
 	push @bad, $2 unless $digest eq $1;

@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
+
 #include "EXTERN.h"
 #include "perl.h"
 
@@ -20,6 +24,18 @@ int _CRT_glob = 0;
 int
 main(int argc, char **argv, char **env)
 {
+#ifdef _MSC_VER
+    /* Arrange for _CrtDumpMemoryLeaks() to be called automatically at program
+     * termination when built with CFG = DebugFull. */
+    int currentFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+    currentFlag |= _CRTDBG_LEAK_CHECK_DF;
+    _CrtSetDbgFlag(currentFlag);
+
+    /* Change this -1 to the allocation number of any reported memory leaks to
+     * break on the allocation call that was leaked. */
+    _CrtSetBreakAlloc(-1L);
+#endif
+
     return RunPerl(argc, argv, env);
 }
 

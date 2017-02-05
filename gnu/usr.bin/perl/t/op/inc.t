@@ -1,7 +1,14 @@
 #!./perl -w
 
-require './test.pl';
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
 use strict;
+
+use Config;
 
 # Tests of post/pre - increment/decrement operators.
 
@@ -179,6 +186,12 @@ cmp_ok($a, '==', 2147483647, "postdecrement properly downgrades from double");
     cmp_ok($x, '==', 0, "(void) i_postdec");
 }
 
+SKIP: {
+    if ($Config{uselongdouble} &&
+        ($Config{longdblkind} == 6 || $Config{longdblkind} == 5)) {
+        skip "the double-double format is weird", 1;
+    }
+
 # I'm sure that there's an IBM format with a 48 bit mantissa
 # IEEE doubles have a 53 bit mantissa
 # 80 bit long doubles have a 64 bit mantissa
@@ -242,7 +255,10 @@ EOC
     $found = 1;
     last;
 }
-die "Could not find a value which overflows the mantissa" unless $found;
+
+ok($found, "found a NV value which overflows the mantissa");
+
+} # SKIP
 
 # these will segfault if they fail
 
@@ -271,15 +287,99 @@ isnt(scalar eval { my $pvbm = PVBM; --$pvbm }, undef, "predecrement defined");
     }
 }
 
+# *Do* use pad TARG if it is actually a named variable, even when the thing
+# you’re copying is a ref.  The fix for #9466 broke this.
+{
+    package P9466_2;
+    my $x;
+    sub DESTROY { $x = 1 }
+    for (2..3) {
+	$x = 0;
+	my $a = bless {};
+	my $b;
+	use integer;
+	if ($_ == 2) {
+	    $b = $a--; # sassign optimised away
+	}
+	else {
+	    $b = $a++;
+	}
+	::is(ref $b, __PACKAGE__, 'i_post(in|de)c/TARGMY on ref');
+	undef $a; undef $b;
+	::is($x, 1, "9466 case $_");
+    }
+}
+
 $_ = ${qr //};
 $_--;
 is($_, -1, 'regexp--');
-$_ = ${qr //};
-$_++;
-is($_, 1, 'regexp++');
+{
+    no warnings 'numeric';
+    $_ = ${qr //};
+    $_++;
+    is($_, 1, 'regexp++');
+}
 
-$_ = v97;
-$_++;
-isnt(ref\$_, 'VSTRING', '++ flattens vstrings');
+if ($::IS_EBCDIC) {
+    $_ = v129;
+    $_++;
+    isnt(ref\$_, 'VSTRING', '++ flattens vstrings');
+}
+else {
+    $_ = v97;
+    $_++;
+    isnt(ref\$_, 'VSTRING', '++ flattens vstrings');
+}
+
+sub TIESCALAR {bless\my $x}
+sub STORE { ++$store::called }
+tie my $t, "";
+{
+    $t = $_++;
+    $t = $_--;
+    use integer;
+    $t = $_++;
+    $t = $_--;
+}
+is $store::called, 4, 'STORE called on "my" target';
+
+{
+    # Temporarily broken between before 5.6.0 (b162f9ea/21f5b33c) and
+    # between 5.21.5 and 5.21.6 (9e319cc4fd)
+    my $x = 7;
+    $x = $x++;
+    is $x, 7, '$lex = $lex++';
+    $x = 7;
+    # broken in b162f9ea (5.6.0); fixed in 5.21.6
+    use integer;
+    $x = $x++;
+    is $x, 7, '$lex = $lex++ under use integer';
+}
+
+{
+    # RT #126637 - it should refuse to modify globs
+    no warnings 'once';
+    *GLOB126637 = [];
+
+    eval 'my $y = ++$_ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, '++*GLOB126637';
+    eval 'my $y = --$_ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, '--*GLOB126637';
+    eval 'my $y = $_++ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, '*GLOB126637++';
+    eval 'my $y = $_-- for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, '*GLOB126637--';
+
+    use integer;
+
+    eval 'my $y = ++$_ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, 'use int; ++*GLOB126637';
+    eval 'my $y = --$_ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, 'use int; --*GLOB126637';
+    eval 'my $y = $_++ for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, 'use int; *GLOB126637++';
+    eval 'my $y = $_-- for *GLOB126637';
+    like $@, qr/Modification of a read-only value/, 'use int; *GLOB126637--';
+}
 
 done_testing();

@@ -204,7 +204,7 @@ my @ChangedFiles;
 
         ### fix installperl, so these files get installed by other utils
         ### ./installperl:    return if $name =~
-        ### /^(?:cpan|instmodsh|prove|corelist|ptar|ptardiff|config_data)\z/;
+        ### /^(?:cpan|instmodsh|prove|corelist|ptar|ptardiff)\z/;
         {   my $file = 'installperl';
 
             ### not there already?

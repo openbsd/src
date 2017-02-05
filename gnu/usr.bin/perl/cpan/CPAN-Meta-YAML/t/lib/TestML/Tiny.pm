@@ -4,7 +4,7 @@ package TestML::Tiny;
 ; # original $VERSION removed by Doppelgaenger
 
 use Carp();
-use Test::More 0.99 ();
+use Test::More 0.88 ();
 
 # use XXX;
 

@@ -30,9 +30,9 @@ BEGIN {
     require 'testutil.pl' if $@;
   }
 
-  if (15) {
+  if (23) {
     load();
-    plan(tests => 15);
+    plan(tests => 23);
   }
 }
 
@@ -47,6 +47,30 @@ require DynaLoader;
 bootstrap Devel::PPPort;
 
 package main;
+
+# Find proper magic
+ok(my $obj1 = Devel::PPPort->new_with_mg());
+ok(Devel::PPPort::as_string($obj1), 'hello');
+
+# Find with no magic
+my $obj = bless {}, 'Fake::Class';
+ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+
+# Find with other magic (not the magic we are looking for)
+ok($obj = Devel::PPPort->new_with_other_mg());
+ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+
+# Okay, attempt to remove magic that isn't there
+Devel::PPPort::remove_other_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), 'hello');
+
+# Remove magic that IS there
+Devel::PPPort::remove_null_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+
+# Removing when no magic present
+Devel::PPPort::remove_null_magic($obj1);
+ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 use Tie::Hash;
 my %h;

@@ -17,6 +17,10 @@ BEGIN {
     plan(skip_all => "oneshot needs Perl 5.005 or better - you have Perl $]" )
         if $] < 5.005 ;
 
+    plan skip_all => "Lengthy Tests Disabled\n" .
+                     "set COMPRESS_ZLIB_RUN_ALL or COMPRESS_ZLIB_RUN_MOST to run this test suite"
+        unless defined $ENV{COMPRESS_ZLIB_RUN_ALL} or defined $ENV{COMPRESS_ZLIB_RUN_MOST};
+
     plan(skip_all => "IO::Compress::Bzip2 not available" )
         unless eval { require IO::Compress::Bzip2; 
                       require IO::Uncompress::Bunzip2; 

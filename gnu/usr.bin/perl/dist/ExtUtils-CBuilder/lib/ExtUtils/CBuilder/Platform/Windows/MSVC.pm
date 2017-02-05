@@ -1,7 +1,7 @@
 package ExtUtils::CBuilder::Platform::Windows::MSVC;
-
-use vars qw($VERSION);
-$VERSION = '0.280217';
+$ExtUtils::CBuilder::Platform::Windows::MSVC::VERSION = '0.280225';
+use warnings;
+use strict;
 
 sub arg_exec_file {
   my ($self, $file) = @_;

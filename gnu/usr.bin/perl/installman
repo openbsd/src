@@ -83,7 +83,7 @@ while (<$fh>) {
     next if /^#/;
     chomp;
     my ($path, $leaf) = m|^(\S*/(\S+))|;
-    # Have we already installed the manpage for this? (eg perldoc, a2p)
+    # Have we already installed the manpage for this? (eg perldoc)
     next if $man1{$leaf};
     pod2man({$leaf, $path}, $opts{man1dir}, $opts{man1ext});
     if ($has_man1dir) {
@@ -142,7 +142,7 @@ sub pod2man {
 
 	unless ($has_pod)
 	{
-	    warn "no documentation in $mod\n" unless $opts{silent};
+	    print "no documentation in $mod\n" if $opts{verbose};
 	    next;
 	}
 
@@ -174,9 +174,4 @@ sub pod2man {
 $packlist->write() unless $opts{notify};
 print "  Installation complete\n" if $opts{verbose};
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

@@ -93,7 +93,7 @@ getting whatever version is first in the user's path.  If you want
 a specific version of Perl, say, perl5.14.1, you should place
 that directly in the C<#!> line's path.
 
-If the C<#!> line does not contain the word "perl" nor the word "indir"
+If the C<#!> line does not contain the word "perl" nor the word "indir",
 the program named after the C<#!> is executed instead of the Perl
 interpreter.  This is slightly bizarre, but it helps people on machines
 that don't do C<#!>, because they can tell a program that their SHELL is
@@ -290,7 +290,7 @@ are as follows; listing the letters is equal to summing the numbers.
               in UTF-8
     L    64   normally the "IOEioA" are unconditional, the L makes
               them conditional on the locale environment variables
-              (the LC_ALL, LC_TYPE, and LANG, in the order of
+              (the LC_ALL, LC_CTYPE, and LANG, in the order of
               decreasing precedence) -- if the variables indicate
               UTF-8, then the selected "IOEioA" are in effect
     a   256   Set ${^UTF8CACHE} to -1, to run the UTF-8 caching
@@ -388,37 +388,42 @@ the format of the output is explained in L<perldebguts>.
 As an alternative, specify a number instead of list of letters (e.g.,
 B<-D14> is equivalent to B<-Dtls>):
 
-        1  p  Tokenizing and parsing (with v, displays parse stack)
-        2  s  Stack snapshots (with v, displays all stacks)
-        4  l  Context (loop) stack processing
-        8  t  Trace execution
-       16  o  Method and overloading resolution
-       32  c  String/numeric conversions
-       64  P  Print profiling info, source file input state
-      128  m  Memory and SV allocation
-      256  f  Format processing
-      512  r  Regular expression parsing and execution
-     1024  x  Syntax tree dump
-     2048  u  Tainting checks
-     4096  U  Unofficial, User hacking (reserved for private,
-              unreleased use)
-     8192  H  Hash dump -- usurps values()
-    16384  X  Scratchpad allocation
-    32768  D  Cleaning up
-    65536  S  Op slab allocation
-   131072  T  Tokenizing
-   262144  R  Include reference counts of dumped variables (eg when
-              using -Ds)
-   524288  J  show s,t,P-debug (don't Jump over) on opcodes within
-              package DB
-  1048576  v  Verbose: use in conjunction with other flags
-  2097152  C  Copy On Write
-  4194304  A  Consistency checks on internal structures
-  8388608  q  quiet - currently only suppresses the "EXECUTING"
-              message
- 16777216  M  trace smart match resolution
- 33554432  B  dump suBroutine definitions, including special Blocks
-              like BEGIN
+         1  p  Tokenizing and parsing (with v, displays parse
+               stack)
+         2  s  Stack snapshots (with v, displays all stacks)
+         4  l  Context (loop) stack processing
+         8  t  Trace execution
+        16  o  Method and overloading resolution
+        32  c  String/numeric conversions
+        64  P  Print profiling info, source file input state
+       128  m  Memory and SV allocation
+       256  f  Format processing
+       512  r  Regular expression parsing and execution
+      1024  x  Syntax tree dump
+      2048  u  Tainting checks
+      4096  U  Unofficial, User hacking (reserved for private,
+               unreleased use)
+      8192  H  Hash dump -- usurps values()
+     16384  X  Scratchpad allocation
+     32768  D  Cleaning up
+     65536  S  Op slab allocation
+    131072  T  Tokenizing
+    262144  R  Include reference counts of dumped variables
+               (eg when using -Ds)
+    524288  J  show s,t,P-debug (don't Jump over) on opcodes within
+               package DB
+   1048576  v  Verbose: use in conjunction with other flags
+   2097152  C  Copy On Write
+   4194304  A  Consistency checks on internal structures
+   8388608  q  quiet - currently only suppresses the "EXECUTING"
+               message
+  16777216  M  trace smart match resolution
+  33554432  B  dump suBroutine definitions, including special
+               Blocks like BEGIN
+  67108864  L  trace Locale-related info; what gets output is very
+               subject to change
+ 134217728  i  trace PerlIO layer processing.  Set PERLIO_DEBUG to
+               the filename to trace to.
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see C<:opd> in L<Devel::Peek> or L<re/'debug' mode>
@@ -704,9 +709,10 @@ at least a week:
     find . -mtime +7 -print | perl -nle unlink
 
 This is faster than using the B<-exec> switch of I<find> because you don't
-have to start a process on every filename found.  It does suffer from
-the bug of mishandling newlines in pathnames, which you can fix if
-you follow the example under B<-0>.
+have to start a process on every filename found (but it's not faster
+than using the B<-delete> switch available in newer versions of I<find>.
+It does suffer from the bug of mishandling newlines in pathnames, which
+you can fix if you follow the example under B<-0>.
 
 C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit program loop, just as in I<awk>.
@@ -1149,19 +1155,22 @@ is run in taint mode.
 =item PERLIO_DEBUG
 X<PERLIO_DEBUG>
 
-If set to the name of a file or device, certain operations of PerlIO
-subsystem will be logged to that file, which is opened in append mode.
-Typical uses are in Unix:
+If set to the name of a file or device when Perl is run with the
+B<-Di> command-line switch, the logging of certain operations of
+the PerlIO subsystem will be redirected to the specified file rather
+than going to stderr, which is the default. The file is opened in append
+mode. Typical uses are in Unix:
 
-   % env PERLIO_DEBUG=/dev/tty perl script ...
+   % env PERLIO_DEBUG=/tmp/perlio.log perl -Di script ...
 
 and under Win32, the approximately equivalent:
 
    > set PERLIO_DEBUG=CON
-   perl script ...
+   perl -Di script ...
 
-This functionality is disabled for setuid scripts and for scripts run
-with B<-T>.
+This functionality is disabled for setuid scripts, for scripts run
+with B<-T>, and for scripts run on a Perl built without C<-DDEBUGGING>
+support.
 
 =item PERLLIB
 X<PERLLIB>
@@ -1324,7 +1333,7 @@ C<key_traversal_mask()> in L<Hash::Util>.
 
 An example output might be:
 
-    HASH_FUNCTION = ONE_AT_A_TIME_HARD HASH_SEED = 0x652e9b9349a7a032 PERTURB_KEYS = 1 (RANDOM)
+ HASH_FUNCTION = ONE_AT_A_TIME_HARD HASH_SEED = 0x652e9b9349a7a032 PERTURB_KEYS = 1 (RANDOM)
 
 =item PERL_MEM_LOG
 X<PERL_MEM_LOG>

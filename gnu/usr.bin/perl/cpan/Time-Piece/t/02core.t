@@ -1,10 +1,11 @@
-use Test::More tests => 96;
+use Test::More tests => 102;
 
 my $is_win32 = ($^O =~ /Win32/);
 my $is_qnx = ($^O eq 'qnx');
 my $is_vos = ($^O eq 'vos');
-BEGIN { use_ok('Time::Piece'); }
-ok(1);
+
+use Time::Piece;
+use Time::Seconds;
 
 my $t = gmtime(951827696); # 2000-02-29T12:34:56
 
@@ -127,7 +128,12 @@ cmp_ok($t->strftime('%W'), 'eq', '09'); # Sun cmp Mon
 cmp_ok($t->strftime('%y'), '==', 0); # should test with 1999
 cmp_ok($t->strftime('%Y'), 'eq', '2000');
 
-# %Z is locale and implementation dependent
+# %Z is locale and implementation dependent (s/// to the rescue)
+cmp_ok($t->strftime('%z'), 'eq', '+0000');
+cmp_ok($t->strftime('%%z%z'), 'eq', '%z+0000');
+cmp_ok($t->strftime('%Z'), 'eq', 'UTC');
+cmp_ok($t->strftime('%%Z%Z'), 'eq', '%ZUTC');
+
 # (there is NO standard for timezone names)
 cmp_ok($t->date(""), 'eq', '20000229');
 cmp_ok($t->ymd("") , 'eq', '20000229');
@@ -212,7 +218,7 @@ cmp_ok(Time::Piece->strptime("2002/06/10 23", '%Y/%m/%d %H')->week, '==', 24);
 # Test that strptime populates all relevant fields
 cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->wday,  '==', 4);
 cmp_ok(Time::Piece->strptime("2002/12/31", '%Y/%m/%d')->yday,  '==', 364);
-cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->isdst, '==', 0);
+cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->isdst, '==', -1);
 cmp_ok(Time::Piece->strptime("2002/07/10", '%Y/%m/%d')->day_of_week, '==', 3);
 
 is(
@@ -226,4 +232,21 @@ cmp_ok(
   '==',
   951827696
 );
+
+#from Time::Piece::Plus
+#test reverse parsing
+my $now = localtime();
+my $strp_format = "%Y-%m-%d %H:%M:%S";
+
+my $now_str = $now->strftime($strp_format);
+
+my $now_parsed = $now->strptime($now_str, $strp_format);
+
+cmp_ok($now_parsed->epoch, '==', $now->epoch);
+cmp_ok($now_parsed->strftime($strp_format), 'eq', $now->strftime($strp_format));
+cmp_ok($now_parsed->strftime(), 'eq', $now->strftime());
+
+
+my $s = Time::Seconds->new(-691050);
+is($s->pretty, 'minus 7 days, 23 hours, 57 minutes, 30 seconds');
 

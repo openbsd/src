@@ -417,6 +417,10 @@ there's the tap-l[2] list. Finally there's a wiki dedicated to the
 Test Anything Protocol[3]. Contributions to the wiki, patches and
 suggestions are all welcome.
 
+=for comment
+  The URLs in [1] and [2] point to 404 pages. What are currently the
+  correct URLs?
+
 [1] L<http://www.hexten.net/mailman/listinfo/tapx-dev>
 [2] L<http://testanything.org/mailman/listinfo/tap-l>
 [3] L<http://testanything.org/>

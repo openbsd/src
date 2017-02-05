@@ -126,3 +126,12 @@ FOO:
     bar: baz 
 --- perl
 [ { 'FOO' => [ { bar => 'baz' } ] } ]
+
+# RT 92916 (a Test::Database ticket)
+=== colon at end of key
+--- yaml
+\---
+dbi:SQLite::
+  foo: bar
+--- perl
+[ { 'dbi:SQLite:' => { 'foo' => 'bar' } } ]

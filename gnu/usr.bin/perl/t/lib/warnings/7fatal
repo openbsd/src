@@ -416,18 +416,21 @@ use warnings FATAL => 'all', NONFATAL => 'io';
 no warnings 'once';
 
 open(F, "<true\ncd");
+open(G, "<truecd\n");
+open(H, "<truecd\n\0");
 close "fred" ;
 print STDERR "The End.\n" ;
 EXPECT
-Unsuccessful open on filename containing newline at - line 5.
-close() on unopened filehandle fred at - line 6.
+Unsuccessful open on filename containing newline at - line 6.
+Unsuccessful open on filename containing newline at - line 7.
+close() on unopened filehandle fred at - line 8.
 The End.
 ########
 
 use warnings FATAL => 'all', NONFATAL => 'io', FATAL => 'unopened' ;
 no warnings 'once';
 
-open(F, "<true\ncd");
+open(F, "<truecd\n");
 close "fred" ;
 print STDERR "The End.\n" ;
 EXPECT
@@ -532,3 +535,34 @@ print STDERR "The End.\n" ;
 EXPECT
 Reversed += operator at - line 10.
 The End.
+########
+
+# fatal warnings shouldn't hide parse errors [perl #122966]
+use warnings FATAL => 'all';
+if (1 {
+    my $x = "hello";
+    print $x, "\n";
+}
+EXPECT
+syntax error at - line 4, near "1 {"
+"my" variable $x masks earlier declaration in same statement at - line 6.
+syntax error at - line 7, near "}"
+Execution of - aborted due to compilation errors.
+########
+
+# fatal warnings in DESTROY should be made non-fatal [perl #123398]
+# This test will blow up your memory with SEGV without the patch
+package Foo;
+use strict; use utf8; use warnings FATAL => 'all';
+sub new {
+    return bless{ 'field' => undef }, 'Foo';
+}
+sub DESTROY {
+    my $self = shift;
+    $self->{'field'}->missing_method;
+}
+package main;
+my $foo = new Foo;
+undef($foo);
+EXPECT
+	(in cleanup) Can't call method "missing_method" on an undefined value at - line 11.

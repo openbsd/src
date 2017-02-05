@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use Scalar::Util qw(reftype refaddr);
 
-$Safe::VERSION = "2.37";
+$Safe::VERSION = "2.39";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -362,9 +362,15 @@ sub reval {
     my $evalsub = lexless_anon_sub($root, $strict, $expr);
     # propagate context
     my $sg = sub_generation();
-    my @subret = (wantarray)
+    my @subret;
+    if (defined wantarray) {
+        @subret = (wantarray)
                ?        Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub)
                : scalar Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+    }
+    else {
+        Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
+    }
     _clean_stash($root.'::') if $sg != sub_generation();
     $obj->wrap_code_refs_within(@subret);
     return (wantarray) ? @subret : $subret[0];

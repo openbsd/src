@@ -3,12 +3,16 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
-    require 'test.pl';
+    require './test.pl';
 }
 
 use strict qw(refs subs);
 
 plan(235);
+
+# Test this first before we extend the stack with other operations.
+# This caused an asan failure due to a bad write past the end of the stack.
+eval { die  1..127, $_=\() };
 
 # Test glob operations.
 
@@ -80,7 +84,7 @@ $refref = \\$x;
 $x = "Good";
 is ($$$refref, 'Good');
 
-# Test nested anonymous lists.
+# Test nested anonymous arrays.
 
 $ref = [[],2,[3,4,5,]];
 is (scalar @$ref, 3);
@@ -319,8 +323,10 @@ is (scalar grep(ref($_), @baa), 3);
 is (scalar (@bzz), 3);
 
 # also, it can't be an lvalue
+# (That’s what *you* think!  --sprout)
 eval '\\($x, $y) = (1, 2);';
-like ($@, qr/Can\'t modify.*ref.*in.*assignment/);
+like ($@, qr/Can\'t modify.*ref.*in.*assignment(?x:
+           )|Experimental aliasing via reference not enabled/);
 
 # test for proper destruction of lexical objects
 $test = curr_test();
@@ -617,7 +623,7 @@ is ( (sub {"bar"})[0]->(), "bar", 'code deref from list slice w/ ->' );
 {
     local $@;
     eval { ()[0]{foo} };
-    like ( "$@", "Can't use an undefined value as a HASH reference",
+    like ( "$@", qr/Can't use an undefined value as a HASH reference/,
            "deref of undef from list slice fails" );
 }
 
@@ -792,7 +798,6 @@ for (3) {
     eval { $_ = 4 };
     like $@, qr/^Modification of a read-only/,
        'assignment to value aliased to literal number';
-    require Config;
     eval { ${\$_} = 4 };
     like $@, qr/^Modification of a read-only/,
        'refgen does not allow assignment to value aliased to literal number';
@@ -801,7 +806,6 @@ for ("4eounthouonth") {
     eval { $_ = 4 };
     like $@, qr/^Modification of a read-only/,
        'assignment to value aliased to literal string';
-    require Config;
     eval { ${\$_} = 4 };
     like $@, qr/^Modification of a read-only/,
        'refgen does not allow assignment to value aliased to literal string';

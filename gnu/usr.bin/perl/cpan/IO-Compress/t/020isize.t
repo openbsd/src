@@ -16,7 +16,7 @@ use CompTestUtils;
 BEGIN 
 { 
     plan skip_all => "Lengthy Tests Disabled\n" .
-                     "set COMPRESS_ZLIB_RUN_ALL to run this test suite" 
+                     "set COMPRESS_ZLIB_RUN_ALL to run this test suite"
         unless defined $ENV{COMPRESS_ZLIB_RUN_ALL} ;
 
     # use Test::NoWarnings, if available

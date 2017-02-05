@@ -3,6 +3,7 @@
 # The tests are in a separate file 't/re/re_tests'.
 # Each line in that file is a separate test.
 # There are five columns, separated by tabs.
+# An optional sixth column is used to give a reason, only when skipping tests
 #
 # Column 1 contains the pattern, optionally enclosed in C<''>.
 # Modifiers can be put after the closing C<'>.
@@ -20,6 +21,8 @@
 #	t	test exposes a bug with threading, TODO if qr_embed_thr
 #       s       test should only be run for regex_sets_compat.t
 #       S       test should not be run for regex_sets_compat.t
+#       a       test should only be run on ASCII platforms
+#       e       test should only be run on EBCDIC platforms
 #
 # Columns 4 and 5 are used only if column 3 contains C<y> or C<c>.
 #
@@ -47,6 +50,9 @@
 #
 # Note that columns 2,3 and 5 are all enclosed in double quotes and then
 # evalled; so something like a\"\x{100}$1 has length 3+length($1).
+#
+# \x... and \o{...} constants are automatically converted to the native
+# character set if necessary.  \[0-7] constants aren't
 
 my ($file, $iters);
 BEGIN {
@@ -59,13 +65,34 @@ BEGIN {
     }
 
     chdir 't' if -d 't';
-    @INC = '../lib';
-
+    @INC = qw '../lib ../ext/re';
+    if (!defined &DynaLoader::boot_DynaLoader) { # miniperl
+	print("1..0 # Skip Unicode tables not built yet\n"), exit
+	    unless eval 'require "unicore/Heavy.pl"';
+    }
 }
 
 sub _comment {
     return map { /^#/ ? "$_\n" : "# $_\n" }
            map { split /\n/ } @_;
+}
+
+sub convert_from_ascii {
+    my $string = shift;
+
+    #my $save = $string;
+    # Convert \x{...}, \o{...}
+    $string =~ s/ (?<! \\ ) \\x\{ ( .*? ) } / "\\x{" . sprintf("%X", utf8::unicode_to_native(hex $1)) .  "}" /gex;
+    $string =~ s/ (?<! \\ ) \\o\{ ( .*? ) } / "\\o{" . sprintf("%o", utf8::unicode_to_native(oct $1)) .  "}" /gex;
+
+    # Convert \xAB
+    $string =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9]{2} ) / "\\x" . sprintf("%02X", utf8::unicode_to_native(hex $1)) /gex;
+
+    # Convert \xA
+    $string =~ s/ (?<! \\ ) \\x ( [A-Fa-f0-9] ) (?! [A-Fa-f0-9] ) / "\\x" . sprintf("%X", utf8::unicode_to_native(hex $1)) /gex;
+
+    #print STDERR __LINE__, ": $save\n$string\n" if $save ne $string;
+    return $string;
 }
 
 use strict;
@@ -96,25 +123,34 @@ TEST:
 foreach (@tests) {
     $test++;
     if (!/\S/ || /^\s*#/ || /^__END__$/) {
-        print "ok $test # (Blank line or comment)\n";
-        if (/#/) { print $_ };
+        chomp;
+        my ($not,$comment)= split /\s*#\s*/, $_, 2;
+        $comment ||= "(blank line)";
+        print "ok $test # $comment\n";
         next;
     }
     chomp;
     s/\\n/\n/g unless $regex_sets;
-    my ($pat, $subject, $result, $repl, $expect, $reason) = split(/\t/,$_,6);
+    my ($pat, $subject, $result, $repl, $expect, $reason, $comment) = split(/\t/,$_,7);
     if (!defined $subject) {
         die "Bad test definition on line $test: $_\n";
     }
     $reason = '' unless defined $reason;
     my $input = join(':',$pat,$subject,$result,$repl,$expect);
+
     # the double '' below keeps simple syntax highlighters from going crazy
     $pat = "'$pat'" unless $pat =~ /^[:''\/]/; 
     $pat =~ s/(\$\{\w+\})/$1/eeg;
     $pat =~ s/\\n/\n/g unless $regex_sets;
+    $pat = convert_from_ascii($pat) if ord("A") != 65;
+
+    $subject = convert_from_ascii($subject) if ord("A") != 65;
     $subject = eval qq("$subject"); die $@ if $@;
+
+    $expect = convert_from_ascii($expect) if ord("A") != 65;
     $expect  = eval qq("$expect"); die $@ if $@;
     $expect = $repl = '-' if $skip_amp and $input =~ /\$[&\`\']/;
+
     my $todo_qr = $qr_embed_thr && ($result =~ s/t//);
     my $skip = ($skip_amp ? ($result =~ s/B//i) : ($result =~ s/B//));
     ++$skip if $result =~ s/M// && !defined &DynaLoader::boot_DynaLoader;
@@ -124,16 +160,29 @@ foreach (@tests) {
             $reason = "Test not valid for $0";
         }
     }
+    if ($result =~ s/a// && ord("A") != 65) {
+        $skip++;
+        $reason = "Test is only valid for ASCII platforms.  $reason";
+    }
+    if ($result =~ s/e// && ord("A") != 193) {
+        $skip++;
+        $reason = "Test is only valid for EBCDIC platforms.  $reason";
+    }
     $reason = 'skipping $&' if $reason eq  '' && $skip_amp;
     $result =~ s/B//i unless $skip;
     my $todo= $result =~ s/T// ? " # TODO" : "";
+    my $testname= $test;
+    if ($comment) {
+        $comment=~s/^\s*(?:#\s*)?//;
+        $testname .= " - $comment" if $comment;
+    }
     if (! $skip && $regex_sets) {
 
         # If testing regex sets, change the [bracketed] classes into
-        # (?[bracketed]).
-
-        if ($pat !~ / \[ /x) {
-
+        # (?[bracketed]).  But note that '\[' and '\c[' don't introduce such a
+        # class.  (We don't bother looking for an odd number of backslashes,
+        # as this hasn't been needed so far.)
+        if ($pat !~ / (?<!\\c) (?<!\\) \[ /x) {
             $skip++;
             $reason = "Pattern doesn't contain [brackets]";
         }
@@ -166,7 +215,7 @@ foreach (@tests) {
                                 $reason = "Can't handle compilation errors with unmatched '{'";
                             }
                             else {
-                                print "not ok $test # Problem in $0; original = '$pat'; mod = '$modified'\n";
+                                print "not ok $testname # Problem in $0; original = '$pat'; mod = '$modified'\n";
                                 next TEST;
                             }
                         }
@@ -299,7 +348,7 @@ foreach (@tests) {
                     $reason = "Can't figure out where to put the (?[ and ]) since is a compilation error";
                 }
                 else {
-                    print "not ok $test # Problem in $0; original = '$pat'; mod = '$modified'\n";
+                    print "not ok $testname # Problem in $0; original = '$pat'; mod = '$modified'\n";
                     next TEST;
                 }
             }
@@ -357,27 +406,27 @@ EOFCODE
 	    # Probably we should annotate specific tests with which warnings
 	    # categories they're known to trigger, and hence should be
 	    # disabled just for that test
-	    no warnings qw(uninitialized regexp);
+	    no warnings qw(uninitialized regexp deprecated);
 	    eval $code;
 	}
 	chomp( my $err = $@ );
 	if ( $skip ) {
-	    print "ok $test # skipped", length($reason) ? ".  $reason" : '', "\n";
+	    print "ok $testname # skipped", length($reason) ? ".  $reason" : '', "\n";
 	    next TEST;
 	}
 	elsif ($result eq 'c') {
-	    if ($err !~ m!^\Q$expect!) { print "not ok $test$todo (compile) $input => '$err'\n"; next TEST }
+	    if ($err !~ m!^\Q$expect!) { print "not ok $testname$todo (compile) $input => '$err'\n"; next TEST }
 	    last;  # no need to study a syntax error
 	}
 	elsif ( $todo_qr ) {
-	    print "not ok $test # TODO", length($reason) ? " - $reason" : '', "\n";
+	    print "not ok $testname # TODO", length($reason) ? " - $reason" : '', "\n";
 	    next TEST;
 	}
 	elsif ($@) {
-	    print "not ok $test$todo $input => error '$err'\n", _comment("$code\n$@\n"); next TEST;
+	    print "not ok $testname$todo $input => error '$err'\n", _comment("$code\n$@\n"); next TEST;
 	}
 	elsif ($result =~ /^n/) {
-	    if ($match) { print "not ok $test$todo ($study) $input => false positive\n"; next TEST }
+	    if ($match) { print "not ok $testname$todo ($study) $input => false positive\n"; next TEST }
 	}
 	else {
 	    if (!$match || $got ne $expect) {
@@ -388,18 +437,18 @@ EOFCODE
 		    # anger as it tries to load B. I'd prefer to keep the
 		    # regular calls below outside of an eval so that real
 		    # (unknown) failures get spotted, not ignored.
-		    print "not ok $test$todo ($study) $input => '$got', match=$match\n", _comment("$code\n");
+		    print "not ok $testname$todo ($study) $input => '$got', match=$match\n", _comment("$code\n");
 		}
 		else { # better diagnostics
 		    my $s = Data::Dumper->new([$subject],['subject'])->Useqq(1)->Dump;
 		    my $g = Data::Dumper->new([$got],['got'])->Useqq(1)->Dump;
-		    print "not ok $test$todo ($study) $input => '$got', match=$match\n", _comment("$s\n$g\n$code\n");
+		    print "not ok $testname$todo ($study) $input => '$got', match=$match\n", _comment("$s\n$g\n$code\n");
 		}
 		next TEST;
 	    }
 	}
     }
-    print "ok $test$todo\n";
+    print "ok $testname$todo\n";
 }
 
 1;

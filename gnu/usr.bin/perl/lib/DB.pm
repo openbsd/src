@@ -41,7 +41,7 @@ BEGIN {
   $DB::subname = '';    # currently executing sub (fully qualified name)
   $DB::lineno = '';     # current line number
 
-  $DB::VERSION = $DB::VERSION = '1.07';
+  $DB::VERSION = $DB::VERSION = '1.08';
 
   # initialize private globals to avoid warnings
 
@@ -244,8 +244,8 @@ sub backtrace {
     for (@a) {
       s/'/\\'/g;
       s/([^\0]*)/'$1'/ unless /^-?[\d.]+$/;
-      s/([\200-\377])/sprintf("M-%c",ord($1)&0177)/eg;
-      s/([\0-\37\177])/sprintf("^%c",ord($1)^64)/eg;
+      require 'meta_notation.pm';
+      $_ = _meta_notation($_) if /[[:^print:]]/a;
     }
     $w = $w ? '@ = ' : '$ = ';
     $a = $h ? '(' . join(', ', @a) . ')' : '';

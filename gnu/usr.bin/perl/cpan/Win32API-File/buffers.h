@@ -78,7 +78,7 @@
  * code makes sure that the buffer is at least large enough to hold a value
  * of that size and then passes in how large the buffer is.  So the buffer
  * size passed to the API call is the larger of the size requested by the
- * user and the size of the buffer aleady allocated to the SV.
+ * user and the size of the buffer already allocated to the SV.
  *
  * The user can also pass in a string consisting of a leading "=" followed
  * by digits for a buffer size.  This means just use the size specified after

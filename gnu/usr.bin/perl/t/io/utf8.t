@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
     skip_all_without_perlio();
 }
 
@@ -27,17 +27,18 @@ is( getc(F), "£" );
 is( getc(F), "\n" );
 seek(F,0,0);
 binmode(F,":bytes");
-my $chr = chr(0xc4);
-if (ord($a_file) == 193) { $chr = chr(0x8c); } # EBCDIC
+
+# Byte representation of these characters
+my $U_100 = byte_utf8a_to_utf8n("\xc4\x80");
+my $POUND_SIGN = byte_utf8a_to_utf8n("\xc2\xa3");
+
+my $chr = substr($U_100, 0, 1);
 is( getc(F), $chr );
-$chr = chr(0x80);
-if (ord($a_file) == 193) { $chr = chr(0x41); } # EBCDIC
+$chr = substr($U_100, 1, 1);
 is( getc(F), $chr );
-$chr = chr(0xc2);
-if (ord($a_file) == 193) { $chr = chr(0x80); } # EBCDIC
+$chr = substr($POUND_SIGN, 0, 1);
 is( getc(F), $chr );
-$chr = chr(0xa3);
-if (ord($a_file) == 193) { $chr = chr(0x44); } # EBCDIC
+$chr = substr($POUND_SIGN, 1, 1);
 is( getc(F), $chr );
 is( getc(F), "\n" );
 seek(F,0,0);
@@ -67,8 +68,7 @@ close(F);
     binmode(F, ":bytes");
     $x = <F>;
     chomp($x);
-    $chr = chr(196).chr(172);
-    if (ord($a_file) == 193) { $chr = chr(141).chr(83); } # EBCDIC
+    $chr = byte_utf8a_to_utf8n(chr(196).chr(172));
     is( $x, $chr );
     close F;
 
@@ -87,7 +87,7 @@ close(F);
 	cmp_ok( $y, '==', 1 );
     }
 
-    print F $b,"\n"; # Don't upgrades $b
+    print F $b,"\n"; # Don't upgrade $b
 
     { # Check byte length of $b
 	use bytes; my $y = length($b);
@@ -96,7 +96,7 @@ close(F);
 
     {
 	my $x = tell(F);
-	{ use bytes; if (ord('A')==193){$y += 2;}else{$y += 3;}} # EBCDIC ASCII
+	{ use bytes; if ($::IS_EBCDIC){$y += 2;}else{$y += 3;}} # EBCDIC ASCII
 	cmp_ok( $x, '==', $y );
     }
 
@@ -107,7 +107,7 @@ close(F);
     $x = <F>;
     chomp($x);
     $chr = v196.172.194.130;
-    if (ord('A') == 193) { $chr = v141.83.130; } # EBCDIC
+    if ($::IS_EBCDIC) { $chr = v141.83.130; } # EBCDIC
     is( $x, $chr, sprintf('(%vd)', $x) );
 
     open F, "<:utf8", $a_file or die $!;
@@ -141,7 +141,7 @@ open F, "<", $a_file or die $!;
 binmode(F, ":bytes");
 $x = <F>; chomp $x;
 $chr = v196.172.130;
-if (ord('A') == 193) { $chr = v141.83.130; } # EBCDIC
+if ($::IS_EBCDIC) { $chr = v141.83.130; } # EBCDIC
 is( $x, $chr );
 
 # Right.
@@ -165,8 +165,8 @@ SKIP: {
 # Now we have a deformed file.
 
 SKIP: {
-    if (ord('A') == 193) {
-	skip("EBCDIC doesn't complain", 2);
+    if ($::IS_EBCDIC) {
+	skip("EBCDIC The file isn't deformed in UTF-EBCDIC", 2);
     } else {
 	my @warnings;
 	open F, "<:utf8", $a_file or die $!;
@@ -223,7 +223,7 @@ is($failed, undef);
     print F chr(0x100);
     close(F);
 
-    like( $@, 'Wide character in print' );
+    like( $@, qr/Wide character in print/ );
 
     undef $@;
     open F, ">:utf8", $a_file;
@@ -257,7 +257,7 @@ is($failed, undef);
     print F chr(0x100);
     close(F);
 
-    like( $@, 'Wide character in print' );
+    like( $@, qr/Wide character in print/ );
 }
 
 {
@@ -330,7 +330,7 @@ is($failed, undef);
     open F, ">$a_file";
     binmode F;
     my ($chrE4, $chrF6) = (chr(0xE4), chr(0xF6));
-    if (ord('A') == 193)	# EBCDIC
+    if ($::IS_EBCDIC)	# EBCDIC
     { ($chrE4, $chrF6) = (chr(0x43), chr(0xEC)); }
     print F "foo", $chrE4, "\n";
     print F "foo", $chrF6, "\n";
@@ -339,7 +339,7 @@ is($failed, undef);
     undef $@;
     my $line = <F>;
     my ($chrE4, $chrF6) = ("E4", "F6");
-    if (ord('A') == 193) { ($chrE4, $chrF6) = ("43", "EC"); } # EBCDIC
+    if ($::IS_EBCDIC) { ($chrE4, $chrF6) = ("43", "EC"); } # EBCDIC
     like( $@, qr/utf8 "\\x$chrE4" does not map to Unicode .+ <F> line 1/,
 	  "<:utf8 readline must warn about bad utf8");
     undef $@;
@@ -393,7 +393,7 @@ is($failed, undef);
 SKIP: {
     skip "no PerlIO::scalar on miniperl", 2, if is_miniperl();
     open my $fh, "<:raw",  \($buf = chr 255);
-    open my $uh, "<:utf8", \($uuf = "\xc4\x80");
+    open my $uh, "<:utf8", \($uuf = $U_100);
     for([$uh,chr 256], [$fh,chr 255]) {
 	is getc $$_[0], $$_[1],
 	  'getc returning non-utf8 after utf8';

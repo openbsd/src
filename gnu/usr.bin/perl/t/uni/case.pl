@@ -1,13 +1,18 @@
-require "test.pl";
+BEGIN {
+    require "test.pl";
+    set_up_inc(qw(../lib .));
+    skip_all_without_unicode_tables();
+}
 use strict;
 use warnings;
+use feature 'unicode_strings';
 
 sub unidump {
-    join " ", map { sprintf "%04X", $_ } unpack "U*", $_[0];
+    join "", map { sprintf "\\x{%04X}", $_ } unpack "W*", $_[0];
 }
 
 sub casetest {
-    my ($already_run, $base, @funcs) = @_;
+    my ($already_run, $base, %funcs) = @_;
 
     my %spec;
 
@@ -16,14 +21,14 @@ sub casetest {
     # $already_run is the number of extra tests the caller has run before this
     # call.
     my $ballast = chr (0x2672) x 3;
-    @funcs = map {my $f = $_;
-		  ($f,
-		   sub {my $r = $f->($_[0] . $ballast); # Add it before
+    foreach my $name (keys %funcs) {
+        $funcs{"${name}_with_ballast"} =
+		   sub {my $r = $funcs{$name}->($_[0] . $ballast); # Add it before
 			$r =~ s/$ballast\z//so # Remove it afterwards
 			    or die "'$_[0]' to '$r' mangled";
 			$r; # Result with $ballast removed.
-		    },
-		   )} @funcs;
+		    };
+    }
 
     use Unicode::UCD 'prop_invmap';
 
@@ -48,7 +53,7 @@ sub casetest {
         else {  # The return is a list of the characters mapped-to.
                 # prop_invmap() guarantees a single element in the range in
                 # this case, so no adjustments are needed.
-            $spec{$invlist_ref->[$i]} = pack "U0U*" , @{$invmap_ref->[$i]};
+            $spec{$invlist_ref->[$i]} = pack "W*" , @{$invmap_ref->[$i]};
         }
     }
 
@@ -69,51 +74,56 @@ sub casetest {
     my %none;
     for my $i (map { ord } split //,
 	       "\e !\"#\$%&'()+,-./0123456789:;<=>?\@[\\]^_{|}~\b") {
-	next if pack("U0U", $i) =~ /\w/;
+	next if pack("W", $i) =~ /\w/;
 	$none{$i}++ unless $seen{$i};
     }
     print "# ", scalar keys %none, " noncase mappings\n";
 
-    my $tests = 
-        $already_run +
-	((scalar keys %simple) +
-	 (scalar keys %spec) +
-	 (scalar keys %none)) * @funcs;
 
     my $test = $already_run + 1;
 
-    for my $i (sort keys %simple) {
-	my $w = $simple{$i};
-	my $c = pack "U0U", $i;
-	foreach my $func (@funcs) {
-	    my $d = $func->($c);
-	    my $e = unidump($d);
-	    is( $d, pack("U0U", $simple{$i}), "$i -> $e ($w)" );
+    for my $ord (sort { $a <=> $b } keys %simple) {
+	my $char = pack "W", $ord;
+        my $disp_input = unidump($char);
+
+        my $expected = pack("W", $simple{$ord});
+        my $disp_expected = unidump($expected);
+
+	foreach my $name (sort keys %funcs) {
+	    my $got = $funcs{$name}->($char);
+	    is( $got, $expected,
+               "Verify $name(\"$disp_input\") eq \"$disp_expected\"");
 	}
     }
 
-    for my $i (sort keys %spec) {
-	my $w = unidump($spec{$i});
-	my $h = sprintf "%04X", $i;
-	my $c = chr($i); $c .= chr(0x100); chop $c;
-	foreach my $func (@funcs) {
-	    my $d = $func->($c);
-	    my $e = unidump($d);
-            is( $w, $e, "$h -> $e ($w)" );
+    for my $ord (sort { $a <=> $b } keys %spec) {
+	my $char = pack "W", $ord;
+        my $disp_input = unidump($char);
+
+	my $expected = unidump($spec{$ord});
+
+	foreach my $name (sort keys %funcs) {
+	    my $got = $funcs{$name}->($char);
+            is( unidump($got), $expected,
+               "Verify $name(\"$disp_input\") eq \"$expected\"");
 	}
     }
 
-    for my $i (sort { $a <=> $b } keys %none) {
-	my $c = pack "U0U", $i;
-	my $w = $i = sprintf "%04X", $i;
-	foreach my $func (@funcs) {
-	    my $d = $func->($c);
-	    my $e = unidump($d);
-            is( $d, $c, "$i -> $e ($w)" );
+    for my $ord (sort { $a <=> $b } keys %none) {
+	my $char = pack "W", $ord;
+        my $disp_input = unidump($char);
+
+	foreach my $name (sort keys %funcs) {
+	    my $got = $funcs{$name}->($char);
+            is( $got, $char,
+               "Verify $name(\"$disp_input\") eq \"$disp_input\"");
 	}
     }
 
-    done_testing();
+    plan $already_run +
+	((scalar keys %simple) +
+	 (scalar keys %spec) +
+	 (scalar keys %none)) * scalar keys %funcs;
 }
 
 1;

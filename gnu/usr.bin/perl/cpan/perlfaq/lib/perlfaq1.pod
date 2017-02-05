@@ -2,6 +2,10 @@
 
 perlfaq1 - General Questions About Perl
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section of the FAQ answers very general, high-level questions
@@ -116,7 +120,7 @@ and an experimental version. The maintenance versions are stable, and
 have an even number as the minor release (i.e. perl5.18.x, where 18 is the
 minor release). The experimental versions may include features that
 don't make it into the stable versions, and have an odd number as the
-minor release (i.e. perl5.19.x, where 9 is the minor release).
+minor release (i.e. perl5.19.x, where 19 is the minor release).
 
 =back
 

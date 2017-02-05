@@ -28,7 +28,7 @@ is ($_, $expected, 'test if $_ takes as the default');
 cmp_ok(@r, '>=', 9) or diag("|@r|");
 
 @r = <*/a*.t>;
-# atleast {argv,abbrev,anydbm,autoloader,append,arith,array,assignwarn,auto}.t
+# at least {argv,abbrev,anydbm,autoloader,append,arith,array,assignwarn,auto}.t
 cmp_ok(@r, '>=', 9, 'check <*/*>') or diag("|@r|");
 my $r = scalar @r;
 

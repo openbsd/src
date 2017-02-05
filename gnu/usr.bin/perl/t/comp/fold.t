@@ -4,7 +4,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..29\n";
+print "1..30\n";
 my $test = 0;
 
 # Historically constant folding was performed by evaluating the ops, and if
@@ -171,3 +171,12 @@ my @values;
 for (1,2) { for (\(1+3)) { push @values, $$_; $$_++ } }
 is "@values", "4 4",
    '\1+3 folding making modification affect future retvals';
+
+{
+    BEGIN { $^W = 0; $::{u} = \undef }
+    my $w;
+    local $SIG{__WARN__} = sub { ++$w };
+    () = 1 + u;
+    is $w, 1, '1+undef_constant is not folded outside warninsg scope';
+    BEGIN { $^W = 1 }
+}

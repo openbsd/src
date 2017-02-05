@@ -1,11 +1,11 @@
 package XS::APItest;
 
-{ use 5.011001; }
+{ use 5.011001; } # 5.11 is a long long time ago... What gives with this?
 use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.60_01';
+our $VERSION = '0.80';
 
 require XSLoader;
 
@@ -40,7 +40,7 @@ sub import {
 	}
     }
     foreach (keys %{$exports||{}}) {
-	next unless /\A(?:rpn|calcrpn|stufftest|swaptwostmts|looprest|scopelessblock|stmtasexpr|stmtsasexpr|loopblock|blockasexpr|swaplabel|labelconst|arrayfullexpr|arraylistexpr|arraytermexpr|arrayarithexpr|arrayexprflags)\z/;
+	next unless /\A(?:rpn|calcrpn|stufftest|swaptwostmts|looprest|scopelessblock|stmtasexpr|stmtsasexpr|loopblock|blockasexpr|swaplabel|labelconst|arrayfullexpr|arraylistexpr|arraytermexpr|arrayarithexpr|arrayexprflags|DEFSV|with_vars|join_with_space)\z/;
 	$^H{"XS::APItest/$_"} = 1;
 	delete $exports->{$_};
     }
@@ -253,6 +253,10 @@ These are not supplied by default, but must be explicitly imported.
 They are lexically scoped.
 
 =over
+
+=item DEFSV
+
+Behaves like C<$_>.
 
 =item rpn(EXPRESSION)
 

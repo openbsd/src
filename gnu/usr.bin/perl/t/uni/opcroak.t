@@ -6,7 +6,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw '../lib ../dist/base/lib';
     require './test.pl';
 }
 
@@ -33,6 +33,8 @@ like $@, qr/Type of arg 1 to main::\x{30cd} must be/u, "bad type croak is UTF-8 
         }
     }
 END_FIELDS
+
+die $@ if $@;
 
 for (
         [ element => 'my ＦŌŌ $bàr = ＦŌŌ->new; $bàr->{クラス};' ],

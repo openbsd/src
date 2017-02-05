@@ -7,10 +7,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
-    require "test.pl";
+    require "./test.pl";
 }
 
-plan( tests => 66 );
+plan( tests => 67 );
 
 {
     my @lol = ([qw(a b c)], [], [qw(1 2 3)]);
@@ -228,3 +228,13 @@ map is(\$_, \$_, '[perl #78194] \$_ == \$_ inside map ..., "$x"'),
     map { undef *_ } $y;
 }
 pass 'no double frees with grep/map { undef *_ }';
+
+# Don't mortalise PADTMPs.
+# This failed while I was messing with leave stuff (but not in a simple
+# test, so add one). The '1;' ensures the block is wrapped in ENTER/LEAVE;
+# the stringify returns a PADTMP. DAPM.
+
+{
+    my @a = map { 1; "$_" } 1,2;
+    is("@a", "1 2", "PADTMP");
+}

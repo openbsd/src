@@ -151,7 +151,7 @@ while (<$T>) {
 	    note "want: $expect";
 	    note "got : $_";
 	}
-	ok($expect eq $_);
+	ok($expect eq $_, $comment // '');
     }
 }
 close $T;

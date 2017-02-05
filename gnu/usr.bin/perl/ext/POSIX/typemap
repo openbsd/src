@@ -14,16 +14,33 @@ cc_t			T_IV
 POSIX::SigSet		T_OPAQUEPTROBJ
 POSIX::Termios		T_OPAQUEPTROBJ
 POSIX::SigAction	T_HVREF
+POSIX::SigNo		T_SIGNO
+POSIX::Fd		T_FD
 
 INPUT
 T_OPAQUEPTROBJ
-	if (SvROK($arg) && sv_derived_from($arg, \"${ntype}\")) {
-	    $var = ($type)SvPV_nolen(SvRV($arg));
+	{
+	    SV * sv = $arg;
+	    if (SvROK(sv) && sv_derived_from(sv, \"${ntype}\"))
+		$var = ($type)SvPV_nolen(SvRV(sv));
+	    else
+		croak(\"%s: %s is not of type %s\",
+			    ${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+			\"$var\", \"$ntype\");
 	}
-	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+
+T_SIGNO
+	if ((sig = SvIV($arg)) < 0) {
+	   croak(\"%s: Negative signals are not allowed %d\",
+		${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
+                                   sig);
+	}
+
+T_FD
+	if ((fd = (int)SvIV($arg)) < 0) {
+	     SETERRNO(EBADF, RMS_IFI);
+	     XSRETURN_IV(-1);
+	}
 
 OUTPUT
 T_OPAQUEPTROBJ

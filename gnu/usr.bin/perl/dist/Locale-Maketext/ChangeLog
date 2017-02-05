@@ -1,5 +1,28 @@
 Revision history for Perl suite Locale::Maketext
 
+2014-06-17
+    * Correct two subtle typos in Locale::Maketext POD.
+
+
+2013-04-13
+    * No changes. Switch to version 1.25 for release to CPAN.
+
+2013-04-13
+    * Update to 1.25_01 from upstream blead for release testing
+
+2013-11-08
+    * Fix for case when lexicon translations contain substitionand literals with eval-non-safe characters.
+	RT #120457
+
+2013-08-21
+    * Swap out base for parent (bowtie) For: RT #119403
+
+2013-05-21
+    * typo fixes for Locale::Maketext
+
+2013-01-04
+    * POD fixes uncovered by the new Pod::Checker, not yet in core.
+
 2012-12-04
     * Fix misparsing of maketext strings.
 
@@ -36,7 +59,7 @@ Revision history for Perl suite Locale::Maketext
     This prevents CPAN upgrade circular heck. Thanks BinGOs
 
     Tested version fix for CPAN by BinGOs. Bump to stable version and release to public
-	
+
 2010-10-07
     * Release 1.16
 
@@ -46,7 +69,7 @@ Revision history for Perl suite Locale::Maketext
     Fix for CPAN RT #40727: infinite loop in
     Locale::Maketext::Guts::_compile() when working with tainted values
 
-    Fix for CPAN RT #34182: Don't localize $@. 
+    Fix for CPAN RT #34182: Don't localize $@.
     ->maketext calls will now backup and restore $@ so that die messages are not suppressed.
 
     Fix for CPAN RT #55461
@@ -100,7 +123,7 @@ Revision history for Perl suite Locale::Maketext
     When debugging is turned on, "DEBUG and warn" is now
     used instead of "DEBUG and print". It makes web applications
     happier. CPAN RT #36238
-	
+
 2007-11-17
     * Release 1.12
 

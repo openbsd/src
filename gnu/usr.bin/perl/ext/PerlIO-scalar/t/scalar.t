@@ -16,7 +16,7 @@ use Fcntl qw(SEEK_SET SEEK_CUR SEEK_END); # Not 0, 1, 2 everywhere.
 
 $| = 1;
 
-use Test::More tests => 120;
+use Test::More tests => 122;
 
 my $fh;
 my $var = "aaa\n";
@@ -509,4 +509,15 @@ SKIP:
     open my $fh, "<", \$buf0 or die $!;
     ok(!seek($fh, -10, SEEK_CUR), "seek to negative position");
     is(tell($fh), 0, "shouldn't change the position");
+}
+
+SKIP:
+{ # write() beyond SSize_t limit
+    skip "Can't overflow SSize_t with Off_t", 2
+      if $Config::Config{lseeksize} <= $Config::Config{sizesize};
+    my $buf0 = "hello";
+    open my $fh, "+<", \$buf0 or die $!;
+    ok(seek($fh, 2**32, SEEK_SET), "seek to a large position");
+    select((select($fh), ++$|)[0]);
+    ok(!(print $fh "x"), "write to a large offset");
 }

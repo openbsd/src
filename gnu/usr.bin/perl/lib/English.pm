@@ -1,6 +1,6 @@
 package English;
 
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -182,7 +182,7 @@ sub import {
 
 	*FORMAT_PAGE_NUMBER			= *%	;
 	*FORMAT_LINES_PER_PAGE			= *=	;
-	*FORMAT_LINES_LEFT			= *-	;
+	*FORMAT_LINES_LEFT			= *-{SCALAR}	;
 	*FORMAT_NAME				= *~	;
 	*FORMAT_TOP_NAME			= *^	;
 	*FORMAT_LINE_BREAK_CHARACTERS		= *:	;

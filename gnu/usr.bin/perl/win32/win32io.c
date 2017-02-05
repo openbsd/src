@@ -61,6 +61,11 @@ PerlIOWin32_pushed(pTHX_ PerlIO *f, const char *mode, SV *arg, PerlIO_funcs *tab
    s->fd     = PerlIO_fileno(PerlIONext(f));
   }
  PerlIOBase(f)->flags |= PERLIO_F_OPEN;
+
+ Perl_ck_warner_d(aTHX_
+		  packWARN(WARN_EXPERIMENTAL__WIN32_PERLIO),
+		  "PerlIO layer ':win32' is experimental");
+
  return code;
 }
 
@@ -79,9 +84,12 @@ PerlIOWin32_open(pTHX_ PerlIO_funcs *self, PerlIO_list_t *layers, IV n, const ch
   {
    char *path = SvPV_nolen(*args);
    DWORD  access = 0;
-   DWORD  share  = 0;
+   /* CRT uses _SH_DENYNO for open(), this the Win32 equivelent */
+   DWORD  share  = FILE_SHARE_READ | FILE_SHARE_WRITE;
    DWORD  create = -1;
    DWORD  attr   = FILE_ATTRIBUTE_NORMAL;
+   if (stricmp(path, "/dev/null")==0)
+    path = "NUL";
    if (*mode == '#')
     {
      /* sysopen - imode is UNIX-like O_RDONLY etc.
@@ -140,8 +148,6 @@ PerlIOWin32_open(pTHX_ PerlIO_funcs *self, PerlIO_list_t *layers, IV n, const ch
      SETERRNO(EINVAL,LIB$_INVARG);
      return NULL;
     }
-   if (!(access & GENERIC_WRITE))
-    share = FILE_SHARE_READ;
    h = CreateFile(path,access,share,NULL,create,attr,NULL);
    if (h == INVALID_HANDLE_VALUE)
     {
@@ -224,6 +230,7 @@ PerlIOWin32_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
    if (GetLastError() != NO_ERROR)
     {
      PerlIOBase(f)->flags |= PERLIO_F_ERROR;
+     PerlIO_save_errno(f);
      return -1;
     }
    else
@@ -247,6 +254,7 @@ PerlIOWin32_write(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
  else
   {
    PerlIOBase(f)->flags |= PERLIO_F_ERROR;
+   PerlIO_save_errno(f);
    return -1;
   }
 }

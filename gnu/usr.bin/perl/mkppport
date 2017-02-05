@@ -160,7 +160,8 @@ mkppport [B<--list>=I<file>] [B<--clean>]
 
 B<mkppport> generates a I<ppport.h> file using Devel::PPPort
 and distributes it to the various extension directories that
-need it to build.
+need it to build.  On certain Win32 builds, this script is not
+used and an alternative mechanism is used to create I<ppport.h>.
 
 =head1 OPTIONS
 

@@ -2,7 +2,7 @@ package Hints_test;
 use strict;
 use warnings;
 
-use base qw(Exporter);
+use Exporter 5.57 'import';
 
 our @EXPORT_OK = qw(
     fail_on_empty fail_on_false fail_on_undef

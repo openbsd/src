@@ -4,15 +4,9 @@
 # the format supported by re/regexp.t.  If you want to add a test
 # that does fit that format, add it to re/re_tests, not here.
 
-use strict;
-use warnings;
-use 5.010;
-use Config;
-
 sub run_tests;
 
 $| = 1;
-
 
 BEGIN {
     chdir 't' if -d 't';
@@ -21,8 +15,12 @@ BEGIN {
     skip_all_if_miniperl("miniperl can't load Tie::Hash::NamedCapture, need for %+ and %-");
 }
 
+use strict;
+use warnings;
+use 5.010;
+use Config;
 
-plan tests => 2532;  # Update this when adding/deleting tests.
+plan tests => 2500;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -88,12 +86,6 @@ sub run_tests {
         $x =~ s/A/B/;
         is($x, "\x{100}B", $message);
         is(length $x, 2, $message);
-    }
-
-    {
-        my $message = '\C and É; Bug 20001230.002';
-        ok("École" =~ /^\C\C(.)/ && $1 eq 'c', $message);
-        like("École", qr/^\C\C(c)/, $message);
     }
 
     {
@@ -233,57 +225,6 @@ sub run_tests {
         ok $ok && $ord == 0x100 && $len == 4, "No panic: end_shift [change 0e933229fa758625]";
     }
 
-    {
-        our $a = "x\x{100}";
-        chop $a;    # Leaves the UTF-8 flag
-        $a .= "y";  # 1 byte before 'y'.
-
-        like($a, qr/^\C/,        'match one \C on 1-byte UTF-8; Bug 15763');
-        like($a, qr/^\C{1}/,     'match \C{1}; Bug 15763');
-
-        like($a, qr/^\Cy/,       'match \Cy; Bug 15763');
-        like($a, qr/^\C{1}y/,    'match \C{1}y; Bug 15763');
-
-        unlike($a, qr/^\C\Cy/,     q {don't match two \Cy; Bug 15763});
-        unlike($a, qr/^\C{2}y/,    q {don't match \C{2}y; Bug 15763});
-
-        $a = "\x{100}y"; # 2 bytes before "y"
-
-        like($a, qr/^\C/,        'match one \C on 2-byte UTF-8; Bug 15763');
-        like($a, qr/^\C{1}/,     'match \C{1}; Bug 15763');
-        like($a, qr/^\C\C/,      'match two \C; Bug 15763');
-        like($a, qr/^\C{2}/,     'match \C{2}; Bug 15763');
-
-        like($a, qr/^\C\C\C/,    'match three \C on 2-byte UTF-8 and a byte; Bug 15763');
-        like($a, qr/^\C{3}/,     'match \C{3}; Bug 15763');
-
-        like($a, qr/^\C\Cy/,     'match two \C; Bug 15763');
-        like($a, qr/^\C{2}y/,    'match \C{2}; Bug 15763');
-
-        unlike($a, qr/^\C\C\Cy/,   q {don't match three \Cy; Bug 15763});
-        unlike($a, qr/^\C{2}\Cy/,  q {don't match \C{2}\Cy; Bug 15763});
-        unlike($a, qr/^\C{3}y/,    q {don't match \C{3}y; Bug 15763});
-
-        $a = "\x{1000}y"; # 3 bytes before "y"
-
-        like($a, qr/^\C/,        'match one \C on three-byte UTF-8; Bug 15763');
-        like($a, qr/^\C{1}/,     'match \C{1}; Bug 15763');
-        like($a, qr/^\C\C/,      'match two \C; Bug 15763');
-        like($a, qr/^\C{2}/,     'match \C{2}; Bug 15763');
-        like($a, qr/^\C\C\C/,    'match three \C; Bug 15763');
-        like($a, qr/^\C{3}/,     'match \C{3}; Bug 15763');
-
-        like($a, qr/^\C\C\C\C/,  'match four \C on three-byte UTF-8 and a byte; Bug 15763');
-        like($a, qr/^\C{4}/,     'match \C{4}; Bug 15763');
-
-        like($a, qr/^\C\C\Cy/,   'match three \Cy; Bug 15763');
-        like($a, qr/^\C{3}y/,    'match \C{3}y; Bug 15763');
-
-        unlike($a, qr/^\C\C\C\Cy/, q {don't match four \Cy; Bug 15763});
-        unlike($a, qr/^\C{4}y/,    q {don't match \C{4}y; Bug 15763});
-    }
-
-    
     {
         my $message = 'UTF-8 matching; Bug 15397';
         like("\x{100}", qr/\x{100}/, $message);
@@ -568,7 +509,7 @@ sub run_tests {
 
   SKIP:
     {
-        skip "In EBCDIC" if $::IS_EBCDIC;
+        skip "In EBCDIC and unclear what would trigger this bug there" if $::IS_EBCDIC;
         no warnings 'utf8';
         $_ = pack 'U0C2', 0xa2, 0xf8;  # Ill-formed UTF-8
         my $ret = 0;
@@ -915,8 +856,7 @@ sub run_tests {
     {
          my $message = '$REGMARK in replacement; Bug 49190';
          our $REGMARK;
-         no warnings 'experimental::lexical_topic';
-         my $_ = "A";
+         local $_ = "A";
          ok(s/(*:B)A/$REGMARK/, $message);
          is($_, "B", $message);
          $_ = "CCCCBAA";
@@ -971,8 +911,11 @@ sub run_tests {
         is($x, 'ab cd', $message);
     }
 
-    {
+    SKIP: {
+        skip("Can run out of memory on os390", 1) if $^O eq 'os390';
         ok (("a" x (2 ** 15 - 10)) =~ /^()(a|bb)*$/, "Recursive stack cracker; Bug 24274");
+    }
+    {
         ok ((q(a)x 100) =~ /^(??{'(.)'x 100})/, 
             "Regexp /^(??{'(.)'x 100})/ crashes older perls; Bug 24274");
     }
@@ -1169,10 +1112,6 @@ EOP
 	# in the report above that only happened in a thread.
 	my $s = "\x{1ff}" . "f" x 32;
 	ok($s =~ /\x{1ff}[[:alpha:]]+/gca, "POSIXA pointer wrap");
-
-	# this one segfaulted under the conditions above
-	# of course, CANY is evil, maybe it should crash
-	ok($s =~ /.\C+/, "CANY pointer wrap");
     }
 } # End of sub run_tests
 

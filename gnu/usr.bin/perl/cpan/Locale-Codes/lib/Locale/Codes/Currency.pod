@@ -14,11 +14,10 @@ Locale::Codes::Currency - standard codes for currency identification
     @codes   = all_currency_codes();
     @names   = all_currency_names();
 
-
 =head1 DESCRIPTION
 
-The C<Locale::Codes::Currency> module provides access to standard codes used
-for identifying currencies and funds, such as those defined in ISO 4217.
+This module provides access to standard codes used for identifying
+currencies and funds, such as those defined in ISO 4217.
 
 Most of the routines take an optional additional argument which
 specifies the code set to use. If not specified, the default ISO
@@ -60,33 +59,33 @@ This is the set of three-digit numeric codes from ISO 4217.
 
 =over 4
 
-=item B<code2currency ( CODE [,CODESET] )>
+=item B<code2currency(CODE [,CODESET] [,'retired'])>
 
-=item B<currency2code ( NAME [,CODESET] )>
+=item B<currency2code(NAME [,CODESET] [,'retired'])>
 
-=item B<currency_code2code ( CODE ,CODESET ,CODESET2 )>
+=item B<currency_code2code(CODE ,CODESET ,CODESET2)>
 
-=item B<all_currency_codes ( [CODESET] )>
+=item B<all_currency_codes([CODESET] [,'retired'])>
 
-=item B<all_currency_names ( [CODESET] )>
+=item B<all_currency_names([CODESET] [,'retired'])>
 
-=item B<Locale::Codes::Currency::rename_currency  ( CODE ,NEW_NAME [,CODESET] )>
+=item B<Locale::Codes::Currency::rename_currency(CODE ,NEW_NAME [,CODESET])>
 
-=item B<Locale::Codes::Currency::add_currency  ( CODE ,NAME [,CODESET] )>
+=item B<Locale::Codes::Currency::add_currency(CODE ,NAME [,CODESET])>
 
-=item B<Locale::Codes::Currency::delete_currency  ( CODE [,CODESET] )>
+=item B<Locale::Codes::Currency::delete_currency(CODE [,CODESET])>
 
-=item B<Locale::Codes::Currency::add_currency_alias  ( NAME ,NEW_NAME )>
+=item B<Locale::Codes::Currency::add_currency_alias(NAME ,NEW_NAME)>
 
-=item B<Locale::Codes::Currency::delete_currency_alias  ( NAME )>
+=item B<Locale::Codes::Currency::delete_currency_alias(NAME)>
 
-=item B<Locale::Codes::Currency::rename_currency_code  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Codes::Currency::rename_currency_code(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Codes::Currency::add_currency_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Codes::Currency::add_currency_code_alias(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Codes::Currency::delete_currency_code_alias  ( CODE [,CODESET] )>
+=item B<Locale::Codes::Currency::delete_currency_code_alias( ODE [,CODESET])>
 
-These routines are all documented in the Locale::Codes::API man page.
+These routines are all documented in the L<Locale::Codes::API> man page.
 
 =back
 
@@ -94,15 +93,15 @@ These routines are all documented in the Locale::Codes::API man page.
 
 =over 4
 
-=item B<Locale::Codes>
+=item L<Locale::Codes>
 
 The Locale-Codes distribution.
 
-=item B<Locale::Codes::API>
+=item L<Locale::Codes::API>
 
 The list of functions supported by this module.
 
-=item B<http://www.iso.org/iso/support/currency_codes_list-1.htm>
+=item L<http://www.iso.org/iso/support/currency_codes_list-1.htm>
 
 The ISO 4217 data.
 
@@ -119,7 +118,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001      Michael Hennecke
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2014 Sullivan Beck
+   Copyright (c) 2010-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

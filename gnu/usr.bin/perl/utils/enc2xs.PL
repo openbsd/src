@@ -1,5 +1,8 @@
 #!/usr/local/bin/perl
 
+# Copy the cpan/Encode/bin/enc2xs script to utils/, while
+# prepending a suitable #! invocation.
+
 use Config;
 use File::Basename qw(&basename &dirname);
 use Cwd;

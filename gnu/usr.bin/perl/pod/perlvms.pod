@@ -23,29 +23,27 @@ hesitate to drop a line to vmsperl@perl.org.
 
 Directions for building and installing Perl 5 can be found in 
 the file F<README.vms> in the main source directory of the 
-Perl distribution..
+Perl distribution.
 
 =head1 Organization of Perl Images
 
 =head2 Core Images
 
-During the installation process, three Perl images are produced.
+During the build process, three Perl images are produced.
 F<Miniperl.Exe> is an executable image which contains all of
 the basic functionality of Perl, but cannot take advantage of
-Perl extensions.  It is used to generate several files needed
-to build the complete Perl and various extensions.  Once you've
-finished installing Perl, you can delete this image.
+Perl XS extensions and has a hard-wired list of library locations
+for loading pure-Perl modules.  It is used extensively to build and
+test Perl and various extensions, but is not installed.
 
-Most of the complete Perl resides in the shareable image
-F<PerlShr.Exe>, which provides a core to which the Perl executable
-image and all Perl extensions are linked.  You should place this
-image in F<Sys$Share>, or define the logical name F<PerlShr> to
-translate to the full file specification of this image.  It should
-be world readable.  (Remember that if a user has execute only access
-to F<PerlShr>, VMS will treat it as if it were a privileged shareable
-image, and will therefore require all downstream shareable images to be
-INSTALLed, etc.)
-
+Most of the complete Perl resides in the shareable image F<PerlShr.Exe>,
+which provides a core to which the Perl executable image and all Perl
+extensions are linked. It is generally located via the logical name
+F<PERLSHR>.  While it's possible to put the image in F<SYS$SHARE> to
+make it loadable, that's not recommended. And while you may wish to
+INSTALL the image for performance reasons, you should not install it
+with privileges; if you do, the result will not be what you expect as
+image privileges are disabled during Perl start-up.
 
 Finally, F<Perl.Exe> is an executable image containing the main
 entry point for Perl, as well as some initialization code.  It
@@ -118,35 +116,10 @@ directory, and the procedure for building the extension is simply
     $ mmk test          ! Run test code, if supplied
     $ mmk install       ! Install into public Perl tree
 
-I<N.B.> The procedure by which extensions are built and
-tested creates several levels (at least 4) under the
-directory in which the extension's source files live.
-For this reason if you are running a version of VMS prior
-to V7.1 you shouldn't nest the source directory
-too deeply in your directory structure lest you exceed RMS'
-maximum of 8 levels of subdirectory in a filespec.  (You
-can use rooted logical names to get another 8 levels of
-nesting, if you can't place the files near the top of
-the physical directory structure.)
-
 VMS support for this process in the current release of Perl
-is sufficient to handle most extensions.  However, it does
-not yet recognize extra libraries required to build shareable
-images which are part of an extension, so these must be added
-to the linker options file for the extension by hand.  For
-instance, if the F<PGPLOT> extension to Perl requires the
-F<PGPLOTSHR.EXE> shareable image in order to properly link
-the Perl extension, then the line C<PGPLOTSHR/Share> must
-be added to the linker options file F<PGPLOT.Opt> produced
-during the build process for the Perl extension.
-
-By default, the shareable image for an extension is placed in
-the F<[.lib.site_perl.auto>I<Arch>.I<Extname>F<]> directory of the
-installed Perl directory tree (where I<Arch> is F<VMS_VAX> or
-F<VMS_AXP>, and I<Extname> is the name of the extension, with
-each C<::> translated to C<.>).  (See the MakeMaker documentation
-for more details on installation options for extensions.)
-However, it can be manually placed in any of several locations:
+is sufficient to handle most extensions.  (See the MakeMaker
+documentation for more details on installation options for
+extensions.)
 
 =over 4
 
@@ -214,12 +187,6 @@ the traditional VMS C<[...]>.  To be compatible with what MakeMaker
 expects, if a VMS path cannot be translated to a Unix path, it is
 passed through unchanged, so C<unixify("[...]")> will return C<[...]>.
 
-The handling of extended characters is largely complete in the
-VMS-specific C infrastructure of Perl, but more work is still needed to
-fully support extended syntax filenames in several core modules.  In
-particular, at this writing PathTools has only partial support for
-directories containing some extended characters.
-
 There are several ambiguous cases where a conversion routine cannot
 determine whether an input filename is in Unix format or in VMS format,
 since now both VMS and Unix file specifications may have characters in
@@ -248,15 +215,12 @@ not yet supported in Perl.
 
 =head2 Filename Case
 
-Perl follows VMS defaults and override settings in preserving (or not
-preserving) filename case.  Case is not preserved on ODS-2 formatted
-volumes on any architecture.  On ODS-5 volumes, filenames may be case
-preserved depending on process and feature settings.  Perl now honors
-DECC$EFS_CASE_PRESERVE and DECC$ARGV_PARSE_STYLE on those systems where
-the CRTL supports these features.  When these features are not enabled
-or the CRTL does not support them, Perl follows the traditional CRTL
-behavior of downcasing command-line arguments and returning file
-specifications in lower case only.
+Perl enables DECC$EFS_CASE_PRESERVE and DECC$ARGV_PARSE_STYLE by
+default.  Note that the latter only takes effect when extended parse
+is set in the process in which Perl is running.  When these features
+are explicitly disabled in the environment or the CRTL does not support
+them, Perl follows the traditional CRTL behavior of downcasing command-line
+arguments and returning file specifications in lower case only.
 
 I<N. B.>  It is very easy to get tripped up using a mixture of other
 programs, external utilities, and Perl scripts that are in varying
@@ -265,7 +229,7 @@ created by an older version of an archive utility or a build utility
 such as MMK or MMS may generate a filename in all upper case even on an
 ODS-5 volume.  If this filename is later retrieved by a Perl script or
 module in a case preserving environment, that upper case name may not
-match the mixed-case or lower-case exceptions of the Perl code.  Your
+match the mixed-case or lower-case expectations of the Perl code.  Your
 best bet is to follow an all-or-nothing approach to case preservation:
 either don't use it at all, or make sure your entire toolchain and
 application environment support and use it.
@@ -938,12 +902,12 @@ F<PERL_ENV_TABLES> as follows:
 
 =item CRTL_ENV
 
-This string tells Perl to consult the CRTL's internal C<environ>
-array of key-value pairs, using I<name> as the key.  In most cases,
-this contains only a few keys, but if Perl was invoked via the C
-C<exec[lv]e()> function, as is the case for CGI processing by some
-HTTP servers, then the C<environ> array may have been populated by
-the calling program.
+This string tells Perl to consult the CRTL's internal C<environ> array
+of key-value pairs, using I<name> as the key.  In most cases, this
+contains only a few keys, but if Perl was invoked via the C
+C<exec[lv]e()> function, as is the case for some embedded Perl
+applications or when running under a shell such as GNV bash, the
+C<environ> array may have been populated by the calling program.
 
 =item CLISYM_[LOCAL]
 
@@ -968,11 +932,15 @@ F<PERL_ENV_TABLES> is translated once when Perl starts up; any changes
 you make while Perl is running do not affect the behavior of C<%ENV>.
 If F<PERL_ENV_TABLES> is not defined, then Perl defaults to consulting
 first the logical name tables specified by F<LNM$FILE_DEV>, and then
-the CRTL C<environ> array.
+the CRTL C<environ> array.  This default order is reversed when the
+logical name F<GNV$UNIX_SHELL> is defined, such as when running under
+GNV bash.
 
-In all operations on %ENV, the key string is treated as if it 
-were entirely uppercase, regardless of the case actually 
-specified in the Perl expression.
+For operations on %ENV entries based on logical names or DCL symbols, the
+key string is treated as if it were entirely uppercase, regardless of the
+case actually specified in the Perl expression. Entries in %ENV based on the
+CRTL's environ array preserve the case of the key string when stored, and
+lookups are case sensitive.
 
 When an element of C<%ENV> is read, the locations to which
 F<PERL_ENV_TABLES> points are checked in order, and the value
@@ -1005,23 +973,16 @@ string, the logical name's translation is defined as a single C<NUL>
 (ASCII C<\0>) character, since a logical name cannot translate to a
 zero-length string.  (This restriction does not apply to CLI symbols
 or CRTL C<environ> values; they are set to the empty string.)
-An element of the CRTL C<environ> array can be set only if your
-copy of Perl knows about the CRTL's C<setenv()> function.  (This is
-present only in some versions of the DECCRTL; check C<$Config{d_setenv}>
-to see whether your copy of Perl was built with a CRTL that has this
-function.)
 
-When an element of C<%ENV> is set to C<undef>,
-the element is looked up as if it were being read, and if it is
-found, it is deleted.  (An item "deleted" from the CRTL C<environ>
-array is set to the empty string; this can only be done if your
-copy of Perl knows about the CRTL C<setenv()> function.)  Using
-C<delete> to remove an element from C<%ENV> has a similar effect,
-but after the element is deleted, another attempt is made to
-look up the element, so an inner-mode logical name or a name in
-another location will replace the logical name just deleted.
-In either case, only the first value found searching PERL_ENV_TABLES
-is altered.  It is not possible at present to define a search list
+When an element of C<%ENV> is set to C<undef>, the element is looked
+up as if it were being read, and if it is found, it is deleted.  (An
+item "deleted" from the CRTL C<environ> array is set to the empty
+string.)  Using C<delete> to remove an element from C<%ENV> has a
+similar effect, but after the element is deleted, another attempt is
+made to look up the element, so an inner-mode logical name or a name
+in another location will replace the logical name just deleted. In
+either case, only the first value found searching PERL_ENV_TABLES is
+altered.  It is not possible at present to define a search list
 logical name via %ENV.
 
 The element C<$ENV{DEFAULT}> is special: when read, it returns

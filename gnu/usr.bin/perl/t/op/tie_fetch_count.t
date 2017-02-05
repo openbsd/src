@@ -5,9 +5,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
-    plan (tests => 312);
+    set_up_inc('../lib');
+    plan (tests => 345);
 }
 
 use strict;
@@ -116,6 +116,8 @@ $dummy  =   abs $var    ; check_count 'abs';
 $dummy  =   log $var    ; check_count 'log';
 $dummy  =  sqrt $var    ; check_count 'sqrt';
 $dummy  =   int $var    ; check_count 'int';
+$var = "inf" for 1..5;
+$dummy  =   int $var    ; check_count 'int $tied_inf';
 $dummy  = atan2 $var, 1 ; check_count 'atan2';
 
 # Readline/glob
@@ -169,16 +171,8 @@ tie my $var1 => 'main', \1;
 $dummy  = $$var1        ; check_count '${}';
 tie my $var2 => 'main', [];
 $dummy  = @$var2        ; check_count '@{}';
-{
-    no warnings 'experimental::autoderef';
-    $dummy  = shift $var2   ; check_count 'shift arrayref';
-}
 tie my $var3 => 'main', {};
 $dummy  = %$var3        ; check_count '%{}';
-{
-    no warnings 'experimental::autoderef';
-    $dummy  = keys $var3    ; check_count 'keys hashref';
-}
 {
     no strict 'refs';
     tie my $var4 => 'main', *];
@@ -215,6 +209,10 @@ $dummy  = &$var5        ; check_count '&{}';
     defined $$var7          ; check_count 'symbolic defined ${}';
 }
 
+# Constructors
+$dummy  = {$var,$var}   ; check_count '{}', 2;
+$dummy  = [$var]        ; check_count '[]';
+
 tie my $var8 => 'main', 'main';
 sub bolgy {}
 $var8->bolgy            ; check_count '->method';
@@ -244,7 +242,23 @@ for ([chdir=>''],[chmod=>'0,'],[chown=>'0,0,'],[utime=>'0,0,'],
     check_count "$op $args\\\$tied_glob$postargs";
 }
 
+my $can_config = eval { require Config; 1 };
+SKIP:
 {
+    skip "No Config", 4 unless $can_config;
+    skip "No crypt()", 4 unless $Config::Config{d_crypt};
+    $dummy  =   crypt $var,0; check_count 'crypt $tied, ...';
+    $dummy  =   crypt 0,$var; check_count 'crypt ..., $tied';
+    $var = substr(chr 256,0,0);
+    $dummy  =   crypt $var,0; check_count 'crypt $tied_utf8, ...';
+    $var = substr(chr 256,0,0);
+    $dummy  =   crypt 0,$var; check_count 'crypt ..., $tied_utf8';
+}
+
+SKIP:
+{
+    skip "select not implemented on Win32 miniperl", 3
+        if $^O eq "MSWin32" and is_miniperl;
     no warnings;
     $var = *foo;
     $dummy  =  select $var, undef, undef, 0
@@ -260,11 +274,28 @@ for ([chdir=>''],[chmod=>'0,'],[chown=>'0,0,'],[utime=>'0,0,'],
 chop(my $u = "\xff\x{100}");
 tie $var, "main", $u;
 $dummy  = pack "u", $var; check_count 'pack "u", $utf8';
+$var = 0;
+$dummy  = pack "w", $var; check_count 'pack "w", $tied_int';
+$var = "111111111111111111111111111111111111111111111111111111111111111";
+$dummy  = eval { pack "w", $var };
+                          check_count 'pack "w", $tied_huge_int_as_str';
 
 tie $var, "main", "\x{100}";
 pos$var = 0             ; check_count 'lvalue pos $utf8';
 $dummy=sprintf"%1s",$var; check_count 'sprintf "%1s", $utf8';
 $dummy=sprintf"%.1s",$var; check_count 'sprintf "%.1s", $utf8';
+
+tie $var, "main", 23;
+for (qw(B b c D d i O o p u U X x)) {
+    $dummy=sprintf"%$_",$var; check_count "sprintf '%$_'"
+}
+tie $var, "main", "Inf";
+for (qw(B b c D d i O o p u U X x)) {
+    $dummy = eval { sprintf "%$_", $var };
+                              check_count "sprintf '%$_', \$tied_inf"
+}
+
+tie $var, "main", "\x{100}";
 $dummy  = substr$var,0,1; check_count 'substr $utf8';
 my $l   =\substr$var,0,1;
 $dummy  = $$l           ; check_count 'reading lvalue substr($utf8)';

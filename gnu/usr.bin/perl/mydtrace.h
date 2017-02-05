@@ -13,89 +13,42 @@
 
 #  include "perldtrace.h"
 
-#  if defined(STAP_PROBE_ADDR) && !defined(DEBUGGING)
+#  define PERL_DTRACE_PROBE_ENTRY(cv)               \
+    if (PERL_SUB_ENTRY_ENABLED())                   \
+        Perl_dtrace_probe_call(aTHX_ cv, TRUE);
 
-/* SystemTap 1.2 uses a construct that chokes on passing a char array
- * as a char *, in this case hek_key in struct hek.  Workaround it
- * with a temporary.
- */
+#  define PERL_DTRACE_PROBE_RETURN(cv)              \
+    if (PERL_SUB_ENTRY_ENABLED())                   \
+        Perl_dtrace_probe_call(aTHX_ cv, FALSE);
 
-#    define ENTRY_PROBE(func, file, line, stash)  	\
-    if (PERL_SUB_ENTRY_ENABLED()) {	        	\
-	const char *tmp_func = func;			\
-	PERL_SUB_ENTRY(tmp_func, file, line, stash); 	\
-    }
+#  define PERL_DTRACE_PROBE_FILE_LOADING(name)      \
+    if (PERL_SUB_ENTRY_ENABLED())                   \
+        Perl_dtrace_probe_load(aTHX_ name, TRUE);
 
-#    define RETURN_PROBE(func, file, line, stash) 	\
-    if (PERL_SUB_RETURN_ENABLED()) {    		\
-	const char *tmp_func = func;			\
-	PERL_SUB_RETURN(tmp_func, file, line, stash);	\
-    }
+#  define PERL_DTRACE_PROBE_FILE_LOADED(name)       \
+    if (PERL_SUB_ENTRY_ENABLED())                   \
+        Perl_dtrace_probe_load(aTHX_ name, FALSE);
 
-#    define LOADING_FILE_PROBE(name) 	                        \
-    if (PERL_LOADING_FILE_ENABLED()) {    		        \
-	const char *tmp_name = name;			\
-	PERL_LOADING_FILE(tmp_name);	                        \
-    }
+#  define PERL_DTRACE_PROBE_OP(op)                  \
+    if (PERL_OP_ENTRY_ENABLED())                    \
+        Perl_dtrace_probe_op(aTHX_ op);
 
-#    define LOADED_FILE_PROBE(name) 	                        \
-    if (PERL_LOADED_FILE_ENABLED()) {    		        \
-	const char *tmp_name = name;			\
-	PERL_LOADED_FILE(tmp_name);	                        \
-    }
-
-#  else
-
-#    define ENTRY_PROBE(func, file, line, stash) 	\
-    if (PERL_SUB_ENTRY_ENABLED()) {	        	\
-	PERL_SUB_ENTRY(func, file, line, stash); 	\
-    }
-
-#    define RETURN_PROBE(func, file, line, stash)	\
-    if (PERL_SUB_RETURN_ENABLED()) {    		\
-	PERL_SUB_RETURN(func, file, line, stash); 	\
-    }
-
-#    define LOADING_FILE_PROBE(name)	                        \
-    if (PERL_LOADING_FILE_ENABLED()) {    		        \
-	PERL_LOADING_FILE(name); 	                                \
-    }
-
-#    define LOADED_FILE_PROBE(name)	                        \
-    if (PERL_LOADED_FILE_ENABLED()) {    		        \
-	PERL_LOADED_FILE(name); 	                                \
-    }
-
-#  endif
-
-#  define OP_ENTRY_PROBE(name)	                \
-    if (PERL_OP_ENTRY_ENABLED()) {    		        \
-	PERL_OP_ENTRY(name); 	                        \
-    }
-
-#  define PHASE_CHANGE_PROBE(new_phase, old_phase)      \
-    if (PERL_PHASE_CHANGE_ENABLED()) {                  \
-	PERL_PHASE_CHANGE(new_phase, old_phase);        \
-    }
+#  define PERL_DTRACE_PROBE_PHASE(phase)            \
+    if (PERL_OP_ENTRY_ENABLED())                    \
+        Perl_dtrace_probe_phase(aTHX_ phase);
 
 #else
 
 /* NOPs */
-#  define ENTRY_PROBE(func, file, line, stash)
-#  define RETURN_PROBE(func, file, line, stash)
-#  define PHASE_CHANGE_PROBE(new_phase, old_phase)
-#  define OP_ENTRY_PROBE(name)
-#  define LOADING_FILE_PROBE(name)
-#  define LOADED_FILE_PROBE(name)
+#  define PERL_DTRACE_PROBE_ENTRY(cv)
+#  define PERL_DTRACE_PROBE_RETURN(cv)
+#  define PERL_DTRACE_PROBE_FILE_LOADING(cv)
+#  define PERL_DTRACE_PROBE_FILE_LOADED(cv)
+#  define PERL_DTRACE_PROBE_OP(op)
+#  define PERL_DTRACE_PROBE_PHASE(phase)
 
 #endif
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -12,7 +12,7 @@ Pod::Simple - framework for parsing Pod
 Pod::Simple is a Perl library for parsing text in the Pod ("plain old
 documentation") markup language that is typically used for writing
 documentation for Perl and for Perl modules. The Pod format is explained
-L<perlpod>; the most common formatter is called C<perldoc>.
+in L<perlpod>; the most common formatter is called C<perldoc>.
 
 Be sure to read L</ENCODING> if your Pod contains non-ASCII characters.
 
@@ -42,8 +42,8 @@ of Pod::Simple.
 =item C<< $parser->output_fh( *OUT ); >>
 
 This sets the filehandle that C<$parser>'s output will be written to.
-You can pass C<*STDOUT>, otherwise you should probably do something
-like this:
+You can pass C<*STDOUT> or C<*STDERR>, otherwise you should probably do
+something like this:
 
     my $outfile = "output.txt";
     open TXTOUT, ">$outfile" or die "Can't write to $outfile: $!";
@@ -183,7 +183,7 @@ verbatim blocks will be preserved in the output. This can be annoying for
 outputs such as HTML, where that whitespace will remain in front of every
 line. It's an unfortunate case where syntax is turned into semantics.
 
-If the POD your parsing adheres to a consistent indentation policy, you can
+If the POD you're parsing adheres to a consistent indentation policy, you can
 have such indentation stripped from the beginning of every line of your
 verbatim blocks. This method tells Pod::Simple what to strip. For two-space
 indents, you'd use:
@@ -289,6 +289,16 @@ I<Example:>
 
   die "too many errors\n" if $parser->any_errata_seen();
 
+=item C<< $parser->errata_seen() >>X<errata_seen>
+
+Returns a hash reference of all errata seen, both whines and screams. The hash reference's keys are the line number and the value is an array reference of the errors for that line.
+
+I<Example:>
+
+  if ( $parser->any_errata_seen() ) {
+     $logger->log( $parser->errata_seen() );
+  }
+
 =item C<< $parser->detected_encoding() >>X<detected_encoding>
 
 Return the encoding corresponding to C<< =encoding >>, but only if the
@@ -349,20 +359,14 @@ octets into Perl's internal character string representation using the value of
 the C<=encoding> declaration in the POD source.
 
 If the POD source does not include an C<=encoding> declaration, the parser will
-attempt to guess the encoding (selecting one of UTF-8 or Latin-1) by examining
+attempt to guess the encoding (selecting one of UTF-8 or CP 1252) by examining
 the first non-ASCII bytes and applying the heuristic described in
-L<perlpodspec>.
+L<perlpodspec>.  (If the POD source contains only ASCII bytes, the
+encoding is assumed to be ASCII.)
 
 If you set the C<parse_characters> option to a true value the parser will
 expect characters rather than octets; will ignore any C<=encoding>; and will
 make no attempt to decode the input.
-
-=head1 CAVEATS
-
-This is just a beta release -- there are a good number of things still
-left to do.  Notably, support for EBCDIC platforms is still half-done,
-an untested.
-
 
 =head1 SEE ALSO
 
@@ -383,8 +387,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

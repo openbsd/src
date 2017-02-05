@@ -1,19 +1,18 @@
-#!./perl
+#!perl
+
+use 5.008001;
+
+use strict;
+use warnings;
 
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = '../lib';
+    if (!eval { require Socket }) {
+        print "1..0 # no Socket\n"; exit 0;
     }
-    if (!eval "require Socket") {
-	print "1..0 # no Socket\n"; exit 0;
-    }
-    if (ord('A') == 193 && !eval "require Convert::EBCDIC") {
+    if (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
         print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
     }
 }
-
-use strict;
 
 use Cwd;
 print "1..20\n";
@@ -25,13 +24,13 @@ $ENV{HOME} = Cwd::cwd();
 local (*CORE::GLOBAL::getpwuid, *CORE::GLOBAL::stat);
 
 *CORE::GLOBAL::getpwuid = sub ($) {
-	((undef) x 7, Cwd::cwd());
+        ((undef) x 7, Cwd::cwd());
 };
 
 # for testing _readrc
 my @stat;
 *CORE::GLOBAL::stat = sub (*) {
-	return @stat;
+        return @stat;
 };
 
 # for testing _readrc
@@ -47,29 +46,29 @@ ok( exists $INC{'Net/Netrc.pm'}, 'should be able to use Net::Netrc' );
 $Net::Netrc::TESTING=$Net::Netrc::TESTING=1;
 
 SKIP: {
-	skip('incompatible stat() handling for OS', 4), next SKIP 
-		if ($^O =~ /os2|win32|macos|cygwin/i or $] < 5.005);
-	
-	my $warn;
-	local $SIG{__WARN__} = sub {
-		$warn = shift;
-	};
+        skip('incompatible stat() handling for OS', 4), next SKIP 
+                if $^O =~ /os2|win32|macos|cygwin/i;
 
-	# add write access for group/other
-	$stat[2] = 077;
-	ok( !defined(Net::Netrc::_readrc()),
-		'_readrc() should not read world-writable file' );
-	ok( scalar($warn =~ /^Bad permissions:/),
-		'... and should warn about it' );
+        my $warn;
+        local $SIG{__WARN__} = sub {
+                $warn = shift;
+        };
 
-	# the owner field should still not match
-	$stat[2] = 0;
+        # add write access for group/other
+        $stat[2] = 077; ## no critic (ValuesAndExpressions::ProhibitLeadingZeros)
+        ok( !defined(Net::Netrc->_readrc()),
+                '_readrc() should not read world-writable file' );
+        ok( scalar($warn =~ /^Bad permissions:/),
+                '... and should warn about it' );
+
+        # the owner field should still not match
+        $stat[2] = 0;
 
         if ($<) { 
-          ok( !defined(Net::Netrc::_readrc()), 
+          ok( !defined(Net::Netrc->_readrc()),
               '_readrc() should not read file owned by someone else' ); 
           ok( scalar($warn =~ /^Not owner:/),
-		'... and should warn about it' ); 
+                '... and should warn about it' ); 
         } else { 
           skip("testing as root",2);
         } 
@@ -80,76 +79,76 @@ $stat[4] = $<;
 
 # this curious mix of spaces and quotes tests a regex at line 79 (version 2.11)
 FileHandle::set_lines(split(/\n/, <<LINES));
-macdef bar
-login	baz
- machine "foo"
-login	nigol "password" drowssap
-machine foo "login"	l2
-	password p2
-account tnuocca
-default	login "baz" password p2
-default "login" baz password p3
+macdef   bar
+login    baz
+machine  "foo"
+login    nigol "password" drowssap
+machine  foo "login" l2
+password p2
+account  tnuocca
+default  login "baz" password p2
+default  "login" baz password p3
 macdef
 LINES
 
 # having set several lines and the uid, this should succeed
-is( Net::Netrc::_readrc(), 1, '_readrc() should succeed now' );
+is( Net::Netrc->_readrc(), 1, '_readrc() should succeed now' );
 
 # on 'foo', the login is 'nigol'
 is( Net::Netrc->lookup('foo')->{login}, 'nigol', 
-	'lookup() should find value by host name' );
+        'lookup() should find value by host name' );
 
 # on 'foo' with login 'l2', the password is 'p2'
 is( Net::Netrc->lookup('foo', 'l2')->{password}, 'p2',
-	'lookup() should find value by hostname and login name' );
+        'lookup() should find value by hostname and login name' );
 
 # the default password is 'p3', as later declarations have priority
 is( Net::Netrc->lookup()->{password}, 'p3', 
-	'lookup() should find default value' );
+        'lookup() should find default value' );
 
 # lookup() ignores the login parameter when using default data
 is( Net::Netrc->lookup('default', 'baz')->{password}, 'p3',
-	'lookup() should ignore passed login when searching default' );
+        'lookup() should ignore passed login when searching default' );
 
 # lookup() goes to default data if hostname cannot be found in config data 
 is( Net::Netrc->lookup('abadname')->{login}, 'baz',
-	'lookup() should use default for unknown machine name' );
+        'lookup() should use default for unknown machine name' );
 
 # now test these accessors
 my $instance = bless({}, 'Net::Netrc');
 for my $accessor (qw( login account password )) {
-	is( $instance->$accessor(), undef, 
-		"$accessor() should return undef if $accessor is not set" );
-	$instance->{$accessor} = $accessor;
-	is( $instance->$accessor(), $accessor,
-		"$accessor() should return value when $accessor is set" );
+        is( $instance->$accessor(), undef, 
+                "$accessor() should return undef if $accessor is not set" );
+        $instance->{$accessor} = $accessor;
+        is( $instance->$accessor(), $accessor,
+                "$accessor() should return value when $accessor is set" );
 }
 
 # and the three-for-one accessor
 is( scalar( () = $instance->lpa()), 3, 
-	'lpa() should return login, password, account');
+        'lpa() should return login, password, account');
 is( join(' ', $instance->lpa), 'login password account', 
-	'lpa() should return appropriate values for l, p, and a' );
+        'lpa() should return appropriate values for l, p, and a' );
 
 package FileHandle;
 
 sub new {
-	tie *FH, 'FileHandle', @_;
-	bless \*FH, $_[0];
+        tie *FH, 'FileHandle', @_;
+        bless \*FH, $_[0];
 }
 
 sub TIEHANDLE {
-	my ($class, $file, $mode) = @_[0,2,3];
-	bless({ file => $file, mode => $mode }, $class);
+        my ($class, $file, $mode) = @_[0,2,3];
+        bless({ file => $file, mode => $mode }, $class);
 }
 
 my @lines;
 sub set_lines {
-	@lines = @_;
+        @lines = @_;
 }
 
 sub READLINE {
-	shift @lines;
+        shift @lines;
 }
 
 sub close { 1 }

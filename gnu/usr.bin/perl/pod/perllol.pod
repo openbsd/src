@@ -170,44 +170,6 @@ to do something a bit funnier looking:
     # add new columns to an existing row
     push @{ $AoA[0] }, "wilma", "betty";   # explicit deref
 
-Prior to Perl 5.14, this wouldn't even compile:
-
-    push $AoA[0], "wilma", "betty";        # implicit deref
-
-How come?  Because once upon a time, the argument to push() had to be a
-real array, not just a reference to one. That's no longer true.  In fact,
-the line marked "implicit deref" above works just fine--in this
-instance--to do what the one that says explicit deref did.
-
-The reason I said "in this instance" is because that I<only> works
-because C<$AoA[0]> already held an array reference.  If you try that on an
-undefined variable, you'll take an exception.  That's because the implicit
-derefererence will never autovivify an undefined variable the way C<@{ }>
-always will:
-
-    my $aref = undef;
-    push $aref,  qw(some more values);  # WRONG!
-    push @$aref, qw(a few more);        # ok
-
-If you want to take advantage of this new implicit dereferencing behavior,
-go right ahead: it makes code easier on the eye and wrist.  Just understand
-that older releases will choke on it during compilation.  Whenever you make
-use of something that works only in some given release of Perl and later,
-but not earlier, you should place a prominent
-
-    use v5.14;   # needed for implicit deref of array refs by array ops
-
-directive at the top of the file that needs it.  That way when somebody
-tries to run the new code under an old perl, rather than getting an error like
-
-    Type of arg 1 to push must be array (not array element) at /tmp/a line 8, near ""betty";"
-    Execution of /tmp/a aborted due to compilation errors.
-
-they'll be politely informed that
-
-    Perl v5.14.0 required--this is only v5.12.3, stopped at /tmp/a line 1.
-    BEGIN failed--compilation aborted at /tmp/a line 1.
-
 =head2 Access and Printing
 
 Now it's time to print your data structure out.  How
@@ -270,26 +232,28 @@ you might look at the standard L<Dumpvalue> or L<Data::Dumper> modules.
 The former is what the Perl debugger uses, while the latter generates
 parsable Perl code.  For example:
 
-    use v5.14;     # using the + prototype, new to v5.14
+ use v5.14;     # using the + prototype, new to v5.14
 
-    sub show(+) {
+ sub show(+) {
 	require Dumpvalue;
 	state $prettily = new Dumpvalue::
 			    tick        => q("),
-			    compactDump => 1,  # comment these two lines out
-			    veryCompact => 1,  # if you want a bigger dump
+			    compactDump => 1,  # comment these two lines
+                                               # out
+			    veryCompact => 1,  # if you want a bigger
+                                               # dump
 			;
 	dumpValue $prettily @_;
-    }
+ }
 
-    # Assign a list of array references to an array.
-    my @AoA = (
+ # Assign a list of array references to an array.
+ my @AoA = (
 	   [ "fred", "barney" ],
 	   [ "george", "jane", "elroy" ],
 	   [ "homer", "marge", "bart" ],
-    );
-    push $AoA[0], "wilma", "betty";
-    show @AoA;
+ );
+ push @{ $AoA[0] }, "wilma", "betty";
+ show @AoA;
 
 will print out:
 

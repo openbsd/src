@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require './test.pl';
-plan(tests => 43);
+plan(tests => 48);
 
 # compile time
 
@@ -63,6 +63,13 @@ is(join('', (split(//,"123")) x 2), '123123',       'split and x');
 
 is(join('', @x x -12),      '',                     '@x x -12');
 is(join('', (@x) x -14),    '',                     '(@x) x -14');
+
+($a, (undef)x5, $b) = 1..10;
+is ("$a $b", "1 7", '(undef)xCONST on lhs of list assignment');
+(($a)x3,$b) = 1..10;
+is ("$a, $b", "3, 4", '($x)xCONST on lhs of list assignment');
+($a, (undef)x${\6}, $b) = "a".."z";
+is ("$a$b", "ah", '(undef)x$foo on lhs of list assignment');
 
 
 # This test is actually testing for Digital C compiler optimizer bug,
@@ -130,26 +137,25 @@ my ($x, $y) = scalar ((1,2)x2);
 is($x, "22",    'list repeat in scalar context');
 is($y, undef,   '  no extra values on stack');
 
-# Make sure the stack doesn't get truncated too much - the left
-# operand of the eq binop needs to remain!
+# Make sure the stack doesn't get truncated too much - the first
+# argument to is() needs to remain!
 is(77, scalar ((1,7)x2),    'stack truncation');
+
+# ( )x in void context should not read preceding stack items
+package Tiecount {
+    sub TIESCALAR { bless[]} sub FETCH { our $Tiecount++; study; 3 }
+}
+sub nil {}
+tie my $t, "Tiecount";
+{ push my @temp, $t, scalar((nil) x 3, 1) }
+is($Tiecount::Tiecount, 1,
+   '(...)x... in void context in list (via scalar comma)');
 
 
 # perlbug 20011113.110 works in 5.6.1, broken in 5.7.2
 {
     my $x= [("foo") x 2];
     is( join('', @$x), 'foofoo', 'list repeat in anon array ref broken [ID 20011113.110]' );
-}
-
-# [ID 20010809.028] x operator not copying elements in 'for' list?
-{
-    local $TODO = "x operator not copying elements in 'for' list? [ID 20010809.028]";
-    my $x = 'abcd';
-    my $y = '';
-    for (($x =~ /./g) x 2) {
-	$y .= chop;
-    }
-    is($y, 'abcdabcd');
 }
 
 # [perl #35885]
@@ -161,3 +167,19 @@ sub {
       '[perl #78194] \$_[0] == \$_[1] when @_ aliases elems repeated by x')
 }
  ->(("${\''}")x2);
+
+$#that_array = 7;
+for(($#that_array)x2) {
+    $_ *= 2;
+}
+is($#that_array, 28, 'list repetition propagates lvalue cx to its lhs');
+
+# [perl #126309] huge list counts should give an error
+
+
+fresh_perl_like(
+ '@a = (1) x ~1',
+  qr/Out of memory/,
+  {  },
+ '(1) x ~1',
+);

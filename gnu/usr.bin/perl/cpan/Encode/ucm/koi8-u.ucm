@@ -1,11 +1,11 @@
 #
-# $Id: koi8-u.ucm,v 2.1 2013/08/14 02:29:54 dankogai Exp $
+# $Id: koi8-u.ucm,v 2.2 2015/07/31 02:18:28 dankogai Exp $
 #
-# Written $Id: koi8-u.ucm,v 2.1 2013/08/14 02:29:54 dankogai Exp $
+# Written $Id: koi8-u.ucm,v 2.2 2015/07/31 02:18:28 dankogai Exp $
 # ./compile -n koi8-u -o Encode/koi8-u.ucm Encode/koi8-u.enc
 #
 # Original table can be obtained at
-# http://www.unicode.org/Public/MAPPINGS/VENDORS/MISC/KOI8-R.TXT
+# http://www.unicode.org/Public/MAPPINGS/VENDORS/MISC/KOI8-U.TXT
 #
 #       Copyright (c) 1991-2008 Unicode, Inc.  All Rights reserved.
 #
@@ -178,7 +178,7 @@ CHARMAP
 <U2593> \x92 |0 # DARK SHADE
 <U2320> \x93 |0 # TOP HALF INTEGRAL
 <U25A0> \x94 |0 # BLACK SQUARE
-<U2022> \x95 |0 # BULLET
+<U2219> \x95 |0 # BULLET OPERATOR
 <U221A> \x96 |0 # SQUARE ROOT
 <U2248> \x97 |0 # ALMOST EQUAL TO
 <U2264> \x98 |0 # LESS-THAN OR EQUAL TO

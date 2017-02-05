@@ -11,7 +11,7 @@ my ($truncate_status, $tmpfh, $tmpfile);
 
 # Some systems have a screwy tempfile. We don't run our tests there.
 eval {
-    ($tmpfh, $tmpfile) = tempfile();
+    ($tmpfh, $tmpfile) = tempfile(UNLINK => 1);
 };
 
 if ($@ or !defined $tmpfh) {
@@ -61,6 +61,8 @@ eval {
 };
 
 is($@, "", "Truncating a normal file should be fine");
+
+$tmpfh->close;
 
 # Time to test truncating via globs.
 

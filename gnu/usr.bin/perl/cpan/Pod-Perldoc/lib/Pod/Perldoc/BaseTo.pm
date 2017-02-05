@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '3.23_01';
+$VERSION = '3.25';
 
 use Carp                  qw(croak carp);
 use Config                qw(%Config);
@@ -106,7 +106,7 @@ Pod::Perldoc::BaseTo - Base for Pod::Perldoc formatters
 
     package Pod::Perldoc::ToMyFormat;
 
-    use base qw( Pod::Perldoc::BaseTo );
+    use parent qw( Pod::Perldoc::BaseTo );
     ...
 
 =head1 DESCRIPTION

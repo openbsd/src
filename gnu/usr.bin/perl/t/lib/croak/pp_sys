@@ -1,0 +1,16 @@
+__END__
+# pp_sys.c
+# NAME pipe() croaks on bad left side [perl #126480]
+# SKIP ? use Config; !$Config{d_pipe} && "No pipe() available"
+my $fh;
+pipe($$5, $fh)
+EXPECT
+Bad symbol for filehandle at - line 3.
+########
+# NAME pipe() croaks on bad right side [perl #126480]
+# SKIP ? use Config; !$Config{d_pipe} && "No pipe() available"
+my $fh;
+pipe($fh, $$5)
+EXPECT
+Bad symbol for filehandle at - line 2.
+########

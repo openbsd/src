@@ -2,6 +2,7 @@
 
 # Tests 51 onwards are intentionally not all-warnings-clean
 
+chdir 't' if -d 't';
 require './test.pl';
 use strict;
 
@@ -110,7 +111,7 @@ is(length, 5,
 is($_, "\0"."_"."7"."_"."7", "string concatenation with nul character");
 chop, chop, chop, chop;
 is($_, "\0", "repeated chop() eliminated all but nul character");
-if (ord("\t") != 9) {
+if ($::IS_EBCDIC) {
     is("\157_", "?_",
         "question mark is 111 in 1047, 037, && POSIX-BC");
 }
@@ -125,7 +126,7 @@ is(length, 5,
 is($_, "\0"."_"."7"."_"."7", "string concatenation with nul character");
 chop, chop, chop, chop;
 is($_, "\0", "repeated chop() eliminated all but nul character");
-if (ord("\t") != 9) {
+if ($::IS_EBCDIC) {
     is("\x61_", "/_",
         "/ is 97 in 1047, 037, && POSIX-BC");
 }

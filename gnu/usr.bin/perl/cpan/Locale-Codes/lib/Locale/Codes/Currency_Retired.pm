@@ -3,7 +3,7 @@ Locale::Codes::Currency_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
-#    Generated on: Tue Mar  4 13:19:40 EST 2014
+#    Generated on: Tue Dec  1 14:45:28 EST 2015
 
 use strict;
 require 5.006;
@@ -11,7 +11,7 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.30';
+$VERSION='3.37';
 
 $Locale::Codes::Retired{'currency'}{'alpha'}{'code'} = {
    q(ADP) => q(Andorran Peseta),
@@ -36,6 +36,7 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'code'} = {
    q(GWP) => q(Guinea-Bissau Peso),
    q(IEP) => q(Irish Pound),
    q(ITL) => q(Italian Lira),
+   q(LTL) => q(Lithuanian Litas),
    q(LUF) => q(Luxembourg Franc),
    q(LVL) => q(Latvian Lats),
    q(MGF) => q(Malagasy Franc),
@@ -55,6 +56,7 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'code'} = {
    q(TPE) => q(Timor Escudo),
    q(TRL) => q(Turkish Lira),
    q(UAK) => q(Karbovanets),
+   q(USS) => q(US Dollar (Same day)),
    q(VEB) => q(Bolivar),
    q(XB5) => q(European Unit of Account 17),
    q(XEU) => q(ECU (until 1998-12-31)),
@@ -68,7 +70,9 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'code'} = {
 
 $Locale::Codes::Retired{'currency'}{'num'}{'code'} = {
    q(428) => q(Latvian Lats),
+   q(440) => q(Lithuanian Litas),
    q(654) => q(Saint Helena Pound),
+   q(998) => q(US Dollar (Same day)),
 };
 
 $Locale::Codes::Retired{'currency'}{'alpha'}{'name'} = {
@@ -80,8 +84,10 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'name'} = {
    q(bolivar fuerte) => [ q(VEF), q(Bolivar Fuerte) ],
    q(bond markets units european composite unit (eurco)) => [ q(XBA), q(Bond Markets Units European Composite Unit (EURCO)) ],
    q(candian dollar) => [ q(CAD), q(Candian Dollar) ],
+   q(cape verde escudo) => [ q(CVE), q(Cape Verde Escudo) ],
    q(cedi) => [ q(GHS), q(Cedi) ],
    q(convertible marks) => [ q(BAM), q(Convertible Marks) ],
+   q(croatian kuna) => [ q(HRK), q(Croatian Kuna) ],
    q(cyprus pound) => [ q(CYP), q(Cyprus Pound) ],
    q(dinar) => [ q(BHD), q(Dinar) ],
    q(drachma) => [ q(GRD), q(Drachma) ],
@@ -108,6 +114,7 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'name'} = {
    q(latvian lats) => [ q(LVL), q(Latvian Lats) ],
    q(leu) => [ q(RON), q(Leu) ],
    q(lev) => [ q(BGL), q(Lev) ],
+   q(lithuanian litas) => [ q(LTL), q(Lithuanian Litas) ],
    q(luxembourg franc) => [ q(LUF), q(Luxembourg Franc) ],
    q(malagasy franc) => [ q(MGF), q(Malagasy Franc) ],
    q(maltese lira) => [ q(MTL), q(Maltese Lira) ],
@@ -121,6 +128,7 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'name'} = {
    q(new kwanza) => [ q(AON), q(New Kwanza) ],
    q(new leu) => [ q(RON), q(New Leu) ],
    q(new manat) => [ q(TMT), q(New Manat) ],
+   q(new romanian leu) => [ q(RON), q(New Romanian Leu) ],
    q(new zaire) => [ q(ZRN), q(New Zaire) ],
    q(portuguese escudo) => [ q(PTE), q(Portuguese Escudo) ],
    q(saint helena pound) => [ q(SHP), q(Saint Helena Pound) ],
@@ -141,17 +149,23 @@ $Locale::Codes::Retired{'currency'}{'alpha'}{'name'} = {
    q(unidades de fomento) => [ q(CLF), q(Unidades de fomento) ],
    q(unidades de formento) => [ q(CLF), q(Unidades de Formento) ],
    q(uruguay peso en unidades indexadas) => [ q(UYI), q(Uruguay Peso en Unidades Indexadas) ],
+   q(us dollar (same day)) => [ q(USS), q(US Dollar (Same day)) ],
 };
 
 $Locale::Codes::Retired{'currency'}{'num'}{'name'} = {
    q(bolivar fuerte) => [ q(937), q(Bolivar Fuerte) ],
+   q(cape verde escudo) => [ q(132), q(Cape Verde Escudo) ],
    q(cedi) => [ q(936), q(Cedi) ],
+   q(croatian kuna) => [ q(191), q(Croatian Kuna) ],
    q(latvian lats) => [ q(428), q(Latvian Lats) ],
    q(leu) => [ q(946), q(Leu) ],
+   q(lithuanian litas) => [ q(440), q(Lithuanian Litas) ],
    q(metical) => [ q(943), q(Metical) ],
    q(new manat) => [ q(934), q(New Manat) ],
+   q(new romanian leu) => [ q(946), q(New Romanian Leu) ],
    q(saint helena pound) => [ q(654), q(Saint Helena Pound) ],
    q(unidades de fomento) => [ q(990), q(Unidades de fomento) ],
+   q(us dollar (same day)) => [ q(998), q(US Dollar (Same day)) ],
 };
 
 

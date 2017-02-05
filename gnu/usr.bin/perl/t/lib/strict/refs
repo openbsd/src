@@ -340,24 +340,6 @@ defined $$x;
 EXPECT
 Can't use string ("foo") as a SCALAR ref while "strict refs" in use at - line 4.
 ########
-# [perl #37886] strict 'refs' doesn't apply inside defined
-use strict 'refs';
-my $x = "foo";
-defined @$x;
-EXPECT
-defined(@array) is deprecated at - line 4.
-	(Maybe you should just omit the defined()?)
-Can't use string ("foo") as an ARRAY ref while "strict refs" in use at - line 4.
-########
-# [perl #37886] strict 'refs' doesn't apply inside defined
-use strict 'refs';
-my $x = "foo";
-defined %$x;
-EXPECT
-defined(%hash) is deprecated at - line 4.
-	(Maybe you should just omit the defined()?)
-Can't use string ("foo") as a HASH ref while "strict refs" in use at - line 4.
-########
 # [perl #74168] Assertion failed: (SvTYPE(_svcur) >= SVt_PV), function Perl_softref2xv, file pp.c, line 240.
 use strict 'refs';
 my $o = 1 ; $o->{1} ;

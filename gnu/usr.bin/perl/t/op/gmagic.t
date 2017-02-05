@@ -77,6 +77,7 @@ expected_tie_calls(tied $c, 1, 2, 'chomping a ref');
  # Do this again, with a utf8 handle
     $c = *foo;                                         # 1 write
     open $h, "<:utf8", $outfile;
+    no warnings 'deprecated';
     sysread $h, $c, 3, 7;                              # 1 read; 1 write
     is $c, "*main::bar", 'what sysread wrote';         # 1 read
     expected_tie_calls(tied $c, 2, 2, 'calling sysread with tied buf');
@@ -180,6 +181,13 @@ ok($wgot == 0, 'a plain *foo causes no set-magic');
      'mortal magic var is explicitly returned to refgen';
   is tied $$x, undef,
      'mortal magic var is copied when explicitly returned';
+
+  $tied_to = tie $_{elem}, "Tie::Monitor";
+  $x = \do { 1; delete $_{elem} };
+  expected_tie_calls $tied_to, 1, 0,
+     'mortal magic var from do passed to refgen';
+  is tied $$x, undef,
+     'mortal magic var from do is copied';
 }
 
 done_testing();

@@ -84,8 +84,6 @@ esac
 # around for old NetBSD binaries.
 libswanted=`echo $libswanted | sed 's/ crypt / /'`
 
-libswanted=`echo $libswanted | sed 's/ util / /'`
-
 # Configure can't figure this out non-interactively
 d_suidsafe=$define
 
@@ -101,13 +99,6 @@ m88k-3.4)
 *)
    test "$optimize" || optimize='-O2'
    ;;
-esac
-
-# Special per-arch specific ccflags
-case "${ARCH}-${osvers}" in
-    vax-*)
-    ccflags="-DUSE_PERL_ATOF=0 $ccflags"
-    ;;
 esac
 
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
@@ -131,9 +122,6 @@ $define|true|[yY]*)
         	# Broken up to OpenBSD 3.6, fixed in OpenBSD 3.7
 		d_getservbyname_r=$undef ;;
 	esac
-	;;
-*)
-	libswanted=`echo $libswanted | sed 's/ pthread / /'`
 esac
 EOCBU
 
@@ -152,12 +140,12 @@ case "$openbsd_distribution" in
 	siteprefix='/usr/local'
 	siteprefixexp='/usr/local'
 	# Ports installs non-std libs in /usr/local/lib so look there too
-	locincpth=''
-	loclibpth=''
+	locincpth='/usr/local/include'
+	loclibpth='/usr/local/lib'
 	# Link perl with shared libperl
-	if [ "$usedl" = "$define" -a -r $src/shlib_version ]; then
+	if [ "$usedl" = "$define" -a -r shlib_version ]; then
 		useshrplib=true
-		libperl=`. $src/shlib_version; echo libperl.so.${major}.${minor}`
+		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
 	fi
 	;;
 esac

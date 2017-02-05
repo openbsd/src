@@ -7,6 +7,7 @@
 use strict;
 use Config;
 
+chdir 't' if -d 't';
 require './test.pl';
 
 plan( tests => 16 );
@@ -27,8 +28,10 @@ for my $perlio ('perlio', 'stdio') {
 SKIP:
     for my $test_in ("test\n", "test") {
 		skip("Guaranteed newline at EOF on VMS", 4) if $^O eq 'VMS' && $test_in eq 'test';
-                skip("[perl #71504] OpenBSD test failures in errno.t with ithreads and perlio", 8)
-                    if $^O eq 'openbsd' && $Config{useithreads} && $perlio eq 'stdio';
+                # perl #71504 added skip in openbsd+threads+stdio;
+                # then commit 23705063 made -lpthread the default.
+                skip("[perl #71504] OpenBSD test failures in errno.t with ithreads and perlio]; [perl #126306: openbsd t/io/errno.t tests fail randomly]", 8)
+                    if $^O eq 'openbsd' && $perlio eq 'stdio';
 		my $test_in_esc = $test_in;
 		$test_in_esc =~ s/\n/\\n/g;
 		for my $rs_code ('', '$/=undef', '$/=\2', '$/=\1024') {

@@ -4,89 +4,70 @@
 BEGIN {
     $|= 1;
 
+    use Test::More;
+
     # when building perl, skip this test if Win32API::File isn't being built
     if ( $ENV{PERL_CORE} ) {
-	require Config;
-	if ( $Config::Config{extensions} !~ m:(?<!\S)Win32API/File(?!\S): ) {
-	    print "1..0 # Skip Win32API::File extension not built\n";
-	    exit();
-	}
+        require Config;
+        if ( $Config::Config{extensions} !~ m:(?<!\S)Win32API/File(?!\S): ) {
+            plan skip_all => 'Skip Win32API::File extension not built';
+            exit;
+        }
     }
 
-    print "1..10\n";
+    plan tests => 10;
 }
-END   { print "not ok 1\n" unless $main::loaded; }
 
 use strict;
 use warnings;
 use Win32API::File qw(:ALL);
 use IO::File;
 
-$main::loaded = 1;
+my $filename = 'foo.txt';
+ok(! -e $filename || unlink($filename), "unlinked $filename (if it existed)");
 
-print "ok 1\n";
-
-unlink "foo.txt";
-
-my $fh = Win32API::File->new("+> foo.txt")
-	or die fileLastError();
+my $fh = Win32API::File->new("+> $filename")
+    or die fileLastError();
 
 my $tell = tell $fh;
-print "# tell \$fh == '$tell'\n";
-print "not " unless
-	tell $fh == 0;
-print "ok 2\n";
+is(0+$tell, 0, "tell \$fh == '$tell'");
 
 my $text = "some text\n";
 
-print "not " unless
-	print $fh $text;
-print "ok 3\n";
+ok(print($fh $text), "printed 'some text\\n'");
 
 $tell = tell $fh;
-print "# after printing 'some text\\n', tell is: '$tell'\n";
-print "not " unless
-	$tell == length($text) + 1;
-print "ok 4\n";
+my $len = length($text) + 1; # + 1 for cr
+is($tell, $len, "after printing 'some text\\n', tell is: '$tell'");
 
-print "not " unless
-	seek($fh, 0, 0) == 0;
-print "ok 5\n";
+my $seek = seek($fh, 0, 0);
+is(0+$seek, 0, "seek is: '$seek'");
 
-print "not " unless
-	not eof $fh;
-print "ok 6\n";
+my $eof = eof $fh;
+ok(! $eof, 'not eof');
 
 my $readline = <$fh>;
 
 my $pretty_readline = $readline;
-$pretty_readline =~ s/\r/\\r/g;  $pretty_readline =~ s/\n/\\n/g;  
-print "# read line is '$pretty_readline'\n";
+$pretty_readline =~ s/\r/\\r/g;  $pretty_readline =~ s/\n/\\n/g;
+is($pretty_readline, "some text\\r\\n", "read line is '$pretty_readline'");
 
-print "not " unless
-	$readline eq "some text\r\n";
-print "ok 7\n";
+$eof = eof $fh;
+ok($eof, 'reached eof');
 
-print "not " unless
-	eof $fh;
-print "ok 8\n";
-
-print "not " unless
-	close $fh;
-print "ok 9\n";
+ok(close($fh), 'closed filehandle');
 
 # Test out binmode (should be only LF with print, no CR).
 
-$fh = Win32API::File->new("+> foo.txt")
-	or die fileLastError();
+$fh = Win32API::File->new("+> $filename")
+    or die fileLastError();
 binmode $fh;
 print $fh "hello there\n";
 seek $fh, 0, 0;
 
-print "not " unless
-	<$fh> eq "hello there\n";
-print "ok 10\n";
+$readline = <$fh>;
+is($readline, "hello there\n", "binmode worked (no CR)");
 
 close $fh;
 
-unlink "foo.txt";
+unlink $filename;

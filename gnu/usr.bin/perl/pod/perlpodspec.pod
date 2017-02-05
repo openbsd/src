@@ -70,7 +70,7 @@ else with the Pod (like counting words, scanning for index points,
 etc.).
 
 Pod content is contained in B<Pod blocks>.  A Pod block starts with a
-line that matches <m/\A=[a-zA-Z]/>, and continues up to the next line
+line that matches C<m/\A=[a-zA-Z]/>, and continues up to the next line
 that matches C<m/\A=cut/> or up to the end of the file if there is
 no C<m/\A=cut/> line.
 
@@ -416,7 +416,7 @@ formatting code.  Examples:
     B<< $foo->bar(); >>
 
 With this syntax, the whitespace character(s) after the "CE<lt><<"
-and before the ">>" (or whatever letter) are I<not> renderable. They
+and before the ">>>" (or whatever letter) are I<not> renderable. They
 do not signify whitespace, are merely part of the formatting codes
 themselves.  That is, these are all synonymous:
 
@@ -607,7 +607,8 @@ as signaling that the file is Unicode encoded as in UTF-16 (whether
 big-endian or little-endian) or UTF-8, Pod parsers should do the
 same.  Otherwise, the character encoding should be understood as
 being UTF-8 if the first highbit byte sequence in the file seems
-valid as a UTF-8 sequence, or otherwise as Latin-1.
+valid as a UTF-8 sequence, or otherwise as CP-1252 (earlier versions of
+this specification used Latin-1 instead of CP-1252).
 
 Future versions of this specification may specify
 how Pod can accept other encodings.  Presumably treatment of other
@@ -621,8 +622,13 @@ The well known Unicode Byte Order Marks are as follows:  if the
 file begins with the two literal byte values 0xFE 0xFF, this is
 the BOM for big-endian UTF-16.  If the file begins with the two
 literal byte value 0xFF 0xFE, this is the BOM for little-endian
-UTF-16.  If the file begins with the three literal byte values
+UTF-16.  On an ASCII platform, if the file begins with the three literal
+byte values
 0xEF 0xBB 0xBF, this is the BOM for UTF-8.
+A mechanism portable to EBCDIC platforms is to:
+
+  my $utf8_bom = "\x{FEFF}";
+  utf8::encode($utf8_bom);
 
 =for comment
  use bytes; print map sprintf(" 0x%02X", ord $_), split '', "\x{feff}";
@@ -633,7 +639,8 @@ UTF-16.  If the file begins with the three literal byte values
 
 =item *
 
-A naive but often sufficient heuristic for testing the first highbit
+A naive, but often sufficient heuristic on ASCII platforms, for testing
+the first highbit
 byte-sequence in a BOM-less file (whether in code or in Pod!), to see
 whether that sequence is valid as UTF-8 (RFC 2279) is to check whether
 that the first byte in the sequence is in the range 0xC2 - 0xFD
@@ -641,7 +648,8 @@ I<and> whether the next byte is in the range
 0x80 - 0xBF.  If so, the parser may conclude that this file is in
 UTF-8, and all highbit sequences in the file should be assumed to
 be UTF-8.  Otherwise the parser should treat the file as being
-in Latin-1.  (A better check is to pass a copy of the sequence to
+in CP-1252.  (A better check, and which works on EBCDIC platforms as
+well, is to pass a copy of the sequence to
 L<utf8::decode()|utf8> which performs a full validity check on the
 sequence and returns TRUE if it is valid UTF-8, FALSE otherwise.  This
 function is always pre-loaded, is fast because it is written in C, and
@@ -667,12 +675,6 @@ is sufficient to establish this file's encoding.
 =for comment
  "The probability that a string of characters
  in any other encoding appears as valid UTF-8 is low" - RFC2279
-
-=item *
-
-This document's requirements and suggestions about encodings
-do not apply to Pod processors running on non-ASCII platforms,
-notably EBCDIC platforms.
 
 =item *
 
@@ -841,17 +843,20 @@ Pod::Parser, comes with modern versions of Perl.
 
 Characters in Pod documents may be conveyed either as literals, or by
 number in EE<lt>n> codes, or by an equivalent mnemonic, as in
-EE<lt>eacute> which is exactly equivalent to EE<lt>233>.
+EE<lt>eacute> which is exactly equivalent to EE<lt>233>.  The numbers
+are the Latin1/Unicode values, even on EBCDIC platforms.
 
-Characters in the range 32-126 refer to those well known US-ASCII
-characters (also defined there by Unicode, with the same meaning),
-which all Pod formatters must render faithfully.  Characters
-in the ranges 0-31 and 127-159 should not be used (neither as
-literals, nor as EE<lt>number> codes), except for the
-literal byte-sequences for newline (13, 13 10, or 10), and tab (9).
+When referring to characters by using a EE<lt>n> numeric code, numbers
+in the range 32-126 refer to those well known US-ASCII characters (also
+defined there by Unicode, with the same meaning), which all Pod
+formatters must render faithfully.  Characters whose EE<lt>E<gt> numbers
+are in the ranges 0-31 and 127-159 should not be used (neither as
+literals,
+nor as EE<lt>number> codes), except for the literal byte-sequences for
+newline (ASCII 13, ASCII 13 10, or ASCII 10), and tab (ASCII 9).
 
-Characters in the range 160-255 refer to Latin-1 characters (also
-defined there by Unicode, with the same meaning).  Characters above
+Numbers in the range 160-255 refer to Latin-1 characters (also
+defined there by Unicode, with the same meaning).  Numbers above
 255 should be understood to refer to Unicode characters.
 
 =item *
@@ -899,17 +904,17 @@ character 34 (doublequote, "), "EE<lt>amp>" for character 38
 
 =item *
 
-Note that in all cases of "EE<lt>whatever>", I<whatever> (whether
+Note that in all cases of "EE<lt>whateverE<gt>", I<whatever> (whether
 an htmlname, or a number in any base) must consist only of
-alphanumeric characters -- that is, I<whatever> must watch
-C<m/\A\w+\z/>.  So "EE<lt> 0 1 2 3 >" is invalid, because
+alphanumeric characters -- that is, I<whatever> must match
+C<m/\A\w+\z/>.  So S<"EE<lt> 0 1 2 3 E<gt>"> is invalid, because
 it contains spaces, which aren't alphanumeric characters.  This
 presumably does not I<need> special treatment by a Pod processor;
-" 0 1 2 3 " doesn't look like a number in any base, so it would
+S<" 0 1 2 3 "> doesn't look like a number in any base, so it would
 presumably be looked up in the table of HTML-like names.  Since
-there isn't (and cannot be) an HTML-like entity called " 0 1 2 3 ",
+there isn't (and cannot be) an HTML-like entity called S<" 0 1 2 3 ">,
 this will be treated as an error.  However, Pod processors may
-treat "EE<lt> 0 1 2 3 >" or "EE<lt>e-acute>" as I<syntactically>
+treat S<"EE<lt> 0 1 2 3 E<gt>"> or "EE<lt>e-acute>" as I<syntactically>
 invalid, potentially earning a different error message than the
 error message (or warning, or event) generated by a merely unknown
 (but theoretically valid) htmlname, as in "EE<lt>qacute>"
@@ -1133,7 +1138,7 @@ four attributes:
 
 =item First:
 
-The link-text.  If there is none, this must be undef.  (E.g., in
+The link-text.  If there is none, this must be C<undef>.  (E.g., in
 "LE<lt>Perl Functions|perlfunc>", the link-text is "Perl Functions".
 In "LE<lt>Time::HiRes>" and even "LE<lt>|Time::HiRes>", there is no
 link text.  Note that link text may contain formatting.)
@@ -1146,13 +1151,13 @@ text, then this is the text that we'll infer in its place.  (E.g., for
 
 =item Third:
 
-The name or URL, or undef if none.  (E.g., in "LE<lt>Perl
+The name or URL, or C<undef> if none.  (E.g., in "LE<lt>Perl
 Functions|perlfunc>", the name (also sometimes called the page)
-is "perlfunc".  In "LE<lt>/CAVEATS>", the name is undef.)
+is "perlfunc".  In "LE<lt>/CAVEATS>", the name is C<undef>.)
 
 =item Fourth:
 
-The section (AKA "item" in older perlpods), or undef if none.  E.g.,
+The section (AKA "item" in older perlpods), or C<undef> if none.  E.g.,
 in "LE<lt>Getopt::Std/DESCRIPTIONE<gt>", "DESCRIPTION" is the section.  (Note
 that this is not the same as a manpage section like the "5" in "man 5
 crontab".  "Section Foo" in the Pod sense means the part of the text
@@ -1344,7 +1349,7 @@ either the name of a Pod page like C<LE<lt>Foo::BarE<gt>> (which
 might be a real Perl module or program in an @INC / PATH
 directory, or a .pod file in those places); or the name of a Unix
 man page, like C<LE<lt>crontab(5)E<gt>>.  In theory, C<LE<lt>chmodE<gt>>
-in ambiguous between a Pod page called "chmod", or the Unix man page
+is ambiguous between a Pod page called "chmod", or the Unix man page
 "chmod" (in whatever man-section).  However, the presence of a string
 in parens, as in "crontab(5)", is sufficient to signal that what
 is being discussed is not a Pod page, and so is presumably a

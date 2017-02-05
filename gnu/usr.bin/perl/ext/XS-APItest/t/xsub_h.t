@@ -120,4 +120,35 @@ is(eval {XS_APIVERSION_invalid("Pie"); 1}, undef,
 like($@, qr/Perl API version v1.0.16 of Pie does not match v5\.\d+\.\d+/,
      "expected error");
 
+my @xsreturn;
+@xsreturn = XS::APItest::XSUB::xsreturn(2);
+is scalar @xsreturn, 2, 'returns a list of 2 elements';
+is $xsreturn[0], 0;
+is $xsreturn[1], 1;
+
+my $xsreturn = XS::APItest::XSUB::xsreturn(3);
+is $xsreturn, 2, 'returns the last item on the stack';
+
+( $xsreturn ) = XS::APItest::XSUB::xsreturn(3);
+is $xsreturn, 0, 'gets the first item on the stack';
+
+is XS::APItest::XSUB::xsreturn_iv(), -2**31+1, 'XSRETURN_IV returns signed int';
+is XS::APItest::XSUB::xsreturn_uv(), 2**31+1, 'XSRETURN_UV returns unsigned int';
+is XS::APItest::XSUB::xsreturn_nv(), 0.25, 'XSRETURN_NV returns double';
+is XS::APItest::XSUB::xsreturn_pv(), "returned", 'XSRETURN_PV returns string';
+is XS::APItest::XSUB::xsreturn_pvn(), "returned", 'XSRETURN_PVN returns string with length';
+ok !XS::APItest::XSUB::xsreturn_no(), 'XSRETURN_NO returns falsey';
+ok XS::APItest::XSUB::xsreturn_yes(), 'XSRETURN_YES returns truthy';
+
+is XS::APItest::XSUB::xsreturn_undef(), undef, 'XSRETURN_UNDEF returns undef in scalar context';
+my @xs_undef = XS::APItest::XSUB::xsreturn_undef();
+is scalar @xs_undef, 1, 'XSRETURN_UNDEF returns a single-element list';
+is $xs_undef[0], undef, 'XSRETURN_UNDEF returns undef in list context';
+
+my @xs_empty = XS::APItest::XSUB::xsreturn_empty();
+is scalar @xs_empty, 0, 'XSRETURN_EMPTY returns empty list in array context';
+my $xs_empty = XS::APItest::XSUB::xsreturn_empty();
+is $xs_empty, undef, 'XSRETURN_EMPTY returns undef in scalar context';
+
+
 done_testing();

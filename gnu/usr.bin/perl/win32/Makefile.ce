@@ -5,7 +5,7 @@
 #
 
 SRCDIR     = ..
-PV         = 520
+PV         = 524
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -35,14 +35,6 @@ CCLIBDIR	= $(CCHOME)\lib
 
 # cecopy program. Make shure it is in your path, as well as cemkdir, cedel
 CECOPY     = cecopy
-
-#
-# Comment out next assign to disable perl's I/O subsystem and use compiler's
-# stdio for IO - depending on your compiler vendor and run time library you may
-# then get a number of fails from make test i.e. bugs - complain to them not us ;-).
-# You will also be unable to take full advantage of perl5.8's support for multiple
-# encodings and may see lower IO performance. You have been warned.
-USE_PERLIO	= define
 
 #
 # set this if you wish to use perl's malloc
@@ -458,10 +450,6 @@ USE_ITHREADS	= undef
 USE_IMP_SYS	= undef
 !ENDIF
 
-!IF "$(USE_PERLIO)" == ""
-USE_PERLIO	= undef
-!ENDIF
-
 !IF "$(USE_PERLCRT)" == ""
 USE_PERLCRT	= undef
 !ENDIF
@@ -480,10 +468,6 @@ BUILDOPT	= $(BUILDOPT) -DPERL_IMPLICIT_CONTEXT
 
 !IF "$(USE_IMP_SYS)" != "undef"
 BUILDOPT	= $(BUILDOPT) -DPERL_IMPLICIT_SYS
-!ENDIF
-
-!IF "$(USE_PERLIO)" == "define"
-BUILDOPT	= $(BUILDOPT) -DUSE_PERLIO
 !ENDIF
 
 !IF "$(CROSS_NAME)" == ""
@@ -638,10 +622,11 @@ MICROCORE_SRC	=		\
 		..\deb.c	\
 		..\doio.c	\
 		..\doop.c	\
+		..\dquote.c	\
 		..\dump.c	\
 		..\globals.c	\
 		..\gv.c		\
-		..\mro.c	\
+		..\mro_core.c	\
 		..\hv.c		\
 		..\locale.c	\
 		..\keywords.c	\
@@ -666,6 +651,7 @@ MICROCORE_SRC	=		\
 		..\scope.c	\
 		..\sv.c		\
 		..\taint.c	\
+		..\time64.c	\
 		..\toke.c	\
 		..\universal.c	\
 		..\utf8.c	\
@@ -766,7 +752,6 @@ CFG_VARS = \
  "usethreads=$(USE_ITHREADS)" \
  "useithreads=$(USE_ITHREADS)" \
  "usemultiplicity=$(USE_MULTI)" \
- "useperlio=$(USE_PERLIO)" \
  "use64bitint=undef" \
  "uselargefiles=undef" \
  "LINK_FLAGS=$(LDLIBPATH) $(LINK_FLAGS) $(SUBSYS)" \
@@ -884,10 +869,11 @@ $(DLLDIR)\caretx.obj \
 $(DLLDIR)\deb.obj \
 $(DLLDIR)\doio.obj \
 $(DLLDIR)\doop.obj \
+$(DLLDIR)\dquote.obj \
 $(DLLDIR)\dump.obj \
 $(DLLDIR)\globals.obj \
 $(DLLDIR)\gv.obj \
-$(DLLDIR)\mro.obj \
+$(DLLDIR)\mro_core.obj \
 $(DLLDIR)\hv.obj \
 $(DLLDIR)\locale.obj \
 $(DLLDIR)\keywords.obj \
@@ -913,6 +899,7 @@ $(DLLDIR)\run.obj \
 $(DLLDIR)\scope.obj \
 $(DLLDIR)\sv.obj \
 $(DLLDIR)\taint.obj \
+$(DLLDIR)\time64.obj \
 $(DLLDIR)\toke.obj \
 $(DLLDIR)\universal.obj \
 $(DLLDIR)\utf8.obj \

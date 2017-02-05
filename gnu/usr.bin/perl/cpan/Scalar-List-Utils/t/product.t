@@ -1,19 +1,9 @@
 #!./perl
 
-BEGIN {
-    unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Config; import Config;
-	keys %Config; # Silence warning
-	if ($Config{extensions} !~ /\bList\/Util\b/) {
-	    print "1..0 # Skip: List::Util was not built\n";
-	    exit 0;
-	}
-    }
-}
+use strict;
+use warnings;
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 use List::Util qw(product);
 
@@ -28,6 +18,9 @@ is( $v, 24, '4 args');
 
 $v = product(-1);
 is( $v, -1, 'one -1');
+
+$v = product(0, 1, 2);
+is( $v, 0, 'first factor zero' );
 
 my $x = -3;
 
@@ -88,7 +81,7 @@ is($v, $v1 * 42 * 2, 'bigint + builtin int');
 
 {
   my $e1 = example->new(7, "test");
-  $t = product($e1, 7, 7);
+  my $t = product($e1, 7, 7);
   is($t, 343, 'overload returning non-overload');
   $t = product(8, $e1, 8);
   is($t, 448, 'overload returning non-overload');

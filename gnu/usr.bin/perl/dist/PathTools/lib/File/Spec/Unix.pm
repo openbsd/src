@@ -3,12 +3,15 @@ package File::Spec::Unix;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '3.48_03';
+$VERSION = '3.63_01';
 my $xs_version = $VERSION;
-$VERSION =~ tr/_//;
+$VERSION =~ tr/_//d;
 
-unless (defined &canonpath) {
-  eval {
+#dont try to load XSLoader and DynaLoader only to ultimately fail on miniperl
+if(!defined &canonpath && defined &DynaLoader::boot_DynaLoader) {
+  eval {#eval is questionable since we are handling potential errors like
+        #"Cwd object version 3.48 does not match bootstrap parameter 3.50
+        #at lib/DynaLoader.pm line 216." by having this eval
     if ( $] >= 5.006 ) {
 	require XSLoader;
 	XSLoader::load("Cwd", $xs_version);

@@ -211,13 +211,7 @@ RunPerl(int argc, char **argv, char **env)
 {
     int exitstatus;
     PerlInterpreter *my_perl, *new_perl = NULL;
-    char *arg0 = argv[0];
-    char *ansi = NULL;
     bool use_environ = (env == environ);
-
-    WCHAR widename[MAX_PATH];
-    GetModuleFileNameW(NULL, widename, sizeof(widename)/sizeof(WCHAR));
-    argv[0] = ansi = win32_ansipath(widename);
 
 #ifdef PERL_GLOBAL_STRUCT
 #define PERLVAR(prefix,var,type) /**/
@@ -268,11 +262,6 @@ RunPerl(int argc, char **argv, char **env)
 	perl_free(new_perl);
     }
 #endif
-
-    /* Some RTLs may want to free argv[] after main() returns. */
-    argv[0] = arg0;
-    if (ansi)
-        win32_free(ansi);
 
     PERL_SYS_TERM();
 

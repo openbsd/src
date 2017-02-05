@@ -1,25 +1,16 @@
-# $Id: encoding.pm,v 2.12 2013/04/26 18:30:46 dankogai Exp $
+# $Id: encoding.pm,v 2.17 2015/09/15 13:53:27 dankogai Exp dankogai $
 package encoding;
-our $VERSION = sprintf "%d.%02d", q$Revision: 2.12 $ =~ /(\d+)/g;
+our $VERSION = sprintf "%d.%02d", q$Revision: 2.17 $ =~ /(\d+)/g;
 
 use Encode;
 use strict;
 use warnings;
 
-use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
-
-BEGIN {
-    if ( ord("A") == 193 ) {
-        require Carp;
-        Carp::croak("encoding: pragma does not support EBCDIC platforms");
-    }
-}
-
-our $HAS_PERLIO = 0;
-eval { require PerlIO::encoding };
-unless ($@) {
-    $HAS_PERLIO = ( PerlIO::encoding->VERSION >= 0.02 );
-}
+use constant {
+    DEBUG => !!$ENV{PERL_ENCODE_DEBUG},
+    HAS_PERLIO => eval { require PerlIO::encoding; PerlIO::encoding->VERSION(0.02) },
+    PERL_5_21_7 => $^V && $^V ge v5.21.7,
+};
 
 sub _exception {
     my $name = shift;
@@ -39,69 +30,90 @@ sub in_locale { $^H & ( $locale::hint_bits || 0 ) }
 sub _get_locale_encoding {
     my $locale_encoding;
 
+    if ($^O eq 'MSWin32') {
+        my @tries = (
+            # First try to get the OutputCP. This will work only if we
+            # are attached to a console
+            'Win32.pm' => 'Win32::GetConsoleOutputCP',
+            'Win32/Console.pm' => 'Win32::Console::OutputCP',
+            # If above failed, this means that we are a GUI app
+            # Let's assume that the ANSI codepage is what matters
+            'Win32.pm' => 'Win32::GetACP',
+        );
+        while (@tries) {
+            my $cp = eval {
+                require $tries[0];
+                no strict 'refs';
+                &{$tries[1]}()
+            };
+            if ($cp) {
+                if ($cp == 65001) { # Code page for UTF-8
+                    $locale_encoding = 'UTF-8';
+                } else {
+                    $locale_encoding = 'cp' . $cp;
+                }
+                return $locale_encoding;
+            }
+            splice(@tries, 0, 2)
+        }
+    }
+
     # I18N::Langinfo isn't available everywhere
-    eval {
+    $locale_encoding = eval {
         require I18N::Langinfo;
-        I18N::Langinfo->import(qw(langinfo CODESET));
-        $locale_encoding = langinfo( CODESET() );
+        find_encoding(
+            I18N::Langinfo::langinfo( I18N::Langinfo::CODESET() )
+        )->name
     };
+    return $locale_encoding if defined $locale_encoding;
 
-    my $country_language;
-
-    no warnings 'uninitialized';
-
-    if ( (not $locale_encoding) && in_locale() ) {
-        if ( $ENV{LC_ALL} =~ /^([^.]+)\.([^.@]+)(@.*)?$/ ) {
+    eval {
+        require POSIX;
+        # Get the current locale
+        # Remember that MSVCRT impl is quite different from Unixes
+        my $locale = POSIX::setlocale(POSIX::LC_CTYPE());
+        if ( $locale =~ /^([^.]+)\.([^.@]+)(?:@.*)?$/ ) {
+            my $country_language;
             ( $country_language, $locale_encoding ) = ( $1, $2 );
-        }
-        elsif ( $ENV{LANG} =~ /^([^.]+)\.([^.@]+)(@.*)?$/ ) {
-            ( $country_language, $locale_encoding ) = ( $1, $2 );
-        }
 
-        # LANGUAGE affects only LC_MESSAGES only on glibc
-    }
-    elsif ( not $locale_encoding ) {
-        if (   $ENV{LC_ALL} =~ /\butf-?8\b/i
-            || $ENV{LANG} =~ /\butf-?8\b/i )
-        {
-            $locale_encoding = 'utf8';
+            # Could do more heuristics based on the country and language
+            # since we have Locale::Country and Locale::Language available.
+            # TODO: get a database of Language -> Encoding mappings
+            # (the Estonian database at http://www.eki.ee/letter/
+            # would be excellent!) --jhi
+            if (lc($locale_encoding) eq 'euc') {
+                if ( $country_language =~ /^ja_JP|japan(?:ese)?$/i ) {
+                    $locale_encoding = 'euc-jp';
+                }
+                elsif ( $country_language =~ /^ko_KR|korean?$/i ) {
+                    $locale_encoding = 'euc-kr';
+                }
+                elsif ( $country_language =~ /^zh_CN|chin(?:a|ese)$/i ) {
+                    $locale_encoding = 'euc-cn';
+                }
+                elsif ( $country_language =~ /^zh_TW|taiwan(?:ese)?$/i ) {
+                    $locale_encoding = 'euc-tw';
+                }
+                else {
+                    require Carp;
+                    Carp::croak(
+                        "encoding: Locale encoding '$locale_encoding' too ambiguous"
+                    );
+                }
+            }
         }
-
-        # Could do more heuristics based on the country and language
-        # parts of LC_ALL and LANG (the parts before the dot (if any)),
-        # since we have Locale::Country and Locale::Language available.
-        # TODO: get a database of Language -> Encoding mappings
-        # (the Estonian database at http://www.eki.ee/letter/
-        # would be excellent!) --jhi
-    }
-    if (   defined $locale_encoding
-        && lc($locale_encoding) eq 'euc'
-        && defined $country_language )
-    {
-        if ( $country_language =~ /^ja_JP|japan(?:ese)?$/i ) {
-            $locale_encoding = 'euc-jp';
-        }
-        elsif ( $country_language =~ /^ko_KR|korean?$/i ) {
-            $locale_encoding = 'euc-kr';
-        }
-        elsif ( $country_language =~ /^zh_CN|chin(?:a|ese)$/i ) {
-            $locale_encoding = 'euc-cn';
-        }
-        elsif ( $country_language =~ /^zh_TW|taiwan(?:ese)?$/i ) {
-            $locale_encoding = 'euc-tw';
-        }
-        else {
-            require Carp;
-            Carp::croak(
-                "encoding: Locale encoding '$locale_encoding' too ambiguous"
-            );
-        }
-    }
+    };
 
     return $locale_encoding;
 }
 
 sub import {
+
+    if ( ord("A") == 193 ) {
+        require Carp;
+        Carp::croak("encoding: pragma does not support EBCDIC platforms");
+    }
+
     if ($] >= 5.017) {
 	warnings::warnif("deprecated",
 			 "Use of the encoding pragma is deprecated")
@@ -131,11 +143,23 @@ sub import {
     $name = $enc->name;    # canonize
     unless ( $arg{Filter} ) {
         DEBUG and warn "_exception($name) = ", _exception($name);
-        _exception($name) or ${^ENCODING} = $enc;
-        $HAS_PERLIO or return 1;
+        if (! _exception($name)) {
+            if (!PERL_5_21_7) {
+                ${^ENCODING} = $enc;
+            }
+            else {
+                # Starting with 5.21.7, this pragma uses a shadow variable
+                # designed explicitly for it, ${^E_NCODING}, to enforce
+                # lexical scope; instead of ${^ENCODING}.
+                $^H{'encoding'} = 1;
+                ${^E_NCODING} = $enc;
+            }
+        }
+        HAS_PERLIO or return 1;
     }
     else {
         defined( ${^ENCODING} ) and undef ${^ENCODING};
+        undef ${^E_NCODING} if PERL_5_21_7;
 
         # implicitly 'use utf8'
         require utf8;      # to fetch $utf8::hint_bits;
@@ -185,7 +209,8 @@ sub import {
 sub unimport {
     no warnings;
     undef ${^ENCODING};
-    if ($HAS_PERLIO) {
+    undef ${^E_NCODING} if PERL_5_21_7;
+    if (HAS_PERLIO) {
         binmode( STDIN,  ":raw" );
         binmode( STDOUT, ":raw" );
     }
@@ -205,20 +230,12 @@ __END__
 
 =head1 NAME
 
-encoding - allows you to write your script in non-ascii or non-utf8
+encoding - allows you to write your script in non-ASCII and non-UTF-8
 
 =head1 WARNING
 
-This module is deprecated under perl 5.18.  It uses a mechanism provided by
-perl that is deprecated under 5.18 and higher, and may be removed in a
-future version.
-
-The easiest and the best alternative is to write your script in UTF-8
-and declear:
-
-  use utf8; # not use encoding ':utf8';
-
-See L<perluniintro> and L<utf8> for details.
+This module has been deprecated since perl v5.18.  See L</DESCRIPTION> and
+L</BUGS>.
 
 =head1 SYNOPSIS
 
@@ -235,68 +252,84 @@ See L<perluniintro> and L<utf8> for details.
   # A simple euc-cn => utf-8 converter
   use encoding "euc-cn", STDOUT => "utf8";  while(<>){print};
 
-  # "no encoding;" supported (but not scoped!)
+  # "no encoding;" supported
   no encoding;
 
   # an alternate way, Filter
   use encoding "euc-jp", Filter=>1;
   # now you can use kanji identifiers -- in euc-jp!
 
-  # switch on locale -
-  # note that this probably means that unless you have a complete control
-  # over the environments the application is ever going to be run, you should
-  # NOT use the feature of encoding pragma allowing you to write your script
-  # in any recognized encoding because changing locale settings will wreck
-  # the script; you can of course still use the other features of the pragma.
+  # encode based on the current locale - specialized purposes only;
+  # fraught with danger!!
   use encoding ':locale';
 
-=head1 ABSTRACT
+=head1 DESCRIPTION
 
-Let's start with a bit of history: Perl 5.6.0 introduced Unicode
-support.  You could apply C<substr()> and regexes even to complex CJK
-characters -- so long as the script was written in UTF-8.  But back
-then, text editors that supported UTF-8 were still rare and many users
-instead chose to write scripts in legacy encodings, giving up a whole
-new feature of Perl 5.6.
+This pragma is used to enable a Perl script to be written in encodings that
+aren't strictly ASCII nor UTF-8.  It translates all or portions of the Perl
+program script from a given encoding into UTF-8, and changes the PerlIO layers
+of C<STDIN> and C<STDOUT> to the encoding specified.
 
-Rewind to the future: starting from perl 5.8.0 with the B<encoding>
-pragma, you can write your script in any encoding you like (so long
-as the C<Encode> module supports it) and still enjoy Unicode support.
-This pragma achieves that by doing the following:
+This pragma dates from the days when UTF-8-enabled editors were uncommon.  But
+that was long ago, and the need for it is greatly diminished.  That, coupled
+with the fact that it doesn't work with threads, along with other problems,
+(see L</BUGS>) have led to its being deprecated.  It is planned to remove this
+pragma in a future Perl version.  New code should be written in UTF-8, and the
+C<use utf8> pragma used instead (see L<perluniintro> and L<utf8> for details).
+Old code should be converted to UTF-8, via something like the recipe in the
+L</SYNOPSIS> (though this simple approach may require manual adjustments
+afterwards).
 
-=over
+The only legitimate use of this pragma is almost certainly just one per file,
+near the top, with file scope, as the file is likely going to only be written
+in one encoding.  Further restrictions apply in Perls before v5.22 (see
+L</Prior to Perl v5.22>).
 
-=item *
+There are two basic modes of operation (plus turning if off):
 
-Internally converts all literals (C<q//,qq//,qr//,qw///, qx//>) from
-the encoding specified to utf8.  In Perl 5.8.1 and later, literals in
-C<tr///> and C<DATA> pseudo-filehandle are also converted.
+=over 4
 
-=item *
+=item C<use encoding ['I<ENCNAME>'] ;>
 
-Changing PerlIO layers of C<STDIN> and C<STDOUT> to the encoding
- specified.
+This is the normal operation.  It translates various literals encountered in
+the Perl source file from the encoding I<ENCNAME> into UTF-8, and similarly
+converts character code points.  This is used when the script is a combination
+of ASCII (for the variable names and punctuation, I<etc>), but the literal
+data is in the specified encoding.
 
-=back
+I<ENCNAME> is optional.  If omitted, the encoding specified in the environment
+variable L<C<PERL_ENCODING>|perlrun/PERL_ENCODING> is used.  If this isn't
+set, or the resolved-to encoding is not known to C<L<Encode>>, the error
+C<Unknown encoding 'I<ENCNAME>'> will be thrown.
 
-=head2 Literal Conversions
+Starting in Perl v5.8.6 (C<Encode> version 2.0.1), I<ENCNAME> may be the
+name C<:locale>.  This is for very specialized applications, and is documented
+in L</The C<:locale> sub-pragma> below.
 
-You can write code in EUC-JP as follows:
+The literals that are converted are C<q//, qq//, qr//, qw///, qx//>, and
+starting in v5.8.1, C<tr///>.  Operations that do conversions include C<chr>,
+C<ord>, C<utf8::upgrade> (but not C<utf8::downgrade>), and C<chomp>.
+
+Also starting in v5.8.1, the C<DATA> pseudo-filehandle is translated from the
+encoding into UTF-8.
+
+For example, you can write code in EUC-JP as follows:
 
   my $Rakuda = "\xF1\xD1\xF1\xCC"; # Camel in Kanji
                #<-char-><-char->   # 4 octets
   s/\bCamel\b/$Rakuda/;
 
 And with C<use encoding "euc-jp"> in effect, it is the same thing as
-the code in UTF-8:
+that code in UTF-8:
 
   my $Rakuda = "\x{99F1}\x{99DD}"; # two Unicode Characters
   s/\bCamel\b/$Rakuda/;
 
-=head2 PerlIO layers for C<STD(IN|OUT)>
+See L</EXAMPLE> below for a more complete example.
 
-The B<encoding> pragma also modifies the filehandle layers of
-STDIN and STDOUT to the specified encoding.  Therefore,
+Unless C<${^UNICODE}> (available starting in v5.8.2) exists and is non-zero, the
+PerlIO layers of C<STDIN> and C<STDOUT> are set to "C<:encoding(I<ENCNAME>)>".
+Therefore,
 
   use encoding "euc-jp";
   my $message = "Camel is the symbol of perl.\n";
@@ -304,14 +337,121 @@ STDIN and STDOUT to the specified encoding.  Therefore,
   $message =~ s/\bCamel\b/$Rakuda/;
   print $message;
 
-Will print "\xF1\xD1\xF1\xCC is the symbol of perl.\n",
-not "\x{99F1}\x{99DD} is the symbol of perl.\n".
+will print
+
+ "\xF1\xD1\xF1\xCC is the symbol of perl.\n"
+
+not
+
+ "\x{99F1}\x{99DD} is the symbol of perl.\n"
 
 You can override this by giving extra arguments; see below.
 
-=head2 Implicit upgrading for byte strings
+Note that C<STDERR> WILL NOT be changed, regardless.
 
-By default, if strings operating under byte semantics and strings
+Also note that non-STD file handles remain unaffected.  Use C<use
+open> or C<binmode> to change the layers of those.
+
+=item C<use encoding I<ENCNAME> Filter=E<gt>1;>
+
+This operates as above, but the C<Filter> argument with a non-zero
+value causes the entire script, and not just literals, to be translated from
+the encoding into UTF-8.  This allows identifiers in the source to be in that
+encoding as well.  (Problems may occur if the encoding is not a superset of
+ASCII; imagine all your semi-colons being translated into something
+different.)  One can use this form to make
+
+ ${"\x{4eba}"}++
+
+work.  (This is equivalent to C<$I<human>++>, where I<human> is a single Han
+ideograph).
+
+This effectively means that your source code behaves as if it were written in
+UTF-8 with C<'use utf8>' in effect.  So even if your editor only supports
+Shift_JIS, for example, you can still try examples in Chapter 15 of
+C<Programming Perl, 3rd Ed.>.
+
+This option is significantly slower than the other one.
+
+=item C<no encoding;>
+
+Unsets the script encoding. The layers of C<STDIN>, C<STDOUT> are
+reset to "C<:raw>" (the default unprocessed raw stream of bytes).
+
+=back
+
+=head1 OPTIONS
+
+=head2 Setting C<STDIN> and/or C<STDOUT> individually
+
+The encodings of C<STDIN> and C<STDOUT> are individually settable by parameters to
+the pragma:
+
+ use encoding 'euc-tw', STDIN => 'greek'  ...;
+
+In this case, you cannot omit the first I<ENCNAME>.  C<< STDIN => undef >>
+turns the I/O transcoding completely off for that filehandle.
+
+When C<${^UNICODE}> (available starting in v5.8.2) exists and is non-zero,
+these options will be completely ignored.  See L<perlvar/C<${^UNICODE}>> and
+L<"C<-C>" in perlrun|perlrun/-C [numberE<sol>list]> for details.
+
+=head2 The C<:locale> sub-pragma
+
+Starting in v5.8.6, the encoding name may be C<:locale>.  This means that the
+encoding is taken from the current locale, and not hard-coded by the pragma.
+Since a script really can only be encoded in exactly one encoding, this option
+is dangerous.  It makes sense only if the script itself is written in ASCII,
+and all the possible locales that will be in use when the script is executed
+are supersets of ASCII.  That means that the script itself doesn't get
+changed, but the I/O handles have the specified encoding added, and the
+operations like C<chr> and C<ord> use that encoding.
+
+The logic of finding which locale C<:locale> uses is as follows:
+
+=over 4
+
+=item 1.
+
+If the platform supports the C<langinfo(CODESET)> interface, the codeset
+returned is used as the default encoding for the open pragma.
+
+=item 2.
+
+If 1. didn't work but we are under the locale pragma, the environment
+variables C<LC_ALL> and C<LANG> (in that order) are matched for encodings
+(the part after "C<.>", if any), and if any found, that is used
+as the default encoding for the open pragma.
+
+=item 3.
+
+If 1. and 2. didn't work, the environment variables C<LC_ALL> and C<LANG>
+(in that order) are matched for anything looking like UTF-8, and if
+any found, C<:utf8> is used as the default encoding for the open
+pragma.
+
+=back
+
+If your locale environment variables (C<LC_ALL>, C<LC_CTYPE>, C<LANG>)
+contain the strings 'UTF-8' or 'UTF8' (case-insensitive matching),
+the default encoding of your C<STDIN>, C<STDOUT>, and C<STDERR>, and of
+B<any subsequent file open>, is UTF-8.
+
+=head1 CAVEATS
+
+=head2 SIDE EFFECTS
+
+=over
+
+=item *
+
+If the C<encoding> pragma is in scope then the lengths returned are
+calculated from the length of C<$/> in Unicode characters, which is not
+always the same as the length of C<$/> in the native encoding.
+
+=item *
+
+Without this pragma, if strings operating under byte semantics and strings
 with Unicode character data are concatenated, the new string will
 be created by decoding the byte strings as I<ISO 8859-1 (Latin-1)>.
 
@@ -328,159 +468,14 @@ Will print C<2>, because C<$string> is upgraded as UTF-8.  Without
 C<use encoding 'utf8';>, it will print C<4> instead, since C<$string>
 is three octets when interpreted as Latin-1.
 
-=head2 Side effects
-
-If the C<encoding> pragma is in scope then the lengths returned are
-calculated from the length of C<$/> in Unicode characters, which is not
-always the same as the length of C<$/> in the native encoding.
-
-This pragma affects utf8::upgrade, but not utf8::downgrade.
-
-=head1 FEATURES THAT REQUIRE 5.8.1
-
-Some of the features offered by this pragma requires perl 5.8.1.  Most
-of these are done by Inaba Hiroto.  Any other features and changes
-are good for 5.8.0.
-
-=over
-
-=item "NON-EUC" doublebyte encodings
-
-Because perl needs to parse script before applying this pragma, such
-encodings as Shift_JIS and Big-5 that may contain '\' (BACKSLASH;
-\x5c) in the second byte fails because the second byte may
-accidentally escape the quoting character that follows.  Perl 5.8.1
-or later fixes this problem.
-
-=item tr//
-
-C<tr//> was overlooked by Perl 5 porters when they released perl 5.8.0
-See the section below for details.
-
-=item DATA pseudo-filehandle
-
-Another feature that was overlooked was C<DATA>.
-
 =back
-
-=head1 USAGE
-
-=over 4
-
-=item use encoding [I<ENCNAME>] ;
-
-Sets the script encoding to I<ENCNAME>.  And unless ${^UNICODE}
-exists and non-zero, PerlIO layers of STDIN and STDOUT are set to
-":encoding(I<ENCNAME>)".
-
-Note that STDERR WILL NOT be changed.
-
-Also note that non-STD file handles remain unaffected.  Use C<use
-open> or C<binmode> to change layers of those.
-
-If no encoding is specified, the environment variable L<PERL_ENCODING>
-is consulted.  If no encoding can be found, the error C<Unknown encoding
-'I<ENCNAME>'> will be thrown.
-
-=item use encoding I<ENCNAME> [ STDIN =E<gt> I<ENCNAME_IN> ...] ;
-
-You can also individually set encodings of STDIN and STDOUT via the
-C<< STDIN => I<ENCNAME> >> form.  In this case, you cannot omit the
-first I<ENCNAME>.  C<< STDIN => undef >> turns the IO transcoding
-completely off.
-
-When ${^UNICODE} exists and non-zero, these options will completely
-ignored.  ${^UNICODE} is a variable introduced in perl 5.8.1.  See
-L<perlrun> see L<perlvar/"${^UNICODE}"> and L<perlrun/"-C"> for
-details (perl 5.8.1 and later).
-
-=item use encoding I<ENCNAME> Filter=E<gt>1;
-
-This turns the encoding pragma into a source filter.  While the
-default approach just decodes interpolated literals (in qq() and
-qr()), this will apply a source filter to the entire source code.  See
-L</"The Filter Option"> below for details.
-
-=item no encoding;
-
-Unsets the script encoding. The layers of STDIN, STDOUT are
-reset to ":raw" (the default unprocessed raw stream of bytes).
-
-=back
-
-=head1 The Filter Option
-
-The magic of C<use encoding> is not applied to the names of
-identifiers.  In order to make C<${"\x{4eba}"}++> ($human++, where human
-is a single Han ideograph) work, you still need to write your script
-in UTF-8 -- or use a source filter.  That's what 'Filter=>1' does.
-
-What does this mean?  Your source code behaves as if it is written in
-UTF-8 with 'use utf8' in effect.  So even if your editor only supports
-Shift_JIS, for example, you can still try examples in Chapter 15 of
-C<Programming Perl, 3rd Ed.>.  For instance, you can use UTF-8
-identifiers.
-
-This option is significantly slower and (as of this writing) non-ASCII
-identifiers are not very stable WITHOUT this option and with the
-source code written in UTF-8.
-
-=head2 Filter-related changes at Encode version 1.87
-
-=over
-
-=item *
-
-The Filter option now sets STDIN and STDOUT like non-filter options.
-And C<< STDIN=>I<ENCODING> >> and C<< STDOUT=>I<ENCODING> >> work like
-non-filter version.
-
-=item *
-
-C<use utf8> is implicitly declared so you no longer have to C<use
-utf8> to C<${"\x{4eba}"}++>.
-
-=back
-
-=head1 CAVEATS
-
-=head2 NOT SCOPED
-
-The pragma is a per script, not a per block lexical.  Only the last
-C<use encoding> or C<no encoding> matters, and it affects
-B<the whole script>.  However, the <no encoding> pragma is supported and
-B<use encoding> can appear as many times as you want in a given script.
-The multiple use of this pragma is discouraged.
-
-By the same reason, the use this pragma inside modules is also
-discouraged (though not as strongly discouraged as the case above.
-See below).
-
-If you still have to write a module with this pragma, be very careful
-of the load order.  See the codes below;
-
-  # called module
-  package Module_IN_BAR;
-  use encoding "bar";
-  # stuff in "bar" encoding here
-  1;
-
-  # caller script
-  use encoding "foo"
-  use Module_IN_BAR;
-  # surprise! use encoding "bar" is in effect.
-
-The best way to avoid this oddity is to use this pragma RIGHT AFTER
-other modules are loaded.  i.e.
-
-  use Module_IN_BAR;
-  use encoding "foo";
 
 =head2 DO NOT MIX MULTIPLE ENCODINGS
 
 Notice that only literals (string or regular expression) having only
 legacy code points are affected: if you mix data like this
 
+    \x{100}\xDF
     \xDF\x{100}
 
 the data is assumed to be in (Latin 1 and) Unicode, not in your native
@@ -509,10 +504,70 @@ resort to \x{....} just to spell your name in a native encoding.
 So feel free to put your strings in your encoding in quotes and
 regexes.
 
-=head2 tr/// with ranges
+=head2 Prior to Perl v5.22
+
+The pragma was a per script, not a per block lexical.  Only the last
+C<use encoding> or C<no encoding> mattered, and it affected
+B<the whole script>.  However, the C<no encoding> pragma was supported and
+C<use encoding> could appear as many times as you want in a given script
+(though only the last was effective).
+
+Since the scope wasn't lexical, other modules' use of C<chr>, C<ord>, I<etc.>
+were affected.  This leads to spooky, incorrect action at a distance that is
+hard to debug.
+
+This means you would have to be very careful of the load order:
+
+  # called module
+  package Module_IN_BAR;
+  use encoding "bar";
+  # stuff in "bar" encoding here
+  1;
+
+  # caller script
+  use encoding "foo"
+  use Module_IN_BAR;
+  # surprise! use encoding "bar" is in effect.
+
+The best way to avoid this oddity is to use this pragma RIGHT AFTER
+other modules are loaded.  i.e.
+
+  use Module_IN_BAR;
+  use encoding "foo";
+
+=head2 Prior to Encode version 1.87
+
+=over
+
+=item *
+
+C<STDIN> and C<STDOUT> were not set under the filter option.
+And C<< STDIN=>I<ENCODING> >> and C<< STDOUT=>I<ENCODING> >> didn't work like
+non-filter version.
+
+=item *
+
+C<use utf8> wasn't implicitly declared so you have to C<use utf8> to do
+
+ ${"\x{4eba}"}++
+
+=back
+
+=head2 Prior to Perl v5.8.1
+
+=over
+
+=item "NON-EUC" doublebyte encodings
+
+Because perl needs to parse the script before applying this pragma, such
+encodings as Shift_JIS and Big-5 that may contain C<'\'> (BACKSLASH;
+C<\x5c>) in the second byte fail because the second byte may
+accidentally escape the quoting character that follows.
+
+=item C<tr///>
 
 The B<encoding> pragma works by decoding string literals in
-C<q//,qq//,qr//,qw///, qx//> and so forth.  In perl 5.8.0, this
+C<q//,qq//,qr//,qw///, qx//> and so forth.  In perl v5.8.0, this
 does not apply to C<tr///>.  Therefore,
 
   use encoding 'euc-jp';
@@ -537,25 +592,21 @@ Does not work as
 
 =back
 
-This counterintuitive behavior has been fixed in perl 5.8.1.
+This counterintuitive behavior has been fixed in perl v5.8.1.
 
-=head3 workaround to tr///;
-
-In perl 5.8.0, you can work around as follows;
+In perl v5.8.0, you can work around this as follows;
 
   use encoding 'euc-jp';
   #  ....
   eval qq{ \$kana =~ tr/\xA4\xA1-\xA4\xF3/\xA5\xA1-\xA5\xF3/ };
 
 Note the C<tr//> expression is surrounded by C<qq{}>.  The idea behind
-is the same as classic idiom that makes C<tr///> 'interpolate'.
+this is the same as the classic idiom that makes C<tr///> 'interpolate':
 
    tr/$from/$to/;            # wrong!
    eval qq{ tr/$from/$to/ }; # workaround.
 
-Nevertheless, in case of B<encoding> pragma even C<q//> is affected so
-C<tr///> not being decoded was obviously against the will of Perl5
-Porters so it has been fixed in Perl 5.8.1 or later.
+=back
 
 =head1 EXAMPLE - Greekperl
 
@@ -590,9 +641,23 @@ Porters so it has been fixed in Perl 5.8.1 or later.
 
     print "zetta\n" if unpack("C", (pack("C", 0xdf))) == 0xdf;
 
-=head1 KNOWN PROBLEMS
+=head1 BUGS
 
 =over
+
+=item Thread safety
+
+C<use encoding ...> is not thread-safe (i.e., do not use in threaded
+applications).
+
+=item Can't be used by more than one module in a single program.
+
+Only one encoding is allowed.  If you combine modules in a program that have
+different encodings, only one will be actually used.
+
+=item Other modules using C<STDIN> and C<STDOUT> get the encoded stream
+
+They may be expecting something completely different.
 
 =item literals in regex that are longer than 127 bytes
 
@@ -603,13 +668,11 @@ recoding errors for regular expression literals longer than 127 bytes.
 =item EBCDIC
 
 The encoding pragma is not supported on EBCDIC platforms.
-(Porters who are willing and able to remove this limitation are
-welcome.)
 
-=item format
+=item C<format>
 
-This pragma doesn't work well with format because PerlIO does not
-get along very well with it.  When format contains non-ascii
+This pragma doesn't work well with C<format> because PerlIO does not
+get along very well with it.  When C<format> contains non-ASCII
 characters it prints funny or gets "wide character warnings".
 To understand it, try the code below.
 
@@ -628,56 +691,19 @@ To understand it, try the code below.
 Without binmode this happens to work but without binmode, print()
 fails instead of write().
 
-At any rate, the very use of format is questionable when it comes to
+At any rate, the very use of C<format> is questionable when it comes to
 unicode characters since you have to consider such things as character
 width (i.e. double-width for ideographs) and directions (i.e. BIDI for
 Arabic and Hebrew).
 
-=item Thread safety
-
-C<use encoding ...> is not thread-safe (i.e., do not use in threaded
-applications).
+=item See also L</CAVEATS>
 
 =back
-
-=head2 The Logic of :locale
-
-The logic of C<:locale> is as follows:
-
-=over 4
-
-=item 1.
-
-If the platform supports the langinfo(CODESET) interface, the codeset
-returned is used as the default encoding for the open pragma.
-
-=item 2.
-
-If 1. didn't work but we are under the locale pragma, the environment
-variables LC_ALL and LANG (in that order) are matched for encodings
-(the part after C<.>, if any), and if any found, that is used
-as the default encoding for the open pragma.
-
-=item 3.
-
-If 1. and 2. didn't work, the environment variables LC_ALL and LANG
-(in that order) are matched for anything looking like UTF-8, and if
-any found, C<:utf8> is used as the default encoding for the open
-pragma.
-
-=back
-
-If your locale environment variables (LC_ALL, LC_CTYPE, LANG)
-contain the strings 'UTF-8' or 'UTF8' (case-insensitive matching),
-the default encoding of your STDIN, STDOUT, and STDERR, and of
-B<any subsequent file open>, is UTF-8.
 
 =head1 HISTORY
 
-This pragma first appeared in Perl 5.8.0.  For features that require
-5.8.1 and better, see above.
-
-The C<:locale> subpragma was implemented in 2.01, or Perl 5.8.6.
+This pragma first appeared in Perl v5.8.0.  It has been enhanced in later
+releases as specified above.
 
 =head1 SEE ALSO
 

@@ -28,7 +28,7 @@ my $result = $thr->join();
 ok(! defined($result), 'thread died');
 
 # Check error
-like($thr->error(), q/Can't locate object method/, 'thread error');
+like($thr->error(), qr/^Can't locate object method/s, 'thread error');
 
 
 # Create a thread that 'die's with an object

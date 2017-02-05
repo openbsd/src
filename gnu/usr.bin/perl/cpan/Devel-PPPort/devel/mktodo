@@ -35,7 +35,7 @@ my $outdir = 'parts/todo';
 
 my @perls = sort { $b->{version} <=> $a->{version} }
             map { { version => `$_ -e 'printf "%.6f", \$]'`, path => $_ } }
-            ($opt{blead}, glob "$opt{install}/*/bin/perl5.*");
+            ($opt{blead}, grep !/-RC\d+/, glob "$opt{install}/*/bin/perl5.*");
 
 if (exists $opt{'blead-version'}) {
   $perls[0]{version} = $opt{'blead-version'};

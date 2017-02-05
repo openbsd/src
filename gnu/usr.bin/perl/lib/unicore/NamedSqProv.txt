@@ -1,29 +1,33 @@
-# NamedSequencesProv-6.3.0.txt
-# Date: 2013-01-02, 08:37:00 GMT [KW]
+# NamedSequencesProv-8.0.0.txt
+# Date: 2015-05-11, 23:40:00 GMT [KW, LI]
 #
-# Unicode Character Database
-# Copyright (c) 1991-2013 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
+# Provisional Unicode Named Character Sequences
 #
-# Provisional Named Sequences
-# Note: This data file contains those named
+# Note: This data file contains those named character
 #   sequences which have been designated to be provisional,
 #   rather than fully approved.
+#
+# Copyright (c) 1991-2015 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Format:
 # Name of Sequence; Code Point Sequence for USI
 #
-# Code point sequences in the UCD use spaces as delimiters.
-# The corresponding format for a USI in ISO/IEC 10646 uses
-# comma delimitation and angle brackets. Thus, a named sequence
-# of the form:
+# Code point sequences in the Unicode Character Database
+# use spaces as delimiters. The corresponding format for a
+# UCS Sequence Identifier (USI) in ISO/IEC 10646 uses
+# comma delimitation and angle brackets. Thus, a Unicode
+# named character sequence of the form:
 #
 # EXAMPLE NAME;1000 1001 1002
 #
-# in this data file, would correspond to a 10646 USI as follows:
+# in this data file, would correspond to an ISO/IEC 10646 USI
+# as follows:
 #
 # <1000, 1001, 1002> 
+#
+# For more information, see UAX #34: Unicode Named Character
+# Sequences, at http://www.unicode.org/unicode/reports/tr34/
 #
 # Note: The order of entries in this file is not significant.
 # However, entries are generally in script order corresponding
@@ -34,7 +38,21 @@
 
 # Provisional entries for NamedSequences.txt.
 
-# There are currently no provisional named sequences.
+# Named keycap sequences for telephone keypad (used for emoji)
+# Added to provisional named sequences, 2015-05-05
+
+KEYCAP NUMBER SIGN;0023 20E3
+KEYCAP ASTERISK;002A 20E3
+KEYCAP DIGIT ZERO;0030 20E3
+KEYCAP DIGIT ONE;0031 20E3
+KEYCAP DIGIT TWO;0032 20E3
+KEYCAP DIGIT THREE;0033 20E3
+KEYCAP DIGIT FOUR;0034 20E3
+KEYCAP DIGIT FIVE;0035 20E3
+KEYCAP DIGIT SIX;0036 20E3
+KEYCAP DIGIT SEVEN;0037 20E3
+KEYCAP DIGIT EIGHT;0038 20E3
+KEYCAP DIGIT NINE;0039 20E3
 
 # ================================================
 

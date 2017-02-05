@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..93\n"; } # 53 + 4 x @Versions
+BEGIN { $| = 1; print "1..106\n"; } # 62 + 4 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -39,9 +39,12 @@ my $Collator = Unicode::Collate->new(
   UCA_Version => 24,
 );
 
-ok($Collator->viewSortKey(""), "[| | |]");
+ok($Collator->viewSortKey(""),		'[| | |]');
+ok($Collator->viewSortKey("\0"),	'[| | |]');
+ok($Collator->viewSortKey("\x{200B}"),	'[| | |]');
 
-ok($Collator->viewSortKey("A"), "[0A15 | 0020 | 0008 | FFFF]");
+ok($Collator->viewSortKey("A"), '[0A15 | 0020 | 0008 | FFFF]');
+ok($Collator->viewSortKey('a'), '[0A15 | 0020 | 0002 | FFFF]');
 
 ok($Collator->viewSortKey("ABC"),
     "[0A15 0A29 0A3D | 0020 0020 0020 | 0008 0008 0008 | FFFF FFFF FFFF]");
@@ -53,6 +56,15 @@ ok($Collator->viewSortKey("!\x{300}"), "[| | | 024B]");
 
 ok($Collator->viewSortKey("\x{300}"), "[| 0035 | 0002 | FFFF]");
 
+ok($Collator->viewSortKey("\x{304C}"),
+    '[1926 | 0020 013D | 000E 0002 | FFFF FFFF]');
+
+ok($Collator->viewSortKey("\x{4E00}"),
+    '[FB40 CE00 | 0020 | 0002 | FFFF FFFF]');
+
+ok($Collator->viewSortKey("\x{100000}"),
+    '[FBE0 8000 | 0020 | 0002 | FFFF FFFF]');
+
 $Collator->change(level => 3);
 ok($Collator->viewSortKey("A"), "[0A15 | 0020 | 0008 |]");
 
@@ -62,7 +74,7 @@ ok($Collator->viewSortKey("A"), "[0A15 | 0020 | |]");
 $Collator->change(level => 1);
 ok($Collator->viewSortKey("A"), "[0A15 | | |]");
 
-##### 10
+##### 16
 
 $Collator->change(level => 4, UCA_Version => 8);
 
@@ -80,6 +92,15 @@ ok($Collator->viewSortKey("!\x{300}"), "[|0035|0002|024B FFFF]");
 
 ok($Collator->viewSortKey("\x{300}"), "[|0035|0002|FFFF]");
 
+ok($Collator->viewSortKey("\x{304C}"),
+    '[1926|0020 013D|000E 0002|FFFF FFFF]');
+
+ok($Collator->viewSortKey("\x{4E00}"),
+    '[4E00|0020|0002|FFFF]');
+
+ok($Collator->viewSortKey("\x{100000}"),
+    '[FFA0 8000|0002|0001|FFFF FFFF]');
+
 $Collator->change(level => 3);
 ok($Collator->viewSortKey("A"), "[0A15|0020|0008|]");
 
@@ -89,7 +110,7 @@ ok($Collator->viewSortKey("A"), "[0A15|0020||]");
 $Collator->change(level => 1);
 ok($Collator->viewSortKey("A"), "[0A15|||]");
 
-##### 19
+##### 28
 
 $Collator->change(level => 3, UCA_Version => 9);
 ok($Collator->viewSortKey("A\x{300}z\x{301}"),
@@ -114,6 +135,8 @@ ok($Collator->viewSortKey("\x{300}\x{301}\x{302}\x{303}"),
 $Collator->change(backwards => []);
 ok($Collator->viewSortKey("A\x{300}z\x{301}"),
     "[0A15 0C13 | 0020 0035 0020 0032 | 0008 0002 0002 0002 |]");
+
+##### 34
 
 $Collator->change(level => 4);
 
@@ -158,7 +181,7 @@ ok($Collator->viewSortKey("?!."), '[| | | 024E 024B 0255]');
 
 $Collator->change(%origVar);
 
-##### 37
+##### 46
 
 # Level 3 weight
 
@@ -199,7 +222,7 @@ ok($Collator->viewSortKey("a\x{3042}"),
 ok($Collator->viewSortKey("A\x{30A2}"),
     '[0A15 1921 | 0020 0020 | 0008 0011 | FFFF FFFF]');
 
-##### 47
+##### 56
 
 our $el = Unicode::Collate->new(
   entry => <<'ENTRY',
@@ -243,9 +266,9 @@ ok($el->viewSortKey("l\x{FF4C}\x{217C}\x{2113}\x{24DB}"),
 ok($el->viewSortKey("L\x{FF2C}\x{216C}\x{2112}\x{24C1}"),
     "[$el12 | 0008 0009 000A 000B 000C | FFFF FFFF FFFF FFFF FFFF]");
 
-##### 53
+##### 62
 
-my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28);
+my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30);
 
 for my $v (@Versions) {
     $Collator->change(UCA_Version => $v);

@@ -189,7 +189,7 @@ Values are magical in numeric context: 1 if the line is breakable, 0 if not.
 The scalar C<${"_<$filename"}> simply contains the string C<$filename>.
 This is also the case for evaluated strings that contain subroutines, or
 which are currently being executed.  The $filename for C<eval>ed strings looks
-like C<(eval 34).
+like C<(eval 34)>.
 
 =head1 DEBUGGER STARTUP
 
@@ -512,18 +512,23 @@ package DB;
 
 use strict;
 
+use Cwd ();
+
+my $_initial_cwd;
+
 BEGIN {eval 'use IO::Handle'}; # Needed for flush only? breaks under miniperl
 
 BEGIN {
     require feature;
     $^V =~ /^v(\d+\.\d+)/;
     feature->import(":$1");
+    $_initial_cwd = Cwd::getcwd();
 }
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
 use vars qw($VERSION $header);
 
-$VERSION = '1.44_02';
+$VERSION = '1.49_05';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -1332,6 +1337,9 @@ if (not defined &get_fork_TTY)       # only if no routine exists
     {
         *get_fork_TTY = \&xterm_get_fork_TTY;    # use the xterm version
     }
+    elsif ( $ENV{TMUX} ) {
+        *get_fork_TTY = \&tmux_get_fork_TTY;
+    }
     elsif ( $^O eq 'os2' ) {                     # If this is OS/2,
         *get_fork_TTY = \&os2_get_fork_TTY;      # use the OS/2 version
     }
@@ -1540,14 +1548,27 @@ We then determine what the console should be on various systems:
         $console = "con";
     }
 
+=item * AmigaOS - use C<CONSOLE:>.
+
+=cut
+
+    elsif ( $^O eq 'amigaos' ) {
+        $console = "CONSOLE:";
+    }
+
 =item * VMS - use C<sys$command>.
 
 =cut
 
-    else {
+    elsif ($^O eq 'VMS') {
+        $console = 'sys$command';
+    }
 
-        # everything else is ...
-        $console = "sys\$command";
+# Keep this last.
+
+    else {
+        _db_warn("Can't figure out your console, using stdin");
+        undef $console;
     }
 
 =pod
@@ -1953,7 +1974,7 @@ sub _DB__handle_y_command {
         my @vars = split( ' ', $match_vars || '' );
 
         # Find the pad.
-        my $h = eval { PadWalker::peek_my( ( $match_level || 0 ) + 1 ) };
+        my $h = eval { PadWalker::peek_my( ( $match_level || 0 ) + 2 ) };
 
         # Oops. Can't find it.
         if (my $Err = $@) {
@@ -2261,6 +2282,13 @@ sub _DB__handle_restart_and_rerun_commands {
     # R - restart execution.
     # rerun - controlled restart execution.
     if ($cmd_cmd eq 'rerun' or $cmd_params eq '') {
+
+        # Change directory to the initial current working directory on
+        # the script startup, so if the debugged program changed the
+        # directory, then we will still be able to find the path to the
+        # the program. (perl 5 RT #121509 ).
+        chdir ($_initial_cwd);
+
         my @args = ($cmd_cmd eq 'R' ? restart() : rerun($cmd_params));
 
         # Close all non-system fds for a clean restart.  A more
@@ -2478,7 +2506,11 @@ EOP
 # 'm' is method.
 # 'v' is the value (i.e: method name or subroutine ref).
 # 's' is subroutine.
-my %cmd_lookup =
+my %cmd_lookup;
+
+BEGIN
+{
+    %cmd_lookup =
 (
     '-' => { t => 'm', v => '_handle_dash_command', },
     '.' => { t => 's', v => \&_DB__handle_dot_command, },
@@ -2511,6 +2543,7 @@ my %cmd_lookup =
     (map { $_ => {t => 'm', v => '_handle_cmd_wrapper_commands' }, }
         qw(a A b B e E h i l L M o O v w W)),
 );
+};
 
 sub DB {
 
@@ -3307,6 +3340,9 @@ B<h q>, B<h R> or B<h o> to get additional info.
 EOP
 
         # Set the DB::eval context appropriately.
+        # At program termination disable any user actions.
+        $DB::action = undef;
+
         $DB::package     = 'main';
         $DB::usercontext = DB::_calc_usercontext($DB::package);
     } ## end elsif ($package eq 'DB::fake')
@@ -6529,11 +6565,10 @@ sub _dump_trace_calc_saved_single_arg
         s/(.*)/'$1'/s
         unless /^(?: -?[\d.]+ | \*[\w:]* )$/x;
 
-        # Turn high-bit characters into meta-whatever.
-        s/([\200-\377])/sprintf("M-%c",ord($1)&0177)/eg;
-
-        # Turn control characters into ^-whatever.
-        s/([\0-\37\177])/sprintf("^%c",ord($1)^64)/eg;
+        # Turn high-bit characters into meta-whatever, and controls into like
+        # '^D'.
+        require 'meta_notation.pm';
+        $_ = _meta_notation($_) if /[[:^print:]]/a;
 
         return $_;
     }
@@ -6726,24 +6761,24 @@ sub _db_system {
 
     # We save, change, then restore STDIN and STDOUT to avoid fork() since
     # some non-Unix systems can do system() but have problems with fork().
-    open( SAVEIN,  "<&STDIN" )  || db_warn("Can't save STDIN");
-    open( SAVEOUT, ">&STDOUT" ) || db_warn("Can't save STDOUT");
-    open( STDIN,   "<&IN" )     || db_warn("Can't redirect STDIN");
-    open( STDOUT,  ">&OUT" )    || db_warn("Can't redirect STDOUT");
+    open( SAVEIN,  "<&STDIN" )  || _db_warn("Can't save STDIN");
+    open( SAVEOUT, ">&STDOUT" ) || _db_warn("Can't save STDOUT");
+    open( STDIN,   "<&IN" )     || _db_warn("Can't redirect STDIN");
+    open( STDOUT,  ">&OUT" )    || _db_warn("Can't redirect STDOUT");
 
     # XXX: using csh or tcsh destroys sigint retvals!
     system(@_);
-    open( STDIN,  "<&SAVEIN" )  || db_warn("Can't restore STDIN");
-    open( STDOUT, ">&SAVEOUT" ) || db_warn("Can't restore STDOUT");
+    open( STDIN,  "<&SAVEIN" )  || _db_warn("Can't restore STDIN");
+    open( STDOUT, ">&SAVEOUT" ) || _db_warn("Can't restore STDOUT");
     close(SAVEIN);
     close(SAVEOUT);
 
     # most of the $? crud was coping with broken cshisms
     if ( $? >> 8 ) {
-        db_warn( "(Command exited ", ( $? >> 8 ), ")\n" );
+        _db_warn( "(Command exited ", ( $? >> 8 ), ")\n" );
     }
     elsif ($?) {
-        db_warn(
+        _db_warn(
             "(Command died of SIG#",
             ( $? & 127 ),
             ( ( $? & 128 ) ? " -- core dumped" : "" ),
@@ -7078,6 +7113,45 @@ sub macosx_get_fork_TTY
     close($pipe);
     return unless defined($tty) && $tty =~ m(^/dev/);
     chomp $tty;
+    return $tty;
+}
+
+=head3 C<tmux_get_fork_TTY>
+
+Creates a split window for subprocesses when a process running under the
+perl debugger in Tmux forks.
+
+=cut
+
+sub tmux_get_fork_TTY {
+    return unless $ENV{TMUX};
+
+    my $pipe;
+
+    my $status = open $pipe, '-|', 'tmux', 'split-window',
+        '-P', '-F', '#{pane_tty}', 'sleep 100000';
+
+    if ( !$status ) {
+        return;
+    }
+
+    my $tty = <$pipe>;
+    close $pipe;
+
+    if ( $tty ) {
+        chomp $tty;
+
+        if ( !defined $term ) {
+            require Term::ReadLine;
+            if ( !$rl ) {
+                $term = Term::ReadLine::Stub->new( 'perldb', $IN, $OUT );
+            }
+            else {
+                $term = Term::ReadLine->new( 'perldb', $IN, $OUT );
+            }
+        }
+    }
+
     return $tty;
 }
 
@@ -7523,7 +7597,7 @@ variables during a restart.
 Set_list packages up items to be stored in a set of environment variables
 (VAR_n, containing the number of items, and VAR_0, VAR_1, etc., containing
 the values). Values outside the standard ASCII charset are stored by encoding
-then as hexadecimal values.
+them as hexadecimal values.
 
 =cut
 
@@ -7539,7 +7613,9 @@ sub set_list {
     for my $i ( 0 .. $#list ) {
         $val = $list[$i];
         $val =~ s/\\/\\\\/g;
-        $val =~ s/([\0-\37\177\200-\377])/"\\0x" . unpack('H2',$1)/eg;
+        no warnings 'experimental::regex_sets';
+        $val =~ s/ ( (?[ [\000-\xFF] & [:^print:] ]) ) /
+                                                "\\0x" . unpack('H2',$1)/xaeg;
         $ENV{"${stem}_$i"} = $val;
     } ## end for $i (0 .. $#list)
 } ## end sub set_list
@@ -8379,7 +8455,7 @@ sub print_help {
     # wide.  If it's wider than that, an extra space will be added.
     $help_str =~ s{
         ^                       # only matters at start of line
-          ( \040{4} | \t )*     # some subcommands are indented
+          ( \ {4} | \t )*       # some subcommands are indented
           ( < ?                 # so <CR> works
             [BI] < [^\t\n] + )  # find an eeevil ornament
           ( \t+ )               # original separation, discarded

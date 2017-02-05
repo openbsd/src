@@ -2,7 +2,7 @@ package Hints_pod_examples;
 use strict;
 use warnings;
 
-use base qw(Exporter);
+use Exporter 5.57 'import';
 
 our %DOES = ( 'autodie::hints::provider' => 1 );
 

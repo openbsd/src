@@ -49,3 +49,12 @@ use HTTP::Tiny;
     is_deeply($handle->read_header_lines, $headers, "roundtrip header lines");
 }
 
+{
+    my $fh      = tmpfile();
+    my $handle  = HTTP::Tiny::Handle->new(fh => $fh);
+    my $headers = { foo => ['Foo', 'Baz'], bar => 'Bar', baz => '' };
+    $handle->write_header_lines($headers);
+    rewind($fh);
+    is_deeply($handle->read_header_lines, $headers, "roundtrip header lines");
+}
+

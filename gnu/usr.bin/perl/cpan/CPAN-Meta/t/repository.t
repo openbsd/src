@@ -225,3 +225,4 @@ delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
   );
 }
 done_testing;
+# vim: ts=2 sts=2 sw=2 et :

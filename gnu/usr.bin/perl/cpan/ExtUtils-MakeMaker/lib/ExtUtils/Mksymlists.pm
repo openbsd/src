@@ -10,7 +10,7 @@ use Config;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(&Mksymlists);
-our $VERSION = '6.98_01';
+our $VERSION = '7.10_02';
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -141,19 +141,24 @@ sub _write_win32 {
     print $def "EXPORTS\n  ";
     my @syms;
     # Export public symbols both with and without underscores to
-    # ensure compatibility between DLLs from different compilers
+    # ensure compatibility between DLLs from Borland C and Visual C
     # NOTE: DynaLoader itself only uses the names without underscores,
     # so this is only to cover the case when the extension DLL may be
     # linked to directly from C. GSAR 97-07-10
-    if ($Config::Config{'cc'} =~ /^bcc/i) {
-        for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}}) {
-            push @syms, "_$_", "$_ = _$_";
+
+    #bcc dropped in 5.16, so dont create useless extra symbols for export table
+    unless($] >= 5.016) {
+        if ($Config::Config{'cc'} =~ /^bcc/i) {
+            push @syms, "_$_", "$_ = _$_"
+                for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}});
         }
-    }
-    else {
-        for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}}) {
-            push @syms, "$_", "_$_ = $_";
+        else {
+            push @syms, "$_", "_$_ = $_"
+                for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}});
         }
+    } else {
+        push @syms, "$_"
+            for (@{$data->{DL_VARS}}, @{$data->{FUNCLIST}});
     }
     print $def join("\n  ",@syms, "\n") if @syms;
     _print_imports($def, $data);

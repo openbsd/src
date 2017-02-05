@@ -2,7 +2,7 @@ package ExtUtils::Typemaps::OutputMap;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.24_01';
+our $VERSION = '3.31';
 
 =head1 NAME
 
@@ -108,7 +108,7 @@ eligible for using the C<TARG>-related macros to optimize this.
 Thus the name of the method: C<targetable>.
 
 If this optimization is applicable, C<ExtUtils::ParseXS> will
-emit a C<dXSTARG;> definition at the start of the generate XSUB code,
+emit a C<dXSTARG;> definition at the start of the generated XSUB code,
 and type (see below) dependent code to set C<TARG> and push it on
 the stack at the end of the generated XSUB code.
 

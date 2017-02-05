@@ -9,20 +9,20 @@ Helloworld
 ########
 # Standard feature bundle, no 5.11
 use feature ":5.10";
-say ord uc chr 233;
+say utf8::native_to_unicode(ord uc chr utf8::unicode_to_native(233));
 EXPECT
 233
 ########
 # Standard feature bundle, 5.11
 use feature ":5.11";
-say ord uc chr 233;
+say utf8::native_to_unicode(ord uc chr utf8::unicode_to_native(233));
 EXPECT
 201
 ########
 # Standard feature bundle, 5.11
 use feature ":5.11";
 use utf8;
-say ord "\ué"; # this is utf8
+say utf8::native_to_unicode(ord "\ué"); # this is utf8
 EXPECT
 201
 ########

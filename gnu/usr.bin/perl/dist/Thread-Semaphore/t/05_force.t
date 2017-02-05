@@ -30,7 +30,7 @@ ok($st, 'New Semaphore');
 
 my $token :shared = 0;
 
-threads->create(sub {
+my $thread = threads->create(sub {
     $st->down_force(2);
     is($token++, 0, 'Thread got semaphore');
     $sm->up();
@@ -38,7 +38,7 @@ threads->create(sub {
     $st->down();
     is($token++, 3, 'Thread done');
     $sm->up();
-})->detach();
+});
 
 $sm->down();
 is($token++, 1, 'Main has semaphore');
@@ -53,6 +53,8 @@ is($token, 4, 'Main re-got semaphore');
 
 ok(1, 'Main done');
 threads::yield();
+
+$thread->join;
 
 exit(0);
 

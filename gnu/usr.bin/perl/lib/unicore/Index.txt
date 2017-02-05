@@ -129,12 +129,14 @@ AEGEAN WORD SEPARATOR LINE	10100
 AESCULAPIUS, STAFF OF	2695
 AFGHANI SIGN	060B
 African Letters for Clicks	01C0
+Ahom	11700
 AIN, LATIN LETTER	1D25
 Ainu, Katakana Extensions for	31F0
 AIRPLANE	2708
 AKTIESELSKAB	214D
 AL-LAKUNA, SINHALA SIGN	0DCA
 ALARM CLOCK	23F0
+Albanian, Caucasian	10530
 Alchemical Symbols	1F700
 aldus leaf	2766
 ALEF SYMBOL	2135
@@ -158,7 +160,9 @@ ALTERNATIVE KEY SYMBOL	2387
 ALVEOLAR CLICK, LATIN LETTER	01C2
 always	25FB
 AMPERSAND	0026
+Ampersand and Ligature-et Ornaments	1F670
 AMPERSAND, TURNED	214B
+Anatolian Hieroglyphs	14400
 ANCHOR	2693
 ANCHOR, INTERLINEAR ANNOTATION	FFF9
 AND, CURLY LOGICAL	22CF
@@ -240,6 +244,7 @@ APPROACHES THE LIMIT	2250
 APPROXIMATELY EQUAL TO	2245
 approximately equal to	2257
 AQUARIUS	2652
+Arabian, Old North	10A80
 Arabian, Old South	10A60
 Arabic	0600
 Arabic Alphabet	0621
@@ -355,6 +360,7 @@ Arrows, User Interface	1F500
 Arrows, Words with	1F519
 Arrows-A Supplement	27F0
 Arrows-B, Supplemental	2900
+Arrows-C, Supplemental	1F800
 ASCENDING NODE	260A
 ASCII C0 Control Codes	0000
 ASCII Digits	0030
@@ -371,6 +377,7 @@ ASTERISK OPERATOR	2217
 ASTERISK OPERATOR, CIRCLED	229B
 ASTERISK, LOW	204E
 Asterisks	2722
+Asterisks	1F7AF
 ASTERISKS ALIGNED VERTICALLY, TWO	2051
 ASTERISM	2042
 Astrological Signs	26B3
@@ -422,6 +429,7 @@ Balinese Musical Symbols	1B61
 BALLOT BOX	2610
 BALLOT BOX WITH CHECK	2611
 BALLOT BOX WITH X	2612
+Ballot Symbols	1F5F3
 BALLOT X	2717
 BALLOT X, HEAVY	2718
 Bamum	A6A0
@@ -439,6 +447,7 @@ barred o, latin capital letter	019F
 BARRED O, LATIN SMALL LETTER	0275
 base	22A5
 BASEBALL	26BE
+Bassa Vah	16AD0
 Batak	1BC0
 batsaganchakan nshan, armenian	055C
 BATTERY	1F50B
@@ -581,6 +590,7 @@ Bold Mathematical Symbols, Sans-serif	1D5D4
 Bold Script Mathematical Symbols	1D4D0
 bom	FEFF
 BOMB	1F4A3
+BOOK	1F56E
 Books	1F4D5
 Bopomofo Extensions, Chinese	31A0
 Bopomofo, Chinese	3100
@@ -679,9 +689,12 @@ BRIDGE BELOW, COMBINING INVERTED	033A
 briffits	1F4A8
 BROKEN BAR	00A6
 broken vertical bar	00A6
+Bubble Symbols, Speech and Thought	1F5E8
+Bud Ornaments, Pointing	1F660
 BUG	1F41B
 Buginese	1A00
 Buhid	1740
+Building and Map Symbols	1F3D4
 Building and Map Symbols	1F3E0
 BULLET	2022
 BULLET OPERATOR	2219
@@ -693,6 +706,7 @@ bullet, tainome japanese	25C9
 BULLET, TRIANGULAR	2023
 BULLET, WHITE	25E6
 BULLSEYE	25CE
+bullseye	1F78B
 bullseye, latin letter	0298
 buried symbol	26B0
 Burmese	1000
@@ -735,6 +749,7 @@ CANCEL CHARACTER	0094
 CANCEL TAG	E007F
 CANCEL, SYMBOL FOR	2418
 CANCELLATION MARK, LAO	0ECC
+CANCELLATION X	1F5D9
 CANCER	264B
 CANDRABINDU, COMBINING	0310
 CANDRABINDU, DEVANAGARI SIGN	0901
@@ -747,9 +762,11 @@ Capital Letters, Cyrillic	0400
 Capital Letters, Georgian	10A0
 Capital Letters, Greek	0391
 Capital Letters, Latin	0041
+CAPITULUM	2E3F
 CAPRICORN	2651
 caps lock	21EA
 caps lock	21EC
+caps lock	2BB8
 CAR SLIDING	26D0
 CAR, DISABLED	26CD
 Card Suits, Playing	2660
@@ -773,6 +790,7 @@ CASTLE	26EB
 CAT	1F408
 CAT FACE	1F431
 Cat Faces	1F638
+caution	1F6C6
 CAUTION SIGN	2621
 cd	1F4BF
 CEDI SIGN	20B5
@@ -808,8 +826,11 @@ CHECK MARK	2713
 CHECK MARK, HEAVY	2714
 CHECK MARK, NOT	237B
 CHECK, BALLOT BOX WITH	2611
+CHECKER BOARD	1F67E
 Checkers, Symbols for Draughts and	26C0
+CHEESE WEDGE	1F9C0
 Cherokee	13A0
+Cherokee Supplement	AB70
 Chess Symbols	2654
 Chess Symbols, Japanese	2616
 chevron bracket, left	27EA
@@ -829,6 +850,7 @@ chinese fourth tone, mandarin	02CB
 chinese second tone, mandarin	02CA
 chinese third tone, mandarin	02C7
 Chinese, Corner Tone Marks for	A700
+CHIPMUNK	1F43F
 choice, dijkstra	2AFE
 choice, n-ary dijkstra	2AFF
 CHRISTMAS TREE	1F384
@@ -908,6 +930,7 @@ CJK Unified Ideographs Extension A	3400
 CJK Unified Ideographs Extension B	20000
 CJK Unified Ideographs Extension C	2A700
 CJK Unified Ideographs Extension D	2B740
+CJK Unified Ideographs Extension E	2B820
 CLAPPING HANDS SIGN	1F44F
 claudian antisigma	2183
 claudian digamma inversum	2132
@@ -988,6 +1011,7 @@ COMBINING CONJOINING MACRON	FE26
 combining counterclockwise arrow above	20D4
 combining counterclockwise ring overlay	20DA
 Combining Diacritical Marks	0300
+Combining Diacritical Marks Extended	1AB0
 Combining Diacritical Marks for Symbols	20D0
 COMBINING DIAERESIS	0308
 COMBINING DIAERESIS BELOW	0324
@@ -1031,6 +1055,7 @@ COMBINING GREEK PERISPOMENI	0342
 COMBINING GREEK YPOGEGRAMMENI	0345
 combining hacek	030C
 Combining Half Marks	FE20
+Combining Half Marks Below	FE27
 COMBINING HOMOTHETIC ABOVE	034B
 COMBINING HOOK ABOVE	0309
 COMBINING HORN	031B
@@ -1133,12 +1158,14 @@ COMMA, MODIFIER LETTER REVERSED	02BD
 COMMA, MODIFIER LETTER TURNED	02BB
 COMMA, MONGOLIAN	1802
 COMMA, MONGOLIAN MANCHU	1808
+COMMA, REVERSED	2E41
 command key	2318
 COMMAND, APPLICATION PROGRAM	009F
 COMMAND, OPERATING SYSTEM	009D
 COMMERCIAL AT	0040
 COMMERCIAL MINUS SIGN	2052
 Communication Symbols	1F4DD
+Communication Symbols	1F57B
 compact disc	1F4BF
 compass	263C
 Compatibility and Specials Area	F900
@@ -1156,6 +1183,7 @@ Components, Form and Chart	2500
 composite function	2218
 composition circle, jis	20DD
 COMPOSITION SYMBOL	2384
+Computer Component Symbols	1F5A5
 concatenation, sequence	2040
 CONICAL TAPER	2332
 CONJOINING MACRON, COMBINING	FE26
@@ -1193,6 +1221,7 @@ Controls, Bidirectional Format	202A
 Controls, Mongolian Format	180B
 coproduct sign	2210
 COPRODUCT, N-ARY	2210
+Coptic Epact Numbers	102E0
 Coptic Letters Derived from Demotic	03E2
 Coptic, Bohairic	2C80
 Coptic, Continuous Macrons for	FE24
@@ -1216,6 +1245,7 @@ COUNTERSINK	2335
 COW	1F404
 COW FACE	1F42E
 cr	000D
+CRAB	1F980
 CREDIT SIGN, TAMIL	0BF7
 cremated symbol	26B1
 CRESCENT MOON	1F319
@@ -1233,14 +1263,17 @@ cross ratio	211E
 cross, constantine's	2627
 CROSS, DOTTED	205C
 CROSS, EAST SYRIAC	2671
+CROSS, HEAVY LATIN	1F547
 CROSS, LATIN	271D
 cross, long	2020
 CROSS, MALTESE	2720
 CROSS, ORTHODOX	2626
 cross, st. andrew's	2613
 CROSS, WEST SYRIAC	2670
+CROSS, WHITE LATIN	1F546
 CROSSED SWORDS	2694
 Crosses	2719
+Crosses, Greek	1F7A1
 crosshatch	0023
 crotchet	1D15F
 crotchet	2669
@@ -1251,6 +1284,7 @@ cubed	00B3
 Cultural Symbols	1F5FB
 Cuneiform	12000
 Cuneiform Numbers and Punctuation	12400
+Cuneiform, Early Dynastic	12480
 cup	222A
 cup of coffee	2615
 cup of tea	2615
@@ -1272,11 +1306,14 @@ CURRENCY SYMBOL RIEL, KHMER	17DB
 currency symbol, florin	0192
 Currency Symbols	20A0
 currency, argentinian former	20B3
+currency, armenian	058F
+currency, azerbaijani	20BC
 currency, brazilian	20A2
 currency, costa rican	20A1
 currency, el salvadorian	20A1
 currency, euro european	20AC
 currency, french	20A3
+currency, georgian	20BE
 currency, ghana	20B5
 currency, greek	20AF
 currency, indian	20A8
@@ -1289,6 +1326,7 @@ currency, mongolian	20AE
 currency, nigerian	20A6
 currency, paraguayan	20B2
 currency, phillipine	20B1
+currency, russian	20BD
 currency, spanish	20A7
 currency, turkish	20A4
 currency, ukrainian	20B4
@@ -1313,6 +1351,7 @@ Cyrillic Extensions	048A
 Cyrillic Historic Letters	0460
 Cyrillic Small Letters	0430
 Cyrillic Supplement	0500
+CYRILLIC TITLO LEFT HALF, COMBINING	FE2E
 d retroflex hook, latin small letter	0256
 D WITH CARON, LATIN SMALL LETTER	010F
 D WITH CEDILLA, LATIN SMALL LETTER	1E11
@@ -1367,6 +1406,7 @@ decimal point	002E
 decimal separator	002C
 DECIMAL SEPARATOR KEY SYMBOL	2396
 DECIMAL SEPARATOR, ARABIC	066B
+decrease	23F7
 deergh viram, devanagari	0965
 DEGREE CELSIUS	2103
 DEGREE FAHRENHEIT	2109
@@ -1437,6 +1477,7 @@ DIAMETER SIGN	2300
 DIAMOND OPERATOR	22C4
 DIAMOND, COMBINING ENCLOSING	20DF
 Diamonds	25C6
+Diamonds	1F797
 Diamonds and Lozenges	2B25
 Dice	2680
 Dictionary and Map Symbols	2690
@@ -1507,6 +1548,7 @@ Dingbats, Hazard	2620
 Dingbats, Heart	2763
 Dingbats, Miscellaneous	2600
 Dingbats, Music	2669
+Dingbats, Ornamental	1F650
 Dingbats, Pencil	270E
 Dingbats, Pointing Index Finger	261A
 Dingbats, Quotation Mark	275B
@@ -1517,6 +1559,7 @@ Dingbats, Vertical Bar	2758
 Dingbats, Warning	2620
 Dingbats, Weather	2600
 Dingbats, Zapf	2700
+dining available symbol	1F37D
 DIRECT CURRENT SYMBOL FORM TWO	2393
 direct product	2299
 direct sum	2295
@@ -1539,6 +1582,8 @@ DIVISION, LONG	27CC
 DIVORCE SYMBOL	26AE
 DIZZY SYMBOL	1F4AB
 do not enter	26D4
+DOCUMENT	1F5CE
+DOCUMENT, EMPTY	1F5CB
 DOES NOT CONTAIN AS MEMBER	220C
 DOES NOT DIVIDE	2224
 DOES NOT EXIST, THERE	2204
@@ -1572,6 +1617,7 @@ DOT PUNCTUATION, TWO	205A
 dot, greek middle	00B7
 DOT, KATAKANA MIDDLE	30FB
 dot, latin capital letter i	0130
+DOT, LATIN LETTER SINOLOGICAL	A78F
 DOT, MIDDLE	00B7
 DOT, SESAME	FE45
 DOT, VERTICAL LINE WITH MIDDLE	237F
@@ -1666,6 +1712,7 @@ Double-struck Greek Letters	213C
 Double-struck Greek Letters	213D
 Double-struck Italic Mathematical Symbols	2145
 Double-struck Mathematical Symbols	1D538
+DOVE OF PEACE	1F54A
 DOWN ARROWHEAD	2304
 DOWN POINTING INDEX, WHITE	261F
 DOWN RIGHT DIAGONAL ELLIPSIS	22F1
@@ -1680,14 +1727,17 @@ Drafting Symbols	232D
 DRAGON	1F409
 DRAGON FACE	1F432
 dram	0292
+DRAM SIGN, ARMENIAN	058F
 Draughts and Checkers, Symbols for	26C0
 DRIVE SLOW SIGN	26DA
 drive-in restaurant	26FE
 drop	264F
 Drop-shadowed Dingbats	274D
 DROPLET	1F4A7
+DROPLET, BLACK	1F322
 Duplicate Characters from Big 5	FA0C
 Duplicate Characters from CNS 11643-1992	2F800
+Duployan	1BC00
 DVD	1F4C0
 E WITH ACUTE, LATIN CAPITAL LETTER	00C9
 E WITH ACUTE, LATIN SMALL LETTER	00E9
@@ -1743,6 +1793,7 @@ Eighths, Fractions	215B
 eject media	23CF
 EK ONKAR, GURMUKHI	0A74
 el salvadorian currency	20A1
+Elbasan	10500
 ELECTRIC ARROW	2301
 ELECTRIC PLUG	1F50C
 ELECTRICAL INTERSECTION	23E7
@@ -1769,6 +1820,8 @@ EM SPACE	2003
 EMBEDDING, LEFT-TO-RIGHT	202A
 EMBEDDING, RIGHT-TO-LEFT	202B
 emf	2130
+Emoji Modifiers	1F3FB
+Emoticon Faces	1F910
 Emoticons	1F600
 EMPHASIS MARK, ARMENIAN	055B
 Emphasis Marks, Sidelining	FE45
@@ -1817,6 +1870,8 @@ ENTER SYMBOL	2386
 Entertainment Symbols	1F3A0
 entity &iinfin;, isotech	29DC
 ENVELOPE	2709
+ENVELOPE, BACK OF	1F582
+ENVELOPE, STAMPED	1F583
 eol	000A
 epidaurean acrophonic symbol three	205D
 EPSILON SYMBOL, GREEK LUNATE	03F5
@@ -1867,6 +1922,7 @@ error	212F
 Error Bar Symbols	29EE
 ESCAPE	001B
 escape	238B
+escape	2BB9
 ESCAPE, DATA LINK	0010
 ESCAPE, SYMBOL FOR	241B
 ESCAPE, SYMBOL FOR DATA LINK	2410
@@ -1922,6 +1978,7 @@ EXISTS, THERE	2203
 exponent, natural	212F
 Extensions for Ainu, Katakana	31F0
 EXTRATERRESTRIAL ALIEN	1F47D
+EYE	1F441
 EYES	1F440
 EZH REVERSED, LATIN SMALL LETTER	01B9
 EZH WITH CARON, LATIN SMALL LETTER	01EF
@@ -1971,6 +2028,7 @@ file separator	001C
 FILE SEPARATOR, SYMBOL FOR	241C
 FILL SPACE, IDEOGRAPHIC HALF	303F
 FILLER, HANGUL	3164
+FILM FRAMES	1F39E
 Finger Dingbats, Pointing Index	261A
 finite function	21FB
 finite function diacritic	20E6
@@ -1979,6 +2037,7 @@ finite relation	21FC
 finite surjection	2901
 finite surjective injection	2918
 FIRE	1F525
+FIRE ENGINE, ONCOMING	1F6F1
 FIRST QUARTER MOON	263D
 FIRST STRONG ISOLATE	2068
 FISH	1F41F
@@ -1991,6 +2050,8 @@ FISTED HAND SIGN	1F44A
 FIVE DOT PUNCTUATION	2059
 FLAG IN HOLE	26F3
 FLAG, BLACK	2691
+FLAG, WAVING BLACK	1F3F4
+FLAG, WAVING WHITE	1F3F3
 FLAG, WHITE	2690
 FLAT SIGN, MUSIC	266D
 FLATNESS	23E5
@@ -2002,11 +2063,13 @@ FLORAL HEART BULLET, REVERSED ROTATED	2619
 florin currency symbol	0192
 folder	0192
 FONGMAN, THAI CHARACTER	0E4F
+food available symbol	1F37D
 Food Symbols	1F354
 FOOTPRINTS	1F463
 FOR ALL	2200
 FORCES	22A9
 Forfeda Supplement, Ogham	1695
+FORK AND KNIFE WITH PLATE	1F37D
 Forks	2AD9
 Form and Chart Components	2500
 FORM FEED	000C
@@ -2018,6 +2081,7 @@ Format Controls, Mongolian	180B
 FORMATTING, POP DIRECTIONAL	202C
 forward arrow indicator	25BB
 forward difference	2206
+forward play	23F5
 forward, fast	23E9
 FOUNTAIN	26F2
 FOUR CORNERS, SQUARE	26F6
@@ -2120,12 +2184,14 @@ generalized union	22C3
 GEOMETRIC PROPORTION	223A
 Geometric Shapes	1F532
 Geometric Shapes	25A0
+Geometric Shapes Extended	1F780
 GEOMETRICALLY EQUAL TO	2251
 GEOMETRICALLY EQUIVALENT TO	224E
 Georgian	10A0
 Georgian Alphabet	10D0
 Georgian Capital Letters	10A0
 georgian comma	00B7
+georgian currency	20BE
 Georgian Extensions	10F1
 georgian full stop	0589
 Georgian Khutsuri	10A0
@@ -2161,6 +2227,7 @@ GOBLIN, JAPANESE	1F47A
 Golden Numbers, Runic	16EE
 golf course	26F3
 Gothic	10330
+Grantha	11300
 GRAPHEME JOINER, COMBINING	034F
 Graphic Characters, Terminal	23B7
 Graphic Characters, Terminal	2596
@@ -2187,6 +2254,7 @@ greek ano teleia	00B7
 Greek Archaic Letters	03D8
 GREEK BETA SYMBOL	03D0
 Greek Capital Letters	0391
+Greek Crosses	1F7A1
 greek currency	20AF
 greek dasia	0314
 greek dialytika	0308
@@ -2234,6 +2302,7 @@ greek vrachy	0306
 GREEK YPOGEGRAMMENI, COMBINING	0345
 Greek, Diacritics for	0342
 Greek, Precomposed Polytonic	1F00
+Gregorian Musical Symbols	1D1D0
 GROUND, EARTH	23DA
 group lock	21F0
 group select (ISO 9995-7)	21E8
@@ -2313,6 +2382,7 @@ Han Ideographs	4E00
 han-daku-on, combining japanese	309A
 han-daku-on, japanese	309C
 Hand Symbols	1F446
+Hand Symbols	1F58E
 Hand Symbols, Pointing	261A
 Hand, Index Finger Pointing	1F446
 HAND, RAISED	270B
@@ -2349,6 +2419,7 @@ HASANTA, SYLOTI NAGRI SIGN	A806
 hash	0023
 hat	0302
 hat	2229
+Hatran	108E0
 have a nice day!	263A
 Hazard Dingbats	2620
 Head Marks, Tibetan	0F01
@@ -2378,6 +2449,7 @@ HELMET WITH WHITE CROSS	26D1
 HERMES, STAFF OF	269A
 HERMITIAN CONJUGATE MATRIX	22B9
 Hexagram Symbols, Yijing / I Ching	4DC0
+Hieroglyphs, Anatolian	14400
 Hieroglyphs, Egyptian	13000
 High Surrogates	D800
 HIGH VOLTAGE SIGN	26A1
@@ -2417,6 +2489,7 @@ HORSE	1F40E
 HORSE FACE	1F434
 hospital	26E8
 HOT BEVERAGE	2615
+HOT DOG	1F32D
 HOT SPRINGS	2668
 HOURGLASS	231B
 HOURGLASS WITH FLOWING SAND	23F3
@@ -2425,6 +2498,7 @@ Hours, Ideographic Telegraph Symbols for	3358
 HOUSE	2302
 HRYVNIA SIGN	20B4
 ht	0009
+Hungarian, Old	10C80
 HV, LATIN SMALL LETTER	0195
 HWAIR, LATIN CAPITAL LETTER	01F6
 HYPHEN	2010
@@ -2432,6 +2506,7 @@ HYPHEN BULLET	2043
 hyphen or minus sign	002D
 HYPHEN, ARMENIAN	058A
 hyphen, discretionary	00AD
+HYPHEN, DOUBLE	2E40
 HYPHEN, KATAKANA-HIRAGANA DOUBLE	30A0
 HYPHEN, MONGOLIAN TODO SOFT	1806
 HYPHEN, NON-BREAKING	2011
@@ -2525,6 +2600,7 @@ inches	2033
 included in set	2282
 includes in set	2283
 incorporated, japanese	337F
+increase	23F6
 INCREMENT	2206
 independence	2AEB
 independent	2ADD
@@ -2546,6 +2622,7 @@ Inequality Signs, Equality and	2243
 Inequality Signs, Equality and	22D5
 INFINITY	221E
 infix bag count	266F
+information	1F6C8
 INFORMATION SEPARATOR FOUR	001C
 INFORMATION SEPARATOR ONE	001F
 INFORMATION SEPARATOR THREE	001D
@@ -2763,8 +2840,11 @@ khmer srak ah	17C7
 khmer srak am	17C6
 Khmer Symbols	19E0
 khmer visarga	17C7
+Khojki	11200
 KHOMUT, THAI CHARACTER	0E5B
+Khudawadi	112B0
 Khutsuri, Georgian	10A0
+Kievan Musical Symbols	1D1DE
 killer, myanmar	1039
 KIP SIGN	20AD
 kissen	2311
@@ -2829,6 +2909,7 @@ laplace transform	2112
 large bowtie	2A1D
 LARGE CIRCLE	25EF
 Large Operators	29F8
+LARI SIGN	20BE
 LAST QUARTER MOON	263E
 LATERAL CLICK, LATIN LETTER	01C1
 Latin Abbreviations, Squared	3371
@@ -2841,6 +2922,7 @@ Latin Extended-A	0100
 Latin Extended-B	0180
 Latin Extended-C	2C60
 Latin Extended-D	A720
+Latin Extended-E	AB30
 Latin Extensions	1D00
 LATIN LETTER AIN	1D25
 LATIN LETTER ALVEOLAR CLICK	01C2
@@ -2921,6 +3003,7 @@ LAZY S, INVERTED	223E
 LEADER, ONE DOT	2024
 leader, three dot	2026
 LEADER, TWO DOT	2025
+Leaf Ornaments	1F650
 leaf, aldus	2766
 leaf, ivy	2767
 left abstract syntax bracket	301A
@@ -3015,6 +3098,7 @@ LIGATURE IJ, LATIN SMALL	0133
 LIGATURE OE, LATIN SMALL	0153
 ligature tie	0361
 ligature tie below	035C
+Ligature-et Ornaments, Ampersand and	1F670
 Ligatures, Arabic	FBEA
 Ligatures, Armenian	FB13
 Ligatures, Latin	FB00
@@ -3022,6 +3106,7 @@ LIGHT BULB, ELECTRIC	1F4A1
 LIGHTHOUSE, MAP SYMBOL FOR	26EF
 LIGHTNING	2607
 lightning	26A1
+lightning bolt	1F5F2
 Limbu	1900
 Limbu Digits	1946
 LIMBU EXCLAMATION MARK	1944
@@ -3064,10 +3149,13 @@ LINE, PROPERTY	214A
 LINE, VERTICAL	007C
 LINE, WAVY	2307
 LINE, WAVY LOW	FE4F
+Linear A	10600
 Linear B Ideograms	10080
 Linear B Syllabary	10000
 Lines, Horizontal Scan	23BA
 Lines, Vertical	2223
+LION FACE	1F981
+LIPS	1F5E2
 LIRA SIGN	20A4
 LIRA SIGN, TURKISH	20BA
 lira, italian	00A3
@@ -3125,6 +3213,7 @@ Lowercase Alphabet, Latin	0061
 LOZENGE	25CA
 LOZENGE, BLACK	29EB
 LOZENGE, SQUARE	2311
+Lozenges	1F79D
 lre	202A
 lrm	200E
 lro	202D
@@ -3160,6 +3249,7 @@ macron, spacing	00AF
 Magnetic Ink Character Recognition, MICR	2446
 MAGNIFYING GLASS, LEFT-POINTING	1F50D
 MAGNIFYING GLASS, RIGHT-POINTING	1F50E
+Mahajani	11150
 Mahjong Tiles	1F000
 Mail Symbols	1F4E4
 Malayalam	0D00
@@ -3176,6 +3266,7 @@ MALTESE CROSS	2720
 MAN	1F468
 MAN AND WOMAN HOLDING HANDS	1F46B
 MAN, OLDER	1F474
+MANAT SIGN	20BC
 MANCHU COMMA, MONGOLIAN	1808
 MANCHU FULL STOP, MONGOLIAN	1809
 Mandaic	0840
@@ -3184,6 +3275,7 @@ mandarin chinese first tone	02C9
 mandarin chinese fourth tone	02CB
 mandarin chinese second tone	02CA
 mandarin chinese third tone	02C7
+Manichaean	10AC0
 Map Symbols, Dictionary and	2690
 maplet	21A6
 maps from	27FB
@@ -3266,6 +3358,7 @@ MEMBER, SMALL CONTAINS AS	220D
 Membership Signs, Set	2208
 MEMBERSHIP, Z NOTATION BAG	22FF
 MEN HOLDING HANDS, TWO	1F46C
+Mende Kikakui	1E800
 MERCURY	263F
 merge	2A07
 Meroitic Cursive	109A0
@@ -3314,6 +3407,7 @@ Mkhedruli, Georgian	10D0
 mmsp	205F
 Modal Logic Operators	27E0
 MODELS	22A7
+Modi	11600
 Modifier Letter Extensions	1D2C
 Modifier Letters, Latin Superscript	02B0
 Modifier Letters, Spacing	02B0
@@ -3357,17 +3451,21 @@ MOON, CRESCENT	1F319
 MOON, FIRST QUARTER	263D
 MOON, LAST QUARTER	263E
 Moon, Sun, and Star Symbols	1F311
+mortarboard	1F393
 most positive	223E
+MOTORWAY	1F6E3
 MOUNTAIN	26F0
 MOUSE	1F401
 MOUSE FACE	1F42D
 moustache, left	23B0
 moustache, right	23B1
 MOUTH	1F444
+Mro	16A40
 MUCH GREATER-THAN	226B
 MUCH GREATER-THAN, VERY	22D9
 MUCH LESS-THAN	226A
 MUCH LESS-THAN, VERY	22D8
+Multani	11280
 MULTIMAP	22B8
 Multiplication and Division Sign Operators	2A2F
 MULTIPLICATION SIGN	00D7
@@ -3383,6 +3481,8 @@ MUSIC NATURAL SIGN	266E
 MUSIC SHARP SIGN	266F
 Music Symbols	1F3B5
 Musical Notation, Ancient Greek	1D200
+MUSICAL NOTES, BEAMED ASCENDING	1F39C
+MUSICAL NOTES, BEAMED DESCENDING	1F39D
 MUSICAL NOTES, MULTIPLE	1F3B6
 Musical Symbols	1D100
 Musical Symbols, Balinese	1B61
@@ -3395,6 +3495,7 @@ Myanmar Consonants	1000
 Myanmar Dependent Vowel Signs	102C
 Myanmar Digits	1040
 Myanmar Extended-A	AA60
+Myanmar Extended-B	A9E0
 Myanmar Independent Vowels	1021
 myanmar killer	1039
 MYANMAR SIGN VIRAMA	1039
@@ -3433,6 +3534,7 @@ N-ARY TIMES OPERATOR	2A09
 N-ARY UNION	22C3
 N-ARY WHITE VERTICAL BAR	2AFF
 naal, tamil	0BF3
+Nabataean	10880
 NABLA	2207
 NAIRA SIGN	20A6
 NAND	22BC
@@ -3597,6 +3699,7 @@ O, LATIN SMALL LETTER SIDEWAYS	1D11
 O, LATIN SMALL LETTER SIDEWAYS OPEN	1D12
 O, LATIN SMALL LETTER TOP HALF	1D16
 O, SCRIPT SMALL	2134
+obelus	00F7
 OBJECT REPLACEMENT CHARACTER	FFFC
 OCR, Optical Character Recognition	2440
 OCTOPUS	1F419
@@ -3618,9 +3721,12 @@ OHM SIGN, INVERTED	2127
 OI, LATIN SMALL LETTER	01A3
 OK HAND SIGN	1F44C
 Ol Chiki	1C50
+Old Hungarian	10C80
 Old Italic	10300
+Old Permic	10350
 Old Persian	103A0
 old testament, greek	1D516
+OM SYMBOL	1F549
 OM, DEVANAGARI	0950
 OM, TIBETAN SYLLABLE	0F00
 omega pi	03D6
@@ -3695,8 +3801,10 @@ Oriya Independent Vowels	0B05
 ORIYA ISSHAR	0B70
 Ornamental Angle Quotation Marks	276E
 Ornamental Brackets	2768
+Ornamental Dingbats	1F650
 Ornaments, Heart	2763
-Ornaments, Punctuation	275B
+Ornaments, Punctuation Mark	275B
+Ornaments, Punctuation Mark	1F676
 Ornaments, Quotation Mark	275B
 ORNATE LEFT PARENTHESIS	FD3E
 ORNATE RIGHT PARENTHESIS	FD3F
@@ -3751,15 +3859,20 @@ P, LATIN LETTER SMALL CAPITAL	1D18
 P, LATIN SUBSCRIPT SMALL LETTER	209A
 P, SCRIPT CAPITAL	2118
 page down	21DF
+page down	2B7D
 PAGE FACING UP	1F4C4
 page up	21DE
+page up	2B7B
 PAGE, NEXT	2398
 PAGE, PREVIOUS	2397
+Pahawh Hmong	16B00
 Pahlavi	10B60
+Pahlavi, Psalter	10B80
 Palaeotype Transliteration Symbols	2E32
 PALATAL HOOK, LATIN SMALL LETTER T WITH	01AB
 PALATALIZED HOOK BELOW, COMBINING	0321
 PALM BRANCH	2E19
+Palmyrene	10860
 PALUTA, TIBETAN MARK	0F85
 PAMUDPOD, HANUNOO SIGN	1734
 PANDA FACE	1F43C
@@ -3810,19 +3923,25 @@ partly cloudy	26C5
 PARTNERSHIP SYMBOL, UNMARRIED	26AF
 patiw, armenian	055F
 patru, tamil	0BF6
+Pau Cin Hau	11AC0
 pause	2389
+pause play	23F8
 PAW PRINTS	1F43E
 pdf	202C
 PEACE SYMBOL	262E
+PEACE, DOVE OF	1F54A
 PENCIL	270F
 Pencil Dingbats	270E
 PENCIL, LOWER RIGHT	270E
 PENCIL, UPPER RIGHT	2710
 PENGUIN	1F427
+PENNANT, BLACK	1F3F2
+PENNANT, WHITE	1F3F1
 PENNY SIGN, GERMAN	20B0
 PENTAGRAM	26E4
 pentalpha, pentangle	26E4
 pentonkion, greek	2059
+PEPPER, HOT	1F336
 PER MILLE SIGN	2030
 PER SIGN	214C
 PER TEN THOUSAND SIGN	2031
@@ -3866,6 +3985,7 @@ PI, GREEK SMALL LETTER	03C0
 pi, mathematical constant 3.141592...	03C0
 PICK	26CF
 Pictographs, Miscellaneous Symbols and	1F300
+Pictographs, Supplemental Symbols and	1F900
 Pictures for Control Codes, Graphic	2400
 PIG	1F416
 PIG FACE	1F437
@@ -3905,6 +4025,7 @@ PLUTO	2647
 point, decimal	002E
 POINT, HYPHENATION	2027
 Pointers	25BA
+Pointing Hand Indexes	1F597
 Pointing Hand Symbols	261A
 Pointing Index Finger Dingbats	261A
 POINTING INDEX, BLACK LEFT	261A
@@ -3928,6 +4049,7 @@ POP DIRECTIONAL ISOLATE	2069
 pork (on menus)	1F416
 Portrait and Role Symbols	1F464
 POSITION INDICATOR	2316
+POSITION INDICATOR, SQUARE	2BD0
 positive difference or sum	2A24
 positive difference, sum or	2A26
 positive, most	223E
@@ -3990,6 +4112,7 @@ product, tensor	2297
 PRODUCT, VECTOR OR CROSS	2A2F
 PRODUCT, WREATH	2240
 PROGRAM COMMAND, APPLICATION	009F
+PROHIBITED SIGN	1F6C7
 prohibition	20E0
 Prohibition Signs, Permission and	1F6AC
 PROJECTIVE	2305
@@ -4011,7 +4134,8 @@ Punctuation and Signs, Syriac	0700
 Punctuation and Symbols, ASCII	0020
 Punctuation and Symbols, Latin-1	00A0
 Punctuation for Vertical Text, Double	2047
-Punctuation Ornaments	275B
+Punctuation Mark Ornaments	275B
+Punctuation Mark Ornaments	1F676
 PUNCTUATION SPACE	2008
 Punctuation, Arabic	060C
 Punctuation, Canadian Syllabics	166D
@@ -4074,6 +4198,7 @@ question mark, turned	00BF
 QUESTIONED EQUAL TO	225F
 QUILL, LEFT SQUARE BRACKET WITH	2045
 QUILL, RIGHT SQUARE BRACKET WITH	2046
+Quilt Square Ornaments	1F668
 Quine Corners	231C
 quotation dash	2015
 QUOTATION MARK	0022
@@ -4082,6 +4207,7 @@ Quotation Mark Ornaments	275B
 quotation mark, double comma	201D
 QUOTATION MARK, DOUBLE HIGH-REVERSED-9	201F
 QUOTATION MARK, DOUBLE LOW-9	201E
+QUOTATION MARK, DOUBLE LOW-REVERSED-9	2E42
 QUOTATION MARK, DOUBLE PRIME	301E
 quotation mark, double reversed comma	201F
 quotation mark, double turned comma	201C
@@ -4146,6 +4272,7 @@ Radicals Supplement, CJK	2E80
 Radicals, CJK Kangxi	2F00
 Radicals, Yi	A490
 RADIOACTIVE SIGN	2622
+RAILWAY TRACK	1F6E4
 RAIN	26C6
 RAIN DROPS, UMBRELLA WITH	2614
 RAINBOW	1F308
@@ -4162,6 +4289,7 @@ real number symbol	210A
 real numbers	211D
 real part	211C
 recipe	211E
+record	23FA
 record separator	001E
 RECORD SEPARATOR, SYMBOL FOR	241E
 RECORDER, TELEPHONE	2315
@@ -4206,6 +4334,7 @@ RETURN SYMBOL	23CE
 RETURN, CARRIAGE	000D
 RETURN, SYMBOL FOR CARRIAGE	240D
 REVERSE LINE FEED	008D
+reverse play	23F4
 REVERSE SOLIDUS	005C
 REVERSE SOLIDUS OPERATOR	29F5
 REVERSE SOLIDUS OVERLAY, COMBINING	20E5
@@ -4248,6 +4377,7 @@ rewind, fast	23EA
 rgroup	27EF
 RHOTIC HOOK, MODIFIER LETTER	02DE
 RIAL SIGN	FDFC
+RIBBON, REMINDER	1F397
 RIEL, KHMER CURRENCY SYMBOL	17DB
 riemann integral	211B
 right abstract syntax bracket	301B
@@ -4364,6 +4494,7 @@ ROOT, FOURTH	221C
 ROOT, SQUARE	221A
 ROTATED CAPITAL Q	213A
 rough breathing mark, greek	0314
+RUBLE SIGN	20BD
 rule, parted	00A6
 RULE-DELAYED	29F4
 Rumi Numeral Symbols	10E60
@@ -4398,6 +4529,7 @@ S, MODIFIER LETTER SMALL	02E2
 SAGITTARIUS	2650
 SAILBOAT	26F4
 SALTIRE	2613
+Saltires	1F7A8
 sam, syriac	070F
 Samaritan	0800
 SAMARITAN SOURCE, SYMBOL FOR	214F
@@ -4430,6 +4562,7 @@ scissors in rock, paper, scissors game	270C
 SCISSORS, BLACK	2702
 SCISSORS, UPPER BLADE	2701
 SCISSORS, WHITE	2704
+SCORPION	1F982
 SCORPIUS	264F
 SCREEN SYMBOL, CLEAR	239A
 SCREEN SYMBOL, PRINT	2399
@@ -4554,11 +4687,13 @@ short slash overlay	0337
 SHORT SOLIDUS OVERLAY, COMBINING	0337
 SHORT STROKE OVERLAY, COMBINING	0335
 SHORT VERTICAL LINE OVERLAY, COMBINING	20D3
+Shorthand Format Controls	1BCA0
 SHOULDERED OPEN BOX	237D
 showery weather	2614
 SHUFFLE PRODUCT	29E2
 shy	00AD
 SIBE SYLLABLE BOUNDARY MARKER, MONGOLIAN	1807
+Siddham	11580
 Sidelining Emphasis Marks	FE45
 SIDEWAYS DIAERESIZED U, LATIN SMALL LETTER	1D1E
 SIDEWAYS O WITH STROKE, LATIN SMALL LETTER	1D13
@@ -4571,6 +4706,7 @@ sigma, greek small letter lunate	03F2
 Signage and Other Symbols	1F6A9
 Signs, Warning	2620
 Signs, Warning	26A0
+SignWriting, Sutton	1D800
 similar to	223C
 SINE WAVE	223F
 SINGLE CHARACTER INTRODUCER	009A
@@ -4591,17 +4727,21 @@ SINGLE SHIFT THREE	008F
 SINGLE SHIFT TWO	008E
 single turned comma quotation mark	2018
 Sinhala	0D80
+Sinhala Archaic Numbers	111E0
 Sinhala Consonants	0D9A
 Sinhala Dependent Vowel Signs	0DCF
 Sinhala Independent Vowels	0D85
 SINHALA SIGN AL-LAKUNA	0DCA
 sinhala virama	0DCA
+SINOLOGICAL DOT, LATIN LETTER	A78F
+SIX DOTS, VERTICAL	2E3D
 SIX-PER-EM SPACE	2006
 SIXTEENTH NOTES, BEAMED	266C
 Sixths, Fractions	2159
 SKIER	26F7
 SKULL	1F480
 SKULL AND CROSSBONES	2620
+SKULL AND CROSSBONES, BLACK	1F571
 slash	002F
 slash overlay, long	0338
 slash overlay, long double	20EB
@@ -4721,9 +4861,12 @@ SPARKLES	2728
 Speaker Symbols	1F507
 Specials	FFF0
 Specials Area, Compatibility and	F900
+Speech and Thought Bubble Symbols	1F5E8
 SPESMILO SIGN	20B7
 SPHERICAL ANGLE	2222
+spicy	1F336
 Sport Symbols	1F3BD
+Sport Symbols	1F3CF
 SQUARE BELOW, COMBINING	033B
 SQUARE BRACKET WITH QUILL, LEFT	2045
 SQUARE BRACKET WITH QUILL, RIGHT	2046
@@ -4775,6 +4918,7 @@ STAR, SHOOTING	1F320
 STAR, WHITE	2606
 starburst	273A
 Stars	2721
+Stars	1F7C0
 START OF GUARDED AREA	0096
 START OF HEADING	0001
 START OF HEADING, SYMBOL FOR	2401
@@ -4783,8 +4927,10 @@ START OF STRING	0098
 START OF TEXT	0002
 START OF TEXT, SYMBOL FOR	2402
 statement is true	22A8
+STENOGRAPHIC FULL STOP	2E3C
 sterling, pound	00A3
 stile, apl	2223
+stop play	23F9
 STOPWATCH	23F1
 straight epsilon	03F5
 straight epsilon, reversed	03F6
@@ -4870,6 +5016,7 @@ surjective injection, finite	2918
 Surrogates Area	D800
 Surrogates, High	D800
 Surrogates, Low	DC00
+Sutton SignWriting	1D800
 Suzhou Numerals	3021
 Svasti Signs	0FD5
 SWASH TAIL, LATIN SMALL LETTER S WITH	023F
@@ -4893,6 +5040,7 @@ Syloti Nagri	A800
 Symbol Variants, Fullwidth	FFE0
 Symbol Variants, Halfwidth	FFE8
 Symbols and Pictographs, Miscellaneous	1F300
+Symbols and Pictographs, Supplemental	1F900
 Symbols and Punctuation, CJK	3000
 Symbols Area	2000
 Symbols Area, CJK Phonetics and	2E80
@@ -4992,9 +5140,15 @@ T, LATIN LETTER SMALL CAPITAL	1D1B
 T, LATIN SMALL LETTER TURNED	0287
 T, LATIN SUBSCRIPT SMALL LETTER	209C
 tab	0009
+TAB KEY, HORIZONTAL	2B7E
+TAB KEY, VERTICAL	2B7F
 tab with shift tab	21B9
+tab, down	2B73
+tab, left	2B70
 tab, leftward	21E4
+tab, right	2B72
 tab, rightward	21E5
+tab, up	2B71
 TABULATION SET, CHARACTER	0088
 TABULATION SET, LINE	008A
 TABULATION WITH JUSTIFICATION, CHARACTER	0089
@@ -5057,6 +5211,8 @@ tamil varudam	0BF5
 TAMIL YEAR SIGN	0BF5
 TAPE DRIVE	2707
 TAPER, CONICAL	2332
+TARGET, ROUND	1F78B
+TARGET, SQUARE	1F796
 TATWEEL, ARABIC	0640
 TAURUS	2649
 tautological equivalent	29E6
@@ -5066,6 +5222,7 @@ Technical, Miscellaneous	2300
 Telegraph Symbols for Days, Ideographic	33E0
 Telegraph Symbols for Hours, Ideographic	3358
 Telegraph Symbols for Months, Ideographic	32C0
+telephone handset	1F57D
 TELEPHONE LOCATION SIGN	2706
 TELEPHONE RECORDER	2315
 TELEPHONE SIGN	2121
@@ -5104,10 +5261,12 @@ Thai Digits	0E50
 Thai Marks and Signs	0E48
 Thai Vowels	0E30
 THANTHAKHAT, THAI CHARACTER	0E4C
+theater masks	1F3AD
 THERE DOES NOT EXIST	2204
 THERE EXISTS	2203
 THEREFORE	2234
 THERMODYNAMIC	29E7
+THERMOMETER	1F321
 THETA SYMBOL, GREEK	03D1
 theta, script	03D1
 thick space	2004
@@ -5189,7 +5348,9 @@ TIMES, INVISIBLE	2062
 TIMES, SQUARED	22A0
 TINY	29FE
 TIPPI, GURMUKHI	0A70
+Tirhuta	11480
 TIRONIAN SIGN ET	204A
+TITLO LEFT HALF, COMBINING CYRILLIC	FE2E
 TODO SOFT HYPHEN, MONGOLIAN	1806
 Tone Letters	02E5
 Tone Letters, Modifier	A700
@@ -5234,6 +5395,7 @@ TRANSMISSION, SYMBOL FOR END OF	2404
 TRANSMIT STATE, SET	0093
 Transport and Map Symbols	1F680
 TRAPEZIUM, WHITE	23E2
+trashcan	1F5D1
 Triangle Symbols	29CA
 TRIANGLE, COMBINING ENCLOSING UPWARD POINTING	20E4
 TRIANGLE, RIGHT	22BF
@@ -5258,6 +5420,7 @@ TSHEG, TIBETAN MARK INTERSYLLABIC	0F0B
 TUGRIK SIGN	20AE
 TURBAN, MAN WITH	1F473
 turbofan	274B
+TURKEY	1F983
 Turkic, Old	10C00
 TURKISH LIRA SIGN	20BA
 TURNED A, LATIN SMALL LETTER	0250
@@ -5347,6 +5510,7 @@ UMBRELLA ON GROUND	26F1
 UMBRELLA WITH RAIN DROPS	2614
 umlaut	0308
 UNASPIRATED, MODIFIER LETTER	02ED
+UNCERTAINTY SIGN	2BD1
 UNDERDOT, COMBINING TRIPLE	20E8
 underline	0332
 UNDERLINE SYMBOL, CONTINUOUS	2381
@@ -5360,6 +5524,7 @@ Underscores, Overscores and	FE49
 UNDERTIE	203F
 UNDERTIE, INVERTED	2054
 UNDO SYMBOL	238C
+UNICORN FACE	1F984
 Unified Canadian Aboriginal Syllabics	1400
 Unified Canadian Aboriginal Syllabics Extended	18B0
 Unified Ideographs Extension A, CJK	3400
@@ -5407,6 +5572,7 @@ URN, FUNERAL	26B1
 User Interface Input Status Symbols	1F520
 User Interface Symbols	1F500
 User Interface Symbols	1F53A
+User Interface Symbols	1F5BF
 v above	030C
 V WITH DOT BELOW, LATIN SMALL LETTER	1E7F
 V WITH HOOK, LATIN CAPITAL LETTER	01B2
@@ -5444,6 +5610,7 @@ Vedic Signs	0CF1
 Vedic Tone Marks	0951
 vee	2228
 Vegetable Symbols, Fruit and	1F345
+Vehicle Symbols	1F6E5
 Vehicles	1F680
 venus	2640
 VERSICLE	2123
@@ -5530,8 +5697,10 @@ W, LATIN LETTER SMALL CAPITAL	1D21
 W, LATIN SMALL LETTER TURNED	028D
 W, MODIFIER LETTER SMALL	02B7
 WAITING, MESSAGE	0095
+Warang Citi	118A0
 WARNING SIGN	26A0
 Warning Signs	2620
+WASTEBASKET	1F5D1
 WATCH	231A
 WATER BUFFALO	1F403
 WAVE DASH	301C
@@ -5544,6 +5713,7 @@ WAVY LOW LINE	FE4F
 WAVY OVERLINE	FE4B
 WAVY OVERLINE, DOUBLE	FE4C
 Weather and Astrological Symbols	2600
+Weather Symbols	1F321
 weather, clear	2600
 weather, cloudy	2601
 Weather, Landscape, and Sky Symbols	1F300
@@ -5596,6 +5766,7 @@ WHITE VERTICAL BAR	2AFE
 WHITE VERTICAL BAR, N-ARY	2AFF
 WIDE BRIDGE ABOVE, COMBINING	20E9
 Wiggly Fences	29D8
+WIGGLY VERTICAL LINE	2E3E
 wj	2060
 WOLF FACE	1F43A
 WOMAN	1F469
@@ -5611,6 +5782,7 @@ WORDSPACE, ETHIOPIC	1361
 working day symbol	2692
 WREATH PRODUCT	2240
 WRITING HAND	270D
+WRITING HAND, LEFT	1F58E
 WYNN, LATIN CAPITAL LETTER	01F7
 WYNN, LATIN LETTER	01BF
 X ABOVE, COMBINING	033D
@@ -5620,6 +5792,7 @@ X WITH DIAERESIS, LATIN SMALL LETTER	1E8D
 X WITH DOT ABOVE, LATIN SMALL LETTER	1E8B
 X, BALLOT	2717
 X, BALLOT BOX WITH	2612
+X, CANCELLATION	1F5D9
 X, COMBINING LATIN SMALL LETTER	036F
 X, HEAVY BALLOT	2718
 X, HEAVY MULTIPLICATION	2716

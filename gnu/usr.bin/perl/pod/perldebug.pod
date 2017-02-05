@@ -5,7 +5,8 @@ perldebug - Perl debugging
 
 =head1 DESCRIPTION
 
-First of all, have you tried using the B<-w> switch?
+First of all, have you tried using L<C<use strict;>|strict> and
+L<C<use warnings;>|warnings>?
 
 
 If you're new to the Perl debugger, you may prefer to read
@@ -990,9 +991,11 @@ X<backtrace> X<stack, backtrace>
 Here's an example of what a stack backtrace via C<T> command might
 look like:
 
-    $ = main::infested called from file 'Ambulation.pm' line 10
-    @ = Ambulation::legs(1, 2, 3, 4) called from file 'camel_flea' line 7
-    $ = main::pests('bactrian', 4) called from file 'camel_flea' line 4
+ $ = main::infested called from file 'Ambulation.pm' line 10
+ @ = Ambulation::legs(1, 2, 3, 4) called from file 'camel_flea'
+                                                          line 7
+ $ = main::pests('bactrian', 4) called from file 'camel_flea'
+                                                          line 4
 
 The left-hand character up there indicates the context in which the
 function was called, with C<$> and C<@> meaning scalar or list
@@ -1015,17 +1018,17 @@ an C<eval> frame.
 
 This shows the sorts of output the C<l> command can produce:
 
-    DB<<13>> l
-  101:                @i{@i} = ();
-  102:b               @isa{@i,$pack} = ()
-  103                     if(exists $i{$prevpack} || exists $isa{$pack});
-  104             }
-  105
-  106             next
-  107==>              if(exists $isa{$pack});
-  108
-  109:a           if ($extra-- > 0) {
-  110:                %isa = ($pack,1);
+   DB<<13>> l
+ 101:        @i{@i} = ();
+ 102:b       @isa{@i,$pack} = ()
+ 103             if(exists $i{$prevpack} || exists $isa{$pack});
+ 104     }
+ 105
+ 106     next
+ 107==>      if(exists $isa{$pack});
+ 108
+ 109:a   if ($extra-- > 0) {
+ 110:        %isa = ($pack,1);
 
 Breakable lines are marked with C<:>.  Lines with breakpoints are
 marked by C<b> and those with actions by C<a>.  The line that's
@@ -1197,7 +1200,7 @@ See L<perldebguts/"Debugging Perl Memory Usage"> for the details.
 
 =head1 SEE ALSO
 
-You did try the B<-w> switch, didn't you?
+You do have C<use strict> and C<use warnings> enabled, don't you?
 
 L<perldebtut>,
 L<perldebguts>,

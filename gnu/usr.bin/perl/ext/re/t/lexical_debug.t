@@ -15,7 +15,7 @@ use strict;
 BEGIN { require "../../t/test.pl"; }
 my $out = runperl(progfile => "t/lexical_debug.pl", stderr => 1 );
 
-print "1..10\n";
+print "1..12\n";
 
 # Each pattern will produce an EXACT node with a specific string in 
 # it, so we will look for that. We can't just look for the string
@@ -25,11 +25,13 @@ ok( $out =~ /EXACT <foo>/, "Expect 'foo'"    );
 ok( $out !~ /EXACT <bar>/, "No 'bar'"        );
 ok( $out =~ /EXACT <baz>/, "Expect 'baz'"    );
 ok( $out !~ /EXACT <bop>/, "No 'bop'"        );
+ok( $out =~ /EXACT <boq>/, "Expect 'boq'"    );
+ok( $out !~ /EXACT <bor>/, "No 'bor'"        );
 ok( $out =~ /EXACT <fip>/, "Expect 'fip'"    );
 ok( $out !~ /EXACT <fop>/, "No 'baz'"        );
 ok( $out =~ /<liz>/,       "Got 'liz'"       ); # in a TRIE so no EXACT
 ok( $out =~ /<zoo>/,       "Got 'zoo'"       ); # in a TRIE so no EXACT
 ok( $out =~ /<zap>/,       "Got 'zap'"       ); # in a TRIE so no EXACT
-ok( $out =~ /Count=7\n/,   "Count is 7") 
+ok( $out =~ /Count=9\n/,   "Count is 9")
     or diag($out);
 

@@ -13,7 +13,7 @@ static const struct mro_alg c3_alg =
 /*
 =for apidoc mro_get_linear_isa_c3
 
-Returns the C3 linearization of @ISA
+Returns the C3 linearization of C<@ISA>
 the given stash.  The return value is a read-only AV*.
 C<level> should be 0 (it is used internally in this
 function's recursion).
@@ -477,8 +477,8 @@ mro__nextcan(...)
     const PERL_SI *top_si = PL_curstackinfo;
     HV* selfstash;
     SV *stashname;
-    const char *fq_subname;
-    const char *subname;
+    const char *fq_subname = NULL;
+    const char *subname = NULL;
     bool subname_utf8 = 0;
     STRLEN stashname_len;
     STRLEN subname_len;

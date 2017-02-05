@@ -1,7 +1,7 @@
 package Locale::Codes;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2014 Sullivan Beck
+# Copyright (c) 2010-2015 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -31,7 +31,7 @@ our($VERSION,%Data,%Retired);
 # $Retired{ TYPE }{ CODESET }{ code }{ CODE } = NAME
 #                            { name }{ NAME } = [CODE,NAME]  (the key is lowercase)
 
-$VERSION='3.30';
+$VERSION='3.37';
 
 #=======================================================================
 #
@@ -43,14 +43,14 @@ sub _code {
    return 1  if (@_ > 3);
 
    my($type,$code,$codeset) = @_;
-   $code = ''  if (! $code);
+   $code = ''  if (! defined $code);
 
    # Determine the codeset
 
    $codeset = $ALL_CODESETS{$type}{'default'}
      if (! defined($codeset)  ||  $codeset eq '');
    $codeset = lc($codeset);
-   return 1  if (! exists $ALL_CODESETS{$type}{'codesets'}{$codeset});
+   return (1)  if (! exists $ALL_CODESETS{$type}{'codesets'}{$codeset});
    return (0,$code,$codeset)  if (! $code);
 
    # Determine the properties of the codeset
@@ -59,20 +59,29 @@ sub _code {
 
    if      ($op eq 'lc') {
       $code = lc($code);
+      return (0,$code,$codeset);
+   }
 
-   } elsif ($op eq 'uc') {
+   if ($op eq 'uc') {
       $code = uc($code);
+      return (0,$code,$codeset);
+   }
 
-   } elsif ($op eq 'ucfirst') {
+   if ($op eq 'ucfirst') {
       $code = ucfirst(lc($code));
+      return (0,$code,$codeset);
+   }
 
-   } elsif ($op eq 'numeric') {
+   # uncoverable branch false
+   if ($op eq 'numeric') {
       return (1)  unless ($code =~ /^\d+$/);
       my $l = $args[0];
       $code    = sprintf("%.${l}d", $code);
+      return (0,$code,$codeset);
    }
 
-   return (0,$code,$codeset);
+   # uncoverable statement
+   die "ERROR: codeset not defined correctly: $codeset [$op]\n";
 }
 
 #=======================================================================
@@ -90,8 +99,7 @@ sub _code2name {
    }
 
    my($err,$code,$codeset) = _code($type,@args);
-   return undef  if ($err  ||
-                     ! defined $code);
+   return undef  if ($err);
 
    $code = $Data{$type}{'codealias'}{$codeset}{$code}
      if (exists $Data{$type}{'codealias'}{$codeset}{$code});

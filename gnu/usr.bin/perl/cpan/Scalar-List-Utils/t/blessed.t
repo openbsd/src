@@ -1,21 +1,12 @@
 #!./perl
 
-BEGIN {
-    unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Config; import Config;
-	keys %Config; # Silence warning
-	if ($Config{extensions} !~ /\bList\/Util\b/) {
-	    print "1..0 # Skip: List::Util was not built\n";
-	    exit 0;
-	}
-    }
-}
+use strict;
+use warnings;
 
 use Test::More tests => 11;
 use Scalar::Util qw(blessed);
-use vars qw($t $x);
+
+my $t;
 
 ok(!defined blessed(undef),	'undef is not blessed');
 ok(!defined blessed(1),		'Numbers are not blessed');
@@ -23,6 +14,8 @@ ok(!defined blessed('A'),	'Strings are not blessed');
 ok(!defined blessed({}),	'Unblessed HASH-ref');
 ok(!defined blessed([]),	'Unblessed ARRAY-ref');
 ok(!defined blessed(\$t),	'Unblessed SCALAR-ref');
+
+my $x;
 
 $x = bless [], "ABC";
 is(blessed($x), "ABC",	'blessed ARRAY-ref');

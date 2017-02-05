@@ -58,6 +58,10 @@ Do one thing and do it well
 
 Choose an appropriate name
 
+=item *
+
+Get feedback before publishing
+
 =back
 
 =head2 The API
@@ -240,11 +244,18 @@ hierarchy already exists under which you could place your module.
 
 =back
 
-You should contact modules@perl.org to ask them about your module name
-before publishing your module.  You should also try to ask people who 
-are already familiar with the module's application domain and the CPAN
-naming system.  Authors of similar modules, or modules with similar
-names, may be a good place to start.
+=head2 Get feedback before publishing
+
+If you have never uploaded a module to CPAN before (and even if you have),
+you are strongly encouraged to get feedback on L<PrePAN|http://prepan.org>.
+PrePAN is a site dedicated to discussing ideas for CPAN modules with other
+Perl developers and is a great resource for new (and experienced) Perl
+developers.
+
+You should also try to get feedback from people who are already familiar
+with the module's application domain and the CPAN naming system.  Authors
+of similar modules, or modules with similar names, may be a good place to
+start, as are community sites like L<Perl Monks|http://www.perlmonks.org>.
 
 =head1 DESIGNING AND WRITING YOUR MODULE
 
@@ -625,7 +636,8 @@ A correct CPAN version number is a floating point number with at least
 2 digits after the decimal.  You can test whether it conforms to CPAN by 
 using
 
-    perl -MExtUtils::MakeMaker -le 'print MM->parse_version(shift)' 'Foo.pm'
+    perl -MExtUtils::MakeMaker -le 'print MM->parse_version(shift)' \
+                                                            'Foo.pm'
 
 If you want to release a 'beta' or 'alpha' version of a module but
 don't want CPAN.pm to list it as most recent use an '_' after the

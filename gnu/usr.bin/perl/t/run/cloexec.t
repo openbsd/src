@@ -45,7 +45,7 @@ $|=1;
 
 # When in doubt, skip.
 skip_all($^O)
-    if $^O eq 'VMS' or $^O eq 'MSWin32';
+    if $^O eq 'VMS' or $^O eq 'MSWin32' or $^O eq 'amigaos';
 
 sub make_tmp_file {
     my ($fname, $fcontents) = @_;

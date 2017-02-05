@@ -1,34 +1,42 @@
-# NameAliases-6.3.0.txt
-# Date: 2013-02-05, 23:33:00 GMT [KW]
+# NameAliases-8.0.0.txt
+# Date: 2014-11-19, 01:30:00 GMT [KW, LI]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 2005-2013 Unicode, Inc.
+# Copyright (c) 2005-2014 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the formal name aliases for Unicode characters.
 #
-# For informative aliases see NamesList.txt
+# For informative aliases, see NamesList.txt
 #
-# The formal name aliases are divided into five types.
+# The formal name aliases are divided into five types, each with a distinct label.
 #
-# 1. Corrections for serious problems in the character names
-# 2. ISO 6429 names for C0 and C1 control functions, and other
-#    commonly occurring names for control codes
-# 3. A few widely used alternate names for format characters
-# 4. Several documented labels for C1 control code points which
-#    were never actually approved in any standard
-# 5. Commonly occurring abbreviations (or acronyms) for control codes,
-#    format characters, spaces, and variation selectors
+# Type Labels:
+#
+# 1. correction
+#      Corrections for serious problems in the character names
+# 2. control
+#      ISO 6429 names for C0 and C1 control functions, and other
+#      commonly occurring names for control codes
+# 3. alternate
+#      A few widely used alternate names for format characters
+# 4. figment
+#      Several documented labels for C1 control code points which
+#      were never actually approved in any standard
+# 5. abbreviation
+#      Commonly occurring abbreviations (or acronyms) for control codes,
+#      format characters, spaces, and variation selectors
 #
 # The formal name aliases are part of the Unicode character namespace, which
 # includes the character names and the names of named character sequences.
 # The inclusion of ISO 6429 names and other commonly occurring names and
 # abbreviations for control codes and format characters as formal name aliases
-# is to help avoid name collisions between Unicode character names and the 
+# is to help avoid name collisions between Unicode character names and the
 # labels which commonly appear in text and/or in implementations such as regex, for
-# control codes (which have no Unicode character name) or for format characters.
+# control codes (which for historical reasons have no Unicode character name)
+# or for format characters.
 #
 # For documentation, see NamesList.html and http://www.unicode.org/reports/tr44/
 #
@@ -40,13 +48,21 @@
 # Second field: Alias
 # Third field:  Type
 #
-# The Type labels used are: correction, control, alternate, figment, abbreviation
+# The type labels used are defined above. As for property values, comparisons
+# of type labels should ignore case.
 #
-# Those Type labels can be mapped to other strings for display, if desired.
+# The type labels can be mapped to other strings for display, if desired.
 #
 # In case multiple aliases are assigned, additional aliases
 # are provided on separate lines. Parsers of this data file should
 # take note that the same code point can (and does) occur more than once.
+#
+# Note that currently the only instances of multiple aliases of the same
+# type for a single code point are either of type "control" or "abbreviation".
+# An alias of type "abbreviation" can, in principle, be added for any code
+# point, although currently aliases of type "correction" do not have
+# any additional aliases of type "abbreviation". Such relationships
+# are not enforced by stability policies.
 #
 #-----------------------------------------------------------------
 
@@ -71,6 +87,7 @@
 
 0007;ALERT;control
 0007;BEL;abbreviation
+
 0008;BACKSPACE;control
 0008;BS;abbreviation
 0009;CHARACTER TABULATION;control
@@ -135,10 +152,23 @@
 0020;SP;abbreviation
 007F;DELETE;control
 007F;DEL;abbreviation
+
+# PADDING CHARACTER and HIGH OCTET PRESET represent
+# architectural concepts initially proposed for early
+# drafts of ISO/IEC 10646-1. They were never actually
+# approved or standardized: hence their designation
+# here as the "figment" type. Formal name aliases
+# (and corresponding abbreviations) for these code
+# points are included here because these names leaked
+# out from the draft documents and were published in
+# at least one RFC whose names for code points was
+# implemented in Perl regex expressions.
+
 0080;PADDING CHARACTER;figment
 0080;PAD;abbreviation
 0081;HIGH OCTET PRESET;figment
 0081;HOP;abbreviation
+
 0082;BREAK PERMITTED HERE;control
 0082;BPH;abbreviation
 0083;NO BREAK HERE;control
@@ -197,8 +227,14 @@
 0097;EPA;abbreviation
 0098;START OF STRING;control
 0098;SOS;abbreviation
+
+# SINGLE GRAPHIC CHARACTER INTRODUCER is another
+# architectural concept from early drafts of ISO/IEC 10646-1
+# which was never approved and standardized.
+
 0099;SINGLE GRAPHIC CHARACTER INTRODUCER;figment
 0099;SGC;abbreviation
+
 009A;SINGLE CHARACTER INTRODUCER;control
 009A;SCI;abbreviation
 009B;CONTROL SEQUENCE INTRODUCER;control
@@ -248,6 +284,8 @@
 2118;WEIERSTRASS ELLIPTIC FUNCTION;correction
 2448;MICR ON US SYMBOL;correction
 2449;MICR DASH SYMBOL;correction
+2B7A;LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
+2B7C;RIGHTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
 A015;YI SYLLABLE ITERATION MARK;correction
 FE18;PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET;correction
 FE00;VS1;abbreviation

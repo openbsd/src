@@ -19,8 +19,8 @@ my ($source_file, $object_file, $exe_file);
 my $b = ExtUtils::CBuilder->new(quiet => $quiet);
 
 # test plan
-if ($^O eq 'MSWin32') {
-  plan skip_all => "link_executable() is not implemented yet on Win32";
+if ($^O =~ / ^ ( MSWin32 | os390 ) $ /xi) {
+  plan skip_all => "link_executable() is not implemented yet on $^O";
 }
 elsif ( ! $b->have_compiler ) {
   plan skip_all => "no compiler available for testing";

@@ -101,9 +101,10 @@ static const char my_z_errmsg[][32] = {
 # define NO_WRITEABLE_DATA
 #endif
 
+/* Set TRACE_DEFAULT to a non-zero value to enable tracing */
 #define TRACE_DEFAULT 0
 
-#ifdef NO_WRITEABLE_DATA
+#if defined(NO_WRITEABLE_DATA) || TRACE_DEFAULT == 0
 #  define trace TRACE_DEFAULT
 #else
   static int trace = TRACE_DEFAULT ;
@@ -133,18 +134,7 @@ GetErrorString(error_no)
 int error_no ;
 #endif
 {
-    dTHX;
-    char * errstr ;
-  
-#if 0
-    if (error_no == BZ_ERRNO) {
-        errstr = Strerror(errno) ;
-    }
-    else
-#endif
-        errstr = (char*) my_z_errmsg[4 - error_no]; 
-
-    return errstr ;
+    return(char*) my_z_errmsg[4 - error_no]; 
 }
 
 static void
@@ -344,9 +334,6 @@ PROTOTYPES:	DISABLE
 INCLUDE: constants.xs
 
 BOOT:
-#ifndef NO_WRITEABLE_DATA
-  trace = TRACE_DEFAULT ;
-#endif
     /* Check this version of bzip2 is == 1 */
     if (BZ2_bzlibVersion()[0] != '1')
 	croak(COMPRESS_CLASS " needs bzip2 version 1.x, you have %s\n", BZ2_bzlibVersion()) ;

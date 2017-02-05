@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Module::CoreList;
-use Test::More tests => 38;
+use Test::More tests => 43;
 
 BEGIN { require_ok('Module::CoreList'); }
 
@@ -27,6 +27,13 @@ ok(Module::CoreList::is_core('attributes', undef, '5.00503') == 0, "attributes w
 ok(Module::CoreList::is_core('attributes', undef, '5.006001') == 1, "attributes were in 5.6.1");
 ok(Module::CoreList::is_core('Pod::Plainer', undef, '5.012001') == 1, "Pod::Plainer was core in 5.12.1");
 ok(Module::CoreList::is_core('Pod::Plainer', undef, '5.016003') == 0, "Pod::Plainer was removed in 5.13.1");
+
+ok(!Module::CoreList::is_core('File::Temp', 0, '5.006'), 'File::Temp is not in 5.006000');
+ok(Module::CoreList::is_core('File::Temp', 0, '5.006001'), 'File::Temp is in 5.006001');
+ok(!Module::CoreList::is_core('File::Temp', '0.12', '5.006'), 'File::Temp 0.12 is not in 5.006000');
+ok(Module::CoreList::is_core('File::Temp', '0.12', '5.006001'), 'File::Temp 0.12 is in 5.006001');
+ok(Module::CoreList::is_core('File::Temp', '0.12', '5.006002'), 'File::Temp 0.12 is in 5.006002');
+
 
 # history of module 'encoding' in core
 #   version 1.00 included in 5.007003

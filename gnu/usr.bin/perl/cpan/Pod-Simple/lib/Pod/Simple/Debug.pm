@@ -1,9 +1,8 @@
-
 require 5;
 package Pod::Simple::Debug;
 use strict;
 use vars qw($VERSION );
-$VERSION = '3.28';
+$VERSION = '3.32';
 
 sub import {
   my($value,$variable);
@@ -48,10 +47,10 @@ sub import {
     # make a not-really-constant
     *Pod::Simple::DEBUG = sub () { $$variable } ;
     $$variable = $value;
-    print "# Starting Pod::Simple::DEBUG = non-constant $variable with val $value\n";
+    print STDERR "# Starting Pod::Simple::DEBUG = non-constant $variable with val $value\n";
   } else {
     *Pod::Simple::DEBUG = eval " sub () { $value } ";
-    print "# Starting Pod::Simple::DEBUG = $value\n";
+    print STDERR "# Starting Pod::Simple::DEBUG = $value\n";
   }
   
   require Pod::Simple;
@@ -97,7 +96,7 @@ Note that you should load this module I<before> loading Pod::Simple (or
 any Pod::Simple-based class).  If you try loading Pod::Simple::Debug
 after &Pod::Simple::DEBUG is already defined, Pod::Simple::Debug will
 throw a fatal error to the effect that
-"it's s too late to call Pod::Simple::Debug".
+"It's too late to call Pod::Simple::Debug".
 
 Note that the C<use Pod::Simple::Debug (\$x, I<somenum>)> mode will make
 Pod::Simple (et al) run rather slower, since &Pod::Simple::DEBUG won't
@@ -141,8 +140,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

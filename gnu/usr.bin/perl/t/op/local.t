@@ -779,7 +779,7 @@ is($@, "");
 like( runperl(stderr => 1,
               prog => 'use constant foo => q(a);' .
                       'index(q(a), foo);' .
-                      'local *g=${::}{foo};print q(ok);'), "ok", "[perl #52740]");
+                      'local *g=${::}{foo};print q(ok);'), qr/^ok$/, "[perl #52740]");
 
 # related to perl #112966
 # Magic should not cause elements not to be deleted after scope unwinding

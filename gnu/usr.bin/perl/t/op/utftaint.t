@@ -3,7 +3,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib);
+    require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
@@ -17,7 +18,6 @@ sub tainted ($) {
     any_tainted @_;
 }
 
-require './test.pl';
 plan(tests => 3*10 + 3*8 + 2*16 + 3);
 
 my $arg = $ENV{PATH}; # a tainted value
@@ -140,7 +140,11 @@ for my $ary ([ascii => 'perl'], [latin1 => "\xB6"]) {
     is(tainted($taint), tainted($arg), "tainted: $encode, downgrade down");
 }
 
-{
+SKIP: {
+    if (is_miniperl()) {
+        skip_if_miniperl("Unicode tables not built yet", 2)
+            unless eval 'require "unicore/Heavy.pl"';
+    }
     fresh_perl_is('$a = substr $^X, 0, 0; /\x{100}/i; /$a\x{100}/i || print q,ok,',
 		  'ok', {switches => ["-T", "-l"]},
 		  "matching a regexp is taint agnostic");

@@ -1,9 +1,11 @@
+#!./perl
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
 }
-plan tests=>205;
+plan tests=>209;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -169,7 +171,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call in scalar assignment/);
+like($_, qr/Can\'t modify non-lvalue subroutine call of &main::nolv in scalar assignment/);
 
 $_ = '';
 
@@ -178,7 +180,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call in scalar assignment/);
+like($_, qr/Can\'t modify non-lvalue subroutine call of &main::nolv in scalar assignment/);
 
 $_ = '';
 
@@ -187,7 +189,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call in scalar assignment/);
+like($_, qr/Can\'t modify non-lvalue subroutine call of &main::nolv in scalar assignment/);
 
 $x0 = $x1 = $_ = undef;
 $nolv = \&nolv;
@@ -358,7 +360,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call at /);
+like($_, qr/Can\'t modify non-lvalue subroutine call of &main::xxx at /);
 
 $_ = undef;
 eval <<'EOE' or $_ = $@;
@@ -366,7 +368,7 @@ eval <<'EOE' or $_ = $@;
   1;
 EOE
 
-like($_, qr/Can\'t modify non-lvalue subroutine call at /);
+like($_, qr/Can\'t modify non-lvalue subroutine call of &main::xxx at /);
 
 sub yyy () { 'yyy' } # Const, not lvalue
 
@@ -386,6 +388,19 @@ eval <<'EOE' or $_ = $@;
 EOE
 
 like($_, qr/Can\'t return a readonly value from lvalue subroutine/);
+
+eval <<'EOF';
+  sub lv2tmpr : lvalue { my $x = *foo; Internals::SvREADONLY $x, 1; $x }
+  lv2tmpr = (2,3);
+EOF
+
+like($@, qr/Can\'t return a readonly value from lvalue subroutine at/);
+
+eval <<'EOG';
+  (lv2tmpr) = (2,3);
+EOG
+
+like($@, qr/Can\'t return a readonly value from lvalue subroutine/);
 
 sub lva : lvalue {@a}
 
@@ -517,7 +532,7 @@ is($str, "Hi, world!");
 
 $str = "Made w/ JavaScript";
 sub veclv : lvalue { vec($str, 2, 32) }
-if (ord('A') != 193) {
+if ($::IS_ASCII) {
     veclv() = 0x5065726C;
 }
 else { # EBCDIC?
@@ -810,7 +825,7 @@ foo = 3;
 ----
 lvalue attribute ignored after the subroutine has been defined at - line 4.
 lvalue attribute ignored after the subroutine has been defined at - line 6.
-Can't modify non-lvalue subroutine call in scalar assignment at - line 7, near "3;"
+Can't modify non-lvalue subroutine call of &main::foo in scalar assignment at - line 7, near "3;"
 Execution of - aborted due to compilation errors.
 ====
 }
@@ -966,7 +981,7 @@ package _102486 {
       'sub:lvalue{&$x}->() does not die for non-lvalue inner sub call';
   ::is $called, 1, 'The &$x actually called the sub';
   eval { +sub :lvalue { &$x }->() = 3 };
-  ::like $@, qr/^Can't modify non-lvalue subroutine call at /,
+  ::like $@, qr/^Can't modify non-lvalue subroutine call of &_102486::nonlv at /,
         'sub:lvalue{&$x}->() dies in true lvalue context';
 }
 
@@ -995,7 +1010,7 @@ for (sub : lvalue { "$x" }->()) {
 
 # [perl #117947] XSUBs should not be treated as lvalues at run time
 eval { &{\&utf8::is_utf8}("") = 3 };
-like $@, qr/^Can't modify non-lvalue subroutine call at /,
+like $@, qr/^Can't modify non-lvalue subroutine call of &utf8::is_utf8 at /,
         'XSUB not seen at compile time dies in lvalue context';
 
 # [perl #119797] else implicitly returning value
@@ -1042,3 +1057,28 @@ sub bare119797 : lvalue {
 eval { (bare119797(0)) = 4..6 };
 is $@, "", '$@ after writing to array returned by bare block';
 is "@119797", "4 5 6", 'writing to array returned by bare block';
+
+# a sub with nested scopes must pop rubbish on the stack
+{
+    my $x = "a";
+    sub loopreturn : lvalue {
+        for (1,2) {
+            return $x
+        }
+    }
+    loopreturn = "b";
+    is($x, "b", "loopreturn");
+}
+
+# a sub without nested scopes that still leaves rubbish on the stack
+# which needs popping
+{
+    my $x = "a";
+    sub junkreturn : lvalue {
+        my $false;
+        return $x unless $false and $false;
+        1;
+    }
+    junkreturn = "b";
+    is($x, "b", "junkreturn");
+}

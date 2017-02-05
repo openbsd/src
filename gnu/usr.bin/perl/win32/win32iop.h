@@ -130,7 +130,6 @@ DllExport  int		win32_putenv(const char *name);
 DllExport  unsigned 	win32_sleep(unsigned int);
 DllExport  int		win32_times(struct tms *timebuf);
 DllExport  unsigned 	win32_alarm(unsigned int sec);
-DllExport  int		win32_stat(const char *path, Stat_t *buf);
 DllExport  char*	win32_longpath(char *path);
 DllExport  char*	win32_ansipath(const WCHAR *path);
 DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
@@ -289,11 +288,11 @@ END_EXTERN_C
 #  undef abort
 #endif
 #define abort()			win32_abort()
-#ifdef UNDER_CE
+#if defined(UNDER_CE) || defined(__MINGW32__)
 #  undef fstat
 #endif
 #define fstat(fd,bufptr)   	win32_fstat(fd,bufptr)
-#ifdef UNDER_CE
+#if defined(UNDER_CE) || defined(__MINGW32__)
 #  undef stat
 #endif
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)

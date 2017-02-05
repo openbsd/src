@@ -174,7 +174,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -193,7 +192,6 @@ BEGIN {    # START PLAN
         #     runlog => [
         #         [   {   archive => 1,
         #             },
-        #             'TAP::Harness',
         #             'one', 'two',
         #             'three'
         #         ]
@@ -209,7 +207,6 @@ BEGIN {    # START PLAN
             runlog => [
                 [   '_runtests',
                     { verbosity => 0, show_count => 1 },
-                    'TAP::Harness',
                     'one', 'two',
                     'three'
                 ]
@@ -229,7 +226,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -249,7 +245,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -269,7 +264,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -288,7 +282,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -307,7 +300,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -327,7 +319,6 @@ BEGIN {    # START PLAN
                         verbosity       => 0,
                         show_count      => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -347,7 +338,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -366,7 +356,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -385,7 +374,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -404,7 +392,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -422,7 +409,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -440,7 +426,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -2,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -458,7 +443,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -476,7 +460,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'three', 'two', 'one'
                 ]
             ],
@@ -495,7 +478,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'xxxone', 'xxxtwo',
                     'xxxthree'
                 ]
@@ -515,7 +497,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -534,7 +515,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -552,7 +532,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -571,7 +550,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -590,7 +568,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     'one', 'two', 'three'
                 ]
             ],
@@ -610,7 +587,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -629,7 +605,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -647,7 +622,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -665,7 +639,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -683,7 +656,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -701,7 +673,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -719,7 +690,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -737,7 +707,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -754,7 +723,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     "xxx$dummy_test"
                 ]
             ],
@@ -771,7 +739,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     "xxx$dummy_test"
                 ]
             ],
@@ -789,7 +756,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -806,7 +772,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -823,7 +788,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -840,7 +804,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     reverse @dummy_tests
                 ]
             ],
@@ -860,7 +823,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -880,7 +842,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -897,7 +858,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -914,7 +874,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -1,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -931,7 +890,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -2,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -948,7 +906,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => -2,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -966,7 +923,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -984,7 +940,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1002,7 +957,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1022,7 +976,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1041,7 +994,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1060,7 +1012,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1079,7 +1030,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1094,7 +1044,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                 ]
             ],
         },
@@ -1108,7 +1057,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                 ]
             ],
         },
@@ -1130,7 +1078,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1178,7 +1125,6 @@ BEGIN {    # START PLAN
                         verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1204,7 +1150,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1233,7 +1178,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1258,7 +1202,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1299,7 +1242,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1324,7 +1266,6 @@ BEGIN {    # START PLAN
                     {   verbosity  => 0,
                         show_count => 1,
                     },
-                    'TAP::Harness',
                     $dummy_test
                 ]
             ],
@@ -1341,7 +1282,6 @@ BEGIN {    # START PLAN
         #     runlog   => [
         #         [   '_runtests',
         #             {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1355,7 +1295,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1368,7 +1307,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1382,7 +1320,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1396,7 +1333,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1410,7 +1346,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1424,7 +1359,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1438,7 +1372,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1468,7 +1401,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1482,7 +1414,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1496,7 +1427,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1510,7 +1440,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],
@@ -1524,7 +1453,6 @@ BEGIN {    # START PLAN
         #     expect   => {},
         #     runlog   => [
         #         [   {},
-        #             'TAP::Harness',
         #             $dummy_test
         #         ]
         #     ],

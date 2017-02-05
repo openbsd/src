@@ -16,6 +16,7 @@
 UV                      T_UV
 NV                      T_NV
 HV *                    T_HVREF
+STRLEN                  T_UV
 
 INPUT
 T_UV

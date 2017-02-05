@@ -23,11 +23,11 @@ TAP::Formatter::Session - Abstract base class for harness output delegate
 
 =head1 VERSION
 
-Version 3.30
+Version 3.36
 
 =cut
 
-our $VERSION = '3.30_01';
+our $VERSION = '3.36_01';
 
 =head1 METHODS
 
@@ -98,6 +98,11 @@ Called to close a test session.
 
 Called by C<close_test> to clear the line showing test progress, or the parallel
 test ruler, prior to printing the final test result.
+
+=head3 C<time_report>
+
+Return a formatted string about the elapsed (wall-clock) time
+and about the consumed CPU time.
 
 =cut
 
@@ -181,6 +186,35 @@ sub _output_test_failure {
 sub _make_ok_line {
     my ( $self, $suffix ) = @_;
     return "ok$suffix\n";
+}
+
+sub time_report {
+    my ( $self, $formatter, $parser ) = @_;
+
+    my @time_report;
+    if ( $formatter->timer ) {
+        my $start_time = $parser->start_time;
+        my $end_time   = $parser->end_time;
+        if ( defined $start_time and defined $end_time ) {
+            my $elapsed = $end_time - $start_time;
+            push @time_report,
+              $self->time_is_hires
+                ? sprintf( ' %8d ms', $elapsed * 1000 )
+                : sprintf( ' %8s s', $elapsed || '<1' );
+        }
+        my $start_times = $parser->start_times();
+        my $end_times   = $parser->end_times();
+        my $usr  = $end_times->[0] - $start_times->[0];
+        my $sys  = $end_times->[1] - $start_times->[1];
+        my $cusr = $end_times->[2] - $start_times->[2];
+        my $csys = $end_times->[3] - $start_times->[3];
+        push @time_report,
+          sprintf('(%5.2f usr %5.2f sys + %5.2f cusr %5.2f csys = %5.2f CPU)',
+                  $usr, $sys, $cusr, $csys,
+                  $usr + $sys + $cusr + $csys);
+    }
+
+    return "@time_report";
 }
 
 1;

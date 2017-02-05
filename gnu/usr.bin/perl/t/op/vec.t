@@ -2,13 +2,12 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
+    require './test.pl';
+    set_up_inc('../lib');
 }
 
-require "test.pl";
 plan( tests => 35 );
 
-my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 
 is(vec($foo,0,1), 0);
 is(length($foo), undef);
@@ -68,7 +67,7 @@ ok(! $@);
 $@ = undef;
 eval { vec($foo, 1, 8) = 13 };
 ok(! $@);
-if ($Is_EBCDIC) {
+if ($::IS_EBCDIC) {
     is($foo, "\x8c\x0d\xff\x8a\x69"); 
 }
 else {

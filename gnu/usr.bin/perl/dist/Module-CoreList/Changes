@@ -1,3 +1,63 @@
+5.20170114_24
+  - Updated for v5.24.1
+
+5.20161220
+  - Updated for v5.25.8
+
+5.20161120
+  - Updated for v5.25.7
+
+5.20161020
+  - Updated for v5.25.6
+
+5.20160920
+  - Updated for v5.25.5
+
+5.20160820
+  - Updated for v5.25.4
+
+5.20160720
+  - Updated for v5.25.3
+
+5.20160620
+  - Updated for v5.25.2
+
+5.20160520
+ - fixed edge-case checking in is_core() (checking for a specific
+   version of a module returned false for the first perl release
+   that contained it)
+ - Updated for v5.25.1
+
+5.20160429
+ - Updated for v5.22.2
+
+5.20160320
+ - Updated for v5.23.9
+
+5.20160228
+  - [perl #127624] corelist: wrong Digest::SHA version in 5.18.4
+
+5.20160220
+  - Updated for v5.23.8
+
+5.20160120
+  - Updated for v5.23.7
+
+5.20151220
+  - Updated for v5.23.6
+
+5.20151213
+  - Updated for v5.22.1
+
+5.20151120
+  - Updated for v5.23.5
+
+5.20151020
+  - Updated for v5.23.4
+
+5.20150920
+  - Updated for v5.23.3
+
 5.20150912
   - Updated for v5.20.3
 

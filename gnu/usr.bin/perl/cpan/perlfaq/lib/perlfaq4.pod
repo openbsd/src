@@ -2,6 +2,10 @@
 
 perlfaq4 - Data Manipulation
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section of the FAQ answers questions related to manipulating
@@ -486,7 +490,7 @@ operators so you can compare them directly:
 You can also get differences with a subtraction, which returns a
 L<Time::Seconds> object:
 
-    my $diff = $date1 - $date2;
+    my $date_diff = $date1 - $date2;
     print "The difference is ", $date_diff->days, " days\n";
 
 If you want to work with formatted dates, the L<Date::Manip>,
@@ -730,7 +734,7 @@ L<Regexp::Common::balanced> and L<Regexp::Common::delimited>).
 More complex cases will require to write a parser, probably
 using a parsing module from CPAN, like
 L<Regexp::Grammars>, L<Parse::RecDescent>, L<Parse::Yapp>,
-L<Text::Balanced>, or L<Marpa::XS>.
+L<Text::Balanced>, or L<Marpa::R2>.
 
 =head2 How do I reverse a string?
 

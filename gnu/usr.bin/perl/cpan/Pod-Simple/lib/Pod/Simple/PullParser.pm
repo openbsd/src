@@ -1,7 +1,6 @@
-
 require 5;
 package Pod::Simple::PullParser;
-$VERSION = '3.28';
+$VERSION = '3.32';
 use Pod::Simple ();
 BEGIN {@ISA = ('Pod::Simple')}
 
@@ -89,7 +88,7 @@ sub new {
   $self->{'text_token_class'}  ||= 'Pod::Simple::PullParserTextToken';
   $self->{'end_token_class'}   ||= 'Pod::Simple::PullParserEndToken';
 
-  DEBUG > 1 and print "New pullparser object: $self\n";
+  DEBUG > 1 and print STDERR "New pullparser object: $self\n";
 
   return $self;
 }
@@ -98,8 +97,8 @@ sub new {
 
 sub get_token {
   my $self = shift;
-  DEBUG > 1 and print "\nget_token starting up on $self.\n";
-  DEBUG > 2 and print " Items in token-buffer (",
+  DEBUG > 1 and print STDERR "\nget_token starting up on $self.\n";
+  DEBUG > 2 and print STDERR " Items in token-buffer (",
    scalar( @{ $self->{'token_buffer'} } ) ,
    ") :\n", map(
      "    " . $_->dump . "\n", @{ $self->{'token_buffer'} }
@@ -109,25 +108,25 @@ sub get_token {
   ;
 
   until( @{ $self->{'token_buffer'} } ) {
-    DEBUG > 3 and print "I need to get something into my empty token buffer...\n";
+    DEBUG > 3 and print STDERR "I need to get something into my empty token buffer...\n";
     if($self->{'source_dead'}) {
-      DEBUG and print "$self 's source is dead.\n";
+      DEBUG and print STDERR "$self 's source is dead.\n";
       push @{ $self->{'token_buffer'} }, undef;
     } elsif(exists $self->{'source_fh'}) {
       my @lines;
       my $fh = $self->{'source_fh'}
        || Carp::croak('You have to call set_source before you can call get_token');
        
-      DEBUG and print "$self 's source is filehandle $fh.\n";
+      DEBUG and print STDERR "$self 's source is filehandle $fh.\n";
       # Read those many lines at a time
       for(my $i = Pod::Simple::MANY_LINES; $i--;) {
-        DEBUG > 3 and print " Fetching a line from source filehandle $fh...\n";
+        DEBUG > 3 and print STDERR " Fetching a line from source filehandle $fh...\n";
         local $/ = $Pod::Simple::NL;
         push @lines, scalar(<$fh>); # readline
-        DEBUG > 3 and print "  Line is: ",
+        DEBUG > 3 and print STDERR "  Line is: ",
           defined($lines[-1]) ? $lines[-1] : "<undef>\n";
         unless( defined $lines[-1] ) {
-          DEBUG and print "That's it for that source fh!  Killing.\n";
+          DEBUG and print STDERR "That's it for that source fh!  Killing.\n";
           delete $self->{'source_fh'}; # so it can be GC'd
           last;
         }
@@ -139,31 +138,31 @@ sub get_token {
       }
       
       if(DEBUG > 8) {
-        print "* I've gotten ", scalar(@lines), " lines:\n";
+        print STDERR "* I've gotten ", scalar(@lines), " lines:\n";
         foreach my $l (@lines) {
           if(defined $l) {
-            print "  line {$l}\n";
+            print STDERR "  line {$l}\n";
           } else {
-            print "  line undef\n";
+            print STDERR "  line undef\n";
           }
         }
-        print "* end of ", scalar(@lines), " lines\n";
+        print STDERR "* end of ", scalar(@lines), " lines\n";
       }
 
       $self->SUPER::parse_lines(@lines);
       
     } elsif(exists $self->{'source_arrayref'}) {
-      DEBUG and print "$self 's source is arrayref $self->{'source_arrayref'}, with ",
+      DEBUG and print STDERR "$self 's source is arrayref $self->{'source_arrayref'}, with ",
        scalar(@{$self->{'source_arrayref'}}), " items left in it.\n";
 
-      DEBUG > 3 and print "  Fetching ", Pod::Simple::MANY_LINES, " lines.\n";
+      DEBUG > 3 and print STDERR "  Fetching ", Pod::Simple::MANY_LINES, " lines.\n";
       $self->SUPER::parse_lines(
         splice @{ $self->{'source_arrayref'} },
         0,
         Pod::Simple::MANY_LINES
       );
       unless( @{ $self->{'source_arrayref'} } ) {
-        DEBUG and print "That's it for that source arrayref!  Killing.\n";
+        DEBUG and print STDERR "That's it for that source arrayref!  Killing.\n";
         $self->SUPER::parse_lines(undef);
         delete $self->{'source_arrayref'}; # so it can be GC'd
       }
@@ -171,12 +170,12 @@ sub get_token {
 
     } elsif(exists $self->{'source_scalar_ref'}) {
 
-      DEBUG and print "$self 's source is scalarref $self->{'source_scalar_ref'}, with ",
+      DEBUG and print STDERR "$self 's source is scalarref $self->{'source_scalar_ref'}, with ",
         length(${ $self->{'source_scalar_ref'} }) -
         (pos(${ $self->{'source_scalar_ref'} }) || 0),
         " characters left to parse.\n";
 
-      DEBUG > 3 and print " Fetching a line from source-string...\n";
+      DEBUG > 3 and print STDERR " Fetching a line from source-string...\n";
       if( ${ $self->{'source_scalar_ref'} } =~
         m/([^\n\r]*)((?:\r?\n)?)/g
       ) {
@@ -190,7 +189,7 @@ sub get_token {
       } else { # that's the end.  Byebye
         $self->SUPER::parse_lines(undef);
         delete $self->{'source_scalar_ref'};
-        DEBUG and print "That's it for that source scalarref!  Killing.\n";
+        DEBUG and print STDERR "That's it for that source scalarref!  Killing.\n";
       }
 
       
@@ -198,7 +197,7 @@ sub get_token {
       die "What source??";
     }
   }
-  DEBUG and print "get_token about to return ",
+  DEBUG and print STDERR "get_token about to return ",
    Pod::Simple::pretty( @{$self->{'token_buffer'}}
      ? $self->{'token_buffer'}[-1] : undef
    ), "\n";
@@ -207,7 +206,7 @@ sub get_token {
 
 sub unget_token {
   my $self = shift;
-  DEBUG and print "Ungetting ", scalar(@_), " tokens: ",
+  DEBUG and print STDERR "Ungetting ", scalar(@_), " tokens: ",
    @_ ? "@_\n" : "().\n";
   foreach my $t (@_) {
     Carp::croak "Can't unget that, because it's not a token -- it's undef!"
@@ -219,7 +218,7 @@ sub unget_token {
   }
   
   unshift @{$self->{'token_buffer'}}, @_;
-  DEBUG > 1 and print "Token buffer now has ",
+  DEBUG > 1 and print STDERR "Token buffer now has ",
    scalar(@{$self->{'token_buffer'}}), " items in it.\n";
   return;
 }
@@ -238,36 +237,36 @@ sub set_source {
     Carp::croak("Can't use empty-string as a source for set_source");
   } elsif(ref(\( $_[0] )) eq 'GLOB') {
     $self->{'source_filename'} = '' . ($handle = $_[0]);
-    DEBUG and print "$self 's source is glob $_[0]\n";
+    DEBUG and print STDERR "$self 's source is glob $_[0]\n";
     # and fall thru   
   } elsif(ref( $_[0] ) eq 'SCALAR') {
     $self->{'source_scalar_ref'} = $_[0];
-    DEBUG and print "$self 's source is scalar ref $_[0]\n";
+    DEBUG and print STDERR "$self 's source is scalar ref $_[0]\n";
     return;
   } elsif(ref( $_[0] ) eq 'ARRAY') {
     $self->{'source_arrayref'} = $_[0];
-    DEBUG and print "$self 's source is array ref $_[0]\n";
+    DEBUG and print STDERR "$self 's source is array ref $_[0]\n";
     return;
   } elsif(ref $_[0]) {
     $self->{'source_filename'} = '' . ($handle = $_[0]);
-    DEBUG and print "$self 's source is fh-obj $_[0]\n";
+    DEBUG and print STDERR "$self 's source is fh-obj $_[0]\n";
   } elsif(!length $_[0]) {
     Carp::croak("Can't use empty-string as a source for set_source");
   } else {  # It's a filename!
-    DEBUG and print "$self 's source is filename $_[0]\n";
+    DEBUG and print STDERR "$self 's source is filename $_[0]\n";
     {
       local *PODSOURCE;
       open(PODSOURCE, "<$_[0]") || Carp::croak "Can't open $_[0]: $!";
       $handle = *PODSOURCE{IO};
     }
     $self->{'source_filename'} = $_[0];
-    DEBUG and print "  Its name is $_[0].\n";
+    DEBUG and print STDERR "  Its name is $_[0].\n";
 
     # TODO: file-discipline things here!
   }
 
   $self->{'source_fh'} = $handle;
-  DEBUG and print "  Its handle is $handle\n";
+  DEBUG and print STDERR "  Its handle is $handle\n";
   return 1;
 }
 
@@ -357,7 +356,7 @@ sub _get_titled_section {
 
     if ($state == 0) { # seeking =head1
       if( $token->is_start and $token->tagname eq 'head1' ) {
-        DEBUG and print "  Found head1.  Seeking content...\n";
+        DEBUG and print STDERR "  Found head1.  Seeking content...\n";
         ++$state;
         $head1_text_content = '';
       }
@@ -366,21 +365,21 @@ sub _get_titled_section {
     elsif($state == 1) { # accumulating text until end of head1
       if( $token->is_text ) {
           unless ($skipX) {
-            DEBUG and print "   Adding \"", $token->text, "\" to head1-content.\n";
+            DEBUG and print STDERR "   Adding \"", $token->text, "\" to head1-content.\n";
             $head1_text_content .= $token->text;
           }
       } elsif( $token->is_tagname('X') ) {
           # We're going to want to ignore X<> stuff.
           $skipX = $token->is_start;
-          DEBUG and print +($skipX ? 'Start' : 'End'), 'ing ignoring of X<> tag';
+          DEBUG and print STDERR +($skipX ? 'Start' : 'End'), 'ing ignoring of X<> tag';
       } elsif( $token->is_end and $token->tagname eq 'head1' ) {
-        DEBUG and print "  Found end of head1.  Considering content...\n";
+        DEBUG and print STDERR "  Found end of head1.  Considering content...\n";
         $head1_text_content = uc $head1_text_content if $nocase;
         if($head1_text_content eq $titlename
           or $head1_text_content =~ m/\($titlename_re\)/s
           # We accept "=head1 Nomen Modularis (NAME)" for sake of i18n
         ) {
-          DEBUG and print "  Yup, it was $titlename.  Seeking next para-content...\n";
+          DEBUG and print STDERR "  Yup, it was $titlename.  Seeking next para-content...\n";
           ++$state;
         } elsif(
           $desperate_for_title
@@ -401,11 +400,11 @@ sub _get_titled_section {
         ) {
           # Looks good; trim it
           ($title = $head1_text_content) =~ s/\s+$//;
-          DEBUG and print "  It looks titular: \"$title\".\n\n  Using that.\n";
+          DEBUG and print STDERR "  It looks titular: \"$title\".\n\n  Using that.\n";
           last;
         } else {
           --$state;
-          DEBUG and print "  Didn't look titular ($head1_text_content).\n",
+          DEBUG and print STDERR "  Didn't look titular ($head1_text_content).\n",
             "\n  Dropping back to seeking-head1-content mode...\n";
         }
       }
@@ -414,7 +413,7 @@ sub _get_titled_section {
     elsif($state == 2) {
       # seeking start of para (which must immediately follow)
       if($token->is_start and $content_containers{ $token->tagname }) {
-        DEBUG and print "  Found start of Para.  Accumulating content...\n";
+        DEBUG and print STDERR "  Found start of Para.  Accumulating content...\n";
         $para_text_content = '';
         ++$state;
       } else {
@@ -427,12 +426,12 @@ sub _get_titled_section {
     elsif($state == 3) {
       # accumulating text until end of Para
       if( $token->is_text ) {
-        DEBUG and print "   Adding \"", $token->text, "\" to para-content.\n";
+        DEBUG and print STDERR "   Adding \"", $token->text, "\" to para-content.\n";
         $para_text_content .= $token->text;
         # and keep looking
         
       } elsif( $token->is_end and $content_containers{ $token->tagname } ) {
-        DEBUG and print "  Found end of Para.  Considering content: ",
+        DEBUG and print STDERR "  Found end of Para.  Considering content: ",
           $para_text_content, "\n";
 
         if( $para_text_content =~ m/\S/
@@ -441,11 +440,11 @@ sub _get_titled_section {
            : 1)
         ) {
           # Some minimal sanity constraints, I think.
-          DEBUG and print "  It looks contentworthy, I guess.  Using it.\n";
+          DEBUG and print STDERR "  It looks contentworthy, I guess.  Using it.\n";
           $title = $para_text_content;
           last;
         } else {
-          DEBUG and print "  Doesn't look at all contentworthy!\n  Giving up.\n";
+          DEBUG and print STDERR "  Doesn't look at all contentworthy!\n  Giving up.\n";
           undef $title;
           last;
         }
@@ -462,8 +461,8 @@ sub _get_titled_section {
   $self->unget_token(@to_unget);
   
   if(DEBUG) {
-    if(defined $title) { print "  Returning title <$title>\n" }
-    else { print "Returning title <>\n" }
+    if(defined $title) { print STDERR "  Returning title <$title>\n" }
+    else { print STDERR "Returning title <>\n" }
   }
   
   return '' unless defined $title;
@@ -477,7 +476,7 @@ sub _get_titled_section {
 
 sub _handle_element_start {
   my $self = shift;   # leaving ($element_name, $attr_hash_r)
-  DEBUG > 2 and print "++ $_[0] (", map("<$_> ", %{$_[1]}), ")\n";
+  DEBUG > 2 and print STDERR "++ $_[0] (", map("<$_> ", %{$_[1]}), ")\n";
   
   push @{ $self->{'token_buffer'} },
        $self->{'start_token_class'}->new(@_);
@@ -486,7 +485,7 @@ sub _handle_element_start {
 
 sub _handle_text {
   my $self = shift;   # leaving ($text)
-  DEBUG > 2 and print "== $_[0]\n";
+  DEBUG > 2 and print STDERR "== $_[0]\n";
   push @{ $self->{'token_buffer'} },
        $self->{'text_token_class'}->new(@_);
   return;
@@ -494,7 +493,7 @@ sub _handle_text {
 
 sub _handle_element_end {
   my $self = shift;   # leaving ($element_name);
-  DEBUG > 2 and print "-- $_[0]\n";
+  DEBUG > 2 and print STDERR "-- $_[0]\n";
   push @{ $self->{'token_buffer'} }, 
        $self->{'end_token_class'}->new(@_);
   return;
@@ -688,7 +687,7 @@ If the title can't be found, then get_short_title returns empty-string
 This works like get_title except that it returns the contents of the
 "=head1 AUTHOR\n\nParagraph...\n" section, assuming that that section
 isn't terribly long. To recognize a "=head1 Author\n\nParagraph\n"
-section, pass the C<nocase> otpion:
+section, pass the C<nocase> option:
 
   $parser->get_author(nocase => 1);
 
@@ -699,7 +698,7 @@ section, pass the C<nocase> otpion:
 This works like get_title except that it returns the contents of the
 "=head1 DESCRIPTION\n\nParagraph...\n" section, assuming that that section
 isn't terribly long. To recognize a "=head1 Description\n\nParagraph\n"
-section, pass the C<nocase> otpion:
+section, pass the C<nocase> option:
 
   $parser->get_description(nocase => 1);
 
@@ -708,7 +707,7 @@ section, pass the C<nocase> otpion:
 This works like get_title except that it returns the contents of
 the "=head1 VERSION\n\n[BIG BLOCK]\n" block.  Note that this does NOT
 return the module's C<$VERSION>!! To recognize a
-"=head1 Version\n\n[BIG BLOCK]\n" section, pass the C<nocase> otpion:
+"=head1 Version\n\n[BIG BLOCK]\n" section, pass the C<nocase> option:
 
   $parser->get_version(nocase => 1);
 
@@ -743,8 +742,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.
@@ -793,9 +792,9 @@ sub _old_get_title {  # some witchery in here
       last;
     }
 
-    DEBUG and print "-Got token ", $to_unget[-1]->dump, "\n";
+    DEBUG and print STDERR "-Got token ", $to_unget[-1]->dump, "\n";
 
-    (DEBUG and print "Too much in the buffer.\n"),
+    (DEBUG and print STDERR "Too much in the buffer.\n"),
      last if @to_unget > 25; # sanity
     
     my $pattern = '';
@@ -812,7 +811,7 @@ sub _old_get_title {  # some witchery in here
        )) =~ m{<head1>NAME</head1><Para>(X|</?[BCIFLS]>)+</Para>$}s
     ) {
       # Whee, it fits the pattern
-      DEBUG and print "Seems to match =head1 NAME pattern.\n";
+      DEBUG and print STDERR "Seems to match =head1 NAME pattern.\n";
       $title = '';
       foreach my $t (reverse @to_unget) {
         last if $t->type eq 'start' and $t->tagname eq 'Para';
@@ -825,7 +824,7 @@ sub _old_get_title {  # some witchery in here
       and !( $1 eq '1' and $2 eq 'NAME' )
     ) {
       # Well, it fits a fallback pattern
-      DEBUG and print "Seems to match NAMEless pattern.\n";
+      DEBUG and print STDERR "Seems to match NAMEless pattern.\n";
       $title = '';
       foreach my $t (reverse @to_unget) {
         last if $t->type eq 'start' and $t->tagname =~ m/^head\d$/s;
@@ -835,7 +834,7 @@ sub _old_get_title {  # some witchery in here
       last;
       
     } else {
-      DEBUG and $pattern and print "Leading pattern: $pattern\n";
+      DEBUG and $pattern and print STDERR "Leading pattern: $pattern\n";
     }
   }
   
@@ -843,8 +842,8 @@ sub _old_get_title {  # some witchery in here
   $self->unget_token(@to_unget);
   
   if(DEBUG) {
-    if(defined $title) { print "  Returning title <$title>\n" }
-    else { print "Returning title <>\n" }
+    if(defined $title) { print STDERR "  Returning title <$title>\n" }
+    else { print STDERR "Returning title <>\n" }
   }
   
   return '' unless defined $title;

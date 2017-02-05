@@ -12,7 +12,7 @@ plan tests => 72;
 # burning tons of CPU for dates far in the future.
 # watchdog() makes sure that the test script eventually exits if
 # the tests are triggering the failing behavior
-watchdog(15);
+watchdog(25);
 
 ($beguser,$begsys) = times;
 
@@ -21,9 +21,9 @@ $beg = time;
 while (($now = time) == $beg) { sleep 1 }
 
 ok($now > $beg && $now - $beg < 10,             'very basic time test');
-
+my $x = "aaaa";
 for ($i = 0; $i < 1_000_000; $i++) {
-    for my $j (1..100) {}; # burn some user cycles
+    for my $j (1..1000) { ++$x; }; # burn some user cycles
     ($nowuser, $nowsys) = times;
     $i = 2_000_000 if $nowuser > $beguser && ( $nowsys >= $begsys ||
                                             (!$nowsys && !$begsys));
@@ -241,8 +241,6 @@ SKIP: { #rt #73040
 
 {
     local $^W;
-    scalar gmtime("NaN");
-    pass('[perl #123495] gmtime(NaN) does not crash');
-    scalar localtime("NaN");
-    pass('localtime(NaN) does not crash');
+    is scalar gmtime("NaN"), undef, '[perl #123495] gmtime(NaN)';
+    is scalar localtime("NaN"), undef, 'localtime(NaN)';
 }

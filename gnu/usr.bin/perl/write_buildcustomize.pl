@@ -28,10 +28,9 @@ if ( @ARGV ) {
 my @toolchain = qw(cpan/AutoLoader/lib
 		   dist/Carp/lib
 		   dist/PathTools dist/PathTools/lib
-		   dist/ExtUtils-Command/lib
-		   dist/ExtUtils-Install/lib
+		   cpan/ExtUtils-Install/lib
 		   cpan/ExtUtils-MakeMaker/lib
-		   dist/ExtUtils-Manifest/lib
+		   cpan/ExtUtils-Manifest/lib
 		   cpan/File-Path/lib
 		   ext/re
 		   dist/Term-ReadLine/lib
@@ -39,14 +38,26 @@ my @toolchain = qw(cpan/AutoLoader/lib
                    ext/File-Find/lib
                    cpan/Text-Tabs/lib
 		   dist/constant/lib
+		   cpan/version/lib
 		   );
 
-# Used only in ExtUtils::Liblist::Kid::_win32_ext()
-push @toolchain, 'cpan/Text-ParseWords/lib' if $^O eq 'MSWin32';
+# Text-ParseWords used only in ExtUtils::Liblist::Kid::_win32_ext()
+# the rest are for XS building on Win32, since nonxs and xs build simultaneously
+# on Win32 if parallel building
+push @toolchain, qw(
+	cpan/Text-ParseWords/lib
+	dist/ExtUtils-ParseXS/lib
+	cpan/Getopt-Long/lib
+	cpan/parent/lib
+	cpan/ExtUtils-Constant/lib
+) if $^O eq 'MSWin32';
 push @toolchain, 'ext/VMS-Filespec/lib' if $^O eq 'VMS';
 
 unshift @INC, @toolchain;
 require File::Spec::Functions;
+require Cwd;
+
+my $cwd  = Cwd::getcwd();
 
 # lib must be last, as the toolchain modules write themselves into it
 # as they build, and it's important that @INC order ensures that the partially
@@ -54,7 +65,7 @@ require File::Spec::Functions;
 
 my $inc = join ",\n        ",
     map { "q\0$_\0" }
-    (map {File::Spec::Functions::rel2abs($_)} (
+    (map {File::Spec::Functions::rel2abs($_, $cwd)} (
 # faster build on the non-parallel Win32 build process
         $^O eq 'MSWin32' ? ('lib', @toolchain ) : (@toolchain, 'lib')
     ));
@@ -77,9 +88,9 @@ print $fh <<"EOT" or $error = "Can't print to $file: $!";
 # We are miniperl, building extensions
 # Replace the first entry of \@INC ("lib") with the list of
 # directories we need.
-${\($^O eq 'MSWin32' ? '${^WIN32_SLOPPY_STAT} = 1;':'')}
 splice(\@INC, 0, 1, $inc);
 \$^O = '$osname';
+__END__
 EOT
 
 if ($error) {
@@ -100,9 +111,4 @@ unlink $file
     or warn "Can't unlink $file after error: $!";
 die $error;
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

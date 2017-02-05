@@ -33,20 +33,20 @@ utf8::encode(my $c2_utf8 = $c2);
 
 {
     use bytes;
-    if (ord('A') == 193) { # EBCDIC?
+    if ($::IS_EBCDIC) { # EBCDIC?
 	is(ord($c), 0x8c, "ord under use bytes looks at the 1st byte");
     } else {
 	is(ord($c), 0xc4, "ord under use bytes looks at the 1st byte");
     }
     is(length($c), 2, "length under use bytes looks at bytes");
     is(bytes::length($c), 2, "bytes::length under use bytes looks at bytes");
-    if (ord('A') == 193) { # EBCDIC?
+    if ($::IS_EBCDIC) { # EBCDIC?
 	is(bytes::ord($c), 0x8c, "bytes::ord under use bytes looks at the 1st byte");
     } else {
 	is(bytes::ord($c), 0xc4, "bytes::ord under use bytes looks at the 1st byte");
     }
     # In z/OS \x41,\x8c are the codepoints corresponding to \x80,\xc4 respectively under ASCII platform
-    if (ord('A') == 193) { # EBCDIC?
+    if ($::IS_EBCDIC) { # EBCDIC?
         is(bytes::substr($c, 0, 1), "\x8c", "bytes::substr under use bytes looks at bytes");
         is(bytes::index($c, "\x41"), 1, "bytes::index under use bytes looks at bytes");
         is(bytes::rindex($c, "\x8c"), 0, "bytes::rindex under use bytes looks at bytes");

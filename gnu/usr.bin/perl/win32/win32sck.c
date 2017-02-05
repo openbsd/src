@@ -42,12 +42,15 @@
     STMT_START {					\
 	StartSockets();					\
 	if((x) == (y))					\
-	    errno = get_last_socket_error();		\
+	    {						\
+	    int wsaerr = WSAGetLastError();		\
+	    errno = convert_wsa_error_to_errno(wsaerr);	\
+	    SetLastError(wsaerr);			\
+	    }						\
     } STMT_END
 
 #define SOCKET_TEST_ERROR(x) SOCKET_TEST(x, SOCKET_ERROR)
 
-static int get_last_socket_error(void);
 static struct servent* win32_savecopyservent(struct servent*d,
                                              struct servent*s,
                                              const char *proto);
@@ -322,12 +325,6 @@ convert_errno_to_wsa_error(int err)
 }
 #endif /* ERRNO_HAS_POSIX_SUPPLEMENT */
 
-static int
-get_last_socket_error(void)
-{
-    return convert_wsa_error_to_errno(WSAGetLastError());
-}
-
 void
 start_sockets(void) 
 {
@@ -533,7 +530,7 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
     }
 
     errno = save_errno;
-    SOCKET_TEST_ERROR(r = select(nfds, &nrd, &nwr, &nex, timeout));
+    SOCKET_TEST_ERROR(r = select(nfds, &nrd, &nwr, &nex, (PTIMEVAL)timeout));
     save_errno = errno;
 
     for (i = 0; i < nfds; i++) {
@@ -669,7 +666,11 @@ win32_socket(int af, int type, int protocol)
     StartSockets();
 
     if((s = open_ifs_socket(af, type, protocol)) == INVALID_SOCKET)
-	errno = get_last_socket_error();
+        {
+	int wsaerr = WSAGetLastError();
+	errno = convert_wsa_error_to_errno(wsaerr);
+	SetLastError(wsaerr);
+	}
     else
 	s = OPEN_SOCKET(s);
 
@@ -699,10 +700,12 @@ int my_close(int fd)
 	    return close(fd);
 	}
 	else if (err == SOCKET_ERROR) {
-	    err = get_last_socket_error();
+	    int wsaerr = WSAGetLastError();
+	    err = convert_wsa_error_to_errno(wsaerr);
 	    if (err != ENOTSOCK) {
 		(void)close(fd);
 		errno = err;
+		SetLastError(wsaerr);
 		return EOF;
 	    }
 	}
@@ -729,10 +732,12 @@ my_fclose (FILE *pf)
 	    return fclose(pf);
 	}
 	else if (err == SOCKET_ERROR) {
-	    err = get_last_socket_error();
+	    int wsaerr = WSAGetLastError();
+	    err = convert_wsa_error_to_errno(wsaerr);
 	    if (err != ENOTSOCK) {
 		(void)fclose(pf);
 		errno = err;
+		SetLastError(wsaerr);
 		return EOF;
 	    }
 	}
@@ -830,12 +835,14 @@ win32_ioctl(int i, unsigned int u, char *data)
     memcpy(data, &u_long_arg, sizeof u_long_arg);
     
     if (retval == SOCKET_ERROR) {
-	int err = get_last_socket_error();
+	int wsaerr = WSAGetLastError();
+	int err = convert_wsa_error_to_errno(wsaerr);
 	if (err == ENOTSOCK) {
 	    Perl_croak_nocontext("ioctl implemented only on sockets");
 	    /* NOTREACHED */
 	}
 	errno = err;
+	SetLastError(wsaerr);
     }
     return retval;
 }

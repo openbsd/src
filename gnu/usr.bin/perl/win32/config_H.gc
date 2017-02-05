@@ -9,7 +9,7 @@
 
 /* Package name      : perl5
  * Source directory  : 
- * Configuration time: Wed Sep 18 14:03:46 2013
+ * Configuration time: Wed Sep 17 14:09:08 2014
  * Configured by     : shay
  * Target system     : 
  */
@@ -246,13 +246,13 @@
 
 /* HAS_MBSTOWCS:
  *	This symbol, if defined, indicates that the mbstowcs routine is
- *	available to covert a multibyte string into a wide character string.
+ *	available to convert a multibyte string into a wide character string.
  */
 #define	HAS_MBSTOWCS		/**/
 
 /* HAS_MBTOWC:
  *	This symbol, if defined, indicates that the mbtowc routine is available
- *	to covert a multibyte to a wide character.
+ *	to convert a multibyte to a wide character.
  */
 #define HAS_MBTOWC		/**/
 
@@ -614,7 +614,7 @@
 
 /* HAS_WCTOMB:
  *	This symbol, if defined, indicates that the wctomb routine is available
- *	to covert a wide character to a multibyte.
+ *	to convert a wide character to a multibyte.
  */
 #define HAS_WCTOMB		/**/
 
@@ -805,26 +805,6 @@
  */
 /*#define I_SYS_WAIT	/ **/
 
-/* I_TERMIO:
- *	This symbol, if defined, indicates that the program should include
- *	<termio.h> rather than <sgtty.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-/* I_TERMIOS:
- *	This symbol, if defined, indicates that the program should include
- *	the POSIX termios.h rather than sgtty.h or termio.h.
- *	There are also differences in the ioctl() calls that depend on the
- *	value of this symbol.
- */
-/* I_SGTTY:
- *	This symbol, if defined, indicates that the program should include
- *	<sgtty.h> rather than <termio.h>.  There are also differences in
- *	the ioctl() calls that depend on the value of this symbol.
- */
-/*#define I_TERMIO		/ **/
-/*#define I_TERMIOS		/ **/
-/*#define I_SGTTY		/ **/
-
 /* I_UNISTD:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <unistd.h>.
@@ -895,18 +875,6 @@
  */
 /*#define MULTIARCH		/ **/
 
-/* USE_CROSS_COMPILE:
- *	This symbol, if defined, indicates that Perl is being cross-compiled.
- */
-/* PERL_TARGETARCH:
- *	This symbol, if defined, indicates the target architecture
- *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
- */
-#ifndef USE_CROSS_COMPILE
-/*#define	USE_CROSS_COMPILE	/ **/
-#define	PERL_TARGETARCH	""	/**/
-#endif
-
 /* MEM_ALIGNBYTES:
  *	This symbol contains the number of bytes required to align a
  *	double, or a long double when applicable. Usual values are 2,
@@ -975,17 +943,8 @@
  *	This symbol holds the hexadecimal constant defined in byteorder,
  *	in a UV, i.e. 0x1234 or 0x4321 or 0x12345678, etc...
  *	If the compiler supports cross-compiling or multiple-architecture
- *	binaries (e.g. on NeXT systems), use compiler-defined macros to
+ *	binaries, use compiler-defined macros to
  *	determine the byte order.
- *	On NeXT 3.2 (and greater), you can build "Fat" Multiple Architecture
- *	Binaries (MAB) on either big endian or little endian machines.
- *	The endian-ness is available at compile-time.  This only matters
- *	for perl, where the config.h can be generated and installed on
- *	one system, and used by a different architecture to build an
- *	extension.  Older versions of NeXT that might not have
- *	defined either *_ENDIAN__ were all on Motorola 680x0 series,
- *	so the default case (for NeXT) is big endian to catch them.
- *	This might matter for NeXT 3.0.
  */
 #if defined(MULTIARCH)
 #  ifdef __LITTLE_ENDIAN__
@@ -1007,12 +966,9 @@
 #      endif
 #    endif
 #  endif
-#  if !defined(BYTEORDER) && (defined(NeXT) || defined(__NeXT__))
-#    define BYTEORDER 0x4321
-#  endif
 #else
 #define BYTEORDER 0x1234	/* large digits for MSB */
-#endif /* NeXT */
+#endif
 
 /* CHARBITS:
  *	This symbol contains the size of a char, so that the C preprocessor
@@ -1140,6 +1096,13 @@
 /*#define HASATTRIBUTE_UNUSED	/ **/
 /*#define HASATTRIBUTE_WARN_UNUSED_RESULT	/ **/
 
+/* HAS_BACKTRACE:
+ *	This symbol, if defined, indicates that the backtrace() routine is
+ *	available to get a stack trace.  The <execinfo.h> header must be
+ *	included to use this routine.
+ */
+/*#define HAS_BACKTRACE	/ **/
+
 /* CASTI32:
  *	This symbol is defined if the C compiler can cast negative
  *	or large floating point numbers to 32-bit ints.
@@ -1227,6 +1190,13 @@
  */
 /*#define HAS_CTIME_R	   / **/
 #define CTIME_R_PROTO 0	   /**/
+
+/* HAS_DLADDR:
+ *	This symbol, if defined, indicates that the dladdr() routine is
+ *	available to query dynamic linker information for an address.
+ *	The <dlfcn.h> header must be included to use this routine.
+ */
+/*#define HAS_DLADDR	/ **/
 
 /* SETUID_SCRIPTS_ARE_SECURE_NOW:
  *	This symbol, if defined, indicates that the bug that prevents
@@ -1936,9 +1906,40 @@
  *	C preprocessor can make decisions based on it.  It is only
  *	defined if the system supports long doubles.
  */
+/* HAS_LDEXPL:
+ *	This symbol, if defined, indicates that the ldexpl routine is
+ *	available to shift a long double floating-point number
+ *	by an integral power of 2.
+ */
+/* LONG_DOUBLEKIND:
+ *	LONG_DOUBLEKIND will be one of
+ *	LONG_DOUBLE_IS_DOUBLE
+ *	LONG_DOUBLE_IS_IEEE_754_128_BIT_LITTLE_ENDIAN
+ *	LONG_DOUBLE_IS_IEEE_754_128_BIT_BIG_ENDIAN
+ *	LONG_DOUBLE_IS_X86_80_BIT_LITTLE_ENDIAN
+ *	LONG_DOUBLE_IS_X86_80_BIT_BIG_ENDIAN
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_LE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_BE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_LE
+ *	LONG_DOUBLE_IS_UNKNOWN_FORMAT
+ *	It is only defined if the system supports long doubles.
+ */
+/*#define  HAS_LDEXPL		/ **/
 #define HAS_LONG_DOUBLE		/**/
 #ifdef HAS_LONG_DOUBLE
 #define LONG_DOUBLESIZE 12		/**/
+#define LONG_DOUBLEKIND 3		/**/
+#define LONG_DOUBLE_IS_DOUBLE				0
+#define LONG_DOUBLE_IS_IEEE_754_128_BIT_LITTLE_ENDIAN	1
+#define LONG_DOUBLE_IS_IEEE_754_128_BIT_BIG_ENDIAN	2
+#define LONG_DOUBLE_IS_X86_80_BIT_LITTLE_ENDIAN		3
+#define LONG_DOUBLE_IS_X86_80_BIT_BIG_ENDIAN		4
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_LE	5
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE	6
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_BE	7
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_LE	8
+#define LONG_DOUBLE_IS_UNKNOWN_FORMAT			-1
 #endif
 
 /* HAS_LONG_LONG:
@@ -2315,36 +2316,6 @@
  *	This symbol, if defined, indicates that the BSD socketpair() call is
  *	supported.
  */
-/* HAS_MSG_CTRUNC:
- *	This symbol, if defined, indicates that the MSG_CTRUNC is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_DONTROUTE:
- *	This symbol, if defined, indicates that the MSG_DONTROUTE is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_OOB:
- *	This symbol, if defined, indicates that the MSG_OOB is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PEEK:
- *	This symbol, if defined, indicates that the MSG_PEEK is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_MSG_PROXY:
- *	This symbol, if defined, indicates that the MSG_PROXY is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
-/* HAS_SCM_RIGHTS:
- *	This symbol, if defined, indicates that the SCM_RIGHTS is supported.
- *	Checking just with #ifdef might not be enough because this symbol
- *	has been known to be an enum.
- */
 /* HAS_SOCKADDR_SA_LEN:
  *	This symbol, if defined, indicates that the struct sockaddr
  *	structure has a member called sa_len, indicating the length of
@@ -2377,12 +2348,6 @@
 #define	HAS_SOCKET		/**/
 /*#define	HAS_SOCKETPAIR	/ **/
 /*#define	HAS_SOCKADDR_SA_LEN	/ **/
-/*#define	HAS_MSG_CTRUNC	/ **/
-/*#define	HAS_MSG_DONTROUTE	/ **/
-/*#define	HAS_MSG_OOB	/ **/
-/*#define	HAS_MSG_PEEK	/ **/
-/*#define	HAS_MSG_PROXY	/ **/
-/*#define	HAS_SCM_RIGHTS	/ **/
 /*#define	HAS_SOCKADDR_IN6	/ **/
 #define	HAS_SIN6_SCOPE_ID	/**/
 /*#define	HAS_IP_MREQ	/ **/
@@ -2674,18 +2639,51 @@
  */
 #define DOUBLESIZE 8		/**/
 
+/* DOUBLEINFBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes for the double precision infinity.
+ */
+/* DOUBLENANBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes (0xHH) for the double precision not-a-number.
+ */
+/* LONGDBLINFBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes for the long double precision infinity.
+ */
+/* LONGDBLNANBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes (0xHH) for the long double precision not-a-number.
+ */
+#define DOUBLEINFBYTES 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x7f		/**/
+#define DOUBLENANBYTES 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f		/**/
+#define LONGDBLINFBYTES 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x7f, 0x00, 0x00		/**/
+#define LONGDBLNANBYTES 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0xff, 0x7f, 0x00, 0x00		/**/
+
+/* DOUBLEMANTBITS:
+ *	This symbol, if defined, tells how many mantissa bits
+ *	there are in double precision floating point format.
+ *      Note that this is usually DBL_MANT_DIG minus one, since
+ *      with the standard IEEE 754 formats DBL_MANT_DIG includes
+ *	the implicit bit, which doesn't really exist.
+ */
+#define DOUBLEMANTBITS 52
+
+/* LONGDBLMANTBITS:
+ *	This symbol, if defined, tells how many mantissa bits
+ *	there are in long double precision floating point format.
+ *      Note that this can be LDBL_MANT_DIG minus one,
+ *      since LDBL_MANT_DIG can include the IEEE 754 implicit bit.
+ *      The common x86-style 80-bit long double does not have
+ *	an implicit bit.
+ */
+#define LONGDBLMANTBITS 64
+
 /* EBCDIC:
  *	This symbol, if defined, indicates that this system uses
  *	EBCDIC encoding.
  */
-/* BOOTSTRAP_CHARSET:
- *	This symbol, if defined, indicates that this system needs
- *	converting various files to the native character set before
- *	bringing up perl on a system that has a non-ASCII character
- *	set and no working perl.
- */
 /*#define	EBCDIC 		/ **/
-/*#define	BOOTSTRAP_CHARSET	/ **/
 
 /* Fpos_t:
  *	This symbol holds the type used to declare file positions in libc.
@@ -2738,6 +2736,12 @@
 #define I_DIRENT		/**/
 #define DIRNAMLEN	/**/
 #define Direntry_t struct direct
+
+/* I_EXECINFO:
+ *	This symbol, if defined, indicates to the C program that it should
+ *	include <execinfo.h> for backtrace() support.
+ */
+/*#define I_EXECINFO		/ **/
 
 /* I_GRP:
  *	This symbol, if defined, indicates to the C program that it should
@@ -2876,6 +2880,26 @@
  *	should be included.
  */
 /*#define	I_SYSUIO		/ **/
+
+/* I_TERMIO:
+ *	This symbol, if defined, indicates that the program should include
+ *	<termio.h> rather than <sgtty.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
+ */
+/* I_TERMIOS:
+ *	This symbol, if defined, indicates that the program should include
+ *	the POSIX termios.h rather than sgtty.h or termio.h.
+ *	There are also differences in the ioctl() calls that depend on the
+ *	value of this symbol.
+ */
+/* I_SGTTY:
+ *	This symbol, if defined, indicates that the program should include
+ *	<sgtty.h> rather than <termio.h>.  There are also differences in
+ *	the ioctl() calls that depend on the value of this symbol.
+ */
+/*#define I_TERMIO		/ **/
+/*#define I_TERMIOS		/ **/
+/*#define I_SGTTY		/ **/
 
 /* I_TIME:
  *	This symbol, if defined, indicates to the C program that it should
@@ -3048,7 +3072,7 @@
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
 #define PRIVLIB "c:\\perl\\lib"		/**/
-#define PRIVLIB_EXP (win32_get_privlib(PERL_VERSION_STRING, NULL))	/**/
+#define PRIVLIB_EXP (PerlEnv_lib_path(PERL_VERSION_STRING, NULL))	/**/
 
 /* CAN_PROTOTYPE:
  *	If defined, this macro indicates that the C compiler can handle
@@ -3215,7 +3239,7 @@
  *	be tacked onto this variable to generate a list of directories to search.
  */
 #define SITELIB "c:\\perl\\site\\lib"		/**/
-#define SITELIB_EXP (win32_get_sitelib(PERL_VERSION_STRING, NULL))	/**/
+#define SITELIB_EXP (PerlEnv_sitelib_path(PERL_VERSION_STRING, NULL))	/**/
 #define SITELIB_STEM ""		/**/
 
 /* Size_t_size:
@@ -3332,6 +3356,18 @@
 /*#define PERL_VENDORLIB_EXP ""		/ **/
 /*#define PERL_VENDORLIB_STEM ""		/ **/
 
+/* USE_CROSS_COMPILE:
+ *	This symbol, if defined, indicates that Perl is being cross-compiled.
+ */
+/* PERL_TARGETARCH:
+ *	This symbol, if defined, indicates the target architecture
+ *	Perl has been cross-compiled to.  Undefined if not a cross-compile.
+ */
+#ifndef USE_CROSS_COMPILE
+/*#define	USE_CROSS_COMPILE	/ **/
+#define	PERL_TARGETARCH	""	/**/
+#endif
+
 /* PERL_USE_DEVEL:
  *	This symbol, if defined, indicates that Perl was configured with
  *	-Dusedevel, to enable development features.  This should not be
@@ -3356,6 +3392,12 @@
  *	available to apply a function to all the file handles.
  */
 /*#define HAS__FWALK		/ **/
+
+/* HAS_ACOSH:
+ *	This symbol, if defined, indicates that the acosh routine is
+ *	available to do the inverse hyperbolic cosine function.
+ */
+/*#define HAS_ACOSH		/ **/
 
 /* HAS_AINTL:
  *	This symbol, if defined, indicates that the aintl routine is
@@ -3467,6 +3509,13 @@
  */
 /*#define FCNTL_CAN_LOCK		/ **/
 
+/* HAS_FEGETROUND:
+ *	This symbol, if defined, indicates that the fegetround routine is
+ *	available to return the macro corresponding to the current rounding
+ *	mode.
+ */
+/*#define HAS_FEGETROUND	/ **/
+
 /* HAS_FINITE:
  *	This symbol, if defined, indicates that the finite routine is
  *	available to check whether a double is finite (non-infinity non-NaN).
@@ -3506,6 +3555,13 @@
  */
 /*#define HAS_FP_CLASS		/ **/
 
+/* HAS_FP_CLASSL:
+ *	This symbol, if defined, indicates that the fp_classl routine is
+ *	available to classify long doubles.  Available for example in
+ *	Digital UNIX.  See for possible values HAS_FP_CLASS.
+ */
+/*#define HAS_FP_CLASSL		/ **/
+
 /* HAS_FPCLASS:
  *	This symbol, if defined, indicates that the fpclass routine is
  *	available to classify doubles.  Available for example in Solaris/SVR4.
@@ -3536,7 +3592,19 @@
  *           FP_NAN        NaN
  *
  */
-/*#define HAS_FPCLASSIFY		/ **/
+/* HAS_FP_CLASSIFY:
+ *	This symbol, if defined, indicates that the fp_classify routine is
+ *	available to classify doubles. The values are defined in <math.h>
+ *
+ *           FP_NORMAL     Normalized
+ *           FP_ZERO       Zero
+ *           FP_INFINITE   Infinity
+ *           FP_SUBNORMAL  Denormalized
+ *           FP_NAN        NaN
+ *
+ */
+/*#define	HAS_FPCLASSIFY		/ **/
+/*#define	HAS_FP_CLASSIFY		/ **/
 
 /* HAS_FPCLASSL:
  *	This symbol, if defined, indicates that the fpclassl routine is
@@ -3555,6 +3623,12 @@
  *	FP_PNORM	positive normalized non-zero
  */
 /*#define HAS_FPCLASSL		/ **/
+
+/* HAS_FPGETROUND:
+ *	This symbol, if defined, indicates that the fpgetround routine is
+ *	available to get the floating point rounding mode.
+ */
+/*#define HAS_FPGETROUND		/ **/
 
 /* HAS_FPOS64_T:
  *	This symbol will be defined if the C compiler supports fpos64_t.
@@ -3708,11 +3782,24 @@
  */
 /*#define HAS_ISFINITE		/ **/
 
+/* HAS_ISFINITEL:
+ *	This symbol, if defined, indicates that the isfinitel routine is
+ *	available to check whether a long double is finite.
+ *	(non-infinity non-NaN).
+ */
+/*#define HAS_ISFINITEL		/ **/
+
 /* HAS_ISINF:
  *	This symbol, if defined, indicates that the isinf routine is
  *	available to check whether a double is an infinity.
  */
 /*#define HAS_ISINF		/ **/
+
+/* HAS_ISINFL:
+ *	This symbol, if defined, indicates that the isinfl routine is
+ *	available to check whether a long double is an infinity.
+ */
+/*#define HAS_ISINFL		/ **/
 
 /* HAS_ISNAN:
  *	This symbol, if defined, indicates that the isnan routine is
@@ -3725,6 +3812,19 @@
  *	available to check whether a long double is a NaN.
  */
 /*#define HAS_ISNANL		/ **/
+
+/* HAS_J0:
+ *	This symbol, if defined, indicates to the C program that the
+ *	j0() function is available for Bessel functions of the first
+ *	kind of the order zero, for doubles.
+ */
+/* HAS_J0L:
+ *	This symbol, if defined, indicates to the C program that the
+ *	j0l() function is available for Bessel functions of the first
+ *	kind of the order zero, for long doubles.
+ */
+/*#define	HAS_J0		/ **/
+/*#define	HAS_J0L		/ **/
 
 /* HAS_LDBL_DIG:
  *	This symbol, if defined, indicates that this system's <float.h>
@@ -3781,16 +3881,8 @@
  *	a prototype for the modfl() function.  Otherwise, it is up
  *	to the program to supply one.
  */
-/* HAS_MODFL_POW32_BUG:
- *	This symbol, if defined, indicates that the modfl routine is
- *	broken for long doubles >= pow(2, 32).
- *	For example from 4294967303.150000 one would get 4294967302.000000
- *	and 1.150000.  The bug has been seen in certain versions of glibc,
- *	release 2.2.2 is known to be okay.
- */
 /*#define HAS_MODFL		/ **/
 /*#define HAS_MODFL_PROTO		/ **/
-/*#define HAS_MODFL_POW32_BUG		/ **/
 
 /* HAS_MPROTECT:
  *	This symbol, if defined, indicates that the mprotect system call is
@@ -3847,6 +3939,11 @@
  *	a thread attribute object.
  */
 /*#define HAS_PTHREAD_ATTR_SETSCOPE		/ **/
+
+/* HAS_PTRDIFF_T:
+ *	This symbol will be defined if the C compiler supports ptrdiff_t.
+ */
+#define	HAS_PTRDIFF_T    		/**/
 
 /* HAS_READV:
  *	This symbol, if defined, indicates that the readv routine is
@@ -4105,6 +4202,12 @@
  */
 /*#define HAS_TIMEGM		/ **/
 
+/* HAS_TRUNCL:
+ *	This symbol, if defined, indicates that the truncl routine is
+ *	available. If copysignl is also present we can emulate modfl.
+ */
+/*#define HAS_TRUNCL		/ **/
+
 /* U32_ALIGNMENT_REQUIRED:
  *	This symbol, if defined, indicates that you must access
  *	character data through U32-aligned pointers.
@@ -4146,6 +4249,18 @@
  */
 /*#define HAS_USTAT		/ **/
 
+/* HAS_WCSCMP:
+ *	This symbol, if defined, indicates that the wcscmp routine is
+ *	available to compare two wide character strings.
+ */
+#define HAS_WCSCMP	/**/
+
+/* HAS_WCSXFRM:
+ *	This symbol, if defined, indicates that the wcsxfrm routine is
+ *	available to tranform a wide character string for wcscmp().
+ */
+#define HAS_WCSXFRM	/**/
+
 /* HAS_WRITEV:
  *	This symbol, if defined, indicates that the writev routine is
  *	available to do scatter writes.
@@ -4179,6 +4294,12 @@
  *	could be included by the C program to get the assert() macro.
  */
 #define	I_ASSERT		/**/
+
+/* I_BFD:
+ *	This symbol, if defined, indicates that <bfd.h> exists and
+ *	can be included.
+ */
+/*#define	I_BFD		/ **/
 
 /* I_CRYPT:
  *	This symbol, if defined, indicates that <crypt.h> exists and
@@ -4215,6 +4336,12 @@
 #define DB_VERSION_MAJOR_CFG	0  	/**/
 #define DB_VERSION_MINOR_CFG	0  	/**/
 #define DB_VERSION_PATCH_CFG	0  	/**/
+
+/* I_FENV:
+ *	This symbol, if defined, indicates to the C program that it should
+ *	include <fenv.h> to get the floating point environment definitions.
+ */
+/*#define I_FENV		/ **/
 
 /* I_FP:
  *	This symbol, if defined, indicates that <fp.h> exists and
@@ -4300,6 +4427,12 @@
  */
 #define	I_STDBOOL		/**/
 
+/* I_STDINT:
+ *	This symbol, if defined, indicates that <stdint.h> exists and
+ *	should be included.
+ */
+/*#define I_STDINT		/ **/
+
 /* I_SUNMATH:
  *	This symbol, if defined, indicates that <sunmath.h> exists and
  *	should be included.
@@ -4369,16 +4502,10 @@
  *	This symbol, if defined, contains the string used by stdio to
  *	format long doubles (format 'f') for input.
  */
-/*#define PERL_PRIfldbl	"f"	/ **/
-/*#define PERL_PRIgldbl	"g"	/ **/
-/*#define PERL_PRIeldbl	"e"	/ **/
-/*#define PERL_SCNfldbl	"f"	/ **/
-
-/* PERL_MAD:
- *	This symbol, if defined, indicates that the Misc Attribution
- *	Declaration code should be conditionally compiled.
- */
-/*#define	PERL_MAD		/ **/
+/*#define PERL_PRIfldbl	"Lf"	/ **/
+/*#define PERL_PRIgldbl	"Lg"	/ **/
+/*#define PERL_PRIeldbl	"Le"	/ **/
+/*#define PERL_SCNfldbl	"Lf"	/ **/
 
 /* NEED_VA_COPY:
  *	This symbol, if defined, indicates that the system stores
@@ -4645,6 +4772,12 @@
 /*#define	USE_64_BIT_ALL		/ **/
 #endif
 
+/* USE_CBACKTRACE:
+ *	This symbol, if defined, indicates that Perl should
+ *	be built with support for backtrace.
+ */
+/*#define USE_CBACKTRACE		/ **/
+
 /* USE_DTRACE:
  *	This symbol, if defined, indicates that Perl should
  *	be built with support for DTrace.
@@ -4712,7 +4845,7 @@
  *	used in a fully backward compatible manner.
  */
 #ifndef USE_PERLIO
-/*#define	USE_PERLIO		/ **/
+#define	USE_PERLIO		/**/
 #endif
 
 /* USE_SOCKS:

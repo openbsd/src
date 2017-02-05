@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
-plan tests => 26;
+plan tests => 23;
 
 is(reverse("abc"), "cba", 'simple reverse');
 
@@ -90,17 +90,4 @@ use Tie::Array;
     my $b = scalar reverse($a);
     my $c = scalar reverse($b);
     is($a, $c, 'Unicode string double reversal matches original');
-}
-
-{
-    # Lexical $_.
-    no warnings 'experimental::lexical_topic';
-    sub blurp { my $_ = shift; reverse }
-
-    is(blurp("foo"), "oof", 'reversal of default variable in function');
-    is(sub { my $_ = shift; reverse }->("bar"), "rab", 'reversal of default variable in anonymous function');
-    {
-        local $_ = "XXX";
-        is(blurp("paz"), "zap", 'reversal of default variable with local value set' );
-    }
 }

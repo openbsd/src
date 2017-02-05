@@ -1,3 +1,16 @@
+2.39 xxxxx
+    - reval was not propagating void context properly.
+      The fix is partly in Opcode, so it requires 5.21.8 or higher.
+
+2.38 Mon Aug 04 2014
+    - critical bugfix: outside packages could be replaced (fix in Opcode)
+
+2.37 Sat Jun 22 2013
+    - Doc and presentation nits
+
+2.36 Thu May 23 18:08:48 2013
+    - Doc and test fixes for newer perls
+
 2.35 Thu Feb 21 2013
     - localize %SIG in the Safe compartment
     - actually check that we call execution methods on a Safe object
@@ -7,7 +20,7 @@
       cf Perl 5 change 42440e3c68e8bafb7e2a74763360939de0fad6be
 
 2.33 Tue Apr  3 2012
-    - Don’t eval code under ‘no strict’ (Father Chrysostomos)
+      Don't eval code under "no strict" (Father Chrysostomos)
       cf. Perl 5 change 25dc25e774abbe993644899cf4d9f9925a9fb9a8
 
 2.32 Sat Mar 31 2012
@@ -150,7 +163,7 @@
 
 2.09 Sun Oct  6 14:12:40 CEST 2002
 	- Upgraded the Makefile.PL to install Safe.pm to the correct place.
-	- Made it work on 5.6 atleast, maybe even on 5.005?
+	- Made it work on 5.6 at least, maybe even on 5.005?
 
 2.08 Sat Oct  5 18:05:32 CEST 2002
 	- First CPAN release, prompted by bug number 17744 on rt.perl.org.

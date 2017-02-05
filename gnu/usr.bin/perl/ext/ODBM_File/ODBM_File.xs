@@ -3,6 +3,10 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#if defined(PERL_IMPLICIT_SYS)
+#  undef open
+#  define open PerlLIO_open3
+#endif
 
 #ifdef I_DBM
 #  include <dbm.h>
@@ -99,16 +103,37 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 	    Newx(tmpbuf, strlen(filename) + 5, char);
 	    SAVEFREEPV(tmpbuf);
 	    sprintf(tmpbuf,"%s.dir",filename);
-	    if (stat(tmpbuf, &PL_statbuf) < 0) {
-		if (flags & O_CREAT) {
-		    if (mode < 0 || close(creat(tmpbuf,mode)) < 0)
-			croak("ODBM_File: Can't create %s", filename);
-		    sprintf(tmpbuf,"%s.pag",filename);
-		    if (close(creat(tmpbuf,mode)) < 0)
-			croak("ODBM_File: Can't create %s", filename);
-		}
-		else
-		    croak("ODBM_FILE: Can't open %s", filename);
+            if ((flags & O_CREAT)) {
+               const int oflags = O_CREAT | O_TRUNC | O_WRONLY | O_EXCL;
+               int created = 0;
+               int fd;
+               if (mode < 0)
+                   goto creat_done;
+               if ((fd = open(tmpbuf,oflags,mode)) < 0 && errno != EEXIST)
+                   goto creat_done;
+               if (close(fd) < 0)
+                   goto creat_done;
+               sprintf(tmpbuf,"%s.pag",filename);
+               if ((fd = open(tmpbuf,oflags,mode)) < 0 && errno != EEXIST)
+                   goto creat_done;
+               if (close(fd) < 0)
+                   goto creat_done;
+               created = 1;
+            creat_done:
+               if (!created)
+                   croak("ODBM_File: Can't create %s", filename);
+            }
+            else {
+               int opened = 0;
+               int fd;
+               if ((fd = open(tmpbuf,O_RDONLY,mode)) < 0)
+                   goto rdonly_done;
+               if (close(fd) < 0)
+                   goto rdonly_done;
+               opened = 1;
+            rdonly_done:
+               if (!opened)
+                   croak("ODBM_FILE: Can't open %s", filename);
 	    }
 	    dbp = (void*)(dbminit(filename) >= 0 ? &dbmrefcnt : 0);
 	    RETVAL = (ODBM_File)safecalloc(1, sizeof(ODBM_File_type));

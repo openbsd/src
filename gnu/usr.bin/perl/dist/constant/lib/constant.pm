@@ -3,8 +3,8 @@ use 5.008;
 use strict;
 use warnings::register;
 
-use vars qw($VERSION %declared);
-$VERSION = '1.31';
+our $VERSION = '1.33';
+our %declared;
 
 #=======================================================================
 
@@ -24,7 +24,8 @@ my $boolean = qr/^[01]?\z/;
 BEGIN {
     # We'd like to do use constant _CAN_PCS => $] > 5.009002
     # but that's a bit tricky before we load the constant module :-)
-    # By doing this, we save 1 run time check for *every* call to import.
+    # By doing this, we save several run time checks for *every* call
+    # to import.
     my $const = $] > 5.009002;
     my $downgrade = $] < 5.015004; # && $] >= 5.008
     my $constarray = exists &_make_const;
@@ -56,13 +57,13 @@ sub import {
     return unless @_;			# Ignore 'use constant;'
     my $constants;
     my $multiple  = ref $_[0];
-    my $pkg = caller;
+    my $caller = caller;
     my $flush_mro;
     my $symtab;
 
     if (_CAN_PCS) {
 	no strict 'refs';
-	$symtab = \%{$pkg . '::'};
+	$symtab = \%{$caller . '::'};
     };
 
     if ( $multiple ) {
@@ -80,6 +81,20 @@ sub import {
     }
 
     foreach my $name ( keys %$constants ) {
+	my $pkg;
+	my $symtab = $symtab;
+	my $orig_name = $name;
+	if ($name =~ s/(.*)(?:::|')(?=.)//s) {
+	    $pkg = $1;
+	    if (_CAN_PCS && $pkg ne $caller) {
+		no strict 'refs';
+		$symtab = \%{$pkg . '::'};
+	    }
+	}
+	else {
+	    $pkg = $caller;
+	}
+
 	# Normal constant name
 	if ($name =~ $normal_constant_name and !$forbidden{$name}) {
 	    # Everything is okay
@@ -127,7 +142,7 @@ sub import {
 	    my $full_name = "${pkg}::$name";
 	    $declared{$full_name}++;
 	    if ($multiple || @_ == 1) {
-		my $scalar = $multiple ? $constants->{$name} : $_[0];
+		my $scalar = $multiple ? $constants->{$orig_name} : $_[0];
 
 		if (_DOWNGRADE) { # for 5.8 to 5.14
 		    # Work around perl bug #31991: Sub names (actually glob
@@ -147,9 +162,9 @@ sub import {
 		    # The check in Perl_ck_rvconst knows that inlinable
 		    # constants from cv_const_sv are read only. So we have to:
 		    Internals::SvREADONLY($scalar, 1);
-		    if ($symtab && !exists $symtab->{$name}) {
+		    if (!exists $symtab->{$name}) {
 			$symtab->{$name} = \$scalar;
-			++$flush_mro;
+			++$flush_mro->{$pkg};
 		    }
 		    else {
 			local $constant::{_dummy} = \$scalar;
@@ -163,9 +178,9 @@ sub import {
 		if (_CAN_PCS_FOR_ARRAY) {
 		    _make_const($list[$_]) for 0..$#list;
 		    _make_const(@list);
-		    if ($symtab && !exists $symtab->{$name}) {
+		    if (!exists $symtab->{$name}) {
 			$symtab->{$name} = \@list;
-			$flush_mro++;
+			$flush_mro->{$pkg}++;
 		    }
 		    else {
 			local $constant::{_dummy} = \@list;
@@ -179,7 +194,9 @@ sub import {
 	}
     }
     # Flush the cache exactly once if we make any direct symbol table changes.
-    mro::method_changed_in($pkg) if _CAN_PCS && $flush_mro;
+    if (_CAN_PCS && $flush_mro) {
+	mro::method_changed_in($_) for keys %$flush_mro;
+    }
 }
 
 1;
@@ -252,10 +269,6 @@ point to data which may be changed, as this code shows.
     ARRAY->[1] = " be changed";
     print ARRAY->[1];
 
-Dereferencing constant references incorrectly (such as using an array
-subscript on a constant hash reference, or vice versa) will be trapped at
-compile time.
-
 Constants belong to the package they are defined in.  To refer to a
 constant defined in another package, specify the full package name, as
 in C<Some::Package::CONSTANT>.  Constants may be exported by modules,
@@ -263,6 +276,13 @@ and may also be called as either class or instance methods, that is,
 as C<< Some::Package->CONSTANT >> or as C<< $obj->CONSTANT >> where
 C<$obj> is an instance of C<Some::Package>.  Subclasses may define
 their own constants to override those in their base class.
+
+As of version 1.32 of this module, constants can be defined in packages
+other than the caller, by including the package name in the name of the
+constant:
+
+    use constant "OtherPackage::FWIBBLE" => 7865;
+    constant->import("Other::FWOBBLE",$value); # dynamically at run time
 
 The use of all caps for constant names is merely a convention,
 although it is recommended in order to make constants stand out

@@ -6,7 +6,7 @@ BEGIN {
 	skip_all_without_perlio();
 }
 
-plan tests => 46;
+plan tests => 48;
 
 use_ok('PerlIO');
 
@@ -110,6 +110,27 @@ ok(close($utffh));
       $filename = find_filename($x, $perlio_tmp_file_glob);
       is($filename, undef, "No tmp files leaked");
       unlink_all $filename if defined $filename;
+    }
+}
+
+# fileno() for directory handles, on supported platforms
+SKIP: {
+    opendir my $dh, "io"
+        or die "Huh? Can't open directory 'io' containing this file: $!\n";
+    local $! = 0;
+    my $fd = fileno $dh;
+    my $errno = 0 + $!;
+    closedir $dh
+        or die "Huh? Can't close freshly-opened directory handle: $!\n";
+    if ($Config{d_dirfd} || $Config{d_dir_dd_fd}) {
+        ok(defined $fd, "fileno(DIRHANDLE) is defined under dirfd()")
+            or skip("directory fd was undefined", 1);
+        like($fd, qr/\A\d+\z/a,
+             "fileno(DIRHANDLE) yields non-negative int under dirfd()");
+    }
+    else {
+        ok(!defined $fd, "fileno(DIRHANDLE) is undef when no dirfd()");
+        isnt($errno, 0, "fileno(DIRHANDLE) sets errno when no dirfd()");
     }
 }
 

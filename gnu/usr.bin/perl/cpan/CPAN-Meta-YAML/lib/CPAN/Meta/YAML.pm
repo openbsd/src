@@ -1,17 +1,12 @@
 use 5.008001; # sane UTF-8 support
 use strict;
 use warnings;
-package CPAN::Meta::YAML;
-$CPAN::Meta::YAML::VERSION = '0.012';
-BEGIN {
-  $CPAN::Meta::YAML::AUTHORITY = 'cpan:ADAMK';
-}
-# git description: v1.60-1-g1c16a0a
-; # original $VERSION removed by Doppelgaenger
+package CPAN::Meta::YAML; # git description: v1.68-2-gcc5324e
 # XXX-INGY is 5.8.1 too old/broken for utf8?
 # XXX-XDG Lancaster consensus was that it was sufficient until
 # proven otherwise
-
+$CPAN::Meta::YAML::VERSION = '0.018';
+; # original $VERSION removed by Doppelgaenger
 
 #####################################################################
 # The CPAN::Meta::YAML API.
@@ -153,7 +148,7 @@ my %QUOTE = map { $_ => 1 } qw{
 my $re_capture_double_quoted = qr/\"([^\\"]*(?:\\.[^\\"]*)*)\"/;
 my $re_capture_single_quoted = qr/\'([^\']*(?:\'\'[^\']*)*)\'/;
 # unquoted re gets trailing space that needs to be stripped
-my $re_capture_unquoted_key  = qr/([^:]+(?::+\S[^:]*)*)(?=\s*\:(?:\s+|$))/;
+my $re_capture_unquoted_key  = qr/([^:]+(?::+\S(?:[^:]*|.*?(?=:)))*)(?=\s*\:(?:\s+|$))/;
 my $re_trailing_comment      = qr/(?:\s+\#.*)?/;
 my $re_key_value_separator   = qr/\s*:(?:\s+(?:\#.*)?|$)/;
 
@@ -300,10 +295,11 @@ Did you decode with lax ":utf8" instead of strict ":encoding(UTF-8)"?
             }
         }
     };
-    if ( ref $@ eq 'SCALAR' ) {
-        $self->_error(${$@});
-    } elsif ( $@ ) {
-        $self->_error($@);
+    my $err = $@;
+    if ( ref $err eq 'SCALAR' ) {
+        $self->_error(${$err});
+    } elsif ( $err ) {
+        $self->_error($err);
     }
 
     return $self;
@@ -513,6 +509,10 @@ sub _load_hash {
         }
         else {
             die \"CPAN::Meta::YAML failed to classify line '$lines->[0]'";
+        }
+
+        if ( exists $hash->{$key} ) {
+            warn "CPAN::Meta::YAML found a duplicate key '$key' in line '$lines->[0]'";
         }
 
         # Do we have a value?
@@ -828,12 +828,10 @@ sub _can_flock {
 #####################################################################
 # Use Scalar::Util if possible, otherwise emulate it
 
+use Scalar::Util ();
 BEGIN {
     local $@;
-    if ( eval { require Scalar::Util }
-      && $Scalar::Util::VERSION
-      && eval($Scalar::Util::VERSION) >= 1.18
-    ) {
+    if ( eval { Scalar::Util->VERSION(1.18); } ) {
         *refaddr = *Scalar::Util::refaddr;
     }
     else {
@@ -855,8 +853,7 @@ END_PERL
     }
 }
 
-
-
+delete $CPAN::Meta::YAML::{refaddr};
 
 1;
 
@@ -881,7 +878,7 @@ CPAN::Meta::YAML - Read and write a subset of YAML for CPAN Meta files
 
 =head1 VERSION
 
-version 0.012
+version 0.018
 
 =head1 SYNOPSIS
 
@@ -917,30 +914,11 @@ C<write> methods do B<not> support UTF-8 and should not be used.
 This module is currently derived from L<YAML::Tiny> by Adam Kennedy.  If
 there are bugs in how it parses a particular META.yml file, please file
 a bug report in the YAML::Tiny bugtracker:
-L<https://rt.cpan.org/Public/Dist/Display.html?Name=YAML-Tiny>
+L<https://github.com/Perl-Toolchain-Gang/YAML-Tiny/issues>
 
 =head1 SEE ALSO
 
 L<YAML::Tiny>, L<YAML>, L<YAML::XS>
-
-=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
-
-=head1 SUPPORT
-
-=head2 Bugs / Feature Requests
-
-Please report any bugs or feature requests through the issue tracker
-at L<https://github.com/dagolden/CPAN-Meta-YAML/issues>.
-You will be notified automatically of any progress on your issue.
-
-=head2 Source Code
-
-This is open source software.  The code repository is available for
-public review and contribution under the terms of the license.
-
-L<https://github.com/dagolden/CPAN-Meta-YAML>
-
-  git clone https://github.com/dagolden/CPAN-Meta-YAML.git
 
 =head1 AUTHORS
 

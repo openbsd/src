@@ -87,11 +87,6 @@ $header_files =~ s/(?=.{64})   # If line is still overlength
 		   (.{1,64})\  # Split at the last convenient space
 		  /$1\n              /gx;
 
-# libpaths that should be truncated after the first path element
-my %Libpathtrunc = map {($_,$_)}
-                   qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
-                      sitelib sitelibexp);
-
 # allowed opts as well as specifies default and initial values
 my %Allowed_Opts = (
     'glossary' => 1,  # --no-glossary  - no glossary file inclusion,
@@ -256,9 +251,6 @@ my %seen_quotes;
     }
     $in_v = $val !~ /$quote\n/;
     next if $in_v;
-
-    # XXX - should use PERLLIB_SEP, not hard-code ':'
-    $val =~ s/^([^:]+).*${quote}\w*$/$1${quote}/ if $Libpathtrunc{$name};
 
     s,/,::,g if $Extensions{$name};
 
@@ -634,6 +626,24 @@ foreach my $prefix (qw(libs libswanted)) {
 	}
     }
     $heavy_txt .= "${prefix}_nolargefiles='$value'\n";
+}
+
+if (open(my $fh, "cflags")) {
+    my $ccwarnflags;
+    my $ccstdflags;
+    while (<$fh>) {
+        if (/^warn="(.+)"$/) {
+            $ccwarnflags = $1;
+        } elsif (/^stdflags="(.+)"$/) {
+            $ccstdflags = $1;
+        }
+    }
+    if (defined $ccwarnflags) {
+      $heavy_txt .= "ccwarnflags='$ccwarnflags'\n";
+    }
+    if (defined $ccstdflags) {
+      $heavy_txt .= "ccstdflags='$ccstdflags'\n";
+    }
 }
 
 $heavy_txt .= "EOVIRTUAL\n";
@@ -1098,18 +1108,6 @@ my $orig_heavy_txt = "";
 }
 
 if ($orig_config_txt ne $config_txt or $orig_heavy_txt ne $heavy_txt) {
-    # During the build don't look in /usr/local for libs or includes
-    # but after, we want to let modules look there.
-    my $install_heavy_txt = $heavy_txt;
-    $install_heavy_txt =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,gm;
-    $install_heavy_txt =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,gm;
-
-    open INSTALL_CONFIG_HEAVY, ">", "$Config_heavy.install"
-         or die "Can't open install $Config_heavy: $!\n";
-    print INSTALL_CONFIG_HEAVY $install_heavy_txt;
-    close INSTALL_CONFIG_HEAVY;
-    print "updated install $Config_heavy\n";
-
     open CONFIG, ">", $Config_PM or die "Can't open $Config_PM: $!\n";
     open CONFIG_HEAVY, ">", $Config_heavy or die "Can't open $Config_heavy: $!\n";
     print CONFIG $config_txt;

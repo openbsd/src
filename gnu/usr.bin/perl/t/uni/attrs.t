@@ -61,10 +61,10 @@ eval 'my A $x : plǖgh;';
 is $@, '';
 
 eval 'package Càt; my Càt @socks;';
-like $@, '';
+is $@, '';
 
 eval 'my Càt %nap;';
-like $@, '';
+is $@, '';
 
 sub X::MODIFY_CODE_ATTRIBUTES { die "$_[0]" }
 sub X::ᕘ { 1 }

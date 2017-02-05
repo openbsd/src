@@ -12,6 +12,7 @@ if ($ENV{PERL_CORE}){
                                       FirstTime
                                       Kwalify
                                       Nox
+                                      Plugin
                                       Queue
                                       Tarzip
                                       Version
@@ -27,7 +28,7 @@ plan(tests => scalar @m);
 for my $m (@m) {
   local $^W = 0;
   eval "require $m";
-  ok($m->VERSION >= 1.76, sprintf "Found version > 1.76 for %20s: %s", $m, $m->VERSION);
+  ok($m->VERSION >= 0.95, sprintf "Found version < 0.95 for %s: %s", $m, $m->VERSION);
 }
 
 # Local Variables:

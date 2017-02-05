@@ -33,6 +33,7 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
    my $testserver = IO::Socket::IP->new(
       ( $socktype eq "SOCK_STREAM" ? ( Listen => 1 ) : () ),
       LocalHost => "::1",
+      LocalPort => "0",
       Type      => Socket->$socktype,
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
@@ -45,6 +46,9 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
 
    is( $testserver->sockhost, $IN6ADDR_LOOPBACK_HOST, "\$testserver->sockhost for $socktype" );
    like( $testserver->sockport, qr/^\d+$/,            "\$testserver->sockport for $socktype" );
+
+   ok( eval { $testserver->peerport; 1 }, "\$testserver->peerport does not die for $socktype" )
+      or do { chomp( my $e = $@ ); diag( "Exception was: $e" ) };
 
    my $socket = IO::Socket->new;
    $socket->socket( $AF_INET6, Socket->$socktype, 0 )

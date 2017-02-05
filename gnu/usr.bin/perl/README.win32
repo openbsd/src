@@ -42,7 +42,7 @@ following compilers on the Intel x86 architecture:
       Microsoft Visual C++    version 6.0 or later
       Intel C++ Compiler      (experimental)
       Gcc by mingw.org        gcc version 3.4.5 or later
-      Gcc by mingw-w64.sf.net gcc version 4.4.3 or later
+      Gcc by mingw-w64.org    gcc version 4.4.3 or later
 
 Note that the last two of these are actually competing projects both
 delivering complete gcc toolchain for MS Windows:
@@ -53,7 +53,7 @@ delivering complete gcc toolchain for MS Windows:
 
 Delivers gcc toolchain targeting 32-bit Windows platform.
 
-=item L<http://mingw-w64.sf.net>
+=item L<http://mingw-w64.org>
 
 Delivers gcc toolchain targeting both 64-bit Windows and 32-bit Windows
 platforms (despite the project name "mingw-w64" they are not only 64-bit
@@ -74,7 +74,7 @@ This port can also be built on IA64/AMD64 using:
       MinGW64 compiler (gcc version 4.4.3 or later)
 
 The Windows SDK can be downloaded from L<http://www.microsoft.com/>.
-The MinGW64 compiler is available at L<http://sourceforge.net/projects/mingw-w64>.
+The MinGW64 compiler is available at L<http://mingw-w64.org>.
 The latter is actually a cross-compiler targeting Win64. There's also a trimmed
 down compiler (no java, or gfortran) suitable for building perl available at:
 L<http://strawberryperl.com/package/kmx/64_gcctoolchain/>
@@ -96,11 +96,15 @@ See L<Usage Hints for Perl on Windows> below for general hints about this.
 =item Make
 
 You need a "make" program to build the sources.  If you are using
-Visual C++ or the Windows SDK tools, nmake will work.  Builds using
-the gcc need dmake.
-
-dmake is a freely available make that has very nice macro features
-and parallelability.
+Visual C++ or the Windows SDK tools, you can use nmake supplied with Visual C++
+or Windows SDK. You may also use, for Visual C++ or Windows SDK, dmake or gmake
+instead of nmake.  dmake is open source software, but is not included with
+Visual C++ or Windows SDK.  Builds using gcc need dmake or gmake.  nmake is not
+supported for gcc builds.  Parallel building is only supported with dmake and
+gmake, not nmake.  When using dmake it is recommended to use dmake 4.13 or newer
+for parallel building.  Older dmakes, in parallel mode, have very high CPU usage
+and pound the disk/filing system with duplicate I/O calls in an aggressive
+polling loop.
 
 A port of dmake for Windows is available from:
 
@@ -135,13 +139,6 @@ console already set up for your target architecture (x86-32 or x86-64 or IA64).
 With the newer compilers, you may also use the older batch files if you choose
 so.
 
-You can also use dmake to build using Visual C++; provided, however,
-you set OSRELEASE to "microsft" (or whatever the directory name
-under which the Visual C dmake configuration lives) in your environment
-and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
-latter step is only essential if you want to use dmake as your default
-make for building extensions using MakeMaker.
-
 =item Microsoft Visual C++ 2008-2013 Express Edition
 
 These free versions of Visual C++ 2008-2013 Professional contain the same
@@ -156,7 +153,7 @@ changing so often.)
 
 Install Visual C++ 2008-2013 Express, then setup your environment using, e.g.
 
-	C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
+ C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
 
 (assuming the default installation location was chosen).
 
@@ -185,15 +182,15 @@ also runs on Windows XP SP2 and Windows 2000.
 Install Visual C++ 2005 first, then the Platform SDK.  Setup your environment
 as follows (assuming default installation locations were chosen):
 
-	SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
+ SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
 
-	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual Studio 8\Common7\IDE;C:\Program Files\Microsoft Visual Studio 8\VC\BIN;C:\Program Files\Microsoft Visual Studio 8\Common7\Tools;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\bin;C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727;C:\Program Files\Microsoft Visual Studio 8\VC\VCPackages;%PlatformSDKDir%\Bin
+ SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual Studio 8\Common7\IDE;C:\Program Files\Microsoft Visual Studio 8\VC\BIN;C:\Program Files\Microsoft Visual Studio 8\Common7\Tools;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\bin;C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727;C:\Program Files\Microsoft Visual Studio 8\VC\VCPackages;%PlatformSDKDir%\Bin
 
-	SET INCLUDE=C:\Program Files\Microsoft Visual Studio 8\VC\INCLUDE;%PlatformSDKDir%\include
+ SET INCLUDE=C:\Program Files\Microsoft Visual Studio 8\VC\INCLUDE;%PlatformSDKDir%\include
 
-	SET LIB=C:\Program Files\Microsoft Visual Studio 8\VC\LIB;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\lib;%PlatformSDKDir%\lib
+ SET LIB=C:\Program Files\Microsoft Visual Studio 8\VC\LIB;C:\Program Files\Microsoft Visual Studio 8\SDK\v2.0\lib;%PlatformSDKDir%\lib
 
-	SET LIBPATH=C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727
+ SET LIBPATH=C:\WINDOWS\Microsoft.NET\Framework\v2.0.50727
 
 (The PlatformSDKDir might need to be set differently depending on which version
 you are using. Earlier versions installed into "C:\Program Files\Microsoft SDK",
@@ -203,7 +200,7 @@ while the latest versions install into version-specific locations such as
 Perl should now build using the win32/Makefile.  You will need to edit that
 file to set
 
-	CCTYPE = MSVC80FREE
+ CCTYPE = MSVC80FREE
 
 and to set CCHOME, CCINCDIR and CCLIBDIR as per the environment setup above.
 
@@ -234,13 +231,13 @@ Install the Toolkit first, then the Platform SDK, then the .NET Framework SDK.
 Setup your environment as follows (assuming default installation locations
 were chosen):
 
-	SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
+ SET PlatformSDKDir=C:\Program Files\Microsoft Platform SDK
 
-	SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin;%PlatformSDKDir%\Bin;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin
+ SET PATH=%SystemRoot%\system32;%SystemRoot%;C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin;%PlatformSDKDir%\Bin;C:\Program Files\Microsoft.NET\SDK\v1.1\Bin
 
-	SET INCLUDE=C:\Program Files\Microsoft Visual C++ Toolkit 2003\include;%PlatformSDKDir%\include;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\include
+ SET INCLUDE=C:\Program Files\Microsoft Visual C++ Toolkit 2003\include;%PlatformSDKDir%\include;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\include
 
-	SET LIB=C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib;%PlatformSDKDir%\lib;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib
+ SET LIB=C:\Program Files\Microsoft Visual C++ Toolkit 2003\lib;%PlatformSDKDir%\lib;C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\lib
 
 (The PlatformSDKDir might need to be set differently depending on which version
 you are using. Earlier versions installed into "C:\Program Files\Microsoft SDK",
@@ -257,7 +254,7 @@ cvtres.exe is required by link.exe when using a .res file.  It is actually
 installed by the .NET Framework SDK, but into a location such as the
 following:
 
-	C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322
+ C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322
 
 Copy it from there to %PlatformSDKDir%\Bin
 
@@ -333,7 +330,10 @@ IA-32 Visual Studio 20__ mode or Intel 64 Visual Studio 20__ mode as
 appropriate. Then run nmake as usually in that prompt box.
 
 Only Intel C++ Compiler v12.1 has been tested. Other versions probably will
-work.
+work. Using Intel C++ Compiler instead of Visual C has the benefit of C99
+compatibility which is needed by some CPAN XS modules, while maintaining
+compatibility with Visual C object code and Visual C debugging infrastructure
+unlike GCC.
 
 =back
 
@@ -366,7 +366,7 @@ You will have to make sure that CCTYPE is set correctly and that
 CCHOME points to wherever you installed your compiler.
 
 If building with the cross-compiler provided by
-mingw-w64.sourceforge.net you'll need to uncomment the line that sets
+mingw-w64.org you'll need to uncomment the line that sets
 GCCCROSS in the makefile.mk. Do this only if it's the cross-compiler - ie
 only if the bin folder doesn't contain a gcc.exe. (The cross-compiler
 does not provide a gcc.exe, g++.exe, ar.exe, etc. Instead, all of these
@@ -393,9 +393,14 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl520.dll at the perl toplevel, and various other extension dll's
+perl524.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
+
+To try dmake's parallel mode, type "dmake -P2", where 2, is the maximum number
+of parallel jobs you want to run. A number of things in the build process will
+run in parallel, but there are serialization points where you will see just 1
+CPU maxed out. This is normal.
 
 If you are advanced enough with building C code, here is a suggestion to speed
 up building perl, and the later C<make test>. Try to keep your PATH enviromental
@@ -415,7 +420,7 @@ There should be no test failures.
 
 If you build with Visual C++ 2013 then three tests currently may fail with
 Daylight Saving Time related problems: F<t/io/fs.t>,
-F<cpan/HTTP-Tiny/t/110_mirror.t> and F<lib/File.Copy.t>. The failures are
+F<cpan/HTTP-Tiny/t/110_mirror.t> and F<lib/File/Copy.t>. The failures are
 caused by bugs in the CRT in VC++ 2013 which will be fixed in future releases
 of VC++, as explained by Microsoft here:
 L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>. In the meantime,
@@ -480,18 +485,22 @@ You can also control the shell that perl uses to run system() and
 backtick commands via PERL5SHELL.  See L<perlrun>.
 
 Perl does not depend on the registry, but it can look up certain default
-values if you choose to put them there.  Perl attempts to read entries from
-C<HKEY_CURRENT_USER\Software\Perl> and C<HKEY_LOCAL_MACHINE\Software\Perl>.
-Entries in the former override entries in the latter.  One or more of the
-following entries (of type REG_SZ or REG_EXPAND_SZ) may be set:
+values if you choose to put them there unless disabled at build time with
+USE_NO_REGISTRY.  On Perl process start Perl checks if
+C<HKEY_CURRENT_USER\Software\Perl> and C<HKEY_LOCAL_MACHINE\Software\Perl>
+exist.  If the keys exists, they will be checked for remainder of the Perl
+process's run life for certain entries.  Entries in
+C<HKEY_CURRENT_USER\Software\Perl> override entries in
+C<HKEY_LOCAL_MACHINE\Software\Perl>.  One or more of the following entries
+(of type REG_SZ or REG_EXPAND_SZ) may be set in the keys:
 
-    lib-$]		version-specific standard library path to add to @INC
-    lib			standard library path to add to @INC
-    sitelib-$]		version-specific site library path to add to @INC
-    sitelib		site library path to add to @INC
-    vendorlib-$]	version-specific vendor library path to add to @INC
-    vendorlib		vendor library path to add to @INC
-    PERL*		fallback for all %ENV lookups that begin with "PERL"
+ lib-$]        version-specific standard library path to add to @INC
+ lib           standard library path to add to @INC
+ sitelib-$]    version-specific site library path to add to @INC
+ sitelib       site library path to add to @INC
+ vendorlib-$]  version-specific vendor library path to add to @INC
+ vendorlib     vendor library path to add to @INC
+ PERL*         fallback for all %ENV lookups that begin with "PERL"
 
 Note the C<$]> in the above is not literal.  Substitute whatever version
 of perl you want to honor that entry, e.g. C<5.6.0>.  Paths must be
@@ -678,26 +687,26 @@ powerful, because it will do the right thing with a pattern like
 4) you can extend the method to add any customizations (or even
 entirely different kinds of wildcard expansion).
 
-	C:\> copy con c:\perl\lib\Wild.pm
-	# Wild.pm - emulate shell @ARGV expansion on shells that don't
-	use File::DosGlob;
-	@ARGV = map {
-		      my @g = File::DosGlob::glob($_) if /[*?]/;
-		      @g ? @g : $_;
-		    } @ARGV;
-	1;
-	^Z
-	C:\> set PERL5OPT=-MWild
-	C:\> perl -le "for (@ARGV) { print }" */*/perl*.c
-	p4view/perl/perl.c
-	p4view/perl/perlio.c
-	p4view/perl/perly.c
-	perl5.005/win32/perlglob.c
-	perl5.005/win32/perllib.c
-	perl5.005/win32/perlglob.c
-	perl5.005/win32/perllib.c
-	perl5.005/win32/perlglob.c
-	perl5.005/win32/perllib.c
+ C:\> copy con c:\perl\lib\Wild.pm
+ # Wild.pm - emulate shell @ARGV expansion on shells that don't
+ use File::DosGlob;
+ @ARGV = map {
+	      my @g = File::DosGlob::glob($_) if /[*?]/;
+	      @g ? @g : $_;
+	    } @ARGV;
+ 1;
+ ^Z
+ C:\> set PERL5OPT=-MWild
+ C:\> perl -le "for (@ARGV) { print }" */*/perl*.c
+ p4view/perl/perl.c
+ p4view/perl/perlio.c
+ p4view/perl/perly.c
+ perl5.005/win32/perlglob.c
+ perl5.005/win32/perllib.c
+ perl5.005/win32/perlglob.c
+ perl5.005/win32/perllib.c
+ perl5.005/win32/perlglob.c
+ perl5.005/win32/perllib.c
 
 Note there are two distinct steps there: 1) You'll have to create
 Wild.pm and put it in your perl lib directory. 2) You'll need to

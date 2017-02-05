@@ -343,3 +343,17 @@ print $x[$b];
 EXPECT
 OPTION regex
 Use of reference ".*" as array index at - line 7.
+########
+use warnings 'misc';
+use constant FOO => { a => 1 };
+() = $_[FOO->{a}];
+
+EXPECT
+########
+use warnings 'misc';
+use constant FOO => {};
+() = $_[FOO];
+
+EXPECT
+OPTION regex
+Use of reference "HASH\(0x\w+\)" as array index at - line 3.

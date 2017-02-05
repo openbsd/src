@@ -12,8 +12,8 @@ version - Perl extension for Version Objects
   # Declaring a dotted-decimal $VERSION (keep on one line!)
 
   use version; our $VERSION = version->declare("v1.2.3"); # formal
-  use version; our $VERSION = qv("v1.2.3");               # shorthand
-  use version; our $VERSION = qv("v1.2_3");               # alpha
+  use version; our $VERSION = qv("v1.2.3");               # deprecated
+  use version; our $VERSION = qv("v1.2_3");               # deprecated
 
   # Declaring an old-style decimal $VERSION (use quotes!)
 
@@ -270,7 +270,7 @@ Returns a value representing the object in a pure decimal form without
 trailing zeroes.
 
  version->declare('v1.2')->numify;  # 1.002
- version->parse('1.2')->numify;     # 1.2
+ version->parse('1.2')->numify;     # 1.200
 
 =head2 stringify()
 

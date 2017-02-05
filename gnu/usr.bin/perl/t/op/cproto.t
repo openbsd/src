@@ -75,7 +75,7 @@ delete undef
 die (@)
 do undef
 dump ()
-each (+)
+each (\[%@])
 else undef
 elsif undef
 endgrent ()
@@ -140,7 +140,7 @@ index ($$;$)
 int (_)
 ioctl (*$$)
 join ($@)
-keys (+)
+keys (\[%@])
 kill (@)
 last undef
 lc (_)
@@ -176,12 +176,12 @@ our undef
 pack ($@)
 package undef
 pipe (**)
-pop (;+)
+pop (;\@)
 pos (;\[$*])
 print undef
 printf undef
-prototype ($)
-push (+@)
+prototype (_)
+push (\@@)
 q undef
 qq undef
 qr undef
@@ -224,7 +224,7 @@ setprotoent ($)
 setpwent ()
 setservent ($)
 setsockopt (*$$$)
-shift (;+)
+shift (;\@)
 shmctl ($$$)
 shmget ($$$)
 shmread ($$$$)
@@ -235,7 +235,7 @@ sleep (;$)
 socket (*$$$)
 socketpair (**$$$)
 sort undef
-splice (+;$$@)
+splice (\@;$$@)
 split undef
 sprintf ($@)
 sqrt (_)
@@ -267,12 +267,12 @@ undef (;\[$@%&*])
 unless undef
 unlink (@)
 unpack ($_)
-unshift (+@)
+unshift (\@@)
 untie (\[$@%*])
 until undef
 use undef
 utime (@)
-values (+)
+values (\[%@])
 vec ($$$)
 wait ()
 waitpid ($$)

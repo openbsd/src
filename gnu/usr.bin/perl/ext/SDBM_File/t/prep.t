@@ -6,8 +6,8 @@ use SDBM_File;
 use File::Temp 'tempfile';
 use Fcntl;
 
-my ($dirfh, $dirname) = tempfile();
-my ($pagfh, $pagname) = tempfile();
+my ($dirfh, $dirname) = tempfile(UNLINK => 1);
+my ($pagfh, $pagname) = tempfile(UNLINK => 1);
 
 # close so Win32 allows them to be re-opened
 close $dirfh;

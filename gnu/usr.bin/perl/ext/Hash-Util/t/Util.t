@@ -13,6 +13,14 @@ BEGIN {
 
 use strict;
 use Test::More;
+
+sub numbers_first { # Sort helper: All digit entries sort in front of others
+                    # Makes sorting portable across ASCII/EBCDIC
+    return $a cmp $b if ($a =~ /^\d+$/) == ($b =~ /^\d+$/);
+    return -1 if $a =~ /^\d+$/;
+    return 1;
+}
+
 my @Exported_Funcs;
 BEGIN {
     @Exported_Funcs = qw(
@@ -36,8 +44,9 @@ BEGIN {
                      hash_seed hash_value bucket_stats bucket_info bucket_array
                      hv_store
                      lock_hash_recurse unlock_hash_recurse
+                     lock_hashref_recurse unlock_hashref_recurse
                     );
-    plan tests => 236 + @Exported_Funcs;
+    plan tests => 244 + @Exported_Funcs;
     use_ok 'Hash::Util', @Exported_Funcs;
 }
 foreach my $func (@Exported_Funcs) {
@@ -427,9 +436,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9);
     lock_keys(%hash,keys(%hash),'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_keys args DDS/t');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","a b c d e f",'lock_keys() @hidden DDS/t 3');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_keys() @legal DDS/t 3');
     is("@keys","0 2 4 6 8",'lock_keys() @keys');
@@ -452,9 +461,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9);
     lock_ref_keys(\%hash,keys %hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_ref_keys args DDS/t');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","a b c d e f",'lock_ref_keys() @hidden DDS/t 2');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_ref_keys() @legal DDS/t 2');
     is("@keys","0 2 4 6 8",'lock_ref_keys() @keys DDS/t 2');
@@ -463,9 +472,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9);
     lock_ref_keys_plus(\%hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_ref_keys_plus args DDS/t');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","a b c d e f",'lock_ref_keys_plus() @hidden DDS/t');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_ref_keys_plus() @legal DDS/t');
     is("@keys","0 2 4 6 8",'lock_ref_keys_plus() @keys DDS/t');
@@ -474,9 +483,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9, 'a' => 'alpha');
     lock_ref_keys_plus(\%hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_ref_keys_plus args overlap');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","b c d e f",'lock_ref_keys_plus() @hidden overlap');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_ref_keys_plus() @legal overlap');
     is("@keys","0 2 4 6 8 a",'lock_ref_keys_plus() @keys overlap');
@@ -485,9 +494,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9);
     lock_keys_plus(%hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_keys_plus args DDS/t');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","a b c d e f",'lock_keys_plus() @hidden DDS/t 3');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_keys_plus() @legal DDS/t 3');
     is("@keys","0 2 4 6 8",'lock_keys_plus() @keys DDS/t 3');
@@ -496,9 +505,9 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my %hash=(0..9, 'a' => 'alpha');
     lock_keys_plus(%hash,'a'..'f');
     ok(Internals::SvREADONLY(%hash),'lock_keys_plus args overlap non-ref');
-    my @hidden=sort(hidden_keys(%hash));
-    my @legal=sort(legal_keys(%hash));
-    my @keys=sort(keys(%hash));
+    my @hidden=sort numbers_first hidden_keys(%hash);
+    my @legal=sort numbers_first legal_keys(%hash);
+    my @keys=sort numbers_first keys(%hash);
     is("@hidden","b c d e f",'lock_keys_plus() @hidden overlap non-ref');
     is("@legal","0 2 4 6 8 a b c d e f",'lock_keys_plus() @legal overlap non-ref');
     is("@keys","0 2 4 6 8 a",'lock_keys_plus() @keys overlap non-ref');
@@ -522,6 +531,7 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
 }
 
 {
+    # lock_hash_recurse / unlock_hash_recurse
     my %hash = (
         a   => 'alpha',
         b   => [ qw( beta gamma delta ) ],
@@ -541,6 +551,43 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
         "unlock_hash_recurse(): top-level hash unlocked" );
     ok( hash_unlocked(%{$hash{d}}),
         "unlock_hash_recurse(): element which is hashref unlocked" );
+    {
+        local $@;
+        eval { $hash{d} = { theta => 'kappa' }; };
+        ok(! $@, "No error; can assign to unlocked hash")
+            or diag($@);
+    }
+    ok( hash_unlocked(%{$hash{c}[1]}),
+        "unlock_hash_recurse(): element which is hashref in array ref not locked" );
+}
+
+{
+    # lock_hashref_recurse / unlock_hashref_recurse
+    my %hash = (
+        a   => 'alpha',
+        b   => [ qw( beta gamma delta ) ],
+        c   => [ 'epsilon', { zeta => 'eta' }, ],
+        d   => { theta => 'iota' },
+    );
+    Hash::Util::lock_hashref_recurse(\%hash);
+    ok( hash_locked(%hash),
+        "lock_hash_recurse(): top-level hash locked" );
+    ok( hash_locked(%{$hash{d}}),
+        "lock_hash_recurse(): element which is hashref locked" );
+    ok( ! hash_locked(%{$hash{c}[1]}),
+        "lock_hash_recurse(): element which is hashref in array ref not locked" );
+
+    Hash::Util::unlock_hashref_recurse(\%hash);
+    ok( hash_unlocked(%hash),
+        "unlock_hash_recurse(): top-level hash unlocked" );
+    ok( hash_unlocked(%{$hash{d}}),
+        "unlock_hash_recurse(): element which is hashref unlocked" );
+    {
+        local $@;
+        eval { $hash{d} = { theta => 'kappa' }; };
+        ok(! $@, "No error; can assign to unlocked hash")
+            or diag($@);
+    }
     ok( hash_unlocked(%{$hash{c}[1]}),
         "unlock_hash_recurse(): element which is hashref in array ref not locked" );
 }

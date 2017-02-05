@@ -13,7 +13,7 @@ use Exporter ();
 our(@ISA, @EXPORT_OK, @EXPORT, $VERSION);
 
 @ISA = qw(Exporter);
-$VERSION = "0.09";
+$VERSION = "0.10";
 
 @EXPORT = qw( POLLIN
 	      POLLOUT
@@ -83,7 +83,7 @@ sub poll {
 	push(@poll,$fd => $mask);
     }
 
-    my $ret = @poll ? _poll(defined($timeout) ? $timeout * 1000 : -1,@poll) : 0;
+    my $ret = _poll(defined($timeout) ? $timeout * 1000 : -1,@poll);
 
     return $ret
 	unless $ret > 0;

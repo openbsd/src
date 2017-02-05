@@ -97,7 +97,7 @@ foreach my $file (
     ++$outfile;
     
     my @outnames = map $outfile . $_ , qw(0 1);
-    open(OUT2, ">$outnames[0].~out.txt") || die "Can't write-open $outnames[0].txt: $!";
+    open(OUT2, ">$outnames[0].txt") || die "Can't write-open $outnames[0].txt: $!";
 
     foreach my $out (@out) { push @outnames, $outnames[-1];  ++$outnames[-1] };
     pop @outnames;

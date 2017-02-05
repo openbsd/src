@@ -4,66 +4,69 @@ perlapio - perl's IO abstraction interface.
 
 =head1 SYNOPSIS
 
-    #define PERLIO_NOT_STDIO 0    /* For co-existence with stdio only */
-    #include <perlio.h>           /* Usually via #include <perl.h> */
+  #define PERLIO_NOT_STDIO 0    /* For co-existence with stdio only */
+  #include <perlio.h>           /* Usually via #include <perl.h> */
 
-    PerlIO *PerlIO_stdin(void);
-    PerlIO *PerlIO_stdout(void);
-    PerlIO *PerlIO_stderr(void);
+  PerlIO *PerlIO_stdin(void);
+  PerlIO *PerlIO_stdout(void);
+  PerlIO *PerlIO_stderr(void);
 
-    PerlIO *PerlIO_open(const char *path,const char *mode);
-    PerlIO *PerlIO_fdopen(int fd, const char *mode);
-    PerlIO *PerlIO_reopen(const char *path, const char *mode, PerlIO *old);  /* deprecated */
-    int     PerlIO_close(PerlIO *f);
+  PerlIO *PerlIO_open(const char *path,const char *mode);
+  PerlIO *PerlIO_fdopen(int fd, const char *mode);
+  PerlIO *PerlIO_reopen(const char *path, /* deprecated */
+          const char *mode, PerlIO *old);
+  int     PerlIO_close(PerlIO *f);
 
-    int     PerlIO_stdoutf(const char *fmt,...)
-    int     PerlIO_puts(PerlIO *f,const char *string);
-    int     PerlIO_putc(PerlIO *f,int ch);
-    SSize_t PerlIO_write(PerlIO *f,const void *buf,size_t numbytes);
-    int     PerlIO_printf(PerlIO *f, const char *fmt,...);
-    int     PerlIO_vprintf(PerlIO *f, const char *fmt, va_list args);
-    int     PerlIO_flush(PerlIO *f);
+  int     PerlIO_stdoutf(const char *fmt,...)
+  int     PerlIO_puts(PerlIO *f,const char *string);
+  int     PerlIO_putc(PerlIO *f,int ch);
+  SSize_t PerlIO_write(PerlIO *f,const void *buf,size_t numbytes);
+  int     PerlIO_printf(PerlIO *f, const char *fmt,...);
+  int     PerlIO_vprintf(PerlIO *f, const char *fmt, va_list args);
+  int     PerlIO_flush(PerlIO *f);
 
-    int     PerlIO_eof(PerlIO *f);
-    int     PerlIO_error(PerlIO *f);
-    void    PerlIO_clearerr(PerlIO *f);
+  int     PerlIO_eof(PerlIO *f);
+  int     PerlIO_error(PerlIO *f);
+  void    PerlIO_clearerr(PerlIO *f);
 
-    int     PerlIO_getc(PerlIO *d);
-    int     PerlIO_ungetc(PerlIO *f,int ch);
-    SSize_t PerlIO_read(PerlIO *f, void *buf, size_t numbytes);
+  int     PerlIO_getc(PerlIO *d);
+  int     PerlIO_ungetc(PerlIO *f,int ch);
+  SSize_t PerlIO_read(PerlIO *f, void *buf, size_t numbytes);
 
-    int     PerlIO_fileno(PerlIO *f);
+  int     PerlIO_fileno(PerlIO *f);
 
-    void    PerlIO_setlinebuf(PerlIO *f);
+  void    PerlIO_setlinebuf(PerlIO *f);
 
-    Off_t   PerlIO_tell(PerlIO *f);
-    int     PerlIO_seek(PerlIO *f, Off_t offset, int whence);
-    void    PerlIO_rewind(PerlIO *f);
+  Off_t   PerlIO_tell(PerlIO *f);
+  int     PerlIO_seek(PerlIO *f, Off_t offset, int whence);
+  void    PerlIO_rewind(PerlIO *f);
 
-    int     PerlIO_getpos(PerlIO *f, SV *save);        /* prototype changed */
-    int     PerlIO_setpos(PerlIO *f, SV *saved);       /* prototype changed */
+  int     PerlIO_getpos(PerlIO *f, SV *save);    /* prototype changed */
+  int     PerlIO_setpos(PerlIO *f, SV *saved);   /* prototype changed */
 
-    int     PerlIO_fast_gets(PerlIO *f);
-    int     PerlIO_has_cntptr(PerlIO *f);
-    SSize_t PerlIO_get_cnt(PerlIO *f);
-    char   *PerlIO_get_ptr(PerlIO *f);
-    void    PerlIO_set_ptrcnt(PerlIO *f, char *ptr, SSize_t count);
+  int     PerlIO_fast_gets(PerlIO *f);
+  int     PerlIO_has_cntptr(PerlIO *f);
+  SSize_t PerlIO_get_cnt(PerlIO *f);
+  char   *PerlIO_get_ptr(PerlIO *f);
+  void    PerlIO_set_ptrcnt(PerlIO *f, char *ptr, SSize_t count);
 
-    int     PerlIO_canset_cnt(PerlIO *f);              /* deprecated */
-    void    PerlIO_set_cnt(PerlIO *f, int count);      /* deprecated */
+  int     PerlIO_canset_cnt(PerlIO *f);              /* deprecated */
+  void    PerlIO_set_cnt(PerlIO *f, int count);      /* deprecated */
 
-    int     PerlIO_has_base(PerlIO *f);
-    char   *PerlIO_get_base(PerlIO *f);
-    SSize_t PerlIO_get_bufsiz(PerlIO *f);
+  int     PerlIO_has_base(PerlIO *f);
+  char   *PerlIO_get_base(PerlIO *f);
+  SSize_t PerlIO_get_bufsiz(PerlIO *f);
 
-    PerlIO *PerlIO_importFILE(FILE *stdio, const char *mode);
-    FILE   *PerlIO_exportFILE(PerlIO *f, int flags);
-    FILE   *PerlIO_findFILE(PerlIO *f);
-    void    PerlIO_releaseFILE(PerlIO *f,FILE *stdio);
+  PerlIO *PerlIO_importFILE(FILE *stdio, const char *mode);
+  FILE   *PerlIO_exportFILE(PerlIO *f, int flags);
+  FILE   *PerlIO_findFILE(PerlIO *f);
+  void    PerlIO_releaseFILE(PerlIO *f,FILE *stdio);
 
-    int     PerlIO_apply_layers(PerlIO *f, const char *mode, const char *layers);
-    int     PerlIO_binmode(PerlIO *f, int ptype, int imode, const char *layers);
-    void    PerlIO_debug(const char *fmt,...)
+  int     PerlIO_apply_layers(PerlIO *f, const char *mode,
+                                                    const char *layers);
+  int     PerlIO_binmode(PerlIO *f, int ptype, int imode,
+                                                    const char *layers);
+  void    PerlIO_debug(const char *fmt,...)
 
 =head1 DESCRIPTION
 
@@ -496,23 +499,25 @@ debugging.  No return value. Its main use is inside PerlIO where using
 real printf, warn() etc. would recursively call PerlIO and be a
 problem.
 
-PerlIO_debug writes to the file named by $ENV{'PERLIO_DEBUG'} typical
+PerlIO_debug writes to the file named by $ENV{'PERLIO_DEBUG'} or defaults
+to stderr if the environment variable is not defined. Typical
 use might be
 
   Bourne shells (sh, ksh, bash, zsh, ash, ...):
-   PERLIO_DEBUG=/dev/tty ./perl somescript some args
+   PERLIO_DEBUG=/tmp/perliodebug.log ./perl -Di somescript some args
 
   Csh/Tcsh:
-   setenv PERLIO_DEBUG /dev/tty
-   ./perl somescript some args
+   setenv PERLIO_DEBUG /tmp/perliodebug.log
+   ./perl -Di somescript some args
 
   If you have the "env" utility:
-   env PERLIO_DEBUG=/dev/tty ./perl somescript some args
+   env PERLIO_DEBUG=/tmp/perliodebug.log ./perl -Di somescript args
 
   Win32:
-   set PERLIO_DEBUG=CON
-   perl somescript some args
+   set PERLIO_DEBUG=perliodebug.log
+   perl -Di somescript some args
 
-If $ENV{'PERLIO_DEBUG'} is not set PerlIO_debug() is a no-op.
+On a Perl built without C<-DDEBUGGING>, or when the C<-Di> command-line switch
+is not specified, or under taint, PerlIO_debug() is a no-op.
 
 =back

@@ -8,6 +8,8 @@ use Test::More 0.88;
 sub dies_ok (&@) {
   my ($code, $qr, $comment) = @_;
 
+  no warnings 'redefine';
+  local *Regexp::CARP_TRACE  = sub { "<regexp>" };
   my $lived = eval { $code->(); 1 };
 
   if ($lived) {

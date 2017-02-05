@@ -2,8 +2,9 @@
 use strict;
 use warnings;
 
-use 5.008000;   # for ${^TAINT}
-use Test::More tests => 2;
+use Config;
+use Test::More $Config{ccflags} =~ /-DSILENT_NO_TAINT_SUPPORT/
+    ? ( skip_all => 'No taint support' ) : ( tests => 2 );
 use Module::Metadata;
 use Carp 'croak';
 
@@ -17,7 +18,8 @@ sub exception(&) {
     return $@;
 }
 
-ok(${^TAINT}, 'taint flag is set');
+my $taint_on = ! eval { no warnings; join('',values %ENV), kill 0; 1; };
+ok($taint_on, 'taint flag is set');
 
 # without the fix, we get:
 # Insecure dependency in eval while running with -T switch at lib/Module/Metadata.pm line 668, <GEN0> line 15.

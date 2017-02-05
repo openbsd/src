@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Scalar::Util qw( reftype);
 
-our $VERSION = '1.15';
+our $VERSION = '1.19';
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -103,7 +103,7 @@ Returns the reference address of a reference $obj.  If $obj is
 not a reference, returns $obj.
 
 This function is a stand-in replacement for
-L<Scalar::Util::refaddr|Scalar::Util/"$addr = refaddr( $ref )">,
+L<Scalar::Util::refaddr|Scalar::Util/refaddr>,
 that is, it returns
 the reference address of its argument as a numeric value.  The only
 difference is that C<refaddr()> returns C<undef> when given a

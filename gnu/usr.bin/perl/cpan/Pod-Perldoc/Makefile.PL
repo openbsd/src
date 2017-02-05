@@ -35,16 +35,17 @@ WriteMakefile(
 
     ($ENV{PERL_CORE} ? () : ('EXE_FILES' => [qw( perldoc )])),
 
-	'META_MERGE' => {
-		no_index => {
-			directory => 'corpus',
-			},
+    'META_MERGE' => {
+        no_index => {
+            directory => 'corpus',
+        },
         resources => {
             repository => 'https://github.com/mrallen1/Pod-Perldoc.git',
-            },
-		},
+        },
+    },
 
-    'MAN1PODS' => { 'perldoc.pod' => 'blib/man1/perldoc.1' },
+    ($ENV{PERL_CORE} ? () :
+        ('MAN1PODS' => { 'perldoc.pod' => 'blib/man1/perldoc.1' })),
 
     ($^V >= 5.008001 && $^V < 5.012 ? ( 'INSTALLDIRS'  => 'perl' ) : ()),
 
@@ -52,7 +53,7 @@ WriteMakefile(
         'LICENSE' => 'perl',
     ) : () ),
 
-	test => {TESTS => 't/*.t t/*/*.t'}
+    test => {TESTS => 't/*.t t/*/*.t'}
 );
 
 package MY;

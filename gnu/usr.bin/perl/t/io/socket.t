@@ -101,9 +101,15 @@ SKIP: {
 
 	    my $buf;
 	    my $recv_peer = recv($child, $buf, 1000, 0);
-	    # [perl #118843]
-	    ok_child($recv_peer eq '' || $recv_peer eq $bind_name,
-	       "peer from recv() should be empty or the remote name");
+	    {
+		use vars '$TODO';
+		local $TODO;
+		$TODO = "[perl #122657] Hurd doesn't populate sin_len correctly"
+		    if $^O eq "gnu";
+		# [perl #118843]
+		ok_child($recv_peer eq '' || $recv_peer eq getpeername $child,
+			 "peer from recv() should be empty or the remote name");
+	    }
 	    while(defined recv($child, my $tmp, 1000, 0)) {
 		last if length $tmp == 0;
 		$buf .= $tmp;
@@ -127,7 +133,8 @@ done_testing();
 my @child_tests;
 sub ok_child {
     my ($ok, $note) = @_;
-    push @child_tests, ( $ok ? "ok " : "not ok ") . curr_test() . " - $note\n";
+    push @child_tests, ( $ok ? "ok " : "not ok ") . curr_test() . " - $note "
+	. ( $TODO ? "# TODO $TODO" : "" ) . "\n";
     curr_test(curr_test()+1);
 }
 

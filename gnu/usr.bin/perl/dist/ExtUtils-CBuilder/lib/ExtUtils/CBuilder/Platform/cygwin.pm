@@ -1,11 +1,11 @@
 package ExtUtils::CBuilder::Platform::cygwin;
-
+$ExtUtils::CBuilder::Platform::cygwin::VERSION = '0.280225';
+use warnings;
 use strict;
 use File::Spec;
 use ExtUtils::CBuilder::Platform::Unix;
 
-use vars qw($VERSION @ISA);
-$VERSION = '0.280217';
+use vars qw(@ISA);
 @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 # TODO: If a specific exe_file name is requested, if the exe created

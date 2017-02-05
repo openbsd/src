@@ -1,5 +1,8 @@
 #!./perl
 
+# Test that $lexical = <some op> optimises the assignment away correctly
+# and causes no ill side-effects.
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
@@ -50,6 +53,52 @@ my $xxx = 'b';
 $xxx = 'c' . ($xxx || 'e');
 is( $xxx, 'cb', 'variables can be read before being overwritten');
 
+# Chains of assignments
+
+my ($l1, $l2, $l3, $l4);
+my $zzzz = 12;
+$zzz1 = $l1 = $l2 = $zzz2 = $l3 = $l4 = 1 + $zzzz;
+
+is($zzz1, 13, 'chain assignment, part1');
+is($zzz2, 13, 'chain assignment, part2');
+is($l1,   13, 'chain assignment, part3');
+is($l2,   13, 'chain assignment, part4');
+is($l3,   13, 'chain assignment, part5');
+is($l4,   13, 'chain assignment, part6');
+
+for (@INPUT) {
+  ($op, undef, $comment) = /^([^\#]+)(\#\s+(.*))?/;
+  $comment = $op unless defined $comment;
+  chomp;
+  $op = "$op==$op" unless $op =~ /==/;
+  ($op, $expectop) = $op =~ /(.*)==(.*)/;
+  
+  $skip = ($op =~ /^'\?\?\?'/ or $comment =~ /skip\(.*\Q$^O\E.*\)/i);
+  $integer = ($comment =~ /^i_/) ? "use integer" : '' ;
+  if ($skip) {
+    SKIP: {
+        skip $comment, 1;
+    }
+    next;
+  }
+  
+  eval <<EOE;
+  local \$SIG{__WARN__} = \\&wrn;
+  my \$a = 'fake';
+  $integer;
+  \$a = $op;
+  \$b = $expectop;
+  is (\$a, \$b, \$comment);
+EOE
+  if ($@) {
+    $warning = $@;
+    chomp $warning;
+    if ($@ !~ /(?:is un|not )implemented/) {
+      fail($_ . ' ' . $warning);
+    }
+  }
+}
+
 {				# Check calling STORE
   note('Tied variables, calling STORE');
   my $sc = 0;
@@ -74,64 +123,16 @@ is( $xxx, 'cb', 'variables can be read before being overwritten');
   is( $sc, 3, 'called on self-increment' );
   is( $m,  89, 'checking the tied variable result' );
 
-}
-
-# Chains of assignments
-
-my ($l1, $l2, $l3, $l4);
-my $zzzz = 12;
-$zzz1 = $l1 = $l2 = $zzz2 = $l3 = $l4 = 1 + $zzzz;
-
-is($zzz1, 13, 'chain assignment, part1');
-is($zzz2, 13, 'chain assignment, part2');
-is($l1,   13, 'chain assignment, part3');
-is($l2,   13, 'chain assignment, part4');
-is($l3,   13, 'chain assignment, part5');
-is($l4,   13, 'chain assignment, part6');
-
-for (@INPUT) {
-  ($op, undef, $comment) = /^([^\#]+)(\#\s+(.*))?/;
-  $comment = $op unless defined $comment;
-  chomp;
-  $op = "$op==$op" unless $op =~ /==/;
-  ($op, $expectop) = $op =~ /(.*)==(.*)/;
-  
-  $skip = ($op =~ /^'\?\?\?'/ or $comment =~ /skip\(.*\Q$^O\E.*\)/i)
-	  ? "skip" : "# '$_'\nnot";
-  $integer = ($comment =~ /^i_/) ? "use integer" : '' ;
-  if ($skip eq 'skip') {
-    SKIP: {
-        skip $comment, 1;
-        pass();
-    }
-    next;
-  }
-  
-  eval <<EOE;
-  local \$SIG{__WARN__} = \\&wrn;
-  my \$a = 'fake';
-  $integer;
-  \$a = $op;
-  \$b = $expectop;
-  if (\$a ne \$b) {
-    SKIP: {
-        skip "\$comment: got '\$a', expected '\$b'", 1;
-        pass("")
-    }
-  }
-  pass();
-EOE
-  if ($@) {
-    $warning = $@;
-    chomp $warning;
-    if ($@ =~ /is unimplemented/) {
-      SKIP: {
-        skip $warning, 1;
-        pass($comment);
-      }
-    } else {
-      fail($_ . ' ' . $warning);
-    }
+  for (@INPUT) {
+    ($op, undef, $comment) = /^([^\#]+)(\#\s+(.*))?/;
+    $comment = $op unless defined $comment;
+    next if ($op =~ /^'\?\?\?'/ or $comment =~ /skip\(.*\Q$^O\E.*\)/i);
+    $op =~ s/==.*//;
+    
+    $sc = 0;
+    local $SIG{__WARN__} = \&wrn;
+    eval "\$m = $op";
+    is $sc, $@ ? 0 : 1, "STORE count for $comment";
   }
 }
 
@@ -151,7 +152,7 @@ EOE
   if ($@) {
     $warning = $@;
     chomp $warning;
-    if ($@ =~ /is unimplemented/) {
+    if ($@ =~ /(?:is un|not )implemented/) {
       SKIP: {
         skip $warning, 1;
         pass($comment);
@@ -168,6 +169,21 @@ EOE
   }
 }
 
+# [perl #123790] Assigning to a typeglob
+# These used to die or crash.
+# Once the bug is fixed for all ops, we can combine this with the tests
+# above that use <DATA>.
+for my $glob (*__) {
+  $glob = $y x $z;
+  { use integer; $glob = $y <=> $z; }
+  $glob = $y cmp $z;
+  $glob = vec 1, 2, 4;
+  $glob = ~${\""};
+  $glob = split;
+}
+
+# XXX This test does not really belong here, as it has nothing to do with
+#     OPpTARGET_MY optimisation.  But where should it go?
 eval {
     sub PVBM () { 'foo' }
     index 'foo', PVBM;
@@ -181,6 +197,24 @@ eval {
 };
 is($@, '', 'ex-PVBM assert'.$@);
 
+# RT perl #127855
+# Check that stringification and assignment to itself doesn't break
+# anything. This is unlikely to actually fail the tests; its more something
+# for valgrind to spot. It will also only fail if SvGROW or its caller
+# decides to over-allocate (otherwise copying the string will skip the
+# sv_grow(), as the new size is the same as the current size).
+
+{
+    my $s;
+    for my $len (1..40) {
+        $s = 'x' x $len;
+        my $t = $s;
+        $t = "$t";
+        ok($s eq $t, "RT 127855: len=$len");
+    }
+}
+
+
 done_testing();
 
 __END__
@@ -192,10 +226,10 @@ ref $cstr			# ref nonref
 <OP>				# readline
 'faked'				# rcatline
 (@z = (1 .. 3))			# aassign
-chop $chopit			# chop
-(chop (@x=@chopar))		# schop
-chomp $chopit			# chomp
-(chop (@x=@chopar))		# schomp
+(chop (@x=@chopar))		# chop
+chop $chopit			# schop
+(chomp (@x=@chopar))		# chomp
+chomp $chopit			# schomp
 pos $posstr			# pos
 pos $chopit			# pos returns undef
 $nn++==2			# postinc
@@ -228,6 +262,7 @@ $n ^ $n				# bit_xor
 $n | $n				# bit_or
 -$n				# negate
 -$n				# i_negate
+-$a=="-fake"			# i_negate with string
 ~$n				# complement
 atan2 $n,$n			# atan2
 sin $n				# sin
@@ -248,6 +283,7 @@ rindex $posstr, 2		# rindex
 sprintf "%i%i", $n, $n		# sprintf
 ord $n				# ord
 chr $n				# chr
+chr ${\256}			# chr $wide
 crypt $n, $n			# crypt
 ucfirst ($cstr . "a")		# ucfirst padtmp
 ucfirst $cstr			# ucfirst
@@ -316,7 +352,7 @@ system "$runme -e 0"		# system skip(VMS)
 '???'				# kill
 getppid				# getppid
 getpgrp				# getpgrp
-'???'				# setpgrp
+setpgrp				# setpgrp
 getpriority $$, $$		# getpriority
 '???'				# setpriority
 time				# time

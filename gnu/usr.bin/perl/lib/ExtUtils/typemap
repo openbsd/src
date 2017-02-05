@@ -71,7 +71,7 @@ T_SVREF
 		    $var = SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -84,7 +84,7 @@ T_SVREF_REFCOUNT_FIXED
 		    $var = SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -97,7 +97,7 @@ T_AVREF
 		    $var = (AV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not an ARRAY reference\",
+		    Perl_croak_nocontext(\"%s: %s is not an ARRAY reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -110,7 +110,7 @@ T_AVREF_REFCOUNT_FIXED
 		    $var = (AV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not an ARRAY reference\",
+		    Perl_croak_nocontext(\"%s: %s is not an ARRAY reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -123,7 +123,7 @@ T_HVREF
 		    $var = (HV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not a HASH reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a HASH reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -136,7 +136,7 @@ T_HVREF_REFCOUNT_FIXED
 		    $var = (HV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak(aTHX_ \"%s: %s is not a HASH reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a HASH reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -149,7 +149,7 @@ T_CVREF
 		SvGETMAGIC(xsub_tmp_sv);
                 $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
 		if (!$var) {
-		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a CODE reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -162,7 +162,7 @@ T_CVREF_REFCOUNT_FIXED
 		SvGETMAGIC(xsub_tmp_sv);
                 $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
 		if (!$var) {
-		    Perl_croak(aTHX_ \"%s: %s is not a CODE reference\",
+		    Perl_croak_nocontext(\"%s: %s is not a CODE reference\",
 				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 				\"$var\");
 		}
@@ -209,7 +209,7 @@ T_PTRREF
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+	    Perl_croak_nocontext(\"%s: %s is not a reference\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\")
 T_REF_IV_REF
@@ -218,7 +218,7 @@ T_REF_IV_REF
 	    $var = *INT2PTR($type *, tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_REF_IV_PTR
@@ -227,7 +227,7 @@ T_REF_IV_PTR
 	    $var = INT2PTR($type, tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_PTROBJ
@@ -236,7 +236,7 @@ T_PTROBJ
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_PTRDESC
@@ -246,7 +246,7 @@ T_PTRDESC
 	    $var = ${type}_desc->ptr;
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_REFREF
@@ -255,7 +255,7 @@ T_REFREF
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not a reference\",
+	    Perl_croak_nocontext(\"%s: %s is not a reference\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\")
 T_REFOBJ
@@ -264,7 +264,7 @@ T_REFOBJ
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak(aTHX_ \"%s: %s is not of type %s\",
+	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
 			\"$var\", \"$ntype\")
 T_OPAQUE
@@ -378,7 +378,19 @@ T_PACKEDARRAY
 T_ARRAY
         {
 	    U32 ix_$var;
-	    EXTEND(SP,size_$var);
+            SSize_t extend_size =
+                /* The weird way this is written is because g++ is dumb
+                 * enough to warn "comparison is always false" on something
+                 * like:
+                 *
+                 * sizeof(a) > sizeof(b) && a > B_t_MAX
+                 *
+                 * (where the LH condition is false)
+                 */
+                (size_$var > (sizeof(size_$var) > sizeof(SSize_t)
+                              ? SSize_t_MAX : size_$var))
+                ? -1 : (SSize_t)size_$var;
+	    EXTEND(SP, extend_size);
 	    for (ix_$var = 0; ix_$var < size_$var; ix_$var++) {
 		ST(ix_$var) = sv_newmortal();
 	DO_ARRAY_ELEM
@@ -388,32 +400,48 @@ T_STDIO
 	{
 	    GV *gv = newGVgen("$Package");
 	    PerlIO *fp = PerlIO_importFILE($var,0);
-	    if ( fp && do_open(gv, "+<&", 3, FALSE, 0, 0, fp) )
-		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
+	    if ( fp && do_open(gv, "+<&", 3, FALSE, 0, 0, fp) ) {
+		SV *rv = newRV_inc((SV*)gv);
+		rv = sv_bless(rv, GvSTASH(gv));
+		${"$var" eq "RETVAL" ? \"$arg = sv_2mortal(rv);"
+		    : \"sv_setsv($arg, rv);\n\t\tSvREFCNT_dec_NN(rv);"}
+	    }${"$var" ne "RETVAL" ? \"
 	    else
-		$arg = &PL_sv_undef;
+		sv_setsv($arg, &PL_sv_undef);\n" : \""}
 	}
 T_IN
 	{
 	    GV *gv = newGVgen("$Package");
-	    if ( do_open(gv, "<&", 2, FALSE, 0, 0, $var) )
-		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
+	    if ( do_open(gv, "<&", 2, FALSE, 0, 0, $var) ) {
+		SV *rv = newRV_inc((SV*)gv);
+		rv = sv_bless(rv, GvSTASH(gv));
+		${"$var" eq "RETVAL" ? \"$arg = sv_2mortal(rv);"
+		    : \"sv_setsv($arg, rv);\n\t\tSvREFCNT_dec_NN(rv);"}
+	    }${"$var" ne "RETVAL" ? \"
 	    else
-		$arg = &PL_sv_undef;
+		sv_setsv($arg, &PL_sv_undef);\n" : \""}
 	}
 T_INOUT
 	{
 	    GV *gv = newGVgen("$Package");
-	    if ( do_open(gv, "+<&", 3, FALSE, 0, 0, $var) )
-		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
+	    if ( do_open(gv, "+<&", 3, FALSE, 0, 0, $var) ) {
+		SV *rv = newRV_inc((SV*)gv);
+		rv = sv_bless(rv, GvSTASH(gv));
+		${"$var" eq "RETVAL" ? \"$arg = sv_2mortal(rv);"
+		    : \"sv_setsv($arg, rv);\n\t\tSvREFCNT_dec_NN(rv);"}
+	    }${"$var" ne "RETVAL" ? \"
 	    else
-		$arg = &PL_sv_undef;
+		sv_setsv($arg, &PL_sv_undef);\n" : \""}
 	}
 T_OUT
 	{
 	    GV *gv = newGVgen("$Package");
-	    if ( do_open(gv, "+>&", 3, FALSE, 0, 0, $var) )
-		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
+	    if ( do_open(gv, "+>&", 3, FALSE, 0, 0, $var) ) {
+		SV *rv = newRV_inc((SV*)gv);
+		rv = sv_bless(rv, GvSTASH(gv));
+		${"$var" eq "RETVAL" ? \"$arg = sv_2mortal(rv);"
+		    : \"sv_setsv($arg, rv);\n\t\tSvREFCNT_dec_NN(rv);"}
+	    }${"$var" ne "RETVAL" ? \"
 	    else
-		$arg = &PL_sv_undef;
+		sv_setsv($arg, &PL_sv_undef);\n" : \""}
 	}

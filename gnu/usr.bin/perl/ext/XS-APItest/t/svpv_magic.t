@@ -3,7 +3,8 @@
 use Test::More tests => 10;
 
 BEGIN {
-    use_ok('XS::APItest')
+    use_ok('XS::APItest');
+    require 'charset_tools.pl';
 };
 
 $b = "\303\244"; # or encode_utf8("\x{e4}");
@@ -30,20 +31,20 @@ is(eval { XS::APItest::first_byte($1) } || $@, 0303,
     "utf8 flag fetched correctly without stringification");
 
 sub TIESCALAR { bless [], shift }
-sub FETCH { ++$f; *{chr 255} }
+sub FETCH { ++$f; *{chr utf8::unicode_to_native(255)} }
 tie $t, "main";
-is SvPVutf8($t), "*main::\xc3\xbf",
+is SvPVutf8($t), "*main::" . byte_utf8a_to_utf8n("\xc3\xbf"),
   'SvPVutf8 works with get-magic changing the SV type';
 is $f, 1, 'SvPVutf8 calls get-magic once';
 
 package t {
   @ISA = 'main';
-  sub FETCH { ++$::f; chr 255 }
+  sub FETCH { ++$::f; chr utf8::unicode_to_native(255) }
   sub STORE { }
 }
 tie $t, "t";
 undef $f;
-is SvPVutf8($t), "\xc3\xbf",
+is SvPVutf8($t), byte_utf8a_to_utf8n("\xc3\xbf"),
   'SvPVutf8 works with get-magic downgrading the SV';
 is $f, 1, 'SvPVutf8 calls get-magic once';
 ()="$t";

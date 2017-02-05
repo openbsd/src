@@ -20,7 +20,6 @@ runops_debug                   # U
 runops_standard                # U
 save_iv                        # U (save_iv)
 save_op                        # U
-screaminstr                    # E (Perl_screaminstr)
 sv_iv                          # U
 sv_nv                          # U
 sv_peek                        # U

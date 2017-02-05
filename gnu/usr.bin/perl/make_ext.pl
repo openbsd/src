@@ -2,11 +2,11 @@
 use strict;
 use warnings;
 use Config;
-use constant IS_CROSS => defined $Config::Config{usecrosscompile} ? 1 : 0;
-
-my $is_Win32 = $^O eq 'MSWin32';
-my $is_VMS = $^O eq 'VMS';
-my $is_Unix = !$is_Win32 && !$is_VMS;
+use constant{IS_CROSS => defined $Config::Config{usecrosscompile} ? 1 : 0,
+             IS_WIN32 => $^O eq 'MSWin32',
+             IS_VMS   => $^O eq 'VMS',
+             IS_UNIX  => $^O ne 'MSWin32' && $^O ne 'VMS',
+};
 
 my @ext_dirs = qw(cpan dist ext);
 my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
@@ -51,13 +51,15 @@ my $ext_dirs_re = '(?:' . join('|', @ext_dirs) . ')';
 # It may be deleted in a later release of perl so try to
 # avoid using it for other purposes.
 
-my (%excl, %incl, %opts, @extspec, @pass_through);
+my (%excl, %incl, %opts, @extspec, @pass_through, $verbose);
 
 foreach (@ARGV) {
     if (/^!(.*)$/) {
 	$excl{$1} = 1;
     } elsif (/^\+(.*)$/) {
 	$incl{$1} = 1;
+    } elsif (/^--verbose$/ or /^-v$/) {
+	$verbose = 1;
     } elsif (/^--([\w\-]+)$/) {
 	$opts{$1} = 1;
     } elsif (/^--([\w\-]+)=(.*)$/) {
@@ -137,7 +139,7 @@ if (!@extspec and !$static and !$dynamic and !$nonxs and !$dynaloader)  {
 my $perl;
 my %extra_passthrough;
 
-if ($is_Win32) {
+if (IS_WIN32) {
     require Cwd;
     require FindExt;
     my $build = Cwd::getcwd();
@@ -153,11 +155,11 @@ if ($is_Win32) {
     my $pl2bat = "$topdir\\win32\\bin\\pl2bat";
     unless (-f "$pl2bat.bat") {
 	my @args = ($perl, "-I$topdir\\lib", ("$pl2bat.pl") x 2);
-	print "@args\n";
+	print "@args\n" if $verbose;
 	system(@args) unless IS_CROSS;
     }
 
-    print "In $build";
+    print "In $build" if $verbose;
     foreach my $dir (@dirs) {
 	chdir($dir) or die "Cannot cd to $dir: $!\n";
 	(my $ext = Cwd::getcwd()) =~ s{/}{\\}g;
@@ -183,10 +185,7 @@ if ($is_Win32) {
 	    next;
 	}
 	push @extspec, $_;
-	if($_ eq 'DynaLoader' and $target !~ /clean$/) {
-	    # No, we don't know why nmake can't work out the dependency chain
-	    push @{$extra_passthrough{$_}}, 'DynaLoader.c';
-	} elsif(FindExt::is_static($_)) {
+	if($_ ne 'DynaLoader' && FindExt::is_static($_)) {
 	    push @{$extra_passthrough{$_}}, 'LINKTYPE=static';
 	}
     }
@@ -194,7 +193,7 @@ if ($is_Win32) {
     chdir '..'
 	or die "Couldn't chdir to build directory: $!"; # now in the Perl build
 }
-elsif ($is_VMS) {
+elsif (IS_VMS) {
     $perl = $^X;
     push @extspec, (split ' ', $Config{static_ext}) if $static;
     push @extspec, (split ' ', $Config{dynamic_ext}) if $dynamic;
@@ -221,6 +220,7 @@ if ($Config{osname} eq 'catamount' and @extspec) {
     # Snowball's chance of building extensions.
     die "This is $Config{osname}, not building $extspec[0], sorry.\n";
 }
+$ENV{PERL_CORE} = 1;
 
 foreach my $spec (@extspec)  {
     my $mname = $spec;
@@ -252,7 +252,7 @@ foreach my $spec (@extspec)  {
 	}
     }
 
-    print "\tMaking $mname ($target)\n";
+    print "\tMaking $mname ($target)\n" if $verbose;
 
     build_extension($ext_pathname, $perl, $mname, $target,
 		    [@pass_through, @{$extra_passthrough{$spec} || []}]);
@@ -272,10 +272,9 @@ sub build_extension {
     $perl ||= "$up/miniperl";
     my $return_dir = $up;
     my $lib_dir = "$up/lib";
-    $ENV{PERL_CORE} = 1;
 
-    my $makefile;
-    if ($is_VMS) {
+    my ($makefile, $makefile_no_minus_f);
+    if (IS_VMS) {
 	$makefile = 'descrip.mms';
 	if ($target =~ /clean$/
 	    && !-f $makefile
@@ -287,6 +286,7 @@ sub build_extension {
     }
     
     if (-f $makefile) {
+	$makefile_no_minus_f = 0;
 	open my $mfh, $makefile or die "Cannot open $makefile: $!";
 	while (<$mfh>) {
 	    # Plagiarised from CPAN::Distribution
@@ -337,9 +337,11 @@ sub build_extension {
                 _unlink($makefile);
             }
         }
+    } else {
+	$makefile_no_minus_f = 1;
     }
 
-    if (!-f $makefile) {
+    if ($makefile_no_minus_f || !-f $makefile) {
 	NO_MAKEFILE:
 	if (!-f 'Makefile.PL') {
             unless (just_pm_to_blib($target, $ext_dir, $mname, $return_dir)) {
@@ -348,38 +350,39 @@ sub build_extension {
                 return;
             }
 
-	    print "\nCreating Makefile.PL in $ext_dir for $mname\n";
+	    print "\nCreating Makefile.PL in $ext_dir for $mname\n" if $verbose;
 	    my ($fromname, $key, $value);
-	    if ($mname eq 'podlators') {
-		# We need to special case this somewhere, and this is fewer
-		# lines of code than a core-only Makefile.PL, and no more
-		# complex
-		$fromname = 'VERSION';
-		$key = 'DISTNAME';
-		$value = 'podlators';
-		$mname = 'Pod';
-	    } else {
-		$key = 'ABSTRACT_FROM';
-		# We need to cope well with various possible layouts
-		my @dirs = split /::/, $mname;
-		my $leaf = pop @dirs;
-		my $leafname = "$leaf.pm";
-		my $pathname = join '/', @dirs, $leafname;
-		my @locations = ($leafname, $pathname, "lib/$pathname");
-		unshift @locations, 'lib/IO/Compress/Base.pm' if $mname eq 'IO::Compress';
-		foreach (@locations) {
-		    if (-f $_) {
-			$fromname = $_;
-			last;
-		    }
-		}
 
-		unless ($fromname) {
-		    die "For $mname tried @locations in in $ext_dir but can't find source";
+	    $key = 'ABSTRACT_FROM';
+	    # We need to cope well with various possible layouts
+	    my @dirs = split /::/, $mname;
+	    my $leaf = pop @dirs;
+	    my $leafname = "$leaf.pm";
+	    my $pathname = join '/', @dirs, $leafname;
+	    my @locations = ($leafname, $pathname, "lib/$pathname");
+	    foreach (@locations) {
+		if (-f $_) {
+		    $fromname = $_;
+		    last;
 		}
-		($value = $fromname) =~ s/\.pm\z/.pod/;
-		$value = $fromname unless -e $value;
-	    }
+	}
+
+	unless ($fromname) {
+	    die "For $mname tried @locations in $ext_dir but can't find source";
+	}
+	($value = $fromname) =~ s/\.pm\z/.pod/;
+	$value = $fromname unless -e $value;
+
+            if ($mname eq 'Pod::Checker') {
+                # the abstract in the .pm file is unparseable by MM,
+                # so special-case it. We can't use the package's own
+                # Makefile.PL, as it doesn't handle the executable scripts
+                # right.
+                $key = 'ABSTRACT';
+                # this is copied from the CPAN Makefile.PL v 1.171
+                $value = 'Pod::Checker verifies POD documentation contents for compliance with the POD format specifications';
+            }
+
 	    open my $fh, '>', 'Makefile.PL'
 		or die "Can't open Makefile.PL for writing: $!";
 	    printf $fh <<'EOM', $0, $mname, $fromname, $key, $value;
@@ -491,10 +494,10 @@ EOM
 	}
 
         # We are going to have to use Makefile.PL:
-	print "\nRunning Makefile.PL in $ext_dir\n";
+	print "\nRunning Makefile.PL in $ext_dir\n" if $verbose;
 
 	my @args = ("-I$lib_dir", 'Makefile.PL');
-	if ($is_VMS) {
+	if (IS_VMS) {
 	    my $libd = VMS::Filespec::vmspath($lib_dir);
 	    push @args, "INST_LIB=$libd", "INST_ARCHLIB=$libd";
 	} else {
@@ -502,10 +505,17 @@ EOM
 		'INSTALLMAN3DIR=none';
 	}
 	push @args, @$pass_through;
-	_quote_args(\@args) if $is_VMS;
-	print join(' ', $perl, @args), "\n";
-	my $code = system $perl, @args;
-	warn "$code from $ext_dir\'s Makefile.PL" if $code;
+	_quote_args(\@args) if IS_VMS;
+	print join(' ', $perl, @args), "\n" if $verbose;
+	my $code = do {
+	   local $ENV{PERL_MM_USE_DEFAULT} = 1;
+	    system $perl, @args;
+	};
+	if($code != 0){
+	    #make sure next build attempt/run of make_ext.pl doesn't succeed
+	    _unlink($makefile);
+	    die "Unsuccessful Makefile.PL($ext_dir): code=$code";
+	}
 
 	# Right. The reason for this little hack is that we're sitting inside
 	# a program run by ./miniperl, but there are tasks we need to perform
@@ -518,7 +528,7 @@ EOM
 	# some of them rely on a $(PERL) for their own distclean targets.
 	# But this always used to be a problem with the old /bin/sh version of
 	# this.
-	if ($is_Unix) {
+	if (IS_UNIX) {
 	    foreach my $clean_target ('realclean', 'veryclean') {
                 fallback_cleanup($return_dir, $clean_target, <<"EOS");
 cd $ext_dir
@@ -529,7 +539,7 @@ else
     if test ! -f Makefile ; then
 	echo "Warning: No Makefile!"
     fi
-    make $clean_target MAKE='@make' @pass_through
+    @make $clean_target MAKE='@make' @pass_through
 fi
 cd $return_dir
 EOS
@@ -541,7 +551,7 @@ EOS
 	print "Warning: No Makefile!\n";
     }
 
-    if ($is_VMS) {
+    if (IS_VMS) {
 	_quote_args($pass_through);
 	@$pass_through = (
 			  "/DESCRIPTION=$makefile",
@@ -549,15 +559,13 @@ EOS
 			 );
     }
 
-    if (!$target or $target !~ /clean$/) {
-	# Give makefile an opportunity to rewrite itself.
-	# reassure users that life goes on...
-	my @args = ('config', @$pass_through);
-	system(@make, @args) and print "@make @args failed, continuing anyway...\n";
-    }
     my @targ = ($target, @$pass_through);
-    print "Making $target in $ext_dir\n@make @targ\n";
+    print "Making $target in $ext_dir\n@make @targ\n" if $verbose;
+    local $ENV{PERL_INSTALL_QUIET} = 1;
     my $code = system(@make, @targ);
+    if($code >> 8 != 0){ # probably cleaned itself, try again once more time
+        $code = system(@make, @targ);
+    }
     die "Unsuccessful make($ext_dir): code=$code" if $code != 0;
 
     chdir $return_dir || die "Cannot cd to $return_dir: $!";
@@ -598,12 +606,13 @@ sub just_pm_to_blib {
     my ($last) = $mname =~ /([^:]+)$/;
     my ($first) = $mname =~ /^([^:]+)/;
 
-    my $pm_to_blib = $is_VMS ? 'pm_to_blib.ts' : 'pm_to_blib';
+    my $pm_to_blib = IS_VMS ? 'pm_to_blib.ts' : 'pm_to_blib';
+    my $silent = defined $ENV{MAKEFLAGS} && $ENV{MAKEFLAGS} =~ /\b(s|silent|quiet)\b/;
 
     foreach my $leaf (<*>) {
         if (-d $leaf) {
             $leaf =~ s/\.DIR\z//i
-                if $is_VMS;
+                if IS_VMS;
             next if $leaf =~ /\A(?:\.|\.\.|t|demo)\z/;
             if ($leaf eq 'lib') {
                 ++$has_lib;
@@ -617,7 +626,7 @@ sub just_pm_to_blib {
         return $leaf
             unless -f _;
         $leaf =~ s/\.\z//
-            if $is_VMS;
+            if IS_VMS;
         # Makefile.PL is "safe" to ignore because we will only be called for
         # directories that hold a Makefile.PL if they are in the exception list.
         next
@@ -643,7 +652,8 @@ sub just_pm_to_blib {
     die "Inconsistent module $mname has both lib/ and $first/"
         if $has_lib && $has_topdir;
 
-    print "\nRunning pm_to_blib for $ext_dir directly\n";
+    print "\nRunning pm_to_blib for $ext_dir directly\n"
+      unless $silent;
 
     my %pm;
     if ($has_top) {
@@ -689,6 +699,7 @@ sub just_pm_to_blib {
     }
     # This is running under miniperl, so no autodie
     if ($target eq 'all') {
+        local $ENV{PERL_INSTALL_QUIET} = 1;
         require ExtUtils::Install;
         ExtUtils::Install::pm_to_blib(\%pm, '../../lib/auto');
         open my $fh, '>', $pm_to_blib
@@ -696,7 +707,7 @@ sub just_pm_to_blib {
         print $fh "$0 has handled pm_to_blib directly\n";
         close $fh
             or die "Can't close '$pm_to_blib': $!";
-	if ($is_Unix) {
+	if (IS_UNIX) {
             # Fake the fallback cleanup
             my $fallback
                 = join '', map {s!^\.\./\.\./!!; "rm -f $_\n"} sort values %pm;

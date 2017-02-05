@@ -6,6 +6,13 @@ my $n_tests;
 use Hash::Util::FieldHash;
 use Scalar::Util qw( weaken);
 
+sub numbers_first { # Sort helper: All digit entries sort in front of others
+                    # Makes sorting portable across ASCII/EBCDIC
+    return $a cmp $b if ($a =~ /^\d+$/) == ($b =~ /^\d+$/);
+    return -1 if $a =~ /^\d+$/;
+    return 1;
+}
+
 # The functions in Hash::Util::FieldHash
 # _test_uvar_get, _test_uvar_get and _test_uvar_both
 
@@ -108,7 +115,7 @@ use Scalar::Util qw( weaken);
     $h{ def} = 456;
     is( $counter, 2, "lvalue assign triggers");
 
-    (@x) = sort %h;
+    (@x) = sort numbers_first %h;
     is( $counter, 2, "hash in list context doesn't trigger");
     is( "@x", "123 456 abc def", "correct result");
 
@@ -121,14 +128,14 @@ use Scalar::Util qw( weaken);
     delete $h{ def};
     is( $counter, 5, "good delete triggers");
 
-    (@x) = sort %h;
+    (@x) = sort numbers_first %h;
     is( $counter, 5, "hash in list context doesn't trigger");
     is( "@x", "123 abc", "correct result");
 
     delete $h{ xyz};
     is( $counter, 6, "bad delete triggers");
 
-    (@x) = sort %h;
+    (@x) = sort numbers_first %h;
     is( $counter, 6, "hash in list context doesn't trigger");
     is( "@x", "123 abc", "correct result");
 
@@ -138,7 +145,7 @@ use Scalar::Util qw( weaken);
     $x = $h{ xyz};
     is( $counter, 8, "bad read triggers");
 
-    (@x) = sort %h;
+    (@x) = sort numbers_first %h;
     is( $counter, 8, "hash in list context doesn't trigger");
     is( "@x", "123 abc", "correct result");
 

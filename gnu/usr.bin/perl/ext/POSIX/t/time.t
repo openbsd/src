@@ -1,5 +1,10 @@
 #!perl -w
 
+BEGIN {
+    unshift @INC, "../../t";
+    require 'loc_tools.pl';
+}
+
 use strict;
 
 use Config;
@@ -48,7 +53,7 @@ is(asctime(POSIX::localtime(12345678)), ctime(12345678),
 
 # Careful!  strftime() is locale sensitive.  Let's take care of that
 my $orig_loc = 'C';
-if ( $Config{d_setlocale} ) {
+if (locales_enabled('LC_TIME')) {
     $orig_loc = setlocale(LC_TIME) || die "Cannot get locale information:  $!";
     setlocale(LC_TIME, "C") || die "Cannot setlocale() to C:  $!";
 }
@@ -72,7 +77,7 @@ is(ord strftime($ss, POSIX::localtime(time)),
    223, 'Format string has correct character');
 unlike($ss, qr/\w/, 'Still not internally UTF-8 encoded');
 
-if ( $Config{d_setlocale} ) {
+if (locales_enabled('LC_TIME')) {
     setlocale(LC_TIME, $orig_loc) || die "Cannot setlocale() back to orig: $!";
 }
 

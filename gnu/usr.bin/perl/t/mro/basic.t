@@ -1,14 +1,15 @@
 #!./perl
 
-use strict;
-use warnings;
-
 BEGIN {
-    chdir 't';
+    chdir 't' if -d 't';
     @INC = '../lib';
     require q(./test.pl);
 }
-plan(tests => 61);
+
+use strict;
+use warnings;
+
+plan(tests => 66);
 
 require mro;
 
@@ -394,4 +395,74 @@ undef *UNIVERSAL::DESTROY;
     no warnings 'uninitialized';
     $#_119433::ISA++;
     pass "no crash when ISA contains nonexistent elements";
+}
+
+{ # 123788
+    fresh_perl_is(<<'PROG', "ok", {}, "don't crash when deleting ISA");
+$x = \@{q(Foo::ISA)};
+delete $Foo::{ISA};
+@$x = "Bar";
+print "ok\n";
+PROG
+
+    # when there are multiple references to an ISA array, the mg_obj
+    # turns into an AV of globs, which is a different code path
+    # this test only crashes on -DDEBUGGING builds
+    fresh_perl_is(<<'PROG', "ok", {}, "a case with multiple refs to ISA");
+@Foo::ISA = qw(Abc Def);
+$x = \@{q(Foo::ISA)};
+*Bar::ISA = $x;
+delete $Bar::{ISA};
+delete $Foo::{ISA};
+++$y;
+$x->[1] = "Ghi";
+@$x = "Bar";
+print "ok\n";
+PROG
+
+    # reverse order of delete to exercise removing from the other end
+    # of the array
+    # again, may only crash on -DDEBUGGING builds
+    fresh_perl_is(<<'PROG', "ok", {}, "a case with multiple refs to ISA");
+$x = \@{q(Foo::ISA)};
+*Bar::ISA = $x;
+delete $Foo::{ISA};
+delete $Bar::{ISA};
+++$y;
+@$x = "Bar";
+print "ok\n";
+PROG
+}
+
+{
+    # [perl #127351]
+    # *Foo::ISA = \@some_array
+    # didn't magicalize the elements of @some_array, causing two
+    # problems:
+
+    #  a) assignment to those elements didn't update the cache
+
+    fresh_perl_is(<<'PROG', "foo\nother", {}, "magical *ISA = arrayref elements");
+*My::Parent::foo = sub { "foo" };
+*My::OtherParent::foo = sub { "other" };
+my $x = [ "My::Parent" ];
+*Fake::ISA = $x;
+print Fake->foo, "\n";
+$x->[0] = "My::OtherParent";
+print Fake->foo, "\n";
+PROG
+
+    #  b) code that attempted to remove the magic when @some_array
+    #     was no longer an @ISA asserted/crashed
+
+    fresh_perl_is(<<'PROG', "foo", {}, "unmagicalize *ISA elements");
+{
+    local *My::Parent::foo = sub { "foo" };
+    my $x = [ "My::Parent" ];
+    *Fake::ISA = $x;
+    print Fake->foo, "\n";
+    my $s = \%Fake::;
+    delete $s->{ISA};
+}
+PROG
 }

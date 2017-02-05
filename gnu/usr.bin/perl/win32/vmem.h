@@ -284,7 +284,7 @@ long VMem::AddRef(void)
  * is freed, therefore space needs to be reserved for them.  Thus, the minimum
  * block size (not counting the tags) is 8 bytes.
  *
- * Since memory allocation may occur on a single threaded, explict locks are not
+ * Since memory allocation may occur on a single threaded, explicit locks are not
  * provided.
  * 
  */
@@ -1012,7 +1012,7 @@ int VMem::HeapAdd(void* p, size_t size
     , BOOL bBigBlock
 #endif
     )
-{   /* if the block can be succesfully added to the heap, returns 0; otherwise -1. */
+{   /* if the block can be successfully added to the heap, returns 0; otherwise -1. */
     int index;
 
     /* Check size, then round size down to next long word boundary. */

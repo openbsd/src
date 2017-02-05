@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Carp;
 
+require "../t/charset_tools.pl";
 
 BEGIN 
 {
@@ -75,6 +76,10 @@ VerifyData(\%h1,
 eval { $db1->Filter_Pop() };
 is $@, '', "pop the 'utf8' filter" ;
 
+SKIP: {
+    skip "Encode doesn't currently work for most filters on EBCDIC, including 8859-16", 11 if $::IS_EBCDIC || $::IS_EBCDIC;
+    # Actually the only thing failing below is the euro, because that's the
+    # only thing that's added in 8859-16.
 eval { $db1->Filter_Push('encode' => 'iso-8859-16') };
 is $@, '', "push an 'encode' filter (specify iso-8859-16)" ;
 
@@ -97,25 +102,14 @@ my $db2 = tie(%h2, $db_file,'Op_dbmx', O_RDWR|O_CREAT, 0640) ;
 
 ok $db2, "tied to $db_file";
 
-if (ord('A') == 193) { # EBCDIC.
-    VerifyData(\%h2,
+VerifyData(\%h2,
 	   {
-	    'alpha'	=> "\xB4\x58",
-	    'beta'	=> "\xB4\x59",
-	    "\xB4\x62"=> "gamma",		
-	    "\x65\x75\x72\x6F" => "\xA4",                           
+	    'alpha'	=> byte_utf8a_to_utf8n("\xCE\xB1"),
+	    'beta'	=> byte_utf8a_to_utf8n("\xCE\xB2"),
+	    byte_utf8a_to_utf8n("\xCE\xB3") => "gamma",
+	    'euro'	=> uni_to_native("\xA4"),
 	    ""		=> "",
 	   });
-} else {
-    VerifyData(\%h2,
-	   {
-	    'alpha'	=> "\xCE\xB1",
-	    'beta'	=> "\xCE\xB2",
-	    "\xCE\xB3"=> "gamma",
-	    'euro'	=> "\xA4",
-	    ""		=> "",
-	   });
-}
 
 undef $db2;
 {
@@ -124,3 +118,4 @@ undef $db2;
     is $@, '', "untie without inner references" ;
 }
 
+}

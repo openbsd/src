@@ -178,6 +178,23 @@ case "$plibpth" in
     ;;
 esac
 
+# libquadmath is sometimes installed as gcc internal library,
+# so contrary to our usual policy of *not* looking at gcc internal
+# directories we now *do* look at them, in case they contain
+# the quadmath library.
+# XXX This may apply to other gcc internal libraries, if such exist.
+# XXX This could be at Configure level, but then the $gcc is messy.
+case "$usequadmath" in
+"$define")
+  for d in `LANG=C LC_ALL=C $gcc $ccflags $ldflags -print-search-dirs | grep libraries | cut -f2- -d= | tr ':' $trnl | grep 'gcc' | sed -e 's:/$::'`
+  do
+    case `ls $d/*libquadmath*$so* 2>/dev/null` in
+    $d/*libquadmath*$so*) xlibpth="$xlibpth $d" ;;
+    esac
+  done
+  ;;
+esac
+
 case "$libc" in
 '')
 # If you have glibc, then report the version for ./myconfig bug reporting.
@@ -497,7 +514,7 @@ then
        DBLIB="$DBDIR/libdb.so"
        if [ -f $DBLIB ]
        then
-         if ${nm:-nm} -u $DBLIB | grep pthread >/dev/null
+         if ${nm:-nm} -u $DBLIB 2>/dev/null | grep pthread >/dev/null
          then
            if ldd $DBLIB | grep pthread >/dev/null
            then

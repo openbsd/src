@@ -52,7 +52,7 @@ END
 # Check that PERL5LIB is propagated to -T.
 {
     my $sentinel_dir = 'i/do/not/exist';
-    local $ENV{PERL5LIB} = join $Config{path_sep}, $ENV{PERL5LIB}, $sentinel_dir;
+    local $ENV{PERL5LIB} = join $Config{path_sep}, $ENV{PERL5LIB} || '', $sentinel_dir;
     run_test_file(sprintf <<'END', $sentinel_dir);
 #!/usr/bin/perl -T
 

@@ -10,7 +10,7 @@ if ($Test::More::VERSION < 0.48) { # Fix for RT#48268
     *main::use_ok = sub ($;@) {
 	my ($pkg, $req, @args) = @_;
 	eval "use $pkg $req ".join(' ',@args);
-	is ${"$pkg\::VERSION"}, $req, 'Had to manually use version';
+	is ${"$pkg\::VERSION"}, eval($req), 'Had to manually use version';
 	# If we made it this far, we are ok.
     };
 }
@@ -132,8 +132,8 @@ sub BaseTests {
     ok ( $version != $new_version, '$version != $new_version' );
 
     $version = $CLASS->$method("1.2.4");
-    ok ( $version > $new_version, '$version > $new_version' );
-    ok ( $new_version < $version, '$new_version < $version' );
+    ok ( $version < $new_version, '$version < $new_version' );
+    ok ( $new_version > $version, '$new_version > $version' );
     ok ( $version != $new_version, '$version != $new_version' );
 
     # now test with alpha version form with object
@@ -146,24 +146,22 @@ sub BaseTests {
     ok ( $new_version->is_alpha, '$new_version->is_alpha');
 
     $version = $CLASS->$method("1.2.4");
-    ok ( $version > $new_version, '$version > $new_version' );
-    ok ( $new_version < $version, '$new_version < $version' );
+    ok ( $version < $new_version, '$version < $new_version' );
+    ok ( $new_version > $version, '$new_version > $version' );
     ok ( $version != $new_version, '$version != $new_version' );
 
-    $version = $CLASS->$method("1.2.3.4");
+    $version = $CLASS->$method("1.2.34");
     $new_version = $CLASS->$method("1.2.3_4");
-    ok ( $version > $new_version, '$version > $new_version' );
-    ok ( $new_version < $version, '$new_version < $version' );
-    ok ( $version != $new_version, '$version != $new_version' );
+    ok ( $version == $new_version, '$version == $new_version' );
 
-    $version = $CLASS->$method("v1.2.3");
-    $new_version = $CLASS->$method("1.2.3.0");
+    $version = $CLASS->$method("v1.2.30");
+    $new_version = $CLASS->$method("1.2.30.0");
     ok ( $version == $new_version, '$version == $new_version' );
     $new_version = $CLASS->$method("1.2.3_0");
     ok ( $version == $new_version, '$version == $new_version' );
-    $new_version = $CLASS->$method("1.2.3.1");
+    $new_version = $CLASS->$method("1.2.30.1");
     ok ( $version < $new_version, '$version < $new_version' );
-    $new_version = $CLASS->$method("1.2.3_1");
+    $new_version = $CLASS->$method("1.2.30_1");
     ok ( $version < $new_version, '$version < $new_version' );
     $new_version = $CLASS->$method("1.1.999");
     ok ( $version > $new_version, '$version > $new_version' );
@@ -348,9 +346,10 @@ SKIP: 	{
 	skip 'Cannot test bare alpha v-strings with Perl < 5.8.1', 2
 		if $] lt 5.008_001;
 	$version = $CLASS->$method(v1.2.3_4);
-	is($version, "v1.2.3_4", '"$version" eq "v1.2.3_4"');
+	$DB::single = 1;
+	is($version, "v1.2.34", '"$version" eq "v1.2.34"');
 	$version = $CLASS->$method(eval "v1.2.3_4");
-	is($version, "v1.2.3_4", '"$version" eq "v1.2.3_4" (from eval)');
+	is($version, "v1.2.34", '"$version" eq "v1.2.34" (from eval)');
     }
 
     # trailing zero testing (reported by Andreas Koenig).
@@ -592,7 +591,48 @@ SKIP: {
 	eval {my $v = $CLASS->new({1 => 2}) };
 	like $@, qr/Invalid version format/, 'Do not crash for garbage';
     }
-
+    { # https://rt.cpan.org/Ticket/Display.html?id=93603
+	eval {my $v = $CLASS->$method('.1.')};
+	like $@, qr/trailing decimal/, 'Forbid trailing decimals';
+	eval {my $v = $CLASS->$method('.1.2.')};
+	like $@, qr/trailing decimal/, 'Forbid trailing decimals';
+    }
+    { # https://rt.cpan.org/Ticket/Display.html?id=93715
+	eval {my $v = $CLASS->new(v1.2)};
+	unlike $@, qr/non-numeric data/, 'Handle short v-strings';
+	eval {my $v = $CLASS->new(v1)};
+	unlike $@, qr/non-numeric data/, 'Handle short v-strings';
+    }
+    {
+	my $two31 = '2147483648';
+	my $v = $CLASS->new($two31);
+	is "$v", 'v.Inf', 'Element Exceeds VERSION_MAX';
+	like $warning, qr/Integer overflow in version/, 'Overflow warning';
+	$v = $CLASS->new("1.$two31.$two31");
+	is "$v", 'v.Inf', 'Element Exceeds VERSION_MAX';
+	like $warning, qr/Integer overflow in version/, 'Overflow warning';
+    }
+    {
+	# now as a number
+	$two31 = 2**31;
+	$v = $CLASS->new($two31);
+	is "$v", 'v.Inf', 'Element Exceeds VERSION_MAX';
+	like $warning, qr/Integer overflow in version/, 'Overflow warning';
+    }
+    { # https://rt.cpan.org/Ticket/Display.html?id=101628
+	undef $warning;
+	$v = $CLASS->new('1.1.00000000010');
+	is $v->normal, "v1.1.10", 'Ignore leading zeros';
+	unlike $warning, qr/Integer overflow in version/, 'No overflow warning';
+    }
+    { # https://rt.cpan.org/Ticket/Display.html?id=93340
+	$v = $CLASS->parse(q[2.6_01]);
+	is $v->normal, 'v2.601.0', 'Normal strips underscores from alphas'
+    }
+    { # https://rt.cpan.org/Ticket/Display.html?id=98744
+	$v = $CLASS->new("1.02_003");
+	is $v->numify, '1.020030', 'Ignore underscores for numify';
+    }
 }
 
 1;

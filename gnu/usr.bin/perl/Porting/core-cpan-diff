@@ -53,7 +53,7 @@ Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 -d/--diff     Display file differences using diff(1), rather than just
               listing which files have changed.
 
---diffopts    Options to pass to the diff command. Defaults to '-u'.
+--diffopts    Options to pass to the diff command. Defaults to '-u --binary'.
 
 -f|force      Force download from CPAN of new 02packages.details.txt file
               (with --crosscheck only).
@@ -125,7 +125,7 @@ sub run {
           if ( $reverse || $use_diff || $diff_opts );
     }
     else {
-        $diff_opts = '-u -b' unless defined $diff_opts;
+        $diff_opts = '-u --binary' unless defined $diff_opts;
         usage("can't use -f without --crosscheck") if $force;
     }
 
@@ -526,7 +526,7 @@ sub do_crosscheck {
             if ( keys %$d > 1 ) {
                 print $outfh
                   "\n$module: (found more than one CPAN candidate):\n";
-                print $outfh "    perl: $pdist\n";
+                print $outfh "    Perl: $pdist\n";
                 print $outfh "    CPAN: $_\n" for sort keys %$d;
                 next;
             }

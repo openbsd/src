@@ -8,16 +8,18 @@ BEGIN {
 }
 
 use strict;
-use Config;
-use Test::More
-    $ENV{PERL_CORE} && $Config{'usecrosscompile'}
-    ? (skip_all => "no toolchain installed when cross-compiling")
-    : (tests => 20);
 
 use TieOut;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::SAS;
+use Config;
+use Test::More;
+use ExtUtils::MM;
+plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+    ? (skip_all => "cross-compiling and make not available")
+    : (tests => 20);
 use File::Path;
+use File::Temp qw[tempdir];
 
 use ExtUtils::MakeMaker;
 
@@ -28,7 +30,8 @@ my $perl     = which_perl();
 my $make     = make_run();
 my $makefile = makefile_name();
 
-chdir 't';
+my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir $tmpdir;
 
 perl_lib();
 

@@ -62,11 +62,7 @@ my %excuses = (
 foreach (@maybe) {
     if (/\.p[lm]$/) {
         push @victims, $_;
-    } elsif ($_ !~ m{^x2p/a2p}) {
-        # test_prep doesn't (yet) have a dependency on a2p, so it seems a bit
-        # silly adding one (and forcing it to be built) just so that we can open
-        # it and determine that it's *not* a perl program, and hence of no
-        # further interest to us.
+    } else {
         open $fh, '<', $_ or die "Can't open '$_': $!";
         my $line = <$fh>;
         if ($line =~ m{^#!(?:\S*|/usr/bin/env\s+)perl}
@@ -86,13 +82,9 @@ foreach my $victim (@victims) {
             if $excuses{$victim};
 
         my $got = runperl(switches => ['-c'], progfile => $victim, stderr => 1, nolib => 1);
-        is($got, "$victim syntax OK\n", "$victim compiles");
+        is($got, "$victim syntax OK\n", "$victim compiles")
+            or diag("when executing perl with '-c $victim'");
     }
 }
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

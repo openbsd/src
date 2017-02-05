@@ -30,8 +30,9 @@ if( $^O eq 'VMS' ) {
     # Quiet noisy 'SYS$ABORT'
     $Perl .= q{ -"I../lib"} if $ENV{PERL_CORE};
     $Perl .= q{ -"Mvmsish=hushed"};
+} else {
+    $Perl = qq("$Perl"); # protect from shell if spaces
 }
-
 
 eval { require POSIX; &POSIX::WEXITSTATUS(0) };
 if( $@ ) {

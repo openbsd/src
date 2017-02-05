@@ -8,7 +8,7 @@ package Win32;
     require DynaLoader;
 
     @ISA = qw|Exporter DynaLoader|;
-    $VERSION = '0.49';
+    $VERSION = '0.52';
     $XS_VERSION = $VERSION;
     $VERSION = eval $VERSION;
 
@@ -215,7 +215,7 @@ sub PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT () { 0x01E } # Windows Essential Bu
 sub PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY   () { 0x01F } # Windows Essential Business Server Security Server
 sub PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING  () { 0x020 } # Windows Essential Business Server Messaging Server
 sub PRODUCT_SERVER_FOUNDATION                () { 0x021 } # Server Foundation
-
+#define PRODUCT_HOME_PREMIUM_SERVER                 0x00000022
 sub PRODUCT_SERVER_FOR_SMALLBUSINESS_V       () { 0x023 } # Windows Server 2008 without Hyper-V for Windows Essential Server Solutions
 sub PRODUCT_STANDARD_SERVER_V                () { 0x024 } # Server Standard without Hyper-V (full installation)
 sub PRODUCT_DATACENTER_SERVER_V              () { 0x025 } # Server Datacenter without Hyper-V (full installation)
@@ -224,17 +224,84 @@ sub PRODUCT_DATACENTER_SERVER_CORE_V         () { 0x027 } # Server Datacenter wi
 sub PRODUCT_STANDARD_SERVER_CORE_V           () { 0x028 } # Server Standard without Hyper-V (core installation)
 sub PRODUCT_ENTERPRISE_SERVER_CORE_V         () { 0x029 } # Server Enterprise without Hyper-V (core installation)
 sub PRODUCT_HYPERV                           () { 0x02A } # Microsoft Hyper-V Server
-
+#define PRODUCT_STORAGE_EXPRESS_SERVER_CORE         0x0000002B
+#define PRODUCT_STORAGE_STANDARD_SERVER_CORE        0x0000002C
+#define PRODUCT_STORAGE_WORKGROUP_SERVER_CORE       0x0000002D
+#define PRODUCT_STORAGE_ENTERPRISE_SERVER_CORE      0x0000002E
 sub PRODUCT_STARTER_N                        () { 0x02F } # Starter N
 sub PRODUCT_PROFESSIONAL                     () { 0x030 } # Professional
 sub PRODUCT_PROFESSIONAL_N                   () { 0x031 } # Professional N
-
+#define PRODUCT_SB_SOLUTION_SERVER                  0x00000032
+#define PRODUCT_SERVER_FOR_SB_SOLUTIONS             0x00000033
+#define PRODUCT_STANDARD_SERVER_SOLUTIONS           0x00000034
+#define PRODUCT_STANDARD_SERVER_SOLUTIONS_CORE      0x00000035
+#define PRODUCT_SB_SOLUTION_SERVER_EM               0x00000036
+#define PRODUCT_SERVER_FOR_SB_SOLUTIONS_EM          0x00000037
+#define PRODUCT_SOLUTION_EMBEDDEDSERVER             0x00000038
+#define PRODUCT_SOLUTION_EMBEDDEDSERVER_CORE        0x00000039
+#define PRODUCT_PROFESSIONAL_EMBEDDED               0x0000003A
+#define PRODUCT_ESSENTIALBUSINESS_SERVER_MGMT       0x0000003B
+#define PRODUCT_ESSENTIALBUSINESS_SERVER_ADDL       0x0000003C
+#define PRODUCT_ESSENTIALBUSINESS_SERVER_MGMTSVC    0x0000003D
+#define PRODUCT_ESSENTIALBUSINESS_SERVER_ADDLSVC    0x0000003E
+#define PRODUCT_SMALLBUSINESS_SERVER_PREMIUM_CORE   0x0000003F
+#define PRODUCT_CLUSTER_SERVER_V                    0x00000040
+#define PRODUCT_EMBEDDED                            0x00000041
 sub PRODUCT_STARTER_E                        () { 0x042 } # Starter E
 sub PRODUCT_HOME_BASIC_E                     () { 0x043 } # Home Basic E
 sub PRODUCT_HOME_PREMIUM_E                   () { 0x044 } # Home Premium E
 sub PRODUCT_PROFESSIONAL_E                   () { 0x045 } # Professional E
 sub PRODUCT_ENTERPRISE_E                     () { 0x046 } # Enterprise E
 sub PRODUCT_ULTIMATE_E                       () { 0x047 } # Ultimate E
+#define PRODUCT_ENTERPRISE_EVALUATION               0x00000048
+#define PRODUCT_MULTIPOINT_STANDARD_SERVER          0x0000004C
+#define PRODUCT_MULTIPOINT_PREMIUM_SERVER           0x0000004D
+#define PRODUCT_STANDARD_EVALUATION_SERVER          0x0000004F
+#define PRODUCT_DATACENTER_EVALUATION_SERVER        0x00000050
+#define PRODUCT_ENTERPRISE_N_EVALUATION             0x00000054
+#define PRODUCT_EMBEDDED_AUTOMOTIVE                 0x00000055
+#define PRODUCT_EMBEDDED_INDUSTRY_A                 0x00000056
+#define PRODUCT_THINPC                              0x00000057
+#define PRODUCT_EMBEDDED_A                          0x00000058
+#define PRODUCT_EMBEDDED_INDUSTRY                   0x00000059
+#define PRODUCT_EMBEDDED_E                          0x0000005A
+#define PRODUCT_EMBEDDED_INDUSTRY_E                 0x0000005B
+#define PRODUCT_EMBEDDED_INDUSTRY_A_E               0x0000005C
+#define PRODUCT_STORAGE_WORKGROUP_EVALUATION_SERVER 0x0000005F
+#define PRODUCT_STORAGE_STANDARD_EVALUATION_SERVER  0x00000060
+#define PRODUCT_CORE_ARM                            0x00000061
+sub PRODUCT_CORE_N                           () { 0x62 } # Windows 10 Home N
+sub PRODUCT_CORE_COUNTRYSPECIFIC             () { 0x63 } # Windows 10 Home China
+sub PRODUCT_CORE_SINGLELANGUAGE              () { 0x64 } # Windows 10 Home Single Language
+sub PRODUCT_CORE                             () { 0x65 } # Windows 10 Home
+#define PRODUCT_PROFESSIONAL_WMC                    0x00000067
+#define PRODUCT_MOBILE_CORE                         0x00000068
+#define PRODUCT_EMBEDDED_INDUSTRY_EVAL              0x00000069
+#define PRODUCT_EMBEDDED_INDUSTRY_E_EVAL            0x0000006A
+#define PRODUCT_EMBEDDED_EVAL                       0x0000006B
+#define PRODUCT_EMBEDDED_E_EVAL                     0x0000006C
+#define PRODUCT_NANO_SERVER                         0x0000006D
+#define PRODUCT_CLOUD_STORAGE_SERVER                0x0000006E
+#define PRODUCT_CORE_CONNECTED                      0x0000006F
+#define PRODUCT_PROFESSIONAL_STUDENT                0x00000070
+#define PRODUCT_CORE_CONNECTED_N                    0x00000071
+#define PRODUCT_PROFESSIONAL_STUDENT_N              0x00000072
+#define PRODUCT_CORE_CONNECTED_SINGLELANGUAGE       0x00000073
+#define PRODUCT_CORE_CONNECTED_COUNTRYSPECIFIC      0x00000074
+#define PRODUCT_CONNECTED_CAR                       0x00000075
+#define PRODUCT_INDUSTRY_HANDHELD                   0x00000076
+#define PRODUCT_PPI_PRO                             0x00000077
+#define PRODUCT_ARM64_SERVER                        0x00000078
+sub PRODUCT_EDUCATION                        () { 0x79 } # Windows 10 Education
+sub PRODUCT_EDUCATION_N                      () { 0x7A } # Windows 10 Education N
+#define PRODUCT_IOTUAP                              0x0000007B
+#define PRODUCT_CLOUD_HOST_INFRASTRUCTURE_SERVER    0x0000007C
+#define PRODUCT_ENTERPRISE_S                        0x0000007D
+#define PRODUCT_ENTERPRISE_S_N                      0x0000007E
+#define PRODUCT_PROFESSIONAL_S                      0x0000007F
+#define PRODUCT_PROFESSIONAL_S_N                    0x00000080
+#define PRODUCT_ENTERPRISE_S_EVALUATION             0x00000081
+#define PRODUCT_ENTERPRISE_S_N_EVALUATION           0x00000082
 
 sub PRODUCT_UNLICENSED                       () { 0xABCDABCD } # product has not been activated and is no longer in the grace period
 
@@ -468,8 +535,22 @@ sub _GetOSName {
 	        $os = "2012";
 	    }
 	    }
+	    elsif ($minor == 3) {
+		if ($producttype == VER_NT_WORKSTATION) {
+		    $os = "8.1";
+		}
+		else {
+		    $os = "2012";
+		    $desc = "R2";
+		}
+	    }
+        }
+	elsif ($major == 10) {
+            $os = '10';
+        }
 
-        if ($productinfo == PRODUCT_ULTIMATE) {
+        if ($major >= 6) {
+            if ($productinfo == PRODUCT_ULTIMATE) {
 		$desc .= " Ultimate";
 	    }
             elsif ($productinfo == PRODUCT_HOME_PREMIUM) {
@@ -531,7 +612,7 @@ sub _GetOSName {
 	    elsif ($arch == PROCESSOR_ARCHITECTURE_AMD64) {
 		$desc .= " (64-bit)";
 	    }
-	}
+	} 
     }
 
     unless (defined $os) {

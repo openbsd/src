@@ -15,12 +15,19 @@ use Unicode::UCD "prop_invmap";
 # this code is designed to help regcomp.c, and EXACTFish regnodes.  For
 # non-UTF-8 patterns, the strings are not folded, so we need to check for the
 # upper and lower case versions.  For UTF-8 patterns, the strings are folded,
-# so we only need to worry about the fold version.  There are no non-ASCII
-# Latin1 multi-char folds currently, and none likely to be ever added.  Thus
-# the output is the same as if it were just asking for ASCII characters, not
-# full Latin1.  Hence, it is suitable for generating things that match
-# EXACTFA.  It does check for and croak if there ever were to be an upper
-# Latin1 range multi-character fold.
+# except in EXACTFL nodes) so we only need to worry about the fold version.
+# All folded-to characters in non-UTF-8 (Latin1) are members of fold-pairs,
+# at least within Latin1, 'k', and 'K', for example.  So there aren't
+# complications with dealing with unfolded input.  That's not true of UTF-8
+# patterns, where things can get tricky.  Thus for EXACTFL nodes where things
+# aren't all folded, code has to be written specially to handle this, instead
+# of the macros here being extended to try to handle it.
+#
+# There are no non-ASCII Latin1 multi-char folds currently, and none likely to
+# be ever added.  Thus the output is the same as if it were just asking for
+# ASCII characters, not full Latin1.  Hence, it is suitable for generating
+# things that match EXACTFA.  It does check for and croak if there ever were
+# to be an upper Latin1 range multi-character fold.
 #
 # This is designed for input to regen/regcharlass.pl.
 
@@ -55,6 +62,8 @@ sub multi_char_folds ($) {
     my $all_folds = shift;  # The single parameter is true if wants all
                             # multi-char folds; false if just the ones that
                             # are all ascii
+
+    return () if pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) lt v3.0.1;
 
     my ($cp_ref, $folds_ref, $format) = prop_invmap("Case_Folding");
     die "Could not find inversion map for Case_Folding" unless defined $format;
@@ -124,7 +133,7 @@ sub multi_char_folds ($) {
     #
     # No combinations of this with 's' need be added, as any of these
     # containing 's' are prohibted under /iaa.
-    push @folds, "\"\x{17F}\x{17F}\"";
+    push @folds, '"\x{17F}\x{17F}"' if $all_folds;
 
 
     return @folds;

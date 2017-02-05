@@ -222,7 +222,7 @@ extern U32 get_PL_signals_3(void);
 int no_dummy_parser_vars(int);
 int dummy_parser_warning(void);
 
-#define ppp_TESTVAR(var)          STMT_START { mXPUSHi(&var != NULL); count++; } STMT_END
+#define ppp_TESTVAR(var)          STMT_START { mXPUSHi(&var); count++; } STMT_END
 
 #define ppp_PARSERVAR(type, var)  STMT_START {                   \
                                     type volatile my_ ## var;    \

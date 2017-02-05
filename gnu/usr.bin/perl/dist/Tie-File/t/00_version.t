@@ -2,7 +2,7 @@
 
 print "1..1\n";
 
-my $testversion = "1.00";
+my $testversion = "1.02";
 use Tie::File;
 
 if ($Tie::File::VERSION != $testversion) {

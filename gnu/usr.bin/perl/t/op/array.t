@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = ('.', '../lib');
-    require 'test.pl';
+    require './test.pl';
 }
 
-plan (171);
+plan (173);
 
 #
 # @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
@@ -100,32 +100,27 @@ is($foo, 'e');
 $foo = ('a','b','c','d','e','f')[1];
 is($foo, 'b');
 
-@foo = ( 'foo', 'bar', 'burbl');
-{
-    no warnings 'deprecated';
-    push(foo, 'blah');
-}
-is($#foo, 3);
+@foo = ( 'foo', 'bar', 'burbl', 'blah');
 
 # various AASSIGN_COMMON checks (see newASSIGNOP() in op.c)
 
-#curr_test(38);
+#curr_test(37);
 
 @foo = @foo;
-is("@foo", "foo bar burbl blah");				# 38
+is("@foo", "foo bar burbl blah");				# 37
 
 (undef,@foo) = @foo;
-is("@foo", "bar burbl blah");					# 39
+is("@foo", "bar burbl blah");					# 38
 
 @foo = ('XXX',@foo, 'YYY');
-is("@foo", "XXX bar burbl blah YYY");				# 40
+is("@foo", "XXX bar burbl blah YYY");				# 39
 
 @foo = @foo = qw(foo b\a\r bu\\rbl blah);
-is("@foo", 'foo b\a\r bu\\rbl blah');				# 41
+is("@foo", 'foo b\a\r bu\\rbl blah');				# 40
 
-@bar = @foo = qw(foo bar);					# 42
+@bar = @foo = qw(foo bar);					# 41
 is("@foo", "foo bar");
-is("@bar", "foo bar");						# 43
+is("@bar", "foo bar");						# 42
 
 # try the same with local
 # XXX tie-stdarray fails the tests involving local, so we use
@@ -135,55 +130,55 @@ is("@bar", "foo bar");						# 43
 {
 
     local @bee = @bee;
-    is("@bee", "foo bar burbl blah");				# 44
+    is("@bee", "foo bar burbl blah");				# 43
     {
 	local (undef,@bee) = @bee;
-	is("@bee", "bar burbl blah");				# 45
+	is("@bee", "bar burbl blah");				# 44
 	{
 	    local @bee = ('XXX',@bee,'YYY');
-	    is("@bee", "XXX bar burbl blah YYY");		# 46
+	    is("@bee", "XXX bar burbl blah YYY");		# 45
 	    {
 		local @bee = local(@bee) = qw(foo bar burbl blah);
-		is("@bee", "foo bar burbl blah");		# 47
+		is("@bee", "foo bar burbl blah");		# 46
 		{
 		    local (@bim) = local(@bee) = qw(foo bar);
-		    is("@bee", "foo bar");			# 48
-		    is("@bim", "foo bar");			# 49
+		    is("@bee", "foo bar");			# 47
+		    is("@bim", "foo bar");			# 48
 		}
-		is("@bee", "foo bar burbl blah");		# 50
+		is("@bee", "foo bar burbl blah");		# 49
 	    }
-	    is("@bee", "XXX bar burbl blah YYY");		# 51
+	    is("@bee", "XXX bar burbl blah YYY");		# 50
 	}
-	is("@bee", "bar burbl blah");				# 52
+	is("@bee", "bar burbl blah");				# 51
     }
-    is("@bee", "foo bar burbl blah");				# 53
+    is("@bee", "foo bar burbl blah");				# 52
 }
 
 # try the same with my
 {
     my @bee = @bee;
-    is("@bee", "foo bar burbl blah");				# 54
+    is("@bee", "foo bar burbl blah");				# 53
     {
 	my (undef,@bee) = @bee;
-	is("@bee", "bar burbl blah");				# 55
+	is("@bee", "bar burbl blah");				# 54
 	{
 	    my @bee = ('XXX',@bee,'YYY');
-	    is("@bee", "XXX bar burbl blah YYY");		# 56
+	    is("@bee", "XXX bar burbl blah YYY");		# 55
 	    {
 		my @bee = my @bee = qw(foo bar burbl blah);
-		is("@bee", "foo bar burbl blah");		# 57
+		is("@bee", "foo bar burbl blah");		# 56
 		{
 		    my (@bim) = my(@bee) = qw(foo bar);
-		    is("@bee", "foo bar");			# 58
-		    is("@bim", "foo bar");			# 59
+		    is("@bee", "foo bar");			# 57
+		    is("@bim", "foo bar");			# 58
 		}
-		is("@bee", "foo bar burbl blah");		# 60
+		is("@bee", "foo bar burbl blah");		# 59
 	    }
-	    is("@bee", "XXX bar burbl blah YYY");		# 61
+	    is("@bee", "XXX bar burbl blah YYY");		# 60
 	}
-	is("@bee", "bar burbl blah");				# 62
+	is("@bee", "bar burbl blah");				# 61
     }
-    is("@bee", "foo bar burbl blah");				# 63
+    is("@bee", "foo bar burbl blah");				# 62
 }
 
 # try the same with our (except that previous values aren't restored)
@@ -543,6 +538,21 @@ pass "no assertion failure after assigning ref to arylen when ary is gone";
     is($aelem[ 254],     254, 'pkg  254');
     is($aelem[ 255],     255, 'pkg  255');
     is($aelem[ 256],     256, 'pkg  256');
+}
+
+# Test aelemfast in list assignment
+@ary = ('a','b');
+($ary[0],$ary[1]) = ($ary[1],$ary[0]);
+is "@ary", 'b a',
+   'aelemfast with the same array on both sides of list assignment';
+
+for(scalar $#foo) { $_ = 3 }
+is $#foo, 3, 'assigning to arylen aliased in foreach(scalar $#arylen)';
+
+{
+    my @a = qw(a b c);
+    @a = @a;
+    is "@a", 'a b c', 'assigning to itself';
 }
 
 "We're included by lib/Tie/Array/std.t so we need to return something true";

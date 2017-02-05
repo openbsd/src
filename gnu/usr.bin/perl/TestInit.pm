@@ -76,7 +76,16 @@ sub import {
 	} else {
 	    # (likely) we're being run by t/TEST or t/harness, and we're a test
 	    # in t/
-	    @INC = '../lib';
+	    if (defined &DynaLoader::boot_DynaLoader) {
+		@INC = '../lib';
+	    }
+	    else {
+		# miniperl/minitest
+		# t/TEST does not supply -I../lib, so buildcustomize.pl is
+		# not automatically included.
+		unshift @INC, '../lib';
+		do "../lib/buildcustomize.pl";
+	    }
 	}
     }
 

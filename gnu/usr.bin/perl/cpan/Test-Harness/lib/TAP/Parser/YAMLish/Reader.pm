@@ -5,7 +5,7 @@ use warnings;
 
 use base 'TAP::Object';
 
-our $VERSION = '3.30_01';
+our $VERSION = '3.36_01';
 
 # TODO:
 #   Handle blessed object syntax
@@ -81,7 +81,7 @@ sub _read {
     my $line = $self->_peek;
 
     # Do we have a document header?
-    if ( $line =~ /^ --- (?: \s* (.+?) \s* )? $/x ) {
+    if ( $line =~ /^ --- (?: \s* (.+?)? \s* )? $/x ) {
         $self->_next;
 
         return $self->_read_scalar($1) if defined $1;    # Inline?
@@ -269,7 +269,7 @@ TAP::Parser::YAMLish::Reader - Read YAMLish data from iterator
 
 =head1 VERSION
 
-Version 3.30
+Version 3.36
 
 =head1 SYNOPSIS
 

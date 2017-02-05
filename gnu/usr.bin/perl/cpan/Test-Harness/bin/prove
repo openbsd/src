@@ -53,6 +53,7 @@ Boolean options:
  -w                     Enable warnings.
  -h,  --help            Display this help
  -?,                    Display this help
+ -V,  --version         Display the version
  -H,  --man             Longer manpage for prove
       --norc            Don't process default .proverc
 

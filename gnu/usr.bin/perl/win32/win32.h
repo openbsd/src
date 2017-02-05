@@ -23,6 +23,12 @@
 #  define WIN32_NO_SOCKETS
 /* less I/O calls during each require */
 #  define PERL_DISABLE_PMC
+
+/* unnecessery for miniperl to lookup anything from an "installed" perl */
+#  define WIN32_NO_REGISTRY
+
+/* allow minitest to work */
+#  define PERL_TEXTMODE_SCRIPTS
 #endif
 
 #ifdef WIN32_NO_SOCKETS
@@ -57,9 +63,6 @@
 #  ifdef PERL_GLOBAL_STRUCT
 #    error PERL_GLOBAL_STRUCT cannot be defined with PERL_IMPLICIT_SYS
 #  endif
-#  define win32_get_privlib PerlEnv_lib_path
-#  define win32_get_sitelib PerlEnv_sitelib_path
-#  define win32_get_vendorlib PerlEnv_vendorlib_path
 #endif
 
 #ifdef __GNUC__
@@ -206,6 +209,13 @@ struct utsname {
 #  define PERL_SOCK_SYSWRITE_IS_SEND
 #endif
 
+#ifdef WIN32_NO_REGISTRY
+/* the last _ in WIN32_NO_REGISTRY_M_ is like the _ in aTHX_ */
+#  define WIN32_NO_REGISTRY_M_(x)
+#else
+#  define WIN32_NO_REGISTRY_M_(x) x,
+#endif
+
 #define PERL_NO_FORCE_LINK		/* no need for PL_force_link_funcs */
 
 #define ENV_IS_CASELESS
@@ -243,8 +253,6 @@ typedef long		gid_t;
 typedef unsigned short	mode_t;
 #endif
 
-#pragma  warning(disable: 4102)	/* "unreferenced label" */
-
 #if _MSC_VER < 1800
 #define isnan		_isnan	/* Defined already in VC++ 12.0 */
 #endif
@@ -258,6 +266,31 @@ typedef unsigned short	mode_t;
 #if _MSC_VER >= 1300 && _MSC_VER < 1400
 #  pragma intrinsic(_rotl64,_rotr64)
 #endif
+
+#  pragma warning(push)
+#  pragma warning(disable:4756;disable:4056)
+PERL_STATIC_INLINE
+double S_Infinity() {
+    /* this is a real C literal which can get further constant folded
+       unlike using HUGE_VAL/_HUGE which are data symbol imports from the CRT
+       and therefore can not by folded by VC, an example of constant
+       folding INF is creating -INF */
+    return (DBL_MAX+DBL_MAX);
+}
+#  pragma warning(pop)
+#  define NV_INF S_Infinity()
+
+/* selectany allows duplicate and unused data symbols to be removed by
+   VC linker, if this were static, each translation unit will have its own,
+   usually unused __PL_nan_u, if this were plain extern it will cause link
+   to fail due to multiple definitions, since we dont know if we are being
+   compiled as static or DLL XS, selectany simply always works, the cost of
+   importing __PL_nan_u across DLL boundaries in size in the importing DLL
+   will be more than the 8 bytes it will take up being in each XS DLL if
+   that DLL actually uses __PL_nan_u */
+extern const __declspec(selectany) union { unsigned __int64 __q; double __d; }
+__PL_nan_u = { 0x7FF8000000000000UI64 };
+#  define NV_NAN ((NV)__PL_nan_u.__d)
 
 #endif /* _MSC_VER */
 
@@ -368,9 +401,10 @@ typedef struct {
 
 DllExport void		win32_get_child_IO(child_IO_table* ptr);
 DllExport HWND		win32_create_message_window(void);
+DllExport int		win32_async_check(pTHX);
 
 extern int		my_fclose(FILE *);
-extern char *		win32_get_privlib(const char *pl, STRLEN *const len);
+extern char *		win32_get_privlib(WIN32_NO_REGISTRY_M_(const char *pl) STRLEN *const len);
 extern char *		win32_get_sitelib(const char *pl, STRLEN *const len);
 extern char *		win32_get_vendorlib(const char *pl, STRLEN *const len);
 
@@ -470,9 +504,8 @@ struct interp_intern {
     UINT	timerid;
     unsigned 	poll_count;
     Sighandler_t sigtable[SIG_SIZE];
+    bool sloppystat;
 };
-
-DllExport int win32_async_check(pTHX);
 
 #define WIN32_POLL_INTERVAL 32768
 #define PERL_ASYNC_CHECK() if (w32_do_async || PL_sig_pending) win32_async_check(aTHX)
@@ -505,6 +538,7 @@ DllExport int win32_async_check(pTHX);
 #define w32_init_socktype	(PL_sys_intern.thr_intern.Winit_socktype)
 #define w32_use_showwindow	(PL_sys_intern.thr_intern.Wuse_showwindow)
 #define w32_showwindow	(PL_sys_intern.thr_intern.Wshowwindow)
+#define w32_sloppystat	(PL_sys_intern.sloppystat)
 
 #ifdef USE_ITHREADS
 void win32_wait_for_children(pTHX);
@@ -543,12 +577,12 @@ typedef struct {
     char pipech;    /* one char buffer for handles opened on pipes */
     int lockinitflag;
     CRITICAL_SECTION lock;
-/* this struct defintion breaks ABI compatibility with
+/* this struct definition breaks ABI compatibility with
  * not using, cl.exe's native VS version specitfic CRT. */
 #  if _MSC_VER >= 1400 && _MSC_VER < 1500
 #    error "This ioinfo struct is incomplete for Visual C 2005"
 #  endif
-/* VC 2005 CRT has atleast 3 different definitions of this struct based on the
+/* VC 2005 CRT has at least 3 different definitions of this struct based on the
  * CRT DLL's build number. */
 #  if _MSC_VER >= 1500
 #    ifndef _SAFECRT_IMPL
@@ -610,14 +644,6 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #undef  PERLIO_NOT_STDIO
 #endif
 #define PERLIO_NOT_STDIO 0
-
-#include "perlio.h"
-
-/*
- * This provides a layer of functions and macros to ensure extensions will
- * get to use the same RTL functions as the core.
- */
-#include "win32iop.h"
 
 #define EXEC_ARGV_CAST(x) ((const char *const *) x)
 

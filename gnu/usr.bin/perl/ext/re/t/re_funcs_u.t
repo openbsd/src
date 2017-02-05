@@ -6,7 +6,8 @@ BEGIN {
 	print "1..0 # Skip -- Perl configured without re module\n";
 	    exit 0;
     }
-    require 'test.pl'; # For watchdog
+    require 'test.pl';      # For watchdog
+    require 'loc_tools.pl'; # To see if platform has locales
 }
 
 use strict;
@@ -33,6 +34,7 @@ use re qw(is_regexp regexp_pattern
     is(regexp_pattern($rx),'(?^upi:foo)', 'scalar regexp_pattern (bare REGEXP)');
 
     ok(!regexp_pattern(''),'!regexp_pattern("")');
+    is +()=regexp_pattern(''), 0, 'regexp_pattern("") in list cx';
 }
 
 if ('1234'=~/(?:(?<A>\d)|(?<C>!))(?<B>\d)(?<A>\d)(?<B>\d)/){
@@ -79,7 +81,7 @@ if ('1234'=~/(?:(?<A>\d)|(?<C>!))(?<B>\d)(?<A>\d)(?<B>\d)/){
 
 {
     # tests for new regexp flags
-    my $text = "\xE4";
+    my $text = chr utf8::unicode_to_native(0xE4);
     my $check;
 
     {
@@ -91,8 +93,7 @@ if ('1234'=~/(?:(?<A>\d)|(?<C>!))(?<B>\d)(?<A>\d)(?<B>\d)/){
     }
 
     SKIP: {
-        skip_if_miniperl("no dynamic loading on miniperl, no POSIX", 3);
-        skip 'No locale testing without d_setlocale', 3 if(!$Config::Config{d_setlocale});
+        skip 'No locales available', 3 unless locales_enabled('LC_CTYPE');
         require POSIX;
         my $current_locale = POSIX::setlocale( &POSIX::LC_CTYPE, 'de_DE.ISO-8859-1' );
         if ( !$current_locale || $current_locale ne 'de_DE.ISO-8859-1' ) {
@@ -108,8 +109,7 @@ if ('1234'=~/(?:(?<A>\d)|(?<C>!))(?<B>\d)(?<A>\d)(?<B>\d)/){
     }
 
     SKIP: {
-        skip_if_miniperl("no dynamic loading on miniperl, no POSIX", 3);
-        skip 'No locale testing without d_setlocale', 3 if(!$Config::Config{d_setlocale});
+        skip 'No locales available', 3 unless locales_enabled('LC_CTYPE');
         require POSIX;
         my $current_locale = POSIX::setlocale( &POSIX::LC_CTYPE, 'C' );
         if ( !$current_locale || $current_locale ne 'C' ) {

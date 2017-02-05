@@ -10,7 +10,6 @@ use File::Spec;
 use File::Basename qw/basename/;
 use IO::Dir;
 use Parse::CPAN::Meta 1.4400;
-use version;
 
 delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
 
@@ -35,6 +34,7 @@ my @files = sort grep { /^\w/ } $data_dir->read;
 #use Data::Dumper;
 
 for my $f ( reverse sort @files ) {
+  note '';
   my $path = File::Spec->catfile('t','data-test',$f);
   my $original = Parse::CPAN::Meta->load_file( $path  );
   ok( $original, "loaded $f" );
@@ -295,4 +295,15 @@ sub _normalize_reqs {
   );
 }
 
+# specific test for preserving release_status on upconversion
+{
+  my $path = File::Spec->catfile('t','data-test','preserve-release-status.yml');
+  my $original = Parse::CPAN::Meta->load_file( $path  );
+  ok( $original, "loaded META-2.json" );
+  my $cmc = CPAN::Meta::Converter->new( $original );
+  my $cleaned_up = $cmc->convert( version => "2" );
+  is( $cleaned_up->{release_status}, 'unstable', "release_status preserved" );
+}
+
 done_testing;
+# vim: ts=2 sts=2 sw=2 et:

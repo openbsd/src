@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use lib 't/lib/';
-use Test::More 0.99;
+use Test::More 0.88;
 use TestUtils;
 
 use File::Spec::Functions ':ALL';

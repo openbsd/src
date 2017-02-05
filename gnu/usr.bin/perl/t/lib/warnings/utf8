@@ -17,7 +17,7 @@ __END__
 # utf8.c [utf8_to_uvchr_buf] -W
 BEGIN {
     if (ord('A') == 193) {
-        print "SKIPPED\n# ebcdic platforms do not generate Malformed UTF-8 warnings.";
+        print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
         exit 0;
     }
 }
@@ -80,16 +80,21 @@ Operation "uc" returns its argument for non-Unicode code point 0x110000 at - lin
 use warnings 'utf8';
 my $d800  = uc(chr(0xD800));
 my $nonUnicode =  uc(chr(0x110000));
-my $big_nonUnicode = uc(chr(0x8000_0000));
 no warnings 'non_unicode';
 my $d800  = uc(chr(0xD800));
 my $nonUnicode =  uc(chr(0x110000));
-my $big_nonUnicode = uc(chr(0x8000_0000));
 EXPECT
 Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 2.
 Operation "uc" returns its argument for non-Unicode code point 0x110000 at - line 3.
-Operation "uc" returns its argument for non-Unicode code point 0x80000000 at - line 4.
-Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 6.
+Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 5.
+########
+use warnings 'utf8';
+no warnings 'deprecated'; # This is above IV_MAX on 32 bit machines
+my $big_nonUnicode = uc(chr(0x8000_0000));
+no warnings 'non_unicode';
+my $big_nonUnicode = uc(chr(0x8000_0000));
+EXPECT
+Operation "uc" returns its argument for non-Unicode code point 0x80000000 at - line 3.
 ########
 use warnings 'utf8';
 my $d7ff  = lc pack("U", 0xD7FF);
@@ -349,92 +354,149 @@ my $file = tempfile();
 open(my $fh, "+>:utf8", $file);
 print $fh "\x{D7FF}", "\n";
 print $fh "\x{D800}", "\n";
+print $fh "\x{D900}", "\n";
+print $fh "\x{DA00}", "\n";
+print $fh "\x{DB00}", "\n";
+print $fh "\x{DC00}", "\n";
+print $fh "\x{DD00}", "\n";
+print $fh "\x{DE00}", "\n";
+print $fh "\x{DF00}", "\n";
 print $fh "\x{DFFF}", "\n";
 print $fh "\x{E000}", "\n";
 print $fh "\x{FDCF}", "\n";
 print $fh "\x{FDD0}", "\n";
+print $fh "\x{FDD1}", "\n";
 print $fh "\x{FDEF}", "\n";
 print $fh "\x{FDF0}", "\n";
+print $fh "\x{FDFE}", "\n";
+print $fh "\x{FDFF}", "\n";
+print $fh "\x{FE00}", "\n";
 print $fh "\x{FEFF}", "\n";
 print $fh "\x{FFFD}", "\n";
 print $fh "\x{FFFE}", "\n";
 print $fh "\x{FFFF}", "\n";
 print $fh "\x{10000}", "\n";
+print $fh "\x{1FFFD}", "\n";
 print $fh "\x{1FFFE}", "\n";
 print $fh "\x{1FFFF}", "\n";
+print $fh "\x{20000}", "\n";
+print $fh "\x{2FFFD}", "\n";
 print $fh "\x{2FFFE}", "\n";
 print $fh "\x{2FFFF}", "\n";
+print $fh "\x{30000}", "\n";
+print $fh "\x{3FFFD}", "\n";
 print $fh "\x{3FFFE}", "\n";
 print $fh "\x{3FFFF}", "\n";
+print $fh "\x{40000}", "\n";
+print $fh "\x{4FFFD}", "\n";
 print $fh "\x{4FFFE}", "\n";
 print $fh "\x{4FFFF}", "\n";
+print $fh "\x{50000}", "\n";
+print $fh "\x{5FFFD}", "\n";
 print $fh "\x{5FFFE}", "\n";
 print $fh "\x{5FFFF}", "\n";
+print $fh "\x{60000}", "\n";
+print $fh "\x{6FFFD}", "\n";
 print $fh "\x{6FFFE}", "\n";
 print $fh "\x{6FFFF}", "\n";
+print $fh "\x{70000}", "\n";
+print $fh "\x{7FFFD}", "\n";
 print $fh "\x{7FFFE}", "\n";
 print $fh "\x{7FFFF}", "\n";
+print $fh "\x{80000}", "\n";
+print $fh "\x{8FFFD}", "\n";
 print $fh "\x{8FFFE}", "\n";
 print $fh "\x{8FFFF}", "\n";
+print $fh "\x{90000}", "\n";
+print $fh "\x{9FFFD}", "\n";
 print $fh "\x{9FFFE}", "\n";
 print $fh "\x{9FFFF}", "\n";
+print $fh "\x{A0000}", "\n";
+print $fh "\x{AFFFD}", "\n";
 print $fh "\x{AFFFE}", "\n";
 print $fh "\x{AFFFF}", "\n";
+print $fh "\x{B0000}", "\n";
+print $fh "\x{BFFFD}", "\n";
 print $fh "\x{BFFFE}", "\n";
 print $fh "\x{BFFFF}", "\n";
+print $fh "\x{C0000}", "\n";
+print $fh "\x{CFFFD}", "\n";
 print $fh "\x{CFFFE}", "\n";
 print $fh "\x{CFFFF}", "\n";
+print $fh "\x{D0000}", "\n";
+print $fh "\x{DFFFD}", "\n";
 print $fh "\x{DFFFE}", "\n";
 print $fh "\x{DFFFF}", "\n";
+print $fh "\x{E0000}", "\n";
+print $fh "\x{EFFFD}", "\n";
 print $fh "\x{EFFFE}", "\n";
 print $fh "\x{EFFFF}", "\n";
+print $fh "\x{F0000}", "\n";
+print $fh "\x{FFFFD}", "\n";
 print $fh "\x{FFFFE}", "\n";
 print $fh "\x{FFFFF}", "\n";
 print $fh "\x{100000}", "\n";
+print $fh "\x{10FFFD}", "\n";
 print $fh "\x{10FFFE}", "\n";
 print $fh "\x{10FFFF}", "\n";
 print $fh "\x{110000}", "\n";
+print $fh "\x{11FFFD}", "\n";
+print $fh "\x{11FFFE}", "\n";
+print $fh "\x{11FFFF}", "\n";
+print $fh "\x{120000}", "\n";
 close $fh;
 EXPECT
 Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
-Unicode surrogate U+DFFF is illegal in UTF-8 at - line 7.
-Unicode non-character U+FDD0 is illegal for open interchange at - line 10.
-Unicode non-character U+FDEF is illegal for open interchange at - line 11.
-Unicode non-character U+FFFE is illegal for open interchange at - line 15.
-Unicode non-character U+FFFF is illegal for open interchange at - line 16.
-Unicode non-character U+1FFFE is illegal for open interchange at - line 18.
-Unicode non-character U+1FFFF is illegal for open interchange at - line 19.
-Unicode non-character U+2FFFE is illegal for open interchange at - line 20.
-Unicode non-character U+2FFFF is illegal for open interchange at - line 21.
-Unicode non-character U+3FFFE is illegal for open interchange at - line 22.
-Unicode non-character U+3FFFF is illegal for open interchange at - line 23.
-Unicode non-character U+4FFFE is illegal for open interchange at - line 24.
-Unicode non-character U+4FFFF is illegal for open interchange at - line 25.
-Unicode non-character U+5FFFE is illegal for open interchange at - line 26.
-Unicode non-character U+5FFFF is illegal for open interchange at - line 27.
-Unicode non-character U+6FFFE is illegal for open interchange at - line 28.
-Unicode non-character U+6FFFF is illegal for open interchange at - line 29.
-Unicode non-character U+7FFFE is illegal for open interchange at - line 30.
-Unicode non-character U+7FFFF is illegal for open interchange at - line 31.
-Unicode non-character U+8FFFE is illegal for open interchange at - line 32.
-Unicode non-character U+8FFFF is illegal for open interchange at - line 33.
-Unicode non-character U+9FFFE is illegal for open interchange at - line 34.
-Unicode non-character U+9FFFF is illegal for open interchange at - line 35.
-Unicode non-character U+AFFFE is illegal for open interchange at - line 36.
-Unicode non-character U+AFFFF is illegal for open interchange at - line 37.
-Unicode non-character U+BFFFE is illegal for open interchange at - line 38.
-Unicode non-character U+BFFFF is illegal for open interchange at - line 39.
-Unicode non-character U+CFFFE is illegal for open interchange at - line 40.
-Unicode non-character U+CFFFF is illegal for open interchange at - line 41.
-Unicode non-character U+DFFFE is illegal for open interchange at - line 42.
-Unicode non-character U+DFFFF is illegal for open interchange at - line 43.
-Unicode non-character U+EFFFE is illegal for open interchange at - line 44.
-Unicode non-character U+EFFFF is illegal for open interchange at - line 45.
-Unicode non-character U+FFFFE is illegal for open interchange at - line 46.
-Unicode non-character U+FFFFF is illegal for open interchange at - line 47.
-Unicode non-character U+10FFFE is illegal for open interchange at - line 49.
-Unicode non-character U+10FFFF is illegal for open interchange at - line 50.
-Code point 0x110000 is not Unicode, may not be portable at - line 51.
+Unicode surrogate U+D900 is illegal in UTF-8 at - line 7.
+Unicode surrogate U+DA00 is illegal in UTF-8 at - line 8.
+Unicode surrogate U+DB00 is illegal in UTF-8 at - line 9.
+Unicode surrogate U+DC00 is illegal in UTF-8 at - line 10.
+Unicode surrogate U+DD00 is illegal in UTF-8 at - line 11.
+Unicode surrogate U+DE00 is illegal in UTF-8 at - line 12.
+Unicode surrogate U+DF00 is illegal in UTF-8 at - line 13.
+Unicode surrogate U+DFFF is illegal in UTF-8 at - line 14.
+Unicode non-character U+FDD0 is not recommended for open interchange in print at - line 17.
+Unicode non-character U+FDD1 is not recommended for open interchange in print at - line 18.
+Unicode non-character U+FDEF is not recommended for open interchange in print at - line 19.
+Unicode non-character U+FFFE is not recommended for open interchange in print at - line 26.
+Unicode non-character U+FFFF is not recommended for open interchange in print at - line 27.
+Unicode non-character U+1FFFE is not recommended for open interchange in print at - line 30.
+Unicode non-character U+1FFFF is not recommended for open interchange in print at - line 31.
+Unicode non-character U+2FFFE is not recommended for open interchange in print at - line 34.
+Unicode non-character U+2FFFF is not recommended for open interchange in print at - line 35.
+Unicode non-character U+3FFFE is not recommended for open interchange in print at - line 38.
+Unicode non-character U+3FFFF is not recommended for open interchange in print at - line 39.
+Unicode non-character U+4FFFE is not recommended for open interchange in print at - line 42.
+Unicode non-character U+4FFFF is not recommended for open interchange in print at - line 43.
+Unicode non-character U+5FFFE is not recommended for open interchange in print at - line 46.
+Unicode non-character U+5FFFF is not recommended for open interchange in print at - line 47.
+Unicode non-character U+6FFFE is not recommended for open interchange in print at - line 50.
+Unicode non-character U+6FFFF is not recommended for open interchange in print at - line 51.
+Unicode non-character U+7FFFE is not recommended for open interchange in print at - line 54.
+Unicode non-character U+7FFFF is not recommended for open interchange in print at - line 55.
+Unicode non-character U+8FFFE is not recommended for open interchange in print at - line 58.
+Unicode non-character U+8FFFF is not recommended for open interchange in print at - line 59.
+Unicode non-character U+9FFFE is not recommended for open interchange in print at - line 62.
+Unicode non-character U+9FFFF is not recommended for open interchange in print at - line 63.
+Unicode non-character U+AFFFE is not recommended for open interchange in print at - line 66.
+Unicode non-character U+AFFFF is not recommended for open interchange in print at - line 67.
+Unicode non-character U+BFFFE is not recommended for open interchange in print at - line 70.
+Unicode non-character U+BFFFF is not recommended for open interchange in print at - line 71.
+Unicode non-character U+CFFFE is not recommended for open interchange in print at - line 74.
+Unicode non-character U+CFFFF is not recommended for open interchange in print at - line 75.
+Unicode non-character U+DFFFE is not recommended for open interchange in print at - line 78.
+Unicode non-character U+DFFFF is not recommended for open interchange in print at - line 79.
+Unicode non-character U+EFFFE is not recommended for open interchange in print at - line 82.
+Unicode non-character U+EFFFF is not recommended for open interchange in print at - line 83.
+Unicode non-character U+FFFFE is not recommended for open interchange in print at - line 86.
+Unicode non-character U+FFFFF is not recommended for open interchange in print at - line 87.
+Unicode non-character U+10FFFE is not recommended for open interchange in print at - line 90.
+Unicode non-character U+10FFFF is not recommended for open interchange in print at - line 91.
+Code point 0x110000 is not Unicode, may not be portable in print at - line 92.
+Code point 0x11FFFD is not Unicode, may not be portable in print at - line 93.
+Code point 0x11FFFE is not Unicode, may not be portable in print at - line 94.
+Code point 0x11FFFF is not Unicode, may not be portable in print at - line 95.
+Code point 0x120000 is not Unicode, may not be portable in print at - line 96.
 ########
 require "../test.pl";
 use warnings 'utf8';
@@ -446,8 +508,8 @@ print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
 Unicode surrogate U+D800 is illegal in UTF-8 at - line 5.
-Unicode non-character U+FFFF is illegal for open interchange at - line 6.
-Code point 0x110000 is not Unicode, may not be portable at - line 7.
+Unicode non-character U+FFFF is not recommended for open interchange in print at - line 6.
+Code point 0x110000 is not Unicode, may not be portable in print at - line 7.
 ########
 require "../test.pl";
 use warnings 'utf8';
@@ -459,8 +521,8 @@ print $fh "\x{FFFF}", "\n";
 print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
-Unicode non-character U+FFFF is illegal for open interchange at - line 7.
-Code point 0x110000 is not Unicode, may not be portable at - line 8.
+Unicode non-character U+FFFF is not recommended for open interchange in print at - line 7.
+Code point 0x110000 is not Unicode, may not be portable in print at - line 8.
 ########
 require "../test.pl";
 use warnings 'utf8';
@@ -473,7 +535,7 @@ print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
 Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
-Code point 0x110000 is not Unicode, may not be portable at - line 8.
+Code point 0x110000 is not Unicode, may not be portable in print at - line 8.
 ########
 require "../test.pl";
 use warnings 'utf8';
@@ -486,7 +548,7 @@ print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
 Unicode surrogate U+D800 is illegal in UTF-8 at - line 6.
-Unicode non-character U+FFFF is illegal for open interchange at - line 7.
+Unicode non-character U+FFFF is not recommended for open interchange in print at - line 7.
 ########
 # NAME C<use warnings "nonchar"> works in isolation
 require "../test.pl";
@@ -496,7 +558,7 @@ open(my $fh, "+>:utf8", $file);
 print $fh "\x{FFFF}", "\n";
 close $fh;
 EXPECT
-Unicode non-character U+FFFF is illegal for open interchange at - line 5.
+Unicode non-character U+FFFF is not recommended for open interchange in print at - line 5.
 ########
 # NAME C<use warnings "surrogate"> works in isolation
 require "../test.pl";
@@ -516,7 +578,7 @@ open(my $fh, "+>:utf8", $file);
 print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
-Code point 0x110000 is not Unicode, may not be portable at - line 5.
+Code point 0x110000 is not Unicode, may not be portable in print at - line 5.
 ########
 require "../test.pl";
 no warnings 'utf8';
@@ -571,3 +633,137 @@ print $fh "\x{10FFFF}", "\n";
 print $fh "\x{110000}", "\n";
 close $fh;
 EXPECT
+########
+# NAME Case change crosses 255/256 under non-UTF8 locale
+require '../loc_tools.pl';
+unless (locales_enabled('LC_CTYPE')) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+use warnings 'locale';
+use feature 'fc';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+my $a;
+$a = lc("\x{178}");
+$a = fc("\x{1E9E}");
+$a = fc("\x{FB05}");
+$a = uc("\x{FB00}");
+$a = ucfirst("\x{149}");
+$a = lcfirst("\x{178}");
+no warnings 'locale';
+$a = lc("\x{178}");
+$a = fc("\x{1E9E}");
+$a = fc("\x{FB05}");
+$a = uc("\x{FB00}");
+$a = ucfirst("\x{149}");
+$a = lcfirst("\x{178}");
+EXPECT
+Can't do lc("\x{178}") on non-UTF-8 locale; resolved to "\x{178}". at - line 14.
+Can't do fc("\x{1E9E}") on non-UTF-8 locale; resolved to "\x{17F}\x{17F}". at - line 15.
+Can't do fc("\x{FB05}") on non-UTF-8 locale; resolved to "\x{FB06}". at - line 16.
+Can't do uc("\x{FB00}") on non-UTF-8 locale; resolved to "\x{FB00}". at - line 17.
+Can't do ucfirst("\x{149}") on non-UTF-8 locale; resolved to "\x{149}". at - line 18.
+Can't do lcfirst("\x{178}") on non-UTF-8 locale; resolved to "\x{178}". at - line 19.
+########
+# NAME Wide character in non-UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled('LC_CTYPE')) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+use warnings 'locale';
+use feature 'fc';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+my $a;
+$a = lc("\x{100}");
+$a = lcfirst("\x{101}");
+$a = fc("\x{102}");
+$a = uc("\x{103}");
+$a = ucfirst("\x{104}");
+no warnings 'locale';
+$a = lc("\x{100}");
+$a = lcfirst("\x{101}");
+$a = fc("\x{102}");
+$a = uc("\x{103}");
+$a = ucfirst("\x{104}");
+EXPECT
+Wide character (U+100) in lc at - line 14.
+Wide character (U+101) in lcfirst at - line 15.
+Wide character (U+102) in fc at - line 16.
+Wide character (U+103) in uc at - line 17.
+Wide character (U+104) in ucfirst at - line 18.
+########
+# NAME Wide character in UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled('LC_CTYPE')) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+my @utf8_locales = find_utf8_ctype_locale();
+unless (@utf8_locales) {
+    print("SKIPPED\n# no UTF-8 locales\n"),exit;
+}
+use warnings 'locale';
+use feature 'fc';
+use locale;
+setlocale(&POSIX::LC_CTYPE, $utf8_locales[0]);
+my $a;
+$a = lc("\x{100}");
+$a = lcfirst("\x{101}");
+$a = fc("\x{102}");
+$a = uc("\x{103}");
+$a = ucfirst("\x{104}");
+EXPECT
+########
+# NAME Deprecation of too-large code points
+require "../test.pl";
+use warnings 'non_unicode';
+my $max_cp = ~0 >> 1;
+my $max_char = chr $max_cp;
+my $to_warn_cp = $max_cp + 1;
+my $to_warn_char = chr $to_warn_cp;
+$max_char =~ /[\x{110000}\P{Unassigned}]/;
+$to_warn_char =~ /[\x{110000}\P{Unassigned}]/;
+my $temp = qr/$max_char/;
+$temp = qr/$to_warn_char/;
+$temp = uc($max_char);
+$temp = uc($to_warn_char);
+my $file = tempfile();
+open(my $fh, "+>:utf8", $file);
+print $fh $max_char, "\n";
+print $fh $to_warn_char, "\n";
+close $fh;
+EXPECT
+OPTION regex
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in pattern match \(m//\) at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
+Operation "uc" returns its argument for non-Unicode code point 0x7F+ at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
+Operation "uc" returns its argument for non-Unicode code point 0x80+ at - line \d+.
+Code point 0x7F+ is not Unicode, may not be portable in print at - line \d+.
+Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in print at - line \d+.
+########
+# NAME  [perl #127262]
+BEGIN{
+    if (ord('A') == 193) {
+        print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
+        exit 0;
+    }
+{};$^H=2**400}Â
+EXPECT
+Malformed UTF-8 character (unexpected non-continuation byte 0x0a, immediately after start byte 0xc2) at - line 6.

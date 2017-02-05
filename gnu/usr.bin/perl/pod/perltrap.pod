@@ -170,7 +170,7 @@ C<do { } while> construct.  See L<perlsyn/"Loop Control">.
 
 =item *
 
-The switch statement is called C<given/when> and only available in
+The switch statement is called C<given>/C<when> and only available in
 perl 5.10 or newer.  See L<perlsyn/"Switch Statements">.
 
 =item *

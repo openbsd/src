@@ -67,6 +67,12 @@ if($^O =~ /dos|win32/i && $resfile =~ /~\d(?=\\|$)/) {
     $resfile =~ s/\\~\d(?=\\|$)/[^\\\\]+/g;
     ok($cmpfile =~ /^$resfile$/, "pod_where found File::Find (with long filename matching)") ||
       diag("'$cmpfile' does not match /^$resfile\$/");
+} elsif($^O =~ /dos|win32/i && $cmpfile =~ /~\d(?=\\|$)/) {
+    # we have ~1 short filenames
+    $cmpfile = quotemeta($cmpfile);
+    $cmpfile =~ s/\\~\d(?=\\|$)/[^\\\\]+/g;
+    ok($resfile =~ /^$cmpfile$/, "pod_where found File::Find (with long filename matching)") ||
+      diag("'$resfile' does not match /^$cmpfile\$/");
 } else {
     is($resfile,$cmpfile,"pod_where found File::Find");
 }

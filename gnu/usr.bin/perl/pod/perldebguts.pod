@@ -275,122 +275,122 @@ is not a complete listing, but only excerpts.
 
 =item 1
 
-  entering main::BEGIN
-   entering Config::BEGIN
-    Package lib/Exporter.pm.
-    Package lib/Carp.pm.
-   Package lib/Config.pm.
-   entering Config::TIEHASH
-   entering Exporter::import
-    entering Exporter::export
-  entering Config::myconfig
-   entering Config::FETCH
-   entering Config::FETCH
-   entering Config::FETCH
-   entering Config::FETCH
+ entering main::BEGIN
+  entering Config::BEGIN
+   Package lib/Exporter.pm.
+   Package lib/Carp.pm.
+  Package lib/Config.pm.
+  entering Config::TIEHASH
+  entering Exporter::import
+   entering Exporter::export
+ entering Config::myconfig
+  entering Config::FETCH
+  entering Config::FETCH
+  entering Config::FETCH
+  entering Config::FETCH
 
 =item 2
 
-  entering main::BEGIN
-   entering Config::BEGIN
-    Package lib/Exporter.pm.
-    Package lib/Carp.pm.
-   exited Config::BEGIN
-   Package lib/Config.pm.
-   entering Config::TIEHASH
-   exited Config::TIEHASH
-   entering Exporter::import
-    entering Exporter::export
-    exited Exporter::export
-   exited Exporter::import
-  exited main::BEGIN
-  entering Config::myconfig
-   entering Config::FETCH
-   exited Config::FETCH
-   entering Config::FETCH
-   exited Config::FETCH
-   entering Config::FETCH
+ entering main::BEGIN
+  entering Config::BEGIN
+   Package lib/Exporter.pm.
+   Package lib/Carp.pm.
+  exited Config::BEGIN
+  Package lib/Config.pm.
+  entering Config::TIEHASH
+  exited Config::TIEHASH
+  entering Exporter::import
+   entering Exporter::export
+   exited Exporter::export
+  exited Exporter::import
+ exited main::BEGIN
+ entering Config::myconfig
+  entering Config::FETCH
+  exited Config::FETCH
+  entering Config::FETCH
+  exited Config::FETCH
+  entering Config::FETCH
 
 =item 3
 
-  in  $=main::BEGIN() from /dev/null:0
-   in  $=Config::BEGIN() from lib/Config.pm:2
-    Package lib/Exporter.pm.
-    Package lib/Carp.pm.
-   Package lib/Config.pm.
-   in  $=Config::TIEHASH('Config') from lib/Config.pm:644
-   in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-    in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from li
-  in  @=Config::myconfig() from /dev/null:0
-   in  $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'PERL_SUBVERSION') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'osname') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'osvers') from lib/Config.pm:574
+ in  $=main::BEGIN() from /dev/null:0
+  in  $=Config::BEGIN() from lib/Config.pm:2
+   Package lib/Exporter.pm.
+   Package lib/Carp.pm.
+  Package lib/Config.pm.
+  in  $=Config::TIEHASH('Config') from lib/Config.pm:644
+  in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+   in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from li
+ in  @=Config::myconfig() from /dev/null:0
+  in  $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'PERL_SUBVERSION') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'osname') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'osvers') from lib/Config.pm:574
 
 =item 4
 
-  in  $=main::BEGIN() from /dev/null:0
-   in  $=Config::BEGIN() from lib/Config.pm:2
-    Package lib/Exporter.pm.
-    Package lib/Carp.pm.
-   out $=Config::BEGIN() from lib/Config.pm:0
-   Package lib/Config.pm.
-   in  $=Config::TIEHASH('Config') from lib/Config.pm:644
-   out $=Config::TIEHASH('Config') from lib/Config.pm:644
-   in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-    in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/
-    out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/
-   out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-  out $=main::BEGIN() from /dev/null:0
-  in  @=Config::myconfig() from /dev/null:0
-   in  $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
-   out $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
-   out $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
-   out $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
-   in  $=Config::FETCH(ref(Config), 'PERL_SUBVERSION') from lib/Config.pm:574
+ in  $=main::BEGIN() from /dev/null:0
+  in  $=Config::BEGIN() from lib/Config.pm:2
+   Package lib/Exporter.pm.
+   Package lib/Carp.pm.
+  out $=Config::BEGIN() from lib/Config.pm:0
+  Package lib/Config.pm.
+  in  $=Config::TIEHASH('Config') from lib/Config.pm:644
+  out $=Config::TIEHASH('Config') from lib/Config.pm:644
+  in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+   in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/
+   out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/
+  out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+ out $=main::BEGIN() from /dev/null:0
+ in  @=Config::myconfig() from /dev/null:0
+  in  $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
+  out $=Config::FETCH(ref(Config), 'package') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
+  out $=Config::FETCH(ref(Config), 'baserev') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
+  out $=Config::FETCH(ref(Config), 'PERL_VERSION') from lib/Config.pm:574
+  in  $=Config::FETCH(ref(Config), 'PERL_SUBVERSION') from lib/Config.pm:574
 
 =item 5
 
-  in  $=main::BEGIN() from /dev/null:0
-   in  $=Config::BEGIN() from lib/Config.pm:2
-    Package lib/Exporter.pm.
-    Package lib/Carp.pm.
-   out $=Config::BEGIN() from lib/Config.pm:0
-   Package lib/Config.pm.
-   in  $=Config::TIEHASH('Config') from lib/Config.pm:644
-   out $=Config::TIEHASH('Config') from lib/Config.pm:644
-   in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-    in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/E
-    out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/E
-   out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-  out $=main::BEGIN() from /dev/null:0
-  in  @=Config::myconfig() from /dev/null:0
-   in  $=Config::FETCH('Config=HASH(0x1aa444)', 'package') from lib/Config.pm:574
-   out $=Config::FETCH('Config=HASH(0x1aa444)', 'package') from lib/Config.pm:574
-   in  $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
-   out $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
+ in  $=main::BEGIN() from /dev/null:0
+  in  $=Config::BEGIN() from lib/Config.pm:2
+   Package lib/Exporter.pm.
+   Package lib/Carp.pm.
+  out $=Config::BEGIN() from lib/Config.pm:0
+  Package lib/Config.pm.
+  in  $=Config::TIEHASH('Config') from lib/Config.pm:644
+  out $=Config::TIEHASH('Config') from lib/Config.pm:644
+  in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+   in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/E
+   out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/E
+  out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+ out $=main::BEGIN() from /dev/null:0
+ in  @=Config::myconfig() from /dev/null:0
+  in  $=Config::FETCH('Config=HASH(0x1aa444)', 'package') from lib/Config.pm:574
+  out $=Config::FETCH('Config=HASH(0x1aa444)', 'package') from lib/Config.pm:574
+  in  $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
+  out $=Config::FETCH('Config=HASH(0x1aa444)', 'baserev') from lib/Config.pm:574
 
 =item 6
 
-  in  $=CODE(0x15eca4)() from /dev/null:0
-   in  $=CODE(0x182528)() from lib/Config.pm:2
-    Package lib/Exporter.pm.
-   out $=CODE(0x182528)() from lib/Config.pm:0
-   scalar context return from CODE(0x182528): undef
-   Package lib/Config.pm.
-   in  $=Config::TIEHASH('Config') from lib/Config.pm:628
-   out $=Config::TIEHASH('Config') from lib/Config.pm:628
-   scalar context return from Config::TIEHASH:   empty hash
-   in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-    in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/Exporter.pm:171
-    out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/Exporter.pm:171
-    scalar context return from Exporter::export: ''
-   out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
-   scalar context return from Exporter::import: ''
+ in  $=CODE(0x15eca4)() from /dev/null:0
+  in  $=CODE(0x182528)() from lib/Config.pm:2
+   Package lib/Exporter.pm.
+  out $=CODE(0x182528)() from lib/Config.pm:0
+  scalar context return from CODE(0x182528): undef
+  Package lib/Config.pm.
+  in  $=Config::TIEHASH('Config') from lib/Config.pm:628
+  out $=Config::TIEHASH('Config') from lib/Config.pm:628
+  scalar context return from Config::TIEHASH:   empty hash
+  in  $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+   in  $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/Exporter.pm:171
+   out $=Exporter::export('Config', 'main', 'myconfig', 'config_vars') from lib/Exporter.pm:171
+   scalar context return from Exporter::export: ''
+  out $=Exporter::import('Config', 'myconfig', 'config_vars') from /dev/null:0
+  scalar context return from Exporter::import: ''
 
 =back
 
@@ -525,7 +525,7 @@ C<(??{ code })>.
 =item C<anchored(TYPE)>
 
 If the pattern may match only at a handful of places, with C<TYPE>
-being C<BOL>, C<MBOL>, or C<GPOS>.  See the table below.
+being C<SBOL>, C<MBOL>, or C<GPOS>.  See the table below.
 
 =back
 
@@ -559,39 +559,45 @@ will be lost.
  END             no         End of program.
  SUCCEED         no         Return from a subroutine, basically.
 
- # Anchors:
+ # Line Start Anchors:
+ SBOL            no         Match "" at beginning of line: /^/, /\A/
+ MBOL            no         Same, assuming multiline: /^/m
 
- BOL             no         Match "" at beginning of line.
- MBOL            no         Same, assuming multiline.
- SBOL            no         Same, assuming singleline.
- EOS             no         Match "" at end of string.
- EOL             no         Match "" at end of line.
- MEOL            no         Same, assuming multiline.
- SEOL            no         Same, assuming singleline.
- BOUND           no         Match "" at any word boundary using native
-                            charset rules for non-utf8
- BOUNDL          no         Match "" at any locale word boundary
- BOUNDU          no         Match "" at any word boundary using Unicode
-                            rules
- BOUNDA          no         Match "" at any word boundary using ASCII
-                            rules
- NBOUND          no         Match "" at any word non-boundary using
-                            native charset rules for non-utf8
- NBOUNDL         no         Match "" at any locale word non-boundary
- NBOUNDU         no         Match "" at any word non-boundary using
-                            Unicode rules
- NBOUNDA         no         Match "" at any word non-boundary using
-                            ASCII rules
+ # Line End Anchors:
+ SEOL            no         Match "" at end of line: /$/
+ MEOL            no         Same, assuming multiline: /$/m
+ EOS             no         Match "" at end of string: /\z/
+
+ # Match Start Anchors:
  GPOS            no         Matches where last m//g left off.
 
- # [Special] alternatives:
+ # Word Boundary Opcodes:
+ BOUND           no         Like BOUNDA for non-utf8, otherwise match ""
+                            between any Unicode \w\W or \W\w
+ BOUNDL          no         Like BOUND/BOUNDU, but \w and \W are defined
+                            by current locale
+ BOUNDU          no         Match "" at any boundary of a given type
+                            using Unicode rules
+ BOUNDA          no         Match "" at any boundary between \w\W or
+                            \W\w, where \w is [_a-zA-Z0-9]
+ NBOUND          no         Like NBOUNDA for non-utf8, otherwise match
+                            "" between any Unicode \w\w or \W\W
+ NBOUNDL         no         Like NBOUND/NBOUNDU, but \w and \W are
+                            defined by current locale
+ NBOUNDU         no         Match "" at any non-boundary of a given type
+                            using using Unicode rules
+ NBOUNDA         no         Match "" betweeen any \w\w or \W\W, where \w
+                            is [_a-zA-Z0-9]
 
+ # [Special] alternatives:
  REG_ANY         no         Match any one character (except newline).
  SANY            no         Match any one character.
- CANY            no         Match any one byte.
- ANYOF           sv         Match character in (or not in) this class,
+ ANYOF           sv 1       Match character in (or not in) this class,
                             single char match only
+ ANYOFD          sv 1       Like ANYOF, but /d is in effect
+ ANYOFL          sv 1       Like ANYOF, but /l is in effect
 
+ # POSIX Character Classes:
  POSIXD          none       Some [[:class:]] under /d; the FLAGS field
                             gives which one
  POSIXL          none       Some [[:class:]] under /l; the FLAGS field
@@ -620,16 +626,11 @@ will be lost.
  #
  BRANCH          node       Match this alternative, or the next...
 
- # Back pointer
-
- # BACK          Normal "next" pointers all implicitly point forward;
- #               BACK exists to make loop structures possible.
- # not used
- BACK            no         Match "", "next" ptr points backward.
-
  # Literals
 
  EXACT           str        Match this string (preceded by length).
+ EXACTL          str        Like EXACT, but /l is in effect (used so
+                            locale-related warnings can be checked for).
  EXACTF          str        Match this non-UTF-8 string (not guaranteed
                             to be folded) using /id rules (w/len).
  EXACTFL         str        Match this string (not guaranteed to be
@@ -639,9 +640,13 @@ will be lost.
                             UTF-8) using /iu rules (w/len).
  EXACTFA         str        Match this string (not guaranteed to be
                             folded) using /iaa rules (w/len).
+
  EXACTFU_SS      str        Match this string (folded iff in UTF-8,
                             length in folding may change even if not in
                             UTF-8) using /iu rules (w/len).
+ EXACTFLU8       str        Rare cirucmstances: like EXACTFU, but is
+                            under /l, UTF-8, folded, and everything in
+                            it is above 255.
  EXACTFA_NO_TRIE str        Match this string (which is not trie-able;
                             not guaranteed to be folded) using /iaa
                             rules (w/len).
@@ -656,7 +661,7 @@ will be lost.
  # Loops
 
  # STAR,PLUS    '?', and complex '*' and '+', are implemented as
- #               circular BRANCH structures using BACK.  Simple cases
+ #               circular BRANCH structures.  Simple cases
  #               (one character per match) are implemented with STAR
  #               and PLUS for speed and to minimize recursive plunges.
  #
@@ -700,20 +705,21 @@ will be lost.
                             unicode rules for non-utf8, no mixing ASCII,
                             non-ASCII
 
+ # Support for long RE
+ LONGJMP         off 1 1    Jump far away.
+ BRANCHJ         off 1 1    BRANCH with long offset.
+
+ # Special Case Regops
  IFMATCH         off 1 2    Succeeds if the following matches.
  UNLESSM         off 1 2    Fails if the following matches.
  SUSPEND         off 1 1    "Independent" sub-RE.
  IFTHEN          off 1 1    Switch, should be preceded by switcher.
  GROUPP          num 1      Whether the group matched.
 
- # Support for long RE
-
- LONGJMP         off 1 1    Jump far away.
- BRANCHJ         off 1 1    BRANCH with long offset.
-
  # The heavy worker
 
- EVAL            evl 1      Execute some Perl code.
+ EVAL            evl/flags  Execute some Perl code.
+                 2L
 
  # Modifiers
 
@@ -740,7 +746,6 @@ will be lost.
 
  # Regex Subroutines
  GOSUB           num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
- GOSTART         no         recurse to start of pattern
 
  # Special conditionals
  NGROUPP         no-sv 1    Whether the group matched.
@@ -749,8 +754,9 @@ will be lost.
 
  # Backtracking Verbs
  ENDLIKE         none       Used only for the type field of verbs
- OPFAIL          none       Same as (?!)
- ACCEPT          parno 1    Accepts the current matched string.
+ OPFAIL          no-sv 1    Same as (?!), but with verb arg
+ ACCEPT          no-sv/num  Accepts the current matched string, with
+                 2L         verbar
 
  # Verbs With Arguments
  VERB            no-sv 1    Used only for the type field of verbs
@@ -915,19 +921,19 @@ usage statistics after compiling your code when C<< $ENV{PERL_DEBUG_MSTATS}
 $ENV{PERL_DEBUG_MSTATS} >= 1 >>.  The report format is similar to
 the following example:
 
-  $ PERL_DEBUG_MSTATS=2 perl -e "require Carp"
-  Memory allocation statistics after compilation: (buckets 4(4)..8188(8192)
-     14216 free:   130   117    28     7     9   0   2     2   1 0 0
+ $ PERL_DEBUG_MSTATS=2 perl -e "require Carp"
+ Memory allocation statistics after compilation: (buckets 4(4)..8188(8192)
+    14216 free:   130   117    28     7     9   0   2     2   1 0 0
 		437    61    36     0     5
-     60924 used:   125   137   161    55     7   8   6    16   2 0 1
+    60924 used:   125   137   161    55     7   8   6    16   2 0 1
 		 74   109   304    84    20
-  Total sbrk(): 77824/21:119. Odd ends: pad+heads+chain+tail: 0+636+0+2048.
-  Memory allocation statistics after execution:   (buckets 4(4)..8188(8192)
-     30888 free:   245    78    85    13     6   2   1     3   2 0 1
+ Total sbrk(): 77824/21:119. Odd ends: pad+heads+chain+tail: 0+636+0+2048.
+ Memory allocation statistics after execution:   (buckets 4(4)..8188(8192)
+    30888 free:   245    78    85    13     6   2   1     3   2 0 1
 		315   162    39    42    11
-    175816 used:   265   176  1112   111    26  22  11    27   2 1 1
+   175816 used:   265   176  1112   111    26  22  11    27   2 1 1
 		196   178  1066   798    39
-  Total sbrk(): 215040/47:145. Odd ends: pad+heads+chain+tail: 0+2192+0+6144.
+ Total sbrk(): 215040/47:145. Odd ends: pad+heads+chain+tail: 0+2192+0+6144.
 
 It is possible to ask for such a statistic at arbitrary points in
 your execution using the mstat() function out of the standard
@@ -967,7 +973,7 @@ of two buckets "above".
 For example, suppose under the previous example, the memory footprints
 were
 
-     free:    8     16    32    64    128  256 512 1024 2048 4096 8192
+   free:    8     16    32    64    128  256 512 1024 2048 4096 8192
 	   4     12    24    48    80
 
 With a non-C<DEBUGGING> perl, the buckets starting from C<128> have

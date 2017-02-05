@@ -6,7 +6,7 @@ use Getopt::Long;
 
 use JSON::PP ();
 
-my $VERSION = '1.00_01';
+my $VERSION = '1.00';
 
 # imported from JSON-XS/bin/json_xs
 

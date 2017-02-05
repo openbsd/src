@@ -13,18 +13,12 @@
 #  define MAXHOSTNAMELEN	256
 #endif
 
-/* swiped from POSIX.xs */
-#if defined(__VMS) && !defined(__POSIX_SOURCE)
-#  if ((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)
-#    include <utsname.h>
-#  endif
-#endif
-
 #ifdef I_SYSUTSNAME
 #  include <sys/utsname.h>
 #endif
 
 MODULE = Sys::Hostname		PACKAGE = Sys::Hostname
+PROTOTYPES: DISABLE
 
 void
 ghname()

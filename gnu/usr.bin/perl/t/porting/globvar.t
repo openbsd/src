@@ -14,11 +14,12 @@ skip_all("Code to read symbols not ported to $^O")
 my %skip = map { ("PL_$_", 1) }
     qw(
 	  DBcv bitcount cshname force_link_funcs generation lastgotoprobe
-	  mod_latin1_uc modcount no_symref_sv timesbuf uudmap
+	  mod_latin1_uc modcount no_symref_sv uudmap
 	  watchaddr watchok warn_uninit_sv
      );
 
 $skip{PL_hash_rand_bits}= $skip{PL_hash_rand_bits_enabled}= 1; # we can be compiled without these, so skip testing them
+$skip{PL_warn_locale}= 1; # we can be compiled without locales, so skip testing them
 
 
 my $trial = "nm globals$Config{_o} 2>&1";

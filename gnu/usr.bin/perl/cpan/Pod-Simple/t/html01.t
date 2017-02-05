@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 12 };
+BEGIN { plan tests => 13 };
 
 #use Pod::Simple::Debug (10);
 
@@ -101,6 +101,23 @@ ok(
 </dd>
 </dl>
 }
+);
+
+my $html = q{<tt>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main(int argc,char *argv[]) {
+
+        printf("Hellow World\n");
+        return 0;
+
+}
+</pre>
+</tt>};
+ok(
+    x("=begin html\n\n$html\n\n=end html\n"),
+    "$html\n\n"
 );
 
 # Check subclass.

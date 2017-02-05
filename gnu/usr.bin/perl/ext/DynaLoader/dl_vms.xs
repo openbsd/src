@@ -45,7 +45,9 @@
  *
  */
 
+#define PERL_EXT
 #include "EXTERN.h"
+#define PERL_IN_DL_VMS_XS
 #include "perl.h"
 #include "XSUB.h"
 
@@ -300,9 +302,10 @@ dl_load_file(filename, flags=0)
 
 
 void
-dl_find_symbol(librefptr,symname)
+dl_find_symbol(librefptr,symname,ign_err=0)
     void *	librefptr
     SV *	symname
+    int	        ign_err
     PREINIT:
     struct libref thislib = *((struct libref *)librefptr);
     struct dsc$descriptor_s
@@ -320,7 +323,7 @@ dl_find_symbol(librefptr,symname)
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "\tentry point is %d\n",
                       (unsigned long int) entry));
     if (!(sts & 1)) {
-      dl_set_error(sts,0);
+      if (!ign_err) dl_set_error(sts,0);
       ST(0) = &PL_sv_undef;
     }
     else ST(0) = sv_2mortal(newSViv(PTR2IV(entry)));
@@ -347,13 +350,13 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 					      XS_DYNAMIC_FILENAME)));
 
 
-char *
+SV *
 dl_error()
     CODE:
     dMY_CXT;
-    RETVAL = dl_last_error ;
+    RETVAL = newSVsv(MY_CXT.x_dl_last_error);
     OUTPUT:
-      RETVAL
+    RETVAL
 
 #if defined(USE_ITHREADS)
 
@@ -368,8 +371,17 @@ CLONE(...)
      * using Perl variables that belong to another thread, we create our 
      * own for this thread.
      */
-    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    MY_CXT.x_dl_last_error = newSVpvs("");
     dl_require_symbols = get_av("DynaLoader::dl_require_symbols", GV_ADDMULTI);
+
+    /* Set up the "static" control blocks for dl_expand_filespec() */
+    dl_fab = cc$rms_fab;
+    dl_nam = cc$rms_nam;
+    dl_fab.fab$l_nam = &dl_nam;
+    dl_nam.nam$l_esa = dl_esa;
+    dl_nam.nam$b_ess = sizeof dl_esa;
+    dl_nam.nam$l_rsa = dl_rsa;
+    dl_nam.nam$b_rss = sizeof dl_rsa;
 
 #endif
 

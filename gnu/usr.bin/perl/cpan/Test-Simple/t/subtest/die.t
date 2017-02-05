@@ -21,7 +21,7 @@ my $Test = Test::Builder->new;
         });
         1;
     });
-    $Test->like( $@, qr/^Death in the subtest at $0 line /);
+    $Test->like( $@, qr/^Death in the subtest at \Q$0\E line /);
 
     $Test->ok( !$tb->parent, "the parent object is restored after a die" );
 }

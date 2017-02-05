@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib); # ../lib needed for test.deparse
-    require "test.pl";
+    require "./test.pl";
 }
 
-plan tests => 42;
+plan tests => 45;
 
 # Note that t/op/ord.t already tests for chr() <-> ord() rountripping.
 
@@ -49,7 +49,9 @@ is chr "-2.2", chr -2.2, 'chr "-2.2" eq chr -2.2';
 
 # Check UTF-8 (not UTF-EBCDIC).
 SKIP: {
-    skip "no UTF-8 on EBCDIC", 21 if chr(193) eq 'A';
+    skip "UTF-8 ASCII centric tests", 21 if $::IS_EBCDIC;
+    # Too hard to convert these tests generically to EBCDIC code pages without
+    # using chr(), which is what we're testing.
 
 sub hexes {
     no warnings 'utf8'; # avoid surrogate and beyond Unicode warnings
@@ -80,3 +82,11 @@ sub hexes {
     is(hexes(0x200000), "f8 88 80 80 80");
 }
 
+package o {
+    use overload
+        '""' => sub { ++$o::str; "42" },
+        '0+' => sub { ++$o::num; 42 };
+}
+is chr(bless [], "o"), chr(42), 'overloading called';
+is $o::str, undef, 'chr does not call string overloading';
+is $o::num, 1,     'chr does call num overloading';

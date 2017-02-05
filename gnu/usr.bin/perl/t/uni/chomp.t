@@ -1,9 +1,10 @@
 #!./perl -w
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
     skip_all_without_dynamic_extension('Encode');
-    skip_all("EBCDIC") if $::IS_EBCDIC;
+    skip_all("encoding doesn't work with EBCDIC") if $::IS_EBCDIC;
     skip_all_without_perlio();
 }
 
@@ -32,7 +33,9 @@ our %mbchars = (
 plan tests => 2 * (4 ** 3 + 4 + 1) * (keys %mbchars);
 
 for my $enc (sort keys %mbchars) {
+    no warnings 'deprecated';
     local ${^ENCODING} = find_encoding($enc);
+    use warnings 'deprecated';
     my @char = (sort(keys   %{ $mbchars{$enc} }),
 		sort(values %{ $mbchars{$enc} }));
 

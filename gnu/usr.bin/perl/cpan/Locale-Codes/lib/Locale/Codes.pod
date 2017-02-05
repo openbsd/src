@@ -14,49 +14,49 @@ Currently, the following modules are included:
 
 =over 4
 
-=item B<Locale::Codes::Country, Locale::Country>
+=item L<Locale::Codes::Country>, L<Locale::Country>
 
 This includes support for country codes (such as those listed in ISO-3166)
 to specify the country.
 
-Because this module was originally distributed as Locale::Country, it is
+Because this module was originally distributed as L<Locale::Country>, it is
 also available under that name.
 
-=item B<Locale::Codes::Language, Locale::Language>
+=item L<Locale::Codes::Language>, L<Locale::Language>
 
 This includes support for language codes (such as those listed in ISO-639)
 to specify the language.
 
-Because this module was originally distributed as Locale::Language, it is
+Because this module was originally distributed as L<Locale::Language>, it is
 also available under that name.
 
-=item B<Locale::Codes::Currency, Locale::Currency>
+=item L<Locale::Codes::Currency>, L<Locale::Currency>
 
 This includes support for currency codes (such as those listed in ISO-4217)
 to specify the currency.
 
-Because this module was originally distributed as Locale::Currency, it is
+Because this module was originally distributed as L<Locale::Currency>, it is
 also available under that name.
 
-=item B<Locale::Codes::Script, Locale::Script>
+=item L<Locale::Codes::Script>, L<Locale::Script>
 
 This includes support for script codes (such as those listed in ISO-15924)
 to specify the script.
 
-Because this module was originally distributed as Locale::Script, it is
+Because this module was originally distributed as L<Locale::Script>, it is
 also available under that name.
 
-=item B<Locale::Codes::LangExt>
+=item L<Locale::Codes::LangExt>
 
 This includes support for language extension codes (such as those listed
 in the IANA language registry) to specify the language extension.
 
-=item B<Locale::Codes::LangVar>
+=item L<Locale::Codes::LangVar>
 
 This includes support for language variation codes (such as those listed
 in the IANA language registry) to specify the language variation.
 
-=item B<Locale::Codes::LangFam>
+=item L<Locale::Codes::LangFam>
 
 This includes support for language family codes (such as those listed
 in ISO 639-5) to specify families of languages.
@@ -65,11 +65,12 @@ in ISO 639-5) to specify families of languages.
 
 Each module can support an arbitrary number of code sets, and it is
 not required that the relationship between these code sets be
-one-to-one.  For example, the Locale::Codes::Country module supports
-code sets from ISO-3166 and the IANA standard, and they do not
-break the world down into exactly the same sets of countries. This
-does not cause any problem (though converting codes from ISO-3166 to
-IANA or back will not work except for countries that are one-to-one).
+one-to-one.  For example, the L<Locale::Codes::Country> module
+supports code sets from ISO-3166 and the IANA standard, and those two
+standards do not break the world down into exactly the same sets of
+countries. This does not cause any problem (though converting codes
+from ISO-3166 to IANA or back will not work except for countries that
+are one-to-one).
 
 All data in all of these modules comes directly from the original
 standards (or as close to direct as possible), so it should be
@@ -106,7 +107,8 @@ in the distribution including:
 =back
 
 These modules are not intended to be used by programmers. They contain functions
-or data that are used by the modules listed above.
+or data that are used by the modules listed above.  No support of any kind is
+offered for using these modules directly.  They may be modified at any time.
 
 =head1 NEW CODE SETS
 
@@ -179,7 +181,7 @@ a few of the most common ones are included in the data. The country
 code for "United States" is "us", so:
 
    country2code('United States');
-      => "us"
+     => "us"
 
 Now the following will also return 'us':
 
@@ -199,11 +201,11 @@ country (please don't request this... I've already added it).
 
 On the other hand, a request to add Zaire as an alias for "Congo, The
 Democratic Republic of" will not be honored. The country's official
-name is no longer Zaire, so adding it as an alias violates the standard.
-Zaire was kept as an alias in versions prior to 3.00, but it has been
-removed. Other aliases (if any) which no longer appear in any standard
-(and which are not common variations of the name in the standards)
-have also been removed.
+name is no longer Zaire, so adding it as an alias violates the
+standard.  Zaire was kept as an alias in versions of this module prior
+to 3.00, but it has been removed. Other aliases (if any) which no
+longer appear in any standard (and which are not common variations of
+the name in the standards) have also been removed.
 
 =head1 DEPRECATED CODES
 
@@ -216,47 +218,47 @@ available), as of version 3.20, every code which has ever been included
 in these modules can be referenced.
 
 For more information, refer to the documentation on the code2XXX, XXX2code,
-all_XXX_codes, and all_XXX_names function in the B<Locale::Codes::API>
+all_XXX_codes, and all_XXX_names function in the L<Locale::Codes::API>
 documentation.
 
 =head1 SEE ALSO
 
 =over 4
 
-=item B<Locale::Codes::API>
+=item L<Locale::Codes::API>
 
 The list of functions available in each of the modules listed below.
 The APIs for each module are exactly identical.
 
-=item B<Locale::Codes::Country>
+=item L<Locale::Codes::Country>
 
 Codes for identification of countries.
 
-=item B<Locale::Codes::Language>
+=item L<Locale::Codes::Language>
 
 Codes for identification of languages.
 
-=item B<Locale::Codes::Script>
+=item L<Locale::Codes::Script>
 
 Codes for identification of scripts.
 
-=item B<Locale::Codes::Currency>
+=item L<Locale::Codes::Currency>
 
 Codes for identification of currencies and funds.
 
-=item B<Locale::Codes::LangExt>
+=item L<Locale::Codes::LangExt>
 
 Codes for identification of language extensions.
 
-=item B<Locale::Codes::LangVar>
+=item L<Locale::Codes::LangVar>
 
 Codes for identification of language variations.
 
-=item B<Locale::Codes::LangFam>
+=item L<Locale::Codes::LangFam>
 
 Codes for identification of language families.
 
-=item B<Locale::Codes::Changes>
+=item L<Locale::Codes::Changes>
 
 A history of changes made to this distribution.
 
@@ -282,14 +284,14 @@ with Neil Bower's permission.  All problems or comments should be
 sent there.  Alternately, problems can be reported using the
 perl problem tracker at:
 
-   https://rt.cpan.org/Dist/Display.html?Queue=Locale-Codes
+   L<https://rt.cpan.org/Dist/Display.html?Queue=Locale-Codes>
 
 =head1 COPYRIGHT
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001      Michael Hennecke (Locale::Currency)
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2014 Sullivan Beck
+   Copyright (c) 2010-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

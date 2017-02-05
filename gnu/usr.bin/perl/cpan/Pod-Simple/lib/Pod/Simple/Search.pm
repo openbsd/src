@@ -1,10 +1,9 @@
-
 require 5.005;
 package Pod::Simple::Search;
 use strict;
 
 use vars qw($VERSION $MAX_VERSION_WITHIN $SLEEPY);
-$VERSION = '3.28';   ## Current version of this package
+$VERSION = '3.32';   ## Current version of this package
 
 BEGIN { *DEBUG = sub () {0} unless defined &DEBUG; }   # set DEBUG level
 use Carp ();
@@ -13,12 +12,13 @@ $SLEEPY = 1 if !defined $SLEEPY and $^O =~ /mswin|mac/i;
   # flag to occasionally sleep for $SLEEPY - 1 seconds.
 
 $MAX_VERSION_WITHIN ||= 60;
+my $IS_CASE_INSENSITIVE = -e uc __FILE__ && -e lc __FILE__;
 
 #############################################################################
 
 #use diagnostics;
 use File::Spec ();
-use File::Basename qw( basename );
+use File::Basename qw( basename dirname );
 use Config ();
 use Cwd qw( cwd );
 
@@ -26,6 +26,7 @@ use Cwd qw( cwd );
 __PACKAGE__->_accessorize(  # Make my dumb accessor methods
  'callback', 'progress', 'dir_prefix', 'inc', 'laborious', 'limit_glob',
  'limit_re', 'shadows', 'verbose', 'name2path', 'path2name', 'recurse',
+ 'ciseen'
 );
 #==========================================================================
 
@@ -52,11 +53,11 @@ sub survey {
 
   $self->_expand_inc( \@search_dirs );
 
-
   $self->{'_scan_count'} = 0;
   $self->{'_dirs_visited'} = {};
   $self->path2name( {} );
   $self->name2path( {} );
+  $self->ciseen( {} );
   $self->limit_re( $self->_limit_glob_to_limit_re ) if $self->{'limit_glob'};
   my $cwd = cwd();
   my $verbose  = $self->verbose;
@@ -116,12 +117,12 @@ sub survey {
   }
   $self->progress and $self->progress->done(
    "Noted $$self{'_scan_count'} Pod files total");
+  $self->ciseen( {} );
 
   return unless defined wantarray; # void
   return $self->name2path unless wantarray; # scalar
   return $self->name2path, $self->path2name; # list
 }
-
 
 #==========================================================================
 sub _make_search_callback {
@@ -129,10 +130,20 @@ sub _make_search_callback {
 
   # Put the options in variables, for easy access
   my( $laborious, $verbose, $shadows, $limit_re, $callback, $progress,
-      $path2name, $name2path, $recurse) =
+      $path2name, $name2path, $recurse, $ciseen) =
     map scalar($self->$_()),
      qw(laborious verbose shadows limit_re callback progress
-        path2name name2path recurse);
+        path2name name2path recurse ciseen);
+  my ($seen, $remember, $files_for);
+  if ($IS_CASE_INSENSITIVE) {
+      $seen      = sub { $ciseen->{ lc $_[0] } };
+      $remember  = sub { $name2path->{ $_[0] } = $ciseen->{ lc $_[0] } = $_[1]; };
+      $files_for = sub { my $n = lc $_[0]; grep { lc $path2name->{$_} eq $n } %{ $path2name } };
+  } else {
+      $seen      = sub { $name2path->{ $_[0] } };
+      $remember  = sub { $name2path->{ $_[0] } = $_[1] };
+      $files_for = sub { my $n = $_[0]; grep { $path2name->{$_} eq $n } %{ $path2name } };
+  }
 
   my($file, $shortname, $isdir, $modname_bits);
   return sub {
@@ -172,7 +183,6 @@ sub _make_search_callback {
       return; # (not pruning);
     }
 
-      
     # Make sure it's a file even worth even considering
     if($laborious) {
       unless(
@@ -198,31 +208,26 @@ sub _make_search_callback {
       return;
     }
 
-    if( !$shadows and $name2path->{$name} ) {
+    if( !$shadows and $seen->($name) ) {
       $verbose and print "Not worth considering $file ",
         "-- already saw $name as ",
-        join(' ', grep($path2name->{$_} eq $name, keys %$path2name)), "\n";
+        join(' ', $files_for->($name)), "\n";
       return;
     }
-        
+
     # Put off until as late as possible the expense of
     #  actually reading the file:
-    if( m/\.pod\z/is ) {
-      # just assume it has pod, okay?
-    } else {
-      $progress and $progress->reach($self->{'_scan_count'}, "Scanning $file");
-      return unless $self->contains_pod( $file );
-    }
+    $progress and $progress->reach($self->{'_scan_count'}, "Scanning $file");
+    return unless $self->contains_pod( $file );
     ++ $self->{'_scan_count'};
 
     # Or finally take note of it:
-    if( $name2path->{$name} ) {
+    if ( my $prev = $seen->($name)  ) {
       $verbose and print
        "Duplicate POD found (shadowing?): $name ($file)\n",
-       "    Already seen in ",
-       join(' ', grep($path2name->{$_} eq $name, keys %$path2name)), "\n";
+       "    Already seen in ", join(' ', $files_for->($name)), "\n";
     } else {
-      $name2path->{$name} = $file; # Noting just the first occurrence
+      $remember->($name, $file); # Noting just the first occurrence
     }
     $verbose and print "  Noting $name = $file\n";
     if( $callback ) {
@@ -327,7 +332,14 @@ sub _recurse_dir {
       closedir(INDIR);
       return
     }
-    my @items = sort readdir(INDIR);
+
+    # Load all items; put no extension before .pod before .pm before .plx?.
+    my @items = map { $_->[0] }
+      sort { $a->[1] cmp $b->[1] || $b->[2] cmp $a->[2] }
+      map {
+        (my $t = $_) =~ s/[.]p(m|lx?|od)\z//;
+        [$_, $t, lc($1 || 'z') ]
+      } readdir(INDIR);
     closedir(INDIR);
 
     push @$modname_bits, $dir_bare unless $dir_bare eq '';
@@ -470,13 +482,15 @@ sub _expand_inc {
   my($self, $search_dirs) = @_;
   
   return unless $self->{'inc'};
+  my %seen = map { File::Spec->rel2abs($_) => 1 } @{ $search_dirs };
 
   if ($^O eq 'MacOS') {
     push @$search_dirs,
-      grep $_ ne File::Spec->curdir, $self->_mac_whammy(@INC);
+      grep { !$seen{ File::Spec->rel2abs($_) }++ } $self->_mac_whammy(@INC);
   # Any other OSs need custom handling here?
   } else {
-    push @$search_dirs, grep $_ ne File::Spec->curdir,  @INC;
+    push @$search_dirs,
+      grep { !$seen{ File::Spec->rel2abs($_) }++ } @INC;
   }
 
   $self->{'laborious'} = 0;   # Since inc said to use INC
@@ -529,6 +543,14 @@ sub _limit_glob_to_limit_re {
 
 # contribution mostly from Tim Jenness <t.jenness@jach.hawaii.edu>
 
+sub _actual_filenames {
+    my $dir = shift;
+    my $fn = lc shift;
+    opendir my $dh, $dir or return;
+    return map { File::Spec->catdir($dir, $_) }
+        grep { lc $_  eq $fn } readdir $dh;
+}
+
 sub find {
   my($self, $pod, @search_dirs) = @_;
   $self = $self->new unless ref $self; # tolerate being a class method
@@ -545,34 +567,17 @@ sub find {
 
   #@search_dirs = File::Spec->curdir unless @search_dirs;
   
-  if( $self->inc ) {
-    if( $^O eq 'MacOS' ) {
-      push @search_dirs, $self->_mac_whammy(@INC);
-    } else {
-      push @search_dirs,                    @INC;
-    }
-
-    # Add location of pod documentation for perl man pages (eg perlfunc)
-    # This is a pod directory in the private install tree
-    #my $perlpoddir = File::Spec->catdir($Config::Config{'installprivlib'},
-    #					'pod');
-    #push (@search_dirs, $perlpoddir)
-    #  if -d $perlpoddir;
-
-    # Add location of binaries such as pod2text:
-    push @search_dirs, $Config::Config{'scriptdir'};
-     # and if that's undef or q{} or nonexistent, we just ignore it later
-  }
+  $self->_expand_inc(\@search_dirs);
+  # Add location of binaries such as pod2text:
+  push @search_dirs, $Config::Config{'scriptdir'} if $self->inc;
 
   my %seen_dir;
- Dir:
-  foreach my $dir ( @search_dirs ) {
+  while (my $dir = shift @search_dirs ) {
     next unless defined $dir and length $dir;
     next if $seen_dir{$dir};
     $seen_dir{$dir} = 1;
     unless(-d $dir) {
       print "Directory $dir does not exist\n" if $verbose;
-      next Dir;
     }
 
     print "Looking in directory $dir\n" if $verbose;
@@ -581,16 +586,36 @@ sub find {
 
     foreach my $ext ('', '.pod', '.pm', '.pl') {   # possible extensions
       my $fullext = $fullname . $ext;
-      if( -f $fullext  and  $self->contains_pod( $fullext ) ){
+      if ( -f $fullext and $self->contains_pod($fullext) ) {
         print "FOUND: $fullext\n" if $verbose;
+        if (@parts > 1 && lc $parts[0] eq 'pod' && $IS_CASE_INSENSITIVE && $ext eq '.pod') {
+          # Well, this file could be for a program (perldoc) but we actually
+          # want a module (Pod::Perldoc). So see if there is a .pm with the
+          # proper casing.
+          my $subdir = dirname $fullext;
+          unless (grep { $fullext eq $_  } _actual_filenames $subdir, "$parts[-1].pod") {
+            print "# Looking for alternate spelling in $subdir\n" if $verbose;
+            # Try the .pm file.
+            my $pm = $fullname . '.pm';
+            if ( -f $pm and $self->contains_pod($pm) ) {
+              # Prefer the .pm if its case matches.
+              if (grep { $pm eq $_  } _actual_filenames $subdir, "$parts[-1].pm") {
+                print "FOUND: $fullext\n" if $verbose;
+                return $pm;
+              }
+            }
+          }
+        }
         return $fullext;
       }
     }
-    my $subdir = File::Spec->catdir($dir,'pod');
-    if(-d $subdir) {  # slip in the ./pod dir too
-      $verbose and print "Noticing $subdir and stopping there...\n";
-      $dir = $subdir;
-      redo Dir;
+
+    # Case-insensitively Look for ./pod directories and slip them in.
+    for my $subdir ( _actual_filenames($dir, 'pod') ) {
+      if (-d $subdir) {
+        $verbose and print "Noticing $subdir and looking there...\n";
+        unshift @search_dirs, $subdir;
+      }
     }
   }
 
@@ -768,7 +793,6 @@ are produced.  (Setting verbose to 1 turns on some messages, and setting
 it to 2 turns on even more messages, i.e., makes the following search(es)
 even more verbose than 1 would make them.)
 
-
 =item $search->limit_glob( I<some-glob-string> );
 
 This option means that you want to limit the results just to items whose
@@ -806,6 +830,10 @@ seeing only files with Perl-like extensions, omitting subdirectories
 that are numeric but do I<not> match the current Perl interpreter's
 version ID, suppressing F<site_perl> as a module hierarchy name, etc.
 
+=item $search->recurse( I<true-or-false> );
+
+Unless you set this attribute to a false value, Pod::Search will
+recurse into subdirectories of the search directories.
 
 =item $search->shadows( I<true-or-false> );
 
@@ -834,7 +862,7 @@ C<limit_glob> attribute is used instead.
 
 Setting this attribute to a string value means that the searches should
 begin in the specified subdirectory name (like "Pod" or "File::Find",
-also expressable as "File/Find"). For example, the search option
+also expressible as "File/Find"). For example, the search option
 C<< $search->limit_glob("File::Find::R*") >>
 is the same as the combination of the search options
 C<< $search->limit_re("^File::Find::R") -> dir_prefix("File::Find") >>.
@@ -942,8 +970,7 @@ version than the system's general path dirs in general.)
 The options to this argument is a list of either directories that are
 searched recursively, or files.  (Usually you wouldn't specify files,
 but just dirs.)  Or you can just specify an empty-list, as in
-$name2path; with the
-C<inc> option on, as it is by default, teh
+$name2path; with the C<inc> option on, as it is by default.
 
 The POD names of files are the plain basenames with any Perl-like
 extension (.pm, .pl, .pod) stripped, and path separators replaced by
@@ -1004,6 +1031,7 @@ with default attribute values is used.
 
 Returns true if the supplied filename (not POD module) contains some Pod
 documentation.
+
 =head1 SUPPORT
 
 Questions or discussion about POD and Pod::Simple should be sent to the
@@ -1011,8 +1039,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

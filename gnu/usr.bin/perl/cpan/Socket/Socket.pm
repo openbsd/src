@@ -3,7 +3,7 @@ package Socket;
 use strict;
 { use 5.006001; }
 
-our $VERSION = '2.013';
+our $VERSION = '2.020_03'; # patched in perl5.git
 
 =head1 NAME
 
@@ -760,8 +760,9 @@ our @EXPORT_OK = qw(
 	IP_DROP_SOURCE_MEMBERSHIP IP_MULTICAST_IF IP_MULTICAST_LOOP
 	IP_MULTICAST_TTL
 
-	IPPROTO_IP IPPROTO_IPV6 IPPROTO_RAW IPPROTO_ICMP IPPROTO_TCP
-	IPPROTO_UDP
+	IPPROTO_IP IPPROTO_IPV6 IPPROTO_RAW IPPROTO_ICMP IPPROTO_IGMP
+	IPPROTO_TCP IPPROTO_UDP IPPROTO_GRE IPPROTO_ESP IPPROTO_AH
+	IPPROTO_SCTP
 
 	IPTOS_LOWDELAY IPTOS_THROUGHPUT IPTOS_RELIABILITY IPTOS_MINCOST
 
@@ -935,7 +936,7 @@ if( defined &getaddrinfo ) {
 # family
 
 # Borrowed from Regexp::Common::net
-my $REGEXP_IPv4_DECIMAL = qr/25[0-5]|2[0-4][0-9]|1?[0-9][0-9]{1,2}/;
+my $REGEXP_IPv4_DECIMAL = qr/25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{1,2}/;
 my $REGEXP_IPv4_DOTTEDQUAD = qr/$REGEXP_IPv4_DECIMAL\.$REGEXP_IPv4_DECIMAL\.$REGEXP_IPv4_DECIMAL\.$REGEXP_IPv4_DECIMAL/;
 
 sub fake_makeerr
@@ -998,7 +999,7 @@ sub fake_getaddrinfo
     my @ports; # Actually ARRAYrefs of [ socktype, protocol, port ]
     my $protname = "";
     if( $protocol ) {
-	$protname = getprotobynumber( $protocol );
+	$protname = eval { getprotobynumber( $protocol ) };
     }
 
     if( $service ne "" and $service !~ m/^\d+$/ ) {
@@ -1029,7 +1030,7 @@ sub fake_getaddrinfo
 	    $port = 0;
 	}
 
-	push @ports, [ $this_socktype, scalar getprotobyname( $this_protname ) || 0, $port ];
+	push @ports, [ $this_socktype, eval { scalar getprotobyname( $this_protname ) } || 0, $port ];
     }
 
     my @ret;

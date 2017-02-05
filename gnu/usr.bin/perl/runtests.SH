@@ -28,6 +28,21 @@ $spitshell >>runtests <<'!NO!SUBS!'
 
 export PATH || (echo "OOPS, this isn't sh.  Desperation time.  I will feed myself to sh."; sh $0; kill $$)
 
+# Avoid "warning: jobserver unavailable: using -j1." warnings under GNU make.
+# When gmake -j N spawns a child, it passes
+#    MAKEFLAGS=" --jobserver-fds=3,4 -j".
+# in the environment.  Also, if make recognises that the child is another
+# make (e.g. it's invoked as $(MAKE) or +command), it keeps open fd's 3
+# and 4 to allow the child process to access the job server. Otherwise,
+# those fd's aren't kept open.
+# In the case where one does 'make -j 16 test_harness', this script is
+# called with MAKEFLAGS set, but fd's 3 and 4 closed. Later when
+# descendents of this script run cpan/ExtUtils-Constant/t/Constant.t
+# which itelf invokes make, the warnings ensue.
+
+unset MAKEFLAGS
+
+
 case $# in
     0)
 	echo "runtests tty_flag ..."

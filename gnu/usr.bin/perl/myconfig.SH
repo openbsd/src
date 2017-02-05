@@ -44,8 +44,8 @@ Summary of my $package (revision $revision $version_patchlevel_string) configura
     optimize='$optimize',
     cppflags='$cppflags'
     ccversion='$ccversion', gccversion='$gccversion', gccosandvers='$gccosandvers'
-    intsize=$intsize, longsize=$longsize, ptrsize=$ptrsize, doublesize=$doublesize, byteorder=$byteorder
-    d_longlong=$d_longlong, longlongsize=$longlongsize, d_longdbl=$d_longdbl, longdblsize=$longdblsize
+    intsize=$intsize, longsize=$longsize, ptrsize=$ptrsize, doublesize=$doublesize, byteorder=$byteorder, doublekind=$doublekind
+    d_longlong=$d_longlong, longlongsize=$longlongsize, d_longdbl=$d_longdbl, longdblsize=$longdblsize, longdblkind=$longdblkind
     ivtype='$ivtype', ivsize=$ivsize, nvtype='$nvtype', nvsize=$nvsize, Off_t='$lseektype', lseeksize=$lseeksize
     alignbytes=$alignbytes, prototype=$prototype
   Linker and Libraries:

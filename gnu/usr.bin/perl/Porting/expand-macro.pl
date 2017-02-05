@@ -138,12 +138,14 @@ expand-macro.pl - expand C macros using the C preprocessor
 
 =head1 SYNOPSIS
 
-  expand-macro.pl [options] [ < macro-name | macro-expression | - > [headers] ]
+  expand-macro.pl [options]
+                  [ < macro-name | macro-expression | - > [headers] ]
 
   options:
     -f		use 'indent' to format output
     -F	<tool>	use <tool> to format output  (instead of -f)
-    -e		erase try.[ic] instead of failing when they're present (errdetect)
+    -e		erase try.[ic] instead of failing when they're present
+                (errdetect)
     -k		keep them after generating (for handy inspection)
     -v		verbose
     -I <indent-opts>	passed into indent

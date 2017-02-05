@@ -87,7 +87,8 @@ BEGIN {
     }
 }
 
-our $VERSION = '1.3301';
+our $VERSION = '1.40';
+$VERSION =~ tr/_//d;
 
 our $MaxEvalLen = 0;
 our $Verbose    = 0;
@@ -229,7 +230,7 @@ sub caller_info {
             my $overflow;
             if ( $MaxArgNums and @args > $MaxArgNums )
             {    # More than we want to show?
-                $#args = $MaxArgNums;
+                $#args = $MaxArgNums - 1;
                 $overflow = 1;
             }
 
@@ -299,12 +300,32 @@ sub format_arg {
 		next;
 	    }
 	    my $o = ord($c);
-	    substr $arg, $i, 1, sprintf("\\x{%x}", $o)
-		if $o < 0x20 || $o > 0x7f;
+
+            # This code is repeated in Regexp::CARP_TRACE()
+            if ($] ge 5.007_003) {
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+		  if utf8::native_to_unicode($o) < utf8::native_to_unicode(0x20)
+                  || utf8::native_to_unicode($o) > utf8::native_to_unicode(0x7e);
+            } elsif (ord("A") == 65) {
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+                    if $o < 0x20 || $o > 0x7e;
+            } else { # Early EBCDIC
+
+                # 3 EBCDIC code pages supported then;  all controls but one
+                # are the code points below SPACE.  The other one is 0x5F on
+                # POSIX-BC; FF on the other two.
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+                    if $o < ord(" ") || ((ord ("^") == 106)
+                                          ? $o == 0x5f
+                                          : $o == 0xff);
+            }
 	}
     } else {
 	$arg =~ s/([\"\\\$\@])/\\$1/g;
-	$arg =~ s/([^ -~])/sprintf("\\x{%x}",ord($1))/eg;
+        # This is all the ASCII printables spelled-out.  It is portable to all
+        # Perl versions and platforms (such as EBCDIC).  There are other more
+        # compact ways to do this, but may not work everywhere every version.
+        $arg =~ s/([^ !"\$\%#'()*+,\-.\/0123456789:;<=>?\@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz\{|}~])/sprintf("\\x{%x}",ord($1))/eg;
     }
     downgrade($arg, 1);
     return "\"".$arg."\"".$suffix;
@@ -317,11 +338,25 @@ sub Regexp::CARP_TRACE {
 	for(my $i = length($arg); $i--; ) {
 	    my $o = ord(substr($arg, $i, 1));
 	    my $x = substr($arg, 0, 0);   # work around bug on Perl 5.8.{1,2}
-	    substr $arg, $i, 1, sprintf("\\x{%x}", $o)
-		if $o < 0x20 || $o > 0x7f;
+
+            # This code is repeated in format_arg()
+            if ($] ge 5.007_003) {
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+		  if utf8::native_to_unicode($o) < utf8::native_to_unicode(0x20)
+                  || utf8::native_to_unicode($o) > utf8::native_to_unicode(0x7e);
+            } elsif (ord("A") == 65) {
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+                    if $o < 0x20 || $o > 0x7e;
+            } else { # Early EBCDIC
+                substr $arg, $i, 1, sprintf("\\x{%x}", $o)
+                    if $o < ord(" ") || ((ord ("^") == 106)
+                                          ? $o == 0x5f
+                                          : $o == 0xff);
+            }
 	}
     } else {
-	$arg =~ s/([^ -~])/sprintf("\\x{%x}",ord($1))/eg;
+        # See comment in format_arg() about this same regex.
+        $arg =~ s/([^ !"\$\%#'()*+,\-.\/0123456789:;<=>?\@ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\\\]^_`abcdefghijklmnopqrstuvwxyz\{|}~])/sprintf("\\x{%x}",ord($1))/eg;
     }
     downgrade($arg, 1);
     my $suffix = "";
@@ -410,7 +445,9 @@ sub long_error_loc {
 }
 
 sub longmess_heavy {
-    return @_ if ref( $_[0] );    # don't break references as exceptions
+    if ( ref( $_[0] ) ) {   # don't break references as exceptions
+        return wantarray ? @_ : $_[0];
+    }
     my $i = long_error_loc();
     return ret_backtrace( $i, @_ );
 }
@@ -749,7 +786,8 @@ Defaults to C<64>.
 =head2 $Carp::MaxArgNums
 
 This variable determines how many arguments to each function to show.
-Use a value of C<0> to show all arguments to a function call.
+Use a false value to show all arguments to a function call.  To suppress all
+arguments, use C<-1> or C<'0 but true'>.
 
 Defaults to C<8>.
 
@@ -865,13 +903,16 @@ The Carp routines don't handle exception objects currently.
 If called with a first argument that is a reference, they simply
 call die() or warn(), as appropriate.
 
-Some of the Carp code assumes that Perl's basic character encoding is
-ASCII, and will go wrong on an EBCDIC platform.
-
 =head1 SEE ALSO
 
 L<Carp::Always>,
 L<Carp::Clan>
+
+=head1 CONTRIBUTING
+
+L<Carp> is maintained by the perl 5 porters as part of the core perl 5
+version control repository. Please see the L<perlhack> perldoc for how to
+submit patches and contribute to it.
 
 =head1 AUTHOR
 

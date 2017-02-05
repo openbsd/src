@@ -141,12 +141,6 @@ Andreas' email address at:
 
     https://pause.perl.org/pause/query?ACTION=pause_04imprint
 
-=head3 search.cpan.org pumpkin status
-
-Make sure that search.cpan.org knows that you're allowed to upload
-perl distros. Contact Graham Barr to make sure that you're on the right
-list.
-
 =head3 rt.perl.org update access
 
 Make sure you have permission to close tickets on L<http://rt.perl.org/>
@@ -165,6 +159,20 @@ release.  Have a chat with whichever evil perl porter tried to talk
 you into the idea in the first place to figure out the best way to
 resolve the issue.
 
+=head3 web-based file share
+
+You will need to be able to share tarballs with #p5p members for
+pre-release testing, and you may wish to upload to PAUSE via URL.
+Make sure you have a way of sharing files, such as a web server or
+file-sharing service.
+
+Porters have access to the "dromedary" server (users.perl5.git.perl.org),
+which has a F<public_html> directory to share files with.
+(L<http://users.perl5.git.perl.org/~username/perl-5.xx.y.tar.gz>)
+
+If you use Dropbox, you can append "raw=1" as a parameter to their usual
+sharing link to allow direct download (albeit with redirects).
+
 =head3 git clone of https://github.com/perlorg/perlweb
 
 For updating the L<http://dev.perl.org> web pages, either a Github account or
@@ -174,6 +182,13 @@ is only needed on the day of the release or shortly afterwards.
 =head3 Quotation for release announcement epigraph
 
 You will need a quotation to use as an epigraph to your release announcement.
+
+=head3 Install the previous version of perl
+
+During the testing phase of the release you have created, you will be
+asked to compare the installed files with a previous install. Save yourself
+some time on release day, and have a (clean) install of the previous
+version ready.
 
 =head2 Building a release - advance actions
 
@@ -228,7 +243,7 @@ necessary, fix things up. For example, you might think that both blead
 and maint are synchronised with a particular CPAN module, but one might
 have some extra changes.
 
-=head3 How to sync a CPAN module with a cpan/ distro
+=head3 How to sync a CPAN module with a cpanE<sol> distro
 
 =over 4
 
@@ -249,7 +264,7 @@ C<git checkout .gitignore> in the F<cpan/Distro> directory.
 =item *
 
 Remove files we do not need. That is, remove any files that match the
-entries in C<@IGNORABLE> in F<Porting/Maintainer.pl>, and anything that
+entries in C<@IGNORABLE> in F<Porting/Maintainers.pl>, and anything that
 matches the C<EXCLUDED> section of the distro's entry in the C<%Modules>
 hash.
 
@@ -263,7 +278,7 @@ into the repository anyway.
 =item *
 
 For any new files in the distro, determine whether they are needed.
-If not, delete them, and list them in either C<EXCLUDED> or C<@INGORE>.
+If not, delete them, and list them in either C<EXCLUDED> or C<@IGNORABLE>.
 Otherwise, add them to C<MANIFEST>, and run C<git add> to add the files
 to the repository.
 
@@ -292,7 +307,7 @@ Run the tests for the package.
 
 =item *
 
-Run the tests in F<t/porting>.
+Run the tests in F<t/porting> (C<make test_porting>).
 
 =item *
 
@@ -342,8 +357,8 @@ Ensure dual-life CPAN modules are stable, which comes down to:
 =head3 monitor smoke tests for failures
 
 Similarly, monitor the smoking of core tests, and try to fix.  See
-L<http://doc.procura.nl/smoke/index.html> and L<http://perl5.test-smoke.org/>
-for a summary. See also
+L<http://smoke.procura.nl/index.html>, L<http://perl5.test-smoke.org/>
+and L<http://perl.develop-help.com> for a summary. See also
 L<http://www.nntp.perl.org/group/perl.daily-build.reports/> which has
 the raw reports.
 
@@ -358,6 +373,11 @@ For any release except a BLEAD-POINT: Examine the relevant analysis report(s)
 at http://analysis.cpantesters.org/beforemaintrelease to see how the impending
 release is performing compared to previous releases with regard to building
 and testing CPAN modules.
+
+That page accepts a query parameter, C<pair> that takes a pair of
+colon-delimited versions to use for comparison.  For example:
+
+http://analysis.cpantesters.org/beforemaintrelease?pair=5.20.2:5.22.0%20RC1
 
 =head3 update perldelta
 
@@ -413,28 +433,31 @@ to guarantee binary compatibility in maint branches.
 After editing, regenerate uconfig.h (this must be run on a system with a
 /bin/sh available):
 
-    $ perl regen/uconfig_h.pl
+ $ perl regen/uconfig_h.pl
 
 This might not cause any new changes.
 
-You may have to add stub entries in C<%Module::CoreList::version>,
-C<%Module::CoreList::deprecated> and C<%Module::CoreList::Utils::delta>.
-If so, you must up their version numbers as well.
+You may also need to regen opcodes:
+
+ $ ./perl -Ilib regen/opcode.pl
 
 Test your changes:
 
-    $ git clean -xdf   # careful if you don't have local files to keep!
-    $ ./Configure -des -Dusedevel
-    $ make
-    $ make test
+ $ git clean -xdf   # careful if you don't have local files to keep!
+ $ ./Configure -des -Dusedevel
+ $ make
+ $ make test
+
+Do note that at this stage, porting tests will fail. They will continue
+to fail until you've updated Module::CoreList, as described below.
 
 Commit your changes:
 
-    $ git status
-    $ git diff
-    B<review the delta carefully>
+ $ git status
+ $ git diff
+ B<review the delta carefully>
 
-    $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
+ $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
 
 At this point you may want to compare the commit with a previous bump to
 see if they look similar.  See commit f7cf42bb69 for an example of a
@@ -461,7 +484,9 @@ release in the previous development cycle (so for example, for a 5.14.x
 release, this would be 5.13.11).
 
 For BLEAD-POINT releases, it needs to refer to the previous BLEAD-POINT
-release (so for 5.15.3 this would be 5.15.2).
+release (so for 5.15.3 this would be 5.15.2).  If the last release manager
+followed instructions, this should have already been done after the last
+blead release, so you may find nothing to do here.
 
 =head3 Check copyright years
 
@@ -630,6 +655,7 @@ Check those files over carefully:
 =head4 Bump version in Module::CoreList F<Changes>
 
 Also edit Module::CoreList's new version number in its F<Changes> file.
+This file is F<dist/Module-CoreList/Changes>.
 
 =head4 Add Module::CoreList version bump to perldelta
 
@@ -842,7 +868,7 @@ directory, they will still identify themselves using git tags and
 commits. (Note that for an odd-numbered version, perl will install
 itself as C<perl5.x.y>). C<perl -v> will identify itself as:
 
-    This is perl 5, version X, subversion Y (v5.X.Y (v5.X.Z-NNN-gdeadbeef))
+ This is perl 5, version X, subversion Y (v5.X.Y (v5.X.Z-NNN-gdeadbeef))
 
 where 5.X.Z is the latest tag, NNN the number of commits since this tag,
 and C<< deadbeef >> commit of that tag.
@@ -873,22 +899,32 @@ Over the lifetime of your distribution this will save a lot of
 people a small amount of download time and disk space, which adds
 up.
 
+In order to produce the C<xz> tarball, XZ Utils are required. The C<xz>
+utility is included with most modern UNIX-type operating systems and
+is available for Cygwin. A Windows port is available from
+L<http://tukaani.org/xz/>.
+
+B<IMPORTANT>: if you are on OS X, you must export C<COPYFILE_DISABLE=1>
+to prevent OS X resource files from being included in your tarball. After
+creating the tarball following the instructions below, inspect it to ensure
+you don't have files like F<._foobar>.
+
 Create a tarball. Use the C<-s> option to specify a suitable suffix for
 the tarball and directory name:
 
-    $ cd root/of/perl/tree
-    $ make distclean       # make sure distclean works
-    $ git clean -xdf       # make sure perl and git agree on files
-                           # git clean should not output anything!
-    $ git status           # and there's nothing lying around
+ $ cd root/of/perl/tree
+ $ make distclean       # make sure distclean works
+ $ git clean -xdf       # make sure perl and git agree on files
+                        # git clean should not output anything!
+ $ git status           # and there's nothing lying around
 
-    $ perl Porting/makerel -b -s RC1            # for a release candidate
-    $ perl Porting/makerel -b                   # for the release itself
+ $ perl Porting/makerel -bx -s RC1            # for a release candidate
+ $ perl Porting/makerel -bx                   # for the release itself
 
 This creates the  directory F<../perl-x.y.z-RC1> or similar, copies all
 the MANIFEST files into it, sets the correct permissions on them, then
 tars it up as F<../perl-x.y.z-RC1.tar.gz>. With C<-b>, it also creates a
-C<tar.bz2> file.
+C<tar.bz2> file. The C<-x> also produces a C<tar.xz> file.
 
 If you're getting your tarball suffixed with -uncommitted and you're sure
 your changes were all committed, you can override the suffix with:
@@ -908,15 +944,23 @@ Once you have a tarball it's time to test the tarball (not the repository).
 
 =head4 Copy the tarball to a web server
 
-Copy the tarballs (.gz and possibly .bz2) to a web server somewhere you
+Copy the tarballs (.gz and possibly .bz2 and .xz) to a web server somewhere you
 have access to.
 
-=head4 Download the tarball to another machine
+=head4 Download the tarball to another machine and unpack it
 
 Download the tarball to some other machine. For a release candidate,
 you really want to test your tarball on two or more different platforms
-and architectures. The #p5p IRC channel on irc.perl.org is a good place
-to find willing victims.
+and architectures.
+
+=head4 Ask #p5p to test the tarball on different platforms
+
+Once you've verified the tarball can be downloaded and unpacked,
+ask the #p5p IRC channel on irc.perl.org for volunteers to test the
+tarballs on whatever platforms they can.
+
+If you're not confident in the tarball, you can defer this step until after
+your own tarball testing, below.
 
 =head4 Check that F<Configure> works
 
@@ -931,9 +975,9 @@ Check that basic configuration and tests work on each test machine:
 
 Check that the test harness and install work on each test machine:
 
-    $ make distclean
-    $ ./Configure -des -Dprefix=/install/path && make all test_harness install
-    $ cd /install/path
+ $ make distclean
+ $ ./Configure -des -Dprefix=/install/path && make all test_harness install
+ $ cd /install/path
 
 =head4 Check C<perl -v> and C<perl -V>
 
@@ -1047,13 +1091,17 @@ high-reliability connection to the Internet, you should probably use the
 new release from wherever you put it for testers to find it.  This will
 eliminate anxious gnashing of teeth while you wait to see if your
 15 megabyte HTTP upload successfully completes across your slow, twitchy
-cable modem.  You can make use of your home directory on dromedary for
+cable modem.
+
+You can make use of your home directory on dromedary for
 this purpose: F<http://users.perl5.git.perl.org/~USERNAME> maps to
 F</home/USERNAME/public_html>, where F<USERNAME> is your login account
-on dromedary.  I<Remember>: if your upload is partially successful, you
+on dromedary.
+
+I<Remember>: if your upload is partially successful, you
 may need to contact a PAUSE administrator or even bump the version of perl.
 
-Upload both the .gz and .bz2 versions of the tarball.
+Upload the .gz, .xz, and .bz2 versions of the tarball.
 
 Do not proceed any further until you are sure that your tarballs are on CPAN.
 Check your authors directory www.cpan.org (the globally balanced "fast"
@@ -1308,9 +1356,9 @@ I<You MUST SKIP this step for RC, BLEAD-POINT>
 
 Copy the perldelta.pod for this release into blead; for example:
 
-    $ cd ..../blead
-    $ cp -i ../5.10.x/pod/perldelta.pod pod/perl5101delta.pod  # for example
-    $ git add pod/perl5101delta.pod
+ $ cd ..../blead
+ $ cp -i ../5.10.x/pod/perldelta.pod pod/perl5101delta.pod  #for example
+ $ git add pod/perl5101delta.pod
 
 Don't forget to set the NAME correctly in the new file (e.g. perl5101delta
 rather than perldelta).
@@ -1336,18 +1384,6 @@ Make sure any recent F<pod/perlhist.pod> entries are copied to
 F<perlhist.pod> on blead.  e.g.
 
     5.8.9         2008-Dec-14
-
-=head3 bump RT version number
-
-Log into http://rt.perl.org/ and check whether the new version is in the RT
-fields C<Perl Version> and C<Fixed In>. The easiest way to determine this is to
-open up any ticket for modification and check the drop downs next to the
-C<Perl Version> and C<Fixed In> labels.
-
-Here, try this link: L<https://rt.perl.org/Ticket/Modify.html?id=10000>
-
-If the new version is not listed there, send an email to C<perlbug-admin at
-perl.org> requesting this.
 
 =head3 Relax!
 
@@ -1414,8 +1450,8 @@ test_porting makefile target to check that they're ok.
 
 Run
 
-    $ ./perl -Ilib -MModule::CoreList \
-        -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
+ $ ./perl -Ilib -MModule::CoreList \
+    -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
 
 and check that it outputs "ok" to prove that Module::CoreList now knows
 about blead's current version.
@@ -1440,19 +1476,19 @@ to ensure that the tarballs are available on the website.
 
 =item *
 
-Check C</src> on CPAN (on a fast mirror) to ensure that links to
-the new tarballs have appeared: There should be links in C</src/5.0>
+Check F</src> on CPAN (on a fast mirror) to ensure that links to
+the new tarballs have appeared: There should be links in F</src/5.0>
 (which is accumulating all new versions), and (for BLEAD-FINAL and
-MAINT only) an appropriate mention in C</src/README.html> (which describes
+MAINT only) an appropriate mention in F</src/README.html> (which describes
 the latest versions in each stable branch, with links).
 
-The C</src/5.0> links should appear automatically, some hours after upload.
-If they don't, or the C</src> description is inadequate,
+The F</src/5.0> links should appear automatically, some hours after upload.
+If they don't, or the F</src> description is inadequate,
 ask Ask <ask@perl.org>.
 
 =item *
 
-Check L<http://www.cpan.org/src/> to ensure that the C</src> updates
+Check L<http://www.cpan.org/src/> to ensure that the F</src> updates
 have been correctly mirrored to the website.
 If they haven't, ask Ask <ask@perl.org>.
 

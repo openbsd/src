@@ -4,10 +4,13 @@
 # test the bit operators '&', '|', '^', '~', '<<', and '>>'
 #
 
+use warnings;
+no warnings 'deprecated';
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require "./test.pl";
+    require "./test.pl"; require "./charset_tools.pl";
     require Config;
 }
 
@@ -15,7 +18,7 @@ BEGIN {
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 174 + (10*13*2) + 5;
+plan tests => 192 + (10*13*2) + 5 + 29;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -63,19 +66,25 @@ is (($foo | $bar), ($Aoz x 75 . $zap));
 # ^ does not truncate
 is (($foo ^ $bar), ($Axz x 75 . $zap));
 
-# string constants
-sub _and($) { $_[0] & "+0" }
-sub _oar($) { $_[0] | "+0" }
-sub _xor($) { $_[0] ^ "+0" }
-is _and "waf", '# ',  'str var & const str'; # These three
-is _and  0,    '0',   'num var & const str';    # are from
-is _and "waf", '# ',  'str var & const str again'; # [perl #20661]
-is _oar "yit", '{yt', 'str var | const str';
-is _oar  0,    '0',   'num var | const str';
-is _oar "yit", '{yt', 'str var | const str again';
-is _xor "yit", 'RYt', 'str var ^ const str';
-is _xor  0,    '0',   'num var ^ const str';
-is _xor "yit", 'RYt', 'str var ^ const str again';
+# string constants.  These tests expect the bit patterns of these strings in
+# ASCII, so convert to that.
+sub _and($) { $_[0] & native_to_uni("+0") }
+sub _oar($) { $_[0] | native_to_uni("+0") }
+sub _xor($) { $_[0] ^ native_to_uni("+0") }
+is _and native_to_uni("waf"), native_to_uni('# '),  'str var & const str'; # [perl #20661]
+is _and native_to_uni("waf"), native_to_uni('# '),  'str var & const str again'; # [perl #20661]
+is _oar native_to_uni("yit"), native_to_uni('{yt'), 'str var | const str';
+is _oar native_to_uni("yit"), native_to_uni('{yt'), 'str var | const str again';
+is _xor native_to_uni("yit"), native_to_uni('RYt'), 'str var ^ const str';
+is _xor native_to_uni("yit"), native_to_uni('RYt'), 'str var ^ const str again';
+
+SKIP: {
+    skip "Converting a numeric doesn't work with EBCDIC unlike the above tests",
+         3 if $::IS_EBCDIC;
+    is _and  0, '0',   'num var & const str';     # [perl #20661]
+    is _oar  0, '0',   'num var | const str';
+    is _xor  0, '0',   'num var ^ const str';
+}
 
 # But don’t mistake a COW for a constant when assigning to it
 %h=(150=>1);
@@ -113,81 +122,69 @@ is (sprintf("%vd", v120.300 & v200.400), '72.256');
 is (sprintf("%vd", v120.300 | v200.400), '248.444');
 is (sprintf("%vd", v120.300 ^ v200.400), '176.188');
 #
-my $a = v120.300;
-my $b = v200.400;
-$a ^= $b;
-is (sprintf("%vd", $a), '176.188');
-my $a = v120.300;
-my $b = v200.400;
-$a |= $b;
-is (sprintf("%vd", $a), '248.444');
+{
+    my $a = v120.300;
+    my $b = v200.400;
+    $a ^= $b;
+    is (sprintf("%vd", $a), '176.188');
+}
+{
+    my $a = v120.300;
+    my $b = v200.400;
+    $a |= $b;
+    is (sprintf("%vd", $a), '248.444');
+}
 
 #
 # UTF8 ~ behaviour
 #
 
-my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
+{
+    my @not36;
 
-my @not36;
-
-for (0x100...0xFFF) {
-  $a = ~(chr $_);
-  if ($Is_EBCDIC) {
-      push @not36, sprintf("%#03X", $_)
-          if $a ne chr(~$_) or length($a) != 1;
-  }
-  else {
-      push @not36, sprintf("%#03X", $_)
-          if $a ne chr(~$_) or length($a) != 1 or ~$a ne chr($_);
-  }
-}
-is (join (', ', @not36), '');
-
-my @not37;
-
-for my $i (0xEEE...0xF00) {
-  for my $j (0x0..0x120) {
-    $a = ~(chr ($i) . chr $j);
-    if ($Is_EBCDIC) {
-        push @not37, sprintf("%#03X %#03X", $i, $j)
-	    if $a ne chr(~$i).chr(~$j) or
-	       length($a) != 2;
+    for (0x100...0xFFF) {
+    $a = ~(chr $_);
+        push @not36, sprintf("%#03X", $_)
+            if $a ne chr(~$_) or length($a) != 1 or ~$a ne chr($_);
     }
-    else {
-        push @not37, sprintf("%#03X %#03X", $i, $j)
-	    if $a ne chr(~$i).chr(~$j) or
-	       length($a) != 2 or 
-               ~$a ne chr($i).chr($j);
+    is (join (', ', @not36), '');
+
+    my @not37;
+
+    for my $i (0xEEE...0xF00) {
+        for my $j (0x0..0x120) {
+            $a = ~(chr ($i) . chr $j);
+                push @not37, sprintf("%#03X %#03X", $i, $j)
+                    if $a ne chr(~$i).chr(~$j) or
+                    length($a) != 2 or
+                    ~$a ne chr($i).chr($j);
+        }
     }
-  }
-}
-is (join (', ', @not37), '');
+    is (join (', ', @not37), '');
 
-SKIP: {
-  skip "EBCDIC" if $Is_EBCDIC;
-  is (~chr(~0), "\0");
-}
+    is (~chr(~0), "\0");
 
 
-my @not39;
+    my @not39;
 
-for my $i (0x100..0x120) {
-    for my $j (0x100...0x120) {
-	push @not39, sprintf("%#03X %#03X", $i, $j)
-	    if ~(chr($i)|chr($j)) ne (~chr($i)&~chr($j));
+    for my $i (0x100..0x120) {
+        for my $j (0x100...0x120) {
+            push @not39, sprintf("%#03X %#03X", $i, $j)
+                if ~(chr($i)|chr($j)) ne (~chr($i)&~chr($j));
+        }
     }
-}
-is (join (', ', @not39), '');
+    is (join (', ', @not39), '');
 
-my @not40;
+    my @not40;
 
-for my $i (0x100..0x120) {
-    for my $j (0x100...0x120) {
-	push @not40, sprintf("%#03X %#03X", $i, $j)
-	    if ~(chr($i)&chr($j)) ne (~chr($i)|~chr($j));
+    for my $i (0x100..0x120) {
+        for my $j (0x100...0x120) {
+            push @not40, sprintf("%#03X %#03X", $i, $j)
+                if ~(chr($i)&chr($j)) ne (~chr($i)|~chr($j));
+        }
     }
+    is (join (', ', @not40), '');
 }
-is (join (', ', @not40), '');
 
 
 # More variations on 19 and 22.
@@ -353,7 +350,7 @@ is($a, "\xFF", "~ works with utf-8");
 # This would cause a segfault without malloc wrap
 SKIP: {
   skip "No malloc wrap checks" unless $Config::Config{usemallocwrap};
-  like( runperl(prog => 'eval q($#a>>=1); print 1'), "^1\n?" );
+  like( runperl(prog => 'eval q($#a>>=1); print 1'), qr/^1\n?/ );
 }
 
 # [perl #37616] Bug in &= (string) and/or m//
@@ -438,31 +435,53 @@ SKIP: {
     is($b, chr(0x1FE) x 0x0FF . chr(0x101) x 2);
 }
 
-# update to pp_complement() via Coverity
-SKIP: {
-  # UTF-EBCDIC is limited to 0x7fffffff and can't encode ~0.
-  skip "EBCDIC" if $Is_EBCDIC;
 
-  my $str = "\x{10000}\x{800}";
-  # U+10000 is four bytes in UTF-8/UTF-EBCDIC.
-  # U+0800 is three bytes in UTF-8/UTF-EBCDIC.
+# New string- and number-specific bitwise ops
+{
+  use feature "bitwise";
+  no warnings "experimental::bitwise";
+  is "22" & "66", 2,    'numeric & with strings';
+  is "22" | "66", 86,   'numeric | with strings';
+  is "22" ^ "66", 84,   'numeric ^ with strings';
+  is ~"22" & 0xff, 233, 'numeric ~ with string';
+  is 22 &. 66, 22,     '&. with numbers';
+  is 22 |. 66, 66,     '|. with numbers';
+  is 22 ^. 66, "\4\4", '^. with numbers';
+  if ($::IS_EBCDIC) {
+    # ord('2') is 0xF2 on EBCDIC
+    is ~.22, "\x0d\x0d", '~. with number';
+  }
+  else {
+    # ord('2') is 0x32 on ASCII
+    is ~.22, "\xcd\xcd", '~. with number';
+  }
+  $_ = "22";
+  is $_ &= "66", 2,  'numeric &= with strings';
+  $_ = "22";
+  is $_ |= "66", 86, 'numeric |= with strings';
+  $_ = "22";
+  is $_ ^= "66", 84, 'numeric ^= with strings';
+  $_ = 22;
+  is $_ &.= 66, 22,     '&.= with numbers';
+  $_ = 22;
+  is $_ |.= 66, 66,     '|.= with numbers';
+  $_ = 22;
+  is $_ ^.= 66, "\4\4", '^.= with numbers';
 
-  no warnings "utf8";
-  { use bytes; $str =~ s/\C\C\z//; }
+ # signed vs. unsigned
+ ok ((~0 > 0 && do { use integer; ~0 } == -1));
 
-  # it's really bogus that (~~malformed) is \0.
-  my $ref = "\x{10000}\0";
-  is(~~$str, $ref);
+ my $bits = 0;
+ for (my $i = ~0; $i; $i >>= 1) { ++$bits; }
+ my $cusp = 1 << ($bits - 1);
 
-  # same test, but this time with a longer replacement string that
-  # exercises a different branch in pp_subsr()
-
-  $str = "\x{10000}\x{800}";
-  { use bytes; $str =~ s/\C\C\z/\0\0\0/; }
-
-  # it's also bogus that (~~malformed) is \0\0\0\0.
-  my $ref = "\x{10000}\0\0\0\0";
-  is(~~$str, $ref, "use bytes with long replacement");
+ ok (($cusp & -1) > 0 && do { use integer; $cusp & -1 } < 0);
+ ok (($cusp | 1) > 0 && do { use integer; $cusp | 1 } < 0);
+ ok (($cusp ^ 1) > 0 && do { use integer; $cusp ^ 1 } < 0);
+ ok ((1 << ($bits - 1)) == $cusp &&
+     do { use integer; 1 << ($bits - 1) } == -$cusp);
+ ok (($cusp >> 1) == ($cusp / 2) &&
+    do { use integer; abs($cusp >> 1) } == ($cusp / 2));
 }
 
 # ref tests
@@ -483,7 +502,7 @@ for my $str ("x", "\x{100}") {
 }
 
 sub PVBM () { "X" }
-index "foo", PVBM;
+1 if index "foo", PVBM;
 
 my $warn = 0;
 local $^W = 1;
@@ -557,7 +576,7 @@ my $strval;
     use overload q/|/ => sub { "y" };
 }
 
-ok(!eval { bless([], "Bar") | "x"; 1 },     "string overload can't use |");
+ok(!eval { 1 if bless([], "Bar") | "x"; 1 },"string overload can't use |");
 like($@, qr/no method found/,               "correct error");
 is(eval { bless([], "Baz") | "x" }, "y",    "| overload works");
 
@@ -568,5 +587,79 @@ $strval = "z";
 is("$obj", "z", "|= doesn't break string overload");
 
 # [perl #29070]
-$^A .= new version ~$_ for "\xce", v205, "\xcc";
+$^A .= new version ~$_ for eval sprintf('"\\x%02x"', 0xff - ord("1")),
+                           $::IS_EBCDIC ? v13 : v205, # 255 - ord('2')
+                           eval sprintf('"\\x%02x"', 0xff - ord("3"));
 is $^A, "123", '~v0 clears vstring magic on retval';
+
+{
+    my $w = $Config::Config{ivsize} * 8;
+
+    fail("unexpected w $w") unless $w == 32 || $w == 64;
+
+    is(1 << 1, 2, "UV 1 left shift 1");
+    is(1 >> 1, 0, "UV 1 right shift 1");
+
+    is(0x7b << -4, 0x007, "UV left negative shift == right shift");
+    is(0x7b >> -4, 0x7b0, "UV right negative shift == left shift");
+
+    is(0x7b <<  0, 0x07b, "UV left  zero shift == identity");
+    is(0x7b >>  0, 0x07b, "UV right zero shift == identity");
+
+    is(0x0 << -1, 0x0, "zero left  negative shift == zero");
+    is(0x0 >> -1, 0x0, "zero right negative shift == zero");
+
+    cmp_ok(1 << $w - 1, '==', 2 ** ($w - 1), # not is() because NV stringify.
+       "UV left $w - 1 shift == 2 ** ($w - 1)");
+    is(1 << $w,     0, "UV left shift $w     == zero");
+    is(1 << $w + 1, 0, "UV left shift $w + 1 == zero");
+
+    is(1 >> $w - 1, 0, "UV right shift $w - 1 == zero");
+    is(1 >> $w,     0, "UV right shift $w     == zero");
+    is(1 >> $w + 1, 0, "UV right shift $w + 1 == zero");
+
+    # Negative shiftees get promoted to UVs before shifting.  This is
+    # not necessarily the ideal behavior, but that is what is happening.
+    if ($w == 64) {
+        no warnings "portable";
+        no warnings "overflow"; # prevent compile-time warning for ivsize=4
+        is(-1 << 1, 0xFFFF_FFFF_FFFF_FFFE,
+           "neg UV (sic) left shift  = 0xFF..E");
+        is(-1 >> 1, 0x7FFF_FFFF_FFFF_FFFF,
+           "neg UV (sic) right right = 0x7F..F");
+    } elsif ($w == 32) {
+        no warnings "portable";
+        is(-1 << 1, 0xFFFF_FFFE, "neg left shift  == 0xFF..E");
+        is(-1 >> 1, 0x7FFF_FFFF, "neg right right == 0x7F..F");
+    }
+
+    {
+        # 'use integer' means use IVs instead of UVs.
+        use integer;
+
+        # No surprises here.
+        is(1 << 1, 2, "IV 1 left shift 1  == 2");
+        is(1 >> 1, 0, "IV 1 right shift 1 == 0");
+
+        # The left overshift should behave like without 'use integer',
+        # that is, return zero.
+        is(1 << $w,     0, "IV 1 left shift $w     == 0");
+        is(1 << $w + 1, 0, "IV 1 left shift $w + 1 == 0");
+        is(-1 << $w,     0, "IV -1 left shift $w     == 0");
+        is(-1 << $w + 1, 0, "IV -1 left shift $w + 1 == 0");
+
+        # Even for negative IVs, left shift is multiplication.
+        # But right shift should display the stuckiness to -1.
+        is(-1 <<      1, -2, "IV -1 left shift       1 == -2");
+        is(-1 >>      1, -1, "IV -1 right shift      1 == -1");
+
+        # As for UVs, negative shifting means the reverse shift.
+        is(-1 <<     -1, -1, "IV -1 left shift      -1 == -1");
+        is(-1 >>     -1, -2, "IV -1 right shift     -1 == -2");
+
+        # Test also at and around wordsize, expect stuckiness to -1.
+        is(-1 >> $w - 1, -1, "IV -1 right shift $w - 1 == -1");
+        is(-1 >> $w,     -1, "IV -1 right shift $w     == -1");
+        is(-1 >> $w + 1, -1, "IV -1 right shift $w + 1 == -1");
+    }
+}

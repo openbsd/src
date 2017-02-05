@@ -5,14 +5,10 @@
 #
 # Works by checking the debugging output of 'use re debug' and, if
 # available, -Dr. We use both to check that the different code paths
-# with Perl_foo() verses the my_foo() under ext/re/ don't cause any
+# with Perl_foo() versus the my_foo() under ext/re/ don't cause any
 # changes.
 
-use strict;
-use warnings;
-
 $| = 1;
-
 
 BEGIN {
     chdir 't' if -d 't';
@@ -21,6 +17,8 @@ BEGIN {
     skip_all_if_miniperl("no dynamic loading on miniperl, no re");
 }
 
+use strict;
+use warnings;
 
 plan tests => 48;
 

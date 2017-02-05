@@ -72,21 +72,29 @@ if ($^O eq 'VMS') {
        push @cmd, "-non_shared";
    }
 
-   push(@cmd,"-I$inc",ccflags(),'embed_test.c');
+   # XXX DAPM 12/2014: ExtUtils::Embed doesn't seem to provide API access
+   # to $Config{optimize} and so compiles the test code without
+   # optimisation on optimised perls. This causes the compiler to warn
+   # when -D_FORTIFY_SOURCE is in force without -O. For now, just strip
+   # the fortify on optimised builds to avoid the warning.
+   my $ccflags =  ccflags();
+   $ccflags =~ s/-D_FORTIFY_SOURCE=\d+// if $Config{optimize} =~ /-O/;
+
+   push(@cmd, "-I$inc", $ccflags, 'embed_test.c');
    if ($^O eq 'MSWin32') {
     $inc = File::Spec->catdir($inc,'win32');
     push(@cmd,"-I$inc");
     $inc = File::Spec->catdir($inc,'include');
     push(@cmd,"-I$inc");
     if ($cc eq 'cl') {
-	push(@cmd,'-link',"-libpath:$lib",$Config{'libperl'},$Config{'libs'});
+	push(@cmd,'-link',"-libpath:$lib\\lib\\CORE",$Config{'libperl'},$Config{'libs'});
     }
     else {
-	push(@cmd,"-L$lib",File::Spec->catfile($lib,$Config{'libperl'}),$Config{'libc'});
+	push(@cmd,"-L$lib",$lib.'\lib\CORE\\'.$Config{'libperl'},$Config{'libc'});
     }
    }
    elsif ($^O eq 'os390' && $Config{usedl}) {
-    # Nothing for OS/390 (z/OS) dynamic.
+    push(@cmd,"-L$lib", ldopts());
    } else { # Not MSWin32 or OS/390 (z/OS) dynamic.
     push(@cmd,"-L$lib",'-lperl');
     local $SIG{__WARN__} = sub {

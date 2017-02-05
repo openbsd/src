@@ -55,7 +55,7 @@ our @Rest;
 	    next;
 	}
 
-	next if $line !~ /^\s*[0-9A-Fa-f]/;
+	next if $line !~ /^\s*[0-9A-Fa-f]/; # lines without element
 
 	$line =~ s/[#%]\s*(.*)//; # removing comment (not getting the name)
 
@@ -71,6 +71,7 @@ our @Rest;
 	if (@uv != 1) {
 	    push @Rest, $line;
 	    next;
+	    # Contractions of two or more characters will not be compiled.
 	}
 
 	my $is_L3_ignorable = TRUE;
@@ -105,15 +106,15 @@ sub stringify {
 
 my $init = '';
 {
-    my $type = "char*";
+    my $type = "char* const";
     my $head = $prefix."rest";
 
-    $init .= "static $type $head [] = {\n";
+    $init .= "static const $type $head [] = {\n";
     for my $line (@Rest) {
 	$line =~ s/\s*\z//;
 	next if $line eq '';
 	$init .= "/*$line*/\n" if $line =~ /^[A-Za-z0-9_.:;@\ \[\]]+\z/;
-	$init .= "($type)".stringify($line).",\n";
+	$init .= stringify($line).",\n";
     }
     $init .= "NULL\n"; # sentinel
     $init .= "};\n\n";
@@ -123,7 +124,7 @@ my @tripletable = (
     {
 	file => "ucatbl",
 	name => "simple",
-	type => "char*",
+	type => "char* const",
 	hash => \%SimpleEntries,
 	null => "NULL",
 	init => $init,
@@ -156,16 +157,17 @@ EOF
 	    unless $uv <= 0x10FFFF;
 	my @c = unpack 'CCCC', pack 'N', $uv;
 	$val{ $c[1] }{ $c[2] }{ $c[3] } = $hash->{$uv};
+	# $c[0] must be 0.
     }
 
     foreach my $p (sort { $a <=> $b } keys %val) {
 	next if ! $val{ $p };
 	for (my $r = 0; $r < 256; $r++) {
 	    next if ! $val{ $p }{ $r };
-	    printf "static $type ${head}_%02x_%02x [256] = {\n", $p, $r;
+	    printf "static const $type ${head}_%02x_%02x [256] = {\n", $p, $r;
 	    for (my $c = 0; $c < 256; $c++) {
 		print "\t", defined $val{$p}{$r}{$c}
-		    ? "($type)".$val{$p}{$r}{$c}
+		    ? $val{$p}{$r}{$c}
 		    : $null;
 		print ','  if $c != 255;
 		print "\n" if $c % 8 == 7;
@@ -175,7 +177,7 @@ EOF
     }
     foreach my $p (sort { $a <=> $b } keys %val) {
 	next if ! $val{ $p };
-	printf "static $type* ${head}_%02x [256] = {\n", $p;
+	printf "static const $type* const ${head}_%02x [256] = {\n", $p;
 	for (my $r = 0; $r < 256; $r++) {
 	    print $val{ $p }{ $r }
 		? sprintf("${head}_%02x_%02x", $p, $r)
@@ -185,7 +187,7 @@ EOF
 	}
 	print "};\n\n";
     }
-    print "static $type** $head [] = {\n";
+    print "static const $type* const * const $head [] = {\n";
     for (my $p = 0; $p <= 0x10; $p++) {
 	print $val{ $p } ? sprintf("${head}_%02x", $p) : "NULL";
 	print ','  if $p != 0x10;

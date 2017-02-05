@@ -4,7 +4,7 @@
 /* We have to be in a different .xs so that we can do this:  */
 
 #undef XS_VERSION
-#define XS_VERSION ""
+#define XS_VERSION " "
 #undef PERL_API_VERSION_STRING
 #define PERL_API_VERSION_STRING "1.0.16"
 #include "XSUB.h"

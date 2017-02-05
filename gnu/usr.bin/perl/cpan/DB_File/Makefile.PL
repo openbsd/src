@@ -4,8 +4,8 @@ use strict ;
 use ExtUtils::MakeMaker 5.16 ;
 use Config ;
 
-die "DB_File needs Perl 5.005_04 or better. This is $]\n" 
-    if $] < 5.00504; 
+die "DB_File needs Perl 5.8.3 or better. This is $]\n" 
+    if $] < 5.008003; 
 
 my $VER_INFO ;
 my $LIB_DIR ;

@@ -15,7 +15,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.04';
+$VERSION = '2.06_01';
 
 # Figure out if we have support for native sized types
 my $N = do { my $foo = eval { pack "L!", 0 }; $@ ? '' : '!' };
@@ -169,7 +169,7 @@ Returns the system message queue identifier.
 =item rcv ( BUF, LEN [, TYPE [, FLAGS ]] )
 
 Read a message from the queue. Returns the type of the message read.
-See L<msgrcv>.  The BUF becomes tainted.
+See L<msgrcv(2)>.  The BUF becomes tainted.
 
 =item remove
 
@@ -193,7 +193,7 @@ or a list of I<name>-I<value> pairs.
 =item snd ( TYPE, MSG [, FLAGS ] )
 
 Place a message on the queue with the data from C<MSG> and with type C<TYPE>.
-See L<msgsnd>.
+See L<msgsnd(2)>.
 
 =item stat
 

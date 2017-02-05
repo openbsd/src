@@ -70,17 +70,28 @@ hash_seed()
 
 
 void
-hash_value(string)
+hash_value(string,...)
         SV* string
-    PROTOTYPE: $
+    PROTOTYPE: $;$
     PPCODE:
-    STRLEN len;
-    char *pv;
+{
     UV uv;
+    STRLEN len;
+    char *pv= SvPV(string,len);
+    if (items<2) {
+        PERL_HASH(uv, pv, len);
+    } else {
+        STRLEN seedlen;
+        U8 *seedbuf= (U8 *)SvPV(ST(1),seedlen);
+        if ( seedlen < PERL_HASH_SEED_BYTES ) {
+            sv_dump(ST(1));
+            Perl_croak(aTHX_ "seed len must be at least %d long only got %"UVuf" bytes", PERL_HASH_SEED_BYTES, (UV)seedlen);
+        }
 
-    pv= SvPV(string,len);
-    PERL_HASH(uv,pv,len);
+        PERL_HASH_WITH_SEED(seedbuf, uv, pv, len);
+    }
     XSRETURN_UV(uv);
+}
 
 void
 hash_traversal_mask(rhv, ...)
@@ -128,8 +139,13 @@ bucket_info(rhv)
     nothing (the empty list).
 
     */
+    const HV * hv = NULL;
     if (SvROK(rhv) && SvTYPE(SvRV(rhv))==SVt_PVHV && !SvMAGICAL(SvRV(rhv))) {
-        const HV * const hv = (const HV *) SvRV(rhv);
+        hv = (const HV *) SvRV(rhv);
+    } else if (!SvOK(rhv)) {
+        hv = PL_strtab;
+    }
+    if (hv) {
         U32 max_bucket_index= HvMAX(hv);
         U32 total_keys= HvUSEDKEYS(hv);
         HE **bucket_array= HvARRAY(hv);
@@ -183,8 +199,13 @@ bucket_array(rhv)
      * of the hash store, combined with regular remappings means that relative
      * order of keys changes each remap.
      */
+    const HV * hv = NULL;
     if (SvROK(rhv) && SvTYPE(SvRV(rhv))==SVt_PVHV && !SvMAGICAL(SvRV(rhv))) {
-        const HV * const hv = (const HV *) SvRV(rhv);
+        hv = (const HV *) SvRV(rhv);
+    } else if (!SvOK(rhv)) {
+        hv = PL_strtab;
+    }
+    if (hv) {
         HE **he_ptr= HvARRAY(hv);
         if (!he_ptr) {
             XSRETURN(0);

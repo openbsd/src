@@ -3,7 +3,7 @@ package OS2::ExtAttr;
 use strict;
 use XSLoader;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 XSLoader::load 'OS2::ExtAttr', $VERSION;
 
 # Preloaded methods go here.
@@ -162,7 +162,7 @@ Three convenience functions are provided:
 The default value for C<flag> is 0.
 
 In addition, all the C<_ea_*> and C<_ead_*> functions defined in EMX
-library are supported, with leading C<_ea/_ead> stripped.
+library are supported, with leading C<_ea> and C<_ead> stripped.
 
 =head1 AUTHOR
 

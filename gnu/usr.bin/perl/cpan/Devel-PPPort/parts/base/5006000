@@ -1,4 +1,5 @@
 5.006000
+PERL_SYS_INIT3                 # U
 POPn                           # E
 PUSHn                          # E
 SvIOK_UV                       # U
@@ -117,7 +118,7 @@ mess                           # E (Perl_mess)
 my_atof                        # E
 my_fflush_all                  # E
 newANONATTRSUB                 # E
-newATTRSUB                     # E
+newATTRSUB                     # U
 newSVnv                        # E (Perl_newSVnv)
 newSVpvf                       # E (Perl_newSVpvf)
 newSVuv                        # E
@@ -184,12 +185,11 @@ sv_vcatpvf_mg                  # E
 sv_vsetpvf                     # E
 sv_vsetpvf_mg                  # E
 swash_init                     # E
-tmps_grow                      # E
 to_uni_lower_lc                # E
 to_uni_title_lc                # E
 to_uni_upper_lc                # E
 utf8_distance                  # E
-utf8_hop                       # E
+utf8_hop                       # U
 vcroak                         # E
 vform                          # E
 vload_module                   # E

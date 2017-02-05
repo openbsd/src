@@ -90,7 +90,7 @@ END
 `
 
 case "$cc" in
-'')    for i in `ls -r /opt/solstudio*/bin/cc` /opt/SUNWspro/bin/cc
+'')    for i in `ls -r /opt/sol*studio*/bin/cc` /opt/SUNWspro/bin/cc
        do
 	       if test -f "$i"; then
 		       cc=$i
@@ -723,3 +723,9 @@ case "$cc" in
   ;;
 esac
 
+# Oracle/Sun builds their Perl shared since 5.6.1, and they also
+# strongly recommend using shared libraries in general.
+#
+# Furthermore, OpenIndiana seems to effectively require building perl
+# shared, or otherwise perl scripts won't even find the Perl library.
+useshrplib='true'

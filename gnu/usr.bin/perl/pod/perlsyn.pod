@@ -181,23 +181,35 @@ This is so that you can write loops like:
 See L<perlfunc/do>.  Note also that the loop control statements described
 later will I<NOT> work in this construct, because modifiers don't take
 loop labels.  Sorry.  You can always put another block inside of it
-(for C<next>) or around it (for C<last>) to do that sort of thing.
-For C<next>, just double the braces:
+(for C<next>/C<redo>) or around it (for C<last>) to do that sort of thing.
 X<next> X<last> X<redo>
+
+For C<next> or C<redo>, just double the braces:
 
     do {{
         next if $x == $y;
         # do something here
     }} until $x++ > $z;
 
-For C<last>, you have to be more elaborate:
+For C<last>, you have to be more elaborate and put braces around it:
 X<last>
 
+    {
+        do {
+            last if $x == $y**2;
+            # do something here
+        } while $x++ <= $z;
+    }
+
+If you need both C<next> and C<last>, you have to do both and also use a
+loop label:
+
     LOOP: {
-            do {
-                last if $x = $y**2;
-                # do something here
-            } while $x++ <= $z;
+        do {{
+            next if $x == $y;
+            last LOOP if $x == $y**2;
+            # do something here
+        }} until $x++ > $z;
     }
 
 B<NOTE:> The behaviour of a C<my>, C<state>, or
@@ -469,7 +481,7 @@ X<readline> X<< <> >>
 =head2 Foreach Loops
 X<for> X<foreach>
 
-The C<foreach> loop iterates over a normal list value and sets the
+The C<foreach> loop iterates over a normal list value and sets the scalar
 variable VAR to be each element of the list in turn.  If the variable
 is preceded with the keyword C<my>, then it is lexically scoped, and
 is therefore visible only within the loop.  Otherwise, the variable is
@@ -499,6 +511,15 @@ X<splice>
 C<foreach> probably won't do what you expect if VAR is a tied or other
 special variable.   Don't do that either.
 
+As of Perl 5.22, there is an experimental variant of this loop that accepts
+a variable preceded by a backslash for VAR, in which case the items in the
+LIST must be references.  The backslashed variable will become an alias
+to each referenced item in the LIST, which must be of the correct type.
+The variable needn't be a scalar in this case, and the backslash may be
+followed by C<my>.  To use this form, you must enable the C<refaliasing>
+feature via C<use feature>.  (See L<feature>.  See also L<perlref/Assigning
+to References>.)
+
 Examples:
 
     for (@ary) { s/foo/bar/ }
@@ -516,6 +537,12 @@ Examples:
 
     foreach $item (split(/:[\\\n:]*/, $ENV{TERMCAP})) {
         print "Item: $item\n";
+    }
+
+    use feature "refaliasing";
+    no warnings "experimental::refaliasing";
+    foreach \my %hash (@array_of_hash_references) {
+        # do something which each %hash
     }
 
 Here's how a C programmer might code up a particular algorithm in Perl:
@@ -670,13 +697,8 @@ and 5.16, under those implementations the version of C<$_> governed by
 C<given> is merely a lexically scoped copy of the original, not a
 dynamically scoped alias to the original, as it would be if it were a
 C<foreach> or under both the original and the current Perl 6 language
-specification.  This bug was fixed in Perl
-5.18.  If you really want a lexical C<$_>,
-specify that explicitly, but note that C<my $_>
-is now deprecated and will warn unless warnings
-have been disabled:
-
-    given(my $_ = EXPR) { ... }
+specification.  This bug was fixed in Perl 5.18 (and lexicalized C<$_> itself
+was removed in Perl 5.24).
 
 If your code still needs to run on older versions,
 stick to C<foreach> for your topicalizer and
@@ -970,16 +992,15 @@ the form C<!/REGEX/>, C<$foo !~ /REGEX/>, or C<$foo !~ EXPR>.
 
 A smart match that uses an explicit C<~~> operator, such as C<EXPR ~~ EXPR>.
 
+B<NOTE:> You will often have to use C<$c ~~ $_> because the default case
+uses C<$_ ~~ $c> , which is frequentlythe opposite of what you want.
+
 =item Z<>4.
 
 A boolean comparison operator such as C<$_ E<lt> 10> or C<$x eq "abc">.  The
 relational operators that this applies to are the six numeric comparisons
 (C<< < >>, C<< > >>, C<< <= >>, C<< >= >>, C<< == >>, and C<< != >>), and
 the six string comparisons (C<lt>, C<gt>, C<le>, C<ge>, C<eq>, and C<ne>).
-
-B<NOTE:> You will often have to use C<$c ~~ $_> because
-the default case uses C<$_ ~~ $c> , which is frequently
-the opposite of what you want.
 
 =item Z<>5.
 

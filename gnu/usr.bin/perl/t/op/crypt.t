@@ -8,13 +8,13 @@ BEGIN {
 BEGIN {
     use Config;
 
-    require "test.pl";
+    require "./test.pl";
 
     if( !$Config{d_crypt} ) {
         skip_all("crypt unimplemented");
     }
     else {
-        plan(tests => 4);
+        plan(tests => 6);
     }
 }
 
@@ -27,21 +27,44 @@ BEGIN {
 # eight characters mattered, but those are probably no more safe
 # bets, given alternative encryption/hashing schemes like MD5,
 # C2 (or higher) security schemes, and non-UNIX platforms.
+#
+# On platforms implementing FIPS mode, using a weak algorithm (including
+# the default triple-DES algorithm) causes crypt(3) to return a null
+# pointer, which Perl converts into undef. We assume for now that all
+# such platforms support glibc-style selection of a different hashing
+# algorithm.
+# glibc supports MD5, but OpenBSD only supports Blowfish.
+my $alg = '';       # Use default algorithm
+if ( !defined(crypt("ab", $alg."cd")) ) {
+    $alg = '$5$';   # Try SHA-256
+}
+if ( !defined(crypt("ab", $alg."cd")) ) {
+    $alg = '$2b$12$FPWWO2RJ3CK4FINTw0Hi';  # Try Blowfish
+}
+if ( !defined(crypt("ab", $alg."cd")) ) {
+    $alg = ''; # Nothing worked.  Back to default
+}
 
-my $alg = '$2b$12$12345678901234567890';   # Use Blowfish
 SKIP: {
-	skip ("VOS crypt ignores salt.", 1) if ($^O eq 'vos');
-	ok(substr(crypt("ab", $alg . "cd"), 2) ne substr(crypt("ab", $alg . "ce"), 2), "salt makes a difference");
+    skip ("VOS crypt ignores salt.", 1) if ($^O eq 'vos');
+    ok(substr(crypt("ab", $alg."cd"), length($alg)+2) ne 
+       substr(crypt("ab", $alg."ce"), length($alg)+2),
+       "salt makes a difference");
 }
 
 $a = "a\xFF\x{100}";
 
-eval {$b = crypt($a, $alg . "cd")};
+eval {$b = crypt($a, $alg."cd")};
 like($@, qr/Wide character in crypt/, "wide characters ungood");
 
 chop $a; # throw away the wide character
 
-eval {$b = crypt($a, $alg . "cd")};
+eval {$b = crypt($a, $alg."cd")};
 is($@, '',                   "downgrade to eight bit characters");
-is($b, crypt("a\xFF", $alg . "cd"), "downgrade results agree");
+is($b, crypt("a\xFF", $alg."cd"), "downgrade results agree");
 
+my $x = chr 256; # has to be lexical, and predeclared
+# Assignment gets optimised away here:
+$x = crypt "foo", ${\"bar"}; # ${\ } to defeat constant folding
+is $x, crypt("foo", "bar"), 'crypt writing to utf8 target';
+ok !utf8::is_utf8($x), 'crypt turns off utf8 on its target';

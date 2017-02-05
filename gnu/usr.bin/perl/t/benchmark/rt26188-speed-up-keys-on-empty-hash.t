@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Benchmark;
+chdir 't' if -d 't';
 require './test.pl';
 plan(tests => 6);
 

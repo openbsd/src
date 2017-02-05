@@ -62,26 +62,33 @@ enum {
     rshift_ass_amg,	/* 0x2d >>=      */
     band_amg,		/* 0x2e &        */
     band_ass_amg,	/* 0x2f &=       */
-    bor_amg,		/* 0x30 |        */
-    bor_ass_amg,	/* 0x31 |=       */
-    bxor_amg,		/* 0x32 ^        */
-    bxor_ass_amg,	/* 0x33 ^=       */
-    ncmp_amg,		/* 0x34 <=>      */
-    scmp_amg,		/* 0x35 cmp      */
-    compl_amg,		/* 0x36 ~        */
-    atan2_amg,		/* 0x37 atan2    */
-    cos_amg,		/* 0x38 cos      */
-    sin_amg,		/* 0x39 sin      */
-    exp_amg,		/* 0x3a exp      */
-    log_amg,		/* 0x3b log      */
-    sqrt_amg,		/* 0x3c sqrt     */
-    repeat_amg,		/* 0x3d x        */
-    repeat_ass_amg,	/* 0x3e x=       */
-    concat_amg,		/* 0x3f .        */
-    concat_ass_amg,	/* 0x40 .=       */
-    smart_amg,		/* 0x41 ~~       */
-    ftest_amg,		/* 0x42 -X       */
-    regexp_amg,		/* 0x43 qr       */
+    sband_amg,		/* 0x30 &.       */
+    sband_ass_amg,	/* 0x31 &.=      */
+    bor_amg,		/* 0x32 |        */
+    bor_ass_amg,	/* 0x33 |=       */
+    sbor_amg,		/* 0x34 |.       */
+    sbor_ass_amg,	/* 0x35 |.=      */
+    bxor_amg,		/* 0x36 ^        */
+    bxor_ass_amg,	/* 0x37 ^=       */
+    sbxor_amg,		/* 0x38 ^.       */
+    sbxor_ass_amg,	/* 0x39 ^.=      */
+    ncmp_amg,		/* 0x3a <=>      */
+    scmp_amg,		/* 0x3b cmp      */
+    compl_amg,		/* 0x3c ~        */
+    scompl_amg,		/* 0x3d ~.       */
+    atan2_amg,		/* 0x3e atan2    */
+    cos_amg,		/* 0x3f cos      */
+    sin_amg,		/* 0x40 sin      */
+    exp_amg,		/* 0x41 exp      */
+    log_amg,		/* 0x42 log      */
+    sqrt_amg,		/* 0x43 sqrt     */
+    repeat_amg,		/* 0x44 x        */
+    repeat_ass_amg,	/* 0x45 x=       */
+    concat_amg,		/* 0x46 .        */
+    concat_ass_amg,	/* 0x47 .=       */
+    smart_amg,		/* 0x48 ~~       */
+    ftest_amg,		/* 0x49 -X       */
+    regexp_amg,		/* 0x4a qr       */
     max_amg_code
     /* Do not leave a trailing comma here.  C9X allows it, C89 doesn't. */
 };

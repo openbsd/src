@@ -37,7 +37,7 @@ my $objEsTrad = Unicode::Collate::Locale->
     new(locale => 'ES-trad', normalization => undef);
 
 ok($objEsTrad->getlocale, 'es__traditional');
-ok($objEsTrad->locale_version, 1.01);
+ok($objEsTrad->locale_version, 1.14);
 
 $objEsTrad->change(level => 1);
 

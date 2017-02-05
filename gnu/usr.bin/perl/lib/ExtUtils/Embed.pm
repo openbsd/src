@@ -10,7 +10,7 @@ use vars qw(@ISA @EXPORT $VERSION
 use strict;
 
 # This is not a dual-life module, so no need for development version numbers
-$VERSION = '1.32';
+$VERSION = '1.33';
 
 @ISA = qw(Exporter);
 @EXPORT = qw(&xsinit &ldopts 
@@ -350,7 +350,8 @@ This will generate code for linking with C<DynaLoader> and
 each static extension found in C<$Config{static_ext}>.
 The code is written to the default file name F<perlxsi.c>.
 
- perl -MExtUtils::Embed -e xsinit -- -o xsinit.c -std DBI DBD::Oracle
+ perl -MExtUtils::Embed -e xsinit -- -o xsinit.c \
+                            -std DBI DBD::Oracle
 
 Here, code is written for all the currently linked extensions along with code
 for C<DBI> and C<DBD::Oracle>.
@@ -424,9 +425,11 @@ are picked up from the F<extralibs.ld> file in the same directory.
 
  perl -MExtUtils::Embed -e ldopts -- -std Socket
 
-This will do the same as the above example, along with printing additional arguments for linking with the C<Socket> extension.
+This will do the same as the above example, along with printing additional
+arguments for linking with the C<Socket> extension.
 
- perl -MExtUtils::Embed -e ldopts -- -std Msql -- -L/usr/msql/lib -lmsql
+ perl -MExtUtils::Embed -e ldopts -- -std Msql -- \
+                        -L/usr/msql/lib -lmsql
 
 Any arguments after the second '--' token are additional linker
 arguments that will be examined for potential conflict.  If there is no

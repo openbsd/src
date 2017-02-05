@@ -8,7 +8,7 @@ use warnings;
 use Config;
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-$VERSION     = "0.22";
+$VERSION     = "0.25";
 @ISA         = ("Exporter");
 @EXPORT_OK   = qw( plv2hash summary myconfig signature );
 %EXPORT_TAGS = (
@@ -33,6 +33,7 @@ my %BTD = map { $_ => 0 } qw(
     NO_MATHOMS
     NO_TAINT_SUPPORT
     PERL_BOOL_AS_CHAR
+    PERL_COPY_ON_WRITE
     PERL_DISABLE_PMC
     PERL_DONT_CREATE_GVSV
     PERL_EXTERNAL_GLOB
@@ -66,6 +67,7 @@ my %BTD = map { $_ => 0 } qw(
     USE_HASH_SEED_EXPLICIT
     USE_LOCALE
     USE_LOCALE_CTYPE
+    USE_NO_REGISTRY
     USE_PERL_ATOF
     USE_SITECUSTOMIZE
 
@@ -106,6 +108,7 @@ my %BTD = map { $_ => 0 } qw(
     USE_LOCALE_TIME
     USE_LONG_DOUBLE
     USE_PERLIO
+    USE_QUADMATH
     USE_REENTRANT_API
     USE_SFIO
     USE_SOCKS
@@ -534,7 +537,7 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2014 H.Merijn Brand
+Copyright (C) 2009-2015 H.Merijn Brand
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

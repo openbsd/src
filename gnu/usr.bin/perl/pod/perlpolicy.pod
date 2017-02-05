@@ -84,9 +84,9 @@ the Perl community should expect from Perl's developers:
 
 =item *
 
-We "officially" support the two most recent stable release series.  5.16.x
-and earlier are now out of support.  As of the release of 5.22.0, we will
-"officially" end support for Perl 5.18.x, other than providing security
+We "officially" support the two most recent stable release series.  5.20.x
+and earlier are now out of support.  As of the release of 5.26.0, we will
+"officially" end support for Perl 5.22.x, other than providing security
 updates as described below.
 
 =item *
@@ -120,8 +120,8 @@ beyond our 3 year support commitment.  We can provide limited support and
 advice to you as you do so and, where possible will try to apply
 those patches to the relevant -maint branches in git, though we may or
 may not choose to make numbered releases or "official" patches
-available.  Contact us at E<lt>perl5-security-report@perl.orgE<gt>
-to begin that process.
+available. See L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
+for details on how to begin that process.
 
 =back
 
@@ -155,23 +155,20 @@ We want to ensure that Perl continues to grow and flourish in the coming
 years and decades, but not at the expense of our user community.
 
 Existing syntax and semantics should only be marked for destruction in
-very limited circumstances.  If a given language feature's continued
-inclusion in the language will cause significant harm to the language
-or prevent us from making needed changes to the runtime, then it may
-be considered for deprecation.
+very limited circumstances.  If they are believed to be very rarely used,
+stand in the way of actual improvement to the Perl language or perl
+interpreter, and if affected code can be easily updated to continue
+working, they may be considered for removal.  When in doubt, caution
+dictates that we will favor backward compatibility.  When a feature is
+deprecated, a statement of reasoning describing the decision process
+will be posted, and a link to it will be provided in the relevant
+perldelta documents.
 
-Any language change which breaks backward-compatibility should be able to
-be enabled or disabled lexically.  Unless code at a given scope declares
-that it wants the new behavior, that new behavior should be disabled.
-Which backward-incompatible changes are controlled implicitly by a
-'use v5.x.y' is a decision which should be made by the pumpking in
-consultation with the community.
-
-When a backward-incompatible change can't be toggled lexically, the decision
-to change the language must be considered very, very carefully.  If it's
-possible to move the old syntax or semantics out of the core language
-and into XS-land, that XS module should be enabled by default unless
-the user declares that they want a newer revision of Perl.
+Using a lexical pragma to enable or disable legacy behavior should be
+considered when appropriate, and in the absence of any pragma legacy
+behavior should be enabled.  Which backward-incompatible changes are
+controlled implicitly by a 'use v5.x.y' is a decision which should be
+made by the pumpking in consultation with the community.
 
 Historically, we've held ourselves to a far higher standard than
 backward-compatibility -- bugward-compatibility.  Any accident of
@@ -186,7 +183,9 @@ bug as a feature, we need to treat it as such.
 
 New syntax and semantics which don't break existing language constructs
 and syntax have a much lower bar.  They merely need to prove themselves
-to be useful, elegant, well designed, and well tested.
+to be useful, elegant, well designed, and well tested.  In most cases,
+these additions will be marked as I<experimental> for some time.  See
+below for more on that.
 
 =head2 Terminology
 
@@ -251,78 +250,109 @@ no longer ship with Perl, but will continue to be available on CPAN.
 
 =head1 MAINTENANCE BRANCHES
 
+New releases of maintenance branches should only contain changes that fall into
+one of the "acceptable" categories set out below, but must not contain any
+changes that fall into one of the "unacceptable" categories.  (For example, a
+fix for a crashing bug must not be included if it breaks binary compatibility.)
+
+It is not necessary to include every change meeting these criteria, and in
+general the focus should be on addressing security issues, crashing bugs,
+regressions and serious installation issues.  The temptation to include a
+plethora of minor changes that don't affect the installation or execution of
+perl (e.g. spelling corrections in documentation) should be resisted in order
+to reduce the overall risk of overlooking something.  The intention is to
+create maintenance releases which are both worthwhile and which users can have
+full confidence in the stability of.  (A secondary concern is to avoid burning
+out the maint-pumpking or overwhelming other committers voting on changes to be
+included (see L</"Getting changes into a maint branch"> below).)
+
+The following types of change may be considered acceptable, as long as they do
+not also fall into any of the "unacceptable" categories set out below:
+
 =over
 
 =item *
 
-New releases of maint should contain as few changes as possible.
-If there is any question about whether a given patch might merit
-inclusion in a maint release, then it almost certainly should not
-be included.
-
-=item *
-
-Portability fixes, such as changes to Configure and the files in
-hints/ are acceptable. Ports of Perl to a new platform, architecture
-or OS release that involve changes to the implementation are NOT
-acceptable.
-
-=item *
-
-Acceptable documentation updates are those that correct factual errors,
-explain significant bugs or deficiencies in the current implementation,
-or fix broken markup.
-
-=item *
-
-Patches that add new warnings or errors or deprecate features
-are not acceptable.
+Patches that fix CVEs or security issues.  These changes should
+be passed using the security reporting mechanism rather than applied
+directly; see L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>.
 
 =item *
 
 Patches that fix crashing bugs, assertion failures and
-memory corruption that do not otherwise change Perl's
-functionality or negatively impact performance are acceptable.
-
-=item *
-
-Patches that fix CVEs or security issues are acceptable, but should
-be run through the perl5-security-report@perl.org mailing list
-rather than applied directly.
+memory corruption but which do not otherwise change perl's
+functionality or negatively impact performance.
 
 =item *
 
 Patches that fix regressions in perl's behavior relative to previous
-releases are acceptable.
+releases, no matter how old the regression, since some people may
+upgrade from very old versions of perl to the latest version.
+
+=item *
+
+Patches that fix bugs in features that were new in the corresponding 5.x.0
+stable release.
+
+=item *
+
+Patches that fix anything which prevents or seriously impacts the build
+or installation of perl.
+
+=item *
+
+Portability fixes, such as changes to Configure and the files in
+the hints/ folder.
+
+=item *
+
+Minimal patches that fix platform-specific test failures.
+
+=item *
+
+Documentation updates that correct factual errors, explain significant
+bugs or deficiencies in the current implementation, or fix broken markup.
 
 =item *
 
 Updates to dual-life modules should consist of minimal patches to
-fix crashing or security issues (as above).
+fix crashing bugs or security issues (as above).  Any changes made to
+dual-life modules for which CPAN is canonical should be coordinated with
+the upstream author.
+
+=back
+
+The following types of change are NOT acceptable:
+
+=over
 
 =item *
 
-Minimal patches that fix platform-specific test failures or build or
-installation issues are acceptable. When these changes are made
-to dual-life modules for which CPAN is canonical, any changes
-should be coordinated with the upstream author.
+Patches that break binary compatibility.  (Please talk to a pumpking.)
+
+=item *
+
+Patches that add or remove features.
+
+=item *
+
+Patches that add new warnings or errors or deprecate features.
+
+=item *
+
+Ports of Perl to a new platform, architecture or OS release that
+involve changes to the implementation.
 
 =item *
 
 New versions of dual-life modules should NOT be imported into maint.
 Those belong in the next stable series.
 
-=item *
-
-Patches that add or remove features are not acceptable.
-
-=item *
-
-Patches that break binary compatibility are not acceptable.  (Please
-talk to a pumpking.)
-
 =back
 
+If there is any question about whether a given patch might merit
+inclusion in a maint release, then it almost certainly should not
+be included.
 
 =head2 Getting changes into a maint branch
 
@@ -337,6 +367,17 @@ they send mail to perl5-porters announcing their intent to cherry-pick
 a specific commit along with a rationale for doing so and at least two
 other committers respond to the list giving their assent. (This policy
 applies to current and former pumpkings, as well as other committers.)
+
+Other voting mechanisms may be used instead, as long as the same number of
+votes is gathered in a transparent manner.  Specifically, proposals of
+which changes to cherry-pick must be visible to everyone on perl5-porters
+so that the views of everyone interested may be heard.
+
+It is not necessary for voting to be held on cherry-picking perldelta
+entries associated with changes that have already been cherry-picked, nor
+for the maint-pumpking to obtain votes on changes required by the
+F<Porting/release_managers_guide.pod> where such changes can be applied by
+the means of cherry-picking from blead.
 
 =head1 CONTRIBUTED MODULES
 
@@ -531,7 +572,7 @@ month.  Subsequent removals will double in length.  After six months with no
 warning, a user's ban length is reset.  Removals, like warnings, are public.
 
 The list of moderators will be public knowledge.  At present, it is:
-Aaron Crane, Andy Dougherty, Ricardo Signes, Steffen Müller.
+Aaron Crane, Andy Dougherty, Ricardo Signes, Sawyer X, Steffen Müller.
 
 =head1 CREDITS
 

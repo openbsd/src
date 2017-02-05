@@ -328,7 +328,7 @@ C<require 5.002>.
 MLDBM example removed (as its own module, it has a separate CPAN 
 reality now).
 
-Fixed bugs in handling keys with wierd characters.  Perl can be
+Fixed bugs in handling keys with weird characters.  Perl can be
 tripped up in its implicit quoting of the word before '=>'.  The
 fix: C<Data::Dumper::Purity>, when set, always triggers quotes
 around hash keys.

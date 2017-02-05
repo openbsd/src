@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan( tests => 95 );
+    plan( tests => 96 );
 }
 
 my @c;
@@ -31,7 +31,7 @@ ok( $c[4], "hasargs true with anon sub" );
 sub foo { @c = caller(0) }
 my $fooref = delete $::{foo};
 $fooref -> ();
-is( $c[3], "main::__ANON__", "deleted subroutine name" );
+is( $c[3], "main::foo", "deleted subroutine name" );
 ok( $c[4], "hasargs true with deleted sub" );
 
 BEGIN {
@@ -66,7 +66,7 @@ ok( $c[4], "hasargs true with anon sub" );
 sub foo2 { f() }
 my $fooref2 = delete $::{foo2};
 $fooref2 -> ();
-is( $c[3], "main::__ANON__", "deleted subroutine name" );
+is( $c[3], "main::foo2", "deleted subroutine name" );
 ok( $c[4], "hasargs true with deleted sub" );
 
 # See if caller() returns the correct warning mask
@@ -109,10 +109,8 @@ sub testwarn {
 	vec($registered, $warnings::LAST_BIT/2, 2) = 1;
     }
 
-    # The repetition number must be set to the value of $BYTES in
-    # lib/warnings.pm
-    BEGIN { check_bits( ${^WARNING_BITS}, "\0" x 15, 'all bits off via "no warnings"' ) }
-    testwarn("\0" x 15, 'no bits');
+    BEGIN { check_bits( ${^WARNING_BITS}, "\0" x $warnings::BYTES, 'all bits off via "no warnings"' ) }
+    testwarn("\0" x $warnings::BYTES, 'no bits');
 
     use warnings;
     BEGIN { check_bits( ${^WARNING_BITS}, $default,
@@ -309,6 +307,11 @@ is eval "s//<<END/e;\nfoo\nEND\n(caller 0)[6]",
  ';
  is $w, 1, 'value from (caller 0)[9] (bitmask) works in ${^WARNING_BITS}';
 }
+
+# [perl #126991]
+sub getlineno { (caller)[2] }
+my $line = eval "\n#line 3000000000\ngetlineno();";
+is $line, "3000000000", "check large line numbers are preserved";
 
 # This was fixed with commit d4d03940c58a0177, which fixed bug #78742
 fresh_perl_is <<'END', "__ANON__::doof\n", {},

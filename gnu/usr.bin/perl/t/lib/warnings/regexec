@@ -117,3 +117,146 @@ $_ = 'a' x (2**15+1);
 #
 EXPECT
 
+########
+# NAME Wide character in non-UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled()) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+"\x{100}" =~ /\x{100}|\x{101}/il;
+"\x{100}" =~ /\x{100}|\x{101}/l;
+"\x{100}" =~ /\w/l;
+"\x{100}" =~ /\x{100}+/l;
+"\x{100}" =~ /[\x{100}\x{102}]/l;
+no warnings 'locale';
+EXPECT
+Wide character (U+100) in pattern match (m//) at - line 12.
+Wide character (U+100) in pattern match (m//) at - line 12.
+Wide character (U+100) in pattern match (m//) at - line 13.
+Wide character (U+100) in pattern match (m//) at - line 13.
+Wide character (U+100) in pattern match (m//) at - line 13.
+Wide character (U+100) in pattern match (m//) at - line 14.
+Wide character (U+100) in pattern match (m//) at - line 14.
+Wide character (U+100) in pattern match (m//) at - line 15.
+Wide character (U+100) in pattern match (m//) at - line 16.
+Wide character (U+100) in pattern match (m//) at - line 16.
+########
+# NAME Wide character in UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled()) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+my @utf8_locales = find_utf8_ctype_locale();
+unless (@utf8_locales) {
+    print("SKIPPED\n# no UTF-8 locales\n"),exit;
+}
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, $utf8_locales[0]);
+"\x{100}" =~ /\x{100}|\x{101}/il;
+"\x{100}" =~ /\x{100}|\x{101}/l;
+"\x{100}" =~ /\w/l;
+"\x{100}" =~ /\x{100}+/l;
+"\x{100}" =~ /[\x{100}\x{102}]/l;
+EXPECT
+########
+# NAME \b{} in non-UTF-8 locale
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+"a" =~ /\b{gcb}/l;
+no warnings 'locale';
+"a" =~ /\b{gcb}/l;
+EXPECT
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 8.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 8.
+########
+# NAME \b{} in UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled()) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+my $utf8_locale = find_utf8_ctype_locale();
+unless ($utf8_locale) {
+    print("SKIPPED\n# No UTF-8 locale available\n"),exit;
+}
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+ "abc def" =~ /\b{wb}.*?/;
+ "abc def" =~ /\B{wb}.*?/;
+setlocale(&POSIX::LC_CTYPE, $utf8_locale);
+ "abc def" =~ /\b{wb}.*?/;
+ "abc def" =~ /\B{wb}.*?/;
+EXPECT
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
+########
+# NAME (?[ ]) in non-UTF-8 locale
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+no warnings 'experimental::regex_sets';
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, "C");
+"\N{KELVIN SIGN}" =~ /(?[ \N{KELVIN SIGN} ])/i;
+"K" =~ /(?[ \N{KELVIN SIGN} ])/i;
+"k" =~ /(?[ \N{KELVIN SIGN} ])/i;
+":" =~ /(?[ \: ])/;
+no warnings 'locale';
+EXPECT
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 9.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 9.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 10.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 10.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 11.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 11.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
+########
+# NAME (?[ ]) in UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled()) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
+eval { require POSIX; POSIX->import("locale_h") };
+if ($@) {
+    print("SKIPPED\n# no POSIX\n"),exit;
+}
+my $utf8_locale = find_utf8_ctype_locale();
+unless ($utf8_locale) {
+    print("SKIPPED\n# No UTF-8 locale available\n"),exit;
+}
+no warnings 'experimental::regex_sets';
+use warnings 'locale';
+use locale;
+setlocale(&POSIX::LC_CTYPE, $utf8_locale);
+"\N{KELVIN SIGN}" =~ /(?[ \N{KELVIN SIGN} ])/i;
+"K" =~ /(?[ \N{KELVIN SIGN} ])/i;
+"k" =~ /(?[ \N{KELVIN SIGN} ])/i;
+":" =~ /(?[ \: ])/;
+EXPECT

@@ -24,38 +24,43 @@
 END         END,        no        ; End of program.
 SUCCEED     END,        no        ; Return from a subroutine, basically.
 
-#* Anchors:
+#* Line Start Anchors:
+#Note flags field for SBOL indicates if it is a /^/ or a /\A/
+SBOL        BOL,        no        ; Match "" at beginning of line: /^/, /\A/
+MBOL        BOL,        no        ; Same, assuming multiline: /^/m
 
-BOL         BOL,        no        ; Match "" at beginning of line.
-MBOL        BOL,        no        ; Same, assuming multiline.
-SBOL        BOL,        no        ; Same, assuming singleline.
-EOS         EOL,        no        ; Match "" at end of string.
-EOL         EOL,        no        ; Match "" at end of line.
-MEOL        EOL,        no        ; Same, assuming multiline.
-SEOL        EOL,        no        ; Same, assuming singleline.
+#* Line End Anchors:
+SEOL        EOL,        no        ; Match "" at end of line: /$/
+MEOL        EOL,        no        ; Same, assuming multiline: /$/m
+EOS         EOL,        no        ; Match "" at end of string: /\z/
+
+#* Match Start Anchors:
+GPOS        GPOS,       no        ; Matches where last m//g left off.
+
+#* Word Boundary Opcodes:
 # The regops that have varieties that vary depending on the character set regex
 # modifiers have to ordered thusly: /d, /l, /u, /a, /aa.  This is because code
 # in regcomp.c uses the enum value of the modifier as an offset from the /d
 # version.  The complements must come after the non-complements.
 # BOUND, POSIX and their complements are affected, as well as EXACTF.
-BOUND       BOUND,      no        ; Match "" at any word boundary using native charset rules for non-utf8
-BOUNDL      BOUND,      no        ; Match "" at any locale word boundary
-BOUNDU      BOUND,      no        ; Match "" at any word boundary using Unicode rules
-BOUNDA      BOUND,      no         ; Match "" at any word boundary using ASCII rules
+BOUND       BOUND,      no        ; Like BOUNDA for non-utf8, otherwise match "" between any Unicode \w\W or \W\w
+BOUNDL      BOUND,      no        ; Like BOUND/BOUNDU, but \w and \W are defined by current locale
+BOUNDU      BOUND,      no        ; Match "" at any boundary of a given type using Unicode rules
+BOUNDA      BOUND,      no        ; Match "" at any boundary between \w\W or \W\w, where \w is [_a-zA-Z0-9]
 # All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
-NBOUND      NBOUND,     no        ; Match "" at any word non-boundary using native charset rules for non-utf8
-NBOUNDL     NBOUND,     no        ; Match "" at any locale word non-boundary
-NBOUNDU     NBOUND,     no        ; Match "" at any word non-boundary using Unicode rules
-NBOUNDA     NBOUND,     no        ; Match "" at any word non-boundary using ASCII rules
-GPOS        GPOS,       no        ; Matches where last m//g left off.
+NBOUND      NBOUND,     no        ; Like NBOUNDA for non-utf8, otherwise match "" between any Unicode \w\w or \W\W
+NBOUNDL     NBOUND,     no        ; Like NBOUND/NBOUNDU, but \w and \W are defined by current locale
+NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using using Unicode rules
+NBOUNDA     NBOUND,     no        ; Match "" betweeen any \w\w or \W\W, where \w is [_a-zA-Z0-9]
 
 #* [Special] alternatives:
-
 REG_ANY     REG_ANY,    no 0 S    ; Match any one character (except newline).
 SANY        REG_ANY,    no 0 S    ; Match any one character.
-CANY        REG_ANY,    no 0 S    ; Match any one byte.
-ANYOF       ANYOF,      sv 0 S    ; Match character in (or not in) this class, single char match only
+ANYOF       ANYOF,      sv 1 S    ; Match character in (or not in) this class, single char match only
+ANYOFD      ANYOF,      sv 1 S    ; Like ANYOF, but /d is in effect
+ANYOFL      ANYOF,      sv 1 S    ; Like ANYOF, but /l is in effect
 
+#* POSIX Character Classes:
 # Order of the below is important.  See ordering comment above.
 POSIXD      POSIXD,     none 0 S   ; Some [[:class:]] under /d; the FLAGS field gives which one
 POSIXL      POSIXD,     none 0 S   ; Some [[:class:]] under /l; the FLAGS field gives which one
@@ -82,22 +87,20 @@ CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 #*
 BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
 
-#*Back pointer
-
-#* BACK          Normal "next" pointers all implicitly point forward;
-#*               BACK exists to make loop structures possible.
-#* not used
-BACK        BACK,       no 0 V    ; Match "", "next" ptr points backward.
-
 #*Literals
 # NOTE: the relative ordering of these types is important do not change it
 
 EXACT       EXACT,      str       ; Match this string (preceded by length).
+EXACTL      EXACT,      str       ; Like EXACT, but /l is in effect (used so locale-related warnings can be checked for).
 EXACTF      EXACT,      str       ; Match this non-UTF-8 string (not guaranteed to be folded) using /id rules (w/len).
 EXACTFL     EXACT,      str       ; Match this string (not guaranteed to be folded) using /il rules (w/len).
 EXACTFU     EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding doesn't change if not in UTF-8) using /iu rules (w/len).
 EXACTFA     EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
+
+# End of important relative ordering.
+
 EXACTFU_SS  EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding may change even if not in UTF-8) using /iu rules (w/len).
+EXACTFLU8   EXACT,      str	  ; Rare cirucmstances: like EXACTFU, but is under /l, UTF-8, folded, and everything in it is above 255.
 EXACTFA_NO_TRIE  EXACT, str	  ; Match this string (which is not trie-able; not guaranteed to be folded) using /iaa rules (w/len).
 
 #*Do nothing types
@@ -109,7 +112,7 @@ TAIL        NOTHING,    no        ; Match empty string. Can jump here from outsi
 #*Loops
 
 #* STAR,PLUS    '?', and complex '*' and '+', are implemented as
-#*               circular BRANCH structures using BACK.  Simple cases
+#*               circular BRANCH structures.  Simple cases
 #*               (one character per match) are implemented with STAR
 #*               and PLUS for speed and to minimize recursive plunges.
 #*
@@ -147,20 +150,21 @@ NREFFL      REF,        no-sv 1 V ; Match already matched string, folded in loc.
 NREFFU      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8
 NREFFA      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8, no mixing ASCII, non-ASCII
 
+#*Support for long RE
+LONGJMP     LONGJMP,    off 1 . 1 ; Jump far away.
+BRANCHJ     BRANCHJ,    off 1 V 1 ; BRANCH with long offset.
+
+#*Special Case Regops
 IFMATCH     BRANCHJ,    off 1 . 2 ; Succeeds if the following matches.
 UNLESSM     BRANCHJ,    off 1 . 2 ; Fails if the following matches.
 SUSPEND     BRANCHJ,    off 1 V 1 ; "Independent" sub-RE.
 IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher.
 GROUPP      GROUPP,     num 1     ; Whether the group matched.
 
-#*Support for long RE
-
-LONGJMP     LONGJMP,    off 1 . 1 ; Jump far away.
-BRANCHJ     BRANCHJ,    off 1 V 1 ; BRANCH with long offset.
 
 #*The heavy worker
 
-EVAL        EVAL,       evl 1     ; Execute some Perl code.
+EVAL        EVAL,       evl/flags 2L ; Execute some Perl code.
 
 #*Modifiers
 
@@ -186,7 +190,6 @@ AHOCORASICKC    TRIE,trie charclass   ; Same as AHOCORASICK, but with embedded c
 
 #*Regex Subroutines
 GOSUB       GOSUB,      num/ofs 2L    ; recurse to paren arg1 at (signed) ofs arg2
-GOSTART     GOSTART,    no        ; recurse to start of pattern
 
 #*Special conditionals
 NGROUPP     NGROUPP,    no-sv 1   ; Whether the group matched.            
@@ -195,9 +198,8 @@ DEFINEP     DEFINEP,    none 1    ; Never execute directly.
 
 #*Backtracking Verbs
 ENDLIKE     ENDLIKE,    none      ; Used only for the type field of verbs
-OPFAIL      ENDLIKE,    none      ; Same as (?!)
-ACCEPT      ENDLIKE,    parno 1   ; Accepts the current matched string.
-
+OPFAIL      ENDLIKE,    no-sv 1   ; Same as (?!), but with verb arg
+ACCEPT      ENDLIKE,    no-sv/num 2L   ; Accepts the current matched string, with verbar
 
 #*Verbs With Arguments
 VERB        VERB,       no-sv 1   ; Used only for the type field of verbs

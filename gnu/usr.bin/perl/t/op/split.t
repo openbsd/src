@@ -2,11 +2,12 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    require './charset_tools.pl';
+    set_up_inc('../lib');
 }
 
-plan tests => 119;
+plan tests => 131;
 
 $FS = ':';
 
@@ -180,7 +181,10 @@ is($cnt, scalar(@ary));
 
 # /^/ treated as /^/m
 $_ = join ':', split /^/, "ab\ncd\nef\n";
-is($_, "ab\n:cd\n:ef\n");
+is($_, "ab\n:cd\n:ef\n","check that split /^/ is treated as split /^/m");
+
+$_ = join ':', split /\A/, "ab\ncd\nef\n";
+is($_, "ab\ncd\nef\n","check that split /\A/ is NOT treated as split /^/m");
 
 # see if @a = @b = split(...) optimization works
 @list1 = @list2 = split ('p',"a p b c p");
@@ -261,15 +265,11 @@ is($cnt, scalar(@ary));
 {
     my $s = "\x20\x40\x{80}\x{100}\x{80}\x40\x20";
 
-  SKIP: {
-    if (ord('A') == 193) {
-	skip("EBCDIC", 1);
-    } else {
+  {
 	# bug id 20000426.003
 
 	my ($a, $b, $c) = split(/\x40/, $s);
 	ok($a eq "\x20" && $b eq "\x{80}\x{100}\x{80}" && $c eq $a);
-    }
   }
 
     my ($a, $b) = split(/\x{100}/, $s);
@@ -278,13 +278,9 @@ is($cnt, scalar(@ary));
     my ($a, $b) = split(/\x{80}\x{100}\x{80}/, $s);
     ok($a eq "\x20\x40" && $b eq "\x40\x20");
 
-  SKIP: {
-    if (ord('A') == 193) {
-	skip("EBCDIC", 1);
-    }  else {
+  {
 	my ($a, $b) = split(/\x40\x{80}/, $s);
 	ok($a eq "\x20" && $b eq "\x{100}\x{80}\x40\x20");
-    }
   }
 
     my ($a, $b, $c) = split(/[\x40\x{80}]+/, $s);
@@ -368,6 +364,21 @@ is($cnt, scalar(@ary));
     eval { $b=split(/[, ]+/,$p) };
     is($b, scalar(@a));
     is ("$@-@a-", '-a b-', '#20912 - split() to array with /[]+/ and utf8');
+}
+
+{
+    # LATIN SMALL LETTER A WITH DIAERESIS, CYRILLIC SMALL LETTER I
+    for my $pattern ("\N{U+E4}", "\x{0437}") {
+        utf8::upgrade $pattern;
+        my @res;
+        for my $str ("a${pattern}b", "axb", "a${pattern}b") {
+            @split = split /$pattern/, $str;
+            push @res, scalar(@split);
+        }
+        is($res[0], 2);
+        is($res[1], 1);
+        is($res[2], 2, '#123469 - split with utf8 pattern after handling non-utf8 EXPR');
+    }
 }
 
 {
@@ -474,14 +485,14 @@ is($cnt, scalar(@ary));
     my @results;
     my $expr;
     $expr = ' a b c ';
-    @results = split "\x20", $expr;
+    @results = split uni_to_native("\x20"), $expr;
     is @results, 3,
         "RT #116086: split on string of single hex-20: captured 3 elements";
     is $results[0], 'a',
         "RT #116086: split on string of single hex-20: first element is non-empty";
 
     $expr = " a \tb c ";
-    @results = split "\x20", $expr;
+    @results = split uni_to_native("\x20"), $expr;
     is @results, 3,
         "RT #116086: split on string of single hex-20: captured 3 elements";
     is $results[0], 'a',
@@ -492,3 +503,23 @@ is($cnt, scalar(@ary));
 use constant nought => 0;
 ($a,$b,$c) = split //, $foo, nought;
 is nought, 0, 'split does not mangle 0 constants';
+
+*aaa = *bbb;
+$aaa[1] = "foobarbaz";
+$aaa[1] .= "";
+@aaa = split //, $bbb[1];
+is "@aaa", "f o o b a r b a z",
+   'split-to-array does not free its own argument';
+
+() = @a = split //, "abc";
+is "@a", "a b c", '() = split-to-array';
+
+(@a = split //, "abc") = 1..10;
+is "@a", '1 2 3', 'assignment to split-to-array (pmtarget/package array)';
+{
+  my @a;
+  (@a = split //, "abc") = 1..10;
+  is "@a", '1 2 3', 'assignment to split-to-array (targ/lexical)';
+}
+(@{\@a} = split //, "abc") = 1..10;
+is "@a", '1 2 3', 'assignment to split-to-array (stacked)';

@@ -32,36 +32,33 @@
 #    perl.imp    NetWare
 #    makedef.lis VMS
 
-BEGIN { unshift @INC, "lib" }
-use Config;
-use strict;
-
-my %ARGS = (CCTYPE => 'MSVC', TARG_DIR => '');
-
+my $fold;
+my %ARGS;
 my %define;
 
-my $fold;
+BEGIN {
+    BEGIN { unshift @INC, "lib" }
+    use Config;
+    use strict;
 
-sub process_cc_flags {
-    foreach (map {split /\s+/, $_} @_) {
-	$define{$1} = $2 // 1 if /^-D(\w+)(?:=(.+))?/;
+    %ARGS = (CCTYPE => 'MSVC', TARG_DIR => '');
+
+    sub process_cc_flags {
+	foreach (map {split /\s+/, $_} @_) {
+	    $define{$1} = $2 // 1 if /^-D(\w+)(?:=(.+))?/;
+	}
     }
-}
 
-while (@ARGV) {
-    my $flag = shift;
-    if ($flag =~ /^(?:CC_FLAGS=)?(-D\w.*)/) {
-	process_cc_flags($1);
-    } elsif ($flag =~ /^(CCTYPE|FILETYPE|PLATFORM|TARG_DIR)=(.+)$/) {
-	$ARGS{$1} = $2;
-    } elsif ($flag eq '--sort-fold') {
-	++$fold;
+    while (@ARGV) {
+	my $flag = shift;
+	if ($flag =~ /^(?:CC_FLAGS=)?(-D\w.*)/) {
+	    process_cc_flags($1);
+	} elsif ($flag =~ /^(CCTYPE|FILETYPE|PLATFORM|TARG_DIR)=(.+)$/) {
+	    $ARGS{$1} = $2;
+	} elsif ($flag eq '--sort-fold') {
+	    ++$fold;
+	}
     }
-}
-
-require "$ARGS{TARG_DIR}regen/embed_lib.pl";
-
-{
     my @PLATFORM = qw(aix win32 wince os2 netware vms test);
     my %PLATFORM;
     @PLATFORM{@PLATFORM} = ();
@@ -71,6 +68,9 @@ require "$ARGS{TARG_DIR}regen/embed_lib.pl";
     die "PLATFORM must be one of: @PLATFORM\n"
 	unless exists $PLATFORM{$ARGS{PLATFORM}};
 }
+use constant PLATFORM => $ARGS{PLATFORM};
+
+require "$ARGS{TARG_DIR}regen/embed_lib.pl";
 
 # Is the following guard strictly necessary? Added during refactoring
 # to keep the same behaviour when merging other code into here.
@@ -212,7 +212,6 @@ if ($ARGS{PLATFORM} ne 'os2') {
 				PL_generation
 				PL_lastgotoprobe
 				PL_modcount
-				PL_timesbuf
 				main
 				 );
 	}
@@ -253,6 +252,8 @@ unless ($define{'DEBUGGING'}) {
 		    Perl_debstackptrs
 		    Perl_pad_sv
 		    Perl_pad_setsv
+                    Perl__setlocale_debug_string
+		    Perl_set_padlist
 		    Perl_hv_assert
 		    PL_watchaddr
 		    PL_watchok
@@ -284,8 +285,7 @@ else {
 			 );
 }
 
-unless ($define{'PERL_OLD_COPY_ON_WRITE'}
-     || $define{'PERL_NEW_COPY_ON_WRITE'}) {
+if (!$define{'PERL_COPY_ON_WRITE'} || $define{'PERL_NO_COW'}) {
     ++$skip{Perl_sv_setsv_cow};
 }
 
@@ -364,6 +364,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    PL_regex_padav
 		    PL_dollarzero_mutex
 		    PL_hints_mutex
+		    PL_locale_mutex
 		    PL_my_ctx_mutex
 		    PL_perlio_mutex
 		    PL_stashpad
@@ -420,157 +421,35 @@ unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
 		    Perl_my_cxt_index
 			 );
 }
-if ($define{'NO_MATHOMS'}) {
+
+unless ($define{'PERL_OP_PARENT'}) {
     ++$skip{$_} foreach qw(
-		    ASCII_TO_NEED
-		    NATIVE_TO_NEED
-		    Perl_custom_op_desc
-		    Perl_custom_op_name
-		    Perl_do_aexec
-		    Perl_do_binmode
-		    Perl_do_open
-		    Perl_do_open9
-		    Perl_fprintf_nocontext
-		    Perl_gv_AVadd
-		    Perl_gv_HVadd
-		    Perl_gv_IOadd
-		    Perl_gv_SVadd
-		    Perl_gv_efullname
-		    Perl_gv_efullname3
-		    Perl_gv_fetchmethod
-		    Perl_gv_fullname
-		    Perl_gv_fullname3
-		    Perl_hv_delete
-		    Perl_hv_delete_ent
-		    Perl_hv_exists
-		    Perl_hv_exists_ent
-		    Perl_hv_fetch
-		    Perl_hv_fetch_ent
-		    Perl_hv_iternext
-		    Perl_hv_magic
-		    Perl_hv_store
-		    Perl_hv_store_ent
-		    Perl_hv_store_flags
-		    Perl_init_i18nl14n
-		    Perl_isALNUM_lazy
-		    Perl_isIDFIRST_lazy
-		    Perl_is_uni_alnum
-		    Perl_is_uni_alnum_lc
-		    Perl_is_uni_alnumc
-		    Perl_is_uni_alnumc_lc
-		    Perl_is_uni_alpha
-		    Perl_is_uni_alpha_lc
-		    Perl_is_uni_ascii
-		    Perl_is_uni_ascii_lc
-		    Perl_is_uni_blank
-		    Perl_is_uni_blank_lc
-		    Perl_is_uni_cntrl
-		    Perl_is_uni_cntrl_lc
-		    Perl_is_uni_digit
-		    Perl_is_uni_digit_lc
-		    Perl_is_uni_graph
-		    Perl_is_uni_graph_lc
-		    Perl_is_uni_idfirst
-		    Perl_is_uni_idfirst_lc
-		    Perl_is_uni_lower
-		    Perl_is_uni_lower_lc
-		    Perl_is_uni_print
-		    Perl_is_uni_print_lc
-		    Perl_is_uni_punct
-		    Perl_is_uni_punct_lc
-		    Perl_is_uni_space
-		    Perl_is_uni_space_lc
-		    Perl_is_uni_upper
-		    Perl_is_uni_upper_lc
-		    Perl_is_uni_xdigit
-		    Perl_is_uni_xdigit_lc
-		    Perl_is_utf8_alnum
-		    Perl_is_utf8_alnumc
-		    Perl_is_utf8_alpha
-		    Perl_is_utf8_ascii
-		    Perl_is_utf8_blank
-		    Perl_is_utf8_char
-		    Perl_is_utf8_cntrl
-		    Perl_is_utf8_digit
-		    Perl_is_utf8_graph
-		    Perl_is_utf8_idcont
-		    Perl_is_utf8_idfirst
-		    Perl_is_utf8_lower
-		    Perl_is_utf8_mark
-		    Perl_is_utf8_perl_space
-		    Perl_is_utf8_perl_word
-		    Perl_is_utf8_posix_digit
-		    Perl_is_utf8_print
-		    Perl_is_utf8_punct
-		    Perl_is_utf8_space
-		    Perl_is_utf8_string_loc
-		    Perl_is_utf8_upper
-		    Perl_is_utf8_xdigit
-		    Perl_is_utf8_xidcont
-		    Perl_is_utf8_xidfirst
-		    Perl_my_lstat
-		    Perl_my_stat
-		    Perl_newAV
-		    Perl_newHV
-		    Perl_newIO
-		    Perl_newSUB
-		    Perl_pack_cat
-		    Perl_printf_nocontext
-		    Perl_ref
-		    Perl_save_freeop
-		    Perl_save_freepv
-		    Perl_save_freesv
-		    Perl_save_iv
-		    Perl_save_list
-		    Perl_save_long
-		    Perl_save_mortalizesv
-		    Perl_save_nogv
-		    Perl_save_op
-		    Perl_save_re_context
-		    Perl_sv_2iv
-		    Perl_sv_2pv
-		    Perl_sv_2pv_nolen
-		    Perl_sv_2pvbyte_nolen
-		    Perl_sv_2pvutf8_nolen
-		    Perl_sv_2uv
-		    Perl_sv_catpvn
-		    Perl_sv_catpvn_mg
-		    Perl_sv_catsv
-		    Perl_sv_catsv_mg
-		    Perl_sv_force_normal
-		    Perl_sv_insert
-		    Perl_sv_iv
-		    Perl_sv_mortalcopy
-		    Perl_sv_nolocking
-		    Perl_sv_nounlocking
-		    Perl_sv_nv
-		    Perl_sv_pv
-		    Perl_sv_pvbyte
-		    Perl_sv_pvbyten
-		    Perl_sv_pvn
-		    Perl_sv_pvn_force
-		    Perl_sv_pvn_nomg
-		    Perl_sv_pvutf8
-		    Perl_sv_pvutf8n
-		    Perl_sv_setsv
-		    Perl_sv_taint
-		    Perl_sv_unref
-		    Perl_sv_usepvn
-		    Perl_sv_usepvn_mg
-		    Perl_sv_utf8_upgrade
-		    Perl_sv_uv
-		    Perl_to_uni_lower_lc
-		    Perl_to_uni_title_lc
-		    Perl_to_uni_upper_lc
-		    Perl_to_utf8_fold
-		    Perl_to_utf8_lower
-		    Perl_to_utf8_title
-		    Perl_to_utf8_upper
-		    Perl_unpack_str
-		    Perl_utf8_to_uvchr
-		    Perl_utf8_to_uvuni
-		    Perl_valid_utf8_to_uvuni
-			 );
+		    Perl_op_parent
+                );
+}
+
+unless ($define{'USE_DTRACE'}) {
+    ++$skip{$_} foreach qw(
+                    Perl_dtrace_probe_call
+                    Perl_dtrace_probe_load
+                    Perl_dtrace_probe_op
+                    Perl_dtrace_probe_phase
+                );
+}
+
+if ($define{'NO_MATHOMS'}) {
+    # win32 builds happen in the win32/ subdirectory, but vms builds happen
+    # at the top level, so we need to look in two candidate locations for
+    # the mathoms.c file.
+    my ($file) = grep { -f } qw( mathoms.c ../mathoms.c )
+        or die "No mathoms.c file found in . or ..\n";
+    open my $mathoms, '<', $file
+        or die "Cannot open $file: $!\n";
+    while (<$mathoms>) {
+        ++$skip{$1} if /\A ( NATIVE_TO_NEED
+                           | ASCII_TO_NEED
+                           | Perl_\w+ ) \s* \( /axms;
+    }
 }
 
 unless ($define{'PERL_NEED_APPCTX'}) {
@@ -603,13 +482,6 @@ unless ($define{'PERL_USES_PL_PIDSTATUS'}) {
 
 unless ($define{'PERL_TRACK_MEMPOOL'}) {
     ++$skip{PL_memory_debug_header};
-}
-
-unless ($define{PERL_MAD}) {
-    ++$skip{$_} foreach qw(
-		    PL_madskills
-		    PL_xmlfp
-			 );
 }
 
 unless ($define{'MULTIPLICITY'}) {
@@ -672,6 +544,11 @@ unless ($define{USE_LOCALE_NUMERIC}) {
 		    PL_numeric_radix_sv
 		    PL_numeric_standard
 			 );
+}
+
+unless ($define{'USE_C_BACKTRACE'}) {
+    ++$skip{Perl_get_c_backtrace_dump};
+    ++$skip{Perl_dump_c_backtrace};
 }
 
 unless ($define{HAVE_INTERP_INTERN}) {
@@ -773,6 +650,8 @@ my @layer_syms = qw(
 		    Perl_PerlIO_get_cnt
 		    Perl_PerlIO_get_ptr
 		    Perl_PerlIO_read
+		    Perl_PerlIO_restore_errno
+		    Perl_PerlIO_save_errno
 		    Perl_PerlIO_seek
 		    Perl_PerlIO_set_cnt
 		    Perl_PerlIO_set_ptrcnt
@@ -788,32 +667,17 @@ if ($ARGS{PLATFORM} eq 'netware') {
     push(@layer_syms,'PL_def_layerlist','PL_known_layers','PL_perlio');
 }
 
-if ($define{'USE_PERLIO'}) {
-    # Export the symbols that make up the PerlIO abstraction, regardless
-    # of its implementation - read from a file
-    push @syms, 'perlio.sym';
+# Export the symbols that make up the PerlIO abstraction, regardless
+# of its implementation - read from a file
+push @syms, 'perlio.sym';
 
-    # PerlIO with layers - export implementation
-    try_symbols(@layer_syms, 'perlsio_binmode');
-} else {
-	# -Uuseperlio
-	# Skip the PerlIO layer symbols - although
-	# nothing should have exported them anyway.
-	++$skip{$_} foreach @layer_syms;
-	++$skip{$_} foreach qw(
-			perlsio_binmode
-			PL_def_layerlist
-			PL_known_layers
-			PL_perlio
-			PL_perlio_debug_fd
-			PL_perlio_fd_refcnt
-			PL_perlio_fd_refcnt_size
-			PL_perlio_mutex
-			     );
+# PerlIO with layers - export implementation
+try_symbols(@layer_syms, 'perlsio_binmode');
 
-	# Also do NOT add abstraction symbols from $perlio_sym
-	# abstraction is done as #define to stdio
-	# Remaining remnants that _may_ be functions are handled below.
+
+unless ($define{'USE_QUADMATH'}) {
+  ++$skip{Perl_quadmath_format_needed};
+  ++$skip{Perl_quadmath_format_single};
 }
 
 ###############################################################################
@@ -846,12 +710,9 @@ if ($define{'USE_PERLIO'}) {
 foreach (@syms) {
     my $syms = $ARGS{TARG_DIR} . $_;
     open my $global, '<', $syms or die "failed to open $syms: $!\n";
-    # Functions already have a Perl_ prefix
-    # Variables need a PL_ prefix
-    my $prefix = $syms =~ /var\.sym$/i ? 'PL_' : '';
     while (<$global>) {
 	next unless /^([A-Za-z].*)/;
-	my $symbol = "$prefix$1";
+	my $symbol = "$1";
 	++$export{$symbol} unless exists $skip{$symbol};
     }
 }
@@ -1083,11 +944,11 @@ elsif ($ARGS{PLATFORM} eq 'vms') {
 		      Perl_my_gconvert
 		      Perl_my_getenv
 		      Perl_my_getenv_len
-		      Perl_my_getlogin
 		      Perl_my_getpwnam
 		      Perl_my_getpwuid
 		      Perl_my_gmtime
 		      Perl_my_kill
+		      Perl_my_killpg
 		      Perl_my_localtime
 		      Perl_my_mkdir
 		      Perl_my_sigaction
@@ -1436,10 +1297,16 @@ elsif ($ARGS{PLATFORM} eq 'netware') {
 
 my @symbols = $fold ? sort {lc $a cmp lc $b} keys %export : sort keys %export;
 foreach my $symbol (@symbols) {
-    if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
-	print "\t$symbol\n";
+    if (PLATFORM eq 'win32' || PLATFORM eq 'wince') {
+	# Remembering the origin file of each symbol is an alternative to PL_ matching
+	if (substr($symbol, 0, 3) eq 'PL_') {
+	    print "\t$symbol DATA\n";
+	}
+	else {
+	    print "\t$symbol\n";
+	}
     }
-    elsif ($ARGS{PLATFORM} eq 'os2') {
+    elsif (PLATFORM eq 'os2') {
 	printf qq(    %-31s \@%s\n),
 	  qq("$symbol"), $ordinal{$symbol} || ++$sym_ord;
 	printf qq(    %-31s \@%s\n),
@@ -1447,7 +1314,7 @@ foreach my $symbol (@symbols) {
 	  $ordinal{$exportperlmalloc{$symbol}} || ++$sym_ord
 	  if $exportperlmalloc and exists $exportperlmalloc{$symbol};
     }
-    elsif ($ARGS{PLATFORM} eq 'netware') {
+    elsif (PLATFORM eq 'netware') {
 	print "\t$symbol,\n";
     } else {
 	print "$symbol\n";

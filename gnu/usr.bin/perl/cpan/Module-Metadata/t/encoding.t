@@ -22,7 +22,7 @@ plan tests => 4 * scalar(keys %versions);
 for my $enc (sort keys %versions) {
   my $pkg  = "BOMTest::$enc";
   my $vers = $versions{$enc};
-  my $pm   = File::Spec->catfile(qw<t lib BOMTest> => "$enc.pm");
+  my $pm   = File::Spec->catfile(qw<corpus BOMTest> => "$enc.pm");
   my $info = Module::Metadata->new_from_file($pm);
   is( $info->name, $pkg, "$enc: default package was found" );
   is( $info->version, $vers, "$enc: version for default package" );

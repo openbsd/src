@@ -4,7 +4,7 @@ package Pod::Simple::TiedOutFH;
 use Symbol ('gensym');
 use Carp ();
 use vars qw($VERSION );
-$VERSION = '3.28';
+$VERSION = '3.32';
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -20,7 +20,7 @@ sub handle_on { # some horrible frightening things are encapsulated in here
   ;
   $$x = '' unless defined $$x;
   
-  #Pod::Simple::DEBUG and print "New $class handle on $x = \"$$x\"\n";
+  #Pod::Simple::DEBUG and print STDERR "New $class handle on $x = \"$$x\"\n";
   
   my $new = gensym();
   tie *$new, $class, $x;
@@ -39,7 +39,7 @@ sub PRINT {
   my $it = shift;
   foreach my $x (@_) { $$$it .= $x }
 
-  #Pod::Simple::DEBUG > 10 and print " appended to $$it = \"$$$it\"\n";
+  #Pod::Simple::DEBUG > 10 and print STDERR " appended to $$it = \"$$$it\"\n";
 
   return 1;
 }

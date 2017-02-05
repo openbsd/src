@@ -2,13 +2,10 @@ package ExtUtils::MM_MacOS;
 
 use strict;
 
-our $VERSION = '6.98_01';
+our $VERSION = '7.10_02';
 
 sub new {
-    die <<'UNSUPPORTED';
-MacOS Classic (MacPerl) is no longer supported by MakeMaker.
-Please use Module::Build instead.
-UNSUPPORTED
+    die 'MacOS Classic (MacPerl) is no longer supported by MakeMaker';
 }
 
 =head1 NAME
@@ -28,12 +25,8 @@ Since there's little chance of it being repaired, MacOS Classic is fading
 away, and the code was icky to begin with, the code has been deleted to
 make maintenance easier.
 
-Those interested in writing modules for MacPerl should use Module::Build
-which works better than MakeMaker ever did.
-
 Anyone interested in resurrecting this file should pull the old version
-from the MakeMaker CVS repository and contact makemaker@perl.org, but we
-really encourage you to work on Module::Build instead.
+from the MakeMaker CVS repository and contact makemaker@perl.org.
 
 =cut
 

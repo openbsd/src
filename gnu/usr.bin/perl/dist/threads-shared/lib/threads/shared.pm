@@ -7,7 +7,7 @@ use warnings;
 
 use Scalar::Util qw(reftype refaddr blessed);
 
-our $VERSION = '1.46'; # Please update the pod, too.
+our $VERSION = '1.51'; # Please update the pod, too.
 my $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -195,7 +195,7 @@ threads::shared - Perl extension for sharing data structures between threads
 
 =head1 VERSION
 
-This document describes threads::shared version 1.46
+This document describes threads::shared version 1.51
 
 =head1 SYNOPSIS
 
@@ -557,6 +557,17 @@ they contain will be lost.
 
 Therefore, populate such variables B<after> declaring them as shared.  (Scalar
 and scalar refs are not affected by this problem.)
+
+Blessing a shared item after it has been nested in another shared item does
+not propagate the blessing to the shared reference:
+
+  my $foo = &share({});
+  my $bar = &share({});
+  $bar->{foo} = $foo;
+  bless($foo, 'baz');   # $foo is now of class 'baz',
+                        # but $bar->{foo} is unblessed.
+
+Therefore, you should bless objects before sharing them.
 
 It is often not wise to share an object unless the class itself has been
 written to support sharing.  For example, an object's destructor may get

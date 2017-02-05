@@ -6,7 +6,7 @@ use strict;
 package CPAN::Distroprefs;
 
 use vars qw($VERSION);
-$VERSION = '6.0001_01';
+$VERSION = '6.0001';
 
 package CPAN::Distroprefs::Result;
 

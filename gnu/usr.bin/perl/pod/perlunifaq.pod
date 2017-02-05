@@ -203,14 +203,12 @@ These are alternate syntaxes for C<decode('utf8', ...)> and C<encode('utf8',
 
 =head2 What is a "wide character"?
 
-This is a term used both for characters with an ordinal value greater than 127,
-characters with an ordinal value greater than 255, or any character occupying
-more than one byte, depending on the context.
+This is a term used for characters occupying more than one byte.
 
-The Perl warning "Wide character in ..." is caused by a character with an
-ordinal value greater than 255. With no specified encoding layer, Perl tries to
-fit things in ISO-8859-1 for backward compatibility reasons. When it can't, it
-emits this warning (if warnings are enabled), and outputs UTF-8 encoded data
+The Perl warning "Wide character in ..." is caused by such a character.
+With no specified encoding layer, Perl tries to
+fit things into a single byte.  When it can't, it
+emits this warning (if warnings are enabled), and uses UTF-8 encoded data
 instead.
 
 To avoid this warning and to avoid having different output encodings in a single

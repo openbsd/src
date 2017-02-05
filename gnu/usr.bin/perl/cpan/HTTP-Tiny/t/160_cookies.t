@@ -18,7 +18,7 @@ SKIP: for my $class ( qw/t::SimpleCookieJar HTTP::CookieJar/ ) {
         eval "require $class; 1"
             or plan skip_all => "Needs $class";
 
-        for my $file ( dir_list("t/cases", qr/^cookies/ ) ) {
+        for my $file ( dir_list("corpus", qr/^cookies/ ) ) {
             my $label = basename($file);
             my $data = do { local (@ARGV,$/) = $file; <> };
             my @cases = split /--+\n/, $data;

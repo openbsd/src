@@ -2,6 +2,10 @@
 
 perlfaq9 - Web, Email and Networking
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section deals with questions related to running web sites,

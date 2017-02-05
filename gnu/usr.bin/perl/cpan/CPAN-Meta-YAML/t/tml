@@ -2,7 +2,8 @@
 use strict;
 use warnings;
 use lib 'lib', 't/lib/';
-use Test::More 0.99;
+use Test::More 0.88;
+use SubtestCompat;
 use Getopt::Long qw/:config passthrough/;
 use List::Util qw/first/;
 use TestBridge;
@@ -17,6 +18,7 @@ use TestUtils;
 my %BRIDGE_MAP = (
     'tml-local/dump-error'      => \&test_dump_error,
     'tml-local/load-error'      => \&test_load_error,
+    'tml-local/load-warning'    => \&test_load_warning,
     'tml-local/perl-to-yaml'    => \&test_perl_to_yaml,
     'tml-local/yaml-roundtrip'  => \&test_yaml_roundtrip,
     'tml-spec/basic-data.tml'   => \&test_yaml_json,
@@ -41,7 +43,6 @@ sub main {
             sub {
                 my ($file, $blocks) = @_;
                 subtest "TestML dev runner: $file" => sub {
-                    plan tests => scalar @$blocks;
                     $BRIDGE_MAP{$bridge}->($_) for @$blocks;
                 };
                 done_testing;

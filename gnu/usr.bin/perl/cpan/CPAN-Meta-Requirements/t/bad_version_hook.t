@@ -6,9 +6,19 @@ use version;
 
 use Test::More 0.88;
 
+my %DATA = (
+  'Foo::Bar' => [ 10, 10 ],
+  'Foo::Baz' => [ 'invalid_version', 42 ],
+  'Foo::Qux' => [ 'version', 42 ],
+);
+my %input = map { ($_ => $DATA{$_}->[0]) } keys %DATA;
+my %expected = map { ($_ => $DATA{$_}->[1]) } keys %DATA;
+
 sub dies_ok (&@) {
   my ($code, $qr, $comment) = @_;
 
+  no warnings 'redefine';
+  local *Regexp::CARP_TRACE  = sub { "<regexp>" };
   my $lived = eval { $code->(); 1 };
 
   if ($lived) {
@@ -18,20 +28,23 @@ sub dies_ok (&@) {
   }
 }
 
-sub _fixit { return version->new(42) }
+my $hook_text;
+sub _fixit { my ($v, $m) = @_; $hook_text .= $m; return version->new(42) }
 
 {
   my $req = CPAN::Meta::Requirements->new( {bad_version_hook => \&_fixit} );
 
-  $req->add_minimum('Foo::Bar' => 10);
-  $req->add_minimum('Foo::Baz' => 'invalid_version');
+  my ($k, $v);
+  while (($k, $v) = each %input) {
+    note "adding minimum requirement: $k => $v";
+    eval { $req->add_minimum($k => $v) };
+    is( $@, '', "adding minimum '$k' for $v" );
+  }
+  like( $hook_text, qr/Foo::Baz/, 'hook stored module name' );
 
   is_deeply(
     $req->as_string_hash,
-    {
-      'Foo::Bar'   => 10,
-      'Foo::Baz'   => 42,
-    },
+    \%expected,
     "hook fixes invalid version",
   );
 }

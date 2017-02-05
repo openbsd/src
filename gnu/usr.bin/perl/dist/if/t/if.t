@@ -1,7 +1,7 @@
 #!./perl
 
 use strict;
-use Test::More tests => 6;
+use Test::More tests => 10;
 
 my $v_plus = $] + 1;
 my $v_minus = $] - 1;
@@ -30,3 +30,11 @@ like( $@, qr/while "strict refs" in use/, 'expected error message'),
 # Use 'open' =>, since pre-5.6.0 could interpret differently
 is( (eval "use if ($v_plus > \$]), 'open' => IN => ':crlf'; 12" || 0), 12,
     '"use if" with open');
+
+is(eval "use if ($v_plus > \$])", undef,
+   "Too few args to 'use if' returns <undef>");
+like($@, qr/Too few arguments to 'use if'/, "  ... and returns correct error");
+
+is(eval "no if ($v_plus > \$])", undef,
+   "Too few args to 'no if' returns <undef>");
+like($@, qr/Too few arguments to 'no if'/, "  ... and returns correct error");

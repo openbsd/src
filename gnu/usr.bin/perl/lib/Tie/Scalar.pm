@@ -1,6 +1,6 @@
 package Tie::Scalar;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -145,7 +145,7 @@ package Tie::StdScalar;
 
 sub TIESCALAR {
     my $class = shift;
-    my $instance = shift || undef;
+    my $instance = @_ ? shift : undef;
     return bless \$instance => $class;
 }
 

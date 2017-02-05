@@ -44,17 +44,15 @@ _getsym(name)
     if (retsts & 1) {
       PUSHs(sv_2mortal(newSVpv(valdsc.dsc$w_length ? 
                                valdsc.dsc$a_pointer : "",valdsc.dsc$w_length)));
-      if (GIMME) {
-        EXTEND(sp,2);  /* just in case we're at the end of the stack */
-        if (tbltype == LIB$K_CLI_LOCAL_SYM)
+      EXTEND(sp,2);  /* just in case we're at the end of the stack */
+      if (tbltype == LIB$K_CLI_LOCAL_SYM)
           PUSHs(sv_2mortal(newSVpv("LOCAL",5)));
-        else
+      else
           PUSHs(sv_2mortal(newSVpv("GLOBAL",6)));
-      }
       _ckvmssts(lib$sfree1_dd(&valdsc));
     }
     else {
-      ST(0) = &PL_sv_undef;  /* error - we're returning undef, if anything */
+      /* error - we'll return an empty list */
       switch (retsts) {
         case LIB$_NOSUCHSYM:
           break;   /* nobody home */;

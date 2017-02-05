@@ -17,7 +17,7 @@ use ExtUtils::testlib;
 
 BEGIN {
     $| = 1;
-    print("1..122\n");   ### Number of tests that will be run ###
+    print("1..131\n");   ### Number of tests that will be run ###
 };
 
 use threads;
@@ -405,5 +405,46 @@ ok($destroyed[$ID], 'Scalar object removed from undef shared hash');
     async { $shared_scalar = SclrObj->new(); }->join();
 }
 ok($destroyed[$ID], 'Scalar object removed from shared scalar');
+
+#
+# RT #122950 abandoning array elements (e.g. by setting $#ary)
+# should trigger destructors
+
+{
+    package rt122950;
+
+    my $count = 0;
+    sub DESTROY { $count++ }
+
+    my $n = 4;
+
+    for my $type (0..1) {
+        my @a : shared;
+        $count = 0;
+        push @a, bless &threads::shared::share({}) for 1..$n;
+        for (1..$n) {
+            { # new scope to ensure tmps are freed, destructors called
+                if ($type) {
+                    pop @a;
+                }
+                else {
+                    $#a = $n - $_ - 1;
+                }
+            }
+            ::ok($count == $_,
+                "remove array object $_ by " . ($type ? "pop" : '$#a=N'));
+        }
+    }
+
+    my @a : shared;
+    $count = 0;
+    push @a, bless &threads::shared::share({}) for 1..$n;
+    {
+        undef @a; # this is implemented internally as $#a = -01
+    }
+    ::ok($count == $n, "remove array object by undef");
+}
+
+
 
 # EOF

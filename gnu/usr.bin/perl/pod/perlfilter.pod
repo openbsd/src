@@ -550,6 +550,30 @@ useful features from the C preprocessor and any other macro processors
 you know. The tricky bit will be choosing how much knowledge of Perl's
 syntax you want your filter to have.
 
+=head1 LIMITATIONS
+
+Source filters only work on the string level, thus are highly limited
+in its ability to change source code on the fly. It cannot detect
+comments, quoted strings, heredocs, it is no replacement for a real
+parser.
+The only stable usage for source filters are encryption, compression,
+or the byteloader, to translate binary code back to source code.
+
+See for example the limitations in L<Switch>, which uses source filters,
+and thus is does not work inside a string eval, the presence of
+regexes with embedded newlines that are specified with raw C</.../>
+delimiters and don't have a modifier C<//x> are indistinguishable from
+code chunks beginning with the division operator C</>. As a workaround
+you must use C<m/.../> or C<m?...?> for such patterns. Also, the presence of
+regexes specified with raw C<?...?> delimiters may cause mysterious
+errors. The workaround is to use C<m?...?> instead.  See
+L<http://search.cpan.org/perldoc?Switch#LIMITATIONS>
+
+Currently the content of the C<__DATA__> block is not filtered.
+
+Currently internal buffer lengths are limited to 32-bit only.
+
+
 =head1 THINGS TO LOOK OUT FOR
 
 =over 5
@@ -560,7 +584,7 @@ Some source filters use the C<DATA> handle to read the calling program.
 When using these source filters you cannot rely on this handle, nor expect
 any particular kind of behavior when operating on it.  Filters based on
 Filter::Util::Call (and therefore Filter::Simple) do not alter the C<DATA>
-filehandle.
+filehandle, but on the other hand totally ignore the text after C<__DATA__>.
 
 =back
 
@@ -579,9 +603,11 @@ Damian Conway.
 
 Paul Marquess E<lt>Paul.Marquess@btinternet.comE<gt>
 
+Reini Urban E<lt>rurban@cpan.orgE<gt>
+
 =head1 Copyrights
 
-This article originally appeared in The Perl Journal #11, and is
-copyright 1998 The Perl Journal. It appears courtesy of Jon Orwant and
-The Perl Journal.  This document may be distributed under the same terms
-as Perl itself.
+The first version of this article originally appeared in The Perl
+Journal #11, and is copyright 1998 The Perl Journal. It appears
+courtesy of Jon Orwant and The Perl Journal.  This document may be
+distributed under the same terms as Perl itself.

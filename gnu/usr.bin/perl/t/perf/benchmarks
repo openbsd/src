@@ -1,0 +1,1074 @@
+#!perl
+
+# This file specifies an array-of-hashes that define snippets of code that
+# can be run by various measurement and profiling tools.
+#
+# The basic idea is that any time you add an optimisation that is intended
+# to make a particular construct faster, then you should add that construct
+# to this file.
+#
+# Under the normal test suite, the test file benchmarks.t does a basic
+# compile and run of each of these snippets; not to test performance,
+# but just to ensure that the code doesn't have errors.
+#
+# Over time, it is intended that various measurement and profiling tools
+# will be written that can run selected (or all) snippets in various
+# environments. These will not be run as part of a normal test suite run.
+#
+# It is intended that the tests in this file will be lightweight; e.g.
+# a hash access, an empty function call, or a single regex match etc.
+#
+# This file is designed to be read in by 'do' (and in such a way that
+# multiple versions of this file from different releases can be read in
+# by a single process).
+#
+# The top-level array has name/hash pairs (we use an array rather than a
+# hash so that duplicate keys can be spotted) Each name is a token that
+# describes a particular test. Code will be compiled in the package named
+# after the token, so it should match /^(\w|::)+$/a. It is intended that
+# this can be used on the command line of tools to select particular
+# tests.
+# In addition, the package names are arranged into an informal hierarchy
+# whose top members are (this is subject to change):
+#
+#     call::     subroutine and method handling
+#     expr::     expressions: e.g. $x=1, $foo{bar}[0]
+#     loop::     structural code like for, while(), etc
+#     regex::    regular expressions
+#     string::   string handling
+#
+#
+# Each hash has three fields:
+#
+#   desc is a description of the test
+#   setup is a string containing setup code
+#   code  is a string containing the code to run in a loop
+#
+# So typically a benchmark tool might do something like
+#
+#   eval "package $token; $setup; for (1..1000000) { $code }"
+#
+# Currently the only tool that uses this file is Porting/bench.pl;
+# try C<perl Porting/bench.pl --help> for more info
+
+
+[
+    'call::sub::empty' => {
+        desc    => 'function call with no args or body',
+        setup   => 'sub f { }',
+        code    => 'f()',
+    },
+    'call::sub::amp_empty' => {
+        desc    => '&foo function call with no args or body',
+        setup   => 'sub f { }; @_ = ();',
+        code    => '&f',
+    },
+    'call::sub::args3' => {
+        desc    => 'function call with 3 local lexical vars',
+        setup   => 'sub f { my ($a, $b, $c) = @_; 1 }',
+        code    => 'f(1,2,3)',
+    },
+    'call::sub::args2_ret1' => {
+        desc    => 'function call with 2 local lex vars and 1 return value',
+        setup   => 'my $x; sub f { my ($a, $b) = @_; $a+$b }',
+        code    => '$x = f(1,2)',
+    },
+    'call::sub::args2_ret1temp' => {
+        desc    => 'function call with 2 local lex vars and 1 return TEMP value',
+        setup   => 'my $x; sub f { my ($a, $b) = @_; \$a }',
+        code    => '$x = f(1,2)',
+    },
+    'call::sub::args3_ret3' => {
+        desc    => 'function call with 3 local lex vars and 3 return values',
+        setup   => 'my @a; sub f { my ($a, $b, $c) = @_; $a+$b, $c, 1 }',
+        code    => '@a = f(1,2,3)',
+    },
+    'call::sub::args3_ret3str' => {
+        desc    => 'function call with 3 local lex vars and 3 string return values',
+        setup   => 'my @a; sub f { my ($a, $b, $c) = @_; my @s = ("aa","bb","cc"); @s }',
+        code    => '@a = f(1,2,3)',
+    },
+    'call::sub::args3_ret3temp' => {
+        desc    => 'function call with 3 local lex vars and 3 TEMP return values',
+        setup   => 'my @a; sub f { my ($a, $b, $c) = @_; 1..3 }',
+        code    => '@a = f(1,2,3)',
+    },
+    'call::sub::recursive' => {
+        desc    => 'basic recursive function call',
+        setup   => 'my $x; sub f { my ($i) = @_; $i > 0 ? $i + f($i-1) : 0 }',
+        code    => '$x = f(1)',
+    },
+
+    'call::goto::empty' => {
+        desc    => 'goto &funtion with no args or body',
+        setup   => 'sub f { goto &g } sub g {}',
+        code    => 'f()',
+    },
+    'call::goto::args3' => {
+        desc    => 'goto &funtion with 3 local lexical vars',
+        setup   => 'sub f { goto &g } sub g { my ($a, $b, $c) = @_ }',
+        code    => 'f(1,2,3)',
+    },
+
+
+    'expr::array::lex_1const_0' => {
+        desc    => 'lexical $array[0]',
+        setup   => 'my @a = (1)',
+        code    => '$a[0]',
+    },
+    'expr::array::lex_1const_m1' => {
+        desc    => 'lexical $array[-1]',
+        setup   => 'my @a = (1)',
+        code    => '$a[-1]',
+    },
+    'expr::array::lex_2const' => {
+        desc    => 'lexical $array[const][const]',
+        setup   => 'my @a = ([1,2])',
+        code    => '$a[0][1]',
+    },
+    'expr::array::lex_2var' => {
+        desc    => 'lexical $array[$i1][$i2]',
+        setup   => 'my ($i1,$i2) = (0,1); my @a = ([1,2])',
+        code    => '$a[$i1][$i2]',
+    },
+    'expr::array::ref_lex_2var' => {
+        desc    => 'lexical $arrayref->[$i1][$i2]',
+        setup   => 'my ($i1,$i2) = (0,1); my $r = [[1,2]]',
+        code    => '$r->[$i1][$i2]',
+    },
+    'expr::array::ref_lex_3const' => {
+        desc    => 'lexical $arrayref->[const][const][const]',
+        setup   => 'my $r = [[[1,2]]]',
+        code    => '$r->[0][0][0]',
+    },
+    'expr::array::ref_expr_lex_3const' => {
+        desc    => '(lexical expr)->[const][const][const]',
+        setup   => 'my $r = [[[1,2]]]',
+        code    => '($r||0)->[0][0][0]',
+    },
+
+
+    'expr::array::pkg_1const_0' => {
+        desc    => 'package $array[0]',
+        setup   => '@a = (1)',
+        code    => '$a[0]',
+    },
+    'expr::array::pkg_1const_m1' => {
+        desc    => 'package $array[-1]',
+        setup   => '@a = (1)',
+        code    => '$a[-1]',
+    },
+    'expr::array::pkg_2const' => {
+        desc    => 'package $array[const][const]',
+        setup   => '@a = ([1,2])',
+        code    => '$a[0][1]',
+    },
+    'expr::array::pkg_2var' => {
+        desc    => 'package $array[$i1][$i2]',
+        setup   => '($i1,$i2) = (0,1); @a = ([1,2])',
+        code    => '$a[$i1][$i2]',
+    },
+    'expr::array::ref_pkg_2var' => {
+        desc    => 'package $arrayref->[$i1][$i2]',
+        setup   => '($i1,$i2) = (0,1); $r = [[1,2]]',
+        code    => '$r->[$i1][$i2]',
+    },
+    'expr::array::ref_pkg_3const' => {
+        desc    => 'package $arrayref->[const][const][const]',
+        setup   => '$r = [[[1,2]]]',
+        code    => '$r->[0][0][0]',
+    },
+    'expr::array::ref_expr_pkg_3const' => {
+        desc    => '(package expr)->[const][const][const]',
+        setup   => '$r = [[[1,2]]]',
+        code    => '($r||0)->[0][0][0]',
+    },
+
+
+    'expr::arrayhash::lex_3var' => {
+        desc    => 'lexical $h{$k1}[$i]{$k2}',
+        setup   => 'my ($i, $k1, $k2) = (0,"foo","bar");'
+                    . 'my %h = (foo => [ { bar => 1 } ])',
+        code    => '$h{$k1}[$i]{$k2}',
+    },
+    'expr::arrayhash::pkg_3var' => {
+        desc    => 'package $h{$k1}[$i]{$k2}',
+        setup   => '($i, $k1, $k2) = (0,"foo","bar");'
+                    . '%h = (foo => [ { bar => 1 } ])',
+        code    => '$h{$k1}[$i]{$k2}',
+    },
+
+
+    'expr::assign::scalar_lex_int' => {
+        desc    => 'lexical $x = 1',
+        setup   => 'my $x',
+        code    => '$x = 1',
+    },
+    'expr::assign::scalar_lex_str' => {
+        desc    => 'lexical $x = "abc"',
+        setup   => 'my $x',
+        code    => '$x = "abc"',
+    },
+    'expr::assign::scalar_lex_strint' => {
+        desc    => 'lexical $x = 1 where $x was previously a string',
+        setup   => 'my $x = "abc"',
+        code    => '$x = 1',
+    },
+    'expr::assign::scalar_lex_intstr' => {
+        desc    => 'lexical $x = "abc" where $x was previously an int',
+        setup   => 'my $x = 1;',
+        code    => '$x = "abc"',
+    },
+    'expr::assign::2list_lex' => {
+        desc    => 'lexical ($x, $y) = (1, 2)',
+        setup   => 'my ($x, $y)',
+        code    => '($x, $y) = (1, 2)',
+    },
+
+
+    'expr::hash::lex_1const' => {
+        desc    => 'lexical $hash{const}',
+        setup   => 'my %h = ("foo" => 1)',
+        code    => '$h{foo}',
+    },
+    'expr::hash::lex_2const' => {
+        desc    => 'lexical $hash{const}{const}',
+        setup   => 'my %h = (foo => { bar => 1 })',
+        code    => '$h{foo}{bar}',
+    },
+    'expr::hash::lex_2var' => {
+        desc    => 'lexical $hash{$k1}{$k2}',
+        setup   => 'my ($k1,$k2) = qw(foo bar); my %h = ($k1 => { $k2 => 1 })',
+        code    => '$h{$k1}{$k2}',
+    },
+    'expr::hash::ref_lex_2var' => {
+        desc    => 'lexical $hashref->{$k1}{$k2}',
+        setup   => 'my ($k1,$k2) = qw(foo bar); my $r = {$k1 => { $k2 => 1 }}',
+        code    => '$r->{$k1}{$k2}',
+    },
+    'expr::hash::ref_lex_3const' => {
+        desc    => 'lexical $hashref->{const}{const}{const}',
+        setup   => 'my $r = {foo => { bar => { baz => 1 }}}',
+        code    => '$r->{foo}{bar}{baz}',
+    },
+    'expr::hash::ref_expr_lex_3const' => {
+        desc    => '(lexical expr)->{const}{const}{const}',
+        setup   => 'my $r = {foo => { bar => { baz => 1 }}}',
+        code    => '($r||0)->{foo}{bar}{baz}',
+    },
+
+
+    'expr::hash::pkg_1const' => {
+        desc    => 'package $hash{const}',
+        setup   => '%h = ("foo" => 1)',
+        code    => '$h{foo}',
+    },
+    'expr::hash::pkg_2const' => {
+        desc    => 'package $hash{const}{const}',
+        setup   => '%h = (foo => { bar => 1 })',
+        code    => '$h{foo}{bar}',
+    },
+    'expr::hash::pkg_2var' => {
+        desc    => 'package $hash{$k1}{$k2}',
+        setup   => '($k1,$k2) = qw(foo bar); %h = ($k1 => { $k2 => 1 })',
+        code    => '$h{$k1}{$k2}',
+    },
+    'expr::hash::ref_pkg_2var' => {
+        desc    => 'package $hashref->{$k1}{$k2}',
+        setup   => '($k1,$k2) = qw(foo bar); $r = {$k1 => { $k2 => 1 }}',
+        code    => '$r->{$k1}{$k2}',
+    },
+    'expr::hash::ref_pkg_3const' => {
+        desc    => 'package $hashref->{const}{const}{const}',
+        setup   => '$r = {foo => { bar => { baz => 1 }}}',
+        code    => '$r->{foo}{bar}{baz}',
+    },
+    'expr::hash::ref_expr_pkg_3const' => {
+        desc    => '(package expr)->{const}{const}{const}',
+        setup   => '$r = {foo => { bar => { baz => 1 }}}',
+        code    => '($r||0)->{foo}{bar}{baz}',
+    },
+
+
+    'expr::hash::exists_lex_2var' => {
+        desc    => 'lexical exists $hash{$k1}{$k2}',
+        setup   => 'my ($k1,$k2) = qw(foo bar); my %h = ($k1 => { $k2 => 1 });',
+        code    => 'exists $h{$k1}{$k2}',
+    },
+    'expr::hash::delete_lex_2var' => {
+        desc    => 'lexical delete $hash{$k1}{$k2}',
+        setup   => 'my ($k1,$k2) = qw(foo bar); my %h = ($k1 => { $k2 => 1 });',
+        code    => 'delete $h{$k1}{$k2}',
+    },
+
+
+    # using a const string as second arg to index triggers using FBM.
+    # the FBM matcher special-cases 1,2-byte strings.
+    #
+    'expr::index::short_const1' => {
+        desc    => 'index of a short string against a 1 char const substr',
+        setup   => 'my $x = "aaaab"',
+        code    => 'index $x, "b"',
+    },
+    'expr::index::long_const1' => {
+        desc    => 'index of a long string against a 1 char const substr',
+        setup   => 'my $x = "a" x 1000 . "b"',
+        code    => 'index $x, "b"',
+    },
+    'expr::index::short_const2aabc_bc' => {
+        desc    => 'index of a short string against a 2 char const substr',
+        setup   => 'my $x = "aaaabc"',
+        code    => 'index $x, "bc"',
+    },
+    'expr::index::long_const2aabc_bc' => {
+        desc    => 'index of a long string against a 2 char const substr',
+        setup   => 'my $x = "a" x 1000 . "bc"',
+        code    => 'index $x, "bc"',
+    },
+    'expr::index::long_const2aa_ab' => {
+        desc    => 'index of a long string aaa.. against const substr "ab"',
+        setup   => 'my $x = "a" x 1000',
+        code    => 'index $x, "ab"',
+    },
+    'expr::index::long_const2bb_ab' => {
+        desc    => 'index of a long string bbb.. against const substr "ab"',
+        setup   => 'my $x = "b" x 1000',
+        code    => 'index $x, "ab"',
+    },
+    'expr::index::long_const2aa_bb' => {
+        desc    => 'index of a long string aaa.. against const substr "bb"',
+        setup   => 'my $x = "a" x 1000',
+        code    => 'index $x, "bb"',
+    },
+    # this one is designed to be pathological
+    'expr::index::long_const2ab_aa' => {
+        desc    => 'index of a long string abab.. against const substr "aa"',
+        setup   => 'my $x = "ab" x 500',
+        code    => 'index $x, "aa"',
+    },
+    # near misses with gaps, 1st letter
+    'expr::index::long_const2aaxx_xy' => {
+        desc    => 'index of a long string with "xx"s against const substr "xy"',
+        setup   => 'my $x = "aaaaaaaaxx" x 100',
+        code    => 'index $x, "xy"',
+    },
+    # near misses with gaps, 2nd letter
+    'expr::index::long_const2aayy_xy' => {
+        desc    => 'index of a long string with "yy"s against const substr "xy"',
+        setup   => 'my $x = "aaaaaaaayy" x 100',
+        code    => 'index $x, "xy"',
+    },
+    # near misses with gaps, duplicate letter
+    'expr::index::long_const2aaxy_xx' => {
+        desc    => 'index of a long string with "xy"s against const substr "xx"',
+        setup   => 'my $x = "aaaaaaaaxy" x 100',
+        code    => 'index $x, "xx"',
+    },
+    # alternating near misses with gaps
+    'expr::index::long_const2aaxxaayy_xy' => {
+        desc    => 'index of a long string with "xx/yy"s against const substr "xy"',
+        setup   => 'my $x = "aaaaaaaaxxbbbbbbbbyy" x 50',
+        code    => 'index $x, "xy"',
+    },
+    'expr::index::short_const3aabcd_bcd' => {
+        desc    => 'index of a short string against a 3 char const substr',
+        setup   => 'my $x = "aaaabcd"',
+        code    => 'index $x, "bcd"',
+    },
+    'expr::index::long_const3aabcd_bcd' => {
+        desc    => 'index of a long string against a 3 char const substr',
+        setup   => 'my $x = "a" x 1000 . "bcd"',
+        code    => 'index $x, "bcd"',
+    },
+    'expr::index::long_const3ab_abc' => {
+        desc    => 'index of a long string of "ab"s against a 3 char const substr "abc"',
+        setup   => 'my $x = "ab" x 500',
+        code    => 'index $x, "abc"',
+    },
+    'expr::index::long_const3bc_abc' => {
+        desc    => 'index of a long string of "bc"s against a 3 char const substr "abc"',
+        setup   => 'my $x = "bc" x 500',
+        code    => 'index $x, "abc"',
+    },
+    'expr::index::utf8_position_1' => {
+        desc    => 'index of a utf8 string, matching at position 1',
+        setup   => 'my $x = "abc". chr(0x100); chop $x',
+        code    => 'index $x, "b"',
+    },
+
+
+    # list assign, OP_AASSIGN
+
+
+    # (....) = ()
+
+    'expr::aassign::ma_empty' => {
+        desc    => 'my array assigned empty',
+        setup   => '',
+        code    => 'my @a = ()',
+    },
+    'expr::aassign::lax_empty' => {
+        desc    => 'non-empty lexical array assigned empty',
+        setup   => 'my @a = 1..3;',
+        code    => '@a = ()',
+    },
+    'expr::aassign::llax_empty' => {
+        desc    => 'non-empty lexical var and array assigned empty',
+        setup   => 'my ($x, @a) = 1..4;',
+        code    => '($x, @a) = ()',
+    },
+    'expr::aassign::3m_empty' => {
+        desc    => 'three my vars assigned empty',
+        setup   => '',
+        code    => 'my ($x,$y,$z) = ()',
+    },
+    'expr::aassign::3l_empty' => {
+        desc    => 'three lexical vars assigned empty',
+        setup   => 'my ($x,$y,$z)',
+        code    => '($x,$y,$z) = ()',
+    },
+    'expr::aassign::pa_empty' => {
+        desc    => 'package array assigned empty',
+        setup   => '',
+        code    => '@a = ()',
+    },
+    'expr::aassign::pax_empty' => {
+        desc    => 'non-empty package array assigned empty',
+        setup   => '@a = (1,2,3)',
+        code    => '@a = ()',
+    },
+    'expr::aassign::3p_empty' => {
+        desc    => 'three package vars assigned empty',
+        setup   => '($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = ()',
+    },
+
+    # (....) = (1,2,3)
+
+    'expr::aassign::ma_3c' => {
+        desc    => 'my array assigned 3 consts',
+        setup   => '',
+        code    => 'my @a = (1,2,3)',
+    },
+    'expr::aassign::lax_3c' => {
+        desc    => 'non-empty lexical array assigned 3 consts',
+        setup   => 'my @a = 1..3;',
+        code    => '@a = (1,2,3)',
+    },
+    'expr::aassign::llax_3c' => {
+        desc    => 'non-empty lexical var and array assigned 3 consts',
+        setup   => 'my ($x, @a) = 1..4;',
+        code    => '($x, @a) = (1,2,3)',
+    },
+    'expr::aassign::3m_3c' => {
+        desc    => 'three my vars assigned 3 consts',
+        setup   => '',
+        code    => 'my ($x,$y,$z) = (1,2,3)',
+    },
+    'expr::aassign::3l_3c' => {
+        desc    => 'three lexical vars assigned 3 consts',
+        setup   => 'my ($x,$y,$z)',
+        code    => '($x,$y,$z) = (1,2,3)',
+    },
+    'expr::aassign::pa_3c' => {
+        desc    => 'package array assigned 3 consts',
+        setup   => '',
+        code    => '@a = (1,2,3)',
+    },
+    'expr::aassign::pax_3c' => {
+        desc    => 'non-empty package array assigned 3 consts',
+        setup   => '@a = (1,2,3)',
+        code    => '@a = (1,2,3)',
+    },
+    'expr::aassign::3p_3c' => {
+        desc    => 'three package vars assigned 3 consts',
+        setup   => '($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = (1,2,3)',
+    },
+
+    # (....) = @lexical
+
+    'expr::aassign::ma_la' => {
+        desc    => 'my array assigned lexical array',
+        setup   => 'my @init = 1..3;',
+        code    => 'my @a = @init',
+    },
+    'expr::aassign::lax_la' => {
+        desc    => 'non-empty lexical array assigned lexical array',
+        setup   => 'my @init = 1..3; my @a = 1..3;',
+        code    => '@a = @init',
+    },
+    'expr::aassign::llax_la' => {
+        desc    => 'non-empty lexical var and array assigned lexical array',
+        setup   => 'my @init = 1..3; my ($x, @a) = 1..4;',
+        code    => '($x, @a) = @init',
+    },
+    'expr::aassign::3m_la' => {
+        desc    => 'three my vars assigned lexical array',
+        setup   => 'my @init = 1..3;',
+        code    => 'my ($x,$y,$z) = @init',
+    },
+    'expr::aassign::3l_la' => {
+        desc    => 'three lexical vars assigned lexical array',
+        setup   => 'my @init = 1..3; my ($x,$y,$z)',
+        code    => '($x,$y,$z) = @init',
+    },
+    'expr::aassign::pa_la' => {
+        desc    => 'package array assigned lexical array',
+        setup   => 'my @init = 1..3;',
+        code    => '@a = @init',
+    },
+    'expr::aassign::pax_la' => {
+        desc    => 'non-empty package array assigned lexical array',
+        setup   => 'my @init = 1..3; @a = @init',
+        code    => '@a = @init',
+    },
+    'expr::aassign::3p_la' => {
+        desc    => 'three package vars assigned lexical array',
+        setup   => 'my @init = 1..3; ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = @init',
+    },
+
+    # (....) = @package
+
+    'expr::aassign::ma_pa' => {
+        desc    => 'my array assigned package array',
+        setup   => '@init = 1..3;',
+        code    => 'my @a = @init',
+    },
+    'expr::aassign::lax_pa' => {
+        desc    => 'non-empty lexical array assigned package array',
+        setup   => '@init = 1..3; my @a = 1..3;',
+        code    => '@a = @init',
+    },
+    'expr::aassign::llax_pa' => {
+        desc    => 'non-empty lexical var and array assigned package array',
+        setup   => '@init = 1..3; my ($x, @a) = 1..4;',
+        code    => '($x, @a) = @init',
+    },
+    'expr::aassign::3m_pa' => {
+        desc    => 'three my vars assigned package array',
+        setup   => '@init = 1..3;',
+        code    => 'my ($x,$y,$z) = @init',
+    },
+    'expr::aassign::3l_pa' => {
+        desc    => 'three lexical vars assigned package array',
+        setup   => '@init = 1..3; my ($x,$y,$z)',
+        code    => '($x,$y,$z) = @init',
+    },
+    'expr::aassign::pa_pa' => {
+        desc    => 'package array assigned package array',
+        setup   => '@init = 1..3;',
+        code    => '@a = @init',
+    },
+    'expr::aassign::pax_pa' => {
+        desc    => 'non-empty package array assigned package array',
+        setup   => '@init = 1..3; @a = @init',
+        code    => '@a = @init',
+    },
+    'expr::aassign::3p_pa' => {
+        desc    => 'three package vars assigned package array',
+        setup   => '@init = 1..3; ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = @init',
+    },
+
+    # (....) = @_;
+
+    'expr::aassign::ma_defary' => {
+        desc    => 'my array assigned @_',
+        setup   => '@_ = 1..3;',
+        code    => 'my @a = @_',
+    },
+    'expr::aassign::lax_defary' => {
+        desc    => 'non-empty lexical array assigned @_',
+        setup   => '@_ = 1..3; my @a = 1..3;',
+        code    => '@a = @_',
+    },
+    'expr::aassign::llax_defary' => {
+        desc    => 'non-empty lexical var and array assigned @_',
+        setup   => '@_ = 1..3; my ($x, @a) = 1..4;',
+        code    => '($x, @a) = @_',
+    },
+    'expr::aassign::3m_defary' => {
+        desc    => 'three my vars assigned @_',
+        setup   => '@_ = 1..3;',
+        code    => 'my ($x,$y,$z) = @_',
+    },
+    'expr::aassign::3l_defary' => {
+        desc    => 'three lexical vars assigned @_',
+        setup   => '@_ = 1..3; my ($x,$y,$z)',
+        code    => '($x,$y,$z) = @_',
+    },
+    'expr::aassign::pa_defary' => {
+        desc    => 'package array assigned @_',
+        setup   => '@_ = 1..3;',
+        code    => '@a = @_',
+    },
+    'expr::aassign::pax_defary' => {
+        desc    => 'non-empty package array assigned @_',
+        setup   => '@_ = 1..3; @a = @_',
+        code    => '@a = @_',
+    },
+    'expr::aassign::3p_defary' => {
+        desc    => 'three package vars assigned @_',
+        setup   => '@_ = 1..3; ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = @_',
+    },
+
+
+    # (....) = ($lex1,$lex2,$lex3);
+
+    'expr::aassign::ma_3l' => {
+        desc    => 'my array assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3;',
+        code    => 'my @a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::lax_3l' => {
+        desc    => 'non-empty lexical array assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3; my @a = 1..3;',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::llax_3l' => {
+        desc    => 'non-empty lexical var and array assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3; my ($x, @a) = 1..4;',
+        code    => '($x, @a) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3m_3l' => {
+        desc    => 'three my vars assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3;',
+        code    => 'my ($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3l_3l' => {
+        desc    => 'three lexical vars assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3; my ($x,$y,$z)',
+        code    => '($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::pa_3l' => {
+        desc    => 'package array assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3;',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::pax_3l' => {
+        desc    => 'non-empty package array assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3; @a = @_',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3p_3l' => {
+        desc    => 'three package vars assigned lexicals',
+        setup   => 'my ($v1,$v2,$v3) = 1..3; ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+
+
+    # (....) = ($pkg1,$pkg2,$pkg3);
+
+    'expr::aassign::ma_3p' => {
+        desc    => 'my array assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3;',
+        code    => 'my @a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::lax_3p' => {
+        desc    => 'non-empty lexical array assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3; my @a = 1..3;',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::llax_3p' => {
+        desc    => 'non-empty lexical var and array assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3; my ($x, @a) = 1..4;',
+        code    => '($x, @a) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3m_3p' => {
+        desc    => 'three my vars assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3;',
+        code    => 'my ($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3l_3p' => {
+        desc    => 'three lexical vars assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3; my ($x,$y,$z)',
+        code    => '($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::pa_3p' => {
+        desc    => 'package array assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3;',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::pax_3p' => {
+        desc    => 'non-empty package array assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3; @a = @_',
+        code    => '@a = ($v1,$v2,$v3)',
+    },
+    'expr::aassign::3p_3p' => {
+        desc    => 'three package vars assigned 3 package vars',
+        setup   => '($v1,$v2,$v3) = 1..3; ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = ($v1,$v2,$v3)',
+    },
+
+
+    # (....) = (1,2,$shared);
+
+    'expr::aassign::llax_2c1s' => {
+        desc    => 'non-empty lexical var and array assigned 2 consts and 1 shared var',
+        setup   => 'my ($x, @a) = 1..4;',
+        code    => '($x, @a) = (1,2,$x)',
+    },
+    'expr::aassign::3l_2c1s' => {
+        desc    => 'three lexical vars assigned 2 consts and 1 shared var',
+        setup   => 'my ($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = (1,2,$x)',
+    },
+    'expr::aassign::3p_2c1s' => {
+        desc    => 'three package vars assigned 2 consts and 1 shared var',
+        setup   => '($x,$y,$z) = 1..3;',
+        code    => '($x,$y,$z) = (1,2,$x)',
+    },
+
+
+    # ($a,$b) = ($b,$a);
+
+    'expr::aassign::2l_swap' => {
+        desc    => 'swap two lexical vars',
+        setup   => 'my ($a,$b) = (1,2)',
+        code    => '($a,$b) = ($b,$a)',
+    },
+    'expr::aassign::2p_swap' => {
+        desc    => 'swap two package vars',
+        setup   => '($a,$b) = (1,2)',
+        code    => '($a,$b) = ($b,$a)',
+    },
+    'expr::aassign::2laelem_swap' => {
+        desc    => 'swap two lexical vars',
+        setup   => 'my @a = (1,2)',
+        code    => '($a[0],$a[1]) = ($a[1],$a[0])',
+    },
+
+    # misc list assign
+
+    'expr::aassign::5l_4l1s' => {
+        desc    => 'long list of lexical vars, 1 shared',
+        setup   => 'my ($a,$b,$c,$d,$e) = 1..5',
+        code    => '($a,$b,$c,$d,$e) = ($a,$a,$c,$d,$e)',
+    },
+
+    'expr::aassign::5p_4p1s' => {
+        desc    => 'long list of package vars, 1 shared',
+        setup   => '($a,$b,$c,$d,$e) = 1..5',
+        code    => '($a,$b,$c,$d,$e) = ($a,$a,$c,$d,$e)',
+    },
+    'expr::aassign::5l_defary' => {
+        desc    => 'long list of lexical vars to assign @_ to',
+        setup   => '@_ = 1..5',
+        code    => 'my ($a,$b,$c,$d,$e) = @_',
+    },
+    'expr::aassign::5l1la_defary' => {
+        desc    => 'long list of lexical vars plus long slurp to assign @_ to',
+        setup   => '@_ = 1..20',
+        code    => 'my ($a,$b,$c,$d,$e,@rest) = @_',
+    },
+    'expr::aassign::1l_2l' => {
+        desc    => 'single lexical LHS',
+        setup   => 'my $x = 1;',
+        code    => '(undef,$x) = ($x,$x)',
+    },
+    'expr::aassign::2l_1l' => {
+        desc    => 'single lexical RHS',
+        setup   => 'my $x = 1;',
+        code    => '($x,$x) = ($x)',
+    },
+    'expr::aassign::2l_1ul' => {
+        desc    => 'undef and single lexical RHS',
+        setup   => 'my $x = 1;',
+        code    => '($x,$x) = (undef, $x)',
+    },
+
+
+    'expr::arith::add_lex_ii' => {
+        desc    => 'add two integers and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = 1..3;',
+        code    => '$z = $x + $y',
+    },
+    'expr::arith::add_pkg_ii' => {
+        desc    => 'add two integers and assign to a package var',
+        setup   => 'my ($x,$y) = 1..2; $z = 3;',
+        code    => '$z = $x + $y',
+    },
+    'expr::arith::add_lex_nn' => {
+        desc    => 'add two NVs and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x + $y',
+    },
+    'expr::arith::add_pkg_nn' => {
+        desc    => 'add two NVs and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x + $y',
+    },
+    'expr::arith::add_lex_ni' => {
+        desc    => 'add an int and an NV and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x + $y',
+    },
+    'expr::arith::add_pkg_ni' => {
+        desc    => 'add an int and an NV and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x + $y',
+    },
+
+    'expr::arith::sub_lex_ii' => {
+        desc    => 'subtract two integers and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = 1..3;',
+        code    => '$z = $x - $y',
+    },
+    'expr::arith::sub_pkg_ii' => {
+        desc    => 'subtract two integers and assign to a package var',
+        setup   => 'my ($x,$y) = 1..2; $z = 3;',
+        code    => '$z = $x - $y',
+    },
+    'expr::arith::sub_lex_nn' => {
+        desc    => 'subtract two NVs and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x - $y',
+    },
+    'expr::arith::sub_pkg_nn' => {
+        desc    => 'subtract two NVs and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x - $y',
+    },
+    'expr::arith::sub_lex_ni' => {
+        desc    => 'subtract an int and an NV and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x - $y',
+    },
+    'expr::arith::sub_pkg_ni' => {
+        desc    => 'subtract an int and an NV and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x - $y',
+    },
+
+    'expr::arith::mult_lex_ii' => {
+        desc    => 'multiply two integers and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = 1..3;',
+        code    => '$z = $x * $y',
+    },
+    'expr::arith::mult_pkg_ii' => {
+        desc    => 'multiply two integers and assign to a package var',
+        setup   => 'my ($x,$y) = 1..2; $z = 3;',
+        code    => '$z = $x * $y',
+    },
+    'expr::arith::mult_lex_nn' => {
+        desc    => 'multiply two NVs and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x * $y',
+    },
+    'expr::arith::mult_pkg_nn' => {
+        desc    => 'multiply two NVs and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1.1, 2.2, 3.3);',
+        code    => '$z = $x * $y',
+    },
+    'expr::arith::mult_lex_ni' => {
+        desc    => 'multiply an int and an NV and assign to a lexical var',
+        setup   => 'my ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x * $y',
+    },
+    'expr::arith::mult_pkg_ni' => {
+        desc    => 'multiply an int and an NV and assign to a package var',
+        setup   => 'my ($x,$y); ($x,$y,$z) = (1, 2.2, 3.3);',
+        code    => '$z = $x * $y',
+    },
+
+    'expr::arith::preinc' => {
+        desc    => '++$x',
+        setup   => 'my $x = 1;',
+        code    => '++$x',
+    },
+    'expr::arith::predec' => {
+        desc    => '--$x',
+        setup   => 'my $x = 1;',
+        code    => '--$x',
+    },
+    'expr::arith::postinc' => {
+        desc    => '$x++',
+        setup   => 'my $x = 1; my $y',
+        code    => '$y = $x++', # scalar context so not optimised to ++$x
+    },
+    'expr::arith::postdec' => {
+        desc    => '$x--',
+        setup   => 'my $x = 1; my $y',
+        code    => '$y = $x--', # scalar context so not optimised to --$x
+    },
+
+    'loop::block' => {
+        desc    => 'empty basic loop',
+        setup   => ';',
+        code    => '{1;}',
+    },
+
+    'loop::do' => {
+        desc    => 'basic do block',
+        setup   => 'my $x; my $y = 2;',
+        code    => '$x = do {1; $y}', # the ';' stops the do being optimised
+    },
+
+    'loop::for::my_range1' => {
+        desc    => 'empty for loop with my var and 1 integer range',
+        setup   => '',
+        code    => 'for my $x (1..1) {}',
+    },
+    'loop::for::lex_range1' => {
+        desc    => 'empty for loop with lexical var and 1 integer range',
+        setup   => 'my $x;',
+        code    => 'for $x (1..1) {}',
+    },
+    'loop::for::pkg_range1' => {
+        desc    => 'empty for loop with package var and 1 integer range',
+        setup   => '$x = 1;',
+        code    => 'for $x (1..1) {}',
+    },
+    'loop::for::defsv_range1' => {
+        desc    => 'empty for loop with $_ and integer 1 range',
+        setup   => ';',
+        code    => 'for (1..1) {}',
+    },
+    'loop::for::my_range4' => {
+        desc    => 'empty for loop with my var and 4 integer range',
+        setup   => '',
+        code    => 'for my $x (1..4) {}',
+    },
+    'loop::for::lex_range4' => {
+        desc    => 'empty for loop with lexical var and 4 integer range',
+        setup   => 'my $x;',
+        code    => 'for $x (1..4) {}',
+    },
+    'loop::for::pkg_range4' => {
+        desc    => 'empty for loop with package var and 4 integer range',
+        setup   => '$x = 1;',
+        code    => 'for $x (1..4) {}',
+    },
+    'loop::for::defsv_range4' => {
+        desc    => 'empty for loop with $_ and integer 4 range',
+        setup   => ';',
+        code    => 'for (1..4) {}',
+    },
+
+    'loop::for::my_list1' => {
+        desc    => 'empty for loop with my var and 1 integer list',
+        setup   => '',
+        code    => 'for my $x (1) {}',
+    },
+    'loop::for::lex_list1' => {
+        desc    => 'empty for loop with lexical var and 1 integer list',
+        setup   => 'my $x;',
+        code    => 'for $x (1) {}',
+    },
+    'loop::for::pkg_list1' => {
+        desc    => 'empty for loop with package var and 1 integer list',
+        setup   => '$x = 1;',
+        code    => 'for $x (1) {}',
+    },
+    'loop::for::defsv_list1' => {
+        desc    => 'empty for loop with $_ and integer 1 list',
+        setup   => ';',
+        code    => 'for (1) {}',
+    },
+    'loop::for::my_list4' => {
+        desc    => 'empty for loop with my var and 4 integer list',
+        setup   => '',
+        code    => 'for my $x (1,2,3,4) {}',
+    },
+    'loop::for::lex_list4' => {
+        desc    => 'empty for loop with lexical var and 4 integer list',
+        setup   => 'my $x;',
+        code    => 'for $x (1,2,3,4) {}',
+    },
+    'loop::for::pkg_list4' => {
+        desc    => 'empty for loop with package var and 4 integer list',
+        setup   => '$x = 1;',
+        code    => 'for $x (1,2,3,4) {}',
+    },
+    'loop::for::defsv_list4' => {
+        desc    => 'empty for loop with $_ and integer 4 list',
+        setup   => '',
+        code    => 'for (1,2,3,4) {}',
+    },
+
+    'loop::for::my_array1' => {
+        desc    => 'empty for loop with my var and 1 integer array',
+        setup   => 'my @a = (1);',
+        code    => 'for my $x (@a) {}',
+    },
+    'loop::for::lex_array1' => {
+        desc    => 'empty for loop with lexical var and 1 integer array',
+        setup   => 'my $x; my @a = (1);',
+        code    => 'for $x (@a) {}',
+    },
+    'loop::for::pkg_array1' => {
+        desc    => 'empty for loop with package var and 1 integer array',
+        setup   => '$x = 1; my @a = (1);',
+        code    => 'for $x (@a) {}',
+    },
+    'loop::for::defsv_array1' => {
+        desc    => 'empty for loop with $_ and integer 1 array',
+        setup   => 'my @a = (@a);',
+        code    => 'for (1) {}',
+    },
+    'loop::for::my_array4' => {
+        desc    => 'empty for loop with my var and 4 integer array',
+        setup   => 'my @a = (1..4);',
+        code    => 'for my $x (@a) {}',
+    },
+    'loop::for::lex_array4' => {
+        desc    => 'empty for loop with lexical var and 4 integer array',
+        setup   => 'my $x; my @a = (1..4);',
+        code    => 'for $x (@a) {}',
+    },
+    'loop::for::pkg_array4' => {
+        desc    => 'empty for loop with package var and 4 integer array',
+        setup   => '$x = 1; my @a = (1..4);',
+        code    => 'for $x (@a) {}',
+    },
+    'loop::for::defsv_array4' => {
+        desc    => 'empty for loop with $_ and integer 4 array',
+        setup   => 'my @a = (1..4);',
+        code    => 'for (@a) {}',
+    },
+
+    'loop::for::next4' => {
+        desc    => 'for loop containing only next with my var and integer 4 array',
+        setup   => 'my @a = (1..4);',
+        code    => 'for my $x (@a) {next}',
+    },
+
+    'loop::grep::expr_3int' => {
+        desc    => 'grep $_ > 0, 1,2,3',
+        setup   => 'my @a',
+        code    => '@a = grep $_ > 0, 1,2,3',
+    },
+
+    'loop::grep::block_3int' => {
+        desc    => 'grep { 1; $_ > 0} 1,2,3',
+        setup   => 'my @a',
+        code    => '@a = grep { 1; $_ > 0} 1,2,3',
+    },
+
+    'loop::map::expr_3int' => {
+        desc    => 'map $_+1, 1,2,3',
+        setup   => 'my @a',
+        code    => '@a = map $_+1, 1,2,3',
+    },
+
+    'loop::map::block_3int' => {
+        desc    => 'map { 1; $_+1} 1,2,3',
+        setup   => 'my @a',
+        code    => '@a = map { 1; $_+1} 1,2,3',
+    },
+
+    'loop::while::i1' => {
+        desc    => 'empty while loop 1 iteration',
+        setup   => 'my $i = 0;',
+        code    => 'while (++$i % 2) {}',
+    },
+    'loop::while::i4' => {
+        desc    => 'empty while loop 4 iterations',
+        setup   => 'my $i = 0;',
+        code    => 'while (++$i % 4) {}',
+    },
+
+];

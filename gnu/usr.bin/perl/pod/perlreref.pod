@@ -21,7 +21,7 @@ false if the match succeeds, and true if it fails.
 
     $var !~ /foo/;
 
-C<m/pattern/msixpogcdual> searches a string for a pattern match,
+C<m/pattern/msixpogcdualn> searches a string for a pattern match,
 applying the given options.
 
     m  Multiline mode - ^ and $ match internal lines
@@ -39,13 +39,14 @@ applying the given options.
     u  match according to Unicode rules
     d  match according to native rules unless something indicates
        Unicode
+    n  Non-capture mode. Don't let () fill in $1, $2, etc...
 
 If 'pattern' is an empty string, the last I<successfully> matched
 regex is used. Delimiters other than '/' may be used for both this
 operator and the following ones. The leading C<m> can be omitted
 if the delimiter is '/'.
 
-C<qr/pattern/msixpodual> lets you store a regex in a variable,
+C<qr/pattern/msixpodualn> lets you store a regex in a variable,
 or pass one around. Modifiers as for C<m//>, and are stored
 within the regex.
 
@@ -143,8 +144,6 @@ and L<perlunicode> for details.
    \V      A non vertical whitespace
    \R      A generic newline           (?>\v|\x0D\x0A)
 
-   \C      Match a byte (with Unicode, '.' matches a character)
-           (Deprecated.)
    \pP     Match P-named (Unicode) property
    \p{...} Match Unicode property with name longer than 1 character
    \PP     Match non-P
@@ -158,7 +157,7 @@ POSIX character classes and their Unicode and Perl equivalents:
  [[:...:]]  \p{...}        \p{...}   sequence    Description
 
  -----------------------------------------------------------------------
- alnum   PosixAlnum       XPosixAlnum            Alpha plus Digit
+ alnum   PosixAlnum       XPosixAlnum            'alpha' plus 'digit'
  alpha   PosixAlpha       XPosixAlpha            Alphabetic characters
  ascii   ASCII                                   Any ASCII character
  blank   PosixBlank       XPosixBlank   \h       Horizontal whitespace;
@@ -168,19 +167,18 @@ POSIX character classes and their Unicode and Perl equivalents:
                                                    extension)
  cntrl   PosixCntrl       XPosixCntrl            Control characters
  digit   PosixDigit       XPosixDigit   \d       Decimal digits
- graph   PosixGraph       XPosixGraph            Alnum plus Punct
+ graph   PosixGraph       XPosixGraph            'alnum' plus 'punct'
  lower   PosixLower       XPosixLower            Lowercase characters
- print   PosixPrint       XPosixPrint            Graph plus Print, but
-                                                   not any Cntrls
+ print   PosixPrint       XPosixPrint            'graph' plus 'space',
+                                                   but not any Controls
  punct   PosixPunct       XPosixPunct            Punctuation and Symbols
                                                    in ASCII-range; just
                                                    punct outside it
- space   PosixSpace       XPosixSpace            [\s\cK]
-         PerlSpace        XPerlSpace    \s       Perl's whitespace def'n
+ space   PosixSpace       XPosixSpace   \s       Whitespace
  upper   PosixUpper       XPosixUpper            Uppercase characters
- word    PosixWord        XPosixWord    \w       Alnum + Unicode marks +
-                                                   connectors, like '_'
-                                                   (Perl extension)
+ word    PosixWord        XPosixWord    \w       'alnum' + Unicode marks
+                                                    + connectors, like
+                                                    '_' (Perl extension)
  xdigit  ASCII_Hex_Digit  XPosixDigit            Hexadecimal digit,
                                                     ASCII-range is
                                                     [0-9A-Fa-f]
@@ -200,6 +198,8 @@ All are zero-width assertions.
 
    ^  Match string start (or line, if /m is used)
    $  Match string end (or line, if /m is used) or before newline
+   \b{} Match boundary of type specified within the braces
+   \B{} Match wherever \b{} doesn't match
    \b Match word boundary (between \w and \W)
    \B Match except at word boundary (between \w and \w or \W and \W)
    \A Match string start (regardless of /m)
@@ -242,6 +242,7 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?<name>...)      Named capture
    (?'name'...)      Named capture
    (?P<name>...)     Named capture (python syntax)
+   (?[...])          Extended bracketed character class
    (?{ code })       Embedded code, return value becomes $^R
    (??{ code })      Dynamic regex, return value used as regex
    (?N)              Recurse into subpattern number N
@@ -251,10 +252,10 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?P>name)         Recurse into a named subpattern (python syntax)
    (?(cond)yes|no)
    (?(cond)yes)      Conditional expression, where "cond" can be:
-                     (?=pat)   look-ahead
-                     (?!pat)   negative look-ahead
-                     (?<=pat)  look-behind
-                     (?<!pat)  negative look-behind
+                     (?=pat)   lookahead
+                     (?!pat)   negative lookahead
+                     (?<=pat)  lookbehind
+                     (?<!pat)  negative lookbehind
                      (N)       subpattern N has matched something
                      (<name>)  named subpattern has matched something
                      ('name')  named subpattern has matched something

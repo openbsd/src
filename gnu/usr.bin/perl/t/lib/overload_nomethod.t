@@ -12,11 +12,11 @@ package main;
 my $foo = Foo->new;
 
 eval {my $val = $foo + 1};
-ok( $@ =~ /unimplemented/ );
+ok( $@ =~ /unimplemented/, "'+'  not implemented; 'nomethod' special key invoked" );
 
 eval {$foo += 1};
-ok( $@ =~ /unimplemented/ );
+ok( $@ =~ /unimplemented/, "'+=' not implemented; 'nomethod' special key invoked"  );
 
 eval {my $val = 0; $val += $foo};
-ok( $@ =~ /unimplemented/ );
+ok( $@ =~ /unimplemented/, "'+=' not implemented; 'nomethod' special key invoked"  );
 

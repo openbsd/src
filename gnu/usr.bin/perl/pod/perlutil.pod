@@ -76,65 +76,13 @@ typeset PostScript or text file of the whole lot.
 
 =head2 Converters
 
-To help you convert legacy programs to Perl, we've included three
-conversion filters:
-
-=over 3
-
-=item L<a2p|a2p>
-
-F<a2p> converts F<awk> scripts to Perl programs; for example, C<a2p -F:>
-on the simple F<awk> script C<{print $2}> will produce a Perl program
-based around this code:
-
-    while (<>) {
-        ($Fld1,$Fld2) = split(/[:\n]/, $_, -1);
-        print $Fld2;
-    }
-
-=item L<s2p|s2p> and L<psed>
-
-Similarly, F<s2p> converts F<sed> scripts to Perl programs. F<s2p> run
-on C<s/foo/bar> will produce a Perl program based around this:
-
-    while (<>) {
-        chomp;
-        s/foo/bar/g;
-        print if $printit;
-    }
-
-When invoked as F<psed>, it behaves as a F<sed> implementation, written in
-Perl.
-
-=item L<find2perl|find2perl>
-
-Finally, F<find2perl> translates C<find> commands to Perl equivalents which 
-use the L<File::Find|File::Find> module. As an example, 
-C<find2perl . -user root -perm 4000 -print> produces the following callback
-subroutine for C<File::Find>:
-
-    sub wanted {
-        my ($dev,$ino,$mode,$nlink,$uid,$gid);
-        (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
-        $uid == $uid{'root'}) &&
-        (($mode & 0777) == 04000);
-        print("$name\n");
-    }
-
-=back
-
-As well as these filters for converting other languages, the
-L<pl2pm|pl2pm> utility will help you convert old-style Perl 4 libraries to 
-new-style Perl5 modules.
+To help you convert legacy programs to more modern Perl, the
+L<pl2pm|pl2pm> utility will help you convert old-style Perl 4 libraries
+to new-style Perl5 modules.
 
 =head2 Administration
 
 =over 3
-
-=item L<config_data|config_data>
-
-Query or change configuration of Perl modules that use Module::Build-based
-configuration files for features and config data.
 
 =item L<libnetcfg|libnetcfg>
 
@@ -289,10 +237,9 @@ validate your packlists and even create a tarball from an installed module.
 L<perldoc|perldoc>, L<pod2man|pod2man>, L<perlpod>,
 L<pod2html|pod2html>, L<pod2usage|pod2usage>, L<podselect|podselect>,
 L<podchecker|podchecker>, L<splain|splain>, L<perldiag>,
-C<roffitall|roffitall>, L<a2p|a2p>, L<s2p|s2p>, L<find2perl|find2perl>,
-L<File::Find|File::Find>, L<pl2pm|pl2pm>, L<perlbug|perlbug>,
-L<h2ph|h2ph>, L<c2ph|c2ph>, L<h2xs|h2xs>, L<enc2xs>, L<xsubpp>,
-L<cpan>, L<instmodsh>, L<piconv>, L<prove>,
-L<corelist>, L<ptar>, L<ptardiff>, L<shasum>, L<zipdetails>
+C<roffitall|roffitall>, L<File::Find|File::Find>, L<pl2pm|pl2pm>,
+L<perlbug|perlbug>, L<h2ph|h2ph>, L<c2ph|c2ph>, L<h2xs|h2xs>, L<enc2xs>,
+L<xsubpp>, L<cpan>, L<instmodsh>, L<piconv>, L<prove>, L<corelist>, L<ptar>,
+L<ptardiff>, L<shasum>, L<zipdetails>
 
 =cut

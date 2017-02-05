@@ -6,10 +6,11 @@ BEGIN {
     }
 }
 
-use Test::More tests => 148;
+use Test::More tests => 156;
 
 use strict;
-use warnings;
+#catch WARN_INTERNAL type errors, and anything else unexpected
+use warnings FATAL => 'all';
 use XS::Typemap;
 
 pass();
@@ -213,6 +214,7 @@ is( T_PV("a string"), "a string");
 is( T_PV(52), 52);
 ok !defined T_PV_null, 'RETVAL = NULL returns undef for char*';
 {
+    use warnings NONFATAL => 'all';
     my $uninit;
     local $SIG{__WARN__} = sub { ++$uninit if shift =~ /uninit/ };
     () = ''.T_PV_null;
@@ -359,6 +361,8 @@ note("T_STDIO");
 
 # open a file in XS for write
 my $testfile= "stdio.tmp";
+# not everything below cleans up
+END { 1 while unlink $testfile; }
 my $fh = T_STDIO_open( $testfile );
 ok( $fh );
 
@@ -393,6 +397,17 @@ if (defined $fh) {
   }
 }
 
+$fh = "FOO";
+T_STDIO_open_ret_in_arg( $testfile, $fh);
+ok( $fh ne "FOO", 'return io in arg open succeeds');
+ok( print($fh "first line\n"), 'can print to return io in arg');
+ok( close($fh), 'can close return io in arg');
+$fh = "FOO";
+#now with a bad file name to make sure $fh is written to on failure
+my $badfile = $^O eq 'VMS' ? '?' : '';
+T_STDIO_open_ret_in_arg( $badfile, $fh);
+ok( !defined$fh, 'return io in arg open failed successfully');
+
 # T_INOUT
 note("T_INOUT");
 SCOPE: {
@@ -405,6 +420,9 @@ SCOPE: {
   seek($fh2, 0, 0);
   is(readline($fh2), $str);
   ok(print $fh2 "foo\n");
+  ok(close $fh);
+  # this fails because the underlying shared handle is already closed
+  ok(!close $fh2);
 }
 
 # T_IN
@@ -431,7 +449,14 @@ SCOPE: {
   seek($fh2, 0, 0);
   is(readline($fh2), $str);
   ok(eval {print $fh2 "foo\n"; 1});
+  ok(close $fh);
+  # this fails because the underlying shared handle is already closed
+  ok(!close $fh2);
 }
+
+# Perl RT #124181 SEGV due to double free in typemap
+# "Attempt to free unreferenced scalar"
+%{*{main::XS::}{HASH}} = ();
 
 sub is_approx {
   my ($l, $r, $n) = @_;

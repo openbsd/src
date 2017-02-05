@@ -1,11 +1,13 @@
 package if;
 
-$VERSION = '0.0603';
+$VERSION = '0.0606';
 
 sub work {
   my $method = shift() ? 'import' : 'unimport';
-  die "Too few arguments to 'use if' (some code returning an empty list in list context?)"
-    unless @_ >= 2;
+  unless (@_ >= 2) {
+    my $type = ($method eq 'import') ? 'use' : 'no';
+    die "Too few arguments to '$type if' (some code returning an empty list in list context?)"
+  }
   return unless shift;		# CONDITION
 
   my $p = $_[0];		# PACKAGE
@@ -23,15 +25,16 @@ __END__
 
 =head1 NAME
 
-if - C<use> a Perl module if a condition holds
+if - C<use> a Perl module if a condition holds (also can C<no> a module)
 
 =head1 SYNOPSIS
 
   use if CONDITION, MODULE => ARGUMENTS;
+  no if CONDITION, MODULE => ARGUMENTS;
 
 =head1 DESCRIPTION
 
-The C<if> module is used to conditionally load another module.
+The C<if> module is used to conditionally load or unload another module.
 The construct
 
   use if CONDITION, MODULE => ARGUMENTS;
@@ -71,6 +74,14 @@ calling module was C<use>'d from a core library directory,
 and if so, generates a warning),
 unless you've installed a more recent version of L<Text::Soundex> from CPAN.
 
+You can also specify to NOT use something:
+
+ no if $] ge 5.021_006, warnings => "locale";
+
+This warning category was added in the specified Perl version (a development
+release).  Without the C<'if'>, trying to use it in an earlier release would
+generate an unknown warning category error.
+
 =head1 BUGS
 
 The current implementation does not allow specification of the
@@ -92,5 +103,11 @@ based on what version of Perl is running.
 
 Ilya Zakharevich L<mailto:ilyaz@cpan.org>.
 
-=cut
+=head1 COPYRIGHT AND LICENCE
 
+This software is copyright (c) 2002 by Ilya Zakharevich.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

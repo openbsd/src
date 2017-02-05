@@ -7,6 +7,9 @@ use warnings;
 
 use Test::More 'no_plan';
 
+use lib "t/lib";
+use Time::Piece::Twin;
+
 BEGIN { use_ok('Time::Piece'); }
 
 my $class = 'Time::Piece::Twin';
@@ -39,12 +42,7 @@ for my $method (qw(new localtime gmtime)) {
   isnt(ref $piece, 'Time::Piece::Twin', "it's not a Twin");
 }
 
-## below is our doppelgaenger package
-{
-  package Time::Piece::Twin;
-  use base qw(Time::Piece);
-  # this package is identical, but will be ->isa('Time::Piece::Twin');
-}
+
 
 {
   my $class = "Time::Piece::NumString";

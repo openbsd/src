@@ -46,7 +46,7 @@ already be overwhelming.
   , =>            /a ASCII    /aa safe  {3,7}  repeat in range
   list ops        /l locale   /d  dual  |      alternation
   not             /u Unicode            []     character class
-  and             /e evaluate /ee rpts  \b     word boundary
+  and             /e evaluate /ee rpts  \b     boundary
   or xor          /g global             \z     string end
                   /o compile pat once   ()     capture
   DEBUG                                 (?:p)  no capture

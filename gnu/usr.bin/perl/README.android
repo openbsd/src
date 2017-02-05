@@ -45,10 +45,10 @@ As of 2014, most Android devices run on ARM, so that is generally a safe bet.
 
 With those two in hand, you should add
 
-$ANDROID_NDK/toolchains/$TARGETARCH-4.8/prebuilt/`uname | tr '[A-Z]' '[a-z]'`-x86_64/bin
+  $ANDROID_NDK/toolchains/$TARGETARCH-4.8/prebuilt/`uname | tr '[A-Z]' '[a-z]'`-x86_64/bin
 
-to your PATH, where $ANDROID_NDK is the location where you unpacked the
-NDK, and $TARGETARCH is your target's architecture.
+to your C<PATH>, where C<$ANDROID_NDK> is the location where you unpacked the
+NDK, and C<$TARGETARCH> is your target's architecture.
 
 =head2 Set up a standalone toolchain
 
@@ -69,6 +69,7 @@ of establishing an ssh connection to an Android device without having to
 install anything on the device itself, as long as the device is either on
 the same local network as the host, or it is connected to the host through
 USB.
+
 Perl can be cross-compiled using either adb or a normal ssh connection;
 in general, if you can connect your device to the host using a USB port,
 or if you don't feel like installing an sshd app on your device,
@@ -81,14 +82,14 @@ use adb.
 
 To use adb, download the Android SDK from L<https://developer.android.com/sdk/index.html>.
 The "SDK Tools Only" version should suffice -- if you downloaded the ADT
-Bundle, you can find the sdk under $ADT_BUNDLE/sdk/.
+Bundle, you can find the sdk under F<$ADT_BUNDLE/sdk/>.
 
-Add $ANDROID_SDK/platform-tools to your PATH, which should give you access
-to adb.  You'll now have to find your device's name using 'adb devices',
-and later pass that to Configure through '-Dtargethost=$DEVICE'.
+Add F<$ANDROID_SDK/platform-tools> to your C<PATH>, which should give you access
+to adb.  You'll now have to find your device's name using C<adb devices>,
+and later pass that to Configure through C<-Dtargethost=$DEVICE>.
 
 However, before calling Configure, you need to check if using adb is a
-viable choice in the first place.  Because Android doesn't have a /tmp,
+viable choice in the first place.  Because Android doesn't have a F</tmp>,
 nor does it allow executables in the sdcard, we need to find somewhere in
 the device for Configure to put some files in, as well as for the tests
 to run in. If your device is rooted, then you're good.  Try running these:
@@ -97,7 +98,7 @@ to run in. If your device is rooted, then you're good.  Try running these:
     $ adb -s $DEVICE shell "echo sh -c '\"mkdir $TARGETDIR\"' | su --"
 
 Which will create the directory we need, and you can move on to the next
-step.  /mnt/asec is mounted as a tmpfs in Android, but it's only
+step.  F</mnt/asec> is mounted as a tmpfs in Android, but it's only
 accessible to root.
 
 If your device is not rooted, you may still be in luck. Try running this:
@@ -107,7 +108,7 @@ If your device is not rooted, you may still be in luck. Try running this:
 
 If the command works, you can move to the next step, but beware:
 B<You'll have to remove the directory from the device once you are done!
-Unlike /mnt/asec, /data/local/tmp may not get automatically garbage
+Unlike F</mnt/asec>, F</data/local/tmp> may not get automatically garbage
 collected once you shut off the phone>.
 
 If neither of those work, then you can't use adb to cross-compile to your
@@ -123,10 +124,12 @@ public key.
 
 Note that several apps spew crap to stderr every time you
 connect, which can throw off Configure.  You may need to monkeypatch
-the part of Configure that creates 'run-ssh' to have it discard stderr.
+the part of Configure that creates C<run-ssh> to have it discard stderr.
 
 Since you're using ssh, you'll have to pass some extra arguments to
-Configure: -Dtargetrun=ssh -Dtargethost=$TARGETHOST -Dtargetuser=$TARGETUSER -Dtargetport=$TARGETPORT
+Configure:
+
+  -Dtargetrun=ssh -Dtargethost=$TARGETHOST -Dtargetuser=$TARGETUSER -Dtargetport=$TARGETPORT
 
 =head2 Configure and beyond
 
@@ -134,29 +137,29 @@ With all of the previous done, you're now ready to call Configure.
 
 If using adb, a "basic" Configure line will look like this:
 
-$ ./Configure -des -Dusedevel -Dusecrosscompile -Dtargetrun=adb \
-    -Dcc=$TARGETARCH-gcc   \
-    -Dsysroot=$SYSROOT     \
-    -Dtargetdir=$TARGETDIR \
-    -Dtargethost=$DEVICE
+  $ ./Configure -des -Dusedevel -Dusecrosscompile -Dtargetrun=adb \
+      -Dcc=$TARGETARCH-gcc   \
+      -Dsysroot=$SYSROOT     \
+      -Dtargetdir=$TARGETDIR \
+      -Dtargethost=$DEVICE
 
 If using ssh, it's not too different -- we just change targetrun to ssh,
 and pass in targetuser and targetport.  It ends up looking like this:
 
-$ ./Configure -des -Dusedevel -Dusecrosscompile -Dtargetrun=ssh \
-    -Dcc=$TARGETARCH-gcc        \
-    -Dsysroot=$SYSROOT          \
-    -Dtargetdir=$TARGETDIR      \
-    -Dtargethost="$TARGETHOST"  \
-    -Dtargetuser=$TARGETUSER    \
-    -Dtargetport=$TARGETPORT
+  $ ./Configure -des -Dusedevel -Dusecrosscompile -Dtargetrun=ssh \
+      -Dcc=$TARGETARCH-gcc        \
+      -Dsysroot=$SYSROOT          \
+      -Dtargetdir=$TARGETDIR      \
+      -Dtargethost="$TARGETHOST"  \
+      -Dtargetuser=$TARGETUSER    \
+      -Dtargetport=$TARGETPORT
 
-Now you're ready to run make and make test!
+Now you're ready to run C<make> and C<make test>!
 
-As a final word of warning, if you're using adb, make test may appear to
+As a final word of warning, if you're using adb, C<make test> may appear to
 hang; this is because it doesn't output anything until it finishes
 running all tests.  You can check its progress by logging into the
-device, moving to $TARGETDIR, and looking at the file output.stdout.
+device, moving to F<$TARGETDIR>, and looking at the file F<output.stdout>.
 
 =head3 Notes
 
@@ -164,13 +167,13 @@ device, moving to $TARGETDIR, and looking at the file output.stdout.
 
 =item *
 
-If you are targetting x86 Android, you will have to change $TARGETARCH-gcc
-to i686-linux-android-gcc.
+If you are targetting x86 Android, you will have to change C<$TARGETARCH-gcc>
+to C<i686-linux-android-gcc>.
 
 =item *
 
 On some older low-end devices -- think early 2.2 era -- some tests,
-particularly t/re/uniprops, may crash the phone, causing it to turn
+particularly F<t/re/uniprops.t>, may crash the phone, causing it to turn
 itself off once, and then back on again.
 
 =back
@@ -187,12 +190,12 @@ version without some important utilities, like ar or nm.
 Once you have the toolchain set up properly, the only
 remaining hurdle is actually locating where in the device it was installed
 in.  For example, CCTools installs its toolchain in 
-/data/data/com.pdaxrom.cctools/root/cctools.  With the path in hand,
+F</data/data/com.pdaxrom.cctools/root/cctools>.  With the path in hand,
 compiling perl is little more than:
 
-    export SYSROOT=<location of the native toolchain>
-    export LD_LIBRARY_PATH="$SYSROOT/lib:`pwd`:`pwd`/lib:`pwd`/lib/auto:$LD_LIBRARY_PATH"
-    sh Configure -des -Dsysroot=$SYSROOT -Alibpth="/system/lib /vendor/lib"
+ export SYSROOT=<location of the native toolchain>
+ export LD_LIBRARY_PATH="$SYSROOT/lib:`pwd`:`pwd`/lib:`pwd`/lib/auto:$LD_LIBRARY_PATH"
+ sh Configure -des -Dsysroot=$SYSROOT -Alibpth="/system/lib /vendor/lib"
 
 =head1 AUTHOR
 

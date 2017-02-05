@@ -41,7 +41,7 @@ use charnames ":full";
 1
 EOE
 
-    like($@, "above 0xFF", "Verify get warning for \\N{above ff} under 'use bytes' with :full");
+    like($@, qr/above 0xFF/, "Verify get warning for \\N{above ff} under 'use bytes' with :full");
     ok(! defined $res, "... and result is undefined");
 
     $res = eval <<'EOE';
@@ -49,7 +49,7 @@ use charnames 'cyrillic';
 "Here: \N{Be}!";
 1
 EOE
-    like($@, "CYRILLIC CAPITAL LETTER BE.*above 0xFF", "Verify get warning under 'use bytes' with explicit script");
+    like($@, qr/CYRILLIC CAPITAL LETTER BE.*above 0xFF/, "Verify get warning under 'use bytes' with explicit script");
     ok(! defined $res, "... and result is undefined");
 
     $res = eval <<'EOE';
@@ -65,7 +65,7 @@ EOE
     use charnames ":alias" => { mychar1 => "0xE8000",
                                 mychar2 => 983040,  # U+F0000
                                 mychar3 => "U+100000",
-                                myctrl => 0x80,
+                                myctrl => utf8::unicode_to_native(0x80),
                                 mylarge => "U+111000",
                               };
     is ("\N{PILE OF POO}", chr(0x1F4A9), "Verify :alias alone implies :full");
@@ -77,29 +77,14 @@ EOE
     is (charnames::viacode(0x100000), "mychar3", "And that can get the alias back");
     is ("\N{mylarge}", chr(0x111000), "Verify that can define alias beyond Unicode");
     is (charnames::viacode(0x111000), "mylarge", "And that can get the alias back");
-    is (charnames::viacode(0x80), "myctrl", "Verify that can name a nameless control");
+    is (charnames::viacode(utf8::unicode_to_native(0x80)), "myctrl", "Verify that can name a nameless control");
 
 }
 
-my $encoded_be;
-my $encoded_alpha;
-my $encoded_bet;
-my $encoded_deseng;
-
-# If octal representation of unicode char is \0xyzt, then the utf8 is \3xy\2zt
-if (ord('A') == 65) { # as on ASCII or UTF-8 machines
-    $encoded_be = "\320\261";
-    $encoded_alpha = "\316\261";
-    $encoded_bet = "\327\221";
-    $encoded_deseng = "\360\220\221\215";
-}
-else { # EBCDIC where UTF-EBCDIC may be used (this may be 1047 specific since
-       # UTF-EBCDIC is codepage specific)
-    $encoded_be = "\270\102\130";
-    $encoded_alpha = "\264\130";
-    $encoded_bet = "\270\125\130";
-    $encoded_deseng = "\336\102\103\124";
-}
+my $encoded_be = byte_utf8a_to_utf8n("\320\261");
+my $encoded_alpha = byte_utf8a_to_utf8n("\316\261");
+my $encoded_bet = byte_utf8a_to_utf8n("\327\221");
+my $encoded_deseng = byte_utf8a_to_utf8n("\360\220\221\215");
 
 sub to_bytes {
     unpack"U0a*", shift;
@@ -209,10 +194,10 @@ sub test_vianame ($$$) {
 
     use charnames ':full';
     my $text = "\N{LATIN CAPITAL LETTER A WITH DIAERESIS}";
-    is($text, latin1_to_native("\xc4"), 'Verify \N{} returns correct string under "no utf8"');
+    is($text, chr utf8::unicode_to_native(0xc4), 'Verify \N{} returns correct string under "no utf8"');
 
     # I'm not sure that this tests anything different from the above.
-    cmp_ok(ord($text), '==', ord(latin1_to_native("\xc4")), '... and ords are ok');
+    cmp_ok(ord($text), '==', utf8::unicode_to_native(0xc4), '... and ords are ok');
 }
 
 {
@@ -235,7 +220,7 @@ sub test_vianame ($$$) {
 
     use bytes;
     is(charnames::vianame("GOTHIC LETTER AHSA"), 0x10330, "Verify vianame \\N{name} is unaffected by 'use bytes'");
-    is(charnames::vianame("U+FF"), chr(0xFF), "Verify vianame \\N{U+FF} is unaffected by 'use bytes'");
+    is(charnames::vianame("U+FF"), chr(utf8::unicode_to_native(0xFF)), "Verify vianame \\N{U+FF} is unaffected by 'use bytes'");
     cmp_ok($warning_count, '==', scalar @WARN, "Verify vianame doesn't warn on legal inputs under 'use bytes'");
     ok(! defined charnames::vianame("U+100"), "Verify vianame \\N{U+100} is undef under 'use bytes'");
     ok($warning_count == scalar @WARN - 1 && $WARN[-1] =~ /above 0xFF/, "Verify vianame gives appropriate warning for previous test");
@@ -244,9 +229,9 @@ sub test_vianame ($$$) {
     ok(! defined charnames::string_vianame("GOTHIC LETTER AHSA"), "Verify string_vianame(\"GOTHIC LETTER AHSA\") is undefined under 'use bytes'");
     ok($warning_count == scalar @WARN - 1 && $WARN[-1] =~ /above 0xFF/, "Verify string_vianame gives appropriate warning for previous test");
     $warning_count = @WARN;
-    is(charnames::string_vianame("U+FF"), chr(0xFF), "Verify string_vianame(\"U+FF\") is chr(0xFF) under 'use bytes'");
+    is(charnames::string_vianame("U+FF"), chr(utf8::unicode_to_native(0xFF)), "Verify string_vianame(\"U+FF\") is chr(0xFF) under 'use bytes'");
     cmp_ok($warning_count, '==', scalar @WARN, "Verify string_vianame doesn't warn on legal inputs under 'use bytes'");
-    is(charnames::string_vianame("LATIN SMALL LETTER Y WITH DIAERESIS"), chr(0xFF), "Verify string_vianame(\"LATIN SMALL LETTER Y WITH DIAERESIS\") is chr(0xFF) under 'use bytes'");
+    is(charnames::string_vianame("LATIN SMALL LETTER Y WITH DIAERESIS"), chr(utf8::unicode_to_native(0xFF)), "Verify string_vianame(\"LATIN SMALL LETTER Y WITH DIAERESIS\") is chr(native 0xFF) under 'use bytes'");
     cmp_ok($warning_count, '==', scalar @WARN, "Verify string_vianame doesn't warn on legal inputs under 'use bytes'");
     ok(! defined charnames::string_vianame("U+100"), "Verify string_vianame \\N{U+100} is undef under 'use bytes'");
     ok($warning_count == scalar @WARN - 1 && $WARN[-1] =~ /above 0xFF/, "Verify string_vianame gives appropriate warning for previous test");
@@ -279,7 +264,7 @@ is("\N{LINE FEED (LF)}", "\n", 'Verify "\N{LINE FEED (LF)}" eq "\n"');
 is("\N{LINE FEED}", "\n", 'Verify "\N{LINE FEED}" eq "\n"');
 is("\N{LF}", "\n", 'Verify "\N{LF}" eq "\n"');
 
-my $nel = latin1_to_native("\x85");
+my $nel = chr utf8::unicode_to_native(0x85);
 $nel = qr/^$nel$/;
 
 like("\N{NEXT LINE (NEL)}", $nel, 'Verify "\N{NEXT LINE (NEL)}" is correct');
@@ -350,7 +335,8 @@ ok(! defined charnames::viacode(0x110000),
 ok((grep { /\Qyou asked for U+110000/ } @WARN), '... and gives warning');
 
 is(charnames::viacode(0), "NULL", 'Verify charnames::viacode(0) eq "NULL"');
-is(charnames::viacode("BE"), "VULGAR FRACTION THREE QUARTERS", 'Verify charnames::viacode("BE") eq "VULGAR FRACTION THREE QUARTERS"');
+my $three_quarters = sprintf("%2X", utf8::unicode_to_native(0xBE));
+is(charnames::viacode("$three_quarters"), "VULGAR FRACTION THREE QUARTERS", 'Verify charnames::viacode(native "BE") eq "VULGAR FRACTION THREE QUARTERS"');
 is(charnames::viacode("U+00000000000FEED"), "ARABIC LETTER WAW ISOLATED FORM", 'Verify charnames::viacode("U+00000000000FEED") eq "ARABIC LETTER WAW ISOLATED FORM"');
 
 {
@@ -747,7 +733,7 @@ is($_, 'foobar', 'Verify charnames.pm doesnt clobbers $_');
 
 my $names = do "unicore/Name.pl";
 ok(defined $names, "Verify can read 'unicore/Name.pl'");
-my $non_ascii = native_to_latin1($names) =~ tr/\0-\177//c;
+my $non_ascii = native_to_uni($names) =~ tr/\0-\177//c;
 ok(! $non_ascii, "Verify all official names are ASCII-only");
 
 # Verify that charnames propagate to eval("")
@@ -1024,7 +1010,10 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
     while (<$fh>) {
         chomp;
         my ($code, $name, undef, undef, undef, undef, undef, undef, undef, undef, $u1name) = split ";";
-        my $decimal = hex $code;
+        my $decimal = utf8::unicode_to_native(hex $code);
+        $code = sprintf("%04X", $decimal) unless $::IS_ASCII;
+
+        $decimal = hex $code;
 
         # The Unicode version 1 name is used instead of any that are
         # marked <control>.
@@ -1034,7 +1023,7 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
         $name = "" if $^V lt v5.17.0 && $decimal == 0x1F514;
 
         # ALERT overrides BELL
-        $name = 'ALERT' if $decimal == 7;
+        $name = 'ALERT' if $decimal == utf8::unicode_to_native(7);
 
         # Some don't have names, leave those array elements undefined
         next unless $name;
@@ -1209,7 +1198,10 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
                 # These four code points now have names, from NameAlias, but
                 # aren't listed as having names in UnicodeData.txt, so viacode
                 # returns their alias names, not undef
-                next if $i == 0x80 || $i == 0x81 || $i == 0x84 || $i == 0x99;
+                next if $i == utf8::unicode_to_native(0x80)
+                              || $i == utf8::unicode_to_native(0x81)
+                              || $i == utf8::unicode_to_native(0x84)
+                              || $i == utf8::unicode_to_native(0x99);
 
                 # If there is no name for this code point, all we can
                 # test is that.
@@ -1223,7 +1215,11 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
                 # These four code points have a different Unicode1 name than
                 # regular name, and viacode has already specifically tested
                 # for the regular name
-                if ($i != 0x0a && $i != 0x0c && $i != 0x0d && $i != 0x85) {
+                if ($i != utf8::unicode_to_native(0x0a)
+                    && $i != utf8::unicode_to_native(0x0c)
+                    && $i != utf8::unicode_to_native(0x0d)
+                    && $i != utf8::unicode_to_native(0x85))
+                {
                     $all_pass &= is(charnames::viacode($i), $names[$i], "Verify viacode(0x$hex) is \"$names[$i]\"");
                 }
 
@@ -1249,7 +1245,7 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
             s/^\s*#.*//;
             next unless $_;
             my ($name, $codes) = split ";";
-            my $utf8 = pack("U*", map { hex } split " ", $codes);
+            my $utf8 = pack("W*", map { hex } split " ", $codes);
             is(charnames::string_vianame($name), $utf8, "Verify string_vianame(\"$name\") is the proper utf8");
             my $loose_name = get_loose_name($name);
             use charnames ":loose";

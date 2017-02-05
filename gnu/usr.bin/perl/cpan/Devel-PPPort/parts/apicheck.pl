@@ -137,6 +137,7 @@ print OUT <<HEAD;
 
 #define NEED_PL_signals
 #define NEED_PL_parser
+#define NEED_caller_cx
 #define NEED_eval_pv
 #define NEED_grok_bin
 #define NEED_grok_hex
@@ -146,6 +147,7 @@ print OUT <<HEAD;
 #define NEED_load_module
 #define NEED_my_snprintf
 #define NEED_my_sprintf
+#define NEED_mg_findext
 #define NEED_my_strlcat
 #define NEED_my_strlcpy
 #define NEED_newCONSTSUB
@@ -162,6 +164,7 @@ print OUT <<HEAD;
 #define NEED_sv_pvn_force_flags
 #define NEED_sv_setpvf_mg
 #define NEED_sv_setpvf_mg_nocontext
+#define NEED_sv_unmagicext
 #define NEED_vload_module
 #define NEED_vnewSVpvf
 #define NEED_warner
@@ -174,6 +177,11 @@ print OUT <<HEAD;
 static int    VARarg1;
 static char  *VARarg2;
 static double VARarg3;
+
+#if defined(PERL_BCDVERSION) && (PERL_BCDVERSION < 0x5009005)
+/* needed to make PL_parser apicheck work */
+typedef void yy_parser;
+#endif
 
 HEAD
 

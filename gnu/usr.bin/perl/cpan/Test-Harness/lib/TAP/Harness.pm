@@ -16,11 +16,11 @@ TAP::Harness - Run test scripts with statistics
 
 =head1 VERSION
 
-Version 3.30
+Version 3.36
 
 =cut
 
-our $VERSION = '3.30_01';
+our $VERSION = '3.36_01';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;
@@ -81,6 +81,7 @@ BEGIN {
         test_args         => sub { shift; shift },
         ignore_exit       => sub { shift; shift },
         rules             => sub { shift; shift },
+        rulesfile         => sub { shift; shift },
         sources           => sub { shift; shift },
         version           => sub { shift; shift },
         trap              => sub { shift; shift },
@@ -328,8 +329,12 @@ run only one test at a time.
 =item * C<rules>
 
 A reference to a hash of rules that control which tests may be executed in
-parallel. If no rules are declared, all tests are eligible for being run in
-parallel. Here some simple examples. For the full details of the data structure
+parallel. If no rules are declared and L<CPAN::Meta::YAML> is available,
+C<TAP::Harness> attempts to load rules from a YAML file specified by the
+C<rulesfile> parameter. If no rules file exists, the default is for all
+tests to be eligible to be run in parallel.
+
+Here some simple examples. For the full details of the data structure
 and the related glob-style pattern matching, see
 L<TAP::Parser::Scheduler/"Rules data structure">.
 
@@ -338,6 +343,10 @@ L<TAP::Parser::Scheduler/"Rules data structure">.
         par => 't/p*.t'
     });
 
+    # Equivalent YAML file
+    ---
+    par: t/p*.t
+
     # Run all tests in parallel, except those starting with "p"
     $harness->rules({
         seq => [
@@ -345,6 +354,12 @@ L<TAP::Parser::Scheduler/"Rules data structure">.
                   { par => '**'     },
                ],
     });
+
+    # Equivalent YAML file
+    ---
+    seq:
+        - seq: t/p*.t
+        - par: **
 
     # Run some  startup tests in sequence, then some parallel tests than some
     # teardown tests in sequence.
@@ -357,7 +372,24 @@ L<TAP::Parser::Scheduler/"Rules data structure">.
 
     });
 
+    # Equivalent YAML file
+    ---
+    seq:
+        - seq: t/startup/*.t
+        - par:
+            - t/a/*.t
+            - t/b/*.t
+            - t/c/*.t
+        - seq: t/shutdown/*.t
+
 This is an experimental feature and the interface may change.
+
+=item * C<rulesfiles>
+
+This specifies where to find a YAML file of test scheduling rules.  If not
+provided, it looks for a default file to use.  It first checks for a file given
+in the C<HARNESS_RULESFILE> environment variable, then it checks for
+F<testrules.yml> and then F<t/testrules.yml>.
 
 =item * C<stdout>
 
@@ -415,6 +447,10 @@ Any keys for which the value is C<undef> will be ignored.
 
         $self->jobs(1) unless defined $self->jobs;
 
+        if ( ! defined $self->rules ) {
+            $self->_maybe_load_rulesfile;
+        }
+
         local $default_class{formatter_class} = 'TAP::Formatter::File'
           unless -t ( $arg_for{stdout} || \*STDOUT ) && !$ENV{HARNESS_NOTTY};
 
@@ -444,6 +480,29 @@ Any keys for which the value is C<undef> will be ignored.
         }
 
         return $self;
+    }
+
+    sub _maybe_load_rulesfile {
+        my ($self) = @_;
+
+        my ($rulesfile) =   defined $self->rulesfile ? $self->rulesfile :
+                            defined($ENV{HARNESS_RULESFILE}) ? $ENV{HARNESS_RULESFILE} :
+                            grep { -r } qw(./testrules.yml t/testrules.yml);
+
+        if ( defined $rulesfile && -r $rulesfile ) {
+            if ( ! eval { require CPAN::Meta::YAML; 1} ) {
+               warn "CPAN::Meta::YAML required to process $rulesfile" ;
+               return;
+            }
+            my $layer = $] lt "5.008" ? "" : ":encoding(UTF-8)";
+            open my $fh, "<$layer", $rulesfile
+                or die "Couldn't open $rulesfile: $!";
+            my $yaml_text = do { local $/; <$fh> };
+            my $yaml = CPAN::Meta::YAML->read_string($yaml_text)
+                or die CPAN::Meta::YAML->errstr;
+            $self->rules( $yaml->[0] );
+        }
+        return;
     }
 }
 

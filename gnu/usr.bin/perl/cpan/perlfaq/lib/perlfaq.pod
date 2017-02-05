@@ -2,6 +2,10 @@
 
 perlfaq - frequently asked questions about Perl
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 The perlfaq comprises several documents that answer the most commonly

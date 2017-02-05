@@ -1,10 +1,11 @@
 #!./perl
 
 BEGIN {
-    require "test.pl";
+    chdir 't' if -d 't';
+    require "./test.pl";
 }
 
-plan(106);
+plan(124);
 
 # A lot of tests to check that reversed for works.
 
@@ -578,4 +579,95 @@ SKIP: {
         eval { \$_[0] }
     }->($a[0]);
     is $@, "", 'vivify_defelem does not croak on &PL_sv_undef elements';
+}
+
+for $x ($y) {
+    $x = 3;
+    ($x, my $z) = (1, $y);
+    is $z, 3, 'list assignment after aliasing via foreach';
+}
+
+for my $x (my $y) {
+    $x = 3;
+    ($x, my $z) = (1, $y);
+    is $z, 3, 'list assignment after aliasing lexical var via foreach';
+}
+
+@_ = ();
+@_ = (1,2,3,scalar do{for(@_){}} + 1, 4, 5, 6);
+is "@_", "1 2 3 1 4 5 6",
+   '[perl #124004] scalar for(@empty_array) stack bug';
+
+# DAPM: while messing with the scope code, I broke some cpan/ code,
+# but surprisingly didn't break any dedicated tests. So test it:
+
+sub fscope {
+    for my $y (1,2) {
+	my $a = $y;
+	return $a;
+    }
+}
+
+is(fscope(), 1, 'return via loop in sub');
+
+# make sure a NULL GvSV is restored at the end of the loop
+
+{
+    local $foo = "boo";
+    {
+        local *foo;
+        for $foo (1,2) {}
+        ok(!defined $foo, "NULL GvSV");
+    }
+}
+
+# make sure storing an int in a NULL GvSV is ok
+
+{
+    local $foo = "boo";
+    {
+        local *foo;
+        for $foo (1..2) {}
+        ok(!defined $foo, "NULL GvSV int iterator");
+    }
+}
+
+# RT #123994 - handle a null GVSV within a loop
+
+{
+    local *foo;
+    local $foo = "outside";
+
+    my $i = 0;
+    for $foo (0..1) {
+        is($foo, $i, "RT #123994 int range $i");
+        *foo = "";
+        $i++;
+    }
+    is($foo, "outside", "RT #123994 int range outside");
+
+    $i = 0;
+    for $foo ('0'..'1') {
+        is($foo, $i, "RT #123994 str range $i");
+        *foo = "";
+        $i++;
+    }
+    is($foo, "outside", "RT #123994 str range outside");
+
+    $i = 0;
+    for $foo (0, 1) {
+        is($foo, $i, "RT #123994 list $i");
+        *foo = "";
+        $i++;
+    }
+    is($foo, "outside", "RT #123994 list outside");
+
+    my @a = (0,1);
+    $i = 0;
+    for $foo (@a) {
+        is($foo, $i, "RT #123994 array $i");
+        *foo = "";
+        $i++;
+    }
+    is($foo, "outside", "RT #123994 array outside");
 }

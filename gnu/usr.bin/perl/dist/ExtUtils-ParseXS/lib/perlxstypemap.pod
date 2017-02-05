@@ -469,6 +469,9 @@ The pointer is blessed into a class that is derived from the name
 of type of the pointer but with all '*' in the name replaced with
 'Ptr'.
 
+For C<DESTROY> XSUBs only, a T_PTROBJ is optimized to a T_PTRREF. This means
+the class check is skipped.
+
 =item T_REF_IV_REF
 
 NOT YET
@@ -477,11 +480,15 @@ NOT YET
 
 Similar to T_PTROBJ in that the pointer is blessed into a scalar object.
 The difference is that when the object is passed back into XS it must be
-of the correct type (inheritance is not supported).
+of the correct type (inheritance is not supported) while T_PTROBJ supports
+inheritance.
 
 The pointer is blessed into a class that is derived from the name
 of type of the pointer but with all '*' in the name replaced with
 'Ptr'.
+
+For C<DESTROY> XSUBs only, a T_REF_IV_PTR is optimized to a T_PTRREF. This
+means the class check is skipped.
 
 =item T_PTRDESC
 
@@ -498,7 +505,11 @@ are no known users in core or on CPAN.
 
 =item T_REFOBJ
 
-NOT YET
+Like T_REFREF, except it does strict type checking (inheritance is not
+supported).
+
+For C<DESTROY> XSUBs only, a T_REFOBJ is optimized to a T_REFREF. This means
+the class check is skipped.
 
 =item T_OPAQUEPTR
 

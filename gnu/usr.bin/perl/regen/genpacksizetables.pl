@@ -70,7 +70,7 @@ my %asciimap  = map {chr $_, chr $_} 0..255;
 # will work; just choose one
 my %ebcdicmap = map {chr $_, Encode::encode("posix-bc", chr $_)} 0..255;
 
-my $fh = open_new('packsizetables.c', '>', { by => $0, from => 'its data'});
+my $fh = open_new('packsizetables.inc', '>', { by => $0, from => 'its data'});
 
 print $fh <<"EOC";
 #if TYPE_IS_SHRIEKING != 0x100

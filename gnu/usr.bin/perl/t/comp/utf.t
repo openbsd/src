@@ -1,6 +1,6 @@
 #!./perl -w
 
-print "1..4016\n";
+print "1..4216\n";
 my $test = 0;
 
 my %templates = (
@@ -67,15 +67,17 @@ for my $bom (0, 1) {
 	    # handles are not implicitly "use utf8", but don't FIXME that
 	    # right now, as here we're testing the input filter itself.
 
-	    for my $expect ("N", "\xFF", "\x{100}", "\x{010a}", "\x{0a23}",
-			    "\x{10000}", "\x{64321}", "\x{10FFFD}",
-			    "\x{1000a}", # 0xD800 0xDC0A
-			    "\x{12800}", # 0xD80A 0xDC00
-			   ) {
+	    for my $expect (
+		"N", "\x{010a}", "\x{0a23}", "\x{64321}", "\x{10FFFD}",
+		"\x{1000a}", # 0xD800 0xDC0A
+		"\x{12800}", # 0xD80A 0xDC00
+		# explore a bunch of bit-width boundaries
+		map { chr((1 << $_) - 1), chr(1 << $_) } 7 .. 20
+	    ) {
 		# A space so that the UTF-16 heuristic triggers - " '" gives two
 		# characters of ASCII.
 		my $write = " '$expect'";
-		my $name = 'chrs ' . join ', ', map {ord $_} split '', $expect;
+		my $name = 'chrs ' . join ', ', map {sprintf "%#x", ord $_} split '', $expect;
 		test($enc, $write, $expect, $bom, $nl, $name);
 	    }
 

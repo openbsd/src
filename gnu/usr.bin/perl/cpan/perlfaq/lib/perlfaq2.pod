@@ -2,6 +2,10 @@
 
 perlfaq2 - Obtaining and Learning about Perl
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section of the FAQ answers questions about where to find
@@ -174,7 +178,7 @@ There's also I<$foo Magazin>, a German magazine dedicated to Perl, at
 German-speaking magazine for Perl beginners (see
 L<http://perl-zeitung.at.tf> ).
 
-Several unix/linux releated magazines frequently includes articles on Perl.
+Several Unix/Linux related magazines frequently include articles on Perl.
 
 =head2 Which Perl blogs should I read?
 

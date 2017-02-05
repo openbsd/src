@@ -500,12 +500,12 @@ sub installdir {
 	no_upwards($_) or next;
 	my $is_dir = -d "$podroot/$dir/$_";
 	next if $is_dir and not $recurse;
-	my $target = (
-	    $is_dir    ? \@dirlist :
-	    s/\.pod$// ? \@podlist :
-	    s/\.pm$//  ? \@pmlist  :
-	    undef
-	);
+	my $target
+	    = $is_dir    ? \@dirlist
+	    : s/\.pod$// ? \@podlist
+	    : s/\.pm$//  ? \@pmlist
+	    : undef
+	    ;
 	push @$target, "$dir/$_" if $target;
     }
 

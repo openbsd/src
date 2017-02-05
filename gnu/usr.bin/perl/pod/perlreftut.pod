@@ -7,7 +7,7 @@ perlreftut - Mark's very short tutorial about references
 One of the most important new features in Perl 5 was the capability to
 manage complicated data structures like multidimensional arrays and
 nested hashes.  To enable these, Perl 5 introduced a feature called
-'references', and using references is the key to managing complicated,
+I<references>, and using references is the key to managing complicated,
 structured data in Perl.  Unfortunately, there's a lot of funny syntax
 to learn, and the main manual page can be hard to follow.  The manual
 is quite complete, and sometimes people find that a problem, because
@@ -116,7 +116,7 @@ name.  This is analogous to the way you like to be able to use the
 string C<"\n"> or the number 80 without having to store it in a named
 variable first.
 
-B<Make Rule 2>
+=head3 B<Make Rule 2>
 
 C<[ ITEMS ]> makes a new, anonymous array, and returns a reference to
 that array.  C<{ ITEMS }> makes a new, anonymous hash, and returns a
@@ -190,13 +190,13 @@ array when all I have is a reference?"  Well, to loop over an array, you
 would write
 
         for my $element (@array) {
-           ...
+          ...
         }
 
 so replace the array name, C<@array>, with the reference:
 
         for my $element (@{$aref}) {
-           ...
+          ...
         }
 
 "How do I print out the contents of a hash when all I have is a
@@ -214,11 +214,11 @@ And then replace the hash name with the reference:
 
 =head3 B<Use Rule 2>
 
-B<Use Rule 1> is all you really need, because it tells you how to do
-absolutely everything you ever need to do with references.  But the
-most common thing to do with an array or a hash is to extract a single
-element, and the B<Use Rule 1> notation is cumbersome.  So there is an
-abbreviation.
+L<B<Use Rule 1>|/B<Use Rule 1>> is all you really need, because it tells
+you how to do absolutely everything you ever need to do with references.
+But the most common thing to do with an array or a hash is to extract a
+single element, and the L<B<Use Rule 1>|/B<Use Rule 1>> notation is
+cumbersome.  So there is an abbreviation.
 
 C<${$aref}[3]> is too hard to read, so you can write C<< $aref->[3] >>
 instead.
@@ -255,16 +255,16 @@ Now think about
 	       [7, 8, 9]
              );
 
-@a is an array with three elements, and each one is a reference to
+C<@a> is an array with three elements, and each one is a reference to
 another array.
 
 C<$a[1]> is one of these references.  It refers to an array, the array
 containing C<(4, 5, 6)>, and because it is a reference to an array,
-B<Use Rule 2> says that we can write C<< $a[1]->[2] >> to get the
-third element from that array.  C<< $a[1]->[2] >> is the 6.
+L<B<Use Rule 2>|/B<Use Rule 2>> says that we can write C<< $a[1]->[2] >>
+to get the third element from that array.  C<< $a[1]->[2] >> is the 6.
 Similarly, C<< $a[0]->[1] >> is the 2.  What we have here is like a
-two-dimensional array; you can write C<< $a[ROW]->[COLUMN] >> to get
-or set the element in any row and any column of the array.
+two-dimensional array; you can write C<< $a[ROW]->[COLUMN] >> to get or
+set the element in any row and any column of the array.
 
 The notation still looks a little cumbersome, so there's one more
 abbreviation:
@@ -292,13 +292,13 @@ file of city and country names.
     1   my %table;
 
     2   while (<>) {
-    3    chomp;
+    3     chomp;
     4     my ($city, $country) = split /, /;
     5     $table{$country} = [] unless exists $table{$country};
     6     push @{$table{$country}}, $city;
     7   }
 
-    8   foreach $country (sort keys %table) {
+    8   for my $country (sort keys %table) {
     9     print "$country: ";
    10     my @cities = @{$table{$country}};
    11     print join ', ', sort @cities;
@@ -306,7 +306,7 @@ file of city and country names.
    13	}
 
 
-The program has two pieces: Lines 2--7 read the input and build a data
+The program has two pieces: Lines 2-7 read the input and build a data
 structure, and lines 8-13 analyze the data and print out the report.
 We're going to have a hash, C<%table>, whose keys are country names,
 and whose values are references to arrays of city names.  The data
@@ -331,21 +331,19 @@ structure will look like this:
 We'll look at output first.  Supposing we already have this structure,
 how do we print it out?
 
-    8   foreach $country (sort keys %table) {
+    8   for my $country (sort keys %table) {
     9     print "$country: ";
    10     my @cities = @{$table{$country}};
    11     print join ', ', sort @cities;
    12     print ".\n";
    13	}
 
-C<%table> is an
-ordinary hash, and we get a list of keys from it, sort the keys, and
-loop over the keys as usual.  The only use of references is in line 10.
-C<$table{$country}> looks up the key C<$country> in the hash
-and gets the value, which is a reference to an array of cities in that country.
-B<Use Rule 1> says that
-we can recover the array by saying
-C<@{$table{$country}}>.  Line 10 is just like
+C<%table> is an ordinary hash, and we get a list of keys from it, sort
+the keys, and loop over the keys as usual.  The only use of references
+is in line 10.  C<$table{$country}> looks up the key C<$country> in the
+hash and gets the value, which is a reference to an array of cities in
+that country.  L<B<Use Rule 1>|/B<Use Rule 1>> says that we can recover
+the array by saying C<@{$table{$country}}>.  Line 10 is just like
 
 	@cities = @array;
 
@@ -358,7 +356,7 @@ Lines 2-7 are responsible for building the structure in the first
 place.  Here they are again:
 
     2   while (<>) {
-    3    chomp;
+    3     chomp;
     4     my ($city, $country) = split /, /;
     5     $table{$country} = [] unless exists $table{$country};
     6     push @{$table{$country}}, $city;
@@ -366,9 +364,9 @@ place.  Here they are again:
 
 Lines 2-4 acquire a city and country name.  Line 5 looks to see if the
 country is already present as a key in the hash.  If it's not, the
-program uses the C<[]> notation (B<Make Rule 2>) to manufacture a new,
-empty anonymous array of cities, and installs a reference to it into
-the hash under the appropriate key.
+program uses the C<[]> notation (L<B<Make Rule 2>|/B<Make Rule 2>>) to
+manufacture a new, empty anonymous array of cities, and installs a
+reference to it into the hash under the appropriate key.
 
 Line 6 installs the city name into the appropriate array.
 C<$table{$country}> now holds a reference to the array of cities seen
@@ -377,14 +375,14 @@ in that country so far.  Line 6 is exactly like
 	push @array, $city;
 
 except that the name C<array> has been replaced by the reference
-C<{$table{$country}}>.  The C<push> adds a city name to the end of the
-referred-to array.
+C<{$table{$country}}>.  The L<C<push>|perlfunc/push ARRAY,LIST> adds a
+city name to the end of the referred-to array.
 
 There's one fine point I skipped.  Line 5 is unnecessary, and we can
 get rid of it.
 
     2   while (<>) {
-    3    chomp;
+    3     chomp;
     4     my ($city, $country) = split /, /;
     5   ####  $table{$country} = [] unless exists $table{$country};
     6     push @{$table{$country}}, $city;
@@ -392,16 +390,15 @@ get rid of it.
 
 If there's already an entry in C<%table> for the current C<$country>,
 then nothing is different.  Line 6 will locate the value in
-C<$table{$country}>, which is a reference to an array, and push
-C<$city> into the array.  But
-what does it do when
-C<$country> holds a key, say C<Greece>, that is not yet in C<%table>?
+C<$table{$country}>, which is a reference to an array, and push C<$city>
+into the array.  But what does it do when C<$country> holds a key, say
+C<Greece>, that is not yet in C<%table>?
 
 This is Perl, so it does the exact right thing.  It sees that you want
 to push C<Athens> onto an array that doesn't exist, so it helpfully
 makes a new, empty, anonymous array for you, installs it into
 C<%table>, and then pushes C<Athens> onto it.  This is called
-'autovivification'--bringing things to life automatically.  Perl saw
+I<autovivification>--bringing things to life automatically.  Perl saw
 that the key wasn't in the hash, so it created a new hash entry
 automatically. Perl saw that you wanted to use the hash value as an
 array, so it created a new empty array and installed a reference to it
@@ -426,11 +423,12 @@ other references.
 
 =item *
 
-In B<Use Rule 1>, you can omit the curly brackets whenever the thing
-inside them is an atomic scalar variable like C<$aref>.  For example,
-C<@$aref> is the same as C<@{$aref}>, and C<$$aref[1]> is the same as
-C<${$aref}[1]>.  If you're just starting out, you may want to adopt
-the habit of always including the curly brackets.
+In L<B<Use Rule 1>|/B<Use Rule 1>>, you can omit the curly brackets
+whenever the thing inside them is an atomic scalar variable like
+C<$aref>.  For example, C<@$aref> is the same as C<@{$aref}>, and
+C<$$aref[1]> is the same as C<${$aref}[1]>.  If you're just starting
+out, you may want to adopt the habit of always including the curly
+brackets.
 
 =item *
 
@@ -456,10 +454,10 @@ Similarly, to copy an anonymous hash, you can use
 
 =item *
 
-To see if a variable contains a reference, use the C<ref> function.  It
-returns true if its argument is a reference.  Actually it's a little
-better than that: It returns C<HASH> for hash references and C<ARRAY>
-for array references.
+To see if a variable contains a reference, use the
+L<C<ref>|perlfunc/ref EXPR> function.  It returns true if its argument
+is a reference.  Actually it's a little better than that: It returns
+C<HASH> for hash references and C<ARRAY> for array references.
 
 =item *
 
@@ -470,17 +468,18 @@ If you try to use a reference like a string, you get strings like
 If you ever see a string that looks like this, you'll know you
 printed out a reference by mistake.
 
-A side effect of this representation is that you can use C<eq> to see
-if two references refer to the same thing.  (But you should usually use
-C<==> instead because it's much faster.)
+A side effect of this representation is that you can use
+L<C<eq>|perlop/Equality Operators> to see if two references refer to the
+same thing.  (But you should usually use
+L<C<==>|perlop/Equality Operators> instead because it's much faster.)
 
 =item *
 
 You can use a string as if it were a reference.  If you use the string
 C<"foo"> as an array reference, it's taken to be a reference to the
-array C<@foo>.  This is called a I<soft reference> or I<symbolic
-reference>.  The declaration C<use strict 'refs'> disables this
-feature, which can cause all sorts of trouble if you use it by accident.
+array C<@foo>.  This is called a I<symbolic reference>.  The declaration
+L<C<use strict 'refs'>|strict> disables this feature, which can cause
+all sorts of trouble if you use it by accident.
 
 =back
 

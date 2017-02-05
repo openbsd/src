@@ -150,32 +150,6 @@ EXPECT
 Use of bare << to mean <<"" is deprecated at - line 2.
 ########
 # toke.c
-eval "\$\cT";
-eval "\${\7LOBAL_PHASE}";
-eval "\${\cT}";
-eval "\${\n\cT}";
-eval "\${\cT\n}";
-my $ret = eval "\${\n\cT\n}";
-print "ok\n" if $ret == $^T;
-
-no warnings 'deprecated' ;
-eval "\$\cT";
-eval "\${\7LOBAL_PHASE}";
-eval "\${\cT}";
-eval "\${\n\cT}";
-eval "\${\cT\n}";
-eval "\${\n\cT\n}";
-
-EXPECT
-Use of literal control characters in variable names is deprecated at (eval 1) line 1.
-Use of literal control characters in variable names is deprecated at (eval 2) line 1.
-Use of literal control characters in variable names is deprecated at (eval 3) line 1.
-Use of literal control characters in variable names is deprecated at (eval 4) line 2.
-Use of literal control characters in variable names is deprecated at (eval 5) line 1.
-Use of literal control characters in variable names is deprecated at (eval 6) line 2.
-ok
-########
-# toke.c
 $a =~ m/$foo/eq;
 $a =~ s/$foo/fool/seq;
 
@@ -783,15 +757,14 @@ use warnings "ambiguous";
 print for keys %+; # should not warn
 EXPECT
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 sub fred {};
 -fred ;
 sub hank : lvalue {$_}
 --hank; # This should *not* warn [perl #77240]
 EXPECT
-Ambiguous use of -fred resolved as -&fred() at - line 3.
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 $^W = 0 ;
 sub fred {} ;
 -fred ;
@@ -803,19 +776,15 @@ sub fred {} ;
 }
 -fred ;
 EXPECT
-Ambiguous use of -fred resolved as -&fred() at - line 4.
-Ambiguous use of -fred resolved as -&fred() at - line 9.
-Ambiguous use of -fred resolved as -&fred() at - line 11.
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 use utf8;
 use open qw( :utf8 :std );
 sub frèd {};
 -frèd ;
 EXPECT
-Ambiguous use of -frèd resolved as -&frèd() at - line 5.
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 $^W = 0 ;
 use utf8;
 use open qw( :utf8 :std );
@@ -829,19 +798,15 @@ sub frèd {} ;
 }
 -frèd ;
 EXPECT
-Ambiguous use of -frèd resolved as -&frèd() at - line 6.
-Ambiguous use of -frèd resolved as -&frèd() at - line 11.
-Ambiguous use of -frèd resolved as -&frèd() at - line 13.
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 use utf8;
 use open qw( :utf8 :std );
 sub ᒍᒘᒊ {};
 -ᒍᒘᒊ ;
 EXPECT
-Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 5.
 ########
-# toke.c
+# toke.c [This does not warn any more.]
 $^W = 0 ;
 use utf8;
 use open qw( :utf8 :std );
@@ -855,9 +820,6 @@ sub ᒍᒘᒊ {} ;
 }
 -ᒍᒘᒊ ;
 EXPECT
-Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 6.
-Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 11.
-Ambiguous use of -ᒍᒘᒊ resolved as -&ᒍᒘᒊ() at - line 13.
 ########
 # toke.c
 open FOO || time;
@@ -1046,15 +1008,12 @@ EXPECT
 Useless use of \E at - line 3.
 ########
 # toke.c
-use feature 'postderef', 'postderef_qq';
+use feature 'postderef_qq';
 (\$_)->$*;
 "$_->$*";
-no warnings 'experimental::postderef';
 (\$_)->$*;
 "$_->$*";
 EXPECT
-Postfix dereference is experimental at - line 3.
-Postfix dereference is experimental at - line 4.
 ########
 # toke.c
 use warnings 'portable' ;
@@ -1229,7 +1188,6 @@ $_ = $a = 1;
 $a !=~  /1/;
 $a !=~ m#1#;
 $a !=~/1/;
-$a !=~ ?/?;
 $a !=~ y/1//;
 $a !=~ tr/1//;
 $a !=~ s/1//;
@@ -1238,7 +1196,6 @@ no warnings "syntax";
 $a !=~  /1/;
 $a !=~ m#1#;
 $a !=~/1/;
-$a !=~ ?/?;
 $a !=~ y/1//;
 $a !=~ tr/1//;
 $a !=~ s/1//;
@@ -1249,7 +1206,6 @@ EXPECT
 !=~ should be !~ at - line 7.
 !=~ should be !~ at - line 8.
 !=~ should be !~ at - line 9.
-!=~ should be !~ at - line 10.
 ########
 # toke.c
 our $foo :unique;
@@ -1351,15 +1307,25 @@ Non-octal character '8'.  Resolved as "\o{123}" at - line 3.
 ########
 # toke.c
 use warnings;
-my $a = "foo";
-print $a =~ ?f? ? "yes\n" : "no\n" foreach 0..2;
+print ref ? "yes\n" : "no\n" foreach [], ''; # ? is unambiguosly an operator
 EXPECT
-Use of ?PATTERN? without explicit operator is deprecated at - line 4.
 yes
 no
-no
+########
+# toke .c
+use warnings;
+$a =~ ?rand?; # ? is not a regex match
+EXPECT
+syntax error at - line 3, near "=~ ?"
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# result varies depending on which ebcdic platform";
+        exit 0;
+    }
+}
 use warnings;
 $a = "\c,";
 $a = "\c`";
@@ -1367,15 +1333,34 @@ no warnings 'syntax';
 $a = "\c,";
 $a = "\c`";
 EXPECT
-"\c," is more clearly written simply as "l" at - line 3.
-"\c`" is more clearly written simply as "\ " at - line 4.
+"\c," is more clearly written simply as "l" at - line 9.
+"\c`" is more clearly written simply as "\ " at - line 10.
 ########
 # toke.c
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# test is ASCII-specific";
+        exit 0;
+    }
+}
 use warnings;
 my $a = "\c{ack}";
 EXPECT
 OPTION fatal
-Use ";" instead of "\c{" at - line 3.
+Use ";" instead of "\c{" at - line 9.
+########
+# toke.c
+BEGIN {
+    if (ord('A') == 65) {
+        print "SKIPPED\n# test is EBCDIC-specific";
+        exit 0;
+    }
+}
+use warnings;
+my $a = "\c{ack}";
+EXPECT
+OPTION fatal
+Sequence "\c{" invalid at - line 9.
 ########
 # toke.c
 my $a = "\câ";
@@ -1453,56 +1438,37 @@ sub { # do not actually call require
 EXPECT
 ########
 # toke.c
-# [perl #113094], [perl #119101]
-print "aa" =~ m{^a\{1,2\}$}, "\n";
-print "aa" =~ m{^a\x\{61\}$}, "\n";
-print "a\\x{6F}" =~ m{^a\\x\{6F\}$}, "\n";
-print "a\\o" =~ m{^a\\\x\{6F\}$}, "\n";
-print "a\\\\x{6F}" =~ m{^a\\\\x\{6F\}$}, "\n";
-print "a\\\\o"     =~ m{^a\\\\\x\{6F\}$}, "\n";
-print "aa" =~ m{^a{1,2}$}, "\n";
-print "aq" =~ m[^a\[a-z\]$], "\n";
-print "aq" =~ m(^a\(q\)$), "\n";
-no warnings 'deprecated';
-print "aa" =~ m{^a\{1,2\}$}, "\n";
-print "aa" =~ m{^a\x\{61\}$}, "\n";
-print "a\\x{6F}" =~ m{^a\\x\{6F\}$}, "\n";
-print "a\\o" =~ m{^a\\\x\{6f\}$}, "\n";
-print "aq" =~ m[^a\[a-z\]$], "\n";
-print "aq" =~ m(^a\(q\)$), "\n";
+# [perl #113094], [perl #119101], since reverted so no warnings generated
+use warnings;
+print "aa" =~ m{^a\{1,2\}$}, "A\n";
+print "aa" =~ m{^a\x\{61\}$}, "B\n";
+print "a\\x{6F}" =~ m{^a\\x\{6F\}$}, "C\n";
+print "a\\o" =~ m{^a\\\x\{6F\}$}, "D\n";
+print "a\\\\x{6F}" =~ m{^a\\\\x\{6F\}$}, "E\n";
+print "a\\\\o"     =~ m{^a\\\\\x\{6F\}$}, "F\n";
+print "aa" =~ m{^a{1,2}$}, "G\n";
+print "aq" =~ m[^a\[a-z\]$], "H\n";
+print "aq" =~ m(^a\(q\)$), "I\n";
 EXPECT
-Useless use of '\'; doesn't escape metacharacter '{' at - line 3.
-Useless use of '\'; doesn't escape metacharacter '{' at - line 4.
-Useless use of '\'; doesn't escape metacharacter '{' at - line 6.
-Useless use of '\'; doesn't escape metacharacter '{' at - line 8.
-Useless use of '\'; doesn't escape metacharacter '[' at - line 10.
-Useless use of '\'; doesn't escape metacharacter '(' at - line 11.
-1
-1
-1
-1
-1
-1
-1
-1
-q
-1
-1
-1
-1
-1
-q
+Illegal hexadecimal digit '\' ignored at - line 5.
+Illegal hexadecimal digit '\' ignored at - line 7.
+Illegal hexadecimal digit '\' ignored at - line 9.
+A
+B
+1C
+D
+1E
+F
+1G
+H
+I
 ########
 # toke.c
 #[perl #119123] disallow literal control character variables
-eval "\$\cQ = 25";
-eval "\${ \cX } = 24";
 *{
     Foo
 }; # shouldn't warn on {\n, even though \n is a control character
 EXPECT
-Use of literal control characters in variable names is deprecated at (eval 1) line 1.
-Use of literal control characters in variable names is deprecated at (eval 2) line 1.
 ########
 # toke.c
 # [perl #120288] -X at start of line gave spurious warning, where X is not
@@ -1534,10 +1500,12 @@ Comme ca!
 ########
 # toke.c
 # Fix 'Use of "..." without parentheses is ambiguous' warning for
-# Unicode function names
+# Unicode function names.  If not under PERL_UNICODE, this will generate
+# a "Wide character" warning
 use utf8;
 use warnings;
 sub 𝛃(;$) { return 0; }
 my $v = 𝛃 - 5;
 EXPECT
-Warning: Use of "𝛃" without parentheses is ambiguous at - line 7.
+OPTION regex
+(Wide character.*\n)?Warning: Use of "𝛃" without parentheses is ambiguous

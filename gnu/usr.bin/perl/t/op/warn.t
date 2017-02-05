@@ -3,8 +3,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
+    set_up_inc('../lib');
 }
 
 plan 32;
@@ -121,22 +121,25 @@ fresh_perl_like(
 
 SKIP: {
     skip_if_miniperl('miniperl ignores -C', 1);
+   $ee = uni_to_native("\xee");
+   $bytes = byte_utf8a_to_utf8n("\xc3\xae");
 fresh_perl_like(
- '
-   $a = "\xee\n";
-   print STDERR $a; warn $a;
-   utf8::upgrade($a);
-   print STDERR $a; warn $a;
- ',
-  qr/^\xc3\xae(?:\r?\n\xc3\xae){3}/,
+ "
+   \$a = \"$ee\n\";
+   print STDERR \$a; warn \$a;
+   utf8::upgrade(\$a);
+   print STDERR \$a; warn \$a;
+ ",
+  qr/^$bytes(?:\r?\n$bytes){3}/,
   { switches => ['-CE'] },
  'warn respects :utf8 layer'
 );
 }
 
+$bytes = byte_utf8a_to_utf8n("\xc4\xac");
 fresh_perl_like(
  'warn chr 300',
-  qr/^Wide character in warn .*\n\xc4\xac at /,
+  qr/^Wide character in warn .*\n$bytes at /,
   { switches => [ "-C0" ] },
  'Wide character in warn (not print)'
 );

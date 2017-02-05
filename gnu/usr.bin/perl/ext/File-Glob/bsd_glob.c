@@ -602,6 +602,7 @@ glob0(const Char *pattern, glob_t *pglob)
 		return(globextend(qpat, pglob, &limit));
         }
 	else if (!(pglob->gl_flags & GLOB_NOSORT))
+            if (pglob->gl_pathv)
 		qsort(pglob->gl_pathv + pglob->gl_offs + oldpathc,
 		    pglob->gl_pathc - oldpathc, sizeof(char *),
 		    (pglob->gl_flags & (GLOB_ALPHASORT|GLOB_NOCASE))

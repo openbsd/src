@@ -84,7 +84,9 @@
    Other comments within the dl_dlopen.xs file may be helpful as well.
 */
 
+#define PERL_EXT
 #include "EXTERN.h"
+#define PERL_IN_DL_DLLLOAD_XS
 #include "perl.h"
 #include "XSUB.h"
 
@@ -140,9 +142,10 @@ dl_unload_file(libref)
 
 
 void
-dl_find_symbol(libhandle, symbolname)
+dl_find_symbol(libhandle, symbolname, ign_err=0)
     void *	libhandle
     char *	symbolname
+    int	        ign_err
     PREINIT:
     void *retv;
     PPCODE:
@@ -153,9 +156,10 @@ dl_find_symbol(libhandle, symbolname)
     retv  = dllqueryvar(libhandle, symbolname);
     DLDEBUG(2, PerlIO_printf(Perl_debug_log,
 			     "  symbolref = %lx\n", (unsigned long) retv));
-    ST(0) = sv_newmortal() ;
-    if (retv == NULL)
-	SaveError(aTHX_ "%s",strerror(errno)) ;
+    ST(0) = sv_newmortal();
+    if (retv == NULL) {
+	if (!ign_err) SaveError(aTHX_ "%s", strerror(errno));
+    }
     else
 	sv_setiv( ST(0), PTR2IV(retv));
     XSRETURN(1);
@@ -184,11 +188,11 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     XSRETURN(1);
 
 
-char *
+SV *
 dl_error()
     CODE:
     dMY_CXT;
-    RETVAL = dl_last_error ;
+    RETVAL = newSVsv(MY_CXT.x_dl_last_error);
     OUTPUT:
     RETVAL
 
@@ -205,7 +209,7 @@ CLONE(...)
      * using Perl variables that belong to another thread, we create our 
      * own for this thread.
      */
-    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    MY_CXT.x_dl_last_error = newSVpvs("");
 
 #endif
 

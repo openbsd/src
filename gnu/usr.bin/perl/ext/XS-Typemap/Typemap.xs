@@ -906,6 +906,15 @@ T_STDIO_open( file )
  OUTPUT:
   RETVAL
 
+void
+T_STDIO_open_ret_in_arg( file, io)
+  const char * file
+  FILE * io = NO_INIT
+ CODE:
+  io = xsfopen( file );
+ OUTPUT:
+  io
+
 SysRet
 T_STDIO_close( f )
   PerlIO * f

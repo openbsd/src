@@ -2,6 +2,7 @@
 use strict;
 
 BEGIN {
+    chdir 't' if -d 't';
     require './test.pl';
     skip_all_if_miniperl("no dynamic loading on miniperl, no Scalar::Util");
     plan(tests => 14);

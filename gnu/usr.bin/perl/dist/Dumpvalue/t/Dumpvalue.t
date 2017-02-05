@@ -1,10 +1,6 @@
 #!./perl
 
 BEGIN {
-	if (ord('A') == 193) {
-	    print "1..0 # skip: EBCDIC\n";
-	    exit 0;
-	}
 	require Config;
 	if (($Config::Config{'extensions'} !~ m!\bList/Util\b!) ){
 	    print "1..0 # Skip -- Perl configured without List::Util module\n";
@@ -57,15 +53,15 @@ is( $d->stringify('hi'), "'hi'", 'used single-quotes when appropriate' );
 $d->{unctrl} = 'unctrl';
 like( $d->stringify('double and whack:\ "'), qr!\\ \"!, 'escaped with unctrl' );
 like( $d->stringify("a\005"), qr/^"a\^/, 'escaped ASCII value in unctrl' );
-like( $d->stringify("b\205"), qr!^'b.'$!, 'no high-bit escape value in unctrl');
+like( $d->stringify("b\xb6"), qr!^'b.'$!, 'no high-bit escape value in unctrl');
 
 $d->{quoteHighBit} = 1;
-like( $d->stringify("b\205"), qr!^'b\\205!, 'high-bit now escaped in unctrl');
+like( $d->stringify("b\266"), qr!^'b\\266!, 'high-bit now escaped in unctrl');
 
 # if 'quote' is set
 $d->{unctrl} = 'quote';
 is( $d->stringify('5@ $1'), "'5\@ \$1'", 'quoted $ and @ fine' );
-is( $d->stringify("5@\033\$1"), '"5\@\e\$1"', 'quoted $ and @ and \033 fine' );
+is( $d->stringify("5@\e\$1"), '"5\@\e\$1"', 'quoted $ and @ and \e fine' );
 like( $d->stringify("\037"), qr/^"\\c/, 'escaped ASCII value okay' );
 
 # add ticks, if necessary

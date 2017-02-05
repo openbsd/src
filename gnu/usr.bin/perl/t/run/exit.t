@@ -39,7 +39,7 @@ if ($^O eq 'VMS') {
     $numtests = 29 unless $vms_exit_mode;
 }
 
-require "test.pl";
+require "./test.pl";
 plan(tests => $numtests);
 
 my $native_success = 0;

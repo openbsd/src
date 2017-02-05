@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use Config;
 use Test::More tests => 16;
 use File::Temp qw[tempdir];
 
@@ -35,10 +36,15 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     ok( my $stdout = tie *STDOUT, 'TieOut' );
     my $warnings = '';
     local $SIG{__WARN__} = sub {
+        if ( $Config{usecrosscompile} ) {
+            # libraries might not be present on the target system
+            # when cross-compiling
+            return if $_[0] =~ /\A\QWarning (mostly harmless): No library found for \E.+/
+        }
         $warnings .= join '', @_;
     };
     # prerequisite warnings are disabled while building the perl core:
-    local $ENV{PERL_CORE} = 0;
+    local $ExtUtils::MakeMaker::UNDER_CORE = 0;
 
     WriteMakefile(
         NAME            => 'Big::Dummy',

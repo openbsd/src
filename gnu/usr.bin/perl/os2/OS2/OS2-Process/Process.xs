@@ -427,7 +427,7 @@ myQueryWindowText(HWND hwnd)
 	    return &PL_sv_undef;
 	return &PL_sv_no;
     }
-    sv = newSVpvn("", 0);
+    sv = newSVpvs("");
     SvGROW(sv, l + 1);
     len = QueryWindowText(hwnd, l + 1, SvPV_force(sv, n_a));
     if (len != l) {
@@ -459,7 +459,7 @@ QueryWindowSWP(HWND hwnd)
 SV *
 myQueryClassName(HWND hwnd)
 {
-    SV *sv = newSVpvn("",0);
+    SV *sv = newSVpvs("");
     STRLEN l = 46, len = 0, n_a;
 
     while (l + 1 >= len) {
@@ -534,7 +534,7 @@ myWinQueryAtomName(ATOM atom, HATOMTBL hAtomTbl)
   ULONG len = QueryAtomLength(hAtomTbl, atom);
 
   if (len) {			/* Probably always so... */
-    SV *sv = newSVpvn("",0);
+    SV *sv = newSVpvs("");
     STRLEN n_a;
 
     SvGROW(sv, len + 1);
@@ -755,7 +755,7 @@ swentries_list()
     int num, n = 0;
     STRLEN n_a;
     PSWBLOCK pswblk;
-    SV *sv = newSVpvn("",0);
+    SV *sv = newSVpvs("");
 
     if (!(_emx_env & 0x200)) 
 	     croak("swentries_list not implemented on DOS"); /* not OS/2. */

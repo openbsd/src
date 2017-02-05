@@ -24,7 +24,7 @@ my %timestamp = (
   'not-modified.txt'  => $known_epoch - 2 * $day,
 );
 
-for my $file ( dir_list("t/cases", qr/^mirror/ ) ) {
+for my $file ( dir_list("corpus", qr/^mirror/ ) ) {
   1 while unlink $tempfile;
   my $data = do { local (@ARGV,$/) = $file; <> };
   my ($params, $expect_req, $give_res) = split /--+\n/, $data;

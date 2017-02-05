@@ -89,9 +89,8 @@ potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
 to pod/perldelta.pod for more detailed information.
 
-B<WARNING:> This version is not binary compatible with versions of Perl
-earlier than 5.20.0.
-If you have built extensions (i.e. modules that include C code)
+B<WARNING:> This version is not binary compatible with earlier versions
+of Perl.  If you have built extensions (i.e. modules that include C code)
 using an earlier version of Perl, you will need to rebuild and reinstall
 those extensions.
 
@@ -251,15 +250,15 @@ enable this, run
 
 The default is to compile without thread support.
 
-Perl used to have two different internal threads implementations.  The current
-model (available internally since 5.6, and as a user-level module since 5.8) is
-called interpreter-based implementation (ithreads), with one interpreter per
-thread, and explicit sharing of data.  The (deprecated) 5.005 version
-(5005threads) was removed for release 5.10.
+Perl used to have two different internal threads implementations.  The
+current model (available internally since 5.6, and as a user-level module
+since 5.8) is called interpreter-based implementation (ithreads), with
+one interpreter per thread, and explicit sharing of data. The (deprecated)
+5.005 version (5005threads) was removed for release 5.10.
 
 The 'threads' module is for use with the ithreads implementation.  The
-'Thread' module emulates the old 5005threads interface on top of the current
-ithreads model.
+'Thread' module emulates the old 5005threads interface on top of the
+current ithreads model.
 
 When using threads, perl uses a dynamically-sized buffer for some of
 the thread-safe library calls, such as those in the getpw*() family.
@@ -276,8 +275,8 @@ Since Perl 5.6.0, Perl has supported large files (files larger than
 support is on by default.
 
 This is both good and bad. It is good in that you can use large files,
-seek(), stat(), and -s them.  It is bad in that if you are interfacing Perl
-using some extension, the components you are connecting to must also
+seek(), stat(), and -s them.  It is bad in that if you are interfacing
+Perl using some extension, the components you are connecting to must also
 be large file aware: if Perl thinks files can be large but the other
 parts of the software puzzle do not understand the concept, bad things
 will happen.
@@ -330,10 +329,27 @@ range and precision of your double precision floating point numbers
 (that is, Perl's numbers).  Use Configure -Duselongdouble to enable
 this support (if it is available).
 
+Note that the exact format and range of long doubles varies:
+the most common is the x86 80-bit (64 bits of mantissa) format,
+but there are others, with different mantissa and exponent ranges.
+
 =head3 "more bits"
 
 You can "Configure -Dusemorebits" to turn on both the 64-bit support
 and the long double support.
+
+=head3 quadmath
+
+One option for more precision is that gcc 4.6 and later have a library
+called quadmath, which implements the IEEE 754 quadruple precision
+(128-bit, 113 bits of mantissa) floating point numbers.  The library
+works at least on x86 and ia64 platforms.  It may be part of your gcc
+installation, or you may need to install it separately.
+
+With "Configure -Dusequadmath" you can try enabling its use, but note
+the compiler dependency, you may need to also add "-Dcc=...".
+At C level the type is called C<__float128> (note, not "long double"),
+but Perl source knows it as NV.  (This is not "long doubles".)
 
 =head3 Algorithmic Complexity Attacks on Hashes
 
@@ -403,9 +419,9 @@ between different runs of Perl, since Data::Dumper by default dumps
 hashes "unordered".  The use of the Data::Dumper C<Sortkeys> option is
 recommended.
 
-See L<perlrun/PERL_HASH_SEED> and L<perlrun/PERL_PERTURB_KEYS> for details on
-the environment variables, and L<perlsec/Algorithmic Complexity Attacks> for
-further security details.
+See L<perlrun/PERL_HASH_SEED> and L<perlrun/PERL_PERTURB_KEYS> for
+details on the environment variables, and L<perlsec/Algorithmic
+Complexity Attacks> for further security details.
 
 =head3 SOCKS
 
@@ -461,7 +477,7 @@ You can elect to build a shared libperl by
 
 To build a shared libperl, the environment variable controlling shared
 library search (LD_LIBRARY_PATH in most systems, DYLD_LIBRARY_PATH for
-NeXTSTEP/OPENSTEP/Darwin, LD_LIBRARY_PATH/SHLIB_PATH
+Darwin, LD_LIBRARY_PATH/SHLIB_PATH
 for HP-UX, LIBPATH for AIX, PATH for Cygwin) must be set up to include
 the Perl build directory because that's where the shared libperl will
 be created.  Configure arranges makefile to have the correct shared
@@ -527,17 +543,18 @@ point to your new architecture-dependent library.
 
 =head3 Environment access
 
-Perl often needs to write to the program's environment, such as when C<%ENV>
-is assigned to. Many implementations of the C library function C<putenv()>
-leak memory, so where possible perl will manipulate the environment directly
-to avoid these leaks. The default is now to perform direct manipulation
-whenever perl is running as a stand alone interpreter, and to call the safe
-but potentially leaky C<putenv()> function when the perl interpreter is
-embedded in another application. You can force perl to always use C<putenv()>
-by compiling with C<-Accflags="-DPERL_USE_SAFE_PUTENV">, see section
-L</"Altering Configure variables for C compiler switches etc.">.
-You can force an embedded perl to use direct manipulation by setting
-C<PL_use_safe_putenv = 0;> after the C<perl_construct()> call.
+Perl often needs to write to the program's environment, such as when
+C<%ENV> is assigned to. Many implementations of the C library function
+C<putenv()> leak memory, so where possible perl will manipulate the
+environment directly to avoid these leaks. The default is now to perform
+direct manipulation whenever perl is running as a stand alone interpreter,
+and to call the safe but potentially leaky C<putenv()> function when the
+perl interpreter is embedded in another application. You can force perl
+to always use C<putenv()> by compiling with
+C<-Accflags="-DPERL_USE_SAFE_PUTENV">, see section L</"Altering Configure
+variables for C compiler switches etc.">.  You can force an embedded perl
+to use direct manipulation by setting C<PL_use_safe_putenv = 0;> after
+the C<perl_construct()> call.
 
 =head2 Installation Directories
 
@@ -564,7 +581,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.20.3.
+By default, Configure will use the following directories for 5.24.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -581,10 +598,11 @@ variables are in the file Porting/Glossary.
     $html1direxp	(none)
     $html3direxp	(none)
 
-$prefixexp is generated from $prefix, with ~ expansion done to convert home
-directories into absolute paths. Similarly for the other variables listed. As
-file system calls do not do this, you should always reference the ...exp
-variables, to support users who build perl in their home directory.
+$prefixexp is generated from $prefix, with ~ expansion done to convert
+home directories into absolute paths. Similarly for the other variables
+listed. As file system calls do not do this, you should always reference
+the ...exp variables, to support users who build perl in their home
+directory.
 
 Actually, Configure recognizes the SVR3-style
 /usr/local/man/l_man/man1 directories, if present, and uses those
@@ -672,10 +690,10 @@ the /usr/local hierarchy.
 
 The entire installed library hierarchy is installed in locations with
 version numbers, keeping the installations of different versions distinct.
-However, later installations of Perl can still be configured to search the
-installed libraries corresponding to compatible earlier versions.
-See L<"Coexistence with earlier versions of perl 5"> below for more details
-on how Perl can be made to search older version directories.
+However, later installations of Perl can still be configured to search
+the installed libraries corresponding to compatible earlier versions.
+See L<"Coexistence with earlier versions of perl 5"> below for more
+details on how Perl can be made to search older version directories.
 
 Of course you may use these directories however you see fit.  For
 example, you may wish to use $siteprefix for site-specific files that
@@ -869,15 +887,15 @@ and these will be used as locations to search for modules by the perl
 being built. The list of perl versions found will be put in the Configure
 variable inc_version_list.
 
-To disable this use of older perl modules, even completely valid pure perl
-modules, you can specify to not include the paths found:
+To disable this use of older perl modules, even completely valid pure
+perl modules, you can specify to not include the paths found:
 
        sh Configure -Dinc_version_list=none ...
 
-If you do want to use modules from some previous perl versions, the variable
-must contain a space separated list of directories under the site_perl
-directory, and has to include architecture-dependent directories separately,
-eg.
+If you do want to use modules from some previous perl versions, the
+variable must contain a space separated list of directories under the
+site_perl directory, and has to include architecture-dependent
+directories separately, eg.
 
        sh Configure -Dinc_version_list="5.16.0/x86_64-linux 5.16.0" ...
 
@@ -966,8 +984,8 @@ much, much more slowly than a standard perl.
 =head2 DTrace support
 
 On platforms where DTrace is available, it may be enabled by
-using the -Dusedtrace option to Configure. DTrace probes are available for
-subroutine entry (sub-entry) and subroutine exit (sub-exit). Here's a
+using the -Dusedtrace option to Configure. DTrace probes are available
+for subroutine entry (sub-entry) and subroutine exit (sub-exit). Here's a
 simple D script that uses them:
 
   perl$target:::sub-entry, perl$target:::sub-return {
@@ -1062,12 +1080,12 @@ you have gdbm installed in any of (/usr/local, /opt/local, /usr/gnu,
 The version of BerkeleyDB distributed by Oracle installs in a
 version-specific directory by default, typically something like
 /usr/local/BerkeleyDB.4.7.  To have Configure find that, you need to add
--I/usr/local/BerkeleyDB.4.7/include to cc flags, as in the previous example,
-and you will also have to take extra steps to help Configure find -ldb.
-Specifically, when Configure prompts you for library directories,
-add /usr/local/BerkeleyDB.4.7/lib to the list.  Also, you will need to
-add appropriate linker flags to tell the runtime linker where to find the
-BerkeleyDB shared libraries.
+-I/usr/local/BerkeleyDB.4.7/include to cc flags, as in the previous
+example, and you will also have to take extra steps to help Configure
+find -ldb.  Specifically, when Configure prompts you for library
+directories, add /usr/local/BerkeleyDB.4.7/lib to the list.  Also, you
+will need to add appropriate linker flags to tell the runtime linker
+where to find the BerkeleyDB shared libraries.
 
 It is possible to specify this from the command line (all on one
 line):
@@ -1095,10 +1113,11 @@ system.
 
 If you are cross-compiling, or are using a compiler which has it's own
 headers and libraries in a nonstandard location, and your compiler
-understands the C<--sysroot> option, you can use the C<-Dsysroot> option to
-specify the logical root directory under which all libraries and headers
-are searched for. This patch adjusts Configure to search under $sysroot, instead of /.
-    
+understands the C<--sysroot> option, you can use the C<-Dsysroot> option
+to specify the logical root directory under which all libraries and
+headers are searched for. This patch adjusts Configure to search under
+$sysroot, instead of /.
+
 --sysroot is added to ccflags and friends so that make in
 ExtUtils::MakeMaker, and other extensions, will use it.
 
@@ -1228,10 +1247,10 @@ resources that are generously available on most platforms.
 
 =item o
 
-How best to optimize for the platform, both in terms of binary size and/or
-speed, and for Perl feature support. Because of wide variations in the
-implementation of shared libraries and of threading, for example, Configure
-often needs hints in order to be able to use these features.
+How best to optimize for the platform, both in terms of binary size
+and/or speed, and for Perl feature support. Because of wide variations in
+the implementation of shared libraries and of threading, for example,
+Configure often needs hints in order to be able to use these features.
 
 =back
 
@@ -1241,20 +1260,21 @@ will offer to use that hint file. Unless you have a very good reason
 not to, you should accept its offer.
 
 Several of the hint files contain additional important information.
-If you have any problems, it is a good idea to read the relevant hint file
-for further information.  See hints/solaris_2.sh for an extensive example.
-More information about writing good hints is in the hints/README.hints
-file, which also explains hint files known as callback-units.
+If you have any problems, it is a good idea to read the relevant hint
+file for further information.  See hints/solaris_2.sh for an extensive
+example.  More information about writing good hints is in the
+hints/README.hints file, which also explains hint files known as
+callback-units.
 
 Note that any hint file is read before any Policy file, meaning that
 Policy overrides hints -- see L</Site-wide Policy settings>.
 
 =item WHOA THERE!!!
 
-If you are re-using an old config.sh, it's possible that Configure detects
-different values from the ones specified in this file.  You will almost
-always want to keep the previous value, unless you have changed something
-on your system.
+If you are re-using an old config.sh, it's possible that Configure
+detects different values from the ones specified in this file.  You will
+almost always want to keep the previous value, unless you have changed
+something on your system.
 
 For example, suppose you have added libgdbm.a to your system
 and you decide to reconfigure perl to use GDBM_File.  When you run
@@ -1324,8 +1344,8 @@ and add a line for toke.c ahead of the catch-all *) so that it now reads:
     toke) optimize='-g' ;;
     *) ;;
 
-You should not edit the generated file cflags directly, as your changes will
-be lost the next time you run Configure, or if you edit config.sh.
+You should not edit the generated file cflags directly, as your changes
+will be lost the next time you run Configure, or if you edit config.sh.
 
 To explore various ways of changing ccflags from within a hint file,
 see the file hints/README.hints.
@@ -1372,8 +1392,8 @@ command line parameter to Configure, for example like this:
 
 or answer first 'y' to the question 'Install any extra modules?' and
 then answer "Bundle::LWP DBI" to the 'Extras?' question.
-The module or the bundle names are as for the CPAN module 'install' command.
-This will only work if those modules are to be built as dynamic
+The module or the bundle names are as for the CPAN module 'install'
+command.  This will only work if those modules are to be built as dynamic
 extensions.  If you wish to include those extra modules as static
 extensions, see L<"Extensions"> above.
 
@@ -1383,8 +1403,8 @@ or via a local copy such as a CD-ROM or a local CPAN mirror.  If you
 do not, using the extra modules option will die horribly.
 
 Also notice that you yourself are responsible for satisfying any extra
-dependencies such as external headers or libraries BEFORE trying the build.
-For example: you will need to have the Foo database specific
+dependencies such as external headers or libraries BEFORE trying the
+build.  For example: you will need to have the Foo database specific
 headers and libraries installed for the DBD::Foo module.  The Configure
 process or the Perl build process will not help you with these.
 
@@ -1448,8 +1468,9 @@ If you have any locale-related environment variables set, try unsetting
 them.  I have some reports that some versions of IRIX hang while
 running B<./miniperl configpm> with locales other than the C locale.
 See the discussion under L<"make test"> below about locales and the
-whole L<perllocale/"LOCALE PROBLEMS"> section in the file pod/perllocale.pod.
-The latter is especially useful if you see something like this
+whole L<perllocale/"LOCALE PROBLEMS"> section in the file
+pod/perllocale.pod.  The latter is especially useful if you see something
+like this
 
 	perl: warning: Setting locale failed.
 	perl: warning: Please check that your locale settings:
@@ -1551,21 +1572,21 @@ installed.  It installs a /usr/local/include/arpa/inet.h that refers to
 these symbols.  Versions of BIND later than 8.1 do not install inet.h
 in that location and avoid the errors.  You should probably update to a
 newer version of BIND (and remove the files the old one left behind).
-If you can't, you can either link with the updated resolver library provided
-with BIND 8.1 or rename /usr/local/bin/arpa/inet.h during the Perl build and
-test process to avoid the problem.
+If you can't, you can either link with the updated resolver library
+provided with BIND 8.1 or rename /usr/local/bin/arpa/inet.h during the
+Perl build and test process to avoid the problem.
 
 =item .*_r() prototype NOT found
 
 On a related note, if you see a bunch of complaints like the above about
-reentrant functions -- specifically networking-related ones -- being present
-but without prototypes available, check to see if BIND 8.1 (or possibly
-other BIND 8 versions) is (or has been) installed. They install
-header files such as netdb.h into places such as /usr/local/include (or into
-another directory as specified at build/install time), at least optionally.
-Remove them or put them in someplace that isn't in the C preprocessor's
-header file include search path (determined by -I options plus defaults,
-normally /usr/include).
+reentrant functions -- specifically networking-related ones -- being
+present but without prototypes available, check to see if BIND 8.1 (or
+possibly other BIND 8 versions) is (or has been) installed. They install
+header files such as netdb.h into places such as /usr/local/include (or
+into another directory as specified at build/install time), at least
+optionally.  Remove them or put them in someplace that isn't in the C
+preprocessor's header file include search path (determined by -I options
+plus defaults, normally /usr/include).
 
 =item #error "No DATAMODEL_NATIVE specified"
 
@@ -1639,8 +1660,8 @@ for likely suspects.
 Some compilers will not compile or optimize the larger files (such as
 toke.c) without some extra switches to use larger jump offsets or
 allocate larger internal tables.  You can customize the switches for
-each file in cflags.SH.  It's okay to insert rules for specific files into
-makefile since a default rule only takes effect in the absence of a
+each file in cflags.SH.  It's okay to insert rules for specific files
+into makefile since a default rule only takes effect in the absence of a
 specific rule.
 
 =item Missing dbmclose
@@ -1668,7 +1689,7 @@ error, as the header file is broken. There are two ways to deal with this
     -extern int     dbmclose __P((DBM *));
     +extern int     dbmclose __P((void));
 
-=item Note (probably harmless): No library found for -lsomething
+=item Warning (mostly harmless): No library found for -lsomething
 
 If you see such a message during the building of an extension, but
 the extension passes its tests anyway (see L<"make test"> below),
@@ -1676,13 +1697,13 @@ then don't worry about the warning message.  The extension
 Makefile.PL goes looking for various libraries needed on various
 systems; few systems will need all the possible libraries listed.
 Most users will see warnings for the ones they don't have.  The
-phrase 'probably harmless' is intended to reassure you that nothing
+phrase 'mostly harmless' is intended to reassure you that nothing
 unusual is happening, and the build process is continuing.
 
 On the other hand, if you are building GDBM_File and you get the
 message
 
-    Note (probably harmless): No library found for -lgdbm
+    Warning (mostly harmless): No library found for -lgdbm
 
 then it's likely you're going to run into trouble somewhere along
 the line, since it's hard to see how you can use the GDBM_File
@@ -1708,12 +1729,12 @@ bval settings.  Upgrade your DB library or OS.
 
 =item Bad arg length for semctl, is XX, should be ZZZ
 
-If you get this error message from the ext/IPC/SysV/t/sem test, your System
-V IPC may be broken.  The XX typically is 20, and that is what ZZZ
+If you get this error message from the F<cpan/IPC-SysV/t/sem.t> test, your
+System V IPC may be broken.  The XX typically is 20, and that is what ZZZ
 also should be.  Consider upgrading your OS, or reconfiguring your OS
 to include the System V semaphores.
 
-=item ext/IPC/SysV/t/sem........semget: No space left on device
+=item cpan/IPC-SysV/t/sem........semget: No space left on device
 
 Either your account or the whole system has run out of semaphores.  Or
 both.  Either list the semaphores with "ipcs" and remove the unneeded
@@ -1761,7 +1782,7 @@ NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
 
 UTS may need one or more of -K or -g, and #undef LSTAT.
 
-FreeBSD can fail the ext/IPC/SysV/t/sem.t test if SysV IPC has not been
+FreeBSD can fail the F<cpan/IPC-SysV/t/sem.t> test if SysV IPC has not been
 configured in the kernel.  Perl tries to detect this, though, and
 you will get a message telling you what to do.
 
@@ -1782,7 +1803,8 @@ January 2014, these include Android, Blackberry 10, PocketPC aka
 WinCE, ARM Linux, and Solaris.  Previous versions of
 Perl also provided support for Open Zaurus, Symbian, and
 the IBM OS/400, but it's unknown if those ports are still functional.
-These platforms are known as the B<target> platforms, while the systems where the compilation takes place are the B<host> platforms.
+These platforms are known as the B<target> platforms, while the systems
+where the compilation takes place are the B<host> platforms.
 
 What makes the situation difficult is that first of all,
 cross-compilation environments vary significantly in how they are set
@@ -1803,7 +1825,8 @@ L<README.ce or perlce|perlce>
 
 =item Android
 
-L<"Cross-compilation" in README.android or perlandroid|perlandroid/Cross-compilation>
+L<"Cross-compilation" in README.android or
+perlandroid|perlandroid/Cross-compilation>
 
 =item Blackberry
 
@@ -1811,7 +1834,8 @@ L<"Cross-compilation" in README.qnx or perlqnx|perlqnx/Cross-compilation>
 
 =item Solaris
 
-L<"CROSS-COMPILATION" in README.solaris or perlsolaris|perlsolaris/CROSS-COMPILATION>
+L<"CROSS-COMPILATION" in README.solaris or
+perlsolaris|perlsolaris/CROSS-COMPILATION>
 
 =item Linux
 
@@ -1831,16 +1855,16 @@ C<-Dinstallprefix=...> might be handy, see L<Changing the installation
 directory>.
 
 About the cross-compilation support of Configure: There's two forms.
-The more common one requires some way of transferring and running executables
-in the target system, such as an ssh connection; this is the
-C<./Configure -Dusecrosscompile -Dtargethost=...> route.  The second method
-doesn't need access to the target system, but requires you to provide 
-a config.sh, and and a canned Makefile; the rest of this section describes
-the former.
+The more common one requires some way of transferring and running
+executables in the target system, such as an ssh connection; this is the
+C<./Configure -Dusecrosscompile -Dtargethost=...> route.  The second
+method doesn't need access to the target system, but requires you to
+provide a config.sh, and and a canned Makefile; the rest of this section
+describes the former.
 
 This cross-compilation setup of Configure has successfully been used in
-a wide variety of setups, such as a 64-bit OS X host for an Android ARM target, or
-an amd64 Linux host targeting x86 Solaris, or even Windows.
+a wide variety of setups, such as a 64-bit OS X host for an Android ARM
+target, or an amd64 Linux host targeting x86 Solaris, or even Windows.
 
 To run Configure in cross-compilation mode the basic switch that
 has to be used is C<-Dusecrosscompile>:
@@ -1872,7 +1896,8 @@ You can also specify a username to use for ssh/rsh logins
     -Dtargetuser=luser
 
 but in case you don't, "root" will be used.  Similarly, you can specify
-a non-standard (i.e. not 22) port for the connection, if applicable, through
+a non-standard (i.e. not 22) port for the connection, if applicable,
+through
 
     -Dtargetport=2222
 
@@ -1883,9 +1908,10 @@ chosen to be CPU-OS-ar and so on.
 (The C<ld> requires more thought and will be chosen later by Configure
 as appropriate).  This will also aid in guessing the proper
 operating system name for the target, which has other repercussions, like
-better defaults and possibly critical fixes for the platform.  If Configure
-isn't guessing the OS name properly, you may need to either add a hint file
-redirecting Configure's guess, or modify Configure to make the correct choice.
+better defaults and possibly critical fixes for the platform.  If
+Configure isn't guessing the OS name properly, you may need to either add
+a hint file redirecting Configure's guess, or modify Configure to make
+the correct choice.
 
 If your compiler doesn't follow that convention, you will also need to
 specify which target environment to use, as well as C<ar> and friends:
@@ -1895,12 +1921,12 @@ specify which target environment to use, as well as C<ar> and friends:
     -Dar=...
 
 Additionally, a cross-compilation toolchain will usually install it's own
-logical system root somewhere -- that is, it'll create a directory somewhere
-which includes subdirectories like 'include' or 'lib'.  For example, you
-may end up with C</skiff/local/arm-linux>, where 
-C</skiff/local/arm-linux/bin> holds the binaries for cross-compilation,
-C</skiff/local/arm-linux/include> has the headers, and 
-C</skiff/local/arm-linux/lib> has the library files.
+logical system root somewhere -- that is, it'll create a directory
+somewhere which includes subdirectories like C<'include'> or C<'lib'>.  For
+example, you may end up with F</skiff/local/arm-linux>, where
+F</skiff/local/arm-linux/bin> holds the binaries for cross-compilation,
+F</skiff/local/arm-linux/include> has the headers, and
+F</skiff/local/arm-linux/lib> has the library files.
 If this is the case, and you are using a compiler that understands
 C<--sysroot>, like gcc or clang, you'll want to specify the
 C<-Dsysroot> option for Configure:
@@ -1953,16 +1979,16 @@ during 'make test'.  For example, if the target system has a nonstandard
 
     -Dtargetenv="export TMPDIR=/other/tmp;"
 
-If you are planning on cross-compiling to several platforms, or some other
-thing that would involve running Configure several times, there are two
-options that can be used to speed things up considerably.
+If you are planning on cross-compiling to several platforms, or some
+other thing that would involve running Configure several times, there are
+two options that can be used to speed things up considerably.
 As a bit of background, when you
 call Configure with C<-Dusecrosscompile>, it begins by actually partially
 building a miniperl on the host machine, as well as the generate_uudmap
 binary, and we end up using that during the build.
-So instead of building that new perl every single time, you can build it just
-once in a separate directory, and then pass the resulting binaries to
-Configure like this:
+So instead of building that new perl every single time, you can build it
+just once in a separate directory, and then pass the resulting binaries
+to Configure like this:
 
     -Dhostperl=/path/to/second/build/dir/miniperl
     -Dhostgenerate=/path/to/second/build/dir/generate_uudmap
@@ -2047,8 +2073,10 @@ If your system is quite busy and doesn't respond quickly enough,
 these tests might fail.  If possible, try running the tests again
 with the system under a lighter load.  These timing-sensitive
 and load-sensitive tests include F<t/op/alarm.t>,
-F<ext/Time-HiRes/t/HiRes.t>, F<ext/threads-shared/t/waithires.t>,
-F<ext/threads-shared/t/stress.t>, F<lib/Benchmark.t>,
+F<dist/Time-HiRes/t/alarm.t>, F<dist/Time-HiRes/t/clock.t>,
+F<dist/Time-HiRes/t/itimer.t>, F<dist/Time-HiRes/t/usleep.t>,
+F<dist/threads-shared/t/waithires.t>,
+F<dist/threads-shared/t/stress.t>, F<lib/Benchmark.t>,
 F<lib/Memoize/t/expmod_t.t>, and F<lib/Memoize/t/speed.t>.
 
 You might also experience some failures in F<t/op/stat.t> if you build
@@ -2131,24 +2159,24 @@ about the various security aspects of temporary files.
 =back
 
 The core distribution can now run its regression tests in parallel on
-Unix-like platforms. Instead of running C<make test>, set C<TEST_JOBS> in
-your environment to the number of tests to run in parallel, and run
+Unix-like platforms. Instead of running C<make test>, set C<TEST_JOBS>
+in your environment to the number of tests to run in parallel, and run
 C<make test_harness>. On a Bourne-like shell, this can be done as
 
     TEST_JOBS=3 make test_harness  # Run 3 tests in parallel
 
-An environment variable is used, rather than parallel make itself, because
-L<TAP::Harness> needs to be able to schedule individual non-conflicting test
-scripts itself, and there is no standard interface to C<make> utilities to
-interact with their job schedulers.
+An environment variable is used, rather than parallel make itself,
+because L<TAP::Harness> needs to be able to schedule individual
+non-conflicting test scripts itself, and there is no standard interface
+to C<make> utilities to interact with their job schedulers.
 
 =head1 make install
 
 This will put perl into the public directory you specified to
-Configure; by default this is /usr/local/bin.  It will also try
-to put the man pages in a reasonable place.  It will not nroff the man
-pages, however.  You may need to be root to run B<make install>.  If you
-are not root, you must still have permission to install into the directories
+Configure; by default this is /usr/local/bin.  It will also try to put
+the man pages in a reasonable place.  It will not nroff the man pages,
+however.  You may need to be root to run B<make install>.  If you are not
+root, you must still have permission to install into the directories
 in question and you should ignore any messages about chown not working.
 
 If "make install" just says "'install' is up to date" or something
@@ -2169,8 +2197,8 @@ You can separately change the base used for versioned names (like
 
     make install PERLNAME=perl5 PERLNAME_VERBASE=perl
 
-This can be useful if you have to install perl as "perl5" (e.g. to
-avoid conflicts with an ancient version in /usr/bin supplied by your vendor).
+This can be useful if you have to install perl as "perl5" (e.g. to avoid
+conflicts with an ancient version in /usr/bin supplied by your vendor).
 Without this the versioned binary would be called "perl55.8.8".
 
 =head2 Installing perl under a different directory
@@ -2198,7 +2226,6 @@ make install will install the following:
 	perl,
 	    perl5.n.n	where 5.n.n is the current release number.  This
 			will be a link to perl.
-	a2p          	awk-to-perl translator.
 
     scripts
 
@@ -2206,13 +2233,11 @@ make install will install the following:
 			if your cc -E can't read from stdin.
 	c2ph, pstruct	Scripts for handling C structures in header
                         files.
-	config_data	Manage Module::Build-like module configuration.
 	corelist	Shows versions of modules that come with
                         different
 			versions of perl.
 	cpan		The CPAN shell.
 	enc2xs		Encoding module generator.
-	find2perl	find-to-perl translator.
 	h2ph		Extract constants and simple macros from C
                         headers.
 	h2xs		Converts C .h header files to Perl extensions.
@@ -2235,7 +2260,6 @@ make install will install the following:
 	ptar		A Perl implementation of tar.
 	ptardiff	A diff for tar archives.
 	ptargrep	A grep for tar archives.
-	s2p		sed-to-perl translator.
 	shasum		A tool to print or check SHA checksums.
 	splain		Describe Perl warnings and errors.
 	xsubpp		Compiler to convert Perl XS code into C code.
@@ -2345,9 +2369,8 @@ or
 	make realclean
 
 The only difference between the two is that make distclean also removes
-your old config.sh and Policy.sh files.  (A plain 'make clean' will not
-delete the makefiles used for rebuilding perl, and will also not delete
-a number of library and utility files extracted during the build process.)
+your old config.sh and Policy.sh files.  (A plain 'make clean' is now
+eqivalent to 'make realclean'.)
 
 If you are upgrading from a previous version of perl, or if you
 change systems or compilers or make other significant changes, or if
@@ -2403,14 +2426,10 @@ attachments or encodings may actually reduce the number of people who
 read your message.  Your message will get relayed to over 400
 subscribers around the world so please try to keep it brief but clear.
 
-If the bug you are reporting has security implications, which make it
-inappropriate to send to a publicly archived mailing list, then please send
-it to perl5-security-report@perl.org. This points to a closed subscription
-unarchived mailing list, which includes all the core committers, who be able
-to help assess the impact of issues, figure out a resolution, and help
-co-ordinate the release of patches to mitigate or fix the problem across all
-platforms on which Perl is supported. Please only use this address for security
-issues in the Perl core, not for modules independently distributed on CPAN.
+If the bug you are reporting has security implications which make it
+inappropriate to send to a publicly archived mailing list, then see
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
+for details of how to report the issue.
 
 If you are unsure what makes a good bug report please read "How to
 report Bugs Effectively" by Simon Tatham:
@@ -2418,13 +2437,14 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.20.3 is not binary compatible with versions of Perl earlier than 5.20.0.
+Perl 5.24.1 is not binary compatible with earlier versions of Perl.
 In other words, you will have to recompile your XS modules.
 
-In general, you can usually safely upgrade from one version of Perl (e.g.
-5.X.Y) to another similar minor version (e.g. 5.X.(Y+1))) without
+In general, you can usually safely upgrade from one version of Perl
+(e.g.  5.X.Y) to another similar minor version (e.g. 5.X.(Y+1))) without
 re-compiling all of your extensions.  You can also safely leave the old
-version around in case the new version causes you problems for some reason.
+version around in case the new version causes you problems for some
+reason.
 
 Usually, most extensions will probably not need to be recompiled to be
 used with a newer version of Perl.  Here is how it is supposed to work.
@@ -2492,9 +2512,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.20.3
+	sh Configure -Dprefix=/opt/perl5.24.1
 
-and adding /opt/perl5.20.3/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.24.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2507,13 +2527,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.19.11 or earlier
+=head2 Upgrading from v5.22 or earlier
 
-B<Perl 5.20.3 may not be binary compatible with Perl 5.19.11 or
+B<Perl 5.24.1 may not be binary compatible with Perl v5.22 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.20.3.  If you find you do need to rebuild an extension with
-5.20.3, you may safely do so without disturbing the older
+used with 5.24.1.  If you find you do need to rebuild an extension with
+5.24.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2546,19 +2566,20 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.20.3 is as follows (under $Config{prefix}):
+in Linux with perl-5.24.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.20.3/strict.pm
-  ./lib/perl5/5.20.3/warnings.pm
-  ./lib/perl5/5.20.3/i686-linux/File/Glob.pm
-  ./lib/perl5/5.20.3/feature.pm
-  ./lib/perl5/5.20.3/XSLoader.pm
-  ./lib/perl5/5.20.3/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.24.1/strict.pm
+  ./lib/perl5/5.24.1/warnings.pm
+  ./lib/perl5/5.24.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.24.1/feature.pm
+  ./lib/perl5/5.24.1/XSLoader.pm
+  ./lib/perl5/5.24.1/i686-linux/auto/File/Glob/Glob.so
 
-Secondly, for perl-5.10.1, the Debian perl-base package contains 591 files,
-(of which 510 are for lib/unicore) totaling about 3.5MB in its i386 version.
-Omitting the lib/unicore/* files for brevity, the remaining files are:
+Secondly, for perl-5.10.1, the Debian perl-base package contains 591
+files, (of which 510 are for lib/unicore) totaling about 3.5MB in its
+i386 version.  Omitting the lib/unicore/* files for brevity, the
+remaining files are:
 
   /usr/bin/perl
   /usr/bin/perl5.10.1

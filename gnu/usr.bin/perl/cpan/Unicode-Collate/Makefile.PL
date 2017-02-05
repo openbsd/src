@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 my $clean = {};
 
 if (-f "Collate.xs") {
-    print STDERR "Making header files for XS...\n";
+    print "Making header files for XS...\n";
 
     do 'mkheader' or die $@ || "mkheader: $!";
 

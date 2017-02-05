@@ -3,352 +3,9 @@ use 5.006;
 use strict;
 use warnings;
 use warnings::register;
-our $VERSION = '1.27';
+our $VERSION = '1.34';
 require Exporter;
 require Cwd;
-
-#
-# Modified to ensure sub-directory traversal order is not inverted by stack
-# push and pops.  That is remains in the same order as in the directory file,
-# or user pre-processing (EG:sorted).
-#
-
-=head1 NAME
-
-File::Find - Traverse a directory tree.
-
-=head1 SYNOPSIS
-
-    use File::Find;
-    find(\&wanted, @directories_to_search);
-    sub wanted { ... }
-
-    use File::Find;
-    finddepth(\&wanted, @directories_to_search);
-    sub wanted { ... }
-
-    use File::Find;
-    find({ wanted => \&process, follow => 1 }, '.');
-
-=head1 DESCRIPTION
-
-These are functions for searching through directory trees doing work
-on each file found similar to the Unix I<find> command.  File::Find
-exports two functions, C<find> and C<finddepth>.  They work similarly
-but have subtle differences.
-
-=over 4
-
-=item B<find>
-
-  find(\&wanted,  @directories);
-  find(\%options, @directories);
-
-C<find()> does a depth-first search over the given C<@directories> in
-the order they are given.  For each file or directory found, it calls
-the C<&wanted> subroutine.  (See below for details on how to use the
-C<&wanted> function).  Additionally, for each directory found, it will
-C<chdir()> into that directory and continue the search, invoking the
-C<&wanted> function on each file or subdirectory in the directory.
-
-=item B<finddepth>
-
-  finddepth(\&wanted,  @directories);
-  finddepth(\%options, @directories);
-
-C<finddepth()> works just like C<find()> except that it invokes the
-C<&wanted> function for a directory I<after> invoking it for the
-directory's contents.  It does a postorder traversal instead of a
-preorder traversal, working from the bottom of the directory tree up
-where C<find()> works from the top of the tree down.
-
-=back
-
-=head2 %options
-
-The first argument to C<find()> is either a code reference to your
-C<&wanted> function, or a hash reference describing the operations
-to be performed for each file.  The
-code reference is described in L<The wanted function> below.
-
-Here are the possible keys for the hash:
-
-=over 3
-
-=item C<wanted>
-
-The value should be a code reference.  This code reference is
-described in L<The wanted function> below. The C<&wanted> subroutine is
-mandatory.
-
-=item C<bydepth>
-
-Reports the name of a directory only AFTER all its entries
-have been reported.  Entry point C<finddepth()> is a shortcut for
-specifying C<< { bydepth => 1 } >> in the first argument of C<find()>.
-
-=item C<preprocess>
-
-The value should be a code reference. This code reference is used to
-preprocess the current directory. The name of the currently processed
-directory is in C<$File::Find::dir>. Your preprocessing function is
-called after C<readdir()>, but before the loop that calls the C<wanted()>
-function. It is called with a list of strings (actually file/directory
-names) and is expected to return a list of strings. The code can be
-used to sort the file/directory names alphabetically, numerically,
-or to filter out directory entries based on their name alone. When
-I<follow> or I<follow_fast> are in effect, C<preprocess> is a no-op.
-
-=item C<postprocess>
-
-The value should be a code reference. It is invoked just before leaving
-the currently processed directory. It is called in void context with no
-arguments. The name of the current directory is in C<$File::Find::dir>. This
-hook is handy for summarizing a directory, such as calculating its disk
-usage. When I<follow> or I<follow_fast> are in effect, C<postprocess> is a
-no-op.
-
-=item C<follow>
-
-Causes symbolic links to be followed. Since directory trees with symbolic
-links (followed) may contain files more than once and may even have
-cycles, a hash has to be built up with an entry for each file.
-This might be expensive both in space and time for a large
-directory tree. See L</follow_fast> and L</follow_skip> below.
-If either I<follow> or I<follow_fast> is in effect:
-
-=over 6
-
-=item *
-
-It is guaranteed that an I<lstat> has been called before the user's
-C<wanted()> function is called. This enables fast file checks involving S<_>.
-Note that this guarantee no longer holds if I<follow> or I<follow_fast>
-are not set.
-
-=item *
-
-There is a variable C<$File::Find::fullname> which holds the absolute
-pathname of the file with all symbolic links resolved.  If the link is
-a dangling symbolic link, then fullname will be set to C<undef>.
-
-=back
-
-This is a no-op on Win32.
-
-=item C<follow_fast>
-
-This is similar to I<follow> except that it may report some files more
-than once.  It does detect cycles, however.  Since only symbolic links
-have to be hashed, this is much cheaper both in space and time.  If
-processing a file more than once (by the user's C<wanted()> function)
-is worse than just taking time, the option I<follow> should be used.
-
-This is also a no-op on Win32.
-
-=item C<follow_skip>
-
-C<follow_skip==1>, which is the default, causes all files which are
-neither directories nor symbolic links to be ignored if they are about
-to be processed a second time. If a directory or a symbolic link
-are about to be processed a second time, File::Find dies.
-
-C<follow_skip==0> causes File::Find to die if any file is about to be
-processed a second time.
-
-C<follow_skip==2> causes File::Find to ignore any duplicate files and
-directories but to proceed normally otherwise.
-
-=item C<dangling_symlinks>
-
-If true and a code reference, will be called with the symbolic link
-name and the directory it lives in as arguments.  Otherwise, if true
-and warnings are on, warning "symbolic_link_name is a dangling
-symbolic link\n" will be issued.  If false, the dangling symbolic link
-will be silently ignored.
-
-=item C<no_chdir>
-
-Does not C<chdir()> to each directory as it recurses. The C<wanted()>
-function will need to be aware of this, of course. In this case,
-C<$_> will be the same as C<$File::Find::name>.
-
-=item C<untaint>
-
-If find is used in taint-mode (-T command line switch or if EUID != UID
-or if EGID != GID) then internally directory names have to be untainted
-before they can be chdir'ed to. Therefore they are checked against a regular
-expression I<untaint_pattern>.  Note that all names passed to the user's
-I<wanted()> function are still tainted. If this option is used while
-not in taint-mode, C<untaint> is a no-op.
-
-=item C<untaint_pattern>
-
-See above. This should be set using the C<qr> quoting operator.
-The default is set to  C<qr|^([-+@\w./]+)$|>.
-Note that the parentheses are vital.
-
-=item C<untaint_skip>
-
-If set, a directory which fails the I<untaint_pattern> is skipped,
-including all its sub-directories. The default is to 'die' in such a case.
-
-=back
-
-=head2 The wanted function
-
-The C<wanted()> function does whatever verifications you want on
-each file and directory.  Note that despite its name, the C<wanted()>
-function is a generic callback function, and does B<not> tell
-File::Find if a file is "wanted" or not.  In fact, its return value
-is ignored.
-
-The wanted function takes no arguments but rather does its work
-through a collection of variables.
-
-=over 4
-
-=item C<$File::Find::dir> is the current directory name,
-
-=item C<$_> is the current filename within that directory
-
-=item C<$File::Find::name> is the complete pathname to the file.
-
-=back
-
-The above variables have all been localized and may be changed without
-affecting data outside of the wanted function.
-
-For example, when examining the file F</some/path/foo.ext> you will have:
-
-    $File::Find::dir  = /some/path/
-    $_                = foo.ext
-    $File::Find::name = /some/path/foo.ext
-
-You are chdir()'d to C<$File::Find::dir> when the function is called,
-unless C<no_chdir> was specified. Note that when changing to
-directories is in effect the root directory (F</>) is a somewhat
-special case inasmuch as the concatenation of C<$File::Find::dir>,
-C<'/'> and C<$_> is not literally equal to C<$File::Find::name>. The
-table below summarizes all variants:
-
-              $File::Find::name  $File::Find::dir  $_
- default      /                  /                 .
- no_chdir=>0  /etc               /                 etc
-              /etc/x             /etc              x
-
- no_chdir=>1  /                  /                 /
-              /etc               /                 /etc
-              /etc/x             /etc              /etc/x
-
-
-When C<follow> or C<follow_fast> are in effect, there is
-also a C<$File::Find::fullname>.  The function may set
-C<$File::Find::prune> to prune the tree unless C<bydepth> was
-specified.  Unless C<follow> or C<follow_fast> is specified, for
-compatibility reasons (find.pl, find2perl) there are in addition the
-following globals available: C<$File::Find::topdir>,
-C<$File::Find::topdev>, C<$File::Find::topino>,
-C<$File::Find::topmode> and C<$File::Find::topnlink>.
-
-This library is useful for the C<find2perl> tool, which when fed,
-
-    find2perl / -name .nfs\* -mtime +7 \
-        -exec rm -f {} \; -o -fstype nfs -prune
-
-produces something like:
-
-    sub wanted {
-        /^\.nfs.*\z/s &&
-        (($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_)) &&
-        int(-M _) > 7 &&
-        unlink($_)
-        ||
-        ($nlink || (($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))) &&
-        $dev < 0 &&
-        ($File::Find::prune = 1);
-    }
-
-Notice the C<_> in the above C<int(-M _)>: the C<_> is a magical
-filehandle that caches the information from the preceding
-C<stat()>, C<lstat()>, or filetest.
-
-Here's another interesting wanted function.  It will find all symbolic
-links that don't resolve:
-
-    sub wanted {
-         -l && !-e && print "bogus link: $File::Find::name\n";
-    }
-
-Note that you may mix directories and (non-directory) files in the list of 
-directories to be searched by the C<wanted()> function.
-
-    find(\&wanted, "./foo", "./bar", "./baz/epsilon");
-
-In the example above, no file in F<./baz/> other than F<./baz/epsilon> will be
-evaluated by C<wanted()>.
-
-See also the script C<pfind> on CPAN for a nice application of this
-module.
-
-=head1 WARNINGS
-
-If you run your program with the C<-w> switch, or if you use the
-C<warnings> pragma, File::Find will report warnings for several weird
-situations. You can disable these warnings by putting the statement
-
-    no warnings 'File::Find';
-
-in the appropriate scope. See L<warnings> for more info about lexical
-warnings.
-
-=head1 CAVEAT
-
-=over 2
-
-=item $dont_use_nlink
-
-You can set the variable C<$File::Find::dont_use_nlink> to 1, if you want to
-force File::Find to always stat directories. This was used for file systems
-that do not have an C<nlink> count matching the number of sub-directories.
-Examples are ISO-9660 (CD-ROM), AFS, HPFS (OS/2 file system), FAT (DOS file
-system) and a couple of others.
-
-You shouldn't need to set this variable, since File::Find should now detect
-such file systems on-the-fly and switch itself to using stat. This works even
-for parts of your file system, like a mounted CD-ROM.
-
-If you do set C<$File::Find::dont_use_nlink> to 1, you will notice slow-downs.
-
-=item symlinks
-
-Be aware that the option to follow symbolic links can be dangerous.
-Depending on the structure of the directory tree (including symbolic
-links to directories) you might traverse a given (physical) directory
-more than once (only if C<follow_fast> is in effect).
-Furthermore, deleting or changing files in a symbolically linked directory
-might cause very unpleasant surprises, since you delete or change files
-in an unknown directory.
-
-=back
-
-=head1 BUGS AND CAVEATS
-
-Despite the name of the C<finddepth()> function, both C<find()> and
-C<finddepth()> perform a depth-first search of the directory
-hierarchy.
-
-=head1 HISTORY
-
-File::Find used to produce incorrect results if called recursively.
-During the development of perl 5.8 this bug was fixed.
-The first fixed version of File::Find was 1.01.
-
-=head1 SEE ALSO
-
-find, find2perl.
-
-=cut
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(find finddepth);
@@ -469,6 +126,7 @@ sub is_tainted_pp {
 
 sub _find_opt {
     my $wanted = shift;
+    return unless @_;
     die "invalid top directory" unless defined $_[0];
 
     # This function must local()ize everything because callbacks may
@@ -763,9 +421,9 @@ sub _find_dir($$$) {
 	    # This dir has subdirectories.
 	    $subcount = $nlink - 2;
 
-	    # HACK: insert directories at this position. so as to preserve
-	    # the user pre-processed ordering of files.
-	    # EG: directory traversal is in user sorted order, not at random.
+	    # HACK: insert directories at this position, so as to preserve
+	    # the user pre-processed ordering of files (thus ensuring
+	    # directory traversal is in user sorted order, not at random).
             my $stack_top = @Stack;
 
 	    for my $FN (@filenames) {
@@ -1055,21 +713,42 @@ sub _find_dir_symlnk($$$) {
 sub wrap_wanted {
     my $wanted = shift;
     if ( ref($wanted) eq 'HASH' ) {
+        # RT #122547
+        my %valid_options = map {$_ => 1} qw(
+            wanted
+            bydepth
+            preprocess
+            postprocess
+            follow
+            follow_fast
+            follow_skip
+            dangling_symlinks
+            no_chdir
+            untaint
+            untaint_pattern
+            untaint_skip
+        );
+        my @invalid_options = ();
+        for my $v (keys %{$wanted}) {
+            push @invalid_options, $v unless exists $valid_options{$v};
+        }
+        warn "Invalid option(s): @invalid_options" if @invalid_options;
+
         unless( exists $wanted->{wanted} and ref( $wanted->{wanted} ) eq 'CODE' ) {
             die 'no &wanted subroutine given';
         }
-	if ( $wanted->{follow} || $wanted->{follow_fast}) {
-	    $wanted->{follow_skip} = 1 unless defined $wanted->{follow_skip};
-	}
-	if ( $wanted->{untaint} ) {
-	    $wanted->{untaint_pattern} = $File::Find::untaint_pattern
-		unless defined $wanted->{untaint_pattern};
-	    $wanted->{untaint_skip} = 0 unless defined $wanted->{untaint_skip};
-	}
-	return $wanted;
+        if ( $wanted->{follow} || $wanted->{follow_fast}) {
+            $wanted->{follow_skip} = 1 unless defined $wanted->{follow_skip};
+        }
+        if ( $wanted->{untaint} ) {
+            $wanted->{untaint_pattern} = $File::Find::untaint_pattern
+            unless defined $wanted->{untaint_pattern};
+            $wanted->{untaint_skip} = 0 unless defined $wanted->{untaint_skip};
+        }
+        return $wanted;
     }
     elsif( ref( $wanted ) eq 'CODE' ) {
-	return { wanted => $wanted };
+        return { wanted => $wanted };
     }
     else {
        die 'no &wanted subroutine given';
@@ -1094,7 +773,7 @@ $File::Find::untaint_pattern = qr|^([-+@\w./]+)$|;
 # These are hard-coded for now, but may move to hint files.
 if ($^O eq 'VMS') {
     $Is_VMS = 1;
-    $File::Find::dont_use_nlink  = 1;
+    $File::Find::dont_use_nlink = 1;
 }
 elsif ($^O eq 'MSWin32') {
     $Is_Win32 = 1;
@@ -1111,7 +790,7 @@ $File::Find::dont_use_nlink = 1
 # Set dont_use_nlink in your hint file if your system's stat doesn't
 # report the number of links in a directory as an indication
 # of the number of files.
-# See, e.g. hints/machten.sh for MachTen 2.2.
+# See e.g. hints/haiku.sh for Haiku.
 unless ($File::Find::dont_use_nlink) {
     require Config;
     $File::Find::dont_use_nlink = 1 if ($Config::Config{'dont_use_nlink'});
@@ -1127,3 +806,344 @@ unless ($File::Find::dont_use_nlink) {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+File::Find - Traverse a directory tree.
+
+=head1 SYNOPSIS
+
+    use File::Find;
+    find(\&wanted, @directories_to_search);
+    sub wanted { ... }
+
+    use File::Find;
+    finddepth(\&wanted, @directories_to_search);
+    sub wanted { ... }
+
+    use File::Find;
+    find({ wanted => \&process, follow => 1 }, '.');
+
+=head1 DESCRIPTION
+
+These are functions for searching through directory trees doing work
+on each file found similar to the Unix I<find> command.  File::Find
+exports two functions, C<find> and C<finddepth>.  They work similarly
+but have subtle differences.
+
+=over 4
+
+=item B<find>
+
+  find(\&wanted,  @directories);
+  find(\%options, @directories);
+
+C<find()> does a depth-first search over the given C<@directories> in
+the order they are given.  For each file or directory found, it calls
+the C<&wanted> subroutine.  (See below for details on how to use the
+C<&wanted> function).  Additionally, for each directory found, it will
+C<chdir()> into that directory and continue the search, invoking the
+C<&wanted> function on each file or subdirectory in the directory.
+
+=item B<finddepth>
+
+  finddepth(\&wanted,  @directories);
+  finddepth(\%options, @directories);
+
+C<finddepth()> works just like C<find()> except that it invokes the
+C<&wanted> function for a directory I<after> invoking it for the
+directory's contents.  It does a postorder traversal instead of a
+preorder traversal, working from the bottom of the directory tree up
+where C<find()> works from the top of the tree down.
+
+=back
+
+=head2 %options
+
+The first argument to C<find()> is either a code reference to your
+C<&wanted> function, or a hash reference describing the operations
+to be performed for each file.  The
+code reference is described in L</The wanted function> below.
+
+Here are the possible keys for the hash:
+
+=over 3
+
+=item C<wanted>
+
+The value should be a code reference.  This code reference is
+described in L</The wanted function> below. The C<&wanted> subroutine is
+mandatory.
+
+=item C<bydepth>
+
+Reports the name of a directory only AFTER all its entries
+have been reported.  Entry point C<finddepth()> is a shortcut for
+specifying C<< { bydepth => 1 } >> in the first argument of C<find()>.
+
+=item C<preprocess>
+
+The value should be a code reference. This code reference is used to
+preprocess the current directory. The name of the currently processed
+directory is in C<$File::Find::dir>. Your preprocessing function is
+called after C<readdir()>, but before the loop that calls the C<wanted()>
+function. It is called with a list of strings (actually file/directory
+names) and is expected to return a list of strings. The code can be
+used to sort the file/directory names alphabetically, numerically,
+or to filter out directory entries based on their name alone. When
+I<follow> or I<follow_fast> are in effect, C<preprocess> is a no-op.
+
+=item C<postprocess>
+
+The value should be a code reference. It is invoked just before leaving
+the currently processed directory. It is called in void context with no
+arguments. The name of the current directory is in C<$File::Find::dir>. This
+hook is handy for summarizing a directory, such as calculating its disk
+usage. When I<follow> or I<follow_fast> are in effect, C<postprocess> is a
+no-op.
+
+=item C<follow>
+
+Causes symbolic links to be followed. Since directory trees with symbolic
+links (followed) may contain files more than once and may even have
+cycles, a hash has to be built up with an entry for each file.
+This might be expensive both in space and time for a large
+directory tree. See L</follow_fast> and L</follow_skip> below.
+If either I<follow> or I<follow_fast> is in effect:
+
+=over 6
+
+=item *
+
+It is guaranteed that an I<lstat> has been called before the user's
+C<wanted()> function is called. This enables fast file checks involving C<_>.
+Note that this guarantee no longer holds if I<follow> or I<follow_fast>
+are not set.
+
+=item *
+
+There is a variable C<$File::Find::fullname> which holds the absolute
+pathname of the file with all symbolic links resolved.  If the link is
+a dangling symbolic link, then fullname will be set to C<undef>.
+
+=back
+
+This is a no-op on Win32.
+
+=item C<follow_fast>
+
+This is similar to I<follow> except that it may report some files more
+than once.  It does detect cycles, however.  Since only symbolic links
+have to be hashed, this is much cheaper both in space and time.  If
+processing a file more than once (by the user's C<wanted()> function)
+is worse than just taking time, the option I<follow> should be used.
+
+This is also a no-op on Win32.
+
+=item C<follow_skip>
+
+C<follow_skip==1>, which is the default, causes all files which are
+neither directories nor symbolic links to be ignored if they are about
+to be processed a second time. If a directory or a symbolic link
+are about to be processed a second time, File::Find dies.
+
+C<follow_skip==0> causes File::Find to die if any file is about to be
+processed a second time.
+
+C<follow_skip==2> causes File::Find to ignore any duplicate files and
+directories but to proceed normally otherwise.
+
+=item C<dangling_symlinks>
+
+Specifies what to do with symbolic links whose target doesn't exist.
+If true and a code reference, will be called with the symbolic link
+name and the directory it lives in as arguments.  Otherwise, if true
+and warnings are on, a warning of the form C<"symbolic_link_name is a dangling
+symbolic link\n"> will be issued.  If false, the dangling symbolic link
+will be silently ignored.
+
+=item C<no_chdir>
+
+Does not C<chdir()> to each directory as it recurses. The C<wanted()>
+function will need to be aware of this, of course. In this case,
+C<$_> will be the same as C<$File::Find::name>.
+
+=item C<untaint>
+
+If find is used in L<taint-mode|perlsec/Taint mode> (-T command line switch or
+if EUID != UID or if EGID != GID), then internally directory names have to be
+untainted before they can be C<chdir>'d to. Therefore they are checked against
+a regular expression I<untaint_pattern>.  Note that all names passed to the
+user's C<wanted()> function are still tainted. If this option is used while not
+in taint-mode, C<untaint> is a no-op.
+
+=item C<untaint_pattern>
+
+See above. This should be set using the C<qr> quoting operator.
+The default is set to C<qr|^([-+@\w./]+)$|>.
+Note that the parentheses are vital.
+
+=item C<untaint_skip>
+
+If set, a directory which fails the I<untaint_pattern> is skipped,
+including all its sub-directories. The default is to C<die> in such a case.
+
+=back
+
+=head2 The wanted function
+
+The C<wanted()> function does whatever verifications you want on
+each file and directory.  Note that despite its name, the C<wanted()>
+function is a generic callback function, and does B<not> tell
+File::Find if a file is "wanted" or not.  In fact, its return value
+is ignored.
+
+The wanted function takes no arguments but rather does its work
+through a collection of variables.
+
+=over 4
+
+=item C<$File::Find::dir> is the current directory name,
+
+=item C<$_> is the current filename within that directory
+
+=item C<$File::Find::name> is the complete pathname to the file.
+
+=back
+
+The above variables have all been localized and may be changed without
+affecting data outside of the wanted function.
+
+For example, when examining the file F</some/path/foo.ext> you will have:
+
+    $File::Find::dir  = /some/path/
+    $_                = foo.ext
+    $File::Find::name = /some/path/foo.ext
+
+You are chdir()'d to C<$File::Find::dir> when the function is called,
+unless C<no_chdir> was specified. Note that when changing to
+directories is in effect, the root directory (F</>) is a somewhat
+special case inasmuch as the concatenation of C<$File::Find::dir>,
+C<'/'> and C<$_> is not literally equal to C<$File::Find::name>. The
+table below summarizes all variants:
+
+              $File::Find::name  $File::Find::dir  $_
+ default      /                  /                 .
+ no_chdir=>0  /etc               /                 etc
+              /etc/x             /etc              x
+
+ no_chdir=>1  /                  /                 /
+              /etc               /                 /etc
+              /etc/x             /etc              /etc/x
+
+
+When C<follow> or C<follow_fast> are in effect, there is
+also a C<$File::Find::fullname>.  The function may set
+C<$File::Find::prune> to prune the tree unless C<bydepth> was
+specified.  Unless C<follow> or C<follow_fast> is specified, for
+compatibility reasons (find.pl, find2perl) there are in addition the
+following globals available: C<$File::Find::topdir>,
+C<$File::Find::topdev>, C<$File::Find::topino>,
+C<$File::Find::topmode> and C<$File::Find::topnlink>.
+
+This library is useful for the C<find2perl> tool (distributed as part of the
+App-find2perl CPAN distribution), which when fed,
+
+  find2perl / -name .nfs\* -mtime +7 \
+    -exec rm -f {} \; -o -fstype nfs -prune
+
+produces something like:
+
+ sub wanted {
+    /^\.nfs.*\z/s &&
+    (($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_)) &&
+    int(-M _) > 7 &&
+    unlink($_)
+    ||
+    ($nlink || (($dev, $ino, $mode, $nlink, $uid, $gid) = lstat($_))) &&
+    $dev < 0 &&
+    ($File::Find::prune = 1);
+ }
+
+Notice the C<_> in the above C<int(-M _)>: the C<_> is a magical
+filehandle that caches the information from the preceding
+C<stat()>, C<lstat()>, or filetest.
+
+Here's another interesting wanted function.  It will find all symbolic
+links that don't resolve:
+
+    sub wanted {
+         -l && !-e && print "bogus link: $File::Find::name\n";
+    }
+
+Note that you may mix directories and (non-directory) files in the list of 
+directories to be searched by the C<wanted()> function.
+
+    find(\&wanted, "./foo", "./bar", "./baz/epsilon");
+
+In the example above, no file in F<./baz/> other than F<./baz/epsilon> will be
+evaluated by C<wanted()>.
+
+See also the script C<pfind> on CPAN for a nice application of this
+module.
+
+=head1 WARNINGS
+
+If you run your program with the C<-w> switch, or if you use the
+C<warnings> pragma, File::Find will report warnings for several weird
+situations. You can disable these warnings by putting the statement
+
+    no warnings 'File::Find';
+
+in the appropriate scope. See L<warnings> for more info about lexical
+warnings.
+
+=head1 CAVEAT
+
+=over 2
+
+=item $dont_use_nlink
+
+You can set the variable C<$File::Find::dont_use_nlink> to 1 if you want to
+force File::Find to always stat directories. This was used for file systems
+that do not have an C<nlink> count matching the number of sub-directories.
+Examples are ISO-9660 (CD-ROM), AFS, HPFS (OS/2 file system), FAT (DOS file
+system) and a couple of others.
+
+You shouldn't need to set this variable, since File::Find should now detect
+such file systems on-the-fly and switch itself to using stat. This works even
+for parts of your file system, like a mounted CD-ROM.
+
+If you do set C<$File::Find::dont_use_nlink> to 1, you will notice slow-downs.
+
+=item symlinks
+
+Be aware that the option to follow symbolic links can be dangerous.
+Depending on the structure of the directory tree (including symbolic
+links to directories) you might traverse a given (physical) directory
+more than once (only if C<follow_fast> is in effect).
+Furthermore, deleting or changing files in a symbolically linked directory
+might cause very unpleasant surprises, since you delete or change files
+in an unknown directory.
+
+=back
+
+=head1 BUGS AND CAVEATS
+
+Despite the name of the C<finddepth()> function, both C<find()> and
+C<finddepth()> perform a depth-first search of the directory
+hierarchy.
+
+=head1 HISTORY
+
+File::Find used to produce incorrect results if called recursively.
+During the development of perl 5.8 this bug was fixed.
+The first fixed version of File::Find was 1.01.
+
+=head1 SEE ALSO
+
+L<find(1)>, find2perl.
+
+=cut

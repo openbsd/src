@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 137;
+plan tests => 124;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -202,22 +202,6 @@ $y = 0;
     redo if $y < 3
 }
 
-
-#
-# Check state $_
-#
-my @stones = qw [fred wilma barny betty];
-my $first  = $stones [0];
-my $First  = ucfirst $first;
-$_ = "bambam";
-foreach my $flint (@stones) {
-    no warnings 'experimental::lexical_topic';
-    state $_ = $flint;
-    is $_, $first, 'state $_';
-    ok /$first/, '/.../ binds to $_';
-    is ucfirst, $First, '$_ default argument';
-}
-is $_, "bambam", '$_ is still there';
 
 #
 # Goto.

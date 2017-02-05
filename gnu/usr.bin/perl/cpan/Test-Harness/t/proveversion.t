@@ -5,7 +5,8 @@ BEGIN {
 }
 
 sub _has_TAP_Formatter_HTML {
-    eval "use TAP::Formatter::HTML";
+    eval "use TAP::Formatter::HTML 0.10";
+    #https://rt.cpan.org/Ticket/Display.html?id=74364
     return $@ ? 0 : 1;
 }
 
@@ -15,7 +16,7 @@ use Test::More tests => 1;
 use IO::c55Capture;    # for util
 
 SKIP: {
-    skip "requires TAP::Formatter::HTML", 1 unless _has_TAP_Formatter_HTML();
+    skip "requires TAP::Formatter::HTML 0.10", 1 unless _has_TAP_Formatter_HTML();
 
     my $ans = util::stdout_of(
         sub {

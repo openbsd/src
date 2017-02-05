@@ -3,13 +3,12 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(../lib lib);
+    require "./test.pl";
 }
-
-BEGIN { require "./test.pl"; }
 
 # This test depends on t/lib/Devel/switchd*.pm.
 
-plan(tests => 20);
+plan(tests => 21);
 
 my $r;
 
@@ -286,6 +285,24 @@ is(
   '-d does not conflict with sort optimisations'
 );
 
+SKIP: {
+  skip_if_miniperl("under miniperl", 1);
+is(
+  runperl(
+   switches => [ '-Ilib', '-d:switchd_empty' ],
+   progs => [ split "\n",
+    'use bignum;
+     $DB::single=2;
+     print qq/debugged\n/;
+    '
+   ],
+   stderr => 1
+  ),
+  "debugged\n",
+  "\$DB::single set to overload"
+);
+}
+
 # [perl #123748]
 #
 # On some platforms, it's possible that calls to getenv() will
@@ -296,6 +313,9 @@ is(
 # then moreswitches(s), which, if -d:switchd_empty is given,
 # will call my_setenv("PERL5DB", "use Devel::switchd_empty"),
 # and then return to continue parsing s.
+#
+# This may need -Accflags="-DPERL_USE_SAFE_PUTENV" to fail on
+# affected systems.
 {
 local $ENV{PERL5OPT} = '-d:switchd_empty';
 

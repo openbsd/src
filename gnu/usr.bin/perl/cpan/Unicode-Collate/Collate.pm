@@ -17,7 +17,7 @@ use File::Spec;
 
 no warnings 'utf8';
 
-our $VERSION = '1.04';
+our $VERSION = '1.14';
 our $PACKAGE = __PACKAGE__;
 
 ### begin XS only ###
@@ -89,9 +89,9 @@ my $DefaultRearrange = [ 0x0E40..0x0E44, 0x0EC0..0x0EC4 ];
 my $HighestVCE = pack(VCE_TEMPLATE, 0, 0xFFFE, 0x20, 0x5, 0xFFFF);
 my $minimalVCE = pack(VCE_TEMPLATE, 0,      1, 0x20, 0x5, 0xFFFE);
 
-sub UCA_Version { "28" }
+sub UCA_Version { "30" }
 
-sub Base_Unicode_Version { "6.3.0" }
+sub Base_Unicode_Version { "7.0.0" }
 
 ######
 
@@ -99,11 +99,9 @@ sub pack_U {
     return pack('U*', @_);
 }
 
-### begin XS only ###
-*unpack_U = exists &Unicode::Collate::bootstrap &&
-	$] < 5.008 && \&unpackUfor56 && 0x41 == unpackUfor56('A')
-    ? \&unpackUfor56 : sub { return unpack('U*', shift(@_).pack('U*')) };
-### end XS only ###
+sub unpack_U {
+    return unpack('U*', shift(@_).pack('U*'));
+}
 
 ######
 
@@ -117,6 +115,7 @@ our @ChangeOK = qw/
     katakana_before_hiragana upper_before_lower ignore_level2
     overrideCJK overrideHangul overrideOut preprocess UCA_Version
     hangul_terminator variable identical highestFFFF minimalFFFE
+    long_contraction
   /;
 
 our @ChangeNG = qw/
@@ -189,6 +188,7 @@ my %DerivCode = (
    24 => \&_derivCE_24,
    26 => \&_derivCE_24, # 26 == 24
    28 => \&_derivCE_24, # 28 == 24
+   30 => \&_derivCE_24, # 30 == 24
 );
 
 sub checkCollator {
@@ -285,6 +285,7 @@ sub new
 	}
     }
 
+    # only in new(), not in change()
     $self->{level} ||= MaxLevel;
     $self->{UCA_Version} ||= UCA_Version();
 
@@ -299,7 +300,10 @@ sub new
 	if ! exists $self->{rearrange};
     $self->{backwards} = $self->{backwardsTable}
 	if ! exists $self->{backwards};
+    exists $self->{long_contraction} or $self->{long_contraction}
+	= 22 <= $self->{UCA_Version} && $self->{UCA_Version} <= 24;
 
+    # checkCollator() will be called in change()
     $self->checkCollator();
 
     return $self;
@@ -441,12 +445,10 @@ sub parseEntry
 	    $self->{maxlength}{$uv[0]} = @uv;
 	}
     }
-    if (@uv > 2) {
-	while (@uv) {
-	    pop @uv;
-	    my $fake_entry = join(CODE_SEP, @uv); # in JCPS
-	    $self->{contraction}{$fake_entry} = 1;
-	}
+    while (@uv > 2) {
+	pop @uv;
+	my $fake_entry = join(CODE_SEP, @uv); # in JCPS
+	$self->{contraction}{$fake_entry} = 1;
     }
 }
 
@@ -486,6 +488,7 @@ sub splitEnt
     my $reH  = $self->{rearrangeHash};
     my $vers = $self->{UCA_Version};
     my $ver9 = $vers >= 9 && $vers <= 11;
+    my $long = $self->{long_contraction};
     my $uXS  = $self->{__useXS}; ### XS only
 
     my @buf;
@@ -566,6 +569,15 @@ sub splitEnt
 		    last unless $curCC;
 		    my $tail = CODE_SEP . $src[$p];
 
+		    if ($preCC != $curCC && $map->{$jcps.$tail}) {
+			$jcps .= $tail;
+			push @out, $p;
+		    } else {
+			$preCC = $curCC;
+		    }
+
+		    next if !$long;
+
 		    if ($preCC_uc != $curCC && ($map->{$jcps_uc.$tail} ||
 					       $cont->{$jcps_uc.$tail})) {
 			$jcps_uc .= $tail;
@@ -573,16 +585,9 @@ sub splitEnt
 		    } else {
 			$preCC_uc = $curCC;
 		    }
-
-		    if ($preCC != $curCC && $map->{$jcps.$tail}) {
-			$jcps .= $tail;
-			push @out, $p;
-		    } else {
-			$preCC = $curCC;
-		    }
 		}
 
-		if ($map->{$jcps_uc}) {
+		if (@out_uc && $map->{$jcps_uc}) {
 		    $jcps = $jcps_uc;
 		    $src[$_] = undef for @out_uc;
 		} else {
@@ -1068,6 +1073,7 @@ with no parameters, the collator should do the default collation.
       ignore_level2 => $bool,
       katakana_before_hiragana => $bool,
       level => $collationLevel,
+      long_contraction => $bool,
       minimalFFFE => $bool,
       normalization  => $normalization_form,
       overrideCJK => \&overrideCJK,
@@ -1091,7 +1097,7 @@ If the revision (previously "tracking version") number of UCA is given,
 behavior of that revision is emulated on collating.
 If omitted, the return value of C<UCA_Version()> is used.
 
-The following revisions are supported.  The default is 28.
+The following revisions are supported.  The default is 30.
 
      UCA       Unicode Standard         DUCET (@version)
    -------------------------------------------------------
@@ -1106,6 +1112,9 @@ The following revisions are supported.  The default is 28.
      24             6.1.0               6.1.0 (6.1.0)
      26             6.2.0               6.2.0 (6.2.0)
      28             6.3.0               6.3.0 (6.3.0)
+     30             7.0.0               7.0.0 (7.0.0)
+
+* See below C<long_contraction> with C<UCA_Version> 22 and 24.
 
 * Noncharacters (e.g. U+FFFF) are not ignored, and can be overridden
 since C<UCA_Version> 22.
@@ -1144,7 +1153,7 @@ forwards at all the levels.
 
 =item entry
 
--- see 5 Tailoring; 3.6.1 File Format, UTS #10.
+-- see 5 Tailoring; 9.1 Allkeys File Format, UTS #10.
 
 If the same character (or a sequence of characters) exists
 in the collation element table through C<table>,
@@ -1261,7 +1270,7 @@ of the string after them (in NFD by default) are used.
 
 =item ignoreName
 
--- see 3.6.2 Variable Weighting, UTS #10.
+-- see 3.6 Variable Weighting, UTS #10.
 
 Makes the entry in the table completely ignorable;
 i.e. as if the weights were zero at all level.
@@ -1321,6 +1330,46 @@ When C<variable> is 'blanked' or 'non-ignorable' (other than 'shifted'
 and 'shift-trimmed'), the level 4 may be unreliable.
 
 See also C<identical>.
+
+=item long_contraction
+
+-- see 3.8.2 Well-Formedness of the DUCET, 4.2 Produce Array, UTS #10.
+
+If the parameter is made true, for a contraction with three or more
+characters (here nicknamed "long contraction"), initial substrings
+will be handled.
+For example, a contraction ABC, where A is a starter, and B and C
+are non-starters (character with non-zero combining character class),
+will be detected even if there is not AB as a contraction.
+
+B<Default:> Usually false.
+If C<UCA_Version> is 22 or 24, and the value of C<long_contraction>
+is not specified in C<new()>, a true value is set implicitly.
+This is a workaround to pass Conformance Tests for Unicode 6.0.0 and 6.1.0.
+
+C<change()> handles C<long_contraction> explicitly only.
+If C<long_contraction> is not specified in C<change()>, even though
+C<UCA_Version> is changed, C<long_contraction> will not be changed.
+
+B<Limitation:> Scanning non-starters is one-way (no back tracking).
+If AB is found but not ABC is not found, other long contraction where
+the first character is A and the second is not B may not be found.
+
+Under C<(normalization =E<gt> undef)>, detection step of discontiguous
+contractions will be skipped.
+
+B<Note:> The following contractions in DUCET are not considered
+in steps S2.1.1 to S2.1.3, where they are discontiguous.
+
+    0FB2 0F71 0F80 (TIBETAN VOWEL SIGN VOCALIC RR)
+    0FB3 0F71 0F80 (TIBETAN VOWEL SIGN VOCALIC LL)
+
+For example C<TIBETAN VOWEL SIGN VOCALIC RR> with C<COMBINING TILDE OVERLAY>
+(C<U+0344>) is C<0FB2 0344 0F71 0F80> in NFD.
+In this case C<0FB2 0F80> (C<TIBETAN VOWEL SIGN VOCALIC R>) is detected,
+instead of C<0FB2 0F71 0F80>.
+Inserted C<0344> makes C<0FB2 0F71 0F80> discontiguous and lack of
+contraction C<0FB2 0F71> prohibits C<0FB2 0F71 0F80> from being detected.
 
 =item minimalFFFE
 
@@ -1615,7 +1664,7 @@ B<NOTE>: Contractions via C<entry> are not be suppressed.
 
 =item table
 
--- see 3.6 Default Unicode Collation Element Table, UTS #10.
+-- see 3.8 Default Unicode Collation Element Table, UTS #10.
 
 You can use another collation element table if desired.
 
@@ -1694,7 +1743,7 @@ this parameter doesn't work validly.
 
 =item variable
 
--- see 3.6.2 Variable Weighting, UTS #10.
+-- see 3.6 Variable Weighting, UTS #10.
 
 This key allows for variable weighting of variable collation elements,
 which are marked with an ASTERISK in the table
@@ -2029,7 +2078,7 @@ B<Unicode::Normalize is required to try The Conformance Test.>
 =head1 AUTHOR, COPYRIGHT AND LICENSE
 
 The Unicode::Collate module for perl was written by SADAHIRO Tomoyuki,
-<SADAHIRO@cpan.org>. This module is Copyright(C) 2001-2013,
+<SADAHIRO@cpan.org>. This module is Copyright(C) 2001-2014,
 SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it and/or

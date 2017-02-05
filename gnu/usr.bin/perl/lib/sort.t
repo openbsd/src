@@ -125,8 +125,6 @@ sub main {
 	$status = checkequal(\@sorted, $unsorted);
 	is($status, '', "contents ok for size $ts");
     }
-    # If the following test (#58) fails, see the comments in pp_sort.c
-    # for Perl_sortsv().
     if ($expect_unstable) {
 	ok($unstable_num > 0, 'Instability ok');
     }

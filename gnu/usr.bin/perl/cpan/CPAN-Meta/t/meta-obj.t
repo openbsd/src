@@ -240,3 +240,4 @@ $chk_feature->($features[0]);
 $chk_feature->( $meta->feature('domination') );
 
 done_testing;
+# vim: ts=2 sts=2 sw=2 et :

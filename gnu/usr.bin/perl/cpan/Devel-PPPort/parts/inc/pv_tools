@@ -80,10 +80,10 @@ pv_escape(pTHX_ SV *dsv, char const * const str,
         if (u > 255 || (flags & PERL_PV_ESCAPE_ALL)) {
             if (flags & PERL_PV_ESCAPE_FIRSTCHAR)
                 chsize = my_snprintf(octbuf, sizeof octbuf,
-                                      "%"UVxf, u);
+                                      "%" UVxf, u);
             else
                 chsize = my_snprintf(octbuf, sizeof octbuf,
-                                      "%cx{%"UVxf"}", esc, u);
+                                      "%cx{%" UVxf "}", esc, u);
         } else if (flags & PERL_PV_ESCAPE_NOBACKSLASH) {
             chsize = 1;
         } else {

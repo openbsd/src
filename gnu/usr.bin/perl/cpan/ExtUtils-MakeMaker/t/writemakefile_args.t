@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use Config;
 use Test::More tests => 43;
 
 use TieOut;
@@ -35,6 +36,11 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     ok( my $stdout = tie *STDOUT, 'TieOut' );
     my $warnings = '';
     local $SIG{__WARN__} = sub {
+        if ( $Config{usecrosscompile} ) {
+            # libraries might not be present on the target system
+            # when cross-compiling
+            return if $_[0] =~ /\A\QWarning (mostly harmless): No library found for \E.+/
+        }
         $warnings .= join '', @_;
     };
 
@@ -266,13 +272,13 @@ VERIFY
 
     # PERL_MM_OPT
     {
-      local $ENV{PERL_MM_OPT} = 'INSTALL_BASE="/Users/miyagawa/tmp/car1 foo/foo bar"';
+      local $ENV{PERL_MM_OPT} = 'INSTALL_BASE="/Users/miyagawa/tmp/car1  foo/foo bar"';
       $mm = WriteMakefile(
           NAME            => 'Big::Dummy',
           VERSION    => '1.00',
       );
 
-      is( $mm->{INSTALL_BASE}, "/Users/miyagawa/tmp/car1 foo/foo bar", 'parse_args() splits like shell' );
+      is( $mm->{INSTALL_BASE}, "/Users/miyagawa/tmp/car1  foo/foo bar", 'parse_args() splits like shell' );
     }
 
 }

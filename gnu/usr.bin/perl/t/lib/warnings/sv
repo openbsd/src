@@ -363,6 +363,14 @@ EXPECT
 Argument "\x{100}\x{200}" isn't numeric in negation (-) at - line 3.
 ########
 # sv.c
+use warnings 'numeric' ;
+$a = "\x{100}\x{1000}" x 10; $b = $a < 1;
+no warnings 'numeric' ;
+$a = "\x{100}\x{1000}" x 10; $b = $a < 1;
+EXPECT
+Argument "\x{100}\x{1000}\x{100}\x{1000}\x{100}..." isn't numeric in numeric lt (<) at - line 3.
+########
+# sv.c
 use warnings 'redefine' ;
 use utf8;
 use open qw( :utf8 :std );
@@ -389,11 +397,19 @@ EXPECT
 Subroutine main::ｆ렏 redefined at - line 7.
 ########
 # sv.c
-sprintf "%vd", new version v1.1_0;
-use warnings 'printf' ;
-sprintf "%vd", new version v1.1_0;
-no warnings 'printf' ;
-sprintf "%vd", new version v1.1_0;
+my $x = "a_c";
+++$x;
+use warnings "numeric";
+$x = "a_c"; ++$x;
+$x = ${ qr/abc/ }; ++$x;
+$x = "123x"; ++$x;
+$x = "123e"; ++$x;
+$x = 0; ++$x; # none of these should warn
+$x = "ABC"; ++$x;
+$x = "ABC123"; ++$x;
+$x = " +10"; ++$x;
 EXPECT
-vector argument not supported with alpha versions at - line 2.
-vector argument not supported with alpha versions at - line 4.
+Argument "a_c" isn't numeric in preincrement (++) at - line 5.
+Argument "(?^:abc)" isn't numeric in preincrement (++) at - line 6.
+Argument "123x" isn't numeric in preincrement (++) at - line 7.
+Argument "123e" isn't numeric in preincrement (++) at - line 8.

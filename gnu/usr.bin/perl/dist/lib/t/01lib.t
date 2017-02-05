@@ -65,7 +65,7 @@ BEGIN {
     is( eval { do 'Yup.pm'  }, 42,  'do() works' );
     ok( eval { require Yup; },      '   require()' );
     ok( eval "use Yup; 1;",         '   use()' );
-    is( $@, '' );
+    is( $@, '', 'last "eval()" parsed and executed correctly' );
 
     is_deeply(\@OrigINC, \@lib::ORIG_INC,    '@lib::ORIG_INC' );
 }

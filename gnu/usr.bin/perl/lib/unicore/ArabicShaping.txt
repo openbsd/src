@@ -1,29 +1,29 @@
-# ArabicShaping-6.3.0.txt
-# Date: 2012-11-14, 21:48:00 GMT [KW]
+# ArabicShaping-8.0.0.txt
+# Date: 2015-02-17, 23:33:00 GMT [RP]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2014 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
-# This file defines the Joining_Type and Joining_Group
-# property values for Arabic, Syriac, N'Ko, and Mandaic
-# positional shaping, repeating in machine readable form the
-# information exemplified in Tables 8-3, 8-8, 8-9, 8-10, 8-13, 8-14,
-# 8-15, 13-5, 14-5, and 14-6 of The Unicode Standard, Version 6.3.
-# This file also defines Joining_Type values for Mongolian and
-# Phags-pa positional shaping, which is not listed in tables in
-# the standard. 
+# This file defines the Joining_Type and Joining_Group property
+# values for Arabic, Syriac, N'Ko, Mandaic, and Manichaean positional
+# shaping, repeating in machine readable form the information
+# exemplified in Tables 9-3, 9-8, 9-9, 9-10, 9-14, 9-15, 9-16, 9-19,
+# 9-20, 10-4, 10-5, 10-6, 10-7, and 19-5 of The Unicode Standard core
+# specification. This file also defines Joining_Type values for
+# Mongolian, Phags-pa, and Psalter Pahlavi positional shaping, which
+# are not listed in tables in the standard.
 #
-# See sections 8.2, 8.3, 10.4, 13.2, 13.5, and 14.12 of The Unicode Standard, 
-# Version 6.3 for more information.
+# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.4, 14.3, 19.4 of
+# The Unicode Standard core specification for more information.
 #
 # Each line contains four fields, separated by a semicolon.
 #
 # Field 0: the code point, in 4-digit hexadecimal
 #   form, of an Arabic, Syriac, N'Ko, Mandaic, Mongolian,
-#   Phags-pa, or other character.
+#   Phags-pa, Manichaean, Psalter Pahlavi, or other character.
 #
 # Field 1: gives a short schematic name for that character.
 #   The schematic name is descriptive of the shape, based as
@@ -40,11 +40,11 @@
 #   U Non_Joining
 #   T Transparent
 #
-# See Section 8.2, Arabic for more information on these joining types.
+# See Section 9.2, Arabic for more information on these joining types.
 # Note that for cursive joining scripts which are typically rendered
 # top-to-bottom, rather than right-to-left, Joining_Type=L conventionally
 # refers to bottom joining, and Joining_Type=R conventionally refers
-# to top joining. See Section 10.4 Phags-pa for more information on the
+# to top joining. See Section 14.3, Phags-pa for more information on the
 # interpretation of joining types in vertical layout.
 #
 # Field 3: defines the joining group (property name: Joining_Group)
@@ -59,7 +59,7 @@
 #
 # corresponds to [Joining_Group = Teh_Marbuta].
 #
-# Note: The property value now designated [Joining_Group = Teh_Marbuta_Goal] 
+# Note: The property value now designated [Joining_Group = Teh_Marbuta_Goal]
 #   used to apply to both of the following characters
 #   in earlier versions of the standard:
 #
@@ -73,14 +73,15 @@
 #   no longer applies to its namesake character, U+06C2.
 #   See PropertyValueAliases.txt.
 #
-# When other cursive scripts are added to the Unicode Standard in
-# the future, the joining group value of all its letters will default
-# to jg=No_Joining_Group in this data file. Other, more specific
+# When other cursive scripts are added to the Unicode Standard in the
+# future, the joining group value of all its letters will default to
+# jg=No_Joining_Group in this data file. Other, more specific
 # joining group values will be defined only if an explicit proposal
 # to define those values exactly has been approved by the UTC. This
 # is the convention exemplified by the N'Ko, Mandaic, Mongolian,
-# and Phags-pa scripts. Only the Arabic and Syriac scripts
-# currently have explicit joining group values defined.
+# Phags-pa, and Psalter Pahlavi scripts. Only the Arabic,
+# Manichaean, and Syriac scripts currently have explicit joining
+# group values defined.
 #
 # Note: Code points that are not explicitly listed in this file are
 # either of joining type T or U:
@@ -93,7 +94,7 @@
 # the derived property file DerivedJoiningType.txt.
 #
 # #############################################################
- 
+
 # Unicode; Schematic Name; Joining Type; Joining Group
 
 # Arabic Characters
@@ -103,6 +104,7 @@
 0602; ARABIC FOOTNOTE MARKER; U; No_Joining_Group
 0603; ARABIC SIGN SAFHA; U; No_Joining_Group
 0604; ARABIC SIGN SAMVAT; U; No_Joining_Group
+0605; ARABIC NUMBER MARK ABOVE; U; No_Joining_Group
 0608; ARABIC RAY; U; No_Joining_Group
 060B; AFGHANI SIGN; U; No_Joining_Group
 0620; DOTLESS YEH WITH SEPARATE RING BELOW; D; YEH
@@ -392,7 +394,7 @@
 0844; MANDAIC AH; D; No_Joining_Group
 0845; MANDAIC USHENNA; D; No_Joining_Group
 0846; MANDAIC AZ; R; No_Joining_Group
-0847; MANDAIC IT; D; No_Joining_Group
+0847; MANDAIC IT; R; No_Joining_Group
 0848; MANDAIC ATT; D; No_Joining_Group
 0849; MANDAIC AKSA; R; No_Joining_Group
 084A; MANDAIC AK; D; No_Joining_Group
@@ -400,7 +402,7 @@
 084C; MANDAIC AM; D; No_Joining_Group
 084D; MANDAIC AN; D; No_Joining_Group
 084E; MANDAIC AS; D; No_Joining_Group
-084F; MANDAIC IN; R; No_Joining_Group
+084F; MANDAIC IN; D; No_Joining_Group
 0850; MANDAIC AP; D; No_Joining_Group
 0851; MANDAIC ASZ; D; No_Joining_Group
 0852; MANDAIC AQ; D; No_Joining_Group
@@ -414,6 +416,7 @@
 # Arabic Extended-A Characters
 
 08A0; DOTLESS BEH WITH V BELOW; D; BEH
+08A1; BEH WITH HAMZA ABOVE; D; BEH
 08A2; HAH WITH DOT BELOW AND 2 DOTS ABOVE; D; HAH
 08A3; TAH WITH 2 DOTS ABOVE; D; TAH
 08A4; DOTLESS FEH WITH DOT BELOW AND 3 DOTS ABOVE; D; FEH
@@ -425,6 +428,14 @@
 08AA; REH WITH LOOP; R; REH
 08AB; WAW WITH DOT WITHIN; R; WAW
 08AC; ROHINGYA YEH; R; ROHINGYA YEH
+08AD; LOW ALEF; U; No_Joining_Group
+08AE; DAL WITH 3 DOTS BELOW; R; DAL
+08AF; SAD WITH 3 DOTS BELOW; D; SAD
+08B0; KEHEH WITH STROKE BELOW; D; GAF
+08B1; STRAIGHT WAW; R; STRAIGHT WAW
+08B2; REH WITH DOT AND INVERTED V ABOVE; R; REH
+08B3; AIN WITH 3 DOTS BELOW; D; AIN
+08B4; KAF WITH DOT BELOW; D; KAF
 
 # Mongolian Characters
 
@@ -626,5 +637,78 @@ A870; PHAGS-PA ASPIRATED FA; D; No_Joining_Group
 A871; PHAGS-PA SUBJOINED RA; D; No_Joining_Group
 A872; PHAGS-PA SUPERFIXED RA; L; No_Joining_Group
 A873; PHAGS-PA CANDRABINDU; U; No_Joining_Group
+
+# Manichaean Characters
+
+10AC0; MANICHAEAN ALEPH; D; MANICHAEAN ALEPH
+10AC1; MANICHAEAN BETH; D; MANICHAEAN BETH
+10AC2; MANICHAEAN BETH WITH 2 DOTS ABOVE; D; MANICHAEAN BETH
+10AC3; MANICHAEAN GIMEL; D; MANICHAEAN GIMEL
+10AC4; MANICHAEAN GIMEL WITH ATTACHED RING BELOW; D; MANICHAEAN GIMEL
+10AC5; MANICHAEAN DALETH; R; MANICHAEAN DALETH
+10AC6; MANICHAEAN HE; U; No_Joining_Group
+10AC7; MANICHAEAN WAW; R; MANICHAEAN WAW
+10AC8; MANICHAEAN UD; U; No_Joining_Group
+10AC9; MANICHAEAN ZAYIN; R; MANICHAEAN ZAYIN
+10ACA; MANICHAEAN ZAYIN WITH 2 DOTS ABOVE; R; MANICHAEAN ZAYIN
+10ACB; MANICHAEAN JAYIN; U; No_Joining_Group
+10ACC; MANICHAEAN JAYIN WITH 2 DOTS ABOVE; U; No_Joining_Group
+10ACD; MANICHAEAN HETH; L; MANICHAEAN HETH
+10ACE; MANICHAEAN TETH; R; MANICHAEAN TETH
+10ACF; MANICHAEAN YODH; R; MANICHAEAN YODH
+10AD0; MANICHAEAN KAPH; R; MANICHAEAN KAPH
+10AD1; MANICHAEAN KAPH WITH DOT ABOVE; R; MANICHAEAN KAPH
+10AD2; MANICHAEAN KAPH WITH 2 DOTS ABOVE; R; MANICHAEAN KAPH
+10AD3; MANICHAEAN LAMEDH; D; MANICHAEAN LAMEDH
+10AD4; MANICHAEAN DHAMEDH; D; MANICHAEAN DHAMEDH
+10AD5; MANICHAEAN THAMEDH; D; MANICHAEAN THAMEDH
+10AD6; MANICHAEAN MEM; D; MANICHAEAN MEM
+10AD7; MANICHAEAN NUN; L; MANICHAEAN NUN
+10AD8; MANICHAEAN SAMEKH; D; MANICHAEAN SAMEKH
+10AD9; MANICHAEAN AYIN; D; MANICHAEAN AYIN
+10ADA; MANICHAEAN AYIN WITH 2 DOTS ABOVE; D; MANICHAEAN AYIN
+10ADB; MANICHAEAN PE; D; MANICHAEAN PE
+10ADC; MANICHAEAN PE WITH DOT ABOVE; D; MANICHAEAN PE
+10ADD; MANICHAEAN SADHE; R; MANICHAEAN SADHE
+10ADE; MANICHAEAN QOPH; D; MANICHAEAN QOPH
+10ADF; MANICHAEAN QOPH WITH DOT ABOVE; D; MANICHAEAN QOPH
+10AE0; MANICHAEAN QOPH WITH 2 DOTS ABOVE; D; MANICHAEAN QOPH
+10AE1; MANICHAEAN RESH; R; MANICHAEAN RESH
+10AE2; MANICHAEAN SHIN; U; No_Joining_Group
+10AE3; MANICHAEAN SHIN WITH 2 DOTS ABOVE; U; No_Joining_Group
+10AE4; MANICHAEAN TAW; R; MANICHAEAN TAW
+10AEB; MANICHAEAN ONE; D; MANICHAEAN ONE
+10AEC; MANICHAEAN FIVE; D; MANICHAEAN FIVE
+10AED; MANICHAEAN TEN; D; MANICHAEAN TEN
+10AEE; MANICHAEAN TWENTY; D; MANICHAEAN TWENTY
+10AEF; MANICHAEAN HUNDRED; R; MANICHAEAN HUNDRED
+
+# Psalter Pahlavi Characters
+
+10B80; PSALTER PAHLAVI ALEPH; D; No_Joining_Group
+10B81; PSALTER PAHLAVI BETH; R; No_Joining_Group
+10B82; PSALTER PAHLAVI GIMEL; D; No_Joining_Group
+10B83; PSALTER PAHLAVI DALETH; R; No_Joining_Group
+10B84; PSALTER PAHLAVI HE; R; No_Joining_Group
+10B85; PSALTER PAHLAVI WAW-AYIN-RESH; R; No_Joining_Group
+10B86; PSALTER PAHLAVI ZAYIN; D; No_Joining_Group
+10B87; PSALTER PAHLAVI HETH; D; No_Joining_Group
+10B88; PSALTER PAHLAVI YODH; D; No_Joining_Group
+10B89; PSALTER PAHLAVI KAPH; R; No_Joining_Group
+10B8A; PSALTER PAHLAVI LAMEDH; D; No_Joining_Group
+10B8B; PSALTER PAHLAVI MEM-QOPH; D; No_Joining_Group
+10B8C; PSALTER PAHLAVI NUN; R; No_Joining_Group
+10B8D; PSALTER PAHLAVI SAMEKH; D; No_Joining_Group
+10B8E; PSALTER PAHLAVI PE; R; No_Joining_Group
+10B8F; PSALTER PAHLAVI SADHE; R; No_Joining_Group
+10B90; PSALTER PAHLAVI SHIN; D; No_Joining_Group
+10B91; PSALTER PAHLAVI TAW; R; No_Joining_Group
+10BA9; PSALTER PAHLAVI ONE; R; No_Joining_Group
+10BAA; PSALTER PAHLAVI TWO; R; No_Joining_Group
+10BAB; PSALTER PAHLAVI THREE; R; No_Joining_Group
+10BAC; PSALTER PAHLAVI FOUR; R; No_Joining_Group
+10BAD; PSALTER PAHLAVI TEN; D; No_Joining_Group
+10BAE; PSALTER PAHLAVI TWENTY; D; No_Joining_Group
+10BAF; PSALTER PAHLAVI HUNDRED; U; No_Joining_Group
 
 # EOF

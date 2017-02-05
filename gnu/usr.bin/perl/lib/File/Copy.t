@@ -292,6 +292,7 @@ SKIP: {
     my $copy4 = "copy4-$$";
     my $copy5 = "copy5-$$";
     my $copy6 = "copy6-$$";
+    my $copyd = "copyd-$$";
 
     open my $fh => ">", $src   or die $!;
     close   $fh                or die $!;
@@ -317,11 +318,11 @@ SKIP: {
 	    # Test that we can actually set a file to the correct permission.
 	    # Slightly convoluted, because some operating systems will let us
 	    # set a directory, but not a file. These should all work:
-	    mkdir $copy1 or die "Can't mkdir $copy1: $!";
-	    chmod $s_perm, $copy1
-		or die sprintf "Can't chmod %o $copy1: $!", $s_perm;
-	    rmdir $copy1
-		or die sprintf "Can't rmdir $copy1: $!";
+	    mkdir $copyd or die "Can't mkdir $copyd: $!";
+	    chmod $s_perm, $copyd
+		or die sprintf "Can't chmod %o $copyd: $!", $s_perm;
+	    rmdir $copyd
+		or die sprintf "Can't rmdir $copyd: $!";
 	    open my $fh0, '>', $copy1 or die "Can't open $copy1: $!";
 	    close $fh0 or die "Can't close $copy1: $!";
 	    unless (chmod $s_perm, $copy1) {
@@ -363,12 +364,8 @@ SKIP: {
             is (__$perm2, __$permdef, "Permission bits set correctly");
             is (__$perm4, __$c_perm1, "Permission bits set correctly");
             is (__$perm5, __$c_perm1, "Permission bits set correctly");
-            TODO: {
-                local $TODO = 'Permission bits inconsistent under cygwin'
-                   if $^O eq 'cygwin';
-                is (__$perm3, __$c_perm3, "Permission bits not modified");
-                is (__$perm6, __$c_perm3, "Permission bits not modified");
-            }
+            is (__$perm3, __$c_perm3, "Permission bits not modified");
+            is (__$perm6, __$c_perm3, "Permission bits not modified");
         }
     }
     umask $old_mask or die $!;

@@ -193,11 +193,11 @@ blah blah
 
 <p>intermediate text</p>
 
-
-
 <more>
 HTML
-</more>some text
+</more>
+
+some text
 
 <h1 id="TESTING-URLs-hyperlinking">TESTING URLs hyperlinking</h1>
 

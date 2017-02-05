@@ -124,6 +124,9 @@ vload_module(U32 flags, SV *name, SV *ver, va_list *args)
 #if { VERSION >= 5.004 }
         utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(FALSE, 0),
                 veop, modname, imop);
+#elif { VERSION > 5.003 }
+        utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(),
+                veop, modname, imop);
 #else
         utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(),
                 modname, imop);

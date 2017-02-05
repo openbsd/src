@@ -11,7 +11,7 @@ use t::Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
 
-for my $file ( dir_list("t/cases", qr/^form/ ) ) {
+for my $file ( dir_list("corpus", qr/^form/ ) ) {
   my $data = do { local (@ARGV,$/) = $file; <> };
   my ($params, $expect_req, $give_res) = split /--+\n/, $data;
   # cleanup source data

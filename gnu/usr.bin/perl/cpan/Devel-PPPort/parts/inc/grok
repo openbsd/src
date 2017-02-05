@@ -569,7 +569,7 @@ grok_bin(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);
@@ -582,7 +582,7 @@ grok_hex(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);
@@ -595,7 +595,7 @@ grok_oct(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);
@@ -621,7 +621,7 @@ Perl_grok_bin(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);
@@ -634,7 +634,7 @@ Perl_grok_hex(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);
@@ -647,7 +647,7 @@ Perl_grok_oct(string)
         SV *string
         PREINIT:
                 char *pv;
-                I32 flags;
+                I32 flags = 0;
                 STRLEN len;
         CODE:
                 pv = SvPV(string, len);

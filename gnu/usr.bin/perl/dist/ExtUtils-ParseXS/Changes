@@ -1,5 +1,16 @@
 Revision history for Perl extension ExtUtils::ParseXS.
 
+3.30 - Mon Aug 31 10:35:00 CET 2015
+  - Promote to stable CPAN release.
+
+3.29_01 - Mon Aug 10 10:45:00 CET 2015
+  - Support added for XS handshake API introduced in 5.21.6.
+  - Backported S_croak_xs_usage optimized on threaded builds
+  - Fix INCLUDE_COMMAND $^X for Perl In Space
+  - Remove 'use lib' left over from refactoring
+  - Document + improve ancient optimization in ParseXS
+  - Improve RETVAL code gen
+
 3.24 - Wed Mar  5 18:20:00 CET 2014
   - Native Android build fixes
   - More lenient syntax for embedded TYPEMAP blocks in XS:

@@ -83,7 +83,8 @@ binaries to be stripped, you can either add a B<-s> option when Configure
 prompts you,
 
   Any additional ld flags (NOT including libraries)? [none] -s
-  Any special flags to pass to g++ to create a dynamically loaded library?
+  Any special flags to pass to g++ to create a dynamically loaded
+  library?
   [none] -s
   Any special flags to pass to gcc to use dynamic linking? [none] -s
 
@@ -106,6 +107,9 @@ The crypt package distributed with Cygwin is a Linux compatible 56-bit
 DES crypt port by Corinna Vinschen.
 
 Alternatively, the crypt libraries in GNU libc have been ported to Cygwin.
+
+As of libcrypt 1.3 (March 2016), you will need to install the
+libcrypt-devel package for Configure to detect crypt().
 
 =item * C<-lgdbm_compat> (C<use GDBM_File>)
 
@@ -208,12 +212,13 @@ You may see some messages during Configure that seem suspicious.
 Win9x does not correctly report C<EOF> with a non-blocking read on a
 closed pipe.  You will see the following messages:
 
-  But it also returns -1 to signal EOF, so be careful!
-  WARNING: you can't distinguish between EOF and no data!
+ But it also returns -1 to signal EOF, so be careful!
+ WARNING: you can't distinguish between EOF and no data!
 
-  *** WHOA THERE!!! ***
-      The recommended value for $d_eofnblk on this machine was "define"!
-      Keep the recommended value? [y]
+ *** WHOA THERE!!! ***
+     The recommended value for $d_eofnblk on this machine was
+     "define"!
+     Keep the recommended value? [y]
 
 At least for consistency with WinNT, you should keep the recommended
 value.
@@ -404,14 +409,15 @@ Using C<fork()> or C<system()> out to another perl after loading multiple dlls
 may result on a DLL baseaddress conflict. The internal cygwin error
 looks like like the following:
 
-  0 [main] perl 8916 child_info_fork::abort: data segment start: parent
-  (0xC1A000) != child(0xA6A000)
+ 0 [main] perl 8916 child_info_fork::abort: data segment start:
+ parent (0xC1A000) != child(0xA6A000)
 
 or:
 
-  183 [main] perl 3588 C:\cygwin\bin\perl.exe: *** fatal error - unable to remap
-  C:\cygwin\bin\cygsvn_subr-1-0.dll to same address as parent(0x6FB30000) != 0x6FE60000
-  46 [main] perl 3488 fork: child 3588 - died waiting for dll loading, errno11
+ 183 [main] perl 3588 C:\cygwin\bin\perl.exe: *** fatal error -
+ unable to remap C:\cygwin\bin\cygsvn_subr-1-0.dll to same address
+ as parent(0x6FB30000) != 0x6FE60000 46 [main] perl 3488 fork: child
+ 3588 - died waiting for dll loading, errno11
 
 See L<http://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
 It helps if not too many DLLs are loaded in memory so the available address space is larger,
@@ -553,194 +559,200 @@ be kept as clean as possible.
 
 =item Documentation
 
-  INSTALL README.cygwin README.win32 MANIFEST
-  pod/perl.pod pod/perlport.pod pod/perlfaq3.pod
-  pod/perldelta.pod pod/perl5004delta.pod pod/perl56delta.pod
-  pod/perl561delta.pod pod/perl570delta.pod pod/perl572delta.pod
-  pod/perl573delta.pod pod/perl58delta.pod pod/perl581delta.pod
-  pod/perl590delta.pod pod/perlhist.pod pod/perlmodlib.pod
-  pod/perltoc.pod Porting/Glossary pod/perlgit.pod
-  Porting/checkAUTHORS.pl
-  dist/Cwd/Changes ext/Compress-Raw-Zlib/Changes
-  ext/Compress-Raw-Zlib/README ext/Compress-Zlib/Changes
-  ext/DB_File/Changes ext/Encode/Changes ext/Sys-Syslog/Changes
-  ext/Time-HiRes/Changes ext/Win32API-File/Changes lib/CGI/Changes
-  lib/ExtUtils/CBuilder/Changes lib/ExtUtils/Changes lib/ExtUtils/NOTES
-  lib/ExtUtils/PATCHING lib/ExtUtils/README lib/Module/Build/Changes
-  lib/Net/Ping/Changes lib/Test/Harness/Changes
-  lib/Term/ANSIColor/ChangeLog lib/Term/ANSIColor/README README.symbian
-  symbian/TODO
+ INSTALL README.cygwin README.win32 MANIFEST
+ pod/perl.pod pod/perlport.pod pod/perlfaq3.pod
+ pod/perldelta.pod pod/perl5004delta.pod pod/perl56delta.pod
+ pod/perl561delta.pod pod/perl570delta.pod pod/perl572delta.pod
+ pod/perl573delta.pod pod/perl58delta.pod pod/perl581delta.pod
+ pod/perl590delta.pod pod/perlhist.pod pod/perlmodlib.pod
+ pod/perltoc.pod Porting/Glossary pod/perlgit.pod
+ Porting/checkAUTHORS.pl
+ dist/Cwd/Changes ext/Compress-Raw-Zlib/Changes
+ dist/Time-HiRes/Changes
+ ext/Compress-Raw-Zlib/README ext/Compress-Zlib/Changes
+ ext/DB_File/Changes ext/Encode/Changes ext/Sys-Syslog/Changes
+ ext/Win32API-File/Changes
+ lib/ExtUtils/CBuilder/Changes lib/ExtUtils/Changes
+ lib/ExtUtils/NOTES lib/ExtUtils/PATCHING lib/ExtUtils/README
+ lib/Net/Ping/Changes lib/Test/Harness/Changes
+ lib/Term/ANSIColor/ChangeLog lib/Term/ANSIColor/README
+ README.symbian symbian/TODO
 
 =item Build, Configure, Make, Install
 
-  cygwin/Makefile.SHs
-  ext/IPC/SysV/hints/cygwin.pl
-  ext/NDBM_File/hints/cygwin.pl
-  ext/ODBM_File/hints/cygwin.pl
-  hints/cygwin.sh
-  Configure             - help finding hints from uname,
-                          shared libperl required for dynamic loading
-  Makefile.SH Cross/Makefile-cross-SH
-                        - linklibperl
-  Porting/patchls       - cygwin in port list
-  installman            - man pages with :: translated to .
-  installperl           - install dll, install to 'pods'
-  makedepend.SH         - uwinfix
-  regen_lib.pl          - file permissions
+ cygwin/Makefile.SHs
+ ext/IPC/SysV/hints/cygwin.pl
+ ext/NDBM_File/hints/cygwin.pl
+ ext/ODBM_File/hints/cygwin.pl
+ hints/cygwin.sh
+ Configure             - help finding hints from uname,
+                         shared libperl required for dynamic loading
+ Makefile.SH Cross/Makefile-cross-SH
+                       - linklibperl
+ Porting/patchls       - cygwin in port list
+ installman            - man pages with :: translated to .
+ installperl           - install dll, install to 'pods'
+ makedepend.SH         - uwinfix
+ regen_lib.pl          - file permissions
 
-  NetWare/Makefile
-  plan9/mkfile
-  symbian/sanity.pl symbian/sisify.pl
-  hints/uwin.sh
-  vms/descrip_mms.template
-  win32/Makefile win32/makefile.mk
+ NetWare/Makefile
+ plan9/mkfile
+ symbian/sanity.pl symbian/sisify.pl
+ hints/uwin.sh
+ vms/descrip_mms.template
+ win32/Makefile win32/makefile.mk
 
 =item Tests
 
-  t/io/fs.t             - no file mode checks if not ntsec
-                          skip rename() check when not check_case:relaxed
-  t/io/tell.t           - binmode
-  t/lib/cygwin.t        - builtin cygwin function tests
-  t/op/groups.t         - basegroup has ID = 0
-  t/op/magic.t          - $^X/symlink WORKAROUND, s/.exe//
-  t/op/stat.t           - no /dev, skip Win32 ftCreationTime quirk
-                          (cache manager sometimes preserves ctime of file
-                          previously created and deleted), no -u (setuid)
-  t/op/taint.t          - can't use empty path under Cygwin Perl
-  t/op/time.t           - no tzset()
+ t/io/fs.t             - no file mode checks if not ntsec
+                         skip rename() check when not
+                         check_case:relaxed
+ t/io/tell.t           - binmode
+ t/lib/cygwin.t        - builtin cygwin function tests
+ t/op/groups.t         - basegroup has ID = 0
+ t/op/magic.t          - $^X/symlink WORKAROUND, s/.exe//
+ t/op/stat.t           - no /dev, skip Win32 ftCreationTime quirk
+                         (cache manager sometimes preserves ctime of
+                         file previously created and deleted), no -u
+                         (setuid)
+ t/op/taint.t          - can't use empty path under Cygwin Perl
+ t/op/time.t           - no tzset()
 
 =item Compiled Perl Source
 
-  EXTERN.h              - __declspec(dllimport)
-  XSUB.h                - __declspec(dllexport)
-  cygwin/cygwin.c       - os_extras (getcwd, spawn, and several Cygwin:: functions)
-  perl.c                - os_extras, -i.bak
-  perl.h                - binmode
-  doio.c                - win9x can not rename a file when it is open
-  pp_sys.c              - do not define h_errno, init _pwent_struct.pw_comment
-  util.c                - use setenv
-  util.h                - PERL_FILE_IS_ABSOLUTE macro
-  pp.c                  - Comment about Posix vs IEEE math under Cygwin
-  perlio.c              - CR/LF mode
-  perliol.c             - Comment about EXTCONST under Cygwin
+ EXTERN.h              - __declspec(dllimport)
+ XSUB.h                - __declspec(dllexport)
+ cygwin/cygwin.c       - os_extras (getcwd, spawn, and several
+                         Cygwin:: functions)
+ perl.c                - os_extras, -i.bak
+ perl.h                - binmode
+ doio.c                - win9x can not rename a file when it is open
+ pp_sys.c              - do not define h_errno, init
+                         _pwent_struct.pw_comment
+ util.c                - use setenv
+ util.h                - PERL_FILE_IS_ABSOLUTE macro
+ pp.c                  - Comment about Posix vs IEEE math under
+                         Cygwin
+ perlio.c              - CR/LF mode
+ perliol.c             - Comment about EXTCONST under Cygwin
 
 =item Compiled Module Source
 
-  ext/Compress-Raw-Zlib/Makefile.PL
-                        - Can't install via CPAN shell under Cygwin
-  ext/Compress-Raw-Zlib/zlib-src/zutil.h
-                        - Cygwin is Unix-like and has vsnprintf
-  ext/Errno/Errno_pm.PL - Special handling for Win32 Perl under Cygwin
-  ext/POSIX/POSIX.xs    - tzname defined externally
-  ext/SDBM_File/sdbm/pair.c
-                        - EXTCONST needs to be redefined from EXTERN.h
-  ext/SDBM_File/sdbm/sdbm.c
-                        - binary open
-  ext/Sys/Syslog/Syslog.xs
-                        - Cygwin has syslog.h
-  ext/Sys/Syslog/win32/compile.pl
-                        - Convert paths to Windows paths
-  ext/Time-HiRes/HiRes.xs
-                        - Various timers not available
-  ext/Time-HiRes/Makefile.PL
-                        - Find w32api/windows.h
-  ext/Win32/Makefile.PL - Use various libraries under Cygwin
-  ext/Win32/Win32.xs    - Child dir and child env under Cygwin
-  ext/Win32API-File/File.xs
-                        - _open_osfhandle not implemented under Cygwin
-  ext/Win32CORE/Win32CORE.c
-                        - __declspec(dllexport)
+ ext/Compress-Raw-Zlib/Makefile.PL
+                       - Can't install via CPAN shell under Cygwin
+ ext/Compress-Raw-Zlib/zlib-src/zutil.h
+                       - Cygwin is Unix-like and has vsnprintf
+ ext/Errno/Errno_pm.PL - Special handling for Win32 Perl under
+                         Cygwin
+ ext/POSIX/POSIX.xs    - tzname defined externally
+ ext/SDBM_File/sdbm/pair.c
+                       - EXTCONST needs to be redefined from
+                         EXTERN.h
+ ext/SDBM_File/sdbm/sdbm.c
+                       - binary open
+ ext/Sys/Syslog/Syslog.xs
+                       - Cygwin has syslog.h
+ ext/Sys/Syslog/win32/compile.pl
+                       - Convert paths to Windows paths
+ ext/Time-HiRes/HiRes.xs
+                       - Various timers not available
+ ext/Time-HiRes/Makefile.PL
+                       - Find w32api/windows.h
+ ext/Win32/Makefile.PL - Use various libraries under Cygwin
+ ext/Win32/Win32.xs    - Child dir and child env under Cygwin
+ ext/Win32API-File/File.xs
+                       - _open_osfhandle not implemented under
+                         Cygwin
+ ext/Win32CORE/Win32CORE.c
+                       - __declspec(dllexport)
 
 =item Perl Modules/Scripts
 
-  ext/B/t/OptreeCheck.pm - Comment about stderr/stdout order under Cygwin
-  ext/Digest-SHA/bin/shasum
-                        - Use binary mode under Cygwin
-  ext/Sys/Syslog/win32/Win32.pm
-                        - Convert paths to Windows paths
-  ext/Time-HiRes/HiRes.pm
-                        - Comment about various timers not available
-  ext/Win32API-File/File.pm
-                        - _open_osfhandle not implemented under Cygwin
-  ext/Win32CORE/Win32CORE.pm
-                        - History of Win32CORE under Cygwin
-  lib/CGI.pm            - binmode and path separator
-  lib/Cwd.pm            - hook to internal Cwd::cwd
-  lib/ExtUtils/CBuilder/Platform/cygwin.pm
-                        - use gcc for ld, and link to libperl.dll.a
-  lib/ExtUtils/CBuilder.pm
-                        - Cygwin is Unix-like
-  lib/ExtUtils/Install.pm - Install and rename issues under Cygwin
-  lib/ExtUtils/MM.pm    - OS classifications
-  lib/ExtUtils/MM_Any.pm - Example for Cygwin
-  lib/ExtUtils/MakeMaker.pm
-                        - require MM_Cygwin.pm
-  lib/ExtUtils/MM_Cygwin.pm
-                        - canonpath, cflags, manifypods, perl_archive
-  lib/File/Fetch.pm     - Comment about quotes using a Cygwin example
-  lib/File/Find.pm      - on remote drives stat() always sets st_nlink to 1
-  lib/File/Spec/Cygwin.pm - case_tolerant
-  lib/File/Spec/Unix.pm - preserve //unc
-  lib/File/Spec/Win32.pm - References a message on cygwin.com
-  lib/File/Spec.pm      - Pulls in lib/File/Spec/Cygwin.pm
-  lib/File/Temp.pm      - no directory sticky bit
-  lib/Module/Build/Compat.pm - Comment references 'make' under Cygwin
-  lib/Module/Build/Platform/cygwin.pm
-                        - Use '.' for man page separator
-  lib/Module/Build.pm   - Cygwin is Unix-like
-  lib/Module/CoreList.pm - List of all module files and versions
-  lib/Net/Domain.pm     - No domainname command under Cygwin
-  lib/Net/Netrc.pm      - Bypass using stat() under Cygwin
-  lib/Net/Ping.pm       - ECONREFUSED is EAGAIN under Cygwin
-  lib/Pod/Find.pm       - Set 'pods' dir
-  lib/Pod/Perldoc/ToMan.pm - '-c' switch for pod2man
-  lib/Pod/Perldoc.pm    - Use 'less' pager, and use .exe extension
-  lib/Term/ANSIColor.pm - Cygwin terminal info
-  lib/perl5db.pl        - use stdin not /dev/tty
-  utils/perlbug.PL      - Add CYGWIN environment variable to report
+ ext/B/t/OptreeCheck.pm - Comment about stderr/stdout order under
+                          Cygwin
+ ext/Digest-SHA/bin/shasum
+                       - Use binary mode under Cygwin
+ ext/Sys/Syslog/win32/Win32.pm
+                       - Convert paths to Windows paths
+ ext/Time-HiRes/HiRes.pm
+                       - Comment about various timers not available
+ ext/Win32API-File/File.pm
+                       - _open_osfhandle not implemented under
+                         Cygwin
+ ext/Win32CORE/Win32CORE.pm
+                       - History of Win32CORE under Cygwin
+ lib/Cwd.pm            - hook to internal Cwd::cwd
+ lib/ExtUtils/CBuilder/Platform/cygwin.pm
+                       - use gcc for ld, and link to libperl.dll.a
+ lib/ExtUtils/CBuilder.pm
+                       - Cygwin is Unix-like
+ lib/ExtUtils/Install.pm - Install and rename issues under Cygwin
+ lib/ExtUtils/MM.pm    - OS classifications
+ lib/ExtUtils/MM_Any.pm - Example for Cygwin
+ lib/ExtUtils/MakeMaker.pm
+                       - require MM_Cygwin.pm
+ lib/ExtUtils/MM_Cygwin.pm
+                       - canonpath, cflags, manifypods, perl_archive
+ lib/File/Fetch.pm     - Comment about quotes using a Cygwin example
+ lib/File/Find.pm      - on remote drives stat() always sets
+                         st_nlink to 1
+ lib/File/Spec/Cygwin.pm - case_tolerant
+ lib/File/Spec/Unix.pm - preserve //unc
+ lib/File/Spec/Win32.pm - References a message on cygwin.com
+ lib/File/Spec.pm      - Pulls in lib/File/Spec/Cygwin.pm
+ lib/File/Temp.pm      - no directory sticky bit
+ lib/Module/CoreList.pm - List of all module files and versions
+ lib/Net/Domain.pm     - No domainname command under Cygwin
+ lib/Net/Netrc.pm      - Bypass using stat() under Cygwin
+ lib/Net/Ping.pm       - ECONREFUSED is EAGAIN under Cygwin
+ lib/Pod/Find.pm       - Set 'pods' dir
+ lib/Pod/Perldoc/ToMan.pm - '-c' switch for pod2man
+ lib/Pod/Perldoc.pm    - Use 'less' pager, and use .exe extension
+ lib/Term/ANSIColor.pm - Cygwin terminal info
+ lib/perl5db.pl        - use stdin not /dev/tty
+ utils/perlbug.PL      - Add CYGWIN environment variable to report
 
 =item Perl Module Tests
 
-  dist/Cwd/t/cwd.t
-  ext/Compress-Zlib/t/14gzopen.t
-  ext/DB_File/t/db-btree.t
-  ext/DB_File/t/db-hash.t
-  ext/DB_File/t/db-recno.t
-  ext/DynaLoader/t/DynaLoader.t
-  ext/File-Glob/t/basic.t
-  ext/GDBM_File/t/gdbm.t
-  ext/POSIX/t/sysconf.t
-  ext/POSIX/t/time.t
-  ext/SDBM_File/t/sdbm.t
-  ext/Sys/Syslog/t/syslog.t
-  ext/Time-HiRes/t/HiRes.t
-  ext/Win32/t/Unicode.t
-  ext/Win32API-File/t/file.t
-  ext/Win32CORE/t/win32core.t
-  lib/AnyDBM_File.t
-  lib/Archive/Extract/t/01_Archive-Extract.t
-  lib/Archive/Tar/t/02_methods.t
-  lib/ExtUtils/t/Embed.t
-  lib/ExtUtils/t/eu_command.t
-  lib/ExtUtils/t/MM_Cygwin.t
-  lib/ExtUtils/t/MM_Unix.t
-  lib/File/Compare.t
-  lib/File/Copy.t
-  lib/File/Find/t/find.t
-  lib/File/Path.t
-  lib/File/Spec/t/crossplatform.t
-  lib/File/Spec/t/Spec.t
-  lib/Module/Build/t/destinations.t
-  lib/Net/hostent.t
-  lib/Net/Ping/t/110_icmp_inst.t
-  lib/Net/Ping/t/500_ping_icmp.t
-  lib/Net/t/netrc.t
-  lib/Pod/Simple/t/perlcyg.pod
-  lib/Pod/Simple/t/perlcygo.txt
-  lib/Pod/Simple/t/perlfaq.pod
-  lib/Pod/Simple/t/perlfaqo.txt
-  lib/User/grent.t
-  lib/User/pwent.t
+ dist/Cwd/t/cwd.t
+ ext/Compress-Zlib/t/14gzopen.t
+ ext/DB_File/t/db-btree.t
+ ext/DB_File/t/db-hash.t
+ ext/DB_File/t/db-recno.t
+ ext/DynaLoader/t/DynaLoader.t
+ ext/File-Glob/t/basic.t
+ ext/GDBM_File/t/gdbm.t
+ ext/POSIX/t/sysconf.t
+ ext/POSIX/t/time.t
+ ext/SDBM_File/t/sdbm.t
+ ext/Sys/Syslog/t/syslog.t
+ ext/Time-HiRes/t/HiRes.t
+ ext/Win32/t/Unicode.t
+ ext/Win32API-File/t/file.t
+ ext/Win32CORE/t/win32core.t
+ lib/AnyDBM_File.t
+ lib/Archive/Extract/t/01_Archive-Extract.t
+ lib/Archive/Tar/t/02_methods.t
+ lib/ExtUtils/t/Embed.t
+ lib/ExtUtils/t/eu_command.t
+ lib/ExtUtils/t/MM_Cygwin.t
+ lib/ExtUtils/t/MM_Unix.t
+ lib/File/Compare.t
+ lib/File/Copy.t
+ lib/File/Find/t/find.t
+ lib/File/Path.t
+ lib/File/Spec/t/crossplatform.t
+ lib/File/Spec/t/Spec.t
+ lib/Net/hostent.t
+ lib/Net/Ping/t/110_icmp_inst.t
+ lib/Net/Ping/t/500_ping_icmp.t
+ lib/Net/t/netrc.t
+ lib/Pod/Simple/t/perlcyg.pod
+ lib/Pod/Simple/t/perlcygo.txt
+ lib/Pod/Simple/t/perlfaq.pod
+ lib/Pod/Simple/t/perlfaqo.txt
+ lib/User/grent.t
+ lib/User/pwent.t
 
 =back
 

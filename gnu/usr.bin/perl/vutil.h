@@ -131,16 +131,16 @@ S_croak_xs_usage(pTHX_ const CV *const cv, const char *const params)
 
 #  define VUTIL_REPLACE_CORE 1
 
-const char * Perl_scan_version2(pTHX_ const char *s, SV *rv, bool qv);
-SV * Perl_new_version2(pTHX_ SV *ver);
-SV * Perl_upg_version2(pTHX_ SV *sv, bool qv);
-SV * Perl_vstringify2(pTHX_ SV *vs);
-SV * Perl_vverify2(pTHX_ SV *vs);
-SV * Perl_vnumify2(pTHX_ SV *vs);
-SV * Perl_vnormal2(pTHX_ SV *vs);
-SV * Perl_vstringify2(pTHX_ SV *vs);
-int Perl_vcmp2(pTHX_ SV *lsv, SV *rsv);
-const char * Perl_prescan_version2(pTHX_ const char *s, bool strict, const char** errstr, bool *sqv, int *ssaw_decimal, int *swidth, bool *salpha);
+static const char * Perl_scan_version2(pTHX_ const char *s, SV *rv, bool qv);
+static SV * Perl_new_version2(pTHX_ SV *ver);
+static SV * Perl_upg_version2(pTHX_ SV *sv, bool qv);
+static SV * Perl_vstringify2(pTHX_ SV *vs);
+static SV * Perl_vverify2(pTHX_ SV *vs);
+static SV * Perl_vnumify2(pTHX_ SV *vs);
+static SV * Perl_vnormal2(pTHX_ SV *vs);
+static SV * Perl_vstringify2(pTHX_ SV *vs);
+static int Perl_vcmp2(pTHX_ SV *lsv, SV *rsv);
+static const char * Perl_prescan_version2(pTHX_ const char *s, bool strict, const char** errstr, bool *sqv, int *ssaw_decimal, int *swidth, bool *salpha);
 
 #  define SCAN_VERSION(a,b,c)	Perl_scan_version2(aTHX_ a,b,c)
 #  define NEW_VERSION(a)	Perl_new_version2(aTHX_ a)
@@ -239,3 +239,13 @@ const char * Perl_prescan_version(pTHX_ const char *s, bool strict, const char**
 #  define RESTORE_NUMERIC_LOCAL()
 # endif
 #endif
+
+#ifndef LOCK_NUMERIC_STANDARD
+#define LOCK_NUMERIC_STANDARD()
+#endif
+
+#ifndef UNLOCK_NUMERIC_STANDARD
+#define UNLOCK_NUMERIC_STANDARD()
+#endif
+
+/* ex: set ro: */

@@ -63,7 +63,7 @@ ok(8, threads::shared::_id($$gg) == threads::shared::_id($$gg2),
        sprintf("Check we get the same thing (%x vs %x)",
        threads::shared::_id($$gg),threads::shared::_id($$gg2)));
 ok(9, $$gg eq $$gg2, "And check the values are the same");
-ok(10, keys %foo == 0, "And make sure we realy have deleted the values");
+ok(10, keys %foo == 0, "And make sure we really have deleted the values");
 {
     my (%hash1, %hash2);
     share(%hash1);

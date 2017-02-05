@@ -149,11 +149,11 @@ checkOptree ( name	=> 'fixup nextstate (in reftext)',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 1  <;> nextstate( NOTE THAT THIS CAN BE ANYTHING ) v:>,<,%
-# 2  <0> padsv[$a:54,55] M/LVINTRO
+# 2  <0> padsv[$a:54,55] sM/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 54 optree_concise.t:84) v:>,<,%
-# 2  <0> padsv[$a:54,55] M/LVINTRO
+# 2  <0> padsv[$a:54,55] sM/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
@@ -164,11 +164,11 @@ checkOptree ( name	=> 'fixup opcode args',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 1  <;> nextstate(main 56 optree_concise.t:96) v:>,<,%
-# 2  <0> padsv[$a:56,57] M/LVINTRO
+# 2  <0> padsv[$a:56,57] sM/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 56 optree_concise.t:96) v:>,<,%
-# 2  <0> padsv[$a:56,57] M/LVINTRO
+# 2  <0> padsv[$a:56,57] sM/LVINTRO
 # 3  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 

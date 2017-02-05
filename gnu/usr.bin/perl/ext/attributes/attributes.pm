@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.23;
+our $VERSION = 0.27;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -23,6 +23,12 @@ $deprecated{CODE} = qr/\A-?(locked)\z/;
 $deprecated{ARRAY} = $deprecated{HASH} = $deprecated{SCALAR}
     = qr/\A-?(unique)\z/;
 
+my %msg = (
+    lvalue => 'lvalue attribute applied to already-defined subroutine',
+   -lvalue => 'lvalue attribute removed from already-defined subroutine',
+    const  => 'Useless use of attribute "const"',
+);
+
 sub _modify_attrs_and_deprecate {
     my $svtype = shift;
     # Now that we've removed handling of locked from the XS code, we need to
@@ -34,13 +40,11 @@ sub _modify_attrs_and_deprecate {
 	    require warnings;
 	    warnings::warnif('deprecated', "Attribute \"$1\" is deprecated");
 	    0;
-	} : $svtype eq 'CODE' && /^-?lvalue\z/ ? do {
+	} : $svtype eq 'CODE' && exists $msg{$_} ? do {
 	    require warnings;
 	    warnings::warnif(
 		'misc',
-		"lvalue attribute "
-		   . (/^-/ ? "removed from" : "applied to")
-		   . " already-defined subroutine"
+		 $msg{$_}
 	    );
 	    0;
 	} : 1
@@ -255,6 +259,13 @@ attribute will be sanity checked at compile time.
 
 The "locked" attribute is deprecated, and has no effect in 5.10.0 and later.
 It was used as part of the now-removed "Perl 5.005 threads".
+
+=item const
+
+This experimental attribute, introduced in Perl 5.22, only applies to
+anonymous subroutines.  It causes the subroutine to be called as soon as
+the C<sub> expression is evaluated.  The return value is captured and
+turned into a constant subroutine.
 
 =back
 

@@ -11,7 +11,7 @@ BEGIN {
 
 use Getopt::Long;
 
-print "1..33\n";
+print "1..37\n";
 
 @ARGV = qw(-Foo -baR --foo bar);
 Getopt::Long::Configure ("no_ignore_case");
@@ -90,4 +90,32 @@ print (!(exists $lnk{bar})   ? "" : "not ", "ok 28\n");
     print "ok 33\n";
     package Overload::Test;
     use overload '""' => sub{ die "Bad mojo!" };
+}
+
+{
+    @ARGV = (qw[-thru -here -more 1]);
+    my $got = "";
+    Getopt::Long::Configure("default");
+    Getopt::Long::Configure("pass_through");
+    print "not" unless GetOptions
+	("here" => sub { $got .= " sub_here"; },
+	 "<>" => sub { $got .= " <>=".$_[0]; }, );
+    $got .= " remain=".join(',',@ARGV);
+    print "ok 34\n";
+    print +(($got eq " <>=-thru sub_here <>=-more <>=1 remain=")
+	    ? "" : "not ", "ok 35\n");
+}
+
+{
+    @ARGV = (qw[-thru -here -more -- 1]);
+    my $got = "";
+    Getopt::Long::Configure("default");
+    Getopt::Long::Configure("pass_through","require_order");
+    print "not" unless GetOptions
+	("here" => sub { $got .= " sub_here"; },
+	 "<>" => sub { $got .= " <>=".$_[0]; }, );
+    $got .= " remain=".join(',',@ARGV);
+    print "ok 36\n";
+    print +(($got eq " remain=-thru,-here,-more,--,1")
+	    ? "" : "not ", "ok 37\n");
 }

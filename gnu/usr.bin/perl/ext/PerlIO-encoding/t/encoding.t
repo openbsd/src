@@ -9,6 +9,11 @@ BEGIN {
 	print "1..0 # Skip: not Encode\n";
 	exit 0;
     }
+    if (ord("A") == 193) {
+	print "1..0 # Skip: EBCDIC\n";
+	exit 0;
+    }
+    require "../../t/charset_tools.pl";
 }
 
 use Test::More tests => 24;
@@ -37,13 +42,9 @@ if (open(GRK, ">$grk")) {
 
 if (open(UTF, "<$utf")) {
     binmode(UTF, ":bytes");
-    if (ord('A') == 193) { # EBCDIC
-	# alpha beta gamma in UTF-EBCDIC Unicode (0x3b1 0x3b2 0x3b3)
-	is(scalar <UTF>, "\xb4\x58\xb4\x59\xb4\x62");
-    } else {
-	# alpha beta gamma in UTF-8 Unicode (0x3b1 0x3b2 0x3b3)
-	is(scalar <UTF>, "\xce\xb1\xce\xb2\xce\xb3");
-    }
+
+    # alpha beta gamma in UTF-8 Unicode (0x3b1 0x3b2 0x3b3)
+    is(scalar <UTF>, byte_utf8a_to_utf8n("\xce\xb1\xce\xb2\xce\xb3"));
     close UTF;
 }
 

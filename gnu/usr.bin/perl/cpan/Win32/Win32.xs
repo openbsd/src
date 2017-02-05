@@ -237,7 +237,7 @@ get_unicode_env(pTHX_ WCHAR *name)
             pfnCreateEnvironmentBlock(&env, token, FALSE))
         {
             size_t name_len = wcslen(name);
-            WCHAR *entry = env;
+            WCHAR *entry = (WCHAR *)env;
             while (*entry) {
                 size_t i;
                 size_t entry_len = wcslen(entry);
@@ -818,7 +818,11 @@ XS(w32_GuidGen)
 
     if (SUCCEEDED(hr)) {
 	LPOLESTR pStr = NULL;
+#ifdef __cplusplus
+	if (SUCCEEDED(StringFromCLSID(guid, &pStr))) {
+#else
 	if (SUCCEEDED(StringFromCLSID(&guid, &pStr))) {
+#endif
             WideCharToMultiByte(CP_ACP, 0, pStr, (int)wcslen(pStr), szGUID,
                                 sizeof(szGUID), NULL, NULL);
             CoTaskMemFree(pStr);

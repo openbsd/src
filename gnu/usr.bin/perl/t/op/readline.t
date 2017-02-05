@@ -1,18 +1,18 @@
 #!./perl
 
 BEGIN {
-    chdir 't';
-    @INC = '../lib';
+    chdir 't' if -d 't';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
-plan tests => 30;
+plan tests => 32;
 
 # [perl #19566]: sv_gets writes directly to its argument via
 # TARG. Test that we respect SvREADONLY.
 use constant roref => \2;
 eval { for (roref) { $_ = <FH> } };
-like($@, 'Modification of a read-only value attempted', '[perl #19566]');
+like($@, qr/Modification of a read-only value attempted/, '[perl #19566]');
 
 # [perl #21628]
 {
@@ -269,6 +269,20 @@ $f{g} = *foom; # since PL_last_in_gv is null, this should have no effect
 is tell, -1, 'unglobbery of last gv nullifies PL_last_in_gv';
 readline *{$f{g}};
 is tell, tell *foom, 'readline *$glob_copy sets PL_last_in_gv';
+
+# PL_last_in_gv should not point to &PL_sv_undef, either.
+# This used to fail an assertion or return a scalar ref.
+readline undef;
+is ${^LAST_FH}, undef, '${^LAST_FH} after readline undef';
+
+{
+    my $w;
+    local($SIG{__WARN__},$^W) = (sub { $w .= shift }, 1);
+    *x=<y>;
+    like $w, qr/^readline\(\) on unopened filehandle y at .*\n(?x:
+                )Undefined value assigned to typeglob at .*\n\z/,
+        '[perl #123790] *x=<y> used to fail an assertion';
+}
 
 __DATA__
 moo

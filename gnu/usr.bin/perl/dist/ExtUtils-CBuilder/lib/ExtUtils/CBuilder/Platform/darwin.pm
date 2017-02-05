@@ -1,10 +1,10 @@
 package ExtUtils::CBuilder::Platform::darwin;
-
+$ExtUtils::CBuilder::Platform::darwin::VERSION = '0.280225';
+use warnings;
 use strict;
 use ExtUtils::CBuilder::Platform::Unix;
 
-use vars qw($VERSION @ISA);
-$VERSION = '0.280217';
+use vars qw(@ISA);
 @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 sub compile {

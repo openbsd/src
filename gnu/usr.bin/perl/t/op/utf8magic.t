@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
 }
 
 plan tests => 6;
@@ -33,6 +33,6 @@ $str2 = "b";
 utf8::encode $str2;
 is $::stored, "a", 'utf8::encode respects get-magic on POK scalars';
 
-tie $str2, "", "\xc4\x80";
+tie $str2, "", byte_utf8a_to_utf8n("\xc4\x80");
 utf8::decode $str2;
 is $::stored, "\x{100}", 'utf8::decode respects set-magic';

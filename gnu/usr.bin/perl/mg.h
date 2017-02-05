@@ -33,12 +33,14 @@ struct magic {
 
 #define MGf_TAINTEDDIR 1        /* PERL_MAGIC_envelem only */
 #define MGf_MINMATCH   1        /* PERL_MAGIC_regex_global only */
+#define MGf_REQUIRE_GV 1        /* PERL_MAGIC_checkcall only */
 #define MGf_REFCOUNTED 2
 #define MGf_GSKIP      4	/* skip further GETs until after next SET */
 #define MGf_COPY       8	/* has an svt_copy  MGVTBL entry */
 #define MGf_DUP     0x10 	/* has an svt_dup   MGVTBL entry */
 #define MGf_LOCAL   0x20	/* has an svt_local MGVTBL entry */
 #define MGf_BYTES   0x40        /* PERL_MAGIC_regex_global only */
+#define MGf_PERSIST    0x80     /* PERL_MAGIC_lvref only */
 
 #define MgTAINTEDDIR(mg)	(mg->mg_flags & MGf_TAINTEDDIR)
 #define MgTAINTEDDIR_on(mg)	(mg->mg_flags |= MGf_TAINTEDDIR)
@@ -74,11 +76,5 @@ struct magic {
 #define whichsig(pv) whichsig_pv(pv)
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

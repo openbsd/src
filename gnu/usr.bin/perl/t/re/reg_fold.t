@@ -123,8 +123,8 @@ my @fold_latin1 = @fold_ascii;
 # characters, but in posix anything outside ASCII maps to itself, as we've
 # already set up.
 for my $i (0x41 .. 0x5A, 0xC0 .. 0xD6, 0xD8 .. 0xDE) {
-    my $upper_ord = ord_latin1_to_native($i);
-    my $lower_ord = ord_latin1_to_native($i + 32);
+    my $upper_ord = utf8::unicode_to_native($i);
+    my $lower_ord = utf8::unicode_to_native($i + 32);
 
     $fold_latin1[$upper_ord] = $lower_ord;
 
@@ -134,8 +134,8 @@ for my $i (0x41 .. 0x5A, 0xC0 .. 0xD6, 0xD8 .. 0xDE) {
 
 # Same for folding lower to the upper equivalents
 for my $i (0x61 .. 0x7A, 0xE0 .. 0xF6, 0xF8 .. 0xFE) {
-    my $lower_ord = ord_latin1_to_native($i);
-    my $upper_ord = ord_latin1_to_native($i - 32);
+    my $lower_ord = utf8::unicode_to_native($i);
+    my $upper_ord = utf8::unicode_to_native($i - 32);
 
     $fold_latin1[$lower_ord] = $upper_ord;
 
@@ -155,10 +155,10 @@ for my $i (0 .. 255) {
 
 push @tests, qq[like chr(0x0430), qr/[=\x{0410}-\x{0411}]/i, 'Bug #71752 Unicode /i char in a range'];
 push @tests, qq[like 'a', qr/\\p{Upper}/i, "'a' =~ /\\\\p{Upper}/i"];
-push @tests, q[my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); like $c, $p, 'Bug #78994: my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); $c =~ $p'];
+push @tests, q[my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); like $c, qr/$p/, 'Bug #78994: my $c = "\x{212A}"; my $p = qr/(?:^[K_]+$)/i; utf8::upgrade($p); $c =~ $p'];
 
 use charnames ":full";
-my $e_grave = latin1_to_native("\xE8");
+my $e_grave = chr utf8::unicode_to_native(0xE8);
 push @tests, q[my $re1 = "\N{WHITE SMILING FACE}";like $e_grave, qr/[\w$re1]/, 'my $re = "\N{WHITE SMILING FACE}"; $e_grave =~ qr/[\w$re]/'];
 push @tests, q[my $re2 = "\N{WHITE SMILING FACE}";like $e_grave, qr/\w|$re2/, 'my $re = "\N{WHITE SMILING FACE}"; $e_grave =~ qr/\w|$re/'];
 

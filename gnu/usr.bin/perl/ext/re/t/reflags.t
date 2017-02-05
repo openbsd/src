@@ -6,11 +6,12 @@ BEGIN {
         	print "1..0 # Skip -- Perl configured without re module\n";
 		exit 0;
 	}
+        require 'loc_tools.pl';
 }
 
 use strict;
 
-use Test::More tests => 62;
+use Test::More tests => 67;
 
 my @flags = qw( a d l u );
 
@@ -53,18 +54,21 @@ no re '/sm';
 ok 'f r e l p' =~ /f r e l p/,
  "use re '/x' turns off when it drops out of scope";
 
+{
+  use re '/i';
+  ok "Foo" =~ /foo/, 'use re "/i"';
+  no re;
+  ok "Foo" !~ /foo/, "bare 'no re' reverts to no /i";
+  use re '/u';
+  my $nbsp = chr utf8::unicode_to_native(0xa0);
+  ok $nbsp =~ /\s/, 'nbsp matches \\s under /u';
+  no re;
+  ok $nbsp !~ /\s/, "bare 'no re' reverts to /d";
+}
+
 SKIP: {
-  if (
-      !$Config::Config{d_setlocale}
-   || $Config::Config{ccflags} =~ /\bD?NO_LOCALE(_|\b)/
-  ) {
-    skip "no locale support", 7
-  }
-  BEGIN {
-      if($Config::Config{d_setlocale}) {
-          require locale; import locale;
-      }
-  }
+  skip "no locale support", 7 unless locales_enabled('CTYPE');
+  use locale;
   use re '/u';
   is qr//, '(?^u:)', 'use re "/u" with active locale';
   no re '/u';
@@ -169,9 +173,13 @@ is qr//, '(?^:)', 'no re "/aai"';
   }
 
   $w = "";
-  eval "use re '/axaa'";
+  eval "use re '/amaa'";
   like $w, qr/The "a" flag may only appear a maximum of twice/,
-    "warning with eval \"use re \"/axaa\"";
+    "warning with eval \"use re \"/amaa\"";
 
+  $w = "";
+  eval "use re '/xamax'";
+  like $w, qr/Having more than one \/x regexp modifier is deprecated/,
+    "warning with eval \"use re \"/xamax\"";
 
 }

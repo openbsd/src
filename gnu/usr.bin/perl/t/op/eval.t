@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
-plan(tests => 130);
+plan(tests => 134);
 
 eval 'pass();';
 
@@ -442,9 +442,9 @@ is($got, "ok\n", 'eval and last');
 }
 
 # a syntax error in an eval called magically (eg via tie or overload)
-# resulted in an assertion failure in S_docatch, since doeval had already
-# popped the EVAL context due to the failure, but S_docatch expected the
-# context to still be there.
+# resulted in an assertion failure in S_docatch, since doeval_compile had
+# already popped the EVAL context due to the failure, but S_docatch
+# expected the context to still be there.
 
 {
     my $ok  = 0;
@@ -515,6 +515,16 @@ END_EVAL_TEST
     my $s = "a";
     $s =~ s/a/$t = \%^H;  qq( qq() );/ee;
     is(Internals::SvREFCNT(%$t), $count_expected, 'RT 63110');
+}
+
+# make sure default arg eval only adds a hints hash once to entereval
+#
+{
+    local $_ = "21+12";
+    is(eval, 33, 'argless eval without hints');
+    use feature qw(:5.10);
+    local $_ = "42+24";
+    is(eval, 66, 'argless eval with hints');
 }
 
 {
@@ -635,3 +645,23 @@ sub _117941 { package _117941; eval '$a' }
 delete $::{"_117941::"};
 _117941();
 pass("eval in freed package does not crash");
+
+# eval is supposed normally to clear $@ on success
+
+{
+    $@ = 1;
+    eval q{$@ = 2};
+    ok(!$@, 'eval clearing $@');
+}
+
+# RT #127786
+# this used to give an assertion failure
+
+{
+    package DB {
+        sub f127786 { eval q/\$s/ }
+    }
+    my $s;
+    sub { $s; DB::f127786}->();
+    pass("RT #127786");
+}

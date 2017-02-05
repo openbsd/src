@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use lib 't/lib/';
-use Test::More 0.99;
+use Test::More 0.88;
+use SubtestCompat;
 use TestBridge;
 use CPAN::Meta::YAML;
 

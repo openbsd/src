@@ -1,8 +1,8 @@
-# DerivedJoiningGroup-6.3.0.txt
-# Date: 2012-12-20, 22:18:24 GMT [MD]
+# DerivedJoiningGroup-8.0.0.txt
+# Date: 2015-02-13, 13:47:12 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2013 Unicode, Inc.
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -21,8 +21,9 @@
 06A0          ; Ain # Lo       ARABIC LETTER AIN WITH THREE DOTS ABOVE
 06FC          ; Ain # Lo       ARABIC LETTER GHAIN WITH DOT BELOW
 075D..075F    ; Ain # Lo   [3] ARABIC LETTER AIN WITH TWO DOTS ABOVE..ARABIC LETTER AIN WITH TWO DOTS VERTICALLY ABOVE
+08B3          ; Ain # Lo       ARABIC LETTER AIN WITH THREE DOTS BELOW
 
-# Total code points: 7
+# Total code points: 8
 
 # ================================================
 
@@ -48,9 +49,9 @@
 066E          ; Beh # Lo       ARABIC LETTER DOTLESS BEH
 0679..0680    ; Beh # Lo   [8] ARABIC LETTER TTEH..ARABIC LETTER BEHEH
 0750..0756    ; Beh # Lo   [7] ARABIC LETTER BEH WITH THREE DOTS HORIZONTALLY BELOW..ARABIC LETTER BEH WITH SMALL V
-08A0          ; Beh # Lo       ARABIC LETTER BEH WITH SMALL V BELOW
+08A0..08A1    ; Beh # Lo   [2] ARABIC LETTER BEH WITH SMALL V BELOW..ARABIC LETTER BEH WITH HAMZA ABOVE
 
-# Total code points: 20
+# Total code points: 21
 
 # ================================================
 
@@ -65,8 +66,9 @@
 0688..0690    ; Dal # Lo   [9] ARABIC LETTER DDAL..ARABIC LETTER DAL WITH FOUR DOTS ABOVE
 06EE          ; Dal # Lo       ARABIC LETTER DAL WITH INVERTED V
 0759..075A    ; Dal # Lo   [2] ARABIC LETTER DAL WITH TWO DOTS VERTICALLY BELOW AND SMALL TAH..ARABIC LETTER DAL WITH INVERTED SMALL V BELOW
+08AE          ; Dal # Lo       ARABIC LETTER DAL WITH THREE DOTS BELOW
 
-# Total code points: 14
+# Total code points: 15
 
 # ================================================
 
@@ -104,8 +106,9 @@
 06AB          ; Gaf # Lo       ARABIC LETTER KAF WITH RING
 06AF..06B4    ; Gaf # Lo   [6] ARABIC LETTER GAF..ARABIC LETTER GAF WITH THREE DOTS ABOVE
 0762..0764    ; Gaf # Lo   [3] ARABIC LETTER KEHEH WITH DOT ABOVE..ARABIC LETTER KEHEH WITH THREE DOTS POINTING UPWARDS BELOW
+08B0          ; Gaf # Lo       ARABIC LETTER GAF WITH INVERTED STROKE
 
-# Total code points: 13
+# Total code points: 14
 
 # ================================================
 
@@ -162,8 +165,9 @@
 0643          ; Kaf # Lo       ARABIC LETTER KAF
 06AC..06AE    ; Kaf # Lo   [3] ARABIC LETTER KAF WITH DOT ABOVE..ARABIC LETTER KAF WITH THREE DOTS BELOW
 077F          ; Kaf # Lo       ARABIC LETTER KAF WITH TWO DOTS ABOVE
+08B4          ; Kaf # Lo       ARABIC LETTER KAF WITH DOT BELOW
 
-# Total code points: 5
+# Total code points: 6
 
 # ================================================
 
@@ -251,8 +255,9 @@
 076B..076C    ; Reh # Lo   [2] ARABIC LETTER REH WITH TWO DOTS VERTICALLY ABOVE..ARABIC LETTER REH WITH HAMZA ABOVE
 0771          ; Reh # Lo       ARABIC LETTER REH WITH SMALL ARABIC LETTER TAH AND TWO DOTS
 08AA          ; Reh # Lo       ARABIC LETTER REH WITH LOOP
+08B2          ; Reh # Lo       ARABIC LETTER ZAIN WITH INVERTED V ABOVE
 
-# Total code points: 17
+# Total code points: 18
 
 # ================================================
 
@@ -265,8 +270,9 @@
 0635..0636    ; Sad # Lo   [2] ARABIC LETTER SAD..ARABIC LETTER DAD
 069D..069E    ; Sad # Lo   [2] ARABIC LETTER SAD WITH TWO DOTS BELOW..ARABIC LETTER SAD WITH THREE DOTS ABOVE
 06FB          ; Sad # Lo       ARABIC LETTER DAD WITH DOT BELOW
+08AF          ; Sad # Lo       ARABIC LETTER SAD WITH THREE DOTS BELOW
 
-# Total code points: 5
+# Total code points: 6
 
 # ================================================
 
@@ -436,5 +442,173 @@
 08AC          ; Rohingya_Yeh # Lo       ARABIC LETTER ROHINGYA YEH
 
 # Total code points: 1
+
+# ================================================
+
+08B1          ; Straight_Waw # Lo       ARABIC LETTER STRAIGHT WAW
+
+# Total code points: 1
+
+# ================================================
+
+10AC0         ; Manichaean_Aleph # Lo       MANICHAEAN LETTER ALEPH
+
+# Total code points: 1
+
+# ================================================
+
+10AD9..10ADA  ; Manichaean_Ayin # Lo   [2] MANICHAEAN LETTER AYIN..MANICHAEAN LETTER AAYIN
+
+# Total code points: 2
+
+# ================================================
+
+10AC1..10AC2  ; Manichaean_Beth # Lo   [2] MANICHAEAN LETTER BETH..MANICHAEAN LETTER BHETH
+
+# Total code points: 2
+
+# ================================================
+
+10AC5         ; Manichaean_Daleth # Lo       MANICHAEAN LETTER DALETH
+
+# Total code points: 1
+
+# ================================================
+
+10AD4         ; Manichaean_Dhamedh # Lo       MANICHAEAN LETTER DHAMEDH
+
+# Total code points: 1
+
+# ================================================
+
+10AEC         ; Manichaean_Five # No       MANICHAEAN NUMBER FIVE
+
+# Total code points: 1
+
+# ================================================
+
+10AC3..10AC4  ; Manichaean_Gimel # Lo   [2] MANICHAEAN LETTER GIMEL..MANICHAEAN LETTER GHIMEL
+
+# Total code points: 2
+
+# ================================================
+
+10ACD         ; Manichaean_Heth # Lo       MANICHAEAN LETTER HETH
+
+# Total code points: 1
+
+# ================================================
+
+10AEF         ; Manichaean_Hundred # No       MANICHAEAN NUMBER ONE HUNDRED
+
+# Total code points: 1
+
+# ================================================
+
+10AD0..10AD2  ; Manichaean_Kaph # Lo   [3] MANICHAEAN LETTER KAPH..MANICHAEAN LETTER KHAPH
+
+# Total code points: 3
+
+# ================================================
+
+10AD3         ; Manichaean_Lamedh # Lo       MANICHAEAN LETTER LAMEDH
+
+# Total code points: 1
+
+# ================================================
+
+10AD6         ; Manichaean_Mem # Lo       MANICHAEAN LETTER MEM
+
+# Total code points: 1
+
+# ================================================
+
+10AD7         ; Manichaean_Nun # Lo       MANICHAEAN LETTER NUN
+
+# Total code points: 1
+
+# ================================================
+
+10AEB         ; Manichaean_One # No       MANICHAEAN NUMBER ONE
+
+# Total code points: 1
+
+# ================================================
+
+10ADB..10ADC  ; Manichaean_Pe # Lo   [2] MANICHAEAN LETTER PE..MANICHAEAN LETTER FE
+
+# Total code points: 2
+
+# ================================================
+
+10ADE..10AE0  ; Manichaean_Qoph # Lo   [3] MANICHAEAN LETTER QOPH..MANICHAEAN LETTER QHOPH
+
+# Total code points: 3
+
+# ================================================
+
+10AE1         ; Manichaean_Resh # Lo       MANICHAEAN LETTER RESH
+
+# Total code points: 1
+
+# ================================================
+
+10ADD         ; Manichaean_Sadhe # Lo       MANICHAEAN LETTER SADHE
+
+# Total code points: 1
+
+# ================================================
+
+10AD8         ; Manichaean_Samekh # Lo       MANICHAEAN LETTER SAMEKH
+
+# Total code points: 1
+
+# ================================================
+
+10AE4         ; Manichaean_Taw # Lo       MANICHAEAN LETTER TAW
+
+# Total code points: 1
+
+# ================================================
+
+10AED         ; Manichaean_Ten # No       MANICHAEAN NUMBER TEN
+
+# Total code points: 1
+
+# ================================================
+
+10ACE         ; Manichaean_Teth # Lo       MANICHAEAN LETTER TETH
+
+# Total code points: 1
+
+# ================================================
+
+10AD5         ; Manichaean_Thamedh # Lo       MANICHAEAN LETTER THAMEDH
+
+# Total code points: 1
+
+# ================================================
+
+10AEE         ; Manichaean_Twenty # No       MANICHAEAN NUMBER TWENTY
+
+# Total code points: 1
+
+# ================================================
+
+10AC7         ; Manichaean_Waw # Lo       MANICHAEAN LETTER WAW
+
+# Total code points: 1
+
+# ================================================
+
+10ACF         ; Manichaean_Yodh # Lo       MANICHAEAN LETTER YODH
+
+# Total code points: 1
+
+# ================================================
+
+10AC9..10ACA  ; Manichaean_Zayin # Lo   [2] MANICHAEAN LETTER ZAYIN..MANICHAEAN LETTER ZHAYIN
+
+# Total code points: 2
 
 # EOF

@@ -210,7 +210,7 @@ if ( $^O eq 'qnx' ) {
 }
 
 ### TEST 15
-### Set up some data to be transfered between the server and
+### Set up some data to be transferred between the server and
 ### the client. We'll use own source code ...
 #
 local @data;

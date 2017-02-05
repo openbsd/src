@@ -2,7 +2,7 @@ package autodie::test::au;
 use strict;
 use warnings;
 
-use base qw(autodie);
+use parent qw(autodie);
 
 use autodie::test::au::exception;
 

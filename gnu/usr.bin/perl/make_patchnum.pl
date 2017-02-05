@@ -100,7 +100,7 @@ sub backtick {
     } else {
         my $result= `$subcd $command`;
         $result="" if ! defined $result;
-        warn "$subcd $command: \$?=$?\n" if $?;
+        #warn "$subcd $command: \$?=$?\n" if $?;
         print "#> $subcd $command ->\n $result\n" if !$? and $opt_v;
         chomp $result;
         return $result;

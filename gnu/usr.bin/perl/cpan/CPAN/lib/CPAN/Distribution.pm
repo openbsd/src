@@ -4,12 +4,37 @@ package CPAN::Distribution;
 use strict;
 use Cwd qw(chdir);
 use CPAN::Distroprefs;
-use CPAN::Meta::Requirements 2;
 use CPAN::InfoObj;
 use File::Path ();
 @CPAN::Distribution::ISA = qw(CPAN::InfoObj);
 use vars qw($VERSION);
-$VERSION = "2.02_01";
+$VERSION = "2.04";
+
+# no prepare, because prepare is not a command on the shell command line
+# TODO: clear instance cache on reload
+my %instance;
+for my $method (qw(get make test install)) {
+    no strict 'refs';
+    for my $prefix (qw(pre post)) {
+        my $hookname = sprintf "%s_%s", $prefix, $method;
+        *$hookname = sub {
+            my($self) = @_;
+            for my $plugin (@{$CPAN::Config->{plugin_list}}) {
+                my($plugin_proper,$args) = split /=/, $plugin, 2;
+                $args = "" unless defined $args;
+                if ($CPAN::META->has_inst($plugin_proper)){
+                    my @args = split /,/, $args;
+                    $instance{$plugin} ||= $plugin_proper->new(@args);
+                    if ($instance{$plugin}->can($hookname)) {
+                        $instance{$plugin}->$hookname($self);
+                    }
+                } else {
+                    $CPAN::Frontend->mydie("Plugin '$plugin_proper' not found");
+                }
+            }
+        };
+    }
+}
 
 # Accessors
 sub cpan_comment {
@@ -180,6 +205,7 @@ sub color_cmd_tmps {
     return if exists $self->{incommandcolor}
         && $color==1
         && $self->{incommandcolor}==$color;
+    $CPAN::MAX_RECURSION||=0; # silence 'once' warnings
     if ($depth>=$CPAN::MAX_RECURSION) {
         die(CPAN::Exception::RecursiveDependency->new($ancestors));
     }
@@ -187,11 +213,10 @@ sub color_cmd_tmps {
     my $prereq_pm = $self->prereq_pm;
     if (defined $prereq_pm) {
         # XXX also optional_req & optional_breq? -- xdg, 2012-04-01
+        # A: no, optional deps may recurse -- ak, 2014-05-07
       PREREQ: for my $pre (
                 keys %{$prereq_pm->{requires}||{}},
                 keys %{$prereq_pm->{build_requires}||{}},
-                keys %{$prereq_pm->{opt_requires}||{}},
-                keys %{$prereq_pm->{opt_build_requires}||{}}
             ) {
             next PREREQ if $pre eq "perl";
             my $premo;
@@ -332,6 +357,8 @@ sub shortcut_get {
 sub get {
     my($self) = @_;
 
+    $self->pre_get();
+
     $self->debug("checking goto id[$self->{ID}]") if $CPAN::DEBUG;
     if (my $goto = $self->prefs->{goto}) {
         return $self->goto($goto);
@@ -379,6 +406,9 @@ sub get {
     }
     return unless $self->patch;
     $self->store_persistent_state;
+
+    $self->post_get();
+
     return 1; # success
 }
 
@@ -648,6 +678,11 @@ sub parse_meta_yml {
     }
     $self->debug(sprintf("yaml[%s]", $early_yaml || 'UNDEF')) if $CPAN::DEBUG;
     $self->debug($early_yaml) if $CPAN::DEBUG && $early_yaml;
+    if (!ref $early_yaml or ref $early_yaml ne "HASH"){
+        # fix rt.cpan.org #95271
+        $CPAN::Frontend->mywarn("The content of '$yaml' is not a HASH reference. Cannot use it.\n");
+        return {};
+    }
     return $early_yaml || undef;
 }
 
@@ -804,8 +839,16 @@ sub store_persistent_state {
                                     "will not store persistent state\n");
         return;
     }
-    unless (   Cwd::realpath(File::Spec->catdir($dir, File::Spec->updir()) )
-            eq Cwd::realpath($CPAN::Config->{build_dir}                  ) ) {
+    # self-build-dir
+    my $sbd = Cwd::realpath(
+        File::Spec->catdir($dir,                       File::Spec->updir ())
+                           );
+    # config-build-dir
+    my $cbd = Cwd::realpath(
+        # the catdir is a workaround for bug https://rt.cpan.org/Ticket/Display.html?id=101283
+        File::Spec->catdir($CPAN::Config->{build_dir}, File::Spec->curdir())
+    );
+    unless ($sbd eq $cbd) {
         $CPAN::Frontend->mywarnonce("Directory '$dir' not below $CPAN::Config->{build_dir}, ".
                                     "will not store persistent state\n");
         return;
@@ -1835,8 +1878,8 @@ sub prepare {
 
     $self->debug("Changed directory to $builddir") if $CPAN::DEBUG;
 
-    local $ENV{PERL_AUTOINSTALL} = $ENV{PERL_AUTOINSTALL};
-    local $ENV{PERL_EXTUTILS_AUTOINSTALL} = $ENV{PERL_EXTUTILS_AUTOINSTALL};
+    local $ENV{PERL_AUTOINSTALL} = $ENV{PERL_AUTOINSTALL} || '';
+    local $ENV{PERL_EXTUTILS_AUTOINSTALL} = $ENV{PERL_EXTUTILS_AUTOINSTALL} || '';
     $self->choose_MM_or_MB
         or return;
 
@@ -1856,8 +1899,8 @@ sub prepare {
     if ($self->prefs->{pl}) {
         $pl_commandline = $self->prefs->{pl}{commandline};
     }
-    local $ENV{PERL} = $ENV{PERL};
-    local $ENV{PERL5_CPAN_IS_EXECUTING} = $ENV{PERL5_CPAN_IS_EXECUTING};
+    local $ENV{PERL} = defined $ENV{PERL}? $ENV{PERL} : $^X;
+    local $ENV{PERL5_CPAN_IS_EXECUTING} = $ENV{PERL5_CPAN_IS_EXECUTING} || '';
     local $ENV{PERL_MM_USE_DEFAULT} = 1 if $CPAN::Config->{use_prompt_default};
     local $ENV{NONINTERACTIVE_TESTING} = 1 if $CPAN::Config->{use_prompt_default};
     if ($pl_commandline) {
@@ -2036,6 +2079,8 @@ sub shortcut_make {
 sub make {
     my($self) = @_;
 
+    $self->pre_make();
+
     $self->debug("checking goto id[$self->{ID}]") if $CPAN::DEBUG;
     if (my $goto = $self->prefs->{goto}) {
         return $self->goto($goto);
@@ -2119,10 +2164,10 @@ is part of the perl-%s distribution. To install that, you need to run
 
     my %env;
     while (my($k,$v) = each %ENV) {
-        next unless defined $v;
-        $env{$k} = $v;
+        next if defined $v;
+        $env{$k} = '';
     }
-    local %ENV = %env;
+    local @ENV{keys %env} = values %env;
     my $satisfied = eval { $self->satisfy_requires };
     return $self->goodbye($@) if $@;
     return unless $satisfied ;
@@ -2130,12 +2175,19 @@ is part of the perl-%s distribution. To install that, you need to run
         delete $self->{force_update};
         return;
     }
+
+    # need to chdir again, because $self->satisfy_requires might change the directory
+    unless (chdir $builddir) {
+        $CPAN::Frontend->mywarn("Couldn't chdir to '$builddir': $!");
+        return;
+    }
+
     my $system;
     my $make_commandline;
     if ($self->prefs->{make}) {
         $make_commandline = $self->prefs->{make}{commandline};
     }
-    local $ENV{PERL} = $ENV{PERL};
+    local $ENV{PERL} = defined $ENV{PERL}? $ENV{PERL} : $^X;
     local $ENV{PERL_MM_USE_DEFAULT} = 1 if $CPAN::Config->{use_prompt_default};
     local $ENV{NONINTERACTIVE_TESTING} = 1 if $CPAN::Config->{use_prompt_default};
     if ($make_commandline) {
@@ -2200,6 +2252,9 @@ is part of the perl-%s distribution. To install that, you need to run
         $CPAN::Frontend->mywarn("  $system -- NOT OK\n");
     }
     $self->store_persistent_state;
+
+    $self->post_make();
+
     return !! $system_ok;
 }
 
@@ -2733,6 +2788,8 @@ sub _feature_depends {
 sub prereqs_for_slot {
     my($self,$slot) = @_;
     my($prereq_pm);
+    $CPAN::META->has_usable("CPAN::Meta::Requirements")
+        or die "CPAN::Meta::Requirements not available";
     my $merged = CPAN::Meta::Requirements->new;
     my $prefs_depends = $self->prefs->{depends}||{};
     my $feature_depends = $self->_feature_depends();
@@ -2795,6 +2852,8 @@ sub unsat_prereq {
     my($self,$slot) = @_;
     my($merged_hash,$prereq_pm) = $self->prereqs_for_slot($slot);
     my(@need);
+    $CPAN::META->has_usable("CPAN::Meta::Requirements")
+        or die "CPAN::Meta::Requirements not available";
     my $merged = CPAN::Meta::Requirements->from_string_hash($merged_hash);
     my @merged = $merged->required_modules;
     CPAN->debug("all merged_prereqs[@merged]") if $CPAN::DEBUG;
@@ -3145,8 +3204,9 @@ sub prereq_pm {
         return;
     }
     # no Makefile/Build means configuration aborted, so don't look for prereqs
-    return unless   -f File::Spec->catfile($self->{build_dir},'Makefile')
-                ||  -f File::Spec->catfile($self->{build_dir},'Build');
+    my $makefile  = File::Spec->catfile($self->{build_dir}, $^O eq 'VMS' ? 'descrip.mms' : 'Makefile');
+    my $buildfile = File::Spec->catfile($self->{build_dir}, $^O eq 'VMS' ? 'Build.com' : 'Build');
+    return unless   -f $makefile || -f $buildfile;
     CPAN->debug(sprintf "writemakefile[%s]modulebuild[%s]",
                 $self->{writemakefile}||"",
                 $self->{modulebuild}||"",
@@ -3166,6 +3226,7 @@ sub prereq_pm {
 
         # XXX assemble optional_req && optional_breq from recommends/suggests
         # depending on corresponding policies -- xdg, 2012-04-01
+        CPAN->use_inst("CPAN::Meta::Requirements");
         my $opt_runtime = CPAN::Meta::Requirements->new;
         my $opt_build   = CPAN::Meta::Requirements->new;
         if ( $CPAN::Config->{recommends_policy} ) {
@@ -3413,6 +3474,8 @@ sub _exe_files {
 sub test {
     my($self) = @_;
 
+    $self->pre_test();
+
     $self->debug("checking goto id[$self->{ID}]") if $CPAN::DEBUG;
     if (my $goto = $self->prefs->{goto}) {
         return $self->goto($goto);
@@ -3590,6 +3653,8 @@ sub test {
                 $self->pretty_id));
     }
     $self->store_persistent_state;
+
+    $self->post_test();
 
     return $self->{force_update} ? 1 : !! $tests_ok;
 }
@@ -3815,6 +3880,8 @@ sub shortcut_install {
 sub install {
     my($self) = @_;
 
+    $self->pre_install();
+
     $self->debug("checking goto id[$self->{ID}]") if $CPAN::DEBUG;
     if (my $goto = $self->prefs->{goto}) {
         return $self->goto($goto);
@@ -3867,7 +3934,6 @@ sub install {
                           $install_directive,
                           $CPAN::Config->{mbuild_install_arg},
                          );
-        
     } else {
         my($make_install_make_command) = $self->_make_install_make_command();
         $system = sprintf("%s install %s",
@@ -3911,8 +3977,7 @@ sub install {
     local $ENV{PERL_MM_USE_DEFAULT} = 1 if $CPAN::Config->{use_prompt_default};
     local $ENV{NONINTERACTIVE_TESTING} = 1 if $CPAN::Config->{use_prompt_default};
 
-    my($pipe) = FileHandle->new("$system $stderr |") || Carp::croak
-("Can't execute $system: $!");
+    my($pipe) = FileHandle->new("$system $stderr |") || Carp::croak("Can't execute $system: $!");
     my($makeout) = "";
     while (<$pipe>) {
         print $_; # intentionally NOT use Frontend->myprint because it
@@ -3954,6 +4019,9 @@ sub install {
     }
     delete $self->{force_update};
     $self->store_persistent_state;
+
+    $self->post_install();
+
     return !! $close_ok;
 }
 

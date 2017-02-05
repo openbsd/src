@@ -88,10 +88,6 @@ ok( ! Foo->isa('Bar'), 'Foo is not a Bar');
 splice @Foo::ISA, 0, 0, 'Bar';
 ok( Foo->isa('Bar'), 'splice @ISA and make Foo a Bar');
 
-# Test undef first arg
-eval { no warnings 'experimental';splice( $new_arrayref, 0, 0, 1, 2, 3 ) };
-like($@, qr/Not an ARRAY/, 'undefined first argument to splice');
-
 # Test arrays with nonexistent elements (crashes when it fails)
 @a = ();
 $#a++;

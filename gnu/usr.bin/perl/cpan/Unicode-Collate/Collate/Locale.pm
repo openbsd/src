@@ -1,10 +1,11 @@
 package Unicode::Collate::Locale;
 
 use strict;
+use warnings;
 use Carp;
 use base qw(Unicode::Collate);
 
-our $VERSION = '1.02';
+our $VERSION = '1.14';
 
 my $PL_EXT  = '.pl';
 

@@ -1,17 +1,7 @@
 #!./perl
 
-BEGIN {
-    unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Config; import Config;
-	keys %Config; # Silence warning
-	if ($Config{extensions} !~ /\bList\/Util\b/) {
-	    print "1..0 # Skip: List::Util was not built\n";
-	    exit 0;
-	}
-    }
-}
+use strict;
+use warnings;
 
 use Scalar::Util ();
 use Test::More  (grep { /dualvar/ } @Scalar::Util::EXPORT_FAIL)
@@ -22,13 +12,14 @@ use Config;
 Scalar::Util->import('dualvar');
 Scalar::Util->import('isdual');
 
+my $var;
 $var = dualvar( 2.2,"string");
 
 ok( isdual($var),	'Is a dualvar');
 ok( $var == 2.2,	'Numeric value');
 ok( $var eq "string",	'String value');
 
-$var2 = $var;
+my $var2 = $var;
 
 ok( isdual($var2),	'Is a dualvar');
 ok( $var2 == 2.2,	'copy Numeric value');

@@ -2,10 +2,11 @@
  * Filename : Call.xs
  * 
  * Author   : Paul Marquess 
- * Date     : 2013-03-29 09:04:42 rurban
- * Version  : 1.49
+ * Date     : 2014-12-09 02:48:44 rurban
+ * Version  : 1.55
  *
  *    Copyright (c) 1995-2011 Paul Marquess. All rights reserved.
+ *    Copyright (c) 2011-2014 Reini Urban. All rights reserved.
  *       This program is free software; you can redistribute it and/or
  *              modify it under the same terms as Perl itself.
  *
@@ -60,7 +61,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 
     if (fdebug)
 	warn("**** In filter_call - maxlen = %d, out len buf = %" IVdf " idx = %d my_sv = %" IVdf " [%s]\n",
-		maxlen, SvCUR(buf_sv), idx, SvCUR(my_sv), SvPVX(my_sv) ) ;
+             maxlen, (IV)SvCUR(buf_sv), idx, (IV)SvCUR(my_sv), SvPVX(my_sv) ) ;
 
     while (1) {
 
@@ -97,7 +98,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 	            SvCUR_set(my_sv, n) ;
 	            if (fdebug)
 		        warn("recycle %d - leaving %d, returning %" IVdf " [%s]",
-				idx, n, SvCUR(buf_sv), SvPVX(buf_sv)) ;
+                             idx, n, (IV)SvCUR(buf_sv), SvPVX(buf_sv)) ;
 
 	            return SvCUR(buf_sv);
 	        }
@@ -130,19 +131,15 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 	    DEFSV_set(newSVpv("", 0)) ; 
 
     	    PUSHMARK(sp) ;
-
 	    if (CODE_REF(my_sv)) {
 	    /* if (SvROK(PERL_OBJECT(my_sv)) && SvTYPE(SvRV(PERL_OBJECT(my_sv))) == SVt_PVCV) { */
     	        count = perl_call_sv((SV*)PERL_OBJECT(my_sv), G_SCALAR);
 	    }
 	    else {
                 XPUSHs((SV*)PERL_OBJECT(my_sv)) ;  
-	
     	        PUTBACK ;
-
     	        count = perl_call_method("filter", G_SCALAR);
 	    }
-
     	    SPAGAIN ;
 
             if (count != 1)
@@ -153,7 +150,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 
 	    if (fdebug)
 	        warn("status = %d, length op buf = %" IVdf " [%s]\n",
-		     n, SvCUR(DEFSV), SvPVX(DEFSV) ) ;
+		     n, (IV)SvCUR(DEFSV), SvPVX(DEFSV) ) ;
 	    if (SvCUR(DEFSV))
 	        sv_setpvn(my_sv, SvPVX(DEFSV), SvCUR(DEFSV)) ; 
 
@@ -172,7 +169,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 
 	    if (fdebug) 
 	        warn ("filter_read %d returned %d , returning %" IVdf "\n", idx, n,
-		      (SvCUR(buf_sv)>0) ? SvCUR(buf_sv) : (STRLEN)n);
+		      (SvCUR(buf_sv)>0) ? (IV)SvCUR(buf_sv) : (IV)n);
 
 	    /* PERL_MODULE(my_sv) ; */
 	    /* PERL_OBJECT(my_sv) ; */
@@ -183,7 +180,7 @@ filter_call(pTHX_ int idx, SV *buf_sv, int maxlen)
 		return n ;
 
 	    /* return what we have so far else signal eof */
-	    return (SvCUR(buf_sv)>0) ? SvCUR(buf_sv) : n;
+	    return (SvCUR(buf_sv)>0) ? (int)SvCUR(buf_sv) : n;
 	}
 
     }
@@ -249,6 +246,7 @@ void
 unimport(package="$Package", ...)
     const char *package
     PPCODE:
+    PERL_UNUSED_VAR(package);
     filter_del(filter_call);
 
 

@@ -41,7 +41,6 @@
 STATIC bool
 S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
 {
-    dVAR;
     const struct mro_meta *const meta = HvMROMETA(stash);
     HV *isa = meta->isa;
     const HV *our_stash;
@@ -67,7 +66,7 @@ S_isa_lookup(pTHX_ HV *stash, const char * const name, STRLEN len, U32 flags)
     if (our_stash) {
 	HEK *canon_name = HvENAME_HEK(our_stash);
 	if (!canon_name) canon_name = HvNAME_HEK(our_stash);
-
+	assert(canon_name);
 	if (hv_common(isa, NULL, HEK_KEY(canon_name), HEK_LEN(canon_name),
 		      HEK_FLAGS(canon_name),
 		      HV_FETCH_ISEXISTS, NULL, HEK_HASH(canon_name))) {
@@ -147,7 +146,6 @@ Perl_sv_derived_from_pv(pTHX_ SV *sv, const char *const name, U32 flags)
 bool
 Perl_sv_derived_from_pvn(pTHX_ SV *sv, const char *const name, const STRLEN len, U32 flags)
 {
-    dVAR;
     HV *stash;
 
     PERL_ARGS_ASSERT_SV_DERIVED_FROM_PVN;
@@ -207,7 +205,7 @@ Perl_sv_does_sv(pTHX_ SV *sv, SV *namesv, U32 flags)
 	return FALSE;
     }
 
-    if (sv_isobject(sv)) {
+    if (SvROK(sv) && SvOBJECT(SvRV(sv))) {
 	classname = sv_ref(NULL,SvRV(sv),TRUE);
     } else {
 	classname = sv;
@@ -296,7 +294,8 @@ A specialised variant of C<croak()> for emitting the usage message for xsubs
 works out the package name and subroutine name from C<cv>, and then calls
 C<croak()>.  Hence if C<cv> is C<&ouch::awk>, it would call C<croak> as:
 
-    Perl_croak(aTHX_ "Usage: %"SVf"::%"SVf"(%s)", "ouch" "awk", "eee_yow");
+ Perl_croak(aTHX_ "Usage: %"SVf"::%"SVf"(%s)", "ouch" "awk",
+                                                     "eee_yow");
 
 =cut
 */
@@ -304,11 +303,12 @@ C<croak()>.  Hence if C<cv> is C<&ouch::awk>, it would call C<croak> as:
 void
 Perl_croak_xs_usage(const CV *const cv, const char *const params)
 {
-    const GV *const gv = CvGV(cv);
+    /* Avoid CvGV as it requires aTHX.  */
+    const GV *gv = CvNAMED(cv) ? NULL : cv->sv_any->xcv_gv_u.xcv_gv;
 
     PERL_ARGS_ASSERT_CROAK_XS_USAGE;
 
-    if (gv) {
+    if (gv) got_gv: {
 	const HV *const stash = GvSTASH(gv);
 
 	if (HvNAME_get(stash))
@@ -322,16 +322,18 @@ Perl_croak_xs_usage(const CV *const cv, const char *const params)
 	    Perl_croak_nocontext("Usage: %"HEKf"(%s)",
                                 HEKfARG(GvNAME_HEK(gv)), params);
     } else {
+        dTHX;
+        if ((gv = CvGV(cv))) goto got_gv;
+
 	/* Pants. I don't think that it should be possible to get here. */
 	/* diag_listed_as: SKIPME */
-	Perl_croak_nocontext("Usage: CODE(0x%"UVxf")(%s)", PTR2UV(cv), params);
+	Perl_croak(aTHX_ "Usage: CODE(0x%"UVxf")(%s)", PTR2UV(cv), params);
     }
 }
 
 XS(XS_UNIVERSAL_isa); /* prototype to pass -Wmissing-prototypes */
 XS(XS_UNIVERSAL_isa)
 {
-    dVAR;
     dXSARGS;
 
     if (items != 2)
@@ -352,7 +354,6 @@ XS(XS_UNIVERSAL_isa)
 XS(XS_UNIVERSAL_can); /* prototype to pass -Wmissing-prototypes */
 XS(XS_UNIVERSAL_can)
 {
-    dVAR;
     dXSARGS;
     SV   *sv;
     SV   *rv;
@@ -388,7 +389,7 @@ XS(XS_UNIVERSAL_can)
     else {
         pkg = gv_stashsv(sv, 0);
         if (!pkg)
-            pkg = gv_stashpv("UNIVERSAL", 0);
+            pkg = gv_stashpvs("UNIVERSAL", 0);
     }
 
     if (pkg) {
@@ -404,7 +405,6 @@ XS(XS_UNIVERSAL_can)
 XS(XS_UNIVERSAL_DOES); /* prototype to pass -Wmissing-prototypes */
 XS(XS_UNIVERSAL_DOES)
 {
-    dVAR;
     dXSARGS;
     PERL_UNUSED_ARG(cv);
 
@@ -422,7 +422,6 @@ XS(XS_UNIVERSAL_DOES)
 XS(XS_utf8_is_utf8); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_is_utf8)
 {
-     dVAR;
      dXSARGS;
      if (items != 1)
 	 croak_xs_usage(cv, "sv");
@@ -440,7 +439,6 @@ XS(XS_utf8_is_utf8)
 XS(XS_utf8_valid); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_valid)
 {
-     dVAR;
      dXSARGS;
      if (items != 1)
 	 croak_xs_usage(cv, "sv");
@@ -459,7 +457,6 @@ XS(XS_utf8_valid)
 XS(XS_utf8_encode); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_encode)
 {
-    dVAR;
     dXSARGS;
     if (items != 1)
 	croak_xs_usage(cv, "sv");
@@ -471,7 +468,6 @@ XS(XS_utf8_encode)
 XS(XS_utf8_decode); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_decode)
 {
-    dVAR;
     dXSARGS;
     if (items != 1)
 	croak_xs_usage(cv, "sv");
@@ -489,7 +485,6 @@ XS(XS_utf8_decode)
 XS(XS_utf8_upgrade); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_upgrade)
 {
-    dVAR;
     dXSARGS;
     if (items != 1)
 	croak_xs_usage(cv, "sv");
@@ -507,13 +502,12 @@ XS(XS_utf8_upgrade)
 XS(XS_utf8_downgrade); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_downgrade)
 {
-    dVAR;
     dXSARGS;
     if (items < 1 || items > 2)
 	croak_xs_usage(cv, "sv, failok=0");
     else {
 	SV * const sv = ST(0);
-        const bool failok = (items < 2) ? 0 : (int)SvIV(ST(1));
+        const bool failok = (items < 2) ? 0 : SvTRUE(ST(1)) ? 1 : 0;
         const bool RETVAL = sv_utf8_downgrade(sv, failok);
 
 	ST(0) = boolSV(RETVAL);
@@ -524,35 +518,32 @@ XS(XS_utf8_downgrade)
 XS(XS_utf8_native_to_unicode); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_native_to_unicode)
 {
- dVAR;
  dXSARGS;
  const UV uv = SvUV(ST(0));
 
  if (items > 1)
      croak_xs_usage(cv, "sv");
 
- ST(0) = sv_2mortal(newSViv(NATIVE_TO_UNI(uv)));
+ ST(0) = sv_2mortal(newSVuv(NATIVE_TO_UNI(uv)));
  XSRETURN(1);
 }
 
 XS(XS_utf8_unicode_to_native); /* prototype to pass -Wmissing-prototypes */
 XS(XS_utf8_unicode_to_native)
 {
- dVAR;
  dXSARGS;
  const UV uv = SvUV(ST(0));
 
  if (items > 1)
      croak_xs_usage(cv, "sv");
 
- ST(0) = sv_2mortal(newSViv(UNI_TO_NATIVE(uv)));
+ ST(0) = sv_2mortal(newSVuv(UNI_TO_NATIVE(uv)));
  XSRETURN(1);
 }
 
 XS(XS_Internals_SvREADONLY); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Internals_SvREADONLY)	/* This is dangerous stuff. */
 {
-    dVAR;
     dXSARGS;
     SV * const svz = ST(0);
     SV * sv;
@@ -572,15 +563,12 @@ XS(XS_Internals_SvREADONLY)	/* This is dangerous stuff. */
     }
     else if (items == 2) {
 	if (SvTRUE(ST(1))) {
-#ifdef PERL_OLD_COPY_ON_WRITE
-	    if (SvIsCOW(sv)) sv_force_normal(sv);
-#endif
-	    SvREADONLY_on(sv);
+	    SvFLAGS(sv) |= SVf_READONLY;
 	    XSRETURN_YES;
 	}
 	else {
 	    /* I hope you really know what you are doing. */
-	    SvREADONLY_off(sv);
+	    SvFLAGS(sv) &=~ SVf_READONLY;
 	    XSRETURN_NO;
 	}
     }
@@ -590,7 +578,6 @@ XS(XS_Internals_SvREADONLY)	/* This is dangerous stuff. */
 XS(XS_constant__make_const); /* prototype to pass -Wmissing-prototypes */
 XS(XS_constant__make_const)	/* This is dangerous stuff. */
 {
-    dVAR;
     dXSARGS;
     SV * const svz = ST(0);
     SV * sv;
@@ -602,9 +589,6 @@ XS(XS_constant__make_const)	/* This is dangerous stuff. */
 
     sv = SvRV(svz);
 
-#ifdef PERL_OLD_COPY_ON_WRITE
-    if (SvIsCOW(sv)) sv_force_normal(sv);
-#endif
     SvREADONLY_on(sv);
     if (SvTYPE(sv) == SVt_PVAV && AvFILLp(sv) != -1) {
 	/* for constant.pm; nobody else should be calling this
@@ -621,7 +605,6 @@ XS(XS_constant__make_const)	/* This is dangerous stuff. */
 XS(XS_Internals_SvREFCNT); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Internals_SvREFCNT)	/* This is dangerous stuff. */
 {
-    dVAR;
     dXSARGS;
     SV * const svz = ST(0);
     SV * sv;
@@ -647,7 +630,6 @@ XS(XS_Internals_SvREFCNT)	/* This is dangerous stuff. */
 XS(XS_Internals_hv_clear_placehold); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Internals_hv_clear_placehold)
 {
-    dVAR;
     dXSARGS;
 
     if (items != 1 || !SvROK(ST(0)))
@@ -662,7 +644,6 @@ XS(XS_Internals_hv_clear_placehold)
 XS(XS_PerlIO_get_layers); /* prototype to pass -Wmissing-prototypes */
 XS(XS_PerlIO_get_layers)
 {
-    dVAR;
     dXSARGS;
     if (items < 1 || items % 2 == 0)
 	croak_xs_usage(cv, "filehandle[,args]");
@@ -789,7 +770,6 @@ XS(XS_PerlIO_get_layers)
 XS(XS_re_is_regexp); /* prototype to pass -Wmissing-prototypes */
 XS(XS_re_is_regexp)
 {
-    dVAR; 
     dXSARGS;
     PERL_UNUSED_VAR(cv);
 
@@ -808,7 +788,6 @@ XS(XS_re_regnames_count)
 {
     REGEXP *rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
     SV * ret;
-    dVAR; 
     dXSARGS;
 
     if (items != 0)
@@ -830,7 +809,6 @@ XS(XS_re_regnames_count)
 XS(XS_re_regname); /* prototype to pass -Wmissing-prototypes */
 XS(XS_re_regname)
 {
-    dVAR;
     dXSARGS;
     REGEXP * rx;
     U32 flags;
@@ -863,7 +841,6 @@ XS(XS_re_regname)
 XS(XS_re_regnames); /* prototype to pass -Wmissing-prototypes */
 XS(XS_re_regnames)
 {
-    dVAR;
     dXSARGS;
     REGEXP * rx;
     U32 flags;
@@ -919,9 +896,9 @@ XS(XS_re_regnames)
 XS(XS_re_regexp_pattern); /* prototype to pass -Wmissing-prototypes */
 XS(XS_re_regexp_pattern)
 {
-    dVAR;
     dXSARGS;
     REGEXP *re;
+    U8 const gimme = GIMME_V;
 
     EXTEND(SP, 2);
     SP -= items;
@@ -944,7 +921,7 @@ XS(XS_re_regexp_pattern)
         /* Houston, we have a regex! */
         SV *pattern;
 
-        if ( GIMME_V == G_ARRAY ) {
+        if ( gimme == G_ARRAY ) {
 	    STRLEN left = 0;
 	    char reflags[sizeof(INT_PAT_MODS) + MAX_CHARSET_NAME_LENGTH];
             const char *fptr;
@@ -984,7 +961,7 @@ XS(XS_re_regexp_pattern)
             XSRETURN(2);
         } else {
             /* Scalar, so use the string that Perl would return */
-            /* return the pattern in (?msix:..) format */
+            /* return the pattern in (?msixn:..) format */
 #if PERL_VERSION >= 11
             pattern = sv_2mortal(newSVsv(MUTABLE_SV(re)));
 #else
@@ -996,9 +973,9 @@ XS(XS_re_regexp_pattern)
         }
     } else {
         /* It ain't a regexp folks */
-        if ( GIMME_V == G_ARRAY ) {
+        if ( gimme == G_ARRAY ) {
             /* return the empty list */
-            XSRETURN_UNDEF;
+            XSRETURN_EMPTY;
         } else {
             /* Because of the (?:..) wrapping involved in a
                stringified pattern it is impossible to get a
@@ -1014,7 +991,7 @@ XS(XS_re_regexp_pattern)
             XSRETURN_NO;
         }
     }
-    /* NOT-REACHED */
+    NOT_REACHED; /* NOTREACHED */
 }
 
 #include "vutil.h"
@@ -1053,10 +1030,58 @@ static const struct xsub_details details[] = {
     {"re::regexp_pattern", XS_re_regexp_pattern, "$"},
 };
 
+STATIC OP*
+optimize_out_native_convert_function(pTHX_ OP* entersubop,
+                                           GV* namegv,
+                                           SV* protosv)
+{
+    /* Optimizes out an identity function, i.e., one that just returns its
+     * argument.  The passed in function is assumed to be an identity function,
+     * with no checking.  This is designed to be called for utf8_to_native()
+     * and native_to_utf8() on ASCII platforms, as they just return their
+     * arguments, but it could work on any such function.
+     *
+     * The code is mostly just cargo-culted from Memoize::Lift */
+
+    OP *pushop, *argop;
+    OP *parent;
+    SV* prototype = newSVpvs("$");
+
+    PERL_UNUSED_ARG(protosv);
+
+    assert(entersubop->op_type == OP_ENTERSUB);
+
+    entersubop = ck_entersub_args_proto(entersubop, namegv, prototype);
+    parent = entersubop;
+
+    SvREFCNT_dec(prototype);
+
+    pushop = cUNOPx(entersubop)->op_first;
+    if (! OpHAS_SIBLING(pushop)) {
+        parent = pushop;
+        pushop = cUNOPx(pushop)->op_first;
+    }
+    argop = OpSIBLING(pushop);
+
+    /* Carry on without doing the optimization if it is not something we're
+     * expecting, so continues to work */
+    if (   ! argop
+        || ! OpHAS_SIBLING(argop)
+        ||   OpHAS_SIBLING(OpSIBLING(argop))
+    ) {
+        return entersubop;
+    }
+
+    /* cut argop from the subtree */
+    (void)op_sibling_splice(parent, pushop, 1, NULL);
+
+    op_free(entersubop);
+    return argop;
+}
+
 void
 Perl_boot_core_UNIVERSAL(pTHX)
 {
-    dVAR;
     static const char file[] = __FILE__;
     const struct xsub_details *xsub = details;
     const struct xsub_details *end = C_ARRAY_END(details);
@@ -1065,22 +1090,34 @@ Perl_boot_core_UNIVERSAL(pTHX)
 	newXS_flags(xsub->name, xsub->xsub, file, xsub->proto, 0);
     } while (++xsub < end);
 
+#ifndef EBCDIC
+    { /* On ASCII platforms these functions just return their argument, so can
+         be optimized away */
+
+        CV* to_native_cv = get_cv("utf8::unicode_to_native", 0);
+        CV* to_unicode_cv = get_cv("utf8::native_to_unicode", 0);
+
+        cv_set_call_checker(to_native_cv,
+                            optimize_out_native_convert_function,
+                            (SV*) to_native_cv);
+        cv_set_call_checker(to_unicode_cv,
+                            optimize_out_native_convert_function,
+                            (SV*) to_unicode_cv);
+    }
+#endif
+
     /* Providing a Regexp::DESTROY fixes #21347. See test in t/op/ref.t  */
     {
 	CV * const cv =
 	    newCONSTSUB(get_hv("Regexp::", GV_ADD), "DESTROY", NULL);
-	Safefree(CvFILE(cv));
-	CvFILE(cv) = (char *)file;
+	char ** cvfile = &CvFILE(cv);
+	char * oldfile = *cvfile;
 	CvDYNFILE_off(cv);
+	*cvfile = (char *)file;
+	Safefree(oldfile);
     }
 }
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

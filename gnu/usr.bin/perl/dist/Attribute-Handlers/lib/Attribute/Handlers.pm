@@ -4,7 +4,7 @@ use Carp;
 use warnings;
 use strict;
 use vars qw($VERSION $AUTOLOAD);
-$VERSION = '0.96'; # remember to update version in POD!
+$VERSION = '0.99'; # remember to update version in POD!
 # $DB::single=1;
 
 my %symcache;
@@ -13,12 +13,16 @@ sub findsym {
 	return $symcache{$pkg,$ref} if $symcache{$pkg,$ref};
 	$type ||= ref($ref);
 	no strict 'refs';
-        foreach my $sym ( values %{$pkg."::"} ) {
+	my $symtab = \%{$pkg."::"};
+	for ( keys %$symtab ) { for my $sym ( $$symtab{$_} ) {
+	    if (ref $sym && $sym == $ref) {
+		return $symcache{$pkg,$ref} = \*{"$pkg:\:$_"};
+	    }
 	    use strict;
 	    next unless ref ( \$sym ) eq 'GLOB';
             return $symcache{$pkg,$ref} = \$sym
 		if *{$sym}{$type} && *{$sym}{$type} == $ref;
-	}
+	}}
 }
 
 my %validtype = (
@@ -266,7 +270,7 @@ Attribute::Handlers - Simpler definition of attribute handlers
 
 =head1 VERSION
 
-This document describes version 0.96 of Attribute::Handlers.
+This document describes version 0.99 of Attribute::Handlers.
 
 =head1 SYNOPSIS
 

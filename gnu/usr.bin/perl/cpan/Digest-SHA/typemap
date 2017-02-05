@@ -1,2 +1,7 @@
-SHA *						T_PTROBJ
-HMAC *						T_PTROBJ
+TYPEMAP
+SHA *		T_SHA
+PerlIO *	T_IN
+
+INPUT
+T_SHA
+	$var = getSHA(aTHX_ $arg)

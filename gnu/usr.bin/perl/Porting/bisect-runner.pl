@@ -4,6 +4,8 @@ use strict;
 use Getopt::Long qw(:config bundling no_auto_abbrev);
 use Pod::Usage;
 use Config;
+use File::Temp qw(tempdir);
+use File::Spec;
 
 my @targets
     = qw(none config.sh config.h miniperl lib/Config.pm Fcntl perl test_prep);
@@ -53,7 +55,7 @@ push @paths, qw(/usr/local/lib /lib /usr/lib)
         unless $linux64;
 
 unless(GetOptions(\%options,
-                  'target=s', 'make=s', 'jobs|j=i', 'expect-pass=i',
+                  'target=s', 'make=s', 'jobs|j=i', 'crash', 'expect-pass=i',
                   'expect-fail' => sub { $options{'expect-pass'} = 0; },
                   'clean!', 'one-liner|e=s@', 'c', 'l', 'w', 'match=s',
                   'no-match=s' => sub {
@@ -64,6 +66,7 @@ unless(GetOptions(\%options,
                   'test-build', 'validate',
                   'all-fixups', 'early-fixup=s@', 'late-fixup=s@', 'valgrind',
                   'check-args', 'check-shebang!', 'usage|help|?', 'gold=s',
+                  'module=s', 'with-module=s', 'cpan-config-dir=s',
                   'A=s@',
                   'D=s@' => sub {
                       my (undef, $val) = @_;
@@ -100,7 +103,7 @@ if (defined $target && $target =~ /\.t\z/) {
         die_255("$0: Test-case targets can't be run with --$_")
             if $options{$_};
     }
-    die_255("$0: Test-case targets can't be combined with an explict test")
+    die_255("$0: Test-case targets can't be combined with an explicit test")
         if @ARGV;
 
     # Needing this unless is a smell suggesting that this implementation of
@@ -124,7 +127,7 @@ if (defined $target && $target =~ /\.t\z/) {
 }
 
 pod2usage(exitval => 255, verbose => 1)
-    unless @ARGV || $match || $options{'test-build'} || defined $options{'one-liner'};
+    unless @ARGV || $match || $options{'test-build'} || defined $options{'one-liner'} || defined $options{module};
 pod2usage(exitval => 255, verbose => 1)
     if !$options{'one-liner'} && ($options{l} || $options{w});
 
@@ -139,25 +142,33 @@ bisect.pl - use git bisect to pinpoint changes
 
 =head1 SYNOPSIS
 
-    # When did this become an error?
-    .../Porting/bisect.pl -e 'my $a := 2;'
-    # When did this stop being an error?
-    .../Porting/bisect.pl --expect-fail -e '1 // 2'
-    # When did this test start failing?
-    .../Porting/bisect.pl --target t/op/sort.t
-    # When were all lines matching this pattern removed from all files?
-    .../Porting/bisect.pl --match '\b(?:PL_)hash_seed_set\b'
-    # When was some line matching this pattern added to some file?
-    .../Porting/bisect.pl --expect-fail --match '\buseithreads\b'
-    # When did this test program stop exiting 0?
-    .../Porting/bisect.pl -- ./perl -Ilib ../test_prog.pl
-    # When did this first become valid syntax?
-    .../Porting/bisect.pl --target=miniperl --end=v5.10.0 \
-         --expect-fail -e 'my $a := 2;'
-    # What was the last revision to build with these options?
-    .../Porting/bisect.pl --test-build -Dd_dosuid
-    # When did this test program start generating errors from valgrind?
-    .../Porting/bisect.pl --valgrind ../test_prog.pl
+ # When did this become an error?
+ .../Porting/bisect.pl -e 'my $a := 2;'
+ # When did this stop being an error?
+ .../Porting/bisect.pl --expect-fail -e '1 // 2'
+ # When did this test start failing?
+ .../Porting/bisect.pl --target t/op/sort.t
+ # When were all lines matching this pattern removed from all files?
+ .../Porting/bisect.pl --match '\b(?:PL_)hash_seed_set\b'
+ # When was some line matching this pattern added to some file?
+ .../Porting/bisect.pl --expect-fail --match '\buseithreads\b'
+ # When did this test program stop exiting 0?
+ .../Porting/bisect.pl -- ./perl -Ilib ../test_prog.pl
+ # When did this test program start crashing (any signal or coredump)?
+ .../Porting/bisect.pl --crash -- ./perl -Ilib ../test_prog.pl
+ # When did this first become valid syntax?
+ .../Porting/bisect.pl --target=miniperl --end=v5.10.0 \
+      --expect-fail -e 'my $a := 2;'
+ # What was the last revision to build with these options?
+ .../Porting/bisect.pl --test-build -Dd_dosuid
+ # When did this test program start generating errors from valgrind?
+ .../Porting/bisect.pl --valgrind ../test_prog.pl
+ # When did these cpan modules start failing to compile/pass tests?
+ .../Porting/bisect.pl --module=autobox,Moose
+ # When did this code stop working in blead with these modules?
+ .../Porting/bisect.pl --with-module=Moose,Moo -e 'use Moose; 1;'
+ # Like the above 2 but with custom CPAN::MyConfig
+ .../Porting/bisect.pl --module=Moo --cpan-config-dir=/home/blah/custom/
 
 =head1 DESCRIPTION
 
@@ -397,6 +408,13 @@ revision. The bisect run will find the first commit where it passes.
 
 =item *
 
+--crash
+
+Treat any non-crash as success, any crash as failure. (Crashing defined
+as exiting with a signal or a core dump.)
+
+=item *
+
 -D I<config_arg=value>
 
 =item *
@@ -530,6 +548,70 @@ even link.
 
 =item *
 
+--module module1,module2,...
+
+Install this (or these) module(s), die when it (the last of those)
+cannot be updated to the current version.
+
+Misnomer. the argument can be any argument that can be passed to CPAN
+shell's install command. B<But>: since we only have the uptodate
+command to verify that an install has taken place, we are unable to
+determine success for arguments like
+MSCHWERN/Test-Simple-1.005000_005.tar.gz.
+
+In so far, it is not such a misnomer.
+
+Note that this and I<--with-module> will both require a C<CPAN::MyConfig>.
+If F<$ENV{HOME}/.cpan/CPAN/MyConfig.pm> does not exist, a CPAN shell will
+be started up for you so you can configure one. Feel free to let
+CPAN pick defaults for you. Enter 'quit' when you are done, and
+then everything should be all set. Alternatively, you may
+specify a custom C<CPAN::MyConfig> by using I<--cpan-config-dir>.
+
+Also, if you want to bisect a module that needs a display (like
+TK) and you don't want random screens appearing and disappearing
+on your computer while you're working, you can do something like
+this:
+
+In a terminal:
+
+ $ while true; do date ; if ! ps auxww | grep -v grep \
+   | grep -q Xvfb; then Xvfb :121 & fi; echo -n 'sleeping 60 '; \
+   sleep 60; done
+
+And then:
+
+  DISPLAY=":121" .../Porting/bisect.pl --module=TK
+
+(Some display alternatives are vncserver and Xnest.)
+
+=item *
+
+--with-module module1,module2,...
+
+Like I<--module> above, except this simply installs the requested
+modules and they can then be used in other tests.
+
+For example:
+
+  .../Porting/bisect.pl --with-module=Moose -e 'use Moose; ...'
+
+=item *
+
+--cpan-config-dir /home/blah/custom
+
+If defined, this will cause L<CPAN> to look for F<CPAN/MyConfig.pm> inside of
+the specified directory, instead of using the default config of
+F<$ENV{HOME}/.cpan/>.
+
+If no default config exists, a L<CPAN> shell will be fired up for you to
+configure things. Letting L<CPAN> automatically configure things for you
+should work well enough. You probably want to choose I<manual> instead of
+I<local::lib> if it asks. When you're finished with configuration, just
+type I<q> and hit I<ENTER> and the bisect should continue.
+
+=item *
+
 --force-manifest
 
 By default, a build will "skip" if any files listed in F<MANIFEST> are not
@@ -582,7 +664,7 @@ F<Configure> is run, and C<C> and C<XS> code isn't patched until after
 F<miniperl> is built. If C<--all-fixups> is specified, all the fixups are
 done before running C<Configure>. In rare cases adding this may cause a
 bisect to abort, because an inapplicable patch or other fixup is attempted
-for a revision which would usually have already I<skip>ed. If this happens,
+for a revision which would usually have already I<skip>ped. If this happens,
 please report it as a bug, giving the OS and problem revision.
 
 =item *
@@ -624,7 +706,7 @@ file is fed to C<patch -p1> on standard input. For C<=~>, the patch is
 applied if no lines match the pattern.
 
 As the empty pattern in Perl is a special case (it matches the most recent
-sucessful match) which is not useful here, an the treatment of empty pattern
+successful match) which is not useful here, the treatment of an empty pattern
 is special-cased. C<I<filename> =~ //> applies the patch if filename is
 present. C<I<filename> !~ //> applies the patch if filename missing. This
 makes it easy to unconditionally apply patches to files, and to use a patch
@@ -1137,6 +1219,7 @@ sub run_report_and_exit {
     my $ret = run_with_options({setprgp => $options{setpgrp},
                                 timeout => $options{timeout},
                                }, @_);
+    $ret &= 0xff if $options{crash};
     report_and_exit(!$ret, 'zero exit from', 'non-zero exit from', "@_");
 }
 
@@ -1166,7 +1249,7 @@ sub match_and_exit {
         while (<$fh>) {
             if ($_ =~ $re) {
                 ++$matches;
-                if (tr/\t\r\n -~\200-\377//c) {
+                if (/[^[:^cntrl:]\h\v]/a) { # Matches non-spacing non-C1 controls
                     print "Binary file $file matches\n";
                 } else {
                     $_ .= "\n" unless /\n\z/;
@@ -1295,6 +1378,16 @@ foreach my $key (sort keys %defines) {
 }
 push @ARGS, map {"-A$_"} @{$options{A}};
 
+my $prefix;
+
+# Testing a module? We need to install perl/cpan modules to a temp dir
+if ($options{module} || $options{'with-module'}) {
+  $prefix = tempdir(CLEANUP => 1);
+
+  push @ARGS, "-Dprefix=$prefix";
+  push @ARGS, "-Uversiononly", "-Dinstallusrbinperl=n";
+}
+
 # If a file in MANIFEST is missing, Configure asks if you want to
 # continue (the default being 'n'). With stdin closed or /dev/null,
 # it exits immediately and the check for config.sh below will skip.
@@ -1368,6 +1461,62 @@ if ($target ne 'miniperl') {
     }
 
     system "$options{make} $j $real_target </dev/null";
+}
+
+# Testing a cpan module? See if it will install
+if ($options{module} || $options{'with-module'}) {
+  # First we need to install this perl somewhere
+  system_or_die('./installperl');
+
+  my @m = split(',', $options{module} || $options{'with-module'});
+
+  my $bdir = File::Temp::tempdir(
+    CLEANUP => 1,
+  ) or die $!;
+
+  # Don't ever stop to ask the user for input
+  $ENV{AUTOMATED_TESTING} = 1;
+  $ENV{PERL_MM_USE_DEFAULT} = 1;
+
+  # Don't let these interfere with our cpan installs
+  delete $ENV{PERL_MB_OPT};
+  delete $ENV{PERL_MM_OPT};
+
+  # Make sure we load up our CPAN::MyConfig and then
+  # override the build_dir so we have a fresh one
+  # every build
+  my $cdir = $options{'cpan-config-dir'}
+          || File::Spec->catfile($ENV{HOME},".cpan");
+
+  my @cpanshell = (
+    "$prefix/bin/perl",
+    "-I", "$cdir",
+    "-MCPAN::MyConfig",
+    "-MCPAN",
+    "-e","\$CPAN::Config->{build_dir}=q{$bdir};",
+    "-e",
+  );
+
+  for (@m) {
+    s/-/::/g if /-/ and !m|/|;
+  }
+  my $install = join ",", map { "'$_'" } @m;
+  my $last = $m[-1];
+  my $shellcmd = "install($install); die unless CPAN::Shell->expand(Module => '$last')->uptodate;";
+
+  if ($options{module}) {
+    run_report_and_exit(@cpanshell, $shellcmd);
+  } else {
+    my $ret = run_with_options({setprgp => $options{setpgrp},
+                                timeout => $options{timeout},
+                               }, @cpanshell, $shellcmd);
+    $ret &= 0xff if $options{crash};
+
+    # Failed? Give up
+    if ($ret) {
+      report_and_exit(!$ret, 'zero exit from', 'non-zero exit from', "@_");
+    }
+  }
 }
 
 my $expected_file_found = $expected_file =~ /perl$/
@@ -3485,9 +3634,4 @@ sub apply_fixups {
     }
 }
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

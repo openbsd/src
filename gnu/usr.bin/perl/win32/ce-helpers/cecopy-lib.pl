@@ -197,7 +197,6 @@ sub BEGIN {
     ExtUtils/Command/MM.pm
     Exporter/Heavy.pm
     Devel/SelfStubber.pm
-    Class/ISA.pm
     Class/Struct.pm
     Carp/Heavy.pm
     Attribute/Handlers.pm

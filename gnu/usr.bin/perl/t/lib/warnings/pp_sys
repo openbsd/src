@@ -576,10 +576,15 @@ getpeername() on unopened socket FOO at - line 64.
 # pp_sys.c [pp_stat]
 use warnings 'newline' ;
 stat "abc\ndef";
+stat "abcdef\n";
+stat "abcdef\n\0";
 no warnings 'newline' ;
 stat "abc\ndef";
+stat "abcdef\n";
+stat "abcdef\n\0";
 EXPECT
-Unsuccessful stat on filename containing newline at - line 3.
+Unsuccessful stat on filename containing newline at - line 4.
+Unsuccessful stat on filename containing newline at - line 5.
 ########
 # pp_sys.c [pp_fttext]
 use warnings qw(unopened closed) ;
@@ -607,10 +612,15 @@ stat() on unopened filehandle foo at - line 9.
 # pp_sys.c [pp_fttext]
 use warnings 'newline' ;
 -T "abc\ndef" ;
+-T "abcdef\n" ;
+-T "abcdef\n\0" ;
 no warnings 'newline' ;
 -T "abc\ndef" ;
+-T "abcdef\n" ;
+-T "abcdef\n\0" ;
 EXPECT
-Unsuccessful open on filename containing newline at - line 3.
+Unsuccessful open on filename containing newline at - line 4.
+Unsuccessful open on filename containing newline at - line 5.
 ########
 # pp_sys.c [pp_sysread]
 use warnings 'io' ;
@@ -623,6 +633,7 @@ EOM
 }
 my $file = "./xcv" ;
 open(F, ">$file") ; 
+binmode F;
 my $a = sysread(F, $a,10) ;
 no warnings 'io' ;
 my $a = sysread(F, $a,10) ;
@@ -634,11 +645,11 @@ sysread(NONEXISTENT, $a, 10);
 read(NONEXISTENT, $a, 10);
 unlink $file ;
 EXPECT
-Filehandle F opened only for output at - line 12.
-sysread() on closed filehandle F at - line 17.
-read() on closed filehandle F at - line 18.
-sysread() on unopened filehandle NONEXISTENT at - line 19.
-read() on unopened filehandle NONEXISTENT at - line 20.
+Filehandle F opened only for output at - line 13.
+sysread() on closed filehandle F at - line 18.
+read() on closed filehandle F at - line 19.
+sysread() on unopened filehandle NONEXISTENT at - line 20.
+read() on unopened filehandle NONEXISTENT at - line 21.
 ########
 # pp_sys.c [pp_binmode]
 use warnings 'unopened' ;
@@ -898,14 +909,8 @@ seekdir() attempted on invalid dirhandle $ｆｏｏ at - line 21.
 rewinddir() attempted on invalid dirhandle $ｆｏｏ at - line 22.
 closedir() attempted on invalid dirhandle $ｆｏｏ at - line 23.
 ########
+
 # pp_sys.c [pp_gmtime]
-BEGIN {
-    print <<EOM;
-SKIPPED
-# NaN values not produced consistently in 5.20.x
-EOM
-    exit;
-}
 gmtime("NaN");
 localtime("NaN");
 use warnings "overflow";
@@ -917,3 +922,43 @@ gmtime(NaN) too large at - line 6.
 gmtime(NaN) failed at - line 6.
 localtime(NaN) too large at - line 7.
 localtime(NaN) failed at - line 7.
+
+########
+# pp_sys.c [pp_alarm]
+alarm(-1);
+no warnings "misc";
+alarm(-1);
+
+EXPECT
+alarm() with negative argument at - line 2.
+
+########
+# pp_sys.c [pp_sleep]
+sleep(-1);
+no warnings "misc";
+sleep(-1);
+
+EXPECT
+sleep() with negative argument at - line 2.
+########
+# NAME sysread() deprecated on :utf8
+use warnings 'deprecated';
+open my $fh, "<:raw", "../harness" or die "# $!";
+my $buf;
+sysread $fh, $buf, 10;
+binmode $fh, ':utf8';
+sysread $fh, $buf, 10;
+EXPECT
+sysread() is deprecated on :utf8 handles at - line 6.
+########
+# NAME syswrite() deprecated on :utf8
+my $file = "syswwarn.tmp";
+use warnings 'deprecated';
+open my $fh, ">:raw", $file or die "# $!";
+syswrite $fh, 'ABC';
+binmode $fh, ':utf8';
+syswrite $fh, 'ABC';
+close $fh;
+unlink $file;
+EXPECT
+syswrite() is deprecated on :utf8 handles at - line 6.

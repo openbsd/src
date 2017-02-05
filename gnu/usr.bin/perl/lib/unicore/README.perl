@@ -1,12 +1,12 @@
-# Perl should compile and reasonably run any version of Unicode.  That doesn't
-# mean that the test suite will run without showing errors.  A few of the
-# very-Unicode specific test files have been modified to account for different
-# versions, but most have not.  For example, some tests use characters that
-# aren't encoded in all Unicode versions; others have hard-coded the General
-# Categories that were correct at the time the test was written.  Perl itself
-# will not compile under Unicode releases prior to 3.0 without a simple change to
-# Unicode::Normalize.  mktables contains instructions for this, as well as other
-# hints for using older Unicode versions.
+# The goal is for perl to compile and reasonably run any version of Unicode.
+# Working reasonably well doesn't mean that the test suite will run without
+# showing errors.  A few of the very-Unicode specific test files have been
+# modified to account for different versions, but most have not.  For example,
+# some tests use characters that aren't encoded in all Unicode versions; others
+# have hard-coded the General Categories for a code point that were correct at
+# the time the test was written.  Perl itself will not compile under Unicode
+# releases prior to 3.0 without a simple change to Unicode::Normalize.
+# mktables contains instructions for this.
 
 # The *.txt files were copied from
 
@@ -14,14 +14,20 @@
 
 # (which always points to the latest version) with subdirectories 'extracted' and
 # 'auxiliary'.  Older versions are located under Public with an appropriate name.
+# They are also available via http at www.unicode.org/versions/
+#
 
 # The Unihan files were not included due to space considerations.  Also NOT
-# included were any *.html files.  It is possible to add the Unihan files, and
-# edit mktables (see instructions near its beginning) to look at them.
+# included were any *.html files.  It is possible to add the Unihan files and
+# have some properties from them automatically compiled.  By editing mktables
+# (see instructions near its beginning) you can add other Unihan properties.
 
 # The file named 'version' should exist and be a single line with the Unicode
 # version, like:
+#
 # 5.2.0
+#
+# (without the initial '# ')
 
 # To be 8.3 filesystem friendly, the names of some of the input files have been
 # changed from the values that are in the Unicode DB.  Not all of the Test
@@ -55,6 +61,8 @@ mv extracted/DerivedJoiningType.txt extracted/DJoinType.txt
 mv extracted/DerivedLineBreak.txt extracted/DLineBreak.txt
 mv extracted/DerivedNumericType.txt extracted/DNumType.txt
 mv extracted/DerivedNumericValues.txt extracted/DNumValues.txt
+rmdir extracted 2>/dev/null     # Will fail if non-empty, but if it is empty
+                                # was an early release that didn't have it.
 
 mv auxiliary/GraphemeBreakTest.txt auxiliary/GCBTest.txt
 mv auxiliary/LineBreakTest.txt auxiliary/LBTest.txt
@@ -78,14 +86,31 @@ mv Unihan_Variants.txt UnihanVariants.txt
 # filesystems.
 
 # mktables is used to generate the tables used by the rest of Perl.  It will
-# warn you about any *.txt files in the directory substructure that it doesn't
-# know about.  You should remove any so-identified, or edit mktables to add
-# them to its lists to process.  You can run
+# warn you about any *.txt and *.html files in the directory substructure that
+# it doesn't know about.  You should remove any so-identified, or edit mktables
+# to add them to its lists to process.  You can run
 #
 #    mktables -globlist
 #
-#to have it try to process these tables generically.
+# to have it try to process these tables generically.
+
+# COMPILING ON OLDER UNICODE VERSIONS
 #
+# To compile perl for use with an older Unicode release, delete everything in
+# the lib/unicore directory except mktables and Makefile.  Then download the
+# Unicode-supplied files for the desired version to that directory  (A url for
+# these is given earlier in this file).  Then create the 'version' file with a
+# single line, like '6.1.0'.  Do a 'make test' from the project level.  You
+# will get some porting errors for needing to regen.  Regenerate what it tells
+# you are needed, and make test again.  If you compile an old enough version,
+# you will also have to download a few files from later Unicode versions,
+# following the instructions that will be given if warranted.  It should
+# compile in any release without warnings, except for some casing conflicts
+# in Unicode 2.1.8, and some extraneous files will show up in very early
+# releases of the form qr/diff.*\.txt/.  If you add Unihan.txt, one line is in error in
+#
+# Other glitches are noted in mktables under 'UNICODE VERSIONS NOTES'
+
 # FOR PUMPKINS
 #
 # The files are inter-related.  If you take the latest UnicodeData.txt, for

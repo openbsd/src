@@ -7,7 +7,7 @@ use strict;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5001_01";
+$VERSION = "5.5002";
 
 BEGIN {
     # alarm() is not implemented in perl 5.6.x and earlier under Windows
@@ -543,9 +543,18 @@ sub uptodate {
 # returns true if installed in privlib or archlib
 sub _in_priv_or_arch {
     my($self,$inst_file) = @_;
-    for my $confdirname (qw(archlibexp privlibexp)) {
-        my $confdir = $Config::Config{$confdirname};
-        if ($confdir eq substr($inst_file,0,length($confdir))) {
+    foreach my $pair (
+        [qw(sitearchexp archlibexp)],
+        [qw(sitelibexp privlibexp)]
+    ) {
+        my ($site, $priv) = @Config::Config{@$pair};
+        if ($^O eq 'VMS') {
+            for my $d ($site, $priv) { $d = VMS::Filespec::unixify($d) };
+        }
+        s!/*$!!g foreach $site, $priv;
+        next if $site eq $priv;
+
+        if ($priv eq substr($inst_file,0,length($priv))) {
             return 1;
         }
     }

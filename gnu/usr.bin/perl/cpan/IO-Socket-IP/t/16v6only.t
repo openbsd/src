@@ -14,6 +14,10 @@ eval { IO::Socket::IP->new( LocalHost => "::1" ) } or
 eval { defined IPV6_V6ONLY } or
    plan skip_all => "IPV6_V6ONLY not available";
 
+# https://rt.cpan.org/Ticket/Display.html?id=102662
+$^O eq "irix" and
+   plan skip_all => "$^O: IPV6_V6ONLY exists but getnameinfo() fails with EAI_NONAME";
+
 # Don't be locale-sensitive
 $! = Errno::ECONNREFUSED;
 my $ECONNREFUSED_STR = "$!";
@@ -25,6 +29,7 @@ my $ECONNREFUSED_STR = "$!";
       LocalPort => 0,
       Type      => SOCK_STREAM,
       V6Only    => 1,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    ) or die "Cannot listen on PF_INET6 - $@";
 
    is( $listensock->getsockopt( IPPROTO_IPV6, IPV6_V6ONLY ), 1, 'IPV6_V6ONLY is 1 on $listensock' );
@@ -34,6 +39,7 @@ my $ECONNREFUSED_STR = "$!";
       PeerHost => "127.0.0.1",
       PeerPort => $listensock->sockport,
       Type     => SOCK_STREAM,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
    my $err = "$@";
 
@@ -52,6 +58,7 @@ SKIP: {
       LocalPort => 0,
       Type      => SOCK_STREAM,
       V6Only    => 0,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    ) or die "Cannot listen on PF_INET6 - $@";
 
    is( $listensock->getsockopt( IPPROTO_IPV6, IPV6_V6ONLY ), 0, 'IPV6_V6ONLY is 0 on $listensock' );
@@ -61,6 +68,7 @@ SKIP: {
       PeerHost => "127.0.0.1",
       PeerPort => $listensock->sockport,
       Type     => SOCK_STREAM,
+      GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
    my $err = "$@";
 

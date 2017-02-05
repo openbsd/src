@@ -6,6 +6,11 @@ use Text::Tabs;
 use Text::Wrap;
 use Getopt::Long;
 
+if (ord("A") == 193) {
+    print "1..0 # EBCDIC sort order is different\n";
+    exit;
+}
+
 # Generate the sections of files listed in %Targets from pod/perl.pod
 # Mostly these are rules in Makefiles
 #
@@ -21,6 +26,7 @@ use Getopt::Long;
             vms => 'vms/descrip_mms.template',
             nmake => 'win32/Makefile',
             dmake => 'win32/makefile.mk',
+            gmake => 'win32/GNUmakefile',
             podmak => 'win32/pod.mak',
             unix => 'Makefile.SH',
             # plan9 =>  'plan9/mkfile',
@@ -159,6 +165,7 @@ sub do_nmake {
 
 # shut up used only once warning
 *do_dmake = *do_dmake = \&do_nmake;
+*do_gmake = *do_gmake = \&do_nmake;
 
 sub do_podmak {
     my ($name, $body) = @_;
@@ -220,9 +227,4 @@ pod/$_: pod/$state->{copies}{$_}
 process($_, $Build{$_}, main->can("do_$_"), $Test && ++$test, $Verbose)
     foreach sort keys %Build;
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

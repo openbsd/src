@@ -108,7 +108,7 @@ use strict 'vars' ;
 $joe = 1 ;
 EXPECT
 Variable "$joe" is not imported at - line 8.
-Global symbol "$joe" requires explicit package name at - line 8.
+Global symbol "$joe" requires explicit package name (did you forget to declare "my $joe"?) at - line 8.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -120,7 +120,7 @@ no strict;
 }
 $joe = 1 ;
 EXPECT
-Global symbol "$joe" requires explicit package name at - line 6.
+Global symbol "$joe" requires explicit package name (did you forget to declare "my $joe"?) at - line 6.
 Execution of - aborted due to compilation errors.
 ########
 
@@ -457,4 +457,13 @@ use strict 'subs';
 /(?{FOO})/
 EXPECT
 Bareword "FOO" not allowed while "strict subs" in use at - line 3.
+Execution of - aborted due to compilation errors.
+########
+# [perl #126981] Strict subs vs. multideref
+my $h;
+my $v1 = $h->{+CONST_TYPO};
+use strict 'subs';
+my $v2 = $h->{+CONST_TYPO};
+EXPECT
+Bareword "CONST_TYPO" not allowed while "strict subs" in use at - line 5.
 Execution of - aborted due to compilation errors.

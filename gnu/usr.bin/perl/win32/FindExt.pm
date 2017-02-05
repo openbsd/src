@@ -1,11 +1,11 @@
 package FindExt;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 use strict;
 use warnings;
 
-my $no = join('|',qw(GDBM_File ODBM_File NDBM_File DB_File
+my $no = join('|',qw(Amiga.* GDBM_File ODBM_File NDBM_File DB_File
                      VMS.* Sys-Syslog IPC-SysV I18N-Langinfo));
 $no = qr/^(?:$no)$/i;
 
@@ -23,6 +23,7 @@ sub apply_config {
     push @no, "NDBM_File" unless $config->{d_ndbm};
     push @no, "ODBM_File"
       unless ($config->{i_dbm} || $config->{i_rpcsvcdbm}) && !$config->{d_cplusplus};
+    push @no, "Amiga.*" unless $^O eq "amigaos";
     push @no, "VMS.*" unless $^O eq "VMS";
     push @no, "Win32.*" unless $^O eq "MSWin32" || $^O eq "cygwin";
 
@@ -132,9 +133,4 @@ sub scan_ext
 }
 
 1;
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

@@ -5,15 +5,473 @@
 
 package warnings;
 
-our $VERSION = '1.23';
+our $VERSION = "1.36";
 
 # Verify that we're called correctly so that warnings will work.
+# Can't use Carp, since Carp uses us!
+# String regexps because constant folding = smaller optree = less memory vs regexp literal
 # see also strict.pm.
-unless ( __FILE__ =~ /(^|[\/\\])\Q${\__PACKAGE__}\E\.pmc?$/ ) {
-    my (undef, $f, $l) = caller;
-    die("Incorrect use of pragma '${\__PACKAGE__}' at $f line $l.\n");
+die sprintf "Incorrect use of pragma '%s' at %s line %d.\n", __PACKAGE__, +(caller)[1,2]
+    if __FILE__ !~ ( '(?x) \b     '.__PACKAGE__.'  \.pmc? \z' )
+    && __FILE__ =~ ( '(?x) \b (?i:'.__PACKAGE__.') \.pmc? \z' );
+
+our %Offsets = (
+    # Warnings Categories added in Perl 5.008
+    'all'				=> 0,
+    'closure'				=> 2,
+    'deprecated'			=> 4,
+    'exiting'				=> 6,
+    'glob'				=> 8,
+    'io'				=> 10,
+    'closed'				=> 12,
+    'exec'				=> 14,
+    'layer'				=> 16,
+    'newline'				=> 18,
+    'pipe'				=> 20,
+    'unopened'				=> 22,
+    'misc'				=> 24,
+    'numeric'				=> 26,
+    'once'				=> 28,
+    'overflow'				=> 30,
+    'pack'				=> 32,
+    'portable'				=> 34,
+    'recursion'				=> 36,
+    'redefine'				=> 38,
+    'regexp'				=> 40,
+    'severe'				=> 42,
+    'debugging'				=> 44,
+    'inplace'				=> 46,
+    'internal'				=> 48,
+    'malloc'				=> 50,
+    'signal'				=> 52,
+    'substr'				=> 54,
+    'syntax'				=> 56,
+    'ambiguous'				=> 58,
+    'bareword'				=> 60,
+    'digit'				=> 62,
+    'parenthesis'			=> 64,
+    'precedence'			=> 66,
+    'printf'				=> 68,
+    'prototype'				=> 70,
+    'qw'				=> 72,
+    'reserved'				=> 74,
+    'semicolon'				=> 76,
+    'taint'				=> 78,
+    'threads'				=> 80,
+    'uninitialized'			=> 82,
+    'unpack'				=> 84,
+    'untie'				=> 86,
+    'utf8'				=> 88,
+    'void'				=> 90,
+
+    # Warnings Categories added in Perl 5.011
+    'imprecision'			=> 92,
+    'illegalproto'			=> 94,
+
+    # Warnings Categories added in Perl 5.013
+    'non_unicode'			=> 96,
+    'nonchar'				=> 98,
+    'surrogate'				=> 100,
+
+    # Warnings Categories added in Perl 5.017
+    'experimental'			=> 102,
+    'experimental::lexical_subs'	=> 104,
+    'experimental::regex_sets'		=> 106,
+    'experimental::smartmatch'		=> 108,
+
+    # Warnings Categories added in Perl 5.019
+    'experimental::postderef'		=> 110,
+    'experimental::signatures'		=> 112,
+    'syscalls'				=> 114,
+
+    # Warnings Categories added in Perl 5.021
+    'experimental::bitwise'		=> 116,
+    'experimental::const_attr'		=> 118,
+    'experimental::re_strict'		=> 120,
+    'experimental::refaliasing'		=> 122,
+    'experimental::win32_perlio'	=> 124,
+    'locale'				=> 126,
+    'missing'				=> 128,
+    'redundant'				=> 130,
+);
+
+our %Bits = (
+    'all'				=> "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x05", # [0..65]
+    'ambiguous'				=> "\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [29]
+    'bareword'				=> "\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [30]
+    'closed'				=> "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
+    'closure'				=> "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
+    'debugging'				=> "\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
+    'deprecated'			=> "\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
+    'digit'				=> "\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [31]
+    'exec'				=> "\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
+    'exiting'				=> "\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
+    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55\x51\x15\x00", # [51..56,58..62]
+    'experimental::bitwise'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00", # [58]
+    'experimental::const_attr'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00", # [59]
+    'experimental::lexical_subs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00", # [52]
+    'experimental::postderef'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00", # [55]
+    'experimental::re_strict'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00", # [60]
+    'experimental::refaliasing'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00", # [61]
+    'experimental::regex_sets'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00", # [53]
+    'experimental::signatures'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00", # [56]
+    'experimental::smartmatch'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00", # [54]
+    'experimental::win32_perlio'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00", # [62]
+    'glob'				=> "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
+    'illegalproto'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00", # [47]
+    'imprecision'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00", # [46]
+    'inplace'				=> "\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
+    'internal'				=> "\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
+    'io'				=> "\x00\x54\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00", # [5..11,57]
+    'layer'				=> "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
+    'locale'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00", # [63]
+    'malloc'				=> "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
+    'misc'				=> "\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
+    'missing'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", # [64]
+    'newline'				=> "\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
+    'non_unicode'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00", # [48]
+    'nonchar'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00", # [49]
+    'numeric'				=> "\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
+    'once'				=> "\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
+    'overflow'				=> "\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
+    'pack'				=> "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
+    'parenthesis'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00", # [32]
+    'pipe'				=> "\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
+    'portable'				=> "\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
+    'precedence'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00", # [33]
+    'printf'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00", # [34]
+    'prototype'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00", # [35]
+    'qw'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00", # [36]
+    'recursion'				=> "\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
+    'redefine'				=> "\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
+    'redundant'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04", # [65]
+    'regexp'				=> "\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
+    'reserved'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00", # [37]
+    'semicolon'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00", # [38]
+    'severe'				=> "\x00\x00\x00\x00\x00\x54\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
+    'signal'				=> "\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
+    'substr'				=> "\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
+    'surrogate'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00", # [50]
+    'syntax'				=> "\x00\x00\x00\x00\x00\x00\x00\x55\x55\x15\x00\x40\x00\x00\x00\x00\x00", # [28..38,47]
+    'syscalls'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00", # [57]
+    'taint'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00", # [39]
+    'threads'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00", # [40]
+    'uninitialized'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00", # [41]
+    'unopened'				=> "\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
+    'unpack'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00", # [42]
+    'untie'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00", # [43]
+    'utf8'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x15\x00\x00\x00\x00", # [44,48..50]
+    'void'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00", # [45]
+);
+
+our %DeadBits = (
+    'all'				=> "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\x0a", # [0..65]
+    'ambiguous'				=> "\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [29]
+    'bareword'				=> "\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [30]
+    'closed'				=> "\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
+    'closure'				=> "\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
+    'debugging'				=> "\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
+    'deprecated'			=> "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
+    'digit'				=> "\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [31]
+    'exec'				=> "\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
+    'exiting'				=> "\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
+    'experimental'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa\xa2\x2a\x00", # [51..56,58..62]
+    'experimental::bitwise'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00", # [58]
+    'experimental::const_attr'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00", # [59]
+    'experimental::lexical_subs'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00", # [52]
+    'experimental::postderef'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00", # [55]
+    'experimental::re_strict'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00", # [60]
+    'experimental::refaliasing'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00", # [61]
+    'experimental::regex_sets'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00", # [53]
+    'experimental::signatures'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00", # [56]
+    'experimental::smartmatch'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00", # [54]
+    'experimental::win32_perlio'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00", # [62]
+    'glob'				=> "\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
+    'illegalproto'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00", # [47]
+    'imprecision'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00", # [46]
+    'inplace'				=> "\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
+    'internal'				=> "\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
+    'io'				=> "\x00\xa8\xaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00", # [5..11,57]
+    'layer'				=> "\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
+    'locale'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00", # [63]
+    'malloc'				=> "\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
+    'misc'				=> "\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
+    'missing'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02", # [64]
+    'newline'				=> "\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
+    'non_unicode'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00", # [48]
+    'nonchar'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00", # [49]
+    'numeric'				=> "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
+    'once'				=> "\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
+    'overflow'				=> "\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
+    'pack'				=> "\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
+    'parenthesis'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00", # [32]
+    'pipe'				=> "\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
+    'portable'				=> "\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
+    'precedence'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00", # [33]
+    'printf'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00", # [34]
+    'prototype'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00", # [35]
+    'qw'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00", # [36]
+    'recursion'				=> "\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
+    'redefine'				=> "\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
+    'redundant'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08", # [65]
+    'regexp'				=> "\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
+    'reserved'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00", # [37]
+    'semicolon'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00", # [38]
+    'severe'				=> "\x00\x00\x00\x00\x00\xa8\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
+    'signal'				=> "\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
+    'substr'				=> "\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
+    'surrogate'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00", # [50]
+    'syntax'				=> "\x00\x00\x00\x00\x00\x00\x00\xaa\xaa\x2a\x00\x80\x00\x00\x00\x00\x00", # [28..38,47]
+    'syscalls'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00", # [57]
+    'taint'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00", # [39]
+    'threads'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00", # [40]
+    'uninitialized'			=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00", # [41]
+    'unopened'				=> "\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
+    'unpack'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00", # [42]
+    'untie'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00", # [43]
+    'utf8'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x2a\x00\x00\x00\x00", # [44,48..50]
+    'void'				=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00", # [45]
+);
+
+# These are used by various things, including our own tests
+our $NONE				=  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+our $DEFAULT				=  "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55\x51\x55\x00", # [2,58,59,52,55,60,61,53,56,54,62,4,63,22,23,25]
+our $LAST_BIT				=  132 ;
+our $BYTES				=  17 ;
+
+our $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
+
+sub Croaker
+{
+    require Carp; # this initializes %CarpInternal
+    local $Carp::CarpInternal{'warnings'};
+    delete $Carp::CarpInternal{'warnings'};
+    Carp::croak(@_);
 }
 
+sub _bits {
+    my $mask = shift ;
+    my $catmask ;
+    my $fatal = 0 ;
+    my $no_fatal = 0 ;
+
+    foreach my $word ( @_ ) {
+	if ($word eq 'FATAL') {
+	    $fatal = 1;
+	    $no_fatal = 0;
+	}
+	elsif ($word eq 'NONFATAL') {
+	    $fatal = 0;
+	    $no_fatal = 1;
+	}
+	elsif ($catmask = $Bits{$word}) {
+	    $mask |= $catmask ;
+	    $mask |= $DeadBits{$word} if $fatal ;
+	    $mask &= ~($DeadBits{$word}|$All) if $no_fatal ;
+	}
+	else
+	  { Croaker("Unknown warnings category '$word'")}
+    }
+
+    return $mask ;
+}
+
+sub bits
+{
+    # called from B::Deparse.pm
+    push @_, 'all' unless @_ ;
+    return _bits(undef, @_) ;
+}
+
+sub import
+{
+    shift;
+
+    my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
+
+    if (vec($mask, $Offsets{'all'}, 1)) {
+	$mask |= $Bits{'all'} ;
+	$mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
+    }
+
+    # append 'all' when implied (after a lone "FATAL" or "NONFATAL")
+    push @_, 'all' if @_==1 && ( $_[0] eq 'FATAL' || $_[0] eq 'NONFATAL' );
+
+    # Empty @_ is equivalent to @_ = 'all' ;
+    ${^WARNING_BITS} = @_ ? _bits($mask, @_) : $mask | $Bits{all} ;
+}
+
+sub unimport
+{
+    shift;
+
+    my $catmask ;
+    my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
+
+    if (vec($mask, $Offsets{'all'}, 1)) {
+	$mask |= $Bits{'all'} ;
+	$mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
+    }
+
+    # append 'all' when implied (empty import list or after a lone "FATAL")
+    push @_, 'all' if !@_ || @_==1 && $_[0] eq 'FATAL';
+
+    foreach my $word ( @_ ) {
+	if ($word eq 'FATAL') {
+	    next;
+	}
+	elsif ($catmask = $Bits{$word}) {
+	    $mask &= ~($catmask | $DeadBits{$word} | $All);
+	}
+	else
+	  { Croaker("Unknown warnings category '$word'")}
+    }
+
+    ${^WARNING_BITS} = $mask ;
+}
+
+my %builtin_type; @builtin_type{qw(SCALAR ARRAY HASH CODE REF GLOB LVALUE Regexp)} = ();
+
+sub MESSAGE () { 4 };
+sub FATAL () { 2 };
+sub NORMAL () { 1 };
+
+sub __chk
+{
+    my $category ;
+    my $offset ;
+    my $isobj = 0 ;
+    my $wanted = shift;
+    my $has_message = $wanted & MESSAGE;
+
+    unless (@_ == 1 || @_ == ($has_message ? 2 : 0)) {
+	my $sub = (caller 1)[3];
+	my $syntax = $has_message ? "[category,] 'message'" : '[category]';
+	Croaker("Usage: $sub($syntax)");
+    }
+
+    my $message = pop if $has_message;
+
+    if (@_) {
+	# check the category supplied.
+	$category = shift ;
+	if (my $type = ref $category) {
+	    Croaker("not an object")
+		if exists $builtin_type{$type};
+	    $category = $type;
+	    $isobj = 1 ;
+	}
+	$offset = $Offsets{$category};
+	Croaker("Unknown warnings category '$category'")
+	    unless defined $offset;
+    }
+    else {
+	$category = (caller(1))[0] ;
+	$offset = $Offsets{$category};
+	Croaker("package '$category' not registered for warnings")
+	    unless defined $offset ;
+    }
+
+    my $i;
+
+    if ($isobj) {
+	my $pkg;
+	$i = 2;
+	while (do { { package DB; $pkg = (caller($i++))[0] } } ) {
+	    last unless @DB::args && $DB::args[0] =~ /^$category=/ ;
+	}
+	$i -= 2 ;
+    }
+    else {
+	$i = _error_loc(); # see where Carp will allocate the error
+    }
+
+    # Default to 0 if caller returns nothing.  Default to $DEFAULT if it
+    # explicitly returns undef.
+    my(@callers_bitmask) = (caller($i))[9] ;
+    my $callers_bitmask =
+	 @callers_bitmask ? $callers_bitmask[0] // $DEFAULT : 0 ;
+
+    my @results;
+    foreach my $type (FATAL, NORMAL) {
+	next unless $wanted & $type;
+
+	push @results, (vec($callers_bitmask, $offset + $type - 1, 1) ||
+			vec($callers_bitmask, $Offsets{'all'} + $type - 1, 1));
+    }
+
+    # &enabled and &fatal_enabled
+    return $results[0] unless $has_message;
+
+    # &warnif, and the category is neither enabled as warning nor as fatal
+    return if $wanted == (NORMAL | FATAL | MESSAGE)
+	&& !($results[0] || $results[1]);
+
+    require Carp;
+    Carp::croak($message) if $results[0];
+    # will always get here for &warn. will only get here for &warnif if the
+    # category is enabled
+    Carp::carp($message);
+}
+
+sub _mkMask
+{
+    my ($bit) = @_;
+    my $mask = "";
+
+    vec($mask, $bit, 1) = 1;
+    return $mask;
+}
+
+sub register_categories
+{
+    my @names = @_;
+
+    for my $name (@names) {
+	if (! defined $Bits{$name}) {
+	    $Bits{$name}     = _mkMask($LAST_BIT);
+	    vec($Bits{'all'}, $LAST_BIT, 1) = 1;
+	    $Offsets{$name}  = $LAST_BIT ++;
+	    foreach my $k (keys %Bits) {
+		vec($Bits{$k}, $LAST_BIT, 1) = 0;
+	    }
+	    $DeadBits{$name} = _mkMask($LAST_BIT);
+	    vec($DeadBits{'all'}, $LAST_BIT++, 1) = 1;
+	}
+    }
+}
+
+sub _error_loc {
+    require Carp;
+    goto &Carp::short_error_loc; # don't introduce another stack frame
+}
+
+sub enabled
+{
+    return __chk(NORMAL, @_);
+}
+
+sub fatal_enabled
+{
+    return __chk(FATAL, @_);
+}
+
+sub warn
+{
+    return __chk(FATAL | MESSAGE, @_);
+}
+
+sub warnif
+{
+    return __chk(NORMAL | FATAL | MESSAGE, @_);
+}
+
+# These are not part of any public interface, so we can delete them to save
+# space.
+delete @warnings::{qw(NORMAL FATAL MESSAGE)};
+
+1;
+__END__
 =head1 NAME
 
 warnings - Perl pragma to control optional warnings
@@ -88,7 +546,7 @@ warning, but the assignment to the scalar C<$b> will not.
 =head2 Default Warnings and Optional Warnings
 
 Before the introduction of lexical warnings, Perl had two classes of
-warnings: mandatory and optional. 
+warnings: mandatory and optional.
 
 As its name suggests, if your code tripped a mandatory warning, you
 would get a warning whether you wanted it or not.
@@ -220,7 +678,7 @@ will work unchanged.
 
 The B<-w> flag just sets the global C<$^W> variable as in 5.005.  This
 means that any legacy code that currently relies on manipulating C<$^W>
-to control warning behavior will still work as is. 
+to control warning behavior will still work as is.
 
 =item 3.
 
@@ -263,19 +721,25 @@ The current hierarchy is:
          |
          +- experimental --+
          |                 |
-         |                 +- experimental::autoderef
+         |                 +- experimental::bitwise
+         |                 |
+         |                 +- experimental::const_attr
          |                 |
          |                 +- experimental::lexical_subs
          |                 |
-         |                 +- experimental::lexical_topic
-         |                 |
          |                 +- experimental::postderef
+         |                 |
+         |                 +- experimental::re_strict
+         |                 |
+         |                 +- experimental::refaliasing
          |                 |
          |                 +- experimental::regex_sets
          |                 |
          |                 +- experimental::signatures
          |                 |
          |                 +- experimental::smartmatch
+         |                 |
+         |                 +- experimental::win32_perlio
          |
          +- glob
          |
@@ -297,7 +761,11 @@ The current hierarchy is:
          |                 |
          |                 +- unopened
          |
+         +- locale
+         |
          +- misc
+         |
+         +- missing
          |
          +- numeric
          |
@@ -312,6 +780,8 @@ The current hierarchy is:
          +- recursion
          |
          +- redefine
+         |
+         +- redundant
          |
          +- regexp
          |
@@ -379,7 +849,7 @@ Just like the "strict" pragma any of these categories can be combined
     no warnings qw(io syntax untie);
 
 Also like the "strict" pragma, if there is more than one instance of the
-C<warnings> pragma in a given scope the cumulative effect is additive. 
+C<warnings> pragma in a given scope the cumulative effect is additive.
 
     use warnings qw(void); # only "void" warnings enabled
     ...
@@ -394,12 +864,62 @@ Note: Before Perl 5.8.0, the lexical warnings category "deprecated" was a
 sub-category of the "syntax" category.  It is now a top-level category
 in its own right.
 
+Note: Before 5.21.0, the "missing" lexical warnings category was
+internally defined to be the same as the "uninitialized" category. It
+is now a top-level category in its own right.
+
 =head2 Fatal Warnings
 X<warning, fatal>
 
-The presence of the word "FATAL" in the category list will escalate any
-warnings detected from the categories specified in the lexical scope
-into fatal errors.  In the code below, the use of C<time>, C<length>
+The presence of the word "FATAL" in the category list will escalate
+warnings in those categories into fatal errors in that lexical scope.
+
+B<NOTE:> FATAL warnings should be used with care, particularly
+C<< FATAL => 'all' >>.
+
+Libraries using L<warnings::warn|/FUNCTIONS> for custom warning categories
+generally don't expect L<warnings::warn|/FUNCTIONS> to be fatal and can wind up
+in an unexpected state as a result.  For XS modules issuing categorized
+warnings, such unanticipated exceptions could also expose memory leak bugs.
+
+Moreover, the Perl interpreter itself has had serious bugs involving
+fatalized warnings.  For a summary of resolved and unresolved problems as
+of January 2015, please see
+L<this perl5-porters post|http://www.nntp.perl.org/group/perl.perl5.porters/2015/01/msg225235.html>.
+
+While some developers find fatalizing some warnings to be a useful
+defensive programming technique, using C<< FATAL => 'all' >> to fatalize
+all possible warning categories -- including custom ones -- is particularly
+risky.  Therefore, the use of C<< FATAL => 'all' >> is
+L<discouraged|perlpolicy/discouraged>.
+
+The L<strictures|strictures/VERSION-2> module on CPAN offers one example of
+a warnings subset that the module's authors believe is relatively safe to
+fatalize.
+
+B<NOTE:> users of FATAL warnings, especially those using
+C<< FATAL => 'all' >>, should be fully aware that they are risking future
+portability of their programs by doing so.  Perl makes absolutely no
+commitments to not introduce new warnings or warnings categories in the
+future; indeed, we explicitly reserve the right to do so.  Code that may
+not warn now may warn in a future release of Perl if the Perl5 development
+team deems it in the best interests of the community to do so.  Should code
+using FATAL warnings break due to the introduction of a new warning we will
+NOT consider it an incompatible change.  Users of FATAL warnings should
+take special caution during upgrades to check to see if their code triggers
+any new warnings and should pay particular attention to the fine print of
+the documentation of the features they use to ensure they do not exploit
+features that are documented as risky, deprecated, or unspecified, or where
+the documentation says "so don't do that", or anything with the same sense
+and spirit.  Use of such features in combination with FATAL warnings is
+ENTIRELY AT THE USER'S RISK.
+
+The following documentation describes how to use FATAL warnings but the
+perl5 porters strongly recommend that you understand the risks before doing
+so, especially for library code intended for use by others, as there is no
+way for downstream users to change the choice of fatal categories.
+
+In the code below, the use of C<time>, C<length>
 and C<join> can all produce a C<"Useless use of xxx in void context">
 warning.
 
@@ -419,7 +939,7 @@ warning.
 When run it produces this output
 
     Useless use of time in void context at fatal line 3.
-    Useless use of length in void context at fatal line 7.  
+    Useless use of length in void context at fatal line 7.
 
 The scope where C<length> is used has escalated the C<void> warnings
 category into a fatal error, so the program terminates immediately when it
@@ -451,24 +971,6 @@ previous versions of Perl, the behavior of the statements
 C<< use warnings 'FATAL'; >>, C<< use warnings 'NONFATAL'; >> and
 C<< no warnings 'FATAL'; >> was unspecified; they did not behave as if
 they included the C<< => 'all' >> portion.  As of 5.20, they do.)
-
-B<NOTE:> Users of FATAL warnings, especially
-those using C<< FATAL => 'all' >>
-should be fully aware that they are risking future portability of their
-programs by doing so.  Perl makes absolutely no commitments to not
-introduce new warnings, or warnings categories in the future, and indeed
-we explicitly reserve the right to do so.  Code that may not warn now may
-warn in a future release of Perl if the Perl5 development team deems it
-in the best interests of the community to do so.  Should code using FATAL
-warnings break due to the introduction of a new warning we will NOT
-consider it an incompatible change.  Users of FATAL warnings should take
-special caution during upgrades to check to see if their code triggers
-any new warnings and should pay particular attention to the fine print of
-the documentation of the features they use to ensure they do not exploit
-features that are documented as risky, deprecated, or unspecified, or where
-the documentation says "so don't do that", or anything with the same sense
-and spirit.  Use of such features in combination with FATAL warnings is
-ENTIRELY AT THE USER'S RISK.
 
 =head2 Reporting Warnings from a Module
 X<warning, reporting> X<warning, registering>
@@ -514,8 +1016,10 @@ this snippet of code:
     package MyMod::Abc;
 
     sub open {
-        warnings::warnif("deprecated", 
-                         "open is deprecated, use new instead");
+        if (warnings::enabled("deprecated")) {
+            warnings::warn("deprecated",
+                           "open is deprecated, use new instead");
+        }
         new(@_);
     }
 
@@ -596,7 +1100,7 @@ Consider this example:
 
     1;
 
-The code below makes use of both modules, but it only enables warnings from 
+The code below makes use of both modules, but it only enables warnings from
 C<Derived>.
 
     use Original;
@@ -608,7 +1112,7 @@ C<Derived>.
     $a->doit(1);
 
 When this code is run only the C<Derived> object, C<$b>, will generate
-a warning. 
+a warning.
 
     Odd numbers are unsafe at main.pl line 7
 
@@ -735,447 +1239,5 @@ use by the warnings::register pragma.
 See also L<perlmodlib/Pragmatic Modules> and L<perldiag>.
 
 =cut
-
-our %Offsets = (
-
-    # Warnings Categories added in Perl 5.008
-
-    'all'		=> 0,
-    'closure'		=> 2,
-    'deprecated'	=> 4,
-    'exiting'		=> 6,
-    'glob'		=> 8,
-    'io'		=> 10,
-    'closed'		=> 12,
-    'exec'		=> 14,
-    'layer'		=> 16,
-    'newline'		=> 18,
-    'pipe'		=> 20,
-    'unopened'		=> 22,
-    'misc'		=> 24,
-    'numeric'		=> 26,
-    'once'		=> 28,
-    'overflow'		=> 30,
-    'pack'		=> 32,
-    'portable'		=> 34,
-    'recursion'		=> 36,
-    'redefine'		=> 38,
-    'regexp'		=> 40,
-    'severe'		=> 42,
-    'debugging'		=> 44,
-    'inplace'		=> 46,
-    'internal'		=> 48,
-    'malloc'		=> 50,
-    'signal'		=> 52,
-    'substr'		=> 54,
-    'syntax'		=> 56,
-    'ambiguous'		=> 58,
-    'bareword'		=> 60,
-    'digit'		=> 62,
-    'parenthesis'	=> 64,
-    'precedence'	=> 66,
-    'printf'		=> 68,
-    'prototype'		=> 70,
-    'qw'		=> 72,
-    'reserved'		=> 74,
-    'semicolon'		=> 76,
-    'taint'		=> 78,
-    'threads'		=> 80,
-    'uninitialized'	=> 82,
-    'unpack'		=> 84,
-    'untie'		=> 86,
-    'utf8'		=> 88,
-    'void'		=> 90,
-
-    # Warnings Categories added in Perl 5.011
-
-    'imprecision'	=> 92,
-    'illegalproto'	=> 94,
-
-    # Warnings Categories added in Perl 5.013
-
-    'non_unicode'	=> 96,
-    'nonchar'		=> 98,
-    'surrogate'		=> 100,
-
-    # Warnings Categories added in Perl 5.017
-
-    'experimental'	=> 102,
-    'experimental::lexical_subs'=> 104,
-    'experimental::lexical_topic'=> 106,
-    'experimental::regex_sets'=> 108,
-    'experimental::smartmatch'=> 110,
-
-    # Warnings Categories added in Perl 5.019
-
-    'experimental::autoderef'=> 112,
-    'experimental::postderef'=> 114,
-    'experimental::signatures'=> 116,
-    'syscalls'		=> 118,
-  );
-
-our %Bits = (
-    'all'		=> "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55", # [0..59]
-    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00", # [29]
-    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00", # [30]
-    'closed'		=> "\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
-    'closure'		=> "\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
-    'debugging'		=> "\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
-    'deprecated'	=> "\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
-    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00", # [31]
-    'exec'		=> "\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
-    'exiting'		=> "\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x55\x15", # [51..58]
-    'experimental::autoderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", # [56]
-    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00", # [52]
-    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00", # [53]
-    'experimental::postderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04", # [57]
-    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00", # [54]
-    'experimental::signatures'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10", # [58]
-    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00", # [55]
-    'glob'		=> "\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
-    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00", # [47]
-    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00", # [46]
-    'inplace'		=> "\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
-    'internal'		=> "\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
-    'io'		=> "\x00\x54\x55\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40", # [5..11,59]
-    'layer'		=> "\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
-    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
-    'misc'		=> "\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
-    'newline'		=> "\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
-    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00", # [48]
-    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00", # [49]
-    'numeric'		=> "\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
-    'once'		=> "\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
-    'overflow'		=> "\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
-    'pack'		=> "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
-    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00", # [32]
-    'pipe'		=> "\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
-    'portable'		=> "\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
-    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00", # [33]
-    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00", # [34]
-    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00", # [35]
-    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00", # [36]
-    'recursion'		=> "\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
-    'redefine'		=> "\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
-    'regexp'		=> "\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
-    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00", # [37]
-    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00", # [38]
-    'severe'		=> "\x00\x00\x00\x00\x00\x54\x05\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
-    'signal'		=> "\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
-    'substr'		=> "\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
-    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00", # [50]
-    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\x55\x55\x15\x00\x40\x00\x00\x00", # [28..38,47]
-    'syscalls'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40", # [59]
-    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00", # [39]
-    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00", # [40]
-    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00", # [41]
-    'unopened'		=> "\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
-    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00", # [42]
-    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00", # [43]
-    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x15\x00\x00", # [44,48..50]
-    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00", # [45]
-  );
-
-our %DeadBits = (
-    'all'		=> "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa", # [0..59]
-    'ambiguous'		=> "\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00", # [29]
-    'bareword'		=> "\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00", # [30]
-    'closed'		=> "\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [6]
-    'closure'		=> "\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [1]
-    'debugging'		=> "\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [22]
-    'deprecated'	=> "\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [2]
-    'digit'		=> "\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00", # [31]
-    'exec'		=> "\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [7]
-    'exiting'		=> "\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [3]
-    'experimental'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\xaa\x2a", # [51..58]
-    'experimental::autoderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02", # [56]
-    'experimental::lexical_subs'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00", # [52]
-    'experimental::lexical_topic'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00", # [53]
-    'experimental::postderef'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08", # [57]
-    'experimental::regex_sets'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00", # [54]
-    'experimental::signatures'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20", # [58]
-    'experimental::smartmatch'=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00", # [55]
-    'glob'		=> "\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [4]
-    'illegalproto'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00", # [47]
-    'imprecision'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00", # [46]
-    'inplace'		=> "\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [23]
-    'internal'		=> "\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00", # [24]
-    'io'		=> "\x00\xa8\xaa\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80", # [5..11,59]
-    'layer'		=> "\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [8]
-    'malloc'		=> "\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00", # [25]
-    'misc'		=> "\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [12]
-    'newline'		=> "\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [9]
-    'non_unicode'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00", # [48]
-    'nonchar'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00", # [49]
-    'numeric'		=> "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [13]
-    'once'		=> "\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [14]
-    'overflow'		=> "\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [15]
-    'pack'		=> "\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [16]
-    'parenthesis'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00", # [32]
-    'pipe'		=> "\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [10]
-    'portable'		=> "\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [17]
-    'precedence'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00", # [33]
-    'printf'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00", # [34]
-    'prototype'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00", # [35]
-    'qw'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00", # [36]
-    'recursion'		=> "\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [18]
-    'redefine'		=> "\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [19]
-    'regexp'		=> "\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [20]
-    'reserved'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00", # [37]
-    'semicolon'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00", # [38]
-    'severe'		=> "\x00\x00\x00\x00\x00\xa8\x0a\x00\x00\x00\x00\x00\x00\x00\x00", # [21..25]
-    'signal'		=> "\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00", # [26]
-    'substr'		=> "\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00", # [27]
-    'surrogate'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00", # [50]
-    'syntax'		=> "\x00\x00\x00\x00\x00\x00\x00\xaa\xaa\x2a\x00\x80\x00\x00\x00", # [28..38,47]
-    'syscalls'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80", # [59]
-    'taint'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00", # [39]
-    'threads'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00", # [40]
-    'uninitialized'	=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00", # [41]
-    'unopened'		=> "\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", # [11]
-    'unpack'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00", # [42]
-    'untie'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00", # [43]
-    'utf8'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x2a\x00\x00", # [44,48..50]
-    'void'		=> "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00", # [45]
-  );
-
-$NONE     = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-$DEFAULT  = "\x10\x01\x00\x00\x00\x50\x04\x00\x00\x00\x00\x00\x00\x55\x15", # [2,56,52,53,57,54,58,55,4,22,23,25]
-$LAST_BIT = 120 ;
-$BYTES    = 15 ;
-
-$All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
-
-sub Croaker
-{
-    require Carp; # this initializes %CarpInternal
-    local $Carp::CarpInternal{'warnings'};
-    delete $Carp::CarpInternal{'warnings'};
-    Carp::croak(@_);
-}
-
-sub _bits {
-    my $mask = shift ;
-    my $catmask ;
-    my $fatal = 0 ;
-    my $no_fatal = 0 ;
-
-    foreach my $word ( @_ ) {
-	if ($word eq 'FATAL') {
-	    $fatal = 1;
-	    $no_fatal = 0;
-	}
-	elsif ($word eq 'NONFATAL') {
-	    $fatal = 0;
-	    $no_fatal = 1;
-	}
-	elsif ($catmask = $Bits{$word}) {
-	    $mask |= $catmask ;
-	    $mask |= $DeadBits{$word} if $fatal ;
-	    $mask &= ~($DeadBits{$word}|$All) if $no_fatal ;
-	}
-	else
-          { Croaker("Unknown warnings category '$word'")}
-    }
-
-    return $mask ;
-}
-
-sub bits
-{
-    # called from B::Deparse.pm
-    push @_, 'all' unless @_ ;
-    return _bits(undef, @_) ;
-}
-
-sub import
-{
-    shift;
-
-    my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
-
-    if (vec($mask, $Offsets{'all'}, 1)) {
-        $mask |= $Bits{'all'} ;
-        $mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
-    }
-
-    # append 'all' when implied (after a lone "FATAL" or "NONFATAL")
-    push @_, 'all' if @_==1 && ( $_[0] eq 'FATAL' || $_[0] eq 'NONFATAL' );
-
-    # Empty @_ is equivalent to @_ = 'all' ;
-    ${^WARNING_BITS} = @_ ? _bits($mask, @_) : $mask | $Bits{all} ;
-}
-
-sub unimport
-{
-    shift;
-
-    my $catmask ;
-    my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
-
-    if (vec($mask, $Offsets{'all'}, 1)) {
-        $mask |= $Bits{'all'} ;
-        $mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
-    }
-
-    # append 'all' when implied (empty import list or after a lone "FATAL")
-    push @_, 'all' if !@_ || @_==1 && $_[0] eq 'FATAL';
-
-    foreach my $word ( @_ ) {
-	if ($word eq 'FATAL') {
-	    next;
-	}
-	elsif ($catmask = $Bits{$word}) {
-	    $mask &= ~($catmask | $DeadBits{$word} | $All);
-	}
-	else
-          { Croaker("Unknown warnings category '$word'")}
-    }
-
-    ${^WARNING_BITS} = $mask ;
-}
-
-my %builtin_type; @builtin_type{qw(SCALAR ARRAY HASH CODE REF GLOB LVALUE Regexp)} = ();
-
-sub MESSAGE () { 4 };
-sub FATAL () { 2 };
-sub NORMAL () { 1 };
-
-sub __chk
-{
-    my $category ;
-    my $offset ;
-    my $isobj = 0 ;
-    my $wanted = shift;
-    my $has_message = $wanted & MESSAGE;
-
-    unless (@_ == 1 || @_ == ($has_message ? 2 : 0)) {
-	my $sub = (caller 1)[3];
-	my $syntax = $has_message ? "[category,] 'message'" : '[category]';
-	Croaker("Usage: $sub($syntax)");
-    }
-
-    my $message = pop if $has_message;
-
-    if (@_) {
-        # check the category supplied.
-        $category = shift ;
-        if (my $type = ref $category) {
-            Croaker("not an object")
-                if exists $builtin_type{$type};
-	    $category = $type;
-            $isobj = 1 ;
-        }
-        $offset = $Offsets{$category};
-        Croaker("Unknown warnings category '$category'")
-	    unless defined $offset;
-    }
-    else {
-        $category = (caller(1))[0] ;
-        $offset = $Offsets{$category};
-        Croaker("package '$category' not registered for warnings")
-	    unless defined $offset ;
-    }
-
-    my $i;
-
-    if ($isobj) {
-        my $pkg;
-        $i = 2;
-        while (do { { package DB; $pkg = (caller($i++))[0] } } ) {
-            last unless @DB::args && $DB::args[0] =~ /^$category=/ ;
-        }
-	$i -= 2 ;
-    }
-    else {
-        $i = _error_loc(); # see where Carp will allocate the error
-    }
-
-    # Default to 0 if caller returns nothing.  Default to $DEFAULT if it
-    # explicitly returns undef.
-    my(@callers_bitmask) = (caller($i))[9] ;
-    my $callers_bitmask =
-	 @callers_bitmask ? $callers_bitmask[0] // $DEFAULT : 0 ;
-
-    my @results;
-    foreach my $type (FATAL, NORMAL) {
-	next unless $wanted & $type;
-
-	push @results, (vec($callers_bitmask, $offset + $type - 1, 1) ||
-			vec($callers_bitmask, $Offsets{'all'} + $type - 1, 1));
-    }
-
-    # &enabled and &fatal_enabled
-    return $results[0] unless $has_message;
-
-    # &warnif, and the category is neither enabled as warning nor as fatal
-    return if $wanted == (NORMAL | FATAL | MESSAGE)
-	&& !($results[0] || $results[1]);
-
-    require Carp;
-    Carp::croak($message) if $results[0];
-    # will always get here for &warn. will only get here for &warnif if the
-    # category is enabled
-    Carp::carp($message);
-}
-
-sub _mkMask
-{
-    my ($bit) = @_;
-    my $mask = "";
-
-    vec($mask, $bit, 1) = 1;
-    return $mask;
-}
-
-sub register_categories
-{
-    my @names = @_;
-
-    for my $name (@names) {
-	if (! defined $Bits{$name}) {
-	    $Bits{$name}     = _mkMask($LAST_BIT);
-	    vec($Bits{'all'}, $LAST_BIT, 1) = 1;
-	    $Offsets{$name}  = $LAST_BIT ++;
-	    foreach my $k (keys %Bits) {
-		vec($Bits{$k}, $LAST_BIT, 1) = 0;
-	    }
-	    $DeadBits{$name} = _mkMask($LAST_BIT);
-	    vec($DeadBits{'all'}, $LAST_BIT++, 1) = 1;
-	}
-    }
-}
-
-sub _error_loc {
-    require Carp;
-    goto &Carp::short_error_loc; # don't introduce another stack frame
-}
-
-sub enabled
-{
-    return __chk(NORMAL, @_);
-}
-
-sub fatal_enabled
-{
-    return __chk(FATAL, @_);
-}
-
-sub warn
-{
-    return __chk(FATAL | MESSAGE, @_);
-}
-
-sub warnif
-{
-    return __chk(NORMAL | FATAL | MESSAGE, @_);
-}
-
-# These are not part of any public interface, so we can delete them to save
-# space.
-delete @warnings::{qw(NORMAL FATAL MESSAGE)};
-
-1;
 
 # ex: set ro:

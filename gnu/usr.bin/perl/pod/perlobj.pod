@@ -148,10 +148,10 @@ demonstrated with this code:
   my $bar = $foo;
 
   bless $foo, 'Class';
-  print blessed( $bar );      # prints "Class"
+  print blessed( $bar ) // 'not blessed';    # prints "Class"
 
   $bar = "some other value";
-  print blessed( $bar );      # prints undef
+  print blessed( $bar ) // 'not blessed';    # prints "not blessed"
 
 When we call C<bless> on a variable, we are actually blessing the
 underlying data structure that the variable refers to. We are not
@@ -949,7 +949,7 @@ C<Devel::GlobalDestruction> module on CPAN.
 
 If your C<DESTROY> method issues a warning during global destruction,
 the Perl interpreter will append the string " during global
-destruction" the warning.
+destruction" to the warning.
 
 During global destruction, Perl will always garbage collect objects
 before unblessed references. See L<perlhacktips/PERL_DESTRUCT_LEVEL>

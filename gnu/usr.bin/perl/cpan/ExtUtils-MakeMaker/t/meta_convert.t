@@ -116,7 +116,7 @@ note "version object in provides"; {
         META_ADD => {
             provides => {
                 "CPAN::Testers::ParseReport" => {
-                    version => version->declare("v1.2.3"),
+                    version => version->new("v1.2.3"),
                     file    => "lib/CPAN/Testers/ParseReport.pm"
                 }
             }

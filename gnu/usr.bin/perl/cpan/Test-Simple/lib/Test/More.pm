@@ -9,7 +9,7 @@ use warnings;
 # We use a lot of subroutine prototypes
 ## no critic (Subroutines::ProhibitSubroutinePrototypes)
 
-# Can't use Carp because it might cause use_ok() to accidentally succeed
+# Can't use Carp because it might cause C<use_ok()> to accidentally succeed
 # even though the module being used forgot to use Carp.  Yes, this
 # actually happened.
 sub _carp {
@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '1.001002';
+our $VERSION = '1.001014';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module 0.99;
@@ -144,7 +144,7 @@ but 'fail', you'd do:
 
   use Test::More tests => 23, import => ['!fail'];
 
-Alternatively, you can use the plan() function.  Useful for when you
+Alternatively, you can use the C<plan()> function.  Useful for when you
 have to calculate the number of tests.
 
   use Test::More;
@@ -204,7 +204,7 @@ sub import_extra {
 If you don't know how many tests you're going to run, you can issue
 the plan when you're done running tests.
 
-$number_of_tests is the same as plan(), it's the number of tests you
+$number_of_tests is the same as C<plan()>, it's the number of tests you
 expected to run.  You can omit this, in which case the number of tests
 you ran doesn't matter, just the fact that your tests ran to
 conclusion.
@@ -277,13 +277,13 @@ out.  It makes it very easy to find a test in your script when it fails
 and gives others an idea of your intentions.  $test_name is optional,
 but we B<very> strongly encourage its use.
 
-Should an ok() fail, it will produce some diagnostics:
+Should an C<ok()> fail, it will produce some diagnostics:
 
     not ok 18 - sufficient mucus
     #   Failed test 'sufficient mucus'
     #   in foo.t at line 42.
 
-This is the same as Test::Simple's ok() routine.
+This is the same as L<Test::Simple>'s C<ok()> routine.
 
 =cut
 
@@ -301,7 +301,7 @@ sub ok ($;$) {
   is  ( $got, $expected, $test_name );
   isnt( $got, $expected, $test_name );
 
-Similar to ok(), is() and isnt() compare their two arguments
+Similar to C<ok()>, C<is()> and C<isnt()> compare their two arguments
 with C<eq> and C<ne> respectively and use the result of that to
 determine if the test succeeded or failed.  So these:
 
@@ -323,9 +323,9 @@ against C<undef> like this:
 
 (Mnemonic:  "This is that."  "This isn't that.")
 
-So why use these?  They produce better diagnostics on failure.  ok()
-cannot know what you are testing for (beyond the name), but is() and
-isnt() know what the test was and why it failed.  For example this
+So why use these?  They produce better diagnostics on failure.  C<ok()>
+cannot know what you are testing for (beyond the name), but C<is()> and
+C<isnt()> know what the test was and why it failed.  For example this
 test:
 
     my $foo = 'waffle';  my $bar = 'yarblokos';
@@ -341,7 +341,7 @@ Will produce something like this:
 
 So you can figure out what went wrong without rerunning the test.
 
-You are encouraged to use is() and isnt() over ok() where possible,
+You are encouraged to use C<is()> and C<isnt()> over C<ok()> where possible,
 however do not be tempted to use them to find out if something is
 true or false!
 
@@ -350,11 +350,11 @@ true or false!
 
 This does not check if C<exists $brooklyn{tree}> is true, it checks if
 it returns 1.  Very different.  Similar caveats exist for false and 0.
-In these cases, use ok().
+In these cases, use C<ok()>.
 
   ok( exists $brooklyn{tree},    'A tree grows in Brooklyn' );
 
-A simple call to isnt() usually does not provide a strong test but there
+A simple call to C<isnt()> usually does not provide a strong test but there
 are cases when you cannot say much more about a value than that it is
 different from some other value:
 
@@ -366,7 +366,7 @@ different from some other value:
   isnt $obj, $clone, "clone() produces a different object";
 
 For those grammatical pedants out there, there's an C<isn't()>
-function which is an alias of isnt().
+function which is an alias of C<isnt()>.
 
 =cut
 
@@ -383,12 +383,13 @@ sub isnt ($$;$) {
 }
 
 *isn't = \&isnt;
+# ' to unconfuse syntax higlighters
 
 =item B<like>
 
   like( $got, qr/expected/, $test_name );
 
-Similar to ok(), like() matches $got against the regex C<qr/expected/>.
+Similar to C<ok()>, C<like()> matches $got against the regex C<qr/expected/>.
 
 So this:
 
@@ -409,7 +410,7 @@ currently not supported):
 
 Regex options may be placed on the end (C<'/expected/i'>).
 
-Its advantages over ok() are similar to that of is() and isnt().  Better
+Its advantages over C<ok()> are similar to that of C<is()> and C<isnt()>.  Better
 diagnostics on failure.
 
 =cut
@@ -424,7 +425,7 @@ sub like ($$;$) {
 
   unlike( $got, qr/expected/, $test_name );
 
-Works exactly as like(), only it checks if $got B<does not> match the
+Works exactly as C<like()>, only it checks if $got B<does not> match the
 given pattern.
 
 =cut
@@ -453,7 +454,7 @@ passes if the comparison is true and fails otherwise.
     cmp_ok( $got, '&&', $expected, 'this && that' );
     ...etc...
 
-Its advantage over ok() is when the test fails you'll know what $got
+Its advantage over C<ok()> is when the test fails you'll know what $got
 and $expected were:
 
     not ok 1
@@ -463,7 +464,7 @@ and $expected were:
     #     undef
 
 It's also useful in those cases where you are comparing numbers and
-is()'s use of C<eq> will interfere:
+C<is()>'s use of C<eq> will interfere:
 
     cmp_ok( $big_hairy_number, '==', $another_big_hairy_number );
 
@@ -501,7 +502,7 @@ is almost exactly like saying:
 only without all the typing and with a better interface.  Handy for
 quickly testing an interface.
 
-No matter how many @methods you check, a single can_ok() call counts
+No matter how many @methods you check, a single C<can_ok()> call counts
 as one test.  If you desire otherwise, use:
 
     foreach my $meth (@methods) {
@@ -663,7 +664,7 @@ WHOA
   my $obj = new_ok( $class => \@args, $object_name );
 
 A convenience function which combines creating an object and calling
-isa_ok() on that object.
+C<isa_ok()> on that object.
 
 It is basically equivalent to:
 
@@ -672,7 +673,7 @@ It is basically equivalent to:
 
 If @args is not given, an empty list will be used.
 
-This function only works on new() and it assumes new() will return
+This function only works on C<new()> and it assumes C<new()> will return
 just a single object which isa C<$class>.
 
 =cut
@@ -704,7 +705,7 @@ sub new_ok {
 
     subtest $name => \&code;
 
-subtest() runs the &code as its own little test with its own plan and
+C<subtest()> runs the &code as its own little test with its own plan and
 its own result.  The main test counts this as a single test using the
 result of the whole subtest to determine if its ok or not ok.
 
@@ -734,7 +735,7 @@ This would produce.
   ok 2 - An example subtest
   ok 3 - Third test
 
-A subtest may call "skip_all".  No tests will be run, but the subtest is
+A subtest may call C<skip_all>.  No tests will be run, but the subtest is
 considered a skip.
 
   subtest 'skippy' => sub {
@@ -779,9 +780,9 @@ sub subtest {
 
 Sometimes you just want to say that the tests have passed.  Usually
 the case is you've got some complicated condition that is difficult to
-wedge into an ok().  In this case, you can simply use pass() (to
+wedge into an C<ok()>.  In this case, you can simply use C<pass()> (to
 declare the test ok) or fail (for not ok).  They are synonyms for
-ok(1) and ok(0).
+C<ok(1)> and C<ok(0)>.
 
 Use these very, very, very sparingly.
 
@@ -896,7 +897,7 @@ If you just want to test a module can be loaded, use C<require_ok>.
 If you just want to load a module in a test, we recommend simply using
 C<use> directly.  It will cause the test to stop.
 
-It's recommended that you run use_ok() inside a BEGIN block so its
+It's recommended that you run C<use_ok()> inside a BEGIN block so its
 functions are exported at compile-time and prototypes are properly
 honored.
 
@@ -1017,16 +1018,16 @@ B<NOTE> I'm not quite sure what will happen with filehandles.
 
   is_deeply( $got, $expected, $test_name );
 
-Similar to is(), except that if $got and $expected are references, it
+Similar to C<is()>, except that if $got and $expected are references, it
 does a deep comparison walking each data structure to see if they are
 equivalent.  If the two structures are different, it will display the
 place where they start differing.
 
-is_deeply() compares the dereferenced values of references, the
+C<is_deeply()> compares the dereferenced values of references, the
 references themselves (except for their type) are ignored.  This means
 aspects such as blessing and ties are not considered "different".
 
-is_deeply() currently has very limited handling of function reference
+C<is_deeply()> currently has very limited handling of function reference
 and globs.  It merely checks if they have the same referent.  This may
 improve in the future.
 
@@ -1185,7 +1186,7 @@ interfere with the test.
 
   note(@diagnostic_message);
 
-Like diag(), except the message will not be seen when the test is run
+Like C<diag()>, except the message will not be seen when the test is run
 in a harness.  It will only be visible in the verbose TAP stream.
 
 Handy for putting in notes which might be useful for debugging, but
@@ -1232,7 +1233,7 @@ sub explain {
 
 Sometimes running a test under certain conditions will cause the
 test script to die.  A certain function or method isn't implemented
-(such as fork() on MacOS), some resource isn't available (like a 
+(such as C<fork()> on MacOS), some resource isn't available (like a 
 net connection) or a module isn't available.  In these cases it's
 necessary to skip tests, or declare that they are supposed to fail
 but will work in the future (a todo test).
@@ -1337,7 +1338,7 @@ because you haven't fixed a bug or haven't finished a new feature:
 
 With a todo block, the tests inside are expected to fail.  Test::More
 will run the tests normally, but print out special flags indicating
-they are "todo".  Test::Harness will interpret failures as being ok.
+they are "todo".  L<Test::Harness> will interpret failures as being ok.
 Should anything succeed, it will report it as an unexpected success.
 You then know the thing you had todo is done and can remove the
 TODO flag.
@@ -1366,7 +1367,7 @@ inside an C<eval BLOCK> with and using C<alarm>.  In these extreme
 cases you have no choice but to skip over the broken tests entirely.
 
 The syntax and behavior is similar to a C<SKIP: BLOCK> except the
-tests will be marked as failing but todo.  Test::Harness will
+tests will be marked as failing but todo.  L<Test::Harness> will
 interpret them as passing.
 
 =cut
@@ -1394,7 +1395,7 @@ sub todo_skip {
 
 B<If it's something the user might not be able to do>, use SKIP.
 This includes optional modules that aren't installed, running under
-an OS that doesn't have some feature (like fork() or symlinks), or maybe
+an OS that doesn't have some feature (like C<fork()> or symlinks), or maybe
 you need an Internet connection and one isn't available.
 
 B<If it's something the programmer hasn't done yet>, use TODO.  This
@@ -1440,11 +1441,11 @@ sub BAIL_OUT {
 
 The use of the following functions is discouraged as they are not
 actually testing functions and produce no diagnostics to help figure
-out what went wrong.  They were written before is_deeply() existed
+out what went wrong.  They were written before C<is_deeply()> existed
 because I couldn't figure out how to display a useful diff of two
 arbitrary data structures.
 
-These functions are usually used inside an ok().
+These functions are usually used inside an C<ok()>.
 
     ok( eq_array(\@got, \@expected) );
 
@@ -1649,7 +1650,7 @@ sub _eq_hash {
 
   my $is_eq = eq_set(\@got, \@expected);
 
-Similar to eq_array(), except the order of the elements is B<not>
+Similar to C<eq_array()>, except the order of the elements is B<not>
 important.  This is a deep check, but the irrelevancy of order only
 applies to the top level.
 
@@ -1662,7 +1663,7 @@ Is better written:
 B<NOTE> By historical accident, this is not a true set comparison.
 While the order of elements does not matter, duplicate elements do.
 
-B<NOTE> eq_set() does not know how to deal with references at the top
+B<NOTE> C<eq_set()> does not know how to deal with references at the top
 level.  The following is an example of a comparison which might not work:
 
     eq_set([\1, \2], [\2, \1]);
@@ -1700,13 +1701,13 @@ sub eq_set {
 =head2 Extending and Embedding Test::More
 
 Sometimes the Test::More interface isn't quite enough.  Fortunately,
-Test::More is built on top of Test::Builder which provides a single,
+Test::More is built on top of L<Test::Builder> which provides a single,
 unified backend for any test library to use.  This means two test
-libraries which both use Test::Builder B<can be used together in the
+libraries which both use <Test::Builder> B<can> be used together in the
 same program>.
 
 If you simply want to do a little tweaking of how the tests behave,
-you can access the underlying Test::Builder object like so:
+you can access the underlying L<Test::Builder> object like so:
 
 =over 4
 
@@ -1714,7 +1715,7 @@ you can access the underlying Test::Builder object like so:
 
     my $test_builder = Test::More->builder;
 
-Returns the Test::Builder object underlying Test::More for you to play
+Returns the L<Test::Builder> object underlying Test::More for you to play
 with.
 
 
@@ -1723,10 +1724,10 @@ with.
 
 =head1 EXIT CODES
 
-If all your tests passed, Test::Builder will exit with zero (which is
+If all your tests passed, L<Test::Builder> will exit with zero (which is
 normal).  If anything failed it will exit with how many failed.  If
 you run less (or more) tests than you planned, the missing (or extras)
-will be considered failures.  If no tests were ever run Test::Builder
+will be considered failures.  If no tests were ever run L<Test::Builder>
 will throw a warning and exit with 255.  If the test died, even after
 having successfully completed all its tests, it will still be
 considered a failure and will exit with 255.
@@ -1785,8 +1786,9 @@ There is a full version history in the Changes file, and the Test::More versions
 =item utf8 / "Wide character in print"
 
 If you use utf8 or other non-ASCII characters with Test::More you
-might get a "Wide character in print" warning.  Using C<binmode
-STDOUT, ":utf8"> will not fix it.  Test::Builder (which powers
+might get a "Wide character in print" warning.  Using
+C<< binmode STDOUT, ":utf8" >> will not fix it.
+L<Test::Builder> (which powers
 Test::More) duplicates STDOUT and STDERR.  So any changes to them,
 including changing their output disciplines, will not be seem by
 Test::More.
@@ -1798,7 +1800,7 @@ as possible and before Test::More (or any other Test module) loads.
     use Test::More;
 
 A more direct work around is to change the filehandles used by
-Test::Builder.
+L<Test::Builder>.
 
     my $builder = Test::More->builder;
     binmode $builder->output,         ":encoding(utf8)";
@@ -1808,14 +1810,14 @@ Test::Builder.
 
 =item Overloaded objects
 
-String overloaded objects are compared B<as strings> (or in cmp_ok()'s
+String overloaded objects are compared B<as strings> (or in C<cmp_ok()>'s
 case, strings or numbers as appropriate to the comparison op).  This
 prevents Test::More from piercing an object's interface allowing
 better blackbox testing.  So if a function starts returning overloaded
 objects instead of bare strings your tests won't notice the
 difference.  This is good.
 
-However, it does mean that functions like is_deeply() cannot be used to
+However, it does mean that functions like C<is_deeply()> cannot be used to
 test the internals of string overloaded objects.  In this case I would
 suggest L<Test::Deep> which contains more flexible testing functions for
 complex data structures.
@@ -1823,7 +1825,7 @@ complex data structures.
 
 =item Threads
 
-Test::More will only be aware of threads if "use threads" has been done
+Test::More will only be aware of threads if C<use threads> has been done
 I<before> Test::More is loaded.  This is ok:
 
     use threads;
@@ -1841,9 +1843,9 @@ This may cause problems:
 
 =head1 HISTORY
 
-This is a case of convergent evolution with Joshua Pritikin's Test
+This is a case of convergent evolution with Joshua Pritikin's L<Test>
 module.  I was largely unaware of its existence when I'd first
-written my own ok() routines.  This module exists because I can't
+written my own C<ok()> routines.  This module exists because I can't
 figure out how to easily wedge test names into Test's interface (along
 with a few other problems).
 
@@ -1856,17 +1858,28 @@ magic side-effects are kept to a minimum.  WYSIWYG.
 
 =head1 SEE ALSO
 
+=head2
+
+=head2 ALTERNATIVES
+
 L<Test::Simple> if all this confuses you and you just want to write
 some tests.  You can upgrade to Test::More later (it's forward
 compatible).
 
-L<Test::Harness> is the test runner and output interpreter for Perl.
-It's the thing that powers C<make test> and where the C<prove> utility
-comes from.
-
 L<Test::Legacy> tests written with Test.pm, the original testing
 module, do not play well with other testing libraries.  Test::Legacy
 emulates the Test.pm interface and does play well with others.
+
+=head2 TESTING FRAMEWORKS
+
+L<Fennec> The Fennec framework is a testers toolbox. It uses L<Test::Builder>
+under the hood. It brings enhancements for forking, defining state, and
+mocking. Fennec enhances several modules to work better together than they
+would if you loaded them individually on your own.
+
+L<Fennec::Declare> Provides enhanced (L<Devel::Declare>) syntax for Fennec.
+
+=head2 ADDITIONAL LIBRARIES
 
 L<Test::Differences> for more ways to test complex data structures.
 And it plays well with Test::More.
@@ -1877,8 +1890,22 @@ L<Test::Deep> gives you more powerful complex data structure testing.
 
 L<Test::Inline> shows the idea of embedded testing.
 
+L<Mock::Quick> The ultimate mocking library. Easily spawn objects defined on
+the fly. Can also override, block, or reimplement packages as needed.
+
+L<Test::FixtureBuilder> Quickly define fixture data for unit tests.
+
+=head2 OTHER COMPONENTS
+
+L<Test::Harness> is the test runner and output interpreter for Perl.
+It's the thing that powers C<make test> and where the C<prove> utility
+comes from.
+
+=head2 BUNDLES
+
 L<Bundle::Test> installs a whole bunch of useful test modules.
 
+L<Test::Most> Most commonly needed test functions and features.
 
 =head1 AUTHORS
 
@@ -1886,6 +1913,14 @@ Michael G Schwern E<lt>schwern@pobox.comE<gt> with much inspiration
 from Joshua Pritikin's Test module and lots of help from Barrie
 Slaymaker, Tony Bowden, blackstar.co.uk, chromatic, Fergal Daly and
 the perl-qa gang.
+
+=head1 MAINTAINERS
+
+=over 4
+
+=item Chad Granum E<lt>exodist@cpan.orgE<gt>
+
+=back
 
 
 =head1 BUGS
@@ -1896,7 +1931,7 @@ See F<http://rt.cpan.org> to report and view bugs.
 =head1 SOURCE
 
 The source code repository for Test::More can be found at
-F<http://github.com/schwern/test-more/>.
+F<http://github.com/Test-More/test-more/>.
 
 
 =head1 COPYRIGHT

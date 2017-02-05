@@ -5,12 +5,15 @@
 #########################
 
 use Test::More qw/no_plan/;
+use File::Spec;
 use File::Temp qw/tempfile/;
 
 BEGIN {
-    (my $coretests = $0) =~ s'[^/]+\.t'coretests.pm';
+    my $coretests = File::Spec->catpath(
+        (File::Spec->splitpath($0))[0,1], 'coretests.pm'
+    );
     require $coretests;
-    use_ok("version", 0.9909);
+    use_ok("version", 0.9916);
     # If we made it this far, we are ok.
 }
 

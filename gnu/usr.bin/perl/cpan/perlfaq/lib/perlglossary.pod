@@ -5,6 +5,10 @@
 
 perlglossary - Perl Glossary
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 A glossary of terms (technical and otherwise) used in the Perl

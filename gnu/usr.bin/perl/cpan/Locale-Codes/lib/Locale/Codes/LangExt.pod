@@ -16,7 +16,7 @@ Locale::Codes::LangExt - standard codes for language extension identification
 
 =head1 DESCRIPTION
 
-The C<Locale::Codes::LangExt> module provides access to standard codes
+This module provides access to standard codes
 used for identifying language extensions, such as those as defined in
 the IANA language registry.
 
@@ -52,33 +52,33 @@ This is the default code set.
 
 =over 4
 
-=item B<code2langext ( CODE [,CODESET] )>
+=item B<code2langext(CODE [,CODESET] [,'retired'])>
 
-=item B<langext2code ( NAME [,CODESET] )>
+=item B<langext2code(NAME [,CODESET] [,'retired'])>
 
-=item B<langext_code2code ( CODE ,CODESET ,CODESET2 )>
+=item B<langext_code2code(CODE ,CODESET ,CODESET2)>
 
-=item B<all_langext_codes ( [CODESET] )>
+=item B<all_langext_codes([CODESET] [,'retired'])>
 
-=item B<all_langext_names ( [CODESET] )>
+=item B<all_langext_names([CODESET] [,'retired'])>
 
-=item B<Locale::Codes::LangExt::rename_langext  ( CODE ,NEW_NAME [,CODESET] )>
+=item B<Locale::Codes::LangExt::rename_langext(CODE ,NEW_NAME [,CODESET])>
 
-=item B<Locale::Codes::LangExt::add_langext  ( CODE ,NAME [,CODESET] )>
+=item B<Locale::Codes::LangExt::add_langext(CODE ,NAME [,CODESET])>
 
-=item B<Locale::Codes::LangExt::delete_langext  ( CODE [,CODESET] )>
+=item B<Locale::Codes::LangExt::delete_langext(CODE [,CODESET])>
 
-=item B<Locale::Codes::LangExt::add_langext_alias  ( NAME ,NEW_NAME )>
+=item B<Locale::Codes::LangExt::add_langext_alias(NAME ,NEW_NAME)>
 
-=item B<Locale::Codes::LangExt::delete_langext_alias  ( NAME )>
+=item B<Locale::Codes::LangExt::delete_langext_alias(NAME)>
 
-=item B<Locale::Codes::LangExt::rename_langext_code  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Codes::LangExt::rename_langext_code(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Codes::LangExt::add_langext_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Codes::LangExt::add_langext_code_alias(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Codes::LangExt::delete_langext_code_alias  ( CODE [,CODESET] )>
+=item B<Locale::Codes::LangExt::delete_langext_code_alias(CODE [,CODESET])>
 
-These routines are all documented in the Locale::Codes::API man page.
+These routines are all documented in the L<Locale::Codes::API> man page.
 
 =back
 
@@ -86,15 +86,15 @@ These routines are all documented in the Locale::Codes::API man page.
 
 =over 4
 
-=item B<Locale::Codes>
+=item L<Locale::Codes>
 
 The Locale-Codes distribution.
 
-=item B<Locale::Codes::API>
+=item L<Locale::Codes::API>
 
 The list of functions supported by this module.
 
-=item B<http://www.iana.org/assignments/language-subtag-registry>
+=item L<http://www.iana.org/assignments/language-subtag-registry>
 
 The IANA language subtag registry.
 
@@ -108,7 +108,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
 =head1 COPYRIGHT
 
-   Copyright (c) 2011-2014 Sullivan Beck
+   Copyright (c) 2011-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -2,12 +2,16 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
-    require Config; import Config;
     require './test.pl';
+    set_up_inc('../lib');
+    require Config; import Config;
+    require constant;
+    constant->import(constcow => *Config::{NAME});
+    require './charset_tools.pl';
+    require './loc_tools.pl';
 }
 
-plan( tests => 236 );
+plan( tests => 270 );
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -15,6 +19,11 @@ ok( $_ eq 'david' && $a eq 'rules', 'non-destructive substitute' );
 
 $a = "david" =~ s/david/rules/r;
 ok( $a eq 'rules', 's///r with constant' );
+
+#[perl #127635] failed with -DPERL_NO_COW perl build (George smoker uses flag)
+#Modification of a read-only value attempted at ../t/re/subst.t line 23.
+$a = constcow =~ s/Config/David/r;
+ok( $a eq 'David::', 's///r with COW constant' );
 
 $a = "david" =~ s/david/"is"."great"/er;
 ok( $a eq 'isgreat', 's///er' );
@@ -263,10 +272,10 @@ if (defined $Config{ebcdic} && $Config{ebcdic} eq 'define') {	# EBCDIC.
 ok( $_ eq 'abcdefghijklmnopqrstuvwxyz0123456789' );
 
 SKIP: {
-    skip("not ASCII",1) unless (ord("+") == ord(",") - 1
-			     && ord(",") == ord("-") - 1
-			     && ord("a") == ord("b") - 1
-			     && ord("b") == ord("c") - 1);
+    skip("ASCII-centric test",1) unless (ord("+") == ord(",") - 1
+			              && ord(",") == ord("-") - 1
+			              && ord("a") == ord("b") - 1
+			              && ord("b") == ord("c") - 1);
     $_ = '+,-';
     tr/+--/a-c/;
     ok( $_ eq 'abc' );
@@ -456,9 +465,7 @@ $pv1 =~ s/A/\x{100}/;
 substr($pv2,0,1) = "\x{100}";
 is($pv1, $pv2);
 
-SKIP: {
-    skip("EBCDIC", 3) if ord("A") == 193; 
-
+{
     {   
 	# Gregor Chrupala <gregor.chrupala@star-group.net>
 	use utf8;
@@ -1002,3 +1009,96 @@ like $@, qr/^Modification of a read-only value/,
 eval { for (__PACKAGE__) { s/b/c/; } };
 like $@, qr/^Modification of a read-only value/,
     'read-only COW =~ s/does not match// should croak';
+
+SKIP: {
+    my $a_acute = chr utf8::unicode_to_native(0xE1); # LATIN SMALL LETTER A WITH ACUTE
+    my $egrave = chr utf8::unicode_to_native(0xE8);  # LATIN SMALL LETTER E WITH GRAVE
+    my $u_umlaut = chr utf8::unicode_to_native(0xFC);  # LATIN SMALL LETTER U WITH DIAERESIS
+    my $division = chr utf8::unicode_to_native(0xF7);  # DIVISION SIGN
+
+    is("ab.c" =~ s/\b/!/agr, "!ab!.!c!", '\\b matches ASCII before string, mid, and end, /a');
+    is("$a_acute$egrave.$u_umlaut" =~ s/\b/!/agr, "$a_acute$egrave.$u_umlaut", '\\b matches Latin1 before string, mid, and end, /a');
+    is("\x{100}\x{101}.\x{102}" =~ s/\b/!/agr, "\x{100}\x{101}.\x{102}", '\\b matches above-Latin1 before string, mid, and end, /a');
+
+    is("..." =~ s/\B/!/agr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /a');
+    is("$division$division$division" =~ s/\B/!/agr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /a');
+    is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/agr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /a');
+
+    is("ab.c" =~ s/\b/!/dgr, "!ab!.!c!", '\\b matches ASCII before string, mid, and end, /d');
+    { is("$a_acute$egrave.$u_umlaut" =~ s/\b/!/dgr, "$a_acute$egrave.$u_umlaut", '\\b matches Latin1 before string, mid, and end, /d'); }
+    is("\x{100}\x{101}.\x{102}" =~ s/\b/!/dgr, "!\x{100}\x{101}!.!\x{102}!", '\\b matches above-Latin1 before string, mid, and end, /d');
+
+    is("..." =~ s/\B/!/dgr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /d');
+    is("$division$division$division" =~ s/\B/!/dgr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /d');
+    is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/dgr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /d');
+
+    is("ab.c" =~ s/\b/!/ugr, "!ab!.!c!", '\\b matches ASCII before string, mid, and end, /u');
+    is("$a_acute$egrave.$u_umlaut" =~ s/\b/!/ugr, "!$a_acute$egrave!.!$u_umlaut!", '\\b matches Latin1 before string, mid, and end, /u');
+    is("\x{100}\x{101}.\x{102}" =~ s/\b/!/ugr, "!\x{100}\x{101}!.!\x{102}!", '\\b matches above-Latin1 before string, mid, and end, /u');
+
+    is("..." =~ s/\B/!/ugr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /u');
+    is("$division$division$division" =~ s/\B/!/ugr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /u');
+    is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/ugr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /u');
+
+    fresh_perl_like( '$_=""; /\b{gcb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{gcb}'
+    );
+    fresh_perl_like( '$_=""; /\B{gcb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{gcb}'
+    );
+    fresh_perl_like( '$_=""; /\b{wb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{wb}'
+    );
+    fresh_perl_like( '$_=""; /\B{wb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{wb}'
+    );
+    fresh_perl_like( '$_=""; /\b{sb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{sb}'
+    );
+    fresh_perl_like( '$_=""; /\B{sb}/;  s///g', qr/^$/, {},
+        '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{sb}'
+    );
+
+SKIP: {
+    if (! locales_enabled('LC_ALL')) {
+        skip "Can't test locale (maybe you are missing POSIX)", 6;
+    }
+
+    setlocale(&POSIX::LC_ALL, "C");
+    use locale;
+    is("a.b" =~ s/\b/!/gr, "!a!.!b!", '\\b matches ASCII before string, mid, and end, /l');
+    is("$a_acute.$egrave" =~ s/\b/!/gr, "$a_acute.$egrave", '\\b matches Latin1 before string, mid, and end, /l');
+    is("\x{100}\x{101}.\x{102}" =~ s/\b/!/gr, "!\x{100}\x{101}!.!\x{102}!", '\\b matches above-Latin1 before string, mid, and end, /l');
+
+    is("..." =~ s/\B/!/gr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /l');
+    is("$division$division$division" =~ s/\B/!/gr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /l');
+    is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/gr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /l');
+}
+
+}
+
+{
+    # RT #123954 if the string getting matched against got converted during
+    # s///e so that it was no longer SvPOK, an assertion would fail when
+    # setting pos.
+    my $s1 = 0;
+    $s1 =~ s/.?/$s1++/ge;
+    is($s1, "01","RT #123954 s1");
+}
+{
+    # RT #126602 double free if the value being modified is freed in the replacement
+    fresh_perl_is('s//*_=0;s|0||;00.y0/e; print qq(ok\n)', "ok\n", { stderr => 1 },
+                  "[perl #126602] s//*_=0;s|0||/e crashes");
+}
+
+{
+    #RT 126260 gofs is in chars, not bytes
+
+    # in something like /..\G/, the engine should start matching two
+    # chars before pos(). At one point it was matching two bytes before.
+
+    my $s = "\x{121}\x{122}\x{123}";
+    pos($s) = 2;
+    $s =~ s/..\G//g;
+    is($s, "\x{123}", "#RT 126260 gofs");
+}

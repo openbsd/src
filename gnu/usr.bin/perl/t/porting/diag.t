@@ -39,6 +39,7 @@ foreach (@{(setup_embed())[0]}) {
   push @functions, 'Perl_' . $_->[2] if $_->[0] =~ /p/;
   push @functions, 'S_' . $_->[2] if $_->[0] =~ /s/;
 };
+push @functions, 'Perl_mess';
 
 my $regcomp_fail_re = '\b(?:(?:Simple_)?v)?FAIL[2-4]?(?:utf8f)?\b';
 my $regcomp_re =
@@ -90,6 +91,9 @@ while (<$diagfh>) {
 
     $cur_entry =~ s/\n/ /gs; # Fix multi-line headers if they have \n's
     $cur_entry =~ s/\s+\z//;
+    $cur_entry =~ s/E<lt>/</g;
+    $cur_entry =~ s/E<gt>/>/g;
+    $cur_entry =~ s,E<sol>,/,g;
     $cur_entry =~ s/[BCIFS](?:<<< (.*?) >>>|<< (.*?) >>|<(.*?)>)/$+/g;
 
     if (exists $entries{$cur_entry} &&  $entries{$cur_entry}{todo}
@@ -174,7 +178,8 @@ my %specialformats = (IVdf => 'd',
 		      UTF8f=> 's',
 		      SVf256=>'s',
 		      SVf32=> 's',
-		      SVf  => 's');
+		      SVf  => 's',
+		      PNf  => 's');
 my $format_modifiers = qr/ [#0\ +-]*              # optional flags
 			  (?: [1-9][0-9]* | \* )? # optional field width
 			  (?: \. \d* )?           # optional precision
@@ -195,7 +200,7 @@ while (my $file = <$fh>) {
     $file =~ s/\s+.*//;
     next unless $file =~ /\.(?:c|cpp|h|xs|y)\z/ or $file =~ /^perly\./;
     # OS/2 extensions have never been migrated to ext/, hence the special case:
-    next if $file =~ m!\A(?:ext|dist|cpan|lib|t|os2/OS2|x2p)/!
+    next if $file =~ m!\A(?:ext|dist|cpan|lib|t|os2/OS2)/!
             && $file !~ m!\Aext/DynaLoader/!;
     check_file($file);
 }
@@ -243,12 +248,28 @@ sub check_file {
       $listed_as = $1;
       $listed_as_line = $.+1;
     }
+    elsif (m</\*\s*diag_listed_as: (.*?)\s*\z>) {
+      $listed_as = $1;
+      my $finished;
+      while (<$codefh>) {
+        if (m<\*/>) {
+          $listed_as .= $` =~ s/^\s*/ /r =~ s/\s+\z//r;
+          $listed_as_line = $.+1;
+          $finished = 1;
+          last;
+        }
+        else {
+          $listed_as .= s/^\s*/ /r =~ s/\s+\z//r;
+        }
+      }
+      if (!$finished) { $listed_as = undef }
+    }
     next if /^#/;
 
     my $multiline = 0;
     # Loop to accumulate the message text all on one line.
     if (m/(?!^)\b(?:$source_msg_re(?:_nocontext)?|$regcomp_re)\s*\(/) {
-      while (not m/\);$/) {
+      while (not m/\);\s*$/) {
         my $nextline = <$codefh>;
         # Means we fell off the end of the file.  Not terribly surprising;
         # this code tries to merge a lot of things that aren't regular C
@@ -596,6 +617,7 @@ Not array reference given to mod2fname
 Operator or semicolon missing before %c%s
 Out of memory during list extend
 panic queryaddr
+Parse error
 PerlApp::TextQuery: no arguments, please
 POSIX syntax [%c %c] is reserved for future extensions in regex; marked by <-- HERE in m/%s/
 ptr wrong %p != %p fl=%x nl=%p e=%p for %d

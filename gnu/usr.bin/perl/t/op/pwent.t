@@ -36,7 +36,14 @@ $where //= try_prog('NetInfo passwd', 'passwd .', '/usr/bin/nidump');
 $where //= try_prog('NIS+', 'passwd.org_dir', '/bin/niscat');
 
 # Try dscl
-if (!defined $where && $Config::Config{useperlio}) {
+DSCL: {
+my @dscl = qw(/usr/bin/dscl);
+if (!defined $where && $Config::Config{useperlio} && grep { -x } @dscl) {
+    eval { require PerlIO::scalar; }; # Beware miniperl.
+    if ($@) {
+        print "# No PerlIO::scalar, will not try dscl\n";
+        last DSCL;
+    }
     # Map dscl items to passwd fields, and provide support for
     # mucking with the dscl output if we need to (and we do).
     my %want = do {
@@ -65,7 +72,7 @@ if (!defined $where && $Config::Config{useperlio}) {
     $want{UniqueID}{mung} = $want{PrimaryGroupID}{mung} = sub {
 	unpack 'L', pack 'l', $_[0]};
 
-    foreach my $dscl (qw(/usr/bin/dscl)) {
+    foreach my $dscl (@dscl) {
 	next unless -x $dscl;
 	next unless open my $fh, '-|', "$dscl . -readall /Users @{[keys %want]} 2>/dev/null";
 	my @lines;
@@ -101,12 +108,13 @@ if (!defined $where && $Config::Config{useperlio}) {
 	    push @lines, join (':', @rec) . "\n";
 	}
 	my $data = join '', @lines;
-	if (open PW, '<', \$data) {
+	if (open PW, '<', \$data) { # Needs PerlIO::scalar.
 	    $where = "dscl . -readall /Users";
 	    last;
 	}
     }
 }
+} # DSCL:
 
 if (not defined $where) {
     # Try local.

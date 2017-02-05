@@ -1,5 +1,7 @@
   regcomp.c	These tests have been moved to t/re/reg_mesg.t
-		except for those that explicitly test line numbers.
+		except for those that explicitly test line numbers
+                and those that don't have a <-- HERE in them, and those that
+                die plus have warnings, or otherwise require special handling
 
 __END__
 use warnings 'regexp';
@@ -7,3 +9,112 @@ $r=qr/(??{ q"\\b+" })/;
 "a" =~ /a$r/; # warning should come from this line
 EXPECT
 \b+ matches null string many times in regex; marked by <-- HERE in m/\b+ <-- HERE / at - line 3.
+########
+# regcomp.c
+use warnings 'digit' ;
+my $a = qr/\o{1238456}\x{100}/;
+my $a = qr/[\o{6548321}]\x{100}/;
+no warnings 'digit' ;
+my $a = qr/\o{1238456}\x{100}/;
+my $a = qr/[\o{6548321}]\x{100}/;
+EXPECT
+Non-octal character '8'.  Resolved as "\o{123}" at - line 3.
+Non-octal character '8'.  Resolved as "\o{654}" at - line 4.
+########
+# regcomp.c
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# Different results on EBCDIC";
+        exit 0;
+    }
+}
+use warnings;
+$a = qr/\c,/;
+$a = qr/[\c,]/;
+no warnings 'syntax';
+$a = qr/\c,/;
+$a = qr/[\c,]/;
+EXPECT
+"\c," is more clearly written simply as "l" at - line 9.
+"\c," is more clearly written simply as "l" at - line 10.
+########
+# This is because currently a different error is output under
+# use re 'strict', so can't go in reg_mesg.t
+# NAME perl #126261, error message causes segfault
+# OPTION fatal
+ qr/abc[\x{df}[.00./i
+EXPECT
+Unmatched [ in regex; marked by <-- HERE in m/abc[ <-- HERE \x{df}[.00./ at - line 4.
+########
+# NAME perl #126261, with 'use utf8'
+# OPTION fatal
+use utf8;
+no warnings 'utf8';
+qr/abc[ﬁ[.00./i;
+EXPECT
+Unmatched [ in regex; marked by <-- HERE in m/abc[ <-- HERE ﬁ[.00./ at - line 4.
+########
+# NAME perl qr/(?[[[:word]]])/ XXX Why is 'syntax' lc?
+# OPTION fatal
+qr/(?[[[:word]]])/;
+EXPECT
+Assuming NOT a POSIX class since there is no terminating ':' in regex; marked by <-- HERE in m/(?[[[:word <-- HERE ]]])/ at - line 2.
+syntax error in (?[...]) in regex m/(?[[[:word]]])/ at - line 2.
+########
+# NAME qr/(?[ [[:digit: ])/
+# OPTION fatal
+qr/(?[[[:digit: ])/;
+EXPECT
+Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[[:digit: ] <-- HERE )/ at - line 2.
+syntax error in (?[...]) in regex m/(?[[[:digit: ])/ at - line 2.
+########
+# NAME qr/(?[ [:digit: ])/
+# OPTION fatal
+qr/(?[[:digit: ])/
+EXPECT
+Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[:digit: ] <-- HERE )/ at - line 2.
+syntax error in (?[...]) in regex m/(?[[:digit: ])/ at - line 2.
+########
+# NAME [perl #126141]
+# OPTION fatal
+eval {/$_/}, print "$_ ==> ", $@ || "OK!\n" for "]]]]]]]]][\\", "]]]]][\\"
+EXPECT
+]]]]]]]]][\ ==> Unmatched [ in regex; marked by <-- HERE in m/]]]]]]]]][\ <-- HERE / at - line 2.
+]]]]][\ ==> Unmatched [ in regex; marked by <-- HERE in m/]]]]][\ <-- HERE / at - line 2.
+########
+# NAME [perl #123417]
+use warnings 'regexp';
+qr/[\N{}]/;
+qr/\N{}/;
+no warnings 'regexp';
+qr/[\N{}]/;
+qr/\N{}/;
+no warnings 'deprecated';
+qr/[\N{}]/;
+qr/\N{}/;
+EXPECT
+Unknown charname '' is deprecated at - line 2.
+Ignoring zero length \N{} in character class in regex; marked by <-- HERE in m/[\N{} <-- HERE ]/ at - line 2.
+Unknown charname '' is deprecated at - line 3.
+Unknown charname '' is deprecated at - line 5.
+Unknown charname '' is deprecated at - line 6.
+########
+# NAME [perl #123417]
+# OPTION fatal
+use warnings 'regexp';
+no warnings 'experimental::re_strict';
+use re 'strict';
+qr/[\N{}]/;
+EXPECT
+Unknown charname '' is deprecated at - line 5.
+Zero length \N{} in regex; marked by <-- HERE in m/[\N{} <-- HERE ]/ at - line 5.
+########
+# NAME [perl #123417]
+# OPTION fatal
+use warnings 'regexp';
+no warnings 'experimental::re_strict';
+use re 'strict';
+qr/\N{}/;
+EXPECT
+Unknown charname '' is deprecated at - line 5.
+Zero length \N{} in regex; marked by <-- HERE in m/\N{} <-- HERE / at - line 5.

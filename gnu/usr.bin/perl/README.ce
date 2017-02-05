@@ -57,7 +57,7 @@ F<Config.pm> for further compilations.
 
 =item *
 
-During extensions build phase, a script F<./win32/buldext.pl> is invoked,
+During extensions build phase, a script F<./win32/buildext.pl> is invoked,
 which in turn steps in F<./ext> subdirectories and performs a build of
 each extension in turn.
 
@@ -73,11 +73,11 @@ Windows then change "C:\Program Files" to "C:\Program Files (x86)" throughout.)
 
 1. Install EVC4 from
 
-    http://download.microsoft.com/download/c/3/f/c3f8b58b-9753-4c2e-8b96-2dfe3476a2f7/eVC4.exe 
+ http://download.microsoft.com/download/c/3/f/c3f8b58b-9753-4c2e-8b96-2dfe3476a2f7/eVC4.exe
 
 Use the key mentioned at 
 
-    http://download.cnet.com/Microsoft-eMbedded-Visual-C/3000-2212_4-10108490.html?tag=bc 
+ http://download.cnet.com/Microsoft-eMbedded-Visual-C/3000-2212_4-10108490.html?tag=bc
 
 The installer is ancient and has a few bugs on the paths it uses. You 
 will have to fix them later. Basically, some things go into "C:/Program 
@@ -101,7 +101,7 @@ Mobile/WinCE are backwards compatible with machine code like Desktop Windows.
 
 3. Download console-1.3-src.tar.gz from 
 
-    http://sourceforge.net/projects/perlce/files/PerlCE%20support%20files/console/ 
+ http://sourceforge.net/projects/perlce/files/PerlCE%20support%20files/console/
 
 Extract it to a spaceless path but not into the perl build source. 
 Don't extract it into the same directory as celib. Make a copy of the 

@@ -12,6 +12,9 @@ BEGIN {
 $|  = 1;
 use warnings;
 use strict;
+BEGIN  {
+    eval { require threads; threads->import; }
+}
 use Test::More;
 
 BEGIN { use_ok( 'B' ); }
@@ -108,6 +111,9 @@ my $obj = B::svref_2object($r);
 my $regexp =  ($] < 5.011) ? $obj->MAGIC : $obj;
 ok($regexp->precomp() eq 'foo', 'Get string from qr//');
 like($regexp->REGEX(), qr/\d+/, "REGEX() returns numeric value");
+like($regexp->compflags, qr/^\d+\z/, "compflags returns numeric value");
+is B::svref_2object(qr/(?{time})/)->qr_anoncv->ROOT->first->name, 'qr',
+  'qr_anoncv';
 my $iv = 1;
 my $iv_ref = B::svref_2object(\$iv);
 is(ref $iv_ref, "B::IV", "Test B:IV return from svref_2object");
@@ -208,6 +214,26 @@ is($gv_ref->FLAGS() & B::SVTYPEMASK, B::SVt_PVGV, "Test SVTYPEMASK");
 is(ref B::sv_yes(), "B::SPECIAL", "B::sv_yes()");
 is(ref B::sv_no(), "B::SPECIAL", "B::sv_no()");
 is(ref B::sv_undef(), "B::SPECIAL", "B::sv_undef()");
+SKIP: {
+    skip('no fork', 1)
+	unless ($Config::Config{d_fork} or $Config::Config{d_pseudofork});
+    my $pid;
+    pipe my $r, my $w or die "Can't pipe: $!";;
+    if ($pid = fork) {
+        close $w;
+        my $type = <$r>;
+        close $r;
+        waitpid($pid,0);
+        is($type, "B::SPECIAL", "special SV table works after pseudofork");
+    }
+    else {
+        close $r;
+        $|++;
+        print $w ref B::svref_2object(\(!!0));
+        close $w;
+        exit;
+    }
+}
 
 # More utility functions
 is(B::ppname(0), "pp_null", "Testing ppname (this might break if opnames.h is changed)");
@@ -255,7 +281,7 @@ is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
     while (my ($test, $expect) = splice @tests, 0, 2) {
 	is(B::perlstring($test), $expect, "B::perlstring($expect)");
 	utf8::upgrade $test;
-	$expect =~ s/\\b/\\x\{8\}/g;
+	$expect =~ s/\\b/sprintf("\\x{%x}", utf8::unicode_to_native(8))/eg;
 	$expect =~ s/\\([0-7]{3})/sprintf "\\x\{%x\}", oct $1/eg;
 	is(B::perlstring($test), $expect, "B::perlstring($expect) (Unicode)");
     }
@@ -292,6 +318,16 @@ B::svref_2object(sub{y/\x{100}//})->ROOT->first->first->sibling->sv;
 ok 1, 'B knows that UTF trans is a padop in 5.8.9, not an svop';
 
 {
+    my $o = B::svref_2object(sub{0;0})->ROOT->first->first;
+    # Make sure we are testing what we think we are testing.  If these two
+    # fail, tweak the test to find a nulled cop a different way.
+    is $o->name, "null", 'first op of sub{0;0} is a null';
+    is B::ppname($o->targ),'pp_nextstate','first op of sub{0;0} was a cop';
+    # Test its class
+    is B::class($o), "COP", 'nulled cops are of class COP';
+}
+
+{
     format FOO =
 foo
 .
@@ -299,6 +335,8 @@ foo
     isa_ok $f, 'B::FM';
     can_ok $f, 'LINES';
 }
+
+is B::safename("\cLAST_FH"), "^LAST_FH", 'basic safename test';
 
 my $sub1 = sub {die};
 { no warnings 'once'; no strict; *Peel:: = *{"Pe\0e\x{142}::"} }
@@ -319,6 +357,11 @@ SKIP: {
     isnt $cop->stashoff, $bobby->stashoff,
 	'different COP->stashoff for different stashes';
 }
+
+my $pmop = B::svref_2object(sub{ qr/fit/ })->ROOT->first->first->sibling;
+$regexp = $pmop->pmregexp;
+is B::class($regexp), 'REGEXP', 'B::PMOP::pmregexp returns a regexp';
+is $regexp->precomp, 'fit', 'pmregexp returns the right regexp';
 
 
 # Test $B::overlay
@@ -404,10 +447,10 @@ SKIP:
         my $cv = B::svref_2object(\&bar);
         ok($cv, "make a B::CV from a lexical sub reference");
         isa_ok($cv, "B::CV");
-        my $gv = $cv->GV;
-        isa_ok($gv, "B::SPECIAL", "GV on a lexical sub");
         my $hek = $cv->NAME_HEK;
         is($hek, "bar", "check the NAME_HEK");
+        my $gv = $cv->GV;
+        isa_ok($gv, "B::GV", "GV on a lexical sub");
     }
     1;
 EOS
@@ -421,5 +464,91 @@ EOS
     my ($k, $v) = $b->ARRAY;
     is($k, "\x{100}", "check utf8 preserved by B::HV::ARRAY");
 }
+
+# test op_parent
+
+SKIP: {
+    unless ($B::OP::does_parent) {
+        skip "op_parent only present with -DPERL_OP_PARENT builds", 6;
+    }
+    my $lineseq = B::svref_2object(sub{my $x = 1})->ROOT->first;
+    is ($lineseq->type,  B::opnumber('lineseq'),
+                                'op_parent: top op is lineseq');
+    my $first  = $lineseq->first;
+    my $second = $first->sibling;
+    is(ref $second->sibling, "B::NULL", 'op_parent: second sibling is null');
+    is($first->moresib,  1 , 'op_parent: first  sibling: moresib');
+    is($second->moresib, 0,  'op_parent: second sibling: !moresib');
+    is($$lineseq,  ${$first->parent},   'op_parent: first  sibling okay');
+    is($$lineseq,  ${$second->parent},  'op_parent: second sibling okay');
+}
+
+
+# make sure ->sv, -gv methods do the right thing on threaded builds
+{
+
+    # for some reason B::walkoptree only likes a sub name, not a code ref
+    my ($gv, $sv);
+    sub gvsv_const {
+        # make the early pad slots something unlike a threaded const or
+        # gvsv
+        my ($dummy1, $dummy2, $dummy3, $dummy4) = qw(foo1 foo2 foo3 foo4);
+        my $self = shift;
+        if ($self->name eq 'gvsv') {
+            $gv = $self->gv;
+        }
+        elsif ($self->name eq 'const') {
+            $sv = $self->sv;
+        }
+    };
+
+    B::walkoptree(B::svref_2object(sub {our $x = 1})->ROOT, "::gvsv_const");
+    ok(defined $gv, "gvsv->gv seen");
+    ok(defined $sv, "const->sv seen");
+    if ($Config::Config{useithreads}) {
+        # should get NULLs
+        is(ref($gv), "B::SPECIAL", "gvsv->gv is special");
+        is(ref($sv), "B::SPECIAL", "const->sv is special");
+        is($$gv, 0, "gvsv->gv special is 0 (NULL)");
+        is($$sv, 0, "const->sv special is 0 (NULL)");
+    }
+    else {
+        is(ref($gv), "B::GV", "gvsv->gv is GV");
+        is(ref($sv), "B::IV", "const->sv is IV");
+        pass();
+        pass();
+    }
+
+}
+
+
+# Some pad tests
+{
+    my $sub = sub { my main $a; CORE::state @b; our %c };
+    my $padlist = B::svref_2object($sub)->PADLIST;
+    is $padlist->MAX, 1, 'padlist MAX';
+    my @array = $padlist->ARRAY;
+    is @array, 2, 'two items from padlist ARRAY';
+    is ${$padlist->ARRAYelt(0)}, ${$array[0]},
+      'ARRAYelt(0) is first item from ARRAY';
+    is ${$padlist->ARRAYelt(1)}, ${$array[1]},
+      'ARRAYelt(1) is second item from ARRAY';
+    is ${$padlist->NAMES}, ${$array[0]},
+      'NAMES is first item from ARRAY';
+    my @names = $array[0]->ARRAY;
+    cmp_ok @names, ">=", 4, 'at least 4 pad names';
+    is join(" ", map($_->PV//"undef",@names[0..3])), 'undef $a @b %c',
+       'pad name PVs';
+
+    my @closures;
+    for (1,2) { push @closures, sub { sub { @closures } } }
+    my $sub1 = B::svref_2object($closures[0]);
+    my $sub2 = B::svref_2object($closures[1]);
+    is $sub2->PADLIST->id, $sub1->PADLIST->id, 'padlist id';
+    $sub1 = B::svref_2object(my $lr = $closures[0]());
+    $sub2 = B::svref_2object(my $lr2= $closures[1]());
+    is $sub2->PADLIST->outid, $sub1->PADLIST->outid, 'padlist outid';
+}
+
 
 done_testing();

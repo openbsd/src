@@ -27,7 +27,7 @@ use File::Find;
 use List::Util qw(max);
 use Config;
 
-my $VERSION = '3.21';
+my $VERSION = '3.32';
 
 $| = 1;
 my %OPT = (

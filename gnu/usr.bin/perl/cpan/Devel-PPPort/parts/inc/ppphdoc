@@ -83,7 +83,7 @@ to be installed on your system.
 If this option is given, a copy of each file will be saved with
 the given suffix that contains the suggested changes. This does
 not require any external programs. Note that this does not
-automagially add a dot between the original filename and the
+automagically add a dot between the original filename and the
 suffix. If you want the dot, you have to include it in the option
 argument.
 
@@ -297,7 +297,7 @@ before sending a bug report.
 
 If F<ppport.h> was generated using the latest version of
 C<Devel::PPPort> and is causing failure of this module, please
-file a bug report using the CPAN Request Tracker at L<http://rt.cpan.org/>.
+file a bug report here: L<https://github.com/mhx/Devel-PPPort/issues/>
 
 Please include the following information:
 

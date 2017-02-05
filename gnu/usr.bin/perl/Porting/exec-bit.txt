@@ -27,9 +27,9 @@ regen/regcharclass.pl
 regen/uconfig_h.pl
 runtests.SH
 t/TEST
-x2p/Makefile.SH
 Porting/Maintainers.pl
 Porting/add-package.pl
+Porting/bench.pl
 Porting/bisect.pl
 Porting/bisect-example.sh
 Porting/bisect-runner.pl
@@ -38,6 +38,7 @@ Porting/checkAUTHORS.pl
 Porting/checkURL.pl
 Porting/checkVERSION.pl
 Porting/checkansi.pl
+Porting/checkcfguse.pl
 Porting/checkcfgvar.pl
 Porting/checkpodencoding.pl
 Porting/cmpVERSION.pl

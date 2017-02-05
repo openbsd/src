@@ -86,6 +86,7 @@ we add a flag to re-add the removed byte to the source we could handle
 
 */
 
+#define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
 #include "encode.h"

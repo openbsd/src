@@ -1,6 +1,6 @@
 use re 'debug';
 
-$_ = 'foo bar baz bop fip fop';
+$_ = 'foo bar baz bop boq bor fip fop';
 
 /foo/ and $count++;
 
@@ -12,6 +12,13 @@ $_ = 'foo bar baz bop fip fop';
         /baz/ and $count++;
     }
     /bop/ and $count++;
+}
+
+{
+    use re 'debug';
+    /boq/ and $count++;
+    no re;
+    /bor/ and $count++;
 }
 
 /fip/ and $count++;

@@ -3,7 +3,7 @@
     -- [ATTRIBUTION]
 
 We are [SYNONYM FOR 'pleased'] to announce version [VERSION.SUBVERSION],
-the [N-TH] development release of version 19 of Perl 5.
+the [N-TH] development release of version [VERSION] of Perl 5.
 
 You will soon be able to download Perl 5.[VERSION.SUBVERSION] from your
 favorite CPAN mirror or find it at:
@@ -14,14 +14,17 @@ SHA1 digests for this release are:
 
  [TAR.GZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.gz
  [TAR.BZ2 SHA1]  perl-5.[VERSION.SUBVERSION].tar.bz2
+ [TAR.XZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.xz
 
 You can find a full list of changes in the file "perldelta.pod" located in
-the "pod" directory inside the release and on the web.
+the "pod" directory inside the release and on the web at
+
+https://metacpan.org/pod/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/pod/perldelta.pod
 
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
 We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
-DATE].  The next major stable release of Perl 5, version 22.0, should
-appear in May 2015.
+DATE].  The next major stable release of Perl 5, version 24.0, should
+appear in May 2016.
 
 [YOUR SALUTATION HERE]

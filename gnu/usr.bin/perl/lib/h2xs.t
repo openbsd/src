@@ -72,7 +72,7 @@ my $thisversion = sprintf "%vd", $^V;
 $thisversion =~ s/^v//;
 
 # If this test has failed previously a copy may be left.
-rmtree($name);
+rmtree($name) if -e $name;
 
 my @tests = (
 "-f -n $name", $], <<"EOXSFILES",

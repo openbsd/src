@@ -52,13 +52,16 @@ is(Cygwin::mount_flags("/cygdrive") =~ /,cygdrive/,  1, "check cygdrive mount_fl
 # Cygdrive mount prefix
 my @flags = split(/,/, Cygwin::mount_flags('/cygdrive'));
 my $prefix = pop(@flags);
-ok($prefix, "cygdrive mount prefix = " . (($prefix) ? $prefix : '<none>'));
-chomp(my $prefix2 = `df | grep -i '^c: ' | cut -d% -f2 | xargs`);
-$prefix2 =~ s/\/c$//i;
-if (! $prefix2) {
-    $prefix2 = '/';
+ok($prefix, "cygdrive mount prefix  = " . (($prefix) ? $prefix : '<none>'));
+my $prefix2 = readlink "/proc/cygdrive";
+unless ($prefix2) {
+    # fallback to old Cygwin, the drive need not actually exist, so
+    # this will always work (but might return the wrong prefix if the
+    # user re-mounted C:\
+    chomp($prefix2 = `cygpath C:`);
+    $prefix2 = substr($prefix2, 0, -1-(length($prefix2)>2));
 }
-is($prefix, $prefix2, 'cygdrive mount prefix');
+is($prefix, $prefix2, 'cygdrive mount prefix2 = ' . $prefix2);
 
 my @mnttbl = Cygwin::mount_table();
 ok(@mnttbl > 0, "non empty mount_table");

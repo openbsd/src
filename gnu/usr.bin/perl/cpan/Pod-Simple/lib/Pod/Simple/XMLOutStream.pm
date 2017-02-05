@@ -5,7 +5,7 @@ use strict;
 use Carp ();
 use Pod::Simple ();
 use vars qw( $ATTR_PAD @ISA $VERSION $SORT_ATTRS);
-$VERSION = '3.28';
+$VERSION = '3.32';
 BEGIN {
   @ISA = ('Pod::Simple');
   *DEBUG = \&Pod::Simple::DEBUG unless defined &DEBUG;
@@ -31,7 +31,7 @@ sub _handle_element_start {
   # ($self, $element_name, $attr_hash_r)
   my $fh = $_[0]{'output_fh'};
   my($key, $value);
-  DEBUG and print "++ $_[1]\n";
+  DEBUG and print STDERR "++ $_[1]\n";
   print $fh "<", $_[1];
   if($SORT_ATTRS) {
     foreach my $key (sort keys %{$_[2]}) {
@@ -55,7 +55,7 @@ sub _handle_element_start {
 }
 
 sub _handle_text {
-  DEBUG and print "== \"$_[1]\"\n";
+  DEBUG and print STDERR "== \"$_[1]\"\n";
   if(length $_[1]) {
     my $text = $_[1];
     _xml_escape($text);
@@ -65,7 +65,7 @@ sub _handle_text {
 }
 
 sub _handle_element_end {
-  DEBUG and print "-- $_[1]\n";
+  DEBUG and print STDERR "-- $_[1]\n";
   print {$_[0]{'output_fh'}} "</", $_[1], ">";
   return;
 }
@@ -76,11 +76,13 @@ sub _handle_element_end {
 sub _xml_escape {
   foreach my $x (@_) {
     # Escape things very cautiously:
-    $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg;
+    if ($] ge 5.007_003) {
+      $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(utf8::native_to_unicode(ord($1))).';'/eg;
+    } else { # Is broken for non-ASCII platforms on early perls
+      $x =~ s/([^-\n\t !\#\$\%\(\)\*\+,\.\~\/\:\;=\?\@\[\\\]\^_\`\{\|\}abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])/'&#'.(ord($1)).';'/eg;
+    }
     # Yes, stipulate the list without a range, so that this can work right on
     #  all charsets that this module happens to run under.
-    # Altho, hmm, what about that ord?  Presumably that won't work right
-    #  under non-ASCII charsets.  Something should be done about that.
   }
   return;
 }
@@ -125,19 +127,6 @@ The older (and possibly obsolete) libraries L<Pod::PXML>, L<Pod::XML>
 
 TODO: An example or two of =extend, then point to Pod::Simple::Subclassing
 
-
-=head1 ASK ME!
-
-If you actually want to use Pod as a format that you want to render to
-XML (particularly if to an XML instance with more elements than normal
-Pod has), please email me (C<sburke@cpan.org>) and I'll probably have
-some recommendations.
-
-For reasons of concision and energetic laziness, some methods and
-options in this module (and the dozen modules it depends on) are
-undocumented; but one of those undocumented bits might be just what
-you're looking for.
-
 =head1 SEE ALSO
 
 L<Pod::Simple>, L<Pod::Simple::Text>, L<Pod::Spell>
@@ -149,8 +138,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

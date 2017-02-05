@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use Config; # To prevent conflict with some strawberry-portable versions
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

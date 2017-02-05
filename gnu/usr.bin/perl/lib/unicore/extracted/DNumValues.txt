@@ -1,8 +1,8 @@
-# DerivedNumericValues-6.3.0.txt
-# Date: 2012-12-20, 22:18:26 GMT [MD]
+# DerivedNumericValues-8.0.0.txt
+# Date: 2015-02-13, 13:47:13 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2013 Unicode, Inc.
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 
@@ -29,7 +29,6 @@
 # in this file, they should be expressed to the limits of the precision
 # available when used.
 #
-# @missing: 0000..10FFFF; NaN; ; NaN
 
 # ================================================
 
@@ -53,6 +52,7 @@
 0C78          ; 0.0 ; ; 0 # No       TELUGU FRACTION DIGIT ZERO FOR ODD POWERS OF FOUR
 0CE6          ; 0.0 ; ; 0 # Nd       KANNADA DIGIT ZERO
 0D66          ; 0.0 ; ; 0 # Nd       MALAYALAM DIGIT ZERO
+0DE6          ; 0.0 ; ; 0 # Nd       SINHALA LITH DIGIT ZERO
 0E50          ; 0.0 ; ; 0 # Nd       THAI DIGIT ZERO
 0ED0          ; 0.0 ; ; 0 # Nd       LAO DIGIT ZERO
 0F20          ; 0.0 ; ; 0 # Nd       TIBETAN DIGIT ZERO
@@ -81,6 +81,7 @@ A6EF          ; 0.0 ; ; 0 # Nl       BAMUM LETTER KOGHOM
 A8D0          ; 0.0 ; ; 0 # Nd       SAURASHTRA DIGIT ZERO
 A900          ; 0.0 ; ; 0 # Nd       KAYAH LI DIGIT ZERO
 A9D0          ; 0.0 ; ; 0 # Nd       JAVANESE DIGIT ZERO
+A9F0          ; 0.0 ; ; 0 # Nd       MYANMAR TAI LAING DIGIT ZERO
 AA50          ; 0.0 ; ; 0 # Nd       CHAM DIGIT ZERO
 ABF0          ; 0.0 ; ; 0 # Nd       MEETEI MAYEK DIGIT ZERO
 F9B2          ; 0.0 ; ; 0 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9B2
@@ -91,15 +92,23 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 110F0         ; 0.0 ; ; 0 # Nd       SORA SOMPENG DIGIT ZERO
 11136         ; 0.0 ; ; 0 # Nd       CHAKMA DIGIT ZERO
 111D0         ; 0.0 ; ; 0 # Nd       SHARADA DIGIT ZERO
+112F0         ; 0.0 ; ; 0 # Nd       KHUDAWADI DIGIT ZERO
+114D0         ; 0.0 ; ; 0 # Nd       TIRHUTA DIGIT ZERO
+11650         ; 0.0 ; ; 0 # Nd       MODI DIGIT ZERO
 116C0         ; 0.0 ; ; 0 # Nd       TAKRI DIGIT ZERO
+11730         ; 0.0 ; ; 0 # Nd       AHOM DIGIT ZERO
+118E0         ; 0.0 ; ; 0 # Nd       WARANG CITI DIGIT ZERO
+16A60         ; 0.0 ; ; 0 # Nd       MRO DIGIT ZERO
+16B50         ; 0.0 ; ; 0 # Nd       PAHAWH HMONG DIGIT ZERO
 1D7CE         ; 0.0 ; ; 0 # Nd       MATHEMATICAL BOLD DIGIT ZERO
 1D7D8         ; 0.0 ; ; 0 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT ZERO
 1D7E2         ; 0.0 ; ; 0 # Nd       MATHEMATICAL SANS-SERIF DIGIT ZERO
 1D7EC         ; 0.0 ; ; 0 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT ZERO
 1D7F6         ; 0.0 ; ; 0 # Nd       MATHEMATICAL MONOSPACE DIGIT ZERO
 1F100..1F101  ; 0.0 ; ; 0 # No   [2] DIGIT ZERO FULL STOP..DIGIT ZERO COMMA
+1F10B..1F10C  ; 0.0 ; ; 0 # No   [2] DINGBAT CIRCLED SANS-SERIF DIGIT ZERO..DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO
 
-# Total code points: 60
+# Total code points: 71
 
 # ================================================
 
@@ -108,6 +117,12 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 A833          ; 0.0625 ; ; 1/16 # No       NORTH INDIC FRACTION ONE SIXTEENTH
 
 # Total code points: 3
+
+# ================================================
+
+109F6         ; 0.08333333 ; ; 1/12 # No       MEROITIC CURSIVE FRACTION ONE TWELFTH
+
+# Total code points: 1
 
 # ================================================
 
@@ -140,9 +155,10 @@ A834          ; 0.125 ; ; 1/8 # No       NORTH INDIC FRACTION ONE EIGHTH
 # ================================================
 
 2159          ; 0.16666667 ; ; 1/6 # No       VULGAR FRACTION ONE SIXTH
+109F7         ; 0.16666667 ; ; 1/6 # No       MEROITIC CURSIVE FRACTION TWO TWELFTHS
 12461         ; 0.16666667 ; ; 1/6 # Nl       CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE SIXTH
 
-# Total code points: 2
+# Total code points: 3
 
 # ================================================
 
@@ -166,20 +182,24 @@ A835          ; 0.1875 ; ; 3/16 # No       NORTH INDIC FRACTION THREE SIXTEENTHS
 0D73          ; 0.25 ; ; 1/4 # No       MALAYALAM FRACTION ONE QUARTER
 A830          ; 0.25 ; ; 1/4 # No       NORTH INDIC FRACTION ONE QUARTER
 10140         ; 0.25 ; ; 1/4 # Nl       GREEK ACROPHONIC ATTIC ONE QUARTER
+1018B         ; 0.25 ; ; 1/4 # No       GREEK ONE QUARTER SIGN
+109F8         ; 0.25 ; ; 1/4 # No       MEROITIC CURSIVE FRACTION THREE TWELFTHS
 10E7C         ; 0.25 ; ; 1/4 # No       RUMI FRACTION ONE QUARTER
 12460         ; 0.25 ; ; 1/4 # Nl       CUNEIFORM NUMERIC SIGN ONE QUARTER ASH
-12462         ; 0.25 ; ; 1/4 # Nl       CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER
+12462..12463  ; 0.25 ; ; 1/4 # Nl   [2] CUNEIFORM NUMERIC SIGN OLD ASSYRIAN ONE QUARTER..CUNEIFORM NUMERIC SIGN ONE QUARTER GUR
 
-# Total code points: 9
+# Total code points: 12
 
 # ================================================
 
 2153          ; 0.33333333 ; ; 1/3 # No       VULGAR FRACTION ONE THIRD
+109F9         ; 0.33333333 ; ; 1/3 # No       MEROITIC CURSIVE FRACTION FOUR TWELFTHS
 10E7D         ; 0.33333333 ; ; 1/3 # No       RUMI FRACTION ONE THIRD
 1245A         ; 0.33333333 ; ; 1/3 # Nl       CUNEIFORM NUMERIC SIGN ONE THIRD DISH
 1245D         ; 0.33333333 ; ; 1/3 # Nl       CUNEIFORM NUMERIC SIGN ONE THIRD VARIANT FORM A
+12465         ; 0.33333333 ; ; 1/3 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE ONE THIRD
 
-# Total code points: 4
+# Total code points: 6
 
 # ================================================
 
@@ -195,6 +215,12 @@ A830          ; 0.25 ; ; 1/4 # No       NORTH INDIC FRACTION ONE QUARTER
 
 # ================================================
 
+109FA         ; 0.41666667 ; ; 5/12 # No       MEROITIC CURSIVE FRACTION FIVE TWELFTHS
+
+# Total code points: 1
+
+# ================================================
+
 00BD          ; 0.5 ; ; 1/2 # No       VULGAR FRACTION ONE HALF
 0B73          ; 0.5 ; ; 1/2 # No       ORIYA FRACTION ONE HALF
 0D74          ; 0.5 ; ; 1/2 # No       MALAYALAM FRACTION ONE HALF
@@ -203,9 +229,18 @@ A830          ; 0.25 ; ; 1/4 # No       NORTH INDIC FRACTION ONE QUARTER
 A831          ; 0.5 ; ; 1/2 # No       NORTH INDIC FRACTION ONE HALF
 10141         ; 0.5 ; ; 1/2 # Nl       GREEK ACROPHONIC ATTIC ONE HALF
 10175..10176  ; 0.5 ; ; 1/2 # No   [2] GREEK ONE HALF SIGN..GREEK ONE HALF SIGN ALTERNATE FORM
+109BD         ; 0.5 ; ; 1/2 # No       MEROITIC CURSIVE FRACTION ONE HALF
+109FB         ; 0.5 ; ; 1/2 # No       MEROITIC CURSIVE FRACTION SIX TWELFTHS
 10E7B         ; 0.5 ; ; 1/2 # No       RUMI FRACTION ONE HALF
+12464         ; 0.5 ; ; 1/2 # Nl       CUNEIFORM NUMERIC SIGN ONE HALF GUR
 
-# Total code points: 10
+# Total code points: 13
+
+# ================================================
+
+109FC         ; 0.58333333 ; ; 7/12 # No       MEROITIC CURSIVE FRACTION SEVEN TWELFTHS
+
+# Total code points: 1
 
 # ================================================
 
@@ -223,11 +258,13 @@ A831          ; 0.5 ; ; 1/2 # No       NORTH INDIC FRACTION ONE HALF
 
 2154          ; 0.66666667 ; ; 2/3 # No       VULGAR FRACTION TWO THIRDS
 10177         ; 0.66666667 ; ; 2/3 # No       GREEK TWO THIRDS SIGN
+109FD         ; 0.66666667 ; ; 2/3 # No       MEROITIC CURSIVE FRACTION EIGHT TWELFTHS
 10E7E         ; 0.66666667 ; ; 2/3 # No       RUMI FRACTION TWO THIRDS
 1245B         ; 0.66666667 ; ; 2/3 # Nl       CUNEIFORM NUMERIC SIGN TWO THIRDS DISH
 1245E         ; 0.66666667 ; ; 2/3 # Nl       CUNEIFORM NUMERIC SIGN TWO THIRDS VARIANT FORM A
+12466         ; 0.66666667 ; ; 2/3 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE TWO THIRDS
 
-# Total code points: 5
+# Total code points: 7
 
 # ================================================
 
@@ -237,8 +274,9 @@ A831          ; 0.5 ; ; 1/2 # No       NORTH INDIC FRACTION ONE HALF
 0D75          ; 0.75 ; ; 3/4 # No       MALAYALAM FRACTION THREE QUARTERS
 A832          ; 0.75 ; ; 3/4 # No       NORTH INDIC FRACTION THREE QUARTERS
 10178         ; 0.75 ; ; 3/4 # No       GREEK THREE QUARTERS SIGN
+109FE         ; 0.75 ; ; 3/4 # No       MEROITIC CURSIVE FRACTION NINE TWELFTHS
 
-# Total code points: 6
+# Total code points: 7
 
 # ================================================
 
@@ -249,13 +287,20 @@ A832          ; 0.75 ; ; 3/4 # No       NORTH INDIC FRACTION THREE QUARTERS
 # ================================================
 
 215A          ; 0.83333333 ; ; 5/6 # No       VULGAR FRACTION FIVE SIXTHS
+109FF         ; 0.83333333 ; ; 5/6 # No       MEROITIC CURSIVE FRACTION TEN TWELFTHS
 1245C         ; 0.83333333 ; ; 5/6 # Nl       CUNEIFORM NUMERIC SIGN FIVE SIXTHS DISH
 
-# Total code points: 2
+# Total code points: 3
 
 # ================================================
 
 215E          ; 0.875 ; ; 7/8 # No       VULGAR FRACTION SEVEN EIGHTHS
+
+# Total code points: 1
+
+# ================================================
+
+109BC         ; 0.91666667 ; ; 11/12 # No       MEROITIC CURSIVE FRACTION ELEVEN TWELFTHS
 
 # Total code points: 1
 
@@ -277,6 +322,7 @@ A832          ; 0.75 ; ; 3/4 # No       NORTH INDIC FRACTION THREE QUARTERS
 0C7C          ; 1.0 ; ; 1 # No       TELUGU FRACTION DIGIT ONE FOR EVEN POWERS OF FOUR
 0CE7          ; 1.0 ; ; 1 # Nd       KANNADA DIGIT ONE
 0D67          ; 1.0 ; ; 1 # Nd       MALAYALAM DIGIT ONE
+0DE7          ; 1.0 ; ; 1 # Nd       SINHALA LITH DIGIT ONE
 0E51          ; 1.0 ; ; 1 # Nd       THAI DIGIT ONE
 0ED1          ; 1.0 ; ; 1 # Nd       LAO DIGIT ONE
 0F21          ; 1.0 ; ; 1 # Nd       TIBETAN DIGIT ONE
@@ -320,44 +366,63 @@ A6E6          ; 1.0 ; ; 1 # Nl       BAMUM LETTER MO
 A8D1          ; 1.0 ; ; 1 # Nd       SAURASHTRA DIGIT ONE
 A901          ; 1.0 ; ; 1 # Nd       KAYAH LI DIGIT ONE
 A9D1          ; 1.0 ; ; 1 # Nd       JAVANESE DIGIT ONE
+A9F1          ; 1.0 ; ; 1 # Nd       MYANMAR TAI LAING DIGIT ONE
 AA51          ; 1.0 ; ; 1 # Nd       CHAM DIGIT ONE
 ABF1          ; 1.0 ; ; 1 # Nd       MEETEI MAYEK DIGIT ONE
 FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 10107         ; 1.0 ; ; 1 # No       AEGEAN NUMBER ONE
 10142         ; 1.0 ; ; 1 # Nl       GREEK ACROPHONIC ATTIC ONE DRACHMA
 10158..1015A  ; 1.0 ; ; 1 # Nl   [3] GREEK ACROPHONIC HERAEUM ONE PLETHRON..GREEK ACROPHONIC HERMIONIAN ONE
+102E1         ; 1.0 ; ; 1 # No       COPTIC EPACT DIGIT ONE
 10320         ; 1.0 ; ; 1 # No       OLD ITALIC NUMERAL ONE
 103D1         ; 1.0 ; ; 1 # Nl       OLD PERSIAN NUMBER ONE
 104A1         ; 1.0 ; ; 1 # Nd       OSMANYA DIGIT ONE
 10858         ; 1.0 ; ; 1 # No       IMPERIAL ARAMAIC NUMBER ONE
+10879         ; 1.0 ; ; 1 # No       PALMYRENE NUMBER ONE
+108A7         ; 1.0 ; ; 1 # No       NABATAEAN NUMBER ONE
+108FB         ; 1.0 ; ; 1 # No       HATRAN NUMBER ONE
 10916         ; 1.0 ; ; 1 # No       PHOENICIAN NUMBER ONE
+109C0         ; 1.0 ; ; 1 # No       MEROITIC CURSIVE NUMBER ONE
 10A40         ; 1.0 ; ; 1 # No       KHAROSHTHI DIGIT ONE
 10A7D         ; 1.0 ; ; 1 # No       OLD SOUTH ARABIAN NUMBER ONE
+10A9D         ; 1.0 ; ; 1 # No       OLD NORTH ARABIAN NUMBER ONE
+10AEB         ; 1.0 ; ; 1 # No       MANICHAEAN NUMBER ONE
 10B58         ; 1.0 ; ; 1 # No       INSCRIPTIONAL PARTHIAN NUMBER ONE
 10B78         ; 1.0 ; ; 1 # No       INSCRIPTIONAL PAHLAVI NUMBER ONE
+10BA9         ; 1.0 ; ; 1 # No       PSALTER PAHLAVI NUMBER ONE
+10CFA         ; 1.0 ; ; 1 # No       OLD HUNGARIAN NUMBER ONE
 10E60         ; 1.0 ; ; 1 # No       RUMI DIGIT ONE
 11052         ; 1.0 ; ; 1 # No       BRAHMI NUMBER ONE
 11067         ; 1.0 ; ; 1 # Nd       BRAHMI DIGIT ONE
 110F1         ; 1.0 ; ; 1 # Nd       SORA SOMPENG DIGIT ONE
 11137         ; 1.0 ; ; 1 # Nd       CHAKMA DIGIT ONE
 111D1         ; 1.0 ; ; 1 # Nd       SHARADA DIGIT ONE
+111E1         ; 1.0 ; ; 1 # No       SINHALA ARCHAIC DIGIT ONE
+112F1         ; 1.0 ; ; 1 # Nd       KHUDAWADI DIGIT ONE
+114D1         ; 1.0 ; ; 1 # Nd       TIRHUTA DIGIT ONE
+11651         ; 1.0 ; ; 1 # Nd       MODI DIGIT ONE
 116C1         ; 1.0 ; ; 1 # Nd       TAKRI DIGIT ONE
+11731         ; 1.0 ; ; 1 # Nd       AHOM DIGIT ONE
+118E1         ; 1.0 ; ; 1 # Nd       WARANG CITI DIGIT ONE
 12415         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE GESH2
 1241E         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE GESHU
 1242C         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE SHARU
 12434         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE BURU
 1244F         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE BAN2
 12458         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE ESHE3
+16A61         ; 1.0 ; ; 1 # Nd       MRO DIGIT ONE
+16B51         ; 1.0 ; ; 1 # Nd       PAHAWH HMONG DIGIT ONE
 1D360         ; 1.0 ; ; 1 # No       COUNTING ROD UNIT DIGIT ONE
 1D7CF         ; 1.0 ; ; 1 # Nd       MATHEMATICAL BOLD DIGIT ONE
 1D7D9         ; 1.0 ; ; 1 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
 1D7E3         ; 1.0 ; ; 1 # Nd       MATHEMATICAL SANS-SERIF DIGIT ONE
 1D7ED         ; 1.0 ; ; 1 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT ONE
 1D7F7         ; 1.0 ; ; 1 # Nd       MATHEMATICAL MONOSPACE DIGIT ONE
+1E8C7         ; 1.0 ; ; 1 # No       MENDE KIKAKUI DIGIT ONE
 1F102         ; 1.0 ; ; 1 # No       DIGIT ONE COMMA
 2092A         ; 1.0 ; ; 1 # Lo       CJK UNIFIED IDEOGRAPH-2092A
 
-# Total code points: 97
+# Total code points: 117
 
 # ================================================
 
@@ -383,6 +448,7 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 0C7D          ; 2.0 ; ; 2 # No       TELUGU FRACTION DIGIT TWO FOR EVEN POWERS OF FOUR
 0CE8          ; 2.0 ; ; 2 # Nd       KANNADA DIGIT TWO
 0D68          ; 2.0 ; ; 2 # Nd       MALAYALAM DIGIT TWO
+0DE8          ; 2.0 ; ; 2 # Nd       SINHALA LITH DIGIT TWO
 0E52          ; 2.0 ; ; 2 # Nd       THAI DIGIT TWO
 0ED2          ; 2.0 ; ; 2 # Nd       LAO DIGIT TWO
 0F22          ; 2.0 ; ; 2 # Nd       TIBETAN DIGIT TWO
@@ -427,26 +493,38 @@ A6E7          ; 2.0 ; ; 2 # Nl       BAMUM LETTER MBAA
 A8D2          ; 2.0 ; ; 2 # Nd       SAURASHTRA DIGIT TWO
 A902          ; 2.0 ; ; 2 # Nd       KAYAH LI DIGIT TWO
 A9D2          ; 2.0 ; ; 2 # Nd       JAVANESE DIGIT TWO
+A9F2          ; 2.0 ; ; 2 # Nd       MYANMAR TAI LAING DIGIT TWO
 AA52          ; 2.0 ; ; 2 # Nd       CHAM DIGIT TWO
 ABF2          ; 2.0 ; ; 2 # Nd       MEETEI MAYEK DIGIT TWO
 F978          ; 2.0 ; ; 2 # Lo       CJK COMPATIBILITY IDEOGRAPH-F978
 FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 10108         ; 2.0 ; ; 2 # No       AEGEAN NUMBER TWO
 1015B..1015E  ; 2.0 ; ; 2 # Nl   [4] GREEK ACROPHONIC EPIDAUREAN TWO..GREEK ACROPHONIC EPIDAUREAN TWO DRACHMAS
+102E2         ; 2.0 ; ; 2 # No       COPTIC EPACT DIGIT TWO
 103D2         ; 2.0 ; ; 2 # Nl       OLD PERSIAN NUMBER TWO
 104A2         ; 2.0 ; ; 2 # Nd       OSMANYA DIGIT TWO
 10859         ; 2.0 ; ; 2 # No       IMPERIAL ARAMAIC NUMBER TWO
+1087A         ; 2.0 ; ; 2 # No       PALMYRENE NUMBER TWO
+108A8         ; 2.0 ; ; 2 # No       NABATAEAN NUMBER TWO
 1091A         ; 2.0 ; ; 2 # No       PHOENICIAN NUMBER TWO
+109C1         ; 2.0 ; ; 2 # No       MEROITIC CURSIVE NUMBER TWO
 10A41         ; 2.0 ; ; 2 # No       KHAROSHTHI DIGIT TWO
 10B59         ; 2.0 ; ; 2 # No       INSCRIPTIONAL PARTHIAN NUMBER TWO
 10B79         ; 2.0 ; ; 2 # No       INSCRIPTIONAL PAHLAVI NUMBER TWO
+10BAA         ; 2.0 ; ; 2 # No       PSALTER PAHLAVI NUMBER TWO
 10E61         ; 2.0 ; ; 2 # No       RUMI DIGIT TWO
 11053         ; 2.0 ; ; 2 # No       BRAHMI NUMBER TWO
 11068         ; 2.0 ; ; 2 # Nd       BRAHMI DIGIT TWO
 110F2         ; 2.0 ; ; 2 # Nd       SORA SOMPENG DIGIT TWO
 11138         ; 2.0 ; ; 2 # Nd       CHAKMA DIGIT TWO
 111D2         ; 2.0 ; ; 2 # Nd       SHARADA DIGIT TWO
+111E2         ; 2.0 ; ; 2 # No       SINHALA ARCHAIC DIGIT TWO
+112F2         ; 2.0 ; ; 2 # Nd       KHUDAWADI DIGIT TWO
+114D2         ; 2.0 ; ; 2 # Nd       TIRHUTA DIGIT TWO
+11652         ; 2.0 ; ; 2 # Nd       MODI DIGIT TWO
 116C2         ; 2.0 ; ; 2 # Nd       TAKRI DIGIT TWO
+11732         ; 2.0 ; ; 2 # Nd       AHOM DIGIT TWO
+118E2         ; 2.0 ; ; 2 # Nd       WARANG CITI DIGIT TWO
 12400         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ASH
 12416         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO GESH2
 1241F         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO GESHU
@@ -457,16 +535,19 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 12450         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO BAN2
 12456         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAMIN
 12459         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ESHE3
+16A62         ; 2.0 ; ; 2 # Nd       MRO DIGIT TWO
+16B52         ; 2.0 ; ; 2 # Nd       PAHAWH HMONG DIGIT TWO
 1D361         ; 2.0 ; ; 2 # No       COUNTING ROD UNIT DIGIT TWO
 1D7D0         ; 2.0 ; ; 2 # Nd       MATHEMATICAL BOLD DIGIT TWO
 1D7DA         ; 2.0 ; ; 2 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT TWO
 1D7E4         ; 2.0 ; ; 2 # Nd       MATHEMATICAL SANS-SERIF DIGIT TWO
 1D7EE         ; 2.0 ; ; 2 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT TWO
 1D7F8         ; 2.0 ; ; 2 # Nd       MATHEMATICAL MONOSPACE DIGIT TWO
+1E8C8         ; 2.0 ; ; 2 # No       MENDE KIKAKUI DIGIT TWO
 1F103         ; 2.0 ; ; 2 # No       DIGIT TWO COMMA
 22390         ; 2.0 ; ; 2 # Lo       CJK UNIFIED IDEOGRAPH-22390
 
-# Total code points: 101
+# Total code points: 117
 
 # ================================================
 
@@ -492,6 +573,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 0C7E          ; 3.0 ; ; 3 # No       TELUGU FRACTION DIGIT THREE FOR EVEN POWERS OF FOUR
 0CE9          ; 3.0 ; ; 3 # Nd       KANNADA DIGIT THREE
 0D69          ; 3.0 ; ; 3 # Nd       MALAYALAM DIGIT THREE
+0DE9          ; 3.0 ; ; 3 # Nd       SINHALA LITH DIGIT THREE
 0E53          ; 3.0 ; ; 3 # Nd       THAI DIGIT THREE
 0ED3          ; 3.0 ; ; 3 # Nd       LAO DIGIT THREE
 0F23          ; 3.0 ; ; 3 # Nd       TIBETAN DIGIT THREE
@@ -532,24 +614,36 @@ A6E8          ; 3.0 ; ; 3 # Nl       BAMUM LETTER TET
 A8D3          ; 3.0 ; ; 3 # Nd       SAURASHTRA DIGIT THREE
 A903          ; 3.0 ; ; 3 # Nd       KAYAH LI DIGIT THREE
 A9D3          ; 3.0 ; ; 3 # Nd       JAVANESE DIGIT THREE
+A9F3          ; 3.0 ; ; 3 # Nd       MYANMAR TAI LAING DIGIT THREE
 AA53          ; 3.0 ; ; 3 # Nd       CHAM DIGIT THREE
 ABF3          ; 3.0 ; ; 3 # Nd       MEETEI MAYEK DIGIT THREE
 F96B          ; 3.0 ; ; 3 # Lo       CJK COMPATIBILITY IDEOGRAPH-F96B
 FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 10109         ; 3.0 ; ; 3 # No       AEGEAN NUMBER THREE
+102E3         ; 3.0 ; ; 3 # No       COPTIC EPACT DIGIT THREE
 104A3         ; 3.0 ; ; 3 # Nd       OSMANYA DIGIT THREE
 1085A         ; 3.0 ; ; 3 # No       IMPERIAL ARAMAIC NUMBER THREE
+1087B         ; 3.0 ; ; 3 # No       PALMYRENE NUMBER THREE
+108A9         ; 3.0 ; ; 3 # No       NABATAEAN NUMBER THREE
 1091B         ; 3.0 ; ; 3 # No       PHOENICIAN NUMBER THREE
+109C2         ; 3.0 ; ; 3 # No       MEROITIC CURSIVE NUMBER THREE
 10A42         ; 3.0 ; ; 3 # No       KHAROSHTHI DIGIT THREE
 10B5A         ; 3.0 ; ; 3 # No       INSCRIPTIONAL PARTHIAN NUMBER THREE
 10B7A         ; 3.0 ; ; 3 # No       INSCRIPTIONAL PAHLAVI NUMBER THREE
+10BAB         ; 3.0 ; ; 3 # No       PSALTER PAHLAVI NUMBER THREE
 10E62         ; 3.0 ; ; 3 # No       RUMI DIGIT THREE
 11054         ; 3.0 ; ; 3 # No       BRAHMI NUMBER THREE
 11069         ; 3.0 ; ; 3 # Nd       BRAHMI DIGIT THREE
 110F3         ; 3.0 ; ; 3 # Nd       SORA SOMPENG DIGIT THREE
 11139         ; 3.0 ; ; 3 # Nd       CHAKMA DIGIT THREE
 111D3         ; 3.0 ; ; 3 # Nd       SHARADA DIGIT THREE
+111E3         ; 3.0 ; ; 3 # No       SINHALA ARCHAIC DIGIT THREE
+112F3         ; 3.0 ; ; 3 # Nd       KHUDAWADI DIGIT THREE
+114D3         ; 3.0 ; ; 3 # Nd       TIRHUTA DIGIT THREE
+11653         ; 3.0 ; ; 3 # Nd       MODI DIGIT THREE
 116C3         ; 3.0 ; ; 3 # Nd       TAKRI DIGIT THREE
+11733         ; 3.0 ; ; 3 # Nd       AHOM DIGIT THREE
+118E3         ; 3.0 ; ; 3 # Nd       WARANG CITI DIGIT THREE
 12401         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE ASH
 12408         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE DISH
 12417         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE GESH2
@@ -561,19 +655,22 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 1244B         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE ASH TENU
 12451         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE BAN2
 12457         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAESH
+16A63         ; 3.0 ; ; 3 # Nd       MRO DIGIT THREE
+16B53         ; 3.0 ; ; 3 # Nd       PAHAWH HMONG DIGIT THREE
 1D362         ; 3.0 ; ; 3 # No       COUNTING ROD UNIT DIGIT THREE
 1D7D1         ; 3.0 ; ; 3 # Nd       MATHEMATICAL BOLD DIGIT THREE
 1D7DB         ; 3.0 ; ; 3 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT THREE
 1D7E5         ; 3.0 ; ; 3 # Nd       MATHEMATICAL SANS-SERIF DIGIT THREE
 1D7EF         ; 3.0 ; ; 3 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT THREE
 1D7F9         ; 3.0 ; ; 3 # Nd       MATHEMATICAL MONOSPACE DIGIT THREE
+1E8C9         ; 3.0 ; ; 3 # No       MENDE KIKAKUI DIGIT THREE
 1F104         ; 3.0 ; ; 3 # No       DIGIT THREE COMMA
 20AFD         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20AFD
 20B19         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20B19
 22998         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-22998
 23B1B         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-23B1B
 
-# Total code points: 103
+# Total code points: 119
 
 # ================================================
 
@@ -596,6 +693,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 0C6A          ; 4.0 ; ; 4 # Nd       TELUGU DIGIT FOUR
 0CEA          ; 4.0 ; ; 4 # Nd       KANNADA DIGIT FOUR
 0D6A          ; 4.0 ; ; 4 # Nd       MALAYALAM DIGIT FOUR
+0DEA          ; 4.0 ; ; 4 # Nd       SINHALA LITH DIGIT FOUR
 0E54          ; 4.0 ; ; 4 # Nd       THAI DIGIT FOUR
 0ED4          ; 4.0 ; ; 4 # Nd       LAO DIGIT FOUR
 0F24          ; 4.0 ; ; 4 # Nd       TIBETAN DIGIT FOUR
@@ -636,21 +734,33 @@ A6E9          ; 4.0 ; ; 4 # Nl       BAMUM LETTER KPA
 A8D4          ; 4.0 ; ; 4 # Nd       SAURASHTRA DIGIT FOUR
 A904          ; 4.0 ; ; 4 # Nd       KAYAH LI DIGIT FOUR
 A9D4          ; 4.0 ; ; 4 # Nd       JAVANESE DIGIT FOUR
+A9F4          ; 4.0 ; ; 4 # Nd       MYANMAR TAI LAING DIGIT FOUR
 AA54          ; 4.0 ; ; 4 # Nd       CHAM DIGIT FOUR
 ABF4          ; 4.0 ; ; 4 # Nd       MEETEI MAYEK DIGIT FOUR
 FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 1010A         ; 4.0 ; ; 4 # No       AEGEAN NUMBER FOUR
+102E4         ; 4.0 ; ; 4 # No       COPTIC EPACT DIGIT FOUR
 104A4         ; 4.0 ; ; 4 # Nd       OSMANYA DIGIT FOUR
+1087C         ; 4.0 ; ; 4 # No       PALMYRENE NUMBER FOUR
+108AA..108AB  ; 4.0 ; ; 4 # No   [2] NABATAEAN NUMBER FOUR..NABATAEAN CRUCIFORM NUMBER FOUR
+109C3         ; 4.0 ; ; 4 # No       MEROITIC CURSIVE NUMBER FOUR
 10A43         ; 4.0 ; ; 4 # No       KHAROSHTHI DIGIT FOUR
 10B5B         ; 4.0 ; ; 4 # No       INSCRIPTIONAL PARTHIAN NUMBER FOUR
 10B7B         ; 4.0 ; ; 4 # No       INSCRIPTIONAL PAHLAVI NUMBER FOUR
+10BAC         ; 4.0 ; ; 4 # No       PSALTER PAHLAVI NUMBER FOUR
 10E63         ; 4.0 ; ; 4 # No       RUMI DIGIT FOUR
 11055         ; 4.0 ; ; 4 # No       BRAHMI NUMBER FOUR
 1106A         ; 4.0 ; ; 4 # Nd       BRAHMI DIGIT FOUR
 110F4         ; 4.0 ; ; 4 # Nd       SORA SOMPENG DIGIT FOUR
 1113A         ; 4.0 ; ; 4 # Nd       CHAKMA DIGIT FOUR
 111D4         ; 4.0 ; ; 4 # Nd       SHARADA DIGIT FOUR
+111E4         ; 4.0 ; ; 4 # No       SINHALA ARCHAIC DIGIT FOUR
+112F4         ; 4.0 ; ; 4 # Nd       KHUDAWADI DIGIT FOUR
+114D4         ; 4.0 ; ; 4 # Nd       TIRHUTA DIGIT FOUR
+11654         ; 4.0 ; ; 4 # Nd       MODI DIGIT FOUR
 116C4         ; 4.0 ; ; 4 # Nd       TAKRI DIGIT FOUR
+11734         ; 4.0 ; ; 4 # Nd       AHOM DIGIT FOUR
+118E4         ; 4.0 ; ; 4 # Nd       WARANG CITI DIGIT FOUR
 12402         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR ASH
 12409         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR DISH
 1240F         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR U
@@ -662,18 +772,22 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 1243C..1243F  ; 4.0 ; ; 4 # Nl   [4] CUNEIFORM NUMERIC SIGN FOUR VARIANT FORM LIMMU..CUNEIFORM NUMERIC SIGN FOUR VARIANT FORM LIMMU B
 1244C         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR ASH TENU
 12452..12453  ; 4.0 ; ; 4 # Nl   [2] CUNEIFORM NUMERIC SIGN FOUR BAN2..CUNEIFORM NUMERIC SIGN FOUR BAN2 VARIANT FORM
+12469         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR U VARIANT FORM
+16A64         ; 4.0 ; ; 4 # Nd       MRO DIGIT FOUR
+16B54         ; 4.0 ; ; 4 # Nd       PAHAWH HMONG DIGIT FOUR
 1D363         ; 4.0 ; ; 4 # No       COUNTING ROD UNIT DIGIT FOUR
 1D7D2         ; 4.0 ; ; 4 # Nd       MATHEMATICAL BOLD DIGIT FOUR
 1D7DC         ; 4.0 ; ; 4 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT FOUR
 1D7E6         ; 4.0 ; ; 4 # Nd       MATHEMATICAL SANS-SERIF DIGIT FOUR
 1D7F0         ; 4.0 ; ; 4 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT FOUR
 1D7FA         ; 4.0 ; ; 4 # Nd       MATHEMATICAL MONOSPACE DIGIT FOUR
+1E8CA         ; 4.0 ; ; 4 # No       MENDE KIKAKUI DIGIT FOUR
 1F105         ; 4.0 ; ; 4 # No       DIGIT FOUR COMMA
 20064         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-20064
 200E2         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-200E2
 2626D         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-2626D
 
-# Total code points: 93
+# Total code points: 111
 
 # ================================================
 
@@ -696,6 +810,7 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 0C6B          ; 5.0 ; ; 5 # Nd       TELUGU DIGIT FIVE
 0CEB          ; 5.0 ; ; 5 # Nd       KANNADA DIGIT FIVE
 0D6B          ; 5.0 ; ; 5 # Nd       MALAYALAM DIGIT FIVE
+0DEB          ; 5.0 ; ; 5 # Nd       SINHALA LITH DIGIT FIVE
 0E55          ; 5.0 ; ; 5 # Nd       THAI DIGIT FIVE
 0ED5          ; 5.0 ; ; 5 # Nd       LAO DIGIT FIVE
 0F25          ; 5.0 ; ; 5 # Nd       TIBETAN DIGIT FIVE
@@ -736,6 +851,7 @@ A6EA          ; 5.0 ; ; 5 # Nl       BAMUM LETTER TEN
 A8D5          ; 5.0 ; ; 5 # Nd       SAURASHTRA DIGIT FIVE
 A905          ; 5.0 ; ; 5 # Nd       KAYAH LI DIGIT FIVE
 A9D5          ; 5.0 ; ; 5 # Nd       JAVANESE DIGIT FIVE
+A9F5          ; 5.0 ; ; 5 # Nd       MYANMAR TAI LAING DIGIT FIVE
 AA55          ; 5.0 ; ; 5 # Nd       CHAM DIGIT FIVE
 ABF5          ; 5.0 ; ; 5 # Nd       MEETEI MAYEK DIGIT FIVE
 FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
@@ -745,15 +861,28 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 1014F         ; 5.0 ; ; 5 # Nl       GREEK ACROPHONIC ATTIC FIVE STATERS
 1015F         ; 5.0 ; ; 5 # Nl       GREEK ACROPHONIC TROEZENIAN FIVE
 10173         ; 5.0 ; ; 5 # Nl       GREEK ACROPHONIC DELPHIC FIVE MNAS
+102E5         ; 5.0 ; ; 5 # No       COPTIC EPACT DIGIT FIVE
 10321         ; 5.0 ; ; 5 # No       OLD ITALIC NUMERAL FIVE
 104A5         ; 5.0 ; ; 5 # Nd       OSMANYA DIGIT FIVE
+1087D         ; 5.0 ; ; 5 # No       PALMYRENE NUMBER FIVE
+108AC         ; 5.0 ; ; 5 # No       NABATAEAN NUMBER FIVE
+108FC         ; 5.0 ; ; 5 # No       HATRAN NUMBER FIVE
+109C4         ; 5.0 ; ; 5 # No       MEROITIC CURSIVE NUMBER FIVE
+10AEC         ; 5.0 ; ; 5 # No       MANICHAEAN NUMBER FIVE
+10CFB         ; 5.0 ; ; 5 # No       OLD HUNGARIAN NUMBER FIVE
 10E64         ; 5.0 ; ; 5 # No       RUMI DIGIT FIVE
 11056         ; 5.0 ; ; 5 # No       BRAHMI NUMBER FIVE
 1106B         ; 5.0 ; ; 5 # Nd       BRAHMI DIGIT FIVE
 110F5         ; 5.0 ; ; 5 # Nd       SORA SOMPENG DIGIT FIVE
 1113B         ; 5.0 ; ; 5 # Nd       CHAKMA DIGIT FIVE
 111D5         ; 5.0 ; ; 5 # Nd       SHARADA DIGIT FIVE
+111E5         ; 5.0 ; ; 5 # No       SINHALA ARCHAIC DIGIT FIVE
+112F5         ; 5.0 ; ; 5 # Nd       KHUDAWADI DIGIT FIVE
+114D5         ; 5.0 ; ; 5 # Nd       TIRHUTA DIGIT FIVE
+11655         ; 5.0 ; ; 5 # Nd       MODI DIGIT FIVE
 116C5         ; 5.0 ; ; 5 # Nd       TAKRI DIGIT FIVE
+11735         ; 5.0 ; ; 5 # Nd       AHOM DIGIT FIVE
+118E5         ; 5.0 ; ; 5 # Nd       WARANG CITI DIGIT FIVE
 12403         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE ASH
 1240A         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE DISH
 12410         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE U
@@ -764,16 +893,20 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 12439         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE BURU
 1244D         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE ASH TENU
 12454..12455  ; 5.0 ; ; 5 # Nl   [2] CUNEIFORM NUMERIC SIGN FIVE BAN2..CUNEIFORM NUMERIC SIGN FIVE BAN2 VARIANT FORM
+1246A         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE U VARIANT FORM
+16A65         ; 5.0 ; ; 5 # Nd       MRO DIGIT FIVE
+16B55         ; 5.0 ; ; 5 # Nd       PAHAWH HMONG DIGIT FIVE
 1D364         ; 5.0 ; ; 5 # No       COUNTING ROD UNIT DIGIT FIVE
 1D7D3         ; 5.0 ; ; 5 # Nd       MATHEMATICAL BOLD DIGIT FIVE
 1D7DD         ; 5.0 ; ; 5 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT FIVE
 1D7E7         ; 5.0 ; ; 5 # Nd       MATHEMATICAL SANS-SERIF DIGIT FIVE
 1D7F1         ; 5.0 ; ; 5 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT FIVE
 1D7FB         ; 5.0 ; ; 5 # Nd       MATHEMATICAL MONOSPACE DIGIT FIVE
+1E8CB         ; 5.0 ; ; 5 # No       MENDE KIKAKUI DIGIT FIVE
 1F106         ; 5.0 ; ; 5 # No       DIGIT FIVE COMMA
 20121         ; 5.0 ; ; 5 # Lo       CJK UNIFIED IDEOGRAPH-20121
 
-# Total code points: 90
+# Total code points: 109
 
 # ================================================
 
@@ -796,6 +929,7 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 0C6C          ; 6.0 ; ; 6 # Nd       TELUGU DIGIT SIX
 0CEC          ; 6.0 ; ; 6 # Nd       KANNADA DIGIT SIX
 0D6C          ; 6.0 ; ; 6 # Nd       MALAYALAM DIGIT SIX
+0DEC          ; 6.0 ; ; 6 # Nd       SINHALA LITH DIGIT SIX
 0E56          ; 6.0 ; ; 6 # Nd       THAI DIGIT SIX
 0ED6          ; 6.0 ; ; 6 # Nd       LAO DIGIT SIX
 0F26          ; 6.0 ; ; 6 # Nd       TIBETAN DIGIT SIX
@@ -836,20 +970,29 @@ A6EB          ; 6.0 ; ; 6 # Nl       BAMUM LETTER NTUU
 A8D6          ; 6.0 ; ; 6 # Nd       SAURASHTRA DIGIT SIX
 A906          ; 6.0 ; ; 6 # Nd       KAYAH LI DIGIT SIX
 A9D6          ; 6.0 ; ; 6 # Nd       JAVANESE DIGIT SIX
+A9F6          ; 6.0 ; ; 6 # Nd       MYANMAR TAI LAING DIGIT SIX
 AA56          ; 6.0 ; ; 6 # Nd       CHAM DIGIT SIX
 ABF6          ; 6.0 ; ; 6 # Nd       MEETEI MAYEK DIGIT SIX
 F9D1          ; 6.0 ; ; 6 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9D1
 F9D3          ; 6.0 ; ; 6 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9D3
 FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 1010C         ; 6.0 ; ; 6 # No       AEGEAN NUMBER SIX
+102E6         ; 6.0 ; ; 6 # No       COPTIC EPACT DIGIT SIX
 104A6         ; 6.0 ; ; 6 # Nd       OSMANYA DIGIT SIX
+109C5         ; 6.0 ; ; 6 # No       MEROITIC CURSIVE NUMBER SIX
 10E65         ; 6.0 ; ; 6 # No       RUMI DIGIT SIX
 11057         ; 6.0 ; ; 6 # No       BRAHMI NUMBER SIX
 1106C         ; 6.0 ; ; 6 # Nd       BRAHMI DIGIT SIX
 110F6         ; 6.0 ; ; 6 # Nd       SORA SOMPENG DIGIT SIX
 1113C         ; 6.0 ; ; 6 # Nd       CHAKMA DIGIT SIX
 111D6         ; 6.0 ; ; 6 # Nd       SHARADA DIGIT SIX
+111E6         ; 6.0 ; ; 6 # No       SINHALA ARCHAIC DIGIT SIX
+112F6         ; 6.0 ; ; 6 # Nd       KHUDAWADI DIGIT SIX
+114D6         ; 6.0 ; ; 6 # Nd       TIRHUTA DIGIT SIX
+11656         ; 6.0 ; ; 6 # Nd       MODI DIGIT SIX
 116C6         ; 6.0 ; ; 6 # Nd       TAKRI DIGIT SIX
+11736         ; 6.0 ; ; 6 # Nd       AHOM DIGIT SIX
+118E6         ; 6.0 ; ; 6 # Nd       WARANG CITI DIGIT SIX
 12404         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX ASH
 1240B         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX DISH
 12411         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX U
@@ -857,16 +1000,20 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 12428         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX SHAR2
 12440         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX VARIANT FORM ASH9
 1244E         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX ASH TENU
+1246B         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX U VARIANT FORM
+16A66         ; 6.0 ; ; 6 # Nd       MRO DIGIT SIX
+16B56         ; 6.0 ; ; 6 # Nd       PAHAWH HMONG DIGIT SIX
 1D365         ; 6.0 ; ; 6 # No       COUNTING ROD UNIT DIGIT SIX
 1D7D4         ; 6.0 ; ; 6 # Nd       MATHEMATICAL BOLD DIGIT SIX
 1D7DE         ; 6.0 ; ; 6 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT SIX
 1D7E8         ; 6.0 ; ; 6 # Nd       MATHEMATICAL SANS-SERIF DIGIT SIX
 1D7F2         ; 6.0 ; ; 6 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT SIX
 1D7FC         ; 6.0 ; ; 6 # Nd       MATHEMATICAL MONOSPACE DIGIT SIX
+1E8CC         ; 6.0 ; ; 6 # No       MENDE KIKAKUI DIGIT SIX
 1F107         ; 6.0 ; ; 6 # No       DIGIT SIX COMMA
 20AEA         ; 6.0 ; ; 6 # Lo       CJK UNIFIED IDEOGRAPH-20AEA
 
-# Total code points: 82
+# Total code points: 96
 
 # ================================================
 
@@ -889,6 +1036,7 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 0C6D          ; 7.0 ; ; 7 # Nd       TELUGU DIGIT SEVEN
 0CED          ; 7.0 ; ; 7 # Nd       KANNADA DIGIT SEVEN
 0D6D          ; 7.0 ; ; 7 # Nd       MALAYALAM DIGIT SEVEN
+0DED          ; 7.0 ; ; 7 # Nd       SINHALA LITH DIGIT SEVEN
 0E57          ; 7.0 ; ; 7 # Nd       THAI DIGIT SEVEN
 0ED7          ; 7.0 ; ; 7 # Nd       LAO DIGIT SEVEN
 0F27          ; 7.0 ; ; 7 # Nd       TIBETAN DIGIT SEVEN
@@ -929,34 +1077,47 @@ A6EC          ; 7.0 ; ; 7 # Nl       BAMUM LETTER SAMBA
 A8D7          ; 7.0 ; ; 7 # Nd       SAURASHTRA DIGIT SEVEN
 A907          ; 7.0 ; ; 7 # Nd       KAYAH LI DIGIT SEVEN
 A9D7          ; 7.0 ; ; 7 # Nd       JAVANESE DIGIT SEVEN
+A9F7          ; 7.0 ; ; 7 # Nd       MYANMAR TAI LAING DIGIT SEVEN
 AA57          ; 7.0 ; ; 7 # Nd       CHAM DIGIT SEVEN
 ABF7          ; 7.0 ; ; 7 # Nd       MEETEI MAYEK DIGIT SEVEN
 FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 1010D         ; 7.0 ; ; 7 # No       AEGEAN NUMBER SEVEN
+102E7         ; 7.0 ; ; 7 # No       COPTIC EPACT DIGIT SEVEN
 104A7         ; 7.0 ; ; 7 # Nd       OSMANYA DIGIT SEVEN
+109C6         ; 7.0 ; ; 7 # No       MEROITIC CURSIVE NUMBER SEVEN
 10E66         ; 7.0 ; ; 7 # No       RUMI DIGIT SEVEN
 11058         ; 7.0 ; ; 7 # No       BRAHMI NUMBER SEVEN
 1106D         ; 7.0 ; ; 7 # Nd       BRAHMI DIGIT SEVEN
 110F7         ; 7.0 ; ; 7 # Nd       SORA SOMPENG DIGIT SEVEN
 1113D         ; 7.0 ; ; 7 # Nd       CHAKMA DIGIT SEVEN
 111D7         ; 7.0 ; ; 7 # Nd       SHARADA DIGIT SEVEN
+111E7         ; 7.0 ; ; 7 # No       SINHALA ARCHAIC DIGIT SEVEN
+112F7         ; 7.0 ; ; 7 # Nd       KHUDAWADI DIGIT SEVEN
+114D7         ; 7.0 ; ; 7 # Nd       TIRHUTA DIGIT SEVEN
+11657         ; 7.0 ; ; 7 # Nd       MODI DIGIT SEVEN
 116C7         ; 7.0 ; ; 7 # Nd       TAKRI DIGIT SEVEN
+11737         ; 7.0 ; ; 7 # Nd       AHOM DIGIT SEVEN
+118E7         ; 7.0 ; ; 7 # Nd       WARANG CITI DIGIT SEVEN
 12405         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN ASH
 1240C         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN DISH
 12412         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN U
 1241B         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN GESH2
 12429         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN SHAR2
 12441..12443  ; 7.0 ; ; 7 # Nl   [3] CUNEIFORM NUMERIC SIGN SEVEN VARIANT FORM IMIN3..CUNEIFORM NUMERIC SIGN SEVEN VARIANT FORM IMIN B
+1246C         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN U VARIANT FORM
+16A67         ; 7.0 ; ; 7 # Nd       MRO DIGIT SEVEN
+16B57         ; 7.0 ; ; 7 # Nd       PAHAWH HMONG DIGIT SEVEN
 1D366         ; 7.0 ; ; 7 # No       COUNTING ROD UNIT DIGIT SEVEN
 1D7D5         ; 7.0 ; ; 7 # Nd       MATHEMATICAL BOLD DIGIT SEVEN
 1D7DF         ; 7.0 ; ; 7 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT SEVEN
 1D7E9         ; 7.0 ; ; 7 # Nd       MATHEMATICAL SANS-SERIF DIGIT SEVEN
 1D7F3         ; 7.0 ; ; 7 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT SEVEN
 1D7FD         ; 7.0 ; ; 7 # Nd       MATHEMATICAL MONOSPACE DIGIT SEVEN
+1E8CD         ; 7.0 ; ; 7 # No       MENDE KIKAKUI DIGIT SEVEN
 1F108         ; 7.0 ; ; 7 # No       DIGIT SEVEN COMMA
 20001         ; 7.0 ; ; 7 # Lo       CJK UNIFIED IDEOGRAPH-20001
 
-# Total code points: 81
+# Total code points: 95
 
 # ================================================
 
@@ -979,6 +1140,7 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 0C6E          ; 8.0 ; ; 8 # Nd       TELUGU DIGIT EIGHT
 0CEE          ; 8.0 ; ; 8 # Nd       KANNADA DIGIT EIGHT
 0D6E          ; 8.0 ; ; 8 # Nd       MALAYALAM DIGIT EIGHT
+0DEE          ; 8.0 ; ; 8 # Nd       SINHALA LITH DIGIT EIGHT
 0E58          ; 8.0 ; ; 8 # Nd       THAI DIGIT EIGHT
 0ED8          ; 8.0 ; ; 8 # Nd       LAO DIGIT EIGHT
 0F28          ; 8.0 ; ; 8 # Nd       TIBETAN DIGIT EIGHT
@@ -1017,33 +1179,46 @@ A6ED          ; 8.0 ; ; 8 # Nl       BAMUM LETTER FAAMAE
 A8D8          ; 8.0 ; ; 8 # Nd       SAURASHTRA DIGIT EIGHT
 A908          ; 8.0 ; ; 8 # Nd       KAYAH LI DIGIT EIGHT
 A9D8          ; 8.0 ; ; 8 # Nd       JAVANESE DIGIT EIGHT
+A9F8          ; 8.0 ; ; 8 # Nd       MYANMAR TAI LAING DIGIT EIGHT
 AA58          ; 8.0 ; ; 8 # Nd       CHAM DIGIT EIGHT
 ABF8          ; 8.0 ; ; 8 # Nd       MEETEI MAYEK DIGIT EIGHT
 FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 1010E         ; 8.0 ; ; 8 # No       AEGEAN NUMBER EIGHT
+102E8         ; 8.0 ; ; 8 # No       COPTIC EPACT DIGIT EIGHT
 104A8         ; 8.0 ; ; 8 # Nd       OSMANYA DIGIT EIGHT
+109C7         ; 8.0 ; ; 8 # No       MEROITIC CURSIVE NUMBER EIGHT
 10E67         ; 8.0 ; ; 8 # No       RUMI DIGIT EIGHT
 11059         ; 8.0 ; ; 8 # No       BRAHMI NUMBER EIGHT
 1106E         ; 8.0 ; ; 8 # Nd       BRAHMI DIGIT EIGHT
 110F8         ; 8.0 ; ; 8 # Nd       SORA SOMPENG DIGIT EIGHT
 1113E         ; 8.0 ; ; 8 # Nd       CHAKMA DIGIT EIGHT
 111D8         ; 8.0 ; ; 8 # Nd       SHARADA DIGIT EIGHT
+111E8         ; 8.0 ; ; 8 # No       SINHALA ARCHAIC DIGIT EIGHT
+112F8         ; 8.0 ; ; 8 # Nd       KHUDAWADI DIGIT EIGHT
+114D8         ; 8.0 ; ; 8 # Nd       TIRHUTA DIGIT EIGHT
+11658         ; 8.0 ; ; 8 # Nd       MODI DIGIT EIGHT
 116C8         ; 8.0 ; ; 8 # Nd       TAKRI DIGIT EIGHT
+11738         ; 8.0 ; ; 8 # Nd       AHOM DIGIT EIGHT
+118E8         ; 8.0 ; ; 8 # Nd       WARANG CITI DIGIT EIGHT
 12406         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT ASH
 1240D         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT DISH
 12413         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT U
 1241C         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT GESH2
 1242A         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT SHAR2
 12444..12445  ; 8.0 ; ; 8 # Nl   [2] CUNEIFORM NUMERIC SIGN EIGHT VARIANT FORM USSU..CUNEIFORM NUMERIC SIGN EIGHT VARIANT FORM USSU3
+1246D         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT U VARIANT FORM
+16A68         ; 8.0 ; ; 8 # Nd       MRO DIGIT EIGHT
+16B58         ; 8.0 ; ; 8 # Nd       PAHAWH HMONG DIGIT EIGHT
 1D367         ; 8.0 ; ; 8 # No       COUNTING ROD UNIT DIGIT EIGHT
 1D7D6         ; 8.0 ; ; 8 # Nd       MATHEMATICAL BOLD DIGIT EIGHT
 1D7E0         ; 8.0 ; ; 8 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT EIGHT
 1D7EA         ; 8.0 ; ; 8 # Nd       MATHEMATICAL SANS-SERIF DIGIT EIGHT
 1D7F4         ; 8.0 ; ; 8 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT EIGHT
 1D7FE         ; 8.0 ; ; 8 # Nd       MATHEMATICAL MONOSPACE DIGIT EIGHT
+1E8CE         ; 8.0 ; ; 8 # No       MENDE KIKAKUI DIGIT EIGHT
 1F109         ; 8.0 ; ; 8 # No       DIGIT EIGHT COMMA
 
-# Total code points: 77
+# Total code points: 91
 
 # ================================================
 
@@ -1066,6 +1241,7 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 0C6F          ; 9.0 ; ; 9 # Nd       TELUGU DIGIT NINE
 0CEF          ; 9.0 ; ; 9 # Nd       KANNADA DIGIT NINE
 0D6F          ; 9.0 ; ; 9 # Nd       MALAYALAM DIGIT NINE
+0DEF          ; 9.0 ; ; 9 # Nd       SINHALA LITH DIGIT NINE
 0E59          ; 9.0 ; ; 9 # Nd       THAI DIGIT NINE
 0ED9          ; 9.0 ; ; 9 # Nd       LAO DIGIT NINE
 0F29          ; 9.0 ; ; 9 # Nd       TIBETAN DIGIT NINE
@@ -1105,34 +1281,47 @@ A6EE          ; 9.0 ; ; 9 # Nl       BAMUM LETTER KOVUU
 A8D9          ; 9.0 ; ; 9 # Nd       SAURASHTRA DIGIT NINE
 A909          ; 9.0 ; ; 9 # Nd       KAYAH LI DIGIT NINE
 A9D9          ; 9.0 ; ; 9 # Nd       JAVANESE DIGIT NINE
+A9F9          ; 9.0 ; ; 9 # Nd       MYANMAR TAI LAING DIGIT NINE
 AA59          ; 9.0 ; ; 9 # Nd       CHAM DIGIT NINE
 ABF9          ; 9.0 ; ; 9 # Nd       MEETEI MAYEK DIGIT NINE
 FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 1010F         ; 9.0 ; ; 9 # No       AEGEAN NUMBER NINE
+102E9         ; 9.0 ; ; 9 # No       COPTIC EPACT DIGIT NINE
 104A9         ; 9.0 ; ; 9 # Nd       OSMANYA DIGIT NINE
+109C8         ; 9.0 ; ; 9 # No       MEROITIC CURSIVE NUMBER NINE
 10E68         ; 9.0 ; ; 9 # No       RUMI DIGIT NINE
 1105A         ; 9.0 ; ; 9 # No       BRAHMI NUMBER NINE
 1106F         ; 9.0 ; ; 9 # Nd       BRAHMI DIGIT NINE
 110F9         ; 9.0 ; ; 9 # Nd       SORA SOMPENG DIGIT NINE
 1113F         ; 9.0 ; ; 9 # Nd       CHAKMA DIGIT NINE
 111D9         ; 9.0 ; ; 9 # Nd       SHARADA DIGIT NINE
+111E9         ; 9.0 ; ; 9 # No       SINHALA ARCHAIC DIGIT NINE
+112F9         ; 9.0 ; ; 9 # Nd       KHUDAWADI DIGIT NINE
+114D9         ; 9.0 ; ; 9 # Nd       TIRHUTA DIGIT NINE
+11659         ; 9.0 ; ; 9 # Nd       MODI DIGIT NINE
 116C9         ; 9.0 ; ; 9 # Nd       TAKRI DIGIT NINE
+11739         ; 9.0 ; ; 9 # Nd       AHOM DIGIT NINE
+118E9         ; 9.0 ; ; 9 # Nd       WARANG CITI DIGIT NINE
 12407         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE ASH
 1240E         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE DISH
 12414         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE U
 1241D         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE GESH2
 1242B         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE SHAR2
 12446..12449  ; 9.0 ; ; 9 # Nl   [4] CUNEIFORM NUMERIC SIGN NINE VARIANT FORM ILIMMU..CUNEIFORM NUMERIC SIGN NINE VARIANT FORM ILIMMU A
+1246E         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE U VARIANT FORM
+16A69         ; 9.0 ; ; 9 # Nd       MRO DIGIT NINE
+16B59         ; 9.0 ; ; 9 # Nd       PAHAWH HMONG DIGIT NINE
 1D368         ; 9.0 ; ; 9 # No       COUNTING ROD UNIT DIGIT NINE
 1D7D7         ; 9.0 ; ; 9 # Nd       MATHEMATICAL BOLD DIGIT NINE
 1D7E1         ; 9.0 ; ; 9 # Nd       MATHEMATICAL DOUBLE-STRUCK DIGIT NINE
 1D7EB         ; 9.0 ; ; 9 # Nd       MATHEMATICAL SANS-SERIF DIGIT NINE
 1D7F5         ; 9.0 ; ; 9 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT NINE
 1D7FF         ; 9.0 ; ; 9 # Nd       MATHEMATICAL MONOSPACE DIGIT NINE
+1E8CF         ; 9.0 ; ; 9 # No       MENDE KIKAKUI DIGIT NINE
 1F10A         ; 9.0 ; ; 9 # No       DIGIT NINE COMMA
 2F890         ; 9.0 ; ; 9 # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 81
+# Total code points: 95
 
 # ================================================
 
@@ -1162,18 +1351,31 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10150         ; 10.0 ; ; 10 # Nl       GREEK ACROPHONIC ATTIC TEN STATERS
 10157         ; 10.0 ; ; 10 # Nl       GREEK ACROPHONIC ATTIC TEN MNAS
 10160..10164  ; 10.0 ; ; 10 # Nl   [5] GREEK ACROPHONIC TROEZENIAN TEN..GREEK ACROPHONIC THESPIAN TEN
+102EA         ; 10.0 ; ; 10 # No       COPTIC EPACT NUMBER TEN
 10322         ; 10.0 ; ; 10 # No       OLD ITALIC NUMERAL TEN
 103D3         ; 10.0 ; ; 10 # Nl       OLD PERSIAN NUMBER TEN
 1085B         ; 10.0 ; ; 10 # No       IMPERIAL ARAMAIC NUMBER TEN
+1087E         ; 10.0 ; ; 10 # No       PALMYRENE NUMBER TEN
+108AD         ; 10.0 ; ; 10 # No       NABATAEAN NUMBER TEN
+108FD         ; 10.0 ; ; 10 # No       HATRAN NUMBER TEN
 10917         ; 10.0 ; ; 10 # No       PHOENICIAN NUMBER TEN
+109C9         ; 10.0 ; ; 10 # No       MEROITIC CURSIVE NUMBER TEN
 10A44         ; 10.0 ; ; 10 # No       KHAROSHTHI NUMBER TEN
+10A9E         ; 10.0 ; ; 10 # No       OLD NORTH ARABIAN NUMBER TEN
+10AED         ; 10.0 ; ; 10 # No       MANICHAEAN NUMBER TEN
 10B5C         ; 10.0 ; ; 10 # No       INSCRIPTIONAL PARTHIAN NUMBER TEN
 10B7C         ; 10.0 ; ; 10 # No       INSCRIPTIONAL PAHLAVI NUMBER TEN
+10BAD         ; 10.0 ; ; 10 # No       PSALTER PAHLAVI NUMBER TEN
+10CFC         ; 10.0 ; ; 10 # No       OLD HUNGARIAN NUMBER TEN
 10E69         ; 10.0 ; ; 10 # No       RUMI NUMBER TEN
 1105B         ; 10.0 ; ; 10 # No       BRAHMI NUMBER TEN
+111EA         ; 10.0 ; ; 10 # No       SINHALA ARCHAIC NUMBER TEN
+1173A         ; 10.0 ; ; 10 # No       AHOM NUMBER TEN
+118EA         ; 10.0 ; ; 10 # No       WARANG CITI NUMBER TEN
+16B5B         ; 10.0 ; ; 10 # No       PAHAWH HMONG NUMBER TENS
 1D369         ; 10.0 ; ; 10 # No       COUNTING ROD TENS DIGIT ONE
 
-# Total code points: 40
+# Total code points: 53
 
 # ================================================
 
@@ -1276,17 +1478,28 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 5344          ; 20.0 ; ; 20 # Lo       CJK UNIFIED IDEOGRAPH-5344
 5EFF          ; 20.0 ; ; 20 # Lo       CJK UNIFIED IDEOGRAPH-5EFF
 10111         ; 20.0 ; ; 20 # No       AEGEAN NUMBER TWENTY
+102EB         ; 20.0 ; ; 20 # No       COPTIC EPACT NUMBER TWENTY
 103D4         ; 20.0 ; ; 20 # Nl       OLD PERSIAN NUMBER TWENTY
 1085C         ; 20.0 ; ; 20 # No       IMPERIAL ARAMAIC NUMBER TWENTY
+1087F         ; 20.0 ; ; 20 # No       PALMYRENE NUMBER TWENTY
+108AE         ; 20.0 ; ; 20 # No       NABATAEAN NUMBER TWENTY
+108FE         ; 20.0 ; ; 20 # No       HATRAN NUMBER TWENTY
 10918         ; 20.0 ; ; 20 # No       PHOENICIAN NUMBER TWENTY
+109CA         ; 20.0 ; ; 20 # No       MEROITIC CURSIVE NUMBER TWENTY
 10A45         ; 20.0 ; ; 20 # No       KHAROSHTHI NUMBER TWENTY
+10A9F         ; 20.0 ; ; 20 # No       OLD NORTH ARABIAN NUMBER TWENTY
+10AEE         ; 20.0 ; ; 20 # No       MANICHAEAN NUMBER TWENTY
 10B5D         ; 20.0 ; ; 20 # No       INSCRIPTIONAL PARTHIAN NUMBER TWENTY
 10B7D         ; 20.0 ; ; 20 # No       INSCRIPTIONAL PAHLAVI NUMBER TWENTY
+10BAE         ; 20.0 ; ; 20 # No       PSALTER PAHLAVI NUMBER TWENTY
 10E6A         ; 20.0 ; ; 20 # No       RUMI NUMBER TWENTY
 1105C         ; 20.0 ; ; 20 # No       BRAHMI NUMBER TWENTY
+111EB         ; 20.0 ; ; 20 # No       SINHALA ARCHAIC NUMBER TWENTY
+1173B         ; 20.0 ; ; 20 # No       AHOM NUMBER TWENTY
+118EB         ; 20.0 ; ; 20 # No       WARANG CITI NUMBER TWENTY
 1D36A         ; 20.0 ; ; 20 # No       COUNTING ROD TENS DIGIT TWO
 
-# Total code points: 19
+# Total code points: 30
 
 # ================================================
 
@@ -1351,12 +1564,16 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 5345          ; 30.0 ; ; 30 # Lo       CJK UNIFIED IDEOGRAPH-5345
 10112         ; 30.0 ; ; 30 # No       AEGEAN NUMBER THIRTY
 10165         ; 30.0 ; ; 30 # Nl       GREEK ACROPHONIC THESPIAN THIRTY
+102EC         ; 30.0 ; ; 30 # No       COPTIC EPACT NUMBER THIRTY
+109CB         ; 30.0 ; ; 30 # No       MEROITIC CURSIVE NUMBER THIRTY
 10E6B         ; 30.0 ; ; 30 # No       RUMI NUMBER THIRTY
 1105D         ; 30.0 ; ; 30 # No       BRAHMI NUMBER THIRTY
+111EC         ; 30.0 ; ; 30 # No       SINHALA ARCHAIC NUMBER THIRTY
+118EC         ; 30.0 ; ; 30 # No       WARANG CITI NUMBER THIRTY
 1D36B         ; 30.0 ; ; 30 # No       COUNTING ROD TENS DIGIT THREE
 20983         ; 30.0 ; ; 30 # Lo       CJK UNIFIED IDEOGRAPH-20983
 
-# Total code points: 11
+# Total code points: 15
 
 # ================================================
 
@@ -1419,13 +1636,18 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 32B5          ; 40.0 ; ; 40 # No       CIRCLED NUMBER FORTY
 534C          ; 40.0 ; ; 40 # Lo       CJK UNIFIED IDEOGRAPH-534C
 10113         ; 40.0 ; ; 40 # No       AEGEAN NUMBER FORTY
+102ED         ; 40.0 ; ; 40 # No       COPTIC EPACT NUMBER FORTY
+109CC         ; 40.0 ; ; 40 # No       MEROITIC CURSIVE NUMBER FORTY
 10E6C         ; 40.0 ; ; 40 # No       RUMI NUMBER FORTY
 1105E         ; 40.0 ; ; 40 # No       BRAHMI NUMBER FORTY
+111ED         ; 40.0 ; ; 40 # No       SINHALA ARCHAIC NUMBER FORTY
+118ED         ; 40.0 ; ; 40 # No       WARANG CITI NUMBER FORTY
+12467         ; 40.0 ; ; 40 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE FORTY
 1D36C         ; 40.0 ; ; 40 # No       COUNTING ROD TENS DIGIT FOUR
 2098C         ; 40.0 ; ; 40 # Lo       CJK UNIFIED IDEOGRAPH-2098C
 2099C         ; 40.0 ; ; 40 # Lo       CJK UNIFIED IDEOGRAPH-2099C
 
-# Total code points: 10
+# Total code points: 15
 
 # ================================================
 
@@ -1495,57 +1717,77 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10151         ; 50.0 ; ; 50 # Nl       GREEK ACROPHONIC ATTIC FIFTY STATERS
 10166..10169  ; 50.0 ; ; 50 # Nl   [4] GREEK ACROPHONIC TROEZENIAN FIFTY..GREEK ACROPHONIC THESPIAN FIFTY
 10174         ; 50.0 ; ; 50 # Nl       GREEK ACROPHONIC STRATIAN FIFTY MNAS
+102EE         ; 50.0 ; ; 50 # No       COPTIC EPACT NUMBER FIFTY
 10323         ; 50.0 ; ; 50 # No       OLD ITALIC NUMERAL FIFTY
+109CD         ; 50.0 ; ; 50 # No       MEROITIC CURSIVE NUMBER FIFTY
 10A7E         ; 50.0 ; ; 50 # No       OLD SOUTH ARABIAN NUMBER FIFTY
+10CFD         ; 50.0 ; ; 50 # No       OLD HUNGARIAN NUMBER FIFTY
 10E6D         ; 50.0 ; ; 50 # No       RUMI NUMBER FIFTY
 1105F         ; 50.0 ; ; 50 # No       BRAHMI NUMBER FIFTY
+111EE         ; 50.0 ; ; 50 # No       SINHALA ARCHAIC NUMBER FIFTY
+118EE         ; 50.0 ; ; 50 # No       WARANG CITI NUMBER FIFTY
+12468         ; 50.0 ; ; 50 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE FIFTY
 1D36D         ; 50.0 ; ; 50 # No       COUNTING ROD TENS DIGIT FIVE
 
-# Total code points: 20
+# Total code points: 26
 
 # ================================================
 
 1377          ; 60.0 ; ; 60 # No       ETHIOPIC NUMBER SIXTY
 324D          ; 60.0 ; ; 60 # No       CIRCLED NUMBER SIXTY ON BLACK SQUARE
 10115         ; 60.0 ; ; 60 # No       AEGEAN NUMBER SIXTY
+102EF         ; 60.0 ; ; 60 # No       COPTIC EPACT NUMBER SIXTY
+109CE         ; 60.0 ; ; 60 # No       MEROITIC CURSIVE NUMBER SIXTY
 10E6E         ; 60.0 ; ; 60 # No       RUMI NUMBER SIXTY
 11060         ; 60.0 ; ; 60 # No       BRAHMI NUMBER SIXTY
+111EF         ; 60.0 ; ; 60 # No       SINHALA ARCHAIC NUMBER SIXTY
+118EF         ; 60.0 ; ; 60 # No       WARANG CITI NUMBER SIXTY
 1D36E         ; 60.0 ; ; 60 # No       COUNTING ROD TENS DIGIT SIX
 
-# Total code points: 6
+# Total code points: 10
 
 # ================================================
 
 1378          ; 70.0 ; ; 70 # No       ETHIOPIC NUMBER SEVENTY
 324E          ; 70.0 ; ; 70 # No       CIRCLED NUMBER SEVENTY ON BLACK SQUARE
 10116         ; 70.0 ; ; 70 # No       AEGEAN NUMBER SEVENTY
+102F0         ; 70.0 ; ; 70 # No       COPTIC EPACT NUMBER SEVENTY
+109CF         ; 70.0 ; ; 70 # No       MEROITIC CURSIVE NUMBER SEVENTY
 10E6F         ; 70.0 ; ; 70 # No       RUMI NUMBER SEVENTY
 11061         ; 70.0 ; ; 70 # No       BRAHMI NUMBER SEVENTY
+111F0         ; 70.0 ; ; 70 # No       SINHALA ARCHAIC NUMBER SEVENTY
+118F0         ; 70.0 ; ; 70 # No       WARANG CITI NUMBER SEVENTY
 1D36F         ; 70.0 ; ; 70 # No       COUNTING ROD TENS DIGIT SEVEN
 
-# Total code points: 6
+# Total code points: 10
 
 # ================================================
 
 1379          ; 80.0 ; ; 80 # No       ETHIOPIC NUMBER EIGHTY
 324F          ; 80.0 ; ; 80 # No       CIRCLED NUMBER EIGHTY ON BLACK SQUARE
 10117         ; 80.0 ; ; 80 # No       AEGEAN NUMBER EIGHTY
+102F1         ; 80.0 ; ; 80 # No       COPTIC EPACT NUMBER EIGHTY
 10E70         ; 80.0 ; ; 80 # No       RUMI NUMBER EIGHTY
 11062         ; 80.0 ; ; 80 # No       BRAHMI NUMBER EIGHTY
+111F1         ; 80.0 ; ; 80 # No       SINHALA ARCHAIC NUMBER EIGHTY
+118F1         ; 80.0 ; ; 80 # No       WARANG CITI NUMBER EIGHTY
 1D370         ; 80.0 ; ; 80 # No       COUNTING ROD TENS DIGIT EIGHT
 
-# Total code points: 6
+# Total code points: 9
 
 # ================================================
 
 137A          ; 90.0 ; ; 90 # No       ETHIOPIC NUMBER NINETY
 10118         ; 90.0 ; ; 90 # No       AEGEAN NUMBER NINETY
+102F2         ; 90.0 ; ; 90 # No       COPTIC EPACT NUMBER NINETY
 10341         ; 90.0 ; ; 90 # Nl       GOTHIC LETTER NINETY
 10E71         ; 90.0 ; ; 90 # No       RUMI NUMBER NINETY
 11063         ; 90.0 ; ; 90 # No       BRAHMI NUMBER NINETY
+111F2         ; 90.0 ; ; 90 # No       SINHALA ARCHAIC NUMBER NINETY
+118F2         ; 90.0 ; ; 90 # No       WARANG CITI NUMBER NINETY
 1D371         ; 90.0 ; ; 90 # No       COUNTING ROD TENS DIGIT NINE
 
-# Total code points: 6
+# Total code points: 9
 
 # ================================================
 
@@ -1561,38 +1803,53 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1014B         ; 100.0 ; ; 100 # Nl       GREEK ACROPHONIC ATTIC ONE HUNDRED TALENTS
 10152         ; 100.0 ; ; 100 # Nl       GREEK ACROPHONIC ATTIC ONE HUNDRED STATERS
 1016A         ; 100.0 ; ; 100 # Nl       GREEK ACROPHONIC THESPIAN ONE HUNDRED
+102F3         ; 100.0 ; ; 100 # No       COPTIC EPACT NUMBER ONE HUNDRED
 103D5         ; 100.0 ; ; 100 # Nl       OLD PERSIAN NUMBER HUNDRED
 1085D         ; 100.0 ; ; 100 # No       IMPERIAL ARAMAIC NUMBER ONE HUNDRED
+108AF         ; 100.0 ; ; 100 # No       NABATAEAN NUMBER ONE HUNDRED
+108FF         ; 100.0 ; ; 100 # No       HATRAN NUMBER ONE HUNDRED
 10919         ; 100.0 ; ; 100 # No       PHOENICIAN NUMBER ONE HUNDRED
+109D2         ; 100.0 ; ; 100 # No       MEROITIC CURSIVE NUMBER ONE HUNDRED
 10A46         ; 100.0 ; ; 100 # No       KHAROSHTHI NUMBER ONE HUNDRED
+10AEF         ; 100.0 ; ; 100 # No       MANICHAEAN NUMBER ONE HUNDRED
 10B5E         ; 100.0 ; ; 100 # No       INSCRIPTIONAL PARTHIAN NUMBER ONE HUNDRED
 10B7E         ; 100.0 ; ; 100 # No       INSCRIPTIONAL PAHLAVI NUMBER ONE HUNDRED
+10BAF         ; 100.0 ; ; 100 # No       PSALTER PAHLAVI NUMBER ONE HUNDRED
+10CFE         ; 100.0 ; ; 100 # No       OLD HUNGARIAN NUMBER ONE HUNDRED
 10E72         ; 100.0 ; ; 100 # No       RUMI NUMBER ONE HUNDRED
 11064         ; 100.0 ; ; 100 # No       BRAHMI NUMBER ONE HUNDRED
+111F3         ; 100.0 ; ; 100 # No       SINHALA ARCHAIC NUMBER ONE HUNDRED
+16B5C         ; 100.0 ; ; 100 # No       PAHAWH HMONG NUMBER HUNDREDS
 
-# Total code points: 20
+# Total code points: 29
 
 # ================================================
 
 1011A         ; 200.0 ; ; 200 # No       AEGEAN NUMBER TWO HUNDRED
+102F4         ; 200.0 ; ; 200 # No       COPTIC EPACT NUMBER TWO HUNDRED
+109D3         ; 200.0 ; ; 200 # No       MEROITIC CURSIVE NUMBER TWO HUNDRED
 10E73         ; 200.0 ; ; 200 # No       RUMI NUMBER TWO HUNDRED
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
 1011B         ; 300.0 ; ; 300 # No       AEGEAN NUMBER THREE HUNDRED
 1016B         ; 300.0 ; ; 300 # Nl       GREEK ACROPHONIC THESPIAN THREE HUNDRED
+102F5         ; 300.0 ; ; 300 # No       COPTIC EPACT NUMBER THREE HUNDRED
+109D4         ; 300.0 ; ; 300 # No       MEROITIC CURSIVE NUMBER THREE HUNDRED
 10E74         ; 300.0 ; ; 300 # No       RUMI NUMBER THREE HUNDRED
 
-# Total code points: 3
+# Total code points: 5
 
 # ================================================
 
 1011C         ; 400.0 ; ; 400 # No       AEGEAN NUMBER FOUR HUNDRED
+102F6         ; 400.0 ; ; 400 # No       COPTIC EPACT NUMBER FOUR HUNDRED
+109D5         ; 400.0 ; ; 400 # No       MEROITIC CURSIVE NUMBER FOUR HUNDRED
 10E75         ; 400.0 ; ; 400 # No       RUMI NUMBER FOUR HUNDRED
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
@@ -1603,38 +1860,48 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1014C         ; 500.0 ; ; 500 # Nl       GREEK ACROPHONIC ATTIC FIVE HUNDRED TALENTS
 10153         ; 500.0 ; ; 500 # Nl       GREEK ACROPHONIC ATTIC FIVE HUNDRED STATERS
 1016C..10170  ; 500.0 ; ; 500 # Nl   [5] GREEK ACROPHONIC EPIDAUREAN FIVE HUNDRED..GREEK ACROPHONIC NAXIAN FIVE HUNDRED
+102F7         ; 500.0 ; ; 500 # No       COPTIC EPACT NUMBER FIVE HUNDRED
+109D6         ; 500.0 ; ; 500 # No       MEROITIC CURSIVE NUMBER FIVE HUNDRED
 10E76         ; 500.0 ; ; 500 # No       RUMI NUMBER FIVE HUNDRED
 
-# Total code points: 12
+# Total code points: 14
 
 # ================================================
 
 1011E         ; 600.0 ; ; 600 # No       AEGEAN NUMBER SIX HUNDRED
+102F8         ; 600.0 ; ; 600 # No       COPTIC EPACT NUMBER SIX HUNDRED
+109D7         ; 600.0 ; ; 600 # No       MEROITIC CURSIVE NUMBER SIX HUNDRED
 10E77         ; 600.0 ; ; 600 # No       RUMI NUMBER SIX HUNDRED
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
 1011F         ; 700.0 ; ; 700 # No       AEGEAN NUMBER SEVEN HUNDRED
+102F9         ; 700.0 ; ; 700 # No       COPTIC EPACT NUMBER SEVEN HUNDRED
+109D8         ; 700.0 ; ; 700 # No       MEROITIC CURSIVE NUMBER SEVEN HUNDRED
 10E78         ; 700.0 ; ; 700 # No       RUMI NUMBER SEVEN HUNDRED
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
 10120         ; 800.0 ; ; 800 # No       AEGEAN NUMBER EIGHT HUNDRED
+102FA         ; 800.0 ; ; 800 # No       COPTIC EPACT NUMBER EIGHT HUNDRED
+109D9         ; 800.0 ; ; 800 # No       MEROITIC CURSIVE NUMBER EIGHT HUNDRED
 10E79         ; 800.0 ; ; 800 # No       RUMI NUMBER EIGHT HUNDRED
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
 10121         ; 900.0 ; ; 900 # No       AEGEAN NUMBER NINE HUNDRED
+102FB         ; 900.0 ; ; 900 # No       COPTIC EPACT NUMBER NINE HUNDRED
 1034A         ; 900.0 ; ; 900 # Nl       GOTHIC LETTER NINE HUNDRED
+109DA         ; 900.0 ; ; 900 # No       MEROITIC CURSIVE NUMBER NINE HUNDRED
 10E7A         ; 900.0 ; ; 900 # No       RUMI NUMBER NINE HUNDRED
 
-# Total code points: 3
+# Total code points: 5
 
 # ================================================
 
@@ -1650,30 +1917,36 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10154         ; 1000.0 ; ; 1000 # Nl       GREEK ACROPHONIC ATTIC ONE THOUSAND STATERS
 10171         ; 1000.0 ; ; 1000 # Nl       GREEK ACROPHONIC THESPIAN ONE THOUSAND
 1085E         ; 1000.0 ; ; 1000 # No       IMPERIAL ARAMAIC NUMBER ONE THOUSAND
+109DB         ; 1000.0 ; ; 1000 # No       MEROITIC CURSIVE NUMBER ONE THOUSAND
 10A47         ; 1000.0 ; ; 1000 # No       KHAROSHTHI NUMBER ONE THOUSAND
 10B5F         ; 1000.0 ; ; 1000 # No       INSCRIPTIONAL PARTHIAN NUMBER ONE THOUSAND
 10B7F         ; 1000.0 ; ; 1000 # No       INSCRIPTIONAL PAHLAVI NUMBER ONE THOUSAND
+10CFF         ; 1000.0 ; ; 1000 # No       OLD HUNGARIAN NUMBER ONE THOUSAND
 11065         ; 1000.0 ; ; 1000 # No       BRAHMI NUMBER ONE THOUSAND
+111F4         ; 1000.0 ; ; 1000 # No       SINHALA ARCHAIC NUMBER ONE THOUSAND
 
-# Total code points: 17
+# Total code points: 20
 
 # ================================================
 
 10123         ; 2000.0 ; ; 2000 # No       AEGEAN NUMBER TWO THOUSAND
+109DC         ; 2000.0 ; ; 2000 # No       MEROITIC CURSIVE NUMBER TWO THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10124         ; 3000.0 ; ; 3000 # No       AEGEAN NUMBER THREE THOUSAND
+109DD         ; 3000.0 ; ; 3000 # No       MEROITIC CURSIVE NUMBER THREE THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10125         ; 4000.0 ; ; 4000 # No       AEGEAN NUMBER FOUR THOUSAND
+109DE         ; 4000.0 ; ; 4000 # No       MEROITIC CURSIVE NUMBER FOUR THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -1682,32 +1955,37 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10146         ; 5000.0 ; ; 5000 # Nl       GREEK ACROPHONIC ATTIC FIVE THOUSAND
 1014E         ; 5000.0 ; ; 5000 # Nl       GREEK ACROPHONIC ATTIC FIVE THOUSAND TALENTS
 10172         ; 5000.0 ; ; 5000 # Nl       GREEK ACROPHONIC THESPIAN FIVE THOUSAND
+109DF         ; 5000.0 ; ; 5000 # No       MEROITIC CURSIVE NUMBER FIVE THOUSAND
 
-# Total code points: 5
+# Total code points: 6
 
 # ================================================
 
 10127         ; 6000.0 ; ; 6000 # No       AEGEAN NUMBER SIX THOUSAND
+109E0         ; 6000.0 ; ; 6000 # No       MEROITIC CURSIVE NUMBER SIX THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10128         ; 7000.0 ; ; 7000 # No       AEGEAN NUMBER SEVEN THOUSAND
+109E1         ; 7000.0 ; ; 7000 # No       MEROITIC CURSIVE NUMBER SEVEN THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10129         ; 8000.0 ; ; 8000 # No       AEGEAN NUMBER EIGHT THOUSAND
+109E2         ; 8000.0 ; ; 8000 # No       MEROITIC CURSIVE NUMBER EIGHT THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 1012A         ; 9000.0 ; ; 9000 # No       AEGEAN NUMBER NINE THOUSAND
+109E3         ; 9000.0 ; ; 9000 # No       MEROITIC CURSIVE NUMBER NINE THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -1718,26 +1996,31 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1012B         ; 10000.0 ; ; 10000 # No       AEGEAN NUMBER TEN THOUSAND
 10155         ; 10000.0 ; ; 10000 # Nl       GREEK ACROPHONIC ATTIC TEN THOUSAND STATERS
 1085F         ; 10000.0 ; ; 10000 # No       IMPERIAL ARAMAIC NUMBER TEN THOUSAND
+109E4         ; 10000.0 ; ; 10000 # No       MEROITIC CURSIVE NUMBER TEN THOUSAND
+16B5D         ; 10000.0 ; ; 10000 # No       PAHAWH HMONG NUMBER TEN THOUSANDS
 
-# Total code points: 7
+# Total code points: 9
 
 # ================================================
 
 1012C         ; 20000.0 ; ; 20000 # No       AEGEAN NUMBER TWENTY THOUSAND
+109E5         ; 20000.0 ; ; 20000 # No       MEROITIC CURSIVE NUMBER TWENTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 1012D         ; 30000.0 ; ; 30000 # No       AEGEAN NUMBER THIRTY THOUSAND
+109E6         ; 30000.0 ; ; 30000 # No       MEROITIC CURSIVE NUMBER THIRTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 1012E         ; 40000.0 ; ; 40000 # No       AEGEAN NUMBER FORTY THOUSAND
+109E7         ; 40000.0 ; ; 40000 # No       MEROITIC CURSIVE NUMBER FORTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -1745,36 +2028,48 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1012F         ; 50000.0 ; ; 50000 # No       AEGEAN NUMBER FIFTY THOUSAND
 10147         ; 50000.0 ; ; 50000 # Nl       GREEK ACROPHONIC ATTIC FIFTY THOUSAND
 10156         ; 50000.0 ; ; 50000 # Nl       GREEK ACROPHONIC ATTIC FIFTY THOUSAND STATERS
+109E8         ; 50000.0 ; ; 50000 # No       MEROITIC CURSIVE NUMBER FIFTY THOUSAND
 
-# Total code points: 4
+# Total code points: 5
 
 # ================================================
 
 10130         ; 60000.0 ; ; 60000 # No       AEGEAN NUMBER SIXTY THOUSAND
+109E9         ; 60000.0 ; ; 60000 # No       MEROITIC CURSIVE NUMBER SIXTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10131         ; 70000.0 ; ; 70000 # No       AEGEAN NUMBER SEVENTY THOUSAND
+109EA         ; 70000.0 ; ; 70000 # No       MEROITIC CURSIVE NUMBER SEVENTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10132         ; 80000.0 ; ; 80000 # No       AEGEAN NUMBER EIGHTY THOUSAND
+109EB         ; 80000.0 ; ; 80000 # No       MEROITIC CURSIVE NUMBER EIGHTY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 10133         ; 90000.0 ; ; 90000 # No       AEGEAN NUMBER NINETY THOUSAND
+109EC         ; 90000.0 ; ; 90000 # No       MEROITIC CURSIVE NUMBER NINETY THOUSAND
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
 2188          ; 100000.0 ; ; 100000 # Nl       ROMAN NUMERAL ONE HUNDRED THOUSAND
+109ED         ; 100000.0 ; ; 100000 # No       MEROITIC CURSIVE NUMBER ONE HUNDRED THOUSAND
+
+# Total code points: 2
+
+# ================================================
+
+109EE         ; 200000.0 ; ; 200000 # No       MEROITIC CURSIVE NUMBER TWO HUNDRED THOUSAND
 
 # Total code points: 1
 
@@ -1786,7 +2081,55 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 
 # ================================================
 
+109EF         ; 300000.0 ; ; 300000 # No       MEROITIC CURSIVE NUMBER THREE HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+109F0         ; 400000.0 ; ; 400000 # No       MEROITIC CURSIVE NUMBER FOUR HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
 12433         ; 432000.0 ; ; 432000 # Nl       CUNEIFORM NUMERIC SIGN SHAR2 TIMES GAL PLUS MIN
+
+# Total code points: 1
+
+# ================================================
+
+109F1         ; 500000.0 ; ; 500000 # No       MEROITIC CURSIVE NUMBER FIVE HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+109F2         ; 600000.0 ; ; 600000 # No       MEROITIC CURSIVE NUMBER SIX HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+109F3         ; 700000.0 ; ; 700000 # No       MEROITIC CURSIVE NUMBER SEVEN HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+109F4         ; 800000.0 ; ; 800000 # No       MEROITIC CURSIVE NUMBER EIGHT HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+109F5         ; 900000.0 ; ; 900000 # No       MEROITIC CURSIVE NUMBER NINE HUNDRED THOUSAND
+
+# Total code points: 1
+
+# ================================================
+
+16B5E         ; 1000000.0 ; ; 1000000 # No       PAHAWH HMONG NUMBER MILLIONS
 
 # Total code points: 1
 
@@ -1794,13 +2137,21 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 
 4EBF          ; 100000000.0 ; ; 100000000 # Lo       CJK UNIFIED IDEOGRAPH-4EBF
 5104          ; 100000000.0 ; ; 100000000 # Lo       CJK UNIFIED IDEOGRAPH-5104
+16B5F         ; 100000000.0 ; ; 100000000 # No       PAHAWH HMONG NUMBER HUNDRED MILLIONS
 
-# Total code points: 2
+# Total code points: 3
+
+# ================================================
+
+16B60         ; 10000000000.0 ; ; 10000000000 # No       PAHAWH HMONG NUMBER TEN BILLIONS
+
+# Total code points: 1
 
 # ================================================
 
 5146          ; 1000000000000.0 ; ; 1000000000000 # Lo       CJK UNIFIED IDEOGRAPH-5146
+16B61         ; 1000000000000.0 ; ; 1000000000000 # No       PAHAWH HMONG NUMBER TRILLIONS
 
-# Total code points: 1
+# Total code points: 2
 
 # EOF

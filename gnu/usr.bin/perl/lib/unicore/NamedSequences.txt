@@ -1,24 +1,32 @@
-# NamedSequences-6.3.0.txt
-# Date: 2012-11-14, 21:51:00 GMT [KW]
+# NamedSequences-8.0.0.txt
+# Date: 2015-02-19, 00:30:00 GMT [KW, LI]
 #
-# Unicode Character Database
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Unicode Named Character Sequences
+#
+# This file is a normative contributory data file in the Unicode
+# Character Database.
+#
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # Format:
 # Name of Sequence; Code Point Sequence for USI
 #
-# Code point sequences in the UCD use spaces as delimiters.
-# The corresponding format for a USI in ISO/IEC 10646 uses
-# comma delimitation and angle brackets. Thus, a named sequence
-# of the form:
+# Code point sequences in the Unicode Character Database
+# use spaces as delimiters. The corresponding format for a
+# UCS Sequence Identifier (USI) in ISO/IEC 10646 uses
+# comma delimitation and angle brackets. Thus, a Unicode
+# named character sequence of the form:
 #
 # EXAMPLE NAME;1000 1001 1002
 #
-# in this data file, would correspond to a 10646 USI as follows:
+# in this data file, would correspond to an ISO/IEC 10646 USI
+# as follows:
 #
-# <1000, 1001, 1002> 
+# <1000, 1001, 1002>
+#
+# For more information, see UAX #34: Unicode Named Character
+# Sequences, at http://www.unicode.org/unicode/reports/tr34/
 #
 # Note: The order of entries in this file is not significant.
 # However, entries are generally in script order corresponding
@@ -54,7 +62,8 @@ LATIN SMALL LETTER S WITH VERTICAL LINE BELOW;0073 0329
 LATIN CAPITAL LETTER U WITH MACRON AND GRAVE;016A 0300
 LATIN SMALL LETTER U WITH MACRON AND GRAVE;016B 0300
 
-# Additions for Lithuanian. Provisional 2006-05-18, Approved 2007-10-19
+# Additions for Lithuanian.
+# Provisional 2006-05-18, Approved 2007-10-19
 
 LATIN CAPITAL LETTER A WITH OGONEK AND ACUTE;0104 0301
 LATIN SMALL LETTER A WITH OGONEK AND ACUTE;0105 0301
@@ -92,7 +101,7 @@ LATIN CAPITAL LETTER U WITH MACRON AND TILDE;016A 0303
 LATIN SMALL LETTER U WITH MACRON AND TILDE;016B 0303
 
 # Entries for JIS X 0213 compatibility mapping.
-# Provisional: 2008-11-07, Approved 2010-05-14
+# Provisional 2008-11-07, Approved 2010-05-14
 
 LATIN SMALL LETTER AE WITH GRAVE;00E6 0300
 LATIN SMALL LETTER OPEN O WITH GRAVE;0254 0300
@@ -105,7 +114,7 @@ LATIN SMALL LETTER HOOKED SCHWA WITH GRAVE;025A 0300
 LATIN SMALL LETTER HOOKED SCHWA WITH ACUTE;025A 0301
 
 # Entries for Uyghur and Chagatai.
-# Provisional: N/A, Approved: 2012-11-08
+# Provisional N/A, Approved 2012-11-08
 
 ARABIC SEQUENCE YEH WITH HAMZA ABOVE WITH ALEF;0626 0627
 ARABIC SEQUENCE YEH WITH HAMZA ABOVE WITH WAW;0626 0648
@@ -118,16 +127,17 @@ ARABIC SEQUENCE YEH WITH HAMZA ABOVE WITH AE;0626 06D5
 ARABIC SEQUENCE NOON WITH KEHEH;0646 06A9
 
 # Entry for a Bangla entity.
-# Provisional: 2009-08-10, Approved 2010-05-14
+# Provisional 2009-08-10, Approved 2010-05-14
 #
 # Note that this same sequence is also used for the ASSAMESE LETTER KSSA.
 
 BENGALI LETTER KHINYA;0995 09CD 09B7
 
-# Additions for Tamil. Provisional 2008-02-08, Approved 2009-08-14
+# Additions for Tamil.
+# Provisional 2008-02-08, Approved 2009-08-14
 #
-# A visual display of the Tamil named sequences is available
-# in the documentation for the Unicode Standard. See Section 9.6, Tamil in
+# A visual display of the Tamil named character sequences is available
+# in the documentation for the Unicode Standard. See Section 12.6, Tamil in
 # http://www.unicode.org/versions/latest/
 
 TAMIL CONSONANT K;  0B95 0BCD
@@ -446,7 +456,7 @@ TAMIL SYLLABLE KSSAU; 0B95 0BCD 0BB7 0BCC
 
 TAMIL SYLLABLE SHRII; 0BB6 0BCD 0BB0 0BC0
 
-# Sinhala medial consonants and "reph" form
+# Sinhala medial consonants and "reph" form.
 # Provisional 2010-05-13, Approved 2011-08-05
 
 SINHALA CONSONANT SIGN YANSAYA;0DCA 200D 0DBA
@@ -497,7 +507,7 @@ KHMER VOWEL SIGN OM;17BB 17C6
 KHMER VOWEL SIGN AAM;17B6 17C6
 
 # Entries for JIS X 0213 compatibility mapping.
-# Provisional: 2008-11-07, Approved 2010-05-14
+# Provisional 2008-11-07, Approved 2010-05-14
 
 HIRAGANA LETTER BIDAKUON NGA;304B 309A
 HIRAGANA LETTER BIDAKUON NGI;304D 309A

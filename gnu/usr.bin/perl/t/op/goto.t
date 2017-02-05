@@ -5,12 +5,12 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
-    require "test.pl";
+    require "./test.pl"; require './charset_tools.pl';
 }
 
 use warnings;
 use strict;
-plan tests => 94;
+plan tests => 98;
 our $TODO;
 
 my $deprecated = 0;
@@ -216,6 +216,46 @@ package _99850 {
 like $@, qr/^Goto undefined subroutine &_99850::reftype at /,
    'goto &foo undefining &foo on sub cleanup';
 
+# When croaking after discovering that the new CV you're about to goto is
+# undef, make sure that the old CV isn't doubly freed.
+
+package Do_undef {
+    my $count;
+
+    # creating a new closure here encourages any prematurely freed
+    # CV to be reallocated
+    sub DESTROY { undef &undef_sub; my $x = sub { $count } }
+
+    sub f {
+        $count++;
+        my $guard = bless []; # trigger DESTROY during goto
+        *undef_sub = sub {};
+        goto &undef_sub
+    }
+
+    for (1..10) {
+        eval { f() };
+    }
+    ::is($count, 10, "goto undef_sub safe");
+}
+
+# make sure that nothing nasty happens if the old CV is freed while
+# goto'ing
+
+package Free_cv {
+    my $results;
+    sub f {
+        no warnings 'redefine';
+        *f = sub {};
+        goto &g;
+    }
+    sub g { $results = "(@_)" }
+
+    f(1,2,3);
+    ::is($results, "(1 2 3)", "Free_cv");
+}
+
+
 # bug #22181 - this used to coredump or make $x undefined, due to
 # erroneous popping of the inner BLOCK context
 
@@ -414,6 +454,38 @@ moretests:
     }
 }
 
+# This bug was introduced in Aug 2010 by commit ac56e7de46621c6f
+# Peephole optimise adjacent pairs of nextstate ops.
+# and fixed in Oct 2014 by commit f5b5c2a37af87535
+# Simplify double-nextstate optimisation
+
+# The bug manifests as a warning
+# Use of "goto" to jump into a construct is deprecated at t/op/goto.t line 442.
+# and $out is undefined. Devel::Peek reveals that the lexical in the pad has
+# been reset to undef. I infer that pp_goto thinks that it's leaving one scope
+# and entering another, but I don't know *why* it thinks that. Whilst this bug
+# has been fixed by Father C, because I don't understand why it happened, I am
+# not confident that other related bugs remain (or have always existed).
+
+sub DEBUG_TIME() {
+    0;
+}
+
+{
+    if (DEBUG_TIME) {
+    }
+
+    {
+        my $out = "";
+        $out .= 'perl rules';
+        goto no_list;
+    no_list:
+        is($out, 'perl rules', '$out has not been erroneously reset to undef');
+    };
+}
+
+is($deprecated, 0, 'no warning was emmitted');
+
 # deep recursion with gotos eventually caused a stack reallocation
 # which messed up buggy internals that didn't expect the stack to move
 
@@ -473,7 +545,7 @@ is sub {
     goto &returnarg;
 }->("quick and easy"), "ick and queasy",
   'goto &foo with *_{ARRAY} replaced';
-my @__ = "\xc4\x80";
+my @__ = byte_utf8a_to_utf8n("\xc4\x80");
 sub { local *_ = \@__; goto &utf8::decode }->("no thinking aloud");
 is "@__", chr 256, 'goto &xsub with replaced *_{ARRAY}';
 

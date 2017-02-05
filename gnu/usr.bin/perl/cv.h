@@ -49,8 +49,9 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvROOT(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_root
 #define CvXSUB(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_xsub
 #define CvXSUBANY(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_xsubany
-#define CvGV(sv)	S_CvGV((const CV *)(sv))
+#define CvGV(sv)	S_CvGV(aTHX_ (CV *)(sv))
 #define CvGV_set(cv,gv)	Perl_cvgv_set(aTHX_ cv, gv)
+#define CvHASGV(cv)	cBOOL(SvANY(cv)->xcv_gv_u.xcv_gv)
 #define CvFILE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_file
 #ifdef USE_ITHREADS
 #  define CvFILE_set_from_cop(sv, cop)	\
@@ -61,10 +62,38 @@ See L<perlguts/Autoloading with XSUBs>.
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
 #define CvDEPTH(sv)	(*S_CvDEPTHp((const CV *)sv))
-#define CvPADLIST(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist
-#define CvOUTSIDE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
-#define CvFLAGS(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
+/* For use when you only have a XPVCV*, not a real CV*.
+   Must be assert protected as in S_CvDEPTHp before use. */
+#define CvDEPTHunsafe(sv) ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_depth
+
+/* these CvPADLIST/CvRESERVED asserts can be reverted one day, once stabilized */
+#define CvPADLIST(sv)	  (*(assert_(!CvISXSUB((CV*)(sv))) \
+	&(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_padlist)))
+/* CvPADLIST_set is not public API, it can be removed one day, once stabilized */
+#ifdef DEBUGGING
+#  define CvPADLIST_set(sv, padlist) Perl_set_padlist((CV*)sv, padlist)
+#else
+#  define CvPADLIST_set(sv, padlist) (CvPADLIST(sv) = (padlist))
+#endif
+#define CvHSCXT(sv)	  *(assert_(CvISXSUB((CV*)(sv))) \
+	&(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_hscxt))
+#ifdef DEBUGGING
+#  if PTRSIZE == 8
+#    define PoisonPADLIST(sv) \
+        (((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_padlist = (PADLIST *)UINT64_C(0xEFEFEFEFEFEFEFEF))
+#  elif PTRSIZE == 4
+#    define PoisonPADLIST(sv) \
+        (((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_padlist = (PADLIST *)0xEFEFEFEF)
+#  else
+#    error unknown pointer size
+#  endif
+#else
+#  define PoisonPADLIST(sv) NOOP
+#endif
+
+#define CvOUTSIDE(sv)	  ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
 #define CvOUTSIDE_SEQ(sv) ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside_seq
+#define CvFLAGS(sv)	  ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
 
 /* These two are sometimes called on non-CVs */
 #define CvPROTO(sv)                               \
@@ -104,9 +133,11 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
 #define CVf_HASEVAL	0x4000	/* contains string eval  */
 #define CVf_NAMED	0x8000  /* Has a name HEK */
+#define CVf_LEXICAL	0x10000 /* Omit package from name */
+#define CVf_ANONCONST	0x20000 /* :const - create anonconst op */
 
 /* This symbol for optimised communication between toke.c and op.c: */
-#define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LVALUE)
+#define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LVALUE|CVf_ANONCONST)
 
 #define CvCLONE(cv)		(CvFLAGS(cv) & CVf_CLONE)
 #define CvCLONE_on(cv)		(CvFLAGS(cv) |= CVf_CLONE)
@@ -185,16 +216,17 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvNAMED_on(cv)		(CvFLAGS(cv) |= CVf_NAMED)
 #define CvNAMED_off(cv)		(CvFLAGS(cv) &= ~CVf_NAMED)
 
+#define CvLEXICAL(cv)		(CvFLAGS(cv) & CVf_LEXICAL)
+#define CvLEXICAL_on(cv)	(CvFLAGS(cv) |= CVf_LEXICAL)
+#define CvLEXICAL_off(cv)	(CvFLAGS(cv) &= ~CVf_LEXICAL)
+
+#define CvANONCONST(cv)		(CvFLAGS(cv) & CVf_ANONCONST)
+#define CvANONCONST_on(cv)	(CvFLAGS(cv) |= CVf_ANONCONST)
+#define CvANONCONST_off(cv)	(CvFLAGS(cv) &= ~CVf_ANONCONST)
+
 /* Flags for newXS_flags  */
 #define XS_DYNAMIC_FILENAME	0x01	/* The filename isn't static  */
 
-PERL_STATIC_INLINE GV *
-S_CvGV(const CV *sv)
-{
-    return CvNAMED(sv)
-	? 0
-	: ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv_u.xcv_gv;
-}
 PERL_STATIC_INLINE HEK *
 CvNAME_HEK(CV *sv)
 {
@@ -232,7 +264,7 @@ There is a further complication with non-closure anonymous subs (i.e. those
 that do not refer to any lexicals outside that sub).  In this case, the
 anonymous prototype is shared rather than being cloned.  This has the
 consequence that the parent may be freed while there are still active
-children, eg
+children, I<e.g.>,
 
     BEGIN { $a = sub { eval '$x' } }
 
@@ -269,12 +301,14 @@ should print 123:
 
 typedef OP *(*Perl_call_checker)(pTHX_ OP *, GV *, SV *);
 
+#define CALL_CHECKER_REQUIRE_GV	MGf_REQUIRE_GV
+
+#define CV_NAME_NOTQUAL		1
+
+#ifdef PERL_CORE
+# define CV_UNDEF_KEEP_NAME	1
+#endif
+
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

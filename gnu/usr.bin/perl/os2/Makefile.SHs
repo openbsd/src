@@ -103,8 +103,8 @@ perl_dll_t: t/$(PERL_DLL)
 t/$(PERL_DLL): $(PERL_DLL)
 	$(LNS) $(PERL_DLL) t/$(PERL_DLL)
 
-$(PERL_DLL): $(obj) perl5.def perl$(OBJ_EXT) perlmain$(OBJ_EXT) $(DYNALOADER)
-	$(LD) $(LD_OPT) $(LDDLFLAGS) $(PERL_DLL_LD_OPT) -o $@ perl$(OBJ_EXT) $(obj) perlmain$(OBJ_EXT) $(DYNALOADER) $(libs) perl5.def || ( rm $(PERL_DLL) && sh -c false )
+$(PERL_DLL): $(perllib_objs) perl5.def perl$(OBJ_EXT) perlmain$(OBJ_EXT) $(DYNALOADER)
+	$(LD) $(LD_OPT) $(LDDLFLAGS) $(PERL_DLL_LD_OPT) -o $@ perl$(OBJ_EXT) $(perllib_objs) perlmain$(OBJ_EXT) $(DYNALOADER) $(libs) perl5.def || ( rm $(PERL_DLL) && sh -c false )
 
 perl5.olddef: perl.linkexp
 	echo "LIBRARY '$(PERL_DLL_BASE)' INITINSTANCE TERMINSTANCE"	> $@
@@ -142,8 +142,8 @@ miniperl.map: miniperl
 
 miniperl.exe: miniperl
 
-miniperl: $(obj) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)
-	$(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) perl$(OBJ_EXT) `echo $(obj)|sed -e 's/\bop\./opmini./g'` $(libs) -Zmap -Zlinker /map/PM:VIO
+miniperl: $(perllib_objs) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)
+	$(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) perl$(OBJ_EXT) `echo $(perllib_objs)|sed -e 's/\bop\./opmini./g'` $(libs) -Zmap -Zlinker /map/PM:VIO
 	@./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
 
 depend: os2ish.h dlfcn.h os2thread.h os2.c
@@ -202,7 +202,7 @@ installcmd :
 
 # Aout section:
 
-aout_obj = $(addsuffix $(AOUT_OBJ_EXT),$(basename $(obj)))
+aout_obj = $(addsuffix $(AOUT_OBJ_EXT),$(basename $(perllib_objs)))
 AOUT_DYNALOADER = $(addsuffix $(AOUT_LIB_EXT),$(basename $(DYNALOADER)))
 aout_ext = $(static_ext) $(dynamic_ext) $(AOUT_EXTRA_LIBS)
 aout_static_ext = $(addsuffix $(AOUT_LIB_EXT),$(basename $(aout_ext)))
@@ -225,7 +225,7 @@ $(aout_static_ext) : $(static_ext) $(dynamic_ext)
 
 $(AOUT_LIBPERL) : $(aout_obj) perl$(AOUT_OBJ_EXT)
 	rm -f $@
-	$(AOUT_AR) rcu $@ perl$(AOUT_OBJ_EXT) $(aout_obj)
+	$(AOUT_AR) rc $@ perl$(AOUT_OBJ_EXT) $(aout_obj)
 	cp $@ perl$(AOUT_LIB_EXT)
 
 .c$(AOUT_OBJ_EXT):

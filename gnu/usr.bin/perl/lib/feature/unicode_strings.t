@@ -30,8 +30,8 @@ my @posix_to_lower
 # Override the elements in the to_lower arrays that have different standard
 # lower case mappings.  (standard meaning they are 32 numbers apart)
 for my $i (0x41 .. 0x5A, 0xC0 .. 0xD6, 0xD8 .. 0xDE) {
-    my $upper_ord = ord_latin1_to_native $i;
-    my $lower_ord = ord_latin1_to_native($i + 32);
+    my $upper_ord = utf8::unicode_to_native $i;
+    my $lower_ord = utf8::unicode_to_native($i + 32);
 
     $latin1_to_lower[$upper_ord] = chr($lower_ord);
 
@@ -42,8 +42,8 @@ for my $i (0x41 .. 0x5A, 0xC0 .. 0xD6, 0xD8 .. 0xDE) {
 
 # Same for upper and title
 for my $i (0x61 .. 0x7A, 0xE0 .. 0xF6, 0xF8 .. 0xFE) {
-    my $lower_ord = ord_latin1_to_native $i;
-    my $upper_ord = ord_latin1_to_native($i - 32);
+    my $lower_ord = utf8::unicode_to_native $i;
+    my $upper_ord = utf8::unicode_to_native($i - 32);
 
     $latin1_to_upper[$lower_ord] = chr($upper_ord);
     $latin1_to_title[$lower_ord] = chr($upper_ord);
@@ -55,12 +55,12 @@ for my $i (0x61 .. 0x7A, 0xE0 .. 0xF6, 0xF8 .. 0xFE) {
 }
 
 # Override the abnormal cases.
-$latin1_to_upper[ord_latin1_to_native 0xB5] = chr(0x39C);
-$latin1_to_title[ord_latin1_to_native 0xB5] = chr(0x39C);
-$latin1_to_upper[ord_latin1_to_native 0xDF] = 'SS';
-$latin1_to_title[ord_latin1_to_native 0xDF] = 'Ss';
-$latin1_to_upper[ord_latin1_to_native 0xFF] = chr(0x178);
-$latin1_to_title[ord_latin1_to_native 0xFF] = chr(0x178);
+$latin1_to_upper[utf8::unicode_to_native 0xB5] = chr(0x39C);
+$latin1_to_title[utf8::unicode_to_native 0xB5] = chr(0x39C);
+$latin1_to_upper[utf8::unicode_to_native 0xDF] = 'SS';
+$latin1_to_title[utf8::unicode_to_native 0xDF] = 'Ss';
+$latin1_to_upper[utf8::unicode_to_native 0xFF] = chr(0x178);
+$latin1_to_title[utf8::unicode_to_native 0xFF] = chr(0x178);
 
 my $repeat = 25;    # Length to make strings.
 
@@ -74,8 +74,8 @@ $cyrillic{'uc'} = chr(0x42F) x $repeat;
 $cyrillic{'lc'} = chr(0x44F) x $repeat;
 
 my %latin1;
-$latin1{'uc'} = chr(ord_latin1_to_native 0xD8) x $repeat;
-$latin1{'lc'} = chr(ord_latin1_to_native 0xF8) x $repeat;
+$latin1{'uc'} = chr(utf8::unicode_to_native 0xD8) x $repeat;
+$latin1{'lc'} = chr(utf8::unicode_to_native 0xF8) x $repeat;
 
 my %empty;
 $empty{'lc'} = $empty{'uc'} = "";
@@ -165,19 +165,19 @@ for my $i ( 0x30 .. 0x39,   # 0-9
             0xF8 .. 0xFF,   # various
         )
 {
-    $w[ord_latin1_to_native $i] = 1;
+    $w[utf8::unicode_to_native $i] = 1;
 }
 
 # Boolean: is s[$i] a \s character?
 my @s = (0) x 256;
-$s[ord_latin1_to_native 0x09] = 1;   # Tab
-$s[ord_latin1_to_native 0x0A] = 1;   # LF
-$s[ord_latin1_to_native 0x0B] = 1;   # VT
-$s[ord_latin1_to_native 0x0C] = 1;   # FF
-$s[ord_latin1_to_native 0x0D] = 1;   # CR
-$s[ord_latin1_to_native 0x20] = 1;   # SPACE
-$s[ord_latin1_to_native 0x85] = 1;   # NEL
-$s[ord_latin1_to_native 0xA0] = 1;   # NO BREAK SPACE
+$s[utf8::unicode_to_native 0x09] = 1;   # Tab
+$s[utf8::unicode_to_native 0x0A] = 1;   # LF
+$s[utf8::unicode_to_native 0x0B] = 1;   # VT
+$s[utf8::unicode_to_native 0x0C] = 1;   # FF
+$s[utf8::unicode_to_native 0x0D] = 1;   # CR
+$s[utf8::unicode_to_native 0x20] = 1;   # SPACE
+$s[utf8::unicode_to_native 0x85] = 1;   # NEL
+$s[utf8::unicode_to_native 0xA0] = 1;   # NO BREAK SPACE
 
 for my $i (0 .. 255) {
     my $char = chr($i);
@@ -225,7 +225,7 @@ for my $i (0 .. 255) {
 
                     # With the legacy, nothing above 128 should be in the
                     # class
-                    if ($i >= 128) {
+                    if (utf8::native_to_unicode($i) >= 128) {
                         $expect_success = 0;
                         $expect_success = ! $expect_success if $complement;
                         $expect_success = ! $expect_success if $complement_class;
@@ -259,7 +259,7 @@ for my $i (0 .. 255) {
 
         no feature 'unicode_strings';
         $prefix = "no uni8bit; Verify $string";
-        if ($i >= 128) {
+        if (utf8::native_to_unicode($i) >= 128) {
             $expect_success = 1;
             $expect_success = ! $expect_success if $complement;
         }

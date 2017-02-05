@@ -16,7 +16,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.04';
+$VERSION = '2.06_01';
 
 # Figure out if we have support for native sized types
 my $N = do { my $foo = eval { pack "L!", 0 }; $@ ? '' : '!' };
@@ -56,7 +56,9 @@ sub id {
 
 sub remove {
     my $self = shift;
-    (semctl($$self,0,IPC_RMID,0), undef $$self)[0];
+    my $result = semctl($$self,0,IPC_RMID,0);
+    undef $$self;
+    $result;
 }
 
 sub getncnt {
@@ -240,7 +242,7 @@ Returns the system identifier for the semaphore set.
 C<OPLIST> is a list of operations to pass to C<semop>. C<OPLIST> is
 a concatenation of smaller lists, each which has three values. The
 first is the semaphore number, the second is the operation and the last
-is a flags value. See L<semop> for more details. For example
+is a flags value. See L<semop(2)> for more details. For example
 
     $sem->op(
 	0, -1, IPC_NOWAIT,
@@ -293,7 +295,7 @@ of these fields see your system documentation.
 
 =head1 SEE ALSO
 
-L<IPC::SysV>, L<Class::Struct>, L<semget>, L<semctl>, L<semop> 
+L<IPC::SysV>, L<Class::Struct>, L<semget(2)>, L<semctl(2)>, L<semop(2)>
 
 =head1 AUTHORS
 

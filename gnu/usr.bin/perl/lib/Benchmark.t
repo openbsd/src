@@ -8,7 +8,7 @@ BEGIN {
 use warnings;
 use strict;
 use vars qw($foo $bar $baz $ballast);
-use Test::More tests => 195;
+use Test::More tests => 213;
 
 use Benchmark qw(:all);
 
@@ -69,7 +69,7 @@ isa_ok($threesecs, 'Benchmark', "countit 0, CODEREF");
 isnt ($baz, 0, "benchmarked code was run");
 my $in_threesecs = $threesecs->iters;
 print "# in_threesecs=$in_threesecs iterations\n";
-ok ($in_threesecs > 0, "iters returned positive iterations");
+cmp_ok($in_threesecs, '>', 0, "iters returned positive iterations");
 my $cpu3 = $threesecs->[1]; # user
 my $sys3 = $threesecs->[2]; # sys
 cmp_ok($cpu3+$sys3, '>=', 3.0, "3s cpu3 is at least 3s");
@@ -85,7 +85,7 @@ isa_ok($onesec, 'Benchmark', "countit 1, CODEREF");
 isnt ($baz, 0, "benchmarked code was run");
 my $in_onesec = $onesec->iters;
 print "# in_onesec=$in_onesec iterations\n";
-ok ($in_onesec > 0, "iters returned positive iterations");
+cmp_ok($in_onesec, '>',  0, "iters returned positive iterations");
 my $cpu1 = $onesec->[1]; # user
 my $sys1 = $onesec->[2]; # sys
 cmp_ok($cpu1+$sys1, '>=', 1.0, "is cpu1 is at least 1s");
@@ -102,7 +102,7 @@ isa_ok($onesec, 'Benchmark', "countit 1, eval");
 isnt ($baz, 0, "benchmarked code was run");
 my $in_again = $again->iters;
 print "# $in_again iterations\n";
-ok ($in_again > 0, "iters returned positive iterations");
+cmp_ok($in_again, '>', 0, "iters returned positive iterations");
 
 
 my $t1 = new Benchmark;
@@ -144,7 +144,7 @@ is ($auto, $default, 'timestr ($diff, "auto") matches timestr ($diff)');
 
 my $out = tie *OUT, 'TieOut';
 
-my $iterations = 3;
+my $iterations = 100;
 
 $foo = 0;
 select(OUT);
@@ -201,8 +201,8 @@ like ($got, $Nop_Pattern, 'specify format as nop');
     select(STDOUT);
     isa_ok($got, 'Benchmark',
            "timethis, at least 2 seconds with format 'none'");
-    ok ($foo > 0, "benchmarked code was run");
-    ok ($end - $start > 1, "benchmarked code ran for over 1 second");
+    cmp_ok($foo, '>', 0, "benchmarked code was run");
+    cmp_ok($end - $start, '>', 1, "benchmarked code ran for over 1 second");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
@@ -288,10 +288,10 @@ my $results;
     isa_ok($results->{Foo}, 'Benchmark', "Foo value");
     isa_ok($results->{Bar}, 'Benchmark', "Bar value");
     eq_set([keys %$results], [qw(Foo Bar)], 'should be exactly two objects');
-    ok ($foo > 0, "Foo code was run");
-    ok ($bar > 0, "Bar code was run");
+    cmp_ok($foo, '>', 0, "Foo code was run");
+    cmp_ok($bar, '>', 0, "Bar code was run");
 
-    ok (($end - $start) > 0.1, "benchmarked code ran for over 0.1 seconds");
+    cmp_ok($end-$start, '>', 0.1, "benchmarked code ran for over 0.1 seconds");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
@@ -347,11 +347,10 @@ sub check_graph_consistency {
         pass ("slow rate is less than fast rate");
         unless (ok ($slowfast <= 0 && $slowfast >= -100,
                     "slowfast should be less than or equal to zero, and >= -100")) {
-          print STDERR "# slowfast $slowfast\n";
+          diag("slowfast=$slowfast");
           $all_passed = 0;
         }
-        unless (ok ($fastslow > 0, "fastslow should be > 0")) {
-          print STDERR "# fastslow $fastslow\n";
+        unless (cmp_ok($fastslow, '>', 0, "fastslow should be > 0")) {
           $all_passed = 0;
         }
     } else {
@@ -384,8 +383,7 @@ sub check_graph_vs_output {
                              [$fastr, $fastratet, $fastslowt, $fastfast]],
                     "check the chart layout matches the formatted output");
     unless ($all_passed) {
-      print STDERR "# Something went wrong there. I got this chart:\n";
-      print STDERR "# $_\n" foreach split /\n/, $got;
+      diag("Something went wrong there. I got this chart:\n$got");
     }
 }
 
@@ -401,12 +399,13 @@ sub check_graph {
 {
     select(OUT);
     my $start = times;
-    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i)",
+    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
                                   b => "\$i = sqrt(\$i++)",
                                 }, "auto" ) ;
     my $end = times;
     select(STDOUT);
-    ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");
+    cmp_ok($end - $start, '>', 0.05,
+                            "benchmarked code ran for over 0.05 seconds");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
@@ -425,11 +424,12 @@ sub check_graph {
 {
     select(OUT);
     my $start = times;
-    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i)",
+    my $chart = cmpthese( -0.1, { a => "\$i = sqrt(\$i++) * sqrt(\$i) for 1..10",
                                   b => "\$i = sqrt(\$i++)" });
     my $end = times;
     select(STDOUT);
-    ok (($end - $start) > 0.05, "benchmarked code ran for over 0.05 seconds");
+    cmp_ok($end - $start, '>', 0.05,
+            "benchmarked code ran for over 0.05 seconds");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
@@ -447,15 +447,15 @@ sub check_graph {
 {
     $foo = $bar = 0;
     select(OUT);
-    my $chart = cmpthese( 10, $code_to_test, 'nop' ) ;
+    my $chart = cmpthese($iterations, $code_to_test, 'nop' ) ;
     select(STDOUT);
-    ok ($foo > 0, "Foo code was run");
-    ok ($bar > 0, "Bar code was run");
+    cmp_ok($foo, '>', 0, "Foo code was run");
+    cmp_ok($bar, '>', 0, "Bar code was run");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
     $got =~ s/\(warning:[^\)]+\)//gs;
-    like ($got, qr/timing 10 iterations of\s+Bar\W+Foo\W*?\.\.\./s,
+    like ($got, qr/timing $iterations iterations of\s+Bar\W+Foo\W*?\.\.\./s,
       'check title');
     # Remove the title
     $got =~ s/.*\.\.\.//s;
@@ -467,10 +467,10 @@ sub check_graph {
 {
     $foo = $bar = 0;
     select(OUT);
-    my $chart = cmpthese( 10, $code_to_test, 'none' ) ;
+    my $chart = cmpthese($iterations, $code_to_test, 'none' ) ;
     select(STDOUT);
-    ok ($foo > 0, "Foo code was run");
-    ok ($bar > 0, "Bar code was run");
+    cmp_ok($foo, '>', 0, "Foo code was run");
+    cmp_ok($bar, '>', 0, "Bar code was run");
 
     $got = $out->read();
     # Remove any warnings about having too few iterations.
@@ -484,6 +484,32 @@ sub check_graph {
     check_graph (@$chart);
 }
 
+# this is a repeat of the above test, but with the timing and charting
+# steps split.
+
+{
+    $foo = $bar = 0;
+    select(OUT);
+    my $res = timethese($iterations, $code_to_test, 'none' ) ;
+    my $chart = cmpthese($res, 'none' ) ;
+    select(STDOUT);
+    cmp_ok($foo, '>', 0, "Foo code was run");
+    cmp_ok($bar, '>', 0, "Bar code was run");
+
+    $got = $out->read();
+    # Remove any warnings about having too few iterations.
+    $got =~ s/\(warning:[^\)]+\)//gs;
+    $got =~ s/^[ \t\n]+//s; # Remove all the whitespace from the beginning
+    is ($got, '', "format 'none' should suppress output");
+    is (ref $chart, 'ARRAY', "output should be an array ref");
+    # Some of these will go bang if the preceding test fails. There will be
+    # a big clue as to why, from the previous test's diagnostic
+    is (ref $chart->[0], 'ARRAY', "output should be an array of arrays");
+    use Data::Dumper;
+    check_graph(@$chart)
+        or diag(Data::Dumper->Dump([$res, $chart], ['$res', '$chart']));
+}
+
 {
     $foo = $bar = 0;
     select(OUT);
@@ -493,7 +519,7 @@ sub check_graph {
     is ($bar, 0, "Bar code was not run");
 
     $got = $out->read();
-    ok ($got !~ /\.\.\./s, 'check that there is no title');
+    unlike($got, qr/\.\.\./s, 'check that there is no title');
     like ($got, $graph_dissassembly, "Should find the output graph somewhere");
     check_graph_vs_output ($chart, $got);
 }

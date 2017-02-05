@@ -391,9 +391,9 @@ encode_qp(sv,...)
 		break;
             }
 	    else if (*p == '\n' && eol_len && !binary) {
-		if (linelen == 1 && SvCUR(RETVAL) > eol_len + 1 && SvEND(RETVAL)[-eol_len - 2] == '=') {
+		if (linelen == 1 && SvCUR(RETVAL) > eol_len + 1 && (SvEND(RETVAL)-eol_len)[-2] == '=') {
 		    /* fixup useless soft linebreak */
-		    SvEND(RETVAL)[-eol_len - 2] = SvEND(RETVAL)[-1];
+		    (SvEND(RETVAL)-eol_len)[-2] = SvEND(RETVAL)[-1];
 		    SvCUR_set(RETVAL, SvCUR(RETVAL) - 1);
 		}
 		else {

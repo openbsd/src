@@ -3,10 +3,14 @@ package version;
 
 use 5.006002;
 use strict;
+use warnings::register;
+if ($] >= 5.015) {
+    warnings::register_categories(qw/version/);
+}
 
 use vars qw(@ISA $VERSION $CLASS $STRICT $LAX *declare *qv);
 
-$VERSION = 0.9909;
+$VERSION = 0.9916;
 $CLASS = 'version';
 
 # avoid using Exporter

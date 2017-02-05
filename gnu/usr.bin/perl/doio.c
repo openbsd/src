@@ -64,7 +64,6 @@ static IO *
 S_openn_setup(pTHX_ GV *gv, char *mode, PerlIO **saveifp, PerlIO **saveofp,
               int *savefd,  char *savetype)
 {
-    dVAR;
     IO * const io = GvIOn(gv);
 
     PERL_ARGS_ASSERT_OPENN_SETUP;
@@ -145,7 +144,6 @@ bool
 Perl_do_open_raw(pTHX_ GV *gv, const char *oname, STRLEN len,
                  int rawmode, int rawperm)
 {
-    dVAR;
     PerlIO *saveifp;
     PerlIO *saveofp;
     int savefd;
@@ -215,7 +213,6 @@ bool
 Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
               PerlIO *supplied_fp, SV **svp, U32 num_svs)
 {
-    dVAR;
     PerlIO *saveifp;
     PerlIO *saveofp;
     int savefd;
@@ -380,6 +377,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
 		else {
 		    PerlIO *that_fp = NULL;
                     int wanted_fd;
+                    UV uv;
 		    if (num_svs > 1) {
 			/* diag_listed_as: More than one argument to '%s' open */
 			Perl_croak(aTHX_ "More than one argument to '%c&' open",IoTYPE(io));
@@ -393,8 +391,11 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
                         wanted_fd = SvUV(*svp);
 			num_svs = 0;
 		    }
-		    else if (isDIGIT(*type)) {
-                        wanted_fd = atoi(type);
+		    else if (isDIGIT(*type)
+                        && grok_atoUV(type, &uv, NULL)
+                        && uv <= INT_MAX
+                    ) {
+                        wanted_fd = (int)uv;
 		    }
 		    else {
 			const IO* thatio;
@@ -437,8 +438,11 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
 			    else if (IoTYPE(thatio) == IoTYPE_SOCKET)
 				IoTYPE(io) = IoTYPE_SOCKET;
 			}
-			else
-			    wanted_fd = -1;
+                        else {
+                            SETERRNO(EBADF, RMS_IFI);
+                            fp = NULL;
+                            goto say_false;
+                        }
 		    }
 		    if (!num_svs)
 			type = NULL;
@@ -617,7 +621,7 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
 
     if (!fp) {
 	if (IoTYPE(io) == IoTYPE_RDONLY && ckWARN(WARN_NEWLINE)
-	    && strchr(oname, '\n')
+	    && should_warn_nl(oname)
 	    
 	)
         {
@@ -646,9 +650,9 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
     }
 
     fd = PerlIO_fileno(fp);
-    /* If there is no fd (e.g. PerlIO::scalar) assume it isn't a
-     * socket - this covers PerlIO::scalar - otherwise unless we "know" the
-     * type probe for socket-ness.
+    /* Do NOT do: "if (fd < 0) goto say_false;" here.  If there is no
+     * fd assume it isn't a socket - this covers PerlIO::scalar -
+     * otherwise unless we "know" the type probe for socket-ness.
      */
     if (IoTYPE(io) && IoTYPE(io) != IoTYPE_PIPE && IoTYPE(io) != IoTYPE_STD && fd >= 0) {
 	if (PerlLIO_fstat(fd,&PL_statbuf) < 0) {
@@ -696,7 +700,10 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
 	       is assigned to (say) STDOUT - for now let dup2() fail
 	       and provide the error
 	     */
-	    if (PerlLIO_dup2(fd, savefd) < 0) {
+	    if (fd < 0) {
+                SETERRNO(EBADF,RMS_IFI);
+		goto say_false;
+            } else if (PerlLIO_dup2(fd, savefd) < 0) {
 		(void)PerlIO_close(fp);
 		goto say_false;
 	    }
@@ -732,16 +739,28 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
 	    if (was_fdopen) {
                 /* need to close fp without closing underlying fd */
                 int ofd = PerlIO_fileno(fp);
-                int dupfd = PerlLIO_dup(ofd);
+                int dupfd = ofd >= 0 ? PerlLIO_dup(ofd) : -1;
 #if defined(HAS_FCNTL) && defined(F_SETFD)
-		/* Assume if we have F_SETFD we have F_GETFD */
-                int coe = fcntl(ofd,F_GETFD);
+		/* Assume if we have F_SETFD we have F_GETFD. */
+                /* Get a copy of all the fd flags. */
+                int fd_flags = ofd >= 0 ? fcntl(ofd, F_GETFD) : -1;
+                if (fd_flags < 0) {
+                    if (dupfd >= 0)
+                        PerlLIO_close(dupfd);
+                    goto say_false;
+                }
 #endif
+                if (ofd < 0 || dupfd < 0) {
+                    if (dupfd >= 0)
+                        PerlLIO_close(dupfd);
+                    goto say_false;
+                }
                 PerlIO_close(fp);
-                PerlLIO_dup2(dupfd,ofd);
+                PerlLIO_dup2(dupfd, ofd);
 #if defined(HAS_FCNTL) && defined(F_SETFD)
-		/* The dup trick has lost close-on-exec on ofd */
-		fcntl(ofd,F_SETFD, coe);
+		/* The dup trick has lost close-on-exec on ofd,
+                 * and possibly any other flags, so restore them. */
+		fcntl(ofd,F_SETFD, fd_flags);
 #endif
                 PerlLIO_close(dupfd);
 	    }
@@ -752,11 +771,10 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
 	PerlIO_clearerr(fp);
 	fd = PerlIO_fileno(fp);
     }
-#if defined(HAS_FCNTL) && defined(F_SETFD)
-    if (fd >= 0) {
-	dSAVE_ERRNO;
-	fcntl(fd,F_SETFD,fd > PL_maxsysfd); /* can change errno */
-	RESTORE_ERRNO;
+#if defined(HAS_FCNTL) && defined(F_SETFD) && defined(FD_CLOEXEC)
+    if (fd >= 0 && fd > PL_maxsysfd && fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
+        PerlLIO_close(fd);
+        goto say_false;
     }
 #endif
     IoIFP(io) = fp;
@@ -771,7 +789,6 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
 	    *s = 'w';
 	    if (!(IoOFP(io) = PerlIO_openn(aTHX_ type,s,fd,0,0,NULL,0,NULL))) {
 		PerlIO_close(fp);
-		IoIFP(io) = NULL;
 		goto say_false;
 	    }
 	}
@@ -780,7 +797,7 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
     }
     return TRUE;
 
-say_false:
+  say_false:
     IoIFP(io) = saveifp;
     IoOFP(io) = saveofp;
     IoTYPE(io) = savetype;
@@ -788,16 +805,19 @@ say_false:
 }
 
 PerlIO *
-Perl_nextargv(pTHX_ GV *gv)
+Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
 {
-    dVAR;
     IO * const io = GvIOp(gv);
+    SV *const old_out_name = PL_inplace ? newSVsv(GvSV(gv)) : NULL;
 
     PERL_ARGS_ASSERT_NEXTARGV;
 
+    if (old_out_name)
+        SAVEFREESV(old_out_name);
+
     if (!PL_argvoutgv)
 	PL_argvoutgv = gv_fetchpvs("ARGVOUT", GV_ADD|GV_NOTQUAL, SVt_PVIO);
-    if (io && (IoFLAGS(io) & IOf_ARGV) && (IoFLAGS(io) & IOf_START)) {
+    if (io && (IoFLAGS(io) & (IOf_ARGV|IOf_START)) == (IOf_ARGV|IOf_START)) {
 	IoFLAGS(io) &= ~IOf_START;
 	if (PL_inplace) {
 	    assert(PL_defoutgv);
@@ -819,6 +839,7 @@ Perl_nextargv(pTHX_ GV *gv)
     if (!GvAV(gv))
 	return NULL;
     while (av_tindex(GvAV(gv)) >= 0) {
+	Stat_t statbuf;
 	STRLEN oldlen;
         SV *const sv = av_shift(GvAV(gv));
 	SAVEFREESV(sv);
@@ -827,11 +848,21 @@ Perl_nextargv(pTHX_ GV *gv)
 	SvSETMAGIC(GvSV(gv));
 	PL_oldname = SvPVx(GvSV(gv), oldlen);
         if (LIKELY(!PL_inplace)) {
-            if (do_open6(gv, PL_oldname, oldlen, NULL, NULL, 0)) {
+            if (nomagicopen
+                    ? do_open6(gv, "<", 1, NULL, &GvSV(gv), 1)
+                    : do_open6(gv, PL_oldname, oldlen, NULL, NULL, 0)
+               ) {
                 return IoIFP(GvIOp(gv));
             }
         }
         else {
+            {
+                IO * const io = GvIOp(PL_argvoutgv);
+                if (io && IoIFP(io) && old_out_name && !io_close(io, PL_argvoutgv, FALSE, FALSE)) {
+                    Perl_croak(aTHX_ "Failed to close in-place edit file %"SVf": %s\n",
+                               old_out_name, Strerror(errno));
+                }
+            }
             /* This very long block ends with return IoIFP(GvIOp(gv));
                Both this block and the block above fall through on open
                failure to the warning code, and then the while loop above tries
@@ -924,7 +955,7 @@ Perl_nextargv(pTHX_ GV *gv)
 #endif
 		}
 		else {
-#if !defined(DOSISH) && !defined(AMIGAOS)
+#if !defined(DOSISH) && !defined(__amigaos4__)
 #  ifndef VMS  /* Don't delete; use automatic file versioning */
 		    if (UNLINK(PL_oldname) < 0) {
 			Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE),
@@ -956,21 +987,23 @@ Perl_nextargv(pTHX_ GV *gv)
 		}
 		setdefout(PL_argvoutgv);
 		PL_lastfd = PerlIO_fileno(IoIFP(GvIOp(PL_argvoutgv)));
-		(void)PerlLIO_fstat(PL_lastfd,&PL_statbuf);
+                if (PL_lastfd >= 0) {
+                    (void)PerlLIO_fstat(PL_lastfd,&statbuf);
 #ifdef HAS_FCHMOD
-		(void)fchmod(PL_lastfd,PL_filemode);
+                    (void)fchmod(PL_lastfd,PL_filemode);
 #else
-		(void)PerlLIO_chmod(PL_oldname,PL_filemode);
+                    (void)PerlLIO_chmod(PL_oldname,PL_filemode);
 #endif
-		if (fileuid != PL_statbuf.st_uid || filegid != PL_statbuf.st_gid) {
-		    /* XXX silently ignore failures */
+                    if (fileuid != statbuf.st_uid || filegid != statbuf.st_gid) {
+                        /* XXX silently ignore failures */
 #ifdef HAS_FCHOWN
-		    PERL_UNUSED_RESULT(fchown(PL_lastfd,fileuid,filegid));
+                        PERL_UNUSED_RESULT(fchown(PL_lastfd,fileuid,filegid));
 #else
 #ifdef HAS_CHOWN
-		    PERL_UNUSED_RESULT(PerlLIO_chown(PL_oldname,fileuid,filegid));
+                        PERL_UNUSED_RESULT(PerlLIO_chown(PL_oldname,fileuid,filegid));
 #endif
 #endif
+                    }
 		}
                 return IoIFP(GvIOp(gv));
 	    }
@@ -978,8 +1011,8 @@ Perl_nextargv(pTHX_ GV *gv)
 
         if (ckWARN_d(WARN_INPLACE)) {
             const int eno = errno;
-            if (PerlLIO_stat(PL_oldname, &PL_statbuf) >= 0
-                && !S_ISREG(PL_statbuf.st_mode)) {
+            if (PerlLIO_stat(PL_oldname, &statbuf) >= 0
+                && !S_ISREG(statbuf.st_mode)) {
                 Perl_warner(aTHX_ packWARN(WARN_INPLACE),
                             "Can't do inplace edit: %s is not a regular file",
                             PL_oldname);
@@ -993,7 +1026,17 @@ Perl_nextargv(pTHX_ GV *gv)
     if (io && (IoFLAGS(io) & IOf_ARGV))
 	IoFLAGS(io) |= IOf_START;
     if (PL_inplace) {
-	(void)do_close(PL_argvoutgv,FALSE);
+        if (old_out_name) {
+            IO * const io = GvIOp(PL_argvoutgv);
+            if (io && IoIFP(io) && !io_close(io, PL_argvoutgv, FALSE, FALSE)) {
+                Perl_croak(aTHX_ "Failed to close in-place edit file %"SVf": %s\n",
+                           old_out_name, Strerror(errno));
+            }
+        }
+        else {
+            /* maybe this is no longer wanted */
+            (void)do_close(PL_argvoutgv,FALSE);
+        }
 	if (io && (IoFLAGS(io) & IOf_ARGV)
 	    && PL_argvout_stack && AvFILLp(PL_argvout_stack) >= 0)
 	{
@@ -1011,7 +1054,6 @@ Perl_nextargv(pTHX_ GV *gv)
 bool
 Perl_do_close(pTHX_ GV *gv, bool not_implicit)
 {
-    dVAR;
     bool retval;
     IO *io;
 
@@ -1030,7 +1072,7 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
 	}
 	return FALSE;
     }
-    retval = io_close(io, not_implicit);
+    retval = io_close(io, NULL, not_implicit, FALSE);
     if (not_implicit) {
 	IoLINES(io) = 0;
 	IoPAGE(io) = 0;
@@ -1041,9 +1083,8 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
 }
 
 bool
-Perl_io_close(pTHX_ IO *io, bool not_implicit)
+Perl_io_close(pTHX_ IO *io, GV *gv, bool not_implicit, bool warn_on_fail)
 {
-    dVAR;
     bool retval = FALSE;
 
     PERL_ARGS_ASSERT_IO_CLOSE;
@@ -1064,15 +1105,37 @@ Perl_io_close(pTHX_ IO *io, bool not_implicit)
 	else {
 	    if (IoOFP(io) && IoOFP(io) != IoIFP(io)) {		/* a socket */
 		const bool prev_err = PerlIO_error(IoOFP(io));
+#ifdef USE_PERLIO
+		if (prev_err)
+		    PerlIO_restore_errno(IoOFP(io));
+#endif
 		retval = (PerlIO_close(IoOFP(io)) != EOF && !prev_err);
 		PerlIO_close(IoIFP(io));	/* clear stdio, fd already closed */
 	    }
 	    else {
 		const bool prev_err = PerlIO_error(IoIFP(io));
+#ifdef USE_PERLIO
+		if (prev_err)
+		    PerlIO_restore_errno(IoIFP(io));
+#endif
 		retval = (PerlIO_close(IoIFP(io)) != EOF && !prev_err);
 	    }
 	}
 	IoOFP(io) = IoIFP(io) = NULL;
+
+	if (warn_on_fail && !retval) {
+	    if (gv)
+		Perl_ck_warner_d(aTHX_ packWARN(WARN_IO),
+				"Warning: unable to close filehandle %"
+				 HEKf" properly: %"SVf,
+				 HEKfARG(GvNAME_HEK(gv)),
+                                 SVfARG(get_sv("!",GV_ADD)));
+	    else
+		Perl_ck_warner_d(aTHX_ packWARN(WARN_IO),
+				"Warning: unable to close filehandle "
+				"properly: %"SVf,
+				 SVfARG(get_sv("!",GV_ADD)));
+	}
     }
     else if (not_implicit) {
 	SETERRNO(EBADF,SS_IVCHAN);
@@ -1084,7 +1147,6 @@ Perl_io_close(pTHX_ IO *io, bool not_implicit)
 bool
 Perl_do_eof(pTHX_ GV *gv)
 {
-    dVAR;
     IO * const io = GvIO(gv);
 
     PERL_ARGS_ASSERT_DO_EOF;
@@ -1117,7 +1179,7 @@ Perl_do_eof(pTHX_ GV *gv)
 		PerlIO_set_cnt(IoIFP(io),-1);
 	}
 	if (PL_op->op_flags & OPf_SPECIAL) { /* not necessarily a real EOF yet? */
-	    if (gv != PL_argvgv || !nextargv(gv))	/* get another fp handy */
+	    if (gv != PL_argvgv || !nextargv(gv, FALSE))	/* get another fp handy */
 		return TRUE;
 	}
 	else
@@ -1129,7 +1191,6 @@ Perl_do_eof(pTHX_ GV *gv)
 Off_t
 Perl_do_tell(pTHX_ GV *gv)
 {
-    dVAR;
     IO *const io = GvIO(gv);
     PerlIO *fp;
 
@@ -1146,7 +1207,6 @@ Perl_do_tell(pTHX_ GV *gv)
 bool
 Perl_do_seek(pTHX_ GV *gv, Off_t pos, int whence)
 {
-    dVAR;
     IO *const io = GvIO(gv);
     PerlIO *fp;
 
@@ -1161,14 +1221,20 @@ Perl_do_seek(pTHX_ GV *gv, Off_t pos, int whence)
 Off_t
 Perl_do_sysseek(pTHX_ GV *gv, Off_t pos, int whence)
 {
-    dVAR;
     IO *const io = GvIO(gv);
     PerlIO *fp;
 
     PERL_ARGS_ASSERT_DO_SYSSEEK;
 
-    if (io && (fp = IoIFP(io)))
-	return PerlLIO_lseek(PerlIO_fileno(fp), pos, whence);
+    if (io && (fp = IoIFP(io))) {
+        int fd = PerlIO_fileno(fp);
+        if (fd < 0 || (whence == SEEK_SET && pos < 0)) {
+            SETERRNO(EINVAL,LIB_INVARG);
+            return -1;
+        } else {
+            return PerlLIO_lseek(fd, pos, whence);
+        }
+    }
     report_evil_fh(gv);
     SETERRNO(EBADF,RMS_IFI);
     return (Off_t)-1;
@@ -1178,6 +1244,7 @@ int
 Perl_mode_from_discipline(pTHX_ const char *s, STRLEN len)
 {
     int mode = O_BINARY;
+    PERL_UNUSED_CONTEXT;
     if (s) {
 	while (*s) {
 	    if (*s == ':') {
@@ -1191,7 +1258,7 @@ Perl_mode_from_discipline(pTHX_ const char *s, STRLEN len)
 			len -= 4;
 			break;
 		    }
-		    /* FALL THROUGH */
+		    /* FALLTHROUGH */
 		case 'c':
 		    if (s[2] == 'r' && s[3] == 'l' && s[4] == 'f'
 			&& (!s[5] || s[5] == ':' || isSPACE(s[5])))
@@ -1201,7 +1268,7 @@ Perl_mode_from_discipline(pTHX_ const char *s, STRLEN len)
 			len -= 5;
 			break;
 		    }
-		    /* FALL THROUGH */
+		    /* FALLTHROUGH */
 		default:
 		    goto fail_discipline;
 		}
@@ -1212,7 +1279,7 @@ Perl_mode_from_discipline(pTHX_ const char *s, STRLEN len)
 	    }
 	    else {
 		const char *end;
-fail_discipline:
+  fail_discipline:
 		end = strchr(s+1, ':');
 		if (!end)
 		    end = s+len;
@@ -1284,8 +1351,6 @@ my_chsize(int fd, Off_t length)
 bool
 Perl_do_print(pTHX_ SV *sv, PerlIO *fp)
 {
-    dVAR;
-
     PERL_ARGS_ASSERT_DO_PRINT;
 
     /* assuming fp is checked earlier */
@@ -1357,7 +1422,6 @@ Perl_do_print(pTHX_ SV *sv, PerlIO *fp)
 I32
 Perl_my_stat_flags(pTHX_ const U32 flags)
 {
-    dVAR;
     dSP;
     IO *io;
     GV* gv;
@@ -1372,9 +1436,15 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
         PL_laststype = OP_STAT;
         PL_statgv = gv ? gv : (GV *)io;
         sv_setpvs(PL_statname, "");
-        if(io) {
+        if (io) {
 	    if (IoIFP(io)) {
-	        return (PL_laststatval = PerlLIO_fstat(PerlIO_fileno(IoIFP(io)), &PL_statcache));
+                int fd = PerlIO_fileno(IoIFP(io));
+                if (fd < 0) {
+                    /* E.g. PerlIO::scalar has no real fd. */
+                    return (PL_laststatval = -1);
+                } else {
+                    return (PL_laststatval = PerlLIO_fstat(fd, &PL_statcache));
+                }
             } else if (IoDIRP(io)) {
                 return (PL_laststatval = PerlLIO_fstat(my_dirfd(IoDIRP(io)), &PL_statcache));
             }
@@ -1405,7 +1475,7 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
 	s = SvPVX_const(PL_statname);		/* s now NUL-terminated */
 	PL_laststype = OP_STAT;
 	PL_laststatval = PerlLIO_stat(s, &PL_statcache);
-	if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && strchr(s, '\n')) {
+	if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && should_warn_nl(s)) {
             GCC_DIAG_IGNORE(-Wformat-nonliteral); /* PL_warn_nl is constant */
 	    Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "stat");
             GCC_DIAG_RESTORE;
@@ -1418,7 +1488,6 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
 I32
 Perl_my_lstat_flags(pTHX_ const U32 flags)
 {
-    dVAR;
     static const char* const no_prev_lstat = "The stat preceding -l _ wasn't an lstat";
     dSP;
     const char *file;
@@ -1462,13 +1531,13 @@ Perl_my_lstat_flags(pTHX_ const U32 flags)
 	    /* diag_listed_as: Use of -l on filehandle%s */
             Perl_warner(aTHX_ packWARN(WARN_IO),
                              "Use of -l on filehandle %"HEKf,
-                              GvENAME_HEK((const GV *)
-                                          (SvROK(sv) ? SvRV(sv) : sv)));
+                              HEKfARG(GvENAME_HEK((const GV *)
+                                          (SvROK(sv) ? SvRV(sv) : sv))));
     }
     file = SvPV_flags_const_nolen(sv, flags);
     sv_setpv(PL_statname,file);
     PL_laststatval = PerlLIO_lstat(file,&PL_statcache);
-    if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && strchr(file, '\n')) {
+    if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && should_warn_nl(file)) {
         GCC_DIAG_IGNORE(-Wformat-nonliteral); /* PL_warn_nl is constant */
         Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "lstat");
         GCC_DIAG_RESTORE;
@@ -1481,9 +1550,10 @@ S_exec_failed(pTHX_ const char *cmd, int fd, int do_report)
 {
     const int e = errno;
     PERL_ARGS_ASSERT_EXEC_FAILED;
+
     if (ckWARN(WARN_EXEC))
-	Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't exec \"%s\": %s",
-		    cmd, Strerror(e));
+        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't exec \"%s\": %s",
+                    cmd, Strerror(e));
     if (do_report) {
         /* XXX silently ignore failures */
         PERL_UNUSED_RESULT(PerlLIO_write(fd, (void*)&e, sizeof(int)));
@@ -1519,10 +1589,11 @@ Perl_do_aexec5(pTHX_ SV *really, SV **mark, SV **sp,
 	    (really && *tmps != '/'))		/* will execvp use PATH? */
 	    TAINT_ENV();		/* testing IFS here is overkill, probably */
 	PERL_FPU_PRE_EXEC
-	if (really && *tmps)
-	    PerlProc_execvp(tmps,EXEC_ARGV_CAST(PL_Argv));
-	else
-	    PerlProc_execvp(PL_Argv[0],EXEC_ARGV_CAST(PL_Argv));
+	if (really && *tmps) {
+            PerlProc_execvp(tmps,EXEC_ARGV_CAST(PL_Argv));
+	} else {
+            PerlProc_execvp(PL_Argv[0],EXEC_ARGV_CAST(PL_Argv));
+	}
 	PERL_FPU_POST_EXEC
  	S_exec_failed(aTHX_ (really ? tmps : PL_Argv[0]), fd, do_report);
     }
@@ -1534,7 +1605,6 @@ Perl_do_aexec5(pTHX_ SV *really, SV **mark, SV **sp,
 void
 Perl_do_execfree(pTHX)
 {
-    dVAR;
     Safefree(PL_Argv);
     PL_Argv = NULL;
     Safefree(PL_Cmd);
@@ -1637,7 +1707,7 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 	    }
 	  doshell:
 	    PERL_FPU_PRE_EXEC
-	    PerlProc_execl(PL_sh_path, "sh", "-c", cmd, (char *)NULL);
+            PerlProc_execl(PL_sh_path, "sh", "-c", cmd, (char *)NULL);
 	    PERL_FPU_POST_EXEC
  	    S_exec_failed(aTHX_ PL_sh_path, fd, do_report);
 	    Safefree(buf);
@@ -1661,7 +1731,7 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
     *a = NULL;
     if (PL_Argv[0]) {
 	PERL_FPU_PRE_EXEC
-	PerlProc_execvp(PL_Argv[0],EXEC_ARGV_CAST(PL_Argv));
+        PerlProc_execvp(PL_Argv[0],EXEC_ARGV_CAST(PL_Argv));
 	PERL_FPU_POST_EXEC
 	if (errno == ENOEXEC) {		/* for system V NIH syndrome */
 	    do_execfree();
@@ -1676,14 +1746,9 @@ Perl_do_exec3(pTHX_ const char *incmd, int fd, int do_report)
 
 #endif /* OS2 || WIN32 */
 
-#ifdef VMS
-#include <starlet.h> /* for sys$delprc */
-#endif
-
 I32
 Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
 {
-    dVAR;
     I32 val;
     I32 tot = 0;
     const char *const what = PL_op_name[type];
@@ -1736,14 +1801,19 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
                 if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FCHMOD
+                        int fd = PerlIO_fileno(IoIFP(GvIOn(gv)));
 			APPLY_TAINT_PROPER();
-			if (fchmod(PerlIO_fileno(IoIFP(GvIOn(gv))), val))
-			    tot--;
+                        if (fd < 0) {
+                            SETERRNO(EBADF,RMS_IFI);
+                            tot--;
+                        } else if (fchmod(fd, val))
+                            tot--;
 #else
 			Perl_die(aTHX_ PL_no_func, "fchmod");
 #endif
 		    }
 		    else {
+                        SETERRNO(EBADF,RMS_IFI);
 			tot--;
 		    }
 		}
@@ -1772,14 +1842,29 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
 		if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FCHOWN
+                        int fd = PerlIO_fileno(IoIFP(GvIOn(gv)));
 			APPLY_TAINT_PROPER();
-			if (fchown(PerlIO_fileno(IoIFP(GvIOn(gv))), val, val2))
+                        if (fd < 0) {
+			    SETERRNO(EBADF,RMS_IFI);
+			    tot--;
+#if Uid_t_sign == 1
+			} else if (val < 0) {
+			    SETERRNO(EINVAL,LIB_INVARG);
+			    tot--;
+#endif
+#if Gid_t_sign == 1
+			} else if (val2 < 0) {
+			    SETERRNO(EINVAL,LIB_INVARG);
+			    tot--;
+#endif
+                        } else if (fchown(fd, val, val2))
 			    tot--;
 #else
 			Perl_die(aTHX_ PL_no_func, "fchown");
 #endif
 		    }
 		    else {
+                        SETERRNO(EBADF,RMS_IFI);
 			tot--;
 		    }
 		}
@@ -1832,40 +1917,7 @@ nothing in the core.
 	}
 	APPLY_TAINT_PROPER();
 	tot = sp - mark;
-#ifdef VMS
-	/* kill() doesn't do process groups (job trees?) under VMS */
-	if (val == SIGKILL) {
-	    /* Use native sys$delprc() to insure that target process is
-	     * deleted; supervisor-mode images don't pay attention to
-	     * CRTL's emulation of Unix-style signals and kill()
-	     */
-	    while (++mark <= sp) {
-		I32 proc;
-		unsigned long int __vmssts;
-		SvGETMAGIC(*mark);
-		if (!(SvIOK(*mark) || SvNOK(*mark) || looks_like_number(*mark)))
-		    Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
-		proc = SvIV_nomg(*mark);
-		APPLY_TAINT_PROPER();
-		if (!((__vmssts = sys$delprc(&proc,0)) & 1)) {
-		    tot--;
-		    switch (__vmssts) {
-			case SS$_NONEXPR:
-			case SS$_NOSUCHNODE:
-			    SETERRNO(ESRCH,__vmssts);
-			    break;
-			case SS$_NOPRIV:
-			    SETERRNO(EPERM,__vmssts);
-			    break;
-			default:
-			    SETERRNO(EVMSERR,__vmssts);
-		    }
-		}
-	    }
-	    PERL_ASYNC_CHECK();
-	    break;
-	}
-#endif
+
 	while (++mark <= sp) {
 	    Pid_t proc;
 	    SvGETMAGIC(*mark);
@@ -1897,18 +1949,47 @@ nothing in the core.
             }
 	    else if (PL_unsafe) {
 		if (UNLINK(s))
+		{
 		    tot--;
+		}
+#if defined(__amigaos4__) && defined(NEWLIB)
+		else
+		{
+                  /* Under AmigaOS4 unlink only 'fails' if the
+                   * filename is invalid.  It may not remove the file
+                   * if it's locked, so check if it's still around. */
+                  if ((access(s,F_OK) != -1))
+                  {
+                    tot--;
+                  }
+		}
+#endif
 	    }
 	    else {	/* don't let root wipe out directories without -U */
-		if (PerlLIO_lstat(s,&PL_statbuf) < 0)
+		Stat_t statbuf;
+		if (PerlLIO_lstat(s, &statbuf) < 0)
 		    tot--;
-		else if (S_ISDIR(PL_statbuf.st_mode)) {
+		else if (S_ISDIR(statbuf.st_mode)) {
+		    SETERRNO(EISDIR, SS_NOPRIV);
 		    tot--;
-		    SETERRNO(EISDIR, SS$_NOPRIV);
 		}
 		else {
 		    if (UNLINK(s))
-			tot--;
+		    {
+				tot--;
+			}
+#if defined(__amigaos4__) && defined(NEWLIB)
+			else
+			{
+				/* Under AmigaOS4 unlink only 'fails' if the filename is invalid */
+				/* It may not remove the file if it's Locked, so check if it's still */
+				/* arround */
+				if((access(s,F_OK) != -1))
+				{
+					tot--;
+				}
+			}	
+#endif
 		}
 	    }
 	}
@@ -1962,9 +2043,12 @@ nothing in the core.
                 if ((gv = MAYBE_DEREF_GV(*mark))) {
 		    if (GvIO(gv) && IoIFP(GvIOp(gv))) {
 #ifdef HAS_FUTIMES
+                        int fd =  PerlIO_fileno(IoIFP(GvIOn(gv)));
 			APPLY_TAINT_PROPER();
-			if (futimes(PerlIO_fileno(IoIFP(GvIOn(gv))),
-                            (struct timeval *) utbufp))
+                        if (fd < 0) {
+                            SETERRNO(EBADF,RMS_IFI);
+                            tot--;
+			} else if (futimes(fd, (struct timeval *) utbufp))
 			    tot--;
 #else
 			Perl_die(aTHX_ PL_no_func, "futimes");
@@ -2009,9 +2093,8 @@ Perl_cando(pTHX_ Mode_t mode, bool effective, const Stat_t *statbufp)
  *  is in the list of groups returned from getgroups().
  */
 {
-    dVAR;
-
     PERL_ARGS_ASSERT_CANDO;
+    PERL_UNUSED_CONTEXT;
 
 #ifdef DOSISH
     /* [Comments and code from Len Reed]
@@ -2069,7 +2152,10 @@ Perl_cando(pTHX_ Mode_t mode, bool effective, const Stat_t *statbufp)
 static bool
 S_ingroup(pTHX_ Gid_t testgid, bool effective)
 {
-    dVAR;
+#ifndef PERL_IMPLICIT_SYS
+    /* PERL_IMPLICIT_SYS like Win32: getegid() etc. require the context. */
+    PERL_UNUSED_CONTEXT;
+#endif
     if (testgid == (effective ? PerlProc_getegid() : PerlProc_getgid()))
 	return TRUE;
 #ifdef HAS_GETGROUPS
@@ -2079,15 +2165,17 @@ S_ingroup(pTHX_ Gid_t testgid, bool effective)
         bool rc = FALSE;
 
 	anum = getgroups(0, gary);
-        Newx(gary, anum, Groups_t);
-        anum = getgroups(anum, gary);
-	while (--anum >= 0)
-	    if (gary[anum] == testgid) {
-                rc = TRUE;
-                break;
-            }
+        if (anum > 0) {
+            Newx(gary, anum, Groups_t);
+            anum = getgroups(anum, gary);
+            while (--anum >= 0)
+                if (gary[anum] == testgid) {
+                    rc = TRUE;
+                    break;
+                }
 
-        Safefree(gary);
+            Safefree(gary);
+        }
         return rc;
     }
 #else
@@ -2100,7 +2188,6 @@ S_ingroup(pTHX_ Gid_t testgid, bool effective)
 I32
 Perl_do_ipcget(pTHX_ I32 optype, SV **mark, SV **sp)
 {
-    dVAR;
     const key_t key = (key_t)SvNVx(*++mark);
     SV *nsv = optype == OP_MSGGET ? NULL : *++mark;
     const I32 flags = SvIVx(*++mark);
@@ -2135,7 +2222,6 @@ Perl_do_ipcget(pTHX_ I32 optype, SV **mark, SV **sp)
 I32
 Perl_do_ipcctl(pTHX_ I32 optype, SV **mark, SV **sp)
 {
-    dVAR;
     char *a;
     I32 ret = -1;
     const I32 id  = SvIVx(*++mark);
@@ -2269,7 +2355,6 @@ Perl_do_ipcctl(pTHX_ I32 optype, SV **mark, SV **sp)
 I32
 Perl_do_msgsnd(pTHX_ SV **mark, SV **sp)
 {
-    dVAR;
 #ifdef HAS_MSG
     STRLEN len;
     const I32 id = SvIVx(*++mark);
@@ -2284,7 +2369,12 @@ Perl_do_msgsnd(pTHX_ SV **mark, SV **sp)
     if (msize < 0)
 	Perl_croak(aTHX_ "Arg too short for msgsnd");
     SETERRNO(0,0);
-    return msgsnd(id, (struct msgbuf *)mbuf, msize, flags);
+    if (id >= 0 && flags >= 0) {
+      return msgsnd(id, (struct msgbuf *)mbuf, msize, flags);
+    } else {
+      SETERRNO(EINVAL,LIB_INVARG);
+      return -1;
+    }
 #else
     PERL_UNUSED_ARG(sp);
     PERL_UNUSED_ARG(mark);
@@ -2298,7 +2388,6 @@ I32
 Perl_do_msgrcv(pTHX_ SV **mark, SV **sp)
 {
 #ifdef HAS_MSG
-    dVAR;
     char *mbuf;
     long mtype;
     I32 msize, flags, ret;
@@ -2318,7 +2407,12 @@ Perl_do_msgrcv(pTHX_ SV **mark, SV **sp)
     mbuf = SvGROW(mstr, sizeof(long)+msize+1);
 
     SETERRNO(0,0);
-    ret = msgrcv(id, (struct msgbuf *)mbuf, msize, mtype, flags);
+    if (id >= 0 && msize >= 0 && flags >= 0) {
+        ret = msgrcv(id, (struct msgbuf *)mbuf, msize, mtype, flags);
+    } else {
+        SETERRNO(EINVAL,LIB_INVARG);
+        ret = -1;
+    }
     if (ret >= 0) {
 	SvCUR_set(mstr, sizeof(long)+ret);
 	*SvEND(mstr) = '\0';
@@ -2339,7 +2433,6 @@ I32
 Perl_do_semop(pTHX_ SV **mark, SV **sp)
 {
 #ifdef HAS_SEM
-    dVAR;
     STRLEN opsize;
     const I32 id = SvIVx(*++mark);
     SV * const opstr = *++mark;
@@ -2385,7 +2478,6 @@ I32
 Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 {
 #ifdef HAS_SHM
-    dVAR;
     char *shm;
     struct shmid_ds shmds;
     const I32 id = SvIVx(*++mark);
@@ -2404,7 +2496,12 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 	SETERRNO(EFAULT,SS_ACCVIO);		/* can't do as caller requested */
 	return -1;
     }
-    shm = (char *)shmat(id, NULL, (optype == OP_SHMREAD) ? SHM_RDONLY : 0);
+    if (id >= 0) {
+        shm = (char *)shmat(id, NULL, (optype == OP_SHMREAD) ? SHM_RDONLY : 0);
+    } else {
+        SETERRNO(EINVAL,LIB_INVARG);
+        return -1;
+    }
     if (shm == (char *)-1)	/* I hate System V IPC, I really do */
 	return -1;
     if (optype == OP_SHMREAD) {
@@ -2450,8 +2547,9 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 
 Function called by C<do_readline> to spawn a glob (or do the glob inside
 perl on VMS).  This code used to be inline, but now perl uses C<File::Glob>
-this glob starter is only used by miniperl during the build process.
-Moving it away shrinks pp_hot.c; shrinking pp_hot.c helps speed perl up.
+this glob starter is only used by miniperl during the build process,
+or when PERL_EXTERNAL_GLOB is defined.
+Moving it away shrinks F<pp_hot.c>; shrinking F<pp_hot.c> helps speed perl up.
 
 =cut
 */
@@ -2459,7 +2557,6 @@ Moving it away shrinks pp_hot.c; shrinking pp_hot.c helps speed perl up.
 PerlIO *
 Perl_start_glob (pTHX_ SV *tmpglob, IO *io)
 {
-    dVAR;
     SV * const tmpcmd = newSV(0);
     PerlIO *fp;
     STRLEN len;
@@ -2535,11 +2632,5 @@ Perl_vms_start_glob
 }
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

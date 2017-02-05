@@ -2,7 +2,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include "sdbm/sdbm.h"
+#include "sdbm.h"
 
 #define fetch_key 0
 #define store_key 1
@@ -28,6 +28,8 @@ typedef datum datum_value ;
 
 
 MODULE = SDBM_File	PACKAGE = SDBM_File	PREFIX = sdbm_
+
+PROTOTYPES: DISABLE
 
 SDBM_File
 sdbm_TIEHASH(dbtype, filename, flags, mode, pagname=NULL)
@@ -65,7 +67,7 @@ sdbm_DESTROY(db)
 	    sdbm_close(db->dbp);
 	    do {
 		if (db->filter[i])
-		    SvREFCNT_dec(db->filter[i]);
+		    SvREFCNT_dec_NN(db->filter[i]);
 	    } while (i-- > 0);
 	    safefree(db) ;
 	}

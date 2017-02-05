@@ -202,9 +202,9 @@ void fallbackQSort3 ( UInt32* fmap,
       bhtab [ 0 .. 2+(nblock/32) ] destroyed
 */
 
-#define       SET_BH(zz)  bhtab[(zz) >> 5] |= (1 << ((zz) & 31))
-#define     CLEAR_BH(zz)  bhtab[(zz) >> 5] &= ~(1 << ((zz) & 31))
-#define     ISSET_BH(zz)  (bhtab[(zz) >> 5] & (1 << ((zz) & 31)))
+#define       SET_BH(zz)  bhtab[(zz) >> 5] |= (1U << ((zz) & 31))
+#define     CLEAR_BH(zz)  bhtab[(zz) >> 5] &= ~(1U << ((zz) & 31))
+#define     ISSET_BH(zz)  (bhtab[(zz) >> 5] & (1U << ((zz) & 31)))
 #define      WORD_BH(zz)  bhtab[(zz) >> 5]
 #define UNALIGNED_BH(zz)  ((zz) & 0x01f)
 
@@ -477,7 +477,7 @@ Bool mainGtU ( UInt32  i1,
    usually small, typically <= 20.
 --*/
 static
-Int32 incs[14] = { 1, 4, 13, 40, 121, 364, 1093, 3280,
+const Int32 incs[14] = { 1, 4, 13, 40, 121, 364, 1093, 3280,
                    9841, 29524, 88573, 265720,
                    797161, 2391484 };
 

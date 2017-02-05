@@ -1,7 +1,7 @@
 package ExtUtils::MM_Any;
 
 use strict;
-our $VERSION = '6.98_01';
+our $VERSION = '7.10_02';
 
 use Carp;
 use File::Spec;
@@ -122,6 +122,152 @@ core, can not load XS.
 
 sub can_load_xs {
     return defined &DynaLoader::boot_DynaLoader ? 1 : 0;
+}
+
+
+=head3 can_run
+
+  use ExtUtils::MM;
+  my $runnable = MM->can_run($Config{make});
+
+If called in a scalar context it will return the full path to the binary
+you asked for if it was found, or C<undef> if it was not.
+
+If called in a list context, it will return a list of the full paths to instances
+of the binary where found in C<PATH>, or an empty list if it was not found.
+
+Copied from L<IPC::Cmd|IPC::Cmd/"$path = can_run( PROGRAM );">, but modified into
+a method (and removed C<$INSTANCES> capability).
+
+=cut
+
+sub can_run {
+    my ($self, $command) = @_;
+
+    # a lot of VMS executables have a symbol defined
+    # check those first
+    if ( $^O eq 'VMS' ) {
+        require VMS::DCLsym;
+        my $syms = VMS::DCLsym->new;
+        return $command if scalar $syms->getsym( uc $command );
+    }
+
+    my @possibles;
+
+    if( File::Spec->file_name_is_absolute($command) ) {
+        return $self->maybe_command($command);
+
+    } else {
+        for my $dir (
+            File::Spec->path,
+            File::Spec->curdir
+        ) {
+            next if ! $dir || ! -d $dir;
+            my $abs = File::Spec->catfile($self->os_flavor_is('Win32') ? Win32::GetShortPathName( $dir ) : $dir, $command);
+            push @possibles, $abs if $abs = $self->maybe_command($abs);
+        }
+    }
+    return @possibles if wantarray;
+    return shift @possibles;
+}
+
+
+=head3 can_redirect_error
+
+  $useredirect = MM->can_redirect_error;
+
+True if on an OS where qx operator (or backticks) can redirect C<STDERR>
+onto C<STDOUT>.
+
+=cut
+
+sub can_redirect_error {
+  my $self = shift;
+  $self->os_flavor_is('Unix')
+      or ($self->os_flavor_is('Win32') and !$self->os_flavor_is('Win9x'))
+      or $self->os_flavor_is('OS/2')
+}
+
+
+=head3 is_make_type
+
+    my $is_dmake = $self->is_make_type('dmake');
+
+Returns true if C<<$self->make>> is the given type; possibilities are:
+
+  gmake    GNU make
+  dmake
+  nmake
+  bsdmake  BSD pmake-derived
+
+=cut
+
+my %maketype2true;
+# undocumented - so t/cd.t can still do its thing
+sub _clear_maketype_cache { %maketype2true = () }
+
+sub is_make_type {
+    my($self, $type) = @_;
+    return $maketype2true{$type} if defined $maketype2true{$type};
+    (undef, undef, my $make_basename) = $self->splitpath($self->make);
+    return $maketype2true{$type} = 1
+        if $make_basename =~ /\b$type\b/i; # executable's filename
+    return $maketype2true{$type} = 0
+        if $make_basename =~ /\b[gdn]make\b/i; # Never fall through for dmake/nmake/gmake
+    # now have to run with "-v" and guess
+    my $redirect = $self->can_redirect_error ? '2>&1' : '';
+    my $make = $self->make || $self->{MAKE};
+    my $minus_v = `"$make" -v $redirect`;
+    return $maketype2true{$type} = 1
+        if $type eq 'gmake' and $minus_v =~ /GNU make/i;
+    return $maketype2true{$type} = 1
+        if $type eq 'bsdmake'
+      and $minus_v =~ /^usage: make \[-BeikNnqrstWwX\]/im;
+    $maketype2true{$type} = 0; # it wasn't whatever you asked
+}
+
+
+=head3 can_dep_space
+
+    my $can_dep_space = $self->can_dep_space;
+
+Returns true if C<make> can handle (probably by quoting)
+dependencies that contain a space. Currently known true for GNU make,
+false for BSD pmake derivative.
+
+=cut
+
+my $cached_dep_space;
+sub can_dep_space {
+    my $self = shift;
+    return $cached_dep_space if defined $cached_dep_space;
+    return $cached_dep_space = 1 if $self->is_make_type('gmake');
+    return $cached_dep_space = 0 if $self->is_make_type('dmake'); # only on W32
+    return $cached_dep_space = 0 if $self->is_make_type('bsdmake');
+    return $cached_dep_space = 0; # assume no
+}
+
+
+=head3 quote_dep
+
+  $text = $mm->quote_dep($text);
+
+Method that protects Makefile single-value constants (mainly filenames),
+so that make will still treat them as single values even if they
+inconveniently have spaces in. If the make program being used cannot
+achieve such protection and the given text would need it, throws an
+exception.
+
+=cut
+
+sub quote_dep {
+    my ($self, $arg) = @_;
+    die <<EOF if $arg =~ / / and not $self->can_dep_space;
+Tried to use make dependency with space for make that can't:
+  '$arg'
+EOF
+    $arg =~ s/( )/\\$1/g; # how GNU make does it
+    return $arg;
 }
 
 
@@ -781,9 +927,10 @@ END
     my @man_cmds;
     foreach my $section (qw(1 3)) {
         my $pods = $self->{"MAN${section}PODS"};
-        push @man_cmds, $self->split_command(<<CMD, map {($_,$pods->{$_})} sort keys %$pods);
-	\$(NOECHO) \$(POD2MAN) --section=$section --perm_rw=\$(PERM_RW)
+        my $p2m = sprintf <<CMD, $] > 5.008 ? " -u" : "";
+	\$(NOECHO) \$(POD2MAN) --section=$section --perm_rw=\$(PERM_RW)%s
 CMD
+        push @man_cmds, $self->split_command($p2m, map {($_,$pods->{$_})} sort keys %$pods);
     }
 
     $manify .= "\t\$(NOECHO) \$(NOOP)\n" unless @man_cmds;
@@ -1037,8 +1184,7 @@ sub _add_requirements_to_meta_v1_4 {
     # Check the original args so we can tell between the user setting it
     # to an empty hash and it just being initialized.
     if( $self->{ARGS}{CONFIGURE_REQUIRES} ) {
-        $meta{configure_requires}
-            = _normalize_prereqs($self->{CONFIGURE_REQUIRES});
+        $meta{configure_requires} = $self->{CONFIGURE_REQUIRES};
     } else {
         $meta{configure_requires} = {
             'ExtUtils::MakeMaker'       => 0,
@@ -1046,7 +1192,7 @@ sub _add_requirements_to_meta_v1_4 {
     }
 
     if( $self->{ARGS}{BUILD_REQUIRES} ) {
-        $meta{build_requires} = _normalize_prereqs($self->{BUILD_REQUIRES});
+        $meta{build_requires} = $self->{BUILD_REQUIRES};
     } else {
         $meta{build_requires} = {
             'ExtUtils::MakeMaker'       => 0,
@@ -1056,11 +1202,11 @@ sub _add_requirements_to_meta_v1_4 {
     if( $self->{ARGS}{TEST_REQUIRES} ) {
         $meta{build_requires} = {
           %{ $meta{build_requires} },
-          %{ _normalize_prereqs($self->{TEST_REQUIRES}) },
+          %{ $self->{TEST_REQUIRES} },
         };
     }
 
-    $meta{requires} = _normalize_prereqs($self->{PREREQ_PM})
+    $meta{requires} = $self->{PREREQ_PM}
         if defined $self->{PREREQ_PM};
     $meta{requires}{perl} = _normalize_version($self->{MIN_PERL_VERSION})
         if $self->{MIN_PERL_VERSION};
@@ -1074,8 +1220,7 @@ sub _add_requirements_to_meta_v2 {
     # Check the original args so we can tell between the user setting it
     # to an empty hash and it just being initialized.
     if( $self->{ARGS}{CONFIGURE_REQUIRES} ) {
-        $meta{prereqs}{configure}{requires}
-            = _normalize_prereqs($self->{CONFIGURE_REQUIRES});
+        $meta{prereqs}{configure}{requires} = $self->{CONFIGURE_REQUIRES};
     } else {
         $meta{prereqs}{configure}{requires} = {
             'ExtUtils::MakeMaker'       => 0,
@@ -1083,7 +1228,7 @@ sub _add_requirements_to_meta_v2 {
     }
 
     if( $self->{ARGS}{BUILD_REQUIRES} ) {
-        $meta{prereqs}{build}{requires} = _normalize_prereqs($self->{BUILD_REQUIRES});
+        $meta{prereqs}{build}{requires} = $self->{BUILD_REQUIRES};
     } else {
         $meta{prereqs}{build}{requires} = {
             'ExtUtils::MakeMaker'       => 0,
@@ -1091,24 +1236,15 @@ sub _add_requirements_to_meta_v2 {
     }
 
     if( $self->{ARGS}{TEST_REQUIRES} ) {
-        $meta{prereqs}{test}{requires} = _normalize_prereqs($self->{TEST_REQUIRES});
+        $meta{prereqs}{test}{requires} = $self->{TEST_REQUIRES};
     }
 
-    $meta{prereqs}{runtime}{requires} = _normalize_prereqs($self->{PREREQ_PM})
+    $meta{prereqs}{runtime}{requires} = $self->{PREREQ_PM}
         if $self->{ARGS}{PREREQ_PM};
     $meta{prereqs}{runtime}{requires}{perl} = _normalize_version($self->{MIN_PERL_VERSION})
         if $self->{MIN_PERL_VERSION};
 
     return %meta;
-}
-
-sub _normalize_prereqs {
-  my ($hash) = @_;
-  my %prereqs;
-  while ( my ($k,$v) = each %$hash ) {
-    $prereqs{$k} = _normalize_version($v);
-  }
-  return \%prereqs;
 }
 
 # Adapted from Module::Build::Base
@@ -1541,7 +1677,7 @@ CODE
     my $add_sign_to_dist = $self->cd('$(DISTVNAME)' => $add_sign );
 
     return sprintf <<'MAKE', $add_sign_to_dist, $touch_sig, $sign_dist
-distsignature : create_distdir
+distsignature : distmeta
 	$(NOECHO) %s
 	$(NOECHO) %s
 	%s
@@ -1993,7 +2129,7 @@ sub init_VERSION {
     if (defined $self->{VERSION}) {
         if ( $self->{VERSION} !~ /^\s*v?[\d_\.]+\s*$/ ) {
           require version;
-          my $normal = eval { version->parse( $self->{VERSION} ) };
+          my $normal = eval { version->new( $self->{VERSION} ) };
           $self->{VERSION} = $normal if defined $normal;
         }
         $self->{VERSION} =~ s/^\s+//;
@@ -2060,7 +2196,7 @@ Defines at least these macros.
 sub init_tools {
     my $self = shift;
 
-    $self->{ECHO}     ||= $self->oneliner('print qq{@ARGV}', ['-l']);
+    $self->{ECHO}     ||= $self->oneliner('binmode STDOUT, qq{:raw}; print qq{@ARGV}', ['-l']);
     $self->{ECHO_N}   ||= $self->oneliner('print qq{@ARGV}');
 
     $self->{TOUCH}    ||= $self->oneliner('touch', ["-MExtUtils::Command"]);
@@ -2722,7 +2858,7 @@ Used by perldepend() in MM_Unix and MM_VMS via _perl_header_files_fragment()
 sub _perl_header_files {
     my $self = shift;
 
-    my $header_dir = $self->{PERL_SRC} || $self->catdir($Config{archlibexp}, 'CORE');
+    my $header_dir = $self->{PERL_SRC} || $ENV{PERL_SRC} || $self->catdir($Config{archlibexp}, 'CORE');
     opendir my $dh, $header_dir
         or die "Failed to opendir '$header_dir' to find header files: $!";
 
@@ -2759,7 +2895,7 @@ sub _perl_header_files_fragment {
     return join("\\\n",
                 "PERL_HDRS = ",
                 map {
-                    sprintf( "        \$(PERL_INC)%s%s            ", $separator, $_ )
+                    sprintf( "        \$(PERL_INCDEP)%s%s            ", $separator, $_ )
                 } $self->_perl_header_files()
            ) . "\n\n"
            . "\$(OBJECT) : \$(PERL_HDRS)\n";

@@ -37,8 +37,8 @@ collide with one of your normal variables.  Strings that match
 parenthesized parts of a regular expression are saved under names
 containing only digits after the C<$> (see L<perlop> and L<perlre>).
 In addition, several special variables that provide windows into
-the inner working of Perl have names containing punctuation characters
-and control characters.  These are documented in L<perlvar>.
+the inner working of Perl have names containing punctuation characters.
+These are documented in L<perlvar>.
 X<variable, built-in>
 
 Scalar values are always named with '$', even when referring to a
@@ -99,11 +99,11 @@ that returns a reference to the appropriate type.  For a description
 of this, see L<perlref>.
 
 Names that start with a digit may contain only more digits.  Names
-that do not start with a letter, underscore, digit or a caret (i.e.
-a control character) are limited to one character, e.g.,  C<$%> or
+that do not start with a letter, underscore, digit or a caret are
+limited to one character, e.g.,  C<$%> or
 C<$$>.  (Most of these one character names have a predefined
 significance to Perl.  For instance, C<$$> is the current process
-id.)
+id.  And all such names are reserved for Perl's possible use.)
 
 =head2 Identifier parsing
 X<identifiers>
@@ -129,7 +129,7 @@ match C<\w> (this prevents some problematic cases); and Perl
 additionally accepts identfier names beginning with an underscore.
 
 If not under C<use utf8>, the source is treated as ASCII + 128 extra
-controls, and identifiers should match
+generic characters, and identifiers should match
 
     / (?aa) (?!\d) \w+ /x
 
@@ -184,35 +184,66 @@ Put together, a grammar to match a basic identifier becomes
 Meanwhile, special identifiers don't follow the above rules; For the most
 part, all of the identifiers in this category have a special meaning given
 by Perl.  Because they have special parsing rules, these generally can't be
-fully-qualified.  They come in four forms:
+fully-qualified.  They come in six forms (but don't use forms 5 and 6):
 
 =over
 
-=item A sigil, followed solely by digits matching \p{POSIX_Digit}, like C<$0>,
-C<$1>, or C<$10000>.
+=item 1.
 
-=item A sigil, followed by either a caret and a single POSIX uppercase letter,
-like C<$^V> or C<$^W>, or a sigil followed by a literal control character
-matching the C<\p{POSIX_Cntrl}> property.
-Due to a historical oddity, if not
-running under C<use utf8>, the 128 extra controls in the C<[0x80-0xff]> range
-may also be used in length one variables.  The use of a literal control
-character is deprecated.  Support for this form will be removed in a future
-version of perl.
+A sigil, followed solely by digits matching C<\p{POSIX_Digit}>, like
+C<$0>, C<$1>, or C<$10000>.
 
-=item Similar to the above, a sigil, followed by bareword text in brackets,
-where the first character is either a caret followed by an uppercase letter,
-or a literal control, like C<${^GLOBAL_PHASE}> or C<${\7LOBAL_PHASE}>.  The use
-of a literal control character is deprecated.  Support for this form will be
-removed in a future version of perl.
+=item 2.
 
-=item A sigil followed by a single character matching the C<\p{POSIX_Punct}>
-property, like C<$!> or C<%+>.
+A sigil followed by a single character matching the C<\p{POSIX_Punct}>
+property, like C<$!> or C<%+>, except the character C<"{"> doesn't work.
+
+=item 3.
+
+A sigil, followed by a caret and any one of the characters
+C<[][A-Z^_?\]>, like C<$^V> or C<$^]>.
+
+=item 4.
+
+Similar to the above, a sigil, followed by bareword text in braces,
+where the first character is a caret.  The next character is any one of
+the characters C<[][A-Z^_?\]>, followed by ASCII word characters.  An
+example is C<${^GLOBAL_PHASE}>.
+
+=item 5.
+
+A sigil, followed by any single character in the range C<[\x80-\xFF]>
+when not under C<S<"use utf8">>.  (Under C<S<"use utf8">>, the normal
+identifier rules given earlier in this section apply.)  Use of
+non-graphic characters (the C1 controls, the NO-BREAK SPACE, and the
+SOFT HYPHEN) is deprecated and will be forbidden in a future Perl
+version.  The use of the other characters is unwise, as these are all
+reserved to have special meaning to Perl, and none of them currently
+do have special meaning, though this could change without notice.
+
+Note that an implication of this form is that there are identifiers only
+legal under C<S<"use utf8">>, and vice-versa, for example the identifier
+C<$E<233>tat> is legal under C<S<"use utf8">>, but is otherwise
+considered to be the single character variable C<$E<233>> followed by
+the bareword C<"tat">, the combination of which is a syntax error.
+
+=item 6.
+
+This is a combination of the previous two forms.  It is valid only when
+not under S<C<"use utf8">> (normal identifier rules apply when under
+S<C<"use utf8">>).  The form is a sigil, followed by text in braces,
+where the first character is any one of the characters in the range
+C<[\x80-\xFF]> followed by ASCII word characters up to the trailing
+brace.
+
+The same caveats as the previous form apply:  The non-graphic characters
+are deprecated, it is unwise to use this form at all, and utf8ness makes
+a big difference.
 
 =back
 
-Note that as of Perl 5.20, literal control characters in variable names
-are deprecated.
+Prior to Perl v5.24, non-graphical ASCII control characters were also
+allowed in some situations; this had been deprecated since v5.20.
 
 =head2 Context
 X<context> X<scalar context> X<list context>
@@ -393,15 +424,16 @@ X<scalar, literal> X<scalar, constant>
 Numeric literals are specified in any of the following floating point or
 integer formats:
 
-    12345
-    12345.67
-    .23E-10             # a very small number
-    3.14_15_92          # a very important number
-    4_294_967_296       # underscore for legibility
-    0xff                # hex
-    0xdead_beef         # more hex   
-    0377                # octal (only numbers, begins with 0)
-    0b011011            # binary
+ 12345
+ 12345.67
+ .23E-10             # a very small number
+ 3.14_15_92          # a very important number
+ 4_294_967_296       # underscore for legibility
+ 0xff                # hex
+ 0xdead_beef         # more hex
+ 0377                # octal (only numbers, begins with 0)
+ 0b011011            # binary
+ 0x1.999ap-4         # hexadecimal floating point (the 'p' is required)
 
 You are allowed to use underscores (underbars) in numeric literals
 between digits for legibility (but not multiple underscores in a row:
@@ -424,6 +456,17 @@ Hexadecimal, octal, or binary, representations in string literals
 (e.g. '0xff') are not automatically converted to their integer
 representation.  The hex() and oct() functions make these conversions
 for you.  See L<perlfunc/hex> and L<perlfunc/oct> for more details.
+
+Hexadecimal floating point can start just like a hexadecimal literal,
+and it can be followed by an optional fractional hexadecimal part,
+but it must be followed by C<p>, an optional sign, and a power of two.
+The format is useful for accurately presenting floating point values,
+avoiding conversions to or from decimal floating point, and therefore
+avoiding possible loss in precision.  Notice that while most current
+platforms use the 64-bit IEEE 754 floating point, not all do.  Another
+potential source of (low-order) differences are the floating point
+rounding modes, which can differ between CPUs, operating systems,
+and compilers, and which Perl doesn't control.
 
 You can also embed newlines directly in your strings, i.e., they can end
 on a different line than they begin.  This is nice, but if you forget
@@ -471,6 +514,37 @@ C<$days{Feb}> and the quotes will be assumed automatically.  But
 anything more complicated in the subscript will be interpreted as an
 expression.  This means for example that C<$version{2.0}++> is
 equivalent to C<$version{2}++>, not to C<$version{'2.0'}++>.
+
+=head3 Special floating point: infinity (Inf) and not-a-number (NaN)
+
+Floating point values include the special values C<Inf> and C<NaN>,
+for infinity and not-a-number.  The infinity can be also negative.
+
+The infinity is the result of certain math operations that overflow
+the floating point range, like 9**9**9.  The not-a-number is the
+result when the result is undefined or unrepresentable.  Though note
+that you cannot get C<NaN> from some common "undefined" or
+"out-of-range" operations like dividing by zero, or square root of
+a negative number, since Perl generates fatal errors for those.
+
+The infinity and not-a-number have their own special arithmetic rules.
+The general rule is that they are "contagious": C<Inf> plus one is
+C<Inf>, and C<NaN> plus one is C<NaN>.  Where things get interesting
+is when you combine infinities and not-a-numbers: C<Inf> minus C<Inf>
+and C<Inf> divided by C<INf> are C<NaN> (while C<Inf> plus C<Inf> is
+C<Inf> and C<Inf> times C<Inf> is C<Inf>).  C<NaN> is also curious
+in that it does not equal any number, I<including> itself:
+C<NaN> != C<NaN>.
+
+Perl doesn't understand C<Inf> and C<NaN> as numeric literals, but
+you can have them as strings, and Perl will convert them as needed:
+"Inf" + 1.  (You can, however, import them from the POSIX extension;
+C<use POSIX qw(Inf NaN);> and then use them as literals.)
+
+Note that on input (string to number) Perl accepts C<Inf> and C<NaN>
+in many forms.   Case is ignored, and the Win32-specific forms like
+C<1.#INF> are understood, but on output the values are normalized to
+C<Inf> and C<NaN>.
 
 =head3 Version Strings
 X<version string> X<vstring> X<v-string>
@@ -688,6 +762,10 @@ function:
 
     ($dev, $ino, undef, undef, $uid, $gid) = stat($file);
 
+As of Perl 5.22, you can also use C<(undef)x2> instead of C<undef, undef>.
+(You can also do C<($x) x 2>, which is less useful, because it assigns to
+the same variable twice, clobbering the first value assigned.)
+
 List assignment in scalar context returns the number of elements
 produced by the expression on the right side of the assignment:
 
@@ -883,26 +961,21 @@ values of the array or hash.
         s/(\w+)/\u\L$1/g;   # "titlecase" words
     }
 
-A slice of an empty list is still an empty list.  Thus:
+As a special exception, when you slice a list (but not an array or a hash),
+if the list evaluates to empty, then taking a slice of that empty list will
+always yield the empty list in turn.  Thus:
 
-    @a = ()[1,0];           # @a has no elements
-    @b = (@a)[0,1];         # @b has no elements
-
-But:
-
-    @a = (1)[1,0];          # @a has two elements
-    @b = (1,undef)[1,0,2];  # @b has three elements
-
-More generally, a slice yields the empty list if it indexes only
-beyond the end of a list:
-
-    @a = (1)[  1,2];        # @a has no elements
-    @b = (1)[0,1,2];        # @b has three elements
+    @a = ()[0,1];          # @a has no elements
+    @b = (@a)[0,1];        # @b has no elements
+    @c = (sub{}->())[0,1]; # @c has no elements
+    @d = ('a','b')[0,1];   # @d has two elements
+    @e = (@d)[0,1,8,9];    # @e has four elements
+    @f = (@d)[8,9];        # @f has two elements
 
 This makes it easy to write loops that terminate when a null list
 is returned:
 
-    while ( ($home, $user) = (getpwent)[7,0]) {
+    while ( ($home, $user) = (getpwent)[7,0] ) {
         printf "%-8s %s\n", $user, $home;
     }
 

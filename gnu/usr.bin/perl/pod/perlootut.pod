@@ -232,7 +232,7 @@ from C<File>. An C<File::MP3> B<is-a> I<more specific> type of C<File>.
 All mp3 files are files, but not all files are mp3 files.
 
 We often refer to inheritance relationships as B<parent-child> or
-C<superclass/subclass> relationships. Sometimes we say that the child
+C<superclass>/C<subclass> relationships. Sometimes we say that the child
 has an B<is-a> relationship with its parent class.
 
 C<File> is a B<superclass> of C<File::MP3>, and C<File::MP3> is a

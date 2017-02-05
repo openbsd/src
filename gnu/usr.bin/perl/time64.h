@@ -49,9 +49,8 @@ struct TM64 {
 
 
 /* Declare functions */
-static struct TM *S_gmtime64_r    (const Time64_T *, struct TM *);
-static struct TM *S_localtime64_r (const Time64_T *, struct TM *);
-static Time64_T   S_timegm64      (struct TM *);
+struct TM *Perl_gmtime64_r    (const Time64_T *, struct TM *);
+struct TM *Perl_localtime64_r (const Time64_T *, struct TM *);
 
 
 /* Not everyone has gm/localtime_r(), provide a replacement */

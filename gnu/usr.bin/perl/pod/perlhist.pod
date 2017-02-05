@@ -33,7 +33,7 @@ Matt S Trout, David Golden, Florian Ragwitz, Tatsuhiko Miyagawa,
 Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
 Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
 Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
-Peter Martini, and Sawyer X.
+Peter Martini, Sawyer X, and Chad 'Exodist' Granum.
 
 =head2 PUMPKIN?
 
@@ -560,10 +560,53 @@ the strings?).
  Ricardo   5.22.0-RC1   2015-May-19     The 5.22 maintenance track
  Ricardo   5.22.0-RC2   2015-May-21
  Ricardo   5.22.0       2015-Jun-01
+ Steve     5.22.1-RC1   2015-Oct-31
+ Steve     5.22.1-RC2   2015-Nov-15
+ Steve     5.22.1-RC3   2015-Dec-02
+ Steve     5.22.1-RC4   2015-Dec-08
+ Steve     5.22.1       2015-Dec-13
+ Steve     5.22.2-RC1   2016-Apr-10
+ Steve     5.22.2       2016-Apr-29
+ Steve     5.22.3-RC1   2016-Jul-17
+ Steve     5.22.3-RC2   2016-Jul-25
+ Steve     5.22.3-RC3   2016-Aug-11
+ Steve     5.22.3-RC4   2016-Oct-12
+ Steve     5.22.3-RC5   2017-Jan-02
+ Steve     5.22.3       2017-Jan-14
 
  Ricardo   5.23.0       2015-Jun-20     The 5.23 development track
  Matthew   5.23.1       2015-Jul-20
  Matthew   5.23.2       2015-Aug-20
+ Peter     5.23.3       2015-Sep-20
+ Steve     5.23.4       2015-Oct-20
+ Abigail   5.23.5       2015-Nov-20
+ David G   5.23.6       2015-Dec-21
+ Stevan    5.23.7       2016-Jan-20
+ Sawyer X  5.23.8       2016-Feb-20
+ Abigail   5.23.9       2016-Mar-20
+
+ Ricardo   5.24.0-RC1   2016-Apr-13     The 5.24 maintenance track
+ Ricardo   5.24.0-RC2   2016-Apr-23
+ Ricardo   5.24.0-RC3   2016-Apr-26
+ Ricardo   5.24.0-RC4   2016-May-02
+ Ricardo   5.24.0-RC5   2016-May-04
+ Ricardo   5.24.0       2016-May-09
+ Steve     5.24.1-RC1   2016-Jul-17
+ Steve     5.24.1-RC2   2016-Jul-25
+ Steve     5.24.1-RC3   2016-Aug-11
+ Steve     5.24.1-RC4   2016-Oct-12
+ Steve     5.24.1-RC5   2017-Jan-02
+ Steve     5.24.1       2017-Jan-14
+
+ Ricardo   5.25.0       2016-May-09     The 5.25 development track
+ Sawyer X  5.25.1       2016-May-20
+ Matthew   5.25.2       2016-Jun-20
+ Steve     5.25.3       2016-Jul-20
+ BinGOs    5.25.4       2016-Aug-20
+ Stevan    5.25.5       2016-Sep-20
+ Aaron     5.25.6       2016-Oct-20
+ Chad      5.25.7       2016-Nov-20
+ Sawyer    5.25.8       2016-Dec-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -646,6 +689,7 @@ explained below.
  5.18.0         5892 113   1088  79  20077 2760   9365 2439   4943 154
  5.20.0         6243 115   1187  75  19499 2701   9620 2457   5145 159
  5.22.0         7819 115   1284  77  19121 2635   9772 2434   5615 176
+ 5.24.0         7922 113   1287  77  19535 2677   9994 2465   5702 177
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -950,25 +994,25 @@ the Perl source distribution for somewhat more selected releases.
 
  ======================================================================
 
-                  5.20.0           5.22.0
+                  5.20.0           5.22.0          5.24.0
 
- Configure    552      1       570      1
- Cross        118     15       118     15
- djgpp         18      7        17      7
- h2pl          13     15        13     15
- hints        355     90       356     87
- mad          174      8         -      -
- NetWare      467     61       466     61
- os2          510     70       510     70
- plan9        316     17       317     17
- Porting     1204     68      1393     71
- qnx            1      4         1      4
- symbian      290     54       291     54
- utils        241     27       242     27
- vms          538     12       532     12
- vos            8      7         8      7
- win32       1183     64      1201     64
- x2p          341     19         -      -
+ Configure    552      1       570      1      586      1
+ Cross        118     15       118     15      118     15
+ djgpp         18      7        17      7       17      7
+ h2pl          13     15        13     15       13     15
+ hints        355     90       356     87      362     87
+ mad          174      8         -      -        -      -
+ NetWare      467     61       466     61      467     61
+ os2          510     70       510     70      510     70
+ plan9        316     17       317     17      314     17
+ Porting     1204     68      1393     71     1321     71
+ qnx            1      4         1      4        1      4
+ symbian      290     54       291     54      292     54
+ utils        241     27       242     27      679     53
+ vms          538     12       532     12      524     12
+ vos            8      7         8      7        8      7
+ win32       1183     64      1201     64     1268     65
+ x2p          341     19         -      -        -      -
 
 =head2 SELECTED PATCH SIZES
 

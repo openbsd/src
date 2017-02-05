@@ -14,7 +14,7 @@ our $NUM_SECTS;
 chomp(my @strs= grep { !/^\s*\#/ } <DATA>);
 my $out = runperl(progfile => "t/regop.pl", stderr => 1 );
 # VMS currently embeds linefeeds in the output.
-$out =~ s/\cJ//g if $^O == 'VMS';
+$out =~ s/\cJ//g if $^O eq 'VMS';
 my @tests = grep { /\S/ } split /(?=Compiling REx)/, $out;
 # on debug builds we get an EXECUTING... message in there at the top
 shift @tests
@@ -55,7 +55,7 @@ foreach my $testout ( @tests ) {
 # that the tests for this result set are finished.
 # If you add a test make sure you update $NUM_SECTS
 # the commented output is just for legacy/debugging purposes
-BEGIN{ $NUM_SECTS= 7 }
+BEGIN{ $NUM_SECTS= 8 }
 
 __END__
 #Compiling REx "X(A|[B]Q||C|D)Y"
@@ -96,8 +96,8 @@ TRIE-EXACT
 <BQ>
 matched empty string
 Match successful!
-Found floating substr "Y" at offset 1...
-Found anchored substr "X" at offset 0...
+Found floating substr "Y" at offset 1 (rx_origin now 0)...
+Found anchored substr "X" at offset 0 (rx_origin now 0)...
 Successfully guessed: match at offset 0
 checking floating
 minlen 2
@@ -261,9 +261,8 @@ Offsets: [3]
 Freeing REx: "[q]"
 ---
 #Compiling REx "^(\S{1,9}):\s*(\d+)$"
-#synthetic stclass "ANYOF[\x{00}-\x{08}\x{0E}-\x{1F}\x{21}-\x{FF}][{utf8}0100-167F 1681-1FFF 200B-2027 202A-202E 2030-205E 2060-2FFF 3001-INFINITY]".
 #Final program:
-#   1: BOL (2)
+#   1: SBOL (2)
 #   2: OPEN1 (4)
 #   4:   CURLY {1,9} (7)
 #   6:     NPOSIXD[\s] (0)
@@ -277,8 +276,59 @@ Freeing REx: "[q]"
 #  17: CLOSE2 (19)
 #  19: EOL (20)
 #  20: END (0)
-#floating ":" at 1..9 (checking floating) stclass ANYOF[\x{00}-\x{08}\x{0E}-\x{1F}\x{21}-\x{FF}][{utf8}0100-167F 1681-1FFF 200B-2027 202A-202E 2030-205E 2060-2FFF 3001-INFINITY] anchored(BOL) minlen 3
 #Freeing REx: "^(\S{1,9}):\s*(\d+)$"
-floating ":" at 1..9 (checking floating) stclass ANYOF[\x{00}-\x{08}\x{0E}-\x{1F}\x{21}-\x{FF}][{utf8}0100-167F 1681-1FFF 200B-2027 202A-202E 2030-205E 2060-2FFF 3001-INFINITY] anchored(BOL) minlen 3
 %MATCHED%
-synthetic stclass
+Freeing REx: "^(\S{1,9}):\s*(\d+)$"
+---
+#Compiling REx "(?(DEFINE)(?<foo>foo))(?(DEFINE)(?<bar>(?&foo)bar))(?(DEFINE"...
+#Got 532 bytes for offset annotations.
+study_chunk_recursed_count: 5
+#Final program:
+#   1: DEFINEP (3)
+#   3: IFTHEN (14)
+#   5:   OPEN1 'foo' (7)
+#   7:     EXACT <foo> (9)
+#   9:   CLOSE1 'foo' (14)
+#  11:   LONGJMP (13)
+#  13:   TAIL (14)
+#  14: DEFINEP (16)
+#  16: IFTHEN (30)
+#  18:   OPEN2 'bar' (20)
+#  20:     GOSUB1[-15] (23)
+#  23:     EXACT <bar> (25)
+#  25:   CLOSE2 'bar' (30)
+#  27:   LONGJMP (29)
+#  29:   TAIL (30)
+#  30: DEFINEP (32)
+#  32: IFTHEN (46)
+#  34:   OPEN3 'baz' (36)
+#  36:     GOSUB2[-18] (39)
+#  39:     EXACT <baz> (41)
+#  41:   CLOSE3 'baz' (46)
+#  43:   LONGJMP (45)
+#  45:   TAIL (46)
+#  46: DEFINEP (48)
+#  48: IFTHEN (62)
+#  50:   OPEN4 'bop' (52)
+#  52:     GOSUB3[-18] (55)
+#  55:     EXACT <bop> (57)
+#  57:   CLOSE4 'bop' (62)
+#  59:   LONGJMP (61)
+#  61:   TAIL (62)
+#  62: END (0)
+minlen 0
+#Offsets: [66]
+#        1:3[0] 3:10[0] 5:17[1] 7:18[3] 9:21[1] 11:21[0] 13:22[0] 14:25[0] 16:32[0] 18:39[1] 20:41[3] 23:47[3] 25:50[1] 27:50[0] 29:51[0] 30:54[0] 32:61[0] 34:68[1] 36:70[3] 39:76[3] 41:79[1] 43:79[0] 45:80[0] 46:83[0] 48:90[0] 50:97[1] 52:99[3] 55:105[3] 57:108[1] 59:108[0] 61:109[0] 62:110[0]
+#Matching REx "(?(DEFINE)(?<foo>foo))(?(DEFINE)(?<bar>(?&foo)bar))(?(DEFINE"... against ""
+#   0 <> <>                   |  1:DEFINEP(3)
+#   0 <> <>                   |  3:IFTHEN(14)
+#   0 <> <>                   | 14:DEFINEP(16)
+#   0 <> <>                   | 16:IFTHEN(30)
+#   0 <> <>                   | 30:DEFINEP(32)
+#   0 <> <>                   | 32:IFTHEN(46)
+#   0 <> <>                   | 46:DEFINEP(48)
+#   0 <> <>                   | 48:IFTHEN(62)
+#   0 <> <>                   | 62:END(0)
+#Match successful!
+%MATCHED%
+#Freeing REx: "(?(DEFINE)(?<foo>foo))(?(DEFINE)(?<bar>(?&foo)bar))(?(DEFINE"...

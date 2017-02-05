@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..45\n"; }
+BEGIN { $| = 1; print "1..48\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -107,8 +107,13 @@ ok($Collator->viewSortKey('a'),
 ok($Collator->viewSortKey("\x{304C}"),
     '[1926 | 0020 013D | 000E 0002 | FFFF FFFF | 0000 304C]');
 
+ok($Collator->viewSortKey("\x{4E00}"),
+    '[FB40 CE00 | 0020 | 0002 | FFFF FFFF | 0000 4E00]');
+
 ok($Collator->viewSortKey("\x{100000}"),
     '[FBE0 8000 | 0020 | 0002 | FFFF FFFF | 0010 0000]');
+
+##### 38
 
 eval { require Unicode::Normalize };
 if (!$@) {
@@ -122,7 +127,7 @@ if (!$@) {
 
 $Collator->change(normalization => undef);
 
-##### 38
+##### 39
 
 $Collator->change(level => 3);
 
@@ -139,7 +144,7 @@ $Collator->change(level => 1);
 ok($Collator->viewSortKey("\x{304C}"),
     '[1926 | | | | 0000 304C]');
 
-##### 41
+##### 42
 
 $Collator->change(UCA_Version => 8);
 
@@ -161,4 +166,10 @@ $Collator->change(level => 4);
 ok($Collator->viewSortKey("\x{304C}"),
     '[1926|0020 013D|000E 0002|FFFF FFFF|0000 304C]');
 
-##### 45
+ok($Collator->viewSortKey("\x{4E00}"),
+    '[4E00|0020|0002|FFFF|0000 4E00]');
+
+ok($Collator->viewSortKey("\x{100000}"),
+    '[FFA0 8000|0002|0001|FFFF FFFF|0010 0000]');
+
+##### 48

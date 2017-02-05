@@ -3,6 +3,7 @@ use strict;
 my ($committer, $patch, $author);
 use utf8;
 use Getopt::Long;
+use Unicode::Collate;
 use Text::Wrap;
 $Text::Wrap::columns = 80;
 
@@ -85,9 +86,9 @@ EOS
 sub list_authors {
     my ($patchers, $authors) = @_;
     binmode(STDOUT, ":utf8");
-    print wrap '', '', join(', ', sort { lc $a cmp lc $b }
+    print wrap '', '', join(', ', Unicode::Collate->new(level => 1)->sort(
                       map { $authors->{$_} }
-                      keys %$patchers) . ".\n";
+                      keys %$patchers)) . ".\n";
 }
 
 sub parse_commits_from_stdin {
@@ -257,6 +258,7 @@ sub display_test_output {
             print "ok $count - ".$real_names->{$_} ." $_\n";
         } else {
             print "not ok $count - Contributor not found in AUTHORS: $_ ".($real_names->{$_} || '???' )."\n";
+            print STDERR ($real_names->{$_} || '???' )." <$_> not found in AUTHORS\n";
         }
 
     }
@@ -443,6 +445,7 @@ jhi                                     jhi\100iki.fi
 +                                       jhi\100hut.fi
 +                                       jarkko.hietaniemi\100nokia.com
 +                                       jarkko.hietaniemi\100cc.hut.fi
++                                       jarkko.hietaniemi\100booking.com
 jesse                                   jesse\100bestpractical.com
 +                                       jesse\100fsck.com
 +                                       jesse\100perl.org
@@ -564,6 +567,8 @@ brian.d.foy\100gmail.com                bdfoy\100cpan.org
 BQW10602\100nifty.com                   sadahiro\100cpan.org
 bulk88\100hotmail.com                   bulk88
 
+chad.granum\100dreamhost.com            exodist7\100gmail.com
+choroba\100cpan.org                     choroba\100weed.(none)
 chromatic\100wgz.org                    chromatic\100rmci.net
 ckuskie\100cadence.com                  colink\100perldreamer.com
 claes\100surfar.nu                      claes\100versed.se
@@ -583,12 +588,15 @@ crt\100kiski.net                        perl\100ctweten.amsite.com
 
 dairiki\100dairiki.org                  dairiki at dairiki.org
 dagolden\100cpan.org                    xdaveg\100gmail.com
++                                       xdg\100xdg.me
 damian\100conway.org                    damian\100cs.monash.edu.au
 dan\100sidhe.org                        sugalsd\100lbcc.cc.or.us
 +                                       sugalskd\100osshe.edu
 daniel\100bitpusher.com                 daniel\100biz.bitpusher.com
 david.dyck\100fluke.com                 dcd\100tc.fluke.com
-david\100kineticode.com                 david\100wheeler.com
+david\100justatheory.com                david\100wheeler.net
++                                       david\100kineticode.com
++                                       david\100wheeler.com
 +                                       david\100wheeler.net
 dennis\100booking.com                   dennis\100camel.ams6.corp.booking.com
 +					dennis.kaarsemaker\100booking.com
@@ -609,6 +617,7 @@ edwardp\100excitehome.net               epeschko\100den-mdev1
 +                                       esp5\100pge.com
 egf7\100columbia.edu                    efifer\100sanwaint.com
 eggert\100twinsun.com                   eggert\100sea.sm.unisys.com
+etj\100cpan.org                         mohawk2\100users.noreply.github.com
 
 fugazi\100zyx.net                       larrysh\100cpan.org
 +                                       lshatzer\100islanddata.com
@@ -639,7 +648,8 @@ ian.goodacre\100xtra.co.nz              ian\100debian.lan
 ingo_weinhold\100gmx.de                 bonefish\100cs.tu-berlin.de
 
 james\100mastros.biz                    theorb\100desert-island.me.uk
-jand\100activestate.com                 jan.dubois\100ibm.net
+jan\100jandubois.com                    jand\100activestate.com
++                                       jan.dubois\100ibm.net
 japhy\100pobox.com                      japhy\100pobox.org
 +                                       japhy\100perlmonk.org
 +                                       japhy\100cpan.org
@@ -655,6 +665,7 @@ jdhedden\100cpan.org                    jerry\100hedden.us
 +                                       jdhedden\100gmail.com
 +                                       jdhedden\100yahoo.com
 +                                       jhedden\100pn100-02-2-356p.corp.bloomberg.com
++                                       jdhedden\100solydxk
 jeremy\100zawodny.com                   jzawodn\100wcnet.org
 jesse\100sig.bsh.com                    jesse\100ginger
 jfriedl\100yahoo.com                    jfriedl\100yahoo-inc.com
@@ -709,9 +720,10 @@ laszlo.molnar\100eth.ericsson.se        molnarl\100cdata.tvnet.hu
 +                                       ml1050\100freemail.hu
 lewart\100uiuc.edu                      lewart\100vadds.cvm.uiuc.edu
 +                                       d-lewart\100uiuc.edu
-lkundrak\100v3.sk                      lubo.rintel\100gooddata.com
+lkundrak\100v3.sk                       lubo.rintel\100gooddata.com
 lstein\100cshl.org                      lstein\100formaggio.cshl.org
 +                                       lstein\100genome.wi.mit.edu
+l.mai\100web.de                         plokinom\100gmail.com
 lupe\100lupe-christoph.de               lupe\100alanya.m.isar.de
 lutherh\100stratcom.com                 lutherh\100infinet.com
 mab\100wdl.loral.com                    markb\100rdcf.sm.unisys.com
@@ -724,6 +736,7 @@ marnix\100gmail.com                     pttesac!marnix!vanam
 marty+p5p\100kasei.com                  marty\100martian.org
 mats\100sm6sxl.net                      mats\100sm5sxl.net
 mbarbon\100dsi.unive.it                 mattia.barbon\100libero.it
++                                       mattia\100barbon.org
 mcmahon\100ibiblio.org                  mcmahon\100metalab.unc.edu
 me\100davidglasser.net                  glasser\100tang-eleven-seventy-nine.mit.edu
 merijnb\100iloquent.nl                  merijnb\100ms.com
@@ -848,6 +861,7 @@ rootbeer\100teleport.com                rootbeer\100redcat.com
 +                                       tomphoenix\100unknown
 rurban\100x-ray.at                      rurban\100cpan.org
 +                                       rurban\100cpanel.net
+rvtol+news\100isolution.nl              rvtol\100isolution.nl
 sartak\100bestpractical.com             sartak\100gmail.com
 +                                       code\100sartak.org
 sadinoff\100olf.com                     danny-cpan\100sadinoff.com
@@ -902,6 +916,8 @@ stef\100mongueurs.net                   stef\100payrard.net
 +                                       s.payrard\100wanadoo.fr
 +                                       properler\100freesurf.fr
 +                                       stef\100francenet.fr
+stevan\100cpan.org                      stevan.little\100gmail.com
++                                       stevan.little\100iinteractive.com
 sthoenna\100efn.org                     ysth\100raven.shiftboard.com
 sisyphus1\100optusnet.com.au            sisyphus\100cpan.org
 

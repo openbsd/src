@@ -45,42 +45,42 @@ checkOptree ( name	=> 'BEGIN',
 # 1        <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$ ->2
 # 3        <1> require sK/1 ->4
 # 2           <$> const[PV "strict.pm"] s/BARE ->3
-# 4        <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$ ->5
+# -        <;> ex-nextstate(B::Concise -837 Concise.pm:366) v:*,&,{,x*,x&,x$,$ ->4
 # -        <@> lineseq K ->-
-# -           <0> null ->5
-# 9           <1> entersub[t1] KS*/TARG,2 ->a
+# 4           <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$ ->5
+# 9           <1> entersub[t1] KS*/TARG,STRICT ->a
 # 5              <0> pushmark s ->6
 # 6              <$> const[PV "strict"] sM ->7
 # 7              <$> const[PV "refs"] sM ->8
-# 8              <$> method_named[PV "unimport"] ->9
+# 8              <.> method_named[PV "unimport"] ->9
 # BEGIN 2:
 # k  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq K ->k
 # b        <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$ ->c
 # d        <1> require sK/1 ->e
 # c           <$> const[PV "strict.pm"] s/BARE ->d
-# e        <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$ ->f
+# -        <;> ex-nextstate(B::Concise -812 Concise.pm:386) v:*,&,x*,x&,x$,$ ->e
 # -        <@> lineseq K ->-
-# -           <0> null ->f
-# j           <1> entersub[t1] KS*/TARG,2 ->k
+# e           <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$ ->f
+# j           <1> entersub[t1] KS*/TARG,STRICT ->k
 # f              <0> pushmark s ->g
 # g              <$> const[PV "strict"] sM ->h
 # h              <$> const[PV "refs"] sM ->i
-# i              <$> method_named[PV "unimport"] ->j
+# i              <.> method_named[PV "unimport"] ->j
 # BEGIN 3:
 # u  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->u
 # l        <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$ ->m
 # n        <1> require sK/1 ->o
 # m           <$> const[PV "warnings.pm"] s/BARE ->n
-# o        <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$ ->p
+# -        <;> ex-nextstate(B::Concise -798 Concise.pm:406) v:*,&,{,x*,x&,x$,$ ->o
 # -        <@> lineseq K ->-
-# -           <0> null ->p
-# t           <1> entersub[t1] KS*/TARG,2 ->u
+# o           <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$ ->p
+# t           <1> entersub[t1] KS*/TARG,STRICT ->u
 # p              <0> pushmark s ->q
 # q              <$> const[PV "warnings"] sM ->r
 # r              <$> const[PV "qw"] sM ->s
-# s              <$> method_named[PV "unimport"] ->t
+# s              <.> method_named[PV "unimport"] ->t
 # BEGIN 4:
 # y  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->y
@@ -95,42 +95,42 @@ EOT_EOT
 # 1        <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$ ->2
 # 3        <1> require sK/1 ->4
 # 2           <$> const(PV "strict.pm") s/BARE ->3
-# 4        <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$ ->5
+# -        <;> ex-nextstate(B::Concise -837 Concise.pm:366) v:*,&,{,x*,x&,x$,$ ->4
 # -        <@> lineseq K ->-
-# -           <0> null ->5
-# 9           <1> entersub[t1] KS*/TARG,2 ->a
+# 4           <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$ ->5
+# 9           <1> entersub[t1] KS*/TARG,STRICT ->a
 # 5              <0> pushmark s ->6
 # 6              <$> const(PV "strict") sM ->7
 # 7              <$> const(PV "refs") sM ->8
-# 8              <$> method_named(PV "unimport") ->9
+# 8              <.> method_named(PV "unimport") ->9
 # BEGIN 2:
 # k  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq K ->k
 # b        <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$ ->c
 # d        <1> require sK/1 ->e
 # c           <$> const(PV "strict.pm") s/BARE ->d
-# e        <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$ ->f
+# -        <;> ex-nextstate(B::Concise -812 Concise.pm:386) v:*,&,x*,x&,x$,$ ->e
 # -        <@> lineseq K ->-
-# -           <0> null ->f
-# j           <1> entersub[t1] KS*/TARG,2 ->k
+# e           <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$ ->f
+# j           <1> entersub[t1] KS*/TARG,STRICT ->k
 # f              <0> pushmark s ->g
 # g              <$> const(PV "strict") sM ->h
 # h              <$> const(PV "refs") sM ->i
-# i              <$> method_named(PV "unimport") ->j
+# i              <.> method_named(PV "unimport") ->j
 # BEGIN 3:
 # u  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->u
 # l        <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$ ->m
 # n        <1> require sK/1 ->o
 # m           <$> const(PV "warnings.pm") s/BARE ->n
-# o        <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$ ->p
+# -        <;> ex-nextstate(B::Concise -798 Concise.pm:406) v:*,&,{,x*,x&,x$,$ ->o
 # -        <@> lineseq K ->-
-# -           <0> null ->p
-# t           <1> entersub[t1] KS*/TARG,2 ->u
+# o           <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$ ->p
+# t           <1> entersub[t1] KS*/TARG,STRICT ->u
 # p              <0> pushmark s ->q
 # q              <$> const(PV "warnings") sM ->r
 # r              <$> const(PV "qw") sM ->s
-# s              <$> method_named(PV "unimport") ->t
+# s              <.> method_named(PV "unimport") ->t
 # BEGIN 4:
 # y  <1> leavesub[1 ref] K/REFC,1 ->(end)
 # -     <@> lineseq KP ->y
@@ -241,34 +241,34 @@ checkOptree ( name	=> 'all of BEGIN END INIT CHECK UNITCHECK -exec',
 # 1  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
 # 2  <$> const[PV "strict.pm"] s/BARE
 # 3  <1> require sK/1
-# 4  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
+# 4  <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$
 # 5  <0> pushmark s
 # 6  <$> const[PV "strict"] sM
 # 7  <$> const[PV "refs"] sM
-# 8  <$> method_named[PV "unimport"] 
-# 9  <1> entersub[t1] KS*/TARG,2
+# 8  <.> method_named[PV "unimport"] 
+# 9  <1> entersub[t1] KS*/TARG,STRICT
 # a  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 2:
 # b  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
 # c  <$> const[PV "strict.pm"] s/BARE
 # d  <1> require sK/1
-# e  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
+# e  <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$
 # f  <0> pushmark s
 # g  <$> const[PV "strict"] sM
 # h  <$> const[PV "refs"] sM
-# i  <$> method_named[PV "unimport"] 
-# j  <1> entersub[t1] KS*/TARG,2
+# i  <.> method_named[PV "unimport"] 
+# j  <1> entersub[t1] KS*/TARG,STRICT
 # k  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 3:
 # l  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
 # m  <$> const[PV "warnings.pm"] s/BARE
 # n  <1> require sK/1
-# o  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
+# o  <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$
 # p  <0> pushmark s
 # q  <$> const[PV "warnings"] sM
 # r  <$> const[PV "qw"] sM
-# s  <$> method_named[PV "unimport"] 
-# t  <1> entersub[t1] KS*/TARG,2
+# s  <.> method_named[PV "unimport"] 
+# t  <1> entersub[t1] KS*/TARG,STRICT
 # u  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 4:
 # v  <;> nextstate(main 2 -e:1) v:>,<,%,{
@@ -300,34 +300,34 @@ EOT_EOT
 # 1  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
 # 2  <$> const(PV "strict.pm") s/BARE
 # 3  <1> require sK/1
-# 4  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
+# 4  <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$
 # 5  <0> pushmark s
 # 6  <$> const(PV "strict") sM
 # 7  <$> const(PV "refs") sM
-# 8  <$> method_named(PV "unimport") 
-# 9  <1> entersub[t1] KS*/TARG,2
+# 8  <.> method_named(PV "unimport") 
+# 9  <1> entersub[t1] KS*/TARG,STRICT
 # a  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 2:
 # b  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
 # c  <$> const(PV "strict.pm") s/BARE
 # d  <1> require sK/1
-# e  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
+# e  <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$
 # f  <0> pushmark s
 # g  <$> const(PV "strict") sM
 # h  <$> const(PV "refs") sM
-# i  <$> method_named(PV "unimport") 
-# j  <1> entersub[t1] KS*/TARG,2
+# i  <.> method_named(PV "unimport") 
+# j  <1> entersub[t1] KS*/TARG,STRICT
 # k  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 3:
 # l  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
 # m  <$> const(PV "warnings.pm") s/BARE
 # n  <1> require sK/1
-# o  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
+# o  <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$
 # p  <0> pushmark s
 # q  <$> const(PV "warnings") sM
 # r  <$> const(PV "qw") sM
-# s  <$> method_named(PV "unimport") 
-# t  <1> entersub[t1] KS*/TARG,2
+# s  <.> method_named(PV "unimport") 
+# t  <1> entersub[t1] KS*/TARG,STRICT
 # u  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 4:
 # v  <;> nextstate(main 2 -e:1) v:>,<,%,{
@@ -369,67 +369,67 @@ checkOptree ( name	=> 'regression test for patch 25352',
 # 1  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
 # 2  <$> const[PV "strict.pm"] s/BARE
 # 3  <1> require sK/1
-# 4  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
+# 4  <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$
 # 5  <0> pushmark s
 # 6  <$> const[PV "strict"] sM
 # 7  <$> const[PV "refs"] sM
-# 8  <$> method_named[PV "unimport"] 
-# 9  <1> entersub[t1] KS*/TARG,2
+# 8  <.> method_named[PV "unimport"] 
+# 9  <1> entersub[t1] KS*/TARG,STRICT
 # a  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 2:
 # b  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
 # c  <$> const[PV "strict.pm"] s/BARE
 # d  <1> require sK/1
-# e  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
+# e  <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$
 # f  <0> pushmark s
 # g  <$> const[PV "strict"] sM
 # h  <$> const[PV "refs"] sM
-# i  <$> method_named[PV "unimport"] 
-# j  <1> entersub[t1] KS*/TARG,2
+# i  <.> method_named[PV "unimport"] 
+# j  <1> entersub[t1] KS*/TARG,STRICT
 # k  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 3:
 # l  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
 # m  <$> const[PV "warnings.pm"] s/BARE
 # n  <1> require sK/1
-# o  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
+# o  <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$
 # p  <0> pushmark s
 # q  <$> const[PV "warnings"] sM
 # r  <$> const[PV "qw"] sM
-# s  <$> method_named[PV "unimport"] 
-# t  <1> entersub[t1] KS*/TARG,2
+# s  <.> method_named[PV "unimport"] 
+# t  <1> entersub[t1] KS*/TARG,STRICT
 # u  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # BEGIN 1:
 # 1  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
 # 2  <$> const(PV "strict.pm") s/BARE
 # 3  <1> require sK/1
-# 4  <;> nextstate(B::Concise -275 Concise.pm:356) v:*,&,{,x*,x&,x$,$
+# 4  <;> nextstate(B::Concise -275 Concise.pm:356) :*,&,{,x*,x&,x$,$
 # 5  <0> pushmark s
 # 6  <$> const(PV "strict") sM
 # 7  <$> const(PV "refs") sM
-# 8  <$> method_named(PV "unimport") 
-# 9  <1> entersub[t1] KS*/TARG,2
+# 8  <.> method_named(PV "unimport") 
+# 9  <1> entersub[t1] KS*/TARG,STRICT
 # a  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 2:
 # b  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
 # c  <$> const(PV "strict.pm") s/BARE
 # d  <1> require sK/1
-# e  <;> nextstate(B::Concise -265 Concise.pm:367) v:*,&,x*,x&,x$,$
+# e  <;> nextstate(B::Concise -265 Concise.pm:367) :*,&,x*,x&,x$,$
 # f  <0> pushmark s
 # g  <$> const(PV "strict") sM
 # h  <$> const(PV "refs") sM
-# i  <$> method_named(PV "unimport") 
-# j  <1> entersub[t1] KS*/TARG,2
+# i  <.> method_named(PV "unimport") 
+# j  <1> entersub[t1] KS*/TARG,STRICT
 # k  <1> leavesub[1 ref] K/REFC,1
 # BEGIN 3:
 # l  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
 # m  <$> const(PV "warnings.pm") s/BARE
 # n  <1> require sK/1
-# o  <;> nextstate(B::Concise -254 Concise.pm:386) v:*,&,{,x*,x&,x$,$
+# o  <;> nextstate(B::Concise -254 Concise.pm:386) :*,&,{,x*,x&,x$,$
 # p  <0> pushmark s
 # q  <$> const(PV "warnings") sM
 # r  <$> const(PV "qw") sM
-# s  <$> method_named(PV "unimport") 
-# t  <1> entersub[t1] KS*/TARG,2
+# s  <.> method_named(PV "unimport") 
+# t  <1> entersub[t1] KS*/TARG,STRICT
 # u  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT

@@ -5,7 +5,7 @@ use warnings;
 
 BEGIN {
     use Test::More;
-    my $tests = 9;
+    my $tests = 12;
     unless ($ENV{PERL_CORE}) {
 	require Test::NoWarnings;
 	Test::NoWarnings->import ();
@@ -20,6 +20,11 @@ BEGIN {
 ok (my $conf = Config::Perl::V::myconfig,	"Read config");
 ok (exists $conf->{$_},	"Has $_ entry") for qw( build environment config inc );
 is (lc $conf->{build}{osname}, lc $conf->{config}{osname}, "osname");
+
+# Test summary
+ok (my $info1 = Config::Perl::V::summary ($conf), "Get a summary for \$conf");
+ok (my $info2 = Config::Perl::V::summary,         "Get a summary for \$^X");
+is_deeply ($info1, $info2, "Info should match");
 
 SKIP: {
     # Test that the code that shells out to perl -V and parses the output

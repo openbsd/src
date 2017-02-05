@@ -7,7 +7,7 @@ use Fcntl 'O_CREAT', 'O_RDWR', 'LOCK_EX', 'LOCK_SH', 'O_WRONLY', 'O_RDONLY';
 sub O_ACCMODE () { O_RDONLY | O_RDWR | O_WRONLY }
 
 
-$VERSION = "1.00";
+$VERSION = "1.02";
 my $DEFAULT_MEMORY_SIZE = 1<<21;    # 2 megabytes
 my $DEFAULT_AUTODEFER_THRESHHOLD = 3; # 3 records
 my $DEFAULT_AUTODEFER_FILELEN_THRESHHOLD = 65536; # 16 disk blocksful
@@ -439,7 +439,8 @@ sub _splice {
     if ($pos < 0) {
       $pos += $oldsize;
       if ($pos < 0) {
-        croak "Modification of non-creatable array value attempted, subscript $oldpos";
+        croak "Modification of non-creatable array value attempted, " .
+              "subscript $oldpos";
       }
     }
 
@@ -676,7 +677,7 @@ sub _upcopy {
   } elsif ($dpos == $spos) {
     return;
   }
-  
+
   while (! defined ($len) || $len > 0) {
     my $readsize = ! defined($len) ? $blocksize
                : $len > $blocksize ? $blocksize
@@ -885,7 +886,7 @@ sub _fill_offsets {
 
   my $fh = $self->{fh};
   local *OFF = $self->{offsets};
-  
+
   $self->_seek(-1);           # tricky -- see comment at _seek
 
   # Tels says that inlining read_record() would make this loop
@@ -1014,7 +1015,7 @@ sub flock {
   my $fh = $self->{fh};
   $op = LOCK_EX unless defined $op;
   my $locked = flock $fh, $op;
-  
+
   if ($locked && ($op & (LOCK_EX | LOCK_SH))) {
     # If you're locking the file, then presumably it's because
     # there might have been a write access by another process.
@@ -1049,7 +1050,7 @@ sub offset {
     # If it's still undefined, there is no such record, so return 'undef'
     return unless defined $o;
    }
- 
+
   $self->{offsets}[$n];
 }
 
@@ -1342,7 +1343,8 @@ sub _check_integrity {
       }
       if (! defined $offset && $self->{eof}) {
         $good = 0;
-        _ci_warn("The offset table was marked complete, but it is missing element $.");
+        _ci_warn("The offset table was marked complete, but it is missing " .
+                 "element $.");
       }
     }
     if (@{$self->{offsets}} > $.+1) {
@@ -1398,14 +1400,16 @@ sub _check_integrity {
 
   # Total size of deferbuffer should not exceed the specified limit
   if ($deferred_s > $self->{dw_size}) {
-    _ci_warn("buffer size is $self->{deferred_s} which exceeds the limit of $self->{dw_size}");
+    _ci_warn("buffer size is $self->{deferred_s} which exceeds the limit " .
+             "of $self->{dw_size}");
     $good = 0;
   }
 
   # Total size of cached data should not exceed the specified limit
   if ($deferred_s + $cached > $self->{memory}) {
     my $total = $deferred_s + $cached;
-    _ci_warn("total stored data size is $total which exceeds the limit of $self->{memory}");
+    _ci_warn("total stored data size is $total which exceeds the limit " .
+             "of $self->{memory}");
     $good = 0;
   }
 
@@ -2009,32 +2013,32 @@ Tie::File - Access the lines of a disk file via a Perl array
 
 =head1 SYNOPSIS
 
-	# This file documents Tie::File version 0.98
-	use Tie::File;
+ # This file documents Tie::File version 0.98
+ use Tie::File;
 
-	tie @array, 'Tie::File', filename or die ...;
+ tie @array, 'Tie::File', filename or die ...;
 
-	$array[13] = 'blah';     # line 13 of the file is now 'blah'
-	print $array[42];        # display line 42 of the file
+ $array[13] = 'blah';     # line 13 of the file is now 'blah'
+ print $array[42];        # display line 42 of the file
 
-	$n_recs = @array;        # how many records are in the file?
-	$#array -= 2;            # chop two records off the end
+ $n_recs = @array;        # how many records are in the file?
+ $#array -= 2;            # chop two records off the end
 
 
-	for (@array) {
-	  s/PERL/Perl/g;         # Replace PERL with Perl everywhere in the file
-	}
+ for (@array) {
+   s/PERL/Perl/g;        # Replace PERL with Perl everywhere in the file
+ }
 
-	# These are just like regular push, pop, unshift, shift, and splice
-	# Except that they modify the file in the way you would expect
+ # These are just like regular push, pop, unshift, shift, and splice
+ # Except that they modify the file in the way you would expect
 
-	push @array, new recs...;
-	my $r1 = pop @array;
-	unshift @array, new recs...;
-	my $r2 = shift @array;
-	@old_recs = splice @array, 3, 7, new recs...;
+ push @array, new recs...;
+ my $r1 = pop @array;
+ unshift @array, new recs...;
+ my $r2 = shift @array;
+ @old_recs = splice @array, 3, 7, new recs...;
 
-	untie @array;            # all finished
+ untie @array;            # all finished
 
 
 =head1 DESCRIPTION
@@ -2170,8 +2174,8 @@ The default memory limit is 2Mib.  You can adjust the maximum read
 cache size by supplying the C<memory> option.  The argument is the
 desired cache size, in bytes.
 
-	# I have a lot of memory, so use a large cache to speed up access
-	tie @array, 'Tie::File', $file, memory => 20_000_000;
+ # I have a lot of memory, so use a large cache to speed up access
+ tie @array, 'Tie::File', $file, memory => 20_000_000;
 
 Setting the memory limit to 0 will inhibit caching; records will be
 fetched from disk every time you examine them.
@@ -2490,7 +2494,8 @@ C<rollback>, but it isn't, so don't.
 =item *
 
 There is a large memory overhead for each record offset and for each
-cache entry: about 310 bytes per cached data record, and about 21 bytes per offset table entry.
+cache entry: about 310 bytes per cached data record, and about 21 bytes
+per offset table entry.
 
 The per-record overhead will limit the maximum number of records you
 can access per file. Note that I<accessing> the length of the array

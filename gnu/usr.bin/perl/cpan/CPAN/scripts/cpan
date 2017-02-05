@@ -5,7 +5,7 @@ use strict;
 use vars qw($VERSION);
 
 use App::Cpan '1.60_02';
-$VERSION = '1.61_01';
+$VERSION = '1.61';
 
 my $rc = App::Cpan->run( @ARGV );
 
@@ -27,16 +27,22 @@ cpan - easily interact with CPAN from the command line
 	# with just the dot, install from the distribution in the
 	# current directory
 	cpan .
-	
+
 	# without arguments, starts CPAN.pm shell
 	cpan
 
+	# force install modules (usually those that fail tests)
+	cpan -f module_name [ module_name ... ]
+
+	# install modules but without testing them
+	cpan -T module_name [ module_name ... ]
+
 	# dump the configuration
 	cpan -J
-	
+
 	# load a different configuration to install Module::Foo
 	cpan -j some/other/file Module::Foo
-	
+
 	# without arguments, but some switches
 	cpan [-ahrvACDlLO]
 
@@ -80,7 +86,7 @@ to install a module even if its tests fail. When you use this option,
 
 =item -F
 
-Turn off CPAN.pm's attempts to lock anything. You should be careful with 
+Turn off CPAN.pm's attempts to lock anything. You should be careful with
 this since you might end up with multiple scripts trying to muck in the
 same directory. This isn't so much of a concern if you're loading a special
 config with C<-j>, and that config sets up its own work directories.
@@ -116,7 +122,7 @@ Load C<local::lib> (think like C<-I> for loading lib paths).
 =item -j Config.pm
 
 Load the file that has the CPAN configuration data. This should have the
-same format as the standard F<CPAN/Config.pm> file, which defines 
+same format as the standard F<CPAN/Config.pm> file, which defines
 C<$CPAN::Config> as an anonymous hash.
 
 =item -J
@@ -174,7 +180,7 @@ Print the script version and CPAN.pm version then exit.
 
 Print detailed information about the cpan client.
 
-=item -w 
+=item -w
 
 UNIMPLEMENTED
 
@@ -210,17 +216,53 @@ and tells you about problems you might have.
 
 =over 4
 
+There are several components in CPAN.pm that use environment variables.
+The build tools, L<ExtUtils::MakeMaker> and L<Module::Build> use some,
+while others matter to the levels above them. Some of these are specified
+by the Perl Toolchain Gang:
+
+Lancaster Concensus: L<https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/lancaster-consensus.md>
+
+Oslo Concensus: L<https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/oslo-consensus.md>
+
+=over 4
+
 =item CPAN_OPTS
 
 C<cpan> splits this variable on whitespace and prepends that list to C<@ARGV>
 before it processes the command-line arguments. For instance, if you always
 want to use C<local:lib>, you can set C<CPAN_OPTS> to C<-I>.
 
+=item CPANSCRIPT_LOGLEVEL
+
+The log level to use, with either the embedded, minimal logger or
+L<Log::Log4perl> if it is installed. Possible values are the same as
+the C<Log::Log4perl> levels: C<TRACE>, C<DEBUG>, C<INFO>, C<WARN>,
+C<ERROR>, and C<FATAL>. The default is C<INFO>.
+
+=item GIT_COMMAND
+
+The path to the C<git> binary to use for the Git features. The default
+is C</usr/local/bin/git>.
+
+=item NONINTERACTIVE_TESTING
+
+Assume no one is paying attention and skips prompts for distributions
+that do that correctly. C<cpan(1)> sets this to C<1> unless it already
+has a value (even if that value is false).
+
+=item PERL_MM_USE_DEFAULT
+
+Use the default answer for a prompted questions. C<cpan(1)> sets this
+to C<1> unless it already has a value (even if that value is false).
+
+=back
+
 =back
 
 =head1 EXIT VALUES
 
-The script exits with zero if it thinks that everything worked, or a 
+The script exits with zero if it thinks that everything worked, or a
 positive number if it thinks that something failed. Note, however, that
 in some cases it has to divine a failure by the output of things it does
 not control. For now, the exit codes are vague:
@@ -248,9 +290,12 @@ comes directly from CPAN.pm.
 
 =head1 SOURCE AVAILABILITY
 
-This code is in Github:
+This code is in Github in the CPAN.pm repository:
 
-	git://github.com/briandfoy/cpan_script.git
+	https://github.com/andk/cpanpm
+
+The source used to be tracked separately in another GitHub repo,
+but the canonical source is now in the above repo.
 
 =head1 CREDITS
 
@@ -268,7 +313,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2013, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2014, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

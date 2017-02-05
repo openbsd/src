@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-require "test.pl";
+require "./test.pl";
 plan( tests => 4 );
 
 use strict;

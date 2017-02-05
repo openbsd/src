@@ -8,9 +8,14 @@ Module::CoreList - what modules shipped with versions of perl
 
  print $Module::CoreList::version{5.00503}{CPAN}; # prints 1.48
 
- print Module::CoreList->first_release('File::Spec');         # prints 5.00405
- print Module::CoreList->first_release_by_date('File::Spec'); # prints 5.005
- print Module::CoreList->first_release('File::Spec', 0.82);   # prints 5.006001
+ print Module::CoreList->first_release('File::Spec');
+ # prints 5.00405
+
+ print Module::CoreList->first_release_by_date('File::Spec');
+ # prints 5.005
+
+ print Module::CoreList->first_release('File::Spec', 0.82);
+ # prints 5.006001
 
  if (Module::CoreList::is_core('File::Spec')) {
    print "File::Spec is a core module\n";
@@ -19,7 +24,7 @@ Module::CoreList - what modules shipped with versions of perl
  print join ', ', Module::CoreList->find_modules(qr/Data/);
     # prints 'Data::Dumper'
  print join ', ',
-            Module::CoreList->find_modules(qr/test::h.*::.*s/i, 5.008008);
+          Module::CoreList->find_modules(qr/test::h.*::.*s/i, 5.008008);
     # prints 'Test::Harness::Assert, Test::Harness::Straps'
 
  print join ", ", @{ $Module::CoreList::families{5.005} };

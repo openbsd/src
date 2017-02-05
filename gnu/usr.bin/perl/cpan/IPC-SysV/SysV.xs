@@ -392,10 +392,15 @@ shmat(id, addr, flag)
     int flag
   CODE:
 #ifdef HAS_SHM
-    void *caddr = SvOK(addr) ? sv2addr(addr) : NULL;
-    void *shm = (void *) shmat(id, caddr, flag);
-    ST(0) = shm == (void *) -1 ? &PL_sv_undef
-                               : sv_2mortal(newSVpvn((char *) &shm, sizeof(void *)));
+    if (id >= 0) {
+      void *caddr = SvOK(addr) ? sv2addr(addr) : NULL;
+      void *shm = (void *) shmat(id, caddr, flag);
+      ST(0) = shm == (void *) -1 ? &PL_sv_undef
+                                 : sv_2mortal(newSVpvn((char *) &shm, sizeof(void *)));
+    } else {
+      SETERRNO(EINVAL,LIB_INVARG);
+      ST(0) = &PL_sv_undef;
+    }
     XSRETURN(1);
 #else
     Perl_die(aTHX_ PL_no_func, "shmat"); return;

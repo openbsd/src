@@ -1,26 +1,32 @@
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib .);
-    require "test.pl";
+    require './test.pl';
+    set_up_inc(qw(../lib .));
+    skip_all_without_unicode_tables();
 }
 
 plan tests => 11;
 
-my $str = join "", map latin1_to_native(chr($_)), 0x20 .. 0x6F;
+my $str = join "", map { chr utf8::unicode_to_native($_) } 0x20 .. 0x6F;
 
 is(($str =~ /(\p{IsMyUniClass}+)/)[0], '0123456789:;<=>?@ABCDEFGHIJKLMNO',
                                 'user-defined class compiled before defined');
 
 sub IsMyUniClass {
-  <<END;
-0030	004F
+  my $return = "";
+  for my $i (0x30 .. 0x4F) {
+    $return .= sprintf("%04X\n", utf8::unicode_to_native($i));
+  }
+  return $return;
 END
 }
 
 sub Other::IsClass {
-  <<END;
-0040	005F
-END
+  my $return = "";
+  for my $i (0x40 .. 0x5F) {
+    $return .= sprintf("%04X\n", utf8::unicode_to_native($i));
+  }
+  return $return;
 }
 
 sub A::B::Intersection {

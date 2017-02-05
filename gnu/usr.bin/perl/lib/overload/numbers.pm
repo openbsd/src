@@ -62,13 +62,20 @@ our @names = qw#
     (>>=
     (&
     (&=
+    (&.
+    (&.=
     (|
     (|=
+    (|.
+    (|.=
     (^
     (^=
+    (^.
+    (^.=
     (<=>
     (cmp
     (~
+    (~.
     (atan2
     (cos
     (sin
@@ -133,13 +140,20 @@ our @enums = qw#
     rshift_ass
     band
     band_ass
+    sband
+    sband_ass
     bor
     bor_ass
+    sbor
+    sbor_ass
     bxor
     bxor_ass
+    sbxor
+    sbxor_ass
     ncmp
     scmp
     compl
+    scompl
     atan2
     cos
     sin

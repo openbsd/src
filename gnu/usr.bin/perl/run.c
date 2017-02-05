@@ -36,11 +36,10 @@
 int
 Perl_runops_standard(pTHX)
 {
-    dVAR;
     OP *op = PL_op;
-    OP_ENTRY_PROBE(OP_NAME(op));
+    PERL_DTRACE_PROBE_OP(op);
     while ((PL_op = op = op->op_ppaddr(aTHX))) {
-        OP_ENTRY_PROBE(OP_NAME(op));
+        PERL_DTRACE_PROBE_OP(op);
     }
     PERL_ASYNC_CHECK();
 
@@ -49,11 +48,5 @@ Perl_runops_standard(pTHX)
 }
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

@@ -1,22 +1,11 @@
 #!./perl
 
-BEGIN {
-    unless (-d 'blib') {
-	chdir 't' if -d 't';
-	@INC = '../lib';
-	require Config; import Config;
-	keys %Config; # Silence warning
-	if ($Config{extensions} !~ /\bList\/Util\b/) {
-	    print "1..0 # Skip: List::Util was not built\n";
-	    exit 0;
-	}
-    }
-}
-
+use strict;
+use warnings;
 
 use List::Util qw(reduce min);
 use Test::More;
-plan tests => 29 + ($::PERL_ONLY ? 0 : 2);
+plan tests => 30 + ($::PERL_ONLY ? 0 : 2);
 
 my $v = reduce {};
 
@@ -28,7 +17,7 @@ is( $v,	9,	'4-arg divide');
 $v = reduce { $a / $b } 6;
 is( $v,	6,	'one arg');
 
-@a = map { rand } 0 .. 20;
+my @a = map { rand } 0 .. 20;
 $v = reduce { $a < $b ? $a : $b } @a;
 is( $v,	min(@a),	'min');
 
@@ -95,7 +84,11 @@ like($@, qr/^Can't undef active subroutine/, "undef active sub");
 # redefinition takes effect immediately depends on whether we're
 # running the Perl or XS implementation.
 
-sub self_updating { local $^W; *self_updating = sub{1} ;1 }
+sub self_updating {
+  no warnings 'redefine';
+  *self_updating = sub{1};
+  1
+}
 eval { $v = reduce \&self_updating, 1,2; };
 is($@, '', 'redefine self');
 
@@ -167,3 +160,6 @@ ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 eval { &reduce(+{},1,2,3) };
 ok($@ =~ /^Not a subroutine reference/, 'check for code reference');
 
+my @names = ("a\x{100}c", "d\x{101}efgh", 'ijk');
+my $longest = reduce { length($a) > length($b) ? $a : $b } @names;
+is( length($longest),	6,	'missing SMG rt#121992');

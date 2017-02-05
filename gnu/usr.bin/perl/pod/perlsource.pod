@@ -101,7 +101,7 @@ broken.
 
 =item * F<t/cmd/>
 
-Tests for basic control structures, C<if/else>, C<while>, subroutines,
+Tests for basic control structures, C<if>/C<else>, C<while>, subroutines,
 etc.
 
 =item * F<t/comp/>
@@ -157,10 +157,6 @@ corresponding entry in the F<AUTHORS> file.
 The old home for the module tests, you shouldn't put anything new in
 here. There are still some bits and pieces hanging around in here that
 need to be moved. Perhaps you could move them?  Thanks!
-
-=item * F<t/x2p>
-
-A test suite for the s2p converter.
 
 =back
 

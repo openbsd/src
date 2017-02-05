@@ -10,7 +10,7 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw '../lib ../cpan/version/lib';
 }
 use warnings;
 use version;
@@ -32,8 +32,18 @@ if ($^O eq 'VMS') {
 # No %Config.
 my $Is_Ultrix_VAX = $^O eq 'ultrix' && `uname -m` =~ /^VAX$/;
 
+our $IS_EBCDIC = $::IS_EBCDIC;  # Solely to avoid the 'used once' warning
+our $IS_ASCII = $::IS_ASCII;   # Solely to avoid the 'used once' warning
+
 while (<DATA>) {
-    s/^\s*>//; s/<\s*$//;
+    s/<\s*$//;
+
+    # An initial 'a' or 'e' marks the test as being only for ASCII or EBCDIC
+    # platforms respectively.
+    s/^\s* ( [ae] )? >//x;
+    next if defined $1 && $1 eq 'a' && $::IS_EBCDIC;
+    next if defined $1 && $1 eq 'e' && $::IS_ASCII;
+
     ($template, $data, $result, $comment) = split(/<\s*>/, $_, 4);
     if ($^O eq 'os390' || $^O eq 's390') { # non-IEEE (s390 is UTS)
         $data   =~ s/([eE])96$/${1}63/;      # smaller exponents
@@ -65,6 +75,8 @@ $SIG{__WARN__} = sub {
 	$w .= ' UNINIT';
     } elsif ($_[0] =~ /^Missing argument/) {
 	$w .= ' MISSING';
+    } elsif ($_[0] =~ /^Redundant argument/) {
+	$w .= ' REDUNDANT';
     } elsif ($_[0]=~/^vector argument not supported with alpha versions/) {
 	$w .= ' ALPHA';
     } else {
@@ -114,7 +126,7 @@ for (@tests) {
     }
 
     if ($x eq ">$result<") {
-        ok(1, ">$result<");
+        ok(1, join ' ', grep length, ">$result<", $comment);
     }
     elsif ($skip) {
         ok(1, "skip $comment");
@@ -174,14 +186,14 @@ for (@tests) {
 
 # template    data          result
 __END__
->%6. 6s<    >''<          >%6. 6s INVALID< >(See use of $w in code above)<
->%6 .6s<    >''<          >%6 .6s INVALID<
->%6.6 s<    >''<          >%6.6 s INVALID<
->%A<        >''<          >%A INVALID<
+>%6. 6s<    >''<          >%6. 6s INVALID REDUNDANT< >(See use of $w in code above)<
+>%6 .6s<    >''<          >%6 .6s INVALID REDUNDANT<
+>%6.6 s<    >''<          >%6.6 s INVALID REDUNDANT<
+>%A<        >0<           ><	 >%A tested in sprintf2.t skip: all<
 >%B<        >2**32-1<     >11111111111111111111111111111111<
 >%+B<       >2**32-1<     >11111111111111111111111111111111<
 >%#B<       >2**32-1<     >0B11111111111111111111111111111111<
->%C<        >''<          >%C INVALID<
+>%C<        >''<          >%C INVALID REDUNDANT<
 >%D<        >0x7fffffff<  >2147483647<     >Synonym for %ld<
 >%E<        >123456.789<  >1.234568E+05<   >Like %e, but using upper-case "E"<
 >%F<        >123456.789<  >123456.789000<  >Synonym for %f<
@@ -191,27 +203,27 @@ __END__
 >%G<        >12345.6789<  >12345.7<
 >%G<        >1234567e96<  >1.23457E+102<	>exponent too big skip: os390<
 >%G<        >.1234567e-101< >1.23457E-102<	>exponent too small skip: os390<
->%H<        >''<          >%H INVALID<
->%I<        >''<          >%I INVALID<
->%J<        >''<          >%J INVALID<
->%K<        >''<          >%K INVALID<
->%L<        >''<          >%L INVALID<
->%M<        >''<          >%M INVALID<
->%N<        >''<          >%N INVALID<
+>%H<        >''<          >%H INVALID REDUNDANT<
+>%I<        >''<          >%I INVALID REDUNDANT<
+>%J<        >''<          >%J INVALID REDUNDANT<
+>%K<        >''<          >%K INVALID REDUNDANT<
+>%L<        >''<          >%L INVALID REDUNDANT<
+>%M<        >''<          >%M INVALID REDUNDANT<
+>%N<        >''<          >%N INVALID REDUNDANT<
 >%O<        >2**32-1<     >37777777777<    >Synonym for %lo<
->%P<        >''<          >%P INVALID<
->%Q<        >''<          >%Q INVALID<
->%R<        >''<          >%R INVALID<
->%S<        >''<          >%S INVALID<
->%T<        >''<          >%T INVALID<
+>%P<        >''<          >%P INVALID REDUNDANT<
+>%Q<        >''<          >%Q INVALID REDUNDANT<
+>%R<        >''<          >%R INVALID REDUNDANT<
+>%S<        >''<          >%S INVALID REDUNDANT<
+>%T<        >''<          >%T INVALID REDUNDANT<
 >%U<        >2**32-1<     >4294967295<     >Synonym for %lu<
->%V<        >''<          >%V INVALID<
->%W<        >''<          >%W INVALID<
+>%V<        >''<          >%V INVALID REDUNDANT<
+>%W<        >''<          >%W INVALID REDUNDANT<
 >%X<        >2**32-1<     >FFFFFFFF<       >Like %x, but with u/c letters<
 >%#X<       >2**32-1<     >0XFFFFFFFF<
->%Y<        >''<          >%Y INVALID<
->%Z<        >''<          >%Z INVALID<
->%a<        >''<          >%a INVALID<
+>%Y<        >''<          >%Y INVALID REDUNDANT<
+>%Z<        >''<          >%Z INVALID REDUNDANT<
+>%a<        >0<           ><	 >%a tested in sprintf2.t skip: all<
 >%b<        >2**32-1<     >11111111111111111111111111111111<
 >%+b<       >2**32-1<     >11111111111111111111111111111111<
 >%#b<       >2**32-1<     >0b11111111111111111111111111111111<
@@ -296,6 +308,11 @@ __END__
 >%+.*d<     >[-2,0]<      >+0<
 >% .*d<     >[-2,0]<      > 0<
 >%0.*d<     >[-2,0]<      >0<
+>%.*2$d<    >[5,3]<       >005<           >reordered precision arg<
+>%4.*2$d<   >[5,3]<       > 005<          >width with reordered precision<
+>%*3$.*2$d< >[5,3,4]<     > 005<          >reordered width with reordered precision<
+>%3$*2$.*1$d< >[3,4,5]<   > 005<          >reordered param, width, precision<
+>%*1$.*f<   >[4, 5, 10]<  >5.0000<        >perl #125956: reordered param, width, precision, floating point<
 >%d<        >-1<          >-1<
 >%-d<       >-1<          >-1<
 >%+d<       >-1<          >-1<
@@ -321,7 +338,6 @@ __END__
 >%vd<       >[version->new("1.002")]< >1.2<
 >%vd<       >[version->new("1048576.5")]< >1048576.5<
 >%vd<       >[version->new("50")]< >50<
->[%vd]<     >[version->new(v1.1_1)]< >[] ALPHA<
 >%v.3d<     >"\01\02\03"< >001.002.003<
 >%0v3d<     >"\01\02\03"< >001.002.003<
 >%v.3d<     >[version::qv("1.2.3")]< >001.002.003<
@@ -396,7 +412,7 @@ __END__
 >%.0f<      >1<           >1<
 >%#.0f<     >1<           >1.<
 >%.0lf<     >1<           >1<              >'l' should have no effect<
->%.0hf<     >1<           >%.0hf INVALID<  >'h' should be rejected<
+>%.0hf<     >1<           >%.0hf INVALID REDUNDANT<  >'h' should be rejected<
 >%g<        >12345.6789<  >12345.7<
 >%+g<       >12345.6789<  >+12345.7<
 >%#g<       >12345.6789<  >12345.7<
@@ -434,12 +450,12 @@ __END__
 >%-13g<     >1234567.89<  >1.23457e+06  <
 >%g<        >.1234567E-101< >1.23457e-102<	>exponent too small skip: os390<
 >%g<        >1234567E96<  >1.23457e+102<	>exponent too big skip: os390<
->%h<        >''<          >%h INVALID<
+>%h<        >''<          >%h INVALID REDUNDANT<
 >%i<        >123456.789<  >123456<         >Synonym for %d<
->%j<        >''<          >%j INVALID<
->%k<        >''<          >%k INVALID<
->%l<        >''<          >%l INVALID<
->%m<        >''<          >%m INVALID<
+>%j<        >''<          >%j INVALID REDUNDANT<
+>%k<        >''<          >%k INVALID REDUNDANT<
+>%l<        >''<          >%l INVALID REDUNDANT<
+>%m<        >''<          >%m INVALID REDUNDANT<
 >%s< >sprintf('%%n%n %d', $n, $n)< >%n 2< >Slight sneakiness to test %n<
 >%s< >$n="abc"; sprintf(' %n%s', substr($n,1,1), $n)< > a1c< >%n w/magic<
 >%s< >no warnings; sprintf('%s%n', chr(256)x5, $n),$n< >5< >Unicode %n<
@@ -510,9 +526,9 @@ __END__
 >%#06.4o<   >18<          >  0022<        >0 flag with precision: no effect<
 >%d< >$p=sprintf('%p',$p);$p=~/^[0-9a-f]+$/< >1< >Coarse hack: hex from %p?<
 >%d< >$p=sprintf('%-8p',$p);$p=~/^[0-9a-f]+\s*$/< >1< >Coarse hack: hex from %p?<
->%#p<       >''<          >%#p INVALID<
->%q<        >''<          >%q INVALID<
->%r<        >''<          >%r INVALID<
+>%#p<       >''<          >%#p INVALID REDUNDANT<
+>%q<        >''<          >%q INVALID REDUNDANT<
+>%r<        >''<          >%r INVALID REDUNDANT<
 >%s<        >[]<          > MISSING<
 > %s<       >[]<          >  MISSING<
 >%s<        >'string'<    >string<
@@ -534,7 +550,7 @@ __END__
 >%3.*s<     >[1, 'string']< >  s<
 >%3.*s<     >[0, 'string']< >   <
 >%3.*s<     >[-1,'string']< >string<  >negative precision to be ignored<
->%t<        >''<          >%t INVALID<
+>%t<        >''<          >%t INVALID REDUNDANT<
 >%u<        >2**32-1<     >4294967295<
 >%+u<       >2**32-1<     >4294967295<
 >%#u<       >2**32-1<     >4294967295<
@@ -549,8 +565,8 @@ __END__
 >% 4.3u<    >18<          > 018<
 >%04.3u<    >18<          > 018<         >0 flag with precision: no effect<
 >%.3u<      >18<          >018<
->%v<        >''<          >%v INVALID<
->%w<        >''<          >%w INVALID<
+>%v<        >''<          >%v INVALID REDUNDANT<
+>%w<        >''<          >%w INVALID REDUNDANT<
 >%x<        >2**32-1<     >ffffffff<
 >%+x<       >2**32-1<     >ffffffff<
 >%#x<       >2**32-1<     >0xffffffff<
@@ -632,37 +648,38 @@ __END__
 >%#+.*x<    >[-1,0]<      >0<
 >%# .*x<    >[-1,0]<      >0<
 >%#0.*x<    >[-1,0]<      >0<
->%y<        >''<          >%y INVALID<
->%z<        >''<          >%z INVALID<
+>%y<        >''<          >%y INVALID REDUNDANT<
+>%z<        >''<          >%z INVALID REDUNDANT<
 >%2$d %1$d<	>[12, 34]<	>34 12<
->%*2$d<		>[12, 3]<	> 12<
+>%*2$d<		>[12, 3]<	> 12<             >RT#125469<
+>%*3$d<		>[12, 9, 3]<	> 12<             >related to RT#125469<
 >%2$d %d<	>[12, 34]<	>34 12<
 >%2$d %d %d<	>[12, 34]<	>34 12 34<
 >%3$d %d %d<	>[12, 34, 56]<	>56 12 34<
 >%2$*3$d %d<	>[12, 34, 3]<	> 34 12<
->%*3$2$d %d<	>[12, 34, 3]<	>%*3$2$d 12 INVALID<
+>%*3$2$d %d<	>[12, 34, 3]<	>%*3$2$d 12 INVALID REDUNDANT<
 >%2$d<		>12<	>0 MISSING<
->%0$d<		>12<	>%0$d INVALID<
->%1$$d<		>12<	>%1$$d INVALID<
->%1$1$d<	>12<	>%1$1$d INVALID<
->%*2$*2$d<	>[12, 3]<	>%*2$*2$d INVALID<
->%*2*2$d<	>[12, 3]<	>%*2*2$d INVALID<
->%*2$1d<	>[12, 3]<	>%*2$1d INVALID<
+>%0$d<		>12<	>%0$d INVALID REDUNDANT<
+>%1$$d<		>12<	>%1$$d INVALID REDUNDANT<
+>%1$1$d<	>12<	>%1$1$d INVALID REDUNDANT<
+>%*2$*2$d<	>[12, 3]<	>%*2$*2$d INVALID REDUNDANT<
+>%*2*2$d<	>[12, 3]<	>%*2*2$d INVALID REDUNDANT<
+>%*2$1d<	>[12, 3]<	>%*2$1d INVALID REDUNDANT<
 >%0v2.2d<	>''<	><
->%vc,%d<	>[63, 64, 65]<	>%vc,63 INVALID<
->%v%,%d<	>[63, 64, 65]<	>%v%,63 INVALID<
->%vd,%d<	>["\x1", 2, 3]<	>1,2<
->%vf,%d<	>[1, 2, 3]<	>%vf,1 INVALID<
->%vF,%d<	>[1, 2, 3]<	>%vF,1 INVALID<
->%ve,%d<	>[1, 2, 3]<	>%ve,1 INVALID<
->%vE,%d<	>[1, 2, 3]<	>%vE,1 INVALID<
->%vg,%d<	>[1, 2, 3]<	>%vg,1 INVALID<
->%vG,%d<	>[1, 2, 3]<	>%vG,1 INVALID<
->%vp<	>''<	>%vp INVALID<
->%vn<	>''<	>%vn INVALID<
->%vs,%d<	>[1, 2, 3]<	>%vs,1 INVALID<
->%v_<	>''<	>%v_ INVALID<
->%v#x<	>''<	>%v#x INVALID<
+>%vc,%d<	>[63, 64, 65]<	>%vc,63 INVALID REDUNDANT<
+>%v%,%d<	>[63, 64, 65]<	>%v%,63 INVALID REDUNDANT<
+>%vd,%d<	>["\x1", 2, 3]<	>1,2 REDUNDANT<
+>%vf,%d<	>[1, 2, 3]<	>%vf,1 INVALID REDUNDANT<
+>%vF,%d<	>[1, 2, 3]<	>%vF,1 INVALID REDUNDANT<
+>%ve,%d<	>[1, 2, 3]<	>%ve,1 INVALID REDUNDANT<
+>%vE,%d<	>[1, 2, 3]<	>%vE,1 INVALID REDUNDANT<
+>%vg,%d<	>[1, 2, 3]<	>%vg,1 INVALID REDUNDANT<
+>%vG,%d<	>[1, 2, 3]<	>%vG,1 INVALID REDUNDANT<
+>%vp<	>''<	>%vp INVALID REDUNDANT<
+>%vn<	>''<	>%vn INVALID REDUNDANT<
+>%vs,%d<	>[1, 2, 3]<	>%vs,1 INVALID REDUNDANT<
+>%v_<	>''<	>%v_ INVALID REDUNDANT<
+>%v#x<	>''<	>%v#x INVALID REDUNDANT<
 >%v02x<	>"\x66\x6f\x6f\012"<	>66.6f.6f.0a<
 >%#v.8b<	>"\141\000\142"<	>0b01100001.00000000.0b01100010<	>perl #39530<
 >%#v.0o<	>"\001\000\002\000"<    >01.0.02.0<
@@ -700,10 +717,10 @@ __END__
 >%#v.2X<	>"\141\x{1e01}\017\142\x{1e03}"<	>0X61.0X1E01.0X0F.0X62.0X1E03<	>perl #39530<
 >%V-%s<		>["Hello"]<	>%V-Hello INVALID<
 >%K %d %d<	>[13, 29]<	>%K 13 29 INVALID<
->%*.*K %d<	>[13, 29, 76]<	>%*.*K 13 INVALID<
->%4$K %d<	>[45, 67]<	>%4$K 45 MISSING INVALID<
+>%*.*K %d<	>[13, 29, 76]<	>%*.*K 13 INVALID REDUNDANT<
+>%4$K %d<	>[45, 67]<	>%4$K 45 INVALID REDUNDANT<
 >%d %K %d<	>[23, 45]<	>23 %K 45 INVALID<
->%*v*999\$d %d %d<	>[11, 22, 33]<	>%*v*999\$d 11 22 INVALID<
+>%*v*999\$d %d %d<	>[11, 22, 33]<	>%*v*999\$d 11 22 INVALID REDUNDANT<
 >%#b<		>0<	>0<
 >%#o<		>0<	>0<
 >%#x<		>0<	>0<
@@ -711,10 +728,18 @@ __END__
 >%*2147483647$v2d<	>''<	> MISSING<
 >%.3X<		>[11]<			>00B<		>perl #83194: hex, zero-padded to 3 places<
 >%.*X<		>[3, 11]<		>00B<		>perl #83194: dynamic precision<
->%vX<		>['012']<		>30.31.32<	>perl #83194: vector flag<
->%*vX<		>[':', '012']<		>30:31:32<	>perl #83194: vector flag + custom separator<
->%v.3X<		>['012']<		>030.031.032<	>perl #83194: vector flag + static precision<
->%v.*X<		>[3, '012']<		>030.031.032<	>perl #83194: vector flag + dynamic precision<
->%*v.3X<	>[':', '012']<		>030:031:032<	>perl #83194: vector flag + custom separator + static precision<
->%*v.*X<	>[':', 3, '012']<	>030:031:032<	>perl #83194: vector flag + custom separator + dynamic precision<
->%vd<	>"version"<	>118.101.114.115.105.111.110<	>perl #102586: vector flag + "version"<
+a>%vX<		>['012']<		>30.31.32<	>perl #83194: vector flag<
+e>%vX<		>['012']<		>F0.F1.F2<	>perl #83194: vector flag<
+a>%*vX<		>[':', '012']<		>30:31:32<	>perl #83194: vector flag + custom separator<
+e>%*vX<		>[':', '012']<		>F0:F1:F2<	>perl #83194: vector flag + custom separator<
+a>%v.3X<		>['012']<		>030.031.032<	>perl #83194: vector flag + static precision<
+e>%v.3X<		>['012']<		>0F0.0F1.0F2<	>perl #83194: vector flag + static precision<
+a>%v.*X<		>[3, '012']<		>030.031.032<	>perl #83194: vector flag + dynamic precision<
+e>%v.*X<		>[3, '012']<		>0F0.0F1.0F2<	>perl #83194: vector flag + dynamic precision<
+a>%*v.3X<	>[':', '012']<		>030:031:032<	>perl #83194: vector flag + custom separator + static precision<
+e>%*v.3X<	>[':', '012']<		>0F0:0F1:0F2<	>perl #83194: vector flag + custom separator + static precision<
+a>%*v.*X<	>[':', 3, '012']<	>030:031:032<	>perl #83194: vector flag + custom separator + dynamic precision<
+e>%*v.*X<	>[':', 3, '012']<	>0F0:0F1:0F2<	>perl #83194: vector flag + custom separator + dynamic precision<
+a>%vd<	>"version"<	>118.101.114.115.105.111.110<	>perl #102586: vector flag + "version"<
+e>%vd<   >"version"<    >165.133.153.162.137.150.149<   >perl #102586: vector flag + "version"<
+>%3$*4$v*2$.*1$x<  >[3, 4, "\x11\x22\x33", "/"]< > 011/ 022/ 033< >four reordered args<

@@ -11,7 +11,7 @@ BEGIN{
 	}
 }
 
-use Test::More tests => 33;
+use Test::More tests => 36;
 
 use strict;
 use vars qw/$bad $bad7 $ok10 $bad18 $ok/;
@@ -191,11 +191,37 @@ SKIP: {
 }
 
 SKIP: {
+    my %siginfo = (
+        signo => SIGHUP,
+        pid => $$,
+        uid => $<,
+    );
+    my %opt_val = ( code => 'SI_USER' );
+    my %always = map +($_ => 1), qw(signo code);
+    my %skip = ( code => { darwin => "not set to SI_USER for kill()" } );
+    $skip{pid}{$^O} = $skip{uid}{$^O} = "not set for kill()"
+        if (($^O.$Config{osvers}) =~ /^darwin[0-8]\./
+            ||
+            ($^O.$Config{osvers}) =~ /^openbsd[0-5]\./);
+    my $tests = keys %{{ %siginfo, %opt_val }};
     eval 'use POSIX qw(SA_SIGINFO); SA_SIGINFO';
-    skip("no SA_SIGINFO", 1) if $@;
-    skip("SA_SIGINFO is broken on AIX 4.2", 1) if ($^O.$Config{osvers}) =~ m/^aix4\.2/;
+    skip("no SA_SIGINFO", $tests) if $@;
+    skip("SA_SIGINFO is broken on AIX 4.2", $tests) if ($^O.$Config{osvers}) =~ m/^aix4\.2/;
+    skip("SA_SIGINFO is broken on os390", $tests) if ($^O.$Config{osvers}) =~ m/os390/;
+    eval "use POSIX qw($opt_val{$_}); \$siginfo{$_} = $opt_val{$_}"
+        for keys %opt_val;
     sub hiphup {
-	is($_[1]->{signo}, SIGHUP, "SA_SIGINFO got right signal");
+        for my $field (sort keys %{{ %siginfo, %opt_val }}) {
+            SKIP: {
+                skip("siginfo_t has no $field field", 1)
+                    unless %always{$field} or ($Config{"d_siginfo_si_$field"} || '') eq 'define';
+                skip("no constant defined for SA_SIGINFO $field value $opt_val{$field}", 1)
+                    unless defined $siginfo{$field};
+                skip("SA_SIGINFO $field value is wrong on $^O: $skip{$field}{$^O}", 1)
+                    if $skip{$field}{$^O};
+                is($_[1]->{$field}, $siginfo{$field}, "SA_SIGINFO got right $field")
+            }
+        }
     }
     my $act = POSIX::SigAction->new('hiphup', 0, SA_SIGINFO);
     sigaction(SIGHUP, $act);

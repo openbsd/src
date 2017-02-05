@@ -138,7 +138,9 @@ Amx|PADNAMELIST *|PadlistNAMES|PADLIST padlist
 Amx|SSize_t|PadMAX|PAD pad
 Amx|SSize_t|PadlistMAX|PADLIST padlist
 Amx|SSize_t|PadlistNAMESMAX|PADLIST padlist
+Amx|SSize_t|PadnameREFCNT|PADNAME pn
 Amx|SSize_t|PadnamelistMAX|PADNAMELIST pnl
+Amx|SSize_t|PadnamelistREFCNT|PADNAMELIST pnl
 Amx|STRLEN|PadnameLEN|PADNAME pn
 Amx|SV **|PadARRAY|PAD pad
 Amx|SV *|PadnameSV|PADNAME pn
@@ -153,6 +155,8 @@ Amx|char *|PadnamePV|PADNAME pn
 Amx|void|BhkDISABLE|BHK *hk|which
 Amx|void|BhkENABLE|BHK *hk|which
 Amx|void|BhkENTRY_set|BHK *hk|which|void *ptr
+Amx|void|PadnameREFCNT_dec|PADNAME pn
+Amx|void|PadnamelistREFCNT_dec|PADNAMELIST pnl
 Amx|void|cophh_free|COPHH *cophh
 Amx|void|lex_stuff_pvs|const char *pv|U32 flags
 Am|AV*|GvAV|GV* gv
@@ -179,6 +183,7 @@ Am|STRLEN|HvENAMELEN|HV *stash
 Am|STRLEN|HvNAMELEN|HV *stash
 Am|STRLEN|SvCUR|SV* sv
 Am|STRLEN|SvLEN|SV* sv
+Am|STRLEN|isUTF8_CHAR|const U8 *s|const U8 *e
 Am|SV *|boolSV|bool b
 Am|SV *|cop_hints_fetch_pvn|const COP *cop|const char *keypv|STRLEN keylen|U32 hash|U32 flags
 Am|SV *|cop_hints_fetch_pvs|const COP *cop|const char *key|U32 flags
@@ -201,10 +206,12 @@ Am|SV*|SvRV|SV* sv
 Am|SV*|newRV_inc|SV* sv
 Am|SV*|newSVpvn_utf8|NULLOK const char* s|STRLEN len|U32 utf8
 Am|U32|HeHASH|HE* he
+Am|U32|HeUTF8|HE* he
 Am|U32|OP_CLASS|OP *o
 Am|U32|SvGAMAGIC|SV* sv
 Am|U32|SvIOKp|SV* sv
 Am|U32|SvIOK|SV* sv
+Am|U32|SvIsCOW|SV* sv
 Am|U32|SvNIOKp|SV* sv
 Am|U32|SvNIOK|SV* sv
 Am|U32|SvNOKp|SV* sv
@@ -236,10 +243,14 @@ Am|UV|toTITLE_uni|UV cp|U8* s|STRLEN* lenp
 Am|UV|toTITLE_utf8|U8* p|U8* s|STRLEN* lenp
 Am|UV|toUPPER_uni|UV cp|U8* s|STRLEN* lenp
 Am|UV|toUPPER_utf8|U8* p|U8* s|STRLEN* lenp
+Am|bool|OP_TYPE_IS_OR_WAS|OP *o|Optype type
+Am|bool|OP_TYPE_IS|OP *o|Optype type
+Am|bool|OpHAS_SIBLING|OP *o
+Am|bool|OpSIBLING_set|OP *o|OP *sib
+Am|bool|OpSIBLING|OP *o
 Am|bool|SvIOK_UV|SV* sv
 Am|bool|SvIOK_notUV|SV* sv
 Am|bool|SvIsCOW_shared_hash|SV* sv
-Am|bool|SvIsCOW|SV* sv
 Am|bool|SvRXOK|SV* sv
 Am|bool|SvTAINTED|SV* sv
 Am|bool|SvTRUE_nomg|SV* sv
@@ -274,7 +285,6 @@ Am|bool|strnEQ|char* s1|char* s2|STRLEN len
 Am|bool|strnNE|char* s1|char* s2|STRLEN len
 Am|char *|SvGROW|SV* sv|STRLEN len
 Am|char*|HePV|HE* he|STRLEN len
-Am|char*|HeUTF8|HE* he
 Am|char*|HvENAME|HV* stash
 Am|char*|HvNAME|HV* stash
 Am|char*|SvEND|SV* sv
@@ -307,7 +317,7 @@ Am|void *|MoveD|void* src|void* dest|int nitems|type
 Am|void *|ZeroD|void* dest|int nitems|type
 Am|void*|HeKEY|HE* he
 Am|void|Copy|void* src|void* dest|int nitems|type
-Am|void|EXTEND|SP|int nitems
+Am|void|EXTEND|SP|SSize_t nitems
 Am|void|Move|void* src|void* dest|int nitems|type
 Am|void|Newxc|void* ptr|int nitems|type|cast
 Am|void|Newxz|void* ptr|int nitems|type
@@ -364,9 +374,9 @@ Am|void|SvSETMAGIC|SV* sv
 Am|void|SvSHARE|SV* sv
 Am|void|SvSTASH_set|SV* sv|HV* val
 Am|void|SvSetMagicSV_nosteal|SV* dsv|SV* ssv
-Am|void|SvSetMagicSV|SV* dsb|SV* ssv
+Am|void|SvSetMagicSV|SV* dsv|SV* ssv
 Am|void|SvSetSV_nosteal|SV* dsv|SV* ssv
-Am|void|SvSetSV|SV* dsb|SV* ssv
+Am|void|SvSetSV|SV* dsv|SV* ssv
 Am|void|SvTAINTED_off|SV* sv
 Am|void|SvTAINTED_on|SV* sv
 Am|void|SvTAINT|SV* sv
@@ -416,6 +426,7 @@ Am|void|sv_catsv_nomg|SV* dsv|SV* ssv
 Am|void|sv_setpvs_mg|SV* sv|const char* s
 Am|void|sv_setpvs|SV* sv|const char* s
 Am|void|sv_setsv_nomg|SV* dsv|SV* ssv
+Am||XopENTRYCUSTOM|const OP *o|which
 Am||XopENTRY|XOP *xop|which
 mU||LVRET
 mn|GV *|PL_DBsub
@@ -438,6 +449,7 @@ m|STRLEN|PAD_COMPNAME_GEN|PADOFFSET po
 m|SV *|CX_CURPAD_SV|struct context|PADOFFSET po
 m|SV *|PAD_BASE_SV	|PADLIST padlist|PADOFFSET po
 m|SV *|PAD_SETSV	|PADOFFSET po|SV* sv
+m|SV *|PAD_SV	|PADOFFSET po
 m|SV *|PAD_SVl	|PADOFFSET po
 m|SV *|refcounted_he_fetch_pvs|const struct refcounted_he *chain|const char *key|U32 flags
 m|U32|PAD_COMPNAME_FLAGS|PADOFFSET po
@@ -455,7 +467,6 @@ m|void|PAD_SAVE_LOCAL|PAD *opad|PAD *npad
 m|void|PAD_SAVE_SETNULLPAD
 m|void|PAD_SET_CUR	|PADLIST padlist|I32 n
 m|void|PAD_SET_CUR_NOSAVE	|PADLIST padlist|I32 n
-m|void|PAD_SV	|PADOFFSET po
 m|void|SAVECLEARSV	|SV **svp
 m|void|SAVECOMPPAD
 m|void|SAVEPADSV	|PADOFFSET po

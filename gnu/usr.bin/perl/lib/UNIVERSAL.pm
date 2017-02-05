@@ -1,27 +1,18 @@
 package UNIVERSAL;
 
-our $VERSION = '1.11';
+our $VERSION = '1.13';
 
 # UNIVERSAL should not contain any extra subs/methods beyond those
-# that it exists to define. The use of Exporter below is a historical
-# accident that can't be fixed without breaking code.  Note that we
-# *don't* set @ISA here, as we don't want all classes/objects inheriting from
-# Exporter.  It's bad enough that all classes have a import() method
-# whenever UNIVERSAL.pm is loaded.
-require Exporter;
-@EXPORT_OK = qw(isa can VERSION);
+# that it exists to define. The existence of import() below is a historical
+# accident that can't be fixed without breaking code.
 
 # Make sure that even though the import method is called, it doesn't do
 # anything unless called on UNIVERSAL.
 sub import {
     return unless $_[0] eq __PACKAGE__;
     return unless @_ > 1;
-    require warnings;
-    warnings::warnif(
-      'deprecated',
-      'UNIVERSAL->import is deprecated and will be removed in a future perl',
-    );
-    goto &Exporter::import;
+    require Carp;
+    Carp::croak("UNIVERSAL does not export anything");
 }
 
 1;
@@ -190,21 +181,15 @@ available to your program (and you should not do so).
 
 =head1 EXPORTS
 
-None by default.
+None.
 
-You may request the import of three functions (C<isa>, C<can>, and C<VERSION>),
-B<but this feature is deprecated and will be removed>.  Please don't do this in
-new code.
-
-For example, previous versions of this documentation suggested using C<isa> as
+Previous versions of this documentation suggested using C<isa> as
 a function to determine the type of a reference:
 
-  use UNIVERSAL 'isa';
+  $yes = UNIVERSAL::isa($h, "HASH");
+  $yes = UNIVERSAL::isa("Foo", "Bar");
 
-  $yes = isa $h, "HASH";
-  $yes = isa "Foo", "Bar";
-
-The problem is that this code will I<never> call an overridden C<isa> method in
+The problem is that this code would I<never> call an overridden C<isa> method in
 any class.  Instead, use C<reftype> from L<Scalar::Util> for the first case:
 
   use Scalar::Util 'reftype';

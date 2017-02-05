@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-4 Secure Hash Standard
  *
- * Copyright (C) 2003-2014 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2015 Mark Shelor, All Rights Reserved
  *
- * Version: 5.88
- * Mon Mar 17 08:46:10 MST 2014
+ * Version: 5.95
+ * Sat Jan 10 12:15:36 MST 2015
  *
  */
 
@@ -14,7 +14,6 @@
 
 #undef sha_384_512
 #undef W64
-#undef strto64
 #undef sha512
 #undef H0384
 #undef H0512
@@ -34,7 +33,7 @@
 #define sigmaQ0(x)	(ROTRQ(x,  1) ^ ROTRQ(x,  8) ^ SR64(x,  7))
 #define sigmaQ1(x)	(ROTRQ(x, 19) ^ ROTRQ(x, 61) ^ SR64(x,  6))
 
-static W64 K512[80] =			/* SHA-384/512 constants */
+static const W64 K512[80] =		/* SHA-384/512 constants */
 {
 C64(0x428a2f98d728ae22), C64(0x7137449123ef65cd), C64(0xb5c0fbcfec4d3b2f),
 C64(0xe9b5dba58189dbbc), C64(0x3956c25bf348b538), C64(0x59f111f1b605d019),
@@ -65,50 +64,39 @@ C64(0x431d67c49c100d4c), C64(0x4cc5d4becb3e42b6), C64(0x597f299cfc657e2a),
 C64(0x5fcb6fab3ad6faec), C64(0x6c44198c4a475817)
 };
 
-static W64 H0384[8] =		/* SHA-384 initial hash value */
+static const W64 H0384[8] =	/* SHA-384 initial hash value */
 {
 C64(0xcbbb9d5dc1059ed8), C64(0x629a292a367cd507), C64(0x9159015a3070dd17),
 C64(0x152fecd8f70e5939), C64(0x67332667ffc00b31), C64(0x8eb44a8768581511),
 C64(0xdb0c2e0d64f98fa7), C64(0x47b5481dbefa4fa4)
 };
 
-static W64 H0512[8] =		/* SHA-512 initial hash value */
+static const W64 H0512[8] =	/* SHA-512 initial hash value */
 {
 C64(0x6a09e667f3bcc908), C64(0xbb67ae8584caa73b), C64(0x3c6ef372fe94f82b),
 C64(0xa54ff53a5f1d36f1), C64(0x510e527fade682d1), C64(0x9b05688c2b3e6c1f),
 C64(0x1f83d9abfb41bd6b), C64(0x5be0cd19137e2179)
 };
 
-static W64 H0512224[8] =	/* SHA-512/224 initial hash value */
+static const W64 H0512224[8] =	/* SHA-512/224 initial hash value */
 {
 C64(0x8c3d37c819544da2), C64(0x73e1996689dcd4d6), C64(0x1dfab7ae32ff9c82),
 C64(0x679dd514582f9fcf), C64(0x0f6d2b697bd44da8), C64(0x77e36f7304c48942),
 C64(0x3f9d85a86a1d36c8), C64(0x1112e6ad91d692a1)
 };
 
-static W64 H0512256[8] =	/* SHA-512/256 initial hash value */
+static const W64 H0512256[8] =	/* SHA-512/256 initial hash value */
 {
 C64(0x22312194fc2bf72c), C64(0x9f555fa3c84c64c2), C64(0x2393b86b6f53b151),
 C64(0x963877195940eabd), C64(0x96283ee2a88effe3), C64(0xbe5e1e2553863992),
 C64(0x2b0199fc2c85b8aa), C64(0x0eb72ddc81c52ca2)
 };
 
-/* strto64: converts hex string to a 64-bit word */
-static W64 strto64(char *s)
-{
-	char str[2] = {0, 0};
-	W64 u = C64(0);
-
-	while (isxdigit(str[0] = *s++))
-		u = (u << 4) + strtoul(str, NULL, 16);
-	return(u);
-}
-
 static void sha512(SHA *s, unsigned char *block) /* SHA-384/512 transform */
 {
 	W64 a, b, c, d, e, f, g, h, T1, T2;
 	W64 W[80];
-	W64 *H = (W64 *) s->H;
+	W64 *H = s->H64;
 	int t;
 
 	SHA64_SCHED(W, block);

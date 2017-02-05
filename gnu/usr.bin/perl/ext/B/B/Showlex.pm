@@ -1,6 +1,6 @@
 package B::Showlex;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 use strict;
 use B qw(svref_2object comppadlist class);
@@ -36,7 +36,8 @@ sub shownamearray {
     for ($i = 0; $i < $count; $i++) {
 	my $sv = $els[$i];
 	if (class($sv) ne "SPECIAL") {
-	    printf $walkHandle "$i: %s (0x%lx) %s\n", class($sv), $$sv, $sv->PVX;
+	    printf $walkHandle "$i: (0x%lx) %s\n",
+				$$sv, $sv->PVX // "undef" || "const";
 	} else {
 	    printf $walkHandle "$i: %s\n", $sv->terse;
 	    #printf $walkHandle "$i: %s\n", B::Concise::concise_sv($sv);
@@ -64,16 +65,27 @@ sub showlex {
 
 my ($newlex, $nosp1); # rendering state vars
 
+sub padname_terse {
+    my $name = shift;
+    return $name->terse if class($name) eq 'SPECIAL';
+    my $str = $name->PVX;
+    return sprintf "(0x%lx) %s",
+	       $$name,
+	       length $str ? qq'"$str"' : defined $str ? "const" : 'undef';
+}
+
 sub newlex { # drop-in for showlex
     my ($objname, $names, $vals) = @_;
     my @names = $names->ARRAY;
     my @vals  = $vals->ARRAY;
     my $count = @names;
     print $walkHandle "$objname Pad has $count entries\n";
-    printf $walkHandle "0: %s\n", $names[0]->terse unless $nosp1;
+    printf $walkHandle "0: %s\n", padname_terse($names[0]) unless $nosp1;
     for (my $i = 1; $i < $count; $i++) {
-	printf $walkHandle "$i: %s = %s\n", $names[$i]->terse, $vals[$i]->terse
-	    unless $nosp1 and $names[$i]->terse =~ /SPECIAL/;
+	printf $walkHandle "$i: %s = %s\n", padname_terse($names[$i]),
+					    $vals[$i]->terse,
+	    unless $nosp1
+	       and class($names[$i]) eq 'SPECIAL' || !$names[$i]->LEN;
     }
 }
 
@@ -143,10 +155,10 @@ Traditional form:
 
  $ perl -MO=Showlex -e 'my ($i,$j,$k)=(1,"foo")'
  Pad of lexical names for comppadlist has 4 entries
- 0: SPECIAL #1 &PL_sv_undef
- 1: PVNV (0x9db0fb0) $i
- 2: PVNV (0x9db0f38) $j
- 3: PVNV (0x9db0f50) $k
+ 0: (0x8caea4) undef
+ 1: (0x9db0fb0) $i
+ 2: (0x9db0f38) $j
+ 3: (0x9db0f50) $k
  Pad of lexical values for comppadlist has 5 entries
  0: SPECIAL #1 &PL_sv_undef
  1: NULL (0x9da4234)
@@ -159,10 +171,10 @@ New-style form:
 
  $ perl -MO=Showlex,-newlex -e 'my ($i,$j,$k)=(1,"foo")'
  main Pad has 4 entries
- 0: SPECIAL #1 &PL_sv_undef
- 1: PVNV (0xa0c4fb8) "$i" = NULL (0xa0b8234)
- 2: PVNV (0xa0c4f40) "$j" = NULL (0xa0c4f34)
- 3: PVNV (0xa0c4f58) "$k" = NULL (0xa0c4f4c)
+ 0: (0x8caea4) undef
+ 1: (0xa0c4fb8) "$i" = NULL (0xa0b8234)
+ 2: (0xa0c4f40) "$j" = NULL (0xa0c4f34)
+ 3: (0xa0c4f58) "$k" = NULL (0xa0c4f4c)
  -e syntax OK
 
 New form, no specials, outside O framework:
@@ -170,9 +182,9 @@ New form, no specials, outside O framework:
  $ perl -MB::Showlex -e \
     'my ($i,$j,$k)=(1,"foo"); B::Showlex::compile(-newlex,-nosp)->()'
  main Pad has 4 entries
- 1: PVNV (0x998ffb0) "$i" = IV (0x9983234) 1
- 2: PVNV (0x998ff68) "$j" = PV (0x998ff5c) "foo"
- 3: PVNV (0x998ff80) "$k" = NULL (0x998ff74)
+ 1: (0x998ffb0) "$i" = IV (0x9983234) 1
+ 2: (0x998ff68) "$j" = PV (0x998ff5c) "foo"
+ 3: (0x998ff80) "$k" = NULL (0x998ff74)
 
 Note that this example shows the values of the lexicals, whereas the other
 examples did not (as they're compile-time only).

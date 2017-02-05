@@ -34,24 +34,19 @@ while (<DATA>) {
 }
 
 # If this hash changes, make sure the equivalent hash in
-# dist/B-Deparse/Deparse.pm is also updated.
+# lib/B/Deparse.pm (%feature_keywords) is also updated.
 my %feature_kw = (
-	given   => 'switch',
-	when    => 'switch',
-	default => 'switch',
-	# continue is already a keyword
-	break   => 'switch',
-
-	say     => 'say',
-
-	state	=> 'state',
-
-	evalbytes=>'evalbytes',
-
-	__SUB__ => '__SUB__',
-
-	fc      => 'fc',
-	);
+    state     => 'state',
+    say       => 'say',
+    given     => 'switch',
+    when      => 'switch',
+    default   => 'switch',
+    # continue is already a keyword
+    break     => 'switch',
+    evalbytes => 'evalbytes',
+    __SUB__   => '__SUB__',
+    fc        => 'fc',
+);
 
 my %pos = map { ($_ => 1) } @{$by_strength{'+'}};
 
@@ -75,8 +70,6 @@ print $c <<"END";
 I32
 Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
 {
-  dVAR;
-
   PERL_ARGS_ASSERT_KEYWORD;
 
 $switch

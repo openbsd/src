@@ -17,7 +17,7 @@
 /* We can't include the <string.h> unconditionally
  * since it has prototypes conflicting with the gcc builtins. */
 extern void  *memchr(const void *s, int c, size_t n);
-#ifndef DL_SYMBIAN_XS
+#ifndef PERL_IN_DL_SYMBIAN_XS
 /* dl_symbian.xs needs to see the C++ prototype of memset() instead */
 extern void  *memset(void *s, int c, size_t n);
 extern size_t strlen(const char *s);

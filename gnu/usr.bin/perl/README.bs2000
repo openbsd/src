@@ -7,6 +7,9 @@ about pod in pod/perlpod.pod or the short summary in the INSTALL file.
 
 perlbs2000 - building and installing Perl for BS2000.
 
+B<This document needs to be updated, but we don't know what it should say.
+Please email comments to L<perlbug@perl.org|mailto:perlbug@perl.org>.>
+
 =head1 SYNOPSIS
 
 This document will help you Configure, build, test and install Perl

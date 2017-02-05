@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.20_06";
+our $VERSION = "1.25";
 
 my %err = ();
 
@@ -61,11 +61,7 @@ sub process_file {
             warn "Cannot open '$file'";
             return;
 	}     
-    } elsif ($Config{gccversion} ne ''
-             # OpenSTEP has gcc 2.7.2.1 which recognizes but
-	     # doesn't implement the -dM flag.
-	     && $^O ne 'openstep' && $^O ne 'next' && $^O ne 'darwin'
-	     ) { 
+    } elsif ($Config{gccversion} ne '' && $^O ne 'darwin' ) {
 	# With the -dM option, gcc outputs every #define it finds
 	unless(open(FH,"$Config{cc} -E -dM $Config{cppflags} $file |")) {
             warn "Cannot open '$file'";
@@ -80,9 +76,16 @@ sub process_file {
 	}
     }
     
+    my $pat;
+    if ($IsMSWin32) {
+	$pat = '^\s*#\s*define\s+((?:WSA)?E\w+)\s+';
+    }
+    else {
+	$pat = '^\s*#\s*define\s+(E\w+)\s+';
+    }
     while(<FH>) {
 	$err{$1} = 1
-	    if /^\s*#\s*define\s+(E\w+)\s+/;
+	    if /$pat/;
     }
 
     close(FH);
@@ -108,15 +111,9 @@ sub default_cpp {
 
 sub get_files {
     my %file = ();
-    # VMS keeps its include files in system libraries (well, except for Gcc)
+    # VMS keeps its include files in system libraries
     if ($^O eq 'VMS') {
-	if ($Config{vms_cc_type} eq 'decc') {
-	    $file{'Sys$Library:DECC$RTLDEF.TLB'} = 1;
-	} elsif ($Config{vms_cc_type} eq 'vaxc') {
-	    $file{'Sys$Library:vaxcdef.tlb'} = 1;
-	} elsif ($Config{vms_cc_type} eq 'gcc') {
-	    $file{'gnu_cc_include:[000000]errno.h'} = 1;
-	}
+	$file{'Sys$Library:DECC$RTLDEF.TLB'} = 1;
     } elsif ($^O eq 'os390') {
 	# OS/390 C compiler doesn't generate #file or #line directives
 	$file{'/usr/include/errno.h'} = 1;
@@ -288,13 +285,24 @@ sub write_errno_pm {
 
 package Errno;
 require Exporter;
-use Config;
 use strict;
 
+EDQ
+
+    # Errno only needs Config to make sure it hasn't changed platforms.
+    # If someone set $ENV{PERL_BUILD_EXPAND_CONFIG_VARS} at build time,
+    # they've already declared perl doesn't need to worry about this risk.
+    if(!$ENV{'PERL_BUILD_EXPAND_CONFIG_VARS'}) {
+        print <<"CONFIG_CHECK_END";
+use Config;
 "\$Config{'archname'}-\$Config{'osvers'}" eq
 "$archname-$Config{'osvers'}" or
 	die "Errno architecture ($archname-$Config{'osvers'}) does not match executable architecture (\$Config{'archname'}-\$Config{'osvers'})";
 
+CONFIG_CHECK_END
+}
+
+    print <<"EDQ";
 our \$VERSION = "$VERSION";
 \$VERSION = eval \$VERSION;
 our \@ISA = 'Exporter';
@@ -357,7 +365,16 @@ ESQ
 	EUSERS EWOULDBLOCK EXDEV));
 
     $k =~ s/(.{50,70})\s/$1\n\t/g;
-    print "\t",$k,"\n    )]\n);\n\n";
+    print "\t",$k,"\n    )],\n";
+
+    if ($IsMSWin32) {
+	print "    WINSOCK => [qw(\n";
+	$k = join(" ", grep { /^WSAE/ } keys %err);
+	$k =~ s/(.{50,70})\s/$1\n\t/g;
+	print "\t",$k,"\n    )],\n";
+    }
+
+    print ");\n\n";
 
     print <<'ESQ';
 sub TIEHASH { bless \%err }
@@ -405,8 +422,12 @@ Errno - System errno constants
 =head1 DESCRIPTION
 
 C<Errno> defines and conditionally exports all the error constants
-defined in your system C<errno.h> include file. It has a single export
+defined in your system F<errno.h> include file. It has a single export
 tag, C<:POSIX>, which will export all POSIX defined error numbers.
+
+On Windows, C<Errno> also defines and conditionally exports all the
+Winsock error constants defined in your system F<WinError.h> include
+file. These are included in a second export tag, C<:WINSOCK>.
 
 C<Errno> also makes C<%!> magic such that each element of C<%!> has a
 non-zero value only if C<$!> is set to that value. For example:

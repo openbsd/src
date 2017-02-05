@@ -35,9 +35,6 @@ CAT2(sv_setsv_cow_hashkey_, SUFFIX) () {
 /*
  * Local variables:
  * mode: c
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
  * End:
  *
  * ex: set ts=8 sts=4 sw=4 et:

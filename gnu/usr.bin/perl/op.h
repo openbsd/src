@@ -24,7 +24,8 @@
  *                      !op_slabbed.
  *	op_savefree	on savestack via SAVEFREEOP
  *	op_folded	Result/remainder of a constant fold operation.
- *	op_spare	Two spare bits
+ *	op_moresib	this op is is not the last sibling
+ *	op_spare	One spare bit
  *	op_flags	Flags common to all operations.  See OPf_* below.
  *	op_private	Flags peculiar to a particular operation (BUT,
  *			by default, set to the number of children until
@@ -35,22 +36,24 @@
 
 #define OPCODE U16
 
-#ifdef PERL_MAD
-#  define MADPROP_IN_BASEOP	MADPROP*	op_madprop;
-#else
-#  define MADPROP_IN_BASEOP
-#endif
-
 typedef PERL_BITFIELD16 Optype;
+
+/* this field now either points to the next sibling or to the parent,
+ * depending on op_moresib. So rename it from op_sibling to op_sibparent.
+ */
+#ifdef PERL_OP_PARENT
+#  define _OP_SIBPARENT_FIELDNAME op_sibparent
+#else
+#  define _OP_SIBPARENT_FIELDNAME op_sibling
+#endif
 
 #ifdef BASEOP_DEFINITION
 #define BASEOP BASEOP_DEFINITION
 #else
 #define BASEOP				\
     OP*		op_next;		\
-    OP*		op_sibling;		\
+    OP*		_OP_SIBPARENT_FIELDNAME;\
     OP*		(*op_ppaddr)(pTHX);	\
-    MADPROP_IN_BASEOP			\
     PADOFFSET	op_targ;		\
     PERL_BITFIELD16 op_type:9;		\
     PERL_BITFIELD16 op_opt:1;		\
@@ -58,12 +61,13 @@ typedef PERL_BITFIELD16 Optype;
     PERL_BITFIELD16 op_savefree:1;	\
     PERL_BITFIELD16 op_static:1;	\
     PERL_BITFIELD16 op_folded:1;	\
-    PERL_BITFIELD16 op_spare:2;		\
+    PERL_BITFIELD16 op_moresib:1;       \
+    PERL_BITFIELD16 op_spare:1;		\
     U8		op_flags;		\
     U8		op_private;
 #endif
 
-/* If op_type:9 is changed to :10, also change PUSHEVAL in cop.h.
+/* If op_type:9 is changed to :10, also change cx_pusheval()
    Also, if the type of op_type is ever changed (e.g. to PERL_BITFIELD32)
    then all the other bit-fields before/after it should change their
    types too to let VC pack them into the same 4 byte integer.*/
@@ -109,17 +113,18 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On local LVAL, don't init local value. */
 				/*  On OP_SORT, subroutine is inlined. */
 				/*  On OP_NOT, inversion was implicit. */
-				/*  On OP_LEAVE, don't restore curpm. */
+				/*  On OP_LEAVE, don't restore curpm, e.g.
+                                 *      /(...)/ while ...>;  */
 				/*  On truncate, we truncate filehandle */
 				/*  On control verbs, we saw no label */
 				/*  On flipflop, we saw ... instead of .. */
 				/*  On UNOPs, saw bare parens, e.g. eof(). */
-				/*  On OP_ENTERSUB || OP_NULL, saw a "do". */
+				/*  On OP_CHDIR, handle (or bare parens) */
+				/*  On OP_NULL, saw a "do". */
 				/*  On OP_EXISTS, treat av as av, not avhv.  */
 				/*  On OP_(ENTER|LEAVE)EVAL, don't clear $@ */
                                 /*  On pushre, rx is used as part of split, e.g. split " " */
 				/*  On regcomp, "use re 'eval'" was in scope */
-				/*  On OP_READLINE, was <$filehandle> */
 				/*  On RV2[ACGHS]V, don't create GV--in
 				    defined()*/
 				/*  On OP_DBSTATE, indicates breakpoint
@@ -130,9 +135,10 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On OP_SMARTMATCH, an implicit smartmatch */
 				/*  On OP_ANONHASH and OP_ANONLIST, create a
 				    reference to the new anon hash or array */
-				/*  On OP_HELEM and OP_HSLICE, localization will be followed
-				    by assignment, so do not wipe the target if it is special
-				    (e.g. a glob or a magic SV) */
+				/*  On OP_HELEM, OP_MULTIDEREF and OP_HSLICE,
+                                    localization will be followed by assignment,
+                                    so do not wipe the target if it is special
+                                    (e.g. a glob or a magic SV) */
 				/*  On OP_MATCH, OP_SUBST & OP_TRANS, the
 				    operand of a logical or conditional
 				    that was optimised away, so it should
@@ -144,225 +150,55 @@ Deprecated.  Use C<GIMME_V> instead.
 			         */
                                 /*  On OP_PADRANGE, push @_ */
                                 /*  On OP_DUMP, has no label */
+                                /*  On OP_UNSTACK, in a C-style for loop */
+/* There is no room in op_flags for this one, so it has its own bit-
+   field member (op_folded) instead.  The flag is only used to tell
+   op_convert_list to set op_folded.  */
+#define OPf_FOLDED      1<<16
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
 #define OPf_KNOW	OPf_WANT
 
-#define GIMME \
+#if !defined(PERL_CORE) && !defined(PERL_EXT)
+#  define GIMME \
 	  (PL_op->op_flags & OPf_WANT					\
 	   ? ((PL_op->op_flags & OPf_WANT) == OPf_WANT_LIST		\
 	      ? G_ARRAY							\
 	      : G_SCALAR)						\
 	   : dowantarray())
+#endif
 
-/* Lower bits of op_private often carry the number of arguments, as
- * set by newBINOP, newUNOP and ck_fun */
 
-/* NOTE: OP_NEXTSTATE and OP_DBSTATE (i.e. COPs) carry NATIVE_HINTS
- * in op_private */
+/* NOTE: OPp* flags are now auto-generated and defined in opcode.h,
+ *       from data in regen/op_private */
 
-/* Private for lvalues */
-#define OPpLVAL_INTRO	128	/* Lvalue must be localized or lvalue sub */
 
-/* Private for OPs with TARGLEX */
-  /* (lower bits may carry MAXARG) */
-#define OPpTARGET_MY		16	/* Target is PADMY. */
-
-/* Private for OP_LEAVE, OP_LEAVESUB, OP_LEAVESUBLV and OP_LEAVEWRITE */
-#define OPpREFCOUNTED		64	/* op_targ carries a refcount */
-
-/* Private for OP_LEAVE and OP_LEAVELOOP */
-#define OPpLVALUE		128	/* Do not copy return value */
-
-/* Private for OP_AASSIGN */
-#define OPpASSIGN_COMMON	64	/* Left & right have syms in common. */
-
-/* Private for OP_SASSIGN */
-#define OPpASSIGN_BACKWARDS	64	/* Left & right switched. */
-#define OPpASSIGN_CV_TO_GV	128	/* Possible optimisation for constants. */
-
-/* Private for OP_MATCH and OP_SUBST{,CONT} */
-#define OPpRUNTIME		64	/* Pattern coming in on the stack */
-
-/* Private for OP_TRANS */
-#define OPpTRANS_FROM_UTF	1
-#define OPpTRANS_TO_UTF		2
-#define OPpTRANS_IDENTICAL	4	/* right side is same as left */
-#define OPpTRANS_SQUASH		8
-    /* 16 is used for OPpTARGET_MY */
-#define OPpTRANS_COMPLEMENT	32
-#define OPpTRANS_GROWS		64
-#define OPpTRANS_DELETE		128
 #define OPpTRANS_ALL	(OPpTRANS_FROM_UTF|OPpTRANS_TO_UTF|OPpTRANS_IDENTICAL|OPpTRANS_SQUASH|OPpTRANS_COMPLEMENT|OPpTRANS_GROWS|OPpTRANS_DELETE)
 
-/* Private for OP_REPEAT */
-#define OPpREPEAT_DOLIST	64	/* List replication. */
 
-/* Private for OP_RV2GV, OP_RV2SV, OP_AELEM, OP_HELEM, OP_PADSV */
-#define OPpDEREF		(32|64)	/* autovivify: Want ref to something: */
-#define OPpDEREF_AV		32	/*   Want ref to AV. */
-#define OPpDEREF_HV		64	/*   Want ref to HV. */
-#define OPpDEREF_SV		(32|64)	/*   Want ref to SV. */
 
-/* OP_ENTERSUB and OP_RV2CV flags
-
-Flags are set on entersub and rv2cv in three phases:
-  parser  - the parser passes the flag to the op constructor
-  check   - the check routine called by the op constructor sets the flag
-  context - application of scalar/ref/lvalue context applies the flag
-
-In the third stage, an entersub op might turn into an rv2cv op (undef &foo,
-\&foo, lock &foo, exists &foo, defined &foo).  The two places where that
-happens (op_lvalue_flags and doref in op.c) need to make sure the flags do
-not conflict.  Flags applied in the context phase are only set when there
-is no conversion of op type.
-
-  bit  entersub flag       phase   rv2cv flag             phase
-  ---  -------------       -----   ----------             -----
-    1  OPpENTERSUB_INARGS  context OPpMAY_RETURN_CONSTANT context
-    2  HINT_STRICT_REFS    check   HINT_STRICT_REFS       check
-    4  OPpENTERSUB_HASTARG check
-    8                              OPpENTERSUB_AMPER      parser
-   16  OPpENTERSUB_DB      check
-   32  OPpDEREF_AV         context
-   64  OPpDEREF_HV         context
-  128  OPpLVAL_INTRO       context OPpENTERSUB_NOPAREN    parser
-
-*/
-
-  /* OP_ENTERSUB only */
-#define OPpENTERSUB_DB		16	/* Debug subroutine. */
-#define OPpENTERSUB_HASTARG	4	/* Called from OP tree. */
-#define OPpENTERSUB_INARGS	1	/* Lval used as arg to a sub. */
-/* used by OPpDEREF             (32|64) */
-/* used by HINT_STRICT_REFS     2          */
-  /* Mask for OP_ENTERSUB flags, the absence of which must be propagated
-     in dynamic context */
+/* Mask for OP_ENTERSUB flags, the absence of which must be propagated
+ in dynamic context */
 #define OPpENTERSUB_LVAL_MASK (OPpLVAL_INTRO|OPpENTERSUB_INARGS)
 
-  /* OP_RV2CV only */
-#define OPpENTERSUB_AMPER	8	/* Used & form to call. */
-#define OPpENTERSUB_NOPAREN	128	/* bare sub call (without parens) */
-#define OPpMAY_RETURN_CONSTANT	1	/* If a constant sub, return the constant */
 
-  /* OP_GV only */
-#define OPpEARLY_CV		32	/* foo() called before sub foo was parsed */
-  /* OP_?ELEM only */
-#define OPpLVAL_DEFER		16	/* Defer creation of array/hash elem */
-  /* OP_RV2[AH]V OP_[AH]SLICE */
-#define OPpSLICEWARNING		4	/* warn about @hash{$scalar} */
-  /* OP_RV2[SAH]V, OP_GVSV, OP_ENTERITER only */
-#define OPpOUR_INTRO		16	/* Variable was in an our() */
-  /* OP_RV2[AGH]V, OP_PAD[AH]V, OP_[AH]ELEM, OP_[AH]SLICE OP_AV2ARYLEN,
-     OP_R?KEYS, OP_SUBSTR, OP_POS, OP_VEC */
-#define OPpMAYBE_LVSUB		8	/* We might be an lvalue to return */
-  /* OP_RV2HV and OP_PADHV */
-#define OPpTRUEBOOL		32	/* %hash in (%hash || $foo) in
-					   void context */
-#define OPpMAYBE_TRUEBOOL	64	/* %hash in (%hash || $foo) where
-					   cx is not known till run time */
+/* things that can be elements of op_aux */
+typedef union  {
+    PADOFFSET pad_offset;
+    SV        *sv;
+    IV        iv;
+    UV        uv;
+} UNOP_AUX_item;
 
-  /* OP_SUBSTR only */
-#define OPpSUBSTR_REPL_FIRST	16	/* 1st arg is replacement string */
+#ifdef USE_ITHREADS
+#  define UNOP_AUX_item_sv(item) PAD_SVl((item)->pad_offset);
+#else
+#  define UNOP_AUX_item_sv(item) ((item)->sv);
+#endif
 
-  /* OP_PADSV only */
-#define OPpPAD_STATE		16	/* is a "state" pad */
-  /* for OP_RV2?V, lower bits carry hints (currently only HINT_STRICT_REFS) */
 
-  /* OP_PADRANGE only */
-  /* bit 7 is OPpLVAL_INTRO */
-#define OPpPADRANGE_COUNTMASK	127	/* bits 6..0 hold target range, */
-#define OPpPADRANGE_COUNTSHIFT	7	/* 7 bits in total */
 
-  /* OP_RV2GV only */
-#define OPpDONT_INIT_GV		4	/* Call gv_fetchpv with GV_NOINIT */
-/* (Therefore will return whatever is currently in the symbol table, not
-   guaranteed to be a PVGV)  */
-#define OPpALLOW_FAKE		16	/* OK to return fake glob */
-
-/* Private for OP_ENTERITER and OP_ITER */
-#define OPpITER_REVERSED	4	/* for (reverse ...) */
-#define OPpITER_DEF		8	/* for $_ or for my $_ */
-
-/* Private for OP_CONST */
-#define	OPpCONST_NOVER		2	/* no 6; */
-#define	OPpCONST_SHORTCIRCUIT	4	/* eg the constant 5 in (5 || foo) */
-#define	OPpCONST_STRICT		8	/* bareword subject to strict 'subs' */
-#define OPpCONST_ENTERED	16	/* Has been entered as symbol. */
-#define OPpCONST_BARE		64	/* Was a bare word (filehandle?). */
-
-/* Private for OP_FLIP/FLOP */
-#define OPpFLIP_LINENUM		64	/* Range arg potentially a line num. */
-
-/* Private for OP_LIST */
-#define OPpLIST_GUESSED		64	/* Guessed that pushmark was needed. */
-
-/* Private for OP_DELETE */
-#define OPpSLICE		64	/* Operating on a list of keys */
-/* Also OPpLVAL_INTRO (128) */
-
-/* Private for OP_EXISTS */
-#define OPpEXISTS_SUB		64	/* Checking for &sub, not {} or [].  */
-
-/* Private for OP_SORT */
-#define OPpSORT_NUMERIC		1	/* Optimized away { $a <=> $b } */
-#define OPpSORT_INTEGER		2	/* Ditto while under "use integer" */
-#define OPpSORT_REVERSE		4	/* Reversed sort */
-#define OPpSORT_INPLACE		8	/* sort in-place; eg @a = sort @a */
-#define OPpSORT_DESCEND		16	/* Descending sort */
-#define OPpSORT_QSORT		32	/* Use quicksort (not mergesort) */
-#define OPpSORT_STABLE		64	/* Use a stable algorithm */
-
-/* Private for OP_REVERSE */
-#define OPpREVERSE_INPLACE	8	/* reverse in-place (@a = reverse @a) */
-
-/* Private for OP_OPEN and OP_BACKTICK */
-#define OPpOPEN_IN_RAW		16	/* binmode(F,":raw") on input fh */
-#define OPpOPEN_IN_CRLF		32	/* binmode(F,":crlf") on input fh */
-#define OPpOPEN_OUT_RAW		64	/* binmode(F,":raw") on output fh */
-#define OPpOPEN_OUT_CRLF	128	/* binmode(F,":crlf") on output fh */
-
-/* Private for COPs */
-#define OPpHUSH_VMSISH		32	/* hush DCL exit msg vmsish mode*/
-/* Note: Used for NATIVE_HINTS (shifted from the values in PL_hints),
-	 currently defined by vms/vmsish.h:
-				64
-				128
- */
-
-/* Private for OP_FTXXX */
-#define OPpFT_ACCESS		2	/* use filetest 'access' */
-#define OPpFT_STACKED		4	/* stacked filetest, as "-f" in "-f -x $f" */
-#define OPpFT_STACKING		8	/* stacking filetest, as "-x" in "-f -x $f" */
-#define OPpFT_AFTER_t		16	/* previous op was -t */
-
-/* Private for OP_(MAP|GREP)(WHILE|START) */
-#define OPpGREP_LEX		2	/* iterate over lexical $_ */
-    
-/* Private for OP_ENTEREVAL */
-#define OPpEVAL_HAS_HH		2	/* Does it have a copy of %^H */
-#define OPpEVAL_UNICODE		4
-#define OPpEVAL_BYTES		8
-#define OPpEVAL_COPHH		16	/* Construct %^H from cop hints */
-#define OPpEVAL_RE_REPARSING	32	/* eval_sv(..., G_RE_REPARSING) */
-    
-/* Private for OP_CALLER, OP_WANTARRAY and OP_RUNCV */
-#define OPpOFFBYONE		128	/* Treat caller(1) as caller(2) */
-
-/* Private for OP_COREARGS */
-/* These must not conflict with OPpDONT_INIT_GV or OPpALLOW_FAKE.
-   See pp.c:S_rv2gv. */
-#define OPpCOREARGS_DEREF1	1	/* Arg 1 is a handle constructor */
-#define OPpCOREARGS_DEREF2	2	/* Arg 2 is a handle constructor */
-#define OPpCOREARGS_SCALARMOD	64	/* \$ rather than \[$@%*] */
-#define OPpCOREARGS_PUSHMARK	128	/* Call pp_pushmark */
-
-/* Private for OP_(LAST|REDO|NEXT|GOTO|DUMP) */
-#define OPpPV_IS_UTF8		128	/* label is in UTF8 */
-
-/* Private for OP_SPLIT */
-#define OPpSPLIT_IMPLIM		128	/* implicit limit */
 
 struct op {
     BASEOP
@@ -371,6 +207,12 @@ struct op {
 struct unop {
     BASEOP
     OP *	op_first;
+};
+
+struct unop_aux {
+    BASEOP
+    OP  	  *op_first;
+    UNOP_AUX_item *op_aux;
 };
 
 struct binop {
@@ -389,6 +231,22 @@ struct listop {
     BASEOP
     OP *	op_first;
     OP *	op_last;
+};
+
+struct methop {
+    BASEOP
+    union {
+        /* op_u.op_first *must* be aligned the same as the op_first
+         * field of the other op types, and op_u.op_meth_sv *must*
+         * be aligned with op_sv */
+        OP* op_first;   /* optree for method name */
+        SV* op_meth_sv; /* static method name */
+    } op_u;
+#ifdef USE_ITHREADS
+    PADOFFSET op_rclass_targ; /* pad index for redirect class */
+#else
+    SV*       op_rclass_sv;   /* static redirect class $o->A::meth() */
+#endif
 };
 
 struct pmop {
@@ -441,52 +299,84 @@ struct pmop {
 #define PM_SETRE(o,r)   ((o)->op_pmregexp = (r))
 #endif
 
-/* Leave some space, so future bit allocations can go either in the shared or
- * unshared area without affecting binary compatibility */
-#define PMf_BASE_SHIFT (_RXf_PMf_SHIFT_NEXT+6)
+/* Currently these PMf flags occupy a single 32-bit word.  Not all bits are
+ * currently used.  The lower bits are shared with their corresponding RXf flag
+ * bits, up to but not including _RXf_PMf_SHIFT_NEXT.  The unused bits
+ * immediately follow; finally the used Pmf-only (unshared) bits, so that the
+ * highest bit in the word is used.  This gathers all the unused bits as a pool
+ * in the middle, like so: 11111111111111110000001111111111
+ * where the '1's represent used bits, and the '0's unused.  This design allows
+ * us to allocate off one end of the pool if we need to add a shared bit, and
+ * off the other end if we need a non-shared bit, without disturbing the other
+ * bits.  This maximizes the likelihood of being able to change things without
+ * breaking binary compatibility.
+ *
+ * To add shared bits, do so in op_reg_common.h.  This should change
+ * _RXf_PMf_SHIFT_NEXT so that things won't compile.  Then come to regexp.h and
+ * op.h and adjust the constant adders in the definitions of PMf_BASE_SHIFT and
+ * Pmf_BASE_SHIFT down by the number of shared bits you added.  That's it.
+ * Things should be binary compatible.  But if either of these gets to having
+ * to subtract rather than add, leave at 0 and adjust all the entries below
+ * that are in terms of this according.  But if the first one of those is
+ * already PMf_BASE_SHIFT+0, there are no bits left, and a redesign is in
+ * order.
+ *
+ * To remove unshared bits, just delete its entry.  If you're where breaking
+ * binary compatibility is ok to do, you might want to adjust things to move
+ * the newly opened space so that it gets absorbed into the common pool.
+ *
+ * To add unshared bits, first use up any gaps in the middle.  Otherwise,
+ * allocate off the low end until you get to PMf_BASE_SHIFT+0.  If that isn't
+ * enough, move PMf_BASE_SHIFT down (if possible) and add the new bit at the
+ * other end instead; this preserves binary compatibility. */
+#define PMf_BASE_SHIFT (_RXf_PMf_SHIFT_NEXT+2)
 
 /* 'use re "taint"' in scope: taint $1 etc. if target tainted */
-#define PMf_RETAINT	(1<<(PMf_BASE_SHIFT+0))
+#define PMf_RETAINT	(1U<<(PMf_BASE_SHIFT+5))
 
 /* match successfully only once per reset, with related flag RXf_USED in
  * re->extflags holding state.  This is used only for ?? matches, and only on
  * OP_MATCH and OP_QR */
-#define PMf_ONCE	(1<<(PMf_BASE_SHIFT+1))
+#define PMf_ONCE	(1U<<(PMf_BASE_SHIFT+6))
 
 /* PMf_ONCE, i.e. ?pat?, has matched successfully.  Not used under threading. */
-#define PMf_USED        (1<<(PMf_BASE_SHIFT+3))
+#define PMf_USED        (1U<<(PMf_BASE_SHIFT+7))
 
 /* subst replacement is constant */
-#define PMf_CONST	(1<<(PMf_BASE_SHIFT+4))
+#define PMf_CONST	(1U<<(PMf_BASE_SHIFT+8))
 
 /* keep 1st runtime pattern forever */
-#define PMf_KEEP	(1<<(PMf_BASE_SHIFT+5))
+#define PMf_KEEP	(1U<<(PMf_BASE_SHIFT+9))
 
-#define PMf_GLOBAL	(1<<(PMf_BASE_SHIFT+6))	/* pattern had a g modifier */
+#define PMf_GLOBAL	(1U<<(PMf_BASE_SHIFT+10)) /* pattern had a g modifier */
 
 /* don't reset pos() if //g fails */
-#define PMf_CONTINUE	(1<<(PMf_BASE_SHIFT+7))
+#define PMf_CONTINUE	(1U<<(PMf_BASE_SHIFT+11))
 
 /* evaluating replacement as expr */
-#define PMf_EVAL	(1<<(PMf_BASE_SHIFT+8))
+#define PMf_EVAL	(1U<<(PMf_BASE_SHIFT+12))
 
 /* Return substituted string instead of modifying it. */
-#define PMf_NONDESTRUCT	(1<<(PMf_BASE_SHIFT+9))
+#define PMf_NONDESTRUCT	(1U<<(PMf_BASE_SHIFT+13))
 
 /* the pattern has a CV attached (currently only under qr/...(?{}).../) */
-#define PMf_HAS_CV	(1<<(PMf_BASE_SHIFT+10))
+#define PMf_HAS_CV	(1U<<(PMf_BASE_SHIFT+14))
 
 /* op_code_list is private; don't free it etc. It may well point to
  * code within another sub, with different pad etc */
-#define PMf_CODELIST_PRIVATE	(1<<(PMf_BASE_SHIFT+11))
+#define PMf_CODELIST_PRIVATE	(1U<<(PMf_BASE_SHIFT+15))
 
 /* the PMOP is a QR (we should be able to detect that from the op type,
  * but the regex compilation API passes just the pm flags, not the op
  * itself */
-#define PMf_IS_QR	(1<<(PMf_BASE_SHIFT+12))
-#define PMf_USE_RE_EVAL	(1<<(PMf_BASE_SHIFT+13)) /* use re'eval' in scope */
+#define PMf_IS_QR	(1U<<(PMf_BASE_SHIFT+16))
+#define PMf_USE_RE_EVAL	(1U<<(PMf_BASE_SHIFT+17)) /* use re'eval' in scope */
 
-#if PMf_BASE_SHIFT+13 > 31
+/* See comments at the beginning of these defines about adding bits.  The
+ * highest bit position should be used, so that if PMf_BASE_SHIFT gets
+ * increased, the #error below will be triggered so that you will be reminded
+ * to adjust things at the other end to keep the bit positions unchanged */
+#if PMf_BASE_SHIFT+17 > 31
 #   error Too many PMf_ bits used.  See above and regnodes.h for any spare in middle
 #endif
 
@@ -539,18 +429,21 @@ struct loop {
     OP *	op_lastop;
 };
 
-#define cUNOPx(o)	((UNOP*)o)
-#define cBINOPx(o)	((BINOP*)o)
-#define cLISTOPx(o)	((LISTOP*)o)
-#define cLOGOPx(o)	((LOGOP*)o)
-#define cPMOPx(o)	((PMOP*)o)
-#define cSVOPx(o)	((SVOP*)o)
-#define cPADOPx(o)	((PADOP*)o)
-#define cPVOPx(o)	((PVOP*)o)
-#define cCOPx(o)	((COP*)o)
-#define cLOOPx(o)	((LOOP*)o)
+#define cUNOPx(o)	((UNOP*)(o))
+#define cUNOP_AUXx(o)	((UNOP_AUX*)(o))
+#define cBINOPx(o)	((BINOP*)(o))
+#define cLISTOPx(o)	((LISTOP*)(o))
+#define cLOGOPx(o)	((LOGOP*)(o))
+#define cPMOPx(o)	((PMOP*)(o))
+#define cSVOPx(o)	((SVOP*)(o))
+#define cPADOPx(o)	((PADOP*)(o))
+#define cPVOPx(o)	((PVOP*)(o))
+#define cCOPx(o)	((COP*)(o))
+#define cLOOPx(o)	((LOOP*)(o))
+#define cMETHOPx(o)	((METHOP*)(o))
 
 #define cUNOP		cUNOPx(PL_op)
+#define cUNOP_AUX	cUNOP_AUXx(PL_op)
 #define cBINOP		cBINOPx(PL_op)
 #define cLISTOP		cLISTOPx(PL_op)
 #define cLOGOP		cLOGOPx(PL_op)
@@ -562,6 +455,7 @@ struct loop {
 #define cLOOP		cLOOPx(PL_op)
 
 #define cUNOPo		cUNOPx(o)
+#define cUNOP_AUXo	cUNOP_AUXx(o)
 #define cBINOPo		cBINOPx(o)
 #define cLISTOPo	cLISTOPx(o)
 #define cLOGOPo		cLOGOPx(o)
@@ -573,6 +467,7 @@ struct loop {
 #define cLOOPo		cLOOPx(o)
 
 #define kUNOP		cUNOPx(kid)
+#define kUNOP_AUX	cUNOP_AUXx(kid)
 #define kBINOP		cBINOPx(kid)
 #define kLISTOP		cLISTOPx(kid)
 #define kLOGOP		cLOGOPx(kid)
@@ -586,21 +481,28 @@ struct loop {
 
 #ifdef USE_ITHREADS
 #  define	cGVOPx_gv(o)	((GV*)PAD_SVl(cPADOPx(o)->op_padix))
-#  define	IS_PADGV(v)	(v && SvTYPE(v) == SVt_PVGV && isGV_with_GP(v) \
-				 && GvIN_PAD(v))
-#  define	IS_PADCONST(v) \
+#  ifndef PERL_CORE
+#    define	IS_PADGV(v)	(v && isGV(v))
+#    define	IS_PADCONST(v) \
 	(v && (SvREADONLY(v) || (SvIsCOW(v) && !SvLEN(v))))
+#  endif
 #  define	cSVOPx_sv(v)	(cSVOPx(v)->op_sv \
 				 ? cSVOPx(v)->op_sv : PAD_SVl((v)->op_targ))
 #  define	cSVOPx_svp(v)	(cSVOPx(v)->op_sv \
 				 ? &cSVOPx(v)->op_sv : &PAD_SVl((v)->op_targ))
+#  define	cMETHOPx_rclass(v) PAD_SVl(cMETHOPx(v)->op_rclass_targ)
 #else
 #  define	cGVOPx_gv(o)	((GV*)cSVOPx(o)->op_sv)
-#  define	IS_PADGV(v)	FALSE
-#  define	IS_PADCONST(v)	FALSE
+#  ifndef PERL_CORE
+#    define	IS_PADGV(v)	FALSE
+#    define	IS_PADCONST(v)	FALSE
+#  endif
 #  define	cSVOPx_sv(v)	(cSVOPx(v)->op_sv)
 #  define	cSVOPx_svp(v)	(&cSVOPx(v)->op_sv)
+#  define	cMETHOPx_rclass(v) (cMETHOPx(v)->op_rclass_sv)
 #endif
+
+#  define	cMETHOPx_meth(v)	cSVOPx_sv(v)
 
 #define	cGVOP_gv		cGVOPx_gv(PL_op)
 #define	cGVOPo_gv		cGVOPx_gv(o)
@@ -623,7 +525,7 @@ struct loop {
 #define OA_DANGEROUS 64
 #define OA_DEFGV 128
 
-/* The next 4 bits encode op class information */
+/* The next 4 bits (8..11) encode op class information */
 #define OCSHIFT 8
 
 #define OA_CLASS_MASK (15 << OCSHIFT)
@@ -642,10 +544,13 @@ struct loop {
 #define OA_BASEOP_OR_UNOP (11 << OCSHIFT)
 #define OA_FILESTATOP (12 << OCSHIFT)
 #define OA_LOOPEXOP (13 << OCSHIFT)
+#define OA_METHOP (14 << OCSHIFT)
+#define OA_UNOP_AUX (15 << OCSHIFT)
 
+/* Each remaining nybble of PL_opargs (i.e. bits 12..15, 16..19 etc)
+ * encode the type for each arg */
 #define OASHIFT 12
 
-/* Remaining nybbles of PL_opargs */
 #define OA_SCALAR 1
 #define OA_LIST 2
 #define OA_AVREF 3
@@ -693,7 +598,10 @@ struct loop {
 /* flags used by Perl_load_module() */
 #define PERL_LOADMOD_DENY		0x1	/* no Module */
 #define PERL_LOADMOD_NOIMPORT		0x2	/* use Module () */
-#define PERL_LOADMOD_IMPORT_OPS		0x4	/* use Module (...) */
+#define PERL_LOADMOD_IMPORT_OPS		0x4	/* import arguments
+						   are passed as a sin-
+						   gle op tree, not a
+						   list of SVs */
 
 #if defined(PERL_IN_PERLY_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_TOKE_C)
 #define ref(o, type) doref(o, type, TRUE)
@@ -706,7 +614,7 @@ struct loop {
 Given the root of an optree, link the tree in execution order using the
 C<op_next> pointers and return the first op executed.  If this has
 already been done, it will not be redone, and C<< o->op_next >> will be
-returned.  If C<< o->op_next >> is not already set, I<o> should be at
+returned.  If C<< o->op_next >> is not already set, C<o> should be at
 least an C<UNOP>.
 
 =cut
@@ -805,30 +713,30 @@ struct block_hooks {
 Return the BHK's flags.
 
 =for apidoc mx|void *|BhkENTRY|BHK *hk|which
-Return an entry from the BHK structure.  I<which> is a preprocessor token
+Return an entry from the BHK structure.  C<which> is a preprocessor token
 indicating which entry to return.  If the appropriate flag is not set
-this will return NULL.  The type of the return value depends on which
+this will return C<NULL>.  The type of the return value depends on which
 entry you ask for.
 
 =for apidoc Amx|void|BhkENTRY_set|BHK *hk|which|void *ptr
 Set an entry in the BHK structure, and set the flags to indicate it is
-valid.  I<which> is a preprocessing token indicating which entry to set.
-The type of I<ptr> depends on the entry.
+valid.  C<which> is a preprocessing token indicating which entry to set.
+The type of C<ptr> depends on the entry.
 
 =for apidoc Amx|void|BhkDISABLE|BHK *hk|which
 Temporarily disable an entry in this BHK structure, by clearing the
-appropriate flag.  I<which> is a preprocessor token indicating which
+appropriate flag.  C<which> is a preprocessor token indicating which
 entry to disable.
 
 =for apidoc Amx|void|BhkENABLE|BHK *hk|which
 Re-enable an entry in this BHK structure, by setting the appropriate
-flag.  I<which> is a preprocessor token indicating which entry to enable.
+flag.  C<which> is a preprocessor token indicating which entry to enable.
 This will assert (under -DDEBUGGING) if the entry doesn't contain a valid
 pointer.
 
 =for apidoc mx|void|CALL_BLOCK_HOOKS|which|arg
-Call all the registered block hooks for type I<which>.  I<which> is a
-preprocessing token; the type of I<arg> depends on I<which>.
+Call all the registered block hooks for type C<which>.  C<which> is a
+preprocessing token; the type of C<arg> depends on C<which>.
 
 =cut
 */
@@ -884,6 +792,11 @@ preprocessing token; the type of I<arg> depends on I<which>.
 
 #define RV2CVOPCV_MARK_EARLY     0x00000001
 #define RV2CVOPCV_RETURN_NAME_GV 0x00000002
+#define RV2CVOPCV_RETURN_STUB    0x00000004
+#ifdef PERL_CORE /* behaviour of this flag is subject to change: */
+# define RV2CVOPCV_MAYBE_NAME_GV  0x00000008
+#endif
+#define RV2CVOPCV_FLAG_MASK      0x0000000f /* all of the above */
 
 #define op_lvalue(op,t) Perl_op_lvalue_flags(aTHX_ op,t,0)
 
@@ -898,19 +811,19 @@ preprocessing token; the type of I<arg> depends on I<which>.
 Return the XOP's flags.
 
 =for apidoc Am||XopENTRY|XOP *xop|which
-Return a member of the XOP structure.  I<which> is a cpp token
+Return a member of the XOP structure.  C<which> is a cpp token
 indicating which entry to return.  If the member is not set
 this will return a default value.  The return type depends
-on I<which>.  This macro evaluates its arguments more than
+on C<which>.  This macro evaluates its arguments more than
 once.  If you are using C<Perl_custom_op_xop> to retreive a
 C<XOP *> from a C<OP *>, use the more efficient L</XopENTRYCUSTOM> instead.
 
 =for apidoc Am||XopENTRYCUSTOM|const OP *o|which
 Exactly like C<XopENTRY(XopENTRY(Perl_custom_op_xop(aTHX_ o), which)> but more
-efficient.  The I<which> parameter is identical to L</XopENTRY>.
+efficient.  The C<which> parameter is identical to L</XopENTRY>.
 
 =for apidoc Am|void|XopENTRY_set|XOP *xop|which|value
-Set a member of the XOP structure.  I<which> is a cpp token
+Set a member of the XOP structure.  C<which> is a cpp token
 indicating which entry to set.  See L<perlguts/"Custom Operators">
 for details about the available members and how
 they are used.  This macro evaluates its argument
@@ -1000,13 +913,13 @@ Return a short description of the provided OP.
 =for apidoc Am|U32|OP_CLASS|OP *o
 Return the class of the provided OP: that is, which of the *OP
 structures it uses.  For core ops this currently gets the information out
-of PL_opargs, which does not always accurately reflect the type used.
+of C<PL_opargs>, which does not always accurately reflect the type used.
 For custom ops the type is returned from the registration, and it is up
 to the registree to ensure it is accurate.  The value returned will be
-one of the OA_* constants from op.h.
+one of the C<OA_>* constants from F<op.h>.
 
 =for apidoc Am|bool|OP_TYPE_IS|OP *o|Optype type
-Returns true if the given OP is not a NULL pointer
+Returns true if the given OP is not a C<NULL> pointer
 and if it is of the given type.
 
 The negation of this macro, C<OP_TYPE_ISNT> is also available
@@ -1021,7 +934,28 @@ replaced by an OP of type OP_NULL.
 The negation of this macro, C<OP_TYPE_ISNT_AND_WASNT>
 is also available as well as C<OP_TYPE_IS_OR_WAS_NN>
 and C<OP_TYPE_ISNT_AND_WASNT_NN> which elide
-the NULL pointer check.
+the C<NULL> pointer check.
+
+=for apidoc Am|bool|OpHAS_SIBLING|OP *o
+Returns true if C<o> has a sibling
+
+=for apidoc Am|OP*|OpSIBLING|OP *o
+Returns the sibling of C<o>, or C<NULL> if there is no sibling
+
+=for apidoc Am|void|OpMORESIB_set|OP *o|OP *sib
+Sets the sibling of C<o> to the non-zero value C<sib>. See also C<L</OpLASTSIB_set>>
+and C<L</OpMAYBESIB_set>>. For a higher-level interface, see
+C<L</op_sibling_splice>>.
+
+=for apidoc Am|void|OpLASTSIB_set|OP *o|OP *parent
+Marks C<o> as having no further siblings. On C<PERL_OP_PARENT> builds, marks
+o as having the specified parent. See also C<L</OpMORESIB_set>> and
+C<OpMAYBESIB_set>. For a higher-level interface, see
+C<L</op_sibling_splice>>.
+
+=for apidoc Am|void|OpMAYBESIB_set|OP *o|OP *sib|OP *parent
+Conditionally does C<OpMORESIB_set> or C<OpLASTSIB_set> depending on whether
+C<sib> is non-null. For a higher-level interface, see C<L</op_sibling_splice>>.
 
 =cut
 */
@@ -1059,105 +993,32 @@ the NULL pointer check.
 #define OP_TYPE_ISNT_AND_WASNT(o, type) \
     ( (o) && OP_TYPE_ISNT_AND_WASNT_NN(o, type) )
 
-#define newATTRSUB(f, o, p, a, b) Perl_newATTRSUB_x(aTHX_  f, o, p, a, b, FALSE)
-#define newSUB(f, o, p, b)	newATTRSUB((f), (o), (p), NULL, (b))
 
-#ifdef PERL_MAD
-#  define MAD_NULL 1
-#  define MAD_PV 2
-#  define MAD_OP 3
-#  define MAD_SV 4
-
-struct madprop {
-    MADPROP* mad_next;
-    void *mad_val;
-    U32 mad_vlen;
-/*    short mad_count; */
-    char mad_key;
-    char mad_type;
-};
-
-struct token {
-    I32 tk_type;
-    YYSTYPE tk_lval;
-    MADPROP* tk_mad;
-};
+#ifdef PERL_OP_PARENT
+#  define OpHAS_SIBLING(o)	(cBOOL((o)->op_moresib))
+#  define OpSIBLING(o)		(0 + (o)->op_moresib ? (o)->op_sibparent : NULL)
+#  define OpMORESIB_set(o, sib) ((o)->op_moresib = 1, (o)->op_sibparent = (sib))
+#  define OpLASTSIB_set(o, parent) \
+       ((o)->op_moresib = 0, (o)->op_sibparent = (parent))
+#  define OpMAYBESIB_set(o, sib, parent) \
+       ((o)->op_sibparent = ((o)->op_moresib = cBOOL(sib)) ? (sib) : (parent))
+#else
+#  define OpHAS_SIBLING(o)	(cBOOL((o)->op_sibling))
+#  define OpSIBLING(o)		(0 + (o)->op_sibling)
+#  define OpMORESIB_set(o, sib) ((o)->op_moresib = 1, (o)->op_sibling = (sib))
+#  define OpLASTSIB_set(o, parent) \
+       ((o)->op_moresib = 0, (o)->op_sibling = NULL)
+#  define OpMAYBESIB_set(o, sib, parent) \
+       ((o)->op_moresib = cBOOL(sib), (o)->op_sibling = (sib))
 #endif
 
-/*
- * Values that can be held by mad_key :
- * ^       unfilled head spot
- * ,       literal ,
- * ;       literal ; (blank if implicit ; at end of block)
- * :       literal : from ?: or attr list
- * +       unary +
- * ?       literal ? from ?:
- * (       literal (
- * )       literal )
- * [       literal [
- * ]       literal ]
- * {       literal {
- * }       literal }
- * @       literal @ sigil
- * $       literal $ sigil
- * *       literal * sigil
- * !       use is source filtered
- * &       & or sub
- * #       whitespace/comment following ; or }
- * #       $# sigil
- * 1       1st ; from for(;;)
- * 1       retired protasis
- * 2       2nd ; from for(;;)
- * 2       retired apodosis
- * 3       C-style for list
- * a       sub or var attributes
- * a       non-method arrow operator
- * A       method arrow operator
- * A       use import args
- * b       format block
- * B       retired stub block
- * C       constant conditional op
- * d       declarator
- * D       do block
- * e       unreached "else" (see C)
- * e       expression producing E
- * E       tr/E/R/, /E/
- * f       folded constant op
- * F       peg op for format
- * g       op was forced to be a word
- * i       if/unless modifier
- * I       if/elsif/unless statement
- * k       local declarator
- * K       retired kid op
- * l       last index of array ($#foo)
- * L       label
- * m       modifier on regex
- * n       sub or format name
- * o       current operator/declarator name
- * o       else/continue
- * O       generic optimized op
- * p       peg to hold extra whitespace at statement level
- * P       peg op for package declaration
- * q       opening quote
- * =       quoted material
- * Q       closing quote
- * Q       optimized qw//
- * r       expression producing R
- * R       tr/E/R/ s/E/R/
- * s       sub signature
- * S       use import stub (no import)
- * S       retired sort block
- * t       unreached "then" (see C)
- * U       use import op
- * v       private sv of for loop
- * V       use version
- * w       while/until modifier
- * W       while/for statement
- * x       optimized qw
- * X       random thing
- * _       whitespace/comments preceding anything else
- * ~       =~ operator
- */
+#if !defined(PERL_CORE) && !defined(PERL_EXT)
+/* for backwards compatibility only */
+#  define OP_SIBLING(o)		OpSIBLING(o)
+#endif
+
+#define newATTRSUB(f, o, p, a, b) Perl_newATTRSUB_x(aTHX_  f, o, p, a, b, FALSE)
+#define newSUB(f, o, p, b)	newATTRSUB((f), (o), (p), NULL, (b))
 
 /*
 =head1 Hook manipulation
@@ -1175,12 +1036,53 @@ struct token {
 #  define OP_CHECK_MUTEX_TERM		NOOP
 #endif
 
+
+/* Stuff for OP_MULTDEREF/pp_multideref. */
+
+/* actions */
+
+/* Load another word of actions/flag bits. Must be 0 */
+#define MDEREF_reload                       0
+
+#define MDEREF_AV_pop_rv2av_aelem           1
+#define MDEREF_AV_gvsv_vivify_rv2av_aelem   2
+#define MDEREF_AV_padsv_vivify_rv2av_aelem  3
+#define MDEREF_AV_vivify_rv2av_aelem        4
+#define MDEREF_AV_padav_aelem               5
+#define MDEREF_AV_gvav_aelem                6
+
+#define MDEREF_HV_pop_rv2hv_helem           8
+#define MDEREF_HV_gvsv_vivify_rv2hv_helem   9
+#define MDEREF_HV_padsv_vivify_rv2hv_helem 10
+#define MDEREF_HV_vivify_rv2hv_helem       11
+#define MDEREF_HV_padhv_helem              12
+#define MDEREF_HV_gvhv_helem               13
+
+#define MDEREF_ACTION_MASK                0xf
+
+/* key / index type */
+
+#define MDEREF_INDEX_none   0x00 /* run external ops to generate index */
+#define MDEREF_INDEX_const  0x10 /* index is const PV/UV */
+#define MDEREF_INDEX_padsv  0x20 /* index is lexical var */
+#define MDEREF_INDEX_gvsv   0x30 /* index is GV */
+
+#define MDEREF_INDEX_MASK   0x30
+
+/* bit flags */
+
+#define MDEREF_FLAG_last    0x40 /* the last [ah]elem; PL_op flags apply */
+
+#define MDEREF_MASK         0x7F
+#define MDEREF_SHIFT           7
+
+#if defined(PERL_IN_DOOP_C) || defined(PERL_IN_PP_C)
+static const char * const deprecated_above_ff_msg
+    = "Use of strings with code points over 0xFF as arguments to "
+      "%s operator is deprecated";
+#endif
+
+
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

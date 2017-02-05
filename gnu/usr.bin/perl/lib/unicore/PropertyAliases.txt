@@ -1,8 +1,8 @@
-# PropertyAliases-6.3.0.txt
-# Date: 2013-03-05, 21:40:52 GMT [MD]
+# PropertyAliases-8.0.0.txt
+# Date: 2015-02-14, 10:26:09 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2013 Unicode, Inc.
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
@@ -111,7 +111,7 @@ ea                       ; East_Asian_Width
 gc                       ; General_Category
 GCB                      ; Grapheme_Cluster_Break
 hst                      ; Hangul_Syllable_Type
-InMC                     ; Indic_Matra_Category
+InPC                     ; Indic_Positional_Category
 InSC                     ; Indic_Syllabic_Category
 jg                       ; Joining_Group
 jt                       ; Joining_Type

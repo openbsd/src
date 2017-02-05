@@ -33,4 +33,9 @@ if ( $Config{usecrosscompile} ) {
     exit 0;
 }
 
+if ( ord("A") == 193) {
+    print "1..0 # EBCDIC sorts differenly than expected\n";
+    exit 0;
+}
+
 system "$^X ext/Pod-Functions/Functions_pm.PL --tap pod/perlfunc.pod";

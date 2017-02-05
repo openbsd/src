@@ -56,8 +56,8 @@ the same thing, but they're not. There are more Unicode encodings, but much of
 the world has standardized on UTF-8. 
 
 UTF-8 treats the first 128 codepoints, 0..127, the same as ASCII. They take
-only one byte per character. All other characters are encoded as two or more
-(up to six) bytes using a complex scheme. Fortunately, Perl handles this for
+only one byte per character. All other characters are encoded as two to
+four bytes using a complex scheme. Fortunately, Perl handles this for
 us, so we don't have to worry about this.
 
 =head3 Text strings (character strings)
@@ -179,7 +179,8 @@ data.)
 
 =head1 Q and A (or FAQ)
 
-After reading this document, you ought to read L<perlunifaq> too. 
+After reading this document, you ought to read L<perlunifaq> too, then
+L<perluniintro>.
 
 =head1 ACKNOWLEDGEMENTS
 

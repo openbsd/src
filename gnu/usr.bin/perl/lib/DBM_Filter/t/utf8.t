@@ -6,6 +6,8 @@ use Carp;
 BEGIN 
 {
 
+    require "../t/charset_tools.pl";
+
     eval { require Encode; };
     
     if ($@) {
@@ -79,23 +81,13 @@ my $db2 = tie(%h2, $db_file,'Op_dbmx', O_RDWR|O_CREAT, 0640) ;
 
 ok $db2, "tied to $db_file";
 
-if (ord('A') == 193) { # EBCDIC.
-    VerifyData(\%h2,
-	   {
-	    'alpha'	=> "\xB4\x58",
-	    'beta'	=> "\xB4\x59",
-	    "\xB4\x62"=> "gamma",
-	    ""		=> "",
-	   });
-} else {
-    VerifyData(\%h2,
-	   {
-	    'alpha'	=> "\xCE\xB1",
-	    'beta'	=> "\xCE\xB2",
-	    "\xCE\xB3"=> "gamma",
-	    ""		=> "",
-	   });
-}
+VerifyData(\%h2,
+        {
+        'alpha'	=> byte_utf8a_to_utf8n("\xCE\xB1"),
+        'beta'	=> byte_utf8a_to_utf8n("\xCE\xB2"),
+        byte_utf8a_to_utf8n("\xCE\xB3")=> "gamma",
+        ""		=> "",
+        });
 
 undef $db2;
 {

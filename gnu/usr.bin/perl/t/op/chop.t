@@ -3,10 +3,11 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
 }
 
-plan tests => 143;
+my $tests_count = 148;
+plan tests => $tests_count;
 
 $_ = 'abc';
 $c = foo();
@@ -183,7 +184,10 @@ ok($@ =~ /Can\'t modify.*chop.*in.*assignment/);
 eval 'chomp($x, $y) = (1, 2);';
 ok($@ =~ /Can\'t modify.*chom?p.*in.*assignment/);
 
-my @chars = ("N", latin1_to_native("\xd3"), substr ("\xd4\x{100}", 0, 1), chr 1296);
+my @chars = ("N",
+             uni_to_native("\xd3"),
+             substr (uni_to_native("\xd4") . "\x{100}", 0, 1),
+             chr 1296);
 foreach my $start (@chars) {
   foreach my $end (@chars) {
     local $/ = $end;
@@ -247,6 +251,8 @@ foreach my $start (@chars) {
 {
     # [perl #73246] chop doesn't support utf8
     # the problem was UTF8_IS_START() didn't handle perl's extended UTF8
+
+    no warnings 'deprecated'; # This is above IV_MAX on 32 bit machines
     my $utf = "\x{80000001}\x{80000000}";
     my $result = chop($utf);
     is($utf, "\x{80000001}", "chopping high 'unicode'- remnant");
@@ -261,5 +267,36 @@ foreach my $start (@chars) {
         my $result = chop $utf;
         is($utf, "\x{ffffffffffffffff}", "chop even higher 'unicode' - remnant");
         is($result, "\x{fffffffffffffffe}", "chop even higher 'unicode' - result");
+    }
+}
+
+$/ = "\n";
+{
+    my $expected = 99999;
+    my $input = "UserID\talpha $expected\n";
+    my $uid = '';
+    chomp(my @line = split (/ |\t/,$input));
+    $uid = $line[-1];
+    is($uid, $expected,
+        "RT #123057: chomp works as expected on split");
+}
+
+{
+    my $a = local $/ = 7;
+    $a = chomp $a;
+    is $a, 1, 'lexical $a = chomp $a when $a eq $/ eq 7';
+    $a = $/ = 0;
+    $a = chomp $a;
+    is $a, 1, 'lexical $a = chomp $a when $a eq $/ eq 0';
+    my @a = "7";
+    for my $b($a[0]) {
+        $/ = 7;
+        $b = chomp @a;
+        is $b, 1,
+          'lexical $b = chomp @a when $b eq $/ eq 7 and \$a[0] == \$b';
+        $b = $/ = 0;
+        $b = chomp @a;
+        is $b, 1,
+          'lexical $b = chomp @a when $b eq $/ eq 0 and \$a[0] == \$b';
     }
 }

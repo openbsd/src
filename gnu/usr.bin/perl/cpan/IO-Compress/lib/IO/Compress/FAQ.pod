@@ -201,7 +201,7 @@ L<http://www.faqs.org/rfcs/rfc1952.html>
 
 The primary site for gzip is F<http://www.gzip.org>.
 
-=head2 Dealing with Concatenated gzip files
+=head2 Dealing with concatenated gzip files
 
 If the gunzip program encounters a file containing multiple gzip files
 concatenated together it will automatically uncompress them all.
@@ -226,6 +226,17 @@ include the C<MultiStream> option, as shown below
     $ perl -MIO::Uncompress::Gunzip=:all -e 'gunzip "x.gz" => \*STDOUT, MultiStream => 1'
     abc
     def
+
+=head2 Reading bgzip files with IO::Uncompress::Gunzip
+
+A C<bgzip> file consists of a series of valid gzip-compliant data streams
+concatenated together. To read a file created by C<bgzip> with
+C<IO::Uncompress::Gunzip> use the C<MultiStream> option as shown in the
+previous section.
+
+See the section titled "The BGZF compression format" in
+F<http://samtools.github.io/hts-specs/SAMv1.pdf> for a definition of
+C<bgzip>.
 
 =head1 ZLIB
 
@@ -665,7 +676,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2014 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2015 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

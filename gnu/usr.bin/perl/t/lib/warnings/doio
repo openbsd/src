@@ -87,10 +87,15 @@ Missing command in piped open at - line 3.
 # doio.c [Perl_do_open9]
 use warnings 'io' ;
 open(F, "<true\ncd");
+open(G, "<truecd\n");
+open(H, "<truecd\n\0");
 no warnings 'io' ;
-open(G, "<true\ncd");
+open(H, "<true\ncd");
+open(I, "<truecd\n");
+open(I, "<truecd\n\0");
 EXPECT
-Unsuccessful open on filename containing newline at - line 3.
+Unsuccessful open on filename containing newline at - line 4.
+Unsuccessful open on filename containing newline at - line 5.
 ########
 # doio.c [Perl_do_close] <<TODO
 use warnings 'unopened' ;
@@ -149,12 +154,22 @@ Use of uninitialized value $a in print at - line 3.
 use warnings 'io' ;
 stat "ab\ncd";
 lstat "ab\ncd";
+stat "abcd\n";
+lstat "abcd\n";
+stat "abcd\n\0";
+lstat "abcd\n\0";
 no warnings 'io' ;
 stat "ab\ncd";
 lstat "ab\ncd";
+stat "abcd\n";
+lstat "abcd\n";
+stat "abcd\n\0";
+lstat "abcd\n\0";
 EXPECT
-Unsuccessful stat on filename containing newline at - line 3.
-Unsuccessful stat on filename containing newline at - line 4.
+Unsuccessful stat on filename containing newline at - line 5.
+Unsuccessful stat on filename containing newline at - line 6.
+Unsuccessful stat on filename containing newline at - line 7.
+Unsuccessful stat on filename containing newline at - line 8.
 ########
 # doio.c [Perl_my_stat]
 use warnings 'io';

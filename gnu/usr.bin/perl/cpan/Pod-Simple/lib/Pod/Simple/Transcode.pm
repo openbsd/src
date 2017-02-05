@@ -1,8 +1,9 @@
 
 require 5;
 package Pod::Simple::Transcode;
-use vars qw($VERSION );
-$VERSION = '3.28';
+use strict;
+use vars qw($VERSION @ISA);
+$VERSION = '3.32';
 
 BEGIN {
   if(defined &DEBUG) {;} # Okay
@@ -16,12 +17,12 @@ foreach my $class (
   '',
 ) {
   $class or die "Couldn't load any encoding classes";
-  DEBUG and print "About to try loading $class...\n";
+  DEBUG and print STDERR "About to try loading $class...\n";
   eval "require $class;";
   if($@) {
-    DEBUG and print "Couldn't load $class: $@\n";
+    DEBUG and print STDERR "Couldn't load $class: $@\n";
   } else {
-    DEBUG and print "OK, loaded $class.\n";
+    DEBUG and print STDERR "OK, loaded $class.\n";
     @ISA = ($class);
     last;
   }

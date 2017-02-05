@@ -58,6 +58,8 @@ sub setup_embed {
     open IN, $prefix . 'embed.fnc' or die $!;
 
     my @embed;
+    my %seen;
+    my $macro_depth = 0;
 
     while (<IN>) {
 	chomp;
@@ -75,11 +77,30 @@ sub setup_embed {
 	else {
 	    @args = split /\s*\|\s*/, $_;
 	}
-	if (@args == 1 && $args[0] !~ /^#\s*(?:if|ifdef|ifndef|else|endif)/) {
-	    die "Illegal line $. '$args[0]' in embed.fnc";
+	if (@args == 1) {
+            if ($args[0] !~ /^#\s*(?:if|ifdef|ifndef|else|endif)/) {
+                die "Illegal line $. '$args[0]' in embed.fnc";
+            }
+            $macro_depth++ if $args[0] =~/^#\s*if(n?def)?\b/;
+            $macro_depth-- if $args[0] =~/^#\s*endif\b/;
+            die "More #endif than #if in embed.fnc:$." if $macro_depth < 0;
 	}
+        else  {
+	    die "Illegal line (less than 3 fields) in embed.fnc:$.: $_"
+                unless @args >= 3;
+            my $name = $args[2];
+            # only check for duplicates outside of #if's - otherwise
+            # they may be alternate definitions of the same function
+            if ($macro_depth == 0) {
+                die "Duplicate function name: '$name' in embed.fnc:$."
+                    if exists $seen{$name};
+            }
+            $seen{$name} = 1;
+        }
+
 	push @embed, \@args;
     }
+    die "More #if than #endif by the end of embed.fnc" if $macro_depth != 0;
 
     close IN or die "Problem reading embed.fnc: $!";
 

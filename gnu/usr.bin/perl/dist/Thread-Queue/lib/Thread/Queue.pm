@@ -3,7 +3,7 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '3.05';
+our $VERSION = '3.09';
 $VERSION = eval $VERSION;
 
 use threads::shared 1.21;
@@ -26,12 +26,27 @@ sub enqueue
 {
     my $self = shift;
     lock(%$self);
+
     if ($$self{'ENDED'}) {
         require Carp;
         Carp::croak("'enqueue' method called on queue that has been 'end'ed");
     }
-    push(@{$$self{'queue'}}, map { shared_clone($_) } @_)
+
+    # Block if queue size exceeds any specified limit
+    my $queue = $$self{'queue'};
+    cond_wait(%$self) while ($$self{'LIMIT'} && (@$queue >= $$self{'LIMIT'}));
+
+    # Add items to queue, and then signal other threads
+    push(@$queue, map { shared_clone($_) } @_)
         and cond_signal(%$self);
+}
+
+# Set or return the max. size for a queue
+sub limit : lvalue
+{
+    my $self = shift;
+    lock(%$self);
+    $$self{'LIMIT'};
 }
 
 # Return a count of the number of items on a queue
@@ -47,7 +62,7 @@ sub pending
 sub end
 {
     my $self = shift;
-    lock $self;
+    lock(%$self);
     # No more data is coming
     $$self{'ENDED'} = 1;
     # Try to release at least one blocked thread
@@ -65,7 +80,7 @@ sub dequeue
 
     # Wait for requisite number of items
     cond_wait(%$self) while ((@$queue < $count) && ! $$self{'ENDED'});
-    cond_signal(%$self) if ((@$queue > $count) || $$self{'ENDED'});
+    cond_signal(%$self) if ((@$queue >= $count) || $$self{'ENDED'});
 
     # If no longer blocking, try getting whatever is left on the queue
     return $self->dequeue_nb($count) if ($$self{'ENDED'});
@@ -120,7 +135,7 @@ sub dequeue_timed
     while ((@$queue < $count) && ! $$self{'ENDED'}) {
         last if (! cond_timedwait(%$self, $timeout));
     }
-    cond_signal(%$self) if ((@$queue > $count) || $$self{'ENDED'});
+    cond_signal(%$self) if ((@$queue >= $count) || $$self{'ENDED'});
 
     # Get whatever we need off the queue if available
     return $self->dequeue_nb($count);
@@ -289,7 +304,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 3.05
+This document describes Thread::Queue version 3.09
 
 =head1 SYNOPSIS
 
@@ -334,6 +349,9 @@ This document describes Thread::Queue version 3.05
         # Work on $item
     }
 
+    # Set a size for a queue
+    $q->limit = 5;
+
     # Get the second item in the queue without dequeuing anything
     my $item = $q->peek(1);
 
@@ -375,20 +393,20 @@ shared array reference via C<&shared([])>, copy the elements 'foo', 'bar'
 and 'baz' from C<@ary> into it, and then place that shared reference onto
 the queue:
 
-    my @ary = qw/foo bar baz/;
-    $q->enqueue(\@ary);
+ my @ary = qw/foo bar baz/;
+ $q->enqueue(\@ary);
 
 However, for the following, the items are already shared, so their references
 are added directly to the queue, and no cloning takes place:
 
-    my @ary :shared = qw/foo bar baz/;
-    $q->enqueue(\@ary);
+ my @ary :shared = qw/foo bar baz/;
+ $q->enqueue(\@ary);
 
-    my $obj = &shared({});
-    $$obj{'foo'} = 'bar';
-    $$obj{'qux'} = 99;
-    bless($obj, 'My::Class');
-    $q->enqueue($obj);
+ my $obj = &shared({});
+ $$obj{'foo'} = 'bar';
+ $$obj{'qux'} = 99;
+ bless($obj, 'My::Class');
+ $q->enqueue($obj);
 
 See L</"LIMITATIONS"> for caveats related to passing objects via queues.
 
@@ -423,7 +441,7 @@ Adds a list of items onto the end of the queue.
 Removes the requested number of items (default is 1) from the head of the
 queue, and returns them.  If the queue contains fewer than the requested
 number of items, then the thread will be blocked until the requisite number
-of items are available (i.e., until other threads <enqueue> more items).
+of items are available (i.e., until other threads C<enqueue> more items).
 
 =item ->dequeue_nb()
 
@@ -461,6 +479,21 @@ behaves the same as C<dequeue_nb>.
 Returns the number of items still in the queue.  Returns C<undef> if the queue
 has been ended (see below), and there are no more items in the queue.
 
+=item ->limit
+
+Sets the size of the queue.  If set, calls to C<enqueue()> will block until
+the number of pending items in the queue drops below the C<limit>.  The
+C<limit> does not prevent enqueuing items beyond that count:
+
+ my $q = Thread::Queue->new(1, 2);
+ $q->limit = 4;
+ $q->enqueue(3, 4, 5);   # Does not block
+ $q->enqueue(6);         # Blocks until at least 2 items are
+                         # dequeued
+ my $size = $q->limit;   # Returns the current limit (may return
+                         # 'undef')
+ $q->limit = 0;          # Queue size is now unlimited
+
 =item ->end()
 
 Declares that no more items will be added to the queue.
@@ -481,14 +514,14 @@ To prevent the contents of a queue from being modified by another thread
 while it is being examined and/or changed, L<lock|threads::shared/"lock
 VARIABLE"> the queue inside a local block:
 
-    {
-        lock($q);   # Keep other threads from changing the queue's contents
-        my $item = $q->peek();
-        if ($item ...) {
-            ...
-        }
-    }
-    # Queue is now unlocked
+ {
+     lock($q);   # Keep other threads from changing the queue's contents
+     my $item = $q->peek();
+     if ($item ...) {
+         ...
+     }
+ }
+ # Queue is now unlocked
 
 =over
 
@@ -513,18 +546,18 @@ Adds the list of items to the queue at the specified index position (0
 is the head of the list).  Any existing items at and beyond that position are
 pushed back past the newly added items:
 
-    $q->enqueue(1, 2, 3, 4);
-    $q->insert(1, qw/foo bar/);
-    # Queue now contains:  1, foo, bar, 2, 3, 4
+ $q->enqueue(1, 2, 3, 4);
+ $q->insert(1, qw/foo bar/);
+ # Queue now contains:  1, foo, bar, 2, 3, 4
 
 Specifying an index position greater than the number of items in the queue
 just adds the list to the end.
 
 Negative index positions are supported:
 
-    $q->enqueue(1, 2, 3, 4);
-    $q->insert(-2, qw/foo bar/);
-    # Queue now contains:  1, 2, foo, bar, 3, 4
+ $q->enqueue(1, 2, 3, 4);
+ $q->insert(-2, qw/foo bar/);
+ # Queue now contains:  1, 2, foo, bar, 3, 4
 
 Specifying a negative index position greater than the number of items in the
 queue adds the list to the head of the queue.
@@ -542,18 +575,18 @@ called with no arguments, C<extract> operates the same as C<dequeue_nb>.
 This method is non-blocking, and will return only as many items as are
 available to fulfill the request:
 
-    $q->enqueue(1, 2, 3, 4);
-    my $item  = $q->extract(2)     # Returns 3
-                                   # Queue now contains:  1, 2, 4
-    my @items = $q->extract(1, 3)  # Returns (2, 4)
-                                   # Queue now contains:  1
+ $q->enqueue(1, 2, 3, 4);
+ my $item  = $q->extract(2)     # Returns 3
+                                # Queue now contains:  1, 2, 4
+ my @items = $q->extract(1, 3)  # Returns (2, 4)
+                                # Queue now contains:  1
 
 Specifying an index position greater than the number of items in the
 queue results in C<undef> or an empty list being returned.
 
-    $q->enqueue('foo');
-    my $nada = $q->extract(3)      # Returns undef
-    my @nada = $q->extract(1, 3)   # Returns ()
+ $q->enqueue('foo');
+ my $nada = $q->extract(3)      # Returns undef
+ my @nada = $q->extract(1, 3)   # Returns ()
 
 Negative index positions are supported.  Specifying a negative index position
 greater than the number of items in the queue may return items from the head
@@ -561,11 +594,12 @@ of the queue (similar to C<dequeue_nb>) if the count overlaps the head of the
 queue from the specified position (i.e. if queue size + index + count is
 greater than zero):
 
-    $q->enqueue(qw/foo bar baz/);
-    my @nada = $q->extract(-6, 2);   # Returns ()         - (3+(-6)+2) <= 0
-    my @some = $q->extract(-6, 4);   # Returns (foo)      - (3+(-6)+4) > 0
-                                     # Queue now contains:  bar, baz
-    my @rest = $q->extract(-3, 4);   # Returns (bar, baz) - (2+(-3)+4) > 0
+ $q->enqueue(qw/foo bar baz/);
+ my @nada = $q->extract(-6, 2);  # Returns ()      - (3+(-6)+2) <= 0
+ my @some = $q->extract(-6, 4);  # Returns (foo)   - (3+(-6)+4) > 0
+                                 # Queue now contains:  bar, baz
+ my @rest = $q->extract(-3, 4);  # Returns (bar, baz) -
+                                 #                   (2+(-3)+4) > 0
 
 =back
 

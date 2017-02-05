@@ -20,12 +20,15 @@
 # file will probably pass as well.
 
 BEGIN {
-    chdir '..' unless -d 't';
-    unshift @INC, 'lib';
+    # We need to be at the top level dir.
+    if (-f 'test.pl' && -f 'harness') {
+      chdir '..';
+    }
+    @INC = qw(lib .); # Special @INC.
+    require 't/test.pl';
 }
 
 use strict;
-require 't/test.pl';
 
 use Config;
 if ( $Config{usecrosscompile} ) {

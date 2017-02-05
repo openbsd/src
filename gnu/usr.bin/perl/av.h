@@ -73,8 +73,6 @@ Same as C<av_top_index()>.
 #define AvREIFY_on(av)	(SvFLAGS(av) |= SVpav_REIFY)
 #define AvREIFY_off(av)	(SvFLAGS(av) &= ~SVpav_REIFY)
 #define AvREIFY_only(av)	(AvREAL_off(av), SvFLAGS(av) |= SVpav_REIFY)
-#define AvPAD_NAMELIST(av)	(SvFLAGS(av) & SVpad_NAMELIST)
-#define AvPAD_NAMELIST_on(av)	(SvFLAGS(av) |= SVpad_NAMELIST)
 
 
 #define AvREALISH(av)	(SvFLAGS(av) & (SVpav_REAL|SVpav_REIFY))
@@ -82,6 +80,15 @@ Same as C<av_top_index()>.
 #define AvFILL(av)	((SvRMAGICAL((const SV *) (av))) \
 			 ? mg_size(MUTABLE_SV(av)) : AvFILLp(av))
 #define av_tindex(av)   av_top_index(av)
+
+#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C) || defined(PERL_IN_UTF8_C)
+/* Note that it doesn't make sense to do this:
+ *      SvGETMAGIC(av); IV x = av_tindex_nomg(av);
+ * This name is controversial, and so is restricted by the #ifdef to the places
+ * it already occurs
+ */
+#   define av_tindex_nomg(av)  (__ASSERT_(SvTYPE(av) == SVt_PVAV) AvFILLp(av))
+#endif
 
 #define NEGATIVE_INDICES_VAR "NEGATIVE_INDICES"
 
@@ -98,11 +105,5 @@ Perl equivalent: C<my @array;>.
 #define newAV()	MUTABLE_AV(newSV_type(SVt_PVAV))
 
 /*
- * Local variables:
- * c-indentation-style: bsd
- * c-basic-offset: 4
- * indent-tabs-mode: nil
- * End:
- *
  * ex: set ts=8 sts=4 sw=4 et:
  */

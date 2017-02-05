@@ -35,11 +35,12 @@ usage: $0 [ -r rootdir ] [-s suffix ] [ -b ] [ -n ]
 		 defaults to the concatenation of the local_patches entry
 		 in patchlevel.h (or blank, if none)
     -b           make a .bz2 file in addtion to a .gz file
+    -x           make a .xz file in addtion to a .gz file
     -n           do not make any tarballs, just the directory
 EOF
 
 my %opts;
-getopts('bnr:s:', \%opts) or usage;
+getopts('bxnr:s:', \%opts) or usage;
 @ARGV && usage;
 
 $relroot = defined $opts{r} ? $opts{r} : "..";
@@ -140,20 +141,21 @@ my @writables = qw(
     proto.h
     embed.h
     embedvar.h
-    overload.c
+    overload.inc
     overload.h
     mg_vtable.h
     perlapi.h
     perlapi.c
     cpan/Devel-PPPort/module2.c
     cpan/Devel-PPPort/module3.c
-    cpan/autodie/t/truncate_me
+    cpan/autodie/t/touch_me
     reentr.c
     reentr.h
     regcharclass.h
     regnodes.h
     warnings.h
     lib/warnings.pm
+    win32/GNUmakefile
     win32/Makefile
     win32/Makefile.ce
     win32/makefile.mk
@@ -162,8 +164,18 @@ my @writables = qw(
     win32/config_H.vc
     uconfig.h
 );
-system("chmod u+w @writables") == 0
-    or die "system: $!";
+
+my $out = `chmod u+w @writables 2>&1`;
+if ($? != 0) {
+    warn $out;
+    if ($out =~ /no such file/i) {
+        warn "Check that the files above still exist in the Perl core.\n";
+        warn "If not, remove them from \@writables in Porting/makerel\n";
+    }
+    exit 1;
+}
+
+warn $out if $out;
 
 chdir ".." or die $!;
 
@@ -204,6 +216,12 @@ if ($opts{b}) {
         $cmd = "tar cf - $reldir | bzip2 > $reldir.tar.bz2";
         system($cmd) == 0 or die "$cmd failed";
     }
+}
+
+if ($opts{x}) {
+    print "Creating and compressing the tar.gz file with 7z...\n";
+    $cmd = "tar cf - $reldir | xz -z -c > $reldir.tar.xz";
+    system($cmd) == 0 or die "$cmd failed";
 }
 
 print "\n";

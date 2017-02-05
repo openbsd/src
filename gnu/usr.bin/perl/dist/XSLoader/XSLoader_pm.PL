@@ -7,10 +7,11 @@ eval { require DynaLoader };
 open OUT, ">XSLoader.pm" or die $!;
 print OUT <<'EOT';
 # Generated from XSLoader.pm.PL (resolved %Config::Config value)
+# This file is unique for every OS
 
 package XSLoader;
 
-$VERSION = "0.17";
+$VERSION = "0.22";
 
 #use strict;
 
@@ -48,7 +49,8 @@ package XSLoader;
 sub load {
     package DynaLoader;
 
-    my ($module, $modlibname) = caller();
+    my ($caller, $modlibname) = caller();
+    my $module = $caller;
 
     if (@_) {
         $module = $_[0];
@@ -67,11 +69,14 @@ sub load {
 
 EOT
 
-print OUT <<'EOT' if defined &DynaLoader::mod2fname;
+# defined &DynaLoader::mod2fname catches most cases, except when
+# cross-compiling to a system that defines mod2fname. Using 
+# $Config{d_libname_unique} is a best attempt at catching those cases.
+print OUT <<'EOT' if defined &DynaLoader::mod2fname || $Config{d_libname_unique};
     # Some systems have restrictions on files names for DLL's etc.
     # mod2fname returns appropriate file base name (typically truncated)
     # It may also edit @modparts if required.
-    $modfname = &mod2fname(\@modparts) if defined &mod2fname;
+    $modfname = &DynaLoader::mod2fname(\@modparts) if defined &DynaLoader::mod2fname;
 
 EOT
 
@@ -84,10 +89,22 @@ EOT
 
 print OUT <<'EOT';
     my $modpname = join('/',@modparts);
-    my $c = @modparts;
+    my $c = () = split(/::/,$caller,-1);
     $modlibname =~ s,[\\/][^\\/]+$,, while $c--;    # Q&D basename
+EOT
+
+my $to_print = <<'EOT';
     # Does this look like a relative path?
-    if ($modlibname !~ m|^[\\/]|) {
+    if ($modlibname !~ m{regexp}) {
+EOT
+
+$to_print =~ s~regexp~
+    $^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'cygwin' || $^O eq 'amigaos'
+        ? '^(?:[A-Za-z]:)?[\\\/]' # Optional drive letter
+        : '^/'
+~e;
+
+print OUT $to_print, <<'EOT';
         # Someone may have a #line directive that changes the file name, or
         # may be calling XSLoader::load from inside a string eval.  We cer-
         # tainly do not want to go loading some code that is not in @INC,
@@ -130,9 +147,10 @@ print OUT <<'EOT';
 #       print STDERR "BS: $bs ($^O, $dlsrc)\n" if $dl_debug;
         eval { do $bs; };
         warn "$bs: $@\n" if $@;
+	goto \&XSLoader::bootstrap_inherit;
     }
 
-    goto \&XSLoader::bootstrap_inherit if not -f $file or -s $bs;
+    goto \&XSLoader::bootstrap_inherit if not -f $file;
 
     my $bootname = "boot_$module";
     $bootname =~ s/\W/_/g;
@@ -143,10 +161,11 @@ print OUT <<'EOT';
 EOT
 
     if ($^O eq 'darwin') {
-print OUT <<'EOT';
-        if ($boot_symbol_ref = dl_find_symbol(0, $bootname)) {
-            goto boot; #extension library has already been loaded, e.g. darwin
-        }
+      my $extra_arg = ', 1 ' if $DynaLoader::VERSION ge '1.37';
+print OUT <<"EOT";
+    if (\$boot_symbol_ref = dl_find_symbol( 0, \$bootname $extra_arg)) {
+        goto boot; #extension library has already been loaded, e.g. darwin
+    }
 EOT
     }
 
@@ -164,12 +183,20 @@ print OUT <<'EOT';
     };
     push(@DynaLoader::dl_librefs,$libref);  # record loaded object
 
+EOT
+my $dlsrc = $Config{dlsrc};
+if ($dlsrc eq 'dl_freemint.xs' || $dlsrc eq 'dl_dld.xs') {
+    print OUT <<'EOT';
     my @unresolved = dl_undef_symbols();
     if (@unresolved) {
         require Carp;
         Carp::carp("Undefined symbols present after loading $file: @unresolved\n");
     }
 
+EOT
+}
+
+print OUT <<'EOT';
     $boot_symbol_ref = dl_find_symbol($libref, $bootname) or do {
         require Carp;
         Carp::croak("Can't find '$bootname' symbol in $file\n");
@@ -228,7 +255,7 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.17
+Version 0.22
 
 =head1 SYNOPSIS
 

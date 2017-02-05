@@ -540,9 +540,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xf -
+	gzip -d -c perl5.004_07.tar.gz | tar -xof -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xf -
+	gzip -d -c perl5.004_08.tar.gz | tar -xof -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove
@@ -1265,12 +1265,6 @@ I've received sensible suggestions for --exec_prefix and other
 GNU configure --options.  It's not always obvious exactly what is
 intended, but this merits investigation.
 
-=item make clean
-
-Currently, B<make clean> isn't all that useful, though
-B<make realclean> and B<make distclean> are.  This needs a bit of
-thought and documentation before it gets cleaned up.
-
 =item Try gcc if cc fails
 
 Currently, we just give up.
@@ -1387,7 +1381,7 @@ The files of Perl source code distribution do carry a lot of
 copyrights, by various people.  (There are many copyrights embedded in
 perl.c, for example.)  The most straightforward thing for pumpkings to
 do is to simply update Larry's copyrights at the beginning of the
-*.[hcy], x2p/*.[hcy], *.pl, and README files, and leave all other
+*.[hcy], *.pl, and README files, and leave all other
 copyrights alone.  Doing more than that requires quite a bit of tracking. 
 
 =back

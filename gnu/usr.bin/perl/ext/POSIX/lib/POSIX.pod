@@ -21,15 +21,6 @@ The POSIX module permits you to access all (or nearly all) the standard
 POSIX 1003.1 identifiers.  Many of these identifiers have been given Perl-ish
 interfaces.
 
-I<Everything is exported by default> with the exception of any POSIX
-functions with the same name as a built-in Perl function, such as
-C<abs>, C<alarm>, C<rmdir>, C<write>, etc.., which will be exported
-only if you ask for them explicitly.  This is an unfortunate backwards
-compatibility feature.  You can stop the exporting by saying S<C<use
-POSIX ()>> and then use the fully qualified names (I<e.g.>, C<POSIX::SEEK_END>),
-or by giving an explicit import list.  If you do neither, and opt for the
-default, S<C<use POSIX;>> has to import I<553 symbols>.
-
 This document gives a condensed list of the features available in the POSIX
 module.  Consult your operating system's manpages for general information on
 most features.  Consult L<perlfunc> for functions which are noted as being
@@ -42,6 +33,15 @@ constants and macros in an organization which roughly follows IEEE Std
 1003.1b-1993.
 
 =head1 CAVEATS
+
+I<Everything is exported by default> (with a handful of exceptions).
+This is an unfortunate backwards compatibility feature and its use is
+B<strongly L<discouraged|perlpolicy/discouraged>>.
+You should either prevent the exporting (by saying S<C<use POSIX ();>>,
+as usual) and then use fully qualified names (e.g. C<POSIX::SEEK_END>),
+or give an explicit import list.
+If you do neither and opt for the default (as in S<C<use POSIX;>>), you
+will import I<hundreds and hundreds> of symbols into your namespace.
 
 A few functions are not implemented because they are C specific.  If you
 attempt to call these, they will print a message telling you that they
@@ -102,6 +102,12 @@ I<race condition>.
 This is identical to the C function C<acos()>, returning
 the arcus cosine of its numerical argument.  See also L<Math::Trig>.
 
+=item C<acosh>
+
+This is identical to the C function C<acosh()>, returning the
+hyperbolic arcus cosine of its numerical argument [C99].  See also
+L<Math::Trig>.
+
 =item C<alarm>
 
 This is identical to Perl's builtin C<alarm()> function,
@@ -128,6 +134,12 @@ The C<$mon> is zero-based: January equals C<0>.  The C<$year> is
 This is identical to the C function C<asin()>, returning
 the arcus sine of its numerical argument.  See also L<Math::Trig>.
 
+=item C<asinh>
+
+This is identical to the C function C<asinh()>, returning the
+hyperbolic arcus sine of its numerical argument [C99].  See also
+L<Math::Trig>.
+
 =item C<assert>
 
 Unimplemented, but you can use L<perlfunc/die> and the L<Carp> module
@@ -138,6 +150,12 @@ to achieve similar things.
 This is identical to the C function C<atan()>, returning the
 arcus tangent of its numerical argument.  See also L<Math::Trig>.
 
+=item C<atanh>
+
+This is identical to the C function C<atanh()>, returning the
+hyperbolic arcus tangent of its numerical argument [C99].  See also
+L<Math::Trig>.
+
 =item C<atan2>
 
 This is identical to Perl's builtin C<atan2()> function, returning
@@ -146,22 +164,22 @@ coordinate and the I<x> coordinate.  See also L<Math::Trig>.
 
 =item C<atexit>
 
-C<atexit()> is C-specific: use C<END {}> instead, see L<perlmod>.
+Not implemented.  C<atexit()> is C-specific: use C<END {}> instead, see L<perlmod>.
 
 =item C<atof>
 
-C<atof()> is C-specific.  Perl converts strings to numbers transparently.
+Not implemented.  C<atof()> is C-specific.  Perl converts strings to numbers transparently.
 If you need to force a scalar to a number, add a zero to it.
 
 =item C<atoi>
 
-C<atoi()> is C-specific.  Perl converts strings to numbers transparently.
+Not implemented.  C<atoi()> is C-specific.  Perl converts strings to numbers transparently.
 If you need to force a scalar to a number, add a zero to it.
 If you need to have just the integer part, see L<perlfunc/int>.
 
 =item C<atol>
 
-C<atol()> is C-specific.  Perl converts strings to numbers transparently.
+Not implemented.  C<atol()> is C-specific.  Perl converts strings to numbers transparently.
 If you need to force a scalar to a number, add a zero to it.
 If you need to have just the integer part, see L<perlfunc/int>.
 
@@ -172,7 +190,11 @@ see L<Search::Dict>.
 
 =item C<calloc>
 
-C<calloc()> is C-specific.  Perl does memory management transparently.
+Not implemented.  C<calloc()> is C-specific.  Perl does memory management transparently.
+
+=item C<cbrt>
+
+The cube root [C99].
 
 =item C<ceil>
 
@@ -196,7 +218,7 @@ to change file and directory owners and groups, see L<perlfunc/chown>.
 
 =item C<clearerr>
 
-Use the method C<IO::Handle::clearerr()> instead, to reset the error
+Not implemented.  Use the method C<IO::Handle::clearerr()> instead, to reset the error
 state (if any) and EOF state (if any) of the given stream.
 
 =item C<clock>
@@ -231,6 +253,14 @@ See also L<Math::Trig>.
 
 This is identical to the C function C<cosh()>, for returning
 the hyperbolic cosine of its numeric argument.  See also L<Math::Trig>.
+
+=item C<copysign>
+
+Returns C<x> but with the sign of C<y> [C99].
+
+ $x_with_sign_of_y = POSIX::copysign($x, $y);
+
+See also L</signbit>.
 
 =item C<creat>
 
@@ -267,7 +297,7 @@ by C<time()>), see L</time>.
 
 =item C<div>
 
-C<div()> is C-specific, use L<perlfunc/int> on the usual C</> division and
+Not implemented.  C<div()> is C-specific, use L<perlfunc/int> on the usual C</> division and
 the modulus C<%>.
 
 =item C<dup>
@@ -290,6 +320,14 @@ C<POSIX::open>.
 
 Returns C<undef> on failure.
 
+=item C<erf>
+
+The error function [C99].
+
+=item C<erfc>
+
+The complementary error function [C99].
+
 =item C<errno>
 
 Returns the value of errno.
@@ -300,27 +338,27 @@ This identical to the numerical values of the C<$!>, see L<perlvar/$ERRNO>.
 
 =item C<execl>
 
-C<execl()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execl()> is C-specific, see L<perlfunc/exec>.
 
 =item C<execle>
 
-C<execle()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execle()> is C-specific, see L<perlfunc/exec>.
 
 =item C<execlp>
 
-C<execlp()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execlp()> is C-specific, see L<perlfunc/exec>.
 
 =item C<execv>
 
-C<execv()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execv()> is C-specific, see L<perlfunc/exec>.
 
 =item C<execve>
 
-C<execve()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execve()> is C-specific, see L<perlfunc/exec>.
 
 =item C<execvp>
 
-C<execvp()> is C-specific, see L<perlfunc/exec>.
+Not implemented.  C<execvp()> is C-specific, see L<perlfunc/exec>.
 
 =item C<exit>
 
@@ -333,6 +371,12 @@ This is identical to Perl's builtin C<exp()> function for
 returning the exponent (I<e>-based) of the numerical argument,
 see L<perlfunc/exp>.
 
+=item C<expm1>
+
+Equivalent to C<exp(x) - 1>, but more precise for small argument values [C99].
+
+See also L</log1p>.
+
 =item C<fabs>
 
 This is identical to Perl's builtin C<abs()> function for returning
@@ -340,7 +384,7 @@ the absolute value of the numerical argument, see L<perlfunc/abs>.
 
 =item C<fclose>
 
-Use method C<IO::Handle::close()> instead, or see L<perlfunc/close>.
+Not implemented.  Use method C<IO::Handle::close()> instead, or see L<perlfunc/close>.
 
 =item C<fcntl>
 
@@ -349,42 +393,77 @@ see L<perlfunc/fcntl>.
 
 =item C<fdopen>
 
-Use method C<IO::Handle::new_from_fd()> instead, or see L<perlfunc/open>.
+Not implemented.  Use method C<IO::Handle::new_from_fd()> instead, or see L<perlfunc/open>.
 
 =item C<feof>
 
-Use method C<IO::Handle::eof()> instead, or see L<perlfunc/eof>.
+Not implemented.  Use method C<IO::Handle::eof()> instead, or see L<perlfunc/eof>.
 
 =item C<ferror>
 
-Use method C<IO::Handle::error()> instead.
+Not implemented.  Use method C<IO::Handle::error()> instead.
 
 =item C<fflush>
 
-Use method C<IO::Handle::flush()> instead.
+Not implemented.  Use method C<IO::Handle::flush()> instead.
 See also C<L<perlvar/$OUTPUT_AUTOFLUSH>>.
 
 =item C<fgetc>
 
-Use method C<IO::Handle::getc()> instead, or see L<perlfunc/read>.
+Not implemented.  Use method C<IO::Handle::getc()> instead, or see L<perlfunc/read>.
 
 =item C<fgetpos>
 
-Use method C<IO::Seekable::getpos()> instead, or see L<perlfunc/seek>.
+Not implemented.  Use method C<IO::Seekable::getpos()> instead, or see L<perlfunc/seek>.
 
 =item C<fgets>
 
-Use method C<IO::Handle::gets()> instead.  Similar to E<lt>E<gt>, also known
+Not implemented.  Use method C<IO::Handle::gets()> instead.  Similar to E<lt>E<gt>, also known
 as L<perlfunc/readline>.
 
 =item C<fileno>
 
-Use method C<IO::Handle::fileno()> instead, or see L<perlfunc/fileno>.
+Not implemented.  Use method C<IO::Handle::fileno()> instead, or see L<perlfunc/fileno>.
 
 =item C<floor>
 
 This is identical to the C function C<floor()>, returning the largest
 integer value less than or equal to the numerical argument.
+
+=item C<fdim>
+
+"Positive difference", S<C<x - y>> if S<C<x E<gt> y>>, zero otherwise [C99].
+
+=item C<fegetround>
+
+Returns the current floating point rounding mode, one of
+
+  FE_TONEAREST FE_TOWARDZERO FE_UPWARD FE_UPWARD
+
+C<FE_TONEAREST> is like L</round>, C<FE_TOWARDZERO> is like L</trunc> [C99].
+
+=item C<fesetround>
+
+Sets the floating point rounding mode, see L</fegetround> [C99].
+
+=item C<fma>
+
+"Fused multiply-add", S<C<x * y + z>>, possibly faster (and less lossy)
+than the explicit two operations [C99].
+
+ my $fused = POSIX::fma($x, $y, $z);
+
+=item C<fmax>
+
+Maximum of C<x> and C<y>, except when either is C<NaN>, returns the other [C99].
+
+ my $min = POSIX::fmax($x, $y);
+
+=item C<fmin>
+
+Minimum of C<x> and C<y>, except when either is C<NaN>, returns the other [C99].
+
+ my $min = POSIX::fmin($x, $y);
 
 =item C<fmod>
 
@@ -392,13 +471,13 @@ This is identical to the C function C<fmod()>.
 
 	$r = fmod($x, $y);
 
-It returns the remainder C<$r = $x - $n*$y>, where C<$n = trunc($x/$y)>.
+It returns the remainder S<C<$r = $x - $n*$y>>, where S<C<$n = trunc($x/$y)>>.
 The C<$r> has the same sign as C<$x> and magnitude (absolute value)
 less than the magnitude of C<$y>.
 
 =item C<fopen>
 
-Use method C<IO::File::open()> instead, or see L<perlfunc/open>.
+Not implemented.  Use method C<IO::File::open()> instead, or see L<perlfunc/open>.
 
 =item C<fork>
 
@@ -419,29 +498,40 @@ pathname on the filesystem which holds F</var/foo>.
 
 Returns C<undef> on failure.
 
+=item C<fpclassify>
+
+Returns one of
+
+  FP_NORMAL FP_ZERO FP_SUBNORMAL FP_INFINITE FP_NAN
+
+telling the class of the argument [C99].  C<FP_INFINITE> is positive
+or negative infinity, C<FP_NAN> is not-a-number.  C<FP_SUBNORMAL>
+means subnormal numbers (also known as denormals), very small numbers
+with low precision. C<FP_ZERO> is zero.  C<FP_NORMAL> is all the rest.
+
 =item C<fprintf>
 
-C<fprintf()> is C-specific, see L<perlfunc/printf> instead.
+Not implemented.  C<fprintf()> is C-specific, see L<perlfunc/printf> instead.
 
 =item C<fputc>
 
-C<fputc()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<fputc()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<fputs>
 
-C<fputs()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<fputs()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<fread>
 
-C<fread()> is C-specific, see L<perlfunc/read> instead.
+Not implemented.  C<fread()> is C-specific, see L<perlfunc/read> instead.
 
 =item C<free>
 
-C<free()> is C-specific.  Perl does memory management transparently.
+Not implemented.  C<free()> is C-specific.  Perl does memory management transparently.
 
 =item C<freopen>
 
-C<freopen()> is C-specific, see L<perlfunc/open> instead.
+Not implemented.  C<freopen()> is C-specific, see L<perlfunc/open> instead.
 
 =item C<frexp>
 
@@ -451,15 +541,15 @@ Return the mantissa and exponent of a floating-point number.
 
 =item C<fscanf>
 
-C<fscanf()> is C-specific, use E<lt>E<gt> and regular expressions instead.
+Not implemented.  C<fscanf()> is C-specific, use E<lt>E<gt> and regular expressions instead.
 
 =item C<fseek>
 
-Use method C<IO::Seekable::seek()> instead, or see L<perlfunc/seek>.
+Not implemented.  Use method C<IO::Seekable::seek()> instead, or see L<perlfunc/seek>.
 
 =item C<fsetpos>
 
-Use method C<IO::Seekable::setpos()> instead, or seek L<perlfunc/seek>.
+Not implemented.  Use method C<IO::Seekable::setpos()> instead, or seek L<perlfunc/seek>.
 
 =item C<fstat>
 
@@ -472,15 +562,15 @@ Perl's builtin C<stat> function.
 
 =item C<fsync>
 
-Use method C<IO::Handle::sync()> instead.
+Not implemented.  Use method C<IO::Handle::sync()> instead.
 
 =item C<ftell>
 
-Use method C<IO::Seekable::tell()> instead, or see L<perlfunc/tell>.
+Not implemented.  Use method C<IO::Seekable::tell()> instead, or see L<perlfunc/tell>.
 
 =item C<fwrite>
 
-C<fwrite()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<fwrite()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<getc>
 
@@ -539,6 +629,17 @@ This is identical to Perl's builtin C<getlogin()> function for
 returning the user name associated with the current session, see
 L<perlfunc/getlogin>.
 
+=item C<getpayload>
+
+	use POSIX ':nan_payload';
+	getpayload($var)
+
+Returns the C<NaN> payload.
+
+Note the API instability warning in L</setpayload>.
+
+See L</nan> for more discussion about C<NaN>.
+
 =item C<getpgrp>
 
 This is identical to Perl's builtin C<getpgrp()> function for
@@ -587,40 +688,40 @@ This is identical to Perl's builtin C<gmtime()> function for
 converting seconds since the epoch to a date in Greenwich Mean Time,
 see L<perlfunc/gmtime>.
 
+=item C<hypot>
+
+Equivalent to C<S<sqrt(x * x + y * y)>> except more stable on very large
+or very small arguments [C99].
+
+=item C<ilogb>
+
+Integer binary logarithm [C99]
+
+For example C<ilogb(20)> is 4, as an integer.
+
+See also L</logb>.
+
+=item C<Inf>
+
+The infinity as a constant:
+
+   use POSIX qw(Inf);
+   my $pos_inf = +Inf;  # Or just Inf.
+   my $neg_inf = -Inf;
+
+See also L</isinf>, and L</fpclassify>.
+
 =item C<isalnum>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:alnum:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
-
-You may want to use the C<L<E<sol>\wE<sol>|perlrecharclass/Word
-characters>> construct instead.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:alnum:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<isalpha>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:alpha:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:alpha:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<isatty>
 
@@ -629,157 +730,121 @@ to a tty.  Similar to the C<-t> operator, see L<perlfunc/-X>.
 
 =item C<iscntrl>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:cntrl:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:cntrl:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<isdigit>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:digit:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:digit:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+=item C<isfinite>
 
-You may want to use the C<L<E<sol>\dE<sol>|perlrecharclass/Digits>>
-construct instead.
+Returns true if the argument is a finite number (that is, not an
+infinity, or the not-a-number) [C99].
+
+See also L</isinf>, L</isnan>, and L</fpclassify>.
 
 =item C<isgraph>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:graph:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:graph:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+=item C<isgreater>
+
+(Also C<isgreaterequal>, C<isless>, C<islessequal>, C<islessgreater>,
+C<isunordered>)
+
+Floating point comparisons which handle the C<NaN> [C99].
+
+=item C<isinf>
+
+Returns true if the argument is an infinity (positive or negative) [C99].
+
+See also L</Inf>, L</isnan>, L</isfinite>, and L</fpclassify>.
 
 =item C<islower>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:lower:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:lower:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+=item C<isnan>
 
-Do B<not> use C</[a-z]/> unless you don't care about the current locale.
+Returns true if the argument is C<NaN> (not-a-number) [C99].
+
+Note that you cannot test for "C<NaN>-ness" with
+
+   $x == $x
+
+since the C<NaN> is not equivalent to anything, B<including itself>.
+
+See also L</nan>, L</NaN>, L</isinf>, and L</fpclassify>.
+
+=item C<isnormal>
+
+Returns true if the argument is normal (that is, not a subnormal/denormal,
+and not an infinity, or a not-a-number) [C99].
+
+See also L</isfinite>, and L</fpclassify>.
 
 =item C<isprint>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:print:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:print:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<ispunct>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:punct:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:punct:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+=item C<issignaling>
+
+	use POSIX ':nan_payload';
+	issignaling($var, $payload)
+
+Return true if the argument is a I<signaling> NaN.
+
+Note the API instability warning in L</setpayload>.
+
+See L</nan> for more discussion about C<NaN>.
 
 =item C<isspace>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:space:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
-
-You may want to use the C<L<E<sol>\sE<sol>|perlrecharclass/Whitespace>>
-construct instead.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:space:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<isupper>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:upper:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
-
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
-
-Do B<not> use C</[A-Z]/> unless you don't care about the current locale.
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:upper:]]+ $ /x>>, which you should convert
+to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
 =item C<isxdigit>
 
-Deprecated function whose use raises a warning, and which is slated to
-be removed in a future Perl version.  It is very similar to matching
-against S<C<qr/ ^ [[:xdigit:]]+ $ /x>>, which you should convert to use
-instead.  The function is deprecated because 1) it doesn't handle UTF-8
-encoded strings properly; and 2) it returns C<TRUE> even if the input is
-the empty string.  The function return is always based on the current
-locale, whereas using locale rules is optional with the regular
-expression, based on pragmas in effect and pattern modifiers (see
-L<perlre/Character set modifiers> and L<perlre/Which character set
-modifier is in effect?>).
+This function has been removed as of v5.24.  It was very similar to
+matching against S<C<qr/ ^ [[:xdigit:]]+ $ /x>>, which you should
+convert to use instead.  See L<perlrecharclass/POSIX Character Classes>.
 
-The function returns C<TRUE> if the input string is empty, or if the
-corresponding C function returns C<TRUE> for every byte in the string.
+=item C<j0>
+
+=item C<j1>
+
+=item C<jn>
+
+=item C<y0>
+
+=item C<y1>
+
+=item C<yn>
+
+The Bessel function of the first kind of the order zero.
 
 =item C<kill>
 
@@ -788,16 +853,18 @@ signals to processes (often to terminate them), see L<perlfunc/kill>.
 
 =item C<labs>
 
-(For returning absolute values of long integers.)
+Not implemented.  (For returning absolute values of long integers.)
 C<labs()> is C-specific, see L<perlfunc/abs> instead.
 
 =item C<lchown>
 
 This is identical to the C function, except the order of arguments is
 consistent with Perl's builtin C<chown()> with the added restriction
-of only one path, not an list of paths.  Does the same thing as the 
-C<chown()> function but changes the owner of a symbolic link instead 
+of only one path, not a list of paths.  Does the same thing as the
+C<chown()> function but changes the owner of a symbolic link instead
 of the file the symbolic link points to.
+
+ POSIX::lchown($uid, $gid, $file_path);
 
 =item C<ldexp>
 
@@ -808,8 +875,33 @@ for multiplying floating point numbers with powers of two.
 
 =item C<ldiv>
 
-(For computing dividends of long integers.)
+Not implemented.  (For computing dividends of long integers.)
 C<ldiv()> is C-specific, use C</> and C<int()> instead.
+
+=item C<lgamma>
+
+The logarithm of the Gamma function [C99].
+
+See also L</tgamma>.
+
+=item C<log1p>
+
+Equivalent to S<C<log(1 + x)>>, but more stable results for small argument
+values [C99].
+
+=item C<log2>
+
+Logarithm base two [C99].
+
+See also L</expm1>.
+
+=item C<logb>
+
+Integer binary logarithm [C99].
+
+For example C<logb(20)> is 4, as a floating point number.
+
+See also L</ilogb>.
 
 =item C<link>
 
@@ -819,7 +911,7 @@ for creating hard links into files, see L<perlfunc/link>.
 =item C<localeconv>
 
 Get numeric formatting information.  Returns a reference to a hash
-containing the current locale formatting values.  Users of this function
+containing the current underlying locale's formatting values.  Users of this function
 should also read L<perllocale>, which provides a comprehensive
 discussion of Perl locale handling, including
 L<a section devoted to this function|perllocale/The localeconv function>.
@@ -860,6 +952,9 @@ Here is how to query the database for the B<de> (Deutsch or German) locale.
 			$property, $lconv->{$property};
 	}
 
+The members whose names begin with C<int_p_> and C<int_n_> were added by
+POSIX.1-2008 and are only available on systems that support them.
+
 =item C<localtime>
 
 This is identical to Perl's builtin C<localtime()> function for
@@ -889,7 +984,7 @@ or
 
 =item C<longjmp>
 
-C<longjmp()> is C-specific: use L<perlfunc/die> instead.
+Not implemented.  C<longjmp()> is C-specific: use L<perlfunc/die> instead.
 
 =item C<lseek>
 
@@ -901,50 +996,70 @@ those obtained by calling C<POSIX::open>.
 
 Returns C<undef> on failure.
 
+=item C<lrint>
+
+Depending on the current floating point rounding mode, rounds the
+argument either toward nearest (like L</round>), toward zero (like
+L</trunc>), downward (toward negative infinity), or upward (toward
+positive infinity) [C99].
+
+For the rounding mode, see L</fegetround>.
+
+=item C<lround>
+
+Like L</round>, but as integer, as opposed to floating point [C99].
+
+See also L</ceil>, L</floor>, L</trunc>.
+
+Owing to an oversight, this is not currently exported by default, or as part of
+the C<:math_h_c99> export tag; importing it must therefore be done by explicit
+name. This will be changed in Perl 5.26.
+
 =item C<malloc>
 
-C<malloc()> is C-specific.  Perl does memory management transparently.
+Not implemented.  C<malloc()> is C-specific.  Perl does memory management transparently.
 
 =item C<mblen>
 
 This is identical to the C function C<mblen()>.
-Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather
-useless function.
+
+Core Perl does not have any support for the wide and multibyte
+characters of the C standards, except under UTF-8 locales, so this might
+be a rather useless function.
+
+However, Perl supports Unicode, see L<perluniintro>.
 
 =item C<mbstowcs>
 
 This is identical to the C function C<mbstowcs()>.
-Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather
-useless function.
+
+See L</mblen>.
 
 =item C<mbtowc>
 
 This is identical to the C function C<mbtowc()>.
-Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather
-useless function.
+
+See L</mblen>.
 
 =item C<memchr>
 
-C<memchr()> is C-specific, see L<perlfunc/index> instead.
+Not implemented.  C<memchr()> is C-specific, see L<perlfunc/index> instead.
 
 =item C<memcmp>
 
-C<memcmp()> is C-specific, use C<eq> instead, see L<perlop>.
+Not implemented.  C<memcmp()> is C-specific, use C<eq> instead, see L<perlop>.
 
 =item C<memcpy>
 
-C<memcpy()> is C-specific, use C<=>, see L<perlop>, or see L<perlfunc/substr>.
+Not implemented.  C<memcpy()> is C-specific, use C<=>, see L<perlop>, or see L<perlfunc/substr>.
 
 =item C<memmove>
 
-C<memmove()> is C-specific, use C<=>, see L<perlop>, or see L<perlfunc/substr>.
+Not implemented.  C<memmove()> is C-specific, use C<=>, see L<perlop>, or see L<perlfunc/substr>.
 
 =item C<memset>
 
-C<memset()> is C-specific, use C<x> instead, see L<perlop>.
+Not implemented.  C<memset()> is C-specific, use C<x> instead, see L<perlop>.
 
 =item C<mkdir>
 
@@ -971,9 +1086,9 @@ Synopsis:
 	mktime(sec, min, hour, mday, mon, year, wday = 0,
 	       yday = 0, isdst = -1)
 
-The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero.
-I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
-year (C<year>) is given in years since 1900.  I.e. The year 1995 is 95; the
+The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero,
+I<i.e.>, January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
+year (C<year>) is given in years since 1900; I<i.e.>, the year 1995 is 95; the
 year 2001 is 101.  Consult your system's C<mktime()> manpage for details
 about these and the other arguments.
 
@@ -990,18 +1105,90 @@ Return the integral and fractional parts of a floating-point number.
 
 	($fractional, $integral) = POSIX::modf( 3.14 );
 
+See also L</round>.
+
+=item C<NaN>
+
+The not-a-number as a constant:
+
+   use POSIX qw(NaN);
+   my $nan = NaN;
+
+See also L</nan>, C</isnan>, and L</fpclassify>.
+
+=item C<nan>
+
+   my $nan = nan();
+
+Returns C<NaN>, not-a-number [C99].
+
+The returned NaN is always a I<quiet> NaN, as opposed to I<signaling>.
+
+With an argument, can be used to generate a NaN with I<payload>.
+The argument is first interpreted as a floating point number,
+but then any fractional parts are truncated (towards zero),
+and the value is interpreted as an unsigned integer.
+The bits of this integer are stored in the unused bits of the NaN.
+
+The result has a dual nature: it is a NaN, but it also carries
+the integer inside it.  The integer can be retrieved with L</getpayload>.
+Note, though, that the payload is not propagated, not even on copies,
+and definitely not in arithmetic operations.
+
+How many bits fit in the NaN depends on what kind of floating points
+are being used, but on the most common platforms (64-bit IEEE 754,
+or the x86 80-bit long doubles) there are 51 and 61 bits available,
+respectively.  (There would be 52 and 62, but the quiet/signaling
+bit of NaNs takes away one.)  However, because of the floating-point-to-
+integer-and-back conversions, please test carefully whether you get back
+what you put in.  If your integers are only 32 bits wide, you probably
+should not rely on more than 32 bits of payload.
+
+Whether a "signaling" NaN is in any way different from a "quiet" NaN,
+depends on the platform.  Also note that the payload of the default
+NaN (no argument to nan()) is not necessarily zero, use C<setpayload>
+to explicitly set the payload.  On some platforms like the 32-bit x86,
+(unless using the 80-bit long doubles) the signaling bit is not supported
+at all.
+
+See also L</isnan>, L</NaN>, L</setpayload> and L</issignaling>.
+
+=item C<nearbyint>
+
+Returns the nearest integer to the argument, according to the current
+rounding mode (see L</fegetround>) [C99].
+
+=item C<nextafter>
+
+Returns the next representable floating point number after C<x> in the
+direction of C<y> [C99].
+
+ my $nextafter = POSIX::nextafter($x, $y);
+
+Like L</nexttoward>, but potentially less accurate.
+
+=item C<nexttoward>
+
+Returns the next representable floating point number after C<x> in the
+direction of C<y> [C99].
+
+ my $nexttoward = POSIX::nexttoward($x, $y);
+
+Like L</nextafter>, but potentially more accurate.
+
 =item C<nice>
 
 This is similar to the C function C<nice()>, for changing
 the scheduling preference of the current process.  Positive
-arguments mean more polite process, negative values more
-needy process.  Normal user processes can only be more polite.
+arguments mean a more polite process, negative values a more
+needy process.  Normal (non-root) user processes can only change towards
+being more polite.
 
 Returns C<undef> on failure.
 
 =item C<offsetof>
 
-C<offsetof()> is C-specific, you probably want to see L<perlfunc/pack> instead.
+Not implemented.  C<offsetof()> is C-specific, you probably want to see L<perlfunc/pack> instead.
 
 =item C<open>
 
@@ -1089,24 +1276,24 @@ You can also use the C<**> operator, see L<perlop>.
 
 =item C<printf>
 
-Formats and prints the specified arguments to STDOUT.
+Formats and prints the specified arguments to C<STDOUT>.
 See also L<perlfunc/printf>.
 
 =item C<putc>
 
-C<putc()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<putc()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<putchar>
 
-C<putchar()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<putchar()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<puts>
 
-C<puts()> is C-specific, see L<perlfunc/print> instead.
+Not implemented.  C<puts()> is C-specific, see L<perlfunc/print> instead.
 
 =item C<qsort>
 
-C<qsort()> is C-specific, see L<perlfunc/sort> instead.
+Not implemented.  C<qsort()> is C-specific, see L<perlfunc/sort> instead.
 
 =item C<raise>
 
@@ -1115,7 +1302,7 @@ See also L<perlfunc/kill> and the C<$$> in L<perlvar/$PID>.
 
 =item C<rand>
 
-C<rand()> is non-portable, see L<perlfunc/rand> instead.
+Not implemented.  C<rand()> is non-portable, see L<perlfunc/rand> instead.
 
 =item C<read>
 
@@ -1137,12 +1324,29 @@ for reading directory entries, see L<perlfunc/readdir>.
 
 =item C<realloc>
 
-C<realloc()> is C-specific.  Perl does memory management transparently.
+Not implemented.  C<realloc()> is C-specific.  Perl does memory management transparently.
+
+=item C<remainder>
+
+Given C<x> and C<y>, returns the value S<C<x - n*y>>, where C<n> is the integer
+closest to C<x>/C<y>. [C99]
+
+ my $remainder = POSIX::remainder($x, $y)
+
+See also L</remquo>.
 
 =item C<remove>
 
 This is identical to Perl's builtin C<unlink()> function
 for removing files, see L<perlfunc/unlink>.
+
+=item C<remquo>
+
+Like L</remainder> but also returns the low-order bits of the quotient (n)
+[C99]
+
+(This is quite esoteric interface, mainly used to implement numerical
+algorithms.)
 
 =item C<rename>
 
@@ -1158,14 +1362,31 @@ Seeks to the beginning of the file.
 This is identical to Perl's builtin C<rewinddir()> function for
 rewinding directory entry streams, see L<perlfunc/rewinddir>.
 
+=item C<rint>
+
+Identical to L</lrint>.
+
 =item C<rmdir>
 
 This is identical to Perl's builtin C<rmdir()> function
 for removing (empty) directories, see L<perlfunc/rmdir>.
 
+=item C<round>
+
+Returns the integer (but still as floating point) nearest to the
+argument [C99].
+
+See also L</ceil>, L</floor>, L</lround>, L</modf>, and L</trunc>.
+
+=item C<scalbn>
+
+Returns S<C<x * 2**y>> [C99].
+
+See also L</frexp> and L</ldexp>.
+
 =item C<scanf>
 
-C<scanf()> is C-specific, use E<lt>E<gt> and regular expressions instead,
+Not implemented.  C<scanf()> is C-specific, use E<lt>E<gt> and regular expressions instead,
 see L<perlre>.
 
 =item C<setgid>
@@ -1179,10 +1400,17 @@ list of numbers.
 
 =item C<setjmp>
 
-C<setjmp()> is C-specific: use C<eval {}> instead,
+Not implemented.  C<setjmp()> is C-specific: use C<eval {}> instead,
 see L<perlfunc/eval>.
 
 =item C<setlocale>
+
+WARNING!  Do NOT use this function in a L<thread|threads>.  The locale
+will change in all other threads at the same time, and should your
+thread get paused by the operating system, and another started, that
+thread will not have the locale it is expecting.  On some platforms,
+there can be a race leading to segfaults if two threads call this
+function nearly simultaneously.
 
 Modifies and queries the program's underlying locale.  Users of this
 function should read L<perllocale>, whch provides a comprehensive
@@ -1192,7 +1420,7 @@ L<a section devoted to this function|perllocale/The setlocale function>.
 The discussion here is merely a summary reference for C<setlocale()>.
 Note that Perl itself is almost entirely unaffected by the locale
 except within the scope of S<C<"use locale">>.  (Exceptions are listed
-in L<perllocale/Not within the scope of any "use locale" variant>.)
+in L<perllocale/Not within the scope of "use locale">.)
 
 The following examples assume
 
@@ -1223,6 +1451,38 @@ your operating system. Please consult L<perllocale> for how to find
 out which locales are available in your system.
 
 	$loc = setlocale( LC_COLLATE, "es_AR.ISO8859-1" );
+
+=item C<setpayload>
+
+	use POSIX ':nan_payload';
+	setpayload($var, $payload);
+
+Sets the C<NaN> payload of var.
+
+NOTE: the NaN payload APIs are based on the latest (as of June 2015)
+proposed ISO C interfaces, but they are not yet a standard.  Things
+may change.
+
+See L</nan> for more discussion about C<NaN>.
+
+See also L</setpayloadsig>, L</isnan>, L</getpayload>, and L</issignaling>.
+
+=item C<setpayloadsig>
+
+	use POSIX ':nan_payload';
+	setpayloadsig($var, $payload);
+
+Like L</setpayload> but also makes the NaN I<signaling>.
+
+Depending on the platform the NaN may or may not behave differently.
+
+Note the API instability warning in L</setpayload>.
+
+Note that because how the floating point formats work out, on the most
+common platforms signaling payload of zero is best avoided,
+since it might end up being identical to C<+Inf>.
+
+See also L</nan>, L</isnan>, L</getpayload>, and L</issignaling>.
 
 =item C<setpgid>
 
@@ -1269,6 +1529,9 @@ semantics, as defined by POSIX/SUSv3:
                 a user process and the uid and pid make sense,
                 otherwise the signal was sent by the kernel
 
+The constants for specific C<code> values can be imported individually
+or using the C<:signal_h_si_code> tag.
+
 The following are also defined by POSIX/SUSv3, but unfortunately
 not very widely implemented:
 
@@ -1276,6 +1539,8 @@ not very widely implemented:
     uid         the uid of the process id generating the signal
     status      exit value or signal for SIGCHLD
     band        band event for SIGPOLL
+    addr        address of faulting instruction or memory
+                reference for SIGILL, SIGFPE, SIGSEGV or SIGBUS
 
 A third argument is also passed to the handler, which contains a copy
 of the raw binary contents of the C<siginfo> structure: if a system has
@@ -1289,7 +1554,11 @@ C<sigaction> and possibly also C<siginfo> documentation.
 
 =item C<siglongjmp>
 
-C<siglongjmp()> is C-specific: use L<perlfunc/die> instead.
+Not implemented.  C<siglongjmp()> is C-specific: use L<perlfunc/die> instead.
+
+=item C<signbit>
+
+Returns zero for positive arguments, non-zero for negative arguments [C99].
 
 =item C<sigpending>
 
@@ -1321,7 +1590,7 @@ reliably.
 
 =item C<sigsetjmp>
 
-C<sigsetjmp()> is C-specific: use C<eval {}> instead,
+Not implemented.  C<sigsetjmp()> is C-specific: use C<eval {}> instead,
 see L<perlfunc/eval>.
 
 =item C<sigsuspend>
@@ -1375,7 +1644,7 @@ Give a seed the pseudorandom number generator, see L<perlfunc/srand>.
 
 =item C<sscanf>
 
-C<sscanf()> is C-specific, use regular expressions instead,
+Not implemented.  C<sscanf()> is C-specific, use regular expressions instead,
 see L<perlre>.
 
 =item C<stat>
@@ -1385,15 +1654,15 @@ for returning information about files and directories.
 
 =item C<strcat>
 
-C<strcat()> is C-specific, use C<.=> instead, see L<perlop>.
+Not implemented.  C<strcat()> is C-specific, use C<.=> instead, see L<perlop>.
 
 =item C<strchr>
 
-C<strchr()> is C-specific, see L<perlfunc/index> instead.
+Not implemented.  C<strchr()> is C-specific, see L<perlfunc/index> instead.
 
 =item C<strcmp>
 
-C<strcmp()> is C-specific, use C<eq> or C<cmp> instead, see L<perlop>.
+Not implemented.  C<strcmp()> is C-specific, use C<eq> or C<cmp> instead, see L<perlop>.
 
 =item C<strcoll>
 
@@ -1404,17 +1673,17 @@ Perl can do this transparently, see L<perllocale>.
 
 =item C<strcpy>
 
-C<strcpy()> is C-specific, use C<=> instead, see L<perlop>.
+Not implemented.  C<strcpy()> is C-specific, use C<=> instead, see L<perlop>.
 
 =item C<strcspn>
 
-C<strcspn()> is C-specific, use regular expressions instead,
+Not implemented.  C<strcspn()> is C-specific, use regular expressions instead,
 see L<perlre>.
 
 =item C<strerror>
 
 Returns the error string for the specified errno.
-Identical to the string form of the C<$!>, see L<perlvar/$ERRNO>.
+Identical to the string form of C<$!>, see L<perlvar/$ERRNO>.
 
 =item C<strftime>
 
@@ -1425,9 +1694,9 @@ Synopsis:
 	strftime(fmt, sec, min, hour, mday, mon, year,
 		 wday = -1, yday = -1, isdst = -1)
 
-The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero.
-I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
-year (C<year>) is given in years since 1900.  I.e., the year 1995 is 95; the
+The month (C<mon>), weekday (C<wday>), and yearday (C<yday>) begin at zero,
+I<i.e.>, January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
+year (C<year>) is given in years since 1900, I<i.e.>, the year 1995 is 95; the
 year 2001 is 101.  Consult your system's C<strftime()> manpage for details
 about these and the other arguments.
 
@@ -1456,32 +1725,32 @@ The string for Tuesday, December 12, 1995.
 
 =item C<strlen>
 
-C<strlen()> is C-specific, use C<length()> instead, see L<perlfunc/length>.
+Not implemented.  C<strlen()> is C-specific, use C<length()> instead, see L<perlfunc/length>.
 
 =item C<strncat>
 
-C<strncat()> is C-specific, use C<.=> instead, see L<perlop>.
+Not implemented.  C<strncat()> is C-specific, use C<.=> instead, see L<perlop>.
 
 =item C<strncmp>
 
-C<strncmp()> is C-specific, use C<eq> instead, see L<perlop>.
+Not implemented.  C<strncmp()> is C-specific, use C<eq> instead, see L<perlop>.
 
 =item C<strncpy>
 
-C<strncpy()> is C-specific, use C<=> instead, see L<perlop>.
+Not implemented.  C<strncpy()> is C-specific, use C<=> instead, see L<perlop>.
 
 =item C<strpbrk>
 
-C<strpbrk()> is C-specific, use regular expressions instead,
+Not implemented.  C<strpbrk()> is C-specific, use regular expressions instead,
 see L<perlre>.
 
 =item C<strrchr>
 
-C<strrchr()> is C-specific, see L<perlfunc/rindex> instead.
+Not implemented.  C<strrchr()> is C-specific, see L<perlfunc/rindex> instead.
 
 =item C<strspn>
 
-C<strspn()> is C-specific, use regular expressions instead,
+Not implemented.  C<strspn()> is C-specific, use regular expressions instead,
 see L<perlre>.
 
 =item C<strstr>
@@ -1494,10 +1763,10 @@ see L<perlfunc/index>.
 String to double translation. Returns the parsed number and the number
 of characters in the unparsed portion of the string.  Truly
 POSIX-compliant systems set C<$!> (C<$ERRNO>) to indicate a translation
-error, so clear C<$!> before calling strtod.  However, non-POSIX systems
+error, so clear C<$!> before calling C<strtod>.  However, non-POSIX systems
 may not check for overflow, and therefore will never set C<$!>.
 
-strtod respects any POSIX I<setlocale()> C<LC_TIME> settings,
+C<strtod> respects any POSIX C<setlocale()> C<LC_TIME> settings,
 regardless of whether or not it is called from Perl code that is within
 the scope of S<C<use locale>>.
 
@@ -1512,11 +1781,11 @@ The second returned item and C<$!> can be used to check for valid input:
         die "Non-numeric input $str" . ($! ? ": $!\n" : "\n");
     }
 
-When called in a scalar context strtod returns the parsed number.
+When called in a scalar context C<strtod> returns the parsed number.
 
 =item C<strtok>
 
-C<strtok()> is C-specific, use regular expressions instead, see
+Not implemented.  C<strtok()> is C-specific, use regular expressions instead, see
 L<perlre>, or L<perlfunc/split>.
 
 =item C<strtol>
@@ -1535,7 +1804,7 @@ To parse a string C<$str> as a number in some base C<$base> use
     ($num, $n_unparsed) = POSIX::strtol($str, $base);
 
 The base should be zero or between 2 and 36, inclusive.  When the base
-is zero or omitted strtol will use the string itself to determine the
+is zero or omitted C<strtol> will use the string itself to determine the
 base: a leading "0x" or "0X" means hexadecimal; a leading "0" means
 octal; any other leading characters mean decimal.  Thus, "1234" is
 parsed as a decimal number, "01234" as an octal number, and "0x1234"
@@ -1547,7 +1816,12 @@ The second returned item and C<$!> can be used to check for valid input:
         die "Non-numeric input $str" . $! ? ": $!\n" : "\n";
     }
 
-When called in a scalar context strtol returns the parsed number.
+When called in a scalar context C<strtol> returns the parsed number.
+
+=item C<strtold>
+
+Like L</strtod> but for long doubles.  Defined only if the
+system supports long doubles.
 
 =item C<strtoul>
 
@@ -1636,6 +1910,12 @@ terminal.
 
 Returns C<undef> on failure.
 
+=item C<tgamma>
+
+The Gamma function [C99].
+
+See also L</lgamma>.
+
 =item C<time>
 
 This is identical to Perl's builtin C<time()> function
@@ -1649,7 +1929,7 @@ The C<times()> function returns elapsed realtime since some point in the past
 and system times used by child processes.  All times are returned in clock
 ticks.
 
-    ($realtime, $user, $system, $cuser, $csystem) 
+    ($realtime, $user, $system, $cuser, $csystem)
 	= POSIX::times();
 
 Note: Perl's builtin C<times()> function returns four values, measured in
@@ -1657,7 +1937,7 @@ seconds.
 
 =item C<tmpfile>
 
-Use method C<IO::File::new_tmpfile()> instead, or see L<File::Temp>.
+Not implemented.  Use method C<IO::File::new_tmpfile()> instead, or see L<File::Temp>.
 
 =item C<tmpnam>
 
@@ -1672,16 +1952,23 @@ should not be used; instead see L<File::Temp>.
 =item C<tolower>
 
 This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using the C<lc()> function,
+character or to a whole string, and currently operates as if the locale
+always is "C".  Consider using the C<lc()> function, see L<perlfunc/lc>,
 see L<perlfunc/lc>, or the equivalent C<\L> operator inside doublequotish
 strings.
 
 =item C<toupper>
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using the C<uc()> function,
-see L<perlfunc/uc>, or the equivalent C<\U> operator inside doublequotish
-strings.
+This is similar to the C function, except that it can apply to a single
+character or to a whole string, and currently operates as if the locale
+always is "C".  Consider using the C<uc()> function, see L<perlfunc/uc>,
+or the equivalent C<\U> operator inside doublequotish strings.
+
+=item C<trunc>
+
+Returns the integer toward zero from the argument [C99].
+
+See also L</ceil>, L</floor>, and L</round>.
 
 =item C<ttyname>
 
@@ -1726,7 +2013,7 @@ Maybe.
 
 =item C<ungetc>
 
-Use method C<IO::Handle::ungetc()> instead.
+Not implemented.  Use method C<IO::Handle::ungetc()> instead.
 
 =item C<unlink>
 
@@ -1741,15 +2028,15 @@ see L<perlfunc/utime>.
 
 =item C<vfprintf>
 
-C<vfprintf()> is C-specific, see L<perlfunc/printf> instead.
+Not implemented.  C<vfprintf()> is C-specific, see L<perlfunc/printf> instead.
 
 =item C<vprintf>
 
-C<vprintf()> is C-specific, see L<perlfunc/printf> instead.
+Not implemented.  C<vprintf()> is C-specific, see L<perlfunc/printf> instead.
 
 =item C<vsprintf>
 
-C<vsprintf()> is C-specific, see L<perlfunc/sprintf> instead.
+Not implemented.  C<vsprintf()> is C-specific, see L<perlfunc/sprintf> instead.
 
 =item C<wait>
 
@@ -1767,16 +2054,14 @@ builtin C<waitpid()> function, see L<perlfunc/waitpid>.
 =item C<wcstombs>
 
 This is identical to the C function C<wcstombs()>.
-Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather
-useless function.
+
+See L</mblen>.
 
 =item C<wctomb>
 
 This is identical to the C function C<wctomb()>.
-Perl does not have any support for the wide and multibyte
-characters of the C standards, so this might be a rather
-useless function.
+
+See L</mblen>.
 
 =item C<write>
 
@@ -1968,7 +2253,7 @@ Tests the SigSet object to see if it contains a specific signal.
 =item C<new>
 
 Create a new Termios object.  This object will be destroyed automatically
-when it is no longer needed.  A Termios object corresponds to the termios
+when it is no longer needed.  A Termios object corresponds to the C<termios>
 C struct.  C<new()> mallocs a new one, C<getattr()> fills it from a file descriptor,
 and C<setattr()> sets a file descriptor's parameters to match Termios' contents.
 
@@ -1978,7 +2263,7 @@ and C<setattr()> sets a file descriptor's parameters to match Termios' contents.
 
 Get terminal control attributes.
 
-Obtain the attributes for stdin.
+Obtain the attributes for C<stdin>.
 
 	$termios->getattr( 0 ) # Recommended for clarity.
 	$termios->getattr()
@@ -1991,20 +2276,20 @@ Returns C<undef> on failure.
 
 =item C<getcc>
 
-Retrieve a value from the c_cc field of a termios object.  The c_cc field is
+Retrieve a value from the C<c_cc> field of a C<termios> object.  The C<c_cc> field is
 an array so an index must be specified.
 
 	$c_cc[1] = $termios->getcc(1);
 
 =item C<getcflag>
 
-Retrieve the c_cflag field of a termios object.
+Retrieve the C<c_cflag> field of a C<termios> object.
 
 	$c_cflag = $termios->getcflag;
 
 =item C<getiflag>
 
-Retrieve the c_iflag field of a termios object.
+Retrieve the C<c_iflag> field of a C<termios> object.
 
 	$c_iflag = $termios->getiflag;
 
@@ -2016,13 +2301,13 @@ Retrieve the input baud rate.
 
 =item C<getlflag>
 
-Retrieve the c_lflag field of a termios object.
+Retrieve the C<c_lflag> field of a C<termios> object.
 
 	$c_lflag = $termios->getlflag;
 
 =item C<getoflag>
 
-Retrieve the c_oflag field of a termios object.
+Retrieve the C<c_oflag> field of a C<termios> object.
 
 	$c_oflag = $termios->getoflag;
 
@@ -2044,20 +2329,20 @@ Returns C<undef> on failure.
 
 =item C<setcc>
 
-Set a value in the c_cc field of a termios object.  The c_cc field is an
+Set a value in the C<c_cc> field of a C<termios> object.  The C<c_cc> field is an
 array so an index must be specified.
 
 	$termios->setcc( &POSIX::VEOF, 1 );
 
 =item C<setcflag>
 
-Set the c_cflag field of a termios object.
+Set the C<c_cflag> field of a C<termios> object.
 
 	$termios->setcflag( $c_cflag | &POSIX::CLOCAL );
 
 =item C<setiflag>
 
-Set the c_iflag field of a termios object.
+Set the C<c_iflag> field of a C<termios> object.
 
 	$termios->setiflag( $c_iflag | &POSIX::BRKINT );
 
@@ -2071,13 +2356,13 @@ Returns C<undef> on failure.
 
 =item C<setlflag>
 
-Set the c_lflag field of a termios object.
+Set the C<c_lflag> field of a C<termios> object.
 
 	$termios->setlflag( $c_lflag | &POSIX::ECHO );
 
 =item C<setoflag>
 
-Set the c_oflag field of a termios object.
+Set the C<c_oflag> field of a C<termios> object.
 
 	$termios->setoflag( $c_oflag | &POSIX::OPOST );
 
@@ -2202,6 +2487,17 @@ C<LDBL_MAX_EXP> C<LDBL_MIN> C<LDBL_MIN_10_EXP> C<LDBL_MIN_EXP>
 
 =back
 
+=head1 FLOATING-POINT ENVIRONMENT
+
+=over 8
+
+=item Constants
+
+C<FE_DOWNWARD> C<FE_TONEAREST> C<FE_TOWARDZERO> C<FE_UPWARD>
+on systems that support them.
+
+=back
+
 =head1 LIMITS
 
 =over 8
@@ -2221,7 +2517,8 @@ C<UCHAR_MAX> C<UINT_MAX> C<ULONG_MAX> C<USHRT_MAX>
 
 =item Constants
 
-C<LC_ALL> C<LC_COLLATE> C<LC_CTYPE> C<LC_MONETARY> C<LC_NUMERIC> C<LC_TIME>
+C<LC_ALL> C<LC_COLLATE> C<LC_CTYPE> C<LC_MONETARY> C<LC_NUMERIC> C<LC_TIME> C<LC_MESSAGES>
+on systems that support them.
 
 =back
 
@@ -2232,6 +2529,12 @@ C<LC_ALL> C<LC_COLLATE> C<LC_CTYPE> C<LC_MONETARY> C<LC_NUMERIC> C<LC_TIME>
 =item Constants
 
 C<HUGE_VAL>
+
+C<FP_ILOGB0> C<FP_ILOGBNAN> C<FP_INFINITE> C<FP_NAN> C<FP_NORMAL> C<FP_SUBNORMAL> C<FP_ZERO>
+C<INFINITY> C<NAN> C<Inf> C<NaN>
+C<M_1_PI> C<M_2_PI> C<M_2_SQRTPI> C<M_E> C<M_LN10> C<M_LN2> C<M_LOG10E> C<M_LOG2E> C<M_PI>
+C<M_PI_2> C<M_PI_4> C<M_SQRT1_2> C<M_SQRT2>
+on systems with C99 support.
 
 =back
 
@@ -2246,6 +2549,12 @@ C<SA_SIGINFO> C<SIGABRT> C<SIGALRM> C<SIGCHLD> C<SIGCONT> C<SIGFPE> C<SIGHUP> C<
 C<SIGKILL> C<SIGPIPE> C<SIGQUIT> C<SIGSEGV> C<SIGSTOP> C<SIGTERM> C<SIGTSTP> C<SIGTTIN> C<SIGTTOU>
 C<SIGUSR1> C<SIGUSR2> C<SIG_BLOCK> C<SIG_DFL> C<SIG_ERR> C<SIG_IGN> C<SIG_SETMASK>
 C<SIG_UNBLOCK>
+C<ILL_ILLOPC> C<ILL_ILLOPN> C<ILL_ILLADR> C<ILL_ILLTRP> C<ILL_PRVOPC> C<ILL_PRVREG> C<ILL_COPROC>
+C<ILL_BADSTK> C<FPE_INTDIV> C<FPE_INTOVF> C<FPE_FLTDIV> C<FPE_FLTOVF> C<FPE_FLTUND> C<FPE_FLTRES>
+C<FPE_FLTINV> C<FPE_FLTSUB> C<SEGV_MAPERR> C<SEGV_ACCERR> C<BUS_ADRALN> C<BUS_ADRERR>
+C<BUS_OBJERR> C<TRAP_BRKPT> C<TRAP_TRACE> C<CLD_EXITED> C<CLD_KILLED> C<CLD_DUMPED> C<CLD_TRAPPED>
+C<CLD_STOPPED> C<CLD_CONTINUED> C<POLL_IN> C<POLL_OUT> C<POLL_MSG> C<POLL_ERR> C<POLL_PRI>
+C<POLL_HUP> C<SI_USER> C<SI_QUEUE> C<SI_TIMER> C<SI_ASYNCIO> C<SI_MESGQ>
 
 =back
 
@@ -2368,6 +2677,28 @@ C<WIFSTOPPED(${^CHILD_ERROR_NATIVE})>
 is true)
 
 =back
+
+=back
+
+=head1 WINSOCK
+
+(Windows only.)
+
+=over 8
+
+=item Constants
+
+C<WSAEINTR> C<WSAEBADF> C<WSAEACCES> C<WSAEFAULT> C<WSAEINVAL> C<WSAEMFILE> C<WSAEWOULDBLOCK>
+C<WSAEINPROGRESS> C<WSAEALREADY> C<WSAENOTSOCK> C<WSAEDESTADDRREQ> C<WSAEMSGSIZE>
+C<WSAEPROTOTYPE> C<WSAENOPROTOOPT> C<WSAEPROTONOSUPPORT> C<WSAESOCKTNOSUPPORT>
+C<WSAEOPNOTSUPP> C<WSAEPFNOSUPPORT> C<WSAEAFNOSUPPORT> C<WSAEADDRINUSE>
+C<WSAEADDRNOTAVAIL> C<WSAENETDOWN> C<WSAENETUNREACH> C<WSAENETRESET> C<WSAECONNABORTED>
+C<WSAECONNRESET> C<WSAENOBUFS> C<WSAEISCONN> C<WSAENOTCONN> C<WSAESHUTDOWN>
+C<WSAETOOMANYREFS> C<WSAETIMEDOUT> C<WSAECONNREFUSED> C<WSAELOOP> C<WSAENAMETOOLONG>
+C<WSAEHOSTDOWN> C<WSAEHOSTUNREACH> C<WSAENOTEMPTY> C<WSAEPROCLIM> C<WSAEUSERS>
+C<WSAEDQUOT> C<WSAESTALE> C<WSAEREMOTE> C<WSAEDISCON> C<WSAENOMORE> C<WSAECANCELLED>
+C<WSAEINVALIDPROCTABLE> C<WSAEINVALIDPROVIDER> C<WSAEPROVIDERFAILEDINIT>
+C<WSAEREFUSED>
 
 =back
 

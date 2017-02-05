@@ -88,15 +88,15 @@ Because of backward compatibility with legacy encodings, the "a unique
 number for every character" idea breaks down a bit: instead, there is
 "at least one number for every character".  The same character could
 be represented differently in several legacy encodings.  The
-converse is not also true: some code points do not have an assigned
+converse is not true: some code points do not have an assigned
 character.  Firstly, there are unallocated code points within
 otherwise used blocks.  Secondly, there are special Unicode control
 characters that do not represent true characters.
 
 When Unicode was first conceived, it was thought that all the world's
 characters could be represented using a 16-bit word; that is a maximum of
-C<0x10000> (or 65536) characters from C<0x0000> to C<0xFFFF> would be
-needed.  This soon proved to be false, and since Unicode 2.0 (July
+C<0x10000> (or 65,536) characters would be needed, from C<0x0000> to
+C<0xFFFF>.  This soon proved to be wrong, and since Unicode 2.0 (July
 1996), Unicode has been defined all the way up to 21 bits (C<0x10FFFF>),
 and Unicode 3.1 (March 2001) defined the first characters above C<0xFFFF>.
 The first C<0x10000> characters are called the I<Plane 0>, or the
@@ -133,8 +133,8 @@ aren't really about languages, such as symbols like C<BAGGAGE CLAIM>.)
 The Unicode code points are just abstract numbers.  To input and
 output these abstract numbers, the numbers must be I<encoded> or
 I<serialised> somehow.  Unicode defines several I<character encoding
-forms>, of which I<UTF-8> is perhaps the most popular.  UTF-8 is a
-variable length encoding that encodes Unicode characters as 1 to 6
+forms>, of which I<UTF-8> is the most popular.  UTF-8 is a
+variable length encoding that encodes Unicode characters as 1 to 4
 bytes.  Other encodings
 include UTF-16 and UTF-32 and their big- and little-endian variants
 (UTF-8 is byte-order independent).  The ISO/IEC 10646 defines the UCS-2
@@ -152,7 +152,7 @@ problems of the initial Unicode implementation, but for example
 regular expressions still do not work with Unicode in 5.6.1.
 Perl v5.14.0 is the first release where Unicode support is
 (almost) seamlessly integrable without some gotchas (the exception being
-some differences in L<quotemeta|perlfunc/quotemeta>, which is fixed
+some differences in L<quotemeta|perlfunc/quotemeta>, and that is fixed
 starting in Perl 5.16.0).   To enable this
 seamless support, you should C<use feature 'unicode_strings'> (which is
 automatically selected if you C<use 5.012> or higher).  See L<feature>.
@@ -230,69 +230,98 @@ C<useperlio=define>.
 
 =head2 Unicode and EBCDIC
 
-Perl 5.8.0 also supports Unicode on EBCDIC platforms.  There,
-Unicode support is somewhat more complex to implement since
-additional conversions are needed at every step.
-
-Later Perl releases have added code that will not work on EBCDIC platforms, and
-no one has complained, so the divergence has continued.  If you want to run
-Perl on an EBCDIC platform, send email to perlbug@perl.org
+Perl 5.8.0 added support for Unicode on EBCDIC platforms.  This support
+was allowed to lapse in later releases, but was revived in 5.22.
+Unicode support is somewhat more complex to implement since additional
+conversions are needed.  See L<perlebcdic> for more information.
 
 On EBCDIC platforms, the internal Unicode encoding form is UTF-EBCDIC
 instead of UTF-8.  The difference is that as UTF-8 is "ASCII-safe" in
 that ASCII characters encode to UTF-8 as-is, while UTF-EBCDIC is
-"EBCDIC-safe".
+"EBCDIC-safe", in that all the basic characters (which includes all
+those that have ASCII equivalents (like C<"A">, C<"0">, C<"%">, I<etc.>)
+are the same in both EBCDIC and UTF-EBCDIC.  Often, documentation
+will use the term "UTF-8" to mean UTF-EBCDIC as well.  This is the case
+in this document.
 
 =head2 Creating Unicode
 
-To create Unicode characters in literals for code points above C<0xFF>,
-use the C<\x{...}> notation in double-quoted strings:
+This section applies fully to Perls starting with v5.22.  Various
+caveats for earlier releases are in the L</Earlier releases caveats>
+subsection below.
 
-    my $smiley = "\x{263a}";
+To create Unicode characters in literals,
+use the C<\N{...}> notation in double-quoted strings:
 
-Similarly, it can be used in regular expression literals
+ my $smiley_from_name = "\N{WHITE SMILING FACE}";
+ my $smiley_from_code_point = "\N{U+263a}";
 
-    $smiley =~ /\x{263a}/;
+Similarly, they can be used in regular expression literals
 
-At run-time you can use C<chr()>:
+ $smiley =~ /\N{WHITE SMILING FACE}/;
+ $smiley =~ /\N{U+263a}/;
 
-    my $hebrew_alef = chr(0x05d0);
+At run-time you can use:
 
-See L</"Further Resources"> for how to find all these numeric codes.
+ use charnames ();
+ my $hebrew_alef_from_name
+                      = charnames::string_vianame("HEBREW LETTER ALEF");
+ my $hebrew_alef_from_code_point = charnames::string_vianame("U+05D0");
 
 Naturally, C<ord()> will do the reverse: it turns a character into
 a code point.
 
-Note that C<\x..> (no C<{}> and only two hexadecimal digits), C<\x{...}>,
-and C<chr(...)> for arguments less than C<0x100> (decimal 256)
-generate an eight-bit character for backward compatibility with older
-Perls.  For arguments of C<0x100> or more, Unicode characters are
-always produced. If you want to force the production of Unicode
-characters regardless of the numeric value, use C<pack("U", ...)>
-instead of C<\x..>, C<\x{...}>, or C<chr()>.
+There are other runtime options as well.  You can use C<pack()>:
 
-You can invoke characters
-by name in double-quoted strings:
+ my $hebrew_alef_from_code_point = pack("U", 0x05d0);
 
-    my $arabic_alef = "\N{ARABIC LETTER ALEF}";
+Or you can use C<chr()>, though it is less convenient in the general
+case:
 
-And, as mentioned above, you can also C<pack()> numbers into Unicode
-characters:
+ $hebrew_alef_from_code_point = chr(utf8::unicode_to_native(0x05d0));
+ utf8::upgrade($hebrew_alef_from_code_point);
 
-   my $georgian_an  = pack("U", 0x10a0);
+The C<utf8::unicode_to_native()> and C<utf8::upgrade()> aren't needed if
+the argument is above 0xFF, so the above could have been written as
 
-Note that both C<\x{...}> and C<\N{...}> are compile-time string
-constants: you cannot use variables in them.  if you want similar
-run-time functionality, use C<chr()> and C<charnames::string_vianame()>.
+ $hebrew_alef_from_code_point = chr(0x05d0);
 
-If you want to force the result to Unicode characters, use the special
-C<"U0"> prefix.  It consumes no arguments but causes the following bytes
-to be interpreted as the UTF-8 encoding of Unicode characters:
+since 0x5d0 is above 255.
 
-   my $chars = pack("U0W*", 0x80, 0x42);
+C<\x{}> and C<\o{}> can also be used to specify code points at compile
+time in double-quotish strings, but, for backward compatibility with
+older Perls, the same rules apply as with C<chr()> for code points less
+than 256.
 
-Likewise, you can stop such UTF-8 interpretation by using the special
-C<"C0"> prefix.
+C<utf8::unicode_to_native()> is used so that the Perl code is portable
+to EBCDIC platforms.  You can omit it if you're I<really> sure no one
+will ever want to use your code on a non-ASCII platform.  Starting in
+Perl v5.22, calls to it on ASCII platforms are optimized out, so there's
+no performance penalty at all in adding it.  Or you can simply use the
+other constructs that don't require it.
+
+See L</"Further Resources"> for how to find all these names and numeric
+codes.
+
+=head3 Earlier releases caveats
+
+On EBCDIC platforms, prior to v5.22, using C<\N{U+...}> doesn't work
+properly.
+
+Prior to v5.16, using C<\N{...}> with a character name (as opposed to a
+C<U+...> code point) required a S<C<use charnames :full>>.
+
+Prior to v5.14, there were some bugs in C<\N{...}> with a character name
+(as opposed to a C<U+...> code point).
+
+C<charnames::string_vianame()> was introduced in v5.14.  Prior to that,
+C<charnames::vianame()> should work, but only if the argument is of the
+form C<"U+...">.  Your best bet there for runtime Unicode by character
+name is probably:
+
+ use charnames ();
+ my $hebrew_alef_from_name
+                  = pack("U", charnames::vianame("HEBREW LETTER ALEF"));
 
 =head2 Handling Unicode
 
@@ -492,6 +521,9 @@ returns the string
 
 which is ready to be printed.
 
+(C<\\x{}> is used here instead of C<\\N{}>, since it's most likely that
+you want to see what the native values are.)
+
 =head2 Special Cases
 
 =over 4
@@ -605,8 +637,17 @@ All the properties that begin with C<\p> (and its inverse C<\P>) are actually
 character classes that are Unicode-aware.  There are dozens of them, see
 L<perluniprops>.
 
-You can use Unicode code points as the end points of character ranges, and the
-range will include all Unicode code points that lie between those end points.
+Starting in v5.22, you can use Unicode code points as the end points of
+regular expression pattern character ranges, and the range will include
+all Unicode code points that lie between those end points, inclusive.
+
+ qr/ [\N{U+03]-\N{U+20}] /x
+
+includes the code points
+C<\N{U+03}>, C<\N{U+04}>, ..., C<\N{U+20}>.
+
+(It is planned to extend this behavior to ranges in C<tr///> in Perl
+v5.24.)
 
 =item *
 
@@ -654,7 +695,7 @@ How Do I Know Whether My String Is In Unicode?
 
 You shouldn't have to care.  But you may if your Perl is before 5.14.0
 or you haven't specified C<use feature 'unicode_strings'> or C<use
-5.012> (or higher) because otherwise the semantics of the code points
+5.012> (or higher) because otherwise the rules for the code points
 in the range 128 to 255 are different depending on
 whether the string they are contained within is in Unicode or not.
 (See L<perlunicode/When Unicode Does Not Happen>.)
@@ -945,6 +986,7 @@ mailing lists for their valuable feedback.
 
 =head1 AUTHOR, COPYRIGHT, AND LICENSE
 
-Copyright 2001-2011 Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
+Copyright 2001-2011 Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>.
+Now maintained by Perl 5 Porters.
 
 This document may be distributed under the same terms as Perl itself.

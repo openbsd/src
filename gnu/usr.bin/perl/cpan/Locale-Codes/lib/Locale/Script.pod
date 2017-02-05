@@ -18,7 +18,7 @@ Locale::Script - standard codes for script identification
 
 =head1 DESCRIPTION
 
-The C<Locale::Script> module provides access to standards codes used
+This module provides access to standards codes used
 for identifying scripts, such as those defined in ISO 15924.
 
 Most of the routines take an optional additional argument which
@@ -61,33 +61,33 @@ for Phoenician.
 
 =over 4
 
-=item B<code2script ( CODE [,CODESET] )>
+=item B<code2script(CODE [,CODESET] [,'retired'])>
 
-=item B<script2code ( NAME [,CODESET] )>
+=item B<script2code(NAME [,CODESET] [,'retired'])>
 
-=item B<script_code2code ( CODE ,CODESET ,CODESET2 )>
+=item B<script_code2code(CODE ,CODESET ,CODESET2)>
 
-=item B<all_script_codes ( [CODESET] )>
+=item B<all_script_codes([CODESET] [,'retired'])>
 
-=item B<all_script_names ( [CODESET] )>
+=item B<all_script_names([CODESET] [,'retired'])>
 
-=item B<Locale::Script::rename_script  ( CODE ,NEW_NAME [,CODESET] )>
+=item B<Locale::Script::rename_script(CODE ,NEW_NAME [,CODESET])>
 
-=item B<Locale::Script::add_script  ( CODE ,NAME [,CODESET] )>
+=item B<Locale::Script::add_script(CODE ,NAME [,CODESET])>
 
-=item B<Locale::Script::delete_script  ( CODE [,CODESET] )>
+=item B<Locale::Script::delete_script(CODE [,CODESET])>
 
-=item B<Locale::Script::add_script_alias  ( NAME ,NEW_NAME )>
+=item B<Locale::Script::add_script_alias(NAME ,NEW_NAME)>
 
-=item B<Locale::Script::delete_script_alias  ( NAME )>
+=item B<Locale::Script::delete_script_alias(NAME)>
 
-=item B<Locale::Script::rename_script_code  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Script::rename_script_code(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Script::add_script_code_alias  ( CODE ,NEW_CODE [,CODESET] )>
+=item B<Locale::Script::add_script_code_alias(CODE ,NEW_CODE [,CODESET])>
 
-=item B<Locale::Script::delete_script_code_alias  ( CODE [,CODESET] )>
+=item B<Locale::Script::delete_script_code_alias(CODE [,CODESET])>
 
-These routines are all documented in the Locale::Codes::API man page.
+These routines are all documented in the L<Locale::Codes::API> man page.
 
 =back
 
@@ -95,19 +95,19 @@ These routines are all documented in the Locale::Codes::API man page.
 
 =over 4
 
-=item B<Locale::Codes>
+=item L<Locale::Codes>
 
 The Locale-Codes distribution.
 
-=item B<Locale::Codes::API>
+=item L<Locale::Codes::API>
 
 The list of functions supported by this module.
 
-=item B<http://www.unicode.org/iso15924/>
+=item L<http://www.unicode.org/iso15924/>
 
 Home page for ISO 15924.
 
-=item B<http://www.iana.org/assignments/language-subtag-registry>
+=item L<http://www.iana.org/assignments/language-subtag-registry>
 
 The IANA language subtag registry.
 
@@ -123,7 +123,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 
    Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2014 Sullivan Beck
+   Copyright (c) 2010-2015 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

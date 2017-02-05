@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.09";
+  our $VERSION = "1.11";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -1410,7 +1410,8 @@ message id $msg, they default to 0.  E.g.,
 		      SC_MAXIMIZE SC_RESTORE);
   $hwnd = process_hentry()->{owner_hwnd};
   # Emulate choosing `Restore' from the window menu:
-  PostMsg $hwnd, WM_SYSCOMMAND, MPFROMSHORT(SC_RESTORE); # Not immediate
+  PostMsg $hwnd, WM_SYSCOMMAND, MPFROMSHORT(SC_RESTORE); # Not
+                                                         # immediate
 
   # Emulate `Show-Contextmenu' (Double-Click-2), two ways:
   PostMsg ActiveWindow, WM_CONTEXTMENU;
@@ -1874,8 +1875,10 @@ a combination of
      MB_YESNOCANCEL        YES, NO, and CANCEL
 
  Color or Icon 
-     MB_ICONHAND           a small red circle with a red line across it. 
-     MB_ERROR              a small red circle with a red line across it. 
+     MB_ICONHAND           a small red circle with a red line across
+                           it.
+     MB_ERROR              a small red circle with a red line across
+                           it.
      MB_ICONASTERISK       an information (i) icon. 
      MB_INFORMATION        an information (i) icon. 
      MB_ICONEXCLAMATION    an exclamation point (!) icon. 
@@ -1885,12 +1888,16 @@ a combination of
      MB_NOICON             No icon.
 
  Default action (i.e., focussed button; default is MB_DEFBUTTON1)
-     MB_DEFBUTTON1         The first button is the default selection.
-     MB_DEFBUTTON2         The second button is the default selection. 
-     MB_DEFBUTTON3         The third button is the default selection. 
+     MB_DEFBUTTON1         The first button is the default
+                           selection.
+     MB_DEFBUTTON2         The second button is the default
+                           selection.
+     MB_DEFBUTTON3         The third button is the default
+                           selection.
 
  Modality indicator 
-     MB_APPLMODAL                  Message box is application modal (default).
+     MB_APPLMODAL                  Message box is application modal
+                                   (default).
      MB_SYSTEMMODAL                Message box is system modal. 
 
  Mobility indicator 
@@ -1912,9 +1919,9 @@ specify the owner as the parent if this option is used.
 Additionally, the following flag is possible, but probably not very useful:
 
  Help button
-     MB_HELP             a HELP button appears, which sends a WM_HELP
-				 message is sent to the window procedure of the
-				 message box. 
+     MB_HELP            a HELP button appears, which sends a WM_HELP
+                        message is sent to the window procedure of
+                        the message box.
 
 Other optional arguments: $parent window, $owner_window, $helpID (used with
 C<WM_HELP> message if C<MB_HELP> style is given).
@@ -1930,7 +1937,7 @@ The return value is one of
   MBID_YES             YES was selected 
   MBID_NO              NO was selected 
 
-  0		           Function not successful; an error occurred. 
+  0                    Function not successful; an error occurred.
 
 B<BUGS???> keyboard transversal by pressing C<TAB> key does not work.
 Do not appear in window list, so may be hard to find if covered by other
@@ -2164,10 +2171,10 @@ Implement SOMETHINGFROMMR.
   >
   >No matter what message I send it, it's being ignored.
 
-  You need to get the style of the buttons using WinQueryWindowULong/QWL_STYLE,
-  set and reset the BS_DEFAULT bits as appropriate and then use
-  WinSetWindowULong/QWL_STYLE to set the button style.
-  Something like this:
+  You need to get the style of the buttons using
+  WinQueryWindowULong/QWL_STYLE, set and reset the BS_DEFAULT bits as
+  appropriate and then use WinSetWindowULong/QWL_STYLE to set the
+  button style.  Something like this:
     hwnd1 = WinWindowFromID (hwnd, id1);
     hwnd2 = WinWindowFromID (hwnd, id2);
     style1 = WinQueryWindowULong (hwnd1, QWL_STYLE);
@@ -2177,11 +2184,12 @@ Implement SOMETHINGFROMMR.
     WinSetWindowULong (hwnd1, QWL_STYLE, style1);
     WinSetWindowULong (hwnd2, QWL_STYLE, style2);
 
- > How to do query and change a frame creation flags for existing window?
+ > How to do query and change a frame creation flags for existing
+ > window?
 
  Set the style bits that correspond to the FCF_* flag for the frame
- window and then send a WM_UPDATEFRAME message with the appropriate FCF_*
- flag in mp1.
+ window and then send a WM_UPDATEFRAME message with the appropriate
+ FCF_* flag in mp1.
 
  ULONG ulFrameStyle;
  ulFrameStyle = WinQueryWindowULong( WinQueryWindow(hwnd, QW_PARENT),
@@ -2195,25 +2203,25 @@ Implement SOMETHINGFROMMR.
              MPFROMP(FCF_SIZEBORDER),
              MPVOID );
 
- If the FCF_* flags you want to change does not have a corresponding FS_*
- style (i.e. the FCF_* flag corresponds to the presence/lack of a frame
- control rather than a property of the frame itself) then you create or
- destroy the appropriate control window using the correct FID_* window
- identifier and then send the WM_UPDATEFRAME message with the appropriate
- FCF_* flag in mp1.
+ If the FCF_* flags you want to change does not have a corresponding
+ FS_* style (i.e. the FCF_* flag corresponds to the presence/lack of a
+ frame control rather than a property of the frame itself) then you
+ create or destroy the appropriate control window using the correct
+ FID_* window identifier and then send the WM_UPDATEFRAME message with
+ the appropriate FCF_* flag in mp1.
 
- /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*
-  |  SetFrameBorder()                                                          |
-  |    Changes a frame window's border to the requested type.                  |
-  |                                                                            |
-  |  Parameters on entry:                                                      |
-  |    hwndFrame     -> Frame window whose border is to be changed.            |
-  |    ulBorderStyle -> Type of border to change to.                           |
-  |                                                                            |
-  |  Returns:                                                                  |
-  |    BOOL          -> Success indicator.                                     |
-  |                                                                            |
-  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+ /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+  |  SetFrameBorder()                                                 |
+  |    Changes a frame window's border to the requested type.         |
+  |                                                                   |
+  |  Parameters on entry:                                             |
+  |    hwndFrame     -> Frame window whose border is to be changed.   |
+  |    ulBorderStyle -> Type of border to change to.                  |
+  |                                                                   |
+  |  Returns:                                                         |
+  |    BOOL          -> Success indicator.                            |
+  |                                                                   |
+  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
  BOOL SetFrameBorder( HWND hwndFrame, ULONG ulBorderType )  {
    ULONG  ulFrameStyle;
    BOOL   fSuccess = TRUE;

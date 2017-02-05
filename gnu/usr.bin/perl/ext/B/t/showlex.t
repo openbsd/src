@@ -31,7 +31,7 @@ if ($is_thread) {
     ok "# use5005threads: test skipped\n";
 } else {
     $a = `$^X $path "-MO=Showlex" -e "my \@one" 2>&1`;
-    like ($a, qr/sv_undef.*PVNV.*\@one.*Nullsv.*AV/s,
+    like ($a, qr/undef.*: \([^)]*\) \@one.*Nullsv.*AV/s,
 	  "canonical usage works");
 }
 
@@ -43,8 +43,8 @@ my ($out, $newlex);	# output, option-flag
 sub padrep {
     my ($varname,$newlex) = @_;
     return ($newlex)
-	? 'PVNV \(0x[0-9a-fA-F]+\) "\\'.$varname.'" = '
-	: "PVNV \\\(0x[0-9a-fA-F]+\\\) \\$varname\n";
+	? '\(0x[0-9a-fA-F]+\) "\\'.$varname.'" = '
+	: "\\\(0x[0-9a-fA-F]+\\\) \\$varname\n";
 }
 
 for $newlex ('', '-newlex') {

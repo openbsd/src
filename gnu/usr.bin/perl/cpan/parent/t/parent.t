@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 9;
 
 use_ok('parent');
 
@@ -65,13 +65,6 @@ like( $@, $expected, 'baseclass that does not exist');
 
 eval q{use parent 'reallyReAlLyNotexists'};
 like( $@, $expected, '  still failing on 2nd load');
-{
-    my $warning;
-    local $SIG{__WARN__} = sub { $warning = shift };
-    eval q{package HomoGenous; use parent 'HomoGenous';};
-    like($warning, q{/^Class 'HomoGenous' tried to inherit from itself/},
-                                          '  self-inheriting');
-}
 
 {
     BEGIN { $Has::Version_0::VERSION = 0 }

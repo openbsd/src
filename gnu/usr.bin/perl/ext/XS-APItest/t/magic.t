@@ -29,4 +29,8 @@ ok !mg_find_bar($sv), '... and bar magic is removed too';
 
 is(test_get_vtbl(), 0, 'get_vtbl(-1) returns NULL');
 
+use Scalar::Util 'weaken';
+eval { sv_magic(\!0, $foo) };
+is $@, "", 'PERL_MAGIC_ext is permitted on read-only things';
+
 done_testing;

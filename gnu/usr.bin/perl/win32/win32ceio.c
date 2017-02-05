@@ -226,6 +226,7 @@ PerlIOWin32_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
    if (GetLastError() != NO_ERROR)
     {
      PerlIOBase(f)->flags |= PERLIO_F_ERROR;
+     PerlIO_save_errno(f);
      return -1;
     }
    else
@@ -249,6 +250,7 @@ PerlIOWin32_write(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
  else
   {
    PerlIOBase(f)->flags |= PERLIO_F_ERROR;
+   PerlIO_save_errno(f);
    return -1;
   }
 }

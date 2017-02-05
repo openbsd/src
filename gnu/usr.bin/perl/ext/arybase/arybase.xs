@@ -156,7 +156,8 @@ STATIC void ab_neuter_dollar_bracket(pTHX_ OP *o) {
  oldc = cUNOPx(o)->op_first;
  newc = newGVOP(OP_GV, 0,
    gv_fetchpvs("arybase::leftbrack", GV_ADDMULTI, SVt_PVGV));
- cUNOPx(o)->op_first = newc;
+ /* replace oldc with newc */
+ op_sibling_splice(o, NULL, 1, newc);
  op_free(oldc);
 }
 
@@ -176,7 +177,7 @@ STATIC OP *ab_ck_sassign(pTHX_ OP *o) {
  o = (*ab_old_ck_sassign)(aTHX_ o);
  if (o->op_type == OP_SASSIGN && FEATURE_ARYBASE_IS_ENABLED) {
   OP *right = cBINOPx(o)->op_first;
-  OP *left = right->op_sibling;
+  OP *left = OpSIBLING(right);
   if (left) ab_process_assignment(left, right);
  }
  return o;
@@ -186,14 +187,15 @@ STATIC OP *ab_ck_aassign(pTHX_ OP *o) {
  o = (*ab_old_ck_aassign)(aTHX_ o);
  if (o->op_type == OP_AASSIGN && FEATURE_ARYBASE_IS_ENABLED) {
   OP *right = cBINOPx(o)->op_first;
-  OP *left = cBINOPx(right->op_sibling)->op_first->op_sibling;
-  right = cBINOPx(right)->op_first->op_sibling;
+  OP *left = OpSIBLING(right);
+  left = OpSIBLING(cBINOPx(left)->op_first);
+  right = OpSIBLING(cBINOPx(right)->op_first);
   ab_process_assignment(left, right);
  }
  return o;
 }
 
-void
+STATIC void
 tie(pTHX_ SV * const sv, SV * const obj, HV *const stash)
 {
     SV *rv = newSV_type(SVt_RV);
@@ -234,6 +236,7 @@ static OP *ab_pp_basearg(pTHX) {
  SV **svp;
  UV count = 1;
  ab_op_info oi;
+ Zero(&oi, 1, ab_op_info);
  ab_map_fetch(PL_op, &oi);
  
  switch (PL_op->op_type) {
@@ -247,7 +250,7 @@ static OP *ab_pp_basearg(pTHX) {
  case OP_LSLICE:
   firstp = PL_stack_base + *(PL_markstack_ptr-1)+1;
   count = TOPMARK - *(PL_markstack_ptr-1);
-  if (GIMME != G_ARRAY) {
+  if (GIMME_V != G_ARRAY) {
    firstp += count-1;
    count = 1;
   }
@@ -275,6 +278,7 @@ static OP *ab_pp_av2arylen(pTHX) {
  SV *sv;
  ab_op_info oi;
  OP *ret;
+ Zero(&oi, 1, ab_op_info);
  ab_map_fetch(PL_op, &oi);
  ret = (*oi.old_pp)(aTHX);
  if (PL_op->op_flags & OPf_MOD || LVRET) {
@@ -295,6 +299,7 @@ static OP *ab_pp_keys(pTHX) {
  OP *retval;
  const I32 offset = SP - PL_stack_base;
  SV **svp;
+ Zero(&oi, 1, ab_op_info);
  ab_map_fetch(PL_op, &oi);
  retval = (*oi.old_pp)(aTHX);
  if (GIMME_V == G_SCALAR) return retval;
@@ -309,6 +314,7 @@ static OP *ab_pp_each(pTHX) {
  ab_op_info oi;
  OP *retval;
  const I32 offset = SP - PL_stack_base;
+ Zero(&oi, 1, ab_op_info);
  ab_map_fetch(PL_op, &oi);
  retval = (*oi.old_pp)(aTHX);
  SPAGAIN;
@@ -323,6 +329,7 @@ static OP *ab_pp_index(pTHX) {
  dVAR; dSP;
  ab_op_info oi;
  OP *retval;
+ Zero(&oi, 1, ab_op_info);
  ab_map_fetch(PL_op, &oi);
  if (MAXARG == 3 && TOPs) replace_sv(TOPs,oi.base);
  retval = (*oi.old_pp)(aTHX);
@@ -375,10 +382,17 @@ static OP *ab_ck_base(pTHX_ OP *o)
    ab_map_store(o, o->op_ppaddr, base);
    o->op_ppaddr = new_pp;
    /* Break the aelemfast optimisation */
-   if (o->op_type == OP_AELEM &&
-       cBINOPo->op_first->op_sibling->op_type == OP_CONST) {
-     cBINOPo->op_first->op_sibling
-      = newUNOP(OP_NULL,0,cBINOPo->op_first->op_sibling);
+   if (o->op_type == OP_AELEM) {
+    OP *const first = cBINOPo->op_first;
+    OP *second = OpSIBLING(first);
+    OP *newop;
+    if (second->op_type == OP_CONST) {
+     /* cut out second arg and replace it with a new unop which is
+      * the parent of that arg */
+     op_sibling_splice(o, first, 1, NULL);
+     newop = newUNOP(OP_NULL,0,second);
+     op_sibling_splice(o, first, 0, newop);
+    }
    }
   }
   else ab_map_delete(o);

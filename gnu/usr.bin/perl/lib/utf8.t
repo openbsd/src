@@ -5,7 +5,7 @@ my $has_perlio;
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require './test.pl';
+    require './test.pl'; require './charset_tools.pl';
     unless ($has_perlio = find PerlIO::Layer 'perlio') {
 	print <<EOF;
 # Since you don't have perlio you might get failures with UTF-8 locales.
@@ -44,8 +44,8 @@ no utf8; # Ironic, no?
 
     my ($a, $b);
 
-    { use bytes; $a = "\xc3\xa4" }
-    { use utf8;  $b = "\xe4"     }
+    { use bytes; $a = byte_utf8a_to_utf8n("\xc3\xa4") }
+    { use utf8;  $b = uni_to_native("\xe4")     }
 
     my $test = 68;
 
@@ -124,10 +124,10 @@ no utf8; # Ironic, no?
     my $progfile = 'utf' . $$;
     END {unlink_all $progfile}
 
-    # If I'm right 60 is '>' in ASCII, ' ' in EBCDIC
-    # 173 is not punctuation in either ASCII or EBCDIC
+    # 64 is '@' in ASCII, ' ' in EBCDIC
+    # 193 is not punctuation in either ASCII nor EBCDIC
     my (@char);
-    foreach (60, 173, 257, 65532) {
+    foreach (64, 193, 257, 65532) {
       my $char = chr $_;
       utf8::encode($char);
       # I don't want to use map {ord} and I've no need to hardcode the UTF
@@ -143,11 +143,11 @@ no utf8; # Ironic, no?
     # Now we've done all the UTF8 munching hopefully we're safe
     my @tests = (
              ['check our detection program works',
-              'my @a = ("'.chr(60).'\x2A", ""); $b = show @a', qr/^>60,42<><$/],
+              'my @a = ("'.chr(64).'\x2A", ""); $b = show @a', qr/^>64,42<><$/],
              ['check literal 8 bit input',
-              '$a = "' . chr (173) . '"; $b = show $a', qr/^>173<$/],
+              '$a = "' . chr (193) . '"; $b = show $a', qr/^>193<$/],
              ['check no utf8; makes no change',
-              'no utf8; $a = "' . chr (173) . '"; $b = show $a', qr/^>173<$/],
+              'no utf8; $a = "' . chr (193) . '"; $b = show $a', qr/^>193<$/],
              # Now we do the real byte sequences that are valid UTF8
              (map {
                ["the utf8 sequence for chr $_->[0]",
@@ -270,15 +270,28 @@ BANG
 #   "my" variable $strict::VERSION can't be in a package
 #
 SKIP: {
-    skip("Embedded UTF-8 does not work in EBCDIC", 1) if ord("A") == 193;
-    ok('' eq runperl(prog => <<'CODE'), "change #17928");
-	my $code = qq{ my \$\xe3\x83\x95\xe3\x83\xbc = 5; };
-    {
-	use utf8;
-	eval $code;
-	print $@ if $@;
-    }
+    skip("Haven't bothered to port this to EBCDIC non-1047", 1) if $::IS_EBCDIC
+                                                                && ord '^' != 95;
+    if ($::IS_ASCII) {
+        ok('' eq runperl(prog => <<'CODE'), "change #17928");
+            my $code = qq{ my \$\xe3\x83\x95\xe3\x83\xbc = 5; };
+        {
+            use utf8;
+            eval $code;
+            print $@ if $@;
+        }
 CODE
+    }
+    else {
+        ok('' eq runperl(prog => <<'CODE'), "change #17928");
+            my $code = qq{ my \$\xCE\x47\x64\xCE\x48\x70 = 5; };
+        {
+            use utf8;
+            eval $code;
+            print $@ if $@;
+        }
+CODE
+    }
 }
 
 {
@@ -324,11 +337,19 @@ END
 }
 
 SKIP: {
-    skip("Embedded UTF-8 does not work in EBCDIC", 1) if ord("A") == 193;
+    skip("Haven't bothered to port this to EBCDIC non-1047", 1) if $::IS_EBCDIC
+                                                                && ord '^' != 95;
     use utf8;
-    is eval qq{q \xc3\xbc test \xc3\xbc . qq\xc2\xb7 test \xc2\xb7},
-      ' test  test ',
-      "utf8 quote delimiters [perl #16823]";
+    if ($::IS_ASCII) {
+        is eval qq{q \xc3\xbc test \xc3\xbc . qq\xc2\xb7 test \xc2\xb7},
+        ' test  test ',
+        "utf8 quote delimiters [perl #16823]";
+    }
+    else {
+        is eval qq{q \x8B\x70 test \x8B\x70 . qq\x80\x66 test \x80\x66},
+        ' test  test ',
+        "utf8 quote delimiters [perl #16823]";
+    }
 }
 
 # Test the "internals".
@@ -336,88 +357,110 @@ SKIP: {
 {
     my $a = "A";
     my $b = chr(0x0FF);
-    my $c = chr(0x100);
+    my $c = chr(0x0DF);  # FF is invariant in many EBCDIC pages, so is not a
+                         # fair test of 'beyond'; but DF is variant (in all
+                         # supported EBCDIC pages so far), so make 2 'beyond'
+                         # tests
+    my $d = chr(0x100);
 
     ok( utf8::valid($a), "utf8::valid basic");
     ok( utf8::valid($b), "utf8::valid beyond");
-    ok( utf8::valid($c), "utf8::valid unicode");
+    ok( utf8::valid($c), "utf8::valid beyond");
+    ok( utf8::valid($d), "utf8::valid unicode");
 
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
     ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
-    ok( utf8::is_utf8($c), "utf8::is_utf8 unicode");
+    ok(!utf8::is_utf8($c), "!utf8::is_utf8 beyond");
+    ok( utf8::is_utf8($d), "utf8::is_utf8 unicode");
 
     is(utf8::upgrade($a), 1, "utf8::upgrade basic");
-    if (ord('A') == 193) { # EBCDIC.
+    if ($::IS_EBCDIC) { # EBCDIC.
 	is(utf8::upgrade($b), 1, "utf8::upgrade beyond");
     } else {
 	is(utf8::upgrade($b), 2, "utf8::upgrade beyond");
     }
-    is(utf8::upgrade($c), 2, "utf8::upgrade unicode");
+    is(utf8::upgrade($c), 2, "utf8::upgrade beyond");
+    is(utf8::upgrade($d), 2, "utf8::upgrade unicode");
 
     is($a, "A",       "basic");
     is($b, "\xFF",    "beyond");
-    is($c, "\x{100}", "unicode");
+    is($c, "\xDF",    "beyond");
+    is($d, "\x{100}", "unicode");
 
     ok( utf8::valid($a), "utf8::valid basic");
     ok( utf8::valid($b), "utf8::valid beyond");
-    ok( utf8::valid($c), "utf8::valid unicode");
+    ok( utf8::valid($c), "utf8::valid beyond");
+    ok( utf8::valid($d), "utf8::valid unicode");
 
     ok( utf8::is_utf8($a), "utf8::is_utf8 basic");
     ok( utf8::is_utf8($b), "utf8::is_utf8 beyond");
-    ok( utf8::is_utf8($c), "utf8::is_utf8 unicode");
+    ok( utf8::is_utf8($c), "utf8::is_utf8 beyond");
+    ok( utf8::is_utf8($d), "utf8::is_utf8 unicode");
 
     is(utf8::downgrade($a), 1, "utf8::downgrade basic");
     is(utf8::downgrade($b), 1, "utf8::downgrade beyond");
+    is(utf8::downgrade($c), 1, "utf8::downgrade beyond");
 
     is($a, "A",       "basic");
     is($b, "\xFF",    "beyond");
+    is($c, "\xDF",    "beyond");
 
     ok( utf8::valid($a), "utf8::valid basic");
     ok( utf8::valid($b), "utf8::valid beyond");
+    ok( utf8::valid($c), "utf8::valid beyond");
 
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
     ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
+    ok(!utf8::is_utf8($c), "!utf8::is_utf8 beyond");
 
     utf8::encode($a);
     utf8::encode($b);
     utf8::encode($c);
+    utf8::encode($d);
 
     is($a, "A",       "basic");
-    if (ord('A') == 193) { # EBCDIC.
+    if ($::IS_EBCDIC) { # EBCDIC.
 	is(length($b), 1, "beyond length");
     } else {
 	is(length($b), 2, "beyond length");
     }
-    is(length($c), 2, "unicode length");
+    is(length($c), 2, "beyond length");
+    is(length($d), 2, "unicode length");
 
     ok(utf8::valid($a), "utf8::valid basic");
     ok(utf8::valid($b), "utf8::valid beyond");
-    ok(utf8::valid($c), "utf8::valid unicode");
+    ok(utf8::valid($c), "utf8::valid beyond");
+    ok(utf8::valid($d), "utf8::valid unicode");
 
     # encode() clears the UTF-8 flag (unlike upgrade()).
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
     ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
-    ok(!utf8::is_utf8($c), "!utf8::is_utf8 unicode");
+    ok(!utf8::is_utf8($c), "!utf8::is_utf8 beyond");
+    ok(!utf8::is_utf8($d), "!utf8::is_utf8 unicode");
 
     utf8::decode($a);
     utf8::decode($b);
     utf8::decode($c);
+    utf8::decode($d);
 
     is($a, "A",       "basic");
     is($b, "\xFF",    "beyond");
-    is($c, "\x{100}", "unicode");
+    is($c, "\xDF",    "beyond");
+    is($d, "\x{100}", "unicode");
 
     ok(utf8::valid($a), "!utf8::valid basic");
     ok(utf8::valid($b), "!utf8::valid beyond");
-    ok(utf8::valid($c), " utf8::valid unicode");
+    ok(utf8::valid($c), "!utf8::valid beyond");
+    ok(utf8::valid($d), " utf8::valid unicode");
 
     ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
-    if (ord('A') == 193) { # EBCDIC.
+    if ($::IS_EBCDIC) { # EBCDIC.
 	ok( utf8::is_utf8(pack('U',0x0ff)), " utf8::is_utf8 beyond");
     } else {
 	ok( utf8::is_utf8($b), " utf8::is_utf8 beyond"); # $b stays in UTF-8.
     }
-    ok( utf8::is_utf8($c), " utf8::is_utf8 unicode");
+    ok( utf8::is_utf8($c), " utf8::is_utf8 beyond"); # $c stays in UTF-8.
+    ok( utf8::is_utf8($d), " utf8::is_utf8 unicode");
 }
 
 {
@@ -429,7 +472,7 @@ SKIP: {
 {
     # Make sure utf8::decode respects copy-on-write [perl #91834].
     # Hash keys are the easiest way to test this.
-    my $name = "\x{c3}\x{b3}";
+    my $name = byte_utf8a_to_utf8n("\x{c3}\x{b3}");
     my ($k1) = keys %{ { $name=>undef } };
     my $k2 = $name;
     utf8::decode($k1);
@@ -442,7 +485,7 @@ SKIP: {
     # Make sure utf8::decode does not modify read-only scalars
     # [perl #91850].
     
-    my $name = "\x{c3}\x{b3}";
+    my $name = byte_utf8a_to_utf8n("\x{c3}\x{b3}");
     Internals::SvREADONLY($name, 1);
     eval { utf8::decode($name) };
     like $@, qr/^Modification of a read-only/,
@@ -452,12 +495,12 @@ SKIP: {
 {
     # utf8::decode should stringify refs [perl #91852].
 
-    package eieifg { use overload '""'      => sub { "\x{c3}\x{b3}" },
+    package eieifg { use overload '""'      => sub { main::byte_utf8a_to_utf8n("\x{c3}\x{b3}") },
                                    fallback => 1 }
 
     my $name = bless[], eieifg::;
     utf8::decode($name);
-    is $name, "\xf3", 'utf8::decode flattens references';
+    is $name, uni_to_native("\xf3"), 'utf8::decode flattens references';
 }
 
 {
@@ -481,7 +524,7 @@ SKIP: {
             use strict;
             my $s = "hlagh";
             my $r = \$s;
-            %s($r);
+            my $dummy = %s($r);
             $$r;
         ], $func;
         my $ret = eval $code or my $error = $@;
@@ -500,10 +543,10 @@ SKIP: {
 }
 
 {
-    my $a = "456\xb6";
+    my $a = "456" . uni_to_native("\xb6");
     utf8::upgrade($a);
 
-    my $b = "123456\xb6";
+    my $b = "123456" . uni_to_native("\xb6");
     $b =~ s/^...//;
     utf8::upgrade($b);
     is($b, $a, "utf8::upgrade OffsetOK");
@@ -563,7 +606,8 @@ SKIP: {
 for my $pos (0..5) {
 
     my $p;
-    my $s = "A\xc8\x81\xe8\xab\x86\x{100}";
+    my $utf8_bytes = byte_utf8a_to_utf8n("\xc8\x81\xe3\xbf\xbf");
+    my $s = "A$utf8_bytes\x{100}";
     chop($s);
 
     pos($s) = $pos;
@@ -573,17 +617,17 @@ for my $pos (0..5) {
     utf8::downgrade($s);
     is(length($s), 6,		   "(pos $pos) len after     utf8::downgrade");
     is(pos($s),    $pos,	   "(pos $pos) pos after     utf8::downgrade");
-    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::downgrade");
+    is($s, "A$utf8_bytes","(pos $pos) str after     utf8::downgrade");
     utf8::decode($s);
     is(length($s), 3,		   "(pos $pos) len after  D; utf8::decode");
     is(pos($s),    undef,	   "(pos $pos) pos after  D; utf8::decode");
-    is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  D; utf8::decode");
+    is($s, "A\x{201}\x{3fff}",	   "(pos $pos) str after  D; utf8::decode");
     utf8::encode($s);
     is(length($s), 6,		   "(pos $pos) len after  D; utf8::encode");
     is(pos($s),    undef,	   "(pos $pos) pos after  D; utf8::encode");
-    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  D; utf8::encode");
+    is($s, "A$utf8_bytes","(pos $pos) str after  D; utf8::encode");
 
-    $s = "A\xc8\x81\xe8\xab\x86";
+    $s = "A$utf8_bytes";
 
     pos($s) = $pos;
     is(length($s), 6,		   "(pos $pos) len before    utf8::upgrade");
@@ -591,16 +635,31 @@ for my $pos (0..5) {
     utf8::upgrade($s);
     is(length($s), 6,		   "(pos $pos) len after     utf8::upgrade");
     is(pos($s),    $pos,	   "(pos $pos) pos after     utf8::upgrade");
-    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after     utf8::upgrade");
+    is($s, "A$utf8_bytes","(pos $pos) str after     utf8::upgrade");
     utf8::decode($s);
     is(length($s), 3,		   "(pos $pos) len after  U; utf8::decode");
     is(pos($s),    undef,	   "(pos $pos) pos after  U; utf8::decode");
-    is($s, "A\x{201}\x{8ac6}",	   "(pos $pos) str after  U; utf8::decode");
+    is($s, "A\x{201}\x{3fff}",	   "(pos $pos) str after  U; utf8::decode");
     utf8::encode($s);
     is(length($s), 6,		   "(pos $pos) len after  U; utf8::encode");
     is(pos($s),    undef,	   "(pos $pos) pos after  U; utf8::encode");
-    is($s, "A\xc8\x81\xe8\xab\x86","(pos $pos) str after  U; utf8::encode");
+    is($s, "A$utf8_bytes","(pos $pos) str after  U; utf8::encode");
 }
+
+SKIP: {
+    skip("Test only valid on ASCII platform", 1) unless $::IS_ASCII;
+    require Config;
+    skip("Test needs a B module, which is lacking in this Perl", 1)
+        if $Config::Config{'extensions'} !~ /\bB\b/;
+
+    my $out = runperl ( switches => ["-XMO=Concise"],
+                    prog => 'utf8::unicode_to_native(0x41);
+                             utf8::native_to_unicode(0x42)',
+                    stderr => 1 );
+    unlike($out, qr/entersub/,
+            "utf8::unicode_to_native() and native_to_unicode() optimized out");
+}
+
 
 # [perl #119043] utf8::upgrade should not croak on read-only COWs
 for(__PACKAGE__) {

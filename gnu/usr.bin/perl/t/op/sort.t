@@ -1,12 +1,13 @@
 #!./perl
+$|=1;
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
-    require 'test.pl';
+    require './test.pl';
+    set_up_inc('../lib');
 }
 use warnings;
-plan( tests => 183 );
+plan(tests => 195);
 
 # these shouldn't hang
 {
@@ -62,6 +63,84 @@ $x = join('', sort @george, 'to', @harry);
 $expected = $upperfirst ?
     'AbelAxedCaincatchaseddoggonepunishedtoxyz' :
     'catchaseddoggonepunishedtoxyzAbelAxedCain' ;
+
+my @initially_sorted = ( 0 .. 260,
+                         0x3FF, 0x400, 0x401,
+                         0x7FF, 0x800, 0x801,
+                         0x3FFF, 0x4000, 0x4001,
+		         0xFFFF, 0x10000, 0x10001,
+                       );
+# It makes things easier below if there are an even number of elements in the
+# array.
+if (scalar(@initially_sorted) % 2 == 1) {
+    push @initially_sorted, $initially_sorted[-1] + 1;
+}
+
+# We convert to a chr(), but prepend a constant string to make sure things can
+# work on more than a single character.
+my $prefix = "a\xb6";
+my $prefix_len = length $prefix;
+
+my @chr_initially_sorted = @initially_sorted;
+$_ = $prefix . chr($_) for @chr_initially_sorted;
+
+# Create a very unsorted version by reversing it, and then pushing the same
+# code points again, but pair-wise reversed.
+my @initially_unsorted = reverse @chr_initially_sorted;
+for (my $i = 0; $i < @chr_initially_sorted - 1; $i += 2) {
+    push @initially_unsorted, $chr_initially_sorted[$i+1],
+                              $chr_initially_sorted[$i];
+}
+
+# And, an all-UTF-8 version
+my @utf8_initialy_unsorted = @initially_unsorted;
+utf8::upgrade($_) for @utf8_initialy_unsorted;
+
+# Sort the non-UTF-8 version
+my @non_utf8_result = sort @initially_unsorted;
+my @wrongly_utf8;
+my $ordered_correctly = 1;
+for my $i (0 .. @chr_initially_sorted -1) {
+    if (   $chr_initially_sorted[$i] ne $non_utf8_result[2*$i]
+        || $chr_initially_sorted[$i] ne $non_utf8_result[2*$i+1])
+    {
+        $ordered_correctly = 0;
+        last;
+    }
+    push @wrongly_utf8, $i if $i < 256 && utf8::is_utf8($non_utf8_result[$i]);
+}
+if (! ok($ordered_correctly, "sort of non-utf8 list worked")) {
+    diag ("This should be in numeric order (with 2 instances of every code point):\n"
+        . join " ", map { sprintf "%02x", ord substr $_, $prefix_len, 1 } @non_utf8_result);
+}
+if (! is(@wrongly_utf8, 0,
+                      "No elements were wrongly converted to utf8 in sorting"))
+{
+    diag "For code points " . join " ", @wrongly_utf8;
+}
+
+# And then the UTF-8 one
+my @wrongly_non_utf8;
+$ordered_correctly = 1;
+my @utf8_result = sort @utf8_initialy_unsorted;
+for my $i (0 .. @chr_initially_sorted -1) {
+    if (   $chr_initially_sorted[$i] ne $utf8_result[2*$i]
+        || $chr_initially_sorted[$i] ne $utf8_result[2*$i+1])
+    {
+        $ordered_correctly = 0;
+        last;
+    }
+    push @wrongly_non_utf8, $i unless utf8::is_utf8($utf8_result[$i]);
+}
+if (! ok($ordered_correctly, "sort of utf8 list worked")) {
+    diag ("This should be in numeric order (with 2 instances of every code point):\n"
+        . join " ", map { sprintf "%02x", ord substr $_, $prefix_len, 1 } @utf8_result);
+}
+if (! is(@wrongly_non_utf8, 0,
+                      "No elements were wrongly converted from utf8 in sorting"))
+{
+    diag "For code points " . join " ", @wrongly_non_utf8;
+}
 
 cmp_ok($x,'eq',$expected,'upper first 4');
 $" = ' ';
@@ -778,12 +857,16 @@ cmp_ok($answer,'eq','good','sort subr called from other package');
     is $@, "", 'abrupt scope exit turns off readonliness';
 }
 
-{
-    local $TODO = "sort should make sure elements are not freed in the sort block";
-    eval { @nomodify_x=(1..8);
-	   our @copy = sort { undef @nomodify_x; 1 } (@nomodify_x, 3); };
-    is($@, "");
-}
+# I commented out this TODO test because messing with FREEd scalars on the
+# stack can have all sorts of strange side-effects, not made safe by eval
+# - DAPM.
+#
+#{
+#    local $TODO = "sort should make sure elements are not freed in the sort block";
+#    eval { @nomodify_x=(1..8);
+#	   our @copy = sort { undef @nomodify_x; 1 } (@nomodify_x, 3); };
+#    is($@, "");
+#}
 
 
 # Sorting shouldn't increase the refcount of a sub
@@ -855,12 +938,12 @@ is("@b", "1 2 3 3 4 5 7", "comparison result as string");
     is($cs, 2, 'overload string called twice');
 }
 
-fresh_perl_is('sub w ($$) {my ($l, my $r) = @_; my $v = \@_; undef @_; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
+fresh_perl_is('sub w ($$) {my ($l, $r) = @_; my $v = \@_; undef @_; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
              '0 1 2 3',
              {stderr => 1, switches => ['-w']},
              'RT #72334');
 
-fresh_perl_is('sub w ($$) {my ($l, my $r) = @_; my $v = \@_; undef @_; @_ = 0..2; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
+fresh_perl_is('sub w ($$) {my ($l, $r) = @_; my $v = \@_; undef @_; @_ = 0..2; $l <=> $r}; print join q{ }, sort w 3, 1, 2, 0',
              '0 1 2 3',
              {stderr => 1, switches => ['-w']},
              'RT #72334');
@@ -1018,3 +1101,40 @@ package deletions {
     @_=sort { delete $deletions::{a}; delete $deletions::{b}; 3 } 1..3;
 }
 pass "no crash when sort block deletes *a and *b";
+
+# make sure return args are always evaluated in scalar context
+
+{
+    package Ret;
+    no warnings 'void';
+    sub f0 { }
+    sub f1 { $b <=> $a, $a <=> $b }
+    sub f2 { return ($b <=> $a, $a <=> $b) }
+    sub f3 { for ($b <=> $a) { return ($b <=> $a, $a <=> $b) } }
+
+    {
+        no warnings 'uninitialized';
+        ::is (join('-', sort { () } 3,1,2,4), '3-1-2-4', "Ret: null blk");
+    }
+    ::is (join('-', sort { $b <=> $a, $a <=> $b } 3,1,2,4), '1-2-3-4', "Ret: blk");
+    ::is (join('-', sort { for($b <=> $a) { return ($b <=> $a, $a <=> $b) } }
+                            3,1,2,4), '1-2-3-4', "Ret: blk ret");
+    {
+        no warnings 'uninitialized';
+        ::is (join('-', sort f0 3,1,2,4), '3-1-2-4', "Ret: f0");
+    }
+    ::is (join('-', sort f1 3,1,2,4), '1-2-3-4', "Ret: f1");
+    ::is (join('-', sort f2 3,1,2,4), '1-2-3-4', "Ret: f2");
+    ::is (join('-', sort f3 3,1,2,4), '1-2-3-4', "Ret: f3");
+}
+
+{
+    @a = sort{ *a=0; 1} 0..1;
+    pass "No crash when GP deleted out from under us [perl 124097]";
+
+    no warnings 'redefine';
+    # some alternative non-solutions localized modifications to *a and *b
+    sub a { 0 };
+    @a = sort { *a = sub { 1 }; $a <=> $b } 0 .. 1;
+    ok(a(), "*a wasn't localized inadvertantly");
+}

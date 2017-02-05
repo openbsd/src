@@ -10,7 +10,7 @@
 package Data::Dumper;
 
 BEGIN {
-    $VERSION = '2.151_01'; # Don't forget to set version and release
+    $VERSION = '2.160'; # Don't forget to set version and release
 }               # date in POD below!
 
 #$| = 1;
@@ -37,8 +37,11 @@ BEGIN {
     or $Useperl = 1;
 }
 
+my $IS_ASCII  = ord 'A' ==  65;
+
 # module vars and their defaults
 $Indent     = 2         unless defined $Indent;
+$Trailingcomma = 0      unless defined $Trailingcomma;
 $Purity     = 0         unless defined $Purity;
 $Pad        = ""        unless defined $Pad;
 $Varname    = "VAR"     unless defined $Varname;
@@ -74,6 +77,7 @@ sub new {
   my($s) = {
         level      => 0,           # current recursive depth
         indent     => $Indent,     # various styles of indenting
+        trailingcomma => $Trailingcomma, # whether to add comma after last elem
         pad        => $Pad,        # all lines prefixed by this string
         xpad       => "",          # padding-per-level
         apad       => "",          # added padding for hash keys n such
@@ -222,8 +226,11 @@ sub DESTROY {}
 
 sub Dump {
     return &Dumpxs
-    unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl}) ||
-           $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse});
+    unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl})
+        || $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse})
+
+            # Use pure perl version on earlier releases on EBCDIC platforms
+        || (! $IS_ASCII && $] lt 5.021_010);
     return &Dumpperl;
 }
 
@@ -408,7 +415,9 @@ sub _dump {
         $out .= $pad . $ipad . '#' . $i
           if $s->{indent} >= 3;
         $out .= $pad . $ipad . $s->_dump($v, $sname);
-        $out .= "," if $i++ < $#$val;
+        $out .= ","
+            if $i++ < $#$val
+            || ($s->{trailingcomma} && $s->{indent} >= 1);
       }
       $out .= $pad . ($s->{xpad} x ($s->{level} - 1)) if $i;
       $out .= ($name =~ /^\@/) ? ')' : ']';
@@ -468,7 +477,7 @@ sub _dump {
           if $s->{indent} >= 2;
       }
       if (substr($out, -1) eq ',') {
-        chop $out;
+        chop $out if !$s->{trailingcomma} || !$s->{indent};
         $out .= $pad . ($s->{xpad} x ($s->{level} - 1));
       }
       $out .= ($name =~ /^\%/) ? ')' : '}';
@@ -628,6 +637,11 @@ sub Indent {
   }
 }
 
+sub Trailingcomma {
+  my($s, $v) = @_;
+  defined($v) ? (($s->{trailingcomma} = $v), return $s) : $s->{trailingcomma};
+}
+
 sub Pair {
     my($s, $v) = @_;
     defined($v) ? (($s->{pair} = $v), return $s) : $s->{pair};
@@ -724,41 +738,71 @@ my %esc = (
     "\e" => "\\e",
 );
 
+my $low_controls = ($IS_ASCII)
+
+                   # This includes \177, because traditionally it has been
+                   # output as octal, even though it isn't really a "low"
+                   # control
+                   ? qr/[\0-\x1f\177]/
+
+                     # EBCDIC low controls.
+                   : qr/[\0-\x3f]/;
+
 # put a string value in double quotes
 sub qquote {
   local($_) = shift;
   s/([\\\"\@\$])/\\$1/g;
-  my $bytes; { use bytes; $bytes = length }
-  s/([[:^ascii:]])/'\x{'.sprintf("%x",ord($1)).'}'/ge if $bytes > length;
-  return qq("$_") unless
-    /[^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~]/;  # fast exit
 
-  my $high = shift || "";
+  # This efficiently changes the high ordinal characters to \x{} if the utf8
+  # flag is on.  On ASCII platforms, the high ordinals are all the
+  # non-ASCII's.  On EBCDIC platforms, we don't include in these the non-ASCII
+  # controls whose ordinals are less than SPACE, excluded below by the range
+  # \0-\x3f.  On ASCII platforms this range just compiles as part of :ascii:.
+  # On EBCDIC platforms, there is just one outlier high ordinal control, and
+  # it gets output as \x{}.
+  my $bytes; { use bytes; $bytes = length }
+  s/([^[:ascii:]\0-\x3f])/sprintf("\\x{%x}",ord($1))/ge
+    if $bytes > length
+
+       # The above doesn't get the EBCDIC outlier high ordinal control when
+       # the string is UTF-8 but there are no UTF-8 variant characters in it.
+       # We want that to come out as \x{} anyway.  We need is_utf8() to do
+       # this.
+       || (! $IS_ASCII && $] ge 5.008_001 && utf8::is_utf8($_));
+
+  return qq("$_") unless /[[:^print:]]/;  # fast exit if only printables
+
+  # Here, there is at least one non-printable to output.  First, translate the
+  # escapes.
   s/([\a\b\t\n\f\r\e])/$esc{$1}/g;
 
-  if (ord('^')==94)  { # ascii
-    # no need for 3 digits in escape for these
-    s/([\0-\037])(?!\d)/'\\'.sprintf('%o',ord($1))/eg;
-    s/([\0-\037\177])/'\\'.sprintf('%03o',ord($1))/eg;
+  # no need for 3 digits in escape for octals not followed by a digit.
+  s/($low_controls)(?!\d)/'\\'.sprintf('%o',ord($1))/eg;
+
+  # But otherwise use 3 digits
+  s/($low_controls)/'\\'.sprintf('%03o',ord($1))/eg;
+
     # all but last branch below not supported --BEHAVIOR SUBJECT TO CHANGE--
-    if ($high eq "iso8859") {
-      s/([\200-\240])/'\\'.sprintf('%o',ord($1))/eg;
+  my $high = shift || "";
+    if ($high eq "iso8859") {   # Doesn't escape the Latin1 printables
+      if ($IS_ASCII) {
+        s/([\200-\240])/'\\'.sprintf('%o',ord($1))/eg;
+      }
+      elsif ($] ge 5.007_003) {
+        my $high_control = utf8::unicode_to_native(0x9F);
+        s/$high_control/sprintf('\\%o',ord($1))/eg;
+      }
     } elsif ($high eq "utf8") {
+#     Some discussion of what to do here is in
+#       https://rt.perl.org/Ticket/Display.html?id=113088
 #     use utf8;
 #     $str =~ s/([^\040-\176])/sprintf "\\x{%04x}", ord($1)/ge;
     } elsif ($high eq "8bit") {
         # leave it as it is
     } else {
-      s/([\200-\377])/'\\'.sprintf('%03o',ord($1))/eg;
-      s/([^\040-\176])/sprintf "\\x{%04x}", ord($1)/ge;
+      s/([[:^ascii:]])/'\\'.sprintf('%03o',ord($1))/eg;
+      #s/([^\040-\176])/sprintf "\\x{%04x}", ord($1)/ge;
     }
-  }
-  else { # ebcdic
-      s{([^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~])(?!\d)}
-       {my $v = ord($1); '\\'.sprintf(($v <= 037 ? '%o' : '%03o'), $v)}eg;
-      s{([^ !"\#\$%&'()*+,\-.\/0-9:;<=>?\@A-Z[\\\]^_`a-z{|}~])}
-       {'\\'.sprintf('%03o',ord($1))}eg;
-  }
 
   return qq("$_");
 }
@@ -997,6 +1041,15 @@ consumes twice the number of lines).  Style 2 is the default.
 
 =item *
 
+$Data::Dumper::Trailingcomma  I<or>  I<$OBJ>->Trailingcomma(I<[NEWVAL]>)
+
+Controls whether a comma is added after the last element of an array or
+hash. Even when true, no comma is added between the last element of an array
+or hash and a closing bracket when they appear on the same line. The default
+is false.
+
+=item *
+
 $Data::Dumper::Purity  I<or>  I<$OBJ>->Purity(I<[NEWVAL]>)
 
 Controls the degree to which the output can be C<eval>ed to recreate the
@@ -1025,9 +1078,7 @@ $Data::Dumper::Useqq  I<or>  I<$OBJ>->Useqq(I<[NEWVAL]>)
 When set, enables the use of double quotes for representing string values.
 Whitespace other than space will be represented as C<[\n\t\r]>, "unsafe"
 characters will be backslashed, and unprintable characters will be output as
-quoted octal integers.  Since setting this variable imposes a performance
-penalty, the default is 0.  C<Dump()> will run slower if this flag is set,
-since the fast XSUB implementation doesn't support it yet.
+quoted octal integers.  The default is 0.
 
 =item *
 
@@ -1391,8 +1442,8 @@ to have, you can use the C<Seen> method to pre-seed the internal reference
 table and make the dumped output point to them, instead.  See L</EXAMPLES>
 above.
 
-The C<Useqq> and C<Deparse> flags makes Dump() run slower, since the
-XSUB implementation does not support them.
+The C<Deparse> flag makes Dump() run slower, since the XSUB
+implementation does not support it.
 
 SCALAR objects have the weirdest looking C<bless> workaround.
 
@@ -1421,7 +1472,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.151_01  (January 8 2015)
+Version 2.160  (January 12 2016)
 
 =head1 SEE ALSO
 

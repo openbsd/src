@@ -2,14 +2,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    require './test.pl';
+    set_up_inc(qw '../lib ../dist/base/lib');
 }
 
 my @expect;
 my $data = "";
 my @data = ();
 
-require './test.pl';
 plan(tests => 67);
 
 sub compare {

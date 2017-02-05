@@ -26,12 +26,9 @@ sub find_tml_files {
     return @files;
 }
 
-# Prefer JSON to JSON::PP; skip if we don't have at least one
 sub json_class {
-    for (qw/JSON JSON::PP/) {
-        return $_ if eval "require $_; 1";
-    }
-    return;
+    return eval { require JSON::MaybeXS; JSON::MaybeXS->VERSION('1.001000'); $JSON::MaybeXS::JSON_Class }
+        || do { require JSON::PP; 'JSON::PP' };
 }
 
 sub test_data_directory {

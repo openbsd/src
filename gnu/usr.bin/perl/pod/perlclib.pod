@@ -119,6 +119,9 @@ There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
                                               / strGT(s1,s2)
  strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
 
+ memcmp(p1, p2, n)              memNE(p1, p2, n)
+ !memcmp(p1, p2, n)             memEQ(p1, p2, n)
+
 Notice the different order of arguments to C<Copy> and C<Move> than used
 in C<memcpy> and C<memmove>.
 
@@ -154,7 +157,7 @@ There are several types of character class tests that Perl implements.
 The only ones described here are those that directly correspond to C
 library functions that operate on 8-bit characters, but there are
 equivalents that operate on wide characters, and UTF-8 encoded strings.
-All are more fully described in L<perlapi/Character classes> and
+All are more fully described in L<perlapi/Character classification> and
 L<perlapi/Character case changing>.
 
 The C library routines listed in the table below return values based on
@@ -200,14 +203,30 @@ C<toUPPER_uni>, as described in L<perlapi/Character case changing>.)
  Instead Of:                 Use:
 
  atof(s)                     Atof(s)
- atol(s)                     Atol(s)
+ atoi(s)                     grok_atoUV(s, &uv, &e)
+ atol(s)                     grok_atoUV(s, &uv, &e)
  strtod(s, &p)               Nothing.  Just don't use it.
- strtol(s, &p, n)            Strtol(s, &p, n)
- strtoul(s, &p, n)           Strtoul(s, &p, n)
+ strtol(s, &p, n)            grok_atoUV(s, &uv, &e)
+ strtoul(s, &p, n)           grok_atoUV(s, &uv, &e)
+
+Typical use is to do range checks on C<uv> before casting:
+
+  int i; UV uv; char* end_ptr;
+  if (grok_atoUV(input, &uv, &end_ptr)
+      && uv <= INT_MAX)
+    i = (int)uv;
+    ... /* continue parsing from end_ptr */
+  } else {
+    ... /* parse error: not a decimal integer in range 0 .. MAX_IV */
+  }
 
 Notice also the C<grok_bin>, C<grok_hex>, and C<grok_oct> functions in
 F<numeric.c> for converting strings representing numbers in the respective
-bases into C<NV>s.
+bases into C<NV>s.  Note that grok_atoUV() doesn't handle negative inputs,
+or leading whitespace (being purposefully strict).
+
+Note that strtol() and strtoul() may be disguised as Strtol(), Strtoul(),
+Atol(), Atoul().  Avoid those, too.
 
 In theory C<Strtol> and C<Strtoul> may not be defined if the machine perl is
 built on doesn't actually have strtol and strtoul. But as those 2
@@ -219,7 +238,7 @@ everywhere by now.
                                PL_srand_called = TRUE; }
 
  exit(n)                     my_exit(n)
- system(s)                   Don't. Look at pp_system or use my_popen
+ system(s)                   Don't. Look at pp_system or use my_popen.
 
  getenv(s)                   PerlEnv_getenv(s)
  setenv(s, val)              my_setenv(s, val)

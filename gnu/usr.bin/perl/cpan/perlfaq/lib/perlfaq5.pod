@@ -2,6 +2,10 @@
 
 perlfaq5 - Files and Formats
 
+=head1 VERSION
+
+version 5.021010
+
 =head1 DESCRIPTION
 
 This section deals with I/O and the "f" issues: filehandles, flushing,
@@ -200,7 +204,7 @@ you can fit the whole thing in memory!):
 
     print $out $content;
 
-Modules such as L<File::Slurp> and L<Tie::File> can help with that
+Modules such as L<Path::Tiny> and L<Tie::File> can help with that
 too. If you can, however, avoid reading the entire file at once. Perl
 won't give that memory back to the operating system until the process
 finishes.
@@ -280,7 +284,7 @@ newlines:
     while( sysread $fh, $buffer, 4096 ) {
         $lines += ( $buffer =~ tr/\n// );
     }
-    close FILE;
+    close $fh;
 
 However, that doesn't work if the line ending isn't a newline. You
 might change that C<tr///> to a C<s///> so you can count the number of
@@ -291,7 +295,7 @@ times the input record separator, C<$/>, shows up:
     while( sysread $fh, $buffer, 4096 ) {
         $lines += ( $buffer =~ s|$/||g; );
     }
-    close FILE;
+    close $fh;
 
 If you don't mind shelling out, the C<wc> command is usually the
 fastest, even with the extra interprocess overhead. Ensure that you
@@ -431,8 +435,10 @@ temporary files in one process, use a counter:
 
     BEGIN {
         use Fcntl;
-        my $temp_dir = -d '/tmp' ? '/tmp' : $ENV{TMPDIR} || $ENV{TEMP};
-        my $base_name = sprintf "%s/%d-%d-0000", $temp_dir, $$, time;
+        use File::Spec;
+        my $temp_dir  = File::Spec->tmpdir();
+        my $file_base = sprintf "%d-%d-0000", $$, time;
+        my $base_name = File::Spec->catfile($temp_dir, $file_base);
 
         sub temp_file {
             my $fh;
@@ -1133,13 +1139,13 @@ C<$DB_RECNO> bindings, which allow you to tie an array to a file so that
 accessing an element of the array actually accesses the corresponding
 line in the file.
 
-If you want to load the entire file, you can use the L<File::Slurp>
+If you want to load the entire file, you can use the L<Path::Tiny>
 module to do it in one simple and efficient step:
 
-    use File::Slurp;
+    use Path::Tiny;
 
-    my $all_of_it = read_file($filename); # entire file in scalar
-    my @all_lines = read_file($filename); # one line per element
+    my $all_of_it = path($filename)->slurp; # entire file in scalar
+    my @all_lines = path($filename)->lines; # one line per element
 
 Or you can read the entire file contents into a scalar like this:
 

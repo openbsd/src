@@ -19,7 +19,7 @@ typedef struct {
 START_MY_CXT
 
 /* Inquire the object registry (a lexical hash) from perl */
-HV *
+static HV *
 HUF_get_ob_reg(pTHX) {
     dSP;
     HV* ob_reg = NULL;
@@ -47,7 +47,7 @@ HUF_get_ob_reg(pTHX) {
 #define HUF_CLONE 0
 #define HUF_RESET -1
 
-void
+static void
 HUF_global(pTHX_ I32 how) {
     if (how == HUF_INIT) {
         MY_CXT_INIT;
@@ -66,7 +66,7 @@ HUF_global(pTHX_ I32 how) {
 /* definition of id transformation */
 #define HUF_OBJ_ID(x) newSVuv(PTR2UV(x))
 
-SV *
+static SV *
 HUF_obj_id(pTHX_ SV *obj) {
     SV *item = SvRV(obj);
     MAGIC *mg;
@@ -94,7 +94,7 @@ HUF_obj_id(pTHX_ SV *obj) {
 }
 
 /* set up uvar magic for any sv */
-void
+static void
 HUF_add_uvar_magic(
     pTHX_
     SV* sv,                    /* the sv to enchant, visible to get/set */
@@ -111,7 +111,7 @@ HUF_add_uvar_magic(
 }
 
 /* Fetch the data container of a trigger */
-AV *
+static AV *
 HUF_get_trigger_content(pTHX_ SV *trigger) {
     MAGIC* mg;
     if (trigger && (mg = mg_find(trigger, PERL_MAGIC_uvar)))
@@ -123,7 +123,7 @@ HUF_get_trigger_content(pTHX_ SV *trigger) {
  * the object's entry from the object registry.  This function goes in
  * the uf_set field of the uvar magic of a trigger.
  */
-I32 HUF_destroy_obj(pTHX_ IV index, SV *trigger) {
+static I32 HUF_destroy_obj(pTHX_ IV index, SV *trigger) {
     PERL_UNUSED_ARG(index);
     /* Do nothing if the weakref wasn't undef'd.  Also don't bother
      * during global destruction.  (MY_CXT.ob_reg is sometimes funny there) */
@@ -155,7 +155,7 @@ I32 HUF_destroy_obj(pTHX_ IV index, SV *trigger) {
  * object may * have to be deleted.  The trigger is stored in the
  * object registry and is also deleted when the object expires.
  */
-SV *
+static SV *
 HUF_new_trigger(pTHX_ SV *obj, SV *ob_id) {
     dMY_CXT;
     SV* trigger = sv_rvweaken(newRV_inc(SvRV(obj)));
@@ -169,7 +169,7 @@ HUF_new_trigger(pTHX_ SV *obj, SV *ob_id) {
 }
 
 /* retrieve a trigger for obj if one exists, return NULL otherwise */
-SV *
+static SV *
 HUF_ask_trigger(pTHX_ SV *ob_id) {
     dMY_CXT;
     HE* ent;
@@ -178,16 +178,7 @@ HUF_ask_trigger(pTHX_ SV *ob_id) {
     return NULL;
 }
 
-/* get the trigger for an object, creating it if necessary */
-SV *
-HUF_get_trigger0(pTHX_ SV *obj, SV *ob_id) {
-    SV* trigger;
-    if (!(trigger = HUF_ask_trigger(aTHX_ ob_id)))
-        trigger = HUF_new_trigger(aTHX_ obj, ob_id);
-    return trigger;
-}
-
-SV *
+static SV *
 HUF_get_trigger(pTHX_ SV *obj, SV *ob_id) {
     SV* trigger = HUF_ask_trigger(aTHX_ ob_id);
     if (!trigger)
@@ -198,7 +189,7 @@ HUF_get_trigger(pTHX_ SV *obj, SV *ob_id) {
 /* mark an object (trigger) as having been used with a field
    (a clenup-liability)
 */
-void
+static void
 HUF_mark_field(pTHX_ SV *trigger, SV *field) {
     AV* cont = HUF_get_trigger_content(aTHX_ trigger);
     HV* field_tab = (HV*) *av_fetch(cont, 1, 0);
@@ -213,7 +204,7 @@ HUF_mark_field(pTHX_ SV *trigger, SV *field) {
 
 /* The key exchange functions.  They communicate with S_hv_magic_uvar_xkey
  * in hv.c */
-I32 HUF_watch_key_safe(pTHX_ IV action, SV* field) {
+static I32 HUF_watch_key_safe(pTHX_ IV action, SV* field) {
     MAGIC* mg = mg_find(field, PERL_MAGIC_uvar);
     SV* keysv;
     if (mg && (keysv = mg->mg_obj)) {
@@ -236,7 +227,7 @@ I32 HUF_watch_key_safe(pTHX_ IV action, SV* field) {
     return 0;
 }
 
-I32 HUF_watch_key_id(pTHX_ IV action, SV* field) {
+static I32 HUF_watch_key_id(pTHX_ IV action, SV* field) {
     MAGIC* mg = mg_find(field, PERL_MAGIC_uvar);
     SV* keysv;
     PERL_UNUSED_ARG(action);
@@ -249,7 +240,7 @@ I32 HUF_watch_key_id(pTHX_ IV action, SV* field) {
     return 0;
 }
 
-int HUF_func_2mode( I32(* val)(pTHX_ IV, SV*)) {
+static int HUF_func_2mode( I32(* val)(pTHX_ IV, SV*)) {
     int ans = 0;
     if (val == &HUF_watch_key_id)
         ans = 1;
@@ -258,7 +249,7 @@ int HUF_func_2mode( I32(* val)(pTHX_ IV, SV*)) {
     return(ans);
 }
 
-I32(* HUF_mode_2func( int mode))(pTHX_ IV, SV*) {
+static I32(* HUF_mode_2func( int mode))(pTHX_ IV, SV*) {
     I32(* ans)(pTHX_ IV, SV*) = NULL;
     switch (mode) {
         case 1:
@@ -272,7 +263,7 @@ I32(* HUF_mode_2func( int mode))(pTHX_ IV, SV*) {
 }
 
 /* see if something is a field hash */
-int
+static int
 HUF_get_status(pTHX_ HV *hash) {
     int ans = 0;
     if (hash && (SvTYPE(hash) == SVt_PVHV)) {
@@ -291,7 +282,7 @@ HUF_get_status(pTHX_ HV *hash) {
 /* Thread support.  These routines are called by CLONE (and nothing else) */
 
 /* Fix entries for one object in all field hashes */
-void
+static void
 HUF_fix_trigger(pTHX_ SV *trigger, SV *new_id) {
     AV* cont = HUF_get_trigger_content(aTHX_ trigger);
     HV* field_tab = (HV*) *av_fetch(cont, 1, 0);
@@ -318,7 +309,7 @@ HUF_fix_trigger(pTHX_ SV *trigger, SV *new_id) {
 /* Go over object registry and fix all objects.  Also fix the object
  * registry.
  */
-void
+static void
 HUF_fix_objects(pTHX) {
     dMY_CXT;
     I32 i, len;

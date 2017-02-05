@@ -5,16 +5,19 @@
 # list of the constructed set and then comparing it character by character
 # with the expected result.
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = ('../lib','.','../ext/re');
+    require './test.pl';
+    require './charset_tools.pl';
+    require './loc_tools.pl';
+    skip_all_without_unicode_tables();
+}
+
 use strict;
 use warnings;
 
 $| = 1;
-
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = ('../lib','.');
-    require './test.pl';
-}
 
 use utf8;
 no warnings 'experimental::regex_sets';
@@ -23,10 +26,9 @@ like("a", qr/(?[ [a]      # This is a comment
                     ])/, 'Can ignore a comment');
 like("a", qr/(?[ [a]      # [[:notaclass:]]
                     ])/, 'A comment isn\'t parsed');
-unlike("\x85", qr/(?[ \t ])/, 'NEL is white space');
-unlike("\x85", qr/(?[ [\t] ])/, '... including within nested []');
-like("\x85", qr/(?[ \t + \ ])/, 'can escape NEL to match');
-like("\x85", qr/(?[ [\] ])/, '... including within nested []');
+unlike(uni_to_native("\x85"), qr/(?[ \t ])/, 'NEL is white space');
+like(uni_to_native("\x85"), qr/(?[ \t + \ ])/, 'can escape NEL to match');
+like(uni_to_native("\x85"), qr/(?[ [\] ])/, '... including within nested []');
 like("\t", qr/(?[ \t + \ ])/, 'can do basic union');
 like("\cK", qr/(?[ \s ])/, '\s matches \cK');
 unlike("\cK", qr/(?[ \s - \cK ])/, 'can do basic subtraction');
@@ -66,13 +68,19 @@ like("\N{LAO DIGIT NINE}", $thai_or_lao_digit, 'embedded qr/(?[ ])/ works');
 unlike(chr(ord("\N{LAO DIGIT NINE}") + 1), $thai_or_lao_digit, 'embedded qr/(?[ ])/ works');
 
 my $ascii_word = qr/(?[ \w ])/a;
-my $ascii_digits_plus_all_of_arabic = qr/(?[ \p{Digit} & $ascii_word + \p{Arabic} ])/;
+my $ascii_digits_plus_all_of_arabic = qr/(?[ \p{Arabic} + \p{Digit} & $ascii_word ])/;
 like("9", $ascii_digits_plus_all_of_arabic, "/a, then interpolating and intersection works for ASCII in the set");
 unlike("A", $ascii_digits_plus_all_of_arabic, "/a, then interpolating and intersection works for ASCII not in the set");
 unlike("\N{BENGALI DIGIT ZERO}", $ascii_digits_plus_all_of_arabic, "/a, then interpolating and intersection works for non-ASCII not in either set");
 unlike("\N{BENGALI LETTER A}", $ascii_digits_plus_all_of_arabic, "/a, then interpolating and intersection works for non-ASCII in one set");
-like("\N{ARABIC LETTER HAMZA}", $ascii_digits_plus_all_of_arabic, "interpolation and intersection is left-associative");
-like("\N{EXTENDED ARABIC-INDIC DIGIT ZERO}", $ascii_digits_plus_all_of_arabic, "interpolation and intersection is left-associative");
+like("\N{ARABIC LETTER HAMZA}", $ascii_digits_plus_all_of_arabic, "intersection has higher precedence than union");
+like("\N{EXTENDED ARABIC-INDIC DIGIT ZERO}", $ascii_digits_plus_all_of_arabic, "intersection has higher precedence than union");
+
+like("\r", qr/(?[ \p{lb=cr} ])/, '\r matches \p{lb=cr}');
+unlike("\r", qr/(?[ ! \p{lb=cr} ])/, '\r doesnt match ! \p{lb=cr}');
+like("\r", qr/(?[ ! ! \p{lb=cr} ])/, 'Two ! ! are the original');
+unlike("\r", qr/(?[ ! ! ! \p{lb=cr} ])/, 'Three ! ! ! are the complement');
+# left associatve
 
 my $kelvin = qr/(?[ \N{KELVIN SIGN} ])/;
 my $fold = qr/(?[ $kelvin ])/i;
@@ -87,6 +95,92 @@ like("k", $still_fold, "/i on interpolated (?[ ]) is retained in outer without /
 
 eval 'my $x = qr/(?[ [a] ])/; qr/(?[ $x ])/';
 is($@, "", 'qr/(?[ [a] ])/ can be interpolated');
+
+like("B", qr/(?[ [B] | ! ( [^B] ) ])/, "[perl #125892]");
+
+like("a", qr/(?[ (?#comment) [a]])/, "Can have (?#comments)");
+
+if (! is_miniperl() && locales_enabled('LC_CTYPE')) {
+    my $utf8_locale = find_utf8_ctype_locale;
+    SKIP: {
+        skip("No utf8 locale available on this platform", 8) unless $utf8_locale;
+
+        setlocale(&POSIX::LC_ALL, "C");
+        use locale;
+
+        $kelvin_fold = qr/(?[ \N{KELVIN SIGN} ])/i;
+        my $single_char_class = qr/(?[ \: ])/;
+
+        setlocale(&POSIX::LC_ALL, $utf8_locale);
+
+        like("\N{KELVIN SIGN}", $kelvin_fold,
+             '(?[ \N{KELVIN SIGN} ]) matches itself under /i in UTF8-locale');
+        like("K", $kelvin_fold,
+                '(?[ \N{KELVIN SIGN} ]) matches "K" under /i in UTF8-locale');
+        like("k", $kelvin_fold,
+                '(?[ \N{KELVIN SIGN} ]) matches "k" under /i in UTF8-locale');
+        like(":", $single_char_class,
+             '(?[ : ]) matches itself in UTF8-locale (a single character class)');
+
+        setlocale(&POSIX::LC_ALL, "C");
+
+        # These should generate warnings (the above 4 shouldn't), but like()
+        # suppresses them, so the warnings tests are in t/lib/warnings/regexec
+        $^W = 0;   # Suppress the warnings that occur when run by hand with
+                   # the -w option
+        like("\N{KELVIN SIGN}", $kelvin_fold,
+             '(?[ \N{KELVIN SIGN} ]) matches itself under /i in C locale');
+        like("K", $kelvin_fold,
+                '(?[ \N{KELVIN SIGN} ]) matches "K" under /i in C locale');
+        like("k", $kelvin_fold,
+                '(?[ \N{KELVIN SIGN} ]) matches "k" under /i in C locale');
+        like(":", $single_char_class,
+             '(?[ : ]) matches itself in C locale (a single character class)');
+    }
+}
+
+# Tests that no warnings given for valid Unicode digit range.
+my $arabic_digits = qr/(?[ [ ٠ - ٩ ] ])/;
+for my $char ("٠", "٥", "٩") {
+    use charnames ();
+    my @got = capture_warnings(sub {
+                like("٠", $arabic_digits, "Matches "
+                                                . charnames::viacode(ord $char));
+            });
+    is (@got, 0, "... without warnings");
+}
+
+# RT #126181: \cX behaves strangely inside (?[])
+{
+	no warnings qw(syntax regexp);
+
+	eval { $_ = '/(?[(\c]) /'; qr/$_/ };
+	like($@, qr/^Syntax error/, '/(?[(\c]) / should not panic');
+	eval { $_ = '(?[\c#]' . "\n])"; qr/$_/ };
+	like($@, qr/^Syntax error/, '/(?[(\c]) / should not panic');
+	eval { $_ = '(?[(\c])'; qr/$_/ };
+	like($@, qr/^Syntax error/, '/(?[(\c])/ should be a syntax error');
+	eval { $_ = '(?[(\c]) ]\b'; qr/$_/ };
+	like($@, qr/^Syntax error/, '/(?[(\c]) ]\b/ should be a syntax error');
+	eval { $_ = '(?[\c[]](])'; qr/$_/ };
+	like($@, qr/^Syntax error/, '/(?[\c[]](])/ should be a syntax error');
+	like("\c#", qr/(?[\c#])/, '\c# should match itself');
+	like("\c[", qr/(?[\c[])/, '\c[ should match itself');
+	like("\c\ ", qr/(?[\c\])/, '\c\ should match itself');
+	like("\c]", qr/(?[\c]])/, '\c] should match itself');
+}
+
+# RT #126481 !! with syntax error panics
+{
+    fresh_perl_like('no warnings "experimental::regex_sets"; qr/(?[ ! ! (\w])/',
+                    qr/^Unmatched \(/, {},
+                    'qr/(?[ ! ! (\w])/ doesnt panic');
+    # The following didn't panic before, but easy to add this here with a
+    # paren between the !!
+    fresh_perl_like('no warnings "experimental::regex_sets";qr/(?[ ! ( ! (\w)])/',
+                    qr/^Unmatched \(/, {},
+                    'qr/qr/(?[ ! ( ! (\w)])/');
+}
 
 done_testing();
 

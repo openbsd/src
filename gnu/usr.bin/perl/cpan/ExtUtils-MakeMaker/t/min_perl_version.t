@@ -8,15 +8,16 @@ BEGIN {
 }
 
 use strict;
-use Config;
-use Test::More
-    $ENV{PERL_CORE} && $Config{'usecrosscompile'}
-    ? (skip_all => "no toolchain installed when cross-compiling")
-    : (tests => 36);
 
 use TieOut;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::MPV;
+use Config;
+use Test::More;
+use ExtUtils::MM;
+plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+    ? (skip_all => "cross-compiling and make not available")
+    : (tests => 36);
 use File::Path;
 
 use ExtUtils::MakeMaker;

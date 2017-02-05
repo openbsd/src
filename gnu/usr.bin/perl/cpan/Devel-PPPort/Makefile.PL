@@ -34,6 +34,21 @@ WriteMakefile(
   OBJECT        => 'RealPPPort$(OBJ_EXT) $(O_FILES)',
   XSPROTOARG    => '-noprototypes',
   CONFIGURE     => \&configure,
+  META_MERGE    => {
+    'meta-spec' => {
+      version => 2,
+    },
+    resources => {
+      bugtracker => {
+        web => 'https://github.com/mhx/Devel-PPPort/issues/',
+      },
+      repository => {
+        type => 'git',
+        url  => 'git://github.com/mhx/Devel-PPPort.git',
+        web  => 'https://github.com/mhx/Devel-PPPort/',
+      },
+    },
+  },
 );
 
 sub configure

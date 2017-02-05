@@ -71,7 +71,7 @@
     </item-text>
     <Para start_line="-321">
       Non-ASCII character seen before =encoding in &#39;s&#233;parant&#39;.
-      Assuming ISO8859-1
+      Assuming CP1252
     </Para>
   </over-text>
 </Document>

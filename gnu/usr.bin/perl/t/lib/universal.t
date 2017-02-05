@@ -6,7 +6,7 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    plan( tests => 13 );
+    plan( tests => 17 );
 }
 
 for my $arg ('', 'q[]', qw( 1 undef )) {
@@ -59,4 +59,17 @@ ok !Internals::SvREADONLY($h{b}),
 Internals::SvREADONLY($h{b},0);
 $h{b} =~ y/ia/ao/;
 is __PACKAGE__, 'main',
-  'turning off a cow’s readonliness did not affect sharers of the same PV';
+  'turning off a cow\'s readonliness did not affect sharers of the same PV';
+
+&Internals::SvREADONLY(\!0, 0);
+eval { ${\!0} = 7 };
+like $@, qr "^Modification of a read-only value",
+    'protected values still croak on assignment after SvREADONLY(..., 0)';
+is ${\3} == 3, "1", 'attempt to modify failed';
+
+eval { { my $x = ${qr//}; Internals::SvREADONLY $x, 1; () } };
+is $@, "", 'read-only lexical regexps on scope exit [perl #115254]';
+
+Internals::SvREADONLY($],0);
+eval { $]=7 };
+is $], 7, 'SvREADONLY can make magic vars mutable'

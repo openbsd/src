@@ -16,7 +16,7 @@ BEGIN {
 }
 
 sub test_data_directory {
-	return( File::Spec->catdir(qw(t data)) );
+	return( "corpus" );
 }
 
 # 22 tests per call to yaml_ok

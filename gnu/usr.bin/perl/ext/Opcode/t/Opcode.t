@@ -113,6 +113,23 @@ is(($s2 ^ $s3), opset('padsv','padhv'));
 my @o2 = opset_to_ops(invert_opset $s3);
 is_deeply(\@o1, \@o2);
 
+# --- test context of undocumented _safe_call_sv (used by Safe.pm)
+
+my %inc = %INC;
+my $expect;
+sub f {
+    %INC = %inc;
+    no warnings 'uninitialized';
+    is wantarray, $expect,
+       sprintf "_safe_call_sv gives %s context",
+		qw[void scalar list][$expect + defined $expect]
+};
+Opcode::_safe_call_sv("main", empty_opset, \&f);
+$expect = !1;
+$_ = Opcode::_safe_call_sv("main", empty_opset, \&f);
+$expect = !0;
+() = Opcode::_safe_call_sv("main", empty_opset, \&f);
+
 # --- finally, check some opname assertions
 
 foreach my $opname (@full_l1) {

@@ -10,13 +10,36 @@ Documentation for this is in bisect-runner.pl
 # The default, auto_abbrev will treat -e as an abbreviation of --end
 # Which isn't what we want.
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
+use File::Spec;
+use File::Path qw(mkpath);
 
-my ($start, $end, $validate, $usage, $bad, $jobs, $make, $gold);
+my ($start, $end, $validate, $usage, $bad, $jobs, $make, $gold,
+    $module, $with_module);
+
+my $need_cpan_config;
+my $cpan_config_dir;
+
 $bad = !GetOptions('start=s' => \$start, 'end=s' => \$end,
                    'jobs|j=i' => \$jobs, 'make=s' => \$make, 'gold=s' => \$gold,
-                   validate => \$validate, 'usage|help|?' => \$usage);
+                   validate => \$validate, 'usage|help|?' => \$usage,
+                   'module=s' => \$module, 'with-module=s' => \$with_module,
+                   'cpan-config-dir=s' => \$cpan_config_dir);
 unshift @ARGV, '--help' if $bad || $usage;
 unshift @ARGV, '--validate' if $validate;
+
+if ($module || $with_module) {
+  unshift @ARGV, '--module', $module if defined $module;
+  unshift @ARGV, '--with-module', $with_module if defined $with_module;
+
+  if ($cpan_config_dir) {
+    my $c = File::Spec->catfile($cpan_config_dir, 'CPAN', 'MyConfig.pm');
+    die "--cpan-config-dir: $c does not exist\n" unless -e $c;
+
+    unshift @ARGV, '--cpan-config-dir', $cpan_config_dir;
+  } else {
+    $need_cpan_config = 1;
+  }
+}
 
 my $runner = $0;
 $runner =~ s/bisect\.pl/bisect-runner.pl/;
@@ -48,6 +71,27 @@ if (!defined $jobs &&
 
 unshift @ARGV, '--jobs', $jobs if defined $jobs;
 unshift @ARGV, '--make', $make if defined $make;
+
+if ($need_cpan_config) {
+  # Make sure we have a CPAN::MyConfig so if we start at an old
+  # revision CPAN doesn't ask for user input to configure itself
+
+  my $cdir = File::Spec->catdir($ENV{HOME},".cpan","CPAN");
+  my $cfile = File::Spec->catfile($cdir, "MyConfig.pm");
+
+  unless (-e $cfile) {
+    printf <<EOF;
+I could not find a CPAN::MyConfig. We need to create one now so that
+you can bisect with --module or --with-module. I'll boot up the CPAN
+shell for you. Feel free to use defaults or change things as needed.
+We recommend using 'manual' over 'local::lib' if it asks.
+
+Type 'quit' when finished.
+
+EOF
+    system("$^X -MCPAN -e shell");
+  }
+}
 
 # We try these in this order for the start revision if none is specified.
 my @stable = map {chomp $_; $_} grep {/v5\.[0-9]+[02468]\.0$/} `git tag -l`;
@@ -225,7 +269,7 @@ system 'git', 'bisect', 'run', $^X, $runner, @ARGV and die;
 END {
     my $end_time = time;
 
-    printf "That took %d seconds\n", $end_time - $start_time
+    printf "That took %d seconds.\n", $end_time - $start_time
         if defined $start_time;
 }
 
@@ -235,9 +279,4 @@ Documentation for this is in bisect-runner.pl
 
 =cut
 
-# Local variables:
-# cperl-indent-level: 4
-# indent-tabs-mode: nil
-# End:
-#
 # ex: set ts=8 sts=4 sw=4 et:

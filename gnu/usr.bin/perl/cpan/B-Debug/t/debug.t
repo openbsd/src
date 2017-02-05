@@ -59,6 +59,12 @@ leave enter nextstate label leaveloop enterloop null and defined null
 threadsv readline gv lineseq nextstate aassign null pushmark split pushre
 threadsv const null pushmark rvav gv nextstate subst const unstack
 EOF
+} elsif ($] >= 5.021005) {
+  $b=<<EOF;
+leave enter nextstate label leaveloop enterloop null and defined null null
+gvsv readline gv lineseq nextstate split pushre null
+gvsv const nextstate subst const unstack
+EOF
 } else {
   $b=<<EOF;
 leave enter nextstate label leaveloop enterloop null and defined null null
@@ -69,7 +75,11 @@ EOF
 #$b .= " nextstate" if $] < 5.008001; # ??
 $b=~s/\n/ /g; $b=~s/\s+/ /g;
 $b =~ s/\s+$//;
-is($a, $b);
+
+TODO: {
+  local $TODO = '5.21.5 split optimization' if $] == 5.021005;
+  is($a, $b);
+}
 
 like(B::Debug::_printop(B::main_root),  qr/LISTOP\s+\[OP_LEAVE\]/);
 like(B::Debug::_printop(B::main_start), qr/OP\s+\[OP_ENTER\]/);

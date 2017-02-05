@@ -1,5 +1,5 @@
-# StandardizedVariants-6.3.0.txt
-# Date: 2012-11-14, 21:34:00 GMT [KW, LI]
+# StandardizedVariants-8.0.0.txt
+# Date: 2015-02-10, 15:25:00 GMT [KW, LI]
 #
 # Specification of the variation sequences that are defined in the
 # Unicode Standard.
@@ -7,7 +7,7 @@
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2012 Unicode, Inc.
+# Copyright (c) 1991-2015 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Standardized variation sequences are defined in this file.
@@ -20,8 +20,8 @@
 # from what it would have had in the absence of the variation selector.
 #
 # For more information on standardized variation sequences, 
-# see Section 16.4, Variation Selectors, 
-# in The Unicode Standard, Version 6.3.
+# see Section 23.4, Variation Selectors, 
+# in The Unicode Standard, Version 8.0.
 #
 # For more information on the Ideographic Variation Database,
 # see http://www.unicode.org/ivd/
@@ -74,6 +74,14 @@ A85E FE00; phags-pa letter reversed shaping i; # PHAGS-PA LETTER I
 A85F FE00; phags-pa letter reversed shaping u; # PHAGS-PA LETTER U
 A860 FE00; phags-pa letter reversed shaping e; # PHAGS-PA LETTER E
 A868 FE00; phags-pa letter reversed shaping subjoined ya; # PHAGS-PA SUBJOINED LETTER YA
+
+# Manichaean
+
+10AC5 FE00; alternate form; isolate # MANICHAEAN LETTER DALETH
+10AC6 FE00; alternate form; isolate # MANICHAEAN LETTER HE
+10AD6 FE00; alternate form; isolate final # MANICHAEAN LETTER MEM
+10AD7 FE00; alternate form; isolate # MANICHAEAN LETTER NUN
+10AE1 FE00; alternate form; isolate # MANICHAEAN LETTER RESH
 
 # Mongolian
 
@@ -169,10 +177,16 @@ A868 FE00; phags-pa letter reversed shaping subjoined ya; # PHAGS-PA SUBJOINED L
 
 # Emoji variation sequences
 
+00A9 FE0E; text style;  # COPYRIGHT SIGN
+00A9 FE0F; emoji style; # COPYRIGHT SIGN
+00AE FE0E; text style;  # REGISTERED SIGN
+00AE FE0F; emoji style; # REGISTERED SIGN
 203C FE0E; text style;  # DOUBLE EXCLAMATION MARK
 203C FE0F; emoji style; # DOUBLE EXCLAMATION MARK
 2049 FE0E; text style;  # EXCLAMATION QUESTION MARK
 2049 FE0F; emoji style; # EXCLAMATION QUESTION MARK
+2122 FE0E; text style;  # TRADE MARK SIGN
+2122 FE0F; emoji style; # TRADE MARK SIGN
 2139 FE0E; text style;  # INFORMATION SOURCE
 2139 FE0F; emoji style; # INFORMATION SOURCE
 2194 FE0E; text style;  # LEFT RIGHT ARROW
@@ -347,6 +361,8 @@ A868 FE00; phags-pa letter reversed shaping subjoined ya; # PHAGS-PA SUBJOINED L
 2B50 FE0F; emoji style; # WHITE MEDIUM STAR
 2B55 FE0E; text style;  # HEAVY LARGE CIRCLE
 2B55 FE0F; emoji style; # HEAVY LARGE CIRCLE
+3030 FE0E; text style;  # WAVY DASH
+3030 FE0F; emoji style; # WAVY DASH
 303D FE0E; text style;  # PART ALTERNATION MARK
 303D FE0F; emoji style; # PART ALTERNATION MARK
 3297 FE0E; text style;  # CIRCLED IDEOGRAPH CONGRATULATION
@@ -355,12 +371,22 @@ A868 FE00; phags-pa letter reversed shaping subjoined ya; # PHAGS-PA SUBJOINED L
 3299 FE0F; emoji style; # CIRCLED IDEOGRAPH SECRET
 1F004 FE0E; text style;  # MAHJONG TILE RED DRAGON
 1F004 FE0F; emoji style; # MAHJONG TILE RED DRAGON
+1F170 FE0E; text style;  # NEGATIVE SQUARED LATIN CAPITAL LETTER A
+1F170 FE0F; emoji style; # NEGATIVE SQUARED LATIN CAPITAL LETTER A
+1F171 FE0E; text style;  # NEGATIVE SQUARED LATIN CAPITAL LETTER B
+1F171 FE0F; emoji style; # NEGATIVE SQUARED LATIN CAPITAL LETTER B
+1F17E FE0E; text style;  # NEGATIVE SQUARED LATIN CAPITAL LETTER O
+1F17E FE0F; emoji style; # NEGATIVE SQUARED LATIN CAPITAL LETTER O
 1F17F FE0E; text style;  # NEGATIVE SQUARED LATIN CAPITAL LETTER P
 1F17F FE0F; emoji style; # NEGATIVE SQUARED LATIN CAPITAL LETTER P
+1F202 FE0E; text style;  # SQUARED KATAKANA SA
+1F202 FE0F; emoji style; # SQUARED KATAKANA SA
 1F21A FE0E; text style;  # SQUARED CJK UNIFIED IDEOGRAPH-7121
 1F21A FE0F; emoji style; # SQUARED CJK UNIFIED IDEOGRAPH-7121
 1F22F FE0E; text style;  # SQUARED CJK UNIFIED IDEOGRAPH-6307
 1F22F FE0F; emoji style; # SQUARED CJK UNIFIED IDEOGRAPH-6307
+1F237 FE0E; text style;  # SQUARED CJK UNIFIED IDEOGRAPH-6708
+1F237 FE0F; emoji style; # SQUARED CJK UNIFIED IDEOGRAPH-6708
 
 # CJK compatibility ideographs
 

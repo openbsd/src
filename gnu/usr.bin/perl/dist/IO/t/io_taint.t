@@ -33,7 +33,7 @@ chop(my $unsafe = <$x>);
 eval { kill 0 * $unsafe };
 SKIP: {
   skip($^O) if $^O eq 'MSWin32' or $^O eq 'NetWare';
-  like($@, '^Insecure');
+  like($@, qr/^Insecure/);
 }
 $x->close;
 
@@ -44,7 +44,7 @@ $x->untaint;
 ok(!$?); # Calling the method worked
 chop($unsafe = <$x>);
 eval { kill 0 * $unsafe };
-unlike($@,'^Insecure');
+unlike($@,qr/^Insecure/);
 $x->close;
 
 TODO: {

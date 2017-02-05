@@ -35,6 +35,7 @@ libswanted="$libswanted m"
 d_locconv='undef'
 d_setlocale='undef'
 d_setlocale_r='undef'
+d_lc_monetary_2008='undef'
 i_locale='undef'
 
 # https://code.google.com/p/android-source-browsing/source/browse/libc/netbsd/net/getservent_r.c?repo=platform--bionic&r=ca6fe7bebe3cc6ed7e2db5a3ede2de0fcddf411d#95
@@ -251,6 +252,9 @@ fi # Cross-compiling with adb
 
 case "$usecrosscompile" in
 define)
+# The tests for this in Configure doesn't play nicely with
+# cross-compiling
+d_procselfexe="define"
 if $test "X$hostosname" = "Xdarwin"; then
   firstmakefile=GNUmakefile;
 fi
@@ -280,10 +284,16 @@ case "$src" in
         ;;
 esac
 
-$cat <<EOO >> $pwd/config.arch
+$cat <<'EOO' >> $pwd/config.arch
 
 osname='android'
 eval "libpth='$libpth /system/lib /vendor/lib'"
+
+if $test "X$procselfexe" = X; then
+    case "$d_procselfexe" in
+        define) procselfexe='"/proc/self/exe"';;
+    esac
+fi
 EOO
 
 # Android is a linux variant, so run those hints.

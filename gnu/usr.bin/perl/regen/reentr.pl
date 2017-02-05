@@ -748,10 +748,16 @@ read_only_bottom_close_and_rename($h);
 # Prepare to write the reentr.c.
 
 my $c = open_print_header('reentr.c', <<'EOQ');
- *
+ */
+
+/*
  * "Saruman," I said, standing away from him, "only one hand at a time can
  *  wield the One, and you know that well, so do not trouble to say we!"
  *
+ *     [p.260 of _The Lord of the Rings_, II/ii: "The Council of Elrond"]
+ */
+
+/*
  * This file contains a collection of automatically created wrappers
  * (created by running reentr.pl) for reentrant (thread-safe) versions of
  * various library calls, such as getpwent_r.  The wrapping is done so
@@ -769,6 +775,7 @@ print $c <<"EOF";
 
 void
 Perl_reentrant_size(pTHX) {
+	PERL_UNUSED_CONTEXT;
 #ifdef USE_REENTRANT_API
 #define REENTRANTSMALLSIZE	 256	/* Make something up. */
 #define REENTRANTUSUALSIZE	4096	/* Make something up. */
@@ -778,6 +785,7 @@ Perl_reentrant_size(pTHX) {
 
 void
 Perl_reentrant_init(pTHX) {
+	PERL_UNUSED_CONTEXT;
 #ifdef USE_REENTRANT_API
 	Newx(PL_reentrant_buffer, 1, REENTR);
 	Perl_reentrant_size(aTHX);
@@ -787,6 +795,7 @@ Perl_reentrant_init(pTHX) {
 
 void
 Perl_reentrant_free(pTHX) {
+	PERL_UNUSED_CONTEXT;
 #ifdef USE_REENTRANT_API
 @free
 	Safefree(PL_reentrant_buffer);

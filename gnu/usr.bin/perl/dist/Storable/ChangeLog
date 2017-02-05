@@ -1,3 +1,12 @@
+Wed Jul  2 16:25:25 IST 2014   Abhijit Menon-Sen <ams@toroid.org>
+    Version 2.51
+
+	* [perl #121928] Fix memory leak for dclone inside freeze hook
+	  (Alex Solovey)
+	* Do not call DESTROY for empty objects
+	  (Vladimir Timofeev)
+	* Other bugfixes
+
 Sat Jul 13 18:34:27 IST 2013   Abhijit Menon-Sen <ams@toroid.org>
     Version 2.45
 
@@ -200,7 +209,7 @@ Fri Jun  7 23:55:41 BST 2002   Nicholas Clark
 	The bug was introduced as development perl change 16442 (on
 	2002/05/07), so has been present since 2.00.
 	Patches to introduce more regression tests to reduce the chance of
-	a reoccurence of this sort of goof are always welcome.
+	a reoccurrence of this sort of goof are always welcome.
 	
 Thu May 30 20:31:08 BST 2002   Nicholas Clark <nick@ccl4.org>
 

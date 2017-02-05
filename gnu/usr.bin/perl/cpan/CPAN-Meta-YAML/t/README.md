@@ -1,6 +1,6 @@
-# Guide to CPAN::Meta::YAML testing
+# Guide to YAML::Tiny testing
 
-CPAN::Meta::YAML tests use several components:
+YAML::Tiny tests use several components:
 
 * .t files
 * Test libraries in t/lib
@@ -19,10 +19,8 @@ of those modules as necessary to avoid known bugs.
 Some .t files have complete inputs/outputs for their tests.  Others iterate
 over .tml files in the t/tml-* directories.
 
-A .t file should load Test::More and either use `done_testing` or provide a
-test plan.  If tests iterate over external data, the use of `done_testing` is
-preferred so that external data can be updated with new tests without needing
-to also update a test plan.
+A .t file should load Test::More and use `done_testing` at the end
+to so that new tests may be added without needing to also update a test plan.
 
 Currently, the convention is to name .t files matching the pattern
 qr/^\d\d_\w+\.t$/
@@ -35,9 +33,15 @@ libraries can assume that if they were loaded, that 't/lib' is already in @INC.
 
 The test libraries are:
 
+* SubtestCompat
 * TestML::Tiny
 * TestBridge
 * TestUtils
+
+The "SubtestCompat" library provides a limited emulation of
+Test::More::subtest that is reasonably compatible back to 0.88.  If using
+subtests, you must not set a plan in the subtest and you must use
+done_testing in the *.t file.
 
 The TestML::Tiny library contains functions for parsing and executing TestML
 tests with callbacks.  TestML is a data-driven testing language; TestML::Tiny
@@ -120,10 +124,10 @@ functions used to process test blocks.
 TestML data files are organized into three directories:
 
 * t/tml-spec — these test files are provided by the YAML spec maintainers and
-should not be modified except to skip testing features that CPAN::Meta::YAML does not
+should not be modified except to skip testing features that YAML::Tiny does not
 support
 
-* t/tml-local — these test files are CPAN::Meta::YAML's own unit tests; generally new
+* t/tml-local — these test files are YAML::Tiny's own unit tests; generally new
 test cases for coverage or correctness should be added here; these are
 broken into subdirectories, described later
 

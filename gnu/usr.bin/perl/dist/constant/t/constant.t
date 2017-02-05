@@ -9,7 +9,7 @@ END { @warnings && print STDERR join "\n- ", "accumulated warnings:", @warnings 
 
 
 use strict;
-use Test::More tests => 105;
+use Test::More tests => 109;
 my $TB = Test::More->builder;
 
 BEGIN { use_ok('constant'); }
@@ -122,7 +122,7 @@ print $output CCODE->($curr_test+4);
 $TB->current_test($curr_test+4);
 
 eval q{ CCODE->{foo} };
-ok scalar($@ =~ /^Constant is not a HASH/);
+ok scalar($@ =~ /^Constant is not a HASH|Not a HASH reference/);
 
 
 # Allow leading underscore
@@ -414,3 +414,10 @@ SKIP: {
     is $values[1], $values[0],
 	'modifying list const elements does not affect future retavls';
 }
+
+use constant { "tahi" => 1, "rua::rua" => 2, "toru'toru" => 3 };
+use constant "wha::wha" => 4;
+is tahi, 1, 'unqualified constant declared with constants in other pkgs';
+is rua::rua, 2, 'constant declared with ::';
+is toru::toru, 3, "constant declared with '";
+is wha::wha, 4, 'constant declared by itself with ::';

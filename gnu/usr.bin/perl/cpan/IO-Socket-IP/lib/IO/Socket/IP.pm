@@ -1,13 +1,13 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2014 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2015 -- leonerd@leonerd.org.uk
 
 package IO::Socket::IP;
 # $VERSION needs to be set before  use base 'IO::Socket'
 #  - https://rt.cpan.org/Ticket/Display.html?id=92107
 BEGIN {
-   $VERSION = '0.29';
+   $VERSION = '0.37';
 }
 
 use strict;
@@ -31,7 +31,7 @@ use Socket 1.97 qw(
 my $AF_INET6 = eval { Socket::AF_INET6() }; # may not be defined
 my $AI_ADDRCONFIG = eval { Socket::AI_ADDRCONFIG() } || 0;
 use POSIX qw( dup2 );
-use Errno qw( EINVAL EINPROGRESS EISCONN );
+use Errno qw( EINVAL EINPROGRESS EISCONN ENOTCONN ETIMEDOUT EWOULDBLOCK );
 
 use constant HAVE_MSWIN32 => ( $^O eq "MSWin32" );
 
@@ -304,6 +304,22 @@ If defined but false, the socket will be set to non-blocking mode. Otherwise
 it will default to blocking mode. See the NON-BLOCKING section below for more
 detail.
 
+=item Timeout => NUM
+
+If defined, gives a maximum time in seconds to block per C<connect()> call
+when in blocking mode. If missing, no timeout is applied other than that
+provided by the underlying operating system. When in non-blocking mode this
+parameter is ignored.
+
+Note that if the hostname resolves to multiple address candidates, the same
+timeout will apply to each connection attempt individually, rather than to the
+operation as a whole. Further note that the timeout does not apply to the
+initial hostname resolve operation, if connecting by hostname.
+
+This behviour is copied inspired by C<IO::Socket::INET>; for more fine grained
+control over connection timeouts, consider performing a nonblocking connect
+directly.
+
 =back
 
 If neither C<Type> nor C<Proto> hints are provided, a default of
@@ -380,6 +396,12 @@ sub _io_socket_ip__configure
    my @localinfos;
    my @peerinfos;
 
+   my $listenqueue = $arg->{Listen};
+   if( defined $listenqueue and
+       ( defined $arg->{PeerHost} || defined $arg->{PeerService} || defined $arg->{PeerAddrInfo} ) ) {
+      croak "Cannot Listen with a peer address";
+   }
+
    if( defined $arg->{GetAddrInfoFlags} ) {
       $hints{flags} = $arg->{GetAddrInfoFlags};
    }
@@ -425,10 +447,16 @@ sub _io_socket_ip__configure
       ref $info eq "ARRAY" or croak "Expected 'LocalAddrInfo' to be an ARRAY ref";
       @localinfos = @$info;
    }
-   elsif( defined $arg->{LocalHost} or defined $arg->{LocalService} ) {
+   elsif( defined $arg->{LocalHost} or
+          defined $arg->{LocalService} or
+          HAVE_MSWIN32 and $arg->{Listen} ) {
       # Either may be undef
       my $host = $arg->{LocalHost};
       my $service = $arg->{LocalService};
+
+      unless ( defined $host or defined $service ) {
+         $service = 0;
+      }
 
       local $1; # Placate a taint-related bug; [perl #67962]
       defined $service and $service =~ s/\((\d+)\)$// and
@@ -480,10 +508,6 @@ sub _io_socket_ip__configure
    push @sockopts_enabled, SO_REUSEADDR if $arg->{ReuseAddr};
    push @sockopts_enabled, SO_REUSEPORT if $arg->{ReusePort};
    push @sockopts_enabled, SO_BROADCAST if $arg->{Broadcast};
-
-   my $listenqueue = $arg->{Listen};
-
-   croak "Cannot Listen with a PeerHost" if defined $listenqueue and @peerinfos;
 
    my $blocking = $arg->{Blocking};
    defined $blocking or $blocking = 1;
@@ -606,10 +630,17 @@ sub setup
             return 1;
          }
 
-         if( $! == EINPROGRESS or HAVE_MSWIN32 && $! == Errno::EWOULDBLOCK() ) {
+         if( $! == EINPROGRESS or $! == EWOULDBLOCK ) {
             ${*$self}{io_socket_ip_connect_in_progress} = 1;
             return 0;
          }
+
+         # If connect failed but we have no system error there must be an error
+         # at the application layer, like a bad certificate with
+         # IO::Socket::SSL.
+         # In this case don't continue IP based multi-homing because the problem
+         # cannot be solved at the IP layer.
+         return 0 if ! $!;
 
          ${*$self}{io_socket_ip_errors}[0] = $!;
          next;
@@ -624,17 +655,58 @@ sub setup
    return undef;
 }
 
-sub connect
+sub connect :method
 {
    my $self = shift;
 
    # It seems that IO::Socket hides EINPROGRESS errors, making them look like
    # a success. This is annoying here.
    # Instead of putting up with its frankly-irritating intentional breakage of
-   # useful APIs I'm just going to end-run around it and call CORE::connect()
+   # useful APIs I'm just going to end-run around it and call core's connect()
    # directly
 
-   return CORE::connect( $self, $_[0] ) if @_;
+   if( @_ ) {
+      my ( $addr ) = @_;
+
+      # Annoyingly IO::Socket's connect() is where the timeout logic is
+      # implemented, so we'll have to reinvent it here
+      my $timeout = ${*$self}{'io_socket_timeout'};
+
+      return connect( $self, $addr ) unless defined $timeout;
+
+      my $was_blocking = $self->blocking( 0 );
+
+      my $err = defined connect( $self, $addr ) ? 0 : $!+0;
+
+      if( !$err ) {
+         # All happy
+         $self->blocking( $was_blocking );
+         return 1;
+      }
+      elsif( not( $err == EINPROGRESS or $err == EWOULDBLOCK ) ) {
+         # Failed for some other reason
+         return undef;
+      }
+      elsif( !$was_blocking ) {
+         # We shouldn't block anyway
+         return undef;
+      }
+
+      my $vec = ''; vec( $vec, $self->fileno, 1 ) = 1;
+      if( !select( undef, $vec, $vec, $timeout ) ) {
+         $! = ETIMEDOUT;
+         return undef;
+      }
+
+      # Hoist the error by connect()ing a second time
+      $err = $self->getsockopt( SOL_SOCKET, SO_ERROR );
+      $err = 0 if $err == EISCONN; # Some OSes give EISCONN
+
+      $self->blocking( $was_blocking );
+
+      $! = $err, return undef if $err;
+      return 1;
+   }
 
    return 1 if !${*$self}{io_socket_ip_connect_in_progress};
 
@@ -651,7 +723,7 @@ sub connect
    # (still in progress). This even works on MSWin32.
    my $addr = ${*$self}{io_socket_ip_infos}[${*$self}{io_socket_ip_idx}]{peeraddr};
 
-   if( $self->connect( $addr ) or $! == EISCONN ) {
+   if( connect( $self, $addr ) or $! == EISCONN ) {
       delete ${*$self}{io_socket_ip_connect_in_progress};
       $! = 0;
       return 1;
@@ -681,6 +753,9 @@ sub _get_host_service
 {
    my $self = shift;
    my ( $addr, $flags, $xflags ) = @_;
+
+   defined $addr or
+      $! = ENOTCONN, return;
 
    $flags |= NI_DGRAM if $self->socktype == SOCK_DGRAM;
 
@@ -747,11 +822,11 @@ Return the resolved name of the local port number
 
 =cut
 
-sub sockhost { my $self = shift; ( $self->_get_host_service( $self->sockname, NI_NUMERICHOST, NIx_NOSERV ) )[0] }
-sub sockport { my $self = shift; ( $self->_get_host_service( $self->sockname, NI_NUMERICSERV, NIx_NOHOST ) )[1] }
+sub sockhost { my $self = shift; scalar +( $self->_get_host_service( $self->sockname, NI_NUMERICHOST, NIx_NOSERV ) )[0] }
+sub sockport { my $self = shift; scalar +( $self->_get_host_service( $self->sockname, NI_NUMERICSERV, NIx_NOHOST ) )[1] }
 
-sub sockhostname { my $self = shift; ( $self->_get_host_service( $self->sockname, 0, NIx_NOSERV ) )[0] }
-sub sockservice  { my $self = shift; ( $self->_get_host_service( $self->sockname, 0, NIx_NOHOST ) )[1] }
+sub sockhostname { my $self = shift; scalar +( $self->_get_host_service( $self->sockname, 0, NIx_NOSERV ) )[0] }
+sub sockservice  { my $self = shift; scalar +( $self->_get_host_service( $self->sockname, 0, NIx_NOHOST ) )[1] }
 
 =head2 $addr = $sock->sockaddr
 
@@ -800,11 +875,11 @@ Return the resolved name of the peer port number
 
 =cut
 
-sub peerhost { my $self = shift; ( $self->_get_host_service( $self->peername, NI_NUMERICHOST, NIx_NOSERV ) )[0] }
-sub peerport { my $self = shift; ( $self->_get_host_service( $self->peername, NI_NUMERICSERV, NIx_NOHOST ) )[1] }
+sub peerhost { my $self = shift; scalar +( $self->_get_host_service( $self->peername, NI_NUMERICHOST, NIx_NOSERV ) )[0] }
+sub peerport { my $self = shift; scalar +( $self->_get_host_service( $self->peername, NI_NUMERICSERV, NIx_NOHOST ) )[1] }
 
-sub peerhostname { my $self = shift; ( $self->_get_host_service( $self->peername, 0, NIx_NOSERV ) )[0] }
-sub peerservice  { my $self = shift; ( $self->_get_host_service( $self->peername, 0, NIx_NOHOST ) )[1] }
+sub peerhostname { my $self = shift; scalar +( $self->_get_host_service( $self->peername, 0, NIx_NOSERV ) )[0] }
+sub peerservice  { my $self = shift; scalar +( $self->_get_host_service( $self->peername, 0, NIx_NOHOST ) )[1] }
 
 =head2 $addr = $peer->peeraddr
 
@@ -830,13 +905,13 @@ sub accept
 
 # This second unbelievably dodgy hack guarantees that $self->fileno doesn't
 # change, which is useful during nonblocking connect
-sub socket
+sub socket :method
 {
    my $self = shift;
    return $self->SUPER::socket(@_) if not defined $self->fileno;
 
    # I hate core prototypes sometimes...
-   CORE::socket( my $tmph, $_[0], $_[1], $_[2] ) or return undef;
+   socket( my $tmph, $_[0], $_[1], $_[2] ) or return undef;
 
    dup2( $tmph->fileno, $self->fileno ) or die "Unable to dup2 $tmph onto $self - $!";
 }
@@ -844,7 +919,7 @@ sub socket
 # Versions of IO::Socket before 1.35 may leave socktype undef if from, say, an
 #   ->fdopen call. In this case we'll apply a fix
 BEGIN {
-   if( $IO::Socket::VERSION < 1.35 ) {
+   if( eval($IO::Socket::VERSION) < 1.35 ) {
       *socktype = sub {
          my $self = shift;
          my $type = $self->SUPER::socktype;
@@ -1082,6 +1157,37 @@ useable address from the results of the C<getaddrinfo(3)> call. The
 constructor will ignore the value of this argument, except if it is defined
 but false. An exception is thrown in this case, because that would request it
 disable the C<getaddrinfo(3)> search behaviour in the first place.
+
+=item *
+
+C<IO::Socket::IP> implements both the C<Blocking> and C<Timeout> parameters,
+but it implements the interaction of both in a different way.
+
+In C<::INET>, supplying a timeout overrides the non-blocking behaviour,
+meaning that the C<connect()> operation will still block despite that the
+caller asked for a non-blocking socket. This is not explicitly specified in
+its documentation, nor does this author believe that is a useful behaviour -
+it appears to come from a quirk of implementation.
+
+In C<::IP> therefore, the C<Blocking> parameter takes precedence - if a
+non-blocking socket is requested, no operation will block. The C<Timeout>
+parameter here simply defines the maximum time that a blocking C<connect()>
+call will wait, if it blocks at all.
+
+In order to specifically obtain the "blocking connect then non-blocking send
+and receive" behaviour of specifying this combination of options to C<::INET>
+when using C<::IP>, perform first a blocking connect, then afterwards turn the
+socket into nonblocking mode.
+
+ my $sock = IO::Socket::IP->new(
+    PeerHost => $peer,
+    Timeout => 20,
+ ) or die "Cannot connect - $@";
+
+ $sock->blocking( 0 );
+
+This code will behave identically under both C<IO::Socket::INET> and
+C<IO::Socket::IP>.
 
 =back
 

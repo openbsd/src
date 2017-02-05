@@ -44,3 +44,5 @@ ok($@ ~~ ':file',	"Exception from close / class :file"	);
 ok($@ ~~ ':io',		"Exception from close / class :io"	);
 ok($@ ~~ ':all',	"Exception from close / class :all"	);
 
+ok $@ eq $@.'',                 "string overloading is complete (eq)";
+ok( ($@ cmp $@.'') == 0,        "string overloading is complete (cmp)" );

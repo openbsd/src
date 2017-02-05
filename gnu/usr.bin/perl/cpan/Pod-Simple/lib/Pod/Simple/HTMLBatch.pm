@@ -5,7 +5,7 @@ use strict;
 use vars qw( $VERSION $HTML_RENDER_CLASS $HTML_EXTENSION
  $CSS $JAVASCRIPT $SLEEPY $SEARCH_CLASS @ISA
 );
-$VERSION = '3.28';
+$VERSION = '3.32';
 @ISA = ();  # Yup, we're NOT a subclass of Pod::Simple::HTML!
 
 # TODO: nocontents stylesheets. Strike some of the color variations?
@@ -270,7 +270,7 @@ sub _do_one_batch_conversion {
   $self->batch_mode_page_object_kill($page, $module, $infile, $outfile, $depth)
    if $self->can('batch_mode_page_object_kill');
     
-  DEBUG > 4 and printf "%s %sb < $infile %s %sb\n",
+  DEBUG > 4 and printf STDERR "%s %sb < $infile %s %sb\n",
      $outfile, -s $outfile, $infile, -s $infile
   ;
 
@@ -295,7 +295,7 @@ sub note_for_contents_file {
      [ join("::", @$namelets), $infile, $outfile, $namelets ]
      #            0               1         2         3
     ;
-    DEBUG > 3 and print "Noting @$c[-1]\n";
+    DEBUG > 3 and print STDERR "Noting @$c[-1]\n";
   }
   return;
 }
@@ -446,7 +446,7 @@ sub makepath {
       die "$dir exists but not as a directory!?" unless -d $dir;
       next;
     }
-    DEBUG > 3 and print "  Making $dir\n";
+    DEBUG > 3 and print STDERR "  Making $dir\n";
     mkdir $dir, 0777
      or die "Can't mkdir $dir: $!\nAborting"
     ;
@@ -533,7 +533,7 @@ sub modnames2paths { # return a hashref mapping modulenames => paths
   my $m2p;
   {
     my $search = $self->search_class->new;
-    DEBUG and print "Searching via $search\n";
+    DEBUG and print STDERR "Searching via $search\n";
     $search->verbose(1) if DEBUG > 10;
     $search->progress( $self->progress->copy->goal(0) ) if $self->progress;
     $search->shadows(0);  # don't bother noting shadowed files
@@ -545,13 +545,13 @@ sub modnames2paths { # return a hashref mapping modulenames => paths
 
   $self->muse("That's odd... no modules found!") unless keys %$m2p;
   if( DEBUG > 4 ) {
-    print "Modules found (name => path):\n";
+    print STDERR "Modules found (name => path):\n";
     foreach my $m (sort {lc($a) cmp lc($b)} keys %$m2p) {
-      print "  $m  $$m2p{$m}\n";
+      print STDERR "  $m  $$m2p{$m}\n";
     }
-    print "(total ",     scalar(keys %$m2p), ")\n\n";
+    print STDERR "(total ",     scalar(keys %$m2p), ")\n\n";
   } elsif( DEBUG ) {
-    print      "Found ", scalar(keys %$m2p), " modules.\n";
+    print STDERR      "Found ", scalar(keys %$m2p), " modules.\n";
   }
   $self->muse( "Found ", scalar(keys %$m2p), " modules." );
   
@@ -566,7 +566,7 @@ sub _wopen {
   my($self, $outpath) = @_;
   require Symbol;
   my $out_fh = Symbol::gensym();
-  DEBUG > 5 and print "Write-opening to $outpath\n";
+  DEBUG > 5 and print STDERR "Write-opening to $outpath\n";
   return $out_fh if open($out_fh, "> $outpath");
   require Carp;  
   Carp::croak("Can't write-open $outpath: $!");
@@ -608,9 +608,9 @@ sub _spray_css {
     my $outfile;
     if( ref($chunk->[-1]) and $url =~ m{^(_[-a-z0-9_]+\.css$)} ) {
       $outfile = $self->filespecsys->catfile( $outdir, "$1" );
-      DEBUG > 5 and print "Noting $$chunk[0] as a file I'll create.\n";
+      DEBUG > 5 and print STDERR "Noting $$chunk[0] as a file I'll create.\n";
     } else {
-      DEBUG > 5 and print "OK, noting $$chunk[0] as an external CSS.\n";
+      DEBUG > 5 and print STDERR "OK, noting $$chunk[0] as an external CSS.\n";
       # Requires no further attention.
       next;
     }
@@ -620,7 +620,7 @@ sub _spray_css {
     print $Cssout ${$chunk->[-1]}
      or warn "Couldn't print to $outfile: $!\nAbort writing to $outfile at all";
     close($Cssout);
-    DEBUG > 5 and print "Wrote $outfile\n";
+    DEBUG > 5 and print STDERR "Wrote $outfile\n";
   }
 
   return;
@@ -771,9 +771,9 @@ sub _spray_javascript {
     
     if( ref($script->[-1]) and $url =~ m{^(_[-a-z0-9_]+\.js$)} ) {
       $outfile = $self->filespecsys->catfile( $outdir, "$1" );
-      DEBUG > 5 and print "Noting $$script[0] as a file I'll create.\n";
+      DEBUG > 5 and print STDERR "Noting $$script[0] as a file I'll create.\n";
     } else {
-      DEBUG > 5 and print "OK, noting $$script[0] as an external JavaScript.\n";
+      DEBUG > 5 and print STDERR "OK, noting $$script[0] as an external JavaScript.\n";
       next;
     }
     
@@ -783,7 +783,7 @@ sub _spray_javascript {
     print $Jsout ${$script->[-1]}
      or warn "Couldn't print to $outfile: $!\nAbort writing to $outfile at all";
     close($Jsout);
-    DEBUG > 5 and print "Wrote $outfile\n";
+    DEBUG > 5 and print STDERR "Wrote $outfile\n";
   }
 
   return;
@@ -1310,18 +1310,6 @@ TODO
     that classname
 
 
-
-=head1 ASK ME!
-
-If you want to do some kind of big pod-to-HTML version with some
-particular kind of option that you don't see how to achieve using this
-module, email me (C<sburke@cpan.org>) and I'll probably have a good idea
-how to do it. For reasons of concision and energetic laziness, some
-methods and options in this module (and the dozen modules it depends on)
-are undocumented; but one of those undocumented bits might be just what
-you're looking for.
-
-
 =head1 SEE ALSO
 
 L<Pod::Simple>, L<Pod::Simple::HTMLBatch>, L<perlpod>, L<perlpodspec>
@@ -1333,8 +1321,8 @@ pod-people@perl.org mail list. Send an empty email to
 pod-people-subscribe@perl.org to subscribe.
 
 This module is managed in an open GitHub repository,
-L<https://github.com/theory/pod-simple/>. Feel free to fork and contribute, or
-to clone L<git://github.com/theory/pod-simple.git> and send patches!
+L<https://github.com/perl-pod/pod-simple/>. Feel free to fork and contribute, or
+to clone L<git://github.com/perl-pod/pod-simple.git> and send patches!
 
 Patches against Pod::Simple are welcome. Please send bug reports to
 <bug-pod-simple@rt.cpan.org>.

@@ -4,7 +4,7 @@ use warnings;
 
 our ($AUTOLOAD, %SIGRT);
 
-our $VERSION = '1.38_03';
+our $VERSION = '1.65';
 
 require XSLoader;
 
@@ -151,7 +151,7 @@ my %reimpl = (
     exit      => 'status => CORE::exit($_[0])',
     getenv    => 'name => $ENV{$_[0]}',
     system    => 'command => CORE::system($_[0])',
-    strerror  => 'errno => local $! = $_[0]; "$!"',
+    strerror  => 'errno => BEGIN { local $!; require locale; locale->import} my $e = $_[0] + 0; local $!; $! = $e; "$!"',
     strstr    => 'big, little => CORE::index($_[0], $_[1])',
     chmod     => 'mode, filename => CORE::chmod($_[0], $_[1])',
     fstat     => 'fd => CORE::open my $dup, "<&", $_[0]; CORE::stat($dup)', # Gross.
@@ -234,7 +234,7 @@ sub sprintf {
 }
 
 sub load_imports {
-our %EXPORT_TAGS = (
+my %default_export_tags = ( # cf. exports policy below
 
     assert_h =>	[qw(assert NDEBUG)],
 
@@ -296,8 +296,13 @@ our %EXPORT_TAGS = (
 		    LC_MONETARY LC_NUMERIC LC_TIME NULL
 		    localeconv setlocale)],
 
-    math_h =>	[qw(HUGE_VAL acos asin atan ceil cosh fabs floor fmod
-		frexp ldexp log10 modf pow sinh tan tanh)],
+    math_h =>   [qw(FP_ILOGB0 FP_ILOGBNAN FP_INFINITE FP_NAN FP_NORMAL
+                    FP_SUBNORMAL FP_ZERO
+                    M_1_PI M_2_PI M_2_SQRTPI M_E M_LN10 M_LN2 M_LOG10E M_LOG2E
+                    M_PI M_PI_2 M_PI_4 M_SQRT1_2 M_SQRT2
+                    HUGE_VAL INFINITY NAN
+                    acos asin atan ceil cosh fabs floor fmod
+		    frexp ldexp log10 modf pow sinh tan tanh)],
 
     pwd_h =>	[],
 
@@ -384,18 +389,74 @@ our %EXPORT_TAGS = (
     utime_h =>	[],
 );
 
-# Exporter::export_tags();
+if ($^O eq 'MSWin32') {
+    $default_export_tags{winsock_h} = [qw(
+	WSAEINTR WSAEBADF WSAEACCES WSAEFAULT WSAEINVAL WSAEMFILE WSAEWOULDBLOCK
+	WSAEINPROGRESS WSAEALREADY WSAENOTSOCK WSAEDESTADDRREQ WSAEMSGSIZE
+	WSAEPROTOTYPE WSAENOPROTOOPT WSAEPROTONOSUPPORT WSAESOCKTNOSUPPORT
+	WSAEOPNOTSUPP WSAEPFNOSUPPORT WSAEAFNOSUPPORT WSAEADDRINUSE
+	WSAEADDRNOTAVAIL WSAENETDOWN WSAENETUNREACH WSAENETRESET WSAECONNABORTED
+	WSAECONNRESET WSAENOBUFS WSAEISCONN WSAENOTCONN WSAESHUTDOWN
+	WSAETOOMANYREFS WSAETIMEDOUT WSAECONNREFUSED WSAELOOP WSAENAMETOOLONG
+	WSAEHOSTDOWN WSAEHOSTUNREACH WSAENOTEMPTY WSAEPROCLIM WSAEUSERS
+	WSAEDQUOT WSAESTALE WSAEREMOTE WSAEDISCON WSAENOMORE WSAECANCELLED
+	WSAEINVALIDPROCTABLE WSAEINVALIDPROVIDER WSAEPROVIDERFAILEDINIT
+	WSAEREFUSED)];
+}
+
+my %other_export_tags = ( # cf. exports policy below
+    fenv_h => [qw(
+        FE_DOWNWARD FE_TONEAREST FE_TOWARDZERO FE_UPWARD fegetround fesetround
+    )],
+
+    math_h_c99 => [ @{$default_export_tags{math_h}}, qw(
+        Inf NaN acosh asinh atanh cbrt copysign erf erfc exp2 expm1 fdim fma
+        fmax fmin fpclassify hypot ilogb isfinite isgreater isgreaterequal
+        isinf isless islessequal islessgreater isnan isnormal isunordered j0 j1
+        jn lgamma log1p log2 logb lrint nan nearbyint nextafter nexttoward
+        remainder remquo rint round scalbn signbit tgamma trunc y0 y1 yn
+    )],
+
+    stdlib_h_c99 => [ @{$default_export_tags{stdlib_h}}, 'strtold' ],
+
+    nan_payload => [ qw(getpayload setpayload setpayloadsig issignaling) ],
+
+    signal_h_si_code => [qw(
+        ILL_ILLOPC ILL_ILLOPN ILL_ILLADR ILL_ILLTRP ILL_PRVOPC ILL_PRVREG
+        ILL_COPROC ILL_BADSTK
+        FPE_INTDIV FPE_INTOVF FPE_FLTDIV FPE_FLTOVF FPE_FLTUND
+        FPE_FLTRES FPE_FLTINV FPE_FLTSUB
+        SEGV_MAPERR SEGV_ACCERR
+        BUS_ADRALN BUS_ADRERR BUS_OBJERR
+        TRAP_BRKPT TRAP_TRACE
+        CLD_EXITED CLD_KILLED CLD_DUMPED CLD_TRAPPED CLD_STOPPED CLD_CONTINUED
+        POLL_IN POLL_OUT POLL_MSG POLL_ERR POLL_PRI POLL_HUP
+        SI_USER SI_QUEUE SI_TIMER SI_ASYNCIO SI_MESGQ
+  )],
+);
+
+# exports policy:
+# - new functions may not be added to @EXPORT, only to @EXPORT_OK
+# - new SHOUTYCONSTANTS are OK to add to @EXPORT
+
 {
   # De-duplicate the export list: 
-  my %export;
-  @export{map {@$_} values %EXPORT_TAGS} = ();
+  my ( %export, %export_ok );
+  @export   {map {@$_} values %default_export_tags} = ();
+  @export_ok{map {@$_} values   %other_export_tags} = ();
   # Doing the de-dup with a temporary hash has the advantage that the SVs in
   # @EXPORT are actually shared hash key scalars, which will save some memory.
   our @EXPORT = keys %export;
 
+  # you do not want to add symbols to the following list. add a new tag instead
   our @EXPORT_OK = (qw(close lchown nice open pipe read sleep times write
-		       printf sprintf),
-		    grep {!exists $export{$_}} keys %reimpl, keys %replacement);
+		       printf sprintf lround),
+                    # lround() should really be in the :math_h_c99 tag, but
+                    # we're too far into the 5.24 code freeze for that to be
+                    # done now. This can be revisited in the 5.25.x cycle.
+		    grep {!exists $export{$_}} keys %reimpl, keys %replacement, keys %export_ok);
+
+  our %EXPORT_TAGS = ( %default_export_tags, %other_export_tags );
 }
 
 require Exporter;

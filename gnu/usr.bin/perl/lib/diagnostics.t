@@ -106,13 +106,13 @@ seek STDERR, 0,0;
 $warning = '';
 warn "Using just the first character returned by \\N{} in character class in regex; marked by <-- HERE in m/%s/";
 like $warning,
-    qr/A charnames handler may return a sequence/s,
+    qr/Named Unicode character escapes/s,
     'multi-line entries in perldiag.pod match';
 
 # ; at end of entry in perldiag.pod
 seek STDERR, 0,0;
 $warning = '';
-warn "Perl folding rules are not up-to-date for 0xA; please use the perlbug utility to report; in regex; marked by <-- HERE in m/\ <-- HERE q/";
+warn "Perl folding rules are not up-to-date for 0x0A; please use the perlbug utility to report; in regex; marked by <-- HERE in m/\ <-- HERE q/";
 like $warning,
     qr/You used a regular expression with case-insensitive matching/s,
     '; works at the end of entries in perldiag.pod';
@@ -134,15 +134,12 @@ like $warning,
     'spaces in warnings with periods at the end are matched lightly';
 
 # Wrapped links
-SKIP: {
-skip("We no longer have any multi-line links", 1);
 seek STDERR, 0,0;
 $warning = '';
 warn "Argument \"%s\" treated as 0 in increment (++)";
 like $warning,
     qr/Auto-increment.*Auto-decrement/s,
     'multiline links are not truncated';
-}
 
 {
 # Find last warning in perldiag.pod, and last items if any

@@ -31,7 +31,7 @@ DeadCode(pTHX)
 	for (sv = sva + 1; sv < svend; ++sv) {
 	    if (SvTYPE(sv) == SVt_PVCV) {
 		CV *cv = (CV*)sv;
-		PADLIST* padlist = CvPADLIST(cv);
+		PADLIST* padlist;
                 AV *argav;
 		SV** svp;
 		SV** pad;
@@ -54,6 +54,7 @@ DeadCode(pTHX)
 		    PerlIO_printf(Perl_debug_log, "  busy\n");
 		    continue;
 		}
+		padlist = CvPADLIST(cv);
 		svp = (SV**) PadlistARRAY(padlist);
 		while (++i <= PadlistMAX(padlist)) { /* Depth. */
 		    SV **args;
@@ -351,7 +352,7 @@ S_pp_dump(pTHX)
 static OP *
 S_ck_dump(pTHX_ OP *entersubop, GV *namegv, SV *cv)
 {
-    OP *aop, *prev, *first, *second = NULL;
+    OP *parent, *pm, *first, *second;
     BINOP *newop;
 
     PERL_UNUSED_ARG(cv);
@@ -359,24 +360,25 @@ S_ck_dump(pTHX_ OP *entersubop, GV *namegv, SV *cv)
     ck_entersub_args_proto(entersubop, namegv,
 			   newSVpvn_flags("$;$", 3, SVs_TEMP));
 
-    aop = cUNOPx(entersubop)->op_first;
-    if (!aop->op_sibling)
-	aop = cUNOPx(aop)->op_first;
-    prev = aop;
-    aop = aop->op_sibling;
-    while (PL_madskills && aop->op_type == OP_STUB) {
-	prev = aop;
-	aop = aop->op_sibling;
+    parent = entersubop;
+    pm = cUNOPx(entersubop)->op_first;
+    if (!OpHAS_SIBLING(pm)) {
+        parent = pm;
+	pm = cUNOPx(pm)->op_first;
     }
-    if (PL_madskills && aop->op_type == OP_NULL) {
-	first = ((UNOP*)aop)->op_first;
-	((UNOP*)aop)->op_first = NULL;
-	prev = aop;
+    first = OpSIBLING(pm);
+    second = OpSIBLING(first);
+    if (!second) {
+	/* It doesn’t really matter what we return here, as this only
+	   occurs after yyerror.  */
+	return entersubop;
     }
-    else {
-	first = aop;
-	prev->op_sibling = first->op_sibling;
-    }
+    /* we either have Dump($x):   [pushmark]->[first]->[ex-cvop]
+     * or             Dump($x,1); [pushmark]->[first]->[second]->[ex-cvop]
+     */
+    if (!OpHAS_SIBLING(second))
+        second = NULL;
+
     if (first->op_type == OP_RV2AV ||
 	first->op_type == OP_PADAV ||
 	first->op_type == OP_RV2HV ||
@@ -385,41 +387,32 @@ S_ck_dump(pTHX_ OP *entersubop, GV *namegv, SV *cv)
 	first->op_flags |= OPf_REF;
     else
 	first->op_flags &= ~OPf_MOD;
-    aop = aop->op_sibling;
-    while (PL_madskills && aop->op_type == OP_STUB) {
-	prev = aop;
-	aop = aop->op_sibling;
-    }
-    if (!aop) {
-	/* It doesn’t really matter what we return here, as this only
-	   occurs after yyerror.  */
-	op_free(first);
-	return entersubop;
-    }
 
-    /* aop now points to the second arg if there is one, the cvop otherwise
-     */
-    if (aop->op_sibling) {
-	prev->op_sibling = aop->op_sibling;
-	second = aop;
-	second->op_sibling = NULL;
-    }
-    first->op_sibling = second;
+    /* splice out first (and optionally second) ops, then discard the rest
+     * of the op tree */
 
+    op_sibling_splice(parent, pm, second ? 2 : 1, NULL);
     op_free(entersubop);
+
+    /* then attach first (and second) to a new binop */
 
     NewOp(1234, newop, 1, BINOP);
     newop->op_type   = OP_CUSTOM;
     newop->op_ppaddr = S_pp_dump;
-    newop->op_first  = first;
-    newop->op_last   = second;
     newop->op_private= second ? 2 : 1;
     newop->op_flags  = OPf_KIDS|OPf_WANT_SCALAR;
+    op_sibling_splice((OP*)newop, NULL, 0, first);
 
     return (OP *)newop;
 }
 
-static XOP my_xop;
+static const XOP my_xop = {
+    XOPf_xop_name|XOPf_xop_desc|XOPf_xop_class,		/* xop_flags */
+    "Devel_Peek_Dump",					/* xop_name */
+    "Dump",						/* xop_desc */
+    OA_BINOP,						/* xop_class */
+    NULL						/* xop_peep */
+};
 
 MODULE = Devel::Peek		PACKAGE = Devel::Peek
 
@@ -450,11 +443,8 @@ PPCODE:
 BOOT:
 {
     CV * const cv = get_cvn_flags("Devel::Peek::Dump", 17, 0);
+    assert(cv);
     cv_set_call_checker(cv, S_ck_dump, (SV *)cv);
-
-    XopENTRY_set(&my_xop, xop_name, "Dump");
-    XopENTRY_set(&my_xop, xop_desc, "Dump");
-    XopENTRY_set(&my_xop, xop_class, OA_BINOP);
     Perl_custom_op_register(aTHX_ S_pp_dump, &my_xop);
 }
 
