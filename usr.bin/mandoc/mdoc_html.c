@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.139 2017/01/29 14:02:19 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.140 2017/02/05 18:13:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -426,7 +426,6 @@ mdoc_root_post(MDOC_ARGS)
 	struct tag	*t, *tt;
 
 	t = print_otag(h, TAG_TABLE, "c", "foot");
-	print_otag(h, TAG_TBODY, "");
 	tt = print_otag(h, TAG_TR, "");
 
 	print_otag(h, TAG_TD, "c", "foot-date");
@@ -457,7 +456,6 @@ mdoc_root_pre(MDOC_ARGS)
 		    meta->title, meta->msec);
 
 	t = print_otag(h, TAG_TABLE, "c", "head");
-	print_otag(h, TAG_TBODY, "");
 	tt = print_otag(h, TAG_TR, "");
 
 	print_otag(h, TAG_TD, "c", "head-ltitle");
@@ -572,6 +570,7 @@ mdoc_nd_pre(MDOC_ARGS)
 static int
 mdoc_nm_pre(MDOC_ARGS)
 {
+	struct tag	*t;
 	int		 len;
 
 	switch (n->type) {
@@ -600,9 +599,10 @@ mdoc_nm_pre(MDOC_ARGS)
 	if (len == 0 && meta->name != NULL)
 		len = html_strlen(meta->name);
 
+	t = print_otag(h, TAG_COLGROUP, "");
 	print_otag(h, TAG_COL, "shw", len);
 	print_otag(h, TAG_COL, "");
-	print_otag(h, TAG_TBODY, "");
+	print_tagq(h, t);
 	print_otag(h, TAG_TR, "");
 	return 1;
 }
@@ -799,6 +799,7 @@ mdoc_it_pre(MDOC_ARGS)
 static int
 mdoc_bl_pre(MDOC_ARGS)
 {
+	struct tag	*t;
 	struct mdoc_bl	*bl;
 	const char	*cattr;
 	size_t		 i;
@@ -806,13 +807,11 @@ mdoc_bl_pre(MDOC_ARGS)
 
 	bl = &n->norm->Bl;
 
-	if (n->type == ROFFT_BODY) {
-		if (bl->type == LIST_column)
-			print_otag(h, TAG_TBODY, "");
+	switch (n->type) {
+	case ROFFT_BODY:
 		return 1;
-	}
 
-	if (n->type == ROFFT_HEAD) {
+	case ROFFT_HEAD:
 		if (bl->type != LIST_column || bl->ncols == 0)
 			return 0;
 
@@ -823,10 +822,15 @@ mdoc_bl_pre(MDOC_ARGS)
 		 * screen and we want to preserve that behaviour.
 		 */
 
+		t = print_otag(h, TAG_COLGROUP, "");
 		for (i = 0; i < bl->ncols - 1; i++)
 			print_otag(h, TAG_COL, "sww", bl->cols[i]);
 		print_otag(h, TAG_COL, "swW", bl->cols[i]);
+		print_tagq(h, t);
 		return 0;
+
+	default:
+		break;
 	}
 
 	switch (bl->type) {

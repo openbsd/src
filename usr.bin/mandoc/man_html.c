@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.85 2017/01/30 20:23:07 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.86 2017/02/05 18:13:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -372,7 +372,6 @@ man_root_pre(MAN_ARGS)
 	mandoc_asprintf(&title, "%s(%s)", man->title, man->msec);
 
 	t = print_otag(h, TAG_TABLE, "c", "head");
-	print_otag(h, TAG_TBODY, "");
 	tt = print_otag(h, TAG_TR, "");
 
 	print_otag(h, TAG_TD, "c", "head-ltitle");

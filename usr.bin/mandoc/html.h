@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.42 2017/01/29 14:02:19 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.43 2017/02/05 18:13:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,7 +30,7 @@ enum	htmltag {
 	TAG_BR,
 	TAG_A,
 	TAG_TABLE,
-	TAG_TBODY,
+	TAG_COLGROUP,
 	TAG_COL,
 	TAG_TR,
 	TAG_TD,
