@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1013 2017/01/30 17:52:24 benno Exp $ */
+/*	$OpenBSD: pf.c,v 1.1014 2017/02/05 16:04:14 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5974,7 +5974,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 
 	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
 	if (!rtisvalid(rt)) {
-		ip6stat.ip6s_noroute++;
+		ip6stat_inc(ip6s_noroute);
 		goto bad;
 	}
 

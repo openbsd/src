@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.15 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.16 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ dest6_input(struct mbuf **mp, int *offp, int proto)
 	for (optlen = 0; dstoptlen > 0; dstoptlen -= optlen, opt += optlen) {
 		if (*opt != IP6OPT_PAD1 &&
 		    (dstoptlen < IP6OPT_MINLEN || *(opt + 1) + 2 > dstoptlen)) {
-			ip6stat.ip6s_toosmall++;
+			ip6stat_inc(ip6s_toosmall);
 			goto bad;
 		}
 

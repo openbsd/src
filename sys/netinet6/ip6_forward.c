@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.93 2016/10/03 12:33:21 mpi Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.94 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		ip6stat.ip6s_cantforward++;
+		ip6stat_inc(ip6s_cantforward);
 		if (ip6_log_time + ip6_log_interval < time_uptime) {
 			ip6_log_time = time_uptime;
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
@@ -171,7 +171,7 @@ reroute:
 		rt = rtalloc_mpath(sin6tosa(dst), &ip6->ip6_src.s6_addr32[0],
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
-			ip6stat.ip6s_noroute++;
+			ip6stat_inc(ip6s_noroute);
 			if (mcopy) {
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
@@ -190,8 +190,8 @@ reroute:
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.ph_ifidx, &ip6->ip6_src) !=
 	    in6_addr2scopeid(rt->rt_ifidx, &ip6->ip6_src)) {
-		ip6stat.ip6s_cantforward++;
-		ip6stat.ip6s_badscope++;
+		ip6stat_inc(ip6s_cantforward);
+		ip6stat_inc(ip6s_badscope);
 
 		if (ip6_log_time + ip6_log_interval < time_uptime) {
 			ip6_log_time = time_uptime;
@@ -316,11 +316,11 @@ reroute:
 
 	error = ifp->if_output(ifp, m, sin6tosa(dst), rt);
 	if (error) {
-		ip6stat.ip6s_cantforward++;
+		ip6stat_inc(ip6s_cantforward);
 	} else {
-		ip6stat.ip6s_forward++;
+		ip6stat_inc(ip6s_forward);
 		if (type)
-			ip6stat.ip6s_redirectsent++;
+			ip6stat_inc(ip6s_redirectsent);
 		else {
 			if (mcopy)
 				goto freecopy;

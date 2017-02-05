@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.196 2016/12/21 12:11:12 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.197 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1839,20 +1839,20 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 
 	/* count statistics for future improvements */
 	if (ia6_best == NULL)
-		ip6stat.ip6s_sources_none++;
+		ip6stat_inc(ip6s_sources_none);
 	else {
 		if (oifp == ia6_best->ia_ifp)
-			ip6stat.ip6s_sources_sameif[best_scope]++;
+			ip6stat_inc(ip6s_sources_sameif + best_scope);
 		else
-			ip6stat.ip6s_sources_otherif[best_scope]++;
+			ip6stat_inc(ip6s_sources_otherif + best_scope);
 
 		if (best_scope == dst_scope)
-			ip6stat.ip6s_sources_samescope[best_scope]++;
+			ip6stat_inc(ip6s_sources_samescope + best_scope);
 		else
-			ip6stat.ip6s_sources_otherscope[best_scope]++;
+			ip6stat_inc(ip6s_sources_otherscope + best_scope);
 
 		if ((ia6_best->ia6_flags & IN6_IFF_DEPRECATED) != 0)
-			ip6stat.ip6s_sources_deprecated[best_scope]++;
+			ip6stat_inc(ip6s_sources_deprecated + best_scope);
 	}
 
 	return (ia6_best);

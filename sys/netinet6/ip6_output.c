@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.223 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.224 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -361,16 +361,16 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		 * we explicitly check the address here for safety.
 		 */
 		error = EOPNOTSUPP;
-		ip6stat.ip6s_badscope++;
+		ip6stat_inc(ip6s_badscope);
 		goto bad;
 	}
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src)) {
 		error = EOPNOTSUPP;
-		ip6stat.ip6s_badscope++;
+		ip6stat_inc(ip6s_badscope);
 		goto bad;
 	}
 
-	ip6stat.ip6s_localout++;
+	ip6stat_inc(ip6s_localout);
 
 	/*
 	 * Route packet.
@@ -455,7 +455,7 @@ reroute:
 	if (ifp == NULL) {
 		rt = in6_selectroute(&dstsock, opt, ro, ro->ro_tableid);
 		if (rt == NULL) {
-			ip6stat.ip6s_noroute++;
+			ip6stat_inc(ip6s_noroute);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -484,7 +484,7 @@ reroute:
 		 * Confirm that the outgoing interface supports multicast.
 		 */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-			ip6stat.ip6s_noroute++;
+			ip6stat_inc(ip6s_noroute);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -738,7 +738,7 @@ reroute:
 		m0 = m;
 		error = ip6_fragment(m0, hlen, nextproto, mtu);
 		if (error)
-			ip6stat.ip6s_odropped++;
+			ip6stat_inc(ip6s_odropped);
 	}
 
 	/*
@@ -751,7 +751,7 @@ reroute:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
-			ip6stat.ip6s_ofragments++;
+			ip6stat_inc(ip6s_ofragments);
 			error = ifp->if_output(ifp, m, sin6tosa(dst),
 			    ro->ro_rt);
 		} else
@@ -759,7 +759,7 @@ reroute:
 	}
 
 	if (error == 0)
-		ip6stat.ip6s_fragmented++;
+		ip6stat_inc(ip6s_fragmented);
 
 done:
 	if_put(ifp);

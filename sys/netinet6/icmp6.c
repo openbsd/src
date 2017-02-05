@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.198 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.199 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1124,8 +1124,13 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		} else
 			sorwakeup(last->inp_socket);
 	} else {
+		struct counters_ref ref;
+		uint64_t *counters;
+
 		m_freem(m);
-		ip6stat.ip6s_delivered--;
+		counters = counters_enter(&ref, ip6counters);
+		counters[ip6s_delivered]--;
+		counters_leave(&ref, ip6counters);
 	}
 	return IPPROTO_DONE;
 }

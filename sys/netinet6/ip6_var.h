@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.66 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.67 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -203,6 +203,65 @@ struct	ip6stat {
 };
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum ip6stat_counters {
+	ip6s_total,
+	ip6s_tooshort,
+	ip6s_toosmall,
+	ip6s_fragments,
+	ip6s_fragdropped,
+	ip6s_fragtimeout,
+	ip6s_fragoverflow,
+	ip6s_forward,
+	ip6s_cantforward,
+	ip6s_redirectsent,
+	ip6s_delivered,
+	ip6s_localout,
+	ip6s_odropped,
+	ip6s_reassembled,
+	ip6s_fragmented,
+	ip6s_ofragments,
+	ip6s_cantfrag,
+	ip6s_badoptions,
+	ip6s_noroute,
+	ip6s_badvers,
+	ip6s_rawout,
+	ip6s_badscope,
+	ip6s_notmember,
+	ip6s_nxthist,
+	ip6s_m1 = ip6s_nxthist + 256,
+	ip6s_m2m,
+	ip6s_mext1 = ip6s_m2m + 32,
+	ip6s_mext2m,
+	ip6s_nogif,
+	ip6s_toomanyhdr,
+	ip6s_sources_none,
+	ip6s_sources_sameif,
+	ip6s_sources_otherif = ip6s_sources_sameif + 16,
+	ip6s_sources_samescope = ip6s_sources_otherif + 16,
+	ip6s_sources_otherscope = ip6s_sources_samescope + 16,
+	ip6s_sources_deprecated = ip6s_sources_otherscope + 16,
+	ip6s_forward_cachehit = ip6s_sources_deprecated + 16,
+	ip6s_forward_cachemiss,
+	ip6s_ncounters,
+};
+
+extern struct cpumem *ip6counters;
+
+static inline void
+ip6stat_inc(enum ip6stat_counters c)
+{
+	counters_inc(ip6counters, c);
+}
+
+static inline void
+ip6stat_add(enum ip6stat_counters c, uint64_t v)
+{
+	counters_add(ip6counters, c, v);
+}
+
 /* flags passed to ip6_output as last parameter */
 #define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
@@ -211,7 +270,6 @@ struct	ip6stat {
 extern int ip6_mtudisc_timeout;		/* mtu discovery */
 extern struct rttimer_queue *icmp6_mtudisc_timeout_q;
 
-extern struct	ip6stat ip6stat;	/* statistics */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */

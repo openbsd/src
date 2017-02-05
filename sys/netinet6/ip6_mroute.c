@@ -873,7 +873,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	 * (although such packets must normally set 1 to the hop limit field).
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		ip6stat.ip6s_cantforward++;
+		ip6stat_inc(ip6s_cantforward);
 		if (ip6_log_time + ip6_log_interval < time_uptime) {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
@@ -1158,7 +1158,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 			     in6_addr2scopeid(ifp->if_index, &ip6->ip6_src) !=
 			     in6_addr2scopeid(mif6table[mifi].m6_ifp->if_index,
 					      &ip6->ip6_src))) {
-				ip6stat.ip6s_badscope++;
+				ip6stat_inc(ip6s_badscope);
 				continue;
 			}
 

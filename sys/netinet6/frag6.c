@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.71 2016/11/28 11:12:45 mpi Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.72 2017/02/05 16:04:14 jca Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	ip6stat.ip6s_fragments++;
+	ip6stat_inc(ip6s_fragments);
 
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
@@ -203,7 +203,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
-		ip6stat.ip6s_reassembled++;
+		ip6stat_inc(ip6s_reassembled);
 		*offp = offset;
 		return ip6f->ip6f_nxt;
 	}
@@ -496,7 +496,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		m->m_pkthdr.len = plen;
 	}
 
-	ip6stat.ip6s_reassembled++;
+	ip6stat_inc(ip6s_reassembled);
 
 	/*
 	 * Tell launch routine the next header
@@ -514,14 +514,14 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		m_freem(IP6_REASS_MBUF(af6));
 		free(af6, M_FTABLE, sizeof(*af6));
 	}
-	ip6stat.ip6s_fragdropped += q6->ip6q_nfrag;
+	ip6stat_add(ip6s_fragdropped, q6->ip6q_nfrag);
 	TAILQ_REMOVE(&frag6_queue, q6, ip6q_queue);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	free(q6, M_FTABLE, sizeof(*q6));
 	frag6_nfragpackets--;
 
  dropfrag:
-	ip6stat.ip6s_fragdropped++;
+	ip6stat_inc(ip6s_fragdropped);
 	m_freem(m);
 	IP6Q_UNLOCK();
 	return IPPROTO_DONE;
@@ -608,7 +608,7 @@ frag6_slowtimo(void)
 	IP6Q_LOCK();
 	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)
 		if (--q6->ip6q_ttl == 0) {
-			ip6stat.ip6s_fragtimeout++;
+			ip6stat_inc(ip6s_fragtimeout);
 			frag6_freef(q6);
 		}
 
@@ -619,7 +619,7 @@ frag6_slowtimo(void)
 	 */
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
 	    !TAILQ_EMPTY(&frag6_queue)) {
-		ip6stat.ip6s_fragoverflow++;
+		ip6stat_inc(ip6s_fragoverflow);
 		frag6_freef(TAILQ_LAST(&frag6_queue, ip6q_head));
 	}
 	IP6Q_UNLOCK();
@@ -636,7 +636,7 @@ frag6_drain(void)
 	if (ip6q_lock_try() == 0)
 		return;
 	while ((q6 = TAILQ_FIRST(&frag6_queue)) != NULL) {
-		ip6stat.ip6s_fragdropped++;
+		ip6stat_inc(ip6s_fragdropped);
 		frag6_freef(q6);
 	}
 	IP6Q_UNLOCK();
