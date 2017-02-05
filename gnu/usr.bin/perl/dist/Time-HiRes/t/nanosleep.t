@@ -8,7 +8,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 3;
+use Test::More tests => 3;
 use t::Watchdog;
 
 eval { Time::HiRes::nanosleep(-5) };
@@ -21,7 +21,7 @@ my $two = CORE::time;
 Time::HiRes::nanosleep(10_000_000);
 my $three = CORE::time;
 ok $one == $two || $two == $three
-    or note "slept too long, $one $two $three";
+    or print("# slept too long, $one $two $three\n");
 
 SKIP: {
     skip "no gettimeofday", 1 unless &Time::HiRes::d_gettimeofday;
@@ -29,7 +29,7 @@ SKIP: {
     Time::HiRes::nanosleep(500_000_000);
     my $f2 = Time::HiRes::time();
     my $d = $f2 - $f;
-    ok $d > 0.4 && $d < 0.9 or note "slept $d secs $f to $f2";
+    ok $d > 0.4 && $d < 0.9 or print("# slept $d secs $f to $f2\n");
 }
 
 1;

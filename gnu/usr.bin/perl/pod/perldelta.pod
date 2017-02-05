@@ -43,10 +43,41 @@ This prevents an attacker injecting an optional module into a process run by
 another user where the current directory is writable by the attacker, e.g. the
 F</tmp> directory.
 
-In most cases this removal should not cause problems, but difficulties were
-encountered with L<base>, which treats every module name supplied as optional.
-These difficulties have not yet been resolved, so for this release there are no
-changes to L<base>.  We hope to have a fix for L<base> in Perl 5.24.2.
+In most cases this removal should not cause problems, the exception being
+L<base>.
+
+L<base> treats every module name supplied as optional.  If you have
+applications that use L<base> to load non-optional modules from the current
+directory you will need to modify your code or environment.
+
+If your code always trusts the contents of the current directory, the simplest
+change is adding F<"."> to C<PERL5LIB>:
+
+  # for Bourne shell and similar
+  set PERL5LIB=.
+  export PERL5LIB
+
+If you do B<not> trust the current directory this will open your code up to
+attacks on any module load, not just optional modules.  You may want to add the
+absolute path of your application's module directory to C<PERL5LIB> instead.
+
+Alternatively, you can change your code, either to add the directory with your
+binary to C<@INC>:
+
+  use FindBin;
+  use lib $FindBin::Bin;
+
+or switch to L<parent>, which requires an explicit parameter for optional
+modules:
+
+  use parent 'Nonoptional::Module';
+
+though this will have the same problem if the current directory is removed from
+C<@INC> in Perl 5.26.
+
+Also, since L<base> now localizes C<@INC> when loading modules, changes to
+C<@INC> in the loaded module will be discarded when C<@INC> is restored to its
+previous value.
 
 To protect your own code from this attack, either remove the default F<".">
 entry from C<@INC> at the start of your script, so:
@@ -89,6 +120,10 @@ that you submit a report.  See L</Reporting Bugs> below.
 =item *
 
 L<Archive::Tar> has been upgraded from version 2.04 to 2.04_01.
+
+=item *
+
+L<base> has been upgraded from version 2.23 to 2.23_01.
 
 =item *
 

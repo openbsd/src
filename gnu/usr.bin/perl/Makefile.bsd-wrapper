@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.105 2016/11/09 03:03:27 afresh1 Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.106 2017/02/05 00:33:38 afresh1 Exp $
 #
 # Build wrapper for Perl 5.20.1-RC2
 #
@@ -26,9 +26,9 @@ H2PH=		/usr/bin/h2ph
 LIB=	perl
 
 SRCS1=	gv.c toke.c perly.c pad.c regcomp.c dump.c util.c mg.c reentr.c \
-	mro.c keywords.c hv.c av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c \
-	pp_sys.c doop.c doio.c regexec.c utf8.c taint.c deb.c universal.c \
-	globals.c perlio.c perlapi.c numeric.c mathoms.c locale.c \
+	mro_core.c keywords.c hv.c av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c \
+	pp_sys.c doop.c doio.c dquote.c regexec.c utf8.c taint.c deb.c universal.c \
+	globals.c perlio.c perlapi.c numeric.c mathoms.c locale.c time64.c \
 	pp_pack.c pp_sort.c caretx.c
 SRCS=	${SRCS1} op.c perl.c
 
@@ -51,8 +51,7 @@ STRIPFLAGS='-s'
 .endif
 
 GEN_AFTER= 	bitcount.h config.h mg_data.h uudmap.h cflags makedepend \
-		myconfig Makefile Policy.sh pod/Makefile \
-		x2p/Makefile
+		myconfig Makefile Policy.sh pod/Makefile
 
 GENERATED=	config.sh ${GEN_AFTER}
 
@@ -65,7 +64,7 @@ all:	perl.build man.build
 man.build: perl.build
 	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 
-beforedepend: config.sh config.h bitcount.h mg_data.h uudmap.h Makefile makedepend x2p/Makefile
+beforedepend: config.sh config.h bitcount.h mg_data.h uudmap.h Makefile makedepend
 	cd ${.OBJDIR} && exec ${MAKE} depend
 
 perl.build:	perl.lib DynaLoader.c
@@ -95,9 +94,6 @@ generate_uudmap: generate_uudmap.o
 
 pod/Makefile:
 	cd ${.OBJDIR}/pod && exec /bin/sh Makefile.SH
-
-x2p/Makefile:
-	cd ${.OBJDIR}/x2p && exec /bin/sh Makefile.SH
 
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
@@ -152,7 +148,7 @@ CFLAGS+= -fno-tree-ter
 
 # The DynaLoader extension is now compiled statically into libperl
 miniperl: ${GENERATED} ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o
-	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm
+	${CC} ${CPPFLAGS} ${CFLAGS} -o $@ ${SRCS1:S/.c/.o/g} opmini.o perlmini.o miniperlmain.o ${LDFLAGS} -lm -lutil
 
 opmini.c: op.c
 	rm -f opmini.c

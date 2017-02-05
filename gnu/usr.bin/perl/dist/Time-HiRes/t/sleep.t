@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More 0.82 tests => 4;
+use Test::More tests => 4;
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -26,12 +26,12 @@ like $@, qr/::sleep\(-1\): negative time not invented yet/,
 SKIP: {
     skip "no subsecond alarm", 2 unless $can_subsecond_alarm;
     my $f = Time::HiRes::time; 
-    note "time...$f";
+    print("# time...$f\n");
     ok 1;
 
     my $r = [Time::HiRes::gettimeofday()];
     Time::HiRes::sleep (0.5);
-    note "sleep...", Time::HiRes::tv_interval($r);
+    printf("# sleep...%s\n", Time::HiRes::tv_interval($r));
     ok 1;
 }
 

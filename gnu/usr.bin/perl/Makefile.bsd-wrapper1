@@ -8,12 +8,12 @@ TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 POD2MAN=	/usr/bin/pod2man
 .else
 POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
-		${.OBJDIR}/cpan/podlators/pod2man
+		${.OBJDIR}/cpan/podlators/scripts/pod2man
 .endif
 
 MANLOCALBUILD=	yes
 
-MLINKS=		c2ph.1 pstruct.1 psed.1 s2p.1 \
+MLINKS=		c2ph.1 pstruct.1 \
 		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
 		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
@@ -33,13 +33,16 @@ _quick1=
 _quick3p=
 
 .for page sect file in \
-    a2p 1				x2p/a2p.pod \
     c2ph 1				utils/pstruct \
-    config_data 1			utils/config_data \
     corelist 1				utils/corelist \
     cpan 1				utils/cpan \
+    CPAN::Meta::History::Meta_1_0 1	lib/CPAN/Meta/History/Meta_1_0.pod \
+    CPAN::Meta::History::Meta_1_1 1	lib/CPAN/Meta/History/Meta_1_1.pod \
+    CPAN::Meta::History::Meta_1_2 1	lib/CPAN/Meta/History/Meta_1_2.pod \
+    CPAN::Meta::History::Meta_1_3 1	lib/CPAN/Meta/History/Meta_1_3.pod \
+    CPAN::Meta::History::Meta_1_4 1	lib/CPAN/Meta/History/Meta_1_4.pod \
     enc2xs 1				utils/enc2xs \
-    find2perl 1				x2p/find2perl \
+    encguess 1				utils/encguess \
     h2ph 1				utils/h2ph \
     h2xs 1				utils/h2xs \
     instmodsh 1				utils/instmodsh \
@@ -72,6 +75,12 @@ _quick3p=
     perl5200delta 1			pod/perl5200delta.pod \
     perl5201delta 1			pod/perl5201delta.pod \
     perl5202delta 1			pod/perl5202delta.pod \
+    perl5203delta 1			pod/perl5203delta.pod \
+    perl5220delta 1			pod/perl5220delta.pod \
+    perl5221delta 1			pod/perl5221delta.pod \
+    perl5222delta 1			pod/perl5222delta.pod \
+    perl5240delta 1			pod/perl5240delta.pod \
+    perl5241delta 1			pod/perl5241delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -207,7 +216,6 @@ _quick3p=
     podchecker 1			cpan/Pod-Checker/blib/script/podchecker \
     podselect 1				cpan/Pod-Parser/blib/script/podselect \
     prove 1				utils/prove \
-    psed 1				x2p/psed \
     splain 1				utils/splain \
     Test::Harness::Beyond 1		lib/TAP/Harness/Beyond.pod \
     xsubpp 1				utils/xsubpp \
@@ -226,7 +234,10 @@ _quick3p=
     autodie::exception 3p		lib/autodie/exception.pm \
     autodie::exception::system 3p	lib/autodie/exception/system.pm \
     autodie::hints 3p			lib/autodie/hints.pm \
+    autodie::Scope::Guard 3p		lib/autodie/Scope/Guard.pm \
+    autodie::Scope::GuardStack 3p	lib/autodie/Scope/GuardStack.pm \
     autodie::skip 3p			lib/autodie/skip.pm \
+    autodie::Util 3p			lib/autodie/Util.pm \
     AutoLoader 3p			lib/AutoLoader.pm \
     AutoSplit 3p			lib/AutoSplit.pm \
     autouse 3p				lib/autouse.pm \
@@ -234,6 +245,7 @@ _quick3p=
     B::Concise 3p			lib/B/Concise.pm \
     B::Debug 3p				lib/B/Debug.pm \
     B::Deparse 3p			lib/B/Deparse.pm \
+    B::Op_private 3p			lib/B/Op_private.pm \
     B::Showlex 3p			lib/B/Showlex.pm \
     B::Terse 3p				lib/B/Terse.pm \
     B::Xref 3p				lib/B/Xref.pm \
@@ -245,15 +257,6 @@ _quick3p=
     blib 3p				lib/blib.pm \
     bytes 3p				lib/bytes.pm \
     Carp 3p				lib/Carp.pm \
-    CGI 3p				lib/CGI.pm \
-    CGI::Apache 3p			lib/CGI/Apache.pm \
-    CGI::Carp 3p			lib/CGI/Carp.pm \
-    CGI::Cookie 3p			lib/CGI/Cookie.pm \
-    CGI::Fast 3p			lib/CGI/Fast.pm \
-    CGI::Pretty 3p			lib/CGI/Pretty.pm \
-    CGI::Push 3p			lib/CGI/Push.pm \
-    CGI::Switch 3p			lib/CGI/Switch.pm \
-    CGI::Util 3p			lib/CGI/Util.pm \
     charnames 3p			lib/charnames.pm \
     Class::Struct 3p			lib/Class/Struct.pm \
     Compress::Raw::Bzip2 3p		lib/Compress/Raw/Bzip2.pm \
@@ -262,6 +265,7 @@ _quick3p=
     Config 3p				lib/Config.pod \
     Config::Extensions 3p		lib/Config/Extensions.pm \
     Config::Perl::V 3p			lib/Config/Perl/V.pm \
+    Configure 3p			cpan/Term-ReadKey/Configure.pm \
     constant 3p				lib/constant.pm \
     CORE 3p				lib/CORE.pod \
     CPAN 3p				lib/CPAN.pm \
@@ -275,6 +279,7 @@ _quick3p=
     CPAN::Meta::Converter 3p		lib/CPAN/Meta/Converter.pm \
     CPAN::Meta::Feature 3p		lib/CPAN/Meta/Feature.pm \
     CPAN::Meta::History 3p		lib/CPAN/Meta/History.pm \
+    CPAN::Meta::Merge 3p		lib/CPAN/Meta/Merge.pm \
     CPAN::Meta::Prereqs 3p		lib/CPAN/Meta/Prereqs.pm \
     CPAN::Meta::Requirements 3p		lib/CPAN/Meta/Requirements.pm \
     CPAN::Meta::Spec 3p			lib/CPAN/Meta/Spec.pm \
@@ -282,6 +287,8 @@ _quick3p=
     CPAN::Meta::YAML 3p			lib/CPAN/Meta/YAML.pm \
     CPAN::Mirrors 3p			lib/CPAN/Mirrors.pm \
     CPAN::Nox 3p			lib/CPAN/Nox.pm \
+    CPAN::Plugin 3p			lib/CPAN/Plugin.pm \
+    CPAN::Plugin::Specfile 3p		lib/CPAN/Plugin/Specfile.pm \
     CPAN::Queue 3p			lib/CPAN/Queue.pm \
     CPAN::Tarzip 3p			lib/CPAN/Tarzip.pm \
     CPAN::Version 3p			lib/CPAN/Version.pm \
@@ -357,6 +364,7 @@ _quick3p=
     ExtUtils::MakeMaker 3p		lib/ExtUtils/MakeMaker.pm \
     ExtUtils::MakeMaker::Config 3p	lib/ExtUtils/MakeMaker/Config.pm \
     ExtUtils::MakeMaker::FAQ 3p		lib/ExtUtils/MakeMaker/FAQ.pod \
+    ExtUtils::MakeMaker::Locale 3p	lib/ExtUtils/MakeMaker/Locale.pm \
     ExtUtils::MakeMaker::Tutorial 3p	lib/ExtUtils/MakeMaker/Tutorial.pod \
     ExtUtils::Manifest 3p		lib/ExtUtils/Manifest.pm \
     ExtUtils::Miniperl 3p		lib/ExtUtils/Miniperl.pm \
@@ -406,6 +414,7 @@ _quick3p=
     File::GlobMapper 3p			lib/File/GlobMapper.pm \
     File::Path 3p			lib/File/Path.pm \
     File::Spec 3p			lib/File/Spec.pm \
+    File::Spec::AmigaOS 3p		lib/File/Spec/AmigaOS.pm \
     File::Spec::Cygwin 3p		lib/File/Spec/Cygwin.pm \
     File::Spec::Epoc 3p			lib/File/Spec/Epoc.pm \
     File::Spec::Functions 3p		lib/File/Spec/Functions.pm \
@@ -434,7 +443,6 @@ _quick3p=
     I18N::LangTags::Detect 3p		lib/I18N/LangTags/Detect.pm \
     I18N::LangTags::List 3p		lib/I18N/LangTags/List.pm \
     if 3p				lib/if.pm \
-    inc::latest 3p			lib/inc/latest.pm \
     integer 3p				lib/integer.pm \
     IO 3p				lib/IO.pm \
     IO::Compress::Base 3p		lib/IO/Compress/Base.pm \
@@ -481,12 +489,10 @@ _quick3p=
     Locale::Codes 3p			lib/Locale/Codes.pod \
     Locale::Codes::API 3p		lib/Locale/Codes/API.pod \
     Locale::Codes::Changes 3p		lib/Locale/Codes/Changes.pod \
-    Locale::Codes::Constants 3p		lib/Locale/Codes/Constants.pod \
     Locale::Codes::Country 3p		lib/Locale/Codes/Country.pod \
     Locale::Codes::Currency 3p		lib/Locale/Codes/Currency.pod \
     Locale::Codes::LangExt 3p		lib/Locale/Codes/LangExt.pod \
     Locale::Codes::LangFam 3p		lib/Locale/Codes/LangFam.pod \
-    Locale::Codes::LangFam_Retired 3p	lib/Locale/Codes/LangFam_Retired.pm \
     Locale::Codes::Language 3p		lib/Locale/Codes/Language.pod \
     Locale::Codes::LangVar 3p		lib/Locale/Codes/LangVar.pod \
     Locale::Codes::Script 3p		lib/Locale/Codes/Script.pod \
@@ -518,21 +524,6 @@ _quick3p=
     Memoize::Storable 3p		lib/Memoize/Storable.pm \
     MIME::Base64 3p			lib/MIME/Base64.pm \
     MIME::QuotedPrint 3p		lib/MIME/QuotedPrint.pm \
-    Module::Build 3p			lib/Module/Build.pm \
-    Module::Build::API 3p		lib/Module/Build/API.pod \
-    Module::Build::Authoring 3p		lib/Module/Build/Authoring.pod \
-    Module::Build::Base 3p		lib/Module/Build/Base.pm \
-    Module::Build::Bundling 3p		lib/Module/Build/Bundling.pod \
-    Module::Build::Compat 3p		lib/Module/Build/Compat.pm \
-    Module::Build::ConfigData 3p	lib/Module/Build/ConfigData.pm \
-    Module::Build::Cookbook 3p		lib/Module/Build/Cookbook.pm \
-    Module::Build::ModuleInfo 3p	lib/Module/Build/ModuleInfo.pm \
-    Module::Build::Notes 3p		lib/Module/Build/Notes.pm \
-    Module::Build::Platform::Default 3p	lib/Module/Build/Platform/Default.pm \
-    Module::Build::Platform::Unix 3p	lib/Module/Build/Platform/Unix.pm \
-    Module::Build::PPMMaker 3p		lib/Module/Build/PPMMaker.pm \
-    Module::Build::Version 3p		lib/Module/Build/Version.pm \
-    Module::Build::YAML 3p		lib/Module/Build/YAML.pm \
     Module::CoreList 3p			lib/Module/CoreList.pod \
     Module::CoreList::Utils 3p		lib/Module/CoreList/Utils.pm \
     Module::Load 3p			lib/Module/Load.pm \
@@ -545,6 +536,7 @@ _quick3p=
     Net::Config 3p			lib/Net/Config.pm \
     Net::Domain 3p			lib/Net/Domain.pm \
     Net::FTP 3p				lib/Net/FTP.pm \
+    Net::FTP::dataconn 3p		lib/Net/FTP/dataconn.pm \
     Net::hostent 3p			lib/Net/hostent.pm \
     Net::netent 3p			lib/Net/netent.pm \
     Net::Netrc 3p			lib/Net/Netrc.pm \
@@ -557,6 +549,7 @@ _quick3p=
     Net::Time 3p			lib/Net/Time.pm \
     NEXT 3p				lib/NEXT.pm \
     O 3p				lib/O.pm \
+    ok 3p				lib/ok.pm \
     Opcode 3p				lib/Opcode.pm \
     open 3p				lib/open.pm \
     OpenBSD::MkTemp 3p			lib/OpenBSD/MkTemp.pm \
@@ -564,7 +557,6 @@ _quick3p=
     ops 3p				lib/ops.pm \
     overload 3p				lib/overload.pm \
     overloading 3p			lib/overloading.pm \
-    Package::Constants 3p		lib/Package/Constants.pm \
     Params::Check 3p			lib/Params/Check.pm \
     parent 3p				lib/parent.pm \
     Parse::CPAN::Meta 3p		lib/Parse/CPAN/Meta.pm \
@@ -639,6 +631,7 @@ _quick3p=
     sort 3p				lib/sort.pm \
     Storable 3p				lib/Storable.pm \
     strict 3p				lib/strict.pm \
+    Sub::Util 3p			lib/Sub/Util.pm \
     subs 3p				lib/subs.pm \
     Symbol 3p				lib/Symbol.pm \
     Sys::Hostname 3p			lib/Sys/Hostname.pm \
@@ -693,13 +686,18 @@ _quick3p=
     Term::ReadLine 3p			lib/Term/ReadLine.pm \
     Test 3p				lib/Test.pm \
     Test::Builder 3p			lib/Test/Builder.pm \
+    Test::Builder::IO::Scalar 3p	lib/Test/Builder/IO/Scalar.pm \
     Test::Builder::Module 3p		lib/Test/Builder/Module.pm \
     Test::Builder::Tester 3p		lib/Test/Builder/Tester.pm \
     Test::Builder::Tester::Color 3p	lib/Test/Builder/Tester/Color.pm \
     Test::Harness 3p			lib/Test/Harness.pm \
     Test::More 3p			lib/Test/More.pm \
     Test::Simple 3p			lib/Test/Simple.pm \
+    Test::Tester 3p			lib/Test/Tester.pm \
+    Test::Tester::Capture 3p		lib/Test/Tester/Capture.pm \
+    Test::Tester::CaptureRunner 3p	lib/Test/Tester/CaptureRunner.pm \
     Test::Tutorial 3p			lib/Test/Tutorial.pod \
+    Test::use::ok 3p			lib/Test/use/ok.pm \
     Text::Abbrev 3p			lib/Text/Abbrev.pm \
     Text::Balanced 3p			lib/Text/Balanced.pm \
     Text::ParseWords 3p			lib/Text/ParseWords.pm \

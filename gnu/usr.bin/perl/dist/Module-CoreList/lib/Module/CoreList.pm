@@ -13683,6 +13683,7 @@ for my $version ( sort { $a <=> $b } keys %released ) {
             'Test'                  => '1.28_01',
             'Test::Harness'         => '3.36_01',
             'XSLoader'              => '0.22',
+            'base'                  => '2.23_01',
             'bigint'                => '0.42_01',
             'bignum'                => '0.42_01',
             'bigrat'                => '0.42_01',

@@ -747,20 +747,32 @@ hrstatns(UV *atime_nsec, UV *mtime_nsec, UV *ctime_nsec)
 #endif /* !TIME_HIRES_STAT */
 }
 
-/* Until Apple implements clock_gettime() (ditto clock_getres())
- * we will emulate it using Mach interfaces. */
-#if defined(PERL_DARWIN) && !defined(CLOCK_REALTIME)
+/* Until Apple implements clock_gettime()
+ * (ditto clock_getres() and clock_nanosleep())
+ * we will emulate them using the Mach kernel interfaces. */
+#if defined(PERL_DARWIN) && \
+  (defined(TIME_HIRES_CLOCK_GETTIME_EMULATION)   || \
+   defined(TIME_HIRES_CLOCK_GETRES_EMULATION)    || \
+   defined(TIME_HIRES_CLOCK_NANOSLEEP_EMULATION))
 
-#  include <mach/mach_time.h>
-
+#ifndef CLOCK_REALTIME
 #  define CLOCK_REALTIME  0x01
 #  define CLOCK_MONOTONIC 0x02
+#endif
 
+#ifndef TIMER_ABSTIME
 #  define TIMER_ABSTIME   0x01
+#endif
 
 #ifdef USE_ITHREADS
+#  define PERL_DARWIN_MUTEX
+#endif
+
+#ifdef PERL_DARWIN_MUTEX
 STATIC perl_mutex darwin_time_mutex;
 #endif
+
+#include <mach/mach_time.h>
 
 static uint64_t absolute_time_init;
 static mach_timebase_info_data_t timebase_info;
@@ -769,7 +781,7 @@ static struct timespec timespec_init;
 static int darwin_time_init() {
   struct timeval tv;
   int success = 1;
-#ifdef USE_ITHREADS
+#ifdef PERL_DARWIN_MUTEX
   MUTEX_LOCK(&darwin_time_mutex);
 #endif
   if (absolute_time_init == 0) {
@@ -784,12 +796,13 @@ static int darwin_time_init() {
       }
     }
   }
-#ifdef USE_ITHREADS
+#ifdef PERL_DARWIN_MUTEX
   MUTEX_UNLOCK(&darwin_time_mutex);
 #endif
   return success;
 }
 
+#ifdef TIME_HIRES_CLOCK_GETTIME_EMULATION
 static int clock_gettime(int clock_id, struct timespec *ts) {
   if (darwin_time_init() && timebase_info.denom) {
     switch (clock_id) {
@@ -821,7 +834,9 @@ static int clock_gettime(int clock_id, struct timespec *ts) {
   SETERRNO(EINVAL, LIB_INVARG);
   return -1;
 }
+#endif /* TIME_HIRES_CLOCK_GETTIME_EMULATION */
 
+#ifdef TIME_HIRES_CLOCK_GETRES_EMULATION
 static int clock_getres(int clock_id, struct timespec *ts) {
   if (darwin_time_init() && timebase_info.denom) {
     switch (clock_id) {
@@ -841,7 +856,9 @@ static int clock_getres(int clock_id, struct timespec *ts) {
   SETERRNO(EINVAL, LIB_INVARG);
   return -1;
 }
+#endif /* TIME_HIRES_CLOCK_GETRES_EMULATION */
 
+#ifdef TIME_HIRES_CLOCK_NANOSLEEP_EMULATION
 static int clock_nanosleep(int clock_id, int flags,
 			   const struct timespec *rqtp,
 			   struct timespec *rmtp) {
@@ -879,6 +896,7 @@ static int clock_nanosleep(int clock_id, int flags,
   SETERRNO(EINVAL, LIB_INVARG);
   return -1;
 }
+#endif /* TIME_HIRES_CLOCK_NANOSLEEP_EMULATION */
 
 #endif /* PERL_DARWIN */
 
@@ -921,6 +939,22 @@ nsec_without_unslept(struct timespec *sleepfor,
 
 #endif
 
+/* In case Perl and/or Devel::PPPort are too old, minimally emulate
+ * IS_SAFE_PATHNAME() (which looks for zero bytes in the pathname). */
+#ifndef IS_SAFE_PATHNAME
+#if PERL_VERSION >= 12 /* Perl_ck_warner is 5.10.0 -> */
+#ifdef WARN_SYSCALLS
+#define WARNEMUCAT WARN_SYSCALLS /* 5.22.0 -> */
+#else
+#define WARNEMUCAT WARN_MISC
+#endif
+#define WARNEMU(opname) Perl_ck_warner(aTHX_ packWARN(WARNEMUCAT), "Invalid \\0 character in pathname for %s",opname)
+#else
+#define WARNEMU(opname) Perl_warn(aTHX_ "Invalid \\0 character in pathname for %s",opname)
+#endif
+#define IS_SAFE_PATHNAME(pv, len, opname) (((len)>1)&&memchr((pv), 0, (len)-1)?(SETERRNO(ENOENT, LIB_INVARG),WARNEMU(opname),FALSE):(TRUE))
+#endif
+
 MODULE = Time::HiRes            PACKAGE = Time::HiRes
 
 PROTOTYPES: ENABLE
@@ -941,7 +975,7 @@ BOOT:
 #   endif
 #endif
 #if defined(PERL_DARWIN)
-#  ifdef USE_ITHREADS
+#  if defined(USE_ITHREADS) && defined(PERL_DARWIN_MUTEX)
   MUTEX_INIT(&darwin_time_mutex);
 #  endif
 #endif
@@ -1316,6 +1350,82 @@ getitimer(which)
 #endif
 
 #endif /* #if defined(HAS_GETITIMER) && defined(HAS_SETITIMER) */
+
+#if defined(TIME_HIRES_UTIME)
+
+I32
+utime(accessed, modified, ...)
+PROTOTYPE: $$@
+    PREINIT:
+	SV* accessed;
+	SV* modified;
+	SV* file;
+
+	struct timespec utbuf[2];
+	struct timespec *utbufp = utbuf;
+	int tot;
+
+    CODE:
+	accessed = ST(0);
+	modified = ST(1);
+	items -= 2;
+	tot = 0;
+
+	if ( accessed == &PL_sv_undef && modified == &PL_sv_undef )
+		utbufp = NULL;
+	else {
+		if (SvNV(accessed) < 0.0 || SvNV(modified) < 0.0)
+	        	croak("Time::HiRes::utime(%"NVgf", %"NVgf"): negative time not invented yet", SvNV(accessed), SvNV(modified));
+		Zero(&utbuf, sizeof utbuf, char);
+		utbuf[0].tv_sec = (Time_t)SvNV(accessed);  /* time accessed */
+		utbuf[0].tv_nsec = (long)( ( SvNV(accessed) - utbuf[0].tv_sec ) * 1e9 );
+		utbuf[1].tv_sec = (Time_t)SvNV(modified);  /* time modified */
+		utbuf[1].tv_nsec = (long)( ( SvNV(modified) - utbuf[1].tv_sec ) * 1e9 );
+	}
+
+	while (items > 0) {
+		file = POPs; items--;
+
+		if (SvROK(file) && GvIO(SvRV(file)) && IoIFP(sv_2io(SvRV(file)))) {
+			int fd =  PerlIO_fileno(IoIFP(sv_2io(file)));
+			if (fd < 0)
+				SETERRNO(EBADF,RMS_IFI);
+			else 
+#ifdef HAS_FUTIMENS
+			if (futimens(fd, utbufp) == 0)
+				tot++;
+#else  /* HAS_FUTIMES */
+				croak("futimens unimplemented in this platform");
+#endif /* HAS_FUTIMES */
+		}
+		else {
+#ifdef HAS_UTIMENSAT
+			STRLEN len;
+			char * name = SvPV(file, len);
+			if (IS_SAFE_PATHNAME(name, len, "utime") &&
+			    utimensat(AT_FDCWD, name, utbufp, 0) == 0)
+				tot++;
+#else  /* HAS_UTIMENSAT */
+			croak("utimensat unimplemented in this platform");
+#endif /* HAS_UTIMENSAT */
+		}
+	} /* while items */
+	RETVAL = tot;
+
+    OUTPUT:
+	RETVAL
+
+#else  /* #if defined(TIME_HIRES_UTIME) */
+
+I32
+utime(accessed, modified, ...)
+    CODE:
+        croak("Time::HiRes::utime(): unimplemented in this platform");
+        RETVAL = 0;
+    OUTPUT:
+	RETVAL
+
+#endif /* #if defined(TIME_HIRES_UTIME) */
 
 #if defined(TIME_HIRES_CLOCK_GETTIME)
 

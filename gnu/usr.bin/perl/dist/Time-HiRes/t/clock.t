@@ -1,6 +1,6 @@
 use strict;
 
-use Test::More 0.82 tests => 5;
+use Test::More tests => 5;
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -13,10 +13,10 @@ sub has_symbol {
     return $@ eq '';
 }
 
-note sprintf "have_clock_gettime   = %d", &Time::HiRes::d_clock_gettime;
-note sprintf "have_clock_getres    = %d", &Time::HiRes::d_clock_getres;
-note sprintf "have_clock_nanosleep = %d", &Time::HiRes::d_clock_nanosleep;
-note sprintf "have_clock           = %d", &Time::HiRes::d_clock;
+printf("# have_clock_gettime   = %d\n", &Time::HiRes::d_clock_gettime);
+printf("# have_clock_getres    = %d\n", &Time::HiRes::d_clock_getres);
+printf("# have_clock_nanosleep = %d\n", &Time::HiRes::d_clock_nanosleep);
+printf("# have_clock           = %d\n", &Time::HiRes::d_clock);
 
 # Ideally, we'd like to test that the timers are rather precise.
 # However, if the system is busy, there are no guarantees on how
@@ -36,25 +36,25 @@ SKIP: {
     my $ok = 0;
  TRY: {
 	for my $try (1..3) {
-	    note "CLOCK_REALTIME: try = $try";
+	    print("# CLOCK_REALTIME: try = $try\n");
 	    my $t0 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
 	    my $T = 1.5;
 	    Time::HiRes::sleep($T);
 	    my $t1 = Time::HiRes::clock_gettime(&CLOCK_REALTIME);
 	    if ($t0 > 0 && $t1 > $t0) {
-		note "t1 = $t1, t0 = $t0";
+		print("# t1 = $t1, t0 = $t0\n");
 		my $dt = $t1 - $t0;
 		my $rt = abs(1 - $dt / $T);
-		note "dt = $dt, rt = $rt";
+		print("# dt = $dt, rt = $rt\n");
 		if ($rt <= 2 * $limit) {
 		    $ok = 1;
 		    last TRY;
 		}
 	    } else {
-		note "Error: t0 = $t0, t1 = $t1";
+		print("# Error: t0 = $t0, t1 = $t1\n");
 	    }
 	    my $r = rand() + rand();
-	    note sprintf "Sleeping for %.6f seconds...\n", $r;
+	    printf("# Sleeping for %.6f seconds...\n", $r);
 	    Time::HiRes::sleep($r);
 	}
     }
@@ -64,7 +64,7 @@ SKIP: {
 SKIP: {
     skip "no clock_getres", 1 unless &Time::HiRes::d_clock_getres;
     my $tr = Time::HiRes::clock_getres();
-    ok $tr > 0 or note "tr = $tr";
+    ok $tr > 0 or print("# tr = $tr\n");
 }
 
 SKIP: {
@@ -73,17 +73,17 @@ SKIP: {
     my $s = 1.5e9;
     my $t = Time::HiRes::clock_nanosleep(&CLOCK_REALTIME, $s);
     my $r = abs(1 - $t / $s);
-    ok $r < 2 * $limit or note "t = $t, r = $r";
+    ok $r < 2 * $limit or print("# t = $t, r = $r\n");
 }
 
 SKIP: {
     skip "no clock", 1 unless &Time::HiRes::d_clock;
     my @clock = Time::HiRes::clock();
-    note "clock = @clock";
+    print("# clock = @clock\n");
     for my $i (1..3) {
 	for (my $j = 0; $j < 1e6; $j++) { }
 	push @clock, Time::HiRes::clock();
-	note "clock = @clock";
+	print("# clock = @clock\n");
     }
     ok $clock[0] >= 0 &&
 	$clock[1] > $clock[0] &&

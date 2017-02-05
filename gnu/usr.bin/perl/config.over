@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.21 2016/11/09 17:09:56 millert Exp $
+# $OpenBSD: config.over,v 1.22 2017/02/05 00:33:38 afresh1 Exp $
 #
 
 # We use a different architecture name than the default
@@ -17,14 +17,14 @@ siteprefix='/usr/local'
 siteprefixexp='/usr/local'
 installsitebin='/usr/local/bin'
 
-installarchlib="/usr/libdata/perl5/${archname}/${version}"
-archlib="${installarchlib}:/usr/local/libdata/perl5/${archname}/${version}"
+installarchlib="/usr/libdata/perl5/${archname}"
+archlib="${installarchlib}"
 archlibexp="${archlib}"
 
 test $useshrplib = "true" && ccdlflags="-Wl,-R${installarchlib}/CORE"   
 
 installprivlib="/usr/libdata/perl5"
-privlib="${installprivlib}:/usr/local/libdata/perl5"
+privlib="${installprivlib}"
 privlibexp="${privlib}"
 
 installsitearch="/usr/local/libdata/perl5/site_perl/${archname}"

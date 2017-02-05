@@ -4,7 +4,7 @@ require Exporter;
 
 =head1 NAME
 
-getopt, getopts - Process single-character switches with switch clustering
+Getopt::Std, getopt, getopts - Process single-character switches with switch clustering
 
 =head1 SYNOPSIS
 

@@ -13,7 +13,7 @@ BEGIN {
     }
 }
 
-use Test::More 0.82 tests => 43;
+use Test::More tests => 43;
 use t::Watchdog;
 
 my @atime;
@@ -42,8 +42,8 @@ for (1..5) {
     is_deeply $lstat, $stat;
 }
 1 while unlink $$;
-note "mtime = @mtime";
-note "atime = @atime";
+print("# mtime = @mtime\n");
+print("# atime = @atime\n");
 my $ai = 0;
 my $mi = 0;
 my $ss = 0;
@@ -63,7 +63,7 @@ for (my $i = 1; $i < @mtime; $i++) {
 	$ss++;
     }
 }
-note "ai = $ai, mi = $mi, ss = $ss";
+print("# ai = $ai, mi = $mi, ss = $ss\n");
 # Need at least 75% of monotonical increase and
 # 20% of subsecond results. Yes, this is guessing.
 SKIP: {

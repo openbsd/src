@@ -202,7 +202,7 @@ SKIP: {
     $skip{pid}{$^O} = $skip{uid}{$^O} = "not set for kill()"
         if (($^O.$Config{osvers}) =~ /^darwin[0-8]\./
             ||
-            ($^O.$Config{osvers}) =~ /^openbsd[0-5]\./);
+            ($^O.$Config{osvers}) =~ /^openbsd[0-6]\./);
     my $tests = keys %{{ %siginfo, %opt_val }};
     eval 'use POSIX qw(SA_SIGINFO); SA_SIGINFO';
     skip("no SA_SIGINFO", $tests) if $@;
