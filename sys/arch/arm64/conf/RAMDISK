@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.6 2017/01/25 10:19:15 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.7 2017/02/05 00:29:30 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -23,6 +23,7 @@ maxusers	4
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
+option		PCIVERBOSE
 option		USBVERBOSE
 option		SMALL_KERNEL
 option		NO_PROPOLICE

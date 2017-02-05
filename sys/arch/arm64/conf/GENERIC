@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.9 2017/01/25 10:19:15 jsg Exp $
+# $OpenBSD: GENERIC,v 1.10 2017/02/05 00:29:30 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -24,6 +24,7 @@ maxusers	32
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
+option		PCIVERBOSE
 option		USBVERBOSE
 
 option		SYSCALL_DEBUG
