@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.6 2017/01/11 17:46:28 bluhm Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.7 2017/02/05 16:23:38 jca Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -125,7 +125,7 @@ cpumem_next(struct cpumem_iter *i, struct cpumem *cm)
 }
 
 struct cpumem *
-counters_alloc(unsigned int n, int type)
+counters_alloc(unsigned int n)
 {
 	struct cpumem *cm;
 	struct cpumem_iter cmi;
@@ -135,7 +135,7 @@ counters_alloc(unsigned int n, int type)
 	KASSERT(n > 0);
 
 	n++; /* add space for a generation number */
-	cm = cpumem_malloc(n * sizeof(uint64_t), type);
+	cm = cpumem_malloc(n * sizeof(uint64_t), M_COUNTERS);
 
 	CPUMEM_FOREACH(counters, &cmi, cm) {
 		for (i = 0; i < n; i++)
@@ -146,17 +146,17 @@ counters_alloc(unsigned int n, int type)
 }
 
 struct cpumem *
-counters_alloc_ncpus(struct cpumem *cm, unsigned int n, int type)
+counters_alloc_ncpus(struct cpumem *cm, unsigned int n)
 {
 	n++; /* the generation number */
-	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), type));
+	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), M_COUNTERS));
 }
 
 void
-counters_free(struct cpumem *cm, int type, unsigned int n)
+counters_free(struct cpumem *cm, unsigned int n)
 {
 	n++; /* generation number */
-	cpumem_free(cm, type, n * sizeof(uint64_t));
+	cpumem_free(cm, M_COUNTERS, n * sizeof(uint64_t));
 }
 
 void
@@ -284,24 +284,24 @@ cpumem_next(struct cpumem_iter *i, struct cpumem *cm)
 }
 
 struct cpumem *
-counters_alloc(unsigned int n, int type)
+counters_alloc(unsigned int n)
 {
 	KASSERT(n > 0);
 
-	return (cpumem_malloc(n * sizeof(uint64_t), type));
+	return (cpumem_malloc(n * sizeof(uint64_t), M_COUNTERS));
 }
 
 struct cpumem *
-counters_alloc_ncpus(struct cpumem *cm, unsigned int n, int type)
+counters_alloc_ncpus(struct cpumem *cm, unsigned int n)
 {
 	/* this is unecessary, but symmetrical */
-	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), type));
+	return (cpumem_malloc_ncpus(cm, n * sizeof(uint64_t), M_COUNTERS));
 }
 
 void
-counters_free(struct cpumem *cm, int type, unsigned int n)
+counters_free(struct cpumem *cm, unsigned int n)
 {
-	cpumem_free(cm, type, n * sizeof(uint64_t));
+	cpumem_free(cm, M_COUNTERS, n * sizeof(uint64_t));
 }
 
 void

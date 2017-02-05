@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.294 2017/01/31 10:24:41 jca Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.295 2017/02/05 16:23:38 jca Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ ip_init(void)
 	const u_int16_t defrootonlyports_tcp[] = DEFROOTONLYPORTS_TCP;
 	const u_int16_t defrootonlyports_udp[] = DEFROOTONLYPORTS_UDP;
 
-	ipcounters = counters_alloc(ips_ncounters, M_COUNTERS);
+	ipcounters = counters_alloc(ips_ncounters);
 
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0,
 	    IPL_SOFTNET, 0, "ipqe",  NULL);

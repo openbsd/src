@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.349 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.350 2017/02/05 16:23:38 jca Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 void
 route_init(void)
 {
-	rtcounters = counters_alloc(rts_ncounters, M_COUNTERS);
+	rtcounters = counters_alloc(rts_ncounters);
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, IPL_SOFTNET, 0,
 	    "rtentry", NULL);

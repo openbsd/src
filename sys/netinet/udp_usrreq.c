@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.230 2017/01/31 10:24:41 jca Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.231 2017/02/05 16:23:38 jca Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ int	udp_sysctl_udpstat(void *, size_t *, void *);
 void
 udp_init(void)
 {
-	udpcounters = counters_alloc(udps_ncounters, M_COUNTERS);
+	udpcounters = counters_alloc(udps_ncounters);
 	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
 }
 

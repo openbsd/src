@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.63 2017/01/31 10:24:41 jca Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.64 2017/02/05 16:23:38 jca Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ igmp_init(void)
 	igmp_timers_are_running = 0;
 	rti_head = 0;
 
-	igmpcounters = counters_alloc(igps_ncounters, M_COUNTERS);
+	igmpcounters = counters_alloc(igps_ncounters);
 	router_alert = m_get(M_DONTWAIT, MT_DATA);
 	if (router_alert == NULL) {
 		printf("%s: no mbuf\n", __func__);

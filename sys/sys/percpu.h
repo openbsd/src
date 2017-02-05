@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.5 2016/12/20 12:07:14 bluhm Exp $ */
+/*	$OpenBSD: percpu.h,v 1.6 2017/02/05 16:23:38 jca Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -110,9 +110,9 @@ static struct {								\
  * per cpu counters
  */
 
-struct cpumem	*counters_alloc(unsigned int, int);
-struct cpumem	*counters_alloc_ncpus(struct cpumem *, unsigned int, int);
-void		 counters_free(struct cpumem *, int, unsigned int);
+struct cpumem	*counters_alloc(unsigned int);
+struct cpumem	*counters_alloc_ncpus(struct cpumem *, unsigned int);
+void		 counters_free(struct cpumem *, unsigned int);
 void		 counters_read(struct cpumem *, uint64_t *, unsigned int);
 void		 counters_zero(struct cpumem *, unsigned int);
 

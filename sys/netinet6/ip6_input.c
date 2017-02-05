@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.176 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.177 2017/02/05 16:23:38 jca Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ ip6_init(void)
 
 	mq_init(&ip6send_mq, 64, IPL_SOFTNET);
 
-	ip6counters = counters_alloc(ip6s_ncounters, M_COUNTERS);
+	ip6counters = counters_alloc(ip6s_ncounters);
 }
 
 /*
