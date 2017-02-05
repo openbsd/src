@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.140 2017/02/05 18:13:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.141 2017/02/05 19:29:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1510,7 +1510,7 @@ mdoc_rs_pre(MDOC_ARGS)
 	if (n->prev && SEC_SEE_ALSO == n->sec)
 		print_paragraph(h);
 
-	print_otag(h, TAG_SPAN, "c", "Rs");
+	print_otag(h, TAG_CITE, "c", "Rs");
 	return 1;
 }
 

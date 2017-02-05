@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.1 2017/01/25 02:54:53 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.2 2017/02/05 19:29:03 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  */
@@ -108,7 +108,8 @@ table.Bl-column { }
 tr.It-column { }
 td.It-column {	margin-top: 1em; }
 
-span.Rs	{ }
+cite.Rs {	font-style: normal;
+		font-weight: normal; }
 span.RsA { }
 i.RsB {		font-weight: normal; }
 span.RsC { }
