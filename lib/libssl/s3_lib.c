@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.133 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.134 2017/02/05 15:06:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2135,6 +2135,12 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		ret = 1;
 		break;
 
+	case SSL_CTRL_SET_GROUPS:
+		return SSL_set1_groups(s, parg, larg);
+
+	case SSL_CTRL_SET_GROUPS_LIST:
+		return SSL_set1_groups_list(s, parg);
+
 	case SSL_CTRL_GET_SERVER_TMP_KEY:
 		ret = ssl_ctrl_get_server_tmp_key(s, parg);
 		break;
@@ -2314,6 +2320,12 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		sk_X509_pop_free(ctx->extra_certs, X509_free);
 		ctx->extra_certs = NULL;
 		break;
+
+	case SSL_CTRL_SET_GROUPS:
+		return SSL_CTX_set1_groups(ctx, parg, larg);
+
+	case SSL_CTRL_SET_GROUPS_LIST:
+		return SSL_CTX_set1_groups_list(ctx, parg);
 
 	default:
 		return (0);
