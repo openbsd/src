@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.15 2017/02/05 12:59:32 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.16 2017/02/05 13:08:03 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1622,6 +1622,18 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_init()
 {
+	uint64_t tcr;
+
+	/*
+	 * Now that we are in virtual address space we don't need
+	 * the identity mapping in TTBR0 and can set the TCR to a
+	 * more useful value.
+	 */
+	tcr = READ_SPECIALREG(tcr_el1);
+	tcr &= ~TCR_T0SZ(0x3f);
+	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
+	WRITE_SPECIALREG(tcr_el1, tcr);
+
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_VM, 0,
 	    "pmap", NULL);
 	pool_setlowat(&pmap_pmap_pool, 2);
@@ -1633,7 +1645,6 @@ pmap_init()
 	//pool_setlowat(&pmap_vp_pool, 20);
 
 	pmap_initialized = 1;
-
 }
 
 void

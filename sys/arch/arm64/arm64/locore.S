@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.10 2017/02/03 13:39:49 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.11 2017/02/05 13:08:03 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -421,6 +421,15 @@ create_pagetables:
 	mov	x10, #1
 	bl	build_l1_block_pagetable
 
+	/* Move to the l0 table */
+	add	x27, x27, #PAGE_SIZE * 2	// pagetable_l0_ttbr0:
+
+	/* Link the l0 -> l1 table */
+	mov	x9, x6
+	mov	x6, x27
+	mov	x10, #1
+	bl	link_l0_pagetable
+
 	/* Restore the Link register */
 	mov	x30, x5
 	ret
@@ -590,7 +599,12 @@ start_mmu:
 	ldr	x2, mair
 	msr	mair_el1, x2
 
-	/* Setup TCR according to PARange bits from ID_AA64MMFR0_EL1 */
+	/*
+	 * Setup TCR according to PARange bits from ID_AA64MMFR0_EL1.
+	 * Some machines have physical memory mapped >512GiB, which can not
+	 * be identity-mapped using the default 39 VA bits. Thus, use
+	 * 48 VA bits for now and switch back to 39 after the VA jump.
+	 */
 	ldr	x2, tcr
 	mrs	x3, id_aa64mmfr0_el1
 	bfi	x2, x3, #32, #3
@@ -623,8 +637,8 @@ mair:
 		/* Device            Normal, no cache     Normal, write-back */
 	.quad	MAIR_ATTR(0x00, 0) | MAIR_ATTR(0x44, 1) | MAIR_ATTR(0xff, 2)
 tcr:
-	.quad (TCR_TxSZ(64 - VIRT_BITS) | TCR_ASID_16 | TCR_TG1_4K | \
-	    TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
+	.quad (TCR_T1SZ(64 - VIRT_BITS) | TCR_T0SZ(64 - 48) | \
+	    TCR_ASID_16 | TCR_TG1_4K | TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
 sctlr_set:
 	/* Bits to set */
 	.quad (SCTLR_UCI | SCTLR_nTWE | SCTLR_nTWI | SCTLR_UCT | SCTLR_DZE | \
@@ -663,6 +677,8 @@ pagetable_l1_ttbr1:
 	.space	PAGE_SIZE * 2	// allocate 2 pages for pmapvp1
 pagetable_l1_ttbr0:
 	.space	PAGE_SIZE * 2	// allocate 2 pages, reused later in pmap
+pagetable_l0_ttbr0:
+	.space	PAGE_SIZE
 pagetable_end:
 
 	.text
