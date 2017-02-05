@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.2 2017/02/05 13:21:38 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -626,4 +626,10 @@ setstatclockrate(int new)
 		panic("arm_clock_func.setstatclockrate not intialized");
 	}
 	arm_clock_func.setstatclockrate(new);
+}
+
+void
+intr_barrier(void *ih)
+{
+	sched_barrier(NULL);
 }
