@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.60 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.61 2017/02/05 02:33:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1793,7 +1793,6 @@ internal_verify(X509_STORE_CTX *ctx)
 	 * peril).
 	 */
 	while (n >= 0) {
-		EVP_PKEY *pkey;
 
 		/*
 		 * Skip signature check for self signed certificates
@@ -1805,15 +1804,19 @@ internal_verify(X509_STORE_CTX *ctx)
 		 */
 		if (xs != xi || (ctx->param->flags &
 			X509_V_FLAG_CHECK_SS_SIGNATURE)) {
+			EVP_PKEY *pkey;
 			if ((pkey = X509_get_pubkey(xi)) == NULL) {
 				if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
 					X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
 					return 0;
 			} else if (X509_verify(xs, pkey) <= 0) {
 				if (!verify_cb_cert(ctx, xs, n,
-					X509_V_ERR_CERT_SIGNATURE_FAILURE))
+					X509_V_ERR_CERT_SIGNATURE_FAILURE)) {
+					EVP_PKEY_free(pkey);
 					return 0;
+				}
 			}
+			EVP_PKEY_free(pkey);
 		}
 check_cert:
 		/* Calls verify callback as needed */
