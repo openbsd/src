@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.171 2016/11/30 07:56:23 mestre Exp $ */
+/* $OpenBSD: netcat.c,v 1.172 2017/02/05 01:39:14 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -148,8 +148,8 @@ main(int argc, char *argv[])
 	struct servent *sv;
 	socklen_t len;
 	struct sockaddr_storage cliaddr;
-	char *proxy;
-	const char *errstr, *proxyhost = "", *proxyport = NULL;
+	char *proxy, *proxyport = NULL;
+	const char *errstr;
 	struct addrinfo proxyhints;
 	char unix_dg_tmp_socket_buf[UNIX_DG_TMP_SOCKET_SIZE];
 	struct tls_config *tls_cfg = NULL;
@@ -426,15 +426,29 @@ main(int argc, char *argv[])
 		if (family == AF_UNIX)
 			errx(1, "no proxy support for unix sockets");
 
-		/* XXX IPv6 transport to proxy would probably work */
-		if (family == AF_INET6)
-			errx(1, "no proxy support for IPv6");
-
 		if (sflag)
 			errx(1, "no proxy support for local source address");
 
-		proxyhost = strsep(&proxy, ":");
-		proxyport = proxy;
+		if (*proxy == '[') {
+			++proxy;
+			proxyport = strchr(proxy, ']');
+			if (proxyport == NULL)
+				errx(1, "missing closing bracket in proxy");
+			*proxyport++ = '\0';
+			if (*proxyport == '\0')
+				/* Use default proxy port. */
+				proxyport = NULL;
+			else {
+				if (*proxyport == ':')
+					++proxyport;
+				else
+					errx(1, "garbage proxy port delimiter");
+			}
+		} else {
+			proxyport = strrchr(proxy, ':');
+			if (proxyport != NULL)
+				*proxyport++ = '\0';
+		}
 
 		memset(&proxyhints, 0, sizeof(struct addrinfo));
 		proxyhints.ai_family = family;
@@ -617,7 +631,7 @@ main(int argc, char *argv[])
 			}
 			if (xflag)
 				s = socks_connect(host, portlist[i], hints,
-				    proxyhost, proxyport, proxyhints, socksv,
+				    proxy, proxyport, proxyhints, socksv,
 				    Pflag);
 			else
 				s = remote_connect(host, portlist[i], hints);
