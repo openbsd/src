@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.958 2017/01/24 10:14:14 rpe Exp $
+#	$OpenBSD: install.sub,v 1.959 2017/02/05 14:40:16 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1902,9 +1902,9 @@ user_setup() {
 		esac
 		echo "$resp is not a useable loginname."
 	done
-	user=$resp
+	ADMIN=$resp
 	while :; do
-		ask "Full name for user $user?" $user
+		ask "Full name for user $ADMIN?" $ADMIN
 		case $resp in
 		*[:\&,]*)
 			echo "':', '&' or ',' are not allowed."
@@ -1915,14 +1915,14 @@ user_setup() {
 			;;
 		esac
 	done
-	username=$resp
+	ADMIN_NAME=$resp
 
-	askpassword "Password for user $user?"
-	userpass=$_password
+	askpassword "Password for user $ADMIN?"
+	ADMIN_PASS=$_password
 
-	userkey=
-	$AUTO && ask "Public ssh key for user $user" none &&
-		[[ $resp != none ]] && userkey=$resp
+	ADMIN_KEY=
+	$AUTO && ask "Public ssh key for user $ADMIN" none &&
+		[[ $resp != none ]] && ADMIN_KEY=$resp
 }
 
 # Ask user whether or not to allow logins to root in case sshd(8) is enabled.
@@ -1933,7 +1933,7 @@ ask_root_sshd() {
 
 	[[ $sshd == y ]] || return
 
-	if [[ -z $user ]]; then
+	if [[ -z $ADMIN ]]; then
 		echo "Since no user was setup, root logins via sshd(8) might be useful."
 	fi
 	echo "WARNING: root is targeted by password guessing attacks, pubkeys are safer."
@@ -2808,26 +2808,26 @@ do_install(){
 	apply
 
 	# Create user account based on information from user_setup().
-	if [[ -n $user ]]; then
-		_encr=$(encr_pwd "$userpass")
-		_home=/home/$user
-		uline="${user}:${_encr}:1000:1000:staff:0:0:${username}:$_home:/bin/ksh"
+	if [[ -n $ADMIN ]]; then
+		_encr=$(encr_pwd "$ADMIN_PASS")
+		_home=/home/$ADMIN
+		uline="${ADMIN}:${_encr}:1000:1000:staff:0:0:${ADMIN_NAME}:$_home:/bin/ksh"
 		echo "$uline" >>/mnt/etc/master.passwd
-		echo "${user}:*:1000:" >>/mnt/etc/group
-		echo ${user} >/mnt/root/.forward
+		echo "${ADMIN}:*:1000:" >>/mnt/etc/group
+		echo ${ADMIN} >/mnt/root/.forward
 
 		_home=/mnt$_home
 		mkdir -p $_home
 		(cd /mnt/etc/skel; cp -pR . $_home)
-		(umask 077 && sed "s,^To: root\$,To: ${username} <${user}>," \
-			/mnt/var/mail/root >/mnt/var/mail/$user )
-		chown -R 1000:1000 $_home /mnt/var/mail/$user
-		sed -i -e "s@^wheel:.:0:root\$@wheel:\*:0:root,${user}@" \
+		(umask 077 && sed "s,^To: root\$,To: ${ADMIN_NAME} <${ADMIN}>," \
+			/mnt/var/mail/root >/mnt/var/mail/$ADMIN )
+		chown -R 1000:1000 $_home /mnt/var/mail/$ADMIN
+		sed -i -e "s@^wheel:.:0:root\$@wheel:\*:0:root,${ADMIN}@" \
 			/mnt/etc/group 2>/dev/null
 
 		# During autoinstall, add public ssh key to authorized_keys.
-		[[ -n "$userkey" ]] &&
-			print -r -- "$userkey" >>$_home/.ssh/authorized_keys
+		[[ -n "$ADMIN_KEY" ]] &&
+			print -r -- "$ADMIN_KEY" >>$_home/.ssh/authorized_keys
 	fi
 
 	# Store root password and rebuild password database.
