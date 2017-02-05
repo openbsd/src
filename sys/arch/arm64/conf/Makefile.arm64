@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.4 2017/01/25 11:15:07 kettenis Exp $
+#	$OpenBSD: Makefile.arm64,v 1.5 2017/02/05 13:28:05 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,7 +28,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-mcpu=cortex-a57+nofp+nosimd \
+CMACHFLAGS=	-march=armv8-a+nofp+nosimd \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer \
 		-ffixed-x18
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
