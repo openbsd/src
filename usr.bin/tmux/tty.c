@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.225 2017/02/01 09:55:07 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.226 2017/02/06 13:23:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1171,18 +1171,6 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_cell(tty, ctx->cell, wp);
-}
-
-void
-tty_cmd_utf8character(struct tty *tty, const struct tty_ctx *ctx)
-{
-	struct window_pane	*wp = ctx->wp;
-
-	/*
-	 * Cannot rely on not being a partial character, so just redraw the
-	 * whole line.
-	 */
-	tty_draw_pane(tty, wp, ctx->ocy, ctx->xoff, ctx->yoff);
 }
 
 void

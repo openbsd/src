@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.712 2017/02/03 21:01:02 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.713 2017/02/06 13:23:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1667,7 +1667,6 @@ void	tty_cmd_erasecharacter(struct tty *, const struct tty_ctx *);
 void	tty_cmd_insertcharacter(struct tty *, const struct tty_ctx *);
 void	tty_cmd_insertline(struct tty *, const struct tty_ctx *);
 void	tty_cmd_linefeed(struct tty *, const struct tty_ctx *);
-void	tty_cmd_utf8character(struct tty *, const struct tty_ctx *);
 void	tty_cmd_reverseindex(struct tty *, const struct tty_ctx *);
 void	tty_cmd_setselection(struct tty *, const struct tty_ctx *);
 void	tty_cmd_rawstring(struct tty *, const struct tty_ctx *);
