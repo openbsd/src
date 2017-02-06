@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.226 2017/02/06 13:23:00 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.227 2017/02/06 19:26:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1057,7 +1057,7 @@ tty_cmd_clearstartofscreen(struct tty *tty, const struct tty_ctx *ctx)
 	struct screen		*s = wp->screen;
 	u_int			 i, j;
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
 	tty_region_pane(tty, ctx, 0, screen_size_y(s) - 1);
 	tty_margin_off(tty);

@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.110 2017/02/06 13:25:15 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.111 2017/02/06 19:26:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1330,7 +1330,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 			screen_write_clearendofscreen(sctx, ictx->cell.cell.bg);
 			break;
 		case 1:
-			screen_write_clearstartofscreen(sctx);
+			screen_write_clearstartofscreen(sctx, ictx->cell.cell.bg);
 			break;
 		case 2:
 			screen_write_clearscreen(sctx, ictx->cell.cell.bg);
