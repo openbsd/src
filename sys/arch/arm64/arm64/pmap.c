@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.17 2017/02/06 07:15:56 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.18 2017/02/06 19:23:45 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -27,6 +27,7 @@
 
 #include "arm64/vmparam.h"
 #include "arm64/pmap.h"
+#include "machine/cpufunc.h"
 #include "machine/pcb.h"
 
 #include <machine/db_machdep.h>
@@ -71,55 +72,6 @@ pmap_pa_is_mem(uint64_t pa)
 	return 0;
 }
 
-unsigned int
-dcache_line_size(void)
-{
-	uint64_t ctr;
-	unsigned int dcl_size;
-
-	/* Accessible from all security levels */
-	ctr = READ_SPECIALREG(ctr_el0);
-
-	/*
-	 * Relevant field [19:16] is LOG2
-	 * of the number of words in DCache line
-	 */
-	dcl_size = CTR_DLINE_SIZE(ctr);
-
-	/* Size of word shifted by cache line size */
-	return (sizeof(int) << dcl_size);
-}
-
-/* Write back D-cache to PoC */
-void
-dcache_wb_poc(vaddr_t addr, vsize_t len)
-{
-	uint64_t cl_size;
-	vaddr_t end;
-
-	cl_size = dcache_line_size();
-
-	/* Calculate end address to clean */
-	end = addr + len;
-	/* Align start address to cache line */
-	addr = addr & ~(cl_size - 1);
-
-	for (; addr < end; addr += cl_size)
-		__asm __volatile("dc cvac, %x0" :: "r" (addr) : "memory");
-	__asm __volatile("dsb ish");
-}
-
-#if 0
-/* Write back and invalidate D-cache to PoC */
-STATIC __inline void
-dcache_wbinv_poc(vaddr_t sva, paddr_t pa, vsize_t size)
-{
-	// XXX needed?
-	for (off = 0; off <size; off += CACHE_LINE_SIZE)
-		__asm __volatile("dc CVAC,%0"::"r"(va+off));
-}
-#endif
-
 STATIC __inline void
 ttlb_flush(pmap_t pm, vaddr_t va)
 {
@@ -131,30 +83,28 @@ ttlb_flush_range(pmap_t pm, vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = va + size;
 
-	__asm __volatile("dsb sy");
 	// if size is over 512 pages, just flush the entire cache !?!?!
 	if (size >= (512 * PAGE_SIZE)) {
-		__asm __volatile("tlbi	vmalle1is");
-		return ;
+		cpu_tlb_flush();
+		return;
 	}
 
 	for ( ; va < eva; va += PAGE_SIZE)
 		arm64_tlbi_asid(va, pm->pm_asid);
-	__asm __volatile("dsb sy");
 }
 
 void
 arm64_tlbi_asid(vaddr_t va, int asid)
 {
 	vaddr_t resva;
+
+	resva = ((va >> PAGE_SHIFT) & ((1ULL << 44) - 1));
 	if (asid == -1) {
-		resva = ((va>>PAGE_SHIFT) & (1ULL << 44) -1) ;
-		__asm volatile ("TLBI VAALE1IS, %x0":: "r"(resva));
-		return;
+		cpu_tlb_flush_all_asid(resva);
+	} else {
+		resva |= (unsigned long long)asid << 48;
+		cpu_tlb_flush_asid(resva);
 	}
-        resva = ((va >> PAGE_SHIFT) & (1ULL << 44) -1) |
-	    ((unsigned long long)asid << 48);
-	__asm volatile ("TLBI VAE1IS, %x0" :: "r"(resva));
 }
 
 struct pmap kernel_pmap_;
@@ -1384,7 +1334,7 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 	pm->pm_vp.l0->l0[idx0] = pg_entry;
 	__asm __volatile("dsb sy");
 
-	dcache_wb_poc((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
+	cpu_dcache_wb_range((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX1_POS);
 }
@@ -1419,7 +1369,7 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 	vp1->l1[idx1] = pg_entry;
 
 	__asm __volatile("dsb sy");
-	dcache_wb_poc((vaddr_t)&vp1->l1[idx1], 8);
+	cpu_dcache_wb_range((vaddr_t)&vp1->l1[idx1], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX2_POS);
 }
@@ -1458,7 +1408,7 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
 	__asm __volatile("dsb sy");
-	dcache_wb_poc((vaddr_t)&vp2->l2[idx2], 8);
+	cpu_dcache_wb_range((vaddr_t)&vp2->l2[idx2], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX3_POS);
 }
@@ -1740,7 +1690,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 
 	*pl3 = pte;
-	dcache_wb_poc((vaddr_t) pl3, 8);
+	cpu_dcache_wb_range((vaddr_t) pl3, 8);
 	__asm __volatile("dsb sy");
 }
 
@@ -1778,7 +1728,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
 	__asm __volatile("dsb sy");
 
-	dcache_wb_poc((vaddr_t)&vp3->l3[VP_IDX3(pted->pted_va)], 8);
+	cpu_dcache_wb_range((vaddr_t)&vp3->l3[VP_IDX3(pted->pted_va)], 8);
 
 	arm64_tlbi_asid(pted->pted_va, pm->pm_asid);
 }
@@ -2354,7 +2304,7 @@ pmap_allocate_asid(pmap_t pm)
 
 	if (pmap_asid_id_next == MAX_ASID) {
 		// out of asid, flush all
-		__asm __volatile("tlbi	vmalle1is");
+		cpu_tlb_flush();
 		for (i = 0;i < MAX_ASID; i++) {
 			if (pmap_asid[i] != NULL) {
 				// printf("reclaiming asid %d from %p\n", i,
@@ -2404,8 +2354,7 @@ pmap_setttb(struct proc *p, paddr_t pagedir, struct pcb *pcb)
 		//printf("switching userland to %p %p asid %d new asid %d\n",
 		//    pm, pmap_kernel(), oasid, pm->pm_asid);
 
-		__asm volatile("msr ttbr0_el1, %x0" :: "r"(pagedir));
-		__asm volatile("dsb sy");
+		cpu_setttb(pagedir);
 	} else {
 		// XXX what to do if switching to kernel pmap !?!?
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.11 2017/02/05 13:08:03 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.12 2017/02/06 19:23:45 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -95,24 +95,11 @@ _start:
 	/* Create the page tables */
 	bl	create_pagetables
 
-
-	mrs	x0, DCZID_EL0
-	tbnz	x0, 4, 1f
-	mov	x1, #1
-	and	x0, x0, 0xf
-	lsl	x1, x1, x0
-	ldr	x0, =dczva_line_size
-	// adjust virtual address to physical
-	sub	x0, x0, x29
-
-	str	x1, [x0]
-1:
 	/*
 	 * At this point:
 	 * x27 = TTBR0 table
 	 * x26 = TTBR1 table
 	 */
-
 
 	/* Enable the mmu */
 	bl	start_mmu
@@ -657,8 +644,6 @@ abort:
 	.data
 	.global _C_LABEL(esym)
 _C_LABEL(esym): .xword   _C_LABEL(end)
-	.global _C_LABEL(dczva_line_size)
-_C_LABEL(dczva_line_size):     .xword   0
 
 	//.section .init_pagetable
 data_align_pad:

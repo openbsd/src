@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.2 2016/12/18 14:40:25 patrick Exp $ */
+/* $OpenBSD: armreg.h,v 1.3 2017/02/06 19:23:45 patrick Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -467,12 +467,7 @@
 
 #define	TCR_CACHE_ATTRS	((TCR_IRGN0_WBWA | TCR_IRGN1_WBWA) |\
 				(TCR_ORGN0_WBWA | TCR_ORGN1_WBWA))
-
-#ifdef SMP
 #define	TCR_SMP_ATTRS	(TCR_SH0_IS | TCR_SH1_IS)
-#else
-#define	TCR_SMP_ATTRS	0
-#endif
 
 #define	TCR_T1SZ_SHIFT	16
 #define	TCR_T0SZ_SHIFT	0
