@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.716 2017/02/06 19:45:23 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.717 2017/02/06 22:05:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -240,6 +240,7 @@ enum tty_code_code {
 	TTYC_DL1,	/* delete_line, dl */
 	TTYC_E3,
 	TTYC_ECH,	/* erase_chars, ec */
+	TTYC_ED,	/* csr_eos, cd */
 	TTYC_EL,	/* clr_eol, ce */
 	TTYC_EL1,	/* clr_bol, cb */
 	TTYC_ENACS,	/* ena_acs, eA */

@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.111 2017/02/06 19:26:49 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.112 2017/02/06 22:05:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -87,6 +87,7 @@ struct input_ctx {
 	struct utf8_data	utf8data;
 
 	int			ch;
+
 	int			flags;
 #define INPUT_DISCARD 0x1
 
