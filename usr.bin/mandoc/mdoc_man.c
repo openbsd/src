@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.99 2017/01/11 17:39:45 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.100 2017/02/06 03:41:44 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1516,7 +1516,7 @@ pre_nm(DECL_ARGS)
 	}
 	if (n->type != ROFFT_ELEM && n->type != ROFFT_HEAD)
 		return 1;
-	name = n->child ? n->child->string : meta->name;
+	name = n->child == NULL ? NULL : n->child->string;
 	if (NULL == name)
 		return 0;
 	if (n->type == ROFFT_HEAD) {
@@ -1527,8 +1527,6 @@ pre_nm(DECL_ARGS)
 		outflags |= MMAN_nl;
 	}
 	font_push('B');
-	if (NULL == n->child)
-		print_word(meta->name);
 	return 1;
 }
 
@@ -1542,7 +1540,7 @@ post_nm(DECL_ARGS)
 		break;
 	case ROFFT_HEAD:
 	case ROFFT_ELEM:
-		if (n->child != NULL || meta->name != NULL)
+		if (n->child != NULL && n->child->string != NULL)
 			font_pop();
 		break;
 	default:

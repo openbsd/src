@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.144 2017/02/05 21:00:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.145 2017/02/06 03:41:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -580,8 +580,6 @@ mdoc_nm_pre(MDOC_ARGS)
 		/* FALLTHROUGH */
 	case ROFFT_ELEM:
 		print_otag(h, TAG_B, "c", "Nm");
-		if (n->child == NULL && meta->name != NULL)
-			print_text(h, meta->name);
 		return 1;
 	case ROFFT_BODY:
 		print_otag(h, TAG_TD, "");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.241 2017/02/04 11:56:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.242 2017/02/06 03:41:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -994,7 +994,7 @@ termp_nm_pre(DECL_ARGS)
 		return 1;
 	}
 
-	if (NULL == n->child && NULL == meta->name)
+	if (n->child == NULL)
 		return 0;
 
 	if (n->type == ROFFT_HEAD)
@@ -1018,8 +1018,6 @@ termp_nm_pre(DECL_ARGS)
 	}
 
 	term_fontpush(p, TERMFONT_BOLD);
-	if (NULL == n->child)
-		term_word(p, meta->name);
 	return 1;
 }
 
