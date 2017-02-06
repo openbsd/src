@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.9 2016/11/14 06:57:39 jmc Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.10 2017/02/06 07:09:19 jca Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: February 6 2017 $
 .Dt COUNTERS_ALLOC 9
 .Os
 .Sh NAME
@@ -34,16 +34,15 @@
 .Sh SYNOPSIS
 .In sys/percpu.h
 .Ft struct cpumem *
-.Fn counters_alloc "unsigned int ncounters" "int type"
+.Fn counters_alloc "unsigned int ncounters"
 .Ft void
-.Fn counters_free "struct cpumem *cm" "unsigned int ncounters" "int type"
+.Fn counters_free "struct cpumem *cm" "unsigned int ncounters"
 .Fn COUNTERS_BOOT_MEMORY "NAME" "unsigned int ncounters"
 .Fn COUNTERS_BOOT_INITIALIZER "NAME"
 .Ft struct cpumemt *
 .Fo counters_alloc_ncpus
 .Fa "struct cpumem *cm"
 .Fa "unsigned int ncounters"
-.Fa "int type"
 .Fc
 .Ft uint64_t *
 .Fn counters_enter "struct counters_ref *ref" "struct cpumem *cm"
@@ -91,20 +90,13 @@ uni-processor systems.
 allocates memory for a series of uint64_t values on each CPU.
 .Fa ncounters
 specifies the number of counters to be allocated.
-The
-.Fa type
-argument specifies the type of memory that the counters will be
-allocated as via
-.Xr malloc 9 .
 The counters will be zeroed on allocation.
 .Pp
 .Fn counters_free
 deallocates each CPU's counters.
 The same
 .Fa ncounters
-and
-.Fa type
-arguments type originally provided to
+argument originally provided to
 .Fn counters_alloc
 must be passed to
 .Fn counters_free .
@@ -142,11 +134,6 @@ The same number of counters originally passed to
 .Fa COUNTERS_BOOT_MEMORY
 must be specified by
 .Fa ncounters .
-The
-.Fa type
-argument specifies the type of memory that the counters will be
-allocated as via
-.Xr malloc 9 .
 The counters on the boot CPU will be preserved, while the counters
 for the additional CPUs will be zeroed on allocation.
 .Pp
@@ -264,8 +251,7 @@ struct cpumem *mbstat = COUNTERS_BOOT_INITIALIZER(mbstat_boot);
 void
 mbcpuinit()
 {
-	mbstat = counters_alloc_ncpus(mbstat, MBSTAT_COUNT,
-	    M_DEVBUF);
+	mbstat = counters_alloc_ncpus(mbstat, MBSTAT_COUNT);
 }
 
 struct mbuf *
