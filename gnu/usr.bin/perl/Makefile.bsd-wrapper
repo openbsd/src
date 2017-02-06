@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.106 2017/02/05 00:33:38 afresh1 Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.107 2017/02/06 02:34:43 afresh1 Exp $
 #
-# Build wrapper for Perl 5.20.1-RC2
+# Build wrapper for Perl
 #
 
 # For ``NOMAN''
