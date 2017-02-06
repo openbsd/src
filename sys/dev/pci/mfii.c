@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.33 2017/02/06 06:16:36 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.34 2017/02/06 07:04:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,8 @@
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/pool.h>
+#include <sys/task.h>
+#include <sys/atomic.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -205,6 +207,7 @@ struct mfii_ccb {
 	u_int32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
 	u_int			ccb_smid;
+	u_int			ccb_refcnt;
 	SIMPLEQ_ENTRY(mfii_ccb)	ccb_link;
 };
 SIMPLEQ_HEAD(mfii_ccb_list, mfii_ccb);
@@ -255,6 +258,10 @@ struct mfii_softc {
 
 	struct mfii_ccb		*sc_ccb;
 	struct mfii_ccb_list	sc_ccb_freeq;
+
+	struct mutex		sc_abort_mtx;
+	struct mfii_ccb_list	sc_abort_list;
+	struct task		sc_abort_task;
 
 	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
@@ -347,9 +354,16 @@ int			mfii_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
 int			mfii_pd_scsi_cmd_cdb(struct mfii_softc *,
 			    struct scsi_xfer *);
+void			mfii_scsi_cmd_tmo(void *);
 
 int			mfii_dev_handles_update(struct mfii_softc *sc);
 void			mfii_dev_handles_dtor(void *, void *);
+
+void			mfii_abort_task(void *);
+void			mfii_abort(struct mfii_softc *, struct mfii_ccb *,
+			    uint16_t, uint16_t, uint8_t, uint32_t);
+void			mfii_scsi_cmd_abort_done(struct mfii_softc *,
+			    struct mfii_ccb *);
 
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
@@ -430,6 +444,10 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&sc->sc_post_mtx, IPL_BIO);
 	mtx_init(&sc->sc_reply_postq_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, mfii_get_ccb, mfii_put_ccb);
+
+	mtx_init(&sc->sc_abort_mtx, IPL_BIO);
+	SIMPLEQ_INIT(&sc->sc_abort_list);
+	task_set(&sc->sc_abort_task, mfii_abort_task, sc);
 
 	/* wire up the bus shizz */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFII_BAR);
@@ -1375,6 +1393,8 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
+	timeout_set(&xs->stimeout, mfii_scsi_cmd_tmo, xs);
+
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
 	case READ_BIG:
@@ -1404,7 +1424,10 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	ccb->ccb_refcnt = 2; /* one for the chip, one for the timeout */
+	timeout_add_msec(&xs->stimeout, xs->timeout);
 	mfii_start(sc, ccb);
+
 	return;
 
 stuffup:
@@ -1418,6 +1441,10 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	struct mpii_msg_scsi_io *io = ccb->ccb_request;
 	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	u_int refs = 1;
+
+	if (timeout_del(&xs->stimeout))
+		refs = 2;
 
 	switch (ctx->status) {
 	case MFI_STAT_OK:
@@ -1439,7 +1466,8 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		break;
 	}
 
-	scsi_done(xs);
+	if (atomic_sub_int_nv(&ccb->ccb_refcnt, refs) == 0)
+		scsi_done(xs);
 }
 
 int
@@ -1551,6 +1579,8 @@ mfii_pd_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
+	timeout_set(&xs->stimeout, mfii_scsi_cmd_tmo, xs);
+
 	xs->error = mfii_pd_scsi_cmd_cdb(sc, xs);
 	if (xs->error != XS_NOERROR)
 		goto done;
@@ -1563,7 +1593,10 @@ mfii_pd_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
+	ccb->ccb_refcnt = 2; /* one for the chip, one for the timeout */
+	timeout_add_msec(&xs->stimeout, xs->timeout);
 	mfii_start(sc, ccb);
+
 	return;
 
 stuffup:
@@ -1722,6 +1755,96 @@ mfii_load_ccb(struct mfii_softc *sc, struct mfii_ccb *ccb, void *sglp,
 	return (0);
 }
 
+void
+mfii_scsi_cmd_tmo(void *xsp)
+{
+	struct scsi_xfer *xs = xsp;
+	struct scsi_link *link = xs->sc_link;
+	struct mfii_softc *sc = link->adapter_softc;
+	struct mfii_ccb *ccb = xs->io;
+
+	mtx_enter(&sc->sc_abort_mtx);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_abort_list, ccb, ccb_link);
+	mtx_leave(&sc->sc_abort_mtx);
+
+	task_add(systqmp, &sc->sc_abort_task);
+}
+
+void
+mfii_abort_task(void *scp)
+{
+	struct mfii_softc *sc = scp;
+	struct mfii_ccb *list;
+
+	mtx_enter(&sc->sc_abort_mtx);
+	list = SIMPLEQ_FIRST(&sc->sc_abort_list);
+	SIMPLEQ_INIT(&sc->sc_abort_list);
+	mtx_leave(&sc->sc_abort_mtx);
+
+	while (list != NULL) {
+		struct mfii_ccb *ccb = list;
+		struct scsi_xfer *xs = ccb->ccb_cookie;
+		struct scsi_link *link = xs->sc_link;
+
+		uint16_t dev_handle;
+		struct mfii_ccb *accb;
+
+		list = SIMPLEQ_NEXT(ccb, ccb_link);
+
+		dev_handle = mfii_dev_handle(sc, link->target);
+		if (dev_handle == htole16(0xffff)) {
+			/* device is gone */
+			if (atomic_dec_int_nv(&ccb->ccb_refcnt) == 0)
+				scsi_done(xs);
+			continue;
+		}
+
+		accb = scsi_io_get(&sc->sc_iopool, 0);
+		mfii_scrub_ccb(accb);
+		mfii_abort(sc, accb, dev_handle, ccb->ccb_smid,
+		    MPII_SCSI_TASK_ABORT_TASK,
+		    htole32(MFII_TASK_MGMT_FLAGS_PD));
+
+		accb->ccb_cookie = ccb;
+		accb->ccb_done = mfii_scsi_cmd_abort_done;
+
+		mfii_start(sc, accb);
+	}
+}
+
+void
+mfii_abort(struct mfii_softc *sc, struct mfii_ccb *accb, uint16_t dev_handle,
+    uint16_t smid, uint8_t type, uint32_t flags)
+{
+	struct mfii_task_mgmt *msg;
+	struct mpii_msg_scsi_task_request *req;
+
+	msg = accb->ccb_request;
+	req = &msg->mpii_request;
+	req->dev_handle = dev_handle;
+	req->function = MPII_FUNCTION_SCSI_TASK_MGMT;
+	req->task_type = type;
+	htolem16(&req->task_mid, smid);
+	msg->flags = flags;
+
+	accb->ccb_req.flags = MFII_REQ_TYPE_HI_PRI;
+	accb->ccb_req.smid = letoh16(accb->ccb_smid);
+}
+
+void
+mfii_scsi_cmd_abort_done(struct mfii_softc *sc, struct mfii_ccb *accb)
+{
+	struct mfii_ccb *ccb = accb->ccb_cookie;
+	struct scsi_xfer *xs = ccb->ccb_cookie;
+
+	/* XXX check accb completion? */
+
+	scsi_io_put(&sc->sc_iopool, accb);
+
+	if (atomic_dec_int_nv(&ccb->ccb_refcnt) == 0)
+		scsi_done(xs);
+}
+
 void *
 mfii_get_ccb(void *cookie)
 {
@@ -1747,6 +1870,7 @@ mfii_scrub_ccb(struct mfii_ccb *ccb)
 	ccb->ccb_direction = 0;
 	ccb->ccb_len = 0;
 	ccb->ccb_sgl_len = 0;
+	ccb->ccb_refcnt = 1;
 
 	memset(&ccb->ccb_req, 0, sizeof(ccb->ccb_req));
 	memset(ccb->ccb_request, 0, MFII_REQUEST_SIZE);
