@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.38 2017/02/06 21:43:48 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.39 2017/02/06 21:52:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -336,18 +336,17 @@ xs_ring_avail(struct xs_ring *xsr, int req)
 }
 
 void
-xs_poll(struct xs_softc *xs, int nowait)
+xs_poll(struct xs_softc *xs, int nosleep)
 {
 	int s;
 
-	if (nowait) {
+	if (nosleep) {
 		delay(XST_DELAY * 1000 >> 2);
 		s = splnet();
 		xs_intr(xs);
 		splx(s);
 	} else
 		tsleep(xs->xs_wchan, PRIBIO, xs->xs_wchan, XST_DELAY * hz >> 2);
-	virtio_membar_sync();
 }
 
 int
@@ -376,7 +375,7 @@ xs_output(struct xs_transaction *xst, uint8_t *bp, int len)
 		 * and must wait for HV to collect the data.
 		 */
 		while (xs->xs_ring->xsr_req_prod != xs->xs_ring->xsr_req_cons)
-			xs_poll(xs, xst->xst_flags & XST_POLL);
+			xs_poll(xs, 1);
 	}
 	return (0);
 }
@@ -437,7 +436,7 @@ xs_reply(struct xs_transaction *xst, uint rid)
 			TAILQ_REMOVE(&xs->xs_rsps, xsm, xsm_link);
 			break;
 		}
-		if (xst->xst_flags & XST_POLL) {
+		if (cold) {
 			mtx_leave(&xs->xs_rsplck);
 			delay(XST_DELAY * 1000 >> 2);
 			s = splnet();
@@ -608,8 +607,7 @@ xs_get_buf(struct xs_transaction *xst, struct xs_msg *xsm, int len)
 {
 	unsigned char *buf = NULL;
 
-	buf = malloc(len, M_DEVBUF, M_ZERO | (xst->xst_flags & XST_POLL ?
-	    M_NOWAIT : M_WAITOK));
+	buf = malloc(len, M_DEVBUF, M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
 	if (buf == NULL)
 		return (-1);
 	xsm->xsm_dlen = len;
@@ -643,7 +641,7 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
 
 	/* If the response size is zero, we return an empty string */
 	dlen = MAX(xsm->xsm_hdr.xmh_len, 1);
-	flags = M_ZERO | (xst->xst_flags & XST_POLL ? M_NOWAIT : M_WAITOK);
+	flags = M_ZERO | (cold ? M_NOWAIT : M_WAITOK);
 
 	*iov_cnt = 0;
 	/* Make sure that the data is NUL terminated */
@@ -763,7 +761,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		}
 	}
 
-	xsm = xs_get_msg(xs, !(xst->xst_flags & XST_POLL));
+	xsm = xs_get_msg(xs, !cold);
 
 	if (xs_get_buf(xst, xsm, datalen)) {
 		xs_put_msg(xs, xsm);
@@ -831,8 +829,6 @@ xs_watch(void *xsc, const char *path, const char *property, struct task *task,
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
-	if (cold)
-		xst.xst_flags = XST_POLL;
 
 	xsw = malloc(sizeof(*xsw), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (xsw == NULL)
@@ -958,8 +954,6 @@ xs_getprop(void *xsc, const char *path, const char *property, char *value,
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
-	if (cold)
-		xst.xst_flags = XST_POLL;
 
 	if (path)
 		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
@@ -995,8 +989,6 @@ xs_setprop(void *xsc, const char *path, const char *property, char *value,
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
-	if (cold)
-		xst.xst_flags = XST_POLL;
 
 	if (path)
 		ret = snprintf(key, sizeof(key), "%s/%s", path, property);
@@ -1030,8 +1022,6 @@ xs_cmpprop(void *xsc, const char *path, const char *property, const char *value,
 	memset(&xst, 0, sizeof(xst));
 	xst.xst_id = 0;
 	xst.xst_cookie = sc->sc_xs;
-	if (cold)
-		xst.xst_flags = XST_POLL;
 
 	if (path)
 		ret = snprintf(key, sizeof(key), "%s/%s", path, property);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.46 2017/02/06 21:43:48 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.47 2017/02/06 21:52:02 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -174,8 +174,6 @@ void	xen_unplug_emulated(void *, int);
 
 struct xs_transaction {
 	uint32_t		 xst_id;
-	uint32_t		 xst_flags;
-#define XST_POLL		0x0001
 	void			*xst_cookie;
 };
 
