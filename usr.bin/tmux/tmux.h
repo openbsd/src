@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.713 2017/02/06 13:23:00 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.714 2017/02/06 15:00:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1226,6 +1226,7 @@ struct cmdq_item {
 
 	struct cmd_list		*cmdlist;
 	struct cmd		*cmd;
+	int			 repeat;
 
 	cmdq_cb			 cb;
 	void			*data;
