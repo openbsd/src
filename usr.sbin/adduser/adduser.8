@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.44 2015/12/24 16:54:37 mmcc Exp $
+.\"	$OpenBSD: adduser.8,v 1.45 2017/02/06 06:16:52 tb Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: February 6 2017 $
 .Dt ADDUSER 8
 .Os
 .Sh NAME
@@ -373,7 +373,7 @@ The password has been created using
 .Xr encrypt 1 :
 .Bd -literal -offset indent
 # adduser -batch falken guest,staff,beer 'Prof. Falken' \e
-    $2a$06$1Sdjxjoxg4cNmT6zAxriGOLgdLXQ3HdJ2dKBbzEk68jSrO1EtLJ3C
+    '$2b$10$aOadQNznQ1YJFnqNaRRneOvYvZAEO7atYiTND3EsLf6afHT5t1UIK'
 .Ed
 .Pp
 Create user
