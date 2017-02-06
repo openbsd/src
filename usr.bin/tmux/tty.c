@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.227 2017/02/06 19:26:49 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.228 2017/02/06 19:45:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -245,6 +245,9 @@ tty_start_tty(struct tty *tty)
 
 	tty_putcode(tty, TTYC_SGR0);
 	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);
+
+	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
+	tty->last_wp = -1;
 
 	tty_putcode(tty, TTYC_RMKX);
 	if (tty_use_acs(tty))
@@ -1250,13 +1253,15 @@ tty_reset(struct tty *tty)
 {
 	struct grid_cell	*gc = &tty->cell;
 
-	if (grid_cells_equal(gc, &grid_default_cell))
-		return;
+	if (!grid_cells_equal(gc, &grid_default_cell)) {
+		if ((gc->attr & GRID_ATTR_CHARSET) && tty_use_acs(tty))
+			tty_putcode(tty, TTYC_RMACS);
+		tty_putcode(tty, TTYC_SGR0);
+		memcpy(gc, &grid_default_cell, sizeof *gc);
+	}
 
-	if ((gc->attr & GRID_ATTR_CHARSET) && tty_use_acs(tty))
-		tty_putcode(tty, TTYC_RMACS);
-	tty_putcode(tty, TTYC_SGR0);
-	memcpy(gc, &grid_default_cell, sizeof *gc);
+	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
+	tty->last_wp = -1;
 }
 
 /* Turn off margin. */
@@ -1478,6 +1483,18 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 	struct grid_cell	*tc = &tty->cell, gc2;
 	u_char			 changed;
 
+	/* Ignore cell if it is the same as the last one. */
+	if (wp != NULL &&
+	    (int)wp->id == tty->last_wp &&
+	    ~(wp->window->flags & WINDOW_STYLECHANGED) &&
+	    gc->attr == tty->last_cell.attr &&
+	    gc->fg == tty->last_cell.fg &&
+	    gc->bg == tty->last_cell.bg)
+		return;
+	tty->last_wp = (wp != NULL ? (int)wp->id : -1);
+	memcpy(&tty->last_cell, gc, sizeof tty->last_cell);
+
+	/* Copy cell and update default colours. */
 	memcpy(&gc2, gc, sizeof gc2);
 	if (wp != NULL)
 		tty_default_colours(&gc2, wp);

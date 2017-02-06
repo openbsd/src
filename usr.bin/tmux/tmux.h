@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.715 2017/02/06 19:26:49 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.716 2017/02/06 19:45:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1053,6 +1053,9 @@ struct tty {
 	struct termios	 tio;
 
 	struct grid_cell cell;
+
+	int              last_wp;
+	struct grid_cell last_cell;
 
 #define TTY_NOCURSOR 0x1
 #define TTY_FREEZE 0x2
