@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2017/02/06 21:54:05 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/02/06 22:58:51 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -153,7 +153,13 @@ run-regress-ping-IPS_TRANSP_IPV6:
 TARGETS +=      ping-${host}_${dir}_${ipv}
 run-regress-ping-${host}_${dir}_${ipv}:
 	@echo '\n======== $@ ========'
+	netstat -s -p esp | awk '/input ESP /{print $$1}' >esp.in
+	netstat -s -p esp | awk '/output ESP /{print $$1}' >esp.out
 	${ping} -n -c 1 -w 2 ${${host}_${dir}_${ipv}}
+.if "${host}" != SRC && "${dir}" != IN && "${dir}" != OUT
+	netstat -s -p esp | awk '/input ESP /{print $$1-1}' | diff esp.in -
+	netstat -s -p esp | awk '/output ESP /{print $$1-1}' | diff esp.out -
+.endif
 .endfor
 .endfor
 
@@ -161,7 +167,7 @@ REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 ${REGRESS_TARGETS}: stamp-ipsec
 
-CLEANFILES +=		addr.py *.pyc *.log stamp-* */hostname.*
+CLEANFILES +=		addr.py *.pyc *.log stamp-* */hostname.* *.{in,out}
 
 .PHONY: create-setup
 
