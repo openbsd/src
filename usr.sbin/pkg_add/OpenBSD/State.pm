@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.41 2017/02/05 14:00:42 rpe Exp $
+# $OpenBSD: State.pm,v 1.42 2017/02/06 15:13:23 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -25,8 +25,22 @@ sub new
 	my ($class, $state) = @_;
 	my $self = bless {}, $class;
 	require OpenBSD::Paths;
+	$self->add_installurl(OpenBSD::Paths->installurl, $state);
 	$self->read_file(OpenBSD::Paths->pkgconf, $state);
 	return $self;
+}
+
+sub add_installurl
+{
+	my ($self, $filename, $state) = @_;
+	open(my $fh, '<', $filename) or return;
+	while (<$fh>) {
+		chomp;
+		next if m/^\s*\#/;
+		next if m/^\s*$/;
+		$self->{installpath} = ["$_/%c/packages/%a/"];
+		return;
+	}
 }
 
 sub read_file
