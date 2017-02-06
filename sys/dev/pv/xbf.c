@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.16 2017/01/19 12:36:50 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.17 2017/02/06 21:43:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -37,6 +37,14 @@
 #include <scsi/cd.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+/* #define XBF_DEBUG */
+
+#ifdef XBF_DEBUG
+#define DPRINTF(x...)		printf(x)
+#else
+#define DPRINTF(x...)
+#endif
 
 #define XBF_OP_READ		0
 #define XBF_OP_WRITE		1
@@ -985,7 +993,7 @@ xbf_init(struct xbf_softc *sc)
 	if (error == 0 && res == 1)
 		sc->sc_caps |= XBF_CAP_FLUSH;
 
-#ifdef XEN_DEBUG
+#ifdef XBF_DEBUG
 	if (sc->sc_caps) {
 		printf("%s: features:", sc->sc_dev.dv_xname);
 		if (sc->sc_caps & XBF_CAP_BARRIER)

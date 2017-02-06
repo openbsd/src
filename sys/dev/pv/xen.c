@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.73 2017/01/31 12:17:20 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.74 2017/02/06 21:43:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -54,6 +54,14 @@
 #include <dev/pv/pvreg.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
+
+/* #define XEN_DEBUG */
+
+#ifdef XEN_DEBUG
+#define DPRINTF(x...)		printf(x)
+#else
+#define DPRINTF(x...)
+#endif
 
 struct xen_softc *xen_sc;
 

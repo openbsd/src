@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.45 2016/12/21 12:17:15 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.46 2017/02/06 21:43:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -18,14 +18,6 @@
 
 #ifndef _DEV_PV_XENVAR_H_
 #define _DEV_PV_XENVAR_H_
-
-/* #define XEN_DEBUG */
-
-#ifdef XEN_DEBUG
-#define DPRINTF(x...)		printf(x)
-#else
-#define DPRINTF(x...)
-#endif
 
 static inline void
 clear_bit(u_int b, volatile void *p)

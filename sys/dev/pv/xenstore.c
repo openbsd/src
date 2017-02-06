@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.37 2017/01/12 20:29:46 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.38 2017/02/06 21:43:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -34,6 +34,14 @@
 #include <dev/pv/pvvar.h>
 #include <dev/pv/xenreg.h>
 #include <dev/pv/xenvar.h>
+
+/* #define XS_DEBUG */
+
+#ifdef XS_DEBUG
+#define DPRINTF(x...)		printf(x)
+#else
+#define DPRINTF(x...)
+#endif
 
 /*
  * The XenStore interface is a simple storage system that is a means of
@@ -795,7 +803,7 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		KASSERT(iov && iov_cnt);
 		error = xs_parse(xst, xsm, iov, iov_cnt);
 	}
-#ifdef XEN_DEBUG
+#ifdef XS_DEBUG
 	else
 		if (strcmp(xsm->xsm_data, "OK"))
 			printf("%s: xenstore request %d failed: %s\n",
