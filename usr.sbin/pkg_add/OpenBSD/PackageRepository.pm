@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.139 2017/01/25 14:07:36 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.140 2017/02/06 16:12:16 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -305,13 +305,13 @@ sub parse_problems
 			next if m/^ftp: local: -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
-		if (m/^signify:/) {
-			$signify_error = 1;
-			s/.*unsigned .*archive.*/unsigned package/;
-		}
 		if ($notyet) {
 			$self->{state}->errsay("Error from #1", $url);
 			$notyet = 0;
+		}
+		if (m/^signify:/) {
+			$signify_error = 1;
+			s/.*unsigned .*archive.*/unsigned package (signify(1) doesn't see old-style signatures)/;
 		}
 		if (m/^421\s+/o ||
 		    m/^ftp: connect: Connection timed out/o ||
