@@ -1,0 +1,10 @@
+Send IPsec traffic to another machine where it gets processed.
+There the IPsec implementation has to deliver it to the local stack
+or forward it after decryption.  By reflecting the packets, the way
+back is also tested.  When the response is received at the generating
+machine, the test is considered successful.
+
+Currently only ICMP ping packets are encrypted with ESP.  Transport
+and tunnel mode are tested with all combinations of IPv4 and IPv6.
+
+Tests for UDP, TCP and path MTU discovery are planned.
