@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.47 2017/02/06 21:52:02 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.48 2017/02/06 21:58:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -46,6 +46,7 @@ struct xen_intsrc {
 	evtchn_port_t		 xi_port;
 	short			 xi_noclose;
 	short			 xi_masked;
+	struct refcnt		 xi_refcnt;
 	struct task		 xi_task;
 	struct taskq		*xi_taskq;
 };
@@ -56,7 +57,7 @@ struct xen_gntent {
 	short			 ge_reserved;
 	short			 ge_next;
 	short			 ge_free;
-	struct mutex		 ge_mtx;
+	struct mutex		 ge_lock;
 };
 
 struct xen_gntmap {
@@ -96,9 +97,10 @@ struct xen_softc {
 
 	uint64_t		 sc_irq;	/* IDT vector number */
 	SLIST_HEAD(, xen_intsrc) sc_intrs;
+	struct mutex		 sc_islck;
 
 	struct xen_gntent	*sc_gnt;	/* grant table entries */
-	struct mutex		 sc_gntmtx;
+	struct mutex		 sc_gntlck;
 	int			 sc_gntcnt;	/* number of allocated frames */
 	int			 sc_gntmax;	/* number of allotted frames */
 

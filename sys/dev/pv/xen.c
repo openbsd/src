@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.75 2017/02/06 21:52:02 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.76 2017/02/06 21:58:29 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -33,6 +33,7 @@
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/refcnt.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/stdint.h>
@@ -563,6 +564,8 @@ xen_init_interrupts(struct xen_softc *sc)
 
 	SLIST_INIT(&sc->sc_intrs);
 
+	mtx_init(&sc->sc_islck, IPL_NET);
+
 	return (0);
 }
 
@@ -582,14 +585,52 @@ xen_evtchn_hypercall(struct xen_softc *sc, int cmd, void *arg, size_t len)
 	return (error);
 }
 
+static inline void
+xen_intsrc_add(struct xen_softc *sc, struct xen_intsrc *xi)
+{
+	refcnt_init(&xi->xi_refcnt);
+	mtx_enter(&sc->sc_islck);
+	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
+	mtx_leave(&sc->sc_islck);
+}
+
 static inline struct xen_intsrc *
-xen_lookup_intsrc(struct xen_softc *sc, evtchn_port_t port)
+xen_intsrc_acquire(struct xen_softc *sc, evtchn_port_t port)
 {
 	struct xen_intsrc *xi;
 
-	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry)
-		if (xi->xi_port == port)
+	mtx_enter(&sc->sc_islck);
+	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
+		if (xi->xi_port == port) {
+			refcnt_take(&xi->xi_refcnt);
 			break;
+		}
+	}
+	mtx_leave(&sc->sc_islck);
+	return (xi);
+}
+
+static inline void
+xen_intsrc_release(struct xen_softc *sc, struct xen_intsrc *xi)
+{
+	refcnt_rele_wake(&xi->xi_refcnt);
+}
+
+static inline struct xen_intsrc *
+xen_intsrc_remove(struct xen_softc *sc, evtchn_port_t port)
+{
+	struct xen_intsrc *xi;
+
+	mtx_enter(&sc->sc_islck);
+	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
+		if (xi->xi_port == port) {
+			SLIST_REMOVE(&sc->sc_intrs, xi, xen_intsrc, xi_entry);
+			break;
+		}
+	}
+	mtx_leave(&sc->sc_islck);
+	if (xi != NULL)
+		refcnt_finalize(&xi->xi_refcnt, "xenisrm");
 	return (xi);
 }
 
@@ -631,13 +672,14 @@ xen_intr(void)
 			if ((pending & 1) == 0)
 				continue;
 			port = (row * LONG_BIT) + bit;
-			if ((xi = xen_lookup_intsrc(sc, port)) == NULL) {
+			if ((xi = xen_intsrc_acquire(sc, port)) == NULL) {
 				printf("%s: unhandled interrupt on port %u\n",
 				    sc->sc_dev.dv_xname, port);
 				continue;
 			}
 			xi->xi_evcnt.ec_count++;
 			task_add(xi->xi_taskq, &xi->xi_task);
+			xen_intsrc_release(sc, xi);
 		}
 	}
 }
@@ -648,8 +690,10 @@ xen_intr_schedule(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_lookup_intsrc(sc, (evtchn_port_t)xih)) != NULL)
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
 		task_add(xi->xi_taskq, &xi->xi_task);
+		xen_intsrc_release(sc, xi);
+	}
 }
 
 void
@@ -659,8 +703,9 @@ xen_intr_signal(xen_intr_handle_t xih)
 	struct xen_intsrc *xi;
 	struct evtchn_send es;
 
-	if ((xi = xen_lookup_intsrc(sc, (evtchn_port_t)xih)) != NULL) {
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
 		es.port = xi->xi_port;
+		xen_intsrc_release(sc, xi);
 		xen_evtchn_hypercall(sc, EVTCHNOP_send, &es, sizeof(es));
 	}
 }
@@ -679,7 +724,8 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 	struct evtchn_status es;
 #endif
 
-	if (port && xen_lookup_intsrc(sc, port)) {
+	if (port && (xi = xen_intsrc_acquire(sc, port)) != NULL) {
+		xen_intsrc_release(sc, xi);
 		DPRINTF("%s: interrupt handler has already been established "
 		    "for port %u\n", sc->sc_dev.dv_xname, port);
 		return (-1);
@@ -735,7 +781,7 @@ xen_intr_establish(evtchn_port_t port, xen_intr_handle_t *xih, int domain,
 
 	evcount_attach(&xi->xi_evcnt, name, &sc->sc_irq);
 
-	SLIST_INSERT_HEAD(&sc->sc_intrs, xi, xi_entry);
+	xen_intsrc_add(sc, xi);
 
 	/* Mask the event port */
 	set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
@@ -774,13 +820,10 @@ xen_intr_disestablish(xen_intr_handle_t xih)
 	struct evtchn_close ec;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_lookup_intsrc(sc, port)) == NULL)
+	if ((xi = xen_intsrc_remove(sc, port)) == NULL)
 		return (-1);
 
 	evcount_detach(&xi->xi_evcnt);
-
-	/* XXX not MP safe */
-	SLIST_REMOVE(&sc->sc_intrs, xi, xen_intsrc, xi_entry);
 
 	taskq_destroy(xi->xi_taskq);
 
@@ -806,6 +849,7 @@ xen_intr_enable(void)
 	struct xen_intsrc *xi;
 	struct evtchn_unmask eu;
 
+	mtx_enter(&sc->sc_islck);
 	SLIST_FOREACH(xi, &sc->sc_intrs, xi_entry) {
 		if (!xi->xi_masked) {
 			eu.port = xi->xi_port;
@@ -819,6 +863,7 @@ xen_intr_enable(void)
 				    sc->sc_dev.dv_xname, xi->xi_port);
 		}
 	}
+	mtx_leave(&sc->sc_islck);
 }
 
 void
@@ -828,9 +873,10 @@ xen_intr_mask(xen_intr_handle_t xih)
 	evtchn_port_t port = (evtchn_port_t)xih;
 	struct xen_intsrc *xi;
 
-	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
+	if ((xi = xen_intsrc_acquire(sc, port)) != NULL) {
 		xi->xi_masked = 1;
 		set_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]);
+		xen_intsrc_release(sc, xi);
 	}
 }
 
@@ -842,11 +888,12 @@ xen_intr_unmask(xen_intr_handle_t xih)
 	struct xen_intsrc *xi;
 	struct evtchn_unmask eu;
 
-	if ((xi = xen_lookup_intsrc(sc, port)) != NULL) {
+	if ((xi = xen_intsrc_acquire(sc, port)) != NULL) {
 		xi->xi_masked = 0;
 		if (!test_bit(xi->xi_port, &sc->sc_ipg->evtchn_mask[0]))
 			return (0);
 		eu.port = xi->xi_port;
+		xen_intsrc_release(sc, xi);
 		return (xen_evtchn_hypercall(sc, EVTCHNOP_unmask, &eu,
 		    sizeof(eu)));
 	}
@@ -878,7 +925,7 @@ xen_init_grant_tables(struct xen_softc *sc)
 		return (-1);
 	}
 
-	mtx_init(&sc->sc_gntmtx, IPL_NET);
+	mtx_init(&sc->sc_gntlck, IPL_NET);
 
 	if (xen_grant_table_grow(sc) == NULL) {
 		free(sc->sc_gnt, M_DEVBUF, sc->sc_gntmax *
@@ -906,19 +953,19 @@ xen_grant_table_grow(struct xen_softc *sc)
 		return (NULL);
 	}
 
-	mtx_enter(&sc->sc_gntmtx);
+	mtx_enter(&sc->sc_gntlck);
 
 	ge = &sc->sc_gnt[sc->sc_gntcnt];
 	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
 	if (ge->ge_table == NULL) {
-		mtx_leave(&sc->sc_gntmtx);
+		mtx_leave(&sc->sc_gntlck);
 		return (NULL);
 	}
 	if (!pmap_extract(pmap_kernel(), (vaddr_t)ge->ge_table, &pa)) {
 		printf("%s: grant table page PA extraction failed\n",
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
-		mtx_leave(&sc->sc_gntmtx);
+		mtx_leave(&sc->sc_gntlck);
 		return (NULL);
 	}
 	xatp.domid = DOMID_SELF;
@@ -929,7 +976,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 		printf("%s: failed to add a grant table page\n",
 		    sc->sc_dev.dv_xname);
 		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
-		mtx_leave(&sc->sc_gntmtx);
+		mtx_leave(&sc->sc_gntlck);
 		return (NULL);
 	}
 	ge->ge_start = sc->sc_gntcnt * GNTTAB_NEPG;
@@ -937,10 +984,10 @@ xen_grant_table_grow(struct xen_softc *sc)
 	ge->ge_reserved = ge->ge_start == 0 ? GNTTAB_NR_RESERVED_ENTRIES : 0;
 	ge->ge_free = GNTTAB_NEPG - ge->ge_reserved;
 	ge->ge_next = ge->ge_reserved;
-	mtx_init(&ge->ge_mtx, IPL_NET);
+	mtx_init(&ge->ge_lock, IPL_NET);
 
 	sc->sc_gntcnt++;
-	mtx_leave(&sc->sc_gntmtx);
+	mtx_leave(&sc->sc_gntlck);
 
 	return (ge);
 }
@@ -954,10 +1001,10 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 	/* Start with a previously allocated table page */
 	ge = &sc->sc_gnt[sc->sc_gntcnt - 1];
 	if (ge->ge_free > 0) {
-		mtx_enter(&ge->ge_mtx);
+		mtx_enter(&ge->ge_lock);
 		if (ge->ge_free > 0)
 			goto search;
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 	}
 
 	/* Try other existing table pages */
@@ -965,10 +1012,10 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 		ge = &sc->sc_gnt[i];
 		if (ge->ge_free == 0)
 			continue;
-		mtx_enter(&ge->ge_mtx);
+		mtx_enter(&ge->ge_lock);
 		if (ge->ge_free > 0)
 			goto search;
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 	}
 
  alloc:
@@ -976,10 +1023,10 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 	if ((ge = xen_grant_table_grow(sc)) == NULL)
 		return (-1);
 
-	mtx_enter(&ge->ge_mtx);
+	mtx_enter(&ge->ge_lock);
 	if (ge->ge_free == 0) {
 		/* We were not fast enough... */
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 		goto alloc;
 	}
 
@@ -1001,10 +1048,10 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 		if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
 			ge->ge_next = ge->ge_reserved;
 		ge->ge_free--;
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 		return (0);
 	}
-	mtx_leave(&ge->ge_mtx);
+	mtx_leave(&ge->ge_lock);
 
 	panic("page full, sc %p gnt %p (%d) ge %p", sc, sc->sc_gnt,
 	    sc->sc_gntcnt, ge);
@@ -1022,17 +1069,17 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 		    sc->sc_gnt, sc->sc_gntcnt);
 #endif
 	ge = &sc->sc_gnt[ref / GNTTAB_NEPG];
-	mtx_enter(&ge->ge_mtx);
+	mtx_enter(&ge->ge_lock);
 #ifdef XEN_DEBUG
 	if (ref < ge->ge_start || ref > ge->ge_start + GNTTAB_NEPG) {
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 		panic("out of bounds ref %u ge %p start %u sc %p gnt %p",
 		    ref, ge, ge->ge_start, sc, sc->sc_gnt);
 	}
 #endif
 	ref -= ge->ge_start;
 	if (ge->ge_table[ref].flags != GTF_invalid) {
-		mtx_leave(&ge->ge_mtx);
+		mtx_leave(&ge->ge_lock);
 #ifdef XEN_DEBUG
 		panic("ref %u is still in use, sc %p gnt %p", ref +
 		    ge->ge_start, sc, sc->sc_gnt);
@@ -1044,7 +1091,7 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 	ge->ge_table[ref].frame = 0;
 	ge->ge_next = ref;
 	ge->ge_free++;
-	mtx_leave(&ge->ge_mtx);
+	mtx_leave(&ge->ge_lock);
 }
 
 void
