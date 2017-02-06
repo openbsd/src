@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.32 2017/01/23 05:18:45 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.33 2017/02/06 06:16:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -140,6 +140,23 @@ struct mfii_ld_map {
 	struct mfii_array_map	mlm_am[MFII_MAX_ARRAY];
 	struct mfii_dev_handle	mlm_dev_handle[MFI_MAX_PD];
 } __packed;
+
+struct mfii_task_mgmt {
+	union {
+		uint8_t			request[128];
+		struct mpii_msg_scsi_task_request
+					mpii_request;
+	} __packed __aligned(8);
+
+	union {
+		uint8_t			reply[128];
+		uint32_t		flags;
+#define MFII_TASK_MGMT_FLAGS_PD				(1 << 0)
+#define MFII_TASK_MGMT_FLAGS_LD				(1 << 1)
+		struct mpii_msg_scsi_task_reply
+					mpii_reply;
+	} __packed __aligned(8);
+} __packed __aligned(8);
 
 struct mfii_dmamem {
 	bus_dmamap_t		mdm_map;
