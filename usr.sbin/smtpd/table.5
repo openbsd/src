@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.5 2015/11/30 17:03:05 jmc Exp $
+.\"	$OpenBSD: table.5,v 1.6 2017/02/06 06:27:01 tb Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 30 2015 $
+.Dd $Mdocdate: February 6 2017 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -127,8 +127,8 @@ accept for any relay tls+auth://label@host auth <credentials>
 In a listener context, the credentials are a mapping of username and encrypted
 passwords:
 .Bd -literal -offset indent
-user1	$2a$06$hIJ4QfMcp.90nJwKqGbKM.MybArjHOTpEtoTV.DgLYAiThuoYmTSe
-user2	$2a$06$bwSmUOBGcZGamIfRuXGTvuTo3VLbPG9k5yeKNMBtULBhksV5KdGsK
+user1	$2b$10$hIJ4QfMcp.90nJwKqGbKM.MybArjHOTpEtoTV.DgLYAiThuoYmTSe
+user2	$2b$10$bwSmUOBGcZGamIfRuXGTvuTo3VLbPG9k5yeKNMBtULBhksV5KdGsK
 .Ed
 .Pp
 The passwords are to be encrypted using the
