@@ -1,4 +1,4 @@
-/*	$OpenBSD: octehci.c,v 1.1 2016/03/18 05:38:10 jmatthew Exp $ */
+/*	$OpenBSD: octehci.c,v 1.2 2017/02/06 15:49:08 visa Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -97,8 +97,8 @@ octehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ehci.sc_id_vendor = 0;
 	strlcpy(sc->sc_ehci.sc_vendor, "Octeon", sizeof(sc->sc_ehci.sc_vendor));
 
-	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, ehci_intr,
-	    (void *)&sc->sc_ehci, sc->sc_ehci.sc_bus.bdev.dv_xname);
+	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB | IPL_MPSAFE,
+	    ehci_intr, (void *)&sc->sc_ehci, sc->sc_ehci.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
 
 	rc = ehci_init(&sc->sc_ehci);
