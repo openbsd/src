@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.83 2016/09/04 09:22:28 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.84 2017/02/06 09:15:51 mpi Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1190,7 +1190,7 @@ _C_LABEL(doreti_iret):
 	movq	(TF_SS + 16)(%rsp), %rax
 	movq	%rax, TF_SS(%rsp)
 
-	/* Pull 8 bytes off the stack and store the content of the register. */
+	/* Pull 8 bytes off the stack and store %rbp in the expected location.*/
 	movq	TF_RSP(%rsp), %rax
 	subq	$8, %rax
 	movq	%rax, TF_RSP(%rsp)
