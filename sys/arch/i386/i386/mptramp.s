@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.19 2016/05/24 02:15:38 mlarkin Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.20 2017/02/06 01:50:36 mlarkin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -142,9 +142,8 @@ _TRMP_LABEL(mp_startup)
 	/* Load base of page directory and enable mapping. */
 	movl	%ecx,%cr3		# load ptd addr into mmu
 #ifndef SMALL_KERNEL
-	movl	$_C_LABEL(pmap_pte_set_pae),%eax
-	cmpl	RELOC(_C_LABEL(pmap_pte_set_p)),%eax
-	jne	nopae
+	testl	$0x1, RELOC(_C_LABEL(cpu_pae))
+	jz	nopae
 
 	movl	%cr4,%eax
 	orl	$CR4_PAE,%eax
