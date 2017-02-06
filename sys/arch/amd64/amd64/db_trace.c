@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.24 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.25 2017/02/06 09:13:41 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -325,9 +325,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 vaddr_t
 db_get_pc(struct trapframe *tf)
 {
-	struct callframe *cf = (struct callframe *)(tf->tf_rsp - 8);
+	struct callframe *cf = (struct callframe *)(tf->tf_rsp - sizeof(long));
 
-	return db_get_value((db_addr_t)&cf->f_retaddr, 8, 0);
+	return db_get_value((db_addr_t)&cf->f_retaddr, sizeof(long), 0);
 }
 
 vaddr_t

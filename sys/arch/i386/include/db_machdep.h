@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.25 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.26 2017/02/06 09:13:41 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -50,6 +50,9 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_INST	0xcc		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
+
+#define	SSF_INST	0x55
+#define	SSF_SIZE	(1)
 
 #define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_eip -= BKPT_SIZE)
 

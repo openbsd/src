@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.22 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.23 2017/02/06 09:13:41 mpi Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -213,6 +213,22 @@ static __inline void
 write_eflags(u_int ef)
 {
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
+}
+
+static inline u_long
+intr_disable(void)
+{
+	u_long ef;
+
+	ef = read_eflags();
+	disable_intr();
+	return (ef);
+}
+
+static inline void
+intr_restore(u_long ef)
+{
+	write_eflags(ef);
 }
 
 static __inline void

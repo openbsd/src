@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.171 2016/10/13 09:01:04 mlarkin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.172 2017/02/06 09:13:41 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -133,7 +133,8 @@
 	pushl	%fs		; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movw	%ax,%fs
-#define	INTRFASTEXIT \
+
+#define	INTR_RESTORE_ALL \
 	popl	%fs		; \
 	popl	%gs		; \
 	popl	%es		; \
@@ -144,10 +145,14 @@
 	popl	%ebx		; \
 	popl	%edx		; \
 	popl	%ecx		; \
-	popl	%eax		; \
+	popl	%eax
+
+#define	INTRFASTEXIT \
+	INTR_RESTORE_ALL	;\
 	addl	$8,%esp		; \
 	iret
 
+#define	INTR_FAKE_TRAP	0xbadabada
 
 /*
  * PTmap is recursive pagemap at top of virtual address space.
@@ -1445,6 +1450,24 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPL,%ebx
 #endif /* DIAGNOSTIC */
+#if !defined(GPROF) && defined(DDBPROF)
+	cmpl	$T_BPTFLT,TF_TRAPNO(%esp)
+	jne	.Lreal_trap
+
+	pushl	%esp
+	call	_C_LABEL(db_prof_hook)
+	addl	$4,%esp
+	cmpl	$1,%eax
+	jne	.Lreal_trap
+
+	/*
+	 * Abuse the error field to indicate that INTRFASTEXIT needs
+	 * to emulate the patched instruction.
+	 */
+	movl	$INTR_FAKE_TRAP, TF_ERR(%esp)
+	jz	2f
+.Lreal_trap:
+#endif /* !defined(GPROF) && defined(DDBPROF) */
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1464,10 +1487,22 @@ calltrap:
 	call	_C_LABEL(ast)
 	addl	$4,%esp
 	jmp	2b
+1:
+#if !defined(GPROF) && defined(DDBPROF)
+	/*
+	 * If we are returning from a probe trap we need to fix the
+	 * stack layout and emulate the patched instruction.
+	 *
+	 * The code below does that by trashing %eax, so it MUST be
+	 * restored afterward.
+	 */
+	cmpl	$INTR_FAKE_TRAP, TF_ERR(%esp)
+	je	.Lprobe_fixup
+#endif /* !defined(GPROF) && defined(DDBPROF) */
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+	INTRFASTEXIT
 #else
-1:	cmpl	CPL,%ebx
+	cmpl	CPL,%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -1482,6 +1517,33 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 
+#if !defined(GPROF) && defined(DDBPROF)
+.Lprobe_fixup:
+	/* Restore all register unwinding the stack. */
+	INTR_RESTORE_ALL
+
+	/*
+	 * Use the space left by ``err'' and ``trapno'' to emulate
+	 * "pushl %ebp".
+	 *
+	 * Temporarily save %eax.
+	 */
+	movl	%eax,0(%esp)
+
+	/* Shift hardware-saved registers: eip, cs, eflags */
+	movl	8(%esp),%eax
+	movl	%eax,4(%esp)
+	movl	12(%esp),%eax
+	movl	%eax,8(%esp)
+	movl	16(%esp),%eax
+	movl	%eax,12(%esp)
+
+	/* Store %ebp in the expected location to finish the emulation. */
+	movl	%ebp,16(%esp)
+
+	popl	%eax
+	iret
+#endif /* !defined(GPROF) && defined(DDBPROF) */
 /*
  * Trap gate entry for syscall
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_prof.c,v 1.1 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: db_prof.c,v 1.2 2017/02/06 09:13:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -61,9 +61,10 @@ extern char etext[];
 
 struct prof_probe {
 	const char		*pp_name;
-	vaddr_t			 pp_inst;
 	Elf_Sym			*pp_symb;
 	SLIST_ENTRY(prof_probe)	 pp_next;
+	vaddr_t			 pp_inst;
+	int			 pp_on;
 };
 
 #define PPTSIZE		PAGE_SIZE
@@ -72,6 +73,7 @@ struct prof_probe {
 SLIST_HEAD(, prof_probe) *pp_table;
 
 extern int db_profile;			/* Allow dynamic profiling */
+int db_prof_on;				/* Profiling state On/Off */
 
 vaddr_t db_get_pc(struct trapframe *);
 vaddr_t db_get_probe_addr(struct trapframe *);
@@ -113,6 +115,12 @@ db_prof_forall(db_sym_t sym, char *name, char *suff, int pre, void *xarg)
 	if (strncmp(name, "db_", 3) == 0 || strncmp(name, "trap", 4) == 0)
 		return;
 
+#ifdef __i386__
+	/* Avoid a recursion in db_write_text(). */
+	if (strncmp(name, "pmap_pte", 8) == 0)
+		return;
+#endif
+
 	pp = malloc(sizeof(struct prof_probe), M_TEMP, M_NOWAIT|M_ZERO);
 	if (pp == NULL)
 		return;
@@ -129,7 +137,7 @@ db_prof_forall(db_sym_t sym, char *name, char *suff, int pre, void *xarg)
 int
 db_prof_enable(void)
 {
-#ifdef __amd64__
+#if defined(__amd64__) || defined(__i386__)
 	struct prof_probe *pp;
 	uint8_t patch = BKPT_INST;
 	unsigned long s;
@@ -146,10 +154,13 @@ db_prof_enable(void)
 	s = intr_disable();
 	for (i = 0; i < (PPTSIZE / sizeof(*pp)); i++) {
 		SLIST_FOREACH(pp, &pp_table[i], pp_next) {
+			pp->pp_on = 1;
 			db_write_bytes(pp->pp_inst, BKPT_SIZE, &patch);
 		}
 	}
 	intr_restore(s);
+
+	db_prof_on = 1;
 
 	return 0;
 #else
@@ -165,10 +176,14 @@ db_prof_disable(void)
 	unsigned long s;
 	int i;
 
+	db_prof_on = 0;
+
 	s = intr_disable();
 	for (i = 0; i < (PPTSIZE / sizeof(*pp)); i++) {
-		SLIST_FOREACH(pp, &pp_table[i], pp_next)
+		SLIST_FOREACH(pp, &pp_table[i], pp_next) {
 			db_write_bytes(pp->pp_inst, SSF_SIZE, &patch);
+			pp->pp_on = 0;
+		}
 	}
 	intr_restore(s);
 }
@@ -186,11 +201,13 @@ db_prof_hook(struct trapframe *frame)
 	inst = db_get_probe_addr(frame);
 
 	SLIST_FOREACH(pp, &pp_table[INSTTOIDX(inst)], pp_next) {
-		if (pp->pp_inst == inst) {
-			db_prof_count(pc, inst);
+		if (pp->pp_on && pp->pp_inst == inst) {
+			if (db_prof_on)
+				db_prof_count(pc, inst);
 			return 1;
 		}
 	}
+
 	return 0;
 }
 

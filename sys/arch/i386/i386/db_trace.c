@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.23 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.24 2017/02/06 09:13:41 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -318,4 +318,23 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_XTRN, pr);
 		(*pr)(":\n");
 	}
+}
+
+vaddr_t
+db_get_pc(struct trapframe *tf)
+{
+	struct callframe *cf;
+
+	if (KERNELMODE(tf->tf_cs, tf->tf_eflags))
+		cf = (struct callframe *)((long)&tf->tf_esp - sizeof(long));
+	else
+		cf = (struct callframe *)(tf->tf_esp - sizeof(long));
+
+	return db_get_value((db_addr_t)&cf->f_retaddr, sizeof(long), 0);
+}
+
+vaddr_t
+db_get_probe_addr(struct trapframe *tf)
+{
+	return tf->tf_eip - BKPT_SIZE;
 }
