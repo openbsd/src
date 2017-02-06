@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.16 2017/02/05 13:08:03 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.17 2017/02/06 07:15:56 jsg Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -976,11 +976,8 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	int s;
 
-	s = splvm();
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	splx(s);
 	pmap_pinit(pmap);
 	if (pmap_vp_poolcache == 0) {
 		pool_setlowat(&pmap_vp_pool, 20);
@@ -1008,7 +1005,6 @@ void
 pmap_destroy(pmap_t pm)
 {
 	int refs;
-	int s;
 
 	/* simple_lock(&pmap->pm_obj.vmobjlock); */
 	refs = --pm->pm_refs;
@@ -1023,9 +1019,7 @@ pmap_destroy(pmap_t pm)
 	 * reference count is zero, free pmap resources and free pmap.
 	 */
 	pmap_release(pm);
-	s = splvm();
 	pool_put(&pmap_pmap_pool, pm);
-	splx(s);
 }
 
 /*
@@ -1634,7 +1628,7 @@ pmap_init()
 	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
 	WRITE_SPECIALREG(tcr_el1, tcr);
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_VM, 0,
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
 	    "pmap", NULL);
 	pool_setlowat(&pmap_pmap_pool, 2);
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, IPL_VM, 0,
