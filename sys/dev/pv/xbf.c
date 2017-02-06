@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.17 2017/02/06 21:43:48 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.18 2017/02/06 21:47:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -311,11 +311,18 @@ xbf_detach(struct device *self, int flags)
 	struct xbf_softc *sc = (struct xbf_softc *)self;
 
 	xen_intr_mask(sc->sc_xih);
-	xen_intr_disestablish(sc->sc_xih);
 
-	xbf_stop(sc);
+	intr_barrier(&sc->sc_xih);
 
-	return (config_detach(sc->sc_scsibus, flags | DETACH_FORCE));
+	if (sc->sc_state == XBF_CONNECTED) {
+		xen_intr_disestablish(sc->sc_xih);
+		xbf_stop(sc);
+	}
+
+	if (sc->sc_scsibus)
+		return (config_detach(sc->sc_scsibus, flags | DETACH_FORCE));
+
+	return (0);
 }
 
 void
@@ -507,7 +514,7 @@ xbf_bounce_xs(struct scsi_xfer *xs, int desc)
 
 	error = xbf_dma_alloc(sc, dma, size, size / PAGE_SIZE, mapflags);
 	if (error) {
-		DPRINTF("%s: failed to allocate a %u byte bounce buffer\n",
+		DPRINTF("%s: failed to allocate a %lu byte bounce buffer\n",
 		    sc->sc_dev.dv_xname, size);
 		return (error);
 	}
@@ -955,6 +962,7 @@ xbf_init(struct xbf_softc *sc)
 	    XEN_STATE_INITIALIZED, strlen(XEN_STATE_INITIALIZED))) {
 		printf("%s: failed to set state to INITIALIZED\n",
 		    sc->sc_dev.dv_xname);
+		xbf_ring_destroy(sc);
 		return (-1);
 	}
 
@@ -962,6 +970,7 @@ xbf_init(struct xbf_softc *sc)
 	    XEN_STATE_CONNECTED, 10000)) {
 		printf("%s: timed out waiting for backend to connect\n",
 		    sc->sc_dev.dv_xname);
+		xbf_ring_destroy(sc);
 		return (-1);
 	}
 
@@ -1016,6 +1025,7 @@ xbf_init(struct xbf_softc *sc)
  errout:
 	printf("%s: failed to %s \"%s\" property (%d)\n", sc->sc_dev.dv_xname,
 	    action, prop, error);
+	xbf_ring_destroy(sc);
 	return (-1);
 }
 
@@ -1028,7 +1038,7 @@ xbf_dma_alloc(struct xbf_softc *sc, struct xbf_dma_mem *dma,
 	dma->dma_tag = sc->sc_dmat;
 
 	dma->dma_seg = mallocarray(nsegs, sizeof(bus_dma_segment_t), M_DEVBUF,
-	    M_ZERO | BUS_DMA_NOWAIT);
+	    M_ZERO | M_NOWAIT);
 	if (dma->dma_seg == NULL) {
 		printf("%s: failed to allocate a segment array\n",
 		    sc->sc_dev.dv_xname);
@@ -1044,7 +1054,8 @@ xbf_dma_alloc(struct xbf_softc *sc, struct xbf_dma_mem *dma,
 	}
 
 	error = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0,
-	    dma->dma_seg, nsegs, &dma->dma_rsegs, BUS_DMA_NOWAIT);
+	    dma->dma_seg, nsegs, &dma->dma_rsegs, BUS_DMA_ZERO |
+	    BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: failed to allocate DMA memory (%d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1175,7 +1186,7 @@ xbf_ring_destroy(struct xbf_softc *sc)
 		if (sc->sc_xs_map[i] == NULL)
 			continue;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_xs_map[i], 0, 0,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_xs_map[i]);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_xs_map[i]);
 		sc->sc_xs_map[i] = NULL;
