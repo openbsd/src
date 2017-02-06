@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.70 2017/01/25 02:33:25 tb Exp $	*/
+/*	$OpenBSD: mount.c,v 1.71 2017/02/06 17:15:56 tb Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -109,9 +109,6 @@ main(int argc, char * const argv[])
 	int all, ch, forceall, i, mntsize, rval, new;
 	char *options, mntpath[PATH_MAX];
 
-	if (pledge("stdio rpath disklabel proc exec", NULL) == -1)
-		err(1, "pledge");
-
 	all = forceall = 0;
 	options = NULL;
 	vfstype = "ffs";
@@ -167,6 +164,25 @@ main(int argc, char * const argv[])
 		}
 	argc -= optind;
 	argv += optind;
+
+	if (typelist == NULL && argc == 2) {
+		/*
+		 * If -t flag has not been specified, and spec contains either
+		 * a ':' or a '@' then assume that an NFS filesystem is being
+		 * specified ala Sun.  If not, check the disklabel for a
+		 * known filesystem type.
+		 */
+		if (strpbrk(argv[0], ":@") != NULL)
+			vfstype = "nfs";
+		else {
+			char *labelfs = readlabelfs(argv[0], 0);
+			if (labelfs != NULL)
+				vfstype = labelfs;
+		}
+	}
+
+	if (pledge("stdio rpath disklabel proc exec", NULL) == -1)
+		err(1, "pledge");
 
 #define	BADTYPE(type)							\
 	(strcmp(type, FSTAB_RO) &&					\
@@ -261,23 +277,7 @@ main(int argc, char * const argv[])
 		    mntonname, options, fs->fs_mntops, skip);
 		break;
 	case 2:
-		/*
-		 * If -t flag has not been specified, and spec contains either
-		 * a ':' or a '@' then assume that an NFS filesystem is being
-		 * specified ala Sun.  If not, check the disklabel for a
-		 * known filesystem type.
-		 */
-		if (typelist == NULL) {
-			if (strpbrk(argv[0], ":@") != NULL)
-				vfstype = "nfs";
-			else {
-				char *labelfs = readlabelfs(argv[0], 0);
-				if (labelfs != NULL)
-					vfstype = labelfs;
-			}
-		}
-		rval = mountfs(vfstype,
-		    argv[0], argv[1], options, NULL, 0);
+		rval = mountfs(vfstype, argv[0], argv[1], options, NULL, 0);
 		break;
 	default:
 		usage();
