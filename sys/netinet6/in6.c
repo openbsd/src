@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.197 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: in6.c,v 1.198 2017/02/07 10:08:21 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -190,6 +190,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	struct	in6_ifaddr *ia6 = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
+	int error;
 
 	if (ifp == NULL)
 		return (EOPNOTSUPP);
@@ -469,9 +470,13 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	default:
-		if (ifp == NULL || ifp->if_ioctl == 0)
+		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
+		error = ((*ifp->if_ioctl)(ifp, cmd, data));
+		rw_enter_write(&netlock);
+		return (error);
 	}
 
 	return (0);

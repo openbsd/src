@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.162 2017/02/04 19:20:59 guenther Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.163 2017/02/07 10:08:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6133,18 +6133,13 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, err = 0;
 
-	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
-
 	/*
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
 	err = rw_enter(&sc->ioctl_rwl, RW_WRITE | RW_INTR);
-	if (err) {
-		rw_enter_write(&netlock);
+	if (err)
 		return err;
-	}
 
 	s = splnet();
 
@@ -6190,7 +6185,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	rw_exit(&sc->ioctl_rwl);
-	rw_enter_write(&netlock);
 
 	return err;
 }
