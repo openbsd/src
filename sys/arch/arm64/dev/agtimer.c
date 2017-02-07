@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.3 2017/01/23 10:15:53 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.4 2017/02/07 21:51:03 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -100,6 +100,16 @@ agtimer_readcnt64(void)
 	return (val);
 }
 
+static inline uint64_t
+agtimer_get_freq(void)
+{
+	uint64_t val;
+
+	__asm volatile("MRS %x0, CNTFRQ_EL0" : "=r" (val));
+
+	return (val);
+}
+
 static inline int
 agtimer_get_ctrl(void)
 {
@@ -149,6 +159,8 @@ agtimer_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = faa->fa_node;
 
+	if (agtimer_get_freq() != 0)
+		agtimer_frequency = agtimer_get_freq();
 	agtimer_frequency =
 	    OF_getpropint(sc->sc_node, "clock-frequency", agtimer_frequency);
 	sc->sc_ticks_per_second = agtimer_frequency;
