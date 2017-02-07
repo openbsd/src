@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.36 2017/02/07 02:47:19 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.37 2017/02/07 03:14:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -259,6 +259,9 @@ struct mfii_softc {
 	struct mfii_ccb		*sc_ccb;
 	struct mfii_ccb_list	sc_ccb_freeq;
 
+	struct mfii_ccb		*sc_aen_ccb;
+	struct task		sc_aen_task;
+
 	struct mutex		sc_abort_mtx;
 	struct mfii_ccb_list	sc_abort_list;
 	struct task		sc_abort_task;
@@ -364,6 +367,13 @@ void			mfii_abort(struct mfii_softc *, struct mfii_ccb *,
 			    uint16_t, uint16_t, uint8_t, uint32_t);
 void			mfii_scsi_cmd_abort_done(struct mfii_softc *,
 			    struct mfii_ccb *);
+
+int			mfii_aen_register(struct mfii_softc *);
+void			mfii_aen_start(struct mfii_softc *, struct mfii_ccb *,
+			    struct mfii_dmamem *, uint32_t);
+void			mfii_aen_done(struct mfii_softc *, struct mfii_ccb *);
+void			mfii_aen(void *);
+void			mfii_aen_unregister(struct mfii_softc *);
 
 /*
  * mfii boards support asynchronous (and non-polled) completion of
@@ -479,6 +489,9 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&sc->sc_reply_postq_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, mfii_get_ccb, mfii_put_ccb);
 
+	sc->sc_aen_ccb = NULL;
+	task_set(&sc->sc_aen_task, mfii_aen, sc);
+
 	mtx_init(&sc->sc_abort_mtx, IPL_BIO);
 	SIMPLEQ_INIT(&sc->sc_abort_list);
 	task_set(&sc->sc_abort_task, mfii_abort_task, sc);
@@ -578,11 +591,18 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	mfii_syspd(sc);
 
+	if (mfii_aen_register(sc) != 0) {
+		/* error printed by mfii_aen_register */
+		goto intr_disestablish;
+	}
+
 	/* enable interrupts */
 	mfii_write(sc, MFI_OSTS, 0xffffffff);
 	mfii_write(sc, MFI_OMSK, ~MFII_OSTS_INTR_VALID);
 
 	return;
+intr_disestablish:
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 free_sgl:
 	mfii_dmamem_free(sc, sc->sc_sgl);
 free_requests:
@@ -700,6 +720,7 @@ mfii_detach(struct device *self, int flags)
 	if (sc->sc_ih == NULL)
 		return (0);
 
+	mfii_aen_unregister(sc);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 	mfii_dmamem_free(sc, sc->sc_sgl);
 	mfii_dmamem_free(sc, sc->sc_requests);
@@ -796,6 +817,117 @@ mfii_dcmd_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
 
 	mfii_start(sc, ccb);
+}
+
+int
+mfii_aen_register(struct mfii_softc *sc)
+{
+	struct mfi_evt_log_info mel;
+	struct mfii_ccb *ccb;
+	struct mfii_dmamem *mdm;
+	int rv;
+
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	if (ccb == NULL) {
+		printf("%s: unable to allocate ccb for aen\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	memset(&mel, 0, sizeof(mel));
+
+	rv = mfii_mgmt(sc, ccb, MR_DCMD_CTRL_EVENT_GET_INFO, NULL,
+	    &mel, sizeof(mel), SCSI_DATA_IN|SCSI_NOSLEEP);
+	if (rv != 0) {
+		scsi_io_put(&sc->sc_iopool, ccb);
+		printf("%s: unable to get event info\n", DEVNAME(sc));
+		return (EIO);
+	}
+
+	mdm = mfii_dmamem_alloc(sc, sizeof(struct mfi_evt_detail));
+	if (mdm == NULL) {
+		scsi_io_put(&sc->sc_iopool, ccb);
+		printf("%s: unable to allocate event data\n", DEVNAME(sc));
+		return (ENOMEM);
+	}
+
+	/* replay all the events from boot */
+	mfii_aen_start(sc, ccb, mdm, lemtoh32(&mel.mel_boot_seq_num));
+
+	return (0);
+}
+
+void
+mfii_aen_start(struct mfii_softc *sc, struct mfii_ccb *ccb,
+    struct mfii_dmamem *mdm, uint32_t seq)
+{
+	struct mfi_dcmd_frame *dcmd = mfii_dcmd_frame(ccb);
+	struct mfi_frame_header *hdr = &dcmd->mdf_header;
+	union mfi_sgl *sgl = &dcmd->mdf_sgl;
+	union mfi_evt_class_locale mec;
+
+	mfii_scrub_ccb(ccb);
+	mfii_dcmd_scrub(ccb);
+	memset(MFII_DMA_KVA(mdm), 0, MFII_DMA_LEN(mdm));
+
+	ccb->ccb_cookie = mdm;
+	ccb->ccb_done = mfii_aen_done;
+	sc->sc_aen_ccb = ccb;
+
+	mec.mec_members.class = MFI_EVT_CLASS_DEBUG;
+	mec.mec_members.reserved = 0;
+	mec.mec_members.locale = htole16(MFI_EVT_LOCALE_ALL);
+
+	hdr->mfh_cmd = MFI_CMD_DCMD;
+	hdr->mfh_sg_count = 1;
+	hdr->mfh_flags = htole16(MFI_FRAME_DIR_READ | MFI_FRAME_SGL64);
+	htolem32(&hdr->mfh_data_len, MFII_DMA_LEN(mdm));
+	dcmd->mdf_opcode = htole32(MR_DCMD_CTRL_EVENT_WAIT);
+	htolem32(&dcmd->mdf_mbox.w[0], seq);
+	htolem32(&dcmd->mdf_mbox.w[1], mec.mec_word);
+	htolem32(&sgl->sg64[0].addr, MFII_DMA_DVA(mdm));
+	htolem64(&sgl->sg64[0].len, MFII_DMA_LEN(mdm));
+
+	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(mdm),
+	    0, MFII_DMA_LEN(mdm), BUS_DMASYNC_PREREAD);
+
+	mfii_dcmd_sync(sc, ccb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	mfii_dcmd_start(sc, ccb);
+}
+
+void
+mfii_aen_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	KASSERT(sc->sc_aen_ccb == ccb);
+
+	/* defer to a thread with KERNEL_LOCK so we can run autoconf */
+	task_add(systq, &sc->sc_aen_task);
+}
+
+void
+mfii_aen(void *arg)
+{
+	struct mfii_softc *sc = arg;
+	struct mfii_ccb *ccb = sc->sc_aen_ccb;
+	struct mfii_dmamem *mdm = ccb->ccb_cookie;
+	const struct mfi_evt_detail *med = MFII_DMA_KVA(mdm);
+
+	mfii_dcmd_sync(sc, ccb,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(mdm),
+	    0, MFII_DMA_LEN(mdm), BUS_DMASYNC_POSTREAD);
+
+#if 0
+	printf("%s: %u %08x %s\n", DEVNAME(sc), lemtoh32(&med->med_seq_num),
+	    lemtoh32(&med->med_code), med->med_description);
+#endif
+
+	mfii_aen_start(sc, ccb, mdm, lemtoh32(&med->med_seq_num) + 1);
+}
+
+void
+mfii_aen_unregister(struct mfii_softc *sc)
+{
+	/* XXX */
 }
 
 int
