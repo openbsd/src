@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.244 2017/02/07 06:51:58 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.245 2017/02/07 07:00:21 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -198,7 +198,15 @@ mbinit(void)
 void
 mbcpuinit()
 {
+	int i;
+
 	mbstat = counters_alloc_ncpus(mbstat, MBSTAT_COUNT);
+
+	pool_cache_init(&mbpool);
+	pool_cache_init(&mtagpool);
+
+	for (i = 0; i < nitems(mclsizes); i++)
+		pool_cache_init(&mclpools[i]);
 }
 
 void
