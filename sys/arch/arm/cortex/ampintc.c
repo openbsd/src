@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.16 2016/12/24 01:55:36 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.17 2017/02/07 21:23:25 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -56,11 +56,11 @@
 #define 	ICD_DIR_IMP_SH		0
 #define 	ICD_DIR_IMP_M		0xfff
 
-#define IRQ_TO_REG32(i)		(((i) >> 5) & 0x7)
+#define IRQ_TO_REG32(i)		(((i) >> 5) & 0x1f)
 #define IRQ_TO_REG32BIT(i)	((i) & 0x1f)
-#define IRQ_TO_REG4(i)		(((i) >> 2) & 0x3f)
+#define IRQ_TO_REG4(i)		(((i) >> 2) & 0xff)
 #define IRQ_TO_REG4BIT(i)	((i) & 0x3)
-#define IRQ_TO_REG16(i)		(((i) >> 4) & 0xf)
+#define IRQ_TO_REG16(i)		(((i) >> 4) & 0x3f)
 #define IRQ_TO_REGBIT_S(i)	8
 #define IRQ_TO_REG4BIT_M(i)	8
 
