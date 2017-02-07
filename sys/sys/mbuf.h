@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.223 2016/12/01 03:11:04 lteo Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.224 2017/02/07 06:27:18 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -415,6 +415,7 @@ struct mbuf_queue {
 };
 
 #ifdef	_KERNEL
+struct pool;
 
 extern	int nmbclust;			/* limit on the # of clusters */
 extern	int mblowat;			/* mbuf low water mark */
@@ -443,6 +444,7 @@ int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
 struct mbuf *m_clget(struct mbuf *, int, u_int);
 void	m_extref(struct mbuf *, struct mbuf *);
+void	m_pool_init(struct pool *, u_int, u_int, const char *);
 void	m_extfree_pool(caddr_t, u_int, void *);
 void	m_adj(struct mbuf *, int);
 int	m_copyback(struct mbuf *, int, int, const void *, int);

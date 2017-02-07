@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.242 2017/02/07 06:21:37 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.243 2017/02/07 06:27:18 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1440,6 +1440,13 @@ m_pool_free(struct pool *pp, void *v)
 	mtx_enter(&m_pool_mtx);
 	mbuf_mem_alloc -= pp->pr_pgsize;
 	mtx_leave(&m_pool_mtx);
+}
+
+void
+m_pool_init(struct pool *pp, u_int size, u_int align, const char *wmesg)
+{
+	pool_init(pp, size, align, IPL_NET, 0, wmesg, &m_pool_allocator);
+	pool_set_constraints(pp, &kp_dma_contig);
 }
 
 #ifdef DDB
