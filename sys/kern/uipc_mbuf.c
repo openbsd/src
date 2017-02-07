@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.241 2017/02/05 16:23:38 jca Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.242 2017/02/07 06:21:37 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -133,6 +133,19 @@ void	m_extfree(struct mbuf *);
 void	nmbclust_update(void);
 void	m_zero(struct mbuf *);
 
+struct mutex m_pool_mtx = MUTEX_INITIALIZER(IPL_NET);
+unsigned int mbuf_mem_limit; /* how much memory can be allocated */
+unsigned int mbuf_mem_alloc; /* how much memory has been allocated */
+
+void	*m_pool_alloc(struct pool *, int, int *);
+void	m_pool_free(struct pool *, void *);
+
+struct pool_allocator m_pool_allocator = {
+	m_pool_alloc,
+	m_pool_free,
+	0 /* will be copied from pool_allocator_multi */
+};
+
 static void (*mextfree_fns[4])(caddr_t, u_int, void *);
 static u_int num_extfree_fns;
 
@@ -147,6 +160,8 @@ mbinit(void)
 {
 	int i;
 	unsigned int lowbits;
+
+	m_pool_allocator.pa_pagesz = pool_allocator_multi.pa_pagesz;
 
 #if DIAGNOSTIC
 	if (mclsizes[0] != MCLBYTES)
@@ -212,6 +227,8 @@ nmbclust_update(void)
 		pool_sethiwat(&mclpools[i], n);
 	}
 	pool_sethiwat(&mbpool, nmbclust);
+
+	mbuf_mem_limit = nmbclust * MCLBYTES;
 }
 
 /*
@@ -1384,6 +1401,45 @@ m_dup_pkt(struct mbuf *m0, unsigned int adj, int wait)
 fail:
 	m_freem(m);
 	return (NULL);
+}
+
+void *
+m_pool_alloc(struct pool *pp, int flags, int *slowdown)
+{
+	void *v = NULL;
+	int avail = 1;
+
+	if (mbuf_mem_alloc + pp->pr_pgsize > mbuf_mem_limit)
+		return (NULL);
+
+	mtx_enter(&m_pool_mtx);
+	if (mbuf_mem_alloc + pp->pr_pgsize > mbuf_mem_limit)
+		avail = 0;
+	else
+		mbuf_mem_alloc += pp->pr_pgsize;
+	mtx_leave(&m_pool_mtx);
+
+	if (avail) {
+		v = (*pool_allocator_multi.pa_alloc)(pp, flags, slowdown);
+
+		if (v == NULL) {
+			mtx_enter(&m_pool_mtx);
+			mbuf_mem_alloc -= pp->pr_pgsize;
+			mtx_leave(&m_pool_mtx);
+		}
+	}
+
+	return (v);
+}
+
+void
+m_pool_free(struct pool *pp, void *v)
+{
+	(*pool_allocator_multi.pa_free)(pp, v);
+
+	mtx_enter(&m_pool_mtx);
+	mbuf_mem_alloc -= pp->pr_pgsize;
+	mtx_leave(&m_pool_mtx);
 }
 
 #ifdef DDB
