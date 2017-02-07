@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.34 2017/02/06 07:04:31 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.35 2017/02/07 00:25:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -191,7 +191,7 @@ struct mfii_ccb {
 
 	bus_dmamap_t		ccb_dmamap;
 
-	/* data for sgl */  
+	/* data for sgl */
 	void			*ccb_data;
 	size_t			ccb_len;
 
@@ -665,7 +665,7 @@ mfii_detach(struct device *self, int flags)
 	if (sc->sc_ih == NULL)
 		return (0);
 
-	pci_intr_disestablish(sc->sc_pc, sc->sc_ih); 
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 	mfii_dmamem_free(sc, sc->sc_sgl);
 	mfii_dmamem_free(sc, sc->sc_requests);
 	mfii_dmamem_free(sc, sc->sc_reply_postq);
@@ -1191,7 +1191,7 @@ mfii_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 #if defined(__LP64__)
-        bus_space_write_raw_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, *r);
+	bus_space_write_raw_8(sc->sc_iot, sc->sc_ioh, MFI_IQPL, *r);
 #else
 	mtx_enter(&sc->sc_post_mtx);
 	bus_space_write_raw_4(sc->sc_iot, sc->sc_ioh, MFI_IQPL, r[0]);
@@ -1922,7 +1922,7 @@ mfii_init_ccb(struct mfii_softc *sc)
 
 		/* select i'th sense */
 		ccb->ccb_sense_offset = MFI_SENSE_SIZE * i;
-		ccb->ccb_sense = (struct mfi_sense *)(sense + 
+		ccb->ccb_sense = (struct mfi_sense *)(sense +
 		    ccb->ccb_sense_offset);
 		ccb->ccb_sense_dva = MFII_DMA_DVA(sc->sc_sense) +
 		    ccb->ccb_sense_offset;
