@@ -1952,6 +1952,7 @@
 ./usr/share/man/man5/ifstated.conf.5
 ./usr/share/man/man5/iked.conf.5
 ./usr/share/man/man5/info.5
+./usr/share/man/man5/installurl.5
 ./usr/share/man/man5/intro.5
 ./usr/share/man/man5/ipsec.conf.5
 ./usr/share/man/man5/isakmpd.conf.5
