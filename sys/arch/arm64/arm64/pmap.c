@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.18 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.19 2017/02/07 21:56:07 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1262,7 +1262,8 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 			if (mapva < (vaddr_t)&_end)
 				continue;
 			vp2->l2[VP_IDX2(mapva)] = mappa | L2_BLOCK |
-				ATTR_AF| ATTR_IDX(2);
+			    ATTR_AF | ATTR_IDX(PTE_ATTR_WB) |
+			    ATTR_SH(SH_INNER);
 		}
 	}
 

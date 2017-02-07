@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.12 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.13 2017/02/07 21:56:07 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -510,6 +510,7 @@ build_l1_block_pagetable:
 	lsl	x12, x7, #2
 	orr	x12, x12, #L1_BLOCK
 	orr	x12, x12, #(ATTR_AF)
+	orr	x12, x12, ATTR_SH(SH_INNER)
 
 	/* Only use the output address bits */
 	lsr	x9, x9, #L1_SHIFT
@@ -548,6 +549,7 @@ build_l2_block_pagetable:
 	lsl	x12, x7, #2
 	orr	x12, x12, #L2_BLOCK
 	orr	x12, x12, #(ATTR_AF)
+	orr	x12, x12, ATTR_SH(SH_INNER)
 
 	/* Only use the output address bits */
 	lsr	x9, x9, #L2_SHIFT
