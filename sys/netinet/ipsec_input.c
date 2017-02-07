@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.142 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.143 2017/02/07 22:28:37 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -80,14 +80,14 @@
 #include "bpfilter.h"
 
 void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
-int ah4_input_cb(struct mbuf *, ...);
-int esp4_input_cb(struct mbuf *, ...);
-int ipcomp4_input_cb(struct mbuf *, ...);
+void ah4_input_cb(struct mbuf *, ...);
+void esp4_input_cb(struct mbuf *, ...);
+void ipcomp4_input_cb(struct mbuf *, ...);
 
 #ifdef INET6
-int ah6_input_cb(struct mbuf *, int, int);
-int esp6_input_cb(struct mbuf *, int, int);
-int ipcomp6_input_cb(struct mbuf *, int, int);
+void ah6_input_cb(struct mbuf *, int, int);
+void esp6_input_cb(struct mbuf *, int, int);
+void ipcomp6_input_cb(struct mbuf *, int, int);
 #endif
 
 #ifdef ENCDEBUG
@@ -321,7 +321,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
  * IPsec input callback, called by the transform callback. Takes care of
  * filtering and other sanity checks on the processed packet.
  */
-int
+void
 ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 {
 	int af, sproto;
@@ -353,7 +353,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		/* The called routine will print a message if necessary */
 		IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr,
 		    ipcompstat.ipcomps_badkcr);
-		return EINVAL;
+		return;
 	}
 
 	/* Fix IPv4 header */
@@ -364,7 +364,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			    buf, sizeof(buf)), ntohl(tdbp->tdb_spi)));
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 			    ipcompstat.ipcomps_hdrops);
-			return ENOBUFS;
+			return;
 		}
 
 		ip = mtod(m, struct ip *);
@@ -380,7 +380,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip),
@@ -395,7 +395,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
@@ -417,7 +417,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 			    ipcompstat.ipcomps_hdrops);
-			return EACCES;
+			return;
 		}
 
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -433,7 +433,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			/* ipn will now contain the inner IPv4 header */
 			m_copydata(m, skip, sizeof(struct ip), (caddr_t) &ipn);
@@ -446,7 +446,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			/* ip6n will now contain the inner IPv6 header. */
 			m_copydata(m, skip, sizeof(struct ip6_hdr),
@@ -471,7 +471,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			cksum = 0;
 			m_copyback(m, skip + offsetof(struct udphdr, uh_sum),
@@ -491,7 +491,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 				IPSEC_ISTAT(espstat.esps_hdrops,
 				    ahstat.ahs_hdrops,
 				    ipcompstat.ipcomps_hdrops);
-				return EINVAL;
+				return;
 			}
 			cksum = 0;
 			m_copyback(m, skip + offsetof(struct tcphdr, th_sum),
@@ -523,7 +523,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 			    "get tag\n"));
 			IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops,
 			    ipcompstat.ipcomps_hdrops);
-			return ENOMEM;
+			return;
 		}
 
 		tdbi = (struct tdb_ident *)(mtag + 1);
@@ -583,19 +583,19 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		switch (sproto)
 		{
 		case IPPROTO_ESP:
-			return esp4_input_cb(m);
-
+			esp4_input_cb(m);
+			return;
 		case IPPROTO_AH:
-			return ah4_input_cb(m);
-
+			ah4_input_cb(m);
+			return;
 		case IPPROTO_IPCOMP:
-			return ipcomp4_input_cb(m);
-
+			ipcomp4_input_cb(m);
+			return;
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
 			    " security protocol %d\n", sproto));
 			m_freem(m);
-			return EPFNOSUPPORT;
+			return;
 		}
 		break;
 
@@ -603,19 +603,19 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	case AF_INET6:
 		switch (sproto) {
 		case IPPROTO_ESP:
-			return esp6_input_cb(m, skip, protoff);
-
+			esp6_input_cb(m, skip, protoff);
+			return;
 		case IPPROTO_AH:
-			return ah6_input_cb(m, skip, protoff);
-
+			ah6_input_cb(m, skip, protoff);
+			return;
 		case IPPROTO_IPCOMP:
-			return ipcomp6_input_cb(m, skip, protoff);
-
+			ipcomp6_input_cb(m, skip, protoff);
+			return;
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
 			    " security protocol %d\n", sproto));
 			m_freem(m);
-			return EPFNOSUPPORT;
+			return;
 		}
 		break;
 #endif /* INET6 */
@@ -624,7 +624,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		DPRINTF(("ipsec_common_input_cb(): unknown/unsupported "
 		    "protocol family %d\n", af));
 		m_freem(m);
-		return EPFNOSUPPORT;
+		return;
 	}
 #undef IPSEC_ISTAT
 }
@@ -705,7 +705,7 @@ ah4_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv4 AH callback. */
-int
+void
 ah4_input_cb(struct mbuf *m, ...)
 {
 	/*
@@ -717,10 +717,8 @@ ah4_input_cb(struct mbuf *m, ...)
 		ahstat.ahs_qfull++;
 		DPRINTF(("ah4_input_cb(): dropped packet because of full "
 		    "IP queue\n"));
-		return ENOBUFS;
+		return;
 	}
-
-	return 0;
 }
 
 
@@ -745,7 +743,7 @@ esp4_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv4 ESP callback. */
-int
+void
 esp4_input_cb(struct mbuf *m, ...)
 {
 	/*
@@ -756,10 +754,8 @@ esp4_input_cb(struct mbuf *m, ...)
 		espstat.esps_qfull++;
 		DPRINTF(("esp4_input_cb(): dropped packet because of full "
 		    "IP queue\n"));
-		return ENOBUFS;
+		return;
 	}
-
-	return 0;
 }
 
 /* IPv4 IPCOMP wrapper */
@@ -772,7 +768,7 @@ ipcomp4_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv4 IPCOMP callback */
-int
+void
 ipcomp4_input_cb(struct mbuf *m, ...)
 {
 	/*
@@ -782,10 +778,8 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 	if (niq_enqueue(&ipintrq, m) != 0) {
 		ipcompstat.ipcomps_qfull++;
 		DPRINTF(("ipcomp4_input_cb(): dropped packet because of full IP queue\n"));
-		return ENOBUFS;
+		return;
 	}
-
-	return 0;
 }
 
 void
@@ -968,7 +962,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv6 AH callback. */
-int
+void
 ah6_input_cb(struct mbuf *m, int off, int protoff)
 {
 	int nxt;
@@ -999,11 +993,10 @@ ah6_input_cb(struct mbuf *m, int off, int protoff)
 		}
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
-	return 0;
+	return;
 
  bad:
 	m_freem(m);
-	return EINVAL;
 }
 
 /* IPv6 ESP wrapper. */
@@ -1060,10 +1053,10 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv6 ESP callback */
-int
+void
 esp6_input_cb(struct mbuf *m, int skip, int protoff)
 {
-	return ah6_input_cb(m, skip, protoff);
+	ah6_input_cb(m, skip, protoff);
 }
 
 /* IPv6 IPcomp wrapper */
@@ -1119,10 +1112,10 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 /* IPv6 IPcomp callback */
-int
+void
 ipcomp6_input_cb(struct mbuf *m, int skip, int protoff)
 {
-	return ah6_input_cb(m, skip, protoff);
+	ah6_input_cb(m, skip, protoff);
 }
 
 #endif /* INET6 */
