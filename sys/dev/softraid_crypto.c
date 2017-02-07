@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.131 2016/09/08 17:39:08 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.132 2017/02/07 15:10:48 bluhm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -88,11 +88,11 @@ int		sr_crypto_ioctl(struct sr_discipline *,
 		    struct bioc_discipline *);
 int		sr_crypto_meta_opt_handler(struct sr_discipline *,
 		    struct sr_meta_opt_hdr *);
-int		sr_crypto_write(struct cryptop *);
+void		sr_crypto_write(struct cryptop *);
 int		sr_crypto_rw(struct sr_workunit *);
 int		sr_crypto_dev_rw(struct sr_workunit *, struct sr_crypto_wu *);
 void		sr_crypto_done(struct sr_workunit *);
-int		sr_crypto_read(struct cryptop *);
+void		sr_crypto_read(struct cryptop *);
 void		sr_crypto_calculate_check_hmac_sha1(u_int8_t *, int,
 		   u_int8_t *, int, u_char *);
 void		sr_crypto_hotplug(struct sr_discipline *, struct disk *, int);
@@ -1117,7 +1117,7 @@ sr_crypto_rw(struct sr_workunit *wu)
 	return (rv);
 }
 
-int
+void
 sr_crypto_write(struct cryptop *crp)
 {
 	struct sr_crypto_wu	*crwu = crp->crp_opaque;
@@ -1135,7 +1135,7 @@ sr_crypto_write(struct cryptop *crp)
 		splx(s);
 	}
 
-	return (sr_crypto_dev_rw(wu, crwu));
+	sr_crypto_dev_rw(wu, crwu);
 }
 
 int
@@ -1195,7 +1195,7 @@ sr_crypto_done(struct sr_workunit *wu)
 	splx(s);
 }
 
-int
+void
 sr_crypto_read(struct cryptop *crp)
 {
 	struct sr_crypto_wu	*crwu = crp->crp_opaque;
@@ -1211,8 +1211,6 @@ sr_crypto_read(struct cryptop *crp)
 	s = splbio();
 	sr_scsi_done(wu->swu_dis, wu->swu_xs);
 	splx(s);
-
-	return (0);
 }
 
 void

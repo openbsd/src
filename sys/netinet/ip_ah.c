@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.125 2017/01/09 17:10:02 mpi Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.126 2017/02/07 15:10:48 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,8 +76,8 @@
 #define DPRINTF(x)
 #endif
 
-int	ah_output_cb(struct cryptop *);
-int	ah_input_cb(struct cryptop *);
+void	ah_output_cb(struct cryptop *);
+void	ah_input_cb(struct cryptop *);
 int	ah_massage_headers(struct mbuf **, int, int, int, int);
 
 struct ahstat ahstat;
@@ -697,10 +697,10 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 /*
  * AH input callback, called directly by the crypto driver.
  */
-int
+void
 ah_input_cb(struct cryptop *crp)
 {
-	int s, roff, rplen, error, skip, protoff;
+	int s, roff, rplen, skip, protoff;
 	unsigned char calc[AH_ALEN_MAX];
 	struct mbuf *m1, *m0, *m;
 	struct auth_hash *ahx;
@@ -724,7 +724,7 @@ ah_input_cb(struct cryptop *crp)
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_input_cb(): bogus returned buffer from "
 		    "crypto\n"));
-		return (EINVAL);
+		return;
 	}
 
 	NET_LOCK(s);
@@ -734,7 +734,6 @@ ah_input_cb(struct cryptop *crp)
 		free(tc, M_XDATA, 0);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_input_cb(): TDB is expired while in crypto"));
-		error = EPERM;
 		goto baddone;
 	}
 
@@ -747,12 +746,12 @@ ah_input_cb(struct cryptop *crp)
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
 			NET_UNLOCK(s);
-			return crypto_dispatch(crp);
+			crypto_dispatch(crp);
+			return;
 		}
 		free(tc, M_XDATA, 0);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
-		error = crp->crp_etype;
 		goto baddone;
 	} else {
 		crypto_freereq(crp); /* No longer needed. */
@@ -776,7 +775,6 @@ ah_input_cb(struct cryptop *crp)
 		    ntohl(tdb->tdb_spi)));
 
 		ahstat.ahs_badauth++;
-		error = EACCES;
 		goto baddone;
 	}
 
@@ -805,21 +803,18 @@ ah_input_cb(struct cryptop *crp)
 			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_wrap++;
-			error = ENOBUFS;
 			goto baddone;
 		case 2:
 			DPRINTF(("ah_input_cb(): old packet received in "
 			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
-			error = ENOBUFS;
 			goto baddone;
 		case 3:
 			DPRINTF(("ah_input_cb(): duplicate packet received in "
 			    "SA %s/%08x\n", ipsp_address(&tdb->tdb_dst, buf,
 			    sizeof(buf)), ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
-			error = ENOBUFS;
 			goto baddone;
 		default:
 			DPRINTF(("ah_input_cb(): bogus value from "
@@ -827,7 +822,6 @@ ah_input_cb(struct cryptop *crp)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
 			ahstat.ahs_replay++;
-			error = ENOBUFS;
 			goto baddone;
 		}
 	}
@@ -842,8 +836,7 @@ ah_input_cb(struct cryptop *crp)
 		DPRINTF(("ah_input(): bad mbuf chain for packet in SA "
 		    "%s/%08x\n", ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi)));
-
-		return EINVAL;
+		return;
 	}
 
 	/* Remove the AH header from the mbuf. */
@@ -904,9 +897,9 @@ ah_input_cb(struct cryptop *crp)
 			m->m_pkthdr.len -= rplen + ahx->authsize;
 		}
 
-	error = ipsec_common_input_cb(m, tdb, skip, protoff);
+	ipsec_common_input_cb(m, tdb, skip, protoff);
 	NET_UNLOCK(s);
-	return (error);
+	return;
 
  baddone:
 	NET_UNLOCK(s);
@@ -915,8 +908,6 @@ ah_input_cb(struct cryptop *crp)
 
 	if (crp != NULL)
 		crypto_freereq(crp);
-
-	return (error);
 }
 
 /*
@@ -1194,15 +1185,15 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 /*
  * AH output callback, called directly from the crypto handler.
  */
-int
+void
 ah_output_cb(struct cryptop *crp)
 {
-	int skip, error;
+	int skip;
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
 	struct mbuf *m;
 	caddr_t ptr;
-	int err, s;
+	int s;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -1216,7 +1207,7 @@ ah_output_cb(struct cryptop *crp)
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_output_cb(): bogus returned buffer from "
 		    "crypto\n"));
-		return (EINVAL);
+		return;
 	}
 
 	NET_LOCK(s);
@@ -1226,7 +1217,6 @@ ah_output_cb(struct cryptop *crp)
 		free(tc, M_XDATA, 0);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_output_cb(): TDB is expired while in crypto\n"));
-		error = EPERM;
 		goto baddone;
 	}
 
@@ -1237,12 +1227,12 @@ ah_output_cb(struct cryptop *crp)
 			if (tdb->tdb_cryptoid != 0)
 				tdb->tdb_cryptoid = crp->crp_sid;
 			NET_UNLOCK(s);
-			return crypto_dispatch(crp);
+			crypto_dispatch(crp);
+			return;
 		}
 		free(tc, M_XDATA, 0);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
-		error = crp->crp_etype;
 		goto baddone;
 	}
 
@@ -1257,9 +1247,9 @@ ah_output_cb(struct cryptop *crp)
 	/* No longer needed. */
 	crypto_freereq(crp);
 
-	err =  ipsp_process_done(m, tdb);
+	ipsp_process_done(m, tdb);
+	/* XXX missing error counter if ipsp_process_done() drops packet */
 	NET_UNLOCK(s);
-	return err;
 
  baddone:
 	NET_UNLOCK(s);
@@ -1267,6 +1257,4 @@ ah_output_cb(struct cryptop *crp)
 	m_freem(m);
 
 	crypto_freereq(crp);
-
-	return error;
 }
