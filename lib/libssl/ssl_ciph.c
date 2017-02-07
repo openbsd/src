@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.92 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.93 2017/02/07 02:08:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1072,7 +1072,7 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 
 	number_uses = calloc((max_strength_bits + 1), sizeof(int));
 	if (!number_uses) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (0);
 	}
 
@@ -1162,7 +1162,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 				 * it is no command or separator nor
 				 * alphanumeric, so we call this an error.
 				 */
-				SSLerror(SSL_R_INVALID_COMMAND);
+				SSLerrorx(SSL_R_INVALID_COMMAND);
 				retval = found = 0;
 				l++;
 				break;
@@ -1308,7 +1308,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			if ((buflen == 8) && !strncmp(buf, "STRENGTH", 8))
 				ok = ssl_cipher_strength_sort(head_p, tail_p);
 			else
-				SSLerror(SSL_R_INVALID_COMMAND);
+				SSLerrorx(SSL_R_INVALID_COMMAND);
 			if (ok == 0)
 				retval = 0;
 			/*
@@ -1377,7 +1377,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	num_of_ciphers = ssl_method->num_ciphers();
 	co_list = reallocarray(NULL, num_of_ciphers, sizeof(CIPHER_ORDER));
 	if (co_list == NULL) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 	}
 
@@ -1457,7 +1457,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ca_list = reallocarray(NULL, num_of_alias_max, sizeof(SSL_CIPHER *));
 	if (ca_list == NULL) {
 		free(co_list);
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 	}
 	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,

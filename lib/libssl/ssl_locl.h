@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.172 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.173 2017/02/07 02:08:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1367,8 +1367,11 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
     unsigned mac_secret_length);
+int SSL_state_func_code(int _state);
 
-#define SSLerror(r)  ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
+#define SSLerror(s, r)  ERR_PUT_error(ERR_LIB_SSL,			\
+    (SSL_state_func_code(s->internal->state)),(r),__FILE__,__LINE__)
+#define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
 
 __END_HIDDEN_DECLS
 

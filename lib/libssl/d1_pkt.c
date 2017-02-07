@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.61 2017/01/26 10:40:21 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.62 2017/02/07 02:08:38 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -255,7 +255,7 @@ err:
 	free(rdata->rbuf.buf);
 
 init_err:
-	SSLerror(ERR_R_INTERNAL_ERROR);
+	SSLerror(s, ERR_R_INTERNAL_ERROR);
 	free(rdata);
 	pitem_free(item);
 	return (-1);
@@ -354,7 +354,7 @@ dtls1_process_record(SSL *s)
 	/* check is not needed I believe */
 	if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
 		al = SSL_AD_RECORD_OVERFLOW;
-		SSLerror(SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+		SSLerror(s, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
 		goto f_err;
 	}
 
@@ -396,7 +396,7 @@ dtls1_process_record(SSL *s)
 		    (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
 		    orig_len < mac_size + 1)) {
 			al = SSL_AD_DECODE_ERROR;
-			SSLerror(SSL_R_LENGTH_TOO_SHORT);
+			SSLerror(s, SSL_R_LENGTH_TOO_SHORT);
 			goto f_err;
 		}
 
@@ -433,7 +433,7 @@ dtls1_process_record(SSL *s)
 
 	if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
 		al = SSL_AD_RECORD_OVERFLOW;
-		SSLerror(SSL_R_DATA_LENGTH_TOO_LONG);
+		SSLerror(s, SSL_R_DATA_LENGTH_TOO_LONG);
 		goto f_err;
 	}
 
@@ -650,7 +650,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	if ((type &&
 	     type != SSL3_RT_APPLICATION_DATA && type != SSL3_RT_HANDSHAKE) ||
 	    (peek && (type != SSL3_RT_APPLICATION_DATA))) {
-		SSLerror(ERR_R_INTERNAL_ERROR);
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return -1;
 	}
 
@@ -667,7 +667,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
 			return (-1);
 		}
 	}
@@ -731,7 +731,7 @@ start:
 		 */
 		if (dtls1_buffer_record(s, &(D1I(s)->buffered_app_data),
 		    rr->seq_num) < 0) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return (-1);
 		}
 		rr->length = 0;
@@ -754,7 +754,7 @@ start:
 		if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
 			(s->enc_read_ctx == NULL)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(SSL_R_APP_DATA_IN_HANDSHAKE);
+			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;
 		}
 
@@ -817,7 +817,7 @@ start:
 
 			/* Not certain if this is the right error handling */
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(SSL_R_UNEXPECTED_RECORD);
+			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
 			goto f_err;
 		}
 
@@ -862,7 +862,7 @@ start:
 		    (D1I(s)->handshake_fragment[2] != 0) ||
 		    (D1I(s)->handshake_fragment[3] != 0)) {
 			al = SSL_AD_DECODE_ERROR;
-			SSLerror(SSL_R_BAD_HELLO_REQUEST);
+			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
 			goto err;
 		}
 
@@ -883,7 +883,7 @@ start:
 				if (i < 0)
 					return (i);
 				if (i == 0) {
-					SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
+					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
 					return (-1);
 				}
 
@@ -940,7 +940,7 @@ start:
 		{
 			s->internal->rwstate = SSL_NOTHING;
 			S3I(s)->fatal_alert = alert_descr;
-			SSLerror(SSL_AD_REASON_OFFSET + alert_descr);
+			SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);
 			ERR_asprintf_error_data("SSL alert number %d",
 			    alert_descr);
 			s->internal->shutdown|=SSL_RECEIVED_SHUTDOWN;
@@ -948,7 +948,7 @@ start:
 			return (0);
 		} else {
 			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(SSL_R_UNKNOWN_ALERT_TYPE);
+			SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
 			goto f_err;
 		}
 
@@ -974,7 +974,7 @@ start:
 		if ((rr->length != ccs_hdr_len) ||
 		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
 			i = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(SSL_R_BAD_CHANGE_CIPHER_SPEC);
+			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
 			goto err;
 		}
 
@@ -1038,7 +1038,7 @@ start:
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
 			return (-1);
 		}
 
@@ -1068,7 +1068,7 @@ start:
 			goto start;
 		}
 		al = SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerror(SSL_R_UNEXPECTED_RECORD);
+		SSLerror(s, SSL_R_UNEXPECTED_RECORD);
 		goto f_err;
 	case SSL3_RT_CHANGE_CIPHER_SPEC:
 	case SSL3_RT_ALERT:
@@ -1077,7 +1077,7 @@ start:
 		 * of SSL3_RT_HANDSHAKE when s->internal->in_handshake is set, but that
 		 * should not happen when type != rr->type */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
-		SSLerror(ERR_R_INTERNAL_ERROR);
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto f_err;
 	case SSL3_RT_APPLICATION_DATA:
 		/* At this point, we were expecting handshake data,
@@ -1099,7 +1099,7 @@ start:
 			return (-1);
 		} else {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(SSL_R_UNEXPECTED_RECORD);
+			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
 			goto f_err;
 		}
 	}
@@ -1122,13 +1122,13 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 		if (i < 0)
 			return (i);
 		if (i == 0) {
-			SSLerror(SSL_R_SSL_HANDSHAKE_FAILURE);
+			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
 			return -1;
 		}
 	}
 
 	if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
-		SSLerror(SSL_R_DTLS_MESSAGE_TOO_BIG);
+		SSLerror(s, SSL_R_DTLS_MESSAGE_TOO_BIG);
 		return -1;
 	}
 

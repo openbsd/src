@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.114 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.115 2017/02/07 02:08:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -742,7 +742,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		int el;
 
 		if (!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -753,7 +753,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		s2n(el, ret);
 
 		if (!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -778,7 +778,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		if (formatslen > lenmax)
 			return NULL;
 		if (formatslen > 255) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -800,7 +800,7 @@ ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		if (curveslen * 2 > lenmax)
 			return NULL;
 		if (curveslen * 2 > 65532) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -942,7 +942,7 @@ skip_ext:
 		s2n(el, ret);
 
 		if (ssl_add_clienthello_use_srtp_ext(s, ret, &el, el)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 		ret += el;
@@ -1020,7 +1020,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		int el;
 
 		if (!ssl_add_serverhello_renegotiate_ext(s, 0, &el, 0)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -1031,7 +1031,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		s2n(el, ret);
 
 		if (!ssl_add_serverhello_renegotiate_ext(s, ret, &el, el)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -1054,7 +1054,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		if (formatslen > lenmax)
 			return NULL;
 		if (formatslen > 255) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 
@@ -1100,7 +1100,7 @@ ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 		s2n(el, ret);
 
 		if (ssl_add_serverhello_use_srtp_ext(s, ret, &el, el)) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return NULL;
 		}
 		ret += el;
@@ -1618,7 +1618,7 @@ ri_check:
 
 	if (!renegotiate_seen && s->internal->renegotiate) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 	}
 
@@ -1870,7 +1870,7 @@ ri_check:
 	if (!renegotiate_seen &&
 	    !(s->internal->options & SSL_OP_LEGACY_SERVER_CONNECT)) {
 		*al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		SSLerror(s, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 	}
 
@@ -2005,7 +2005,7 @@ ssl_check_serverhello_tlsext(SSL *s)
 			}
 		}
 		if (!found_uncompressed) {
-			SSLerror(SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+			SSLerror(s, SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
 			return -1;
 		}
 	}

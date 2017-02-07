@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.83 2017/01/26 12:16:13 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.84 2017/02/07 02:08:38 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -202,7 +202,7 @@ dtls1_accept(SSL *s)
 	D1I(s)->listen = listen;
 
 	if (s->cert == NULL) {
-		SSLerror(SSL_R_NO_CERTIFICATE_SET);
+		SSLerror(s, SSL_R_NO_CERTIFICATE_SET);
 		ret = -1;
 		goto end;
 	}
@@ -225,7 +225,7 @@ dtls1_accept(SSL *s)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
 			if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-				SSLerror(ERR_R_INTERNAL_ERROR);
+				SSLerror(s, ERR_R_INTERNAL_ERROR);
 				ret = -1;
 				goto end;
 			}
@@ -506,7 +506,7 @@ dtls1_accept(SSL *s)
 				 * at this point and digest cached records.
 				 */
 				if (!S3I(s)->handshake_buffer) {
-					SSLerror(ERR_R_INTERNAL_ERROR);
+					SSLerror(s, ERR_R_INTERNAL_ERROR);
 					ret = -1;
 					goto end;
 				}
@@ -658,7 +658,7 @@ dtls1_accept(SSL *s)
 			/* break; */
 
 		default:
-			SSLerror(SSL_R_UNKNOWN_STATE);
+			SSLerror(s, SSL_R_UNKNOWN_STATE);
 			ret = -1;
 			goto end;
 			/* break; */
@@ -705,7 +705,7 @@ dtls1_send_hello_verify_request(SSL *s)
 		if (s->ctx->internal->app_gen_cookie_cb == NULL ||
 		    s->ctx->internal->app_gen_cookie_cb(s,
 			D1I(s)->cookie, &(D1I(s)->cookie_len)) == 0) {
-			SSLerror(ERR_R_INTERNAL_ERROR);
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 

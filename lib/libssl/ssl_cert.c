@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.63 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.64 2017/02/07 02:08:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,7 +178,7 @@ ssl_cert_new(void)
 
 	ret = calloc(1, sizeof(CERT));
 	if (ret == NULL) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 	ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
@@ -195,7 +195,7 @@ ssl_cert_dup(CERT *cert)
 
 	ret = calloc(1, sizeof(CERT));
 	if (ret == NULL) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
 
@@ -212,13 +212,13 @@ ssl_cert_dup(CERT *cert)
 	if (cert->dh_tmp != NULL) {
 		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
 		if (ret->dh_tmp == NULL) {
-			SSLerror(ERR_R_DH_LIB);
+			SSLerrorx(ERR_R_DH_LIB);
 			goto err;
 		}
 		if (cert->dh_tmp->priv_key) {
 			BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
 			if (!b) {
-				SSLerror(ERR_R_BN_LIB);
+				SSLerrorx(ERR_R_BN_LIB);
 				goto err;
 			}
 			ret->dh_tmp->priv_key = b;
@@ -226,7 +226,7 @@ ssl_cert_dup(CERT *cert)
 		if (cert->dh_tmp->pub_key) {
 			BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
 			if (!b) {
-				SSLerror(ERR_R_BN_LIB);
+				SSLerrorx(ERR_R_BN_LIB);
 				goto err;
 			}
 			ret->dh_tmp->pub_key = b;
@@ -238,7 +238,7 @@ ssl_cert_dup(CERT *cert)
 	if (cert->ecdh_tmp) {
 		ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
 		if (ret->ecdh_tmp == NULL) {
-			SSLerror(ERR_R_EC_LIB);
+			SSLerrorx(ERR_R_EC_LIB);
 			goto err;
 		}
 	}
@@ -284,7 +284,7 @@ ssl_cert_dup(CERT *cert)
 
 			default:
 				/* Can't happen. */
-				SSLerror(SSL_R_LIBRARY_BUG);
+				SSLerrorx(SSL_R_LIBRARY_BUG);
 			}
 		}
 	}
@@ -354,12 +354,12 @@ ssl_cert_inst(CERT **o)
 	 */
 
 	if (o == NULL) {
-		SSLerror(ERR_R_PASSED_NULL_PARAMETER);
+		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (*o == NULL) {
 		if ((*o = ssl_cert_new()) == NULL) {
-			SSLerror(ERR_R_MALLOC_FAILURE);
+			SSLerrorx(ERR_R_MALLOC_FAILURE);
 			return (0);
 		}
 	}
@@ -374,7 +374,7 @@ ssl_sess_cert_new(void)
 
 	ret = calloc(1, sizeof *ret);
 	if (ret == NULL) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA_ENC]);
@@ -418,7 +418,7 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
 	x = sk_X509_value(sk, 0);
 	if (!X509_STORE_CTX_init(&ctx, s->ctx->cert_store, x, sk)) {
-		SSLerror(ERR_R_X509_LIB);
+		SSLerror(s, ERR_R_X509_LIB);
 		return (0);
 	}
 	X509_STORE_CTX_set_ex_data(&ctx,
@@ -574,7 +574,7 @@ SSL_load_client_CA_file(const char *file)
 	in = BIO_new(BIO_s_file_internal());
 
 	if ((sk == NULL) || (in == NULL)) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -587,7 +587,7 @@ SSL_load_client_CA_file(const char *file)
 		if (ret == NULL) {
 			ret = sk_X509_NAME_new_null();
 			if (ret == NULL) {
-				SSLerror(ERR_R_MALLOC_FAILURE);
+				SSLerrorx(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
 		}
@@ -642,7 +642,7 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	in = BIO_new(BIO_s_file_internal());
 
 	if (in == NULL) {
-		SSLerror(ERR_R_MALLOC_FAILURE);
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -711,7 +711,7 @@ SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack, const char *dir)
 	if (!ret) {
  		SYSerror(errno);
 		ERR_asprintf_error_data("opendir ('%s')", dir);
-		SSLerror(ERR_R_SYS_LIB);
+		SSLerrorx(ERR_R_SYS_LIB);
 	}
 	return ret;
 }
