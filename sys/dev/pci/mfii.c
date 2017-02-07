@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.39 2017/02/07 04:43:59 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.40 2017/02/07 05:08:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -379,6 +379,8 @@ void			mfii_aen_pd_insert(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
 void			mfii_aen_pd_remove(struct mfii_softc *,
 			    const struct mfi_evtarg_pd_address *);
+void			mfii_aen_pd_state_change(struct mfii_softc *,
+			    const struct mfi_evtarg_pd_state *);
 
 /*
  * mfii boards support asynchronous (and non-polled) completion of
@@ -940,6 +942,14 @@ mfii_aen(void *arg)
 		
 		mfii_aen_pd_remove(sc, &med->args.pd_address);
 		break;
+
+	case MFI_EVT_PD_STATE_CHANGE:
+		if (med->med_arg_type != MFI_EVT_ARGS_PD_STATE)
+			break;
+
+		mfii_aen_pd_state_change(sc, &med->args.pd_state);
+		break;
+
 	default:
 		break;
 	}
@@ -987,6 +997,30 @@ mfii_aen_pd_remove(struct mfii_softc *sc,
 	/* the firmware will abort outstanding commands for us */
 
 	scsi_detach_target(sc->sc_pd->pd_scsibus, target, DETACH_FORCE);
+}
+
+void
+mfii_aen_pd_state_change(struct mfii_softc *sc,
+    const struct mfi_evtarg_pd_state *state)
+{
+	uint16_t target = lemtoh16(&state->pd.mep_device_id);
+
+	if (state->prev_state == htole32(MFI_PD_SYSTEM) &&
+	    state->new_state != htole32(MFI_PD_SYSTEM)) {
+		/* it's been pulled or configured for raid */
+
+		scsi_activate(sc->sc_pd->pd_scsibus, target, -1,
+		    DVACT_DEACTIVATE);
+		/* outstanding commands will simply complete or get aborted */
+		scsi_detach_target(sc->sc_pd->pd_scsibus, target,
+		    DETACH_FORCE);
+
+	} else if (state->prev_state == htole32(MFI_PD_UNCONFIG_GOOD) &&
+	    state->new_state == htole32(MFI_PD_SYSTEM)) {
+		/* the firmware is handing the disk over */
+
+		scsi_probe_target(sc->sc_pd->pd_scsibus, target);
+	}
 }
 
 void
