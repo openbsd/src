@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.38 2017/02/07 04:42:56 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.39 2017/02/07 04:43:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -153,8 +153,8 @@ struct mfii_task_mgmt {
 	union {
 		uint8_t			reply[128];
 		uint32_t		flags;
-#define MFII_TASK_MGMT_FLAGS_PD				(1 << 0)
-#define MFII_TASK_MGMT_FLAGS_LD				(1 << 1)
+#define MFII_TASK_MGMT_FLAGS_LD				(1 << 0)
+#define MFII_TASK_MGMT_FLAGS_PD				(1 << 1)
 		struct mpii_msg_scsi_task_reply
 					mpii_reply;
 	} __packed __aligned(8);
