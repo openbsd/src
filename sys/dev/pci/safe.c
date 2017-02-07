@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.41 2015/12/10 21:00:51 naddy Exp $	*/
+/*	$OpenBSD: safe.c,v 1.42 2017/02/07 17:25:46 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -301,7 +301,7 @@ safe_process(struct cryptop *crp)
 {
 	int err = 0, i, nicealign, uniform, s;
 	struct safe_softc *sc;
-	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
+	struct cryptodesc *crd1, *crd2 = NULL, *maccrd, *enccrd;
 	int bypass, oplen, ivsize, card;
 	int16_t coffset;
 	struct safe_session *ses;
@@ -360,13 +360,14 @@ safe_process(struct cryptop *crp)
 	sa = &re->re_sa;
 	ses = &sc->sc_sessions[re->re_sesn];
 
-	crd1 = crp->crp_desc;
-	if (crd1 == NULL) {
+	if (crp->crp_ndesc < 1) {
 		safestats.st_nodesc++;
 		err = EINVAL;
 		goto errout;
 	}
-	crd2 = crd1->crd_next;
+	crd1 = &crp->crp_desc[0];
+	if (crp->crp_ndesc >= 2)
+		crd2 = &crp->crp_desc[1];
 
 	cmd0 = SAFE_SA_CMD0_BASIC;		/* basic group operation */
 	cmd1 = 0;
@@ -1608,6 +1609,7 @@ safe_callback(struct safe_softc *sc, struct safe_ringentry *re)
 {
 	struct cryptop *crp = (struct cryptop *)re->re_crp;
 	struct cryptodesc *crd;
+	int i;
 
 	safestats.st_opackets++;
 	safestats.st_obytes += (re->re_dst_map == NULL) ?
@@ -1644,7 +1646,8 @@ safe_callback(struct safe_softc *sc, struct safe_ringentry *re)
 
 	if (re->re_flags & SAFE_QFLAGS_COPYOUTICV) {
 		/* copy out ICV result */
-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+		for (i = 0; i < crp->crp_ndesc; i++) {
+			crd = &crp->crp_desc[i];
 			if (!(crd->crd_alg == CRYPTO_MD5_HMAC ||
 			    crd->crd_alg == CRYPTO_SHA1_HMAC))
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.126 2017/02/07 15:10:48 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.127 2017/02/07 17:25:46 patrick Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -629,7 +629,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		return ENOBUFS;
 	}
 
-	crda = crp->crp_desc;
+	crda = &crp->crp_desc[0];
 
 	crda->crd_skip = 0;
 	crda->crd_len = m->m_pkthdr.len;
@@ -1090,7 +1090,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		return ENOBUFS;
 	}
 
-	crda = crp->crp_desc;
+	crda = &crp->crp_desc[0];
 
 	crda->crd_skip = 0;
 	crda->crd_inject = skip + rplen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.30 2015/09/08 08:33:26 deraadt Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.31 2017/02/07 17:25:45 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -778,7 +778,7 @@ glxsb_crypto_process(struct cryptop *crp)
 	struct glxsb_session *ses;
 	struct cryptodesc *crd;
 	int sesn,err = 0;
-	int s;
+	int s, i;
 
 	s = splnet();
 
@@ -786,8 +786,7 @@ glxsb_crypto_process(struct cryptop *crp)
 		err = EINVAL;
 		goto out;
 	}
-	crd = crp->crp_desc;
-	if (crd == NULL) {
+	if (crp->crp_ndesc < 1) {
 		err = EINVAL;
 		goto out;
 	}
@@ -803,7 +802,8 @@ glxsb_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 
-	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+	for (i = 0; i < crp->crp_ndesc; i++) {
+		crd = &crp->crp_desc[i];
 		switch (crd->crd_alg) {
 		case CRYPTO_AES_CBC:
 			if (ses->ses_swd_enc) {

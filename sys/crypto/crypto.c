@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.78 2016/09/19 18:09:40 tedu Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.79 2017/02/07 17:25:46 patrick Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -400,18 +400,17 @@ crypto_dispatch(struct cryptop *crp)
 int
 crypto_invoke(struct cryptop *crp)
 {
-	struct cryptodesc *crd;
 	u_int64_t nid;
 	u_int32_t hid;
 	int error;
-	int s;
+	int s, i;
 
 	/* Sanity checks. */
 	if (crp == NULL || crp->crp_callback == NULL)
 		return EINVAL;
 
 	s = splvm();
-	if (crp->crp_desc == NULL || crypto_drivers == NULL) {
+	if (crp->crp_ndesc < 1 || crypto_drivers == NULL) {
 		crp->crp_etype = EINVAL;
 		crypto_done(crp);
 		splx(s);
@@ -449,8 +448,9 @@ crypto_invoke(struct cryptop *crp)
 
  migrate:
 	/* Migrate session. */
-	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
-		crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
+	for (i = 0; i < crp->crp_ndesc - 1; i++)
+		crp->crp_desc[i].CRD_INI.cri_next = &crp->crp_desc[i+1].CRD_INI;
+	crp->crp_desc[crp->crp_ndesc].CRD_INI.cri_next = NULL;
 
 	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 		crp->crp_sid = nid;
@@ -467,16 +467,12 @@ crypto_invoke(struct cryptop *crp)
 void
 crypto_freereq(struct cryptop *crp)
 {
-	struct cryptodesc *crd;
-
 	if (crp == NULL)
 		return;
 
-	while ((crd = crp->crp_desc) != NULL) {
-		crp->crp_desc = crd->crd_next;
-		pool_put(&cryptodesc_pool, crd);
-	}
-
+	if (crp->crp_ndescalloc > 2)
+		free(crp->crp_desc, M_CRYPTO_DATA,
+		    crp->crp_ndescalloc * sizeof(struct cryptodesc));
 	pool_put(&cryptop_pool, crp);
 }
 
@@ -486,22 +482,22 @@ crypto_freereq(struct cryptop *crp)
 struct cryptop *
 crypto_getreq(int num)
 {
-	struct cryptodesc *crd;
 	struct cryptop *crp;
-	
+
 	crp = pool_get(&cryptop_pool, PR_NOWAIT | PR_ZERO);
 	if (crp == NULL)
 		return NULL;
 
-	while (num--) {
-		crd = pool_get(&cryptodesc_pool, PR_NOWAIT | PR_ZERO);
-		if (crd == NULL) {
-			crypto_freereq(crp);
+	crp->crp_desc = crp->crp_sdesc;
+	crp->crp_ndescalloc = crp->crp_ndesc = num;
+
+	if (num > 2) {
+		crp->crp_desc = mallocarray(num, sizeof(struct cryptodesc),
+		    M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
+		if (crp->crp_desc == NULL) {
+			pool_put(&cryptop_pool, crp);
 			return NULL;
 		}
-
-		crd->crd_next = crp->crp_desc;
-		crp->crp_desc = crd;
 	}
 
 	return crp;
@@ -515,8 +511,6 @@ crypto_init(void)
 
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, IPL_VM, 0,
 	    "cryptop", NULL);
-	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, IPL_VM, 0,
-	    "cryptodesc", NULL);
 }
 
 /*

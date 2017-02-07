@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.69 2017/02/07 15:10:48 bluhm Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.70 2017/02/07 17:25:46 patrick Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -147,8 +147,6 @@ struct cryptodesc {
 #define crd_rnd		CRD_INI.cri_rnd
 #define crd_alg		CRD_INI.cri_alg
 #define crd_klen	CRD_INI.cri_klen
-
-	struct cryptodesc *crd_next;
 };
 
 /* Structure describing complete operation */
@@ -179,7 +177,11 @@ struct cryptop {
 
 	void 		*crp_buf;	/* Data to be processed */
 	void 		*crp_opaque;	/* Opaque pointer, passed along */
-	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
+
+	struct cryptodesc *crp_desc;	/* List of processing descriptors */
+	struct cryptodesc crp_sdesc[2];	/* Static array for small ops */
+	int		 crp_ndesc;	/* Amount of descriptors to use */
+	int		 crp_ndescalloc;/* Amount of descriptors allocated */
 
 	void (*crp_callback)(struct cryptop *); /* Callback function */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.51 2017/02/07 15:10:48 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.52 2017/02/07 17:25:46 patrick Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -158,7 +158,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
-	crdc = crp->crp_desc;
+	crdc = &crp->crp_desc[0];
 
 	crdc->crd_skip = skip + hlen;
 	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
@@ -474,7 +474,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ipcompstat.ipcomps_crypto++;
 		return ENOBUFS;
 	}
-	crdc = crp->crp_desc;
+	crdc = &crp->crp_desc[0];
 
 	/* Compression descriptor */
 	crdc->crd_skip = skip;

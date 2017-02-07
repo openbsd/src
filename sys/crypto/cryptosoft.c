@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.81 2016/09/02 09:12:49 tom Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.82 2017/02/07 17:25:46 patrick Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -495,7 +495,8 @@ swcr_authenc(struct cryptop *crp)
 
 	ivlen = blksz = iskip = oskip = 0;
 
-	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+	for (i = 0; i < crp->crp_ndesc; i++) {
+		crd = &crp->crp_desc[i];
 		for (sw = swcr_sessions[crp->crp_sid & 0xffffffff];
 		     sw && sw->sw_alg != crd->crd_alg;
 		     sw = sw->sw_next)
@@ -1020,12 +1021,13 @@ swcr_process(struct cryptop *crp)
 	struct swcr_data *sw;
 	u_int32_t lid;
 	int type;
+	int i;
 
 	/* Sanity check */
 	if (crp == NULL)
 		return EINVAL;
 
-	if (crp->crp_desc == NULL || crp->crp_buf == NULL) {
+	if (crp->crp_ndesc < 1 || crp->crp_buf == NULL) {
 		crp->crp_etype = EINVAL;
 		goto done;
 	}
@@ -1042,7 +1044,8 @@ swcr_process(struct cryptop *crp)
 		type = CRYPTO_BUF_IOV;
 
 	/* Go through crypto descriptors, processing as we go */
-	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+	for (i = 0; i < crp->crp_ndesc; i++) {
+		crd = &crp->crp_desc[i];
 		/*
 		 * Find the crypto context.
 		 *

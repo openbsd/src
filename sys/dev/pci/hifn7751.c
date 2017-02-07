@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.176 2017/01/19 10:20:29 jsg Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.177 2017/02/07 17:25:46 patrick Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1927,7 +1927,7 @@ hifn_process(struct cryptop *crp)
 	struct hifn_command *cmd = NULL;
 	int card, session, err = 0, ivlen;
 	struct hifn_softc *sc;
-	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
+	struct cryptodesc *crd1, *crd2 = NULL, *maccrd, *enccrd;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
 		hifnstats.hst_invalid++;
@@ -1969,12 +1969,13 @@ hifn_process(struct cryptop *crp)
 		goto errout;	/* XXX we don't handle contiguous buffers! */
 	}
 
-	crd1 = crp->crp_desc;
-	if (crd1 == NULL) {
+	if (crp->crp_ndesc < 1) {
 		err = EINVAL;
 		goto errout;
 	}
-	crd2 = crd1->crd_next;
+	crd1 = &crp->crp_desc[0];
+	if (crp->crp_ndesc >= 2)
+		crd2 = &crp->crp_desc[1];
 
 	if (crd2 == NULL) {
 		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
@@ -2291,8 +2292,10 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 			macbuf += sizeof(struct hifn_comp_result);
 		macbuf += sizeof(struct hifn_mac_result);
 
-		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+		for (i = 0; i < crp->crp_ndesc; i++) {
 			int len;
+
+			crd = &crp->crp_desc[i];
 
 			if (crd->crd_alg == CRYPTO_MD5_HMAC ||
 			    crd->crd_alg == CRYPTO_SHA1_HMAC)
@@ -2326,7 +2329,7 @@ int
 hifn_compression(struct hifn_softc *sc, struct cryptop *crp,
     struct hifn_command *cmd)
 {
-	struct cryptodesc *crd = crp->crp_desc;
+	struct cryptodesc *crd = &crp->crp_desc[0];
 	int s, err = 0;
 
 	cmd->compcrd = crd;

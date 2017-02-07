@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.162 2016/05/30 23:38:21 dlg Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.163 2017/02/07 17:25:46 patrick Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -776,7 +776,7 @@ ubsec_process(struct cryptop *crp)
 	struct ubsec_q *q = NULL;
 	int card, err = 0, i, j, s, nicealign;
 	struct ubsec_softc *sc;
-	struct cryptodesc *crd1, *crd2, *maccrd, *enccrd;
+	struct cryptodesc *crd1, *crd2 = NULL, *maccrd, *enccrd;
 	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
 	int sskip, dskip, stheend, dtheend;
 	int16_t coffset;
@@ -835,12 +835,13 @@ ubsec_process(struct cryptop *crp)
 	dmap->d_dma->d_mcr.mcr_flags = 0;
 	q->q_crp = crp;
 
-	crd1 = crp->crp_desc;
-	if (crd1 == NULL) {
+	if (crp->crp_ndesc < 1) {
 		err = EINVAL;
 		goto errout;
 	}
-	crd2 = crd1->crd_next;
+	crd1 = &crp->crp_desc[0];
+	if (crp->crp_ndesc >= 2)
+		crd2 = &crp->crp_desc[1];
 
 	if (crd2 == NULL) {
 		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
@@ -1330,6 +1331,7 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	u_int8_t *ctx = (u_int8_t *)(dmap->d_alloc.dma_vaddr +
 		    offsetof(struct ubsec_dmachunk, d_ctx));
 	struct ubsec_pktctx_hdr *ph = (struct ubsec_pktctx_hdr *)ctx;
+	int i;
 
 	ubsecstats.hst_opackets++;
 	ubsecstats.hst_obytes += dmap->d_alloc.dma_size;
@@ -1355,7 +1357,8 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 		crp->crp_buf = (caddr_t)q->q_dst_m;
 	}
 
-	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+	for (i = 0; i < crp->crp_ndesc; i++) {
+		crd = &crp->crp_desc[i];
 		if (crd->crd_alg != CRYPTO_MD5_HMAC &&
 		    crd->crd_alg != CRYPTO_SHA1_HMAC)
 			continue;

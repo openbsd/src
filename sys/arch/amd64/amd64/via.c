@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.21 2015/08/28 00:03:53 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.22 2017/02/07 17:25:45 patrick Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -441,8 +441,11 @@ viac3_crypto_process(struct cryptop *crp)
 	struct viac3_session *ses;
 	struct cryptodesc *crd;
 	int sesn, err = 0;
+	int i;
 
 	if (crp == NULL || crp->crp_callback == NULL)
+		return (EINVAL);
+	if (crp->crp_ndesc < 1)
 		return (EINVAL);
 
 	sesn = VIAC3_SESSION(crp->crp_sid);
@@ -456,7 +459,8 @@ viac3_crypto_process(struct cryptop *crp)
 		goto out;
 	}
 
-	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
+	for (i = 0; i < crp->crp_ndesc; i++) {
+		crd = &crp->crp_desc[i];
 		switch (crd->crd_alg) {
 		case CRYPTO_AES_CBC:
 			if ((err = viac3_crypto_encdec(crp, crd, ses, sc,

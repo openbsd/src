@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.144 2017/02/07 15:10:48 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.145 2017/02/07 17:25:46 patrick Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -461,8 +461,8 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	if (esph) {
-		crda = crp->crp_desc;
-		crde = crda->crd_next;
+		crda = &crp->crp_desc[0];
+		crde = &crp->crp_desc[1];
 
 		/* Authentication descriptor */
 		crda->crd_skip = skip;
@@ -488,7 +488,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		/* Copy the authenticator */
 		m_copydata(m, m->m_pkthdr.len - alen, alen, (caddr_t)(tc + 1));
 	} else
-		crde = crp->crp_desc;
+		crde = &crp->crp_desc[0];
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
@@ -958,8 +958,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	if (espx) {
-		crde = crp->crp_desc;
-		crda = crde->crd_next;
+		crde = &crp->crp_desc[0];
+		crda = &crp->crp_desc[1];
 
 		/* Encryption descriptor. */
 		crde->crd_skip = skip + hlen;
@@ -977,7 +977,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		else
 			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 	} else
-		crda = crp->crp_desc;
+		crda = &crp->crp_desc[0];
 
 	/* IPsec-specific opaque crypto info. */
 	tc = malloc(sizeof(*tc), M_XDATA, M_NOWAIT | M_ZERO);
