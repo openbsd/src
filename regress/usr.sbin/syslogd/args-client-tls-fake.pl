@@ -34,7 +34,8 @@ our %args = (
 	    qr{Server CAfile fake-ca.crt} => 1,
 	    qr{tls logger .* accepted} => 1,
 	    qr/syslogd: tls logger .* connection error: /.
-		qr/handshake failed: error:.*:CRYPTO_internal:/ => 1,
+		qr/handshake failed: error:.*:rsa routines:/.
+		qr/CRYPTO_internal:/ => 1,
 	},
     },
     server => {

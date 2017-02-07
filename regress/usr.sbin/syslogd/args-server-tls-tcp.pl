@@ -40,8 +40,8 @@ our %args = (
     file => {
 	loggrep => {
 	    qr/syslogd: loghost .* connection error: /.
-		qr/handshake failed: error:.*:/.
-		qr/SSL_internal:wrong version number/ => 1,
+		qr/handshake failed: error:.*:SSL routines:/.
+		qr/CONNECT_CR_SRVR_HELLO:wrong version number/ => 1,
 	},
     },
 );
