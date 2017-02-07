@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.47 2017/01/23 01:20:08 dlg Exp $ */
+/* $OpenBSD: mfireg.h,v 1.48 2017/02/07 07:07:29 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -489,6 +489,12 @@ struct mfi_evtarg_pd {
 	uint8_t			mep_slot_number;
 } __packed;
 
+struct mfi_evtarg_pd_state {
+	struct mfi_evtarg_pd	pd;
+	uint32_t		prev_state;
+	uint32_t		new_state;
+} __packed;
+
 struct mfi_evtarg_pd_address {
 	uint16_t		device_id;
 	uint16_t		encl_id;
@@ -596,11 +602,7 @@ struct mfi_evt_detail {
 			struct mfi_progress	prog;
 		} __packed			pd_prog;
 
-		struct {
-			struct mfi_evtarg_pd	pd;
-			uint32_t		prev_state;
-			uint32_t		new_state;
-		} __packed			pd_state;
+		struct mfi_evtarg_pd_state	pd_state;
 
 		struct {
 			uint16_t		vendor_id;
