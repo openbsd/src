@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.231 2017/02/07 17:13:28 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.232 2017/02/07 18:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1356,13 +1356,15 @@ tty_margin(struct tty *tty, u_int rleft, u_int rright)
 	if (tty->rleft == rleft && tty->rright == rright)
 		return;
 
-	tty->rupper = 0;
-	tty->rlower = tty->sy - 1;
+	tty_putcode2(tty, TTYC_CSR, tty->rupper, tty->rlower);
 
 	tty->rleft = rleft;
 	tty->rright = rright;
 
-	snprintf(s, sizeof s, "\033[r\033[%u;%us", rleft + 1, rright + 1);
+	if (rleft == 0 && rright == tty->sx - 1)
+		snprintf(s, sizeof s, "\033[s");
+	else
+		snprintf(s, sizeof s, "\033[%u;%us", rleft + 1, rright + 1);
 	tty_puts(tty, s);
 	tty->cx = tty->cy = 0;
 }
