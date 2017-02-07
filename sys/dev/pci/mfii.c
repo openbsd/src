@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.35 2017/02/07 00:25:40 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.36 2017/02/07 02:47:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -365,6 +365,40 @@ void			mfii_abort(struct mfii_softc *, struct mfii_ccb *,
 void			mfii_scsi_cmd_abort_done(struct mfii_softc *,
 			    struct mfii_ccb *);
 
+/*
+ * mfii boards support asynchronous (and non-polled) completion of
+ * dcmds by proxying them through a passthru mpii command that points
+ * at a dcmd frame. since the passthru command is submitted like
+ * the scsi commands using an SMID in the request descriptor,
+ * ccb_request memory * must contain the passthru command because
+ * that is what the SMID refers to. this means ccb_request cannot
+ * contain the dcmd. rather than allocating separate dma memory to
+ * hold the dcmd, we reuse the sense memory buffer for it.
+ */
+
+void			mfii_dcmd_start(struct mfii_softc *,
+			    struct mfii_ccb *);
+
+static inline void
+mfii_dcmd_scrub(struct mfii_ccb *ccb)
+{
+	memset(ccb->ccb_sense, 0, sizeof(*ccb->ccb_sense));
+}
+
+static inline struct mfi_dcmd_frame *
+mfii_dcmd_frame(struct mfii_ccb *ccb)
+{
+	CTASSERT(sizeof(struct mfi_dcmd_frame) <= sizeof(*ccb->ccb_sense));
+	return ((struct mfi_dcmd_frame *)ccb->ccb_sense);
+}
+
+static inline void
+mfii_dcmd_sync(struct mfii_softc *sc, struct mfii_ccb *ccb, int flags)
+{
+	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(sc->sc_sense),
+	    ccb->ccb_sense_offset, sizeof(*ccb->ccb_sense), flags);
+}
+
 #define mfii_fw_state(_sc) mfii_read((_sc), MFI_OSP)
 
 const struct mfii_iop mfii_iop_thunderbolt = {
@@ -475,6 +509,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
 
 	/* sense memory */
+	CTASSERT(sizeof(struct mfi_sense) == MFI_SENSE_SIZE);
 	sc->sc_sense = mfii_dmamem_alloc(sc, sc->sc_max_cmds * MFI_SENSE_SIZE);
 	if (sc->sc_sense == NULL) {
 		printf("%s: unable to allocate sense memory\n", DEVNAME(sc));
@@ -743,8 +778,25 @@ mfii_dmamem_free(struct mfii_softc *sc, struct mfii_dmamem *m)
 	free(m, M_DEVBUF, 0);
 }
 
+void
+mfii_dcmd_start(struct mfii_softc *sc, struct mfii_ccb *ccb)
+{
+	struct mpii_msg_scsi_io *io = ccb->ccb_request;
+	struct mfii_raid_context *ctx = (struct mfii_raid_context *)(io + 1);
+	struct mfii_sge *sge = (struct mfii_sge *)(ctx + 1);
 
+	io->function = MFII_FUNCTION_PASSTHRU_IO;
+	io->sgl_offset0 = (uint32_t *)sge - (uint32_t *)io;
 
+	htolem64(&sge->sg_addr, ccb->ccb_sense_dva);
+	htolem32(&sge->sg_len, sizeof(*ccb->ccb_sense));
+	sge->sg_flags = MFII_SGE_CHAIN_ELEMENT | MFII_SGE_ADDR_IOCPLBNTA;
+
+	ccb->ccb_req.flags = MFII_REQ_TYPE_SCSI;
+	ccb->ccb_req.smid = letoh16(ccb->ccb_smid);
+
+	mfii_start(sc, ccb);
+}
 
 int
 mfii_transition_firmware(struct mfii_softc *sc)
