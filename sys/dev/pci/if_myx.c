@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.101 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.102 2017/02/07 06:51:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -294,8 +294,6 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 
 	/* this is sort of racy */
 	if (myx_mcl_pool == NULL) {
-		extern struct kmem_pa_mode kp_dma_contig;
-
 		myx_mcl_pool = malloc(sizeof(*myx_mcl_pool), M_DEVBUF,
 		    M_WAITOK);
 		if (myx_mcl_pool == NULL) {
@@ -303,9 +301,9 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc));
 			goto unmap;
 		}
-		pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY, IPL_NET,
-		    0, "myxmcl", NULL);
-		pool_set_constraints(myx_mcl_pool, &kp_dma_contig);
+
+		m_pool_init(myx_mcl_pool, MYX_RXBIG_SIZE, MYX_BOUNDARY,
+		    "myxmcl");
 	}
 
 	if (myx_pcie_dc(sc, pa) != 0)

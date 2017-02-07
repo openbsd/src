@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.243 2017/02/07 06:27:18 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.244 2017/02/07 06:51:58 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -163,6 +163,9 @@ mbinit(void)
 
 	m_pool_allocator.pa_pagesz = pool_allocator_multi.pa_pagesz;
 
+	nmbclust_update();
+	mbuf_mem_alloc = 0;
+
 #if DIAGNOSTIC
 	if (mclsizes[0] != MCLBYTES)
 		panic("mbinit: the smallest cluster size != MCLBYTES");
@@ -170,9 +173,7 @@ mbinit(void)
 		panic("mbinit: the largest cluster size != MAXMCLBYTES");
 #endif
 
-	pool_init(&mbpool, MSIZE, 0, IPL_NET, 0, "mbufpl", NULL);
-	pool_set_constraints(&mbpool, &kp_dma_contig);
-	pool_setlowat(&mbpool, mblowat);
+	m_pool_init(&mbpool, MSIZE, 64, "mbufpl");
 
 	pool_init(&mtagpool, PACKET_TAG_MAXSIZE + sizeof(struct m_tag), 0,
 	    IPL_NET, 0, "mtagpl", NULL);
@@ -186,16 +187,12 @@ mbinit(void)
 			snprintf(mclnames[i], sizeof(mclnames[0]), "mcl%dk",
 			    mclsizes[i] >> 10);
 		}
-		pool_init(&mclpools[i], mclsizes[i], 64, IPL_NET, 0,
-		    mclnames[i], NULL);
-		pool_set_constraints(&mclpools[i], &kp_dma_contig);
-		pool_setlowat(&mclpools[i], mcllowat);
+
+		m_pool_init(&mclpools[i], mclsizes[i], 64, mclnames[i]);
 	}
 
 	(void)mextfree_register(m_extfree_pool);
 	KASSERT(num_extfree_fns == 1);
-
-	nmbclust_update();
 }
 
 void
@@ -207,27 +204,7 @@ mbcpuinit()
 void
 nmbclust_update(void)
 {
-	unsigned int i, n;
-
-	/*
-	 * Set the hard limit on the mclpools to the number of
-	 * mbuf clusters the kernel is to support.  Log the limit
-	 * reached message max once a minute.
-	 */
-	for (i = 0; i < nitems(mclsizes); i++) {
-		n = (unsigned long long)nmbclust * MCLBYTES / mclsizes[i];
-		(void)pool_sethardlimit(&mclpools[i], n, mclpool_warnmsg, 60);
-		/*
-		 * XXX this needs to be reconsidered.
-		 * Setting the high water mark to nmbclust is too high
-		 * but we need to have enough spare buffers around so that
-		 * allocations in interrupt context don't fail or mclgeti()
-		 * drivers may end up with empty rings.
-		 */
-		pool_sethiwat(&mclpools[i], n);
-	}
-	pool_sethiwat(&mbpool, nmbclust);
-
+	/* update the global mbuf memory limit */
 	mbuf_mem_limit = nmbclust * MCLBYTES;
 }
 
