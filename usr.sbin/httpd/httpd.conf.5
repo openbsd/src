@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.78 2017/01/24 13:28:47 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.79 2017/02/07 12:27:42 reyk Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: February 7 2017 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -240,8 +240,14 @@ Set the maximum number of requests per persistent HTTP connection.
 Persistent connections are negotiated using the Keep-Alive header in
 HTTP/1.0 and enabled by default in HTTP/1.1.
 The default maximum number of requests per connection is 100.
+.It Ic request timeout Ar seconds
+Specify the inactivity timeout for HTTP operations between client and server,
+for example the maximum time to wait for a request from the client.
+The default timeout is 60 seconds (1 minute).
+The maximum is 2147483647 seconds (68 years).
 .It Ic timeout Ar seconds
-Specify the inactivity timeout in seconds for accepted sessions.
+Specify the inactivity timeout in seconds for accepted sessions,
+for example the maximum time to wait for I/O from the FastCGI backend.
 The default timeout is 600 seconds (10 minutes).
 The maximum is 2147483647 seconds (68 years).
 .El

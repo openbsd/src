@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.129 2017/02/03 08:23:46 guenther Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.130 2017/02/07 12:27:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -64,6 +64,7 @@
 
 #define SERVER_MAX_CLIENTS	1024
 #define SERVER_TIMEOUT		600
+#define SERVER_REQUESTTIMEOUT	60
 #define SERVER_CACHESIZE	-1	/* use default size */
 #define SERVER_NUMPROC		3
 #define SERVER_MAXHEADERLENGTH	8192
@@ -459,6 +460,7 @@ struct server_config {
 	struct sockaddr_storage	 ss;
 	int			 prefixlen;
 	struct timeval		 timeout;
+	struct timeval		 requesttimeout;
 	uint32_t		 maxrequests;
 	size_t			 maxrequestbody;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.106 2017/02/02 22:19:59 reyk Exp $	*/
+/*	$OpenBSD: server.c,v 1.107 2017/02/07 12:27:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -818,7 +818,7 @@ server_input(struct client *clt)
 	bufferevent_setwatermark(clt->clt_bev, EV_READ, 0, FCGI_CONTENT_SIZE);
 
 	bufferevent_settimeout(clt->clt_bev,
-	    srv_conf->timeout.tv_sec, srv_conf->timeout.tv_sec);
+	    srv_conf->requesttimeout.tv_sec, srv_conf->requesttimeout.tv_sec);
 	bufferevent_enable(clt->clt_bev, EV_READ|EV_WRITE);
 }
 
@@ -902,7 +902,7 @@ server_error(struct bufferevent *bev, short error, void *arg)
 	struct evbuffer		*dst;
 
 	if (error & EVBUFFER_TIMEOUT) {
-		server_close(clt, "buffer event timeout");
+		server_abort_http(clt, 408, "timeout");
 		return;
 	}
 	if (error & EVBUFFER_ERROR) {

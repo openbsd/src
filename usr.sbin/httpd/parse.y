@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2017/01/27 07:03:27 tom Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2017/02/07 12:27:42 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -245,6 +245,8 @@ server		: SERVER optmatch STRING	{
 			s->srv_conf.parent_id = s->srv_conf.id;
 			s->srv_s = -1;
 			s->srv_conf.timeout.tv_sec = SERVER_TIMEOUT;
+			s->srv_conf.requesttimeout.tv_sec =
+			    SERVER_REQUESTTIMEOUT;
 			s->srv_conf.maxrequests = SERVER_MAXREQUESTS;
 			s->srv_conf.maxrequestbody = SERVER_MAXREQUESTBODY;
 			s->srv_conf.flags = SRVFLAG_LOG;
@@ -684,6 +686,10 @@ conflags_l	: conflags optcommanl conflags_l
 
 conflags	: TIMEOUT timeout		{
 			memcpy(&srv_conf->timeout, &$2,
+			    sizeof(struct timeval));
+		}
+		| REQUEST TIMEOUT timeout	{
+			memcpy(&srv_conf->requesttimeout, &$3,
 			    sizeof(struct timeval));
 		}
 		| MAXIMUM REQUESTS NUMBER	{
