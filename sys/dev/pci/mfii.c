@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.37 2017/02/07 03:14:53 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.38 2017/02/07 04:42:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -374,6 +374,11 @@ void			mfii_aen_start(struct mfii_softc *, struct mfii_ccb *,
 void			mfii_aen_done(struct mfii_softc *, struct mfii_ccb *);
 void			mfii_aen(void *);
 void			mfii_aen_unregister(struct mfii_softc *);
+
+void			mfii_aen_pd_insert(struct mfii_softc *,
+			    const struct mfi_evtarg_pd_address *);
+void			mfii_aen_pd_remove(struct mfii_softc *,
+			    const struct mfi_evtarg_pd_address *);
 
 /*
  * mfii boards support asynchronous (and non-polled) completion of
@@ -917,11 +922,71 @@ mfii_aen(void *arg)
 	    0, MFII_DMA_LEN(mdm), BUS_DMASYNC_POSTREAD);
 
 #if 0
-	printf("%s: %u %08x %s\n", DEVNAME(sc), lemtoh32(&med->med_seq_num),
-	    lemtoh32(&med->med_code), med->med_description);
+	printf("%s: %u %08x %02x %s\n", DEVNAME(sc),
+	    lemtoh32(&med->med_seq_num), lemtoh32(&med->med_code),
+	    med->med_arg_type, med->med_description);
 #endif
 
+	switch (lemtoh32(&med->med_code)) {
+	case MFI_EVT_PD_INSERTED_EXT:
+		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
+			break;
+		
+		mfii_aen_pd_insert(sc, &med->args.pd_address);
+		break;
+ 	case MFI_EVT_PD_REMOVED_EXT:
+		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
+			break;
+		
+		mfii_aen_pd_remove(sc, &med->args.pd_address);
+		break;
+	default:
+		break;
+	}
+
 	mfii_aen_start(sc, ccb, mdm, lemtoh32(&med->med_seq_num) + 1);
+}
+
+void
+mfii_aen_pd_insert(struct mfii_softc *sc,
+    const struct mfi_evtarg_pd_address *pd)
+{
+#if 0
+	printf("%s: pd inserted ext\n", DEVNAME(sc));
+	printf("%s:  device_id %04x encl_id: %04x type %x\n", DEVNAME(sc),
+	    lemtoh16(&pd->device_id), lemtoh16(&pd->encl_id),
+	    pd->scsi_dev_type);
+	printf("%s:  connected %02x addrs %016llx %016llx\n", DEVNAME(sc),
+	    pd->connected.port_bitmap, lemtoh64(&pd->sas_addr[0]),
+	    lemtoh64(&pd->sas_addr[1]));
+#endif
+
+	if (mfii_dev_handles_update(sc) != 0) /* refresh map */
+		return;
+
+	scsi_probe_target(sc->sc_pd->pd_scsibus, lemtoh16(&pd->device_id));
+}
+
+void
+mfii_aen_pd_remove(struct mfii_softc *sc,
+    const struct mfi_evtarg_pd_address *pd)
+{
+#if 0
+	printf("%s: pd removed ext\n", DEVNAME(sc));
+	printf("%s:  device_id %04x encl_id: %04x type %u\n", DEVNAME(sc),
+	    lemtoh16(&pd->device_id), lemtoh16(&pd->encl_id),
+	    pd->scsi_dev_type);
+	printf("%s:  connected %02x addrs %016llx %016llx\n", DEVNAME(sc),
+	    pd->connected.port_bitmap, lemtoh64(&pd->sas_addr[0]),
+	    lemtoh64(&pd->sas_addr[1]));
+#endif
+	uint16_t target = lemtoh16(&pd->device_id);
+
+	scsi_activate(sc->sc_pd->pd_scsibus, target, -1, DVACT_DEACTIVATE);
+
+	/* the firmware will abort outstanding commands for us */
+
+	scsi_detach_target(sc->sc_pd->pd_scsibus, target, DETACH_FORCE);
 }
 
 void
