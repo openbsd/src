@@ -1239,7 +1239,6 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	BIGNUM *a, *p, *m, *d, *e, *b, *n, *c;
 	int rc = 1;
 	BN_MONT_CTX *mont;
-	char *bigstring;
 
 	a = BN_new();
 	p = BN_new();
