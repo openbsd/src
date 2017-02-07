@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.19 2017/02/07 21:56:07 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.20 2017/02/07 23:05:33 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -481,10 +481,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct pte_desc *pted;
 	struct vm_page *pg;
-	int s;
+	int s, cache, error;
 	int need_sync = 0;
-	int cache;
-	int error;
 
 	//if (!cold) printf("%s: %x %x %x %x %x %x\n", __func__, va, pa, prot, flags, pm, pmap_kernel());
 
@@ -540,6 +538,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pg->pg_flags |= PG_PMAP_REF;
 		if ((prot & PROT_WRITE) && (flags & PROT_WRITE)) {
 			pg->pg_flags |= PG_PMAP_MOD;
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		}
 	}
 
@@ -557,31 +556,19 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_pte_insert(pted);
 	}
 
-//	cpu_dcache_inv_range(va & ~PAGE_MASK, PAGE_SIZE);
-//	cpu_sdcache_inv_range(va & ~PAGE_MASK, pa & ~PAGE_MASK, PAGE_SIZE);
-//	cpu_drain_writebuf();
 	ttlb_flush(pm, va & ~PAGE_MASK);
 
-	if (prot & PROT_EXEC) {
+	if (flags & PROT_EXEC) {
 		if (pg != NULL) {
 			need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
 			atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
 		} else
 			need_sync = 1;
-	} else {
-		/*
-		 * Should we be paranoid about writeable non-exec
-		 * mappings ? if so, clear the exec tag
-		 */
-		if ((prot & PROT_WRITE) && (pg != NULL))
-			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
 
-#if 0
-	/* only instruction sync executable pages */
-	if (need_sync)
-		pmap_syncicache_user_virt(pm, va);
-#endif
+	if (need_sync && (pm == pmap_kernel() || (curproc &&
+	    curproc->p_vmspace->vm_map.pmap == pm)))
+		cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
 
 	error = 0;
 out:
@@ -631,9 +618,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
-
-	__asm __volatile("dsb sy");
-	//dcache_wbinv_poc(va & ~PAGE_MASK, pted->pted_pte & PTE_RPGN, PAGE_SIZE);
 
 	pmap_pte_remove(pted, pm != pmap_kernel());
 
@@ -1595,7 +1579,6 @@ pmap_init()
 void
 pmap_proc_iflush(struct process *pr, vaddr_t addr, vsize_t len)
 {
-	paddr_t pa;
 	vsize_t clen;
 
 	while (len > 0) {
@@ -1604,9 +1587,9 @@ pmap_proc_iflush(struct process *pr, vaddr_t addr, vsize_t len)
 		if (clen > len)
 			clen = len;
 
-		if (pmap_extract(pr->ps_vmspace->vm_map.pmap, addr, &pa)) {
-			//syncicache((void *)pa, clen);
-		}
+		/* We only need to do anything if it is the current process. */
+		if (pr == curproc->p_p)
+			cpu_icache_sync_range(addr, clen);
 
 		len -= clen;
 		addr += clen;
@@ -1747,6 +1730,7 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	// pl3 is pointer to the L3 entry to update for this mapping.
 	// will be valid if a pted exists.
 	uint64_t *pl3 = NULL;
+	int need_sync = 0;
 
 	//printf("fault pm %x va %x ftype %x user %x\n", pm, va, ftype, user);
 
@@ -1772,7 +1756,6 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	if (*pl3 == 0)
 		return 0;
 
-
 	/*
 	 * Check the fault types to find out if we were doing
 	 * any mod/ref emulation and fixup the PTE if we were.
@@ -1788,16 +1771,11 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 */
 		pg->pg_flags |= PG_PMAP_MOD;
 		pg->pg_flags |= PG_PMAP_REF;
+		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
 
 		/* Thus, enable read, write and exec. */
 		pted->pted_pte |=
 		    (pted->pted_va & (PROT_READ|PROT_WRITE|PROT_EXEC));
-		pmap_pte_update(pted, pl3);
-
-		/* Flush tlb. */
-		ttlb_flush(pm, va & ~PAGE_MASK);
-
-		return 1;
 	} else if ((ftype & PROT_EXEC) && /* fault caused by an exec */
 	    !(pted->pted_pte & PROT_EXEC) && /* and exec is disabled now */
 	    (pted->pted_va & PROT_EXEC)) { /* but is supposedly allowed */
@@ -1811,12 +1789,6 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pmap_pte_update(pted, pl3);
-
-		/* Flush tlb. */
-		ttlb_flush(pm, va & ~PAGE_MASK);
-
-		return 1;
 	} else if ((ftype & PROT_READ) && /* fault caused by a read */
 	    !(pted->pted_pte & PROT_READ) && /* and read is disabled now */
 	    (pted->pted_va & PROT_READ)) { /* but is supposedly allowed */
@@ -1830,16 +1802,30 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		/* Thus, enable read and exec. */
 		pted->pted_pte |= (pted->pted_va & (PROT_READ|PROT_EXEC));
-		pmap_pte_update(pted, pl3);
-
-		/* Flush tlb. */
-		ttlb_flush(pm, va & ~PAGE_MASK);
-
-		return 1;
+	} else {
+		/* didn't catch it, so probably broken */
+		return 0;
 	}
 
-	/* didn't catch it, so probably broken */
-	return 0;
+	/* We actually made a change, so flush it and sync. */
+	pmap_pte_update(pted, pl3);
+
+	/* Flush tlb. */
+	ttlb_flush(pm, va & ~PAGE_MASK);
+
+	/*
+	 * If this is a page that can be executed, make sure to invalidate
+	 * the instruction cache if the page has been modified or not used
+	 * yet.
+	 */
+	if (pted->pted_va & PROT_EXEC) {
+		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
+		if (need_sync)
+			cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
+	}
+
+	return 1;
 }
 
 void pmap_postinit(void) {}
