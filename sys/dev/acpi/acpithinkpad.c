@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.53 2016/10/04 23:02:05 deraadt Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.54 2017/02/07 05:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -661,9 +661,11 @@ int
 thinkpad_set_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
-	int maxval = (sc->sc_thinklight >> 8) & 0x0f;
+	int maxval;
 
 	KASSERT(sc != NULL);
+
+	maxval = (sc->sc_thinklight >> 8) & 0x0f;
 
 	if (maxval == 0)
 		return (ENOTTY);
@@ -721,10 +723,12 @@ int
 thinkpad_set_param(struct wsdisplay_param *dp)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
-	int maxval = (sc->sc_brightness >> 8) & 0xff;
+	int maxval;
 
 	if (sc == NULL)
 		return -1;
+
+	maxval = (sc->sc_brightness >> 8) & 0xff;
 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
