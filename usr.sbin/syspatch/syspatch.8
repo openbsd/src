@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.14 2017/02/07 08:58:47 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.15 2017/02/07 17:58:43 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -54,7 +54,8 @@ Backup of the original
 .Pa /bsd
 release kernel.
 .It Pa /etc/installurl
-.Ox mirror top-level URL for fetching patches.
+.Ox
+mirror top-level URL for fetching patches.
 .It Pa /var/syspatch/*
 Directories containing the rollback tarball and original signed
 .Xr diff 1
