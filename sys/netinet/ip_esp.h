@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.43 2016/09/02 09:39:32 vgross Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.44 2017/02/07 18:18:16 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -38,8 +38,7 @@
 #ifndef _NETINET_IP_ESP_H_
 #define _NETINET_IP_ESP_H_
 
-struct espstat
-{
+struct espstat {
     u_int32_t	esps_hdrops;	/* Packet shorter than header shows */
     u_int32_t	esps_nopf;	/* Protocol family not supported */
     u_int32_t	esps_notdb;
@@ -63,6 +62,7 @@ struct espstat
     u_int32_t	esps_udpencout; /* Output ESP-in-UDP packets */
     u_int32_t	esps_udpinval;  /* Invalid input ESP-in-UDP packets */
     u_int32_t	esps_udpneeded; /* Trying to use a ESP-in-UDP TDB */
+    u_int32_t	esps_outfail;	/* Packet output failure */
 };
 
 /*

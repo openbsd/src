@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.127 2017/02/07 17:25:46 patrick Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.128 2017/02/07 18:18:16 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1247,8 +1247,8 @@ ah_output_cb(struct cryptop *crp)
 	/* No longer needed. */
 	crypto_freereq(crp);
 
-	ipsp_process_done(m, tdb);
-	/* XXX missing error counter if ipsp_process_done() drops packet */
+	if (ipsp_process_done(m, tdb))
+		ahstat.ahs_outfail++;
 	NET_UNLOCK(s);
 
  baddone:

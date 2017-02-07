@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.33 2010/01/10 12:43:07 markus Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.34 2017/02/07 18:18:16 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -38,8 +38,7 @@
 #ifndef _NETINET_IP_AH_H_
 #define _NETINET_IP_AH_H_
 
-struct ahstat
-{
+struct ahstat {
     u_int32_t	ahs_hdrops;	/* Packet shorter than header shows */
     u_int32_t	ahs_nopf;	/* Protocol family not supported */
     u_int32_t	ahs_notdb;
@@ -58,10 +57,10 @@ struct ahstat
     u_int32_t	ahs_toobig;	/* Packet got larger than IP_MAXPACKET */
     u_int32_t	ahs_pdrops;	/* Packet blocked due to policy */
     u_int32_t	ahs_crypto;	/* Crypto processing failure */
+    u_int32_t	ahs_outfail;	/* Packet output failure */
 };
 
-struct ah
-{
+struct ah {
     u_int8_t   ah_nh;
     u_int8_t   ah_hl;
     u_int16_t  ah_rv;

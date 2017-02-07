@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.7 2007/12/14 18:33:41 deraadt Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.8 2017/02/07 18:18:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -51,6 +51,7 @@ struct ipcompstat {
 	u_int32_t	ipcomps_pdrops;	/* Packet blocked due to policy */
 	u_int32_t	ipcomps_crypto;	/* "Crypto" processing failure */
 	u_int32_t	ipcomps_minlen;	/* packets too short for compress */
+	u_int32_t	ipcomps_outfail;	/* Packet output failure */
 };
 
 /* IPCOMP header */

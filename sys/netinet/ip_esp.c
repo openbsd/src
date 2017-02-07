@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.145 2017/02/07 17:25:46 patrick Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.146 2017/02/07 18:18:16 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1088,8 +1088,8 @@ esp_output_cb(struct cryptop *crp)
 	crypto_freereq(crp);
 
 	/* Call the IPsec input callback. */
-	ipsp_process_done(m, tdb);
-	/* XXX missing error counter if ipsp_process_done() drops packet */
+	if (ipsp_process_done(m, tdb))
+		espstat.esps_outfail++;
 	NET_UNLOCK(s);
 	return;
 

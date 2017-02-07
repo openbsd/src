@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.153 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: inet.c,v 1.154 2017/02/07 18:18:16 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -954,6 +954,7 @@ ah_stats(char *name)
 	p(ahs_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ahs_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ahs_crypto, "\t%u packet%s that failed crypto processing\n");
+	p(ahs_outfail, "\t%u output packet%s could not be sent\n");
 	p(ahs_ibytes, "\t%llu input byte%s\n");
 	p(ahs_obytes, "\t%llu output byte%s\n");
 
@@ -1032,6 +1033,7 @@ esp_stats(char *name)
 	p(esps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(esps_crypto, "\t%u packet%s that failed crypto processing\n");
+	p(esps_outfail, "\t%u output packet%s could not be sent\n");
 	p(esps_udpencin, "\t%u input UDP encapsulated ESP packet%s\n");
 	p(esps_udpencout, "\t%u output UDP encapsulated ESP packet%s\n");
 	p(esps_udpinval, "\t%u UDP packet%s for non-encapsulating TDB received\n");
@@ -1226,6 +1228,7 @@ ipcomp_stats(char *name)
 	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
+	p(ipcomps_outfail, "\t%u output packet%s could not be sent\n");
 	p(ipcomps_minlen, "\t%u packet%s less than minimum compression length\n");
 	p(ipcomps_ibytes, "\t%llu input byte%s\n");
 	p(ipcomps_obytes, "\t%llu output byte%s\n");

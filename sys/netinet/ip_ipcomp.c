@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.52 2017/02/07 17:25:46 patrick Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.53 2017/02/07 18:18:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -579,8 +579,8 @@ ipcomp_output_cb(struct cryptop *crp)
 	if (rlen < crp->crp_olen) {
 		/* Compression was useless, we have lost time. */
 		crypto_freereq(crp);
-		ipsp_process_done(m, tdb);
-		/* XXX missing counter if ipsp_process_done() drops packet */
+		if (ipsp_process_done(m, tdb))
+			ipcompstat.ipcomps_outfail++;
 		NET_UNLOCK(s);
 		return;
 	}
@@ -628,8 +628,8 @@ ipcomp_output_cb(struct cryptop *crp)
 	/* Release the crypto descriptor. */
 	crypto_freereq(crp);
 
-	ipsp_process_done(m, tdb);
-	/* XXX missing error counter if ipsp_process_done() drops packet */
+	if (ipsp_process_done(m, tdb))
+		ipcompstat.ipcomps_outfail++;
 	NET_UNLOCK(s);
 	return;
 
