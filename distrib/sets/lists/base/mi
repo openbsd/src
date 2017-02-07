@@ -3560,6 +3560,9 @@
 ./usr/share/terminfo/d/dtc382
 ./usr/share/terminfo/d/dtterm
 ./usr/share/terminfo/d/dumb
+./usr/share/terminfo/d/dumb-emacs-ansi
+./usr/share/terminfo/d/dvtm
+./usr/share/terminfo/d/dvtm-256color
 ./usr/share/terminfo/d/dw
 ./usr/share/terminfo/d/dw1
 ./usr/share/terminfo/d/dw2
