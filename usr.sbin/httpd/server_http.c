@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.113 2017/02/02 22:19:59 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.114 2017/02/07 12:22:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -216,9 +216,27 @@ server_read_http(struct bufferevent *bev, void *arg)
 		goto done;
 	}
 
-	while (!clt->clt_headersdone && (line =
-	    evbuffer_readln(src, NULL, EVBUFFER_EOL_CRLF_STRICT)) != NULL) {
-		linelen = strlen(line);
+	while (!clt->clt_headersdone) {
+		if (!clt->clt_line) {
+			/* Peek into the buffer to see if it looks like HTTP */
+			key = EVBUFFER_DATA(src);
+			if (!isalpha(*key)) {
+				server_abort_http(clt, 400,
+				    "invalid request line");
+				goto abort;
+			}
+		}
+
+		if ((line = evbuffer_readln(src,
+		    &linelen, EVBUFFER_EOL_CRLF_STRICT)) == NULL) {
+			/* No newline found after too many bytes */
+			if (size > SERVER_MAXHEADERLENGTH) {
+				server_abort_http(clt, 413,
+				    "request line too long");
+				goto abort;
+			}
+			break;
+		}
 
 		/*
 		 * An empty line indicates the end of the request.
