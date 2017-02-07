@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.68 2016/11/21 01:44:06 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.69 2017/02/07 05:39:17 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -205,6 +205,7 @@ struct pool {
 #ifdef _KERNEL
 
 extern struct pool_allocator pool_allocator_single;
+extern struct pool_allocator pool_allocator_multi;
 
 struct pool_request {
 	TAILQ_ENTRY(pool_request) pr_entry;
