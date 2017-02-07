@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.71 2017/02/02 16:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.72 2017/02/07 15:07:14 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -310,23 +310,23 @@ ieee80211_reset_erp(struct ieee80211com *ic)
 {
 	ic->ic_flags &= ~IEEE80211_F_USEPROT;
 
-	/*
-	 * Enable short slot time iff:
-	 * - we're operating in 802.11a or
-	 * - we're operating in 802.11g and we're not in IBSS mode and
-	 *   the device supports short slot time
-	 */
 	ieee80211_set_shortslottime(ic,
-	    ic->ic_curmode == IEEE80211_MODE_11A
+	    ic->ic_curmode == IEEE80211_MODE_11A ||
+	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    IEEE80211_IS_CHAN_5GHZ(ic->ic_ibss_chan))
 #ifndef IEEE80211_STA_ONLY
 	    ||
-	    (ic->ic_curmode == IEEE80211_MODE_11G &&
+	    ((ic->ic_curmode == IEEE80211_MODE_11G ||
+	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan))) &&
 	     ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	     (ic->ic_caps & IEEE80211_C_SHSLOT))
 #endif
 	);
 
 	if (ic->ic_curmode == IEEE80211_MODE_11A ||
+	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    IEEE80211_IS_CHAN_5GHZ(ic->ic_ibss_chan)) ||
 	    (ic->ic_caps & IEEE80211_C_SHPREAMBLE))
 		ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
 	else
