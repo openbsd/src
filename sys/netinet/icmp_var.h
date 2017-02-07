@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.14 2014/01/19 05:01:50 claudio Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.15 2017/02/07 22:30:16 jmatthew Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -91,6 +91,32 @@ struct	icmpstat {
 }
 
 #ifdef _KERNEL
-extern struct	icmpstat icmpstat;
+
+#include <sys/percpu.h>
+
+enum icmpstat_counters {
+	icps_error,
+	icps_toofreq,
+	icps_oldshort,
+	icps_oldicmp,
+	icps_outhist,
+	icps_badcode = icps_outhist + ICMP_MAXTYPE + 1,
+	icps_tooshort,
+	icps_checksum,
+	icps_badlen,
+	icps_reflect,
+	icps_bmcastecho,
+	icps_inhist,
+	icps_ncounters = icps_inhist + ICMP_MAXTYPE + 1
+};
+
+extern struct cpumem *icmpcounters;
+
+static inline void
+icmpstat_inc(enum icmpstat_counters c)
+{
+	counters_inc(icmpcounters, c);
+}
+
 #endif /* _KERNEL */
 #endif /* _NETINET_ICMP_VAR_H_ */
