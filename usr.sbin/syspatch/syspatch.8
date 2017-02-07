@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.13 2016/12/08 09:47:37 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.14 2017/02/07 08:58:47 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2016 $
+.Dd $Mdocdate: February 7 2017 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -53,6 +53,8 @@ Revert the most recently installed patch.
 Backup of the original
 .Pa /bsd
 release kernel.
+.It Pa /etc/installurl
+.Ox mirror top-level URL for fetching patches.
 .It Pa /var/syspatch/*
 Directories containing the rollback tarball and original signed
 .Xr diff 1
@@ -60,6 +62,7 @@ of installed patches.
 .El
 .Sh SEE ALSO
 .Xr signify 1 ,
+.Xr installurl 5 ,
 .Xr release 8
 .Sh HISTORY
 .Nm
