@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installurl.5,v 1.2 2017/02/06 21:31:32 tj Exp $
+.\"	$OpenBSD: installurl.5,v 1.3 2017/02/07 11:36:52 tb Exp $
 .\"
 .\" Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2017 $
+.Dd $Mdocdate: February 7 2017 $
 .Dt INSTALLURL 5
 .Os
 .Sh NAME
@@ -25,7 +25,10 @@ The
 .Pa /etc/installurl
 file contains a single line specifying an
 .Ox
-mirror server URL.
+mirror server URL, such as
+.Pp
+.Dl https://ftp.openbsd.org/pub/OpenBSD
+.Pp
 It is created by the installer script if the system is installed
 through an official mirror.
 .Pp
@@ -36,9 +39,5 @@ in the file are ignored.
 .Bl -tag -width /etc/installurl -compact
 .It Pa /etc/installurl
 .El
-.Sh EXAMPLES
-.Bd -literal
-.Dl https://ftp.openbsd.org/pub/OpenBSD
-.Ed
 .Sh SEE ALSO
 .Xr syspatch 1
