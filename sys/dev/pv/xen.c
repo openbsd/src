@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.76 2017/02/06 21:58:29 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.77 2017/02/08 16:08:06 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1039,11 +1039,11 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 			i = 0;
 		if (ge->ge_reserved && i < ge->ge_reserved)
 			continue;
-		if (ge->ge_table[i].flags != GTF_invalid &&
-		    ge->ge_table[i].frame != 0)
+		if (ge->ge_table[i].frame != 0)
 			continue;
 		*ref = ge->ge_start + i;
 		/* XXX Mark as taken */
+		ge->ge_table[i].flags = GTF_invalid;
 		ge->ge_table[i].frame = 0xffffffff;
 		if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
 			ge->ge_next = ge->ge_reserved;
@@ -1080,13 +1080,9 @@ xen_grant_table_free(struct xen_softc *sc, grant_ref_t ref)
 	ref -= ge->ge_start;
 	if (ge->ge_table[ref].flags != GTF_invalid) {
 		mtx_leave(&ge->ge_lock);
-#ifdef XEN_DEBUG
-		panic("ref %u is still in use, sc %p gnt %p", ref +
-		    ge->ge_start, sc, sc->sc_gnt);
-#else
-		printf("%s: reference %u is still in use\n",
-		    sc->sc_dev.dv_xname, ref + ge->ge_start);
-#endif
+		panic("reference %u is still in use, flags %#x frame %#x",
+		    ref + ge->ge_start, ge->ge_table[ref].flags,
+		    ge->ge_table[ref].frame);
 	}
 	ge->ge_table[ref].frame = 0;
 	ge->ge_next = ref;
