@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.185 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.186 2017/02/08 20:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -680,20 +680,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	free(pack.ep_hdr, M_EXEC, pack.ep_hdrlen);
 
-	/*
-	 * Call emulation specific exec hook. This can setup per-process
-	 * p->p_emuldata or do any other per-process stuff an emulation needs.
-	 *
-	 * If we are executing process of different emulation than the
-	 * original forked process, call e_proc_exit() of the old emulation
-	 * first, then e_proc_exec() of new emulation. If the emulation is
-	 * same, the exec hook code should deallocate any old emulation
-	 * resources held previously by this process.
-	 */
-	if (pr->ps_emul && pr->ps_emul->e_proc_exit &&
-	    pr->ps_emul != pack.ep_emul)
-		(*pr->ps_emul->e_proc_exit)(p);
-
 	p->p_descfd = 255;
 	if ((pack.ep_flags & EXEC_HASFD) && pack.ep_fd < 255)
 		p->p_descfd = pack.ep_fd;
@@ -702,13 +688,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		p->p_p->ps_flags |= PS_WXNEEDED;
 	else
 		p->p_p->ps_flags &= ~PS_WXNEEDED;
-
-	/*
-	 * Call exec hook. Emulation code may NOT store reference to anything
-	 * from &pack.
-	 */
-	if (pack.ep_emul->e_proc_exec)
-		(*pack.ep_emul->e_proc_exec)(p, &pack);
 
 	/* update ps_emul, the old value is no longer needed */
 	pr->ps_emul = pack.ep_emul;

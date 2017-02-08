@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.158 2016/11/07 00:26:32 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.159 2017/02/08 20:58:30 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -241,12 +241,6 @@ exit1(struct proc *p, int rv, int flags)
 	}
 
 	p->p_fd = NULL;		/* zap the thread's copy */
-
-	/*
-	 * If emulation has thread exit hook, call it now.
-	 */
-	if (pr->ps_emul->e_proc_exit)
-		(*pr->ps_emul->e_proc_exit)(p);
 
         /*
 	 * Remove proc from pidhash chain and allproc so looking

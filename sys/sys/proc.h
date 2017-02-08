@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.232 2017/01/31 07:44:55 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.233 2017/02/08 20:58:30 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -115,10 +115,6 @@ struct	emul {
 	char	*e_esigret;		/* sigaction RET position */
 	int	e_flags;		/* Flags, see below */
 	struct uvm_object *e_sigobject;	/* shared sigcode object */
-					/* Per-process hooks */
-	void	(*e_proc_exec)(struct proc *, struct exec_package *);
-	void	(*e_proc_fork)(struct proc *p, struct proc *parent);
-	void	(*e_proc_exit)(struct proc *);
 };
 /* Flags for e_flags */
 #define	EMUL_ENABLED	0x0001		/* Allow exec to continue */
@@ -324,8 +320,6 @@ struct proc {
 	struct	tusage p_tu;		/* accumulated times. */
 	struct	timespec p_rtime;	/* Real time. */
 
-	void	*p_emuldata;		/* Per-process emulation data, or */
-					/* NULL. Malloc type M_EMULDATA */
 	int	 p_siglist;		/* Signals arrived but not delivered. */
 
 /* End area that is zeroed on creation. */
