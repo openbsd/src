@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.174 2017/02/08 18:03:31 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.175 2017/02/08 18:44:50 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -121,7 +121,7 @@ int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int, struct tls *);
 void	fdpass(int nfd) __attribute__((noreturn));
 int	remote_connect(const char *, const char *, struct addrinfo);
-int	timeout_handshake(int, struct tls *);
+int	timeout_tls(int, struct tls *, int (*)(struct tls *));
 int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
 	    const char *, const char *, struct addrinfo, int, const char *);
@@ -578,12 +578,7 @@ main(int argc, char *argv[])
 				if (!usetls)
 					readwrite(connfd, NULL);
 				if (tls_cctx) {
-					int i;
-
-					do {
-						i = tls_close(tls_cctx);
-					} while (i == TLS_WANT_POLLIN ||
-					    i == TLS_WANT_POLLOUT);
+					timeout_tls(s, tls_cctx, tls_close);
 					tls_free(tls_cctx);
 					tls_cctx = NULL;
 				}
@@ -673,12 +668,7 @@ main(int argc, char *argv[])
 				if (!zflag)
 					readwrite(s, tls_ctx);
 				if (tls_ctx) {
-					int j;
-
-					do {
-						j = tls_close(tls_ctx);
-					} while (j == TLS_WANT_POLLIN ||
-					    j == TLS_WANT_POLLOUT);
+					timeout_tls(s, tls_ctx, tls_close);
 					tls_free(tls_ctx);
 					tls_ctx = NULL;
 				}
@@ -729,12 +719,12 @@ unix_bind(char *path, int flags)
 }
 
 int
-timeout_handshake(int s, struct tls *tls_ctx)
+timeout_tls(int s, struct tls *tls_ctx, int (*func)(struct tls *))
 {
 	struct pollfd pfd;
 	int ret;
 
-	while ((ret = tls_handshake(tls_ctx)) != 0) {
+	while ((ret = (*func)(tls_ctx)) != 0) {
 		if (ret == TLS_WANT_POLLIN)
 			pfd.events = POLLIN;
 		else if (ret == TLS_WANT_POLLOUT)
@@ -765,7 +755,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 		errx(1, "tls connection failed (%s)",
 		    tls_error(tls_ctx));
 	}
-	if (timeout_handshake(s, tls_ctx) == -1) {
+	if (timeout_tls(s, tls_ctx, tls_handshake) == -1) {
 		if ((errstr = tls_error(tls_ctx)) == NULL)
 			errstr = strerror(errno);
 		errx(1, "tls handshake failed (%s)", errstr);
@@ -785,7 +775,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 
 	if (tls_accept_socket(tls_ctx, &tls_cctx, connfd) == -1) {
 		warnx("tls accept failed (%s)", tls_error(tls_ctx));
-	} else if (timeout_handshake(connfd, tls_cctx) == -1) {
+	} else if (timeout_tls(connfd, tls_cctx, tls_handshake) == -1) {
 		if ((errstr = tls_error(tls_ctx)) == NULL)
 			errstr = strerror(errno);
 		warnx("tls handshake failed (%s)", errstr);
