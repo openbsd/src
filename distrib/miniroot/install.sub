@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.962 2017/02/05 19:29:32 rpe Exp $
+#	$OpenBSD: install.sub,v 1.963 2017/02/08 21:35:18 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -531,7 +531,8 @@ get_responsefile() {
 
 	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
 	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
-	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$_mode.conf && AI_MODE=$_mode && return
+	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$_mode.conf &&
+		AI_MODE=$_mode && return
 
 	for _if in ''; do
 		[[ -x /sbin/dhclient ]] || break
@@ -545,7 +546,8 @@ get_responsefile() {
 		# Ask if multiple were found and system was not netbooted.
 		while (($# > 1)); do
 			ask_which "network interface" \
-				"should be used for the initial DHCP request" "$*"
+				"should be used for the initial DHCP request" \
+				"$*"
 			isin "$resp" $* && _if=$resp && break
 		done
 
@@ -560,7 +562,8 @@ get_responsefile() {
 		_mode=${_aifile##*?(/)auto_}
 
 		# Extract installer server ip address from lease file.
-		AI_SERVER=$(lease_value $_lf server-name tftp-server-name next-server)
+		AI_SERVER=$(lease_value $_lf \
+			server-name tftp-server-name next-server)
 
 		# Prime hostname with host-name option from lease file.
 		_hn=$(lease_value $_lf host-name)
@@ -575,7 +578,8 @@ get_responsefile() {
 		for _rf in {$AI_MAC-,${_hn:+$_hn-,}}$_mode; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
-			if unpriv ftp -Vo - "$_url" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null; then
+			if unpriv ftp -Vo - "$_url" \
+				>"/tmp/ai/ai.$_mode.conf" 2>/dev/null; then
 				AI_MODE=$_mode
 				ifconfig $_if delete down 2>/dev/null
 				return 0
@@ -604,7 +608,8 @@ get_responsefile() {
 
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
-	unpriv ftp -Vo - "$_rf" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null && AI_MODE=$_mode
+	unpriv ftp -Vo - "$_rf" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null &&
+		 AI_MODE=$_mode
 	ifconfig $_if delete down 2>/dev/null
 	[[ -n $AI_MODE ]]
 }
