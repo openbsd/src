@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.136 2017/02/08 05:09:25 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.137 2017/02/08 21:04:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -94,7 +94,7 @@
 #include <machine/exec.h>
 
 int	elf_load_file(struct proc *, char *, struct exec_package *,
-	    struct elf_args *, Elf_Addr *);
+	    struct elf_args *);
 int	elf_check_header(Elf_Ehdr *);
 int	elf_read_from(struct proc *, struct vnode *, u_long, void *, int);
 void	elf_load_psection(struct exec_vmcmd_set *, struct vnode *,
@@ -312,7 +312,7 @@ elf_read_from(struct proc *p, struct vnode *vp, u_long off, void *buf,
  */
 int
 elf_load_file(struct proc *p, char *path, struct exec_package *epp,
-    struct elf_args *ap, Elf_Addr *last)
+    struct elf_args *ap)
 {
 	int error, i;
 	struct nameidata nd;
@@ -327,7 +327,7 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 		u_long memsz;
 	} loadmap[ELF_MAX_VALID_PHDR];
 	int nload, idx = 0;
-	Elf_Addr pos = *last;
+	Elf_Addr pos;
 	int file_align;
 	int loop;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
@@ -378,17 +378,13 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 	nload = idx;
 
 	/*
-	 * If no position to load the interpreter was set by a probe
-	 * function, pick the same address that a non-fixed mmap(0, ..)
+	 * Load the interpreter where a non-fixed mmap(NULL, ...)
 	 * would (i.e. something safely out of the way).
 	 */
-	if (pos == ELF_NO_ADDR) {
-		pos = uvm_map_hint(p->p_vmspace, PROT_EXEC,
-		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-	}
-
+	pos = uvm_map_hint(p->p_vmspace, PROT_EXEC, VM_MIN_ADDRESS,
+	    VM_MAXUSER_ADDRESS);
 	pos = ELF_ROUND(pos, file_align);
-	*last = epp->ep_interp_pos = pos;
+
 	loop = 0;
 	for (i = 0; i < nload;/**/) {
 		vaddr_t	addr;
@@ -422,7 +418,7 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			if (loop == 0) {
 				loop = 1;
 				i = 0;
-				*last = epp->ep_interp_pos = pos = 0;
+				pos = 0;
 				continue;
 			}
 			error = ENOMEM;
@@ -432,7 +428,6 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			/* base changed. */
 			pos = addr - trunc_page(loadmap[i].vaddr);
 			pos = ELF_ROUND(pos,file_align);
-			epp->ep_interp_pos = *last = pos;
 			i = 0;
 			continue;
 		}
@@ -452,7 +447,7 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 		case PT_LOAD:
 			if (base_ph == NULL) {
 				flags = VMCMD_BASE;
-				addr = *last;
+				addr = pos;
 				base_ph = &ph[i];
 			} else {
 				flags = VMCMD_RELATIVE;
@@ -497,7 +492,6 @@ bad1:
 bad:
 	free(ph, M_TEMP, phsize);
 
-	*last = addr;
 	vput(nd.ni_vp);
 	return (error);
 }
@@ -519,7 +513,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	Elf_Addr phdr = 0, exe_base = 0;
 	int error, i, has_phdr = 0;
 	char *interp = NULL;
-	u_long pos = 0, phsize;
+	u_long phsize;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -592,7 +586,6 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	 * standard emulation package for "real" elf.
 	 */
 	epp->ep_emul = &emul_elf;
-	pos = ELF_NO_ADDR;
 
 	/*
 	 * Verify this is an OpenBSD executable.  If it's marked that way
@@ -755,7 +748,6 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 
 		epp->ep_emul_arg = ap;
 		epp->ep_emul_argsize = sizeof *ap;
-		epp->ep_interp_pos = pos;
 	}
 
 	free(ph, M_TEMP, phsize);
@@ -783,7 +775,6 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	int	error = 0;
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
-	Elf_Addr	pos = epp->ep_interp_pos;
 
 	if (epp->ep_emul_arg == NULL) {
 		return (0);
@@ -793,7 +784,7 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	ap = epp->ep_emul_arg;
 
 	if (interp &&
-	    (error = elf_load_file(p, interp, epp, ap, &pos)) != 0) {
+	    (error = elf_load_file(p, interp, epp, ap)) != 0) {
 		free(ap, M_TEMP, epp->ep_emul_argsize);
 		pool_put(&namei_pool, interp);
 		kill_vmcmds(&epp->ep_vmcmds);
