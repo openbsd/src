@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2017/02/08 17:58:59 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/02/08 23:09:28 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -38,34 +38,34 @@ PREFIX_IPV6 ?=	fdd7:e83e:66bc:1
 # to avoid encryption of neighbor discovery packets
 
 SRC_OUT_IPV4 ?=	${PREFIX_IPV4}00.17
-SRC_OUT_IPV6 ?=	${PREFIX_IPV6}0::17
+SRC_OUT_IPV6 ?=	${PREFIX_IPV6}00::17
 SRC_TRANSP_IPV4 ?=	${PREFIX_IPV4}05.17
-SRC_TRANSP_IPV6 ?=	${PREFIX_IPV6}4::17
+SRC_TRANSP_IPV6 ?=	${PREFIX_IPV6}04::17
 SRC_TUNNEL_IPV4 ?=	${PREFIX_IPV4}08.17
-SRC_TUNNEL_IPV6 ?=	${PREFIX_IPV6}8::17
+SRC_TUNNEL_IPV6 ?=	${PREFIX_IPV6}08::17
 
 IPS_IN_IPV4 ?=	${PREFIX_IPV4}00.70
-IPS_IN_IPV6 ?=	${PREFIX_IPV6}0::70
+IPS_IN_IPV6 ?=	${PREFIX_IPV6}00::70
 IPS_OUT_IPV4 ?=	${PREFIX_IPV4}01.70
-IPS_OUT_IPV6 ?=	${PREFIX_IPV6}1::70
+IPS_OUT_IPV6 ?=	${PREFIX_IPV6}01::70
 IPS_TRANSP_IPV4 ?=	${PREFIX_IPV4}05.70
-IPS_TRANSP_IPV6 ?=	${PREFIX_IPV6}5::70
+IPS_TRANSP_IPV6 ?=	${PREFIX_IPV6}05::70
 IPS_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}12.70
-IPS_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}c::70
+IPS_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}0c::70
 IPS_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}13.70
-IPS_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}d::70
+IPS_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}0d::70
 
 RT_IN_IPV4 ?=	${PREFIX_IPV4}01.71
-RT_IN_IPV6 ?=	${PREFIX_IPV6}1::71
+RT_IN_IPV6 ?=	${PREFIX_IPV6}01::71
 RT_OUT_IPV4 ?=	${PREFIX_IPV4}02.71
-RT_OUT_IPV6 ?=	${PREFIX_IPV6}2::71
+RT_OUT_IPV6 ?=	${PREFIX_IPV6}02::71
 
 ECO_IN_IPV4 ?=	${PREFIX_IPV4}02.72
-ECO_IN_IPV6 ?=	${PREFIX_IPV6}2::72
+ECO_IN_IPV6 ?=	${PREFIX_IPV6}02::72
 ECO_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}14.72
-ECO_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}e::72
+ECO_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}0e::72
 ECO_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}15.72
-ECO_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}f::72
+ECO_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}0f::72
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -366,11 +366,11 @@ stamp-hostname: etc/hostname.${SRC_OUT_IF} \
 	    /etc/hostname.${SRC_OUT_IF} &&\
 	    sh /etc/netstart ${SRC_OUT_IF}"
 .for host dir in IPS IN IPS OUT RT IN RT OUT ECO IN
-	ssh ${${host}_SSH} ${SUDO} "umask 027;\
+	ssh root@${${host}_SSH} "umask 027;\
 	    { sed '/^### regress/,\$$d' /etc/hostname.${${host}_${dir}_IF} &&\
 	    cat; } >/etc/hostname.${${host}_${dir}_IF}.tmp"\
 	    <${${host}_SSH}/hostname.${${host}_${dir}_IF}
-	ssh ${${host}_SSH} ${SUDO} "mv /etc/hostname.${${host}_${dir}_IF}.tmp\
+	ssh root@${${host}_SSH} "mv /etc/hostname.${${host}_${dir}_IF}.tmp\
 	    /etc/hostname.${${host}_${dir}_IF} &&\
 	    sh /etc/netstart ${${host}_${dir}_IF}"
 .endfor
