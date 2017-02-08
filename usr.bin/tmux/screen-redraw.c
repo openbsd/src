@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.43 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.44 2017/02/08 15:41:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -422,6 +422,9 @@ screen_redraw_pane(struct client *c, struct window_pane *wp)
 	yoff = wp->yoff;
 	if (status_at_line(c) == 0)
 		yoff++;
+
+	log_debug("%s: redraw pane %%%u (at %u,%u)", c->tty.path, wp->id,
+	    wp->xoff, yoff);
 
 	for (i = 0; i < wp->sy; i++)
 		tty_draw_pane(&c->tty, wp, i, wp->xoff, yoff);
