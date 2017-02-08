@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.69 2017/02/08 04:47:23 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.70 2017/02/08 05:02:05 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -610,7 +610,6 @@ struct elfcore_procinfo {
 #if defined(_KERNEL) || defined(_DYN_LOADER)
 
 #define ELF32_NO_ADDR	((uint32_t) ~0)	/* Indicates addr. not yet filled in */
-#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
 
 typedef struct {
 	Elf32_Sword	au_id;				/* 32-bit id */
@@ -618,7 +617,6 @@ typedef struct {
 } Aux32Info;
 
 #define ELF64_NO_ADDR	((__uint64_t) ~0)/* Indicates addr. not yet filled in */
-#define ELF64_AUX_ENTRIES	8	/* Size of aux array passed to loader */
 
 typedef struct {
 	Elf64_Shalf	au_id;				/* 32-bit id */

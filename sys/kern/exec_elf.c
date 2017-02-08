@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.134 2017/02/08 04:55:38 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.135 2017/02/08 05:02:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -115,6 +115,11 @@ extern char *syscallnames[];
  * be a reasonable limit for ELF, the most we have seen so far is 12
  */
 #define ELF_MAX_VALID_PHDR 32
+
+/*
+ * How many entries are in the AuxInfo array we pass to the process?
+ */
+#define ELF_AUX_ENTRIES	8
 
 /*
  * This is the OpenBSD ELF emul
