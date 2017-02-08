@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.19 2017/02/08 16:29:00 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.20 2017/02/08 16:51:26 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -309,12 +309,14 @@ int
 xbf_detach(struct device *self, int flags)
 {
 	struct xbf_softc *sc = (struct xbf_softc *)self;
+	int ostate = sc->sc_state;
+
+	sc->sc_state = XBF_CLOSING;
 
 	xen_intr_mask(sc->sc_xih);
+	xen_intr_barrier(sc->sc_xih);
 
-	intr_barrier(&sc->sc_xih);
-
-	if (sc->sc_state == XBF_CONNECTED) {
+	if (ostate == XBF_CONNECTED) {
 		xen_intr_disestablish(sc->sc_xih);
 		xbf_stop(sc);
 	}
@@ -974,8 +976,6 @@ xbf_init(struct xbf_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_state = XBF_CONNECTED;
-
 	action = "read";
 
 	prop = "sectors";
@@ -1019,6 +1019,8 @@ xbf_init(struct xbf_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
+
+	sc->sc_state = XBF_CONNECTED;
 
 	return (0);
 
@@ -1243,8 +1245,6 @@ xbf_stop(struct xbf_softc *sc)
 		xbf_scsi_done(xs, XS_SELTIMEOUT);
 		sc->sc_xs[desc] = NULL;
 	}
-
-	sc->sc_state = XBF_CLOSING;
 
 	/* Give other processes a chance to run */
 	yield();
