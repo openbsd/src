@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.50 2017/02/06 22:05:11 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.51 2017/02/08 17:31:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,6 +95,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_ICH1] = { TTYCODE_STRING, "ich1" },
 	[TTYC_IL] = { TTYCODE_STRING, "il" },
 	[TTYC_IL1] = { TTYCODE_STRING, "il1" },
+	[TTYC_INDN] = { TTYCODE_STRING, "indn" },
 	[TTYC_INVIS] = { TTYCODE_STRING, "invis" },
 	[TTYC_IS1] = { TTYCODE_STRING, "is1" },
 	[TTYC_IS2] = { TTYCODE_STRING, "is2" },
