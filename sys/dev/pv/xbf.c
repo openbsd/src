@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.20 2017/02/08 16:51:26 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.21 2017/02/08 17:23:46 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -1192,9 +1192,6 @@ xbf_ring_destroy(struct xbf_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_xs_map[i]);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_xs_map[i]);
 		sc->sc_xs_map[i] = NULL;
-		if (sc->sc_xs == NULL || sc->sc_xs[i] == NULL)
-			continue;
-		xbf_scsi_done(sc->sc_xs[i], XS_RESET);
 	}
 
 	free(sc->sc_xs, M_DEVBUF, sc->sc_xr_ndesc *
@@ -1210,7 +1207,6 @@ xbf_ring_destroy(struct xbf_softc *sc)
 	sc->sc_xs_bb = NULL;
 
 	xbf_dma_free(sc, &sc->sc_xr_dma);
-
 	sc->sc_xr = NULL;
 }
 
@@ -1245,9 +1241,6 @@ xbf_stop(struct xbf_softc *sc)
 		xbf_scsi_done(xs, XS_SELTIMEOUT);
 		sc->sc_xs[desc] = NULL;
 	}
-
-	/* Give other processes a chance to run */
-	yield();
 
 	xbf_ring_destroy(sc);
 }
