@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.965 2017/02/08 22:16:49 rpe Exp $
+#	$OpenBSD: install.sub,v 1.966 2017/02/08 22:29:39 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1001,7 +1001,8 @@ v6_config() {
 	case $resp in
 	none)	return
 		;;
-	rtsol)	ifconfig $_if inet6 >/dev/null 2>&1 || { echo "No INET6 support."; return; }
+	rtsol)	ifconfig $_if inet6 >/dev/null 2>&1 ||
+			{ echo "No INET6 support."; return; }
 		ifconfig $_if up
 		ifconfig $_if inet6 autoconf && echo "up\nrtsol" >>$_hn
 		return
@@ -1208,7 +1209,8 @@ v4_defroute() {
 
 	# Check routing table to see if a default route ($1) already exists
 	# and if it is handled by dhclient ($2).
-	set -- $(route -nv show -inet | { set -- $(grep '^default '); print $2 $9; })
+	set -- $(route -nv show -inet |
+		{ set -- $(grep '^default '); print $2 $9; })
 	[[ -n $1 ]] && _dr=$1
 
 	# Don't ask if a default route exits and is handled by dhclient.
@@ -1218,7 +1220,8 @@ v4_defroute() {
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
 		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" && { echo "$resp" >>/tmp/i/mygate; break; }
+		route -n add -inet -host default "$resp" &&
+			{ echo "$resp" >>/tmp/i/mygate; break; }
 		# Put the old default route back. The new one did not work.
 		route -n add -inet -host default $_dr >/dev/null 2>&1
 	done
