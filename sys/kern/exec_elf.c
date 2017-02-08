@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.133 2017/02/08 04:47:23 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.134 2017/02/08 04:55:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -96,7 +96,7 @@
 int ELFNAME(load_file)(struct proc *, char *, struct exec_package *,
 	struct elf_args *, Elf_Addr *);
 int ELFNAME(check_header)(Elf_Ehdr *);
-int ELFNAME(read_from)(struct proc *, struct vnode *, u_long, caddr_t, int);
+int ELFNAME(read_from)(struct proc *, struct vnode *, u_long, void *, int);
 void ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
 int ELFNAMEEND(coredump)(struct proc *, void *);
@@ -279,7 +279,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
  * Read from vnode into buffer at offset.
  */
 int
-ELFNAME(read_from)(struct proc *p, struct vnode *vp, u_long off, caddr_t buf,
+ELFNAME(read_from)(struct proc *p, struct vnode *vp, u_long off, void *buf,
 	int size)
 {
 	int error;
@@ -340,8 +340,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	}
 	if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) != 0)
 		goto bad1;
-	if ((error = ELFNAME(read_from)(p, nd.ni_vp, 0,
-				    (caddr_t)&eh, sizeof(eh))) != 0)
+	if ((error = ELFNAME(read_from)(p, nd.ni_vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad1;
 
 	if (ELFNAME(check_header)(&eh) || eh.e_type != ET_DYN) {
@@ -352,7 +351,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	ph = mallocarray(eh.e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 
-	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
+	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff, ph,
 	    phsize)) != 0)
 		goto bad1;
 
@@ -539,7 +538,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	ph = mallocarray(eh->e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
+	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, ph,
 	    phsize)) != 0)
 		goto bad;
 
@@ -856,7 +855,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 	hph = mallocarray(eh->e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-	    (caddr_t)hph, phsize)) != 0)
+	    hph, phsize)) != 0)
 		goto out1;
 
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
@@ -886,7 +885,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 
 		np = malloc(ph->p_filesz, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
-		    (caddr_t)np, ph->p_filesz)) != 0)
+		    np, ph->p_filesz)) != 0)
 			goto out2;
 
 #if 0
