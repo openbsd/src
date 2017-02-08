@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.108 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.109 2017/02/08 01:28:51 jsg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -948,7 +948,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 	struct rtentry *rt;
 	struct mfcctl2 mfcctl2;
 	int mfcctl_size = sizeof(struct mfcctl);
-	struct mfcctl *mp = mtod(m, struct mfcctl *);
+	struct mfcctl *mp;
 	unsigned int rtableid = inp->inp_rtableid;
 
 	splsoftassert(IPL_SOFTNET);
@@ -960,6 +960,8 @@ del_mfc(struct socket *so, struct mbuf *m)
 
 	if (m == NULL || m->m_len < mfcctl_size)
 		return (EINVAL);
+
+	mp = mtod(m, struct mfcctl *);
 
 	bcopy(mp, (caddr_t)&mfcctl2, sizeof(*mp));
 	memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
