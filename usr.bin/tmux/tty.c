@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.242 2017/02/08 23:47:35 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.243 2017/02/08 23:53:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -408,40 +408,36 @@ tty_putcode_ptr2(struct tty *tty, enum tty_code_code code, const void *a,
 		tty_puts(tty, tty_term_ptr2(tty->term, code, a, b));
 }
 
+static void
+tty_add(struct tty *tty, const char *buf, size_t len)
+{
+	bufferevent_write(tty->event, buf, len);
+	log_debug("%s: %.*s", tty->path, (int)len, buf);
+
+	if (tty_log_fd != -1)
+		write(tty_log_fd, buf, len);
+}
+
 void
 tty_puts(struct tty *tty, const char *s)
 {
-	size_t	size = EVBUFFER_LENGTH(tty->event->output);
-
-	if (*s == '\0')
-		return;
-
-	bufferevent_write(tty->event, s, strlen(s));
-	log_debug("%s (%zu): %s", tty->path, size, s);
-
-	if (tty_log_fd != -1)
-		write(tty_log_fd, s, strlen(s));
+	if (*s != '\0')
+		tty_add(tty, s, strlen(s));
 }
 
 void
 tty_putc(struct tty *tty, u_char ch)
 {
-	size_t		 size = EVBUFFER_LENGTH(tty->event->output);
 	const char	*acs;
 
 	if (tty->cell.attr & GRID_ATTR_CHARSET) {
 		acs = tty_acs_get(tty, ch);
-		if (acs != NULL) {
-			bufferevent_write(tty->event, acs, strlen(acs));
-			log_debug("%s (%zu): %s", tty->path, size, acs);
-		} else {
-			bufferevent_write(tty->event, &ch, 1);
-			log_debug("%s (%zu): %c", tty->path, size, ch);
-		}
-	} else {
-		bufferevent_write(tty->event, &ch, 1);
-		log_debug("%s (%zu): %c", tty->path, size, ch);
-	}
+		if (acs != NULL)
+			tty_add(tty, acs, strlen(acs));
+		else
+			tty_add(tty, &ch, 1);
+	} else
+		tty_add(tty, &ch, 1);
 
 	if (ch >= 0x20 && ch != 0x7f) {
 		if (tty->cx >= tty->sx) {
@@ -459,22 +455,12 @@ tty_putc(struct tty *tty, u_char ch)
 		} else
 			tty->cx++;
 	}
-
-	if (tty_log_fd != -1)
-		write(tty_log_fd, &ch, 1);
 }
 
 void
 tty_putn(struct tty *tty, const void *buf, size_t len, u_int width)
 {
-	size_t	size = EVBUFFER_LENGTH(tty->event->output);
-
-	bufferevent_write(tty->event, buf, len);
-	log_debug("%s (%zu): %.*s", tty->path, size, (int)len, (char *)buf);
-
-	if (tty_log_fd != -1)
-		write(tty_log_fd, buf, len);
-
+	tty_add(tty, buf, len);
 	tty->cx += width;
 }
 

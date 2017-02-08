@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.722 2017/02/08 23:47:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.723 2017/02/08 23:53:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1086,9 +1086,9 @@ struct tty {
 
 /* TTY command context. */
 struct tty_ctx {
-	struct window_pane *wp;
+	struct window_pane	*wp;
 
-	const struct grid_cell *cell;
+	const struct grid_cell	*cell;
 
 	u_int		 num;
 	void		*ptr;
