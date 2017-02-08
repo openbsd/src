@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.22 2017/02/08 17:32:45 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.23 2017/02/08 17:39:57 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -431,10 +431,13 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs, desc, 1000)) {
-		DPRINTF("%s: desc %u timed out\n", sc->sc_dev.dv_xname, desc);
-		sc->sc_xs[desc] = NULL;
-		xbf_reclaim_xs(xs, desc);
-		xbf_scsi_done(xs, XS_TIMEOUT);
+		printf("%s: op %#x timed out\n", sc->sc_dev.dv_xname,
+		    xs->cmd->opcode);
+		if (sc->sc_state == XBF_CONNECTED) {
+			sc->sc_xs[desc] = NULL;
+			xbf_reclaim_xs(xs, desc);
+			xbf_scsi_done(xs, XS_TIMEOUT);
+		}
 		return;
 	}
 }
