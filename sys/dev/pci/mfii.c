@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.40 2017/02/07 05:08:53 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.41 2017/02/08 07:06:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -891,8 +891,8 @@ mfii_aen_start(struct mfii_softc *sc, struct mfii_ccb *ccb,
 	dcmd->mdf_opcode = htole32(MR_DCMD_CTRL_EVENT_WAIT);
 	htolem32(&dcmd->mdf_mbox.w[0], seq);
 	htolem32(&dcmd->mdf_mbox.w[1], mec.mec_word);
-	htolem32(&sgl->sg64[0].addr, MFII_DMA_DVA(mdm));
-	htolem64(&sgl->sg64[0].len, MFII_DMA_LEN(mdm));
+	htolem64(&sgl->sg64[0].addr, MFII_DMA_DVA(mdm));
+	htolem32(&sgl->sg64[0].len, MFII_DMA_LEN(mdm));
 
 	bus_dmamap_sync(sc->sc_dmat, MFII_DMA_MAP(mdm),
 	    0, MFII_DMA_LEN(mdm), BUS_DMASYNC_PREREAD);
