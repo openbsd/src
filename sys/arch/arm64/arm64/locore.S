@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.13 2017/02/07 21:56:07 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.14 2017/02/08 09:18:24 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -84,6 +84,7 @@ _start:
 	adr	x0, .Lesym
 	ldr	x0, [x0]
 	sub	x0, x0, x29
+	add	x21, x21, x29
 	str	x21, [x0]
 
 	/*

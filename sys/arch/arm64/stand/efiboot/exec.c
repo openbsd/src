@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.4 2017/02/05 13:11:06 patrick Exp $	*/
+/*	$OpenBSD: exec.c,v 1.5 2017/02/08 09:18:24 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -90,29 +90,9 @@ cpu_inval_icache(void)
 void
 run_loadfile(u_long *marks, int howto)
 {
-	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
-	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
-	u_long esym = marks[MARK_END] & 0x000fffffff;
-	u_long offset = 0;
 	char args[256];
 	char *cp;
 	void *fdt;
-	int i;
-
-	/*
-	 * Tell locore.S where the symbol table ends by setting
-	 * 'esym', which should be the first word in the .data
-	 * section.
-	 */
-	for (i = 0; i < elf->e_shnum; i++) {
-		/* XXX Assume .data is the first writable segment. */
-		if (shp[i].sh_flags & SHF_WRITE) {
-			/* XXX We have to store the virtual address. */
-			esym |= shp[i].sh_addr & 0xffffff8000000000;
-			*(u_long *)(LOADADDR(shp[i].sh_addr)) = esym;
-			break;
-		}
-	}
 
 	snprintf(args, sizeof(args) - 8, "%s:%s", cmd.bootdev, cmd.image);
 	cp = args + strlen(args);
@@ -141,7 +121,7 @@ run_loadfile(u_long *marks, int howto)
 
 	cpu_flush_dcache((vaddr_t)fdt, fdt_get_size(fdt));
 
-	(*(startfuncp)(marks[MARK_ENTRY]))((void *)esym, 0, fdt);
+	(*(startfuncp)(marks[MARK_ENTRY]))((void *)marks[MARK_END], 0, fdt);
 
 	/* NOTREACHED */
 }
