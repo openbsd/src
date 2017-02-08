@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.18 2017/02/06 21:47:06 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.19 2017/02/08 16:29:00 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -388,7 +388,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 	case WRITE_12:
 	case WRITE_16:
 		if (sc->sc_state != XBF_CONNECTED) {
-			xbf_scsi_done(xs, XS_RESET);
+			xbf_scsi_done(xs, XS_SELTIMEOUT);
 			return;
 		}
 		break;
@@ -1240,7 +1240,7 @@ xbf_stop(struct xbf_softc *sc)
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
 		xbf_reclaim_xs(xs, desc);
-		xbf_scsi_done(xs, XS_RESET);
+		xbf_scsi_done(xs, XS_SELTIMEOUT);
 		sc->sc_xs[desc] = NULL;
 	}
 
