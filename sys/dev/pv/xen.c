@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.77 2017/02/08 16:08:06 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.78 2017/02/08 16:15:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -692,6 +692,49 @@ xen_intr_schedule(xen_intr_handle_t xih)
 
 	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
 		task_add(xi->xi_taskq, &xi->xi_task);
+		xen_intsrc_release(sc, xi);
+	}
+}
+
+static void
+xen_barrier_task(void *arg)
+{
+	int *notdone = arg;
+
+	*notdone = 0;
+	wakeup_one(notdone);
+}
+
+/*
+ * This code achieves two goals: 1) makes sure that *after* masking
+ * the interrupt source we're not getting more task_adds: intr_barrier
+ * will take care of that, and 2) makes sure that the interrupt task
+ * is finished executing the current task and won't be called again:
+ * it sets up a barrier task to await completion of the current task
+ * and relies on the interrupt masking to prevent submission of new
+ * tasks in the future.
+ */
+void
+xen_intr_barrier(xen_intr_handle_t xih)
+{
+	struct xen_softc *sc = xen_sc;
+	struct xen_intsrc *xi;
+	struct sleep_state sls;
+	int notdone = 1;
+	struct task t = TASK_INITIALIZER(xen_barrier_task, &notdone);
+
+	/*
+	 * XXX This will need to be revised once intr_barrier starts
+	 * using an argument.
+	 */
+	intr_barrier(NULL);
+
+	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
+		task_add(xi->xi_taskq, &t);
+		while (notdone) {
+			sleep_setup(&sls, &notdone, PWAIT, "xenbar");
+			sleep_finish(&sls, notdone);
+		}
 		xen_intsrc_release(sc, xi);
 	}
 }

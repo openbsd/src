@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenvar.h,v 1.48 2017/02/06 21:58:29 mikeb Exp $	*/
+/*	$OpenBSD: xenvar.h,v 1.49 2017/02/08 16:15:52 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -144,6 +144,7 @@ void	xen_intr(void);
 void	xen_intr_ack(void);
 void	xen_intr_signal(xen_intr_handle_t);
 void	xen_intr_schedule(xen_intr_handle_t);
+void	xen_intr_barrier(xen_intr_handle_t);
 int	xen_intr_establish(evtchn_port_t, xen_intr_handle_t *, int,
 	    void (*)(void *), void *, char *);
 int	xen_intr_disestablish(xen_intr_handle_t);
