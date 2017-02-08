@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.23 2016/09/16 19:13:17 jasper Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.24 2017/02/08 04:30:45 guenther Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -296,22 +296,22 @@ db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
 				rsymp = symp;
 				if (diff == 0) {
 					if (strategy == DB_STGY_PROC &&
-					    ELFDEFNNAME(ST_TYPE)(symp->st_info)
+					    ELF_ST_TYPE(symp->st_info)
 					      == STT_FUNC &&
-					    ELFDEFNNAME(ST_BIND)(symp->st_info)
+					    ELF_ST_BIND(symp->st_info)
 					      != STB_LOCAL)
 						break;
 					if (strategy == DB_STGY_ANY &&
-					    ELFDEFNNAME(ST_BIND)(symp->st_info)
+					    ELF_ST_BIND(symp->st_info)
 					      != STB_LOCAL)
 						break;
 				}
 			} else if ((off - symp->st_value) == diff) {
 				if (rsymp == NULL)
 					rsymp = symp;
-				else if (ELFDEFNNAME(ST_BIND)(rsymp->st_info)
+				else if (ELF_ST_BIND(rsymp->st_info)
 				      == STB_LOCAL &&
-				    ELFDEFNNAME(ST_BIND)(symp->st_info)
+				    ELF_ST_BIND(symp->st_info)
 				      != STB_LOCAL) {
 					/* pick the external symbol */
 					rsymp = symp;
@@ -411,7 +411,7 @@ db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 	for (symp = symtab_start; symp < symtab_end; symp++)
 		if (symp->st_name != 0) {
 			suffix[1] = '\0';
-			switch (ELFDEFNNAME(ST_TYPE)(symp->st_info)) {
+			switch (ELF_ST_TYPE(symp->st_info)) {
 			case STT_OBJECT:
 				suffix[0] = '+';
 				break;

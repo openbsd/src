@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_prof.c,v 1.2 2017/02/06 09:13:41 mpi Exp $	*/
+/*	$OpenBSD: db_prof.c,v 1.3 2017/02/08 04:30:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -102,7 +102,7 @@ db_prof_forall(db_sym_t sym, char *name, char *suff, int pre, void *xarg)
 	struct prof_probe *pp;
 	vaddr_t inst;
 
-	if (ELFDEFNNAME(ST_TYPE)(symb->st_info) != STT_FUNC)
+	if (ELF_ST_TYPE(symb->st_info) != STT_FUNC)
 		return;
 
 	inst = symb->st_value;
