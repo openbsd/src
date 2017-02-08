@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.240 2017/02/08 17:31:09 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.241 2017/02/08 22:42:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1040,7 +1040,7 @@ tty_cmd_scrollup(struct tty *tty, const struct tty_ctx *ctx)
 	tty_margin_pane(tty, ctx);
 
 	if (ctx->num == 1 || !tty_term_has(tty->term, TTYC_INDN)) {
-		tty_cursor(tty, tty->rright, ctx->yoff + tty->rlower);
+		tty_cursor(tty, tty->rright, tty->rlower);
 		for (i = 0; i < ctx->num; i++)
 			tty_putc(tty, '\n');
 	} else
