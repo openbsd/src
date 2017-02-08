@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.67 2017/01/30 05:00:31 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.68 2017/02/08 04:34:29 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -689,6 +689,7 @@ struct elf_args {
 #define ELF_ST_TYPE	ELF32_ST_TYPE
 #define ELF_ST_INFO	ELF32_ST_INFO
 
+#define ELF_NO_ADDR	ELF32_NO_ADDR
 #define AuxInfo		Aux32Info
 #elif defined(ELFSIZE) && (ELFSIZE == 64)
 #define Elf_Ehdr	Elf64_Ehdr
@@ -715,6 +716,7 @@ struct elf_args {
 #define ELF_ST_TYPE	ELF64_ST_TYPE
 #define ELF_ST_INFO	ELF64_ST_INFO
 
+#define ELF_NO_ADDR	ELF64_NO_ADDR
 #define AuxInfo		Aux64Info
 #endif
 

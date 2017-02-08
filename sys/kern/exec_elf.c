@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.131 2017/02/05 19:51:27 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.132 2017/02/08 04:34:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -208,7 +208,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	/*
 	 * If the user specified an address, then we load there.
 	 */
-	if (*addr != ELFDEFNNAME(NO_ADDR)) {
+	if (*addr != ELF_NO_ADDR) {
 		if (ph->p_align > 1) {
 			*addr = ELF_TRUNC(*addr, ph->p_align);
 			diff = ph->p_vaddr - ELF_TRUNC(ph->p_vaddr, ph->p_align);
@@ -374,7 +374,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	 * function, pick the same address that a non-fixed mmap(0, ..)
 	 * would (i.e. something safely out of the way).
 	 */
-	if (pos == ELFDEFNNAME(NO_ADDR)) {
+	if (pos == ELF_NO_ADDR) {
 		pos = uvm_map_hint(p->p_vmspace, PROT_EXEC,
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 	}
@@ -543,8 +543,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	    phsize)) != 0)
 		goto bad;
 
-	epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
-	epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
+	epp->ep_tsize = ELF_NO_ADDR;
+	epp->ep_dsize = ELF_NO_ADDR;
 
 	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
 		if (pp->p_type == PT_INTERP && !interp) {
@@ -584,7 +584,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * standard emulation package for "real" elf.
 	 */
 	epp->ep_emul = &ELFNAMEEND(emul);
-	pos = ELFDEFNNAME(NO_ADDR);
+	pos = ELF_NO_ADDR;
 
 	/*
 	 * Verify this is an OpenBSD executable.  If it's marked that way
@@ -614,7 +614,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 					addr = pp->p_vaddr - base_ph->p_vaddr;
 				}
 			} else
-				addr = ELFDEFNNAME(NO_ADDR);
+				addr = ELF_NO_ADDR;
 
 			/*
 			 * Calculates size of text and data segments
@@ -642,7 +642,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 			 */
 			if (prot & PROT_WRITE) {
 				/* data section */
-				if (epp->ep_dsize == ELFDEFNNAME(NO_ADDR)) {
+				if (epp->ep_dsize == ELF_NO_ADDR) {
 					epp->ep_daddr = addr;
 					epp->ep_dsize = size;
 				} else {
@@ -658,7 +658,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 				}
 			} else if (prot & PROT_EXEC) {
 				/* text section */
-				if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR)) {
+				if (epp->ep_tsize == ELF_NO_ADDR) {
 					epp->ep_taddr = addr;
 					epp->ep_tsize = size;
 				} else {
@@ -715,14 +715,14 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * Strangely some linux programs may have all load sections marked
 	 * writeable, in this case, textsize is not -1, but rather 0;
 	 */
-	if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR))
+	if (epp->ep_tsize == ELF_NO_ADDR)
 		epp->ep_tsize = 0;
 	/*
 	 * Another possibility is that it has all load sections marked
 	 * read-only.  Fake a zero-sized data segment right after the
 	 * text segment.
 	 */
-	if (epp->ep_dsize == ELFDEFNNAME(NO_ADDR)) {
+	if (epp->ep_dsize == ELF_NO_ADDR) {
 		epp->ep_daddr = round_page(epp->ep_taddr + epp->ep_tsize);
 		epp->ep_dsize = 0;
 	}
