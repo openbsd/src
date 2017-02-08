@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.964 2017/02/08 22:04:03 rpe Exp $
+#	$OpenBSD: install.sub,v 1.965 2017/02/08 22:16:49 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -954,7 +954,7 @@ v6_info() {
 
 # Set up IPv6 default route on interface $1.
 v6_defroute() {
-	local _if=$1 _prompt _resp _routers
+	local _if=$1 _prompt _resp _routers PS3
 
 	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
 
@@ -967,7 +967,7 @@ v6_defroute() {
 	if $AUTO; then
 		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
 	else
-		local PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
+		PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
 		select _resp in $_routers; do
 			[[ ${_resp:=$REPLY} == *:* ]] && break
 			[[ $_resp == none ]] && return
