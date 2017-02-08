@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.143 2017/02/07 22:28:37 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.144 2017/02/08 12:37:43 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -80,15 +80,6 @@
 #include "bpfilter.h"
 
 void ipsec_common_ctlinput(u_int, int, struct sockaddr *, void *, int);
-void ah4_input_cb(struct mbuf *, ...);
-void esp4_input_cb(struct mbuf *, ...);
-void ipcomp4_input_cb(struct mbuf *, ...);
-
-#ifdef INET6
-void ah6_input_cb(struct mbuf *, int, int);
-void esp6_input_cb(struct mbuf *, int, int);
-void ipcomp6_input_cb(struct mbuf *, int, int);
-#endif
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -325,7 +316,7 @@ void
 ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 {
 	int af, sproto;
-	u_char prot;
+	u_int8_t prot;
 
 #if NBPFILTER > 0
 	struct ifnet *encif;
@@ -577,49 +568,33 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	}
 #endif
 
+	switch (sproto) {
+	case IPPROTO_ESP:
+	case IPPROTO_AH:
+	case IPPROTO_IPCOMP:
+		break;
+	default:
+		DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
+		    " security protocol %d\n", sproto));
+		m_freem(m);
+		return;
+	}
+
 	/* Call the appropriate IPsec transform callback. */
 	switch (af) {
 	case AF_INET:
-		switch (sproto)
-		{
-		case IPPROTO_ESP:
-			esp4_input_cb(m);
-			return;
-		case IPPROTO_AH:
-			ah4_input_cb(m);
-			return;
-		case IPPROTO_IPCOMP:
-			ipcomp4_input_cb(m);
-			return;
-		default:
-			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
-			    " security protocol %d\n", sproto));
-			m_freem(m);
-			return;
+		if (niq_enqueue(&ipintrq, m) != 0) {
+			DPRINTF(("ipsec_common_input_cb(): dropped packet "
+			    "because of full IP queue\n"));
+			IPSEC_ISTAT(espstat.esps_qfull, ahstat.ahs_qfull,
+			    ipcompstat.ipcomps_qfull);
 		}
-		break;
-
+		return;
 #ifdef INET6
 	case AF_INET6:
-		switch (sproto) {
-		case IPPROTO_ESP:
-			esp6_input_cb(m, skip, protoff);
-			return;
-		case IPPROTO_AH:
-			ah6_input_cb(m, skip, protoff);
-			return;
-		case IPPROTO_IPCOMP:
-			ipcomp6_input_cb(m, skip, protoff);
-			return;
-		default:
-			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
-			    " security protocol %d\n", sproto));
-			m_freem(m);
-			return;
-		}
-		break;
+		ip6_ours(m, skip, prot);
+		return;
 #endif /* INET6 */
-
 	default:
 		DPRINTF(("ipsec_common_input_cb(): unknown/unsupported "
 		    "protocol family %d\n", af));
@@ -704,24 +679,6 @@ ah4_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-/* IPv4 AH callback. */
-void
-ah4_input_cb(struct mbuf *m, ...)
-{
-	/*
-	 * Interface pointer is already in first mbuf; chop off the
-	 * `outer' header and reschedule.
-	 */
-
-	if (niq_enqueue(&ipintrq, m) != 0) {
-		ahstat.ahs_qfull++;
-		DPRINTF(("ah4_input_cb(): dropped packet because of full "
-		    "IP queue\n"));
-		return;
-	}
-}
-
-
 /* XXX rdomain */
 void
 ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
@@ -742,22 +699,6 @@ esp4_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-/* IPv4 ESP callback. */
-void
-esp4_input_cb(struct mbuf *m, ...)
-{
-	/*
-	 * Interface pointer is already in first mbuf; chop off the
-	 * `outer' header and reschedule.
-	 */
-	if (niq_enqueue(&ipintrq, m) != 0) {
-		espstat.esps_qfull++;
-		DPRINTF(("esp4_input_cb(): dropped packet because of full "
-		    "IP queue\n"));
-		return;
-	}
-}
-
 /* IPv4 IPCOMP wrapper */
 int
 ipcomp4_input(struct mbuf **mp, int *offp, int proto)
@@ -765,21 +706,6 @@ ipcomp4_input(struct mbuf **mp, int *offp, int proto)
 	ipsec_common_input(*mp, *offp, offsetof(struct ip, ip_p), AF_INET,
 	    proto, 0);
 	return IPPROTO_DONE;
-}
-
-/* IPv4 IPCOMP callback */
-void
-ipcomp4_input_cb(struct mbuf *m, ...)
-{
-	/*
-	 * Interface pointer is already in first mbuf; chop off the
-	 * `outer' header and reschedule.
-	 */
-	if (niq_enqueue(&ipintrq, m) != 0) {
-		ipcompstat.ipcomps_qfull++;
-		DPRINTF(("ipcomp4_input_cb(): dropped packet because of full IP queue\n"));
-		return;
-	}
 }
 
 void
@@ -961,44 +887,6 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-/* IPv6 AH callback. */
-void
-ah6_input_cb(struct mbuf *m, int off, int protoff)
-{
-	int nxt;
-	u_int8_t nxt8;
-	int nest = 0;
-
-	/* Retrieve new protocol */
-	m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt8);
-	nxt = nxt8;
-
-	/*
-	 * see the end of ip6_input for this logic.
-	 * IPPROTO_IPV[46] case will be processed just like other ones
-	 */
-	while (nxt != IPPROTO_DONE) {
-		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
-			ip6stat_inc(ip6s_toomanyhdr);
-			goto bad;
-		}
-
-		/*
-		 * Protection against faulty packet - there should be
-		 * more sanity checks in header chain processing.
-		 */
-		if (m->m_pkthdr.len < off) {
-			ip6stat_inc(ip6s_tooshort);
-			goto bad;
-		}
-		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
-	}
-	return;
-
- bad:
-	m_freem(m);
-}
-
 /* IPv6 ESP wrapper. */
 int
 esp6_input(struct mbuf **mp, int *offp, int proto)
@@ -1052,13 +940,6 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 
 }
 
-/* IPv6 ESP callback */
-void
-esp6_input_cb(struct mbuf *m, int skip, int protoff)
-{
-	ah6_input_cb(m, skip, protoff);
-}
-
 /* IPv6 IPcomp wrapper */
 int
 ipcomp6_input(struct mbuf **mp, int *offp, int proto)
@@ -1110,12 +991,4 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 	ipsec_common_input(*mp, *offp, protoff, AF_INET6, proto, 0);
 	return IPPROTO_DONE;
 }
-
-/* IPv6 IPcomp callback */
-void
-ipcomp6_input_cb(struct mbuf *m, int skip, int protoff)
-{
-	ah6_input_cb(m, skip, protoff);
-}
-
 #endif /* INET6 */

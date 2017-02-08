@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.178 2017/02/06 16:01:25 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.179 2017/02/08 12:37:43 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ struct cpumem *ip6counters;
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
-void ip6_ours(struct mbuf *, int, int);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 
 static struct mbuf_queue	ip6send_mq;
