@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.4 2017/02/04 22:43:46 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.5 2017/02/08 09:13:25 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -38,16 +38,23 @@
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
-EFI_HANDLE		 IH;
+EFI_HANDLE		 IH, efi_bootdp = NULL;
 
-EFI_HANDLE		 efi_bootdp;
+EFI_PHYSICAL_ADDRESS	 heap;
+UINTN			 heapsiz = 1 * 1024 * 1024;
+EFI_MEMORY_DESCRIPTOR	*mmap = NULL;
+UINTN			 mmap_key;
+UINTN			 mmap_ndesc;
+UINTN			 mmap_descsiz;
 
 static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 
-static void efi_timer_init(void);
-static void efi_timer_cleanup(void);
+static void	 efi_heap_init(void);
+static void	 efi_memprobe_internal(void);
+static void	 efi_timer_init(void);
+static void	 efi_timer_cleanup(void);
 static EFI_STATUS efi_memprobe_find(UINTN, UINTN, EFI_PHYSICAL_ADDRESS *);
 
 EFI_STATUS
@@ -144,9 +151,6 @@ efi_cons_putc(dev_t dev, int c)
 
 	conout->OutputString(conout, buf);
 }
-
-EFI_PHYSICAL_ADDRESS	 heap;
-UINTN			 heapsiz = 1 * 1024 * 1024;
 
 static void
 efi_heap_init(void)
@@ -291,9 +295,20 @@ machdep(void)
 void
 efi_cleanup(void)
 {
+	int		 retry;
+	EFI_STATUS	 status;
+
 	efi_timer_cleanup();
 
-	BS->ExitBootServices(NULL, 0);
+	/* retry once in case of failure */
+	for (retry = 1; retry >= 0; retry--) {
+		efi_memprobe_internal();	/* sync the current map */
+		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
+		if (status == EFI_SUCCESS)
+			break;
+		if (retry == 0)
+			panic("ExitBootServices failed (%d)", status);
+	}
 }
 
 void
@@ -472,6 +487,33 @@ devopen(struct open_file *f, const char *fname, char **file)
 	return (*dp->dv_open)(f, unit, part);
 }
 
+static void
+efi_memprobe_internal(void)
+{
+	EFI_STATUS		 status;
+	UINTN			 mapkey, mmsiz, siz;
+	UINT32			 mmver;
+	EFI_MEMORY_DESCRIPTOR	*mm;
+	int			 n;
+
+	free(mmap, mmap_ndesc * mmap_descsiz);
+
+	siz = 0;
+	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
+	    &mmver);
+	if (status != EFI_BUFFER_TOO_SMALL)
+		panic("cannot get the size of memory map");
+	mm = alloc(siz);
+	status = EFI_CALL(BS->GetMemoryMap, &siz, mm, &mapkey, &mmsiz, &mmver);
+	if (status != EFI_SUCCESS)
+		panic("cannot get the memory map");
+	n = siz / mmsiz;
+	mmap = mm;
+	mmap_key = mapkey;
+	mmap_ndesc = n;
+	mmap_descsiz = mmsiz;
+}
+
 /*
  * 64-bit ARMs can have a much wider memory mapping, as in somewhere
  * after the 32-bit region.  To cope with our alignment requirement,
@@ -480,27 +522,16 @@ devopen(struct open_file *f, const char *fname, char **file)
 static EFI_STATUS
 efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 {
-	EFI_STATUS		 status;
-	UINTN			 mapkey, mmsiz, siz;
-	UINT32			 mmver;
-	EFI_MEMORY_DESCRIPTOR	*mm0, *mm;
-	int			 i, j, n;
+	EFI_MEMORY_DESCRIPTOR	*mm;
+	int			 i, j;
 
 	if (align < EFI_PAGE_SIZE)
 		return EFI_INVALID_PARAMETER;
 
-	siz = 0;
-	status = EFI_CALL(BS->GetMemoryMap, &siz, NULL, &mapkey, &mmsiz,
-	    &mmver);
-	if (status != EFI_BUFFER_TOO_SMALL)
-		panic("cannot get the size of memory map");
-	mm0 = alloc(siz);
-	status = EFI_CALL(BS->GetMemoryMap, &siz, mm0, &mapkey, &mmsiz, &mmver);
-	if (status != EFI_SUCCESS)
-		panic("cannot get the memory map");
-	n = siz / mmsiz;
+	efi_memprobe_internal();	/* sync the current map */
 
-	for (i = 0, mm = mm0; i < n; i++, mm = NextMemoryDescriptor(mm, mmsiz)) {
+	for (i = 0, mm = mmap; i < mmap_ndesc;
+	    i++, mm = NextMemoryDescriptor(mm, mmap_descsiz)) {
 		if (mm->Type != EfiConventionalMemory)
 			continue;
 
@@ -520,11 +551,9 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 			if (EFI_CALL(BS->AllocatePages, AllocateAddress,
 			    EfiLoaderData, pages, &paddr) == EFI_SUCCESS) {
 				*addr = paddr;
-				free(mm0, siz);
 				return EFI_SUCCESS;
 			}
 		}
 	}
-	free(mm0, siz);
 	return EFI_OUT_OF_RESOURCES;
 }
