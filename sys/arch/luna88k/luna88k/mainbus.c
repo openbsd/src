@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.13 2016/12/17 05:22:34 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.14 2017/02/08 13:13:15 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -42,7 +42,6 @@
 #include <machine/cpu.h>
 
 #include "lcd.h"
-#include "pcex.h"
 
 static const struct mainbus_attach_args devs[] = {
 	{ "clock", 0x45000000, 6,  LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
