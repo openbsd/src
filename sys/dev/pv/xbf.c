@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.21 2017/02/08 17:23:46 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.22 2017/02/08 17:32:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -513,6 +513,10 @@ xbf_bounce_xs(struct scsi_xfer *xs, int desc)
 		mapflags |= BUS_DMA_NOWAIT;
 	else
 		mapflags |= BUS_DMA_WAITOK;
+	if (ISSET(xs->flags, SCSI_DATA_IN))
+		mapflags |= BUS_DMA_READ;
+	else
+		mapflags |= BUS_DMA_WRITE;
 
 	error = xbf_dma_alloc(sc, dma, size, size / PAGE_SIZE, mapflags);
 	if (error) {
