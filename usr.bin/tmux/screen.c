@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.45 2016/11/24 13:38:44 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.46 2017/02/08 16:45:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,9 +40,6 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 	s->ccolour = xstrdup("");
 	s->tabs = NULL;
 
-	s->dirty = NULL;
-	s->dirtysize = 0;
-
 	screen_reinit(s);
 }
 
@@ -69,7 +66,6 @@ screen_reinit(struct screen *s)
 void
 screen_free(struct screen *s)
 {
-	free(s->dirty);
 	free(s->tabs);
 	free(s->title);
 	free(s->ccolour);
@@ -358,7 +354,7 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 				xx = sel->sx - 1;
 			else
 				xx = sel->sx;
-			if (py == sel->sy && px > xx)
+			if (py == sel->sy && (sel->sx == 0 || px > xx))
 				return (0);
 		} else {
 			/* starting line == ending line. */

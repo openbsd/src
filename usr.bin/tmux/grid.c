@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.63 2017/02/08 15:41:41 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.64 2017/02/08 16:45:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -405,6 +405,36 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 		grid_extended_cell(gl, gce, gc);
 	else
 		grid_store_cell(gce, gc, gc->data.data[0]);
+}
+
+/* Set cells at relative position. */
+void
+grid_set_cells(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc,
+    const char *s, size_t slen)
+{
+	struct grid_line	*gl;
+	struct grid_cell_entry	*gce;
+	struct grid_cell	*gcp;
+	u_int			 i;
+
+	if (grid_check_y(gd, py) != 0)
+		return;
+
+	grid_expand_line(gd, py, px + slen, 8);
+
+	gl = &gd->linedata[py];
+	if (px + slen > gl->cellused)
+		gl->cellused = px + slen;
+
+	for (i = 0; i < slen; i++) {
+		gce = &gl->celldata[px + i];
+		if (gce->flags & GRID_FLAG_EXTENDED) {
+			gcp = &gl->extddata[gce->offset];
+			memcpy(gcp, gc, sizeof *gcp);
+			utf8_set(&gcp->data, s[i]);
+		} else
+			grid_store_cell(gce, gc, s[i]);
+	}
 }
 
 /* Clear area. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.238 2017/02/08 16:18:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.239 2017/02/08 16:45:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1167,6 +1167,15 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_cell(tty, ctx->cell, ctx->wp);
+}
+
+void
+tty_cmd_cells(struct tty *tty, const struct tty_ctx *ctx)
+{
+	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+
+	tty_attributes(tty, ctx->cell, ctx->wp);
+	tty_putn(tty, ctx->ptr, ctx->num, ctx->num);
 }
 
 void
