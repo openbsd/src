@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.132 2017/02/08 04:34:29 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.133 2017/02/08 04:47:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -841,18 +841,6 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 	if (interp)
 		pool_put(&namei_pool, interp);
 	return (error);
-}
-
-/*
- * Older ELF binaries use EI_ABIVERSION (formerly EI_BRAND) to brand
- * executables.  Newer ELF binaries use EI_OSABI instead.
- */
-char *
-ELFNAME(check_brand)(Elf_Ehdr *eh)
-{
-	if (eh->e_ident[EI_ABIVERSION] == '\0')
-		return (NULL);
-	return (&eh->e_ident[EI_ABIVERSION]);
 }
 
 int

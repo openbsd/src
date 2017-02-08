@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.68 2017/02/08 04:34:29 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.69 2017/02/08 04:47:23 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -730,7 +730,6 @@ int exec_elf64_makecmds(struct proc *, struct exec_package *);
 void *elf64_copyargs(struct exec_package *, struct ps_strings *,
         void *, void *);
 int exec_elf64_fixup(struct proc *, struct exec_package *);
-char *elf64_check_brand(Elf64_Ehdr *);
 int elf64_os_pt_note(struct proc *, struct exec_package *, Elf64_Ehdr *,
 	char *, size_t, size_t);
 #endif
@@ -739,7 +738,6 @@ int exec_elf32_makecmds(struct proc *, struct exec_package *);
 void *elf32_copyargs(struct exec_package *, struct ps_strings *,
         void *, void *);
 int exec_elf32_fixup(struct proc *, struct exec_package *);
-char *elf32_check_brand(Elf32_Ehdr *);
 int elf32_os_pt_note(struct proc *, struct exec_package *, Elf32_Ehdr *,
 	char *, size_t, size_t);
 #endif
