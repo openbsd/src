@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.718 2017/02/08 08:25:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.719 2017/02/08 08:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1105,9 +1105,6 @@ struct tty_ctx {
 
 	/* The background colour used for clearing (erasing). */
 	u_int		 bg;
-
-	/* Saved last cell on line. */
-	struct grid_cell last_cell;
 };
 
 /* Saved message entry. */
