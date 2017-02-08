@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.966 2017/02/08 22:29:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.967 2017/02/08 22:43:37 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1297,7 +1297,8 @@ __EOT
 			[[ $resp == all ]] && resp=*
 
 			for _f in $_avail; do
-				[[ $_f == $resp ]] && _selected=$($_action $_f $_selected)
+				[[ $_f == $resp ]] &&
+					_selected=$($_action $_f $_selected)
 			done
 		done
 	done
@@ -1456,7 +1457,8 @@ install_files() {
 			_issue="Cannot fetch SHA256.sig" && break
 
 		# Verify signature file with public keys.
-		! unpriv -f "$_cfile" signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
+		! unpriv -f "$_cfile" \
+			signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
 		for _f in $_get_sets; do
@@ -1506,7 +1508,8 @@ install_files() {
 		_fsrc="$_src/$_f"
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
 		case $_fsrc in
-		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" | tar -zxphf - -C /mnt
+		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" |
+				tar -zxphf - -C /mnt
 			if [[ $_f == ?(x)base*.tgz && $MODE == install ]]; then
 				ftp -D Extracting -Vmo - \
 				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
@@ -2472,7 +2475,8 @@ apply() {
 			-e "/^$CTTY/s/unknown/vt220	/" \
 			-e "/$CTTY/s/off.*/on secure/" /tmp/i/ttys >/mnt/etc/ttys
 		[[ -n $CPROM ]] &&
-			echo "stty $CPROM $CSPEED\nset tty $CPROM" >>/mnt/etc/boot.conf
+			echo "stty $CPROM $CSPEED\nset tty $CPROM" \
+				>>/mnt/etc/boot.conf
 	fi
 
 	ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
@@ -2852,7 +2856,8 @@ do_install(){
 	# Store root password and rebuild password database.
 	if [[ -n "$_rootpass" ]]; then
 		_encr=$(encr_pwd "$_rootpass")
-		sed -i -e "s@^root::@root:${_encr}:@" /mnt/etc/master.passwd 2>/dev/null
+		sed -i -e "s@^root::@root:${_encr}:@" /mnt/etc/master.passwd \
+			2>/dev/null
 	fi
 	pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
