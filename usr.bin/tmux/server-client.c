@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.210 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.211 2017/02/08 15:49:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -963,6 +963,7 @@ server_client_loop(void)
 	}
 }
 
+/* Resize timer event. */
 static void
 server_client_resize_event(__unused int fd, __unused short events, void *data)
 {

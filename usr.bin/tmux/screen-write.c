@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.107 2017/02/08 15:41:41 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.108 2017/02/08 15:49:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -51,9 +51,8 @@ void
 screen_write_start(struct screen_write_ctx *ctx, struct window_pane *wp,
     struct screen *s)
 {
-	u_int		 size;
-	char		 tmp[16];
-	const char	*cp = tmp;
+	u_int	size;
+	char	tmp[16];
 
 	ctx->wp = wp;
 	if (wp != NULL && s == NULL)
@@ -71,12 +70,10 @@ screen_write_start(struct screen_write_ctx *ctx, struct window_pane *wp,
 
 	ctx->cells = ctx->written = ctx->skipped = 0;
 
-	if (wp == NULL)
-		cp = "no pane";
-	else
+	if (wp != NULL)
 		snprintf(tmp, sizeof tmp, "pane %%%u", wp->id);
 	log_debug("%s: size %ux%u, %s", __func__, screen_size_x(ctx->s),
-	    screen_size_y(ctx->s), cp);
+	    screen_size_y(ctx->s), wp == NULL ? "no pane" : tmp);
 }
 
 /* Finish writing. */
@@ -773,12 +770,12 @@ screen_write_clearline(struct screen_write_ctx *ctx, u_int bg)
 	struct tty_ctx		 ttyctx;
 	u_int			 sx = screen_size_x(s);
 
-	screen_write_initctx(ctx, &ttyctx);
-	ttyctx.bg = bg;
-
 	gl = &s->grid->linedata[s->grid->hsize + s->cy];
 	if (gl->cellsize == 0 && bg == 8)
 		return;
+
+	screen_write_initctx(ctx, &ttyctx);
+	ttyctx.bg = bg;
 
 	screen_dirty_clear(s, 0, s->cy, sx - 1, s->cy);
 	grid_view_clear(s->grid, 0, s->cy, sx, 1, bg);
@@ -795,12 +792,12 @@ screen_write_clearendofline(struct screen_write_ctx *ctx, u_int bg)
 	struct tty_ctx		 ttyctx;
 	u_int			 sx = screen_size_x(s);
 
-	screen_write_initctx(ctx, &ttyctx);
-	ttyctx.bg = bg;
-
 	gl = &s->grid->linedata[s->grid->hsize + s->cy];
 	if (s->cx > sx - 1 || (s->cx >= gl->cellsize && bg == 8))
 		return;
+
+	screen_write_initctx(ctx, &ttyctx);
+	ttyctx.bg = bg;
 
 	screen_dirty_clear(s, s->cx, s->cy, sx - 1, s->cy);
 	grid_view_clear(s->grid, s->cx, s->cy, sx - s->cx, 1, bg);
