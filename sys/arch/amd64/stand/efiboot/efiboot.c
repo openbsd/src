@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.14 2016/08/30 20:31:09 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.15 2017/02/08 04:00:04 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -137,12 +137,18 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 void
 efi_cleanup(void)
 {
+	int		 retry;
 	EFI_STATUS	 status;
 
-	efi_memprobe_internal();	/* sync the current map */
-	status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
-	if (status != EFI_SUCCESS)
-		panic("ExitBootServices");
+	/* retry once in case of failure */
+	for (retry = 1; retry >= 0; retry--) {
+		efi_memprobe_internal();	/* sync the current map */
+		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
+		if (status == EFI_SUCCESS)
+			break;
+		if (retry == 0)
+			panic("ExitBootServices failed (%d)", status);
+	}
 }
 
 /***********************************************************************
