@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.968 2017/02/08 22:56:01 rpe Exp $
+#	$OpenBSD: install.sub,v 1.969 2017/02/08 23:13:02 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1099,7 +1099,8 @@ configure_ifs() {
 	while :; do
 		_vd=$(ifconfig vlan$_vl 2>&1)
 		[[ $_vd == @(*no such interface*) ]] && break
-		[[ $_vd == @(*vlan: +([[:digit:]]) parent interface:*) ]] || break
+		[[ $_vd == @(*vlan: +([[:digit:]]) parent interface:*) ]] ||
+			break
 		((_vl++))
 	done
 	_vd=
@@ -1145,12 +1146,14 @@ configure_ifs() {
 			while [[ $1 == vlan+([0-9]) ]]; do
 				shift
 			done
-			ask "Which interface:tag should $_if be on?" "${_vd:=$1}:$_vi"
+			ask "Which interface:tag should $_if be on?" \
+				"${_vd:=$1}:$_vi"
 			_vd=${resp%%:*}
 			_vi=${resp##*:}
 
 			# Validate that $_vd is a real interface.
-			if ! (isin "$_vd" $_ifs && [[ $_vd != vlan+([0-9]) ]]); then
+			if ! (isin "$_vd" $_ifs &&
+				[[ $_vd != vlan+([0-9]) ]]); then
 				echo "Invalid interface choice '$_vd'"
 				_vd=
 				continue
