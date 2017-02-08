@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.34 2016/02/28 15:46:18 naddy Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.35 2017/02/08 05:09:25 guenther Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -34,21 +34,13 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_script.h>
-
-#if defined(_KERN_DO_ELF) || defined(_KERN_DO_ELF64)
 #include <sys/exec_elf.h>
-#endif
 
 extern struct emul emul_native;
 
 struct execsw execsw[] = {
 	{ EXEC_SCRIPT_HDRSZ, exec_script_makecmds, &emul_native, },	/* shell scripts */
-#ifdef _KERN_DO_ELF
-	{ sizeof(Elf32_Ehdr), exec_elf32_makecmds, &emul_native },	/* elf binaries */
-#endif
-#ifdef _KERN_DO_ELF64
-	{ sizeof(Elf64_Ehdr), exec_elf64_makecmds, &emul_native },	/* elf binaries */
-#endif /* ELF64 */
+	{ sizeof(Elf_Ehdr), exec_elf_makecmds, &emul_native },	/* elf binaries */
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
 int exec_maxhdrsz;

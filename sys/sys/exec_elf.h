@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.70 2017/02/08 05:02:05 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.71 2017/02/08 05:09:25 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -657,8 +657,6 @@ struct elf_args {
 #if defined(ELFSIZE)
 #define CONCAT(x,y)	__CONCAT(x,y)
 #define ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
@@ -723,23 +721,7 @@ extern Elf_Dyn		_DYNAMIC[];
 #endif
 
 #ifdef	_KERNEL
-#ifdef _KERN_DO_ELF64
-int exec_elf64_makecmds(struct proc *, struct exec_package *);
-void *elf64_copyargs(struct exec_package *, struct ps_strings *,
-        void *, void *);
-int exec_elf64_fixup(struct proc *, struct exec_package *);
-int elf64_os_pt_note(struct proc *, struct exec_package *, Elf64_Ehdr *,
-	char *, size_t, size_t);
-#endif
-#ifdef _KERN_DO_ELF
-int exec_elf32_makecmds(struct proc *, struct exec_package *);
-void *elf32_copyargs(struct exec_package *, struct ps_strings *,
-        void *, void *);
-int exec_elf32_fixup(struct proc *, struct exec_package *);
-int elf32_os_pt_note(struct proc *, struct exec_package *, Elf32_Ehdr *,
-	char *, size_t, size_t);
-#endif
-
+int	exec_elf_makecmds(struct proc *, struct exec_package *);
 #endif /* _KERNEL */
 
 #define ELF_TARG_VER	1	/* The ver for which this code is intended */

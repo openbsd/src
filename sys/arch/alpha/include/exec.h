@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.16 2015/08/29 01:58:39 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.17 2017/02/08 05:09:25 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -39,8 +39,6 @@
 #define ELF_TARG_CLASS		ELFCLASS64
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_ALPHA_EXP
-
-#define _KERN_DO_ELF64
 
 /* Processor specific dynamic tag values.  */
 #define	DT_ALPHA_PLTRO		0x70000000

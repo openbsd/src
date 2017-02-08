@@ -1,7 +1,5 @@
-/*	$OpenBSD: exec.h,v 1.10 2015/08/29 01:58:39 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.11 2017/02/08 05:09:26 guenther Exp $	*/
 /*	$NetBSD: elf_machdep.h,v 1.7 2001/02/11 00:18:49 eeh Exp $	*/
-
-#define _KERN_DO_ELF64
 
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 #define ELF_TARG_CLASS		ELFCLASS64

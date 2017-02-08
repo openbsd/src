@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 2016/09/16 18:52:25 kettenis Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 2017/02/08 05:09:25 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -38,8 +38,6 @@
 #define ELF_TARG_CLASS		ELFCLASS32
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_ARM 
-
-#define _KERN_DO_ELF
 
 #define PT_ARM_EXIDX	0x70000001
 

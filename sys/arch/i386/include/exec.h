@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.13 2015/08/29 01:58:39 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.14 2017/02/08 05:09:25 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -39,7 +39,5 @@
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_386 /* XXX - EM_486 is currently unused
                                           by all OSs/compilers/linkers */
-
-#define _KERN_DO_ELF
 
 #endif  /* _MACHINE_EXEC_H_ */
