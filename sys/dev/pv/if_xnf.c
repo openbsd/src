@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.49 2017/02/06 21:43:48 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.50 2017/02/08 16:17:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -473,7 +473,7 @@ xnf_stop(struct xnf_softc *sc)
 	ifp->if_timer = 0;
 
 	ifq_barrier(&ifp->if_snd);
-	intr_barrier(&sc->sc_xih);
+	xen_intr_barrier(sc->sc_xih);
 
 	ifq_clr_oactive(&ifp->if_snd);
 
