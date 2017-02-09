@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.21 2016/12/14 17:38:59 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.22 2017/02/09 15:04:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,11 +52,11 @@ cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	wl_src = item->state.sflag.wl;
 	src = item->state.sflag.s;
-	sg_src = session_group_find(src);
+	sg_src = session_group_contains(src);
 
 	wl_dst = item->state.tflag.wl;
 	dst = item->state.tflag.s;
-	sg_dst = session_group_find(dst);
+	sg_dst = session_group_contains(dst);
 
 	if (src != dst && sg_src != NULL && sg_dst != NULL &&
 	    sg_src == sg_dst) {
