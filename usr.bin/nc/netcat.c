@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.175 2017/02/08 18:44:50 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.176 2017/02/09 20:14:41 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -867,7 +867,8 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 	int s = -1, error, on = 1, save_errno;
 
 	if ((error = getaddrinfo(host, port, &hints, &res0)))
-		errx(1, "getaddrinfo: %s", gai_strerror(error));
+		errx(1, "getaddrinfo for host \"%s\" port %s: %s", host,
+		    port, gai_strerror(error));
 
 	for (res = res0; res; res = res->ai_next) {
 		if ((s = socket(res->ai_family, res->ai_socktype |
