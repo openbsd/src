@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.112 2016/11/26 11:18:43 mpi Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.113 2017/02/09 22:21:53 jca Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -308,7 +308,8 @@ main(int argc, char *argv[])
 			}
 
 			printf("at %p: ", (void *)nl[i].n_value);
-			if (nl[i].n_type == N_DATA) {
+			if ((nl[i].n_type & N_TYPE) == N_DATA ||
+			    (nl[i].n_type & N_TYPE) == N_COMM) {
 				if (stringformat) {
 					KGET1(i, &buf, sizeof(buf), argv[i]);
 					buf[sizeof(buf) - 1] = '\0';
