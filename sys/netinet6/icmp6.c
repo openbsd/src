@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.200 2017/02/09 15:23:35 jca Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.201 2017/02/09 20:31:29 jca Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -156,57 +156,60 @@ icmp6_init(void)
 void
 icmp6_errcount(int type, int code)
 {
+	enum icmp6stat_counters c = icp6s_ounknown;
+
 	switch (type) {
 	case ICMP6_DST_UNREACH:
 		switch (code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
-			icmp6stat_inc(icp6s_odst_unreach_noroute);
-			return;
+			c = icp6s_odst_unreach_noroute;
+			break;
 		case ICMP6_DST_UNREACH_ADMIN:
-			icmp6stat_inc(icp6s_odst_unreach_admin);
-			return;
+			c = icp6s_odst_unreach_admin;
+			break;
 		case ICMP6_DST_UNREACH_BEYONDSCOPE:
-			icmp6stat_inc(icp6s_odst_unreach_beyondscope);
-			return;
+			c = icp6s_odst_unreach_beyondscope;
+			break;
 		case ICMP6_DST_UNREACH_ADDR:
-			icmp6stat_inc(icp6s_odst_unreach_addr);
-			return;
+			c = icp6s_odst_unreach_addr;
+			break;
 		case ICMP6_DST_UNREACH_NOPORT:
-			icmp6stat_inc(icp6s_odst_unreach_noport);
-			return;
+			c = icp6s_odst_unreach_noport;
+			break;
 		}
 		break;
 	case ICMP6_PACKET_TOO_BIG:
-		icmp6stat_inc(icp6s_opacket_too_big);
-		return;
+		c = icp6s_opacket_too_big;
+		break;
 	case ICMP6_TIME_EXCEEDED:
 		switch (code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
-			icmp6stat_inc(icp6s_otime_exceed_transit);
-			return;
+			c = icp6s_otime_exceed_transit;
+			break;
 		case ICMP6_TIME_EXCEED_REASSEMBLY:
-			icmp6stat_inc(icp6s_otime_exceed_reassembly);
-			return;
+			c = icp6s_otime_exceed_reassembly;
+			break;
 		}
 		break;
 	case ICMP6_PARAM_PROB:
 		switch (code) {
 		case ICMP6_PARAMPROB_HEADER:
-			icmp6stat_inc(icp6s_oparamprob_header);
-			return;
+			c = icp6s_oparamprob_header;
+			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
-			icmp6stat_inc(icp6s_oparamprob_nextheader);
-			return;
+			c = icp6s_oparamprob_nextheader;
+			break;
 		case ICMP6_PARAMPROB_OPTION:
-			icmp6stat_inc(icp6s_oparamprob_option);
-			return;
+			c = icp6s_oparamprob_option;
+			break;
 		}
 		break;
 	case ND_REDIRECT:
-		icmp6stat_inc(icp6s_oredirect);
-		return;
+		c = icp6s_oredirect;
+		break;
 	}
-	icmp6stat_inc(icp6s_ounknown);
+
+	icmp6stat_inc(c);
 }
 
 /*
