@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.723 2017/02/08 23:53:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.724 2017/02/09 12:09:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1828,6 +1828,8 @@ void	 server_client_exec(struct client *, const char *);
 void	 server_client_loop(void);
 void	 server_client_push_stdout(struct client *);
 void	 server_client_push_stderr(struct client *);
+void printflike(2, 3) server_client_add_message(struct client *, const char *,
+	     ...);
 
 /* server-fn.c */
 void	 server_fill_environ(struct session *, struct environ *);
