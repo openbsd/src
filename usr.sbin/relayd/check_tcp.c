@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.51 2016/01/11 21:31:42 benno Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.52 2017/02/09 11:16:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -233,8 +233,12 @@ tcp_read_buf(int s, short event, void *arg)
 	struct ctl_tcp_event	*cte = arg;
 
 	if (event == EV_TIMEOUT) {
-		tcp_close(cte, HOST_DOWN);
-		hce_notify_done(cte->host, HCE_TCP_READ_TIMEOUT);
+		if (ibuf_size(cte->buf))
+			(void)cte->validate_close(cte);
+		else
+			cte->host->he = HCE_TCP_READ_TIMEOUT;
+		tcp_close(cte, cte->host->up == HOST_UP ? 0 : HOST_DOWN);
+		hce_notify_done(cte->host, cte->host->he);
 		return;
 	}
 
