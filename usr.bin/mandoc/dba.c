@@ -1,4 +1,4 @@
-/*	$OpenBSD: dba.c,v 1.6 2017/01/15 15:28:51 schwarze Exp $ */
+/*	$OpenBSD: dba.c,v 1.7 2017/02/09 18:26:17 schwarze Exp $ */
 /*
  * Copyright (c) 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -307,8 +307,8 @@ compare_names(const void *vp1, const void *vp2)
 	const char	*cp1, *cp2;
 	int		 diff;
 
-	cp1 = *(char **)vp1;
-	cp2 = *(char **)vp2;
+	cp1 = *(const char * const *)vp1;
+	cp2 = *(const char * const *)vp2;
 	return (diff = *cp2 - *cp1) ? diff :
 	    strcasecmp(cp1 + 1, cp2 + 1);
 }
@@ -318,8 +318,8 @@ compare_strings(const void *vp1, const void *vp2)
 {
 	const char	*cp1, *cp2;
 
-	cp1 = *(char **)vp1;
-	cp2 = *(char **)vp2;
+	cp1 = *(const char * const *)vp1;
+	cp2 = *(const char * const *)vp2;
 	return strcmp(cp1, cp2);
 }
 
@@ -494,7 +494,7 @@ compare_entries(const void *vp1, const void *vp2)
 {
 	const struct macro_entry *ep1, *ep2;
 
-	ep1 = *(struct macro_entry **)vp1;
-	ep2 = *(struct macro_entry **)vp2;
+	ep1 = *(const struct macro_entry * const *)vp1;
+	ep2 = *(const struct macro_entry * const *)vp2;
 	return strcmp(ep1->value, ep2->value);
 }

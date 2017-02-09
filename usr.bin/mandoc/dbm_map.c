@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm_map.c,v 1.5 2016/10/22 10:08:31 schwarze Exp $ */
+/*	$OpenBSD: dbm_map.c,v 1.6 2017/02/09 18:26:17 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -165,7 +165,7 @@ dbm_getint(int32_t offset)
 int32_t
 dbm_addr(const void *p)
 {
-	return htobe32((char *)p - dbm_base);
+	return htobe32((const char *)p - dbm_base);
 }
 
 int
