@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.43 2017/01/29 19:58:47 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.44 2017/02/09 15:32:56 jca Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,7 @@
 #include <net/pfvar.h>
 
 struct	inpcbtable	divbtable;
-struct	divstat		divstat;
+struct	cpumem		*divcounters;
 
 #ifndef DIVERT_SENDSPACE
 #define DIVERT_SENDSPACE	(65536 + 100)
@@ -69,6 +69,7 @@ void
 divert_init(void)
 {
 	in_pcbinit(&divbtable, divbhashsize);
+	divcounters = counters_alloc(divs_ncounters);
 }
 
 int
@@ -96,7 +97,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		goto fail;
 	if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
 		/* m_pullup() has freed the mbuf, so just return. */
-		divstat.divs_errors++;
+		divstat_inc(divs_errors);
 		return (ENOBUFS);
 	}
 	ip = mtod(m, struct ip *);
@@ -157,12 +158,12 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 			error = EHOSTUNREACH;
 	}
 
-	divstat.divs_opackets++;
+	divstat_inc(divs_opackets);
 	return (error);
 
 fail:
 	m_freem(m);
-	divstat.divs_errors++;
+	divstat_inc(divs_errors);
 	return (error ? error : EINVAL);
 }
 
@@ -174,11 +175,11 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	struct sockaddr_in addr;
 
 	inp = NULL;
-	divstat.divs_ipackets++;
+	divstat_inc(divs_ipackets);
 
 	if (m->m_len < sizeof(struct ip) &&
 	    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
-		divstat.divs_errors++;
+		divstat_inc(divs_errors);
 		return (0);
 	}
 
@@ -220,7 +221,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	if (inp) {
 		sa = inp->inp_socket;
 		if (sbappendaddr(&sa->so_rcv, sintosa(&addr), m, NULL) == 0) {
-			divstat.divs_fullsock++;
+			divstat_inc(divs_fullsock);
 			m_freem(m);
 			return (0);
 		} else
@@ -228,7 +229,7 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	}
 
 	if (sa == NULL) {
-		divstat.divs_noport++;
+		divstat_inc(divs_noport);
 		m_freem(m);
 	}
 	return (0);
@@ -331,6 +332,25 @@ release:
 	return (error);
 }
 
+int
+divert_sysctl_divstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	uint64_t counters[divs_ncounters];
+	struct divstat divstat;
+	u_long *words = (u_long *)&divstat;
+	int i;
+
+	CTASSERT(sizeof(divstat) == (nitems(counters) * sizeof(u_long)));
+
+	counters_read(divcounters, counters, nitems(counters));
+
+	for (i = 0; i < nitems(counters); i++)
+		words[i] = (u_long)counters[i];
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &divstat, sizeof(divstat)));
+}
+
 /*
  * Sysctl for divert variables.
  */
@@ -350,10 +370,7 @@ divert_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &divert_recvspace));
 	case DIVERTCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &divstat, sizeof(divstat)));
+		return (divert_sysctl_divstat(oldp, oldlenp, newp));
 	default:
 		if (name[0] < DIVERTCTL_MAXID)
 			return sysctl_int_arr(divertctl_vars, name, namelen,

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.h,v 1.7 2017/01/25 17:34:31 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.h,v 1.8 2017/02/09 15:32:56 jca Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -50,8 +50,27 @@ struct divstat {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum divstat_counters {
+	divs_ipackets,
+	divs_noport,
+	divs_fullsock,
+	divs_opackets,
+	divs_errors,
+	divs_ncounters,
+};
+
+extern struct cpumem *divcounters;
+
+static inline void
+divstat_inc(enum divstat_counters c)
+{
+	counters_inc(divcounters, c);
+}
+
 extern struct	inpcbtable	divbtable;
-extern struct	divstat		divstat;
 
 void	 divert_init(void);
 void	 divert_input(struct mbuf *, int, int);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.44 2017/01/29 19:58:47 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.45 2017/02/09 15:32:56 jca Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -43,7 +43,7 @@
 #include <net/pfvar.h>
 
 struct	inpcbtable	divb6table;
-struct	div6stat	div6stat;
+struct	cpumem		*div6counters;
 
 #ifndef DIVERT_SENDSPACE
 #define DIVERT_SENDSPACE	(65536 + 100)
@@ -71,6 +71,7 @@ void
 divert6_init(void)
 {
 	in_pcbinit(&divb6table, divb6hashsize);
+	div6counters = counters_alloc(div6s_ncounters);
 }
 
 int
@@ -95,7 +96,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		goto fail;
 	if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 		/* m_pullup() has freed the mbuf, so just return. */
-		div6stat.divs_errors++;
+		div6stat_inc(div6s_errors);
 		return (ENOBUFS);
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -159,11 +160,11 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 	}
 
-	div6stat.divs_opackets++;
+	div6stat_inc(div6s_opackets);
 	return (error);
 
 fail:
-	div6stat.divs_errors++;
+	div6stat_inc(div6s_errors);
 	m_freem(m);
 	return (error ? error : EINVAL);
 }
@@ -176,11 +177,11 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	struct sockaddr_in6 addr;
 
 	inp = NULL;
-	div6stat.divs_ipackets++;
+	div6stat_inc(div6s_ipackets);
 
 	if (m->m_len < sizeof(struct ip6_hdr) &&
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-		div6stat.divs_errors++;
+		div6stat_inc(div6s_errors);
 		return (0);
 	}
 
@@ -221,7 +222,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	if (inp) {
 		sa = inp->inp_socket;
 		if (sbappendaddr(&sa->so_rcv, sin6tosa(&addr), m, NULL) == 0) {
-			div6stat.divs_fullsock++;
+			div6stat_inc(div6s_fullsock);
 			m_freem(m);
 			return (0);
 		} else
@@ -229,7 +230,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	}
 
 	if (sa == NULL) {
-		div6stat.divs_noport++;
+		div6stat_inc(div6s_noport);
 		m_freem(m);
 	}
 	return (0);
@@ -332,6 +333,25 @@ release:
 	return (error);
 }
 
+int
+divert6_sysctl_div6stat(void *oldp, size_t *oldlenp, void *newp)
+{
+	uint64_t counters[div6s_ncounters];
+	struct div6stat div6stat;
+	u_long *words = (u_long *)&div6stat;
+	int i;
+
+	CTASSERT(sizeof(div6stat) == (nitems(counters) * sizeof(u_long)));
+
+	counters_read(div6counters, counters, nitems(counters));
+
+	for (i = 0; i < nitems(counters); i++)
+		words[i] = (u_long)counters[i];
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &div6stat, sizeof(div6stat)));
+}
+
 /*
  * Sysctl for divert variables.
  */
@@ -351,10 +371,7 @@ divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &divert6_recvspace));
 	case DIVERT6CTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &div6stat, sizeof(div6stat)));
+		return (divert6_sysctl_div6stat(oldp, oldlenp, newp));
 	default:
 		if (name[0] < DIVERT6CTL_MAXID)
 			return sysctl_int_arr(divert6ctl_vars, name, namelen,
