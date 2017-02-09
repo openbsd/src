@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.29 2016/07/06 15:53:01 tedu Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.30 2017/02/09 20:15:28 mikeb Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -380,9 +380,6 @@ tc_windup(void)
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
 	int i;
-#ifdef leapsecs
-	time_t t;
-#endif
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
