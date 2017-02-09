@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.154 2016/12/22 13:39:32 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.155 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off, icmp6len);
 	if (nd_rs == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat_inc(icp6s_tooshort);
 		return;
 	}
 
@@ -190,7 +190,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badrs++;
+	icmp6stat_inc(icp6s_badrs);
 	m_freem(m);
 }
 
@@ -276,7 +276,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 
 	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
 
-	icmp6stat.icp6s_outhist[ND_ROUTER_SOLICIT]++;
+	icmp6stat_inc(icp6s_outhist + ND_ROUTER_SOLICIT);
 }
 
 void
@@ -412,7 +412,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
 	if (nd_ra == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);
 		return;
 	}
@@ -570,7 +570,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badra++;
+	icmp6stat_inc(icp6s_badra);
 	if_put(ifp);
 	m_freem(m);
 }

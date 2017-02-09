@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.114 2017/01/03 13:32:51 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.115 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);
 		return;
 	}
@@ -339,7 +339,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	    inet_ntop(AF_INET6, &daddr6, addr, sizeof(addr))));
 	nd6log((LOG_ERR, "nd6_ns_input: tgt=%s\n",
 	    inet_ntop(AF_INET6, &taddr6, addr, sizeof(addr))));
-	icmp6stat.icp6s_badns++;
+	icmp6stat_inc(icp6s_badns);
 	m_freem(m);
 	if_put(ifp);
 }
@@ -532,7 +532,7 @@ nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	ip6_output(m, NULL, NULL, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL);
-	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
+	icmp6stat_inc(icp6s_outhist + ND_NEIGHBOR_SOLICIT);
 	return;
 
   bad:
@@ -589,7 +589,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat_inc(icp6s_tooshort);
 		if_put(ifp);
 		return;
 	}
@@ -875,7 +875,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badna++;
+	icmp6stat_inc(icp6s_badna);
 	m_freem(m);
 	if_put(ifp);
 }
@@ -1037,7 +1037,7 @@ nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6,
 	m->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	ip6_output(m, NULL, NULL, 0, &im6o, NULL);
-	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
+	icmp6stat_inc(icp6s_outhist+ ND_NEIGHBOR_ADVERT);
 	return;
 
   bad:

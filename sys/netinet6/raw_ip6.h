@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.h,v 1.3 2007/12/14 18:33:42 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.h,v 1.4 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -59,7 +59,28 @@ struct rip6stat {
 }
 
 #ifdef _KERNEL
-extern struct rip6stat rip6stat;
+
+#include <sys/percpu.h>
+
+enum rip6stat_counters {
+	rip6s_ipackets,
+	rip6s_isum,
+	rip6s_badsum,
+	rip6s_nosock,
+	rip6s_nosockmcast,
+	rip6s_fullsock,
+	rip6s_opackets,
+	rip6s_ncounters,
+};
+
+extern struct cpumem *rip6counters;
+
+static inline void
+rip6stat_inc(enum rip6stat_counters c)
+{
+	counters_inc(rip6counters, c);
+}
+
 #endif
 
 #endif

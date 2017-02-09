@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.64 2016/07/05 10:17:14 mpi Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.65 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -334,7 +334,6 @@ struct	in6_aliasreq {
 
 TAILQ_HEAD(in6_ifaddrhead, in6_ifaddr);
 extern struct in6_ifaddrhead in6_ifaddr;
-extern struct icmp6stat icmp6stat;
 
 /*
  * Multi-cast membership entry.  One for each group/ifp that a PCB

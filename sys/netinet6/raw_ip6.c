@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.105 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.106 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -103,7 +103,7 @@
 
 struct	inpcbtable rawin6pcbtable;
 
-struct rip6stat rip6stat;
+struct cpumem *rip6counters;
 
 /*
  * Initialize raw connection block queue.
@@ -111,8 +111,8 @@ struct rip6stat rip6stat;
 void
 rip6_init(void)
 {
-
 	in_pcbinit(&rawin6pcbtable, 1);
+	rip6counters = counters_alloc(rip6s_ncounters);
 }
 
 int
@@ -125,7 +125,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
 
-	rip6stat.rip6s_ipackets++;
+	rip6stat_inc(rip6s_ipackets);
 
 	/* Be proactive about malicious use of IPv4 mapped address */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
@@ -171,10 +171,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))
 			continue;
 		if (in6p->inp_cksum6 != -1) {
-			rip6stat.rip6s_isum++;
+			rip6stat_inc(rip6s_isum);
 			if (in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
-				rip6stat.rip6s_badsum++;
+				rip6stat_inc(rip6s_badsum);
 				continue;
 			}
 		}
@@ -190,7 +190,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 					/* should notify about lost packet */
 					m_freem(n);
 					m_freem(opts);
-					rip6stat.rip6s_fullsock++;
+					rip6stat_inc(rip6s_fullsock);
 				} else
 					sorwakeup(last->inp_socket);
 				opts = NULL;
@@ -207,16 +207,16 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			m_freem(opts);
-			rip6stat.rip6s_fullsock++;
+			rip6stat_inc(rip6s_fullsock);
 		} else
 			sorwakeup(last->inp_socket);
 	} else {
 		struct counters_ref ref;
 		uint64_t *counters;
 
-		rip6stat.rip6s_nosock++;
+		rip6stat_inc(rip6s_nosock);
 		if (m->m_flags & M_MCAST)
-			rip6stat.rip6s_nosockmcast++;
+			rip6stat_inc(rip6s_nosockmcast);
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
@@ -457,9 +457,9 @@ rip6_output(struct mbuf *m, ...)
 	error = ip6_output(m, optp, &in6p->inp_route6, flags,
 	    in6p->inp_moptions6, in6p);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
-		icmp6stat.icp6s_outhist[type]++;
+		icmp6stat_inc(icp6s_outhist + type);
 	} else
-		rip6stat.rip6s_opackets++;
+		rip6stat_inc(rip6s_opackets);
 
 	goto freectl;
 
@@ -769,6 +769,18 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 }
 
 int
+rip6_sysctl_rip6stat(void *oldp, size_t *oldplen, void *newp)
+{
+	struct rip6stat rip6stat;
+
+	CTASSERT(sizeof(rip6stat) == rip6s_ncounters * sizeof(uint64_t));
+	counters_read(ip6counters, (uint64_t *)&rip6stat, rip6s_ncounters);
+
+	return (sysctl_rdstruct(oldp, oldplen, newp,
+	    &rip6stat, sizeof(rip6stat)));
+}
+
+int
 rip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
@@ -778,10 +790,7 @@ rip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 	case RIPV6CTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &rip6stat, sizeof(rip6stat)));
+		return (rip6_sysctl_rip6stat(oldp, oldlenp, newp));
 	default:
 		return (EOPNOTSUPP);
 	}

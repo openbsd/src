@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.42 2015/09/09 15:51:40 mpi Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.43 2017/02/09 15:23:35 jca Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -457,22 +457,6 @@ struct icmp6_filter {
  * Variables related to this implementation
  * of the internet control message protocol version 6.
  */
-struct icmp6errstat {
-	u_int64_t icp6errs_dst_unreach_noroute;
-	u_int64_t icp6errs_dst_unreach_admin;
-	u_int64_t icp6errs_dst_unreach_beyondscope;
-	u_int64_t icp6errs_dst_unreach_addr;
-	u_int64_t icp6errs_dst_unreach_noport;
-	u_int64_t icp6errs_packet_too_big;
-	u_int64_t icp6errs_time_exceed_transit;
-	u_int64_t icp6errs_time_exceed_reassembly;
-	u_int64_t icp6errs_paramprob_header;
-	u_int64_t icp6errs_paramprob_nextheader;
-	u_int64_t icp6errs_paramprob_option;
-	u_int64_t icp6errs_redirect; /* we regard redirect as an error here */
-	u_int64_t icp6errs_unknown;
-};
-
 struct icmp6stat {
 /* statistics related to icmp6 packets generated */
 	u_int64_t icp6s_error;		/* # of calls to icmp6_error */
@@ -491,25 +475,19 @@ struct icmp6stat {
 	u_int64_t icp6s_reflect;
 	u_int64_t icp6s_inhist[256];
 	u_int64_t icp6s_nd_toomanyopt;	/* too many ND options */
-	struct icmp6errstat icp6s_outerrhist;
-#define icp6s_odst_unreach_noroute \
-	icp6s_outerrhist.icp6errs_dst_unreach_noroute
-#define icp6s_odst_unreach_admin icp6s_outerrhist.icp6errs_dst_unreach_admin
-#define icp6s_odst_unreach_beyondscope \
-	icp6s_outerrhist.icp6errs_dst_unreach_beyondscope
-#define icp6s_odst_unreach_addr icp6s_outerrhist.icp6errs_dst_unreach_addr
-#define icp6s_odst_unreach_noport icp6s_outerrhist.icp6errs_dst_unreach_noport
-#define icp6s_opacket_too_big icp6s_outerrhist.icp6errs_packet_too_big
-#define icp6s_otime_exceed_transit \
-	icp6s_outerrhist.icp6errs_time_exceed_transit
-#define icp6s_otime_exceed_reassembly \
-	icp6s_outerrhist.icp6errs_time_exceed_reassembly
-#define icp6s_oparamprob_header icp6s_outerrhist.icp6errs_paramprob_header
-#define icp6s_oparamprob_nextheader \
-	icp6s_outerrhist.icp6errs_paramprob_nextheader
-#define icp6s_oparamprob_option icp6s_outerrhist.icp6errs_paramprob_option
-#define icp6s_oredirect icp6s_outerrhist.icp6errs_redirect
-#define icp6s_ounknown icp6s_outerrhist.icp6errs_unknown
+	u_int64_t icp6s_odst_unreach_noroute;
+	u_int64_t icp6s_odst_unreach_admin;
+	u_int64_t icp6s_odst_unreach_beyondscope;
+	u_int64_t icp6s_odst_unreach_addr;
+	u_int64_t icp6s_odst_unreach_noport;
+	u_int64_t icp6s_opacket_too_big;
+	u_int64_t icp6s_otime_exceed_transit;
+	u_int64_t icp6s_otime_exceed_reassembly;
+	u_int64_t icp6s_oparamprob_header;
+	u_int64_t icp6s_oparamprob_nextheader;
+	u_int64_t icp6s_oparamprob_option;
+	u_int64_t icp6s_oredirect;	/* we regard redirect as an error here */
+	u_int64_t icp6s_ounknown;
 	u_int64_t icp6s_pmtuchg;	/* path MTU changes */
 	u_int64_t icp6s_nd_badopt;	/* bad ND options */
 	u_int64_t icp6s_badns;		/* bad neighbor solicitation */
@@ -590,6 +568,51 @@ struct icmp6stat {
 #define RTF_PROBEMTU	RTF_PROTO1
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum icmp6stat_counters {
+	icp6s_error,
+	icp6s_canterror,
+	icp6s_toofreq,
+	icp6s_outhist,
+	icp6s_badcode = icp6s_outhist + 256,
+	icp6s_tooshort,
+	icp6s_checksum,
+	icp6s_badlen,
+	icp6s_reflect,
+	icp6s_inhist,
+	icp6s_nd_toomanyopt = icp6s_inhist + 256,
+	icp6s_odst_unreach_noroute,
+	icp6s_odst_unreach_admin,
+	icp6s_odst_unreach_beyondscope,
+	icp6s_odst_unreach_addr,
+	icp6s_odst_unreach_noport,
+	icp6s_opacket_too_big,
+	icp6s_otime_exceed_transit,
+	icp6s_otime_exceed_reassembly,
+	icp6s_oparamprob_header,
+	icp6s_oparamprob_nextheader,
+	icp6s_oparamprob_option,
+	icp6s_oredirect,
+	icp6s_ounknown,
+	icp6s_pmtuchg,
+	icp6s_nd_badopt,
+	icp6s_badns,
+	icp6s_badna,
+	icp6s_badrs,
+	icp6s_badra,
+	icp6s_badredirect,
+	icp6s_ncounters,
+};
+
+extern struct cpumem *icmp6counters;
+
+static inline void
+icmp6stat_inc(enum icmp6stat_counters c)
+{
+	counters_inc(icmp6counters, c);
+}
 
 struct	rtentry;
 struct	rttimer;
