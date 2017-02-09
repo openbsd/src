@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.114 2017/02/09 10:40:57 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.115 2017/02/09 11:18:55 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -398,6 +398,8 @@ unp_detach(struct unpcb *unp)
 {
 	struct vnode *vp;
 
+	NET_ASSERT_UNLOCKED();
+
 	LIST_REMOVE(unp, unp_link);
 	if (unp->unp_vnode) {
 		unp->unp_vnode->v_socket = NULL;
@@ -409,7 +411,10 @@ unp_detach(struct unpcb *unp)
 		unp_disconnect(unp);
 	while (!SLIST_EMPTY(&unp->unp_refs))
 		unp_drop(SLIST_FIRST(&unp->unp_refs), ECONNRESET);
+	/* XXXSMP The assert is wrong */
+	rw_enter_write(&netlock);
 	soisdisconnected(unp->unp_socket);
+	rw_exit_write(&netlock);
 	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
 	free(unp, M_PCB, sizeof *unp);
