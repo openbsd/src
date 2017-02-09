@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.19 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: set_key.c,v 1.20 2017/02/09 03:43:05 dtucker Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ int DES_check_key_parity(const_DES_cblock *key)
 	return(1);
 	}
 
-/* Weak and semi week keys as take from
+/* Weak and semi weak keys as taken from
  * %A D.W. Davies
  * %A W.L. Price
  * %T Security for Computer Networks
