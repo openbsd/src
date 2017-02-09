@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.118 2016/07/19 21:28:43 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.119 2017/02/09 15:19:32 jca Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ send:
 		int count = 0;  /* actual number of SACKs inserted */
 		int maxsack = (MAX_TCPOPTLEN - (optlen + 4))/TCPOLEN_SACK;
 
-		tcpstat.tcps_sack_snd_opts++;
+		tcpstat_inc(tcps_sack_snd_opts);
 		maxsack = min(maxsack, TCP_MAX_SACK);
 		for (i = 0; (i < tp->rcv_numsacks && count < maxsack); i++) {
 			struct sackblk sack = tp->sackblks[i];
@@ -685,13 +685,12 @@ send:
 	 */
 	if (len) {
 		if (tp->t_force && len == 1)
-			tcpstat.tcps_sndprobe++;
+			tcpstat_inc(tcps_sndprobe);
 		else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
-			tcpstat.tcps_sndrexmitpack++;
-			tcpstat.tcps_sndrexmitbyte += len;
+			tcpstat_pkt(tcps_sndrexmitpack, tcps_sndrexmitbyte,
+			    len);
 		} else {
-			tcpstat.tcps_sndpack++;
-			tcpstat.tcps_sndbyte += len;
+			tcpstat_pkt(tcps_sndpack, tcps_sndbyte, len);
 		}
 #ifdef notyet
 		if ((m = m_copypack(so->so_snd.sb_mb, off,
@@ -746,13 +745,13 @@ send:
 			flags |= TH_PUSH;
 	} else {
 		if (tp->t_flags & TF_ACKNOW)
-			tcpstat.tcps_sndacks++;
+			tcpstat_inc(tcps_sndacks);
 		else if (flags & (TH_SYN|TH_FIN|TH_RST))
-			tcpstat.tcps_sndctrl++;
+			tcpstat_inc(tcps_sndctrl);
 		else if (SEQ_GT(tp->snd_up, tp->snd_una))
-			tcpstat.tcps_sndurg++;
+			tcpstat_inc(tcps_sndurg);
 		else
-			tcpstat.tcps_sndwinup++;
+			tcpstat_inc(tcps_sndwinup);
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
@@ -823,8 +822,7 @@ send:
 #if defined(TCP_SACK) && defined(TCP_FACK)
 		tp->retran_data += len;
 #endif /* TCP_FACK */
-		tcpstat.tcps_sack_rexmits++;
-		tcpstat.tcps_sack_rexmit_bytes += len;
+		tcpstat_pkt(tcps_sack_rexmits, tcps_sack_rexmit_bytes, len);
 	}
 #endif /* TCP_SACK */
 
@@ -841,7 +839,7 @@ send:
 		 */
 		if (tp->t_flags & TF_RCVD_CE) {
 			flags |= TH_ECE;
-			tcpstat.tcps_ecn_sndece++;
+			tcpstat_inc(tcps_ecn_sndece);
 		}
 		if (!(tp->t_flags & TF_DISABLE_ECN)) {
 			/*
@@ -862,7 +860,7 @@ send:
 		    (tp->t_flags & TF_SEND_CWR)) {
 			flags |= TH_CWR;
 			tp->t_flags &= ~TF_SEND_CWR;
-			tcpstat.tcps_ecn_sndcwr++;
+			tcpstat_inc(tcps_ecn_sndcwr);
 		}
 	}
 #endif
@@ -982,7 +980,7 @@ send:
 			if (tp->t_rtttime == 0) {
 				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
-				tcpstat.tcps_segstimed++;
+				tcpstat_inc(tcps_segstimed);
 			}
 		}
 
@@ -1073,7 +1071,7 @@ send:
 			/* don't set ECT */
 		} else {
 			needect = 1;
-			tcpstat.tcps_ecn_sndect++;
+			tcpstat_inc(tcps_ecn_sndect);
 		}
 	}
 #endif
@@ -1172,9 +1170,9 @@ out:
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
 
-	tcpstat.tcps_sndtotal++;
+	tcpstat_inc(tcps_sndtotal);
 	if (tp->t_flags & TF_DELACK)
-		tcpstat.tcps_delack++;
+		tcpstat_inc(tcps_delack);
 
 	/*
 	 * Data sent (as far as we can tell).

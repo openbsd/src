@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.143 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.144 2017/02/09 15:19:32 jca Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		tcp_rscale(tp, sb_max);
 
 		soisconnecting(so);
-		tcpstat.tcps_connattempt++;
+		tcpstat_inc(tcps_connattempt);
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 		tcp_set_iss_tsm(tp);
@@ -805,7 +805,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	}
 
 	if (inp == NULL) {
-		++tcpstat.tcps_pcbhashmiss;
+		tcpstat_inc(tcps_pcbhashmiss);
 		switch (tir.faddr.ss_family) {
 #ifdef INET6
 		case AF_INET6:
@@ -831,6 +831,137 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	*oldlenp = sizeof (tir);
 	error = copyout((void *)&tir, oldp, sizeof (tir));
 	return (error);
+}
+
+int
+tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct tcpstat tcpstat;
+	struct counters_ref cr;
+	uint64_t *counters;
+	struct syn_cache_set *set;
+	int i = 0;
+
+#define ASSIGN(field)	do { tcpstat.field = counters[i++]; } while (0)
+
+	counters = counters_enter(&cr, tcpcounters);
+	ASSIGN(tcps_connattempt);
+	ASSIGN(tcps_accepts);
+	ASSIGN(tcps_connects);
+	ASSIGN(tcps_drops);
+	ASSIGN(tcps_conndrops);
+	ASSIGN(tcps_closed);
+	ASSIGN(tcps_segstimed);
+	ASSIGN(tcps_rttupdated);
+	ASSIGN(tcps_delack);
+	ASSIGN(tcps_timeoutdrop);
+	ASSIGN(tcps_rexmttimeo);
+	ASSIGN(tcps_persisttimeo);
+	ASSIGN(tcps_persistdrop);
+	ASSIGN(tcps_keeptimeo);
+	ASSIGN(tcps_keepprobe);
+	ASSIGN(tcps_keepdrops);
+	ASSIGN(tcps_sndtotal);
+	ASSIGN(tcps_sndpack);
+	ASSIGN(tcps_sndbyte);
+	ASSIGN(tcps_sndrexmitpack);
+	ASSIGN(tcps_sndrexmitbyte);
+	ASSIGN(tcps_sndrexmitfast);
+	ASSIGN(tcps_sndacks);
+	ASSIGN(tcps_sndprobe);
+	ASSIGN(tcps_sndurg);
+	ASSIGN(tcps_sndwinup);
+	ASSIGN(tcps_sndctrl);
+	ASSIGN(tcps_rcvtotal);
+	ASSIGN(tcps_rcvpack);
+	ASSIGN(tcps_rcvbyte);
+	ASSIGN(tcps_rcvbadsum);
+	ASSIGN(tcps_rcvbadoff);
+	ASSIGN(tcps_rcvmemdrop);
+	ASSIGN(tcps_rcvnosec);
+	ASSIGN(tcps_rcvshort);
+	ASSIGN(tcps_rcvduppack);
+	ASSIGN(tcps_rcvdupbyte);
+	ASSIGN(tcps_rcvpartduppack);
+	ASSIGN(tcps_rcvpartdupbyte);
+	ASSIGN(tcps_rcvoopack);
+	ASSIGN(tcps_rcvoobyte);
+	ASSIGN(tcps_rcvpackafterwin);
+	ASSIGN(tcps_rcvbyteafterwin);
+	ASSIGN(tcps_rcvafterclose);
+	ASSIGN(tcps_rcvwinprobe);
+	ASSIGN(tcps_rcvdupack);
+	ASSIGN(tcps_rcvacktoomuch);
+	ASSIGN(tcps_rcvacktooold);
+	ASSIGN(tcps_rcvackpack);
+	ASSIGN(tcps_rcvackbyte);
+	ASSIGN(tcps_rcvwinupd);
+	ASSIGN(tcps_pawsdrop);
+	ASSIGN(tcps_predack);
+	ASSIGN(tcps_preddat);
+	ASSIGN(tcps_pcbhashmiss);
+	ASSIGN(tcps_noport);
+	ASSIGN(tcps_badsyn);
+	ASSIGN(tcps_dropsyn);
+	ASSIGN(tcps_rcvbadsig);
+	ASSIGN(tcps_rcvgoodsig);
+	ASSIGN(tcps_inswcsum);
+	ASSIGN(tcps_outswcsum);
+	ASSIGN(tcps_ecn_accepts);
+	ASSIGN(tcps_ecn_rcvece);
+	ASSIGN(tcps_ecn_rcvcwr);
+	ASSIGN(tcps_ecn_rcvce);
+	ASSIGN(tcps_ecn_sndect);
+	ASSIGN(tcps_ecn_sndece);
+	ASSIGN(tcps_ecn_sndcwr);
+	ASSIGN(tcps_cwr_ecn);
+	ASSIGN(tcps_cwr_frecovery);
+	ASSIGN(tcps_cwr_timeout);
+	ASSIGN(tcps_sc_added);
+	ASSIGN(tcps_sc_completed);
+	ASSIGN(tcps_sc_timed_out);
+	ASSIGN(tcps_sc_overflowed);
+	ASSIGN(tcps_sc_reset);
+	ASSIGN(tcps_sc_unreach);
+	ASSIGN(tcps_sc_bucketoverflow);
+	ASSIGN(tcps_sc_aborted);
+	ASSIGN(tcps_sc_dupesyn);
+	ASSIGN(tcps_sc_dropped);
+	ASSIGN(tcps_sc_collisions);
+	ASSIGN(tcps_sc_retransmitted);
+	ASSIGN(tcps_sc_seedrandom);
+	ASSIGN(tcps_sc_hash_size);
+	ASSIGN(tcps_sc_entry_count);
+	ASSIGN(tcps_sc_entry_limit);
+	ASSIGN(tcps_sc_bucket_maxlen);
+	ASSIGN(tcps_sc_bucket_limit);
+	ASSIGN(tcps_sc_uses_left);
+	ASSIGN(tcps_conndrained);
+	ASSIGN(tcps_sack_recovery_episode);
+	ASSIGN(tcps_sack_rexmits);
+	ASSIGN(tcps_sack_rexmit_bytes);
+	ASSIGN(tcps_sack_rcv_opts);
+	ASSIGN(tcps_sack_snd_opts);
+	counters_leave(&cr, tcpcounters);
+
+#undef ASSIGN
+
+	set = &tcp_syn_cache[tcp_syn_cache_active];
+	tcpstat.tcps_sc_hash_size = set->scs_size;
+	tcpstat.tcps_sc_entry_count = set->scs_count;
+	tcpstat.tcps_sc_entry_limit = tcp_syn_cache_limit;
+	tcpstat.tcps_sc_bucket_maxlen = 0;
+	for (i = 0; i < set->scs_size; i++) {
+		if (tcpstat.tcps_sc_bucket_maxlen <
+		    set->scs_buckethead[i].sch_length)
+			tcpstat.tcps_sc_bucket_maxlen =
+				set->scs_buckethead[i].sch_length;
+	}
+	tcpstat.tcps_sc_bucket_limit = tcp_syn_bucket_limit;
+	tcpstat.tcps_sc_uses_left = set->scs_use;
+
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &tcpstat, sizeof(tcpstat)));
 }
 
 /*
@@ -910,28 +1041,7 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 
 	case TCPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		{
-			struct syn_cache_set *set;
-			int i;
-
-			set = &tcp_syn_cache[tcp_syn_cache_active];
-			tcpstat.tcps_sc_hash_size = set->scs_size;
-			tcpstat.tcps_sc_entry_count = set->scs_count;
-			tcpstat.tcps_sc_entry_limit = tcp_syn_cache_limit;
-			tcpstat.tcps_sc_bucket_maxlen = 0;
-			for (i = 0; i < set->scs_size; i++) {
-				if (tcpstat.tcps_sc_bucket_maxlen <
-				    set->scs_buckethead[i].sch_length)
-					tcpstat.tcps_sc_bucket_maxlen =
-					    set->scs_buckethead[i].sch_length;
-			}
-			tcpstat.tcps_sc_bucket_limit = tcp_syn_bucket_limit;
-			tcpstat.tcps_sc_uses_left = set->scs_use;
-		}
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &tcpstat, sizeof(tcpstat)));
+		return (tcp_sysctl_tcpstat(oldp, oldlenp, newp));
 
 	case TCPCTL_SYN_USE_LIMIT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,

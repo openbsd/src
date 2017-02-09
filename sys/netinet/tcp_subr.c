@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.159 2017/01/26 13:03:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.160 2017/02/09 15:19:32 jca Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ struct pool tcpqe_pool;
 struct pool sackhl_pool;
 #endif
 
-struct tcpstat tcpstat;		/* tcp statistics */
+struct cpumem *tcpcounters;		/* tcp statistics */
 tcp_seq  tcp_iss;
 
 /*
@@ -152,6 +152,7 @@ tcp_init(void)
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 #endif /* TCP_SACK */
 	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);
+	tcpcounters = counters_alloc(tcps_ncounters);
 
 #ifdef INET6
 	/*
@@ -494,9 +495,9 @@ tcp_drop(struct tcpcb *tp, int errno)
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {
 		tp->t_state = TCPS_CLOSED;
 		(void) tcp_output(tp);
-		tcpstat.tcps_drops++;
+		tcpstat_inc(tcps_drops);
 	} else
-		tcpstat.tcps_conndrops++;
+		tcpstat_inc(tcps_conndrops);
 	if (errno == ETIMEDOUT && tp->t_softerror)
 		errno = tp->t_softerror;
 	so->so_error = errno;
@@ -551,7 +552,7 @@ tcp_reaper(void *arg)
 	struct tcpcb *tp = arg;
 
 	pool_put(&tcpcb_pool, tp);
-	tcpstat.tcps_closed++;
+	tcpstat_inc(tcps_closed);
 }
 
 int

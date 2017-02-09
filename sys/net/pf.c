@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1014 2017/02/05 16:04:14 jca Exp $ */
+/*	$OpenBSD: pf.c,v 1.1015 2017/02/09 15:19:32 jca Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6026,7 +6026,7 @@ pf_check_tcp_cksum(struct mbuf *m, int off, int len, sa_family_t af)
 	}
 
 	/* need to do it in software */
-	tcpstat.tcps_inswcsum++;
+	tcpstat_inc(tcps_inswcsum);
 
 	switch (af) {
 	case AF_INET:
@@ -6047,7 +6047,7 @@ pf_check_tcp_cksum(struct mbuf *m, int off, int len, sa_family_t af)
 		unhandled_af(af);
 	}
 	if (sum) {
-		tcpstat.tcps_rcvbadsum++;
+		tcpstat_inc(tcps_rcvbadsum);
 		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
 		return (1);
 	}

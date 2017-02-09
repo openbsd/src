@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.53 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.54 2017/02/09 15:19:32 jca Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -226,12 +226,12 @@ tcp_timer_rexmt(void *arg)
 #endif
 	if (++tp->t_rxtshift > TCP_MAXRXTSHIFT) {
 		tp->t_rxtshift = TCP_MAXRXTSHIFT;
-		tcpstat.tcps_timeoutdrop++;
+		tcpstat_inc(tcps_timeoutdrop);
 		(void)tcp_drop(tp, tp->t_softerror ?
 		    tp->t_softerror : ETIMEDOUT);
 		goto out;
 	}
-	tcpstat.tcps_rexmttimeo++;
+	tcpstat_inc(tcps_rexmttimeo);
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
 		rto = tp->t_rttmin;
@@ -363,7 +363,7 @@ tcp_timer_rexmt(void *arg)
 		tp->t_flags |= TF_SEND_CWR;
 #endif
 #if 1 /* TCP_ECN */
-		tcpstat.tcps_cwr_timeout++;
+		tcpstat_inc(tcps_cwr_timeout);
 #endif
 	}
 	(void) tcp_output(tp);
@@ -384,7 +384,7 @@ tcp_timer_persist(void *arg)
             TCP_TIMER_ISARMED(tp, TCPT_REXMT)) {
 		goto out;
 	}
-	tcpstat.tcps_persisttimeo++;
+	tcpstat_inc(tcps_persisttimeo);
 	/*
 	 * Hack: if the peer is dead/unreachable, we do not
 	 * time out if the window is closed.  After a full
@@ -398,7 +398,7 @@ tcp_timer_persist(void *arg)
 	if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
 	    ((tcp_now - tp->t_rcvtime) >= tcp_maxpersistidle ||
 	    (tcp_now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
-		tcpstat.tcps_persistdrop++;
+		tcpstat_inc(tcps_persistdrop);
 		tp = tcp_drop(tp, ETIMEDOUT);
 		goto out;
 	}
@@ -420,7 +420,7 @@ tcp_timer_keep(void *arg)
 	if (tp->t_flags & TF_DEAD)
 		goto out;
 
-	tcpstat.tcps_keeptimeo++;
+	tcpstat_inc(tcps_keeptimeo);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
 	if ((tcp_always_keepalive ||
@@ -441,7 +441,7 @@ tcp_timer_keep(void *arg)
 		 * by the protocol spec, this requires the
 		 * correspondent TCP to respond.
 		 */
-		tcpstat.tcps_keepprobe++;
+		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
 		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0);
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
@@ -452,7 +452,7 @@ tcp_timer_keep(void *arg)
 	return;
 
  dropit:
-	tcpstat.tcps_keepdrops++;
+	tcpstat_inc(tcps_keepdrops);
 	tp = tcp_drop(tp, ETIMEDOUT);
 	NET_UNLOCK(s);
 }
