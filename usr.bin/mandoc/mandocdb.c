@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.192 2017/02/09 17:19:07 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.193 2017/02/09 19:50:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -557,7 +557,7 @@ treescan(void)
 	const char	*argv[2];
 
 	argv[0] = ".";
-	argv[1] = (char *)NULL;
+	argv[1] = NULL;
 
 	f = fts_open((char * const *)argv, FTS_PHYSICAL | FTS_NOCHDIR,
 	    fts_compare);
