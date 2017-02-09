@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.44 2017/01/25 06:15:50 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.45 2017/02/09 10:27:03 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -329,7 +329,6 @@ preempt(struct proc *newp)
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;
 	p->p_stat = SRUN;
-	p->p_cpu = sched_choosecpu(p);
 	setrunqueue(p);
 	p->p_ru.ru_nivcsw++;
 	mi_switch();
