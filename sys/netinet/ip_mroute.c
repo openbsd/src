@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.109 2017/02/08 01:28:51 jsg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.110 2017/02/09 15:36:46 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -367,9 +367,9 @@ mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 }
 
 struct mfcsysctlarg {
-	uint8_t		*msa_start;
-	uint8_t		*msa_cur;
-	uint8_t		*msa_end;
+	struct mfcinfo	*msa_minfos;
+	size_t		 msa_len;
+	size_t		 msa_needed;
 };
 
 int
@@ -380,12 +380,18 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	struct ifnet		*ifp;
 	struct vif		*v;
 	struct mfcinfo		*minfo;
-	int			 error;
+	int			 new = 0;
 
 	/* Skip non-multicast routes. */
 	if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
 	    (RTF_HOST | RTF_MULTICAST))
 		return (0);
+
+	/* User just asked for the output size. */
+	if (msa->msa_minfos == NULL) {
+		msa->msa_needed += sizeof(*minfo);
+		return (0);
+	}
 
 	/* Skip route with invalid interfaces. */
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
@@ -395,17 +401,20 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 		return (0);
 	}
 
-	for (minfo = (struct mfcinfo *)msa->msa_start;
-	     (uint8_t *)minfo <= (msa->msa_end - sizeof(*minfo));
+	for (minfo = msa->msa_minfos;
+	     (uint8_t *)minfo < ((uint8_t *)msa->msa_minfos + msa->msa_len);
 	     minfo++) {
 		/* Find a new entry or update old entry. */
-		if (!((minfo->mfc_origin.s_addr ==
-		    satosin(rt->rt_gateway)->sin_addr.s_addr &&
-		    minfo->mfc_mcastgrp.s_addr ==
-		    satosin(rt_key(rt))->sin_addr.s_addr) ||
-		    (minfo->mfc_origin.s_addr == 0 &&
-		    minfo->mfc_mcastgrp.s_addr == 0)))
-			continue;
+		if (minfo->mfc_origin.s_addr !=
+		    satosin(rt->rt_gateway)->sin_addr.s_addr ||
+		    minfo->mfc_mcastgrp.s_addr !=
+		    satosin(rt_key(rt))->sin_addr.s_addr) {
+			if (minfo->mfc_origin.s_addr != 0 ||
+			    minfo->mfc_mcastgrp.s_addr != 0)
+				continue;
+
+			new = 1;
+		}
 
 		minfo->mfc_origin = satosin(rt->rt_gateway)->sin_addr;
 		minfo->mfc_mcastgrp = satosin(rt_key(rt))->sin_addr;
@@ -413,17 +422,13 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 		minfo->mfc_pkt_cnt += mfc->mfc_pkt_cnt;
 		minfo->mfc_byte_cnt += mfc->mfc_byte_cnt;
 		minfo->mfc_ttls[v->v_id] = mfc->mfc_ttl;
+		break;
 	}
 
+	if (new != 0)
+		msa->msa_needed += sizeof(*minfo);
+
 	if_put(ifp);
-
-	if ((msa->msa_cur + sizeof(minfo)) >= msa->msa_end)
-		return (ENOMEM);
-
-	if ((error = copyout(&minfo, msa->msa_cur, sizeof(minfo))) != 0)
-		return (error);
-
-	msa->msa_cur += sizeof(minfo);
 
 	return (0);
 }
@@ -431,18 +436,30 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 int
 mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 {
-	struct mfcsysctlarg	 msa = { oldp, oldp, oldp + *oldlenp };
 	unsigned int		 rtableid;
 	int			 error;
+	struct mfcsysctlarg	 msa;
 
-	memset(oldp, 0, *oldlenp);
+	if (oldp != NULL && *oldlenp > MAXPHYS)
+		return (EINVAL);
 
-	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++) {
-		error = rtable_walk(rtableid, AF_INET, mrt_rtwalk_mfcsysctl,
-		    &msa);
-		if (error != 0)
-			return (error);
-	}
+	if (oldp != NULL)
+		msa.msa_minfos = malloc(*oldlenp, M_TEMP, M_WAITOK | M_ZERO);
+	else
+		msa.msa_minfos = NULL;
+
+	msa.msa_len = *oldlenp;
+	msa.msa_needed = 0;
+
+	for (rtableid = 0; rtableid < RT_TABLEID_MAX; rtableid++)
+		rtable_walk(rtableid, AF_INET, mrt_rtwalk_mfcsysctl, &msa);
+
+	if (msa.msa_minfos != NULL && msa.msa_needed > 0 &&
+	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0)
+		return (error);
+
+	free(msa.msa_minfos, M_TEMP, *oldlenp);
+	*oldlenp = msa.msa_needed;
 
 	return (0);
 }
