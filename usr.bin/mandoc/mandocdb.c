@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.191 2017/01/27 11:33:08 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.192 2017/02/09 17:19:07 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,7 +147,7 @@ static	void	 putmdockey(const struct mpage *,
 			const struct roff_node *, uint64_t, int);
 static	int	 render_string(char **, size_t *);
 static	void	 say(const char *, const char *, ...)
-			__attribute__((__format__ (printf, 2, 3)));
+			__attribute__((__format__ (__printf__, 2, 3)));
 static	int	 set_basedir(const char *, int);
 static	int	 treescan(void);
 static	size_t	 utf8(unsigned int, char [7]);

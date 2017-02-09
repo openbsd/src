@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.183 2017/01/27 13:47:17 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.184 2017/02/09 17:19:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,7 +94,7 @@ static	void		  parse(struct curparse *, int, const char *);
 static	void		  passthrough(const char *, int, int);
 static	pid_t		  spawn_pager(struct tag_files *);
 static	int		  toptions(struct curparse *, char *);
-static	void		  usage(enum argmode) __attribute__((noreturn));
+static	void		  usage(enum argmode) __attribute__((__noreturn__));
 static	int		  woptions(struct curparse *, char *);
 
 static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
