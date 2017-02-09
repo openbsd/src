@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.113 2017/01/27 20:31:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.114 2017/02/09 10:40:57 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -132,7 +132,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_DETACH:
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		unp_detach(unp);
+		rw_enter_write(&netlock);
 		break;
 
 	case PRU_BIND:
@@ -394,7 +397,7 @@ void
 unp_detach(struct unpcb *unp)
 {
 	struct vnode *vp;
-	
+
 	LIST_REMOVE(unp, unp_link);
 	if (unp->unp_vnode) {
 		unp->unp_vnode->v_socket = NULL;
