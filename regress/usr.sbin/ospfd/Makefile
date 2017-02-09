@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/09/28 12:40:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/02/09 22:43:35 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -93,7 +93,8 @@ stamp-passfd: PassFd.so
 
 .xs.so:
 	xsubpp -prototypes $> >${@:S/.so$/.c/}
-	gcc -shared -Wall -I${PERLHEADER} -o $@ ${@:S/.so$/.c/}
+	gcc -shared -Wall -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE\
+	    -I${PERLHEADER} -o $@ ${@:S/.so$/.c/}
 	perl ${PERLINC} -M${@:R} -e ''
 
 .include <bsd.regress.mk>
