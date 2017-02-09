@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.52 2016/09/16 03:21:16 dlg Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.53 2017/02/09 19:02:34 bluhm Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ cache_zap(struct namecache *ncp)
  * the information on the entry being sought, such as its length
  * and its name. If the lookup succeeds, vpp is set to point to the vnode
  * and an error of 0 is returned. If the lookup determines the name does
- * not exist (negative caching) an error of ENOENT is returned. If the 
+ * not exist (negative caching) an error of ENOENT is returned. If the
  * lookup fails, an error of -1 is returned.
  */
 int
@@ -384,7 +384,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		 * for the same vnode (different ncp) - we don't need
 		 * this entry, so free it and we are done.
 		 */
-	  	pool_put(&nch_pool, ncp);
+		pool_put(&nch_pool, ncp);
 		/* we know now dvp->v_nc_tree is not empty, no need
 		 * to vdrop here
 		 */
@@ -461,20 +461,16 @@ cache_purgevfs(struct mount *mp)
 	struct namecache *ncp, *nxtcp;
 
 	/* whack the regular entries */
-	for (ncp = TAILQ_FIRST(&nclruhead); ncp != NULL; ncp = nxtcp) {
-		nxtcp = TAILQ_NEXT(ncp, nc_lru);
-		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
+	TAILQ_FOREACH_SAFE(ncp, &nclruhead, nc_lru, nxtcp) {
+		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp)
 			continue;
-		}
 		/* free the resources we had */
 		cache_zap(ncp);
 	}
 	/* whack the negative entries */
-	for (ncp = TAILQ_FIRST(&nclruneghead); ncp != NULL; ncp = nxtcp) {
-		nxtcp = TAILQ_NEXT(ncp, nc_neg);
-		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
+	TAILQ_FOREACH_SAFE(ncp, &nclruneghead, nc_neg, nxtcp) {
+		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp)
 			continue;
-		}
 		/* free the resources we had */
 		cache_zap(ncp);
 	}
