@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.43 2017/01/07 06:10:40 ratchov Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.44 2017/02/10 08:07:21 ratchov Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ umidi_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 
-	DPRINTFN(1,("umidi_match\n"));
+	DPRINTFN(1,("%s\n", __func__));
 
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
@@ -174,7 +174,7 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	int i;
 
-	DPRINTFN(1,("umidi_attach\n"));
+	DPRINTFN(1,("%s\n", __func__));
 
 	sc->sc_iface = uaa->iface;
 	sc->sc_udev = uaa->device;
@@ -227,7 +227,7 @@ umidi_activate(struct device *self, int act)
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 
 	if (act == DVACT_DEACTIVATE) {
-		DPRINTFN(1,("umidi_activate (deactivate)\n"));
+		DPRINTFN(1,("%s (deactivate)\n", __func__));
 		usbd_deactivate(sc->sc_udev);
 		deactivate_all_mididevs(sc);
 	}
@@ -239,7 +239,7 @@ umidi_detach(struct device *self, int flags)
 {
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 
-	DPRINTFN(1,("umidi_detach\n"));
+	DPRINTFN(1,("%s\n", __func__));
 
 	detach_all_mididevs(sc, flags);
 	free_all_mididevs(sc);
@@ -263,7 +263,7 @@ umidi_open(void *addr,
 	struct umidi_mididev *mididev = addr;
 	struct umidi_softc *sc = mididev->sc;
 
-	DPRINTF(("umidi_open: sc=%p\n", sc));
+	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (!sc)
 		return ENXIO;
@@ -365,7 +365,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 static void
 free_pipe(struct umidi_endpoint *ep)
 {
-	DPRINTF(("%s: free_pipe %p\n", ep->sc->sc_dev.dv_xname, ep));
+	DPRINTF(("%s: %s %p\n", ep->sc->sc_dev.dv_xname, __func__, ep));
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
@@ -1010,7 +1010,7 @@ dump_sc(struct umidi_softc *sc)
 {
 	int i;
 
-	DPRINTFN(10, ("%s: dump_sc\n", sc->sc_dev.dv_xname));
+	DPRINTFN(10, ("%s: %s\n", sc->sc_dev.dv_xname, __func__));
 	for (i=0; i<sc->sc_out_num_endpoints; i++) {
 		DPRINTFN(10, ("\tout_ep(%p):\n", &sc->sc_out_ep[i]));
 		dump_ep(&sc->sc_out_ep[i]);
@@ -1084,8 +1084,8 @@ start_input_transfer(struct umidi_endpoint *ep)
 			USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, in_intr);
 	err = usbd_transfer(ep->xfer);
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_IN_PROGRESS) {
-		DPRINTF(("%s: start_input_transfer: usbd_transfer() failed err=%s\n", 
-			ep->sc->sc_dev.dv_xname, usbd_errstr(err)));
+		DPRINTF(("%s: %s: usbd_transfer() failed err=%s\n", 
+			ep->sc->sc_dev.dv_xname, __func__, usbd_errstr(err)));
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
@@ -1101,8 +1101,8 @@ start_output_transfer(struct umidi_endpoint *ep)
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	err = usbd_transfer(ep->xfer);
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_IN_PROGRESS) {
-		DPRINTF(("%s: start_output_transfer: usbd_transfer() failed err=%s\n", 
-			ep->sc->sc_dev.dv_xname, usbd_errstr(err)));
+		DPRINTF(("%s: %s: usbd_transfer() failed err=%s\n", 
+			ep->sc->sc_dev.dv_xname, __func__, usbd_errstr(err)));
 		return err;
 	}
 	ep->used = ep->packetsize;
@@ -1189,7 +1189,7 @@ in_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &remain, NULL);
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("in_intr: abnormal status: %s\n", usbd_errstr(status)));
+		DPRINTF(("%s: abnormal status: %s\n", __func__, usbd_errstr(status)));
 		return;
 	}
 	buf = ep->buffer;
