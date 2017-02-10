@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.68 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.69 2017/02/10 08:05:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1032,11 +1032,8 @@ envy_mt_write_4(struct envy_softc *sc, int reg, int val)
 int
 envy_cci_read(struct envy_softc *sc, int index)
 {
-	int val;
-
 	envy_ccs_write(sc, ENVY_CCI_INDEX, index);
-	val = envy_ccs_read(sc, ENVY_CCI_DATA);
-	return val;
+	return (envy_ccs_read(sc, ENVY_CCI_DATA));
 }
 
 void
