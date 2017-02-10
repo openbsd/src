@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/01/18 11:56:10 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2017/02/10 12:30:50 bluhm Exp $
 
 PROGS=		mmap-sysctl-copyin mmap-sysctl-copyout
 OBJS=		${PROGS:S/$/.o/}
@@ -25,7 +25,7 @@ mount: disk nfs
 	mount -t nfs 127.0.0.1:/mnt/regress-nfs-server /mnt/regress-nfs-client
 
 unconfig:
-	-umount -f -t nfs -h 127.0.0.1 -a
+	-umount -f -t nfs -h 127.0.0.1 -a || true
 	-rmdir /mnt/regress-nfs-client 2>/dev/null || true
 	-pkill -KILL mountd || true
 	-rcctl -f stop nfsd
@@ -59,9 +59,25 @@ run-regress-${p}: stamp-setup ${p}
 	./${p}
 .endfor
 
+.for socktype nctype in stream -U dgram -Uu
+REGRESS_TARGETS+=	run-regress-socket-${socktype}
+run-regress-socket-${socktype}: stamp-setup
+	@echo '\n======== $@ ========'
+	rm -f /mnt/regress-nfs-client/socket-${socktype}
+	nc ${nctype} -v -l /mnt/regress-nfs-client/socket-${socktype} &
+	[ -S /mnt/regress-nfs-client/socket-${socktype} ] || sleep 1
+	[ -S /mnt/regress-nfs-client/socket-${socktype} ]
+	nc ${nctype} -z /mnt/regress-nfs-client/socket-${socktype}
+.if "${socktype}" == dgram
+	pkill -xf "nc -Uu -v -l /mnt/regress-nfs-client/socket-dgram"
+.endif
+.endfor
+
 REGRESS_TARGETS+=	run-regress-cleanup
 run-regress-cleanup:
 	@echo '\n======== $@ ========'
+	-pkill -xf "nc -U -v -l /mnt/regress-nfs-client/socket-stream" || true
+	-pkill -xf "nc -Uu -v -l /mnt/regress-nfs-client/socket-dgram" || true
 	${.MAKE} -C ${.CURDIR} unconfig
 
 .include <bsd.regress.mk>
