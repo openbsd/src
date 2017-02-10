@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.231 2017/01/10 00:36:25 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.232 2017/02/10 08:13:37 ratchov Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -32,7 +32,8 @@
 
 /*
  * High Definition Audio Specification
- *	ftp://download.intel.com/standards/hdaudio/pdf/HDAudio_03.pdf
+ *
+ * http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/high-definition-audio-specification.pdf
  *
  *
  * TO DO:
