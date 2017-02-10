@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.57 2010/12/24 10:31:59 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.58 2017/02/10 02:10:22 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,12 @@ sub register_libname
 		    unless $pkgname eq 'system';
 	}
 
+}
+
+sub find_best
+{
+	my ($class, $stem) = @_;
+	return $repo->find_best($stem);
 }
 
 my $done_plist = {};

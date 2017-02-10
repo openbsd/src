@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.16 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.17 2017/02/10 02:10:22 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -123,6 +123,21 @@ sub register
 	my ($repo, $lib, $origin) = @_;
 	$lib->set_origin($origin);
 	push @{$repo->{$lib->stem}}, $lib;
+}
+
+sub find_best
+{
+	my ($repo, $stem) = @_;
+	my $best;
+
+	if (exists $repo->{$stem}) {
+		for my $lib (@{$repo->{$stem}}) {
+			if (!defined $best || $lib->is_better($best)) {
+				$best = $lib;
+			}
+		}
+	} 
+	return $best;
 }
 
 package OpenBSD::Library;
