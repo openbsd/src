@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.97 2017/01/31 19:43:23 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.98 2017/02/10 15:44:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2017 $
+.Dd $Mdocdate: February 10 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -538,12 +538,25 @@ A closing parenthesis if the node is a closing delimiter.
 .It
 A full stop if the node ends a sentence.
 .It
+BROKEN if the node is a block broken by another block.
+.It
 NOSRC if the node is not in the input file,
 but automatically generated from macros.
 .It
 NOPRT if the node is not supposed to generate output
 for any output format.
 .El
+.El
+.Pp
+The following
+.Fl O
+argument is accepted:
+.Bl -tag -width Ds
+.It Cm noval
+Skip validation and show the unvalidated syntax tree.
+This can help to find out whether a given behaviour is caused by
+the parser or by the validator.
+Meta data is not available in this case.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MANPAGER
