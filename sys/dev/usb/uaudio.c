@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.123 2017/01/31 13:42:15 jca Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.124 2017/02/10 08:09:36 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -32,9 +32,9 @@
  */
 
 /*
- * USB audio specs: http://www.usb.org/developers/docs/devclass_docs/audio10.pdf
- *                  http://www.usb.org/developers/docs/devclass_docs/frmts10.pdf
- *                  http://www.usb.org/developers/docs/devclass_docs/termt10.pdf
+ * USB audio specs: http://www.usb.org/developers/devclass_docs/audio10.pdf
+ *                  http://www.usb.org/developers/devclass_docs/frmts10.pdf
+ *                  http://www.usb.org/developers/devclass_docs/termt10.pdf
  */
 
 #include <sys/param.h>
