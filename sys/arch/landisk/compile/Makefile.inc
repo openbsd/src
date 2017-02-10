@@ -9,7 +9,7 @@ config:
 .else
 .PHONY: config clean
 config:
-	config -b ${.OBJDIR} -s ${SYSDIR} ${CONFDIR}/${.CURDIR:T}
+	config -b ${.OBJDIR} -s ${SYSDIR} ${CONFDIR}/${.CURDIR:T:S/.PROF$//}
 .endif
 
 cleandir clean:
