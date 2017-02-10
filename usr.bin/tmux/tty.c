@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.244 2017/02/10 12:59:18 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.245 2017/02/10 15:38:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -171,18 +171,59 @@ tty_read_callback(__unused int fd, __unused short events, void *data)
 }
 
 static void
+tty_timer_callback(__unused int fd, __unused short events, void *data)
+{
+	struct tty		*tty = data;
+	struct client		*c = tty->client;
+	const struct timeval	 tv = { .tv_usec = 250000 };
+
+	server_client_add_message(c, "%s: %zu discarded", tty->path,
+	    tty->discarded);
+
+	c->flags |= CLIENT_REDRAW;
+
+	if (tty->discarded < 256) {
+		tty->flags &= ~TTY_BLOCK;
+		tty_invalidate(tty);
+		return;
+	}
+	tty->discarded = 0;
+	evtimer_add(&tty->timer, &tv);
+}
+
+static void
 tty_write_callback(__unused int fd, __unused short events, void *data)
 {
-	struct tty	*tty = data;
-	size_t		 size = EVBUFFER_LENGTH(tty->out);
-	int		 nwrite;
+	struct tty		*tty = data;
+	struct client		*c = tty->client;
+	size_t			 size = EVBUFFER_LENGTH(tty->out), left;
+	int			 nwrite;
+	const struct timeval	 tv = { .tv_usec = 250000 };
 
 	nwrite = evbuffer_write(tty->out, tty->fd);
 	if (nwrite == -1)
 		return;
 	log_debug("%s: wrote %d bytes (of %zu)", tty->path, nwrite, size);
 
-	if (EVBUFFER_LENGTH(tty->out) == 0)
+	/*
+	 * If we aren't managing to write everything (so we are creating more
+	 * data than the terminal can accept), then the terminal can't keep up.
+	 */
+	left = EVBUFFER_LENGTH(tty->out);
+	if (left > 32768 && nwrite < (int)size && (~tty->flags & TTY_BLOCK)) {
+		server_client_add_message(c, "%s: can't keep up, %zu discarded",
+		    tty->path, left);
+
+		evbuffer_drain(tty->out, left);
+		event_del(&tty->event_out);
+
+		tty->discarded = 0;
+		evtimer_add(&tty->timer, &tv);
+
+		tty->flags |= TTY_BLOCK;
+		return;
+	}
+	if (left == 0)
 		event_del(&tty->event_out);
 }
 
@@ -196,7 +237,7 @@ tty_open(struct tty *tty, char **cause)
 	}
 	tty->flags |= TTY_OPENED;
 
-	tty->flags &= ~(TTY_NOCURSOR|TTY_FREEZE);
+	tty->flags &= ~(TTY_NOCURSOR|TTY_FREEZE|TTY_BLOCK|TTY_TIMER);
 
 	event_set(&tty->event_in, tty->fd, EV_PERSIST|EV_READ,
 	    tty_read_callback, tty);
@@ -204,6 +245,8 @@ tty_open(struct tty *tty, char **cause)
 
 	event_set(&tty->event_out, tty->fd, EV_WRITE, tty_write_callback, tty);
 	tty->out = evbuffer_new();
+
+	evtimer_set(&tty->timer, tty_timer_callback, tty);
 
 	tty_start_tty(tty);
 
@@ -270,6 +313,9 @@ tty_stop_tty(struct tty *tty)
 	if (!(tty->flags & TTY_STARTED))
 		return;
 	tty->flags &= ~TTY_STARTED;
+
+	event_del(&tty->timer);
+	tty->flags &= ~TTY_BLOCK;
 
 	event_del(&tty->event_in);
 	event_del(&tty->event_out);
@@ -422,6 +468,11 @@ tty_putcode_ptr2(struct tty *tty, enum tty_code_code code, const void *a,
 static void
 tty_add(struct tty *tty, const char *buf, size_t len)
 {
+	if ((tty->flags & TTY_BLOCK) && (~tty->flags & TTY_FORCE)) {
+		tty->discarded += len;
+		return;
+	}
+
 	evbuffer_add(tty->out, buf, len);
 	log_debug("%s: %.*s", tty->path, (int)len, (const char *)buf);
 
