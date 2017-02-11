@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.24 2017/02/11 10:34:23 visa Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.25 2017/02/11 14:40:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -755,7 +755,7 @@ iec_start(struct ifnet *ifp)
 	DPRINTF(IEC_DEBUG_START, ("iec_start: opending = %d, firstdirty = %d\n",
 	    opending, firstdirty));
 
-	while (sc->sc_txpending < IEC_NTXDESC) {
+	while (sc->sc_txpending < IEC_NTXDESC - 1) {
 		/* Grab a packet off the queue. */
 		m0 = ifq_dequeue(&ifp->if_snd);
 		if (m0 == NULL)
@@ -945,7 +945,7 @@ iec_start(struct ifnet *ifp)
 		sc->sc_txlast = nexttx;
 	}
 
-	if (sc->sc_txpending == IEC_NTXDESC) {
+	if (sc->sc_txpending >= IEC_NTXDESC - 1) {
 		/* No more slots; notify upper layer. */
 		ifq_set_oactive(&ifp->if_snd);
 	}
