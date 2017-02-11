@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.17 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.18 2017/02/11 03:44:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -158,6 +158,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 				    ih = ih->ih_next) {
 #ifdef MULTIPROCESSOR
 					register_t sr;
+					int need_lock;
 #endif
 #if defined(INTR_HANDLER_SKIP)
 					if (INTR_HANDLER_SKIP(ih) != 0)
@@ -168,9 +169,14 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 					if (ih->ih_level < IPL_IPI) {
 						sr = getsr();
 						ENABLEIPI();
-						if (ih->ih_level < IPL_CLOCK)
-							__mp_lock(&kernel_lock);
 					}
+					if (ih->ih_flags & IH_MPSAFE)
+						need_lock = 0;
+					else
+						need_lock =
+						    ih->ih_level < IPL_CLOCK;
+					if (need_lock)
+						__mp_lock(&kernel_lock);
 #endif
 					ret = (*ih->ih_fun)(ih->ih_arg);
 					if (ret != 0) {
@@ -179,11 +185,10 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trapframe *frame)
 						    &ih->ih_count.ec_count);
 					}
 #ifdef MULTIPROCESSOR
-					if (ih->ih_level < IPL_IPI) {
-						if (ih->ih_level < IPL_CLOCK)
-							__mp_unlock(&kernel_lock);
+					if (need_lock)
+						__mp_unlock(&kernel_lock);
+					if (ih->ih_level < IPL_IPI)
 						setsr(sr);
-					}
 #endif
 					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.30 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.31 2017/02/11 03:44:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -302,6 +302,7 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
     int level, const char *name, struct intrhand *ihstore)
 {
 	struct intrhand *ih;
+	int flags;
 	int s;
 	u_long cpuid = cpu_number();
 
@@ -309,6 +310,9 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	if (intrbit < 0 || intrbit >= HEART_NINTS)
 		return EINVAL;
 #endif
+
+	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
+	level &= ~IPL_MPSAFE;
 
 	/*
 	 * HEART interrupts are not supposed to be shared - the interrupt
@@ -321,17 +325,16 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 		ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 		if (ih == NULL)
 			return ENOMEM;
-		ih->ih_flags = IH_ALLOCATED;
-	} else {
+		flags |= IH_ALLOCATED;
+	} else
 		ih = ihstore;
-		ih->ih_flags = 0;
-	}
 
 	ih->ih_next = NULL;
 	ih->ih_fun = func;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_irq = intrbit;
+	ih->ih_flags = flags;
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_level);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.100 2015/12/03 15:38:06 visa Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.101 2017/02/11 03:44:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -1198,6 +1198,8 @@ struct xbridge_intrhandler {
 	int	(*xih_func)(void *);
 	void	*xih_arg;
 	struct evcount	xih_count;
+	int	 xih_flags;
+#define	XIH_MPSAFE	0x01
 	int	 xih_level;
 	int	 xih_device;	/* device slot number */
 };
@@ -1309,10 +1311,14 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	struct xbridge_intr *xi;
 	struct xbridge_intrhandler *xih;
 	uint64_t int_addr;
-	int intrbit = XBRIDGE_INTR_BIT(ih);
 	int device = XBRIDGE_INTR_DEVICE(ih);
+	int intrbit = XBRIDGE_INTR_BIT(ih);
+	int flags;
 	int intrsrc;
 	int new;
+
+	flags = (level & IPL_MPSAFE) ? XIH_MPSAFE : 0;
+	level &= ~IPL_MPSAFE;
 
 	/*
 	 * Allocate bookkeeping structure if this is the
@@ -1353,7 +1359,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		 * XXX between devices of different levels.
 		 */
 		if (xbow_intr_establish(xb->xb_pci_intr_handler, xi, intrsrc,
-		    IPL_BIO, NULL, NULL)) {
+		    IPL_BIO | IPL_MPSAFE, NULL, NULL)) {
 			printf("%s: unable to register interrupt handler\n",
 			    DEVNAME(xb));
 			return NULL;
@@ -1368,6 +1374,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	xih->xih_main = xi;
 	xih->xih_func = func;
 	xih->xih_arg = arg;
+	xih->xih_flags = flags;
 	xih->xih_level = level;
 	xih->xih_device = device;
 	evcount_attach(&xih->xih_count, name, &xi->xi_intrsrc);
@@ -1466,8 +1473,11 @@ xbridge_pci_intr_handler(void *v)
 	struct xbridge_intr *xi = (struct xbridge_intr *)v;
 	struct xbpci_softc *xb = xi->xi_bus;
 	struct xbridge_intrhandler *xih;
-	int rc;
 	uint64_t isr;
+	int rc;
+#ifdef MULTIPROCESSOR
+	int need_lock;
+#endif
 
 	/* XXX shouldn't happen, and assumes interrupt is not shared */
 	if (LIST_EMPTY(&xi->xi_handlers)) {
@@ -1507,10 +1517,22 @@ xbridge_pci_intr_handler(void *v)
 		rc = 0;
 		LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt) {
 			splraise(xih->xih_level);
+#ifdef MULTIPROCESSOR
+			if (ISSET(xih->xih_flags, XIH_MPSAFE))
+				need_lock = 0;
+			else
+				need_lock = xih->xih_flags < IPL_CLOCK;
+			if (need_lock)
+				__mp_lock(&kernel_lock);
+#endif
 			if ((*xih->xih_func)(xih->xih_arg) != 0) {
 				xih->xih_count.ec_count++;
 				rc = 1;
 			}
+#ifdef MULTIPROCESSOR
+			if (need_lock)
+				__mp_unlock(&kernel_lock);
+#endif
 			/*
 			 * No need to lower spl here, as our caller will
 			 * lower spl upon our return.

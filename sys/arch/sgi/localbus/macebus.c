@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.64 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: macebus.c,v 1.65 2017/02/11 03:44:22 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -493,6 +493,8 @@ macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
 	struct crime_intrhand **p, *q, *ih;
 	int s;
 
+	level &= ~IPL_MPSAFE;
+
 #ifdef DIAGNOSTIC
 	if (irq >= CRIME_NINTS || irq < 0)
 		panic("intr_establish: illegal irq %d", irq);
@@ -507,6 +509,7 @@ macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
 	ih->ih.ih_arg = ih_arg;
 	ih->ih.ih_level = level;
 	ih->ih.ih_irq = irq;
+	ih->ih.ih_flags = 0;
 	ih->mace_irqmask = mace_irqmask;
 	evcount_attach(&ih->ih.ih_count, ih_what, &ih->ih.ih_irq);
 

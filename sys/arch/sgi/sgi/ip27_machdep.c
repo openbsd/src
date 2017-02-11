@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.76 2016/10/27 13:19:27 visa Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.77 2017/02/11 03:44:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -776,12 +776,16 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 {
 	struct intrhand *ih, **anchor;
 	u_long cpuid = cpu_number();
+	int flags;
 	int s;
 
 #ifdef DIAGNOSTIC
 	if (intrbit < 0 || intrbit >= HUBPI_NINTS + HUBPI_NINTS)
 		return EINVAL;
 #endif
+
+	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
+	level &= ~IPL_MPSAFE;
 
 	/*
 	 * Widget interrupts are not supposed to be shared - the interrupt
@@ -802,17 +806,16 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 		ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 		if (ih == NULL)
 			return ENOMEM;
-		ih->ih_flags = IH_ALLOCATED;
-	} else {
+		flags |= IH_ALLOCATED;
+	} else
 		ih = ihstore;
-		ih->ih_flags = 0;
-	}
 
 	ih->ih_next = NULL;
 	ih->ih_fun = func;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_irq = intrbit;
+	ih->ih_flags = flags;
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_level);
 

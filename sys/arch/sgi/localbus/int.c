@@ -1,4 +1,4 @@
-/*	$OpenBSD: int.c,v 1.13 2016/03/14 23:08:05 krw Exp $	*/
+/*	$OpenBSD: int.c,v 1.14 2017/02/11 03:44:22 visa Exp $	*/
 /*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -184,6 +184,8 @@ int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
 	struct int2_intrhand **p, *q, *ih;
 	int s;
 
+	level &= ~IPL_MPSAFE;
+
 #ifdef DIAGNOSTIC
 	if (irq < 0 || irq >= INT2_NINTS)
 		panic("int2_intr_establish: illegal irq %d", irq);
@@ -201,6 +203,7 @@ int2_intr_establish(int irq, int level, int (*ih_fun) (void *),
 	ih->ih.ih_arg = ih_arg;
 	ih->ih.ih_level = level;
 	ih->ih.ih_irq = irq;
+	ih->ih.ih_flags = 0;
 	if (ih_what != NULL)
 		evcount_attach(&ih->ih.ih_count, ih_what, &ih->ih.ih_irq);
 	ih->flags = 0;
