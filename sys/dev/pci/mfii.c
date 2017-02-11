@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.41 2017/02/08 07:06:43 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.42 2017/02/11 04:12:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -598,18 +598,22 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	mfii_syspd(sc);
 
+#ifdef notyet
 	if (mfii_aen_register(sc) != 0) {
 		/* error printed by mfii_aen_register */
 		goto intr_disestablish;
 	}
+#endif
 
 	/* enable interrupts */
 	mfii_write(sc, MFI_OSTS, 0xffffffff);
 	mfii_write(sc, MFI_OMSK, ~MFII_OSTS_INTR_VALID);
 
 	return;
+#ifdef notyet
 intr_disestablish:
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+#endif
 free_sgl:
 	mfii_dmamem_free(sc, sc->sc_sgl);
 free_requests:
