@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.55 2016/10/06 16:12:43 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.56 2017/02/11 16:12:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -445,6 +445,11 @@ typedef unsigned char option_mask[16];
 
 /* External definitions... */
 
+/* parse.c */
+void	do_percentm(char *obuf, size_t size, char *ibuf);
+int	parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1,
+	    2)));
+
 /* options.c */
 void	 parse_options(struct packet *);
 void	 parse_option_buffer(struct packet *, unsigned char *, int);
@@ -460,7 +465,6 @@ void	error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int	warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int	note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int	debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int	parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /* dhcpd.c */
 extern time_t		cur_time;

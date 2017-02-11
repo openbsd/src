@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.9 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.10 2017/02/11 16:12:36 krw Exp $	*/
 
 /* Errors and warnings... */
 
@@ -59,10 +59,8 @@
 #include "tree.h"
 #include "dhcpd.h"
 
-static void do_percentm(char *obuf, size_t size, char *ibuf);
-
-static char mbuf[1024];
-static char fbuf[1024];
+char mbuf[1024];
+char fbuf[1024];
 
 int warnings_occurred;
 
@@ -168,7 +166,7 @@ debug(char *fmt, ...)
 /*
  * Find %m in the input string and substitute an error message string.
  */
-static void
+void
 do_percentm(char *obuf, size_t size, char *ibuf)
 {
 	char ch;
@@ -201,51 +199,4 @@ do_percentm(char *obuf, size_t size, char *ibuf)
 		}
 	}
 	*t = '\0';
-}
-
-int
-parse_warn(char *fmt, ...)
-{
-	va_list list;
-	static char spaces[] =
-	    "                                        "
-	    "                                        "; /* 80 spaces */
-	struct iovec iov[6];
-	size_t iovcnt;
-
-	do_percentm(mbuf, sizeof(mbuf), fmt);
-	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
-	va_start(list, fmt);
-	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
-	va_end(list);
-
-	if (log_perror) {
-		iov[0].iov_base = mbuf;
-		iov[0].iov_len = strlen(mbuf);
-		iov[1].iov_base = "\n";
-		iov[1].iov_len = 1;
-		iov[2].iov_base = token_line;
-		iov[2].iov_len = strlen(token_line);
-		iov[3].iov_base = "\n";
-		iov[3].iov_len = 1;
-		iovcnt = 4;
-		if (lexchar < 81) {
-			iov[4].iov_base = spaces;
-			iov[4].iov_len = lexchar - 1;
-			iov[5].iov_base = "^\n";
-			iov[5].iov_len = 2;
-			iovcnt += 2;
-		}
-		writev(STDERR_FILENO, iov, iovcnt);
-	} else {
-		syslog_r(log_priority | LOG_ERR, &sdata, "%s", mbuf);
-		syslog_r(log_priority | LOG_ERR, &sdata, "%s", token_line);
-		if (lexchar < 81)
-			syslog_r(log_priority | LOG_ERR, &sdata, "%*c", lexchar,
-			    '^');
-	}
-
-	warnings_occurred = 1;
-
-	return (0);
 }

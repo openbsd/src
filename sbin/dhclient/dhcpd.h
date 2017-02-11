@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.158 2016/09/02 15:44:26 mpi Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.159 2017/02/11 16:12:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,6 @@ void note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 #ifdef DEBUG
 void debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 #endif
-void parse_warn(char *);
 
 /* conflex.c */
 extern int lexline, lexchar;
@@ -220,6 +219,7 @@ void parse_lease_time(FILE *, time_t *);
 int parse_decimal(FILE *, unsigned char *, char);
 int parse_hex(FILE *, unsigned char *);
 time_t parse_date(FILE *);
+void parse_warn(char *);
 
 /* bpf.c */
 void if_register_send(struct interface_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.40 2016/02/06 19:30:52 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.41 2017/02/11 16:12:36 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -55,6 +55,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #include "dhcp.h"
 #include "dhcpd.h"
@@ -409,4 +411,50 @@ parse_date(FILE *cfile)
 	}
 
 	return (guess);
+}
+
+void
+parse_warn(char *msg)
+{
+	static char spaces[81];
+	extern char mbuf[1024];
+	struct iovec iov[6];
+	size_t iovcnt;
+	int i;
+
+	snprintf(mbuf, sizeof(mbuf), "%s line %d: %s", tlname, lexline, msg);
+
+#ifndef DEBUG
+	syslog(LOG_ERR, "%s", mbuf);
+	syslog(LOG_ERR, "%s", token_line);
+	if (lexchar < 81)
+		syslog(LOG_ERR, "%*c", lexchar, '^');
+#endif
+
+	if (log_perror) {
+		iov[0].iov_base = mbuf;
+		iov[0].iov_len = strlen(mbuf);
+		iov[1].iov_base = "\n";
+		iov[1].iov_len = 1;
+		iov[2].iov_base = token_line;
+		iov[2].iov_len = strlen(token_line);
+		iov[3].iov_base = "\n";
+		iov[3].iov_len = 1;
+		iovcnt = 4;
+		if (lexchar < 81) {
+			for (i = 0; i < lexchar; i++) {
+				if (token_line[i] == '\t')
+					spaces[i] = '\t';
+				else
+					spaces[i] = ' ';
+			}
+			iov[4].iov_base = spaces;
+			iov[4].iov_len = lexchar - 1;
+			iov[5].iov_base = "^\n";
+			iov[5].iov_len = 2;
+			iovcnt += 2;
+		}
+		writev(STDERR_FILENO, iov, iovcnt);
+	}
+	warnings_occurred = 1;
 }
