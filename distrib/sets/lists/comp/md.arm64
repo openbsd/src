@@ -17,6 +17,7 @@
 ./usr/include/arm64/cdefs.h
 ./usr/include/arm64/conf.h
 ./usr/include/arm64/cpu.h
+./usr/include/arm64/cpufunc.h
 ./usr/include/arm64/db_machdep.h
 ./usr/include/arm64/disklabel.h
 ./usr/include/arm64/endian.h
@@ -41,6 +42,7 @@
 ./usr/include/arm64/openpromio.h
 ./usr/include/arm64/param.h
 ./usr/include/arm64/pcb.h
+./usr/include/arm64/pci_machdep.h
 ./usr/include/arm64/pmap.h
 ./usr/include/arm64/proc.h
 ./usr/include/arm64/profile.h
