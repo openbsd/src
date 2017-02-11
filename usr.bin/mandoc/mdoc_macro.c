@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.170 2017/02/11 13:23:11 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.171 2017/02/11 14:08:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -645,10 +645,16 @@ blk_exp_close(MACRO_PROT_ARGS)
 			break;
 		}
 
-		/* Explicit blocks close out description lines. */
+		/*
+		 * Explicit blocks close out description lines, but
+		 * even those can get broken together with a child.
+		 */
 
 		if (n->tok == MDOC_Nd) {
-			rew_last(mdoc, n);
+			if (later != NULL)
+				n->flags |= NODE_BROKEN | NODE_ENDED;
+			else
+				rew_last(mdoc, n);
 			continue;
 		}
 
