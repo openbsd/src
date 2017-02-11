@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.17 2017/02/11 19:51:06 guenther Exp $
+.\"     $OpenBSD: file.9,v 1.18 2017/02/11 23:12:22 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -84,7 +84,7 @@ initializes the new file to have a reference count of two:
 one for the reference from the file descriptor table and one
 for the caller to release with
 .Fn FRELE
-when it done initializing it.
+when it's done initializing it.
 .Pp
 A file descriptor is freed with
 .Fn fdrelease .
