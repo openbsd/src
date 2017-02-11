@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.186 2017/02/08 20:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.187 2017/02/11 19:51:06 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -576,7 +576,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				struct vnode *vp;
 				int indx;
 
-				if ((error = falloc(p, &fp, &indx)) != 0)
+				if ((error = falloc(p, 0, &fp, &indx)) != 0)
 					break;
 #ifdef DIAGNOSTIC
 				if (indx != i)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.139 2017/01/24 04:09:59 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.140 2017/02/11 19:51:06 guenther Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -895,10 +895,13 @@ fdexpand(struct proc *p)
  * a file descriptor for the process that refers to it.
  */
 int
-falloc(struct proc *p, struct file **resultfp, int *resultfd)
+falloc(struct proc *p, int flags, struct file **resultfp, int *resultfd)
 {
 	struct file *fp, *fq;
 	int error, i;
+
+	KASSERT(resultfp != NULL);
+	KASSERT(resultfd != NULL);
 
 	fdpassertlocked(p->p_fd);
 restart:
@@ -929,13 +932,12 @@ restart:
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
 	p->p_fd->fd_ofiles[i] = fp;
+	p->p_fd->fd_ofileflags[i] |= (flags & UF_EXCLOSE);
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
-	if (resultfp)
-		*resultfp = fp;
-	if (resultfd)
-		*resultfd = i;
+	*resultfp = fp;
+	*resultfd = i;
 	FREF(fp);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.75 2016/10/08 02:16:43 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.76 2017/02/11 19:51:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -133,7 +133,9 @@ dopipe(struct proc *p, int *ufds, int flags)
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe = NULL;
-	int fds[2], error;
+	int fds[2], cloexec, error;
+
+	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
 	rpipe = pool_get(&pipe_pool, PR_WAITOK);
 	error = pipe_create(rpipe);
@@ -146,7 +148,7 @@ dopipe(struct proc *p, int *ufds, int flags)
 
 	fdplock(fdp);
 
-	error = falloc(p, &rf, &fds[0]);
+	error = falloc(p, cloexec, &rf, &fds[0]);
 	if (error != 0)
 		goto free2;
 	rf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
@@ -154,18 +156,13 @@ dopipe(struct proc *p, int *ufds, int flags)
 	rf->f_data = rpipe;
 	rf->f_ops = &pipeops;
 
-	error = falloc(p, &wf, &fds[1]);
+	error = falloc(p, cloexec, &wf, &fds[1]);
 	if (error != 0)
 		goto free3;
 	wf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
 	wf->f_type = DTYPE_PIPE;
 	wf->f_data = wpipe;
 	wf->f_ops = &pipeops;
-
-	if (flags & O_CLOEXEC) {
-		fdp->fd_ofileflags[fds[0]] |= UF_EXCLOSE;
-		fdp->fd_ofileflags[fds[1]] |= UF_EXCLOSE;
-	}
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;

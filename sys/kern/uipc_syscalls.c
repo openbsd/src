@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.148 2017/01/26 01:58:00 dhill Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.149 2017/02/11 19:51:06 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -94,9 +94,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	fdplock(fdp);
-	error = falloc(p, &fp, &fd);
-	if (error == 0 && (type & SOCK_CLOEXEC))
-		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
+	error = falloc(p, (type & SOCK_CLOEXEC) ? UF_EXCLOSE : 0, &fp, &fd);
 	fdpunlock(fdp);
 	if (error != 0)
 		goto out;
@@ -279,9 +277,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	headfp = fp;
 
 	fdplock(fdp);
-	error = falloc(p, &fp, &tmpfd);
-	if (!error && (flags & SOCK_CLOEXEC))
-		fdp->fd_ofileflags[tmpfd] |= UF_EXCLOSE;
+	error = falloc(p, (flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0, &fp, &tmpfd);
 	fdpunlock(fdp);
 	if (error) {
 		FRELE(headfp, p);
@@ -447,11 +443,12 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
-	int type, flags, fflag, error, sv[2];
+	int type, cloexec, nonblock, fflag, error, sv[2];
 
 	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK);
-	flags = SCARG(uap, type) &  (SOCK_CLOEXEC | SOCK_NONBLOCK);
-	fflag = FREAD | FWRITE | (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
+	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
+	nonblock = SCARG(uap, type) &  SOCK_NONBLOCK;
+	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
 	error = socreate(SCARG(uap, domain), &so1, type, SCARG(uap, protocol));
 	if (error)
@@ -471,32 +468,28 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 			goto free2;
 	}
 	fdplock(fdp);
-	if ((error = falloc(p, &fp1, &sv[0])) != 0)
+	if ((error = falloc(p, cloexec, &fp1, &sv[0])) != 0)
 		goto free3;
 	fp1->f_flag = fflag;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = so1;
-	if ((error = falloc(p, &fp2, &sv[1])) != 0)
+	if ((error = falloc(p, cloexec, &fp2, &sv[1])) != 0)
 		goto free4;
 	fp2->f_flag = fflag;
 	fp2->f_type = DTYPE_SOCKET;
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
-	if (flags & SOCK_CLOEXEC) {
-		fdp->fd_ofileflags[sv[0]] |= UF_EXCLOSE;
-		fdp->fd_ofileflags[sv[1]] |= UF_EXCLOSE;
-	}
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof (int));
 	if (error == 0) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrfds(p, sv, 2);
 #endif
-		if (flags & SOCK_NONBLOCK) {
-			(*fp1->f_ops->fo_ioctl)(fp1, FIONBIO, (caddr_t)&flags,
+		if (nonblock) {
+			(*fp1->f_ops->fo_ioctl)(fp1, FIONBIO, (caddr_t)&type,
 			    p);
-			(*fp2->f_ops->fo_ioctl)(fp2, FIONBIO, (caddr_t)&flags,
+			(*fp2->f_ops->fo_ioctl)(fp2, FIONBIO, (caddr_t)&type,
 			    p);
 		}
 		FILE_SET_MATURE(fp1, p);
