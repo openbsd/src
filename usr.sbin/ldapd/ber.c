@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.11 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: ber.c,v 1.12 2017/02/11 20:40:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -823,6 +823,19 @@ ber_read_elements(struct ber *ber, struct ber_element *elm)
 	}
 
 	return root;
+}
+
+void
+ber_free_element(struct ber_element *root)
+{
+	if (root->be_sub && (root->be_encoding == BER_TYPE_SEQUENCE ||
+	    root->be_encoding == BER_TYPE_SET))
+		ber_free_elements(root->be_sub);
+	if (root->be_free && (root->be_encoding == BER_TYPE_OCTETSTRING ||
+	    root->be_encoding == BER_TYPE_BITSTRING ||
+	    root->be_encoding == BER_TYPE_OBJECT))
+		free(root->be_val);
+	free(root);
 }
 
 void

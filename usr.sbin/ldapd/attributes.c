@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.4 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: attributes.c,v 1.5 2017/02/11 20:40:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -207,9 +207,9 @@ int
 ldap_del_values(struct ber_element *elm, struct ber_element *vals)
 {
 	char			*attr;
-	struct ber_element	*old_vals, *v, *x, *vk, *xk, *prev;
+	struct ber_element	*old_vals, *v, *x, *prev, *next;
 	struct ber_element	*removed;
-
+	int			removed_p;
 	assert(elm);
 	assert(vals);
 	assert(vals->be_sub);
@@ -220,19 +220,25 @@ ldap_del_values(struct ber_element *elm, struct ber_element *vals)
 	}
 
 	prev = old_vals;
-	for (v = old_vals->be_sub; v; v = v->be_next) {
-		vk = v->be_sub;
+	removed_p = 0;
+	for (v = old_vals->be_sub; v; v = next) {
+		next = v->be_next;
+
 		for (x = vals->be_sub; x; x = x->be_next) {
-			xk = x->be_sub;
-			if (xk && vk->be_len == xk->be_len &&
-			    memcmp(vk->be_val, xk->be_val, xk->be_len) == 0) {
+			if (x && v->be_len == x->be_len &&
+			    memcmp(v->be_val, x->be_val, x->be_len) == 0) {
 				removed = ber_unlink_elements(prev);
 				ber_link_elements(prev, removed->be_next);
-				ber_free_elements(removed);
+				ber_free_element(removed);
+				removed_p = 1;
 				break;
 			}
 		}
-		prev = v;
+		if (removed_p) {
+			removed_p = 0;
+		} else {
+			prev = v;
+		}
 	}
 
 	return 0;
