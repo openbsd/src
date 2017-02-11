@@ -1462,6 +1462,7 @@
 ./usr/share/man/man4/luna88k/necsb.4
 ./usr/share/man/man4/luna88k/pcexmem.4
 ./usr/share/man/man4/luna88k/spc.4
+./usr/share/man/man4/luna88k/xp.4
 ./usr/share/man/man4/luphy.4
 ./usr/share/man/man4/lxtphy.4
 ./usr/share/man/man4/macppc/abtn.4
