@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.2 2017/01/25 03:10:06 patrick Exp $
+dnl	$OpenBSD: prep,v 1.3 2017/02/11 07:07:10 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -15,7 +15,7 @@ miniroot images are used, U-Boot and DTB files are distributed as part
 of the miniroot disk images.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot-board-{:--:}OSrev.fs" image to an SD card.
+board "miniroot{:--:}OSrev.fs" image to an SD card.
 
 Booting from an SD card:
 
@@ -26,16 +26,16 @@ Booting from an SD card:
   
   Use the dd(1) utility to copy the miniroot to the hard drive.
   The command would likely be, under OpenBSD:
-  	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsd1c
+  	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
   
-  When you have connected the BeagleBoard to you computer, a command such
+  When you have connected the serial to you computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
 
 Running EFI payloads with U-Boot:
 
 If the U-Boot target supports "distro_bootcmd" efiboot will automatically
-be loaded by placing bootarm.efi into /efi/boot/bootarm.efi on a FAT
+be loaded by placing bootaa64.efi into /efi/boot/bootaa64.efi on a FAT
 filesystem.  With dtb files placed in in /, /dtbs/, or /dtb/current/.
 
 If the U-Boot target supports bootefi but not automatically finding it with
@@ -43,7 +43,7 @@ If the U-Boot target supports bootefi but not automatically finding it with
 script.
 	=> run findfdt
 	=> load mmc 0:1 ${fdt_addr_r} ${fdtfile}
-	=> load mmc 0:1 ${kernel_addr_r} efi/boot/bootarm.efi
+	=> load mmc 0:1 ${kernel_addr_r} efi/boot/bootaa64.efi
 	=> bootefi ${kernel_addr_r} ${fdt_addr_r}
 The bootloader will then run and try to load sd0a:/bsd off an FFS
 filesystem after a timeout.
@@ -53,15 +53,15 @@ Install on systems without a supported miniroot:
   If a miniroot is not available for your system you will have to modify
   an existing image before booting it.
 
-  To do so first install the u-boot-aarch64 and dtb packages.  Write one of the
-  provided miniroot images to an SD card:
+  To do so first install the u-boot-aarch64 and dtb packages.  Write the
+  provided miniroot image to an SD card:
 
- 	dd if=miniroot-beagle-{:--:}OSrev.fs of=/dev/rsdXc
+ 	dd if=miniroot{:--:}OSrev.fs of=/dev/rsdXc
 
   Add a board specific DTB file:
 
  	mount /dev/sdXi /mnt
- 	cp /usr/local/share/dtb/arm64/board.dtb /mnt/
+ 	cp /usr/local/share/dtb/arm64/vendor/board.dtb /mnt/
  	umount /mnt
 
   For systems based on Allwinner Axx Socs:
