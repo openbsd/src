@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.137 2017/02/08 21:04:44 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.138 2017/02/11 06:07:03 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -460,7 +460,9 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
  				epp->ep_entry = addr + eh.e_entry -
 				    ELF_TRUNC(ph[i].p_vaddr,ph[i].p_align);
-				ap->arg_interp = addr;
+				if (flags == VMCMD_RELATIVE)
+					epp->ep_entry += pos;
+				ap->arg_interp = pos;
 			}
 			addr += size;
 			break;
