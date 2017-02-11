@@ -1,9 +1,9 @@
-.Dd April 5, 2015
+.Dd February 11, 2017
 .Dt BREAK-TAIL 1
 .Os OpenBSD
 .Sh NAME
 .Nm break-tail
-.Nd tail arguments on broken blocks
+.Nd tail arguments on or after broken blocks
 .Sh DESCRIPTION
 Broken by a partial explicit block:
 .Ao ao
@@ -35,3 +35,14 @@ list body
 .Pc tail
 list body
 .El
+.Pp
+After a broken block: closing child on closing macro,
+then opening child on closing macro:
+.\" Crashed before mdoc_macro.c OpenBSD rev. 1.169
+.Ao ao
+.Bo bo
+.Bro bro
+.Po po brc
+.Brc pc
+.Pc bc Bc ac
+.Ac Op op

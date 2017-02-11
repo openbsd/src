@@ -1,0 +1,12 @@
+BL-BREAKINGTA(1)            General Commands Manual           BL-BREAKINGTA(1)
+
+NNAAMMEE
+     BBll--bbrreeaakkiinnggTTaa - tab macro breaking a block
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+     it <aq>   ta [bo bc] (pq)
+     final text
+
+OpenBSD                        February 11, 2017                       OpenBSD

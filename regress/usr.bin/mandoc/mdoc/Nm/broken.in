@@ -1,4 +1,4 @@
-.Dd February 2, 2015
+.Dd February 11, 2017
 .Dt NM-BROKEN 1
 .Os OpenBSD
 .Sh NAME
@@ -8,3 +8,14 @@
 .Ft int
 .Fo function
 .Nm name Fc tail
+.\" Crashed in validation before mdoc_macro.c OpenBSD rev. 1.167
+.Bl -dash
+.Oo oo
+.Nm nm
+.Bk -words
+oc
+.Oc
+.Ek
+.It
+item
+.El

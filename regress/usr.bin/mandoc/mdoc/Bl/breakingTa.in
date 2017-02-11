@@ -1,0 +1,14 @@
+.Dd February 11, 2017
+.Dt BL-BREAKINGTA 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-breakingTa
+.Nd tab macro breaking a block
+.Sh DESCRIPTION
+.\" Crashed before mdoc_macro.c OpenBSD rev. 1.172
+initial text
+.Bl -column 6n 6n
+.It it Aq aq Ta ta Bo bo bc
+.Bc Pq pq
+.El
+final text

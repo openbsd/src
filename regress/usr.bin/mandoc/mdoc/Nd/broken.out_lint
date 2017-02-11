@@ -1,3 +1,4 @@
+mandoc: broken.in:28:11: WARNING: blocks badly nested: Bo breaks Pq
 mandoc: broken.in:5:2: WARNING: bad NAME section content: Oo
 mandoc: broken.in:9:1: WARNING: bad NAME section content: text
 mandoc: broken.in:4:2: WARNING: NAME section without Nm before Nd

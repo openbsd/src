@@ -1,17 +1,22 @@
-# $OpenBSD: Makefile,v 1.31 2016/10/17 19:00:16 schwarze Exp $
+# $OpenBSD: Makefile,v 1.32 2017/02/11 20:22:17 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column colNoIt extend nested offset secstart
 
 REGRESS_TARGETS += notype multitype badargs
 REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
-REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt broken
+REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt breakingTa broken
 
 UTF8_TARGETS	 = dash
 
 LINT_TARGETS	 = column notype badargs tag
 LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
 LINT_TARGETS	+= bareIt bareTa break breakingIt broken
+
+# groff-mandoc differences:
+# - groff allows enclosures to span Ta, mandoc does not
+
+SKIP_GROFF ?= breakingTa
 
 # groff-1.22.3 defects:
 # - lists with missing or late type ruin indentation
@@ -21,9 +26,9 @@ LINT_TARGETS	+= bareIt bareTa break breakingIt broken
 # - breaking a list aborts processing
 # - empty -tag item heads lose the blank line and the indentation
 
-SKIP_GROFF ?= notype empty break breakingIt broken emptytag
+SKIP_GROFF += notype empty break breakingIt broken emptytag
 
-SKIP_TMAN ?= column colNoIt multitype multitag bareTa break broken
+SKIP_TMAN ?= column colNoIt multitype multitag bareTa break breakingTa broken
 
 # Fixing the indentation in long .IP and .TP tags in -man -Tascii
 # caused a minor regression in -Tman that is not trivial to fix,

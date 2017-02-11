@@ -1,0 +1,2 @@
+mandoc: broken.in:17:2: WARNING: blocks badly nested: Oo breaks Bk
+mandoc: broken.in:13:2: WARNING: moving content out of list: Oo

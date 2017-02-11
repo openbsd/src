@@ -19,4 +19,12 @@ back to outer list
 .It outer tag
 outer text
 .El
+.Pp
+Broken together with a child block:
+.\" Crashed before mdoc_macro.c OpenBSD rev. 1.171
+.Ao ao
+.Bo bo
+.Nd nd
+.Pq pq bc Bc ac
+.Ac Op op
 end of file
