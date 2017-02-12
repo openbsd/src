@@ -232,6 +232,7 @@
 ./home
 ./mnt
 ./root
+./root/.ssh
 ./sbin
 ./sbin/atactl
 ./sbin/badsect

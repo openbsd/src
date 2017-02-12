@@ -50,6 +50,7 @@
 ./root/.cvsrc
 ./root/.login
 ./root/.profile
+./root/.ssh/authorized_keys
 ./var/crash/minfree
 ./var/cron/at.deny
 ./var/cron/cron.deny
