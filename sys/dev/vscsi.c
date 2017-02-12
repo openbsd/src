@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.40 2016/09/15 02:00:17 dlg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.41 2017/02/12 17:12:37 chl Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -429,7 +429,6 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 {
 	struct vscsi_ccb		*ccb;
 	struct scsi_xfer		*xs;
-	struct scsi_link		*link;
 	int				rv = 0;
 
 	TAILQ_FOREACH(ccb, &sc->sc_ccb_t2i, ccb_entry) {
@@ -442,7 +441,6 @@ vscsi_t2i(struct vscsi_softc *sc, struct vscsi_ioc_t2i *t2i)
 	TAILQ_REMOVE(&sc->sc_ccb_t2i, ccb, ccb_entry);
 
 	xs = ccb->ccb_xs;
-	link = xs->sc_link;
 
 	xs->resid = xs->datalen - ccb->ccb_datalen;
 	xs->status = SCSI_OK;
