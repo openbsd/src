@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2015/03/27 01:59:26 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/02/12 09:57:47 jsg Exp $
 #	$NetBSD: Makefile,v 1.4 1994/12/22 10:48:04 cgd Exp $
 
-MAN=	help.1 intro.1 gcc-local.1
+MAN=	clang-local.1 help.1 intro.1 gcc-local.1
 
 .include <bsd.prog.mk>
