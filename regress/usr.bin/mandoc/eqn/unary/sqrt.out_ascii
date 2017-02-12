@@ -4,6 +4,6 @@ NNAAMMEE
      uunnaarryy--ssqqrrtt - square root
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text r = sqrt(x^2 + y^2) final text
+     initial text r = sqrt(x^2 + y^2) + sqrt() + sqrt final text
 
-OpenBSD                        October 10, 2014                        OpenBSD
+OpenBSD                        February 12, 2017                       OpenBSD

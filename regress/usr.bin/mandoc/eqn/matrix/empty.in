@@ -1,0 +1,17 @@
+.Dd February 12, 2017
+.Dt MATRIX-EMPTY 1
+.Os OpenBSD
+.Sh NAME
+.Nm matrix-empty
+.Nd empty matrixes
+.Sh DESCRIPTION
+initial text
+.EQ
+left (
+matrix { }
+right )
+left (
+matrix
+right )
+.EN
+final text

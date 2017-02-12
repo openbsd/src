@@ -1,4 +1,4 @@
-.Dd October 10, 2014
+.Dd February 12, 2017
 .Dt UNARY-SQRT 1
 .Os OpenBSD
 .Sh NAME
@@ -7,6 +7,6 @@
 .Sh DESCRIPTION
 initial text
 .EQ
-r = sqrt { x sup 2 + y sup 2 }
+r = sqrt { x sup 2 + y sup 2 } + sqrt { } + sqrt
 .EN
 final text
