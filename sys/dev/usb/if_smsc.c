@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.29 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.30 2017/02/12 04:29:57 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -175,6 +175,32 @@ struct cfdriver smsc_cd = {
 const struct cfattach smsc_ca = {
 	sizeof(struct smsc_softc), smsc_match, smsc_attach, smsc_detach,
 };
+
+#if defined(__arm__) || defined(__arm64__)
+
+#include <dev/ofw/openfirm.h>
+
+void
+smsc_enaddr_OF(struct smsc_softc *sc)
+{
+	int node;
+
+	if (sc->sc_dev.dv_unit != 0)
+		return;
+
+	/*
+	 * Get the Raspberry Pi MAC address from FDT
+	 * also available via mailbox interface
+	 */
+	if ((node = OF_finddevice("/axi/usb/hub/ethernet")) == -1)
+		return;
+
+	OF_getprop(node, "mac-address", sc->sc_ac.ac_enaddr,
+	    sizeof(sc->sc_ac.ac_enaddr));
+}
+#else
+#define smsc_enaddr_OF(x) do {} while(0)
+#endif
 
 int
 smsc_read_reg(struct smsc_softc *sc, uint32_t off, uint32_t *data)
@@ -993,6 +1019,8 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ac.ac_enaddr[1] = (uint8_t)((mac_l >> 8) & 0xff);
 		sc->sc_ac.ac_enaddr[0] = (uint8_t)((mac_l) & 0xff);
 	}
+
+	smsc_enaddr_OF(sc);
 	
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
