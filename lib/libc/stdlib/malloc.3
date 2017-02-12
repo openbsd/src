@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.100 2016/10/20 08:03:15 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.101 2017/02/12 10:46:09 otto Exp $
 .\"
-.Dd $Mdocdate: October 20 2016 $
+.Dd $Mdocdate: February 12 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -66,9 +66,6 @@ maintains multiple lists of free blocks according to size, allocating
 space from the appropriate list.
 The allocated space is suitably aligned (after possible pointer coercion) for
 storage of any type of object.
-If the space is of
-.Em pagesize
-or larger, the memory returned will be page-aligned.
 .Pp
 The
 .Fn calloc
