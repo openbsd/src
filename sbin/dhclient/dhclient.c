@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.396 2017/02/12 13:55:01 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.397 2017/02/12 15:53:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -523,15 +523,14 @@ main(int argc, char *argv[])
 	/* Put us into the correct rdomain */
 	ifi->rdomain = get_rdomain(ifi->name);
 	if (setrtable(ifi->rdomain) == -1)
-		fatalx("setting routing table to %u: '%s'", ifi->rdomain,
-		    strerror(errno));
+		fatal("setting routing table to %u", ifi->rdomain);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
 	    PF_UNSPEC, socket_fd) == -1)
-		fatalx("socketpair: %s", strerror(errno));
+		fatal("socketpair");
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
-		fatalx("cannot open %s: %s", _PATH_DEVNULL, strerror(errno));
+		fatal("cannot open %s", _PATH_DEVNULL);
 
 	fork_privchld(ifi, socket_fd[0], socket_fd[1]);
 
@@ -590,22 +589,19 @@ main(int argc, char *argv[])
 	tailfd = open("/etc/resolv.conf.tail", O_RDONLY);
 	if (tailfd == -1) {
 		if (errno != ENOENT)
-			fatalx("Cannot open /etc/resolv.conf.tail: %s",
-			    strerror(errno));
+			fatal("Cannot open /etc/resolv.conf.tail");
 	} else if (fstat(tailfd, &sb) == -1) {
-		fatalx("Cannot stat /etc/resolv.conf.tail: %s",
-		    strerror(errno));
+		fatal("Cannot stat /etc/resolv.conf.tail");
 	} else {
 		if (sb.st_size > 0 && sb.st_size < SIZE_MAX) {
 			config->resolv_tail = calloc(1, sb.st_size + 1);
 			if (config->resolv_tail == NULL) {
 				fatalx("no memory for resolv.conf.tail "
-				    "contents: %s", strerror(errno));
+				    "contents");
 			}
 			tailn = read(tailfd, config->resolv_tail, sb.st_size);
 			if (tailn == -1)
-				fatalx("Couldn't read resolv.conf.tail: %s",
-				    strerror(errno));
+				fatal("Couldn't read resolv.conf.tail");
 			else if (tailn == 0)
 				fatalx("Got no data from resolv.conf.tail");
 			else if (tailn != sb.st_size)
@@ -616,11 +612,10 @@ main(int argc, char *argv[])
 
 	if ((fd = open(path_dhclient_db,
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
-		fatalx("can't open and lock %s: %s", path_dhclient_db,
-		    strerror(errno));
+		fatal("can't open and lock %s", path_dhclient_db);
 	read_client_leases(ifi);
 	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
-		fatalx("can't open %s: %s", path_dhclient_db, strerror(errno));
+		fatal("can't open %s", path_dhclient_db);
 	rewrite_client_leases(ifi);
 	close(fd);
 
@@ -635,17 +630,17 @@ main(int argc, char *argv[])
 		interface_link_forceup(ifi->name);
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatalx("socket(PF_ROUTE, SOCK_RAW): %s", strerror(errno));
+		fatal("socket(PF_ROUTE, SOCK_RAW)");
 
 	rtfilter = ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
 	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
-		fatalx("setsockopt(ROUTE_MSGFILTER): %s", strerror(errno));
+		fatal("setsockopt(ROUTE_MSGFILTER)");
 	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
-		fatalx("setsockopt(ROUTE_TABLEFILTER): %s", strerror(errno));
+		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
 	/* Register the interface. */
 	if_register_receive(ifi);
@@ -1200,7 +1195,7 @@ addressinuse(struct interface_info *ifi, struct in_addr address, char *ifname)
 	int used = 0;
 
 	if (getifaddrs(&ifap) != 0) {
-		log_warnx("addressinuse: getifaddrs: %s", strerror(errno));
+		log_warn("addressinuse: getifaddrs");
 		return (0);
 	}
 
@@ -2068,7 +2063,7 @@ go_daemon(void)
 	log_setverbose(0);
 
 	if (rdaemon(nullfd) == -1)
-		fatalx("Cannot daemonize: %s", strerror(errno));
+		fatal("Cannot daemonize");
 
 	/* Catch stuff that might be trying to terminate the program. */
 	signal(SIGHUP, sighdlr);
@@ -2210,7 +2205,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1) {
 			if (errno != EINTR) {
-				log_warnx("poll error: %s", strerror(errno));
+				log_warn("poll error");
 				quit = INTERNALSIG;
 			}
 			continue;
@@ -2220,7 +2215,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			continue;
 
 		if ((n = imsg_read(priv_ibuf)) == -1 && errno != EAGAIN) {
-			log_warnx("imsg_read(priv_ibuf): %s", strerror(errno));
+			log_warn("imsg_read(priv_ibuf)");
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -2241,8 +2236,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		/* Truncate the file so monitoring process see exit. */
 		rslt = truncate(path_option_db, 0);
 		if (rslt == -1)
-			log_warnx("Unable to truncate '%s': %s",
-			    path_option_db, strerror(errno));
+			log_warn("Unable to truncate '%s'", path_option_db);
 	}
 
 	/*
@@ -2261,8 +2255,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
-		fatalx("RESTART FAILED: '%s': %s", saved_argv[0],
-		    strerror(errno));
+		fatal("RESTART FAILED: '%s'", saved_argv[0]);
 	}
 
 	if (quit != INTERNALSIG)
@@ -2287,13 +2280,13 @@ get_ifname(struct interface_info *ifi, char *arg)
 		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 			if (errno == ENOENT)
 				fatalx("no interface in group egress found");
-			fatalx("ioctl SIOCGIFGMEMB: %s", strerror(errno));
+			fatal("ioctl SIOCGIFGMEMB");
 		}
 		len = ifgr.ifgr_len;
 		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
 			fatalx("get_ifname");
 		if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
-			fatalx("ioctl SIOCGIFGMEMB: %s", strerror(errno));
+			fatal("ioctl SIOCGIFGMEMB");
 
 		arg = NULL;
 		for (ifg = ifgr.ifgr_groups;
@@ -2305,7 +2298,7 @@ get_ifname(struct interface_info *ifi, char *arg)
 		}
 
 		if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-			fatalx("Interface name too long: %s", strerror(errno));
+			fatal("Interface name too long");
 
 		free(ifgr.ifgr_groups);
 		close(s);
@@ -2644,8 +2637,7 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_RESOLV_CONF,
 	    0, 0, -1, contents, sz);
 	if (rslt == -1)
-		log_warnx("write_resolv_conf: imsg_compose: %s",
-		    strerror(errno));
+		log_warn("write_resolv_conf: imsg_compose");
 
 	flush_unpriv_ibuf("write_resolv_conf");
 }
@@ -2658,8 +2650,7 @@ write_option_db(u_int8_t *contents, size_t sz)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_OPTION_DB,
 	    0, 0, -1, contents, sz);
 	if (rslt == -1)
-		log_warnx("write_option_db: imsg_compose: %s",
-		    strerror(errno));
+		log_warn("write_option_db: imsg_compose");
 
 	flush_unpriv_ibuf("write_option_db");
 }
@@ -2714,24 +2705,21 @@ priv_write_file(char *path, int flags, mode_t mode,
 
 	fd = open(path, flags, mode);
 	if (fd == -1) {
-		log_info("Couldn't open '%s': %s", path, strerror(errno));
+		log_warn("Couldn't open '%s'", path);
 		return;
 	}
 
 	n = write(fd, contents, sz);
 	if (n == -1)
-		log_info("Couldn't write contents to '%s': %s", path,
-		    strerror(errno));
+		log_warn("Couldn't write contents to '%s'", path);
 	else if (n < sz)
-		log_info("Short contents write to '%s' (%zd vs %zu)", path,
+		log_warnx("Short contents write to '%s' (%zd vs %zu)", path,
 		    n, sz);
 
 	if (fchown(fd, 0, 0) == -1)
-		log_info("fchown(fd, %d, %d) of '%s' failed (%s)",
-		    0, 0, path, strerror(errno));
+		log_warn("fchown(fd, %d, %d) of '%s' failed", 0, 0, path);
 	if (fchmod(fd, mode) == -1)
-		log_info("fchmod(fd, 0x%x) of '%s' failed (%s)", mode,
-		    path, strerror(errno));
+		log_warn("fchmod(fd, 0x%x) of '%s' failed", mode, path);
 
 	close(fd);
 }

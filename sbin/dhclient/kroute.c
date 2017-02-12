@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.83 2017/02/12 13:55:01 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.84 2017/02/12 15:53:15 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -75,7 +75,7 @@ flush_routes(void)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("flush_routes: imsg_compose: %s", strerror(errno));
+		log_warn("flush_routes: imsg_compose");
 
 	flush_unpriv_ibuf("flush_routes");
 }
@@ -125,14 +125,14 @@ priv_flush_routes(struct interface_info *ifi, struct imsg_flush_routes *imsg)
 	}
 
 	if (errmsg) {
-		log_warnx("route cleanup failed - %s %s (msize=%zu)",
-		    errmsg, strerror(errno), needed);
+		log_warn("route cleanup failed - %s (msize=%zu)", errmsg,
+		    needed);
 		free(buf);
 		return;
 	}
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatalx("opening socket to flush routes: %s", strerror(errno));
+		fatal("opening socket to flush routes");
 
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -194,7 +194,7 @@ add_route(struct in_addr dest, struct in_addr netmask,
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ROUTE, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("add_route: imsg_compose: %s", strerror(errno));
+		log_warn("add_route: imsg_compose");
 
 	flush_unpriv_ibuf("add_route");
 }
@@ -211,7 +211,7 @@ priv_add_route(struct interface_info *ifi, struct imsg_add_route *imsg)
 	int s, i, iovcnt = 0;
 
 	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatalx("Routing Socket open failed: %s", strerror(errno));
+		fatal("Routing Socket open failed");
 
 	memset(destbuf, 0, sizeof(destbuf));
 	memset(maskbuf, 0, sizeof(maskbuf));
@@ -303,9 +303,8 @@ priv_add_route(struct interface_info *ifi, struct imsg_add_route *imsg)
 		if (writev(s, iov, iovcnt) != -1)
 			break;
 		if (i == 4)
-			log_warnx("failed to add route (%s/%s via %s/%s): %s",
-			    destbuf, maskbuf, gatewaybuf, ifabuf,
-			    strerror(errno));
+			log_warn("failed to add route (%s/%s via %s/%s)",
+			    destbuf, maskbuf, gatewaybuf, ifabuf);
 		else if (errno == EEXIST || errno == ENETUNREACH)
 			sleep(1);
 	}
@@ -323,7 +322,7 @@ delete_addresses(struct interface_info *ifi)
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
-		fatalx("delete_addresses getifaddrs: %s", strerror(errno));
+		fatal("delete_addresses getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
@@ -361,7 +360,7 @@ delete_address(struct in_addr addr)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_DELETE_ADDRESS, 0, 0 , -1, &imsg,
 	    sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("delete_address: imsg_compose: %s", strerror(errno));
+		log_warn("delete_address: imsg_compose");
 
 	flush_unpriv_ibuf("delete_address");
 }
@@ -379,7 +378,7 @@ priv_delete_address(struct interface_info *ifi,
 	 */
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		fatalx("socket open failed: %s", strerror(errno));
+		fatal("socket open failed");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, ifi->name, sizeof(ifaliasreq.ifra_name));
@@ -392,8 +391,8 @@ priv_delete_address(struct interface_info *ifi,
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
 	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
 		if (errno != EADDRNOTAVAIL)
-			log_warnx("SIOCDIFADDR failed (%s): %s",
-			    inet_ntoa(imsg->addr), strerror(errno));
+			log_warn("SIOCDIFADDR failed (%s)",
+			    inet_ntoa(imsg->addr));
 	}
 
 	close(s);
@@ -415,8 +414,7 @@ set_interface_mtu(int mtu)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_INTERFACE_MTU, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("set_interface_mtu: imsg_compose: %s",
-		    strerror(errno));
+		log_warn("set_interface_mtu: imsg_compose");
 
 	flush_unpriv_ibuf("set_interface_mtu");
 }
@@ -434,10 +432,9 @@ priv_set_interface_mtu(struct interface_info *ifi,
 	ifr.ifr_mtu = imsg->mtu;
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		fatalx("socket open failed: %s", strerror(errno));
+		fatal("socket open failed");
 	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
-		log_warnx("SIOCSIFMTU failed (%d): %s", imsg->mtu,
-		    strerror(errno));
+		log_warn("SIOCSIFMTU failed (%d)", imsg->mtu);
 	close(s);
 }
 
@@ -461,7 +458,7 @@ add_address(struct in_addr addr, struct in_addr mask)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_ADD_ADDRESS, 0, 0, -1, &imsg,
 	    sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("add_address: imsg_compose: %s", strerror(errno));
+		log_warn("add_address: imsg_compose");
 
 	flush_unpriv_ibuf("add_address");
 }
@@ -485,7 +482,7 @@ priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 	 */
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		fatalx("socket open failed: %s", strerror(errno));
+		fatal("socket open failed");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, ifi->name, sizeof(ifaliasreq.ifra_name));
@@ -505,8 +502,7 @@ priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 	/* No need to set broadcast address. Kernel can figure it out. */
 
 	if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
-		log_warnx("SIOCAIFADDR failed (%s): %s", inet_ntoa(imsg->addr),
-		    strerror(errno));
+		log_warn("SIOCAIFADDR failed (%s)", inet_ntoa(imsg->addr));
 
 	close(s);
 
@@ -530,7 +526,7 @@ sendhup(struct client_lease *active)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("sendhup: imsg_compose: %s", strerror(errno));
+		log_warn("sendhup: imsg_compose");
 
 	flush_unpriv_ibuf("sendhup");
 }
@@ -574,7 +570,7 @@ resolv_conf_priority(struct interface_info *ifi)
 
 	s = socket(PF_ROUTE, SOCK_RAW, AF_INET);
 	if (s == -1) {
-		log_warnx("default route socket: %s", strerror(errno));
+		log_warn("default route socket");
 		return (0);
 	}
 
@@ -609,8 +605,7 @@ resolv_conf_priority(struct interface_info *ifi)
 
 	if (writev(s, iov, iovcnt) == -1) {
 		if (errno != ESRCH)
-			log_warnx("RTM_GET of default route: %s",
-			    strerror(errno));
+			log_warn("RTM_GET of default route");
 		goto done;
 	}
 
@@ -619,8 +614,7 @@ resolv_conf_priority(struct interface_info *ifi)
 	do {
 		len = read(s, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
-			log_warnx("get default route read: %s",
-			    strerror(errno));
+			log_warn("get default route read");
 			break;
 		} else if (len == 0) {
 			log_warnx("no data from default route read");
@@ -665,7 +659,7 @@ create_route_label(struct sockaddr_rtlabel *label)
 	    (int)getpid());
 
 	if (len == -1) {
-		log_warnx("creating route label: %s", strerror(errno));
+		log_warn("creating route label");
 		return (1);
 	}
 
@@ -740,7 +734,7 @@ delete_route(struct interface_info *ifi, int s, struct rt_msghdr *rtm)
 	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
 	if (rlen == -1) {
 		if (errno != ESRCH)
-			fatalx("RTM_DELETE write: %s", strerror(errno));
+			fatal("RTM_DELETE write");
 	} else if (rlen < (int)rtm->rtm_msglen)
 		fatalx("short RTM_DELETE write (%zd)\n", rlen);
 }
@@ -755,8 +749,7 @@ flush_unpriv_ibuf(const char *who)
 			if (quit == 0)
 				quit = INTERNALSIG;
 			if (errno != EPIPE && errno != 0)
-				log_warnx("%s: msgbuf_write: %s", who,
-				    strerror(errno));
+				log_warn("%s: msgbuf_write", who);
 			break;
 		}
 	}

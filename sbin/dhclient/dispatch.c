@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.114 2017/02/12 13:55:01 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.115 2017/02/12 15:53:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -169,7 +169,7 @@ dispatch(struct interface_info *ifi)
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
 			} else {
-				log_warnx("poll: %s", strerror(errno));
+				log_warn("poll");
 				quit = INTERNALSIG;
 				continue;
 			}
@@ -207,8 +207,7 @@ packethandler(struct interface_info *ifi)
 	ssize_t result;
 
 	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
-		log_warnx("%s receive_packet failed: %s", ifi->name,
-		    strerror(errno));
+		log_warn("%s receive_packet failed", ifi->name);
 		ifi->errors++;
 		if (ifi->errors > 20) {
 			fatalx("%s too many receive_packet failures; exiting",
@@ -235,23 +234,20 @@ interface_link_forceup(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_info("interface_link_forceup: SIOCGIFFLAGS failed (%s)",
-		    strerror(errno));
+		log_warn("interface_link_forceup: SIOCGIFFLAGS failed");
 		return;
 	}
 
 	/* Force it down and up so others notice link state change. */
 	ifr.ifr_flags &= ~IFF_UP;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_info("interface_link_forceup: SIOCSIFFLAGS DOWN "
-		    "failed (%s)", strerror(errno));
+		log_warn("interface_link_forceup: SIOCSIFFLAGS DOWN failed");
 		return;
 	}
 
 	ifr.ifr_flags |= IFF_UP;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_info("interface_link_forceup: SIOCSIFFLAGS UP failed (%s)",
-		    strerror(errno));
+		log_warn("interface_link_forceup: SIOCSIFFLAGS UP failed");
 		return;
 	}
 }
@@ -267,8 +263,7 @@ interface_status(struct interface_info *ifi)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
-		fatalx("ioctl(SIOCGIFFLAGS) on %s: %s", ifi->name,
-		    strerror(errno));
+		fatal("ioctl(SIOCGIFFLAGS) on %s", ifi->name);
 	}
 
 	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -286,8 +281,7 @@ interface_status(struct interface_info *ifi)
 		 */
 #ifdef DEBUG
 		if (errno != EINVAL && errno != ENOTTY)
-			log_debug("ioctl(SIOCGIFMEDIA) on %s: %s", ifi->name,
-			    strerror(errno));
+			log_debug("ioctl(SIOCGIFMEDIA) on %s", ifi->name);
 #endif
 
 		ifi->flags |= IFI_NOMEDIA;
@@ -339,7 +333,7 @@ get_rdomain(char *name)
 	struct ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-	    fatalx("get_rdomain socket: %s", strerror(errno));
+	    fatal("get_rdomain socket");
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));

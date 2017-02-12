@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.43 2017/02/12 13:15:50 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.44 2017/02/12 15:53:15 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -43,8 +43,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("dispatch_imsg: imsg_get failure: %s",
-			    strerror(errno));
+			fatal("dispatch_imsg: imsg_get failure");
 
 		if (n == 0)
 			break;
