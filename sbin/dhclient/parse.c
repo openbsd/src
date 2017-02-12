@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.41 2017/02/11 16:12:36 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.42 2017/02/12 13:15:50 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -61,6 +61,7 @@
 #include "dhcp.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
+#include "log.h"
 
 /*
  * Skip to the semicolon ending the current statement.   If we encounter
@@ -144,7 +145,7 @@ parse_string(FILE *cfile)
 	}
 	s = strdup(val);
 	if (!s)
-		error("no memory for string %s.", val);
+		fatalx("no memory for string %s.", val);
 
 	if (!parse_semi(cfile)) {
 		free(s);
@@ -413,11 +414,13 @@ parse_date(FILE *cfile)
 	return (guess);
 }
 
+int warnings_occurred;
+
 void
 parse_warn(char *msg)
 {
 	static char spaces[81];
-	extern char mbuf[1024];
+	static char mbuf[1024];
 	struct iovec iov[6];
 	size_t iovcnt;
 	int i;

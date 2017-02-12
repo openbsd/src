@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.34 2016/08/16 21:57:51 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.35 2017/02/12 13:15:50 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -60,6 +60,7 @@
 #include "dhcp.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
+#include "log.h"
 
 int lexline;
 int lexchar;

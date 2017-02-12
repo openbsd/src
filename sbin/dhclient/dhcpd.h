@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.159 2017/02/11 16:12:36 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.160 2017/02/12 13:15:50 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -192,15 +192,6 @@ int pretty_print_domain_search(unsigned char *, size_t, unsigned char *,
 void do_packet(struct interface_info *, unsigned int, struct in_addr,
     struct ether_addr *);
 
-/* errwarn.c */
-extern int warnings_occurred;
-void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-void warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-void note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-#ifdef DEBUG
-void debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-#endif
-
 /* conflex.c */
 extern int lexline, lexchar;
 extern char *token_line, *tlname;
@@ -209,6 +200,7 @@ int next_token(char **, FILE *);
 int peek_token(char **, FILE *);
 
 /* parse.c */
+extern int warnings_occurred;
 void skip_to_semi(FILE *);
 int parse_semi(FILE *);
 char *parse_string(FILE *);

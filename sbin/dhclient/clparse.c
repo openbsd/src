@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.103 2016/10/06 16:29:17 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.104 2017/02/12 13:15:50 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -58,6 +58,7 @@
 #include "dhcp.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
+#include "log.h"
 
 void parse_client_statement(FILE *, struct interface_info *);
 int parse_X(FILE *, u_int8_t *, int);
@@ -150,7 +151,7 @@ read_client_leases(struct interface_info *ifi)
 		if (token == EOF)
 			break;
 		if (token != TOK_LEASE) {
-			warning("Corrupt lease file - possible data loss!");
+			log_warnx("Corrupt lease file - possible data loss!");
 			break;
 		}
 		parse_client_lease_statement(cfile, 0, ifi);
@@ -478,7 +479,7 @@ parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *
 
 	lease = calloc(1, sizeof(struct client_lease));
 	if (!lease)
-		error("no memory for lease.");
+		fatalx("no memory for lease.");
 
 	do {
 		token = peek_token(NULL, cfile);
@@ -766,7 +767,7 @@ bad_flag:
 				dp = cidr;
 				goto alloc;
 			default:
-				warning("Bad format %c in parse_option_param.",
+				log_warnx("Bad format %c in parse_option_param.",
 				    *fmt);
 				skip_to_semi(cfile);
 				return (-1);
@@ -782,7 +783,7 @@ bad_flag:
 
 	options[code].data = malloc(hunkix + nul_term);
 	if (!options[code].data)
-		error("out of memory allocating option data.");
+		fatalx("out of memory allocating option data.");
 	memcpy(options[code].data, hunkbuf, hunkix + nul_term);
 	options[code].len = hunkix;
 	return (code);
@@ -801,7 +802,7 @@ parse_reject_statement(FILE *cfile)
 
 		elem = malloc(sizeof(struct reject_elem));
 		if (!elem)
-			error("no memory for reject address!");
+			fatalx("no memory for reject address!");
 
 		elem->addr = addr;
 		TAILQ_INSERT_TAIL(&config->reject_list, elem, next);

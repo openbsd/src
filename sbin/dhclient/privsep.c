@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.42 2016/09/02 15:44:26 mpi Exp $ */
+/*	$OpenBSD: privsep.c,v 1.43 2017/02/12 13:15:50 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 
 #include "dhcp.h"
 #include "dhcpd.h"
+#include "log.h"
 #include "privsep.h"
 
 void
@@ -42,7 +43,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			error("dispatch_imsg: imsg_get failure: %s",
+			fatalx("dispatch_imsg: imsg_get failure: %s",
 			    strerror(errno));
 
 		if (n == 0)
@@ -52,7 +53,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_DELETE_ADDRESS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_delete_address))
-				warning("bad IMSG_DELETE_ADDRESS");
+				log_warnx("bad IMSG_DELETE_ADDRESS");
 			else
 				priv_delete_address(ifi, imsg.data);
 			break;
@@ -60,7 +61,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_ADD_ADDRESS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_add_address))
-				warning("bad IMSG_ADD_ADDRESS");
+				log_warnx("bad IMSG_ADD_ADDRESS");
 			else
 				priv_add_address(ifi, imsg.data);
 			break;
@@ -68,7 +69,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_FLUSH_ROUTES:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_flush_routes))
-				warning("bad IMSG_FLUSH_ROUTES");
+				log_warnx("bad IMSG_FLUSH_ROUTES");
 			else
 				priv_flush_routes(ifi, imsg.data);
 			break;
@@ -76,7 +77,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_ADD_ROUTE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_add_route))
-				warning("bad IMSG_ADD_ROUTE");
+				log_warnx("bad IMSG_ADD_ROUTE");
 			else
 				priv_add_route(ifi, imsg.data);
 			break;
@@ -84,7 +85,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_SET_INTERFACE_MTU:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_set_interface_mtu))
-				warning("bad IMSG_SET_INTERFACE_MTU");
+				log_warnx("bad IMSG_SET_INTERFACE_MTU");
 			else
 				priv_set_interface_mtu(ifi, imsg.data);
 			break;
@@ -92,7 +93,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 		case IMSG_HUP:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct imsg_hup))
-				warning("bad IMSG_HUP");
+				log_warnx("bad IMSG_HUP");
 			else {
 				ifi->flags |= IFI_HUP;
 				quit = SIGHUP;
@@ -107,7 +108,7 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			break;
 
 		default:
-			warning("received unknown message, code %u",
+			log_warnx("received unknown message, code %u",
 			    imsg.hdr.type);
 		}
 

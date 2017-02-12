@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.79 2016/10/06 16:29:17 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.80 2017/02/12 13:15:50 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -59,6 +59,7 @@
 
 #include "dhcp.h"
 #include "dhcpd.h"
+#include "log.h"
 
 int parse_option_buffer(struct option_data *, unsigned char *, int);
 int expand_search_domain_name(unsigned char *, size_t, int *, unsigned char *);
@@ -93,12 +94,12 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			if (s + 1 + len < end) {
 				; /* option data is all there. */
 			} else {
-				warning("option %s (%d) larger than buffer.",
+				log_warnx("option %s (%d) larger than buffer.",
 				    dhcp_options[code].name, len);
 				return (0);
 			}
 		} else {
-			warning("option %s has no length field.",
+			log_warnx("option %s has no length field.",
 			    dhcp_options[code].name);
 			return (0);
 		}
@@ -121,7 +122,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 		 */
 		if (!options[code].data) {
 			if (!(t = calloc(1, len + 1)))
-				error("Can't allocate storage for option %s.",
+				fatalx("Can't allocate storage for option %s.",
 				    dhcp_options[code].name);
 			/*
 			 * Copy and NUL-terminate the option (in case
@@ -138,7 +139,7 @@ parse_option_buffer(struct option_data *options, unsigned char *buffer,
 			 */
 			t = calloc(1, len + options[code].len + 1);
 			if (!t)
-				error("Can't expand storage for option %s.",
+				fatalx("Can't expand storage for option %s.",
 				    dhcp_options[code].name);
 			memcpy(t, options[code].data, options[code].len);
 			memcpy(t + options[code].len, &s[2], len);
@@ -331,7 +332,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			/* This is a pointer to another list of labels. */
 			if (i + 1 >= srclen) {
 				/* The pointer is truncated. */
-				warning("Truncated pointer in DHCP Domain "
+				log_warnx("Truncated pointer in DHCP Domain "
 				    "Search option.");
 				return (-1);
 			}
@@ -342,7 +343,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 				 * The pointer must indicates a prior
 				 * occurance.
 				 */
-				warning("Invalid forward pointer in DHCP "
+				log_warnx("Invalid forward pointer in DHCP "
 				    "Domain Search option compression.");
 				return (-1);
 			}
@@ -355,7 +356,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 			return (domain_name_len);
 		}
 		if (i + label_len + 1 > srclen) {
-			warning("Truncated label in DHCP Domain Search "
+			log_warnx("Truncated label in DHCP Domain Search "
 			    "option.");
 			return (-1);
 		}
@@ -367,7 +368,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 
 		if (strlen(domain_search) + domain_name_len >=
 		    DHCP_DOMAIN_SEARCH_LEN) {
-			warning("Domain search list too long.");
+			log_warnx("Domain search list too long.");
 			return (-1);
 		}
 
@@ -380,7 +381,7 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
 		cursor += label_len + 1;
 	}
 
-	warning("Truncated DHCP Domain Search option.");
+	log_warnx("Truncated DHCP Domain Search option.");
 
 	return (-1);
 }
@@ -398,7 +399,7 @@ pretty_print_domain_search(unsigned char *dst, size_t dstlen,
 
 	domain_search = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
 	if (domain_search == NULL)
-		error("Can't allocate storage for expanded domain-search\n");
+		fatalx("Can't allocate storage for expanded domain-search\n");
 
 	/* Compute expanded length. */
 	expanded_len = len = 0;
@@ -455,7 +456,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 
 	/* Code should be between 0 and 255. */
 	if (code > 255) {
-		warning("pretty_print_option: bad code %d", code);
+		log_warnx("pretty_print_option: bad code %d", code);
 		goto done;
 	}
 
@@ -479,7 +480,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	/* Figure out the size of the data. */
 	for (i = 0; dhcp_options[code].format[i]; i++) {
 		if (!numhunk) {
-			warning("%s: Excess information in format string: %s",
+			log_warnx("%s: Excess information in format string: %s",
 			    dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
 			goto done;
@@ -492,7 +493,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 			fmtbuf[i] = 0;
 			numhunk = 0;
 			if (hunksize == 0) {
-				warning("%s: no size indicator before A"
+				log_warnx("%s: no size indicator before A"
 				    " in format string: %s",
 				    dhcp_options[code].name,
 				    dhcp_options[code].format);
@@ -533,7 +534,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		case 'e':
 			break;
 		default:
-			warning("%s: garbage in format string: %s",
+			log_warnx("%s: garbage in format string: %s",
 			    dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
 			goto done;
@@ -542,13 +543,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 
 	/* Check for too few bytes. */
 	if (hunksize > len) {
-		warning("%s: expecting at least %d bytes; got %d",
+		log_warnx("%s: expecting at least %d bytes; got %d",
 		    dhcp_options[code].name, hunksize, len);
 		goto done;
 	}
 	/* Check for too many bytes. */
 	if (numhunk == -1 && hunksize < len) {
-		warning("%s: expecting only %d bytes: got %d",
+		log_warnx("%s: expecting only %d bytes: got %d",
 		    dhcp_options[code].name, hunksize, len);
 		goto done;
 	}
@@ -558,7 +559,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		numhunk = len / hunksize;
 	/* See if we got an exact number of hunks. */
 	if (numhunk > 0 && numhunk * hunksize != len) {
-		warning("%s: expecting %d bytes: got %d",
+		log_warnx("%s: expecting %d bytes: got %d",
 		    dhcp_options[code].name, numhunk * hunksize, len);
 		goto done;
 	}
@@ -613,7 +614,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				dp++;
 				break;
 			default:
-				warning("Unexpected format code %c", fmtbuf[j]);
+				log_warnx("Unexpected format code %c", fmtbuf[j]);
 				goto toobig;
 			}
 			if (opcount >= opleft || opcount == -1)
@@ -660,14 +661,14 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
 #ifdef DEBUG
-		debug("Discarding packet with hlen != %s (%u)",
+		log_debug("Discarding packet with hlen != %s (%u)",
 		    ifi->name, packet->hlen);
 #endif
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
 #ifdef DEBUG
-		debug("Discarding packet with chaddr != %s (%s)", ifi->name,
+		log_debug("Discarding packet with chaddr != %s (%s)", ifi->name,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
 #endif
 		return;
@@ -675,7 +676,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 
 	if (client->xid != client->packet.xid) {
 #ifdef DEBUG
-		debug("Discarding packet with XID != %u (%u)", client->xid,
+		log_debug("Discarding packet with XID != %u (%u)", client->xid,
 		    client->packet.xid);
 #endif
 		return;
@@ -684,7 +685,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 	TAILQ_FOREACH(ap, &config->reject_list, next)
 		if (from.s_addr == ap->addr.s_addr) {
 #ifdef DEBUG
-			debug("Discarding packet from address on reject list "
+			log_debug("Discarding packet from address on reject list "
 			    "(%s)", inet_ntoa(from));
 #endif
 			return;
@@ -722,7 +723,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		    memcmp(options[i].data, config->send_options[i].data,
 		    options[i].len) != 0)) {
 #ifdef DEBUG
-			debug("Discarding packet with client-identifier '%s'",
+			log_debug("Discarding packet with client-identifier '%s'",
 			    pretty_print_option(i, &options[i], 0));
 #endif
 			goto done;
@@ -749,7 +750,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 			break;
 		default:
 #ifdef DEBUG
-			debug("Discarding DHCP packet of unknown type (%d)",
+			log_debug("Discarding DHCP packet of unknown type (%d)",
 				options[DHO_DHCP_MESSAGE_TYPE].data[0]);
 #endif
 			break;
@@ -759,14 +760,14 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		type = "BOOTREPLY";
 	} else {
 #ifdef DEBUG
-		debug("Discarding packet which is neither DHCP nor BOOTP");
+		log_debug("Discarding packet which is neither DHCP nor BOOTP");
 #endif
 	}
 
 	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(from),
 	    ether_ntoa(hfrom));
 	if (rslt == -1)
-		error("no memory for info string");
+		fatalx("no memory for info string");
 
 	if (handler)
 		(*handler)(ifi, from, options, info);
