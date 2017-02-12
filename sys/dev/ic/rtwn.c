@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.18 2017/02/01 12:46:40 stsp Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.19 2017/02/12 01:01:39 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -654,7 +654,8 @@ rtwn_ra_init(struct rtwn_softc *sc)
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	uint32_t rates, basicrates;
 	uint8_t mode;
-	int maxrate, maxbasicrate, error, i, j;
+	int maxrate, maxbasicrate, i, j;
+	int error = 0;
 
 	/* Get normal and basic rates mask. */
 	rates = basicrates = 0;
