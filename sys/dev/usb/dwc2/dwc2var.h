@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.17 2016/09/24 12:59:42 kettenis Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.18 2017/02/12 17:41:17 visa Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -141,8 +141,6 @@ dwc2_root_intr(dwc2_softc_t *sc)
 }
 
 // XXX compat
-
-#define	mtx_owned(x)	((void)(x), 1)
 
 #define	ENOSR		90
 #define	EPROTO		96

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdintr.c,v 1.6 2015/06/28 11:48:18 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2_hcdintr.c,v 1.7 2017/02/12 17:41:17 visa Exp $	*/
 /*	$NetBSD: dwc2_hcdintr.c,v 1.11 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -2091,7 +2091,7 @@ irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg)
 		return retval;
 	}
 
-	KASSERT(mtx_owned(&hsotg->lock));
+	MUTEX_ASSERT_LOCKED(&hsotg->lock);
 
 	/* Check if HOST Mode */
 	if (dwc2_is_host_mode(hsotg)) {

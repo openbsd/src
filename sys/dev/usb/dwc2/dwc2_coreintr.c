@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.8 2015/06/28 11:48:18 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.9 2017/02/12 17:41:17 visa Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ irqreturn_t dwc2_handle_common_intr(void *dev)
 		goto out;
 	}
 
-	KASSERT(mtx_owned(&hsotg->lock));
+	MUTEX_ASSERT_LOCKED(&hsotg->lock);
 
 	gintsts = dwc2_read_common_intr(hsotg);
 	if (gintsts & ~GINTSTS_PRTINT)
