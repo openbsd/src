@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2015/05/05 02:13:47 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct trapframe *tf;
@@ -92,7 +92,11 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 */
 	if (stack != NULL) {
 		tf = trapframe(p2);
-		tf->fixreg[1] = (register_t)stack + stacksize;
+		tf->fixreg[1] = (register_t)stack;
+	}
+	if (tcb != NULL) {
+		tf = trapframe(p2);
+		tf->fixreg[2] = (register_t)tcb;
 	}
 
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);  /* Align stack pointer */

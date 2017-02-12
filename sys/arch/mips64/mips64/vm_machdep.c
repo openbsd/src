@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.34 2017/02/12 04:55:08 guenther Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -61,12 +61,8 @@ extern void proc_trampoline(void);
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
+    void (*func)(void *), void *arg)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb;
@@ -117,10 +113,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_regs = &p2->p_addr->u_pcb.pcb_regs;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack and/or TCB.
 	 */
 	if (stack != NULL)
-		p2->p_md.md_regs->sp = (u_int64_t)stack + stacksize;
+		p2->p_md.md_regs->sp = (u_int64_t)stack;
+	if (tcb != NULL)
+		TCB_SET(p2, tcb);
 
 	/*
 	 * Copy the process control block to the new proc and

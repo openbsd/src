@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.285 2017/01/24 00:58:55 mpi Exp $
+#	$OpenBSD: Makefile,v 1.286 2017/02/12 04:55:08 guenther Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -34,7 +34,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	sensor_attach.9 \
 	spl.9 srp_enter.9 srpl_rc_init.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 style.9 syscall.9 sysctl_int.9 \
-	task_add.9 tc_init.9 tfind.9 time_second.9 timeout.9 tsleep.9 tvtohz.9 \
+	task_add.9 tc_init.9 tfind.9 thread_fork.9 \
+	time_second.9 timeout.9 tsleep.9 tvtohz.9 \
 	uiomove.9 uvm.9 usb_add_task.9 usbd_close_pipe.9 usbd_open_pipe.9 \
 	usbd_ref_wait.9 usbd_transfer.9 vfs.9 vfs_busy.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \

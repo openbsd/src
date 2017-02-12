@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.81 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.82 2017/02/12 04:55:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -49,7 +49,7 @@
 extern struct pool hppa_fppl;
 
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcbp;
@@ -102,10 +102,12 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	    (curcpu()->ci_psw & PSL_O);
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack and/or TCB
 	 */
 	if (stack != NULL)
 		setstack(tf, (u_long)stack, 0);	/* XXX ignore error? */
+	if (tcb != NULL)
+		tf->tf_cr27 = (u_long)tcb;
 
 	/*
 	 * Build stack frames for the cpu_switchto & co.

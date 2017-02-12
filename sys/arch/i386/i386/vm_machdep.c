@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.64 2016/04/03 17:45:30 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.65 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -67,12 +67,9 @@
  * Copy and update the kernel stack and pcb, making the child
  * ready to run, and marking it so that it can return differently
  * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
@@ -104,10 +101,12 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	*tf = *p1->p_md.md_regs;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack and/or TCB
 	 */
 	if (stack != NULL)
-		tf->tf_esp = (u_int)stack + stacksize;
+		tf->tf_esp = (u_int)stack;
+	if (tcb != NULL)
+		i386_set_threadbase(p2, (uint32_t)tcb, TSEG_GS);
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_esi = (int)func;

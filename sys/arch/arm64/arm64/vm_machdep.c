@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
  * than the parent.  Returns 1 in the child process, 0 in the parent.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
@@ -86,11 +86,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	    - 0x10);
 
 	tf = (struct trapframe *)STACKALIGN(tf);
-	p2->p_addr->u_pcb.pcb_tf = tf;
+	pcb->pcb_tf = tf;
 	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	if (stack != NULL)
-		tf->tf_sp = STACKALIGN((u_int)(stack) + stacksize);
+		tf->tf_sp = STACKALIGN((u_int)(stack));
+	if (tcb != NULL)
+		pcb->pcb_tcb = tcb;
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_x19 = (uint64_t)func;

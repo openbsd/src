@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.35 2015/11/06 06:33:26 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.36 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -153,26 +153,19 @@ char cpu_forkname[] = "cpu_fork()";
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * proc_trampoline() and call 'func' with 'arg' as an argument.
+ * For normal processes this is child_return(), which causes the
+ * child to go directly to user level with an apparent return value
+ * of 0 from fork(), while the parent process returns normally.
+ * For kernel threads this will be a function that never return.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
- *
- * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * An alternate user-level stack or TCB can be requested by passing
+ * a non-NULL value; these are poked into the PCB so they're in
+ * effect at the initial return to userspace.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *opcb = &p1->p_addr->u_pcb;
 	struct pcb *npcb = &p2->p_addr->u_pcb;
@@ -240,10 +233,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * with space reserved for the frame, and zero the frame pointer.
 	 */
 	if (stack != NULL) {
-		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize
-		    - (BIAS + CC64FSZ);
+		tf2->tf_out[6] = (u_int64_t)(u_long)stack - (BIAS + CC64FSZ);
 		tf2->tf_in[6] = 0;
 	}
+	if (tcb != NULL)
+		tf2->tf_global[7] = (u_int64_t)tcb;
 
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);

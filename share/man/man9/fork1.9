@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.28 2017/01/24 07:59:58 jmc Exp $
+.\"	$OpenBSD: fork1.9,v 1.29 2017/02/12 04:55:08 guenther Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: February 12 2017 $
 .Dt FORK1 9
 .Os
 .Sh NAME
@@ -42,8 +42,6 @@
 .Fo fork1
 .Fa "struct proc *p1"
 .Fa "int flags"
-.Fa "void *stack"
-.Fa "pid_t *tidptr"
 .Fa "void (*func)(void *)"
 .Fa "void *arg"
 .Fa "register_t *retval"
@@ -53,10 +51,10 @@
 .Fn fork1
 creates a new process out of
 .Ar p1 ,
-which should be the current process.
+which should be the current thread.
 This function is used primarily to implement the
-.Xr fork 2 ,
-.Xr __tfork 3 ,
+.Xr fork 2
+and
 .Xr vfork 2
 system calls, as well as the
 .Xr kthread_create 9
@@ -77,11 +75,6 @@ The call is done by the
 .Xr vfork 2
 system call.
 Used only for statistics.
-.It Dv FORK_TFORK
-The call is done by the
-.Xr __tfork 3
-system call.
-Used only for statistics.
 .It Dv FORK_PPWAIT
 Suspend the parent process until the child is terminated (by calling
 .Xr _exit 2
@@ -93,7 +86,7 @@ fdshare().
 The default behavior is to copy the table through
 fdcopy().
 .It Dv FORK_IDLE
-The child will be left in the
+The new thread will be left in the
 .Dv SIDL
 state.
 The default behavior is to make it runnable and add it to the run queue.
@@ -116,51 +109,13 @@ must also be set.
 .It Dv FORK_PTRACE
 The child will start with tracing enabled, as if
 ptrace(PT_TRACE_ME, 0, 0, 0) had been invoked in the child.
-.It Dv FORK_THREAD
-The child will instead be a kernel-level thread in the same process
-as the parent.
-.Dv FORK_SHAREFILES ,
-.Dv FORK_SHAREVM ,
-and
-.Dv FORK_SIGHAND
-must also be set.
-.El
-.Pp
-If
-.Fa stack
-is not
-.Dv NULL ,
-it will be used as the initial value of the child's stack pointer,
-instead of using the child's copy of the parent's stack.
-.Pp
-If
-.Fa tidptr
-is not
-.Dv NULL ,
-the PID of the child process will be written there in the parent
-on success.
-This is guaranteed to be done before
-the child process is started.
-.Pp
-If
-.Fa retval
-is not
-.Dv NULL ,
-it will hold the following values after successful completion
-of the fork operation:
-.Bl -tag -width retval[0]
-.It Fa retval[0]
-This will contain the PID of the child process.
-.It Fa retval[1]
-In the parent process, this will contain the value 0.
-In the child process, this will contain 1.
 .El
 .Pp
 If
 .Fa func
 is not
 .Dv NULL ,
-the new process will begin execution by calling this function.
+the new thread will begin execution by calling this function.
 It defaults to child_return, which returns to userland.
 .Pp
 If
@@ -168,10 +123,23 @@ If
 is not
 .Dv NULL ,
 it is the argument to the previous function.
-It defaults to a pointer to the new process.
+It defaults to a pointer to the new thread.
 .Pp
-The newly created process is returned through
-.Fa *rnewprocp .
+If
+.Fa retval
+is not
+.Dv NULL ,
+the PID of the child process will be stored in
+.Fa *retval
+on successful completion.
+.Pp
+If
+.Fa rnewprocp
+is not
+.Dv NULL ,
+the newly created thread is stored in
+.Fa *rnewprocp
+on successful completion.
 .Sh RETURN VALUES
 Upon successful completion of the fork operation,
 .Fn fork1
@@ -179,18 +147,20 @@ returns 0.
 Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
-The limit on the total number of system processes would be exceeded.
+The system limits on the total number of threads or processes would
+be exceeded.
 .It Bq Er EAGAIN
 The limit
 .Dv RLIMIT_NPROC
 on the total number of processes under execution by this
 user id would be exceeded.
+.It Bq Er ENOMEM
+There is insufficient swap space for the new thread.
 .El
 .Sh SEE ALSO
 .Xr execve 2 ,
 .Xr fork 2 ,
 .Xr vfork 2 ,
-.Xr __tfork 3 ,
 .Xr kthread_create 9 ,
 .Xr psignal 9 ,
 .Xr tfind 9

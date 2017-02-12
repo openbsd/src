@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2015/05/05 02:13:47 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2017/02/12 04:55:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -67,18 +67,11 @@ extern void switch_exit(struct proc *);
  * Copy and update the kernel stack and pcb, making the child
  * ready to run, and marking it so that it can return differently
  * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
  */
 
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
+    void (*func)(void *), void *arg)
 {
 	struct ksigframe {
 		void (*func)(void *);
@@ -100,10 +93,12 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_tf = (struct trapframe *)USER_REGS(p2);
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack and/or TCB.
 	 */
 	if (stack != NULL)
-		USER_REGS(p2)->r[31] = (u_int)stack + stacksize;
+		USER_REGS(p2)->r[31] = (u_int)stack;
+	if (tcb != NULL)
+		USER_REGS(p2)->r[27] = (u_int)tcb;
 
 	ksfp = (struct ksigframe *)((char *)p2->p_addr + USPACE) - 1;
 	ksfp->func = func;

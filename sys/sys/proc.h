@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.233 2017/02/08 20:58:30 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.234 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -447,10 +447,8 @@ struct uidinfo *uid_find(uid_t);
 #define FORK_SYSTEM	0x00000020
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
-#define FORK_TFORK	0x00000100
 #define FORK_SIGHAND	0x00000200
 #define FORK_PTRACE	0x00000400
-#define FORK_THREAD	0x00000800
 
 #define EXIT_NORMAL		0x00000001
 #define EXIT_THREAD		0x00000002
@@ -517,10 +515,14 @@ void	exit1(struct proc *, int, int);
 void	exit2(struct proc *);
 int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
 	    register_t *);
+void	cpu_fork(struct proc *_curp, struct proc *_child, void *_stack,
+	    void *_tcb, void (*_func)(void *), void *_arg);
 void	cpu_exit(struct proc *);
 void	process_initialize(struct process *, struct proc *);
-int	fork1(struct proc *, int, void *, pid_t *, void (*)(void *),
-	    void *, register_t *, struct proc **);
+int	fork1(struct proc *_curp, int _flags, void (*_func)(void *),
+	    void *_arg, register_t *_retval, struct proc **_newprocp);
+int	thread_fork(struct proc *_curp, void *_stack, void *_tcb,
+	    pid_t *_tidptr, register_t *_retval);
 int	groupmember(gid_t, struct ucred *);
 void	dorefreshcreds(struct process *, struct proc *);
 void	dosigsuspend(struct proc *, sigset_t);

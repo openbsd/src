@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.35 2016/04/03 19:49:35 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.36 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -66,10 +66,10 @@ void setredzone(struct proc *);
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
  * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * than the parent.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
@@ -112,10 +112,12 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	setredzone(p2);
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack and/or TCB
 	 */
 	if (stack != NULL)
-		tf->tf_rsp = (u_int64_t)stack + stacksize;
+		tf->tf_rsp = (u_int64_t)stack;
+	if (tcb != NULL)
+		pcb->pcb_fsbase = (u_int64_t)tcb;
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r12 = (u_int64_t)func;

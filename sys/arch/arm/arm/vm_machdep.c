@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2016/07/31 09:18:01 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -80,24 +80,21 @@ extern void proc_trampoline	(void);
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * proc_trampoline() and call 'func' with 'arg' as an argument.
+ * For normal processes this is child_return(), which causes the
+ * child to go directly to user level with an apparent return value
+ * of 0 from fork(), while the parent process returns normally.
+ * For kernel threads this will be a function that never return.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
- *
- * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * An alternate user-level stack or TCB can be requested by passing
+ * a non-NULL value; these are poked into the PCB so they're in
+ * effect at the initial return to userspace.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack,
-    size_t stacksize, void (*func) (void *), void *arg)
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -130,16 +127,17 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 
 	pmap_activate(p2);
 
-	p2->p_addr->u_pcb.pcb_tf = tf =
-	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
+	pcb->pcb_tf = tf = (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
 	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	/*
-	 * If specified, give the child a different stack (make sure
-	 * it's 8-byte aligned).
+	 * If specified, give the child a different stack and/or TCB.
+	 * Enforce 8-byte alignment on the stack.
 	 */
 	if (stack != NULL)
-		tf->tf_usr_sp = ((vaddr_t)(stack) + stacksize) & -8;
+		tf->tf_usr_sp = (vaddr_t)stack & -8;
+	if (tcb != NULL)
+		p2->p_addr->u_pcb.pcb_tcb = tcb;
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r4 = (u_int)func;

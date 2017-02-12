@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.265 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.266 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -437,8 +437,7 @@ main(void *framep)
 	{
 		struct proc *initproc;
 
-		if (fork1(p, FORK_FORK, NULL, 0, start_init, NULL, NULL,
-		    &initproc))
+		if (fork1(p, FORK_FORK, start_init, NULL, NULL, &initproc))
 			panic("fork init");
 		initprocess = initproc->p_p;
 	}

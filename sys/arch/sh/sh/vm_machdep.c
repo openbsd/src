@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2015/05/05 02:13:47 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
@@ -120,23 +120,20 @@ extern void proc_trampoline(void);
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- *
+ * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * proc_trampoline() and call 'func' with 'arg' as an argument.
+ * For normal processes this is child_return(), which causes the
+ * child to go directly to user level with an apparent return value
+ * of 0 from fork(), while the parent process returns normally.
+ * For kernel threads this will be a function that never return.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
- *
- * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * An alternate user-level stack or TCB can be requested by passing
+ * a non-NULL value; these are poked into the PCB so they're in
+ * effect at the initial return to userspace.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
@@ -213,7 +210,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		tf->tf_r15 = (u_int)stack + stacksize;
+		tf->tf_r15 = (int)stack;
+	if (tcb != NULL)
+		tf->tf_gbr = (int)tcb;
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;

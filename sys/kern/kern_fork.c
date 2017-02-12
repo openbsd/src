@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.194 2017/02/08 20:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.195 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -75,12 +75,13 @@ int	randompid;		/* when set to 1, pid's go random */
 struct	forkstat forkstat;
 
 void fork_return(void *);
-void tfork_child_return(void *);
 pid_t alloctid(void);
 pid_t allocpid(void);
 int ispidtaken(pid_t);
 
-void process_new(struct proc *, struct process *, int);
+struct proc *thread_new(struct proc *_parent, vaddr_t _uaddr);
+struct process *process_new(struct proc *, struct process *, int);
+int fork_check_maxthread(uid_t _uid);
 
 void
 fork_return(void *arg)
@@ -101,14 +102,14 @@ sys_fork(struct proc *p, void *v, register_t *retval)
 	flags = FORK_FORK;
 	if (p->p_p->ps_ptmask & PTRACE_FORK)
 		flags |= FORK_PTRACE;
-	return (fork1(p, flags, NULL, 0, fork_return, NULL, retval, NULL));
+	return fork1(p, flags, fork_return, NULL, retval, NULL);
 }
 
 int
 sys_vfork(struct proc *p, void *v, register_t *retval)
 {
-	return (fork1(p, FORK_VFORK|FORK_PPWAIT, NULL, 0, NULL,
-	    NULL, retval, NULL));
+	return fork1(p, FORK_VFORK|FORK_PPWAIT, child_return, NULL,
+	    retval, NULL);
 }
 
 int
@@ -120,32 +121,58 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	size_t psize = SCARG(uap, psize);
 	struct __tfork param = { 0 };
-	int flags;
 	int error;
 
 	if (psize == 0 || psize > sizeof(param))
-		return (EINVAL);
+		return EINVAL;
 	if ((error = copyin(SCARG(uap, param), &param, psize)))
-		return (error);
+		return error;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_STRUCT))
 		ktrstruct(p, "tfork", &param, sizeof(param));
 #endif
 
-	flags = FORK_TFORK | FORK_THREAD | FORK_SIGHAND | FORK_SHAREVM
-	    | FORK_SHAREFILES;
-
-	return (fork1(p, flags, param.tf_stack, param.tf_tid,
-	    tfork_child_return, param.tf_tcb, retval, NULL));
+	return thread_fork(p, param.tf_stack, param.tf_tcb, param.tf_tid,
+	    retval);
 }
 
-void
-tfork_child_return(void *arg)
+/*
+ * Allocate and initialize a thread (proc) structure, given the parent thread.
+ */
+struct proc *
+thread_new(struct proc *parent, vaddr_t uaddr)
 {
-	struct proc *p = curproc;
+	struct proc *p; 
 
-	TCB_SET(p, arg);
-	child_return(p);
+	p = pool_get(&proc_pool, PR_WAITOK);
+	p->p_stat = SIDL;			/* protect against others */
+	p->p_flag = 0;
+
+	/*
+	 * Make a proc table entry for the new process.
+	 * Start by zeroing the section of proc that is zero-initialized,
+	 * then copy the section that is copied directly from the parent.
+	 */
+	memset(&p->p_startzero, 0,
+	    (caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero);
+	memcpy(&p->p_startcopy, &parent->p_startcopy,
+	    (caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy);
+	crhold(p->p_ucred);
+	p->p_addr = (struct user *)uaddr;
+
+	/*
+	 * Initialize the timeouts.
+	 */
+	timeout_set(&p->p_sleep_to, endtsleep, p);
+
+	/*
+	 * set priority of child to be that of parent
+	 * XXX should move p_estcpu into the region of struct proc which gets
+	 * copied.
+	 */
+	scheduler_fork_hook(parent, p);
+
+	return p;
 }
 
 /*
@@ -175,7 +202,7 @@ process_initialize(struct process *pr, struct proc *p)
 /*
  * Allocate and initialize a new process.
  */
-void
+struct process *
 process_new(struct proc *p, struct process *parent, int flags)
 {
 	struct process *pr;
@@ -246,36 +273,16 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	/* it's sufficiently inited to be globally visible */
 	LIST_INSERT_HEAD(&allprocess, pr, ps_list);
+
+	return pr;
 }
 
 /* print the 'table full' message once per 10 seconds */
 struct timeval fork_tfmrate = { 10, 0 };
 
 int
-fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
-    void (*func)(void *), void *arg, register_t *retval,
-    struct proc **rnewprocp)
+fork_check_maxthread(uid_t uid)
 {
-	struct process *curpr = curp->p_p;
-	struct process *pr;
-	struct proc *p;
-	uid_t uid;
-	struct vmspace *vm;
-	int count;
-	vaddr_t uaddr;
-	int s;
-	struct  ptrace_state *newptstat = NULL;
-
-	/* sanity check some flag combinations */
-	if (flags & FORK_THREAD) {
-		if ((flags & FORK_SHAREFILES) == 0 ||
-		    (flags & FORK_SIGHAND) == 0 ||
-		    (flags & FORK_SYSTEM) != 0)
-			return (EINVAL);
-	}
-	if (flags & FORK_SIGHAND && (flags & FORK_SHAREVM) == 0)
-		return (EINVAL);
-
 	/*
 	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create. We reserve
@@ -285,48 +292,80 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * the variable nthreads is the current number of procs, maxthread is
 	 * the limit.
 	 */
-	uid = curp->p_ucred->cr_ruid;
 	if ((nthreads >= maxthread - 5 && uid != 0) || nthreads >= maxthread) {
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc");
-		return (EAGAIN);
+		return EAGAIN;
 	}
 	nthreads++;
 
-	if ((flags & FORK_THREAD) == 0) {
-		if ((nprocesses >= maxprocess - 5 && uid != 0) ||
-		    nprocesses >= maxprocess) {
-			static struct timeval lasttfm;
+	return 0;
+}
 
-			if (ratecheck(&lasttfm, &fork_tfmrate))
-				tablefull("process");
-			nthreads--;
-			return (EAGAIN);
-		}
-		nprocesses++;
+static inline void
+fork_thread_start(struct proc *p, struct proc *parent, int flags)
+{
+	int s;
 
-		/*
-		 * Increment the count of processes running with
-		 * this uid.  Don't allow a nonprivileged user to
-		 * exceed their current limit.
-		 */
-		count = chgproccnt(uid, 1);
-		if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
-			(void)chgproccnt(uid, -1);
-			nprocesses--;
-			nthreads--;
-			return (EAGAIN);
-		}
+	SCHED_LOCK(s);
+	p->p_stat = SRUN;
+	p->p_cpu = sched_choosecpu_fork(parent, flags);
+	setrunqueue(p);
+	SCHED_UNLOCK(s);
+}
+
+int
+fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
+    register_t *retval, struct proc **rnewprocp)
+{
+	struct process *curpr = curp->p_p;
+	struct process *pr;
+	struct proc *p;
+	uid_t uid = curp->p_ucred->cr_ruid;
+	struct vmspace *vm;
+	int count;
+	vaddr_t uaddr;
+	int error;
+	struct  ptrace_state *newptstat = NULL;
+
+	KASSERT((flags & ~(FORK_FORK | FORK_VFORK | FORK_PPWAIT | FORK_PTRACE
+	    | FORK_IDLE | FORK_SHAREVM | FORK_SHAREFILES | FORK_NOZOMBIE
+	    | FORK_SYSTEM | FORK_SIGHAND)) == 0);
+	KASSERT((flags & FORK_SIGHAND) == 0 || (flags & FORK_SHAREVM));
+	KASSERT(func != NULL);
+
+	if ((error = fork_check_maxthread(uid)))
+		return error;
+
+	if ((nprocesses >= maxprocess - 5 && uid != 0) ||
+	    nprocesses >= maxprocess) {
+		static struct timeval lasttfm;
+
+		if (ratecheck(&lasttfm, &fork_tfmrate))
+			tablefull("process");
+		nthreads--;
+		return EAGAIN;
+	}
+	nprocesses++;
+
+	/*
+	 * Increment the count of processes running with this uid.
+	 * Don't allow a nonprivileged user to exceed their current limit.
+	 */
+	count = chgproccnt(uid, 1);
+	if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+		(void)chgproccnt(uid, -1);
+		nprocesses--;
+		nthreads--;
+		return EAGAIN;
 	}
 
 	uaddr = uvm_uarea_alloc();
 	if (uaddr == 0) {
-		if ((flags & FORK_THREAD) == 0) {
-			(void)chgproccnt(uid, -1);
-			nprocesses--;
-		}
+		(void)chgproccnt(uid, -1);
+		nprocesses--;
 		nthreads--;
 		return (ENOMEM);
 	}
@@ -334,37 +373,9 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	/*
 	 * From now on, we're committed to the fork and cannot fail.
 	 */
+	p = thread_new(curp, uaddr);
+	pr = process_new(p, curpr, flags);
 
-	/* Allocate new proc. */
-	p = pool_get(&proc_pool, PR_WAITOK);
-
-	p->p_stat = SIDL;			/* protect against others */
-	p->p_flag = 0;
-
-	/*
-	 * Make a proc table entry for the new process.
-	 * Start by zeroing the section of proc that is zero-initialized,
-	 * then copy the section that is copied directly from the parent.
-	 */
-	memset(&p->p_startzero, 0,
-	    (caddr_t)&p->p_endzero - (caddr_t)&p->p_startzero);
-	memcpy(&p->p_startcopy, &curp->p_startcopy,
-	    (caddr_t)&p->p_endcopy - (caddr_t)&p->p_startcopy);
-	crhold(p->p_ucred);
-
-	/*
-	 * Initialize the timeouts.
-	 */
-	timeout_set(&p->p_sleep_to, endtsleep, p);
-
-	if (flags & FORK_THREAD) {
-		atomic_setbits_int(&p->p_flag, P_THREAD);
-		p->p_p = pr = curpr;
-		pr->ps_refcnt++;
-	} else {
-		process_new(p, curpr, flags);
-		pr = p->p_p;
-	}
 	p->p_fd		= pr->ps_fd;
 	p->p_vmspace	= pr->ps_vmspace;
 	if (pr->ps_flags & PS_SYSTEM)
@@ -380,22 +391,10 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if ((flags & FORK_THREAD) == 0 && curpr->ps_traceflag & KTRFAC_INHERIT)
+	if (curpr->ps_traceflag & KTRFAC_INHERIT)
 		ktrsettrace(pr, curpr->ps_traceflag, curpr->ps_tracevp,
 		    curpr->ps_tracecred);
 #endif
-
-	/*
-	 * set priority of child to be that of parent
-	 * XXX should move p_estcpu into the region of struct proc which gets
-	 * copied.
-	 */
-	scheduler_fork_hook(curp, p);
-
-	if (flags & FORK_THREAD)
-		sigstkinit(&p->p_sigstk);
-
-	p->p_addr = (struct user *)uaddr;
 
 	/*
 	 * Finish creating the child thread.  cpu_fork() will copy
@@ -405,7 +404,7 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	 * and will not return here.  If this is a kernel thread,
 	 * the specified entry point will be executed.
 	 */
-	cpu_fork(curp, p, stack, 0, func ? func : child_return, arg ? arg : p);
+	cpu_fork(curp, p, NULL, NULL, func, arg ? arg : p);
 
 	vm = pr->ps_vmspace;
 
@@ -415,11 +414,8 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 	} else if (flags & FORK_VFORK) {
 		forkstat.cntvfork++;
 		forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
-	} else if (flags & FORK_TFORK) {
-		forkstat.cnttfork++;
 	} else {
 		forkstat.cntkthread++;
-		forkstat.sizkthread += vm->vm_dsize + vm->vm_ssize;
 	}
 
 	if (pr->ps_flags & PS_TRACED && flags & FORK_FORK)
@@ -429,76 +425,46 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
-	if ((flags & FORK_THREAD) == 0) {
-		LIST_INSERT_HEAD(PIDHASH(pr->ps_pid), pr, ps_hash);
-		LIST_INSERT_AFTER(curpr, pr, ps_pglist);
-		LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
+	LIST_INSERT_HEAD(PIDHASH(pr->ps_pid), pr, ps_hash);
+	LIST_INSERT_AFTER(curpr, pr, ps_pglist);
+	LIST_INSERT_HEAD(&curpr->ps_children, pr, ps_sibling);
 
-		if (pr->ps_flags & PS_TRACED) {
-			pr->ps_oppid = curpr->ps_pid;
-			if (pr->ps_pptr != curpr->ps_pptr)
-				proc_reparent(pr, curpr->ps_pptr);
+	if (pr->ps_flags & PS_TRACED) {
+		pr->ps_oppid = curpr->ps_pid;
+		if (pr->ps_pptr != curpr->ps_pptr)
+			proc_reparent(pr, curpr->ps_pptr);
 
-			/*
-			 * Set ptrace status.
-			 */
-			if (flags & FORK_FORK) {
-				pr->ps_ptstat = newptstat;
-				newptstat = NULL;
-				curpr->ps_ptstat->pe_report_event = PTRACE_FORK;
-				pr->ps_ptstat->pe_report_event = PTRACE_FORK;
-				curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
-				pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
-			}
-		}
-	} else {
-		TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
 		/*
-		 * if somebody else wants to take us to single threaded mode,
-		 * count ourselves in.
+		 * Set ptrace status.
 		 */
-		if (pr->ps_single) {
-			curpr->ps_singlecount++;
-			atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
+		if (newptstat != NULL) {
+			pr->ps_ptstat = newptstat;
+			newptstat = NULL;
+			curpr->ps_ptstat->pe_report_event = PTRACE_FORK;
+			pr->ps_ptstat->pe_report_event = PTRACE_FORK;
+			curpr->ps_ptstat->pe_other_pid = pr->ps_pid;
+			pr->ps_ptstat->pe_other_pid = curpr->ps_pid;
 		}
-	}
-
-	if (tidptr != NULL) {
-		pid_t	tid = p->p_tid + THREAD_PID_OFFSET;
-
-		if (copyout(&tid, tidptr, sizeof(tid)))
-			psignal(curp, SIGSEGV);
 	}
 
 	/*
 	 * For new processes, set accounting bits and mark as complete.
 	 */
-	if ((flags & FORK_THREAD) == 0) {
-		getnanotime(&pr->ps_start);
-		pr->ps_acflag = AFORK;
-		atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
-	}
+	getnanotime(&pr->ps_start);
+	pr->ps_acflag = AFORK;
+	atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
 
-	/*
-	 * Make child runnable and add to run queue.
-	 */
-	if ((flags & FORK_IDLE) == 0) {
-		SCHED_LOCK(s);
-		p->p_stat = SRUN;
-		p->p_cpu = sched_choosecpu_fork(curp, flags);
-		setrunqueue(p);
-		SCHED_UNLOCK(s);
-	} else
+	if ((flags & FORK_IDLE) == 0)
+		fork_thread_start(p, curp, flags);
+	else
 		p->p_cpu = arg;
 
-	if (newptstat)
-		free(newptstat, M_SUBPROC, sizeof(*newptstat));
+	free(newptstat, M_SUBPROC, sizeof(*newptstat));
 
 	/*
 	 * Notify any interested parties about the new process.
 	 */
-	if ((flags & FORK_THREAD) == 0)
-		KNOTE(&curpr->ps_klist, NOTE_FORK | pr->ps_pid);
+	KNOTE(&curpr->ps_klist, NOTE_FORK | pr->ps_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.
@@ -533,16 +499,97 @@ fork1(struct proc *curp, int flags, void *stack, pid_t *tidptr,
 		psignal(curp, SIGTRAP);
 
 	/*
-	 * Return child pid to parent process,
-	 * marking us as parent via retval[1].
+	 * Return child pid to parent process
 	 */
 	if (retval != NULL) {
-		retval[0] = (flags & FORK_THREAD) == 0 ? pr->ps_pid :
-		    (p->p_tid + THREAD_PID_OFFSET);
+		retval[0] = pr->ps_pid;
 		retval[1] = 0;
 	}
 	return (0);
 }
+
+int
+thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
+    register_t *retval)
+{
+	struct process *pr = curp->p_p;
+	struct proc *p;
+	pid_t tid;
+	vaddr_t uaddr;
+	int error;
+
+	if (stack == NULL)
+		return EINVAL;
+
+	if ((error = fork_check_maxthread(curp->p_ucred->cr_ruid)))
+		return error;
+
+	uaddr = uvm_uarea_alloc();
+	if (uaddr == 0) {
+		nthreads--;
+		return ENOMEM;
+	}
+
+	/*
+	 * From now on, we're committed to the fork and cannot fail.
+	 */
+	p = thread_new(curp, uaddr);
+	atomic_setbits_int(&p->p_flag, P_THREAD);
+	sigstkinit(&p->p_sigstk);
+
+	/* other links */
+	p->p_p = pr;
+	pr->ps_refcnt++;
+
+	/* local copies */
+	p->p_fd		= pr->ps_fd;
+	p->p_vmspace	= pr->ps_vmspace;
+
+	/*
+	 * Finish creating the child thread.  cpu_fork() will copy
+	 * and update the pcb and make the child ready to run.  The
+	 * child will exit directly to user mode via child_return()
+	 * on its first time slice and will not return here.
+	 */
+	cpu_fork(curp, p, stack, tcb, child_return, p);
+
+	p->p_tid = alloctid();
+
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
+	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+
+	/*
+	 * if somebody else wants to take us to single threaded mode,
+	 * count ourselves in.
+	 */
+	if (pr->ps_single) {
+		pr->ps_singlecount++;
+		atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
+	}
+
+	/*
+	 * Return tid to parent thread and copy it out to userspace
+	 */
+	retval[0] = tid = p->p_tid + THREAD_PID_OFFSET;
+	retval[1] = 0;
+	if (tidptr != NULL) {
+		if (copyout(&tid, tidptr, sizeof(tid)))
+			psignal(curp, SIGSEGV);
+	}
+
+	fork_thread_start(p, curp, 0);
+
+	/*
+	 * Update stats now that we know the fork was successful.
+	 */
+	forkstat.cnttfork++;
+	uvmexp.forks++;
+	uvmexp.forks_sharevm++;
+
+	return 0;
+}
+
 
 /* Find an unused tid */
 pid_t

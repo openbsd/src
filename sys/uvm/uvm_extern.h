@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.139 2016/06/05 08:35:57 stefan Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.140 2017/02/12 04:55:08 guenther Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -272,8 +272,6 @@ extern vaddr_t vm_min_kernel_address;
 
 void			vmapbuf(struct buf *, vsize_t);
 void			vunmapbuf(struct buf *, vsize_t);
-void			cpu_fork(struct proc *, struct proc *, void *,
-			    size_t, void (*)(void *), void *);
 struct uvm_object	*uao_create(vsize_t, int);
 void			uao_detach(struct uvm_object *);
 void			uao_detach_locked(struct uvm_object *);
