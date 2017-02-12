@@ -1564,6 +1564,7 @@
 ./usr/share/man/man1/ar.1
 ./usr/share/man/man1/as.1
 ./usr/share/man/man1/c++filt.1
+./usr/share/man/man1/clang-local.1
 ./usr/share/man/man1/flex.1
 ./usr/share/man/man1/gcc-local.1
 ./usr/share/man/man1/gcc.1
@@ -2859,6 +2860,7 @@
 ./usr/share/man/man9/task_add.9
 ./usr/share/man/man9/tc_init.9
 ./usr/share/man/man9/tfind.9
+./usr/share/man/man9/thread_fork.9
 ./usr/share/man/man9/time_second.9
 ./usr/share/man/man9/timeout.9
 ./usr/share/man/man9/tsleep.9
