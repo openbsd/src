@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.122 2016/12/27 09:17:52 jca Exp $
+#	$OpenBSD: special,v 1.123 2017/02/12 08:59:52 landry Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -121,6 +121,9 @@ root		type=dir mode=0700 uname=root gname=wheel
 .login		type=file mode=0644 uname=root gname=wheel
 .profile	type=file mode=0644 uname=root gname=wheel
 .rhosts		type=file mode=0600 uname=root gname=wheel optional
+.ssh		type=dir mode=0700 uname=root gname=wheel
+authorized_keys	type=file mode=0600 uname=root gname=wheel
+..	#root/.ssh
 ..	#root
 
 sbin		type=dir mode=0755 uname=root gname=wheel ignore
