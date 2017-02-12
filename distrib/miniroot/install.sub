@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.969 2017/02/08 23:13:02 rpe Exp $
+#	$OpenBSD: install.sub,v 1.970 2017/02/12 08:58:30 landry Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2868,7 +2868,6 @@ do_install(){
 	# During autoinstall, add root user's public ssh key to authorized_keys.
 	[[ -n "$_rootkey" ]] && (
 		umask 077
-		mkdir /mnt/root/.ssh
 		print -r -- "$_rootkey" >>/mnt/root/.ssh/authorized_keys
 	)
 
