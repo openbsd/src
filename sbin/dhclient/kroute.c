@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.82 2017/02/12 13:15:50 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.83 2017/02/12 13:55:01 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -415,7 +415,8 @@ set_interface_mtu(int mtu)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_SET_INTERFACE_MTU, 0, 0, -1,
 	    &imsg, sizeof(imsg));
 	if (rslt == -1)
-		log_warnx("set_interface_mtu: imsg_compose: %s", strerror(errno));
+		log_warnx("set_interface_mtu: imsg_compose: %s",
+		    strerror(errno));
 
 	flush_unpriv_ibuf("set_interface_mtu");
 }
@@ -618,7 +619,8 @@ resolv_conf_priority(struct interface_info *ifi)
 	do {
 		len = read(s, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
-			log_warnx("get default route read: %s", strerror(errno));
+			log_warnx("get default route read: %s",
+			    strerror(errno));
 			break;
 		} else if (len == 0) {
 			log_warnx("no data from default route read");
@@ -668,8 +670,8 @@ create_route_label(struct sockaddr_rtlabel *label)
 	}
 
 	if (len >= sizeof(label->sr_label)) {
-		log_warnx("creating route label: label too long (%d vs %zu)", len,
-		    sizeof(label->sr_label));
+		log_warnx("creating route label: label too long (%d vs %zu)",
+		    len, sizeof(label->sr_label));
 		return (1);
 	}
 

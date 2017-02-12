@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.80 2017/02/12 13:15:50 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.81 2017/02/12 13:55:01 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -480,8 +480,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	/* Figure out the size of the data. */
 	for (i = 0; dhcp_options[code].format[i]; i++) {
 		if (!numhunk) {
-			log_warnx("%s: Excess information in format string: %s",
-			    dhcp_options[code].name,
+			log_warnx("%s: Excess information in format string: "
+			    "%s", dhcp_options[code].name,
 			    &(dhcp_options[code].format[i]));
 			goto done;
 		}
@@ -614,7 +614,8 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				dp++;
 				break;
 			default:
-				log_warnx("Unexpected format code %c", fmtbuf[j]);
+				log_warnx("Unexpected format code %c",
+				    fmtbuf[j]);
 				goto toobig;
 			}
 			if (opcount >= opleft || opcount == -1)
@@ -668,7 +669,8 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
 #ifdef DEBUG
-		log_debug("Discarding packet with chaddr != %s (%s)", ifi->name,
+		log_debug("Discarding packet with chaddr != %s (%s)",
+		    ifi->name,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
 #endif
 		return;
@@ -685,8 +687,8 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 	TAILQ_FOREACH(ap, &config->reject_list, next)
 		if (from.s_addr == ap->addr.s_addr) {
 #ifdef DEBUG
-			log_debug("Discarding packet from address on reject list "
-			    "(%s)", inet_ntoa(from));
+			log_debug("Discarding packet from address on reject "
+			    "list (%s)", inet_ntoa(from));
 #endif
 			return;
 		}
@@ -723,8 +725,8 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		    memcmp(options[i].data, config->send_options[i].data,
 		    options[i].len) != 0)) {
 #ifdef DEBUG
-			log_debug("Discarding packet with client-identifier '%s'",
-			    pretty_print_option(i, &options[i], 0));
+			log_debug("Discarding packet with client-identifier "
+			    "'%s'", pretty_print_option(i, &options[i], 0));
 #endif
 			goto done;
 		}
@@ -750,8 +752,8 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 			break;
 		default:
 #ifdef DEBUG
-			log_debug("Discarding DHCP packet of unknown type (%d)",
-				options[DHO_DHCP_MESSAGE_TYPE].data[0]);
+			log_debug("Discarding DHCP packet of unknown type "
+			    "(%d)", options[DHO_DHCP_MESSAGE_TYPE].data[0]);
 #endif
 			break;
 		}

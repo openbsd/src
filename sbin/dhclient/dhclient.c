@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.395 2017/02/12 13:15:50 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.396 2017/02/12 13:55:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -696,8 +696,8 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-d | -q] [-u] [-c file] [-i options] [-L file] [-l file] "
-	    "interface\n", __progname);
+	    "usage: %s [-d | -q] [-u] [-c file] [-i options] [-L file] "
+	    "[-l file] interface\n", __progname);
 	exit(1);
 }
 
@@ -808,7 +808,8 @@ state_reboot(void *xifi)
 }
 
 /*
- * Called when a lease has completely expired and we've been unable to renew it.
+ * Called when a lease has completely expired and we've been unable to
+ * renew it.
  */
 void
 state_init(void *xifi)
@@ -987,8 +988,8 @@ bind_lease(struct interface_info *ifi)
 	client->new->rebind = lease->rebind;
 
 	/*
-	 * A duplicate lease once we are responsible & S_RENEWING means we don't
-	 * need to change the interface, routing table or resolv.conf.
+	 * A duplicate lease once we are responsible & S_RENEWING means we
+	 * don't need to change the interface, routing table or resolv.conf.
 	 */
 	if ((client->flags & IS_RESPONSIBLE) && client->state == S_RENEWING &&
 	    compare_lease(client->active, client->new) == 0) {
@@ -1178,10 +1179,10 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
 	if (TAILQ_EMPTY(&client->offered_leases)) {
 		TAILQ_INSERT_HEAD(&client->offered_leases, lease, next);
 	} else if (lease->address.s_addr == client->requested_address.s_addr) {
-		/* The lease we expected - put it at the head of the list. */
+		/* The expected lease - put it at the head of the list. */
 		TAILQ_INSERT_HEAD(&client->offered_leases, lease, next);
 	} else {
-		/* Not the lease we expected - put it at the end of the list. */
+		/* Not the expected lease - put it at the end of the list. */
 		TAILQ_INSERT_TAIL(&client->offered_leases, lease, next);
 	}
 
@@ -1491,7 +1492,8 @@ state_panic(void *xifi)
 			continue;
 		if (lp->is_static) {
 			set_lease_times(lp);
-			log_info("Trying static lease %s", inet_ntoa(lp->address));
+			log_info("Trying static lease %s",
+			    inet_ntoa(lp->address));
 		} else if (lp->expiry <= cur_time) {
 			continue;
 		} else
@@ -1541,7 +1543,8 @@ send_request(void *xifi)
 	 * reused our old address.  In the former case, we're hosed
 	 * anyway.  This is not a win-prone situation.
 	 */
-	if (client->state == S_REBOOTING && interval > config->reboot_timeout) {
+	if (client->state == S_REBOOTING && interval >
+	    config->reboot_timeout) {
 		client->state = S_INIT;
 		cancel_timeout();
 		state_init(ifi);
@@ -2223,7 +2226,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		}
 
 		if (n == 0) {
-			/* Connection closed -- other end should log message. */
+			/* Connection closed - other end should log message. */
 			quit = INTERNALSIG;
 			continue;
 		}
@@ -2238,8 +2241,8 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		/* Truncate the file so monitoring process see exit. */
 		rslt = truncate(path_option_db, 0);
 		if (rslt == -1)
-			log_warnx("Unable to truncate '%s': %s", path_option_db,
-			    strerror(errno));
+			log_warnx("Unable to truncate '%s': %s",
+			    path_option_db, strerror(errno));
 	}
 
 	/*
@@ -2314,8 +2317,9 @@ get_ifname(struct interface_info *ifi, char *arg)
  * Update resolv.conf.
  */
 char *
-resolv_conf_contents(struct interface_info *ifi, struct option_data *domainname,
-    struct option_data *nameservers, struct option_data *domainsearch)
+resolv_conf_contents(struct interface_info *ifi,
+    struct option_data *domainname, struct option_data *nameservers,
+    struct option_data *domainsearch)
 {
 	char *dn, *ns, *nss[MAXNS], *contents, *courtesy, *p, *buf;
 	size_t len;
@@ -2573,7 +2577,8 @@ clone_lease(struct client_lease *oldlease)
 		if (oldlease->options[i].len == 0)
 			continue;
 		newlease->options[i].len = oldlease->options[i].len;
-		newlease->options[i].data = calloc(1, newlease->options[i].len);
+		newlease->options[i].data = calloc(1,
+		    newlease->options[i].len);
 		if (newlease->options[i].data == NULL)
 			goto cleanup;
 		memcpy(newlease->options[i].data, oldlease->options[i].data,
@@ -2639,7 +2644,8 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_RESOLV_CONF,
 	    0, 0, -1, contents, sz);
 	if (rslt == -1)
-		log_warnx("write_resolv_conf: imsg_compose: %s", strerror(errno));
+		log_warnx("write_resolv_conf: imsg_compose: %s",
+		    strerror(errno));
 
 	flush_unpriv_ibuf("write_resolv_conf");
 }
@@ -2652,7 +2658,8 @@ write_option_db(u_int8_t *contents, size_t sz)
 	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_OPTION_DB,
 	    0, 0, -1, contents, sz);
 	if (rslt == -1)
-		log_warnx("write_option_db: imsg_compose: %s", strerror(errno));
+		log_warnx("write_option_db: imsg_compose: %s",
+		    strerror(errno));
 
 	flush_unpriv_ibuf("write_option_db");
 }
@@ -2735,7 +2742,8 @@ priv_write_file(char *path, int flags, mode_t mode,
  *     route add -net $dest -netmask $mask -cloning -iface $iface
  */
 void
-add_direct_route(struct in_addr dest, struct in_addr mask, struct in_addr iface)
+add_direct_route(struct in_addr dest, struct in_addr mask,
+    struct in_addr iface)
 {
 	struct in_addr ifa = { INADDR_ANY };
 
@@ -2927,7 +2935,8 @@ set_lease_times(struct client_lease *lease)
 
 	lease->rebind = (lease->expiry * 7) / 8;
 	if (lease->options[DHO_DHCP_REBINDING_TIME].len == sizeof(uint32val)) {
-		memcpy(&uint32val, lease->options[DHO_DHCP_REBINDING_TIME].data,
+		memcpy(&uint32val,
+		    lease->options[DHO_DHCP_REBINDING_TIME].data,
 		    sizeof(uint32val));
 		lease->rebind = ntohl(uint32val);
 		if (lease->rebind > lease->expiry)

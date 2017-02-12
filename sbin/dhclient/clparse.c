@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.104 2017/02/12 13:15:50 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.105 2017/02/12 13:55:01 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -463,7 +463,8 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
  *		client-lease-declarations client-lease-declaration
  */
 void
-parse_client_lease_statement(FILE *cfile, int is_static, struct interface_info *ifi)
+parse_client_lease_statement(FILE *cfile, int is_static,
+    struct interface_info *ifi)
 {
 	struct client_state	*client = ifi->client;
 	struct client_lease	*lease, *lp, *pl;
@@ -767,8 +768,8 @@ bad_flag:
 				dp = cidr;
 				goto alloc;
 			default:
-				log_warnx("Bad format %c in parse_option_param.",
-				    *fmt);
+				log_warnx("Bad format %c in "
+				    "parse_option_param.", *fmt);
 				skip_to_semi(cfile);
 				return (-1);
 			}
