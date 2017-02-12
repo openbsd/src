@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.449 2017/02/02 21:35:05 rpe Exp $
+#	$OpenBSD: Makefile,v 1.450 2017/02/12 08:56:17 landry Exp $
 
 .include <bsd.own.mk>
 
@@ -110,6 +110,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/root/.Xdefaults; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cvsrc \
 		    ${DESTDIR}/root/.cvsrc; \
+		${INSTALL} -c -o root -g wheel -m 600 /dev/null \
+		    ${DESTDIR}/root/.ssh/authorized_keys; \
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/.cshrc; \

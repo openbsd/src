@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.293 2016/12/27 09:17:52 jca Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.294 2017/02/12 08:56:17 landry Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -118,6 +118,8 @@ home
 mnt
 ..
 root				mode=0700
+    .ssh			uname=root mode=0700
+    ..
 ..
 sbin
 ..
