@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.16 2017/02/13 19:15:39 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.17 2017/02/13 21:57:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -276,8 +276,7 @@ got_one(struct protocol *l)
 	memset(&pc, 0, sizeof(pc));
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof(u), &pc)) == -1) {
-		log_warnx("receive_packet failed on %s: %s", ip->name,
-		    strerror(errno));
+		log_warn("receive_packet failed on %s", ip->name);
 		ip->errors++;
 		if ((!interface_status(ip)) ||
 		    (ip->noifmedia && ip->errors > 20)) {
