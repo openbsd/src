@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.358 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: session.c,v 1.359 2017/02/13 14:48:44 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2322,7 +2322,9 @@ parse_notification(struct peer *peer)
 		return (1);
 	}
 
-	if (errcode == ERR_CEASE && subcode == ERR_CEASE_ADMIN_DOWN) {
+	if (errcode == ERR_CEASE &&
+	    (subcode == ERR_CEASE_ADMIN_DOWN ||
+	     subcode == ERR_CEASE_ADMIN_RESET)) {
 		if (datalen >= sizeof(shutcomm_len)) {
 			memcpy(&shutcomm_len, p, sizeof(shutcomm_len));
 			p += sizeof(shutcomm_len);
@@ -3236,8 +3238,8 @@ session_stop(struct peer *peer, u_int8_t subcode)
 
 	communication = peer->conf.shutcomm;
 
-	if (subcode == ERR_CEASE_ADMIN_DOWN && communication &&
-	    *communication) {
+	if ((subcode == ERR_CEASE_ADMIN_DOWN || subcode == ERR_CEASE_ADMIN_RESET)
+	    && communication && *communication) {
 		shutcomm_len = strlen(communication);
 		if(shutcomm_len < SHUT_COMM_LEN) {
 			data[0] = shutcomm_len;

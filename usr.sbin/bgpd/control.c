@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.86 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.87 2017/02/13 14:48:44 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -354,6 +354,9 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
+					strlcpy(p->conf.shutcomm,
+					    neighbor->shutcomm,
+					    sizeof(neighbor->shutcomm));
 					if (!p->conf.down) {
 						session_stop(p,
 						    ERR_CEASE_ADMIN_RESET);

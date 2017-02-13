@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.75 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: parser.c,v 1.76 2017/02/13 14:48:44 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -255,7 +255,7 @@ static const struct token t_nei_mod_shutc[] = {
 static const struct token t_neighbor_modifiers[] = {
 	{ KEYWORD,	"up",		NEIGHBOR_UP,		NULL},
 	{ KEYWORD,	"down",		NEIGHBOR_DOWN,		t_nei_mod_shutc},
-	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		NULL},
+	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		t_nei_mod_shutc},
 	{ KEYWORD,	"refresh",	NEIGHBOR_RREFRESH,	NULL},
 	{ KEYWORD,	"destroy",	NEIGHBOR_DESTROY,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
