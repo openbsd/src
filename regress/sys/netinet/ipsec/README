@@ -4,10 +4,10 @@ or forward it after decryption.  By reflecting the packets, the way
 back is also tested.  When the response is received at the generating
 machine, the test is considered successful.
 
-Currently ICMP ping, UDP and TCP packets are encrypted with ESP.
+Currently ICMP ping, UDP and TCP packets are protected with ESP and AH.
 Transport and tunnel mode are tested with all combinations of IPv4
 and IPv6.
 
 TODO:
-Tests for AH/IPCOMP/IPIP and path MTU discovery are planned.
+Tests for IPCOMP/IPIP and path MTU discovery are planned.
 BPF output of enc0 and pflog0 should be checked.
