@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.167 2017/01/08 01:38:31 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.168 2017/02/13 12:23:47 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 8 2017 $
+.Dd $Mdocdate: February 13 2017 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -84,7 +84,10 @@ An exclamation mark may be specified to perform a reverse match.
 Following the accept/reject
 decision comes the matching of optional session related properties:
 .Bl -tag -width Ds
-.It Ic authenticated
+.It Xo
+.Op Ic \&!
+.Ic authenticated
+.Xc
 If specified, the rule will only be matched if the client session was
 authenticated either by requesting authentication over the network or
 because the message was submitted over the local enqueuer.

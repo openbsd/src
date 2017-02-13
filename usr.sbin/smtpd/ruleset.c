@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.33 2016/08/31 15:24:04 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.34 2017/02/13 12:23:47 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -56,9 +56,11 @@ ruleset_match(const struct envelope *evp)
 				continue;
 		}
 
-		if (r->r_wantauth && !(evp->flags & EF_AUTHENTICATED))
+		if ((r->r_wantauth && !r->r_negwantauth) && !(evp->flags & EF_AUTHENTICATED))
 			continue;
-		
+		if ((r->r_wantauth && r->r_negwantauth) && (evp->flags & EF_AUTHENTICATED))
+			continue;
+
 		ret = ruleset_check_source(r->r_sources, ss, evp->flags);
 		if (ret == -1) {
 			errno = EAGAIN;

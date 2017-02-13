@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.529 2017/02/03 08:23:46 guenther Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.530 2017/02/13 12:23:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -398,7 +398,8 @@ struct rule {
 	struct table		       *r_destination;
 
 	uint8_t				r_wantauth;
-	
+	uint8_t				r_negwantauth;
+
 	enum action_type		r_action;
 	union rule_dest {
 		char			buffer[EXPAND_BUFFER];
