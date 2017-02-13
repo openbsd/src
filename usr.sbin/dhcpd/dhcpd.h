@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.57 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.58 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -268,17 +268,17 @@ struct class {
 
 /* DHCP client lease structure... */
 struct client_lease {
-	struct client_lease *next;		/* Next lease in list. */
-	time_t expiry, renewal, rebind;		/* Lease timeouts. */
-	struct iaddr address;			/* Address being leased. */
-	char *server_name;			/* Name of boot server. */
-	char *filename;				/* File to boot. */
-	struct string_list *medium;		/* Network medium. */
+	struct client_lease *next;	/* Next lease in list. */
+	time_t expiry, renewal, rebind;	/* Lease timeouts. */
+	struct iaddr address;		/* Address being leased. */
+	char *server_name;		/* Name of boot server. */
+	char *filename;			/* File to boot. */
+	struct string_list *medium;	/* Network medium. */
 
-	unsigned int is_static : 1;	/* If set, lease is from config file. */
-	unsigned int is_bootp: 1;	/* If set, lease was aquired with BOOTP. */
+	unsigned int is_static : 1;	/* Lease is from config file. */
+	unsigned int is_bootp: 1;	/* Lease was aquired with BOOTP. */
 
-	struct option_data options[256];	/* Options supplied with lease. */
+	struct option_data options[256];/* Options supplied with lease. */
 };
 
 /* privsep message. fixed length for easy parsing */
@@ -515,8 +515,8 @@ time_t			 parse_timestamp(FILE *);
 struct lease		*parse_lease_declaration(FILE *);
 void			 parse_address_range(FILE *, struct subnet *);
 time_t			 parse_date(FILE *);
-unsigned char		*parse_numeric_aggregate(FILE *, unsigned char *, int *,
-			    int, int, int);
+unsigned char		*parse_numeric_aggregate(FILE *, unsigned char *,
+			    int *, int, int, int);
 void			 convert_num(unsigned char *, char *, int, int);
 
 /* tree.c */

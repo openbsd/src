@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.29 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.30 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -1078,7 +1078,8 @@ parse_option_param(FILE *cfile, struct group *group)
 					do {
 						token = next_token
 							(&val, cfile);
-						if (token != TOK_NUMBER_OR_NAME) {
+						if (token !=
+						    TOK_NUMBER_OR_NAME) {
 							parse_warn("expecting "
 							    "hex number.");
 							if (token != ';')
@@ -1089,9 +1090,11 @@ parse_option_param(FILE *cfile, struct group *group)
 						convert_num(buf, val, 16, 8);
 						tree = tree_concat(tree,
 						    tree_const(buf, 1));
-						token = peek_token(&val, cfile);
+						token = peek_token(&val,
+						    cfile);
 						if (token == ':')
-							token = next_token(&val,
+							token =
+							    next_token(&val,
 							    cfile);
 					} while (token == ':');
 				} else if (token == TOK_STRING) {
@@ -1195,12 +1198,12 @@ parse_option_param(FILE *cfile, struct group *group)
 				tree = tree_concat(tree, tree_const(&cprefix,
 				    sizeof(cprefix)));
 				if (cprefix > 0)
-					tree = tree_concat(tree, tree_const(buf,
-					    (cprefix + 7) / 8));
+					tree = tree_concat(tree, tree_const(
+					    buf, (cprefix + 7) / 8));
 				break;
 			default:
-				log_warnx("Bad format %c in parse_option_param.",
-				    *fmt);
+				log_warnx("Bad format %c in "
+				    "parse_option_param.", *fmt);
 				skip_to_semi(cfile);
 				return;
 			}
@@ -1276,7 +1279,8 @@ parse_lease_declaration(FILE *cfile)
 		strlcpy(tbuf, val, sizeof tbuf);
 
 		/* Parse any of the times associated with the lease. */
-		if (token == TOK_STARTS || token == TOK_ENDS || token == TOK_TIMESTAMP) {
+		if (token == TOK_STARTS || token == TOK_ENDS || token ==
+		    TOK_TIMESTAMP) {
 			time_t t;
 			t = parse_date(cfile);
 			switch (token) {

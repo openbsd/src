@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.40 2017/02/13 21:53:53 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.41 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -181,7 +181,8 @@ discover_interfaces(int *rdomain)
 				tif = malloc(len);
 				if (!tif)
 					fatalx("no space to remember ifp.");
-				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
+				strlcpy(tif->ifr_name, ifa->ifa_name,
+				    IFNAMSIZ);
 				memcpy(&tif->ifr_addr, ifa->ifa_addr,
 				    ifa->ifa_addr->sa_len);
 				tmp->ifp = tif;
@@ -250,8 +251,8 @@ discover_interfaces(int *rdomain)
 		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof tmp->ifp->ifr_addr);
 
 		if (!tmp->shared_network) {
-			log_warnx("Can't listen on %s - dhcpd.conf has no subnet "
-			    "declaration for %s.", tmp->name,
+			log_warnx("Can't listen on %s - dhcpd.conf has no "
+			    "subnet declaration for %s.", tmp->name,
 			    inet_ntoa(foo.sin_addr));
 			/* Remove tmp from the list of interfaces. */
 			if (!last)
@@ -264,8 +265,9 @@ discover_interfaces(int *rdomain)
 		last = tmp;
 
 		/* Find subnets that don't have valid interface addresses. */
-		for (subnet = (tmp->shared_network ? tmp->shared_network->subnets :
-		    NULL); subnet; subnet = subnet->next_sibling) {
+		for (subnet = (tmp->shared_network ?
+		    tmp->shared_network->subnets : NULL); subnet;
+		    subnet = subnet->next_sibling) {
 			if (!subnet->interface_address.len) {
 				/*
 				 * Set the interface address for this subnet

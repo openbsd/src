@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.16 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: icmp.c,v 1.17 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -88,7 +88,8 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 	    &state, sizeof(state)) == -1)
 		fatalx("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
-	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
+	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply,
+	    (void *)handler);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.53 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.54 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -277,7 +277,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]", __progname);
+	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]",
+	    __progname);
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
 	fprintf(stderr, " [-l lease-file] [-u[bind_address]]\n");
@@ -307,8 +308,8 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 	}
 
 	if (!lp->state && !lp->releasing) {
-		log_warnx("ICMP Echo Reply for %s arrived late or is spurious.",
-		    piaddr(from));
+		log_warnx("ICMP Echo Reply for %s arrived late or is "
+		    "spurious.", piaddr(from));
 		return;
 	}
 
@@ -321,8 +322,8 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 	 *     and something answered, so we don't release it.
 	 */
 	if (lp->releasing) {
-		log_warnx("IP address %s answers a ping after sending a release",
-		    piaddr(lp->ip_addr));
+		log_warnx("IP address %s answers a ping after sending a "
+		    "release", piaddr(lp->ip_addr));
 		log_warnx("Possible release spoof - Not releasing address %s",
 		    piaddr(lp->ip_addr));
 		lp->releasing = 0;

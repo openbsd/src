@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.17 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.18 2017/02/13 22:33:39 krw Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -77,10 +77,10 @@ bootp(struct packet *packet)
 	if (packet->raw->op != BOOTREQUEST)
 		return;
 
-	log_info("BOOTREQUEST from %s via %s%s", print_hw_addr(packet->raw->htype,
-	    packet->raw->hlen, packet->raw->chaddr),
-	    packet->raw->giaddr.s_addr ? inet_ntoa(packet->raw->giaddr) :
-	    packet->interface->name,
+	log_info("BOOTREQUEST from %s via %s%s",
+	    print_hw_addr(packet->raw->htype, packet->raw->hlen,
+	    packet->raw->chaddr), packet->raw->giaddr.s_addr ?
+	    inet_ntoa(packet->raw->giaddr) : packet->interface->name,
 	    packet->options_valid ? "" : " (non-rfc1048)");
 
 	if (!locate_network(packet))
@@ -114,8 +114,9 @@ bootp(struct packet *packet)
 				}
 
 		if (host && (!host->group->allow_booting)) {
-			log_info("Ignoring excluded BOOTP client %s", host->name ?
-			    host->name : print_hw_addr (packet->raw->htype,
+			log_info("Ignoring excluded BOOTP client %s",
+			    host->name ?  host->name :
+			    print_hw_addr (packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr));
 			return;
 		}
@@ -129,8 +130,8 @@ bootp(struct packet *packet)
 		}
 
 		/*
-		 * If we've been told not to boot unknown clients, and we didn't
-		 * find any host record for this client, ignore it.
+		 * If we've been told not to boot unknown clients, and we
+		 * didn't find any host record for this client, ignore it.
 		 */
 		if (!host && !(s->group->boot_unknown_clients)) {
 			log_info("Ignoring unknown BOOTP client %s via %s",
@@ -147,8 +148,8 @@ bootp(struct packet *packet)
 		 * ignore it.
 		 */
 		if (!host && !(s->group->allow_bootp)) {
-			log_info("Ignoring BOOTP request from client %s via %s",
-			    print_hw_addr(packet->raw->htype,
+			log_info("Ignoring BOOTP request from client %s via "
+			    "%s", print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
 			    inet_ntoa(packet->raw->giaddr) :
@@ -163,8 +164,8 @@ bootp(struct packet *packet)
 		 */
 		if (!(s->group->dynamic_bootp)) {
 lose:
-			log_info("No applicable record for BOOTP host %s via %s",
-			    print_hw_addr(packet->raw->htype,
+			log_info("No applicable record for BOOTP host %s via "
+			    "%s", print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
 			    inet_ntoa(packet->raw->giaddr) :
@@ -182,9 +183,9 @@ lose:
 			 */
 			if ((lease->flags & DYNAMIC_BOOTP_OK)) {
 				/*
-				 * If it's not a DYNAMIC_BOOTP lease, release it
-				 * before reassigning it so that we don't get a
-				 * lease conflict.
+				 * If it's not a DYNAMIC_BOOTP lease, release
+				 * it before reassigning it so that we don't
+				 * get a lease conflict.
 				 */
 				if (!(lease->flags & BOOTP_LEASE))
 					release_lease(lease);

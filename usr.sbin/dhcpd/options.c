@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.34 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.35 2017/02/13 22:33:39 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -157,8 +157,10 @@ parse_option_buffer(struct packet *packet,
 			if (bad_options == bad_options_max) {
 				packet->options_valid = 1;
 				bad_options = 0;
-				log_warnx("Many bogus options seen in offers.");
-				log_warnx("Taking this offer in spite of bogus");
+				log_warnx("Many bogus options seen in "
+				    "offers.");
+				log_warnx("Taking this offer in spite of "
+				    "bogus");
 				log_warnx("options - hope for the best!");
 			} else {
 				log_warnx("rejecting bogus offer.");
@@ -324,7 +326,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	 * prl. If that is not available just use the default list.
 	 */
 	memset(&priority_list, 0, sizeof(priority_list));
-	if (inpacket && inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data)
+	if (inpacket &&
+	    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data)
 		create_priority_list(priority_list,
 		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].data,
 		    inpacket->options[DHO_DHCP_PARAMETER_REQUEST_LIST].len);

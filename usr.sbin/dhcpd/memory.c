@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.26 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.27 2017/02/13 22:33:39 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -103,7 +103,8 @@ enter_host(struct host_decl *hd)
 	}
 
 	if (hd->group->options[DHO_DHCP_CLIENT_IDENTIFIER]) {
-		if (!tree_evaluate(hd->group->options[DHO_DHCP_CLIENT_IDENTIFIER]))
+		if (!tree_evaluate(
+		    hd->group->options[DHO_DHCP_CLIENT_IDENTIFIER]))
 			return;
 
 		/* If there's no uid hash, make one; otherwise, see if
@@ -259,7 +260,8 @@ new_address_range(struct iaddr low, struct iaddr high, struct subnet *subnet,
 	for (i = 0; i < max - min + 1; i++) {
 		address_range[i].ip_addr = ip_addr(subnet->net,
 		    subnet->netmask, i + min);
-		address_range[i].starts = address_range[i].timestamp = MIN_TIME;
+		address_range[i].starts = address_range[i].timestamp =
+		    MIN_TIME;
 		address_range[i].ends = MIN_TIME;
 		address_range[i].subnet = subnet;
 		address_range[i].shared_network = share;
@@ -449,7 +451,8 @@ hwaddrcmp(struct hardware *a, struct hardware *b)
 static inline int
 uidcmp(struct lease *a, struct lease *b)
 {
-	return (a->uid_len != b->uid_len || memcmp(a->uid, b->uid, b->uid_len));
+	return (a->uid_len != b->uid_len || memcmp(a->uid, b->uid,
+	    b->uid_len));
 }
 
 static inline int
@@ -521,7 +524,8 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 		comp->starts = lease->starts;
 		if (lease->uid) {
 			if (lease->uid_len <= sizeof (lease->uid_buf)) {
-				memcpy(comp->uid_buf, lease->uid, lease->uid_len);
+				memcpy(comp->uid_buf, lease->uid,
+				    lease->uid_len);
 				comp->uid = &comp->uid_buf[0];
 				comp->uid_max = sizeof comp->uid_buf;
 			} else if (lease->uid != &lease->uid_buf[0]) {

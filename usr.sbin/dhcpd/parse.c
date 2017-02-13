@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.23 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.24 2017/02/13 22:33:39 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -253,7 +253,8 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		parse_warn("hardware address too long");
 	} else {
 		hardware->hlen = hlen;
-		memcpy((unsigned char *)&hardware->haddr[0], t, hardware->hlen);
+		memcpy((unsigned char *)&hardware->haddr[0], t,
+		    hardware->hlen);
 		if (hlen < sizeof(hardware->haddr))
 			memset(&hardware->haddr[hlen], 0,
 			    sizeof(hardware->haddr) - hlen);

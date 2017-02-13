@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.21 2017/02/13 21:53:53 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.22 2017/02/13 22:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -428,10 +428,10 @@ sync_lease(struct lease *lease)
 	memcpy(&lv.lv_ip_addr, &lease->ip_addr, sizeof(lv.lv_ip_addr));
 	memcpy(&lv.lv_hardware_addr, &lease->hardware_addr,
 	    sizeof(lv.lv_hardware_addr));
-	log_info("sending DHCP_SYNC_LEASE for hw %s -> ip %s, start %d, end %d",
-	    print_hw_addr(lv.lv_hardware_addr.htype, lv.lv_hardware_addr.hlen,
-	    lv.lv_hardware_addr.haddr), piaddr(lease->ip_addr),
-	    ntohl(lv.lv_starts), ntohl(lv.lv_ends));
+	log_info("sending DHCP_SYNC_LEASE for hw %s -> ip %s, start %d, "
+	    "end %d", print_hw_addr(lv.lv_hardware_addr.htype,
+	    lv.lv_hardware_addr.hlen, lv.lv_hardware_addr.haddr),
+	    piaddr(lease->ip_addr), ntohl(lv.lv_starts), ntohl(lv.lv_ends));
 	iov[i].iov_base = &lv;
 	iov[i].iov_len = sizeof(lv);
 	HMAC_Update(&ctx, iov[i].iov_base, iov[i].iov_len);

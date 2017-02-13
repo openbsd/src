@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.9 2017/02/13 21:53:53 krw Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.10 2017/02/13 22:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -62,7 +62,8 @@ udpsock_startup(struct in_addr bindaddr)
 		fatal("creating a socket failed for udp");
 
 	onoff = 1;
-	if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
+	if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) !=
+	    0)
 		fatal("setsocketopt IP_RECVIF failed for udp");
 
 	sin4.sin_family = AF_INET;
@@ -156,7 +157,8 @@ udpsock_handler(struct protocol *protocol)
 	iface.wfdesc = udpsock->sock;
 	iface.ifp = &ifr;
 	iface.index = sdl->sdl_index;
-	iface.primary_address = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
+	iface.primary_address =
+	    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
 	strlcpy(iface.name, ifname, sizeof(iface.name));
 
 	addr.len = 4;
