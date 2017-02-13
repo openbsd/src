@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.31 2017/01/21 11:36:54 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.32 2017/02/13 18:49:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1200,6 +1200,13 @@ vmmci_ctl(unsigned int cmd)
 	case VMMCI_REBOOT:
 		/* Update command */
 		vmmci.cmd = cmd;
+
+		/*
+		 * vmm VMs do not support powerdown, send a reboot request
+		 * instead and turn it off after the triple fault.
+		 */
+		if (cmd == VMMCI_SHUTDOWN)
+			cmd = VMMCI_REBOOT;
 
 		/* Trigger interrupt */
 		vmmci.cfg.isr_status = VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
