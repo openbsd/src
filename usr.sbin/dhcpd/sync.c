@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.22 2017/02/13 22:33:39 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.23 2017/02/13 23:04:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -369,7 +369,7 @@ sync_send(struct iovec *iov, int iovlen)
 		msg.msg_name = &sync_out;
 		msg.msg_namelen = sizeof(sync_out);
 		if (sendmsg(syncfd, &msg, 0) == -1)
-			log_warnx("sending multicast sync message failed: %m");
+			log_warn("sending multicast sync message failed");
 	}
 
 	LIST_FOREACH(shost, &sync_hosts, h_entry) {
@@ -379,7 +379,7 @@ sync_send(struct iovec *iov, int iovlen)
 		msg.msg_name = &shost->sh_addr;
 		msg.msg_namelen = sizeof(shost->sh_addr);
 		if (sendmsg(syncfd, &msg, 0) == -1)
-			log_warnx("sending sync message failed: %m");
+			log_warn("sending sync message failed");
 	}
 }
 

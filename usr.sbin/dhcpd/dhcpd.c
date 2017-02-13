@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.54 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.55 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 
 	if (rdomain != -1)
 		if (setrtable(rdomain) == -1)
-			fatalx("setrtable (%m)");
+			fatal("setrtable");
 
 	if (syncsend || syncrecv) {
 		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
@@ -224,10 +224,10 @@ main(int argc, char *argv[])
 	    (changedmac_tab != NULL) ||
 	    (leased_tab != NULL)){
 		if (pipe(pfpipe) == -1)
-			fatalx("pipe (%m)");
+			fatal("pipe");
 		switch (pfproc_pid = fork()){
 		case -1:
-			fatalx("fork (%m)");
+			fatal("fork");
 			/* NOTREACHED */
 			exit(1);
 		case 0:
@@ -249,13 +249,13 @@ main(int argc, char *argv[])
 	icmp_startup(1, lease_pinged);
 
 	if (chroot(_PATH_VAREMPTY) == -1)
-		fatalx("chroot %s: %m", _PATH_VAREMPTY);
+		fatal("chroot %s", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
-		fatalx("chdir(\"/\"): %m");
+		fatal("chdir(\"/\")");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatalx("can't drop privileges: %m");
+		fatal("can't drop privileges");
 
 	if (udpsockmode) {
 		if (pledge("stdio inet route sendfd", NULL) == -1)

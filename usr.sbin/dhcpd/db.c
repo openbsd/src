@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.17 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.18 2017/02/13 23:04:05 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -168,12 +168,12 @@ commit_leases(void)
 	 * rewrite fails.
 	 */
 	if (fflush(db_file) == EOF) {
-		log_info("commit_leases: unable to commit: %m");
+		log_warn("commit_leases: unable to commit");
 		return (0);
 	}
 
 	if (fsync(fileno(db_file)) == -1) {
-		log_info("commit_leases: unable to commit: %m");
+		log_warn("commit_leases: unable to commit");
 		return (0);
 	}
 
@@ -198,7 +198,7 @@ db_startup(void)
 	/* open lease file. once we dropped privs it has to stay open */
 	db_fd = open(path_dhcpd_db, O_WRONLY|O_CREAT, 0640);
 	if (db_fd == -1)
-		fatalx("Can't create new lease file: %m");
+		fatal("Can't create new lease file");
 	if ((db_file = fdopen(db_fd, "w")) == NULL)
 		fatalx("Can't fdopen new lease file!");
 

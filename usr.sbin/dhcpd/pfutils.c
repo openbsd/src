@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.17 2017/02/13 21:53:53 krw Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.18 2017/02/13 23:04:05 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -53,15 +53,15 @@ pftable_handler()
 	int l, r, fd, nfds;
 
 	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW, 0660)) == -1)
-		log_warnx("can't open pf device: %m");
+		log_warn("can't open pf device");
 	if (chroot(_PATH_VAREMPTY) == -1)
-		log_warnx("chroot %s: %m", _PATH_VAREMPTY);
+		log_warn("chroot %s", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
-		log_warnx("chdir(\"/\"): %m");
+		log_warn("chdir(\"/\")");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		log_warnx("can't drop privileges: %m");
+		log_warn("can't drop privileges");
 
 	setproctitle("pf table handler");
 	l = sizeof(struct pf_cmd);
@@ -71,7 +71,7 @@ pftable_handler()
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, -1)) == -1)
 			if (errno != EINTR)
-				log_warnx("poll: %m");
+				log_warn("poll");
 
 		if (nfds > 0 && (pfd[0].revents & POLLHUP))
 			log_warnx("pf pipe closed");
@@ -81,7 +81,7 @@ pftable_handler()
 			r = atomicio(read, pfpipe[0], &cmd, l);
 
 			if (r != l)
-				log_warnx("pf pipe error: %m");
+				log_warn("pf pipe error");
 
 			switch (cmd.type) {
 			case 'A':

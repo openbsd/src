@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.54 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.55 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -688,7 +688,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		result = packet->interface->send_packet(packet->interface, &raw,
 		    outgoing.packet_length, from, &to, packet->haddr);
 		if (result == -1)
-			log_warnx("send_fallback: %m");
+			log_warn("send_fallback");
 		return;
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);

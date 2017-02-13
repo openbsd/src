@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.30 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.31 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -82,7 +82,7 @@ readconf(void)
 	root_group.authoritative = 1;
 
 	if ((cfile = fopen(path_dhcpd_conf, "r")) == NULL)
-		fatalx("Can't open %s: %m", path_dhcpd_conf);
+		fatal("Can't open %s", path_dhcpd_conf);
 
 	do {
 		token = peek_token(&val, cfile);
@@ -126,9 +126,8 @@ read_leases(void)
 	 * could create severe network chaos.
 	 */
 	if ((cfile = fopen(path_dhcpd_db, "r")) == NULL) {
-		log_warnx("Can't open lease database %s: %m -- %s",
-		    path_dhcpd_db,
-		    "check for failed database rewrite attempt!");
+		log_warn("Can't open lease database (%s)", path_dhcpd_db);
+		log_warnx("check for failed database rewrite attempt!");
 		log_warnx("Please read the dhcpd.leases manual page if you");
 		fatalx("don't know what to do about this.");
 	}

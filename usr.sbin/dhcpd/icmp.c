@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.17 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: icmp.c,v 1.18 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -80,13 +80,13 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 
 	/* Get a raw socket for the ICMP protocol. */
 	if ((icmp_protocol_fd = socket(AF_INET, SOCK_RAW, protocol)) == -1)
-		fatalx("unable to create icmp socket: %m");
+		fatal("unable to create icmp socket");
 
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
 	    &state, sizeof(state)) == -1)
-		fatalx("Unable to disable SO_DONTROUTE on ICMP socket: %m");
+		fatal("Unable to disable SO_DONTROUTE on ICMP socket");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply,
 	    (void *)handler);
@@ -120,7 +120,7 @@ icmp_echorequest(struct iaddr *addr)
 	status = sendto(icmp_protocol_fd, &icmp, sizeof(icmp), 0,
 	    (struct sockaddr *)&to, sizeof(to));
 	if (status == -1)
-		log_warnx("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
+		log_warn("icmp_echorequest %s", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
 		return 0;
@@ -142,7 +142,7 @@ icmp_echoreply(struct protocol *protocol)
 	status = recvfrom(protocol->fd, icbuf, sizeof(icbuf), 0,
 	    (struct sockaddr *)&from, &salen);
 	if (status == -1) {
-		log_warnx("icmp_echoreply: %m");
+		log_warn("icmp_echoreply");
 		return;
 	}
 

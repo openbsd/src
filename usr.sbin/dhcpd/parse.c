@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.24 2017/02/13 22:33:39 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.25 2017/02/13 23:04:05 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -548,43 +548,6 @@ parse_date(FILE *cfile)
 	return (guess);
 }
 
-/*
- * Find %m in the input string and substitute an error message string.
- */
-void
-do_percentm(char *obuf, size_t size, char *ibuf)
-{
-	char ch;
-	char *s = ibuf;
-	char *t = obuf;
-	size_t prlen;
-	size_t fmt_left;
-	int saved_errno = errno;
-
-	/*
-	 * We wouldn't need this mess if printf handled %m, or if
-	 * strerror() had been invented before syslog_r().
-	 */
-	for (fmt_left = size; (ch = *s); ++s) {
-		if (ch == '%' && s[1] == 'm') {
-			++s;
-			prlen = snprintf(t, fmt_left, "%s",
-			    strerror(saved_errno));
-			if (prlen == -1)
-				prlen = 0;
-			if (prlen >= fmt_left)
-				prlen = fmt_left - 1;
-			t += prlen;
-			fmt_left -= prlen;
-		} else {
-			if (fmt_left > 1) {
-				*t++ = ch;
-				fmt_left--;
-			}
-		}
-	}
-	*t = '\0';
-}
 int warnings_occurred;
 
 int
@@ -599,7 +562,6 @@ parse_warn(char *fmt, ...)
 	struct iovec iov[6];
 	size_t iovcnt;
 
-	do_percentm(mbuf, sizeof(mbuf), fmt);
 	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
 	va_start(list, fmt);
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);

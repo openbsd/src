@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.41 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.42 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -376,7 +376,7 @@ another:
 		switch (poll(fds, nfds, to_msec)) {
 		case -1:
 			if (errno != EAGAIN && errno != EINTR)
-				fatalx("poll: %m");
+				fatal("poll");
 			/* FALLTHROUGH */
 		case 0:
 			continue;	/* no packets */
@@ -455,7 +455,7 @@ interface_status(struct interface_info *ifinfo)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) == -1) {
-		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
+		log_warn("ioctl(SIOCGIFFLAGS) on %s", ifname);
 		goto inactive;
 	}
 	/*
@@ -472,8 +472,7 @@ interface_status(struct interface_info *ifinfo)
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		if (errno != EINVAL) {
-			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			    ifname);
+			log_debug("ioctl(SIOCGIFMEDIA) on %s", ifname);
 			ifinfo->noifmedia = 1;
 			goto active;
 		}
@@ -652,7 +651,7 @@ get_rdomain(char *name)
 	struct  ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatalx("get_rdomain socket: %m");
+		fatal("get_rdomain socket");
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));

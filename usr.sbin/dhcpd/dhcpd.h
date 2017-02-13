@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.58 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.59 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -447,7 +447,6 @@ typedef unsigned char option_mask[16];
 
 /* parse.c */
 extern int warnings_occurred;
-void	do_percentm(char *obuf, size_t size, char *ibuf);
 int	parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1,
 	    2)));
 

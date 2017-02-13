@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.15 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.16 2017/02/13 23:04:05 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -78,12 +78,11 @@ if_register_bpf(struct interface_info *info)
 	int sock;
 
 	if ((sock = open("/dev/bpf0", O_RDWR)) == -1)
-		fatalx("Can't open bpf device: %m");
+		fatal("Can't open bpf device");
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl(sock, BIOCSETIF, info->ifp) == -1)
-		fatalx("Can't attach interface %s to bpf device: %m",
-		    info->name);
+		fatal("Can't attach interface %s to bpf device", info->name);
 
 	info->send_packet = send_packet;
 	return (sock);
@@ -182,7 +181,7 @@ if_register_receive(struct interface_info *info)
 
 	/* Make sure the BPF version is in range... */
 	if (ioctl(info->rfdesc, BIOCVERSION, &v) == -1)
-		fatalx("Can't get BPF version: %m");
+		fatal("Can't get BPF version");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
 	    v.bv_minor < BPF_MINOR_VERSION)
@@ -194,18 +193,18 @@ if_register_receive(struct interface_info *info)
 	 * with packets.
 	 */
 	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) == -1)
-		fatalx("Can't set immediate mode on bpf device: %m");
+		fatal("Can't set immediate mode on bpf device");
 
 	if (ioctl(info->rfdesc, BIOCSFILDROP, &flag) == -1)
-		fatalx("Can't set filter-drop mode on bpf device: %m");
+		fatal("Can't set filter-drop mode on bpf device");
 
 	/* make sure kernel fills in the source ethernet address */
 	if (ioctl(info->rfdesc, BIOCSHDRCMPLT, &cmplt) == -1)
-		fatalx("Can't set header complete flag on bpf device: %m");
+		fatal("Can't set header complete flag on bpf device");
 
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) == -1)
-		fatalx("Can't get bpf buffer length: %m");
+		fatal("Can't get bpf buffer length");
 	info->rbuf_max = sz;
 	info->rbuf = malloc(info->rbuf_max);
 	if (!info->rbuf)
@@ -219,18 +218,18 @@ if_register_receive(struct interface_info *info)
 	p.bf_insns = dhcp_bpf_filter;
 
 	if (ioctl(info->rfdesc, BIOCSETF, &p) == -1)
-		fatalx("Can't install packet filter program: %m");
+		fatal("Can't install packet filter program");
 
 	/* Set up the bpf write filter program structure. */
 	p.bf_len = dhcp_bpf_wfilter_len;
 	p.bf_insns = dhcp_bpf_wfilter;
 
 	if (ioctl(info->rfdesc, BIOCSETWF, &p) == -1)
-		fatalx("Can't install write filter program: %m");
+		fatal("Can't install write filter program");
 
 	/* make sure these settings cannot be changed after dropping privs */
 	if (ioctl(info->rfdesc, BIOCLOCK) == -1)
-		fatalx("Failed to lock bpf descriptor: %m");
+		fatal("Failed to lock bpf descriptor");
 }
 
 ssize_t
@@ -256,7 +255,7 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 
 	result = writev(interface->wfdesc, iov, 2);
 	if (result == -1)
-		log_warnx("send_packet: %m");
+		log_warn("send_packet");
 	return (result);
 }
 

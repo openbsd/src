@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.27 2017/02/13 22:33:39 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.28 2017/02/13 23:04:05 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -886,5 +886,5 @@ write_leases(void)
 		}
 	}
 	if (!commit_leases())
-		fatalx("Can't commit leases to new database: %m");
+		fatal("Can't commit leases to new database");
 }
