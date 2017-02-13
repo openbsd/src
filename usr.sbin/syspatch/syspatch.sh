@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.91 2017/01/30 15:36:20 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.92 2017/02/13 14:59:09 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -36,10 +36,10 @@ apply_patch()
 
 	_explodir=${_TMP}/${_patch}
 
-	echo "Applying patch ${_patch##${_OSrev}-}"
 	fetch_and_verify "syspatch${_patch}.tgz"
 
 	trap '' INT
+	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_explodir} ${_PDIR}/${_patch}
 
 	_files="$(tar xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_explodir})"
