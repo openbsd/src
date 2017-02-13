@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.20 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: sync.c,v 1.21 2017/02/13 21:53:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -143,8 +143,7 @@ sync_init(const char *iface, const char *baddr, u_short port)
 	sync_key = SHA1File(DHCP_SYNC_KEY, NULL);
 	if (sync_key == NULL) {
 		if (errno != ENOENT) {
-			fprintf(stderr, "failed to open sync key: %s\n",
-			    strerror(errno));
+			log_warn("failed to open sync key");
 			return (-1);
 		}
 		/* Use empty key by default */
@@ -206,14 +205,13 @@ sync_init(const char *iface, const char *baddr, u_short port)
 
 	if (setsockopt(syncfd, IPPROTO_IP,
 	    IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1) {
-		fprintf(stderr, "failed to add multicast membership to %s: %s",
-		    DHCP_SYNC_MCASTADDR, strerror(errno));
+		log_warn("failed to add multicast membership to %s",
+		    DHCP_SYNC_MCASTADDR);
 		goto fail;
 	}
 	if (setsockopt(syncfd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
 	    sizeof(ttl)) == -1) {
-		fprintf(stderr, "failed to set multicast ttl to "
-		    "%u: %s\n", ttl, strerror(errno));
+		log_warn("failed to set multicast ttl to %u", ttl);
 		setsockopt(syncfd, IPPROTO_IP,
 		    IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.8 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.9 2017/02/13 21:53:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -55,16 +55,15 @@ udpsock_startup(struct in_addr bindaddr)
 	struct udpsock		*udpsock;
 
 	if ((udpsock = calloc(1, sizeof(struct udpsock))) == NULL)
-		fatalx("could not create udpsock: %s", strerror(errno));
+		fatal("could not create udpsock");
 
 	memset(&sin4, 0, sizeof(sin4));
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		fatalx("creating a socket failed for udp: %s", strerror(errno));
+		fatal("creating a socket failed for udp");
 
 	onoff = 1;
 	if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
-		fatalx("setsocketopt IP_RECVIF failed for udp: %s",
-		    strerror(errno));
+		fatal("setsocketopt IP_RECVIF failed for udp");
 
 	sin4.sin_family = AF_INET;
 	sin4.sin_len = sizeof(sin4);
@@ -72,7 +71,7 @@ udpsock_startup(struct in_addr bindaddr)
 	sin4.sin_port = server_port;
 
 	if (bind(sock, (struct sockaddr *)&sin4, sizeof(sin4)) != 0)
-		fatalx("bind failed for udp: %s", strerror(errno));
+		fatal("bind failed for udp");
 
 	add_protocol("udp", sock, udpsock_handler, (void *)(intptr_t)udpsock);
 	log_info("Listening on %s:%d/udp.", inet_ntoa(sin4.sin_addr),
@@ -116,7 +115,7 @@ udpsock_handler(struct protocol *protocol)
 
 	memset(&iface, 0, sizeof(iface));
 	if ((len = recvmsg(udpsock->sock, &m, 0)) < 0) {
-		log_warnx("receiving a DHCP message failed: %s", strerror(errno));
+		log_warn("receiving a DHCP message failed");
 		return;
 	}
 	if (ss.ss_family != AF_INET) {
@@ -138,13 +137,12 @@ udpsock_handler(struct protocol *protocol)
 	if_indextoname(sdl->sdl_index, ifname);
 
 	if ((sockio = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		log_warnx("socket creation failed: %s", strerror(errno));
+		log_warn("socket creation failed");
 		return;
 	}
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sockio, SIOCGIFADDR, &ifr, sizeof(ifr)) != 0) {
-		log_warnx("Failed to get address for %s: %s", ifname,
-		    strerror(errno));
+		log_warn("Failed to get address for %s", ifname);
 		close(sockio);
 		return;
 	}

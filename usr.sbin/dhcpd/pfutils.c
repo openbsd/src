@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.16 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.17 2017/02/13 21:53:53 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -156,8 +156,8 @@ pf_change_table(int fd, int op, struct in_addr ip, char *table)
 
 	if (ioctl(fd, op ? DIOCRADDADDRS : DIOCRDELADDRS, &io) &&
 	    errno != ESRCH) {
-		log_warnx( "DIOCR%sADDRS on table %s: %s",
-		    op ? "ADD" : "DEL", table, strerror(errno));
+		log_warn( "DIOCR%sADDRS on table %s", op ? "ADD" : "DEL",
+		    table);
 	}
 }
 
@@ -179,7 +179,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
 	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
-		log_warnx("DIOCKILLSTATES failed (%s)", strerror(errno));
+		log_warn("DIOCKILLSTATES failed");
 	}
 
 	/* Kill all states to target */
@@ -189,7 +189,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
 	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
-		log_warnx("DIOCKILLSTATES failed (%s)", strerror(errno));
+		log_warn("DIOCKILLSTATES failed");
 	}
 }
 

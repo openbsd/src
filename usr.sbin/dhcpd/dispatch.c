@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.39 2017/02/13 19:13:14 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.40 2017/02/13 21:53:53 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -417,8 +417,7 @@ got_one(struct protocol *l)
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
-		log_warnx("receive_packet failed on %s: %s", ip->name,
-		    strerror(errno));
+		log_warn("receive_packet failed on %s", ip->name);
 		ip->errors++;
 		if ((!interface_status(ip)) ||
 		    (ip->noifmedia && ip->errors > 20)) {
