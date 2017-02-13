@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.384 2017/01/24 03:57:34 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.385 2017/02/13 00:56:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2204,9 +2204,9 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Set up address of statistics block */
 	if (!(BGE_IS_5705_PLUS(sc))) {
-		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, 0);
-		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO,
-			    BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
+		BGE_HOSTADDR(taddr, BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
+		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, taddr.bge_addr_hi);
+		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO, taddr.bge_addr_lo);
 
 		CSR_WRITE_4(sc, BGE_HCC_STATS_BASEADDR, BGE_STATS_BLOCK);
 		CSR_WRITE_4(sc, BGE_HCC_STATUSBLK_BASEADDR, BGE_STATUS_BLOCK);
