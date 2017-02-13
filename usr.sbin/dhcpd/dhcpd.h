@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.56 2017/02/11 16:12:36 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.57 2017/02/13 19:13:14 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -446,6 +446,7 @@ typedef unsigned char option_mask[16];
 /* External definitions... */
 
 /* parse.c */
+extern int warnings_occurred;
 void	do_percentm(char *obuf, size_t size, char *ibuf);
 int	parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1,
 	    2)));
@@ -458,13 +459,6 @@ int	 cons_options(struct packet *, struct dhcp_packet *, int,
 char	*pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void	 do_packet(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
-
-/* errwarn.c */
-extern int warnings_occurred;
-void	error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int	warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int	note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int	debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /* dhcpd.c */
 extern time_t		cur_time;
@@ -673,7 +667,6 @@ void pf_kill_state(int, struct in_addr);
 size_t atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 #define vwrite (ssize_t (*)(int, void *, size_t))write
 void pfmsg(char, struct lease *);
-extern struct syslog_data sdata;
 
 /* udpsock.c */
 void udpsock_startup(struct in_addr);

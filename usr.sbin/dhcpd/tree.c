@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.17 2016/02/06 23:50:10 krw Exp $ */
+/*	$OpenBSD: tree.c,v 1.18 2017/02/13 19:13:14 krw Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -54,6 +54,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 static time_t tree_evaluate_recurse(int *, unsigned char **, int *,
     struct tree *);
@@ -66,7 +67,7 @@ cons(caddr_t car, pair cdr)
 
 	foo = calloc(1, sizeof *foo);
 	if (!foo)
-		error("no memory for cons.");
+		fatalx("no memory for cons.");
 	foo->car = car;
 	foo->cdr = cdr;
 	return foo;
@@ -96,7 +97,7 @@ tree_const(unsigned char *data, int len)
 	d = calloc(1, len);
 	nt = calloc(1, sizeof(struct tree));
 	if (!nt || !d)
-		error("No memory for constant data tree node.");
+		fatalx("No memory for constant data tree node.");
 
 	memcpy(d, data, len);
 
@@ -130,7 +131,7 @@ tree_concat(struct tree *left, struct tree *right)
 		    + right->data.const_val.len);
 
 		if (!buf)
-			error("No memory to concatenate constants.");
+			fatalx("No memory to concatenate constants.");
 		memcpy(buf, left->data.const_val.data,
 		    left->data.const_val.len);
 		memcpy(buf + left->data.const_val.len,
@@ -146,7 +147,7 @@ tree_concat(struct tree *left, struct tree *right)
 	/* Otherwise, allocate a new node to concatenate the two. */
 	nt = calloc(1, sizeof(struct tree));
 	if (!nt)
-		error("No memory for data tree concatenation node.");
+		fatalx("No memory for data tree concatenation node.");
 	nt->op = TREE_CONCAT;
 	nt->data.concat.left = left;
 	nt->data.concat.right = right;
@@ -168,7 +169,7 @@ tree_limit(struct tree *tree, int limit)
 	/* Otherwise, put in a node which enforces the limit on evaluation. */
 	rv = calloc(1, sizeof(struct tree));
 	if (!rv) {
-		warning("No memory for data tree limit node.");
+		log_warnx("No memory for data tree limit node.");
 		return NULL;
 	}
 	rv->op = TREE_LIMIT;
@@ -207,7 +208,7 @@ tree_evaluate(struct tree_cache *tree_cache)
 	 */
 	bp = calloc(1, bufix);
 	if (!bp) {
-		warning("no more memory for option data");
+		log_warnx("no more memory for option data");
 		return 0;
 	}
 
@@ -264,7 +265,7 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp,
 		return t1;
 
 	default:
-		warning("Bad node id in tree: %d.", tree->op);
+		log_warnx("Bad node id in tree: %d.", tree->op);
 		t1 = MAX_TIME;
 		return t1;
 	}

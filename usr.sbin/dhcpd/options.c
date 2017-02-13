@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.33 2016/11/15 10:49:37 mestre Exp $	*/
+/*	$OpenBSD: options.c,v 1.34 2017/02/13 19:13:14 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -54,6 +54,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 int bad_options = 0;
 int bad_options_max = 5;
@@ -150,17 +151,17 @@ parse_option_buffer(struct packet *packet,
 		if (s + len + 2 > end) {
 		    bogus:
 			bad_options++;
-			warning("option %s (%d) %s.",
+			log_warnx("option %s (%d) %s.",
 			    dhcp_options[code].name, len,
 			    "larger than buffer");
 			if (bad_options == bad_options_max) {
 				packet->options_valid = 1;
 				bad_options = 0;
-				warning("Many bogus options seen in offers.");
-				warning("Taking this offer in spite of bogus");
-				warning("options - hope for the best!");
+				log_warnx("Many bogus options seen in offers.");
+				log_warnx("Taking this offer in spite of bogus");
+				log_warnx("options - hope for the best!");
 			} else {
-				warning("rejecting bogus offer.");
+				log_warnx("rejecting bogus offer.");
 				packet->options_valid = 0;
 			}
 			return;
@@ -172,7 +173,7 @@ parse_option_buffer(struct packet *packet,
 		if (!packet->options[code].data) {
 			t = calloc(1, len + 1);
 			if (!t)
-				error("Can't allocate storage for option %s.",
+				fatalx("Can't allocate storage for option %s.",
 				    dhcp_options[code].name);
 			/*
 			 * Copy and NUL-terminate the option (in case
@@ -190,7 +191,7 @@ parse_option_buffer(struct packet *packet,
 			 */
 			t = calloc(1, len + packet->options[code].len + 1);
 			if (!t)
-				error("Can't expand storage for option %s.",
+				fatalx("Can't expand storage for option %s.",
 				    dhcp_options[code].name);
 			memcpy(t, packet->options[code].data,
 				packet->options[code].len);
@@ -530,7 +531,7 @@ do_packet(struct interface_info *interface, struct dhcp_packet *packet,
 	int i;
 
 	if (packet->hlen > sizeof(packet->chaddr)) {
-		note("Discarding packet with invalid hlen.");
+		log_info("Discarding packet with invalid hlen.");
 		return;
 	}
 

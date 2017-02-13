@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.15 2016/11/15 10:49:37 mestre Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.16 2017/02/13 19:13:14 krw Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -36,6 +36,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 extern struct passwd *pw;
 extern int pfpipe[2];
@@ -52,15 +53,15 @@ pftable_handler()
 	int l, r, fd, nfds;
 
 	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW, 0660)) == -1)
-		error("can't open pf device: %m");
+		log_warnx("can't open pf device: %m");
 	if (chroot(_PATH_VAREMPTY) == -1)
-		error("chroot %s: %m", _PATH_VAREMPTY);
+		log_warnx("chroot %s: %m", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
-		error("chdir(\"/\"): %m");
+		log_warnx("chdir(\"/\"): %m");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		error("can't drop privileges: %m");
+		log_warnx("can't drop privileges: %m");
 
 	setproctitle("pf table handler");
 	l = sizeof(struct pf_cmd);
@@ -70,17 +71,17 @@ pftable_handler()
 		pfd[0].events = POLLIN;
 		if ((nfds = poll(pfd, 1, -1)) == -1)
 			if (errno != EINTR)
-				error("poll: %m");
+				log_warnx("poll: %m");
 
 		if (nfds > 0 && (pfd[0].revents & POLLHUP))
-			error("pf pipe closed");
+			log_warnx("pf pipe closed");
 
 		if (nfds > 0 && (pfd[0].revents & POLLIN)) {
 			memset(&cmd, 0, l);
 			r = atomicio(read, pfpipe[0], &cmd, l);
 
 			if (r != l)
-				error("pf pipe error: %m");
+				log_warnx("pf pipe error: %m");
 
 			switch (cmd.type) {
 			case 'A':
@@ -155,7 +156,7 @@ pf_change_table(int fd, int op, struct in_addr ip, char *table)
 
 	if (ioctl(fd, op ? DIOCRADDADDRS : DIOCRDELADDRS, &io) &&
 	    errno != ESRCH) {
-		warning( "DIOCR%sADDRS on table %s: %s",
+		log_warnx( "DIOCR%sADDRS on table %s: %s",
 		    op ? "ADD" : "DEL", table, strerror(errno));
 	}
 }
@@ -178,7 +179,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
 	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
-		warning("DIOCKILLSTATES failed (%s)", strerror(errno));
+		log_warnx("DIOCKILLSTATES failed (%s)", strerror(errno));
 	}
 
 	/* Kill all states to target */
@@ -188,7 +189,7 @@ pf_kill_state(int fd, struct in_addr ip)
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
 	if (ioctl(fd, DIOCKILLSTATES, &psk)) {
-		warning("DIOCKILLSTATES failed (%s)", strerror(errno));
+		log_warnx("DIOCKILLSTATES failed (%s)", strerror(errno));
 	}
 }
 

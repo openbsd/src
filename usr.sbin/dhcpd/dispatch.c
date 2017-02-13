@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.38 2016/11/15 10:49:37 mestre Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.39 2017/02/13 19:13:14 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -64,6 +64,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 #include "sync.h"
 
 extern int syncfd;
@@ -95,7 +96,7 @@ discover_interfaces(int *rdomain)
 	struct ifaddrs *ifap, *ifa;
 
 	if (getifaddrs(&ifap) != 0)
-		error("getifaddrs failed");
+		fatalx("getifaddrs failed");
 
 	/*
 	 * If we already have a list of interfaces, the interfaces were
@@ -134,7 +135,7 @@ discover_interfaces(int *rdomain)
 		if (*rdomain == -1)
 			*rdomain = ird;
 		else if (*rdomain != ird && ir)
-			error("Interface %s is not in rdomain %d",
+			fatalx("Interface %s is not in rdomain %d",
 			    tmp->name, *rdomain);
 		else if (*rdomain != ird && !ir)
 			continue;
@@ -144,7 +145,7 @@ discover_interfaces(int *rdomain)
 		if (tmp == NULL) {
 			tmp = calloc(1, sizeof *tmp);
 			if (!tmp)
-				error("Insufficient memory to %s %s",
+				fatalx("Insufficient memory to %s %s",
 				    "record interface", ifa->ifa_name);
 			strlcpy(tmp->name, ifa->ifa_name, sizeof(tmp->name));
 			tmp->next = interfaces;
@@ -179,7 +180,7 @@ discover_interfaces(int *rdomain)
 				int len = (IFNAMSIZ + ifa->ifa_addr->sa_len);
 				tif = malloc(len);
 				if (!tif)
-					error("no space to remember ifp.");
+					fatalx("no space to remember ifp.");
 				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
 				memcpy(&tif->ifr_addr, ifa->ifa_addr,
 				    ifa->ifa_addr->sa_len);
@@ -201,7 +202,7 @@ discover_interfaces(int *rdomain)
 					subnet->interface = tmp;
 					subnet->interface_address = addr;
 				} else if (subnet->interface != tmp) {
-					warning("Multiple %s %s: %s %s",
+					log_warnx("Multiple %s %s: %s %s",
 					    "interfaces match the",
 					    "same subnet",
 					    subnet->interface->name,
@@ -210,7 +211,7 @@ discover_interfaces(int *rdomain)
 				share = subnet->shared_network;
 				if (tmp->shared_network &&
 				    tmp->shared_network != share) {
-					warning("Interface %s matches %s",
+					log_warnx("Interface %s matches %s",
 					    tmp->name,
 					    "multiple shared networks");
 				} else {
@@ -220,7 +221,7 @@ discover_interfaces(int *rdomain)
 				if (!share->interface) {
 					share->interface = tmp;
 				} else if (share->interface != tmp) {
-					warning("Multiple %s %s: %s %s",
+					log_warnx("Multiple %s %s: %s %s",
 					    "interfaces match the",
 					    "same shared network",
 					    share->interface->name,
@@ -236,7 +237,7 @@ discover_interfaces(int *rdomain)
 		next = tmp->next;
 
 		if (!tmp->ifp) {
-			warning("Can't listen on %s - it has no IP address.",
+			log_warnx("Can't listen on %s - it has no IP address.",
 			    tmp->name);
 			/* Remove tmp from the list of interfaces. */
 			if (!last)
@@ -249,7 +250,7 @@ discover_interfaces(int *rdomain)
 		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof tmp->ifp->ifr_addr);
 
 		if (!tmp->shared_network) {
-			warning("Can't listen on %s - dhcpd.conf has no subnet "
+			log_warnx("Can't listen on %s - dhcpd.conf has no subnet "
 			    "declaration for %s.", tmp->name,
 			    inet_ntoa(foo.sin_addr));
 			/* Remove tmp from the list of interfaces. */
@@ -279,12 +280,12 @@ discover_interfaces(int *rdomain)
 		/* Register the interface... */
 		if_register_receive(tmp);
 		if_register_send(tmp);
-		note("Listening on %s (%s).", tmp->name,
+		log_info("Listening on %s (%s).", tmp->name,
 		    inet_ntoa(foo.sin_addr));
 	}
 
 	if (interfaces == NULL)
-		error("No interfaces to listen on.");
+		fatalx("No interfaces to listen on.");
 
 	/* Now register all the remaining interfaces as protocols. */
 	for (tmp = interfaces; tmp; tmp = tmp->next)
@@ -314,7 +315,7 @@ dispatch(void)
 	if (nfds > nfds_max) {
 		fds = reallocarray(fds, nfds, sizeof(struct pollfd));
 		if (fds == NULL)
-			error("Can't allocate poll structures.");
+			fatalx("Can't allocate poll structures.");
 		nfds_max = nfds;
 	}
 
@@ -361,7 +362,7 @@ another:
 		}
 
 		if (i == 0)
-			error("No live interfaces to poll on - exiting.");
+			fatalx("No live interfaces to poll on - exiting.");
 
 		if (syncfd != -1) {
 			/* add syncer */
@@ -373,7 +374,7 @@ another:
 		switch (poll(fds, nfds, to_msec)) {
 		case -1:
 			if (errno != EAGAIN && errno != EINTR)
-				error("poll: %m");
+				fatalx("poll: %m");
 			/* FALLTHROUGH */
 		case 0:
 			continue;	/* no packets */
@@ -416,13 +417,13 @@ got_one(struct protocol *l)
 
 	if ((result = receive_packet(ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
-		warning("receive_packet failed on %s: %s", ip->name,
+		log_warnx("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
 		ip->errors++;
 		if ((!interface_status(ip)) ||
 		    (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
-			warning("Interface %s no longer appears valid.",
+			log_warnx("Interface %s no longer appears valid.",
 			    ip->name);
 			ip->dead = 1;
 			interfaces_invalidated = 1;
@@ -553,7 +554,7 @@ add_timeout(time_t when, void (*where)(void *), void *what)
 		} else {
 			q = malloc(sizeof (struct dhcpd_timeout));
 			if (!q)
-				error("Can't allocate timeout structure!");
+				fatalx("Can't allocate timeout structure!");
 			q->func = where;
 			q->what = what;
 		}
@@ -618,7 +619,7 @@ add_protocol(char *name, int fd, void (*handler)(struct protocol *),
 
 	p = malloc(sizeof *p);
 	if (!p)
-		error("can't allocate protocol struct for %s", name);
+		fatalx("can't allocate protocol struct for %s", name);
 	p->fd = fd;
 	p->handler = handler;
 	p->local = local;
@@ -650,7 +651,7 @@ get_rdomain(char *name)
 	struct  ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("get_rdomain socket: %m");
+		fatalx("get_rdomain socket: %m");
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));

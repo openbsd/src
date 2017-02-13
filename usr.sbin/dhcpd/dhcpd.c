@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.52 2016/08/27 01:26:22 guenther Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.53 2017/02/13 19:13:14 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -60,6 +60,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 #include "sync.h"
 
 
@@ -84,21 +85,19 @@ char *path_dhcpd_db = _PATH_DHCPD_DB;
 char *abandoned_tab = NULL;
 char *changedmac_tab = NULL;
 char *leased_tab = NULL;
-struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 int
 main(int argc, char *argv[])
 {
 	int ch, cftest = 0, daemonize = 1, rdomain = -1, udpsockmode = 0;
-	extern char *__progname;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
 	u_short sync_port = 0;
 	struct servent *ent;
 	struct in_addr udpaddr;
 
-	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog_r(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY, &sdata);
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	log_setverbose(1);
 
 	opterr = 0;
 	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::Y:y:")) != -1)
@@ -176,7 +175,7 @@ main(int argc, char *argv[])
 	while (argc > 0) {
 		struct interface_info *tmp = calloc(1, sizeof(*tmp));
 		if (!tmp)
-			error("calloc");
+			fatalx("calloc");
 		strlcpy(tmp->name, argv[0], sizeof(tmp->name));
 		tmp->next = interfaces;
 		interfaces = tmp;
@@ -192,7 +191,7 @@ main(int argc, char *argv[])
 
 	time(&cur_time);
 	if (!readconf())
-		error("Configuration file errors encountered");
+		fatalx("Configuration file errors encountered");
 
 	if (cftest)
 		exit(0);
@@ -203,7 +202,7 @@ main(int argc, char *argv[])
 
 	if (rdomain != -1)
 		if (setrtable(rdomain) == -1)
-			error("setrtable (%m)");
+			fatalx("setrtable (%m)");
 
 	if (syncsend || syncrecv) {
 		syncfd = sync_init(sync_iface, sync_baddr, sync_port);
@@ -214,18 +213,21 @@ main(int argc, char *argv[])
 	if (daemonize)
 		daemon(0, 0);
 
+	log_init(0, LOG_DAEMON);	/* stop logging to stderr */
+	log_setverbose(0);
+
 	if ((pw = getpwnam("_dhcp")) == NULL)
-		error("user \"_dhcp\" not found");
+		fatalx("user \"_dhcp\" not found");
 
 	/* don't go near /dev/pf unless we actually intend to use it */
 	if ((abandoned_tab != NULL) ||
 	    (changedmac_tab != NULL) ||
 	    (leased_tab != NULL)){
 		if (pipe(pfpipe) == -1)
-			error("pipe (%m)");
+			fatalx("pipe (%m)");
 		switch (pfproc_pid = fork()){
 		case -1:
-			error("fork (%m)");
+			fatalx("fork (%m)");
 			/* NOTREACHED */
 			exit(1);
 		case 0:
@@ -247,13 +249,13 @@ main(int argc, char *argv[])
 	icmp_startup(1, lease_pinged);
 
 	if (chroot(_PATH_VAREMPTY) == -1)
-		error("chroot %s: %m", _PATH_VAREMPTY);
+		fatalx("chroot %s: %m", _PATH_VAREMPTY);
 	if (chdir("/") == -1)
-		error("chdir(\"/\"): %m");
+		fatalx("chdir(\"/\"): %m");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		error("can't drop privileges: %m");
+		fatalx("can't drop privileges: %m");
 
 	if (udpsockmode) {
 		if (pledge("stdio inet route sendfd", NULL) == -1)
@@ -300,12 +302,12 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 	lp = find_lease_by_ip_addr(from);
 
 	if (!lp) {
-		note("unexpected ICMP Echo Reply from %s", piaddr(from));
+		log_info("unexpected ICMP Echo Reply from %s", piaddr(from));
 		return;
 	}
 
 	if (!lp->state && !lp->releasing) {
-		warning("ICMP Echo Reply for %s arrived late or is spurious.",
+		log_warnx("ICMP Echo Reply for %s arrived late or is spurious.",
 		    piaddr(from));
 		return;
 	}
@@ -319,9 +321,9 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 	 *     and something answered, so we don't release it.
 	 */
 	if (lp->releasing) {
-		warning("IP address %s answers a ping after sending a release",
+		log_warnx("IP address %s answers a ping after sending a release",
 		    piaddr(lp->ip_addr));
-		warning("Possible release spoof - Not releasing address %s",
+		log_warnx("Possible release spoof - Not releasing address %s",
 		    piaddr(lp->ip_addr));
 		lp->releasing = 0;
 	} else {

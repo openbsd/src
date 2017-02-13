@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.12 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: tables.c,v 1.13 2017/02/13 19:13:14 krw Exp $	*/
 
 /* Tables of information... */
 
@@ -52,6 +52,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 /*
  * DHCP Option names, formats and codes, from RFC1533.
@@ -698,7 +699,7 @@ initialize_universes(void)
 	dhcp_universe.name = "dhcp";
 	dhcp_universe.hash = new_hash();
 	if (!dhcp_universe.hash)
-		error("Can't allocate dhcp option hash table.");
+		fatalx("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options[i] = &dhcp_options[i];
 		add_hash(dhcp_universe.hash,

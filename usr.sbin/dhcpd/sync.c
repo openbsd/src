@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.19 2016/10/21 11:34:48 mestre Exp $	*/
+/*	$OpenBSD: sync.c,v 1.20 2017/02/13 19:13:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2008 Bob Beck <beck@openbsd.org>
@@ -40,6 +40,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 #include "sync.h"
 
 int sync_debug;
@@ -104,7 +105,7 @@ sync_addhost(const char *name, u_short port)
 	LIST_INSERT_HEAD(&sync_hosts, shost, h_entry);
 
 	if (sync_debug)
-		note("added dhcp sync host %s (address %s, port %d)\n",
+		log_info("added dhcp sync host %s (address %s, port %d)\n",
 		    shost->h_name, inet_ntoa(shost->sh_addr.sin_addr), port);
 
 	return (0);
@@ -219,7 +220,7 @@ sync_init(const char *iface, const char *baddr, u_short port)
 	}
 
 	if (sync_debug)
-		syslog_r(LOG_DEBUG, &sdata, "using multicast dhcp sync %smode "
+		log_debug("using multicast dhcp sync %smode "
 		    "(ttl %u, group %s, port %d)\n",
 		    sendmcast ? "" : "receive ",
 		    ttl, inet_ntoa(sync_out.sin_addr), port);
@@ -277,7 +278,7 @@ sync_recv(void)
 		goto trunc;
 
 	if (sync_debug)
-		note("%s(sync): received packet of %d bytes\n",
+		log_info("%s(sync): received packet of %d bytes\n",
 		    inet_ntoa(addr.sin_addr), (int)len);
 
 	p = (u_int8_t *)(hdr + 1);
@@ -308,7 +309,7 @@ sync_recv(void)
 			    sizeof(lp->ip_addr));
 			memcpy(&lp->hardware_addr, &lv->lv_hardware_addr,
 			    sizeof(lp->hardware_addr));
-			note("DHCP_SYNC_LEASE from %s for hw %s -> ip %s, "
+			log_info("DHCP_SYNC_LEASE from %s for hw %s -> ip %s, "
 			    "start %lld, end %lld",
 			    inet_ntoa(addr.sin_addr),
 			    print_hw_addr(lp->hardware_addr.htype,
@@ -346,7 +347,7 @@ sync_recv(void)
 
  trunc:
 	if (sync_debug)
-		note("%s(sync): truncated or invalid packet\n",
+		log_info("%s(sync): truncated or invalid packet\n",
 		    inet_ntoa(addr.sin_addr));
 }
 
@@ -366,21 +367,21 @@ sync_send(struct iovec *iov, int iovlen)
 
 	if (sendmcast) {
 		if (sync_debug)
-			note("sending multicast sync message\n");
+			log_info("sending multicast sync message\n");
 		msg.msg_name = &sync_out;
 		msg.msg_namelen = sizeof(sync_out);
 		if (sendmsg(syncfd, &msg, 0) == -1)
-			warning("sending multicast sync message failed: %m");
+			log_warnx("sending multicast sync message failed: %m");
 	}
 
 	LIST_FOREACH(shost, &sync_hosts, h_entry) {
 		if (sync_debug)
-			note("sending sync message to %s (%s)\n",
+			log_info("sending sync message to %s (%s)\n",
 			    shost->h_name, inet_ntoa(shost->sh_addr.sin_addr));
 		msg.msg_name = &shost->sh_addr;
 		msg.msg_namelen = sizeof(shost->sh_addr);
 		if (sendmsg(syncfd, &msg, 0) == -1)
-			warning("sending sync message failed: %m");
+			log_warnx("sending sync message failed: %m");
 	}
 }
 
@@ -429,7 +430,7 @@ sync_lease(struct lease *lease)
 	memcpy(&lv.lv_ip_addr, &lease->ip_addr, sizeof(lv.lv_ip_addr));
 	memcpy(&lv.lv_hardware_addr, &lease->hardware_addr,
 	    sizeof(lv.lv_hardware_addr));
-	note("sending DHCP_SYNC_LEASE for hw %s -> ip %s, start %d, end %d",
+	log_info("sending DHCP_SYNC_LEASE for hw %s -> ip %s, start %d, end %d",
 	    print_hw_addr(lv.lv_hardware_addr.htype, lv.lv_hardware_addr.hlen,
 	    lv.lv_hardware_addr.haddr), piaddr(lease->ip_addr),
 	    ntohl(lv.lv_starts), ntohl(lv.lv_ends));

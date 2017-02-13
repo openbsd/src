@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.28 2016/08/17 00:55:33 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.29 2017/02/13 19:13:14 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -52,6 +52,7 @@
 #include "tree.h"
 #include "dhcpd.h"
 #include "dhctoken.h"
+#include "log.h"
 
 /*
  * conf-file :== parameters declarations EOF
@@ -81,7 +82,7 @@ readconf(void)
 	root_group.authoritative = 1;
 
 	if ((cfile = fopen(path_dhcpd_conf, "r")) == NULL)
-		error("Can't open %s: %m", path_dhcpd_conf);
+		fatalx("Can't open %s: %m", path_dhcpd_conf);
 
 	do {
 		token = peek_token(&val, cfile);
@@ -125,11 +126,11 @@ read_leases(void)
 	 * could create severe network chaos.
 	 */
 	if ((cfile = fopen(path_dhcpd_db, "r")) == NULL) {
-		warning("Can't open lease database %s: %m -- %s",
+		log_warnx("Can't open lease database %s: %m -- %s",
 		    path_dhcpd_db,
 		    "check for failed database rewrite attempt!");
-		warning("Please read the dhcpd.leases manual page if you");
-		error("don't know what to do about this.");
+		log_warnx("Please read the dhcpd.leases manual page if you");
+		fatalx("don't know what to do about this.");
 	}
 
 	do {
@@ -137,7 +138,7 @@ read_leases(void)
 		if (token == EOF)
 			break;
 		if (token != TOK_LEASE) {
-			warning("Corrupt lease file - possible data loss!");
+			log_warnx("Corrupt lease file - possible data loss!");
 			skip_to_semi(cfile);
 		} else {
 			struct lease *lease;
@@ -250,7 +251,7 @@ parse_statement(FILE *cfile, struct group *group, int type,
 
 		share = calloc(1, sizeof(struct shared_network));
 		if (!share)
-			error("No memory for shared subnet");
+			fatalx("No memory for shared subnet");
 		share->group = clone_group(group, "parse_statement:subnet");
 		share->group->shared_network = share;
 
@@ -265,7 +266,7 @@ parse_statement(FILE *cfile, struct group *group, int type,
 			n = piaddr(share->subnets->net);
 			share->name = strdup(n);
 			if (share->name == NULL)
-				error("no memory for subnet name");
+				fatalx("no memory for subnet name");
 
 			/*
 			 * Copy the authoritative parameter from the subnet,
@@ -357,7 +358,7 @@ parse_statement(FILE *cfile, struct group *group, int type,
 			break;
 		cache = tree_cache(tree);
 		if (!tree_evaluate (cache))
-			error("next-server is not known");
+			fatalx("next-server is not known");
 		group->next_server.len = 4;
 		memcpy(group->next_server.iabuf,
 		    cache->value, group->next_server.len);
@@ -534,7 +535,7 @@ parse_host_declaration(FILE *cfile, struct group *group)
 
 	host = calloc(1, sizeof (struct host_decl));
 	if (!host)
-		error("can't allocate host decl struct %s.", name);
+		fatalx("can't allocate host decl struct %s.", name);
 
 	host->name = name;
 	host->group = clone_group(group, "parse_host_declaration");
@@ -566,7 +567,7 @@ parse_host_declaration(FILE *cfile, struct group *group)
 		host->group->options[DHO_HOST_NAME] =
 		    new_tree_cache("parse_host_declaration");
 		if (!host->group->options[DHO_HOST_NAME])
-			error("can't allocate a tree cache for hostname.");
+			fatalx("can't allocate a tree cache for hostname.");
 		host->group->options[DHO_HOST_NAME]->len =
 			strlen(name);
 		host->group->options[DHO_HOST_NAME]->value =
@@ -601,7 +602,7 @@ parse_class_declaration(FILE *cfile, struct group *group, int type)
 
 	class = add_class (type, val);
 	if (!class)
-		error("No memory for class %s.", val);
+		fatalx("No memory for class %s.", val);
 	class->group = clone_group(group, "parse_class_declaration");
 
 	if (!parse_lbrace(cfile)) {
@@ -642,7 +643,7 @@ parse_shared_net_declaration(FILE *cfile, struct group *group)
 
 	share = calloc(1, sizeof(struct shared_network));
 	if (!share)
-		error("No memory for shared subnet");
+		fatalx("No memory for shared subnet");
 	share->leases = NULL;
 	share->last_lease = NULL;
 	share->insertion_point = NULL;
@@ -662,7 +663,7 @@ parse_shared_net_declaration(FILE *cfile, struct group *group)
 		}
 		name = strdup(val);
 		if (name == NULL)
-			error("no memory for shared network name");
+			fatalx("no memory for shared network name");
 	} else {
 		name = parse_host_name(cfile);
 		if (!name) {
@@ -721,7 +722,7 @@ parse_subnet_declaration(FILE *cfile, struct shared_network *share)
 
 	subnet = calloc(1, sizeof(struct subnet));
 	if (!subnet)
-		error("No memory for new subnet");
+		fatalx("No memory for new subnet");
 	subnet->shared_network = share;
 	subnet->group = clone_group(share->group, "parse_subnet_declaration");
 	subnet->group->subnet = subnet;
@@ -998,7 +999,7 @@ parse_option_param(FILE *cfile, struct group *group)
 	}
 	vendor = strdup(val);
 	if (vendor == NULL)
-		error("no memory for vendor token.");
+		fatalx("no memory for vendor token.");
 	token = peek_token(&val, cfile);
 	if (token == '.') {
 		/* Go ahead and take the DOT token. */
@@ -1198,7 +1199,7 @@ parse_option_param(FILE *cfile, struct group *group)
 					    (cprefix + 7) / 8));
 				break;
 			default:
-				warning("Bad format %c in parse_option_param.",
+				log_warnx("Bad format %c in parse_option_param.",
 				    *fmt);
 				skip_to_semi(cfile);
 				return;
@@ -1310,7 +1311,7 @@ parse_lease_declaration(FILE *cfile)
 					lease.uid_len = strlen(val);
 					lease.uid = malloc(lease.uid_len);
 					if (!lease.uid) {
-						warning("no space for uid");
+						log_warnx("no space for uid");
 						return NULL;
 					}
 					memcpy(lease.uid, val, lease.uid_len);
@@ -1321,7 +1322,7 @@ parse_lease_declaration(FILE *cfile)
 					    parse_numeric_aggregate(cfile,
 					    NULL, &lease.uid_len, ':', 16, 8);
 					if (!lease.uid) {
-						warning("no space for uid");
+						log_warnx("no space for uid");
 						return NULL;
 					}
 					if (lease.uid_len == 0) {
@@ -1332,7 +1333,7 @@ parse_lease_declaration(FILE *cfile)
 					}
 				}
 				if (!lease.uid)
-					error("No memory for lease uid");
+					fatalx("No memory for lease uid");
 				break;
 
 			case TOK_CLASS:

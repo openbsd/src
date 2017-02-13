@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.14 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.15 2017/02/13 19:13:14 krw Exp $	*/
 
 /* Memory allocation... */
 
@@ -53,6 +53,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 struct lease_state *free_lease_states;
 struct tree_cache *free_tree_caches;
@@ -68,7 +69,7 @@ new_tree_cache(char *name)
 	} else {
 		rval = calloc(1, sizeof(struct tree_cache));
 		if (!rval)
-			error("unable to allocate tree cache for %s.", name);
+			fatalx("unable to allocate tree cache for %s.", name);
 	}
 	return (rval);
 }
@@ -91,7 +92,7 @@ new_lease_state(char *name)
 	} else {
 		rval = calloc(1, sizeof(struct lease_state));
 		if (!rval)
-			error("unable to allocate lease state for %s.", name);
+			fatalx("unable to allocate lease state for %s.", name);
 	}
 
 	return (rval);

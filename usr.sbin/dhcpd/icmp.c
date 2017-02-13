@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.15 2016/11/15 10:49:37 mestre Exp $ */
+/*	$OpenBSD: icmp.c,v 1.16 2017/02/13 19:13:14 krw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -56,6 +56,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 static int icmp_protocol_initialized;
 static int icmp_protocol_fd;
@@ -70,7 +71,7 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 
 	/* Only initialize icmp once. */
 	if (icmp_protocol_initialized)
-		error("attempted to reinitialize icmp protocol");
+		fatalx("attempted to reinitialize icmp protocol");
 	icmp_protocol_initialized = 1;
 
 	/* Get the protocol number (should be 1). */
@@ -79,13 +80,13 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 
 	/* Get a raw socket for the ICMP protocol. */
 	if ((icmp_protocol_fd = socket(AF_INET, SOCK_RAW, protocol)) == -1)
-		error("unable to create icmp socket: %m");
+		fatalx("unable to create icmp socket: %m");
 
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
 	    &state, sizeof(state)) == -1)
-		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
+		fatalx("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
 }
@@ -98,7 +99,7 @@ icmp_echorequest(struct iaddr *addr)
 	int status;
 
 	if (!icmp_protocol_initialized)
-		error("attempt to use ICMP protocol before initialization.");
+		fatalx("attempt to use ICMP protocol before initialization.");
 
 	memset(&to, 0, sizeof(to));
 	to.sin_len = sizeof to;
@@ -118,7 +119,7 @@ icmp_echorequest(struct iaddr *addr)
 	status = sendto(icmp_protocol_fd, &icmp, sizeof(icmp), 0,
 	    (struct sockaddr *)&to, sizeof(to));
 	if (status == -1)
-		warning("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
+		log_warnx("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
 		return 0;
@@ -140,7 +141,7 @@ icmp_echoreply(struct protocol *protocol)
 	status = recvfrom(protocol->fd, icbuf, sizeof(icbuf), 0,
 	    (struct sockaddr *)&from, &salen);
 	if (status == -1) {
-		warning("icmp_echoreply: %m");
+		log_warnx("icmp_echoreply: %m");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.11 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.12 2017/02/13 19:13:14 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -56,6 +56,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
@@ -198,7 +199,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		ip_packets_bad_checksum++;
 		if (ip_packets_seen > 4 && ip_packets_bad_checksum != 0 &&
 		    (ip_packets_seen / ip_packets_bad_checksum) < 2) {
-			note("%u bad IP checksums seen in %u packets",
+			log_info("%u bad IP checksums seen in %u packets",
 			    ip_packets_bad_checksum, ip_packets_seen);
 			ip_packets_seen = ip_packets_bad_checksum = 0;
 		}
@@ -209,7 +210,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 
 #ifdef DEBUG
 	if (ntohs(ip->ip_len) != buflen)
-		debug("ip length %d disagrees with bytes received %d.",
+		log_debug("ip length %d disagrees with bytes received %d.",
 		    ntohs(ip->ip_len), buflen);
 #endif
 
@@ -242,7 +243,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		    udp_packets_length_overflow != 0 &&
 		    (udp_packets_length_checked /
 		    udp_packets_length_overflow) < 2) {
-			note("%u udp packets in %u too long - dropped",
+			log_info("%u udp packets in %u too long - dropped",
 			    udp_packets_length_overflow,
 			    udp_packets_length_checked);
 			udp_packets_length_overflow =
@@ -251,7 +252,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		return (-1);
 	}
 	if (len + data != buf + bufix + buflen)
-		debug("accepting packet with data after udp payload.");
+		log_debug("accepting packet with data after udp payload.");
 
 	usum = udp->uh_sum;
 	udp->uh_sum = 0;
@@ -266,7 +267,7 @@ decode_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 		udp_packets_bad_checksum++;
 		if (udp_packets_seen > 4 && udp_packets_bad_checksum != 0 &&
 		    (udp_packets_seen / udp_packets_bad_checksum) < 2) {
-			note("%u bad udp checksums in %u packets",
+			log_info("%u bad udp checksums in %u packets",
 			    udp_packets_bad_checksum, udp_packets_seen);
 			udp_packets_seen = udp_packets_bad_checksum = 0;
 		}

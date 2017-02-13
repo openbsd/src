@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.16 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.17 2017/02/13 19:13:14 krw Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -57,6 +57,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 void
 bootp(struct packet *packet)
@@ -76,7 +77,7 @@ bootp(struct packet *packet)
 	if (packet->raw->op != BOOTREQUEST)
 		return;
 
-	note("BOOTREQUEST from %s via %s%s", print_hw_addr(packet->raw->htype,
+	log_info("BOOTREQUEST from %s via %s%s", print_hw_addr(packet->raw->htype,
 	    packet->raw->hlen, packet->raw->chaddr),
 	    packet->raw->giaddr.s_addr ? inet_ntoa(packet->raw->giaddr) :
 	    packet->interface->name,
@@ -113,14 +114,14 @@ bootp(struct packet *packet)
 				}
 
 		if (host && (!host->group->allow_booting)) {
-			note("Ignoring excluded BOOTP client %s", host->name ?
+			log_info("Ignoring excluded BOOTP client %s", host->name ?
 			    host->name : print_hw_addr (packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr));
 			return;
 		}
 
 		if (host && (!host->group->allow_bootp)) {
-			note("Ignoring BOOTP request from client %s",
+			log_info("Ignoring BOOTP request from client %s",
 			    host->name ? host->name :
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr));
@@ -132,7 +133,7 @@ bootp(struct packet *packet)
 		 * find any host record for this client, ignore it.
 		 */
 		if (!host && !(s->group->boot_unknown_clients)) {
-			note("Ignoring unknown BOOTP client %s via %s",
+			log_info("Ignoring unknown BOOTP client %s via %s",
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
@@ -146,7 +147,7 @@ bootp(struct packet *packet)
 		 * ignore it.
 		 */
 		if (!host && !(s->group->allow_bootp)) {
-			note("Ignoring BOOTP request from client %s via %s",
+			log_info("Ignoring BOOTP request from client %s via %s",
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
@@ -162,7 +163,7 @@ bootp(struct packet *packet)
 		 */
 		if (!(s->group->dynamic_bootp)) {
 lose:
-			note("No applicable record for BOOTP host %s via %s",
+			log_info("No applicable record for BOOTP host %s via %s",
 			    print_hw_addr(packet->raw->htype,
 			    packet->raw->hlen, packet->raw->chaddr),
 			    packet->raw->giaddr.s_addr ?
@@ -218,13 +219,13 @@ lose:
 
 	/* Make sure we're allowed to boot this client. */
 	if (hp && (!hp->group->allow_booting)) {
-		note("Ignoring excluded BOOTP client %s", hp->name);
+		log_info("Ignoring excluded BOOTP client %s", hp->name);
 		return;
 	}
 
 	/* Make sure we're allowed to boot this client with bootp. */
 	if (hp && (!hp->group->allow_bootp)) {
-		note("Ignoring BOOTP request from client %s", hp->name);
+		log_info("Ignoring BOOTP request from client %s", hp->name);
 		return;
 	}
 
@@ -322,7 +323,7 @@ lose:
 	from = packet->interface->primary_address;
 
 	/* Report what we're doing... */
-	note("BOOTREPLY for %s to %s (%s) via %s", piaddr(ip_address),
+	log_info("BOOTREPLY for %s to %s (%s) via %s", piaddr(ip_address),
 	    hp->name, print_hw_addr(packet->raw->htype, packet->raw->hlen,
 	    packet->raw->chaddr), packet->raw->giaddr.s_addr ?
 	    inet_ntoa(packet->raw->giaddr) : packet->interface->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.7 2016/02/06 23:50:10 krw Exp $	*/
+/*	$OpenBSD: hash.c,v 1.8 2017/02/13 19:13:14 krw Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -54,6 +54,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 static int do_hash(unsigned char *, int, int);
 
@@ -64,7 +65,7 @@ new_hash(void)
 
 	rv = calloc(1, sizeof(struct hash_table));
 	if (!rv)
-		warning("No memory for new hash.");
+		log_warnx("No memory for new hash.");
 	else
 		rv->hash_count = DEFAULT_HASH_SIZE;
 
@@ -102,7 +103,7 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 	hashno = do_hash(name, len, table->hash_count);
 	bp = calloc(1, sizeof(struct hash_bucket));
 	if (!bp) {
-		warning("Can't add %s to hash table.", name);
+		log_warnx("Can't add %s to hash table.", name);
 		return;
 	}
 	bp->name = name;

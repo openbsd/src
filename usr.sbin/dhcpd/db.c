@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.16 2016/08/27 01:26:22 guenther Exp $	*/
+/*	$OpenBSD: db.c,v 1.17 2017/02/13 19:13:14 krw Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -57,6 +57,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 FILE *db_file;
 
@@ -149,7 +150,7 @@ bad_hostname:
 		++errors;
 
 	if (errors)
-		note("write_lease: unable to write lease %s",
+		log_info("write_lease: unable to write lease %s",
 		    piaddr(lease->ip_addr));
 
 	return (!errors);
@@ -167,12 +168,12 @@ commit_leases(void)
 	 * rewrite fails.
 	 */
 	if (fflush(db_file) == EOF) {
-		note("commit_leases: unable to commit: %m");
+		log_info("commit_leases: unable to commit: %m");
 		return (0);
 	}
 
 	if (fsync(fileno(db_file)) == -1) {
-		note("commit_leases: unable to commit: %m");
+		log_info("commit_leases: unable to commit: %m");
 		return (0);
 	}
 
@@ -197,9 +198,9 @@ db_startup(void)
 	/* open lease file. once we dropped privs it has to stay open */
 	db_fd = open(path_dhcpd_db, O_WRONLY|O_CREAT, 0640);
 	if (db_fd == -1)
-		error("Can't create new lease file: %m");
+		fatalx("Can't create new lease file: %m");
 	if ((db_file = fdopen(db_fd, "w")) == NULL)
-		error("Can't fdopen new lease file!");
+		fatalx("Can't fdopen new lease file!");
 
 	/* Read in the existing lease file... */
 	read_leases();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.7 2016/04/27 10:16:10 mestre Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.8 2017/02/13 19:13:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -37,6 +37,7 @@
 #include "dhcp.h"
 #include "tree.h"
 #include "dhcpd.h"
+#include "log.h"
 
 void	 udpsock_handler (struct protocol *);
 ssize_t	 udpsock_send_packet(struct interface_info *, struct dhcp_packet *,
@@ -54,15 +55,15 @@ udpsock_startup(struct in_addr bindaddr)
 	struct udpsock		*udpsock;
 
 	if ((udpsock = calloc(1, sizeof(struct udpsock))) == NULL)
-		error("could not create udpsock: %s", strerror(errno));
+		fatalx("could not create udpsock: %s", strerror(errno));
 
 	memset(&sin4, 0, sizeof(sin4));
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		error("creating a socket failed for udp: %s", strerror(errno));
+		fatalx("creating a socket failed for udp: %s", strerror(errno));
 
 	onoff = 1;
 	if (setsockopt(sock, IPPROTO_IP, IP_RECVIF, &onoff, sizeof(onoff)) != 0)
-		error("setsocketopt IP_RECVIF failed for udp: %s",
+		fatalx("setsocketopt IP_RECVIF failed for udp: %s",
 		    strerror(errno));
 
 	sin4.sin_family = AF_INET;
@@ -71,10 +72,10 @@ udpsock_startup(struct in_addr bindaddr)
 	sin4.sin_port = server_port;
 
 	if (bind(sock, (struct sockaddr *)&sin4, sizeof(sin4)) != 0)
-		error("bind failed for udp: %s", strerror(errno));
+		fatalx("bind failed for udp: %s", strerror(errno));
 
 	add_protocol("udp", sock, udpsock_handler, (void *)(intptr_t)udpsock);
-	note("Listening on %s:%d/udp.", inet_ntoa(sin4.sin_addr),
+	log_info("Listening on %s:%d/udp.", inet_ntoa(sin4.sin_addr),
 	    ntohs(server_port));
 
 	udpsock->sock = sock;
@@ -115,11 +116,11 @@ udpsock_handler(struct protocol *protocol)
 
 	memset(&iface, 0, sizeof(iface));
 	if ((len = recvmsg(udpsock->sock, &m, 0)) < 0) {
-		warning("receiving a DHCP message failed: %s", strerror(errno));
+		log_warnx("receiving a DHCP message failed: %s", strerror(errno));
 		return;
 	}
 	if (ss.ss_family != AF_INET) {
-		warning("received DHCP message is not AF_INET");
+		log_warnx("received DHCP message is not AF_INET");
 		return;
 	}
 	sin4 = (struct sockaddr_in *)&ss;
@@ -131,18 +132,18 @@ udpsock_handler(struct protocol *protocol)
 			sdl = (struct sockaddr_dl *)CMSG_DATA(cm);
 	}
 	if (sdl == NULL) {
-		warning("could not get the received interface by IP_RECVIF");
+		log_warnx("could not get the received interface by IP_RECVIF");
 		return;
 	}
 	if_indextoname(sdl->sdl_index, ifname);
 
 	if ((sockio = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		warning("socket creation failed: %s", strerror(errno));
+		log_warnx("socket creation failed: %s", strerror(errno));
 		return;
 	}
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sockio, SIOCGIFADDR, &ifr, sizeof(ifr)) != 0) {
-		warning("Failed to get address for %s: %s", ifname,
+		log_warnx("Failed to get address for %s: %s", ifname,
 		    strerror(errno));
 		close(sockio);
 		return;
