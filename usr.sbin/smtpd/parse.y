@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.194 2017/02/13 12:23:47 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.195 2017/02/13 12:43:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2230,6 +2230,9 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	if (lo->ssl & F_TLS_VERIFY)
 		h->flags |= F_TLS_VERIFY;
 
+	if (lo->ssl & F_STARTTLS_REQUIRE)
+		h->flags |= F_STARTTLS_REQUIRE;
+	
 	if (h != conf->sc_sock_listener)
 		TAILQ_INSERT_TAIL(conf->sc_listeners, h, entry);
 }
