@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.14 2016/12/12 15:41:05 rzalamena Exp $ */
+/*	$OpenBSD: bpf.c,v 1.15 2017/02/13 19:15:39 krw Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -59,6 +59,7 @@
 
 #include "dhcp.h"
 #include "dhcpd.h"
+#include "log.h"
 
 /*
  * Called by get_interface_list for each interface that's discovered.
@@ -72,11 +73,11 @@ if_register_bpf(struct interface_info *info)
 
 	/* Open the BPF device */
 	if ((sock = open("/dev/bpf0", O_RDWR)) == -1)
-		error("Can't open bpf device: %m");
+		fatalx("Can't open bpf device: %m");
 
 	/* Set the BPF device to point at this interface. */
 	if (ioctl(sock, BIOCSETIF, &info->ifr) == -1)
-		error("Can't attach interface %s to bpf device: %m",
+		fatalx("Can't attach interface %s to bpf device: %m",
 		    info->name);
 
 	return (sock);
@@ -268,11 +269,11 @@ if_register_receive(struct interface_info *info, int isserver)
 
 	/* Make sure the BPF version is in range... */
 	if (ioctl(info->rfdesc, BIOCVERSION, &v) == -1)
-		error("Can't get BPF version: %m");
+		fatalx("Can't get BPF version: %m");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
 	    v.bv_minor < BPF_MINOR_VERSION)
-		error("Kernel BPF version out of range - recompile dhcpd!");
+		fatalx("Kernel BPF version out of range - recompile dhcpd!");
 
 	/*
 	 * Set immediate mode so that reads return as soon as a packet
@@ -280,19 +281,19 @@ if_register_receive(struct interface_info *info, int isserver)
 	 * with packets.
 	 */
 	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) == -1)
-		error("Can't set immediate mode on bpf device: %m");
+		fatalx("Can't set immediate mode on bpf device: %m");
 
 	/* make sure kernel fills in the source ethernet address */
 	if (ioctl(info->rfdesc, BIOCSHDRCMPLT, &cmplt) == -1)
-		error("Can't set header complete flag on bpf device: %m");
+		fatalx("Can't set header complete flag on bpf device: %m");
 
 	/* Get the required BPF buffer length from the kernel. */
 	if (ioctl(info->rfdesc, BIOCGBLEN, &sz) == -1)
-		error("Can't get bpf buffer length: %m");
+		fatalx("Can't get bpf buffer length: %m");
 	info->rbuf_max = sz;
 	info->rbuf = malloc(info->rbuf_max);
 	if (!info->rbuf)
-		error("Can't allocate %lu bytes for bpf input buffer.",
+		fatalx("Can't allocate %lu bytes for bpf input buffer.",
 		    (unsigned long)info->rbuf_max);
 	info->rbuf_offset = 0;
 	info->rbuf_len = 0;
@@ -309,7 +310,7 @@ if_register_receive(struct interface_info *info, int isserver)
 		p.bf_insns = dhcp_bpf_filter;
 	}
 	if (ioctl(info->rfdesc, BIOCSETF, &p) == -1)
-		error("Can't install packet filter program: %m");
+		fatalx("Can't install packet filter program: %m");
 
 	/* Set up the bpf write filter program structure. */
 	if (isserver) {
@@ -321,11 +322,11 @@ if_register_receive(struct interface_info *info, int isserver)
 	}
 
 	if (ioctl(info->rfdesc, BIOCSETWF, &p) == -1)
-		error("Can't install write filter program: %m");
+		fatalx("Can't install write filter program: %m");
 
 	/* make sure these settings cannot be changed after dropping privs */
 	if (ioctl(info->rfdesc, BIOCLOCK) == -1)
-		error("Failed to lock bpf descriptor: %m");
+		fatalx("Failed to lock bpf descriptor: %m");
 }
 
 ssize_t
@@ -357,7 +358,7 @@ send_packet(struct interface_info *interface,
 	result = writev(interface->wfdesc, iov, 2);
  done:
 	if (result == -1)
-		warning("send_packet: %m");
+		log_warnx("send_packet: %m");
 	return (result);
 }
 

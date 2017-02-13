@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2004/04/12 21:30:30 henning Exp $
+# $OpenBSD: Makefile,v 1.3 2017/02/13 19:15:39 krw Exp $
 
 .include <bsd.own.mk>
 
-SRCS=	dhcrelay.c dispatch.c errwarn.c bpf.c packet.c
+SRCS=	dhcrelay.c dispatch.c log.c bpf.c packet.c
 PROG=	dhcrelay
 MAN=	dhcrelay.8
 

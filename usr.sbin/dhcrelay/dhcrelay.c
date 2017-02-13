@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.55 2016/12/16 18:38:39 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.56 2017/02/13 19:15:39 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -61,6 +61,7 @@
 
 #include "dhcp.h"
 #include "dhcpd.h"
+#include "log.h"
 
 void	 usage(void);
 int	 rdaemon(int);
@@ -107,7 +108,6 @@ int
 main(int argc, char *argv[])
 {
 	int			 ch, devnull = -1, daemonize, opt, rdomain;
-	extern char		*__progname;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
 	struct sockaddr_in	 laddr;
@@ -115,9 +115,8 @@ main(int argc, char *argv[])
 
 	daemonize = 1;
 
-	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
-	setlogmask(LOG_UPTO(LOG_INFO));
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	log_setverbose(1);
 
 	while ((ch = getopt(argc, argv, "aC:di:oR:r")) != -1) {
 		switch (ch) {
@@ -133,7 +132,7 @@ main(int argc, char *argv[])
 
 			interfaces = get_interface(optarg, got_one, 0);
 			if (interfaces == NULL)
-				error("interface '%s' not found", optarg);
+				fatalx("interface '%s' not found", optarg);
 			break;
 		case 'o':
 			/* add the relay agent information option */
@@ -159,7 +158,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (rai_remote != NULL && rai_circuit == NULL)
-		error("you must specify a circuit-id with a remote-id");
+		fatalx("you must specify a circuit-id with a remote-id");
 
 	/* Validate that we have space for all suboptions. */
 	if (rai_circuit != NULL) {
@@ -168,7 +167,7 @@ main(int argc, char *argv[])
 			optslen += 2 + strlen(rai_remote);
 
 		if (optslen > DHCP_OPTION_MAXLEN)
-			error("relay agent information is too long");
+			fatalx("relay agent information is too long");
 	}
 
 	while (argc > 0) {
@@ -176,14 +175,14 @@ main(int argc, char *argv[])
 		struct in_addr		 ia, *iap = NULL;
 
 		if ((sp = calloc(1, sizeof(*sp))) == NULL)
-			error("calloc");
+			fatalx("calloc");
 
 		if ((sp->intf = get_interface(argv[0], got_one, 1)) != NULL) {
 			if (drm == DRM_LAYER3)
-				error("don't mix interfaces with hosts");
+				fatalx("don't mix interfaces with hosts");
 
 			if (sp->intf->hw_address.htype == HTYPE_IPSEC_TUNNEL)
-				error("can't use IPSec with layer 2");
+				fatalx("can't use IPSec with layer 2");
 
 			sp->next = servers;
 			servers = sp;
@@ -199,13 +198,13 @@ main(int argc, char *argv[])
 		else {
 			he = gethostbyname(argv[0]);
 			if (!he)
-				warning("%s: host unknown", argv[0]);
+				log_warnx("%s: host unknown", argv[0]);
 			else
 				iap = ((struct in_addr *)he->h_addr_list[0]);
 		}
 		if (iap) {
 			if (drm == DRM_LAYER2)
-				error("don't mix interfaces with hosts");
+				fatalx("don't mix interfaces with hosts");
 
 			drm = DRM_LAYER3;
 			sp->next = servers;
@@ -221,16 +220,16 @@ main(int argc, char *argv[])
 	if (daemonize) {
 		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
 		if (devnull == -1)
-			error("open(%s): %m", _PATH_DEVNULL);
+			fatalx("open(%s): %m", _PATH_DEVNULL);
 	}
 
 	if (interfaces == NULL)
-		error("no interface given");
+		fatalx("no interface given");
 	/* We need an address for running layer 3 mode. */
 	if (drm == DRM_LAYER3 &&
 	    (interfaces->hw_address.htype != HTYPE_IPSEC_TUNNEL &&
 	    interfaces->primary_address.s_addr == 0))
-		error("interface '%s' does not have an address",
+		fatalx("interface '%s' does not have an address",
 		    interfaces->name);
 
 	/* Default DHCP/BOOTP ports. */
@@ -262,19 +261,19 @@ main(int argc, char *argv[])
 		sp->to.sin_len = sizeof sp->to;
 		sp->fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (sp->fd == -1)
-			error("socket: %m");
+			fatalx("socket: %m");
 		opt = 1;
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
-			error("setsockopt: %m");
+			fatalx("setsockopt: %m");
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
-			error("setsockopt: %m");
+			fatalx("setsockopt: %m");
 		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) == -1)
-			error("bind: %m");
+			fatalx("bind: %m");
 		if (connect(sp->fd, (struct sockaddr *)&sp->to,
 		    sizeof sp->to) == -1)
-			error("connect: %m");
+			fatalx("connect: %m");
 		add_protocol("server", sp->fd, got_response, sp);
 	}
 
@@ -283,17 +282,17 @@ main(int argc, char *argv[])
 		laddr.sin_addr.s_addr = INADDR_ANY;
 		server_fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (server_fd == -1)
-			error("socket: %m");
+			fatalx("socket: %m");
 		opt = 1;
 		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
-			error("setsockopt: %m");
+			fatalx("setsockopt: %m");
 		if (setsockopt(server_fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
-			error("setsockopt: %m");
+			fatalx("setsockopt: %m");
 		if (bind(server_fd, (struct sockaddr *)&laddr,
 		    sizeof(laddr)) == -1)
-			error("bind: %m");
+			fatalx("bind: %m");
 	}
 
 	tzset();
@@ -305,24 +304,26 @@ main(int argc, char *argv[])
 		bootp_packet_handler = l2relay;
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
-		error("user \"_dhcp\" not found");
+		fatalx("user \"_dhcp\" not found");
 	if (chroot(_PATH_VAREMPTY) == -1)
-		error("chroot: %m");
+		fatalx("chroot: %m");
 	if (chdir("/") == -1)
-		error("chdir(\"/\"): %m");
+		fatalx("chdir(\"/\"): %m");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		error("can't drop privileges: %m");
+		fatalx("can't drop privileges: %m");
 
 	if (daemonize) {
 		if (rdaemon(devnull) == -1)
-			error("rdaemon: %m");
+			fatalx("rdaemon: %m");
 		log_perror = 0;
 	}
+	log_init(0, LOG_DAEMON);	/* stop loggoing to stderr */
+	log_setverbose(0);
 
 	if (pledge("stdio route", NULL) == -1)
-		error("pledge");
+		fatalx("pledge");
 
 	dispatch();
 	/* not reached */
@@ -338,7 +339,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	struct sockaddr_in	 to;
 
 	if (packet->hlen > sizeof packet->chaddr) {
-		note("Discarding packet with invalid hlen.");
+		log_info("Discarding packet with invalid hlen.");
 		return;
 	}
 
@@ -379,7 +380,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		relay_agentinfo(pc, interfaces, packet->op);
 		if ((length = relay_agentinfo_remove(pc, packet,
 		    length)) == -1) {
-			note("ignoring BOOTREPLY with invalid "
+			log_info("ignoring BOOTREPLY with invalid "
 			    "relay agent information");
 			return;
 		}
@@ -397,19 +398,19 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 
 		ss2sin(&pc->pc_src)->sin_addr = interfaces->primary_address;
 		if (send_packet(interfaces, packet, length, pc) != -1)
-			debug("forwarded BOOTREPLY for %s to %s",
+			log_debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
 			    packet->chaddr), inet_ntoa(to.sin_addr));
 		return;
 	}
 
 	if (ip == NULL) {
-		note("ignoring non BOOTREPLY from server");
+		log_info("ignoring non BOOTREPLY from server");
 		return;
 	}
 
 	if (packet->hops > 16) {
-		note("ignoring BOOTREQUEST with hop count of %d",
+		log_info("ignoring BOOTREQUEST with hop count of %d",
 		    packet->hops);
 		return;
 	}
@@ -426,7 +427,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 
 	relay_agentinfo(pc, interfaces, packet->op);
 	if ((length = relay_agentinfo_append(pc, packet, length)) == -1) {
-		note("ignoring BOOTREQUEST with invalid "
+		log_info("ignoring BOOTREQUEST with invalid "
 		    "relay agent information");
 		return;
 	}
@@ -435,7 +436,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	   servers. */
 	for (sp = servers; sp; sp = sp->next) {
 		if (send(sp->fd, packet, length, 0) != -1) {
-			debug("forwarded BOOTREQUEST for %s to %s",
+			log_debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
 			    packet->chaddr), inet_ntoa(sp->to.sin_addr));
 		}
@@ -533,7 +534,7 @@ got_response(struct protocol *l)
 		 * Ignore ECONNREFUSED as too many dhcp servers send a bogus
 		 * icmp unreach for every request.
 		 */
-		warning("recv failed for %s: %m",
+		log_warnx("recv failed for %s: %m",
 		    inet_ntoa(sp->to.sin_addr));
 		return;
 	}
@@ -544,7 +545,7 @@ got_response(struct protocol *l)
 		return;
 
 	if (result < BOOTP_MIN_LEN) {
-		note("Discarding packet with invalid size.");
+		log_info("Discarding packet with invalid size.");
 		return;
 	}
 
@@ -636,7 +637,7 @@ relay_agentinfo_cmp(struct packet_ctx *pc, uint8_t *p, int plen)
 
 	default:
 		/* Unmatched type */
-		note("unmatched relay info %d", *p);
+		log_info("unmatched relay info %d", *p);
 		return (0);
 	}
 }
@@ -657,7 +658,7 @@ relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
 	startp = (uint8_t *)dp;
 	p = (uint8_t *)&dp->options;
 	if (memcmp(p, DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN)) {
-		note("invalid dhcp options cookie");
+		log_info("invalid dhcp options cookie");
 		return (-1);
 	}
 
@@ -674,7 +675,7 @@ relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
 			optlen = p[1] + DHCP_OPTION_HDR_LEN;
 
 		if ((i + optlen) > opttotal) {
-			note("truncated dhcp options");
+			log_info("truncated dhcp options");
 			return (-1);
 		}
 
@@ -710,7 +711,7 @@ relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
 
 			/* Check if we have enough space for the new options. */
 			if (neededlen > maxlen) {
-				warning("no space for relay agent info");
+				log_warnx("no space for relay agent info");
 				return (newtotal);
 			}
 
@@ -777,7 +778,7 @@ relay_agentinfo_remove(struct packet_ctx *pc, struct dhcp_packet *dp,
 	startp = (uint8_t *)dp;
 	p = (uint8_t *)&dp->options;
 	if (memcmp(p, DHCP_OPTIONS_COOKIE, DHCP_OPTIONS_COOKIE_LEN)) {
-		note("invalid dhcp options cookie");
+		log_info("invalid dhcp options cookie");
 		return (-1);
 	}
 
@@ -795,7 +796,7 @@ relay_agentinfo_remove(struct packet_ctx *pc, struct dhcp_packet *dp,
 			optlen = p[1] + DHCP_OPTION_HDR_LEN;
 
 		if ((i + optlen) > opttotal) {
-			note("truncated dhcp options");
+			log_info("truncated dhcp options");
 			return (-1);
 		}
 
@@ -860,7 +861,7 @@ get_rdomain(char *name)
 	struct  ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		error("get_rdomain socket: %m");
+		fatalx("get_rdomain socket: %m");
 
 	bzero(&ifr, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -879,7 +880,7 @@ l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
 	ssize_t			 dplen;
 
 	if (dp->hlen > sizeof(dp->chaddr)) {
-		note("Discarding packet with invalid hlen.");
+		log_info("Discarding packet with invalid hlen.");
 		return;
 	}
 
@@ -899,14 +900,14 @@ l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
 			if (sp->intf == ip)
 				continue;
 
-			debug("forwarded BOOTREQUEST for %s to %s",
+			log_debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
 			    pc->pc_smac), sp->intf->name);
 
 			send_packet(sp->intf, dp, dplen, pc);
 		}
 		if (ip != interfaces) {
-			debug("forwarded BOOTREQUEST for %s to %s",
+			log_debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
 			    pc->pc_smac), interfaces->name);
 
@@ -920,7 +921,7 @@ l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
 			return;
 
 		if (ip != interfaces) {
-			debug("forwarded BOOTREPLY for %s to %s",
+			log_debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(pc->pc_htype, pc->pc_hlen,
 			    pc->pc_dmac), interfaces->name);
 			send_packet(interfaces, dp, dplen, pc);
@@ -928,7 +929,7 @@ l2relay(struct interface_info *ip, struct dhcp_packet *dp, int length,
 		break;
 
 	default:
-		debug("invalid operation type '%d'", dp->op);
+		log_debug("invalid operation type '%d'", dp->op);
 		return;
 	}
 }
