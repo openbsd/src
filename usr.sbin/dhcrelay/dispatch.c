@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.17 2017/02/13 21:57:31 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.18 2017/02/13 22:05:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,7 @@ get_interface(const char *ifname, void (*handler)(struct protocol *),
 			if (ifi->ifi_type == IFT_ENC)
 				iface->hw_address.htype = HTYPE_IPSEC_TUNNEL;
 			else
-				iface->hw_address.htype = HTYPE_ETHER; /* XXX */
+				iface->hw_address.htype = HTYPE_ETHER; /*XXX*/
 			memcpy(iface->hw_address.haddr,
 			    LLADDR(foo), foo->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {

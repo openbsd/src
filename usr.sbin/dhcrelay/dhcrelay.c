@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.56 2017/02/13 19:15:39 krw Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.57 2017/02/13 22:05:35 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -269,7 +269,8 @@ main(int argc, char *argv[])
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
 			fatalx("setsockopt: %m");
-		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) == -1)
+		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) ==
+		    -1)
 			fatalx("bind: %m");
 		if (connect(sp->fd, (struct sockaddr *)&sp->to,
 		    sizeof sp->to) == -1)
@@ -709,7 +710,7 @@ relay_agentinfo_append(struct packet_ctx *pc, struct dhcp_packet *dp,
 			/* Save one byte for DHO_END. */
 			neededlen += 1;
 
-			/* Check if we have enough space for the new options. */
+			/* Check if we have space for the new options. */
 			if (neededlen > maxlen) {
 				log_warnx("no space for relay agent info");
 				return (newtotal);

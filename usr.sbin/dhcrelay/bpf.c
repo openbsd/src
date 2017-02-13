@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.15 2017/02/13 19:15:39 krw Exp $ */
+/*	$OpenBSD: bpf.c,v 1.16 2017/02/13 22:05:35 krw Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -223,7 +223,8 @@ struct bpf_insn dhcp_bpf_swfilter[] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
-int dhcp_bpf_swfilter_len = sizeof(dhcp_bpf_swfilter) / sizeof(struct bpf_insn);
+int dhcp_bpf_swfilter_len = sizeof(dhcp_bpf_swfilter) /
+	sizeof(struct bpf_insn);
 
 /*
  * Packet write filter program: 'ip and udp and src port SERVER_PORT'
@@ -421,7 +422,8 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		 * do is drop it.
 		 */
 		if (hdr.bh_caplen != hdr.bh_datalen) {
-			interface->rbuf_offset += hdr.bh_hdrlen = hdr.bh_caplen;
+			interface->rbuf_offset += hdr.bh_hdrlen =
+			    hdr.bh_caplen;
 			continue;
 		}
 
