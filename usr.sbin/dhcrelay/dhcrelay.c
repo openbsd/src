@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.57 2017/02/13 22:05:35 krw Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.58 2017/02/13 22:49:38 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 	if (daemonize) {
 		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
 		if (devnull == -1)
-			fatalx("open(%s): %m", _PATH_DEVNULL);
+			fatal("open(%s)", _PATH_DEVNULL);
 	}
 
 	if (interfaces == NULL)
@@ -261,20 +261,20 @@ main(int argc, char *argv[])
 		sp->to.sin_len = sizeof sp->to;
 		sp->fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (sp->fd == -1)
-			fatalx("socket: %m");
+			fatal("socket");
 		opt = 1;
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
-			fatalx("setsockopt: %m");
+			fatal("setsockopt");
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
-			fatalx("setsockopt: %m");
+			fatal("setsockopt");
 		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) ==
 		    -1)
-			fatalx("bind: %m");
+			fatal("bind");
 		if (connect(sp->fd, (struct sockaddr *)&sp->to,
 		    sizeof sp->to) == -1)
-			fatalx("connect: %m");
+			fatal("connect");
 		add_protocol("server", sp->fd, got_response, sp);
 	}
 
@@ -283,17 +283,17 @@ main(int argc, char *argv[])
 		laddr.sin_addr.s_addr = INADDR_ANY;
 		server_fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (server_fd == -1)
-			fatalx("socket: %m");
+			fatal("socket");
 		opt = 1;
 		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
-			fatalx("setsockopt: %m");
+			fatal("setsockopt");
 		if (setsockopt(server_fd, SOL_SOCKET, SO_RTABLE, &rdomain,
 		    sizeof(rdomain)) == -1)
-			fatalx("setsockopt: %m");
+			fatal("setsockopt");
 		if (bind(server_fd, (struct sockaddr *)&laddr,
 		    sizeof(laddr)) == -1)
-			fatalx("bind: %m");
+			fatal("bind");
 	}
 
 	tzset();
@@ -307,17 +307,17 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("user \"_dhcp\" not found");
 	if (chroot(_PATH_VAREMPTY) == -1)
-		fatalx("chroot: %m");
+		fatal("chroot");
 	if (chdir("/") == -1)
-		fatalx("chdir(\"/\"): %m");
+		fatal("chdir(\"/\")");
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatalx("can't drop privileges: %m");
+		fatal("can't drop privileges");
 
 	if (daemonize) {
 		if (rdaemon(devnull) == -1)
-			fatalx("rdaemon: %m");
+			fatal("rdaemon");
 		log_perror = 0;
 	}
 	log_init(0, LOG_DAEMON);	/* stop loggoing to stderr */
@@ -535,8 +535,7 @@ got_response(struct protocol *l)
 		 * Ignore ECONNREFUSED as too many dhcp servers send a bogus
 		 * icmp unreach for every request.
 		 */
-		log_warnx("recv failed for %s: %m",
-		    inet_ntoa(sp->to.sin_addr));
+		log_warn("recv failed for %s", inet_ntoa(sp->to.sin_addr));
 		return;
 	}
 	if (result == -1 && errno == ECONNREFUSED)
@@ -862,7 +861,7 @@ get_rdomain(char *name)
 	struct  ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatalx("get_rdomain socket: %m");
+		fatal("get_rdomain socket");
 
 	bzero(&ifr, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));

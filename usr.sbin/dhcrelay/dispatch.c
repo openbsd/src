@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.18 2017/02/13 22:05:35 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.19 2017/02/13 22:49:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -233,7 +233,7 @@ another:
 				continue;
 			}
 			else
-				fatalx("poll: %m");
+				fatal("poll");
 		}
 
 		/* Get the current time... */
@@ -310,7 +310,7 @@ interface_status(struct interface_info *ifinfo)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) == -1) {
-		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
+		log_warn("ioctl(SIOCGIFFLAGS) on %s", ifname);
 		goto inactive;
 	}
 	/*
@@ -327,9 +327,7 @@ interface_status(struct interface_info *ifinfo)
 	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
 		if (errno != EINVAL) {
-			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			    ifname);
-
+			log_debug("ioctl(SIOCGIFMEDIA) on %s", ifname);
 			ifinfo->noifmedia = 1;
 			goto active;
 		}
