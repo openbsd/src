@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.150 2017/01/24 10:08:30 krw Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.151 2017/02/14 09:47:40 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2228,8 +2228,10 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *new, size_t newlen)
 {
 	struct pfkeyv2_sysctl_walk w;
-	int s, error = EINVAL;
+	int error = EINVAL;
 	u_int rdomain;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (new)
 		return (EPERM);
@@ -2246,9 +2248,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case NET_KEY_SADB_DUMP:
 		if ((error = suser(curproc, 0)) != 0)
 			return (error);
-		s = splsoftnet();
 		error = tdb_walk(rdomain, pfkeyv2_sysctl_walker, &w);
-		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
@@ -2256,10 +2256,8 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
-		s = splsoftnet();
 		error = pfkeyv2_ipo_walk(rdomain,
 		    pfkeyv2_sysctl_policydumper, &w);
-		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
