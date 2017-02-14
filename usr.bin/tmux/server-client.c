@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.212 2017/02/09 12:09:33 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.213 2017/02/14 18:13:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1654,4 +1654,33 @@ server_client_add_message(struct client *c, const char *fmt, ...)
 		TAILQ_REMOVE(&c->message_log, msg, entry);
 		free(msg);
 	}
+}
+
+/* Get client working directory. */
+const char *
+server_client_get_cwd(struct client *c)
+{
+	struct session	*s;
+
+	if (c != NULL && c->session == NULL && c->cwd != NULL)
+		return (c->cwd);
+	if (c != NULL && (s = c->session) != NULL && s->cwd != NULL)
+		return (s->cwd);
+	return (".");
+}
+
+/* Resolve an absolute path or relative to client working directory. */
+char *
+server_client_get_path(struct client *c, const char *file)
+{
+	char	*path, resolved[PATH_MAX];
+
+	if (*file == '/')
+		path = xstrdup(file);
+	else
+		xasprintf(&path, "%s/%s", server_client_get_cwd(c), file);
+	if (realpath(path, resolved) == NULL)
+		return (path);
+	free(path);
+	return (xstrdup(resolved));
 }
