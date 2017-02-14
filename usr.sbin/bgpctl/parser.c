@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.76 2017/02/13 14:48:44 phessler Exp $ */
+/*	$OpenBSD: parser.c,v 1.77 2017/02/14 13:13:23 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1033,21 +1033,26 @@ int
 parse_largecommunity(const char *word, struct parse_result *r)
 {
 	struct filter_set *fs;
-	char		*p = strdup(word);
-	char 		*array[3];
+	char		*p, *po = strdup(word);
+	char		*array[3] = { NULL, NULL, NULL };
+	char		*val;
 	int64_t		 as, ld1, ld2;
 	int		 i = 0;
 
-	while (p != NULL) {
-		array[i++] = p;
-		p = strchr(p, ':');
-		if (p)
-			*p++ = 0;
+	p = po;
+	while ((p != NULL) && (i < 3)) {
+		val = strsep(&p, ":");
+		array[i++] = val;
 	}
+
+	if ((p != NULL) || !(array[0] && array[1] && array[2]))
+		errx(1, "Invalid Large-Community syntax");
 
 	as   = getlargecommunity(array[0]);
 	ld1  = getlargecommunity(array[1]);
 	ld2  = getlargecommunity(array[2]);
+
+	free(po);
 
 	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
 		err(1, NULL);
