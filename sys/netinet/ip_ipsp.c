@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.219 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.220 2017/02/14 09:51:46 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -176,7 +176,9 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 {
 	struct tdb *tdbp, *exists;
 	u_int32_t spi;
-	int nums, s;
+	int nums;
+
+	splsoftassert(IPL_SOFTNET);
 
 	/* Don't accept ranges only encompassing reserved SPIs. */
 	if (sproto != IPPROTO_IPCOMP &&
@@ -229,10 +231,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 			spi = htonl(spi);
 
 		/* Check whether we're using this SPI already. */
-		s = splsoftnet();
 		exists = gettdb(rdomain, spi, dst, sproto);
-		splx(s);
-
 		if (exists)
 			continue;
 
@@ -267,14 +266,14 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
  * When we receive an IPSP packet, we need to look up its tunnel descriptor
  * block, based on the SPI in the packet and the destination address (which
  * is really one of our addresses if we received the packet!
- *
- * Caller is responsible for setting at least splsoftnet().
  */
 struct tdb *
 gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (tdbh == NULL)
 		return (struct tdb *) NULL;
@@ -469,14 +468,13 @@ tdb_hashstats(void)
 }
 #endif	/* DDB */
 
-/*
- * Caller is responsible for setting at least splsoftnet().
- */
 int
 tdb_walk(u_int rdomain, int (*walker)(struct tdb *, void *, int), void *arg)
 {
 	int i, rval = 0;
 	struct tdb *tdbp, *next;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (tdbh == NULL)
 		return ENOENT;
@@ -567,15 +565,14 @@ tdb_soft_firstuse(void *v)
 	NET_UNLOCK(s);
 }
 
-/*
- * Caller is responsible for splsoftnet().
- */
 void
 tdb_rehash(void)
 {
 	struct tdb **new_tdbh, **new_tdbdst, **new_srcaddr, *tdbp, *tdbnp;
 	u_int i, old_hashmask = tdb_hashmask;
 	u_int32_t hashval;
+
+	splsoftassert(IPL_SOFTNET);
 
 	tdb_hashmask = (tdb_hashmask << 1) | 1;
 
@@ -633,7 +630,8 @@ void
 puttdb(struct tdb *tdbp)
 {
 	u_int32_t hashval;
-	int s = splsoftnet();
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (tdbh == NULL) {
 		arc4random_buf(&tdbkey, sizeof(tdbkey));
@@ -679,24 +677,18 @@ puttdb(struct tdb *tdbp)
 	tdb_count++;
 
 	ipsec_last_added = time_second;
-
-	splx(s);
 }
 
-/*
- * Caller is responsible to set at least splsoftnet().
- */
 void
 tdb_delete(struct tdb *tdbp)
 {
 	struct tdb *tdbpp;
 	u_int32_t hashval;
-	int s;
+
+	splsoftassert(IPL_SOFTNET);
 
 	if (tdbh == NULL)
 		return;
-
-	s = splsoftnet();
 
 	hashval = tdb_hash(tdbp->tdb_rdomain, tdbp->tdb_spi,
 	    &tdbp->tdb_dst, tdbp->tdb_sproto);
@@ -751,8 +743,6 @@ tdb_delete(struct tdb *tdbp)
 	tdbp->tdb_snext = NULL;
 	tdb_free(tdbp);
 	tdb_count--;
-
-	splx(s);
 }
 
 /*
@@ -943,7 +933,7 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	}
 	ids->id_refcount = 1;
 	DPRINTF(("%s: new ids %p flow %u\n", __func__, ids, ids->id_flow));
-	timeout_set(&ids->id_timeout, ipsp_ids_timeout, ids);
+	timeout_set_proc(&ids->id_timeout, ipsp_ids_timeout, ids);
 	return ids;
 }
 
@@ -965,13 +955,14 @@ ipsp_ids_timeout(void *arg)
 
 	DPRINTF(("%s: ids %p count %d\n", __func__, ids, ids->id_refcount));
 	KASSERT(ids->id_refcount == 0);
-	s = splsoftnet();
+
+	NET_LOCK(s);
 	RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	RBT_REMOVE(ipsec_ids_flows, &ipsec_ids_flows, ids);
 	free(ids->id_local, M_CREDENTIALS, 0);
 	free(ids->id_remote, M_CREDENTIALS, 0);
 	free(ids, M_CREDENTIALS, 0);
-	splx(s);
+	NET_UNLOCK(s);
 }
 
 /* decrements refcount, actual free happens in timeout */
