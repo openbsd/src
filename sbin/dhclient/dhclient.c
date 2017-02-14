@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.397 2017/02/12 15:53:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.398 2017/02/14 22:46:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -422,7 +422,7 @@ done:
 die:
 	if (rslt == -1)
 		fatalx("no memory for errmsg");
-	fatalx("%s; exiting", errmsg);
+	fatalx("%s", errmsg);
 }
 
 char **saved_argv;
@@ -2259,7 +2259,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	}
 
 	if (quit != INTERNALSIG)
-		log_warnx("%s; exiting", strsignal(quit));
+		fatalx("%s", strsignal(quit));
 
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.115 2017/02/12 15:53:15 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.116 2017/02/14 22:46:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -193,8 +193,7 @@ dispatch(struct interface_info *ifi)
 		log_warnx("%s; restarting", strsignal(quit));
 		exit (0);
 	} else if (quit != INTERNALSIG) {
-		log_warnx("%s; exiting", strsignal(quit));
-		exit(1);
+		fatalx("%s", strsignal(quit));
 	}
 }
 
@@ -207,12 +206,12 @@ packethandler(struct interface_info *ifi)
 	ssize_t result;
 
 	if ((result = receive_packet(ifi, &from, &hfrom)) == -1) {
-		log_warn("%s receive_packet failed", ifi->name);
 		ifi->errors++;
-		if (ifi->errors > 20) {
-			fatalx("%s too many receive_packet failures; exiting",
+		if (ifi->errors > 20)
+			fatalx("%s too many receive_packet failures",
 			    ifi->name);
-		}
+		else
+			log_warn("%s receive_packet failed", ifi->name);
 		return;
 	}
 	ifi->errors = 0;
