@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.30 2016/04/22 20:45:53 jung Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.31 2017/02/14 15:47:12 jcs Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -92,6 +92,7 @@ void	asmc_update(void *);
 int	asmc_match(struct device *, void *, void *);
 void	asmc_attach(struct device *, struct device *, void *);
 int 	asmc_detach(struct device *, int);
+int	asmc_activate(struct device *, int);
 
 /* wskbd hook functions */
 void	asmc_backlight(void *);
@@ -101,7 +102,7 @@ extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
 const struct cfattach asmc_ca = {
-	sizeof(struct asmc_softc), asmc_match, asmc_attach
+	sizeof(struct asmc_softc), asmc_match, asmc_attach, NULL, asmc_activate
 };
 
 struct cfdriver asmc_cd = {
@@ -355,6 +356,20 @@ asmc_detach(struct device *self, int flags)
 
 	task_del(systq, &sc->sc_task_backlight);
 	asmc_try(sc, ASMC_WRITE, "LKSB", buf, 2);
+	return 0;
+}
+
+int
+asmc_activate(struct device *self, int act)
+{
+	struct asmc_softc *sc = (struct asmc_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		asmc_backlight(sc);
+		break;
+	}
+
 	return 0;
 }
 
