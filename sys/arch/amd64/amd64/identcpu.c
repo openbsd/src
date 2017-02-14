@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.80 2017/01/13 17:15:27 mikeb Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.81 2017/02/14 15:39:14 reyk Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ int cpuspeed;
 u_int tsc_get_timecount(struct timecounter *tc);
 
 struct timecounter tsc_timecounter = {
-	tsc_get_timecount, NULL, ~0u, 0, "tsc", 0, NULL
+	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL
 };
 
 int amd64_has_xcrypt;
