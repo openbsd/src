@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.970 2017/02/12 08:58:30 landry Exp $
+#	$OpenBSD: install.sub,v 1.971 2017/02/14 22:03:01 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -68,10 +68,10 @@ usage() {
 
 # Wait for the ftp process to finish, or be killed after the timeout and
 # extract various informations from the ftplist.cgi output.
-waitcgiinfo() {
+wait_cgiinfo() {
 	local _l _s _key _val
 
-	# Wait for the ftp(1) process started in startcgiinfo() to end and
+	# Wait for the ftp(1) process started in start_cgiinfo() to end and
 	# ensure, there is actual data to extract info from.
 	wait "$CGIPID" 2>/dev/null
 	[[ -s $CGI_INFO ]] || return
@@ -175,7 +175,7 @@ quote() (
 )
 
 # Show a list (passed via ordered arguments) in column output using ls.
-showcols() {
+show_cols() {
 	local _l _cdir=/tmp/i/cdir _clist
 
 	mkdir -p $_cdir
@@ -264,7 +264,7 @@ diskinfo() {
 	local _d
 
 	for _d; do
-		makedev $_d
+		make_dev $_d
 		echo -n "$_d: "
 		disklabel -dpg $_d 2>/dev/null |
 		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;h;d;}' \
@@ -275,7 +275,7 @@ diskinfo() {
 }
 
 # Create devices passed as arguments.
-makedev() {
+make_dev() {
 	[[ -z $(cd /dev && sh MAKEDEV "$@" 2>&1) ]]
 }
 
@@ -433,7 +433,7 @@ disklabel_autolayout() {
 configure_disk() {
 	local _disk=$1 _fstab=/tmp/i/fstab.$1
 
-	makedev $_disk || return
+	make_dev $_disk || return
 
 	# Deal with disklabels, including editing the root disklabel
 	# and labeling additional disks. This is machine-dependent since
@@ -797,7 +797,7 @@ function ask_until {
 # 4) *Don't* interpret "\" as escape character.
 # 5) Preserve whitespace in input
 #
-askpass() {
+ask_pass() {
 	stty -echo
 	IFS= read -r resp?"$1 "
 	stty echo
@@ -805,7 +805,7 @@ askpass() {
 }
 
 # Ask for a password twice, saving the input in $_password.
-askpassword() {
+ask_password() {
 	local _q=$1
 
 	if $AUTO; then
@@ -817,10 +817,10 @@ askpassword() {
 	fi
 
 	while :; do
-		askpass "$_q (will not echo)"
+		ask_pass "$_q (will not echo)"
 		_password=$resp
 
-		askpass "$_q (again)"
+		ask_pass "$_q (again)"
 		[[ $resp == "$_password" ]] && break
 
 		echo "Passwords do not match, try again."
@@ -881,7 +881,7 @@ hextodec() {
 # $1 = IP address (v6 if it contains ':', else v4)
 # $2 = symbolic name
 #
-addhostent() {
+add_hostent() {
 	local _addr=$1 _name=$2 _delim="."
 
 	[[ -z $_addr || -z $_name ]] && return
@@ -935,7 +935,7 @@ v4_config() {
 		ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
 		ifconfig $_if -group dhcp >/dev/null 2>&1
 		if ifconfig $_if inet $_addr netmask $resp up; then
-			addhostent "$_addr" "$_name"
+			add_hostent "$_addr" "$_name"
 			echo "inet $_addr $resp" >>$_hn
 		fi
 		;;
@@ -1014,7 +1014,7 @@ v6_config() {
 	ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
 	ifconfig $_if inet6 $_addr prefixlen $resp up || return
 	echo "inet6 $_addr $resp" >>$_hn
-	addhostent "$_addr" "$_name"
+	add_hostent "$_addr" "$_name"
 
 	v6_defroute $_if
 }
@@ -1286,7 +1286,7 @@ __EOT
 	while :; do
 		for _f in $_avail; do
 			isin "$_f" $_selected && echo "[X] $_f" || echo "[ ] $_f"
-		done | showcols | sed 's/^/    /'
+		done | show_cols | sed 's/^/    /'
 		ask "Set name(s)? (or 'abort' or 'done')" done
 
 		set -o noglob
@@ -1387,7 +1387,7 @@ install_files() {
 		echo "and found no $OBSD sets.  The set names looked for were:"
 
 		let COLUMNS=_col-8
-		for _n in $THESETS; do echo $_n; done | showcols | sed 's/^/    /'
+		for _n in $THESETS; do echo $_n; done | show_cols | sed 's/^/    /'
 		COLUMNS=$_col
 
 		$AUTO && exit 1
@@ -1708,7 +1708,7 @@ install_mounted_fs() {
 install_cdrom() {
 	local _drive=$1
 
-	makedev $_drive && mount_mnt2 $_drive || return
+	make_dev $_drive && mount_mnt2 $_drive || return
 
 	install_mounted_fs
 }
@@ -1723,7 +1723,7 @@ install_disk() {
 		[[ $resp == done ]] && return 1
 
 		# Ensure the device file exists and mount the fs on /mnt2.
-		makedev $resp && mount_mnt2 $resp || return
+		make_dev $resp && mount_mnt2 $resp || return
 	fi
 
 	install_mounted_fs
@@ -1941,7 +1941,7 @@ user_setup() {
 	done
 	ADMIN_NAME=$resp
 
-	askpassword "Password for user $ADMIN?"
+	ask_password "Password for user $ADMIN?"
 	ADMIN_PASS=$_password
 
 	ADMIN_KEY=
@@ -1997,7 +1997,7 @@ set_timezone() {
 		TZ=${TZ#*${_zoneroot#/mnt}/}
 	fi
 
-	waitcgiinfo
+	wait_cgiinfo
 	isin "$CGI_TZ" $(<$_zonefile) && TZ=$CGI_TZ
 
 	# If neither the base or HTTP_LIST gave a hint, and this is the
@@ -2010,7 +2010,7 @@ set_timezone() {
 		case $_zonepath in
 		"")	continue
 			;;
-		"?")	grep -v /. $_zonefile | showcols
+		"?")	grep -v /. $_zonefile | show_cols
 			continue
 			;;
 		esac
@@ -2021,7 +2021,7 @@ set_timezone() {
 			resp=${resp%%*(/)}
 			case $resp in
 			"")	;;
-			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | showcols;;
+			"?")	sed -n "/^$_zsed/{s/$_zsed//;/\/./!p;}" $_zonefile | show_cols;;
 			*)	_zonepath=$_zonepath/$resp;;
 			esac
 		done
@@ -2043,7 +2043,7 @@ is_rootdisk() {
 	local _d=$1 _rc=1
 
 	(
-		makedev $_d
+		make_dev $_d
 		if disklabel $_d | grep -q '^  a: .*4\.2BSD ' &&
 			mount -t ffs -r /dev/${_d}a /mnt; then
 			ls -d /mnt/{bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
@@ -2080,7 +2080,7 @@ get_rootinfo() {
 	done
 	log_answers "$_q" "$resp"
 
-	makedev $resp || exit
+	make_dev $resp || exit
 
 	ROOTDISK=$resp
 	ROOTDEV=${ROOTDISK}a
@@ -2244,12 +2244,12 @@ enable_network() {
 # Fetch the list of mirror servers and installer choices from previous runs if
 # available from ftplist.cgi. Start the ftp process in the background, but kill
 # it if it takes longer than 12 seconds.
-startcgiinfo() {
+start_cgiinfo() {
 	# If no networks are configured, we do not need the httplist file.
 	((NIFS < 1)) && return
 
 	# Ensure proper name resolution in case there's no dns yet.
-	addhostent 129.128.5.191 ftp.openbsd.org
+	add_hostent 129.128.5.191 ftp.openbsd.org
 
 	# Make sure the ftp subshell gets its own process group.
 	set -m
@@ -2340,7 +2340,7 @@ check_fs() {
 		[[ $ROOTDEV == @(${_dev#/dev/}|$_dn${_dev##*.}) ]] && continue
 		[[ -f /sbin/fsck_$_fstype ]] || continue
 		# Make sure device exists before fsck'ing it.
-		makedev "$_dn" || continue
+		make_dev "$_dn" || continue
 		((_passno > 0)) || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
@@ -2567,7 +2567,7 @@ finish_up() {
 
 	# In case this is a softraid device, make sure all underlying
 	# device nodes exist.
-	makedev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
+	make_dev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
 	md_installboot $ROOTDISK
 
 	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
@@ -2623,12 +2623,12 @@ do_install(){
 
 	# If there's network connectivity, fetch list of mirror servers and
 	# installer choices from previous runs.
-	((NIFS)) && startcgiinfo
+	((NIFS)) && start_cgiinfo
 
 	echo
 
 	while :; do
-		askpassword "Password for root account?"
+		ask_password "Password for root account?"
 		_rootpass="$_password"
 		[[ -n "$_password" ]] && break
 		echo "The root password must be set."
@@ -2900,7 +2900,7 @@ do_upgrade(){
 
 	# Fetch the list of mirror servers and installer choices from previous
 	# runs.
-	startcgiinfo
+	start_cgiinfo
 
 	# Create a skeletal /etc/fstab which is usable for the upgrade process.
 	munge_fstab
@@ -2916,7 +2916,7 @@ do_upgrade(){
 	feed_random
 
 	# Ensure that previous installer choices (e.g. method) are available.
-	waitcgiinfo
+	wait_cgiinfo
 
 	# Ask the user for locations, and install whatever sets the user
 	# selected.
