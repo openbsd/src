@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.178 2016/09/16 02:54:51 dlg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.179 2017/02/14 10:31:15 mpi Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1088,7 +1088,7 @@ buf_daemon(struct proc *p)
 			bawrite(bp);
 			pushed++;
 
-			sched_pause();
+			sched_pause(yield);
 
 			s = splbio();
 		}

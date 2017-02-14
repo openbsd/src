@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.90 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.91 2017/02/14 10:31:15 mpi Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -246,8 +246,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 		 * Don't allow this process to hog the cpu when doing
 		 * huge I/O.
 		 */
-		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
-			preempt(NULL);
+		sched_pause(preempt);
 
 		count = lmin(iov->iov_len, buflen);
 		if (count > len)
@@ -362,8 +361,7 @@ ktrexec(struct proc *p, int type, const char *data, ssize_t len)
 		 * Don't allow this process to hog the cpu when doing
 		 * huge I/O.
 		 */
-		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
-			preempt(NULL);
+		sched_pause(preempt);
 
 		count = lmin(len, buflen);
 		if (ktrwrite(p, &kth, data, count) != 0)

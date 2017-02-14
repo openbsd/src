@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.18 2016/08/11 01:32:31 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.19 2017/02/14 10:31:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -288,7 +288,7 @@ taskq_thread(void *xtq)
 
 	while (taskq_next_work(tq, &work, tqsleep)) {
 		(*work.t_func)(work.t_arg);
-		sched_pause();
+		sched_pause(yield);
 	}
 
 	mtx_enter(&tq->tq_mtx);

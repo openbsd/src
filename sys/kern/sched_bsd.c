@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.45 2017/02/09 10:27:03 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.46 2017/02/14 10:31:15 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -315,16 +315,10 @@ yield(void)
  * criteria.
  */
 void
-preempt(struct proc *newp)
+preempt(void)
 {
 	struct proc *p = curproc;
 	int s;
-
-	/*
-	 * XXX Switching to a specific process is not supported yet.
-	 */
-	if (newp != NULL)
-		panic("preempt: cpu_preempt not yet implemented");
 
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;

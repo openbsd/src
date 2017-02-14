@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.228 2017/02/05 01:08:31 guenther Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.229 2017/02/14 10:31:15 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2480,7 +2480,7 @@ uvm_map_teardown(struct vm_map *map)
 	if ((entry = RBT_ROOT(uvm_map_addr, &map->addr)) != NULL)
 		DEAD_ENTRY_PUSH(&dead_entries, entry);
 	while (entry != NULL) {
-		sched_pause();
+		sched_pause(yield);
 		uvm_unmap_kill_entry(map, entry);
 		if ((tmp = RBT_LEFT(uvm_map_addr, entry)) != NULL)
 			DEAD_ENTRY_PUSH(&dead_entries, tmp);
