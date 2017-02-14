@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.123 2017/01/25 06:15:50 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.124 2017/02/14 09:46:21 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -301,7 +301,7 @@ do {									\
 	s = splsoftnet();						\
 } while (0)
 
-#define	NET_UNLOCK(s)						\
+#define	NET_UNLOCK(s)							\
 do {									\
 	splx(s);							\
 	rw_exit_write(&netlock);					\

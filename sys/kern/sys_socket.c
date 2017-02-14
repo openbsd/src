@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.28 2017/01/31 12:16:20 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.29 2017/02/14 09:46:21 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -127,10 +127,10 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	}
 	if (IOCGROUP(cmd) == 'r')
 		return (EOPNOTSUPP);
-	NET_LOCK(s);
+	s = solock(so);
 	error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL, 
 	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)NULL, p));
-	NET_UNLOCK(s);
+	sounlock(s);
 
 	return (error);
 }
@@ -187,10 +187,10 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 		ub->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
 	ub->st_uid = so->so_euid;
 	ub->st_gid = so->so_egid;
-	NET_LOCK(s);
+	s = solock(so);
 	(void) ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, NULL, NULL, p));
-	NET_UNLOCK(s);
+	sounlock(s);
 	return (0);
 }
 

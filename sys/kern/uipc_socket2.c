@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.71 2017/01/25 06:15:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.72 2017/02/14 09:46:21 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/domain.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
@@ -147,7 +148,7 @@ sonewconn(struct socket *head, int connstatus)
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
 
-	NET_ASSERT_LOCKED();
+	soassertlocked(head);
 
 	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)
 		return (NULL);
@@ -267,16 +268,52 @@ socantrcvmore(struct socket *so)
 	sorwakeup(so);
 }
 
+int
+solock(struct socket *so)
+{
+	int s;
+
+	if (so->so_proto->pr_domain->dom_family != PF_LOCAL)
+		NET_LOCK(s);
+	else
+		s = -42;
+
+	return (s);
+}
+
+void
+sounlock(int s)
+{
+	if (s != -42)
+		NET_UNLOCK(s);
+}
+
+void
+soassertlocked(struct socket *so)
+{
+	if (so->so_proto->pr_domain->dom_family != PF_LOCAL)
+		NET_ASSERT_LOCKED();
+}
+
+int
+sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
+{
+	if (so->so_proto->pr_domain->dom_family != PF_LOCAL)
+		return rwsleep(ident, &netlock, prio, wmesg, timo);
+	else
+		return tsleep(ident, prio, wmesg, timo);
+}
+
 /*
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int
-sbwait(struct sockbuf *sb)
+sbwait(struct socket *so, struct sockbuf *sb)
 {
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	sb->sb_flagsintr |= SB_WAIT;
-	return (rwsleep(&sb->sb_cc, &netlock,
+	return (sosleep(so, &sb->sb_cc,
 	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, "netio",
 	    sb->sb_timeo));
 }
@@ -338,7 +375,7 @@ sbunlock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	NET_ASSERT_LOCKED();
+	soassertlocked(so);
 
 	selwakeup(&sb->sb_sel);
 	sb->sb_flagsintr &= ~SB_SEL;

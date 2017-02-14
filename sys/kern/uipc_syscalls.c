@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.149 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.150 2017/02/14 09:46:21 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -285,9 +285,9 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	}
 
 	nam = m_get(M_WAIT, MT_SONAME);
-	
-	NET_LOCK(s);
+
 	head = headfp->f_data;
+	s = solock(head);
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
 		goto out;
@@ -304,8 +304,8 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 			head->so_error = ECONNABORTED;
 			break;
 		}
-		error = rwsleep(&head->so_timeo, &netlock, PSOCK | PCATCH,
-		    "netcon", 0);
+		error = sosleep(head, &head->so_timeo, PSOCK | PCATCH, "netcon",
+		    0);
 		if (error)
 			goto out;
 	}
@@ -342,7 +342,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		*retval = tmpfd;
 	}
 out:
-	NET_UNLOCK(s);
+	sounlock(s);
 	m_freem(nam);
 	if (error) {
 		fdplock(fdp);
@@ -406,9 +406,9 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		m_freem(nam);
 		return (EINPROGRESS);
 	}
-	NET_LOCK(s);
+	s = solock(so);
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = rwsleep(&so->so_timeo, &netlock, PSOCK | PCATCH,
+		error = sosleep(so, &so->so_timeo, PSOCK | PCATCH,
 		    "netcon2", 0);
 		if (error) {
 			if (error == EINTR || error == ERESTART)
@@ -420,7 +420,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		error = so->so_error;
 		so->so_error = 0;
 	}
-	NET_UNLOCK(s);
+	sounlock(s);
 bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
@@ -1044,9 +1044,9 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	NET_LOCK(s);
+	s = solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
-	NET_UNLOCK(s);
+	sounlock(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
@@ -1087,9 +1087,9 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
-	NET_LOCK(s);
+	s = solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0, p);
-	NET_UNLOCK(s);
+	sounlock(s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
