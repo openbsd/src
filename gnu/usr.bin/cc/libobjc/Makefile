@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libobjc/Makefile,v 1.34.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.4 2016/11/08 17:39:12 tb Exp $
+# $OpenBSD: Makefile,v 1.5 2017/02/15 21:22:53 miod Exp $
 
 OBJCDIR=${.CURDIR}/../../../gcc/libobjc
 GCCDIR=	${.CURDIR}/../../../gcc/gcc
@@ -22,6 +22,9 @@ CFLAGS+= -I${OBJCDIR}/objc -I${OBJCDIR}
 CFLAGS+= -I${GCCDIR}/config -I${GCCDIR}
 CFLAGS+= -I${GCCLIB}/include
 CFLAGS+= -fexceptions -frandom-seed=RepeatabilityConsideredGood
+.if ${MACHINE_ARCH} == "m88k"
+CPPFLAGS+=	-DSJLJ_EXCEPTIONS=1
+.endif
 OBJCFLAGS= -fgnu-runtime ${CFLAGS}
 
 GENHDRS= runtime-info.h
