@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2016/10/19 08:31:33 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2017/02/15 21:18:52 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1146,7 +1146,9 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	struct sysent *callp;
 	struct proc *p = curproc;
 	int error;
-	register_t args[8], rval[2], *ap;
+	register_t args[8] __aligned(8);
+	register_t rval[2] __aligned(8);
+	register_t *ap;
 
 	uvmexp.syscalls++;
 
@@ -1267,7 +1269,9 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	struct sysent *callp;
 	struct proc *p = curproc;
 	int error;
-	register_t args[8], rval[2], *ap;
+	register_t args[8] __aligned(8);
+	register_t rval[2] __aligned(8);
+	register_t *ap;
 
 	uvmexp.syscalls++;
 

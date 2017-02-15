@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2017/01/24 10:52:33 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.20 2017/02/15 21:18:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -395,7 +395,7 @@ _dl_bind(elf_object_t *object, int reloff)
 
 		__asm volatile("tb0 0, %%r0, 450; or %%r0, %%r0, %%r0"
 		    : "+r" (arg1), "+r" (arg2) : "r" (syscall_num),
-		    "r" (arg3), "r" (arg4) : "cc", "memory");
+		    "r" (arg3), "r" (arg4) : "memory");
 	}
 
 	return (buf.newval);

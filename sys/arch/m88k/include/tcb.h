@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.4 2016/09/04 08:49:35 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.5 2017/02/15 21:18:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -46,13 +46,13 @@
  */
 #define TLS_VARIANT	1
 
-#if defined(__GNUC__) && __GNUC__ > 4
+#if defined(__GNUC__) && __GNUC__ >= 4
 
 register void *__tcb __asm__ ("%r27");
 #define	TCB_GET()	(__tcb)
 #define	TCB_SET(tcb)	((__tcb) = (tcb))
 
-#else /* __GNUC__ > 4 */
+#else /* __GNUC__ >= 4 */
 
 /* Get a pointer to the TCB itself */
 static inline void *
@@ -66,7 +66,7 @@ __m88k_get_tcb(void)
 #define TCB_GET()	__m88k_get_tcb()
 #define TCB_SET(tcb)	__asm volatile("or %%r27,%0,%r0" : : "r" (tcb))
 
-#endif /* __GNUC__ > 4 */
+#endif /* __GNUC__ >= 4 */
 
 #endif /* _KERNEL */
 #endif /* _MACHINE_TCB_H_ */
