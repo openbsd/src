@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.350 2017/02/05 16:23:38 jca Exp $	*/
+/*	$OpenBSD: route.c,v 1.351 2017/02/15 18:53:29 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1556,8 +1556,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 	 * If there's already a timer with this action, destroy it before
 	 * we add a new one.
 	 */
-	for (r = LIST_FIRST(&rt->rt_timer); r != NULL;
-	     r = LIST_NEXT(r, rtt_link)) {
+	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
 		if (r->rtt_func == func) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
@@ -1598,8 +1597,7 @@ rt_timer_timer(void *arg)
 	current_time = time_uptime;
 
 	NET_LOCK(s);
-	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
-	     rtq = LIST_NEXT(rtq, rtq_link)) {
+	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
 			LIST_REMOVE(r, rtt_link);
@@ -1620,7 +1618,7 @@ rt_timer_timer(void *arg)
 u_int16_t
 rtlabel_name2id(char *name)
 {
-	struct rt_label		*label, *p = NULL;
+	struct rt_label		*label, *p;
 	u_int16_t		 new_id = 1;
 
 	if (!name[0])
@@ -1637,12 +1635,11 @@ rtlabel_name2id(char *name)
 	 * and take the first free slot we find. if there is none or the list
 	 * is empty, append a new entry at the end.
 	 */
-
-	if (!TAILQ_EMPTY(&rt_labels))
-		for (p = TAILQ_FIRST(&rt_labels); p != NULL &&
-		    p->rtl_id == new_id; p = TAILQ_NEXT(p, rtl_entry))
-			new_id = p->rtl_id + 1;
-
+	TAILQ_FOREACH(p, &rt_labels, rtl_entry) {
+		if (p->rtl_id != new_id)
+			break;
+		new_id = p->rtl_id + 1;
+	}
 	if (new_id > LABELID_MAX)
 		return (0);
 
@@ -1697,8 +1694,7 @@ rtlabel_unref(u_int16_t id)
 	if (id == 0)
 		return;
 
-	for (p = TAILQ_FIRST(&rt_labels); p != NULL; p = next) {
-		next = TAILQ_NEXT(p, rtl_entry);
+	TAILQ_FOREACH_SAFE(p, &rt_labels, rtl_entry, next) {
 		if (id == p->rtl_id) {
 			if (--p->rtl_ref == 0) {
 				TAILQ_REMOVE(&rt_labels, p, rtl_entry);
