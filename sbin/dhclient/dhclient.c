@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.398 2017/02/14 22:46:53 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.399 2017/02/15 20:00:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -441,23 +441,26 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	char *ignore_list = NULL;
 	ssize_t tailn;
-	int rtfilter, tailfd;
+	int rtfilter, tailfd, q_flag, d_flag;
 
 	saved_argv = argv;
 
-	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	if (isatty(STDERR_FILENO))
+		log_perror = 1; /* log to stderr until daemonized */
+	else
+		log_perror = 0; /* can't log to stderr */
+
+	log_init(log_perror, LOG_DAEMON);
 	log_setverbose(1);
 
+	q_flag = d_flag = 0;
 	while ((ch = getopt(argc, argv, "c:di:l:L:qu")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
-			if (log_perror == 0)
-				usage();
-			daemonize = 0;
-			log_perror = 1;
+			d_flag = 1;
 			break;
 		case 'i':
 			ignore_list = optarg;
@@ -479,10 +482,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			if (daemonize == 0)
-				usage();
-			daemonize = 1;
-			log_perror = 0;
+			q_flag = 1;
 			break;
 		case 'u':
 			unknown_ok = 0;
@@ -494,8 +494,16 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc != 1 || (q_flag && d_flag))
 		usage();
+
+	if (d_flag)
+		daemonize = 0;
+
+	if (q_flag)
+		log_perror = 0;
+
+	log_init(log_perror, LOG_DAEMON);
 
 	ifi = calloc(1, sizeof(struct interface_info));
 	if (ifi == NULL)
