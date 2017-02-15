@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.10 2016/03/19 17:17:06 visa Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.11 2017/02/15 14:44:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -226,8 +226,8 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
 	    &sc->sc_dwc2.sc_bus, usbctlprint);
 
-	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, dwc2_intr,
-	    (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
+	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB | IPL_MPSAFE,
+	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
 }
 
