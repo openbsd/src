@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2015/11/01 20:09:59 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.17 2017/02/15 15:14:23 jca Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -46,11 +46,7 @@
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 #define	KERNBASE	VM_MAXUSER_ADDRESS
 
-/*
- * Note that MAXTSIZ can't be larger than 32M, otherwise the compiler
- * would have to be changed to not generate "bl" instructions.
- */
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #ifndef	DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
