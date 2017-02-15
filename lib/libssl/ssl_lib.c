@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.156 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.157 2017/02/15 14:56:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -886,7 +886,7 @@ int
 SSL_check_private_key(const SSL *ssl)
 {
 	if (ssl == NULL) {
-		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
+		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 	if (ssl->cert == NULL) {
