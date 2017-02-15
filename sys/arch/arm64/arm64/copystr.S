@@ -1,4 +1,4 @@
-/* $OpenBSD: copystr.S,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: copystr.S,v 1.2 2017/02/15 21:38:09 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -39,8 +39,7 @@ ENTRY(copystr)
 	ldr	x6, [x6, #(CI_CURPCB)]
 	ldr	x5, [x6, #(PCB_ONFAULT)]
 	adr	x7, .Lcopystrfault
-// set handler
-	str	x7, [x6, #(PCB_ONFAULT)]
+	str	x7, [x6, #(PCB_ONFAULT)]	// set handler
 
 	mov	x8, xzr
 
@@ -50,7 +49,7 @@ ENTRY(copystr)
 	add     x8, x8, #1
 	cbz	w4, .Lcopystrsuccess
 	cbnz	x2, 1b
-	
+
 	mov	x0, #ENAMETOOLONG
 	b .Lcopystrcleanup
 
@@ -77,8 +76,24 @@ ENTRY(copystr)
  * Copy string from user space to kernel space
  */
 ENTRY(copyinstr)
-// XXX verify that x0 is user and x1 is kernel
-	b copystr
+	mrs	x6, tpidr_el1			// load curcpu
+	ldr	x6, [x6, #(CI_CURPCB)]
+	ldr	x5, [x6, #(PCB_ONFAULT)]
+	adr	x7, .Lcopystrfault
+	str	x7, [x6, #(PCB_ONFAULT)]	// set handler
+
+	mov	x8, xzr
+
+1:	ldtrb	w4, [x0]
+	strb	w4, [x1], #1
+	add	x0, x0, #1
+	sub	x2, x2, #1
+	add	x8, x8, #1
+	cbz	w4, .Lcopystrsuccess
+	cbnz	x2, 1b
+
+	mov	x0, #ENAMETOOLONG
+	b	.Lcopystrcleanup
 
 /*
  * x0 - kernel space address
@@ -89,5 +104,21 @@ ENTRY(copyinstr)
  * Copy string from kernel space to user space
  */
 ENTRY(copyoutstr)
-// XXX verify that x0 is kernel and x1 is user
-	b copystr
+	mrs	x6, tpidr_el1			// load curcpu
+	ldr	x6, [x6, #(CI_CURPCB)]
+	ldr	x5, [x6, #(PCB_ONFAULT)]
+	adr	x7, .Lcopystrfault
+	str	x7, [x6, #(PCB_ONFAULT)]	// set handler
+
+	mov	x8, xzr
+
+1:	ldrb	w4, [x0], 1
+	sttrb	w4, [x1]
+	add	x1, x1, #1
+	sub	x2, x2, #1
+	add	x8, x8, #1
+	cbz	w4, .Lcopystrsuccess
+	cbnz	x2, 1b
+
+	mov	x0, #ENAMETOOLONG
+	b	.Lcopystrcleanup
