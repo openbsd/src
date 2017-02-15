@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.2 2017/02/15 21:38:09 patrick Exp $ */
+/* $OpenBSD: copy.S,v 1.3 2017/02/15 21:39:50 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -45,7 +45,7 @@ ENTRY(copyin)
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
 // This probably should be optimized
-2:	ldtrb 	w6, [x0]
+2:	ldtrb	w6, [x0]
 	strb	w6, [x1], #1
 	add	x0, x0, #1
 	sub	x2, x2, #1
@@ -82,7 +82,7 @@ ENTRY(copyout)
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
 // This probably should be optimized
-2:	ldrb 	w6, [x0], #1
+2:	ldrb	w6, [x0], #1
 	sttrb	w6, [x1]
 	add	x1, x1, #1
 	sub	x2, x2, #1
@@ -112,7 +112,7 @@ ENTRY(kcopy)
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
 // This probably should be optimized
-2:	ldrb 	w6, [x0], #1
+2:	ldrb	w6, [x0], #1
 	strb	w6, [x1], #1
 	sub	x2, x2, #1
 	cbnz	x2, 2b

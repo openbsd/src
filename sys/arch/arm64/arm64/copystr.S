@@ -1,4 +1,4 @@
-/* $OpenBSD: copystr.S,v 1.2 2017/02/15 21:38:09 patrick Exp $ */
+/* $OpenBSD: copystr.S,v 1.3 2017/02/15 21:39:50 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -43,19 +43,19 @@ ENTRY(copystr)
 
 	mov	x8, xzr
 
-1:	ldrb 	w4, [x0], 1
+1:	ldrb	w4, [x0], 1
 	strb	w4, [x1], #1
 	sub	x2, x2, #1
-	add     x8, x8, #1
+	add	x8, x8, #1
 	cbz	w4, .Lcopystrsuccess
 	cbnz	x2, 1b
 
 	mov	x0, #ENAMETOOLONG
-	b .Lcopystrcleanup
+	b	.Lcopystrcleanup
 
 .Lcopystrfault:
 	mov	x0, #EFAULT
-	b 	.Lcopystrcleanup
+	b	.Lcopystrcleanup
 
 .Lcopystrsuccess:
 	mov	x0, xzr
