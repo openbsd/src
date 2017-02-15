@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.52 2016/06/14 17:09:25 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.53 2017/02/15 13:19:08 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 14 2016 $
+.Dd $Mdocdate: February 15 2017 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -113,15 +113,16 @@ Force removal of the package.
 is a keyword that states what failsafe
 should be waived.
 Recognized keywords include:
-.Bl -tag -width "dependenciesXX"
+.Pp
+.Bl -tag -width "dependenciesXX" -compact
 .It Ar baddepend
-force the deletion of packages even if they reference nonexistent dependencies.
+Force the deletion of packages even if they reference nonexistent dependencies.
 .It Ar dependencies
-also delete the whole set of packages that depends upon the requested packages.
+Also delete the whole set of packages that depends upon the requested packages.
 .It Ar nonroot
-uninstall even if not running as root.
+Uninstall even if not running as root.
 .It Ar scripts
-external scripts may fail.
+External scripts may fail.
 .El
 .It Fl I
 Force non-interactive mode.

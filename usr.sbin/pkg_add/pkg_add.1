@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.140 2017/01/01 01:08:11 tb Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.141 2017/02/15 13:19:08 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 1 2017 $
+.Dd $Mdocdate: February 15 2017 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -297,41 +297,41 @@ Recognized keywords include:
 .Pp
 .Bl -tag -width "updatedependsXX" -compact
 .It Ar allversions
-do not trim older p* variants of packages for updates.
+Do not trim older p* variants of packages for updates.
 .It Ar arch
-architecture recorded in package may not match.
+Architecture recorded in package may not match.
 .It Ar dontmerge
-by default, if dependencies are too strict,
+By default, if dependencies are too strict,
 .Nm
 will merge updates together to make sure everything stays in sync.
 .Fl D Ar dontmerge
 disables that behavior.
 .It Ar donttie
-by default,
+By default,
 .Nm
 will try to find new files in old packages by comparing the stored sha256,
 and tie the entries together to avoid extracting files needlessly.
 .Fl D Ar donttie
 disables that behavior.
 .It Ar downgrade
-don't filter out package versions older than what's currently installed.
+Don't filter out package versions older than what's currently installed.
 .It Ar installed
-in update mode, reinstall an existing package with the same update signature.
+In update mode, reinstall an existing package with the same update signature.
 .It Ar libdepends
-library specifications may not be fulfilled.
+Library specifications may not be fulfilled.
 .It Ar nonroot
-install even if not running as root.
+Install even if not running as root.
 .\" .It Ar nosig
 .\" do not check digital signatures.
 .\" Still displays a very prominent message if a signature is found.
 .It Ar paranoid
-very safe update: don't run any @exec/@unexec.
+Very safe update: don't run any @exec/@unexec.
 .It Ar repair
-attempt to repair installed packages with missing registration data.
+Attempt to repair installed packages with missing registration data.
 .It Ar scripts
-external scripts may fail.
+External scripts may fail.
 .It Ar SIGNER
-list of trusted signers, separated by commas.
+List of trusted signers, separated by commas.
 Corresponds to list of public keys under
 .Pa /etc/signify
 we want to trust.
@@ -341,12 +341,12 @@ for packages, and any key matching
 .Sq *fw
 for firmware.
 .It Ar unsigned
-allow the installation of unsigned packages without warnings/errors
+Allow the installation of unsigned packages without warnings/errors
 (necessary for
 .Xr ports 7 ,
 automatically set by the build infrastructure).
 .It Ar updatedepends
-force update even if forward dependencies no longer match.
+Force update even if forward dependencies no longer match.
 .El
 .It Fl I
 Force non-interactive mode.

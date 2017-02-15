@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.9 2016/10/03 13:11:38 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.10 2017/02/15 13:19:08 jmc Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2016 $
+.Dd $Mdocdate: February 15 2017 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -84,15 +84,15 @@ Source repository for packages to be signed.
 .Xc
 Specify signature parameters for signed packages.
 Option parameters are as follows:
-.Bl -tag -width signify2 -compact
+.Bl -tag -width signify2
 .It Cm signify2
-choose
+Choose
 .Xr signify 1
 new style signatures, where the
 .Xr gzip 1
 compressed data is signed.
 .It Ar privkey
-the path to the signer's private key.
+The path to the signer's private key.
 For
 .Cm signify ,
 the private key name is used to set the

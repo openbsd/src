@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_check.8,v 1.8 2016/08/25 16:27:16 jmc Exp $
+.\"	$OpenBSD: pkg_check.8,v 1.9 2017/02/15 13:19:08 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2016 $
+.Dd $Mdocdate: February 15 2017 $
 .Dt PKG_CHECK 8
 .Os
 .Sh NAME
@@ -80,10 +80,9 @@ The options are as follows:
 .Xc
 Extra options.
 Recognized keywords include:
-.Pp
-.Bl -tag -width "nosigXXX" -compact
+.Bl -tag -width "nosigXXX"
 .It Ar nosig
-do not check digital signatures.
+Do not check digital signatures.
 .El
 .It Fl F
 Check the filesystem for random objects.
