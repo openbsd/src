@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.56 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: fts.c,v 1.57 2017/02/15 15:58:40 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -74,7 +74,7 @@ fts_open(char * const *argv, int options,
 	FTS *sp;
 	FTSENT *p, *root;
 	int nitems;
-	FTSENT *parent, *tmp;
+	FTSENT *parent, *prev;
 
 	/* Options check. */
 	if (options & ~FTS_OPTIONMASK) {
@@ -111,7 +111,7 @@ fts_open(char * const *argv, int options,
 	parent->fts_level = FTS_ROOTPARENTLEVEL;
 
 	/* Allocate/initialize root(s). */
-	for (root = NULL, nitems = 0; *argv; ++argv, ++nitems) {
+	for (root = prev = NULL, nitems = 0; *argv; ++argv, ++nitems) {
 		if ((p = fts_alloc(sp, *argv, strlen(*argv))) == NULL)
 			goto mem3;
 		p->fts_level = FTS_ROOTLEVEL;
@@ -133,11 +133,10 @@ fts_open(char * const *argv, int options,
 		} else {
 			p->fts_link = NULL;
 			if (root == NULL)
-				tmp = root = p;
-			else {
-				tmp->fts_link = p;
-				tmp = p;
-			}
+				root = p;
+			else
+				prev->fts_link = p;
+			prev = p;
 		}
 	}
 	if (compar && nitems > 1)
