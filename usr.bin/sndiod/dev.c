@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.27 2017/01/03 06:53:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.28 2017/02/15 21:28:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1823,7 +1823,7 @@ slot_detach(struct slot *s)
 #endif
 	for (ps = &s->dev->slot_list; *ps != s; ps = &(*ps)->next) {
 #ifdef DEBUG
-		if (s == NULL) {
+		if (*ps == NULL) {
 			slot_log(s);
 			log_puts(": can't detach, not on list\n");
 			panic();
