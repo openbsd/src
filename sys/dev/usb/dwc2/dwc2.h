@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.13 2015/06/28 11:48:18 jmatthew Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.14 2017/02/15 14:49:13 visa Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ enum usb_otg_state {
 #define usleep_range(l, u)	do { DELAY(u); } while (0)
 
 #define spinlock_t		struct mutex
-#define spin_lock_init(lock)	mtx_init(lock, IPL_SCHED)
+#define spin_lock_init(lock)	mtx_init(lock, IPL_USB)
 #define	spin_lock(l)		do { mtx_enter(l); } while (0)
 #define	spin_unlock(l)		do { mtx_leave(l); } while (0)
 
