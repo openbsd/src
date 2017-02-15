@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.270 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.271 2017/02/15 03:36:58 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -280,22 +280,22 @@ update:
  * track of how many were replaced.  That's the number of references
  * the old vnode had that we've replaced, so finish by vrele()'ing
  * it that many times.  This puts off any possible sleeping until
- * we've finished walking the allproc list.
+ * we've finished walking the allprocess list.
  */
 void
 checkdirs(struct vnode *olddp)
 {
 	struct filedesc *fdp;
 	struct vnode *newdp;
-	struct proc *p;
+	struct process *pr;
 	u_int  free_count = 0;
 
 	if (olddp->v_usecount == 1)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	LIST_FOREACH(p, &allproc, p_list) {
-		fdp = p->p_fd;
+	LIST_FOREACH(pr, &allprocess, ps_list) {
+		fdp = pr->ps_fd;
 		if (fdp->fd_cdir == olddp) {
 			free_count++;
 			vref(newdp);
