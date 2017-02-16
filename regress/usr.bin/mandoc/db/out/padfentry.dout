@@ -14,7 +14,7 @@ macros count  36
 macro 00 entry count 2
 === MACRO 00 ===
 macro 00 # three(3) # empty 
-macro 00 # one(1) # empty 
+macro 00 # two(2) # empty 
 === END OF MACRO 00 ===
 macro 01 entry count 0
 macro 02 entry count 0

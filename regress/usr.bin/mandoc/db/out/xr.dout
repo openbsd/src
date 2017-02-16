@@ -13,8 +13,8 @@ macros count  36
 === MACROS ===
 macro 00 entry count 2
 === MACRO 00 ===
-macro 00 # page(1) # xr 
 macro 00 # bare # xr 
+macro 00 # page(1) # xr 
 === END OF MACRO 00 ===
 macro 01 entry count 0
 macro 02 entry count 0

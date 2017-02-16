@@ -15,15 +15,15 @@ macro 00 entry count 0
 macro 01 entry count 0
 macro 02 entry count 2
 === MACRO 02 ===
-macro 02 # fo_arg # fn 
 macro 02 # fn_arg # fn 
+macro 02 # fo_arg # fn 
 === END OF MACRO 02 ===
 macro 03 entry count 0
 macro 04 entry count 0
 macro 05 entry count 2
 === MACRO 05 ===
-macro 05 # fo_name # fn 
 macro 05 # fn_func # fn 
+macro 05 # fo_name # fn 
 === END OF MACRO 05 ===
 macro 06 entry count 0
 macro 07 entry count 0
@@ -34,8 +34,8 @@ macro 11 entry count 0
 macro 12 entry count 0
 macro 13 entry count 2
 === MACRO 13 ===
-macro 13 # fo_type # fn 
 macro 13 # fn_type # fn 
+macro 13 # fo_type # fn 
 === END OF MACRO 13 ===
 macro 14 entry count 0
 macro 15 entry count 0
