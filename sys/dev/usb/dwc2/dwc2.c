@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.40 2017/02/12 17:41:17 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.41 2017/02/16 14:09:00 visa Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1436,16 +1436,13 @@ dwc2_worker(struct task *wk, void *priv)
 	}
 }
 
-int dwc2_intr(void *p)
+int
+dwc2_intr(void *p)
 {
 	struct dwc2_softc *sc = p;
-	struct dwc2_hsotg *hsotg;
+	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 	int ret = 0;
 
-	if (sc == NULL)
-		return 0;
-
-	hsotg = sc->sc_hsotg;
 	mtx_enter(&hsotg->lock);
 
 	if (sc->sc_dying)
