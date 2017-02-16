@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.44 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.45 2017/02/16 10:53:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -131,14 +131,11 @@ cmd_run_shell_callback(struct job *job)
 	char				*cmd = cdata->cmd, *msg, *line;
 	size_t				 size;
 	int				 retcode;
-	u_int				 lines;
 
-	lines = 0;
 	do {
 		if ((line = evbuffer_readline(job->event->input)) != NULL) {
 			cmd_run_shell_print(job, line);
 			free(line);
-			lines++;
 		}
 	} while (line != NULL);
 
@@ -149,7 +146,6 @@ cmd_run_shell_callback(struct job *job)
 		line[size] = '\0';
 
 		cmd_run_shell_print(job, line);
-		lines++;
 
 		free(line);
 	}

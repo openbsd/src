@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.111 2017/02/03 21:01:02 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.112 2017/02/16 10:53:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,7 +72,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmd_find_state		*fs = &item->state.tflag;
 	struct session			*s = fs->s;
 	struct winlink			*wl = fs->wl;
-	struct window			*w = wl->window;
+	struct window			*w;
 	struct client			*c;
 	enum options_table_scope	 scope;
 	struct options			*oo;

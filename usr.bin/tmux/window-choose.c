@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.86 2017/02/03 11:57:28 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.87 2017/02/16 10:53:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -910,7 +910,7 @@ window_choose_write_line(struct window_pane *wp, struct screen_write_ctx *ctx,
 		     * expanded or not.
 		     */
 		    (item->wcd->type & TREE_SESSION) ?
-		    (item->state & TREE_EXPANDED ? "-" : "+") : "", item->name);
+		    ((item->state & TREE_EXPANDED) ? "-" : "+") : "", item->name);
 	}
 	while (s->cx < screen_size_x(s) - 1)
 		screen_write_putc(ctx, &gc, ' ');
