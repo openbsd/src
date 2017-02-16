@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.21 2017/01/10 13:46:53 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.22 2017/02/16 02:59:42 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,8 +75,7 @@ enum	roff_next {
  */
 enum	mdoc_endbody {
 	ENDBODY_NOT = 0,
-	ENDBODY_SPACE,	/* Is broken: append a space. */
-	ENDBODY_NOSPACE	/* Is broken: don't append a space. */
+	ENDBODY_SPACE	/* Is broken: append a space. */
 };
 
 struct	roff_node {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.148 2017/01/28 23:26:56 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.149 2017/02/16 02:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -134,7 +134,7 @@ mdoc_tail_alloc(struct roff_man *mdoc, int line, int pos, int tok)
 
 struct roff_node *
 mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos, int tok,
-		struct roff_node *body, enum mdoc_endbody end)
+		struct roff_node *body)
 {
 	struct roff_node *p;
 
@@ -143,7 +143,7 @@ mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos, int tok,
 	p = roff_node_alloc(mdoc, line, pos, ROFFT_BODY, tok);
 	p->body = body;
 	p->norm = body->norm;
-	p->end = end;
+	p->end = ENDBODY_SPACE;
 	roff_node_append(mdoc, p);
 	mdoc->next = ROFF_NEXT_SIBLING;
 	return p;

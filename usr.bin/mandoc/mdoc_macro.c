@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.172 2017/02/11 15:44:11 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.173 2017/02/16 02:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -418,7 +418,7 @@ find_pending(struct roff_man *mdoc, int tok, int line, int ppos,
 				    "%s breaks %s", mdoc_macronames[tok],
 				    mdoc_macronames[n->tok]);
 				mdoc_endbody_alloc(mdoc, line, ppos,
-				    tok, target, ENDBODY_NOSPACE);
+				    tok, target);
 			}
 		}
 	}
@@ -632,7 +632,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 			    mdoc_macronames[later->tok]);
 
 			endbody = mdoc_endbody_alloc(mdoc, line, ppos,
-			    atok, body, ENDBODY_SPACE);
+			    atok, body);
 
 			if (tok == MDOC_El)
 				itblk->flags |= NODE_ENDED | NODE_BROKEN;

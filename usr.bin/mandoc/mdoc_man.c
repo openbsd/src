@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.100 2017/02/06 03:41:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.101 2017/02/16 02:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -637,9 +637,6 @@ print_node(DECL_ARGS)
 
 	if (ENDBODY_NOT != n->end)
 		n->body->flags |= NODE_ENDED;
-
-	if (ENDBODY_NOSPACE == n->end)
-		outflags &= ~(MMAN_spc | MMAN_nl);
 }
 
 static int

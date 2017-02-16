@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.145 2017/02/06 03:41:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.146 2017/02/16 02:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -415,8 +415,6 @@ print_mdoc_node(MDOC_ARGS)
 		(*mdocs[n->tok].post)(meta, n, h);
 		if (n->end != ENDBODY_NOT)
 			n->body->flags |= NODE_ENDED;
-		if (n->end == ENDBODY_NOSPACE)
-			h->flags |= HTML_NOSPACE;
 		break;
 	}
 }
