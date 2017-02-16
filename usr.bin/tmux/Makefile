@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.85 2017/01/24 21:50:22 nicm Exp $
+# $OpenBSD: Makefile,v 1.86 2017/02/16 12:18:38 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -13,7 +13,6 @@ SRCS=	alerts.c \
 	cmd-choose-buffer.c \
 	cmd-choose-client.c \
 	cmd-choose-tree.c \
-	cmd-clear-history.c \
 	cmd-command-prompt.c \
 	cmd-confirm-before.c \
 	cmd-copy-mode.c \
