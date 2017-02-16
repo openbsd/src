@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.185 2017/02/10 15:44:31 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.186 2017/02/16 10:55:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -107,17 +107,14 @@ int
 main(int argc, char *argv[])
 {
 	struct manconf	 conf;
-	struct curparse	 curp;
 	struct mansearch search;
+	struct curparse	 curp;
 	struct tag_files *tag_files;
-	const char	*progname;
-	char		*auxpaths;
-	char		*defos;
-	unsigned char	*uc;
 	struct manpage	*res, *resp;
-	char		*conf_file, *defpaths;
-	const char	*sec;
-	const char	*thisarg;
+	const char	*progname, *sec, *thisarg;
+	char		*conf_file, *defpaths, *auxpaths;
+	char		*defos, *oarg;
+	unsigned char	*uc;
 	size_t		 i, sz;
 	int		 prio, best_prio;
 	enum outmode	 outmode;
@@ -145,6 +142,7 @@ main(int argc, char *argv[])
 
 	memset(&search, 0, sizeof(struct mansearch));
 	search.outkey = "Nd";
+	oarg = NULL;
 
 	if (strcmp(progname, "man") == 0)
 		search.argmode = ARG_NAME;
@@ -223,15 +221,7 @@ main(int argc, char *argv[])
 			auxpaths = optarg;
 			break;
 		case 'O':
-			search.outkey = optarg;
-			while (optarg != NULL) {
-				thisarg = optarg;
-				if (manconf_output(&conf.output,
-				    strsep(&optarg, ","), 0) == 0)
-					continue;
-				warnx("-O %s: Bad argument", thisarg);
-				return (int)MANDOCLEVEL_BADARG;
-			}
+			oarg = optarg;
 			break;
 		case 'S':
 			search.arch = optarg;
@@ -273,6 +263,21 @@ main(int argc, char *argv[])
 		default:
 			outmode = OUTMODE_LST;
 			break;
+		}
+	}
+
+	if (oarg != NULL) {
+		if (outmode == OUTMODE_LST)
+			search.outkey = oarg;
+		else {
+			while (oarg != NULL) {
+				thisarg = oarg;
+				if (manconf_output(&conf.output,
+				    strsep(&oarg, ","), 0) == 0)
+					continue;
+				warnx("-O %s: Bad argument", thisarg);
+				return (int)MANDOCLEVEL_BADARG;
+			}
 		}
 	}
 
