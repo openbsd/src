@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.27 2017/02/08 16:45:18 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.28 2017/02/16 12:43:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -194,7 +194,7 @@ grid_view_insert_cells(struct grid *gd, u_int px, u_int py, u_int nx, u_int bg)
 
 	sx = grid_view_x(gd, gd->sx);
 
-	if (px == sx - 1)
+	if (px >= sx - 1)
 		grid_clear(gd, px, py, 1, 1, bg);
 	else
 		grid_move_cells(gd, px + nx, px, py, sx - px - nx, bg);
