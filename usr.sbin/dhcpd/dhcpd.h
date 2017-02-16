@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.59 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.60 2017/02/16 00:24:43 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -465,8 +465,6 @@ extern struct group	root_group;
 
 extern u_int16_t	server_port;
 extern u_int16_t	client_port;
-extern int		log_priority;
-extern int		log_perror;
 
 extern char		*path_dhcpd_conf;
 extern char		*path_dhcpd_db;

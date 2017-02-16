@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.25 2017/02/13 23:04:05 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.26 2017/02/16 00:24:43 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -555,42 +555,27 @@ parse_warn(char *fmt, ...)
 {
 	static char fbuf[1024];
 	static char mbuf[1024];
+	static char spaces[81];
 	va_list list;
-	static char spaces[] =
-	    "                                        "
-	    "                                        "; /* 80 spaces */
-	struct iovec iov[6];
-	size_t iovcnt;
+	int i;
 
 	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
 	va_start(list, fmt);
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-	if (log_perror) {
-		iov[0].iov_base = mbuf;
-		iov[0].iov_len = strlen(mbuf);
-		iov[1].iov_base = "\n";
-		iov[1].iov_len = 1;
-		iov[2].iov_base = token_line;
-		iov[2].iov_len = strlen(token_line);
-		iov[3].iov_base = "\n";
-		iov[3].iov_len = 1;
-		iovcnt = 4;
-		if (lexchar < 81) {
-			iov[4].iov_base = spaces;
-			iov[4].iov_len = lexchar - 1;
-			iov[5].iov_base = "^\n";
-			iov[5].iov_len = 2;
-			iovcnt += 2;
+	log_warnx("%s", mbuf);
+	log_warnx("%s", token_line);
+	if (lexchar < sizeof(spaces)) {
+		memset(spaces, 0, sizeof(spaces));
+		for (i = 0; i < lexchar - 1; i++) {
+			if (token_line[i] == '\t')
+				spaces[i] = '\t';
+			else
+				spaces[i] = ' ';
 		}
-		writev(STDERR_FILENO, iov, iovcnt);
-	} else {
-		log_warnx("%s", mbuf);
-		log_warnx("%s", token_line);
-		if (lexchar < 81)
-			log_warnx("%*c", lexchar, '^');
 	}
+	log_warnx("%s^", spaces);
 
 	warnings_occurred = 1;
 

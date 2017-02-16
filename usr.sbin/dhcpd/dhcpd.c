@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.55 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.56 2017/02/16 00:24:43 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -74,7 +74,6 @@ u_int16_t client_port;
 
 struct passwd *pw;
 int log_priority;
-int log_perror = 0;
 int pfpipe[2];
 int gotpipe = 0;
 int syncrecv;
@@ -135,7 +134,6 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			daemonize = 0;
-			log_perror = 1;
 			break;
 		case 'f':
 			daemonize = 0;
@@ -146,7 +144,6 @@ main(int argc, char *argv[])
 		case 'n':
 			daemonize = 0;
 			cftest = 1;
-			log_perror = 1;
 			break;
 		case 'u':
 			udpsockmode = 1;
