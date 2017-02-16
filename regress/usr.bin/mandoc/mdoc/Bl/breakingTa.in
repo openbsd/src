@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 .\" Crashed before mdoc_macro.c OpenBSD rev. 1.172
 initial text
-.Bl -column 6n 6n
+.Bl -column 123456 123456
 .It it Aq aq Ta ta Bo bo bc
 .Bc Pq pq
 .El

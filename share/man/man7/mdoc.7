@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.149 2017/02/05 22:30:16 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.150 2017/02/16 14:38:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 5 2017 $
+.Dd $Mdocdate: February 16 2017 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -974,10 +974,8 @@ argument.
 A columnated list.
 The
 .Fl width
-argument has no effect; instead, each argument specifies the width
-of one column, using either the scaling width syntax described in
-.Xr roff 7
-or the string length of the argument.
+argument has no effect; instead, the string length of each argument
+specifies the width of one column.
 If the first line of the body of a
 .Fl column
 list is not an
