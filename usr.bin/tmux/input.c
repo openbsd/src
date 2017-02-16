@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.115 2017/02/08 17:31:09 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.116 2017/02/16 12:56:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1389,7 +1389,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 		break;
 	case INPUT_CSI_IL:
 		screen_write_insertline(sctx, input_get(ictx, 0, 1, 1),
-			ictx->cell.cell.bg);
+		    ictx->cell.cell.bg);
 		break;
 	case INPUT_CSI_RCP:
 		memcpy(&ictx->cell, &ictx->old_cell, sizeof ictx->cell);
