@@ -6,3 +6,6 @@ mandoc: twice.in:25:2: WARNING: blocks badly nested: Bo breaks Ao
 mandoc: twice.in:26:2: WARNING: blocks badly nested: Bo breaks Ao
 mandoc: twice.in:32:11: WARNING: blocks badly nested: Bo breaks Aq
 mandoc: twice.in:32:17: WARNING: blocks badly nested: Bo breaks Aq
+mandoc: twice.in:36:8: WARNING: blocks badly nested: Bq breaks Po
+mandoc: twice.in:36:2: WARNING: blocks badly nested: Aq breaks Po
+mandoc: twice.in:36:2: WARNING: moving content out of list: Aq

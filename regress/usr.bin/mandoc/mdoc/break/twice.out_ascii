@@ -4,12 +4,16 @@ NNAAMMEE
      bbrreeaakk--ttwwiiccee - breaking the same block twice
 
 DDEESSCCRRIIPPTTIIOONN
-     Standard case, explicit: [bo {bro <ao brc} bc] ac>
+     Standard case, fully explicit: [bo {bro <ao brc} bc] ac>
 
-     Standard case, implicit: [bo {bro <aq brc} bc] eol>
+     Standard case, implicit broken block: [bo {bro <aq brc} bc] eol>
 
-     Two of the same kind, explicit: [bo [bo <ao bc] bc] ac>
+     Two of the same kind, fully explicit: [bo [bo <ao bc] bc] ac>
 
-     Two of the same kind, implicit: [bo [bo <aq bc] bc] eol>
+     Two of the same kind, implicit broken block: [bo [bo <aq bc] bc] eol>
 
-OpenBSD                        February 12, 2015                       OpenBSD
+     Two implicit breakers: <aq [bq (po]> pc)
+
+     --   it
+
+OpenBSD                        February 16, 2017                       OpenBSD

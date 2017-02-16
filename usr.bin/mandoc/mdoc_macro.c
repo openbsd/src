@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.173 2017/02/16 02:59:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.174 2017/02/16 09:47:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -379,6 +379,10 @@ rew_elem(struct roff_man *mdoc, int tok)
 static void
 break_intermediate(struct roff_node *n, struct roff_node *breaker)
 {
+	if (n != breaker &&
+	    n->type != ROFFT_BLOCK && n->type != ROFFT_HEAD &&
+	    (n->type != ROFFT_BODY || n->end != ENDBODY_NOT))
+		n = n->parent;
 	while (n != breaker) {
 		if ( ! (n->flags & NODE_VALID))
 			n->flags |= NODE_BROKEN;
@@ -408,8 +412,7 @@ find_pending(struct roff_man *mdoc, int tok, int line, int ppos,
 		if (n->type == ROFFT_BLOCK &&
 		    mdoc_macros[n->tok].flags & MDOC_EXPLICIT) {
 			irc = 1;
-			break_intermediate(mdoc->last, n);
-			n->flags |= NODE_BROKEN;
+			break_intermediate(mdoc->last, target);
 			if (target->type == ROFFT_HEAD)
 				target->flags |= NODE_ENDED;
 			else if ( ! (target->flags & NODE_ENDED)) {
