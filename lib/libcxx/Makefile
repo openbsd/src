@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/01/20 07:55:20 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2017/02/16 02:08:42 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,6 @@ UHDRDIR=	${.CURDIR}/../libunwind/include
 CXXINCLUDEDIR=	/usr/include/c++/v1
 
 .PATH:	${SRCDIR}
-
-CC=		clang
-CXX=		clang++
 
 LIB=		c++
 
