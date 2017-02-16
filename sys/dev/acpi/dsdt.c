@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.230 2017/01/14 11:32:00 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.231 2017/02/16 18:02:22 jcs Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -105,6 +105,8 @@ void			_aml_die(const char *fn, int line, const char *fmt, ...);
 
 void aml_notify_task(void *, int);
 void acpi_poll_notify_task(void *, int);
+
+extern char		*hw_vendor;
 
 /*
  * @@@: Global variables
@@ -1505,6 +1507,21 @@ aml_callosi(struct aml_scope *scope, struct aml_value *val)
 	struct aml_value *fa;
 
 	fa = aml_getstack(scope, AMLOP_ARG0);
+
+	if (hw_vendor != NULL &&
+	    (strcmp(hw_vendor, "Apple Inc.") == 0 ||
+	    strcmp(hw_vendor, "Apple Computer, Inc.") == 0)) {
+		if (strcmp(fa->v_string, "Darwin") == 0) {
+			dnprintf(10,"osi: returning 1 for %s on %s hardware\n",
+			    fa->v_string, hw_vendor);
+			result = 1;
+		} else
+			dnprintf(10,"osi: on %s hardware, but ignoring %s\n",
+			    hw_vendor, fa->v_string);
+
+		return aml_allocvalue(AML_OBJTYPE_INTEGER, result, NULL);
+	}
+
 	for (idx=0; !result && aml_valid_osi[idx] != NULL; idx++) {
 		dnprintf(10,"osi: %s,%s\n", fa->v_string, aml_valid_osi[idx]);
 		result = !strcmp(fa->v_string, aml_valid_osi[idx]);
