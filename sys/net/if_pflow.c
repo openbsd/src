@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.73 2017/02/07 15:34:47 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.74 2017/02/16 10:15:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -508,6 +508,8 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    sizeof(pflowr))))
 			return (error);
 
+		/* XXXSMP breaks atomicity */
+		rw_exit_write(&netlock);
 		s = splnet();
 		error = pflow_set(sc, &pflowr);
 		splx(s);
@@ -525,6 +527,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
+		rw_enter_write(&netlock);
 		break;
 
 	default:

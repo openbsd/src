@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.134 2017/02/07 10:08:21 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.135 2017/02/16 10:15:12 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -390,10 +390,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	default:
 		if (ifp->if_ioctl == NULL)
 			return (EOPNOTSUPP);
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		rw_enter_write(&netlock);
 		return (error);
 	}
 	return (0);
