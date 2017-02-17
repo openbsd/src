@@ -1,0 +1,21 @@
+RS-ALLCH(1)                 General Commands Manual                RS-ALLCH(1)
+
+NNAAMMEE
+     RRss--aallllcchh – reference block using all supported child macros
+
+DDEESSCCRRIIPPTTIIOONN
+     reference on the same line: some _b_o_g_u_s text author name, “title of
+     article”, _b_o_o_k _t_i_t_l_e, _i_s_s_u_e_r _n_a_m_e, _j_o_u_r_n_a_l _n_a_m_e, report name, number of
+     journal, volume number, uniform resource locator, page number,
+     institutional author, city name, date of publication, optional
+     information.
+
+SSEEEE AALLSSOO
+     reference after a blank line:
+
+     some _b_o_g_u_s text author name, “title of article”, _b_o_o_k _t_i_t_l_e, _i_s_s_u_e_r _n_a_m_e,
+     _j_o_u_r_n_a_l _n_a_m_e, report name, number of journal, volume number, uniform
+     resource locator, page number, institutional author, city name, date of
+     publication, optional information.
+
+OpenBSD                          July 7, 2014                          OpenBSD

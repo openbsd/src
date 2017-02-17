@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.244 2017/02/16 14:38:07 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.245 2017/02/17 19:14:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1712,6 +1712,8 @@ termp_quote_pre(DECL_ARGS)
 	case MDOC_Bq:
 		term_word(p, "[");
 		break;
+	case MDOC__T:
+		/* FALLTHROUGH */
 	case MDOC_Do:
 	case MDOC_Dq:
 		term_word(p, "\\(Lq");
@@ -1726,7 +1728,6 @@ termp_quote_pre(DECL_ARGS)
 	case MDOC_Pq:
 		term_word(p, "(");
 		break;
-	case MDOC__T:
 	case MDOC_Qo:
 	case MDOC_Qq:
 		term_word(p, "\"");
@@ -1769,6 +1770,8 @@ termp_quote_post(DECL_ARGS)
 	case MDOC_Bq:
 		term_word(p, "]");
 		break;
+	case MDOC__T:
+		/* FALLTHROUGH */
 	case MDOC_Do:
 	case MDOC_Dq:
 		term_word(p, "\\(Rq");
@@ -1785,7 +1788,6 @@ termp_quote_post(DECL_ARGS)
 	case MDOC_Pq:
 		term_word(p, ")");
 		break;
-	case MDOC__T:
 	case MDOC_Qo:
 	case MDOC_Qq:
 		term_word(p, "\"");

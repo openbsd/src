@@ -1,0 +1,19 @@
+RS-BREAK(1)                 General Commands Manual                RS-BREAK(1)
+
+NNAAMMEE
+     RRss--bbrreeaakk – line break before reference start
+
+DDEESSCCRRIIPPTTIIOONN
+     reference on the same line: author, _j_o_u_r_n_a_l, 42.
+
+SSEEEE AALLSSOO
+     reference after a blank line:
+
+     author, _j_o_u_r_n_a_l, 42.
+
+SSEEEE _A_L_S_O
+     reference after a blank line:
+
+     author, _j_o_u_r_n_a_l, 42.
+
+OpenBSD                         April 15, 2014                         OpenBSD
