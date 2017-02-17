@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2016/12/19 07:44:54 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2017/02/17 17:16:04 patrick Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -39,12 +39,13 @@
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
 db_regs_t ddb_regs;
 
-#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
+#define INKERNEL(va)	(((vaddr_t)(va)) & (1ULL << 63))
 
 #ifndef __clang__
 /*
@@ -55,19 +56,21 @@ db_regs_t ddb_regs;
  *
  */
 #define FR_RFP	(0x0)
-#define FR_RLV	(+0x4)
+#define FR_RLV	(0x4)
 #endif /* !__clang__ */
 
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	u_int32_t	frame, lastframe;
+	u_int64_t	frame, lastframe, lr, lastlr, sp;
 	char		c, *cp = modif;
+	db_expr_t	offset;
+	db_sym_t	sym;
+	char		*name;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	//db_addr_t	scp = 0;
-	int		scp_offset;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'u')
@@ -77,18 +80,71 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	}
 
 	if (!have_addr) {
-		// Implement
-		frame = 0;
+		sp = ddb_regs.tf_sp;
+		lr = ddb_regs.tf_lr;
+		lastlr = ddb_regs.tf_elr;
+		frame = ddb_regs.tf_x[29];
 	} else {
-		// Implement
-		frame = 0;
+		if (trace_thread) {
+			struct proc *p = tfind((pid_t)addr);
+			if (p == NULL) {
+				(*pr)("not found\n");
+				return;
+			}
+			frame = p->p_addr->u_pcb.pcb_tf->tf_x[29];
+			sp =  p->p_addr->u_pcb.pcb_tf->tf_sp;
+			lr =  p->p_addr->u_pcb.pcb_tf->tf_lr;
+			lastlr =  p->p_addr->u_pcb.pcb_tf->tf_elr;
+		} else {
+			sp = addr;
+			db_read_bytes(sp+16, sizeof(db_addr_t),
+			    (char *)&frame);
+			db_read_bytes(sp + 8, sizeof(db_addr_t),
+			    (char *)&lr);
+			lastlr = 0;
+		}
 	}
-	lastframe = 0;
-	//scp_offset = -get_pc_str_offset();
-	scp_offset = -4;
 
 	while (count-- && frame != 0) {
-		break;
-	// Implement
+		lastframe = frame;
+
+		sym = db_search_symbol(lastlr, DB_STGY_ANY, &offset);
+		db_symbol_values(sym, &name, NULL);
+
+		if (name == NULL || strcmp(name, "end") == 0) {
+			(*pr)("%llx at 0x%lx", lastlr, lr - 4);
+		} else {
+			(*pr)("%s() at ", name);
+			db_printsym(lr - 4, DB_STGY_PROC, pr);
+		}
+		(*pr)("\n");
+
+		// can we detect traps ?
+		db_read_bytes(frame, sizeof(db_addr_t), (char *)&frame);
+		if (frame == 0)
+			break;
+		lastlr = lr;
+		db_read_bytes(frame + 8, sizeof(db_addr_t), (char *)&lr);
+
+		if (name != NULL) {
+			if ((strcmp (name, "handle_el0_irq") == 0) ||
+			    (strcmp (name, "handle_el1_irq") == 0)) {
+				(*pr)("--- interrupt ---\n");
+			} else if (
+			    (strcmp (name, "handle_el0_sync") == 0) ||
+			    (strcmp (name, "handle_el1_sync") == 0)) {
+				(*pr)("--- trap ---\n");
+			}
+		}
+		if (INKERNEL(frame)) {
+			if (frame <= lastframe) {
+				(*pr)("Bad frame pointer: 0x%lx\n", frame);
+				break;
+			}
+		} else {
+			if (kernel_only)
+				break;
+		}
+		--count;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2017/02/17 17:16:04 patrick Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ int db_access_abt_sp (struct db_variable *, db_expr_t *, int);
 int db_access_irq_sp (struct db_variable *, db_expr_t *, int);
 u_int db_fetch_reg (int, db_regs_t *);
 
-int db_trapper (u_int, u_int, trapframe_t *, int);
+int db_trapper (vaddr_t, u_int, trapframe_t *, int);
 
 struct db_variable db_regs[] = {
 	{ "x0", (long *)&DDB_REGS->tf_x[0], FCN_NULL, },
@@ -146,6 +146,8 @@ kdb_trap(int type, db_regs_t *regs)
 #endif
 
 
+#define INKERNEL(va)	(((vaddr_t)(va)) & (1ULL << 63))
+
 static int db_validate_address(vaddr_t addr);
 
 static int
@@ -155,12 +157,7 @@ db_validate_address(vaddr_t addr)
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
-#ifndef ARM32_NEW_VM_LAYOUT
-	    addr >= VM_MAXUSER_ADDRESS
-#else
-	    addr >= VM_MIN_KERNEL_ADDRESS
-#endif
-	    )
+	    INKERNEL(addr))
 		pmap = pmap_kernel();
 	else
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -179,23 +176,28 @@ db_read_bytes(addr, size, data)
 {
 	char	*src = (char *)addr;
 
-	if (db_validate_address((u_int)src)) {
+	if (db_validate_address((vaddr_t)src)) {
 		db_printf("address %p is invalid\n", src);
 		return;
 	}
 
-	if (size == 4 && (addr & 3) == 0 && ((u_int32_t)data & 3) == 0) {
+	if (size == 8 && (addr & 7) == 0 && ((vaddr_t)data & 7) == 0) {
+		*((uint64_t*)data) = *((uint64_t*)src);
+		return;
+	}
+
+	if (size == 4 && (addr & 3) == 0 && ((vaddr_t)data & 3) == 0) {
 		*((int*)data) = *((int*)src);
 		return;
 	}
 
-	if (size == 2 && (addr & 1) == 0 && ((u_int32_t)data & 1) == 0) {
+	if (size == 2 && (addr & 1) == 0 && ((vaddr_t)data & 1) == 0) {
 		*((short*)data) = *((short*)src);
 		return;
 	}
 
 	while (size-- > 0) {
-		if (db_validate_address((u_int)src)) {
+		if (db_validate_address((vaddr_t)src)) {
 			db_printf("address %p is invalid\n", src);
 			return;
 		}
@@ -233,7 +235,7 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	dst = (char *)addr;
 	loop = size;
 	while (loop-- > 0) {
-		if (db_validate_address((u_int)dst)) {
+		if (db_validate_address((vaddr_t)dst)) {
 			db_printf("address %p is invalid\n", dst);
 			return;
 		}
@@ -259,7 +261,7 @@ struct db_command db_machine_command_table[] = {
 };
 
 int
-db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
+db_trapper(vaddr_t addr, u_int inst, trapframe_t *frame, int fault_code)
 {
 
 	if (fault_code == EXCP_BRK) {
@@ -270,8 +272,8 @@ db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
 	return (0);
 }
 
-extern u_int esym;
-extern u_int end;
+extern vaddr_t esym;
+extern vaddr_t end;
 
 void
 db_machine_init(void)
@@ -284,84 +286,6 @@ db_machine_init(void)
 	//install_coproc_handler_static(0, &db_uh);
 
 	db_machine_commands_install(db_machine_command_table);
-}
-
-u_int
-db_fetch_reg(int reg, db_regs_t *db_regs)
-{
-
-	switch (reg) {
-	case 0:
-		return (db_regs->tf_x[0]);
-	case 1:
-		return (db_regs->tf_x[1]);
-	case 2:
-		return (db_regs->tf_x[2]);
-	case 3:
-		return (db_regs->tf_x[3]);
-	case 4:
-		return (db_regs->tf_x[4]);
-	case 5:
-		return (db_regs->tf_x[5]);
-	case 6:
-		return (db_regs->tf_x[6]);
-	case 7:
-		return (db_regs->tf_x[7]);
-	case 8:
-		return (db_regs->tf_x[8]);
-	case 9:
-		return (db_regs->tf_x[9]);
-	case 10:
-		return (db_regs->tf_x[10]);
-	case 11:
-		return (db_regs->tf_x[11]);
-	case 12:
-		return (db_regs->tf_x[12]);
-	case 13:
-		return (db_regs->tf_x[13]);
-	case 14:
-		return (db_regs->tf_x[14]);
-	case 15:
-		return (db_regs->tf_x[15]);
-	case 16:
-		return (db_regs->tf_x[16]);
-	case 17:
-		return (db_regs->tf_x[17]);
-	case 18:
-		return (db_regs->tf_x[18]);
-	case 19:
-		return (db_regs->tf_x[19]);
-	case 20:
-		return (db_regs->tf_x[20]);
-	case 21:
-		return (db_regs->tf_x[21]);
-	case 22:
-		return (db_regs->tf_x[22]);
-	case 23:
-		return (db_regs->tf_x[23]);
-	case 24:
-		return (db_regs->tf_x[24]);
-	case 25:
-		return (db_regs->tf_x[25]);
-	case 26:
-		return (db_regs->tf_x[26]);
-	case 27:
-		return (db_regs->tf_x[27]);
-	case 28:
-		return (db_regs->tf_x[28]);
-	case 29:
-		return (db_regs->tf_x[29]);
-	case 30:
-		return (db_regs->tf_lr);
-	case 31:
-		return (db_regs->tf_sp);
-	case 32:
-		return (db_regs->tf_elr);
-	case 33:
-		return (db_regs->tf_spsr);
-	default:
-		panic("db_fetch_reg: botch");
-	}
 }
 
 db_addr_t
