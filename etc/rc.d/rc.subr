@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.117 2017/01/24 01:11:11 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.118 2017/02/17 16:42:41 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,11 +114,6 @@ _rc_quirks() {
 	if [ X"${nfs_server}" = X"YES" ]; then
 		[ X"${nfsd_flags}" = X"NO" ] && nfsd_flags="-tun 4"
 		[ X"${mountd_flags}" = X"NO" ] && mountd_flags=
-	fi
-
-	# in case domainname is set and /var/yp/binding exists enable ypbind
-	if [ X"`domainname`" != X"" -a -d /var/yp/binding ]; then
-		ypbind_flags=
 	fi
 }
 
