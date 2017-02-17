@@ -43,6 +43,9 @@
 #  include <sys/types.h>
 #endif
 #include <sys/time.h>
+#ifdef USE_TCP_FASTOPEN
+#include <netinet/tcp.h>
+#endif
 #include "services/listen_dnsport.h"
 #include "services/outside_network.h"
 #include "util/netevent.h"
@@ -58,6 +61,10 @@
 
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
 #endif
 
 /** number of queued TCP connections for listen() */
@@ -93,11 +100,71 @@ verbose_print_addr(struct addrinfo *addr)
 	}
 }
 
+#ifdef HAVE_SYSTEMD
+static int
+systemd_get_activated(int family, int socktype, int listen,
+		      struct sockaddr *addr, socklen_t addrlen,
+		      const char *path)
+{
+	int i = 0;
+	int r = 0;
+	int s = -1;
+	const char* listen_pid, *listen_fds;
+
+	/* We should use "listen" option only for stream protocols. For UDP it should be -1 */
+
+	if((r = sd_booted()) < 1) {
+		if(r == 0)
+			log_warn("systemd is not running");
+		else
+			log_err("systemd sd_booted(): %s", strerror(-r));
+		return -1;
+	}
+
+	listen_pid = getenv("LISTEN_PID");
+	listen_fds = getenv("LISTEN_FDS");
+
+	if (!listen_pid) {
+		log_warn("Systemd mandatory ENV variable is not defined: LISTEN_PID");
+		return -1;
+	}
+
+	if (!listen_fds) {
+		log_warn("Systemd mandatory ENV variable is not defined: LISTEN_FDS");
+		return -1;
+	}
+
+	if((r = sd_listen_fds(0)) < 1) {
+		if(r == 0)
+			log_warn("systemd: did not return socket, check unit configuration");
+		else
+			log_err("systemd sd_listen_fds(): %s", strerror(-r));
+		return -1;
+	}
+	
+	for(i = 0; i < r; i++) {
+		if(sd_is_socket(SD_LISTEN_FDS_START + i, family, socktype, listen)) {
+			s = SD_LISTEN_FDS_START + i;
+			break;
+		}
+	}
+	if (s == -1) {
+		if (addr)
+			log_err_addr("systemd sd_listen_fds()",
+				     "no such socket",
+				     (struct sockaddr_storage *)addr, addrlen);
+		else
+			log_err("systemd sd_listen_fds(): %s", path);
+	}
+	return s;
+}
+#endif
+
 int
 create_udp_sock(int family, int socktype, struct sockaddr* addr,
         socklen_t addrlen, int v6only, int* inuse, int* noproto,
 	int rcv, int snd, int listen, int* reuseport, int transparent,
-	int freebind)
+	int freebind, int use_systemd)
 {
 	int s;
 #if defined(SO_REUSEADDR) || defined(SO_REUSEPORT) || defined(IPV6_USE_MIN_MTU)  || defined(IP_TRANSPARENT) || defined(IP_BINDANY) || defined(IP_FREEBIND)
@@ -121,6 +188,16 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 #if !defined(IP_FREEBIND)
 	(void)freebind;
 #endif
+#ifdef HAVE_SYSTEMD
+	int got_fd_from_systemd = 0;
+
+	if (!use_systemd
+	    || (use_systemd
+		&& (s = systemd_get_activated(family, socktype, -1, addr,
+					      addrlen, NULL)) == -1)) {
+#else
+	(void)use_systemd;
+#endif
 	if((s = socket(family, socktype, 0)) == -1) {
 		*inuse = 0;
 #ifndef USE_WINSOCK
@@ -141,6 +218,11 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 		*noproto = 0;
 		return -1;
 	}
+#ifdef HAVE_SYSTEMD
+	} else {
+		got_fd_from_systemd = 1;
+	}
+#endif
 	if(listen) {
 #ifdef SO_REUSEADDR
 		if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void*)&on, 
@@ -184,14 +266,6 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 #else
 		(void)reuseport;
 #endif /* defined(SO_REUSEPORT) */
-#ifdef IP_FREEBIND
-		if (freebind &&
-		    setsockopt(s, IPPROTO_IP, IP_FREEBIND, (void*)&on,
-		    (socklen_t)sizeof(on)) < 0) {
-			log_warn("setsockopt(.. IP_FREEBIND ..) failed: %s",
-			strerror(errno));
-		}
-#endif /* IP_FREEBIND */
 #ifdef IP_TRANSPARENT
 		if (transparent &&
 		    setsockopt(s, IPPROTO_IP, IP_TRANSPARENT, (void*)&on,
@@ -209,6 +283,14 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 		}
 #endif /* IP_TRANSPARENT || IP_BINDANY */
 	}
+#ifdef IP_FREEBIND
+	if(freebind &&
+	    setsockopt(s, IPPROTO_IP, IP_FREEBIND, (void*)&on,
+	    (socklen_t)sizeof(on)) < 0) {
+		log_warn("setsockopt(.. IP_FREEBIND ..) failed: %s",
+		strerror(errno));
+	}
+#endif /* IP_FREEBIND */
 	if(rcv) {
 #ifdef SO_RCVBUF
 		int got;
@@ -462,7 +544,11 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 		}
 #  endif /* IPv4 MTU */
 	}
-	if(bind(s, (struct sockaddr*)addr, addrlen) != 0) {
+	if(
+#ifdef HAVE_SYSTEMD
+		!got_fd_from_systemd &&
+#endif
+		bind(s, (struct sockaddr*)addr, addrlen) != 0) {
 		*noproto = 0;
 		*inuse = 0;
 #ifndef USE_WINSOCK
@@ -485,7 +571,7 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 				(struct sockaddr_storage*)addr, addrlen);
 		}
 		closesocket(s);
-#endif
+#endif /* USE_WINSOCK */
 		return -1;
 	}
 	if(!fd_set_nonblock(s)) {
@@ -503,11 +589,17 @@ create_udp_sock(int family, int socktype, struct sockaddr* addr,
 
 int
 create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
-	int* reuseport, int transparent, int mss, int freebind)
+	int* reuseport, int transparent, int mss, int freebind, int use_systemd)
 {
 	int s;
 #if defined(SO_REUSEADDR) || defined(SO_REUSEPORT) || defined(IPV6_V6ONLY) || defined(IP_TRANSPARENT) || defined(IP_BINDANY) || defined(IP_FREEBIND)
 	int on = 1;
+#endif
+#ifdef HAVE_SYSTEMD
+	int got_fd_from_systemd = 0;
+#endif
+#ifdef USE_TCP_FASTOPEN
+	int qlen;
 #endif
 #if !defined(IP_TRANSPARENT) && !defined(IP_BINDANY)
 	(void)transparent;
@@ -517,6 +609,15 @@ create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
 #endif
 	verbose_print_addr(addr);
 	*noproto = 0;
+#ifdef HAVE_SYSTEMD
+	if (!use_systemd ||
+	    (use_systemd
+	     && (s = systemd_get_activated(addr->ai_family, addr->ai_socktype, 1,
+					   addr->ai_addr, addr->ai_addrlen,
+					   NULL)) == -1)) {
+#else
+	(void)use_systemd;
+#endif
 	if((s = socket(addr->ai_family, addr->ai_socktype, 0)) == -1) {
 #ifndef USE_WINSOCK
 		if(errno == EAFNOSUPPORT || errno == EPROTONOSUPPORT) {
@@ -554,6 +655,11 @@ create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
 		log_warn(" setsockopt(TCP_MAXSEG) unsupported");
 #endif /* defined(IPPROTO_TCP) && defined(TCP_MAXSEG) */
 	}
+#ifdef HAVE_SYSTEMD
+	} else {
+		got_fd_from_systemd = 1;
+    }
+#endif
 #ifdef SO_REUSEADDR
 	if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void*)&on, 
 		(socklen_t)sizeof(on)) < 0) {
@@ -631,7 +737,11 @@ create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
 		(addr->ai_family==AF_INET6?"V6":""), strerror(errno));
 	}
 #endif /* IP_TRANSPARENT || IP_BINDANY */
-	if(bind(s, addr->ai_addr, addr->ai_addrlen) != 0) {
+	if(
+#ifdef HAVE_SYSTEMD
+		!got_fd_from_systemd &&
+#endif
+        bind(s, addr->ai_addr, addr->ai_addrlen) != 0) {
 #ifndef USE_WINSOCK
 		/* detect freebsd jail with no ipv6 permission */
 		if(addr->ai_family==AF_INET6 && errno==EINVAL)
@@ -669,20 +779,46 @@ create_tcp_accept_sock(struct addrinfo *addr, int v6only, int* noproto,
 #endif
 		return -1;
 	}
+#ifdef USE_TCP_FASTOPEN
+	/* qlen specifies how many outstanding TFO requests to allow. Limit is a defense
+	   against IP spoofing attacks as suggested in RFC7413 */
+#ifdef __APPLE__
+	/* OS X implementation only supports qlen of 1 via this call. Actual
+	   value is configured by the net.inet.tcp.fastopen_backlog kernel parm. */
+	qlen = 1;
+#else
+	/* 5 is recommended on linux */
+	qlen = 5;
+#endif
+	if ((setsockopt(s, IPPROTO_TCP, TCP_FASTOPEN, &qlen, 
+		  sizeof(qlen))) == -1 ) {
+		log_err("Setting TCP Fast Open as server failed: %s", strerror(errno));
+	}
+#endif
 	return s;
 }
 
 int
-create_local_accept_sock(const char *path, int* noproto)
+create_local_accept_sock(const char *path, int* noproto, int use_systemd)
 {
+#ifdef HAVE_SYSTEMD
+	int ret;
+
+	if (use_systemd && (ret = systemd_get_activated(AF_LOCAL, SOCK_STREAM, 1, NULL, 0, path)) != -1)
+		return ret;
+	else {
+#endif
 #ifdef HAVE_SYS_UN_H
 	int s;
 	struct sockaddr_un usock;
+#ifndef HAVE_SYSTEMD
+	(void)use_systemd;
+#endif
 
 	verbose(VERB_ALGO, "creating unix socket %s", path);
 #ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
 	/* this member exists on BSDs, not Linux */
-	usock.sun_len = (socklen_t)sizeof(usock);
+	usock.sun_len = (unsigned)sizeof(usock);
 #endif
 	usock.sun_family = AF_LOCAL;
 	/* length is 92-108, 104 on FreeBSD */
@@ -729,7 +865,11 @@ err:
 #endif
 	return -1;
 
+#ifdef HAVE_SYSTEMD
+	}
+#endif
 #else
+	(void)use_systemd;
 	(void)path;
 	log_err("Local sockets are not supported");
 	*noproto = 1;
@@ -744,7 +884,7 @@ err:
 static int
 make_sock(int stype, const char* ifname, const char* port, 
 	struct addrinfo *hints, int v6only, int* noip6, size_t rcv, size_t snd,
-	int* reuseport, int transparent, int tcp_mss, int freebind)
+	int* reuseport, int transparent, int tcp_mss, int freebind, int use_systemd)
 {
 	struct addrinfo *res = NULL;
 	int r, s, inuse, noproto;
@@ -772,7 +912,7 @@ make_sock(int stype, const char* ifname, const char* port,
 		s = create_udp_sock(res->ai_family, res->ai_socktype,
 			(struct sockaddr*)res->ai_addr, res->ai_addrlen,
 			v6only, &inuse, &noproto, (int)rcv, (int)snd, 1,
-			reuseport, transparent, freebind);
+			reuseport, transparent, freebind, use_systemd);
 		if(s == -1 && inuse) {
 			log_err("bind: address already in use");
 		} else if(s == -1 && noproto && hints->ai_family == AF_INET6){
@@ -780,7 +920,7 @@ make_sock(int stype, const char* ifname, const char* port,
 		}
 	} else	{
 		s = create_tcp_accept_sock(res, v6only, &noproto, reuseport,
-			transparent, tcp_mss, freebind);
+			transparent, tcp_mss, freebind, use_systemd);
 		if(s == -1 && noproto && hints->ai_family == AF_INET6){
 			*noip6 = 1;
 		}
@@ -793,7 +933,7 @@ make_sock(int stype, const char* ifname, const char* port,
 static int
 make_sock_port(int stype, const char* ifname, const char* port, 
 	struct addrinfo *hints, int v6only, int* noip6, size_t rcv, size_t snd,
-	int* reuseport, int transparent, int tcp_mss, int freebind)
+	int* reuseport, int transparent, int tcp_mss, int freebind, int use_systemd)
 {
 	char* s = strchr(ifname, '@');
 	if(s) {
@@ -815,10 +955,10 @@ make_sock_port(int stype, const char* ifname, const char* port,
 		(void)strlcpy(p, s+1, sizeof(p));
 		p[strlen(s+1)]=0;
 		return make_sock(stype, newif, p, hints, v6only, noip6,
-			rcv, snd, reuseport, transparent, tcp_mss, freebind);
+			rcv, snd, reuseport, transparent, tcp_mss, freebind, use_systemd);
 	}
 	return make_sock(stype, ifname, port, hints, v6only, noip6, rcv, snd,
-		reuseport, transparent, tcp_mss, freebind);
+		reuseport, transparent, tcp_mss, freebind, use_systemd);
 }
 
 /**
@@ -868,7 +1008,7 @@ set_recvpktinfo(int s, int family)
 		}
 #           else
 		log_err("no IPV6_RECVPKTINFO and no IPV6_PKTINFO option, please "
-			"disable interface-automatic in config");
+			"disable interface-automatic or do-ip6 in config");
 		return 0;
 #           endif /* defined IPV6_RECVPKTINFO */
 
@@ -889,7 +1029,7 @@ set_recvpktinfo(int s, int family)
 		}
 #           else
 		log_err("no IP_SENDSRCADDR or IP_PKTINFO option, please disable "
-			"interface-automatic in config");
+			"interface-automatic or do-ip4 in config");
 		return 0;
 #           endif /* IP_PKTINFO */
 
@@ -915,13 +1055,14 @@ set_recvpktinfo(int s, int family)
  * @param transparent: set IP_TRANSPARENT socket option.
  * @param tcp_mss: maximum segment size of tcp socket. default if zero.
  * @param freebind: set IP_FREEBIND socket option.
+ * @param use_systemd: if true, fetch sockets from systemd.
  * @return: returns false on error.
  */
 static int
 ports_create_if(const char* ifname, int do_auto, int do_udp, int do_tcp, 
 	struct addrinfo *hints, const char* port, struct listen_port** list,
 	size_t rcv, size_t snd, int ssl_port, int* reuseport, int transparent,
-	int tcp_mss, int freebind)
+	int tcp_mss, int freebind, int use_systemd)
 {
 	int s, noip6=0;
 	if(!do_udp && !do_tcp)
@@ -929,7 +1070,7 @@ ports_create_if(const char* ifname, int do_auto, int do_udp, int do_tcp,
 	if(do_auto) {
 		if((s = make_sock_port(SOCK_DGRAM, ifname, port, hints, 1, 
 			&noip6, rcv, snd, reuseport, transparent,
-			tcp_mss, freebind)) == -1) {
+			tcp_mss, freebind, use_systemd)) == -1) {
 			if(noip6) {
 				log_warn("IPv6 protocol not available");
 				return 1;
@@ -957,7 +1098,7 @@ ports_create_if(const char* ifname, int do_auto, int do_udp, int do_tcp,
 		/* regular udp socket */
 		if((s = make_sock_port(SOCK_DGRAM, ifname, port, hints, 1, 
 			&noip6, rcv, snd, reuseport, transparent,
-			tcp_mss, freebind)) == -1) {
+			tcp_mss, freebind, use_systemd)) == -1) {
 			if(noip6) {
 				log_warn("IPv6 protocol not available");
 				return 1;
@@ -979,7 +1120,7 @@ ports_create_if(const char* ifname, int do_auto, int do_udp, int do_tcp,
 			(!strchr(ifname, '@') && atoi(port) == ssl_port));
 		if((s = make_sock_port(SOCK_STREAM, ifname, port, hints, 1, 
 			&noip6, 0, 0, reuseport, transparent, tcp_mss,
-			freebind)) == -1) {
+			freebind, use_systemd)) == -1) {
 			if(noip6) {
 				/*log_warn("IPv6 protocol not available");*/
 				return 1;
@@ -1023,7 +1164,7 @@ listen_cp_insert(struct comm_point* c, struct listen_dnsport* front)
 struct listen_dnsport* 
 listen_create(struct comm_base* base, struct listen_port* ports,
 	size_t bufsize, int tcp_accept_count, void* sslctx,
-	struct dt_env* dtenv, comm_point_callback_t* cb, void *cb_arg)
+	struct dt_env* dtenv, comm_point_callback_type* cb, void *cb_arg)
 {
 	struct listen_dnsport* front = (struct listen_dnsport*)
 		malloc(sizeof(struct listen_dnsport));
@@ -1137,7 +1278,7 @@ listening_ports_open(struct config_file* cfg, int* reuseport)
 				cfg->so_rcvbuf, cfg->so_sndbuf,
 				cfg->ssl_port, reuseport,
 				cfg->ip_transparent,
-				cfg->tcp_mss, cfg->ip_freebind)) {
+				cfg->tcp_mss, cfg->ip_freebind, cfg->use_systemd)) {
 				listening_ports_free(list);
 				return NULL;
 			}
@@ -1150,7 +1291,7 @@ listening_ports_open(struct config_file* cfg, int* reuseport)
 				cfg->so_rcvbuf, cfg->so_sndbuf,
 				cfg->ssl_port, reuseport,
 				cfg->ip_transparent,
-				cfg->tcp_mss, cfg->ip_freebind)) {
+				cfg->tcp_mss, cfg->ip_freebind, cfg->use_systemd)) {
 				listening_ports_free(list);
 				return NULL;
 			}
@@ -1165,7 +1306,7 @@ listening_ports_open(struct config_file* cfg, int* reuseport)
 				cfg->so_rcvbuf, cfg->so_sndbuf,
 				cfg->ssl_port, reuseport,
 				cfg->ip_transparent,
-				cfg->tcp_mss, cfg->ip_freebind)) {
+				cfg->tcp_mss, cfg->ip_freebind, cfg->use_systemd)) {
 				listening_ports_free(list);
 				return NULL;
 			}
@@ -1178,7 +1319,7 @@ listening_ports_open(struct config_file* cfg, int* reuseport)
 				cfg->so_rcvbuf, cfg->so_sndbuf,
 				cfg->ssl_port, reuseport,
 				cfg->ip_transparent,
-				cfg->tcp_mss, cfg->ip_freebind)) {
+				cfg->tcp_mss, cfg->ip_freebind, cfg->use_systemd)) {
 				listening_ports_free(list);
 				return NULL;
 			}

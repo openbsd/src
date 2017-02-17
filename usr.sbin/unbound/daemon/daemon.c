@@ -79,6 +79,7 @@
 #include "services/cache/rrset.h"
 #include "services/cache/infra.h"
 #include "services/localzone.h"
+#include "services/view.h"
 #include "services/modstack.h"
 #include "util/module.h"
 #include "util/random.h"
@@ -86,6 +87,10 @@
 #include "util/net_help.h"
 #include "sldns/keyraw.h"
 #include <signal.h>
+
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 /** How many quit requests happened. */
 static int sig_record_quit = 0;
@@ -174,8 +179,15 @@ static void
 signal_handling_playback(struct worker* wrk)
 {
 #ifdef SIGHUP
-	if(sig_record_reload)
+	if(sig_record_reload) {
+# ifdef HAVE_SYSTEMD
+		sd_notify(0, "RELOADING=1");
+# endif
 		worker_sighandler(SIGHUP, wrk);
+# ifdef HAVE_SYSTEMD
+		sd_notify(0, "READY=1");
+# endif
+	}
 #endif
 	if(sig_record_quit)
 		worker_sighandler(SIGTERM, wrk);
@@ -204,17 +216,29 @@ daemon_init(void)
 	signal_handling_record();
 	checklock_start();
 #ifdef HAVE_SSL
+#  ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
+#  endif
 	ERR_load_SSL_strings();
 #  ifdef USE_GOST
 	(void)sldns_key_EVP_load_gost_id();
 #  endif
+#  if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
+#  else
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
+		| OPENSSL_INIT_ADD_ALL_DIGESTS
+		| OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+#  endif
 #  if HAVE_DECL_SSL_COMP_GET_COMPRESSION_METHODS
 	/* grab the COMP method ptr because openssl leaks it */
 	comp_meth = (void*)SSL_COMP_get_compression_methods();
 #  endif
+#  if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_SSL)
 	(void)SSL_library_init();
+#  else
+	(void)OPENSSL_init_ssl(0, NULL);
+#  endif
 #  if defined(HAVE_SSL) && defined(OPENSSL_THREADS) && !defined(THREADS_DISABLED)
 	if(!ub_openssl_lock_init())
 		fatal_exit("could not init openssl locks");
@@ -236,9 +260,16 @@ daemon_init(void)
 		free(daemon);
 		return NULL;
 	}
+	/* init edns_known_options */
+	if(!edns_known_options_init(daemon->env)) {
+		free(daemon->env);
+		free(daemon);
+		return NULL;
+	}
 	alloc_init(&daemon->superalloc, NULL, 0);
 	daemon->acl = acl_list_create();
 	if(!daemon->acl) {
+		edns_known_options_delete(daemon->env);
 		free(daemon->env);
 		free(daemon);
 		return NULL;
@@ -335,6 +366,7 @@ static void daemon_setup_modules(struct daemon* daemon)
 		daemon->env)) {
 		fatal_exit("failed to setup modules");
 	}
+	log_edns_known_options(VERB_ALGO, daemon->env);
 }
 
 /**
@@ -404,6 +436,8 @@ daemon_create_workers(struct daemon* daemon)
 	}
 	daemon->workers = (struct worker**)calloc((size_t)daemon->num, 
 		sizeof(struct worker*));
+	if(!daemon->workers)
+		fatal_exit("out of memory during daemon init");
 	if(daemon->cfg->dnstap) {
 #ifdef USE_DNSTAP
 		daemon->dtenv = dt_create(daemon->cfg->dnstap_socket_path,
@@ -528,8 +562,15 @@ void
 daemon_fork(struct daemon* daemon)
 {
 	log_assert(daemon);
-	if(!acl_list_apply_cfg(daemon->acl, daemon->cfg))
+	if(!(daemon->views = views_create()))
+		fatal_exit("Could not create views: out of memory");
+	/* create individual views and their localzone/data trees */
+	if(!views_apply_cfg(daemon->views, daemon->cfg))
+		fatal_exit("Could not set up views");
+
+	if(!acl_list_apply_cfg(daemon->acl, daemon->cfg, daemon->views))
 		fatal_exit("Could not setup access control list");
+	/* create global local_zones */
 	if(!(daemon->local_zones = local_zones_create()))
 		fatal_exit("Could not create local zones: out of memory");
 	if(!local_zones_apply_cfg(daemon->local_zones, daemon->cfg))
@@ -565,8 +606,14 @@ daemon_fork(struct daemon* daemon)
 	signal_handling_playback(daemon->workers[0]);
 
 	/* Start resolver service on main thread. */
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "READY=1");
+#endif
 	log_info("start of service (%s).", PACKAGE_STRING);
 	worker_work(daemon->workers[0]);
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "STOPPING=1");
+#endif
 	log_info("service stopped (%s).", PACKAGE_STRING);
 
 	/* we exited! a signal happened! Stop other threads */
@@ -586,13 +633,14 @@ daemon_cleanup(struct daemon* daemon)
 	log_thread_set(NULL);
 	/* clean up caches because
 	 * a) RRset IDs will be recycled after a reload, causing collisions
-	 * b) validation config can change, thus rrset, msg, keycache clear 
-	 * The infra cache is kept, the timing and edns info is still valid */
+	 * b) validation config can change, thus rrset, msg, keycache clear */
 	slabhash_clear(&daemon->env->rrset_cache->table);
 	slabhash_clear(daemon->env->msg_cache);
 	local_zones_delete(daemon->local_zones);
 	daemon->local_zones = NULL;
-	/* key cache is cleared by module desetup during next daemon_init() */
+	views_delete(daemon->views);
+	daemon->views = NULL;
+	/* key cache is cleared by module desetup during next daemon_fork() */
 	daemon_remote_clear(daemon->rc);
 	for(i=0; i<daemon->num; i++)
 		worker_delete(daemon->workers[i]);
@@ -621,6 +669,8 @@ daemon_delete(struct daemon* daemon)
 		slabhash_delete(daemon->env->msg_cache);
 		rrset_cache_delete(daemon->env->rrset_cache);
 		infra_delete(daemon->env->infra_cache);
+		edns_known_options_delete(daemon->env);
+		inplace_cb_lists_delete(daemon->env);
 	}
 	ub_randfree(daemon->rand);
 	alloc_clear(&daemon->superalloc);
@@ -656,8 +706,12 @@ daemon_delete(struct daemon* daemon)
 #  endif
 	CONF_modules_free();
 #  endif
+#  ifdef HAVE_CRYPTO_CLEANUP_ALL_EX_DATA
 	CRYPTO_cleanup_all_ex_data(); /* safe, no more threads right now */
+#  endif
+#  ifdef HAVE_ERR_FREE_STRINGS
 	ERR_free_strings();
+#  endif
 #  if OPENSSL_VERSION_NUMBER < 0x10100000
 	RAND_cleanup();
 #  endif

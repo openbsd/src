@@ -72,7 +72,7 @@
 
 /** Give checkconf usage, and exit (1). */
 static void
-usage()
+usage(void)
 {
 	printf("Usage:	unbound-checkconf [file]\n");
 	printf("	Checks unbound configuration file for errors.\n");
@@ -97,7 +97,10 @@ static void
 print_option(struct config_file* cfg, const char* opt, int final)
 {
 	if(strcmp(opt, "pidfile") == 0 && final) {
-		printf("%s\n", fname_after_chroot(cfg->pidfile, cfg, 1));
+		char *p = fname_after_chroot(cfg->pidfile, cfg, 1);
+		if(!p) fatal_exit("out of memory");
+		printf("%s\n", p);
+		free(p);
 		return;
 	}
 	if(!config_get_option(cfg, opt, config_print_func, stdout))
@@ -115,12 +118,15 @@ check_mod(struct config_file* cfg, struct module_func_block* fb)
 	env.scratch_buffer = sldns_buffer_new(BUFSIZ);
 	if(!env.scratch || !env.scratch_buffer)
 		fatal_exit("out of memory");
+	if(!edns_known_options_init(&env))
+		fatal_exit("out of memory");
 	if(!(*fb->init)(&env, 0)) {
 		fatal_exit("bad config for %s module", fb->name);
 	}
 	(*fb->deinit)(&env, 0);
 	sldns_buffer_free(env.scratch_buffer);
 	regional_destroy(env.scratch);
+	edns_known_options_delete(&env);
 }
 
 /** check localzones */
@@ -161,6 +167,7 @@ warn_hosts(const char* typ, struct config_stub* list)
 static void
 interfacechecks(struct config_file* cfg)
 {
+	int d;
 	struct sockaddr_storage a;
 	socklen_t alen;
 	int i, j;
@@ -177,8 +184,8 @@ interfacechecks(struct config_file* cfg)
 		}
 	}
 	for(i=0; i<cfg->num_out_ifs; i++) {
-		if(!ipstrtoaddr(cfg->out_ifs[i], UNBOUND_DNS_PORT, 
-			&a, &alen)) {
+		if(!ipstrtoaddr(cfg->out_ifs[i], UNBOUND_DNS_PORT, &a, &alen) &&
+		   !netblockstrtoaddr(cfg->out_ifs[i], UNBOUND_DNS_PORT, &a, &alen, &d)) {
 			fatal_exit("cannot parse outgoing-interface "
 				"specified as '%s'", cfg->out_ifs[i]);
 		}
@@ -330,6 +337,8 @@ morechecks(struct config_file* cfg, const char* fname)
 		fatal_exit("num_threads value weird");
 	if(!cfg->do_ip4 && !cfg->do_ip6)
 		fatal_exit("ip4 and ip6 are both disabled, pointless");
+	if(!cfg->do_ip6 && cfg->prefer_ip6)
+		fatal_exit("cannot prefer and disable ip6, pointless");
 	if(!cfg->do_udp && !cfg->do_tcp)
 		fatal_exit("udp and tcp are both disabled, pointless");
 	if(cfg->edns_buffer_size > cfg->msg_buffer_size)
@@ -436,7 +445,9 @@ morechecks(struct config_file* cfg, const char* fname)
 	if(cfg->username && cfg->username[0]) {
 		if(getpwnam(cfg->username) == NULL)
 			fatal_exit("user '%s' does not exist.", cfg->username);
+#  ifdef HAVE_ENDPWENT
 		endpwent();
+#  endif
 	}
 #endif
 	if(cfg->remote_control_enable && cfg->remote_control_use_cert) {
@@ -481,14 +492,22 @@ check_hints(struct config_file* cfg)
 static void
 checkconf(const char* cfgfile, const char* opt, int final)
 {
+	char oldwd[4096];
 	struct config_file* cfg = config_create();
 	if(!cfg)
 		fatal_exit("out of memory");
+	oldwd[0] = 0;
+	if(!getcwd(oldwd, sizeof(oldwd))) {
+		log_err("cannot getcwd: %s", strerror(errno));
+		oldwd[0] = 0;
+	}
 	if(!config_read(cfg, cfgfile, NULL)) {
 		/* config_read prints messages to stderr */
 		config_delete(cfg);
 		exit(1);
 	}
+	if(oldwd[0] && chdir(oldwd) == -1)
+		log_err("cannot chdir(%s): %s", oldwd, strerror(errno));
 	if(opt) {
 		print_option(cfg, opt, final);
 		config_delete(cfg);

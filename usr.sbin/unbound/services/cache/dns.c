@@ -106,7 +106,7 @@ store_rrsets(struct module_env* env, struct reply_info* rep, time_t now,
 
 void 
 dns_cache_store_msg(struct module_env* env, struct query_info* qinfo,
-	hashvalue_t hash, struct reply_info* rep, time_t leeway, int pside,
+	hashvalue_type hash, struct reply_info* rep, time_t leeway, int pside,
 	struct reply_info* qrep, struct regional* region)
 {
 	struct msgreply_entry* e;
@@ -188,12 +188,13 @@ msg_cache_lookup(struct module_env* env, uint8_t* qname, size_t qnamelen,
 {
 	struct lruhash_entry* e;
 	struct query_info k;
-	hashvalue_t h;
+	hashvalue_type h;
 
 	k.qname = qname;
 	k.qname_len = qnamelen;
 	k.qtype = qtype;
 	k.qclass = qclass;
+	k.local_alias = NULL;
 	h = query_info_hash(&k, flags);
 	e = slabhash_lookup(env->msg_cache, h, &k, wr);
 
@@ -361,6 +362,7 @@ dns_msg_create(uint8_t* qname, size_t qnamelen, uint16_t qtype,
 	msg->qinfo.qname_len = qnamelen;
 	msg->qinfo.qtype = qtype;
 	msg->qinfo.qclass = qclass;
+	msg->qinfo.local_alias = NULL;
 	/* non-packed reply_info, because it needs to grow the array */
 	msg->rep = (struct reply_info*)regional_alloc_zero(region, 
 		sizeof(struct reply_info)-sizeof(struct rrset_ref));
@@ -707,7 +709,7 @@ dns_cache_lookup(struct module_env* env,
 {
 	struct lruhash_entry* e;
 	struct query_info k;
-	hashvalue_t h;
+	hashvalue_type h;
 	time_t now = *env->now;
 	struct ub_packed_rrset_key* rrset;
 
@@ -716,6 +718,7 @@ dns_cache_lookup(struct module_env* env,
 	k.qname_len = qnamelen;
 	k.qtype = qtype;
 	k.qclass = qclass;
+	k.local_alias = NULL;
 	h = query_info_hash(&k, flags);
 	e = slabhash_lookup(env->msg_cache, h, &k, 0);
 	if(e) {
@@ -795,9 +798,9 @@ dns_cache_lookup(struct module_env* env,
 		dname_remove_label(&k.qname, &k.qname_len);
 		h = query_info_hash(&k, flags);
 		e = slabhash_lookup(env->msg_cache, h, &k, 0);
-		if(!e && k.qtype != LDNS_RR_TYPE_NS &&
+		if(!e && k.qtype != LDNS_RR_TYPE_A &&
 			env->cfg->qname_minimisation) {
-			k.qtype = LDNS_RR_TYPE_NS;
+			k.qtype = LDNS_RR_TYPE_A;
 			h = query_info_hash(&k, flags);
 			e = slabhash_lookup(env->msg_cache, h, &k, 0);
 		}
@@ -817,7 +820,7 @@ dns_cache_lookup(struct module_env* env,
 			lock_rw_unlock(&e->lock);
 		}
 		k.qtype = qtype;
-	}
+	    }
 
 	/* fill common RR types for ANY response to avoid requery */
 	if(qtype == LDNS_RR_TYPE_ANY) {
@@ -862,7 +865,7 @@ dns_cache_store(struct module_env* env, struct query_info* msgqinf,
 	} else {
 		/* store msg, and rrsets */
 		struct query_info qinf;
-		hashvalue_t h;
+		hashvalue_type h;
 
 		qinf = *msgqinf;
 		qinf.qname = memdup(msgqinf->qname, msgqinf->qname_len);

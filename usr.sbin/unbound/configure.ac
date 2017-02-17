@@ -9,15 +9,15 @@ sinclude(dnstap/dnstap.m4)
 
 # must be numbers. ac_defun because of later processing
 m4_define([VERSION_MAJOR],[1])
-m4_define([VERSION_MINOR],[5])
-m4_define([VERSION_MICRO],[9])
+m4_define([VERSION_MINOR],[6])
+m4_define([VERSION_MICRO],[1rc3])
 AC_INIT(unbound, m4_defn([VERSION_MAJOR]).m4_defn([VERSION_MINOR]).m4_defn([VERSION_MICRO]), unbound-bugs@nlnetlabs.nl, unbound)
 AC_SUBST(UNBOUND_VERSION_MAJOR, [VERSION_MAJOR])
 AC_SUBST(UNBOUND_VERSION_MINOR, [VERSION_MINOR])
 AC_SUBST(UNBOUND_VERSION_MICRO, [VERSION_MICRO])
 
 LIBUNBOUND_CURRENT=6
-LIBUNBOUND_REVISION=1
+LIBUNBOUND_REVISION=4
 LIBUNBOUND_AGE=4
 # 1.0.0 had 0:12:0
 # 1.0.1 had 0:13:0
@@ -66,6 +66,9 @@ LIBUNBOUND_AGE=4
 # 1.5.7 had 5:10:3
 # 1.5.8 had 6:0:4 # adds ub_ctx_set_stub
 # 1.5.9 had 6:1:4
+# 1.5.10 had 6:2:4
+# 1.6.0 had 6:3:4
+# 1.6.1 had 7:0:5 # ub_callback_t typedef renamed to ub_callback_type
 
 #   Current  -- the number of the binary API that we're implementing
 #   Revision -- which iteration of the implementation of the binary
@@ -107,7 +110,7 @@ esac
 # are we on MinGW?
 if uname -s 2>&1 | grep MINGW32 >/dev/null; then on_mingw="yes"
 else 
-	if echo $target | grep mingw32 >/dev/null; then on_mingw="yes"
+	if echo $host $target | grep mingw32 >/dev/null; then on_mingw="yes"
 	else on_mingw="no"; fi
 fi
 
@@ -117,7 +120,7 @@ fi
 if test $on_mingw = "no"; then
   ub_conf_file=`eval echo "${sysconfdir}/unbound/unbound.conf"`
 else
-  ub_conf_file="C:\\Program Files\\Unbound\\service.conf"
+  ub_conf_file="C:\\Program Files (x86)\\Unbound\\service.conf"
 fi
 AC_ARG_WITH([conf_file],
         AC_HELP_STRING([--with-conf-file=path], 
@@ -187,7 +190,7 @@ AC_ARG_WITH(rootkey-file,
 if test $on_mingw = no; then
     UNBOUND_ROOTKEY_FILE="$UNBOUND_RUN_DIR/root.key"
 else
-    UNBOUND_ROOTKEY_FILE="C:\\Program Files\\Unbound\\root.key"
+    UNBOUND_ROOTKEY_FILE="C:\\Program Files (x86)\\Unbound\\root.key"
 fi
 )
 AC_SUBST(UNBOUND_ROOTKEY_FILE)
@@ -201,7 +204,7 @@ AC_ARG_WITH(rootcert-file,
 if test $on_mingw = no; then
     UNBOUND_ROOTCERT_FILE="$UNBOUND_RUN_DIR/icannbundle.pem"
 else
-    UNBOUND_ROOTCERT_FILE="C:\\Program Files\\Unbound\\icannbundle.pem"
+    UNBOUND_ROOTCERT_FILE="C:\\Program Files (x86)\\Unbound\\icannbundle.pem"
 fi
 )
 AC_SUBST(UNBOUND_ROOTCERT_FILE)
@@ -542,6 +545,8 @@ if test x_$ub_test_python != x_no; then
       LIBS="$PYTHON_LDFLAGS $LIBS"
       CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
       ub_have_python=yes
+      PC_PY_DEPENDENCY="python"
+      AC_SUBST(PC_PY_DEPENDENCY)
 
       # Check for SWIG
       ub_have_swig=no
@@ -629,6 +634,7 @@ AC_ARG_WITH([nettle], AC_HELP_STRING([--with-nettle=path],
 	[
 	USE_NETTLE="yes"
 	AC_DEFINE(HAVE_NETTLE, 1, [Use libnettle for crypto])
+	AC_CHECK_HEADERS([nettle/dsa-compat.h],,, [AC_INCLUDES_DEFAULT])
 	if test "$withval" != "" -a "$withval" != "yes"; then
 		CPPFLAGS="$CPPFLAGS -I$withval/include/nettle"
 		LDFLAGS="$LDFLAGS -L$withval/lib"
@@ -646,6 +652,20 @@ if test $USE_NSS = "no" -a $USE_NETTLE = "no"; then
 ACX_WITH_SSL
 ACX_LIB_SSL
 SSLLIB="-lssl"
+
+# check if -lcrypt32 is needed because CAPIENG needs that. (on windows)
+BAKLIBS="$LIBS"
+LIBS="-lssl $LIBS"
+AC_MSG_CHECKING([if libssl needs -lcrypt32])
+AC_TRY_LINK_FUNC([HMAC_Update], [
+	AC_MSG_RESULT([no])
+	LIBS="$BAKLIBS"
+], [
+	AC_MSG_RESULT([yes])
+	LIBS="$BAKLIBS"
+	LIBS="$LIBS -lcrypt32"
+])
+
 AC_MSG_CHECKING([for LibreSSL])
 if grep VERSION_TEXT $ssldir/include/openssl/opensslv.h | grep "LibreSSL" >/dev/null; then
 	AC_MSG_RESULT([yes])
@@ -656,9 +676,15 @@ if grep VERSION_TEXT $ssldir/include/openssl/opensslv.h | grep "LibreSSL" >/dev/
 else
 	AC_MSG_RESULT([no])
 fi
-AC_CHECK_HEADERS([openssl/conf.h],,, [AC_INCLUDES_DEFAULT])
-AC_CHECK_HEADERS([openssl/engine.h],,, [AC_INCLUDES_DEFAULT])
-AC_CHECK_FUNCS([OPENSSL_config EVP_sha1 EVP_sha256 EVP_sha512 FIPS_mode EVP_MD_CTX_new])
+AC_CHECK_HEADERS([openssl/conf.h openssl/engine.h openssl/bn.h openssl/dh.h openssl/dsa.h openssl/rsa.h],,, [AC_INCLUDES_DEFAULT])
+AC_CHECK_FUNCS([OPENSSL_config EVP_sha1 EVP_sha256 EVP_sha512 FIPS_mode EVP_MD_CTX_new OpenSSL_add_all_digests OPENSSL_init_crypto EVP_cleanup ERR_load_crypto_strings CRYPTO_cleanup_all_ex_data ERR_free_strings RAND_cleanup DSA_SIG_set0 EVP_dss1])
+
+# these check_funcs need -lssl
+BAKLIBS="$LIBS"
+LIBS="-lssl $LIBS"
+AC_CHECK_FUNCS([OPENSSL_init_ssl SSL_CTX_set_security_level])
+LIBS="$BAKLIBS"
+
 AC_CHECK_DECLS([SSL_COMP_get_compression_methods,sk_SSL_COMP_pop_free,SSL_CTX_set_ecdh_auto], [], [], [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_OPENSSL_ERR_H
@@ -842,12 +868,12 @@ esac
 
 AC_ARG_ENABLE(dsa, AC_HELP_STRING([--disable-dsa], [Disable DSA support]))
 use_dsa="no"
-case "$enable_ecdsa" in
+case "$enable_dsa" in
     no)
       ;;
     *)
       # detect if DSA is supported, and turn it off if not.
-      AC_CHECK_FUNC(EVP_dss1, [
+      AC_CHECK_FUNC(DSA_SIG_new, [
       AC_DEFINE_UNQUOTED([USE_DSA], [1], [Define this to enable DSA support.])
       ], [if test "x$enable_dsa" = "xyes"; then AC_MSG_ERROR([OpenSSL does not support DSA and you used --enable-dsa.])
                fi ])
@@ -863,6 +889,42 @@ case "$enable_event_api" in
       ;;
     *)
       ;;
+esac
+
+AC_ARG_ENABLE(tfo-client, AC_HELP_STRING([--enable-tfo-client], [Enable TCP Fast Open for client mode]))
+case "$enable_tfo_client" in
+	yes)
+		case `uname` in
+			Linux) AC_CHECK_DECL([MSG_FASTOPEN], [AC_MSG_WARN([Check the platform specific TFO kernel parameters are correctly configured to support client mode TFO])],
+			                     [AC_MSG_ERROR([TCP Fast Open is not available for client mode: please rerun without --enable-tfo-client])], 
+			                     [AC_INCLUDES_DEFAULT 
+#include <netinet/tcp.h>
+])
+					AC_DEFINE_UNQUOTED([USE_MSG_FASTOPEN], [1], [Define this to enable client TCP Fast Open.])
+			  ;;
+			Darwin) AC_CHECK_DECL([CONNECT_RESUME_ON_READ_WRITE], [AC_MSG_WARN([Check the platform specific TFO kernel parameters are correctly configured to support client mode TFO])], 
+			                      [AC_MSG_ERROR([TCP Fast Open is not available for client mode: please rerun without --enable-tfo-client])], 
+			                      [AC_INCLUDES_DEFAULT
+#include <sys/socket.h>
+])
+					AC_DEFINE_UNQUOTED([USE_OSX_MSG_FASTOPEN], [1], [Define this to enable client TCP Fast Open.])
+			  ;;
+		esac
+	;;
+	no|*)
+		;;
+esac
+
+AC_ARG_ENABLE(tfo-server, AC_HELP_STRING([--enable-tfo-server], [Enable TCP Fast Open for server mode]))
+case "$enable_tfo_server" in
+	yes)
+	      AC_CHECK_DECL([TCP_FASTOPEN], [AC_MSG_WARN([Check the platform specific TFO kernel parameters are correctly configured to support server mode TFO])], [AC_MSG_ERROR([TCP Fast Open is not available for server mode: please rerun without --enable-tfo-server])], [AC_INCLUDES_DEFAULT
+#include <netinet/tcp.h>
+	      ])
+		AC_DEFINE_UNQUOTED([USE_TCP_FASTOPEN], [1], [Define this to enable server TCP Fast Open.])
+		;;
+	no|*)
+		;;
 esac
 
 # check for libevent
@@ -942,6 +1004,8 @@ large outgoing port ranges.  ])
 	AC_CHECK_FUNCS([event_base_get_method]) # only in libevent 1.4.3 and later
 	AC_CHECK_FUNCS([ev_loop]) # only in libev. (tested on 3.51)
 	AC_CHECK_FUNCS([ev_default_loop]) # only in libev. (tested on 4.00)
+        PC_LIBEVENT_DEPENDENCY="libevent"
+        AC_SUBST(PC_LIBEVENT_DEPENDENCY)
 	if test -n "$BAK_LDFLAGS_SET"; then
 		LDFLAGS="$BAK_LDFLAGS"
 	fi
@@ -985,12 +1049,14 @@ if test x_$enable_static_exe = x_yes; then
 	staticexe="-static"
 	if test "$on_mingw" = yes; then
 		staticexe="-all-static"
-		# for static crosscompile, include gdi32 and zlib here.
-		if test "`uname`" = "Linux"; then
-			LIBS="$LIBS -lgdi32 -lz"
-		fi
+		# for static compile, include gdi32 and zlib here.
+		LIBS="$LIBS -lgdi32 -lz"
 	fi
 fi
+
+# Include systemd.m4 - begin
+sinclude(systemd.m4)
+# Include systemd.m4 - end
 
 # set lock checking if requested
 AC_ARG_ENABLE(lock_checks, AC_HELP_STRING([--enable-lock-checks],
@@ -1082,27 +1148,36 @@ AC_INCLUDES_DEFAULT
 #endif
 ])
 AC_SEARCH_LIBS([setusercontext], [util])
-AC_CHECK_FUNCS([tzset sigprocmask fcntl getpwnam getrlimit setrlimit setsid chroot kill chown sleep usleep random srandom recvmsg sendmsg writev socketpair glob initgroups strftime localtime_r setusercontext _beginthreadex endservent endprotoent fsync])
+AC_CHECK_FUNCS([tzset sigprocmask fcntl getpwnam endpwent getrlimit setrlimit setsid chroot kill chown sleep usleep random srandom recvmsg sendmsg writev socketpair glob initgroups strftime localtime_r setusercontext _beginthreadex endservent endprotoent fsync])
 AC_CHECK_FUNCS([setresuid],,[AC_CHECK_FUNCS([setreuid])])
 AC_CHECK_FUNCS([setresgid],,[AC_CHECK_FUNCS([setregid])])
-
-AC_MSG_CHECKING([for sbrk])
-# catch the warning of deprecated sbrk
-old_cflags="$CFLAGS"
-CFLAGS="$CFLAGS -Werror"
-AC_COMPILE_IFELSE([AC_LANG_SOURCE(AC_INCLUDES_DEFAULT
-[[
-int main(void) { void* cur = sbrk(0); printf("%u\n", (unsigned)(size_t)((char*)cur - (char*)sbrk(0))); return 0; }
-]])], [
-	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_SBRK, 1, [define if you have the sbrk() call])
-    ], [AC_MSG_RESULT(no)])
-CFLAGS="$old_cflags"
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
 if echo $build_os | grep darwin8 > /dev/null; then
 	AC_DEFINE(DARWIN_BROKEN_SETREUID, 1, [Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work])
 fi
+AC_CHECK_DECLS([inet_pton,inet_ntop], [], [], [
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>
+#endif
+])
 AC_REPLACE_FUNCS(inet_aton)
 AC_REPLACE_FUNCS(inet_pton)
 AC_REPLACE_FUNCS(inet_ntop)
@@ -1140,11 +1215,11 @@ if test "$USE_NSS" = "no"; then
 		    if test "$USE_WINSOCK" = 1; then
 			AC_LIBOBJ(getentropy_win)
 		    else
-			case `uname` in
-			Darwin)
+			case "$host" in
+			Darwin|*darwin*)
 				AC_LIBOBJ(getentropy_osx)
 			;;
-			SunOS)
+			*solaris*|*sunos*|SunOS)
 				AC_LIBOBJ(getentropy_solaris)
 				AC_CHECK_HEADERS([sys/sha2.h],, [
 					AC_CHECK_FUNCS([SHA512_Update],,[
@@ -1157,7 +1232,7 @@ if test "$USE_NSS" = "no"; then
 				fi
 				AC_SEARCH_LIBS([clock_gettime], [rt])
 			;;
-			Linux|*)
+			*linux*|Linux|*)
 				AC_LIBOBJ(getentropy_linux)
 				AC_CHECK_FUNCS([SHA512_Update],,[
 					AC_DEFINE([COMPAT_SHA512], [1], [Do sha512 definitions in config.h])
@@ -1413,6 +1488,14 @@ char *strsep(char **stringp, const char *delim);
 #ifndef HAVE_ISBLANK
 #define isblank unbound_isblank
 int isblank(int c);
+#endif
+
+#if defined(HAVE_INET_NTOP) && !HAVE_DECL_INET_NTOP
+const char *inet_ntop(int af, const void *src, char *dst, size_t size);
+#endif
+
+#if defined(HAVE_INET_PTON) && !HAVE_DECL_INET_PTON
+int inet_pton(int af, const char* src, void* dst);
 #endif
 
 #if !defined(HAVE_STRPTIME) || !defined(STRPTIME_WORKS)

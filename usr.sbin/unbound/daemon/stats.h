@@ -63,6 +63,8 @@ struct sldns_buffer;
 struct server_stats {
 	/** number of queries from clients received. */
 	size_t num_queries;
+	/** number of queries that have been dropped/ratelimited by ip. */
+	size_t num_queries_ip_ratelimited;
 	/** number of queries that had a cache-miss. */
 	size_t num_queries_missed_cache;
 	/** number of prefetch queries - cachehits with prefetch */
@@ -131,7 +133,8 @@ struct server_stats {
 	size_t unwanted_queries;
 	/** usage of tcp accept list */
 	size_t tcp_accept_usage;
-
+	/** answers served from expired cache */
+	size_t zero_ttl_responses;
 	/** histogram data exported to array 
 	 * if the array is the same size, no data is lost, and
 	 * if all histograms are same size (is so by default) then

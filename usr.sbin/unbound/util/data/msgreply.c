@@ -52,6 +52,8 @@
 #include "util/data/msgencode.h"
 #include "sldns/sbuffer.h"
 #include "sldns/wire2str.h"
+#include "util/module.h"
+#include "util/fptr_wlist.h"
 
 /** MAX TTL default for messages and rrsets */
 time_t MAX_TTL = 3600 * 24 * 10; /* ten days */
@@ -76,6 +78,7 @@ parse_create_qinfo(sldns_buffer* pkt, struct msg_parse* msg,
 	qinf->qname_len = msg->qname_len;
 	qinf->qtype = msg->qtype;
 	qinf->qclass = msg->qclass;
+	qinf->local_alias = NULL;
 	return 1;
 }
 
@@ -451,6 +454,7 @@ int reply_info_parse(sldns_buffer* pkt, struct alloc_cache* alloc,
 	int ret;
 	
 	qinf->qname = NULL;
+	qinf->local_alias = NULL;
 	*rep = NULL;
 	if(!(msg = regional_alloc(region, sizeof(*msg)))) {
 		return LDNS_RCODE_SERVFAIL;
@@ -542,6 +546,7 @@ query_info_parse(struct query_info* m, sldns_buffer* query)
 		return 0; /* need qtype, qclass */
 	m->qtype = sldns_buffer_read_u16(query);
 	m->qclass = sldns_buffer_read_u16(query);
+	m->local_alias = NULL;
 	return 1;
 }
 
@@ -603,10 +608,10 @@ reply_info_delete(void* d, void* ATTR_UNUSED(arg))
 	free(r);
 }
 
-hashvalue_t 
+hashvalue_type
 query_info_hash(struct query_info *q, uint16_t flags)
 {
-	hashvalue_t h = 0xab;
+	hashvalue_type h = 0xab;
 	h = hashlittle(&q->qtype, sizeof(q->qtype), h);
 	if(q->qtype == LDNS_RR_TYPE_AAAA && (flags&BIT_CD))
 		h++;
@@ -617,7 +622,7 @@ query_info_hash(struct query_info *q, uint16_t flags)
 
 struct msgreply_entry* 
 query_info_entrysetup(struct query_info* q, struct reply_info* r, 
-	hashvalue_t h)
+	hashvalue_type h)
 {
 	struct msgreply_entry* e = (struct msgreply_entry*)malloc( 
 		sizeof(struct msgreply_entry));
@@ -814,7 +819,39 @@ log_dns_msg(const char* str, struct query_info* qinfo, struct reply_info* rep)
 	regional_destroy(region);
 }
 
-void 
+void
+log_reply_info(enum verbosity_value v, struct query_info *qinf,
+	struct sockaddr_storage *addr, socklen_t addrlen, struct timeval dur,
+	int cached, struct sldns_buffer *rmsg)
+{
+	char qname_buf[LDNS_MAX_DOMAINLEN+1];
+	char clientip_buf[128];
+	char rcode_buf[16];
+	char type_buf[16];
+	char class_buf[16];
+	size_t pktlen;
+	uint16_t rcode = FLAGS_GET_RCODE(sldns_buffer_read_u16_at(rmsg, 2));
+
+	if(verbosity < v)
+	  return;
+
+	sldns_wire2str_rcode_buf((int)rcode, rcode_buf, sizeof(rcode_buf));
+	addr_to_str(addr, addrlen, clientip_buf, sizeof(clientip_buf));
+	if(rcode == LDNS_RCODE_FORMERR)
+	{
+		log_info("%s - - - %s - - - ", clientip_buf, rcode_buf);
+	} else {
+		dname_str(qinf->qname, qname_buf);
+		pktlen = sldns_buffer_limit(rmsg);
+		sldns_wire2str_type_buf(qinf->qtype, type_buf, sizeof(type_buf));
+		sldns_wire2str_class_buf(qinf->qclass, class_buf, sizeof(class_buf));
+		log_info("%s %s %s %s %s " ARG_LL "d.%6.6d %d %d",
+			clientip_buf, qname_buf, type_buf, class_buf,
+			rcode_buf, (long long)dur.tv_sec, (int)dur.tv_usec, cached, (int)pktlen);
+	}
+}
+
+void
 log_query_info(enum verbosity_value v, const char* str, 
 	struct query_info* qinf)
 {
@@ -871,9 +908,12 @@ int edns_opt_append(struct edns_data* edns, struct regional* region,
 	opt->next = NULL;
 	opt->opt_code = code;
 	opt->opt_len = len;
-	opt->opt_data = regional_alloc_init(region, data, len);
-	if(!opt->opt_data)
-		return 0;
+	opt->opt_data = NULL;
+	if(len > 0) {
+		opt->opt_data = regional_alloc_init(region, data, len);
+		if(!opt->opt_data)
+			return 0;
+	}
 	
 	/* append at end of list */
 	prevp = &edns->opt_list;
@@ -883,13 +923,138 @@ int edns_opt_append(struct edns_data* edns, struct regional* region,
 	return 1;
 }
 
-int edns_opt_inplace_reply(struct edns_data* edns, struct regional* region)
+int edns_opt_list_append(struct edns_option** list, uint16_t code, size_t len,
+	uint8_t* data, struct regional* region)
 {
-	(void)region;
-	/* remove all edns options from the reply, because only the
-	 * options that we understand should be in the reply
-	 * (sec 6.1.2 RFC 6891) */
-	edns->opt_list = NULL;
+	struct edns_option** prevp;
+	struct edns_option* opt;
+
+	/* allocate new element */
+	opt = (struct edns_option*)regional_alloc(region, sizeof(*opt));
+	if(!opt)
+		return 0;
+	opt->next = NULL;
+	opt->opt_code = code;
+	opt->opt_len = len;
+	opt->opt_data = NULL;
+	if(len > 0) {
+		opt->opt_data = regional_alloc_init(region, data, len);
+		if(!opt->opt_data)
+			return 0;
+	}
+
+	/* append at end of list */
+	prevp = list;
+	while(*prevp != NULL) {
+		prevp = &((*prevp)->next);
+	}
+	*prevp = opt;
+	return 1;
+}
+
+int edns_opt_list_remove(struct edns_option** list, uint16_t code)
+{
+	/* The list should already be allocated in a region. Freeing the
+	 * allocated space in a region is not possible. We just unlink the
+	 * required elements and they will be freed together with the region. */
+
+	struct edns_option* prev;
+	struct edns_option* curr;
+	if(!list || !(*list)) return 0;
+
+	/* Unlink and repoint if the element(s) are first in list */
+	while(list && *list && (*list)->opt_code == code) {
+		*list = (*list)->next;
+	}
+
+	if(!list || !(*list)) return 1;
+	/* Unlink elements and reattach the list */
+	prev = *list;
+	curr = (*list)->next;
+	while(curr != NULL) {
+		if(curr->opt_code == code) {
+			prev->next = curr->next;
+			curr = curr->next;
+		} else {
+			prev = curr;
+			curr = curr->next;
+		}
+	}
+	return 1;
+}
+
+static int inplace_cb_reply_call_generic(
+    struct inplace_cb_reply* callback_list, enum inplace_cb_list_type type,
+	struct query_info* qinfo, struct module_qstate* qstate,
+	struct reply_info* rep, int rcode, struct edns_data* edns,
+	struct regional* region)
+{
+	struct inplace_cb_reply* cb;
+	struct edns_option* opt_list_out = NULL;
+	if(qstate)
+		opt_list_out = qstate->edns_opts_front_out;
+	for(cb=callback_list; cb; cb=cb->next) {
+		fptr_ok(fptr_whitelist_inplace_cb_reply_generic(cb->cb, type));
+		(void)(*cb->cb)(qinfo, qstate, rep, rcode, edns, &opt_list_out, region,
+			cb->cb_arg);
+	}
+	edns->opt_list = opt_list_out;
+	return 1;
+}
+
+int inplace_cb_reply_call(struct module_env* env, struct query_info* qinfo,
+	struct module_qstate* qstate, struct reply_info* rep, int rcode,
+	struct edns_data* edns, struct regional* region)
+{
+	return inplace_cb_reply_call_generic(
+		env->inplace_cb_lists[inplace_cb_reply], inplace_cb_reply, qinfo,
+		qstate, rep, rcode, edns, region);
+}
+
+int inplace_cb_reply_cache_call(struct module_env* env,
+	struct query_info* qinfo, struct module_qstate* qstate,
+	struct reply_info* rep, int rcode, struct edns_data* edns,
+	struct regional* region)
+{
+	return inplace_cb_reply_call_generic(
+		env->inplace_cb_lists[inplace_cb_reply_cache], inplace_cb_reply_cache,
+		qinfo, qstate, rep, rcode, edns, region);
+}
+
+int inplace_cb_reply_local_call(struct module_env* env,
+	struct query_info* qinfo, struct module_qstate* qstate,
+	struct reply_info* rep, int rcode, struct edns_data* edns,
+	struct regional* region)
+{
+	return inplace_cb_reply_call_generic(
+		env->inplace_cb_lists[inplace_cb_reply_local], inplace_cb_reply_local,
+		qinfo, qstate, rep, rcode, edns, region);
+}
+
+int inplace_cb_reply_servfail_call(struct module_env* env,
+	struct query_info* qinfo, struct module_qstate* qstate,
+	struct reply_info* rep, int rcode, struct edns_data* edns,
+	struct regional* region)
+{
+	/* We are going to servfail. Remove any potential edns options. */
+	if(qstate)
+		qstate->edns_opts_front_out = NULL;
+	return inplace_cb_reply_call_generic(
+		env->inplace_cb_lists[inplace_cb_reply_servfail],
+		inplace_cb_reply_servfail, qinfo, qstate, rep, rcode, edns, region);
+}
+
+int inplace_cb_query_call(struct module_env* env, struct query_info* qinfo,
+	uint16_t flags, struct sockaddr_storage* addr, socklen_t addrlen,
+	uint8_t* zone, size_t zonelen, struct module_qstate* qstate,
+	struct regional* region)
+{
+	struct inplace_cb_query* cb = env->inplace_cb_lists[inplace_cb_query];
+	for(; cb; cb=cb->next) {
+		fptr_ok(fptr_whitelist_inplace_cb_query(cb->cb));
+		(void)(*cb->cb)(qinfo, flags, qstate, addr, addrlen, zone, zonelen,
+			region, cb->cb_arg);
+	}
 	return 1;
 }
 
@@ -1000,7 +1165,7 @@ struct edns_option* edns_opt_copy_alloc(struct edns_option* list)
 	return result;
 }
 
-struct edns_option* edns_opt_find(struct edns_option* list, uint16_t code)
+struct edns_option* edns_opt_list_find(struct edns_option* list, uint16_t code)
 {
 	struct edns_option* p;
 	for(p=list; p; p=p->next) {
