@@ -4,10 +4,10 @@ NNAAMMEE
      LLbb--bbrreeaakk - output line breaks after the library macro
 
 LLIIBBRRAARRYY
-     library ``mylib''
+     library "mylib"
      text
 
 DDEESSCCRRIIPPTTIIOONN
-     library ``mylib'' text
+     library "mylib" text
 
 OpenBSD                          June 30, 2010                         OpenBSD

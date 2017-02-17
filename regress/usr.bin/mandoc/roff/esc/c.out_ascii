@@ -4,7 +4,7 @@ NNAAMMEE
      eesscc--cc - the roff escape c sequence: remove trailing space
 
 DDEESSCCRRIIPPTTIIOONN
-     No space between ``one'' and ``word'': oneword
+     No space between "one" and "word": oneword
 
      oneword
 

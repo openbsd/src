@@ -1,4 +1,4 @@
-/*	$OpenBSD: chars.c,v 1.38 2015/10/13 22:57:49 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.39 2017/02/17 18:26:16 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,8 +99,8 @@ static struct ln lines[] = {
 	{ "bq",			",",		0x201a	},
 	{ "lq",			"\"",		0x201c	},
 	{ "rq",			"\"",		0x201d	},
-	{ "Lq",			"``",		0x201c	},
-	{ "Rq",			"''",		0x201d	},
+	{ "Lq",			"\"",		0x201c	},
+	{ "Rq",			"\"",		0x201d	},
 	{ "oq",			"`",		0x2018	},
 	{ "cq",			"\'",		0x2019	},
 	{ "aq",			"\'",		0x0027	},

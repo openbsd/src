@@ -4,8 +4,8 @@ NNAAMMEE
      OOpp--bbrrookkeenn - partial implicit block broken by partial explicit block
 
 DDEESSCCRRIIPPTTIIOONN
-     before both ``inside first [inside both'' inside second] after both
+     before both "inside first [inside both" inside second] after both
 
-     0 ``1 [12 [123'' 23]] 0
+     0 "1 [12 [123" 23]] 0
 
 OpenBSD                          July 2, 2014                          OpenBSD
