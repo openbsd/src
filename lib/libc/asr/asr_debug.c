@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.22 2015/10/28 21:38:45 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.23 2017/02/17 22:24:45 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -24,6 +24,7 @@
 
 #include <asr.h>
 #include <resolv.h>
+#include <string.h>
 
 #include "asr_private.h"
 
@@ -177,7 +178,7 @@ _asr_dump_packet(FILE *f, const void *data, size_t len)
 	_asr_unpack_init(&p, data, len);
 
 	if (_asr_unpack_header(&p, &h) == -1) {
-		fprintf(f, ";; BAD PACKET: %s\n", p.err);
+		fprintf(f, ";; BAD PACKET: %s\n", strerror(p.err));
 		return;
 	}
 
@@ -215,7 +216,7 @@ _asr_dump_packet(FILE *f, const void *data, size_t len)
     error:
 	if (p.err)
 		fprintf(f, ";; ERROR AT OFFSET %zu/%zu: %s\n", p.offset, p.len,
-		    p.err);
+		    strerror(p.err));
 }
 
 const char *

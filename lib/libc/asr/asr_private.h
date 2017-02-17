@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.40 2016/12/18 01:34:51 krw Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.41 2017/02/17 22:24:45 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -34,14 +34,14 @@ struct asr_pack {
 	char		*buf;
 	size_t		 len;
 	size_t		 offset;
-	const char	*err;
+	int		 err;
 };
 
 struct asr_unpack {
 	const char	*buf;
 	size_t		 len;
 	size_t		 offset;
-	const char	*err;
+	int		 err;
 };
 
 struct asr_dns_header {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.13 2015/09/09 15:49:34 deraadt Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.14 2017/02/17 22:24:45 eric Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -167,7 +167,7 @@ _asr_pack_init(struct asr_pack *pack, char *buf, size_t len)
 	pack->buf = buf;
 	pack->len = len;
 	pack->offset = 0;
-	pack->err = NULL;
+	pack->err = 0;
 }
 
 void
@@ -176,7 +176,7 @@ _asr_unpack_init(struct asr_unpack *unpack, const char *buf, size_t len)
 	unpack->buf = buf;
 	unpack->len = len;
 	unpack->offset = 0;
-	unpack->err = NULL;
+	unpack->err = 0;
 }
 
 static int
@@ -186,7 +186,7 @@ unpack_data(struct asr_unpack *p, void *data, size_t len)
 		return (-1);
 
 	if (p->len - p->offset < len) {
-		p->err = "too short";
+		p->err = EOVERFLOW;
 		return (-1);
 	}
 
@@ -240,11 +240,11 @@ unpack_dname(struct asr_unpack *p, char *dst, size_t max)
 
 	e = dname_expand(p->buf, p->len, p->offset, &p->offset, dst, max);
 	if (e == -1) {
-		p->err = "bad domain name";
+		p->err = EINVAL;
 		return (-1);
 	}
 	if (e < 0 || e > MAXDNAME) {
-		p->err = "domain name too long";
+		p->err = ERANGE;
 		return (-1);
 	}
 
@@ -292,7 +292,7 @@ _asr_unpack_rr(struct asr_unpack *p, struct asr_dns_rr *rr)
 		return (-1);
 
 	if (p->len - p->offset < rdlen) {
-		p->err = "too short";
+		p->err = EOVERFLOW;
 		return (-1);
 	}
 
@@ -350,7 +350,7 @@ _asr_unpack_rr(struct asr_unpack *p, struct asr_dns_rr *rr)
 
 	/* make sure that the advertised rdlen is really ok */
 	if (p->offset - save_offset != rdlen)
-		p->err = "bad dlen";
+		p->err = EINVAL;
 
 	return (p->err) ? (-1) : (0);
 }
@@ -362,7 +362,7 @@ pack_data(struct asr_pack *p, const void *data, size_t len)
 		return (-1);
 
 	if (p->len < p->offset + len) {
-		p->err = "no space";
+		p->err = EOVERFLOW;
 		return (-1);
 	}
 
