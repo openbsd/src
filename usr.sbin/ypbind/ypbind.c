@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.68 2016/07/08 19:32:26 millert Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.69 2017/02/17 16:46:17 ajacoutot Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -375,9 +375,6 @@ main(int argc, char *argv[])
 		}
 		closedir(dirp);
 	} else {
-		printf("Enabling yp client subsystem.\n");
-		printf("To disable: kill ypbind and remove %s\n",
-		    BINDINGDIR);
 		(void)mkdir(BINDINGDIR, 0755);
 	}
 
