@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.10 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.11 2017/02/17 19:20:22 patrick Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1069,7 +1069,7 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
 		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE,
-		    PMAP_CACHE_CI);
+		    PMAP_CACHE_DEV);
 
 	virtual_avail = va;
 

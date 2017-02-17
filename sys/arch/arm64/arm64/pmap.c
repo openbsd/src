@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.22 2017/02/17 19:14:58 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.23 2017/02/17 19:20:22 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -786,9 +786,9 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		break;
 	case PMAP_CACHE_CI:
 		break;
-	case PMAP_CACHE_PTE:
-		break;
 	case PMAP_CACHE_DEV:
+		break;
+	case PMAP_CACHE_PTE:
 		break;
 	default:
 		panic("pmap_fill_pte:invalid cache mode");
@@ -1652,7 +1652,12 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	case PMAP_CACHE_CI:
-		attr |= ATTR_IDX(PTE_ATTR_DEV); // treat as device !?!?!?!
+		attr |= ATTR_IDX(PTE_ATTR_CI);
+		attr |= ATTR_SH(SH_INNER);
+		break;
+	case PMAP_CACHE_DEV:
+		attr |= ATTR_IDX(PTE_ATTR_DEV);
+		attr |= ATTR_SH(SH_INNER);
 		break;
 	case PMAP_CACHE_PTE:
 		attr |= ATTR_IDX(PTE_ATTR_CI); // inner and outer uncached, XXX?
