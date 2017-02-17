@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.3 2017/02/05 14:07:11 patrick Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.4 2017/02/17 17:51:02 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -306,7 +306,6 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 {
 	int nsegs;
 	int curseg;
-	//struct cpu_info *ci = curcpu();
 
 	nsegs = map->dm_nsegs;
 	curseg = 0;
@@ -334,13 +333,6 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 		if (ssize > size)
 			ssize = size;
 
-#if 0
-		if (IS_XKPHYS(vaddr) && XKPHYS_TO_CCA(vaddr) == CCA_NC) {
-			size -= ssize;
-			ssize = 0;
-		}
-#endif
-
 		if (ssize != 0) {
 			/*
 			 * If only PREWRITE is requested, writeback.
@@ -350,27 +342,12 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			 */
 			if (op & BUS_DMASYNC_PREWRITE) {
 				if (op & BUS_DMASYNC_PREREAD)
-#if 0
-					Mips_IOSyncDCache(ci, vaddr,
-					    ssize, CACHE_SYNC_X);
-#else
 					; // XXX MUST ADD CACHEFLUSHING
-#endif
 				else
-#if 0
-					Mips_IOSyncDCache(ci, vaddr,
-					    ssize, CACHE_SYNC_W);
-#else
 					; // XXX MUST ADD CACHEFLUSHING
-#endif
 			} else
 			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-#if 0
-				Mips_IOSyncDCache(ci, vaddr,
-				    ssize, CACHE_SYNC_R);
-#else
 				; // XXX MUST ADD CACHEFLUSHING
-#endif
 			}
 			size -= ssize;
 		}
@@ -438,17 +415,6 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	int curseg, pmap_flags, cache;
 	const struct kmem_dyn_mode *kd;
 
-#if 0
-	if (nsegs == 1) {
-		(void)pmap_extract (pmap_kernel(), segs[0].ds_addr, &pa);
-		if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
-			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_NC);
-		else
-			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_CACHED);
-		return (0);
-	}
-#endif
-
 	size = round_page(size);
 	kd = flags & BUS_DMA_NOWAIT ? &kd_trylock : &kd_waitok;
 	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, kd);
@@ -472,21 +438,6 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 			pmap_kenter_cache(va, addr,
 			    PROT_READ | PROT_WRITE | pmap_flags,
 			    cache);
-
-			/*
-			 * This is redundant with what pmap_enter() did
-			 * above, but will take care of forcing other
-			 * mappings of the same page (if any) to be
-			 * uncached.
-			 * If there are no multiple mappings of that
-			 * page, this amounts to a noop.
-			 */
-#if 0
-			// XXX handle ?
-			if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
-				pmap_page_cache(PHYS_TO_VM_PAGE(pa),
-				    PGF_UNCACHED);
-#endif
 		}
 		pmap_update(pmap_kernel());
 	}
@@ -501,11 +452,6 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 void
 _dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
-#if 0
-	if (IS_XKPHYS((vaddr_t)kva))
-		return;
-#endif
-
 	km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
