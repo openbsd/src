@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.54 2017/02/09 00:43:58 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.55 2017/02/17 14:49:03 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -411,6 +411,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			ipcompstat.ipcomps_toobig++;
 			return EMSGSIZE;
 		}
+		break;
 #endif /* INET6 */
 
 	default:
