@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.21 2017/02/17 09:59:28 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.22 2017/02/17 19:14:58 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1647,8 +1647,8 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		attr |= ATTR_IDX(PTE_ATTR_WB); // inner and outer writeback
 		attr |= ATTR_SH(SH_INNER);
 		break;
-	case PMAP_CACHE_WT: /* for the momemnt treating this as uncached */
-		attr |= ATTR_IDX(PTE_ATTR_CI); // inner and outer uncached
+	case PMAP_CACHE_WT:
+		attr |= ATTR_IDX(PTE_ATTR_WT); // inner and outer writethrough
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	case PMAP_CACHE_CI:

@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.2 2017/02/03 09:47:26 patrick Exp $ */
+/* $OpenBSD: pte.h,v 1.3 2017/02/17 19:14:58 patrick Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -56,6 +56,7 @@
 #define		PTE_ATTR_DEV	0
 #define		PTE_ATTR_CI	1
 #define		PTE_ATTR_WB	2
+#define		PTE_ATTR_WT	3
 
 
 #define		SH_INNER	3

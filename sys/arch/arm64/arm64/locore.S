@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.14 2017/02/08 09:18:24 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.15 2017/02/17 19:14:58 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -624,8 +624,11 @@ switch_mmu_kernel:
 
 	.align 3
 mair:
-		/* Device            Normal, no cache     Normal, write-back */
-	.quad	MAIR_ATTR(0x00, 0) | MAIR_ATTR(0x44, 1) | MAIR_ATTR(0xff, 2)
+	/* Device | Normal (no cache, write-back, write-through) */
+	.quad	MAIR_ATTR(0x00, 0) |	\
+		MAIR_ATTR(0x44, 1) |	\
+		MAIR_ATTR(0xff, 2) |	\
+		MAIR_ATTR(0x88, 3)
 tcr:
 	.quad (TCR_T1SZ(64 - VIRT_BITS) | TCR_T0SZ(64 - 48) | \
 	    TCR_ASID_16 | TCR_TG1_4K | TCR_CACHE_ATTRS | TCR_SMP_ATTRS)
