@@ -326,7 +326,7 @@ create_path_components(const char* path, int* notexist)
 }
 
 void
-namedb_write_zonefile(struct nsd* nsd, zone_options_t* zopt)
+namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt)
 {
 	const char* zfile;
 	int notexist = 0;
@@ -412,10 +412,10 @@ namedb_write_zonefile(struct nsd* nsd, zone_options_t* zopt)
 }
 
 void
-namedb_write_zonefiles(struct nsd* nsd, nsd_options_t* options)
+namedb_write_zonefiles(struct nsd* nsd, struct nsd_options* options)
 {
-	zone_options_t* zo;
-	RBTREE_FOR(zo, zone_options_t*, options->zone_options) {
+	struct zone_options* zo;
+	RBTREE_FOR(zo, struct zone_options*, options->zone_options) {
 		namedb_write_zonefile(nsd, zo);
 	}
 }

@@ -23,11 +23,11 @@ static region_type *tsig_region;
 
 struct tsig_key_table
 {
-	rbnode_t node; /* by dname */
+	rbnode_type node; /* by dname */
 	tsig_key_type *key;
 };
 typedef struct tsig_key_table tsig_key_table_type;
-static rbtree_t *tsig_key_table;
+static rbtree_type *tsig_key_table;
 
 struct tsig_algorithm_table
 {

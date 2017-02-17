@@ -137,10 +137,10 @@ radnode_find_prev_from_idx(struct radnode* n, unsigned from)
  * @return false if no prefix found, not even the root "" prefix.
  */
 static int radix_find_prefix_node(struct radtree* rt, uint8_t* k,
-	radstrlen_t len, struct radnode** result, radstrlen_t* respos)
+	radstrlen_type len, struct radnode** result, radstrlen_type* respos)
 {
 	struct radnode* n = rt->root;
-	radstrlen_t pos = 0;
+	radstrlen_type pos = 0;
 	uint8_t byte;
 	*respos = 0;
 	*result = n;
@@ -260,7 +260,7 @@ radnode_array_space(struct region* region, struct radnode* n, uint8_t byte)
 /** create a prefix in the array strs */
 static int
 radsel_str_create(struct region* region, struct radsel* r, uint8_t* k,
-	radstrlen_t pos, radstrlen_t len)
+	radstrlen_type pos, radstrlen_type len)
 {
 	r->str = (uint8_t*)region_alloc(region, sizeof(uint8_t)*(len-pos));
 	if(!r->str)
@@ -272,7 +272,8 @@ radsel_str_create(struct region* region, struct radsel* r, uint8_t* k,
 
 /** see if one byte string p is a prefix of another x (equality is true) */
 static int
-bstr_is_prefix(uint8_t* p, radstrlen_t plen, uint8_t* x, radstrlen_t xlen)
+bstr_is_prefix(uint8_t* p, radstrlen_type plen, uint8_t* x,
+	radstrlen_type xlen)
 {
 	/* if plen is zero, it is an (empty) prefix */
 	if(plen == 0)
@@ -284,8 +285,8 @@ bstr_is_prefix(uint8_t* p, radstrlen_t plen, uint8_t* x, radstrlen_t xlen)
 }
 
 /** number of bytes in common for the two strings */
-static radstrlen_t
-bstr_common(uint8_t* x, radstrlen_t xlen, uint8_t* y, radstrlen_t ylen)
+static radstrlen_type
+bstr_common(uint8_t* x, radstrlen_type xlen, uint8_t* y, radstrlen_type ylen)
 {
 	unsigned i, max = ((xlen<ylen)?xlen:ylen);
 	for(i=0; i<max; i++) {
@@ -297,13 +298,15 @@ bstr_common(uint8_t* x, radstrlen_t xlen, uint8_t* y, radstrlen_t ylen)
 
 
 int
-bstr_is_prefix_ext(uint8_t* p, radstrlen_t plen, uint8_t* x, radstrlen_t xlen)
+bstr_is_prefix_ext(uint8_t* p, radstrlen_type plen, uint8_t* x,
+	radstrlen_type xlen)
 {
 	return bstr_is_prefix(p, plen, x, xlen);
 }
 
-radstrlen_t
-bstr_common_ext(uint8_t* x, radstrlen_t xlen, uint8_t* y, radstrlen_t ylen)
+radstrlen_type
+bstr_common_ext(uint8_t* x, radstrlen_type xlen, uint8_t* y,
+	radstrlen_type ylen)
 {
 	return bstr_common(x, xlen, y, ylen);
 }
@@ -311,9 +314,9 @@ bstr_common_ext(uint8_t* x, radstrlen_t xlen, uint8_t* y, radstrlen_t ylen)
 /** allocate remainder from prefixes for a split:
  * plen: len prefix, l: longer bstring, llen: length of l. */
 static int
-radsel_prefix_remainder(struct region* region, radstrlen_t plen,
-	uint8_t* l, radstrlen_t llen,
-	uint8_t** s, radstrlen_t* slen)
+radsel_prefix_remainder(struct region* region, radstrlen_type plen,
+	uint8_t* l, radstrlen_type llen,
+	uint8_t** s, radstrlen_type* slen)
 {
 	*slen = llen - plen;
 	*s = (uint8_t*)region_alloc(region, (*slen)*sizeof(uint8_t));
@@ -334,13 +337,13 @@ radsel_prefix_remainder(struct region* region, radstrlen_t plen,
  */
 static int
 radsel_split(struct region* region, struct radsel* r, uint8_t* k,
-	radstrlen_t pos, radstrlen_t len, struct radnode* add)
+	radstrlen_type pos, radstrlen_type len, struct radnode* add)
 {
 	uint8_t* addstr = k+pos;
-	radstrlen_t addlen = len-pos;
+	radstrlen_type addlen = len-pos;
 	if(bstr_is_prefix(addstr, addlen, r->str, r->len)) {
 		uint8_t* split_str=NULL, *dupstr=NULL;
-		radstrlen_t split_len=0;
+		radstrlen_type split_len=0;
 		/* 'add' is a prefix of r.node */
 		/* also for empty addstr */
 		/* set it up so that the 'add' node has r.node as child */
@@ -384,7 +387,7 @@ radsel_split(struct region* region, struct radsel* r, uint8_t* k,
 		r->len = addlen;
 	} else if(bstr_is_prefix(r->str, r->len, addstr, addlen)) {
 		uint8_t* split_str = NULL;
-		radstrlen_t split_len = 0;
+		radstrlen_type split_len = 0;
 		/* r.node is a prefix of 'add' */
 		/* set it up so that the 'r.node' has 'add' as child */
 		/* and basically, r.node is already completely fine,
@@ -414,7 +417,7 @@ radsel_split(struct region* region, struct radsel* r, uint8_t* k,
 		 * key name. */
 		struct radnode* com;
 		uint8_t* common_str=NULL, *s1_str=NULL, *s2_str=NULL;
-		radstrlen_t common_len, s1_len=0, s2_len=0;
+		radstrlen_type common_len, s1_len=0, s2_len=0;
 		common_len = bstr_common(r->str, r->len, addstr, addlen);
 		assert(common_len < r->len);
 		assert(common_len < addlen);
@@ -486,11 +489,11 @@ radsel_split(struct region* region, struct radsel* r, uint8_t* k,
 	return 1;
 }
 
-struct radnode* radix_insert(struct radtree* rt, uint8_t* k, radstrlen_t len,
-        void* elem)
+struct radnode* radix_insert(struct radtree* rt, uint8_t* k,
+	radstrlen_type len, void* elem)
 {
 	struct radnode* n;
-	radstrlen_t pos = 0;
+	radstrlen_type pos = 0;
 	/* create new element to add */
 	struct radnode* add = (struct radnode*)region_alloc_zero(rt->region,
 		sizeof(*add));
@@ -620,7 +623,7 @@ radnode_cleanup_onechild(struct region* region, struct radnode* n,
 	struct radnode* par)
 {
 	uint8_t* join;
-	radstrlen_t joinlen;
+	radstrlen_type joinlen;
 	uint8_t pidx = n->pidx;
 	struct radnode* child = n->array[0].node;
 	/* node had one child, merge them into the parent. */
@@ -813,10 +816,11 @@ void radix_delete(struct radtree* rt, struct radnode* n)
 	}
 }
 
-struct radnode* radix_search(struct radtree* rt, uint8_t* k, radstrlen_t len)
+struct radnode* radix_search(struct radtree* rt, uint8_t* k,
+	radstrlen_type len)
 {
 	struct radnode* n = rt->root;
-	radstrlen_t pos = 0;
+	radstrlen_type pos = 0;
 	uint8_t byte;
 	while(n) {
 		if(pos == len)
@@ -851,11 +855,11 @@ static int ret_self_or_prev(struct radnode* n, struct radnode** result)
 	return 0;
 }
 
-int radix_find_less_equal(struct radtree* rt, uint8_t* k, radstrlen_t len,
+int radix_find_less_equal(struct radtree* rt, uint8_t* k, radstrlen_type len,
         struct radnode** result)
 {
 	struct radnode* n = rt->root;
-	radstrlen_t pos = 0;
+	radstrlen_type pos = 0;
 	uint8_t byte;
 	int r;
 	if(!n) {
@@ -1035,7 +1039,7 @@ static void cpy_r2d(uint8_t* to, uint8_t* from, uint8_t len)
 }
 
 /* radname code: domain to radix-bstring */
-void radname_d2r(uint8_t* k, radstrlen_t* len, const uint8_t* dname,
+void radname_d2r(uint8_t* k, radstrlen_type* len, const uint8_t* dname,
 	size_t dlen)
 {
 	/* the domain name is converted as follows,
@@ -1107,7 +1111,7 @@ void radname_d2r(uint8_t* k, radstrlen_t* len, const uint8_t* dname,
 }
 
 /* radname code: radix-bstring to domain */
-void radname_r2d(uint8_t* k, radstrlen_t len, uint8_t* dname, size_t* dlen)
+void radname_r2d(uint8_t* k, radstrlen_type len, uint8_t* dname, size_t* dlen)
 {
 	/* find labels and push on stack */
 	uint8_t* labstart[130];
@@ -1164,7 +1168,7 @@ radname_insert(struct radtree* rt, const uint8_t* d, size_t max, void* elem)
 {
 	/* convert and insert */
 	uint8_t radname[300];
-	radstrlen_t len = (radstrlen_t)sizeof(radname);
+	radstrlen_type len = (radstrlen_type)sizeof(radname);
 	if(max > sizeof(radname))
 		return NULL; /* too long */
 	radname_d2r(radname, &len, d, max);
@@ -1189,7 +1193,7 @@ struct radnode* radname_search(struct radtree* rt, const uint8_t* d,
 	unsigned int lab, dpos, lpos;
 	struct radnode* n = rt->root;
 	uint8_t byte;
-	radstrlen_t i;
+	radstrlen_type i;
 	uint8_t b;
 
 	/* search for root? it is '' */
@@ -1274,7 +1278,7 @@ int radname_find_less_equal(struct radtree* rt, const uint8_t* d, size_t max,
 	unsigned int lab, dpos, lpos;
 	struct radnode* n = rt->root;
 	uint8_t byte;
-	radstrlen_t i;
+	radstrlen_type i;
 	uint8_t b;
 
 	/* empty tree */

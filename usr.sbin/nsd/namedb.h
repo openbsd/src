@@ -40,7 +40,7 @@ struct domain_table
 #ifdef USE_RADIX_TREE
 	struct radtree *nametree;
 #else
-	rbtree_t      *names_to_domains;
+	rbtree_type      *names_to_domains;
 #endif
 	domain_type* root;
 	/* ptr to biggest domain.number and last in list.
@@ -63,13 +63,13 @@ struct nsec3_domain_data {
 	/* NSEC3 domains to prehash, prev and next on the list or cleared */
 	domain_type* prehash_prev, *prehash_next;
 	/* entry in the nsec3tree (for NSEC3s in the chain in use) */
-	rbnode_t nsec3_node;
+	rbnode_type nsec3_node;
 	/* entry in the hashtree (for precompiled domains) */
-	rbnode_t hash_node;
+	rbnode_type hash_node;
 	/* entry in the wchashtree (the wildcard precompile) */
-	rbnode_t wchash_node;
+	rbnode_type wchash_node;
 	/* entry in the dshashtree (the parent ds precompile) */
-	rbnode_t dshash_node;
+	rbnode_type dshash_node;
 
 	/* nsec3 hash */
 	uint8_t nsec3_hash[NSEC3_HASH_LEN];
@@ -94,7 +94,7 @@ struct domain
 	struct radnode* rnode;
 	const dname_type* dname;
 #else
-	rbnode_t     node;
+	rbnode_type     node;
 #endif
 	domain_type* parent;
 	domain_type* wildcard_child_closest_match;
@@ -127,10 +127,10 @@ struct zone
 	rr_type* nsec3_param; /* NSEC3PARAM RR of chain in use or NULL */
 	domain_type* nsec3_last; /* last domain with nsec3, wraps */
 	/* in these trees, the root contains an elem ptr to the radtree* */
-	rbtree_t* nsec3tree; /* tree with relevant NSEC3 domains */
-	rbtree_t* hashtree; /* tree, hashed NSEC3precompiled domains */
-	rbtree_t* wchashtree; /* tree, wildcard hashed domains */
-	rbtree_t* dshashtree; /* tree, ds-parent-hash domains */
+	rbtree_type* nsec3tree; /* tree with relevant NSEC3 domains */
+	rbtree_type* hashtree; /* tree, hashed NSEC3precompiled domains */
+	rbtree_type* wchashtree; /* tree, wildcard hashed domains */
+	rbtree_type* dshashtree; /* tree, ds-parent-hash domains */
 #endif
 	struct zone_options* opts;
 	char*        filename; /* set if read from file, which file */
@@ -223,12 +223,12 @@ domain_type *domain_table_insert(domain_table_type *table,
 				 const dname_type  *dname);
 
 /* put domain into nsec3 hash space tree */
-void zone_add_domain_in_hash_tree(region_type* region, rbtree_t** tree,
+void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*), domain_type* domain,
-	rbnode_t* node);
-void zone_del_domain_in_hash_tree(rbtree_t* tree, rbnode_t* node);
-void hash_tree_clear(rbtree_t* tree);
-void hash_tree_delete(region_type* region, rbtree_t* tree);
+	rbnode_type* node);
+void zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node);
+void hash_tree_clear(rbtree_type* tree);
+void hash_tree_delete(region_type* region, rbtree_type* tree);
 void prehash_clear(domain_table_type* table);
 void prehash_add(domain_table_type* table, domain_type* domain);
 void prehash_del(domain_table_type* table, domain_type* domain);
@@ -286,7 +286,7 @@ domain_previous(domain_type* domain)
 	struct radnode* prev = radix_prev(domain->rnode);
 	return prev == NULL ? NULL : (domain_type*)prev->elem;
 #else
-	rbnode_t *prev = rbtree_previous((rbnode_t *) domain);
+	rbnode_type *prev = rbtree_previous((rbnode_type *) domain);
 	return prev == RBTREE_NULL ? NULL : (domain_type *) prev;
 #endif
 }
@@ -298,7 +298,7 @@ domain_next(domain_type* domain)
 	struct radnode* next = radix_next(domain->rnode);
 	return next == NULL ? NULL : (domain_type*)next->elem;
 #else
-	rbnode_t *next = rbtree_next((rbnode_t *) domain);
+	rbnode_type *next = rbtree_next((rbnode_type *) domain);
 	return next == RBTREE_NULL ? NULL : (domain_type *) next;
 #endif
 }

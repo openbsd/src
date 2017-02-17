@@ -82,7 +82,7 @@ struct region;
 struct event_base
 {
 	/** sorted by timeout (absolute), ptr */
-	rbtree_t* times;
+	rbtree_type* times;
 	/** array of 0 - maxfd of ptr to event for it */
 	struct event** fds;
 	/** max fd in use */
@@ -116,7 +116,7 @@ struct event_base
  */
 struct event {
 	/** node in timeout rbtree */
-	rbnode_t node;
+	rbnode_type node;
 	/** is event already added */
 	int added;
 

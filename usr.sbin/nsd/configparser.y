@@ -30,7 +30,7 @@ extern "C"
 #endif /* __cplusplus */
 
 /* these need to be global, otherwise they cannot be used inside yacc */
-extern config_parser_state_t* cfg_parser;
+extern config_parser_state_type* cfg_parser;
 
 #if 0
 #define OUTYY(s) printf s /* used ONLY when debugging */
@@ -108,15 +108,15 @@ server_ip_address: VAR_IP_ADDRESS STRING
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
 		if(cfg_parser->current_ip_address_option) {
 			cfg_parser->current_ip_address_option->next = 
-				(ip_address_option_t*)region_alloc(
-				cfg_parser->opt->region, sizeof(ip_address_option_t));
+				(ip_address_option_type*)region_alloc(
+				cfg_parser->opt->region, sizeof(ip_address_option_type));
 			cfg_parser->current_ip_address_option = 
 				cfg_parser->current_ip_address_option->next;
 			cfg_parser->current_ip_address_option->next=0;
 		} else {
 			cfg_parser->current_ip_address_option = 
-				(ip_address_option_t*)region_alloc(
-				cfg_parser->opt->region, sizeof(ip_address_option_t));
+				(ip_address_option_type*)region_alloc(
+				cfg_parser->opt->region, sizeof(ip_address_option_type));
 			cfg_parser->current_ip_address_option->next=0;
 			cfg_parser->opt->ip_addresses = cfg_parser->current_ip_address_option;
 		}
@@ -528,8 +528,8 @@ rc_control_port: VAR_CONTROL_PORT STRING
 	;
 rc_control_interface: VAR_CONTROL_INTERFACE STRING
 	{
-		ip_address_option_t* o = (ip_address_option_t*)region_alloc(
-			cfg_parser->opt->region, sizeof(ip_address_option_t));
+		ip_address_option_type* o = (ip_address_option_type*)region_alloc(
+			cfg_parser->opt->region, sizeof(ip_address_option_type));
 		OUTYY(("P(control_interface:%s)\n", $2));
 		o->next = cfg_parser->opt->control_interface;
 		cfg_parser->opt->control_interface = o;
@@ -706,7 +706,7 @@ zone_zonestats: VAR_ZONESTATS STRING
 	;
 zone_allow_notify: VAR_ALLOW_NOTIFY STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
 		OUTYY(("P(allow_notify:%s %s)\n", $2, $3)); 
 		if(cfg_parser->current_allow_notify)
 			cfg_parser->current_allow_notify->next = acl;
@@ -729,7 +729,7 @@ zone_size_limit_xfr: VAR_SIZE_LIMIT_XFR STRING
 	;
 zone_request_xfr_data: STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $1, $2);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $1, $2);
 		OUTYY(("P(request_xfr:%s %s)\n", $1, $2)); 
 		if(acl->blocked) c_error("blocked address used for request-xfr");
 		if(acl->rangetype!=acl_range_single) c_error("address range used for request-xfr");
@@ -741,7 +741,7 @@ zone_request_xfr_data: STRING STRING
 	}
 	| VAR_AXFR STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
 		acl->use_axfr_only = 1;
 		OUTYY(("P(request_xfr:%s %s)\n", $2, $3)); 
 		if(acl->blocked) c_error("blocked address used for request-xfr");
@@ -754,7 +754,7 @@ zone_request_xfr_data: STRING STRING
 	}
 	| VAR_UDP STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
 		acl->allow_udp = 1;
 		OUTYY(("P(request_xfr:%s %s)\n", $2, $3)); 
 		if(acl->blocked) c_error("blocked address used for request-xfr");
@@ -768,7 +768,7 @@ zone_request_xfr_data: STRING STRING
 	;
 zone_notify: VAR_NOTIFY STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
 		OUTYY(("P(notify:%s %s)\n", $2, $3)); 
 		if(acl->blocked) c_error("blocked address used for notify");
 		if(acl->rangetype!=acl_range_single) c_error("address range used for notify");
@@ -792,7 +792,7 @@ zone_notify_retry: VAR_NOTIFY_RETRY STRING
 	;
 zone_provide_xfr: VAR_PROVIDE_XFR STRING STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, $3);
 		OUTYY(("P(provide_xfr:%s %s)\n", $2, $3)); 
 		if(cfg_parser->current_provide_xfr)
 			cfg_parser->current_provide_xfr->next = acl;
@@ -803,7 +803,7 @@ zone_provide_xfr: VAR_PROVIDE_XFR STRING STRING
 	;
 zone_outgoing_interface: VAR_OUTGOING_INTERFACE STRING
 	{ 
-		acl_options_t* acl = parse_acl_info(cfg_parser->opt->region, $2, "NOKEY");
+		acl_options_type* acl = parse_acl_info(cfg_parser->opt->region, $2, "NOKEY");
 		OUTYY(("P(outgoing_interface:%s)\n", $2)); 
 		if(acl->rangetype!=acl_range_single) c_error("address range used for outgoing interface");
 		if(cfg_parser->current_outgoing_interface)

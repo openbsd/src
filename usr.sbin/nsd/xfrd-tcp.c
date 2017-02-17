@@ -47,11 +47,12 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	return (uintptr_t)x < (uintptr_t)y ? -1 : 1;
 }
 
-xfrd_tcp_set_t* xfrd_tcp_set_create(struct region* region)
+struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region)
 {
 	int i;
-	xfrd_tcp_set_t* tcp_set = region_alloc(region, sizeof(xfrd_tcp_set_t));
-	memset(tcp_set, 0, sizeof(xfrd_tcp_set_t));
+	struct xfrd_tcp_set* tcp_set = region_alloc(region,
+		sizeof(struct xfrd_tcp_set));
+	memset(tcp_set, 0, sizeof(struct xfrd_tcp_set));
 	tcp_set->tcp_count = 0;
 	tcp_set->tcp_waiting_first = 0;
 	tcp_set->tcp_waiting_last = 0;
@@ -99,10 +100,10 @@ xfrd_setup_packet(buffer_type* packet,
 
 static socklen_t
 #ifdef INET6
-xfrd_acl_sockaddr(acl_options_t* acl, unsigned int port,
+xfrd_acl_sockaddr(acl_options_type* acl, unsigned int port,
 	struct sockaddr_storage *sck)
 #else
-xfrd_acl_sockaddr(acl_options_t* acl, unsigned int port,
+xfrd_acl_sockaddr(acl_options_type* acl, unsigned int port,
 	struct sockaddr_in *sck, const char* fromto)
 #endif /* INET6 */
 {
@@ -135,9 +136,9 @@ INET6.", fromto, acl->ip_address_spec);
 
 socklen_t
 #ifdef INET6
-xfrd_acl_sockaddr_to(acl_options_t* acl, struct sockaddr_storage *to)
+xfrd_acl_sockaddr_to(acl_options_type* acl, struct sockaddr_storage *to)
 #else
-xfrd_acl_sockaddr_to(acl_options_t* acl, struct sockaddr_in *to)
+xfrd_acl_sockaddr_to(acl_options_type* acl, struct sockaddr_in *to)
 #endif /* INET6 */
 {
 	unsigned int port = acl->port?acl->port:(unsigned)atoi(TCP_PORT);
@@ -150,9 +151,9 @@ xfrd_acl_sockaddr_to(acl_options_t* acl, struct sockaddr_in *to)
 
 socklen_t
 #ifdef INET6
-xfrd_acl_sockaddr_frm(acl_options_t* acl, struct sockaddr_storage *frm)
+xfrd_acl_sockaddr_frm(acl_options_type* acl, struct sockaddr_storage *frm)
 #else
-xfrd_acl_sockaddr_frm(acl_options_t* acl, struct sockaddr_in *frm)
+xfrd_acl_sockaddr_frm(acl_options_type* acl, struct sockaddr_in *frm)
 #endif /* INET6 */
 {
 	unsigned int port = acl->port?acl->port:0;
@@ -193,12 +194,12 @@ xfrd_write_soa_buffer(struct buffer* packet,
 	buffer_write_u16_at(packet, rdlength_pos, rdlength);
 }
 
-xfrd_tcp_t*
+struct xfrd_tcp*
 xfrd_tcp_create(region_type* region, size_t bufsize)
 {
-	xfrd_tcp_t* tcp_state = (xfrd_tcp_t*)region_alloc(
-		region, sizeof(xfrd_tcp_t));
-	memset(tcp_state, 0, sizeof(xfrd_tcp_t));
+	struct xfrd_tcp* tcp_state = (struct xfrd_tcp*)region_alloc(
+		region, sizeof(struct xfrd_tcp));
+	memset(tcp_state, 0, sizeof(struct xfrd_tcp));
 	tcp_state->packet = buffer_create(region, bufsize);
 	tcp_state->fd = -1;
 
@@ -206,9 +207,9 @@ xfrd_tcp_create(region_type* region, size_t bufsize)
 }
 
 static struct xfrd_tcp_pipeline*
-pipeline_find(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
+pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 {
-	rbnode_t* sme = NULL;
+	rbnode_type* sme = NULL;
 	struct xfrd_tcp_pipeline* r;
 	/* smaller buf than a full pipeline with 64kb ID array, only need
 	 * the front part with the key info, this front part contains the
@@ -243,7 +244,7 @@ pipeline_find(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 
 /* remove zone from tcp waiting list */
 static void
-tcp_zone_waiting_list_popfirst(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
+tcp_zone_waiting_list_popfirst(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 {
 	assert(zone->tcp_waiting);
 	set->tcp_waiting_first = zone->tcp_waiting_next;
@@ -256,7 +257,7 @@ tcp_zone_waiting_list_popfirst(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 
 /* remove zone from tcp pipe write-wait list */
 static void
-tcp_pipe_sendlist_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
+tcp_pipe_sendlist_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
 	if(zone->in_tcp_send) {
 		if(zone->tcp_send_prev)
@@ -271,7 +272,7 @@ tcp_pipe_sendlist_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
 
 /* remove first from write-wait list */
 static void
-tcp_pipe_sendlist_popfirst(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
+tcp_pipe_sendlist_popfirst(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
 	tp->tcp_send_first = zone->tcp_send_next;
 	if(tp->tcp_send_first)
@@ -282,7 +283,7 @@ tcp_pipe_sendlist_popfirst(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
 
 /* remove zone from tcp pipe ID map */
 static void
-tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
+tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
 	assert(tp->num_unused < ID_PIPE_NUM && tp->num_unused >= 0);
 	assert(tp->id[zone->query_id] == zone);
@@ -305,7 +306,7 @@ xfrd_tcp_pipe_stop(struct xfrd_tcp_pipeline* tp)
 	/* these could use different lists and go to a different nextmaster*/
 	for(i=0; i<ID_PIPE_NUM; i++) {
 		if(tp->id[i] && tp->id[i] != TCP_NULL_SKIP) {
-			xfrd_zone_t* zone = tp->id[i];
+			xfrd_zone_type* zone = tp->id[i];
 			conn = zone->tcp_conn;
 			zone->tcp_conn = -1;
 			zone->tcp_waiting = 0;
@@ -364,8 +365,8 @@ xfrd_handle_tcp_pipe(int ATTR_UNUSED(fd), short event, void* arg)
 
 /* add a zone to the pipeline, it starts to want to write its query */
 static void
-pipeline_setup_new_zone(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
-	xfrd_zone_t* zone)
+pipeline_setup_new_zone(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
+	xfrd_zone_type* zone)
 {
 	/* assign the ID */
 	int idx;
@@ -398,7 +399,7 @@ pipeline_setup_new_zone(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 }
 
 void
-xfrd_tcp_obtain(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
+xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 {
 	struct xfrd_tcp_pipeline* tp;
 	assert(zone->tcp_conn == -1);
@@ -484,8 +485,8 @@ xfrd_tcp_obtain(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 }
 
 int
-xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
-	xfrd_zone_t* zone)
+xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
+	xfrd_zone_type* zone)
 {
 	int fd, family, conn;
 	struct timeval tv;
@@ -521,7 +522,10 @@ xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 	}
 	fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
 	if(fd == -1) {
-		log_msg(LOG_ERR, "xfrd: %s cannot create tcp socket: %s",
+		/* squelch 'Address family not supported by protocol' at low
+		 * verbosity levels */
+		if(errno != EAFNOSUPPORT || verbosity > 2)
+		    log_msg(LOG_ERR, "xfrd: %s cannot create tcp socket: %s",
 			zone->master->ip_address_spec, strerror(errno));
 		xfrd_set_refresh_now(zone);
 		return 0;
@@ -583,9 +587,9 @@ xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 }
 
 void
-xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
+xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
-	xfrd_tcp_t* tcp = tp->tcp_w;
+	struct xfrd_tcp* tcp = tp->tcp_w;
 	assert(zone->tcp_conn != -1);
 	assert(zone->tcp_waiting == 0);
 	/* start AXFR or IXFR for the zone */
@@ -625,14 +629,14 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
 }
 
 static void
-tcp_conn_ready_for_reading(xfrd_tcp_t* tcp)
+tcp_conn_ready_for_reading(struct xfrd_tcp* tcp)
 {
 	tcp->total_bytes = 0;
 	tcp->msglen = 0;
 	buffer_clear(tcp->packet);
 }
 
-int conn_write(xfrd_tcp_t* tcp)
+int conn_write(struct xfrd_tcp* tcp)
 {
 	ssize_t sent;
 
@@ -686,10 +690,10 @@ int conn_write(xfrd_tcp_t* tcp)
 }
 
 void
-xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
+xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 {
 	int ret;
-	xfrd_tcp_t* tcp = tp->tcp_w;
+	struct xfrd_tcp* tcp = tp->tcp_w;
 	assert(zone->tcp_conn != -1);
 	assert(zone == tp->tcp_send_first);
 	/* see if for non-established connection, there is a connect error */
@@ -752,7 +756,7 @@ xfrd_tcp_write(struct xfrd_tcp_pipeline* tp, xfrd_zone_t* zone)
 }
 
 int
-conn_read(xfrd_tcp_t* tcp)
+conn_read(struct xfrd_tcp* tcp)
 {
 	ssize_t received;
 	/* receive leading packet length bytes */
@@ -831,8 +835,8 @@ conn_read(xfrd_tcp_t* tcp)
 void
 xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 {
-	xfrd_zone_t* zone;
-	xfrd_tcp_t* tcp = tp->tcp_r;
+	xfrd_zone_type* zone;
+	struct xfrd_tcp* tcp = tp->tcp_r;
 	int ret;
 	enum xfrd_packet_result pkt_result;
 
@@ -906,7 +910,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 }
 
 void
-xfrd_tcp_release(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
+xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 {
 	int conn = zone->tcp_conn;
 	struct xfrd_tcp_pipeline* tp = set->tcp_state[conn];
@@ -955,7 +959,7 @@ xfrd_tcp_release(xfrd_tcp_set_t* set, xfrd_zone_t* zone)
 }
 
 void
-xfrd_tcp_pipe_release(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
+xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	int conn)
 {
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: tcp pipe released"));
@@ -980,7 +984,7 @@ xfrd_tcp_pipe_release(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
 		int i;
 
 		/* pop first waiting process */
-		xfrd_zone_t* zone = set->tcp_waiting_first;
+		xfrd_zone_type* zone = set->tcp_waiting_first;
 		/* start it */
 		assert(zone->tcp_conn == -1);
 		zone->tcp_conn = conn;

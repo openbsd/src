@@ -9,7 +9,7 @@
 struct udb_radnode;
 
 /** length of the binary string */
-typedef uint16_t udb_radstrlen_t;
+typedef uint16_t udb_radstrlen_type;
 
 /**
  * The radix tree
@@ -54,7 +54,7 @@ struct udb_radnode_d {
 struct udb_radsel_d {
 	/** length of the additional string for this edge,
 	 * additional string after the selection-byte for this edge.*/
-	udb_radstrlen_t len;
+	udb_radstrlen_type len;
 	/** padding for non64bit compilers to 64bit boundaries, to make
 	 * the udb file more portable, without this the file would work
 	 * on the system it is created on (which is what we promise), but
@@ -78,7 +78,7 @@ struct udb_radarray_d {
 	/** capacity of the lookup array (can be larger than length) */
 	uint16_t capacity;
 	/** space capacity of for every string */
-	udb_radstrlen_t str_cap;
+	udb_radstrlen_type str_cap;
 	/** padding to 64bit alignment, just in case compiler goes mad */
 	uint16_t padding;
 	/** the elements (allocated contiguously after this structure) */
@@ -123,7 +123,7 @@ void udb_radix_tree_delete(udb_base* udb, udb_ptr* rt);
  * 	On success the new radix node for this element (udb_radnode_d).
  */
 udb_void udb_radix_insert(udb_base* udb, udb_ptr* rt, uint8_t* k,
-	udb_radstrlen_t len, udb_ptr* elem, udb_ptr* result);
+	udb_radstrlen_type len, udb_ptr* elem, udb_ptr* result);
 
 /**
  * Delete element from radix tree.
@@ -142,7 +142,7 @@ void udb_radix_delete(udb_base* udb, udb_ptr* rt, udb_ptr* n);
  * @return the radix node or NULL if not found. type udb_radnode_d
  */
 udb_void udb_radix_search(udb_ptr* rt, uint8_t* k,
-	udb_radstrlen_t len);
+	udb_radstrlen_type len);
 
 /**
  * Find radix element in tree, and if not found, find the closest smaller or
@@ -157,7 +157,7 @@ udb_void udb_radix_search(udb_ptr* rt, uint8_t* k,
  * @return true if exact match, false if no match.
  */
 int udb_radix_find_less_equal(udb_base* udb, udb_ptr* rt, uint8_t* k,
-	udb_radstrlen_t len, udb_ptr* result);
+	udb_radstrlen_type len, udb_ptr* result);
 
 /**
  * Return the first (smallest) element in the tree.

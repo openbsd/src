@@ -20,23 +20,23 @@
 #define XFRD_NOTIFY_RETRY_TIMOUT 15 /* seconds between retries sending NOTIFY */
 
 /* start sending notifies */
-static void notify_enable(struct notify_zone_t* zone,
+static void notify_enable(struct notify_zone* zone,
 	struct xfrd_soa* new_soa);
 /* setup the notify active state */
-static void setup_notify_active(struct notify_zone_t* zone);
+static void setup_notify_active(struct notify_zone* zone);
 
 /* returns if the notify send is done for the notify_current acl */
-static int xfrd_handle_notify_reply(struct notify_zone_t* zone, buffer_type* packet);
+static int xfrd_handle_notify_reply(struct notify_zone* zone, buffer_type* packet);
 
 /* handle zone notify send */
 static void xfrd_handle_notify_send(int fd, short event, void* arg);
 
-static void xfrd_notify_next(struct notify_zone_t* zone);
+static void xfrd_notify_next(struct notify_zone* zone);
 
-static void xfrd_notify_send_udp(struct notify_zone_t* zone, buffer_type* packet);
+static void xfrd_notify_send_udp(struct notify_zone* zone, buffer_type* packet);
 
 static void
-notify_send_disable(struct notify_zone_t* zone)
+notify_send_disable(struct notify_zone* zone)
 {
 	zone->notify_send_enable = 0;
 	event_del(&zone->notify_send_handler);
@@ -46,7 +46,7 @@ notify_send_disable(struct notify_zone_t* zone)
 }
 
 void
-notify_disable(struct notify_zone_t* zone)
+notify_disable(struct notify_zone* zone)
 {
 	zone->notify_current = 0;
 	/* if added, then remove */
@@ -58,7 +58,7 @@ notify_disable(struct notify_zone_t* zone)
 		/* find next waiting and needy zone */
 		while(xfrd->notify_waiting_first) {
 			/* snip off */
-			struct notify_zone_t* wz = xfrd->notify_waiting_first;
+			struct notify_zone* wz = xfrd->notify_waiting_first;
 			assert(wz->is_waiting);
 			wz->is_waiting = 0;
 			xfrd->notify_waiting_first = wz->waiting_next;
@@ -80,11 +80,12 @@ notify_disable(struct notify_zone_t* zone)
 }
 
 void
-init_notify_send(rbtree_t* tree, region_type* region, zone_options_t* options)
+init_notify_send(rbtree_type* tree, region_type* region,
+	struct zone_options* options)
 {
-	struct notify_zone_t* not = (struct notify_zone_t*)
-		region_alloc(region, sizeof(struct notify_zone_t));
-	memset(not, 0, sizeof(struct notify_zone_t));
+	struct notify_zone* not = (struct notify_zone*)
+		region_alloc(region, sizeof(struct notify_zone));
+	memset(not, 0, sizeof(struct notify_zone));
 	not->apex = options->node.key;
 	not->apex_str = options->name;
 	not->node.key = not->apex;
@@ -100,14 +101,14 @@ init_notify_send(rbtree_t* tree, region_type* region, zone_options_t* options)
 	not->notify_send_enable = 0;
 	tsig_create_record_custom(&not->notify_tsig, NULL, 0, 0, 4);
 	not->notify_current = 0;
-	rbtree_insert(tree, (rbnode_t*)not);
+	rbtree_insert(tree, (rbnode_type*)not);
 }
 
 void
-xfrd_del_notify(xfrd_state_t* xfrd, const dname_type* dname)
+xfrd_del_notify(xfrd_state_type* xfrd, const dname_type* dname)
 {
 	/* find it */
-	struct notify_zone_t* not = (struct notify_zone_t*)rbtree_delete(
+	struct notify_zone* not = (struct notify_zone*)rbtree_delete(
 		xfrd->notify_zones, dname);
 	if(!not)
 		return;
@@ -132,13 +133,13 @@ xfrd_del_notify(xfrd_state_t* xfrd, const dname_type* dname)
 	tsig_delete_record(&not->notify_tsig, NULL);
 
 	/* free it */
-	region_recycle(xfrd->region, not->current_soa, sizeof(xfrd_soa_t));
+	region_recycle(xfrd->region, not->current_soa, sizeof(xfrd_soa_type));
 	/* the apex is recycled when the zone_options.node.key is removed */
 	region_recycle(xfrd->region, not, sizeof(*not));
 }
 
 static int
-xfrd_handle_notify_reply(struct notify_zone_t* zone, buffer_type* packet)
+xfrd_handle_notify_reply(struct notify_zone* zone, buffer_type* packet)
 {
 	if((OPCODE(packet) != OPCODE_NOTIFY) ||
 		(QR(packet) == 0)) {
@@ -167,7 +168,7 @@ xfrd_handle_notify_reply(struct notify_zone_t* zone, buffer_type* packet)
 }
 
 static void
-xfrd_notify_next(struct notify_zone_t* zone)
+xfrd_notify_next(struct notify_zone* zone)
 {
 	/* advance to next in acl */
 	zone->notify_current = zone->notify_current->next;
@@ -182,7 +183,7 @@ xfrd_notify_next(struct notify_zone_t* zone)
 }
 
 static void
-xfrd_notify_send_udp(struct notify_zone_t* zone, buffer_type* packet)
+xfrd_notify_send_udp(struct notify_zone* zone, buffer_type* packet)
 {
 	int fd;
 	if(zone->notify_send_enable) {
@@ -235,7 +236,7 @@ xfrd_notify_send_udp(struct notify_zone_t* zone, buffer_type* packet)
 static void
 xfrd_handle_notify_send(int fd, short event, void* arg)
 {
-	struct notify_zone_t* zone = (struct notify_zone_t*)arg;
+	struct notify_zone* zone = (struct notify_zone*)arg;
 	buffer_type* packet = xfrd_get_temp_buffer();
 	assert(zone->notify_current);
 	if(zone->is_waiting) {
@@ -272,7 +273,7 @@ xfrd_handle_notify_send(int fd, short event, void* arg)
 }
 
 static void
-setup_notify_active(struct notify_zone_t* zone)
+setup_notify_active(struct notify_zone* zone)
 {
 	zone->notify_retry = 0;
 	zone->notify_current = zone->options->pattern->notify;
@@ -291,16 +292,16 @@ setup_notify_active(struct notify_zone_t* zone)
 }
 
 static void
-notify_enable(struct notify_zone_t* zone, struct xfrd_soa* new_soa)
+notify_enable(struct notify_zone* zone, struct xfrd_soa* new_soa)
 {
 	if(!zone->options->pattern->notify) {
 		return; /* no notify acl, nothing to do */
 	}
 
 	if(new_soa == NULL)
-		memset(zone->current_soa, 0, sizeof(xfrd_soa_t));
+		memset(zone->current_soa, 0, sizeof(xfrd_soa_type));
 	else
-		memcpy(zone->current_soa, new_soa, sizeof(xfrd_soa_t));
+		memcpy(zone->current_soa, new_soa, sizeof(xfrd_soa_type));
 	if(zone->is_waiting)
 		return;
 
@@ -325,22 +326,22 @@ notify_enable(struct notify_zone_t* zone, struct xfrd_soa* new_soa)
 }
 
 void
-xfrd_notify_start(struct notify_zone_t* zone, struct xfrd_state* xfrd)
+xfrd_notify_start(struct notify_zone* zone, struct xfrd_state* xfrd)
 {
-	xfrd_zone_t* xz;
+	xfrd_zone_type* xz;
 	if(zone->is_waiting || zone->notify_send_enable)
 		return;
-	xz = (xfrd_zone_t*)rbtree_search(xfrd->zones, zone->apex);
+	xz = (xfrd_zone_type*)rbtree_search(xfrd->zones, zone->apex);
 	if(xz && xz->soa_nsd_acquired)
 		notify_enable(zone, &xz->soa_nsd);
 	else	notify_enable(zone, NULL);
 }
 
 void
-xfrd_send_notify(rbtree_t* tree, const dname_type* apex, struct xfrd_soa* new_soa)
+xfrd_send_notify(rbtree_type* tree, const dname_type* apex, struct xfrd_soa* new_soa)
 {
 	/* lookup the zone */
-	struct notify_zone_t* zone = (struct notify_zone_t*)
+	struct notify_zone* zone = (struct notify_zone*)
 		rbtree_search(tree, apex);
 	assert(zone);
 	if(zone->notify_send_enable)
@@ -350,11 +351,11 @@ xfrd_send_notify(rbtree_t* tree, const dname_type* apex, struct xfrd_soa* new_so
 }
 
 void
-notify_handle_master_zone_soainfo(rbtree_t* tree,
+notify_handle_master_zone_soainfo(rbtree_type* tree,
 	const dname_type* apex, struct xfrd_soa* new_soa)
 {
 	/* lookup the zone */
-	struct notify_zone_t* zone = (struct notify_zone_t*)
+	struct notify_zone* zone = (struct notify_zone*)
 		rbtree_search(tree, apex);
 	if(!zone) return; /* got SOAINFO but zone was deleted meanwhile */
 
@@ -368,10 +369,10 @@ notify_handle_master_zone_soainfo(rbtree_t* tree,
 }
 
 void
-close_notify_fds(rbtree_t* tree)
+close_notify_fds(rbtree_type* tree)
 {
-	struct notify_zone_t* zone;
-	RBTREE_FOR(zone, struct notify_zone_t*, tree)
+	struct notify_zone* zone;
+	RBTREE_FOR(zone, struct notify_zone*, tree)
 	{
 		if(zone->notify_send_enable)
 			notify_send_disable(zone);

@@ -10,7 +10,7 @@ struct radnode;
 struct region;
 
 /** length of the binary string */
-typedef uint16_t radstrlen_t;
+typedef uint16_t radstrlen_type;
 
 /**
  * The radix tree
@@ -58,7 +58,7 @@ struct radsel {
 	/** additional string after the selection-byte for this edge. */
 	uint8_t* str;
 	/** length of the additional string for this edge */
-	radstrlen_t len;
+	radstrlen_type len;
 	/** node that deals with byte+str */
 	struct radnode* node;
 };
@@ -99,8 +99,8 @@ void radix_tree_delete(struct radtree* rt);
  * 	NULL on failure - duplicate entry.
  * 	On success the new radix node for this element.
  */
-struct radnode* radix_insert(struct radtree* rt, uint8_t* k, radstrlen_t len,
-	void* elem);
+struct radnode* radix_insert(struct radtree* rt, uint8_t* k,
+	radstrlen_type len, void* elem);
 
 /**
  * Delete element from radix tree.
@@ -117,7 +117,8 @@ void radix_delete(struct radtree* rt, struct radnode* n);
  * @param len: length of key.
  * @return the radix node or NULL if not found.
  */
-struct radnode* radix_search(struct radtree* rt, uint8_t* k, radstrlen_t len);
+struct radnode* radix_search(struct radtree* rt, uint8_t* k,
+	radstrlen_type len);
 
 /**
  * Find radix element in tree, and if not found, find the closest smaller or
@@ -129,7 +130,7 @@ struct radnode* radix_search(struct radtree* rt, uint8_t* k, radstrlen_t len);
  * 	smaller than the smallest key in the tree).
  * @return true if exact match, false if no match.
  */
-int radix_find_less_equal(struct radtree* rt, uint8_t* k, radstrlen_t len,
+int radix_find_less_equal(struct radtree* rt, uint8_t* k, radstrlen_type len,
 	struct radnode** result);
 
 /**
@@ -174,7 +175,7 @@ struct radnode* radix_prev(struct radnode* n);
  * @param dname: the domain name to convert, in wireformat.
  * @param dlen: length of space for dname.
  */
-void radname_d2r(uint8_t* k, radstrlen_t* len, const uint8_t* dname,
+void radname_d2r(uint8_t* k, radstrlen_type* len, const uint8_t* dname,
 	size_t dlen);
 
 /**
@@ -184,7 +185,7 @@ void radname_d2r(uint8_t* k, radstrlen_t* len, const uint8_t* dname,
  * @param dname: buffer to store domain name into.
  * @param dlen: length of dname (including root label).
  */
-void radname_r2d(uint8_t* k, radstrlen_t len, uint8_t* dname, size_t* dlen);
+void radname_r2d(uint8_t* k, radstrlen_type len, uint8_t* dname, size_t* dlen);
 
 /**
  * Search the radix tree using a domain name.
@@ -235,10 +236,10 @@ struct radnode* radname_insert(struct radtree* rt, const uint8_t* d,
 void radname_delete(struct radtree* rt, const uint8_t* d, size_t max);
 
 /** number of bytes in common in strings */
-radstrlen_t bstr_common_ext(uint8_t* x, radstrlen_t xlen, uint8_t* y,
-	radstrlen_t ylen);
+radstrlen_type bstr_common_ext(uint8_t* x, radstrlen_type xlen, uint8_t* y,
+	radstrlen_type ylen);
 /** true if one is prefix of the other */
-int bstr_is_prefix_ext(uint8_t* p, radstrlen_t plen, uint8_t* x,
-	radstrlen_t xlen);
+int bstr_is_prefix_ext(uint8_t* p, radstrlen_type plen, uint8_t* x,
+	radstrlen_type xlen);
 
 #endif /* RADTREE_H */

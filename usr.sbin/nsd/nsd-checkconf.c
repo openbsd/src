@@ -29,7 +29,7 @@ extern int optind;
 
 #define ZONE_GET_OUTGOING(NAME, VAR, PATTERN)			\
 	if (strcasecmp(#NAME, (VAR)) == 0) {		\
-		acl_options_t* acl; 			\
+		acl_options_type* acl; 			\
 		for(acl=PATTERN->NAME; acl; acl=acl->next)	\
 			quote(acl->ip_address_spec);	\
 		return; 				\
@@ -176,7 +176,7 @@ quote(const char *v)
 }
 
 static void
-quotepath(nsd_options_t* opt, int final, const char *f)
+quotepath(nsd_options_type* opt, int final, const char *f)
 {
 	const char* chr = opt->chroot;
 #ifdef CHROOTDIR
@@ -191,7 +191,7 @@ quotepath(nsd_options_t* opt, int final, const char *f)
 }
 
 static void
-quote_acl(acl_options_t* acl)
+quote_acl(acl_options_type* acl)
 {
 	while(acl)
 	{
@@ -203,7 +203,7 @@ quote_acl(acl_options_t* acl)
 }
 
 static void
-print_acl(const char* varname, acl_options_t* acl)
+print_acl(const char* varname, acl_options_type* acl)
 {
 	while(acl)
 	{
@@ -251,7 +251,7 @@ print_acl(const char* varname, acl_options_t* acl)
 }
 
 static void
-print_acl_ips(const char* varname, acl_options_t* acl)
+print_acl_ips(const char* varname, acl_options_type* acl)
 {
 	while(acl)
 	{
@@ -261,14 +261,14 @@ print_acl_ips(const char* varname, acl_options_t* acl)
 }
 
 void
-config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
+config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 	const char *z, const char* pat, int final)
 {
-	ip_address_option_t* ip;
+	ip_address_option_type* ip;
 
 	if (k) {
 		/* find key */
-		key_options_t* key = key_options_find(opt, k);
+		key_options_type* key = key_options_find(opt, k);
 		if(key) {
 			if (s) {
 				quote(key->secret);
@@ -286,7 +286,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 	}
 
 	if (z) {
-		zone_options_t* zone;
+		zone_options_type* zone;
 		const dname_type *dname = dname_parse(opt->region, z);
 		if(!dname) {
 			printf("Could not parse zone name %s\n", z);
@@ -324,7 +324,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		printf("Zone option not handled: %s %s\n", z, o);
 		exit(1);
 	} else if(pat) {
-		pattern_options_t* p = pattern_options_find(opt, pat);
+		pattern_options_type* p = pattern_options_find(opt, pat);
 		if(!p) {
 			printf("Pattern does not exist: %s\n", pat);
 			exit(1);
@@ -413,14 +413,14 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 		SERV_GET_STR(control_cert_file, o);
 
 		if(strcasecmp(o, "zones") == 0) {
-			zone_options_t* zone;
-			RBTREE_FOR(zone, zone_options_t*, opt->zone_options)
+			zone_options_type* zone;
+			RBTREE_FOR(zone, zone_options_type*, opt->zone_options)
 				quote(zone->name);
 			return;
 		}
 		if(strcasecmp(o, "patterns") == 0) {
-			pattern_options_t* p;
-			RBTREE_FOR(p, pattern_options_t*, opt->patterns)
+			pattern_options_type* p;
+			RBTREE_FOR(p, pattern_options_type*, opt->patterns)
 				quote(p->pname);
 			return;
 		}
@@ -430,7 +430,7 @@ config_print_zone(nsd_options_t* opt, const char* k, int s, const char *o,
 }
 
 /* print zone content items */
-static void print_zone_content_elems(pattern_options_t* pat)
+static void print_zone_content_elems(pattern_options_type* pat)
 {
 	if(pat->zonefile)
 		print_string_var("zonefile:", pat->zonefile);
@@ -465,12 +465,12 @@ static void print_zone_content_elems(pattern_options_t* pat)
 }
 
 void
-config_test_print_server(nsd_options_t* opt)
+config_test_print_server(nsd_options_type* opt)
 {
-	ip_address_option_t* ip;
-	key_options_t* key;
-	zone_options_t* zone;
-	pattern_options_t* pat;
+	ip_address_option_type* ip;
+	key_options_type* key;
+	zone_options_type* zone;
+	pattern_options_type* pat;
 
 	printf("# Config settings.\n");
 	printf("server:\n");
@@ -532,21 +532,21 @@ config_test_print_server(nsd_options_t* opt)
 	print_string_var("control-key-file:", opt->control_key_file);
 	print_string_var("control-cert-file:", opt->control_cert_file);
 
-	RBTREE_FOR(key, key_options_t*, opt->keys)
+	RBTREE_FOR(key, key_options_type*, opt->keys)
 	{
 		printf("\nkey:\n");
 		print_string_var("name:", key->name);
 		print_string_var("algorithm:", key->algorithm);
 		print_string_var("secret:", key->secret);
 	}
-	RBTREE_FOR(pat, pattern_options_t*, opt->patterns)
+	RBTREE_FOR(pat, pattern_options_type*, opt->patterns)
 	{
 		if(pat->implicit) continue;
 		printf("\npattern:\n");
 		print_string_var("name:", pat->pname);
 		print_zone_content_elems(pat);
 	}
-	RBTREE_FOR(zone, zone_options_t*, opt->zone_options)
+	RBTREE_FOR(zone, zone_options_type*, opt->zone_options)
 	{
 		if(!zone->part_of_config)
 			continue;
@@ -578,12 +578,12 @@ file_inside_chroot(const char* fname, const char* chr)
 }
 
 static int
-additional_checks(nsd_options_t* opt, const char* filename)
+additional_checks(nsd_options_type* opt, const char* filename)
 {
-	zone_options_t* zone;
+	zone_options_type* zone;
 	int errors = 0;
 
-	RBTREE_FOR(zone, zone_options_t*, opt->zone_options)
+	RBTREE_FOR(zone, zone_options_type*, opt->zone_options)
 	{
 		const dname_type* dname = dname_parse(opt->region, zone->name); /* memory leak. */
 		if(!dname) {
@@ -707,7 +707,7 @@ main(int argc, char* argv[])
 	const char * conf_key = NULL; /* what key is needed */
 	const char * conf_pat = NULL; /* what pattern is talked about */
 	const char* configfile;
-	nsd_options_t *options;
+	nsd_options_type *options;
 
 	log_init("nsd-checkconf");
 

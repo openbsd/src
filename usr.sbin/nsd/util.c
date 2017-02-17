@@ -487,6 +487,10 @@ strtoserial(const char* nptr, const char** endptr)
 		case '7':
 		case '8':
 		case '9':
+			if((i*10)/10 != i)
+				/* number too large, return i
+				 * with *endptr != 0 as a failure*/
+				return i;
 			i *= 10;
 			i += (**endptr - '0');
 			break;

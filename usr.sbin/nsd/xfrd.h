@@ -32,11 +32,11 @@ struct region;
 struct buffer;
 struct xfrd_tcp;
 struct xfrd_tcp_set;
-struct notify_zone_t;
+struct notify_zone;
 struct udb_ptr;
-typedef struct xfrd_state xfrd_state_t;
-typedef struct xfrd_zone xfrd_zone_t;
-typedef struct xfrd_soa xfrd_soa_t;
+typedef struct xfrd_state xfrd_state_type;
+typedef struct xfrd_zone xfrd_zone_type;
+typedef struct xfrd_soa xfrd_soa_type;
 /*
  * The global state for the xfrd daemon process.
  * The time_t times are epochs in secs since 1970, absolute times.
@@ -105,15 +105,15 @@ struct xfrd_state {
 	/* xfrd shutdown flag */
 	uint8_t shutdown;
 
-	/* tree of zones, by apex name, contains xfrd_zone_t*. Only secondary zones. */
-	rbtree_t *zones;
+	/* tree of zones, by apex name, contains xfrd_zone_type*. Only secondary zones. */
+	rbtree_type *zones;
 
-	/* tree of zones, by apex name, contains notify_zone_t*. All zones. */
-	rbtree_t *notify_zones;
-	/* number of notify_zone_t active using UDP socket */
+	/* tree of zones, by apex name, contains notify_zone*. All zones. */
+	rbtree_type *notify_zones;
+	/* number of notify_zone active using UDP socket */
 	int notify_udp_num;
-	/* first and last notify_zone_t* entries waiting for a UDP socket */
-	struct notify_zone_t *notify_waiting_first, *notify_waiting_last;
+	/* first and last notify_zone* entries waiting for a UDP socket */
+	struct notify_zone *notify_waiting_first, *notify_waiting_last;
 };
 
 /*
@@ -143,7 +143,7 @@ struct xfrd_soa {
  * XFRD state for a single zone
  */
 struct xfrd_zone {
-	rbnode_t node;
+	rbnode_type node;
 
 	/* name of the zone */
 	const dname_type* apex;
@@ -156,11 +156,11 @@ struct xfrd_zone {
 	 * And the time the soa was acquired (start time for timeouts).
 	 * If the time==0, no SOA is available.
 	 */
-	xfrd_soa_t soa_nsd;
+	xfrd_soa_type soa_nsd;
 	time_t soa_nsd_acquired;
-	xfrd_soa_t soa_disk;
+	xfrd_soa_type soa_disk;
 	time_t soa_disk_acquired;
-	xfrd_soa_t soa_notified;
+	xfrd_soa_type soa_notified;
 	time_t soa_notified_acquired;
 
 	enum xfrd_zone_state {
@@ -170,12 +170,12 @@ struct xfrd_zone {
 	} state;
 
 	/* master to try to transfer from, number for persistence */
-	acl_options_t* master;
+	struct acl_options* master;
 	int master_num;
 	int next_master; /* -1 or set by notify where to try next */
 	/* round of xfrattempts, -1 is waiting for timeout */
 	int round_num;
-	zone_options_t* zone_options;
+	struct zone_options* zone_options;
 	int fresh_xfr_timeout;
 
 	/* handler for timeouts */
@@ -189,23 +189,23 @@ struct xfrd_zone {
 	/* zone is waiting for a tcp connection */
 	uint8_t tcp_waiting;
 	/* next zone in waiting list */
-	xfrd_zone_t* tcp_waiting_next;
-	xfrd_zone_t* tcp_waiting_prev;
+	xfrd_zone_type* tcp_waiting_next;
+	xfrd_zone_type* tcp_waiting_prev;
 	/* zone is in its tcp send queue */
 	uint8_t in_tcp_send;
 	/* next zone in tcp send queue */
-	xfrd_zone_t* tcp_send_next;
-	xfrd_zone_t* tcp_send_prev;
+	xfrd_zone_type* tcp_send_next;
+	xfrd_zone_type* tcp_send_prev;
 	/* zone is waiting for a udp connection (tcp is preferred) */
 	uint8_t udp_waiting;
 	/* next zone in waiting list for UDP */
-	xfrd_zone_t* udp_waiting_next;
-	xfrd_zone_t* udp_waiting_prev;
+	xfrd_zone_type* udp_waiting_next;
+	xfrd_zone_type* udp_waiting_prev;
 	/* zone has been activated to run now (after the other events
 	 * but before blocking in select again) */
 	uint8_t is_activated;
-	xfrd_zone_t* activated_next;
-	xfrd_zone_t* activated_prev;
+	xfrd_zone_type* activated_next;
+	xfrd_zone_type* activated_prev;
 
 	/* xfr message handling data */
 	/* query id */
@@ -247,20 +247,20 @@ enum xfrd_packet_result {
 #define XFRD_TRANSFER_TIMEOUT_START 10 /* empty zone timeout is between x and 2*x seconds */
 #define XFRD_TRANSFER_TIMEOUT_MAX 86400 /* empty zone timeout max expbackoff */
 
-extern xfrd_state_t* xfrd;
+extern xfrd_state_type* xfrd;
 
 /* start xfrd, new start. Pass socket to server_main. */
 void xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	pid_t nsd_pid);
 
 /* add new slave zone, dname(from zone_opt) and given options */
-void xfrd_init_slave_zone(xfrd_state_t* xfrd, zone_options_t* zone_opt);
+void xfrd_init_slave_zone(xfrd_state_type* xfrd, struct zone_options* zone_opt);
 
 /* delete slave zone */
-void xfrd_del_slave_zone(xfrd_state_t* xfrd, const dname_type* dname);
+void xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname);
 
 /* disable ixfr for a while for zone->master */
-void xfrd_disable_ixfr(xfrd_zone_t* zone);
+void xfrd_disable_ixfr(xfrd_zone_type* zone);
 
 /* get the current time epoch. Cached for speed. */
 time_t xfrd_time(void);
@@ -270,16 +270,16 @@ time_t xfrd_time(void);
  * returns enum of packet discovery results
  */
 enum xfrd_packet_result xfrd_handle_received_xfr_packet(
-	xfrd_zone_t* zone, buffer_type* packet);
+	xfrd_zone_type* zone, buffer_type* packet);
 
 /* set timer to specific value */
-void xfrd_set_timer(xfrd_zone_t* zone, time_t t);
+void xfrd_set_timer(xfrd_zone_type* zone, time_t t);
 /* set refresh timer of zone to refresh at time now */
-void xfrd_set_refresh_now(xfrd_zone_t* zone);
+void xfrd_set_refresh_now(xfrd_zone_type* zone);
 /* unset the timer - no more timeouts, for when zone is queued */
-void xfrd_unset_timer(xfrd_zone_t* zone);
+void xfrd_unset_timer(xfrd_zone_type* zone);
 /* remove the 'refresh now', remove it from the activated list */
-void xfrd_deactivate_zone(xfrd_zone_t* z);
+void xfrd_deactivate_zone(xfrd_zone_type* z);
 
 /*
  * Make a new request to next master server.
@@ -288,13 +288,14 @@ void xfrd_deactivate_zone(xfrd_zone_t* z);
  * starts next round of requests if at last master.
  * if too many rounds of requests, sets timer for next retry.
  */
-void xfrd_make_request(xfrd_zone_t* zone);
+void xfrd_make_request(xfrd_zone_type* zone);
 
 /*
  * send packet via udp (returns UDP fd source socket) to acl addr.
  * returns -1 on failure.
  */
-int xfrd_send_udp(acl_options_t* acl, buffer_type* packet, acl_options_t* ifc);
+int xfrd_send_udp(struct acl_options* acl, buffer_type* packet,
+	struct acl_options* ifc);
 
 /*
  * read from udp port packet into buffer, returns 0 on failure
@@ -304,7 +305,7 @@ int xfrd_udp_read_packet(buffer_type* packet, int fd);
 /*
  * Release udp socket that a zone is using
  */
-void xfrd_udp_release(xfrd_zone_t* zone);
+void xfrd_udp_release(xfrd_zone_type* zone);
 
 /*
  * Get a static buffer for temporary use (to build a packet).
@@ -315,12 +316,12 @@ struct buffer* xfrd_get_temp_buffer(void);
  * TSIG sign outgoing request. Call if acl has a key.
  */
 void xfrd_tsig_sign_request(buffer_type* packet, struct tsig_record* tsig,
-        acl_options_t* acl);
+        struct acl_options* acl);
 
 /* handle incoming soa information (NSD is running it, time acquired=guess).
    Pass soa=NULL,acquired=now if NSD has nothing loaded for the zone
    (i.e. zonefile was deleted). */
-void xfrd_handle_incoming_soa(xfrd_zone_t* zone, xfrd_soa_t* soa,
+void xfrd_handle_incoming_soa(xfrd_zone_type* zone, xfrd_soa_type* soa,
 	time_t acquired);
 /* handle a packet passed along ipc route. acl is the one that accepted
    the packet. The packet is the network blob received. acl_xfr is 
@@ -335,7 +336,7 @@ void xfrd_reopen_logfile(void);
 void xfrd_free_namedb(struct nsd* nsd);
 
 /* copy SOA info from rr to soa struct. */
-void xfrd_copy_soa(xfrd_soa_t* soa, rr_type* rr);
+void xfrd_copy_soa(xfrd_soa_type* soa, rr_type* rr);
 
 /* check for failed updates - it is assumed that now the reload has
    finished, and all zone SOAs have been sent. */
@@ -348,20 +349,20 @@ void xfrd_check_failed_updates(void);
 void xfrd_prepare_zones_for_reload(void);
 
 /* Bind a local interface to a socket descriptor, return 1 on success */
-int xfrd_bind_local_interface(int sockd, acl_options_t* ifc,
-	acl_options_t* acl, int tcp);
+int xfrd_bind_local_interface(int sockd, struct acl_options* ifc,
+	struct acl_options* acl, int tcp);
 
 /* process results and soa info from reload */
-void xfrd_process_task_result(xfrd_state_t* xfrd, struct udb_base* taskudb);
+void xfrd_process_task_result(xfrd_state_type* xfrd, struct udb_base* taskudb);
 
 /* set to reload right away (for user controlled reload events) */
-void xfrd_set_reload_now(xfrd_state_t* xfrd);
+void xfrd_set_reload_now(xfrd_state_type* xfrd);
 
 /* send expiry notifications to nsd */
-void xfrd_send_expire_notification(xfrd_zone_t* zone);
+void xfrd_send_expire_notification(xfrd_zone_type* zone);
 
 /* handle incoming notify (soa or NULL) and start zone xfr if necessary */
-void xfrd_handle_notify_and_start_xfr(xfrd_zone_t* zone, xfrd_soa_t* soa);
+void xfrd_handle_notify_and_start_xfr(xfrd_zone_type* zone, xfrd_soa_type* soa);
 
 /* handle zone timeout, event */
 void xfrd_handle_zone(int fd, short event, void* arg);

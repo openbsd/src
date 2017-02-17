@@ -88,7 +88,7 @@ xfrd_read_check_str(FILE* in, const char* str)
 
 static int
 xfrd_read_state_soa(FILE* in, const char* id_acquired,
-	const char* id, xfrd_soa_t* soa, time_t* soatime)
+	const char* id, xfrd_soa_type* soa, time_t* soatime)
 {
 	char *p;
 
@@ -188,13 +188,13 @@ xfrd_read_state(struct xfrd_state* xfrd)
 
 	for(i=0; i<numzones; i++) {
 		char *p;
-		xfrd_zone_t* zone;
+		xfrd_zone_type* zone;
 		const dname_type* dname;
 		uint32_t state, masnum, nextmas, round_num, timeout, backoff;
-		xfrd_soa_t soa_nsd_read, soa_disk_read, soa_notified_read;
+		xfrd_soa_type soa_nsd_read, soa_disk_read, soa_notified_read;
 		time_t soa_nsd_acquired_read,
 			soa_disk_acquired_read, soa_notified_acquired_read;
-		xfrd_soa_t incoming_soa;
+		xfrd_soa_type incoming_soa;
 		time_t incoming_acquired;
 
 		if(nsd.signal_hint_shutdown) {
@@ -237,7 +237,7 @@ xfrd_read_state(struct xfrd_state* xfrd)
 			return;
 		}
 
-		zone = (xfrd_zone_t*)rbtree_search(xfrd->zones, dname);
+		zone = (xfrd_zone_type*)rbtree_search(xfrd->zones, dname);
 		if(!zone) {
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: state file has info for not configured zone %s", p));
 			continue;
@@ -407,7 +407,7 @@ static void xfrd_write_dname(FILE* out, uint8_t* dname)
 
 static void
 xfrd_write_state_soa(FILE* out, const char* id,
-	xfrd_soa_t* soa, time_t soatime, const dname_type* ATTR_UNUSED(apex))
+	xfrd_soa_type* soa, time_t soatime, const dname_type* ATTR_UNUSED(apex))
 {
 	fprintf(out, "\t%s_acquired: %d", id, (int)soatime);
 	if(!soatime) {
@@ -440,7 +440,7 @@ xfrd_write_state_soa(FILE* out, const char* id,
 void
 xfrd_write_state(struct xfrd_state* xfrd)
 {
-	rbnode_t* p;
+	rbnode_type* p;
 	const char* statefile = xfrd->nsd->options->xfrdfile;
 	FILE *out;
 	time_t now = xfrd_time();
@@ -477,7 +477,7 @@ xfrd_write_state(struct xfrd_state* xfrd)
 	fprintf(out, "\n");
 	for(p = rbtree_first(xfrd->zones); p && p!=RBTREE_NULL; p=rbtree_next(p))
 	{
-		xfrd_zone_t* zone = (xfrd_zone_t*)p;
+		xfrd_zone_type* zone = (xfrd_zone_type*)p;
 		fprintf(out, "zone: \tname: %s\n", zone->apex_str);
 		fprintf(out, "\tstate: %d", (int)zone->state);
 		fprintf(out, " # %s", zone->state==xfrd_zone_ok?"OK":(

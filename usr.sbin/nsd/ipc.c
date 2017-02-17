@@ -24,11 +24,11 @@
 /* attempt to send NSD_STATS command to child fd */
 static void send_stat_to_child(struct main_ipc_handler_data* data, int fd);
 /* send reload request over the IPC channel */
-static void xfrd_send_reload_req(xfrd_state_t* xfrd);
+static void xfrd_send_reload_req(xfrd_state_type* xfrd);
 /* send quit request over the IPC channel */
-static void xfrd_send_quit_req(xfrd_state_t* xfrd);
+static void xfrd_send_quit_req(xfrd_state_type* xfrd);
 /* perform read part of handle ipc for xfrd */
-static void xfrd_handle_ipc_read(struct event* handler, xfrd_state_t* xfrd);
+static void xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd);
 
 static void
 ipc_child_quit(struct nsd* nsd)
@@ -254,17 +254,17 @@ void
 stats_add(struct nsdst* total, struct nsdst* s)
 {
 	unsigned i;
-	for(i=0; i<sizeof(total->qtype)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->qtype)/sizeof(stc_type); i++)
 		total->qtype[i] += s->qtype[i];
-	for(i=0; i<sizeof(total->qclass)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->qclass)/sizeof(stc_type); i++)
 		total->qclass[i] += s->qclass[i];
 	total->qudp += s->qudp;
 	total->qudp6 += s->qudp6;
 	total->ctcp += s->ctcp;
 	total->ctcp6 += s->ctcp6;
-	for(i=0; i<sizeof(total->rcode)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] += s->rcode[i];
-	for(i=0; i<sizeof(total->opcode)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
 		total->opcode[i] += s->opcode[i];
 	total->dropped += s->dropped;
 	total->truncated += s->truncated;
@@ -285,17 +285,17 @@ void
 stats_subtract(struct nsdst* total, struct nsdst* s)
 {
 	unsigned i;
-	for(i=0; i<sizeof(total->qtype)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->qtype)/sizeof(stc_type); i++)
 		total->qtype[i] -= s->qtype[i];
-	for(i=0; i<sizeof(total->qclass)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->qclass)/sizeof(stc_type); i++)
 		total->qclass[i] -= s->qclass[i];
 	total->qudp -= s->qudp;
 	total->qudp6 -= s->qudp6;
 	total->ctcp -= s->ctcp;
 	total->ctcp6 -= s->ctcp6;
-	for(i=0; i<sizeof(total->rcode)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->rcode)/sizeof(stc_type); i++)
 		total->rcode[i] -= s->rcode[i];
-	for(i=0; i<sizeof(total->opcode)/sizeof(stc_t); i++)
+	for(i=0; i<sizeof(total->opcode)/sizeof(stc_type); i++)
 		total->opcode[i] -= s->opcode[i];
 	total->dropped -= s->dropped;
 	total->truncated -= s->truncated;
@@ -553,7 +553,7 @@ parent_handle_reload_command(netio_type *ATTR_UNUSED(netio),
 }
 
 static void
-xfrd_send_reload_req(xfrd_state_t* xfrd)
+xfrd_send_reload_req(xfrd_state_type* xfrd)
 {
 	sig_atomic_t req = NSD_RELOAD;
 	uint64_t p = xfrd->last_task->data;
@@ -598,7 +598,7 @@ ipc_xfrd_set_listening(struct xfrd_state* xfrd, short mode)
 }
 
 static void
-xfrd_send_shutdown_req(xfrd_state_t* xfrd)
+xfrd_send_shutdown_req(xfrd_state_type* xfrd)
 {
 	sig_atomic_t cmd = NSD_SHUTDOWN;
 	xfrd->ipc_send_blocked = 1;
@@ -612,7 +612,7 @@ xfrd_send_shutdown_req(xfrd_state_t* xfrd)
 }
 
 static void
-xfrd_send_quit_req(xfrd_state_t* xfrd)
+xfrd_send_quit_req(xfrd_state_type* xfrd)
 {
 	sig_atomic_t cmd = NSD_QUIT;
 	xfrd->ipc_send_blocked = 1;
@@ -626,7 +626,7 @@ xfrd_send_quit_req(xfrd_state_t* xfrd)
 }
 
 static void
-xfrd_send_stats(xfrd_state_t* xfrd)
+xfrd_send_stats(xfrd_state_type* xfrd)
 {
 	sig_atomic_t cmd = NSD_STATS;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc send stats"));
@@ -640,7 +640,7 @@ xfrd_send_stats(xfrd_state_t* xfrd)
 void
 xfrd_handle_ipc(int ATTR_UNUSED(fd), short event, void* arg)
 {
-	xfrd_state_t* xfrd = (xfrd_state_t*)arg;
+	xfrd_state_type* xfrd = (xfrd_state_type*)arg;
         if ((event & EV_READ))
 	{
 		/* first attempt to read as a signal from main
@@ -674,7 +674,7 @@ xfrd_handle_ipc(int ATTR_UNUSED(fd), short event, void* arg)
 }
 
 static void
-xfrd_handle_ipc_read(struct event* handler, xfrd_state_t* xfrd)
+xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 {
         sig_atomic_t cmd;
         int len;

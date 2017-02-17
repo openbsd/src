@@ -1396,7 +1396,7 @@ parent_send_stats(struct nsd* nsd, int cmdfd)
 	}
 	for(i=0; i<nsd->child_count; i++)
 		if(!write_socket(cmdfd, &nsd->children[i].query_count,
-			sizeof(stc_t))) {
+			sizeof(stc_type))) {
 			log_msg(LOG_ERR, "could not write stats to reload");
 			return;
 		}
@@ -1406,7 +1406,7 @@ static void
 reload_do_stats(int cmdfd, struct nsd* nsd, udb_ptr* last)
 {
 	struct nsdst s;
-	stc_t* p;
+	stc_type* p;
 	size_t i;
 	if(block_read(nsd, cmdfd, &s, sizeof(s),
 		RELOAD_SYNC_TIMEOUT) != sizeof(s)) {
@@ -1415,11 +1415,12 @@ reload_do_stats(int cmdfd, struct nsd* nsd, udb_ptr* last)
 	}
 	s.db_disk = (nsd->db->udb?nsd->db->udb->base_size:0);
 	s.db_mem = region_get_mem(nsd->db->region);
-	p = (stc_t*)task_new_stat_info(nsd->task[nsd->mytask], last, &s,
+	p = (stc_type*)task_new_stat_info(nsd->task[nsd->mytask], last, &s,
 		nsd->child_count);
 	if(!p) return;
 	for(i=0; i<nsd->child_count; i++) {
-		if(block_read(nsd, cmdfd, p++, sizeof(stc_t), 1)!=sizeof(stc_t))
+		if(block_read(nsd, cmdfd, p++, sizeof(stc_type), 1)!=
+			sizeof(stc_type))
 			return;
 	}
 }

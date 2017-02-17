@@ -21,8 +21,8 @@ struct dname;
 struct acl_options;
 
 struct xfrd_tcp_pipeline;
-typedef struct xfrd_tcp xfrd_tcp_t;
-typedef struct xfrd_tcp_set xfrd_tcp_set_t;
+typedef struct xfrd_tcp xfrd_tcp_type;
+typedef struct xfrd_tcp_set xfrd_tcp_set_type;
 /*
  * A set of xfrd tcp connections.
  */
@@ -34,7 +34,7 @@ struct xfrd_tcp_set {
 	/* TCP timeout. */
 	int tcp_timeout;
 	/* rbtree with pipelines sorted by master */
-	rbtree_t* pipetree;
+	rbtree_type* pipetree;
 	/* double linked list of zones waiting for a TCP connection */
 	struct xfrd_zone *tcp_waiting_first, *tcp_waiting_last;
 };
@@ -78,7 +78,7 @@ struct xfrd_tcp {
  */
 struct xfrd_tcp_pipeline {
 	/* the rbtree node, sorted by IP and nr of unused queries */
-	rbnode_t node;
+	rbnode_type node;
 	/* destination IP address */
 #ifdef INET6
 	struct sockaddr_storage ip;
@@ -99,10 +99,10 @@ struct xfrd_tcp_pipeline {
 	struct event handler;
 
 	/* the tcp connection to use for reading */
-	xfrd_tcp_t* tcp_r;
+	struct xfrd_tcp* tcp_r;
 	/* the tcp connection to use for writing, if it is done successfully,
 	 * then the first zone from the sendlist can be removed. */
-	xfrd_tcp_t* tcp_w;
+	struct xfrd_tcp* tcp_w;
 	/* once a byte has been written, handshake complete */
 	int connection_established;
 
@@ -125,22 +125,23 @@ struct xfrd_tcp_pipeline {
 };
 
 /* create set of tcp connections */
-xfrd_tcp_set_t* xfrd_tcp_set_create(struct region* region);
+struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region);
 
 /* init tcp state */
-xfrd_tcp_t* xfrd_tcp_create(struct region* region, size_t bufsize);
+struct xfrd_tcp* xfrd_tcp_create(struct region* region, size_t bufsize);
 /* obtain tcp connection for a zone (or wait) */
-void xfrd_tcp_obtain(xfrd_tcp_set_t* set, struct xfrd_zone* zone);
+void xfrd_tcp_obtain(struct xfrd_tcp_set* set, struct xfrd_zone* zone);
 /* release tcp connection for a zone (starts waiting) */
-void xfrd_tcp_release(xfrd_tcp_set_t* set, struct xfrd_zone* zone);
+void xfrd_tcp_release(struct xfrd_tcp_set* set, struct xfrd_zone* zone);
 /* release tcp pipe entirely (does not stop the zones inside it) */
-void xfrd_tcp_pipe_release(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp,
-	int conn);
+void xfrd_tcp_pipe_release(struct xfrd_tcp_set* set,
+	struct xfrd_tcp_pipeline* tp, int conn);
 /* use tcp connection to start xfr */
 void xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp,
 	struct xfrd_zone* zone);
 /* initialize tcp_state for a zone. Opens the connection. true on success.*/
-int xfrd_tcp_open(xfrd_tcp_set_t* set, struct xfrd_tcp_pipeline* tp, struct xfrd_zone* zone);
+int xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
+	struct xfrd_zone* zone);
 /* read data from tcp, maybe partial read */
 void xfrd_tcp_read(struct xfrd_tcp_pipeline* tp);
 /* write data to tcp, maybe a partial write */
@@ -157,7 +158,7 @@ void xfrd_handle_tcp_pipe(int fd, short event, void* arg);
  * On first call, make sure total_bytes = 0, msglen=0, buffer_clear().
  * and the packet and fd need to be set.
  */
-int conn_read(xfrd_tcp_t* conn);
+int conn_read(struct xfrd_tcp* conn);
 /*
  * Write to a stream connection (size16)+packet.
  * return value is
@@ -165,7 +166,7 @@ int conn_read(xfrd_tcp_t* conn);
  * On first call, make sure total_bytes=0, msglen=buffer_limit(),
  * buffer_flipped(). packet and fd need to be set.
  */
-int conn_write(xfrd_tcp_t* conn);
+int conn_write(struct xfrd_tcp* conn);
 
 /* setup DNS packet for a query of this type */
 void xfrd_setup_packet(struct buffer* packet,

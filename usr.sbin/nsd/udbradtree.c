@@ -46,7 +46,8 @@ size_t size_of_lookup_ext(udb_ptr* lookup)
 }
 
 /** size needed for a lookup array like this */
-static size_t size_of_lookup_needed(uint16_t capacity, udb_radstrlen_t str_cap)
+static size_t size_of_lookup_needed(uint16_t capacity,
+	udb_radstrlen_type str_cap)
 {
 	return sizeof(struct udb_radarray_d)+ ((size_t)capacity)*(
 		sizeof(struct udb_radsel_d)+(size_t)str_cap);
@@ -61,7 +62,7 @@ static struct udb_radarray_d* lookup(udb_ptr* n)
 }
 
 /** get a length in the lookup array */
-static udb_radstrlen_t lookup_len(udb_ptr* n, unsigned i)
+static udb_radstrlen_type lookup_len(udb_ptr* n, unsigned i)
 {
 	return lookup(n)->array[i].len;
 }
@@ -158,9 +159,9 @@ void udb_radix_tree_delete(udb_base* udb, udb_ptr* rt)
  * @return false if no prefix found, not even the root "" prefix.
  */
 static int udb_radix_find_prefix_node(udb_base* udb, udb_ptr* rt, uint8_t* k,
-	udb_radstrlen_t len, udb_ptr* result, udb_radstrlen_t* respos)
+	udb_radstrlen_type len, udb_ptr* result, udb_radstrlen_type* respos)
 {
-	udb_radstrlen_t pos = 0;
+	udb_radstrlen_type pos = 0;
 	uint8_t byte;
 	udb_ptr n;
 	udb_ptr_new(&n, udb, &RADTREE(rt)->root);
@@ -207,14 +208,15 @@ static int udb_radix_find_prefix_node(udb_base* udb, udb_ptr* rt, uint8_t* k,
 }
 
 /** grow the radnode stringcapacity, copy existing elements */
-static int udb_radnode_str_grow(udb_base* udb, udb_ptr* n, udb_radstrlen_t want)
+static int udb_radnode_str_grow(udb_base* udb, udb_ptr* n,
+	udb_radstrlen_type want)
 {
 	unsigned ns = ((unsigned)lookup(n)->str_cap)*2;
 	unsigned i;
 	udb_ptr a;
 	if(want > ns)
 		ns = want;
-	if(ns > 65535) ns = 65535; /* MAX of udb_radstrlen_t range */
+	if(ns > 65535) ns = 65535; /* MAX of udb_radstrlen_type range */
 	/* if this fails, the tree is still usable */
 	if(!udb_ptr_alloc_space(&a, udb, udb_chunk_type_radarray,
 		size_of_lookup_needed(lookup(n)->capacity, ns)))
@@ -280,7 +282,7 @@ static int udb_radnode_array_create(udb_base* udb, udb_ptr* n)
 		/* create array */
 		udb_ptr a;
 		uint16_t cap = 0;
-		udb_radstrlen_t len = 0;
+		udb_radstrlen_type len = 0;
 		if(!udb_ptr_alloc_space(&a, udb, udb_chunk_type_radarray,
 			size_of_lookup_needed(cap, len)))
 			return 0;
@@ -297,7 +299,7 @@ static int udb_radnode_array_create(udb_base* udb, udb_ptr* n)
 
 /** make space in radnode for another byte, or longer strings */
 static int udb_radnode_array_space(udb_base* udb, udb_ptr* n, uint8_t byte,
-	udb_radstrlen_t len)
+	udb_radstrlen_type len)
 {
 	/* is there an array? */
 	if(RADNODE(n)->lookup.data == 0) {
@@ -389,7 +391,8 @@ static int udb_radnode_array_space(udb_base* udb, udb_ptr* n, uint8_t byte,
 }
 
 /** make space for string size */
-static int udb_radnode_str_space(udb_base* udb, udb_ptr* n, udb_radstrlen_t len)
+static int udb_radnode_str_space(udb_base* udb, udb_ptr* n,
+	udb_radstrlen_type len)
 {
 	if(RADNODE(n)->lookup.data == 0) {
 		return udb_radnode_array_space(udb, n, 0, len);
@@ -404,9 +407,9 @@ static int udb_radnode_str_space(udb_base* udb, udb_ptr* n, udb_radstrlen_t len)
 
 /** copy remainder from prefixes for a split:
  * plen: len prefix, l: longer bstring, llen: length of l. */
-static void udb_radsel_prefix_remainder(udb_radstrlen_t plen, 
-	uint8_t* l, udb_radstrlen_t llen,
-	uint8_t* s, udb_radstrlen_t* slen)
+static void udb_radsel_prefix_remainder(udb_radstrlen_type plen, 
+	uint8_t* l, udb_radstrlen_type llen,
+	uint8_t* s, udb_radstrlen_type* slen)
 {
 	*slen = llen - plen;
 	/* assert(*slen <= lookup(n)->str_cap); */
@@ -414,34 +417,34 @@ static void udb_radsel_prefix_remainder(udb_radstrlen_t plen,
 }
 
 /** create a prefix in the array strs */
-static void udb_radsel_str_create(uint8_t* s, udb_radstrlen_t* slen,
-	uint8_t* k, udb_radstrlen_t pos, udb_radstrlen_t len)
+static void udb_radsel_str_create(uint8_t* s, udb_radstrlen_type* slen,
+	uint8_t* k, udb_radstrlen_type pos, udb_radstrlen_type len)
 {
 	*slen = len-pos;
 	/* assert(*slen <= lookup(n)->str_cap); */
 	memmove(s, k+pos, len-pos);
 }
 
-static udb_radstrlen_t
-udb_bstr_common(uint8_t* x, udb_radstrlen_t xlen,
-	uint8_t* y, udb_radstrlen_t ylen)
+static udb_radstrlen_type
+udb_bstr_common(uint8_t* x, udb_radstrlen_type xlen,
+	uint8_t* y, udb_radstrlen_type ylen)
 {
-	assert(sizeof(radstrlen_t) == sizeof(udb_radstrlen_t));
+	assert(sizeof(radstrlen_type) == sizeof(udb_radstrlen_type));
 	return bstr_common_ext(x, xlen, y, ylen);
 }
 
 static int
-udb_bstr_is_prefix(uint8_t* p, udb_radstrlen_t plen,
-	uint8_t* x, udb_radstrlen_t xlen)
+udb_bstr_is_prefix(uint8_t* p, udb_radstrlen_type plen,
+	uint8_t* x, udb_radstrlen_type xlen)
 {
-	assert(sizeof(radstrlen_t) == sizeof(udb_radstrlen_t));
+	assert(sizeof(radstrlen_type) == sizeof(udb_radstrlen_type));
 	return bstr_is_prefix_ext(p, plen, x, xlen);
 }
 
 /** grow array space for byte N after a string, (but if string shorter) */
 static int
 udb_radnode_array_space_strremain(udb_base* udb, udb_ptr* n,
-	uint8_t* str, udb_radstrlen_t len, udb_radstrlen_t pos)
+	uint8_t* str, udb_radstrlen_type len, udb_radstrlen_type pos)
 {
 	assert(pos < len);
 	/* shift by one char because it goes in lookup array */
@@ -461,13 +464,13 @@ udb_radnode_array_space_strremain(udb_base* udb, udb_ptr* n,
  * @return false on alloc failure, no changes made.
  */
 static int udb_radsel_split(udb_base* udb, udb_ptr* n, uint8_t idx, uint8_t* k,
-	udb_radstrlen_t pos, udb_radstrlen_t len, udb_ptr* add)
+	udb_radstrlen_type pos, udb_radstrlen_type len, udb_ptr* add)
 {
 	uint8_t* addstr = k+pos;
-	udb_radstrlen_t addlen = len-pos;
+	udb_radstrlen_type addlen = len-pos;
 	if(udb_bstr_is_prefix(addstr, addlen, lookup_string(n, idx),
 		lookup_len(n, idx))) {
-		udb_radstrlen_t split_len = 0;
+		udb_radstrlen_type split_len = 0;
 		/* 'add' is a prefix of r.node */
 		/* also for empty addstr */
 		/* set it up so that the 'add' node has r.node as child */
@@ -511,7 +514,7 @@ static int udb_radsel_split(udb_base* udb, udb_ptr* n, uint8_t idx, uint8_t* k,
 		}
 	} else if(udb_bstr_is_prefix(lookup_string(n, idx), lookup_len(n, idx),
 		addstr, addlen)) {
-		udb_radstrlen_t split_len = 0;
+		udb_radstrlen_type split_len = 0;
 		udb_ptr rnode;
 		/* r.node is a prefix of 'add' */
 		/* set it up so that the 'r.node' has 'add' as child */
@@ -556,7 +559,7 @@ static int udb_radsel_split(udb_base* udb, udb_ptr* n, uint8_t idx, uint8_t* k,
 		 * We do this so that r.node stays the same pointer for its
 		 * key name. */
 		udb_ptr com, rnode;
-		udb_radstrlen_t common_len = udb_bstr_common(
+		udb_radstrlen_type common_len = udb_bstr_common(
 			lookup_string(n, idx), lookup_len(n, idx),
 			addstr, addlen);
 		assert(common_len < lookup_len(n, idx));
@@ -633,11 +636,11 @@ static int udb_radsel_split(udb_base* udb, udb_ptr* n, uint8_t idx, uint8_t* k,
 
 uint64_t* result_data = NULL;
 udb_void udb_radix_insert(udb_base* udb, udb_ptr* rt, uint8_t* k,
-        udb_radstrlen_t len, udb_ptr* elem, udb_ptr* result)
+        udb_radstrlen_type len, udb_ptr* elem, udb_ptr* result)
 {
 	udb_void ret;
 	udb_ptr add, n; /* type udb_radnode_d */
-	udb_radstrlen_t pos = 0;
+	udb_radstrlen_type pos = 0;
 	/* create new element to add */
 	if(!udb_ptr_alloc_space(&add, udb, udb_chunk_type_radnode,
 		sizeof(struct udb_radnode_d))) {
@@ -778,7 +781,7 @@ udb_radnode_cleanup_onechild(udb_base* udb, udb_ptr* n)
 {
 	udb_ptr par, child;
 	uint8_t pidx = RADNODE(n)->pidx;
-	radstrlen_t joinlen;
+	radstrlen_type joinlen;
 	udb_ptr_new(&par, udb, &RADNODE(n)->parent);
 	udb_ptr_new(&child, udb, &lookup(n)->array[0].node);
 
@@ -819,7 +822,7 @@ udb_radnode_cleanup_onechild(udb_base* udb, udb_ptr* n)
 /** reduce the size of radarray, does a malloc */
 static int
 udb_radarray_reduce(udb_base* udb, udb_ptr* n, uint16_t cap,
-	udb_radstrlen_t strcap)
+	udb_radstrlen_type strcap)
 {
 	udb_ptr a;
 	unsigned i;
@@ -849,10 +852,10 @@ udb_radarray_reduce(udb_base* udb, udb_ptr* n, uint16_t cap,
 }
 
 /** find the max stringlength in the array */
-static udb_radstrlen_t udb_radarray_max_len(udb_ptr* n)
+static udb_radstrlen_type udb_radarray_max_len(udb_ptr* n)
 {
 	unsigned i;
-	udb_radstrlen_t maxlen = 0;
+	udb_radstrlen_type maxlen = 0;
 	for(i=0; i<lookup(n)->len; i++) {
 		if(lookup(n)->array[i].node.data &&
 			lookup(n)->array[i].len > maxlen)
@@ -865,7 +868,7 @@ static udb_radstrlen_t udb_radarray_max_len(udb_ptr* n)
 static int
 udb_radarray_reduce_if_needed(udb_base* udb, udb_ptr* n)
 {
-	udb_radstrlen_t maxlen = udb_radarray_max_len(n);
+	udb_radstrlen_type maxlen = udb_radarray_max_len(n);
 	if((lookup(n)->len <= lookup(n)->capacity/2 || lookup(n)->len == 0
 		|| maxlen <= lookup(n)->str_cap/2 || maxlen == 0) &&
 		(lookup(n)->len != lookup(n)->capacity ||
@@ -1053,12 +1056,12 @@ void udb_radix_delete(udb_base* udb, udb_ptr* rt, udb_ptr* n)
 	}
 }
 
-udb_void udb_radix_search(udb_ptr* rt, uint8_t* k, udb_radstrlen_t len)
+udb_void udb_radix_search(udb_ptr* rt, uint8_t* k, udb_radstrlen_type len)
 {
 	/* since we only perform reads, and no udb_mallocs or udb_frees
 	 * we know the pointers stay the same */
 	struct udb_radnode_d* n;
-	udb_radstrlen_t pos = 0;
+	udb_radstrlen_type pos = 0;
 	uint8_t byte;
 	void* base = *rt->base;
 
@@ -1206,10 +1209,10 @@ static int udb_ret_self_or_prev(udb_base* udb, udb_ptr* n, udb_ptr* result)
 
 
 int udb_radix_find_less_equal(udb_base* udb, udb_ptr* rt, uint8_t* k,
-        udb_radstrlen_t len, udb_ptr* result)
+        udb_radstrlen_type len, udb_ptr* result)
 {
 	udb_ptr n;
-	udb_radstrlen_t pos = 0;
+	udb_radstrlen_type pos = 0;
 	uint8_t byte;
 	int r;
 	/* set result to NULL */
@@ -1411,7 +1414,7 @@ udb_void udb_radname_insert(udb_base* udb, udb_ptr* rt, const uint8_t* dname,
 	size_t dlen, udb_ptr* elem, udb_ptr* result)
 {
 	uint8_t k[300];
-	radstrlen_t klen = (radstrlen_t)sizeof(k);
+	radstrlen_type klen = (radstrlen_type)sizeof(k);
 	radname_d2r(k, &klen, dname, dlen);
 	return udb_radix_insert(udb, rt, k, klen, elem, result);
 }
@@ -1421,7 +1424,7 @@ int udb_radname_search(udb_base* udb, udb_ptr* rt, const uint8_t* dname,
 {
 	udb_void r;
 	uint8_t k[300];
-	radstrlen_t klen = (radstrlen_t)sizeof(k);
+	radstrlen_type klen = (radstrlen_type)sizeof(k);
 	radname_d2r(k, &klen, dname, dlen);
 	r = udb_radix_search(rt, k, klen);
 	udb_ptr_init(result, udb);

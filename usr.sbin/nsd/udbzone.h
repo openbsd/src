@@ -46,7 +46,7 @@ struct zone_d {
 	/** number of RRs in the zone */
 	uint64_t rr_count;
 	/** the length of the zone name */
-	udb_radstrlen_t namelen;
+	udb_radstrlen_type namelen;
 	/** if the zone is expired */
 	uint8_t expired;
 	/** if the zone has been changed by AXFR */
@@ -62,7 +62,7 @@ struct domain_d {
 	/** the list of rrsets for this name, single linked */
 	udb_rel_ptr rrsets;
 	/** length of the domain name */
-	udb_radstrlen_t namelen;
+	udb_radstrlen_type namelen;
 	/** the domain (wire uncompressed) name in DNS format */
 	uint8_t name[0];
 };

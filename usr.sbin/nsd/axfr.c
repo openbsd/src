@@ -164,12 +164,12 @@ return_answer:
 query_state_type
 answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 {
-	acl_options_t *acl = NULL;
+	struct acl_options *acl = NULL;
 	/* Is it AXFR? */
 	switch (q->qtype) {
 	case TYPE_AXFR:
 		if (q->tcp) {
-			zone_options_t* zone_opt;
+			struct zone_options* zone_opt;
 			zone_opt = zone_options_find(nsd->options, q->qname);
 			if(!zone_opt ||
 			   acl_check_incoming(zone_opt->pattern->provide_xfr, q, &acl)==-1)

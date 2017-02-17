@@ -164,7 +164,7 @@ int domain_is_prehash(domain_table_type* table, domain_type* domain)
 
 /** remove domain node from NSEC3 tree in hash space */
 void
-zone_del_domain_in_hash_tree(rbtree_t* tree, rbnode_t* node)
+zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node)
 {
 	if(!node->key)
 		return;
@@ -280,9 +280,9 @@ domain_table_deldomain(namedb_type* db, domain_type* domain)
 
 /** clear hash tree */
 void
-hash_tree_clear(rbtree_t* tree)
+hash_tree_clear(rbtree_type* tree)
 {
-	rbnode_t* n;
+	rbnode_type* n;
 	if(!tree) return;
 
 	/* note that elements are no longer in the tree */
@@ -293,19 +293,19 @@ hash_tree_clear(rbtree_t* tree)
 	tree->root = RBTREE_NULL;
 }
 
-void hash_tree_delete(region_type* region, rbtree_t* tree)
+void hash_tree_delete(region_type* region, rbtree_type* tree)
 {
-	region_recycle(region, tree, sizeof(rbtree_t));
+	region_recycle(region, tree, sizeof(rbtree_type));
 }
 
 /** add domain nsec3 node to hashedspace tree */
-void zone_add_domain_in_hash_tree(region_type* region, rbtree_t** tree,
+void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*),
-	domain_type* domain, rbnode_t* node)
+	domain_type* domain, rbnode_type* node)
 {
 	if(!*tree)
 		*tree = rbtree_create(region, cmpf);
-	memset(node, 0, sizeof(rbnode_t));
+	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
 	rbtree_insert(*tree, node);
 }
@@ -351,7 +351,7 @@ domain_table_create(region_type* region)
 #else
 	result->names_to_domains = rbtree_create(
 		region, (int (*)(const void *, const void *)) dname_compare);
-	rbtree_insert(result->names_to_domains, (rbnode_t *) root);
+	rbtree_insert(result->names_to_domains, (rbnode_type *) root);
 #endif
 
 	result->root = root;
@@ -382,7 +382,7 @@ domain_table_search(domain_table_type *table,
 		dname->name_size, (struct radnode**)closest_match);
 	*closest_match = (domain_type*)((*(struct radnode**)closest_match)->elem);
 #else
-	exact = rbtree_find_less_equal(table->names_to_domains, dname, (rbnode_t **) closest_match);
+	exact = rbtree_find_less_equal(table->names_to_domains, dname, (rbnode_type **) closest_match);
 #endif
 	assert(*closest_match);
 
@@ -445,7 +445,7 @@ domain_table_insert(domain_table_type* table,
 				dname_name(result->dname),
 				result->dname->name_size, result);
 #else
-			rbtree_insert(table->names_to_domains, (rbnode_t *) result);
+			rbtree_insert(table->names_to_domains, (rbnode_type *) result);
 #endif
 
 			/*

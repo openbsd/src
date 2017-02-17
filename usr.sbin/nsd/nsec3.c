@@ -346,7 +346,7 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 {
 	if(domain->nsec3 && domain->nsec3->nsec3_node.key) {
 		/* see if there is a prev */
-		rbnode_t* r = rbtree_previous(&domain->nsec3->nsec3_node);
+		rbnode_type* r = rbtree_previous(&domain->nsec3->nsec3_node);
 		if(r != RBTREE_NULL) {
 			/* found a previous, which is not the root-node in
 			 * the prehash tree (and thus points to the tree) */
@@ -464,7 +464,7 @@ int
 nsec3_find_cover(zone_type* zone, uint8_t* hash, size_t hashlen,
 	domain_type** result)
 {
-	rbnode_t* r = NULL;
+	rbnode_type* r = NULL;
 	int exact;
 	domain_type d;
 	uint8_t n[48];
@@ -656,7 +656,7 @@ init_lookup_key_ds_tree(domain_type* d, uint8_t* hash)
 
 /* find first in the tree and true if the first to process it */
 static int
-process_first(rbtree_t* tree, uint8_t* hash, rbnode_t** p,
+process_first(rbtree_type* tree, uint8_t* hash, rbnode_type** p,
 	void (*init)(domain_type*, uint8_t*))
 {
 	domain_type d;
@@ -682,7 +682,7 @@ process_first(rbtree_t* tree, uint8_t* hash, rbnode_t** p,
 
 /* set end pointer if possible */
 static void
-process_end(rbtree_t* tree, uint8_t* hash, rbnode_t** p,
+process_end(rbtree_type* tree, uint8_t* hash, rbnode_type** p,
 	void (*init)(domain_type*, uint8_t*))
 {
 	domain_type d;
@@ -716,8 +716,8 @@ process_range(zone_type* zone, domain_type* start,
 {
 	/* start NULL means from first in tree */
 	/* end NULL means to last in tree */
-	rbnode_t *p = RBTREE_NULL, *pwc = RBTREE_NULL, *pds = RBTREE_NULL;
-	rbnode_t *p_end = RBTREE_NULL, *pwc_end = RBTREE_NULL, *pds_end = RBTREE_NULL;
+	rbnode_type *p = RBTREE_NULL, *pwc = RBTREE_NULL, *pds = RBTREE_NULL;
+	rbnode_type *p_end = RBTREE_NULL, *pwc_end = RBTREE_NULL, *pds_end = RBTREE_NULL;
 	/* because the nodes are on the prehashlist, the domain->nsec3 is
 	 * already allocated, and we need not allocate it here */
 	/* set start */
@@ -783,7 +783,7 @@ process_prehash_domain(domain_type* domain, zone_type* zone)
 	 * and set precompile pointers to point to this domain (or is_exact),
 	 * the first domain can be is_exact. If it is the last NSEC3, also
 	 * process the initial part (before the first) */
-	rbnode_t* nx;
+	rbnode_type* nx;
 
 	/* this domain is part of the prehash list and therefore the
 	 * domain->nsec3 is allocated and need not be allocated here */
@@ -855,8 +855,8 @@ nsec3_add_nonexist_proof(struct query* query, struct answer* answer,
 	{
 		/* exact match, hash collision */
 		/* the hashed name of the query corresponds to an existing name. */
-		log_msg(LOG_ERR, "nsec3 hash collision for name=%s",
-			dname_to_string(to_prove, NULL));
+		VERBOSITY(3, (LOG_ERR, "nsec3 hash collision for name=%s",
+			dname_to_string(to_prove, NULL)));
 		RCODE_SET(query->packet, RCODE_SERVFAIL);
 		return;
 	}

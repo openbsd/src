@@ -36,8 +36,8 @@ struct xfrd_state;
 /**
  * This struct keeps track of outbound notifies for a zone.
  */
-struct notify_zone_t {
-	rbnode_t node;
+struct notify_zone {
+	rbnode_type node;
 	/* name of the zone */
 	const dname_type* apex;
 	const char* apex_str;
@@ -59,30 +59,30 @@ struct notify_zone_t {
 	/* is this notify waiting for a socket? */
 	uint8_t is_waiting;
 	/* the double linked waiting list for the udp sockets */
-	struct notify_zone_t* waiting_next;
-	struct notify_zone_t* waiting_prev;
+	struct notify_zone* waiting_next;
+	struct notify_zone* waiting_prev;
 };
 
 /* initialise outgoing notifies */
-void init_notify_send(rbtree_t* tree, region_type* region,
+void init_notify_send(rbtree_type* tree, region_type* region,
 	struct zone_options* options);
 /* delete notify zone */
 void xfrd_del_notify(struct xfrd_state* xfrd, const dname_type* dname);
 
 /* send notifications to all in the notify list */
-void xfrd_send_notify(rbtree_t* tree, const struct dname* apex,
+void xfrd_send_notify(rbtree_type* tree, const struct dname* apex,
 	struct xfrd_soa* new_soa);
 /* start notifications, if not started already (does not clobber SOA) */
-void xfrd_notify_start(struct notify_zone_t* zone, struct xfrd_state* xfrd);
+void xfrd_notify_start(struct notify_zone* zone, struct xfrd_state* xfrd);
 
 /* handle soa update notify for a master zone. newsoa can be NULL.
    Makes sure that the soa (serial) has changed. Or drops notify. */
-void notify_handle_master_zone_soainfo(rbtree_t* tree,
+void notify_handle_master_zone_soainfo(rbtree_type* tree,
 	const dname_type* apex, struct xfrd_soa* new_soa);
 
 /* close fds in use for notification sending */
-void close_notify_fds(rbtree_t* tree);
+void close_notify_fds(rbtree_type* tree);
 /* stop send of notify */
-void notify_disable(struct notify_zone_t* zone);
+void notify_disable(struct notify_zone* zone);
 
 #endif /* XFRD_NOTIFY_H */

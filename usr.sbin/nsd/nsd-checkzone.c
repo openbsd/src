@@ -55,7 +55,7 @@ static void
 check_zone(struct nsd* nsd, const char* name, const char* fname)
 {
 	const dname_type* dname;
-	zone_options_t* zo;
+	zone_options_type* zo;
 	zone_type* zone;
 	unsigned errors;
 

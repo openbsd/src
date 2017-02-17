@@ -73,7 +73,7 @@ struct daemon_remote;
 
 #ifdef BIND8_STATS
 /* Counter for statistics */
-typedef	unsigned long stc_t;
+typedef	unsigned long stc_type;
 
 #define	LASTELEM(arr)	(sizeof(arr) / sizeof(arr[0]) - 1)
 
@@ -146,7 +146,7 @@ struct nsd_child
 	struct netio_handler* handler;
 
 #ifdef	BIND8_STATS
-	stc_t query_count;
+	stc_type query_count;
 #endif
 };
 
@@ -233,14 +233,14 @@ struct	nsd
 	struct nsdst {
 		time_t	boot;
 		int	period;		/* Produce statistics dump every st_period seconds */
-		stc_t	qtype[257];	/* Counters per qtype */
-		stc_t	qclass[4];	/* Class IN or Class CH or other */
-		stc_t	qudp, qudp6;	/* Number of queries udp and udp6 */
-		stc_t	ctcp, ctcp6;	/* Number of tcp and tcp6 connections */
-		stc_t	rcode[17], opcode[6]; /* Rcodes & opcodes */
+		stc_type qtype[257];	/* Counters per qtype */
+		stc_type qclass[4];	/* Class IN or Class CH or other */
+		stc_type qudp, qudp6;	/* Number of queries udp and udp6 */
+		stc_type ctcp, ctcp6;	/* Number of tcp and tcp6 connections */
+		stc_type rcode[17], opcode[6]; /* Rcodes & opcodes */
 		/* Dropped, truncated, queries for nonconfigured zone, tx errors */
-		stc_t	dropped, truncated, wrongzone, txerr, rxerr;
-		stc_t 	edns, ednserr, raxfr, nona;
+		stc_type dropped, truncated, wrongzone, txerr, rxerr;
+		stc_type edns, ednserr, raxfr, nona;
 		uint64_t db_disk, db_mem;
 	} st;
 	/* per zone stats, each an array per zone-stat-idx, stats per zone is

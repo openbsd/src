@@ -411,10 +411,10 @@ static query_state_type
 answer_notify(struct nsd* nsd, struct query *query)
 {
 	int acl_num, acl_num_xfr;
-	acl_options_t *why;
+	struct acl_options *why;
 	nsd_rc_type rc;
 
-	zone_options_t* zone_opt;
+	struct zone_options* zone_opt;
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "got notify %s processing acl",
 		dname_to_string(query->qname, NULL)));
 
@@ -664,7 +664,7 @@ add_additional_rrsets(struct query *query, answer_type *answer,
 			temp->rnode = NULL;
 			temp->dname = additional->dname;
 #else
-			memcpy(&temp->node, &additional->node, sizeof(rbnode_t));
+			memcpy(&temp->node, &additional->node, sizeof(rbnode_type));
 			temp->node.parent = NULL;
 #endif
 			temp->number = additional->number;
@@ -1113,7 +1113,7 @@ answer_authoritative(struct nsd   *nsd,
 		match->rnode = NULL;
 		match->dname = wildcard_child->dname;
 #else
-		memcpy(&match->node, &wildcard_child->node, sizeof(rbnode_t));
+		memcpy(&match->node, &wildcard_child->node, sizeof(rbnode_type));
 		match->node.parent = NULL;
 #endif
 		match->parent = closest_encloser;

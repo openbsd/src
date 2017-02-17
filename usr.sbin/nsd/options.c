@@ -18,7 +18,7 @@
 
 #include "configyyrename.h"
 #include "configparser.h"
-config_parser_state_t* cfg_parser = 0;
+config_parser_state_type* cfg_parser = 0;
 extern FILE* c_in, *c_out;
 int c_parse(void);
 int c_lex(void);
@@ -35,11 +35,12 @@ rbtree_strcmp(const void* p1, const void* p2)
 	return strcmp((const char*)p1, (const char*)p2);
 }
 
-nsd_options_t*
+struct nsd_options*
 nsd_options_create(region_type* region)
 {
-	nsd_options_t* opt;
-	opt = (nsd_options_t*)region_alloc(region, sizeof(nsd_options_t));
+	struct nsd_options* opt;
+	opt = (struct nsd_options*)region_alloc(region, sizeof(
+		struct nsd_options));
 	opt->region = region;
 	opt->zone_options = rbtree_create(region,
 		(int (*)(const void *, const void *)) dname_compare);
@@ -110,40 +111,41 @@ nsd_options_create(region_type* region)
 }
 
 int
-nsd_options_insert_zone(nsd_options_t* opt, zone_options_t* zone)
+nsd_options_insert_zone(struct nsd_options* opt, struct zone_options* zone)
 {
 	/* create dname for lookup */
 	const dname_type* dname = dname_parse(opt->region, zone->name);
 	if(!dname)
 		return 0;
 	zone->node.key = dname;
-	if(!rbtree_insert(opt->zone_options, (rbnode_t*)zone))
+	if(!rbtree_insert(opt->zone_options, (rbnode_type*)zone))
 		return 0;
 	return 1;
 }
 
 int
-nsd_options_insert_pattern(nsd_options_t* opt, pattern_options_t* pat)
+nsd_options_insert_pattern(struct nsd_options* opt,
+	struct pattern_options* pat)
 {
 	if(!pat->pname)
 		return 0;
 	pat->node.key = pat->pname;
-	if(!rbtree_insert(opt->patterns, (rbnode_t*)pat))
+	if(!rbtree_insert(opt->patterns, (rbnode_type*)pat))
 		return 0;
 	return 1;
 }
 
 int
-parse_options_file(nsd_options_t* opt, const char* file,
+parse_options_file(struct nsd_options* opt, const char* file,
 	void (*err)(void*,const char*), void* err_arg)
 {
 	FILE *in = 0;
-	pattern_options_t* pat;
-	acl_options_t* acl;
+	struct pattern_options* pat;
+	struct acl_options* acl;
 
 	if(!cfg_parser) {
-		cfg_parser = (config_parser_state_t*)region_alloc(
-			opt->region, sizeof(config_parser_state_t));
+		cfg_parser = (config_parser_state_type*)region_alloc(
+			opt->region, sizeof(config_parser_state_type));
 		cfg_parser->chroot = 0;
 	}
 	cfg_parser->err = err;
@@ -212,7 +214,7 @@ parse_options_file(nsd_options_t* opt, const char* file,
 			c_error("last key has no secret blob");
 		key_options_insert(opt, cfg_parser->current_key);
 	}
-	RBTREE_FOR(pat, pattern_options_t*, opt->patterns)
+	RBTREE_FOR(pat, struct pattern_options*, opt->patterns)
 	{
 		/* lookup keys for acls */
 		for(acl=pat->allow_notify; acl; acl=acl->next)
@@ -271,9 +273,9 @@ parse_options_file(nsd_options_t* opt, const char* file,
 	return 1;
 }
 
-void options_zonestatnames_create(nsd_options_t* opt)
+void options_zonestatnames_create(struct nsd_options* opt)
 {
-	zone_options_t* zopt;
+	struct zone_options* zopt;
 	/* allocate "" as zonestat 0, for zones without a zonestat */
 	if(!rbtree_search(opt->zonestatnames, "")) {
 		struct zonestatname* n;
@@ -285,9 +287,9 @@ void options_zonestatnames_create(nsd_options_t* opt)
 			exit(1);
 		}
 		n->id = (unsigned)(opt->zonestatnames->count);
-		rbtree_insert(opt->zonestatnames, (rbnode_t*)n);
+		rbtree_insert(opt->zonestatnames, (rbnode_type*)n);
 	}
-	RBTREE_FOR(zopt, zone_options_t*, opt->zone_options) {
+	RBTREE_FOR(zopt, struct zone_options*, opt->zone_options) {
 		/* insert into tree, so that when read in later id exists */
 		(void)getzonestatid(opt, zopt);
 	}
@@ -304,7 +306,7 @@ comp_zonebucket(const void* a, const void* b)
 
 /* insert free entry into zonelist free buckets */
 static void
-zone_list_free_insert(nsd_options_t* opt, int linesize, off_t off)
+zone_list_free_insert(struct nsd_options* opt, int linesize, off_t off)
 {
 	struct zonelist_free* e;
 	struct zonelist_bucket* b = (struct zonelist_bucket*)rbtree_search(
@@ -323,12 +325,12 @@ zone_list_free_insert(nsd_options_t* opt, int linesize, off_t off)
 	opt->zonefree_number++;
 }
 
-zone_options_t*
-zone_list_zone_insert(nsd_options_t* opt, const char* nm, const char* patnm,
-	int linesize, off_t off)
+struct zone_options*
+zone_list_zone_insert(struct nsd_options* opt, const char* nm,
+	const char* patnm, int linesize, off_t off)
 {
-	pattern_options_t* pat = pattern_options_find(opt, patnm);
-	zone_options_t* zone;
+	struct pattern_options* pat = pattern_options_find(opt, patnm);
+	struct zone_options* zone;
 	if(!pat) {
 		log_msg(LOG_ERR, "pattern does not exist for zone %s "
 			"pattern %s", nm, patnm);
@@ -351,7 +353,7 @@ zone_list_zone_insert(nsd_options_t* opt, const char* nm, const char* patnm,
 }
 
 int
-parse_zone_list_file(nsd_options_t* opt)
+parse_zone_list_file(struct nsd_options* opt)
 {
 	/* zonelist looks like this:
 	# name pattern
@@ -432,7 +434,7 @@ parse_zone_list_file(nsd_options_t* opt)
 }
 
 void
-zone_options_delete(nsd_options_t* opt, zone_options_t* zone)
+zone_options_delete(struct nsd_options* opt, struct zone_options* zone)
 {
 	rbtree_delete(opt->zone_options, zone->node.key);
 	region_recycle(opt->region, (void*)zone->node.key, dname_total_size(
@@ -441,15 +443,15 @@ zone_options_delete(nsd_options_t* opt, zone_options_t* zone)
 }
 
 /* add a new zone to the zonelist */
-zone_options_t*
-zone_list_add(nsd_options_t* opt, const char* zname, const char* pname)
+struct zone_options*
+zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 {
 	int r;
 	struct zonelist_free* e;
 	struct zonelist_bucket* b;
 	int linesize = 6 + strlen(zname) + strlen(pname);
 	/* create zone entry */
-	zone_options_t* zone = zone_list_zone_insert(opt, zname, pname,
+	struct zone_options* zone = zone_list_zone_insert(opt, zname, pname,
 		linesize, 0);
 	if(!zone)
 		return NULL;
@@ -564,7 +566,7 @@ zone_list_add(nsd_options_t* opt, const char* zname, const char* pname)
 
 /* remove a zone on the zonelist */
 void
-zone_list_del(nsd_options_t* opt, zone_options_t* zone)
+zone_list_del(struct nsd_options* opt, struct zone_options* zone)
 {
 	/* put its space onto the free entry */
 	if(fseeko(opt->zonelist, zone->off, SEEK_SET) == -1) {
@@ -574,7 +576,7 @@ zone_list_del(nsd_options_t* opt, zone_options_t* zone)
 	fprintf(opt->zonelist, "del");
 	zone_list_free_insert(opt, zone->linesize, zone->off);
 
-	/* remove zone_options_t */
+	/* remove zone_options */
 	zone_options_delete(opt, zone);
 
 	/* see if we need to compact: it is going to halve the zonelist */
@@ -591,7 +593,7 @@ static void
 delbucket(region_type* region, struct zonelist_bucket* b)
 {
 	struct zonelist_free* e, *f;
-	if(!b || (rbnode_t*)b==RBTREE_NULL)
+	if(!b || (rbnode_type*)b==RBTREE_NULL)
 		return;
 	delbucket(region, (struct zonelist_bucket*)b->node.left);
 	delbucket(region, (struct zonelist_bucket*)b->node.right);
@@ -606,11 +608,11 @@ delbucket(region_type* region, struct zonelist_bucket* b)
 
 /* compact zonelist file */
 void
-zone_list_compact(nsd_options_t* opt)
+zone_list_compact(struct nsd_options* opt)
 {
 	char outname[1024];
 	FILE* out;
-	zone_options_t* zone;
+	struct zone_options* zone;
 	off_t off;
 	int r;
 	snprintf(outname, sizeof(outname), "%s~", opt->zonelistfile);
@@ -639,7 +641,7 @@ zone_list_compact(nsd_options_t* opt)
 		fclose(out);
 		return;
 	}
-	RBTREE_FOR(zone, zone_options_t*, opt->zone_options) {
+	RBTREE_FOR(zone, struct zone_options*, opt->zone_options) {
 		if(zone->part_of_config)
 			continue;
 		r = fprintf(out, "add %s %s\n", zone->name,
@@ -669,7 +671,7 @@ zone_list_compact(nsd_options_t* opt)
 	}
 	fclose(opt->zonelist);
 	/* set offsets */
-	RBTREE_FOR(zone, zone_options_t*, opt->zone_options) {
+	RBTREE_FOR(zone, struct zone_options*, opt->zone_options) {
 		if(zone->part_of_config)
 			continue;
 		zone->off = off;
@@ -687,7 +689,7 @@ zone_list_compact(nsd_options_t* opt)
 
 /* close zonelist file */
 void
-zone_list_close(nsd_options_t* opt)
+zone_list_close(struct nsd_options* opt)
 {
 	fclose(opt->zonelist);
 	opt->zonelist = NULL;
@@ -755,11 +757,12 @@ c_wrap()
         return 1;
 }
 
-zone_options_t*
+struct zone_options*
 zone_options_create(region_type* region)
 {
-	zone_options_t* zone;
-	zone = (zone_options_t*)region_alloc(region, sizeof(zone_options_t));
+	struct zone_options* zone;
+	zone = (struct zone_options*)region_alloc(region, sizeof(
+		struct zone_options));
 	zone->node = *RBTREE_NULL;
 	zone->name = 0;
 	zone->pattern = 0;
@@ -771,7 +774,7 @@ zone_options_create(region_type* region)
 #define booleq(x,y) ( ((x) && (y)) || (!(x) && !(y)) )
 
 int
-acl_equal(acl_options_t* p, acl_options_t* q)
+acl_equal(struct acl_options* p, struct acl_options* q)
 {
 	if(!booleq(p->use_axfr_only, q->use_axfr_only)) return 0;
 	if(!booleq(p->allow_udp, q->allow_udp)) return 0;
@@ -788,7 +791,7 @@ acl_equal(acl_options_t* p, acl_options_t* q)
 }
 
 int
-acl_list_equal(acl_options_t* p, acl_options_t* q)
+acl_list_equal(struct acl_options* p, struct acl_options* q)
 {
 	/* must be same and in same order */
 	while(p && q) {
@@ -802,11 +805,12 @@ acl_list_equal(acl_options_t* p, acl_options_t* q)
 	return 0;
 }
 
-pattern_options_t*
+struct pattern_options*
 pattern_options_create(region_type* region)
 {
-	pattern_options_t* p;
-	p = (pattern_options_t*)region_alloc(region, sizeof(pattern_options_t));
+	struct pattern_options* p;
+	p = (struct pattern_options*)region_alloc(region, sizeof(
+		struct pattern_options));
 	p->node = *RBTREE_NULL;
 	p->pname = 0;
 	p->zonefile = 0;
@@ -839,7 +843,7 @@ pattern_options_create(region_type* region)
 }
 
 static void
-acl_delete(region_type* region, acl_options_t* acl)
+acl_delete(region_type* region, struct acl_options* acl)
 {
 	if(acl->ip_address_spec)
 		region_recycle(region, (void*)acl->ip_address_spec,
@@ -852,9 +856,9 @@ acl_delete(region_type* region, acl_options_t* acl)
 }
 
 static void
-acl_list_delete(region_type* region, acl_options_t* list)
+acl_list_delete(region_type* region, struct acl_options* list)
 {
-	acl_options_t* n;
+	struct acl_options* n;
 	while(list) {
 		n = list->next;
 		acl_delete(region, list);
@@ -863,9 +867,9 @@ acl_list_delete(region_type* region, acl_options_t* list)
 }
 
 void
-pattern_options_remove(nsd_options_t* opt, const char* name)
+pattern_options_remove(struct nsd_options* opt, const char* name)
 {
-	pattern_options_t* p = (pattern_options_t*)rbtree_delete(
+	struct pattern_options* p = (struct pattern_options*)rbtree_delete(
 		opt->patterns, name);
 	/* delete p and its contents */
 	if (!p)
@@ -885,15 +889,15 @@ pattern_options_remove(nsd_options_t* opt, const char* name)
 	acl_list_delete(opt->region, p->provide_xfr);
 	acl_list_delete(opt->region, p->outgoing_interface);
 
-	region_recycle(opt->region, p, sizeof(pattern_options_t));
+	region_recycle(opt->region, p, sizeof(struct pattern_options));
 }
 
-static acl_options_t*
-copy_acl(region_type* region, acl_options_t* a)
+static struct acl_options*
+copy_acl(region_type* region, struct acl_options* a)
 {
-	acl_options_t* b;
+	struct acl_options* b;
 	if(!a) return NULL;
-	b = (acl_options_t*)region_alloc(region, sizeof(*b));
+	b = (struct acl_options*)region_alloc(region, sizeof(*b));
 	/* copy the whole lot */
 	*b = *a;
 	/* fix the pointers */
@@ -906,10 +910,10 @@ copy_acl(region_type* region, acl_options_t* a)
 	return b;
 }
 
-static acl_options_t*
-copy_acl_list(nsd_options_t* opt, acl_options_t* a)
+static struct acl_options*
+copy_acl_list(struct nsd_options* opt, struct acl_options* a)
 {
-	acl_options_t* b, *blast = NULL, *blist = NULL;
+	struct acl_options* b, *blast = NULL, *blist = NULL;
 	while(a) {
 		b = copy_acl(opt->region, a);
 		/* fixup key_options */
@@ -929,8 +933,8 @@ copy_acl_list(nsd_options_t* opt, acl_options_t* a)
 }
 
 static void
-copy_changed_acl(nsd_options_t* opt, acl_options_t** orig,
-	acl_options_t* anew)
+copy_changed_acl(struct nsd_options* opt, struct acl_options** orig,
+	struct acl_options* anew)
 {
 	if(!acl_list_equal(*orig, anew)) {
 		acl_list_delete(opt->region, *orig);
@@ -939,8 +943,8 @@ copy_changed_acl(nsd_options_t* opt, acl_options_t** orig,
 }
 
 static void
-copy_pat_fixed(region_type* region, pattern_options_t* orig,
-	pattern_options_t* p)
+copy_pat_fixed(region_type* region, struct pattern_options* orig,
+	struct pattern_options* p)
 {
 	orig->allow_axfr_fallback = p->allow_axfr_fallback;
 	orig->allow_axfr_fallback_is_default =
@@ -969,9 +973,9 @@ copy_pat_fixed(region_type* region, pattern_options_t* orig,
 }
 
 void
-pattern_options_add_modify(nsd_options_t* opt, pattern_options_t* p)
+pattern_options_add_modify(struct nsd_options* opt, struct pattern_options* p)
 {
-	pattern_options_t* orig = pattern_options_find(opt, p->pname);
+	struct pattern_options* orig = pattern_options_find(opt, p->pname);
 	if(!orig) {
 		/* needs to be copied to opt region */
 		orig = pattern_options_create(opt->region);
@@ -1003,14 +1007,14 @@ pattern_options_add_modify(nsd_options_t* opt, pattern_options_t* p)
 	}
 }
 
-pattern_options_t*
-pattern_options_find(nsd_options_t* opt, const char* name)
+struct pattern_options*
+pattern_options_find(struct nsd_options* opt, const char* name)
 {
-	return (pattern_options_t*)rbtree_search(opt->patterns, name);
+	return (struct pattern_options*)rbtree_search(opt->patterns, name);
 }
 
 int
-pattern_options_equal(pattern_options_t* p, pattern_options_t* q)
+pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 {
 	if(strcmp(p->pname, q->pname) != 0) return 0;
 	if(!p->zonefile && q->zonefile) return 0;
@@ -1137,7 +1141,7 @@ unmarshal_str(region_type* r, struct buffer* b)
 }
 
 static void
-marshal_acl(struct buffer* b, acl_options_t* acl)
+marshal_acl(struct buffer* b, struct acl_options* acl)
 {
 	buffer_reserve(b, sizeof(*acl));
 	buffer_write(b, acl, sizeof(*acl));
@@ -1145,10 +1149,11 @@ marshal_acl(struct buffer* b, acl_options_t* acl)
 	marshal_str(b, acl->key_name);
 }
 
-static acl_options_t*
+static struct acl_options*
 unmarshal_acl(region_type* r, struct buffer* b)
 {
-	acl_options_t* acl = (acl_options_t*)region_alloc(r, sizeof(*acl));
+	struct acl_options* acl = (struct acl_options*)region_alloc(r,
+		sizeof(*acl));
 	buffer_read(b, acl, sizeof(*acl));
 	acl->next = NULL;
 	acl->key_options = NULL;
@@ -1158,7 +1163,7 @@ unmarshal_acl(region_type* r, struct buffer* b)
 }
 
 static void
-marshal_acl_list(struct buffer* b, acl_options_t* list)
+marshal_acl_list(struct buffer* b, struct acl_options* list)
 {
 	while(list) {
 		marshal_u8(b, 1); /* is there a next one marker */
@@ -1168,10 +1173,10 @@ marshal_acl_list(struct buffer* b, acl_options_t* list)
 	marshal_u8(b, 0); /* end of list marker */
 }
 
-static acl_options_t*
+static struct acl_options*
 unmarshal_acl_list(region_type* r, struct buffer* b)
 {
-	acl_options_t* a, *last=NULL, *list=NULL;
+	struct acl_options* a, *last=NULL, *list=NULL;
 	while(unmarshal_u8(b)) {
 		a = unmarshal_acl(r, b);
 		/* link in */
@@ -1184,7 +1189,7 @@ unmarshal_acl_list(region_type* r, struct buffer* b)
 }
 
 void
-pattern_options_marshal(struct buffer* b, pattern_options_t* p)
+pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 {
 	marshal_str(b, p->pname);
 	marshal_str(b, p->zonefile);
@@ -1214,10 +1219,10 @@ pattern_options_marshal(struct buffer* b, pattern_options_t* p)
 	marshal_u8(b, p->multi_master_check);
 }
 
-pattern_options_t*
+struct pattern_options*
 pattern_options_unmarshal(region_type* r, struct buffer* b)
 {
-	pattern_options_t* p = pattern_options_create(r);
+	struct pattern_options* p = pattern_options_create(r);
 	p->pname = unmarshal_str(r, b);
 	p->zonefile = unmarshal_str(r, b);
 	p->zonestats = unmarshal_str(r, b);
@@ -1247,31 +1252,32 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	return p;
 }
 
-key_options_t*
+struct key_options*
 key_options_create(region_type* region)
 {
-	key_options_t* key;
-	key = (key_options_t*)region_alloc_zero(region, sizeof(key_options_t));
+	struct key_options* key;
+	key = (struct key_options*)region_alloc_zero(region,
+		sizeof(struct key_options));
 	return key;
 }
 
 void
-key_options_insert(nsd_options_t* opt, key_options_t* key)
+key_options_insert(struct nsd_options* opt, struct key_options* key)
 {
 	if(!key->name) return;
 	key->node.key = key->name;
 	(void)rbtree_insert(opt->keys, &key->node);
 }
 
-key_options_t*
-key_options_find(nsd_options_t* opt, const char* name)
+struct key_options*
+key_options_find(struct nsd_options* opt, const char* name)
 {
-	return (key_options_t*)rbtree_search(opt->keys, name);
+	return (struct key_options*)rbtree_search(opt->keys, name);
 }
 
 /** remove tsig_key contents */
 void
-key_options_desetup(region_type* region, key_options_t* key)
+key_options_desetup(region_type* region, struct key_options* key)
 {
 	/* keep tsig_key pointer so that existing references keep valid */
 	if(!key->tsig_key)
@@ -1289,7 +1295,7 @@ key_options_desetup(region_type* region, key_options_t* key)
 
 /** add tsig_key contents */
 void
-key_options_setup(region_type* region, key_options_t* key)
+key_options_setup(region_type* region, struct key_options* key)
 {
 	uint8_t data[16384]; /* 16KB */
 	int size;
@@ -1320,9 +1326,9 @@ key_options_setup(region_type* region, key_options_t* key)
 }
 
 void
-key_options_remove(nsd_options_t* opt, const char* name)
+key_options_remove(struct nsd_options* opt, const char* name)
 {
-	key_options_t* k = key_options_find(opt, name);
+	struct key_options* k = key_options_find(opt, name);
 	if(!k) return;
 	(void)rbtree_delete(opt->keys, name);
 	if(k->name)
@@ -1341,20 +1347,20 @@ key_options_remove(nsd_options_t* opt, const char* name)
 		key_options_desetup(opt->region, k);
 		region_recycle(opt->region, k->tsig_key, sizeof(tsig_key_type));
 	}
-	region_recycle(opt->region, k, sizeof(key_options_t));
+	region_recycle(opt->region, k, sizeof(struct key_options));
 }
 
 int
-key_options_equal(key_options_t* p, key_options_t* q)
+key_options_equal(struct key_options* p, struct key_options* q)
 {
 	return strcmp(p->name, q->name)==0 && strcmp(p->algorithm,
 		q->algorithm)==0 && strcmp(p->secret, q->secret)==0;
 }
 
 void
-key_options_add_modify(nsd_options_t* opt, key_options_t* key)
+key_options_add_modify(struct nsd_options* opt, struct key_options* key)
 {
-	key_options_t* orig = key_options_find(opt, key->name);
+	struct key_options* orig = key_options_find(opt, key->name);
 	if(!orig) {
 		/* needs to be copied to opt region */
 		orig = key_options_create(opt->region);
@@ -1378,8 +1384,8 @@ key_options_add_modify(nsd_options_t* opt, key_options_t* key)
 }
 
 int
-acl_check_incoming(acl_options_t* acl, struct query* q,
-	acl_options_t** reason)
+acl_check_incoming(struct acl_options* acl, struct query* q,
+	struct acl_options** reason)
 {
 	/* check each acl element.
 	   if 1 blocked element matches - return -1.
@@ -1387,7 +1393,7 @@ acl_check_incoming(acl_options_t* acl, struct query* q,
 	   else return -1. */
 	int found_match = -1;
 	int number = 0;
-	acl_options_t* match = 0;
+	struct acl_options* match = 0;
 
 	if(reason)
 		*reason = NULL;
@@ -1420,7 +1426,7 @@ acl_check_incoming(acl_options_t* acl, struct query* q,
 
 #ifdef INET6
 int
-acl_addr_matches_ipv6host(acl_options_t* acl, struct sockaddr_storage* addr_storage, unsigned int port)
+acl_addr_matches_ipv6host(struct acl_options* acl, struct sockaddr_storage* addr_storage, unsigned int port)
 {
 	struct sockaddr_in6* addr = (struct sockaddr_in6*)addr_storage;
 	if(acl->port != 0 && acl->port != port)
@@ -1449,7 +1455,7 @@ acl_addr_matches_ipv6host(acl_options_t* acl, struct sockaddr_storage* addr_stor
 #endif
 
 int
-acl_addr_matches_ipv4host(acl_options_t* acl, struct sockaddr_in* addr, unsigned int port)
+acl_addr_matches_ipv4host(struct acl_options* acl, struct sockaddr_in* addr, unsigned int port)
 {
 	if(acl->port != 0 && acl->port != port)
 		return 0;
@@ -1476,7 +1482,7 @@ acl_addr_matches_ipv4host(acl_options_t* acl, struct sockaddr_in* addr, unsigned
 }
 
 int
-acl_addr_matches_host(acl_options_t* acl, acl_options_t* host)
+acl_addr_matches_host(struct acl_options* acl, struct acl_options* host)
 {
 	if(acl->is_ipv6)
 	{
@@ -1499,7 +1505,7 @@ acl_addr_matches_host(acl_options_t* acl, acl_options_t* host)
 }
 
 int
-acl_addr_matches(acl_options_t* acl, struct query* q)
+acl_addr_matches(struct acl_options* acl, struct query* q)
 {
 	if(acl->is_ipv6)
 	{
@@ -1571,7 +1577,7 @@ acl_addr_match_range(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz)
 }
 
 int
-acl_key_matches(acl_options_t* acl, struct query* q)
+acl_key_matches(struct acl_options* acl, struct query* q)
 {
 	if(acl->blocked)
 		return 1;
@@ -1610,7 +1616,7 @@ acl_key_matches(acl_options_t* acl, struct query* q)
 }
 
 int
-acl_same_host(acl_options_t* a, acl_options_t* b)
+acl_same_host(struct acl_options* a, struct acl_options* b)
 {
 	if(a->is_ipv6 && !b->is_ipv6)
 		return 0;
@@ -1646,10 +1652,10 @@ acl_same_host(acl_options_t* a, acl_options_t* b)
 
 #if defined(HAVE_SSL)
 void
-key_options_tsig_add(nsd_options_t* opt)
+key_options_tsig_add(struct nsd_options* opt)
 {
-	key_options_t* optkey;
-	RBTREE_FOR(optkey, key_options_t*, opt->keys) {
+	struct key_options* optkey;
+	RBTREE_FOR(optkey, struct key_options*, opt->keys) {
 		key_options_setup(opt->region, optkey);
 		tsig_add_key(optkey->tsig_key);
 	}
@@ -1657,7 +1663,7 @@ key_options_tsig_add(nsd_options_t* opt)
 #endif
 
 int
-zone_is_slave(zone_options_t* opt)
+zone_is_slave(struct zone_options* opt)
 {
 	return opt && opt->pattern && opt->pattern->request_xfr != 0;
 }
@@ -1675,7 +1681,7 @@ get_char(const char* str, size_t i)
 }
 /* get end label of the zone name (or .) */
 static const char*
-get_end_label(zone_options_t* zone, int i)
+get_end_label(struct zone_options* zone, int i)
 {
 	const dname_type* d = (const dname_type*)zone->node.key;
 	if(i >= d->label_count) {
@@ -1706,7 +1712,7 @@ replace_str(char* str, size_t len, const char* one, const char* two)
 }
 
 const char*
-config_cook_string(zone_options_t* zone, const char* input)
+config_cook_string(struct zone_options* zone, const char* input)
 {
 	static char f[1024];
 	/* if not a template, return as-is */
@@ -1732,7 +1738,7 @@ config_cook_string(zone_options_t* zone, const char* input)
 }
 
 const char*
-config_make_zonefile(zone_options_t* zone, struct nsd* nsd)
+config_make_zonefile(struct zone_options* zone, struct nsd* nsd)
 {
 	static char f[1024];
 	/* if not a template, return as-is */
@@ -1768,14 +1774,14 @@ config_make_zonefile(zone_options_t* zone, struct nsd* nsd)
 	return f;
 }
 
-zone_options_t*
-zone_options_find(nsd_options_t* opt, const struct dname* apex)
+struct zone_options*
+zone_options_find(struct nsd_options* opt, const struct dname* apex)
 {
-	return (zone_options_t*) rbtree_search(opt->zone_options, apex);
+	return (struct zone_options*) rbtree_search(opt->zone_options, apex);
 }
 
-acl_options_t*
-acl_find_num(acl_options_t* acl, int num)
+struct acl_options*
+acl_find_num(struct acl_options* acl, int num)
 {
 	int count = num;
 	if(num < 0)
@@ -1851,11 +1857,12 @@ parse_acl_range_subnet(char* p, void* addr, int maxbits)
 	}
 }
 
-acl_options_t*
+struct acl_options*
 parse_acl_info(region_type* region, char* ip, const char* key)
 {
 	char* p;
-	acl_options_t* acl = (acl_options_t*)region_alloc(region, sizeof(acl_options_t));
+	struct acl_options* acl = (struct acl_options*)region_alloc(region,
+		sizeof(struct acl_options));
 	acl->next = 0;
 	/* ip */
 	acl->ip_address_spec = region_strdup(region, ip);
@@ -1917,11 +1924,12 @@ parse_acl_info(region_type* region, char* ip, const char* key)
 
 /* copy acl list at end of parser start, update current */
 static
-void append_acl(acl_options_t** start, acl_options_t** cur,
-	acl_options_t* list)
+void append_acl(struct acl_options** start, struct acl_options** cur,
+	struct acl_options* list)
 {
 	while(list) {
-		acl_options_t* acl = copy_acl(cfg_parser->opt->region, list);
+		struct acl_options* acl = copy_acl(cfg_parser->opt->region,
+			list);
 		acl->next = NULL;
 		if(*cur)
 			(*cur)->next = acl;
@@ -1935,8 +1943,9 @@ void
 config_apply_pattern(const char* name)
 {
 	/* find the pattern */
-	pattern_options_t* pat = pattern_options_find(cfg_parser->opt, name);
-	pattern_options_t* a = cfg_parser->current_pattern;
+	struct pattern_options* pat = pattern_options_find(cfg_parser->opt,
+		name);
+	struct pattern_options* a = cfg_parser->current_pattern;
 	if(!pat) {
 		c_error_msg("could not find pattern %s", name);
 		return;
@@ -1992,17 +2001,17 @@ config_apply_pattern(const char* name)
 }
 
 void
-nsd_options_destroy(nsd_options_t* opt)
+nsd_options_destroy(struct nsd_options* opt)
 {
 	region_destroy(opt->region);
 }
 
-unsigned getzonestatid(nsd_options_t* opt, zone_options_t* zopt)
+unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 {
 #ifdef USE_ZONE_STATS
 	const char* statname;
 	struct zonestatname* n;
-	rbnode_t* res;
+	rbnode_type* res;
 	/* try to find the instantiated zonestat name */
 	if(!zopt->pattern->zonestats || zopt->pattern->zonestats[0]==0)
 		return 0; /* no zone stats */
@@ -2019,7 +2028,7 @@ unsigned getzonestatid(nsd_options_t* opt, zone_options_t* zopt)
 		exit(1);
 	}
 	n->id = (unsigned)(opt->zonestatnames->count);
-	rbtree_insert(opt->zonestatnames, (rbnode_t*)n);
+	rbtree_insert(opt->zonestatnames, (rbnode_type*)n);
 	return n->id;
 #else /* USE_ZONE_STATS */
 	(void)opt; (void)zopt;
