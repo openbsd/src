@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.446 2017/01/29 21:37:17 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.447 2017/02/18 14:29:23 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 29 2017 $
+.Dd $Mdocdate: February 18 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -34,9 +34,27 @@
 .Fd .include <bsd.port.mk>
 .Sh DESCRIPTION
 .Nm
-holds all the standard routines used by the ports tree.
-Some variables and targets are for its internal use only.
-The rest is documented here.
+contains the
+.Xr ports 7
+tree
+.Xr make 1
+framework, in the form of documented public targets,
+variables and paths.
+.Pp
+Identifiers beginning with an underscore
+are internal-use only and likely to change without
+notice.
+.Pp
+This documentation contains sections covering targets, variables,
+diagnostics, and filenames, ordered in alphabetic order, followed
+by a section covering the fake framework, a section
+explaining flavors and multi-packages, and a section covering
+the generation of package information.
+.Pp
+It ends with sections covering obsolete targets, variables and files,
+outlining conversion
+methods from older incarnations of the ports tree or from other
+.Bx variants.
 .Pp
 .Nm
 also uses quite a few helper scripts.
@@ -45,24 +63,6 @@ Those live under
 and they do have manpages under
 .Pa ${PORTSDIR}/infrastructure/man .
 .Pp
-Other
-.Bx
-variants, as well as older versions of
-.Nm ,
-include other targets and variables.
-Conversion methods are outlined here.
-.Pp
-Most variables and targets are documented, with very few exceptions.
-.Pp
-This documentation covers the current targets, variables and paths used by
-.Nm .
-There is a separate section covering the fake framework, a section
-explaining flavors and multi-packages, and a section covering
-the generation of package information.
-.Pp
-It ends with sections on obsolete constructs that a porter may need
-when converting from other ports systems.
-.Pp
 Binary package details are mostly covered in
 .Xr pkg_create 1
 for the packing-list details,
@@ -70,12 +70,14 @@ and in
 .Xr pkg_add 1
 for the installation semantics.
 .Pp
-Selected common user activity such as the building of every package in
+Common usage such as building every package in
 the system is covered by
 .Xr ports 7
-instead.
+and
+.Xr bulk 8
+instead, with
 .Xr packages 7
-provides an overview of the result.
+providing an overview of the result.
 .Sh TARGETS
 .Bl -tag -width Ds
 .It Cm {build,run,all,test}-dir-depends
