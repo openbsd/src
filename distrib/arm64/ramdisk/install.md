@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2017/01/23 02:24:00 patrick Exp $
+#	$OpenBSD: install.md,v 1.2 2017/02/18 02:01:53 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,12 +39,23 @@ NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=/dev/$1
+	local _disk=/dev/$1 _mdec _plat
 
 	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
 	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
 	mkdir -p /mnt/mnt/efi/boot
 	cp /mnt/usr/mdec/BOOTAA64.EFI /mnt/mnt/efi/boot/bootaa64.efi
+
+	_plat=rpi
+	_mdec=/usr/mdec/$_plat
+
+	cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
+	cat > /mnt/mnt/config.txt<<-__EOT
+		arm_control=0x200
+		enable_uart=1
+		device_tree_address=0x100
+		kernel=u-boot.bin
+	__EOT
 }
 
 md_prep_fdisk() {

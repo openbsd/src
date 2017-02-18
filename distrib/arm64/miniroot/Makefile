@@ -23,11 +23,19 @@ FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 FS?=		msdos
 PART_ID?=C
 
-NEWFS_ARGS_msdos=-L boot
+NEWFS_ARGS_msdos=-L boot -c1 -F16
 MOUNT_ARGS_msdos=-o-l
 
 PDTB=		/usr/local/share/dtb/arm64
 PUBOOT=		/usr/local/share/u-boot
+PRPI=		/usr/local/share/raspberrypi-firmware/boot
+
+PIFILES=\
+	bootcode.bin \
+	start.elf \
+	fixup.dat \
+	bcm2710-rpi-3-b.dtb \
+	bcm2710-rpi-cm3.dtb
 
 cleandir: clean
 clean:
@@ -49,8 +57,13 @@ do_files:
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 	-umount ${MOUNT_POINT}
 	mount ${MOUNT_ARGS_msdos} ${VND_IDEV} ${MOUNT_POINT}
+.for FILE in ${PIFILES}
+	cp ${PRPI}/${FILE} ${MOUNT_POINT}/
+.endfor
+	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	echo 'arm_control=0x200\nenable_uart=1\ndevice_tree_address=0x100\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
