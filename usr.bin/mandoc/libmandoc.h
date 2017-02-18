@@ -1,4 +1,4 @@
-/*	$OpenBSD: libmandoc.h,v 1.50 2017/02/09 17:19:07 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.51 2017/02/18 13:43:34 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -59,7 +59,7 @@ int		 man_parseln(struct roff_man *, int, char *, int);
 void		 man_endparse(struct roff_man *);
 
 int		 preconv_cue(const struct buf *, size_t);
-int		 preconv_encode(struct buf *, size_t *,
+int		 preconv_encode(const struct buf *, size_t *,
 			struct buf *, size_t *, int *);
 
 void		 roff_free(struct roff *);
