@@ -20,12 +20,6 @@
 ./usr/share/info/readline.info
 ./usr/share/info/stabs.info
 ./usr/share/info/texinfo
-./usr/share/man/man1/CPAN::Meta::History::Meta_1_0.1
-./usr/share/man/man1/CPAN::Meta::History::Meta_1_1.1
-./usr/share/man/man1/CPAN::Meta::History::Meta_1_2.1
-./usr/share/man/man1/CPAN::Meta::History::Meta_1_3.1
-./usr/share/man/man1/CPAN::Meta::History::Meta_1_4.1
-./usr/share/man/man1/Test::Harness::Beyond.1
 ./usr/share/man/man1/acme-client.1
 ./usr/share/man/man1/amd64/fdformat.1
 ./usr/share/man/man1/apply.1
@@ -152,7 +146,6 @@
 ./usr/share/man/man1/leave.1
 ./usr/share/man/man1/less.1
 ./usr/share/man/man1/lesskey.1
-./usr/share/man/man1/libnetFAQ.1
 ./usr/share/man/man1/libnetcfg.1
 ./usr/share/man/man1/ln.1
 ./usr/share/man/man1/lndir.1
@@ -253,11 +246,8 @@
 ./usr/share/man/man1/perl588delta.1
 ./usr/share/man/man1/perl589delta.1
 ./usr/share/man/man1/perl58delta.1
-./usr/share/man/man1/perl5db.1
-./usr/share/man/man1/perlandroid.1
 ./usr/share/man/man1/perlapi.1
 ./usr/share/man/man1/perlapio.1
-./usr/share/man/man1/perlartistic.1
 ./usr/share/man/man1/perlbook.1
 ./usr/share/man/man1/perlboot.1
 ./usr/share/man/man1/perlbot.1
@@ -268,7 +258,6 @@
 ./usr/share/man/man1/perlcommunity.1
 ./usr/share/man/man1/perldata.1
 ./usr/share/man/man1/perldbmfilter.1
-./usr/share/man/man1/perldebguts.1
 ./usr/share/man/man1/perldebtut.1
 ./usr/share/man/man1/perldebug.1
 ./usr/share/man/man1/perldelta.1
@@ -293,7 +282,6 @@
 ./usr/share/man/man1/perlfunc.1
 ./usr/share/man/man1/perlgit.1
 ./usr/share/man/man1/perlglossary.1
-./usr/share/man/man1/perlgpl.1
 ./usr/share/man/man1/perlguts.1
 ./usr/share/man/man1/perlhack.1
 ./usr/share/man/man1/perlhacktips.1
@@ -339,7 +327,6 @@
 ./usr/share/man/man1/perlrequick.1
 ./usr/share/man/man1/perlreref.1
 ./usr/share/man/man1/perlretut.1
-./usr/share/man/man1/perlriscos.1
 ./usr/share/man/man1/perlrun.1
 ./usr/share/man/man1/perlsec.1
 ./usr/share/man/man1/perlsource.1
@@ -354,7 +341,6 @@
 ./usr/share/man/man1/perltooc.1
 ./usr/share/man/man1/perltoot.1
 ./usr/share/man/man1/perltrap.1
-./usr/share/man/man1/perltru64.1
 ./usr/share/man/man1/perlunicode.1
 ./usr/share/man/man1/perlunicook.1
 ./usr/share/man/man1/perlunifaq.1
@@ -379,7 +365,6 @@
 ./usr/share/man/man1/pod2man.1
 ./usr/share/man/man1/pod2text.1
 ./usr/share/man/man1/pod2usage.1
-./usr/share/man/man1/pod_file.1
 ./usr/share/man/man1/podchecker.1
 ./usr/share/man/man1/podselect.1
 ./usr/share/man/man1/pr.1
@@ -532,6 +517,11 @@
 ./usr/share/man/man3p/CPAN::Meta::Converter.3p
 ./usr/share/man/man3p/CPAN::Meta::Feature.3p
 ./usr/share/man/man3p/CPAN::Meta::History.3p
+./usr/share/man/man3p/CPAN::Meta::History::Meta_1_0.3p
+./usr/share/man/man3p/CPAN::Meta::History::Meta_1_1.3p
+./usr/share/man/man3p/CPAN::Meta::History::Meta_1_2.3p
+./usr/share/man/man3p/CPAN::Meta::History::Meta_1_3.3p
+./usr/share/man/man3p/CPAN::Meta::History::Meta_1_4.3p
 ./usr/share/man/man3p/CPAN::Meta::Merge.3p
 ./usr/share/man/man3p/CPAN::Meta::Prereqs.3p
 ./usr/share/man/man3p/CPAN::Meta::Requirements.3p
@@ -553,7 +543,6 @@
 ./usr/share/man/man3p/Config.3p
 ./usr/share/man/man3p/Config::Extensions.3p
 ./usr/share/man/man3p/Config::Perl::V.3p
-./usr/share/man/man3p/Configure.3p
 ./usr/share/man/man3p/Cwd.3p
 ./usr/share/man/man3p/DB.3p
 ./usr/share/man/man3p/DBM_Filter.3p
@@ -593,14 +582,12 @@
 ./usr/share/man/man3p/Encode::KR.3p
 ./usr/share/man/man3p/Encode::KR::2022_KR.3p
 ./usr/share/man/man3p/Encode::MIME::Header.3p
-./usr/share/man/man3p/Encode::MIME::NAME.3p
 ./usr/share/man/man3p/Encode::PerlIO.3p
 ./usr/share/man/man3p/Encode::Supported.3p
 ./usr/share/man/man3p/Encode::Symbol.3p
 ./usr/share/man/man3p/Encode::TW.3p
 ./usr/share/man/man3p/Encode::Unicode.3p
 ./usr/share/man/man3p/Encode::Unicode::UTF7.3p
-./usr/share/man/man3p/Encode::_Name_.3p
 ./usr/share/man/man3p/English.3p
 ./usr/share/man/man3p/Env.3p
 ./usr/share/man/man3p/Errno.3p
@@ -688,7 +675,6 @@
 ./usr/share/man/man3p/Getopt::Long.3p
 ./usr/share/man/man3p/Getopt::Std.3p
 ./usr/share/man/man3p/HTTP::Tiny.3p
-./usr/share/man/man3p/Haiku.3p
 ./usr/share/man/man3p/Hash::Util.3p
 ./usr/share/man/man3p/Hash::Util::FieldHash.3p
 ./usr/share/man/man3p/I18N::Collate.3p
@@ -793,6 +779,7 @@
 ./usr/share/man/man3p/Net::SMTP.3p
 ./usr/share/man/man3p/Net::Time.3p
 ./usr/share/man/man3p/Net::hostent.3p
+./usr/share/man/man3p/Net::libnetFAQ.3p
 ./usr/share/man/man3p/Net::netent.3p
 ./usr/share/man/man3p/Net::protoent.3p
 ./usr/share/man/man3p/Net::servent.3p
@@ -874,6 +861,7 @@
 ./usr/share/man/man3p/Pod::Simple::XMLOutStream.3p
 ./usr/share/man/man3p/Pod::Text.3p
 ./usr/share/man/man3p/Pod::Text::Color.3p
+./usr/share/man/man3p/Pod::Text::Overstrike.3p
 ./usr/share/man/man3p/Pod::Text::Termcap.3p
 ./usr/share/man/man3p/Pod::Usage.3p
 ./usr/share/man/man3p/SDBM_File.3p
@@ -898,6 +886,7 @@
 ./usr/share/man/man3p/TAP::Formatter::File::Session.3p
 ./usr/share/man/man3p/TAP::Formatter::Session.3p
 ./usr/share/man/man3p/TAP::Harness.3p
+./usr/share/man/man3p/TAP::Harness::Beyond.3p
 ./usr/share/man/man3p/TAP::Harness::Env.3p
 ./usr/share/man/man3p/TAP::Object.3p
 ./usr/share/man/man3p/TAP::Parser.3p
@@ -1049,6 +1038,8 @@
 ./usr/share/man/man3p/overload.3p
 ./usr/share/man/man3p/overloading.3p
 ./usr/share/man/man3p/parent.3p
+./usr/share/man/man3p/perl5db.3p
+./usr/share/man/man3p/perldebguts.3p
 ./usr/share/man/man3p/pod2usage.3p
 ./usr/share/man/man3p/podchecker.3p
 ./usr/share/man/man3p/podselect.3p
