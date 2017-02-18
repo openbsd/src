@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.41 2017/02/17 22:24:45 eric Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.42 2017/02/18 19:23:05 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -294,6 +294,7 @@ enum asr_state {
 	ASR_STATE_HALT,
 };
 
+#define MAXPACKETSZ	4096
 
 __BEGIN_HIDDEN_DECLS
 
@@ -301,6 +302,7 @@ __BEGIN_HIDDEN_DECLS
 void _asr_pack_init(struct asr_pack *, char *, size_t);
 int _asr_pack_header(struct asr_pack *, const struct asr_dns_header *);
 int _asr_pack_query(struct asr_pack *, uint16_t, uint16_t, const char *);
+int _asr_pack_edns0(struct asr_pack *, uint16_t);
 void _asr_unpack_init(struct asr_unpack *, const char *, size_t);
 int _asr_unpack_header(struct asr_unpack *, struct asr_dns_header *);
 int _asr_unpack_query(struct asr_unpack *, struct asr_dns_query *);

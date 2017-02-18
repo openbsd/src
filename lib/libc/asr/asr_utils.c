@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.14 2017/02/17 22:24:45 eric Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.15 2017/02/18 19:23:05 jca Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -381,6 +381,14 @@ pack_u16(struct asr_pack *p, uint16_t v)
 }
 
 static int
+pack_u32(struct asr_pack *p, uint32_t v)
+{
+	v = htonl(v);
+
+	return (pack_data(p, &v, 4));
+}
+
+static int
 pack_dname(struct asr_pack *p, const char *dname)
 {
 	/* dname compression would be nice to have here.
@@ -410,6 +418,18 @@ _asr_pack_query(struct asr_pack *p, uint16_t type, uint16_t class, const char *d
 	pack_dname(p, dname);
 	pack_u16(p, type);
 	pack_u16(p, class);
+
+	return (p->err) ? (-1) : (0);
+}
+
+int
+_asr_pack_edns0(struct asr_pack *p, uint16_t pktsz)
+{
+	pack_dname(p, "");	/* root */
+	pack_u16(p, 41);	/* OPT */
+	pack_u16(p, pktsz);	/* UDP payload size */
+	pack_u32(p, 0);		/* extended RCODE and flags */
+	pack_u16(p, 0);		/* RDATA len */
 
 	return (p->err) ? (-1) : (0);
 }

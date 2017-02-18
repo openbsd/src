@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.51 2017/01/24 12:43:00 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.52 2017/02/18 19:23:05 jca Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: February 18 2017 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -258,21 +258,21 @@ lines are able to handle the extension.
 On
 .Ox
 this option does nothing.
-.\" .Pp
-.\" To verify whether a server supports EDNS,
-.\" query it using the
-.\" .Xr dig 1
-.\" query option
-.\" .Li +edns=0 :
-.\" the reply indicates compliance (EDNS version 0)
-.\" and whether a UDP packet larger than 512 bytes can be used.
-.\" Note that EDNS0 can cause the server to send packets
-.\" large enough to require fragmentation.
-.\" Other factors such as packet filters may impede these,
-.\" particularly if there is a reduced MTU,
-.\" as is often the case with
-.\" .Xr pppoe 4
-.\" or with tunnels.
+.Pp
+To verify whether a server supports EDNS,
+query it using the
+.Xr dig 1
+query option
+.Li +edns=0 :
+the reply indicates compliance (EDNS version 0)
+and whether a UDP packet larger than 512 bytes can be used.
+Note that EDNS0 can cause the server to send packets
+large enough to require fragmentation.
+Other factors such as packet filters may impede these,
+particularly if there is a reduced MTU,
+as is often the case with
+.Xr pppoe 4
+or with tunnels.
 .It Cm inet6
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see

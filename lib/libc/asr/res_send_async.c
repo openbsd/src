@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.30 2017/02/17 00:29:22 krw Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.31 2017/02/18 19:23:05 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -377,10 +377,14 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 	if (as->as_ctx->ac_options & RES_RECURSE)
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
+	if (as->as_ctx->ac_options & RES_USE_EDNS0)
+		h.arcount = 1;
 
 	_asr_pack_init(&p, as->as.dns.obuf, as->as.dns.obufsize);
 	_asr_pack_header(&p, &h);
 	_asr_pack_query(&p, type, class, dname);
+	if (as->as_ctx->ac_options & RES_USE_EDNS0)
+		_asr_pack_edns0(&p, MAXPACKETSZ);
 	if (p.err) {
 		DPRINT("error packing query");
 		errno = EINVAL;
@@ -448,8 +452,6 @@ udp_recv(struct asr_query *as)
 {
 	ssize_t		 n;
 	int		 save_errno;
-
-#define MAXPACKETSZ	4096
 
 	if (ensure_ibuf(as, MAXPACKETSZ) == -1) {
 		save_errno = errno;
