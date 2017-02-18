@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.6 2017/02/18 00:34:14 patrick Exp $ */
+/* $OpenBSD: agtimer.c,v 1.7 2017/02/18 00:47:18 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -95,6 +95,7 @@ agtimer_readcnt64(void)
 {
 	uint64_t val;
 
+	__asm volatile("isb" : : : "memory");
 	__asm volatile("MRS %x0, CNTPCT_EL0" : "=r" (val));
 
 	return (val);
@@ -124,9 +125,7 @@ static inline int
 agtimer_set_ctrl(uint32_t val)
 {
 	__asm volatile("MSR CNTP_CTL_EL0, %x0" : : "r" (val));
-
-	//cpu_drain_writebuf();
-	//isb();
+	__asm volatile("isb" : : : "memory");
 
 	return (0);
 }
@@ -135,9 +134,7 @@ static inline int
 agtimer_set_tval(uint32_t val)
 {
 	__asm volatile("MSR CNTP_TVAL_EL0, %x0" : : "r" (val));
-
-	//cpu_drain_writebuf();
-	//isb();
+	__asm volatile("isb" : : : "memory");
 
 	return (0);
 }
