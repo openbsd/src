@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.5 2017/02/18 00:19:33 patrick Exp $ */
+/* $OpenBSD: agtimer.c,v 1.6 2017/02/18 00:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -318,9 +318,9 @@ agtimer_cpu_initclocks()
 void
 agtimer_delay(u_int usecs)
 {
-	u_int32_t		clock, oclock, delta, delaycnt;
+	uint64_t		clock, oclock, delta, delaycnt;
+	uint64_t		csec, usec;
 	volatile int		j;
-	int			csec, usec;
 
 	if (usecs > (0x80000000 / agtimer_frequency)) {
 		csec = usecs / 10000;
