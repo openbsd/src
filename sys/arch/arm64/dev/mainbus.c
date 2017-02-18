@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.2 2017/02/18 00:19:33 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -81,6 +81,7 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 }
 
 extern char *hw_prod;
+void agtimer_init(void);
 
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
@@ -93,6 +94,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		panic("mainbus: no device tree");
 
 	arm_intr_init_fdt();
+	agtimer_init();
 
 	sc->sc_iot = &arm64_bs_tag;
 	sc->sc_dmat = &mainbus_dma_tag;
