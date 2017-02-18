@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.71 2017/02/08 05:09:25 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.72 2017/02/18 06:09:01 jsg Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -33,7 +33,7 @@
 #ifndef _SYS_EXEC_ELF_H_
 #define _SYS_EXEC_ELF_H_
 
-#include <machine/_types.h>
+#include <sys/types.h>
 #include <machine/exec.h>
 
 typedef __uint8_t	Elf_Byte;
