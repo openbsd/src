@@ -36,18 +36,12 @@ _quick3p=
     c2ph 1				utils/pstruct \
     corelist 1				utils/corelist \
     cpan 1				utils/cpan \
-    CPAN::Meta::History::Meta_1_0 1	lib/CPAN/Meta/History/Meta_1_0.pod \
-    CPAN::Meta::History::Meta_1_1 1	lib/CPAN/Meta/History/Meta_1_1.pod \
-    CPAN::Meta::History::Meta_1_2 1	lib/CPAN/Meta/History/Meta_1_2.pod \
-    CPAN::Meta::History::Meta_1_3 1	lib/CPAN/Meta/History/Meta_1_3.pod \
-    CPAN::Meta::History::Meta_1_4 1	lib/CPAN/Meta/History/Meta_1_4.pod \
     enc2xs 1				utils/enc2xs \
     encguess 1				utils/encguess \
     h2ph 1				utils/h2ph \
     h2xs 1				utils/h2xs \
     instmodsh 1				utils/instmodsh \
     libnetcfg 1				utils/libnetcfg \
-    libnetFAQ 1				lib/Net/libnetFAQ.pod \
     perl 1				pod/perl.pod \
     perl5004delta 1			pod/perl5004delta.pod \
     perl5005delta 1			pod/perl5005delta.pod \
@@ -93,11 +87,8 @@ _quick3p=
     perl588delta 1			pod/perl588delta.pod \
     perl589delta 1			pod/perl589delta.pod \
     perl58delta 1			pod/perl58delta.pod \
-    perl5db 1				lib/perl5db.pl \
-    perlandroid 1			pod/perlandroid.pod \
     perlapi 1				pod/perlapi.pod \
     perlapio 1				pod/perlapio.pod \
-    perlartistic 1			pod/perlartistic.pod \
     perlbook 1				pod/perlbook.pod \
     perlboot 1				pod/perlboot.pod \
     perlbot 1				pod/perlbot.pod \
@@ -108,7 +99,6 @@ _quick3p=
     perlcommunity 1			pod/perlcommunity.pod \
     perldata 1				pod/perldata.pod \
     perldbmfilter 1			pod/perldbmfilter.pod \
-    perldebguts 1			pod/perldebguts.pod \
     perldebtut 1			pod/perldebtut.pod \
     perldebug 1				pod/perldebug.pod \
     perldelta 1				pod/perldelta.pod \
@@ -133,7 +123,6 @@ _quick3p=
     perlfunc 1				pod/perlfunc.pod \
     perlgit 1				pod/perlgit.pod \
     perlglossary 1			lib/perlglossary.pod \
-    perlgpl 1				pod/perlgpl.pod \
     perlguts 1				pod/perlguts.pod \
     perlhack 1				pod/perlhack.pod \
     perlhacktips 1			pod/perlhacktips.pod \
@@ -179,7 +168,6 @@ _quick3p=
     perlrequick 1			pod/perlrequick.pod \
     perlreref 1				pod/perlreref.pod \
     perlretut 1				pod/perlretut.pod \
-    perlriscos 1			pod/perlriscos.pod \
     perlrun 1				pod/perlrun.pod \
     perlsec 1				pod/perlsec.pod \
     perlsource 1			pod/perlsource.pod \
@@ -194,7 +182,6 @@ _quick3p=
     perltooc 1				pod/perltooc.pod \
     perltoot 1				pod/perltoot.pod \
     perltrap 1				pod/perltrap.pod \
-    perltru64 1				pod/perltru64.pod \
     perlunicode 1			pod/perlunicode.pod \
     perlunicook 1			pod/perlunicook.pod \
     perlunifaq 1			pod/perlunifaq.pod \
@@ -212,12 +199,10 @@ _quick3p=
     pod2man 1				cpan/podlators/blib/script/pod2man \
     pod2text 1				cpan/podlators/blib/script/pod2text \
     pod2usage 1				cpan/Pod-Usage/blib/script/pod2usage \
-    pod_file 1				lib/unicore/mktables \
     podchecker 1			cpan/Pod-Checker/blib/script/podchecker \
     podselect 1				cpan/Pod-Parser/blib/script/podselect \
     prove 1				utils/prove \
     splain 1				utils/splain \
-    Test::Harness::Beyond 1		lib/TAP/Harness/Beyond.pod \
     xsubpp 1				utils/xsubpp \
     AnyDBM_File 3p			lib/AnyDBM_File.pm \
     App::Cpan 3p			lib/App/Cpan.pm \
@@ -265,7 +250,6 @@ _quick3p=
     Config 3p				lib/Config.pod \
     Config::Extensions 3p		lib/Config/Extensions.pm \
     Config::Perl::V 3p			lib/Config/Perl/V.pm \
-    Configure 3p			cpan/Term-ReadKey/Configure.pm \
     constant 3p				lib/constant.pm \
     CORE 3p				lib/CORE.pod \
     CPAN 3p				lib/CPAN.pm \
@@ -279,6 +263,11 @@ _quick3p=
     CPAN::Meta::Converter 3p		lib/CPAN/Meta/Converter.pm \
     CPAN::Meta::Feature 3p		lib/CPAN/Meta/Feature.pm \
     CPAN::Meta::History 3p		lib/CPAN/Meta/History.pm \
+    CPAN::Meta::History::Meta_1_0 3p	lib/CPAN/Meta/History/Meta_1_0.pod \
+    CPAN::Meta::History::Meta_1_1 3p	lib/CPAN/Meta/History/Meta_1_1.pod \
+    CPAN::Meta::History::Meta_1_2 3p	lib/CPAN/Meta/History/Meta_1_2.pod \
+    CPAN::Meta::History::Meta_1_3 3p	lib/CPAN/Meta/History/Meta_1_3.pod \
+    CPAN::Meta::History::Meta_1_4 3p	lib/CPAN/Meta/History/Meta_1_4.pod \
     CPAN::Meta::Merge 3p		lib/CPAN/Meta/Merge.pm \
     CPAN::Meta::Prereqs 3p		lib/CPAN/Meta/Prereqs.pm \
     CPAN::Meta::Requirements 3p		lib/CPAN/Meta/Requirements.pm \
@@ -316,7 +305,6 @@ _quick3p=
     Dumpvalue 3p			lib/Dumpvalue.pm \
     DynaLoader 3p			lib/DynaLoader.pm \
     Encode 3p				lib/Encode.pm \
-    Encode::_Name_ 3p			lib/Encode/_PM.e2x \
     Encode::Alias 3p			lib/Encode/Alias.pm \
     Encode::Byte 3p			lib/Encode/Byte.pm \
     Encode::CJKConstants 3p		lib/Encode/CJKConstants.pm \
@@ -334,7 +322,6 @@ _quick3p=
     Encode::KR 3p			lib/Encode/KR.pm \
     Encode::KR::2022_KR 3p		lib/Encode/KR/2022_KR.pm \
     Encode::MIME::Header 3p		lib/Encode/MIME/Header.pm \
-    Encode::MIME::NAME 3p		lib/Encode/MIME/Name.pm \
     Encode::PerlIO 3p			lib/Encode/PerlIO.pod \
     Encode::Supported 3p		lib/Encode/Supported.pod \
     Encode::Symbol 3p			lib/Encode/Symbol.pm \
@@ -433,7 +420,6 @@ _quick3p=
     FindBin 3p				lib/FindBin.pm \
     Getopt::Long 3p			lib/Getopt/Long.pm \
     Getopt::Std 3p			lib/Getopt/Std.pm \
-    Haiku 3p				haiku/Haiku/Haiku.pm \
     Hash::Util 3p			lib/Hash/Util.pm \
     Hash::Util::FieldHash 3p		lib/Hash/Util/FieldHash.pm \
     HTTP::Tiny 3p			lib/HTTP/Tiny.pm \
@@ -538,6 +524,7 @@ _quick3p=
     Net::FTP 3p				lib/Net/FTP.pm \
     Net::FTP::dataconn 3p		lib/Net/FTP/dataconn.pm \
     Net::hostent 3p			lib/Net/hostent.pm \
+    Net::libnetFAQ 3p			lib/Net/libnetFAQ.pod \
     Net::netent 3p			lib/Net/netent.pm \
     Net::Netrc 3p			lib/Net/Netrc.pm \
     Net::NNTP 3p			lib/Net/NNTP.pm \
@@ -560,7 +547,9 @@ _quick3p=
     Params::Check 3p			lib/Params/Check.pm \
     parent 3p				lib/parent.pm \
     Parse::CPAN::Meta 3p		lib/Parse/CPAN/Meta.pm \
+    perl5db 3p				lib/perl5db.pl \
     Perl::OSType 3p			lib/Perl/OSType.pm \
+    perldebguts 3p			pod/perldebguts.pod \
     PerlIO 3p				lib/PerlIO.pm \
     PerlIO::encoding 3p			lib/PerlIO/encoding.pm \
     PerlIO::mmap 3p			lib/PerlIO/mmap.pm \
@@ -616,6 +605,7 @@ _quick3p=
     Pod::Simple::XMLOutStream 3p	lib/Pod/Simple/XMLOutStream.pm \
     Pod::Text 3p			lib/Pod/Text.pm \
     Pod::Text::Color 3p			lib/Pod/Text/Color.pm \
+    Pod::Text::Overstrike 3p		lib/Pod/Text/Overstrike.pm \
     Pod::Text::Termcap 3p		lib/Pod/Text/Termcap.pm \
     Pod::Usage 3p			lib/Pod/Usage.pm \
     POSIX 3p				lib/POSIX.pod \
@@ -646,6 +636,7 @@ _quick3p=
     TAP::Formatter::File::Session 3p	lib/TAP/Formatter/File/Session.pm \
     TAP::Formatter::Session 3p		lib/TAP/Formatter/Session.pm \
     TAP::Harness 3p			lib/TAP/Harness.pm \
+    TAP::Harness::Beyond 3p		lib/TAP/Harness/Beyond.pod \
     TAP::Harness::Env 3p		lib/TAP/Harness/Env.pm \
     TAP::Object 3p			lib/TAP/Object.pm \
     TAP::Parser 3p			lib/TAP/Parser.pm \
