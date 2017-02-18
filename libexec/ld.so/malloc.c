@@ -172,7 +172,10 @@ hash(void *p)
 static __dead void
 wrterror(char *msg)
 {
-	_dl_die("%s error: %s", g_pool->func, msg);
+	if (g_pool != NULL && g_pool->func != NULL)
+		_dl_die("%s error: %s", g_pool->func, msg);
+	else
+		_dl_die("%s", msg);
 }
 
 static void
