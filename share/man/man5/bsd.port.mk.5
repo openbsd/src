@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.448 2017/02/18 14:36:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.449 2017/02/18 15:05:56 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -163,7 +163,11 @@ target that simulates invoking
 .It Cm checksum
 Check distribution archives and distribution patches control sum against
 the results recorded in ${CHECKSUM_FILE},
-using the message digest (checksum) utilities listed in ${PREFERRED_CIPHERS}.
+using the proper cryptographic message digest 
+.Po 
+currently 
+.Xr sha256 1
+.Pc
 All the files needed to recreate a port should be in ${CHECKSUMFILES} and
 checksummed.
 Invoking
@@ -174,7 +178,9 @@ will try to fetch a version with the correct checksum from the
 .Ox
 main archive site in the case of a checksum mismatch.
 .Ev NO_CHECKSUM
-can be used to avoid all checksumming steps.
+can be used to bypass
+.Cm checksum
+(for instance, if it has already been done).
 .It Cm clean
 Clean ports contents.
 By default, it will clean the work directory.
@@ -2419,11 +2425,6 @@ Controls the behavior of
 .Pa misc/portroach
 as documented in detail at
 .Lk http://jasperla.github.io/portroach/docs/portroach-portconfig.txt .
-.It Ev PREFERRED_CIPHERS
-List of cryptographic ciphers to use, in order of preference.
-Default is
-.Sq sha256 .
-The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under
@@ -3238,7 +3239,8 @@ Cache of all distribution files.
 Checksum file.
 Holds the output of
 .Xr cksum 1 ,
-using ${PREFERRED_CIPHERS},
+using
+.Xr sha256 1
 for the port's ${DISTFILES} and ${PATCHFILES},
 as well as the sizes of these files.
 .It Pa ${DISTDIR}/${CHECKSUMFILES}
@@ -4025,6 +4027,8 @@ Use SUBST_VARS instead.
 does not allow general substitutions of the form VAR=value, but uses
 only a list of variables instead.
 Most package files gets transformed, instead of only the packing list.
+.It Ev PREFERRED_CIPHERS
+Allowing user change of cryptographic digest is dangerous.
 .It Ev RESTRICTED
 Port has cryptographic issues.
 .Ox
