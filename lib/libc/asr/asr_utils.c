@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.15 2017/02/18 19:23:05 jca Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.16 2017/02/19 12:02:30 jca Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -426,7 +426,7 @@ int
 _asr_pack_edns0(struct asr_pack *p, uint16_t pktsz)
 {
 	pack_dname(p, "");	/* root */
-	pack_u16(p, 41);	/* OPT */
+	pack_u16(p, T_OPT);	/* OPT */
 	pack_u16(p, pktsz);	/* UDP payload size */
 	pack_u32(p, 0);		/* extended RCODE and flags */
 	pack_u16(p, 0);		/* RDATA len */
