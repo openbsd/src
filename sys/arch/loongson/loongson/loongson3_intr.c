@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.4 2016/12/12 16:25:47 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.5 2017/02/19 09:53:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -363,8 +363,9 @@ loongson3_splx(int newipl)
 
 	setipl(ci, newipl);
 
-	REGVAL(LS3_IRT_INTENSET(0)) =
-	    loongson3_intem & ~loongson3_imask[newipl];
+	if (CPU_IS_PRIMARY(ci))
+		REGVAL(LS3_IRT_INTENSET(0)) =
+		    loongson3_intem & ~loongson3_imask[newipl];
 
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
