@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.23 2017/01/21 05:46:56 guenther Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.24 2017/02/19 21:39:32 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ MD_SECT_CALL_FUNC(".fini", __do_fini);
 void
 __do_init(void)
 {
-	static int initialized = 0;
+	static int initialized;
 	static struct dwarf2_eh_object object;
 
 	/*
@@ -148,7 +148,7 @@ __do_init(void)
 void
 __do_fini(void)
 {
-	static int finalized = 0;
+	static int finalized;
 
 	if (!finalized) {
 		finalized = 1;

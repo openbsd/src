@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.18 2017/01/21 05:46:56 guenther Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.19 2017/02/19 21:39:32 guenther Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ MD_SECT_CALL_FUNC(".fini", _do_fini);
 void
 _do_init(void)
 {
-	static int initialized = 0;
+	static int initialized;
 
 	/*
 	 * Call global constructors.
@@ -155,7 +155,7 @@ _do_init(void)
 void
 _do_fini(void)
 {
-	static int finalized = 0;
+	static int finalized;
 
 	if (!finalized) {
 		finalized = 1;
