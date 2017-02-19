@@ -58,7 +58,7 @@ elf_generic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 #define TARGET_LITTLE_SYM		bfd_elf64_aarch64_vec
-#define TARGET_LITTLE_NAME		"elf64-aarc64"
+#define TARGET_LITTLE_NAME		"elf64-aarch64"
 #define ELF_ARCH			bfd_arch_aarch64
 #define ELF_MACHINE_CODE		EM_AARCH64
 #define ELF_MAXPAGESIZE			0x1000
