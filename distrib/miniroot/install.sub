@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.973 2017/02/14 22:23:04 rpe Exp $
+#	$OpenBSD: install.sub,v 1.974 2017/02/19 17:53:58 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2775,7 +2775,7 @@ do_install(){
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
 		[[ -n $_i ]] && unpriv2 ftp -w 15 -Vao - \
-			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?dbversion=1&$_i" \ 
+			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?dbversion=1&$_i" \
 			 >/dev/null 2>&1 &
 	fi
 
