@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.2 2016/12/18 17:46:52 patrick Exp $ */
+/* $OpenBSD: exception.S,v 1.3 2017/02/19 19:42:40 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -121,12 +121,12 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 1:
 	msr	daifset, #2
 
-	/* Read the current thread flags */
+	/* Check for astpending */
 	mrs	x18, tpidr_el1
-	ldrb	w1, [x18, #CI_WANT_RESCHED]
-	/* Check if we have either bits set */
-	cmp	w1, #0
-	b.eq	2f
+	ldr	x1, [x18, #CI_CURPROC]
+	cbz	x1, 2f
+	ldr	w1, [x1, #P_ASTPENDING]
+	cbz	w1, 2f
 
 	/* Restore interrupts */
 	msr	daif, x19
@@ -134,7 +134,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 	/* handle the ast */
 	mov	x0, sp
 	bl	_C_LABEL(ast)
-	b 1b
+	b	1b
 2:
 .endm
 
@@ -160,7 +160,6 @@ handle_el0_sync:
 	mov	x0, sp
 	bl	do_el0_sync
 	bl	_C_LABEL(vfp_enable)
-ENTRY(syscall_return)
 	do_ast
 	restore_registers 0
 	eret
@@ -171,6 +170,7 @@ handle_el0_irq:
 	mov	x0, sp
 	bl	arm_cpu_intr
 	bl	_C_LABEL(vfp_enable)
+	do_ast
 	restore_registers 0
 	eret
 
@@ -180,6 +180,11 @@ handle_el0_error:
 	bl	do_el0_error
 	brk	0xf23
 	1: b 1b
+
+ENTRY(syscall_return)
+	do_ast
+	restore_registers 0
+	eret
 
 .macro	vempty
 	.align 7

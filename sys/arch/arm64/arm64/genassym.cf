@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2016/12/17 23:38:33 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2017/02/19 19:42:40 patrick Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -56,6 +56,7 @@ struct cpu_info
 member CI_CURPROC ci_curproc
 
 struct proc
+member P_ASTPENDING p_md.md_astpending
 member P_STAT p_stat
 
 struct pcb
@@ -76,7 +77,6 @@ define SONPROC SONPROC
 
 struct cpu_info
 member CI_CURPCB ci_curpcb
-member CI_WANT_RESCHED ci_want_resched
 
 struct proc
 member P_ADDR p_addr
