@@ -1,8 +1,8 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.3 2016/12/11 07:57:14 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.4 2017/02/19 08:59:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
- * Copyright (c) 2016 Visa Hankala.
+ * Copyright (c) 2016, 2017 Visa Hankala.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,13 +24,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <mips64/archtype.h>
+#include <mips64/loongson3.h>
+#include <mips64/mips_cpu.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/pmon.h>
-
-#include <mips64/loongson3.h>
 
 #include <dev/ic/i8259reg.h>
 #include <dev/isa/isareg.h>
@@ -50,6 +52,18 @@ void	 generic3a_device_register(struct device *, void *);
 void	 generic3a_powerdown(void);
 void	 generic3a_reset(void);
 void	 generic3a_setup(void);
+
+#ifdef MULTIPROCESSOR
+void	 generic3a_config_secondary_cpus(struct device *, cfprint_t);
+void	 generic3a_boot_secondary_cpu(struct cpu_info *);
+int	 generic3a_ipi_establish(int (*)(void *), cpuid_t);
+void	 generic3a_ipi_set(cpuid_t);
+void	 generic3a_ipi_clear(cpuid_t);
+uint32_t generic3a_ipi_intr(uint32_t, struct trapframe *);
+
+paddr_t	 ls3_ipi_base[MAXCPUS];
+int	(*ls3_ipi_handler)(void *);
+#endif /* MULTIPROCESSOR */
 
 void	 rs780e_setup(void);
 
@@ -104,7 +118,15 @@ const struct platform rs780e_platform = {
 	.device_register = generic3a_device_register,
 
 	.powerdown = generic3a_powerdown,
-	.reset = generic3a_reset
+	.reset = generic3a_reset,
+
+#ifdef MULTIPROCESSOR
+	.config_secondary_cpus = generic3a_config_secondary_cpus,
+	.boot_secondary_cpu = generic3a_boot_secondary_cpu,
+	.ipi_establish = generic3a_ipi_establish,
+	.ipi_set = generic3a_ipi_set,
+	.ipi_clear = generic3a_ipi_clear,
+#endif /* MULTIPROCESSOR */
 };
 
 const struct pic rs780e_pic = {
@@ -151,6 +173,11 @@ generic3a_setup(void)
 	}
 
 	loongson3_intr_init();
+
+#ifdef MULTIPROCESSOR
+	ipi_mask = CR_INT_4;
+	set_intr(INTPRI_IPI, CR_INT_4, generic3a_ipi_intr);
+#endif
 }
 
 void
@@ -194,6 +221,114 @@ generic3a_device_register(struct device *dev, void *aux)
 	}
 #endif
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+generic3a_config_secondary_cpus(struct device *parent, cfprint_t print)
+{
+	struct cpu_attach_args caa;
+	struct cpu_hwinfo hw;
+	uint32_t boot_cpu = loongson3_get_cpuid();
+	uint32_t cpu, unit = 0;
+
+	ls3_ipi_base[unit++] = LS3_IPI_BASE(0, boot_cpu);
+
+	memset(&caa, 0, sizeof(caa));
+	hw = bootcpu_hwinfo;
+	for (cpu = 0; cpu < LOONGSON_MAXCPUS && ncpus < MAXCPUS; cpu++) {
+		if (!ISSET(loongson_cpumask, 1u << cpu))
+			continue;
+		if (cpu == boot_cpu)
+			continue;
+
+		ls3_ipi_base[unit++] = LS3_IPI_BASE(LS3_NODEID(cpu),
+		    LS3_COREID(cpu));
+
+		caa.caa_maa.maa_name = "cpu";
+		caa.caa_hw = &hw;
+		config_found(parent, &caa, print);
+	}
+}
+
+void
+generic3a_boot_secondary_cpu(struct cpu_info *ci)
+{
+	vaddr_t kstack;
+
+	kstack = alloc_contiguous_pages(USPACE);
+	if (kstack == 0)
+		panic("unable to allocate idle stack");
+	ci->ci_curprocpaddr = (void *)kstack;
+
+	/*
+	 * The firmware has put the secondary core into a wait loop which
+	 * terminates when a non-zero value is written to mailbox0.
+	 * After the core exits the loop, the firmware initializes the core's
+	 * pc, sp, gp and a1 registers as follows:
+	 *
+	 * pc = mailbox0 | 0xffffffff00000000u;
+	 * sp = mailbox1 | 0x9800000000000000u;
+	 * gp = mailbox2 | 0x9800000000000000u;
+	 * a1 = mailbox3;
+	 */
+
+	cpu_spinup_a0 = (uint64_t)ci;
+	cpu_spinup_sp = kstack;
+	mips_sync();
+
+	REGVAL64(ls3_ipi_base[ci->ci_cpuid] + LS3_IPI_MBOX0) =
+	    (uint64_t)hw_cpu_spinup_trampoline;  /* pc */
+
+	while (!cpuset_isset(&cpus_running, ci))
+		continue;
+}
+
+int
+generic3a_ipi_establish(int (*func)(void *), cpuid_t cpuid)
+{
+	if (cpuid == 0)
+		ls3_ipi_handler = func;
+
+	/* Clear any pending IPIs. */
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_CLEAR) = ~0u;
+
+	/* Enable the IPI. */
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_IMR) = 1u;
+
+	return 0;
+}
+
+void
+generic3a_ipi_set(cpuid_t cpuid)
+{
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_SET) = 1;
+}
+
+void
+generic3a_ipi_clear(cpuid_t cpuid)
+{
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_CLEAR) = 1;
+}
+
+uint32_t
+generic3a_ipi_intr(uint32_t hwpend, struct trapframe *frame)
+{
+	cpuid_t cpuid = cpu_number();
+
+	/* Mask all IPIs. */
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_IMR) = ~0u;
+
+	if (ls3_ipi_handler != NULL)
+		ls3_ipi_handler((void *)cpuid);
+
+	/* Enable the IPI. */
+	REGVAL32(ls3_ipi_base[cpuid] + LS3_IPI_IMR) = 1u;
+
+	return hwpend;
+}
+
+#endif /* MULTIPROCESSOR */
 
 /*
  * Routines for RS780E-based systems
