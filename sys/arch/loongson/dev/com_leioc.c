@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_leioc.c,v 1.1 2016/11/17 14:41:21 visa Exp $	*/
+/*	$OpenBSD: com_leioc.c,v 1.2 2017/02/19 10:18:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -38,6 +38,7 @@
 
 int	com_leioc_match(struct device *, void *, void *);
 void	com_leioc_attach(struct device *, struct device *, void *);
+int	com_leioc_intr(void *);
 
 const struct cfattach com_leioc_ca = {
 	sizeof(struct com_softc), com_leioc_match, com_leioc_attach
@@ -90,8 +91,22 @@ com_leioc_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	loongson3_intr_establish(LS3_IRQ_LPC, IPL_TTY, comintr, sc,
+	loongson3_intr_establish(LS3_IRQ_LPC, IPL_TTY, com_leioc_intr, sc,
 	    sc->sc_dev.dv_xname);
+}
+
+int
+com_leioc_intr(void *arg)
+{
+	comintr(arg);
+
+	/*
+	 * Always return non-zero to prevent console clutter about spurious
+	 * interrupts. comstart() enables the transmitter holding register
+	 * empty interrupt before adding data to the FIFO, which can trigger
+	 * a premature interrupt on the primary CPU in a multiprocessor system.
+	 */
+	return 1;
 }
 
 void
