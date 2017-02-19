@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.451 2017/02/19 10:07:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.452 2017/02/19 10:55:35 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -164,19 +164,17 @@ target that simulates invoking
 Compute a
 .Xr sha256 1
 digest
-of distribution archives and distribution patches and
-check it against ${CHECKSUM_FILE}.
-Invoking
+of ${CHECKSUM_FILES} (files listed in DISTFILES and PATCHFILES) and
+check it against ${CHECKSUM_FILE}, normally
+.Pa distinfo .
+In case of a mismatch, running
 .Cm checksum
 with
 .Ev REFETCH Ns = Ns Cm true
-will try to fetch a version with the correct checksum from the
+will fetch alternative versions of files keyed on their checksum
+fron the
 .Ox
-main archive site in the case of a checksum mismatch.
-.Ev NO_CHECKSUM
-can be used to bypass
-.Cm checksum
-(for instance, if it has already been done).
+main archive site.
 .It Cm clean
 Clean ports contents.
 By default, it will clean the work directory.
@@ -226,8 +224,7 @@ Shorthand for
 .Ql make clean=depends .
 .It Cm configure
 Configure the port.
-Might be a void operation.
-Unless overridden,
+By default,
 .Cm configure
 creates the ${WRKBUILD} directory (see SEPARATE_BUILD),
 and runs whatever configuration methods are recorded in
@@ -303,55 +300,50 @@ against the list of installed packages and libraries in the ports tree.
 See
 .Cm print-package-args .
 .It Cm fetch
-Fetch the distribution files and patchfiles, using ${FETCH_CMD}.
-Each file of the
+Fetch the list of files in
 .Ev DISTFILES
 and
 .Ev PATCHFILES
-lists is retrieved, if necessary, from the list of sites in
+using ${FETCH_CMD}.
+Files are normally retrieved from the list of sites in
 .Ev MASTER_SITES .
 .Pp
-If a filename ends with a
+Appending
 .Sq :0
 to
 .Sq :9
-extension, it will be retrieved from
+to an entry will let
+${FETCH_CMD} retrieve from
 .Ev MASTER_SITES0
 to
 .Ev MASTER_SITES9
 instead.
-After stripping that extension if necessary,
-if the entry parses as
+If the rest of the entry parses as
 .Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
-it will be fetched as
+${FETCH_CMD} will fetch
 .Ar url Ns Ar sufx
-instead, yet still stored as
+instead, but store the result as
 .Ar filename Ns Ar sufx .
 .Pp
-Transfers in progress will be stored as
-.Ar filenamesufx.part .
+Transfers in progress are stored as
+.Ar filenamesufx.part
+and moved after completion.
 .Pp
 The ports framework uses
 .Pa ${DISTDIR}/${DIST_SUBDIR}
 (aliased to
 .Pa ${FULLDISTDIR} )
-to cache the ports distribution files and patch files.
-Note that this framework is also used by mirroring scripts,
-which will also retrieve
-.Ev SUPDISTFILES ,
-to fill with supplementary distribution files which are not needed for
-every configuration.
+to save the ports distribution files and patch files.
 .Pp
-Note that fetching a significant number of distfiles, or fetching all distfiles
-relevant to a port and dependencies is better accomplished using
-.Xr dpb 1
-with the
-.Fl F
-option.
+If you want to fetch a significant number of distfiles quickly, say
+all files relevant to a port,
+.Cm dpb Fl F
+is more efficient.
 .Pp
 Use of
 .Cm {pre,do,post}-fetch
 hooks is forbidden, as this would make mirroring of distfiles very complicated.
+.Pp
 See
 .Ev CHECKSUMFILES ,
 .Ev CDROM_SITE ,
@@ -370,7 +362,7 @@ See
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
 .It Cm fetch-all
-also fetches
+Also fetches
 .Ev SUPDISTFILES ,
 for use with e.g.,
 .Cm makesum .
@@ -431,11 +423,14 @@ Seldom used, see
 .Xr ports 7
 for details.
 .It Cm makesum
-Create the ${CHECKSUM_FILE} list of recorded checksums by running the
-cryptographic fingerprint sha256 on ${MAKESUMFILES}.
-That normally includes ${DISTFILES}, ${SUPDISTFILES} and ${PATCHFILES}.
-.Ev NO_CHECKSUM
-can be used to avoid all checksumming steps.
+Run
+.Xr sha256 1
+on ${MAKESUMFILES}
+that is, files listed in ${DISTFILES}, ${SUPDISTFILES} and ${PATCHFILES},
+and store the result in ${CHECKSUM_FILE}, normally
+.Pa distinfo .
+Also store the lengths of all files for a quick check during
+.Cm fetch .
 .It Cm manpages-check
 Verify that
 .Xr makewhatis 8
@@ -2047,14 +2042,16 @@ even when
 .Ev USE_CCACHE
 is set.
 .It Ev NO_CHECKSUM
-User settings.
 Set to
 .Sq Yes
+by
+.Xr dpb 1
 to avoid
-.Cm checksum ,
-entirely.
-Beware of the full implications of this mechanism, namely that it disables
-the basic authentication mechanisms of the ports tree entirely.
+.Cm checksum
+entirely,
+as
+.Xr dpb 1
+already deals with checksums internally.
 .It Ev NO_DEPENDS
 User settings.
 Don't verify build of dependencies.
