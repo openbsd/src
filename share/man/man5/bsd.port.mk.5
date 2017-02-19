@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.452 2017/02/19 10:55:35 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.453 2017/02/19 16:12:28 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -435,15 +435,6 @@ Also store the lengths of all files for a quick check during
 Verify that
 .Xr makewhatis 8
 can do a correct job with the port's manpages.
-.It Cm mirror-maker
-Top-level target, see
-.Xr mirroring-ports 7 .
-.It Cm mirror-maker-fetch
-Debug target: generate the
-.Cm mirror-maker
-makefile fragment and use it
-to fetch files, see
-.Xr mirroring-ports 7 .
 .It Cm no-lib-depends-args
 Degenerate form of
 .Cm lib-depends-args
@@ -2541,9 +2532,6 @@ Location for daemon startup scripts.
 Defaults to
 .Pa /etc/rc.d .
 Do not change.
-.It Ev RECURSIVE_FETCH_LIST
-See
-.Xr mirroring-ports 7 .
 .It Ev REFETCH
 User settings.
 If set to true,
@@ -3726,10 +3714,11 @@ There is no port that requires special treatment during packaging,
 as
 .Cm {pre,do,post}-install
 should take care of every necessity.
-.It Cm fetch-list , mirror-distfiles , fetch-makefile
-See
-.Xr mirroring-ports 7
-for more efficient and flexible ways to build mirrors.
+.It Cm fetch-list , mirror-distfiles , fetch-makefile , mirror-maker , mirror-maker-fetch
+Use
+.Cm dpb Fl F
+instead, see
+.Xr mirroring-ports 7 .
 .It Cm obj
 Starting with
 .Ox 3.3 ,
@@ -4022,6 +4011,9 @@ only a list of variables instead.
 Most package files gets transformed, instead of only the packing list.
 .It Ev PREFERRED_CIPHERS
 Allowing user change of cryptographic digest is dangerous.
+.It Ev RECURSIVE_FETCH_LIST
+No longer needed with modern
+.Xr mirroring-ports 7 .
 .It Ev RESTRICTED
 Port has cryptographic issues.
 .Ox
