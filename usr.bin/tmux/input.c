@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.116 2017/02/16 12:56:01 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.117 2017/02/19 07:55:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1778,6 +1778,9 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 			break;
 		case 27:
 			gc->attr &= ~GRID_ATTR_REVERSE;
+			break;
+		case 28:
+			gc->attr &= ~GRID_ATTR_HIDDEN;
 			break;
 		case 30:
 		case 31:
