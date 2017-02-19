@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.186 2016/11/14 06:59:42 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.187 2017/02/19 22:09:18 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: February 19 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1704,12 +1704,10 @@ is used to produce values.
 If the variable
 .Ev RANDOM
 is assigned a value, the value is used as the seed to
-.Xr srand 3
+.Xr srand_deterministic 3
 and subsequent references of
 .Ev RANDOM
-will use
-.Xr rand 3
-to produce values, resulting in a predictable sequence.
+produce a predictable sequence.
 .It Ev REPLY
 Default parameter for the
 .Ic read
