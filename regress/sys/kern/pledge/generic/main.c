@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2015/10/30 07:24:20 semarie Exp $ */
+/*	$OpenBSD: main.c,v 1.9 2017/02/19 19:59:12 tb Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -61,6 +61,7 @@ test_kill()
 	kill(0, SIGINT);
 }
 
+#ifdef WLPATHS 
 static void
 open_close(const char *filename)
 {
@@ -96,16 +97,16 @@ test_wpaths()
 	printf("\n");
 	exit(EXIT_SUCCESS);
 }
+#endif
 
 static void
 test_pledge()
 {
-	const char *wpaths[] = { "/sbin", NULL };
-
-	if (pledge("stdio rpath", wpaths) != 0)
+	if (pledge("stdio rpath", NULL) != 0)
 		_exit(errno);
 }
 
+#ifdef WLPATHS
 static void
 do_stat(const char *path)
 {
@@ -150,25 +151,7 @@ test_stat()
 	printf("\n");
 	exit(EXIT_SUCCESS);
 }
-
-static void
-test_mmap()
-{
-	int fd;
-	void * data;
-
-	if ((fd = open("/dev/zero", O_RDONLY, 0)) == -1)
-		_exit(errno);
-
-	data = mmap(NULL, 4096, PROT_READ|PROT_WRITE|PROT_EXEC,
-	    MAP_FILE|MAP_SHARED, fd, 0);
-
-	if (data == MAP_FAILED)
-		_exit(errno);
-
-	munmap(data, 4096);
-	close(fd);
-}
+#endif
 
 static void
 test_rpath()
@@ -247,6 +230,7 @@ main(int argc, char *argv[])
 	start_test(&ret, "stdio wpath", NULL, test_wpath);
 	start_test(&ret, "cpath", NULL, test_cpath);
 
+#if WLPATHS
 	/*
 	 * test whitelist path
 	 */
@@ -261,6 +245,7 @@ main(int argc, char *argv[])
 	start_test1(&ret, "stdio rpath", "generic", test_wpaths);
 	start_test1(&ret, "stdio rpath", "", test_wpaths);
 	start_test1(&ret, "stdio rpath", ".", test_wpaths);
+#endif
 
 	/*
 	 * test pledge(2) arguments
@@ -269,20 +254,15 @@ main(int argc, char *argv[])
 	start_test(&ret, "stdio rpath", NULL, test_pledge);
 	/* reduce request */
 	start_test(&ret, "stdio rpath wpath", NULL, test_pledge);
-	/* reduce request (with same/other wpaths) */
-	start_test1(&ret, "stdio rpath wpath", "/sbin", test_pledge);
-	start_test1(&ret, "stdio rpath wpath", "/", test_pledge);
 	/* add request */
 	start_test(&ret, "stdio", NULL, test_pledge);
 	/* change request */
 	start_test(&ret, "stdio unix", NULL, test_pledge);
 
 	/* test stat(2) */
+#if WLPATHS
 	start_test1(&ret, "stdio rpath", "/usr/share/man", test_stat);
-
-	/* mmap */
-	start_test1(&ret, "stdio rpath prot_exec", "/dev/zero", test_mmap);
-	start_test1(&ret, "stdio rpath", "/dev/zero", test_mmap);
+#endif
 
 	/* stdio */
 	start_test(&ret, NULL, NULL, test_request_stdio);

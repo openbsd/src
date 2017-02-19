@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.4 2015/10/23 18:50:54 mmcc Exp $ */
+/*	$OpenBSD: manager.c,v 1.5 2017/02/19 19:59:12 tb Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -128,8 +128,8 @@ grab_syscall(pid_t pid)
 			const char *errstr = NULL;
 			char *c;
 			/* truncate at first no-number */
-			for (c = line + searchlen; (*c != '\0') && isdigit((unsigned char)*c);
-			     c++)
+			for (c = line + searchlen;
+			    (*c != '\0') && isdigit((unsigned char)*c); c++)
 				;
 			*c = '\0';
 
@@ -195,7 +195,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 			printf("NULL)");
 	} else
 		printf("skip");
-	
+
 	/* unlink previous coredump (if exists) */
 	if (clear_coredump(ret, test_name) == -1)
 		return;
