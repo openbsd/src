@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.12 2016/01/08 05:26:25 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.13 2017/02/19 08:35:13 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -47,6 +47,9 @@ void	mips64_ipi_nop(void);
 void	smp_rendezvous_action(void);
 void	mips64_ipi_ddb(void);
 void	mips64_multicast_ipi(unsigned int, unsigned int);
+
+struct evcount ipi_count;
+unsigned int ipi_irq = 0;
 unsigned int ipi_mailbox[MAXCPUS];
 
 /* Variables needed for SMP rendezvous. */
@@ -77,8 +80,10 @@ mips64_ipi_init(void)
 	cpuid_t cpuid = cpu_number();
 	int error;
 
-	if (!cpuid)
+	if (!cpuid) {
 		mtx_init(&smp_ipi_mtx, IPL_IPI);
+		evcount_attach(&ipi_count, "ipi", &ipi_irq);
+	}
 
 	hw_ipi_intr_clear(cpuid);
 
@@ -104,9 +109,13 @@ mips64_ipi_intr(void *arg)
 	pending_ipis = atomic_swap_uint(&ipi_mailbox[cpuid], 0);
 	
 	if (pending_ipis > 0) {
-		for (bit = 0; bit < MIPS64_NIPIS; bit++)
-			if (pending_ipis & (1UL << bit))
+		for (bit = 0; bit < MIPS64_NIPIS; bit++) {
+			if (pending_ipis & (1UL << bit)) {
 				(*ipifuncs[bit])();
+				atomic_inc_long(
+				    (unsigned long *)&ipi_count.ec_count);
+			}
+		}
 	}
 
 	return 1;
