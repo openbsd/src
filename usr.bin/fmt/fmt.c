@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.36 2016/01/07 18:02:43 schwarze Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.37 2017/02/19 23:45:46 schwarze Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -468,7 +468,7 @@ process_stream(FILE *stream, const char *name)
 					    tab_width - line_width;
 				else if ((wcw = wcwidth(wc)) == -1)
 					wcw = 1;
-				if (iswblank(wc)) {
+				if (iswblank(wc) && wc != 0xa0) {
 					/* Skip whitespace at start of line. */
 					if (word_length == 0) {
 						wordp += wcl;
