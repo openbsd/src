@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.7 2010/08/28 12:48:14 miod Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.8 2017/02/20 15:35:05 jcs Exp $	*/
 /*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri;
 	int32_t *dp, *rp;
 	u_char *fr;
+	uint32_t buffer[64];
 
 	ri = (struct rasops_info *)cookie;
 
@@ -90,12 +91,13 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (uc == ' ') {
+		for (cnt = 0; cnt < width; cnt++)
+			buffer[cnt] = clr[0];
 		while (height--) {
 			dp = rp;
 			DELTA(rp, ri->ri_stride, int32_t *);
 
-			for (cnt = width; cnt; cnt--)
-				*dp++ = clr[0];
+			memcpy(dp, buffer, width << 2);
 		}
 	} else {
 		uc -= ri->ri_font->firstchar;
@@ -109,10 +111,11 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			fr += fs;
 			DELTA(rp, ri->ri_stride, int32_t *);
 
-			for (cnt = width; cnt; cnt--) {
-				*dp++ = clr[(fb >> 31) & 1];
+			for (cnt = 0; cnt < width; cnt++) {
+				buffer[cnt] = clr[(fb >> 31) & 1];
 				fb <<= 1;
 			}
+			memcpy(dp, buffer, width << 2);
 		}
 	}
 
