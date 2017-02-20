@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.20 2017/02/20 19:56:33 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.21 2017/02/20 20:25:27 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3702,9 +3702,12 @@ vmx_handle_hlt(struct vcpu *vcpu)
 	uint32_t insn_length;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
-		printf("vmx_handle_hlt: can't obtain instruction length\n");
+		printf("%s: can't obtain instruction length\n", __func__);
 		return (EINVAL);
 	}
+
+	/* All HLT insns are 1 byte */
+	KASSERT(insn_length == 1);
 
 	vcpu->vc_gueststate.vg_eip += insn_length;
 	return (EAGAIN);
