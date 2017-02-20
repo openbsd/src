@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.453 2017/02/19 16:12:28 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.454 2017/02/20 14:21:45 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 19 2017 $
+.Dd $Mdocdate: February 20 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -136,13 +136,6 @@ Essentially invoke
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \e
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
-.It Cm build-depends
-Verify the ports mentioned in
-.Ev BUILD_DEPENDS ,
-by checking the corresponding packages are actually installed,
-and install the missing ports by recursing through the ports tree.
-Deprecated, see
-.Cm prepare .
 .It Cm check-register
 Introspection target.
 Verify from the ports tree, without building anything, that the current
@@ -229,12 +222,6 @@ By default,
 creates the ${WRKBUILD} directory (see SEPARATE_BUILD),
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
-.It Cm depends
-Check all the port's dependencies, that is:
-.Cm build-depends ,
-.Cm lib-depends ,
-.Cm run-depends ,
-.Cm test-depends .
 .It Cm describe
 Prints a one-line index entry of the port, suitable for
 .Pa ${PORTSDIR}/INDEX .
@@ -369,6 +356,17 @@ for use with e.g.,
 .It Cm index
 Top-level target, see
 .Xr ports 7 .
+.It Cm install-depends
+Before package installation, Install and verify dependencies constructed from
+.Ev RUN_DEPENDS ,
+.Ev LIB_DEPENDS ,
+and
+.Ev WANTLIB .
+In
+.Ev MULTI_PACKAGES
+setups,
+see
+.Sx FLAVORS AND MULTI_PACKAGES .
 .It Cm install
 Install the package after building.
 See the description of
@@ -378,9 +376,6 @@ for the non-intuitive details of the way
 hooks are actually used by the ports tree.
 .It Cm install-all
 Install all packages in a multi-packages port.
-.It Cm lib-depends
-Verify that the library dependencies a port needs are actually there,
-by checking the library specifications.
 .It Cm lib-depends-args
 Filter
 .Ev LIB_DEPENDS
@@ -552,11 +547,11 @@ or installed packages, and writes a list of options suitable for
 See
 .Cm print-package-args .
 .It Cm prepare
-Prepare a port for building, by checking and installing all required
-dependencies, constructed from
+Before port building, install and verify dependencies constructed from
+.Ev BUILD_DEPENDS ,
 .Ev LIB_DEPENDS
 and
-.Ev BUILD_DEPENDS .
+.Ev WANTLIB .
 In
 .Ev MULTI_PACKAGES
 setups,
@@ -672,12 +667,6 @@ Seldom needed, as
 will often do the right thing.
 .It Cm repackage
 Rebuild the packages of a port after removing existing packages.
-.It Cm run-depends
-Verify the ports mentioned in
-.Ev RUN_DEPENDS ,
-by checking the corresponding packages are actually installed,
-and install the missing ports by recursing through the ports tree.
-Invoked right before installing the package.
 .It Cm run-depends-args
 Process
 .Ev RUN_DEPENDS
@@ -746,10 +735,9 @@ testing, define a
 .Sq test
 .Ev FLAVOR .
 .It Cm test-depends
-Verify packages needed for regression tests, using the same scheme as
-.Cm build-depends .
-Only invoked when regression tests are run, or explicitly through
-.Cm depends .
+Before running regression tests, Install and verify dependencies
+constructed from
+.Ev TEST_DEPENDS .
 .It Cm unlink-categories
 Remove symbolic links in other directories that correspond to the port's
 .Ev CATEGORIES .
@@ -1764,7 +1752,7 @@ Use with
 and
 .Ev ONLY_FOR_ARCHS .
 .It Ev LIB_DEPENDS
-Libraries this port depends upon.
+List of packages used by a port for its library dependencies.
 Each item has the form
 .Sq [pkgspec:]pkgpath .
 Similar to
@@ -1774,9 +1762,12 @@ and
 but with specific rules:
 .Ev LIB_DEPENDS
 always turn into
-.Ev BUILD_DEPENDS .
+.Ev BUILD_DEPENDS
+.Po
+but see
+.Sx FLAVORS AND MULTI PACKAGES
+.Pc .
 .Pp
-On architectures that use dynamic libraries,
 .Ev LIB_DEPENDS
 is also used as a run-time dependency, and recorded in the package as
 such, if any of the libraries mentioned in
@@ -2931,7 +2922,7 @@ Base location for ports that install stuff outside of
 Defaults to
 .Pa /var .
 .It Ev WANTLIB
-Extra list of library specifications that a package will need.
+List of library specifications that a package will need.
 May include system and X11 libraries.
 See
 .Xr library-specs 7
@@ -3700,6 +3691,13 @@ target.
 .It Cm depends-list
 Renamed into
 .Cm full-build-depends .
+.It Cm {build,run,lib}-depends
+The dependency mechanism now meshes
+.Ev BUILD_DEPENDS , LIB_DEPENDS , RUN_DEPENDS, WANTLIB
+and
+.Ev MULTI_PACKAGES .
+Refer to
+.Cm prepare , install-depends , test-depends .
 .It Cm {pre,do}-extract
 Don't override.
 Set
