@@ -1,3 +1,4 @@
+/* $OpenBSD: ocspcheck.c,v 1.16 2017/02/20 23:55:22 beck Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
