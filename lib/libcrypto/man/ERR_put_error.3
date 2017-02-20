@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_put_error.3,v 1.4 2016/11/23 17:54:15 schwarze Exp $
+.\"	$OpenBSD: ERR_put_error.3,v 1.5 2017/02/20 23:21:19 beck Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,12 +48,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2016 $
+.Dd $Mdocdate: February 20 2017 $
 .Dt ERR_PUT_ERROR 3
 .Os
 .Sh NAME
 .Nm ERR_put_error ,
-.Nm ERR_add_error_data
+.Nm ERR_add_error_data ,
+.Nm ERR_add_error_vdata
 .Nd record an OpenSSL error
 .Sh SYNOPSIS
 .In openssl/err.h
@@ -97,6 +98,12 @@ string arguments with the error code added last.
 .Fn ERR_add_error_vdata
 is similar except the argument is a
 .Vt va_list .
+Use of
+.Fn ERR_add_error_data
+and
+.Fn ERR_add_error_vdata
+is deprecated inside of LibreSSL in favour of
+.Xr ERR_asprintf_error_data 3 .
 .Pp
 .Xr ERR_load_strings 3
 can be used to register error strings so that the application can
@@ -136,6 +143,7 @@ which must use the
 macro.
 .Sh SEE ALSO
 .Xr ERR 3 ,
+.Xr ERR_asprintf_error_data 3 ,
 .Xr ERR_load_strings 3
 .Sh HISTORY
 .Fn ERR_put_error
