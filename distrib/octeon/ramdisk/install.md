@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.17 2017/01/22 23:43:54 rpe Exp $
+#	$OpenBSD: install.md,v 1.18 2017/02/20 16:13:35 visa Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,12 +71,12 @@ e 0
 C
 n
 64
-32768
+65536
 f 0
 e 3
 A6
 n
-32832
+65600
 
 write
 quit
@@ -95,7 +95,7 @@ by U-Boot. Neither partition will overlap any other partition.
 
 The OpenBSD MBR partition will have an id of 'A6' and the boot MBR
 partition will have an id of 'C' (MSDOS). The boot partition will be
-at least 16MB and be the first 'MSDOS' partition on the disk.
+at least 32MB and be the first 'MSDOS' partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
