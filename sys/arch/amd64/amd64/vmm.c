@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.112 2017/02/20 07:14:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.113 2017/02/20 07:21:47 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1686,12 +1686,11 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* Setup MSR bitmap */
 	memset((uint8_t *)vcpu->vc_msr_bitmap_va, 0xFF, 2 * PAGE_SIZE);
-	vmcb->v_iopm_pa = (uint64_t)(vcpu->vc_msr_bitmap_pa);
+	vmcb->v_msrpm_pa = (uint64_t)(vcpu->vc_msr_bitmap_pa);
 	svm_setmsrbrw(vcpu, MSR_IA32_FEATURE_CONTROL);
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_CS);
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_ESP);
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_EIP);
-	svm_setmsrbrw(vcpu, MSR_EFER);
 	svm_setmsrbrw(vcpu, MSR_STAR);
 	svm_setmsrbrw(vcpu, MSR_LSTAR);
 	svm_setmsrbrw(vcpu, MSR_CSTAR);
@@ -1699,6 +1698,9 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbrw(vcpu, MSR_FSBASE);
 	svm_setmsrbrw(vcpu, MSR_GSBASE);
 	svm_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+
+	/* EFER is R/O so we can ensure the guest always has SVME */
+	svm_setmsrbr(vcpu, MSR_EFER);
 
 	/* Guest VCPU ASID */
 	vmcb->v_asid = vcpu->vc_parent->vm_id;
@@ -1712,7 +1714,13 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
 	}
 
+	/* Enable SVME in EFER (must always be set) */
+	vmcb->v_efer |= EFER_SVME;
+
 	ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs);
+
+	vmcb->v_efer |= (EFER_LME | EFER_LMA);
+	vmcb->v_cr4 |= CR4_PAE;
 
 	return ret;
 }
@@ -1751,14 +1759,11 @@ svm_setmsrbr(struct vcpu *vcpu, uint32_t msr)
 		msrs[idx] &= ~(SVM_MSRBIT_R(msr - 0xc0000000));
 	} else if (msr >= 0xc0010000 && msr <= 0xc0011fff) {
 		idx = SVM_MSRIDX(msr - 0xc0010000) + 0x1000;
-		msrs[idx] &= ~(SVM_MSRBIT_R(msr - 0xc0000000));
+		msrs[idx] &= ~(SVM_MSRBIT_R(msr - 0xc0010000));
 	} else {
 		printf("%s: invalid msr 0x%x\n", __func__, msr);
 		return;
 	}
-
-	DPRINTF("%s: set msr read bitmap, msr=0x%x, idx=0x%x, "
-	    "msrs[0x%x]=0x%x\n", __func__, msr, idx, idx, msrs[idx]);
 }
 
 /*
@@ -1794,15 +1799,12 @@ svm_setmsrbw(struct vcpu *vcpu, uint32_t msr)
 		idx = SVM_MSRIDX(msr - 0xc0000000) + 0x800;
 		msrs[idx] &= ~(SVM_MSRBIT_W(msr - 0xc0000000));
 	} else if (msr >= 0xc0010000 && msr <= 0xc0011fff) {
-		idx = SVM_MSRIDX(msr - 0xc0000000) + 0x1000;
+		idx = SVM_MSRIDX(msr - 0xc0010000) + 0x1000;
 		msrs[idx] &= ~(SVM_MSRBIT_W(msr - 0xc0010000));
 	} else {
 		printf("%s: invalid msr 0x%x\n", __func__, msr);
 		return;
 	}
-
-	DPRINTF("%s: set msr write bitmap, msr=0x%x, idx=0x%x, "
-	    "msrs[0x%x]=0x%x\n", __func__, msr, idx, idx, msrs[idx]);
 }
 
 /*
