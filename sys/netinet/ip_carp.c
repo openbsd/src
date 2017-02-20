@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.301 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.302 2017/02/20 06:29:42 jca Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -184,7 +184,7 @@ struct srpl_rc carp_sc_rc =
     SRPL_RC_INITIALIZER(carp_sc_ref, carp_sc_unref, NULL);
 
 int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, LOG_CRIT };	/* XXX for now */
-struct carpstats carpstats;
+struct cpumem *carpcounters;
 
 int	carp_send_all_recur = 0;
 
@@ -444,7 +444,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	struct carp_header *ch;
 	int iplen, len, ismulti;
 
-	carpstats.carps_ipackets++;
+	carpstat_inc(carps_ipackets);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -456,7 +456,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	/* check if received on a valid carp interface */
 	if (!(ifp->if_type == IFT_CARP ||
 	    (ifp->if_type != IFT_CARP && !ismulti && ifp->if_carp != NULL))) {
-		carpstats.carps_badif++;
+		carpstat_inc(carps_badif);
 		CARP_LOG(LOG_INFO, sc,
 		    ("packet received on non-carp interface: %s",
 		     ifp->if_xname));
@@ -466,7 +466,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 	/* verify that the IP TTL is 255.  */
 	if (ip->ip_ttl != CARP_DFLTTL) {
-		carpstats.carps_badttl++;
+		carpstat_inc(carps_badttl);
 		CARP_LOG(LOG_NOTICE, sc, ("received ttl %d != %d on %s",
 		    ip->ip_ttl, CARP_DFLTTL, ifp->if_xname));
 		m_freem(m);
@@ -480,7 +480,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	iplen = ip->ip_hl << 2;
 	len = iplen + sizeof(*ch);
 	if (len > m->m_pkthdr.len) {
-		carpstats.carps_badlen++;
+		carpstat_inc(carps_badlen);
 		CARP_LOG(LOG_INFO, sc, ("packet too short %d on %s",
 		    m->m_pkthdr.len, ifp->if_xname));
 		m_freem(m);
@@ -488,7 +488,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	}
 
 	if ((m = m_pullup(m, len)) == NULL) {
-		carpstats.carps_hdrops++;
+		carpstat_inc(carps_hdrops);
 		return IPPROTO_DONE;
 	}
 	ip = mtod(m, struct ip *);
@@ -497,7 +497,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	/* verify the CARP checksum */
 	m->m_data += iplen;
 	if (carp_cksum(m, len - iplen)) {
-		carpstats.carps_badsum++;
+		carpstat_inc(carps_badsum);
 		CARP_LOG(LOG_INFO, sc, ("checksum failed on %s",
 		    ifp->if_xname));
 		m_freem(m);
@@ -535,7 +535,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	struct carp_header *ch;
 	u_int len;
 
-	carpstats.carps_ipackets6++;
+	carpstat_inc(carps_ipackets6);
 
 	if (!carp_opts[CARPCTL_ALLOW]) {
 		m_freem(m);
@@ -544,7 +544,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 	/* check if received on a valid carp interface */
 	if (ifp->if_type != IFT_CARP) {
-		carpstats.carps_badif++;
+		carpstat_inc(carps_badif);
 		CARP_LOG(LOG_INFO, sc, ("packet received on non-carp interface: %s",
 		    ifp->if_xname));
 		m_freem(m);
@@ -553,7 +553,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 
 	/* verify that the IP TTL is 255 */
 	if (ip6->ip6_hlim != CARP_DFLTTL) {
-		carpstats.carps_badttl++;
+		carpstat_inc(carps_badttl);
 		CARP_LOG(LOG_NOTICE, sc, ("received ttl %d != %d on %s",
 		    ip6->ip6_hlim, CARP_DFLTTL, ifp->if_xname));
 		m_freem(m);
@@ -563,7 +563,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	/* verify that we have a complete carp packet */
 	len = m->m_len;
 	if ((m = m_pullup(m, *offp + sizeof(*ch))) == NULL) {
-		carpstats.carps_badlen++;
+		carpstat_inc(carps_badlen);
 		CARP_LOG(LOG_INFO, sc, ("packet size %u too small", len));
 		return IPPROTO_DONE;
 	}
@@ -572,7 +572,7 @@ carp6_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	/* verify the CARP checksum */
 	m->m_data += *offp;
 	if (carp_cksum(m, sizeof(*ch))) {
-		carpstats.carps_badsum++;
+		carpstat_inc(carps_badsum);
 		CARP_LOG(LOG_INFO, sc, ("checksum failed, on %s",
 		    ifp->if_xname));
 		m_freem(m);
@@ -613,7 +613,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 
 	if (!sc || (sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
-		carpstats.carps_badvhid++;
+		carpstat_inc(carps_badvhid);
 		m_freem(m);
 		return;
 	}
@@ -624,7 +624,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 
 	/* verify the CARP version. */
 	if (ch->carp_version != CARP_VERSION) {
-		carpstats.carps_badver++;
+		carpstat_inc(carps_badver);
 		sc->sc_if.if_ierrors++;
 		CARP_LOG(LOG_NOTICE, sc, ("invalid version %d != %d",
 		    ch->carp_version, CARP_VERSION));
@@ -634,7 +634,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 
 	/* verify the hash */
 	if (carp_hmac_verify(vhe, ch->carp_counter, ch->carp_md)) {
-		carpstats.carps_badauth++;
+		carpstat_inc(carps_badauth);
 		sc->sc_if.if_ierrors++;
 		CARP_LOG(LOG_INFO, sc, ("incorrect hash"));
 		m_freem(m);
@@ -645,7 +645,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 	    sizeof(ch->carp_counter))) {
 		/* Do not log duplicates from non simplex interfaces */
 		if (sc->sc_carpdev->if_flags & IFF_SIMPLEX) {
-			carpstats.carps_badauth++;
+			carpstat_inc(carps_badauth);
 			sc->sc_if.if_ierrors++;
 			CARP_LOG(LOG_WARNING, sc,
 			    ("replay or network loop detected"));
@@ -724,6 +724,17 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 }
 
 int
+carp_sysctl_carpstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct carpstats carpstat;
+
+	CTASSERT(sizeof(carpstat) == (carps_ncounters * sizeof(uint64_t)));
+	counters_read(carpcounters, (uint64_t *)&carpstat, carps_ncounters);
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &carpstat, sizeof(carpstat)));
+}
+
+int
 carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
@@ -733,10 +744,7 @@ carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case CARPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &carpstats, sizeof(carpstats)));
+		return (carp_sysctl_carpstat(oldp, oldlenp, newp));
 	default:
 		if (name[0] <= 0 || name[0] >= CARPCTL_MAXID)
 			return (ENOPROTOOPT);
@@ -758,6 +766,7 @@ carpattach(int n)
 	if ((ifg = if_creategroup("carp")) != NULL)
 		ifg->ifg_refcnt++;	/* keep around even if empty */
 	if_clone_attach(&carp_cloner);
+	carpcounters = counters_alloc(carps_ncounters);
 }
 
 int
@@ -1085,7 +1094,7 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
 			sc->sc_if.if_oerrors++;
-			carpstats.carps_onomem++;
+			carpstat_inc(carps_onomem);
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
@@ -1131,13 +1140,13 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		getmicrotime(&sc->sc_if.if_lastchange);
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += len;
-		carpstats.carps_opackets++;
+		carpstat_inc(carps_opackets);
 
 		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo,
 		    NULL, 0);
 		if (error) {
 			if (error == ENOBUFS)
-				carpstats.carps_onomem++;
+				carpstat_inc(carps_onomem);
 			else
 				CARP_LOG(LOG_WARNING, sc,
 				    ("ip_output failed: %d", error));
@@ -1175,7 +1184,7 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
 			sc->sc_if.if_oerrors++;
-			carpstats.carps_onomem++;
+			carpstat_inc(carps_onomem);
 			/* XXX maybe less ? */
 			goto retry_later;
 		}
@@ -1221,12 +1230,12 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		getmicrotime(&sc->sc_if.if_lastchange);
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += len;
-		carpstats.carps_opackets6++;
+		carpstat_inc(carps_opackets6);
 
 		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL);
 		if (error) {
 			if (error == ENOBUFS)
-				carpstats.carps_onomem++;
+				carpstat_inc(carps_onomem);
 			else
 				CARP_LOG(LOG_WARNING, sc,
 				    ("ip6_output failed: %d", error));
@@ -1541,7 +1550,7 @@ carp_master_down(struct carp_vhost_entry *vhe)
 #endif /* INET6 */
 		}
 		carp_setrun(vhe, 0);
-		carpstats.carps_preempt++;
+		carpstat_inc(carps_preempt);
 		break;
 	}
 }

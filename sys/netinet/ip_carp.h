@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.40 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.41 2017/02/20 06:29:42 jca Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -162,6 +162,37 @@ struct carpreq {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum carpstat_counters {
+	carps_ipackets,
+	carps_ipackets6,
+	carps_badif,
+	carps_badttl,
+	carps_hdrops,
+	carps_badsum,
+	carps_badver,
+	carps_badlen,
+	carps_badauth,
+	carps_badvhid,
+	carps_badaddrs,
+	carps_opackets,
+	carps_opackets6,
+	carps_onomem,
+	carps_ostates,
+	carps_preempt,
+	carps_ncounters,
+};
+
+extern struct cpumem *carpcounters;
+
+static inline void
+carpstat_inc(enum carpstat_counters c)
+{
+	counters_inc(carpcounters, c);
+}
+
 void		 carp_ifdetach (struct ifnet *);
 int		 carp_proto_input(struct mbuf **, int *, int);
 void		 carp_carpdev_state(void *);
