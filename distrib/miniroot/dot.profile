@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.36 2016/09/09 14:52:28 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.37 2017/02/20 21:27:36 rpe Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -94,8 +94,7 @@ __EOT
 	fi
 
 	while :; do
-		echo -n '(I)nstall, (U)pgrade, (A)utoinstall or (S)hell? '
-		read REPLY
+		read REPLY?'(I)nstall, (U)pgrade, (A)utoinstall or (S)hell? '
 
 		# Begin the automatic installation if the timeout has expired.
 		if $timeout; then
