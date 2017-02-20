@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.51 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.52 2017/02/20 06:30:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -272,6 +272,36 @@ struct pfsyncreq {
 };
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum pfsync_counters {
+	pfsyncs_ipackets,
+	pfsyncs_ipackets6,
+	pfsyncs_badif,
+	pfsyncs_badttl,
+	pfsyncs_hdrops,
+	pfsyncs_badver,
+	pfsyncs_badact,
+	pfsyncs_badlen,
+	pfsyncs_badauth,
+	pfsyncs_stale,
+	pfsyncs_badval,
+	pfsyncs_badstate,
+	pfsyncs_opackets,
+	pfsyncs_opackets6,
+	pfsyncs_onomem,
+	pfsyncs_oerrors,
+	pfsyncs_ncounters,
+};
+
+extern struct cpumem *pfsynccounters;
+
+static inline void
+pfsyncstat_inc(enum pfsync_counters c)
+{
+	counters_inc(pfsynccounters, c);
+}
 
 /*
  * this shows where a pf state is with respect to the syncing.

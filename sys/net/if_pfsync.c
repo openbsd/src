@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.244 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.245 2017/02/20 06:30:39 jca Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -239,7 +239,7 @@ struct pfsync_softc {
 };
 
 struct pfsync_softc	*pfsyncif = NULL;
-struct pfsyncstats	 pfsyncstats;
+struct cpumem		*pfsynccounters;
 
 void	pfsyncattach(int);
 int	pfsync_clone_create(struct if_clone *, int);
@@ -283,6 +283,7 @@ void
 pfsyncattach(int npfsync)
 {
 	if_clone_attach(&pfsync_cloner);
+	pfsynccounters = counters_alloc(pfsyncs_ncounters);
 }
 
 int
@@ -644,7 +645,7 @@ pfsync_input(struct mbuf **mp, int *offp, int proto)
 	struct pfsync_subheader subh;
 	int offset, noff, len, count, mlen, flags = 0;
 
-	pfsyncstats.pfsyncs_ipackets++;
+	pfsyncstat_inc(pfsyncs_ipackets);
 
 	/* verify that we have a sync interface configured */
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
@@ -653,7 +654,7 @@ pfsync_input(struct mbuf **mp, int *offp, int proto)
 
 	/* verify that the packet came in on the right interface */
 	if (sc->sc_sync_if->if_index != m->m_pkthdr.ph_ifidx) {
-		pfsyncstats.pfsyncs_badif++;
+		pfsyncstat_inc(pfsyncs_badif);
 		goto done;
 	}
 
@@ -662,26 +663,26 @@ pfsync_input(struct mbuf **mp, int *offp, int proto)
 
 	/* verify that the IP TTL is 255. */
 	if (ip->ip_ttl != PFSYNC_DFLTTL) {
-		pfsyncstats.pfsyncs_badttl++;
+		pfsyncstat_inc(pfsyncs_badttl);
 		goto done;
 	}
 
 	offset = ip->ip_hl << 2;
 	n = m_pulldown(m, offset, sizeof(*ph), &noff);
 	if (n == NULL) {
-		pfsyncstats.pfsyncs_hdrops++;
+		pfsyncstat_inc(pfsyncs_hdrops);
 		return IPPROTO_DONE;
 	}
 	ph = (struct pfsync_header *)(n->m_data + noff);
 
 	/* verify the version */
 	if (ph->version != PFSYNC_VERSION) {
-		pfsyncstats.pfsyncs_badver++;
+		pfsyncstat_inc(pfsyncs_badver);
 		goto done;
 	}
 	len = ntohs(ph->len) + offset;
 	if (m->m_pkthdr.len < len) {
-		pfsyncstats.pfsyncs_badlen++;
+		pfsyncstat_inc(pfsyncs_badlen);
 		goto done;
 	}
 
@@ -709,13 +710,13 @@ pfsync_input(struct mbuf **mp, int *offp, int proto)
 				offset += count * mlen;
 				continue;
 			}
-			pfsyncstats.pfsyncs_badact++;
+			pfsyncstat_inc(pfsyncs_badact);
 			goto done;
 		}
 
 		n = m_pulldown(m, offset, mlen * count, &noff);
 		if (n == NULL) {
-			pfsyncstats.pfsyncs_badlen++;
+			pfsyncstat_inc(pfsyncs_badlen);
 			return IPPROTO_DONE;
 		}
 
@@ -784,7 +785,7 @@ pfsync_in_ins(caddr_t buf, int len, int count, int flags)
 		    (sp->af != AF_INET && sp->af != AF_INET6))) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfsync_input: PFSYNC5_ACT_INS: invalid value");
-			pfsyncstats.pfsyncs_badval++;
+			pfsyncstat_inc(pfsyncs_badval);
 			continue;
 		}
 
@@ -873,7 +874,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		    sp->dst.state > PF_TCPS_PROXY_DST) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfsync_input: PFSYNC_ACT_UPD: invalid value");
-			pfsyncstats.pfsyncs_badval++;
+			pfsyncstat_inc(pfsyncs_badval);
 			continue;
 		}
 
@@ -884,7 +885,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (st == NULL) {
 			/* insert the update */
 			if (pfsync_state_import(sp, flags))
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstat_inc(pfsyncs_badstate);
 			continue;
 		}
 
@@ -920,7 +921,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		st->pfsync_time = time_uptime;
 
 		if (sync) {
-			pfsyncstats.pfsyncs_stale++;
+			pfsyncstat_inc(pfsyncs_stale);
 
 			pfsync_update_state(st);
 			schednetisr(NETISR_PFSYNC);
@@ -950,7 +951,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 		    up->dst.state > PF_TCPS_PROXY_DST) {
 			DPFPRINTF(LOG_NOTICE,
 			    "pfsync_input: PFSYNC_ACT_UPD_C: invalid value");
-			pfsyncstats.pfsyncs_badval++;
+			pfsyncstat_inc(pfsyncs_badval);
 			continue;
 		}
 
@@ -994,7 +995,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 		st->pfsync_time = time_uptime;
 
 		if (sync) {
-			pfsyncstats.pfsyncs_stale++;
+			pfsyncstat_inc(pfsyncs_stale);
 
 			pfsync_update_state(st);
 			schednetisr(NETISR_PFSYNC);
@@ -1024,7 +1025,7 @@ pfsync_in_ureq(caddr_t buf, int len, int count, int flags)
 		else {
 			st = pf_find_state_byid(&id_key);
 			if (st == NULL) {
-				pfsyncstats.pfsyncs_badstate++;
+				pfsyncstat_inc(pfsyncs_badstate);
 				continue;
 			}
 			if (ISSET(st->state_flags, PFSTATE_NOSYNC))
@@ -1053,7 +1054,7 @@ pfsync_in_del(caddr_t buf, int len, int count, int flags)
 
 		st = pf_find_state_byid(&id_key);
 		if (st == NULL) {
-			pfsyncstats.pfsyncs_badstate++;
+			pfsyncstat_inc(pfsyncs_badstate);
 			continue;
 		}
 		SET(st->state_flags, PFSTATE_NOSYNC);
@@ -1079,7 +1080,7 @@ pfsync_in_del_c(caddr_t buf, int len, int count, int flags)
 
 		st = pf_find_state_byid(&id_key);
 		if (st == NULL) {
-			pfsyncstats.pfsyncs_badstate++;
+			pfsyncstat_inc(pfsyncs_badstate);
 			continue;
 		}
 
@@ -1194,7 +1195,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
  bad:
 	DPFPRINTF(LOG_WARNING, "pfsync_insert: PFSYNC_ACT_TDB_UPD: "
 	    "invalid value");
-	pfsyncstats.pfsyncs_badstate++;
+	pfsyncstat_inc(pfsyncs_badstate);
 	return;
 }
 #endif
@@ -1204,7 +1205,7 @@ int
 pfsync_in_eof(caddr_t buf, int len, int count, int flags)
 {
 	if (len > 0 || count > 0)
-		pfsyncstats.pfsyncs_badact++;
+		pfsyncstat_inc(pfsyncs_badact);
 
 	/* we're done. let the caller return */
 	return (1);
@@ -1213,7 +1214,7 @@ pfsync_in_eof(caddr_t buf, int len, int count, int flags)
 int
 pfsync_in_error(caddr_t buf, int len, int count, int flags)
 {
-	pfsyncstats.pfsyncs_badact++;
+	pfsyncstat_inc(pfsyncs_badact);
 	return (-1);
 }
 
@@ -1513,7 +1514,7 @@ pfsync_sendout(void)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		sc->sc_if.if_oerrors++;
-		pfsyncstats.pfsyncs_onomem++;
+		pfsyncstat_inc(pfsyncs_onomem);
 		pfsync_drop(sc);
 		return;
 	}
@@ -1523,7 +1524,7 @@ pfsync_sendout(void)
 		if (!ISSET(m->m_flags, M_EXT)) {
 			m_free(m);
 			sc->sc_if.if_oerrors++;
-			pfsyncstats.pfsyncs_onomem++;
+			pfsyncstat_inc(pfsyncs_onomem);
 			pfsync_drop(sc);
 			return;
 		}
@@ -1652,9 +1653,9 @@ pfsync_sendout(void)
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL, 0) == 0)
-		pfsyncstats.pfsyncs_opackets++;
+		pfsyncstat_inc(pfsyncs_opackets);
 	else
-		pfsyncstats.pfsyncs_oerrors++;
+		pfsyncstat_inc(pfsyncs_oerrors);
 }
 
 void
@@ -2355,6 +2356,18 @@ pfsyncintr(void)
 }
 
 int
+pfsync_sysctl_pfsyncstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct pfsyncstats pfsyncstat;
+
+	CTASSERT(sizeof(pfsyncstat) == (pfsyncs_ncounters * sizeof(uint64_t)));
+	counters_read(pfsynccounters, (uint64_t *)&pfsyncstat,
+	    pfsyncs_ncounters);
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &pfsyncstat, sizeof(pfsyncstat)));
+}
+
+int
 pfsync_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
@@ -2364,10 +2377,7 @@ pfsync_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case PFSYNCCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &pfsyncstats, sizeof(pfsyncstats)));
+		return (pfsync_sysctl_pfsyncstat(oldp, oldlenp, newp));
 	default:
 		return (ENOPROTOOPT);
 	}
