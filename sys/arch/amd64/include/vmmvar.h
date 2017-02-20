@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.30 2017/01/24 09:50:54 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.31 2017/02/20 07:36:20 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -713,6 +713,8 @@ int	vmread(uint64_t, uint64_t *);
 void	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
 void	invept(uint64_t, struct vmx_invept_descriptor *);
 int	vmx_enter_guest(uint64_t *, struct vmx_gueststate *, int);
+int	svm_enter_guest(uint64_t, struct vmx_gueststate *,
+    struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
 
