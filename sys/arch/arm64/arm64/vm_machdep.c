@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2017/02/20 21:12:14 patrick Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	*tf = *p1->p_addr->u_pcb.pcb_tf;
 
 	if (stack != NULL)
-		tf->tf_sp = STACKALIGN((u_int)(stack));
+		tf->tf_sp = STACKALIGN(stack);
 	if (tcb != NULL)
 		pcb->pcb_tcb = tcb;
 
