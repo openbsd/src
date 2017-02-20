@@ -1,9 +1,10 @@
-.\" $OpenBSD: tls_read.3,v 1.3 2017/01/28 00:59:36 schwarze Exp $
+.\" $OpenBSD: tls_read.3,v 1.4 2017/02/20 13:09:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
 .\" Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: February 20 2017 $
 .Dt TLS_READ 3
 .Os
 .Sh NAME
@@ -106,8 +107,20 @@ return 0 on success or -1 on error.
 .Fn tls_error
 returns
 .Dv NULL
-if no error occurred or the first place, or if memory allocation
-failed while trying to assemble the string describing the error.
+if no error occurred with
+.Fa ctx
+during or since the last call to
+.Fn tls_handshake ,
+.Fn tls_read ,
+.Fn tls_write ,
+.Fn tls_close ,
+or
+.Fn tls_reset
+involving
+.Fa ctx ,
+or if memory allocation failed while trying to assemble the string
+describing the most recent error related to
+.Fa ctx .
 .Pp
 The
 .Fn tls_read ,
@@ -215,3 +228,18 @@ appeared in
 .An Joel Sing Aq Mt jsing@openbsd.org
 with contributions from
 .An Bob Beck Aq Mt beck@openbsd.org
+.Sh CAVEATS
+The function
+.Fn tls_error
+returns an internal pointer.
+It must not be freed by the application, or a double free error
+will occur.
+The pointer will become invalid when the next error occurs with
+.Fa ctx .
+Consequently, if the application may need the message at a later
+time, it has to copy the string before calling the next
+.Sy libtls
+function involving
+.Fa ctx ,
+or a segmentation fault or read access to unintended data is the
+likely result.
