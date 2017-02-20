@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.111 2017/01/19 23:18:11 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.112 2017/02/20 07:14:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1547,6 +1547,7 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 {
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
+	uint16_t attr;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
@@ -1571,61 +1572,59 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vmcb->v_rip = gprs[VCPU_REGS_RIP];
 		vmcb->v_rsp = gprs[VCPU_REGS_RSP];
 		vmcb->v_rflags = gprs[VCPU_REGS_RFLAGS];
-		DPRINTF("%s: set vcpu GPRs (rip=0x%llx rsp=0x%llx)\n",
-		    __func__, vmcb->v_rip, vmcb->v_rsp);
 	}
 
 	if (regmask & VM_RWREGS_SREGS) {
 		vmcb->v_cs.vs_sel = sregs[VCPU_REGS_CS].vsi_sel;
 		vmcb->v_cs.vs_lim = sregs[VCPU_REGS_CS].vsi_limit;
-		vmcb->v_cs.vs_attr = sregs[VCPU_REGS_CS].vsi_ar;
+		attr = sregs[VCPU_REGS_CS].vsi_ar;
+		vmcb->v_cs.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_cs.vs_base = sregs[VCPU_REGS_CS].vsi_base;
 		vmcb->v_ds.vs_sel = sregs[VCPU_REGS_DS].vsi_sel;
 		vmcb->v_ds.vs_lim = sregs[VCPU_REGS_DS].vsi_limit;
-		vmcb->v_ds.vs_attr = sregs[VCPU_REGS_DS].vsi_ar;
+		attr = sregs[VCPU_REGS_DS].vsi_ar;
+		vmcb->v_ds.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_ds.vs_base = sregs[VCPU_REGS_DS].vsi_base;
 		vmcb->v_es.vs_sel = sregs[VCPU_REGS_ES].vsi_sel;
 		vmcb->v_es.vs_lim = sregs[VCPU_REGS_ES].vsi_limit;
-		vmcb->v_es.vs_attr = sregs[VCPU_REGS_ES].vsi_ar;
+		attr = sregs[VCPU_REGS_ES].vsi_ar;
+		vmcb->v_es.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_es.vs_base = sregs[VCPU_REGS_ES].vsi_base;
 		vmcb->v_fs.vs_sel = sregs[VCPU_REGS_FS].vsi_sel;
 		vmcb->v_fs.vs_lim = sregs[VCPU_REGS_FS].vsi_limit;
-		vmcb->v_fs.vs_attr = sregs[VCPU_REGS_FS].vsi_ar;
+		attr = sregs[VCPU_REGS_FS].vsi_ar;
+		vmcb->v_fs.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_fs.vs_base = sregs[VCPU_REGS_FS].vsi_base;
 		vmcb->v_gs.vs_sel = sregs[VCPU_REGS_GS].vsi_sel;
 		vmcb->v_gs.vs_lim = sregs[VCPU_REGS_GS].vsi_limit;
-		vmcb->v_gs.vs_attr = sregs[VCPU_REGS_GS].vsi_ar;
+		attr = sregs[VCPU_REGS_GS].vsi_ar;
+		vmcb->v_gs.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_gs.vs_base = sregs[VCPU_REGS_GS].vsi_base;
 		vmcb->v_ss.vs_sel = sregs[VCPU_REGS_SS].vsi_sel;
 		vmcb->v_ss.vs_lim = sregs[VCPU_REGS_SS].vsi_limit;
-		vmcb->v_ss.vs_attr = sregs[VCPU_REGS_SS].vsi_ar;
+		attr = sregs[VCPU_REGS_SS].vsi_ar;
+		vmcb->v_ss.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_ss.vs_base = sregs[VCPU_REGS_SS].vsi_base;
 		vmcb->v_ldtr.vs_sel = sregs[VCPU_REGS_LDTR].vsi_sel;
 		vmcb->v_ldtr.vs_lim = sregs[VCPU_REGS_LDTR].vsi_limit;
-		vmcb->v_ldtr.vs_attr = sregs[VCPU_REGS_LDTR].vsi_ar;
+		attr = sregs[VCPU_REGS_LDTR].vsi_ar;
+		vmcb->v_ldtr.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_ldtr.vs_base = sregs[VCPU_REGS_LDTR].vsi_base;
 		vmcb->v_tr.vs_sel = sregs[VCPU_REGS_TR].vsi_sel;
 		vmcb->v_tr.vs_lim = sregs[VCPU_REGS_TR].vsi_limit;
-		vmcb->v_tr.vs_attr = sregs[VCPU_REGS_TR].vsi_ar;
+		attr = sregs[VCPU_REGS_TR].vsi_ar;
+		vmcb->v_tr.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
 		vmcb->v_tr.vs_base = sregs[VCPU_REGS_TR].vsi_base;
 		vmcb->v_gdtr.vs_lim = vrs->vrs_gdtr.vsi_limit;
 		vmcb->v_gdtr.vs_base = vrs->vrs_gdtr.vsi_base;
 		vmcb->v_idtr.vs_lim = vrs->vrs_idtr.vsi_limit;
 		vmcb->v_idtr.vs_base = vrs->vrs_idtr.vsi_base;
-
-		DPRINTF("%s: set vcpu seg regs (gdt.base=0x%llx, "
-		    "cs.sel=0x%llx)\n", __func__, vmcb->v_gdtr.vs_base,
-		    (uint64_t)vmcb->v_cs.vs_sel);
 	}
 
 	if (regmask & VM_RWREGS_CRS) {
 		vmcb->v_cr0 = crs[VCPU_REGS_CR0];
 		vmcb->v_cr3 = crs[VCPU_REGS_CR3];
 		vmcb->v_cr4 = crs[VCPU_REGS_CR4];
-
-		DPRINTF("%s: set vcpu CRs (cr0=0x%llx cr3=0x%llx "
-		    "cr4=0x%llx)\n", __func__, vmcb->v_cr0, vmcb->v_cr3,
-		    vmcb->v_cr4);
 	}
 
 	return (0);
