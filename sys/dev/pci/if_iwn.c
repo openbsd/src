@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.183 2017/02/16 10:15:12 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.184 2017/02/20 15:38:04 krw Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3259,14 +3259,9 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	/* XXXSMP breaks atomicity */
-	rw_exit_write(&netlock);
-
 	error = rw_enter(&sc->sc_rwlock, RW_WRITE | RW_INTR);
-	if (error) {
-		rw_enter_write(&netlock);
+	if (error)
 		return error;
-	}
 	s = splnet();
 
 	switch (cmd) {
@@ -3325,7 +3320,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	rw_exit_write(&sc->sc_rwlock);
-	rw_enter_write(&netlock);
 	return error;
 }
 
