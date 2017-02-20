@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.154 2017/02/07 18:18:16 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.155 2017/02/20 17:04:25 jca Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1065,16 +1065,16 @@ ipip_stats(char *name)
 #define p(f, m) if (ipipstat.f || sflag <= 1) \
 	printf(m, ipipstat.f, plural(ipipstat.f))
 
-	p(ipips_ipackets, "\t%u total input packet%s\n");
-	p(ipips_opackets, "\t%u total output packet%s\n");
-	p(ipips_hdrops, "\t%u packet%s shorter than header shows\n");
-	p(ipips_pdrops, "\t%u packet%s dropped due to policy\n");
-	p(ipips_spoof, "\t%u packet%s with possibly spoofed local addresses\n");
-	p(ipips_qfull, "\t%u packet%s were dropped due to full output queue\n");
+	p(ipips_ipackets, "\t%llu total input packet%s\n");
+	p(ipips_opackets, "\t%llu total output packet%s\n");
+	p(ipips_hdrops, "\t%llu packet%s shorter than header shows\n");
+	p(ipips_pdrops, "\t%llu packet%s dropped due to policy\n");
+	p(ipips_spoof, "\t%llu packet%s with possibly spoofed local addresses\n");
+	p(ipips_qfull, "\t%llu packet%s were dropped due to full output queue\n");
 	p(ipips_ibytes, "\t%llu input byte%s\n");
 	p(ipips_obytes, "\t%llu output byte%s\n");
-	p(ipips_family, "\t%u protocol family mismatche%s\n");
-	p(ipips_unspec, "\t%u attempt%s to use tunnel with unspecified endpoint(s)\n");
+	p(ipips_family, "\t%llu protocol family mismatche%s\n");
+	p(ipips_unspec, "\t%llu attempt%s to use tunnel with unspecified endpoint(s)\n");
 #undef p
 }
 
