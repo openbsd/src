@@ -1,4 +1,55 @@
-/*	$OpenBSD: fmt.c,v 1.37 2017/02/19 23:45:46 schwarze Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.38 2017/02/20 15:48:00 schwarze Exp $	*/
+/*
+ * This file is a derived work.
+ * The changes are covered by the following Copyright and license:
+ *
+ * Copyright (c) 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2000 Paul Janzen <pjanzen@foatdi.net>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ *
+ * The unchanged parts are covered by the following Copyright and license:
+ *
+ * Copyright (c) 1997 Gareth McCaughan. All rights reserved.
+ *
+ * Redistribution and use of this code, in source or binary forms,
+ * with or without modification, are permitted subject to the following
+ * conditions:
+ *
+ *  - Redistribution of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ *  - If you distribute modified source code it must also include
+ *    a notice saying that it has been modified, and giving a brief
+ *    description of what changes have been made.
+ *
+ * Disclaimer: I am not responsible for the results of using this code.
+ *             If it formats your hard disc, sends obscene messages to
+ *             your boss and kills your children then that's your problem
+ *             not mine. I give absolutely no warranty of any sort as to
+ *             what the program will do, and absolutely refuse to be held
+ *             liable for any consequences of your using it.
+ *             Thank you. Have a nice day.
+ *
+ *
+ * Brief overview of the changes made by OpenBSD:
+ * Added UTF-8 support (2016).
+ * Added pledge(2) support (2015).
+ * ANSI function syntax and KNF (2004).
+ * Added -w option (2000).
+ * Some minor changes can be seen in the public OpenBSD CVS repository.
+ */
 
 /* Sensible version of fmt
  *
@@ -121,51 +172,6 @@
  *   Everything here should work OK even on nasty 16-bit
  *   machines and nice 64-bit ones. However, it's only really
  *   been tested on my FreeBSD machine. Your mileage may vary.
- */
-
-/* Copyright (c) 1997 Gareth McCaughan. All rights reserved.
- *
- * Redistribution and use of this code, in source or binary forms,
- * with or without modification, are permitted subject to the following
- * conditions:
- *
- *  - Redistribution of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- *  - If you distribute modified source code it must also include
- *    a notice saying that it has been modified, and giving a brief
- *    description of what changes have been made.
- *
- * Disclaimer: I am not responsible for the results of using this code.
- *             If it formats your hard disc, sends obscene messages to
- *             your boss and kills your children then that's your problem
- *             not mine. I give absolutely no warranty of any sort as to
- *             what the program will do, and absolutely refuse to be held
- *             liable for any consequences of your using it.
- *             Thank you. Have a nice day.
- */
-
-/* RCS change log:
- * Revision 1.5  1998/03/02 18:02:21  gjm11
- * Minor changes for portability.
- *
- * Revision 1.4  1997/10/01 11:51:28  gjm11
- * Repair broken indented-paragraph handling.
- * Add mail message header stuff.
- * Improve comments and layout.
- * Make usable with non-BSD systems.
- * Add revision display to usage message.
- *
- * Revision 1.3  1997/09/30 16:24:47  gjm11
- * Add copyright notice, rcsid string and log message.
- *
- * Revision 1.2  1997/09/30 16:13:39  gjm11
- * Add options: -d <chars>, -l <width>, -p, -s, -t <width>, -h .
- * Parse options with `getopt'. Clean up code generally.
- * Make comments more accurate.
- *
- * Revision 1.1  1997/09/30 11:29:57  gjm11
- * Initial revision
  */
 
 #include <ctype.h>
