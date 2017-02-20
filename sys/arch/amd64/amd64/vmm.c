@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.113 2017/02/20 07:21:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.114 2017/02/20 07:22:50 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3346,7 +3346,7 @@ vcpu_must_stop(struct vcpu *vcpu)
 /*
  * vcpu_run_vmx
  *
- * VMM main loop used to run a VCPU.
+ * VMX main loop used to run a VCPU.
  *
  * Parameters:
  *  vcpu: The VCPU to run
