@@ -1820,6 +1820,7 @@
 ./usr/share/man/man3/EC_POINT_new.3
 ./usr/share/man/man3/ERR.3
 ./usr/share/man/man3/ERR_GET_LIB.3
+./usr/share/man/man3/ERR_asprintf_error_data.3
 ./usr/share/man/man3/ERR_clear_error.3
 ./usr/share/man/man3/ERR_error_string.3
 ./usr/share/man/man3/ERR_get_error.3
