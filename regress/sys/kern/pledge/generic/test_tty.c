@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_tty.c,v 1.4 2015/10/30 07:24:20 semarie Exp $ */
+/*	$OpenBSD: test_tty.c,v 1.5 2017/02/21 15:46:25 tb Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -24,16 +24,20 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <util.h>
 
 
 void
 test_request_tty()
 {
-	int fd = STDERR_FILENO;
+	int amaster, fd;
 	struct termios ts; /* sys/termios.h */
 	struct winsize ws; /* sys/ttycom.h */
 
-	/* TODO: get a tty */
+	/* get a tty */
+	if (openpty(&amaster, &fd, NULL, NULL, NULL) == -1)
+		_exit(errno);
+	close(amaster);
 
 	/* tests that need tty+proc (stdio for pledge(2) */
 	if (pledge("stdio tty proc", NULL) == -1)
