@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.50 2015/12/16 16:32:30 deraadt Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.51 2017/02/21 07:28:28 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -191,8 +191,9 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 		/* Restrict result set to configured address families */
 		if (ai->ai_flags & AI_ADDRCONFIG) {
-			if (addrconfig_setup(as) != 0) {
-				ar->ar_gai_errno = EAI_FAIL;
+			if (addrconfig_setup(as) == -1) {
+				ar->ar_errno = errno;
+				ar->ar_gai_errno = EAI_SYSTEM;
 				async_set_state(as, ASR_STATE_HALT);
 				break;
 			}
@@ -679,7 +680,7 @@ addrconfig_setup(struct asr_query *as)
 	struct sockaddr_in	*sinp;
 	struct sockaddr_in6	*sin6p;
 
-	if (getifaddrs(&ifa0) != 0)
+	if (getifaddrs(&ifa0) == -1)
 		return (-1);
 
 	as->as.ai.flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
