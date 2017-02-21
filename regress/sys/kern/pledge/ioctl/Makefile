@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/01/26 04:58:08 benno Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/02/21 16:31:58 bluhm Exp $
 TEST_CASES_OK+=		pfioctl1
 TEST_CASES_FAILED+=	pfioctl2
 
@@ -7,7 +7,6 @@ WARNINGS=		Yes
 CFLAGS+=		-Wall -Wundef -Werror
 CLEANFILES+=		${TEST_CASES_OK} ${TEST_CASES_FAILED} *.core \
 			file1 file2 file3 output test-sock unfdpass
-SUDO=			doas
 
 tests_ok: ${TEST_CASES_OK}
 	@for test in $>; do \
