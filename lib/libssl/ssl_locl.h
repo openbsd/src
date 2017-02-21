@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.173 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.174 2017/02/21 15:28:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,7 +250,6 @@ __BEGIN_HIDDEN_DECLS
 /* Not a real MAC, just an indication it is part of cipher */
 #define SSL_AEAD		0x00000040L
 #define SSL_STREEBOG256		0x00000080L
-#define SSL_STREEBOG512		0x00000100L
 
 /* Bits for algorithm_ssl (protocol version) */
 #define SSL_SSLV3		0x00000002L
@@ -266,12 +265,11 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_HANDSHAKE_MAC_SHA256 0x80
 #define SSL_HANDSHAKE_MAC_SHA384 0x100
 #define SSL_HANDSHAKE_MAC_STREEBOG256 0x200
-#define SSL_HANDSHAKE_MAC_STREEBOG512 0x400
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
  * make sure to update this constant too */
-#define SSL_MAX_DIGEST 8
+#define SSL_MAX_DIGEST 7
 
 #define SSL3_CK_ID		0x03000000
 #define SSL3_CK_VALUE_MASK	0x0000ffff
