@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.85 2017/01/25 03:19:56 deraadt Exp $ */
+/*	$OpenBSD: cgi.c,v 1.86 2017/02/22 16:16:35 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -973,6 +973,20 @@ main(void)
 	const char	*path;
 	const char	*querystring;
 	int		 i;
+
+	/*
+	 * The "rpath" pledge could be revoked after mparse_readfd()
+	 * if the file desciptor to "/footer.html" would be opened
+	 * up front, but it's probably not worth the complication
+	 * of the code it would cause: it would require scattering
+	 * pledge() calls in multiple low-level resp_*() functions.
+	 */
+
+	if (pledge("stdio rpath", NULL) == -1) {
+		warn("pledge");
+		pg_error_internal();
+		return EXIT_FAILURE;
+	}
 
 	/* Poor man's ReDoS mitigation. */
 
