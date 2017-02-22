@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.46 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.47 2017/02/22 13:55:14 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -147,7 +147,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa.sadb_sa_exttype = SADB_EXT_SA;
 		sa.sadb_sa_len = sizeof(sa) / 8;
 		sa.sadb_sa_replay = 0;
-		sa.sadb_sa_spi = spi;
+		sa.sadb_sa_spi = htonl(spi);
 		sa.sadb_sa_state = SADB_SASTATE_MATURE;
 		break;
 	case SADB_X_ADDFLOW:

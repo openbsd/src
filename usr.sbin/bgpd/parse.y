@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.297 2017/01/25 00:11:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.298 2017/02/22 13:55:14 renato Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 #include <netmpls/mpls.h>
 
@@ -1266,7 +1267,7 @@ peeropts	: REMOTEAS as4number	{
 				    AUTH_IPSEC_MANUAL_AH;
 			}
 
-			if ($5 < 0 || $5 > UINT_MAX) {
+			if ($5 <= SPI_RESERVED_MAX || $5 > UINT_MAX) {
 				yyerror("bad spi number %lld", $5);
 				free($7);
 				YYERROR;
