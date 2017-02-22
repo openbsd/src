@@ -85,6 +85,7 @@
 ./usr/include/dev/acpi/acpivar.h
 ./usr/include/dev/acpi/amltypes.h
 ./usr/include/dev/acpi/dsdt.h
+./usr/include/dev/acpi/smbus.h
 ./usr/include/dev/adb
 ./usr/include/dev/adb/adb.h
 ./usr/include/dev/adb/akbdmap.h
