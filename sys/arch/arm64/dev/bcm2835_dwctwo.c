@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.1 2017/01/23 08:05:47 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.2 2017/02/22 04:39:30 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
@@ -123,6 +123,9 @@ bcm_dwctwo_deferred(void *self)
 {
 	struct bcm_dwctwo_softc *sc = (struct bcm_dwctwo_softc *)self;
 	int rc;
+
+	strlcpy(sc->sc_dwc2.sc_vendor, "Broadcom",
+	    sizeof(sc->sc_dwc2.sc_vendor));
 
 	rc = dwc2_init(&sc->sc_dwc2);
 	if (rc != 0)
