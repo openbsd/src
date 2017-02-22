@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.217 2016/10/20 18:34:17 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.218 2017/02/22 13:43:35 renato Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 	int64_t preload;
 	int ch, i, optval = 1, packlen, maxsize, error, s;
 	int df = 0, tos = 0, bufspace = IP_MAXPACKET, hoplimit = -1, mflag = 0;
-	u_char *datap, *packet, loop = 1;
+	u_char *datap, *packet;
 	u_char ttl = MAXTTL;
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
@@ -352,7 +352,6 @@ main(int argc, char *argv[])
 			break;
 		case 'L':
 			moptions |= MULTICAST_NOLOOP;
-			loop = 0;
 			break;
 		case 'l':
 			if (ouid)
@@ -531,6 +530,8 @@ main(int argc, char *argv[])
 			    (void *)&hoplimit, sizeof(hoplimit)))
 				err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
 		} else {
+			u_char loop = 0;
+
 			from4.sin_port = ntohs(DUMMY_PORT);
 
 			if ((moptions & MULTICAST_NOLOOP) && setsockopt(dummy,
@@ -614,6 +615,8 @@ main(int argc, char *argv[])
 		    "(default %d)", bufspace, IP_MAXPACKET);
 
 	if (v6flag) {
+		unsigned int loop = 0;
+
 		/*
 		 * let the kernel pass extension headers of incoming packets,
 		 * for privileged socket options
@@ -639,7 +642,7 @@ main(int argc, char *argv[])
 		if ((moptions & MULTICAST_NOLOOP) &&
 		    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
 		    sizeof(loop)) < 0)
-			err(1, "setsockopt IP6_MULTICAST_LOOP");
+			err(1, "setsockopt IPV6_MULTICAST_LOOP");
 
 		optval = IPV6_DEFHLIM;
 		if (IN6_IS_ADDR_MULTICAST(&dst6.sin6_addr))
@@ -684,6 +687,8 @@ main(int argc, char *argv[])
 		    (socklen_t)sizeof(optval)) < 0)
 			warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
 	} else {
+		u_char loop = 0;
+
 		if (options & F_TTL) {
 			if (IN_MULTICAST(ntohl(dst4.sin_addr.s_addr)))
 				moptions |= MULTICAST_TTL;
