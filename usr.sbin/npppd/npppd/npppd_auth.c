@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.18 2016/03/08 02:05:00 yasuoka Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.19 2017/02/22 07:48:26 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.18 2016/03/08 02:05:00 yasuoka Exp $ */
+/* $Id: npppd_auth.c,v 1.19 2017/02/22 07:48:26 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -75,8 +75,6 @@ npppd_auth_create(int auth_type, const char *name, void *_npppd)
 	case NPPPD_AUTH_TYPE_LOCAL:
 		if ((base = calloc(1, sizeof(npppd_auth_local))) != NULL) {
 			base->type = NPPPD_AUTH_TYPE_LOCAL;
-			base->strip_nt_domain = 1;
-			base->strip_atmark_realm = 0;
 			strlcpy(base->name, name, sizeof(base->name));
 			base->npppd = _npppd;
 
@@ -89,7 +87,6 @@ npppd_auth_create(int auth_type, const char *name, void *_npppd)
 		if ((base = calloc(1, sizeof(npppd_auth_radius))) != NULL) {
 			npppd_auth_radius *_this = (npppd_auth_radius *)base;
 			base->type = NPPPD_AUTH_TYPE_RADIUS;
-			base->strip_nt_domain = 0;
 			strlcpy(base->name, name, sizeof(base->name));
 			base->npppd = _npppd;
 			if ((_this->rad_auth_setting =
