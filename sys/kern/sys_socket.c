@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.29 2017/02/14 09:46:21 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.30 2017/02/22 10:20:21 mpi Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 	int revents = 0;
 	int s;
 
-	NET_LOCK(s);
+	s = solock(so);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (soreadable(so))
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -168,7 +168,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 			so->so_snd.sb_flagsintr |= SB_SEL;
 		}
 	}
-	NET_UNLOCK(s);
+	sounlock(s);
 	return (revents);
 }
 
