@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.22 2016/09/02 17:59:58 benno Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.23 2017/02/22 14:24:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -164,6 +164,7 @@ struct iface {
 	TAILQ_ENTRY(iface)	 entry;
 	TAILQ_HEAD(, eigrp_iface) ei_list;
 	unsigned int		 ifindex;
+	unsigned int		 rdomain;
 	char			 name[IF_NAMESIZE];
 	struct if_addr_head	 addr_list;
 	struct in6_addr		 linklocal;
@@ -368,6 +369,7 @@ struct kif {
 	int			 flags;
 	uint8_t			 link_state;
 	int			 mtu;
+	unsigned int		 rdomain;
 	uint8_t			 if_type;
 	uint64_t		 baudrate;
 	uint8_t			 nh_reachable;	/* for nexthop verification */

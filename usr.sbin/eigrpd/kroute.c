@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.17 2017/02/22 14:24:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -737,6 +737,7 @@ kif_update(unsigned short ifindex, int flags, struct if_data *ifd,
 	kif->k.if_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 	kif->k.mtu = ifd->ifi_mtu;
+	kif->k.rdomain = ifd->ifi_rdomain;
 
 	if (sdl && sdl->sdl_family == AF_LINK) {
 		if (sdl->sdl_nlen >= sizeof(kif->k.ifname))

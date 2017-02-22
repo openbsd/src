@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.23 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.24 2017/02/22 14:24:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -82,6 +82,7 @@ if_new(struct eigrpd_conf *xconf, struct kif *kif)
 	/* get index and flags */
 	iface->mtu = kif->mtu;
 	iface->ifindex = kif->ifindex;
+	iface->rdomain = kif->rdomain;
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
 	iface->if_type = kif->if_type;
@@ -118,26 +119,6 @@ if_lookup(struct eigrpd_conf *xconf, unsigned int ifindex)
 			return (iface);
 
 	return (NULL);
-}
-
-void
-if_init(struct eigrpd_conf *xconf, struct iface *iface)
-{
-	struct ifreq		 ifr;
-	unsigned int		 rdomain;
-
-	/* set rdomain */
-	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-	if (ioctl(global.eigrp_socket_v4, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1)
-		rdomain = 0;
-	else {
-		rdomain = ifr.ifr_rdomainid;
-		if (setsockopt(global.eigrp_socket_v4, SOL_SOCKET, SO_RTABLE,
-		    &rdomain, sizeof(rdomain)) == -1)
-			fatal("failed to set rdomain");
-	}
-	if (rdomain != xconf->rdomain)
-		fatalx("interface rdomain mismatch");
 }
 
 void
