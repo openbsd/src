@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.2 2017/02/22 22:18:51 patrick Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -35,12 +35,12 @@
 #include "SYS.h"
 
 SYSENTRY_HIDDEN(sigprocmask)
-	cbz	x1, 2f
+	cbz	x1, 1f
 	ldr	w1, [x1]
-	b 2f
+	b	2f
 1:
 	mov	w0, #0x00000001
-	mov	x1, #0x00000000
+	mov	w1, #0x00000000
 2:
 
 	SYSTRAP(sigprocmask)
