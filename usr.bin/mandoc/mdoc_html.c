@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.146 2017/02/16 02:59:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.147 2017/02/22 08:52:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -749,6 +749,7 @@ mdoc_it_pre(MDOC_ARGS)
 		case ROFFT_HEAD:
 			if (h->style != NULL && !bl->norm->Bl.comp &&
 			    (n->parent->prev == NULL ||
+			     n->parent->prev->body == NULL ||
 			     n->parent->prev->body->child != NULL)) {
 				t = print_otag(h, TAG_DT, "csWl",
 				    cattr, bl->norm->Bl.width);
