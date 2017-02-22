@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.112 2016/11/15 13:46:54 mpi Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.113 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -74,6 +74,20 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 int		nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int		nfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
 struct mount	*nfs_mount_diskless(struct nfs_dlmount *, char *, int);
+int	mountnfs(struct nfs_args *, struct mount *, struct mbuf *,
+	    const char *, char *);
+int	nfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
+int	nfs_root(struct mount *, struct vnode **);
+int	nfs_start(struct mount *, int, struct proc *);
+int	nfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	nfs_sync(struct mount *, int, struct ucred *, struct proc *);
+int	nfs_unmount(struct mount *, int, struct proc *);
+int	nfs_vget(struct mount *, ino_t, struct vnode **);
+int	nfs_vptofh(struct vnode *, struct fid *);
+int	nfs_mountroot(void);
+void	nfs_decode_args(struct nfsmount *, struct nfs_args *,
+	    struct nfs_args *);
+int	nfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 
 /*
  * nfs vfs operations.

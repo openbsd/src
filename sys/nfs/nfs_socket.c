@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.112 2016/12/19 08:36:50 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.113 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -128,6 +128,16 @@ int  nfs_estimate_rto(struct nfsmount *, u_int32_t procnum);
 
 void nfs_realign(struct mbuf **, int);
 void nfs_realign_fixup(struct mbuf *, struct mbuf *, unsigned int *);
+
+int nfs_rcvlock(struct nfsreq *);
+int nfs_receive(struct nfsreq *, struct mbuf **, struct mbuf **);
+int nfs_reconnect(struct nfsreq *);
+int nfs_reply(struct nfsreq *);
+void nfs_msg(struct nfsreq *, char *);
+void nfs_rcvunlock(int *);
+
+int nfsrv_getstream(struct nfssvc_sock *, int);
+
 unsigned int nfs_realign_test = 0;
 unsigned int nfs_realign_count = 0;
 

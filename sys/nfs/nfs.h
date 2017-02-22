@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.52 2014/03/24 00:19:48 guenther Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.53 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -291,11 +291,6 @@ struct nfssvc_sock {
 #define	SLP_GETSTREAM	0x10	/* extracting RPC from TCP connection */
 #define	SLP_LASTFRAG	0x20	/* last fragment received on TCP connection */
 #define	SLP_ALLFLAGS	0xff	/* convenience */
-
-extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
-extern int nfssvc_sockhead_flag;
-#define	SLP_INIT	0x01	/* NFS data undergoing initialization */
-#define	SLP_WANTINIT	0x02	/* thread waiting on NFS initialization */
 
 /*
  * One of these structures is allocated for each nfsd.

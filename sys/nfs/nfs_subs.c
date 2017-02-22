@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.133 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.134 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 #include <crypto/idgen.h>
 
 int	nfs_attrtimeo(struct nfsnode *np);
+u_int32_t nfs_get_xid(void);
 
 /*
  * Data items converted to xdr at startup, since they are constant

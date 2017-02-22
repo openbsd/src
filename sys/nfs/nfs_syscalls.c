@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.106 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.107 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -112,16 +112,24 @@ int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 };
 #endif
 
-struct nfssvc_sockhead nfssvc_sockhead;
+TAILQ_HEAD(, nfssvc_sock) nfssvc_sockhead;
 struct nfsdhead nfsd_head;
 
 int nfssvc_sockhead_flag;
+#define	SLP_INIT	0x01	/* NFS data undergoing initialization */
+#define	SLP_WANTINIT	0x02	/* thread waiting on NFS initialization */
 int nfsd_head_flag;
 
 #ifdef NFSCLIENT
 struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 int nfs_niothreads = -1;
 #endif
+
+int nfssvc_addsock(struct file *, struct mbuf *);
+int nfssvc_nfsd(struct nfsd *);
+void nfsrv_slpderef(struct nfssvc_sock *);
+void nfsrv_zapsock(struct nfssvc_sock *);
+void nfssvc_iod(void *);
 
 /*
  * NFS server pseudo system call for the nfsd's

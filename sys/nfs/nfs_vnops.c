@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.170 2016/06/13 19:00:22 tedu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.171 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -77,7 +77,61 @@
 
 #include <netinet/in.h>
 
+int nfs_access(void *);
+int nfs_advlock(void *);
+int nfs_bmap(void *);
+int nfs_bwrite(void *);
+int nfs_close(void *);
+int nfs_commit(struct vnode *, u_quad_t, int, struct proc *);
+int nfs_create(void *);
+int nfs_flush(struct vnode *, struct ucred *, int, struct proc *, int);
+int nfs_fsync(void *);
+int nfs_getattr(void *);
+int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
+int nfs_link(void *);
+int nfs_lookitup(struct vnode *, char *, int, struct ucred *, struct proc *,
+	struct nfsnode **);
+int nfs_lookup(void *);
+int nfs_mkdir(void *);
+int nfs_mknod(void *);
+int nfs_mknodrpc(struct vnode *, struct vnode **, struct componentname *,
+	struct vattr *);
+int nfs_null(struct vnode *, struct ucred *, struct proc *);
+int nfs_open(void *);
+int nfs_pathconf(void *);
+int nfs_poll(void *);
+int nfs_print(void *);
+int nfs_read(void *);
+int nfs_readdir(void *);
+int nfs_readdirplusrpc(struct vnode *, struct uio *, struct ucred *, int *,
+	struct proc *);
+int nfs_readdirrpc(struct vnode *, struct uio *, struct ucred *, int *);
+int nfs_remove(void *);
+int nfs_removerpc(struct vnode *, char *, int, struct ucred *, struct proc *);
+int nfs_rename(void *);
+int nfs_renameit(struct vnode *, struct componentname *, struct sillyrename *);
+int nfs_renamerpc(struct vnode *, char *, int, struct vnode *, char *, int,
+	struct ucred *, struct proc *);
+int nfs_rmdir(void *);
+int nfs_setattr(void *);
+int nfs_setattrrpc(struct vnode *, struct vattr *, struct ucred *,
+	struct proc *);
+int nfs_sillyrename(struct vnode *, struct vnode *,
+			 struct componentname *);
+int nfs_strategy(void *);
+int nfs_symlink(void *);
+
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
+
+int nfsfifo_close(void *);
+int nfsfifo_read(void *);
+int nfsfifo_reclaim(void *);
+int nfsfifo_write(void *);
+
+int nfsspec_access(void *);
+int nfsspec_close(void *);
+int nfsspec_read(void *);
+int nfsspec_write(void *);
 
 /* Global vfs data structures for nfs. */
 struct vops nfs_vops = {

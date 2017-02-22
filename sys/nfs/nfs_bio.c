@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.81 2016/02/13 15:45:05 stefan Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.82 2017/02/22 11:42:46 mpi Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -58,6 +58,8 @@ extern int nfs_numasync;
 extern struct nfsstats nfsstats;
 struct nfs_bufqhead nfs_bufq;
 uint32_t nfs_bufqmax, nfs_bufqlen;
+
+struct buf *nfs_getcacheblk(struct vnode *, daddr_t, int, struct proc *);
 
 /*
  * Vnode op for read using bio

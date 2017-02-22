@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.110 2016/09/21 13:22:44 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.111 2017/02/22 11:42:46 mpi Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -88,6 +88,8 @@ extern enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
+
+int nfsrv_access(struct vnode *, int, struct ucred *, int, struct proc *, int);
 
 /*
  * nfs v3 access service
