@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.1 2017/02/22 16:39:56 jcs Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.2 2017/02/22 21:41:31 jcs Exp $ */
 /*
  * Smart Battery Subsystem device driver
  * ACPI 5.0 spec section 10
@@ -377,7 +377,7 @@ acpi_smbus_read(struct acpisbs_softc *sc, uint8_t type, uint8_t cmd, int len,
 	acpiec_write(sc->sc_ec, sc->sc_ec_base + SMBUS_CMD, 1, &cmd);
 	acpiec_write(sc->sc_ec, sc->sc_ec_base + SMBUS_PRTCL, 1, &type);
 
-	for (j = SMBUS_TIMEOUT; j < 0; j--) {
+	for (j = SMBUS_TIMEOUT; j > 0; j--) {
 		acpiec_read(sc->sc_ec, sc->sc_ec_base + SMBUS_PRTCL, 1, &val);
 		if (val == 0)
 			break;
@@ -388,18 +388,12 @@ acpi_smbus_read(struct acpisbs_softc *sc, uint8_t type, uint8_t cmd, int len,
 		return 1;
 	}
 
-	if (cold)
-		DELAY(1000);
-
 	acpiec_read(sc->sc_ec, sc->sc_ec_base + SMBUS_STS, 1, &val);
 	if (val & SMBUS_STS_MASK) {
 		printf("%s: %s: error reading status: 0x%x\n",
 		    sc->sc_dev.dv_xname, __func__, addr);
 		return 1;
 	}
-
-	if (cold)
-		DELAY(1000);
 
 	switch (type) {
         case SMBUS_READ_WORD: {
