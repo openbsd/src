@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.5 2017/02/18 14:14:19 patrick Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.6 2017/02/22 22:55:27 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -362,6 +362,16 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	int nsegs;
 	int curseg;
 
+	/*
+	 * If our tag tells us that the device we are doing DMA
+	 * with is coherent, make sure the write buffer is synced
+	 * and return.
+	 */
+	if (t->_flags & BUS_DMA_COHERENT) {
+		membar_sync();
+		return;
+	}
+
 	nsegs = map->dm_nsegs;
 	curseg = 0;
 
@@ -482,7 +492,8 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	ssize = size;
 	pmap_flags = PMAP_WIRED | PMAP_CANFAIL;
 	cache = PMAP_CACHE_DEFAULT;
-	if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
+	if (((t->_flags & BUS_DMA_COHERENT) == 0 &&
+	   (flags & BUS_DMA_COHERENT)) || (flags & BUS_DMA_NOCACHE))
 		cache = PMAP_CACHE_CI;
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
