@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.36 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.37 2017/02/22 19:34:42 dhill Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -266,20 +266,12 @@ struct domain pfkeydomain = {
 };
 
 static struct protosw pfkey_protosw_template = {
-	SOCK_RAW,
-	&pfkeydomain,
-	-1, /* protocol */
-	PR_ATOMIC | PR_ADDR,
-	NULL, /* input */
-	(void *) pfkey_output,
-	NULL, /* ctlinput */
-	NULL, /* ctloutput */
-	pfkey_usrreq,
-	NULL, /* init */
-	NULL, /* fasttimo */
-	NULL, /* slowtimo */
-	NULL, /* drain */
-	NULL	/* sysctl */
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &pfkeydomain,
+  .pr_protocol	= -1,
+  .pr_flags	= PR_ATOMIC | PR_ADDR,
+  .pr_output	= (void *) pfkey_output,
+  .pr_usrreq	= pfkey_usrreq
 };
 
 int
