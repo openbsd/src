@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2017/01/26 02:06:37 jmatthew Exp $
+# $OpenBSD: Makefile,v 1.7 2017/02/22 14:36:20 gsoares Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -15,6 +15,15 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install package p5-ldap
+	@echo SKIPPED
+.endif
+
+.if ! (make(clean) || make(cleandir) || make(obj))
+LDAP_DEP != ldapsearch -VV 2>/dev/null ; echo $?
+.endif
+.if ("${LDAP_DEP}" != 0)
+regress:
+	@echo openldap-client must be installed
 	@echo SKIPPED
 .endif
 
