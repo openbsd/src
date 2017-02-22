@@ -1,4 +1,4 @@
-/*	$OpenBSD: btest.c,v 1.2 2015/12/24 17:47:57 mmcc Exp $ */
+/*	$OpenBSD: btest.c,v 1.3 2017/02/22 14:40:46 gsoares Exp $ */
 
 /* Simple test program for the btree database. */
 /*
@@ -74,7 +74,7 @@ main(int argc, char **argv)
 		else
 			printf("FAIL\n");
 	} else if (strcmp(argv[0], "del") == 0) {
-		if (argc < 1)
+		if (argc < 2)
 			errx(1, "missing argument");
 		key.data = argv[1];
 		key.size = strlen(key.data);
