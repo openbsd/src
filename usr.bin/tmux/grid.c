@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.65 2017/02/13 16:05:30 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.66 2017/02/22 09:01:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@
 const struct grid_cell grid_default_cell = {
 	0, 0, 8, 8, { { ' ' }, 0, 1, 1 }
 };
-const struct grid_cell_entry grid_default_entry = {
+static const struct grid_cell_entry grid_default_entry = {
 	0, { .data = { 0, 8, 8, ' ' } }
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.183 2017/02/08 08:25:12 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.184 2017/02/22 09:01:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1491,6 +1491,7 @@ winlink_clear_flags(struct winlink *wl)
 	}
 }
 
+/* Shuffle window indexes up. */
 int
 winlink_shuffle_up(struct session *s, struct winlink *wl)
 {
