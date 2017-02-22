@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.31 2017/01/21 10:05:23 krw Exp $	*/
+/*	$OpenBSD: process.c,v 1.32 2017/02/22 14:09:09 tom Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -89,7 +89,6 @@ process(void)
 	SPACE tspace;
 	size_t len, oldpsl;
 	char *p;
-	int oldpsanl;
 
 	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
 		pd = 0;
@@ -185,7 +184,6 @@ redirect:
 					break;
 				if ((p = memchr(ps, '\n', psl)) != NULL) {
 					oldpsl = psl;
-					oldpsanl = psanl;
 					psl = p - ps;
 					psanl = 1;
 					OUT();
