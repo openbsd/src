@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.18 2016/09/07 07:21:02 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.19 2017/02/22 10:16:14 patrick Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2016 $
+.Dd $Mdocdate: February 22 2017 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -569,7 +569,7 @@ removes the NT domain prefix,
 such as '\e\eNTDOMAIN\e',
 from the username before contacting the authentication server.
 The default is
-.Dq no .
+.Dq yes .
 .It Ic strip-atmark-realm Ar yes | no
 Specify whether
 .Xr npppd 8
