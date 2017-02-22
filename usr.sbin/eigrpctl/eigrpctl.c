@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpctl.c,v 1.8 2016/01/15 12:57:48 renato Exp $ */
+/*	$OpenBSD: eigrpctl.c,v 1.9 2017/02/22 14:18:25 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -68,7 +68,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-s socket] command [argument ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -82,11 +83,27 @@ main(int argc, char *argv[])
 	int				 ctl_sock;
 	int				 done = 0;
 	int				 n, verbose = 0;
+	int				 ch;
+	char				*sockname;
 	struct ctl_show_topology_req	 treq;
 	struct ctl_nbr			 nbr;
 
+	sockname = EIGRPD_SOCKET;
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
+		switch (ch) {
+		case 's':
+			sockname = optarg;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
+	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	/* connect to eigrpd control socket */
@@ -95,9 +112,9 @@ main(int argc, char *argv[])
 
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, EIGRPD_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", EIGRPD_SOCKET);
+		err(1, "connect: %s", sockname);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
