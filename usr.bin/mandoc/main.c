@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.186 2017/02/16 10:55:57 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.187 2017/02/22 14:58:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	    strncmp(progname, "makewhatis", 10) == 0)
 		return mandocdb(argc, argv);
 
-	if (pledge("stdio rpath tmppath tty proc exec flock", NULL) == -1)
+	if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1)
 		err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Search options. */
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 		use_pager = 0;
 
 	if (!use_pager)
-		if (pledge("stdio rpath flock", NULL) == -1)
+		if (pledge("stdio rpath", NULL) == -1)
 			err((int)MANDOCLEVEL_SYSERR, "pledge");
 
 	/* Parse arguments. */
