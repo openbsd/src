@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.39 2016/10/25 06:55:59 pirofti Exp $ */
+/* $OpenBSD: acpidev.h,v 1.40 2017/02/22 16:39:56 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -22,6 +22,7 @@
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/smbus.h>
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -343,4 +344,57 @@ struct acpiec_softc {
 void		acpibtn_disable_psw(void);
 void		acpibtn_enable_psw(void);
 int		acpibtn_numopenlids(void);
+
+struct acpisbs_battery {
+	uint16_t mode;			/* bit flags */
+	int	 units;
+#define	ACPISBS_UNITS_MW		0
+#define	ACPISBS_UNITS_MA		1
+	uint16_t at_rate;		/* mAh or mWh */
+	uint16_t temperature;		/* 0.1 degK */
+	uint16_t voltage;		/* mV */
+	uint16_t current;		/* mA */
+	uint16_t avg_current;		/* mA */
+	uint16_t rel_charge;		/* percent of last_capacity */
+	uint16_t abs_charge;		/* percent of design_capacity */
+	uint16_t capacity;		/* mAh */
+	uint16_t full_capacity;		/* mAh, when fully charged */
+	uint16_t run_time;		/* minutes */
+	uint16_t avg_empty_time;	/* minutes */
+	uint16_t avg_full_time;		/* minutes until full */
+	uint16_t charge_current;	/* mA */
+	uint16_t charge_voltage;	/* mV */
+	uint16_t status;		/* bit flags */
+	uint16_t cycle_count;		/* cycles */
+	uint16_t design_capacity;	/* mAh */
+	uint16_t design_voltage;	/* mV */
+	uint16_t spec;			/* formatted */
+	uint16_t manufacture_date;	/* formatted */
+	uint16_t serial;		/* number */
+
+#define	ACPISBS_VALUE_UNKNOWN		65535
+
+	char	 manufacturer[SMBUS_DATA_SIZE];
+	char	 device_name[SMBUS_DATA_SIZE];
+	char	 device_chemistry[SMBUS_DATA_SIZE];
+	char	 oem_data[SMBUS_DATA_SIZE];
+};
+
+struct acpisbs_softc {
+	struct device		sc_dev;
+
+	struct acpi_softc	*sc_acpi;
+	struct aml_node		*sc_devnode;
+	struct acpiec_softc     *sc_ec;
+	uint8_t			sc_ec_base;
+
+	struct acpisbs_battery	sc_battery;
+	int			sc_batteries_present;
+
+	struct ksensor		*sc_sensors;
+	struct ksensordev	sc_sensordev;
+	struct sensor_task	*sc_sensor_task;
+	struct timeval		sc_lastpoll;
+};
+
 #endif /* __DEV_ACPI_ACPIDEV_H__ */

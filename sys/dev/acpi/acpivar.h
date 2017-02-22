@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.83 2016/07/28 21:57:56 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.84 2017/02/22 16:39:56 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -191,6 +191,13 @@ struct acpi_bat {
 
 SLIST_HEAD(acpi_bat_head, acpi_bat);
 
+struct acpi_sbs {
+	struct acpisbs_softc	*asbs_softc;
+	SLIST_ENTRY(acpi_sbs)	asbs_link;
+};
+
+SLIST_HEAD(acpi_sbs_head, acpi_sbs);
+
 struct acpi_softc {
 	struct device		sc_dev;
 
@@ -250,6 +257,7 @@ struct acpi_softc {
 
 	struct acpi_ac_head	sc_ac;
 	struct acpi_bat_head	sc_bat;
+	struct acpi_sbs_head	sc_sbs;
 
 	struct timeout		sc_dev_timeout;
 

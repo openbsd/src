@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.36 2017/01/10 08:54:14 jsg Exp $
+#	$OpenBSD: files.acpi,v 1.37 2017/02/22 16:39:56 jcs Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -150,3 +150,8 @@ file	dev/acpi/tpm.c			tpm
 device	acpihve
 attach	acpihve at acpi
 file	dev/acpi/acpihve.c		acpihve
+
+# Smart Battery Subsystem
+device	acpisbs
+attach	acpisbs at acpi
+file	dev/acpi/acpisbs.c		acpisbs
