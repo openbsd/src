@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_search_async.c,v 1.19 2015/12/16 16:32:30 deraadt Exp $	*/
+/*	$OpenBSD: res_search_async.c,v 1.20 2017/02/23 17:04:02 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -120,9 +120,9 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 			async_set_state(as, ASR_STATE_HALT);
 			break;
 		}
-		as->as.search.subq = _res_query_async_ctx(fqdn,
+		as->as_subq = _res_query_async_ctx(fqdn,
 		    as->as.search.class, as->as.search.type, as->as_ctx);
-		if (as->as.search.subq == NULL) {
+		if (as->as_subq == NULL) {
 			ar->ar_errno = errno;
 			if (errno == EINVAL)
 				ar->ar_h_errno = NO_RECOVERY;
@@ -138,9 +138,9 @@ res_search_async_run(struct asr_query *as, struct asr_result *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = asr_run(as->as.search.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as_subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
-		as->as.search.subq = NULL;
+		as->as_subq = NULL;
 
 		if (ar->ar_h_errno == NETDB_SUCCESS) {
 			async_set_state(as, ASR_STATE_HALT);

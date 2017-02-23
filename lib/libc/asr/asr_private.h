@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.42 2017/02/18 19:23:05 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.43 2017/02/23 17:04:02 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -170,6 +170,7 @@ struct asr_query {
 	/* cond */
 	int		 as_timeout;
 	int		 as_fd;
+	struct asr_query *as_subq;
 
 	/* loop indices in ctx */
 	int		 as_dom_step;
@@ -209,7 +210,6 @@ struct asr_query {
 			int		 class;
 			int		 type;
 			char		*name;
-			struct asr_query	*subq;
 			int		 saved_h_errno;
 		} search;
 
@@ -218,13 +218,11 @@ struct asr_query {
 			int		 class;
 			int		 type;
 			char		*name;
-			struct asr_query	*subq;
 		} rrset;
 
 		struct {
 			char		*name;
 			int		 family;
-			struct asr_query	*subq;
 			char		 addr[16];
 			int		 addrlen;
 			int		 subq_h_errno;
@@ -233,7 +231,6 @@ struct asr_query {
 		struct {
 			char		*name;
 			int		 family;
-			struct asr_query	*subq;
 			in_addr_t	 addr;
 		} netnamadr;
 
@@ -252,7 +249,6 @@ struct asr_query {
 			char		*fqdn;
 			struct addrinfo	*aifirst;
 			struct addrinfo	*ailast;
-			struct asr_query	*subq;
 			int		 flags;
 		} ai;
 
@@ -267,7 +263,6 @@ struct asr_query {
 				struct sockaddr_in6	sain6;
 			}		 sa;
 			int		 flags;
-			struct asr_query	*subq;
 		} ni;
 #define MAXTOKEN 10
 	} as;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr_async.c,v 1.24 2017/02/21 22:32:28 eric Exp $	*/
+/*	$OpenBSD: getnetnamadr_async.c,v 1.25 2017/02/23 17:04:02 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -155,7 +155,7 @@ getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 				 */
 				type = T_PTR;
 				name = as->as.netnamadr.name;
-				as->as.netnamadr.subq = _res_search_async_ctx(
+				as->as_subq = _res_search_async_ctx(
 				    name, C_IN, type, as->as_ctx);
 			} else {
 				type = T_PTR;
@@ -165,11 +165,11 @@ getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 				_asr_addr_as_fqdn((char *)&in,
 				    as->as.netnamadr.family,
 				    dname, sizeof(dname));
-				as->as.netnamadr.subq = _res_query_async_ctx(
+				as->as_subq = _res_query_async_ctx(
 				    name, C_IN, type, as->as_ctx);
 			}
 
-			if (as->as.netnamadr.subq == NULL) {
+			if (as->as_subq == NULL) {
 				ar->ar_errno = errno;
 				ar->ar_h_errno = NETDB_INTERNAL;
 				async_set_state(as, ASR_STATE_HALT);
@@ -211,9 +211,9 @@ getnetnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 	case ASR_STATE_SUBQUERY:
 
-		if ((r = asr_run(as->as.netnamadr.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as_subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
-		as->as.netnamadr.subq = NULL;
+		as->as_subq = NULL;
 
 		if (ar->ar_datalen == -1) {
 			async_set_state(as, ASR_STATE_NEXT_DB);

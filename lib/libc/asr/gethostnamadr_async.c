@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.42 2015/12/16 16:32:30 deraadt Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.43 2017/02/23 17:04:02 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -215,18 +215,18 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 			if (as->as_type == ASR_GETHOSTBYNAME) {
 				type = (as->as.hostnamadr.family == AF_INET) ?
 				    T_A : T_AAAA;
-				as->as.hostnamadr.subq = _res_search_async_ctx(
+				as->as_subq = _res_search_async_ctx(
 				    as->as.hostnamadr.name,
 				    C_IN, type, as->as_ctx);
 			} else {
 				_asr_addr_as_fqdn(as->as.hostnamadr.addr,
 				    as->as.hostnamadr.family,
 				    name, sizeof(name));
-				as->as.hostnamadr.subq = _res_query_async_ctx(
+				as->as_subq = _res_query_async_ctx(
 				    name, C_IN, T_PTR, as->as_ctx);
 			}
 
-			if (as->as.hostnamadr.subq == NULL) {
+			if (as->as_subq == NULL) {
 				ar->ar_errno = errno;
 				ar->ar_h_errno = NETDB_INTERNAL;
 				async_set_state(as, ASR_STATE_HALT);
@@ -275,11 +275,11 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 		/* Run the DNS subquery. */
 
-		if ((r = asr_run(as->as.hostnamadr.subq, ar)) == ASYNC_COND)
+		if ((r = asr_run(as->as_subq, ar)) == ASYNC_COND)
 			return (ASYNC_COND);
 
 		/* Done. */
-		as->as.hostnamadr.subq = NULL;
+		as->as_subq = NULL;
 
 		if (ar->ar_datalen == -1) {
 			async_set_state(as, ASR_STATE_NEXT_DB);
