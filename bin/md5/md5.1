@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.46 2016/09/20 12:14:42 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.47 2017/02/23 20:46:08 daniel Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: September 20 2016 $
+.Dd $Mdocdate: February 23 2017 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -55,14 +55,9 @@
 .Sh DESCRIPTION
 These utilities take as input a message of arbitrary length and produce
 as output a message digest (checksum) of the input.
-It is conjectured that it is computationally infeasible to produce
-two messages having the same message digest (a collision),
-or to produce any message having a given prespecified target message digest.
-The algorithm (MD5, SHA-1, SHA-256, SHA-512) is determined by the
-name used to invoke the utility.
 .Pp
-Collisions have now been produced for MD5, and are theorized for SHA-1,
-so their use is deprecated.
+Two messages having the same message digest (a collision) have been produced
+for MD5 and for SHA-1, so their use is deprecated.
 .Pp
 The options for use with each command are as follows:
 .Bl -tag -width Ds
