@@ -61,7 +61,8 @@ elf_generic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
 #define TARGET_LITTLE_NAME		"elf64-aarch64"
 #define ELF_ARCH			bfd_arch_aarch64
 #define ELF_MACHINE_CODE		EM_AARCH64
-#define ELF_MAXPAGESIZE			0x1000
+#define ELF_MAXPAGESIZE			0x10000
+#define ELF_MINPAGESIZE			0x1000
 #define bfd_elf64_bfd_reloc_type_lookup bfd_default_reloc_type_lookup
 #define elf_info_to_howto		elf_generic_info_to_howto
 #define elf_info_to_howto_rel		elf_generic_info_to_howto_rel
