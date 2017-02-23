@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.2 2017/02/23 22:50:07 patrick Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.5 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -35,9 +35,10 @@
 #include "SYS.h"
 
 SYSENTRY(sigpending)
-	ldr	w0, [x0]
+	mov	x2, x0
 	SYSTRAP(sigpending)
 	bcs	CERROR
+	str	w0, [x2]
 	mov	x0, #0
 	ret
 SYSCALL_END(sigpending)
