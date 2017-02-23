@@ -571,8 +571,10 @@ kvp_pool_insert(struct kvp_pool *kvpl, const char *key, const char *val,
 	}
 
 	kpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
-	if (kpe == NULL)
+	if (kpe == NULL) {
+		mtx_leave(&kvpl->kvp_lock);
 		return (ENOMEM);
+	}
 
 	strlcpy(kpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2);
 
@@ -639,8 +641,10 @@ kvp_pool_import(struct kvp_pool *kvpl, const char *key, uint32_t keylen,
 	}
 	if (kpe == NULL) {
 		kpe = pool_get(&kvp_entry_pool, PR_ZERO | PR_NOWAIT);
-		if (kpe == NULL)
+		if (kpe == NULL) {
+			mtx_leave(&kvpl->kvp_lock);
 			return (ENOMEM);
+		}
 
 		copyin_utf16le(kpe->kpe_key, key, HV_KVP_MAX_KEY_SIZE / 2,
 		    keylen);
