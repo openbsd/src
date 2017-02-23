@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.29 2016/12/10 21:13:25 schwarze Exp $
+.\"	$OpenBSD: dc.1,v 1.30 2017/02/23 06:40:17 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)dc.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: February 23 2017 $
 .Dt DC 1
 .Os
 .Sh NAME
@@ -185,6 +185,10 @@ operator is a non-portable extension.
 All values on the stack are popped.
 .It Ic d
 The top value on the stack is duplicated.
+.It Ic e
+Equivalent to
+.Ic p ,
+except that the output is written to the standard error stream.
 .It Ic f
 All values on the stack are printed, separated by newlines.
 .It Ic G
