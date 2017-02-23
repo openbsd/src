@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.6 2017/02/05 16:23:38 jca Exp $ */
+/*	$OpenBSD: percpu.h,v 1.7 2017/02/23 00:15:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -94,7 +94,7 @@ static struct {								\
 #define CPUMEM_BOOT_MEMORY(_name, _sz)					\
 static struct {								\
 	unsigned char	mem[_sz];					\
-} __aligned(sizeof(unsigned long)) _name##_boot_cpumem
+} __aligned(sizeof(uint64_t)) _name##_boot_cpumem
 
 #define CPUMEM_BOOT_INITIALIZER(_name)					\
 	{ (struct cpumem *)&_name##_boot_cpumem.mem }
