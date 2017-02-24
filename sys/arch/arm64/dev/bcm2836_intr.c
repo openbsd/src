@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.1 2017/01/23 08:05:47 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.2 2017/02/24 17:16:41 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -202,9 +202,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(bcm_intc_splraise, bcm_intc_spllower,
-	    bcm_intc_splx, bcm_intc_setipl,
-	    bcm_intc_intr_establish, bcm_intc_intr_disestablish,
-	    bcm_intc_irq_handler);
+	    bcm_intc_splx, bcm_intc_setipl, bcm_intc_irq_handler);
 
 	sc->sc_intc.ic_node = faa->fa_node;
 	sc->sc_intc.ic_cookie = sc;

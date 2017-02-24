@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.4 2017/02/07 21:23:25 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.5 2017/02/24 17:16:41 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -270,8 +270,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(ampintc_splraise, ampintc_spllower, ampintc_splx,
-	    ampintc_setipl, ampintc_intr_establish_ext,
-	    ampintc_intr_disestablish, ampintc_irq_handler);
+	    ampintc_setipl, ampintc_irq_handler);
 
 	/* enable interrupts */
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);

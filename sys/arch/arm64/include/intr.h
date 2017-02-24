@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2017/02/24 17:10:59 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.3 2017/02/24 17:16:41 patrick Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -85,9 +85,6 @@ void	 splx(int);
 void	 arm_do_pending_intr(int);
 void	 arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
     void (*x)(int), void (*setipl)(int),
-    void *(*intr_establish)(int irqno, int level, int (*func)(void *),
-        void *cookie, char *name),
-    void (*intr_disestablish)(void *cookie),
     void (*intr_handle)(void *));
 
 struct arm_intr_func {
@@ -95,9 +92,6 @@ struct arm_intr_func {
 	int (*lower)(int);
 	void (*x)(int);
 	void (*setipl)(int);
-	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
-	    void *cookie, char *name);
-	void (*intr_disestablish)(void *cookie);
 };
 
 extern struct arm_intr_func arm_intr_func;
@@ -130,10 +124,6 @@ void	 arm_init_smask(void); /* XXX */
 extern uint32_t arm_smask[NIPL];
 
 #include <machine/softintr.h>
-
-void	*arm_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name);
-void	 arm_intr_disestablish(void *cookie);
 
 /* XXX - this is probably the wrong location for this */
 void arm_clock_register(void (*)(void), void (*)(u_int), void (*)(int),

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.3 2017/02/24 17:10:59 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.4 2017/02/24 17:16:41 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -37,9 +37,6 @@ int arm_dflt_splraise(int);
 int arm_dflt_spllower(int);
 void arm_dflt_splx(int);
 void arm_dflt_setipl(int);
-void *arm_dflt_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name);
-void arm_dflt_intr_disestablish(void *cookie);
 
 void arm_dflt_intr(void *);
 void arm_cpu_intr(void *);
@@ -51,9 +48,7 @@ struct arm_intr_func arm_intr_func = {
 	arm_dflt_splraise,
 	arm_dflt_spllower,
 	arm_dflt_splx,
-	arm_dflt_setipl,
-	arm_dflt_intr_establish,
-	arm_dflt_intr_disestablish
+	arm_dflt_setipl
 };
 
 void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
@@ -68,17 +63,6 @@ void
 arm_dflt_intr(void *frame)
 {
 	panic("arm_dflt_intr() called");
-}
-
-
-void *arm_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name)
-{
-	return arm_intr_func.intr_establish(irqno, level, func, cookie, name);
-}
-void arm_intr_disestablish(void *cookie)
-{
-	arm_intr_func.intr_disestablish(cookie);
 }
 
 /*
@@ -480,17 +464,6 @@ arm_dflt_setipl(int newcpl)
 	ci->ci_cpl = newcpl;
 }
 
-void *arm_dflt_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name)
-{
-	panic("arm_dflt_intr_establish called");
-}
-
-void arm_dflt_intr_disestablish(void *cookie)
-{
-	panic("arm_dflt_intr_disestablish called");
-}
-
 void
 arm_do_pending_intr(int pcpl)
 {
@@ -523,17 +496,12 @@ arm_do_pending_intr(int pcpl)
 
 void arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
     void (*x)(int), void (*setipl)(int),
-	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
-	    void *cookie, char *name),
-	void (*intr_disestablish)(void *cookie),
 	void (*intr_handle)(void *))
 {
 	arm_intr_func.raise		= raise;
 	arm_intr_func.lower		= lower;
 	arm_intr_func.x			= x;
 	arm_intr_func.setipl		= setipl;
-	arm_intr_func.intr_establish	= intr_establish;
-	arm_intr_func.intr_disestablish	= intr_disestablish;
 	arm_intr_dispatch		= intr_handle;
 }
 
