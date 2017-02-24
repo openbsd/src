@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.133 2017/01/20 14:12:32 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.134 2017/02/24 11:23:02 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -520,6 +520,10 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
 			TAILQ_INSERT_TAIL(&policy->pol_sapeers,
 			    sa, sa_peer_entry);
+			if (old->pol_flags & IKED_POLICY_REFCNT)
+				policy_unref(env, old);
+			if (policy->pol_flags & IKED_POLICY_REFCNT)
+				policy_ref(env, policy);
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
