@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.45 2017/01/25 14:17:45 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.46 2017/02/24 23:38:47 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -603,29 +603,48 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 {
 	VarPattern		*pattern;
 	const char		*cp, *cp2;
-	BUFFER buf;
+	BUFFER buf, buf2;
 	int cnt = 0;
 	char startc = endc == ')' ? '(' : '{';
+
+	Buf_Init(&buf, 0);
 	for (cp = *p;; cp++) {
 		if (*cp == '=' && cnt == 0)
 			break;
-		if (*cp == '\0')
+		if (*cp == '\0') {
+			Buf_Destroy(&buf);
 			return NULL;
+		}
 		if (*cp == startc)
 			cnt++;
 		else if (*cp == endc) {
 			cnt--;
-			if (cnt < 0)
+			if (cnt < 0) {
+				Buf_Destroy(&buf);
 				return NULL;
+			}
+		} else if (*cp == '$') {
+			if (cp[1] == '$')
+				cp++;
+			else {
+				size_t len;
+				(void)Var_ParseBuffer(&buf, cp, ctxt, err, 
+				    &len);
+				cp += len - 1;
+				continue;
+			}
 		}
+		Buf_AddChar(&buf, *cp);
 	}
-	Buf_Init(&buf, 0);
+
+	Buf_Init(&buf2, 0);
 	for (cp2 = cp+1;; cp2++) {
 		if (((*cp2 == ':' && cp2[1] != endc) || *cp2 == endc) && 
 		    cnt == 0)
 			break;
 		if (*cp2 == '\0') {
 			Buf_Destroy(&buf);
+			Buf_Destroy(&buf2);
 			return NULL;
 		}
 		if (*cp2 == startc)
@@ -634,6 +653,7 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 			cnt--;
 			if (cnt < 0) {
 				Buf_Destroy(&buf);
+				Buf_Destroy(&buf2);
 				return NULL;
 			}
 		} else if (*cp2 == '$') {
@@ -641,20 +661,20 @@ get_sysvpattern(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
 				cp2++;
 			else {
 				size_t len;
-				(void)Var_ParseBuffer(&buf, cp2, ctxt, err, 
+				(void)Var_ParseBuffer(&buf2, cp2, ctxt, err, 
 				    &len);
 				cp2 += len - 1;
 				continue;
 			}
 		}
-		Buf_AddChar(&buf, *cp2);
+		Buf_AddChar(&buf2, *cp2);
 	}
 
 	pattern = emalloc(sizeof(VarPattern));
-	pattern->lbuffer = pattern->lhs = Str_dupi(*p, cp);
-	pattern->leftLen = cp - *p;
-	pattern->rhs = Buf_Retrieve(&buf);
-	pattern->rightLen = Buf_Size(&buf);
+	pattern->lbuffer = pattern->lhs = Buf_Retrieve(&buf);
+	pattern->leftLen = Buf_Size(&buf);
+	pattern->rhs = Buf_Retrieve(&buf2);
+	pattern->rightLen = Buf_Size(&buf2);
 	pattern->flags = 0;
 	*p = cp2;
 	return pattern;
