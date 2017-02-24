@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.27 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.28 2017/02/24 14:28:31 gsoares Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -327,6 +327,13 @@ struct control_sock {
 	int			 cs_restricted;
 };
 
+enum ldapd_process {
+	PROC_MAIN_AUTH,
+	PROC_LDAP_SERVER
+};
+
+#define PROC_PARENT_SOCK_FILENO	 3
+
 /* ldapd.c */
 extern struct ldapd_stats	 stats;
 extern struct ldapd_config	*conf;
@@ -351,8 +358,7 @@ void			 request_dispatch(struct request *req);
 void			 request_free(struct request *req);
 
 /* ldape.c */
-pid_t			 ldape(struct passwd *pw, char *csockpath,
-				int pipe_parent2ldap[2]);
+void			 ldape(int, int, char *);
 int			 ldap_abandon(struct request *req);
 int			 ldap_unbind(struct request *req);
 int			 ldap_compare(struct request *req);

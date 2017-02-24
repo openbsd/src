@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.25 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: ldape.c,v 1.26 2017/02/24 14:28:31 gsoares Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -330,11 +330,10 @@ done:
 	return 0;
 }
 
-pid_t
-ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
+void
+ldape(int debug, int verbose, char *csockpath)
 {
 	int			 on = 1;
-	pid_t			 pid;
 	struct namespace	*ns;
 	struct listener		*l;
 	struct sockaddr_un	*sun = NULL;
@@ -343,16 +342,14 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	struct event		 ev_sigchld;
 	struct event		 ev_sighup;
 	struct ssl		 key;
+	struct passwd		*pw;
 	char			 host[128];
 	mode_t			old_umask = 0;
+	
+	log_init(debug);
+	log_verbose(verbose);
 
 	TAILQ_INIT(&conn_list);
-
-	pid = fork();
-	if (pid < 0)
-		fatal("ldape: fork");
-	if (pid > 0)
-		return pid;
 
 	setproctitle("ldap server");
 	event_init();
@@ -367,12 +364,10 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
-	close(pipe_parent2ldap[0]);
-
 	/* Initialize parent imsg events. */
 	if ((iev_ldapd = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("calloc");
-	imsgev_init(iev_ldapd, pipe_parent2ldap[1], NULL, ldape_imsgev,
+	imsgev_init(iev_ldapd, PROC_PARENT_SOCK_FILENO, NULL, ldape_imsgev,
 	    ldape_needfd);
 
 	/* Initialize control socket. */
@@ -451,6 +446,9 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 			fatal(ns->suffix);
 	}
 
+	if ((pw = getpwnam(LDAPD_USER)) == NULL)
+		fatal("getpwnam");
+
 	if (pw != NULL) {
 		if (chroot(pw->pw_dir) == -1)
 			fatal("chroot");
@@ -475,7 +473,7 @@ ldape(struct passwd *pw, char *csockpath, int pipe_parent2ldap[2])
 	control_cleanup(&csock);
 
 	log_info("ldape: exiting");
-	_exit(0);
+	exit(0);
 }
 
 static void
