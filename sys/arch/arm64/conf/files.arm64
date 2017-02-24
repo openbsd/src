@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.9 2017/02/06 19:23:45 patrick Exp $
+# $OpenBSD: files.arm64,v 1.10 2017/02/24 10:13:13 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -130,3 +130,7 @@ file	arch/arm64/dev/bcm2836_intr.c		bcmintc
 include	"dev/usb/dwc2/files.dwc2"
 attach	dwctwo at fdt with bcmdwctwo
 file	arch/arm64/dev/bcm2835_dwctwo.c		bcmdwctwo	needs-flag
+
+device	pciecam: pcibus
+attach	pciecam at fdt
+file	arch/arm64/dev/pciecam.c		pciecam
