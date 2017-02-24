@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.23 2017/02/08 17:39:57 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.24 2017/02/24 16:58:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -267,7 +267,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	}
 	xen_intr_mask(sc->sc_xih);
 
-	printf(" backend %d chan %u: %s\n", sc->sc_domid, sc->sc_xih,
+	printf(" backend %d channel %u: %s\n", sc->sc_domid, sc->sc_xih,
 	    sc->sc_dtype);
 
 	scsi_iopool_init(&sc->sc_iopool, sc, xbf_io_get, xbf_io_put);

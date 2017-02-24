@@ -1,7 +1,7 @@
-/*	$OpenBSD: xen.c,v 1.78 2017/02/08 16:15:52 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.79 2017/02/24 16:58:12 mikeb Exp $	*/
 
 /*
- * Copyright (c) 2015 Mike Belopuhov
+ * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1186,7 +1186,7 @@ xen_grant_table_remove(struct xen_softc *sc, grant_ref_t ref)
 	    (ge->ge_table[ref].domid << 16);
 	loop = 0;
 	while (atomic_cas_uint(ptr, flags, GTF_invalid) != flags) {
-		if (loop++ > 10000000) {
+		if (loop++ > 100000000) {
 			printf("%s: grant table reference %u is held "
 			    "by domain %d\n", sc->sc_dev.dv_xname, ref +
 			    ge->ge_start, ge->ge_table[ref].domid);

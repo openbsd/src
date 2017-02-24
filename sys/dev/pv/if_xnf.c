@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.50 2017/02/08 16:17:31 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.51 2017/02/24 16:58:12 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -269,7 +269,7 @@ xnf_attach(struct device *parent, struct device *self, void *aux)
 	}
 	xen_intr_mask(sc->sc_xih);
 
-	printf(" backend %d chan %u: address %s\n", sc->sc_domid,
+	printf(" backend %d channel %u: address %s\n", sc->sc_domid,
 	    sc->sc_xih, ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (xnf_capabilities(sc)) {
