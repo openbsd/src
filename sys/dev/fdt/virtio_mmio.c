@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.1 2017/01/26 01:46:19 jsg Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ virtio_mmio_detach(struct device *self, int flags)
 	}
 	KASSERT(vsc->sc_child == 0 || vsc->sc_child == VIRTIO_CHILD_ERROR);
 	KASSERT(vsc->sc_vqs == 0);
-	arm_intr_disestablish(sc->sc_ih);
+	arm_intr_disestablish_fdt(sc->sc_ih);
 	sc->sc_ih = 0;
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);

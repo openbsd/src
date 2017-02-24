@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiehci.c,v 1.1 2017/01/21 08:26:49 patrick Exp $ */
+/*	$OpenBSD: sxiehci.c,v 1.2 2017/02/24 17:12:31 patrick Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -179,7 +179,7 @@ sxiehci_attach(struct device *parent, struct device *self, void *aux)
 	goto out;
 
 intr:
-	arm_intr_disestablish(sc->sc_ih);
+	arm_intr_disestablish_fdt(sc->sc_ih);
 	sc->sc_ih = NULL;
 mem0:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
@@ -280,7 +280,7 @@ sxiehci_detach(struct device *self, int flags)
 		return (rv);
 
 	if (sc->sc_ih != NULL) {
-		arm_intr_disestablish(sc->sc_ih);
+		arm_intr_disestablish_fdt(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 
