@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.151 2017/02/14 09:47:40 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.152 2017/02/24 18:36:33 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -413,7 +413,7 @@ pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
 		break;
 #endif /* INET6 */
 	}
-	export_address(&p, (struct sockaddr *) &sunion);
+	export_address(&p, &sunion.sa);
 
 	if (dir == IPSP_DIRECTION_OUT)
 		headers[SADB_X_EXT_SRC_MASK] = p;
@@ -432,7 +432,7 @@ pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
 		break;
 #endif /* INET6 */
 	}
-	export_address(&p, (struct sockaddr *) &sunion);
+	export_address(&p, &sunion.sa);
 
 	if (dir == IPSP_DIRECTION_OUT)
 		headers[SADB_X_EXT_DST_FLOW] = p;
@@ -451,7 +451,7 @@ pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
 		break;
 #endif /* INET6 */
 	}
-	export_address(&p, (struct sockaddr *) &sunion);
+	export_address(&p, &sunion.sa);
 
 	if (dir == IPSP_DIRECTION_OUT)
 		headers[SADB_X_EXT_DST_MASK] = p;
@@ -470,7 +470,7 @@ pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
 		break;
 #endif /* INET6 */
 	}
-	export_address(&p, (struct sockaddr *) &sunion);
+	export_address(&p, &sunion.sa);
 
 	headers[SADB_X_EXT_FLOW_TYPE] = p;
 	sp = p;
@@ -607,11 +607,11 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 
 	/* Export TDB source address */
 	headers[SADB_EXT_ADDRESS_SRC] = p;
-	export_address(&p, (struct sockaddr *) &sa->tdb_src);
+	export_address(&p, &sa->tdb_src.sa);
 
 	/* Export TDB destination address */
 	headers[SADB_EXT_ADDRESS_DST] = p;
-	export_address(&p, (struct sockaddr *) &sa->tdb_dst);
+	export_address(&p, &sa->tdb_dst.sa);
 
 	/* Export source/destination identities, if present */
 	if (sa->tdb_ids)
@@ -883,10 +883,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    &sa1->tdb_sproto, 0)))
 			goto ret;
 
-		import_address((struct sockaddr *) &sa1->tdb_src,
-		    headers[SADB_EXT_ADDRESS_SRC]);
-		import_address((struct sockaddr *) &sa1->tdb_dst,
-		    headers[SADB_EXT_ADDRESS_DST]);
+		import_address(&sa1->tdb_src.sa, headers[SADB_EXT_ADDRESS_SRC]);
+		import_address(&sa1->tdb_dst.sa, headers[SADB_EXT_ADDRESS_DST]);
 
 		/* Find an unused SA identifier */
 		sprng = (struct sadb_spirange *) headers[SADB_EXT_SPIRANGE];
@@ -974,9 +972,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 			/* Initialize SA */
 			import_sa(newsa, headers[SADB_EXT_SA], &ii);
-			import_address((struct sockaddr *) &newsa->tdb_src,
+			import_address(&newsa->tdb_src.sa,
 			    headers[SADB_EXT_ADDRESS_SRC]);
-			import_address((struct sockaddr *) &newsa->tdb_dst,
+			import_address(&newsa->tdb_dst.sa,
 			    headers[SADB_EXT_ADDRESS_DST]);
 			import_lifetime(newsa,
 			    headers[SADB_EXT_LIFETIME_CURRENT],
@@ -1125,9 +1123,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			}
 
 			import_sa(newsa, headers[SADB_EXT_SA], &ii);
-			import_address((struct sockaddr *) &newsa->tdb_src,
+			import_address(&newsa->tdb_src.sa,
 			    headers[SADB_EXT_ADDRESS_SRC]);
-			import_address((struct sockaddr *) &newsa->tdb_dst,
+			import_address(&newsa->tdb_dst.sa,
 			    headers[SADB_EXT_ADDRESS_DST]);
 
 			import_lifetime(newsa,
@@ -1958,10 +1956,10 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	    PFKEYV2_LIFETIME_SOFT : PFKEYV2_LIFETIME_HARD);
 
 	headers[SADB_EXT_ADDRESS_SRC] = p;
-	export_address(&p, (struct sockaddr *) &sa->tdb_src);
+	export_address(&p, &sa->tdb_src.sa);
 
 	headers[SADB_EXT_ADDRESS_DST] = p;
-	export_address(&p, (struct sockaddr *) &sa->tdb_dst);
+	export_address(&p, &sa->tdb_dst.sa);
 
 	if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_BROADCAST,
 	    NULL, 0, 0, sa->tdb_rdomain)) != 0)
@@ -2124,13 +2122,13 @@ pfkeyv2_dump_policy(struct ipsec_policy *ipo, void **headers, void **buffer,
 	/* Local address. */
 	if (ipo->ipo_src.sa.sa_family) {
 		headers[SADB_EXT_ADDRESS_SRC] = p;
-		export_address(&p, (struct sockaddr *)&ipo->ipo_src);
+		export_address(&p, &ipo->ipo_src.sa);
 	}
 
 	/* Remote address. */
 	if (ipo->ipo_dst.sa.sa_family) {
 		headers[SADB_EXT_ADDRESS_DST] = p;
-		export_address(&p, (struct sockaddr *)&ipo->ipo_dst);
+		export_address(&p, &ipo->ipo_dst.sa);
 	}
 
 	/* Get actual flow. */
