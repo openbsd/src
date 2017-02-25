@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.4 2017/02/24 17:16:41 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.5 2017/02/25 16:53:09 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/openfirm.h>
 
 uint32_t arm_intr_get_parent(int);
+uint32_t arm_intr_msi_get_parent(int);
 
 void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
@@ -75,6 +76,19 @@ arm_intr_get_parent(int node)
 
 	while (node && !phandle) {
 		phandle = OF_getpropint(node, "interrupt-parent", 0);
+		node = OF_parent(node);
+	}
+
+	return phandle;
+}
+
+uint32_t
+arm_intr_msi_get_parent(int node)
+{
+	uint32_t phandle = 0;
+
+	while (node && !phandle) {
+		phandle = OF_getpropint(node, "msi-parent", 0);
 		node = OF_parent(node);
 	}
 
@@ -187,7 +201,7 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 
 	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
 	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
-	if (ic->ic_cells == 0 || ic->ic_phandle == 0)
+	if (ic->ic_phandle == 0)
 		return;
 	KASSERT(ic->ic_cells <= MAX_INTERRUPT_CELLS);
 
@@ -361,6 +375,34 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int acells,
 	ih->ih_ih = val;
 
 	free(map, M_DEVBUF, map_len);
+	return ih;
+}
+
+void *
+arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
+    int level, int (*func)(void *), void *cookie, char *name)
+{
+	struct interrupt_controller *ic;
+	struct arm_intr_handle *ih;
+	uint32_t phandle;
+	void *val = NULL;
+
+	phandle = arm_intr_msi_get_parent(node);
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_phandle == phandle)
+			break;
+	}
+
+	if (ic == NULL || ic->ic_establish_msi == NULL)
+		return NULL;
+
+	val = ic->ic_establish_msi(ic->ic_cookie, addr, data,
+	    level, func, cookie, name);
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
 	return ih;
 }
 

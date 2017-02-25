@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2017/02/24 17:16:41 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.4 2017/02/25 16:53:09 patrick Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,6 +134,8 @@ struct interrupt_controller {
 	void	*ic_cookie;
 	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
 		    void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
@@ -149,6 +151,8 @@ void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_imap(int, int *, int, int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
+	    int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
 
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
