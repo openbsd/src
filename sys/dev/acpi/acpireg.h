@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.36 2016/07/10 20:36:41 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.37 2017/02/25 19:15:09 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -766,6 +766,7 @@ struct acpi_ivrs {
 #define ACPI_DEV_ASUS1	"ATK0100"	/* ASUS Special Device */
 #define ACPI_DEV_IBM	"IBM0068"	/* IBM ThinkPad support */
 #define ACPI_DEV_LENOVO	"LEN0068"	/* Lenovo ThinkPad support */
+#define ACPI_DEV_LENOVO2 "LEN0268"	/* Lenovo ThinkPad support */
 #define ACPI_DEV_ASUSAIBOOSTER	"ATK0110"	/* ASUSTeK AI Booster */
 #define ACPI_DEV_TOSHIBA_LIBRETTO	"TOS6200"	/* Toshiba Libretto support */
 #define ACPI_DEV_TOSHIBA_DYNABOOK	"TOS6207"	/* Toshiba Dynabook support */
