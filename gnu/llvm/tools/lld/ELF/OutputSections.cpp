@@ -394,7 +394,7 @@ template <class ELFT> void EhOutputSection<ELFT>::finalize() {
       Off += alignTo(Fde->size(), sizeof(uintX_t));
     }
   }
-  this->Size = Off;
+  this->Size = Off + 4;
 }
 
 template <class ELFT> static uint64_t readFdeAddr(uint8_t *Buf, int Size) {
