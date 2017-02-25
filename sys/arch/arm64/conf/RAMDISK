@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.9 2017/02/24 10:13:13 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.10 2017/02/25 17:05:43 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -56,10 +56,11 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 ampintc*	at fdt?
+ampintcmsi*	at fdt?
 agtimer*	at fdt?
 ahci*		at fdt?
-#pciecam*	at fdt?
-#pci*		at pciecam?
+pciecam*	at fdt?
+pci*		at pciecam?
 
 # NS16550 compatible serial ports
 com*		at fdt?
@@ -70,7 +71,7 @@ plrtc*		at fdt?
 psci*		at fdt?
 
 virtio*		at fdt?
-#virtio*		at pci?
+virtio*		at pci?
 vio*		at virtio?
 vioblk*		at virtio?
 viomb*		at virtio?
@@ -133,8 +134,8 @@ rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
 
 # PCI
-#ppb*		at pci?			# PCI-PCI bridges
-#pci*		at ppb?
+ppb*		at pci?			# PCI-PCI bridges
+pci*		at ppb?
 
 scsibus*	at scsi?
 sd*		at scsibus?
