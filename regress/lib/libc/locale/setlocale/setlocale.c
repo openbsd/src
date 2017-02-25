@@ -1,4 +1,4 @@
-/* $OpenBSD: setlocale.c,v 1.2 2015/08/23 07:33:50 guenther Exp $ */
+/* $OpenBSD: setlocale.c,v 1.3 2017/02/25 07:28:32 jsg Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 /*
  * test helpers for __LINE__

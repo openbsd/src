@@ -11,6 +11,7 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
+#include <err.h>
 
 int
 main(void)

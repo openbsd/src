@@ -7,6 +7,7 @@
 
 #include <stdlib.h>	/* for malloc(3) */
 #include <stdio.h>	/* for snprintf(3) */
+#include <err.h>
 
 /* sh.h */
 #define Flag(f)		0

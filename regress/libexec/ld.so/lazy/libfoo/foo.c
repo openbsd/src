@@ -1,8 +1,9 @@
-/*	$OpenBSD: foo.c,v 1.1.1.1 2008/01/02 18:36:59 matthieu Exp $ */
+/*	$OpenBSD: foo.c,v 1.2 2017/02/25 07:28:32 jsg Exp $ */
 /* Public domain. 2008, Matthieu Herrb */
 
 #include <dlfcn.h>
 #include <stdio.h>
+#include <err.h>
 
 static void *h = NULL;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.11 2016/08/14 23:08:09 guenther Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.12 2017/02/25 07:28:32 jsg Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <util.h>
 

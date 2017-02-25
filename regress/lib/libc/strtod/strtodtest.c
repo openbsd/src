@@ -1,9 +1,10 @@
-/*	$OpenBSD: strtodtest.c,v 1.1 2006/09/29 11:00:24 otto Exp $	*/
+/*	$OpenBSD: strtodtest.c,v 1.2 2017/02/25 07:28:32 jsg Exp $	*/
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <err.h>
 
 /*
  * Checks if strtod() reports underflow.

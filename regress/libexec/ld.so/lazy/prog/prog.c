@@ -1,9 +1,10 @@
-/*	$OpenBSD: prog.c,v 1.2 2013/10/28 08:40:05 jsg Exp $ */
+/*	$OpenBSD: prog.c,v 1.3 2017/02/25 07:28:32 jsg Exp $ */
 /* Public Domain, 2008, Matthieu Herrb */
 
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 
 void *handle = NULL;
 

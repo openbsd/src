@@ -19,6 +19,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <wchar.h>
+#include <err.h>
 
 #include "chared.c"
 
