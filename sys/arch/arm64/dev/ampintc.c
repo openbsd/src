@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.5 2017/02/24 17:16:41 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.6 2017/02/25 13:19:57 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -58,6 +58,7 @@
 #define IRQ_TO_REG4(i)		(((i) >> 2) & 0xff)
 #define IRQ_TO_REG4BIT(i)	((i) & 0x3)
 #define IRQ_TO_REG16(i)		(((i) >> 4) & 0x3f)
+#define IRQ_TO_REG16BIT(i)	((i) & 0xf)
 #define IRQ_TO_REGBIT_S(i)	8
 #define IRQ_TO_REG4BIT_M(i)	8
 
@@ -70,6 +71,10 @@
 #define ICD_IPRn(i)		(0x400 + (i))
 #define ICD_IPTRn(i)		(0x800 + (i))
 #define ICD_ICRn(i)		(0xC00 + (IRQ_TO_REG16(i) * 4))
+#define 	ICD_ICR_TRIG_LEVEL(i)	(0x0 << (IRQ_TO_REG16BIT(i) * 2))
+#define 	ICD_ICR_TRIG_EDGE(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+#define 	ICD_ICR_TRIG_MASK(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+
 /*
  * what about (ppi|spi)_status
  */
@@ -160,10 +165,10 @@ void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
-void		*ampintc_intr_establish(int, int, int (*)(void *), void *,
-		    char *);
-void		*ampintc_intr_establish_ext(int, int, int (*)(void *), void *,
-		    char *);
+void		*ampintc_intr_establish(int, int, int, int (*)(void *),
+		    void *, char *);
+void		*ampintc_intr_establish_ext(int, int, int, int (*)(void *),
+		    void *, char *);
 void		*ampintc_intr_establish_fdt(void *, int *, int,
 		    int (*)(void *), void *, char *);
 void		 ampintc_intr_disestablish(void *);
@@ -174,6 +179,7 @@ void		 ampintc_eoi(uint32_t);
 void		 ampintc_set_priority(int, int);
 void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
+void		 ampintc_intr_config(int, int);
 void		 ampintc_route(int, int , int);
 
 struct cfattach	ampintc_ca = {
@@ -340,6 +346,22 @@ ampintc_intr_disable(int irq)
 	    1 << IRQ_TO_REG32BIT(irq));
 }
 
+void
+ampintc_intr_config(int irqno, int type)
+{
+	struct ampintc_softc	*sc = ampintc;
+	uint32_t		 ctrl;
+
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(irqno));
+
+	ctrl &= ~ICD_ICR_TRIG_MASK(irqno);
+	if (type == IST_EDGE_RISING)
+		ctrl |= ICD_ICR_TRIG_EDGE(irqno);
+	else
+		ctrl |= ICD_ICR_TRIG_LEVEL(irqno);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(irqno), ctrl);
+}
 
 void
 ampintc_calc_mask(void)
@@ -513,10 +535,10 @@ ampintc_irq_handler(void *frame)
 }
 
 void *
-ampintc_intr_establish_ext(int irqno, int level, int (*func)(void *),
+ampintc_intr_establish_ext(int irqno, int type, int level, int (*func)(void *),
     void *arg, char *name)
 {
-	return ampintc_intr_establish(irqno+32, level, func, arg, name);
+	return ampintc_intr_establish(irqno+32, type, level, func, arg, name);
 }
 
 void *
@@ -525,6 +547,7 @@ ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
 {
 	struct ampintc_softc	*sc = (struct ampintc_softc *)cookie;
 	int			 irq;
+	int			 type;
 
 	/* 2nd cell contains the interrupt number */
 	irq = cell[1];
@@ -537,11 +560,17 @@ ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else
 		panic("%s: bogus interrupt type", sc->sc_dev.dv_xname);
 
-	return ampintc_intr_establish(irq, level, func, arg, name);
+	/* SPIs are only active-high level or low-to-high edge */
+	if (cell[2] & 0x3)
+		type = IST_EDGE_RISING;
+	else
+		type = IST_LEVEL_HIGH;
+
+	return ampintc_intr_establish(irq, type, level, func, arg, name);
 }
 
 void *
-ampintc_intr_establish(int irqno, int level, int (*func)(void *),
+ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
     void *arg, char *name)
 {
 	struct ampintc_softc	*sc = ampintc;
@@ -570,8 +599,10 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	printf("ampintc_intr_establish irq %d level %d [%s]\n", irqno, level,
 	    name);
 #endif
+
+	ampintc_intr_config(irqno, type);
 	ampintc_calc_mask();
-	
+
 	restore_interrupts(psw);
 	return (ih);
 }
