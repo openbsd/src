@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.37 2017/02/25 19:15:09 jcs Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.38 2017/02/25 20:09:20 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -745,8 +745,6 @@ struct acpi_ivrs {
 #define ACPI_DEV_LD	"PNP0C0D"	/* Lid Device */
 #define ACPI_DEV_SBD	"PNP0C0E"	/* Sleep Button Device */
 #define ACPI_DEV_PILD	"PNP0C0F"	/* PCI Interrupt Link Device */
-#define ACPI_DEV_HIDI2C	"PNP0C50"	/* HID over I2C device */
-#define ACPI_DEV_HIDI2C2 "ACPI0C50"	/* HID over I2C device */
 #define ACPI_DEV_MEMD	"PNP0C80"	/* Memory Device */
 #define ACPI_DEV_MOUSE	"PNP0F13"	/* PS/2 Mouse */
 #define ACPI_DEV_SHC	"ACPI0001"	/* SMBus 1.0 Host Controller */
@@ -762,21 +760,5 @@ struct acpi_ivrs {
 #define ACPI_DEV_IOSA	"ACPI000B"	/* IO SAPIC Device */
 #define ACPI_DEV_THZ	"THERMALZONE"	/* Thermal Zone */
 #define ACPI_DEV_FFB	"FIXEDBUTTON"	/* Fixed Feature Button */
-#define ACPI_DEV_ASUS	"ASUS010"	/* ASUS Hotkeys */
-#define ACPI_DEV_ASUS1	"ATK0100"	/* ASUS Special Device */
-#define ACPI_DEV_IBM	"IBM0068"	/* IBM ThinkPad support */
-#define ACPI_DEV_LENOVO	"LEN0068"	/* Lenovo ThinkPad support */
-#define ACPI_DEV_LENOVO2 "LEN0268"	/* Lenovo ThinkPad support */
-#define ACPI_DEV_ASUSAIBOOSTER	"ATK0110"	/* ASUSTeK AI Booster */
-#define ACPI_DEV_TOSHIBA_LIBRETTO	"TOS6200"	/* Toshiba Libretto support */
-#define ACPI_DEV_TOSHIBA_DYNABOOK	"TOS6207"	/* Toshiba Dynabook support */
-#define ACPI_DEV_TOSHIBA_SPA40	"TOS6208"	/* Toshiba SPA40 support */
-
-/* Synopsys DesignWare I2C controllers */
-#define ACPI_DEV_DWIIC1	"INT33C2"
-#define ACPI_DEV_DWIIC2	"INT33C3"
-#define ACPI_DEV_DWIIC3	"INT3432"
-#define ACPI_DEV_DWIIC4	"INT3433"
-#define ACPI_DEV_DWIIC5	"80860F41"
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */

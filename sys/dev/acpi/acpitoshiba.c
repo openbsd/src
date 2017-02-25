@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.6 2016/06/16 10:39:36 giovanni Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.7 2017/02/25 20:09:20 jcs Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -121,9 +121,9 @@ struct cfdriver acpitoshiba_cd = {
 };
 
 const char *acpitoshiba_hids[] = {
-	ACPI_DEV_TOSHIBA_LIBRETTO,
-	ACPI_DEV_TOSHIBA_DYNABOOK,
-	ACPI_DEV_TOSHIBA_SPA40,
+	"TOS6200",	/* Libretto */
+	"TOS6207",	/* Dynabook */
+	"TOS6208",	/* SPA40 */
 	0
 };
 

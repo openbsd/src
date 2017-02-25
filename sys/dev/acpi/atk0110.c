@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.13 2015/08/25 07:00:11 deraadt Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.14 2017/02/25 20:09:20 jcs Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -122,7 +122,7 @@ struct cfdriver aibs_cd = {
 };
 
 static const char* aibs_hids[] = {
-	ACPI_DEV_ASUSAIBOOSTER,
+	"ATK0110",
 	NULL
 };
 
