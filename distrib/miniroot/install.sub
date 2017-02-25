@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.974 2017/02/19 17:53:58 tb Exp $
+#	$OpenBSD: install.sub,v 1.975 2017/02/25 12:57:03 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -431,7 +431,7 @@ disklabel_autolayout() {
 
 # Create a partition table and configure the partition layout for disk $1.
 configure_disk() {
-	local _disk=$1 _fstab=/tmp/i/fstab.$1
+	local _disk=$1 _fstab=/tmp/i/fstab.$1 _opt
 
 	make_dev $_disk || return
 
@@ -479,9 +479,9 @@ configure_disk() {
 		# other filesystems.
 		while read _pp _mp _fstype _rest; do
 			[[ $_fstype == ffs ]] || continue
-			_OPT=
-			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
-			newfs -q $_OPT ${_pp##/dev/}
+			_opt=
+			[[ $_mp == / ]] && _opt=$MDROOTFSOPT
+			newfs -q $_opt ${_pp##/dev/}
 			# N.B.: '!' is lexically < '/'. That is
 			#	required for correct sorting of
 			#	mount points.
