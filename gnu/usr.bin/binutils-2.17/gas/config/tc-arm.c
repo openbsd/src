@@ -3521,6 +3521,46 @@ parse_address (char **str, int i)
   return SUCCESS;
 }
 
+/* Parse an operand for a MOVW or MOVT instruction.  */
+static int
+parse_half (char **str)
+{
+  char * p;
+  
+  p = *str;
+  skip_past_char (&p, '#');
+  if (strncasecmp (p, ":lower16:", 9) == 0) 
+    inst.reloc.type = BFD_RELOC_ARM_MOVW;
+  else if (strncasecmp (p, ":upper16:", 9) == 0)
+    inst.reloc.type = BFD_RELOC_ARM_MOVT;
+
+  if (inst.reloc.type != BFD_RELOC_UNUSED)
+    {
+      p += 9;
+      skip_whitespace(p);
+    }
+
+  if (my_get_expression (&inst.reloc.exp, &p, GE_NO_PREFIX))
+    return FAIL;
+
+  if (inst.reloc.type == BFD_RELOC_UNUSED)
+    {
+      if (inst.reloc.exp.X_op != O_constant)
+	{
+	  inst.error = _("constant expression expected");
+	  return FAIL;
+	}
+      if (inst.reloc.exp.X_add_number < 0
+	  || inst.reloc.exp.X_add_number > 0xffff)
+	{
+	  inst.error = _("immediate value out of range");
+	  return FAIL;
+	}
+    }
+  *str = p;
+  return SUCCESS;
+}
+
 /* Miscellaneous. */
 
 /* Parse a PSR flag operand.  The value returned is FAIL on syntax error,
@@ -3822,7 +3862,6 @@ enum operand_parse_code
   OP_I32,	/*		   1 .. 32 */
   OP_I63s,	/*		 -64 .. 63 */
   OP_I255,	/*		   0 .. 255 */
-  OP_Iffff,	/*		   0 .. 65535 */
 
   OP_I4b,	/* immediate, prefix optional, 1 .. 4 */
   OP_I7b,	/*			       0 .. 7 */
@@ -3834,6 +3873,7 @@ enum operand_parse_code
   OP_EXP,	/* arbitrary expression */
   OP_EXPi,	/* same, with optional immediate prefix */
   OP_EXPr,	/* same, with optional relocation suffix */
+  OP_HALF,	/* 0 .. 65535 or low/high reloc.  */
 
   OP_CPSF,	/* CPS flags */
   OP_ENDI,	/* Endianness specifier */
@@ -3972,7 +4012,6 @@ parse_operands (char *str, const unsigned char *pattern)
 	case OP_I32:	 po_imm_or_fail (  1,	  32, FALSE);	break;
 	case OP_I63s:	 po_imm_or_fail (-64,	  63, FALSE);	break;
 	case OP_I255:	 po_imm_or_fail (  0,	 255, FALSE);	break;
-	case OP_Iffff:	 po_imm_or_fail (  0, 0xffff, FALSE);	break;
 
 	case OP_I4b:	 po_imm_or_fail (  1,	   4, TRUE);	break;
 	case OP_oI7b:
@@ -4035,6 +4074,11 @@ parse_operands (char *str, const unsigned char *pattern)
 		  inst.operands[i].hasreloc = 1;
 		}
 	    }
+	  break;
+
+	  /* Operand for MOVW or MOVT.  */
+	case OP_HALF:
+	  po_misc_or_fail (parse_half (&str));
 	  break;
 
 	  /* Register or expression */
@@ -5169,10 +5213,22 @@ do_mov (void)
 static void
 do_mov16 (void)
 {
+  bfd_vma imm;
+  bfd_boolean top;
+
+  top = (inst.instruction & 0x00400000) != 0;
+  constraint (top && inst.reloc.type == BFD_RELOC_ARM_MOVW,
+	      _(":lower16: not allowed this instruction"));
+  constraint (!top && inst.reloc.type == BFD_RELOC_ARM_MOVT,
+	      _(":upper16: not allowed instruction"));
   inst.instruction |= inst.operands[0].reg << 12;
-  /* The value is in two pieces: 0:11, 16:19.  */
-  inst.instruction |= (inst.operands[1].imm & 0x00000fff);
-  inst.instruction |= (inst.operands[1].imm & 0x0000f000) << 4;
+  if (inst.reloc.type == BFD_RELOC_UNUSED)
+    {
+      imm = inst.reloc.exp.X_add_number;
+      /* The value is in two pieces: 0:11, 16:19.  */
+      inst.instruction |= (imm & 0x00000fff);
+      inst.instruction |= (imm & 0x0000f000) << 4;
+    }
 }
 
 static void
@@ -7344,11 +7400,30 @@ do_t_mov_cmp (void)
 static void
 do_t_mov16 (void)
 {
+  bfd_vma imm;
+  bfd_boolean top;
+
+  top = (inst.instruction & 0x00800000) != 0;
+  if (inst.reloc.type == BFD_RELOC_ARM_MOVW)
+    {
+      constraint (top, _(":lower16: not allowed this instruction"));
+      inst.reloc.type = BFD_RELOC_ARM_THUMB_MOVW;
+    }
+  else if (inst.reloc.type == BFD_RELOC_ARM_MOVT)
+    {
+      constraint (!top, _(":upper16: not allowed this instruction"));
+      inst.reloc.type = BFD_RELOC_ARM_THUMB_MOVT;
+    }
+
   inst.instruction |= inst.operands[0].reg << 8;
-  inst.instruction |= (inst.operands[1].imm & 0xf000) << 4;
-  inst.instruction |= (inst.operands[1].imm & 0x0800) << 15;
-  inst.instruction |= (inst.operands[1].imm & 0x0700) << 4;
-  inst.instruction |= (inst.operands[1].imm & 0x00ff);
+  if (inst.reloc.type == BFD_RELOC_UNUSED)
+    {
+      imm = inst.reloc.exp.X_add_number;
+      inst.instruction |= (imm & 0xf000) << 4;
+      inst.instruction |= (imm & 0x0800) << 15;
+      inst.instruction |= (imm & 0x0700) << 4;
+      inst.instruction |= (imm & 0x00ff);
+    }
 }
 
 static void
@@ -9404,8 +9479,8 @@ static const struct asm_opcode insns[] =
  TCE(ubfx,	7e00050, f3c00000, 4, (RR, RR, I31, I32),	   bfx, t_bfx),
 
  TCE(mls,	0600090, fb000010, 4, (RRnpc, RRnpc, RRnpc, RRnpc), mlas, t_mla),
- TCE(movw,	3000000, f2400000, 2, (RRnpc, Iffff),		    mov16, t_mov16),
- TCE(movt,	3400000, f2c00000, 2, (RRnpc, Iffff),		    mov16, t_mov16),
+ TCE(movw,	3000000, f2400000, 2, (RRnpc, HALF),		    mov16, t_mov16),
+ TCE(movt,	3400000, f2c00000, 2, (RRnpc, HALF),		    mov16, t_mov16),
  TCE(rbit,	3ff0f30, fa90f0a0, 2, (RR, RR),			    rd_rm, t_rbit),
 
  TC3(ldrht,	03000b0, f8300e00, 2, (RR, ADDR), ldsttv4, t_ldstt),
@@ -12408,6 +12483,47 @@ md_apply_fix (fixS *	fixP,
       fixP->fx_done = 0;
       return;
 
+    case BFD_RELOC_ARM_MOVW:
+    case BFD_RELOC_ARM_MOVT:
+    case BFD_RELOC_ARM_THUMB_MOVW:
+    case BFD_RELOC_ARM_THUMB_MOVT:
+      if (fixP->fx_done || !seg->use_rela_p)
+	{
+	  /* REL format relocations are limited to a 16-bit addend.  */
+	  if (!fixP->fx_done)
+	    {
+	      if (value < -0x1000 || value > 0xffff)
+		  as_bad_where (fixP->fx_file, fixP->fx_line,
+				_("offset too big"));
+	    }
+	  else if (fixP->fx_r_type == BFD_RELOC_ARM_MOVT
+		   || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVT)
+	    {
+	      value >>= 16;
+	    }
+
+	  if (fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVW
+	      || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVT)
+	    {
+	      newval = get_thumb32_insn (buf);
+	      newval &= 0xfbf08f00;
+	      newval |= (value & 0xf000) << 4;
+	      newval |= (value & 0x0800) << 15;
+	      newval |= (value & 0x0700) << 4;
+	      newval |= (value & 0x00ff);
+	      put_thumb32_insn (buf, newval);
+	    }
+	  else
+	    {
+	      newval = md_chars_to_number (buf, 4);
+	      newval &= 0xfff0f000;
+	      newval |= value & 0x0fff;
+	      newval |= (value & 0xf000) << 4;
+	      md_number_to_chars (buf, newval, 4);
+	    }
+	}
+      return;
+
     case BFD_RELOC_UNUSED:
     default:
       as_bad_where (fixP->fx_file, fixP->fx_line,
@@ -12459,6 +12575,34 @@ tc_gen_reloc (asection *section, fixS *fixp)
       if (fixp->fx_pcrel)
 	{
 	  code = BFD_RELOC_32_PCREL;
+	  break;
+	}
+
+    case BFD_RELOC_ARM_MOVW:
+      if (fixp->fx_pcrel)
+	{
+	  code = BFD_RELOC_ARM_MOVW_PCREL;
+	  break;
+	}
+
+    case BFD_RELOC_ARM_MOVT:
+      if (fixp->fx_pcrel)
+	{
+	  code = BFD_RELOC_ARM_MOVT_PCREL;
+	  break;
+	}
+
+    case BFD_RELOC_ARM_THUMB_MOVW:
+      if (fixp->fx_pcrel)
+	{
+	  code = BFD_RELOC_ARM_THUMB_MOVW_PCREL;
+	  break;
+	}
+
+    case BFD_RELOC_ARM_THUMB_MOVT:
+      if (fixp->fx_pcrel)
+	{
+	  code = BFD_RELOC_ARM_THUMB_MOVT_PCREL;
 	  break;
 	}
 
@@ -12725,6 +12869,12 @@ arm_fix_adjustable (fixS * fixP)
       || fixP->fx_r_type == BFD_RELOC_ARM_TLS_LDM32
       || fixP->fx_r_type == BFD_RELOC_ARM_TLS_LDO32
       || fixP->fx_r_type == BFD_RELOC_ARM_TARGET2)
+    return 0;
+
+  if (fixP->fx_r_type == BFD_RELOC_ARM_MOVW
+      || fixP->fx_r_type == BFD_RELOC_ARM_MOVT
+      || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVW
+      || fixP->fx_r_type == BFD_RELOC_ARM_THUMB_MOVT)
     return 0;
 
   return 1;

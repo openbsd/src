@@ -2913,6 +2913,10 @@ pc-relative or some form of GOT-indirect relocation.  */
   BFD_RELOC_ARM_MOVT,
   BFD_RELOC_ARM_MOVW_PCREL,
   BFD_RELOC_ARM_MOVT_PCREL,
+  BFD_RELOC_ARM_THUMB_MOVW,
+  BFD_RELOC_ARM_THUMB_MOVT,
+  BFD_RELOC_ARM_THUMB_MOVW_PCREL,
+  BFD_RELOC_ARM_THUMB_MOVT_PCREL,
 
 /* Relocations for setting up GOTs and PLTs for shared libraries.  */
   BFD_RELOC_ARM_JUMP_SLOT,
