@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.7 2016/01/05 05:27:54 visa Exp $ */
+/* $OpenBSD: cpu.h,v 1.8 2017/02/26 05:52:02 visa Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -56,6 +56,8 @@ int  hw_ipi_intr_establish(int (*)(void *), u_long);
 void hw_ipi_intr_set(u_long);
 void hw_ipi_intr_clear(u_long);
 #endif	/* MULTIPROCESSOR && !_LOCORE */
+
+#define CACHELINESIZE 128
 
 /*
  * No need to use the per-cpu_info function pointers, as we only support
