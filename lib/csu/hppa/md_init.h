@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.11 2017/01/21 01:43:16 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.12 2017/02/26 22:26:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -46,27 +46,12 @@
 	"	.int "#value"						\n" \
 	"	.previous")
 
-#ifdef __PIC__
 #define MD_SECT_CALL_FUNC(section, func)			\
 	__asm (".section "#section",\"ax\",@progbits	\n"	\
 	"	bl	" #func ",%r2			\n"	\
 	"	stw	%r19,-80(%r30)			\n"	\
 	"	ldw	-80(%r30),%r19			\n"	\
 	"	.previous")
-#else
-#define MD_SECT_CALL_FUNC(section, func)			\
-	__asm (".section .rodata			\n"	\
-	"	.align 4				\n"	\
-	"L$" #func "					\n"	\
-	"	.word "#func "				\n"	\
-	"	.previous				\n"	\
-	"	.section "#section",\"ax\",@progbits	\n"	\
-	"	ldil	LR'L$" #func ",%r1		\n"	\
-	"	ldw	RR'L$" #func "(%r1), %r31	\n"	\
-	"	ble	0(%sr4,%r31)			\n"	\
-	"	copy 	%r31,%r2			\n"	\
-	"	.previous")
-#endif
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)			\
 	__asm (						   	\
