@@ -202,7 +202,7 @@
 ./etc/rc.d/vmd
 ./etc/rc.d/watchdogd
 ./etc/rc.d/wsmoused
-./etc/rc.d/xdm
+./etc/rc.d/xenodm
 ./etc/rc.d/ypbind
 ./etc/rc.d/ypldap
 ./etc/rc.d/ypserv

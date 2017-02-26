@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# $OpenBSD: xenodm,v 1.1 2017/02/26 16:51:18 matthieu Exp $
+
+daemon="/usr/X11R6/bin/xenodm"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.492 2016/12/27 09:17:52 jca Exp $
+#	$OpenBSD: rc,v 1.493 2017/02/26 16:51:18 matthieu Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -566,7 +566,7 @@ ifconfig -g carp -carpdemote 128	# Disable carp interlock.
 mixerctl_conf
 
 echo -n 'starting local daemons:'
-start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xdm
+start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xenodm
 echo '.'
 
 date

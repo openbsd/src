@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.975 2017/02/25 12:57:03 rpe Exp $
+#	$OpenBSD: install.sub,v 1.976 2017/02/26 16:51:18 matthieu Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1885,7 +1885,7 @@ questions() {
 				APERTURE=$MDXAPERTURE
 		fi
 		if [[ -n $MDXDM && $resp != n ]]; then
-			ask_yn "Do you want the X Window System to be started by xdm(1)?"
+			ask_yn "Do you want the X Window System to be started by xenodm(1)?"
 			START_XDM=$resp
 		fi
 	fi
@@ -2470,8 +2470,8 @@ apply() {
 		echo "machdep.allowaperture=$APERTURE # See xf86(4)" \
 			>>/mnt/etc/sysctl.conf
 
-	[[ $START_XDM == y && -x /mnt/usr/X11R6/bin/xdm ]] &&
-		echo "xdm_flags=" >>/mnt/etc/rc.conf.local
+	[[ $START_XDM == y && -x /mnt/usr/X11R6/bin/xenodm ]] &&
+		echo "xenodm_flags=" >>/mnt/etc/rc.conf.local
 
 	if [[ $DEFCONS == y ]]; then
 		cp /mnt/etc/ttys /tmp/i/ttys
