@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.50 2017/02/23 06:40:17 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -386,7 +386,7 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 	bn_checkp(BN_copy(i, n->number));
 
 	if (n->scale == 0 && f != NULL)
-		bn_check(BN_zero(f));
+		bn_check(BN_set_word(f, 0));
 	else if (n->scale < sizeof(factors)/sizeof(factors[0])) {
 		rem = BN_div_word(i, factors[n->scale]);
 		if (f != NULL)
@@ -804,7 +804,7 @@ load(void)
 		v = stack_tos(&bmachine.reg[idx]);
 		if (v == NULL) {
 			n = new_number();
-			bn_check(BN_zero(n->number));
+			bn_check(BN_set_word(n->number, 0));
 			push_number(n);
 		} else
 			push(stack_dup_value(v, &copy));
@@ -888,7 +888,7 @@ load_array(void)
 			v = frame_retrieve(stack, idx);
 			if (v == NULL || v->type == BCODE_NONE) {
 				n = new_number();
-				bn_check(BN_zero(n->number));
+				bn_check(BN_set_word(n->number, 0));
 				push_number(n);
 			}
 			else

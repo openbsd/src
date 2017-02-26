@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.19 2015/02/16 20:53:34 jca Exp $	*/
+/*	$OpenBSD: inout.c,v 1.20 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -186,7 +186,7 @@ readnumber(struct source *src, u_int base)
 	u_int		i;
 
 	n = new_number();
-	bn_check(BN_zero(n->number));
+	bn_check(BN_set_word(n->number, 0));
 
 	while ((ch = (*src->vtable->readchar)(src)) != EOF) {
 
