@@ -33,6 +33,7 @@
 ./usr/lib/libc++.so.0.0
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
+./usr/lib/libc++abi.so.0.0
 ./usr/lib/libc++abi_p.a
 ./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/aarch64-openbsd
@@ -449,4 +450,5 @@
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot
+./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
