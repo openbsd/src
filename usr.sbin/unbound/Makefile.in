@@ -408,7 +408,7 @@ _unbound.la:	libunbound_wrap.lo libunbound.la
 
 util/config_file.c:	util/configparser.h
 util/configlexer.c:  $(srcdir)/util/configlexer.lex util/configparser.h
-	@-if test ! -d util; then $(INSTALL) -d util; fi
+	@-if test ! -d util; then mkdir -p util; fi
 	if test "$(LEX)" != ":"; then \
 		echo "#include \"config.h\"" > $@ ;\
 		echo "#include \"util/configyyrename.h\"" >> $@ ;\
@@ -416,7 +416,7 @@ util/configlexer.c:  $(srcdir)/util/configlexer.lex util/configparser.h
 	fi
 
 util/configparser.c util/configparser.h:  $(srcdir)/util/configparser.y
-	@-if test ! -d util; then $(INSTALL) -d util; fi
+	@-if test ! -d util; then mkdir -p util; fi
 	$(YACC) -d -o util/configparser.c $(srcdir)/util/configparser.y
 
 clean:
