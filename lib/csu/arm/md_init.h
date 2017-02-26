@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2017/01/21 00:45:13 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.11 2017/02/26 15:20:58 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -55,23 +55,13 @@
 	"	.int "#value"						\n" \
 	"	.previous")
 
-#ifdef __PIC__
-	/* This nastyness derived from gcc3 output */
 #define MD_SECT_CALL_FUNC(section, func) \
 	__asm (".section "#section", \"ax\"		\n" \
-	"	bl " #func "(PLT)			\n" \
+	"	movw	r0, #:lower16:" #func "- 1f - 8	\n" \
+	"	movt	r0, #:upper16:" #func "- 1f - 8	\n" \
+	"1:	add	r0, r0, pc			\n" \
+	"	blx	r0				\n" \
 	"	.previous")
-#else
-#define MD_SECT_CALL_FUNC(section, func) \
-	__asm (".section "#section", \"ax\"	\n" \
-	"	adr r0, 1f			\n" \
-	"	ldr r0, [r0]			\n" \
-	"	adr lr, 2f			\n" \
-	"	mov pc,	r0			\n" \
-	"1:	.word " #func "			\n" \
-	"2:					\n" \
-	"	.previous")
-#endif
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)	\
 	__asm (					\
