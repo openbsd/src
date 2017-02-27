@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2016/10/26 14:06:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2017/02/27 21:56:09 bluhm Exp $
 #
 #  template_v10
 #  ----------------
@@ -30,6 +30,15 @@ REGRESS_TARGETS=template_v10 flow_10_4 flow_10_6 ifconfig
 
 PROG=   gen_traffic
 LDADD=  -levent
+
+.if ! (make(clean) || make(cleandir) || make(obj))
+PF_ENABLED !=	pfctl -si | grep '^Status: Enabled ' || true
+.endif
+.if empty(PF_ENABLED)
+regress:
+	@echo enable pf on localhost to run pflog test
+	@echo SKIPPED
+.endif
 
 template_v10:
 	perl -I ${.CURDIR} ${.CURDIR}/template.pl 10 \

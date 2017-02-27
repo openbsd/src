@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: flow.pl,v 1.4 2017/01/16 07:04:50 florian Exp $
+# $OpenBSD: flow.pl,v 1.5 2017/02/27 21:56:09 bluhm Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -150,12 +150,6 @@ system('ifconfig', 'lo0', 'inet6', '2001:db8::13');
 open($prog, '|pfctl -f -') or die $!;
 print $prog gen_pf_conf(get_ifs());
 close($prog) or die $!;
-
-open($prog, 'pfctl -si|') or die $!;
-$line = <$prog>;
-close($prog);
-
-system('pfctl', '-q', '-e') if ($line!~/^Status: Enabled/);
 
 if (`ifconfig pflow0 2>&1` ne "pflow0: no such interface\n") {
 	system('ifconfig', 'pflow0', 'destroy');
