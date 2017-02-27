@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.72 2017/02/27 16:21:47 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.73 2017/02/27 16:40:10 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -236,12 +236,6 @@ static struct wsmouse_param synaptics_params[] = {
 	{ WSMOUSECFG_PRESSURE_HI, SYNAPTICS_PRESSURE_HI }
 };
 #define SYNAPTICS_NPARAMS 2
-
-static const struct wsmouse_param elantech_v4_cfg[] = {
-    { WSMOUSECFG_DX_SCALE, (4096 / SYNAPTICS_SCALE) },
-    { WSMOUSECFG_DY_SCALE, (4096 / SYNAPTICS_SCALE) },
-};
-#define ELANTECH_V4_NPARAMS 2
 
 int	pmsprobe(struct device *, void *, void *);
 void	pmsattach(struct device *, struct device *, void *);
@@ -1841,6 +1835,7 @@ int
 elantech_get_hwinfo_v4(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
+	struct wsmousehw *hw;
 	int fw_version;
 	u_char capabilities[3];
 	u_char resp[3];
@@ -1866,13 +1861,18 @@ elantech_get_hwinfo_v4(struct pms_softc *sc)
 	    pms_get_status(sc, resp))
 		return (-1);
 
-	elantech->max_x = (resp[0] & 0x0f) << 8 | resp[1];
-	elantech->max_y = (resp[0] & 0xf0) << 4 | resp[2];
+	hw = wsmouse_get_hw(sc->sc_wsmousedev);
+	hw->x_max = (resp[0] & 0x0f) << 8 | resp[1];
+	hw->y_max = (resp[0] & 0xf0) << 4 | resp[2];
 
-	if ((capabilities[1] < 2) || (capabilities[1] > elantech->max_x))
+	if ((capabilities[1] < 2) || (capabilities[1] > hw->x_max))
 		return (-1);
 
-	elantech->width = elantech->max_x / (capabilities[1] - 1);
+	hw->type = WSMOUSE_TYPE_ELANTECH;
+	hw->hw_type = WSMOUSEHW_CLICKPAD;
+	hw->mt_slots = ELANTECH_MAX_FINGERS;
+
+	elantech->width = hw->x_max / (capabilities[1] - 1);
 
 	return (0);
 }
@@ -2021,18 +2021,6 @@ err:
 }
 
 int
-pms_elantech_v4_configure(struct device *sc_wsmousedev,
-    struct elantech_softc *elantech)
-{
-	if (wsmouse_mt_init(sc_wsmousedev, ELANTECH_MAX_FINGERS, 0)
-	    || wsmouse_set_params(sc_wsmousedev, elantech_v4_cfg,
-	    ELANTECH_V4_NPARAMS))
-		return (-1);
-
-	return (0);
-}
-
-int
 pms_enable_elantech_v4(struct pms_softc *sc)
 {
 	struct elantech_softc *elantech = sc->elantech;
@@ -2055,9 +2043,7 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			sc->elantech = NULL;
 			goto err;
 		}
-
-		if (pms_elantech_v4_configure(
-		    sc->sc_wsmousedev, sc->elantech)) {
+		if (wsmouse_configure(sc->sc_wsmousedev, NULL, 0)) {
 			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			printf("%s: setup failed\n", DEVNAME(sc));
@@ -2084,6 +2070,7 @@ pms_ioctl_elantech(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 {
 	struct elantech_softc *elantech = sc->elantech;
 	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+	struct wsmousehw *hw;
 	int wsmode;
 
 	switch (cmd) {
@@ -2091,10 +2078,18 @@ pms_ioctl_elantech(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 		*(u_int *)data = WSMOUSE_TYPE_ELANTECH;
 		break;
 	case WSMOUSEIO_GCALIBCOORDS:
-		wsmc->minx = elantech->min_x;
-		wsmc->maxx = elantech->max_x;
-		wsmc->miny = elantech->min_y;
-		wsmc->maxy = elantech->max_y;
+		if (sc->protocol->type == PMS_ELANTECH_V4) {
+			hw = wsmouse_get_hw(sc->sc_wsmousedev);
+			wsmc->minx = hw->x_min;
+			wsmc->maxx = hw->x_max;
+			wsmc->miny = hw->y_min;
+			wsmc->maxy = hw->y_max;
+		} else {
+			wsmc->minx = elantech->min_x;
+			wsmc->maxx = elantech->max_x;
+			wsmc->miny = elantech->min_y;
+			wsmc->maxy = elantech->max_y;
+		}
 		wsmc->swapxy = 0;
 		wsmc->resx = 0;
 		wsmc->resy = 0;
