@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.35 2016/10/23 22:59:19 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.36 2017/02/27 15:59:56 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -109,8 +109,8 @@
 #include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
-#include <dev/wscons/wsmouseinput.h>
 #include <dev/wscons/wseventvar.h>
+#include <dev/wscons/wsmouseinput.h>
 #include <dev/rndvar.h>
 
 #include "wsmux.h"
@@ -134,7 +134,7 @@ struct wsmouse_softc {
 	const struct wsmouse_accessops *sc_accessops;
 	void		*sc_accesscookie;
 
-	struct wsmouseinput input;
+	struct wsmouseinput sc_input;
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
@@ -173,29 +173,35 @@ struct wssrcops wsmouse_srcops = {
 };
 #endif
 
-static const size_t cfg_fltr[] = {
+static const size_t cfg_filter[] = {
 	[WSMOUSECFG_DX_SCALE & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.h.scale),
+	    offsetof(struct wsmouseinput, filter.h.scale),
 	[WSMOUSECFG_DY_SCALE & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.v.scale),
+	    offsetof(struct wsmouseinput, filter.v.scale),
 	[WSMOUSECFG_PRESSURE_LO & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.pressure_lo),
+	    offsetof(struct wsmouseinput, filter.pressure_lo),
 	[WSMOUSECFG_PRESSURE_HI & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.pressure_hi),
+	    offsetof(struct wsmouseinput, filter.pressure_hi),
 	[WSMOUSECFG_TRKMAXDIST & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.tracking_maxdist),
+	    offsetof(struct wsmouseinput, filter.tracking_maxdist),
 	[WSMOUSECFG_SWAPXY & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.swapxy),
+	    offsetof(struct wsmouseinput, filter.swapxy),
 	[WSMOUSECFG_X_INV & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.h.inv),
+	    offsetof(struct wsmouseinput, filter.h.inv),
 	[WSMOUSECFG_Y_INV & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.v.inv),
+	    offsetof(struct wsmouseinput, filter.v.inv),
 	[WSMOUSECFG_DX_MAX & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.h.dmax),
+	    offsetof(struct wsmouseinput, filter.h.dmax),
 	[WSMOUSECFG_DY_MAX & 0xff] =
-	    offsetof(struct wsmouseinput, fltr.v.dmax),
+	    offsetof(struct wsmouseinput, filter.v.dmax),
+	[WSMOUSECFG_X_HYSTERESIS & 0xff] =
+	    offsetof(struct wsmouseinput, filter.h.hysteresis),
+	[WSMOUSECFG_Y_HYSTERESIS & 0xff] =
+	    offsetof(struct wsmouseinput, filter.v.hysteresis),
+	[WSMOUSECFG_DECELERATION & 0xff] =
+	    offsetof(struct wsmouseinput, filter.dclr),
 
-	[WSMOUSECFG_FLTR_MAX & 0xff] = 0
+	[WSMOUSECFG_FILTER_MAX & 0xff] = 0
 };
 
 /*
@@ -228,7 +234,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
 
-	wsmouse_input_init(&sc->input, &sc->sc_base.me_evp);
+	sc->sc_input.evar = &sc->sc_base.me_evp;
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;
@@ -310,7 +316,7 @@ wsmouse_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 
-	wsmouse_input_cleanup(&sc->input);
+	wsmouse_input_cleanup(&sc->sc_input);
 
 	return (0);
 }
@@ -404,7 +410,7 @@ wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
 {
 	sc->sc_base.me_evp = evp;
 
-	wsmouse_input_reset(&sc->input);
+	wsmouse_input_reset(&sc->sc_input);
 
 	/* enable the device, and punt if that's not possible */
 	return (*sc->sc_accessops->enable)(sc->sc_accesscookie);
@@ -615,8 +621,7 @@ wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 void
 wsmouse_buttons(struct device *sc, u_int buttons)
 {
-	struct btn_state *btn =
-	    &((struct wsmouse_softc *) sc)->input.btn;
+	struct btn_state *btn = &((struct wsmouse_softc *) sc)->sc_input.btn;
 
 	if (btn->sync)
 		/* Restore the old state. */
@@ -630,7 +635,7 @@ void
 wsmouse_motion(struct device *sc, int dx, int dy, int dz, int dw)
 {
 	struct motion_state *motion =
-	    &((struct wsmouse_softc *) sc)->input.motion;
+	    &((struct wsmouse_softc *) sc)->sc_input.motion;
 
 	motion->dx = dx;
 	motion->dy = dy;
@@ -651,7 +656,7 @@ void
 wsmouse_position(struct device *sc, int x, int y)
 {
 	struct motion_state *motion =
-	    &((struct wsmouse_softc *) sc)->input.motion;
+	    &((struct wsmouse_softc *) sc)->sc_input.motion;
 	int delta;
 
 	delta = x - motion->x;
@@ -682,7 +687,7 @@ normalized_pressure(struct wsmouseinput *input, int pressure)
 void
 wsmouse_touch(struct device *sc, int pressure, int contacts)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct touch_state *touch = &input->touch;
 
 	pressure = normalized_pressure(input, pressure);
@@ -696,6 +701,7 @@ wsmouse_touch(struct device *sc, int pressure, int contacts)
 		touch->pressure = pressure;
 		touch->sync |= SYNC_PRESSURE;
 	}
+	touch->prev_contacts = touch->contacts;
 	if (contacts != touch->contacts) {
 		touch->contacts = contacts;
 		touch->sync |= SYNC_CONTACTS;
@@ -705,7 +711,7 @@ wsmouse_touch(struct device *sc, int pressure, int contacts)
 void
 wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct mt_state *mt = &input->mt;
 	struct mt_slot *mts;
 	u_int bit;
@@ -751,7 +757,7 @@ wsmouse_mtstate(struct device *sc, int slot, int x, int y, int pressure)
 void
 wsmouse_set(struct device *sc, enum wsmouseval type, int value, int aux)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct mt_slot *mts;
 
 	if (WSMOUSE_IS_MT_CODE(type)) {
@@ -824,10 +830,10 @@ wsmouse_touch_update(struct wsmouseinput *input)
 		motion->x_delta = motion->y_delta = 0;
 
 	if ((touch->sync & SYNC_PRESSURE) && touch->min_pressure) {
-		if (touch->pressure >= input->fltr.pressure_hi)
-			touch->min_pressure = input->fltr.pressure_lo;
-		else if (touch->pressure < input->fltr.pressure_lo)
-			touch->min_pressure = input->fltr.pressure_hi;
+		if (touch->pressure >= input->filter.pressure_hi)
+			touch->min_pressure = input->filter.pressure_lo;
+		else if (touch->pressure < input->filter.pressure_lo)
+			touch->min_pressure = input->filter.pressure_hi;
 	}
 }
 
@@ -902,7 +908,7 @@ wsmouse_ptr_ctrl(struct mt_state *mt)
 void
 wsmouse_mt_convert(struct device *sc)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct mt_state *mt = &input->mt;
 	struct mt_slot *mts;
 	int slot, pressure;
@@ -945,9 +951,8 @@ wsmouse_evq_put(struct evq_access *evq, int ev_type, int ev_value)
 
 
 void
-wsmouse_btn_sync(struct wsmouseinput *input, struct evq_access *evq)
+wsmouse_btn_sync(struct btn_state *btn, struct evq_access *evq)
 {
-	struct btn_state *btn = &input->btn;
 	int button, ev_type;
 	u_int bit, sync;
 
@@ -979,8 +984,8 @@ void
 wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
 {
 	struct motion_state *motion = &input->motion;
-	struct axis_filter *h = &input->fltr.h;
-	struct axis_filter *v = &input->fltr.v;
+	struct axis_filter *h = &input->filter.h;
+	struct axis_filter *v = &input->filter.v;
 	int x, y, dx, dy;
 
 	if (motion->sync & SYNC_DELTAS) {
@@ -1029,38 +1034,13 @@ wsmouse_touch_sync(struct wsmouseinput *input, struct evq_access *evq)
 		wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_WIDTH, touch->width);
 }
 
-/*
- * Convert absolute touchpad input (compatibility mode).
- */
-void
-wsmouse_compat_convert(struct device *sc, struct evq_access *evq)
-{
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
-	struct axis_filter *h = &input->fltr.h;
-	struct axis_filter *v = &input->fltr.v;
-	int dx, dy, dz, dw;
-
-	dx = (input->motion.sync & SYNC_X) ? input->motion.x_delta : 0;
-	dy = (input->motion.sync & SYNC_Y) ? input->motion.y_delta : 0;
-	dz = (input->motion.sync & SYNC_DELTAS) ? input->motion.dz : 0;
-	dw = (input->motion.sync & SYNC_DELTAS) ? input->motion.dw : 0;
-
-	if ((h->dmax && (abs(dx) > h->dmax))
-	    || (v->dmax && (abs(dy) > v->dmax)))
-		dx = dy = 0;
-
-	wsmouse_motion(sc, dx, dy, dz, dw);
-
-	input->motion.sync &= ~SYNC_POSITION;
-	input->touch.sync = 0;
-}
-
 static __inline void
 clear_sync_flags(struct wsmouseinput *input)
 {
 	int i;
 
 	input->btn.sync = 0;
+	input->sbtn.sync = 0;
 	input->motion.sync = 0;
 	input->touch.sync = 0;
 	if (input->mt.frame) {
@@ -1073,7 +1053,7 @@ clear_sync_flags(struct wsmouseinput *input)
 void
 wsmouse_input_sync(struct device *sc)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct evq_access evq;
 
 	evq.evar = *input->evar;
@@ -1096,7 +1076,7 @@ wsmouse_input_sync(struct device *sc)
 		wsmouse_touch_update(input);
 
 	if (input->flags & TPAD_COMPAT_MODE)
-		wsmouse_compat_convert(sc, &evq);
+		wstpad_compat_convert(input, &evq);
 
 	if (input->flags & RESYNC) {
 		input->flags &= ~RESYNC;
@@ -1105,7 +1085,9 @@ wsmouse_input_sync(struct device *sc)
 	}
 
 	if (input->btn.sync)
-		wsmouse_btn_sync(input, &evq);
+		wsmouse_btn_sync(&input->btn, &evq);
+	if (input->sbtn.sync)
+		wsmouse_btn_sync(&input->sbtn, &evq);
 	if (input->motion.sync)
 		wsmouse_motion_sync(input, &evq);
 	if (input->touch.sync)
@@ -1129,7 +1111,7 @@ wsmouse_input_sync(struct device *sc)
 int
 wsmouse_id_to_slot(struct device *sc, int id)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct mt_state *mt = &input->mt;
 	int slot;
 
@@ -1154,7 +1136,7 @@ wsmouse_id_to_slot(struct device *sc, int id)
  * Find a minimum-weight matching for an m-by-n matrix.
  *
  * m must be greater than or equal to n. The size of the buffer must be
- * at least 4m + 3n.
+ * at least 3m + 3n.
  *
  * On return, the first m elements of the buffer contain the row-to-
  * column mappings, i.e., buffer[i] is the column index for row i, or -1
@@ -1177,14 +1159,13 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 	int *p;
 	int *r2c = buffer;	/* row-to-column assignments */
 	int *red = r2c + m;	/* reduced values of the assignments */
-	int *alt = red + m;	/* alternative assignments */
-	int *mc = alt + m;	/* row-wise minimal elements of cs */
+	int *mc = red + m;	/* row-wise minimal elements of cs */
 	int *cs = mc + m;	/* the column set */
 	int *c2r = cs + n;	/* column-to-row assignments in cs */
 	int *cd = c2r + n;	/* column deltas (reduction) */
 
 	for (p = r2c; p < red; *p++ = -1) {}
-	for (; p < alt; *p++ = 0) {}
+	for (; p < mc; *p++ = 0) {}
 	for (col = 0; col < n; col++) {
 		delta = INT_MAX;
 		for (i = 0, p = matrix + col; i < m; i++, p += n) {
@@ -1199,15 +1180,14 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 			r2c[row] = col;
 			continue;
 		}
-		for (p = alt; p < mc; *p++ = -1) {}
-		for (; p < cs; *p++ = col) {}
+		for (p = mc; p < cs; *p++ = col) {}
 		for (k = 0; (j = r2c[row]) >= 0;) {
 			cs[k++] = j;
 			c2r[j] = row;
-			alt[row] = mc[row];
+			mc[row] -= n;
 			delta = INT_MAX;
 			for (i = 0, p = matrix; i < m; i++, p += n)
-				if (alt[i] < 0) {
+				if (mc[i] >= 0) {
 					d = p[mc[i]] - cd[mc[i]];
 					e = p[j] - cd[j];
 					if (e < d) {
@@ -1229,7 +1209,7 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 		}
 		for (j = mc[row]; (r2c[row] = j) != col;) {
 			row = c2r[j];
-			j = alt[row];
+			j = mc[row] + n;
 		}
 	}
 }
@@ -1237,7 +1217,7 @@ wsmouse_matching(int *matrix, int m, int n, int *buffer)
 void
 wsmouse_mtframe(struct device *sc, struct mtpoint *pt, int size)
 {
-	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	struct mt_state *mt = &input->mt;
 	int i, j, m, n, dx, dy, slot, maxdist;
 	int *p, *r2c, *c2r;
@@ -1272,7 +1252,7 @@ wsmouse_mtframe(struct device *sc, struct mtpoint *pt, int size)
 
 	r2c = p;
 	c2r = p + m;
-	maxdist = input->fltr.tracking_maxdist;
+	maxdist = input->filter.tracking_maxdist;
 	maxdist = (maxdist ? maxdist * maxdist : INT_MAX);
 	for (i = 0, p = mt->matrix; i < m; i++, p += n)
 		if ((j = r2c[i]) >= 0) {
@@ -1324,8 +1304,7 @@ free_mt_slots(struct wsmouseinput *input)
 int
 wsmouse_mt_init(struct device *sc, int num_slots, int tracking)
 {
-	struct wsmouseinput *input =
-	    &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	int n, size;
 
 	if (num_slots == input->mt.num_slots
@@ -1376,8 +1355,7 @@ int
 wsmouse_get_params(struct device *sc,
     struct wsmouse_param *params, u_int nparams)
 {
-	struct wsmouseinput *input =
-	    &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	int i, key, delegate = 0;
 	void *p;
 
@@ -1386,9 +1364,9 @@ wsmouse_get_params(struct device *sc,
 
 	for (i = 0; i < nparams; i++) {
 		key = params[i].key;
-		if (WSMOUSECFG_MATCH(key, FLTR)) {
+		if (WSMOUSECFG_MATCH(key, FILTER)) {
 			p = input;
-			p += cfg_fltr[key & 0xff];
+			p += cfg_filter[key & 0xff];
 			if (p != input)
 				params[i].value = *((int *) p);
 			else
@@ -1399,7 +1377,7 @@ wsmouse_get_params(struct device *sc,
 		}
 	}
 	if (delegate)
-		return (-1); /* not yet */
+		return (wstpad_get_params(input, params, nparams));
 
 	return (0);
 }
@@ -1408,8 +1386,7 @@ int
 wsmouse_set_params(struct device *sc,
     const struct wsmouse_param *params, u_int nparams)
 {
-	struct wsmouseinput *input =
-	    &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 	int i, key, val, delegate = 0;
 	void *p;
 
@@ -1418,28 +1395,40 @@ wsmouse_set_params(struct device *sc,
 
 	for (i = 0; i < nparams; i++) {
 		key = params[i].key;
-		if (!(WSMOUSECFG_MATCH(key, FLTR))) {
+		if (!(WSMOUSECFG_MATCH(key, FILTER))) {
 			delegate = 1;
 			continue;
 		}
 		val = params[i].value;
 		switch (key) {
 		case WSMOUSECFG_PRESSURE_LO:
-			input->fltr.pressure_lo = val;
-			if (val > input->fltr.pressure_hi)
-				input->fltr.pressure_hi = val;
+			input->filter.pressure_lo = val;
+			if (val > input->filter.pressure_hi)
+				input->filter.pressure_hi = val;
 			input->touch.min_pressure =
-			    input->fltr.pressure_hi;
+			    input->filter.pressure_hi;
 			continue;
 		case WSMOUSECFG_PRESSURE_HI:
-			input->fltr.pressure_hi = val;
-			if (val < input->fltr.pressure_lo)
-				input->fltr.pressure_lo = val;
+			input->filter.pressure_hi = val;
+			if (val < input->filter.pressure_lo)
+				input->filter.pressure_lo = val;
 			input->touch.min_pressure = val;
+			continue;
+		case WSMOUSECFG_X_HYSTERESIS:
+			input->filter.h.hysteresis = val;
+			input->filter.h.acc = 0;
+			continue;
+		case WSMOUSECFG_Y_HYSTERESIS:
+			input->filter.v.hysteresis = val;
+			input->filter.v.acc = 0;
+			continue;
+		case WSMOUSECFG_DECELERATION:
+			input->filter.dclr = val;
+			wstpad_init_deceleration(input);
 			continue;
 		default:
 			p = input;
-			p += cfg_fltr[key & 0xff];
+			p += cfg_filter[key & 0xff];
 			if (p != input)
 				*((int *) p) = val;
 			else
@@ -1449,7 +1438,7 @@ wsmouse_set_params(struct device *sc,
 		}
 	}
 	if (delegate)
-		return (-1); /* not yet */
+		return (wstpad_set_params(input, params, nparams));
 
 	return (0);
 }
@@ -1457,8 +1446,7 @@ wsmouse_set_params(struct device *sc,
 int
 wsmouse_set_mode(struct device *sc, int mode)
 {
-	struct wsmouseinput *input =
-	    &((struct wsmouse_softc *) sc)->input;
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
 
 	if (mode == WSMOUSE_COMPAT) {
 		input->flags &= ~TPAD_NATIVE_MODE;
@@ -1472,6 +1460,57 @@ wsmouse_set_mode(struct device *sc, int mode)
 	return (-1);
 }
 
+struct wsmousehw *wsmouse_get_hw(struct device *sc)
+{
+	return &((struct wsmouse_softc *) sc)->sc_input.hw;
+}
+
+/*
+ * Create a default configuration based on the hardware infos in the 'hw'
+ * fields. The 'params' argument is optional, hardware drivers can use it
+ * to modify the generic defaults. Up to now this function is only useful
+ * for touchpads.
+ */
+int
+wsmouse_configure(struct device *sc,
+    struct wsmouse_param *params, u_int nparams)
+{
+	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
+
+	if (!(input->flags & CONFIGURED)) {
+		if (input->hw.x_max && input->hw.y_max) {
+			if (input->hw.flags & WSMOUSEHW_LR_DOWN) {
+				input->filter.v.inv =
+				    input->hw.y_max + input->hw.y_min;
+			}
+		}
+		input->filter.ratio = 1 << 12;
+		if (input->hw.h_res > 0 && input->hw.v_res > 0) {
+			input->filter.ratio *= input->hw.h_res;
+			input->filter.ratio /= input->hw.v_res;
+		}
+		if (wsmouse_mt_init(sc, input->hw.mt_slots,
+		    (input->hw.flags & WSMOUSEHW_MT_TRACKING))) {
+			printf("wsmouse_configure: "
+			    "MT initialization failed.\n");
+			return (-1);
+		}
+		if (IS_TOUCHPAD(input) && wstpad_configure(input)) {
+			printf("wstpad_configure: "
+			    "Initialization failed.\n");
+			return (-1);
+		}
+		if (params != NULL)
+			wsmouse_set_params(sc, params, nparams);
+		input->flags |= CONFIGURED;
+	}
+	if (IS_TOUCHPAD(input))
+		wsmouse_set_mode(sc, WSMOUSE_COMPAT);
+
+	return (0);
+}
+
+
 void
 wsmouse_input_reset(struct wsmouseinput *input)
 {
@@ -1481,7 +1520,7 @@ wsmouse_input_reset(struct wsmouseinput *input)
 	memset(&input->btn, 0, sizeof(struct btn_state));
 	memset(&input->motion, 0, sizeof(struct motion_state));
 	memset(&input->touch, 0, sizeof(struct touch_state));
-	input->touch.min_pressure = input->fltr.pressure_hi;
+	input->touch.min_pressure = input->filter.pressure_hi;
 	if ((num_slots = input->mt.num_slots)) {
 		slots = input->mt.slots;
 		matrix = input->mt.matrix;
@@ -1491,12 +1530,8 @@ wsmouse_input_reset(struct wsmouseinput *input)
 		input->mt.slots = slots;
 		input->mt.matrix = matrix;
 	}
-}
-
-void
-wsmouse_input_init(struct wsmouseinput *input, struct wseventvar **evar)
-{
-	input->evar = evar;
+	if (input->tp != NULL)
+		wstpad_reset(input);
 }
 
 void

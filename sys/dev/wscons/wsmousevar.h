@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.12 2016/10/23 22:59:19 bru Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.13 2017/02/27 15:59:56 bru Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -187,3 +187,53 @@ int wsmouse_set_mode(struct device *, int);
 /* Read/Set parameter values. */
 int wsmouse_get_params(struct device *, struct wsmouse_param *, u_int);
 int wsmouse_set_params(struct device *, const struct wsmouse_param *, u_int);
+
+
+enum wsmousehw_type {
+	WSMOUSEHW_RAW,
+	WSMOUSEHW_MOUSE,
+	WSMOUSEHW_TOUCHPAD,
+	WSMOUSEHW_CLICKPAD,
+	WSMOUSEHW_TPANEL,
+};
+
+/*
+ * wsmousehw.flags
+ */
+/* Invert Y-coordinates */
+#define WSMOUSEHW_LR_DOWN 	(1 << 0)
+/* Allocate the buffers for wsmouse_mtframe(). */
+#define WSMOUSEHW_MT_TRACKING	(1 << 1)
+
+
+/*
+ * The more or less minimal hardware description for the default
+ * configuration.
+ *
+ * Drivers that report coordinates with a downward orientation
+ * must set the flag WSMOUSEHW_LR_DOWN. Drivers for MT hardware
+ * must provide the number of slots. If they use wsmouse_mtframe(),
+ * WSMOUSEHW_MT_TRACKING must be set.
+ *
+ * The resolution values are optional.
+ */
+struct wsmousehw {
+	int type;		/* WSMOUSE_TYPE_*, cf. wsconsio.h */
+	enum wsmousehw_type hw_type;
+	int x_min;
+	int x_max;
+	int y_min;
+	int y_max;
+	int h_res;
+	int v_res;
+
+	int flags;
+	int mt_slots;
+
+	int contacts_max;	/* inclusive (not needed for MT touchpads) */
+};
+
+struct wsmousehw *wsmouse_get_hw(struct device*);
+
+/* Configure the input context. */
+int wsmouse_configure(struct device *, struct wsmouse_param *, u_int);

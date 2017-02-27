@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.77 2016/10/23 22:59:19 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.78 2017/02/27 15:59:56 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -282,6 +282,10 @@ struct wsmouse_calibcoords {
  * that all keys are valid and that the number of key/value pairs doesn't
  * exceed the enum size.
  *
+ * Most parameters in the "FILTER" group concern coordinate handling.
+ * DX_MAX, DY_MAX, HYSTERESIS, and DECELERATION only apply to touchpads in
+ * WSMOUSE_COMPAT mode.
+ *
  * WSMOUSECFG_DX_SCALE, WSMOUSECFG_DY_SCALE:
  *	Scale factors in [*.12] fixed-point format.
  * WSMOUSECFG_PRESSURE_LO, WSMOUSECFG_PRESSURE_HI:
@@ -294,8 +298,25 @@ struct wsmouse_calibcoords {
  * WSMOUSECFG_X_INV, WSMOUSECFG_Y_INV:
  *	Map an absolute coordinate C to (INV - C), negate relative coordinates.
  * WSMOUSECFG_DX_MAX, WSMOUSECFG_DY_MAX:
- *	Ignore deltas that are greater than these limits (for touchpads in
- *	WSMOUSE_COMPAT mode only).
+ *	Ignore deltas that are greater than these limits.
+ * WSMOUSECFG_X_HYSTERESIS, WSMOUSECFG_Y_HYSTERESIS:
+ *	If these values are non-zero, changes of output coordinates will lag
+ *	behind the input by [+hysteresis] units, or [-hysteresis] units,
+ *	respectively.
+ * WSMOUSECFG_DECELERATION:
+ *	A distance defining the thresholds for deceleration, see
+ *	wstpad_decelerate().
+ *
+ * The "TP_OPTS" group consists exclusively of flags that control touchpad
+ * behaviour. Softbuttons at the bottom edge of a touchpad (SOFTBUTTONS)
+ * will not include a middle-button area if SOFTMBTN is not set. Likewise,
+ * if edge scrolling is active, HORIZSCROLL must be set in addition in order
+ * to enable horizontal scrolling.
+ *
+ * The first parameters in the "TP" group (*_EDGE) determine the size of the
+ * edge areas, and the width of the middle-button area (CENTERWIDTH). The
+ * values are ratios to the width or height of the touchpad surface and have
+ * a [*.12] fixed-point format.
  */
 #define wsmousecfg_group(group)	\
     WSMOUSECFG_##group##_MAX,	\
@@ -312,8 +333,34 @@ enum wsmousecfg {
 	WSMOUSECFG_Y_INV,
 	WSMOUSECFG_DX_MAX,
 	WSMOUSECFG_DY_MAX,
+	WSMOUSECFG_X_HYSTERESIS,
+	WSMOUSECFG_Y_HYSTERESIS,
+	WSMOUSECFG_DECELERATION,
 
-	wsmousecfg_group(FLTR),
+	wsmousecfg_group(FILTER),
+
+	WSMOUSECFG_SOFTBUTTONS,
+	WSMOUSECFG_SOFTMBTN,
+	WSMOUSECFG_TOPBUTTONS,
+	WSMOUSECFG_TWOFINGERSCROLL,
+	WSMOUSECFG_EDGESCROLL,
+	WSMOUSECFG_HORIZSCROLL,
+	WSMOUSECFG_SWAPSIDES,
+	WSMOUSECFG_DISABLE,
+
+	wsmousecfg_group(TP_OPTS),
+
+	WSMOUSECFG_LEFT_EDGE,
+	WSMOUSECFG_RIGHT_EDGE,
+	WSMOUSECFG_TOP_EDGE,
+	WSMOUSECFG_BOTTOM_EDGE,
+	WSMOUSECFG_CENTERWIDTH,
+	WSMOUSECFG_HORIZSCROLLDIST,
+	WSMOUSECFG_VERTSCROLLDIST,
+	WSMOUSECFG_F2WIDTH,
+	WSMOUSECFG_F2PRESSURE,
+
+	wsmousecfg_group(TP),
 };
 #undef wsmousecfg_group
 

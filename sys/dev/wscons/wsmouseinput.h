@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.3 2016/10/23 22:59:19 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.4 2017/02/27 15:59:56 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -54,6 +54,7 @@ struct touch_state {
 	u_int sync;
 
 	int min_pressure;
+	int prev_contacts;
 };
 #define SYNC_PRESSURE		(1 << 0)
 #define SYNC_CONTACTS		(1 << 1)
@@ -101,14 +102,29 @@ struct axis_filter {
 	int rmdr;
 	/* Invert coordinates. */
 	int inv;
+	/* Hysteresis limit and accumulated deltas. */
+	int hysteresis;
+	int acc;
+	/* A [*.12] coefficient for "magnitudes", used for deceleration. */
+	int mag_scale;
+	int dclr_rmdr;
 	/* Ignore deltas that are greater than this limit. */
 	int dmax;
+};
+
+struct interval {
+	long avg;	/* average update interval in nanoseconds */
+	long sum;
+	int samples;
+	struct timespec ts;
+	int track;
 };
 
 struct wsmouseinput {
 	u_int flags;
 
 	struct btn_state btn;
+	struct btn_state sbtn;	/* softbuttons */
 	struct motion_state motion;
 	struct touch_state touch;
 	struct mt_state mt;
@@ -117,11 +133,20 @@ struct wsmouseinput {
 		struct axis_filter h;
 		struct axis_filter v;
 
+		int dclr;	/* deceleration threshold */
+		int mag;	/* weighted average of delta magnitudes */
+
+		int ratio;	/* X/Y ratio */
+
 		int swapxy;
 		int tracking_maxdist;
 		int pressure_lo;
 		int pressure_hi;
-	} fltr;
+	} filter;
+
+	struct wsmousehw hw;
+	struct interval intv;
+	struct wstpad *tp;
 
 	struct wseventvar **evar;
 };
@@ -130,6 +155,8 @@ struct wsmouseinput {
 #define TPAD_NATIVE_MODE	(1 << 1)
 #define MT_TRACKING		(1 << 2)
 #define RESYNC			(1 << 16)
+#define TRACK_INTERVAL		(1 << 17)
+#define CONFIGURED		(1 << 18)
 
 struct evq_access {
 	struct wseventvar *evar;
@@ -143,24 +170,30 @@ struct evq_access {
 
 
 void wsmouse_evq_put(struct evq_access *, int, int);
-void wsmouse_init_scaling(struct wsmouseinput *);
-
 void wsmouse_input_reset(struct wsmouseinput *);
-void wsmouse_input_init(struct wsmouseinput *, struct wseventvar **);
 void wsmouse_input_cleanup(struct wsmouseinput *);
+
+void wstpad_compat_convert(struct wsmouseinput *, struct evq_access *);
+void wstpad_init_deceleration(struct wsmouseinput *);
+int wstpad_configure(struct wsmouseinput *);
+void wstpad_reset(struct wsmouseinput *);
+
+int wstpad_get_params(struct wsmouseinput *,
+    struct wsmouse_param *, u_int);
+int wstpad_set_params(struct wsmouseinput *,
+    const struct wsmouse_param *, u_int);
 
 
 #define FOREACHBIT(v, i) \
     for ((i) = ffs(v) - 1; (i) != -1; (i) = ffs((v) & (~1 << (i))) - 1)
 
-
-#define DELTA_X_EV(input) ((input)->fltr.swapxy ? \
+#define DELTA_X_EV(input) ((input)->filter.swapxy ? \
     WSCONS_EVENT_MOUSE_DELTA_Y : WSCONS_EVENT_MOUSE_DELTA_X)
-#define DELTA_Y_EV(input) ((input)->fltr.swapxy ? \
+#define DELTA_Y_EV(input) ((input)->filter.swapxy ? \
     WSCONS_EVENT_MOUSE_DELTA_X : WSCONS_EVENT_MOUSE_DELTA_Y)
-#define ABS_X_EV(input) ((input)->fltr.swapxy ? \
+#define ABS_X_EV(input) ((input)->filter.swapxy ? \
     WSCONS_EVENT_MOUSE_ABSOLUTE_Y : WSCONS_EVENT_MOUSE_ABSOLUTE_X)
-#define ABS_Y_EV(input) ((input)->fltr.swapxy ? \
+#define ABS_Y_EV(input) ((input)->filter.swapxy ? \
     WSCONS_EVENT_MOUSE_ABSOLUTE_X : WSCONS_EVENT_MOUSE_ABSOLUTE_Y)
 #define DELTA_Z_EV	WSCONS_EVENT_MOUSE_DELTA_Z
 #define DELTA_W_EV	WSCONS_EVENT_MOUSE_DELTA_W
@@ -170,18 +203,25 @@ void wsmouse_input_cleanup(struct wsmouseinput *);
 #define BTN_UP_EV	WSCONS_EVENT_MOUSE_UP
 #define SYNC_EV		WSCONS_EVENT_SYNC
 
-/* buffer size for wsmouse_matching */
-#define MATRIX_SIZE(slots) (((slots) + 7) * (slots) * sizeof(int))
+/* matrix size + buffer size for wsmouse_matching */
+#define MATRIX_SIZE(slots) (((slots) + 6) * (slots) * sizeof(int))
 
+#define IS_TOUCHPAD(input)			\
+    ((input)->hw.hw_type == WSMOUSEHW_TOUCHPAD	\
+    || (input)->hw.hw_type == WSMOUSEHW_CLICKPAD)
 
 #define WSMOUSECFG_MATCH(key, group)		\
     ((key) < WSMOUSECFG_##group##_MAX &&	\
     (key) >= (WSMOUSECFG_##group##_MAX & ~0xff))
 
-#define IS_WSMOUSECFG_KEY(key) \
-    WSMOUSECFG_MATCH((key), FLTR)
+#define IS_WSMOUSECFG_KEY(key)			\
+    (WSMOUSECFG_MATCH((key), FILTER)		\
+    || WSMOUSECFG_MATCH((key), TP_OPTS)		\
+    || WSMOUSECFG_MATCH((key), TP))
 
-#define WSMOUSECFG_SIZE \
-    (WSMOUSECFG_FLTR_MAX & 0xff)
+#define WSMOUSECFG_SIZE				\
+    ((WSMOUSECFG_FILTER_MAX & 0xff)		\
+    + (WSMOUSECFG_TP_OPTS_MAX & 0xff)		\
+    + (WSMOUSECFG_TP_MAX & 0xff))
 
 #endif /* _WSMOUSEINPUT_H_ */
