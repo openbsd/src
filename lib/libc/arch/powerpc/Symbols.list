@@ -1,7 +1,5 @@
 __end
 __floatundidf
-__plt_end
-__plt_start
 _mcount
 fabsl
 frexpl

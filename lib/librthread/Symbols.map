@@ -9,12 +9,6 @@
 		_end;
 		__end;
 
-		/* needed by ld.so until we switch to RELRO */
-		__got_start;
-		__got_end;
-		__plt_start;
-		__plt_end;
-
 		/* pthread implementation */
 		pthread_attr_destroy;
 		pthread_attr_getdetachstate;

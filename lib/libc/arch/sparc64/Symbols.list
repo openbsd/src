@@ -52,6 +52,4 @@ _Qp_xtoq
 __builtin_saveregs
 __dtoul
 __ftoul
-__plt_end
-__plt_start
 _mcount

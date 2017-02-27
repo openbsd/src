@@ -2,8 +2,6 @@ __divl
 __divlu
 __divq
 __divqu
-__plt_end
-__plt_start
 __reml
 __remlu
 __remq
