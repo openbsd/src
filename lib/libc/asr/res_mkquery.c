@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.10 2017/02/18 19:23:05 jca Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.11 2017/02/27 11:38:08 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -61,14 +61,15 @@ res_mkquery(int op, const char *dname, int class, int type,
 	if (ac->ac_options & RES_RECURSE)
 		h.flags |= RD_MASK;
 	h.qdcount = 1;
-	if (ac->ac_options & RES_USE_EDNS0)
+	if (ac->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
 		h.arcount = 1;
 
 	_asr_pack_init(&p, buf, buflen);
 	_asr_pack_header(&p, &h);
 	_asr_pack_query(&p, type, class, dn);
-	if (ac->ac_options & RES_USE_EDNS0)
-		_asr_pack_edns0(&p, MAXPACKETSZ);
+	if (ac->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
+		_asr_pack_edns0(&p, MAXPACKETSZ,
+		    ac->ac_options & RES_USE_DNSSEC);
 
 	_asr_ctx_unref(ac);
 

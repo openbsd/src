@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.16 2017/02/19 12:02:30 jca Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.17 2017/02/27 11:38:08 jca Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -423,12 +423,19 @@ _asr_pack_query(struct asr_pack *p, uint16_t type, uint16_t class, const char *d
 }
 
 int
-_asr_pack_edns0(struct asr_pack *p, uint16_t pktsz)
+_asr_pack_edns0(struct asr_pack *p, uint16_t pktsz, int dnssec_do)
 {
+	DPRINT("asr EDNS0 pktsz:%hu dnssec:%s\n", pktsz,
+	    dnssec_do ? "yes" : "no");
+
 	pack_dname(p, "");	/* root */
 	pack_u16(p, T_OPT);	/* OPT */
 	pack_u16(p, pktsz);	/* UDP payload size */
-	pack_u32(p, 0);		/* extended RCODE and flags */
+
+	/* extended RCODE and flags */
+	pack_u16(p, 0);
+	pack_u16(p, dnssec_do ? DNS_MESSAGEEXTFLAG_DO : 0);
+
 	pack_u16(p, 0);		/* RDATA len */
 
 	return (p->err) ? (-1) : (0);

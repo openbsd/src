@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.45 2017/02/27 11:31:01 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.46 2017/02/27 11:38:08 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -297,7 +297,7 @@ __BEGIN_HIDDEN_DECLS
 void _asr_pack_init(struct asr_pack *, char *, size_t);
 int _asr_pack_header(struct asr_pack *, const struct asr_dns_header *);
 int _asr_pack_query(struct asr_pack *, uint16_t, uint16_t, const char *);
-int _asr_pack_edns0(struct asr_pack *, uint16_t);
+int _asr_pack_edns0(struct asr_pack *, uint16_t, int);
 void _asr_unpack_init(struct asr_unpack *, const char *, size_t);
 int _asr_unpack_header(struct asr_unpack *, struct asr_dns_header *);
 int _asr_unpack_query(struct asr_unpack *, struct asr_dns_query *);
