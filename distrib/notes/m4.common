@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.123 2016/10/18 09:22:05 tb Exp $
+dnl	$OpenBSD: m4.common,v 1.124 2017/02/27 21:18:01 matthieu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -387,7 +387,7 @@ ifelse(MDXDM,,,
 	Since the X Window System can run on OpenBSD/MACHINE
 	without the need for a configuration file, you will get asked-:},
 {:-	If you answered `y' to this question, you will get asked-:})
-	whether you want to start xdm on boot.
+	whether you want to start xenodm(1) on boot.
 -:})dnl
 dnl install.sub (install) questions(): serial console setup
 ifelse(MDSERCONS,,,{:-
