@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.53 2017/02/23 17:04:02 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.54 2017/02/27 10:44:46 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -356,11 +356,11 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 			    AS_FAMILY(as) : as->as.ai.hints.ai_family;
 
 			if (family == AF_INET &&
-			    as->as.ai.flags & ASYNC_NO_INET) {
+			    as->as_flags & ASYNC_NO_INET) {
 				async_set_state(as, ASR_STATE_NEXT_FAMILY);
 				break;
 			} else if (family == AF_INET6 &&
-			    as->as.ai.flags & ASYNC_NO_INET6) {
+			    as->as_flags & ASYNC_NO_INET6) {
 				async_set_state(as, ASR_STATE_NEXT_FAMILY);
 				break;
 			}
@@ -431,7 +431,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 	case ASR_STATE_NOT_FOUND:
 		/* No result found. Maybe we can try again. */
-		if (as->as.ai.flags & ASYNC_AGAIN)
+		if (as->as_flags & ASYNC_AGAIN)
 			ar->ar_gai_errno = EAI_AGAIN;
 		else
 			ar->ar_gai_errno = EAI_NODATA;
@@ -684,7 +684,7 @@ addrconfig_setup(struct asr_query *as)
 	if (getifaddrs(&ifa0) == -1)
 		return (-1);
 
-	as->as.ai.flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
+	as->as_flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
 
 	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr == NULL)
@@ -697,7 +697,7 @@ addrconfig_setup(struct asr_query *as)
 			if (sinp->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 				continue;
 
-			as->as.ai.flags &= ~ASYNC_NO_INET;
+			as->as_flags &= ~ASYNC_NO_INET;
 			break;
 		case PF_INET6:
 			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
@@ -708,7 +708,7 @@ addrconfig_setup(struct asr_query *as)
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6p->sin6_addr))
 				continue;
 
-			as->as.ai.flags &= ~ASYNC_NO_INET6;
+			as->as_flags &= ~ASYNC_NO_INET6;
 			break;
 		}
 	}

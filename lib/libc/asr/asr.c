@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.56 2017/02/23 17:04:02 eric Exp $	*/
+/*	$OpenBSD: asr.c,v 1.57 2017/02/27 10:44:46 jca Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -244,7 +244,7 @@ _asr_async_free(struct asr_query *as)
 	case ASR_SEND:
 		if (as->as_fd != -1)
 			close(as->as_fd);
-		if (as->as.dns.obuf && !(as->as.dns.flags & ASYNC_EXTOBUF))
+		if (as->as.dns.obuf && !(as->as_flags & ASYNC_EXTOBUF))
 			free(as->as.dns.obuf);
 		if (as->as.dns.ibuf)
 			free(as->as.dns.ibuf);
