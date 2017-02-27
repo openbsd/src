@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.42 2017/02/06 15:13:23 espie Exp $
+# $OpenBSD: State.pm,v 1.43 2017/02/27 21:53:11 rpe Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ sub new
 	my $self = bless {}, $class;
 	require OpenBSD::Paths;
 	$self->add_installurl(OpenBSD::Paths->installurl, $state);
-	$self->read_file(OpenBSD::Paths->pkgconf, $state);
 	return $self;
 }
 

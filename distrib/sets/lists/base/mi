@@ -74,7 +74,6 @@
 ./etc/examples/ospf6d.conf
 ./etc/examples/ospfd.conf
 ./etc/examples/pf.conf
-./etc/examples/pkg.conf
 ./etc/examples/printcap
 ./etc/examples/radiusd.conf
 ./etc/examples/rbootd.conf

@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.86 2016/10/04 14:27:25 espie Exp $
+# $OpenBSD: Makefile,v 1.87 2017/02/27 21:53:11 rpe Exp $
 
 .include <bsd.own.mk>
 
 MAN1=fw_update.1 pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 \
 	pkg_mklocatedb.1 pkg_sign.1
-MAN5=package.5 pkg.conf.5
+MAN5=package.5
 MAN8=pkg_check.8
 MAN=${MAN1} ${MAN5} ${MAN8}
 NOPROG= 

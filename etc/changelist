@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.115 2017/01/24 03:13:13 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.116 2017/02/27 21:53:11 rpe Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -90,7 +90,6 @@
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
-/etc/pkg.conf
 /etc/printcap
 /etc/profile
 /etc/protocols
