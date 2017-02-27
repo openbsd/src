@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.14 2016/10/03 13:17:30 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.15 2017/02/27 14:03:52 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -29,6 +29,7 @@ sub handle_options
 {
 	my $state = shift;
 
+	$state->{extra_stats} = 0;
 	$state->{opt} = {
 	    'o' =>
 		    sub {
@@ -42,11 +43,15 @@ sub handle_options
 		    sub { 
 			    push(@{$state->{signature_params}}, shift);
 		    },
+	    'V' =>
+		    sub {
+			    $state->{extra_stats}++;
+		    },
 	};
 	$state->{signature_style} = 'unsigned';
 
-	$state->SUPER::handle_options('Cij:o:S:s:',
-	    '[-Cv] [-D name[=value]] -s signify2 -s priv',
+	$state->SUPER::handle_options('Cij:o:S:s:V',
+	    '[-CvV] [-D name[=value]] -s signify2 -s priv',
 	    '[-o dir] [-S source] [pkg-name...]');
 	if (defined $state->{signature_params}) {
 		$state->{signer} = OpenBSD::Signer->factory($state);
@@ -60,6 +65,8 @@ sub handle_options
 		File::Path::make_path($state->{output_dir})
 		    or $state->usage("can't create dir");
 	}
+	$state->{wantntogo} = $state->{extra_stats} || 
+	    $state->config->istrue("ntogo");
 }
 
 package OpenBSD::PkgSign;
@@ -188,7 +195,6 @@ sub parse_and_run
 	my ($self, $cmd) = @_;
 	my $state = OpenBSD::PkgSign::State->new($cmd);
 	$state->handle_options;
-	$state->{wantntogo} = $state->config->istrue("ntogo");
 	if (!defined $state->{source} && @ARGV == 0) {
 		$state->usage("Nothing to sign");
 	}

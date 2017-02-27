@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.36 2017/01/25 14:12:33 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.37 2017/02/27 14:03:52 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -101,7 +101,7 @@ sub handle_options
 {
 	my $state = shift;
 	$state->SUPER::handle_options('X',
-	    '[-acimnqsvXx] [-B pkg-destdir] [-D name[=value]] [pkg-name ...]');
+	    '[-acimnqsvVXx] [-B pkg-destdir] [-D name[=value]] [pkg-name ...]');
 
 	my $base = $state->opt('B') // $ENV{'PKG_DESTDIR'} // '';
 	if ($base ne '') {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.74 2016/06/15 15:40:13 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.75 2017/02/27 14:03:52 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -161,15 +161,13 @@ sub handle_options
 {
 	my ($state, $opt_string, @usage) = @_;
 
-	# backward compatibility
-	$state->{opt}{F} = sub {
-		for my $o (split /\,/o, shift) {
-			$state->{subst}->add($o, 1);
-		}
+	$state->{extra_stats} = 0;
+	$state->{opt}{V} = sub {
+		$state->{extra_stats}++;
 	};
 	$state->{no_exports} = 1;
 	$state->add_interactive_options;
-	$state->SUPER::handle_options($opt_string.'aciInqsB:F:', @usage);
+	$state->SUPER::handle_options($opt_string.'aciInqsVB:', @usage);
 
 	if ($state->opt('s')) {
 		$state->{not} = 1;
@@ -199,6 +197,8 @@ sub handle_options
 		require Sys::Syslog;
 		Sys::Syslog::openlog($state->{cmd}, "nofatal");
 	}
+	$state->{wantntogo} = $state->{extra_stats} || 
+	    $state->config->istrue("ntogo");
 }
 
 sub init
@@ -210,7 +210,6 @@ sub init
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
 	$self->SUPER::init(@_);
-	$self->{wantntogo} = $self->config->istrue("ntogo");
 	$self->{export_level}++;
 }
 
