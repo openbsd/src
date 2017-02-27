@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.50 2017/01/13 19:21:16 edd Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.51 2017/02/27 14:37:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/cdefs.h>
+#include <sys/tty.h>
+#include <sys/ioctl.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +35,6 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <util.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -484,6 +485,9 @@ vmd_configure(void)
 	struct vmd_vm		*vm;
 	struct vmd_switch	*vsw;
 
+	if ((env->vmd_ptmfd = open(PATH_PTMDEV, O_RDWR|O_CLOEXEC)) == -1)
+		fatal("open %s", PATH_PTMDEV);
+
 	/*
 	 * pledge in the parent process:
 	 * stdio - for malloc and basic I/O including events.
@@ -605,6 +609,12 @@ vmd_reload(unsigned int reset, const char *filename)
 void
 vmd_shutdown(void)
 {
+	struct vmd_vm *vm, *vm_next;
+
+	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
+		vm_remove(vm);
+	}
+
 	proc_kill(&env->vmd_ps);
 	free(env);
 
@@ -702,16 +712,8 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
 	}
-
-	if (keeptty)
-		return;
-
-	if (vm->vm_tty != -1) {
-		close(vm->vm_tty);
-		vm->vm_tty = -1;
-	}
-	free(vm->vm_ttyname);
-	vm->vm_ttyname = NULL;
+	if (!keeptty)
+		vm_closetty(vm);
 }
 
 void
@@ -769,6 +771,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	memcpy(&vm->vm_params, vmc, sizeof(vm->vm_params));
 	vm->vm_pid = -1;
+	vm->vm_tty = -1;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)
 		vm->vm_disks[i] = -1;
@@ -787,10 +790,43 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	*ret_vm = vm;
 	return (0);
-fail:
+ fail:
 	if (errno == 0)
 		errno = EINVAL;
 	return (-1);
+}
+
+int
+vm_opentty(struct vmd_vm *vm)
+{
+	struct ptmget		 ptm;
+
+	/*
+	 * Open tty with pre-opened PTM fd
+	 */
+	if ((ioctl(env->vmd_ptmfd, PTMGET, &ptm) == -1))
+		return (-1);
+
+	vm->vm_tty = ptm.cfd;
+	close(ptm.sfd);
+	if ((vm->vm_ttyname = strdup(ptm.sn)) == NULL)
+		goto fail;
+
+	return (0);
+ fail:
+	vm_closetty(vm);
+	return (-1);
+}
+
+void
+vm_closetty(struct vmd_vm *vm)
+{
+	if (vm->vm_tty != -1) {
+		close(vm->vm_tty);
+		vm->vm_tty = -1;
+	}
+	free(vm->vm_ttyname);
+	vm->vm_ttyname = NULL;
 }
 
 void

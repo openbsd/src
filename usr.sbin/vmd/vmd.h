@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.43 2017/01/13 19:21:16 edd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.44 2017/02/27 14:37:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -185,6 +185,7 @@ struct vmd {
 	struct switchlist	*vmd_switches;
 
 	int			 vmd_fd;
+	int			 vmd_ptmfd;
 };
 
 /* vmd.c */
@@ -197,6 +198,8 @@ void	 vm_stop(struct vmd_vm *, int);
 void	 vm_remove(struct vmd_vm *);
 int	 vm_register(struct privsep *, struct vmop_create_params *,
 	    struct vmd_vm **, uint32_t);
+int	 vm_opentty(struct vmd_vm *);
+void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
 struct vmd_switch *switch_getbyname(const char *);
 char	*get_string(uint8_t *, size_t);
