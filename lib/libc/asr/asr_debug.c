@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.23 2017/02/17 22:24:45 eric Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.24 2017/02/27 11:31:01 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -37,7 +37,6 @@ static const char *print_rr(const struct asr_dns_rr *, char *, size_t);
 FILE *_asr_debug = NULL;
 
 #define OPCODE_SHIFT	11
-#define Z_SHIFT		 4
 
 static const char *
 rcodetostr(uint16_t v)
@@ -147,7 +146,7 @@ static const char *
 print_header(const struct asr_dns_header *h, char *buf, size_t max)
 {
 	snprintf(buf, max,
-	"id:0x%04x %s op:%i %s %s %s %s z:%i r:%s qd:%i an:%i ns:%i ar:%i",
+	"id:0x%04x %s op:%i %s %s %s %s z:%i %s %s r:%s qd:%i an:%i ns:%i ar:%i",
 	    ((int)h->id),
 	    (h->flags & QR_MASK) ? "QR":"  ",
 	    (int)(OPCODE(h->flags) >> OPCODE_SHIFT),
@@ -155,7 +154,9 @@ print_header(const struct asr_dns_header *h, char *buf, size_t max)
 	    (h->flags & TC_MASK) ? "TC":"  ",
 	    (h->flags & RD_MASK) ? "RD":"  ",
 	    (h->flags & RA_MASK) ? "RA":"  ",
-	    ((h->flags & Z_MASK) >> Z_SHIFT),
+	    (h->flags & Z_MASK),
+	    (h->flags & AD_MASK) ? "AD":"  ",
+	    (h->flags & CD_MASK) ? "CD":"  ",
 	    rcodetostr(RCODE(h->flags)),
 	    h->qdcount, h->ancount, h->nscount, h->arcount);
 

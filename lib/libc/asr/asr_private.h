@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.44 2017/02/27 10:44:46 jca Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.45 2017/02/27 11:31:01 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -23,7 +23,9 @@
 #define TC_MASK		(0x1 <<  9)
 #define RD_MASK		(0x1 <<  8)
 #define RA_MASK		(0x1 <<  7)
-#define Z_MASK		(0x7 <<  4)
+#define Z_MASK		(0x1 <<  6)
+#define AD_MASK		(0x1 <<  5)
+#define CD_MASK		(0x1 <<  4)
 #define RCODE_MASK	(0xf)
 
 #define OPCODE(v)	((v) & OPCODE_MASK)
