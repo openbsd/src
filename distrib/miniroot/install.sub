@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.976 2017/02/26 16:51:18 matthieu Exp $
+#	$OpenBSD: install.sub,v 1.977 2017/02/27 22:02:09 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2968,11 +2968,14 @@ fi
 #	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
 #
 # The following variables can be provided if required:
+#	MDEFI       - set to 'y' on archs that support GPT partitioning
+#	MDROOTFSOPT - newfs options for the root partition
 #	MDSETS	    - list of files to add to THESETS
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
 #	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
+#	MDXDM       - ask if xdm should be started if set to 'y'
 #	NCPU	    - the number of cpus for mp capable arches
 . install.md
 
