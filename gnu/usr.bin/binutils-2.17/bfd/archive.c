@@ -1397,6 +1397,14 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
       return NULL;
     }
 
+  if ((abfd->flags & BFD_DETERMINISTIC) != 0)
+    {
+      status.st_mtime = 0;
+      status.st_uid = 0;
+      status.st_gid = 0;
+      status.st_mode = 0644;
+    }
+
   amt = sizeof (struct ar_hdr) + sizeof (struct areltdata);
   ared = bfd_zalloc (abfd, amt);
   if (ared == NULL)
@@ -1951,6 +1959,7 @@ bsd_write_armap (bfd *arch,
   unsigned int count;
   struct ar_hdr hdr;
   struct stat statbuf;
+  long int uid, gid;
 
   firstreal = mapsize + elength + sizeof (struct ar_hdr) + SARMAG;
 
@@ -1963,8 +1972,15 @@ bsd_write_armap (bfd *arch,
 				      + offsetof (struct ar_hdr, ar_date[0]));
   _bfd_ar_spacepadll (hdr.ar_date, sizeof (hdr.ar_date), "%lld",
                     bfd_ardata (arch)->armap_timestamp);
-  _bfd_ar_spacepad (hdr.ar_uid, sizeof (hdr.ar_uid), "%ld", getuid ());
-  _bfd_ar_spacepad (hdr.ar_gid, sizeof (hdr.ar_gid), "%ld", getgid ());
+  if ((arch->flags & BFD_DETERMINISTIC) != 0)
+    uid = gid = 0;
+  else
+    {
+      uid = getuid ();
+      gid = getgid ();
+    }
+  _bfd_ar_spacepad (hdr.ar_uid, sizeof (hdr.ar_uid), "%ld", uid);
+  _bfd_ar_spacepad (hdr.ar_gid, sizeof (hdr.ar_gid), "%ld", gid);
   _bfd_ar_spacepad (hdr.ar_size, sizeof (hdr.ar_size), "%-10ld", mapsize);
   memcpy (hdr.ar_fmag, ARFMAG, 2);
   if (bfd_bwrite (&hdr, sizeof (struct ar_hdr), arch)
