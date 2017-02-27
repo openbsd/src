@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.48 2016/12/20 21:15:36 mpi Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.49 2017/02/27 19:16:56 claudio Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -193,20 +193,14 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (pipex_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
+#ifdef MPLS
+	if (family == PF_MPLS)
+		return (mpls_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	dp = pffinddomain(family);
 	if (dp == NULL)
 		return (ENOPROTOOPT);
-#ifdef MPLS
-	/* XXX WARNING: big fat ugly hack */
-	/* stupid net.mpls is special as it does not have a protocol */
-	if (family == PF_MPLS) {
-		NET_LOCK(s);
-		error = (dp->dom_protosw[0].pr_sysctl)(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen);
-		NET_UNLOCK(s);
-		return (error);
-	}
-#endif
 
 	if (namelen < 3)
 		return (EISDIR);		/* overloaded */

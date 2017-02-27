@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.14 2016/11/15 13:44:03 mpi Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.15 2017/02/27 19:16:56 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -45,12 +45,6 @@
 
 #include <netmpls/mpls.h>
 
-#define MPLS_RAW_SNDQ	8192
-#define MPLS_RAW_RCVQ	8192
-
-u_long mpls_raw_sendspace = MPLS_RAW_SNDQ;
-u_long mpls_raw_recvspace = MPLS_RAW_RCVQ;
-
 int mpls_defttl = 255;
 int mpls_inkloop = MPLS_INKERNEL_LOOP_MAX;
 int mpls_push_expnull_ip = 0;
@@ -59,53 +53,6 @@ int mpls_mapttl_ip = 1;
 int mpls_mapttl_ip6 = 0;
 
 int *mplsctl_vars[MPLSCTL_MAXID] = MPLSCTL_VARS;
-
-int
-mpls_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	int error = 0;
-
-#ifdef MPLS_DEBUG
-	printf("mpls_raw_usrreq: called! (reqid=%d).\n", req);
-#endif	/* MPLS_DEBUG */
-
-	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
-
-	switch (req) {
-	case PRU_ATTACH:
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, mpls_raw_sendspace,
-				mpls_raw_recvspace);
-			if (error)
-				break;
-		}
-		break;
-
-	case PRU_DETACH:
-	case PRU_BIND:
-	case PRU_LISTEN:
-	case PRU_CONNECT:
-	case PRU_CONNECT2:
-	case PRU_DISCONNECT:
-	case PRU_SHUTDOWN:
-	case PRU_RCVD:
-	case PRU_SEND:
-	case PRU_SENSE:
-	case PRU_RCVOOB:
-	case PRU_SENDOOB:
-	case PRU_SOCKADDR:
-	case PRU_PEERADDR:
-		error = EOPNOTSUPP;
-		break;
-
-	default:
-		panic("mpls_raw_usrreq");
-	}
-
-	return (error);
-}
 
 int
 mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,

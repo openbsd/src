@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.14 2015/12/03 21:57:59 mpi Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.15 2017/02/27 19:16:56 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -43,31 +43,12 @@
 #include <netmpls/mpls.h>
 
 /*
- * MPLS protocol family:
+ * MPLS address family: needed for the routing table
  */
-struct protosw mplssw[] = {
-{ 0,			&mplsdomain,		0,	0,
-  0,			0,			0,	0,
-  0,
-  mpls_init,		0,			0,	0,	mpls_sysctl
-},
-{ SOCK_DGRAM,		&mplsdomain,		0,	PR_ATOMIC|PR_ADDR,
-  0,			0,			0,	0,
-  mpls_raw_usrreq,
-  0,			0,			0,	0,	mpls_sysctl,
-},
-/* raw wildcard */
-{ SOCK_RAW,		&mplsdomain,		0,	PR_ATOMIC|PR_ADDR,
-  0,			0,			0,	0,
-  mpls_raw_usrreq,
-  0,			0,			0,	0,	mpls_sysctl,
-},
-};
-
 struct domain mplsdomain = {
-	AF_MPLS, "mpls", mpls_init, 0, 0,
-	mplssw,
-	&mplssw[nitems(mplssw)],
+	AF_MPLS, "mpls", NULL, 0, 0,
+	NULL,
+	0,
 	sizeof(struct sockaddr_mpls),
 	offsetof(struct sockaddr_mpls, smpls_label), 32
 };
