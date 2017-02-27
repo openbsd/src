@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.1 2017/01/25 10:14:40 jsg Exp $	*/
+/*	$OpenBSD: psci.c,v 1.2 2017/02/27 08:39:25 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -35,6 +35,8 @@ extern void (*powerdownfn)(void);
 struct psci_softc {
 	struct device		 sc_dev;
 	void			 (*callfn)(uint32_t, uint32_t, uint32_t, uint32_t);
+	int			 sc_system_off;
+	int			 sc_system_reset;
 };
 
 struct psci_softc *psci_sc;
@@ -60,8 +62,9 @@ psci_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	/* reset and shutdown added in 0.2 */
-	return OF_is_compatible(faa->fa_node, "arm,psci-0.2");
+	return OF_is_compatible(faa->fa_node, "arm,psci") ||
+	    OF_is_compatible(faa->fa_node, "arm,psci-0.2") ||
+	    OF_is_compatible(faa->fa_node, "arm,psci-1.0");
 }
 
 void
@@ -78,11 +81,29 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 			sc->callfn = smc_call;
 	}
 
+	/*
+	 * The function IDs are only to be parsed for the old specification
+	 * (as in version 0.1).  All newer implementations are supposed to
+	 * use the specified values.
+	 */
+	if (OF_is_compatible(faa->fa_node, "arm,psci-0.2") ||
+	    OF_is_compatible(faa->fa_node, "arm,psci-1.0")) {
+		sc->sc_system_off = SYSTEM_OFF;
+		sc->sc_system_reset = SYSTEM_RESET;
+	} else if (OF_is_compatible(faa->fa_node, "arm,psci")) {
+		sc->sc_system_off = OF_getpropint(faa->fa_node,
+		    "system_off", 0);
+		sc->sc_system_reset = OF_getpropint(faa->fa_node,
+		    "system_reset", 0);
+	}
+
 	printf("\n");
 
 	psci_sc = sc;
-	cpuresetfn = psci_reset;
-	powerdownfn = psci_powerdown;
+	if (sc->sc_system_off != 0)
+		powerdownfn = psci_powerdown;
+	if (sc->sc_system_reset != 0)
+		cpuresetfn = psci_reset;
 }
 
 void
@@ -90,7 +111,7 @@ psci_reset(void)
 {
 	struct psci_softc *sc = psci_sc;
 	if (sc->callfn)
-		(*sc->callfn)(SYSTEM_RESET, 0, 0, 0);
+		(*sc->callfn)(sc->sc_system_reset, 0, 0, 0);
 }
 
 void
@@ -98,5 +119,5 @@ psci_powerdown(void)
 {
 	struct psci_softc *sc = psci_sc;
 	if (sc->callfn)
-		(*sc->callfn)(SYSTEM_OFF, 0, 0, 0);
+		(*sc->callfn)(sc->sc_system_off, 0, 0, 0);
 }
