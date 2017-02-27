@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2016/11/21 22:56:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/02/27 23:05:21 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -6,15 +6,32 @@
 # py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
+.include <bsd.own.mk>
+
 .if ! (make(clean) || make(cleandir) || make(obj))
 # Check wether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
+PF_ENABLED !!=	${SUDO} pfctl -si | grep '^Status: Enabled ' || true
+PF_ANCHOR !!=	${SUDO} pfctl -sr | grep '^anchor "regress" all$$' || true
 .endif
+
 .if ! empty(PYTHON_IMPORT)
+.BEGIN:
+	@true
 regress:
 	@echo '${PYTHON_IMPORT}'
-	@echo install python and the scapy module for additional tests
+	@echo Install python and the scapy module for additional tests.
+	@echo SKIPPED
+.endif
+
+.if ! empty(PF_ENABLED) && empty(PF_ANCHOR)
+.BEGIN:
+	@true
+regress:
+	@echo This test cannot run with pf filtering packets on localhost.
+	@echo Either disable pf or add a line 'anchor "regress"' to pf.conf.
+	@echo There the test will add a stateless rule that passes all packets.
 	@echo SKIPPED
 .endif
 
@@ -41,6 +58,8 @@ FAKE_NET_ADDR ?=
     empty (REMOTE_ADDR) || \
     empty (FAKE_NET) || \
     empty (FAKE_NET_ADDR)
+.BEGIN:
+	@true
 regress:
 	@echo This tests needs a remote machine to operate on
 	@echo LOCAL_IF REMOTE_SSH LOCAL_ADDR REMOTE_ADDR FAKE_NET FAKE_NET_ADDR
@@ -55,6 +74,7 @@ regress:
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true
+	rm -f stamp-pfctl
 .endif
 
 depend: addr.py
@@ -74,6 +94,9 @@ stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
+.if ! empty(PF_ANCHOR)
+	echo 'pass on ${LOCAL_IF} no state' | ${SUDO} pfctl -a regress -f -
+.endif
 	@date >$@
 
 # Set variables so that make runs with and without obj directory.
@@ -88,6 +111,13 @@ TARGETS +=	challenge-ack
 run-regress-challenge-ack: stamp-pfctl
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}challenge_ack.py
+
+.if ! empty(PF_ANCHOR)
+TARGETS +=	cleanup
+run-regress-cleanup:
+	@echo '\n======== $@ ========'
+	${SUDO} pfctl -a regress -Fr
+.endif
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
