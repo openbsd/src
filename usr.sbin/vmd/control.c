@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.13 2017/01/17 21:51:01 krw Exp $	*/
+/*	$OpenBSD: control.c,v 1.14 2017/02/27 12:07:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -286,11 +286,13 @@ control_close(int fd, struct control_sock *cs)
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {
-	struct control_sock	*cs = arg;
-	struct privsep		*ps = cs->cs_env;
-	struct ctl_conn		*c;
-	struct imsg		 imsg;
-	int			 n, v, ret = 0;
+	struct control_sock		*cs = arg;
+	struct privsep			*ps = cs->cs_env;
+	struct ctl_conn			*c;
+	struct imsg			 imsg;
+	struct vmop_create_params	 vmc;
+	struct vmop_id			 vid;
+	int				 n, v, ret = 0;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("%s: fd %d: not found", __func__, fd);
@@ -347,7 +349,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			c->flags |= CTL_CONN_NOTIFY;
 			break;
 		case IMSG_CTL_VERBOSE:
-			IMSG_SIZE_CHECK(&imsg, &v);
+			if (IMSG_DATA_SIZE(&imsg) < sizeof(v))
+				goto fail;
 
 			memcpy(&v, imsg.data, sizeof(v));
 			log_setverbose(v);
@@ -355,13 +358,30 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			proc_forward_imsg(ps, &imsg, PROC_PARENT, -1);
 			break;
 		case IMSG_VMDOP_START_VM_REQUEST:
-		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
-		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
-			imsg.hdr.peerid = fd;
-
+			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
+				goto fail;
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, imsg.hdr.peerid, -1,
+			    imsg.hdr.type, fd, -1,
 			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1) {
+				control_close(fd, cs);
+				return;
+			}
+			break;
+		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
+				goto fail;
+			if (proc_compose_imsg(ps, PROC_PARENT, -1,
+			    imsg.hdr.type, fd, -1,
+			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1) {
+				control_close(fd, cs);
+				return;
+			}
+			break;
+		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+			if (IMSG_DATA_SIZE(&imsg) != 0)
+				goto fail;
+			if (proc_compose_imsg(ps, PROC_PARENT, -1,
+			    imsg.hdr.type, fd, -1, NULL, 0) == -1) {
 				control_close(fd, cs);
 				return;
 			}
@@ -384,6 +404,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 	return;
 
  fail:
+	if (ret == 0)
+		ret = EINVAL;
 	imsg_compose_event(&c->iev, IMSG_CTL_FAIL,
 	    0, 0, -1, &ret, sizeof(ret));
 	imsg_flush(&c->iev.ibuf);
