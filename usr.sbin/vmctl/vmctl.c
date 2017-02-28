@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.21 2016/12/14 21:17:25 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.22 2017/02/28 08:35:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "vmd.h"
 #include "vmctl.h"
@@ -363,27 +364,43 @@ void
 print_vm_info(struct vmop_info_result *list, size_t ct)
 {
 	struct vm_info_result *vir;
+	struct vmop_info_result *vmi;
 	size_t i, j;
-	char *vcpu_state;
+	char *vcpu_state, *tty;
+	char curmem[FMT_SCALED_STRSIZE];
+	char maxmem[FMT_SCALED_STRSIZE];
 
-	printf("%5s %5s %5s %9s %9s %*s %s\n", "ID", "PID", "VCPUS", "MAXMEM",
-	    "CURMEM", VM_TTYNAME_MAX, "TTY", "NAME");
+	printf("%5s %5s %5s %7s %7s %7s %s\n", "ID", "PID", "VCPUS",
+	    "MAXMEM", "CURMEM", "TTY", "NAME");
+
 	for (i = 0; i < ct; i++) {
-		vir = &list[i].vir_info;
+		vmi = &list[i];
+		vir = &vmi->vir_info;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
+			(void)strlcpy(curmem, "-", sizeof(curmem));
+			(void)strlcpy(maxmem, "-", sizeof(maxmem));
+
+			(void)fmt_scaled(vir->vir_memory_size * 1024 * 1024,
+			    maxmem);
+
 			if (vir->vir_id != 0) {
+				/* get tty - skip /dev/ path */
+				if ((tty = strrchr(vmi->vir_ttyname,
+				    '/')) == NULL || ++tty == '\0')
+					tty = list[i].vir_ttyname;
+
+				(void)fmt_scaled(vir->vir_used_size, curmem);
+
 				/* running vm */
-				printf("%5u %5u %5zd %7zdMB %7zdMB %*s %s\n",
+				printf("%5u %5u %5zd %7s %7s %7s %s\n",
 				    vir->vir_id, vir->vir_creator_pid,
-				    vir->vir_ncpus, vir->vir_memory_size,
-				    vir->vir_used_size / 1024 / 1024 , VM_TTYNAME_MAX,
-				    list[i].vir_ttyname, vir->vir_name);
+				    vir->vir_ncpus, maxmem, curmem,
+				    tty, vir->vir_name);
 			} else {
 				/* disabled vm */
-				printf("%5s %5s %5zd %7zdMB %9s %*s %s\n",
+				printf("%5s %5s %5zd %7s %7s %7s %s\n",
 				    "-", "-",
-				    vir->vir_ncpus, vir->vir_memory_size,
-				    "-", VM_TTYNAME_MAX,
+				    vir->vir_ncpus, maxmem, curmem,
 				    "-", vir->vir_name);
 			}
 		}
