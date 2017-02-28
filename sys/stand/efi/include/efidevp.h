@@ -1,4 +1,4 @@
-/* $FreeBSD: head/sys/boot/efi/include/efidevp.h 163898 2006-11-02 02:42:48Z marcel $ */
+/* $FreeBSD: head/sys/boot/efi/include/efidevp.h 312314 2017-01-16 20:57:01Z tsoome $ */
 #ifndef _DEVPATH_H
 #define _DEVPATH_H
 
@@ -40,9 +40,7 @@ typedef struct _EFI_DEVICE_PATH {
 #define EFI_DP_TYPE_MASK                    0x7F
 #define EFI_DP_TYPE_UNPACKED                0x80
 
-//#define END_DEVICE_PATH_TYPE                0xff
 #define END_DEVICE_PATH_TYPE                0x7f
-//#define END_DEVICE_PATH_TYPE_UNPACKED       0x7f
 
 #define END_ENTIRE_DEVICE_PATH_SUBTYPE      0xff
 #define END_INSTANCE_DEVICE_PATH_SUBTYPE    0x01
@@ -56,8 +54,8 @@ typedef struct _EFI_DEVICE_PATH {
 #define DevicePathSubType(a)        ( (a)->SubType )
 #define DevicePathNodeLength(a)     ( ((a)->Length[0]) | ((a)->Length[1] << 8) )
 #define NextDevicePathNode(a)       ( (EFI_DEVICE_PATH *) ( ((UINT8 *) (a)) + DevicePathNodeLength(a)))
-//#define IsDevicePathEndType(a)      ( DevicePathType(a) == END_DEVICE_PATH_TYPE_UNPACKED )
-#define IsDevicePathEndType(a)      ( DevicePathType(a) == END_DEVICE_PATH_TYPE )
+#define IsDevicePathType(a, t)      ( DevicePathType(a) == t )
+#define IsDevicePathEndType(a)      IsDevicePathType(a, END_DEVICE_PATH_TYPE)
 #define IsDevicePathEndSubType(a)   ( (a)->SubType == END_ENTIRE_DEVICE_PATH_SUBTYPE )
 #define IsDevicePathEnd(a)          ( IsDevicePathEndType(a) && IsDevicePathEndSubType(a) )
 #define IsDevicePathUnpacked(a)     ( (a)->Type & EFI_DP_TYPE_UNPACKED )
@@ -74,8 +72,6 @@ typedef struct _EFI_DEVICE_PATH {
             (a)->Length[0] = sizeof(EFI_DEVICE_PATH);   \
             (a)->Length[1] = 0;                         \
             }
-
-
 
 /*
  *
@@ -285,6 +281,13 @@ typedef struct _UART_DEVICE_PATH {
 #define DEVICE_PATH_MESSAGING_VT_UTF8 \
     { 0xad15a0d6, 0x8bec, 0x4acf, { 0xa0, 0x73, 0xd0, 0x1d, 0xe7, 0x7e, 0x2d, 0x88 } }
 
+#define MSG_SATA_DP			0x12
+typedef struct _SATA_DEVICE_PATH {
+	EFI_DEVICE_PATH			Header;
+	UINT16				HBAPortNumber;
+	UINT16				PortMultiplierPortNumber;
+	UINT16				Lun;
+} SATA_DEVICE_PATH;
 
 #define MEDIA_DEVICE_PATH               0x04
 
@@ -419,5 +422,33 @@ typedef union {
 
 } EFI_DEV_PATH_PTR;
 
+#define	EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID			\
+    { 0xbc62157e, 0x3e33, 0x4fec, { 0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf } }
+
+#define	EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID				\
+    { 0x8b843e20, 0x8132, 0x4852, { 0x90, 0xcc, 0x55, 0x1a, 0x4e, 0x4a, 0x7f, 0x1c } }
+
+INTERFACE_DECL(_EFI_DEVICE_PATH_PROTOCOL);
+
+typedef
+CHAR16*
+(EFIAPI *EFI_DEVICE_PATH_TO_TEXT_NODE) (
+    IN struct _EFI_DEVICE_PATH *This,
+    IN BOOLEAN                 DisplayOnly,
+    IN BOOLEAN                 AllowShortCuts
+    );
+
+typedef
+CHAR16*
+(EFIAPI *EFI_DEVICE_PATH_TO_TEXT_PATH) (
+    IN struct _EFI_DEVICE_PATH *This,
+    IN BOOLEAN                 DisplayOnly,
+    IN BOOLEAN                 AllowShortCuts
+    );
+
+typedef struct _EFI_DEVICE_PATH_TO_TEXT_PROTOCOL {
+	EFI_DEVICE_PATH_TO_TEXT_NODE ConvertDeviceNodeToText;
+	EFI_DEVICE_PATH_TO_TEXT_PATH ConvertDevicePathToText;
+} EFI_DEVICE_PATH_TO_TEXT_PROTOCOL;
 
 #endif
