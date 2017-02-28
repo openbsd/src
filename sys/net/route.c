@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.351 2017/02/15 18:53:29 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.352 2017/02/28 10:16:38 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1084,7 +1084,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		error = rtable_insert(tableid, ndst,
 		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
 		    rt->rt_priority, rt);
-		if (error != 0 && (crt = rtalloc(ndst, 0, tableid)) != NULL) {
+		if (error != 0 &&
+		    (crt = rtable_match(tableid, ndst, NULL)) != NULL) {
 			/* overwrite cloned route */
 			if (ISSET(crt->rt_flags, RTF_CLONED)) {
 				struct ifnet *cifp;
