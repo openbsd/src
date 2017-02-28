@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.160 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.161 2017/02/28 06:31:12 guenther Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1502,7 +1502,7 @@ size_t
 ftp_read(FILE *fp, struct tls *tls, char *buf, size_t len)
 {
 #ifndef NOSSL
-	ssize_t tls_ret;
+	ssize_t tret;
 #endif
 	size_t ret = 0;
 
@@ -1510,13 +1510,12 @@ ftp_read(FILE *fp, struct tls *tls, char *buf, size_t len)
 		ret = fread(buf, sizeof(char), len, fp);
 #ifndef NOSSL
 	else if (tls != NULL) {
- again:
-		if ((tls_ret = tls_read(tls, buf, len)) >= 0)
-			ret = (size_t)tls_ret;
-		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
-			goto again;
-		if (ret < 0)
+		do {
+			tret = tls_read(tls, buf, len);
+		} while (tret == TLS_WANT_POLLIN || tret == TLS_WANT_POLLOUT);
+		if (tret < 0)
 			errx(1, "SSL read error: %s", tls_error(tls));
+		ret = (size_t)tret;
 	}
 #endif /* !NOSSL */
 	return (ret);
@@ -1592,10 +1591,9 @@ SSL_readline(struct tls *tls, size_t *lenp)
 			buf = q;
 			len *= 2;
 		}
-again:
-		ret = tls_read(tls, &c, 1);
-		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
-			goto again;
+		do {
+			ret = tls_read(tls, &c, 1);
+		} while (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT);
 		if (ret < 0)
 			errx(1, "SSL read error: %s", tls_error(tls));
 
