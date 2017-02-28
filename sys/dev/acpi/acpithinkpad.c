@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.56 2017/02/25 20:09:20 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.57 2017/02/28 10:39:07 natano Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -383,7 +383,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 #ifndef SMALL_KERNEL
 			if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
 				acpi_addtask(sc->sc_acpi, acpi_sleep_task, 
-				    sc->sc_acpi, ACPI_STATE_S3);
+				    sc->sc_acpi, ACPI_SLEEP_SUSPEND);
 #endif
 			handled = 1;
 			break;
@@ -409,7 +409,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 #if defined(HIBERNATE) && !defined(SMALL_KERNEL)
 			if (acpi_record_event(sc->sc_acpi, APM_USER_HIBERNATE_REQ))
 				acpi_addtask(sc->sc_acpi, acpi_sleep_task, 
-				    sc->sc_acpi, ACPI_STATE_S4);
+				    sc->sc_acpi, ACPI_SLEEP_HIBERNATE);
 #endif
 			handled = 1;
 			break;
