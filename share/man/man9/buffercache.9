@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.10 2014/12/11 14:29:42 jmc Exp $
+.\"	$OpenBSD: buffercache.9,v 1.11 2017/02/28 19:36:14 natano Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,7 +102,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: December 11 2014 $
+.Dd $Mdocdate: February 28 2017 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -139,7 +139,7 @@
 .Fn getblk "struct vnode *vp" "daddr_t blkno" "int size" \
 "int slpflag" "int slptimeo"
 .Ft struct buf *
-.Fn geteblk "int size"
+.Fn geteblk "size_t size"
 .Ft struct buf *
 .Fn incore "struct vnode *vp" "daddr_t blkno"
 .Ft void
