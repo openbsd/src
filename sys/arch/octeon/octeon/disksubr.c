@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 2015/09/27 20:20:23 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 2017/02/28 10:49:37 natano Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 
 	/* get a buffer and initialize it */
-	bp = geteblk((int)lp->d_secsize);
+	bp = geteblk(lp->d_secsize);
 	bp->b_dev = dev;
 
 	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
@@ -103,7 +103,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	struct buf *bp = NULL;
 
 	/* get a buffer and initialize it */
-	bp = geteblk((int)lp->d_secsize);
+	bp = geteblk(lp->d_secsize);
 	bp->b_dev = dev;
 
 	if (readdoslabel(bp, strat, lp, &partoff, 1) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.104 2016/09/16 02:54:51 dlg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.105 2017/02/28 10:49:37 natano Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ void    buf_undirty(struct buf *);
 void	buf_adjcnt(struct buf *, long);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
-struct buf *geteblk(int);
+struct buf *geteblk(size_t);
 struct buf *incore(struct vnode *, daddr_t);
 
 /*
