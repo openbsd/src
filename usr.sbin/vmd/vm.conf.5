@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.12 2016/11/26 19:49:11 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.13 2017/02/28 08:35:56 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2016 $
+.Dd $Mdocdate: February 28 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -108,11 +108,6 @@ is specified.
 Do not start this VM.
 .It Cm disk Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
-.It Cm kernel Ar path
-Kernel to load when booting the VM.
-.It Cm memory Ar bytes
-Memory size of the VM, in bytes, rounded to megabytes.
-The default is 512M.
 .It Cm interface Oo name Oc Op Brq ...
 Network interface to add to the VM.
 The optional
@@ -161,6 +156,11 @@ If the
 is greater than the number of
 .Ic interface
 statements, additional default interfaces will be added.
+.It Cm kernel Ar path
+Kernel to load when booting the VM.
+.It Cm memory Ar bytes
+Memory size of the VM, in bytes, rounded to megabytes.
+The default is 512M.
 .El
 .Sh SWITCH CONFIGURATION
 A virtual switch allows VMs to communicate with other network interfaces on the
