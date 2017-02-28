@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.32 2016/09/28 21:12:14 millert Exp $
+# $OpenBSD: backward,v 1.33 2017/02/28 23:19:42 millert Exp $
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -97,6 +97,7 @@ Link	Pacific/Auckland	NZ
 Link	Pacific/Chatham		NZ-CHAT
 Link	America/Denver		Navajo
 Link	Asia/Shanghai		PRC
+Link	Pacific/Honolulu	Pacific/Johnston
 Link	Pacific/Pohnpei		Pacific/Ponape
 Link	Pacific/Pago_Pago	Pacific/Samoa
 Link	Pacific/Chuuk		Pacific/Truk
