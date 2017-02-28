@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.42 2015/12/09 21:41:50 naddy Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.43 2017/02/28 16:46:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -55,6 +55,7 @@ static void	print_ident(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 static void	print_tag(struct sadb_ext *, struct sadb_msg *);
 static void	print_tap(struct sadb_ext *, struct sadb_msg *);
+static void	print_satype(struct sadb_ext *, struct sadb_msg *);
 
 static struct idname *lookup(struct idname *, u_int32_t);
 static char    *lookup_name(struct idname *, u_int32_t);
@@ -103,6 +104,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
 	{ SADB_X_EXT_TAG,		"tag",			print_tag },
 	{ SADB_X_EXT_TAP,		"tap",			print_tap },
+	{ SADB_X_EXT_SATYPE2,		"satype2",		print_satype },
 	{ 0,				NULL,			NULL }
 };
 
@@ -402,6 +404,14 @@ print_tap(struct sadb_ext *ext, struct sadb_msg *msg)
 	struct sadb_x_tap *stap = (struct sadb_x_tap *)ext;
 
 	printf("enc%u", stap->sadb_x_tap_unit);
+}
+
+static void
+print_satype(struct sadb_ext *ext, struct sadb_msg *msg)
+{
+	struct sadb_protocol *proto = (struct sadb_protocol *)ext;
+
+	printf("type %s", lookup_name(sa_types, proto->sadb_protocol_proto));
 }
 
 static char *

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.197 2015/12/10 17:27:00 mmcc Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.198 2017/02/28 16:46:27 bluhm Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -3303,8 +3303,8 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 		goto cleanup;
 	addr = 0;
 
-	/* Setup the PROTOCOL extension.  */
-	protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+	/* Setup the sa type extension.  */
+	protocol.sadb_protocol_exttype = SADB_X_EXT_SATYPE2;
 	protocol.sadb_protocol_len = sizeof protocol / PF_KEY_V2_CHUNK;
 	switch (proto2->proto) {
 	case IPSEC_PROTO_IPSEC_ESP:

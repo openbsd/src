@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.50 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.51 2017/02/28 16:46:27 bluhm Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -125,6 +125,7 @@
 #define BITMAP_X_LIFETIME_LASTUSE      (1LL << SADB_X_EXT_LIFETIME_LASTUSE)
 #define BITMAP_X_TAG                   (1LL << SADB_X_EXT_TAG)
 #define BITMAP_X_TAP                   (1LL << SADB_X_EXT_TAP)
+#define BITMAP_X_SATYPE2               (1LL << SADB_X_EXT_SATYPE2)
 
 uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -157,7 +158,7 @@ uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 	/* X_DELFLOW */
 	BITMAP_X_FLOW,
 	/* X_GRPSPIS */
-	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_SATYPE2,
 	/* X_ASKPOLICY */
 	BITMAP_X_POLICY,
 };
@@ -193,7 +194,7 @@ uint64_t sadb_exts_required_in[SADB_MAX+1] =
 	/* X_DELFLOW */
 	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
 	/* X_GRPSPIS */
-	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_SATYPE2,
 	/* X_ASKPOLICY */
 	BITMAP_X_POLICY,
 };
@@ -229,7 +230,7 @@ uint64_t sadb_exts_allowed_out[SADB_MAX+1] =
 	/* X_DELFLOW */
 	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
 	/* X_GRPSPIS */
-	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_SATYPE2,
 	/* X_ASKPOLICY */
 	BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE | BITMAP_X_POLICY,
 };
@@ -265,7 +266,7 @@ uint64_t sadb_exts_required_out[SADB_MAX+1] =
 	/* X_DELFLOW */
 	BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE,
 	/* X_GRPSPIS */
-	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_PROTOCOL,
+	BITMAP_SA | BITMAP_X_SA2 | BITMAP_X_DST2 | BITMAP_ADDRESS_DST | BITMAP_X_SATYPE2,
 	/* X_REPPOLICY */
 	BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE,
 };
@@ -434,9 +435,10 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		break;
 		case SADB_X_EXT_PROTOCOL:
 		case SADB_X_EXT_FLOW_TYPE:
+		case SADB_X_EXT_SATYPE2:
 			if (i != sizeof(struct sadb_protocol)) {
-				DPRINTF(("pfkeyv2_parsemessage: bad "
-				    "PROTOCOL/FLOW header length in extension "
+				DPRINTF(("pfkeyv2_parsemessage: bad PROTOCOL/"
+				    "FLOW/SATYPE2 header length in extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
 				return (EINVAL);
 			}

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.73 2017/01/24 10:08:30 krw Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.74 2017/02/28 16:46:27 bluhm Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -261,7 +261,8 @@ struct sadb_x_tap {
 #define SADB_X_EXT_LIFETIME_LASTUSE   32
 #define SADB_X_EXT_TAG                33
 #define SADB_X_EXT_TAP                34
-#define SADB_EXT_MAX                  34
+#define SADB_X_EXT_SATYPE2            35
+#define SADB_EXT_MAX                  35
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -427,6 +428,7 @@ void export_key(void **, struct tdb *, int);
 void export_udpencap(void **, struct tdb *);
 void export_tag(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
+void export_satype(void **, struct tdb *);
 
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identities(struct ipsec_ids **, int, struct sadb_ident *,

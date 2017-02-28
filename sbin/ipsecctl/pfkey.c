@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.57 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.58 2017/02/28 16:46:27 bluhm Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -701,7 +701,7 @@ pfkey_sagroup(int sd, u_int8_t satype, u_int8_t satype2, u_int8_t action,
 	sa_dst2.sadb_address_len = (sizeof(sa_dst2) + ROUNDUP(sdst2.ss_len)) / 8;
 
 	bzero(&sa_proto, sizeof(sa_proto));
-	sa_proto.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+	sa_proto.sadb_protocol_exttype = SADB_X_EXT_SATYPE2;
 	sa_proto.sadb_protocol_len = sizeof(sa_proto) / 8;
 	sa_proto.sadb_protocol_direction = 0;
 	sa_proto.sadb_protocol_proto = satype2;

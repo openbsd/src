@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.152 2017/02/24 18:36:33 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.153 2017/02/28 16:46:27 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -556,6 +556,13 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 		}
 	}
 
+	if (sa->tdb_onext) {
+		i += sizeof(struct sadb_sa);
+		i += sizeof(struct sadb_address) +
+		    PADUP(SA_LEN(&sa->tdb_onext->tdb_dst.sa));
+		i += sizeof(struct sadb_protocol);
+	}
+
 	if (sa->tdb_udpencap_port)
 		i += sizeof(struct sadb_x_udpencap);
 
@@ -633,6 +640,15 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	if (sa->tdb_filter.sen_type)
 		export_flow(&p, IPSP_IPSEC_USE, &sa->tdb_filter,
 		    &sa->tdb_filtermask, headers);
+
+	if (sa->tdb_onext) {
+		headers[SADB_X_EXT_SA2] = p;
+		export_sa(&p, sa->tdb_onext);
+		headers[SADB_X_EXT_DST2] = p;
+		export_address(&p, &sa->tdb_onext->tdb_dst.sa);
+		headers[SADB_X_EXT_SATYPE2] = p;
+		export_satype(&p, sa->tdb_onext);
+	}
 
 	/* Export UDP encapsulation port, if present */
 	if (sa->tdb_udpencap_port) {
@@ -1368,7 +1384,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		ssa = (struct sadb_sa *) headers[SADB_X_EXT_SA2];
 		sunionp = (union sockaddr_union *) (headers[SADB_X_EXT_DST2] +
 		    sizeof(struct sadb_address));
-		sa_proto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL]);
+		sa_proto = (struct sadb_protocol *) headers[SADB_X_EXT_SATYPE2];
 
 		tdb2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
