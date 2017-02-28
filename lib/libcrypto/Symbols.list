@@ -1505,6 +1505,7 @@ EVP_idea_ecb
 EVP_idea_ofb
 EVP_md4
 EVP_md5
+EVP_md5_sha1
 EVP_md_null
 EVP_rc2_40_cbc
 EVP_rc2_64_cbc

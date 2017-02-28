@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2017/01/21 09:38:58 beck Exp $
+# $OpenBSD: Makefile,v 1.15 2017/02/28 14:15:37 jsing Exp $
 
 LIB=	crypto
 
@@ -158,6 +158,7 @@ SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 SRCS+= e_chacha.c evp_aead.c e_chacha20poly1305.c
 SRCS+= e_gost2814789.c m_gost2814789.c m_gostr341194.c m_streebog.c
+SRCS+= m_md5_sha1.c
 
 # gost/
 SRCS+= gost2814789.c gost89_keywrap.c gost89_params.c gost89imit_ameth.c
