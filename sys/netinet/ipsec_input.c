@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.144 2017/02/08 12:37:43 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.145 2017/02/28 09:59:34 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -592,7 +592,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		return;
 #ifdef INET6
 	case AF_INET6:
-		ip6_ours(m, skip, prot);
+		ip6_local(m, skip, prot);
 		return;
 #endif /* INET6 */
 	default:

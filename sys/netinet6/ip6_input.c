@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.179 2017/02/08 12:37:43 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.180 2017/02/28 09:59:34 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
 
+void ip6_ours(struct mbuf *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
@@ -339,14 +340,14 @@ ip6_input(struct mbuf *m)
 
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
-		ours = 1;
-		goto hbhcheck;
+		ip6_ours(m);
+		goto out;
 	}
 
 #if NPF > 0
 	if (pf_ouraddr(m) == 1) {
-		ours = 1;
-		goto hbhcheck;
+		ip6_ours(m);
+		goto out;
 	}
 #endif
 
@@ -383,14 +384,16 @@ ip6_input(struct mbuf *m)
 			 * ip6_mforward() returns a non-zero value, the packet
 			 * must be discarded, else it may be accepted below.
 			 */
+			KERNEL_LOCK();
 			if (ip6_mforward(ip6, ifp, m)) {
 				ip6stat_inc(ip6s_cantforward);
-				goto bad;
+				m_freem(m);
+			} else if (ours) {
+				ip6_local(m, off, nxt);
+			} else {
+				m_freem(m);
 			}
-
-			if (!ours)
-				goto bad;
-			ip6_ours(m, off, nxt);
+			KERNEL_UNLOCK();
 			goto out;
 		}
 #endif
@@ -400,7 +403,8 @@ ip6_input(struct mbuf *m)
 				ip6stat_inc(ip6s_cantforward);
 			goto bad;
 		}
-		goto hbhcheck;
+		ip6_ours(m);
+		goto out;
 	}
 
 
@@ -438,9 +442,8 @@ ip6_input(struct mbuf *m)
 
 			goto bad;
 		} else {
-			/* this address is ready */
-			ours = 1;
-			goto hbhcheck;
+			ip6_ours(m);
+			goto out;
 		}
 	}
 
@@ -459,19 +462,16 @@ ip6_input(struct mbuf *m)
 		goto bad;
 	}
 
-  hbhcheck:
-
 	if (ip6_hbhchcheck(m, &off, &nxt, &ours))
 		goto out;
 
 	if (ours) {
-		ip6_ours(m, off, nxt);
+		KERNEL_LOCK();
+		ip6_local(m, off, nxt);
+		KERNEL_UNLOCK();
 		goto out;
 	}
 
-	/*
-	 * Forward if desirable.
-	 */
 	ip6_forward(m, rt, srcrt);
 	if_put(ifp);
 	return;
@@ -483,9 +483,22 @@ ip6_input(struct mbuf *m)
 }
 
 void
-ip6_ours(struct mbuf *m, int off, int nxt)
+ip6_ours(struct mbuf *m)
+{
+	int off, nxt;
+
+	if (ip6_hbhchcheck(m, &off, &nxt, NULL))
+		return;
+
+	ip6_local(m, off, nxt);
+}
+
+void
+ip6_local(struct mbuf *m, int off, int nxt)
 {
 	int nest = 0;
+
+	KERNEL_ASSERT_LOCKED();
 
 	/* pf might have changed things */
 	in6_proto_cksum_out(m, NULL);
@@ -582,7 +595,7 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
 		 * accept the packet if a router alert option is included
 		 * and we act as an IPv6 router.
 		 */
-		if (rtalert != ~0 && ip6_forwarding)
+		if (rtalert != ~0 && ip6_forwarding && oursp != NULL)
 			*oursp = 1;
 	} else
 		*nxtp = ip6->ip6_nxt;
