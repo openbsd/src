@@ -2,6 +2,8 @@
 # send a ping6 packet without routing header type 0
 # we expect an echo reply, as there is no routing header
 
+print "send ping6 packet without routing header type 0"
+
 import os
 from addr import *
 from scapy.all import *

@@ -3,6 +3,8 @@
 # the address list is empty
 # we expect a parameter problem from header scanning
 
+print "send ping6 packet with routing header type 0 but empty address list"
+
 import os
 from addr import *
 from scapy.all import *

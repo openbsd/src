@@ -4,6 +4,8 @@
 # hide the routing header behind a fragment header to avoid header scan
 # we expect an ICMP6 error, as we do not support source routing
 
+print "send with fragment and routing header type 0 to be source routed"
+
 import os
 from addr import *
 from scapy.all import *

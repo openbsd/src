@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2016/10/19 14:31:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/02/28 16:14:35 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -9,12 +9,13 @@
 .if ! (make(clean) || make(cleandir) || make(obj))
 # Check wether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 .endif
+
 .if ! empty(PYTHON_IMPORT)
 regress:
 	@echo '${PYTHON_IMPORT}'
-	@echo install python and the scapy module for additional tests
+	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
 
@@ -45,13 +46,22 @@ SRT_OUT6 ?=
 
 .if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
     empty (SRC_OUT6) || empty (DST_IN6) || empty (DST_OUT6) || \
-    empty (SRT_IN6) || empty (SRT_OUT6)
+    empty (SRT_IN6) || empty (SRT_OUT6) || empty (REMOTE_SSH)
 regress:
-	@echo this tests needs a remote machine to operate on
+	@echo This tests needs a remote machine to operate on.
 	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 DST_OUT6
-	@echo SRT_IN6 SRT_OUT6 are empty
-	@echo fill out these variables for additional tests
+	@echo SRT_IN6 SRT_OUT6 REMOTE_SSH are empty.
+	@echo Fill out these variables for additional tests.
 	@echo SKIPPED
+.endif
+
+.MAIN: all
+
+.if make (regress) || make (all)
+.BEGIN: addr.py
+	@echo
+	${SUDO} true
+	rm -f stamp-stack stamp-pf
 .endif
 
 depend: addr.py
@@ -75,65 +85,35 @@ PYTHON =	python2.7 ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
-# Send ping6 packet without routing header type 0
-TARGETS +=	rh0-none
-run-regress-rh0-none: addr.py
+stamp-stack:
+	rm -f stamp-stack stamp-pf
+	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -d
+	ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
+	date >$@
+
+stamp-pf:
+	rm -f stamp-stack stamp-pf
+	echo 'pass proto tcp from port ssh no state\n'\
+	    'pass proto tcp to port ssh no state'|\
+	    ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
+	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -e
+	date >$@
+
+RH0_SCRIPTS !!=		cd ${.CURDIR} && ls -1 rh0*.py
+
+.for s in ${RH0_SCRIPTS}
+run-regress-${s}: addr.py stamp-stack
 	@echo '\n======== $@ ========'
-	@echo Check without routing header type 0
-	${SUDO} ${PYTHON}rh0_none.py
+	${SUDO} ${PYTHON}${s}
+.endfor
 
-# Send ping6 packet with routing header type 0 but empty address list
-TARGETS +=	rh0-empty
-run-regress-rh0-empty: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check routing header type 0 with empty address list
-	${SUDO} ${PYTHON}rh0_empty.py
+REGRESS_TARGETS =	${RH0_SCRIPTS:S/^/run-regress-/}
 
-TARGETS +=	rh0-final
-# Send ping6 packet with routing header type 0 to the final destination
-run-regress-rh0-final: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check routing header type 0 to the final destination
-	${SUDO} ${PYTHON}rh0_final.py
+# After running the tests, turn on pf on remote machine.
+# This is the expected default configuration.
+REGRESS_TARGETS +=      stamp-pf
 
-TARGETS +=	rh0-route
-# Send ping6 packet with routing header type 0 to be source routed
-run-regress-rh0-route: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check routing header type 0 to be source routed
-	${SUDO} ${PYTHON}rh0_route.py
-
-# Send with fragment and routing header type 0 but empty address list
-TARGETS +=	rh0-frag-empty
-run-regress-rh0-frag-empty: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check fragment and routing header type 0 with empty address list
-	${SUDO} ${PYTHON}rh0_frag_empty.py
-
-TARGETS +=	rh0-frag-final
-# Send with fragment and routing header type 0 to the final destination
-run-regress-rh0-frag-final: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check fragment and routing header type 0 to the final destination
-	${SUDO} ${PYTHON}rh0_frag_final.py
-
-TARGETS +=	rh0-frag-route
-# Send with fragment and routing header type 0 to be source routed
-run-regress-rh0-frag-route: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check fragment and routing header type 0 to be source routed
-	${SUDO} ${PYTHON}rh0_frag_route.py
-
-TARGETS +=	rh0-frag2
-# Send with fragment and routing header type 0 to be source routed
-run-regress-rh0-frag2: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check routing header type 0 in the second fragment
-	${SUDO} ${PYTHON}rh0_frag2.py
-
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-
-CLEANFILES +=		addr.py *.pyc *.log
+CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .PHONY: check-setup
 
@@ -148,8 +128,5 @@ check-setup:
 	ping6 -n -c 1 ${DST_OUT6}
 	route -n get -inet6 ${SRT_IN6} | grep -q 'gateway: ${DST_IN6}$$'
 	ndp -n ${DST_IN6} | grep -q ' ${DST_MAC} '
-.if defined(REMOTE_SSH)
-	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Disabled '
-.endif
 
 .include <bsd.regress.mk>

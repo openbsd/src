@@ -4,6 +4,8 @@
 # hide the routing header behind a fragment header to avoid header scan
 # we expect an echo reply, as there are no more hops
 
+print "send with fragment and routing header type 0 but empty address list"
+
 import os
 from addr import *
 from scapy.all import *

@@ -4,6 +4,8 @@
 # hide the routing header in a second fragment to preclude header scan
 # we expect an echo reply, as there are no more hops
 
+print "send with fragment and routing header type 0 to be source routed"
+
 import os
 from addr import *
 from scapy.all import *

@@ -3,6 +3,8 @@
 # the address pointer is at the final destination
 # we expect a parameter problem from header scanning
 
+print "send ping6 packet with routing header type 0 to the final destination"
+
 import os
 from addr import *
 from scapy.all import *

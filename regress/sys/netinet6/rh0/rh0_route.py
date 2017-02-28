@@ -3,6 +3,8 @@
 # try to source route
 # we expect an ICMP6 error, as we do not support source routing
 
+print "send ping6 packet with routing header type 0 to be source routed"
+
 import os
 from addr import *
 from scapy.all import *
