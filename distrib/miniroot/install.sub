@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.977 2017/02/27 22:02:09 rpe Exp $
+#	$OpenBSD: install.sub,v 1.978 2017/02/28 18:32:15 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2400,6 +2400,9 @@ install_sets() {
 
 	# Set default location to HTTP in case we netbooted.
 	ifconfig netboot >/dev/null 2>&1 && : ${_d:=http}
+
+	# Set default location to HTTP if installurl(5) exists.
+	[[ -s /mnt/etc/installurl ]] && : ${_d:=http}
 
 	# Set default location to the first cdrom device if any are found.
 	[[ -n $_cddevs ]] && : ${_d:=cd0}
