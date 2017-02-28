@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2016/11/17 17:27:05 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/02/28 16:08:10 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -9,12 +9,13 @@
 .if ! (make(clean) || make(cleandir) || make(obj))
 # Check wether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 .endif
+
 .if ! empty(PYTHON_IMPORT)
 regress:
 	@echo '${PYTHON_IMPORT}'
-	@echo install python and the scapy module for additional tests
+	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
 
@@ -40,12 +41,21 @@ SRC_OUT6 ?=
 DST_IN6 ?=
 
 .if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
-    empty (SRC_OUT6) || empty (DST_IN6)
+    empty (SRC_OUT6) || empty (DST_IN6) || empty (REMOTE_SSH)
 regress:
-	@echo this tests needs a remote machine to operate on
-	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 are empty
-	@echo fill out these variables for additional tests
+	@echo This tests needs a remote machine to operate on.
+	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 REMOTE_SSH are empty.
+	@echo Fill out these variables for additional tests.
 	@echo SKIPPED
+.endif
+
+.MAIN: all
+
+.if make (regress) || make (all)
+.BEGIN: addr.py
+	@echo
+	${SUDO} true
+	rm -f stamp-stack stamp-pf
 .endif
 
 depend: addr.py
@@ -69,9 +79,29 @@ PYTHON =	python2.7 ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 .endif
 
+stamp-stack:
+	rm -f stamp-stack stamp-pf
+	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -d
+	ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
+	date >$@
+
+stamp-pf:
+	rm -f stamp-stack stamp-pf
+	echo 'pass proto tcp from port ssh no state\n'\
+	    'pass proto tcp to port ssh no state'|\
+	    ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
+	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -e
+	date >$@
+
+REGRESS_TARGETS =
+FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
+
+.for sp in stack pf
+
 # Ping all addresses.  This ensures that the ip addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
-run-regress-ping6:
+${sp}: run-regress-${sp}-ping6
+run-regress-${sp}-ping6: stamp-${sp}
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT DST_IN
 	@echo Check ping6 ${ip}6:
@@ -80,24 +110,30 @@ run-regress-ping6:
 
 # Ping all addresses again but with 5000 bytes payload.  These large
 # packets get fragmented by SRC and must be handled by DST.
-run-regress-fragping6:
+${sp}: run-regress-${sp}-fragping6
+run-regress-${sp}-fragping6: stamp-${sp}
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT DST_IN
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 -s 5000 -m ${${ip}6}
 .endfor
 
-FRAG6_SCRIPTS !=	cd ${.CURDIR} && ls -1 frag6*.py
-
 .for s in ${FRAG6_SCRIPTS}
-run-regress-${s}: addr.py
+${sp}: run-regress-${sp}-${s}
+run-regress-${sp}-${s}: addr.py stamp-${sp}
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
 
-REGRESS_TARGETS =	run-regress-ping6 run-regress-fragping6 \
-			${FRAG6_SCRIPTS:S/^/run-regress-/}
+REGRESS_TARGETS +=	run-regress-${sp}-ping6 run-regress-${sp}-fragping6 \
+			${FRAG6_SCRIPTS:S/^/run-regress-${sp}-/}
 
-CLEANFILES +=		addr.py *.pyc *.log
+.endfor
+
+# After running the tests, turn on pf on remote machine.
+# This is the expected default configuration.
+REGRESS_TARGETS +=	stamp-pf
+
+CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
 .include <bsd.regress.mk>
