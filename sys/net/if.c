@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.487 2017/02/16 10:15:12 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.488 2017/02/28 15:35:02 yasuoka Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1707,7 +1707,7 @@ int
 if_setrdomain(struct ifnet *ifp, int rdomain)
 {
 	struct ifreq ifr;
-	int error;
+	int error, up = 0, s;
 
 	if (rdomain < 0 || rdomain > RT_TABLEID_MAX)
 		return (EINVAL);
@@ -1748,8 +1748,6 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 	/* remove all routing entries when switching domains */
 	/* XXX this is a bit ugly */
 	if (rdomain != ifp->if_rdomain) {
-		int s;
-
 		s = splnet();
 		/*
 		 * We are tearing down the world.
@@ -1757,8 +1755,10 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 		 * 1. everything that cares gets a message
 		 * 2. the automagic IPv6 bits are recreated
 		 */
-		if (ifp->if_flags & IFF_UP)
+		if (ifp->if_flags & IFF_UP) {
+			up = 1;
 			if_down(ifp);
+		}
 		rti_delete(ifp);
 #ifdef MROUTING
 		vif_delete(ifp);
@@ -1779,6 +1779,13 @@ if_setrdomain(struct ifnet *ifp, int rdomain)
 
 	/* Add interface to the specified rdomain */
 	ifp->if_rdomain = rdomain;
+
+	/* If we took down the IF, bring it back */
+	if (up) {
+		s = splnet();
+		if_up(ifp);
+		splx(s);
+	}
 
 	return (0);
 }
