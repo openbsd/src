@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.174 2017/02/21 15:28:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.175 2017/02/28 14:08:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -530,9 +530,6 @@ typedef struct ssl_ctx_internal_st {
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct cert_st /* CERT */ *cert;
-
-	const EVP_MD *md5;	/* For SSLv3/TLSv1 'ssl3-md5' */
-	const EVP_MD *sha1;	/* For SSLv3/TLSv1 'ssl3-sha1' */
 
 	/* Default values used when no per-SSL value is defined follow */
 

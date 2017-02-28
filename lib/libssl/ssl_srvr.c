@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.6 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.7 2017/02/28 14:08:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1524,8 +1524,8 @@ ssl3_send_server_key_exchange(SSL *s)
 				j = 0;
 				for (num = 2; num > 0; num--) {
 					if (!EVP_DigestInit_ex(&md_ctx,
-					    (num == 2) ? s->ctx->internal->md5 :
-					    s->ctx->internal->sha1, NULL))
+					    (num == 2) ? EVP_md5() : EVP_sha1(),
+					    NULL))
 						goto err;
 					EVP_DigestUpdate(&md_ctx,
 					    s->s3->client_random,
