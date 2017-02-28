@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.57 2017/01/24 10:08:30 krw Exp $ */
+/*	$OpenBSD: rtable.c,v 1.58 2017/02/28 09:50:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -479,6 +479,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 
 static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
 
+int	an_match(struct art_node *, struct sockaddr *, int);
 void	rtentry_ref(void *, void *);
 void	rtentry_unref(void *, void *);
 
@@ -530,8 +531,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 		an = art_lookup(ar, addr, plen, &nsr);
 
 		/* Make sure we've got a perfect match. */
-		if (an == NULL || an->an_plen != plen ||
-		    memcmp(an->an_dst, dst, dst->sa_len))
+		if (!an_match(an, dst, plen))
 			goto out;
 	}
 
@@ -666,8 +666,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	/* Do not permit exactly the same dst/mask/gw pair. */
 	an = art_lookup(ar, addr, plen, &sr);
 	srp_leave(&sr); /* an can't go away while we have the lock */
-	if (an != NULL && an->an_plen == plen &&
-	    !memcmp(an->an_dst, dst, dst->sa_len)) {
+	if (an_match(an, dst, plen)) {
 		struct rtentry  *mrt;
 		int		 mpathok = ISSET(rt->rt_flags, RTF_MPATH);
 
@@ -776,8 +775,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	srp_leave(&sr); /* an can't go away while we have the lock */
 
 	/* Make sure we've got a perfect match. */
-	if (an == NULL || an->an_plen != plen ||
-	    memcmp(an->an_dst, dst, dst->sa_len)) {
+	if (!an_match(an, dst, plen)) {
 		error = ESRCH;
 		goto leave;
 	}
@@ -796,7 +794,6 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 		    rt_next);
 
 		mrt = SRPL_FIRST_LOCKED(&an->an_rtlist);
-		an->an_dst = mrt->rt_dest;
 		if (npaths == 2)
 			mrt->rt_flags &= ~RTF_MPATH;
 
@@ -912,8 +909,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	srp_leave(&sr); /* an can't go away while we have the lock */
 
 	/* Make sure we've got a perfect match. */
-	if (an == NULL || an->an_plen != plen ||
-	    memcmp(an->an_dst, dst, dst->sa_len))
+	if (!an_match(an, dst, plen))
 		error = ESRCH;
 	else {
 		rtref(rt); /* keep rt alive in between remove and insert */
@@ -965,6 +961,26 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
 	}
 }
 #endif /* SMALL_KERNEL */
+
+/*
+ * Returns 1 if ``an'' perfectly matches (``dst'', ``plen''), 0 otherwise.
+ */
+int
+an_match(struct art_node *an, struct sockaddr *dst, int plen)
+{
+	struct rtentry			*rt;
+	struct srp_ref			 sr;
+	int				 match;
+
+	if (an == NULL || an->an_plen != plen)
+		return (0);
+
+	rt = SRPL_FIRST(&sr, &an->an_rtlist);
+	match = (memcmp(rt->rt_dest, dst, dst->sa_len) == 0);
+	SRPL_LEAVE(&sr);
+
+	return (match);
+}
 
 void
 rtentry_ref(void *null, void *xrt)

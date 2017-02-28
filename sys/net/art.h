@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.16 2017/01/23 01:02:11 claudio Exp $ */
+/* $OpenBSD: art.h,v 1.17 2017/02/28 09:50:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -46,15 +46,14 @@ struct rtentry;
  * A node is the internal representation of a route entry.
  */
 struct art_node {
-	SRPL_HEAD(, rtentry)	 an_rtlist;	/* Route related to this node */
 	union {
-		void		*an__dst;	/* Destination address (key) */
-		struct art_node	*an__gc;	/* Entry on GC list */
+	    SRPL_HEAD(, rtentry) an__rtlist;	/* Route related to this node */
+	    struct art_node	*an__gc;	/* Entry on GC list */
 	}			 an_pointer;
 	uint8_t			 an_plen;	/* Prefix length */
 };
-#define an_dst	an_pointer.an__dst
-#define an_gc	an_pointer.an__gc
+#define an_rtlist	an_pointer.an__rtlist
+#define an_gc		an_pointer.an__gc
 
 void		 art_init(void);
 struct art_root	*art_alloc(unsigned int, unsigned int, unsigned int);
