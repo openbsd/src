@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.4 2016/07/10 02:55:15 jsg Exp $ */
+/* $OpenBSD: omap4.c,v 1.5 2017/03/01 05:10:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -26,21 +26,6 @@
 
 #define OMAPID_ADDR	0x4a002000
 #define OMAPID_SIZE	0x1000
-
-#define GPIOx_SIZE	0x1000
-#define GPIO1_ADDR	0x4a310000
-#define GPIO2_ADDR	0x48055000
-#define GPIO3_ADDR	0x48057000
-#define GPIO4_ADDR	0x48059000
-#define GPIO5_ADDR	0x4805b000
-#define GPIO6_ADDR	0x4805d000
-
-#define GPIO1_IRQ	29
-#define GPIO2_IRQ	30
-#define GPIO3_IRQ	31
-#define GPIO4_IRQ	32
-#define GPIO5_IRQ	33
-#define GPIO6_IRQ	34
 
 #define PRM_ADDR	0x4a306000
 #define PRM_SIZE	0x2000
@@ -85,46 +70,6 @@ struct armv7_dev omap4_devs[] = {
 	{ .name = "omapid",
 	  .unit = 0,
 	  .mem = { { OMAPID_ADDR, OMAPID_SIZE } },
-	},
-
-	/*
-	 * GPIO
-	 */
-
-	{ .name = "omgpio",
-	  .unit = 0,
-	  .mem = { { GPIO1_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO1_IRQ }
-	},
-
-	{ .name = "omgpio",
-	  .unit = 1,
-	  .mem = { { GPIO2_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO2_IRQ }
-	},
-
-	{ .name = "omgpio",
-	  .unit = 2,
-	  .mem = { { GPIO3_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO3_IRQ }
-	},
-
-	{ .name = "omgpio",
-	  .unit = 3,
-	  .mem = { { GPIO4_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO4_IRQ }
-	},
-
-	{ .name = "omgpio",
-	  .unit = 4,
-	  .mem = { { GPIO5_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO5_IRQ }
-	},
-
-	{ .name = "omgpio",
-	  .unit = 5,
-	  .mem = { { GPIO6_ADDR, GPIOx_SIZE } },
-	  .irq = { GPIO6_IRQ }
 	},
 
 	/*
