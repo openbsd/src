@@ -1,3 +1,5 @@
+/*	$OpenBSD: imsgev.h,v 1.3 2017/03/01 00:53:39 gsoares Exp $ */
+
 /*
  * Copyright (c) 2009 Eric Faurot <eric@openbsd.org>
  *
