@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2017/03/01 21:15:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -194,7 +194,7 @@ vmmaction(struct parse_result *res)
 
 	switch (res->action) {
 	case CMD_START:
-		ret = start_vm(res->name, res->size, res->nifs, res->nets,
+		ret = vm_start(res->name, res->size, res->nifs, res->nets,
 		    res->ndisks, res->disks, res->path);
 		if (ret) {
 			errno = ret;

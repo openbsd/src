@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.23 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.24 2017/03/01 21:15:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -47,7 +47,7 @@ char info_name[VMM_MAX_NAME_LEN];
 int info_console;
 
 /*
- * start_vm
+ * vm_start
  *
  * Request vmd to start the VM defined by the supplied parameters
  *
@@ -65,7 +65,7 @@ int info_console;
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-start_vm(const char *name, int memsize, int nnics, char **nics,
+vm_start(const char *name, int memsize, int nnics, char **nics,
     int ndisks, char **disks, char *kernel)
 {
 	struct vmop_create_params *vmc;
