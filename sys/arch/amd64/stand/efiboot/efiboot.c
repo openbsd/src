@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.15 2017/02/08 04:00:04 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.16 2017/03/01 02:11:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -41,7 +41,8 @@
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
-EFI_HANDLE		 IH, efi_bootdp = NULL;
+EFI_HANDLE		 IH;
+EFI_DEVICE_PATH		*efi_bootdp = NULL;
 EFI_PHYSICAL_ADDRESS	 heap;
 EFI_LOADED_IMAGE	*loadedImage;
 UINTN			 heapsiz = 1 * 1024 * 1024;
@@ -51,6 +52,7 @@ static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 u_long			 efi_loadaddr;
 
+static int	 efi_device_path_cmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
@@ -87,14 +89,12 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	if (status == EFI_SUCCESS) {
 		for (dp = dp0; !IsDevicePathEnd(dp);
 		    dp = NextDevicePathNode(dp)) {
-			if (DevicePathType(dp) == MEDIA_DEVICE_PATH)
-				continue;
-			if (DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP) {
+			if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
+			    DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP) {
 				bios_bootdev = 0x80;
-				efi_bootdp = dp;
+				efi_bootdp = dp0;
 				break;
 			}
-			break;
 		}
 	}
 
@@ -166,7 +166,7 @@ efi_diskprobe(void)
 	EFI_BLOCK_IO		*blkio;
 	EFI_BLOCK_IO_MEDIA	*media;
 	struct diskinfo		*di;
-	EFI_DEVICE_PATH		*dp, *bp;
+	EFI_DEVICE_PATH		*dp;
 
 	TAILQ_INIT(&efi_disklist);
 
@@ -199,18 +199,10 @@ efi_diskprobe(void)
 		    (void **)&dp);
 		if (EFI_ERROR(status))
 			goto next;
-		bp = efi_bootdp;
-		while (1) {
-			if (IsDevicePathEnd(dp)) {
-				bootdev = 1;
-				break;
-			}
-			if (memcmp(dp, bp, sizeof(EFI_DEVICE_PATH)) != 0 ||
-			    memcmp(dp, bp, DevicePathNodeLength(dp)) != 0)
-				break;
-			dp = NextDevicePathNode(dp);
-			bp = NextDevicePathNode(bp);
-		}
+		if (!efi_device_path_cmp(efi_bootdp, dp, HARDWARE_DEVICE_PATH)&&
+		    !efi_device_path_cmp(efi_bootdp, dp, ACPI_DEVICE_PATH) &&
+		    !efi_device_path_cmp(efi_bootdp, dp, MESSAGING_DEVICE_PATH))
+			bootdev = 1;
 next:
 		if (bootdev)
 			TAILQ_INSERT_HEAD(&efi_disklist, di, list);
@@ -219,6 +211,35 @@ next:
 	}
 
 	free(handles, sz);
+}
+
+static int
+efi_device_path_cmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int dptype)
+{
+	int		 cmp;
+	EFI_DEVICE_PATH	*dp, *dpt_a = NULL, *dpt_b = NULL;
+
+	for (dp = dpa; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
+		if (DevicePathType(dp) == dptype) {
+			dpt_a = dp;
+			break;
+		}
+	}
+	for (dp = dpb; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
+		if (DevicePathType(dp) == dptype) {
+			dpt_b = dp;
+			break;
+		}
+	}
+
+	if (dpt_a && dpt_b) {
+		cmp = DevicePathNodeLength(dpt_a) - DevicePathNodeLength(dpt_b);
+		if (cmp)
+			return (cmp);
+		return (memcmp(dpt_a, dpt_b, DevicePathNodeLength(dpt_a)));
+	}
+
+	return ((uintptr_t)dpt_a - (uintptr_t)dpt_b);
 }
 
 /***********************************************************************
