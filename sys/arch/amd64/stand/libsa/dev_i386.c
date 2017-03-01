@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.18 2016/09/11 17:51:21 jsing Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.19 2017/03/01 12:43:07 patrick Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -182,8 +182,10 @@ ttydev(char *name)
 int
 cnspeed(dev_t dev, int sp)
 {
+#ifndef EFIBOOT
 	if (major(dev) == 8)	/* comN */
 		return comspeed(dev, sp);
+#endif
 
 	/* pc0 and anything else */
 	return 9600;
