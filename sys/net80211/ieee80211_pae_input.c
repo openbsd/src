@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.27 2017/03/01 19:28:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.28 2017/03/01 20:20:45 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -198,7 +198,7 @@ ieee80211_recv_4way_msg1(struct ieee80211com *ic,
 	 * APs will rekey the PTK by sending Msg1/4 after some time.
 	 */
 	if (ni->ni_rsn_supp_state == RSNA_SUPP_INITIALIZE) {
-		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_supp_state));
 		return;
 	}
 	/* enforce monotonicity of key request replay counter */
@@ -355,7 +355,7 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_supp_state != RSNA_SUPP_PTKNEGOTIATING &&
 	    ni->ni_rsn_supp_state != RNSA_SUPP_PTKDONE) {
-		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_supp_state));
 		return;
 	}
 	/* enforce monotonicity of key request replay counter */
@@ -755,7 +755,7 @@ ieee80211_recv_rsn_group_msg1(struct ieee80211com *ic,
 #endif
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_supp_state != RNSA_SUPP_PTKDONE) {
-		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_supp_state));
 		return;
 	}
 	/* enforce monotonicity of key request replay counter */
@@ -907,7 +907,7 @@ ieee80211_recv_wpa_group_msg1(struct ieee80211com *ic,
 #endif
 	/* discard if we're not expecting this message */
 	if (ni->ni_rsn_supp_state != RNSA_SUPP_PTKDONE) {
-		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_state));
+		DPRINTF(("unexpected in state: %d\n", ni->ni_rsn_supp_state));
 		return;
 	}
 	/* enforce monotonicity of key request replay counter */
