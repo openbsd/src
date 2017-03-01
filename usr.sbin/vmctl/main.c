@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2017/03/01 21:15:26 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2017/03/01 21:22:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -268,7 +268,7 @@ vmmaction(struct parse_result *res)
 			ret = 0;
 			switch (action) {
 			case CMD_START:
-				done = start_vm_complete(&imsg, &ret,
+				done = vm_start_complete(&imsg, &ret,
 				    tty_autoconnect);
 				break;
 			case CMD_STOP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.24 2017/03/01 21:15:26 mlarkin Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.25 2017/03/01 21:22:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -135,7 +135,7 @@ vm_start(const char *name, int memsize, int nnics, char **nics,
 }
 
 /*
- * start_vm_complete
+ * vm_start_complete
  *
  * Callback function invoked when we are expecting an
  * IMSG_VMDOP_START_VMM_RESPONSE message indicating the completion of
@@ -153,10 +153,10 @@ vm_start(const char *name, int memsize, int nnics, char **nics,
  *  The function also sets 'ret' to the error code as follows:
  *   0     : Message successfully processed
  *   EINVAL: Invalid or unexpected response from vmd
- *   EIO   : start_vm command failed
+ *   EIO   : vm_start command failed
  */
 int
-start_vm_complete(struct imsg *imsg, int *ret, int autoconnect)
+vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 {
 	struct vmop_result *vmr;
 	int res;
