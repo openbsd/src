@@ -1,4 +1,4 @@
-/*	$OpenBSD: edma.c,v 1.5 2015/01/22 14:33:01 krw Exp $	*/
+/*	$OpenBSD: edma.c,v 1.6 2017/03/01 04:34:09 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,11 +19,14 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
 #include <armv7/omap/edmavar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define DEVNAME(s)		((s)->sc_dev.dv_xname)
 
@@ -78,30 +81,42 @@ struct edma_softc {
 
 struct edma_softc *edma_sc;
 
+int	edma_match(struct device *, void *, void *);
 void	edma_attach(struct device *, struct device *, void *);
 int	edma_comp_intr(void *);
 
 struct cfattach edma_ca = {
-	sizeof(struct edma_softc), NULL, edma_attach
+	sizeof(struct edma_softc), edma_match, edma_attach
 };
 
 struct cfdriver edma_cd = {
 	NULL, "edma", DV_DULL
 };
 
+int
+edma_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "ti,edma3-tpcc");
+}
+
 void
 edma_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 	struct edma_softc *sc = (struct edma_softc *)self;
 	uint32_t rev;
 	int i;
 
-	sc->sc_iot = aa->aa_iot;
+	if (faa->fa_nreg < 1)
+		return;
+
+	sc->sc_iot = faa->fa_iot;
 
 	/* Map Base address for TPCC and TPCTX */
-	if (bus_space_map(sc->sc_iot, aa->aa_dev->mem[0].addr,
-	    aa->aa_dev->mem[0].size, 0, &sc->sc_tpcc)) {
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_tpcc)) {
 		printf("%s: bus_space_map failed for TPCC\n", DEVNAME(sc));
 		return ;
 	}
@@ -115,12 +130,12 @@ edma_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX IPL_VM ? */
 	/* Enable interrupts line */
-	sc->sc_ih_comp = arm_intr_establish(aa->aa_dev->irq[0], IPL_VM,
+	sc->sc_ih_comp = arm_intr_establish_fdt(faa->fa_node, IPL_VM,
 	    edma_comp_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih_comp == NULL) {
 		printf("%s: unable to establish interrupt comp\n", DEVNAME(sc));
 		bus_space_unmap(sc->sc_iot, sc->sc_tpcc,
-		    aa->aa_dev->mem[0].size);
+		    faa->fa_reg[0].size);
 		return ;
 	}
 

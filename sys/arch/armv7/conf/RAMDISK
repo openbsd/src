@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.65 2017/01/23 22:43:17 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.66 2017/03/01 04:34:09 jsg Exp $
 
 machine		armv7 arm
 
@@ -61,7 +61,7 @@ omapid*		at omap?
 # OMAP on-chip devices
 intc*		at fdt?			# OMAP3 interrupt controller
 omwugen*	at fdt?			# Wake-up generator
-#edma*		at omap?		# OMAP3 dma controller
+#edma*		at fdt?			# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
 ompinmux*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.19 2016/10/03 01:59:20 jsg Exp $
+#	$OpenBSD: files.omap,v 1.20 2017/03/01 04:34:09 jsg Exp $
 
 define omap {}
 device omap: omap
@@ -39,7 +39,7 @@ attach tiiic at fdt
 file	arch/armv7/omap/ti_iic.c		tiiic
 
 device edma
-attach edma at omap
+attach edma at fdt
 file	arch/armv7/omap/edma.c			edma
 
 device intc
