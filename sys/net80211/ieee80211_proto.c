@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.72 2017/02/07 15:07:14 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.73 2017/03/01 19:28:48 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -356,8 +356,8 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 int
 ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
 {
-#ifndef IEEE80211_STA_ONLY
 	struct ieee80211_node *ni;
+#ifndef IEEE80211_STA_ONLY
 	struct ieee80211_pmk *pmk;
 #endif
 
@@ -366,6 +366,7 @@ ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
 	    !(ic->ic_flags & IEEE80211_F_RSNON))
 		return ENETDOWN;
 
+	ni->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_STA)
 #endif
@@ -731,6 +732,10 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		}
 		ieee80211_new_state(ic, IEEE80211_S_AUTH,
 		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+
+		/* In IBSS mode no (re)association frames are sent. */
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ni->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 		break;
 
 	case IEEE80211_M_AHDEMO:
@@ -897,6 +902,7 @@ justcleanup:
 			ieee80211_free_allnodes(ic);
 			break;
 		}
+		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
@@ -907,6 +913,7 @@ justcleanup:
 			ieee80211_chan2mode(ic, ni->ni_chan)];
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
+		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 #ifndef IEEE80211_STA_ONLY
@@ -949,6 +956,7 @@ justcleanup:
 		}
 		break;
 	case IEEE80211_S_AUTH:
+		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			DPRINTF(("invalid transition\n"));
