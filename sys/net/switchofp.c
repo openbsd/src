@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.59 2017/01/24 14:14:51 rzalamena Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.60 2017/03/01 09:32:07 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1626,7 +1626,6 @@ swofp_timer(void *v)
 	struct switch_softc	*sc = (struct switch_softc *)v;
 	struct swofp_ofs	*swofs = sc->sc_ofs;
 
-	/* XXX needs LOCK? */
 	swofp_flow_timeout(sc);
 	timeout_add_sec(&swofs->swofs_flow_timeout, 10);
 }
