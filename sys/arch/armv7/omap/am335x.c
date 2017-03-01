@@ -1,4 +1,4 @@
-/* $OpenBSD: am335x.c,v 1.8 2016/07/10 02:55:15 jsg Exp $ */
+/* $OpenBSD: am335x.c,v 1.9 2017/03/01 04:36:45 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -60,15 +60,6 @@
 #define GPIO2_IRQ	32
 #define GPIO3_IRQ	62
 
-#define TPCC_SIZE	0x100000
-#define TPCC_ADDR	0x49000000
-#define TPTC0_ADDR	0x49800000
-#define TPTC1_ADDR	0x49900000
-#define TPTC2_ADDR	0x49a00000
-#define EDMACOMP_IRQ	12
-#define EDMAMPERR_IRQ	13
-#define EDMAERR_IRQ	14
-
 struct armv7_dev am335x_devs[] = {
 
 	/*
@@ -96,15 +87,6 @@ struct armv7_dev am335x_devs[] = {
 	{ .name = "intc",
 	  .unit = 0,
 	  .mem = { { INTC_ADDR, INTC_SIZE } },
-	},
-
-	/*
-	 * EDMA Controller
-	 */
-	{ .name = "edma",
-	  .unit = 0,
-	  .mem = { { TPCC_ADDR, TPCC_SIZE } },
-	  .irq = { EDMACOMP_IRQ }
 	},
 
 	/*
