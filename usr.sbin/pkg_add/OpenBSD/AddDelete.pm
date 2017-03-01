@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.75 2017/02/27 14:03:52 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.76 2017/03/01 10:35:24 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -185,20 +185,19 @@ sub handle_options
 	    "$state->{localbase}/sbin");
 
 	$state->{size_only} = $state->opt('s');
-	$state->{quick} = $state->opt('q') || $state->config->istrue("nochecksum");
+	$state->{quick} = $state->opt('q');
 	$state->{extra} = $state->opt('c');
 	$state->{automatic} = $state->opt('a') // 0;
 	$ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 	if ($state->{not}) {
 		$state->{loglevel} = 0;
 	}
-	$state->{loglevel} //= $state->config->value("loglevel") // 1;
+	$state->{loglevel} //= 1;
 	if ($state->{loglevel}) {
 		require Sys::Syslog;
 		Sys::Syslog::openlog($state->{cmd}, "nofatal");
 	}
-	$state->{wantntogo} = $state->{extra_stats} || 
-	    $state->config->istrue("ntogo");
+	$state->{wantntogo} = $state->{extra_stats};
 }
 
 sub init

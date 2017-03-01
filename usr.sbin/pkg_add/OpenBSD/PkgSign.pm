@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.15 2017/02/27 14:03:52 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.16 2017/03/01 10:35:24 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -65,8 +65,7 @@ sub handle_options
 		File::Path::make_path($state->{output_dir})
 		    or $state->usage("can't create dir");
 	}
-	$state->{wantntogo} = $state->{extra_stats} || 
-	    $state->config->istrue("ntogo");
+	$state->{wantntogo} = $state->{extra_stats};
 }
 
 package OpenBSD::PkgSign;

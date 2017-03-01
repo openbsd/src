@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.43 2017/02/27 21:53:11 rpe Exp $
+# $OpenBSD: State.pm,v 1.44 2017/03/01 10:35:24 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -18,94 +18,6 @@
 
 use strict;
 use warnings;
-
-package OpenBSD::Configuration;
-sub new
-{
-	my ($class, $state) = @_;
-	my $self = bless {}, $class;
-	require OpenBSD::Paths;
-	$self->add_installurl(OpenBSD::Paths->installurl, $state);
-	return $self;
-}
-
-sub add_installurl
-{
-	my ($self, $filename, $state) = @_;
-	open(my $fh, '<', $filename) or return;
-	while (<$fh>) {
-		chomp;
-		next if m/^\s*\#/;
-		next if m/^\s*$/;
-		$self->{installpath} = ["$_/%c/packages/%a/"];
-		return;
-	}
-}
-
-sub read_file
-{
-	my ($self, $filename, $state) = @_;
-	open(my $fh, '<', $filename) or return;
-	while (<$fh>) {
-		chomp;
-		next if m/^\s*\#/;
-		next if m/^\s*$/;
-		my ($cmd, $k, $v, $add);
-		my $h = $self;
-		if (($cmd, $k, $add, $v) = m/^\s*(.*?)\.(.*?)\s*(\+?)\=\s*(.*?)\s*$/) {
-			next unless $cmd eq $state->{cmd};
-			my $h = $self->{cmd} = {};
-		} elsif (($k, $add, $v) = m/^\s*(.*?)\s*(\+?)\=\s*(.*?)\s*$/) {
-		} else {
-			# bad line: should we say so ?
-			$state->errsay("Bad line in #1: #2 (#3)",
-			    $filename, $_, $.);
-			next;
-		}
-		# remove caps
-		$k =~ tr/A-Z/a-z/;
-		if ($add eq '') {
-			$h->{$k} = [$v];
-		} else {
-			push(@{$h->{$k}}, $v);
-		}
-	}
-}
-
-sub ref
-{
-	my ($self, $k) = @_;
-	if (defined $self->{cmd}{$k}) {
-		return $self->{cmd}{$k};
-	} else {
-		return $self->{$k};
-	}
-}
-
-sub value
-{
-	my ($self, $k) = @_;
-	my $r = $self->ref($k);
-	if (!defined $r) {
-		return $r;
-	}
-	if (wantarray) {
-		return @$r;
-	} else {
-		return $r->[0];
-	}
-}
-
-sub istrue
-{
-	my ($self, $k) = @_;
-	my $v = $self->value($k);
-	if (defined $v && $v =~ /^yes$/i) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
 
 package OpenBSD::PackageRepositoryFactory;
 sub new
@@ -203,9 +115,17 @@ sub sync_display
 {
 }
 
-OpenBSD::Auto::cache(config,
+OpenBSD::Auto::cache(installpath,
 	sub {
-		return OpenBSD::Configuration->new(shift);
+		my $self = shift;
+		require OpenBSD::Paths;
+		open(my $fh, '<', OpenBSD::Paths->installurl) or return [];
+		while (<$fh>) {
+			chomp;
+			next if m/^\s*\#/;
+			next if m/^\s*$/;
+			return ["$_/%c/packages/%a/"];
+		}
 	});
 
 sub usage_is
