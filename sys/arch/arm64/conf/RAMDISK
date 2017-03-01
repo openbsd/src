@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.10 2017/02/25 17:05:43 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.11 2017/03/01 01:24:34 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -36,8 +36,6 @@ option		FFS
 option		MSDOSFS
 option		INET6
 option		EXT2FS
-
-option		SYSCALL_DEBUG
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"

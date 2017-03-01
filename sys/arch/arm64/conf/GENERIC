@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.14 2017/02/28 07:32:00 jsg Exp $
+# $OpenBSD: GENERIC,v 1.15 2017/03/01 01:24:34 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -27,8 +27,6 @@ option		DST=0		# daylight saving time used by RTC
 option		PCIVERBOSE
 option		USER_PCICONF	# user-space PCI configuration
 option		USBVERBOSE
-
-option		SYSCALL_DEBUG
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"
