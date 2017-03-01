@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.6 2017/02/28 14:08:49 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.7 2017/03/01 14:01:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1472,29 +1472,20 @@ ssl3_get_server_key_exchange(SSL *s)
 		}
 
 		if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
-			int num;
-
 			j = 0;
 			q = md_buf;
-			for (num = 2; num > 0; num--) {
-				if (!EVP_DigestInit_ex(&md_ctx,
-				    (num == 2) ? EVP_md5() : EVP_sha1(),
-				    NULL)) {
-					al = SSL_AD_INTERNAL_ERROR;
-					goto f_err;
-				}
-				EVP_DigestUpdate(&md_ctx,
-				    s->s3->client_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_DigestUpdate(&md_ctx,
-				    s->s3->server_random,
-				    SSL3_RANDOM_SIZE);
-				EVP_DigestUpdate(&md_ctx, param, param_len);
-				EVP_DigestFinal_ex(&md_ctx, q,
-				    (unsigned int *)&i);
-				q += i;
-				j += i;
+			if (!EVP_DigestInit_ex(&md_ctx, EVP_md5_sha1(), NULL)) {
+				al = SSL_AD_INTERNAL_ERROR;
+				goto f_err;
 			}
+			EVP_DigestUpdate(&md_ctx, s->s3->client_random,
+			    SSL3_RANDOM_SIZE);
+			EVP_DigestUpdate(&md_ctx, s->s3->server_random,
+			    SSL3_RANDOM_SIZE);
+			EVP_DigestUpdate(&md_ctx, param, param_len);
+			EVP_DigestFinal_ex(&md_ctx, q, (unsigned int *)&i);
+			q += i;
+			j += i;
 			i = RSA_verify(NID_md5_sha1, md_buf, j,
 			    p, n, pkey->pkey.rsa);
 			if (i < 0) {
