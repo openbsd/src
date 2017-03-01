@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.22 2017/02/24 14:28:31 gsoares Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.23 2017/03/01 00:50:12 gsoares Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 {
 	int			 c;
 	int			 debug = 0, verbose = 0, eflag = 0;
-	int			 configtest = 0, skip_chroot = 0;
+	int			 configtest = 0;
 	int			 pipe_parent2ldap[2];
 	char			*conffile = CONFFILE;
 	char			*csockpath = LDAPD_SOCKET;
@@ -172,6 +172,14 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
+	/* check for root privileges  */
+	if (geteuid())
+		errx(1, "need root privileges");
+
+	/* check for ldapd user */
+	if (getpwnam(LDAPD_USER) == NULL)
+		errx(1, "unknown user %s", LDAPD_USER);
+
 	log_verbose(verbose);
 	stats.started_at = time(0);
 	tls_init();
@@ -186,20 +194,11 @@ main(int argc, char *argv[])
 
 	if (eflag)
 		ldape(debug, verbose, csockpath);
-	
-	if (geteuid()) {
-		if (!debug)
-			errx(1, "need root privileges");
-		skip_chroot = 1;
-	}
 
 	if (stat(datadir, &sb) == -1)
 		err(1, "%s", datadir);
 	if (!S_ISDIR(sb.st_mode))
 		errx(1, "%s is not a directory", datadir);
-
-	if (!skip_chroot && (getpwnam(LDAPD_USER) == NULL))
-		err(1, "%s", LDAPD_USER);
 
 	if (!debug) {
 		if (daemon(1, 0) == -1)
