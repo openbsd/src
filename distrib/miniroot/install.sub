@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.979 2017/02/28 19:42:38 rpe Exp $
+#	$OpenBSD: install.sub,v 1.980 2017/03/01 20:48:12 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2570,7 +2570,7 @@ finish_up() {
 	[[ -x /mnt/$MODE.site ]] && chroot /mnt /$MODE.site
 
 	# In case this is a softraid device, make sure all underlying
-	# device nodes exist.
+	# device nodes exist before installing boot-blocks on disk.
 	make_dev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
 	md_installboot $ROOTDISK
 
@@ -2580,14 +2580,17 @@ finish_up() {
 		mv /mnt/bsd.mp /mnt/bsd
 	fi
 
-	# Ensure that fw_update is run on reboot.
+	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
 		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
+
+	# Ensure that fw_update is run on reboot.
 	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
 
 	# Email installer questions and their answers to root on next boot.
 	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
 
+	# Store entropy for the next boot.
 	store_random
 
 	# Pat on the back.
