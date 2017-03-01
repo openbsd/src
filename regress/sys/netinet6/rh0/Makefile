@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2017/03/01 00:05:21 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2017/03/01 00:58:22 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -64,6 +64,7 @@ regress:
 .BEGIN: addr.py
 	@echo
 	${SUDO} true
+	ssh -t ${REMOTE_SSH} ${SUDO} true
 	rm -f stamp-stack stamp-pf
 .endif
 
@@ -90,16 +91,16 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 
 stamp-stack:
 	rm -f stamp-stack stamp-pf
-	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -d
-	ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
+	-ssh ${REMOTE_SSH} ${SUDO} pfctl -d
+	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
 	date >$@
 
 stamp-pf:
 	rm -f stamp-stack stamp-pf
 	echo 'pass proto tcp from port ssh no state\n'\
 	    'pass proto tcp to port ssh no state'|\
-	    ssh -t ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
-	-ssh -t ${REMOTE_SSH} ${SUDO} pfctl -e
+	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
+	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e
 	date >$@
 
 RH0_SCRIPTS !!=		cd ${.CURDIR} && ls -1 rh0*.py
