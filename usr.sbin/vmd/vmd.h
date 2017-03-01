@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.45 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.46 2017/03/01 18:00:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -229,6 +229,10 @@ int	 opentap(char *);
 int	 fd_hasdata(int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
+int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
+
+/* vm.c */
+int	 start_vm(struct vmd_vm *, int);
 
 /* control.c */
 int	 config_init(struct vmd *);
