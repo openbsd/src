@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2016/10/03 12:30:43 rzalamena Exp $ */
+/*	$OpenBSD: util.c,v 1.24 2017/03/01 00:56:30 gsoares Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -177,7 +177,7 @@ start_child(char *pname, int cfd, int argc, char **argv)
 	for (i = 1; i < argc; i++)
 		nargv[nargc++] = argv[i];
 
-	nargv[nargc] = 0;
+	nargv[nargc] = NULL;
 
 	switch (pid = fork()) {
 	case -1:
