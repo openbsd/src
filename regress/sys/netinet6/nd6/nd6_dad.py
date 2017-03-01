@@ -2,6 +2,8 @@
 # send Duplicate Address Detection neighbor solicitation
 # expect an neighbor advertisement answer and check it
 
+print "send duplicate address detection neighbor solicitation packet"
+
 import os
 from addr import *
 from scapy.all import *
@@ -24,25 +26,25 @@ def nsmamac(a):
 def lla(m):
 	return "fe80::"+in6_mactoifaceid(m)
 
-ip=IPv6(src="::", dst=nsma(DST_IN6))/ICMPv6ND_NS(tgt=DST_IN6)
-eth=Ether(src=SRC_MAC, dst=nsmamac(DST_IN6))/ip
+ip=IPv6(src="::", dst=nsma(REMOTE_ADDR6))/ICMPv6ND_NS(tgt=REMOTE_ADDR6)
+eth=Ether(src=LOCAL_MAC, dst=nsmamac(REMOTE_ADDR6))/ip
 
 if os.fork() == 0:
 	time.sleep(1)
-	sendp(eth, iface=SRC_IF)
+	sendp(eth, iface=LOCAL_IF)
 	os._exit(0)
 
-ans=sniff(iface=SRC_IF, timeout=3, filter=
-    "ip6 and src "+lla(DST_MAC)+" and dst ff02::1 and icmp6")
+ans=sniff(iface=LOCAL_IF, timeout=3, filter=
+    "ip6 and src "+lla(REMOTE_MAC)+" and dst ff02::1 and icmp6")
 for a in ans:
 	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Neighbor Advertisement':
 		tgt=a.payload.payload.tgt
 		print "target=%s" % (tgt)
-		if tgt == DST_IN6:
+		if tgt == REMOTE_ADDR6:
 			exit(0)
-		print "TARGET!=%s" % (DST_IN6)
+		print "TARGET!=%s" % (REMOTE_ADDR6)
 		exit(1)
 print "NO NEIGHBOR ADVERTISEMENT"
 exit(2)

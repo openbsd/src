@@ -1,6 +1,8 @@
 #!/usr/local/bin/python2.7
 # send Unsolicited Neighbor Advertisement
 
+print "send unsolicited neighbor advertisement packet"
+
 import os
 from addr import *
 from scapy.all import *
@@ -23,10 +25,10 @@ def nsmamac(a):
 def lla(m):
 	return "fe80::"+in6_mactoifaceid(m)
 
-ip=IPv6(src=lla(SRC_MAC), dst="ff02::1")/ICMPv6ND_NA(tgt=SRC_OUT6)
-eth=Ether(src=SRC_MAC, dst=nsmac("ff02::1"))/ip
+ip=IPv6(src=lla(LOCAL_MAC), dst="ff02::1")/ICMPv6ND_NA(tgt=LOCAL_ADDR6)
+eth=Ether(src=LOCAL_MAC, dst=nsmac("ff02::1"))/ip
 
-sendp(eth, iface=SRC_IF)
+sendp(eth, iface=LOCAL_IF)
 time.sleep(1)
 
 exit(0)

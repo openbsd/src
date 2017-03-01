@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2016/10/19 14:31:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2017/03/01 00:05:21 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -9,36 +9,34 @@
 .if ! (make(clean) || make(cleandir) || make(obj))
 # Check wether all required python packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT != python2.7 -c 'from scapy.all import *' 2>&1 || true
+PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 .endif
+
 .if ! empty(PYTHON_IMPORT)
 regress:
 	@echo '${PYTHON_IMPORT}'
-	@echo install python and the scapy module for additional tests
+	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
 
 # This test needs a manual setup of two machines
-# Set up machines: SRC DST
-# SRC is the machine where this makefile is running.
-# DST is running OpenBSD with pf to test the neighbor discovery states.
-#
-# +---+   1   +---+
-# |SRC| ----> |DST|
-# +---+       +---+
-#     out    in
+# Set up machines: LOCAL REMOTE
+# LOCAL is the machine where this makefile is running.
+# REMOTE is running OpenBSD with pf to test the neighbor discovery states.
 
-# Configure Addresses on the machines.
+# Configure addresses on the machines.
 # Adapt interface and addresse variables to your local setup.
-#
-SRC_IF ?=
-SRC_MAC ?=
-DST_MAC ?=
 
-SRC_OUT6 ?=
-DST_IN6 ?=
+LOCAL_IF ?=	em1
+LOCAL_MAC ?=	00:1b:21:0e:6e:8e
+REMOTE_MAC ?=	00:04:23:b0:68:8e
 
-# pf rules on DST should look like this:
+LOCAL_ADDR6 ?=	fdd7:e83e:66bc:81::21
+REMOTE_ADDR6 ?=	fdd7:e83e:66bc:81::22
+
+REMOTE_SSH ?=
+
+# pf rules on REMOTE should look like this:
 #
 # block log
 # pass inet6 proto icmp6 icmp6-type echoreq keep state
@@ -62,12 +60,12 @@ DST_IN6 ?=
 # - request  NS from interface address   to target unicast
 # - response NA from interface address   to source of NS
 
-.if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
-    empty (SRC_OUT6) || empty (DST_IN6)
+.if empty (LOCAL_IF) || empty (LOCAL_MAC) || empty (REMOTE_MAC) || \
+    empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6)
 regress:
-	@echo this tests needs a remote machine to operate on
-	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 are empty
-	@echo fill out these variables for additional tests
+	@echo This tests needs a remote machine to operate on.
+	@echo LOCAL_IF LOCAL_MAC REMOTE_MAC LOCAL_ADDR6 REMOTE_ADDR6
+	@echo Fill out these variables for additional tests.
 	@echo SKIPPED
 .endif
 
@@ -76,10 +74,10 @@ depend: addr.py
 # Create python include file containing the addresses.
 addr.py: Makefile
 	rm -f $@ $@.tmp
-	echo 'SRC_IF = "${SRC_IF}"' >>$@.tmp
-	echo 'SRC_MAC = "${SRC_MAC}"' >>$@.tmp
-	echo 'DST_MAC = "${DST_MAC}"' >>$@.tmp
-.for var in SRC_OUT DST_IN
+	echo 'LOCAL_IF = "${LOCAL_IF}"' >>$@.tmp
+	echo 'LOCAL_MAC = "${LOCAL_MAC}"' >>$@.tmp
+	echo 'REMOTE_MAC = "${REMOTE_MAC}"' >>$@.tmp
+.for var in LOCAL_ADDR REMOTE_ADDR
 	echo '${var} = "${${var}}"' >>$@.tmp
 	echo '${var}6 = "${${var}6}"' >>$@.tmp
 .endfor
@@ -96,45 +94,49 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
 # Clear neighbor cache and ping all addresses.  This ensures that
 # the ip addresses are configured and all routing table are set up
 # to allow bidirectional packet flow.
-TARGETS +=	ping6
 run-regress-ping6:
 	@echo '\n======== $@ ========'
 	${SUDO} ndp -c
-.for ip in SRC_OUT DST_IN
+.for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
 .endfor
 
-# Send hand-crafted duplicate address detection neighbor solicitation packet
-TARGETS +=	nd6_dad
-run-regress-nd6_dad: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check duplicate address detection
-	${SUDO} ${PYTHON}nd6_dad.py
+ND6_SCRIPTS !!=		cd ${.CURDIR} && ls -1 nd6*.py
 
-# Send hand-crafted address resolution neighbor solicitation packet
-TARGETS +=	nd6_ar
-run-regress-nd6_ar: addr.py
+.for s in ${ND6_SCRIPTS}
+run-regress-${s}: addr.py
 	@echo '\n======== $@ ========'
-	@echo Check address resolution
-	${SUDO} ${PYTHON}nd6_ar.py
+	${SUDO} ${PYTHON}${s}
+.endfor
 
-# Send hand-crafted unsolicited neighbor advertisement packet
-TARGETS +=	nd6_una
-run-regress-nd6_una: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check unsolicited neighbor advertisement
-	${SUDO} ${PYTHON}nd6_una.py
-
-# Send hand-crafted neighbor unreachability detection solicitation packet
-TARGETS +=	nd6_nud
-run-regress-nd6_nud: addr.py
-	@echo '\n======== $@ ========'
-	@echo Check neighbor unreachability detection
-	${SUDO} ${PYTHON}nd6_nud.py
-
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
+REGRESS_TARGETS =	run-regress-ping6 ${ND6_SCRIPTS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log
+
+.PHONY: check-setup check-setup-local check-setup-remote
+
+# Check wether the address, route and remote setup is correct
+check-setup: check-setup-local check-setup-remote
+
+check-setup-local:
+	@echo '\n======== $@ ========'
+	ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+	route -n get -inet6 ${LOCAL_ADDR6} |\
+	    grep -q 'flags: .*LOCAL'  # LOCAL_ADDR6
+	ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	route -n get -inet6 ${REMOTE_ADDR6} |\
+	    grep -q 'interface: ${LOCAL_IF}$$'  # REMOTE_ADDR6 LOCAL_IF
+	ndp -n ${REMOTE_ADDR6} |\
+	    grep -q ' ${REMOTE_MAC} '  # REMOTE_ADDR6 REMOTE_MAC
+
+check-setup-remote:
+	@echo '\n======== $@ ========'
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} route -n get -inet6 ${REMOTE_ADDR6} |\
+	    grep -q 'flags: .*LOCAL'  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+	ssh ${REMOTE_SSH} ndp -n ${LOCAL_ADDR6} |\
+	    grep -q ' ${LOCAL_MAC} '  # LOCAL_ADDR6 LOCAL_MAC
 
 .include <bsd.regress.mk>

@@ -23,7 +23,7 @@ payload="ABCDEFGHIJKLMNOP"
 for p in permute:
 	pid += 1
 	eid=pid & 0xffff
-	packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ \
+	packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
 	    ICMPv6EchoRequest(id=eid, data=payload)
 	frag=[]
 	fid=pid & 0xffffffff
@@ -35,16 +35,16 @@ for p in permute:
 	    str(packet)[56:64])
 	eth=[]
 	for i in range(3):
-		pkt=IPv6(src=SRC_OUT6, dst=DST_IN6)/frag[p[i]]
-		eth.append(Ether(src=SRC_MAC, dst=DST_MAC)/pkt)
+		pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/frag[p[i]]
+		eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/pkt)
 
 	if os.fork() == 0:
 		time.sleep(1)
-		sendp(eth, iface=SRC_IF)
+		sendp(eth, iface=LOCAL_IF)
 		os._exit(0)
 
-	ans=sniff(iface=SRC_IF, timeout=3, filter=
-	    "ip6 and src "+DST_IN6+" and dst "+SRC_OUT6+" and icmp6")
+	ans=sniff(iface=LOCAL_IF, timeout=3, filter=
+	    "ip6 and src "+REMOTE_ADDR6+" and dst "+LOCAL_ADDR6+" and icmp6")
 	for a in ans:
 		if a and a.type == ETH_P_IPV6 and \
 		    ipv6nh[a.payload.nh] == 'ICMPv6' and \

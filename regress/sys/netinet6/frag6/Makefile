@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2017/02/28 16:08:10 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/03/01 00:05:21 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -13,6 +13,8 @@ PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 .endif
 
 .if ! empty(PYTHON_IMPORT)
+.BEGIN:
+	@true
 regress:
 	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
@@ -20,31 +22,31 @@ regress:
 .endif
 
 # This test needs a manual setup of two machines
-# Set up machines: SRC DST
-# SRC is the machine where this makefile is running.
-# DST is running OpenBSD with pf disabled to test the IPv6 stack.
-# Enable echo udp6 in inetd.conf of DST to test UDP fragments.
-#
-# +---+   1   +---+
-# |SRC| ----> |DST|
-# +---+       +---+
-#     out    in
+# Set up machines: LOCAL REMOTE
+# LOCAL is the machine where this makefile is running.
+# REMOTE is running OpenBSD with or without pf to test fragment reassemly
+# Enable echo udp6 in inetd.conf on REMOTE to test UDP fragments.
+# REMOTE_SSH is used to login and enable or disable pf automatically.
 
-# Configure Addresses on the machines.
+# Configure addresses on the machines.
 # Adapt interface and addresse variables to your local setup.
-#
-SRC_IF ?=
-SRC_MAC ?=
-DST_MAC ?=
 
-SRC_OUT6 ?=
-DST_IN6 ?=
+LOCAL_IF ?=	em1
+LOCAL_MAC ?=	00:1b:21:0e:6e:8e
+REMOTE_MAC ?=	00:04:23:b0:68:8e
 
-.if empty (SRC_IF) || empty (SRC_MAC) || empty (DST_MAC) || \
-    empty (SRC_OUT6) || empty (DST_IN6) || empty (REMOTE_SSH)
+LOCAL_ADDR ?=	fdd7:e83e:66bc:81::21
+REMOTE_ADDR ?=	fdd7:e83e:66bc:81::22
+
+REMOTE_SSH ?=
+
+.if empty (LOCAL_IF) || empty (LOCAL_MAC) || empty (REMOTE_MAC) || \
+    empty (LOCAL_ADDR6) || empty (REMOTE_ADDR6) || empty (REMOTE_SSH)
+.BEGIN:
+	@true
 regress:
 	@echo This tests needs a remote machine to operate on.
-	@echo SRC_IF SRC_MAC DST_MAC SRC_OUT6 DST_IN6 REMOTE_SSH are empty.
+	@echo LOCAL_IF LOCAL_MAC REMOTE_MAC LOCAL_ADDR6 REMOTE_ADDR6 REMOTE_SSH
 	@echo Fill out these variables for additional tests.
 	@echo SKIPPED
 .endif
@@ -63,10 +65,10 @@ depend: addr.py
 # Create python include file containing the addresses.
 addr.py: Makefile
 	rm -f $@ $@.tmp
-	echo 'SRC_IF = "${SRC_IF}"' >>$@.tmp
-	echo 'SRC_MAC = "${SRC_MAC}"' >>$@.tmp
-	echo 'DST_MAC = "${DST_MAC}"' >>$@.tmp
-.for var in SRC_OUT DST_IN
+	echo 'LOCAL_IF = "${LOCAL_IF}"' >>$@.tmp
+	echo 'LOCAL_MAC = "${LOCAL_MAC}"' >>$@.tmp
+	echo 'REMOTE_MAC = "${REMOTE_MAC}"' >>$@.tmp
+.for var in LOCAL_ADDR REMOTE_ADDR
 	echo '${var}6 = "${${var}6}"' >>$@.tmp
 .endfor
 	mv $@.tmp $@
@@ -103,17 +105,17 @@ FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
 ${sp}: run-regress-${sp}-ping6
 run-regress-${sp}-ping6: stamp-${sp}
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT DST_IN
+.for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
 .endfor
 
 # Ping all addresses again but with 5000 bytes payload.  These large
-# packets get fragmented by SRC and must be handled by DST.
+# packets get fragmented by LOCAL and must be handled by REMOTE.
 ${sp}: run-regress-${sp}-fragping6
 run-regress-${sp}-fragping6: stamp-${sp}
 	@echo '\n======== $@ ========'
-.for ip in SRC_OUT DST_IN
+.for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 -s 5000 -m ${${ip}6}
 .endfor
@@ -135,5 +137,30 @@ REGRESS_TARGETS +=	run-regress-${sp}-ping6 run-regress-${sp}-fragping6 \
 REGRESS_TARGETS +=	stamp-pf
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
+
+.PHONY: check-setup check-setup-local check-setup-remote
+
+# Check wether the address, route and remote setup is correct
+check-setup: check-setup-local check-setup-remote
+
+check-setup-local:
+	@echo '\n======== $@ ========'
+	ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+	route -n get -inet6 ${LOCAL_ADDR6} |\
+	    grep -q 'flags: .*LOCAL'  # LOCAL_ADDR6
+	ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	route -n get -inet6 ${REMOTE_ADDR6} |\
+	    grep -q 'interface: ${LOCAL_IF}$$'  # REMOTE_ADDR6 LOCAL_IF
+	ndp -n ${REMOTE_ADDR6} |\
+	    grep -q ' ${REMOTE_MAC} '  # REMOTE_ADDR6 REMOTE_MAC
+
+check-setup-remote:
+	@echo '\n======== $@ ========'
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${REMOTE_ADDR6}  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} route -n get -inet6 ${REMOTE_ADDR6} |\
+	    grep -q 'flags: .*LOCAL'  # REMOTE_ADDR6
+	ssh ${REMOTE_SSH} ping6 -n -c 1 ${LOCAL_ADDR6}  # LOCAL_ADDR6
+	ssh ${REMOTE_SSH} ndp -n ${LOCAL_ADDR6} |\
+	    grep -q ' ${LOCAL_MAC} '  # LOCAL_ADDR6 LOCAL_MAC
 
 .include <bsd.regress.mk>

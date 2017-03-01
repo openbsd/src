@@ -15,7 +15,8 @@ from scapy.all import *
 pid=os.getpid()
 eid=pid & 0xffff
 payload=100 * "ABCDEFGHIJKLMNOP"
-packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/ICMPv6EchoRequest(id=eid, data=payload)
+packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
+    ICMPv6EchoRequest(id=eid, data=payload)
 request_cksum=ICMPv6Unknown(str(packet.payload)).cksum
 print "request cksum=%#x" % (request_cksum)
 frag=[]
@@ -31,16 +32,16 @@ frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset)/
     str(packet)[40+(8*offset):])
 eth=[]
 for f in frag:
-	pkt=IPv6(src=SRC_OUT6, dst=DST_IN6)/f
-	eth.append(Ether(src=SRC_MAC, dst=DST_MAC)/pkt)
+	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
+	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/pkt)
 
 if os.fork() == 0:
 	time.sleep(1)
-	sendp(eth, iface=SRC_IF)
+	sendp(eth, iface=LOCAL_IF)
 	os._exit(0)
 
-ans=sniff(iface=SRC_IF, timeout=3, filter=
-    "ip6 and src "+DST_IN6+" and dst "+SRC_OUT6+" and proto ipv6-frag")
+ans=sniff(iface=LOCAL_IF, timeout=3, filter=
+    "ip6 and src "+REMOTE_ADDR6+" and dst "+LOCAL_ADDR6+" and proto ipv6-frag")
 for a in ans:
 	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'Fragment Header' and \

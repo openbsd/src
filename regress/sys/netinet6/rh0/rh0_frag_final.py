@@ -14,19 +14,20 @@ pid=os.getpid()
 eid=pid & 0xffff
 fid=pid & 0xffffffff
 payload="ABCDEFGHIJKLMNOP"
-packet=IPv6(src=SRC_OUT6, dst=DST_IN6)/\
+packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/\
     IPv6ExtHdrFragment(id=fid)/\
-    IPv6ExtHdrRouting(addresses=[SRT_IN6, SRT_OUT6], segleft=0)/\
+    IPv6ExtHdrRouting(addresses=[OTHER_FAKE1_ADDR6, OTHER_FAKE2_ADDR6], \
+    segleft=0)/\
     ICMPv6EchoRequest(id=eid, data=payload)
-eth=Ether(src=SRC_MAC, dst=DST_MAC)/packet
+eth=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/packet
 
 if os.fork() == 0:
 	time.sleep(1)
-	sendp(eth, iface=SRC_IF)
+	sendp(eth, iface=LOCAL_IF)
 	os._exit(0)
 
-ans=sniff(iface=SRC_IF, timeout=3, filter=
-    "ip6 and dst "+SRC_OUT6+" and icmp6")
+ans=sniff(iface=LOCAL_IF, timeout=3, filter=
+    "ip6 and dst "+LOCAL_ADDR6+" and icmp6")
 for a in ans:
 	if a and a.type == ETH_P_IPV6 and \
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
