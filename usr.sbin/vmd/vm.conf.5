@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.13 2017/02/28 08:35:56 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.14 2017/03/01 07:43:33 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2017 $
+.Dd $Mdocdate: March 1 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -161,6 +161,12 @@ Kernel to load when booting the VM.
 .It Cm memory Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
+.It Cm owner Ar user Ns Op : Ns Ar group
+Set the owner of the VM to the specified user or group.
+The owner will be allowed to start or stop the VM and get the
+permissions to open the VM's console.
+.It Cm owner Pf : Ar group
+Set the owner to the specified group.
 .El
 .Sh SWITCH CONFIGURATION
 A virtual switch allows VMs to communicate with other network interfaces on the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2017/02/27 12:07:58 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -324,6 +324,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 		switch (imsg.hdr.type) {
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+		case IMSG_VMDOP_START_VM_REQUEST:
 			break;
 		default:
 			if (c->peercred.uid != 0) {
@@ -351,7 +353,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_VERBOSE:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(v))
 				goto fail;
-
 			memcpy(&v, imsg.data, sizeof(v));
 			log_setverbose(v);
 
@@ -360,9 +361,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_VMDOP_START_VM_REQUEST:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
 				goto fail;
+			memcpy(&vmc, imsg.data, sizeof(vmc));
+			vmc.vmc_uid = c->peercred.uid;
+			vmc.vmc_gid = -1;
+
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, -1,
-			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1) {
+			    imsg.hdr.type, fd, -1, &vmc, sizeof(vmc)) == -1) {
 				control_close(fd, cs);
 				return;
 			}
@@ -370,9 +374,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
 				goto fail;
+			memcpy(&vid, imsg.data, sizeof(vid));
+			vid.vid_uid = c->peercred.uid;
+
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, -1,
-			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1) {
+			    imsg.hdr.type, fd, -1, &vid, sizeof(vid)) == -1) {
 				control_close(fd, cs);
 				return;
 			}

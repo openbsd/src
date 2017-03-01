@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.44 2017/02/27 14:37:58 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.45 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -87,11 +87,14 @@ struct vmop_result {
 struct vmop_info_result {
 	struct vm_info_result	 vir_info;
 	char			 vir_ttyname[VM_TTYNAME_MAX];
+	uid_t			 vir_uid;
+	int64_t			 vir_gid;
 };
 
 struct vmop_id {
 	uint32_t		 vid_id;
 	char			 vid_name[VMM_MAX_NAME_LEN];
+	uid_t			 vid_uid;
 };
 
 struct vmop_ifreq {
@@ -113,6 +116,8 @@ struct vmop_create_params {
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
+	uid_t			 vmc_uid;
+	int64_t			 vmc_gid;
 };
 
 struct vmboot_params {
@@ -166,6 +171,8 @@ struct vmd_vm {
 	int			 vm_from_config;
 	struct imsgev		 vm_iev;
 	int			 vm_shutdown;
+	uid_t			 vm_uid;
+
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
@@ -197,7 +204,8 @@ struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_stop(struct vmd_vm *, int);
 void	 vm_remove(struct vmd_vm *);
 int	 vm_register(struct privsep *, struct vmop_create_params *,
-	    struct vmd_vm **, uint32_t);
+	    struct vmd_vm **, uint32_t, uid_t);
+int	 vm_checkperm(struct vmd_vm *, uid_t);
 int	 vm_opentty(struct vmd_vm *);
 void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
@@ -227,7 +235,7 @@ int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
-int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t);
+int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t, uid_t);
 int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);

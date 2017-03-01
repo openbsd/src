@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.22 2017/02/28 08:35:08 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.23 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
@@ -35,6 +35,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "vmd.h"
 #include "vmctl.h"
@@ -369,14 +371,36 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	char *vcpu_state, *tty;
 	char curmem[FMT_SCALED_STRSIZE];
 	char maxmem[FMT_SCALED_STRSIZE];
+	char user[16];
+	struct passwd *pw;
+	struct group *gr;
 
-	printf("%5s %5s %5s %7s %7s %7s %s\n", "ID", "PID", "VCPUS",
-	    "MAXMEM", "CURMEM", "TTY", "NAME");
+	printf("%5s %5s %5s %7s %7s %7s %12s %s\n", "ID", "PID", "VCPUS",
+	    "MAXMEM", "CURMEM", "TTY", "OWNER", "NAME");
 
 	for (i = 0; i < ct; i++) {
 		vmi = &list[i];
 		vir = &vmi->vir_info;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
+			/* get user name */
+			if ((pw = getpwuid(vmi->vir_uid)) == NULL)
+				(void)snprintf(user, sizeof(user),
+				    "%d", vmi->vir_uid);
+			else
+				(void)strlcpy(user, pw->pw_name,
+				    sizeof(user));
+			/* get group name */
+			if (vmi->vir_gid != -1) {
+				if (vmi->vir_uid == 0)
+					*user = '\0';
+				if ((gr = getgrgid(vmi->vir_gid)) == NULL)
+					(void)snprintf(user, sizeof(user),
+					    "%s:%lld", user, vmi->vir_gid);
+				else
+					(void)snprintf(user, sizeof(user),
+					    "%s:%s", user, gr->gr_name);
+			}
+
 			(void)strlcpy(curmem, "-", sizeof(curmem));
 			(void)strlcpy(maxmem, "-", sizeof(maxmem));
 
@@ -392,16 +416,16 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 				(void)fmt_scaled(vir->vir_used_size, curmem);
 
 				/* running vm */
-				printf("%5u %5u %5zd %7s %7s %7s %s\n",
+				printf("%5u %5u %5zd %7s %7s %7s %12s %s\n",
 				    vir->vir_id, vir->vir_creator_pid,
 				    vir->vir_ncpus, maxmem, curmem,
-				    tty, vir->vir_name);
+				    tty, user, vir->vir_name);
 			} else {
 				/* disabled vm */
-				printf("%5s %5s %5zd %7s %7s %7s %s\n",
+				printf("%5s %5s %5zd %7s %7s %7s %12s %s\n",
 				    "-", "-",
 				    vir->vir_ncpus, maxmem, curmem,
-				    "-", vir->vir_name);
+				    "-", user, vir->vir_name);
 			}
 		}
 		if (check_info_id(vir->vir_name, vir->vir_id) > 0) {

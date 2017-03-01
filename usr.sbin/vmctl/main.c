@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2017/01/11 22:38:10 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -151,7 +151,7 @@ parse(int argc, char *argv[])
 
 	if (!ctl->has_pledge) {
 		/* pledge(2) default if command doesn't have its own pledge */
-		if (pledge("stdio rpath exec unix", NULL) == -1)
+		if (pledge("stdio rpath exec unix getpw", NULL) == -1)
 			err(1, "pledge");
 	}
 	if (ctl->main(&res, argc, argv) != 0)

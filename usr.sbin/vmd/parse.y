@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2017/01/13 19:21:16 edd Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,8 @@
 #include <util.h>
 #include <errno.h>
 #include <err.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -101,6 +103,10 @@ typedef struct {
 		uint8_t		 lladdr[ETHER_ADDR_LEN];
 		int64_t		 number;
 		char		*string;
+		struct {
+			uid_t	 uid;
+			int64_t	 gid;
+		}		 owner;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -110,7 +116,7 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD DISK DOWN GROUP INTERFACE NIFS PATH SIZE SWITCH UP VMID
-%token	ENABLE DISABLE VM KERNEL LLADDR MEMORY
+%token	ENABLE DISABLE VM KERNEL LLADDR MEMORY OWNER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
@@ -118,6 +124,7 @@ typedef struct {
 %type	<v.lladdr>	lladdr
 %type	<v.string>	string
 %type	<v.string>	optstring
+%type	<v.owner>	owner_id
 
 %%
 
@@ -260,6 +267,10 @@ vm		: VM string			{
 				yyerror("vm name too long");
 				YYERROR;
 			}
+
+			/* set default user/group permissions */
+			vmc.vmc_uid = 0;
+			vmc.vmc_gid = -1;
 		} '{' optnl vm_opts_l '}'	{
 			int ret;
 
@@ -268,7 +279,8 @@ vm		: VM string			{
 				vcp->vcp_nnics = vcp_nnics;
 
 			if (!env->vmd_noaction) {
-				ret = vm_register(&env->vmd_ps, &vmc, &vm, 0);
+				ret = vm_register(&env->vmd_ps, &vmc,
+				    &vm, 0, 0);
 				if (ret == -1 && errno == EALREADY) {
 					log_debug("%s:%d: vm \"%s\""
 					    " skipped (%s)",
@@ -397,6 +409,57 @@ vm_opts		: disable			{
 			}
 			vcp->vcp_memranges[0].vmr_size = (size_t)res;
 			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
+		}
+		| OWNER owner_id		{
+			vmc.vmc_uid = $2.uid;
+			vmc.vmc_gid = $2.gid;
+		}
+		;
+
+owner_id	: /* none */		{
+			$$.uid = 0;
+			$$.gid = -1;
+		}
+		| NUMBER 		{
+			$$.uid = $1;
+			$$.gid = -1;
+		}
+		| STRING		{
+			char		*user, *group;
+			struct passwd	*pw;
+			struct group	*gr;
+
+			$$.uid = 0;
+			$$.gid = -1;
+
+			user = $1;
+			if ((group = strchr(user, ':')) != NULL) {
+				if (group == user)
+					user = NULL;
+				*group++ = '\0';
+			}
+
+			if (user != NULL && *user) {
+				if ((pw = getpwnam(user)) == NULL) {
+					yyerror("failed to get user: %s",
+					    user);
+					free($1);
+					YYERROR;
+				}
+				$$.uid = pw->pw_uid;
+			}
+
+			if (group != NULL && *group) {
+				if ((gr = getgrnam(group)) == NULL) {
+					yyerror("failed to get group: %s",
+					    group);
+					free($1);
+					YYERROR;
+				}
+				$$.gid = gr->gr_gid;
+			}
+
+			free($1);
 		}
 		;
 
@@ -544,6 +607,7 @@ lookup(char *s)
 		{ "kernel",		KERNEL },
 		{ "lladdr",		LLADDR },
 		{ "memory",		MEMORY },
+		{ "owner",		OWNER },
 		{ "size",		SIZE },
 		{ "switch",		SWITCH },
 		{ "up",			UP },

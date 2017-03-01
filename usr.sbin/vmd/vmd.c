@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.51 2017/02/27 14:37:58 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.52 2017/03/01 07:43:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/cdefs.h>
+#include <sys/stat.h>
 #include <sys/tty.h>
 #include <sys/ioctl.h>
 
@@ -35,6 +36,8 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "proc.h"
 #include "vmd.h"
@@ -80,7 +83,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		ret = vm_register(ps, &vmc, &vm, 0);
+		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_uid);
 		if (vmc.vmc_flags == 0) {
 			/* start an existing VM with pre-configured options */
 			if (!(ret == -1 && errno == EALREADY)) {
@@ -92,7 +95,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
 		if (res == 0 &&
-		    config_setvm(ps, vm, imsg->hdr.peerid) == -1) {
+		    config_setvm(ps, vm, imsg->hdr.peerid, vmc.vmc_uid) == -1) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
@@ -108,6 +111,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				break;
 			}
 			id = vm->vm_params.vmc_params.vcp_id;
+		} else
+			vm = vm_getbyid(id);
+		if (vm_checkperm(vm, vid.vid_uid) != 0) {
+			res = EPERM;
+			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
+			break;
 		}
 		memset(&vtp, 0, sizeof(vtp));
 		vtp.vtp_vm_id = id;
@@ -247,7 +256,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else if (vmr.vmr_result == EAGAIN) {
 			/* Stop VM instance but keep the tty open */
 			vm_stop(vm, 1);
-			config_setvm(ps, vm, (uint32_t)-1);
+			config_setvm(ps, vm, (uint32_t)-1, 0);
 		}
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
@@ -256,6 +265,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL) {
 			(void)strlcpy(vir.vir_ttyname, vm->vm_ttyname,
 			    sizeof(vir.vir_ttyname));
+			/* get the user id who started the vm */
+			vir.vir_uid = vm->vm_uid;
+			vir.vir_gid = vm->vm_params.vmc_gid;
 		}
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
@@ -280,6 +292,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    vm->vm_params.vmc_params.vcp_memranges[0].vmr_size;
 				vir.vir_info.vir_ncpus =
 				    vm->vm_params.vmc_params.vcp_ncpus;
+				/* get the configured user id for this vm */
+				vir.vir_uid = vm->vm_params.vmc_uid;
+				vir.vir_gid = vm->vm_params.vmc_gid;
 				if (proc_compose_imsg(ps, PROC_CONTROL, -1,
 				    IMSG_VMDOP_GET_INFO_VM_DATA,
 				    imsg->hdr.peerid, -1, &vir,
@@ -496,8 +511,11 @@ vmd_configure(void)
 	 * tty - for openpty.
 	 * proc - run kill to terminate its children safely.
 	 * sendfd - for disks, interfaces and other fds.
+	 * getpw - lookup user or group id by name.
+	 * chown, fattr - change tty ownership
 	 */
-	if (pledge("stdio rpath wpath proc tty sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath proc tty sendfd getpw"
+	    " chown fattr", NULL) == -1)
 		fatal("pledge");
 
 	if (parse_config(env->vmd_conffile) == -1) {
@@ -529,7 +547,7 @@ vmd_configure(void)
 			    vm->vm_params.vmc_params.vcp_name);
 			continue;
 		}
-		if (config_setvm(&env->vmd_ps, vm, -1) == -1)
+		if (config_setvm(&env->vmd_ps, vm, -1, 0) == -1)
 			return (-1);
 	}
 
@@ -595,7 +613,7 @@ vmd_reload(unsigned int reset, const char *filename)
 					    vm->vm_params.vmc_params.vcp_name);
 					continue;
 				}
-				if (config_setvm(&env->vmd_ps, vm, -1) == -1)
+				if (config_setvm(&env->vmd_ps, vm, -1, 0) == -1)
 					return;
 			} else {
 				log_debug("%s: not creating vm \"%s\": "
@@ -712,6 +730,7 @@ vm_stop(struct vmd_vm *vm, int keeptty)
 		close(vm->vm_kernel);
 		vm->vm_kernel = -1;
 	}
+	vm->vm_uid = 0;
 	if (!keeptty)
 		vm_closetty(vm);
 }
@@ -729,7 +748,7 @@ vm_remove(struct vmd_vm *vm)
 
 int
 vm_register(struct privsep *ps, struct vmop_create_params *vmc,
-    struct vmd_vm **ret_vm, uint32_t id)
+    struct vmd_vm **ret_vm, uint32_t id, uid_t uid)
 {
 	struct vmd_vm		*vm = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
@@ -739,11 +758,23 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	*ret_vm = NULL;
 
 	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL) {
+		if (vm_checkperm(vm, uid) != 0 || vmc->vmc_flags != 0) {
+			errno = EPERM;
+			goto fail;
+		}
 		*ret_vm = vm;
 		errno = EALREADY;
 		goto fail;
 	}
 
+	/*
+	 * non-root users can only start existing VMs
+	 * XXX there could be a mechanism to allow overriding some options
+	 */
+	if (vm_checkperm(NULL, uid) != 0) {
+		errno = EPERM;
+		goto fail;
+	}
 	if (vmc->vmc_flags == 0) {
 		errno = ENOENT;
 		goto fail;
@@ -797,9 +828,45 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 }
 
 int
+vm_checkperm(struct vmd_vm *vm, uid_t uid)
+{
+	struct group	*gr;
+	struct passwd	*pw;
+	char		**grmem;
+
+	/* root has no restrictions */
+	if (uid == 0)
+		return (0);
+
+	if (vm == NULL)
+		return (-1);
+
+	/* check supplementary groups */
+	if (vm->vm_params.vmc_gid != -1 &&
+	    (pw = getpwuid(uid)) != NULL &&
+	    (gr = getgrgid(vm->vm_params.vmc_gid)) != NULL) {
+		for (grmem = gr->gr_mem; *grmem; grmem++)
+			if (strcmp(*grmem, pw->pw_name) == 0)
+				return (0);
+	}
+
+	/* check user */
+	if ((vm->vm_running && vm->vm_uid == uid) ||
+	    (!vm->vm_running && vm->vm_params.vmc_uid == uid))
+		return (0);
+
+	return (-1);
+}
+
+int
 vm_opentty(struct vmd_vm *vm)
 {
 	struct ptmget		 ptm;
+	struct stat		 st;
+	struct group		*gr;
+	uid_t			 uid;
+	gid_t			 gid;
+	mode_t			 mode;
 
 	/*
 	 * Open tty with pre-opened PTM fd
@@ -812,6 +879,54 @@ vm_opentty(struct vmd_vm *vm)
 	if ((vm->vm_ttyname = strdup(ptm.sn)) == NULL)
 		goto fail;
 
+	uid = vm->vm_uid;
+	gid = vm->vm_params.vmc_gid;
+
+	if (vm->vm_params.vmc_gid != -1) {
+		mode = 0660;
+	} else if ((gr = getgrnam("tty")) != NULL) {
+		gid = gr->gr_gid;
+		mode = 0620;
+	} else {
+		mode = 0600;
+		gid = 0;
+	}
+
+	log_debug("%s: vm %s tty %s uid %d gid %d mode %o",
+	    __func__, vm->vm_params.vmc_params.vcp_name,
+	    vm->vm_ttyname, uid, gid, mode);
+
+	/*
+	 * Change ownership and mode of the tty as required.
+	 * Loosely based on the implementation of sshpty.c
+	 */
+	if (stat(vm->vm_ttyname, &st) == -1)
+		goto fail;
+
+	if (st.st_uid != uid || st.st_gid != gid) {
+		if (chown(vm->vm_ttyname, uid, gid) == -1) {
+			log_warn("chown %s %d %d failed, uid %d",
+			    vm->vm_ttyname, uid, gid, getuid());
+
+			/* Ignore failure on read-only filesystems */
+			if (!((errno == EROFS) &&
+			    (st.st_uid == uid || st.st_uid == 0)))
+				goto fail;
+		}
+	}
+
+	if ((st.st_mode & (S_IRWXU|S_IRWXG|S_IRWXO)) != mode) {
+		if (chmod(vm->vm_ttyname, mode) == -1) {
+			log_warn("chmod %s %o failed, uid %d",
+			    vm->vm_ttyname, mode, getuid());
+
+			/* Ignore failure on read-only filesystems */
+			if (!((errno == EROFS) &&
+			    (st.st_uid == uid || st.st_uid == 0)))
+				goto fail;
+		}
+	}
+
 	return (0);
  fail:
 	vm_closetty(vm);
@@ -822,6 +937,11 @@ void
 vm_closetty(struct vmd_vm *vm)
 {
 	if (vm->vm_tty != -1) {
+		/* Release and close the tty */
+		if (fchown(vm->vm_tty, 0, 0) == -1)
+			log_warn("chown %s 0 0 failed", vm->vm_ttyname);
+		if (fchmod(vm->vm_tty, 0666) == -1)
+			log_warn("chmod %s 0666 failed", vm->vm_ttyname);
 		close(vm->vm_tty);
 		vm->vm_tty = -1;
 	}
