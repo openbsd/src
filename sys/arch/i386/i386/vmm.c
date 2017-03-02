@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.22 2017/03/02 02:57:35 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.23 2017/03/02 03:21:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1600,7 +1600,6 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vmcb->v_tr.vs_lim = sregs[VCPU_REGS_TR].vsi_limit;
 		attr = sregs[VCPU_REGS_TR].vsi_ar;
 		vmcb->v_tr.vs_attr = (attr & 0xff) | ((attr >> 4) & 0xf00);
-		vmcb->v_tr.vs_attr = sregs[VCPU_REGS_TR].vsi_ar;
 		vmcb->v_tr.vs_base = sregs[VCPU_REGS_TR].vsi_base;
 		vmcb->v_gdtr.vs_lim = vrs->vrs_gdtr.vsi_limit;
 		vmcb->v_gdtr.vs_base = vrs->vrs_gdtr.vsi_base;
@@ -1612,10 +1611,6 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vmcb->v_cr0 = crs[VCPU_REGS_CR0];
 		vmcb->v_cr3 = crs[VCPU_REGS_CR3];
 		vmcb->v_cr4 = crs[VCPU_REGS_CR4];
-
-		DPRINTF("%s: set vcpu CRs (cr0=0x%llx cr3=0x%llx "
-		    "cr4=0x%llx)\n", __func__, vmcb->v_cr0, vmcb->v_cr3,
-		    vmcb->v_cr4);
 	}
 
 	return (0);
@@ -1682,7 +1677,6 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_CS);
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_ESP);
 	svm_setmsrbrw(vcpu, MSR_SYSENTER_EIP);
-	svm_setmsrbrw(vcpu, MSR_EFER);
 	svm_setmsrbrw(vcpu, MSR_STAR);
 	svm_setmsrbrw(vcpu, MSR_LSTAR);
 	svm_setmsrbrw(vcpu, MSR_CSTAR);
@@ -1690,6 +1684,9 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbrw(vcpu, MSR_FSBASE);
 	svm_setmsrbrw(vcpu, MSR_GSBASE);
 	svm_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+
+	/* EFER is R/O so we can ensure the guest always has SVME */
+	svm_setmsrbr(vcpu, MSR_EFER);
 
 	/* Guest VCPU ASID */
 	vmcb->v_asid = vcpu->vc_parent->vm_id;
@@ -1703,7 +1700,13 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		vmcb->v_n_cr3 = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
 	}
 
+	/* Enable SVME in EFER (must always be set) */
+	vmcb->v_efer |= EFER_SVME;
+
 	ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs);
+
+	vmcb->v_efer |= (EFER_LME | EFER_LMA);
+	vmcb->v_cr4 |= CR4_PAE;
 
 	return ret;
 }
@@ -2328,7 +2331,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
-	
+
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
 
@@ -2349,6 +2352,7 @@ exit:
  *
  * This function allocates various per-VCPU memory regions, sets up initial
  * VCPU VMCS controls, and sets initial register values.
+ *
  * Parameters:
  *  vcpu: the VCPU structure being initialized
  *
