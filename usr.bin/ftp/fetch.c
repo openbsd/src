@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.161 2017/02/28 06:31:12 guenther Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.162 2017/03/02 09:29:53 sthen Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1041,6 +1041,8 @@ cleanup_url_get:
 		fclose(fin);
 	else if (s != -1)
 		close(s);
+	if (out >= 0 && out != fileno(stdout))
+		close(out);
 	free(buf);
 	free(proxyhost);
 	free(proxyurl);
