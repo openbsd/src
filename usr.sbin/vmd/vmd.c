@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.52 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.53 2017/03/02 07:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -753,6 +753,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	struct vmd_vm		*vm = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	unsigned int		 i;
+	struct vmd_switch	*sw;
 
 	errno = 0;
 	*ret_vm = NULL;
@@ -801,13 +802,20 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 
 	memcpy(&vm->vm_params, vmc, sizeof(vm->vm_params));
+	vmc = &vm->vm_params;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
 
 	for (i = 0; i < vcp->vcp_ndisks; i++)
 		vm->vm_disks[i] = -1;
-	for (i = 0; i < vcp->vcp_nnics; i++)
+	for (i = 0; i < vcp->vcp_nnics; i++) {
 		vm->vm_ifs[i].vif_fd = -1;
+
+		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
+			/* inherit per-interface flags from the switch */
+			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);
+		}
+	}
 	vm->vm_kernel = -1;
 	vm->vm_iev.ibuf.fd = -1;
 

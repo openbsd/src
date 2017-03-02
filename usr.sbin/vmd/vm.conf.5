@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.15 2017/03/01 12:29:06 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.16 2017/03/02 07:33:37 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2017 $
+.Dd $Mdocdate: March 2 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -130,11 +130,16 @@ rules for several VM interfaces in the same group.
 The
 .Ar group-name
 must not end with a digit.
-.It Cm lladdr Ar etheraddr
+.It Oo Cm locked Oc Cm lladdr Op Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
 If not specified, a randomized address will be assigned by
 .Xr vmd 8 .
+If the
+.Cm locked
+keyword is specified,
+.Xr vmd 8
+will drop packets from the VM with altered source addresses.
 .It Cm switch Ar name
 Set the virtual switch
 by
@@ -221,6 +226,11 @@ This is the default if neither
 nor
 .Cm disable
 is specified.
+.It Cm locked lladdr
+If this option is specified,
+.Xr vmd 8
+will drop packets with altered sources addresses that do not match the
+link layer addresses (MAC addresses) of the VM interfaces in this switch.
 .It Cm disable
 Do not configure this switch.
 .It Cm group Ar group-name

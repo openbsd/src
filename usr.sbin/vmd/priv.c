@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.5 2016/10/29 14:56:05 edd Exp $	*/
+/*	$OpenBSD: priv.c,v 1.6 2017/03/02 07:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -295,7 +295,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		}
 
 		/* Set the new interface status to up or down */
-		proc_compose(ps, PROC_PRIV, (vif->vif_flags & IFF_UP) ?
+		proc_compose(ps, PROC_PRIV, (vif->vif_flags & VMIFF_UP) ?
 		    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
 		    &vfr, sizeof(vfr));
 	}
@@ -339,7 +339,7 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	}
 
 	/* Set the new interface status to up or down */
-	proc_compose(ps, PROC_PRIV, (vsw->sw_flags & IFF_UP) ?
+	proc_compose(ps, PROC_PRIV, (vsw->sw_flags & VMIFF_UP) ?
 	    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
 	    &vfr, sizeof(vfr));
 

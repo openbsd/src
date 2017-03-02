@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.26 2017/03/02 07:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -236,7 +236,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		}
 
 		/* Set the interface status */
-		vif->vif_flags = vmc->vmc_ifflags[i] & IFF_UP;
+		vif->vif_flags =
+		    vmc->vmc_ifflags[i] & (VMIFF_UP|VMIFF_OPTMASK);
 	}
 
 	/* Open TTY */

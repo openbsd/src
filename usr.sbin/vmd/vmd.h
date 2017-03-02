@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.46 2017/03/01 18:00:50 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.47 2017/03/02 07:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -113,6 +113,9 @@ struct vmop_create_params {
 
 	/* userland-only part of the create params */
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
+#define VMIFF_UP		0x01
+#define VMIFF_LOCKED		0x02
+#define VMIFF_OPTMASK		VMIFF_LOCKED
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];

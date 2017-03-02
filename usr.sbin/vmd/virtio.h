@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.9 2017/01/21 12:45:41 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.10 2017/03/02 07:33:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -118,6 +118,7 @@ struct vionet_dev {
 	uint32_t vm_id;
 	int irq;
 	uint8_t mac[6];
+	int lockedmac;
 };
 
 struct virtio_net_hdr {
@@ -150,7 +151,7 @@ struct vmmci_dev {
 	int irq;
 };
 
-void virtio_init(struct vm_create_params *, int *, int *);
+void virtio_init(struct vmop_create_params *, int *, int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *);
