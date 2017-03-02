@@ -5654,6 +5654,7 @@
 ./usr/share/zoneinfo/America/Porto_Acre
 ./usr/share/zoneinfo/America/Porto_Velho
 ./usr/share/zoneinfo/America/Puerto_Rico
+./usr/share/zoneinfo/America/Punta_Arenas
 ./usr/share/zoneinfo/America/Rainy_River
 ./usr/share/zoneinfo/America/Rankin_Inlet
 ./usr/share/zoneinfo/America/Recife
@@ -6268,6 +6269,7 @@
 ./usr/share/zoneinfo/posix/America/Porto_Acre
 ./usr/share/zoneinfo/posix/America/Porto_Velho
 ./usr/share/zoneinfo/posix/America/Puerto_Rico
+./usr/share/zoneinfo/posix/America/Punta_Arenas
 ./usr/share/zoneinfo/posix/America/Rainy_River
 ./usr/share/zoneinfo/posix/America/Rankin_Inlet
 ./usr/share/zoneinfo/posix/America/Recife
@@ -6883,6 +6885,7 @@
 ./usr/share/zoneinfo/right/America/Porto_Acre
 ./usr/share/zoneinfo/right/America/Porto_Velho
 ./usr/share/zoneinfo/right/America/Puerto_Rico
+./usr/share/zoneinfo/right/America/Punta_Arenas
 ./usr/share/zoneinfo/right/America/Rainy_River
 ./usr/share/zoneinfo/right/America/Rankin_Inlet
 ./usr/share/zoneinfo/right/America/Recife
