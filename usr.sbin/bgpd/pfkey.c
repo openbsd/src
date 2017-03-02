@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.47 2017/02/22 13:55:14 renato Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.48 2017/03/02 19:54:22 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -434,7 +434,7 @@ pfkey_read(int sd, struct sadb_msg *h)
 }
 
 int
-pfkey_reply(int sd, u_int32_t *spip)
+pfkey_reply(int sd, u_int32_t *spi)
 {
 	struct sadb_msg hdr, *msg;
 	struct sadb_ext *ext;
@@ -471,7 +471,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 	}
 
 	if (hdr.sadb_msg_type == SADB_GETSPI) {
-		if (spip == NULL) {
+		if (spi == NULL) {
 			explicit_bzero(data, len);
 			free(data);
 			return (0);
@@ -485,7 +485,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 		    ext->sadb_ext_len * PFKEY2_CHUNK)) {
 			if (ext->sadb_ext_type == SADB_EXT_SA) {
 				sa = (struct sadb_sa *) ext;
-				*spip = sa->sadb_sa_spi;
+				*spi = ntohl(sa->sadb_sa_spi);
 				break;
 			}
 		}
