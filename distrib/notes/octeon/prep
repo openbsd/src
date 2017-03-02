@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2015/08/02 09:54:29 jasper Exp $
+dnl	$OpenBSD: prep,v 1.6 2017/03/02 15:31:15 stsp Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installated on the CompactFlash card or USB drive.
 
@@ -25,6 +25,19 @@ Booting from a CF card or USB:
   The command would likely be, under OpenBSD:
 
   	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
+
+  On the EdgeRouter Lite, some USB storage devices are not detected
+  immediately after power on:
+
+    USB:   (port 0) scanning bus for devices... 
+          USB device not responding, giving up (status=0)
+    1 USB Devices found
+           scanning bus for storage devices...
+    No device found. Not initialized?
+
+  In such cases, manually resetting the usb controller may help:
+  
+    Octeon ubnt_e100# usb reset
 
   Now load the ramdisk kernel using either of the following commands depending
   on the medium used. For USB:
@@ -74,3 +87,7 @@ Booting the installation kernel
   arguments provided:
 
 	# bootoctlinux
+
+  On dual-core systems, boot with both CPU cores enabled:
+
+	# bootoctlinux rootdev=rd0 coremask=0x3
