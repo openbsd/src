@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.73 2017/03/01 19:28:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.74 2017/03/02 09:41:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -356,7 +356,7 @@ ieee80211_set_shortslottime(struct ieee80211com *ic, int on)
 int
 ieee80211_keyrun(struct ieee80211com *ic, u_int8_t *macaddr)
 {
-	struct ieee80211_node *ni;
+	struct ieee80211_node *ni = ic->ic_bss;
 #ifndef IEEE80211_STA_ONLY
 	struct ieee80211_pmk *pmk;
 #endif
