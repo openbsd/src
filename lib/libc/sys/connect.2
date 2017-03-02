@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.31 2016/08/20 20:22:28 millert Exp $
+.\"	$OpenBSD: connect.2,v 1.32 2017/03/02 22:12:02 benno Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 20 2016 $
+.Dd $Mdocdate: March 2 2017 $
 .Dt CONNECT 2
 .Os
 .Sh NAME
@@ -196,6 +196,9 @@ Either the socket is non-blocking or a previous call to
 .Fn connect
 was interrupted by a signal, and the connection attempt has not yet
 been completed.
+.It Bq Er EPERM
+A TCP connection on a socket with socket option TCP_MD5SIG was
+attempted without configuring the security parameters correctly.
 .El
 .Pp
 The following errors are specific to connecting names in the
