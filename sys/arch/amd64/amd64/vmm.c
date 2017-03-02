@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.118 2017/03/02 03:21:44 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.119 2017/03/02 07:26:31 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4315,6 +4315,8 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x03:	/* Processor serial number (not supported) */
+		DPRINTF("%s: function 0x03 (processor serial number) not "
+		"supported\n", __func__);
 		*rax = 0;
 		*rbx = 0;
 		*rcx = 0;
