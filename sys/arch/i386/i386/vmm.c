@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.23 2017/03/02 03:21:44 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.24 2017/03/02 07:27:13 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -144,7 +144,7 @@ int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint32_t *, uint32_t *);
 int vmx_handle_exit(struct vcpu *);
-int vmx_handle_cpuid(struct vcpu *);
+int vmm_handle_cpuid(struct vcpu *);
 int vmx_handle_rdmsr(struct vcpu *);
 int vmx_handle_wrmsr(struct vcpu *);
 int vmx_handle_cr(struct vcpu *);
@@ -3765,7 +3765,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		ret = vmx_handle_np_fault(vcpu);
 		break;
 	case VMX_EXIT_CPUID:
-		ret = vmx_handle_cpuid(vcpu);
+		ret = vmm_handle_cpuid(vcpu);
 		update_rip = 1;
 		break;
 	case VMX_EXIT_IO:
@@ -4205,23 +4205,34 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 }
 
 /*
- * vmx_handle_cpuid
+ * vmm_handle_cpuid
  *
  * Exit handler for CPUID instruction
+ *
+ * Parameters:
+ *  vcpu: vcpu causing the CPUID exit
+ *
+ * Return value:
+ *  0: the exit was processed successfully
+ *  EINVAL: error occurred validating the CPUID instruction arguments
  */
 int
-vmx_handle_cpuid(struct vcpu *vcpu)
+vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint32_t insn_length;
 	uint32_t *eax, *ebx, *ecx, *edx;
 
-	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
-		printf("vmx_handle_cpuid: can't obtain instruction length\n");
-		return (EINVAL);
-	}
+	if (vmm_softc->mode == VMM_MODE_VMX ||
+	    vmm_softc->mode == VMM_MODE_EPT) {
+		if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
+			DPRINTF("%s: can't obtain instruction length\n",
+			    __func__);
+			return (EINVAL);
+		}
 
-	/* All CPUID instructions are 0x0F 0xA2 */
-	KASSERT(insn_length == 2);
+		/* All CPUID instructions are 0x0F 0xA2 */
+		KASSERT(insn_length == 2);
+	}
 
 	eax = &vcpu->vc_gueststate.vg_eax;
 	ebx = &vcpu->vc_gueststate.vg_ebx;
@@ -4283,34 +4294,40 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		      CPUID_MTRR | CPUID_PAT);
 		break;
 	case 0x02:	/* Cache and TLB information */
-		DPRINTF("vmx_handle_cpuid: function 0x02 (cache/TLB) not"
-		    " supported\n");
+		DPRINTF("%s: function 0x02 (cache/TLB) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x03:	/* Processor serial number (not supported) */
+		DPRINTF("%s: function 0x03 (processor serial number) not "
+		    "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x04:
-		DPRINTF("vmx_handle_cpuid: function 0x04 (deterministic "
-		    "cache info) not supported\n");
+		DPRINTF("%s: function 0x04 (deterministic cache info) not "
+		    "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x05:	/* MONITOR/MWAIT (not supported) */
+		DPRINTF("%s: function 0x05 (monitor/mwait) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
-	case 0x06:	/* Thermal / Power management */
+	case 0x06:	/* Thermal / Power management (not supported) */
+		DPRINTF("%s: function 0x06 (thermal/power mgt) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
@@ -4338,6 +4355,8 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 			*edx = 0;
 		} else {
 			/* Unsupported subleaf */
+			DPRINTF("%s: function 0x07 (SEFF) unsupported subleaf "
+			    "0x%llx not supported\n", __func__, *ecx);
 			*eax = 0;
 			*ebx = 0;
 			*ecx = 0;
@@ -4345,62 +4364,64 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		}
 		break;
 	case 0x09:	/* Direct Cache Access (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x09 (direct cache access)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x09 (direct cache access) not "
+		     "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
-	case 0x0a:	/* Architectural performance monitoring */
+	case 0x0a:	/* Architectural perf monitoring (not supported) */
+		DPRINTF("%s: function 0x0a (arch. perf mon) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x0b:	/* Extended topology enumeration (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x0b (topology enumeration)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x0b (topology enumeration) not "
+		    "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x0d:	/* Processor ext. state information (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x0d (ext. state info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x0d (ext. state info) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x0f:	/* QoS info (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x0f (QoS info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x0f (QoS info) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x14:	/* Processor Trace info (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x14 (processor trace info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x14 (processor trace info) not "
+		    "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x15:	/* TSC / Core Crystal Clock info (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x15 (TSC / CCC info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x15 (TSC / CCC info) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	case 0x16:	/* Processor frequency info (not supported) */
-		DPRINTF("vmx_handle_cpuid: function 0x16 (frequency info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x16 (frequency info) not supported\n",
+		    __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
@@ -4460,15 +4481,15 @@ vmx_handle_cpuid(struct vcpu *vcpu)
 		*edx = 0;	/* unsupported ITSC */
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
-		DPRINTF("vmx_handle_cpuid: function 0x80000008 (phys bits info)"
-		    " not supported\n");
+		DPRINTF("%s: function 0x80000008 (phys bits info) not "
+		    "supported\n", __func__);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
 		*edx = 0;
 		break;
 	default:
-		DPRINTF("vmx_handle_cpuid: unsupported eax=0x%x\n", *eax);
+		DPRINTF("%s: unsupported eax=0x%x\n", __func__, *eax);
 		*eax = 0;
 		*ebx = 0;
 		*ecx = 0;
