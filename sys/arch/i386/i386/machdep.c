@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.595 2017/01/13 17:15:27 mikeb Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.596 2017/03/02 10:38:10 natano Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -234,7 +234,7 @@ void (*update_cpuspeed)(void) = NULL;
 void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
-int lid_suspend = 1;
+int lid_action = 1;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -2655,7 +2655,7 @@ __dead void
 boot(int howto)
 {
 	if ((howto & RB_POWERDOWN) != 0)
-		lid_suspend = 0;
+		lid_action = 0;
 
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
@@ -3595,7 +3595,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CPU_XCRYPT:
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_xcrypt));
 	case CPU_LIDSUSPEND:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &lid_suspend));
+	case CPU_LIDACTION:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &lid_action));
 	default:
 		return (EOPNOTSUPP);
 	}

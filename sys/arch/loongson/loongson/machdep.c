@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2017/01/19 15:09:04 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.73 2017/03/02 10:38:10 natano Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -116,7 +116,7 @@ int	physmem;		/* Max supported memory, changes to actual. */
 int	ncpu = 1;		/* At least one CPU in the system. */
 int	nnodes = 1;		/* Number of NUMA nodes, only on 3A. */
 struct	user *proc0paddr;
-int	lid_suspend = 1;
+int	lid_action = 1;
 
 #ifdef MULTIPROCESSOR
 uint64_t cpu_spinup_a0;
@@ -1025,7 +1025,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case CPU_LIDSUSPEND:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &lid_suspend);
+	case CPU_LIDACTION:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &lid_action);
 	default:
 		return EOPNOTSUPP;
 	}

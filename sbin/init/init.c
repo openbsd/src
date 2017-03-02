@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.62 2016/09/05 10:20:40 gsoares Exp $	*/
+/*	$OpenBSD: init.c,v 1.63 2017/03/02 10:38:09 natano Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1325,13 +1325,13 @@ f_nice_death(void)
 	int status;
 
 #ifdef CPU_LIDSUSPEND
-	int lidsuspend_mib[] = {CTL_MACHDEP, CPU_LIDSUSPEND};
-	int dontsuspend = 0;
+	int mib[] = {CTL_MACHDEP, CPU_LIDACTION};
+	int lidaction = 0;
 
 	if ((death_howto & RB_POWERDOWN) &&
-	    (sysctl(lidsuspend_mib, 2, NULL, NULL, &dontsuspend,
-		    sizeof(dontsuspend)) == -1) && (errno != EOPNOTSUPP))
-			warning("cannot disable lid suspend");
+	    (sysctl(mib, 2, NULL, NULL, &lidaction,
+		    sizeof(lidaction)) == -1) && (errno != EOPNOTSUPP))
+			warning("cannot disable lid action");
 #endif
 
 	for (sp = sessions; sp; sp = sp->se_next) {

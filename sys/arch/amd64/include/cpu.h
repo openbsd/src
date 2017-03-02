@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.107 2016/12/14 10:30:59 reyk Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.108 2017/03/02 10:38:10 natano Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -425,7 +425,8 @@ void mp_setperf_init(void);
 #define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
 #define CPU_LIDSUSPEND		13	/* lid close causes a suspend */
-#define CPU_MAXID		14	/* number of valid machdep ids */
+#define CPU_LIDACTION		14	/* action caused by lid close */
+#define CPU_MAXID		15	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -442,6 +443,7 @@ void mp_setperf_init(void);
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "xcrypt", CTLTYPE_INT }, \
 	{ "lidsuspend", CTLTYPE_INT }, \
+	{ "lidaction", CTLTYPE_INT }, \
 }
 
 /*

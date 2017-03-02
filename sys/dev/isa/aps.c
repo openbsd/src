@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.25 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.26 2017/03/02 10:38:10 natano Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -434,7 +434,7 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 	int64_t temp;
 	int i;
 #if NAPM > 0
-	extern int lid_suspend;
+	extern int lid_action;
 	extern int apm_lidclose;
 #endif
 
@@ -467,7 +467,7 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 	sc->sensors[APS_SENSOR_MSACT].value =
 	    (sc->aps_data.input & APS_INPUT_MS) ? 1 : 0;
 #if NAPM > 0
-	if (lid_suspend &&
+	if (lid_action &&
 	    (sc->sensors[APS_SENSOR_LIDOPEN].value == 1) &&
 	    (sc->aps_data.input & APS_INPUT_LIDOPEN) == 0)
 		/* Inform APM that the lid has closed */

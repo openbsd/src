@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.35 2016/08/27 01:56:07 guenther Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.36 2017/03/02 10:38:09 natano Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -115,13 +115,11 @@ main(int argc, char *argv[])
 #ifdef CPU_LIDSUSPEND
 	if (howto & RB_POWERDOWN) {
 		/* Disable suspending on laptop lid close */
-		int mib[2];
-		int lidsuspend = 0;
+		int mib[] = {CTL_MACHDEP, CPU_LIDACTION};
+		int lidaction = 0;
 
-		mib[0] = CTL_MACHDEP;
-		mib[1] = CPU_LIDSUSPEND;
-		if (sysctl(mib, 2, NULL, NULL, &lidsuspend,
-		    sizeof(lidsuspend)) == -1 && errno != EOPNOTSUPP)
+		if (sysctl(mib, 2, NULL, NULL, &lidaction,
+		    sizeof(lidaction)) == -1 && errno != EOPNOTSUPP)
 			warn("sysctl");
 	}
 #endif /* CPU_LIDSUSPEND */

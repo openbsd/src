@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.322 2017/02/28 10:39:07 natano Exp $ */
+/* $OpenBSD: acpi.c,v 1.323 2017/03/02 10:38:10 natano Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2349,7 +2349,7 @@ int
 acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 {
 	extern int perflevel;
-	extern int lid_suspend;
+	extern int lid_action;
 	int error = ENXIO;
 	size_t rndbuflen = 0;
 	char *rndbuf = NULL;
@@ -2506,7 +2506,7 @@ fail_alloc:
 	acpi_indicator(sc, ACPI_SST_WORKING);
 
 	/* If we woke up but all the lids are closed, go back to sleep */
-	if (acpibtn_numopenlids() == 0 && lid_suspend != 0)
+	if (acpibtn_numopenlids() == 0 && lid_action != 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, sleepmode);
 
 fail_tts:

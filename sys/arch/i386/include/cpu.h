@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.152 2017/02/06 09:13:41 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.153 2017/03/02 10:38:10 natano Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -524,7 +524,8 @@ int	cpu_paenable(void *);
 #define CPU_SSE2		15	/* supports SSE2 */
 #define CPU_XCRYPT		16	/* supports VIA xcrypt in userland */
 #define CPU_LIDSUSPEND		17	/* lid close causes a suspend */
-#define CPU_MAXID		18	/* number of valid machdep ids */
+#define CPU_LIDACTION		18	/* action caused by lid close */
+#define CPU_MAXID		19	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -545,6 +546,7 @@ int	cpu_paenable(void *);
 	{ "sse2", CTLTYPE_INT }, \
 	{ "xcrypt", CTLTYPE_INT }, \
 	{ "lidsuspend", CTLTYPE_INT }, \
+	{ "lidaction", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.43 2017/02/28 10:39:07 natano Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.44 2017/03/02 10:38:10 natano Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -207,7 +207,7 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibtn_softc	*sc = arg;
 #ifndef SMALL_KERNEL
-	extern int lid_suspend;
+	extern int lid_action;
 	int64_t lid;
 #endif
 
@@ -227,10 +227,24 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		    "_LID", 0, NULL, &lid))
 			return (0);
 		sc->sc_sens.value = lid;
-		if (lid_suspend == 0)
+
+		if (lid != 0)
 			break;
-		if (lid == 0)
+
+		switch (lid_action) {
+		case 1:
 			goto sleep;
+#ifdef HIBERNATE
+		case 2:
+			/* Request to go to sleep */
+			if (acpi_record_event(sc->sc_acpi, APM_USER_HIBERNATE_REQ))
+				acpi_addtask(sc->sc_acpi, acpi_sleep_task,
+				    sc->sc_acpi, ACPI_SLEEP_HIBERNATE);
+			break;
+#endif
+		default:
+			break;
+		}
 #endif /* SMALL_KERNEL */
 		break;
 	case ACPIBTN_SLEEP:
