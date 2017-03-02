@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.223 2017/02/22 19:34:42 dhill Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.224 2017/03/02 08:58:24 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1666,6 +1666,10 @@ struct protosw routesw[] = {
 }
 };
 
-struct domain routedomain =
-    { PF_ROUTE, "route", route_init, 0, 0,
-      routesw, &routesw[nitems(routesw)] };
+struct domain routedomain = {
+  .dom_family = PF_ROUTE,
+  .dom_name = "route",
+  .dom_init = route_init,
+  .dom_protosw = routesw,
+  .dom_protoswNPROTOSW = &routesw[nitems(routesw)]
+};

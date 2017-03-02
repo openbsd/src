@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.89 2017/02/22 19:34:42 dhill Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.90 2017/03/02 08:58:24 mpi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -340,13 +340,17 @@ struct protosw inet6sw[] = {
 }
 };
 
-struct domain inet6domain =
-    { AF_INET6, "internet6", 0, 0, 0,
-      (struct protosw *)inet6sw,
-      (struct protosw *)&inet6sw[nitems(inet6sw)],
-      sizeof(struct sockaddr_in6),
-      offsetof(struct sockaddr_in6, sin6_addr), 128,
-      in6_domifattach, in6_domifdetach, };
+struct domain inet6domain = {
+  .dom_family = AF_INET6,
+  .dom_name = "internet6",
+  .dom_protosw = inet6sw,
+  .dom_protoswNPROTOSW = &inet6sw[nitems(inet6sw)],
+  .dom_rtkeylen = sizeof(struct sockaddr_in6),
+  .dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr),
+  .dom_maxplen = 128,
+  .dom_ifattach = in6_domifattach,
+  .dom_ifdetach = in6_domifdetach
+};
 
 /*
  * Internet configuration info

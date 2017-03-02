@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.37 2017/02/22 19:34:42 dhill Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.38 2017/03/02 08:58:24 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -256,13 +256,9 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 }
 
 struct domain pfkeydomain = {
-	PF_KEY,
-	"PF_KEY",
-	pfkey_init, /* init */
-	NULL, /* externalize */
-	NULL, /* dispose */
-	NULL, /* protosw */
-	NULL, /* protoswNPROTOSW */
+  .dom_family = PF_KEY,
+  .dom_name = "PF_KEY",
+  .dom_init = pfkey_init,
 };
 
 static struct protosw pfkey_protosw_template = {

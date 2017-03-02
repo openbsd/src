@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.15 2017/02/27 19:16:56 claudio Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.16 2017/03/02 08:58:24 mpi Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -46,9 +46,9 @@
  * MPLS address family: needed for the routing table
  */
 struct domain mplsdomain = {
-	AF_MPLS, "mpls", NULL, 0, 0,
-	NULL,
-	0,
-	sizeof(struct sockaddr_mpls),
-	offsetof(struct sockaddr_mpls, smpls_label), 32
+  .dom_family = AF_MPLS,
+  .dom_name = "mpls",
+  .dom_rtkeylen = sizeof(struct sockaddr_mpls),
+  .dom_rtoffset = offsetof(struct sockaddr_mpls, smpls_label),
+  .dom_maxplen = 32
 };

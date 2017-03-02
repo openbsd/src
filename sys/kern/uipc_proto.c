@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.12 2017/02/22 19:34:42 dhill Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.13 2017/03/02 08:58:24 mpi Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -37,9 +37,9 @@
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-#include <sys/unpcb.h> 
+#include <sys/unpcb.h>
 #include <sys/socketvar.h>
-                        
+
 #include <net/raw_cb.h>
 
 /*
@@ -72,6 +72,11 @@ struct protosw unixsw[] = {
 }
 };
 
-struct domain unixdomain =
-    { AF_LOCAL, "unix", 0, unp_externalize, unp_dispose,
-      unixsw, &unixsw[nitems(unixsw)] };
+struct domain unixdomain = {
+  .dom_family = AF_LOCAL,
+  .dom_name = "unix",
+  .dom_externalize = unp_externalize,
+  .dom_dispose = unp_dispose,
+  .dom_protosw = unixsw,
+  .dom_protoswNPROTOSW = &unixsw[nitems(unixsw)]
+};

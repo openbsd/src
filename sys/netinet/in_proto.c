@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.73 2017/02/22 19:34:42 dhill Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.74 2017/03/02 08:58:24 mpi Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -438,8 +438,12 @@ struct protosw inetsw[] = {
 }
 };
 
-struct domain inetdomain =
-    { AF_INET, "internet", 0, 0, 0,
-      inetsw, &inetsw[nitems(inetsw)],
-      sizeof(struct sockaddr_in),
-      offsetof(struct sockaddr_in, sin_addr), 32 };
+struct domain inetdomain = {
+  .dom_family = AF_INET,
+  .dom_name = "internet",
+  .dom_protosw = inetsw,
+  .dom_protoswNPROTOSW = &inetsw[nitems(inetsw)],
+  .dom_rtkeylen = sizeof(struct sockaddr_in),
+  .dom_rtoffset = offsetof(struct sockaddr_in, sin_addr),
+  .dom_maxplen = 32
+};
