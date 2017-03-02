@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.43 2017/02/28 16:46:27 bluhm Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.44 2017/03/02 17:44:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -604,6 +604,31 @@ parse_key(struct sadb_ext *ext, struct ipsec_key *ikey)
 	ikey->len = key->sadb_key_bits / 8;
 }
 
+static void
+parse_satype(struct sadb_ext *ext, u_int8_t *satype)
+{
+	struct sadb_protocol *proto = (struct sadb_protocol *)ext;
+
+	if (proto == NULL)
+		return;
+	switch (proto->sadb_protocol_proto) {
+	case SADB_SATYPE_ESP:
+		*satype = IPSEC_ESP;
+		break;
+	case SADB_SATYPE_AH:
+		*satype = IPSEC_AH;
+		break;
+	case SADB_X_SATYPE_IPCOMP:
+		*satype = IPSEC_IPCOMP;
+		break;
+	case SADB_X_SATYPE_IPIP:
+		*satype = IPSEC_IPIP;
+		break;
+	default:
+		return;
+	}
+}
+
 u_int32_t
 pfkey_get_spi(struct sadb_msg *msg)
 {
@@ -622,8 +647,8 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	struct ipsec_rule r;
 	struct ipsec_key enckey, authkey;
 	struct ipsec_transforms xfs;
-	struct ipsec_addr_wrap src, dst;
-	struct sadb_sa *sa;
+	struct ipsec_addr_wrap src, dst, dst2;
+	struct sadb_sa *sa, *sa2;
 
 	setup_extensions(msg);
 	sa = (struct sadb_sa *)extensions[SADB_EXT_SA];
@@ -786,6 +811,15 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 		bzero(&authkey, sizeof authkey);
 		extensions[SADB_EXT_KEY_AUTH] = NULL;
 		extensions[SADB_EXT_KEY_ENCRYPT] = NULL;
+	}
+	if (extensions[SADB_X_EXT_SA2]) {
+		r.type |= RULE_GROUP;
+		sa2 = (struct sadb_sa *)extensions[SADB_X_EXT_SA2];
+		r.spi2 = ntohl(sa2->sadb_sa_spi);
+		parse_addr(extensions[SADB_X_EXT_DST2], &dst2);
+		r.dst2 = &dst2;
+		parse_satype(extensions[SADB_X_EXT_SATYPE2], &r.proto2);
+		r.proto = r.satype;
 	}
 	ipsecctl_print_rule(&r, opts);
 

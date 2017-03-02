@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.80 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.81 2017/03/02 17:44:32 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -384,9 +384,6 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 void
 ipsecctl_print_sagroup(struct ipsec_rule *r, int opts)
 {
-	if (!(opts & IPSECCTL_OPT_VERBOSE2))
-		return;
-
 	printf("[group %s to ", satype[r->proto]);
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x with %s to ", r->spi, satype[r->proto2]);
