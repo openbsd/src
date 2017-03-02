@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.19 2017/01/24 10:08:30 krw Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.20 2017/03/02 03:09:50 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -379,7 +379,8 @@ mpw_start(struct ifnet *ifp)
 		return;
 	}
 
-	rt = rtalloc((struct sockaddr *)&sc->sc_nexthop, RT_RESOLVE, 0);
+	rt = rtalloc((struct sockaddr *)&sc->sc_nexthop, RT_RESOLVE,
+	    ifp->if_rdomain);
 	if (!rtisvalid(rt)) {
 		IFQ_PURGE(&ifp->if_snd);
 		goto rtfree;
@@ -435,8 +436,7 @@ mpw_start(struct ifnet *ifp)
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
 		shim->shim_label |= sc->sc_rshim.shim_label;
 
-		/* XXX: MPLS only uses domain 0 */
-		m->m_pkthdr.ph_rtableid = 0;
+		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 		mpls_output(p, m, (struct sockaddr *)&ss, rt);
 	}
