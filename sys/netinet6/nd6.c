@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.203 2017/02/09 15:23:35 jca Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.204 2017/03/02 09:24:02 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -435,7 +435,7 @@ nd6_timer_work(void *null)
 {
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
-	struct in6_ifaddr *ia6, *nia6;
+	struct ifnet *ifp;
 	int s;
 
 	NET_LOCK(s);
@@ -453,18 +453,26 @@ nd6_timer_work(void *null)
 	 * However, from a stricter spec-conformance standpoint, we should
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
-	TAILQ_FOREACH_SAFE(ia6, &in6_ifaddr, ia_list, nia6) {
-		/* check address lifetime */
-		if (IFA6_IS_INVALID(ia6)) {
-			in6_purgeaddr(&ia6->ia_ifa);
-		} else if (IFA6_IS_DEPRECATED(ia6)) {
-			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
-		} else {
-			/*
-			 * A new RA might have made a deprecated address
-			 * preferred.
-			 */
-			ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		struct ifaddr *ifa, *nifa;
+		struct in6_ifaddr *ia6;
+
+		TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, nifa) {
+			if (ifa->ifa_addr->sa_family != AF_INET6)
+				continue;
+			ia6 = ifatoia6(ifa);
+			/* check address lifetime */
+			if (IFA6_IS_INVALID(ia6)) {
+				in6_purgeaddr(&ia6->ia_ifa);
+			} else if (IFA6_IS_DEPRECATED(ia6)) {
+				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
+			} else {
+				/*
+				 * A new RA might have made a deprecated address
+				 * preferred.
+				 */
+				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
+			}
 		}
 	}
 
