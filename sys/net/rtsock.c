@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.225 2017/03/02 09:37:04 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.226 2017/03/02 17:09:21 krw Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -108,9 +108,13 @@ int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
 void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 
+void		 rt_proposalmsg(struct rt_msghdr *, struct rt_addrinfo *);
+
 int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
+
+int		 validate_proposal(struct rt_addrinfo *);
 
 struct routecb {
 	struct rawcb	rcb;
@@ -597,6 +601,7 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
+	case RTM_PROPOSAL:
 		break;
 	default:
 		error = EOPNOTSUPP;
@@ -652,11 +657,12 @@ route_output(struct mbuf *m, ...)
 	info.rti_addrs = rtm->rtm_addrs;
 	rt_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
 	info.rti_flags = rtm->rtm_flags;
-	if (info.rti_info[RTAX_DST] == NULL ||
+	if (rtm->rtm_type != RTM_PROPOSAL &&
+	   (info.rti_info[RTAX_DST] == NULL ||
 	    info.rti_info[RTAX_DST]->sa_family >= AF_MAX ||
 	    (info.rti_info[RTAX_GATEWAY] != NULL &&
 	    info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX) ||
-	    info.rti_info[RTAX_GENMASK] != NULL) {
+	    info.rti_info[RTAX_GENMASK] != NULL)) {
 		error = EINVAL;
 		goto fail;
 	}
@@ -675,6 +681,18 @@ route_output(struct mbuf *m, ...)
 	 * may be not consistent and could cause unexpected behaviour in other
 	 * userland clients. Use goto fail instead.
 	 */
+
+	/*
+	 * Validate RTM_PROPOSAL and pass it along or error out.
+	 */
+	if (rtm->rtm_type == RTM_PROPOSAL) {
+	       if (validate_proposal(&info) == -1) {
+			error = EINVAL;
+			goto fail;
+	       }
+	       goto flush;
+	}
+
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
 		if (info.rti_info[RTAX_GATEWAY] == NULL) {
@@ -1640,6 +1658,89 @@ sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
 		words[i] = (uint32_t)counters[i];
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &rtstat, sizeof(rtstat)));
+}
+
+int
+validate_proposal(struct rt_addrinfo *info)
+{
+	if (info->rti_addrs & ~(RTA_NETMASK | RTA_IFA | RTA_DNS | RTA_STATIC |
+	    RTA_SEARCH)) {
+		return -1;
+	}
+
+	if (ISSET(info->rti_addrs, RTA_NETMASK)) {
+		struct sockaddr *sa = info->rti_info[RTAX_NETMASK];
+		if (sa == NULL)
+			return -1;
+		switch (sa->sa_family) {
+		case AF_INET:
+			if (sa->sa_len != sizeof(struct sockaddr_in))
+				return -1;
+			break;
+		case AF_INET6:
+			if (sa->sa_len != sizeof(struct sockaddr_in6))
+				return -1;
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	if (ISSET(info->rti_addrs, RTA_IFA)) {
+		struct sockaddr *sa = info->rti_info[RTAX_IFA];
+		if (sa == NULL)
+			return -1;
+		switch (sa->sa_family) {
+		case AF_INET:
+			if (sa->sa_len != sizeof(struct sockaddr_in))
+				return -1;
+			break;
+		case AF_INET6:
+			if (sa->sa_len != sizeof(struct sockaddr_in6))
+				return -1;
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	if (ISSET(info->rti_addrs, RTA_DNS)) {
+		struct sockaddr_rtdns *rtdns =
+		    (struct sockaddr_rtdns *)info->rti_info[RTAX_DNS];
+		if (rtdns == NULL)
+			return -1;
+		if (rtdns->sr_len > sizeof(*rtdns))
+			return -1;
+		if (rtdns->sr_len <=
+		    offsetof(struct sockaddr_rtdns, sr_dns))
+			return -1;
+	}
+
+	if (ISSET(info->rti_addrs, RTA_STATIC)) {
+		struct sockaddr_rtstatic *rtstatic =
+		    (struct sockaddr_rtstatic *)info->rti_info[RTAX_STATIC];
+		if (rtstatic == NULL)
+			return -1;
+		if (rtstatic->sr_len > sizeof(*rtstatic))
+			return -1;
+		if (rtstatic->sr_len <=
+		    offsetof(struct sockaddr_rtstatic, sr_static))
+			return -1;
+	}
+
+	if (ISSET(info->rti_addrs, RTA_SEARCH)) {
+		struct sockaddr_rtsearch *rtsearch =
+		    (struct sockaddr_rtsearch *)info->rti_info[RTAX_SEARCH];
+		if (rtsearch == NULL)
+			return -1;
+		if (rtsearch->sr_len > sizeof(*rtsearch))
+			return -1;
+		if (rtsearch->sr_len <=
+		    offsetof(struct sockaddr_rtsearch, sr_search))
+			return -1;
+	}
+
+	return 0;
 }
 
 /*

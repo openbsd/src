@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.156 2017/01/23 00:59:22 krw Exp $	*/
+/*	$OpenBSD: route.h,v 1.157 2017/03/02 17:09:21 krw Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -168,6 +168,9 @@ struct rtentry {
 #define RTP_RIP		40	/* RIP routes */
 #define RTP_BGP		48	/* BGP routes */
 #define RTP_DEFAULT	56	/* routes that have nothing set */
+#define RTP_PROPOSAL_STATIC	57
+#define RTP_PROPOSAL_DHCLIENT	58
+#define RTP_PROPOSAL_SLAAC	59
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
 #define RTP_MASK	0x7f
@@ -237,6 +240,7 @@ struct rt_msghdr {
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
 #define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 #define RTM_BFD		0x12	/* bidirectional forwarding detection */
+#define RTM_PROPOSAL	0x13	/* proposal for netconfigd */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -262,6 +266,9 @@ struct rt_msghdr {
 #define RTA_SRCMASK	0x200	/* source netmask present */
 #define RTA_LABEL	0x400	/* route label present */
 #define RTA_BFD		0x800	/* bfd present */
+#define RTA_DNS		0x1000	/* DNS Servers sockaddr present */
+#define RTA_STATIC	0x2000	/* RFC 3442 encoded static routes present */
+#define RTA_SEARCH	0x4000	/* RFC 3397 encoded search path present */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -278,7 +285,10 @@ struct rt_msghdr {
 #define RTAX_SRCMASK	9	/* source netmask present */
 #define RTAX_LABEL	10	/* route label present */
 #define RTAX_BFD	11	/* bfd present */
-#define RTAX_MAX	12	/* size of array to allocate */
+#define RTAX_DNS	12	/* DNS Server(s) sockaddr present */
+#define RTAX_STATIC	13	/* RFC 3442 encoded static routes present */
+#define RTAX_SEARCH	14	/* RFC 3397 encoded search path present */
+#define RTAX_MAX	15	/* size of array to allocate */
 
 /*
  * setsockopt defines used for the filtering.
@@ -297,6 +307,30 @@ struct sockaddr_rtlabel {
 	u_int8_t	sr_len;			/* total length */
 	sa_family_t	sr_family;		/* address family */
 	char		sr_label[RTLABEL_LEN];
+};
+
+#define	RTDNS_LEN	128
+
+struct sockaddr_rtdns {
+	u_int8_t	sr_len;			/* total length */
+	sa_family_t	sr_family;		/* address family */
+	char		sr_dns[RTDNS_LEN];
+};
+
+#define	RTSTATIC_LEN	128
+
+struct sockaddr_rtstatic {
+	u_int8_t	sr_len;			/* total length */
+	sa_family_t	sr_family;		/* address family */
+	char		sr_static[RTSTATIC_LEN];
+};
+
+#define	RTSEARCH_LEN	128
+
+struct sockaddr_rtsearch {
+	u_int8_t	sr_len;			/* total length */
+	sa_family_t	sr_family;		/* address family */
+	char		sr_search[RTSEARCH_LEN];
 };
 
 /*

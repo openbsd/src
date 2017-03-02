@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.196 2017/01/23 00:10:07 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.197 2017/03/02 17:09:21 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -119,6 +119,9 @@ void	 interfaces(void);
 void	 getlabel(char *);
 int	 gettable(const char *);
 int	 rdomain(int, char **);
+void	 print_rtdns(struct sockaddr_rtdns *);
+void	 print_rtstatic(struct sockaddr_rtstatic *);
+void	 print_rtsearch(struct sockaddr_rtsearch *);
 
 __dead void
 usage(char *cp)
@@ -1258,6 +1261,7 @@ char *msgtypes[] = {
 	"RTM_DESYNC: route socket overflow",
 	"RTM_INVALIDATE: invalidate cache of L2 route",
 	"RTM_BFD: bidirectional forwarding detection",
+	"RTM_PROPOSAL: config proposal"
 };
 
 char metricnames[] =
@@ -1271,7 +1275,7 @@ char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC"
 "\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
 char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\12SRCMASK\013LABEL";
+"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\012SRCMASK\013LABEL\014BFD\015DNS\016STATIC\017SEARCH";
 
 const char *
 get_linkstate(int mt, int link_state)
@@ -1355,6 +1359,87 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		print_bfdmsg(rtm);
 		break;
 #endif
+	case RTM_PROPOSAL:
+		printf(", source ");
+		switch (rtm->rtm_priority) {
+		case RTP_PROPOSAL_STATIC:
+			printf("static");
+			break;
+		case RTP_PROPOSAL_DHCLIENT:
+			printf("dhcp");
+			break;
+		case RTP_PROPOSAL_SLAAC:
+			printf("slaac");
+			break;
+		default:
+			printf("unknown");
+			break;
+		}
+		printf(" table %u, ifidx %u, ",
+		    rtm->rtm_tableid, rtm->rtm_index);
+		printf("pid: %ld, seq %d, errno %d\nflags:",
+		    (long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
+		bprintf(stdout, rtm->rtm_flags, routeflags);
+		printf("\nfmask:");
+		bprintf(stdout, rtm->rtm_fmask, routeflags);
+		if (verbose) {
+#define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
+			relative_expire = rtm->rtm_rmx.rmx_expire ?
+			    rtm->rtm_rmx.rmx_expire - time(NULL) : 0;
+			printf("\nuse: %8llu   mtu: %8u%c   expire: %8lld%c",
+			    rtm->rtm_rmx.rmx_pksent,
+			    rtm->rtm_rmx.rmx_mtu, lock(MTU),
+			    relative_expire, lock(EXPIRE));
+#undef lock
+		}
+		printf("\nlocks: ");
+		bprintf(stdout, rtm->rtm_rmx.rmx_locks, metricnames);
+		printf(" inits: ");
+		bprintf(stdout, rtm->rtm_inits, metricnames);
+		pmsg_addrs(((char *)rtm + rtm->rtm_hdrlen),
+		   rtm->rtm_addrs & ~(RTA_STATIC | RTA_SEARCH | RTA_DNS));
+		printf("Static Routes:\n");
+		if (rtm->rtm_addrs & RTA_STATIC) {
+			char *next = (char *)rtm + rtm->rtm_hdrlen;
+			struct sockaddr	*sa, *rti_info[RTAX_MAX];
+			struct sockaddr_rtstatic *rtstatic;
+			sa = (struct sockaddr *)next;
+			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+			rtstatic = (struct sockaddr_rtstatic *)
+			    rti_info[RTAX_STATIC];
+			if (rtstatic != NULL) {
+				printf(" ");
+				print_rtstatic(rtstatic);
+			}
+		}
+		printf("Domain search:\n");
+		if (rtm->rtm_addrs & RTA_SEARCH) {
+			char *next = (char *)rtm + rtm->rtm_hdrlen;
+			struct sockaddr	*sa, *rti_info[RTAX_MAX];
+			struct sockaddr_rtsearch *rtsearch;
+			sa = (struct sockaddr *)next;
+			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+			rtsearch = (struct sockaddr_rtsearch *)
+			    rti_info[RTAX_SEARCH];
+			if (rtsearch != NULL) {
+				printf(" ");
+				print_rtsearch(rtsearch);
+			}
+		}
+		printf("Domain Name Servers:\n");
+		if (rtm->rtm_addrs & RTA_DNS) {
+			char *next = (char *)rtm + rtm->rtm_hdrlen;
+			struct sockaddr	*sa, *rti_info[RTAX_MAX];
+			struct sockaddr_rtdns *rtdns;
+			sa = (struct sockaddr *)next;
+			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+			rtdns = (struct sockaddr_rtdns *)rti_info[RTAX_DNS];
+			if (rtdns != NULL) {
+				printf(" ");
+				print_rtdns(rtdns);
+			}
+		}
+		break;
 	default:
 		printf(", priority %d, table %u, ifidx %u, ",
 		    rtm->rtm_priority, rtm->rtm_tableid, rtm->rtm_index);
@@ -1917,4 +2002,135 @@ rdomain(int argc, char **argv)
 	execvp(*argv, argv);
 	warn("%s", argv[0]);
 	return (errno == ENOENT ? 127 : 126);
+}
+
+/*
+ * Print RTM_PROPOSAL DNS server addresses.
+ */
+void
+print_rtdns(struct sockaddr_rtdns *rtdns)
+{
+	struct in_addr	 server;
+	char		*src = rtdns->sr_dns;
+	size_t		 srclen, offset;
+	unsigned int	 servercnt;
+	int		 i;
+
+	offset = offsetof(struct sockaddr_rtdns, sr_dns);
+	if (rtdns->sr_len <= offset) {
+		printf("<invalid sr_len (%d <= %zu)>\n", rtdns->sr_len,
+		    offset);
+		return;
+	}
+	srclen = rtdns->sr_len - offset;
+	if (srclen > sizeof(rtdns->sr_dns)) {
+		printf("<invalid sr_len (%zu > %zu)>\n", srclen,
+		    sizeof(rtdns->sr_dns));
+		return;
+	}
+
+	switch (rtdns->sr_family) {
+	case AF_INET:
+		/* An array of IPv4 addresses. */
+		servercnt = srclen / sizeof(struct in_addr);
+		if (servercnt * sizeof(struct in_addr) != srclen) {
+			printf("<invalid server count>\n");
+			return;
+		}
+		for (i = 0; i < servercnt; i++) {
+			memcpy(&server.s_addr, src, sizeof(server.s_addr));
+			printf("%s ", inet_ntoa(server));
+			src += sizeof(struct in_addr);
+		}
+		break;
+	case AF_INET6:
+		printf("<AF_INET6> printing not yet implemented\n");
+		break;
+	default:
+		break;
+	}
+	printf("\n");
+}
+
+/*
+ * Print RTM_PROPOSAL static routes.
+ */
+void
+print_rtstatic(struct sockaddr_rtstatic *rtstatic)
+{
+	struct in_addr	 dest, gateway;
+	unsigned char	*src = rtstatic->sr_static;
+	size_t		 srclen, offset;
+	int		 bits, bytes;
+	char		 ntoabuf[INET_ADDRSTRLEN];
+
+	offset = offsetof(struct sockaddr_rtstatic, sr_static);
+	if (rtstatic->sr_len <= offset) {
+		printf("<invalid sr_len (%d <= %zu)>\n", rtstatic->sr_len,
+		    offset);
+		return;
+	}
+	srclen = rtstatic->sr_len - offset;
+	if (srclen > sizeof(rtstatic->sr_static)) {
+		printf("<invalid sr_len (%zu > %zu)>\n", srclen,
+		    sizeof(rtstatic->sr_static));
+		return;
+	}
+
+	switch (rtstatic->sr_family) {
+	case AF_INET:
+		/* AF_INET -> RFC 3442 encoded static routes. */
+		while (srclen) {
+			bits = *src;
+			src++;
+			srclen--;
+			bytes = (bits + 7) / 8;
+			if (srclen < bytes || bytes > sizeof(dest.s_addr))
+				break;
+			memset(&dest, 0, sizeof(dest));
+			memcpy(&dest.s_addr, src, bytes);
+			src += bytes;
+			srclen -= bytes;
+			strlcpy(ntoabuf, inet_ntoa(dest), sizeof(ntoabuf));
+			if (srclen < sizeof(gateway.s_addr))
+				break;
+			memcpy(&gateway.s_addr, src, sizeof(gateway.s_addr));
+			src += sizeof(gateway.s_addr);
+			srclen -= sizeof(gateway.s_addr);
+			printf("%s/%u %s ", ntoabuf, bits, inet_ntoa(gateway));
+		}
+		break;
+	case AF_INET6:
+		printf("<AF_INET6 printing not yet implemented>");
+		break;
+	default:
+		printf("<unknown address family %d>", rtstatic->sr_family);
+		break;
+	}
+	printf("\n");
+}
+
+/*
+ * Print RTM_PROPOSAL domain search list.
+ */
+void
+print_rtsearch(struct sockaddr_rtsearch *rtsearch)
+{
+	char	*src = rtsearch->sr_search;
+	size_t	 srclen, offset;
+
+	offset = offsetof(struct sockaddr_rtsearch, sr_search);
+	if (rtsearch->sr_len <= offset) {
+		printf("<invalid sr_len (%d <= %zu)>\n", rtsearch->sr_len,
+		    offset);
+		return;
+	}
+	srclen = rtsearch->sr_len - offset;
+	if (srclen > sizeof(rtsearch->sr_search)) {
+		printf("<invalid sr_len (%zu > %zu)>\n", srclen,
+		    sizeof(rtsearch->sr_search));
+		return;
+	}
+
+	printf("%*s\n", (int)srclen, src);
 }
