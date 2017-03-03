@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.51 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.52 2017/03/03 13:10:55 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -657,6 +657,7 @@ exprterm(const struct mansearch *search, int argc, char *argv[], int *argi)
 	 * If needed, request regular expression handling.
 	 */
 
+	cs = 1;
 	if (search->argmode == ARG_WORD) {
 		e->bits = TYPE_Nm;
 		e->match.type = DBM_REGEX;
