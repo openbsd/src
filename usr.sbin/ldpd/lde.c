@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.68 2017/01/20 12:19:18 benno Exp $ */
+/*	$OpenBSD: lde.c,v 1.69 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -44,7 +44,7 @@ static __dead void	 lde_shutdown(void);
 static int		 lde_imsg_compose_parent(int, pid_t, void *, uint16_t);
 static void		 lde_dispatch_imsg(int, short, void *);
 static void		 lde_dispatch_parent(int, short, void *);
-static __inline		 int lde_nbr_compare(struct lde_nbr *,
+static __inline	int	 lde_nbr_compare(struct lde_nbr *,
 			    struct lde_nbr *);
 static struct lde_nbr	*lde_nbr_new(uint32_t, struct lde_nbr *);
 static void		 lde_nbr_del(struct lde_nbr *);
@@ -935,7 +935,7 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 }
 
 void
-lde_send_notification(uint32_t peerid, uint32_t status_code, uint32_t msg_id,
+lde_send_notification(struct lde_nbr *ln, uint32_t status_code, uint32_t msg_id,
     uint16_t msg_type)
 {
 	struct notify_msg nm;
@@ -946,7 +946,7 @@ lde_send_notification(uint32_t peerid, uint32_t status_code, uint32_t msg_id,
 	nm.msg_id = msg_id;
 	nm.msg_type = msg_type;
 
-	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, peerid, 0,
+	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, ln->peerid, 0,
 	    &nm, sizeof(nm));
 }
 

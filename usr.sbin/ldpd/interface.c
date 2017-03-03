@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.49 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.50 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -83,18 +83,6 @@ if_new(struct kif *kif)
 	return (iface);
 }
 
-struct iface *
-if_lookup(struct ldpd_conf *xconf, unsigned short ifindex)
-{
-	struct iface *iface;
-
-	LIST_FOREACH(iface, &xconf->iface_list, entry)
-		if (iface->ifindex == ifindex)
-			return (iface);
-
-	return (NULL);
-}
-
 void
 if_exit(struct iface *iface)
 {
@@ -111,6 +99,18 @@ if_exit(struct iface *iface)
 		LIST_REMOVE(if_addr, entry);
 		free(if_addr);
 	}
+}
+
+struct iface *
+if_lookup(struct ldpd_conf *xconf, unsigned short ifindex)
+{
+	struct iface *iface;
+
+	LIST_FOREACH(iface, &xconf->iface_list, entry)
+		if (iface->ifindex == ifindex)
+			return (iface);
+
+	return (NULL);
 }
 
 struct iface_af *

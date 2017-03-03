@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.63 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.64 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -264,7 +264,7 @@ kr_change(struct kroute *kr)
 
 	return (0);
 
-miss:
+ miss:
 	log_warnx("%s: lost FEC %s/%d nexthop %s", __func__,
 	    log_addr(kr->af, &kr->prefix), kr->prefixlen,
 	    log_addr(kr->af, &kr->nexthop));
@@ -565,7 +565,7 @@ kr_redist_eval(struct kroute *kr)
 	main_imsg_compose_lde(IMSG_NETWORK_ADD, 0, kr, sizeof(*kr));
 	return (1);
 
-dont_redistribute:
+ dont_redistribute:
 	return (0);
 }
 
@@ -754,7 +754,7 @@ kroute_remove(struct kroute *kr)
 
 	return (0);
 
-notfound:
+ notfound:
 	log_warnx("%s failed to find %s/%u", __func__,
 	    log_addr(kr->af, &kr->prefix), kr->prefixlen);
 	return (-1);
@@ -1284,7 +1284,7 @@ send_rtmsg_v4(int fd, int action, struct kroute *kr, int family)
 		}
 	}
 
-retry:
+ retry:
 	if (writev(fd, iov, iovcnt) == -1) {
 		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE && family == AF_MPLS) {

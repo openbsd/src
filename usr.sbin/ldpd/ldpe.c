@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.72 2017/03/03 23:30:57 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.73 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -730,8 +730,7 @@ ldpe_iface_af_ctl(struct ctl_conn *c, int af, unsigned int idx)
 				continue;
 
 			ictl = if_to_ctl(ia);
-			imsg_compose_event(&c->iev,
-			     IMSG_CTL_SHOW_INTERFACE,
+			imsg_compose_event(&c->iev, IMSG_CTL_SHOW_INTERFACE,
 			    0, 0, -1, ictl, sizeof(struct ctl_iface));
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.35 2016/09/03 16:07:08 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.36 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -244,6 +244,7 @@ struct address_list_tlv {
 #define FEC_ELM_WCARD_LEN	1
 #define FEC_ELM_PREFIX_MIN_LEN	4
 #define FEC_PWID_ELM_MIN_LEN	8
+#define FEC_PWID_SIZE		4
 
 #define	MAP_TYPE_WILDCARD	0x01
 #define	MAP_TYPE_PREFIX		0x02

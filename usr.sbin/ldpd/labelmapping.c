@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.61 2016/09/02 17:16:24 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.62 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -399,8 +399,8 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		if (me->map.flags & F_MAP_REQ_ID)
 			me->map.requestid = reqid;
 
-		log_debug("msg-in: label mapping: lsr-id %s, fec %s, label %s",
-		    inet_ntoa(nbr->id), log_map(&me->map),
+		log_debug("msg-in: %s: lsr-id %s, fec %s, label %s",
+		    msg_name(type), inet_ntoa(nbr->id), log_map(&me->map),
 		    log_label(me->map.label));
 
 		switch (type) {
@@ -426,14 +426,14 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		ldpe_imsg_compose_lde(imsg_type, nbr->peerid, 0, &me->map,
 		    sizeof(struct map));
 
-next:
+ next:
 		TAILQ_REMOVE(&mh, me, entry);
 		free(me);
 	}
 
 	return (0);
 
-err:
+ err:
 	mapping_list_clr(&mh);
 
 	return (-1);
@@ -565,7 +565,7 @@ gen_fec_tlv(struct ibuf *buf, struct map *map)
 		break;
 	case MAP_TYPE_PWID:
 		if (map->flags & F_MAP_PW_ID)
-			pw_len += PW_STATUS_TLV_LEN;
+			pw_len += FEC_PWID_SIZE;
 		if (map->flags & F_MAP_PW_IFMTU)
 			pw_len += FEC_SUBTLV_IFMTU_SIZE;
 

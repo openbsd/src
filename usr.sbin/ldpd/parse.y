@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.61 2017/03/03 23:41:27 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -969,7 +969,7 @@ yylex(void)
 	int		 quotec, next, c;
 	int		 token;
 
-top:
+ top:
 	p = buf;
 	while ((c = lgetc(0)) == ' ' || c == '\t')
 		; /* nothing */
@@ -1071,7 +1071,7 @@ top:
 			}
 			return (NUMBER);
 		} else {
-nodigits:
+ nodigits:
 			while (p > buf + 1)
 				lungetc(*--p);
 			c = *--p;
