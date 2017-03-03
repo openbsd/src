@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.11 2014/01/11 11:51:01 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.12 2017/03/03 14:13:58 espie Exp $
 
 =head1 NAME
 
@@ -80,21 +80,9 @@ special files like the package description or install script.
 
 contents file.
 
-=item ::FCOMMENT
-
-comment file. Deprecated.
-
 =item ::FDESC
 
 package description.
-
-=item ::FREQUIRE
-
-Deprecated.
-
-=item ::FMTREE_DIRS
-
-deprecated
 
 =item ::DisplayFile
 
@@ -110,27 +98,6 @@ message displayed during package install.
 =item ::FUNDISPLAY
 
 message displayed during package uninstall.
-
-=back
-
-=item ::ScriptFile
-
-abstract class for special files that can be run.
-provides method C<run($state, @args)> to run the script.
-
-=over 4
-
-=item ::FINSTALL
-
-INSTALL script.
-
-=item ::FDEINSTALL
-
-DEINSTALL script.
-
-=item ::FREQUIRE
-
-REQUIRE script.
 
 =back
 
@@ -157,18 +124,6 @@ all dependency information.
 
 =over 4
 
-=item ::PkgDep
-
-deprecated.
-
-=item ::NewDepend
-
-deprecated.
-
-=item ::LibDepend
-
-deprecated.
-
 =item ::Wantlib
 
 shared library needed for the package.
@@ -189,12 +144,6 @@ conflict information.
 
 =over 4
 
-=item ::PkgConflict
-
-deprecated.
-
-=back
-
 =back
 
 =item ::Annotation
@@ -208,7 +157,7 @@ properties to objects.
 
 mark next object as ignored.
 
-=item ::md5
+=item ::sha
 
 mark last file with a checksum.
 
@@ -349,10 +298,6 @@ user that needs to be created for the package to work.
 group that needs to be created for the package to work.
 
 =back
-
-=item ::Sysctl
-
-C<sysctl(8)> property needed for the package to work.
 
 =item ::ExeclikeAction
 

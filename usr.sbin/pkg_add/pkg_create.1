@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.104 2017/02/27 21:53:11 rpe Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.105 2017/03/03 14:13:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: February 27 2017 $
+.Dd $Mdocdate: March 3 2017 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -710,18 +710,6 @@ Specialized version of
 to handle shells.
 See
 .Xr shells 5 .
-.Pp
-.It Cm @sysctl Ar var Ns = Ns Ar val
-.It Cm @sysctl Ar var Ns \*(Ge Ns Ar val
-During
-.Xr pkg_add 1 ,
-check that
-.Xr sysctl 8
-variable
-.Ar var
-is set to exactly/at least a given value
-.Ar val .
-Adjust it otherwise.
 .Pp
 .It Cm @unexec Ar command
 Execute
