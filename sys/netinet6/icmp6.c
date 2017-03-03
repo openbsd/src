@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.202 2017/03/02 09:06:59 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.203 2017/03/03 13:19:40 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1161,6 +1161,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	struct in6_addr t, *src = NULL;
 	struct sockaddr_in6 sa6_src, sa6_dst;
 
+	CTASSERT(sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) <= MHLEN);
+
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
 		nd6log((LOG_DEBUG,
@@ -1174,10 +1176,6 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	 * If there are extra headers between IPv6 and ICMPv6, strip
 	 * off that header first.
 	 */
-#ifdef DIAGNOSTIC
-	if (sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) > MHLEN)
-		panic("assumption failed in icmp6_reflect");
-#endif
 	if (off > sizeof(struct ip6_hdr)) {
 		size_t l;
 		struct ip6_hdr nip6;
