@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.177 2017/02/14 09:46:21 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.178 2017/03/03 09:41:20 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1529,12 +1529,8 @@ sorwakeup(struct socket *so)
 		return;
 #endif
 	sowakeup(so, &so->so_rcv);
-	if (so->so_upcall) {
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
+	if (so->so_upcall)
 		(*(so->so_upcall))(so, so->so_upcallarg, M_DONTWAIT);
-		rw_enter_write(&netlock);
-	}
 }
 
 void

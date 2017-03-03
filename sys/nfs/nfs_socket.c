@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.113 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.114 2017/03/03 09:41:20 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1580,26 +1580,15 @@ nfsrv_rcv(struct socket *so, caddr_t arg, int waitflag)
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-#ifdef notdef
-	/*
-	 * Define this to test for nfsds handling this under heavy load.
-	 */
+
+	/* Defer soreceive() to an nfsd. */
 	if (waitflag == M_DONTWAIT) {
-		slp->ns_flag |= SLP_NEEDQ; goto dorecs;
+		slp->ns_flag |= SLP_NEEDQ;
+		goto dorecs;
 	}
-#endif
+
 	auio.uio_procp = NULL;
 	if (so->so_type == SOCK_STREAM) {
-		/*
-		 * If there are already records on the queue, defer soreceive()
-		 * to an nfsd so that there is feedback to the TCP layer that
-		 * the nfs servers are heavily loaded.
-		 */
-		if (slp->ns_rec && waitflag == M_DONTWAIT) {
-			slp->ns_flag |= SLP_NEEDQ;
-			goto dorecs;
-		}
-
 		/*
 		 * Do soreceive().
 		 */
