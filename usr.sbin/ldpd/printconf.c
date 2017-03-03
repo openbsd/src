@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.26 2016/07/01 23:14:31 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.27 2017/03/03 23:36:06 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -44,6 +44,7 @@ print_mainconf(struct ldpd_conf *conf)
 	else
 		printf("fib-update yes\n");
 
+	printf("rdomain %u\n", conf->rdomain);
 	if (conf->trans_pref == DUAL_STACK_LDPOV4)
 		printf("transport-preference ipv4\n");
 	else if (conf->trans_pref == DUAL_STACK_LDPOV6)

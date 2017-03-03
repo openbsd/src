@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.33 2016/07/07 19:56:27 rzalamena Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.34 2017/03/03 23:36:06 renato Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2016 $
+.Dd $Mdocdate: March 3 2017 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -107,6 +107,12 @@ do not update the Label Forwarding Information Base, a.k.a. the kernel routing
 table.
 The default is
 .Ic yes .
+.Pp
+.It Ic rdomain Ar tableid
+Specifies the routing table
+.Xr ldpd 8
+should modify.
+Table 0 is the default table.
 .Pp
 .It Ic router-id Ar address
 Set the router ID; in combination with labelspace it forms the LSR-ID.

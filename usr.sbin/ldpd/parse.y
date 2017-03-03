@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2017/01/05 13:53:09 krw Exp $ */
+/*	$OpenBSD: parse.y,v 1.60 2017/03/03 23:36:06 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -99,6 +99,7 @@ static struct nbr_params *conf_get_nbrp(struct in_addr);
 static struct l2vpn	*conf_get_l2vpn(char *);
 static struct l2vpn_if	*conf_get_l2vpn_if(struct l2vpn *, struct kif *);
 static struct l2vpn_pw	*conf_get_l2vpn_pw(struct l2vpn *, struct kif *);
+int			 conf_check_rdomain(unsigned int);
 static void		 clear_config(struct ldpd_conf *xconf);
 static uint32_t		 get_rtr_id(void);
 static int		 get_address(const char *, union ldpd_addr *);
@@ -133,7 +134,7 @@ static int			 pushback_index;
 
 %}
 
-%token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE EXPNULL
+%token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE RDOMAIN EXPNULL
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
 %token	THELLOACCEPT AF IPV4 IPV6 GTSMENABLE GTSMHOPS
@@ -242,6 +243,13 @@ conf_main	: ROUTERID STRING {
 				conf->flags |= F_LDPD_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~F_LDPD_NO_FIB_UPDATE;
+		}
+		| RDOMAIN NUMBER {
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rdomain");
+				YYERROR;
+			}
+			conf->rdomain = $2;
 		}
 		| TRANSPREFERENCE ldp_af {
 			conf->trans_pref = $2;
@@ -842,6 +850,7 @@ lookup(char *s)
 		{"pseudowire",			PSEUDOWIRE},
 		{"pw-id",			PWID},
 		{"pw-type",			PWTYPE},
+		{"rdomain",			RDOMAIN},
 		{"router-id",			ROUTERID},
 		{"status-tlv",			STATUSTLV},
 		{"targeted-hello-accept",	THELLOACCEPT},
@@ -1174,6 +1183,7 @@ parse_config(char *filename)
 	struct sym	*sym, *next;
 
 	conf = config_new_empty();
+	conf->rdomain = 0;
 	conf->trans_pref = DUAL_STACK_LDPOV6;
 
 	defs = &globaldefs;
@@ -1207,6 +1217,9 @@ parse_config(char *filename)
 			free(sym);
 		}
 	}
+
+	/* check that all interfaces belong to the configured rdomain */
+	errors += conf_check_rdomain(conf->rdomain);
 
 	/* free global config defaults */
 	if (errors) {
@@ -1436,6 +1449,23 @@ conf_get_l2vpn_pw(struct l2vpn *l, struct kif *kif)
 	p = l2vpn_pw_new(l, kif);
 	LIST_INSERT_HEAD(&l2vpn->pw_list, p, entry);
 	return (p);
+}
+
+int
+conf_check_rdomain(unsigned int rdomain)
+{
+	struct iface	*i;
+	int		 errs = 0;
+
+	LIST_FOREACH(i, &conf->iface_list, entry) {
+		if (i->rdomain != rdomain) {
+			logit(LOG_CRIT, "interface %s not in rdomain %u",
+			    i->name, rdomain);
+			errs++;
+		}
+	}
+
+	return (errs);
 }
 
 static void

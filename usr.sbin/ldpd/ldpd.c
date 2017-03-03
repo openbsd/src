@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.61 2017/03/03 23:30:57 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.62 2017/03/03 23:36:06 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -255,11 +255,12 @@ main(int argc, char *argv[])
 		fatal("could not establish imsg links");
 	main_imsg_send_config(ldpd_conf);
 
+	if (kr_init(!(ldpd_conf->flags & F_LDPD_NO_FIB_UPDATE),
+	    ldpd_conf->rdomain) == -1)
+		fatalx("kr_init failed");
+
 	/* notify ldpe about existing interfaces and addresses */
 	kif_redistribute(NULL);
-
-	if (kr_init(!(ldpd_conf->flags & F_LDPD_NO_FIB_UPDATE)) == -1)
-		fatalx("kr_init failed");
 
 	if (ldpd_conf->ipv4.flags & F_LDPD_AF_ENABLED)
 		main_imsg_send_net_sockets(AF_INET);
@@ -771,6 +772,8 @@ merge_global(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		}
 		conf->rtr_id = xconf->rtr_id;
 	}
+
+	conf->rdomain= xconf->rdomain;
 
 	if (conf->trans_pref != xconf->trans_pref) {
 		if (ldpd_process == PROC_LDP_ENGINE)

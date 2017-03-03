@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.82 2017/03/03 23:30:57 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.83 2017/03/03 23:36:06 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -258,6 +258,7 @@ struct iface {
 	LIST_ENTRY(iface)	 entry;
 	char			 name[IF_NAMESIZE];
 	unsigned int		 ifindex;
+	unsigned int		 rdomain;
 	struct if_addr_head	 addr_list;
 	struct in6_addr		 linklocal;
 	enum iface_type		 type;
@@ -388,6 +389,7 @@ struct ldpd_af_conf {
 
 struct ldpd_conf {
 	struct in_addr		 rtr_id;
+	unsigned int		 rdomain;
 	struct ldpd_af_conf	 ipv4;
 	struct ldpd_af_conf	 ipv6;
 	LIST_HEAD(, iface)	 iface_list;
@@ -460,6 +462,7 @@ struct kif {
 	int			 flags;
 	uint8_t			 link_state;
 	int			 mtu;
+	unsigned int		 rdomain;
 	uint8_t			 if_type;
 	uint64_t		 baudrate;
 };
@@ -533,7 +536,7 @@ int			 cmdline_symset(char *);
 
 /* kroute.c */
 int		 kif_init(void);
-int		 kr_init(int);
+int		 kr_init(int, unsigned int);
 void		 kif_redistribute(const char *);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
