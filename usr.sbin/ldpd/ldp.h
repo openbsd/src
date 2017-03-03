@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.36 2017/03/03 23:41:27 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.37 2017/03/03 23:56:54 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -94,7 +94,7 @@
 #define TLV_TYPE_FRSESSION	0x0502
 #define TLV_TYPE_LABELREQUEST	0x0600
 /* RFC 4447 */
-#define TLV_TYPE_PW_STATUS	0x096A
+#define TLV_TYPE_PW_STATUS	0x896A
 #define TLV_TYPE_PW_IF_PARAM	0x096B
 #define TLV_TYPE_PW_GROUP_ID	0x096C
 /* RFC 7552 */
