@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.71 2017/01/20 12:19:18 benno Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.72 2017/03/03 23:30:57 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -66,7 +66,7 @@ ldpe_sig_handler(int sig, short event, void *bula)
 
 /* label distribution protocol engine */
 void
-ldpe(int debug, int verbose)
+ldpe(int debug, int verbose, char *sockname)
 {
 	struct passwd		*pw;
 	struct event		 ev_sigint, ev_sigterm;
@@ -81,7 +81,8 @@ ldpe(int debug, int verbose)
 	log_procname = log_procnames[ldpd_process];
 
 	/* create ldpd control socket outside chroot */
-	if (control_init() == -1)
+	global.csock = sockname;
+	if (control_init(global.csock) == -1)
 		fatalx("control socket setup failed");
 
 	LIST_INIT(&global.addr_list);
@@ -170,7 +171,7 @@ ldpe_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
-	control_cleanup();
+	control_cleanup(global.csock);
 	config_clear(leconf);
 
 	if (sysdep.no_pfkey == 0) {

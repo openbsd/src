@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.81 2017/01/20 12:19:18 benno Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.82 2017/03/03 23:30:57 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -410,6 +410,7 @@ struct ldpd_af_global {
 
 struct ldpd_global {
 	int			 cmd_opts;
+	char			*csock;
 	time_t			 uptime;
 	struct ldpd_af_global	 ipv4;
 	struct ldpd_af_global	 ipv6;
