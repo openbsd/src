@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.115 2017/01/10 13:46:53 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.116 2017/03/03 13:55:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -201,7 +201,7 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 
 	/* Jump to the next non-whitespace word. */
 
-	while (buf[offs] && buf[offs] == ' ')
+	while (buf[offs] == ' ')
 		offs++;
 
 	/*

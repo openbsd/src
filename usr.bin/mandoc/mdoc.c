@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.149 2017/02/16 02:59:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.150 2017/03/03 13:55:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -380,7 +380,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 
 	/* Jump to the next non-whitespace word. */
 
-	while (buf[offs] && ' ' == buf[offs])
+	while (buf[offs] == ' ')
 		offs++;
 
 	/*

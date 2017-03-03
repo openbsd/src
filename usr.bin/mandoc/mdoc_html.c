@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.147 2017/02/22 08:52:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.148 2017/03/03 13:55:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -664,7 +664,7 @@ mdoc_it_pre(MDOC_ARGS)
 	enum mdoc_list		 type;
 
 	bl = n->parent;
-	while (bl != NULL && bl->tok != MDOC_Bl)
+	while (bl->tok != MDOC_Bl)
 		bl = bl->parent;
 	type = bl->norm->Bl.type;
 
