@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.65 2016/08/28 16:13:51 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.66 2017/03/03 15:04:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -422,8 +422,6 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 	if (v == NULL)
 		v = &v_local;
 	fl = tok == TOKEN_NONE ? ARGSFL_NONE : mdocargs[tok].flags;
-	if (tok != MDOC_It)
-		return args(mdoc, line, pos, buf, fl, v);
 
 	/*
 	 * We know that we're in an `It', so it's reasonable to expect
@@ -432,12 +430,15 @@ mdoc_args(struct roff_man *mdoc, int line, int *pos,
 	 * safe fall-back into the default behaviour.
 	 */
 
-	for (n = mdoc->last; n; n = n->parent)
-		if (MDOC_Bl == n->tok)
-			if (LIST_column == n->norm->Bl.type) {
+	if (tok == MDOC_It) {
+		for (n = mdoc->last; n != NULL; n = n->parent) {
+			if (n->tok != MDOC_Bl)
+				continue;
+			if (n->norm->Bl.type == LIST_column)
 				fl = ARGSFL_TABSEP;
-				break;
-			}
+			break;
+		}
+	}
 
 	return args(mdoc, line, pos, buf, fl, v);
 }
