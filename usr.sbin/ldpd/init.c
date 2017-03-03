@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.33 2016/07/16 19:20:16 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.34 2017/03/03 23:44:35 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -119,7 +119,7 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 			return (-1);
 		default:
 			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
-				send_notification_nbr(nbr, S_UNKNOWN_TLV,
+				send_notification(nbr->tcp, S_UNKNOWN_TLV,
 				    msg.id, msg.type);
 			/* ignore unknown tlv */
 			break;

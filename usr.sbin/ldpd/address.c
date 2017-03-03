@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.30 2016/09/03 16:07:08 renato Exp $ */
+/*	$OpenBSD: address.c,v 1.31 2017/03/03 23:44:35 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -179,7 +179,7 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 			return (0);
 		break;
 	default:
-		send_notification_nbr(nbr, S_UNSUP_ADDR, msg.id, msg.type);
+		send_notification(nbr->tcp, S_UNSUP_ADDR, msg.id, msg.type);
 		return (-1);
 	}
 	buf += sizeof(alt);
