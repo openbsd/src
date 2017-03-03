@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.172 2016/08/27 18:17:46 espie Exp $
+# $OpenBSD: Add.pm,v 1.173 2017/03/03 14:06:32 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -383,32 +383,6 @@ sub build_args
 	my ($self, $l) = @_;
 
 	$self->add_entry($l, '-g', $self->{gid});
-}
-
-package OpenBSD::PackingElement::Sysctl;
-use OpenBSD::Error;
-
-sub install
-{
-	my ($self, $state) = @_;
-
-	my $name = $self->name;
-	$self->SUPER::install($state);
-	open(my $pipe, '-|', OpenBSD::Paths->sysctl, '-n', '--', $name);
-	my $actual = <$pipe>;
-	chomp $actual;
-	if ($self->{mode} eq '=' && $actual eq $self->{value}) {
-		return;
-	}
-	if ($self->{mode} eq '>=' && $actual >= $self->{value}) {
-		return;
-	}
-	if ($state->{not}) {
-		$state->say("sysctl -w #1 =! #2",
-		    $name, $self->{value}) if $state->verbose >= 2;
-		return;
-	}
-	$state->vsystem(OpenBSD::Paths->sysctl, '--', $name.'='.$self->{value});
 }
 
 package OpenBSD::PackingElement::FileBase;
