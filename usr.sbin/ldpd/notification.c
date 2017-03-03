@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.43 2017/03/03 23:47:41 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.44 2017/03/03 23:50:45 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -24,6 +24,8 @@
 #include "ldp.h"
 #include "log.h"
 #include "ldpe.h"
+
+static void	 log_msg_notification(int, struct nbr *, struct notify_msg *);
 
 void
 send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
@@ -65,15 +67,7 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 	}
 
 	if (tcp->nbr) {
-		log_debug("msg-out: notification: lsr-id %s, status %s%s",
-		    inet_ntoa(tcp->nbr->id), status_code_name(nm->status_code),
-		    (nm->status_code & STATUS_FATAL) ? " (fatal)" : "");
-		if (nm->flags & F_NOTIF_FEC)
-			log_debug("msg-out: notification:   fec %s",
-			    log_map(&nm->fec));
-		if (nm->flags & F_NOTIF_PW_STATUS)
-			log_debug("msg-out: notification:   pw-status %s",
-			    (nm->pw_status) ? "not forwarding" : "forwarding");
+		log_msg_notification(1, tcp->nbr, nm);
 		nbr_fsm(tcp->nbr, NBR_EVT_PDU_SENT);
 	}
 
@@ -199,14 +193,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		}
 	}
 
-	log_warnx("msg-in: notification: lsr-id %s, status %s%s",
-	    inet_ntoa(nbr->id), status_code_name(ntohl(st.status_code)),
-	    (st.status_code & htonl(STATUS_FATAL)) ? " (fatal)" : "");
-	if (nm.flags & F_NOTIF_FEC)
-		log_debug("msg-in: notification:   fec %s", log_map(&nm.fec));
-	if (nm.flags & F_NOTIF_PW_STATUS)
-		log_debug("msg-in: notification:   pw-status %s",
-		    (nm.pw_status) ? "not forwarding" : "forwarding");
+	log_msg_notification(0, nbr, &nm);
 
 	if (st.status_code & htonl(STATUS_FATAL)) {
 		if (nbr->state == NBR_STA_OPENSENT)
@@ -241,4 +228,26 @@ gen_status_tlv(struct ibuf *buf, uint32_t status_code, uint32_t msg_id,
 	st.msg_type = msg_type;
 
 	return (ibuf_add(buf, &st, STATUS_SIZE));
+}
+
+void
+log_msg_notification(int out, struct nbr *nbr, struct notify_msg *nm)
+{
+	const char	*dir = (out) ? "out" : "in";
+
+	if (nm->status_code & STATUS_FATAL) {
+		log_warnx("msg-%s: notification: lsr-id %s, status %s "
+		    "(fatal error)", dir, inet_ntoa(nbr->id),
+		    status_code_name(nm->status_code));
+		return;
+	}
+
+	log_debug("msg-%s: notification: lsr-id %s, status %s", dir,
+	    inet_ntoa(nbr->id), status_code_name(nm->status_code));
+	if (nm->flags & F_NOTIF_FEC)
+		log_debug("msg-%s: notification:   fec %s", dir,
+		    log_map(&nm->fec));
+	if (nm->flags & F_NOTIF_PW_STATUS)
+		log_debug("msg-%s: notification:   pw-status %s", dir,
+		    (nm->pw_status) ? "not forwarding" : "forwarding");
 }
