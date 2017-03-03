@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.42 2017/03/03 23:44:35 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.43 2017/03/03 23:47:41 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -68,6 +68,12 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 		log_debug("msg-out: notification: lsr-id %s, status %s%s",
 		    inet_ntoa(tcp->nbr->id), status_code_name(nm->status_code),
 		    (nm->status_code & STATUS_FATAL) ? " (fatal)" : "");
+		if (nm->flags & F_NOTIF_FEC)
+			log_debug("msg-out: notification:   fec %s",
+			    log_map(&nm->fec));
+		if (nm->flags & F_NOTIF_PW_STATUS)
+			log_debug("msg-out: notification:   pw-status %s",
+			    (nm->pw_status) ? "not forwarding" : "forwarding");
 		nbr_fsm(tcp->nbr, NBR_EVT_PDU_SENT);
 	}
 
@@ -196,6 +202,11 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 	log_warnx("msg-in: notification: lsr-id %s, status %s%s",
 	    inet_ntoa(nbr->id), status_code_name(ntohl(st.status_code)),
 	    (st.status_code & htonl(STATUS_FATAL)) ? " (fatal)" : "");
+	if (nm.flags & F_NOTIF_FEC)
+		log_debug("msg-in: notification:   fec %s", log_map(&nm.fec));
+	if (nm.flags & F_NOTIF_PW_STATUS)
+		log_debug("msg-in: notification:   pw-status %s",
+		    (nm.pw_status) ? "not forwarding" : "forwarding");
 
 	if (st.status_code & htonl(STATUS_FATAL)) {
 		if (nbr->state == NBR_STA_OPENSENT)
