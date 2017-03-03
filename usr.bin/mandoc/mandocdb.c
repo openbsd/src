@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.193 2017/02/09 19:50:47 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.194 2017/03/03 13:41:28 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1171,7 +1171,7 @@ mpages_merge(struct dba *dba, struct mparse *mp)
 		} else if (man != NULL && man->macroset == MACROSET_MAN) {
 			man_validate(man);
 			if (*man->meta.msec != '\0' ||
-			    *man->meta.msec != '\0') {
+			    *man->meta.title != '\0') {
 				mpage->form = FORM_SRC;
 				mpage->sec = mandoc_strdup(man->meta.msec);
 				mpage->arch = mandoc_strdup(mlink->arch);
