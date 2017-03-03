@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.226 2017/03/02 17:09:21 krw Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.227 2017/03/03 14:22:40 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -509,10 +509,7 @@ rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
 
 	/* build new route message */
 	len = rt_msg2(type, RTM_VERSION, &info, NULL, NULL);
-	/* XXX why can't we wait? Should be process context... */
-	rtm = malloc(len, M_RTABLE, M_NOWAIT | M_ZERO);
-	if (rtm == NULL)
-		return NULL;
+	rtm = malloc(len, M_RTABLE, M_WAITOK | M_ZERO);
 
 	rt_msg2(type, RTM_VERSION, &info, (caddr_t)rtm, NULL);
 	rtm->rtm_type = type;
@@ -575,11 +572,7 @@ route_output(struct mbuf *m, ...)
 			error = EMSGSIZE;
 			goto fail;
 		}
-		rtm = malloc(len, M_RTABLE, M_NOWAIT);
-		if (rtm == NULL) {
-			error = ENOBUFS;
-			goto fail;
-		}
+		rtm = malloc(len, M_RTABLE, M_WAITOK);
 		m_copydata(m, 0, len, (caddr_t)rtm);
 		break;
 	default:
@@ -864,11 +857,7 @@ change:
 				if (rt->rt_llinfo == NULL) {
 					rt->rt_llinfo =
 					    malloc(sizeof(struct rt_mpls),
-					    M_TEMP, M_NOWAIT|M_ZERO);
-				}
-				if (rt->rt_llinfo == NULL) {
-					error = ENOMEM;
-					goto flush;
+					    M_TEMP, M_WAITOK | M_ZERO);
 				}
 
 				rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
@@ -963,10 +952,7 @@ change:
 	rtm = rt_report(rt, type, seq, tableid);
 flush:
 	rtfree(rt);
-	if (rtm == NULL) {
-		error = ENOBUFS;
-		goto fail;
-	} else if (error) {
+	if (error) {
 		rtm->rtm_errno = error;
 	} else {
 		rtm->rtm_flags |= RTF_DONE;
