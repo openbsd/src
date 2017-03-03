@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.12 2017/03/03 14:13:58 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.13 2017/03/03 18:29:07 bluhm Exp $
 
 =head1 NAME
 
@@ -141,8 +141,6 @@ and to fullfill default dependencies.
 =item ::Conflict
 
 conflict information.
-
-=over 4
 
 =back
 
