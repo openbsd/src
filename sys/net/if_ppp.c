@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.103 2017/01/01 15:39:01 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.104 2017/03/03 08:00:36 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -385,12 +385,11 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		flags = *(int *)data & SC_MASK;
-		s = splsoftnet();
 #ifdef PPP_COMPRESS
 		if (sc->sc_flags & SC_CCP_OPEN && !(flags & SC_CCP_OPEN))
 			ppp_ccp_closed(sc);
 #endif
-		splnet();
+		s = splnet();
 		sc->sc_flags = (sc->sc_flags & ~SC_MASK) | flags;
 		splx(s);
 		break;
@@ -411,11 +410,8 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 	case PPPIOCSMAXCID:
 		if ((error = suser(p, 0)) != 0)
 			return (error);
-		if (sc->sc_comp) {
-			s = splsoftnet();
+		if (sc->sc_comp)
 			sl_compress_setup(sc->sc_comp, *(int *)data);
-			splx(s);
-		}
 		break;
 #endif
 
@@ -446,7 +442,6 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 			 */
 			error = 0;
 			if (odp->transmit) {
-				s = splsoftnet();
 				if (sc->sc_xc_state != NULL) {
 					(*sc->sc_xcomp->comp_free)(
 					    sc->sc_xc_state);
@@ -461,11 +456,10 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 						    sc->sc_if.if_xname);
 					error = ENOBUFS;
 				}
-				splnet();
+				s = splnet();
 				sc->sc_flags &= ~SC_COMP_RUN;
 				splx(s);
 			} else {
-				s = splsoftnet();
 				if (sc->sc_rc_state != NULL) {
 					(*sc->sc_rcomp->decomp_free)(
 					    sc->sc_rc_state);
@@ -481,7 +475,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 					}
 					error = ENOBUFS;
 				}
-				splnet();
+				s = splnet();
 				sc->sc_flags &= ~SC_DECOMP_RUN;
 				splx(s);
 			}
@@ -511,23 +505,19 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 			if ((error = suser(p, 0)) != 0)
 				return (error);
 			if (npi->mode != sc->sc_npmode[npx]) {
-				s = splsoftnet();
 				sc->sc_npmode[npx] = npi->mode;
 				if (npi->mode != NPMODE_QUEUE) {
 					ppp_requeue(sc);
 					(*sc->sc_start)(sc);
 				}
-				splx(s);
 			}
 		}
 		break;
 
 	case PPPIOCGIDLE:
-		s = splsoftnet();
 		t = time_uptime;
 		((struct ppp_idle *)data)->xmit_idle = t - sc->sc_last_sent;
 		((struct ppp_idle *)data)->recv_idle = t - sc->sc_last_recv;
-		splx(s);
 		break;
 
 #if NBPFILTER > 0
@@ -657,7 +647,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct ppp_softc *sc = ifp->if_softc;
 	int protocol, address, control;
 	u_char *cp;
-	int s, error;
+	int error;
 	enum NPmode mode;
 	int len;
 
@@ -778,14 +768,12 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	/*
 	 * Put the packet on the appropriate queue.
 	 */
-	s = splsoftnet();
 	if (mode == NPMODE_QUEUE) {
 		/* XXX we should limit the number of packets on this queue */
 		ml_enqueue(&sc->sc_npqueue, m0);
 	} else {
 		IFQ_ENQUEUE(&sc->sc_if.if_snd, m0, error);
 		if (error) {
-			splx(s);
 			sc->sc_if.if_oerrors++;
 			sc->sc_stats.ppp_oerrors++;
 			return (error);
@@ -795,7 +783,6 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	ifp->if_opackets++;
 	ifp->if_obytes += len;
 
-	splx(s);
 	return (0);
 
 bad:
@@ -816,8 +803,6 @@ ppp_requeue(struct ppp_softc *sc)
 	struct mbuf *m;
 	enum NPmode mode;
 	int error;
-
-	splsoftassert(IPL_SOFTNET);
 
 	while ((m = ml_dequeue(&sc->sc_npqueue)) != NULL) {
 		switch (PPP_PROTOCOL(mtod(m, u_char *))) {
@@ -1165,7 +1150,6 @@ ppppktin(struct ppp_softc *sc, struct ppp_pkt *pkt, int lost)
 
 /*
  * Process a received PPP packet, doing decompression as necessary.
- * Should be called at splsoftnet.
  */
 #define COMPTYPE(proto)	((proto) == PPP_VJC_COMP? TYPE_COMPRESSED_TCP: \
 			 TYPE_UNCOMPRESSED_TCP)
