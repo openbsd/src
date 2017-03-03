@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.66 2017/03/01 04:34:09 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.67 2017/03/03 01:53:03 jsg Exp $
 
 machine		armv7 arm
 
@@ -17,6 +17,7 @@ option		MINIROOTSIZE=15360
 option		RAMDISK_HOOKS
 
 option		FFS
+option		FFS2
 option		MSDOSFS
 option		INET6
 option		EXT2FS
