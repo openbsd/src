@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2017/03/03 20:49:47 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -242,7 +242,6 @@ copyfault:
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
-	case T_NMI|T_USER:
 #ifdef TRAP_SIGDEBUG
 		printf("pid %d (%s): %s at rip %llx addr %llx\n",
 		    p->p_p->ps_pid, p->p_p->ps_comm, "BUS",
@@ -425,8 +424,9 @@ faultcommon:
 		KERNEL_UNLOCK();
 		break;
 
-#if	NISA > 0
+#if NISA > 0
 	case T_NMI:
+	case T_NMI|T_USER:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");

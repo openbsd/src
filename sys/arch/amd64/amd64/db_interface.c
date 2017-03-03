@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.25 2016/03/14 23:08:05 krw Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.26 2017/03/03 20:49:47 bluhm Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
 	case T_NMI:	/* NMI */
+	case T_NMI|T_USER:
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
