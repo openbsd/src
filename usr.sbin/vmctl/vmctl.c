@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.25 2017/03/01 21:22:57 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.26 2017/03/03 09:12:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -371,7 +371,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	char *vcpu_state, *tty;
 	char curmem[FMT_SCALED_STRSIZE];
 	char maxmem[FMT_SCALED_STRSIZE];
-	char user[16];
+	char user[16], group[16];
 	struct passwd *pw;
 	struct group *gr;
 
@@ -394,11 +394,12 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 				if (vmi->vir_uid == 0)
 					*user = '\0';
 				if ((gr = getgrgid(vmi->vir_gid)) == NULL)
-					(void)snprintf(user, sizeof(user),
-					    "%s:%lld", user, vmi->vir_gid);
+					(void)snprintf(group, sizeof(group),
+					    ":%lld", vmi->vir_gid);
 				else
-					(void)snprintf(user, sizeof(user),
-					    "%s:%s", user, gr->gr_name);
+					(void)snprintf(group, sizeof(group),
+					    ":%s", gr->gr_name);
+				(void)strlcat(user, group, sizeof(user));
 			}
 
 			(void)strlcpy(curmem, "-", sizeof(curmem));
