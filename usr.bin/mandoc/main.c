@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.187 2017/02/22 14:58:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.188 2017/03/03 14:21:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -61,6 +61,7 @@ enum	outt {
 	OUTT_TREE,	/* -Ttree */
 	OUTT_MAN,	/* -Tman */
 	OUTT_HTML,	/* -Thtml */
+	OUTT_MARKDOWN,	/* -Tmarkdown */
 	OUTT_LINT,	/* -Tlint */
 	OUTT_PS,	/* -Tps */
 	OUTT_PDF	/* -Tpdf */
@@ -736,6 +737,9 @@ parse(struct curparse *curp, int fd, const char *file)
 		case OUTT_PS:
 			terminal_mdoc(curp->outdata, man);
 			break;
+		case OUTT_MARKDOWN:
+			markdown_mdoc(curp->outdata, man);
+			break;
 		default:
 			break;
 		}
@@ -920,6 +924,8 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_MAN;
 	else if (0 == strcmp(arg, "html"))
 		curp->outtype = OUTT_HTML;
+	else if (0 == strcmp(arg, "markdown"))
+		curp->outtype = OUTT_MARKDOWN;
 	else if (0 == strcmp(arg, "utf8"))
 		curp->outtype = OUTT_UTF8;
 	else if (0 == strcmp(arg, "locale"))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.21 2016/07/15 19:31:53 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.22 2017/03/03 14:21:41 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,3 +49,5 @@ void		  pspdf_free(void *);
 void		  terminal_mdoc(void *, const struct roff_man *);
 void		  terminal_man(void *, const struct roff_man *);
 void		  terminal_sepline(void *);
+
+void		  markdown_mdoc(void *, const struct roff_man *);
