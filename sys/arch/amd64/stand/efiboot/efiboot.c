@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.16 2017/03/01 02:11:23 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.17 2017/03/03 08:56:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -494,7 +494,6 @@ efi_cons_getshifts(dev_t dev)
 }
 
 /* XXX: serial console is not supported yet */
-int comspeed = 9600;
 int com_addr = -1;
 int com_speed = -1;
 
