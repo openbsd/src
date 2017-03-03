@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.161 2017/02/17 03:01:39 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.162 2017/03/03 11:49:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1234,7 +1234,7 @@ deroff(char **dest, const struct roff_node *n)
 	/* Skip trailing backslash. */
 
 	sz = strlen(cp);
-	if (cp[sz - 1] == '\\')
+	if (sz > 0 && cp[sz - 1] == '\\')
 		sz--;
 
 	/* Skip trailing whitespace. */
