@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.95 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.96 2017/03/03 15:48:02 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -207,19 +207,12 @@ rip_input(struct mbuf **mp, int *offp, int proto)
  * Tack on options user may have setup with control call.
  */
 int
-rip_output(struct mbuf *m, ...)
+rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
+    struct mbuf *control)
 {
-	struct socket *so;
-	u_long dst;
 	struct ip *ip;
 	struct inpcb *inp;
 	int flags, error;
-	va_list ap;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	dst = va_arg(ap, u_long);
-	va_end(ap);
 
 	inp = sotoinpcb(so);
 	flags = IP_ALLOWBROADCAST;
@@ -242,7 +235,7 @@ rip_output(struct mbuf *m, ...)
 		ip->ip_p = inp->inp_ip.ip_p;
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_src = inp->inp_laddr;
-		ip->ip_dst.s_addr = dst;
+		ip->ip_dst = satosin(dstaddr)->sin_addr;
 		ip->ip_ttl = inp->inp_ip.ip_ttl ? inp->inp_ip.ip_ttl : MAXTTL;
 	} else {
 		if (m->m_pkthdr.len > IP_MAXPACKET) {
@@ -512,25 +505,29 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_SEND:
 	    {
-		u_int32_t dst;
+		struct sockaddr_in dst;
 
+		memset(&dst, 0, sizeof(dst));
+		dst.sin_family = AF_INET;
+		dst.sin_len = sizeof(dst);
 		if (so->so_state & SS_ISCONNECTED) {
 			if (nam) {
 				error = EISCONN;
 				break;
 			}
-			dst = inp->inp_faddr.s_addr;
+			dst.sin_addr = inp->inp_faddr;
 		} else {
 			if (nam == NULL) {
 				error = ENOTCONN;
 				break;
 			}
-			dst = mtod(nam, struct sockaddr_in *)->sin_addr.s_addr;
+			dst.sin_addr =
+			    mtod(nam, struct sockaddr_in *)->sin_addr;
 		}
 #ifdef IPSEC
 		/* XXX Find an IPsec TDB */
 #endif
-		error = rip_output(m, so, dst);
+		error = rip_output(m, so, sintosa(&dst), NULL);
 		m = NULL;
 		break;
 	    }

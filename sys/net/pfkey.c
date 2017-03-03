@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.38 2017/03/02 08:58:24 mpi Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.39 2017/03/03 15:48:02 bluhm Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -90,10 +90,10 @@ static struct pfkey_version *pfkey_versions[PFKEY_PROTOCOL_MAX+1] =
 
 struct sockaddr pfkey_addr = { 2, PF_KEY, };
 
-/* static struct domain pfkeydomain; */
-static int pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
-    struct mbuf *nam, struct mbuf *control, struct proc *);
-static int pfkey_output(struct mbuf *mbuf, struct socket *socket);
+int pfkey_usrreq(struct socket *, int , struct mbuf *, struct mbuf *,
+    struct mbuf *, struct proc *);
+int pfkey_output(struct mbuf *, struct socket *, struct sockaddr *,
+    struct mbuf *);
 
 void pfkey_init(void);
 int pfkey_buildprotosw(void);
@@ -154,8 +154,9 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 	return (0);
 }
 
-static int
-pfkey_output(struct mbuf *mbuf, struct socket *socket)
+int
+pfkey_output(struct mbuf *mbuf, struct socket *socket, struct sockaddr *dstaddr,
+    struct mbuf *control)
 {
 	void *message;
 	int error = 0;
@@ -230,7 +231,7 @@ pfkey_detach(struct socket *socket, struct proc *p)
 	return (rval);
 }
 
-static int
+int
 pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
@@ -266,7 +267,7 @@ static struct protosw pfkey_protosw_template = {
   .pr_domain	= &pfkeydomain,
   .pr_protocol	= -1,
   .pr_flags	= PR_ATOMIC | PR_ADDR,
-  .pr_output	= (void *) pfkey_output,
+  .pr_output	= pfkey_output,
   .pr_usrreq	= pfkey_usrreq
 };
 

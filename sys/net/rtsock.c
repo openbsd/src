@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.227 2017/03/03 14:22:40 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.228 2017/03/03 15:48:02 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -528,7 +528,8 @@ rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
 }
 
 int
-route_output(struct mbuf *m, ...)
+route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
+    struct mbuf *control)
 {
 	struct rt_msghdr	*rtm = NULL;
 	struct rtentry		*rt = NULL;
@@ -536,19 +537,13 @@ route_output(struct mbuf *m, ...)
 	int			 plen, len, seq, newgate = 0, error = 0;
 	struct ifnet		*ifp = NULL;
 	struct ifaddr		*ifa = NULL;
-	struct socket		*so;
 	struct rawcb		*rp = NULL;
 #ifdef MPLS
 	struct sockaddr_mpls	*psa_mpls;
 #endif
-	va_list			 ap;
 	u_int			 tableid;
 	u_int8_t		 prio;
 	u_char			 vers, type;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	va_end(ap);
 
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
 	    (m = m_pullup(m, sizeof(int32_t))) == 0))
