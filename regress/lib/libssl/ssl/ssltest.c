@@ -1370,27 +1370,20 @@ doit(SSL *s_ssl, SSL *c_ssl, long count)
 			if (SSL_in_init(s_ssl))
 				printf("server waiting in SSL_accept - %s\n",
 				    SSL_state_string_long(s_ssl));
-/*			else if (s_write)
-				printf("server:SSL_write()\n");
-			else
-				printf("server:SSL_read()\n"); */
-			}
+		}
 
-			if (do_client && debug) {
+		if (do_client && debug) {
 			if (SSL_in_init(c_ssl))
 				printf("client waiting in SSL_connect - %s\n",
 				    SSL_state_string_long(c_ssl));
-/*			else if (c_write)
-				printf("client:SSL_write()\n");
-			else
-				printf("client:SSL_read()\n"); */
-			}
+		}
 
-			if (!do_client && !do_server) {
+		if (!do_client && !do_server) {
 			fprintf(stdout, "ERROR IN STARTUP\n");
 			ERR_print_errors(bio_err);
 			break;
 		}
+
 		if (do_client && !(done & C_DONE)) {
 			if (c_write) {
 				j = (cw_num > (long)sizeof(cbuf)) ?
