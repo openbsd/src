@@ -1,4 +1,4 @@
-From deraadt@do-not-reply.openbsd.org Sun May  1 07:00:00 MST 2016
+From deraadt@do-not-reply.openbsd.org Sun May  1 07:00:00 MST 2017
 Return-Path: root
 Date: May  1 07:00:00 MST 2016
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
@@ -25,14 +25,13 @@ hours improving them so that they are clear and precise.
 If you have installed the X11 file sets during the install process, you can
 find further information regarding configuration in the file /usr/X11R6/README.
 
-Several popular binary packages (pre-compiled applications) are available
-for most architectures.
+Several popular binary packages (pre-compiled applications) are
+available from mirror sites.  Mirror selection is usually automatic
+during install/upgrade -- a mirror URLs from https://www.openbsd.org/ftp.html
+is stored into the file /etc/installurl.  Installation of packages is
+as simple as:
 
-	http://ftp.openbsd.org/pub/OpenBSD/6.1/packages/
-
-And install them via the internet this way:
-
- # pkg_add -v http://ftp.openbsd.org/pub/OpenBSD/6.1/packages/amd64/emacs-24.5p0-no_x11.tgz
+ # pkg_add -v rsync chromium emacs-24.5p0-no_x11
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
