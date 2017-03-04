@@ -1,4 +1,4 @@
-#	$OpenBSD: files.exynos,v 1.5 2016/08/21 06:36:23 jsg Exp $
+#	$OpenBSD: files.exynos,v 1.6 2017/03/04 18:17:24 kettenis Exp $
 
 define exynos {}
 device exynos: exynos
@@ -18,23 +18,23 @@ attach exdisplay at exynos
 file	arch/armv7/exynos/exdisplay.c		exdisplay
 
 device exclock
-attach exclock at exynos
+attach exclock at fdt
 file	arch/armv7/exynos/exclock.c		exclock
 
 device expower
-attach expower at exynos
+attach expower at fdt
 file	arch/armv7/exynos/expower.c		expower
 
 device exsysreg
-attach exsysreg at exynos
+attach exsysreg at fdt
 file	arch/armv7/exynos/exsysreg.c		exsysreg
 
 device exmct
-attach exmct at exynos
+attach exmct at fdt
 file	arch/armv7/exynos/exmct.c		exmct
 
 device exdog
-attach exdog at exynos
+attach exdog at fdt
 file	arch/armv7/exynos/exdog.c		exdog
 
 device exgpio
@@ -45,13 +45,12 @@ device	exiic: i2cbus
 attach	exiic at exynos
 file	arch/armv7/exynos/exiic.c		exiic
 
-device exehci {}
-attach exehci at exynos with exehci
-attach ehci at exehci with ehci_ex
+device exehci: usbus
+attach exehci at fdt
 file	arch/armv7/exynos/exehci.c		exehci
 
 device exesdhc: sdmmcbus
-attach exesdhc at exynos
+attach exesdhc at fdt
 file	arch/armv7/exynos/exesdhc.c		exesdhc
 
 device	crosec: wskbddev

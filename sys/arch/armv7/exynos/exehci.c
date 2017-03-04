@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/*	$OpenBSD: exehci.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,14 +19,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
-#include <sys/timeout.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -37,6 +33,13 @@
 #include <armv7/exynos/exsysregvar.h>
 #include <armv7/exynos/expowervar.h>
 #include <armv7/exynos/exgpiovar.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
+#include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
@@ -78,147 +81,107 @@ void	exehci_attach(struct device *, struct device *, void *);
 int	exehci_detach(struct device *, int);
 
 struct exehci_softc {
-	struct device		sc_dev;
-	struct ehci_softc	*sc_ehci;
+	struct ehci_softc	sc;
 	void			*sc_ih;
-	bus_dma_tag_t		sc_dmat;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_size_t		sc_size;
 	bus_space_handle_t	ph_ioh;
+};
+
+struct cfattach exehci_ca = {
+	sizeof (struct exehci_softc), exehci_match, exehci_attach,
+	exehci_detach
 };
 
 struct cfdriver exehci_cd = {
 	NULL, "exehci", DV_DULL
 };
 
-struct cfattach exehci_ca = {
-	sizeof (struct exehci_softc), NULL, exehci_attach,
-	exehci_detach, NULL
-};
-struct cfattach exehci_fdt_ca = {
-	sizeof (struct exehci_softc), exehci_match, exehci_attach,
-	exehci_detach, NULL
-};
-
 void	exehci_setup(struct exehci_softc *);
 
 int
-exehci_match(struct device *parent, void *v, void *aux)
+exehci_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos4210-ehci", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "samsung,exynos4210-ehci");
 }
 
 void
 exehci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct exehci_softc		*sc = (struct exehci_softc *)self;
-	struct ehci_softc		*esc;
-	struct armv7_attach_args	*aa = aux;
-	struct armv7mem			 hmem, pmem;
-	int				 irq;
-	usbd_status			 r;
+	struct exehci_softc *sc = (struct exehci_softc *)self;
+	struct fdt_attach_args *faa = aux;
+	usbd_status r;
+	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	uint32_t phys[2];
+	uint32_t phy_reg[2];
+	int node;
 
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_dmat = aa->aa_dmat;
+	if (faa->fa_nreg < 1)
+		return;
 
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg hreg, preg;
-		uint32_t ints[3];
+	node = OF_child(faa->fa_node);
+	if (node == 0)
+		return;
 
-		if (fdt_get_reg(aa->aa_node, 0, &hreg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
+	if (OF_getpropintarray(node, "phys", phys,
+	    sizeof(phys)) != sizeof(phys))
+		return;
 
-		/* XXX: In a different way, please. */
-		void *node = fdt_find_compatible("samsung,exynos5250-usb2-phy");
-		if (node == NULL || fdt_get_reg(node, 0, &preg))
-			panic("%s: could not extract phy data from FDT",
-			    __func__);
+	node = OF_getnodebyphandle(phys[0]);
+	if (node == 0)
+		return;
 
-		/* TODO: Add interrupt FDT API. */
-		if (fdt_node_property_ints(aa->aa_node, "interrupts",
-		    ints, 3) != 3)
-			panic("%s: could not extract interrupt data from FDT",
-			    __func__);
+	if (OF_getpropintarray(node, "reg", phy_reg,
+	    sizeof(phy_reg)) != sizeof(phy_reg))
+		return;
 
-		hmem.addr = hreg.addr;
-		hmem.size = hreg.size;
-		pmem.addr = preg.addr;
-		pmem.size = preg.size;
-
-		irq = ints[1];
-	} else
-#endif
-	{
-		hmem.addr = aa->aa_dev->mem[0].addr;
-		hmem.size = aa->aa_dev->mem[0].size;
-		pmem.addr = aa->aa_dev->mem[1].addr;
-		pmem.size = aa->aa_dev->mem[1].size;
-		irq = aa->aa_dev->irq[0];
-	}
+	sc->sc.iot = faa->fa_iot;
+	sc->sc.sc_bus.dmatag = faa->fa_dmat;
+	sc->sc.sc_size = faa->fa_reg[0].size;
 
 	/* Map I/O space */
-	sc->sc_size = hmem.size;
-	if (bus_space_map(sc->sc_iot, hmem.addr, hmem.size, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		goto out;
 	}
 
-	if (bus_space_map(sc->sc_iot, pmem.addr, pmem.size, 0, &sc->ph_ioh)) {
+	if (bus_space_map(sc->sc.iot, phy_reg[0],
+	    phy_reg[1], 0, &sc->ph_ioh)) {
 		printf(": cannot map mem space\n");
-		goto pmem;
+		goto mem0;
 	}
 
 	printf("\n");
 
 	exehci_setup(sc);
 
-	if ((esc = (struct ehci_softc *)config_found(self, NULL, NULL)) == NULL)
-		goto hmem;
-
-	sc->sc_ehci = esc;
-	esc->iot = sc->sc_iot;
-	esc->ioh = sc->sc_ioh;
-	esc->sc_bus.dmatag = aa->aa_dmat;
-
-	sc->sc_ih = arm_intr_establish(irq, IPL_USB,
-	    ehci_intr, esc, esc->sc_bus.bdev.dv_xname);
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_USB,
+	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
-		goto hmem;
+		goto mem1;
 	}
 
-	strlcpy(esc->sc_vendor, "Exynos 5", sizeof(esc->sc_vendor));
-	r = ehci_init(esc);
+	strlcpy(sc->sc.sc_vendor, "Exynos 5", sizeof(sc->sc.sc_vendor));
+	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n",
-		    esc->sc_bus.bdev.dv_xname, r);
+		printf("%s: init failed, error=%d\n", devname, r);
 		goto intr;
 	}
 
-	printf("\n");
-
-	config_found((struct device *)esc, &esc->sc_bus, usbctlprint);
+	config_found(self, &sc->sc.sc_bus, usbctlprint);
 
 	goto out;
 
 intr:
 	arm_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
-hmem:
-	bus_space_unmap(sc->sc_iot, sc->ph_ioh, hmem.size);
-pmem:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
-	sc->sc_size = 0;
+mem1:
+	bus_space_unmap(sc->sc.iot, sc->ph_ioh, phy_reg[1]);
+mem0:
+	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	sc->sc.sc_size = 0;
 out:
 	return;
 }
@@ -226,21 +189,21 @@ out:
 int
 exehci_detach(struct device *self, int flags)
 {
-	struct exehci_softc		*sc = (struct exehci_softc *)self;
-	int				 rv = 0;
+	struct exehci_softc *sc = (struct exehci_softc *)self;
+	int rv;
 
 	rv = ehci_detach(self, flags);
 	if (rv)
-		return (rv);
+		return rv;
 
 	if (sc->sc_ih != NULL) {
 		arm_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 
 	return 0;
@@ -251,10 +214,12 @@ exehci_setup(struct exehci_softc *sc)
 {
 	uint32_t val;
 
+#if 0
 	/* VBUS, GPIO_X11, only on SMDK5250 and Chromebooks */
 	exgpio_set_dir(0xa9, EXGPIO_DIR_OUT);
 	exgpio_set_bit(0xa9);
 	delay(3000);
+#endif
 
 	exsysreg_usbhost_mode(1);
 	expower_usbhost_phy_ctrl(1);
@@ -262,9 +227,8 @@ exehci_setup(struct exehci_softc *sc)
 	delay(10000);
 
 	/* Setting up host and device simultaneously */
-	val = bus_space_read_4(sc->sc_iot, sc->ph_ioh, USBPHY_CTRL0);
+	val = bus_space_read_4(sc->sc.iot, sc->ph_ioh, USBPHY_CTRL0);
 	val &= ~(HOST_CTRL0_FSEL_MASK |
-		 HOST_CTRL0_COMMONON_N |
 		 /* HOST Phy setting */
 		 HOST_CTRL0_PHYSWRST |
 		 HOST_CTRL0_PHYSWRSTALL |
@@ -273,24 +237,26 @@ exehci_setup(struct exehci_softc *sc)
 		 HOST_CTRL0_FORCESLEEP);
 	val |= (/* Setting up the ref freq */
 		 CLK_24MHZ << 16 |
+		 HOST_CTRL0_COMMONON_N |
 		 /* HOST Phy setting */
 		 HOST_CTRL0_LINKSWRST |
 		 HOST_CTRL0_UTMISWRST);
-	bus_space_write_4(sc->sc_iot, sc->ph_ioh, USBPHY_CTRL0, val);
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, USBPHY_CTRL0, val);
 	delay(10000);
-	bus_space_write_4(sc->sc_iot, sc->ph_ioh, USBPHY_CTRL0,
-	    bus_space_read_4(sc->sc_iot, sc->ph_ioh, USBPHY_CTRL0) &
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, USBPHY_CTRL0,
+	    bus_space_read_4(sc->sc.iot, sc->ph_ioh, USBPHY_CTRL0) &
 		~(HOST_CTRL0_LINKSWRST | HOST_CTRL0_UTMISWRST));
 	delay(20000);
 
 	/* EHCI Ctrl setting */
-	bus_space_write_4(sc->sc_iot, sc->ph_ioh, EHCI_CTRL,
-	    bus_space_read_4(sc->sc_iot, sc->ph_ioh, EHCI_CTRL) |
+	bus_space_write_4(sc->sc.iot, sc->ph_ioh, EHCI_CTRL,
+	    bus_space_read_4(sc->sc.iot, sc->ph_ioh, EHCI_CTRL) |
 		EHCI_CTRL_ENAINCRXALIGN |
 		EHCI_CTRL_ENAINCR4 |
 		EHCI_CTRL_ENAINCR8 |
 		EHCI_CTRL_ENAINCR16);
 
+#if 0
 	/* HSIC USB Hub initialization. */
 	if (1) {
 		exgpio_set_dir(0xc8, EXGPIO_DIR_OUT);
@@ -299,36 +265,19 @@ exehci_setup(struct exehci_softc *sc)
 		exgpio_set_bit(0xc8);
 		delay(5000);
 
-		val = bus_space_read_4(sc->sc_iot, sc->ph_ioh, HSICPHY_CTRL1);
+		val = bus_space_read_4(sc->sc.iot, sc->ph_ioh, HSICPHY_CTRL1);
 		val &= ~(HOST_CTRL0_SIDDQ |
 			 HOST_CTRL0_FORCESLEEP |
 			 HOST_CTRL0_FORCESUSPEND);
-		bus_space_write_4(sc->sc_iot, sc->ph_ioh, HSICPHY_CTRL1, val);
+		bus_space_write_4(sc->sc.iot, sc->ph_ioh, HSICPHY_CTRL1, val);
 		val |= HOST_CTRL0_PHYSWRST;
-		bus_space_write_4(sc->sc_iot, sc->ph_ioh, HSICPHY_CTRL1, val);
+		bus_space_write_4(sc->sc.iot, sc->ph_ioh, HSICPHY_CTRL1, val);
 		delay(1000);
 		val &= ~HOST_CTRL0_PHYSWRST;
-		bus_space_write_4(sc->sc_iot, sc->ph_ioh, HSICPHY_CTRL1, val);
+		bus_space_write_4(sc->sc.iot, sc->ph_ioh, HSICPHY_CTRL1, val);
 	}
+#endif
 
 	/* PHY clock and power setup time */
 	delay(50000);
-}
-
-int	ehci_ex_match(struct device *, void *, void *);
-void	ehci_ex_attach(struct device *, struct device *, void *);
-
-struct cfattach ehci_ex_ca = {
-	sizeof (struct ehci_softc), ehci_ex_match, ehci_ex_attach
-};
-
-int
-ehci_ex_match(struct device *parent, void *v, void *aux)
-{
-	return 1;
-}
-
-void
-ehci_ex_attach(struct device *parent, struct device *self, void *aux)
-{
 }

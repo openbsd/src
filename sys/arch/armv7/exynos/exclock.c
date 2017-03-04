@@ -1,4 +1,4 @@
-/* $OpenBSD: exclock.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: exclock.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,19 +17,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
-#include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define CLOCK_APLL_CON0				0x0100
@@ -89,8 +85,8 @@ enum clocks {
 
 struct exclock_softc *exclock_sc;
 
-int exclock_match(struct device *parent, void *v, void *aux);
-void exclock_attach(struct device *parent, struct device *self, void *args);
+int exclock_match(struct device *, void *, void *);
+void exclock_attach(struct device *, struct device *, void *);
 int exclock_cpuspeed(int *);
 unsigned int exclock_decode_pll_clk(enum clocks, unsigned int, unsigned int);
 unsigned int exclock_get_pll_clk(enum clocks);
@@ -98,9 +94,6 @@ unsigned int exclock_get_armclk(void);
 unsigned int exclock_get_i2cclk(void);
 
 struct cfattach	exclock_ca = {
-	sizeof (struct exclock_softc), NULL, exclock_attach
-};
-struct cfattach	exclock_fdt_ca = {
 	sizeof (struct exclock_softc), exclock_match, exclock_attach
 };
 
@@ -109,49 +102,30 @@ struct cfdriver exclock_cd = {
 };
 
 int
-exclock_match(struct device *parent, void *v, void *aux)
+exclock_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos5250-clock", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return (OF_is_compatible(faa->fa_node, "samsung,exynos5250-clock") ||
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5800-clock"));
 }
 
 void
-exclock_attach(struct device *parent, struct device *self, void *args)
+exclock_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct exclock_softc *sc = (struct exclock_softc *) self;
-	struct armv7mem mem;
+	struct exclock_softc *sc = (struct exclock_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
-	exclock_sc = sc;
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
+	sc->sc_iot = faa->fa_iot;
 
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
-	printf(": Exynos 5 CPU freq: %d MHz",
-	    exclock_get_armclk() / 1000);
+	exclock_sc = sc;
 
-	printf("\n");
+	printf(": Exynos 5 CPU freq: %d MHz\n",
+	    exclock_get_armclk() / 1000);
 
 	cpu_cpuspeed = exclock_cpuspeed;
 }
@@ -277,7 +251,7 @@ exclock_get_pll_clk(enum clocks pll)
 }
 
 unsigned int
-exclock_get_armclk()
+exclock_get_armclk(void)
 {
 	struct exclock_softc *sc = exclock_sc;
 	uint32_t div, armclk, arm_ratio, arm2_ratio;
@@ -295,7 +269,7 @@ exclock_get_armclk()
 }
 
 unsigned int
-exclock_get_i2cclk()
+exclock_get_i2cclk(void)
 {
 	struct exclock_softc *sc = exclock_sc;
 	uint32_t aclk_66, aclk_66_pre, div, ratio;

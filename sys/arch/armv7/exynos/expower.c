@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: expower.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,19 +17,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/sysctl.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
-#include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
+
 #include <armv7/exynos/expowervar.h>
 
 /* registers */
@@ -55,13 +51,10 @@ struct expower_softc {
 
 struct expower_softc *expower_sc;
 
-int expower_match(struct device *parent, void *v, void *aux);
-void expower_attach(struct device *parent, struct device *self, void *args);
+int expower_match(struct device *, void *, void *);
+void expower_attach(struct device *, struct device *, void *);
 
 struct cfattach	expower_ca = {
-	sizeof (struct expower_softc), NULL, expower_attach
-};
-struct cfattach	expower_fdt_ca = {
 	sizeof (struct expower_softc), expower_match, expower_attach
 };
 
@@ -70,41 +63,24 @@ struct cfdriver expower_cd = {
 };
 
 int
-expower_match(struct device *parent, void *v, void *aux)
+expower_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos5250-pmu", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return (OF_is_compatible(faa->fa_node, "samsung,exynos5250-pmu") ||
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-pmu"));
 }
 
 void
-expower_attach(struct device *parent, struct device *self, void *args)
+expower_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct expower_softc *sc = (struct expower_softc *) self;
-	struct armv7mem mem;
+	struct expower_softc *sc = (struct expower_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
@@ -116,6 +92,7 @@ void
 expower_usbhost_phy_ctrl(int on)
 {
 	struct expower_softc *sc = expower_sc;
+	KASSERT(sc);
 
 	if (on)
 		HSET4(sc, POWER_PHY_CTRL, POWER_PHY_CTRL_USB_HOST_EN);

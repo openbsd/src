@@ -1,4 +1,4 @@
-/* $OpenBSD: exdog.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: exdog.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,12 +23,15 @@
 #include <sys/evcount.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
-#include <machine/bus.h>
-#if NFDT > 0
-#include <machine/fdt.h>
-#endif
+
 #include <machine/intr.h>
-#include <armv7/armv7/armv7var.h>
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <armv7/armv7/armv7_machdep.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define WTCON		0x00
@@ -60,9 +63,6 @@ void exdog_stop(void);
 void exdog_reset(void);
 
 struct cfattach	exdog_ca = {
-	sizeof (struct exdog_softc), NULL, exdog_attach
-};
-struct cfattach	exdog_fdt_ca = {
 	sizeof (struct exdog_softc), exdog_match, exdog_attach
 };
 
@@ -71,49 +71,34 @@ struct cfdriver exdog_cd = {
 };
 
 int
-exdog_match(struct device *parent, void *v, void *aux)
+exdog_match(struct device *parent, void *cfdata, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *fa = aux;
 
-	if (fdt_node_compatible("samsung,exynos5250-wdt", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return (OF_is_compatible(fa->fa_node, "samsung,exynos5250-wdt") ||
+	    OF_is_compatible(fa->fa_node, "samsung,exynos5420-wdt"));
 }
 
 void
-exdog_attach(struct device *parent, struct device *self, void *args)
+exdog_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct exdog_softc *sc = (struct exdog_softc *) self;
-	struct armv7mem mem;
+	struct exdog_softc *sc = (struct exdog_softc *)self;
+	struct fdt_attach_args *fa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = fa->fa_iot;
+
+	if (bus_space_map(sc->sc_iot, fa->fa_reg[0].addr,
+	    fa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
+
 	exdog_sc = sc;
+	cpuresetfn = exdog_reset;
 }
 
 void
-exdog_stop()
+exdog_stop(void)
 {
 	uint32_t wtcon;
 
@@ -128,7 +113,7 @@ exdog_stop()
 }
 
 void
-exdog_reset()
+exdog_reset(void)
 {
 	uint32_t wtcon;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.9 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.10 2017/03/04 18:17:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -25,10 +25,17 @@
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+
+#include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
+#include <dev/ofw/fdt.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
@@ -140,10 +147,8 @@
 #define SDHC_BUFFER_TIMEOUT	hz
 #define SDHC_TRANSFER_TIMEOUT	hz
 
-int exesdhc_match(struct device *parent, void *v, void *aux);
-void exesdhc_attach(struct device *parent, struct device *self, void *args);
-
-#include <machine/bus.h>
+int exesdhc_match(struct device *, void *, void *);
+void exesdhc_attach(struct device *, struct device *, void *);
 
 struct exesdhc_softc {
 	struct device sc_dev;
@@ -241,74 +246,37 @@ struct cfdriver exesdhc_cd = {
 };
 
 struct cfattach exesdhc_ca = {
-	sizeof(struct exesdhc_softc), NULL, exesdhc_attach
-};
-struct cfattach exesdhc_fdt_ca = {
 	sizeof(struct exesdhc_softc), exesdhc_match, exesdhc_attach
 };
 
 int
-exesdhc_match(struct device *parent, void *v, void *aux)
+exesdhc_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos5250-dw-mshc", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return (OF_is_compatible(faa->fa_node, "samsung,exynos5250-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"));
 }
 
 void
-exesdhc_attach(struct device *parent, struct device *self, void *args)
+exesdhc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct exesdhc_softc		*sc = (struct exesdhc_softc *) self;
-	struct armv7_attach_args	*aa = args;
-	struct sdmmcbus_attach_args	 saa;
-	struct armv7mem			 mem;
-	int				 error = 1, irq;
-	uint32_t			 caps;
+	struct exesdhc_softc *sc = (struct exesdhc_softc *)self;
+	struct fdt_attach_args *faa = aux;
+	struct sdmmcbus_attach_args saa;
+	uint32_t caps;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		static int unit = 0;
-		uint32_t ints[3];
+	sc->sc_iot = faa->fa_iot;
 
-		sc->unit = unit++;
-
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-
-		/* TODO: Add interrupt FDT API. */
-		if (fdt_node_property_ints(aa->aa_node, "interrupts",
-		    ints, 3) != 3)
-			panic("%s: could not extract interrupt data from FDT",
-			    __func__);
-
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-
-		irq = ints[1];
-	} else
-#endif
-	{
-		irq = aa->aa_dev->irq[0];
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
 	/* XXX DMA channels? */
 
-	sc->sc_ih = arm_intr_establish(irq, IPL_SDMMC,
+	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	    exesdhc_intr, sc, sc->sc_dev.dv_xname);
 
 	/*
@@ -373,10 +341,8 @@ exesdhc_attach(struct device *parent, struct device *self, void *args)
 	saa.sch = sc;
 
 	sc->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
-	if (sc->sdmmc == NULL) {
-		error = 0;
+	if (sc->sdmmc == NULL)
 		goto err;
-	}
 	
 	return;
 

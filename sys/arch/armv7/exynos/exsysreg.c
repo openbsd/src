@@ -1,4 +1,4 @@
-/* $OpenBSD: exsysreg.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: exsysreg.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,19 +17,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
-#include <sys/sysctl.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
-#include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
+
 #include <armv7/exynos/exsysregvar.h>
 
 /* registers */
@@ -55,13 +51,10 @@ struct exsysreg_softc {
 
 struct exsysreg_softc *exsysreg_sc;
 
-int exsysreg_match(struct device *parent, void *v, void *aux);
-void exsysreg_attach(struct device *parent, struct device *self, void *args);
+int exsysreg_match(struct device *, void *, void *);
+void exsysreg_attach(struct device *, struct device *, void *);
 
 struct cfattach	exsysreg_ca = {
-	sizeof (struct exsysreg_softc), NULL, exsysreg_attach
-};
-struct cfattach	exsysreg_fdt_ca = {
 	sizeof (struct exsysreg_softc), exsysreg_match, exsysreg_attach
 };
 
@@ -70,41 +63,23 @@ struct cfdriver exsysreg_cd = {
 };
 
 int
-exsysreg_match(struct device *parent, void *v, void *aux)
+exsysreg_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos5-sysreg", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "samsung,exynos5-sysreg");
 }
 
 void
-exsysreg_attach(struct device *parent, struct device *self, void *args)
+exsysreg_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct exsysreg_softc *sc = (struct exsysreg_softc *) self;
-	struct armv7mem mem;
+	struct exsysreg_softc *sc = (struct exsysreg_softc *)self;
+	struct fdt_attach_args *faa = aux;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
@@ -116,6 +91,7 @@ void
 exsysreg_usbhost_mode(int on)
 {
 	struct exsysreg_softc *sc = exsysreg_sc;
+	KASSERT(sc);
 
 	if (on)
 		HSET4(sc, SYSREG_USB20PHY_CFG, SYSREG_USB20PHY_CFG_HOST_LINK_EN);

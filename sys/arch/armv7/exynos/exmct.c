@@ -1,4 +1,4 @@
-/* $OpenBSD: exmct.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: exmct.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -17,19 +17,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
-#include <sys/socket.h>
-#include <sys/timeout.h>
+
 #include <arm/cpufunc.h>
+
 #include <machine/intr.h>
 #include <machine/bus.h>
-#if NFDT > 0
 #include <machine/fdt.h>
-#endif
-#include <armv7/armv7/armv7var.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 /* registers */
 #define MCT_CTRL	0x240
@@ -46,15 +43,12 @@ struct exmct_softc {
 
 struct exmct_softc *exmct_sc;
 
-int exmct_match(struct device *parent, void *v, void *aux);
-void exmct_attach(struct device *parent, struct device *self, void *args);
+int exmct_match(struct device *, void *, void *);
+void exmct_attach(struct device *, struct device *, void *);
 void exmct_stop(void);
 void exmct_reset(void);
 
 struct cfattach	exmct_ca = {
-	sizeof (struct exmct_softc), NULL, exmct_attach
-};
-struct cfattach	exmct_fdt_ca = {
 	sizeof (struct exmct_softc), exmct_match, exmct_attach
 };
 
@@ -63,47 +57,32 @@ struct cfdriver exmct_cd = {
 };
 
 int
-exmct_match(struct device *parent, void *v, void *aux)
+exmct_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,exynos4210-mct", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "samsung,exynos4210-mct");
 }
 
 void
-exmct_attach(struct device *parent, struct device *self, void *args)
+exmct_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct armv7_attach_args *aa = args;
-	struct exmct_softc *sc = (struct exmct_softc *) self;
-	struct armv7mem mem;
+	struct exmct_softc *sc = (struct exmct_softc *)self;
+	struct fdt_attach_args *faa = aux;
 	uint32_t i, mask, reg;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	printf("\n");
 
 	exmct_sc = sc;
+
+	extern void agtimer_delay(u_int);
+	arm_clock_register(NULL, agtimer_delay, NULL, NULL);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MCT_CTRL,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MCT_CTRL) | MCT_CTRL_START);
@@ -123,5 +102,5 @@ exmct_attach(struct device *parent, struct device *self, void *args)
 
 	/* NOTREACHED */
 
-	panic("%s: Can't enable timer!", __func__);
+	panic("%s: can't enable timer!", __func__);
 }
