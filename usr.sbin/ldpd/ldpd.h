@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.83 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.84 2017/03/04 00:06:10 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -228,10 +228,16 @@ struct notify_msg {
 	uint16_t	msg_type;	/* network byte order */
 	uint32_t	pw_status;
 	struct map	fec;
+	struct {
+		uint16_t	 type;
+		uint16_t	 length;
+		char		*data;
+	} rtlvs;
 	uint8_t		flags;
 };
 #define F_NOTIF_PW_STATUS	0x01	/* pseudowire status tlv present */
 #define F_NOTIF_FEC		0x02	/* fec tlv present */
+#define F_NOTIF_RETURNED_TLVS	0x04	/* returned tlvs present */
 
 struct if_addr {
 	LIST_ENTRY(if_addr)	 entry;

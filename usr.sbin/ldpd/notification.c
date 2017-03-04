@@ -1,4 +1,4 @@
-/*	$OpenBSD: notification.c,v 1.44 2017/03/03 23:50:45 renato Exp $ */
+/*	$OpenBSD: notification.c,v 1.45 2017/03/04 00:06:10 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -25,6 +25,7 @@
 #include "log.h"
 #include "ldpe.h"
 
+static int	 gen_returned_tlvs(struct ibuf *, uint16_t, uint16_t, char *);
 static void	 log_msg_notification(int, struct nbr *, struct notify_msg *);
 
 void
@@ -48,6 +49,8 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 			break;
 		}
 	}
+	if (nm->flags & F_NOTIF_RETURNED_TLVS)
+		size += TLV_HDR_SIZE * 2 + nm->rtlvs.length;
 
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
@@ -61,6 +64,9 @@ send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
 		err |= gen_pw_status_tlv(buf, nm->pw_status);
 	if (nm->flags & F_NOTIF_FEC)
 		err |= gen_fec_tlv(buf, &nm->fec);
+	if (nm->flags & F_NOTIF_RETURNED_TLVS)
+		err |= gen_returned_tlvs(buf, nm->rtlvs.type, nm->rtlvs.length,
+		    nm->rtlvs.data);
 	if (err) {
 		ibuf_free(buf);
 		return;
@@ -87,6 +93,27 @@ send_notification(struct tcp_conn *tcp, uint32_t status_code, uint32_t msg_id,
 	nm.msg_type = msg_type;
 
 	send_notification_full(tcp, &nm);
+}
+
+void
+send_notification_rtlvs(struct nbr *nbr, uint32_t status_code, uint32_t msg_id,
+    uint16_t msg_type, uint16_t tlv_type, uint16_t tlv_len, char *tlv_data)
+{
+	struct notify_msg	 nm;
+
+	memset(&nm, 0, sizeof(nm));
+	nm.status_code = status_code;
+	nm.msg_id = msg_id;
+	nm.msg_type = msg_type;
+	/* do not append the given TLV if it's too big (shouldn't happen) */
+	if (tlv_len < 1024) {
+		nm.rtlvs.type = tlv_type;
+		nm.rtlvs.length = tlv_len;
+		nm.rtlvs.data = tlv_data;
+		nm.flags |= F_NOTIF_RETURNED_TLVS;
+	}
+
+	send_notification_full(nbr->tcp, &nm);
 }
 
 int
@@ -121,6 +148,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 	/* Optional Parameters */
 	while (len > 0) {
 		struct tlv 	tlv;
+		uint16_t	tlv_type;
 		uint16_t	tlv_len;
 
 		if (len < sizeof(tlv)) {
@@ -129,6 +157,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		}
 
 		memcpy(&tlv, buf, TLV_HDR_SIZE);
+		tlv_type = ntohs(tlv.type);
 		tlv_len = ntohs(tlv.length);
 		if (tlv_len + TLV_HDR_SIZE > len) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
@@ -137,7 +166,7 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		buf += TLV_HDR_SIZE;
 		len -= TLV_HDR_SIZE;
 
-		switch (ntohs(tlv.type)) {
+		switch (tlv_type) {
 		case TLV_TYPE_EXTSTATUS:
 		case TLV_TYPE_RETURNEDPDU:
 		case TLV_TYPE_RETURNEDMSG:
@@ -167,8 +196,8 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 			break;
 		default:
 			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
-				send_notification(nbr->tcp, S_UNKNOWN_TLV,
-				    msg.id, msg.type);
+				send_notification_rtlvs(nbr, S_UNKNOWN_TLV,
+				    msg.id, msg.type, tlv_type, tlv_len, buf);
 			/* ignore unknown tlv */
 			break;
 		}
@@ -228,6 +257,26 @@ gen_status_tlv(struct ibuf *buf, uint32_t status_code, uint32_t msg_id,
 	st.msg_type = msg_type;
 
 	return (ibuf_add(buf, &st, STATUS_SIZE));
+}
+
+static int
+gen_returned_tlvs(struct ibuf *buf, uint16_t type, uint16_t length,
+    char *tlv_data)
+{
+	struct tlv	 rtlvs;
+	struct tlv	 tlv;
+	int		 err;
+
+	rtlvs.type = htons(TLV_TYPE_RETURNED_TLVS);
+	rtlvs.length = htons(length + TLV_HDR_SIZE);
+	tlv.type = htons(type);
+	tlv.length = htons(length);
+
+	err = ibuf_add(buf, &rtlvs, sizeof(rtlvs));
+	err |= ibuf_add(buf, &tlv, sizeof(tlv));
+	err |= ibuf_add(buf, tlv_data, length);
+
+	return (err);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.64 2017/03/03 23:50:45 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.65 2017/03/04 00:06:10 renato Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -241,6 +241,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 	/* Optional Parameters */
 	while (len > 0) {
 		struct tlv 	tlv;
+		uint16_t	tlv_type;
 		uint16_t	tlv_len;
 		uint32_t	reqbuf, labelbuf, statusbuf;
 
@@ -250,6 +251,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		}
 
 		memcpy(&tlv, buf, TLV_HDR_SIZE);
+		tlv_type = ntohs(tlv.type);
 		tlv_len = ntohs(tlv.length);
 		if (tlv_len + TLV_HDR_SIZE > len) {
 			session_shutdown(nbr, S_BAD_TLV_LEN, msg.id, msg.type);
@@ -258,7 +260,7 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 		buf += TLV_HDR_SIZE;
 		len -= TLV_HDR_SIZE;
 
-		switch (ntohs(tlv.type)) {
+		switch (tlv_type) {
 		case TLV_TYPE_LABELREQUEST:
 			switch (type) {
 			case MSG_TYPE_LABELMAPPING:
@@ -343,8 +345,8 @@ recv_labelmessage(struct nbr *nbr, char *buf, uint16_t len, uint16_t type)
 			break;
 		default:
 			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
-				send_notification(nbr->tcp, S_UNKNOWN_TLV,
-				    msg.id, msg.type);
+				send_notification_rtlvs(nbr, S_UNKNOWN_TLV,
+				    msg.id, msg.type, tlv_type, tlv_len, buf);
 			/* ignore unknown tlv */
 			break;
 		}

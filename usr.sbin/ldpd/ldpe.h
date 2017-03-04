@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.71 2017/03/03 23:44:35 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.72 2017/03/04 00:06:10 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -104,6 +104,7 @@ struct nbr {
 	int			 flags;
 };
 #define F_NBR_GTSM_NEGOTIATED	 0x01
+#define F_NBR_CAP_DYNAMIC	 0x02
 
 RB_HEAD(nbr_id_head, nbr);
 RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
@@ -152,6 +153,8 @@ void	 recv_hello(struct in_addr, struct ldp_msg *, int, union ldpd_addr *,
 /* init.c */
 void	 send_init(struct nbr *);
 int	 recv_init(struct nbr *, char *, uint16_t);
+void	 send_capability(struct nbr *, uint16_t, int);
+int	 recv_capability(struct nbr *, char *, uint16_t);
 
 /* keepalive.c */
 void	 send_keepalive(struct nbr *);
@@ -160,6 +163,8 @@ int	 recv_keepalive(struct nbr *, char *, uint16_t);
 /* notification.c */
 void	 send_notification_full(struct tcp_conn *, struct notify_msg *);
 void	 send_notification(struct tcp_conn *, uint32_t, uint32_t, uint16_t);
+void	 send_notification_rtlvs(struct nbr *, uint32_t, uint32_t, uint16_t,
+	    uint16_t, uint16_t, char *);
 int	 recv_notification(struct nbr *, char *, uint16_t);
 int	 gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint16_t);
 

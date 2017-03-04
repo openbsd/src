@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.2 2017/03/04 00:03:04 renato Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.3 2017/03/04 00:06:10 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,6 +303,8 @@ msg_name(uint16_t msg)
 		return ("initialization");
 	case MSG_TYPE_KEEPALIVE:
 		return ("keepalive");
+	case MSG_TYPE_CAPABILITY:
+		return ("capability");
 	case MSG_TYPE_ADDR:
 		return ("address");
 	case MSG_TYPE_ADDRWITHDRAW:
@@ -396,6 +398,8 @@ status_code_name(uint32_t status)
 		return ("Generic Misconfiguration Error");
 	case S_WITHDRAW_MTHD:
 		return ("Label Withdraw PW Status Method");
+	case S_UNSSUPORTDCAP:
+		return ("Unsupported Capability");
 	case S_TRANS_MISMTCH:
 		return ("Transport Connection Mismatch");
 	case S_DS_NONCMPLNCE:
