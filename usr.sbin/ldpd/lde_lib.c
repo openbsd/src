@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.67 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.68 2017/03/04 00:12:26 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -812,6 +812,13 @@ lde_wildcard_apply(struct map *wcard, struct fec *fec, struct lde_map *me)
 				return (0);
 			if (wcard->fec.twcard.u.prefix_af == AF_INET6 &&
 			    fec->type != FEC_TYPE_IPV6)
+				return (0);
+			return (1);
+		case MAP_TYPE_PWID:
+			if (fec->type != FEC_TYPE_PWID)
+				return (0);
+			if (wcard->fec.twcard.u.pw_type != PW_TYPE_WILDCARD &&
+			    wcard->fec.twcard.u.pw_type != fec->u.pwid.type)
 				return (0);
 			return (1);
 		default:

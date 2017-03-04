@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.39 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.40 2017/03/04 00:12:26 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -280,7 +280,10 @@ struct address_list_tlv {
 #define CONTROL_WORD_FLAG	0x8000
 #define PW_TYPE_ETHERNET_TAGGED	0x0004
 #define PW_TYPE_ETHERNET	0x0005
+#define PW_TYPE_WILDCARD	0x7FFF
 #define DEFAULT_PW_TYPE		PW_TYPE_ETHERNET
+
+#define PW_TWCARD_RESERVED_BIT	0x8000
 
 /* RFC 4447 Sub-TLV record */
 struct subtlv {

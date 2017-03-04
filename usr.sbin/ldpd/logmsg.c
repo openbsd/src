@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.4 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.5 2017/03/04 00:12:26 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -181,6 +181,12 @@ log_map(const struct map *map)
 			if (snprintf(buf + strlen(buf), sizeof(buf) -
 			    strlen(buf), " (prefix, address-family %s)",
 			    af_name(map->fec.twcard.u.prefix_af)) < 0)
+				return ("???");
+			break;
+		case MAP_TYPE_PWID:
+			if (snprintf(buf + strlen(buf), sizeof(buf) -
+			    strlen(buf), " (pwid, type %s)",
+			    pw_type_name(map->fec.twcard.u.pw_type)) < 0)
 				return ("???");
 			break;
 		default:
@@ -437,6 +443,8 @@ pw_type_name(uint16_t pw_type)
 		return ("Eth Tagged");
 	case PW_TYPE_ETHERNET:
 		return ("Ethernet");
+	case PW_TYPE_WILDCARD:
+		return ("Wildcard");
 	default:
 		snprintf(buf, sizeof(buf), "[%0x]", pw_type);
 		return (buf);

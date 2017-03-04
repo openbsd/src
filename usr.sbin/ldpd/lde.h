@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.47 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.48 2017/03/04 00:12:26 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -138,6 +138,8 @@ void		 lde_send_labelwithdraw(struct lde_nbr *, struct fec_node *,
 void		 lde_send_labelwithdraw_wcard(struct lde_nbr *, uint32_t);
 void		 lde_send_labelwithdraw_twcard_prefix(struct lde_nbr *,
 		    uint16_t, uint32_t);
+void		 lde_send_labelwithdraw_twcard_pwid(struct lde_nbr *, uint16_t,
+		    uint32_t);
 void		 lde_send_labelwithdraw_pwid_wcard(struct lde_nbr *, uint16_t,
 		    uint32_t);
 void		 lde_send_labelrelease(struct lde_nbr *, struct fec_node *,
