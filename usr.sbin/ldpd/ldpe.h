@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.72 2017/03/04 00:06:10 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.73 2017/03/04 00:09:17 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -105,6 +105,7 @@ struct nbr {
 };
 #define F_NBR_GTSM_NEGOTIATED	 0x01
 #define F_NBR_CAP_DYNAMIC	 0x02
+#define F_NBR_CAP_TWCARD	 0x04
 
 RB_HEAD(nbr_id_head, nbr);
 RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)

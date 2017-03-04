@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.70 2017/03/04 00:03:04 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.71 2017/03/04 00:09:17 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -890,6 +890,20 @@ lde_send_labelwithdraw_wcard(struct lde_nbr *ln, uint32_t label)
 
 	memset(&wcard, 0, sizeof(wcard));
 	wcard.type = MAP_TYPE_WILDCARD;
+	wcard.label = label;
+	lde_send_labelwithdraw(ln, NULL, &wcard, NULL);
+}
+
+void
+lde_send_labelwithdraw_twcard_prefix(struct lde_nbr *ln, uint16_t af,
+    uint32_t label)
+{
+	struct map	 wcard;
+
+	memset(&wcard, 0, sizeof(wcard));
+	wcard.type = MAP_TYPE_TYPED_WCARD;
+	wcard.fec.twcard.type = MAP_TYPE_PREFIX;
+	wcard.fec.twcard.u.prefix_af = af;
 	wcard.label = label;
 	lde_send_labelwithdraw(ln, NULL, &wcard, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.3 2017/03/04 00:06:10 renato Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.4 2017/03/04 00:09:17 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -172,6 +172,23 @@ log_map(const struct map *map)
 		    map->fec.pwid.pwid, map->fec.pwid.group_id,
 		    pw_type_name(map->fec.pwid.type)) == -1)
 			return ("???");
+		break;
+	case MAP_TYPE_TYPED_WCARD:
+		if (snprintf(buf, sizeof(buf), "typed wildcard") < 0)
+			return ("???");
+		switch (map->fec.twcard.type) {
+		case MAP_TYPE_PREFIX:
+			if (snprintf(buf + strlen(buf), sizeof(buf) -
+			    strlen(buf), " (prefix, address-family %s)",
+			    af_name(map->fec.twcard.u.prefix_af)) < 0)
+				return ("???");
+			break;
+		default:
+			if (snprintf(buf + strlen(buf), sizeof(buf) -
+			    strlen(buf), " (unknown type)") < 0)
+				return ("???");
+			break;
+		}
 		break;
 	default:
 		return ("???");

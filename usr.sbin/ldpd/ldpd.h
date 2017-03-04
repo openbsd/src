@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.84 2017/03/04 00:06:10 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.85 2017/03/04 00:09:17 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -204,6 +204,12 @@ struct map {
 			uint32_t	group_id;
 			uint16_t	ifmtu;
 		} pwid;
+		struct {
+			uint8_t		type;
+			union {
+				uint16_t	prefix_af;
+			} u;
+		} twcard;
 	} fec;
 	struct {
 		uint32_t	status_code;
