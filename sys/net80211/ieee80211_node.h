@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.66 2017/03/01 19:28:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.67 2017/03/04 12:44:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
 #define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 #define	IEEE80211_CACHE_SIZE	100
-#define	IEEE80211_CACHE_WAIT	3600
+#define	IEEE80211_CACHE_WAIT	30
 
 struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
@@ -380,7 +380,6 @@ extern	int ieee80211_setup_rates(struct ieee80211com *,
 extern  int ieee80211_iserp_sta(const struct ieee80211_node *);
 extern void ieee80211_count_longslotsta(void *, struct ieee80211_node *);
 extern void ieee80211_count_nonerpsta(void *, struct ieee80211_node *);
-extern void ieee80211_count_nonhtsta(void *, struct ieee80211_node *);
 extern void ieee80211_count_pssta(void *, struct ieee80211_node *);
 extern void ieee80211_count_rekeysta(void *, struct ieee80211_node *);
 extern	void ieee80211_node_join(struct ieee80211com *,

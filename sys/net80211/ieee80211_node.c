@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.114 2017/02/03 09:32:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.115 2017/03/04 12:44:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -359,10 +359,8 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		int aci;
 
 		/* 
-		 * Default to non-member HT protection until we have a way
-		 * of picking up information from the environment (such as
-		 * beacons from other networks) which proves that only HT
-		 * STAs are on the air.
+		 * Default to non-member HT protection. This will be updated
+		 * later based on the number of non-HT nodes in the node cache.
 		 */
 		ni->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
 		ic->ic_protmode = IEEE80211_PROT_RTSCTS;
@@ -1210,7 +1208,7 @@ ieee80211_clean_cached(struct ieee80211com *ic)
  *
  * If called because of a cache timeout, which happens only in hostap and ibss
  * modes, clean all inactive cached or authenticated nodes but don't de-auth
- * any associated nodes.
+ * any associated nodes. Also update HT protection settings.
  *
  * Else, this function is called because a new node must be allocated but the
  * node cache is full. In this case, return as soon as a free slot was made
@@ -1225,8 +1223,10 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 	u_int gen = ic->ic_scangen++;		/* NB: ok 'cuz single-threaded*/
 	int s;
 #ifndef IEEE80211_STA_ONLY
-	int nnodes = 0;
+	int nnodes = 0, nonht = 0, nonhtassoc = 0;
 	struct ifnet *ifp = &ic->ic_if;
+	enum ieee80211_htprot htprot = IEEE80211_HTPROT_NONE;
+	enum ieee80211_protmode protmode = IEEE80211_PROT_NONE;
 #endif
 
 	s = splnet();
@@ -1239,6 +1239,13 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 			continue;
 #ifndef IEEE80211_STA_ONLY
 		nnodes++;
+		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
+			if ((ni->ni_rxmcs[0] & 0xff) == 0) {
+				nonht++;
+				if (ni->ni_state == IEEE80211_STA_ASSOC)
+					nonhtassoc++;
+			}
+		}
 #endif
 		ni->ni_scangen = gen;
 		if (ni->ni_refcnt > 0)
@@ -1278,14 +1285,19 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 		 */
 #ifndef IEEE80211_STA_ONLY
 		nnodes--;
+		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
+			if ((ni->ni_rxmcs[0] & 0xff) == 0) {
+				nonht--;
+				if (ni->ni_state == IEEE80211_STA_ASSOC)
+					nonhtassoc--;
+			}
+		}
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    ni->ni_state >= IEEE80211_STA_AUTH &&
 		    ni->ni_state != IEEE80211_STA_COLLECT) {
-			splx(s);
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
 			    IEEE80211_REASON_AUTH_EXPIRE);
-			s = splnet();
 			ieee80211_node_leave(ic, ni);
 		} else
 #endif
@@ -1294,6 +1306,23 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 	}
 
 #ifndef IEEE80211_STA_ONLY
+	if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
+		/* Update HT protection settings. */
+		if (nonht) {
+			protmode = IEEE80211_PROT_RTSCTS;
+			if (nonhtassoc)
+				htprot = IEEE80211_HTPROT_NONHT_MIXED;
+			else
+				htprot = IEEE80211_HTPROT_NONMEMBER;
+		}
+		if (ic->ic_bss->ni_htop1 != htprot) {
+			ic->ic_bss->ni_htop1 = htprot;
+			ic->ic_protmode = protmode;
+			if (ic->ic_update_htprot)
+				ic->ic_update_htprot(ic, ic->ic_bss);
+		}
+	}
+
 	/* 
 	 * During a cache timeout we iterate over all nodes.
 	 * Check for node leaks by comparing the actual number of cached
@@ -1547,18 +1576,6 @@ ieee80211_count_nonerpsta(void *arg, struct ieee80211_node *ni)
 
 	if (!ieee80211_iserp_sta(ni))
 		(*nonerpsta)++;
-}
-
-void
-ieee80211_count_nonhtsta(void *arg, struct ieee80211_node *ni)
-{
-	int *nonhtsta = arg;
-
-	if (ni->ni_associd == 0 || ni->ni_state == IEEE80211_STA_COLLECT)
-		return;
-
-	if (!(ni->ni_flags & IEEE80211_NODE_HT))
-		(*nonhtsta)++;
 }
 
 void
@@ -1833,17 +1850,6 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_leave_ht(ic, ni);
-	else if (ic->ic_flags & IEEE80211_F_HTON) {
-		int nonhtsta = 0;
-		ieee80211_iterate_nodes(ic,
-		    ieee80211_count_nonhtsta, &nonhtsta);
-		if (nonhtsta == 1) {
-			/* All associated stations now support HT. */
-			ic->ic_bss->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
-			if (ic->ic_update_htprot)
-				ic->ic_update_htprot(ic, ic->ic_bss);
-		}
-	}
 
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);
