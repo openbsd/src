@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.64 2017/03/03 23:41:27 renato Exp $ */
+/*	$OpenBSD: kroute.c,v 1.65 2017/03/04 00:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/sysctl.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <net/route.h>
 #include <netmpls/mpls.h>
 #include <errno.h>
@@ -873,6 +874,8 @@ kif_update(unsigned short ifindex, int flags, struct if_data *ifd,
 
 	kif->k.flags = flags;
 	kif->k.link_state = ifd->ifi_link_state;
+	if (sdl)
+		memcpy(kif->k.mac, LLADDR(sdl), sizeof(kif->k.mac));
 	kif->k.if_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 	kif->k.mtu = ifd->ifi_mtu;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2vpn.c,v 1.23 2017/03/04 00:12:25 renato Exp $ */
+/*	$OpenBSD: l2vpn.c,v 1.24 2017/03/04 00:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -111,7 +111,7 @@ l2vpn_if_new(struct l2vpn *l2vpn, struct kif *kif)
 	strlcpy(lif->ifname, kif->ifname, sizeof(lif->ifname));
 	lif->ifindex = kif->ifindex;
 	lif->flags = kif->flags;
-	lif->link_state = kif->link_state;
+	lif->linkstate = kif->link_state;
 
 	return (lif);
 }
@@ -126,6 +126,33 @@ l2vpn_if_find(struct l2vpn *l2vpn, unsigned int ifindex)
 			return (lif);
 
 	return (NULL);
+}
+
+void
+l2vpn_if_update(struct l2vpn_if *lif)
+{
+	struct l2vpn	*l2vpn = lif->l2vpn;
+	struct l2vpn_pw	*pw;
+	struct map	 fec;
+	struct nbr	*nbr;
+
+	if ((lif->flags & IFF_UP) && LINK_STATE_IS_UP(lif->linkstate))
+		return;
+
+	LIST_FOREACH(pw, &l2vpn->pw_list, entry) {
+		nbr = nbr_find_ldpid(pw->lsr_id.s_addr);
+		if (nbr == NULL)
+			continue;
+
+		memset(&fec, 0, sizeof(fec));
+		fec.type = MAP_TYPE_PWID;
+		fec.fec.pwid.type = l2vpn->pw_type;
+		fec.fec.pwid.group_id = 0;
+		fec.flags |= F_MAP_PW_ID;
+		fec.fec.pwid.pwid = pw->pwid;
+
+		send_mac_withdrawal(nbr, &fec, lif->mac);
+	}
 }
 
 struct l2vpn_pw *

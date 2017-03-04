@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.86 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.87 2017/03/04 00:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -26,8 +26,10 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <net/if_arp.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <event.h>
 #include <imsg.h>
 
@@ -327,7 +329,8 @@ struct l2vpn_if {
 	char			 ifname[IF_NAMESIZE];
 	unsigned int		 ifindex;
 	uint16_t		 flags;
-	uint8_t			 link_state;
+	uint8_t			 linkstate;
+	uint8_t			 mac[ETHER_ADDR_LEN];
 };
 
 struct l2vpn_pw {
@@ -474,6 +477,7 @@ struct kif {
 	unsigned short		 ifindex;
 	int			 flags;
 	uint8_t			 link_state;
+	uint8_t			 mac[ETHER_ADDR_LEN];
 	int			 mtu;
 	unsigned int		 rdomain;
 	uint8_t			 if_type;

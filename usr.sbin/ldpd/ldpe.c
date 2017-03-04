@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.73 2017/03/03 23:41:27 renato Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.74 2017/03/04 00:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -221,8 +221,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	struct iface		*niface;
 	struct tnbr		*ntnbr;
 	struct nbr_params	*nnbrp;
-	static struct l2vpn	*nl2vpn;
-	struct l2vpn_if		*nlif;
+	static struct l2vpn	*l2vpn, *nl2vpn;
+	struct l2vpn_if		*lif = NULL, *nlif;
 	struct l2vpn_pw		*npw;
 	struct imsg		 imsg;
 	struct imsgev		*iev = bula;
@@ -265,12 +265,24 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 			kif = imsg.data;
 
 			iface = if_lookup(leconf, kif->ifindex);
-			if (!iface)
+			if (iface) {
+				iface->flags = kif->flags;
+				iface->linkstate = kif->link_state;
+				if_update(iface, AF_UNSPEC);
 				break;
+			}
 
-			iface->flags = kif->flags;
-			iface->linkstate = kif->link_state;
-			if_update(iface, AF_UNSPEC);
+			LIST_FOREACH(l2vpn, &leconf->l2vpn_list, entry) {
+				lif = l2vpn_if_find(l2vpn, kif->ifindex);
+				if (lif) {
+					lif->flags = kif->flags;
+					lif->linkstate = kif->link_state;
+					memcpy(lif->mac, kif->mac,
+					    sizeof(lif->mac));
+					l2vpn_if_update(lif);
+					break;
+				}
+			}
 			break;
 		case IMSG_NEWADDR:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

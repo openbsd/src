@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.74 2017/03/04 00:15:35 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.75 2017/03/04 00:21:48 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -173,6 +173,7 @@ int	 gen_status_tlv(struct ibuf *, uint32_t, uint32_t, uint16_t);
 /* address.c */
 void	 send_address_single(struct nbr *, struct if_addr *, int);
 void	 send_address_all(struct nbr *, int);
+void	 send_mac_withdrawal(struct nbr *, struct map *, uint8_t *);
 int	 recv_address(struct nbr *, char *, uint16_t);
 
 /* labelmapping.c */
