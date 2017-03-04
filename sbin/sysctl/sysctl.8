@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.208 2016/10/15 14:43:53 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.209 2017/03/04 17:40:23 natano Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: October 15 2016 $
+.Dd $Mdocdate: March 4 2017 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -374,6 +374,7 @@ and a few require a kernel compiled with non-standard
 .It machdep.led_blink Ta integer Ta yes
 .It machdep.ceccerrs Ta integer Ta no
 .It machdep.cecclast Ta quad Ta no
+.It machdep.lidaction Ta integer Ta yes
 .It ddb.radix Ta integer Ta yes
 .It ddb.max_width Ta integer Ta yes
 .It ddb.max_line Ta integer Ta yes
