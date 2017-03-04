@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.48 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: lde.h,v 1.49 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -87,6 +87,7 @@ struct lde_nbr {
 	struct in_addr		 id;
 	int			 v4_enabled;	/* announce/process v4 msgs */
 	int			 v6_enabled;	/* announce/process v6 msgs */
+	int			 flags;		/* capabilities */
 	struct fec_tree		 recv_req;
 	struct fec_tree		 sent_req;
 	struct fec_tree		 recv_map;
@@ -146,6 +147,8 @@ void		 lde_send_labelrelease(struct lde_nbr *, struct fec_node *,
 		    struct map *, uint32_t);
 void		 lde_send_notification(struct lde_nbr *, uint32_t, uint32_t,
 		    uint16_t);
+void		 lde_send_notification_eol_prefix(struct lde_nbr *, int);
+void		 lde_send_notification_eol_pwid(struct lde_nbr *, uint16_t);
 struct lde_nbr	*lde_nbr_find_by_lsrid(struct in_addr);
 struct lde_nbr	*lde_nbr_find_by_addr(int, union ldpd_addr *);
 struct lde_map	*lde_map_add(struct lde_nbr *, struct fec_node *, int);

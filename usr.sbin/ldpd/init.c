@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.36 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: init.c,v 1.37 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -27,6 +27,7 @@
 static int	gen_init_prms_tlv(struct ibuf *, struct nbr *);
 static int	gen_cap_dynamic_tlv(struct ibuf *);
 static int	gen_cap_twcard_tlv(struct ibuf *, int);
+static int	gen_cap_unotif_tlv(struct ibuf *, int);
 
 void
 send_init(struct nbr *nbr)
@@ -38,7 +39,7 @@ send_init(struct nbr *nbr)
 	log_debug("%s: lsr-id %s", __func__, inet_ntoa(nbr->id));
 
 	size = LDP_HDR_SIZE + LDP_MSG_SIZE + SESS_PRMS_SIZE +
-	    CAP_TLV_DYNAMIC_SIZE + CAP_TLV_TWCARD_SIZE;
+	    CAP_TLV_DYNAMIC_SIZE + CAP_TLV_TWCARD_SIZE + CAP_TLV_UNOTIF_SIZE;
 	if ((buf = ibuf_open(size)) == NULL)
 		fatal(__func__);
 
@@ -48,6 +49,7 @@ send_init(struct nbr *nbr)
 	err |= gen_init_prms_tlv(buf, nbr);
 	err |= gen_cap_dynamic_tlv(buf);
 	err |= gen_cap_twcard_tlv(buf, 1);
+	err |= gen_cap_unotif_tlv(buf, 1);
 	if (err) {
 		ibuf_free(buf);
 		return;
@@ -168,6 +170,26 @@ recv_init(struct nbr *nbr, char *buf, uint16_t len)
 			log_debug("%s: lsr-id %s announced the Typed Wildcard "
 			    "FEC capability", __func__, inet_ntoa(nbr->id));
 			break;
+		case TLV_TYPE_UNOTIF_CAP:
+			if (tlv_len != CAP_TLV_UNOTIF_LEN) {
+				session_shutdown(nbr, S_BAD_TLV_LEN, msg.id,
+				    msg.type);
+				return (-1);
+			}
+
+			if (caps_rcvd & F_CAP_TLV_RCVD_UNOTIF) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, msg.id,
+				    msg.type);
+				return (-1);
+			}
+			caps_rcvd |= F_CAP_TLV_RCVD_UNOTIF;
+
+			nbr->flags |= F_NBR_CAP_UNOTIF;
+
+			log_debug("%s: lsr-id %s announced the Unrecognized "
+			    "Notification capability", __func__,
+			    inet_ntoa(nbr->id));
+			break;
 		default:
 			if (!(ntohs(tlv.type) & UNKNOWN_FLAG))
 				send_notification_rtlvs(nbr, S_UNSSUPORTDCAP,
@@ -217,6 +239,9 @@ send_capability(struct nbr *nbr, uint16_t capability, int enable)
 	switch (capability) {
 	case TLV_TYPE_TWCARD_CAP:
 		err |= gen_cap_twcard_tlv(buf, enable);
+		break;
+	case TLV_TYPE_UNOTIF_CAP:
+		err |= gen_cap_unotif_tlv(buf, enable);
 		break;
 	case TLV_TYPE_DYNAMIC_CAP:
 		/*
@@ -300,6 +325,32 @@ recv_capability(struct nbr *nbr, char *buf, uint16_t len)
 			    "capability", __func__, inet_ntoa(nbr->id),
 			    (enable) ? "announced" : "withdrew");
 			break;
+		case TLV_TYPE_UNOTIF_CAP:
+			if (tlv_len != CAP_TLV_UNOTIF_LEN) {
+				session_shutdown(nbr, S_BAD_TLV_LEN, msg.id,
+				    msg.type);
+				return (-1);
+			}
+
+			if (caps_rcvd & F_CAP_TLV_RCVD_UNOTIF) {
+				session_shutdown(nbr, S_BAD_TLV_VAL, msg.id,
+				    msg.type);
+				return (-1);
+			}
+			caps_rcvd |= F_CAP_TLV_RCVD_UNOTIF;
+
+			memcpy(&reserved, buf, sizeof(reserved));
+			enable = reserved & STATE_BIT;
+			if (enable)
+				nbr->flags |= F_NBR_CAP_UNOTIF;
+			else
+				nbr->flags &= ~F_NBR_CAP_UNOTIF;
+
+			log_debug("%s: lsr-id %s %s the Unrecognized "
+			    "Notification capability", __func__,
+			    inet_ntoa(nbr->id), (enable) ? "announced" :
+			    "withdrew");
+			break;
 		case TLV_TYPE_DYNAMIC_CAP:
 			/*
 		 	 * RFC 5561 - Section 9:
@@ -371,4 +422,18 @@ gen_cap_twcard_tlv(struct ibuf *buf, int enable)
 		cap.reserved = STATE_BIT;
 
 	return (ibuf_add(buf, &cap, CAP_TLV_TWCARD_SIZE));
+}
+
+static int
+gen_cap_unotif_tlv(struct ibuf *buf, int enable)
+{
+	struct capability_tlv	cap;
+
+	memset(&cap, 0, sizeof(cap));
+	cap.type = htons(TLV_TYPE_UNOTIF_CAP);
+	cap.length = htons(CAP_TLV_UNOTIF_LEN);
+	if (enable)
+		cap.reserved = STATE_BIT;
+
+	return (ibuf_add(buf, &cap, CAP_TLV_UNOTIF_SIZE));
 }

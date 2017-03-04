@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.72 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.73 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -313,6 +313,13 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 			case S_PW_STATUS:
 				l2vpn_recv_pw_status(ln, &nm);
 				break;
+			case S_ENDOFLIB:
+				/*
+				 * Do nothing for now. Should be useful in
+				 * the future when we implement LDP-IGP
+				 * Synchronization (RFC 5443) and Graceful
+				 * Restart (RFC 3478).
+				 */
 			default:
 				break;
 			}
@@ -990,6 +997,38 @@ lde_send_notification(struct lde_nbr *ln, uint32_t status_code, uint32_t msg_id,
 	    &nm, sizeof(nm));
 }
 
+void
+lde_send_notification_eol_prefix(struct lde_nbr *ln, int af)
+{
+	struct notify_msg nm;
+
+	memset(&nm, 0, sizeof(nm));
+	nm.status_code = S_ENDOFLIB;
+	nm.fec.type = MAP_TYPE_TYPED_WCARD;
+	nm.fec.fec.twcard.type = MAP_TYPE_PREFIX;
+	nm.fec.fec.twcard.u.prefix_af = af;
+	nm.flags |= F_NOTIF_FEC;
+
+	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, ln->peerid, 0,
+	    &nm, sizeof(nm));
+}
+
+void
+lde_send_notification_eol_pwid(struct lde_nbr *ln, uint16_t pw_type)
+{
+	struct notify_msg nm;
+
+	memset(&nm, 0, sizeof(nm));
+	nm.status_code = S_ENDOFLIB;
+	nm.fec.type = MAP_TYPE_TYPED_WCARD;
+	nm.fec.fec.twcard.type = MAP_TYPE_PWID;
+	nm.fec.fec.twcard.u.pw_type = pw_type;
+	nm.flags |= F_NOTIF_FEC;
+
+	lde_imsg_compose_ldpe(IMSG_NOTIFICATION_SEND, ln->peerid, 0,
+	    &nm, sizeof(nm));
+}
+
 static __inline int
 lde_nbr_compare(struct lde_nbr *a, struct lde_nbr *b)
 {
@@ -1007,6 +1046,7 @@ lde_nbr_new(uint32_t peerid, struct lde_nbr *new)
 	ln->id = new->id;
 	ln->v4_enabled = new->v4_enabled;
 	ln->v6_enabled = new->v6_enabled;
+	ln->flags = new->flags;
 	ln->peerid = peerid;
 	fec_init(&ln->recv_map);
 	fec_init(&ln->sent_map);

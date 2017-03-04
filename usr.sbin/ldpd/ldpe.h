@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.73 2017/03/04 00:09:17 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.74 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -106,6 +106,7 @@ struct nbr {
 #define F_NBR_GTSM_NEGOTIATED	 0x01
 #define F_NBR_CAP_DYNAMIC	 0x02
 #define F_NBR_CAP_TWCARD	 0x04
+#define F_NBR_CAP_UNOTIF	 0x08
 
 RB_HEAD(nbr_id_head, nbr);
 RB_PROTOTYPE(nbr_id_head, nbr, id_tree, nbr_id_compare)
@@ -179,6 +180,7 @@ int	 recv_address(struct nbr *, char *, uint16_t);
 void	 send_labelmessage(struct nbr *, uint16_t, struct mapping_head *);
 int	 recv_labelmessage(struct nbr *, char *, uint16_t, uint16_t);
 int	 gen_pw_status_tlv(struct ibuf *, uint32_t);
+uint16_t len_fec_tlv(struct map *);
 int	 gen_fec_tlv(struct ibuf *, struct map *);
 int	 tlv_decode_fec_elm(struct nbr *, struct ldp_msg *, char *,
 	    uint16_t, struct map *);

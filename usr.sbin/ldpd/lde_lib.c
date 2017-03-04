@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.68 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.69 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -26,6 +26,7 @@
 
 #include "ldpd.h"
 #include "lde.h"
+#include "ldpe.h"
 #include "log.h"
 
 static __inline int	 fec_compare(struct fec *, struct fec *);
@@ -215,6 +216,22 @@ fec_snap(struct lde_nbr *ln)
 	}
 
 	lde_imsg_compose_ldpe(IMSG_MAPPING_ADD_END, ln->peerid, 0, NULL, 0);
+
+	/*
+	 * RFC 5919 - Section 4:
+	 * "An LDP speaker that conforms to this specification SHOULD signal
+	 * completion of its label advertisements to a peer by means of a
+	 * Notification message, if its peer has advertised the Unrecognized
+	 * Notification capability during session establishment.  The LDP
+	 * speaker SHOULD send the Notification message (per Forwarding
+	 * Equivalence Class (FEC) Type) to a peer even if the LDP speaker has
+	 * zero Label bindings to advertise to that peer".
+	 */
+	if (ln->flags & F_NBR_CAP_UNOTIF) {
+		lde_send_notification_eol_prefix(ln, AF_INET);
+		lde_send_notification_eol_prefix(ln, AF_INET6);
+		lde_send_notification_eol_pwid(ln, PW_TYPE_WILDCARD);
+	}
 }
 
 static void
@@ -611,6 +628,32 @@ lde_check_request_wcard(struct map *map, struct lde_nbr *ln)
 
 		/* LRq.9: perform LSR label distribution */
 		lde_send_labelmapping(ln, fn, 1);
+	}
+
+	/*
+	 * RFC 5919 - Section 5.3:
+	 * "When an LDP speaker receives a Label Request message for a Typed
+	 * Wildcard FEC (e.g., a particular FEC Element Type) from a peer, the
+	 * LDP speaker determines the set of bindings (as per any local
+	 * filtering policy) to advertise to the peer for the FEC type specified
+	 * by the request.  Assuming the peer had advertised the Unrecognized
+	 * Notification capability at session initialization time, the speaker
+	 * should send the peer an End-of-LIB Notification for the FEC type when
+	 * it completes advertisement of the permitted bindings".
+	 */
+	if (ln->flags & F_NBR_CAP_UNOTIF) {
+		switch (map->fec.twcard.type) {
+		case MAP_TYPE_PREFIX:
+			lde_send_notification_eol_prefix(ln,
+			    map->fec.twcard.u.prefix_af);
+			break;
+		case MAP_TYPE_PWID:
+			lde_send_notification_eol_pwid(ln,
+			    map->fec.twcard.u.pw_type);
+			break;
+		default:
+			break;
+		}
 	}
 }
 

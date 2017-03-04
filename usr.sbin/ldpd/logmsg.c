@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.5 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.6 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -423,6 +423,8 @@ status_code_name(uint32_t status)
 		return ("Label Withdraw PW Status Method");
 	case S_UNSSUPORTDCAP:
 		return ("Unsupported Capability");
+	case S_ENDOFLIB:
+		return ("End-of-LIB");
 	case S_TRANS_MISMTCH:
 		return ("Transport Connection Mismatch");
 	case S_DS_NONCMPLNCE:

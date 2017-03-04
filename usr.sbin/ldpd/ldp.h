@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.40 2017/03/04 00:12:26 renato Exp $ */
+/*	$OpenBSD: ldp.h,v 1.41 2017/03/04 00:15:35 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -103,6 +103,8 @@
 #define TLV_TYPE_DYNAMIC_CAP	0x8506
 /* RFC 5918 */
 #define TLV_TYPE_TWCARD_CAP	0x850B
+/* RFC 5919 */
+#define TLV_TYPE_UNOTIF_CAP	0x8603
 /* RFC 7552 */
 #define TLV_TYPE_DUALSTACK	0x8701
 
@@ -206,6 +208,8 @@ struct hello_prms_opt16_tlv {
 #define S_WITHDRAW_MTHD	0x0000002B
 /* RFC 5561 */
 #define	S_UNSSUPORTDCAP	0x0000002E
+/* RFC 5919 */
+#define	S_ENDOFLIB	0x0000002F
 /* RFC 7552 */
 #define	S_TRANS_MISMTCH	0x80000032
 #define	S_DS_NONCMPLNCE	0x80000033
@@ -246,12 +250,16 @@ struct capability_tlv {
 
 #define F_CAP_TLV_RCVD_DYNAMIC	0x01
 #define F_CAP_TLV_RCVD_TWCARD	0x02
+#define F_CAP_TLV_RCVD_UNOTIF	0x04
 
 #define CAP_TLV_DYNAMIC_SIZE	5
 #define CAP_TLV_DYNAMIC_LEN	1
 
 #define CAP_TLV_TWCARD_SIZE	5
 #define CAP_TLV_TWCARD_LEN	1
+
+#define CAP_TLV_UNOTIF_SIZE	5
+#define CAP_TLV_UNOTIF_LEN	1
 
 #define	AF_IPV4			0x1
 #define	AF_IPV6			0x2
