@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.23 2014/07/17 03:21:48 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.24 2017/03/04 22:46:20 tj Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -118,7 +118,7 @@ To boot in Mac OS with this setup (works on most supported machines),
 press and hold down the Alt/Option key during reboot, and select which
 (Mac OS/Mac OS X) partition to boot in the graphical boot selector
 presented. Note that OpenBSD does not currently show up in this boot
-selector except for the installation CD-ROM. This works on most machines
+selector except for the installation image. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac;
 perhaps this feature was added to the Open Firmware ROM after that
 machine.

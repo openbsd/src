@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.49 2016/09/02 12:17:32 tb Exp $
+dnl	$OpenBSD: packages,v 1.50 2017/03/04 22:46:19 tj Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -14,42 +14,10 @@ this.  You can:
    upon whatever installation procedures are provided with the
    application.
 
-If you purchased the OpenBSD CD-ROM set you already have a few popular
-``packages'', and the ``ports'' collection.
-
 Instructions for installing applications from the various sources using
 the different installation methods follow.
 
 You should also refer to the packages(7) manual page.
-
-Installing applications from the CD-ROM package collection:
-
-	The OpenBSD CD-ROM ships with the most commonly installed third-party
-	applications pre-built for various hardware architectures.  Limited
-	disk space on the CD-ROM unfortunately limits the number of such
-	packages.  Check the directory OSREV/packages/MACHINE_ARCH to see which
-	packages are available for your hardware architecture.  That directory
-	will be on the same CD-ROM containing the OS installation files for
-	your architecture.
-
-	To install one or more of these packages you must:
-	1) become the superuser (root).
-	2) mount the appropriate CD-ROM.
-	3) use the ``pkg_add'' command to install the software.
-
-	Example (in which we use su(1) to get superuser privileges, thus
-	you have to be in group "wheel", see the manual page for su(1)).
-
-    $ su
-    Password: <enter your root password>
-    # mkdir -p /cdrom
-    # mount /dev/cd0a /cdrom
-    {:-#-:} pkg_add /cdrom/OSREV/packages/MACHINE_ARCH/<package-name>
-    # <add more packages if desired>
-    # umount /cdrom
-
-	Package names are usually the application name and version
-	with .tgz appended, e.g. bzip2-1.0.6p0.tgz
 
 Installing applications from the ftp.OpenBSD.org package collection:
 
@@ -73,31 +41,6 @@ Installing applications from the ftp.OpenBSD.org package collection:
     Password: <enter your root password>
     # pkg_add \
       http://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-21.4p32.tgz
-
-Installing applications from the CD-ROM ports collection:
-
-	The CD-ROM ``ports'' collection is a set of Makefiles, patches,
-	and other files used to control the building and installation
-	of an application from source files.
-
-	Creating an application from sources can require a lot of
-	disk space, sometimes 50 megabytes or more.  The first step is
-	to determine which of your disks has enough room.  Once you've
-	made this determination, read the file PORTS located on the
-	CD-ROM which contains the ports tree.
-
-	To build an application you must:
-
-	1) become the superuser (root)
-	2) have network access, or obtain the actual source files by
-	   some other means.
-	3) cd to the ports directory containing the port you wish
-	   to build.  To build samba, for example, where you'd
-	   previously copied the ports files into the /usr/ports
-	   directory: cd /usr/ports/net/samba
-	4) make
-	5) make install
-	6) make clean
 
 Installing applications from the OpenBSD ports collection:
 

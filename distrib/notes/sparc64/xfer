@@ -1,11 +1,11 @@
-dnl	$OpenBSD: xfer,v 1.32 2016/01/01 15:58:28 rpe Exp $
+dnl	$OpenBSD: xfer,v 1.33 2017/03/04 22:46:20 tj Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
 	FFS partitions
 	HTTP
 
-If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you may be
+If you created an OpenBSD CD-ROM (and have a CD-ROM drive), you may be
 able to boot from it, or from the supplied bootable CD-ROM mini image. If you
 can boot from the CD-ROM, you are home free and can proceed to the
 installation steps.  If not, you will need to do some setup work to prepare
@@ -15,10 +15,10 @@ server.
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.
 
-Although you can access the distribution sets directly from the CD-ROM or
-from one of the OpenBSD mirrors over the internet, you may wish to transfer
-the sets to a local HTTP server, or copy them to a partition on the target
-system's disk.
+Although you can access the distribution sets directly from one of the
+OpenBSD mirrors over the internet, you may wish to transfer the sets to
+a local HTTP server, or copy them to a partition on the target system's
+disk.
 
 OpenBSDXferCDROM
 

@@ -1,8 +1,8 @@
-dnl	$OpenBSD: install,v 1.51 2014/08/06 02:34:23 doug Exp $
+dnl	$OpenBSD: install,v 1.52 2017/03/04 22:46:19 tj Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way,
-should your computer support it, is to boot off the OpenBSD CD-ROM,
+should your computer support it, is to boot off an OpenBSD CD-ROM,
 USB key, or off one of the bootable CD-ROM mini images.  Otherwise, you
 can boot from a 3.5" 1.44MB floppy disk if your machine has a floppy drive.
 If your machine supports PXE network boots, you could try to configure a
