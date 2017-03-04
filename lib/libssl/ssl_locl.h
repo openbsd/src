@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.175 2017/02/28 14:08:49 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.176 2017/03/04 16:32:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1186,9 +1186,8 @@ int ssl_server_legacy_first_packet(SSL *s);
 int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
-unsigned char *dtls1_set_message_header(SSL *s, unsigned char *p,
-    unsigned char mt, unsigned long len, unsigned long frag_off,
-    unsigned long frag_len);
+void dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
+    unsigned long frag_off, unsigned long frag_len);
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.135 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.136 2017/03/04 16:32:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1722,7 +1722,7 @@ ssl3_handshake_msg_finish(SSL *s, unsigned int len)
 	s->internal->init_off = 0;
 
 	if (SSL_IS_DTLS(s)) {
-		dtls1_set_message_header(s, d, msg_type, len, 0, len);
+		dtls1_set_message_header(s, msg_type, len, 0, len);
 		dtls1_buffer_message(s, 0);
 	}
 }
@@ -1785,7 +1785,7 @@ ssl3_handshake_msg_finish_cbb(SSL *s, CBB *handshake)
 
 		len = outlen - ssl3_handshake_msg_hdr_len(s);
 
-		dtls1_set_message_header(s, data, msg_type, len, 0, len);
+		dtls1_set_message_header(s, msg_type, len, 0, len);
 		dtls1_buffer_message(s, 0);
 	}
 

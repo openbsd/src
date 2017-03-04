@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.49 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: d1_both.c,v 1.50 2017/03/04 16:32:00 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1167,9 +1167,9 @@ dtls1_clear_record_buffer(SSL *s)
 	}
 }
 
-unsigned char *
-dtls1_set_message_header(SSL *s, unsigned char *p, unsigned char mt,
-    unsigned long len, unsigned long frag_off, unsigned long frag_len)
+void
+dtls1_set_message_header(SSL *s, unsigned char mt, unsigned long len,
+    unsigned long frag_off, unsigned long frag_len)
 {
 	/* Don't change sequence numbers while listening */
 	if (frag_off == 0 && !D1I(s)->listen) {
@@ -1179,8 +1179,6 @@ dtls1_set_message_header(SSL *s, unsigned char *p, unsigned char mt,
 
 	dtls1_set_message_header_int(s, mt, len, D1I(s)->handshake_write_seq,
 	    frag_off, frag_len);
-
-	return p += DTLS1_HM_HEADER_LENGTH;
 }
 
 /* don't actually do the writing, wait till the MTU has been retrieved */
