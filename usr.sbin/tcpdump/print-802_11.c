@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.38 2017/01/29 15:16:14 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.39 2017/03/04 17:51:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -485,7 +485,7 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 	u_int8_t primary_chan;
 	u_int8_t htopinfo[5];
 	u_int8_t basic_mcs[16];
-	int sco, prot, i;
+	int sco, htprot, i;
 
 	if (len < sizeof(primary_chan) + sizeof(htopinfo) + sizeof(basic_mcs)) {
 		ieee80211_print_element(data, len);
@@ -535,14 +535,25 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 	htopinfo[1] = data[2];
 
 	/* protection requirements for HT transmissions */
-	prot = ((htopinfo[1] & IEEE80211_HTOP1_PROT_MASK)
+	htprot = ((htopinfo[1] & IEEE80211_HTOP1_PROT_MASK)
 	    >> IEEE80211_HTOP1_PROT_SHIFT);
-	if (prot == 1)
-		printf(",protect non-member");
-	else if (prot == 2)
-		printf(",protect 20MHz");
-	else if (prot == 3)
-		printf(",protect non-HT");
+	switch (htprot) {
+	case IEEE80211_HTPROT_NONE:
+		printf(",htprot none");
+		break;
+	case IEEE80211_HTPROT_NONMEMBER:
+		printf(",htprot non-member");
+		break;
+	case IEEE80211_HTPROT_20MHZ:
+		printf(",htprot 20MHz");
+		break;
+	case IEEE80211_HTPROT_NONHT_MIXED:
+		printf(",htprot non-HT-mixed");
+		break;
+	default:
+		printf(",htprot %d", htprot);
+		break;
+	}
 
 	/* non-greenfield STA present */
 	if (htopinfo[1] & IEEE80211_HTOP1_NONGF_STA)
