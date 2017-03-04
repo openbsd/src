@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.1 2017/01/20 12:19:18 benno Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.2 2017/03/04 00:03:04 renato Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -154,7 +154,7 @@ log_hello_src(const struct hello_source *src)
 const char *
 log_map(const struct map *map)
 {
-	static char	buf[64];
+	static char	buf[128];
 
 	switch (map->type) {
 	case MAP_TYPE_WILDCARD:
@@ -168,8 +168,8 @@ log_map(const struct map *map)
 			return ("???");
 		break;
 	case MAP_TYPE_PWID:
-		if (snprintf(buf, sizeof(buf), "pwid %u (%s)",
-		    map->fec.pwid.pwid,
+		if (snprintf(buf, sizeof(buf), "pw-id %u group-id %u (%s)",
+		    map->fec.pwid.pwid, map->fec.pwid.group_id,
 		    pw_type_name(map->fec.pwid.type)) == -1)
 			return ("???");
 		break;

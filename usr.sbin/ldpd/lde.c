@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.69 2017/03/03 23:41:27 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.70 2017/03/04 00:03:04 renato Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -253,16 +253,10 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 				lde_check_request(&map, ln);
 				break;
 			case IMSG_LABEL_RELEASE:
-				if (map.type == MAP_TYPE_WILDCARD)
-					lde_check_release_wcard(&map, ln);
-				else
-					lde_check_release(&map, ln);
+				lde_check_release(&map, ln);
 				break;
 			case IMSG_LABEL_WITHDRAW:
-				if (map.type == MAP_TYPE_WILDCARD)
-					lde_check_withdraw_wcard(&map, ln);
-				else
-					lde_check_withdraw(&map, ln);
+				lde_check_withdraw(&map, ln);
 				break;
 			case IMSG_LABEL_ABORT:
 				/* not necessary */
@@ -820,8 +814,8 @@ lde_send_labelmapping(struct lde_nbr *ln, struct fec_node *fn, int single)
 }
 
 void
-lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
-    struct status_tlv *st)
+lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn,
+    struct map *wcard, struct status_tlv *st)
 {
 	struct lde_wdraw	*lw;
 	struct map		 map;
@@ -850,11 +844,8 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
 			break;
 		}
 		map.label = fn->local_label;
-	} else {
-		memset(&map, 0, sizeof(map));
-		map.type = MAP_TYPE_WILDCARD;
-		map.label = label;
-	}
+	} else
+		memcpy(&map, wcard, sizeof(map));
 
 	if (st) {
 		map.st.status_code = st->status_code;
@@ -875,8 +866,13 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
 			lw = lde_wdraw_add(ln, fn);
 		lw->label = map.label;
 	} else {
+		struct lde_map *me;
+
 		RB_FOREACH(f, fec_tree, &ft) {
 			fn = (struct fec_node *)f;
+			me = (struct lde_map *)fec_find(&ln->sent_map, &fn->fec);
+			if (lde_wildcard_apply(wcard, &fn->fec, me) == 0)
+				continue;
 
 			lw = (struct lde_wdraw *)fec_find(&ln->sent_wdraw,
 			    &fn->fec);
@@ -888,16 +884,34 @@ lde_send_labelwithdraw(struct lde_nbr *ln, struct fec_node *fn, uint32_t label,
 }
 
 void
-lde_send_labelwithdraw_all(struct fec_node *fn, uint32_t label)
+lde_send_labelwithdraw_wcard(struct lde_nbr *ln, uint32_t label)
 {
-	struct lde_nbr		*ln;
+	struct map	 wcard;
 
-	RB_FOREACH(ln, nbr_tree, &lde_nbrs)
-		lde_send_labelwithdraw(ln, fn, label, NULL);
+	memset(&wcard, 0, sizeof(wcard));
+	wcard.type = MAP_TYPE_WILDCARD;
+	wcard.label = label;
+	lde_send_labelwithdraw(ln, NULL, &wcard, NULL);
 }
 
 void
-lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
+lde_send_labelwithdraw_pwid_wcard(struct lde_nbr *ln, uint16_t pw_type,
+    uint32_t group_id)
+{
+	struct map	 wcard;
+
+	memset(&wcard, 0, sizeof(wcard));
+	wcard.type = MAP_TYPE_PWID;
+	wcard.fec.pwid.type = pw_type;
+	wcard.fec.pwid.group_id = group_id;
+	/* we can not append a Label TLV when using PWid group wildcards. */
+	wcard.label = NO_LABEL;
+	lde_send_labelwithdraw(ln, NULL, &wcard, NULL);
+}
+
+void
+lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn,
+    struct map *wcard, uint32_t label)
 {
 	struct map		 map;
 	struct l2vpn_pw		*pw;
@@ -923,10 +937,8 @@ lde_send_labelrelease(struct lde_nbr *ln, struct fec_node *fn, uint32_t label)
 				map.flags |= F_MAP_PW_CWORD;
 			break;
 		}
-	} else {
-		memset(&map, 0, sizeof(map));
-		map.type = MAP_TYPE_WILDCARD;
-	}
+	} else
+		memcpy(&map, wcard, sizeof(map));
 	map.label = label;
 
 	lde_imsg_compose_ldpe(IMSG_RELEASE_ADD, ln->peerid, 0,
@@ -1235,15 +1247,14 @@ lde_change_egress_label(int af, int was_implicit)
 	RB_FOREACH(ln, nbr_tree, &lde_nbrs) {
 		/* explicit withdraw */
 		if (was_implicit)
-			lde_send_labelwithdraw(ln, NULL, MPLS_LABEL_IMPLNULL,
-			    NULL);
+			lde_send_labelwithdraw_wcard(ln, MPLS_LABEL_IMPLNULL);
 		else {
 			if (ln->v4_enabled)
-				lde_send_labelwithdraw(ln, NULL,
-				    MPLS_LABEL_IPV4NULL, NULL);
+				lde_send_labelwithdraw_wcard(ln,
+				    MPLS_LABEL_IPV4NULL);
 			if (ln->v6_enabled)
-				lde_send_labelwithdraw(ln, NULL,
-				    MPLS_LABEL_IPV6NULL, NULL);
+				lde_send_labelwithdraw_wcard(ln,
+				    MPLS_LABEL_IPV6NULL);
 		}
 
 		/* advertise new label of connected prefixes */
