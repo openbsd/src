@@ -307,6 +307,7 @@ if ($Is_VMS) {
 }
 elsif ($^O ne 'dos') {
     if (!$Is_NetWare) {
+	my $ver = ''; # don't install a versioned perl binary
 	install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext", "0755");
     }
     else {
@@ -410,14 +411,15 @@ if ($Is_W32) { #linking lib isn't made in root but in CORE on Win32
 # Install main perl executables
 # Make links to ordinary names if installbin directory isn't current directory.
 
-if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS && ! $Is_NetWare) {
+if (0) { # don't install a versioned perl binary
+#if (! $versiononly && ! samepath($installbin, '.') && ($^O ne 'dos') && ! $Is_VMS && ! $Is_NetWare) {
     safe_unlink("$installbin/$perl$exe_ext", "$installbin/suid$perl$exe_ext");
     if ($^O eq 'vos') {
 	# VOS doesn't support hard links, so use a symlink.
 	symlink("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$perl$exe_ext");
     } else {
-	safe_rename("$installbin/$perl_verbase$ver$exe_ext",
+	link("$installbin/$perl_verbase$ver$exe_ext",
 		"$installbin/$perl$exe_ext");
     }
 }
