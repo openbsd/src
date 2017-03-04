@@ -67,11 +67,11 @@
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/bin/pctr
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.0
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.0/4.2.1
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.0/4.2.1/collect2
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.0/4.2.1/libgcc.a
-./usr/lib/gcc-lib/amd64-unknown-openbsd6.0/4.2.1/specs
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.1
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/collect2
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/libgcc.a
+./usr/lib/gcc-lib/amd64-unknown-openbsd6.1/4.2.1/specs
 ./usr/libdata/perl5/amd64-openbsd
 ./usr/libdata/perl5/amd64-openbsd/.packlist
 ./usr/libdata/perl5/amd64-openbsd/B

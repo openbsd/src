@@ -64,11 +64,11 @@
 ./sbin/kbd
 ./sbin/pdisk
 ./sbin/wsconsctl
-./usr/lib/gcc-lib/powerpc-unknown-openbsd6.0
-./usr/lib/gcc-lib/powerpc-unknown-openbsd6.0/4.2.1
-./usr/lib/gcc-lib/powerpc-unknown-openbsd6.0/4.2.1/collect2
-./usr/lib/gcc-lib/powerpc-unknown-openbsd6.0/4.2.1/libgcc.a
-./usr/lib/gcc-lib/powerpc-unknown-openbsd6.0/4.2.1/specs
+./usr/lib/gcc-lib/powerpc-unknown-openbsd6.1
+./usr/lib/gcc-lib/powerpc-unknown-openbsd6.1/4.2.1
+./usr/lib/gcc-lib/powerpc-unknown-openbsd6.1/4.2.1/collect2
+./usr/lib/gcc-lib/powerpc-unknown-openbsd6.1/4.2.1/libgcc.a
+./usr/lib/gcc-lib/powerpc-unknown-openbsd6.1/4.2.1/specs
 ./usr/libdata/perl5/powerpc-openbsd
 ./usr/libdata/perl5/powerpc-openbsd/.packlist
 ./usr/libdata/perl5/powerpc-openbsd/B

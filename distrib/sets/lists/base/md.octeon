@@ -32,11 +32,11 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.0
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.0/4.2.1
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.0/4.2.1/collect2
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.0/4.2.1/libgcc.a
-./usr/lib/gcc-lib/mips64-unknown-openbsd6.0/4.2.1/specs
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.1
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1/collect2
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1/libgcc.a
+./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1/specs
 ./usr/libdata/perl5/mips64-openbsd
 ./usr/libdata/perl5/mips64-openbsd/.packlist
 ./usr/libdata/perl5/mips64-openbsd/B
