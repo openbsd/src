@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.99 2017/03/03 14:21:41 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.100 2017/03/04 17:17:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 3 2017 $
+.Dd $Mdocdate: March 4 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -98,21 +98,29 @@ arguments are
 .Cm iso-8859-1 ,
 and
 .Cm utf-8 .
-If not specified, autodetection uses the first match:
-.Bl -tag -width iso-8859-1
-.It Cm utf-8
-if the first three bytes of the input file
-are the UTF-8 byte order mark (BOM, 0xefbbbf)
-.It Ar encoding
-if the first or second line of the input file matches the
+If not specified, autodetection uses the first match in the following
+list:
+.Bl -enum
+.It
+If the first three bytes of the input file are the UTF-8 byte order
+mark (BOM, 0xefbbbf), input is interpreted as
+.Cm utf-8 .
+.It
+If the first or second line of the input file matches the
 .Sy emacs
 mode line format
 .Pp
 .D1 .\e" -*- Oo ...; Oc coding: Ar encoding ; No -*-
-.It Cm utf-8
-if the first non-ASCII byte in the file introduces a valid UTF-8 sequence
-.It Cm iso-8859-1
-otherwise
+.Pp
+then input is interpreted according to
+.Ar encoding .
+.It
+If the first non-ASCII byte in the file introduces a valid UTF-8
+sequence, input is interpreted as
+.Cm utf-8 .
+.It
+Otherwise, input is interpreted as
+.Cm iso-8859-1 .
 .El
 .It Fl k
 A synonym for
