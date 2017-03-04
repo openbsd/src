@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.102 2017/02/17 19:14:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.103 2017/03/04 21:41:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -713,8 +713,7 @@ static int
 pre__t(DECL_ARGS)
 {
 
-	if (n->parent && MDOC_Rs == n->parent->tok &&
-	    n->parent->norm->Rs.quote_T) {
+	if (n->parent->tok == MDOC_Rs && n->parent->norm->Rs.quote_T) {
 		print_word("\\(lq");
 		outflags &= ~MMAN_spc;
 	} else
@@ -726,8 +725,7 @@ static void
 post__t(DECL_ARGS)
 {
 
-	if (n->parent && MDOC_Rs == n->parent->tok &&
-	    n->parent->norm->Rs.quote_T) {
+	if (n->parent->tok  == MDOC_Rs && n->parent->norm->Rs.quote_T) {
 		outflags &= ~MMAN_spc;
 		print_word("\\(rq");
 	} else

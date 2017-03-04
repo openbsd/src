@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.1 2017/03/03 14:21:41 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.2 2017/03/04 21:41:13 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1419,8 +1419,7 @@ md_pre_Xr(struct roff_node *n)
 static int
 md_pre__T(struct roff_node *n)
 {
-	if (n->parent != NULL && n->parent->tok == MDOC_Rs &&
-	    n->parent->norm->Rs.quote_T)
+	if (n->parent->tok == MDOC_Rs && n->parent->norm->Rs.quote_T)
 		md_word("\"");
 	else
 		md_rawword("*");
@@ -1432,8 +1431,7 @@ static void
 md_post__T(struct roff_node *n)
 {
 	outflags &= ~MD_spc;
-	if (n->parent != NULL && n->parent->tok == MDOC_Rs &&
-	    n->parent->norm->Rs.quote_T)
+	if (n->parent->tok == MDOC_Rs && n->parent->norm->Rs.quote_T)
 		md_word("\"");
 	else
 		md_rawword("*");
