@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.61 2017/02/02 06:23:58 guenther Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.62 2017/03/05 00:45:31 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -135,90 +135,104 @@ uvm_grow(struct proc *p, vaddr_t sp)
 #ifndef SMALL_KERNEL
 
 /*
- * Walk the VA space for a process, invoking 'func' on each present range
- * that should be included in a coredump.
+ * Common logic for whether a map entry should be included in a coredump
  */
-int
-uvm_coredump_walkmap(struct proc *p, void *iocookie,
-    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
-    void *cookie)
+static inline int
+uvm_should_coredump(struct proc *p, struct vm_map_entry *entry)
 {
-	struct uvm_coredump_state state;
+	if (!(entry->protection & PROT_WRITE) &&
+	    entry->aref.ar_amap == NULL &&
+	    entry->start != p->p_p->ps_sigcode)
+		return 0;
+
+	/*
+	 * Skip ranges marked as unreadable, as uiomove(UIO_USERSPACE)
+	 * will fail on them.  Maybe this really should be a test of
+	 * entry->max_protection, but doing
+	 *	uvm_map_extract(UVM_EXTRACT_FIXPROT)
+	 * on each such page would suck.
+	 */
+	if ((entry->protection & PROT_READ) == 0)
+		return 0;
+
+	/* Don't dump mmaped devices. */
+	if (entry->object.uvm_obj != NULL &&
+	    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
+		return 0;
+
+	if (entry->start >= VM_MAXUSER_ADDRESS)
+		return 0;
+
+	return 1;
+}
+
+/*
+ * Walk the VA space for a process to identify what to write to
+ * a coredump.  First the number of contiguous ranges is counted,
+ * then the 'setup' callback is invoked to prepare for actually
+ * recording the ranges, then the VA is walked again, invoking
+ * the 'walk' callback for each range.  The number of ranges walked
+ * is guaranteed to match the count seen by the 'setup' callback.
+ */
+
+int
+uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
+    uvm_coredump_walk_cb *walk, void *cookie)
+{
 	struct vmspace *vm = p->p_vmspace;
 	struct vm_map *map = &vm->vm_map;
 	struct vm_map_entry *entry;
-	vaddr_t top;
-	int error;
+	vaddr_t end;
+	int nsegment, error;
 
+	/*
+	 * Walk the map once to count the segments.
+	 */
+	nsegment = 0;
+	vm_map_lock_read(map);
 	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
-		state.cookie = cookie;
-		state.prot = entry->protection;
-		state.flags = 0;
-
 		/* should never happen for a user process */
 		if (UVM_ET_ISSUBMAP(entry)) {
 			panic("%s: user process with submap?", __func__);
 		}
 
-		if (!(entry->protection & PROT_WRITE) &&
-		    entry->aref.ar_amap == NULL &&
-		    entry->start != p->p_p->ps_sigcode)
+		if (! uvm_should_coredump(p, entry))
 			continue;
 
-		/*
-		 * Skip pages marked as unreadable, as uiomove(UIO_USERSPACE)
-		 * will fail on them.  Maybe this really should be a test of
-		 * entry->max_protection, but doing
-		 *	uvm_map_extract(UVM_EXTRACT_FIXPROT)
-		 * when dumping such a mapping would suck.
-		 */
-		if ((entry->protection & PROT_READ) == 0)
-			continue;
-
-		/* Don't dump mmaped devices. */
-		if (entry->object.uvm_obj != NULL &&
-		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
-			continue;
-
-		state.start = entry->start;
-		state.realend = entry->end;
-		state.end = entry->end;
-
-		if (state.start >= VM_MAXUSER_ADDRESS)
-			continue;
-
-		if (state.end > VM_MAXUSER_ADDRESS)
-			state.end = VM_MAXUSER_ADDRESS;
-
-#ifdef MACHINE_STACK_GROWS_UP
-		if ((vaddr_t)vm->vm_maxsaddr <= state.start &&
-		    state.start < ((vaddr_t)vm->vm_maxsaddr + MAXSSIZ)) {
-			top = round_page((vaddr_t)vm->vm_maxsaddr +
-			    ptoa(vm->vm_ssize));
-			if (state.end > top)
-				state.end = top;
-
-			if (state.start >= state.end)
-				continue;
-#else
-		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
-			top = trunc_page((vaddr_t)vm->vm_minsaddr -
-			    ptoa(vm->vm_ssize));
-			if (state.start < top)
-				state.start = top;
-
-			if (state.start >= state.end)
-				continue;
-#endif
-			state.flags |= UVM_COREDUMP_STACK;
-		}
-
-		error = (*func)(p, iocookie, &state);
-		if (error)
-			return (error);
+		nsegment++;
 	}
 
-	return (0);
+	/*
+	 * Okay, we have a count in nsegment; invoke the setup callback.
+	 */
+	error = (*setup)(nsegment, cookie);
+	if (error)
+		goto cleanup;
+
+	/*
+	 * Setup went okay, so do the second walk, invoking the walk
+	 * callback on the counted segments.
+	 */
+	nsegment = 0;
+	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
+		if (! uvm_should_coredump(p, entry))
+			continue;
+
+		end = entry->end;
+		if (end > VM_MAXUSER_ADDRESS)
+			end = VM_MAXUSER_ADDRESS;
+
+		error = (*walk)(entry->start, end, end, entry->protection,
+		    nsegment, cookie);
+		if (error)
+			break;
+		nsegment++;
+	}
+
+cleanup:
+	vm_map_unlock_read(map);
+
+	return error;
 }
 
 #endif	/* !SMALL_KERNEL */

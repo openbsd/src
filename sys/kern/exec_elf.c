@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.138 2017/02/11 06:07:03 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.139 2017/03/05 00:45:30 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -933,21 +933,20 @@ coredump_elf(struct proc *p, void *cookie)
 }
 #else /* !SMALL_KERNEL */
 
-
-struct countsegs_state {
+struct writesegs_state {
+	off_t	notestart;
+	off_t	secstart;
+	off_t	secoff;
+	struct	proc *p;
+	void	*iocookie;
+	Elf_Phdr *psections;
+	size_t	psectionslen;
+	size_t	notesize;
 	int	npsections;
 };
 
-int	coredump_countsegs_elf(struct proc *, void *,
-	    struct uvm_coredump_state *);
-
-struct writesegs_state {
-	Elf_Phdr *psections;
-	off_t	secoff;
-};
-
-int	coredump_writeseghdrs_elf(struct proc *, void *,
-	    struct uvm_coredump_state *);
+uvm_coredump_setup_cb	coredump_setup_elf;
+uvm_coredump_walk_cb	coredump_walk_elf;
 
 int	coredump_notes_elf(struct proc *, void *, size_t *);
 int	coredump_note_elf(struct proc *, void *, size_t *);
@@ -960,39 +959,96 @@ int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
 int
 coredump_elf(struct proc *p, void *cookie)
 {
-	Elf_Ehdr ehdr;
-	Elf_Phdr *psections = NULL;
-	struct countsegs_state cs;
+#ifdef DIAGNOSTIC
+	off_t offset;
+#endif
 	struct writesegs_state ws;
-	off_t notestart, secstart, offset;
-	size_t notesize, psectionslen;
+	size_t notesize;
 	int error, i;
 
-	/*
-	 * We have to make a total of 3 passes across the map:
-	 *
-	 *	1. Count the number of map entries (the number of
-	 *	   PT_LOAD sections).
-	 *
-	 *	2. Write the P-section headers.
-	 *
-	 *	3. Write the P-sections.
-	 */
+	ws.p = p;
+	ws.iocookie = cookie;
+	ws.psections = NULL;
 
-	/* Pass 1: count the entries. */
-	cs.npsections = 0;
-	error = uvm_coredump_walkmap(p, NULL, coredump_countsegs_elf, &cs);
+	/*
+	 * Walk the map to get all the segment offsets and lengths,
+	 * write out the ELF header.
+	 */
+	error = uvm_coredump_walkmap(p, coredump_setup_elf,
+	    coredump_walk_elf, &ws);
 	if (error)
 		goto out;
 
-	/* Count the PT_NOTE section. */
-	cs.npsections++;
+	error = coredump_write(cookie, UIO_SYSSPACE, ws.psections,
+	    ws.psectionslen);
+	if (error)
+		goto out;
+
+	/* Write out the notes. */
+	error = coredump_notes_elf(p, cookie, &notesize);
+	if (error)
+		goto out;
+
+#ifdef DIAGNOSTIC
+	if (notesize != ws.notesize)
+		panic("coredump: notesize changed: %zu != %zu",
+		    ws.notesize, notesize);
+	offset = ws.notestart + notesize;
+	if (offset != ws.secstart)
+		panic("coredump: offset %lld != secstart %lld",
+		    (long long) offset, (long long) ws.secstart);
+#endif
+
+	/* Pass 3: finally, write the sections themselves. */
+	for (i = 0; i < ws.npsections - 1; i++) {
+		Elf_Phdr *pent = &ws.psections[i];
+		if (pent->p_filesz == 0)
+			continue;
+
+#ifdef DIAGNOSTIC
+		if (offset != pent->p_offset)
+			panic("coredump: offset %lld != p_offset[%d] %lld",
+			    (long long) offset, i,
+			    (long long) pent->p_filesz);
+#endif
+
+		error = coredump_write(cookie, UIO_USERSPACE,
+		    (void *)(vaddr_t)pent->p_vaddr, pent->p_filesz);
+		if (error)
+			goto out;
+
+		coredump_unmap(cookie, (vaddr_t)pent->p_vaddr,
+		    (vaddr_t)pent->p_vaddr + pent->p_filesz);
+
+#ifdef DIAGNOSTIC
+		offset += ws.psections[i].p_filesz;
+#endif
+	}
+
+out:
+	free(ws.psections, M_TEMP, ws.psectionslen);
+	return (error);
+}
+
+
+
+int
+coredump_setup_elf(int segment_count, void *cookie)
+{
+	Elf_Ehdr ehdr;
+	struct writesegs_state *ws = cookie;
+	Elf_Phdr *note;
+	int error;
+
+	/* Get the count of segments, plus one for the PT_NOTE */
+	ws->npsections = segment_count + 1;
 
 	/* Get the size of the notes. */
-	error = coredump_notes_elf(p, NULL, &notesize);
+	error = coredump_notes_elf(ws->p, NULL, &ws->notesize);
 	if (error)
-		goto out;
+		return error;
 
+	/* Setup the ELF header */
 	memset(&ehdr, 0, sizeof(ehdr));
 	memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
 	ehdr.e_ident[EI_CLASS] = ELF_TARG_CLASS;
@@ -1011,133 +1067,70 @@ coredump_elf(struct proc *p, void *cookie)
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-	ehdr.e_phnum = cs.npsections;
+	ehdr.e_phnum = ws->npsections;
 	ehdr.e_shentsize = 0;
 	ehdr.e_shnum = 0;
 	ehdr.e_shstrndx = 0;
 
 	/* Write out the ELF header. */
-	error = coredump_write(cookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
+	error = coredump_write(ws->iocookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
 	if (error)
-		goto out;
+		return error;
 
-	psections = mallocarray(cs.npsections, sizeof(Elf_Phdr),
+	/*
+	 * Allocate the segment header array and setup to collect
+	 * the section sizes and offsets
+	 */
+	ws->psections = mallocarray(ws->npsections, sizeof(Elf_Phdr),
 	    M_TEMP, M_WAITOK|M_ZERO);
-	psectionslen = cs.npsections * sizeof(Elf_Phdr);
+	ws->psectionslen = ws->npsections * sizeof(Elf_Phdr);
 
-	offset = sizeof(ehdr);
-	notestart = offset + psectionslen;
-	secstart = notestart + notesize;
+	ws->notestart = sizeof(ehdr) + ws->psectionslen;
+	ws->secstart = ws->notestart + ws->notesize;
+	ws->secoff = ws->secstart;
 
-	/* Pass 2: now write the P-section headers. */
-	ws.secoff = secstart;
-	ws.psections = psections;
-	error = uvm_coredump_walkmap(p, cookie, coredump_writeseghdrs_elf, &ws);
-	if (error)
-		goto out;
+	/* Fill in the PT_NOTE segment header in the last slot */
+	note = &ws->psections[ws->npsections - 1];
+	note->p_type = PT_NOTE;
+	note->p_offset = ws->notestart;
+	note->p_vaddr = 0;
+	note->p_paddr = 0;
+	note->p_filesz = ws->notesize;
+	note->p_memsz = 0;
+	note->p_flags = PF_R;
+	note->p_align = ELFROUNDSIZE;
 
-	/* Write out the PT_NOTE header. */
-	ws.psections->p_type = PT_NOTE;
-	ws.psections->p_offset = notestart;
-	ws.psections->p_vaddr = 0;
-	ws.psections->p_paddr = 0;
-	ws.psections->p_filesz = notesize;
-	ws.psections->p_memsz = 0;
-	ws.psections->p_flags = PF_R;
-	ws.psections->p_align = ELFROUNDSIZE;
-
-	error = coredump_write(cookie, UIO_SYSSPACE, psections, psectionslen);
-	if (error)
-		goto out;
-
-#ifdef DIAGNOSTIC
-	offset += psectionslen;
-	if (offset != notestart)
-		panic("coredump: offset %lld != notestart %lld",
-		    (long long) offset, (long long) notestart);
-#endif
-
-	/* Write out the notes. */
-	error = coredump_notes_elf(p, cookie, &notesize);
-	if (error)
-		goto out;
-
-#ifdef DIAGNOSTIC
-	offset += notesize;
-	if (offset != secstart)
-		panic("coredump: offset %lld != secstart %lld",
-		    (long long) offset, (long long) secstart);
-#endif
-
-	/* Pass 3: finally, write the sections themselves. */
-	for (i = 0; i < cs.npsections - 1; i++) {
-		if (psections[i].p_filesz == 0)
-			continue;
-
-#ifdef DIAGNOSTIC
-		if (offset != psections[i].p_offset)
-			panic("coredump: offset %lld != p_offset[%d] %lld",
-			    (long long) offset, i,
-			    (long long) psections[i].p_filesz);
-#endif
-
-		error = coredump_write(cookie, UIO_USERSPACE,
-		    (void *)(vaddr_t)psections[i].p_vaddr,
-		    psections[i].p_filesz);
-		if (error)
-			goto out;
-
-		coredump_unmap(cookie, (vaddr_t)psections[i].p_vaddr,
-		    (vaddr_t)psections[i].p_vaddr + psections[i].p_filesz);
-
-#ifdef DIAGNOSTIC
-		offset += psections[i].p_filesz;
-#endif
-	}
-
-out:
-	free(psections, M_TEMP, psectionslen);
-	return (error);
-}
-
-int
-coredump_countsegs_elf(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
-{
-	struct countsegs_state *cs = us->cookie;
-
-	cs->npsections++;
 	return (0);
 }
 
 int
-coredump_writeseghdrs_elf(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
+coredump_walk_elf(vaddr_t start, vaddr_t realend, vaddr_t end, vm_prot_t prot,
+    int nsegment, void *cookie)
 {
-	struct writesegs_state *ws = us->cookie;
+	struct writesegs_state *ws = cookie;
 	Elf_Phdr phdr;
 	vsize_t size, realsize;
 
-	size = us->end - us->start;
-	realsize = us->realend - us->start;
+	size = end - start;
+	realsize = realend - start;
 
 	phdr.p_type = PT_LOAD;
 	phdr.p_offset = ws->secoff;
-	phdr.p_vaddr = us->start;
+	phdr.p_vaddr = start;
 	phdr.p_paddr = 0;
 	phdr.p_filesz = realsize;
 	phdr.p_memsz = size;
 	phdr.p_flags = 0;
-	if (us->prot & PROT_READ)
+	if (prot & PROT_READ)
 		phdr.p_flags |= PF_R;
-	if (us->prot & PROT_WRITE)
+	if (prot & PROT_WRITE)
 		phdr.p_flags |= PF_W;
-	if (us->prot & PROT_EXEC)
+	if (prot & PROT_EXEC)
 		phdr.p_flags |= PF_X;
 	phdr.p_align = PAGE_SIZE;
 
 	ws->secoff += phdr.p_filesz;
-	*ws->psections++ = phdr;
+	ws->psections[nsegment] = phdr;
 
 	return (0);
 }
