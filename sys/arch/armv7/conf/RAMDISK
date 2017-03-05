@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.68 2017/03/04 22:11:37 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.69 2017/03/05 21:03:17 deraadt Exp $
 
 machine		armv7 arm
 
@@ -116,7 +116,7 @@ expower*	at fdt? early 1
 exsysreg*	at fdt? early 1
 exmct*		at fdt? early 1
 exdog*		at fdt?
-exgpio*		at exynos?
+exgpio*		at fdt? early 1
 exiic*		at exynos?
 iic*		at exiic?
 exehci*		at fdt?
