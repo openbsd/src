@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.62 2017/03/05 00:45:31 guenther Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.63 2017/03/05 00:55:01 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -134,6 +134,78 @@ uvm_grow(struct proc *p, vaddr_t sp)
 
 #ifndef SMALL_KERNEL
 
+#define WALK_CHUNK	32
+/*
+ * Not all the pages in an amap may be present.  When dumping core,
+ * we don't want to force all the pages to be present: it's a waste
+ * of time and memory when we already know what they contain (zeros)
+ * and the ELF format at least can adequately represent them as a
+ * segment with memory size larger than its file size.
+ *
+ * So, we walk the amap with calls to amap_lookups() and scan the
+ * resulting pointers to find ranges of zero or more present pages
+ * followed by at least one absent page or the end of the amap.
+ * When then pass that range to the walk callback with 'start'
+ * pointing to the start of the present range, 'realend' pointing
+ * to the first absent page (or the end of the entry), and 'end'
+ * pointing to the page page the last absent page (or the end of
+ * the entry).
+ *
+ * Note that if the first page of the amap is empty then the callback
+ * must be invoked with 'start' == 'realend' so it can present that
+ * first range of absent pages.
+ */
+int
+uvm_coredump_walk_amap(struct vm_map_entry *entry, int *nsegmentp,
+    uvm_coredump_walk_cb *walk, void *cookie)
+{
+	struct vm_anon *anons[WALK_CHUNK];
+	vaddr_t pos, start, realend, end, entry_end;
+	vm_prot_t prot;
+	int nsegment, absent, npages, i, error;
+
+	prot = entry->protection;
+	nsegment = *nsegmentp;
+	start = entry->start;
+	entry_end = MIN(entry->end, VM_MAXUSER_ADDRESS);
+
+	absent = 0;
+	for (pos = start; pos < entry_end; pos += npages << PAGE_SHIFT) {
+		npages = (entry_end - pos) >> PAGE_SHIFT;
+		if (npages > WALK_CHUNK)
+			npages = WALK_CHUNK;
+		amap_lookups(&entry->aref, pos - entry->start, anons, npages);
+		for (i = 0; i < npages; i++) {
+			if ((anons[i] == NULL) == absent)
+				continue;
+			if (!absent) {
+				/* going from present to absent: set realend */
+				realend = pos + (i << PAGE_SHIFT);
+				absent = 1;
+				continue;
+			}
+
+			/* going from absent to present: invoke callback */
+			end = pos + (i << PAGE_SHIFT);
+			if (start != end) {
+				error = (*walk)(start, realend, end, prot,
+				    nsegment, cookie);
+				if (error)
+					return error;
+				nsegment++;
+			}
+			start = realend = end;
+			absent = 0;
+		}
+	}
+
+	if (!absent)
+		realend = entry_end;
+	error = (*walk)(start, realend, entry_end, prot, nsegment, cookie);
+	*nsegmentp = nsegment + 1;
+	return error;
+}
+
 /*
  * Common logic for whether a map entry should be included in a coredump
  */
@@ -166,6 +238,15 @@ uvm_should_coredump(struct proc *p, struct vm_map_entry *entry)
 	return 1;
 }
 
+
+/* do nothing callback for uvm_coredump_walk_amap() */
+static int
+noop(vaddr_t start, vaddr_t realend, vaddr_t end, vm_prot_t prot,
+    int nsegment, void *cookie)
+{
+	return 0;
+}
+
 /*
  * Walk the VA space for a process to identify what to write to
  * a coredump.  First the number of contiguous ranges is counted,
@@ -183,10 +264,16 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 	struct vm_map *map = &vm->vm_map;
 	struct vm_map_entry *entry;
 	vaddr_t end;
+	int refed_amaps = 0;
 	int nsegment, error;
 
 	/*
-	 * Walk the map once to count the segments.
+	 * Walk the map once to count the segments.  If an amap is
+	 * referenced more than once than take *another* reference
+	 * and treat the amap as exactly one segment instead of
+	 * checking page presence inside it.  On the second pass
+	 * we'll recognize which amaps we did that for by the ref
+	 * count being >1...and decrement it then.
 	 */
 	nsegment = 0;
 	vm_map_lock_read(map);
@@ -199,24 +286,51 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 		if (! uvm_should_coredump(p, entry))
 			continue;
 
+		if (entry->aref.ar_amap != NULL) {
+			if (entry->aref.ar_amap->am_ref == 1) {
+				uvm_coredump_walk_amap(entry, &nsegment,
+				    &noop, cookie);
+				continue;
+			}
+
+			/*
+			 * Multiple refs currently, so take another and
+			 * treat it as a single segment
+			 */
+			entry->aref.ar_amap->am_ref++;
+			refed_amaps++;
+		}
+
 		nsegment++;
 	}
 
 	/*
-	 * Okay, we have a count in nsegment; invoke the setup callback.
+	 * Okay, we have a count in nsegment.  Prepare to
+	 * walk it again, then invoke the setup callback. 
 	 */
+	entry = RBT_MIN(uvm_map_addr, &map->addr);
 	error = (*setup)(nsegment, cookie);
 	if (error)
 		goto cleanup;
 
 	/*
 	 * Setup went okay, so do the second walk, invoking the walk
-	 * callback on the counted segments.
+	 * callback on the counted segments and cleaning up references
+	 * as we go.
 	 */
 	nsegment = 0;
-	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
+	for (; entry != NULL; entry = RBT_NEXT(uvm_map_addr, entry)) {
 		if (! uvm_should_coredump(p, entry))
 			continue;
+
+		if (entry->aref.ar_amap != NULL &&
+		    entry->aref.ar_amap->am_ref == 1) {
+			error = uvm_coredump_walk_amap(entry, &nsegment,
+			    walk, cookie);
+			if (error)
+				break;
+			continue;
+		}
 
 		end = entry->end;
 		if (end > VM_MAXUSER_ADDRESS)
@@ -227,9 +341,32 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 		if (error)
 			break;
 		nsegment++;
+
+		if (entry->aref.ar_amap != NULL &&
+		    entry->aref.ar_amap->am_ref > 1) {
+			/* multiple refs, so we need to drop one */
+			entry->aref.ar_amap->am_ref--;
+			refed_amaps--;
+		}
 	}
 
+	if (error) {
 cleanup:
+		/* clean up the extra references from where we left off */
+		if (refed_amaps > 0) {
+			for (; entry != NULL;
+			    entry = RBT_NEXT(uvm_map_addr, entry)) {
+				if (entry->aref.ar_amap == NULL ||
+				    entry->aref.ar_amap->am_ref == 1)
+					continue;
+				if (! uvm_should_coredump(p, entry))
+					continue;
+				entry->aref.ar_amap->am_ref--;
+				if (refed_amaps-- == 0)
+					break;
+			}
+		}
+	}
 	vm_map_unlock_read(map);
 
 	return error;
