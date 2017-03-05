@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.28 2016/10/02 18:56:05 patrick Exp $ */
+/*	$OpenBSD: ahci.c,v 1.29 2017/03/05 09:55:16 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2158,6 +2158,12 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 				PORTNAME(ap), err_slot);
 
 			ccb = &ap->ap_ccbs[err_slot];
+			if (ccb->ccb_xa.state != ATA_S_ONCHIP) {
+				printf("%s: NCQ errored slot %d is idle"
+				    " (%08x active)\n", PORTNAME(ap), err_slot,
+				    ci_saved);
+				goto failall;
+			}
 		} else {
 			/* Didn't reset, could gather extended info from log. */
 		}
