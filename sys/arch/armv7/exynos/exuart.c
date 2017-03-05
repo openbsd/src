@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.7 2016/08/21 06:36:23 jsg Exp $ */
+/* $OpenBSD: exuart.c,v 1.8 2017/03/05 16:51:18 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -883,12 +883,10 @@ exuartcnputc(dev_t dev, int c)
 {
 	int s;
 	s = splhigh();
-	bus_space_write_1(exuartconsiot, exuartconsioh, EXUART_UTXH, (uint8_t)c);
-	while((bus_space_read_2(exuartconsiot, exuartconsioh, EXUART_UTRSTAT) &
-	    EXUART_UTRSTAT_TXBEMPTY) != 0 &&
-	      (bus_space_read_2(exuartconsiot, exuartconsioh, EXUART_UFSTAT) &
-	    (EXUART_UFSTAT_TX_FIFO_CNT_MASK|EXUART_UFSTAT_TX_FIFO_FULL)) != 0)
+	while (bus_space_read_4(exuartconsiot, exuartconsioh, EXUART_UFSTAT) &
+	   EXUART_UFSTAT_TX_FIFO_FULL)
 		;
+	bus_space_write_1(exuartconsiot, exuartconsioh, EXUART_UTXH, c);
 	splx(s);
 }
 
