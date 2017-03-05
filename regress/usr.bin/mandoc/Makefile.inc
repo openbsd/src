@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.20 2015/02/03 19:37:25 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.21 2017/03/05 19:57:35 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -33,6 +33,9 @@ _UTF8DIFFS = ${UTF8_TARGETS:C/$/.diff_utf8/}
 _HTMLFILES = ${HTML_TARGETS:C/$/.mandoc_html/}
 _HTMLDIFFS = ${HTML_TARGETS:C/$/.diff_html/}
 
+_MARKDOWNFILES = ${MARKDOWN_TARGETS:C/$/.mandoc_markdown/}
+_MARKDOWNDIFFS = ${MARKDOWN_TARGETS:C/$/.diff_markdown/}
+
 _LINTFILES =
 _LINTDIFFS =
 .for t in ${LINT_TARGETS}
@@ -53,6 +56,8 @@ utf8: utf8-clean ${_UTF8DIFFS}
 
 html: html-clean ${_HTMLDIFFS}
 
+markdown: markdown-clean ${_MARKDOWNDIFFS}
+
 tman: tman-clean ${_MANDIFFS}
 
 lint: lint-clean ${_LINTDIFFS}
@@ -61,10 +66,11 @@ htmlval: ${_HTMLVALS}
 
 # --- suffix rules ---
 
-.SUFFIXES:	.diff_ascii .diff_html .diff_lint .diff_man .diff_utf8 \
+.SUFFIXES:	.diff_ascii .diff_html .diff_lint \
+		.diff_man .diff_markdown .diff_utf8 \
 		.in .in_man \
 		.mandoc_ascii .mandoc_html .mandoc_lint \
-		.mandoc_man .mandoc_utf8 \
+		.mandoc_man .mandoc_markdown .mandoc_utf8 \
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
@@ -85,6 +91,13 @@ htmlval: ${_HTMLVALS}
 
 .mandoc_html.diff_html:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
+
+.in.mandoc_markdown:
+	@${MANDOC} ${MOPTS} -Tmarkdown ${.IMPSRC} > ${.TARGET}
+
+.mandoc_markdown.diff_markdown:
+	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_markdown$/out_markdown/} \
+		${.IMPSRC}
 
 .in.in_man:
 	@${MANDOC} ${MOPTS} -Tman ${.IMPSRC} > ${.TARGET}
@@ -125,6 +138,10 @@ ${t}: ${t}.diff_utf8
 ${t}: ${t}.diff_html
 .endfor
 
+.for t in ${MARKDOWN_TARGETS}
+${t}: ${t}.diff_markdown
+.endfor
+
 .for t in ${LINT_TARGETS}
 ${t}: ${t}.diff_lint
 .endfor
@@ -148,6 +165,11 @@ html-clean:
 	@rm -f ${_HTMLFILES}
 .endif
 
+markdown-clean:
+.if !empty(_MARKDOWNFILES)
+	@rm -f ${_MARKDOWNFILES}
+.endif
+
 tman-clean:
 .if !empty(_MANFILES)
 	@rm -f ${_MANFILES}
@@ -158,8 +180,8 @@ lint-clean:
 	@rm -f ${_LINTFILES}
 .endif
 
-.PHONY: ${_ASCIIDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} ${_MANDIFFS} \
-	${_LINTDIFFS} ${_HTMLVALS}
+.PHONY: ${_ASCIIDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} ${_MARKDOWNDIFFS} \
+	${_MANDIFFS} ${_LINTDIFFS} ${_HTMLVALS}
 
 
 # ----------------------------------------------------------------------
@@ -183,6 +205,7 @@ SKIP_GROFF_UTF8  += ${SKIP_GROFF}
 
 _OUTFILES =
 _HTMLOUTFILES =
+_MARKDOWNOUTFILES =
 _LINTOUTFILES =
 .for t in ${REGRESS_TARGETS}
 .  if empty(SKIP_GROFF_ASCII:M${t}) && \
@@ -201,6 +224,10 @@ _OUTFILES += ${t}.out_utf8
 _HTMLOUTFILES += ${t}.out_html
 .endfor
 
+.for t in ${MARKDOWN_TARGETS}
+_MARKDOWNOUTFILES += ${t}.out_markdown
+.endfor
+
 .for t in ${LINT_TARGETS}
 _LINTOUTFILES += ${t}.out_lint
 .endfor
@@ -210,6 +237,8 @@ _LINTOUTFILES += ${t}.out_lint
 groff: obj-check ${_OUTFILES}
 
 html-out: obj-check ${_HTMLOUTFILES}
+
+markdown-out: obj-check ${_MARKDOWNOUTFILES}
 
 lint-out: obj-check ${_LINTOUTFILES}
 
@@ -245,6 +274,11 @@ ${t}.out_html: ${t}.in
 		sed -n '/^BEGINTEST/,/^ENDTEST/p' > ${.TARGET}
 .endfor
 
+.for t in ${MARKDOWN_TARGETS}
+${t}.out_markdown: ${t}.in
+	${MANDOC} ${MOPTS} -Tmarkdown ${.ALLSRC} > ${.TARGET}
+.endfor
+
 .for t in ${LINT_TARGETS}
 ${t}.out_lint: ${t}.in
 	-${MANDOC} ${MOPTS} -Tlint ${.ALLSRC} > ${.TARGET} 2>&1
@@ -260,6 +294,11 @@ groff-clean: obj-check
 html-out-clean: obj-check
 .if !empty(_HTMLOUTFILES)
 	rm -f ${_HTMLOUTFILES}
+.endif
+
+markdown-out-clean: obj-check
+.if !empty(_MARKDOWNOUTFILES)
+	rm -f ${_MARKDOWNOUTFILES}
 .endif
 
 lint-out-clean: obj-check
