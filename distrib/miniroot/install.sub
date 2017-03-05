@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.980 2017/03/01 20:48:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.981 2017/03/05 19:31:15 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2188,12 +2188,16 @@ ifstart () {
 enable_network() {
 	local _f _gw _trunks _svlans _vlans
 
-	# Copy any network configuration files. N.B.: hosts already copied.
+	# Copy any network configuration files.
 	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
 		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
 	done
+
+	# Create a minimal hosts file.
+	echo "127.0.0.1\tlocalhost" >/tmp/i/hosts
+	echo "::1\t\tlocalhost" >>/tmp/i/hosts
 
 	# Set the address for the loopback interface. Bringing the
 	# interface up, automatically invokes the IPv6 address ::1.
@@ -2894,8 +2898,8 @@ do_upgrade(){
 	mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED."; exit; }
 	echo "OK."
 
-	# The fstab, hosts and myname files are required.
-	for _f in /mnt/etc/{fstab,hosts,myname}; do
+	# The fstab and myname files are required.
+	for _f in /mnt/etc/{fstab,myname}; do
 		[[ -f $_f ]] || { echo "No $_f!"; exit; }
 		cp $_f /tmp/i/${_f##*/}
 	done
