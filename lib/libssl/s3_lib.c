@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.136 2017/03/04 16:32:00 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.137 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1839,8 +1839,12 @@ ssl3_free(SSL *s)
 	free(S3I(s)->tmp.x25519);
 
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
+
 	BIO_free(S3I(s)->handshake_buffer);
+
 	tls1_free_digest_list(s);
+	tls1_handshake_hash_free(s);
+
 	free(S3I(s)->alpn_selected);
 
 	explicit_bzero(S3I(s), sizeof(*S3I(s)));
@@ -1881,6 +1885,7 @@ ssl3_clear(SSL *s)
 	S3I(s)->handshake_buffer = NULL;
 
 	tls1_free_digest_list(s);
+	tls1_handshake_hash_free(s);
 
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;

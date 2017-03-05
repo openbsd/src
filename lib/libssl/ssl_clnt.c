@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.9 2017/03/05 14:24:12 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.10 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -900,6 +900,9 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 	S3I(s)->tmp.new_cipher = cipher;
+
+	if (!tls1_handshake_hash_init(s))
+		goto err;
 
 	/*
 	 * Don't digest cached records if no sigalgs: we may need them for

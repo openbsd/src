@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2017/01/26 09:16:01 jsing Exp $
+# $OpenBSD: Makefile,v 1.32 2017/03/05 14:39:53 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -25,7 +25,7 @@ SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 SRCS= \
 	ssl_srvr.c ssl_clnt.c s3_lib.c ssl_pkt.c ssl_both.c \
-	t1_meth.c t1_srvr.c t1_clnt.c t1_lib.c t1_enc.c \
+	t1_meth.c t1_srvr.c t1_clnt.c t1_lib.c t1_enc.c t1_hash.c \
 	d1_meth.c d1_srvr.c d1_clnt.c d1_lib.c d1_pkt.c \
 	d1_both.c d1_enc.c d1_srtp.c \
 	ssl_lib.c ssl_cert.c ssl_sess.c \

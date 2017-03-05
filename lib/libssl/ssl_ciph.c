@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.94 2017/02/21 15:28:27 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.95 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -717,6 +717,34 @@ ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
 	else
 		*md = NULL;
 	return 1;
+}
+
+int
+ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
+{
+	*md = NULL;
+
+	switch (ssl_get_algorithm2(s) & SSL_HANDSHAKE_MAC_MASK) {
+	case SSL_HANDSHAKE_MAC_DEFAULT:
+		*md = EVP_md5_sha1();
+		return 1;
+	case SSL_HANDSHAKE_MAC_GOST94:
+		*md = EVP_gostr341194();
+		return 1;
+	case SSL_HANDSHAKE_MAC_SHA256:
+		*md = EVP_sha256();
+		return 1;
+	case SSL_HANDSHAKE_MAC_SHA384:
+		*md = EVP_sha384();
+		return 1;
+	case SSL_HANDSHAKE_MAC_STREEBOG256:
+		*md = EVP_streebog256();
+		return 1;
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 #define ITEM_SEP(a) \

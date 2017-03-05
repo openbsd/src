@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.176 2017/03/04 16:32:00 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.177 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,12 +259,13 @@ __BEGIN_HIDDEN_DECLS
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
-#define SSL_HANDSHAKE_MAC_MD5 0x10
-#define SSL_HANDSHAKE_MAC_SHA 0x20
-#define SSL_HANDSHAKE_MAC_GOST94 0x40
-#define SSL_HANDSHAKE_MAC_SHA256 0x80
-#define SSL_HANDSHAKE_MAC_SHA384 0x100
-#define SSL_HANDSHAKE_MAC_STREEBOG256 0x200
+#define SSL_HANDSHAKE_MAC_MASK		0xff0
+#define SSL_HANDSHAKE_MAC_MD5		0x010
+#define SSL_HANDSHAKE_MAC_SHA		0x020
+#define SSL_HANDSHAKE_MAC_GOST94	0x040
+#define SSL_HANDSHAKE_MAC_SHA256	0x080
+#define SSL_HANDSHAKE_MAC_SHA384	0x100
+#define SSL_HANDSHAKE_MAC_STREEBOG256	0x200
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
@@ -808,6 +809,10 @@ typedef struct ssl3_state_internal_st {
 	 * and freed and MD_CTX-es for all required digests are stored in
 	 * this array */
 	EVP_MD_CTX **handshake_dgst;
+
+	/* Rolling hash of handshake messages. */
+	EVP_MD_CTX *handshake_hash;
+
 	/* this is set whenerver we see a change_cipher_spec message
 	 * come in when we are not looking for one */
 	int change_cipher_spec;
@@ -1099,6 +1104,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
 int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);
 int ssl_get_handshake_digest(int i, long *mask, const EVP_MD **md);
+int ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md);
 
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
@@ -1271,6 +1277,12 @@ int dtls1_enc(SSL *s, int snd);
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);
+
+int tls1_handshake_hash_init(SSL *s);
+int tls1_handshake_hash_update(SSL *s, const unsigned char *buf, size_t len);
+int tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
+    size_t *outlen);
+void tls1_handshake_hash_free(SSL *s);
 
 int tls1_init_finished_mac(SSL *s);
 int tls1_finish_mac(SSL *s, const unsigned char *buf, int len);

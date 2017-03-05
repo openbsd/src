@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.96 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.97 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,6 +135,7 @@
  * OTHERWISE.
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include "ssl_locl.h"
@@ -192,6 +193,12 @@ int
 tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
 	int i;
+
+	if (len < 0)
+		return 0;
+
+	if (!tls1_handshake_hash_update(s, buf, len))
+		return 0;
 
 	if (S3I(s)->handshake_buffer &&
 	    !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
@@ -1121,52 +1128,23 @@ tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 int
 tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 {
-	unsigned int i;
-	EVP_MD_CTX ctx;
-	unsigned char buf[2*EVP_MAX_MD_SIZE];
-	unsigned char *q, buf2[12];
-	int idx;
-	long mask;
-	int err = 0;
-	const EVP_MD *md;
+	unsigned char buf1[EVP_MAX_MD_SIZE];
+	unsigned char buf2[12];
+	size_t hlen;
 
-	q = buf;
+	if (!tls1_handshake_hash_value(s, buf1, sizeof(buf1), &hlen))
+		return 0;
 
-	if (S3I(s)->handshake_buffer)
-		if (!tls1_digest_cached_records(s))
-			return 0;
+	if (hlen > INT_MAX)
+		return 0;
 
-	EVP_MD_CTX_init(&ctx);
-
-	for (idx = 0; ssl_get_handshake_digest(idx, &mask, &md); idx++) {
-		if (ssl_get_algorithm2(s) & mask) {
-			int hashsize = EVP_MD_size(md);
-			EVP_MD_CTX *hdgst = S3I(s)->handshake_dgst[idx];
-			if (!hdgst || hashsize < 0 ||
-			    hashsize > (int)(sizeof buf - (size_t)(q - buf))) {
-				/* internal error: 'buf' is too small for this cipersuite! */
-				err = 1;
-			} else {
-				if (!EVP_MD_CTX_copy_ex(&ctx, hdgst) ||
-				    !EVP_DigestFinal_ex(&ctx, q, &i) ||
-				    (i != (unsigned int)hashsize))
-					err = 1;
-				q += hashsize;
-			}
-		}
-	}
-
-	if (!tls1_PRF(ssl_get_algorithm2(s), str, slen, buf, (int)(q - buf),
+	if (!tls1_PRF(ssl_get_algorithm2(s), str, slen, buf1, hlen,
 	    NULL, 0, NULL, 0, NULL, 0,
 	    s->session->master_key, s->session->master_key_length,
-	    out, buf2, sizeof buf2))
-		err = 1;
-	EVP_MD_CTX_cleanup(&ctx);
-
-	if (err)
+	    out, buf2, sizeof(buf2)))
 		return 0;
-	else
-		return sizeof buf2;
+
+	return sizeof(buf2);
 }
 
 int

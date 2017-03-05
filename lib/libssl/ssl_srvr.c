@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.9 2017/03/05 14:24:12 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.10 2017/03/05 14:39:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1044,6 +1044,9 @@ ssl3_get_client_hello(SSL *s)
 	} else {
 		S3I(s)->tmp.new_cipher = s->session->cipher;
 	}
+
+	if (!tls1_handshake_hash_init(s))
+		goto err;
 
 	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
 	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) ||
