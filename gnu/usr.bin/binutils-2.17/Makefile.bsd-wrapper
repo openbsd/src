@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2017/01/25 08:56:07 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2017/03/05 00:26:08 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,11 @@ INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
 INFO_HOST_MODULES=${SUBDIRS:S/^/info-/g}
 INSTALL_INFO_HOST_MODULES=${INST_SUBDIRS:S/^/install-info-/g}
 
+.if defined(CROSSDIR)
 CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
+.else
+CONFIGTARGET=
+.endif
 
 .if ${TARGET_ARCH} == "aarch64"
 CONFIGTARGET+=--without-gnu-ld
