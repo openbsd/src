@@ -1,0 +1,15 @@
+FO-OBSOLETE(1) - General Commands Manual
+
+# NAME
+
+**Fo-obsolete** - obsolete function macros
+
+# DESCRIPTION
+
+old function type
+*fortran*
+
+function return value
+*value*
+
+OpenBSD - July 2, 2014

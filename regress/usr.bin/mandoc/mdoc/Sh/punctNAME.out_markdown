@@ -1,0 +1,13 @@
+SH-PUNCTNAME(1) - General Commands Manual
+
+# NAME
+
+**Sh-punctNAME**
+**second\_name**;
+**third\_name**, - wrong punctuation in the NAME section
+
+# DESCRIPTION
+
+One comma is missing, and one is misplaced.
+
+OpenBSD - January 7, 2017

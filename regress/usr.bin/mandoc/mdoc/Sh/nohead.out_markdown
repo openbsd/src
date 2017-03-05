@@ -1,0 +1,13 @@
+SH-NOHEAD(1) - General Commands Manual
+
+# NAME
+
+**Sh-nohead** - sections without header lines
+
+# DESCRIPTION
+
+empty section header:
+empty subsection header:
+text
+
+OpenBSD - February 5, 2015

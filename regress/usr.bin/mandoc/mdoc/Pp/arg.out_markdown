@@ -1,0 +1,16 @@
+PP-ARG(1) - General Commands Manual
+
+# NAME
+
+**Pp-arg** - paragraph macro with arguments
+
+# DESCRIPTION
+
+line 1
+
+line 2  
+line 3
+
+line 4
+
+OpenBSD - February 4, 2015

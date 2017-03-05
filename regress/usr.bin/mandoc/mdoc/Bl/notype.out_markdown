@@ -1,0 +1,23 @@
+BL-NOTYPE(1) - General Commands Manual
+
+# NAME
+
+**Bl-notype** - lists with late or missing types
+
+# DESCRIPTION
+
+late type:
+
+*	Some text.
+
+no type:
+
+Some text.
+
+no argument at all:
+
+Some text.
+
+final text
+
+OpenBSD - August 10, 2016

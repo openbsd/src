@@ -1,0 +1,13 @@
+IN-FONT(2) - System Calls Manual
+
+# NAME
+
+**In-font** - changing the font inside the include macro
+
+# DESCRIPTION
+
+normal text
+&lt;*prefix**header**suffix*>
+trailing text
+
+OpenBSD - July 9, 2012

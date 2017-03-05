@@ -1,0 +1,15 @@
+CM-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Cm-noarg** - command modifier macro without arguments
+
+# DESCRIPTION
+
+end of line:
+**mt** **-f** *device*
+
+middle of line:
+**ps** **-x** **-o** **command**
+
+OpenBSD - July 2, 2014

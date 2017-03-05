@@ -1,0 +1,13 @@
+FD-EOS(1) - General Commands Manual
+
+# NAME
+
+**Fd-eos** - end of sentence handling after the legacy include macro
+
+# DESCRIPTION
+
+Let's use
+**string.h .**  
+And then something else.
+
+OpenBSD - November 17, 2012

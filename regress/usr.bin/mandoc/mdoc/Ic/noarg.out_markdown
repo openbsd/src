@@ -1,0 +1,14 @@
+IC-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Ic-noarg** - interactive command without an argument
+
+# DESCRIPTION
+
+with command:
+**ls**
+no command:
+end of test document
+
+OpenBSD - January 19, 2011

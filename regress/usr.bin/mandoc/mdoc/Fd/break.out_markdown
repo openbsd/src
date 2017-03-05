@@ -1,0 +1,35 @@
+FD-BREAK(2) - System Calls Manual
+
+# NAME
+
+**Fd-break** - line break before old-style header include file
+
+# SYNOPSIS
+
+**#include &lt;fcntl.h&gt;**
+
+*int*  
+**open**(*const char \*path*, *int flags*, *mode\_t mode*);
+
+**#include &lt;sys/types.h&gt;**  
+**#include &lt;unistd.h&gt;**
+
+*int*  
+**dup**(*int oldd*);
+
+*ssize\_t*  
+**write**(*int d*, *const void \*buf*, *size\_t nbytes*);
+
+# DESCRIPTION
+
+**#include &lt;fcntl.h&gt;**  
+*int*
+**open**(*const char \*path*, *int flags*, *mode\_t mode*)
+**#include &lt;sys/types.h&gt;**  
+**#include &lt;unistd.h&gt;**  
+*int*
+**dup**(*int oldd*)
+*ssize\_t*
+**write**(*int d*, *const void \*buf*, *size\_t nbytes*)
+
+OpenBSD - June 9, 2010

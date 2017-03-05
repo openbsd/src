@@ -1,0 +1,13 @@
+TN-FONT(1) - General Commands Manual
+
+# NAME
+
+**Tn-font** - changing fonts inside the trade name macro
+
+# DESCRIPTION
+
+normal text
+`literal*emphasis*back`
+trailing text
+
+OpenBSD - July 9, 2012

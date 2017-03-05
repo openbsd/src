@@ -1,0 +1,19 @@
+SM-TWOARG(1) - General Commands Manual
+
+# NAME
+
+**Sm-twoarg** - spacing macro with multiple arguments
+
+# DESCRIPTION
+
+**default**:
+**-f** *on*  
+**off two**:
+two**-f**&zwnj;*off*  
+**badtwo**: bad two
+**-f** *off*  
+**on two**:
+two
+**-f** *on*
+
+OpenBSD - November 26, 2014

@@ -1,0 +1,13 @@
+CD-EOS(1) - General Commands Manual
+
+# NAME
+
+**Cd-eos** - end of sentence handling after the configuration directive macro
+
+# DESCRIPTION
+
+Do not use
+**options INSECURE**.
+It is insecure.
+
+OpenBSD - November 17, 2012

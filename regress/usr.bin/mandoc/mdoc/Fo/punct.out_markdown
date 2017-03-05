@@ -1,0 +1,12 @@
+FO-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Fo-punct** - punctuation on function name input lines
+
+# DESCRIPTION
+
+*double*
+**sin**(), cos
+
+OpenBSD - November 20, 2014

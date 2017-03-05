@@ -1,0 +1,24 @@
+TA-BARE(1) - General Commands Manual
+
+# NAME
+
+**Ta-bare** - bare tabular column macro
+
+# DESCRIPTION
+
+initial text
+middle text
+
+indented text
+
+middle text
+
+-	indented text
+
+middle text
+
+	a    b
+
+final text
+
+OpenBSD - November 12, 2012

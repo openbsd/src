@@ -1,0 +1,16 @@
+DV-FONT(1) - General Commands Manual
+
+# NAME
+
+**Dv-font** - formatting of defined variables
+
+# DESCRIPTION
+
+The
+`BUFSIZ`
+macro.
+
+And with
+`some *embedded* string`.
+
+OpenBSD - October 21, 2011

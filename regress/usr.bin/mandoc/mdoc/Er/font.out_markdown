@@ -1,0 +1,13 @@
+ER-FONT(1) - General Commands Manual
+
+# NAME
+
+**Er-font** - changing fonts inside the error code macro
+
+# DESCRIPTION
+
+normal text
+`EFONT*emphasis*EBACK`
+trailing text
+
+OpenBSD - July 9, 2012

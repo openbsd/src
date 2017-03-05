@@ -1,0 +1,85 @@
+EM-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Em-punct** - punctuation following an emphasis macro
+
+# DESCRIPTION
+
+Leading punctuation:
+(*b*
+\[*b*
+| *b*
+. *b*
+, *b*
+; *b*
+: *b*
+? *b*
+! *b*
+) *b*
+] *b*
+
+Trailing punctuation:
+*a* (
+*a* \[
+*a* |
+*a*.
+*a*,
+*a*;
+*a*:
+*a*?
+*a*!
+*a*)
+*a*]
+
+Middle punctuation:
+*a* (*b*
+*a* \[*b*
+*a* | *b*
+*a*. *b*
+*a*, *b*
+*a*; *b*
+*a*: *b*
+*a*? *b*
+*a*! *b*
+*a*) *b*
+*a*] *b*
+
+Isolated punctuation:
+*a* (*b*
+*a* \[*b*
+*a* | *b*
+*a* . *b*
+*a* , *b*
+*a* ; *b*
+*a* : *b*
+*a* ? *b*
+*a* ! *b*
+*a* ) *b*
+*a* ] *b*
+
+Isolated trailing punctuation:
+*a* (
+*a* \[
+*a* |
+*a* .
+*a* ,
+*a* ;
+*a* :
+*a* ?
+*a* !
+*a* )
+*a* ]
+
+Multiple isolated punctuation:
+*a* (\[*b*
+*a* )] *b*
+
+Multiple punctuation:
+\[(*arg*)].
+
+Quoted:
+*a . b Nm*
+*. b Nm*
+
+OpenBSD - November 17, 2014

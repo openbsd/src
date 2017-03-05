@@ -1,0 +1,14 @@
+TN-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Tn-noarg** - trade name macro without argument
+
+# DESCRIPTION
+
+with argument
+`IBM`
+no argument
+end of test document
+
+OpenBSD - January 19, 2011

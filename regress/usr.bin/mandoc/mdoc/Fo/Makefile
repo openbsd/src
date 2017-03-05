@@ -1,8 +1,10 @@
-# $OpenBSD: Makefile,v 1.13 2015/02/16 11:39:34 schwarze Exp $
+# $OpenBSD: Makefile,v 1.14 2017/03/05 19:59:26 schwarze Exp $
 
 REGRESS_TARGETS	 = basic break eos font noarg nohead
 REGRESS_TARGETS += obsolete punct section warn
 LINT_TARGETS	 = noarg nohead obsolete warn
+MARKDOWN_TARGETS  = basic break eos font noarg nohead
+MARKDOWN_TARGETS += obsolete punct section warn
 
 # groff-1.22.3 defects:
 # - .Fo without an argument prints unbalanced parentheses

@@ -1,0 +1,32 @@
+FN-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Fn-noarg** - function name macro without arguments
+
+# DESCRIPTION
+
+with arguments:
+*int*
+**abs**(*int i*)
+*long*
+**labs**(*long i*)
+void function arguments:
+*int*
+**rand**()
+*long*
+**random**()
+*u\_int32\_t*
+**arc4random**()
+no name arguments:
+*int*
+no type arguments:
+**abs**(*int i*)
+no type and void function arguments:
+**rand**()
+**random**()
+**arc4random**()
+no arguments at all:
+end of test document
+
+OpenBSD - July 12, 2012

@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.5 2012/07/09 17:52:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2017/03/05 19:59:26 schwarze Exp $
 
 REGRESS_TARGETS = simple font
+MARKDOWN_TARGETS = simple
 
 .include <bsd.regress.mk>

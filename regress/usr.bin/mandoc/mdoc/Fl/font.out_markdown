@@ -1,0 +1,13 @@
+FL-FONT(1) - General Commands Manual
+
+# NAME
+
+**Fl-font** - changing fonts inside the flag macro
+
+# DESCRIPTION
+
+normal text
+**-bold*emphasis*back**
+trailing text
+
+OpenBSD - July 9, 2012

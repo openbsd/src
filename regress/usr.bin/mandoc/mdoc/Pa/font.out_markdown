@@ -1,0 +1,13 @@
+PA-FONT(1) - General Commands Manual
+
+# NAME
+
+**Pa-font** - changing fonts inside the path macro
+
+# DESCRIPTION
+
+normal text
+*emphasis**bold**back*
+trailing text
+
+OpenBSD - July 9, 2012

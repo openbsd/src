@@ -1,0 +1,13 @@
+FD-FONT(2) - System Calls Manual
+
+# NAME
+
+**Fd-font** - changing the font inside the old-style include macro
+
+# DESCRIPTION
+
+normal text
+**prefix*header*suffix**  
+trailing text
+
+OpenBSD - July 9, 2012

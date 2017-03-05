@@ -1,0 +1,45 @@
+FO-BREAK(1) - General Commands Manual
+
+# NAME
+
+**Fo-break** - line breaks in function blocks
+
+# SYNOPSIS
+
+**using Fn:**
+
+*my\_long\_return\_type \*&zwnj;*  
+**my\_long\_function**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*);
+
+*void*  
+**this function name is so ridiculously long that it will not fit on the line**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*, *my\_long\_type third\_argument*);
+
+**using Fo and single-argument Fa:**
+
+*my\_long\_return\_type \*&zwnj;*  
+**my\_long\_function**(*my\_long\_type first\_argument*,
+*my\_long\_type second\_argument*);
+
+*void*  
+**this function name is so ridiculously long that it will not fit on the line**(*my\_long\_type first\_argument*,
+*my\_long\_type second\_argument*,
+*my\_long\_type third\_argument*);
+
+**using Fo and multi-argument Fa:**
+
+*my\_long\_return\_type \*&zwnj;*  
+**my\_long\_function**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*);
+
+# DESCRIPTION
+
+using Fn:  
+**my\_long\_function**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*)
+
+using Fo and single-argument Fa:  
+**my\_long\_function**(*my\_long\_type first\_argument*,
+*my\_long\_type second\_argument*)
+
+using Fo and multi-argument Fa:  
+**my\_long\_function**(*my\_long\_type first\_argument*, *my\_long\_type second\_argument*)
+
+OpenBSD - April 8, 2014

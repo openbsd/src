@@ -1,0 +1,14 @@
+BREAK-NOTOPEN(1) - General Commands Manual
+
+# NAME
+
+**break-notopen** - mismatching end macro inside two open blocks
+
+# DESCRIPTION
+
+&lt;ao
+\[bo pc bc]
+ac&gt;
+tail
+
+OpenBSD - August 20, 2016

@@ -1,0 +1,18 @@
+EX-ARGS(1) - General Commands Manual
+
+# NAME
+
+**Ex-args** - arguments to the exit value macro
+
+# EXIT STATUS
+
+no arguments:
+The **Ex-args** utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+one argument:
+The **one** utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+two arguments:
+The **one** and **two** utilities exit&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+OpenBSD - July 29, 2014

@@ -1,0 +1,14 @@
+DV-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Dv-noarg** - defined variable macro without an argument
+
+# DESCRIPTION
+
+with variable:
+`NULL`
+no variable:
+end of test document
+
+OpenBSD - July 2, 2014

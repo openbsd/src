@@ -1,0 +1,13 @@
+CM-FONT(1) - General Commands Manual
+
+# NAME
+
+**Cm-font** - changing fonts inside the command modifier macro
+
+# DESCRIPTION
+
+normal text
+**bold*emphasis*back**
+trailing text
+
+OpenBSD - July 9, 2012

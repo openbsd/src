@@ -1,0 +1,14 @@
+NM-PAR(1) - General Commands Manual
+
+# NAME
+
+**Nm-par** - paragraph macro in a synopsis name block
+
+# SYNOPSIS
+
+**Nm-par**
+**-a**
+
+**-b**
+
+OpenBSD - February 3, 2015

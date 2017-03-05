@@ -1,0 +1,16 @@
+EV-FONT(1) - General Commands Manual
+
+# NAME
+
+**Ev-font** - formatting of environment variables
+
+# DESCRIPTION
+
+The
+`PATH`
+variable.
+
+And with
+`some *embedded* string`.
+
+OpenBSD - October 21, 2011

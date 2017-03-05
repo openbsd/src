@@ -1,0 +1,22 @@
+FO-BASIC(1) - General Commands Manual
+
+# NAME
+
+**Fo-basic** - function blocks
+
+# SYNOPSIS
+
+*double*  
+**sin**(*double x*);
+
+*double*  
+**atan2**(*double y*, *double x*);
+
+# DESCRIPTION
+
+*double*
+**sin**(*double x*)
+*double*
+**atan2**(*double y*, *double x*)
+
+OpenBSD - July 7, 2012

@@ -1,0 +1,17 @@
+SH-BEFORE(1) - General Commands Manual
+
+Can
+mandoc(1)
+on
+OpenBSD
+handle this?
+
+# NAME
+
+**Sh-before** - content before the first section header
+
+# DESCRIPTION
+
+some text
+
+OpenBSD - July 7, 2014

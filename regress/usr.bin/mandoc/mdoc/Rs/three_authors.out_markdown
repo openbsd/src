@@ -1,0 +1,14 @@
+RS-THREE\_AUTHORS(1) - General Commands Manual
+
+# NAME
+
+**Rs-three\_authors** - listing three authors in a reference block
+
+# AUTHORS
+
+kristaps,
+joerg, and
+ingo,
+*mandoc*.
+
+OpenBSD - May 1, 2009

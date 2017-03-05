@@ -1,0 +1,13 @@
+SX-FONT(1) - General Commands Manual
+
+# NAME
+
+**Sx-font** - changing fonts inside the cross reference macro
+
+# DESCRIPTION
+
+normal text
+*emphasis**bold**back*
+trailing text
+
+OpenBSD - July 9, 2012

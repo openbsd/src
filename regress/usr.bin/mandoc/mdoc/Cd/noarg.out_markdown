@@ -1,0 +1,14 @@
+CD-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Cd-noarg** - kernel configuration directive without arguments
+
+# DESCRIPTION
+
+with arguments:
+**wd\* at pciide?**
+without arguments:
+end of test document
+
+OpenBSD - January 19, 2011

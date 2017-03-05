@@ -1,0 +1,18 @@
+NM-EMPTY(2) - System Calls Manual
+
+# NAME
+
+**Nm-empty** - handling of empty name macros
+
+# SYNOPSIS
+
+**Nm-empty**  
+**Nm-empty**
+
+# DESCRIPTION
+
+The
+**Nm-empty**
+utility ...
+
+OpenBSD - June 30, 2010

@@ -1,0 +1,22 @@
+EO-OBSOLETE(1) - General Commands Manual
+
+# NAME
+
+**Eo-obsolete** - obsolete enclosure macros
+
+# DESCRIPTION
+
+no prior Es
+
+surplus
+initial text
+&lt;&lt;enclosed words with **-flags**&gt;&gt;
+middle text
+&lt;&lt;more enclosed words&gt;&gt;
+final text
+
+initial text
+after empty Es
+final text
+
+OpenBSD - July 2, 2014

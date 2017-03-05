@@ -1,0 +1,21 @@
+ST-INVALID(1) - General Commands Manual
+
+# NAME
+
+**St-invalid** - handling of invalid standard argument
+
+# STANDARDS
+
+valid argument:
+IEEE Std 1003.1-2004 (&#8220;POSIX.1&#8221;)
+
+invalid argument:
+
+no arguments:
+
+two arguments:
+IEEE Std 1003.1-2004 (&#8220;POSIX.1&#8221;) murks
+
+end of file
+
+OpenBSD - June 30, 2010

@@ -1,0 +1,14 @@
+AD-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Ad-noarg** - address macro without an argument
+
+# DESCRIPTION
+
+with address:
+*0x3bc*
+no address:
+end of test document
+
+OpenBSD - January 19, 2011

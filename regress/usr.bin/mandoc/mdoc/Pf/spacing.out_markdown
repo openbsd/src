@@ -1,0 +1,34 @@
+PF-SPACING(1) - General Commands Manual
+
+# NAME
+
+**Pf-spacing** - spacing around the prefix macro
+
+# DESCRIPTION
+
+Closing punctuation goes
+.right.
+But
+.. double
+prefixes don't work.
+Opening punctuation goes
+(left.
+But again, prefix
+() pairs
+don't work.
+Even normal text gets
+prefixed.
+The first
+Argument
+is not parsed.
+Nothing can be
+prefixed
+to the next line.
+Trailing punctuation still counts as
+*eos* .
+(But it does not fall out of enclosures .)
+
+It makes no sense at the very
+*end*
+
+OpenBSD - November 30, 2014

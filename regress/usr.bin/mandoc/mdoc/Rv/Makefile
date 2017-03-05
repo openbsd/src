@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2014/08/14 02:00:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2017/03/05 19:59:26 schwarze Exp $
 
 REGRESS_TARGETS	 = args noname nostd
 LINT_TARGETS	 = noname nostd
+MARKDOWN_TARGETS = args nostd
 
 # groff-1.22.2 defect:
 # - .Rv without -std produces no output

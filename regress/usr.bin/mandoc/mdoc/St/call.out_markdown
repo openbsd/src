@@ -1,0 +1,17 @@
+ST-CALL(1) - General Commands Manual
+
+# NAME
+
+**St-call** - the standard macro calling other macros
+
+# STANDARDS
+
+calling another macro:
+**-called**
+
+valid argument:
+IEEE Std 1003.1-2004 (&#8220;POSIX.1&#8221;)
+
+end of file
+
+OpenBSD - February 10, 2015

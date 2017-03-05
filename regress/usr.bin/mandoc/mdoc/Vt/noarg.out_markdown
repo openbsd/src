@@ -1,0 +1,14 @@
+VT-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Vt-noarg** - variable type macro without arguments
+
+# DESCRIPTION
+
+with arguments
+*signed int*
+no arguments
+end of test document
+
+OpenBSD - January 20, 2011

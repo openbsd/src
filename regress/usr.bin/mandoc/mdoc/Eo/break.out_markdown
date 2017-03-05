@@ -1,0 +1,43 @@
+EO-BREAK(1) - General Commands Manual
+
+# NAME
+
+**Eo-break** - breaking a custom enclosure block
+
+# DESCRIPTION
+
+break
+&lt;&lt;eo
+\[bo
+ec&gt;&gt;
+bc]
+no closing
+&lt;&lt;eo
+\[bo
+ec
+bc]
+no content
+&lt;&lt;\[&gt;&gt;
+bc]
+opening only
+&lt;&lt;\[
+bc]
+broken
+\[bo
+&lt;&lt;eo
+bc]
+ec&gt;&gt;
+no content
+\[bo
+&lt;&lt;]&gt;&gt;
+no opening
+\[bo
+eo
+bc]
+ec&gt;&gt;
+closing only
+\[bo
+]&gt;&gt;
+final text
+
+OpenBSD - February 1, 2015

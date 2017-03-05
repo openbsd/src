@@ -1,0 +1,17 @@
+NM-BREAK(1) - General Commands Manual
+
+# NAME
+
+**Nm-break** - name block head breaking another block
+
+# SYNOPSIS
+
+**before&nbsp;\[within]**
+
+# DESCRIPTION
+
+initial text
+**Nm-break**
+final text
+
+OpenBSD - August 17, 2014

@@ -1,0 +1,15 @@
+VA-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Va-noarg** - variable name macro without arguments
+
+# DESCRIPTION
+
+with arguments
+*int*
+*errno*
+no arguments
+end of test document
+
+OpenBSD - January 20, 2011

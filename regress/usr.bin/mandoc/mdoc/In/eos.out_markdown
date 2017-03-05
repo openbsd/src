@@ -1,0 +1,13 @@
+IN-EOS(1) - General Commands Manual
+
+# NAME
+
+**In-eos** - end of sentence handling after the include macro
+
+# DESCRIPTION
+
+Let's use
+&lt;*string.h*>.
+And then something else.
+
+OpenBSD - November 16, 2012

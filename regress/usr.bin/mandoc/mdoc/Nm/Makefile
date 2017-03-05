@@ -1,10 +1,13 @@
-# $OpenBSD: Makefile,v 1.14 2017/02/11 20:22:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.15 2017/03/05 19:59:26 schwarze Exp $
 
 REGRESS_TARGETS	 = badNAME badNAMEuse break broken
 REGRESS_TARGETS	+= empty emptyNAME emptyNAMEuse
 REGRESS_TARGETS	+= font long par parns punct
 
 LINT_TARGETS	 = badNAME badNAMEuse break broken
+
+MARKDOWN_TARGETS  = break broken empty
+MARKDOWN_TARGETS += font long par parns punct
 
 # groff-1.22.3/mandoc differences:
 # - When the head of an Nm block in the SYNOPSIS is broken by an

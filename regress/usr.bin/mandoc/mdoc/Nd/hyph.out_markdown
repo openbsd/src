@@ -1,0 +1,13 @@
+ND-HYPH(1) - General Commands Manual
+
+# NAME
+
+**Nd-hyph** - when there is already a hyphen within the the word, line-breaking is permitted at that place
+
+# DESCRIPTION
+
+Even in the document description line in the
+*NAME*
+section.
+
+OpenBSD - October 5, 2013

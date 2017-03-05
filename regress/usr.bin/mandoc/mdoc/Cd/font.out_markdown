@@ -1,0 +1,13 @@
+CD-FONT(1) - General Commands Manual
+
+# NAME
+
+**Cd-font** - changing fonts inside the configuration declaration macro
+
+# DESCRIPTION
+
+normal text
+**bold*emphasis*back**
+trailing text
+
+OpenBSD - July 9, 2012

@@ -1,0 +1,14 @@
+ER-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Er-noarg** - error constant macro without an argument
+
+# DESCRIPTION
+
+with error:
+`ENOENT`
+no error:
+end of test document
+
+OpenBSD - January 19, 2011

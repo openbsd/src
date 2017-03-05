@@ -1,0 +1,17 @@
+VA-BASIC(1) - General Commands Manual
+
+# NAME
+
+**Va-basic** - basic usage of the variable name macro
+
+# DESCRIPTION
+
+Both
+*char \*&zwnj;*
+*malloc\_options*
+and
+*int*
+*errno*
+are typical examples of global variables.
+
+OpenBSD - July 8, 2012

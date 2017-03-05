@@ -1,0 +1,22 @@
+FL-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Fl-noarg** - Fl macro without arguments
+
+# DESCRIPTION
+
+Without an argument, it yields
+**-**
+a dash.
+
+This is true even before middle
+**-** | **-and**
+trailing punctuation
+**-**.
+
+Following macros
+**-** \[flag]
+follow without white space.
+
+OpenBSD - August 21, 2014

@@ -1,0 +1,14 @@
+EV-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Ev-noarg** - environment variable macro without an argument
+
+# DESCRIPTION
+
+with variable:
+`HOME`
+no variable:
+end of test document
+
+OpenBSD - July 2, 2014

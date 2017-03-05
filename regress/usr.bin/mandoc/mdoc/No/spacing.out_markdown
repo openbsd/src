@@ -1,0 +1,27 @@
+NO-SPACING(1) - General Commands Manual
+
+# NAME
+
+**No-spacing** - spacing around the normal macro
+
+# DESCRIPTION
+
+Text before
+and
+after the macro.
+Macros on the line
+\[before]
+and
+\[after]
+the macro.
+Macros
+*before* and *after*
+the macro on the same line.
+Punctuation before (
+and
+) after the macro.
+The macro
+\[in]
+an enclosure.
+
+OpenBSD - October 1, 2010

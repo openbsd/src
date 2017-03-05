@@ -1,0 +1,16 @@
+BLANK-COMMENT(1) - General Commands Manual
+
+# NAME
+
+**blank-comment** - normal and bogus comments
+
+# DESCRIPTION
+
+normal comment
+bogus comment
+end of text
+
+text
+text
+
+OpenBSD - February 17, 2010

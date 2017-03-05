@@ -1,0 +1,41 @@
+BL-EMPTYITEM(1) - General Commands Manual
+
+# NAME
+
+**Bl-emptyitem** - lists with fixed heads and empty items
+
+# DESCRIPTION
+
+bullet list:
+
+*	one
+
+*	
+
+*	three
+
+dash list:
+
+-	one
+
+-	
+
+-	three
+
+enum list:
+
+1.	one
+
+2.	
+
+3.	three
+
+hyphen list:
+
+-	one
+
+-	
+
+-	three
+
+OpenBSD - August 10, 2016

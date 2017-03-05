@@ -1,0 +1,21 @@
+VT-SPACING(1) - General Commands Manual
+
+# NAME
+
+**Vt-spacing** - spacing around the variable type macro
+
+# SYNOPSIS
+
+*extern char \*\*environ*  
+*extern int errno*
+
+# DESCRIPTION
+
+various types, for example
+*unsigned int*,
+*long int*
+and
+*float*,
+*double*
+
+OpenBSD - July 8, 2012

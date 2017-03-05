@@ -1,0 +1,12 @@
+SH-BADNAME(1) - General Commands Manual
+
+# NAME
+
+*bad NAME section*
+**Sh-badNAME**
+
+# DESCRIPTION
+
+The description appears before the name and is not marked up with Nd.
+
+OpenBSD - July 1, 2014

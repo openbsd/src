@@ -1,0 +1,12 @@
+LB-BADARGS(3) - Library Functions Manual
+
+# NAME
+
+**Lb-badargs** - bad arguments to the library macro
+
+# LIBRARY
+
+library &#8220;murks&#8221;  
+library &#8220;mylib&#8221; another
+
+OpenBSD - January 2, 2011

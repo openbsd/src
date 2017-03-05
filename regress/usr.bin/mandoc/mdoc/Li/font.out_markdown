@@ -1,0 +1,13 @@
+LI-FONT(1) - General Commands Manual
+
+# NAME
+
+**Li-font** - changing fonts inside the literal in-line macro
+
+# DESCRIPTION
+
+normal text
+`literal*emphasis*back`
+trailing text
+
+OpenBSD - July 9, 2012

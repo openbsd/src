@@ -1,0 +1,34 @@
+OP-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Op-punct** - punctuation handling by the Op macro
+
+# DESCRIPTION
+
+at the beginning:
+(\[z]
+\[| z]
+\[. z]
+
+in the middle:
+\[a (z]
+\[a | z]
+\[a. z]
+
+at the end:
+\[a (]
+\[a |]
+\[a].
+
+punctuation only:
+(\[]
+\[|]
+\[].
+
+more than one:
+((\[]
+\[| |]
+\[]..
+
+OpenBSD - June 24, 2011

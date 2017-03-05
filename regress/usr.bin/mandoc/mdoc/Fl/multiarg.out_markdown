@@ -1,0 +1,17 @@
+FL-MULTIARG(1) - General Commands Manual
+
+# NAME
+
+**Fl-multiarg** - multiple arguments to a Fl macro
+
+# DESCRIPTION
+
+Each group of flags in
+**-a** **-b** **-c** **-def**
+gets its own dash.
+
+Punctuation characters like in
+\[**-a** | **-b**]
+get no dash.
+
+OpenBSD - December 24, 2009

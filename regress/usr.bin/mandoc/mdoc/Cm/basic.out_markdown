@@ -1,0 +1,15 @@
+CM-BASIC(1) - General Commands Manual
+
+# NAME
+
+**Cm-basic** - basic usage of the Cm macro
+
+# DESCRIPTION
+
+end of line:
+**mt** **-f** *device* **rewind**
+
+middle of line:
+**ps** **-o** **pid**,**command**
+
+OpenBSD - July 6, 2012

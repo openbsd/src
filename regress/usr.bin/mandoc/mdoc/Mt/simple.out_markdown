@@ -1,0 +1,15 @@
+MT-SIMPLE(1) - General Commands Manual
+
+# NAME
+
+**Mt-simple** - mailto
+
+# DESCRIPTION
+
+Please send mail to
+<schwarze@openbsd.org>.
+
+Do not send mail to
+<~>.
+
+OpenBSD - February 17, 2010

@@ -1,0 +1,19 @@
+OP-BROKEN(1) - General Commands Manual
+
+# NAME
+
+**Op-broken** - partial implicit block broken by partial explicit block
+
+# DESCRIPTION
+
+before both
+"inside first
+\[inside both" inside second]
+after both
+
+0
+"1
+\[12 \[123" 23]]
+0
+
+OpenBSD - July 2, 2014

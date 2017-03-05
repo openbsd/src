@@ -1,0 +1,20 @@
+VT-CHILD(1) - General Commands Manual
+
+# NAME
+
+**Vt-child** - the variable type macro does not want children
+
+# SYNOPSIS
+
+*extern **int** `errno`*
+
+# DESCRIPTION
+
+various types, for example
+*unsigned* **int**,
+*long* `int`
+and
+*float*,
+*double*
+
+OpenBSD - July 2, 2014

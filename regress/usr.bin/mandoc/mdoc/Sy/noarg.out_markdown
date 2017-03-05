@@ -1,0 +1,14 @@
+SY-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Sy-noarg** - symbolic macro without arguments
+
+# DESCRIPTION
+
+with argument
+**arg**
+no argument
+end of test document
+
+OpenBSD - January 19, 2011

@@ -1,0 +1,17 @@
+AQ-EMPTY(1) - General Commands Manual
+
+# NAME
+
+**Aq-empty** - empty implicit enclosure macros
+
+# DESCRIPTION
+
+An empty
+&lt;&gt;
+and a full
+&lt;user@host&gt;
+return path.
+And another
+&lt;full&gt; one.
+
+OpenBSD - August 6, 2010

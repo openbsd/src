@@ -1,0 +1,114 @@
+FN-SECTION(3) - Library Functions Manual
+
+# NAME
+
+**Fn-section** - special handling of Fn in various sections
+
+# SYNOPSIS
+
+*int*  
+**abs**(*int j*);
+
+*double*  
+**sin**(*double x*);
+
+# DESCRIPTION
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# RETURN VALUES
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# ENVIRONMENT
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# FILES
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# EXAMPLES
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# DIAGNOSTICS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# ERRORS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# SEE ALSO
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# STANDARDS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# HISTORY
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# AUTHORS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# CAVEATS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# BUGS
+
+*int*
+**abs**(*int j*)
+*double*
+**sin**(*double x*)
+
+# CUSTOM
+
+*int*  
+**abs**(*int j*);
+
+*double*  
+**sin**(*double x*);
+
+OpenBSD - April 7, 2010

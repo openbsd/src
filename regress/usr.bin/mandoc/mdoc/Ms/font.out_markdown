@@ -1,0 +1,13 @@
+MS-FONT(1) - General Commands Manual
+
+# NAME
+
+**Ms-font** - changing fonts inside the mathematical symbol macro
+
+# DESCRIPTION
+
+normal text
+**bold*emphasis*back** | **after**: **punctuation**
+trailing text
+
+OpenBSD - November 20, 2014

@@ -1,0 +1,16 @@
+NS-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Ns-punct** - punctuation after the no space macro
+
+# DESCRIPTION
+
+Normal words:
+nons no
+Opening punctuation:
+no(ns no
+Closing punctuation:
+nons) no
+
+OpenBSD - October 1, 2010

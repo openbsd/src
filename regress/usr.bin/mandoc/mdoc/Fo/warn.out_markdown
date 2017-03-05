@@ -1,0 +1,15 @@
+FO-WARN(1) - General Commands Manual
+
+# NAME
+
+**Fo-warn** - warnings related to function blocks
+
+# SYNOPSIS
+
+*double*  
+**sin()**(*double x*);
+
+*double*  
+**atan2**(*double y, double x*);
+
+OpenBSD - October 11, 2014

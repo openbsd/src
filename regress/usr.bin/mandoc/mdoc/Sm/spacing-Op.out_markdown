@@ -1,0 +1,49 @@
+SM-SPACING-OP(1) - General Commands Manual
+
+# NAME
+
+**Sm-spacing-Op** - spacing mode, demonstrated using the .Op macro
+
+# SYNOPSIS
+
+**mandoc**
+**-T**&zwnj;*mode*
+*file&nbsp;...*
+
+# DESCRIPTION
+
+text1
+text2 text3
+text4
+
+text1
+text2 text3
+\[macro4]
+
+text1
+\[macro2macro3]
+text4
+
+text1
+\[macro2\[macro3]]
+\[macro4]
+
+\[macro1]
+text2 text3
+text4
+
+\[macro1]
+text2 text3
+\[macro4]
+
+\[macro1]
+\[macro2\[macro3]]
+text4
+
+\[macro1]
+\[macro2\[macro3]]
+\[macro4]
+
+\[macro1]
+
+OpenBSD - July 4, 2010

@@ -1,0 +1,17 @@
+DL-SPACING(1) - General Commands Manual
+
+# NAME
+
+**Dl-spacing** - spacing in and around one-line literal displays
+
+# DESCRIPTION
+
+preceding text
+
+	spacing in and around one-line literal displays
+
+empty display:
+
+following text
+
+OpenBSD - February 5, 2015

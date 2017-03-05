@@ -1,0 +1,17 @@
+SQ-EMPTY(1) - General Commands Manual
+
+# NAME
+
+**Sq-empty** - empty implicit enclosure macros
+
+# DESCRIPTION
+
+An empty
+''
+and a full
+'user@host'
+quotation.
+And another
+'full' one.
+
+OpenBSD - October 21, 2010

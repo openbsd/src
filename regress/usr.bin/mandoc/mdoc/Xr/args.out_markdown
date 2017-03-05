@@ -1,0 +1,28 @@
+XR-ARGS(1) - General Commands Manual
+
+# NAME
+
+**Xr-args** - additional arguments to cross references
+
+# DESCRIPTION
+
+One single
+echo(1)
+is fine, and so is an
+echo(1) followed by something else.
+
+But listen for multiple
+echo(1)s.
+
+A call, an
+echo(1), and
+another
+echo(1).
+
+Finally, half an
+echo,
+no echo
+and no
+echo at all.
+
+OpenBSD - December 3, 2011

@@ -1,0 +1,13 @@
+VT-FONT(1) - General Commands Manual
+
+# NAME
+
+**Vt-font** - changing fonts inside the variable type macro
+
+# DESCRIPTION
+
+normal text
+*emphasis**bold**back*
+trailing text
+
+OpenBSD - July 9, 2012

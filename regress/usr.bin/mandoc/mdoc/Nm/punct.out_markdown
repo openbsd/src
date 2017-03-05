@@ -1,0 +1,42 @@
+NM-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Nm-punct** - punctuation handling by the Nm macro
+
+# DESCRIPTION
+
+closing punctuation
+**a**)
+only one
+**Nm-punct**)
+only more than one
+**Nm-punct**))
+middle
+**a**) **z**
+start
+**Nm-punct**) z
+dot
+**Nm-punct**. z
+comma
+**Nm-punct**, z
+semicolon
+**Nm-punct**; z
+colon
+**Nm-punct**: z
+quest
+**Nm-punct**? z
+excl
+**Nm-punct**! z
+paren
+**Nm-punct**) z
+bracket
+**Nm-punct**] z
+bar
+| **m**
+op paren
+(**a**
+op bracket
+\[**a**
+
+OpenBSD - August 21, 2014

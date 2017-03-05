@@ -1,0 +1,50 @@
+RS-ALLCH(1) - General Commands Manual
+
+# NAME
+
+**Rs-allch** - reference block using all supported child macros
+
+# DESCRIPTION
+
+reference on the same line:
+some
+*bogus*
+text
+author name,
+"title of article",
+*book title*,
+*issuer name*,
+*journal name*,
+report name,
+number of journal,
+volume number,
+uniform resource locator,
+page number,
+institutional author,
+city name,
+date of publication,
+optional information.
+
+# SEE ALSO
+
+reference after a blank line:
+
+some
+*bogus*
+text
+author name,
+"title of article",
+*book title*,
+*issuer name*,
+*journal name*,
+report name,
+number of journal,
+volume number,
+uniform resource locator,
+page number,
+institutional author,
+city name,
+date of publication,
+optional information.
+
+OpenBSD - July 7, 2014

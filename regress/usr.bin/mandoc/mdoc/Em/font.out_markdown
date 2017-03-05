@@ -1,0 +1,13 @@
+EM-FONT(1) - General Commands Manual
+
+# NAME
+
+**Em-font** - changing fonts inside the emphasis macro
+
+# DESCRIPTION
+
+normal text
+*emphasis**bold**back*
+trailing text
+
+OpenBSD - July 9, 2012

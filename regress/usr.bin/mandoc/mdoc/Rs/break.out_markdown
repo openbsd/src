@@ -1,0 +1,30 @@
+RS-BREAK(1) - General Commands Manual
+
+# NAME
+
+**Rs-break** - line break before reference start
+
+# DESCRIPTION
+
+reference on the same line:
+author,
+*journal*,
+42\.
+
+# SEE ALSO
+
+reference after a blank line:
+
+author,
+*journal*,
+42\.
+
+# SEE *ALSO*
+
+reference after a blank line:
+
+author,
+*journal*,
+42\.
+
+OpenBSD - April 15, 2014

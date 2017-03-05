@@ -1,0 +1,13 @@
+NM-LONG(1) - General Commands Manual
+
+# NAME
+
+**Nm-long** - long Nm in the SYNOPSIS
+
+# SYNOPSIS
+
+**This is a terribly long name, it is so long that it does not fit one one single line -**
+**-o**
+*file&nbsp;...*
+
+OpenBSD - April 4, 2014

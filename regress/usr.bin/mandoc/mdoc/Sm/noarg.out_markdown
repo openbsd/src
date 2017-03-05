@@ -1,0 +1,18 @@
+SM-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Sm-noarg** - spacing macro without arguments
+
+# DESCRIPTION
+
+**-f** *on*
+**-f**&zwnj;*off*
+**-f** *toggle* (now on)
+**-f** *on*
+**-f**&zwnj;*toggle*(nowoff)
+
+**-f** *on*
+on a new line
+
+OpenBSD - July 2, 2014

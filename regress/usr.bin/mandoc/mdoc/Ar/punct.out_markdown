@@ -1,0 +1,42 @@
+AR-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Ar-punct** - punctuation handling by the Ar macro
+
+# DESCRIPTION
+
+closing punctuation
+*a*)
+only one
+*file ...*)
+only more than one
+*file ...*))
+middle
+*a*) *z*
+start
+*file ...*) *z*
+dot
+*file ...*. *z*
+comma
+*file ...*, *z*
+semicolon
+*file ...*; *z*
+colon
+*file ...*: *z*
+quest
+*file ...*? *z*
+excl
+*file ...*! *z*
+paren
+*file ...*) *z*
+bracket
+*file ...*] *z*
+bar
+| *m*
+op paren
+(*a*
+op bracket
+\[*a*
+
+OpenBSD - August 21, 2014

@@ -1,0 +1,15 @@
+AP-EOS(1) - General Commands Manual
+
+# NAME
+
+**Ap-eos** - end of sentence handling after the apostrophe macro
+
+# DESCRIPTION
+
+The first sentence is
+Ingo's.
+The second is
+Kristaps'.
+No idea about the third.
+
+OpenBSD - November 16, 2012

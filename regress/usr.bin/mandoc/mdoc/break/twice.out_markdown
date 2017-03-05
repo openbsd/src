@@ -1,0 +1,35 @@
+BREAK-TWICE(1) - General Commands Manual
+
+# NAME
+
+**break-twice** - breaking the same block twice
+
+# DESCRIPTION
+
+Standard case, fully explicit:
+\[bo
+{bro
+&lt;ao brc} bc] ac&gt;
+
+Standard case, implicit broken block:
+\[bo
+{bro
+&lt;aq brc} bc] eol&gt;
+
+Two of the same kind, fully explicit:
+\[bo
+\[bo
+&lt;ao bc] bc] ac&gt;
+
+Two of the same kind, implicit broken block:
+\[bo
+\[bo
+&lt;aq bc] bc] eol&gt;
+
+Two implicit breakers:
+&lt;aq \[bq (po]&gt;
+pc)
+
+-	it
+
+OpenBSD - February 16, 2017

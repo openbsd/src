@@ -1,0 +1,50 @@
+BLANK-LIST(1) - General Commands Manual
+
+# NAME
+
+**blank-list** - handling of blank lines in lists
+
+# DESCRIPTION
+
+normal list:
+
+first item
+
+second item
+
+list with paragraphs:
+
+first item
+
+second item
+
+list with final paragraph:
+
+item
+
+list with double paragraph:
+
+item
+
+normal compact list:
+
+first item  
+second item
+
+compact list with paragraphs:
+
+first item
+
+second item
+
+compact list with final paragraph:
+
+item
+
+compact list with double paragraph:
+
+item
+
+End.
+
+OpenBSD - July 17, 2012

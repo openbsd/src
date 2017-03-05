@@ -1,0 +1,14 @@
+SX-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Sx-noarg** - internal cross reference without a target
+
+# DESCRIPTION
+
+with target:
+*DESCRIPTION*
+no target:
+end of test document
+
+OpenBSD - January 19, 2011

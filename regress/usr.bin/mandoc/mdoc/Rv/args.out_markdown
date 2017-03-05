@@ -1,0 +1,18 @@
+RV-ARGS(3) - Library Functions Manual
+
+# NAME
+
+**Rv-args** - arguments to the return value macro
+
+# RETURN VALUES
+
+no arguments:
+Upon successful completion, the value&#160;0 is returned; otherwise the value&#160;&#45;1 is returned and the global variable *errno* is set to indicate the error.
+
+one argument:
+The **one**() function returns the value&#160;0 if successful; otherwise the value&#160;&#45;1 is returned and the global variable *errno* is set to indicate the error.
+
+two arguments:
+The **one**() and **two**() functions return the value&#160;0 if successful; otherwise the value&#160;&#45;1 is returned and the global variable *errno* is set to indicate the error.
+
+OpenBSD - July 29, 2014

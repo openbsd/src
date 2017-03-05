@@ -1,0 +1,19 @@
+SH-SUBBEFORE(1) - General Commands Manual
+
+## Subsection
+
+Can
+mandoc(1)
+on
+OpenBSD
+handle this?
+
+# NAME
+
+**Sh-subbefore** - subsection before the first section header
+
+# DESCRIPTION
+
+some text
+
+OpenBSD - July 30, 2014

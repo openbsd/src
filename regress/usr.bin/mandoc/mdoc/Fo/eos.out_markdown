@@ -1,0 +1,17 @@
+FO-EOS(1) - General Commands Manual
+
+# NAME
+
+**Fo-eos** - end of sentence handling after a function block
+
+# DESCRIPTION
+
+As an example of a trigonometric function, let us consider
+**double sin**(*double x*).
+Or do you prefer
+*double*
+**cos**(*double*, *x*)
+.
+Either will do.
+
+OpenBSD - November 17, 2012

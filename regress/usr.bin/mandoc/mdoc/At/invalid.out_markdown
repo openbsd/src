@@ -1,0 +1,20 @@
+AT-INVALID(1) - General Commands Manual
+
+# NAME
+
+**At-invalid** - handling of an invalid AT&T UNIX argument
+
+# DESCRIPTION
+
+no argument:
+AT&T UNIX
+
+valid argument:
+Version&#160;7 AT&T UNIX
+
+invalid argument:
+AT&T UNIX murks
+
+end of file
+
+OpenBSD - June 30, 2010

@@ -1,0 +1,18 @@
+FO-FONT(1) - General Commands Manual
+
+# NAME
+
+**Fo-font** - font nesting in function blocks
+
+# DESCRIPTION
+
+**prefix*name*suffix**(*type arg*)
+trailing text
+
+**prefix*name*suffix**(*type arg*)
+trailing text
+
+**function**(*prefix**bold**suffix*)
+trailing text
+
+OpenBSD - July 9, 2012

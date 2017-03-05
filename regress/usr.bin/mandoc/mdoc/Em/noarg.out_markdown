@@ -1,0 +1,14 @@
+EM-NOARG(1) - General Commands Manual
+
+# NAME
+
+**Em-noarg** - emphasis macro without arguments
+
+# DESCRIPTION
+
+with argument
+*arg*
+no argument
+end of test document
+
+OpenBSD - January 19, 2011

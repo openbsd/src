@@ -1,0 +1,23 @@
+OO-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Oo-punct** - punctuation handling by the Oo macro
+
+# DESCRIPTION
+
+at the beginning:
+(\[z
+\[| z
+\[. z]]]
+
+in the middle:
+\[a (z
+\[a | z
+\[a. z]]]
+
+at the end:
+\[\[a (]
+|]
+
+OpenBSD - July 6, 2012

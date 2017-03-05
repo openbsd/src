@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile,v 1.6 2015/02/16 19:02:32 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2017/03/05 19:59:25 schwarze Exp $
 
 REGRESS_TARGETS	 = badsec case dupe fourargs late
 REGRESS_TARGETS	+= missing noarg nobody nosec order
 LINT_TARGETS	 = badsec case dupe fourargs late
 LINT_TARGETS	+= missing noarg nobody nosec order
+MARKDOWN_TARGETS  = case dupe fourargs late
+MARKDOWN_TARGETS += missing noarg nobody nosec order
 
 SKIP_GROFF	 = badsec nobody
 SKIP_ASCII	 = badsec

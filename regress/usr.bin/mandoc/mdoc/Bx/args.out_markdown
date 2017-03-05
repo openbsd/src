@@ -1,0 +1,29 @@
+BX-ARGS(1) - General Commands Manual
+
+# NAME
+
+**Bx-args** - arguments to the BSD macro
+
+# DESCRIPTION
+
+no arguments:
+BSD
+
+one standard argument:
+4\.4BSD
+
+one non-standard argument:
+nettBSD
+
+one semi-standard argument:
+4\.1cBSD
+
+two standard arguments:
+4\.3BSD-Reno
+
+more arguments:
+4\.3BSD-Tahoe and some additional words
+
+end of test document
+
+OpenBSD - January 30, 2011

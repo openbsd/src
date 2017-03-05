@@ -1,0 +1,12 @@
+EO-UNCLOSED(1) - General Commands Manual
+
+# NAME
+
+**Eo-unclosed** - unclosed custom enclosure block
+
+# DESCRIPTION
+
+before block
+&lt;&lt;
+
+OpenBSD - February 11, 2015

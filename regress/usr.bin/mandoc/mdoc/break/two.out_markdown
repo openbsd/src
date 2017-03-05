@@ -1,0 +1,37 @@
+BREAK-TWO(1) - General Commands Manual
+
+# NAME
+
+**break-two** - the same block breaking two other blocks
+
+# DESCRIPTION
+
+Standard case, explicit:
+&lt;ao
+\[bo
+{bro ac&gt; brc}
+bc]
+
+Standard case, implicit:
+&lt;aq \[bo {bro eol&gt;}
+bc]
+
+Reverse closing, explicit:
+&lt;ao
+\[bo
+{bro ac&gt; bc] brc}
+
+Reverse closing, implicit:
+&lt;aq \[bo {bro eol&gt;] brc}
+
+Two of the same kind, explicit:
+&lt;ao
+\[bo
+\[bo ac&gt; bc]
+bc]
+
+Two of the same kind, implicit:
+&lt;aq \[bo \[bo eol&gt;]
+bc]
+
+OpenBSD - February 12, 2015

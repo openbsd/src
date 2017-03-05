@@ -1,0 +1,17 @@
+LB-BREAK(3) - Library Functions Manual
+
+# NAME
+
+**Lb-break** - output line breaks after the library macro
+
+# LIBRARY
+
+library &#8220;mylib&#8221;  
+text
+
+# DESCRIPTION
+
+library &#8220;mylib&#8221;
+text
+
+OpenBSD - June 30, 2010

@@ -1,0 +1,13 @@
+FO-NOHEAD(1) - General Commands Manual
+
+# NAME
+
+**Fo-nohead** - function block macro without head argument
+
+# DESCRIPTION
+
+initial text
+*int*(*int*)
+final text
+
+OpenBSD - February 5, 2015

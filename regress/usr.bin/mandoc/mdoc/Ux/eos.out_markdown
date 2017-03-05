@@ -1,0 +1,25 @@
+UX-EOS(1) - General Commands Manual
+
+# NAME
+
+**Ux-eos** - end of sentence spacing after Unix macros
+
+# DESCRIPTION
+
+In the beginning Ken and Dennis wrote
+UNIX.
+The CSRG rewrote it to become
+BSD.
+When it dissolved, people started
+BSD/OS.
+And
+NetBSD.
+And
+FreeBSD.
+And
+OpenBSD.
+And
+DragonFly.
+By now, it's free for everyone.
+
+OpenBSD - December 22, 2013

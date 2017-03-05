@@ -1,0 +1,18 @@
+EX-NOSTD(1) - General Commands Manual
+
+# NAME
+
+**Ex-nostd** - exit value macros without -std arguments
+
+# EXIT STATUS
+
+no arguments:
+The **Ex-nostd** utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+one argument:
+The **one** utility exits&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+two arguments:
+The **one** and **two** utilities exit&#160;0 on success, and&#160;&gt;0 if an error occurs.
+
+OpenBSD - July 29, 2014

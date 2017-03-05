@@ -1,0 +1,17 @@
+ND-PAR(1) - General Commands Manual
+
+# NAME
+
+**Nd-par** - paragraph macro
+after one-line description
+
+Usually, there shouldn't be additional text in the NAME section.
+
+# DESCRIPTION
+
+The text belongs here. - stray
+description macro
+
+Back to normal state.
+
+OpenBSD - February 3, 2015

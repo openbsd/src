@@ -1,0 +1,13 @@
+VA-FONT(1) - General Commands Manual
+
+# NAME
+
+**Va-font** - changing fonts inside the variable name macro
+
+# DESCRIPTION
+
+normal text
+*emphasis**bold**back*
+trailing text
+
+OpenBSD - July 9, 2012

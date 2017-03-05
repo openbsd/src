@@ -1,0 +1,19 @@
+NM-BROKEN(1) - General Commands Manual
+
+# NAME
+
+**Nm-broken** - broken synapsis name block
+
+# SYNOPSIS
+
+*int*  
+**function**(**name**);
+
+tail
+\[oo  
+**nm**
+oc]
+
+-	item
+
+OpenBSD - February 11, 2017

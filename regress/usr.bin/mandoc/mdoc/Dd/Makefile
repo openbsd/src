@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2014/11/21 01:52:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2017/03/05 19:59:25 schwarze Exp $
 
 REGRESS_TARGETS	 = badarg dupe late long manarg noarg order
 LINT_TARGETS	 = badarg dupe late long manarg noarg order
+MARKDOWN_TARGETS = badarg dupe late long manarg order
 
 # If groff finds exactly three arguments, it assumes they are month,
 # day and year without further checking.  If there are no arguments,

@@ -1,0 +1,12 @@
+OX-KEEP(1) - General Commands Manual
+
+# NAME
+
+**Ox-keep** - interaction of unix variant macros and word keeps
+
+# DESCRIPTION
+
+Because we use a keep,
+OpenBSD&nbsp;4.9&nbsp;must&nbsp;be&nbsp;at&nbsp;the&nbsp;beginning&nbsp;of&nbsp;a&nbsp;new&nbsp;line.
+
+OpenBSD - January 30, 2011

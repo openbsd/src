@@ -1,0 +1,14 @@
+SM-BADARG(1) - General Commands Manual
+
+# NAME
+
+**Sm-badarg** - spacing macro with invalid arguments
+
+# DESCRIPTION
+
+**-f** *on*
+**-f**&zwnj;*off* bad
+**-f** *bad* (on)
+bad**-f**&zwnj;*bad*(off)
+
+OpenBSD-July 3, 2014
