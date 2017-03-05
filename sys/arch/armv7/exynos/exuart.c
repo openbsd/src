@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.8 2017/03/05 16:51:18 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.9 2017/03/05 18:56:57 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -196,6 +196,14 @@ exuartattach(struct device *parent, struct device *self, void *aux)
 
 		printf(": console");
 	}
+
+	/* Clear pending interrupts and mask them all. */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTP,
+	    EXUART_UINTP_RXD | EXUART_UINTP_ERROR |
+	    EXUART_UINTP_TXD | EXUART_UINTP_MODEM);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTM,
+	    EXUART_UINTM_RXD | EXUART_UINTM_ERROR |
+	    EXUART_UINTM_TXD | EXUART_UINTM_MODEM);
 
 	timeout_set(&sc->sc_diag_tmo, exuart_diag, sc);
 	timeout_set(&sc->sc_dtr_tmo, exuart_raisedtr, sc);
