@@ -1,4 +1,4 @@
-/*	$OpenBSD: exesdhc.c,v 1.10 2017/03/04 18:17:24 kettenis Exp $	*/
+/*	$OpenBSD: exesdhc.c,v 1.11 2017/03/05 20:53:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -42,7 +42,6 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exclockvar.h>
-#include <armv7/exynos/exgpiovar.h>
 
 /* registers */
 #define SDHC_DS_ADDR			0x00
@@ -266,6 +265,8 @@ exesdhc_attach(struct device *parent, struct device *self, void *aux)
 	struct sdmmcbus_attach_args saa;
 	uint32_t caps;
 
+	pinctrl_byname(faa->fa_node, "default");
+
 	sc->sc_iot = faa->fa_iot;
 
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
@@ -446,6 +447,7 @@ exesdhc_host_maxblklen(sdmmc_chipset_handle_t sch)
 int
 exesdhc_card_detect(sdmmc_chipset_handle_t sch)
 {
+#if 0
 	struct exesdhc_softc *sc = sch;
 	int gpio;
 
@@ -466,6 +468,9 @@ exesdhc_card_detect(sdmmc_chipset_handle_t sch)
 	default:
 		return 1;
 	}
+#else
+	return 1;
+#endif
 }
 
 /*

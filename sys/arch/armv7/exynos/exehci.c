@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
+/*	$OpenBSD: exehci.c,v 1.6 2017/03/05 20:53:19 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,7 +32,6 @@
 #include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exsysregvar.h>
 #include <armv7/exynos/expowervar.h>
-#include <armv7/exynos/exgpiovar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

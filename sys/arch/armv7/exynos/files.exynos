@@ -1,4 +1,4 @@
-#	$OpenBSD: files.exynos,v 1.6 2017/03/04 18:17:24 kettenis Exp $
+#	$OpenBSD: files.exynos,v 1.7 2017/03/05 20:53:19 kettenis Exp $
 
 define exynos {}
 device exynos: exynos
@@ -38,7 +38,7 @@ attach exdog at fdt
 file	arch/armv7/exynos/exdog.c		exdog
 
 device exgpio
-attach exgpio at exynos
+attach exgpio at fdt
 file	arch/armv7/exynos/exgpio.c		exgpio
 
 device	exiic: i2cbus

@@ -26,7 +26,6 @@
 #endif
 
 #include <armv7/armv7/armv7var.h>
-#include <armv7/exynos/exgpiovar.h>
 #include <armv7/exynos/exiicvar.h>
 #include <armv7/exynos/exclockvar.h>
 

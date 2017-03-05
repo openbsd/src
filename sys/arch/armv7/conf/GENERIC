@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.73 2017/03/04 18:17:24 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.74 2017/03/05 20:53:19 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -120,7 +120,7 @@ expower*	at fdt? early 1
 exsysreg*	at fdt? early 1
 exmct*		at fdt? early 1
 exdog*		at fdt?
-exgpio*		at exynos?
+exgpio*		at fdt? early 1
 exiic*		at exynos?
 iic*		at exiic?
 exehci*		at fdt?
