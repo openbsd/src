@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.16 2016/04/03 17:46:26 guenther Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.17 2017/03/05 01:02:48 guenther Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -120,9 +120,9 @@ char *	db_Grp6[] = {
 };
 
 struct inst db_Grp7[] = {
-	{ "sgdt",   FALSE, NONE, op1(E),     0 },
+	{ "sgdt",   FALSE, NONE, op2(MEx,5), "\0vmcall\0vmlaunch\0vmresume\0vmxoff"},
 	{ "sidt",   FALSE, NONE, op2(MEx,4), "monitor\0mwait\0clac\0stac"},
-	{ "lgdt",   FALSE, NONE, op2(MEx,2), "xgetbv\0xsetbv" },
+	{ "lgdt",   FALSE, NONE, op2(MEx,7), "xgetbv\0xsetbv\0\0\0vmfunc\0xend\0xtest" },
 	{ "lidt",   FALSE, NONE, op1(E),     0 },
 	{ "smsw",   FALSE, NONE, op1(E),     0 },
 	{ "",       FALSE, NONE, 0,          0 },
