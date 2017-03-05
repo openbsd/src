@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.8 2017/03/04 16:15:02 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.9 2017/03/05 14:24:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2619,27 +2619,40 @@ err:
 int
 ssl3_send_next_proto(SSL *s)
 {
-	unsigned int	 len, padding_len;
-	unsigned char	*d, *p;
+	CBB cbb, nextproto, npn, padding;
+	size_t pad_len;
+	uint8_t *pad;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->internal->state == SSL3_ST_CW_NEXT_PROTO_A) {
-		d = p = ssl3_handshake_msg_start(s, SSL3_MT_NEXT_PROTO);
+		pad_len = 32 - ((s->internal->next_proto_negotiated_len + 2) % 32);
 
-		len = s->internal->next_proto_negotiated_len;
-		padding_len = 32 - ((len + 2) % 32);
-		*(p++) = len;
-		memcpy(p, s->internal->next_proto_negotiated, len);
-		p += len;
-		*(p++) = padding_len;
-		memset(p, 0, padding_len);
-		p += padding_len;
-
-		ssl3_handshake_msg_finish(s, p - d);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &nextproto,
+		    SSL3_MT_NEXT_PROTO))
+			goto err;
+		if (!CBB_add_u8_length_prefixed(&nextproto, &npn))
+			goto err;
+		if (!CBB_add_bytes(&npn, s->internal->next_proto_negotiated,
+		    s->internal->next_proto_negotiated_len))
+			goto err;
+		if (!CBB_add_u8_length_prefixed(&nextproto, &padding))
+			goto err;
+		if (!CBB_add_space(&padding, &pad, pad_len))
+			goto err;
+		memset(pad, 0, pad_len);
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = SSL3_ST_CW_NEXT_PROTO_B;
 	}
 
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.8 2017/03/01 14:01:24 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.9 2017/03/05 14:24:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -705,15 +705,27 @@ end:
 int
 ssl3_send_hello_request(SSL *s)
 {
+	CBB cbb, hello;
+
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (s->internal->state == SSL3_ST_SW_HELLO_REQ_A) {
-		ssl3_handshake_msg_start(s, SSL3_MT_HELLO_REQUEST);
-		ssl3_handshake_msg_finish(s, 0);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &hello,
+		    SSL3_MT_HELLO_REQUEST))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = SSL3_ST_SW_HELLO_REQ_B;
 	}
 
 	/* SSL3_ST_SW_HELLO_REQ_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 int
@@ -1166,15 +1178,27 @@ ssl3_send_server_hello(SSL *s)
 int
 ssl3_send_server_done(SSL *s)
 {
+	CBB cbb, done;
+
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (s->internal->state == SSL3_ST_SW_SRVR_DONE_A) {
-		ssl3_handshake_msg_start(s, SSL3_MT_SERVER_DONE);
-		ssl3_handshake_msg_finish(s, 0);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &done,
+		    SSL3_MT_SERVER_DONE))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = SSL3_ST_SW_SRVR_DONE_B;
 	}
 
 	/* SSL3_ST_SW_SRVR_DONE_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 int
@@ -2718,32 +2742,34 @@ ssl3_send_newsession_ticket(SSL *s)
 int
 ssl3_send_cert_status(SSL *s)
 {
-	unsigned char *p;
+	CBB cbb, certstatus, ocspresp;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->internal->state == SSL3_ST_SW_CERT_STATUS_A) {
-		/*
-		 * Grow buffer if need be: the length calculation is as
- 		 * follows 1 (message type) + 3 (message length) +
- 		 * 1 (ocsp response type) + 3 (ocsp response length)
- 		 * + (ocsp response)
- 		 */
-		if (!BUF_MEM_grow(s->internal->init_buf, SSL3_HM_HEADER_LENGTH + 4 +
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &certstatus,
+		    SSL3_MT_CERTIFICATE_STATUS))
+			goto err;
+		if (!CBB_add_u8(&certstatus, s->tlsext_status_type))
+			goto err;
+		if (!CBB_add_u24_length_prefixed(&certstatus, &ocspresp))
+			goto err;
+		if (!CBB_add_bytes(&ocspresp, s->internal->tlsext_ocsp_resp,
 		    s->internal->tlsext_ocsp_resplen))
-			return (-1);
-
-		p = ssl3_handshake_msg_start(s, SSL3_MT_CERTIFICATE_STATUS);
-
-		*(p++) = s->tlsext_status_type;
-		l2n3(s->internal->tlsext_ocsp_resplen, p);
-		memcpy(p, s->internal->tlsext_ocsp_resp, s->internal->tlsext_ocsp_resplen);
-
-		ssl3_handshake_msg_finish(s, s->internal->tlsext_ocsp_resplen + 4);
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = SSL3_ST_SW_CERT_STATUS_B;
 	}
 
 	/* SSL3_ST_SW_CERT_STATUS_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 /*

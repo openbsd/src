@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.6 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.7 2017/03/05 14:24:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,8 +166,10 @@ ssl3_do_write(SSL *s, int type)
 int
 ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 {
-	unsigned char *p;
+	CBB cbb, finished;
 	int md_len;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->internal->state == a) {
 		md_len = TLS1_FINISH_MAC_LENGTH;
@@ -189,14 +191,23 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 			S3I(s)->previous_server_finished_len = md_len;
 		}
 
-		p = ssl3_handshake_msg_start(s, SSL3_MT_FINISHED);
-		memcpy(p, S3I(s)->tmp.finish_md, md_len);
-		ssl3_handshake_msg_finish(s, md_len);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &finished,
+		    SSL3_MT_FINISHED))
+                        goto err;
+		if (!CBB_add_bytes(&finished, S3I(s)->tmp.finish_md, md_len))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = b;
 	}
 
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
 
 /*

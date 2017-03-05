@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.84 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.85 2017/03/05 14:24:12 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -693,31 +693,38 @@ end:
 int
 dtls1_send_hello_verify_request(SSL *s)
 {
-	unsigned char *d, *p;
+	CBB cbb, verify, cookie;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->internal->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A) {
-		d = p = ssl3_handshake_msg_start(s,
-		    DTLS1_MT_HELLO_VERIFY_REQUEST);
-
-		*(p++) = s->version >> 8;
-		*(p++) = s->version & 0xFF;
-
 		if (s->ctx->internal->app_gen_cookie_cb == NULL ||
-		    s->ctx->internal->app_gen_cookie_cb(s,
-			D1I(s)->cookie, &(D1I(s)->cookie_len)) == 0) {
+		    s->ctx->internal->app_gen_cookie_cb(s, D1I(s)->cookie,
+			&(D1I(s)->cookie_len)) == 0) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return 0;
 		}
 
-		*(p++) = (unsigned char) D1I(s)->cookie_len;
-		memcpy(p, D1I(s)->cookie, D1I(s)->cookie_len);
-		p += D1I(s)->cookie_len;
-
-		ssl3_handshake_msg_finish(s, p - d);
+		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &verify,
+		    DTLS1_MT_HELLO_VERIFY_REQUEST))
+			goto err;
+		if (!CBB_add_u16(&verify, s->version))
+			goto err;
+		if (!CBB_add_u8_length_prefixed(&verify, &cookie))
+			goto err;
+		if (!CBB_add_bytes(&cookie, D1I(s)->cookie, D1I(s)->cookie_len))
+			goto err;
+		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+			goto err;
 
 		s->internal->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;
 	}
 
 	/* s->internal->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
 	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
 }
