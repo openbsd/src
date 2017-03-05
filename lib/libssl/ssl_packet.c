@@ -74,11 +74,12 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	CBS cbs, challenge, cipher_specs, session;
 	uint16_t record_length, client_version, cipher_specs_length;
 	uint16_t session_id_length, challenge_length;
-	unsigned char *client_random, *data = NULL;
+	unsigned char *client_random = NULL, *data = NULL;
+	size_t data_len, pad_len, len;
 	uint32_t cipher_spec;
 	uint8_t message_type;
-	size_t data_len;
-	int rv = -1;
+	unsigned char *pad;
+	int ret = -1;
 	int n;
 
 	memset(&cbb, 0, sizeof(cbb));
@@ -153,6 +154,25 @@ ssl_convert_sslv2_client_hello(SSL *s)
 		return -1;
 	}
 
+	/*
+	 * Convert SSLv2 challenge to SSLv3/TLS client random, by truncating or
+	 * left-padding with zero bytes.
+	 */
+	if ((client_random = malloc(SSL3_RANDOM_SIZE)) == NULL)
+		goto err;
+	if (!CBB_init_fixed(&cbb, client_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if ((len = CBS_len(&challenge)) > SSL3_RANDOM_SIZE)
+		len = SSL3_RANDOM_SIZE;
+	pad_len = SSL3_RANDOM_SIZE - len;
+	if (!CBB_add_space(&cbb, &pad, pad_len))
+		goto err;
+	memset(pad, 0, pad_len);
+	if (!CBB_add_bytes(&cbb, CBS_data(&challenge), len))
+		goto err;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
+
 	/* Build SSLv3/TLS record with client hello. */
 	if (!CBB_init(&cbb, SSL3_RT_MAX_PLAIN_LENGTH))
 		goto err;
@@ -168,10 +188,7 @@ ssl_convert_sslv2_client_hello(SSL *s)
 		goto err;
 	if (!CBB_add_u16(&client_hello, client_version))
 		goto err;
-	if (!CBB_add_space(&client_hello, &client_random, SSL3_RANDOM_SIZE))
-		goto err;
-	memset(client_random, 0, SSL3_RANDOM_SIZE);
-	if (!CBS_write_bytes(&challenge, client_random, SSL3_RANDOM_SIZE, NULL))
+	if (!CBB_add_bytes(&client_hello, client_random, SSL3_RANDOM_SIZE))
 		goto err;
 	if (!CBB_add_u8_length_prefixed(&client_hello, &session_id))
 		goto err;
@@ -198,13 +215,14 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	s->internal->packet = s->s3->rbuf.buf;
 	s->internal->packet_length = data_len;
 	memcpy(s->internal->packet, data, data_len);
-	rv = 1;
+	ret = 1;
 
  err:
 	CBB_cleanup(&cbb);
+	free(client_random);
 	free(data);
 
-	return (rv);
+	return (ret);
 }
 
 /*
