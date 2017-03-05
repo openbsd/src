@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.235 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.236 2017/03/05 06:40:18 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -147,12 +147,9 @@ struct tusage {
 #ifdef __need_process
 struct process {
 	/*
-	 * ps_mainproc is the main thread in the process.
-	 * Ultimately, we shouldn't need that, threads should be able to exit
-	 * at will. Unfortunately until the pid is moved into struct process
-	 * we'll have to remember the main threads and abuse its pid as the
-	 * the pid of the process. This is gross, but considering the horrible
-	 * pid semantics we have right now, it's unavoidable.
+	 * ps_mainproc is the original thread in the process.
+	 * It's only still special for the handling of p_xstat and
+	 * some signal and ptrace behaviors that need to be fixed.
 	 */
 	struct	proc *ps_mainproc;
 	struct	ucred *ps_ucred;	/* Process owner's identity. */
