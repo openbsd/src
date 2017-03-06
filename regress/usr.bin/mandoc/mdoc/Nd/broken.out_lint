@@ -3,5 +3,7 @@ mandoc: broken.in:5:2: WARNING: bad NAME section content: Oo
 mandoc: broken.in:9:1: WARNING: bad NAME section content: text
 mandoc: broken.in:4:2: WARNING: NAME section without Nm before Nd
 mandoc: broken.in:4:2: WARNING: NAME section without description
+mandoc: broken.in:16:2: WARNING: description line outside NAME section: Nd
 mandoc: broken.in:13:2: WARNING: moving content out of list: Bl
 mandoc: broken.in:18:1: WARNING: moving content out of list: text
+mandoc: broken.in:27:2: WARNING: description line outside NAME section: Nd

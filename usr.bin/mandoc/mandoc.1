@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.100 2017/03/04 17:17:17 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.101 2017/03/06 17:25:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2017 $
+.Dd $Mdocdate: March 6 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -908,6 +908,14 @@ The
 .Ic \&Nd
 macro lacks the required argument.
 The title line of the manual will end after the dash.
+.It Sy "description line outside NAME section"
+.Pq mdoc
+An
+.Ic \&Nd
+macro appears outside the NAME section.
+The arguments are printed anyway and the following text is used for
+.Xr apropos 1 ,
+but none of that behaviour is portable.
 .It Sy "sections out of conventional order"
 .Pq mdoc
 A standard section occurs after another section it usually precedes.

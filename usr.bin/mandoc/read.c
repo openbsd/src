@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.133 2017/02/03 18:18:08 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.134 2017/03/06 17:25:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -109,6 +109,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad NAME section content",
 	"missing comma before name",
 	"missing description line, using \"\"",
+	"description line outside NAME section",
 	"sections out of conventional order",
 	"duplicate section title",
 	"unexpected section",

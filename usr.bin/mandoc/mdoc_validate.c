@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.234 2017/02/06 03:41:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.235 2017/03/06 17:25:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1022,6 +1022,10 @@ post_nd(POST_ARGS)
 
 	if (n->type != ROFFT_BODY)
 		return;
+
+	if (n->sec != SEC_NAME)
+		mandoc_msg(MANDOCERR_ND_LATE, mdoc->parse,
+		    n->line, n->pos, "Nd");
 
 	if (n->child == NULL)
 		mandoc_msg(MANDOCERR_ND_EMPTY, mdoc->parse,
