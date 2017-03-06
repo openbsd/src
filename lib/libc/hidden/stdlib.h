@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.8 2016/08/14 23:18:03 guenther Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.9 2017/03/06 18:44:21 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -128,6 +128,7 @@ PROTO_NORMAL(rand_r);
 PROTO_DEPRECATED(random);
 /*PROTO_NORMAL(realloc);		not yet, breaks emacs */
 PROTO_NORMAL(reallocarray);
+PROTO_NORMAL(recallocarray);
 PROTO_DEPRECATED(realpath);
 PROTO_DEPRECATED(seed48);
 PROTO_NORMAL(seed48_deterministic);

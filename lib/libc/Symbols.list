@@ -1470,6 +1470,7 @@ qsort
 radixsort
 realloc
 reallocarray
+recallocarray
 realpath
 remque
 setenv

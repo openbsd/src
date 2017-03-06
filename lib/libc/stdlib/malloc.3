@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.101 2017/02/12 10:46:09 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.102 2017/03/06 18:44:21 otto Exp $
 .\"
-.Dd $Mdocdate: February 12 2017 $
+.Dd $Mdocdate: March 6 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -50,6 +50,8 @@
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
 .Fn reallocarray "void *ptr" "size_t nmemb" "size_t size"
+.Ft void *
+.Fn recallocarray "void *ptr" "size_t oldnmemb" "size_t nmemb" "size_t size"
 .Ft void *
 .Fn realloc "void *ptr" "size_t size"
 .Ft void
@@ -113,6 +115,33 @@ and checks for integer overflow in the calculation
 .Fa size .
 .Pp
 The
+.Fn recallocarray
+function is similar to
+.Fn reallocarray
+except that it takes care of clearing newly allocated and freed memory.
+If
+.Fa ptr
+is a
+.Dv NULL
+pointer,
+.Fa oldnmemb
+is ignored and the call is equivalent to
+.Fn calloc .
+If
+.Fa ptr
+is not a
+.Dv NULL
+pointer,
+.Fa oldnmemb
+must be a value such that
+.Fa oldnmemb
+* 
+.Fa size
+is the size of an earlier allocation that returned
+.Fa ptr ,
+otherwise the behaviour is undefined.
+.Pp
+The
 .Fn free
 function causes the space pointed to by
 .Fa ptr
@@ -129,16 +158,18 @@ If
 was previously freed by
 .Fn free ,
 .Fn realloc ,
+.Fn reallocarray
 or
-.Fn reallocarray ,
+.Fn recallocarray ,
 the behavior is undefined and the double free is a security concern.
 .Sh RETURN VALUES
 Upon successful completion, the functions
 .Fn malloc ,
 .Fn calloc ,
 .Fn realloc ,
-and
 .Fn reallocarray
+and
+.Fn recallocarray
 return a pointer to the allocated space; otherwise, a
 .Dv NULL
 pointer is returned and
@@ -161,15 +192,31 @@ If multiplying
 and
 .Fa size
 results in integer overflow,
-.Fn calloc
-and
+.Fn calloc ,
 .Fn reallocarray
+and
+.Fn recallocarray
 return
 .Dv NULL
 and set
 .Va errno
 to
 .Er ENOMEM .
+.Pp
+If
+.Fa ptr 
+is not NULL and multiplying
+.Fa oldnmemb
+and
+.Fa size
+results in integer overflow
+.Fn recallocarray
+returns
+.Dv NULL
+and sets
+.Va errno
+to
+.Er EINVAL .
 .Sh IDIOMS
 Consider
 .Fn calloc
@@ -264,6 +311,17 @@ Use the following:
 .Bd -literal -offset indent
 newp = realloc(p, newsize);
 .Ed
+.Pp
+The
+.Fn recallocarray
+function should be used for resizing objects containing sensitive data like
+keys.
+To avoid leaking information,
+it guarantees memory is cleared before placing it on the internal free list.
+A
+.Fn free
+call for such an object should still be preceded by a call to
+.Xr explicit_bzero 3 .
 .Sh ENVIRONMENT
 .Bl -tag -width "/etc/malloc.conf"
 .It Ev MALLOC_OPTIONS
