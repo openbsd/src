@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.73 2017/02/27 16:40:10 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.74 2017/03/06 09:06:20 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -235,7 +235,6 @@ static struct wsmouse_param synaptics_params[] = {
 	{ WSMOUSECFG_PRESSURE_LO, SYNAPTICS_PRESSURE_LO },
 	{ WSMOUSECFG_PRESSURE_HI, SYNAPTICS_PRESSURE_HI }
 };
-#define SYNAPTICS_NPARAMS 2
 
 int	pmsprobe(struct device *, void *, void *);
 void	pmsattach(struct device *, struct device *, void *);
@@ -1073,8 +1072,8 @@ pms_enable_synaptics(struct pms_softc *sc)
 			    wsmousedevprint);
 		}
 
-		if (wsmouse_configure(sc->sc_wsmousedev,
-		    synaptics_params, SYNAPTICS_NPARAMS))
+		if (wsmouse_configure(sc->sc_wsmousedev, synaptics_params,
+		    nitems(synaptics_params)))
 			goto err;
 
 		printf("%s: Synaptics %s, firmware %d.%d\n", DEVNAME(sc),
