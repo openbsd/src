@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.65 2017/02/09 15:23:35 jca Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.66 2017/03/06 08:59:07 mpi Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -331,9 +331,6 @@ struct	in6_aliasreq {
 #ifdef _KERNEL
 #define IN6_ARE_SCOPE_CMP(a,b) ((a)-(b))
 #define IN6_ARE_SCOPE_EQUAL(a,b) ((a)==(b))
-
-TAILQ_HEAD(in6_ifaddrhead, in6_ifaddr);
-extern struct in6_ifaddrhead in6_ifaddr;
 
 /*
  * Multi-cast membership entry.  One for each group/ifp that a PCB

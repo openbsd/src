@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.180 2017/02/28 09:59:34 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.181 2017/03/06 08:59:07 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -114,7 +114,6 @@
 #include <netinet/ip_carp.h>
 #endif
 
-struct in6_ifaddrhead in6_ifaddr;
 struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
@@ -152,7 +151,6 @@ ip6_init(void)
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
-	TAILQ_INIT(&in6_ifaddr);
 	ip6_randomid_init();
 	nd6_init();
 	frag6_init();

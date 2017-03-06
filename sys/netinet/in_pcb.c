@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.217 2017/03/06 08:56:39 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.218 2017/03/06 08:59:07 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -316,8 +316,6 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	switch (sotopf(so)) {
 #ifdef INET6
 	case PF_INET6:
-		if (TAILQ_EMPTY(&in6_ifaddr))
-			return (EADDRNOTAVAIL);
 		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
 			return (EINVAL);
 		wild |= INPLOOKUP_IPV6;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.199 2017/02/16 10:15:12 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.200 2017/03/06 08:59:07 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -614,7 +614,6 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_ifa.ifa_netmask = sin6tosa(&ia6->ia_prefixmask);
 
 		ia6->ia_ifp = ifp;
-		TAILQ_INSERT_TAIL(&in6_ifaddr, ia6, ia_list);
 		ia6->ia_addr = ifra->ifra_addr;
 		ifa_add(ifp, &ia6->ia_ifa);
 	}
@@ -896,8 +895,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	int plen;
 
 	splsoftassert(IPL_SOFTNET);
-
-	TAILQ_REMOVE(&in6_ifaddr, ia6, ia_list);
 
 	/* Release the reference to the base prefix. */
 	if (ia6->ia6_ndpr == NULL) {
