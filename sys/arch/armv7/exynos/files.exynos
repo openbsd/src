@@ -1,21 +1,13 @@
-#	$OpenBSD: files.exynos,v 1.8 2017/03/06 06:50:47 kettenis Exp $
-
-define exynos {}
-device exynos: exynos
-attach exynos at fdt
-file	arch/armv7/exynos/exynos_machdep.c	exynos	needs-flag
-file	arch/armv7/exynos/exynos.c		exynos
-file	arch/armv7/exynos/exynos4.c		exynos
-file	arch/armv7/exynos/exynos5.c		exynos
+#	$OpenBSD: files.exynos,v 1.9 2017/03/06 07:41:58 kettenis Exp $
 
 # serial ports
 device exuart
 attach	exuart at fdt
 file	arch/armv7/exynos/exuart.c		exuart
 
-device exdisplay: wsemuldisplaydev, rasops16
-attach exdisplay at exynos
-file	arch/armv7/exynos/exdisplay.c		exdisplay
+#device exdisplay: wsemuldisplaydev, rasops16
+#attach exdisplay at exynos
+#file	arch/armv7/exynos/exdisplay.c		exdisplay
 
 device exclock
 attach exclock at fdt

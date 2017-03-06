@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.75 2017/03/06 06:50:47 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.76 2017/03/06 07:41:58 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -112,9 +112,8 @@ simplefb*	at fdt?
 wsdisplay*	at simplefb?
 
 # Exynos
-exynos0		at mainbus?
-exdisplay*	at exynos?
-wsdisplay*	at exdisplay? console ?
+#exdisplay*	at exynos?
+#wsdisplay*	at exdisplay? console ?
 exclock*	at fdt?
 expower*	at fdt? early 1
 exsysreg*	at fdt? early 1
