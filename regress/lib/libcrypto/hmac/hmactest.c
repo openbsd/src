@@ -319,7 +319,7 @@ end:
 static char *
 pt(unsigned char *md, unsigned int len)
 {
-	int i;
+	unsigned int i;
 	static char buf[80];
 
 	for (i = 0; i < len; i++)
