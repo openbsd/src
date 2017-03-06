@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.36 2017/02/27 15:59:56 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.37 2017/03/06 09:08:45 mpi Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -673,7 +673,7 @@ wsmouse_position(struct device *sc, int x, int y)
 	}
 }
 
-static __inline int
+static inline int
 normalized_pressure(struct wsmouseinput *input, int pressure)
 {
 	int limit = imax(input->touch.min_pressure, 1);
@@ -967,7 +967,7 @@ wsmouse_btn_sync(struct btn_state *btn, struct evq_access *evq)
 /*
  * Scale with a [*.12] fixed-point factor and a remainder:
  */
-static __inline int
+static inline int
 scale(int val, int factor, int *rmdr)
 {
 	val = val * factor + *rmdr;
@@ -1034,7 +1034,7 @@ wsmouse_touch_sync(struct wsmouseinput *input, struct evq_access *evq)
 		wsmouse_evq_put(evq, WSCONS_EVENT_TOUCH_WIDTH, touch->width);
 }
 
-static __inline void
+static inline void
 clear_sync_flags(struct wsmouseinput *input)
 {
 	int i;
@@ -1284,7 +1284,7 @@ wsmouse_mtframe(struct device *sc, struct mtpoint *pt, int size)
 		}
 }
 
-static __inline void
+static inline void
 free_mt_slots(struct wsmouseinput *input)
 {
 	int n, size;

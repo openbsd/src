@@ -207,13 +207,13 @@ static const size_t cfg_tp[] = {
  * Coordinates in the wstpad struct are "normalized" device coordinates,
  * the orientation is left-to-right and upward.
  */
-static __inline int
+static inline int
 normalize_abs(struct axis_filter *filter, int val)
 {
 	return (filter->inv ? filter->inv - val : val);
 }
 
-static __inline int
+static inline int
 normalize_rel(struct axis_filter *filter, int val)
 {
 	return (filter->inv ? -val : val);
@@ -246,7 +246,7 @@ normalize_rel(struct axis_filter *filter, int val)
 #define EAST(d) ((d) == 2 || (d) == 3)
 #define WEST(d) ((d) == 8 || (d) == 9)
 
-static __inline int
+static inline int
 direction(int dx, int dy, int ratio)
 {
 	int rdy, dir = -1;
@@ -267,7 +267,7 @@ direction(int dx, int dy, int ratio)
 	return dir;
 }
 
-static __inline int
+static inline int
 dircmp(int dir1, int dir2)
 {
 	int diff = abs(dir1 - dir2);
@@ -297,7 +297,7 @@ wstpad_set_direction(struct tpad_touch *t, int dx, int dy, int ratio)
  * scrolling, or palm detection, pointer motion will be suppressed as long
  * as it stays in that area.
  */
-static __inline u_int
+static inline u_int
 edge_flags(struct wstpad *tp, int x, int y)
 {
 	u_int flags = 0;
@@ -314,7 +314,7 @@ edge_flags(struct wstpad *tp, int x, int y)
 	return (flags);
 }
 
-static __inline struct tpad_touch *
+static inline struct tpad_touch *
 get_2nd_touch(struct wsmouseinput *input)
 {
 	struct wstpad *tp = input->tp;
@@ -329,7 +329,7 @@ get_2nd_touch(struct wsmouseinput *input)
 }
 
 /* Suppress pointer motion for a short period of time. */
-static __inline void
+static inline void
 set_freeze_ts(struct wstpad *tp, int sec, int ms)
 {
 	tp->freeze_ts.tv_sec = sec;
@@ -339,7 +339,7 @@ set_freeze_ts(struct wstpad *tp, int sec, int ms)
 
 
 /* Return TRUE if f2-/edge-scrolling would be valid. */
-static __inline int
+static inline int
 chk_scroll_state(struct wstpad *tp)
 {
 	if (tp->contacts != tp->prev_contacts || tp->btns || tp->btns_sync) {
@@ -433,7 +433,7 @@ wstpad_edgescroll(struct wsmouseinput *input, u_int *cmds)
 		wstpad_scroll(tp, dx, dy, cmds);
 }
 
-static __inline u_int
+static inline u_int
 sbtn(struct wstpad *tp, int x, int y)
 {
 	if (y >= tp->edge.bottom)
@@ -445,7 +445,7 @@ sbtn(struct wstpad *tp, int x, int y)
 	return ((x < tp->edge.center ? LEFTBTN : RIGHTBTN) ^ tp->sbtnswap);
 }
 
-static __inline u_int
+static inline u_int
 top_sbtn(struct wstpad *tp, int x, int y)
 {
 	if (y < tp->edge.top)
@@ -564,7 +564,7 @@ wstpad_cmds(struct wsmouseinput *input, struct evq_access *evq, u_int cmds)
  * Set the state of touches that have ended. TOUCH_END is a transitional
  * state and will be changed to TOUCH_NONE before process_input() returns.
  */
-static __inline void
+static inline void
 clear_touchstates(struct wsmouseinput *input, enum touchstates state)
 {
 	u_int touches;
@@ -933,7 +933,7 @@ wstpad_init(struct wsmouseinput *input)
  *
  * Cf. also Martin Guy's "Square root by abacus" method.
  */
-static __inline u_int
+static inline u_int
 isqrt(u_int n)
 {
 	u_int root, sqbit;

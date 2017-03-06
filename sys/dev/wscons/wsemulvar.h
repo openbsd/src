@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.15 2013/10/18 22:06:41 miod Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.16 2017/03/06 09:08:45 mpi Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -147,7 +147,7 @@ struct wsemul_abortstate {
 
 /* start character processing, assuming cursor or jump scroll failure condition
    has been taken care of */
-static __inline__ void
+static inline void
 wsemul_resume_abort(struct wsemul_abortstate *was)
 {
 	was->state = ABORT_OK;
@@ -155,13 +155,13 @@ wsemul_resume_abort(struct wsemul_abortstate *was)
 }
 
 /* register processing failure points */
-static __inline__ void
+static inline void
 wsemul_abort_cursor(struct wsemul_abortstate *was)
 {
 	was->state = ABORT_FAILED_CURSOR;
 }
 
-static __inline__ void
+static inline void
 wsemul_abort_jump_scroll(struct wsemul_abortstate *was, int lines)
 {
 	was->state = ABORT_FAILED_JUMP_SCROLL;
@@ -169,7 +169,7 @@ wsemul_abort_jump_scroll(struct wsemul_abortstate *was, int lines)
 	was->lines = lines;
 }
 
-static __inline__ void
+static inline void
 wsemul_abort_other(struct wsemul_abortstate *was)
 {
 	was->state = ABORT_FAILED_OTHER;
@@ -177,7 +177,7 @@ wsemul_abort_other(struct wsemul_abortstate *was)
 }
 
 /* initialize abortstate structure */
-static __inline__ void
+static inline void
 wsemul_reset_abortstate(struct wsemul_abortstate *was)
 {
 	was->state = ABORT_OK;
