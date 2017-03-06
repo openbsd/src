@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.9 2017/03/06 18:14:41 millert Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.10 2017/03/06 18:16:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
@@ -89,7 +89,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')
 	    && isascii((unsigned char)src[1]) && isxdigit((unsigned char)src[1])) {
 		/* Hexadecimal: Eat nybble string. */
-		if (size <= 0)
+		if (size == 0)
 			goto emsgsize;
 		tmp = 0, dirty = 0;
 		src++;	/* skip x or X. */
@@ -128,7 +128,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 					goto enoent;
 			} while ((ch = (unsigned char)*src++) != '\0' &&
 				 isascii(ch) && isdigit(ch));
-			if (size-- <= 0)
+			if (size-- == 0)
 				goto emsgsize;
 			*dst++ = (u_char) tmp;
 			if (ch == '\0' || ch == '/')
@@ -186,7 +186,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 	}
 	/* Extend network to cover the actual mask. */
 	while (bits > ((dst - odst) * 8)) {
-		if (size-- <= 0)
+		if (size-- == 0)
 			goto emsgsize;
 		*dst++ = '\0';
 	}
