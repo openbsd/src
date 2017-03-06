@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.229 2017/03/06 08:56:39 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.230 2017/03/06 10:19:17 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
 void	route_senddesync(void *);
 
+int	rtm_output(struct rt_msghdr *, struct rtentry **, struct rt_addrinfo *,
+	    uint8_t, unsigned int);
 struct rt_msghdr *rtm_report(struct rtentry *, u_char, int, int);
 struct mbuf	*rtm_msg1(int, struct rt_addrinfo *);
 int		 rtm_msg2(int, int, struct rt_addrinfo *, caddr_t,
@@ -535,13 +537,8 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	struct rt_msghdr	*rtm = NULL;
 	struct rtentry		*rt = NULL;
 	struct rt_addrinfo	 info;
-	int			 plen, len, seq, newgate = 0, error = 0;
-	struct ifnet		*ifp = NULL;
-	struct ifaddr		*ifa = NULL;
+	int			 len, seq, error = 0;
 	struct rawcb		*rp = NULL;
-#ifdef MPLS
-	struct sockaddr_mpls	*psa_mpls;
-#endif
 	u_int			 tableid;
 	u_int8_t		 prio;
 	u_char			 vers, type;
@@ -679,274 +676,16 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			error = EINVAL;
 			goto fail;
 	       }
-	       goto flush;
+	} else {
+		error = rtm_output(rtm, &rt, &info, prio, tableid);
+		if (!error) {
+			type = rtm->rtm_type;
+			seq = rtm->rtm_seq;
+			free(rtm, M_RTABLE, 0);
+			rtm = rtm_report(rt, type, seq, tableid);
+		}
 	}
 
-	switch (rtm->rtm_type) {
-	case RTM_ADD:
-		if (info.rti_info[RTAX_GATEWAY] == NULL) {
-			error = EINVAL;
-			goto flush;
-		}
-
-		rt = rtable_match(tableid, info.rti_info[RTAX_DST], NULL);
-		if ((error = route_arp_conflict(rt, &info))) {
-			rtfree(rt);
-			rt = NULL;
-			goto flush;
-		}
-
-		/*
-		 * We cannot go through a delete/create/insert cycle for
-		 * cached route because this can lead to races in the
-		 * receive path.  Instead we upade the L2 cache.
-		 */
-		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_CACHED))
-			goto change;
-
-		rtfree(rt);
-		rt = NULL;
-
-		error = rtrequest(RTM_ADD, &info, prio, &rt, tableid);
-		if (error == 0)
-			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
-			    &rt->rt_rmx);
-		else
-			goto flush;
-		break;
-	case RTM_DELETE:
-		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
-		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
-		    prio);
-
-		/*
-		 * Invalidate the cache of automagically created and
-		 * referenced L2 entries to make sure that ``rt_gwroute''
-		 * pointer stays valid for other CPUs.
-		 */
-		if ((rt != NULL) && (ISSET(rt->rt_flags, RTF_CACHED))) {
-			ifp = if_get(rt->rt_ifidx);
-			KASSERT(ifp != NULL);
-			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
-			if_put(ifp);
-			/* Reset the MTU of the gateway route. */
-			rtable_walk(tableid, rt_key(rt)->sa_family,
-			    route_cleargateway, rt);
-			break;
-		}
-
-		/*
-		 * Make sure that local routes are only modified by the
-		 * kernel.
-		 */
-		if ((rt != NULL) &&
-		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
-			error = EINVAL;
-			break;
-		}
-
-		rtfree(rt);
-		rt = NULL;
-
-		error = rtrequest(RTM_DELETE, &info, prio, &rt, tableid);
-		if (error != 0)
-			goto flush;
-		break;
-	case RTM_CHANGE:
-	case RTM_LOCK:
-		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
-		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
-		    prio);
-#ifndef SMALL_KERNEL
-		/*
-		 * If we got multipath routes, we require users to specify
-		 * a matching gateway.
-		 */
-		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH) &&
-		    (info.rti_info[RTAX_GATEWAY] == NULL)) {
-			rtfree(rt);
-			rt = NULL;
-		}
-#endif
-		/*
-		 * If RTAX_GATEWAY is the argument we're trying to
-		 * change, try to find a compatible route.
-		 */
-		if ((rt == NULL) && (info.rti_info[RTAX_GATEWAY] != NULL) &&
-		    (rtm->rtm_type == RTM_CHANGE)) {
-			rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
-			    info.rti_info[RTAX_NETMASK], NULL, prio);
-#ifndef SMALL_KERNEL
-			/* Ensure we don't pick a multipath one. */
-			if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH)) {
-				rtfree(rt);
-				rt = NULL;
-			}
-#endif
-		}
-
-		if (rt == NULL) {
-			error = ESRCH;
-			goto flush;
-		}
-
-		/*
-		 * RTM_CHANGE/LOCK need a perfect match.
-		 */
-		plen = rtable_satoplen(info.rti_info[RTAX_DST]->sa_family,
-		    info.rti_info[RTAX_NETMASK]);
-		if (rt_plen(rt) != plen ) {
-			error = ESRCH;
-			goto flush;
-		}
-
-		switch (rtm->rtm_type) {
-		case RTM_CHANGE:
-			if (info.rti_info[RTAX_GATEWAY] != NULL)
-				if (rt->rt_gateway == NULL ||
-				    bcmp(rt->rt_gateway,
-				    info.rti_info[RTAX_GATEWAY],
-				    info.rti_info[RTAX_GATEWAY]->sa_len)) {
-					newgate = 1;
-				}
-			/*
-			 * Check reachable gateway before changing the route.
-			 * New gateway could require new ifaddr, ifp;
-			 * flags may also be different; ifp may be specified
-			 * by ll sockaddr when protocol address is ambiguous.
-			 */
-			if (newgate || info.rti_info[RTAX_IFP] != NULL ||
-			    info.rti_info[RTAX_IFA] != NULL) {
-				if ((error = rt_getifa(&info, tableid)) != 0)
-					goto flush;
-				ifa = info.rti_ifa;
-				if (rt->rt_ifa != ifa) {
-					ifp = if_get(rt->rt_ifidx);
-					KASSERT(ifp != NULL);
-					ifp->if_rtrequest(ifp, RTM_DELETE, rt);
-					ifafree(rt->rt_ifa);
-					if_put(ifp);
-
-					ifa->ifa_refcnt++;
-					rt->rt_ifa = ifa;
-					rt->rt_ifidx = ifa->ifa_ifp->if_index;
-#ifndef SMALL_KERNEL
-					/* recheck link state after ifp change*/
-					rt_if_linkstate_change(rt, ifa->ifa_ifp,
-					    tableid);
-#endif
-				}
-			}
-change:
-			if (info.rti_info[RTAX_GATEWAY] != NULL && (error =
-			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY],
-			    tableid)))
-				goto flush;
-#ifdef MPLS
-			if ((rtm->rtm_flags & RTF_MPLS) &&
-			    info.rti_info[RTAX_SRC] != NULL) {
-				struct rt_mpls *rt_mpls;
-
-				psa_mpls = (struct sockaddr_mpls *)
-				    info.rti_info[RTAX_SRC];
-
-				if (rt->rt_llinfo == NULL) {
-					rt->rt_llinfo =
-					    malloc(sizeof(struct rt_mpls),
-					    M_TEMP, M_WAITOK | M_ZERO);
-				}
-
-				rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
-
-				if (psa_mpls != NULL) {
-					rt_mpls->mpls_label =
-					    psa_mpls->smpls_label;
-				}
-
-				rt_mpls->mpls_operation = info.rti_mpls;
-
-				/* XXX: set experimental bits */
-
-				rt->rt_flags |= RTF_MPLS;
-			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
-			    !(rtm->rtm_flags & RTF_MPLS))) {
-				/* if gateway changed remove MPLS information */
-				if (rt->rt_llinfo != NULL &&
-				    rt->rt_flags & RTF_MPLS) {
-					free(rt->rt_llinfo, M_TEMP, 0);
-					rt->rt_llinfo = NULL;
-					rt->rt_flags &= ~RTF_MPLS;
-				}
-			}
-#endif
-
-#ifdef BFD
-			if (ISSET(rtm->rtm_flags, RTF_BFD)) {
-				if ((error = bfdset(rt)))
-					goto flush;
-			} else if (!ISSET(rtm->rtm_flags, RTF_BFD) &&
-			    ISSET(rtm->rtm_fmask, RTF_BFD)) {
-				bfdclear(rt);
-			}
-#endif
-
-			/* Hack to allow some flags to be toggled */
-			if (rtm->rtm_fmask)
-				rt->rt_flags =
-				    (rt->rt_flags & ~rtm->rtm_fmask) |
-				    (rtm->rtm_flags & rtm->rtm_fmask);
-
-			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
-			    &rt->rt_rmx);
-
-			ifp = if_get(rt->rt_ifidx);
-			KASSERT(ifp != NULL);
-			ifp->if_rtrequest(ifp, RTM_ADD, rt);
-			if_put(ifp);
-
-			if (info.rti_info[RTAX_LABEL] != NULL) {
-				char *rtlabel = ((struct sockaddr_rtlabel *)
-				    info.rti_info[RTAX_LABEL])->sr_label;
-				rtlabel_unref(rt->rt_labelid);
-				rt->rt_labelid = rtlabel_name2id(rtlabel);
-			}
-			if_group_routechange(info.rti_info[RTAX_DST],
-			    info.rti_info[RTAX_NETMASK]);
-			/* FALLTHROUGH */
-		case RTM_LOCK:
-			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
-			rt->rt_rmx.rmx_locks |=
-			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
-			break;
-		}
-		break;
-	case RTM_GET:
-		rt = rtable_lookup(tableid, info.rti_info[RTAX_DST],
-		    info.rti_info[RTAX_NETMASK], info.rti_info[RTAX_GATEWAY],
-		    prio);
-		if (rt == NULL) {
-			error = ESRCH;
-			goto flush;
-		}
-		break;
-	}
-
-	/*
-	 * From here on these vars need to be valid
-	 * rt, rtm, error, so, m, tableid, sa_family
-	 *
-	 * Other notes:
-	 * - to end up here previous calls passed OK, error is most probably 0
-	 * - error cases take the flush route or in bad cases fail
-	 * - fail does not report the message back but just fails the call
-	 *   if the message is not valid then fail should be used
-	 */
-
-	type = rtm->rtm_type;
-	seq = rtm->rtm_seq;
-	free(rtm, M_RTABLE, 0);
-	rtm = rtm_report(rt, type, seq, tableid);
-flush:
 	rtfree(rt);
 	if (error) {
 		rtm->rtm_errno = error;
@@ -983,6 +722,266 @@ fail:
 	if (rp)
 		rp->rcb_proto.sp_family = PF_ROUTE; /* Readd us */
 
+	return (error);
+}
+
+int
+rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
+    struct rt_addrinfo *info, uint8_t prio, unsigned int tableid)
+{
+	struct rtentry		*rt = *prt;
+	struct ifnet		*ifp = NULL;
+	struct ifaddr		*ifa = NULL;
+#ifdef MPLS
+	struct sockaddr_mpls	*psa_mpls;
+#endif
+	int			 plen, newgate = 0, error = 0;
+
+	switch (rtm->rtm_type) {
+	case RTM_ADD:
+		if (info->rti_info[RTAX_GATEWAY] == NULL) {
+			error = EINVAL;
+			break;
+		}
+
+		rt = rtable_match(tableid, info->rti_info[RTAX_DST], NULL);
+		if ((error = route_arp_conflict(rt, info))) {
+			rtfree(rt);
+			rt = NULL;
+			break;
+		}
+
+		/*
+		 * We cannot go through a delete/create/insert cycle for
+		 * cached route because this can lead to races in the
+		 * receive path.  Instead we upade the L2 cache.
+		 */
+		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_CACHED))
+			goto change;
+
+		rtfree(rt);
+		rt = NULL;
+
+		error = rtrequest(RTM_ADD, info, prio, &rt, tableid);
+		if (error == 0)
+			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
+			    &rt->rt_rmx);
+		break;
+	case RTM_DELETE:
+		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
+		    prio);
+
+		/*
+		 * Invalidate the cache of automagically created and
+		 * referenced L2 entries to make sure that ``rt_gwroute''
+		 * pointer stays valid for other CPUs.
+		 */
+		if ((rt != NULL) && (ISSET(rt->rt_flags, RTF_CACHED))) {
+			ifp = if_get(rt->rt_ifidx);
+			KASSERT(ifp != NULL);
+			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
+			if_put(ifp);
+			/* Reset the MTU of the gateway route. */
+			rtable_walk(tableid, rt_key(rt)->sa_family,
+			    route_cleargateway, rt);
+			break;
+		}
+
+		/*
+		 * Make sure that local routes are only modified by the
+		 * kernel.
+		 */
+		if ((rt != NULL) &&
+		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
+			error = EINVAL;
+			break;
+		}
+
+		rtfree(rt);
+		rt = NULL;
+
+		error = rtrequest(RTM_DELETE, info, prio, &rt, tableid);
+		if (error != 0)
+			break;
+		break;
+	case RTM_CHANGE:
+	case RTM_LOCK:
+		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
+		    prio);
+#ifndef SMALL_KERNEL
+		/*
+		 * If we got multipath routes, we require users to specify
+		 * a matching gateway.
+		 */
+		if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH) &&
+		    (info->rti_info[RTAX_GATEWAY] == NULL)) {
+			rtfree(rt);
+			rt = NULL;
+		}
+#endif
+		/*
+		 * If RTAX_GATEWAY is the argument we're trying to
+		 * change, try to find a compatible route.
+		 */
+		if ((rt == NULL) && (info->rti_info[RTAX_GATEWAY] != NULL) &&
+		    (rtm->rtm_type == RTM_CHANGE)) {
+			rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
+			    info->rti_info[RTAX_NETMASK], NULL, prio);
+#ifndef SMALL_KERNEL
+			/* Ensure we don't pick a multipath one. */
+			if ((rt != NULL) && ISSET(rt->rt_flags, RTF_MPATH)) {
+				rtfree(rt);
+				rt = NULL;
+			}
+#endif
+		}
+
+		if (rt == NULL) {
+			error = ESRCH;
+			break;
+		}
+
+		/*
+		 * RTM_CHANGE/LOCK need a perfect match.
+		 */
+		plen = rtable_satoplen(info->rti_info[RTAX_DST]->sa_family,
+		    info->rti_info[RTAX_NETMASK]);
+		if (rt_plen(rt) != plen ) {
+			error = ESRCH;
+			break;
+		}
+
+		switch (rtm->rtm_type) {
+		case RTM_CHANGE:
+			if (info->rti_info[RTAX_GATEWAY] != NULL)
+				if (rt->rt_gateway == NULL ||
+				    bcmp(rt->rt_gateway,
+				    info->rti_info[RTAX_GATEWAY],
+				    info->rti_info[RTAX_GATEWAY]->sa_len)) {
+					newgate = 1;
+				}
+			/*
+			 * Check reachable gateway before changing the route.
+			 * New gateway could require new ifaddr, ifp;
+			 * flags may also be different; ifp may be specified
+			 * by ll sockaddr when protocol address is ambiguous.
+			 */
+			if (newgate || info->rti_info[RTAX_IFP] != NULL ||
+			    info->rti_info[RTAX_IFA] != NULL) {
+				if ((error = rt_getifa(info, tableid)) != 0)
+					break;
+				ifa = info->rti_ifa;
+				if (rt->rt_ifa != ifa) {
+					ifp = if_get(rt->rt_ifidx);
+					KASSERT(ifp != NULL);
+					ifp->if_rtrequest(ifp, RTM_DELETE, rt);
+					ifafree(rt->rt_ifa);
+					if_put(ifp);
+
+					ifa->ifa_refcnt++;
+					rt->rt_ifa = ifa;
+					rt->rt_ifidx = ifa->ifa_ifp->if_index;
+#ifndef SMALL_KERNEL
+					/* recheck link state after ifp change*/
+					rt_if_linkstate_change(rt, ifa->ifa_ifp,
+					    tableid);
+#endif
+				}
+			}
+change:
+			if (info->rti_info[RTAX_GATEWAY] != NULL && (error =
+			    rt_setgate(rt, info->rti_info[RTAX_GATEWAY],
+			    tableid)))
+				break;
+#ifdef MPLS
+			if ((rtm->rtm_flags & RTF_MPLS) &&
+			    info->rti_info[RTAX_SRC] != NULL) {
+				struct rt_mpls *rt_mpls;
+
+				psa_mpls = (struct sockaddr_mpls *)
+				    info->rti_info[RTAX_SRC];
+
+				if (rt->rt_llinfo == NULL) {
+					rt->rt_llinfo =
+					    malloc(sizeof(struct rt_mpls),
+					    M_TEMP, M_WAITOK | M_ZERO);
+				}
+
+				rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
+
+				if (psa_mpls != NULL) {
+					rt_mpls->mpls_label =
+					    psa_mpls->smpls_label;
+				}
+
+				rt_mpls->mpls_operation = info->rti_mpls;
+
+				/* XXX: set experimental bits */
+
+				rt->rt_flags |= RTF_MPLS;
+			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
+			    !(rtm->rtm_flags & RTF_MPLS))) {
+				/* if gateway changed remove MPLS information */
+				if (rt->rt_llinfo != NULL &&
+				    rt->rt_flags & RTF_MPLS) {
+					free(rt->rt_llinfo, M_TEMP, 0);
+					rt->rt_llinfo = NULL;
+					rt->rt_flags &= ~RTF_MPLS;
+				}
+			}
+#endif
+
+#ifdef BFD
+			if (ISSET(rtm->rtm_flags, RTF_BFD)) {
+				if ((error = bfdset(rt)))
+					break;
+			} else if (!ISSET(rtm->rtm_flags, RTF_BFD) &&
+			    ISSET(rtm->rtm_fmask, RTF_BFD)) {
+				bfdclear(rt);
+			}
+#endif
+
+			/* Hack to allow some flags to be toggled */
+			if (rtm->rtm_fmask)
+				rt->rt_flags =
+				    (rt->rt_flags & ~rtm->rtm_fmask) |
+				    (rtm->rtm_flags & rtm->rtm_fmask);
+
+			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
+			    &rt->rt_rmx);
+
+			ifp = if_get(rt->rt_ifidx);
+			KASSERT(ifp != NULL);
+			ifp->if_rtrequest(ifp, RTM_ADD, rt);
+			if_put(ifp);
+
+			if (info->rti_info[RTAX_LABEL] != NULL) {
+				char *rtlabel = ((struct sockaddr_rtlabel *)
+				    info->rti_info[RTAX_LABEL])->sr_label;
+				rtlabel_unref(rt->rt_labelid);
+				rt->rt_labelid = rtlabel_name2id(rtlabel);
+			}
+			if_group_routechange(info->rti_info[RTAX_DST],
+			    info->rti_info[RTAX_NETMASK]);
+			/* FALLTHROUGH */
+		case RTM_LOCK:
+			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
+			rt->rt_rmx.rmx_locks |=
+			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
+			break;
+		}
+		break;
+	case RTM_GET:
+		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
+		    prio);
+		if (rt == NULL)
+			error = ESRCH;
+		break;
+	}
+	*prt = rt;
 	return (error);
 }
 
