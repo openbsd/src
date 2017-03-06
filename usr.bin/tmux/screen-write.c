@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.114 2017/02/21 10:30:15 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.115 2017/03/06 09:02:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1151,7 +1151,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	struct grid_cell 	 tmp_gc, now_gc;
 	struct tty_ctx		 ttyctx;
 	u_int			 sx = screen_size_x(s), sy = screen_size_y(s);
-	u_int		 	 width = gc->data.width, xx, last;
+	u_int		 	 width = gc->data.width, xx, last, cx, cy;
 	int			 selected, skip = 1;
 
 	/* Ignore padding cells. */
@@ -1163,10 +1163,12 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	if (width == 0) {
 		screen_write_collect_flush(ctx, 0);
 		if ((gc = screen_write_combine(ctx, &gc->data, &xx)) != 0) {
+			cx = s->cx; cy = s->cy;
 			screen_write_cursormove(ctx, xx, s->cy);
 			screen_write_initctx(ctx, &ttyctx);
 			ttyctx.cell = gc;
 			tty_write(tty_cmd_cell, &ttyctx);
+			s->cx = cx; s->cy = cy;
 		}
 		return;
 	}
