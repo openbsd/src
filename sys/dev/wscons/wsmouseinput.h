@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.4 2017/02/27 15:59:56 bru Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.5 2017/03/06 09:53:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -23,6 +23,7 @@
 #ifndef _WSMOUSEINPUT_H_
 #define _WSMOUSEINPUT_H_
 
+#ifdef _KERNEL
 
 struct btn_state {
 	u_int buttons;
@@ -223,5 +224,7 @@ int wstpad_set_params(struct wsmouseinput *,
     ((WSMOUSECFG_FILTER_MAX & 0xff)		\
     + (WSMOUSECFG_TP_OPTS_MAX & 0xff)		\
     + (WSMOUSECFG_TP_MAX & 0xff))
+
+#endif /* _KERNEL */
 
 #endif /* _WSMOUSEINPUT_H_ */

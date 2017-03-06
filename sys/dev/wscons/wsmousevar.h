@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.13 2017/02/27 15:59:56 bru Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.14 2017/03/06 09:53:01 mpi Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -46,6 +46,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _WSMOUSEVAR_H_
+#define _WSMOUSEVAR_H_
+
+#ifdef _KERNEL
 
 /*
  * WSMOUSE interfaces.
@@ -237,3 +242,7 @@ struct wsmousehw *wsmouse_get_hw(struct device*);
 
 /* Configure the input context. */
 int wsmouse_configure(struct device *, struct wsmouse_param *, u_int);
+
+#endif /* _KERNEL */
+
+#endif /* _WSMOUSEVAR_H_ */
