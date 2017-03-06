@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.229 2017/01/11 08:50:11 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.230 2017/03/06 08:16:24 ajacoutot Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -621,7 +621,7 @@ done
 shift $(( OPTIND -1 ))
 [[ $# -ne 0 ]] && usage
 
-[[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && usage
+[[ $(id -u) -ne 0 ]] && echo "${0##*/}: need root privileges" && exit 1
 
 # global constants
 _BKPDIR=/var/sysmerge/backups
