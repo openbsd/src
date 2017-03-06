@@ -1,8 +1,8 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.8 2013/11/25 18:23:51 deraadt Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.9 2017/03/06 18:14:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
- * Copyright (c) 1996 by Internet Software Consortium.
+ * Copyright (c) 1996,1999 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -91,7 +91,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 		/* Hexadecimal: Eat nybble string. */
 		if (size <= 0)
 			goto emsgsize;
-		*dst = 0, dirty = 0;
+		tmp = 0, dirty = 0;
 		src++;	/* skip x or X. */
 		while ((ch = (unsigned char)*src++) != '\0' &&
 		    isascii(ch) && isxdigit(ch)) {
@@ -99,16 +99,22 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 				ch = tolower(ch);
 			n = strchr(xdigits, ch) - xdigits;
 			assert(n >= 0 && n <= 15);
-			*dst |= n;
-			if (!dirty++)
-				*dst <<= 4;
-			else if (size-- > 0)
-				*++dst = 0, dirty = 0;
+			if (dirty == 0)
+				tmp = n;
 			else
-				goto emsgsize;
+				tmp = (tmp << 4) | n;
+			if (++dirty == 2) {
+				if (size-- == 0)
+					goto emsgsize;
+				*dst++ = (u_char) tmp;
+				dirty = 0;
+			}
 		}
-		if (dirty)
-			size--;
+		if (dirty) {  /* Odd trailing nybble? */
+			if (size-- == 0)
+				goto emsgsize;
+			*dst++ = (u_char) (tmp << 4);
+		}
 	} else if (isascii(ch) && isdigit(ch)) {
 		/* Decimal: eat dotted digit string. */
 		for (;;) {
