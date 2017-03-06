@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.488 2017/02/28 15:35:02 yasuoka Exp $	*/
+/*	$OpenBSD: if.c,v 1.489 2017/03/06 08:56:39 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -435,7 +435,7 @@ if_attachsetup(struct ifnet *ifp)
 	task_set(ifp->if_linkstatetask, if_linkstate_task, (void *)ifidx);
 
 	/* Announce the interface. */
-	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
+	rtm_ifannounce(ifp, IFAN_ARRIVAL);
 }
 
 /*
@@ -1087,7 +1087,7 @@ if_detach(struct ifnet *ifp)
 	}
 
 	/* Announce that the interface is gone. */
-	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
+	rtm_ifannounce(ifp, IFAN_DEPARTURE);
 	splx(s2);
 	NET_UNLOCK(s);
 
@@ -1579,7 +1579,7 @@ if_linkstate(struct ifnet *ifp)
 {
 	NET_ASSERT_LOCKED();
 
-	rt_ifmsg(ifp);
+	rtm_ifchg(ifp);
 #ifndef SMALL_KERNEL
 	rt_if_track(ifp);
 #endif
@@ -1988,7 +1988,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFXF_CANTCHANGE);
-		rt_ifmsg(ifp);
+		rtm_ifchg(ifp);
 		break;
 
 	case SIOCSIFMETRIC:
@@ -2004,7 +2004,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		if (!error)
-			rt_ifmsg(ifp);
+			rtm_ifchg(ifp);
 		break;
 
 	case SIOCSIFPHYADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.156 2017/03/03 08:01:41 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.157 2017/03/06 08:56:39 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	error = rtrequest(RTM_ADD, &info, RTP_DEFAULT, &rt,
 	    new->ifp->if_rdomain);
 	if (error == 0) {
-		rt_sendmsg(rt, RTM_ADD, new->ifp->if_rdomain);
+		rtm_send(rt, RTM_ADD, new->ifp->if_rdomain);
 		rtfree(rt);
 		new->installed = 1;
 	}
@@ -710,7 +710,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 	error = rtrequest(RTM_DELETE, &info, RTP_DEFAULT, &rt,
 	    dr->ifp->if_rdomain);
 	if (error == 0) {
-		rt_sendmsg(rt, RTM_DELETE, dr->ifp->if_rdomain);
+		rtm_send(rt, RTM_DELETE, dr->ifp->if_rdomain);
 		rtfree(rt);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.228 2017/03/03 15:48:02 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.229 2017/03/06 08:56:39 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -102,19 +102,22 @@ int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	route_input(struct mbuf *m0, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
+void	route_senddesync(void *);
 
-struct mbuf	*rt_msg1(int, struct rt_addrinfo *);
-int		 rt_msg2(int, int, struct rt_addrinfo *, caddr_t,
+struct rt_msghdr *rtm_report(struct rtentry *, u_char, int, int);
+struct mbuf	*rtm_msg1(int, struct rt_addrinfo *);
+int		 rtm_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
-void		 rt_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
-
-void		 rt_proposalmsg(struct rt_msghdr *, struct rt_addrinfo *);
+void		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
+int		 rtm_validate_proposal(struct rt_addrinfo *);
+void		 rtm_setmetrics(u_long, const struct rt_metrics *,
+		     struct rt_kmetrics *);
+void		 rtm_getmetrics(const struct rt_kmetrics *,
+		     struct rt_metrics *);
 
 int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
-
-int		 validate_proposal(struct rt_addrinfo *);
 
 struct routecb {
 	struct rawcb	rcb;
@@ -145,8 +148,6 @@ struct route_cb route_cb;
 
 #define ROUTE_DESYNC_RESEND_TIMEOUT	(hz / 5)	/* In hz */
 
-void	rt_senddesync(void *);
-
 int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
@@ -171,7 +172,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		rp = &rop->rcb;
 		so->so_pcb = rp;
 		/* Init the timeout structure */
-		timeout_set(&((struct routecb *)rp)->timeout, rt_senddesync, rp);
+		timeout_set(&rop->timeout, route_senddesync, rp);
 		/*
 		 * Don't call raw_usrreq() in the attach case, because
 		 * we want to allow non-privileged processes to listen
@@ -296,7 +297,7 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 }
 
 void
-rt_senddesync(void *data)
+route_senddesync(void *data)
 {
 	struct rawcb	*rp;
 	struct routecb	*rop;
@@ -314,7 +315,7 @@ rt_senddesync(void *data)
 	 * If we fail to alloc memory or if sbappendaddr()
 	 * fails, re-add timeout and try again.
 	 */
-	desync_mbuf = rt_msg1(RTM_DESYNC, NULL);
+	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
 		s = splsoftnet();
 		if (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src,
@@ -430,7 +431,7 @@ route_input(struct mbuf *m0, sa_family_t sa_family)
 					sotoroutecb(last)->flags |=
 					    ROUTECB_FLAG_DESYNC |
 					    ROUTECB_FLAG_FLUSH;
-					rt_senddesync((void *) sotorawcb(last));
+					route_senddesync(sotorawcb(last));
 					m_freem(n);
 				} else {
 					sorwakeup(last);
@@ -449,7 +450,7 @@ route_input(struct mbuf *m0, sa_family_t sa_family)
 			/* Flag socket as desync'ed and flush required */
 			sotoroutecb(last)->flags |=
 			    ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
-			rt_senddesync((void *) sotorawcb(last));
+			route_senddesync(sotorawcb(last));
 			m_freem(m);
 		} else {
 			sorwakeup(last);
@@ -461,7 +462,7 @@ route_input(struct mbuf *m0, sa_family_t sa_family)
 }
 
 struct rt_msghdr *
-rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
+rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 {
 	struct rt_msghdr	*rtm;
 	struct rt_addrinfo	 info;
@@ -508,10 +509,10 @@ rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
 	/* RTAX_GENMASK, RTAX_AUTHOR, RTAX_SRCMASK ignored */
 
 	/* build new route message */
-	len = rt_msg2(type, RTM_VERSION, &info, NULL, NULL);
+	len = rtm_msg2(type, RTM_VERSION, &info, NULL, NULL);
 	rtm = malloc(len, M_RTABLE, M_WAITOK | M_ZERO);
 
-	rt_msg2(type, RTM_VERSION, &info, (caddr_t)rtm, NULL);
+	rtm_msg2(type, RTM_VERSION, &info, (caddr_t)rtm, NULL);
 	rtm->rtm_type = type;
 	rtm->rtm_index = rt->rt_ifidx;
 	rtm->rtm_tableid = tableid;
@@ -519,7 +520,7 @@ rt_report(struct rtentry *rt, u_char type, int seq, int tableid)
 	rtm->rtm_flags = rt->rt_flags;
 	rtm->rtm_pid = curproc->p_p->ps_pid;
 	rtm->rtm_seq = seq;
-	rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+	rtm_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 	rtm->rtm_addrs = info.rti_addrs;
 #ifdef MPLS
 	rtm->rtm_mpls = info.rti_mpls;
@@ -643,7 +644,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
-	rt_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
+	rtm_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
 	info.rti_flags = rtm->rtm_flags;
 	if (rtm->rtm_type != RTM_PROPOSAL &&
 	   (info.rti_info[RTAX_DST] == NULL ||
@@ -674,7 +675,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	 * Validate RTM_PROPOSAL and pass it along or error out.
 	 */
 	if (rtm->rtm_type == RTM_PROPOSAL) {
-	       if (validate_proposal(&info) == -1) {
+	       if (rtm_validate_proposal(&info) == -1) {
 			error = EINVAL;
 			goto fail;
 	       }
@@ -708,7 +709,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 
 		error = rtrequest(RTM_ADD, &info, prio, &rt, tableid);
 		if (error == 0)
-			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
+			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 		else
 			goto flush;
@@ -895,7 +896,7 @@ change:
 				    (rt->rt_flags & ~rtm->rtm_fmask) |
 				    (rtm->rtm_flags & rtm->rtm_fmask);
 
-			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
+			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 
 			ifp = if_get(rt->rt_ifidx);
@@ -944,7 +945,7 @@ change:
 	type = rtm->rtm_type;
 	seq = rtm->rtm_seq;
 	free(rtm, M_RTABLE, 0);
-	rtm = rt_report(rt, type, seq, tableid);
+	rtm = rtm_report(rt, type, seq, tableid);
 flush:
 	rtfree(rt);
 	if (error) {
@@ -1036,7 +1037,7 @@ route_arp_conflict(struct rtentry *rt, struct rt_addrinfo *info)
 }
 
 void
-rt_setmetrics(u_long which, const struct rt_metrics *in,
+rtm_setmetrics(u_long which, const struct rt_metrics *in,
     struct rt_kmetrics *out)
 {
 	int64_t expire;
@@ -1055,7 +1056,7 @@ rt_setmetrics(u_long which, const struct rt_metrics *in,
 }
 
 void
-rt_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
+rtm_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 {
 	int64_t expire;
 
@@ -1077,7 +1078,7 @@ rt_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 void
-rt_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
+rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 {
 	struct sockaddr	*sa;
 	int		 i;
@@ -1092,7 +1093,7 @@ rt_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 }
 
 struct mbuf *
-rt_msg1(int type, struct rt_addrinfo *rtinfo)
+rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 {
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;
@@ -1121,7 +1122,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 		break;
 	}
 	if (len > MCLBYTES)
-		panic("rt_msg1");
+		panic("rtm_msg1");
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m && len > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
@@ -1155,7 +1156,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo)
 }
 
 int
-rt_msg2(int type, int vers, struct rt_addrinfo *rtinfo, caddr_t cp,
+rtm_msg2(int type, int vers, struct rt_addrinfo *rtinfo, caddr_t cp,
     struct walkarg *w)
 {
 	int		i;
@@ -1227,6 +1228,31 @@ again:
 	return (len);
 }
 
+void
+rtm_send(struct rtentry *rt, int cmd, u_int rtableid)
+{
+	struct rt_addrinfo	 info;
+	struct ifnet		*ifp;
+	struct sockaddr_rtlabel	 sa_rl;
+	struct sockaddr_in6	 sa_mask;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	if (!ISSET(rt->rt_flags, RTF_HOST))
+		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp != NULL) {
+		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+	}
+
+	rtm_miss(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, 0,
+	    rtableid);
+	if_put(ifp);
+}
+
 /*
  * This routine is called to generate a message from the routing
  * socket indicating that a redirect has occurred, a routing lookup
@@ -1234,7 +1260,7 @@ again:
  * destination.
  */
 void
-rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
+rtm_miss(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
     u_int ifidx, int error, u_int tableid)
 {
 	struct rt_msghdr	*rtm;
@@ -1243,7 +1269,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
 
 	if (route_cb.any_count == 0)
 		return;
-	m = rt_msg1(type, rtinfo);
+	m = rtm_msg1(type, rtinfo);
 	if (m == NULL)
 		return;
 	rtm = mtod(m, struct rt_msghdr *);
@@ -1261,14 +1287,14 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
  * socket indicating that the status of a network interface has changed.
  */
 void
-rt_ifmsg(struct ifnet *ifp)
+rtm_ifchg(struct ifnet *ifp)
 {
 	struct if_msghdr	*ifm;
 	struct mbuf		*m;
 
 	if (route_cb.any_count == 0)
 		return;
-	m = rt_msg1(RTM_IFINFO, NULL);
+	m = rtm_msg1(RTM_IFINFO, NULL);
 	if (m == NULL)
 		return;
 	ifm = mtod(m, struct if_msghdr *);
@@ -1290,7 +1316,7 @@ rt_ifmsg(struct ifnet *ifp)
  * copies of it.
  */
 void
-rt_sendaddrmsg(struct rtentry *rt, int cmd, struct ifaddr *ifa)
+rtm_addr(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct mbuf		*m = NULL;
@@ -1305,7 +1331,7 @@ rt_sendaddrmsg(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 	info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
 	info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 	info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-	if ((m = rt_msg1(cmd, &info)) == NULL)
+	if ((m = rtm_msg1(cmd, &info)) == NULL)
 		return;
 	ifam = mtod(m, struct ifa_msghdr *);
 	ifam->ifam_index = ifp->if_index;
@@ -1322,14 +1348,14 @@ rt_sendaddrmsg(struct rtentry *rt, int cmd, struct ifaddr *ifa)
  * network interface arrival and departure.
  */
 void
-rt_ifannouncemsg(struct ifnet *ifp, int what)
+rtm_ifannounce(struct ifnet *ifp, int what)
 {
 	struct if_announcemsghdr	*ifan;
 	struct mbuf			*m;
 
 	if (route_cb.any_count == 0)
 		return;
-	m = rt_msg1(RTM_IFANNOUNCE, NULL);
+	m = rtm_msg1(RTM_IFANNOUNCE, NULL);
 	if (m == NULL)
 		return;
 	ifan = mtod(m, struct if_announcemsghdr *);
@@ -1345,7 +1371,7 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
  * the state of a BFD session.
  */
 void
-rt_bfdmsg(struct bfd_config *bfd)
+rtm_bfd(struct bfd_config *bfd)
 {
 	struct bfd_msghdr	*bfdm;
 	struct sockaddr_bfd	 sa_bfd;
@@ -1358,7 +1384,7 @@ rt_bfdmsg(struct bfd_config *bfd)
 	info.rti_info[RTAX_DST] = rt_key(bfd->bc_rt);
 	info.rti_info[RTAX_IFA] = bfd->bc_rt->rt_ifa->ifa_addr;
 
-	m = rt_msg1(RTM_BFD, &info);
+	m = rtm_msg1(RTM_BFD, &info);
 	if (m == NULL)
 		return;
 	bfdm = mtod(m, struct bfd_msghdr *);
@@ -1435,14 +1461,14 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	}
 #endif
 
-	size = rt_msg2(RTM_GET, RTM_VERSION, &info, NULL, w);
+	size = rtm_msg2(RTM_GET, RTM_VERSION, &info, NULL, w);
 	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_pid = curproc->p_p->ps_pid;
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+		rtm_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		/* Do not account the routing table's reference. */
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt - 1;
 		rtm->rtm_index = rt->rt_ifidx;
@@ -1473,7 +1499,7 @@ sysctl_iflist(int af, struct walkarg *w)
 			continue;
 		/* Copy the link-layer address first */
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		len = rt_msg2(RTM_IFINFO, RTM_VERSION, &info, 0, w);
+		len = rtm_msg2(RTM_IFINFO, RTM_VERSION, &info, 0, w);
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			struct if_msghdr *ifm;
 
@@ -1496,7 +1522,7 @@ sysctl_iflist(int af, struct walkarg *w)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			len = rt_msg2(RTM_NEWADDR, RTM_VERSION, &info, 0, w);
+			len = rtm_msg2(RTM_NEWADDR, RTM_VERSION, &info, 0, w);
 			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 				struct ifa_msghdr *ifam;
 
@@ -1642,7 +1668,7 @@ sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
 }
 
 int
-validate_proposal(struct rt_addrinfo *info)
+rtm_validate_proposal(struct rt_addrinfo *info)
 {
 	if (info->rti_addrs & ~(RTA_NETMASK | RTA_IFA | RTA_DNS | RTA_STATIC |
 	    RTA_SEARCH)) {

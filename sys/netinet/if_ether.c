@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.227 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.228 2017/03/06 08:56:39 mpi Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	/* Notify userland that an ARP resolution has been done. */
 	if (la->la_asked || changed) {
 		KERNEL_LOCK();
-		rt_sendmsg(rt, RTM_RESOLVE, ifp->if_rdomain);
+		rtm_send(rt, RTM_RESOLVE, ifp->if_rdomain);
 		KERNEL_UNLOCK();
 	}
 

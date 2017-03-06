@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.353 2017/03/02 03:09:50 renato Exp $	*/
+/*	$OpenBSD: route.c,v 1.354 2017/03/06 08:56:39 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -264,11 +264,11 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 			error = rtrequest(RTM_RESOLVE, &info,
 			    rt->rt_priority - 1, &rt, tableid);
 			if (error) {
-				rt_missmsg(RTM_MISS, &info, 0, RTP_NONE, 0,
+				rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0,
 				    error, tableid);
 			} else {
 				/* Inform listeners of the new route */
-				rt_sendmsg(rt, RTM_ADD, tableid);
+				rtm_send(rt, RTM_ADD, tableid);
 				rtfree(rt0);
 			}
 			KERNEL_UNLOCK();
@@ -499,31 +499,6 @@ rtfree(struct rtentry *rt)
 }
 
 void
-rt_sendmsg(struct rtentry *rt, int cmd, u_int rtableid)
-{
-	struct rt_addrinfo	 info;
-	struct ifnet		*ifp;
-	struct sockaddr_rtlabel	 sa_rl;
-	struct sockaddr_in6	 sa_mask;
-
-	memset(&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
-	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	if (!ISSET(rt->rt_flags, RTF_HOST))
-		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
-	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp != NULL) {
-		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-	}
-
-	rt_missmsg(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, 0,
-	    rtableid);
-	if_put(ifp);
-}
-
-void
 ifafree(struct ifaddr *ifa)
 {
 	if (ifa == NULL)
@@ -649,7 +624,7 @@ out:
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_AUTHOR] = src;
-	rt_missmsg(RTM_REDIRECT, &info, flags, prio, ifidx, error, rdomain);
+	rtm_miss(RTM_REDIRECT, &info, flags, prio, ifidx, error, rdomain);
 }
 
 /*
@@ -678,7 +653,7 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	info.rti_flags = rt->rt_flags;
 	ifidx = rt->rt_ifidx;
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
-	rt_missmsg(RTM_DELETE, &info, info.rti_flags, rt->rt_priority, ifidx,
+	rtm_miss(RTM_DELETE, &info, info.rti_flags, rt->rt_priority, ifidx,
 	    error, tableid);
 	if (error == 0)
 		rtfree(rt);
@@ -1225,8 +1200,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 * userland that a new address has been added.
 		 */
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(rt, RTM_NEWADDR, ifa);
-		rt_sendmsg(rt, RTM_ADD, rtableid);
+			rtm_addr(rt, RTM_NEWADDR, ifa);
+		rtm_send(rt, RTM_ADD, rtableid);
 		rtfree(rt);
 	}
 	return (error);
@@ -1279,9 +1254,9 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	error = rtrequest_delete(&info, prio, ifp, &rt, rtableid);
 	if (error == 0) {
-		rt_sendmsg(rt, RTM_DELETE, rtableid);
+		rtm_send(rt, RTM_DELETE, rtableid);
 		if (flags & RTF_LOCAL)
-			rt_sendaddrmsg(rt, RTM_DELADDR, ifa);
+			rtm_addr(rt, RTM_DELADDR, ifa);
 		rtfree(rt);
 	}
 	m_free(m);

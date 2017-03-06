@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.58 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.59 2017/03/06 08:56:39 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -397,7 +397,7 @@ bfd_send_task(void *arg)
 			bfd_set_state(bfd, BFD_STATE_DOWN);
 		}
 	}
-//rt_bfdmsg(bfd);
+//rtm_bfd(bfd);
 
 	/* re-add 70%-90% jitter to our transmits, rfc 5880 6.8.7 */
 	timeout_add_usec(&bfd->bc_timo_tx,
@@ -651,7 +651,7 @@ bfd_timeout_rx(void *v)
 
 	if (bfd->bc_state > BFD_STATE_DOWN) {
 		bfd_error(bfd);
-		rt_bfdmsg(bfd);
+		rtm_bfd(bfd);
 	}
 
 	timeout_add_usec(&bfd->bc_timo_rx, bfd->bc_minrx);
@@ -897,7 +897,7 @@ bfd_set_state(struct bfd_config *bfd, int state)
 	}
 
 	bfd->bc_state = state;
-	rt_bfdmsg(bfd);
+	rtm_bfd(bfd);
 	if_put(ifp);
 
 	return;
