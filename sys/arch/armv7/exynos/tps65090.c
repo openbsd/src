@@ -1,4 +1,4 @@
-/* $OpenBSD: tps65090.c,v 1.2 2015/07/19 02:41:39 bmercer Exp $ */
+/* $OpenBSD: tps65090.c,v 1.3 2017/03/06 06:50:47 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -97,7 +97,7 @@ tps65090_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "tps65090") == 0)
+	if (strcmp(ia->ia_name, "ti,tps65090") == 0)
 		return (1);
 	return (0);
 }

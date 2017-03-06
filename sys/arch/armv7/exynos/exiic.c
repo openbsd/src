@@ -15,18 +15,19 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <machine/bus.h>
-#if NFDT > 0
-#include <machine/fdt.h>
-#endif
+#include <sys/device.h>
+#include <sys/rwlock.h>
 
-#include <armv7/armv7/armv7var.h>
-#include <armv7/exynos/exiicvar.h>
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/fdt.h>
+
+#include <dev/i2c/i2cvar.h>
+
 #include <armv7/exynos/exclockvar.h>
 
 /* registers */
@@ -66,7 +67,7 @@ struct exiic_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	void			*sc_ih;
-	int			unit;
+	int			sc_node;
 
 	struct rwlock		sc_buslock;
 	struct i2c_controller	i2c_tag;
@@ -75,10 +76,10 @@ struct exiic_softc {
 	uint16_t		intr_status;
 };
 
-int exiic_match(struct device *parent, void *v, void *aux);
+int exiic_match(struct device *, void *, void *);
 void exiic_attach(struct device *, struct device *, void *);
 int exiic_detach(struct device *, int);
-void exiic_bus_scan(struct device *, struct i2cbus_attach_args *, void *);
+void exiic_scan(struct device *, struct i2cbus_attach_args *, void *);
 void exiic_setspeed(struct exiic_softc *, int);
 int exiic_intr(void *);
 int exiic_wait_intr(struct exiic_softc *, int, int);
@@ -103,9 +104,6 @@ int exiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 
 
 struct cfattach exiic_ca = {
-	sizeof(struct exiic_softc), NULL, exiic_attach, exiic_detach
-};
-struct cfattach exiic_fdt_ca = {
 	sizeof(struct exiic_softc), exiic_match, exiic_attach, exiic_detach
 };
 
@@ -114,47 +112,27 @@ struct cfdriver exiic_cd = {
 };
 
 int
-exiic_match(struct device *parent, void *v, void *aux)
+exiic_match(struct device *parent, void *match, void *aux)
 {
-#if NFDT > 0
-	struct armv7_attach_args *aa = aux;
+	struct fdt_attach_args *faa = aux;
 
-	if (fdt_node_compatible("samsung,s3c2440-i2c", aa->aa_node))
-		return 1;
-#endif
-
-	return 0;
+	return OF_is_compatible(faa->fa_node, "samsung,s3c2440-i2c");
 }
 
 void
-exiic_attach(struct device *parent, struct device *self, void *args)
+exiic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct exiic_softc *sc = (struct exiic_softc *)self;
-	struct armv7_attach_args *aa = args;
-	struct armv7mem mem;
+	struct fdt_attach_args *faa = aux;
+	struct i2cbus_attach_args iba;
 
-	sc->sc_iot = aa->aa_iot;
-#if NFDT > 0
-	if (aa->aa_node) {
-		struct fdt_reg reg;
-		static int unit = 0;
+	pinctrl_byname(faa->fa_node, "default");
 
-		sc->unit = unit++;
-		if (fdt_get_reg(aa->aa_node, 0, &reg))
-			panic("%s: could not extract memory data from FDT",
-			    __func__);
-		mem.addr = reg.addr;
-		mem.size = reg.size;
-	} else
-#endif
-	{
-		mem.addr = aa->aa_dev->mem[0].addr;
-		mem.size = aa->aa_dev->mem[0].size;
-		sc->unit = aa->aa_dev->unit;
-	}
-	if (bus_space_map(sc->sc_iot, mem.addr, mem.size, 0, &sc->sc_ioh))
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_node = faa->fa_node;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
-	sc->sc_ios = mem.size;
 
 #if 0
 	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
@@ -165,8 +143,6 @@ exiic_attach(struct device *parent, struct device *self, void *args)
 
 	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
 
-	struct i2cbus_attach_args iba;
-
 	sc->i2c_tag.ic_cookie = sc;
 	sc->i2c_tag.ic_acquire_bus = exiic_i2c_acquire_bus;
 	sc->i2c_tag.ic_release_bus = exiic_i2c_release_bus;
@@ -175,40 +151,41 @@ exiic_attach(struct device *parent, struct device *self, void *args)
 	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->i2c_tag;
-	iba.iba_bus_scan = exiic_bus_scan;
-	iba.iba_bus_scan_arg = sc;
+	iba.iba_bus_scan = exiic_scan;
+	iba.iba_bus_scan_arg = &sc->sc_node;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 
 void
-exiic_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
+exiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 {
-	struct exiic_softc *sc = (struct exiic_softc *)arg;
+	int iba_node = *(int *)aux;
+	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
+	char name[32];
+	uint32_t reg[1];
+	int node;
 
-	/* XXX: We currently only attach cros-ec on I2C4.  We'll use FDT later. */
-	if (sc->unit != 4)
-		return;
+	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+		memset(reg, 0, sizeof(reg));
 
-	char *name = "crosec";
-	int addr = 0x1e;
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
 
-	memset(&ia, 0, sizeof(ia));
-	ia.ia_tag = iba->iba_tag;
-	ia.ia_addr = addr;
-	ia.ia_size = 1;
-	ia.ia_name = name;
-	config_found(self, &ia, iicbus_print);
+		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+			continue;
 
-	name = "tps65090";
-	addr = 0x48;
-
-	memset(&ia, 0, sizeof(ia));
-	ia.ia_tag = iba->iba_tag;
-	ia.ia_addr = addr;
-	ia.ia_size = 1;
-	ia.ia_name = name;
-	config_found(self, &ia, iicbus_print);
+		memset(&ia, 0, sizeof(ia));
+		ia.ia_tag = iba->iba_tag;
+		ia.ia_addr = bemtoh32(&reg[0]);
+		ia.ia_name = name;
+		ia.ia_cookie = &node;
+	
+		config_found(self, &ia, iic_print);
+	}
 }
 
 void

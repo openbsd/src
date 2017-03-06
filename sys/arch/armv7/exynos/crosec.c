@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec.c,v 1.2 2016/06/10 06:42:53 jsg Exp $ */
+/* $OpenBSD: crosec.c,v 1.3 2017/03/06 06:50:47 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -55,7 +55,7 @@ cros_ec_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "crosec") == 0)
+	if (strcmp(ia->ia_name, "google,cros-ec-i2c") == 0)
 		return 1;
 	return 0;
 }
