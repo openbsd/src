@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.12 2016/12/28 22:45:24 kettenis Exp $ */
+/* $OpenBSD: imxiic.c,v 1.13 2017/03/06 06:44:46 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -54,7 +54,6 @@ struct imxiic_softc {
 	bus_size_t		sc_ios;
 	void			*sc_ih;
 	int			sc_node;
-	int			unit;
 
 	struct rwlock		sc_buslock;
 	struct i2c_controller	i2c_tag;
@@ -120,7 +119,6 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_ios = faa->fa_reg[0].size;
 	sc->sc_node = faa->fa_node;
-	sc->unit = (faa->fa_reg[0].addr & 0xc000) >> 14;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
