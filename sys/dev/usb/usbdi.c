@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.86 2017/03/06 09:04:58 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.87 2017/03/06 12:13:58 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -702,7 +702,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	SPLUSBCHECK;
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
-		     "actlen=%d\n", pipe, xfer, status, xfer->actlen));
+		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_ONQU) {
 		printf("%s: xfer=%p not on queue\n", __func__, xfer);
