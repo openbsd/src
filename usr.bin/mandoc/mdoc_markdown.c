@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.2 2017/03/04 21:41:13 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.3 2017/03/06 14:57:44 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -220,7 +220,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, NULL, md_post_pc, NULL, NULL }, /* %Q */
 	{ NULL, md_pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* sp */
-	{ NULL, NULL, md_post_pc, NULL, NULL }, /* %U */
+	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 	{ NULL, NULL, NULL, NULL, NULL }, /* ll */
 	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
@@ -1235,6 +1235,7 @@ static int
 md_pre_Lk(struct roff_node *n)
 {
 	const struct roff_node *link, *descr;
+	const unsigned char *s;
 
 	if ((link = n->child) == NULL)
 		return 0;
@@ -1251,8 +1252,16 @@ md_pre_Lk(struct roff_node *n)
 	} else
 		md_rawword("<");
 
-	outflags &= ~MD_spc;
-	md_word(link->string);
+	for (s = link->string; *s != '\0'; s++) {
+		if (strchr("%)<>", *s) != NULL) {
+			printf("%%%2.2hhX", *s);
+			outcount += 3;
+		} else {
+			putchar(*s);
+			outcount++;
+		}
+	}
+
 	outflags &= ~MD_spc;
 	md_rawword(link->next == NULL ? ">" : ")");
 	return 0;
