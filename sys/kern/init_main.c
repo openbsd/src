@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.266 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.267 2017/03/06 10:48:16 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ main(void *framep)
 	struct process *pr;
 	struct pdevinit *pdev;
 	quad_t lim;
-	int s, i;
+	int i;
 	extern struct pdevinit pdevinit[];
 	extern void disk_init(void);
 
@@ -403,12 +403,9 @@ main(void *framep)
 #endif /* CRYPTO */
 
 	/*
-	 * Initialize protocols.  Block reception of incoming packets
-	 * until everything is ready.
+	 * Initialize protocols.
 	 */
-	s = splnet();
 	domaininit();
-	splx(s);
 
 	initconsbuf();
 
