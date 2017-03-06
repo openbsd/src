@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.250 2017/02/21 16:25:04 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.251 2017/03/06 09:02:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -709,7 +709,11 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 	for (i = 0; i < sx; i++) {
 		grid_view_get_cell(s->grid, i, py, &gc);
 		if (len != 0 &&
-		    (gc.attr & GRID_ATTR_CHARSET ||
+		    (((~tty->flags & TTY_UTF8) &&
+		    (gc.data.size != 1 ||
+		    *gc.data.data >= 0x7f ||
+		    gc.data.width != 1)) ||
+		    (gc.attr & GRID_ATTR_CHARSET) ||
 		    gc.flags != last.flags ||
 		    gc.attr != last.attr ||
 		    gc.fg != last.fg ||
@@ -726,10 +730,19 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 			screen_select_cell(s, &last, &gc);
 		else
 			memcpy(&last, &gc, sizeof last);
-		if (gc.attr & GRID_ATTR_CHARSET) {
+		if (((~tty->flags & TTY_UTF8) &&
+		    (gc.data.size != 1 ||
+		    *gc.data.data >= 0x7f ||
+		    gc.data.width != 1)) ||
+		    (gc.attr & GRID_ATTR_CHARSET)) {
 			tty_attributes(tty, &last, wp);
-			for (j = 0; j < gc.data.size; j++)
-				tty_putc(tty, gc.data.data[j]);
+			if (~tty->flags & TTY_UTF8) {
+				for (j = 0; j < gc.data.width; j++)
+					tty_putc(tty, '_');
+			} else {
+				for (j = 0; j < gc.data.size; j++)
+					tty_putc(tty, gc.data.data[j]);
+			}
 		} else {
 			memcpy(buf + len, gc.data.data, gc.data.size);
 			len += gc.data.size;
