@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.981 2017/03/05 19:31:15 rpe Exp $
+#	$OpenBSD: install.sub,v 1.982 2017/03/06 22:10:14 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2090,6 +2090,8 @@ get_rootinfo() {
 # Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
 ifstart () {
+	# Note: Do not rename the 'if' variable which is documented as being
+	# usable in hostname.if(5) files.
 	local _hn=$1 if=${1#/mnt/etc/hostname.}
 
 	((NIFS++))
@@ -2186,7 +2188,7 @@ ifstart () {
 
 # Configure the network during upgrade based on the on-disk configuration.
 enable_network() {
-	local _f _gw _trunks _svlans _vlans
+	local _f _gw _hn _if _trunks _svlans _vlans
 
 	# Copy any network configuration files.
 	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
@@ -2205,25 +2207,25 @@ enable_network() {
 
 	# Configure all of the non-loopback interfaces which we know about.
 	# Refer to hostname.if(5)
-	for hn in /mnt/etc/hostname.*; do
+	for _hn in /mnt/etc/hostname.*; do
 		# Strip off prefix to get interface name.
-		if=${hn#/mnt/etc/hostname.}
-		if isin "${if%%+([0-9])}" $(ifconfig -C); then
+		_if=${_hn#/mnt/etc/hostname.}
+		if isin "${_if%%+([0-9])}" $(ifconfig -C); then
 			# Dynamic interfaces must be done later.
-			case ${if%%+([0-9])} in
-			trunk)	_trunks="$_trunks $hn";;
-			svlan)	_svlans="$_svlans $hn";;
-			vlan)	_vlans="$_vlans $hn";;
+			case ${_if%%+([0-9])} in
+			trunk)	_trunks="$_trunks $_hn";;
+			svlan)	_svlans="$_svlans $_hn";;
+			vlan)	_vlans="$_vlans $_hn";;
 			esac
 		else
 			# 'Real' interfaces (if available) are done now.
-			ifconfig $if >/dev/null 2>&1 && ifstart $hn
+			ifconfig $_if >/dev/null 2>&1 && ifstart $_hn
 		fi
 	done
 	# Configure any dynamic interfaces now that 'real' ones are up.
 	# ORDER IS IMPORTANT! (see /etc/netstart).
-	for hn in $_trunks $_svlans $_vlans; do
-		ifstart $hn
+	for _hn in $_trunks $_svlans $_vlans; do
+		ifstart $_hn
 	done
 
 	[[ -n $rtsolif ]] && ifconfig $rtsolif inet6 autoconf
