@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.9 2013/06/02 01:55:52 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.10 2017/03/07 13:59:51 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -72,12 +72,12 @@ ENTRY(mtx_enter)
 	movl	%edx, %edi
 	call	_C_LABEL(spllower)
 	popq	%rdi
+3:
 #ifdef DIAGNOSTIC
 	movq	CPUVAR(SELF), %rcx
 	cmpq	MTX_OWNER(%rdi), %rcx
 	je	4f
 #endif
-3:
 	movq	MTX_OWNER(%rdi), %rax
 	testq	%rax, %rax
 	jz	1b
