@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.7 2017/03/07 14:03:56 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.8 2017/03/07 15:31:18 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -247,6 +247,7 @@ static	int	 escflags; /* Escape in generated markdown code: */
 #define	ESC_PAR	 (1 << 3)  /* ")" when "(" is open. */
 #define	ESC_SQU	 (1 << 4)  /* "]" when "[" is open. */
 #define	ESC_FON	 (1 << 5)  /* "*" immediately after unrelated "*". */
+#define	ESC_EOL	 (1 << 6)  /* " " at the and of a line. */
 
 static	int	 code_blocks, quote_blocks, list_blocks;
 static	int	 outcount;
@@ -380,25 +381,25 @@ md_preword(void)
 	 * they terminate the list.  Work around this markdown issue
 	 * by using mere line breaks instead.
 	 */
+
 	if (list_blocks && outflags & MD_sp) {
 		outflags &= ~MD_sp;
 		outflags |= MD_br;
 	}
 
-	/* End the old line if requested. */
+	/*
+	 * End the old line if requested.
+	 * Escape whitespace at the end of the markdown line
+	 * such that it won't look like an output line break.
+	 */
 
 	if (outflags & MD_sp)
 		putchar('\n');
 	else if (outflags & MD_br) {
 		putchar(' ');
 		putchar(' ');
-#ifdef DEBUG
-		putchar(':');
-		putchar(':');
-		putchar(' ');
-		putchar(' ');
-#endif
-	}
+	} else if (outflags & MD_nl && escflags & ESC_EOL)
+		md_named("zwnj");
 
 	/* Start a new line if necessary. */
 
@@ -437,7 +438,7 @@ md_rawword(const char *s)
 {
 	md_preword();
 
-	if (*s == 0)
+	if (*s == '\0')
 		return;
 
 	if (escflags & ESC_FON) {
@@ -470,6 +471,10 @@ md_rawword(const char *s)
 		}
 		md_char(*s++);
 	}
+	if (s[-1] == ' ')
+		escflags |= ESC_EOL;
+	else
+		escflags &= ~ESC_EOL;
 }
 
 /*
@@ -489,6 +494,9 @@ md_word(const char *s)
 		outflags &= ~MD_spc;
 
 	md_preword();
+
+	if (*s == '\0')
+		return;
 
 	/* No spacing after opening delimiters. */
 	if ((s[0] == '(' || s[0] == '[') && s[1] == '\0')
@@ -630,7 +638,10 @@ md_word(const char *s)
 	if (*currfont != '\0') {
 		outflags &= ~MD_spc;
 		md_rawword(currfont);
-	}
+	} else if (s[-2] == ' ')
+		escflags |= ESC_EOL;
+	else
+		escflags &= ~ESC_EOL;
 }
 
 /*
@@ -640,7 +651,7 @@ static void
 md_named(const char *s)
 {
 	printf("&%s;", s);
-	escflags &= ~ESC_FON;
+	escflags &= ~(ESC_FON | ESC_EOL);
 	outcount++;
 }
 
