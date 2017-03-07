@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.92 2017/02/27 14:03:52 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.93 2017/03/07 14:35:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -855,7 +855,8 @@ sub newer_has_errors
 		if ($handle->has_error) {
 			$state->set_name_from_handle($handle);
 			$state->log("Can't install #1: #2",
-			    $handle->pkgname, $handle->error_message);
+			    $handle->pkgname, $handle->error_message)
+			    unless $handle->has_reported_error;
 			$state->{bad}++;
 			$set->cleanup($handle->has_error);
 			$state->tracker->cant($set);

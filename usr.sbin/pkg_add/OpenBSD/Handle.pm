@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.40 2017/03/07 14:20:01 espie Exp $
+# $OpenBSD: Handle.pm,v 1.41 2017/03/07 14:35:40 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -134,6 +134,12 @@ sub has_error
 	return $self->{error};
 }
 
+sub has_reported_error
+{
+	my $self = shift;
+	return $self->{error_reported};
+}
+
 sub error_message
 {
 	my $self = shift;
@@ -240,6 +246,7 @@ sub get_plist
 		$location->close_with_client_error;
 		$location->wipe_info;
 		$handle->set_error(BAD_PACKAGE);
+		$handle->{error_reported} = 1;
 		return;
 	}
 	delete $location->{update_info};
