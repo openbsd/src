@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.50 2016/10/04 10:10:19 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.51 2017/03/07 14:15:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -78,8 +78,8 @@ sub _opened
 	}
 	my $fh = $self->{repository}->open($self);
 	if (!defined $fh) {
-		$self->{repository}->parse_problems($self->{errors})
-		    if defined $self->{errors};
+		$self->{repository}->parse_problems($self->{errors}, undef, 
+		    $self) if defined $self->{errors};
 		undef $self->{errors};
 		return;
 	}
