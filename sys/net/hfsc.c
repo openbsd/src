@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.35 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.36 2017/03/07 01:29:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -260,7 +260,7 @@ struct pool	hfsc_class_pl, hfsc_internal_sc_pl;
  */
 
 unsigned int	 hfsc_idx(unsigned int, const struct mbuf *);
-int		 hfsc_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*hfsc_enq(struct ifqueue *, struct mbuf *);
 struct mbuf	*hfsc_deq_begin(struct ifqueue *, void **);
 void		 hfsc_deq_commit(struct ifqueue *, struct mbuf *, void *);
 void		 hfsc_purge(struct ifqueue *, struct mbuf_list *);
@@ -650,7 +650,7 @@ hfsc_nextclass(struct hfsc_class *cl)
 	return (cl);
 }
 
-int
+struct mbuf *
 hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 {
 	struct hfsc_if *hif = ifq->ifq_q;
@@ -660,14 +660,14 @@ hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 	    cl->cl_children != NULL) {
 		cl = hif->hif_defaultclass;
 		if (cl == NULL)
-			return (ENOBUFS);
+			return (m);
 		cl->cl_pktattr = NULL;
 	}
 
 	if (ml_len(&cl->cl_q.q) >= cl->cl_q.qlimit) {
 		/* drop occurred.  mbuf needs to be freed */
 		PKTCNTR_INC(&cl->cl_stats.drop_cnt, m->m_pkthdr.len);
-		return (ENOBUFS);
+		return (m);
 	}
 
 	ml_enqueue(&cl->cl_q.q, m);
@@ -677,7 +677,7 @@ hfsc_enq(struct ifqueue *ifq, struct mbuf *m)
 	if (ml_len(&cl->cl_q.q) == 1)
 		hfsc_set_active(hif, cl, m->m_pkthdr.len);
 
-	return (0);
+	return (NULL);
 }
 
 struct mbuf *

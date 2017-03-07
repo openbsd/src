@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.6 2017/01/24 03:57:35 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.7 2017/03/07 01:29:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -29,7 +29,7 @@
  * priq glue
  */
 unsigned int	 priq_idx(unsigned int, const struct mbuf *);
-int		 priq_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*priq_enq(struct ifqueue *, struct mbuf *);
 struct mbuf	*priq_deq_begin(struct ifqueue *, void **);
 void		 priq_deq_commit(struct ifqueue *, struct mbuf *, void *);
 void		 priq_purge(struct ifqueue *, struct mbuf_list *);
@@ -225,7 +225,8 @@ ifq_attach(struct ifqueue *ifq, const struct ifq_ops *newops, void *opsarg)
 	ifq->ifq_q = newq;
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
-		if (ifq->ifq_ops->ifqop_enq(ifq, m) != 0) {
+		m = ifq->ifq_ops->ifqop_enq(ifq, m);
+		if (m != NULL) {
 			ifq->ifq_qdrops++;
 			ml_enqueue(&free_ml, m);
 		} else
@@ -252,36 +253,29 @@ ifq_destroy(struct ifqueue *ifq)
 }
 
 int
-ifq_enqueue_try(struct ifqueue *ifq, struct mbuf *m)
+ifq_enqueue(struct ifqueue *ifq, struct mbuf *m)
 {
-	int rv;
+	struct mbuf *dm;
 
 	mtx_enter(&ifq->ifq_mtx);
-	rv = ifq->ifq_ops->ifqop_enq(ifq, m);
-	if (rv == 0) {
-		ifq->ifq_len++;
-
+	dm = ifq->ifq_ops->ifqop_enq(ifq, m);
+	if (dm != m) {
 		ifq->ifq_packets++;
 		ifq->ifq_bytes += m->m_pkthdr.len;
 		if (ISSET(m->m_flags, M_MCAST))
 			ifq->ifq_mcasts++;
-	} else
+	}
+
+	if (dm == NULL)
+		ifq->ifq_len++;
+	else
 		ifq->ifq_qdrops++;
 	mtx_leave(&ifq->ifq_mtx);
 
-	return (rv);
-}
+	if (dm != NULL)
+		m_freem(dm);
 
-int
-ifq_enqueue(struct ifqueue *ifq, struct mbuf *m)
-{
-	int err;
-
-	err = ifq_enqueue_try(ifq, m);
-	if (err != 0)
-		m_freem(m);
-
-	return (err);
+	return (dm == m ? ENOBUFS : 0);
 }
 
 struct mbuf *
@@ -403,14 +397,14 @@ priq_free(unsigned int idx, void *pq)
 	free(pq, M_DEVBUF, sizeof(struct priq));
 }
 
-int
+struct mbuf *
 priq_enq(struct ifqueue *ifq, struct mbuf *m)
 {
 	struct priq *pq;
 	struct priq_list *pl;
 
 	if (ifq_len(ifq) >= ifq->ifq_maxlen)
-		return (ENOBUFS);
+		return (m);
 
 	pq = ifq->ifq_q;
 	KASSERT(m->m_pkthdr.pf.prio <= IFQ_MAXPRIO);
@@ -423,7 +417,7 @@ priq_enq(struct ifqueue *ifq, struct mbuf *m)
 		pl->tail->m_nextpkt = m;
 	pl->tail = m;
 
-	return (0);
+	return (NULL);
 }
 
 struct mbuf *

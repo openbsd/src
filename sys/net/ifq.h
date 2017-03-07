@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.9 2017/01/24 10:08:30 krw Exp $ */
+/*	$OpenBSD: ifq.h,v 1.10 2017/03/07 01:29:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -117,25 +117,21 @@ struct ifqueue {
  * the ifqueue. All the pending mbufs are removed from the previous
  * conditioner and requeued on the new.
  *
- * === ifq_enqueue() and ifq_enqueue_try()
+ * === ifq_enqueue()
  *
- * ifq_enqueue() and ifq_enqueue_try() attempt to fit an mbuf onto the
- * ifqueue. If the current traffic conditioner rejects the packet it
- * wont be queued and will be counted as a drop. ifq_enqueue() will
- * free the mbuf on the callers behalf if the packet is rejected.
- * ifq_enqueue_try() does not free the mbuf, allowing the caller to
- * reuse it.
+ * ifq_enqueue() attempts to fit an mbuf onto the ifqueue. The
+ * current traffic conditioner may drop a packet to make space on the
+ * queue.
  *
  * === ifq_start()
  *
- * Once a packet has been successfully queued with ifq_enqueue() or
- * ifq_enqueue_try(), the network card is notified with a call to
- * if_start(). If an interface is marked with IFXF_MPSAFE in its
- * if_xflags field, if_start() calls ifq_start() to dispatch the
- * interfaces start routine. Calls to ifq_start() run in the ifqueue
- * serialisation context, guaranteeing that only one instance of
- * ifp->if_start() will be running in the system at any point in time.
- *
+ * Once a packet has been successfully queued with ifq_enqueue(),
+ * the network card is notified with a call to if_start(). If an
+ * interface is marked with IFXF_MPSAFE in its if_xflags field,
+ * if_start() calls ifq_start() to dispatch the interfaces start
+ * routine. Calls to ifq_start() run in the ifqueue serialisation
+ * context, guaranteeing that only one instance of ifp->if_start()
+ * will be running in the system at any point in time.
  *
  * == Traffic conditioners API
  *
@@ -324,7 +320,7 @@ struct ifqueue {
 struct ifq_ops {
 	unsigned int		 (*ifqop_idx)(unsigned int,
 				    const struct mbuf *);
-	int			 (*ifqop_enq)(struct ifqueue *, struct mbuf *);
+	struct mbuf		*(*ifqop_enq)(struct ifqueue *, struct mbuf *);
 	struct mbuf		*(*ifqop_deq_begin)(struct ifqueue *, void **);
 	void			 (*ifqop_deq_commit)(struct ifqueue *,
 				    struct mbuf *, void *);
@@ -341,7 +337,6 @@ struct ifq_ops {
 void		 ifq_init(struct ifqueue *, struct ifnet *, unsigned int);
 void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
-int		 ifq_enqueue_try(struct ifqueue *, struct mbuf *);
 int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
