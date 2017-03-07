@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.155 2017/02/20 17:04:25 jca Exp $	*/
+/*	$OpenBSD: inet.c,v 1.156 2017/03/07 23:35:06 jca Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -983,15 +983,15 @@ etherip_stats(char *name)
 #define p(f, m) if (etheripstat.f || sflag <= 1) \
 	printf(m, etheripstat.f, plural(etheripstat.f))
 
-	p(etherip_hdrops, "\t%u packet%s shorter than header shows\n");
-	p(etherip_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(etherip_noifdrops, "\t%u packet%s were dropped because of no interface/bridge information\n");
-	p(etherip_pdrops, "\t%u packet%s dropped due to policy\n");
-	p(etherip_adrops, "\t%u packet%s dropped for other reasons\n");
-	p(etherip_ipackets, "\t%u input ethernet-in-IP packet%s\n");
-	p(etherip_opackets, "\t%u output ethernet-in-IP packet%s\n");
-	p(etherip_ibytes, "\t%llu input byte%s\n");
-	p(etherip_obytes, "\t%llu output byte%s\n");
+	p(etherips_hdrops, "\t%llu packet%s shorter than header shows\n");
+	p(etherips_qfull, "\t%llu packet%s were dropped due to full output queue\n");
+	p(etherips_noifdrops, "\t%llu packet%s were dropped because of no interface/bridge information\n");
+	p(etherips_pdrops, "\t%llu packet%s dropped due to policy\n");
+	p(etherips_adrops, "\t%llu packet%s dropped for other reasons\n");
+	p(etherips_ipackets, "\t%llu input ethernet-in-IP packet%s\n");
+	p(etherips_opackets, "\t%llu output ethernet-in-IP packet%s\n");
+	p(etherips_ibytes, "\t%llu input byte%s\n");
+	p(etherips_obytes, "\t%llu output byte%s\n");
 #undef p
 }
 

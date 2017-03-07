@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.14 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.15 2017/03/07 23:35:06 jca Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -366,7 +366,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return ENOBUFS;
 	}
 	eip = mtod(m, struct etherip_header *);
@@ -376,7 +376,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return ENOBUFS;
 	}
 	ip = mtod(m, struct ip *);
@@ -397,8 +397,8 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	etheripstat.etherip_opackets++;
-	etheripstat.etherip_obytes += (m->m_pkthdr.len -
+	etheripstat.etherips_opackets++;
+	etheripstat.etherips_obytes += (m->m_pkthdr.len -
 	    (sizeof(struct ip) + sizeof(struct etherip_header)));
 
 	return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL, 0);
@@ -425,7 +425,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto)
 
 	if (!etherip_allow) {
 		m_freem(m);
-		etheripstat.etherip_pdrops++;
+		etheripstat.etherips_pdrops++;
 		return IPPROTO_DONE;
 	}
 
@@ -455,7 +455,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto)
 		 */
 		return etherip_input(mp, offp, proto);
 #else
-		etheripstat.etherip_noifdrops++;
+		etheripstat.etherips_noifdrops++;
 		m_freem(m);
 		return IPPROTO_DONE;
 #endif /* NGIF */
@@ -464,25 +464,25 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto)
 	m_adj(m, *offp);
 	m = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
 	}
 
 	eip = mtod(m, struct etherip_header *);
 	if (eip->eip_ver != ETHERIP_VERSION || eip->eip_pad) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
 
-	etheripstat.etherip_ipackets++;
-	etheripstat.etherip_ibytes += (m->m_pkthdr.len -
+	etheripstat.etherips_ipackets++;
+	etheripstat.etherips_ibytes += (m->m_pkthdr.len -
 	    sizeof(struct etherip_header));
 
 	m_adj(m, sizeof(struct etherip_header));
 	m = m_pullup(m, sizeof(struct ether_header));
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
 	}
 	m->m_flags &= ~(M_BCAST|M_MCAST);
@@ -523,7 +523,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	M_PREPEND(m, sizeof(struct etherip_header), M_DONTWAIT);
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return ENOBUFS;
 	}
 	eip = mtod(m, struct etherip_header *);
@@ -533,7 +533,7 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 
 	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return ENOBUFS;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -555,8 +555,8 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
-	etheripstat.etherip_opackets++;
-	etheripstat.etherip_obytes += (m->m_pkthdr.len -
+	etheripstat.etherips_opackets++;
+	etheripstat.etherips_obytes += (m->m_pkthdr.len -
 	    (sizeof(struct ip6_hdr) + sizeof(struct etherip_header)));
 
 	return ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
@@ -581,7 +581,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 
 	if (!etherip_allow) {
 		m_freem(m);
-		etheripstat.etherip_pdrops++;
+		etheripstat.etherips_pdrops++;
 		return IPPROTO_NONE;
 	}
 
@@ -615,7 +615,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 		 */
 		return etherip_input(mp, offp, proto);
 #else
-		etheripstat.etherip_noifdrops++;
+		etheripstat.etherips_noifdrops++;
 		m_freem(m);
 		return IPPROTO_DONE;
 #endif /* NGIF */
@@ -624,24 +624,24 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 	m_adj(m, *offp);
 	m = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
 	}
 
 	eip = mtod(m, struct etherip_header *);
 	if ((eip->eip_ver != ETHERIP_VERSION) || eip->eip_pad) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
-	etheripstat.etherip_ipackets++;
-	etheripstat.etherip_ibytes += (m->m_pkthdr.len -
+	etheripstat.etherips_ipackets++;
+	etheripstat.etherips_ibytes += (m->m_pkthdr.len -
 	    sizeof(struct etherip_header));
 
 	m_adj(m, sizeof(struct etherip_header));
 	m = m_pullup(m, sizeof(struct ether_header));
 	if (m == NULL) {
-		etheripstat.etherip_adrops++;
+		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
 	}
 
