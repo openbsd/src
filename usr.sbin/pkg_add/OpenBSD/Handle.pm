@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.39 2014/02/08 16:11:02 espie Exp $
+# $OpenBSD: Handle.pm,v 1.40 2017/03/07 14:20:01 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -235,7 +235,8 @@ sub get_plist
 	}
 	my $plist = $location->plist;
 	unless (defined $plist) {
-		$state->say("Can't find CONTENTS from #1", $location->url);
+		$state->say("Can't find CONTENTS from #1", $location->url)
+		    unless $location->{error_reported};
 		$location->close_with_client_error;
 		$location->wipe_info;
 		$handle->set_error(BAD_PACKAGE);
