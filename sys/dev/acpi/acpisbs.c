@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.2 2017/02/22 21:41:31 jcs Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.3 2017/03/07 02:27:02 jcs Exp $ */
 /*
  * Smart Battery Subsystem device driver
  * ACPI 5.0 spec section 10
@@ -16,6 +16,11 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * TODO: support multiple batteries based on _SBS, make sc_battery an array and
+ * poll each battery independently
  */
 
 #include <sys/param.h>
@@ -234,7 +239,6 @@ acpisbs_read(struct acpisbs_softc *sc)
 				break;
 			}
 
-			/* TODO: support multiple batteries based on _SBS */
 			sc->sc_batteries_present = 1;
 
 			if (*ival & SMBATT_BM_CAPACITY_MODE)
