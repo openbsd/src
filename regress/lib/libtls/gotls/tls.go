@@ -26,7 +26,6 @@ var (
 
 // TLSConfig provides configuration options for a TLS context.
 type TLSConfig struct {
-	caFile *C.char
 	tlsCfg *C.struct_tls_config
 }
 
@@ -57,11 +56,9 @@ func NewConfig() (*TLSConfig, error) {
 
 // SetCAFile sets the CA file to be used for connections.
 func (c *TLSConfig) SetCAFile(filename string) {
-	if c.caFile != nil {
-		C.free(unsafe.Pointer(c.caFile))
-	}
-	c.caFile = C.CString(filename)
-	C.tls_config_set_ca_file(c.tlsCfg, c.caFile)
+	caFile := C.CString(filename)
+	defer C.free(unsafe.Pointer(caFile))
+	C.tls_config_set_ca_file(c.tlsCfg, caFile)
 }
 
 // InsecureNoVerifyCert disables certificate verification for the connection.
