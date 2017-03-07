@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_drv.h,v 1.9 2015/12/09 05:17:44 jsg Exp $	*/
+/*	$OpenBSD: intel_drv.h,v 1.10 2017/03/07 02:48:15 jcs Exp $	*/
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007-2008 Intel Corporation
@@ -168,6 +168,7 @@ struct intel_panel {
 		bool enabled;
 		bool combination_mode;	/* gen 2/4 only */
 		bool active_low_pwm;
+		bool alternate_pwm_increment;	/* lpt+ */
 		struct backlight_device *device;
 	} backlight;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i915_reg.h,v 1.11 2015/09/25 16:15:19 jsg Exp $	*/
+/*	$OpenBSD: i915_reg.h,v 1.12 2017/03/07 02:48:15 jcs Exp $	*/
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -4540,9 +4540,11 @@
 #define  FDI_PHASE_SYNC_OVR(pipe) (1<<(FDIA_PHASE_SYNC_SHIFT_OVR - ((pipe) * 2)))
 #define  FDI_PHASE_SYNC_EN(pipe) (1<<(FDIA_PHASE_SYNC_SHIFT_EN - ((pipe) * 2)))
 #define  FDI_BC_BIFURCATION_SELECT	(1 << 12)
+#define  SPT_PWM_GRANULARITY		(1<<0)
 #define SOUTH_CHICKEN2		0xc2004
 #define  FDI_MPHY_IOSFSB_RESET_STATUS	(1<<13)
 #define  FDI_MPHY_IOSFSB_RESET_CTL	(1<<12)
+#define  LPT_PWM_GRANULARITY		(1<<5)
 #define  DPLS_EDP_PPS_FIX_DIS		(1<<0)
 
 #define _FDI_RXA_CHICKEN         0xc200c

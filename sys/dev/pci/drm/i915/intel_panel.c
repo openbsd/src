@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_panel.c,v 1.11 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: intel_panel.c,v 1.12 2017/03/07 02:48:15 jcs Exp $	*/
 /*
  * Copyright © 2006-2010 Intel Corporation
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -611,13 +611,29 @@ static void bdw_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	u32 pch_ctl1, pch_ctl2;
+	u32 pch_ctl1, pch_ctl2, schicken;
 
 	pch_ctl1 = I915_READ(BLC_PWM_PCH_CTL1);
 	if (pch_ctl1 & BLM_PCH_PWM_ENABLE) {
 		DRM_DEBUG_KMS("pch backlight already enabled\n");
 		pch_ctl1 &= ~BLM_PCH_PWM_ENABLE;
 		I915_WRITE(BLC_PWM_PCH_CTL1, pch_ctl1);
+	}
+
+	if (HAS_PCH_LPT(dev)) {
+		schicken = I915_READ(SOUTH_CHICKEN2);
+		if (panel->backlight.alternate_pwm_increment)
+			schicken |= LPT_PWM_GRANULARITY;
+		else
+			schicken &= ~LPT_PWM_GRANULARITY;
+		I915_WRITE(SOUTH_CHICKEN2, schicken);
+	} else {
+		schicken = I915_READ(SOUTH_CHICKEN1);
+		if (panel->backlight.alternate_pwm_increment)
+			schicken |= SPT_PWM_GRANULARITY;
+		else
+			schicken &= ~SPT_PWM_GRANULARITY;
+		I915_WRITE(SOUTH_CHICKEN1, schicken);
 	}
 
 	pch_ctl2 = panel->backlight.max << 16;
@@ -956,6 +972,13 @@ static int bdw_setup_backlight(struct intel_connector *connector)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
 	u32 pch_ctl1, pch_ctl2, val;
+	bool alt;
+
+	if (HAS_PCH_LPT(dev))
+		alt = I915_READ(SOUTH_CHICKEN2) & LPT_PWM_GRANULARITY;
+	else
+		alt = I915_READ(SOUTH_CHICKEN1) & SPT_PWM_GRANULARITY;
+	panel->backlight.alternate_pwm_increment = alt;
 
 	pch_ctl1 = I915_READ(BLC_PWM_PCH_CTL1);
 	panel->backlight.active_low_pwm = pch_ctl1 & BLM_PCH_POLARITY;
