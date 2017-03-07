@@ -1,4 +1,4 @@
-/*      $OpenBSD: gmac_test.c,v 1.3 2015/11/07 17:50:07 mikeb Exp $  */
+/*      $OpenBSD: gmac_test.c,v 1.4 2017/03/07 16:11:34 inoguchi Exp $  */
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mikeb@openbsd.org>
@@ -530,6 +530,104 @@ struct {
 		"84 b7 d7 b9 8f 0c a8 b6 ac da 68 94 bc 61 90 69",
 		/* tag */
 		"ef 9c bc 28 fe 1b 56 a7 c4 e0 d5 8c 86 cd 2b c0"
+	},
+
+	/* local add-ons, primarily streaming ghash tests */
+
+	/* 128 bytes aad */
+	{
+		/* key + salt */
+		"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 "
+		"00 00 00 00",
+		/* iv */
+		"00 00 00 00 00 00 00 00",
+		/* aad */
+		"d9 31 32 25 f8 84 06 e5 a5 59 09 c5 af f5 26 9a "
+		"86 a7 a9 53 15 34 f7 da 2e 4c 30 3d 8a 31 8a 72 "
+		"1c 3c 0c 95 95 68 09 53 2f cf 0e 24 49 a6 b5 25 "
+		"b1 6a ed f5 aa 0d e6 57 ba 63 7b 39 1a af d2 55 "
+		"52 2d c1 f0 99 56 7d 07 f4 7f 37 a3 2a 84 42 7d "
+		"64 3a 8c dc bf e5 c0 c9 75 98 a2 bd 25 55 d1 aa "
+		"8c b0 8e 48 59 0d bb 3d a7 b0 8b 10 56 82 88 38 "
+		"c5 f6 1e 63 93 ba 7a 0a bc c9 f6 62 89 80 15 ad",
+		/* ciphertext */
+		NULL,
+		/* tag */
+		"5f ea 79 3a 2d 6f 97 4d 37 e6 8e 0c b8 ff 94 92"
+	},
+	/* 48 bytes plaintext */
+	{
+		/* key + salt */
+		"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 "
+		"00 00 00 00",
+		/* iv */
+		"00 00 00 00 00 00 00 00",
+		/* aad */
+		NULL,
+		/* ciphertext */
+		"03 88 da ce 60 b6 a3 92 f3 28 c2 b9 71 b2 fe 78 "
+		"f7 95 aa ab 49 4b 59 23 f7 fd 89 ff 94 8b c1 e0 "
+		"20 02 11 21 4e 73 94 da 20 89 b6 ac d0 93 ab e0",
+		/* tag */
+		"9d d0 a3 76 b0 8e 40 eb 00 c3 5f 29 f9 ea 61 a4"
+	},
+	/* 80 bytes plaintext */
+	{
+		/* key + salt */
+		"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 "
+		"00 00 00 00",
+		/* iv */
+		"00 00 00 00 00 00 00 00",
+		/* aad */
+		NULL,
+		/* ciphertext */
+		"03 88 da ce 60 b6 a3 92 f3 28 c2 b9 71 b2 fe 78 "
+		"f7 95 aa ab 49 4b 59 23 f7 fd 89 ff 94 8b c1 e0 "
+		"20 02 11 21 4e 73 94 da 20 89 b6 ac d0 93 ab e0 "
+		"c9 4d a2 19 11 8e 29 7d 7b 7e bc bc c9 c3 88 f2 "
+		"8a de 7d 85 a8 ee 35 61 6f 71 24 a9 d5 27 02 91",
+		/* tag */
+		"98 88 5a 3a 22 bd 47 42 fe 7b 72 17 21 93 b1 63"
+	},
+	/* 128 bytes plaintext */
+	{
+		/* key + salt */
+		"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 "
+		"00 00 00 00",
+		/* iv */
+		"00 00 00 00 00 00 00 00",
+		/* aad */
+		NULL,
+		/* ciphertext */
+		"03 88 da ce 60 b6 a3 92 f3 28 c2 b9 71 b2 fe 78 "
+		"f7 95 aa ab 49 4b 59 23 f7 fd 89 ff 94 8b c1 e0 "
+		"20 02 11 21 4e 73 94 da 20 89 b6 ac d0 93 ab e0 "
+		"c9 4d a2 19 11 8e 29 7d 7b 7e bc bc c9 c3 88 f2 "
+		"8a de 7d 85 a8 ee 35 61 6f 71 24 a9 d5 27 02 91 "
+		"95 b8 4d 1b 96 c6 90 ff 2f 2d e3 0b f2 ec 89 e0 "
+		"02 53 78 6e 12 65 04 f0 da b9 0c 48 a3 03 21 de "
+		"33 45 e6 b0 46 1e 7c 9e 6c 6b 7a fe dd e8 3f 40",
+		/* tag */
+		"ca c4 5f 60 e3 1e fd 3b 5a 43 b9 8a 22 ce 1a a1"
+	},
+	/* 80 bytes plaintext, submitted by Intel */
+	{
+		/* key + salt */
+		"84 3f fc f5 d2 b7 26 94 d1 9e d0 1d 01 24 94 12 "
+		"db cc a3 2e",
+		/* iv */
+		"bf 9b 80 46 17 c3 aa 9e",
+		/* aad */
+		"00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 "
+		"10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f",
+		/* ciphertext */
+		"62 68 c6 fa 2a 80 b2 d1 37 46 7f 09 2f 65 7a c0 "
+		"4d 89 be 2b ea a6 23 d6 1b 5a 86 8c 8f 03 ff 95 "
+		"d3 dc ee 23 ad 2f 1a b3 a6 c8 0e af 4b 14 0e b0 "
+		"5d e3 45 7f 0f bc 11 1a 6b 43 d0 76 3a a4 22 a3 "
+		"01 3c f1 dc 37 fe 41 7d 1f bf c4 49 b7 5d 4c c5",
+		/* tag */
+		"3b 62 9c cf bc 11 19 b7 31 9e 1d ce 2c d6 fd 6d"
 	}
 };
 
