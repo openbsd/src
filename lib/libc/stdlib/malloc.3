@@ -30,15 +30,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.102 2017/03/06 18:44:21 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.103 2017/03/07 06:07:50 otto Exp $
 .\"
-.Dd $Mdocdate: March 6 2017 $
+.Dd $Mdocdate: March 7 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
 .Nm calloc ,
 .Nm reallocarray ,
+.Nm recallocarray ,
 .Nm realloc ,
 .Nm free
 .Nd memory allocation and deallocation
@@ -118,7 +119,9 @@ The
 .Fn recallocarray
 function is similar to
 .Fn reallocarray
-except that it takes care of clearing newly allocated and freed memory.
+except that it takes care of clearing newly allocated memory.
+Additionally, the memory that becomes unallocated while shrinking
+or moving existing allocations is erased.
 If
 .Fa ptr
 is a
@@ -135,9 +138,9 @@ pointer,
 .Fa oldnmemb
 must be a value such that
 .Fa oldnmemb
-* 
+*
 .Fa size
-is the size of an earlier allocation that returned
+is the size of the earlier allocation that returned
 .Fa ptr ,
 otherwise the behaviour is undefined.
 .Pp
@@ -204,7 +207,7 @@ to
 .Er ENOMEM .
 .Pp
 If
-.Fa ptr 
+.Fa ptr
 is not NULL and multiplying
 .Fa oldnmemb
 and
@@ -220,8 +223,10 @@ to
 .Sh IDIOMS
 Consider
 .Fn calloc
-or the extension
+or the extensions
 .Fn reallocarray
+and
+.Fn recallocarray
 when there is multiplication in the
 .Fa size
 argument of
@@ -547,6 +552,10 @@ The
 .Fn reallocarray
 function appeared in
 .Ox 5.6 .
+The
+.Fn recallocarray
+function appeared in
+.Ox 6.1 .
 .Sh CAVEATS
 When using
 .Fn malloc ,
