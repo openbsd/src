@@ -14,7 +14,6 @@ import "C"
 
 import (
 	"errors"
-	"fmt"
 	"time"
 	"unsafe"
 )
@@ -106,11 +105,11 @@ func NewClient(config *TLSConfig) (*TLS, error) {
 }
 
 // Error returns the error message from the TLS context.
-func (t *TLS) Error() string {
+func (t *TLS) Error() error {
 	if msg := C.tls_error(t.ctx); msg != nil {
-		return C.GoString(msg)
+		return errors.New(C.GoString(msg))
 	}
-	return ""
+	return errors.New("unknown error")
 }
 
 // PeerCertProvided returns whether the peer provided a certificate.
@@ -203,7 +202,7 @@ func (t *TLS) Connect(host, port string) error {
 	defer C.free(unsafe.Pointer(h))
 	defer C.free(unsafe.Pointer(p))
 	if C.tls_connect(t.ctx, h, p) != 0 {
-		return fmt.Errorf("connect failed: %v", t.Error())
+		return t.Error()
 	}
 	return nil
 }
@@ -217,7 +216,7 @@ func (t *TLS) Handshake() error {
 	case ret == C.TLS_WANT_POLLOUT:
 		return errWantPollOut
 	case ret != 0:
-		return fmt.Errorf("handshake failed: %v", t.Error())
+		return t.Error()
 	}
 	return nil
 }
@@ -231,7 +230,7 @@ func (t *TLS) Read(buf []byte) (int, error) {
 	case ret == C.TLS_WANT_POLLOUT:
 		return -1, errWantPollOut
 	case ret < 0:
-		return -1, fmt.Errorf("read failed: %v", t.Error())
+		return -1, t.Error()
 	}
 	return int(ret), nil
 }
@@ -247,7 +246,7 @@ func (t *TLS) Write(buf []byte) (int, error) {
 	case ret == C.TLS_WANT_POLLOUT:
 		return -1, errWantPollOut
 	case ret < 0:
-		return -1, fmt.Errorf("write failed: %v", t.Error())
+		return -1, t.Error()
 	}
 	return int(ret), nil
 }
@@ -261,7 +260,7 @@ func (t *TLS) Close() error {
 	case ret == C.TLS_WANT_POLLOUT:
 		return errWantPollOut
 	case ret != 0:
-		return fmt.Errorf("close failed: %v", t.Error())
+		return t.Error()
 	}
 	return nil
 }
