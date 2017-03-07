@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.8 2017/03/07 15:16:01 mikeb Exp $ */
+/*	$OpenBSD: ifq.c,v 1.9 2017/03/07 15:42:02 mikeb Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -403,17 +403,33 @@ priq_enq(struct ifqueue *ifq, struct mbuf *m)
 {
 	struct priq *pq;
 	struct mbuf_list *pl;
-
-	if (ifq_len(ifq) >= ifq->ifq_maxlen)
-		return (m);
+	struct mbuf *n = NULL;
+	unsigned int prio;
 
 	pq = ifq->ifq_q;
 	KASSERT(m->m_pkthdr.pf.prio <= IFQ_MAXPRIO);
-	pl = &pq->pq_lists[m->m_pkthdr.pf.prio];
 
+	/* Find a lower priority queue to drop from */
+	if (ifq_len(ifq) >= ifq->ifq_maxlen) {
+		for (prio = 0; prio < m->m_pkthdr.pf.prio; prio++) {
+			pl = &pq->pq_lists[prio];
+			if (ml_len(pl) > 0) {
+				n = ml_dequeue(pl);
+				goto enqueue;
+			}
+		}
+		/*
+		 * There's no lower priority queue that we can
+		 * drop from so don't enqueue this one.
+		 */
+		return (m);
+	}
+
+ enqueue:
+	pl = &pq->pq_lists[m->m_pkthdr.pf.prio];
 	ml_enqueue(pl, m);
 
-	return (NULL);
+	return (n);
 }
 
 struct mbuf *
