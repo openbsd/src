@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2017/03/02 10:38:10 natano Exp $ */
+/*	$OpenBSD: machdep.c,v 1.74 2017/03/07 11:49:42 natano Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1019,6 +1019,8 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	int val, error;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;		/* Overloaded */
@@ -1026,7 +1028,15 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case CPU_LIDSUSPEND:
 	case CPU_LIDACTION:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &lid_action);
+		val = lid_action;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (!error) {
+			if (val < 0 || val > 2)
+				error = EINVAL;
+			else
+				lid_action = val;
+		}
+		return error;
 	default:
 		return EOPNOTSUPP;
 	}

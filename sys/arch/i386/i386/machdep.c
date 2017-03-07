@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.596 2017/03/02 10:38:10 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.597 2017/03/07 11:49:42 natano Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3530,6 +3530,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	dev_t dev;
+	int val, error;
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
@@ -3596,7 +3597,15 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_xcrypt));
 	case CPU_LIDSUSPEND:
 	case CPU_LIDACTION:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &lid_action));
+		val = lid_action;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (!error) {
+			if (val < 0 || val > 2)
+				error = EINVAL;
+			else
+				lid_action = val;
+		}
+		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}
