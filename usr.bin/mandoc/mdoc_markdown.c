@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.4 2017/03/07 12:38:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.5 2017/03/07 13:09:08 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -51,6 +51,7 @@ static	int	 md_pre_raw(struct roff_node *);
 static	int	 md_pre_word(struct roff_node *);
 static	int	 md_pre_skip(struct roff_node *);
 static	void	 md_pre_syn(struct roff_node *);
+static	int	 md_pre_An(struct roff_node *);
 static	int	 md_pre_Ap(struct roff_node *);
 static	int	 md_pre_Bd(struct roff_node *);
 static	int	 md_pre_Bk(struct roff_node *);
@@ -115,7 +116,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* El */
 	{ NULL, md_pre_It, md_post_It, NULL, NULL }, /* It */
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Ad */
-	{ NULL, NULL, NULL, NULL, NULL }, /* An */
+	{ NULL, md_pre_An, NULL, NULL, NULL }, /* An */
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Ar */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Cd */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Cm */
@@ -235,6 +236,8 @@ static	int	 outflags;
 #define	MD_sp		 (1 << 5)  /* Insert a paragraph break. */
 #define	MD_Sm		 (1 << 6)  /* Horizontal spacing mode. */
 #define	MD_Bk		 (1 << 7)  /* Word keep mode. */
+#define	MD_An_split	 (1 << 8)  /* Author mode is "split". */
+#define	MD_An_nosplit	 (1 << 9)  /* Author mode is "nosplit". */
 
 static	int	 escflags; /* Escape in generated markdown code: */
 #define	ESC_BOL	 (1 << 0)  /* "#*+-" near the beginning of a line. */
@@ -778,6 +781,28 @@ md_pre_syn(struct roff_node *n)
 	default:
 		outflags |= MD_br;
 		break;
+	}
+}
+
+static int
+md_pre_An(struct roff_node *n)
+{
+	switch (n->norm->An.auth) {
+	case AUTH_split:
+		outflags &= ~MD_An_nosplit;
+		outflags |= MD_An_split;
+		return 0;
+	case AUTH_nosplit:
+		outflags &= ~MD_An_split;
+		outflags |= MD_An_nosplit;
+		return 0;
+	default:
+		if (outflags & MD_An_split)
+			outflags |= MD_br;
+		else if (n->sec == SEC_AUTHORS &&
+		    ! (outflags & MD_An_nosplit))
+			outflags |= MD_An_split;
+		return 1;
 	}
 }
 
@@ -1347,6 +1372,10 @@ static int
 md_pre_Sh(struct roff_node *n)
 {
 	switch (n->type) {
+	case ROFFT_BLOCK:
+		if (n->sec == SEC_AUTHORS)
+			outflags &= ~(MD_An_split | MD_An_nosplit);
+		break;
 	case ROFFT_HEAD:
 		outflags |= MD_sp;
 		md_rawword(n->tok == MDOC_Sh ? "#" : "##");

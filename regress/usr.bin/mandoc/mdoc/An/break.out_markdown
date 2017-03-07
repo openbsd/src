@@ -1,0 +1,47 @@
+AN-BREAK(1) - General Commands Manual
+
+# NAME
+
+**An-break** - line breaking of the author macro
+
+# DESCRIPTION
+
+inline is the default:
+Kristaps,
+Ingo,
+and
+Joerg.
+empty
+trailing
+.
+
+split mode:  
+Kristaps  
+Ingo  
+Joerg
+
+empty  
+trailing  
+.
+
+# AUTHORS
+
+split mode is the default:
+Kristaps  
+Ingo  
+Joerg
+
+empty  
+trailing  
+.
+
+inline:
+Kristaps,
+Ingo,
+and
+Joerg.
+empty
+trailing
+.
+
+OpenBSD - February 5, 2015

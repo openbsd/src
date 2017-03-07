@@ -1,0 +1,16 @@
+AQ-AUTHOR(1) - General Commands Manual
+
+# NAME
+
+**Aq-author** - angle brackets after an author name macro
+
+# DESCRIPTION
+
+Name &lt;<addr>&gt; Name &lt;<addr>&gt;
+
+# AUTHORS
+
+Name &lt;<addr>&gt;  
+Name &lt;<addr>&gt;
+
+OpenBSD - November 19, 2014
