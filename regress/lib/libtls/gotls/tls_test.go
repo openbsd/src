@@ -21,7 +21,7 @@ const (
 
 var (
 	certNotBefore = time.Unix(0, 0)
-	certNotAfter = certNotBefore.Add(1000000 * time.Hour)
+	certNotAfter  = certNotBefore.Add(1000000 * time.Hour)
 )
 
 // createCAFile writes a PEM encoded version of the certificate out to a
@@ -81,7 +81,9 @@ func TestTLSBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cfg.Free()
-	cfg.SetCAFile(caFile)
+	if err := cfg.SetCAFile(caFile); err != nil {
+		t.Fatal(err)
+	}
 
 	tls, err := NewClient(cfg)
 	if err != nil {
@@ -135,7 +137,9 @@ func TestTLSSingleByteReadWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cfg.Free()
-	cfg.SetCAFile(caFile)
+	if err := cfg.SetCAFile(caFile); err != nil {
+		t.Fatal(err)
+	}
 
 	tls, err := NewClient(cfg)
 	if err != nil {
@@ -202,7 +206,9 @@ func TestTLSInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cfg.Free()
-	cfg.SetCAFile(caFile)
+	if err := cfg.SetCAFile(caFile); err != nil {
+		t.Fatal(err)
+	}
 
 	tls, err := NewClient(cfg)
 	if err != nil {

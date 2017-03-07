@@ -53,11 +53,22 @@ func NewConfig() (*TLSConfig, error) {
 	}, nil
 }
 
+// Error returns the error message from the TLS configuration.
+func (c *TLSConfig) Error() error {
+	if msg := C.tls_config_error(c.tlsCfg); msg != nil {
+		return errors.New(C.GoString(msg))
+	}
+	return errors.New("unknown error")
+}
+
 // SetCAFile sets the CA file to be used for connections.
-func (c *TLSConfig) SetCAFile(filename string) {
+func (c *TLSConfig) SetCAFile(filename string) error {
 	caFile := C.CString(filename)
 	defer C.free(unsafe.Pointer(caFile))
-	C.tls_config_set_ca_file(c.tlsCfg, caFile)
+	if C.tls_config_set_ca_file(c.tlsCfg, caFile) != 0 {
+		return c.Error()
+	}
+	return nil
 }
 
 // InsecureNoVerifyCert disables certificate verification for the connection.
