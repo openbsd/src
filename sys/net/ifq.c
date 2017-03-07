@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.7 2017/03/07 01:29:53 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.8 2017/03/07 15:16:01 mikeb Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -53,13 +53,8 @@ const struct ifq_ops * const ifq_priq_ops = &priq_ops;
  * priq internal structures
  */
 
-struct priq_list {
-	struct mbuf		*head;
-	struct mbuf		*tail;
-};
-
 struct priq {
-	struct priq_list	 pq_lists[IFQ_NQUEUES];
+	struct mbuf_list	 pq_lists[IFQ_NQUEUES];
 };
 
 /*
@@ -388,7 +383,13 @@ priq_idx(unsigned int nqueues, const struct mbuf *m)
 void *
 priq_alloc(unsigned int idx, void *null)
 {
-	return (malloc(sizeof(struct priq), M_DEVBUF, M_WAITOK | M_ZERO));
+	struct priq *pq;
+	int i;
+
+	pq = malloc(sizeof(struct priq), M_DEVBUF, M_WAITOK);
+	for (i = 0; i < IFQ_NQUEUES; i++)
+		ml_init(&pq->pq_lists[i]);
+	return (pq);
 }
 
 void
@@ -401,7 +402,7 @@ struct mbuf *
 priq_enq(struct ifqueue *ifq, struct mbuf *m)
 {
 	struct priq *pq;
-	struct priq_list *pl;
+	struct mbuf_list *pl;
 
 	if (ifq_len(ifq) >= ifq->ifq_maxlen)
 		return (m);
@@ -410,12 +411,7 @@ priq_enq(struct ifqueue *ifq, struct mbuf *m)
 	KASSERT(m->m_pkthdr.pf.prio <= IFQ_MAXPRIO);
 	pl = &pq->pq_lists[m->m_pkthdr.pf.prio];
 
-	m->m_nextpkt = NULL;
-	if (pl->tail == NULL)
-		pl->head = m;
-	else
-		pl->tail->m_nextpkt = m;
-	pl->tail = m;
+	ml_enqueue(pl, m);
 
 	return (NULL);
 }
@@ -424,13 +420,13 @@ struct mbuf *
 priq_deq_begin(struct ifqueue *ifq, void **cookiep)
 {
 	struct priq *pq = ifq->ifq_q;
-	struct priq_list *pl;
+	struct mbuf_list *pl;
 	unsigned int prio = nitems(pq->pq_lists);
 	struct mbuf *m;
 
 	do {
 		pl = &pq->pq_lists[--prio];
-		m = pl->head;
+		m = MBUF_LIST_FIRST(pl);
 		if (m != NULL) {
 			*cookiep = pl;
 			return (m);
@@ -443,33 +439,22 @@ priq_deq_begin(struct ifqueue *ifq, void **cookiep)
 void
 priq_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 {
-	struct priq_list *pl = cookie;
+	struct mbuf_list *pl = cookie;
 
-	KASSERT(pl->head == m);
+	KASSERT(MBUF_LIST_FIRST(pl) == m);
 
-	pl->head = m->m_nextpkt;
-	m->m_nextpkt = NULL;
-
-	if (pl->head == NULL)
-		pl->tail = NULL;
+	ml_dequeue(pl);
 }
 
 void
 priq_purge(struct ifqueue *ifq, struct mbuf_list *ml)
 {
 	struct priq *pq = ifq->ifq_q;
-	struct priq_list *pl;
+	struct mbuf_list *pl;
 	unsigned int prio = nitems(pq->pq_lists);
-	struct mbuf *m, *n;
 
 	do {
 		pl = &pq->pq_lists[--prio];
-
-		for (m = pl->head; m != NULL; m = n) {
-			n = m->m_nextpkt;
-			ml_enqueue(ml, m);
-		}
-
-		pl->head = pl->tail = NULL;
+		ml_enlist(ml, pl);
 	} while (prio > 0);
 }
