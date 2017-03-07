@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.7 2017/03/05 19:59:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2017/03/07 12:38:25 schwarze Exp $
 
 REGRESS_TARGETS	 = break eos font noarg
 LINT_TARGETS	 = noarg
-MARKDOWN_TARGETS = eos font
+MARKDOWN_TARGETS = break eos font noarg
 
 .include <bsd.regress.mk>

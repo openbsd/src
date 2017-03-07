@@ -1,0 +1,25 @@
+IN-NOARG(2) - System Calls Manual
+
+# NAME
+
+**In-noarg** - include file macros without argument
+
+# SYNOPSIS
+
+**#include &lt;math.h>**
+
+*double*  
+**sin**(*double x*);
+
+*double*  
+**cos**(*double x*);
+
+# DESCRIPTION
+
+&lt;*math.h*>
+*double*
+**sin**(*double x*)
+*double*
+**cos**(*double x*)
+
+OpenBSD - February 5, 2015

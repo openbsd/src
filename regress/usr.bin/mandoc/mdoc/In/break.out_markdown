@@ -1,0 +1,35 @@
+IN-BREAK(2) - System Calls Manual
+
+# NAME
+
+**In-break** - line break before header include file
+
+# SYNOPSIS
+
+**#include &lt;fcntl.h>**
+
+*int*  
+**open**(*const char \*path*, *int flags*, *mode\_t mode*);
+
+**#include &lt;sys/types.h>**  
+**#include &lt;unistd.h>**
+
+*int*  
+**dup**(*int oldd*);
+
+*ssize\_t*  
+**write**(*int d*, *const void \*buf*, *size\_t nbytes*);
+
+# DESCRIPTION
+
+&lt;*fcntl.h*>
+*int*
+**open**(*const char \*path*, *int flags*, *mode\_t mode*)
+&lt;*sys/types.h*>
+&lt;*unistd.h*>
+*int*
+**dup**(*int oldd*)
+*ssize\_t*
+**write**(*int d*, *const void \*buf*, *size\_t nbytes*)
+
+OpenBSD - June 6, 2010

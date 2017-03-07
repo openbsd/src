@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.3 2017/03/06 14:57:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.4 2017/03/07 12:38:25 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -129,7 +129,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, md_pre_Fn, md_post_Fn, NULL, NULL }, /* Fn */
 	{ NULL, md_pre_Fd, md_post_raw, "*", "*" }, /* Ft */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Ic */
-	{ NULL, md_pre_In, md_post_In, "*", "*" }, /* In */
+	{ NULL, md_pre_In, md_post_In, NULL, NULL }, /* In */
 	{ NULL, md_pre_raw, md_post_raw, "`", "`" }, /* Li */
 	{ md_cond_head, md_pre_Nd, NULL, NULL, NULL }, /* Nd */
 	{ NULL, md_pre_Nm, md_post_Nm, "**", "**" }, /* Nm */
@@ -1067,16 +1067,15 @@ md_pre_In(struct roff_node *n)
 {
 	if (n->flags & NODE_SYNPRETTY) {
 		md_pre_syn(n);
-		md_pre_raw(n);
-		md_rawword("*");
+		md_rawword("**");
 		outflags &= ~MD_spc;
 		md_word("#include <");
-		outflags &= ~MD_spc;
 	} else {
 		md_word("<");
 		outflags &= ~MD_spc;
-		md_pre_raw(n);
+		md_rawword("*");
 	}
+	outflags &= ~MD_spc;
 	return 1;
 }
 
@@ -1085,13 +1084,11 @@ md_post_In(struct roff_node *n)
 {
 	if (n->flags & NODE_SYNPRETTY) {
 		outflags &= ~MD_spc;
-		md_rawword(">*");
-		md_post_raw(n);
+		md_rawword(">**");
 		outflags |= MD_nl;
 	} else {
-		md_post_raw(n);
 		outflags &= ~MD_spc;
-		md_rawword(">");
+		md_rawword("*>");
 	}
 }
 
