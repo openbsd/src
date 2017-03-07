@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.30 2017/02/09 20:15:28 mikeb Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.31 2017/03/07 20:22:37 dhill Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -41,7 +41,7 @@
 
 u_int dummy_get_timecount(struct timecounter *);
 
-void ntp_update_second(int64_t *, time_t *);
+void ntp_update_second(int64_t *);
 int sysctl_tc_hardware(void *, size_t *, void *, size_t);
 int sysctl_tc_choice(void *, size_t *, void *, size_t);
 
@@ -434,7 +434,7 @@ tc_windup(void)
 	if (i > LARGE_STEP)
 		i = 2;
 	for (; i > 0; i--)
-		ntp_update_second(&th->th_adjustment, &bt.sec);
+		ntp_update_second(&th->th_adjustment);
 
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
@@ -617,7 +617,7 @@ sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 
 void
-ntp_update_second(int64_t *adjust, time_t *sec)
+ntp_update_second(int64_t *adjust)
 {
 	int64_t adj;
 
