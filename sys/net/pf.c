@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1016 2017/03/07 09:29:40 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1017 2017/03/07 16:28:37 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6782,7 +6782,7 @@ done:
 		s->key[PF_SK_STACK]->inp = pd.m->m_pkthdr.pf.inp;
 	}
 
-	if (s) {
+	if (s && (pd.m->m_pkthdr.ph_flowid & M_FLOWID_VALID) == 0) {
 		pd.m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
 		    (M_FLOWID_MASK & bemtoh64(&s->id));
 	}
