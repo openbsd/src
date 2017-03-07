@@ -23,6 +23,42 @@ var (
 	errWantPollOut = errors.New("want poll out")
 )
 
+// ProtocolVersion represents a TLS protocol version.
+type ProtocolVersion uint32
+
+// String returns the string representation of a protocol version.
+func (pv ProtocolVersion) String() string {
+	name, ok := protocolNames[pv]
+	if !ok {
+		return "unknown protocol version"
+	}
+	return name
+}
+
+const (
+	ProtocolTLSv10 ProtocolVersion = C.TLS_PROTOCOL_TLSv1_0
+	ProtocolTLSv11 ProtocolVersion = C.TLS_PROTOCOL_TLSv1_1
+	ProtocolTLSv12 ProtocolVersion = C.TLS_PROTOCOL_TLSv1_2
+	ProtocolsAll   ProtocolVersion = C.TLS_PROTOCOLS_ALL
+)
+
+var protocolNames = map[ProtocolVersion]string{
+	ProtocolTLSv10: "TLSv1.0",
+	ProtocolTLSv11: "TLSv1.1",
+	ProtocolTLSv12: "TLSv1.2",
+	ProtocolsAll:   "all",
+}
+
+// ProtocolVersionFromString returns the protocol version with the given name.
+func ProtocolVersionFromString(version string) (ProtocolVersion, error) {
+	for proto, name := range protocolNames {
+		if version == name {
+			return proto, nil
+		}
+	}
+	return 0, errors.New("unknown protocol version")
+}
+
 // TLSConfig provides configuration options for a TLS context.
 type TLSConfig struct {
 	tlsCfg *C.struct_tls_config
@@ -66,6 +102,14 @@ func (c *TLSConfig) SetCAFile(filename string) error {
 	caFile := C.CString(filename)
 	defer C.free(unsafe.Pointer(caFile))
 	if C.tls_config_set_ca_file(c.tlsCfg, caFile) != 0 {
+		return c.Error()
+	}
+	return nil
+}
+
+// SetProtocols sets the protocol versions enabled for the connection.
+func (c *TLSConfig) SetProtocols(proto ProtocolVersion) error {
+	if C.tls_config_set_protocols(c.tlsCfg, C.uint32_t(proto)) != 0 {
 		return c.Error()
 	}
 	return nil
@@ -184,12 +228,12 @@ func (t *TLS) PeerCertNotAfter() (time.Time, error) {
 }
 
 // ConnVersion returns the protocol version of the connection.
-func (t *TLS) ConnVersion() (string, error) {
+func (t *TLS) ConnVersion() (ProtocolVersion, error) {
 	ver := C.tls_conn_version(t.ctx)
 	if ver == nil {
-		return "", errors.New("no connection version")
+		return 0, errors.New("no connection version")
 	}
-	return C.GoString(ver), nil
+	return ProtocolVersionFromString(C.GoString(ver))
 }
 
 // ConnCipher returns the cipher suite used for the connection.
