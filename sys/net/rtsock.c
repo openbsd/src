@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.230 2017/03/06 10:19:17 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.231 2017/03/07 06:58:55 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct walkarg {
 };
 
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
-void	route_input(struct mbuf *m0, sa_family_t);
+void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
 void	route_senddesync(void *);
@@ -335,7 +335,7 @@ route_senddesync(void *data)
 }
 
 void
-route_input(struct mbuf *m0, sa_family_t sa_family)
+route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 {
 	struct rawcb *rp;
 	struct routecb *rop;
@@ -359,6 +359,10 @@ route_input(struct mbuf *m0, sa_family_t sa_family)
 			continue;
 		if (rp->rcb_proto.sp_family != PF_ROUTE)
 			continue;
+		/* Check to see if we don't want our own messages. */
+		if (so == rp->rcb_socket && !(so->so_options & SO_USELOOPBACK))
+			continue;
+
 		/*
 		 * If route socket is bound to an address family only send
 		 * messages that match the address family. Address family
@@ -538,7 +542,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	struct rtentry		*rt = NULL;
 	struct rt_addrinfo	 info;
 	int			 len, seq, error = 0;
-	struct rawcb		*rp = NULL;
 	u_int			 tableid;
 	u_int8_t		 prio;
 	u_char			 vers, type;
@@ -704,9 +707,6 @@ fail:
 			m_freem(m);
 			return (error);
 		}
-		/* There is another listener, so construct message */
-		rp = sotorawcb(so);
-		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	}
 	if (rtm) {
 		if (m_copyback(m, 0, rtm->rtm_msglen, rtm, M_NOWAIT)) {
@@ -717,10 +717,8 @@ fail:
 		free(rtm, M_RTABLE, 0);
 	}
 	if (m)
-		route_input(m, info.rti_info[RTAX_DST] ?
+		route_input(m, so, info.rti_info[RTAX_DST] ?
 		    info.rti_info[RTAX_DST]->sa_family : AF_UNSPEC);
-	if (rp)
-		rp->rcb_proto.sp_family = PF_ROUTE; /* Readd us */
 
 	return (error);
 }
@@ -1278,7 +1276,7 @@ rtm_miss(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
 	rtm->rtm_tableid = tableid;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
 	rtm->rtm_index = ifidx;
-	route_input(m, sa ? sa->sa_family : AF_UNSPEC);
+	route_input(m, NULL, sa ? sa->sa_family : AF_UNSPEC);
 }
 
 /*
@@ -1303,7 +1301,7 @@ rtm_ifchg(struct ifnet *ifp)
 	ifm->ifm_xflags = ifp->if_xflags;
 	if_getdata(ifp, &ifm->ifm_data);
 	ifm->ifm_addrs = 0;
-	route_input(m, AF_UNSPEC);
+	route_input(m, NULL, AF_UNSPEC);
 }
 
 /*
@@ -1339,7 +1337,8 @@ rtm_addr(struct rtentry *rt, int cmd, struct ifaddr *ifa)
 	ifam->ifam_addrs = info.rti_addrs;
 	ifam->ifam_tableid = ifp->if_rdomain;
 
-	route_input(m, ifa->ifa_addr ? ifa->ifa_addr->sa_family : AF_UNSPEC);
+	route_input(m, NULL,
+	    ifa->ifa_addr ? ifa->ifa_addr->sa_family : AF_UNSPEC);
 }
 
 /*
@@ -1361,7 +1360,7 @@ rtm_ifannounce(struct ifnet *ifp, int what)
 	ifan->ifan_index = ifp->if_index;
 	strlcpy(ifan->ifan_name, ifp->if_xname, sizeof(ifan->ifan_name));
 	ifan->ifan_what = what;
-	route_input(m, AF_UNSPEC);
+	route_input(m, NULL, AF_UNSPEC);
 }
 
 #ifdef BFD
@@ -1392,7 +1391,7 @@ rtm_bfd(struct bfd_config *bfd)
 	bfd2sa(bfd->bc_rt, &sa_bfd);
 	memcpy(&bfdm->bm_sa, &sa_bfd, sizeof(sa_bfd));
 
-	route_input(m, info.rti_info[RTAX_DST]->sa_family);
+	route_input(m, NULL, info.rti_info[RTAX_DST]->sa_family);
 }
 #endif /* BFD */
 
