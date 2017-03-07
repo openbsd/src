@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.231 2017/03/07 06:58:55 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.232 2017/03/07 09:23:27 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -98,7 +98,11 @@ struct walkarg {
 	caddr_t	w_where, w_tmem;
 };
 
+int	route_output(struct mbuf *, struct socket *, struct sockaddr *,
+	    struct mbuf *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
+int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+	    struct mbuf *, struct proc *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -158,8 +162,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct routecb	*rop;
 	int		 af;
 	int		 error = 0;
-
-	NET_ASSERT_LOCKED();
 
 	rp = sotorawcb(so);
 
@@ -344,6 +346,8 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 	int s, sockets = 0;
 	struct socket *last = NULL;
 	struct sockaddr *sosrc, *sodst;
+
+	KERNEL_ASSERT_LOCKED();
 
 	sosrc = &route_src;
 	sodst = &route_dst;
@@ -734,7 +738,9 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 	struct sockaddr_mpls	*psa_mpls;
 #endif
 	int			 plen, newgate = 0, error = 0;
+	int			 s;
 
+	NET_LOCK(s);
 	switch (rtm->rtm_type) {
 	case RTM_ADD:
 		if (info->rti_info[RTAX_GATEWAY] == NULL) {
@@ -979,6 +985,8 @@ change:
 			error = ESRCH;
 		break;
 	}
+	NET_UNLOCK(s);
+
 	*prt = rt;
 	return (error);
 }
