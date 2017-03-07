@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.12 2017/03/03 01:53:04 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.13 2017/03/07 03:07:12 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -75,6 +75,7 @@ vio*		at virtio?
 vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
+vioscsi*	at virtio?
 
 # Raspberry Pi 3
 bcmintc*	at fdt?

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.15 2017/03/01 01:24:34 jsg Exp $
+# $OpenBSD: GENERIC,v 1.16 2017/03/07 03:07:12 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -65,6 +65,7 @@ vio*		at virtio?
 vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
+vioscsi*	at virtio?
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
