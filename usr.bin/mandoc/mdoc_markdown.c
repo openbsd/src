@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.5 2017/03/07 13:09:08 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.6 2017/03/07 13:27:58 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -90,6 +90,7 @@ static	void	 md_post_En(struct roff_node *);
 static	void	 md_post_Eo(struct roff_node *);
 static	void	 md_post_Fa(struct roff_node *);
 static	void	 md_post_Fd(struct roff_node *);
+static	void	 md_post_Fl(struct roff_node *);
 static	void	 md_post_Fn(struct roff_node *);
 static	void	 md_post_Fo(struct roff_node *);
 static	void	 md_post_In(struct roff_node *);
@@ -126,7 +127,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ex */
 	{ NULL, md_pre_Fa, md_post_Fa, NULL, NULL }, /* Fa */
 	{ NULL, md_pre_Fd, md_post_Fd, "**", "**" }, /* Fd */
-	{ NULL, md_pre_raw, md_post_raw, "**-", "**" }, /* Fl */
+	{ NULL, md_pre_raw, md_post_Fl, "**-", "**" }, /* Fl */
 	{ NULL, md_pre_Fn, md_post_Fn, NULL, NULL }, /* Fn */
 	{ NULL, md_pre_Fd, md_post_raw, "*", "*" }, /* Ft */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Ic */
@@ -1016,6 +1017,15 @@ md_post_Fd(struct roff_node *n)
 {
 	md_post_raw(n);
 	outflags |= MD_br;
+}
+
+static void
+md_post_Fl(struct roff_node *n)
+{
+	md_post_raw(n);
+	if (n->child == NULL && n->next != NULL &&
+	    n->next->type != ROFFT_TEXT && !(n->next->flags & NODE_LINE))
+		outflags &= ~MD_spc;
 }
 
 static int

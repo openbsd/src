@@ -1,0 +1,21 @@
+FL-PARSED(1) - General Commands Manual
+
+# NAME
+
+**Fl-parsed** - is the Fl macro parsed?
+
+# DESCRIPTION
+
+\[**-**UNIX]
+
+\[UNIX]
+
+\[**-**&zwnj;**x**]
+
+**-W** **-all**
+versus
+**-W**&zwnj;**all**
+
+**-**&zwnj;**help**
+
+OpenBSD - April 7, 2010

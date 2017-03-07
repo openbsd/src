@@ -16,7 +16,7 @@ trailing punctuation
 **-**.
 
 Following macros
-**-** \[flag]
+**-**\[flag]
 follow without white space.
 
 OpenBSD - August 21, 2014
