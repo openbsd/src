@@ -1,0 +1,14 @@
+.Dd March 7, 2017
+.Dt DE-INFINITE 1
+.Os OpenBSD
+.Sh NAME
+.Nm de-infinite
+.Nd inifinte recursion in a user-defined macro
+.Sh DESCRIPTION
+initial text
+.de mym
+.mym
+not printed
+..
+.mym
+final text

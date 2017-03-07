@@ -1,7 +1,12 @@
-# $OpenBSD: Makefile,v 1.9 2015/02/03 19:37:25 schwarze Exp $
+# $OpenBSD: Makefile,v 1.10 2017/03/07 20:00:02 schwarze Exp $
 
-REGRESS_TARGETS = append cond escname factorial indir startde TH Dd
-LINT_TARGETS	= escname indir
+REGRESS_TARGETS	 = append cond escname factorial indir infinite startde TH Dd
+LINT_TARGETS	 = escname indir infinite
+
+# groff-1.22.3 defect:
+# infinite recursion aborts output completely
+
+SKIP_GROFF	 = infinite
 
 .include <bsd.regress.mk>
 
