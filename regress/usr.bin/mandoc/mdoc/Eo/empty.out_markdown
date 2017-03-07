@@ -1,0 +1,35 @@
+EO-EMPTY(1) - General Commands Manual
+
+# NAME
+
+**Eo-empty** - empty implicit enclosure macros
+
+# DESCRIPTION
+
+completely empty
+closing only
+&gt;&gt;
+content only
+text
+opening only
+&lt;&lt;
+no opening
+text&gt;&gt;
+no content
+&lt;&lt;&gt;&gt;
+no closing
+&lt;&lt;text
+all
+&lt;&lt;text&gt;&gt;
+completely empty
+prefixclosing only
+prefix&gt;&gt;
+no opening
+prefixtext&gt;&gt;
+no closing
+&lt;&lt;prefix
+stray closing  
+&gt;&gt;
+end of file
+
+OpenBSD - February 1, 2015

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.6 2017/03/07 13:27:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.7 2017/03/07 14:03:56 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -957,21 +957,17 @@ md_pre_Eo(struct roff_node *n)
 static void
 md_post_Eo(struct roff_node *n)
 {
-	int	 body, tail;
-
 	if (n->end != ENDBODY_NOT) {
 		outflags |= MD_spc;
 		return;
 	}
 
-	body = n->child != NULL || n->parent->head->child != NULL;
-	tail = n->parent->tail != NULL && n->parent->tail->child != NULL;
+	if (n->child == NULL && n->parent->head->child == NULL)
+		return;
 
-	if (body && tail)
+	if (n->parent->tail != NULL && n->parent->tail->child != NULL)
 		outflags &= ~MD_spc;
-        else if ( ! (body || tail))
-		md_preword();
-        else if ( ! tail)
+        else
 		outflags |= MD_spc;
 }
 
