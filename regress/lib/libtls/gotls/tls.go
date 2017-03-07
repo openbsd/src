@@ -107,6 +107,16 @@ func (c *TLSConfig) SetCAFile(filename string) error {
 	return nil
 }
 
+// SetCiphers sets the cipher suites enabled for the connection.
+func (c *TLSConfig) SetCiphers(ciphers string) error {
+	cipherStr := C.CString(ciphers)
+	defer C.free(unsafe.Pointer(cipherStr))
+	if C.tls_config_set_ciphers(c.tlsCfg, cipherStr) != 0 {
+		return c.Error()
+	}
+	return nil
+}
+
 // SetProtocols sets the protocol versions enabled for the connection.
 func (c *TLSConfig) SetProtocols(proto ProtocolVersion) error {
 	if C.tls_config_set_protocols(c.tlsCfg, C.uint32_t(proto)) != 0 {
