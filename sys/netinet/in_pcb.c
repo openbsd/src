@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.219 2017/03/07 12:00:31 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.220 2017/03/07 16:59:40 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -249,10 +249,9 @@ int
 in_pcballoc(struct socket *so, struct inpcbtable *table)
 {
 	struct inpcb *inp;
-	int s;
 	struct inpcbhead *head;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (inpcb_pool_initialized == 0) {
 		pool_init(&inpcb_pool, sizeof(struct inpcb), 0,
@@ -269,7 +268,6 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_IPCOMP] = IPSEC_IPCOMP_LEVEL_DEFAULT;
 	inp->inp_rtableid = curproc->p_p->ps_rtableid;
-	s = splnet();
 	if (table->inpt_hash != 0 &&
 	    table->inpt_count++ > INPCBHASH_LOADFACTOR(table->inpt_hash))
 		(void)in_pcbresize(table, (table->inpt_hash + 1) * 2);
@@ -287,7 +285,6 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 		    &inp->inp_laddr, inp->inp_lport,
 		    rtable_l2(inp->inp_rtableid));
 	LIST_INSERT_HEAD(head, inp, inp_hash);
-	splx(s);
 	so->so_pcb = inp;
 	inp->inp_hops = -1;
 
@@ -585,9 +582,8 @@ void
 in_pcbdetach(struct inpcb *inp)
 {
 	struct socket *so = inp->inp_socket;
-	int s;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	so->so_pcb = 0;
 	sofree(so);
@@ -610,12 +606,10 @@ in_pcbdetach(struct inpcb *inp)
 		pf_inp_unlink(inp);
 	}
 #endif
-	s = splnet();
 	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	inp->inp_table->inpt_count--;
-	splx(s);
 	pool_put(&inpcb_pool, inp);
 }
 
@@ -669,7 +663,7 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rdomain,
 	struct inpcb *inp, *ninp;
 	struct in_addr faddr;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 #ifdef INET6
 	/*
@@ -964,10 +958,10 @@ void
 in_pcbrehash(struct inpcb *inp)
 {
 	struct inpcbtable *table = inp->inp_table;
-	int s;
 	struct inpcbhead *head;
 
-	s = splnet();
+	NET_ASSERT_LOCKED();
+
 	LIST_REMOVE(inp, inp_lhash);
 	head = INPCBLHASH(table, inp->inp_lport, inp->inp_rtableid);
 	LIST_INSERT_HEAD(head, inp, inp_lhash);
@@ -983,7 +977,6 @@ in_pcbrehash(struct inpcb *inp)
 		    &inp->inp_laddr, inp->inp_lport,
 		    rtable_l2(inp->inp_rtableid));
 	LIST_INSERT_HEAD(head, inp, inp_hash);
-	splx(s);
 }
 
 int
