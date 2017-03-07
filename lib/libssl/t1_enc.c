@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.98 2017/03/06 15:08:57 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.99 2017/03/07 13:37:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,6 +378,7 @@ tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
     int slen, unsigned char *out1, unsigned char *out2, int olen)
 {
 	const EVP_MD *md;
+	size_t hlen;
 	int i;
 
 	memset(out1, 0, olen);
@@ -385,12 +386,32 @@ tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
 	if (!ssl_get_handshake_evp_md(s, &md))
 		return (0);
 
-	if (!tls1_P_hash(md, sec, slen, seed1, seed1_len, seed2, seed2_len,
-	    seed3, seed3_len, seed4, seed4_len, seed5, seed5_len, out2, olen))
-		return (0);
+	if (md->type == NID_md5_sha1) {
+		/*
+		 * Partition secret between MD5 and SHA1, then XOR result.
+		 * If the secret length is odd, a one byte overlap is used.
+		 */
+		hlen = slen - (slen / 2);
+		if (!tls1_P_hash(EVP_md5(), sec, hlen, seed1, seed1_len, seed2,
+		    seed2_len, seed3, seed3_len, seed4, seed4_len, seed5,
+		    seed5_len, out1, olen))
+			return (0);
 
-	for (i = 0; i < olen; i++)
-		out1[i] ^= out2[i];
+		sec += slen - hlen;
+		if (!tls1_P_hash(EVP_sha1(), sec, hlen, seed1, seed1_len, seed2,
+		    seed2_len, seed3, seed3_len, seed4, seed4_len, seed5,
+		    seed5_len, out2, olen))
+			return (0);
+
+		for (i = 0; i < olen; i++)
+			out1[i] ^= out2[i];
+
+		return (1);
+	}
+
+	if (!tls1_P_hash(md, sec, slen, seed1, seed1_len, seed2, seed2_len,
+	    seed3, seed3_len, seed4, seed4_len, seed5, seed5_len, out1, olen))
+		return (0);
 
 	return (1);
 }
