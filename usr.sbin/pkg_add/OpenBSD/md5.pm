@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.16 2014/01/31 15:48:44 espie Exp $
+# $OpenBSD: md5.pm,v 1.17 2017/03/07 16:11:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -43,20 +43,14 @@ sub write
 sub digest_file
 {
 	my ($self, $fname) = @_;
-	open(my $file, '<', $fname) or die "can't open $fname: $!";
-	my $digest = $self->digest_fh($file);
-	close($file) or die "problem closing $fname: $!";
-	return $digest;
-}
-
-
-sub digest_fh
-{
-	my ($self, $file) = @_;
-
 	my $d = $self->algo;
-
-	$d->addfile($file);
+	eval {
+		$d->addfile($fname);
+	};
+	if ($@) {
+		$@ =~ s/\sat.*//;
+		die "can't compute ".$self->keyword." on $fname: $@";
+	}
 	return $d->digest;
 }
 
