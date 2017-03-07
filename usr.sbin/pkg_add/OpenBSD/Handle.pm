@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.41 2017/03/07 14:35:40 espie Exp $
+# $OpenBSD: Handle.pm,v 1.42 2017/03/07 16:21:28 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -290,6 +290,7 @@ sub get_location
 			$state);
 		if (!$handle->{tweaked}) {
 			$state->say("Can't find #1", $name);
+			$handle->{error_reported} = 1;
 			eval {
 				my $r = [$name];
 				$state->quirks->filter_obsolete($r, $state);
