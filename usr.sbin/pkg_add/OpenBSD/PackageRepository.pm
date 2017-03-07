@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.140 2017/02/06 16:12:16 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.141 2017/03/07 14:19:32 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -157,7 +157,8 @@ sub stemlist
 		require OpenBSD::PackageName;
 		my @l = $self->available;
 		if (@l == 0 && !$self->{empty_okay}) {
-			$self->{state}->errsay("#1 is empty", $self->url);
+			$self->{state}->errsay("#1: #2", $self->url,
+				$self->{no_such_dir} ? "no such dir" : "empty");
 		}
 		$self->{stemlist} = OpenBSD::PackageName::avail2stems(@l);
 	}
@@ -299,6 +300,15 @@ sub parse_problems
 			$broken = 1;
 			next;
 		}
+		# http error
+		if (m/^ftp: Error retrieving file: 404/o) {
+			if (!defined $object) {
+				$self->{no_such_dir} = 1;
+				next;
+			} else {
+				$self->{lasterror} = 404;
+			}
+		}
 
 		if (defined $hint && $hint == 0) {
 			next if m/^ftp: -: short write/o;
@@ -306,7 +316,10 @@ sub parse_problems
 			next if m/^421\s+/o;
 		}
 		if ($notyet) {
-			$self->{state}->errsay("Error from #1", $url);
+			$self->{state}->errprint("#1: ", $url);
+			if (defined $object) {
+				$object->{error_reported} = 1;
+			}
 			$notyet = 0;
 		}
 		if (m/^signify:/) {
@@ -317,10 +330,6 @@ sub parse_problems
 		    m/^ftp: connect: Connection timed out/o ||
 		    m/^ftp: Can't connect or login to host/o) {
 			$self->{lasterror} = 421;
-		}
-		# http error
-		if (m/^ftp: Error retrieving file: 404/o) {
-		    	$self->{lasterror} = 404;
 		}
 		if (m/^550\s+/o) {
 			$self->{lasterror} = 550;
@@ -868,12 +877,6 @@ sub list
 		}
 		$self->{list} = $self->obtain_list($error);
 		$self->parse_problems($error);
-		if ($self->{no_such_dir}) {
-			$self->{state}->errsay(
-			    "#1: Directory does not exist on #2",
-			    $self->{path}, $self->{host});
-		    	$self->{lasterror} = 404;
-		}
 	}
 	return $self->{list};
 }
