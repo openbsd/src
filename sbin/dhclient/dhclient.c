@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.401 2017/03/08 14:28:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.402 2017/03/08 14:36:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -969,7 +969,8 @@ bind_lease(struct interface_info *ifi)
 {
 	struct client_state *client = ifi->client;
 	struct in_addr gateway, mask;
-	struct option_data *options, *opt;
+	struct option_data *opt;
+	struct option_data *options;
 	struct client_lease *lease, *pl;
 	time_t cur_time;
 	int seen;
