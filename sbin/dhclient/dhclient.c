@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.404 2017/03/08 15:34:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.405 2017/03/08 20:54:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -261,9 +261,6 @@ routehandler(struct interface_info *ifi)
 		goto done;
 
 	switch (rtm->rtm_type) {
-	case RTM_DESYNC:
-		log_warnx("route socket buffer overflow");
-		break;
 	case RTM_NEWADDR:
 		ifam = (struct ifa_msghdr *)rtm;
 		if (ifam->ifam_index != ifi->index)
@@ -352,6 +349,9 @@ routehandler(struct interface_info *ifi)
 			rslt = asprintf(&errmsg, "%s deleted from %s",
 			    inet_ntoa(a), ifi->name);
 		goto die;
+	case RTM_DESYNC:
+		log_warnx("route socket buffer overflow");
+		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
