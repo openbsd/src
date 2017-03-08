@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.13 2017/03/08 18:17:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.14 2017/03/08 19:23:23 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -244,7 +244,6 @@ static	int	 escflags; /* Escape in generated markdown code: */
 #define	ESC_BOL	 (1 << 0)  /* "#*+-" near the beginning of a line. */
 #define	ESC_NUM	 (1 << 1)  /* "." after a leading number. */
 #define	ESC_HYP	 (1 << 2)  /* "(" immediately after "]". */
-#define	ESC_PAR	 (1 << 3)  /* ")" when "(" is open. */
 #define	ESC_SQU	 (1 << 4)  /* "]" when "[" is open. */
 #define	ESC_FON	 (1 << 5)  /* "*" immediately after unrelated "*". */
 #define	ESC_EOL	 (1 << 6)  /* " " at the and of a line. */
@@ -455,12 +454,6 @@ md_rawword(const char *s)
 
 	while (*s != '\0') {
 		switch(*s) {
-		case '(':
-			escflags |= ESC_PAR;
-			break;
-		case ')':
-			escflags |= ~ESC_PAR;
-			break;
 		case '*':
 			if (s[1] == '\0')
 				escflags |= ESC_FON;
@@ -535,7 +528,7 @@ md_word(const char *s)
 			bs = escflags & ESC_HYP && !code_blocks;
 			break;
 		case ')':
-			bs = escflags & (ESC_NUM | ESC_PAR) && !code_blocks;
+			bs = escflags & ESC_NUM && !code_blocks;
 			break;
 		case '*':
 		case '[':
@@ -1308,7 +1301,7 @@ md_pre_Lk(struct roff_node *n)
 		md_rawword("<");
 
 	for (s = link->string; *s != '\0'; s++) {
-		if (strchr("%)<>", *s) != NULL) {
+		if (strchr("%()<>", *s) != NULL) {
 			printf("%%%2.2hhX", *s);
 			outcount += 3;
 		} else {
