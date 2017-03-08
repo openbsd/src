@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.403 2017/03/08 14:55:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.404 2017/03/08 15:34:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1100,10 +1100,10 @@ newlease:
 	if (!client->active->is_static && !seen)
 		TAILQ_INSERT_HEAD(&client->leases, client->active,  next);
 
-	client->state = S_BOUND;
-
 	/* Write out new leases file. */
 	rewrite_client_leases(ifi);
+
+	client->state = S_BOUND;
 
 	/* Set timeout to start the renewal process. */
 	set_timeout(client->active->renewal, state_bound, ifi);
