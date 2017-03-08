@@ -1,0 +1,13 @@
+BD-UNCLOSED(1) - General Commands Manual
+
+# NAME
+
+**Bd-unclosed** - display still open at the end of the file
+
+# DESCRIPTION
+
+before display
+
+> inside display
+
+OpenBSD - July 7, 2014

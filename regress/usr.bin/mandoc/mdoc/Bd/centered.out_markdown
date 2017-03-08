@@ -1,0 +1,16 @@
+BD-CENTERED(1) - General Commands Manual
+
+# NAME
+
+**Bd-centered** - centered display blocks
+
+# DESCRIPTION
+
+preceding text
+
+> first line of the block  
+> second line
+
+following text
+
+OpenBSD - July 28, 2014

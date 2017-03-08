@@ -1,0 +1,43 @@
+BREAK-TAIL(1) - General Commands Manual
+
+# NAME
+
+**break-tail** - tail arguments on or after broken blocks
+
+# DESCRIPTION
+
+Broken by a partial explicit block:
+&lt;ao
+\[bo ac&gt; bc]
+tail
+&lt;ao
+\[bo ac&gt; bc] \(po pc)
+tail
+
+Broken by a partial implicit block:
+&lt;aq \[bo eol&gt;]
+tail
+&lt;aq \[bo eol&gt;] \(po pc)
+tail
+
+Broken by a full implicit block:
+
+it &lt;ao ac&gt;
+tail
+
+> list body
+
+it &lt;ao ac&gt; (po pc)
+tail
+
+> list body
+
+After a broken block: closing child on closing macro,
+then opening child on closing macro:
+&lt;ao
+\[bo
+{bro
+(po brc} pc)
+bc] ac&gt; \[op]
+
+OpenBSD - February 11, 2017

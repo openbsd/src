@@ -1,0 +1,17 @@
+BD-BREAK(1) - General Commands Manual
+
+# NAME
+
+**Bd-break** - display breaking another block
+
+# DESCRIPTION
+
+before both
+
+> before bracket
+> \[inside both
+
+after display]
+after both
+
+OpenBSD - November 10, 2012

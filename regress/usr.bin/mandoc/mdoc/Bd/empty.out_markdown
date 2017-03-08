@@ -1,0 +1,19 @@
+BD-EMPTY(1) - General Commands Manual
+
+# NAME
+
+**Bd-empty** - empty displays
+
+# DESCRIPTION
+
+An empty filled display:
+
+An empty literal display:
+
+An empty ragged display:
+
+An empty unfilled display:
+
+end of test document
+
+OpenBSD - January 2, 2010

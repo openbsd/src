@@ -1,0 +1,27 @@
+BL-BROKEN(1) - General Commands Manual
+
+# NAME
+
+**Bl-broken** - list broken by another block
+
+# DESCRIPTION
+
+before both
+\[before list
+
+1.	inside both]
+	after bracket
+
+after list
+\[before list
+
+1.	inside list
+
+	> inside display]
+	> after bracket
+
+2.	next item
+
+after list
+
+OpenBSD - February 12, 2015

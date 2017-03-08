@@ -1,0 +1,31 @@
+SM-SCOPE(1) - General Commands Manual
+
+# NAME
+
+**Sm-scope** - scope of the spacing macro
+
+# DESCRIPTION
+
+Using an abbreviated example from the
+ksh(1)
+manual.
+
+Modifiers can be applied to the
+${*name*}
+form of parameter substitution:
+
+${*name*:-*word*}
+
+> If
+> *name*
+> is set and not
+> `NULL`,
+> it is substituted; otherwise,
+> *word*
+> is substituted.
+
+In the above modifiers, the
+'`:`'
+can be omitted, ...
+
+OpenBSD - January 2, 2010

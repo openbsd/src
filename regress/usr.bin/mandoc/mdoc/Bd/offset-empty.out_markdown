@@ -1,0 +1,25 @@
+BD-OFFSET-EMPTY(1) - General Commands Manual
+
+# NAME
+
+**Bd-offset-empty** - no argument specified to Bd offset
+
+# DESCRIPTION
+
+	Bd literal offset empty
+
+	Bd literal offset left
+
+	Bd literal offset indent
+
+	Bd literal offset indent-two
+
+	Bd literal offset 4n
+
+	Bd literal offset mystring
+
+	Bd literal offset Ds
+
+	Bd literal offset 78n
+
+OpenBSD - November 20, 2014

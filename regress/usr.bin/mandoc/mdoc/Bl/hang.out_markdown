@@ -1,0 +1,118 @@
+BL-HANG(1) - General Commands Manual
+
+# NAME
+
+**Bl-hang** - hanged lists
+
+# DESCRIPTION
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+four
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+quint
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+indent
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+septime
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+achtacht
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+neun\_neun
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+zehn\_\_zehn
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+This is a very long text contained in the hanged item head, it is so long that it overruns the line -
+
+> and here comes the item body.
+
+Compact hanged list:
+
+one
+
+> first line
+
+second
+
+> second line
+
+third\_tag
+
+> last line
+
+Hanged list without a width:
+
+tag
+
+> text
+
+OpenBSD - December 25, 2014

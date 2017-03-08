@@ -1,0 +1,46 @@
+BD-NESTED(1) - General Commands Manual
+
+# NAME
+
+**Bd-nested** - nested displays and lists
+
+# DESCRIPTION
+
+regular
+text
+
+> outer
+> text (default indent)
+
+> > inner
+> > text (default indent)
+
+> outer
+> text
+
+regular
+text
+
+> outer text (4n)
+
+> > inner text (2n)
+
+> outer text
+
+> tag
+
+> > text
+
+> outer text
+
+regular text
+
+tag
+
+> outer text
+
+> > inner text (2n)
+
+> outer text
+
+OpenBSD - November 18, 2012

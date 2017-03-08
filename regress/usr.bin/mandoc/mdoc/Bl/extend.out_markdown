@@ -1,0 +1,23 @@
+BL-EXTEND(1) - General Commands Manual
+
+# NAME
+
+**Bl-extend** - extending block headers
+
+# DESCRIPTION
+
+&lt;plain quoted text&gt;
+
+normal tag
+
+> normal text
+
+&lt;extended tag&gt;
+
+> extended text
+
+prefix &lt;prefixed tag&gt;
+
+> prefixed text
+
+OpenBSD - April 12, 2010

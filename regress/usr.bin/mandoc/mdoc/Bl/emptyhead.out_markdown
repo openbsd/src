@@ -1,0 +1,51 @@
+BL-EMPTYHEAD(1) - General Commands Manual
+
+# NAME
+
+**Bl-emptyhead** - lists with empty item heads
+
+# DESCRIPTION
+
+hang list:
+
+tag
+
+> text
+
+> no tag before this text
+
+tag
+
+> text
+
+ohang list:
+
+tag  
+text
+
+no tag before this text
+
+tag  
+text
+
+inset list:
+
+tag
+text
+
+no tag before this text
+
+tag
+text
+
+diag list:
+
+tag
+text
+
+no tag before this text
+
+tag
+text
+
+OpenBSD - July 3, 2014

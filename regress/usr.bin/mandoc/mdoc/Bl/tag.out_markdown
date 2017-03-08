@@ -1,0 +1,175 @@
+BL-TAG(1) - General Commands Manual
+
+# NAME
+
+**Bl-tag** - tagged lists
+
+# DESCRIPTION
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+tag
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+four
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+quint
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+indent
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+septime
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+achtacht
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+neun neun
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+zehn\_ zehn
+
+> x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+
+This is a very long text contained in the tag, it is so long that it overruns the line -
+
+> and here comes the item body.
+
+hundred
+
+> text text
+
+Trailing white space in the head:
+
+a
+
+> none
+
+a 
+
+> one
+
+a  
+
+> two
+
+a   
+
+> three
+
+a    
+
+> four
+
+a     
+
+> five
+
+a      
+
+> six
+
+ 
+
+> white space only
+
+Non-numeric width specification:
+
+tag
+
+> text
+
+tag
+
+> text
+
+Scaling units other than n:
+
+tag
+
+> text
+
+tag
+
+> text
+
+tag
+
+> text
+
+Default width:
+
+tag
+
+> text
+
+long tag
+
+> long text
+
+**tag** *with markup*
+
+> text
+
+Indented list:
+
+one
+
+> first text
+
+two
+
+> second text
+
+Embedded paragraph:
+
+tag
+
+> first paragraph
+
+> second paragraph
+
+OpenBSD - September 21, 2015

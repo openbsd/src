@@ -1,0 +1,51 @@
+BD-BADARGS(1) - General Commands Manual
+
+# NAME
+
+**Bd-badargs** - display block with bad arguments
+
+# DESCRIPTION
+
+trailing -offset:
+
+> is
+> ignored
+
+double -compact and -offset:
+
+> last
+> wins
+
+no type:
+
+> displayed
+> text
+
+double type:
+
+> ragged
+> unfilled
+
+	unfilled
+	ragged
+
+file /dev/null:
+
+> ragged
+> offset indent
+
+trailing -file:
+
+> ragged
+> offset indent
+
+missing -file argument:
+
+> ragged
+> offset indent
+
+no argument whatsoever:
+no
+argument
+
+OpenBSD - October 27, 2015

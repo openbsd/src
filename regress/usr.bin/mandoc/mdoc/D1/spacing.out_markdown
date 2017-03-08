@@ -1,0 +1,17 @@
+D1-SPACING(1) - General Commands Manual
+
+# NAME
+
+**D1-spacing** - spacing in and around one-line displays
+
+# DESCRIPTION
+
+preceding text
+
+> spacing in and around one-line displays
+
+empty display:
+
+following text
+
+OpenBSD - February 5, 2015

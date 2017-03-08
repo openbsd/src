@@ -1,0 +1,65 @@
+BL-MULTITAG(1) - General Commands Manual
+
+# NAME
+
+**Bl-multitag** - lists with multiple successive tags
+
+# DESCRIPTION
+
+inset:
+
+first
+
+second
+
+third
+some text
+
+fourth
+
+fifth
+more text
+
+tag:
+
+first
+
+second
+
+third
+
+> some text
+
+fourth
+
+fifth
+
+> more text
+
+inset compact:
+
+first  
+second  
+third
+some text  
+fourth  
+fifth
+more text
+
+tag compact:
+
+first
+
+second
+
+third
+
+> some text
+
+fourth
+
+fifth
+
+> more text
+
+OpenBSD - April 13, 2010

@@ -1,0 +1,69 @@
+BL-BREAKINGIT(1) - General Commands Manual
+
+# NAME
+
+**Bl-breakingIt** - items breaking other blocks
+
+# DESCRIPTION
+
+## Breaking partial explicit macros
+
+Stray text.
+&lt;More stray text.&gt;
+
+tag
+
+> Tagged text.
+
+Stray text.
+&lt;More stray text.&gt;
+
+*	Bullet point.
+
+tag
+
+> Tagged text.
+> &lt;More tagged text.&gt;
+
+tag2
+
+> Yet more tagged text.
+
+*	Item text.
+	&lt;More item text.&gt;
+
+*	Bullet point.
+
+## Breaking full explicit macros
+
+Stray text.
+
+> More stray text.
+
+tag
+
+> Tagged text.
+
+Stray text.
+
+> More stray text.
+
+*	Bullet point.
+
+tag
+
+> Tagged text.
+
+> > Display text.
+
+tag2
+
+> More tagged text.
+
+*	Item text.
+
+	> Display text.
+
+*	Bullet point.
+
+OpenBSD - February 3, 2015

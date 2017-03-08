@@ -1,0 +1,63 @@
+BL-OFFSET(1) - General Commands Manual
+
+# NAME
+
+**Bl-offset** - various arguments for Bl offset
+
+# DESCRIPTION
+
+Bl item offset empty
+
+Bl item offset left
+
+Bl item offset indent
+
+Bl item offset indent-two
+
+Bl item offset 4n
+
+Bl item offset mystring
+
+Bl item offset Ds
+
+Bl item offset 78n
+
+Bl item offset -3n
+
+tag
+
+> Bl tag width Ds offset empty
+
+tag
+
+> Bl tag width Ds offset left
+
+tag
+
+> Bl tag width Ds offset indent
+
+tag
+
+> Bl tag width Ds offset indent-two
+
+tag
+
+> Bl tag width Ds offset 4n
+
+tag
+
+> Bl tag width Ds offset mystring
+
+tag
+
+> Bl tag width Ds offset Ds
+
+tag
+
+> Bl tag width Ds offset 78n
+
+tag
+
+> Bl tag width Ds offset -3n
+
+OpenBSD - December 25, 2014

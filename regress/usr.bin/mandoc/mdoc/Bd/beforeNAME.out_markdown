@@ -1,0 +1,15 @@
+BD-BEFORENAME(1) - General Commands Manual
+
+> Building and Debugging NetBSD Kernels  
+> David A. Holland  
+> August 17, 2009
+
+# NAME
+
+**Bd-beforename** - title and author block before the NAME section
+
+# DESCRIPTION
+
+some text
+
+OpenBSD - July 28, 2014

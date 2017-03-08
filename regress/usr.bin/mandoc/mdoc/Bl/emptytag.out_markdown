@@ -1,0 +1,23 @@
+BL-EMPTYTAG(1) - General Commands Manual
+
+# NAME
+
+**Bl-emptytag** - tag lists with empty item heads
+
+# DESCRIPTION
+
+initial text
+
+tag
+
+> text
+
+> no tag before this text
+
+tag
+
+> text
+
+final text
+
+OpenBSD - July 3, 2014

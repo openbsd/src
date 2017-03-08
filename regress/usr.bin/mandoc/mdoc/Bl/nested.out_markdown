@@ -1,0 +1,81 @@
+BL-NESTED(1) - General Commands Manual
+
+# NAME
+
+**Bl-nested** - nested lists
+
+# DESCRIPTION
+
+inset:
+
+outer
+list
+
+inner
+list
+
+inset compact:
+
+outer
+list
+
+inner
+list
+
+dash:
+
+-	outer list
+
+	-	inner list
+
+dash compact:
+
+-	outer list
+
+	-	inner list
+
+tag:
+
+outer tag
+
+> outer text
+
+> inner tag
+
+> > inner text
+
+> outer text
+
+outer tag
+
+> > outer text (display)
+
+> inner tag
+
+> > inner text
+
+> outer text
+
+outer tag
+
+> > outer text (one-line display)
+
+> inner tag
+
+> > inner text
+
+> outer text
+
+outer tag (indented 3n)
+
+> outer text
+
+> inner tag (indented 6n)
+
+> > inner text
+
+> outer text
+
+final text
+
+OpenBSD - May 19, 2013
