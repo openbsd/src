@@ -7,6 +7,12 @@
 .Sh DESCRIPTION
 initial text
 .de mym
+.Op \\$1 \\$2
+..
+.mym $1 \$1
+.mym \$1 nothing
+middle text
+.de mym
 .mym
 not printed
 ..

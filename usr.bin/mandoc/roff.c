@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.163 2017/03/03 13:55:06 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.164 2017/03/08 13:17:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -3036,7 +3036,7 @@ roff_userdef(ROFF_ARGS)
 {
 	const char	 *arg[9], *ap;
 	char		 *cp, *n1, *n2;
-	int		  i, ib, ie;
+	int		  expand_count, i, ib, ie;
 	size_t		  asz, rsz;
 
 	/*
@@ -3060,8 +3060,9 @@ roff_userdef(ROFF_ARGS)
 	 */
 
 	buf->sz = strlen(r->current_string) + 1;
-	n1 = cp = mandoc_malloc(buf->sz);
+	n1 = n2 = cp = mandoc_malloc(buf->sz);
 	memcpy(n1, r->current_string, buf->sz);
+	expand_count = 0;
 	while (*cp != '\0') {
 
 		/* Scan ahead for the next argument invocation. */
@@ -3079,6 +3080,18 @@ roff_userdef(ROFF_ARGS)
 				continue;
 		}
 		cp -= 2;
+
+		/*
+		 * Prevent infinite recursion.
+		 */
+
+		if (cp >= n2)
+			expand_count = 1;
+		else if (++expand_count > EXPAND_LIMIT) {
+			mandoc_msg(MANDOCERR_ROFFLOOP, r->parse,
+			    ln, (int)(cp - n1), NULL);
+			return ROFF_IGN;
+		}
 
 		/*
 		 * Determine the size of the expanded argument,
