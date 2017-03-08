@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.10 2017/03/08 15:08:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.11 2017/03/08 17:40:17 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1178,7 +1178,9 @@ md_pre_It(struct roff_node *n)
 			break;
 		case LIST_enum:
 			md_preword();
-			printf("%d.\t", ++bln->norm->Bl.count);
+			if (bln->norm->Bl.count < 99)
+				bln->norm->Bl.count++;
+			printf("%d.\t", bln->norm->Bl.count);
 			escflags &= ~ESC_FON;
 			break;
 		case LIST_column:
