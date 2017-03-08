@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.11 2017/03/08 17:40:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.12 2017/03/08 17:51:29 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -535,7 +535,7 @@ md_word(const char *s)
 			bs = escflags & ESC_HYP && !code_blocks;
 			break;
 		case ')':
-			bs = escflags & ESC_PAR && !code_blocks;
+			bs = escflags & (ESC_NUM | ESC_PAR) && !code_blocks;
 			break;
 		case '*':
 		case '[':
