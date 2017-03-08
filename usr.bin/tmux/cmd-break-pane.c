@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.42 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.43 2017/03/08 13:36:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -48,6 +48,7 @@ static enum cmd_retval
 cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct client		*c = item->state.c;
 	struct winlink		*wl = item->state.sflag.wl;
 	struct session		*src_s = item->state.sflag.s;
 	struct session		*dst_s = item->state.tflag.s;
@@ -55,7 +56,6 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*w = wl->window;
 	char			*name, *cause;
 	int			 idx = item->state.tflag.idx;
-	struct format_tree	*ft;
 	const char		*template;
 	char			*cp;
 
@@ -106,15 +106,9 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = BREAK_PANE_TEMPLATE;
-
-		ft = format_create(item, FORMAT_NONE, 0);
-		format_defaults(ft, item->state.c, dst_s, wl, wp);
-
-		cp = format_expand(ft, template);
+		cp = format_single(item, template, c, dst_s, wl, wp);
 		cmdq_print(item, "%s", cp);
 		free(cp);
-
-		format_free(ft);
 	}
 	return (CMD_RETURN_NORMAL);
 }
