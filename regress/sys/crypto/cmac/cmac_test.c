@@ -26,7 +26,7 @@ print_hex(char *str, unsigned char *buf, int len)
       int     i;
 
       for ( i=0; i<len; i++ ) {
-          if ( (i % 16) == 0 && i != 0 ) printf(str);
+          if ( (i % 16) == 0 && i != 0 ) printf("%s", str);
           printf("%02x", buf[i]);
           if ( (i % 4) == 3 ) printf(" ");
           if ( (i % 16) == 15 ) printf("\n");
