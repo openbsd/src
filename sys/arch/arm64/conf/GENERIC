@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.19 2017/03/08 11:41:11 patrick Exp $
+# $OpenBSD: GENERIC,v 1.20 2017/03/08 11:45:23 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -217,6 +217,7 @@ udl*		at uhub?		# DisplayLink USB displays
 wsdisplay*	at udl?
 
 atphy*		at mii?			# Attansic F1 PHYs
+eephy*		at mii?			# Marvell 88E1000 series PHY
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
