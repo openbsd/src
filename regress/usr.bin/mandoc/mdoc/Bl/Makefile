@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.36 2017/03/08 15:08:17 schwarze Exp $
+# $OpenBSD: Makefile,v 1.37 2017/03/08 22:53:35 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
 REGRESS_TARGETS += column colNoIt extend nested offset secstart
@@ -12,12 +12,6 @@ UTF8_TARGETS	 = dash
 LINT_TARGETS	 = column notype badargs tag
 LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
 LINT_TARGETS	+= bareIt bareTa break breakingIt broken
-
-MARKDOWN_TARGETS  = item inset diag ohang bullet dash enum hang tag
-MARKDOWN_TARGETS += column colNoIt extend nested offset secstart
-MARKDOWN_TARGETS += notype multitype badargs
-MARKDOWN_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
-MARKDOWN_TARGETS += bareIt bareTa unclosed breakingIt breakingTa broken
 
 # groff-mandoc differences:
 # - groff allows enclosures to span Ta, mandoc does not
@@ -45,5 +39,9 @@ SKIP_TMAN += tag
 # Empty heads are still mishandled by -Tman.
 
 SKIP_TMAN += emptyhead emptytag
+
+# mandoc -T markdown still has issues with badly nested lists
+
+SKIP_MARKDOWN ?= break
 
 .include <bsd.regress.mk>

@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile.inc,v 1.3 2015/02/03 19:37:25 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2017/03/08 22:53:35 schwarze Exp $
 
 SKIP_TMAN ?= ALL
+SKIP_MARKDOWN ?= ALL
 
 .include "../Makefile.inc"

@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.6 2017/03/05 19:59:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2017/03/08 22:53:35 schwarze Exp $
 
 REGRESS_TARGETS	 = broken hyph noarg par
 LINT_TARGETS	 = broken noarg
-MARKDOWN_TARGETS = hyph noarg par
+
+SKIP_MARKDOWN	?= broken
 
 .include <bsd.regress.mk>

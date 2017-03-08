@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.3 2017/03/05 19:59:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.4 2017/03/08 22:53:35 schwarze Exp $
 
 REGRESS_TARGETS	 = dupe late long missing
 LINT_TARGETS	 = dupe late missing
-MARKDOWN_TARGETS = dupe late long missing
 
 SKIP_GROFF	 = long
 

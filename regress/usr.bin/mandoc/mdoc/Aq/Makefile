@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2017/03/07 13:09:08 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2017/03/08 22:53:35 schwarze Exp $
 
 REGRESS_TARGETS	= author empty
 UTF8_TARGETS	= author empty
-MARKDOWN_TARGETS = author empty
 
 .include <bsd.regress.mk>

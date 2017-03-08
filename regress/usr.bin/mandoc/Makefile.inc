@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.21 2017/03/05 19:57:35 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.22 2017/03/08 22:53:35 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -11,6 +11,7 @@ MANDOC ?= mandoc
 
 SKIP_ASCII ?=
 SKIP_TMAN ?=
+SKIP_MARKDOWN ?=
 
 _ASCIIFILES =
 _ASCIIDIFFS =
@@ -25,6 +26,10 @@ _MANFILES += ${t}.in_man ${t}.mandoc_man
 _MANDIFFS += ${t}.diff_man
 .    endif
 .  endif
+.  if empty(SKIP_MARKDOWN:MALL) && empty(SKIP_MARKDOWN:M${t})
+_MARKDOWNFILES += ${t}.mandoc_markdown
+_MARKDOWNDIFFS += ${t}.diff_markdown
+.  endif
 .endfor
 
 _UTF8FILES = ${UTF8_TARGETS:C/$/.mandoc_utf8/}
@@ -32,9 +37,6 @@ _UTF8DIFFS = ${UTF8_TARGETS:C/$/.diff_utf8/}
 
 _HTMLFILES = ${HTML_TARGETS:C/$/.mandoc_html/}
 _HTMLDIFFS = ${HTML_TARGETS:C/$/.diff_html/}
-
-_MARKDOWNFILES = ${MARKDOWN_TARGETS:C/$/.mandoc_markdown/}
-_MARKDOWNDIFFS = ${MARKDOWN_TARGETS:C/$/.diff_markdown/}
 
 _LINTFILES =
 _LINTDIFFS =
@@ -138,8 +140,10 @@ ${t}: ${t}.diff_utf8
 ${t}: ${t}.diff_html
 .endfor
 
-.for t in ${MARKDOWN_TARGETS}
+.for t in ${REGRESS_TARGETS}
+.  if empty(SKIP_MARKDOWN:MALL) && empty(SKIP_MARKDOWN:M${t})
 ${t}: ${t}.diff_markdown
+.  endif
 .endfor
 
 .for t in ${LINT_TARGETS}
@@ -224,8 +228,10 @@ _OUTFILES += ${t}.out_utf8
 _HTMLOUTFILES += ${t}.out_html
 .endfor
 
-.for t in ${MARKDOWN_TARGETS}
+.for t in ${REGRESS_TARGETS}
+.  if empty(SKIP_MARKDOWN:MALL) && empty(SKIP_MARKDOWN:M${t})
 _MARKDOWNOUTFILES += ${t}.out_markdown
+.  endif
 .endfor
 
 .for t in ${LINT_TARGETS}
@@ -274,9 +280,11 @@ ${t}.out_html: ${t}.in
 		sed -n '/^BEGINTEST/,/^ENDTEST/p' > ${.TARGET}
 .endfor
 
-.for t in ${MARKDOWN_TARGETS}
+.for t in ${REGRESS_TARGETS}
+.  if empty(SKIP_MARKDOWN:MALL) && empty(SKIP_MARKDOWN:M${t})
 ${t}.out_markdown: ${t}.in
 	${MANDOC} ${MOPTS} -Tmarkdown ${.ALLSRC} > ${.TARGET}
+.  endif
 .endfor
 
 .for t in ${LINT_TARGETS}

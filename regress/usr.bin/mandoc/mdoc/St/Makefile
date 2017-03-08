@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.5 2017/03/05 19:59:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2017/03/08 22:53:36 schwarze Exp $
 
 REGRESS_TARGETS	 = badargs call
 LINT_TARGETS	 = badargs call
-MARKDOWN_TARGETS = badargs call
 
 # groff-1.22.3 defect:
 # - If the first argument of .St is the name of another macro,
