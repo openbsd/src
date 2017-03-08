@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.9 2017/03/08 14:29:49 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.10 2017/03/08 15:08:17 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1151,7 +1151,8 @@ md_pre_It(struct roff_node *n)
 
 	case ROFFT_HEAD:
 		bln = n->parent->parent;
-		if (bln->norm->Bl.comp == 0)
+		if (bln->norm->Bl.comp == 0 &&
+		    bln->norm->Bl.type != LIST_column)
 			outflags |= MD_sp;
 		outflags |= MD_nl;
 
@@ -1180,6 +1181,9 @@ md_pre_It(struct roff_node *n)
 			printf("%d.\t", ++bln->norm->Bl.count);
 			escflags &= ~ESC_FON;
 			break;
+		case LIST_column:
+			outflags |= MD_br;
+			return 0;
 		default:
 			return 0;
 		}

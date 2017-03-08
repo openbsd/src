@@ -1,0 +1,15 @@
+BL-COLNOIT(1) - General Commands Manual
+
+# NAME
+
+**Bl-colNoIt** - column lists without item macros
+
+# DESCRIPTION
+
+	**a** b  
+	*c*  d
+
+	a    b  
+	c    d
+
+OpenBSD - August 20, 2016
