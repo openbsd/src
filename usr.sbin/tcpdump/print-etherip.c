@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-etherip.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-etherip.c,v 1.9 2017/03/08 10:05:30 jca Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -72,7 +72,7 @@ etherip_print(const u_char *bp, u_int caplen, u_int len, const u_char *bp2)
 	printf("etherip %s > %s ver ", ipaddr_string(&ip->ip_src),
 	    ipaddr_string(&ip->ip_dst));
 
-	switch ((*pbuf) & 0xf) {
+	switch (*pbuf >> 4) {
 	case 2:
 		hlen = 1;
 		printf("%d", 2);
