@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2017/02/18 02:01:53 jsg Exp $
+#	$OpenBSD: install.md,v 1.3 2017/03/08 09:33:03 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ md_installboot() {
 	_mdec=/usr/mdec/$_plat
 
 	cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
+	cp $_mdec/u-boot.bin /mnt/mnt/
 	cat > /mnt/mnt/config.txt<<-__EOT
 		arm_control=0x200
 		enable_uart=1
