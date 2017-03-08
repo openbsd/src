@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.84 2017/02/12 15:53:15 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.85 2017/03/08 15:07:32 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -43,6 +43,9 @@
 #include "dhcpd.h"
 #include "log.h"
 #include "privsep.h"
+
+#define ROUNDUP(a) \
+    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 struct in_addr active_addr;
 
@@ -705,9 +708,6 @@ populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 {
 	struct sockaddr *sa;
 	int i;
-
-#define ROUNDUP(a) \
-    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 	sa = (struct sockaddr *)((char *)(rtm) + rtm->rtm_hdrlen);
 
