@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.17 2017/03/08 08:57:16 patrick Exp $
+# $OpenBSD: GENERIC,v 1.18 2017/03/08 09:23:06 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -90,7 +90,8 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 
 # PCI Ethernet
-em*		at pci?			# Intel Pro/1000 ethernet
+em*		at pci?			# Intel Pro/1000 Ethernet
+ix*		at pci?			# Intel 82598EB 10Gb Ethernet
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
