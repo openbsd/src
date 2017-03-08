@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.c,v 1.1 2003/11/04 07:38:08 mickey Exp $	*/
+/*	$OpenBSD: wait.c,v 1.2 2017/03/08 19:25:00 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -14,11 +14,11 @@ main()
 {
 	int status;
 
-	switch(fork()) {
+	switch (fork()) {
 	case -1:
 		err(1, "fork");
 	case 0:
-		__syscall((u_int64_t)SYS_exit, 17, 0);
+		_exit(17);
 		abort();
 	}
 
