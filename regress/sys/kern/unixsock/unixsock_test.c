@@ -1,4 +1,4 @@
-/* $OpenBSD: unixsock_test.c,v 1.2 2011/07/06 06:22:59 guenther Exp $ */
+/* $OpenBSD: unixsock_test.c,v 1.3 2017/03/08 19:28:47 deraadt Exp $ */
 /* Written by Claudio Jeker in 2011 */
 /* Public domain */
 #include <sys/types.h>
@@ -104,9 +104,9 @@ main()
 		sun2.sun_family = AF_UNIX;
 
 		snprintf(sun->sun_path, sizeof(ss) - 2, "%s.%.*s", path,
-		    slen - strlen(path) - 1, aaa);
+		    (int)(slen - strlen(path) - 1), aaa);
 		snprintf(sun2.sun_path, sizeof(sun2) - 2, "%s.%.*s", "socket",
-		    slen - strlen(path) - 1, aaa);
+		    (int)(slen - strlen(path) - 1), aaa);
 
 		if (test_bind(sun, slen + 2) != t[i].r) {
 			warn("FAIL: bind(\"%s\") len %d", sun->sun_path,
@@ -120,14 +120,14 @@ main()
 		}
 		if (sizeof(*sun) >= slen + 2 &&
 		    test_bind(sun, sizeof(*sun)) != t[i].r) {
-			warn("FAIL3: bind(\"%s\") len %d", sun->sun_path,
+			warn("FAIL3: bind(\"%s\") len %zd", sun->sun_path,
 			    sizeof(*sun));
 			fail = 1;
 		}
 		sun->sun_path[slen] = 'a';
 		if (test_bind(sun, slen + 2) != t[i].r) {
 			warn("FAIL4: bind(\"%.*s\") len %d no-NUL",
-			     slen + 2, sun->sun_path, slen + 2);
+			     (int)(slen + 2), sun->sun_path, slen + 2);
 			fail = 1;
 		}
 		sun->sun_path[slen] = '\0';
@@ -144,7 +144,7 @@ main()
 		}
 		if (sizeof(*sun) >= slen + 2 &&
 		    test_connect(sun, sizeof(*sun), &sun2) != t[i].r) {
-			warn("FAIL3: connect(\"%s\") len %d", sun->sun_path,
+			warn("FAIL3: connect(\"%s\") len %zd", sun->sun_path,
 			    sizeof(*sun));
 			fail = 1;
 		}
