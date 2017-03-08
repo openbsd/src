@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.17 2017/03/08 11:45:23 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.18 2017/03/08 11:47:07 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -99,6 +99,8 @@ pci*		at ppb?
 # PCI Ethernet
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+mskc*		at pci?			# Marvell Yukon-2
+msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
 
 # PCI SCSI
