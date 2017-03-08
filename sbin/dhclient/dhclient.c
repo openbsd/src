@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.400 2017/03/08 14:19:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.401 2017/03/08 14:28:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -234,18 +234,18 @@ get_ifa(char *cp, int n)
 void
 routehandler(struct interface_info *ifi)
 {
-	struct client_state *client = ifi->client;
 	char ntoabuf[INET_ADDRSTRLEN];
 	struct in_addr a, b;
-	ssize_t n;
-	int linkstat, rslt;
+	struct sockaddr *sa;
+	struct ifa_msghdr *ifam;
+	struct client_state *client = ifi->client;
 	struct ether_addr hw;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
-	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
-	struct sockaddr *sa;
 	char *errmsg, *rtmmsg;
+	ssize_t n;
+	int linkstat, rslt;
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
