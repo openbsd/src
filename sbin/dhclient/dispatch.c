@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.116 2017/02/14 22:46:53 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.117 2017/03/08 15:46:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -281,7 +281,7 @@ interface_status(struct interface_info *ifi)
 #ifdef DEBUG
 		if (errno != EINVAL && errno != ENOTTY)
 			log_debug("ioctl(SIOCGIFMEDIA) on %s", ifi->name);
-#endif
+#endif	/* DEBUG */
 
 		ifi->flags |= IFI_NOMEDIA;
 		goto active;
