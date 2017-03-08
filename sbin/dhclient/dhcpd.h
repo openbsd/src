@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.160 2017/02/12 13:15:50 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.161 2017/03/08 20:33:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -176,10 +176,10 @@ struct dhcp_timeout {
 
 extern struct client_config *config;
 extern struct imsgbuf *unpriv_ibuf;
+extern volatile sig_atomic_t quit;
 extern struct in_addr deleting;
 extern struct in_addr adding;
 extern struct in_addr active_addr;
-extern volatile sig_atomic_t quit;
 
 /* options.c */
 int cons_options(struct interface_info *, struct option_data *);
@@ -274,8 +274,8 @@ void flush_routes(void);
 void add_route(struct in_addr, struct in_addr, struct in_addr, struct in_addr,
     int, int);
 
-void sendhup(struct client_lease *);
-
 int resolv_conf_priority(struct interface_info *);
+
+void sendhup(struct client_lease *);
 
 void flush_unpriv_ibuf(const char *);
