@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sq.c,v 1.28 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: if_sq.c,v 1.29 2017/03/08 15:07:10 mpi Exp $	*/
 /*	$NetBSD: if_sq.c,v 1.42 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ sq_set_filter(struct sq_softc *sc)
 	/*
 	 * Unless otherwise specified, always accept broadcast frames.
 	 */
-	if ((sc->sc_rxcmd & ~RXCMD_REC_MASK) == RXCMD_REC_NONE)
+	if ((sc->sc_rxcmd & RXCMD_REC_MASK) == RXCMD_REC_NONE)
 		sc->sc_rxcmd |= RXCMD_REC_BROAD;
 }
 
