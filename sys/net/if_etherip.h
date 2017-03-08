@@ -30,15 +30,15 @@ extern int etherip_allow;
 extern struct etheripstat etheripstat;
 
 struct etheripstat {
-	uint32_t	etherip_hdrops;	/* packet shorter than header shows */
-	uint32_t	etherip_qfull;	/* bridge queue full, packet dropped */
-	uint32_t	etherip_noifdrops;	/* no interface/bridge info */
-	uint32_t	etherip_pdrops;		/* dropped due to policy */
-	uint32_t	etherip_adrops;		/* all other drops */
-	uint32_t	etherip_ipackets;	/* total input packets */
-	uint32_t	etherip_opackets;	/* total output packets */
-	uint64_t	etherip_ibytes;		/* input bytes */
-	uint64_t	etherip_obytes;		/* output bytes */
+	u_int64_t	etherips_hdrops;	/* packet shorter than header shows */
+	u_int64_t	etherips_qfull;		/* bridge queue full, packet dropped */
+	u_int64_t	etherips_noifdrops;	/* no interface/bridge information */
+	u_int64_t	etherips_pdrops;	/* packet dropped due to policy */
+	u_int64_t	etherips_adrops;	/* all other drops */
+	u_int64_t	etherips_ipackets;	/* total input packets */
+	u_int64_t	etherips_opackets;	/* total output packets */
+	u_int64_t	etherips_ibytes;	/* input bytes */
+	u_int64_t	etherips_obytes;	/* output bytes */
 };
 
 struct etherip_header {
