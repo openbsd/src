@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.81 2017/02/12 13:55:01 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.82 2017/03/08 14:19:00 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -664,7 +664,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 #ifdef DEBUG
 		log_debug("Discarding packet with hlen != %s (%u)",
 		    ifi->name, packet->hlen);
-#endif
+#endif	/* DEBUG */
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
 	    sizeof(ifi->hw_address))) {
@@ -672,7 +672,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		log_debug("Discarding packet with chaddr != %s (%s)",
 		    ifi->name,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
@@ -680,7 +680,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 #ifdef DEBUG
 		log_debug("Discarding packet with XID != %u (%u)", client->xid,
 		    client->packet.xid);
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
@@ -689,7 +689,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 #ifdef DEBUG
 			log_debug("Discarding packet from address on reject "
 			    "list (%s)", inet_ntoa(from));
-#endif
+#endif	/* DEBUG */
 			return;
 		}
 
@@ -727,7 +727,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 #ifdef DEBUG
 			log_debug("Discarding packet with client-identifier "
 			    "'%s'", pretty_print_option(i, &options[i], 0));
-#endif
+#endif	/* DEBUG */
 			goto done;
 		}
 	}
@@ -754,7 +754,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 #ifdef DEBUG
 			log_debug("Discarding DHCP packet of unknown type "
 			    "(%d)", options[DHO_DHCP_MESSAGE_TYPE].data[0]);
-#endif
+#endif	/* DEBUG */
 			break;
 		}
 	} else if (options_valid && packet->op == BOOTREPLY) {
@@ -763,7 +763,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 	} else {
 #ifdef DEBUG
 		log_debug("Discarding packet which is neither DHCP nor BOOTP");
-#endif
+#endif	/* DEBUG */
 	}
 
 	rslt = asprintf(&info, "%s from %s (%s)", type, inet_ntoa(from),

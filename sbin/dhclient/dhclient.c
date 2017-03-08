@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.399 2017/02/15 20:00:16 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.400 2017/03/08 14:19:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -378,7 +378,7 @@ routehandler(struct interface_info *ifi)
 			log_debug("link state %s -> %s",
 			    ifi->linkstat ? "up" : "down",
 			    linkstat ? "up" : "down");
-#endif
+#endif	/* DEBUG */
 			ifi->linkstat = linkstat;
 			if (ifi->linkstat) {
 				if (client->state == S_PREBOOT) {
@@ -938,7 +938,7 @@ dhcpack(struct interface_info *ifi, struct in_addr client_addr,
 	    client->state != S_REBINDING) {
 #ifdef DEBUG
 		log_debug("Unexpected %s. State #%d", info, client->state);
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
@@ -1150,7 +1150,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
 	if (client->state != S_SELECTING) {
 #ifdef DEBUG
 		log_debug("Unexpected %s. State #%d.", info, client->state);
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
@@ -1162,7 +1162,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
 		    sizeof(in_addr_t))) {
 #ifdef DEBUG
 			log_debug("Duplicate %s.", info);
-#endif
+#endif	/* DEBUG */
 			return;
 		}
 	}
@@ -1375,14 +1375,14 @@ dhcpnak(struct interface_info *ifi, struct in_addr client_addr,
 	    client->state != S_REBINDING) {
 #ifdef DEBUG
 		log_debug("Unexpected %s. State #%d", info, client->state);
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
 	if (!client->active) {
 #ifdef DEBUG
 		log_debug("Unexpected %s. No active lease.", info);
-#endif
+#endif	/* DEBUG */
 		return;
 	}
 
