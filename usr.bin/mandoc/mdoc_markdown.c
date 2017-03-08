@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.8 2017/03/07 15:31:18 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.9 2017/03/08 14:29:49 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -375,6 +375,8 @@ md_stack(char c)
 static void
 md_preword(void)
 {
+	const char	*cp;
+
 	/*
 	 * If a list block is nested inside a code block or a blockquote,
 	 * blank lines for paragraph breaks no longer work; instead,
@@ -405,7 +407,11 @@ md_preword(void)
 
 	if (outflags & (MD_nl | MD_br | MD_sp)) {
 		putchar('\n');
-		fputs(md_stack('\0'), stdout);
+		for (cp = md_stack('\0'); *cp != '\0'; cp++) {
+			putchar(*cp);
+			if (*cp == '>')
+				putchar(' ');
+		}
 		outflags &= ~(MD_nl | MD_br | MD_sp);
 		escflags = ESC_BOL;
 		outcount = 0;
