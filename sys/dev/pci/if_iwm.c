@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.165 2017/02/20 15:38:04 krw Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.166 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6151,8 +6151,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
 				err = iwm_init(ifp);
-				if (err)
-					ifp->if_flags &= ~IFF_UP;
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -6801,7 +6799,6 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
 		handled |= IWM_CSR_INT_BIT_HW_ERR;
 		printf("%s: hardware error, stopping device \n", DEVNAME(sc));
-		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
 		rv = 1;
 		goto out;
@@ -6819,7 +6816,6 @@ iwm_intr(void *arg)
 	if (r1 & IWM_CSR_INT_BIT_RF_KILL) {
 		handled |= IWM_CSR_INT_BIT_RF_KILL;
 		if (iwm_check_rfkill(sc) && (ifp->if_flags & IFF_UP)) {
-			ifp->if_flags &= ~IFF_UP;
 			iwm_stop(ifp, 1);
 		}
 	}

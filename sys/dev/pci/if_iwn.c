@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.184 2017/02/20 15:38:04 krw Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.185 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2556,7 +2556,6 @@ iwn_notif_intr(struct iwn_softc *sc)
 				printf("%s: Radio transmitter is off\n",
 				    sc->sc_dev.dv_xname);
 				/* Turn the interface down. */
-				ifp->if_flags &= ~IFF_UP;
 				iwn_stop(ifp, 1);
 				return;	/* No further processing. */
 			}
@@ -3240,7 +3239,6 @@ iwn_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
 			iwn_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;

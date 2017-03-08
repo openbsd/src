@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.42 2017/02/01 12:45:56 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.43 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1273,7 +1273,6 @@ ar5008_intr(struct athn_softc *sc)
 			printf("%s: radio switch turned off\n",
 			    sc->sc_dev.dv_xname);
 			/* Turn the interface down. */
-			ifp->if_flags &= ~IFF_UP;
 			athn_stop(ifp, 1);
 			return (1);
 		}

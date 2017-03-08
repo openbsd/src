@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.44 2017/01/30 09:42:14 stsp Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.45 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1375,7 +1375,6 @@ ar9003_intr(struct athn_softc *sc)
 			printf("%s: radio switch turned off\n",
 			    sc->sc_dev.dv_xname);
 			/* Turn the interface down. */
-			ifp->if_flags &= ~IFF_UP;
 			athn_stop(ifp, 1);
 			return (1);
 		}

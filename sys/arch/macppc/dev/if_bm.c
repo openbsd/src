@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.41 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.42 2017/03/08 12:02:41 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -595,7 +595,7 @@ bmac_stop(struct bmac_softc *sc)
 	dbdma_stop(sc->sc_txdma);
 	dbdma_stop(sc->sc_rxdma);
 
-	ifp->if_flags &= ~(IFF_UP | IFF_RUNNING);
+	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
 	splx(s);

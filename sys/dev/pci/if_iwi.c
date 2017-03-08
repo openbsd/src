@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.134 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.135 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1164,7 +1164,6 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_RADIO_OFF) {
 		DPRINTF(("radio transmitter off\n"));
-		ifp->if_flags &= ~IFF_UP;
 		iwi_stop(ifp, 1);
 		return 1;
 	}
@@ -1429,7 +1428,6 @@ iwi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
 			iwi_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;

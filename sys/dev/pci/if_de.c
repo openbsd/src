@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.136 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.137 2017/03/08 12:02:41 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -1281,7 +1281,7 @@ tulip_mii_autonegotiate(tulip_softc_t * const sc, const unsigned phyaddr)
 #endif
 		sc->tulip_flags &= ~TULIP_TXPROBE_ACTIVE;
 		sc->tulip_probe_state = TULIP_PROBE_FAILED;
-		sc->tulip_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+		sc->tulip_if.if_flags &= ~IFF_RUNNING;
 		return;
 	    }
 	    status = tulip_mii_readreg(sc, phyaddr, PHYREG_STATUS)

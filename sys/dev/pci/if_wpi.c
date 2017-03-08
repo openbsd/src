@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.138 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.139 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1476,7 +1476,6 @@ wpi_notif_intr(struct wpi_softc *sc)
 				printf("%s: Radio transmitter is off\n",
 				    sc->sc_dev.dv_xname);
 				/* Turn the interface down. */
-				ifp->if_flags &= ~IFF_UP;
 				wpi_stop(ifp, 1);
 				return;	/* No further processing. */
 			}
@@ -1954,7 +1953,6 @@ wpi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
 			wpi_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;

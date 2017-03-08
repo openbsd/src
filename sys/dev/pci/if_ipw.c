@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.119 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.120 2017/03/08 12:02:41 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -809,7 +809,6 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 		break;
 
 	case IPW_STATE_RADIO_DISABLED:
-		ifp->if_flags &= ~IFF_UP;
 		ipw_stop(&ic->ic_if, 1);
 		break;
 	}
@@ -1047,7 +1046,6 @@ ipw_intr(void *arg)
 
 	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
 		printf("%s: fatal firmware error\n", sc->sc_dev.dv_xname);
-		ifp->if_flags &= ~IFF_UP;
 		ipw_stop(ifp, 1);
 		return 1;
 	}
@@ -1336,7 +1334,6 @@ ipw_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
 			ipw_stop(ifp, 1);
 			ifp->if_oerrors++;
 			return;
