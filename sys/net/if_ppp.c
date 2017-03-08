@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.104 2017/03/03 08:00:36 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.105 2017/03/08 11:35:34 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ pppdealloc(struct ppp_softc *sc)
 
 	NET_LOCK(s);
 	if_down(&sc->sc_if);
-	sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+	sc->sc_if.if_flags &= ~IFF_RUNNING;
 	sc->sc_devp = NULL;
 	sc->sc_xfer = 0;
 	while ((pkt = ppp_pkt_dequeue(&sc->sc_rawq)) != NULL)
