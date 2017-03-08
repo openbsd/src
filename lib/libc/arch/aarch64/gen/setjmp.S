@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.2 2017/03/08 06:28:12 drahn Exp $	*/
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014 The FreeBSD Foundation
@@ -34,16 +34,15 @@
 #include <machine/setjmp.h>
 
 ENTRY(setjmp)
-	stp	x0, x30, [sp, #-16]!
 
+	mov	x2, x0 				/* save jmpbuf in x2 */
 	/* Store the signal mask */
-	add	x2, x0, #(_JB_SIGMASK * 8)	/* oset */
-	mov	x1, #0				/* set */
+	mov	w1, #0				/* set */
 	mov	x0, #1				/* SIG_BLOCK */
 	SYSTRAP(sigprocmask)
+	str	w0, [x2, #(_JB_SIGMASK * 8)]	/* oset */
 
-	ldp	x0, x30, [sp], #16
-
+	mov	x0, x2
 	/* Store the magic value and stack pointer */
 	ldr	x8, .Lmagic
 	mov	x9, sp
@@ -73,18 +72,15 @@ ENTRY(setjmp)
 END_STRONG(setjmp)
 
 ENTRY(longjmp)
-	stp	x0, x1, [sp, #-32]!
-	str	x30, [sp, #24]
+	mov	x2, x0				/* move jmpbuf */
+	mov	x3, x1				/* final return value */
 
 	/* Restore the signal mask */
-	mov	x2, #0				/* oset */
-	add	x1, x0, #(_JB_SIGMASK * 8)	/* set */
+	ldr	w1, [x2, #(_JB_SIGMASK * 8)]	/* set */
 	mov	x0, #3				/* SIG_SETMASK */
 	SYSTRAP(sigprocmask)
 
-	ldr	x30, [sp, #24]
-	ldp	x0, x1, [sp], #32
-
+	mov	x0, x2
 	/* Check the magic value */
 	ldr	x8, [x0], #8
 	ldr	x9, .Lmagic
@@ -110,7 +106,8 @@ ENTRY(longjmp)
 	ldp	d14, d15, [x0]
 
 	/* Load the return value */
-	mov	x0, x1
+	cmp	w3, #0
+	csinc	w0, w3, wzr, ne
 	ret
 
 botch:
