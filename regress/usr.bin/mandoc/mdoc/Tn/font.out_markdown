@@ -7,7 +7,7 @@ TN-FONT(1) - General Commands Manual
 # DESCRIPTION
 
 normal text
-`literal*emphasis*back`
+`literalemphasisback`
 trailing text
 
 OpenBSD - July 9, 2012

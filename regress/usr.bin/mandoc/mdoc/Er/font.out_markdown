@@ -7,7 +7,7 @@ ER-FONT(1) - General Commands Manual
 # DESCRIPTION
 
 normal text
-`EFONT*emphasis*EBACK`
+`EFONTemphasisEBACK`
 trailing text
 
 OpenBSD - July 9, 2012

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.12 2017/03/08 17:51:29 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.13 2017/03/08 18:17:06 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -706,6 +706,8 @@ md_pre_raw(struct roff_node *n)
 	if ((prefix = md_acts[n->tok].prefix) != NULL) {
 		md_rawword(prefix);
 		outflags &= ~MD_spc;
+		if (*prefix == '`')
+			code_blocks++;
 	}
 	return 1;
 }
@@ -718,6 +720,8 @@ md_post_raw(struct roff_node *n)
 	if ((suffix = md_acts[n->tok].suffix) != NULL) {
 		outflags &= ~(MD_spc | MD_nl);
 		md_rawword(suffix);
+		if (*suffix == '`')
+			code_blocks--;
 	}
 }
 
