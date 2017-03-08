@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.16 2017/03/07 03:07:12 jsg Exp $
+# $OpenBSD: GENERIC,v 1.17 2017/03/08 08:57:16 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -84,7 +84,30 @@ sxirtc*		at fdt?		# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
 ehci*		at fdt?		# EHCI (shim)
+
+# PCI
+ppb*		at pci?			# PCI-PCI bridges
+pci*		at ppb?
+
+# PCI Ethernet
+em*		at pci?			# Intel Pro/1000 ethernet
+
+# PCI SCSI
+ahci*		at pci? flags 0x0000	# AHCI SATA controllers
+					# flags 0x0001 to force SATA 1 (1.5Gb/s)
+nvme*		at pci?			# NVMe controllers
+
+# USB Controllers
+ohci*		at pci?			# Open Host Controller
+uhci*		at pci?			# Universal Host Controller (Intel)
+ehci*		at pci?			# Enhanced Host Controller
+xhci*		at pci?			# eXtensible Host Controller
+
+# USB bus support
+usb*		at ohci?
+usb*		at uhci?
 usb*		at ehci?
+usb*		at xhci?
 
 # USB devices
 uhub*		at usb?			# USB Hubs
@@ -195,10 +218,6 @@ atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
-
-# PCI
-ppb*		at pci?			# PCI-PCI bridges
-pci*		at ppb?
 
 scsibus*	at scsi?
 sd*		at scsibus?
