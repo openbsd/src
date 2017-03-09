@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2017/03/08 08:48:02 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.6 2017/03/09 14:23:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -129,6 +129,8 @@ extern uint32_t arm_smask[NIPL];
 void arm_clock_register(void (*)(void), void (*)(u_int), void (*)(int),
     void (*)(void));
 
+struct cpu_info;
+
 struct interrupt_controller {
 	int	ic_node;
 	void	*ic_cookie;
@@ -137,7 +139,7 @@ struct interrupt_controller {
 	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
 		    int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
-	void	 (*ic_route)(void *, int, int);
+	void	 (*ic_route)(void *, int, struct cpu_info *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;
@@ -155,7 +157,7 @@ void	*arm_intr_establish_fdt_imap(int, int *, int, int, int, int (*)(void *),
 void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
 	    int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
-void	 arm_intr_route(void *, int, int);
+void	 arm_intr_route(void *, int, struct cpu_info *);
 
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
 	    int (*)(void *), void *, char *);
