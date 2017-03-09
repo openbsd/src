@@ -1,4 +1,4 @@
-/* $OpenBSD: exdog.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
+/* $OpenBSD: exdog.c,v 1.6 2017/03/09 20:07:35 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -94,7 +94,8 @@ exdog_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	exdog_sc = sc;
-	cpuresetfn = exdog_reset;
+	if (cpuresetfn == NULL)
+		cpuresetfn = exdog_reset;
 }
 
 void
