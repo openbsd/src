@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.177 2017/02/09 22:55:45 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.178 2017/03/09 13:58:00 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -777,7 +777,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 	if (tls_accept_socket(tls_ctx, &tls_cctx, connfd) == -1) {
 		warnx("tls accept failed (%s)", tls_error(tls_ctx));
 	} else if (timeout_tls(connfd, tls_cctx, tls_handshake) == -1) {
-		if ((errstr = tls_error(tls_ctx)) == NULL)
+		if ((errstr = tls_error(tls_cctx)) == NULL)
 			errstr = strerror(errno);
 		warnx("tls handshake failed (%s)", errstr);
 	} else {
