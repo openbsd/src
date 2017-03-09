@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.17 2017/01/15 22:00:56 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.18 2017/03/09 17:06:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,7 @@ cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 	else
 		c->identify_callback_data = xstrdup("select-pane -t '%%'");
 
-	server_set_identify(c);
+	server_client_set_identify(c);
 
 	return (CMD_RETURN_NORMAL);
 }
