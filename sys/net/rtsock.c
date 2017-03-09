@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.232 2017/03/07 09:23:27 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.233 2017/03/09 16:53:20 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -306,7 +306,6 @@ route_senddesync(void *data)
 	struct rawcb	*rp;
 	struct routecb	*rop;
 	struct mbuf	*desync_mbuf;
-	int		 s;
 
 	rp = (struct rawcb *)data;
 	rop = (struct routecb *)rp;
@@ -321,15 +320,12 @@ route_senddesync(void *data)
 	 */
 	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
-		s = splsoftnet();
 		if (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src,
 		    desync_mbuf, NULL) != 0) {
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rp->rcb_socket);
-			splx(s);
 			return;
 		}
-		splx(s);
 		m_freem(desync_mbuf);
 	}
 	/* Re-add timeout to try sending msg again */
@@ -343,7 +339,7 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 	struct routecb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
-	int s, sockets = 0;
+	int sockets = 0;
 	struct socket *last = NULL;
 	struct sockaddr *sosrc, *sodst;
 
@@ -430,7 +426,6 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				s = splsoftnet();
 				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 				    sbappendaddr(&last->so_rcv, sosrc,
 				    n, (struct mbuf *)NULL) == 0) {
@@ -447,13 +442,11 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 					sorwakeup(last);
 					sockets++;
 				}
-				splx(s);
 			}
 		}
 		last = rp->rcb_socket;
 	}
 	if (last) {
-		s = splsoftnet();
 		if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
 		    sbappendaddr(&last->so_rcv, sosrc,
 		    m, (struct mbuf *)NULL) == 0) {
@@ -466,7 +459,6 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 			sorwakeup(last);
 			sockets++;
 		}
-		splx(s);
 	} else
 		m_freem(m);
 }
