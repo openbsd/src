@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.71 2017/03/06 07:41:58 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.72 2017/03/09 20:18:40 kettenis Exp $
 
 machine		armv7 arm
 
@@ -106,6 +106,7 @@ plrtc*		at fdt?
 virtio*		at fdt?
 
 psci*		at fdt?
+syscon*		at fdt?
 
 # Exynos
 #exdisplay*	at exynos?
