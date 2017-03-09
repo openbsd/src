@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
+/* $OpenBSD: expower.c,v 1.6 2017/03/09 20:13:12 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -24,6 +24,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <armv7/exynos/expowervar.h>
@@ -85,6 +86,8 @@ expower_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
+	    faa->fa_reg[0].size);
 	expower_sc = sc;
 }
 
