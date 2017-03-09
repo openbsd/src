@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.63 2017/03/05 00:55:01 guenther Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.64 2017/03/09 20:27:41 guenther Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 	 * count being >1...and decrement it then.
 	 */
 	nsegment = 0;
-	vm_map_lock_read(map);
 	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		/* should never happen for a user process */
 		if (UVM_ET_ISSUBMAP(entry)) {
@@ -367,7 +366,6 @@ cleanup:
 			}
 		}
 	}
-	vm_map_unlock_read(map);
 
 	return error;
 }
