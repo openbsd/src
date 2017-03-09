@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.51 2017/02/24 16:58:12 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.52 2017/03/09 20:15:36 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -525,7 +525,7 @@ xnf_start(struct ifqueue *ifq)
 	}
 	if (pkts > 0) {
 		txr->txr_prod = prod;
-		if (txr->txr_cons_event < txr->txr_cons)
+		if (txr->txr_cons_event <= txr->txr_cons)
 			txr->txr_cons_event = txr->txr_cons +
 			    ((txr->txr_prod - txr->txr_cons) >> 1) + 1;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
