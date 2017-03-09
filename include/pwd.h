@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.24 2015/11/18 16:44:46 tedu Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.25 2017/03/09 10:13:03 fcambus Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -96,9 +96,9 @@ struct passwd	*getpwnam(const char *);
 struct passwd	*getpwuid_shadow(uid_t);
 struct passwd	*getpwnam_shadow(const char *);
 int		getpwnam_r(const char *, struct passwd *, char *, size_t,
-		    struct passwd **result);
-int		getpwuid_r(uid_t uid, struct passwd *, char *buf, size_t buflen,
-		    struct passwd **result);
+		    struct passwd **);
+int		getpwuid_r(uid_t, struct passwd *, char *, size_t,
+		    struct passwd **);
 #if __BSD_VISIBLE || __XPG_VISIBLE
 struct passwd	*getpwent(void);
 void		 setpwent(void);
