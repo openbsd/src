@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.127 2017/03/03 20:49:47 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.128 2017/03/09 20:31:41 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -625,10 +625,7 @@ syscall(struct trapframe *frame)
 		break;
 	default:
 	bad:
-		if (p->p_p->ps_emul->e_errno && error >= 0 && error <= ELAST)
-			frame->tf_eax = p->p_p->ps_emul->e_errno[error];
-		else
-			frame->tf_eax = error;
+		frame->tf_eax = error;
 		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
