@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.69 2017/01/14 18:51:24 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.70 2017/03/09 21:25:01 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -282,7 +282,7 @@ main(int argc, char **argv)
 			i = open("/dev/tty", O_RDWR);
 			if (i != -1)
 				ioctl(i, TIOCCLRVERAUTH);
-			exit(i != -1);
+			exit(i == -1);
 		case 'u':
 			if (parseuid(optarg, &target) != 0)
 				errx(1, "unknown user");
