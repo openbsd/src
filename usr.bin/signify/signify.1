@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.40 2016/10/05 15:45:13 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.41 2017/03/09 19:42:05 benno Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: October 5 2016 $
+.Dd $Mdocdate: March 9 2017 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -165,12 +165,12 @@ Verify a release directory containing
 .Pa SHA256.sig
 and a full set of release files:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-61-base.pub -x SHA256.sig
+$ signify -C -p /etc/signify/openbsd-62-base.pub -x SHA256.sig
 .Ed
 .Pp
 Verify a bsd.rd before an upgrade:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-61-base.pub -x SHA256.sig bsd.rd
+$ signify -C -p /etc/signify/openbsd-62-base.pub -x SHA256.sig bsd.rd
 .Ed
 .Pp
 Sign a gzip archive:
