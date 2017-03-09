@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.104 2017/02/09 15:04:53 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.105 2017/03/09 17:02:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,24 +31,6 @@
 static struct session	*server_next_session(struct session *);
 static void		 server_callback_identify(int, short, void *);
 static void		 server_destroy_session_group(struct session *);
-
-void
-server_fill_environ(struct session *s, struct environ *env)
-{
-	const char	*term;
-	u_int		 idx;
-	long		 pid;
-
-	if (s != NULL) {
-		term = options_get_string(global_options, "default-terminal");
-		environ_set(env, "TERM", "%s", term);
-
-		idx = s->id;
-	} else
-		idx = (u_int)-1;
-	pid = getpid();
-	environ_set(env, "TMUX", "%s,%ld,%u", socket_path, pid, idx);
-}
 
 void
 server_redraw_client(struct client *c)

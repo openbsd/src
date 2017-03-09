@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.41 2016/10/10 21:29:23 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.42 2017/03/09 17:02:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -53,12 +53,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
 
-	env = environ_create();
-	environ_copy(global_environ, env);
-	if (s != NULL)
-		environ_copy(s->environ, env);
-	server_fill_environ(s, env);
-
+	env = environ_for_session(s);
 	switch (pid = fork()) {
 	case -1:
 		environ_free(env);
