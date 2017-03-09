@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.44 2017/03/01 10:35:24 espie Exp $
+# $OpenBSD: State.pm,v 1.45 2017/03/09 14:33:32 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -119,12 +119,12 @@ OpenBSD::Auto::cache(installpath,
 	sub {
 		my $self = shift;
 		require OpenBSD::Paths;
-		open(my $fh, '<', OpenBSD::Paths->installurl) or return [];
+		open(my $fh, '<', OpenBSD::Paths->installurl) or return undef;
 		while (<$fh>) {
 			chomp;
 			next if m/^\s*\#/;
 			next if m/^\s*$/;
-			return ["$_/%c/packages/%a/"];
+			return "$_/%c/packages/%a/";
 		}
 	});
 
