@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.10 2017/01/19 23:18:29 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.11 2017/03/10 01:38:07 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -128,6 +128,7 @@ struct bfd_neighbor {
 struct bfd_config {
 	TAILQ_ENTRY(bfd_config)	 bc_entry;
 	struct socket		*bc_so;
+	struct socket		*bc_upcallso;
 	struct socket		*bc_soecho;
 	struct socket		*bc_sosend;
 	struct rtentry		*bc_rt;
@@ -135,6 +136,7 @@ struct bfd_config {
 	struct timeval		*bc_time;
 	struct task		 bc_bfd_task;
 	struct task		 bc_bfd_send_task;
+	struct task		 bc_upcall_task;
 	struct timeout		 bc_timo_rx;
 	struct timeout		 bc_timo_tx;
 	time_t			 bc_lastuptime;
