@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.87 2017/03/06 12:13:58 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.88 2017/03/10 09:14:06 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -279,6 +279,8 @@ usbd_status
 usbd_transfer(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->pipe;
+	struct usbd_bus *bus = pipe->device->bus;
+	int polling = bus->use_polling;
 	usbd_status err;
 	int flags, s;
 
@@ -298,8 +300,6 @@ usbd_transfer(struct usbd_xfer *xfer)
 
 	/* If there is no buffer, allocate one. */
 	if ((xfer->rqflags & URQ_DEV_DMABUF) == 0) {
-		struct usbd_bus *bus = pipe->device->bus;
-
 #ifdef DIAGNOSTIC
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
@@ -325,8 +325,6 @@ usbd_transfer(struct usbd_xfer *xfer)
 	if (err != USBD_IN_PROGRESS && err) {
 		/* The transfer has not been queued, so free buffer. */
 		if (xfer->rqflags & URQ_AUTO_DMABUF) {
-			struct usbd_bus *bus = pipe->device->bus;
-
 			usb_freemem(bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
@@ -338,19 +336,40 @@ usbd_transfer(struct usbd_xfer *xfer)
 	/* Sync transfer, wait for completion. */
 	if (err != USBD_IN_PROGRESS)
 		return (err);
-	s = splusb();
-	while (!xfer->done) {
-		if (pipe->device->bus->use_polling)
-			panic("usbd_transfer: not done");
-		flags = PRIBIO | (xfer->flags & USBD_CATCH ? PCATCH : 0);
 
-		err = tsleep(xfer, flags, "usbsyn", 0);
-		if (err && !xfer->done) {
-			usbd_abort_pipe(pipe);
-			if (err == EINTR)
-				xfer->status = USBD_INTERRUPTED;
-			else
-				xfer->status = USBD_TIMEOUT;
+	s = splusb();
+	if (polling) {
+		int timo;
+
+		for (timo = xfer->timeout; timo >= 0; timo--) {
+			usb_delay_ms(bus, 1);
+			if (bus->dying) {
+				xfer->status = USBD_IOERROR;
+				usb_transfer_complete(xfer);
+				break;
+			}
+
+			usbd_dopoll(pipe->device);
+			if (xfer->done)
+				break;
+		}
+
+		if (timo < 0) {
+			xfer->status = USBD_TIMEOUT;
+			usb_transfer_complete(xfer);
+		}
+	} else {
+		while (!xfer->done) {
+			flags = PRIBIO|(xfer->flags & USBD_CATCH ? PCATCH : 0);
+
+			err = tsleep(xfer, flags, "usbsyn", 0);
+			if (err && !xfer->done) {
+				usbd_abort_pipe(pipe);
+				if (err == EINTR)
+					xfer->status = USBD_INTERRUPTED;
+				else
+					xfer->status = USBD_TIMEOUT;
+			}
 		}
 	}
 	splx(s);

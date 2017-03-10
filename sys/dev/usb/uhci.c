@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.140 2017/02/02 22:31:05 chl Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.141 2017/03/10 09:14:06 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -119,7 +119,6 @@ usbd_status	uhci_alloc_std_chain(struct uhci_softc *, u_int,
 		    struct usbd_xfer *, struct uhci_soft_td **,
 		    struct uhci_soft_td **);
 void		uhci_poll_hub(void *);
-void		uhci_waitintr(struct uhci_softc *, struct usbd_xfer *);
 void		uhci_check_intr(struct uhci_softc *, struct usbd_xfer *);
 void		uhci_idone(struct usbd_xfer *);
 
@@ -1337,38 +1336,6 @@ uhci_timeout_task(void *addr)
 	splx(s);
 }
 
-/*
- * Wait here until controller claims to have an interrupt.
- * Then call uhci_intr and return.  Use timeout to avoid waiting
- * too long.
- * Only used during boot when interrupts are not enabled yet.
- */
-void
-uhci_waitintr(struct uhci_softc *sc, struct usbd_xfer *xfer)
-{
-	int timo;
-	u_int32_t intrs;
-
-	xfer->status = USBD_IN_PROGRESS;
-	for (timo = xfer->timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_bus.dying)
-			break;
-		intrs = UREAD2(sc, UHCI_STS) & UHCI_STS_ALLINTRS;
-		DPRINTFN(15,("uhci_waitintr: 0x%04x\n", intrs));
-		if (intrs) {
-			uhci_intr1(sc);
-			if (xfer->status != USBD_IN_PROGRESS)
-				return;
-		}
-	}
-
-	/* Timeout */
-	DPRINTF(("uhci_waitintr: timeout\n"));
-	xfer->status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
-}
-
 void
 uhci_poll(struct usbd_bus *bus)
 {
@@ -1707,9 +1674,6 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	}
 #endif
 
-	if (sc->sc_bus.use_polling)
-		uhci_waitintr(sc, xfer);
-
 	return (USBD_IN_PROGRESS);
 }
 
@@ -1841,9 +1805,6 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	if (err)
 		return (err);
 
-	if (sc->sc_bus.use_polling)
-		uhci_waitintr(sc, xfer);
-
 	return (USBD_IN_PROGRESS);
 }
 
@@ -1931,9 +1892,6 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 		uhci_dump_qh(upipe->u.intr.qhs[0]);
 	}
 #endif
-
-	if (sc->sc_bus.use_polling)
-		uhci_waitintr(sc, xfer);
 
 	return (USBD_IN_PROGRESS);
 }
@@ -2253,11 +2211,6 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 	uhci_add_intr_list(sc, ux);
 
 	splx(s);
-
-	if (sc->sc_bus.use_polling) {
-		DPRINTF(("Starting uhci isoc xfer with polling. Bad idea?\n"));
-		uhci_waitintr(sc, xfer);
-	}
 
 	return (USBD_IN_PROGRESS);
 }

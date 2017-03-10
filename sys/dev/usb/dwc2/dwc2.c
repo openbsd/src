@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.41 2017/02/16 14:09:00 visa Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.42 2017/03/10 09:14:06 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@ STATIC usbd_status	dwc2_open(struct usbd_pipe *);
 STATIC int		dwc2_setaddr(struct usbd_device *, int);
 STATIC void		dwc2_poll(struct usbd_bus *);
 STATIC void		dwc2_softintr(void *);
-STATIC void		dwc2_waitintr(struct dwc2_softc *, struct usbd_xfer *);
 
 #if 0
 STATIC usbd_status	dwc2_allocm(struct usbd_bus *, struct usb_dma *, uint32_t);
@@ -403,38 +402,6 @@ dwc2_softintr(void *v)
 		mtx_enter(&hsotg->lock);
 	}
 	mtx_leave(&hsotg->lock);
-}
-
-STATIC void
-dwc2_waitintr(struct dwc2_softc *sc, struct usbd_xfer *xfer)
-{
-	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-	uint32_t intrs;
-	int timo;
-
-	xfer->status = USBD_IN_PROGRESS;
-	for (timo = xfer->timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_dying)
-			break;
-		intrs = dwc2_read_core_intr(hsotg);
-
-		DPRINTFN(15, "0x%08x\n", intrs);
-
-		if (intrs) {
-			mtx_enter(&hsotg->lock);
-			dwc2_interrupt(sc);
-			mtx_leave(&hsotg->lock);
-			if (xfer->status != USBD_IN_PROGRESS)
-				return;
-		}
-	}
-
-	/* Timeout */
-	DPRINTF("timeout\n");
-
-	xfer->status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
 }
 
 STATIC void
@@ -987,16 +954,12 @@ dwc2_device_ctrl_transfer(struct usbd_xfer *xfer)
 STATIC usbd_status
 dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	usbd_status err;
 
 	DPRINTF("\n");
 
 	xfer->status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
-
-	if (sc->sc_bus.use_polling)
-		dwc2_waitintr(sc, xfer);
 
 	return err;
 }
@@ -1044,16 +1007,12 @@ dwc2_device_bulk_transfer(struct usbd_xfer *xfer)
 STATIC usbd_status
 dwc2_device_bulk_start(struct usbd_xfer *xfer)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	usbd_status err;
 
 	DPRINTF("xfer=%p\n", xfer);
 
 	xfer->status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
-
-	if (sc->sc_bus.use_polling)
-		dwc2_waitintr(sc, xfer);
 
 	return err;
 }
@@ -1103,15 +1062,10 @@ dwc2_device_intr_transfer(struct usbd_xfer *xfer)
 STATIC usbd_status
 dwc2_device_intr_start(struct usbd_xfer *xfer)
 {
-	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer)
-	struct dwc2_softc *sc = DWC2_DPIPE2SC(dpipe);
 	usbd_status err;
 
 	xfer->status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
-
-	if (sc->sc_bus.use_polling)
-		dwc2_waitintr(sc, xfer);
 
 	return err;
 }

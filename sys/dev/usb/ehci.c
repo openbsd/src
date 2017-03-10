@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.195 2016/11/08 10:31:30 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.196 2017/03/10 09:14:06 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -117,7 +117,6 @@ int		ehci_setaddr(struct usbd_device *, int);
 void		ehci_poll(struct usbd_bus *);
 void		ehci_softintr(void *);
 int		ehci_intr1(struct ehci_softc *);
-void		ehci_waitintr(struct ehci_softc *, struct usbd_xfer *);
 void		ehci_check_intr(struct ehci_softc *, struct usbd_xfer *);
 void		ehci_check_qh_intr(struct ehci_softc *, struct usbd_xfer *);
 void		ehci_check_itd_intr(struct ehci_softc *, struct usbd_xfer *);
@@ -916,37 +915,6 @@ ehci_idone(struct usbd_xfer *xfer)
 	 * beforehand? */
 	usb_transfer_complete(xfer);
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p done\n", ex));
-}
-
-/*
- * Wait here until controller claims to have an interrupt.
- * Then call ehci_intr and return.  Use timeout to avoid waiting
- * too long.
- */
-void
-ehci_waitintr(struct ehci_softc *sc, struct usbd_xfer *xfer)
-{
-	int timo;
-	u_int32_t intrs;
-
-	xfer->status = USBD_IN_PROGRESS;
-	for (timo = xfer->timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_bus.dying)
-			break;
-		intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS)) &
-			sc->sc_eintrs;
-		if (intrs) {
-			ehci_intr1(sc);
-			if (xfer->status != USBD_IN_PROGRESS)
-				return;
-		}
-	}
-
-	/* Timeout */
-	xfer->status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
-	/* XXX should free TD */
 }
 
 void
@@ -2973,9 +2941,6 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
 
-	if (sc->sc_bus.use_polling)
-		ehci_waitintr(sc, xfer);
-
 	return (USBD_IN_PROGRESS);
 
  bad3:
@@ -3072,9 +3037,6 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
-
-	if (sc->sc_bus.use_polling)
-		ehci_waitintr(sc, xfer);
 
 	return (USBD_IN_PROGRESS);
 }
@@ -3188,9 +3150,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	TAILQ_INSERT_TAIL(&sc->sc_intrhead, ex, inext);
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
-
-	if (sc->sc_bus.use_polling)
-		ehci_waitintr(sc, xfer);
 
 	return (USBD_IN_PROGRESS);
 }

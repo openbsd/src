@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.70 2016/11/08 10:31:30 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.71 2017/03/10 09:14:06 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -75,7 +75,6 @@ struct xhci_pipe {
 
 int	xhci_reset(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
-void	xhci_waitintr(struct xhci_softc *, struct usbd_xfer *);
 void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
@@ -631,26 +630,6 @@ xhci_poll(struct usbd_bus *bus)
 
 	if (XOREAD4(sc, XHCI_USBSTS))
 		xhci_intr1(sc);
-}
-
-void
-xhci_waitintr(struct xhci_softc *sc, struct usbd_xfer *xfer)
-{
-	int timo;
-
-	for (timo = xfer->timeout; timo >= 0; timo--) {
-		usb_delay_ms(&sc->sc_bus, 1);
-		if (sc->sc_bus.dying)
-			break;
-
-		if (xfer->status != USBD_IN_PROGRESS)
-			return;
-
-		xhci_intr1(sc);
-	}
-
-	xfer->status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
 }
 
 void
@@ -2525,10 +2504,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
 	xfer->status = USBD_IN_PROGRESS;
-
-	if (sc->sc_bus.use_polling)
-		xhci_waitintr(sc, xfer);
-	else if (xfer->timeout) {
+	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
@@ -2645,10 +2621,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	XDWRITE4(sc, XHCI_DOORBELL(xp->slot), xp->dci);
 
 	xfer->status = USBD_IN_PROGRESS;
-
-	if (sc->sc_bus.use_polling)
-		xhci_waitintr(sc, xfer);
-	else if (xfer->timeout) {
+	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, xhci_timeout, xfer);
 		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
