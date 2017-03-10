@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.10 2017/03/05 14:39:53 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.11 2017/03/10 16:03:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2354,13 +2354,21 @@ ssl3_send_client_verify(SSL *s)
 		pkey = s->cert->key->privatekey;
 		pctx = EVP_PKEY_CTX_new(pkey, NULL);
 		EVP_PKEY_sign_init(pctx);
-		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
-			if (!SSL_USE_SIGALGS(s))
-				tls1_cert_verify_mac(s,
-				    NID_sha1, &(data[MD5_DIGEST_LENGTH]));
-		} else {
+
+		/* XXX - is this needed? */
+		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) <= 0)
 			ERR_clear_error();
+
+		if (!SSL_USE_SIGALGS(s)) {
+			if (S3I(s)->handshake_buffer) {
+				if (!tls1_digest_cached_records(s))
+					goto err;
+			}
+			if (!tls1_handshake_hash_value(s, data, sizeof(data),
+			    NULL))
+				goto err;
 		}
+
 		/*
 		 * For TLS v1.2 send signature algorithm and signature
 		 * using agreed digest and cached handshake records.
@@ -2388,8 +2396,6 @@ ssl3_send_client_verify(SSL *s)
 			if (!tls1_digest_cached_records(s))
 				goto err;
 		} else if (pkey->type == EVP_PKEY_RSA) {
-			tls1_cert_verify_mac(
-			    s, NID_md5, &(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
 			    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, &(p[2]),
 			    &u, pkey->pkey.rsa) <= 0 ) {

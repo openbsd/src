@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.101 2017/03/10 15:08:49 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.102 2017/03/10 16:03:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,7 +165,6 @@ int
 tls1_init_finished_mac(SSL *s)
 {
 	BIO_free(S3I(s)->handshake_buffer);
-	tls1_free_digest_list(s);
 
 	S3I(s)->handshake_buffer = BIO_new(BIO_s_mem());
 	if (S3I(s)->handshake_buffer == NULL)
@@ -176,29 +175,9 @@ tls1_init_finished_mac(SSL *s)
 	return (1);
 }
 
-void
-tls1_free_digest_list(SSL *s)
-{
-	int i;
-
-	if (s == NULL)
-		return;
-	if (S3I(s)->handshake_dgst == NULL)
-		return;
-
-	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (S3I(s)->handshake_dgst[i])
-			EVP_MD_CTX_destroy(S3I(s)->handshake_dgst[i]);
-	}
-	free(S3I(s)->handshake_dgst);
-	S3I(s)->handshake_dgst = NULL;
-}
-
 int
 tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
-	int i;
-
 	if (len < 0)
 		return 0;
 
@@ -211,58 +190,19 @@ tls1_finish_mac(SSL *s, const unsigned char *buf, int len)
 		return 1;
 	}
 
-	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (S3I(s)->handshake_dgst[i] == NULL)
-			continue;
-		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], buf, len)) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			return 0;
-		}
-	}
-
 	return 1;
 }
 
 int
 tls1_digest_cached_records(SSL *s)
 {
-	const EVP_MD *md;
-	long hdatalen, mask;
+	long hdatalen;
 	void *hdata;
-	int i;
 
-	tls1_free_digest_list(s);
-
-	S3I(s)->handshake_dgst = calloc(SSL_MAX_DIGEST, sizeof(EVP_MD_CTX *));
-	if (S3I(s)->handshake_dgst == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 	hdatalen = BIO_get_mem_data(S3I(s)->handshake_buffer, &hdata);
 	if (hdatalen <= 0) {
 		SSLerror(s, SSL_R_BAD_HANDSHAKE_LENGTH);
 		goto err;
-	}
-
-	/* Loop through bits of the algorithm2 field and create MD contexts. */
-	for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
-		if ((mask & ssl_get_algorithm2(s)) == 0 || md == NULL)
-			continue;
-
-		S3I(s)->handshake_dgst[i] = EVP_MD_CTX_create();
-		if (S3I(s)->handshake_dgst[i] == NULL) {
-			SSLerror(s, ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		if (!EVP_DigestInit_ex(S3I(s)->handshake_dgst[i], md, NULL)) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			goto err;
-		}
-		if (!EVP_DigestUpdate(S3I(s)->handshake_dgst[i], hdata,
-		    hdatalen)) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			goto err;
-		}
 	}
 
 	if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) {
@@ -273,7 +213,6 @@ tls1_digest_cached_records(SSL *s)
 	return 1;
 
  err:
-	tls1_free_digest_list(s);
 	return 0;
 }
 
@@ -1088,38 +1027,6 @@ tls1_enc(SSL *s, int send)
 			rec->length -= pad;
 	}
 	return ret;
-}
-
-int
-tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
-{
-	EVP_MD_CTX ctx, *d = NULL;
-	unsigned int ret;
-	int i;
-
-	if (S3I(s)->handshake_buffer)
-		if (!tls1_digest_cached_records(s))
-			return 0;
-
-	for (i = 0; i < SSL_MAX_DIGEST; i++) {
-		if (S3I(s)->handshake_dgst[i] &&
-		    EVP_MD_CTX_type(S3I(s)->handshake_dgst[i]) == md_nid) {
-			d = S3I(s)->handshake_dgst[i];
-			break;
-		}
-	}
-	if (d == NULL) {
-		SSLerror(s, SSL_R_NO_REQUIRED_DIGEST);
-		return 0;
-	}
-
-	EVP_MD_CTX_init(&ctx);
-	if (!EVP_MD_CTX_copy_ex(&ctx, d))
-		return 0;
-	EVP_DigestFinal_ex(&ctx, out, &ret);
-	EVP_MD_CTX_cleanup(&ctx);
-
-	return ((int)ret);
 }
 
 int

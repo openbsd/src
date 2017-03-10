@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.10 2017/03/05 14:39:53 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.11 2017/03/10 16:03:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -493,18 +493,12 @@ ssl3_accept(SSL *s)
 					goto end;
 				}
 			} else {
-				int offset = 0;
-				int dgst_num;
-
 				s->internal->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->internal->init_num = 0;
 
 				/*
 				 * We need to get hashes here so if there is
-				 * a client cert, it can be verified
-				 * FIXME - digest processing for
-				 * CertificateVerify should be generalized.
-				 * But it is next step
+				 * a client cert, it can be verified.
 				 */
 				if (S3I(s)->handshake_buffer) {
 					if (!tls1_digest_cached_records(s)) {
@@ -512,22 +506,12 @@ ssl3_accept(SSL *s)
 						goto end;
 					}
 				}
-				for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST;
-				    dgst_num++)
-					if (S3I(s)->handshake_dgst[dgst_num]) {
-					int dgst_size;
-
-					tls1_cert_verify_mac(s,
-					    EVP_MD_CTX_type(
-					    S3I(s)->handshake_dgst[dgst_num]),
-					    &(S3I(s)->tmp.cert_verify_md[offset]));
-					dgst_size = EVP_MD_CTX_size(
-					    S3I(s)->handshake_dgst[dgst_num]);
-					if (dgst_size < 0) {
-						ret = -1;
-						goto end;
-					}
-					offset += dgst_size;
+				if (!tls1_handshake_hash_value(s,
+				    S3I(s)->tmp.cert_verify_md,
+				    sizeof(S3I(s)->tmp.cert_verify_md),
+				    NULL)) {
+				        ret = -1;
+					goto end;
 				}
 			}
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.177 2017/03/05 14:39:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.178 2017/03/10 16:03:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -805,10 +805,6 @@ typedef struct ssl3_state_internal_st {
 
 	/* used during startup, digest all incoming/outgoing packets */
 	BIO *handshake_buffer;
-	/* When set of handshake digests is determined, buffer is hashed
-	 * and freed and MD_CTX-es for all required digests are stored in
-	 * this array */
-	EVP_MD_CTX **handshake_dgst;
 
 	/* Rolling hash of handshake messages. */
 	EVP_MD_CTX *handshake_hash;
@@ -1103,7 +1099,6 @@ void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
 int ssl_cipher_get_evp_aead(const SSL_SESSION *s, const EVP_AEAD **aead);
-int ssl_get_handshake_digest(int i, long *mask, const EVP_MD **md);
 int ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md);
 
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
@@ -1293,7 +1288,6 @@ int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
 int tls1_enc(SSL *s, int snd);
 int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *p);
-int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,
     unsigned char *p, int len);

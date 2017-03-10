@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.85 2017/03/05 14:24:12 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.86 2017/03/10 16:03:27 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -519,13 +519,23 @@ dtls1_accept(SSL *s)
 				s->internal->state = SSL3_ST_SR_CERT_VRFY_A;
 				s->internal->init_num = 0;
 
-				/* We need to get hashes here so if there is
-				 * a client cert, it can be verified */
-				tls1_cert_verify_mac(s,
-				    NID_md5, &(S3I(s)->tmp.cert_verify_md[0]));
-				tls1_cert_verify_mac(s,
-				    NID_sha1,
-				    &(S3I(s)->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
+				/*
+				 * We need to get hashes here so if there is
+				 * a client cert, it can be verified.
+				 */
+				if (S3I(s)->handshake_buffer) {
+					if (!tls1_digest_cached_records(s)) {
+						ret = -1;
+						goto end;
+					}
+				}
+				if (!tls1_handshake_hash_value(s,
+				    S3I(s)->tmp.cert_verify_md,
+				    sizeof(S3I(s)->tmp.cert_verify_md),
+				    NULL)) {
+					ret = -1;
+					goto end;
+				}
 			}
 			break;
 
