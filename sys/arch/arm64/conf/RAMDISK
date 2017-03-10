@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.18 2017/03/08 11:47:07 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.19 2017/03/10 03:27:50 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -155,11 +155,13 @@ urtw*		at uhub?		# Realtek 8187
 rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
 
+amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs
 eephy*		at mii?			# Marvell 88E1000 series PHY
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
+urlphy*		at mii?			# Realtek RTL8150L internal PHY
 
 scsibus*	at scsi?
 sd*		at scsibus?
