@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.6 2017/03/09 20:13:12 kettenis Exp $ */
+/* $OpenBSD: expower.c,v 1.7 2017/03/10 21:26:19 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -27,14 +27,6 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-#include <armv7/exynos/expowervar.h>
-
-/* registers */
-#define POWER_PHY_CTRL				0x708
-
-/* bits and bytes */
-#define POWER_PHY_CTRL_USB_HOST_EN		(1 << 0)
-
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -49,8 +41,6 @@ struct expower_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
-
-struct expower_softc *expower_sc;
 
 int expower_match(struct device *, void *, void *);
 void expower_attach(struct device *, struct device *, void *);
@@ -88,17 +78,4 @@ expower_attach(struct device *parent, struct device *self, void *aux)
 
 	regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
 	    faa->fa_reg[0].size);
-	expower_sc = sc;
-}
-
-void
-expower_usbhost_phy_ctrl(int on)
-{
-	struct expower_softc *sc = expower_sc;
-	KASSERT(sc);
-
-	if (on)
-		HSET4(sc, POWER_PHY_CTRL, POWER_PHY_CTRL_USB_HOST_EN);
-	else
-		HCLR4(sc, POWER_PHY_CTRL, POWER_PHY_CTRL_USB_HOST_EN);
 }

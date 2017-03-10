@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.6 2017/03/05 20:53:19 kettenis Exp $ */
+/*	$OpenBSD: exehci.c,v 1.7 2017/03/10 21:26:19 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,13 +29,12 @@
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <armv7/exynos/exsysregvar.h>
-#include <armv7/exynos/expowervar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
@@ -75,6 +74,11 @@
 #define EHCI_CTRL_ENAINCR8		(1 << 27)
 #define EHCI_CTRL_ENAINCR16		(1 << 26)
 
+/* PMU registers */
+#define USB_HOST_POWER_5250	0x708
+#define USB_HOST_POWER_54XX	0x70c
+#define USB_HOST_POWER_EN	(1 << 0)
+
 int	exehci_match(struct device *, void *, void *);
 void	exehci_attach(struct device *, struct device *, void *);
 int	exehci_detach(struct device *, int);
@@ -82,6 +86,7 @@ int	exehci_detach(struct device *, int);
 struct exehci_softc {
 	struct ehci_softc	sc;
 	void			*sc_ih;
+	int			sc_phy;
 	bus_space_handle_t	ph_ioh;
 };
 
@@ -126,11 +131,11 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(phys)) != sizeof(phys))
 		return;
 
-	node = OF_getnodebyphandle(phys[0]);
-	if (node == 0)
+	sc->sc_phy = OF_getnodebyphandle(phys[0]);
+	if (sc->sc_phy == 0)
 		return;
 
-	if (OF_getpropintarray(node, "reg", phy_reg,
+	if (OF_getpropintarray(sc->sc_phy, "reg", phy_reg,
 	    sizeof(phy_reg)) != sizeof(phy_reg))
 		return;
 
@@ -211,7 +216,11 @@ exehci_detach(struct device *self, int flags)
 void
 exehci_setup(struct exehci_softc *sc)
 {
+	struct regmap *pmurm;
+	uint32_t pmureg;
+	bus_size_t offset;
 	uint32_t val;
+	int node;
 
 #if 0
 	/* VBUS, GPIO_X11, only on SMDK5250 and Chromebooks */
@@ -221,7 +230,21 @@ exehci_setup(struct exehci_softc *sc)
 #endif
 
 	exsysreg_usbhost_mode(1);
-	expower_usbhost_phy_ctrl(1);
+
+	/* Power up the PHY block. */
+	pmureg = OF_getpropint(sc->sc_phy, "samsung,pmureg-phandle", 0);
+	pmurm = regmap_byphandle(pmureg);
+	if (pmurm) {
+		node = OF_getnodebyphandle(pmureg);
+		if (OF_is_compatible(node, "samsung,exynos5250-pmu"))
+			offset = USB_HOST_POWER_5250;
+		else
+			offset = USB_HOST_POWER_54XX;
+		
+		val = regmap_read_4(pmurm, offset);
+		val |= USB_HOST_POWER_EN;
+		regmap_write_4(pmurm, offset, val);
+	}
 
 	delay(10000);
 
