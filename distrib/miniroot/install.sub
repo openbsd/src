@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.985 2017/03/10 22:02:59 rpe Exp $
+#	$OpenBSD: install.sub,v 1.986 2017/03/10 22:11:28 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1621,7 +1621,6 @@ install_http() {
 	resp=$_mirror_dir/$HTTP_SETDIR
 	# If there is no directory specified, don't use this entry!
 	[[ -z $_mirror_dir ]] && resp=
-	INSTALL_MIRROR=
 	if (($# > 1)); then
 		# It's a mirror, since it has location info.
 		resp=$_mirror_dir/$HTTP_SETDIR
@@ -1659,7 +1658,7 @@ install_http() {
 	else
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
-		if [[ -n $INSTALL_MIRROR ]]; then
+		if [[ ${_url_base%/$HTTP_SETDIR} == "$INSTALL_MIRROR" ]]; then
 			$AUTO && exit 1 || return
 		fi
 	fi
