@@ -63,6 +63,7 @@ do_files:
 	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
 	echo 'arm_control=0x200\nenable_uart=1\ndevice_tree_address=0x100\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 
 rd_setup:
