@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.45 2016/10/25 00:04:59 jsg Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.46 2017/03/10 08:38:12 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -754,6 +754,7 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 		physsegs--;
 	}
 
+	node = fdt_find_node("/memory");
 	for (i = 1; i < physsegs; i++) {
 		if (fdt_get_reg(node, i, &reg))
 			break;
