@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.99 2017/03/07 13:37:03 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.100 2017/03/10 15:03:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,6 +143,11 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+
+int tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
+    int seed2_len, const void *seed3, int seed3_len, const void *seed4,
+    int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
+    int slen, unsigned char *out1, unsigned char *out2, int olen);
 
 void
 tls1_cleanup_key_block(SSL *s)
@@ -371,7 +376,7 @@ err:
 }
 
 /* seed1 through seed5 are virtually concatenated */
-static int
+int
 tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
     int seed2_len, const void *seed3, int seed3_len, const void *seed4,
     int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
