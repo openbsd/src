@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.100 2017/03/10 15:03:59 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.101 2017/03/10 15:08:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -288,32 +288,32 @@ tls1_record_sequence_increment(unsigned char *seq)
 	}
 }
 
-/* seed1 through seed5 are virtually concatenated */
+/*
+ * TLS P_hash() data expansion function - see RFC 5246, section 5.
+ */
 static int
 tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
     const void *seed1, int seed1_len, const void *seed2, int seed2_len,
     const void *seed3, int seed3_len, const void *seed4, int seed4_len,
     const void *seed5, int seed5_len, unsigned char *out, int olen)
 {
-	int chunk;
-	size_t j;
-	EVP_MD_CTX ctx, ctx_tmp;
-	EVP_PKEY *mac_key;
 	unsigned char A1[EVP_MAX_MD_SIZE];
+	EVP_MD_CTX ctx;
+	EVP_PKEY *mac_key;
 	size_t A1_len;
 	int ret = 0;
+	int chunk;
+	size_t j;
 
 	chunk = EVP_MD_size(md);
 	OPENSSL_assert(chunk >= 0);
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_init(&ctx_tmp);
+
 	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
 	if (!mac_key)
 		goto err;
 	if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
-		goto err;
-	if (!EVP_DigestSignInit(&ctx_tmp, NULL, md, NULL, mac_key))
 		goto err;
 	if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
 		goto err;
@@ -329,14 +329,9 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 		goto err;
 
 	for (;;) {
-		/* Reinit mac contexts */
 		if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
 			goto err;
-		if (!EVP_DigestSignInit(&ctx_tmp, NULL, md, NULL, mac_key))
-			goto err;
 		if (!EVP_DigestSignUpdate(&ctx, A1, A1_len))
-			goto err;
-		if (!EVP_DigestSignUpdate(&ctx_tmp, A1, A1_len))
 			goto err;
 		if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
 			goto err;
@@ -354,24 +349,28 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 				goto err;
 			out += j;
 			olen -= j;
-			/* calc the next A1 value */
-			if (!EVP_DigestSignFinal(&ctx_tmp, A1, &A1_len))
-				goto err;
 		} else {
-			/* last one */
 			if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
 				goto err;
 			memcpy(out, A1, olen);
 			break;
 		}
+
+		if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
+			goto err;
+		if (!EVP_DigestSignUpdate(&ctx, A1, A1_len))
+			goto err;
+		if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
+			goto err;
 	}
 	ret = 1;
 
-err:
+ err:
 	EVP_PKEY_free(mac_key);
 	EVP_MD_CTX_cleanup(&ctx);
-	EVP_MD_CTX_cleanup(&ctx_tmp);
+
 	explicit_bzero(A1, sizeof(A1));
+
 	return ret;
 }
 
