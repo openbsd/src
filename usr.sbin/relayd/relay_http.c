@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.63 2016/09/26 16:25:16 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.64 2017/03/10 21:04:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -418,7 +418,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			cre->toread = TOREAD_UNLIMITED;
 			bev->readcb = relay_read;
 			break;
-		case HTTP_METHOD_DELETE:
 		case HTTP_METHOD_GET:
 		case HTTP_METHOD_HEAD:
 		/* WebDAV methods */
@@ -426,6 +425,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		case HTTP_METHOD_MOVE:
 			cre->toread = 0;
 			break;
+		case HTTP_METHOD_DELETE:
 		case HTTP_METHOD_OPTIONS:
 		case HTTP_METHOD_POST:
 		case HTTP_METHOD_PUT:
