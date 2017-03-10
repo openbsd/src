@@ -1,4 +1,4 @@
-#	$OpenBSD: files.exynos,v 1.9 2017/03/06 07:41:58 kettenis Exp $
+#	$OpenBSD: files.exynos,v 1.10 2017/03/10 12:05:28 kettenis Exp $
 
 # serial ports
 device exuart
@@ -44,6 +44,10 @@ file	arch/armv7/exynos/exehci.c		exehci
 device exesdhc: sdmmcbus
 attach exesdhc at fdt
 file	arch/armv7/exynos/exesdhc.c		exesdhc
+
+device	exdwusb: fdt
+attach	exdwusb at fdt
+file	arch/armv7/exynos/exdwusb.c		exdwusb
 
 device	crosec: wskbddev
 attach	crosec at i2c
