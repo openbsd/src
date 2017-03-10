@@ -1,8 +1,6 @@
-#	$OpenBSD: regress.sh,v 1.6 2013/04/01 10:17:45 eric Exp $
+#	$OpenBSD: regress.sh,v 1.7 2017/03/10 17:23:48 eric Exp $
 
 . regress.subr
-
-EFLAG=
 
 test_res_mkquery()
 {

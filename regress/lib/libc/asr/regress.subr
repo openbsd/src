@@ -1,13 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: regress.subr,v 1.2 2013/03/28 09:36:03 eric Exp $
-
-TOTAL=0
-FAIL=0
-OK=0
-
-EXT0=.std
-EXT1=.asr
-EFLAG=-ee
+#	$OpenBSD: regress.subr,v 1.3 2017/03/10 17:23:48 eric Exp $
 
 set -e
 
@@ -19,70 +11,75 @@ fail()
 
 regress()
 {
-	local out;
-	local _cmd=$1;
-	local _bin0=/bin/$_cmd$EXT0
-	local _bin1=/bin/$_cmd$EXT1
-	shift;
+	local cmd="$1"
+	local bin0="/bin/${cmd}${A}"
+	local bin1="/bin/${cmd}${B}"
+	local out="${OUTDIR}/test-${COUNT}.out"
+	local out0="${OUTDIR}/test-${COUNT}${A}.out"
+	local out1="${OUTDIR}/test-${COUNT}${B}.out"
+	local err0="${OUTDIR}/test-${COUNT}${A}.err"
+	local err1="${OUTDIR}/test-${COUNT}${B}.err"
+	local outdiff="${OUTDIR}/test-${COUNT}${A}${B}.diff"
+	shift
 
-	TOTAL=$((TOTAL+1))
+	test -x "${ROOTDIR}${bin0}" || fail "${ROOTDIR}${bin0}" not executable
+	test -x "${ROOTDIR}${bin1}" || fail "${ROOTDIR}${bin1}" not executable
 
-	# XXX with user "bin"
-	test -x $_RUNDIR$_bin0 || fail $_RUNDIR$_bin0 not executable
-	test -x $_RUNDIR$_bin1 || fail $_RUNDIR$_bin1 not executable
-
-	out=/tmp/asr_regress
-
-	echo -n $_cmd $EFLAG $@ "."
+	echo -n "${cmd} $@ ."
 
 	set +e
-	chroot -u bin "$_RUNDIR" $_bin0 $EFLAG $@ > $out.0
+	chroot -u bin "${ROOTDIR}" ${bin0} $@ > ${out0}
 	echo -n .
-	chroot -u bin "$_RUNDIR" $_bin1 $EFLAG $@ > $out.1
-	echo -n ". "
+	chroot -u bin "${ROOTDIR}" ${bin1} $@ > ${out1}
+	echo -n "."
 
-	diff -u $out.0 $out.1 > $out.diff
+	diff -u ${out0} ${out1} > ${outdiff}
 	set -e
-	if test -s $out.diff; then
+	if test -s ${outdiff}; then
 		FAIL=$((FAIL+1))
 		echo fail
-		echo "*** FAIL (env=$REGRESSENV)" $_cmd $EFLAG $@ >> $REG
-		tail -n +3 $out.diff >> $REG
-		echo >> $REG
+		echo "### FAIL [#${COUNT} env=${REGRESSENV}] ${cmd} $@" >> $ERR
+		cat ${outdiff} >> $ERR
+		echo >> $ERR
 	else
+		rm ${outdiff}
+		rm ${out1}
+		mv ${out0} ${out}
 		OK=$((OK+1))
 		echo ok
-		echo "OK (env=$REGRESSENV)" $_cmd $EFLAG $@ >> $OUT
-		cat $out.0 >> $OUT
+		echo "### OK [#${COUNT} env=$REGRESSENV] ${cmd} $@" >> $OUT
+		cat ${out} >> $OUT
 		echo >> $OUT
 	fi
-	rm $out.diff $out.0 $out.1
+
+	COUNT=$((COUNT+1))
 }
 
 regress_setenv()
 {
 	local _name="$1"
 
-	echo "===> using env $_name"
+	echo "==> using env $_name"
 
-	cp /etc/hosts $_RUNDIR/etc/
-	cp /etc/resolv.conf $_RUNDIR/etc/
-	cp /etc/protocols $_RUNDIR/etc/
-	cp /etc/networks $_RUNDIR/etc/
+	mkdir -p "${ROOTDIR}/etc/"
+	cp /etc/hosts "${ROOTDIR}/etc/"
+	cp /etc/resolv.conf "${ROOTDIR}/etc/"
+	cp /etc/protocols "${ROOTDIR}/etc/"
+	cp /etc/networks "${ROOTDIR}/etc/"
 
 	case $_name in
 	empty)
-		rm -f $_RUNDIR/etc/*
+		rm -f "${ROOTDIR}/etc/*"
 		;;
 	local)
 		;;
 	file)
-		grep -v lookup /etc/resolv.conf > $_RUNDIR/etc/resolv.conf
-		echo "lookup file" >> $_RUNDIR/etc/resolv.conf
+		grep -v lookup /etc/resolv.conf > "${ROOTDIR}/etc/resolv.conf"
+		echo "lookup file" >> "${ROOTDIR}/etc/resolv.conf"
 		;;
 	bind)
-		grep -v lookup /etc/resolv.conf > $_RUNDIR/etc/resolv.conf
-		echo "lookup bind" >> $_RUNDIR/etc/resolv.conf
+		grep -v lookup /etc/resolv.conf > "${ROOTDIR}/etc/resolv.conf"
+		echo "lookup bind" >> "${ROOTDIR}/etc/resolv.conf"
 		;;
 	*)
 		fail unknown env $_name
@@ -93,23 +90,32 @@ regress_setenv()
 
 regress_digest()
 {
-	echo
-	cat $REG
-	echo "===>" run=$TOTAL fail=$FAIL
-}
+	echo "===> done"
+ 	test -f $ERR && (echo; cat $ERR; echo "===> errfile=$ERR")
+	echo "===> logfile=$OUT"
+	echo "===> run=$COUNT ok=$OK fail=$FAIL error=$ERROR"
 
+}
 
 # needed for chroot
 test "$(id -u)" -ne 0 && fail need root privileges to run this script
 
 # we really really want to avoid erasing /etc later
-test "$RUNDIR" || fail RUNDIR is not set
-_RUNDIR=$(readlink -fn ${RUNDIR})
-test "$_RUNDIR" == / && fail RUNDIR is root dir: $RUNDIR
+test "${RUNDIR}" || fail RUNDIR is not set
 
-OUT=$_RUNDIR/output.log
-REG=$_RUNDIR/regress.log
-ETC=$_RUNDIR/etc
+ROOTDIR=$(readlink -fn ${RUNDIR})
+test "${ROOTDIR}" == "/" && fail RUNDIR is root dir: ${RUNDIR}
 
-echo -n > $REG
-echo -n > $OUT
+COUNT=0
+OK=0
+FAIL=0
+ERROR=0
+A=${A:=.a}
+B=${B:=.b}
+
+OUTDIR=$(mktemp -d -p $ROOTDIR)
+chmod a+rx ${OUTDIR}
+echo "===> ${OUTDIR}"
+
+OUT=$OUTDIR/regress.log
+ERR=$OUTDIR/regress.err
