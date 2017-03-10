@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.71 2017/01/29 19:58:47 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.72 2017/03/10 07:29:25 jca Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -84,7 +84,13 @@
  */
 int ipip_allow = 0;
 
-struct ipipstat ipipstat;
+struct cpumem *ipipcounters;
+
+void
+ipip_init(void)
+{
+	ipipcounters = counters_alloc(ipips_ncounters);
+}
 
 /*
  * Really only a wrapper for ipip_input(), for use with pr_input.
@@ -95,7 +101,7 @@ ip4_input(struct mbuf **mp, int *offp, int proto)
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("ip4_input(): dropped due to policy\n"));
-		ipipstat.ipips_pdrops++;
+		ipipstat_inc(ipips_pdrops);
 		m_freem(*mp);
 		return IPPROTO_DONE;
 	}
@@ -129,7 +135,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 	u_int8_t v;
 	sa_family_t af;
 
-	ipipstat.ipips_ipackets++;
+	ipipstat_inc(ipips_ipackets);
 
 	m_copydata(m, 0, 1, &v);
 
@@ -143,7 +149,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 		break;
 #endif
 	default:
-		ipipstat.ipips_family++;
+		ipipstat_inc(ipips_family);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -152,7 +158,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
 			DPRINTF(("ipip_input(): m_pullup() failed\n"));
-			ipipstat.ipips_hdrops++;
+			ipipstat_inc(ipips_hdrops);
 			return IPPROTO_DONE;
 		}
 	}
@@ -179,7 +185,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 
 	/* Sanity check */
 	if (m->m_pkthdr.len < sizeof(struct ip)) {
-		ipipstat.ipips_hdrops++;
+		ipipstat_inc(ipips_hdrops);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -195,7 +201,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 		break;
 #endif
 	default:
-		ipipstat.ipips_family++;
+		ipipstat_inc(ipips_family);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -206,7 +212,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
 			DPRINTF(("ipip_input(): m_pullup() failed\n"));
-			ipipstat.ipips_hdrops++;
+			ipipstat_inc(ipips_hdrops);
 			return IPPROTO_DONE;
 		}
 	}
@@ -229,7 +235,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
 		if (!ip_ecn_egress(mode, &otos, &ipo->ip_tos)) {
 			DPRINTF(("ipip_input(): ip_ecn_egress() failed"));
-			ipipstat.ipips_pdrops++;
+			ipipstat_inc(ipips_pdrops);
 			m_freem(m);
 			return IPPROTO_DONE;
 		}
@@ -249,7 +255,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
 			DPRINTF(("ipip_input(): ip_ecn_egress() failed"));
-			ipipstat.ipips_pdrops++;
+			ipipstat_inc(ipips_pdrops);
 			m_freem(m);
 			return IPPROTO_DONE;
 		}
@@ -291,7 +297,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 		rt = rtalloc((struct sockaddr *)&ss, 0,
 		    m->m_pkthdr.ph_rtableid);
 		if ((rt != NULL) && (rt->rt_flags & RTF_LOCAL)) {
-			ipipstat.ipips_spoof++;
+			ipipstat_inc(ipips_spoof);
 			m_freem(m);
 			rtfree(rt);
 			return IPPROTO_DONE;
@@ -302,7 +308,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 	}
 
 	/* Statistics */
-	ipipstat.ipips_ibytes += m->m_pkthdr.len - iphlen;
+	ipipstat_add(ipips_ibytes, m->m_pkthdr.len - iphlen);
 
 	/*
 	 * Interface pointer stays the same; if no IPsec processing has
@@ -336,7 +342,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 #endif
 
 	if (niq_enqueue(ifq, m) != 0) {
-		ipipstat.ipips_qfull++;
+		ipipstat_inc(ipips_qfull);
 		DPRINTF(("ipip_input(): packet dropped because of full "
 		    "queue\n"));
 	}
@@ -375,7 +381,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
 
-			ipipstat.ipips_unspec++;
+			ipipstat_inc(ipips_unspec);
 			m_freem(m);
 			*mp = NULL;
 			return EINVAL;
@@ -384,7 +390,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == NULL) {
 			DPRINTF(("ipip_output(): M_PREPEND failed\n"));
-			ipipstat.ipips_hdrops++;
+			ipipstat_inc(ipips_hdrops);
 			*mp = NULL;
 			return ENOBUFS;
 		}
@@ -441,7 +447,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		else {
 			m_freem(m);
 			*mp = NULL;
-			ipipstat.ipips_family++;
+			ipipstat_inc(ipips_family);
 			return EAFNOSUPPORT;
 		}
 
@@ -461,7 +467,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi)));
 
-			ipipstat.ipips_unspec++;
+			ipipstat_inc(ipips_unspec);
 			m_freem(m);
 			*mp = NULL;
 			return ENOBUFS;
@@ -480,7 +486,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (m == NULL) {
 			DPRINTF(("ipip_output(): M_PREPEND failed\n"));
-			ipipstat.ipips_hdrops++;
+			ipipstat_inc(ipips_hdrops);
 			*mp = NULL;
 			return ENOBUFS;
 		}
@@ -518,7 +524,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			} else {
 				m_freem(m);
 				*mp = NULL;
-				ipipstat.ipips_family++;
+				ipipstat_inc(ipips_family);
 				return EAFNOSUPPORT;
 			}
 
@@ -533,11 +539,11 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 		    tdb->tdb_dst.sa.sa_family));
 		m_freem(m);
 		*mp = NULL;
-		ipipstat.ipips_family++;
+		ipipstat_inc(ipips_family);
 		return EAFNOSUPPORT;
 	}
 
-	ipipstat.ipips_opackets++;
+	ipipstat_inc(ipips_opackets);
 	*mp = m;
 
 	if (tdb->tdb_dst.sa.sa_family == AF_INET) {
@@ -545,7 +551,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			tdb->tdb_cur_bytes +=
 			    m->m_pkthdr.len - sizeof(struct ip);
 
-		ipipstat.ipips_obytes += m->m_pkthdr.len - sizeof(struct ip);
+		ipipstat_add(ipips_obytes, m->m_pkthdr.len - sizeof(struct ip));
 	}
 
 #ifdef INET6
@@ -554,8 +560,8 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int dummy,
 			tdb->tdb_cur_bytes +=
 			    m->m_pkthdr.len - sizeof(struct ip6_hdr);
 
-		ipipstat.ipips_obytes +=
-		    m->m_pkthdr.len - sizeof(struct ip6_hdr);
+		ipipstat_add(ipips_obytes,
+		    m->m_pkthdr.len - sizeof(struct ip6_hdr));
 	}
 #endif /* INET6 */
 
@@ -592,6 +598,17 @@ ipe4_input(struct mbuf *m, int hlen, int proto)
 #endif	/* IPSEC */
 
 int
+ipip_sysctl_ipipstat(void *oldp, size_t *oldlenp, void *newp)
+{
+	struct ipipstat ipipstat;
+
+	CTASSERT(sizeof(ipipstat) == (ipips_ncounters * sizeof(uint64_t)));
+	counters_read(ipipcounters, (uint64_t *)&ipipstat, ipips_ncounters);
+	return (sysctl_rdstruct(oldp, oldlenp, newp,
+	    &ipipstat, sizeof(ipipstat)));
+}
+
+int
 ipip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
@@ -603,10 +620,7 @@ ipip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPIPCTL_ALLOW:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ipip_allow));
 	case IPIPCTL_STATS:
-		if (newp != NULL)
-			return (EPERM);
-		return (sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ipipstat, sizeof(ipipstat)));
+		return (ipip_sysctl_ipipstat(oldp, oldlenp, newp));
 	default:
 		return (ENOPROTOOPT);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.h,v 1.7 2017/02/20 17:04:25 jca Exp $ */
+/*	$OpenBSD: ip_ipip.h,v 1.8 2017/03/10 07:29:25 jca Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -73,9 +73,40 @@ struct ipipstat {
 }
 
 #ifdef _KERNEL
+
+#include <sys/percpu.h>
+
+enum ipipstat_counters {
+	ipips_ipackets,
+	ipips_opackets,
+	ipips_hdrops,
+	ipips_qfull,
+	ipips_ibytes,
+	ipips_obytes,
+	ipips_pdrops,
+	ipips_spoof,
+	ipips_family,
+	ipips_unspec,
+	ipips_ncounters
+};
+
+extern struct cpumem *ipipcounters;
+
+static inline void
+ipipstat_inc(enum ipipstat_counters c)
+{
+	counters_inc(ipipcounters, c);
+}
+
+static inline void
+ipipstat_add(enum ipipstat_counters c, uint64_t v)
+{
+	counters_add(ipipcounters, c, v);
+}
+
+void	ipip_init(void);
 int	ipip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 extern int ipip_allow;
-extern struct ipipstat ipipstat;
 #endif /* _KERNEL */
 #endif /* _NETINET_IPIP_H_ */

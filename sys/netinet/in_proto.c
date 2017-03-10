@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.74 2017/03/02 08:58:24 mpi Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.75 2017/03/10 07:29:25 jca Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -239,7 +239,8 @@ struct protosw inetsw[] = {
   .pr_output	= rip_output,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
-  .pr_sysctl	= ipip_sysctl
+  .pr_sysctl	= ipip_sysctl,
+  .pr_init	= ipip_init
 },
 {
   .pr_type	= SOCK_RAW,
@@ -284,7 +285,8 @@ struct protosw inetsw[] = {
   .pr_output	= rip_output,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
-  .pr_sysctl	= ipip_sysctl
+  .pr_sysctl	= ipip_sysctl,
+  .pr_init	= ipip_init
 },
 #ifdef INET6
 {
