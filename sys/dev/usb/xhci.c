@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.71 2017/03/10 09:14:06 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.72 2017/03/10 11:18:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2345,7 +2345,7 @@ ret:
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
-	return (USBD_IN_PROGRESS);
+	return (err);
 }
 
 

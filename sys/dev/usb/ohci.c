@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.148 2017/03/10 09:14:06 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.149 2017/03/10 11:18:48 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2550,7 +2550,7 @@ ohci_root_ctrl_start(struct usbd_xfer *xfer)
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
-	return (USBD_IN_PROGRESS);
+	return (err);
 }
 
 /* Abort a root control request. */

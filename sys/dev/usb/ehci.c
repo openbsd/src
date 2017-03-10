@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.196 2017/03/10 09:14:06 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.197 2017/03/10 11:18:48 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2138,7 +2138,7 @@ ehci_root_ctrl_start(struct usbd_xfer *xfer)
 	s = splusb();
 	usb_transfer_complete(xfer);
 	splx(s);
-	return (USBD_IN_PROGRESS);
+	return (err);
 }
 
 void

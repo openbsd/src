@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.88 2017/03/10 09:14:06 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.89 2017/03/10 11:18:48 mpi Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -322,7 +322,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 
 	err = pipe->methods->transfer(xfer);
 
-	if (err != USBD_IN_PROGRESS && err) {
+	if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION) {
 		/* The transfer has not been queued, so free buffer. */
 		if (xfer->rqflags & URQ_AUTO_DMABUF) {
 			usb_freemem(bus, &xfer->dmabuf);
