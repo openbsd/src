@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.986 2017/03/10 22:11:28 rpe Exp $
+#	$OpenBSD: install.sub,v 1.987 2017/03/10 22:34:09 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1542,6 +1542,11 @@ install_http() {
 	local _f _flist _file_list _prompt _tls _http_proto _http_server
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
 	local _url_base _install_url _mirror_url _mirror_srv _mirror_dir
+
+	# N.B.: Don't make INSTALL_MIRROR a local variable! It preserves the
+	# mirror information if install_http() is called multiple times with
+	# mirror and local servers. That ensures that the mirror server ends
+	# up in /etc/installurl file if one of the servers is not a mirror.
 
 	# N.B.: 'http_proxy' is an environment variable used by ftp(1).
 	# DON'T change the name or case!
