@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.64 2015/06/06 13:13:07 florian Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.65 2017/03/10 18:28:11 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: June 6 2015 $
+.Dd $Mdocdate: March 10 2017 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -229,7 +229,7 @@ A DHCP-configured network interface setup consists of
 .Ed
 .Pp
 The above format has the following field values:
-.Bl -tag -width indent -offset indent
+.Bl -tag -width "optionsXXX" -offset indent
 .It Li dhcp
 The literal string
 .Dq dhcp
@@ -248,17 +248,19 @@ Valid options for a particular interface type can be found in
 .Pp
 IPv6 stateless address autoconfiguration:
 .Bd -ragged -offset indent
-.Li rtsol
+.Li inet6 autoconf
 .Va options
 .Ed
 .Pp
 The above format has the following field values:
-.Bl -tag -width indent -offset indent
-.It Li rtsol
+.Bl -tag -width "optionsXXX" -offset indent
+.It Li inet6
+The address family.
+.It Li autoconf
 The literal string
-.Dq rtsol
-if the interface is to be configured using
-IPv6 stateless address autoconfiguration.
+.Dq autoconf ,
+to configure the interface
+using IPv6 stateless address autoconfiguration (SLAAC).
 .It Va options
 Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
