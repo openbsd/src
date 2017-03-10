@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.11 2017/03/10 01:38:07 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.12 2017/03/10 02:12:46 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -137,6 +137,7 @@ struct bfd_config {
 	struct task		 bc_bfd_task;
 	struct task		 bc_bfd_send_task;
 	struct task		 bc_upcall_task;
+	struct task		 bc_clear_task;
 	struct timeout		 bc_timo_rx;
 	struct timeout		 bc_timo_tx;
 	time_t			 bc_lastuptime;

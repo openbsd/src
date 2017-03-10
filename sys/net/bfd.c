@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.60 2017/03/10 01:38:07 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.61 2017/03/10 02:12:46 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -158,6 +158,7 @@ void	 bfd_send_control(void *);
 void	 bfd_start_task(void *);
 void	 bfd_send_task(void *);
 void	 bfd_upcall_task(void *);
+void	 bfd_clear_task(void *);
 void	 bfd_error(struct bfd_config *);
 void	 bfd_timeout_rx(void *);
 void	 bfd_timeout_tx(void *);
@@ -205,6 +206,8 @@ bfdset(struct rtentry *rt)
 		timeout_set(&bfd->bc_timo_tx, bfd_timeout_tx, bfd);
 
 	task_set(&bfd->bc_bfd_task, bfd_start_task, bfd);
+	task_set(&bfd->bc_clear_task, bfd_clear_task, bfd);
+
 	task_add(bfdtq, &bfd->bc_bfd_task);
 
 	TAILQ_INSERT_TAIL(&bfd_queue, bfd, bc_entry);
@@ -221,6 +224,18 @@ bfdclear(struct rtentry *rt)
 {
 	struct bfd_config *bfd;
 
+	if ((bfd = bfd_lookup(rt)) == NULL)
+		return;
+
+	task_add(systqmp, &bfd->bc_clear_task);
+}
+
+void
+bfd_clear_task(void *arg)
+{
+	struct rtentry *rt = (struct rtentry *)arg;
+	struct bfd_config *bfd;
+
 	splsoftassert(IPL_SOFTNET);
 
 	if ((bfd = bfd_lookup(rt)) == NULL)
@@ -228,7 +243,7 @@ bfdclear(struct rtentry *rt)
 
 	timeout_del(&bfd->bc_timo_rx);
 	timeout_del(&bfd->bc_timo_tx);
-	task_del(bfdtq, &bfd->bc_bfd_upcall_task);
+	task_del(bfdtq, &bfd->bc_upcall_task);
 	task_del(bfdtq, &bfd->bc_bfd_send_task);
 
 	TAILQ_REMOVE(&bfd_queue, bfd, bc_entry);
