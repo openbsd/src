@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.40 2016/11/16 00:24:03 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.41 2017/03/11 15:16:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -483,8 +483,8 @@ cmd_find_get_window(struct cmd_find_state *fs, const char *window)
 	if (cmd_find_get_window_with_session(fs, window) == 0)
 		return (0);
 
-	/* Otherwise try as a session itself. */
-	if (cmd_find_get_session(fs, window) == 0) {
+	/* Try as a session if it looks like a session. */
+	if (*window == '$' && cmd_find_get_session(fs, window) == 0) {
 		fs->wl = fs->s->curw;
 		fs->w = fs->wl->window;
 		if (~fs->flags & CMD_FIND_WINDOW_INDEX)
@@ -674,8 +674,8 @@ cmd_find_get_pane(struct cmd_find_state *fs, const char *pane)
 	if (cmd_find_get_pane_with_window(fs, pane) == 0)
 		return (0);
 
-	/* Otherwise try as a window itself (this will also try as session). */
-	if (cmd_find_get_window(fs, pane) == 0) {
+	/* Try as a window if it looks like a window. */
+	if (*pane == '@' && cmd_find_get_window(fs, pane) == 0) {
 		fs->wp = fs->w->active;
 		return (0);
 	}
