@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.37 2016/09/15 12:53:08 espie Exp $
+# $OpenBSD: Installed.pm,v 1.38 2017/03/11 11:25:01 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -41,12 +41,10 @@ sub expand_locations
 		return OpenBSD::Paths->machine_architecture;
 	} elsif ($string eq '%v') {
 		return OpenBSD::Paths->os_version;
-	} elsif ($string eq '%c') {
-		return OpenBSD::Paths->os_directory;
 	} elsif ($string eq '%m') {
 		return join('/',
 		    'pub/OpenBSD', 
-		    OpenBSD::Paths->os_directory,
+		    '%c',
 		    'packages', 
 		    OpenBSD::Paths->machine_architecture);
 	}
@@ -66,9 +64,24 @@ sub parse_url
 		$$r = '';
 	}
 
-	$path =~ s/\%[vacm]\b/$class->expand_locations($&, $state)/ge;
+	$path =~ s/\%[vam]\b/$class->expand_locations($&, $state)/ge;
+	# make %c magical: if we're on a release, we expand into
+	# stable, and leave the release dir for the full object with
+	# host to push back
+	my $release;
+	if ($path =~ m/\%c\b/) {
+		my $d = $state->defines('snap') ?
+		    'snapshots' : OpenBSD::Paths->os_directory;
+		if ($d ne 'snapshots' && $path =~ m,\%c/packages/,) {
+			$release = $path;
+			$release =~ s,\%c\b,$d,;
+			$path =~ s,\%c/packages/,$d/packages-stable/,;
+		} else {
+			$path =~ s,\%c\b,$d,;
+	    	}
+	}
 	$path .= '/' unless $path =~ m/\/$/;
-	bless { path => $path, state => $state }, $class;
+	bless { path => $path, release => $release, state => $state }, $class;
 }
 
 sub parse_fullurl

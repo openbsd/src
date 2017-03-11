@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.141 2017/03/07 14:19:32 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.142 2017/03/11 11:25:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -568,6 +568,10 @@ sub parse_url
 		$$r = $path;
 		my $o = $class->SUPER::parse_url($r, $state);
 		$o->{host} = $host;
+		if (defined $o->{release}) {
+			$o->can_be_empty;
+			$$r = $class->urlscheme."://$o->{host}$o->{release}:$$r";
+		}
 		return $o;
 	} else {
 		return undef;
