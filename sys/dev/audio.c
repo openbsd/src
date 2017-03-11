@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.160 2017/01/03 06:42:11 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.161 2017/03/11 10:12:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -608,25 +608,6 @@ audio_setpar(struct audio_softc *sc)
 	    "rate=%d, pchan=%d, rchan=%d, round=%u, nblks=%d\n",
 	    DEVNAME(sc), sc->sw_enc, sc->bits, sc->bps, sc->msb,
 	    sc->rate, sc->pchan, sc->rchan, sc->round, sc->nblks);
-
-	/*
-	 * AUDIO_ENCODING_SLINEAR and AUDIO_ENCODING_ULINEAR are not
-	 * used anymore, promote them to the _LE and _BE equivalents
-	 */
-	if (sc->sw_enc == AUDIO_ENCODING_SLINEAR) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		sc->sw_enc = AUDIO_ENCODING_SLINEAR_LE;
-#else
-		sc->sw_enc = AUDIO_ENCODING_SLINEAR_BE;
-#endif
-	}
-	if (sc->sw_enc == AUDIO_ENCODING_ULINEAR) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		sc->sw_enc = AUDIO_ENCODING_ULINEAR_LE;
-#else
-		sc->sw_enc = AUDIO_ENCODING_ULINEAR_BE;
-#endif
-	}
 
 	/*
 	 * check if requested parameters are in the allowed ranges
