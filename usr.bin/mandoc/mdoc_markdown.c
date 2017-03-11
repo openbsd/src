@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.14 2017/03/08 19:23:23 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.15 2017/03/11 12:35:40 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -43,6 +43,7 @@ static	void	 md_rawword(const char *);
 static	void	 md_word(const char *);
 static	void	 md_named(const char *);
 static	void	 md_char(unsigned char);
+static	void	 md_uri(const char *);
 
 static	int	 md_cond_head(struct roff_node *);
 static	int	 md_cond_body(struct roff_node *);
@@ -67,6 +68,7 @@ static	int	 md_pre_Fo(struct roff_node *);
 static	int	 md_pre_In(struct roff_node *);
 static	int	 md_pre_It(struct roff_node *);
 static	int	 md_pre_Lk(struct roff_node *);
+static	int	 md_pre_Mt(struct roff_node *);
 static	int	 md_pre_Nd(struct roff_node *);
 static	int	 md_pre_Nm(struct roff_node *);
 static	int	 md_pre_No(struct roff_node *);
@@ -211,7 +213,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, NULL, md_post_Lb, NULL, NULL }, /* Lb */
 	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* Lp */
 	{ NULL, md_pre_Lk, NULL, NULL, NULL }, /* Lk */
-	{ NULL, md_pre_raw, md_post_raw, "<", ">" }, /* Mt */
+	{ NULL, md_pre_Mt, NULL, NULL, NULL }, /* Mt */
 	{ md_cond_body, md_pre_word, md_post_word, "{", "}" }, /* Brq */
 	{ md_cond_body, md_pre_word, md_post_word, "{", "}" }, /* Bro */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Brc */
@@ -1279,28 +1281,10 @@ md_post_Lb(struct roff_node *n)
 		outflags |= MD_br;
 }
 
-static int
-md_pre_Lk(struct roff_node *n)
+static void
+md_uri(const char *s)
 {
-	const struct roff_node *link, *descr;
-	const unsigned char *s;
-
-	if ((link = n->child) == NULL)
-		return 0;
-
-	if ((descr = link->next) != NULL) {
-		md_rawword("[");
-		outflags &= ~MD_spc;
-		while (descr != NULL) {
-			md_word(descr->string);
-			descr = descr->next;
-		}
-		outflags &= ~MD_spc;
-		md_rawword("](");
-	} else
-		md_rawword("<");
-
-	for (s = link->string; *s != '\0'; s++) {
+	while (*s != '\0') {
 		if (strchr("%()<>", *s) != NULL) {
 			printf("%%%2.2hhX", *s);
 			outcount += 3;
@@ -1308,10 +1292,53 @@ md_pre_Lk(struct roff_node *n)
 			putchar(*s);
 			outcount++;
 		}
+		s++;
 	}
+}
 
+static int
+md_pre_Lk(struct roff_node *n)
+{
+	const struct roff_node *link, *descr;
+
+	if ((link = n->child) == NULL)
+		return 0;
+
+	descr = link->next == NULL ? link : link->next;
+	md_rawword("[");
 	outflags &= ~MD_spc;
-	md_rawword(link->next == NULL ? ">" : ")");
+	do {
+		md_word(descr->string);
+		descr = link->next == NULL ? NULL : descr->next;
+	} while (descr != NULL);
+	outflags &= ~MD_spc;
+	md_rawword("](");
+	md_uri(link->string);
+	outflags &= ~MD_spc;
+	md_rawword(")");
+	return 0;
+}
+
+static int
+md_pre_Mt(struct roff_node *n)
+{
+	const struct roff_node *nch;
+
+	md_rawword("[");
+	outflags &= ~MD_spc;
+	for (nch = n->child; nch != NULL; nch = nch->next)
+		md_word(nch->string);
+	outflags &= ~MD_spc;
+	md_rawword("](mailto:");
+	for (nch = n->child; nch != NULL; nch = nch->next) {
+		md_uri(nch->string);
+		if (nch->next != NULL) {
+			putchar(' ');
+			outcount++;
+		}
+	}
+	outflags &= ~MD_spc;
+	md_rawword(")");
 	return 0;
 }
 

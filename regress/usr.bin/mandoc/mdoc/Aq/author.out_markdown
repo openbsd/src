@@ -6,11 +6,11 @@ AQ-AUTHOR(1) - General Commands Manual
 
 # DESCRIPTION
 
-Name &lt;<addr>&gt; Name &lt;<addr>&gt;
+Name &lt;[addr](mailto:addr)&gt; Name &lt;[addr](mailto:addr)&gt;
 
 # AUTHORS
 
-Name &lt;<addr>&gt;  
-Name &lt;<addr>&gt;
+Name &lt;[addr](mailto:addr)&gt;  
+Name &lt;[addr](mailto:addr)&gt;
 
 OpenBSD - November 19, 2014
