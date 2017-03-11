@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.143 2017/03/11 11:42:10 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.144 2017/03/11 17:34:40 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -27,7 +27,7 @@
 .Op Fl acIimnqrsUuVvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl D Ns Ar name Ns Op = Ns Ar value
+.Op Fl D Ar name Ns Op = Ns Ar value
 .Op Fl L Ar localbase
 .Op Fl l Ar file
 .Op Fl P Ar type
@@ -117,7 +117,7 @@ enforces signed packages, except if they come from a trusted source
 .Ev TRUSTED_PKG_PATH
 .Pc
 or if
-.Fl D Ns Ar unsigned
+.Fl D Ar unsigned
 is specified.
 .Pp
 In normal mode,
@@ -242,7 +242,7 @@ are slightly more magical.
 One can force them to expand to
 .Sq snapshots
 on a release kernel by using
-.Fl D Ns Ar snap .
+.Fl D Ar snap .
 Otherwise, on a
 .Sq -stable
 system, they will expand
@@ -301,9 +301,7 @@ While replacing packages, delete extra configuration file in the old package,
 mentioned as
 .Dl @extra file
 in the packing-list.
-.It Xo
-.Fl D Ns Ar name Ns Op = Ns Ar value
-.Xc
+.It Fl D Ar name Ns Op = Ns Ar value
 Force installation of the package.
 .Ar name
 is a keyword that states what failsafe
