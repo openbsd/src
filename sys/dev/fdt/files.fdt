@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.8 2017/03/09 20:04:21 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.9 2017/03/11 00:11:47 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -29,6 +29,10 @@ file	dev/fdt/sxiehci.c		sxiehci
 device	bcmdog
 attach	bcmdog at fdt
 file	dev/fdt/bcm2835_dog.c		bcmdog
+
+device	exrtc
+attach	exrtc at fdt
+file	dev/fdt/exrtc.c			exrtc
 
 # ARM PrimeCell PL031 Real-time clock
 device	plrtc
