@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.225 2017/03/07 11:49:42 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.226 2017/03/11 11:55:03 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -146,6 +146,12 @@ extern int db_console;
 #include <machine/hibernate_var.h>
 #endif /* HIBERNATE */
 
+#include "ukbd.h"
+#include "pckbc.h"
+#if NPCKBC > 0 && NUKBD > 0
+#include <dev/ic/pckbcvar.h>
+#endif
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
 
@@ -189,6 +195,7 @@ paddr_t tramp_pdirpa;
 
 int kbd_reset;
 int lid_action = 1;
+int forceukbd;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -506,6 +513,16 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 				lid_action = val;
 		}
 		return (error);
+#if NPCKBC > 0 && NUKBD > 0
+	case CPU_FORCEUKBD:
+		if (forceukbd)
+			return (sysctl_rdint(oldp, oldlenp, newp, forceukbd));
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &forceukbd);
+		if (forceukbd)
+			pckbc_release_console();
+		return (error);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

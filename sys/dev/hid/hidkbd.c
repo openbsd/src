@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.1 2016/01/08 15:54:13 jcs Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.2 2017/03/11 11:55:03 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -215,17 +215,6 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 	DPRINTF(("hidkbd_detach: sc=%p flags=%d\n", kbd->sc_device, flags));
 
 	if (kbd->sc_console_keyboard) {
-#if 0
-		/*
-		 * XXX Should probably disconnect our consops,
-		 * XXX and either notify some other keyboard that
-		 * XXX it can now be the console, or if there aren't
-		 * XXX any more USB keyboards, set hidkbd_is_console
-		 * XXX back to 1 so that the next USB keyboard attached
-		 * XXX to the system will get it.
-		 */
-		panic("hidkbd_detach: console keyboard");
-#else
 		/*
 		 * Disconnect our consops and set hidkbd_is_console
 		 * back to 1 so that the next USB keyboard attached
@@ -235,9 +224,7 @@ hidkbd_detach(struct hidkbd *kbd, int flags)
 		 */
 		printf("%s: was console keyboard\n",
 		       kbd->sc_device->dv_xname);
-		wskbd_cndetach();
 		hidkbd_is_console = 1;
-#endif
 	}
 	/* No need to do reference counting of hidkbd, wskbd has all the goo */
 	if (kbd->sc_wskbddev != NULL)

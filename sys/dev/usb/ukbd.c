@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.76 2016/01/12 19:16:21 jcs Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.77 2017/03/11 11:55:03 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -57,10 +57,13 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h> /* needs_reattach() */
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
@@ -448,12 +451,29 @@ ukbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 int
 ukbd_cnattach(void)
 {
+	struct ukbd_softc *sc;
+	int i;
+
 	/*
 	 * XXX USB requires too many parts of the kernel to be running
 	 * XXX in order to work, so we can't do much for the console
 	 * XXX keyboard until autconfiguration has run its course.
 	 */
 	hidkbd_is_console = 1;
+
+	if (!cold) {
+		/*
+		 * When switching console dynamically force all USB keyboards
+		 * to re-attach and possibly became the 'console' keyboard.
+		 */
+		for (i = 0; i < ukbd_cd.cd_ndevs; i++) {
+			if ((sc = ukbd_cd.cd_devs[i]) != NULL) {
+				usb_needs_reattach(sc->sc_hdev.sc_udev);
+				break;
+			}
+		}
+	}
+
 	return (0);
 }
 

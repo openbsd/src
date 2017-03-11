@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.49 2015/05/24 10:57:47 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.50 2017/03/11 11:55:03 mpi Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -81,12 +81,11 @@ int pckbc_attach_slot(struct pckbc_softc *, pckbc_slot_t, int);
 int pckbc_submatch_locators(struct device *, void *, void *);
 int pckbc_submatch(struct device *, void *, void *);
 int pckbcprint(void *, const char *);
-void pckbc_release_console(void);
 
 struct pckbc_internal pckbc_consdata;
 int pckbc_console_attached;
 
-static int pckbc_console;
+int pckbc_console;
 static struct pckbc_slotdata pckbc_cons_slotdata;
 
 static int pckbc_wait_output(bus_space_tag_t, bus_space_handle_t);

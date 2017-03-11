@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.15 2015/05/24 10:57:47 miod Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.16 2017/03/11 11:55:03 mpi Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -109,6 +109,8 @@ int pckbc_is_console(bus_space_tag_t, bus_addr_t);
 void pckbc_reset(struct pckbc_softc *);
 void pckbc_stop(struct pckbc_softc *);
 int pckbcintr(void *);
+
+void pckbc_release_console(void);
 
 /*
  * Device configuration flags (cf_flags).

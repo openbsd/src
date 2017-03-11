@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.597 2017/03/07 11:49:42 natano Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.598 2017/03/11 11:55:03 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -168,6 +168,12 @@ extern struct proc *npxproc;
 #include <machine/hibernate_var.h>
 #endif /* HIBERNATE */
 
+#include "ukbd.h"
+#include "pckbc.h"
+#if NPCKBC > 0 && NUKBD > 0
+#include <dev/ic/pckbcvar.h>
+#endif
+
 #include "vmm.h"
 
 void	replacesmap(void);
@@ -235,6 +241,7 @@ void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
 int lid_action = 1;
+int forceukbd;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -3606,6 +3613,16 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 				lid_action = val;
 		}
 		return (error);
+#if NPCKBC > 0 && NUKBD > 0
+	case CPU_FORCEUKBD:
+		if (forceukbd)
+			return (sysctl_rdint(oldp, oldlenp, newp, forceukbd));
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &forceukbd);
+		if (forceukbd)
+			pckbc_release_console();
+		return (error);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

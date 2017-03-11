@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.209 2017/03/04 17:40:23 natano Exp $
+.\"	$OpenBSD: sysctl.8,v 1.210 2017/03/11 11:55:03 mpi Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: March 4 2017 $
+.Dd $Mdocdate: March 11 2017 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -370,6 +370,9 @@ and a few require a kernel compiled with non-standard
 .It machdep.sse Ta integer Ta no
 .It machdep.sse2 Ta integer Ta no
 .It machdep.xcrypt Ta integer Ta no
+.It machdep.lidsuspend Ta integer Ta yes
+.It machdep.lidaction Ta integer Ta yes
+.It machdep.forceukbd Ta integer Ta yes
 .It machdep.allowaperture Ta integer Ta yes
 .It machdep.led_blink Ta integer Ta yes
 .It machdep.ceccerrs Ta integer Ta no

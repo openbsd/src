@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.16 2014/01/26 17:48:08 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.17 2017/03/11 11:55:03 mpi Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -229,7 +229,6 @@ hilkbddetach(struct device *self, int flags)
 	 * as the first device in the loop anyways.
 	 */
 	if (sc->sc_console) {
-		wskbd_cndetach();
 		seen_hilkbd_console = 0;
 	}
 

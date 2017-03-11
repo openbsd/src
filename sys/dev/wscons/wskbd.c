@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.84 2016/09/30 12:05:46 kettenis Exp $ */
+/* $OpenBSD: wskbd.c,v 1.85 2017/03/11 11:55:03 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -517,7 +517,7 @@ wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
 	wskbd_console_initted = 1;
 }
 
-void    
+void
 wskbd_cndetach(void)
 {
 	KASSERT(wskbd_console_initted);
@@ -532,6 +532,7 @@ wskbd_cndetach(void)
 	wsdisplay_unset_cons_kbd();
 #endif
 
+	wskbd_console_device = NULL;
 	wskbd_console_initted = 0;
 }
 
@@ -608,7 +609,7 @@ wskbd_detach(struct device  *self, int flags)
 
 	if (sc->sc_isconsole) {
 		KASSERT(wskbd_console_device == sc);
-		wskbd_console_device = NULL;
+		wskbd_cndetach();
 	}
 
 	evar = sc->sc_base.me_evp;
@@ -1365,7 +1366,6 @@ wskbd_cngetc(dev_t dev)
 void
 wskbd_cnpollc(dev_t dev, int poll)
 {
-
 	if (!wskbd_console_initted)
 		return;
 
