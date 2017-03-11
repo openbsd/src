@@ -1,4 +1,4 @@
-/* $OpenBSD: exgpio.c,v 1.5 2017/03/05 20:53:19 kettenis Exp $ */
+/* $OpenBSD: exgpio.c,v 1.6 2017/03/11 17:06:27 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -27,13 +27,18 @@
 #include <machine/intr.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define GPXCON(x)	((x) + 0x0000)
+#define  GPXCON_INPUT	0
+#define  GPXCON_OUTPUT	1
 #define GPXDAT(x)	((x) + 0x0004)
 #define GPXPUD(x)	((x) + 0x0008)
 #define GPXDRV(x)	((x) + 0x000c)
+
+#define GPX_NUM_PINS	8
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -43,6 +48,12 @@
 struct exgpio_bank {
 	const char name[8];
 	bus_addr_t addr;
+};
+
+struct exgpio_controller {
+	struct gpio_controller ec_gc;
+	struct exgpio_bank *ec_bank;
+	struct exgpio_softc *ec_sc;
 };
 
 struct exgpio_softc {
@@ -114,7 +125,11 @@ struct exgpio_bank exynos5420_banks[] = {
 	{ "gpz", 0x0000 },
 };
 
-int exgpio_pinctrl(uint32_t, void *);
+struct exgpio_bank *exgpio_bank(struct exgpio_softc *, const char *);
+int	exgpio_pinctrl(uint32_t, void *);
+void	exgpio_config_pin(void *, uint32_t *, int);
+int	exgpio_get_pin(void *, uint32_t *);
+void	exgpio_set_pin(void *, uint32_t *, int);
 
 int
 exgpio_match(struct device *parent, void *match, void *aux)
@@ -129,6 +144,11 @@ exgpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct exgpio_softc *sc = (struct exgpio_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	struct exgpio_controller *ec;
+	struct exgpio_bank *bank;
+	char name[8];
+	int node;
+	int len;
 
 	sc->sc_iot = faa->fa_iot;
 
@@ -141,22 +161,59 @@ exgpio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nbanks = nitems(exynos5420_banks);
 	}
 
+	KASSERT(sc->sc_banks);
 	pinctrl_register(faa->fa_node, exgpio_pinctrl, sc);
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		if (OF_getproplen(node, "gpio-controller") < 0)
+			continue;
+
+		len = OF_getprop(node, "name", &name, sizeof(name));
+		if (len <= 0 || len >= sizeof(name))
+			continue;
+
+		bank = exgpio_bank(sc, name);
+		if (bank == NULL)
+			continue;
+
+		ec = malloc(sizeof(*ec), M_DEVBUF, M_WAITOK);
+		ec->ec_bank = exgpio_bank(sc, name);
+		ec->ec_sc = sc;
+		ec->ec_gc.gc_node = node;
+		ec->ec_gc.gc_cookie = ec;
+		ec->ec_gc.gc_config_pin = exgpio_config_pin;
+		ec->ec_gc.gc_get_pin = exgpio_get_pin;
+		ec->ec_gc.gc_set_pin = exgpio_set_pin;
+		gpio_controller_register(&ec->ec_gc);
+	}
+
 	printf("\n");
+}
+
+struct exgpio_bank *
+exgpio_bank(struct exgpio_softc *sc, const char *name)
+{
+	int i;
+
+	for (i = 0; i < sc->sc_nbanks; i++) {
+		if (strcmp(name, sc->sc_banks[i].name) == 0)
+			return &sc->sc_banks[i];
+	}
+
+	return NULL;
 }
 
 int
 exgpio_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct exgpio_softc *sc = cookie;
-	char *pins;
-	char *bank, *next;
+	char *pins, *bank_name, *pin_name;
+	struct exgpio_bank *bank;
 	uint32_t func, val, pud, drv;
 	uint32_t reg;
 	int node;
 	int len;
 	int pin;
-	int i;
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -174,50 +231,108 @@ exgpio_pinctrl(uint32_t phandle, void *cookie)
 	pud = OF_getpropint(node, "samsung,pin-pud", 1);
 	drv = OF_getpropint(node, "samsung,pin-drv", 0);
 
-	bank = pins;
-	while (bank < pins + len) {
-		next = strchr(bank, '-');
-		if (next == NULL)
-			return -1;
-		*next++ = 0;
-		pin = *next++ - '0';
-		if (pin < 0 || pin > 7)
-			return -1;
-		next++;
+	bank_name = pins;
+	while (bank_name < pins + len) {
+		pin_name = strchr(bank_name, '-');
+		if (pin_name == NULL)
+			goto fail;
+		*pin_name++ = 0;
+		pin = *pin_name - '0';
+		if (pin < 0 || pin >= GPX_NUM_PINS)
+			goto fail;
 
-		for (i = 0; i < sc->sc_nbanks; i++) {
-			if (strcmp(bank, sc->sc_banks[i].name) != 0)
-				break;
+		bank = exgpio_bank(sc, bank_name);
+		if (bank == NULL)
+			goto fail;
 
-			reg = HREAD4(sc, GPXCON(sc->sc_banks[i].addr));
-			reg &= ~(0xf << (pin * 4));
-			reg |= (func << (pin * 4));
-			HWRITE4(sc, GPXCON(sc->sc_banks[i].addr), reg);
+		reg = HREAD4(sc, GPXCON(bank->addr));
+		reg &= ~(0xf << (pin * 4));
+		reg |= (func << (pin * 4));
+		HWRITE4(sc, GPXCON(bank->addr), reg);
 
-			reg = HREAD4(sc, GPXDAT(sc->sc_banks[i].addr));
-			if (val)
-				reg |= (1 << pin);
-			else
-				reg &= ~(1 << pin);
-			HWRITE4(sc, GPXDAT(sc->sc_banks[i].addr), reg);
+		reg = HREAD4(sc, GPXDAT(bank->addr));
+		if (val)
+			reg |= (1 << pin);
+		else
+			reg &= ~(1 << pin);
+		HWRITE4(sc, GPXDAT(bank->addr), reg);
 
-			reg = HREAD4(sc, GPXPUD(sc->sc_banks[i].addr));
-			reg &= ~(0x3 << (pin * 2));
-			reg |= (pud << (pin * 2));
-			HWRITE4(sc, GPXPUD(sc->sc_banks[i].addr), reg);
+		reg = HREAD4(sc, GPXPUD(bank->addr));
+		reg &= ~(0x3 << (pin * 2));
+		reg |= (pud << (pin * 2));
+		HWRITE4(sc, GPXPUD(bank->addr), reg);
 
-			reg = HREAD4(sc, GPXDRV(sc->sc_banks[i].addr));
-			reg &= ~(0x3 << (pin * 2));
-			reg |= (drv << (pin * 2));
-			HWRITE4(sc, GPXDRV(sc->sc_banks[i].addr), reg);
-			break;
-		}
-		if (i == sc->sc_nbanks)
-			return -1;
+		reg = HREAD4(sc, GPXDRV(bank->addr));
+		reg &= ~(0x3 << (pin * 2));
+		reg |= (drv << (pin * 2));
+		HWRITE4(sc, GPXDRV(bank->addr), reg);
 
-		bank = next;
+		bank_name = pin_name + 2;
 	}
 
 	free(pins, M_TEMP, len);
 	return 0;
+
+fail:
+	free(pins, M_TEMP, len);
+	return -1;
+}
+
+void
+exgpio_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct exgpio_controller *ec = cookie;
+	uint32_t pin = cells[0];
+	uint32_t val;
+	int func;
+
+	if (pin >= GPX_NUM_PINS)
+		return;
+
+	func = (config & GPIO_CONFIG_OUTPUT) ? GPXCON_OUTPUT : GPXCON_INPUT;
+	val = HREAD4(ec->ec_sc, GPXCON(ec->ec_bank->addr));
+	val &= ~(0xf << (pin * 4));
+	val |= (func << (pin * 4));
+	HWRITE4(ec->ec_sc, GPXCON(ec->ec_bank->addr), val);
+}
+
+int
+exgpio_get_pin(void *cookie, uint32_t *cells)
+{
+	struct exgpio_controller *ec = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+	int val;
+
+	if (pin >= GPX_NUM_PINS)
+		return 0;
+
+	reg = HREAD4(ec->ec_sc, GPXDAT(ec->ec_bank->addr));
+	reg &= (1 << pin);
+	val = (reg >> pin) & 1;
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
+}
+
+void
+exgpio_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct exgpio_controller *ec = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+
+	if (pin >= GPX_NUM_PINS)
+		return;
+
+	reg = HREAD4(ec->ec_sc, GPXDAT(ec->ec_bank->addr));
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	if (val)
+		reg |= (1 << pin);
+	else
+		reg &= ~(1 << pin);
+	HWRITE4(ec->ec_sc, GPXDAT(ec->ec_bank->addr), reg);
 }
