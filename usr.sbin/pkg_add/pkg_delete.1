@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.55 2017/03/11 11:42:10 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.56 2017/03/11 18:24:55 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -25,7 +25,7 @@
 .Nm pkg_delete
 .Op Fl acIimnqsVvXx
 .Op Fl B Ar pkg-destdir
-.Op Fl D Ns Ar name Ns Op = Ns Ar value
+.Op Fl D Ar name Ns Op = Ns Ar value
 .Op Ar pkg-name ...
 .Sh DESCRIPTION
 The
@@ -83,7 +83,7 @@ options
 .Fl I/i .
 .Pp
 The options are as follows:
-.Bl -tag -width BB-pkg-destdir
+.Bl -tag -width Ds
 .It Fl a
 Delete unused dependencies (packages that are not needed by anything tagged
 as installed manually).
@@ -100,9 +100,7 @@ as the prefix to prepend to any object deleted.
 Delete extra configuration file, mentioned as
 .Dl @extra file
 in the packing-list.
-.It Xo
-.Fl D Ns Ar name Ns Op = Ns Ar value
-.Xc
+.It Fl D Ar name Ns Op = Ns Ar value
 Force removal of the package.
 .Ar name
 is a keyword that states what failsafe

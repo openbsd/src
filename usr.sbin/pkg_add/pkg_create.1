@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.105 2017/03/03 14:13:58 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.106 2017/03/11 18:24:55 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: March 3 2017 $
+.Dd $Mdocdate: March 11 2017 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ If defined, appended to the description.
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
 .El
-.It Fl d No [-] Ns Ar desc
+.It Fl d Oo Fl Oc Ns Ar desc
 Fetch long description for package from file
 .Ar desc
 or, if preceded by
