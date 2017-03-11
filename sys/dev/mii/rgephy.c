@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.38 2015/07/19 06:35:18 yuo Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.39 2017/03/11 13:40:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -249,7 +249,7 @@ setit:
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		if (strcmp(devname, "re") == 0) {
+		if (strcmp(devname, "re") == 0 || strcmp(devname, "ure") == 0) {
 			reg = PHY_READ(sc, RL_GMEDIASTAT);
 			if (reg & RL_GMEDIASTAT_LINK) {
 				sc->mii_ticks = 0;
@@ -305,7 +305,7 @@ rgephy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	if (strcmp(devname, "re") == 0) {
+	if (strcmp(devname, "re") == 0 || strcmp(devname, "ure") == 0) {
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
 		if (bmsr & RL_GMEDIASTAT_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
@@ -330,7 +330,7 @@ rgephy_status(struct mii_softc *sc)
 		}
 	}
 
-	if (strcmp(devname, "re") == 0) {
+	if (strcmp(devname, "re") == 0 || strcmp(devname, "ure") == 0) {
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
 		if (bmsr & RL_GMEDIASTAT_1000MBPS)
 			mii->mii_media_active |= IFM_1000_T;

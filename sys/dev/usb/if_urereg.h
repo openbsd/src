@@ -1,6 +1,6 @@
-/*	$OpenBSD: if_urereg.h,v 1.2 2016/08/07 00:21:57 jmatthew Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.3 2017/03/11 13:40:46 kettenis Exp $	*/
 /*-
- * Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
+ * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -462,9 +462,13 @@ struct ure_softc {
 
 	u_int			ure_flags;
 #define	URE_FLAG_LINK		0x0001
+#define	URE_FLAG_8152		0x1000	/* RTL8152 */
 
 	u_int			ure_chip;
 #define	URE_CHIP_VER_4C00	0x01
 #define	URE_CHIP_VER_4C10	0x02
+#define	URE_CHIP_VER_5C00	0x04
+#define	URE_CHIP_VER_5C10	0x08
+#define	URE_CHIP_VER_5C20	0x10
+#define	URE_CHIP_VER_5C30	0x20
 };
-
