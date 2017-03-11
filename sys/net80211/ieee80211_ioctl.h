@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.27 2016/08/15 22:14:19 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.28 2017/03/11 13:22:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -328,6 +328,7 @@ struct ieee80211_nodereq {
 	u_int16_t	nr_state;	/* node state in the cache */
 
 	/* RSN */
+	u_int		nr_rsnprotos;
 	u_int		nr_rsnciphers;
 	u_int		nr_rsnakms;
 

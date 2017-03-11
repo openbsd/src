@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.48 2017/01/19 01:07:35 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.49 2017/03/11 13:22:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -107,6 +107,11 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	/* RSN */
 	nr->nr_rsnciphers = ni->ni_rsnciphers;
 	nr->nr_rsnakms = 0;
+	nr->nr_rsnprotos = 0;
+	if (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)
+		nr->nr_rsnprotos |= IEEE80211_WPA_PROTO_WPA1;
+	if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
+		nr->nr_rsnprotos |= IEEE80211_WPA_PROTO_WPA2;
 	if (ni->ni_rsnakms & IEEE80211_AKM_8021X)
 		nr->nr_rsnakms |= IEEE80211_WPA_AKM_8021X;
 	if (ni->ni_rsnakms & IEEE80211_AKM_PSK)
