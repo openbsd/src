@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.245 2017/02/20 06:30:39 jca Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.246 2017/03/11 13:21:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -234,6 +234,7 @@ struct pfsync_softc {
 	TAILQ_HEAD(, tdb)	 sc_tdb_q;
 
 	void			*sc_lhcookie;
+	void			*sc_dhcookie;
 
 	struct timeout		 sc_tmo;
 };
@@ -252,6 +253,7 @@ int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
 void	pfsync_syncdev_state(void *);
+void	pfsync_ifdetach(void *);
 
 void	pfsync_deferred(struct pf_state *, int);
 void	pfsync_undefer(struct pfsync_deferral *, int);
@@ -365,10 +367,13 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_link_demoted)
 		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
 #endif
-	if (sc->sc_sync_if)
+	if (sc->sc_sync_if) {
 		hook_disestablish(
 		    sc->sc_sync_if->if_linkstatehooks,
 		    sc->sc_lhcookie);
+		hook_disestablish(sc->sc_sync_if->if_detachhooks,
+		    sc->sc_dhcookie);
+	}
 	if_detach(ifp);
 
 	pfsync_drop(sc);
@@ -425,6 +430,14 @@ pfsync_syncdev_state(void *arg)
 
 		pfsync_request_full_update(sc);
 	}
+}
+
+void
+pfsync_ifdetach(void *arg)
+{
+	struct pfsync_softc *sc = arg;
+
+	sc->sc_sync_if = NULL;
 }
 
 int
@@ -1313,10 +1326,14 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_defer = pfsyncr.pfsyncr_defer;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
-			if (sc->sc_sync_if)
+			if (sc->sc_sync_if) {
 				hook_disestablish(
 				    sc->sc_sync_if->if_linkstatehooks,
 				    sc->sc_lhcookie);
+				hook_disestablish(
+				    sc->sc_sync_if->if_detachhooks,
+				    sc->sc_dhcookie);
+			}
 			sc->sc_sync_if = NULL;
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[
@@ -1338,10 +1355,14 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    sifp->if_mtu < MCLBYTES - sizeof(struct ip))
 			pfsync_sendout();
 
-		if (sc->sc_sync_if)
+		if (sc->sc_sync_if) {
 			hook_disestablish(
 			    sc->sc_sync_if->if_linkstatehooks,
 			    sc->sc_lhcookie);
+			hook_disestablish(
+			    sc->sc_sync_if->if_detachhooks,
+			    sc->sc_dhcookie);
+		}
 		sc->sc_sync_if = sifp;
 
 		if (imo->imo_num_memberships > 0) {
@@ -1388,6 +1409,8 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_lhcookie =
 		    hook_establish(sc->sc_sync_if->if_linkstatehooks, 1,
 		    pfsync_syncdev_state, sc);
+		sc->sc_dhcookie = hook_establish(sc->sc_sync_if->if_detachhooks,
+		    0, pfsync_ifdetach, sc);
 
 		pfsync_request_full_update(sc);
 		splx(s);
