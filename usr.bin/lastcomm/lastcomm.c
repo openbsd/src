@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.23 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.24 2017/03/11 18:33:21 guenther Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <struct.h>
 #include <unistd.h>
 #include <utmp.h>
 #include <pwd.h>
@@ -116,15 +115,15 @@ main(int argc, char *argv[])
 			ab.ac_comm[1] = '\0';
 		} else
 			for (p = &ab.ac_comm[0];
-			    p < &ab.ac_comm[fldsiz(acct, ac_comm)] && *p; ++p)
+			    p < &ab.ac_comm[sizeof ab.ac_comm] && *p; ++p)
 				if (!isprint((unsigned char)*p))
 					*p = '?';
 		if (!*argv || requested(argv, &ab))
 		{
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
-			    (int)fldsiz(acct, ac_comm),
-			    (int)fldsiz(acct, ac_comm),
+			    (int)sizeof ab.ac_comm,
+			    (int)sizeof ab.ac_comm,
 			    ab.ac_comm, flagbits(ab.ac_flag), UT_NAMESIZE,
 			    UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
 			    UT_LINESIZE, UT_LINESIZE, getdev(ab.ac_tty),
@@ -186,7 +185,7 @@ requested(char *argv[], struct acct *acp)
 			return (1);
 		if (!strcmp(getdev(acp->ac_tty), *argv))
 			return (1);
-		if (!strncmp(acp->ac_comm, *argv, fldsiz(acct, ac_comm)))
+		if (!strncmp(acp->ac_comm, *argv, sizeof acp->ac_comm))
 			return (1);
 	} while (*++argv);
 	return (0);
