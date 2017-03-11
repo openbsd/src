@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.193 2017/03/11 07:03:38 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.194 2017/03/11 16:54:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -372,6 +372,7 @@ static const struct {
 	{ "getpw",		PLEDGE_GETPW },
 	{ "id",			PLEDGE_ID },
 	{ "inet",		PLEDGE_INET },
+	{ "ioctl",		PLEDGE_TAPE },		/* Remove Mar 20 2017 */
 	{ "mcast",		PLEDGE_MCAST },
 	{ "pf",			PLEDGE_PF },
 	{ "proc",		PLEDGE_PROC },
