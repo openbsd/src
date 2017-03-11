@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.142 2017/02/27 21:53:11 rpe Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.143 2017/03/11 11:42:10 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 27 2017 $
+.Dd $Mdocdate: March 11 2017 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,10 +24,10 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIimnqrsUuvxz
+.Op Fl acIimnqrsUuVvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl D Ar name Ns Op = Ns Ar value
+.Op Fl D Ns Ar name Ns Op = Ns Ar value
 .Op Fl L Ar localbase
 .Op Fl l Ar file
 .Op Fl P Ar type
@@ -117,7 +117,7 @@ enforces signed packages, except if they come from a trusted source
 .Ev TRUSTED_PKG_PATH
 .Pc
 or if
-.Fl D Ar unsigned
+.Fl D Ns Ar unsigned
 is specified.
 .Pp
 In normal mode,
@@ -155,7 +155,7 @@ nor
 .Ev PKG_PATH
 are defined,
 .Nm
-will use the path in
+will build its path based on the contents of
 .Xr installurl 5 .
 Specifying
 .Ql -
@@ -223,9 +223,35 @@ respectively.
 .Pp
 All paths recognize special sequences
 .Sq %a ,
-.Sq %c ,
 .Sq %m ,
-.Sq %v .
+.Sq %c ,
+.Sq %v ,
+which will be expanded to
+.Sq package architecture ,
+.Sq OS version or snapshots ,
+.Sq full mirror path
+and
+.Sq OS version
+respectively.
+.Pp
+The sequences
+.Sq %c
+and
+.Sq %m
+are slightly more magical.
+One can force them to expand to
+.Sq snapshots
+on a release kernel by using
+.Fl D Ns Ar snap .
+Otherwise, on a
+.Sq -stable
+system, they will expand
+.Sq %c/packages
+into
+two directories:
+.Pa <VERSION>/packages-stable
+and
+.Pa <VERSION>/packages .
 .Pp
 The following examples are valid:
 .Bd -literal -offset indent
@@ -276,8 +302,7 @@ mentioned as
 .Dl @extra file
 in the packing-list.
 .It Xo
-.Fl D
-.Ar name Ns Op = Ns Ar value
+.Fl D Ns Ar name Ns Op = Ns Ar value
 .Xc
 Force installation of the package.
 .Ar name
@@ -330,6 +355,14 @@ Defaults to any key matching
 for packages, and any key matching
 .Sq *fw
 for firmware.
+.It Ar snap
+Force
+.Sq %c
+and
+.Sq %m
+to expand to
+.Sq snapshots ,
+even on a release kernel.
 .It Ar unsigned
 Allow the installation of unsigned packages without warnings/errors
 (necessary for
@@ -447,6 +480,12 @@ will update all installed packages.
 This relies on
 .Ev PKG_PATH
 to figure out the new package names.
+.It Fl V
+Turn on statistics output.
+For now, only displays the number of packages done/total number of packages.
+Several
+.Fl V
+will turn on more statistics in the future.
 .It Fl v
 Turn on verbose output.
 Several
@@ -800,6 +839,7 @@ and waves any kind of signature checking.
 .Xr pkg_info 1 ,
 .Xr OpenBSD::Intro 3p ,
 .Xr bsd.port.mk 5 ,
+.Xr installurl 5 ,
 .Xr package 5 ,
 .Xr pkg_check 8
 .Sh AUTHORS

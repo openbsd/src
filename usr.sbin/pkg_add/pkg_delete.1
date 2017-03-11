@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.54 2017/02/27 21:53:11 rpe Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.55 2017/03/11 11:42:10 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 27 2017 $
+.Dd $Mdocdate: March 11 2017 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@
 .Nd delete software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl acIimnqsvXx
+.Op Fl acIimnqsVvXx
 .Op Fl B Ar pkg-destdir
-.Op Fl D Ar name Ns Op = Ns Ar value
+.Op Fl D Ns Ar name Ns Op = Ns Ar value
 .Op Ar pkg-name ...
 .Sh DESCRIPTION
 The
@@ -101,8 +101,7 @@ Delete extra configuration file, mentioned as
 .Dl @extra file
 in the packing-list.
 .It Xo
-.Fl D
-.Ar name Ns Op = Ns Ar value
+.Fl D Ns Ar name Ns Op = Ns Ar value
 .Xc
 Force removal of the package.
 .Ar name
@@ -143,6 +142,12 @@ it will not bother with checksums for configuration files either.
 .It Fl s
 Don't actually deinstall packages, report the disk size changes
 that would happen.
+.It Fl V
+Turn on statistics output.
+For now, only displays the number of packages done/total number of packages.
+Several
+.Fl V
+will turn on more statistics in the future.
 .It Fl v
 Turn on verbose output.
 Several
