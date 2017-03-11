@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.61 2017/01/23 12:46:13 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.62 2017/03/11 12:55:47 tb Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -1261,7 +1261,7 @@ ar_start_gzip(int fd, const char *path, int wr)
 		close(fds[1]);
 
 		if (pmode == 0 || (act != EXTRACT && act != COPY)) {
-		    if (pledge("stdio rpath wpath cpath fattr dpath getpw proc ioctl",
+		    if (pledge("stdio rpath wpath cpath fattr dpath getpw proc tape",
 			NULL) == -1)
 				err(1, "pledge");
 		}
