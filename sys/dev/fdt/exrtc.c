@@ -1,4 +1,4 @@
-/*	$OpenBSD: exrtc.c,v 1.1 2017/03/11 00:11:47 kettenis Exp $	*/
+/*	$OpenBSD: exrtc.c,v 1.2 2017/03/11 00:18:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -79,7 +79,6 @@ exrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct exrtc_softc *sc = (struct exrtc_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	struct clock_ymdhms dt;
 
 	sc->sc_iot = faa->fa_iot;
 
