@@ -1,0 +1,30 @@
+.Dd March 11, 2017
+.Dt DEFINE-INFINITE 1
+.Os OpenBSD
+.Sh NAME
+.Nm define-infinite
+.Nd infinite recursion in define statements
+.Sh DESCRIPTION
+alone:
+.EQ
+define key 'key' key
+.EN
+eol
+.Pp
+leading position:
+.EQ
+define key 'key suffix' key
+.EN
+eol
+.Pp
+middle position:
+.EQ
+define key 'prefix key suffix' key
+.EN
+eol
+.Pp
+trailing position:
+.EQ
+define key 'prefix key' key
+.EN
+eol

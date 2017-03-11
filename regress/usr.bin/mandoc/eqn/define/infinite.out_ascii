@@ -1,0 +1,15 @@
+DEFINE-INFINITE(1)          General Commands Manual         DEFINE-INFINITE(1)
+
+NNAAMMEE
+     ddeeffiinnee--iinnffiinniittee - infinite recursion in define statements
+
+DDEESSCCRRIIPPTTIIOONN
+     alone: eol
+
+     leading position: eol
+
+     middle position: eol
+
+     trailing position: eol
+
+OpenBSD                         March 11, 2017                         OpenBSD
