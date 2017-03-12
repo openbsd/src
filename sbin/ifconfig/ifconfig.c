@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.338 2017/03/11 13:22:36 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.339 2017/03/12 03:18:57 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2375,11 +2375,12 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	if (nr->nr_capinfo) {
 		printb_status(nr->nr_capinfo, IEEE80211_CAPINFO_BITS);
 		if (nr->nr_capinfo & IEEE80211_CAPINFO_PRIVACY) {
-			if (nr->nr_rsnprotos & IEEE80211_WPA_PROTO_WPA2)
-				fputs(",wpa2", stdout);
-			else if (nr->nr_rsnprotos & IEEE80211_WPA_PROTO_WPA1)
-				fputs(",wpa1", stdout);
-			else
+			if (nr->nr_rsnprotos) {
+				if (nr->nr_rsnprotos & IEEE80211_WPA_PROTO_WPA2)
+					fputs(",wpa2", stdout);
+				if (nr->nr_rsnprotos & IEEE80211_WPA_PROTO_WPA1)
+					fputs(",wpa1", stdout);
+			} else
 				fputs(",wep", stdout);
 
 			if (nr->nr_rsnakms & IEEE80211_WPA_AKM_8021X ||
