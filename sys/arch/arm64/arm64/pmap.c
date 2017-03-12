@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.23 2017/02/17 19:20:22 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.24 2017/03/12 16:35:09 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1576,23 +1576,11 @@ pmap_init()
 }
 
 void
-pmap_proc_iflush(struct process *pr, vaddr_t addr, vsize_t len)
+pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	vsize_t clen;
-
-	while (len > 0) {
-		/* add one to always round up to the next page */
-		clen = round_page(addr + 1) - addr;
-		if (clen > len)
-			clen = len;
-
-		/* We only need to do anything if it is the current process. */
-		if (pr == curproc->p_p)
-			cpu_icache_sync_range(addr, clen);
-
-		len -= clen;
-		addr += clen;
-	}
+	/* We only need to do anything if it is the current process. */
+	if (pr == curproc->p_p)
+		cpu_icache_sync_range(va, len);
 }
 
 
