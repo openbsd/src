@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.4 2017/02/14 12:50:15 jmc Exp $
+.\" $OpenBSD: clang-local.1,v 1.5 2017/03/12 01:21:32 jsg Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 14 2017 $
+.Dd $Mdocdate: March 12 2017 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -66,6 +66,9 @@ This can be
 re-enabled with the
 .Fl Wpointer-sign
 flag.
+.It
+Color diagnostic messages are disabled by default and can be re-enabled with
+.Fl fdiagnostics-color .
 .El
 .Sh SEE ALSO
 .Xr clang 1
