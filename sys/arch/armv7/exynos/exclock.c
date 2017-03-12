@@ -1,4 +1,4 @@
-/* $OpenBSD: exclock.c,v 1.5 2017/03/04 18:17:24 kettenis Exp $ */
+/* $OpenBSD: exclock.c,v 1.6 2017/03/12 12:44:35 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,6 +25,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 /* registers */
@@ -67,6 +68,8 @@ struct exclock_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	struct clock_device	sc_cd;
 };
 
 enum clocks {
@@ -101,6 +104,10 @@ struct cfdriver exclock_cd = {
 	NULL, "exclock", DV_DULL
 };
 
+uint32_t exclock_get_frequency(void *, uint32_t *);
+int	exclock_set_frequency(void *, uint32_t *, uint32_t);
+void	exclock_enable(void *, uint32_t *, int);
+
 int
 exclock_match(struct device *parent, void *match, void *aux)
 {
@@ -127,7 +134,40 @@ exclock_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Exynos 5 CPU freq: %d MHz\n",
 	    exclock_get_armclk() / 1000);
 
+	sc->sc_cd.cd_node = faa->fa_node;
+	sc->sc_cd.cd_cookie = sc;
+	sc->sc_cd.cd_enable = exclock_enable;
+	sc->sc_cd.cd_get_frequency = exclock_get_frequency;
+	sc->sc_cd.cd_set_frequency = exclock_set_frequency;
+	clock_register(&sc->sc_cd);
+
 	cpu_cpuspeed = exclock_cpuspeed;
+}
+
+uint32_t
+exclock_get_frequency(void *cookie, uint32_t *cells)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+int
+exclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+void
+exclock_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
 }
 
 int
