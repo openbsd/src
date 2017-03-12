@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.14 2016/05/21 00:56:43 deraadt Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.15 2017/03/12 17:57:12 kettenis Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 static __inline struct trapframe *
 process_frame(struct proc *p)
 {
-
 	return p->p_addr->u_pcb.pcb_tf;
 }
 
@@ -85,8 +84,6 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 
 	tf = process_frame(p);
 
-	/* Do we need to jump onto the signal stack? */
-
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_usr_sp) && (psp->ps_sigonstack & sigmask(sig)))
@@ -99,7 +96,7 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	fp--;
 
 	/* make the stack aligned */
-	fp = (void *)STACKALIGN(fp);
+	fp = (struct sigframe *)STACKALIGN(fp);
 
 	/* Build stack frame for signal trampoline. */
 	bzero(&frame, sizeof(frame));
@@ -148,22 +145,15 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 
 	/*
 	 * Build context to run handler in.  We invoke the handler
-	 * directly, only returning via the trampoline.  Note the
-	 * trampoline version numbers are coordinated with machine-
-	 * dependent code in libc.
-	 */
-
-	/*
-	 * this was all in the switch below, seemed daft to duplicate it, if
-	 * we do a new trampoline version it might change then
+	 * directly, only returning via the trampoline.
 	 */
 	tf->tf_r0 = sig;
-	tf->tf_r1 = (int)frame.sf_sip;
-	tf->tf_r2 = (int)frame.sf_scp;
-	tf->tf_pc = (int)frame.sf_handler;
-	tf->tf_usr_sp = (int)fp;
+	tf->tf_r1 = (register_t)frame.sf_sip;
+	tf->tf_r2 = (register_t)frame.sf_scp;
+	tf->tf_pc = (register_t)frame.sf_handler;
+	tf->tf_usr_sp = (register_t)fp;
 	
-	tf->tf_usr_lr = (int)p->p_p->ps_sigcode;
+	tf->tf_usr_lr = p->p_p->ps_sigcode;
 }
 
 /*

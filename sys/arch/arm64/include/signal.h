@@ -1,4 +1,4 @@
-/* $OpenBSD: signal.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: signal.h,v 1.2 2017/03/12 17:57:12 kettenis Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,6 @@
 
 #include <sys/cdefs.h>
 
-#if !defined(__LANGUAGE_ASSEMBLY)
-#include <sys/types.h>
-
-/*
- * Machine-dependent signal definitions
- */
 typedef int sig_atomic_t;
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
@@ -56,16 +50,15 @@ typedef int sig_atomic_t;
  */
 struct	sigcontext {
 	int	__sc_unused;
-	int	sc_mask;		/* signal mask to restore (old style) */
+	int	sc_mask;	/* signal mask to restore */
 
-	uint64_t sc_sp;
-	uint64_t sc_lr;
-	uint64_t sc_elr;
-	uint64_t sc_spsr;
-	uint64_t sc_x[30];
+	unsigned long sc_sp;
+	unsigned long sc_lr;
+	unsigned long sc_elr;
+	unsigned long sc_spsr;
+	unsigned long sc_x[30];
+
+	long	sc_cookie;
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-
-#endif /* !__LANGUAGE_ASSEMBLY */
-
 #endif	/* !_MACHINE_SIGNAL_H_ */

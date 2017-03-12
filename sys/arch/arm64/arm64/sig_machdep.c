@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.2 2016/12/19 01:25:53 jsg Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.3 2017/03/12 17:57:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,6 @@
  *
  */
 
-
 #include <sys/param.h>
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
@@ -99,52 +98,52 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
    union sigval val)
 {
 	struct proc *p = curproc;
-	struct sigframe *fp, ksf;
 	struct trapframe *tf;
+	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_p->ps_sigacts;
-	siginfo_t *sip;
-	int fsize;
+	siginfo_t *sip = NULL;
 	int i;
 
 	tf = process_frame(p);
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	fsize = sizeof(struct sigframe);
-	if (!(psp->ps_siginfo & sigmask(sig)))
-		fsize -= sizeof(siginfo_t);
+	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
-					 p->p_sigstk.ss_size - fsize);
+		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
+		    p->p_sigstk.ss_size);
 	else
-		fp = (struct sigframe *)(tf->tf_sp - fsize);
+		fp = (struct sigframe *)tf->tf_sp;
 
+	/* make room on the stack */
+	fp--;
+
+	/* make the stack aligned */
 	fp = (struct sigframe *)STACKALIGN(fp);
 
-	bzero (&ksf, sizeof(ksf));
-	ksf.sf_signum = sig;
-	sip = NULL;
+	/* Build stack frame for signal trampoline. */
+	bzero(&frame, sizeof(frame));
+	frame.sf_signum = sig;
 
-	for (i=0; i < 30; i++) {
-		ksf.sf_sc.sc_x[i] = tf->tf_x[i];
-	}
-	ksf.sf_sc.sc_sp = tf->tf_sp;
-	ksf.sf_sc.sc_lr = tf->tf_lr;
-	ksf.sf_sc.sc_elr = tf->tf_elr;
-	ksf.sf_sc.sc_spsr = tf->tf_spsr;
+	/* Save register context. */
+	for (i=0; i < 30; i++)
+		frame.sf_sc.sc_x[i] = tf->tf_x[i];
+	frame.sf_sc.sc_sp = tf->tf_sp;
+	frame.sf_sc.sc_lr = tf->tf_lr;
+	frame.sf_sc.sc_elr = tf->tf_elr;
+	frame.sf_sc.sc_spsr = tf->tf_spsr;
 
-	// Save signal mask.
-	ksf.sf_sc.sc_mask = returnmask;
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = returnmask;
+
+	/* XXX Save floating point context */
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = &fp->sf_si;
-		initsiginfo(&ksf.sf_si, sig, code, type, val);
+		initsiginfo(&frame.sf_si, sig, code, type, val);
 	}
 
-	// XXX copy floating point context
-	if (copyout(&ksf, fp, fsize ) != 0) {
+	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -154,15 +153,16 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	}
 
 	/*
-         * Build the argument list for the signal handler.
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.
          */
-
 	tf->tf_x[0] = sig;
 	tf->tf_x[1] = (register_t)sip;
 	tf->tf_x[2] = (register_t)&fp->sf_sc;
-	tf->tf_lr = p->p_p->ps_sigcode;
 	tf->tf_elr = (register_t)catcher;
 	tf->tf_sp = (register_t)fp;
+
+	tf->tf_lr = p->p_p->ps_sigcode;
 }
 
 /*
@@ -182,13 +182,27 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp, ksc;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf;
 	int i;
 
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &ksc, sizeof(*scp)) != 0)
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		sigexit(p, SIGILL);
+		return (EPERM);
+	}
+
+	if (copyin(scp, &ksc, sizeof(*scp)) != 0)
 		return (EFAULT);
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		sigexit(p, SIGILL);
+		return (EFAULT);
+	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	/*
 	 * Make sure the processor mode has not been tampered with and
@@ -198,20 +212,19 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	    (ksc.sc_spsr & (PSR_I | PSR_F)) != 0)
 		return (EINVAL);
 
+	/* XXX Restore floating point context */
+
 	/* Restore register context. */
 	tf = process_frame(p);
-	for (i=0; i < 30; i++) {
+	for (i=0; i < 30; i++)
 		tf->tf_x[i] = ksc.sc_x[i];
-	}
 	tf->tf_sp = ksc.sc_sp;
 	tf->tf_lr = ksc.sc_lr;
 	tf->tf_elr = ksc.sc_elr;
-	tf->tf_spsr  = ksc.sc_spsr;
+	tf->tf_spsr = ksc.sc_spsr;
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
-
-	// XXX fpustate
 
 	return (EJUSTRETURN);
 }
