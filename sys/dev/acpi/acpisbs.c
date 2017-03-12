@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.4 2017/03/12 21:30:44 jcs Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.5 2017/03/12 21:48:56 jung Exp $ */
 /*
  * Smart Battery Subsystem device driver
  * ACPI 5.0 spec section 10
@@ -133,7 +133,7 @@ int	acpisbs_notify(struct aml_node *, int, void *);
 
 int	acpi_smbus_read(struct acpisbs_softc *, uint8_t, uint8_t, int, void *);
 
-struct cfattach acpisbs_ca = {
+const struct cfattach acpisbs_ca = {
 	sizeof(struct acpisbs_softc),
 	acpisbs_match,
 	acpisbs_attach,
