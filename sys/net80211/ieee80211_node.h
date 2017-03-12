@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.67 2017/03/04 12:44:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.68 2017/03/12 03:13:50 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -219,7 +219,9 @@ struct ieee80211_node {
 	u_int			ni_rsn_supp_state;
 	u_int			ni_rsn_gstate;
 	u_int			ni_rsn_retries;
+	u_int			ni_supported_rsnprotos;
 	u_int			ni_rsnprotos;
+	u_int			ni_supported_rsnakms;
 	u_int			ni_rsnakms;
 	u_int			ni_rsnciphers;
 	enum ieee80211_cipher	ni_rsngroupcipher;
