@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.1 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.2 2017/03/12 21:05:25 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -87,6 +87,7 @@ ENTRY(cpu_setttb)
 END(cpu_setttb)
 
 ENTRY(cpu_tlb_flush)
+	dsb	ishst
 	tlbi	vmalle1is
 	dsb	ish
 	isb
@@ -94,6 +95,7 @@ ENTRY(cpu_tlb_flush)
 END(cpu_tlb_flush)
 
 ENTRY(cpu_tlb_flush_asid)
+	dsb	ishst
 	tlbi	vae1is, x0
 	dsb	ish
 	isb
@@ -101,6 +103,7 @@ ENTRY(cpu_tlb_flush_asid)
 END(cpu_tlb_flush_asid)
 
 ENTRY(cpu_tlb_flush_all_asid)
+	dsb	ishst
 	tlbi	vaale1is, x0
 	dsb	ish
 	isb
