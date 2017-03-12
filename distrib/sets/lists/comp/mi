@@ -1273,7 +1273,6 @@
 ./usr/include/stdlib.h
 ./usr/include/string.h
 ./usr/include/strings.h
-./usr/include/struct.h
 ./usr/include/sys
 ./usr/include/sys/_endian.h
 ./usr/include/sys/_null.h
