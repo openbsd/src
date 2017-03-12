@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: pmap.h,v 1.2 2017/03/12 16:35:56 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -109,14 +109,6 @@ typedef struct pv_addr {
 	paddr_t pv_pa;
 	vaddr_t pv_va;
 } pv_addr_t;
-void	vector_page_setprot(int);
-
-#define PTE_NOCACHE 0
-#define PTE_CACHE 1
-#define PTE_PAGETABLE 2
-
-vsize_t      pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
-void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 
 extern vaddr_t	pmap_curmaxkvaddr;
 
