@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_pinctrl.c,v 1.1 2016/08/06 17:12:34 kettenis Exp $	*/
+/*	$OpenBSD: ofw_pinctrl.c,v 1.2 2017/03/12 11:44:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -96,28 +96,11 @@ pinctrl_byid(int node, int id)
 int
 pinctrl_byname(int node, const char *config)
 {
-	char *names;
-	char *name;
-	char *end;
-	int id = 0;
-	int len;
+	int id;
 
-	len = OF_getproplen(node, "pinctrl-names");
-	if (len <= 0)
+	id = OF_getindex(node, config, "pinctrl-names");
+	if (id < 0)
 		return -1;
 
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "pinctrl-names", names, len);
-	end = names + len;
-	name = names;
-	while (name < end) {
-		if (strcmp(name, config) == 0) {
-			free(names, M_TEMP, len);
-			return pinctrl_byid(node, id);
-		}
-		name += strlen(name) + 1;
-		id++;
-	}
-	free(names, M_TEMP, len);
-	return -1;
+	return pinctrl_byid(node, id);
 }

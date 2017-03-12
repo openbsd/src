@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_clock.c,v 1.7 2016/08/27 16:50:40 kettenis Exp $	*/
+/*	$OpenBSD: ofw_clock.c,v 1.8 2017/03/12 11:44:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -120,38 +120,6 @@ clock_next_clock(uint32_t *cells)
 	return cells + ncells + 1;
 }
 
-int
-clock_index(int node, const char *clock)
-{
-	char *names;
-	char *name;
-	char *end;
-	int idx = 0;
-	int len;
-
-	if (clock == NULL)
-		return 0;
-
-	len = OF_getproplen(node, "clock-names");
-	if (len <= 0)
-		return -1;
-
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "clock-names", names, len);
-	end = names + len;
-	name = names;
-	while (name < end) {
-		if (strcmp(name, clock) == 0) {
-			free(names, M_TEMP, len);
-			return idx;
-		}
-		name += strlen(name) + 1;
-		idx++;
-	}
-	free(names, M_TEMP, len);
-	return -1;
-}
-
 uint32_t
 clock_get_frequency_idx(int node, int idx)
 {
@@ -186,7 +154,7 @@ clock_get_frequency(int node, const char *name)
 {
 	int idx;
 
-	idx = clock_index(node, name);
+	idx = OF_getindex(node, name, "clock-names");
 	if (idx == -1)
 		return 0;
 
@@ -227,7 +195,7 @@ clock_set_frequency(int node, const char *name, uint32_t freq)
 {
 	int idx;
 
-	idx = clock_index(node, name);
+	idx = OF_getindex(node, name, "clock-names");
 	if (idx == -1)
 		return -1;
 
@@ -266,7 +234,7 @@ clock_do_enable(int node, const char *name, int on)
 {
 	int idx;
 
-	idx = clock_index(node, name);
+	idx = OF_getindex(node, name, "clock-names");
 	if (idx == -1)
 		return;
 
@@ -344,38 +312,6 @@ reset_next_reset(uint32_t *cells)
 	return cells + ncells + 1;
 }
 
-int
-reset_index(int node, const char *reset)
-{
-	char *names;
-	char *name;
-	char *end;
-	int idx = 0;
-	int len;
-
-	if (reset == NULL)
-		return 0;
-
-	len = OF_getproplen(node, "reset-names");
-	if (len <= 0)
-		return -1;
-
-	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "reset-names", names, len);
-	end = names + len;
-	name = names;
-	while (name < end) {
-		if (strcmp(name, reset) == 0) {
-			free(names, M_TEMP, len);
-			return idx;
-		}
-		name += strlen(name) + 1;
-		idx++;
-	}
-	free(names, M_TEMP, len);
-	return -1;
-}
-
 void
 reset_do_assert_idx(int node, int idx, int assert)
 {
@@ -408,7 +344,7 @@ reset_do_assert(int node, const char *name, int assert)
 {
 	int idx;
 
-	idx = reset_index(node, name);
+	idx = OF_getindex(node, name, "reset-names");
 	if (idx == -1)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.19 2016/08/23 18:12:09 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.20 2017/03/12 11:44:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -18,8 +18,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
@@ -905,3 +905,34 @@ OF_is_compatible(int handle, const char *name)
 	return (fdt_is_compatible(node, name));
 }
 
+int
+OF_getindex(int handle, const char *entry, const char *prop)
+{
+	char *names;
+	char *name;
+	char *end;
+	int idx = 0;
+	int len;
+
+	if (entry == NULL)
+		return 0;
+
+	len = OF_getproplen(handle, (char *)prop);
+	if (len <= 0)
+		return -1;
+
+	names = malloc(len, M_TEMP, M_WAITOK);
+	OF_getprop(handle, (char *)prop, names, len);
+	end = names + len;
+	name = names;
+	while (name < end) {
+		if (strcmp(name, entry) == 0) {
+			free(names, M_TEMP, len);
+			return idx;
+		}
+		name += strlen(name) + 1;
+		idx++;
+	}
+	free(names, M_TEMP, len);
+	return -1;
+}
