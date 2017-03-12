@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.62 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpibat.c,v 1.63 2017/03/12 21:30:44 jcs Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -53,6 +53,9 @@ acpibat_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
+
+	if (((struct acpi_softc *)parent)->sc_havesbs)
+		return (0);
 
 	/* sanity */
 	return (acpi_matchhids(aa, acpibat_hids, cf->cf_driver->cd_name));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.38 2017/02/25 20:09:20 jcs Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.39 2017/03/12 21:30:44 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -748,10 +748,10 @@ struct acpi_ivrs {
 #define ACPI_DEV_MEMD	"PNP0C80"	/* Memory Device */
 #define ACPI_DEV_MOUSE	"PNP0F13"	/* PS/2 Mouse */
 #define ACPI_DEV_SHC	"ACPI0001"	/* SMBus 1.0 Host Controller */
-#define ACPI_DEV_SMS1	"ACPI0002"	/* Smart Battery Subsystem */
+#define ACPI_DEV_SBS	"ACPI0002"	/* Smart Battery Subsystem */
 #define ACPI_DEV_AC	"ACPI0003"	/* AC Device */
 #define ACPI_DEV_MD	"ACPI0004"	/* Module Device */
-#define ACPI_DEV_SMS2	"ACPI0005"	/* SMBus 2.0 Host Controller */
+#define ACPI_DEV_SMBUS	"ACPI0005"	/* SMBus 2.0 Host Controller */
 #define ACPI_DEV_GBD	"ACPI0006"	/* GPE Block Device */
 #define ACPI_DEV_PD	"ACPI0007"	/* Processor Device */
 #define ACPI_DEV_ALSD	"ACPI0008"	/* Ambient Light Sensor Device */

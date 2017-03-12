@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.3 2017/03/07 02:27:02 jcs Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.4 2017/03/12 21:30:44 jcs Exp $ */
 /*
  * Smart Battery Subsystem device driver
  * ACPI 5.0 spec section 10
@@ -144,7 +144,7 @@ struct cfdriver acpisbs_cd = {
 };
 
 const char *acpisbs_hids[] = {
-	"ACPI0002",
+	ACPI_DEV_SBS,
 	NULL
 };
 
@@ -211,6 +211,8 @@ acpisbs_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpisbs_notify,
 	    sc, ACPIDEV_POLL);
+
+	sc->sc_acpi->sc_havesbs = 1;
 }
 
 void
