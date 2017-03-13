@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.108 2017/03/13 18:48:16 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.109 2017/03/13 18:49:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -433,7 +433,8 @@ struct iked_sa {
 
 	struct iked_sa			*sa_nexti;	/* initiated IKE SA */
 	struct iked_sa			*sa_nextr;	/* simultaneous rekey */
-	uint64_t			 sa_rekeyspi;	/* peerspi for rekey*/
+	uint64_t			 sa_rekeyspi;	/* peerspi CSA rekey*/
+	struct ibuf			*sa_simult;	/* simultaneous rekey */
 
 	uint8_t				 sa_ipcomp;	/* IPcomp transform */
 	uint16_t			 sa_cpi_out;	/* IPcomp outgoing */

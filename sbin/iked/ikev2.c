@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.142 2017/03/13 18:48:16 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.143 2017/03/13 18:49:20 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -106,6 +106,8 @@ int	 ikev2_set_sa_proposal(struct iked_sa *, struct iked_policy *,
 
 int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *,
 	    struct iked_kex *, struct iked_proposals *, int, int, int);
+int	 ikev2_childsa_delete_proposed(struct iked *, struct iked_sa *,
+	    struct iked_proposals *);
 int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
 	    struct iked_transform **, int);
 int	 ikev2_valid_proposal(struct iked_proposal *,
@@ -2278,7 +2280,8 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 
 	if (sa->sa_state == IKEV2_STATE_EAP)
 		return (ikev2_resp_ike_eap(env, sa, NULL));
-	else if (!sa_stateok(sa, IKEV2_STATE_VALID))
+
+	if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (0);	/* ignore */
 
 	if (ikev2_cp_setaddr(env, sa, AF_INET) < 0 ||
@@ -2971,6 +2974,25 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	ibuf_release(sa->sa_rnonce);
 	sa->sa_rnonce = ibuf_dup(msg->msg_nonce);
 
+	if (csa && (ni = sa->sa_simult) != NULL) {
+		log_debug("%s: resolving simultaneous CHILD SA rekeying",
+		    __func__);
+		/* set nr to minimum nonce for exchange initiated by peer */
+		if (ikev2_nonce_cmp(sa->sa_inonce, sa->sa_rnonce) < 0)
+			nr = sa->sa_inonce;
+		else
+			nr = sa->sa_rnonce;
+		/*
+		 * If the exchange initated by us has smaller nonce,
+		 * then we have to delete our SAs.
+		 */
+		if (ikev2_nonce_cmp(ni, nr) < 0) {
+			ret = ikev2_childsa_delete_proposed(env, sa,
+			    &sa->sa_proposals);
+			goto done;
+		}
+	}
+
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals, 1,
 	    pfs, !csa)) {
 		log_debug("%s: failed to get CHILD SAs", __func__);
@@ -3005,9 +3027,16 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 done:
 	sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+	ibuf_release(sa->sa_simult);
+	sa->sa_simult = NULL;
 
 	if (ret)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
+	else if (csa) {
+		/* delete the rekeyed SA pair */
+		ikev2_childsa_delete(env, sa, csa->csa_saproto,
+		    csa->csa_peerspi, NULL, 0);
+	}
 	ibuf_release(buf);
 	return (ret);
 }
@@ -3181,7 +3210,7 @@ ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
 int
 ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 {
-	struct iked_childsa		*csa;
+	struct iked_childsa		*csa = NULL;
 	struct iked_proposal		*prop;
 	struct iked_proposals		 proposals;
 	struct iked_kex			*kex, *kextmp = NULL;
@@ -3330,6 +3359,19 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		    pfs, !rekeying)) {
 			log_debug("%s: failed to get CHILD SAs", __func__);
 			goto fail;
+		}
+
+		if (rekeying && (sa->sa_stateflags & IKED_REQ_CHILDSA) &&
+		    csa && (sa->sa_rekeyspi == csa->csa_peerspi)) {
+			log_debug("%s: simultanous rekeying for CHILD SA %s/%s",
+			    __func__,
+			    print_spi(rekey->spi, rekey->spi_size),
+			    print_spi(sa->sa_rekeyspi, rekey->spi_size));
+			ibuf_release(sa->sa_simult);
+			if (ikev2_nonce_cmp(kex->kex_inonce, nonce) < 0)
+				sa->sa_simult = ibuf_dup(kex->kex_inonce);
+			else
+				sa->sa_simult = ibuf_dup(nonce);
 		}
 	}
 
@@ -4440,6 +4482,57 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 }
 
 int
+ikev2_childsa_delete_proposed(struct iked *env, struct iked_sa *sa,
+    struct iked_proposals *proposals)
+{
+	struct ibuf			*buf = NULL;
+	struct iked_proposal		*prop;
+	struct ikev2_delete		*del;
+	uint32_t			 spi32;
+	uint8_t				 protoid = 0;
+	int				 ret = -1, count;
+
+	if (!sa_stateok(sa, IKEV2_STATE_VALID))
+		return (-1);
+
+	count = 0;
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
+		if (ikev2_valid_proposal(prop, NULL, NULL, NULL) != 0)
+			continue;
+		protoid = prop->prop_protoid;
+		count++;
+	}
+	if (count == 0)
+		return (0);
+	if ((buf = ibuf_static()) == NULL)
+		return (-1);
+	if ((del = ibuf_advance(buf, sizeof(*del))) == NULL)
+		goto done;
+	/* XXX we assume all have the same protoid */
+	del->del_protoid = protoid;
+	del->del_spisize = 4;
+	del->del_nspi = htobe16(count);
+
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
+		if (ikev2_valid_proposal(prop, NULL, NULL, NULL) != 0)
+			continue;
+		spi32 = htobe32(prop->prop_localspi.spi);
+		if (ibuf_add(buf, &spi32, sizeof(spi32)))
+			goto done;
+	}
+
+	if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
+	    IKEV2_EXCHANGE_INFORMATIONAL, 0) == -1)
+		goto done;
+	sa->sa_stateflags |= IKED_REQ_INF;
+	ret = 0;
+ done:
+	ibuf_release(buf);
+
+	return (ret);
+}
+
+int
 ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
     struct iked_kex *kex, struct iked_proposals *proposals, int initiator,
     int pfs, int acquired)
@@ -4855,7 +4948,7 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 int
 ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 {
-	struct iked_childsa	*csa;
+	struct iked_childsa	*csa, *ocsa;
 	struct iked_flow	*flow, *oflow;
 
 	if (sa->sa_ipcomp && sa->sa_cpi_in && sa->sa_cpi_out &&
@@ -4871,6 +4964,16 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			    __func__, print_spi(csa->csa_spi.spi,
 			    csa->csa_spi.spi_size));
 			return (-1);
+		}
+
+		if ((ocsa = RB_FIND(iked_activesas, &env->sc_activesas, csa))
+		    != NULL) {
+			log_debug("%s: replaced CHILD SA %p with %p spi %s",
+			    __func__, ocsa, csa, print_spi(ocsa->csa_spi.spi,
+			    ocsa->csa_spi.spi_size));
+			ocsa->csa_loaded = 0;
+			ocsa->csa_rekey = 1;	/* prevent re-loading */
+			RB_REMOVE(iked_activesas, &env->sc_activesas, ocsa);
 		}
 
 		RB_INSERT(iked_activesas, &env->sc_activesas, csa);
