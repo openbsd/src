@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.24 2017/03/12 16:35:09 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.25 2017/03/13 23:20:12 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2269,6 +2269,7 @@ pmap_show_mapping(uint64_t va)
 #define MAX_ASID 256
 struct pmap *pmap_asid[MAX_ASID];
 int pmap_asid_id_next = 1;
+int pmap_asid_id_flush = 0;
 
 // stupid quick allocator, flush all asid when we run out
 // XXX never searches, just flushes all on rollover (or out)
@@ -2282,17 +2283,20 @@ pmap_allocate_asid(pmap_t pm)
 	int i, new_asid;
 
 	if (pmap_asid_id_next == MAX_ASID) {
-		// out of asid, flush all
-		cpu_tlb_flush();
+		/*
+		 * Out of ASIDs.  Reclaim them all and schedule a full
+		 * TLB flush.  We can't flush here as the CPU could
+		 * (and would) speculatively load TLB entries for the
+		 * ASID of the current pmap.
+		 */
 		for (i = 0;i < MAX_ASID; i++) {
 			if (pmap_asid[i] != NULL) {
-				// printf("reclaiming asid %d from %p\n", i,
-				//    pmap_asid[i] );
 				pmap_asid[i]->pm_asid = -1;
 				pmap_asid[i] = NULL;
 			}
 		}
 		pmap_asid_id_next = 1;
+		pmap_asid_id_flush = 1;
 	}
 
 	// locks?
@@ -2334,6 +2338,10 @@ pmap_setttb(struct proc *p, paddr_t pagedir, struct pcb *pcb)
 		//    pm, pmap_kernel(), oasid, pm->pm_asid);
 
 		cpu_setttb(pagedir);
+		if (pmap_asid_id_flush) {
+			pmap_asid_id_flush = 0;
+			cpu_tlb_flush();
+		}
 	} else {
 		// XXX what to do if switching to kernel pmap !?!?
 	}
