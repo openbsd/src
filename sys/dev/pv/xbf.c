@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.25 2017/03/13 01:00:15 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.26 2017/03/13 01:10:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -467,7 +467,7 @@ xbf_load_xs(struct scsi_xfer *xs, int desc)
 	error = bus_dmamap_load(sc->sc_dmat, map, xs->data, xs->datalen,
 	    NULL, mapflags);
 	if (error) {
-		DPRINTF("%s: failed to load %u bytes of data\n",
+		DPRINTF("%s: failed to load %d bytes of data\n",
 		    sc->sc_dev.dv_xname, xs->datalen);
 		return (-1);
 	}
@@ -530,7 +530,7 @@ xbf_bounce_xs(struct scsi_xfer *xs, int desc)
 
 	map = dma->dma_map;
 
-	DPRINTF("%s: bouncing %d bytes via %ld size map with %d segments\n",
+	DPRINTF("%s: bouncing %d bytes via %lu size map with %d segments\n",
 	    sc->sc_dev.dv_xname, xs->datalen, size, map->dm_nsegs);
 
 	if (ISSET(xs->flags, SCSI_DATA_OUT))
@@ -642,7 +642,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	xrd->xrd_req.req_sector = lba;
 
 	if (operation == XBF_OP_READ || operation == XBF_OP_WRITE) {
-		DPRINTF("%s: desc %u %s%s lba %llu nsec %u len %u\n",
+		DPRINTF("%s: desc %d %s%s lba %llu nsec %u len %d\n",
 		    sc->sc_dev.dv_xname, desc, operation == XBF_OP_READ ?
 		    "read" : "write", ISSET(xs->flags, SCSI_POLL) ? "-poll" :
 		    "", lba, nblk, xs->datalen);
@@ -654,7 +654,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		if (error)
 			return (error);
 	} else {
-		DPRINTF("%s: desc %u %s%s lba %llu\n", sc->sc_dev.dv_xname,
+		DPRINTF("%s: desc %d %s%s lba %llu\n", sc->sc_dev.dv_xname,
 		    desc, operation == XBF_OP_FLUSH ? "flush" : "barrier",
 		    ISSET(xs->flags, SCSI_POLL) ? "-poll" : "", lba);
 		xrd->xrd_req.req_nsegs = 0;
@@ -720,7 +720,7 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 
 	sc->sc_xs[desc] = NULL;
 
-	DPRINTF("%s: completing desc %u(%llu) op %u with error %d\n",
+	DPRINTF("%s: completing desc %d(%llu) op %u with error %d\n",
 	    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
 	    xrd->xrd_rsp.rsp_op, xrd->xrd_rsp.rsp_status);
 
@@ -922,7 +922,7 @@ xbf_init(struct xbf_softc *sc)
 	if (sc->sc_xr_ndesc > XBF_MAX_REQS)
 		sc->sc_xr_ndesc = XBF_MAX_REQS;
 
-	DPRINTF("%s: %u ring pages, %u requests\n",
+	DPRINTF("%s: %u ring pages, %d requests\n",
 	    sc->sc_dev.dv_xname, sc->sc_xr_size, sc->sc_xr_ndesc);
 
 	if (xbf_ring_create(sc))
@@ -1234,7 +1234,7 @@ xbf_stop(struct xbf_softc *sc)
 		if (xs == NULL)
 			continue;
 		xrd = &sc->sc_xr->xr_desc[desc];
-		DPRINTF("%s: aborting desc %u(%llu) op %u\n",
+		DPRINTF("%s: aborting desc %d(%llu) op %u\n",
 		    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
 		    xrd->xrd_rsp.rsp_op);
 		if (sc->sc_xs_bb[desc].dma_size > 0)

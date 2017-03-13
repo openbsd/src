@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.53 2017/03/13 01:00:15 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.54 2017/03/13 01:10:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -586,7 +586,7 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 		flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_WAITOK;
 		if (bus_dmamap_load(sc->sc_dmat, dmap, m->m_data, m->m_len,
 		    NULL, flags)) {
-			DPRINTF("%s: failed to load %d bytes @%lu\n",
+			DPRINTF("%s: failed to load %u bytes @%lu\n",
 			    sc->sc_dev.dv_xname, m->m_len,
 			    mtod(m, vaddr_t) & PAGE_MASK);
 			goto unroll;

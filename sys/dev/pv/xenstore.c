@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.42 2017/03/13 01:00:15 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.43 2017/03/13 01:10:03 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -528,7 +528,7 @@ xs_intr(void *arg)
  again:
 	if (xs->xs_rmsg == NULL) {
 		if (avail < sizeof(xmh)) {
-			DPRINTF("%s: incomplete header: %d\n",
+			DPRINTF("%s: incomplete header: %u\n",
 			    sc->sc_dev.dv_xname, avail);
 			goto out;
 		}

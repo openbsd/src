@@ -680,7 +680,7 @@ hvn_rx_ring_create(struct hvn_softc *sc)
 		goto errout;
 	}
 	if (rsp->nvs_nsect > 1) {
-		DPRINTF("%s: invalid number of Rx ring sections: %d\n",
+		DPRINTF("%s: invalid number of Rx ring sections: %u\n",
 		    sc->sc_dev.dv_xname, rsp->nvs_nsect);
 		hvn_rx_ring_destroy(sc);
 		return (-1);
@@ -1030,7 +1030,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 			else
 				delay(100);
 		} else if (rv) {
-			DPRINTF("%s: NVSP operation %d send error %d\n",
+			DPRINTF("%s: NVSP operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type, rv);
 			return (rv);
 		}
@@ -1236,7 +1236,7 @@ hvn_rndis_attach(struct hvn_softc *sc)
 	    BUS_DMASYNC_PREWRITE);
 
 	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0) {
-		DPRINTF("%s: INITIALIZE_MSG failed, error %u\n",
+		DPRINTF("%s: INITIALIZE_MSG failed, error %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		hvn_free_cmd(sc, rc);
 		goto errout;
@@ -1327,7 +1327,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 		if (rv == EAGAIN)
 			tsleep(rc, PRIBIO, "rndisout", timo / 10);
 		else if (rv) {
-			DPRINTF("%s: RNDIS operation %d send error %d\n",
+			DPRINTF("%s: RNDIS operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type, rv);
 			hvn_rollback_cmd(sc, rc);
 			return (rv);
@@ -1673,7 +1673,7 @@ hvn_rndis_set(struct hvn_softc *sc, uint32_t oid, void *data, size_t length)
 	    BUS_DMASYNC_PREWRITE);
 
 	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0) {
-		DPRINTF("%s: SET_MSG failed, error %u\n",
+		DPRINTF("%s: SET_MSG failed, error %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		hvn_free_cmd(sc, rc);
 		return (rv);
@@ -1746,7 +1746,7 @@ hvn_rndis_detach(struct hvn_softc *sc)
 	    BUS_DMASYNC_PREWRITE);
 
 	if ((rv = hvn_rndis_cmd(sc, rc, 500)) != 0)
-		DPRINTF("%s: HALT_MSG failed, error %u\n",
+		DPRINTF("%s: HALT_MSG failed, error %d\n",
 		    sc->sc_dev.dv_xname, rv);
 
 	hvn_free_cmd(sc, rc);
