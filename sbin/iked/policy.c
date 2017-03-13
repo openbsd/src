@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.44 2017/03/13 14:33:33 patrick Exp $	*/
+/*	$OpenBSD: policy.c,v 1.45 2017/03/13 15:01:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -437,6 +437,8 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 void
 childsa_free(struct iked_childsa *csa)
 {
+	struct iked_childsa *csb;
+
 	if (csa->csa_children) {
 		/* XXX should not happen */
 		log_warnx("%s: trying to remove CSA %p children %u",
@@ -445,6 +447,8 @@ childsa_free(struct iked_childsa *csa)
 	}
 	if (csa->csa_parent)
 		csa->csa_parent->csa_children--;
+	if ((csb = csa->csa_peersa) != NULL)
+		csb->csa_peersa = NULL;
 	ibuf_release(csa->csa_encrkey);
 	ibuf_release(csa->csa_integrkey);
 	free(csa);
