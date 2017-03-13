@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.107 2017/03/13 18:28:02 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.108 2017/03/13 18:48:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -431,7 +431,8 @@ struct iked_sa {
 	struct iked_childsas		 sa_childsas;	/* IPSec Child SAs */
 	struct iked_saflows		 sa_flows;	/* IPSec flows */
 
-	struct iked_sa			*sa_next;	/* IKE SA rekeying */
+	struct iked_sa			*sa_nexti;	/* initiated IKE SA */
+	struct iked_sa			*sa_nextr;	/* simultaneous rekey */
 	uint64_t			 sa_rekeyspi;	/* peerspi for rekey*/
 
 	uint8_t				 sa_ipcomp;	/* IPcomp transform */
@@ -766,6 +767,7 @@ int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    uint8_t, uint64_t, uint64_t *, int);
+void	 ikev2_ikesa_recv_delete(struct iked *, struct iked_sa *);
 
 struct ibuf *
 	 ikev2_prfplus(struct iked_hash *, struct ibuf *, struct ibuf *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.58 2017/03/13 14:50:52 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.59 2017/03/13 18:48:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1402,7 +1402,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 			    IKEV2_EXCHANGE_INFORMATIONAL, 1);
 			msg->msg_parent->msg_responded = 1;
 			ibuf_release(resp);
-			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			ikev2_ikesa_recv_delete(env, sa);
 		} else {
 			/*
 			 * We're sending a delete message. Upper layer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.45 2017/03/13 15:01:59 mikeb Exp $	*/
+/*	$OpenBSD: policy.c,v 1.46 2017/03/13 18:48:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -392,9 +392,13 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
 	/* IKE rekeying running? */
-	if (sa->sa_next) {
-		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_next);
-		config_free_sa(env, sa->sa_next);
+	if (sa->sa_nexti) {
+		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nexti);
+		config_free_sa(env, sa->sa_nexti);
+	}
+	if (sa->sa_nextr) {
+		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nextr);
+		config_free_sa(env, sa->sa_nextr);
 	}
 	RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);

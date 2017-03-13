@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.141 2017/03/13 18:28:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.142 2017/03/13 18:48:16 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -81,6 +81,7 @@ int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 	    struct iked_spi *, uint8_t);
 int	 ikev2_ikesa_enable(struct iked *, struct iked_sa *, struct iked_sa *);
 void	 ikev2_ikesa_delete(struct iked *, struct iked_sa *, int);
+int	 ikev2_nonce_cmp(struct ibuf *, struct ibuf *);
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 void	 ikev2_ike_sa_rekey(struct iked *, void *);
@@ -2727,6 +2728,11 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	    print_spi(sa->sa_hdr.sh_ispi, 8),
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
+	if (sa->sa_nexti) {
+		log_debug("%s: already rekeying", __func__);
+		goto done;
+	}
+
 	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
 		/*
 		 * We cannot initiate multiple concurrent CREATE_CHILD_SA
@@ -2798,7 +2804,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, IKEV2_PAYLOAD_SA, 0);
 	if (ret == 0) {
 		sa->sa_stateflags |= IKED_REQ_CHILDSA;
-		sa->sa_next = nsa;
+		sa->sa_nexti = nsa;
 		nsa = NULL;
 	}
 done:
@@ -2814,15 +2820,31 @@ done:
 }
 
 int
+ikev2_nonce_cmp(struct ibuf *a, struct ibuf *b)
+{
+	size_t				alen, blen, len;
+	int				ret;
+
+	alen = ibuf_length(a);
+	blen = ibuf_length(b);
+	len = MIN(alen, blen);
+	ret = memcmp(ibuf_data(a), ibuf_data(b), len);
+	if (ret == 0)
+		ret = (alen < blen ? -1 : 1);
+	return (ret);
+}
+
+int
 ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 {
 	struct iked_childsa		*csa = NULL;
 	struct iked_proposal		*prop;
 	struct iked_sa			*sa = msg->msg_sa;
-	struct iked_sa			*nsa;
+	struct iked_sa			*nsa, *dsa;
 	struct iked_spi			*spi;
 	struct ikev2_delete		*del;
 	struct ibuf			*buf = NULL;
+	struct ibuf			*ni, *nr;
 	uint32_t			 spi32;
 	int				 pfs = 0, ret = -1;
 
@@ -2854,19 +2876,20 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 	/* IKE SA rekeying */
 	if (prop->prop_protoid == IKEV2_SAPROTO_IKE) {
-		if (sa->sa_next == NULL) {
+		if (sa->sa_nexti == NULL) {
 			log_debug("%s: missing IKE SA for rekeying", __func__);
 			return (-1);
 		}
 		/* Update the responder SPI */
+		/* XXX sa_new() is just a lookup, so nsa == sa->sa_nexti */
 		spi = &msg->msg_prop->prop_peerspi;
-		if ((nsa = sa_new(env, sa->sa_next->sa_hdr.sh_ispi,
-		    spi->spi, 1, NULL)) == NULL || nsa != sa->sa_next) {
+		if ((nsa = sa_new(env, sa->sa_nexti->sa_hdr.sh_ispi,
+		    spi->spi, 1, NULL)) == NULL || nsa != sa->sa_nexti) {
 			log_debug("%s: invalid rekey SA", __func__);
 			if (nsa)
 				sa_free(env, nsa);
-			sa_free(env, sa->sa_next);
-			sa->sa_next = NULL;
+			sa_free(env, sa->sa_nexti);
+			sa->sa_nexti = NULL;
 			return (-1);
 		}
 		if (ikev2_sa_initiator(env, nsa, sa, msg) == -1) {
@@ -2874,7 +2897,43 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			return (-1);
 		}
 		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
-		sa->sa_next = NULL;
+		if (sa->sa_nextr) {
+			/*
+			 * Resolve simultaneous IKE SA rekeying by
+			 * deleting the SA with the lowest NONCE.
+			 */
+			log_debug("%s: resolving simultaneous IKE SA rekeying",
+			    __func__);
+			/* ni: minimum nonce of sa_nexti */
+			if (ikev2_nonce_cmp(sa->sa_nexti->sa_inonce,
+			    sa->sa_nexti->sa_rnonce) < 0)
+				ni = sa->sa_nexti->sa_inonce;
+			else
+				ni = sa->sa_nexti->sa_rnonce;
+			/* nr: minimum nonce of sa_nextr */
+			if (ikev2_nonce_cmp(sa->sa_nextr->sa_inonce,
+			    sa->sa_nextr->sa_rnonce) < 0)
+				nr = sa->sa_nextr->sa_inonce;
+			else
+				nr = sa->sa_nextr->sa_rnonce;
+			/* delete SA with minumum nonce */
+			if (ikev2_nonce_cmp(ni, nr) < 0) {
+				dsa = sa->sa_nexti;
+				nsa = sa->sa_nextr;
+			} else {
+				dsa = sa->sa_nextr;
+				nsa = sa->sa_nexti;
+			}
+			/* Setup address, socket and NAT information */
+			sa_state(env, dsa, IKEV2_STATE_CLOSING);
+			sa_address(dsa, &dsa->sa_peer, &sa->sa_peer.addr);
+			sa_address(dsa, &dsa->sa_local, &sa->sa_local.addr);
+			dsa->sa_fd = sa->sa_fd;
+			dsa->sa_natt = sa->sa_natt;
+			dsa->sa_udpencap = sa->sa_udpencap;
+			ikev2_ikesa_delete(env, dsa, dsa->sa_hdr.sh_initiator);
+		}
+		sa->sa_nexti = sa->sa_nextr = NULL;
 		return (ikev2_ikesa_enable(env, sa, nsa));
 	}
 
@@ -2974,6 +3033,10 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	nsa->sa_natt = sa->sa_natt;
 	nsa->sa_udpencap = sa->sa_udpencap;
 
+	/* Transfer old addresses */
+	memcpy(&nsa->sa_local, &sa->sa_local, sizeof(nsa->sa_local));
+	memcpy(&nsa->sa_peer, &sa->sa_peer, sizeof(nsa->sa_peer));
+
 	/* Transfer all Child SAs and flows from the old IKE SA */
 	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
 	     flow = nextflow) {
@@ -3015,14 +3078,20 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	if (sa->sa_hdr.sh_initiator == nsa->sa_hdr.sh_initiator) {
 		nsa->sa_iid = sa->sa_iid;
 		nsa->sa_rid = sa->sa_rid;
+		nsa->sa_icert = sa->sa_icert;
+		nsa->sa_rcert = sa->sa_rcert;
 	} else {
 		/* initiator and responder role swapped */
 		nsa->sa_iid = sa->sa_rid;
 		nsa->sa_rid = sa->sa_iid;
+		nsa->sa_icert = sa->sa_rcert;
+		nsa->sa_rcert = sa->sa_icert;
 	}
 	/* duplicate the actual buffer */
 	nsa->sa_iid.id_buf = ibuf_dup(nsa->sa_iid.id_buf);
 	nsa->sa_rid.id_buf = ibuf_dup(nsa->sa_rid.id_buf);
+	nsa->sa_icert.id_buf = ibuf_dup(nsa->sa_icert.id_buf);
+	nsa->sa_rcert.id_buf = ibuf_dup(nsa->sa_rcert.id_buf);
 
 	/* Transfer sa_addrpool address */
 	if (sa->sa_addrpool) {
@@ -3086,6 +3155,27 @@ done:
 	/* Remove IKE-SA after timeout, e.g. if we don't get a delete */
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_DELETE_TIMEOUT);
+}
+
+void
+ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
+{
+	if (sa->sa_nexti) {
+		/*
+		 * We initiated rekeying, but since sa_nexti is still set
+		 * we have to assume that the the peer did not receive our
+		 * rekey message. So remove the initiated SA and -- if
+		 * sa_nextr is set -- keep the responder SA instead.
+		 */
+		if (sa->sa_nextr) {
+			log_debug("%s: resolving simultaneous IKE SA rekeying",
+			    __func__);
+			ikev2_ikesa_enable(env, sa, sa->sa_nextr);
+		}
+		sa_free(env, sa->sa_nexti);
+		sa->sa_nextr = sa->sa_nexti = NULL;
+	}
+	sa_state(env, sa, IKEV2_STATE_CLOSED);
 }
 
 int
@@ -3308,9 +3398,21 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	    IKEV2_EXCHANGE_CREATE_CHILD_SA, firstpayload, 1)) == -1)
 		goto done;
 
-	if (protoid == IKEV2_SAPROTO_IKE)
-		ret = ikev2_ikesa_enable(env, sa, nsa);
-	else
+	if (protoid == IKEV2_SAPROTO_IKE) {
+		/*
+		 * If we also have initiated rekeying for this IKE SA, then
+		 * sa_nexti is already set. In this case don't enable the new SA
+		 * immediately, but record it in sa_nextr, until the exchange
+		 * for sa_nexti completes in ikev2_init_create_child_sa() and
+		 * the 'winner' can be selected by comparing nonces.
+		 */
+		if (sa->sa_nexti) {
+			log_debug("%s: simultaneous IKE SA rekeying", __func__);
+			sa->sa_nextr = nsa;
+			ret = 0;
+		} else
+			ret = ikev2_ikesa_enable(env, sa, nsa);
+	} else
 		ret = ikev2_childsa_enable(env, sa);
 
  done:
