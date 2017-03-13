@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.274 2017/03/13 12:34:49 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.275 2017/03/13 22:47:31 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,13 +287,11 @@ privileges may change the value.
 .It Dv HW_PAGESIZE Ta "integer" Ta "no"
 .It Dv HW_PERFPOLICY Ta "string" Ta "yes"
 .It Dv HW_PHYSMEM Ta "integer" Ta "no"
-.\" XXX
 .It Dv HW_PHYSMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_PRODUCT Ta "string" Ta "no"
 .It Dv HW_SENSORS Ta "node" Ta "not applicable"
 .It Dv HW_SETPERF Ta "integer" Ta "yes"
 .It Dv HW_USERMEM Ta "integer" Ta "no"
-.\" XXX
 .It Dv HW_USERMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_UUID Ta "string" Ta "no"
 .It Dv HW_VENDOR Ta "string" Ta "no"
@@ -462,8 +460,6 @@ information.
 .It Dv KERN_PROC_VMMAP Ta "struct kinfo_vmentry" Ta "no"
 .It Dv KERN_PROF Ta "node" Ta "not applicable"
 .It Dv KERN_RAWPARTITION Ta "integer" Ta "no"
-.\" XXX Remove
-.It Dv KERN_RND Ta "struct rndstats" Ta "no"
 .It Dv KERN_SAVED_IDS Ta "integer" Ta "no"
 .It Dv KERN_SECURELVL Ta "integer" Ta "raise only"
 .It Dv KERN_SEMINFO Ta "node" Ta "not applicable"
@@ -792,13 +788,6 @@ describing destination of calls and their counts.
 .El
 .It Dv KERN_RAWPARTITION Pq Va kern.rawpartition
 The raw partition of a disk (a == 0).
-.\" XXX Remove
-.It Dv KERN_RND
-Returns statistics about the
-.Pa /dev/random
-device in a
-.Li struct rndstats
-structure.
 .It Dv KERN_SAVED_IDS Pq Va kern.saved_ids
 Returns 1 if saved set-group-ID and saved set-user-ID are available.
 .It Dv KERN_SECURELVL Pq Va kern.securelevel
@@ -2108,7 +2097,6 @@ privileges may change the value.
 .It Dv VM_ANONMIN Ta "integer" Ta "yes"
 .It Dv VM_LOADAVG Ta "struct loadavg" Ta "no"
 .It Dv VM_MAXSLP Ta "integer" Ta "no"
-.\" XXX
 .It Dv VM_METER Ta "struct vmtotal" Ta "no"
 .It Dv VM_NKMEMPAGES Ta "integer" Ta "no"
 .It Dv VM_PSSTRINGS Ta "struct psstrings" Ta "no"
