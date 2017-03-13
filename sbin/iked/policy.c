@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.42 2016/06/01 11:16:41 patrick Exp $	*/
+/*	$OpenBSD: policy.c,v 1.43 2017/03/13 14:19:08 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -343,7 +343,15 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 	if (initiator && sa->sa_hdr.sh_rspi == 0 && rspi)
 		sa->sa_hdr.sh_rspi = rspi;
 
-	if (sa->sa_policy == NULL) {
+	if (pol == NULL && sa->sa_policy == NULL)
+		fatalx("%s: sa %p no policy", __func__, sa);
+	else if (sa->sa_policy == NULL) {
+		/* Increment refcount if the policy has refcounting enabled. */
+		if (pol->pol_flags & IKED_POLICY_REFCNT) {
+			log_info("%s: sa %p old pol %p pol_refcnt %d",
+			    __func__, sa, pol, pol->pol_refcnt);
+			policy_ref(env, pol);
+		}
 		sa->sa_policy = pol;
 		TAILQ_INSERT_TAIL(&pol->pol_sapeers, sa, sa_peer_entry);
 	} else
