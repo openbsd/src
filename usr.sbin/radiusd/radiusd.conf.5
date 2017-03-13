@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.7 2015/10/26 06:44:40 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.8 2017/03/13 21:48:07 jca Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2015 $
+.Dd $Mdocdate: March 13 2017 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -154,15 +154,15 @@ Specify the module name.
 .El
 .El
 .Sh FILES
-.Bl -tag -width "/usr/libexec/radiusd/radius_bsdauth" -compact
+.Bl -tag -width "/usr/libexec/radiusd/radiusd_bsdauth" -compact
 .It Pa /etc/radiusd.conf
 Default
 .Xr radiusd 8
 configuration file.
-.It Pa /usr/libexec/radiusd/radius_bsdauth
+.It Pa /usr/libexec/radiusd/radiusd_bsdauth
 .Dq bsdauth
 module executable.
-.It Pa /usr/libexec/radiusd/radius_radius
+.It Pa /usr/libexec/radiusd/radiusd_radius
 .Dq radius
 module executable.
 .El
