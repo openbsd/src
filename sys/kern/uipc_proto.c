@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.13 2017/03/02 08:58:24 mpi Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.14 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@ struct protosw unixsw[] = {
   .pr_protocol	= PF_LOCAL,
   .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
   .pr_usrreq	= uipc_usrreq,
+  .pr_attach	= uipc_attach,
 },
 {
   .pr_type	= SOCK_SEQPACKET,
@@ -62,6 +63,7 @@ struct protosw unixsw[] = {
   .pr_protocol	= PF_LOCAL,
   .pr_flags	= PR_ATOMIC|PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
   .pr_usrreq	= uipc_usrreq,
+  .pr_attach	= uipc_attach,
 },
 {
   .pr_type	= SOCK_DGRAM,
@@ -69,6 +71,7 @@ struct protosw unixsw[] = {
   .pr_protocol	= PF_LOCAL,
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_RIGHTS,
   .pr_usrreq	= uipc_usrreq,
+  .pr_attach	= uipc_attach,
 }
 };
 

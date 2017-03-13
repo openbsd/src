@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.68 2017/02/14 09:46:21 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.69 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -258,8 +258,6 @@ int	soo_poll(struct file *fp, int events, struct proc *p);
 int	soo_kqfilter(struct file *fp, struct knote *kn);
 int 	soo_close(struct file *fp, struct proc *p);
 int	soo_stat(struct file *, struct stat *, struct proc *);
-int	uipc_usrreq(struct socket *, int , struct mbuf *,
-			 struct mbuf *, struct mbuf *, struct proc *);
 void	sbappend(struct sockbuf *sb, struct mbuf *m);
 void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
 int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,

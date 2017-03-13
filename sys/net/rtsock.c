@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.233 2017/03/09 16:53:20 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.234 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -166,46 +166,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	rp = sotorawcb(so);
 
 	switch (req) {
-	case PRU_ATTACH:
-		/*
-		 * use the rawcb but allocate a routecb, this
-		 * code does not care about the additional fields
-		 * and works directly on the raw socket.
-		 */
-		rop = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
-		rp = &rop->rcb;
-		so->so_pcb = rp;
-		/* Init the timeout structure */
-		timeout_set(&rop->timeout, route_senddesync, rp);
-		/*
-		 * Don't call raw_usrreq() in the attach case, because
-		 * we want to allow non-privileged processes to listen
-		 * on and send "safe" commands to the routing socket.
-		 */
-		if (curproc == 0)
-			error = EACCES;
-		else
-			error = raw_attach(so, (int)(long)nam);
-		if (error) {
-			free(rop, M_PCB, sizeof(struct routecb));
-			return (error);
-		}
-		rop->rtableid = curproc->p_p->ps_rtableid;
-		af = rp->rcb_proto.sp_protocol;
-		if (af == AF_INET)
-			route_cb.ip_count++;
-		else if (af == AF_INET6)
-			route_cb.ip6_count++;
-#ifdef MPLS
-		else if (af == AF_MPLS)
-			route_cb.mpls_count++;
-#endif
-		rp->rcb_faddr = &route_src;
-		route_cb.any_count++;
-		soisconnected(so);
-		so->so_options |= SO_USELOOPBACK;
-		break;
-
 	case PRU_RCVD:
 		rop = (struct routecb *)rp;
 
@@ -237,6 +197,51 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		error = raw_usrreq(so, req, m, nam, control, p);
 	}
+
+	return (error);
+}
+
+int
+route_attach(struct socket *so, int proto)
+{
+	struct rawcb    *rp;
+	struct routecb	*rop;
+	int		 af;
+	int		 error = 0;
+
+	/*
+	 * use the rawcb but allocate a routecb, this
+	 * code does not care about the additional fields
+	 * and works directly on the raw socket.
+	 */
+	rop = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
+	rp = &rop->rcb;
+	so->so_pcb = rp;
+	/* Init the timeout structure */
+	timeout_set(&rop->timeout, route_senddesync, rp);
+
+	if (curproc == NULL)
+		error = EACCES;
+	else
+		error = raw_attach(so, proto);
+	if (error) {
+		free(rop, M_PCB, sizeof(struct routecb));
+		return (error);
+	}
+	rop->rtableid = curproc->p_p->ps_rtableid;
+	af = rp->rcb_proto.sp_protocol;
+	if (af == AF_INET)
+		route_cb.ip_count++;
+	else if (af == AF_INET6)
+		route_cb.ip6_count++;
+#ifdef MPLS
+	else if (af == AF_MPLS)
+		route_cb.mpls_count++;
+#endif
+	rp->rcb_faddr = &route_src;
+	route_cb.any_count++;
+	soisconnected(so);
+	so->so_options |= SO_USELOOPBACK;
 
 	return (error);
 }
@@ -1762,6 +1767,7 @@ struct protosw routesw[] = {
   .pr_output	= route_output,
   .pr_ctloutput	= route_ctloutput,
   .pr_usrreq	= route_usrreq,
+  .pr_attach	= route_attach,
   .pr_init	= raw_init,
   .pr_sysctl	= sysctl_rtable
 }

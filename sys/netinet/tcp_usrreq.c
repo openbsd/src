@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.144 2017/02/09 15:19:32 jca Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.145 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * a (struct inpcb) pointed at by the socket, and this
 	 * structure will point at a subsidiary (struct tcpcb).
 	 */
-	if (inp == NULL && req != PRU_ATTACH) {
+	if (inp == NULL) {
 		error = so->so_error;
 		if (error == 0)
 			error = EINVAL;
@@ -182,23 +182,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	} else
 		ostate = 0;
 	switch (req) {
-
-	/*
-	 * TCP attaches to socket via PRU_ATTACH, reserving space,
-	 * and an internet control block.
-	 */
-	case PRU_ATTACH:
-		if (inp) {
-			error = EISCONN;
-			break;
-		}
-		error = tcp_attach(so);
-		if (error)
-			break;
-		if ((so->so_options & SO_LINGER) && so->so_linger == 0)
-			so->so_linger = TCP_LINGERTIME;
-		tp = sototcpcb(so);
-		break;
 
 	/*
 	 * PRU_DETACH detaches the TCP protocol from the socket.
@@ -608,12 +591,14 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
  * bufer space, and entering LISTEN state if to accept connections.
  */
 int
-tcp_attach(struct socket *so)
+tcp_attach(struct socket *so, int proto)
 {
 	struct tcpcb *tp;
 	struct inpcb *inp;
 	int error;
 
+	if (so->so_pcb)
+		return EISCONN;
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0 ||
 	    sbcheckreserve(so->so_snd.sb_wat, tcp_sendspace) ||
 	    sbcheckreserve(so->so_rcv.sb_wat, tcp_recvspace)) {
@@ -645,6 +630,11 @@ tcp_attach(struct socket *so)
 #else
 	tp->pf = PF_INET;
 #endif
+	if ((so->so_options & SO_LINGER) && so->so_linger == 0)
+		so->so_linger = TCP_LINGERTIME;
+
+	if (tp && (so->so_options & SO_DEBUG))
+		tcp_trace(TA_USER, 0, tp, (caddr_t)0, 0 /* XXX */, 0);
 	return (0);
 }
 

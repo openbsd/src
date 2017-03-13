@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.116 2017/02/14 09:46:21 mpi Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.117 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		goto release;
 	}
-	if (unp == NULL && req != PRU_ATTACH) {
+	if (unp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
@@ -125,14 +125,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	NET_ASSERT_UNLOCKED();
 
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (unp) {
-			error = EISCONN;
-			break;
-		}
-		error = unp_attach(so);
-		break;
 
 	case PRU_DETACH:
 		unp_detach(unp);
@@ -351,11 +343,13 @@ u_long	unpdg_recvspace = 4*1024;
 int	unp_rights;			/* file descriptors in flight */
 
 int
-unp_attach(struct socket *so)
+uipc_attach(struct socket *so, int proto)
 {
 	struct unpcb *unp;
 	int error;
 	
+	if (so->so_pcb)
+		return EISCONN;
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		switch (so->so_type) {
 

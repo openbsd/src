@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.231 2017/02/05 16:23:38 jca Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.232 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1115,7 +1115,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	}
 
 	inp = sotoinpcb(so);
-	if (inp == NULL && req != PRU_ATTACH) {
+	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
@@ -1125,22 +1125,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (inp != NULL) {
-			error = EINVAL;
-			break;
-		}
-		if ((error = soreserve(so, udp_sendspace, udp_recvspace)) ||
-		    (error = in_pcballoc(so, &udbtable)))
-			break;
-#ifdef INET6
-		if (sotoinpcb(so)->inp_flags & INP_IPV6)
-			sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
-		else
-#endif /* INET6 */
-			sotoinpcb(so)->inp_ip.ip_ttl = ip_defttl;
-		break;
 
 	case PRU_DETACH:
 		in_pcbdetach(inp);
@@ -1305,6 +1289,26 @@ release:
 	m_freem(control);
 	m_freem(m);
 	return (error);
+}
+
+int
+udp_attach(struct socket *so, int proto)
+{
+	int error;
+
+	if (so->so_pcb != NULL)
+		return EINVAL;
+
+	if ((error = soreserve(so, udp_sendspace, udp_recvspace)) ||
+	    (error = in_pcballoc(so, &udbtable)))
+		return error;
+#ifdef INET6
+	if (sotoinpcb(so)->inp_flags & INP_IPV6)
+		sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
+	else
+#endif /* INET6 */
+		sotoinpcb(so)->inp_ip.ip_ttl = ip_defttl;
+	return 0;
 }
 
 /*

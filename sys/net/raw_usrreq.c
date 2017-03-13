@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.30 2017/03/07 09:23:27 mpi Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.31 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -76,20 +76,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (EINVAL);
 	}
 	switch (req) {
-
-	/*
-	 * Allocate a raw control block and fill in the
-	 * necessary info to allow packets to be routed to
-	 * the appropriate raw interface routine.
-	 */
-	case PRU_ATTACH:
-		if ((so->so_state & SS_PRIV) == 0) {
-			error = EACCES;
-			break;
-		}
-		error = raw_attach(so, (int)(long)nam);
-		break;
-
 	/*
 	 * Destroy state just before socket deallocation.
 	 * Flush data or not depending on the options.

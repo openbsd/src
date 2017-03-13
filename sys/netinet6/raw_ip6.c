@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.107 2017/03/03 15:48:02 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.108 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -556,48 +556,14 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct inpcb *in6p = sotoinpcb(so);
 	int error = 0;
-	int priv;
 
 	NET_ASSERT_LOCKED();
-
-	priv = 0;
-	if ((so->so_state & SS_PRIV) != 0)
-		priv++;
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
 
 	switch (req) {
-	case PRU_ATTACH:
-		if (in6p)
-			panic("rip6_attach");
-		if (!priv) {
-			error = EACCES;
-			break;
-		}
-		if ((long)nam < 0 || (long)nam >= IPPROTO_MAX) {
-			error = EPROTONOSUPPORT;
-			break;
-		}
-		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
-		    (error = in_pcballoc(so, &rawin6pcbtable))) {
-			break;
-		}
-		in6p = sotoinpcb(so);
-		in6p->inp_ipv6.ip6_nxt = (long)nam;
-		in6p->inp_cksum6 = -1;
-
-		in6p->inp_icmp6filt = malloc(sizeof(struct icmp6_filter),
-		    M_PCB, M_NOWAIT);
-		if (in6p->inp_icmp6filt == NULL) {
-			in_pcbdetach(in6p);
-			error = ENOMEM;
-			break;
-		}
-		ICMP6_FILTER_SETPASSALL(in6p->inp_icmp6filt);
-		break;
-
 	case PRU_DISCONNECT:
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			error = ENOTCONN;
@@ -757,6 +723,37 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 	m_freem(m);
 	return (error);
+}
+
+int
+rip6_attach(struct socket *so, int proto)
+{
+	struct inpcb *in6p;
+	int error;
+
+	if (so->so_pcb)
+		panic("rip6_attach");
+	if ((so->so_state & SS_PRIV) == 0)
+		return (EACCES);
+	if (proto < 0 || proto >= IPPROTO_MAX)
+		return EPROTONOSUPPORT;
+
+	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
+	    (error = in_pcballoc(so, &rawin6pcbtable)))
+		return error;
+
+	in6p = sotoinpcb(so);
+	in6p->inp_ipv6.ip6_nxt = proto;
+	in6p->inp_cksum6 = -1;
+
+	in6p->inp_icmp6filt = malloc(sizeof(struct icmp6_filter),
+	    M_PCB, M_NOWAIT);
+	if (in6p->inp_icmp6filt == NULL) {
+		in_pcbdetach(in6p);
+		return ENOMEM;
+	}
+	ICMP6_FILTER_SETPASSALL(in6p->inp_icmp6filt);
+	return 0;
 }
 
 int

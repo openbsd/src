@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.14 2017/01/27 20:31:42 bluhm Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.15 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -91,7 +91,10 @@ struct fdpass {
 	int		 flags;
 };
 
-int	unp_attach(struct socket *);
+int	uipc_usrreq(struct socket *, int , struct mbuf *,
+			 struct mbuf *, struct mbuf *, struct proc *);
+int	uipc_attach(struct socket *, int);
+
 int	unp_bind(struct unpcb *, struct mbuf *, struct proc *);
 int	unp_connect(struct socket *, struct mbuf *, struct proc *);
 int	unp_connect2(struct socket *, struct socket *);

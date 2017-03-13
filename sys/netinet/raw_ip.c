@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.96 2017/03/03 15:48:02 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.97 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -403,31 +403,12 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		return (in_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
 
-	if (inp == NULL && req != PRU_ATTACH) {
+	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (inp)
-			panic("rip_attach");
-		if ((so->so_state & SS_PRIV) == 0) {
-			error = EACCES;
-			break;
-		}
-		if ((long)nam < 0 || (long)nam >= IPPROTO_MAX) {
-			error = EPROTONOSUPPORT;
-			break;
-		}
-		if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
-		    (error = in_pcballoc(so, &rawcbtable))) {
-			break;
-		}
-		inp = sotoinpcb(so);
-		inp->inp_ip.ip_p = (long)nam;
-		break;
 
 	case PRU_DISCONNECT:
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -563,4 +544,26 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 release:
 	m_freem(m);
 	return (error);
+}
+
+int
+rip_attach(struct socket *so, int proto)
+{
+	struct inpcb *inp;
+	int error;
+
+	if (so->so_pcb)
+		panic("rip_attach");
+	if ((so->so_state & SS_PRIV) == 0)
+		return EACCES;
+	if (proto < 0 || proto >= IPPROTO_MAX)
+		return EPROTONOSUPPORT;
+
+	if ((error = soreserve(so, rip_sendspace, rip_recvspace)) ||
+	    (error = in_pcballoc(so, &rawcbtable))) {
+		return error;
+	}
+	inp = sotoinpcb(so);
+	inp->inp_ip.ip_p = proto;
+	return 0;
 }

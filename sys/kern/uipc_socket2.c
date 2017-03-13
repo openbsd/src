@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.73 2017/03/07 09:23:27 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.74 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -187,8 +187,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
 
 	soqinsque(head, so, soqueue);
-	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL, NULL,
-	    curproc)) {
+	if ((*so->so_proto->pr_attach)(so, 0)) {
 		(void) soqremque(so, soqueue);
 		pool_put(&socket_pool, so);
 		return (NULL);

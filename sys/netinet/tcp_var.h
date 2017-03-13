@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.122 2017/02/09 15:19:32 jca Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.123 2017/03/13 20:18:21 claudio Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -716,7 +716,6 @@ extern	int tcp_syn_use_limit;   /* number of uses before reseeding hash */
 extern	struct syn_cache_set tcp_syn_cache[];
 extern	int tcp_syn_cache_active; /* active syn cache, may be 0 or 1 */
 
-int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
@@ -765,6 +764,7 @@ struct tcpcb *
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+int	 tcp_attach(struct socket *, int);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 #ifdef TCP_SACK

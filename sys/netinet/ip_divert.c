@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.44 2017/02/09 15:32:56 jca Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.45 2017/03/13 20:18:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -249,30 +249,11 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		return (in_control(so, (u_long)m, (caddr_t)addr,
 		    (struct ifnet *)control));
 	}
-	if (inp == NULL && req != PRU_ATTACH) {
+	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
 	}
 	switch (req) {
-
-	case PRU_ATTACH:
-		if (inp != NULL) {
-			error = EINVAL;
-			break;
-		}
-		if ((so->so_state & SS_PRIV) == 0) {
-			error = EACCES;
-			break;
-		}
-		error = in_pcballoc(so, &divbtable);
-		if (error)
-			break;
-
-		error = soreserve(so, divert_sendspace, divert_recvspace);
-		if (error)
-			break;
-		sotoinpcb(so)->inp_flags |= INP_HDRINCL;
-		break;
 
 	case PRU_DETACH:
 		in_pcbdetach(inp);
@@ -330,6 +311,28 @@ release:
 	m_freem(control);
 	m_freem(m);
 	return (error);
+}
+
+int
+divert_attach(struct socket *so, int proto)
+{
+	int error;
+
+	if (so->so_pcb != NULL)
+		return EINVAL;
+	if ((so->so_state & SS_PRIV) == 0)
+		return EACCES;
+
+	error = in_pcballoc(so, &divbtable);
+	if (error)
+		return error;
+
+	error = soreserve(so, divert_sendspace, divert_recvspace);
+	if (error)
+		return error;
+
+	sotoinpcb(so)->inp_flags |= INP_HDRINCL;
+	return (0);
 }
 
 int

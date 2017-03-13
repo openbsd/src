@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.39 2017/03/03 15:48:02 bluhm Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.40 2017/03/13 20:18:21 claudio Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -189,31 +189,39 @@ ret:
 	return (error);
 }
 
-static int
-pfkey_attach(struct socket *socket, struct mbuf *proto, struct proc *p)
+int
+pfkey_attach(struct socket *so, int proto)
 {
 	int rval;
 
-	if (!(socket->so_pcb = malloc(sizeof(struct rawcb),
+	if ((so->so_state & SS_PRIV) == 0)
+		return EACCES;
+
+	if ((so->so_proto->pr_protocol > PFKEY_PROTOCOL_MAX) ||
+	    (so->so_proto->pr_protocol < 0) ||
+	    !pfkey_versions[so->so_proto->pr_protocol])
+		return (EPROTONOSUPPORT);
+
+	if (!(so->so_pcb = malloc(sizeof(struct rawcb),
 	    M_PCB, M_DONTWAIT | M_ZERO)))
 		return (ENOMEM);
 
-	rval = raw_usrreq(socket, PRU_ATTACH, NULL, proto, NULL, p);
+	rval = raw_attach(so, so->so_proto->pr_protocol);
 	if (rval)
 		goto ret;
 
-	((struct rawcb *)socket->so_pcb)->rcb_faddr = &pfkey_addr;
-	soisconnected(socket);
+	((struct rawcb *)so->so_pcb)->rcb_faddr = &pfkey_addr;
+	soisconnected(so);
 
-	socket->so_options |= SO_USELOOPBACK;
+	so->so_options |= SO_USELOOPBACK;
 	if ((rval =
-	    pfkey_versions[socket->so_proto->pr_protocol]->create(socket)) != 0)
+	    pfkey_versions[so->so_proto->pr_protocol]->create(so)) != 0)
 		goto ret;
 
 	return (0);
 
 ret:
-	free(socket->so_pcb, M_PCB, sizeof(struct rawcb));
+	free(so->so_pcb, M_PCB, sizeof(struct rawcb));
 	return (rval);
 }
 
@@ -243,9 +251,6 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 		return (EPROTONOSUPPORT);
 
 	switch (req) {
-	case PRU_ATTACH:
-		return (pfkey_attach(socket, nam, p));
-
 	case PRU_DETACH:
 		return (pfkey_detach(socket, p));
 
@@ -268,7 +273,8 @@ static struct protosw pfkey_protosw_template = {
   .pr_protocol	= -1,
   .pr_flags	= PR_ATOMIC | PR_ADDR,
   .pr_output	= pfkey_output,
-  .pr_usrreq	= pfkey_usrreq
+  .pr_usrreq	= pfkey_usrreq,
+  .pr_attach	= pfkey_attach,
 };
 
 int
