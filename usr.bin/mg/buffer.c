@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.102 2016/09/07 11:42:01 lum Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.103 2017/03/13 20:32:58 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -88,6 +88,9 @@ usebuffer(int f, int n)
 	else
 		bufp = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
 		    EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
+
+	if (bufp == NULL)
+		return FALSE;
 
 	return (usebufname(bufp));
 }
