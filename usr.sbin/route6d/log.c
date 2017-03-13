@@ -1,3 +1,5 @@
+/*	$OpenBSD: log.c,v 1.2 2017/03/13 21:20:56 bluhm Exp $	*/
+
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
