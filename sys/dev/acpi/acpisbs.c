@@ -1,6 +1,6 @@
-/* $OpenBSD: acpisbs.c,v 1.5 2017/03/12 21:48:56 jung Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.6 2017/03/13 02:33:34 jcs Exp $ */
 /*
- * Smart Battery Subsystem device driver
+ * Smart Battery subsystem device driver
  * ACPI 5.0 spec section 10
  *
  * Copyright (c) 2016-2017 joshua stein <jcs@openbsd.org>
@@ -209,8 +209,12 @@ acpisbs_attach(struct device *parent, struct device *self, void *aux)
 	acpisbs_setup_sensors(sc);
 	acpisbs_refresh_sensors(sc);
 
-	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpisbs_notify,
-	    sc, ACPIDEV_POLL);
+	/*
+	 * Request notification of SCI events on the subsystem itself, but also
+	 * periodically poll as a fallback in case those events never arrive.
+	 */
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev,
+	    acpisbs_notify, sc, ACPIDEV_POLL);
 
 	sc->sc_acpi->sc_havesbs = 1;
 }
@@ -361,12 +365,23 @@ acpisbs_notify(struct aml_node *node, int notify_type, void *arg)
 
 	getmicrotime(&tv);
 
-	if (tv.tv_sec - sc->sc_lastpoll.tv_sec > ACPISBS_POLL_FREQ) {
-		acpisbs_read(sc);
-		getmicrotime(&sc->sc_lastpoll);
+	switch (notify_type) {
+	case 0x00:
+		/* fallback poll */
+	case 0x80:
+		/*
+		 * EC SCI will come for every data point, so only run once in a
+		 * while
+		 */
+		if (tv.tv_sec - sc->sc_lastpoll.tv_sec > ACPISBS_POLL_FREQ) {
+			acpisbs_read(sc);
+			acpisbs_refresh_sensors(sc);
+			getmicrotime(&sc->sc_lastpoll);
+		}
+		break;
+	default:
+		break;
 	}
-
-	acpisbs_refresh_sensors(sc);
 
 	return 0;
 }
