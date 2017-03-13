@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.137 2017/03/13 14:57:55 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.138 2017/03/13 15:06:51 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4683,7 +4683,7 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	/* redirect flows to IPCOMP */
 	/* XXX expensive? should be merged into ikev2_childsa_negotiate() */
 	TAILQ_FOREACH_SAFE(flow, &sa->sa_flows, flow_entry, nflow) {
-		if (flow->flow_loaded ||
+		if (flow->flow_loaded || flow->flow_ipcomp ||
 		    flow->flow_saproto != IKEV2_SAPROTO_ESP)
 			continue;
 		TAILQ_FOREACH(oflow, &sa->sa_flows, flow_entry)
@@ -4706,6 +4706,7 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 	}
 
 	/* setup ESP flows for gateways */
+	flowa->flow_ipcomp = 1;
 	flowa->flow_dir = IPSP_DIRECTION_OUT;
 	flowa->flow_saproto = IKEV2_SAPROTO_ESP;
 	flowa->flow_local = &sa->sa_local;
@@ -4802,7 +4803,7 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
 {
 	struct iked_childsa	*csa, *nextcsa = NULL;
 	uint64_t		 peerspi = 0;
-	int			 found = 0;
+	int			 found = 0, ipcomp = 0;
 
 	for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL; csa = nextcsa) {
 		nextcsa = TAILQ_NEXT(csa, csa_entry);
@@ -4829,8 +4830,21 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
 		if (spi && csa->csa_spi.spi == spi)
 			peerspi = csa->csa_peerspi;
 
+		if (csa->csa_parent && csa->csa_parent->csa_children == 1)
+			ipcomp = 1;
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
 		childsa_free(csa);
+	}
+
+	/* lookup and delete matching IPcomp SAs */
+	if (ipcomp) {
+		for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
+		    csa = nextcsa) {
+			nextcsa = TAILQ_NEXT(csa, csa_entry);
+			if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP &&
+			    csa->csa_children == 0)
+				ikev2_ipcomp_csa_free(env, csa);
+		}
 	}
 
 	if (spiptr)
@@ -5004,8 +5018,12 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		return (0);
 
 	sa = csa->csa_ikesa;
-	if (sa && (sa->sa_stateflags & IKED_REQ_CHILDSA))
+	if (csa->csa_saproto != IKEV2_SAPROTO_IPCOMP &&
+	    sa && (sa->sa_stateflags & IKED_REQ_CHILDSA)) {
+		/* XXXX might loop, should we add a counter? */
+		log_debug("%s: parent SA busy", __func__);
 		return (-1);	/* busy, retry later */
+	}
 
 	RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
 	csa->csa_loaded = 0;
