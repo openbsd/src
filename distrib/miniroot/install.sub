@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.987 2017/03/10 22:34:09 rpe Exp $
+#	$OpenBSD: install.sub,v 1.988 2017/03/13 17:08:31 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1635,7 +1635,7 @@ install_http() {
 	# Set HTTP_DIR to a default path in case it was not defined yet.
 	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
 	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
-	HTTP_DIR=$resp
+	HTTP_DIR=${resp##+(/)}
 	_url_base="$_http_proto://$HTTP_SERVER/$HTTP_DIR"
 
 	# Fetch SHA256.sig to create the list of files to select from.
