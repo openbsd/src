@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.134 2017/02/24 11:23:02 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.135 2017/03/13 14:33:33 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4314,20 +4314,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			continue;
 
 		RB_FOREACH(flow, iked_flows, &sa->sa_policy->pol_flows) {
-			skip = 0;
-			TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
-				if (IKED_ADDR_EQ(&saflow->flow_src,
-				    &flow->flow_src) &&
-				    IKED_ADDR_EQ(&saflow->flow_dst,
-				    &flow->flow_dst) &&
-				    saflow->flow_saproto ==
-				    prop->prop_protoid) {
-					skip = 1;
-					break;
-				}
-			}
-			if (skip)
-				continue;
 
 			if ((flowa = calloc(1, sizeof(*flowa))) == NULL) {
 				log_debug("%s: failed to get flow", __func__);
@@ -4341,6 +4327,18 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
 			ikev2_cp_fixaddr(sa, &flow->flow_dst, &flowa->flow_dst);
+
+			skip = 0;
+			TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
+				if (flow_equal(saflow, flowa)) {
+					skip = 1;
+					break;
+				}
+			}
+			if (skip) {
+				flow_free(flowa);
+				continue;
+			}
 
 			if ((flowb = calloc(1, sizeof(*flowb))) == NULL) {
 				log_debug("%s: failed to get flow", __func__);
@@ -4573,7 +4571,8 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 		    flow->flow_saproto != IKEV2_SAPROTO_ESP)
 			continue;
 		TAILQ_FOREACH(oflow, &sa->sa_flows, flow_entry)
-			if (IKED_ADDR_EQ(&oflow->flow_src, &flow->flow_src) &&
+			if (flow != oflow &&
+			    IKED_ADDR_EQ(&oflow->flow_src, &flow->flow_src) &&
 			    IKED_ADDR_EQ(&oflow->flow_dst, &flow->flow_dst) &&
 			    oflow->flow_dir == flow->flow_dir &&
 			    oflow->flow_saproto == IKEV2_SAPROTO_IPCOMP)
@@ -4606,10 +4605,7 @@ ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
 
 	/* skip if flow already exists */
 	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-		if (IKED_ADDR_EQ(&flow->flow_src, &flowa->flow_src) &&
-		    IKED_ADDR_EQ(&flow->flow_dst, &flowa->flow_dst) &&
-		    flow->flow_dir == flowa->flow_dir &&
-		    flow->flow_saproto == flowa->flow_saproto) {
+		if (flow_equal(flow, flowa)) {
 			free(flowa);
 			free(flowb);
 			goto done;

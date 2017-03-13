@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.43 2017/03/13 14:19:08 patrick Exp $	*/
+/*	$OpenBSD: policy.c,v 1.44 2017/03/13 14:33:33 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -585,16 +585,24 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 {
 	int		diff = 0;
 
-	if (a->flow_peer && b->flow_peer)
-		diff = addr_cmp(a->flow_peer, b->flow_peer, 0);
+	if (!diff)
+		diff = (int)a->flow_ipproto - (int)b->flow_ipproto;
+	if (!diff)
+		diff = (int)a->flow_saproto - (int)b->flow_saproto;
+	if (!diff)
+		diff = (int)a->flow_dir - (int)b->flow_dir;
 	if (!diff)
 		diff = addr_cmp(&a->flow_dst, &b->flow_dst, 1);
 	if (!diff)
 		diff = addr_cmp(&a->flow_src, &b->flow_src, 1);
-	if (!diff && a->flow_dir && b->flow_dir)
-		diff = (int)a->flow_dir - (int)b->flow_dir;
 
 	return (diff);
+}
+
+int
+flow_equal(struct iked_flow *a, struct iked_flow *b)
+{
+	return (flow_cmp(a, b) == 0);
 }
 
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);

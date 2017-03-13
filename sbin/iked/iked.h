@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.102 2017/02/03 08:23:46 guenther Exp $	*/
+/*	$OpenBSD: iked.h,v 1.103 2017/03/13 14:33:33 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -696,6 +696,7 @@ void	 childsa_free(struct iked_childsa *);
 struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, uint64_t, uint8_t);
 void	 flow_free(struct iked_flow *);
+int	 flow_equal(struct iked_flow *, struct iked_flow *);
 struct iked_sa *
 	 sa_lookup(struct iked *, uint64_t, uint64_t, unsigned int);
 struct iked_user *
