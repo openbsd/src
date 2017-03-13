@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.52 2017/03/09 20:15:36 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.53 2017/03/13 01:00:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -177,7 +177,7 @@ struct xnf_softc {
 
 	/* Rx ring */
 	struct xnf_rx_ring	*sc_rx_ring;
-	int			 sc_rx_cons;
+	uint32_t		 sc_rx_cons;
 	bus_dmamap_t		 sc_rx_rmap;		  /* map for the ring */
 	bus_dma_segment_t	 sc_rx_seg;
 	uint32_t		 sc_rx_ref;		  /* grant table ref */
@@ -187,7 +187,7 @@ struct xnf_softc {
 
 	/* Tx ring */
 	struct xnf_tx_ring	*sc_tx_ring;
-	int			 sc_tx_cons;
+	uint32_t		 sc_tx_cons;
 	bus_dmamap_t		 sc_tx_rmap;		  /* map for the ring */
 	bus_dma_segment_t	 sc_tx_seg;
 	uint32_t		 sc_tx_ref;		  /* grant table ref */
@@ -366,11 +366,11 @@ xnf_lladdr(struct xnf_softc *sc)
 	if (xs_getprop(sc->sc_parent, sc->sc_backend, "mac", mac, sizeof(mac)))
 		return (-1);
 
-	for (i = 0, j = 0; j < ETHER_ADDR_LEN; i += 3) {
+	for (i = 0, j = 0; j < ETHER_ADDR_LEN; i += 3, j++) {
 		if ((hi = nibble(mac[i])) == -1 ||
 		    (lo = nibble(mac[i+1])) == -1)
 			return (-1);
-		enaddr[j++] = hi << 4 | lo;
+		enaddr[j] = hi << 4 | lo;
 	}
 
 	memcpy(sc->sc_ac.ac_enaddr, enaddr, ETHER_ADDR_LEN);
@@ -922,7 +922,7 @@ xnf_rx_ring_drain(struct xnf_softc *sc)
 void
 xnf_rx_ring_destroy(struct xnf_softc *sc)
 {
-	int i, slots = 0;
+	int i;
 
 	for (i = 0; i < XNF_RX_DESC; i++) {
 		if (sc->sc_rx_buf[i] == NULL)
@@ -932,7 +932,6 @@ xnf_rx_ring_destroy(struct xnf_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rx_dmap[i]);
 		m_freem(sc->sc_rx_buf[i]);
 		sc->sc_rx_buf[i] = NULL;
-		slots++;
 	}
 
 	for (i = 0; i < XNF_RX_DESC; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.79 2017/02/24 16:58:12 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.80 2017/03/13 01:00:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -276,7 +276,7 @@ xen_init_hypercall(struct xen_softc *sc)
 
 	/* We don't support more than one hypercall page */
 	if (regs[0] != 1) {
-		printf(": requested %d hypercall pages\n", regs[0]);
+		printf(": requested %u hypercall pages\n", regs[0]);
 		return (-1);
 	}
 
@@ -673,7 +673,7 @@ xen_intr(void)
 				continue;
 			port = (row * LONG_BIT) + bit;
 			if ((xi = xen_intsrc_acquire(sc, port)) == NULL) {
-				printf("%s: unhandled interrupt on port %u\n",
+				printf("%s: unhandled interrupt on port %d\n",
 				    sc->sc_dev.dv_xname, port);
 				continue;
 			}
@@ -976,7 +976,7 @@ xen_init_grant_tables(struct xen_softc *sc)
 		return (-1);
 	}
 
-	printf(", %u grant table frames", sc->sc_gntmax);
+	printf(", %d grant table frames", sc->sc_gntmax);
 
 	xen_bus_dma_tag._cookie = sc;
 

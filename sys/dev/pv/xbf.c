@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.24 2017/02/24 16:58:12 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.25 2017/03/13 01:00:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -934,7 +934,7 @@ xbf_init(struct xbf_softc *sc)
 		if (i == 0 && sc->sc_xr_size == 1)
 			snprintf(pbuf, sizeof(pbuf), "ring-ref");
 		else
-			snprintf(pbuf, sizeof(pbuf), "ring-ref%u", i);
+			snprintf(pbuf, sizeof(pbuf), "ring-ref%d", i);
 		prop = pbuf;
 		if (xs_setnum(sc->sc_parent, sc->sc_node, prop,
 		    sc->sc_xr_ref[i]))

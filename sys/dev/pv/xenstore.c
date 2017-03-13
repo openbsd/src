@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.41 2017/02/12 11:56:41 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.42 2017/03/13 01:00:15 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -116,8 +116,8 @@ struct xs_msghdr {
 
 struct xs_msg {
 	struct xs_msghdr	 xsm_hdr;
-	int			 xsm_read;
-	int			 xsm_dlen;
+	uint32_t		 xsm_read;
+	uint32_t		 xsm_dlen;
 	uint8_t			*xsm_data;
 	TAILQ_ENTRY(xs_msg)	 xsm_link;
 };
@@ -219,7 +219,7 @@ xs_attach(struct xen_softc *sc)
 	}
 	xs->xs_port = xhv.value;
 
-	printf(", event channel %d\n", xs->xs_port);
+	printf(", event channel %u\n", xs->xs_port);
 
 	/* Fetch a frame number (PA) of a shared xenstore page */
 	memset(&xhv, 0, sizeof(xhv));
@@ -321,8 +321,8 @@ xs_geterror(struct xs_msg *xsm)
 
 	for (i = 0; i < nitems(xs_errors); i++)
 		if (strcmp(xs_errors[i].xse_errstr, xsm->xsm_data) == 0)
-			break;
-	return (xs_errors[i].xse_errnum);
+			return (xs_errors[i].xse_errnum);
+	return (EOPNOTSUPP);
 }
 
 static inline uint32_t
@@ -400,7 +400,7 @@ xs_start(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec *iov,
 	/* Data loop */
 	for (i = 0; i < iov_cnt; i++) {
 		if (xs_output(xst, iov[i].iov_base, iov[i].iov_len) == -1) {
-			printf("%s: failed on iovec #%d len %ld\n", __func__,
+			printf("%s: failed on iovec #%d len %lu\n", __func__,
 			    i, iov[i].iov_len);
 			rw_exit_write(&xs->xs_rnglck);
 			return (-1);
@@ -605,7 +605,7 @@ xs_intr(void *arg)
 static inline int
 xs_get_buf(struct xs_transaction *xst, struct xs_msg *xsm, int len)
 {
-	unsigned char *buf = NULL;
+	unsigned char *buf;
 
 	buf = malloc(len, M_DEVBUF, M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
 	if (buf == NULL)
@@ -637,7 +637,8 @@ xs_parse(struct xs_transaction *xst, struct xs_msg *xsm, struct iovec **iov,
     int *iov_cnt)
 {
 	char *bp, *cp;
-	int i, dlen, flags;
+	uint32_t dlen;
+	int i, flags;
 
 	/* If the response size is zero, we return an empty string */
 	dlen = MAX(xsm->xsm_hdr.xmh_len, 1);

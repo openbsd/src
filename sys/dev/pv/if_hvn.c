@@ -308,7 +308,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	DPRINTF("%s:", sc->sc_dev.dv_xname);
-	printf(" channel %u: NVS %u.%u NDIS %u.%u, address %s\n",
+	printf(" channel %u: NVS %d.%d NDIS %d.%d, address %s\n",
 	    sc->sc_chan->ch_id, sc->sc_proto >> 16, sc->sc_proto & 0xffff,
 	    sc->sc_ndisver >> 16 , sc->sc_ndisver & 0xffff,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
@@ -989,7 +989,7 @@ hvn_nvs_intr(void *arg)
 				hvn_txeof(sc, cph->cph_tid);
 				break;
 			default:
-				printf("%s: unhandled NVSP packet type %d "
+				printf("%s: unhandled NVSP packet type %u "
 				    "on completion\n", sc->sc_dev.dv_xname,
 				    nvs->nvs_type);
 			}
@@ -999,7 +999,7 @@ hvn_nvs_intr(void *arg)
 				hvn_rndis_input(sc, cph->cph_tid, cph);
 				break;
 			default:
-				printf("%s: unhandled NVSP packet type %d "
+				printf("%s: unhandled NVSP packet type %u "
 				    "on receive\n", sc->sc_dev.dv_xname,
 				    nvs->nvs_type);
 			}
@@ -1042,7 +1042,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		    timo);
 		mtx_leave(&sc->sc_nvslck);
 		if (rv == EWOULDBLOCK)
-			printf("%s: NVSP operation %d timed out\n",
+			printf("%s: NVSP operation %u timed out\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type);
 	}
 	return (rv);
@@ -1354,7 +1354,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 			hvn_release_cmd(sc, rc);
 			rv = 0;
 		} else if (rv == EWOULDBLOCK) {
-			printf("%s: RNDIS operation %d timed out\n",
+			printf("%s: RNDIS operation %u timed out\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type);
 		}
 		break;
