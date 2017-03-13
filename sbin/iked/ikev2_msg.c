@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.48 2017/01/20 14:09:00 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.49 2017/03/13 17:41:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -323,7 +323,6 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 			log_debug("%s: failed to set NAT-T", __func__);
 			return (-1);
 		}
-		msg->msg_offset += sizeof(natt);
 	}
 
 	if (sendtofrom(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,

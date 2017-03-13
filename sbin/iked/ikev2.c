@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.139 2017/03/13 17:23:45 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.140 2017/03/13 17:41:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -134,6 +134,8 @@ int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
 
 ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 	    ssize_t);
+ssize_t ikev2_add_nat_detection(struct iked *, struct ibuf *,
+	    struct ikev2_payload **, struct iked_message *, ssize_t);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -830,11 +832,9 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
 	struct ikev2_keyexchange	*ke;
-	struct ikev2_notify		*n;
 	struct iked_sa			*sa;
 	struct ibuf			*buf;
 	struct group			*group;
-	uint8_t				*ptr;
 	ssize_t				 len;
 	int				 ret = -1;
 	struct iked_socket		*sock;
@@ -919,39 +919,9 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 			log_debug("%s: enforcing NAT-T", __func__);
 			req.msg_natt = sa->sa_natt = 1;
 		}
-
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+		if ((len = ikev2_add_nat_detection(env, buf, &pld, &req, len))
+		    == -1)
 			goto done;
-
-		/* NAT-T notify payloads */
-		if ((pld = ikev2_add_payload(buf)) == NULL)
-			goto done;
-		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
-			goto done;
-		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(env, &req, NULL, 0, 0);
-		if ((ptr = ibuf_advance(buf, len)) == NULL)
-			goto done;
-		if ((len = ikev2_nat_detection(env, &req, ptr, len,
-		    betoh16(n->n_type))) == -1)
-			goto done;
-		len += sizeof(*n);
-
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
-			goto done;
-
-		if ((pld = ikev2_add_payload(buf)) == NULL)
-			goto done;
-		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
-			goto done;
-		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(env, &req, NULL, 0, 0);
-		if ((ptr = ibuf_advance(buf, len)) == NULL)
-			goto done;
-		if ((len = ikev2_nat_detection(env, &req, ptr, len,
-		    betoh16(n->n_type))) == -1)
-			goto done;
-		len += sizeof(*n);
 	}
 
 	if ((len = ikev2_add_sighashnotify(buf, &pld, len)) == -1)
@@ -1690,6 +1660,50 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 }
 
 ssize_t
+ikev2_add_nat_detection(struct iked *env, struct ibuf *buf,
+    struct ikev2_payload **pld, struct iked_message *msg, ssize_t len)
+{
+	struct ikev2_notify		*n;
+	uint8_t			*ptr;
+
+	/* *pld is NULL if there is no previous payload */
+	if (*pld != NULL) {
+		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+			return (-1);
+	}
+	/* NAT-T notify payloads */
+	if ((*pld = ikev2_add_payload(buf)) == NULL)
+		return (-1);
+	if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
+		return (-1);
+	n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
+	len = ikev2_nat_detection(env, msg, NULL, 0, 0);
+	if ((ptr = ibuf_advance(buf, len)) == NULL)
+		return (-1);
+	if ((len = ikev2_nat_detection(env, msg, ptr, len,
+	    betoh16(n->n_type))) == -1)
+		return (-1);
+	len += sizeof(*n);
+
+	if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+		return (-1);
+
+	if ((*pld = ikev2_add_payload(buf)) == NULL)
+		return (-1);
+	if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
+		return (-1);
+	n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
+	len = ikev2_nat_detection(env, msg, NULL, 0, 0);
+	if ((ptr = ibuf_advance(buf, len)) == NULL)
+		return (-1);
+	if ((len = ikev2_nat_detection(env, msg, ptr, len,
+	    betoh16(n->n_type))) == -1)
+		return (-1);
+	len += sizeof(*n);
+	return (len);
+}
+
+ssize_t
 ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 {
 	struct iked_policy	*pol = sa->sa_policy;
@@ -2069,11 +2083,9 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
 	struct ikev2_keyexchange	*ke;
-	struct ikev2_notify		*n;
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ibuf			*buf;
 	struct group			*group;
-	uint8_t				*ptr;
 	ssize_t				 len;
 	int				 ret = -1;
 
@@ -2134,40 +2146,10 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0 &&
 	    msg->msg_local.ss_family != AF_UNSPEC) {
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+		if ((len = ikev2_add_nat_detection(env, buf, &pld, &resp, len))
+		    == -1)
 			goto done;
-
-		/* NAT-T notify payloads */
-		if ((pld = ikev2_add_payload(buf)) == NULL)
-			goto done;
-		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
-			goto done;
-		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_SOURCE_IP);
-		len = ikev2_nat_detection(env, &resp, NULL, 0, 0);
-		if ((ptr = ibuf_advance(buf, len)) == NULL)
-			goto done;
-		if ((len = ikev2_nat_detection(env, &resp, ptr, len,
-		    betoh16(n->n_type))) == -1)
-			goto done;
-		len += sizeof(*n);
-
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
-			goto done;
-
-		if ((pld = ikev2_add_payload(buf)) == NULL)
-			goto done;
-		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
-			goto done;
-		n->n_type = htobe16(IKEV2_N_NAT_DETECTION_DESTINATION_IP);
-		len = ikev2_nat_detection(env, &resp, NULL, 0, 0);
-		if ((ptr = ibuf_advance(buf, len)) == NULL)
-			goto done;
-		if ((len = ikev2_nat_detection(env, &resp, ptr, len,
-		    betoh16(n->n_type))) == -1)
-			goto done;
-		len += sizeof(*n);
 	}
-
 	if (sa->sa_statevalid & IKED_REQ_CERT) {
 		/* CERTREQ payload(s) */
 		if ((len = ikev2_add_certreq(buf, &pld,

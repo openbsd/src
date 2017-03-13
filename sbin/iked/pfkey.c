@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.54 2017/03/13 15:06:51 patrick Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.55 2017/03/13 17:41:14 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -511,6 +511,18 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	if (action == SADB_DELETE)
 		goto send;
 
+	if (satype == SADB_SATYPE_ESP &&
+	    sa->csa_ikesa->sa_udpencap && sa->csa_ikesa->sa_natt) {
+		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
+		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
+		udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
+		udpencap.sadb_x_udpencap_port =
+		    sa->csa_ikesa->sa_peer.addr_port;
+
+		log_debug("%s: udpencap port %d", __func__,
+		    ntohs(udpencap.sadb_x_udpencap_port));
+	}
+
 	if ((action == SADB_ADD || action == SADB_UPDATE) &&
 	    !sa->csa_persistent && (lt->lt_bytes || lt->lt_seconds)) {
 		sa_ltime_hard.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -540,18 +552,6 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	    satype != SADB_X_SATYPE_IPCOMP && satype != SADB_X_SATYPE_IPIP) {
 		log_warnx("%s: no key specified", __func__);
 		return (-1);
-	}
-
-	if (satype == SADB_SATYPE_ESP &&
-	    sa->csa_ikesa->sa_udpencap && sa->csa_ikesa->sa_natt) {
-		sadb.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
-		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
-		udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
-		udpencap.sadb_x_udpencap_port =
-		    sa->csa_ikesa->sa_peer.addr_port;
-
-		log_debug("%s: udpencap port %d", __func__,
-		    ntohs(udpencap.sadb_x_udpencap_port));
 	}
 
 	if (sa->csa_integrid)
