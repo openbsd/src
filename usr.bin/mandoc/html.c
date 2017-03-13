@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.77 2017/02/05 20:21:17 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.78 2017/03/13 19:01:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -532,18 +532,25 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		print_byte(h, '=');
 		print_byte(h, '"');
 		switch (*fmt) {
-		case 'M':
-			print_href(h, arg1, arg2, 1);
-			fmt++;
-			break;
 		case 'I':
 			print_href(h, arg1, NULL, 0);
 			fmt++;
 			break;
+		case 'M':
+			print_href(h, arg1, arg2, 1);
+			fmt++;
+			break;
 		case 'R':
 			print_byte(h, '#');
+			print_encode(h, arg1, NULL, 1);
 			fmt++;
-			/* FALLTHROUGH */
+			break;
+		case 'T':
+			print_encode(h, arg1, NULL, 1);
+			print_word(h, "\" title=\"");
+			print_encode(h, arg1, NULL, 1);
+			fmt++;
+			break;
 		default:
 			print_encode(h, arg1, NULL, 1);
 			break;
