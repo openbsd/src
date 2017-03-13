@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.103 2017/03/13 14:33:33 patrick Exp $	*/
+/*	$OpenBSD: iked.h,v 1.104 2017/03/13 14:57:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -437,7 +437,9 @@ struct iked_sa {
 	uint16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
-#define IKED_IKE_SA_DELETE_TIMEOUT	 300		/* 5 minutes */
+#define IKED_IKE_SA_EXCHANGE_TIMEOUT	 300		/* 5 minutes */
+#define IKED_IKE_SA_REKEY_TIMEOUT	 120		/* 2 minutes */
+#define IKED_IKE_SA_DELETE_TIMEOUT	 120		/* 2 minutes */
 #define IKED_IKE_SA_ALIVE_TIMEOUT	 60		/* 1 minute */
 
 	struct iked_timer		 sa_rekey;	/* rekey timeout */

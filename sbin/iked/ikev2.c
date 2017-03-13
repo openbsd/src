@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.136 2017/03/13 14:50:52 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.137 2017/03/13 14:57:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -61,6 +61,7 @@ int	 ikev2_ike_auth(struct iked *, struct iked_sa *);
 
 void	 ikev2_init_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
+void	 ikev2_init_ike_sa_timeout(struct iked *, void *);
 int	 ikev2_init_ike_sa_peer(struct iked *, struct iked_policy *,
 	    struct iked_addr *);
 int	 ikev2_init_ike_auth(struct iked *, struct iked_sa *);
@@ -83,6 +84,8 @@ void	 ikev2_ikesa_delete(struct iked *, struct iked_sa *, int);
 int	 ikev2_init_create_child_sa(struct iked *, struct iked_message *);
 int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 void	 ikev2_ike_sa_rekey(struct iked *, void *);
+void	 ikev2_ike_sa_rekey_timeout(struct iked *, void *);
+void	 ikev2_ike_sa_rekey_schedule(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 
@@ -172,9 +175,14 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_PASSIVE:
 		if (config_getmode(env, imsg->hdr.type) == -1)
 			return (0);	/* ignore error */
-		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa,
-		    NULL);
-		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
+		if (env->sc_passive)
+			timer_del(env, &env->sc_inittmr);
+		else {
+			timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa,
+			    NULL);
+			timer_add(env, &env->sc_inittmr,
+			    IKED_INITIATOR_INITIAL);
+		}
 		return (0);
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
@@ -801,6 +809,18 @@ ikev2_init_ike_sa(struct iked *env, void *arg)
 	timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INTERVAL);
 }
 
+void
+ikev2_init_ike_sa_timeout(struct iked *env, void *arg)
+{
+	struct iked_sa	 *sa = arg;
+
+	log_debug("%s: ispi %s rspi %s", __func__,
+	    print_spi(sa->sa_hdr.sh_ispi, 8),
+	    print_spi(sa->sa_hdr.sh_rspi, 8));
+
+	sa_free(env, sa);
+}
+
 int
 ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
     struct iked_addr *peer)
@@ -953,6 +973,10 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 
 	if ((ret = ikev2_msg_send(env, &req)) == 0)
 		sa_state(env, sa, IKEV2_STATE_SA_INIT);
+
+	/* Setup exchange timeout. */
+	timer_set(env, &sa->sa_timer, ikev2_init_ike_sa_timeout, sa);
+	timer_add(env, &sa->sa_timer, IKED_IKE_SA_EXCHANGE_TIMEOUT);
 
  done:
 	if (ret == -1) {
@@ -1122,11 +1146,13 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		/* Delete exchange timeout. */
+		timer_del(env, &sa->sa_timer);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
 		if (sa->sa_policy->pol_rekey)
-			timer_add(env, &sa->sa_rekey, sa->sa_policy->pol_rekey);
+			ikev2_ike_sa_rekey_schedule(env, sa);
 	}
 
 	if (ret)
@@ -1945,6 +1971,11 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			log_debug("%s: failed to get new SA", __func__);
 			return;
 		}
+		/* Setup exchange timeout. */
+		timer_set(env, &msg->msg_sa->sa_timer,
+		    ikev2_init_ike_sa_timeout, msg->msg_sa);
+		timer_add(env, &msg->msg_sa->sa_timer,
+		    IKED_IKE_SA_EXCHANGE_TIMEOUT);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
 		if (ikev2_msg_valid_ike_sa(env, hdr, msg) == -1)
@@ -2370,11 +2401,13 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
 		sa_state(env, sa, IKEV2_STATE_ESTABLISHED);
+		/* Delete exchange timeout. */
+		timer_del(env, &sa->sa_timer);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
 		if (sa->sa_policy->pol_rekey)
-			timer_add(env, &sa->sa_rekey, sa->sa_policy->pol_rekey);
+			ikev2_ike_sa_rekey_schedule(env, sa);
 	}
 
  done:
@@ -2707,7 +2740,9 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	ssize_t				 len = 0;
 	int				 ret = -1;
 
-	log_debug("%s: called for IKE SA %p", __func__, sa);
+	log_debug("%s: IKE SA %p ispi %s rspi %s", __func__, sa,
+	    print_spi(sa->sa_hdr.sh_ispi, 8),
+	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
 	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
 		/*
@@ -2717,6 +2752,10 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 		timer_add(env, &sa->sa_rekey, 60);
 		return;
 	}
+
+	/* We need to make sure the rekeying finishes in time */
+	timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey_timeout, sa);
+	timer_add(env, &sa->sa_rekey, IKED_IKE_SA_REKEY_TIMEOUT);
 
 	if ((nsa = sa_new(env, 0, 0, 1, sa->sa_policy)) == NULL) {
 		log_debug("%s: failed to get new SA", __func__);
@@ -3022,7 +3061,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	timer_add(env, &nsa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 	timer_set(env, &nsa->sa_rekey, ikev2_ike_sa_rekey, nsa);
 	if (nsa->sa_policy->pol_rekey)
-		timer_add(env, &nsa->sa_rekey, nsa->sa_policy->pol_rekey);
+		ikev2_ike_sa_rekey_schedule(env, nsa);
 	nsa->sa_stateflags = nsa->sa_statevalid; /* XXX */
 
 	/* unregister DPD keep alive timer & rekey first */
@@ -3309,6 +3348,22 @@ ikev2_ike_sa_timeout(struct iked *env, void *arg)
 
 	log_debug("%s: closing SA", __func__);
 	sa_free(env, sa);
+}
+
+void
+ikev2_ike_sa_rekey_timeout(struct iked *env, void *arg)
+{
+	struct iked_sa			*sa = arg;
+
+	log_debug("%s: closing SA", __func__);
+	sa_free(env, sa);
+}
+
+void
+ikev2_ike_sa_rekey_schedule(struct iked *env, struct iked_sa *sa)
+{
+	timer_add(env, &sa->sa_rekey, (sa->sa_policy->pol_rekey * 850 +
+	    arc4random_uniform(100)) / 1000);
 }
 
 void
@@ -3826,6 +3881,7 @@ ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
 	kex->kex_dhpeer = kex->kex_dhiexchange;
 	return (0);
 }
+
 int
 ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
     struct iked_message *msg)
