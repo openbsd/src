@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.188 2017/03/12 03:13:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.189 2017/03/13 07:44:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1649,11 +1649,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
 
-	if (ic->ic_state == IEEE80211_S_SCAN
-#ifndef IEEE80211_STA_ONLY
-	    && ic->ic_opmode != IEEE80211_M_HOSTAP
-#endif
-	   ) {
+	if (ic->ic_state == IEEE80211_S_SCAN) {
 		struct ieee80211_rsnparams rsn, wpa;
 
 		ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
@@ -1683,7 +1679,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		if (rsnie != NULL &&
 		    (ni->ni_supported_rsnprotos & IEEE80211_PROTO_RSN) &&
 		    (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)) {
-			if (ieee80211_save_ie(rsnie, &ni->ni_rsnie) == 0) {
+			if (ieee80211_save_ie(rsnie, &ni->ni_rsnie) == 0
+#ifndef IEEE80211_STA_ONLY
+	    		&& ic->ic_opmode != IEEE80211_M_HOSTAP
+#endif
+			) {
 				ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
 				ni->ni_rsnakms = rsn.rsn_akms;
 				ni->ni_rsnciphers = rsn.rsn_ciphers;
@@ -1695,7 +1695,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		} else if (wpaie != NULL &&
 		    (ni->ni_supported_rsnprotos & IEEE80211_PROTO_WPA) &&
 		    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)) {
-			if (ieee80211_save_ie(wpaie, &ni->ni_rsnie) == 0) {
+			if (ieee80211_save_ie(wpaie, &ni->ni_rsnie) == 0
+#ifndef IEEE80211_STA_ONLY
+	    		&& ic->ic_opmode != IEEE80211_M_HOSTAP
+#endif
+			) {
 				ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
 				ni->ni_rsnakms = wpa.rsn_akms;
 				ni->ni_rsnciphers = wpa.rsn_ciphers;
@@ -1905,6 +1909,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	int resp, status = 0;
 	struct ieee80211_rsnparams rsn;
 	u_int8_t rate;
+	const u_int8_t *saveie = NULL;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
 	    ic->ic_state != IEEE80211_S_RUN)
@@ -2049,31 +2054,38 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	ni->ni_rsngroupmgmtcipher = 0;
 	ni->ni_rsncaps = 0;
 
-	if (ic->ic_flags & IEEE80211_F_RSNON) {
-		const u_int8_t *saveie;
-		/*
-		 * A station should never include both a WPA and an RSN IE
-		 * in its (Re)Association Requests, but if it does, we only
-		 * consider the IE of the highest version of the protocol
-		 * that is allowed (ie RSN over WPA).
-		 */
-		if (rsnie != NULL &&
+	/*
+	 * A station should never include both a WPA and an RSN IE
+	 * in its (Re)Association Requests, but if it does, we only
+	 * consider the IE of the highest version of the protocol
+	 * that is allowed (ie RSN over WPA).
+	 */
+	if (rsnie != NULL) {
+		status = ieee80211_parse_rsn(ic, rsnie, &rsn);
+		if (status != 0)
+			goto end;
+		ni->ni_supported_rsnprotos = IEEE80211_PROTO_RSN;
+		ni->ni_supported_rsnakms = rsn.rsn_akms;
+		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 		    (ic->ic_rsnprotos & IEEE80211_PROTO_RSN)) {
-			status = ieee80211_parse_rsn(ic, rsnie, &rsn);
-			if (status != 0)
-				goto end;
 			ni->ni_rsnprotos = IEEE80211_PROTO_RSN;
-			ni->ni_supported_rsnprotos = IEEE80211_PROTO_RSN;
 			saveie = rsnie;
-		} else if (wpaie != NULL &&
+		}
+	} else if (wpaie != NULL) {
+		status = ieee80211_parse_wpa(ic, wpaie, &rsn);
+		if (status != 0)
+			goto end;
+		ni->ni_supported_rsnprotos = IEEE80211_PROTO_WPA;
+		ni->ni_supported_rsnakms = rsn.rsn_akms;
+		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 		    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA)) {
-			status = ieee80211_parse_wpa(ic, wpaie, &rsn);
-			if (status != 0)
-				goto end;
 			ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
-			ni->ni_supported_rsnprotos = IEEE80211_PROTO_WPA;
 			saveie = wpaie;
-		} else {
+		}
+	}
+
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		if (ni->ni_rsnprotos == IEEE80211_PROTO_NONE) {
 			/*
 			 * In an RSN, an AP shall not associate with STAs
 			 * that fail to include the RSN IE in the
@@ -2091,21 +2103,25 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 		if (rsn.rsn_nakms != 1 ||
 		    !(rsn.rsn_akms & ic->ic_bss->ni_rsnakms)) {
 			status = IEEE80211_STATUS_BAD_AKMP;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 		if (rsn.rsn_nciphers != 1 ||
 		    !(rsn.rsn_ciphers & ic->ic_bss->ni_rsnciphers)) {
 			status = IEEE80211_STATUS_BAD_PAIRWISE_CIPHER;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 		if (rsn.rsn_groupcipher != ic->ic_bss->ni_rsngroupcipher) {
 			status = IEEE80211_STATUS_BAD_GROUP_CIPHER;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 
 		if ((ic->ic_bss->ni_rsncaps & IEEE80211_RSNCAP_MFPR) &&
 		    !(rsn.rsn_caps & IEEE80211_RSNCAP_MFPC)) {
 			status = IEEE80211_STATUS_MFP_POLICY;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 		if ((ic->ic_bss->ni_rsncaps & IEEE80211_RSNCAP_MFPC) &&
@@ -2113,6 +2129,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 		     IEEE80211_RSNCAP_MFPR)) == IEEE80211_RSNCAP_MFPR) {
 			/* STA advertises an invalid setting */
 			status = IEEE80211_STATUS_MFP_POLICY;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 		/*
@@ -2125,6 +2142,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 		     rsn.rsn_groupmgmtcipher !=
 		     ic->ic_bss->ni_rsngroupmgmtcipher)) {
 			status = IEEE80211_STATUS_MFP_POLICY;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 
@@ -2136,16 +2154,18 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 		    (rsn.rsn_ciphers == IEEE80211_CIPHER_TKIP ||
 		     rsn.rsn_groupcipher == IEEE80211_CIPHER_TKIP)) {
 			status = IEEE80211_STATUS_CIPHER_REJ_POLICY;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 
 		/* everything looks fine, save IE and parameters */
-		if (ieee80211_save_ie(saveie, &ni->ni_rsnie) != 0) {
+		if (saveie == NULL ||
+		    ieee80211_save_ie(saveie, &ni->ni_rsnie) != 0) {
 			status = IEEE80211_STATUS_TOOMANY;
+			ni->ni_rsnprotos = IEEE80211_PROTO_NONE;
 			goto end;
 		}
 		ni->ni_rsnakms = rsn.rsn_akms;
-		ni->ni_supported_rsnakms = rsn.rsn_akms;
 		ni->ni_rsnciphers = rsn.rsn_ciphers;
 		ni->ni_rsngroupcipher = ic->ic_bss->ni_rsngroupcipher;
 		ni->ni_rsngroupmgmtcipher = ic->ic_bss->ni_rsngroupmgmtcipher;
