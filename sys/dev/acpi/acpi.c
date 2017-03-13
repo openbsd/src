@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.324 2017/03/12 21:30:44 jcs Exp $ */
+/* $OpenBSD: acpi.c,v 1.325 2017/03/13 01:50:49 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -116,7 +116,6 @@ void	acpi_enable_wakegpes(struct acpi_softc *, int);
 int	acpi_foundec(struct aml_node *, void *);
 int	acpi_foundsony(struct aml_node *node, void *arg);
 int	acpi_foundhid(struct aml_node *, void *);
-int	acpi_foundsbs(struct aml_node *node, void *);
 int	acpi_add_device(struct aml_node *node, void *arg);
 
 void	acpi_thread(void *);
@@ -136,6 +135,7 @@ int	acpi_foundpss(struct aml_node *, void *);
 int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
+int	acpi_foundsbs(struct aml_node *node, void *);
 
 int	acpi_foundide(struct aml_node *node, void *arg);
 int	acpiide_notify(struct aml_node *, int, void *);
@@ -1083,8 +1083,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
 
+#ifndef SMALL_KERNEL
 	/* try to find smart battery first */
 	aml_find_node(&aml_root, "_HID", acpi_foundsbs, sc);
+#endif /* SMALL_KERNEL */
 
 	/* attach battery, power supply and button devices */
 	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
