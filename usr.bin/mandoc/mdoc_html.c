@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.149 2017/03/13 19:01:14 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.150 2017/03/13 20:22:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,6 +46,7 @@ struct	htmlmdoc {
 	void		(*post)(MDOC_ARGS);
 };
 
+static	char		 *cond_id(const struct roff_node *);
 static	char		 *make_id(const struct roff_node *);
 static	void		  print_mdoc_head(MDOC_ARGS);
 static	void		  print_mdoc_node(MDOC_ARGS);
@@ -496,6 +497,22 @@ make_id(const struct roff_node *n)
 	return buf;
 }
 
+static char *
+cond_id(const struct roff_node *n)
+{
+	if (n->child != NULL &&
+	    n->child->type == ROFFT_TEXT &&
+	    (n->prev == NULL ||
+	     (n->prev->type == ROFFT_TEXT &&
+	      strcmp(n->prev->string, "|") == 0)) &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Xo &&
+	      n->parent->parent->prev == NULL &&
+	      n->parent->parent->parent->tok == MDOC_It)))
+		return make_id(n);
+	return NULL;
+}
+
 static int
 mdoc_sh_pre(MDOC_ARGS)
 {
@@ -505,6 +522,7 @@ mdoc_sh_pre(MDOC_ARGS)
 	case ROFFT_HEAD:
 		id = make_id(n);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
+		print_otag(h, TAG_A, "chR", "selflink", id);
 		free(id);
 		break;
 	case ROFFT_BODY:
@@ -527,6 +545,7 @@ mdoc_ss_pre(MDOC_ARGS)
 
 	id = make_id(n);
 	print_otag(h, TAG_H2, "cTi", "Ss", id);
+	print_otag(h, TAG_A, "chR", "selflink", id);
 	free(id);
 	return 1;
 }
@@ -534,9 +553,14 @@ mdoc_ss_pre(MDOC_ARGS)
 static int
 mdoc_fl_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "cT", "Fl");
-	print_text(h, "\\-");
+	char	*id;
 
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_B, "cTi", "Fl", id);
+	free(id);
+
+	print_text(h, "\\-");
 	if (!(n->child == NULL &&
 	    (n->next == NULL ||
 	     n->next->type == ROFFT_TEXT ||
@@ -549,7 +573,12 @@ mdoc_fl_pre(MDOC_ARGS)
 static int
 mdoc_cm_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "cT", "Cm");
+	char	*id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_B, "cTi", "Cm", id);
+	free(id);
 	return 1;
 }
 
@@ -1066,21 +1095,42 @@ mdoc_cd_pre(MDOC_ARGS)
 static int
 mdoc_dv_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_CODE, "cT", "Dv");
+	char	*id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_CODE, "cTi", "Dv", id);
+	free(id);
 	return 1;
 }
 
 static int
 mdoc_ev_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_CODE, "cT", "Ev");
+	char	*id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_CODE, "cTi", "Ev", id);
+	free(id);
 	return 1;
 }
 
 static int
 mdoc_er_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_CODE, "cT", "Er");
+	char	*id;
+
+	id = n->sec == SEC_ERRORS &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Bq &&
+	      n->parent->parent->parent->tok == MDOC_It)) ?
+	    make_id(n) : NULL;
+
+	if (id != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_CODE, "cTi", "Er", id);
+	free(id);
 	return 1;
 }
 
@@ -1434,7 +1484,12 @@ mdoc_in_pre(MDOC_ARGS)
 static int
 mdoc_ic_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "cT", "Ic");
+	char	*id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_B, "cTi", "Ic", id);
+	free(id);
 	return 1;
 }
 
@@ -1486,7 +1541,12 @@ mdoc_bf_pre(MDOC_ARGS)
 static int
 mdoc_ms_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_B, "cT", "Ms");
+	char *id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_B, "cTi", "Ms", id);
+	free(id);
 	return 1;
 }
 
@@ -1522,14 +1582,24 @@ mdoc_rs_pre(MDOC_ARGS)
 static int
 mdoc_no_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_SPAN, "c", "No");
+	char *id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_SPAN, "ci", "No", id);
+	free(id);
 	return 1;
 }
 
 static int
 mdoc_li_pre(MDOC_ARGS)
 {
-	print_otag(h, TAG_CODE, "c", "Li");
+	char	*id;
+
+	if ((id = cond_id(n)) != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
+	print_otag(h, TAG_CODE, "ci", "Li", id);
+	free(id);
 	return 1;
 }
 
