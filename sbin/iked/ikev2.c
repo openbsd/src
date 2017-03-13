@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.138 2017/03/13 15:06:51 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.139 2017/03/13 17:23:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -104,7 +104,7 @@ int	 ikev2_set_sa_proposal(struct iked_sa *, struct iked_policy *,
 	    unsigned int);
 
 int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *,
-	    struct iked_kex *, struct iked_proposals *, int, int);
+	    struct iked_kex *, struct iked_proposals *, int, int, int);
 int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
 	    struct iked_transform **);
 int	 ikev2_valid_proposal(struct iked_proposal *,
@@ -1141,7 +1141,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		return (0);	/* ignored */
 
 	ret = ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
-	    sa->sa_hdr.sh_initiator, 0);
+	    sa->sa_hdr.sh_initiator, 0, 0);
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
@@ -2302,7 +2302,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		return (-1);
 
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
-	    sa->sa_hdr.sh_initiator, 0) < 0)
+	    sa->sa_hdr.sh_initiator, 0, 0) < 0)
 		return (-1);
 
 	/* New encrypted message buffer */
@@ -2930,7 +2930,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	sa->sa_rnonce = ibuf_dup(msg->msg_nonce);
 
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals, 1,
-	    pfs)) {
+	    pfs, !csa)) {
 		log_debug("%s: failed to get CHILD SAs", __func__);
 		return (-1);
 	}
@@ -3251,7 +3251,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		ibuf_release(kex->kex_rnonce);
 		kex->kex_rnonce = nonce;
 
-		if (ikev2_childsa_negotiate(env, sa, kex, &proposals, 0, pfs)) {
+		if (ikev2_childsa_negotiate(env, sa, kex, &proposals, 0,
+		    pfs, !rekeying)) {
 			log_debug("%s: failed to get CHILD SAs", __func__);
 			goto fail;
 		}
@@ -4336,7 +4337,7 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 int
 ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
     struct iked_kex *kex, struct iked_proposals *proposals, int initiator,
-    int pfs)
+    int pfs, int acquired)
 {
 	struct iked_proposal	*prop;
 	struct iked_transform	*xform, *encrxf = NULL, *integrxf = NULL;
@@ -4492,6 +4493,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csa->csa_ikesa = sa;
 		csa->csa_spi.spi_protoid = prop->prop_protoid;
 		csa->csa_esn = esn;
+		csa->csa_acquired = acquired;
 
 		/* Set up responder's SPIs */
 		if (initiator) {
@@ -4980,6 +4982,8 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 
 	if (csa->csa_rekey)	/* See if it's already taken care of */
 		return (0);
+	if (csa->csa_acquired)	/* Don't rekey, wait for hard expire */
+		return (0);
 	if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP)	/* no rekey */
 		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
@@ -5011,6 +5015,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	struct iked_sa			*sa;
 	struct ikev2_delete		*del;
 	uint32_t			 spi32;
+	int			 	 acquired;
 
 	key.csa_spi = *drop;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);
@@ -5043,6 +5048,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		spi32 = htobe32(csa->csa_spi.spi);
 	else
 		spi32 = htobe32(csa->csa_peerspi);
+	acquired = csa->csa_acquired;
 
 	if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
 	    csa->csa_peerspi, NULL, 0))
@@ -5066,6 +5072,10 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		goto done;
 
 	sa->sa_stateflags |= IKED_REQ_INF;
+
+	/* Don't automatically re-initiate Child SAs that have been acquired */
+	if (acquired)
+		goto done;
 
 	/* Initiate Child SA creation */
 	if (ikev2_send_create_child_sa(env, sa, NULL, drop->spi_protoid))

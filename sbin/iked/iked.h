@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.105 2017/03/13 15:06:51 patrick Exp $	*/
+/*	$OpenBSD: iked.h,v 1.106 2017/03/13 17:23:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -173,6 +173,7 @@ struct iked_childsa {
 	uint8_t				 csa_persistent;/* do not rekey */
 	uint8_t				 csa_esn;	/* use ESN */
 	uint8_t				 csa_transport;	/* transport mode */
+	uint8_t				 csa_acquired;	/* no rekey for me */
 
 	struct iked_spi			 csa_spi;
 
