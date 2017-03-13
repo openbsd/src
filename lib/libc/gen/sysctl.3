@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.273 2016/10/07 20:58:12 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.274 2017/03/13 12:34:49 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 7 2016 $
+.Dd $Mdocdate: March 13 2017 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -46,10 +46,10 @@ appropriate privileges to set system information.
 The information available from
 .Fn sysctl
 consists of integers, strings, and tables.
-Information may be retrieved and set from the command interface
-using the
+Information may be retrieved and set using the
 .Xr sysctl 8
-utility.
+utility;
+the variable names used by this utility are given here in parentheses.
 .Pp
 Unless explicitly noted below,
 .Fn sysctl
@@ -162,47 +162,47 @@ More information is also available in
 .It Dv DBCTL_TRIGGER Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv DBCTL_CONSOLE
+.It Dv DBCTL_CONSOLE Pq Va ddb.console
 When this variable is set, an architecture dependent magic key sequence
 on the console or a debugger button will permit entry into the kernel debugger.
 When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be raised.
-.It Dv DBCTL_LOG
+.It Dv DBCTL_LOG Pq Va ddb.log
 When set, ddb output is also logged in the kernel message buffer.
-.It Dv DBCTL_MAXLINE
+.It Dv DBCTL_MAXLINE Pq Va ddb.max_line
 Determines the number of lines to page in
 .Xr ddb 4 .
 This variable is also available as the ddb
 .Dv $lines
 variable.
-.It Dv DBCTL_MAXWIDTH
+.It Dv DBCTL_MAXWIDTH Pq Va ddb.max_width
 Determines the maximum width of a line in
 .Xr ddb 4 .
 This variable is also available as the ddb
 .Dv $maxwidth
 variable.
-.It Dv DBCTL_PANIC
+.It Dv DBCTL_PANIC Pq Va ddb.panic
 When this variable is set, system panics may drop into the kernel debugger.
 When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be raised.
-.It Dv DBCTL_RADIX
+.It Dv DBCTL_RADIX Pq Va ddb.radix
 Determines the default radix or base for non-prefixed numbers
 entered into
 .Xr ddb 4 .
 This variable is also available as the ddb
 .Dv $radix
 variable.
-.It Dv DBCTL_TABSTOP
+.It Dv DBCTL_TABSTOP Pq Va ddb.tab_stop_width
 Width of a tab stop in
 .Xr ddb 4 .
 This variable is also available as the ddb
 .Dv $tabstops
 variable.
-.It Dv DBCTL_TRIGGER
+.It Dv DBCTL_TRIGGER Pq Va ddb.trigger
 When
 .Dv DBCTL_CONSOLE
 is set,
@@ -254,7 +254,7 @@ privileges may change the value.
 .It Dv FS_POSIX_SETUID Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv FS_POSIX_SETUID
+.It Dv FS_POSIX_SETUID Pq Va fx.posix.setuid
 When this variable is set, ownership changes on a file will cause
 the
 .Va S_ISUID
@@ -287,19 +287,20 @@ privileges may change the value.
 .It Dv HW_PAGESIZE Ta "integer" Ta "no"
 .It Dv HW_PERFPOLICY Ta "string" Ta "yes"
 .It Dv HW_PHYSMEM Ta "integer" Ta "no"
+.\" XXX
 .It Dv HW_PHYSMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_PRODUCT Ta "string" Ta "no"
 .It Dv HW_SENSORS Ta "node" Ta "not applicable"
-.It Dv HW_SERIALNO Ta "string" Ta "no"
 .It Dv HW_SETPERF Ta "integer" Ta "yes"
 .It Dv HW_USERMEM Ta "integer" Ta "no"
+.\" XXX
 .It Dv HW_USERMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_UUID Ta "string" Ta "no"
 .It Dv HW_VENDOR Ta "string" Ta "no"
 .It Dv HW_VERSION Ta "string" Ta "no"
 .El
 .Bl -tag -width "123456"
-.It Dv HW_ALLOWPOWERDOWN
+.It Dv HW_ALLOWPOWERDOWN Pq Va hw.allowpowerdown
 Some machines generate an interrupt when the power button is pressed
 and a driver can catch that interrupt.
 When this variable is set, such an event will cause the system to
@@ -308,30 +309,30 @@ When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be changed.
-.It Dv HW_BYTEORDER
+.It Dv HW_BYTEORDER Pq Va hw.byteorder
 The byteorder (4321 or 1234).
-.It Dv HW_CPUSPEED
+.It Dv HW_CPUSPEED Pq Va hw.cpuspeed
 The current CPU frequency
 .Pq in MHz .
-.It Dv HW_DISKCOUNT
+.It Dv HW_DISKCOUNT Pq Va hw.diskcount
 The number of disks currently attached to the system.
-.It Dv HW_DISKNAMES
+.It Dv HW_DISKNAMES Pq Va hw.disknames
 A comma-separated list of disk names.
-.It Dv HW_DISKSTATS
+.It Dv HW_DISKSTATS Pq Va hw.diskstats
 An array of
 .Li struct diskstats
 structures containing disk statistics.
-.It Dv HW_MACHINE
+.It Dv HW_MACHINE Pq Va hw.machine
 The machine class.
-.It Dv HW_MODEL
+.It Dv HW_MODEL Pq Va hw.model
 The machine model.
-.It Dv HW_NCPU
+.It Dv HW_NCPU Pq Va hw.ncpu
 The number of CPUs being used.
-.It Dv HW_NCPUFOUND
+.It Dv HW_NCPUFOUND Pq Va hw.ncpufound
 The number of CPUs found.
-.It Dv HW_PAGESIZE
+.It Dv HW_PAGESIZE Pq Va hw.pagesize
 The software page size.
-.It Dv HW_PERFPOLICY
+.It Dv HW_PERFPOLICY Pq Va hw.perfpolicy
 The performance policy for power management.
 Can be one of
 .Dq manual ,
@@ -343,11 +344,11 @@ The total physical memory, in bytes.
 This variable is deprecated; use
 .Dv HW_PHYSMEM64
 instead.
-.It Dv HW_PHYSMEM64
+.It Dv HW_PHYSMEM64 Pq Va hw.physmem
 The total physical memory, in bytes.
-.It Dv HW_PRODUCT
+.It Dv HW_PRODUCT Pq Va hw.product
 The product name of the machine.
-.It Dv HW_SENSORS
+.It Dv HW_SENSORS Pq Va hw.sensors
 Third level comprises an array of
 .Li struct sensordev
 structures containing information about devices
@@ -375,9 +376,9 @@ and
 enumeration
 are defined in
 .In sys/sensors.h .
-.It Dv HW_SERIALNO
+.It Dv HW_SERIALNO Pq Va hw.serialno
 The serial number of the machine.
-.It Dv HW_SETPERF
+.It Dv HW_SETPERF Pq Va hw.setperf
 Current CPU performance
 .Pq percentage .
 It is only modifiable if
@@ -389,13 +390,13 @@ The amount of available non-kernel memory in bytes.
 This variable is deprecated; use
 .Dv HW_USERMEM64
 instead.
-.It Dv HW_USERMEM64
+.It Dv HW_USERMEM64 Pq Va hw.usermem
 The amount of available non-kernel memory in bytes.
-.It Dv HW_UUID
+.It Dv HW_UUID Pq Va hw.uuid
 The universal unique identification number assigned to the machine.
-.It Dv HW_VENDOR
+.It Dv HW_VENDOR Pq Va hw.vendor
 The vendor name for this machine.
-.It Dv HW_VERSION
+.It Dv HW_VERSION Pq Va hw.version
 The version or revision of this machine.
 .El
 .Ss CTL_KERN
@@ -413,7 +414,7 @@ information.
 .It Dv KERN_ALLOWKMEM Ta "integer" Ta "yes"
 .It Dv KERN_ARGMAX Ta "integer" Ta "no"
 .It Dv KERN_BOOTTIME Ta "struct timeval" Ta "no"
-.It Dv KERN_BUFCACHEPERCENT Ta "integer" Ta "yes"
+.It Dv KERN_CACHEPCT Ta "integer" Ta "yes"
 .It Dv KERN_CCPU Ta "integer" Ta "no"
 .It Dv KERN_CLOCKRATE Ta "struct clockinfo" Ta "no"
 .It Dv KERN_CONSDEV Ta "dev_t" Ta "no"
@@ -461,6 +462,7 @@ information.
 .It Dv KERN_PROC_VMMAP Ta "struct kinfo_vmentry" Ta "no"
 .It Dv KERN_PROF Ta "node" Ta "not applicable"
 .It Dv KERN_RAWPARTITION Ta "integer" Ta "no"
+.\" XXX Remove
 .It Dv KERN_RND Ta "struct rndstats" Ta "no"
 .It Dv KERN_SAVED_IDS Ta "integer" Ta "no"
 .It Dv KERN_SECURELVL Ta "integer" Ta "raise only"
@@ -482,36 +484,36 @@ information.
 .It Dv KERN_WXABORT Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv KERN_ALLOWKMEM
+.It Dv KERN_ALLOWKMEM Pq Va kern.allowkmem
 Allow userland processes access to
 .Pa /dev/kmem .
 When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be changed.
-.It Dv KERN_ARGMAX
+.It Dv KERN_ARGMAX Pq Va kern.argmax
 The maximum number of bytes allowed among the arguments to
 .Xr exec 3 .
-.It Dv KERN_BOOTTIME
+.It Dv KERN_BOOTTIME Pq Va kern.boottime
 A
 .Li struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
-.It Dv KERN_BUFCACHEPERCENT
+.It Dv KERN_CACHEPCT Pq Va kern.bufcachepercent
 The maximum percentage of physical memory the buffer cache may use;
 the default is 20%.
-.It Dv KERN_CCPU
+.It Dv KERN_CCPU Pq Va kern.ccpu
 The scheduler exponential decay value.
-.It Dv KERN_CLOCKRATE
+.It Dv KERN_CLOCKRATE Pq Va kern.clockrate
 A
 .Li struct clockinfo
 structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
-.It Dv KERN_CONSDEV
+.It Dv KERN_CONSDEV Pq Va kern.consdev
 The console device.
-.It Dv KERN_CPTIME
+.It Dv KERN_CPTIME Pq Va kern.cp_time
 An array of longs of size
 .Li CPUSTATES
 is returned, containing statistics about the number of ticks spent by
@@ -521,17 +523,17 @@ the system in interrupt processing, user processes
 or normal
 .Pc ,
 system processing, or idling.
-.It Dv KERN_CPTIME2
+.It Dv KERN_CPTIME2 Pq Va kern.cp_time2
 Similar to
 .Dv KERN_CPTIME ,
 but obtains information from only the single CPU specified by the
 third level name given.
-.It Dv KERN_DNSJACKPORT
+.It Dv KERN_DNSJACKPORT Pq Va kern.dnsjackport
 When non-zero, the localhost port to which all DNS sockets should be
 redirected.
-.It Dv KERN_DOMAINNAME
+.It Dv KERN_DOMAINNAME Pq Va kern.domainname
 Get or set the YP domain name.
-.It Dv KERN_FILE
+.It Dv KERN_FILE Pq Va kern.file
 Return the entire file table, or a subset of it.
 An array of
 .Li struct kinfo_file
@@ -548,7 +550,7 @@ The third and fourth level names are as follows:
 The fifth level name is the size of the
 .Li struct kinfo_file
 and the sixth level name is the number of structures to return.
-.It Dv KERN_FORKSTAT
+.It Dv KERN_FORKSTAT Pq Va kern.forkstat
 A
 .Li struct forkstat
 structure is returned.
@@ -559,23 +561,23 @@ and
 .Xr __tfork 3
 system calls as well as kernel thread creations since system startup,
 and the number of pages of virtual memory involved in each.
-.It Dv KERN_FSCALE
+.It Dv KERN_FSCALE Pq Va kern.fscale
 The kernel fixed-point scale factor.
-.It Dv KERN_FSYNC
+.It Dv KERN_FSYNC Pq Va kern.fsync
 Return 1 if the File Synchronisation Option is available on this system,
 otherwise 0.
-.It Dv KERN_GLOBAL_PTRACE
+.It Dv KERN_GLOBAL_PTRACE Pq Va kern.global_ptrace
 When set to 1, permit
 .Xr ptrace 2
 to attach to any process with the appropriate privileges.
 When set to 0, processes may only attach to their own descendants.
-.It Dv KERN_HOSTID
+.It Dv KERN_HOSTID Pq Va kern.hostid
 Get or set the host ID.
-.It Dv KERN_HOSTNAME
+.It Dv KERN_HOSTNAME Pq Va kern.hostname
 Get or set the hostname.
-.It Dv KERN_JOB_CONTROL
+.It Dv KERN_JOB_CONTROL Pq Va kern.job_control
 Return 1 if job control is available on this system, otherwise 0.
-.It Dv KERN_MALLOCSTATS
+.It Dv KERN_MALLOCSTATS Pq Va kern.malloc
 Return kernel memory bucket statistics.
 The third level names are detailed below.
 There are no changeable values in this branch.
@@ -589,7 +591,7 @@ There are no changeable values in this branch.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_MALLOC_BUCKET.\*(Ltsize\*(Gt
+.It Dv KERN_MALLOC_BUCKET.<size> Pq Va kern.malloc.bucket
 A node containing the statistics for the memory bucket of the
 specified size (in decimal notation, the number of bytes per bucket
 element, e.g., 16, 32, 128).
@@ -601,46 +603,48 @@ bucket size, the statistics for the closest larger bucket size will be
 returned instead.
 .Pp
 Note that bucket sizes are typically powers of 2.
-.It Dv KERN_MALLOC_BUCKETS
+.It Dv KERN_MALLOC_BUCKETS Pq Va kern.malloc.buckets
 Return a comma-separated list of the bucket sizes used by the kernel.
-.It Dv KERN_MALLOC_KMEMNAMES
+.It Dv KERN_MALLOC_KMEMNAMES Pq Va kern.malloc.kmemnames
 Return a comma-separated list of the names of the kernel
 .Xr malloc 9
 types.
-.It Dv KERN_MALLOC_KMEMSTATS
+.It Dv KERN_MALLOC_KMEMSTATS Pq Va kern.malloc.kmemstat
 A node containing the statistics for the memory types of the specified
 name.
 Each node returns a
 .Li struct kmemstats .
 .El
-.It Dv KERN_MAXCLUSTERS
+.It Dv KERN_MAXCLUSTERS Pq Va kern.maxclusters
 The maximum number of
 .Xr mbuf 9
 clusters that may be allocated.
-.It Dv KERN_MAXFILES
+.It Dv KERN_MAXFILES Pq Va kern.maxfiles
 The maximum number of open files that may be open in the system.
-.It Dv KERN_MAXLOCKSPERUID
+.It Dv KERN_MAXLOCKSPERUID Pq Va kerb.maxlocksperuid
 The maximum number of file locks per user;
 the default is 1024.
-.It Dv KERN_MAXPARTITIONS
+.It Dv KERN_MAXPARTITIONS Pq Va kern.maxpartitions
 The maximum number of partitions allowed per disk.
-.It Dv KERN_MAXPROC
+.It Dv KERN_MAXPROC Pq Va kern.maxproc
 The maximum number of simultaneous processes the system will allow.
-.It Dv KERN_MAXTHREAD
+.It Dv KERN_MAXTHREAD Pq Va kern.maxthread
 The maximum number of simultaneous threads the system will allow.
-.It Dv KERN_MAXVNODES
+.It Dv KERN_MAXVNODES Pq Va kern.maxvnodes
 The maximum number of vnodes available on the system.
-.It Dv KERN_MBSTAT
+.It Dv KERN_MBSTAT Pq Va kern.mbstat
 A
 .Li struct mbstat
 structure is returned, containing statistics on
 .Xr mbuf 9
 usage.
-.It Dv KERN_MSGBUF
-Returns a buffer containing kernel log messages.
-.It Dv KERN_MSGBUFSIZE
+.It Dv KERN_MSGBUF Pq Va kern.msgbuf
+Returns a buffer containing kernel log messages;
+see
+.Xr dmesg 8 .
+.It Dv KERN_MSGBUFSIZE Pq Va kern.msgbufsize
 The size of the kernel message buffer.
-.It Dv KERN_NCHSTATS
+.It Dv KERN_NCHSTATS Pq Va kern.nchstats
 A
 .Li struct nchstats
 structure is returned.
@@ -648,11 +652,11 @@ This structure contains information about the
 filename to
 .Xr inode 5
 mapping cache.
-.It Dv KERN_NFILES
+.It Dv KERN_NFILES Pq Va kern.nfiles
 Number of open files.
-.It Dv KERN_NGROUPS
+.It Dv KERN_NGROUPS Pq Va kern.ngroups
 The maximum number of supplemental groups.
-.It Dv KERN_NOSUIDCOREDUMP
+.It Dv KERN_NOSUIDCOREDUMP Pq Va kern.nosuidcoredump
 Whether a process may dump core after changing user or group ID:
 .Bl -column "value" "condition" "current directory"
 .It Sy "value" Ta Sy "condition" Ta Sy "dump core to"
@@ -661,28 +665,28 @@ Whether a process may dump core after changing user or group ID:
 .It 2 Ta "always" Ta Pa "/var/crash"
 .It 3 Ta "depends" Ta Pa "/var/crash/$programname/"
 .El
-.It Dv KERN_NPROCS
+.It Dv KERN_NPROCS Pq Va kern.nprocs
 The number of entries in the kernel process table.
-.It Dv KERN_NSELCOLL
+.It Dv KERN_NSELCOLL Pq Va kern.nselcoll
 Number of
 .Xr select 2
 collisions.
-.It Dv KERN_NTHREADS
+.It Dv KERN_NTHREADS Pq Va kern.nthreads
 The number of entries in the kernel thread table.
-.It Dv KERN_NUMVNODES
+.It Dv KERN_NUMVNODES Pq Va kern.numvnodes
 Number of vnodes in use.
-.It Dv KERN_OSRELEASE
+.It Dv KERN_OSRELEASE Pq Va kern.osrelease
 The system release string.
-.It Dv KERN_OSREV
+.It Dv KERN_OSREV Pq Va kern.osrevision
 The system revision number.
-.It Dv KERN_OSTYPE
+.It Dv KERN_OSTYPE Pq Va kern.ostype
 The system type string.
-.It Dv KERN_OSVERSION
+.It Dv KERN_OSVERSION Pq Va kern.osversion
 The kernel build version.
-.It Dv KERN_POSIX1
+.It Dv KERN_POSIX1 Pq Va kern.posix1version
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
-.It Dv KERN_PROC
+.It Dv KERN_PROC Pq Va kern.proc
 Return the entire process table, or a subset of it.
 An array of
 .Li struct kinfo_proc
@@ -704,7 +708,7 @@ The third and fourth level names are as follows:
 The fifth level name is the size of the
 .Li struct kinfo_proc
 and the sixth level name is the number of structures to return.
-.It Dv KERN_PROC_ARGS
+.It Dv KERN_PROC_ARGS Pq Va kern.procargs
 Returns the arguments or environment of a process.
 The third level name is the PID of the process.
 The fourth level name is one of:
@@ -732,14 +736,14 @@ followed by the strings themselves.
 The last char pointer is a
 .Dv NULL
 pointer.
-.It Dv KERN_PROC_CWD
+.It Dv KERN_PROC_CWD Pq Va kern.proc_cwd
 Return the current working directory of a process.
 The third level name is the target process ID.
 A NUL-terminated string is returned.
-.It Dv KERN_PROC_NOBROADCASTKILL
+.It Dv KERN_PROC_NOBROADCASTKILL Pq Va kern.proc_nobroadcastkill
 When set, a process will no longer be signaled when sending broadcast signals.
 The third level name is the target process ID.
-.It Dv KERN_PROC_VMMAP
+.It Dv KERN_PROC_VMMAP Pq Va kern.proc_vmmap
 Return the entire process VM map entries.
 An array of
 .Li struct kinfo_vmentry
@@ -747,7 +751,7 @@ structures is returned,
 whose size depends on the current number of VM map entries of the selected process.
 Iteration is possible by setting the base address in the first element of
 .Li struct kinfo_vmentry .
-.It Dv KERN_PROF
+.It Dv KERN_PROF Pq Va kern.profiling
 Return profiling information about the kernel.
 If the kernel is not compiled for profiling,
 attempts to retrieve any of the
@@ -786,21 +790,22 @@ Array of
 .Li struct tostruct
 describing destination of calls and their counts.
 .El
-.It Dv KERN_RAWPARTITION
+.It Dv KERN_RAWPARTITION Pq Va kern.rawpartition
 The raw partition of a disk (a == 0).
+.\" XXX Remove
 .It Dv KERN_RND
 Returns statistics about the
 .Pa /dev/random
 device in a
 .Li struct rndstats
 structure.
-.It Dv KERN_SAVED_IDS
+.It Dv KERN_SAVED_IDS Pq Va kern.saved_ids
 Returns 1 if saved set-group-ID and saved set-user-ID are available.
-.It Dv KERN_SECURELVL
+.It Dv KERN_SECURELVL Pq Va kern.securelevel
 The system security level.
 This level may be raised by processes with appropriate privileges.
 It may only be lowered by process 1.
-.It Dv KERN_SEMINFO
+.It Dv KERN_SEMINFO Pq Va kern.seminfo
 Return the elements of
 .Li struct seminfo .
 If the kernel is not compiled with System V style semaphore support,
@@ -828,28 +833,28 @@ privileges may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_SEMINFO_SEMAEM
+.It Dv KERN_SEMINFO_SEMAEM Pq Va kern.seminfo.semaem
 The adjust on exit maximum value.
-.It Dv KERN_SEMINFO_SEMMNI
+.It Dv KERN_SEMINFO_SEMMNI Pq Va kern.seminfo.semni
 The maximum number of semaphore identifiers allowed.
-.It Dv KERN_SEMINFO_SEMMNS
+.It Dv KERN_SEMINFO_SEMMNS Pq Va kern.seminfo.semmns
 The maximum number of semaphores allowed in the system.
-.It Dv KERN_SEMINFO_SEMMNU
+.It Dv KERN_SEMINFO_SEMMNU Pq Va kern.seminfo.semnu
 The maximum number of semaphore undo structures allowed in the system.
-.It Dv KERN_SEMINFO_SEMMSL
+.It Dv KERN_SEMINFO_SEMMSL Pq Va kern.seminfo.semmsl
 The maximum number of semaphores allowed per ID.
-.It Dv KERN_SEMINFO_SEMOPM
+.It Dv KERN_SEMINFO_SEMOPM Pq Va kern.seminfo.semopm
 The maximum number of operations per
 .Xr semop 2
 call.
-.It Dv KERN_SEMINFO_SEMUME
+.It Dv KERN_SEMINFO_SEMUME Pq Va kern.seminfo.semume
 The maximum number of undo entries per process.
-.It Dv KERN_SEMINFO_SEMUSZ
+.It Dv KERN_SEMINFO_SEMUSZ Pq Va kern.seminfo.semusz
 The size (in bytes) of the undo structure.
-.It Dv KERN_SEMINFO_SEMVMX
+.It Dv KERN_SEMINFO_SEMVMX Pq Va kern.seminfo.semvmx
 The semaphore maximum value.
 .El
-.It Dv KERN_SHMINFO
+.It Dv KERN_SHMINFO Pq Va kern.shminfo
 Return the elements of
 .Li struct shminfo .
 If the kernel is not compiled with System V style shared memory support,
@@ -873,28 +878,28 @@ privileges may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_SHMINFO_SHMALL
+.It Dv KERN_SHMINFO_SHMALL Pq Va kern.shminfo.shmall
 The maximum amount of total shared memory allowed in the system (in pages).
-.It Dv KERN_SHMINFO_SHMMAX
+.It Dv KERN_SHMINFO_SHMMAX Pq Va kern.shminfo.shmmax
 The maximum shared memory segment size (in bytes).
-.It Dv KERN_SHMINFO_SHMMIN
+.It Dv KERN_SHMINFO_SHMMIN Pq Va kern.shminfo.shmmin
 The minimum shared memory segment size (in bytes).
-.It Dv KERN_SHMINFO_SHMMNI
+.It Dv KERN_SHMINFO_SHMMNI Pq Va kern.shminfo.shmmni
 The maximum number of shared memory identifiers in the system.
-.It Dv KERN_SHMINFO_SHMSEG
+.It Dv KERN_SHMINFO_SHMSEG Pq Va kern.shminfo.shmseg
 The maximum number of shared memory segments per process.
 .El
-.It Dv KERN_SOMAXCONN
+.It Dv KERN_SOMAXCONN Pq Va kern.somaxconn
 Upper bound on the number of half-open connections a process can allow
 to be associated with a socket, using
 .Xr listen 2 .
 The default value is 128.
-.It Dv KERN_SOMINCONN
+.It Dv KERN_SOMINCONN Pq Va kern.sominconn
 Lower bound on the number of half-open connections a process can allow
 to be associated with a socket, using
 .Xr listen 2 .
 The default value is 80.
-.It Dv KERN_SPLASSERT
+.It Dv KERN_SPLASSERT Pq Va kern.splassert
 Modify the system interrupt priority level.
 Valid values are:
 .Pp
@@ -914,14 +919,14 @@ Any other value causes a system panic on errors.
 See
 .Xr splassert 9
 for more information.
-.It Dv KERN_STACKGAPRANDOM
+.It Dv KERN_STACKGAPRANDOM Pq Va kern.stackgap_random
 Sets the range of the random value added to the stack pointer on each
 program execution.
 The random value is added to make buffer overflow exploitation slightly
 harder.
 The bigger the number, the harder it is to brute force this added protection,
 but it also means bigger waste of memory.
-.It Li KERN_SYSVIPC_INFO
+.It Li KERN_SYSVIPC_INFO Pq Va kern.sysvipc_info
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
@@ -950,16 +955,16 @@ The
 structure is defined in
 .In sys/shm.h .
 .El
-.It Dv KERN_SYSVMSG
+.It Dv KERN_SYSVMSG Pq Va kern.sysvmsg
 Returns 1 if System V style message queue functionality is available on this
 system, otherwise 0.
-.It Dv KERN_SYSVSEM
+.It Dv KERN_SYSVSEM Pq Va kern.sysvem
 Returns 1 if System V style semaphore functionality is available on this
 system, otherwise 0.
-.It Dv KERN_SYSVSHM
+.It Dv KERN_SYSVSHM Pq Va kern.sysvshm
 Returns 1 if System V style shared memory functionality is available on this
 system, otherwise 0.
-.It Dv KERN_TIMECOUNTER
+.It Dv KERN_TIMECOUNTER Pq Va kern.timecounter
 Return statistics information about the kernel time counter.
 The third level names information is detailed below.
 The changeable column shows whether a process with appropriate
@@ -974,19 +979,19 @@ privileges may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_TIMECOUNTER_CHOICE
+.It Dv KERN_TIMECOUNTER_CHOICE Pq Va kern.timecounter.choice
 Get the list of kernel time counter sources and their claimed
 quality (higher is better).
-.It Dv KERN_TIMECOUNTER_HARDWARE
+.It Dv KERN_TIMECOUNTER_HARDWARE Pq Va kern.timecounter.hardware
 Get or set the kernel time counter source by name.
-.It Dv KERN_TIMECOUNTER_TICK
+.It Dv KERN_TIMECOUNTER_TICK Pq Va kern.timecounter.tick
 Get the number of times we have reset the kernel time counter
 information.
-.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS
+.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS Pq Va kern.timecounter.timestepwarnings
 Get or set a flag to log a message when the kernel time is
 stepped.
 .El
-.It Dv KERN_TTY
+.It Dv KERN_TTY Pq Va kern.tty
 Return statistics information about tty input/output.
 The third level names information is detailed below.
 The changeable column shows whether a process with appropriate
@@ -1002,28 +1007,28 @@ privileges may change the value.
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_TTY_INFO
+.It Dv KERN_TTY_INFO Pq Va kern.tty.ttyinfo
 Returns an array of
 .Li struct itty
 structures containing tty statistics.
-.It Dv KERN_TTY_TKCANCC
+.It Dv KERN_TTY_TKCANCC Pq Va kern.tty.tk_cancc
 Returns the number of input characters in canonical mode.
-.It Dv KERN_TTY_TKNIN
+.It Dv KERN_TTY_TKNIN Pq Va kern.tty.tk_nin
 Returns the number of input characters from a
 .Xr tty 4 .
-.It Dv KERN_TTY_TKNOUT
+.It Dv KERN_TTY_TKNOUT Pq Va kern.tty.tk_nout
 Returns the number of output characters on a
 .Xr tty 4 .
-.It Dv KERN_TTY_TKRAWCC
+.It Dv KERN_TTY_TKRAWCC Pq Va kern.tty.tk_rawcc
 Returns the number of input characters in raw mode.
 .El
-.It Dv KERN_TTYCOUNT
+.It Dv KERN_TTYCOUNT Pq Va kern.ttycount
 Number of available
 .Xr tty 4
 devices.
-.It Dv KERN_VERSION
+.It Dv KERN_VERSION Pq Va kern.version
 The system version string.
-.It Dv KERN_WATCHDOG
+.It Dv KERN_WATCHDOG Pq Va kern.watchdog
 Return information on hardware watchdog timers.
 If the kernel does not support a hardware watchdog timer,
 attempts to retrieve or set any of the
@@ -1038,17 +1043,17 @@ values will fail with
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_WATCHDOG_AUTO
+.It Dv KERN_WATCHDOG_AUTO Pq Va kern.watchdog.auto
 If set to 1, the kernel refreshes the watchdog timer periodically.
 If set to 0, a userland process must ensure that the watchdog timer
 gets refreshed by setting the
 .Dv KERN_WATCHDOG_PERIOD
 variable.
-.It Dv KERN_WATCHDOG_PERIOD
+.It Dv KERN_WATCHDOG_PERIOD Pq Va kern.watchdog.period
 The period of the watchdog timer in seconds.
 Set to 0 to disable the watchdog timer.
 .El
-.It Dv KERN_WXABORT
+.It Dv KERN_WXABORT Pq Va kern.wxabort
 Generate an abort,
 rather than returning an error,
 on W^X violation.
@@ -1060,6 +1065,12 @@ Most architectures define at least the following variables.
 .It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv CPU_CONSDEV Ta "dev_t" Ta "no"
 .El
+.Pp
+Consult the example file
+.Pa /etc/example/sysctl.conf
+for a non-exhaustive list of
+.Li machdep
+variables.
 .Ss CTL_NET
 The string and integer information available for the
 .Dv CTL_NET
@@ -1203,7 +1214,7 @@ The currently defined protocols and names are:
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Li ah.enable
+.It Li ah.enable Pq Va net.inet.ah.enable
 If set to 1, enable the Authentication Header
 .Pq AH
 IPsec protocol.
@@ -1211,21 +1222,21 @@ Enabled by default.
 See
 .Xr ipsec 4
 for more information.
-.It Li bpf.bufsize
+.It Li bpf.bufsize Pq Va net.bpf.bufsize
 The initial size of
 .Xr bpf 4
 buffers.
-.It Li bpf.maxbufsize
+.It Li bpf.maxbufsize Pq Va net.bpf.maxbufsize
 The maximum size a user may request a
 .Xr bpf 4
 buffer to be.
-.It Li carp.allow
+.It Li carp.allow Pq Va net.inet.carp.allow
 If set to 0, incoming
 .Xr carp 4
 packets will not be processed.
 If set to any other value, processing will occur.
 Enabled by default.
-.It Li carp.log
+.It Li carp.log Pq Va net.inet.carp.log
 Controls the verbosity of
 .Xr carp 4
 logging.
@@ -1233,7 +1244,7 @@ May be a value between 0 and 7 corresponding with
 .Xr syslog 3
 priorities.
 The default value is 2.
-.It Li carp.preempt
+.It Li carp.preempt Pq Va net.inet.carp.preempt
 If set to 0,
 .Xr carp 4
 will not attempt to become master if it is receiving advertisements from
@@ -1241,11 +1252,11 @@ another active master.
 If set to any other value, carp will become master of the virtual host if it
 believes it can send advertisements more frequently than the current master.
 Disabled by default.
-.It Li divert.recvspace
+.It Li divert.recvspace Pq Va net.inet.divert.recvspace
 Returns the default divert receive buffer size.
-.It Li divert.sendspace
+.It Li divert.sendspace Pq Va net.inet.divert.sendspace
 Returns the default divert send buffer size.
-.It Li esp.enable
+.It Li esp.enable Pq Va net.inet.esp.enable
 If set to 1, enable the Encapsulating Security Payload
 .Pq ESP
 IPsec protocol.
@@ -1253,75 +1264,68 @@ Enabled by default.
 See
 .Xr ipsec 4
 for more information.
-.It Li esp.udpencap
+.It Li esp.udpencap Pq Va net.inet.esp.udpencap
 If set to 1, enable processing of UDP encapsulated ESP packets.
 Enabled by default.
-.It Li esp.udpencap_port
+.It Li esp.udpencap_port Pq Va net.inet.udpencap_port
 Contains the value of the UDP port that triggers
 decapsulation for incoming UDP encapsulated ESP packets.
 The default port is 4500.
-.It Li etherip.allow
+.It Li etherip.allow Pq Va net.inet.etherip.allow
 If set to 0, incoming Ethernet-in-IPv4 packets will not be processed.
 If set to any other value, processing will occur.
-.It Li gre.allow
+.It Li gre.allow Pq Va net.inet.gre.allow
 If set to 0, incoming GRE packets will not be processed.
 If set to any other value, processing will occur.
-.It Li gre.wccp
+.It Li gre.wccp Pq Va net.inet.gre.wccp
 If set to 0, incoming WCCPv1-style GRE packets will not be processed.
 If set to any other value, and gre.allow allows GRE packet processing,
 WCCPv1-style GRE packets will be processed.
-.It Li icmp.bmcastecho
+.It Li icmp.bmcastecho Pq Va net.inet.icmp.bmcastecho
 If set to 1, respond to ICMP echo requests destined for
 broadcast and multicast addresses.
 Note, enabling this could open a system to a type of denial of service attack
 called
 .Qq smurfing ,
 and is thus not advised.
-.It Li icmp.errppslimit
+.It Li icmp.errppslimit Pq Va net.inet.icmp.errppslimit
 This variable specifies the maximum number of outgoing ICMP error messages
 per second.
 ICMP error messages exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value disables rate limitation.
-.It Li icmp.maskrepl
-Returns 1 if
-.Tn ICMP
-network mask requests are to be answered.
-.It Li icmp.rediraccept
+.It Li icmp.maskrepl Pq Va kern.inet.icmp.maskrepl
+Returns 1 if ICMP network mask requests are to be answered.
+.It Li icmp.rediraccept Pq Va kern.inet.icmp.rediraccept
 If set to non-zero, the host will accept ICMP redirect packets.
 Note that routers will never accept ICMP redirect packets,
 and the variable is meaningful on IP hosts only.
-.It Li icmp.redirtimeout
+.It Li icmp.redirtimeout Pq Va net.inet.icmp.redrttimeout
 This variable specifies the lifetime of routing entries generated by incoming
 ICMP redirects.
 The default timeout is 10 minutes.
-.It Li icmp.stats
+.It Li icmp.stats Pq Va kern.inet.icmp.stats
 Returns the ICMP statistics in a struct icmpstat.
-.It Li icmp.tstamprepl
+.It Li icmp.tstamprepl Pq Va net.inet.icmp.tstamprepl
 If set to 1, reply to ICMP timestamp requests.
 If set to 0, ignore timestamp requests.
-.It Li ip.arpdown
+.It Li ip.arpdown Pq Va net.inet.ip.arpdown
 Lifetime of unresolved ARP entries, in seconds.
-.It Li ip.arptimeout
+.It Li ip.arptimeout Pq Va net.inet.ip.arptimeout
 Lifetime of resolved ARP entries, in seconds.
-.It Li ip.directed-broadcast
+.It Li ip.directed-broadcast Pq Va net.inet.ip.directed-broadcast
 Returns 1 if directed broadcast behavior is enabled for the host.
-.It Li ip.encdebug
+.It Li ip.encdebug Pq Va net.inet.ip.encdebug
 Returns 1 when error message reporting is enabled for the host.
 If the kernel has been compiled with the
 .Dv ENCDEBUG
 option,
 then debugging information will also be reported when this variable is set.
-.It Li ip.forwarding
-If set to 1, then
-.Tn IP
-forwarding is enabled for the host,
+.It Li ip.forwarding Pq Va net.inet.ip.forwarding
+If set to 1, then IP forwarding is enabled for the host,
 indicating the host is acting as a router.
-If set to 2, then
-.Tn IP
-forwarding is restricted to traffic that has
-been IPsec encapsulated or decapsulated by
-the host.
+If set to 2, then IP forwarding is restricted to traffic that has been
+IPsec encapsulated or decapsulated by the host.
 The default value is 0.
 .It Li ip.ifq
 Fifth level comprises an array of
@@ -1340,20 +1344,20 @@ are detailed below.
 The variables are as follows:
 .Pp
 .Bl -tag -width Ds -compact
-.It Dv IFQCTL_DROPS
+.It Dv IFQCTL_DROPS Pq Va net.inet.ip.ifq.drops
 Returns number of packet dropped.
-.It Dv IFQCTL_LEN
+.It Dv IFQCTL_LEN Pq Va net.inet.ip.ifq.len
 Returns the current queue length.
-.It Dv IFQCTL_MAXLEN
+.It Dv IFQCTL_MAXLEN Pq Va bet.inet.ip.ifq.maxlen
 Get or set the maximum number of queue length.
 .El
-.It Li ip.ipsec-allocs
+.It Li ip.ipsec-allocs Pq Va net.inet.ip.ipsec-allocs
 The number of IPsec flows that can use a security association before
 it expires.
 If set to less than or equal to zero, the security association will not
 expire because of this counter.
 The default value is 0.
-.It Li ip.ipsec-auth-alg
+.It Li ip.ipsec-auth-alg Pq Va net.inet.ip.ipsec-auth-alg
 This is the default authentication algorithm the kernel will instruct
 key management daemons to negotiate when establishing security
 associations on behalf of the kernel.
@@ -1365,13 +1369,13 @@ Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
 If set to any other value, it is left to the key management daemons to
 select an authentication algorithm for the security association.
 The default value is hmac-sha1.
-.It Li ip.ipsec-bytes
+.It Li ip.ipsec-bytes Pq Va net.inet.ip.ipsec-bytes
 The number of bytes that will be processed by a security association
 before it expires.
 If set to less than or equal to zero, the security association will not
 expire because of this counter.
 The default value is 0.
-.It Li ip.ipsec-comp-alg
+.It Li ip.ipsec-comp-alg Pq Va net.inet.ip.ipsec-comp-alg
 The compression algorithm to use with an IP Compression Association
 .Pq IPCA .
 Possible values are
@@ -1383,7 +1387,7 @@ Note that lzs is only available with
 See
 .Xr ipsecctl 8
 for more information.
-.It Li ip.ipsec-enc-alg
+.It Li ip.ipsec-enc-alg Pq Va net.inet.ip.ipsec-enc-alg
 This is the default encryption algorithm the kernel will instruct key
 management daemons to negotiate when establishing security
 associations on behalf of the kernel.
@@ -1395,22 +1399,22 @@ Supported values are aes, des, 3des, blowfish and cast128.
 If set to any other value, it is left to the key management daemons to
 select an encryption algorithm for the security association.
 The default value is aes.
-.It Li ip.ipsec-expire-acquire
+.It Li ip.ipsec-expire-acquire Pq Va net.inet.ip.ipsec-expire-acquire
 How long the kernel should allow key management to dynamically acquire
 security associations before re-sending a request.
 The default value is 30 seconds.
-.It Li ip.ipsec-firstuse
+.It Li ip.ipsec-firstuse Pq Va net.inet.ip.ipsec-firstuse
 The number of seconds after a security association is first used before
 it expires.
 If set to less than or equal to zero, the security association will
 not expire because of this timer.
 The default value is 7200 seconds.
-.It Li ip.ipsec-invalid-life
+.It Li ip.ipsec-invalid-life Pq Va net.inet.ip.ipsec-invalid-life
 The lifetime of embryonic Security Associations (SAs that key management
 daemons have reserved but not fully established yet) in seconds.
 If set to less than or equal to zero, embryonic SAs will not expire.
 The default value is 60.
-.It Li ip.ipsec-pfs
+.It Li ip.ipsec-pfs Pq Va net.inet.ip.ipsec-pfs
 If set to any non-zero value, the kernel will ask the key management
 daemons to use Perfect Forward Secrecy when establishing IPsec
 Security Associations.
@@ -1422,242 +1426,214 @@ computational load of
 .Xr isakmpd 8
 exchanges.
 The default value is 1.
-.It Li ip.ipsec-soft-allocs
+.It Li ip.ipsec-soft-allocs Pq Va net.inet.ip.ipsec-soft-allocs
 The number of IPsec flows that can use a security association before a
 message is sent by the kernel to key management for renegotiation
 of the security association.
 If set to less than or equal to zero, no message is sent to key
 management.
 The default value is 0.
-.It Li ip.ipsec-soft-bytes
+.It Li ip.ipsec-soft-bytes Pq Va net.inet.ip.ipsec-soft-bytes
 The number of bytes that will be processed by a security association
 before a message is sent by the kernel to key management for
 renegotiation of the security association.
 If set to less than or equal to zero, no message is sent to key
 management.
 The default value is 0.
-.It Li ip.ipsec-soft-firstuse
+.It Li ip.ipsec-soft-firstuse Pq Va net.inet.ip.ipsec-soft-firstuse
 The number of seconds after a security association is first used
 before a message is sent by the kernel to key management for
 renegotiation of the security association.
 If set to less than or equal to zero, no message is sent to key
 management.
 The default value is 3600 seconds.
-.It Li ip.ipsec-soft-timeout
+.It Li ip.ipsec-soft-timeout Pq Va net.inet.ip.ipsec-soft-timeout
 The number of seconds after a security association is established
 before a message is sent by the kernel to key management for
 renegotiation of the security association.
 If set to less than or equal to zero, no message is sent to key
 management.
 The default value is 80000 seconds.
-.It Li ip.ipsec-timeout
+.It Li ip.ipsec-timeout Pq Va net.inet.ip.ipsec-timeout
 The number of seconds after a security association is established
 before it will expire.
 If set to less than or equal to zero, the security association will
 not expire because of this timer.
 The default value is 86400 seconds.
-.It Li ip.maxqueue
+.It Li ip.maxqueue Pq Va net.inet.ip.maxqueue
 Fragment flood protection.
 Sets the maximum number of unassembled IP fragments in the fragment queue.
-.It Li ip.mforwarding
+.It Li ip.mforwarding Pq Va net.inet.ip.mforwarding
 If set to 1, then multicast forwarding is enabled for the host.
 The default is 0.
-.It Li ip.mtudisc
+.It Li ip.mtudisc Pq Va net.inet.ip.mtudisc
 Returns 1 if Path MTU Discovery is enabled.
-.It Li ip.mtudisctimeout
+.It Li ip.mtudisctimeout Pq Va net.inet.ip.mtudisctimeout
 Number of seconds in which a route added by the Path MTU
 Discovery engine will time out.
 When the route times out, the Path MTU Discovery engine will attempt
 to probe a larger path MTU.
-.It Li ip.multipath
+.It Li ip.multipath Pq Va net.inet.ip.multipath
 This variable enables multipath routing for IPv4 addresses.
 If set to 0, only the first route selected will be used for a given
 destination regardless of how many routes exist in the routing table.
-.It Li ip.portfirst
+.It Li ip.portfirst Pq Va net.inet.ip.portfirst
 Minimum registered port number for TCP/UDP port allocation.
 Registered ports can be used by ordinary user processes
 or programs executed by ordinary users.
 Cannot be less than 1024 or greater than 49151.
 Must be less than ip.portlast.
-.It Li ip.porthifirst
+.It Li ip.porthifirst Pq Va net.inet.ip.porthifirst
 Minimum dynamic/private port number for TCP/UDP port allocation.
 Dynamic/private ports can be used by ordinary user processes
 or programs executed by ordinary users.
 Cannot be less than 49152 or greater than 65535.
 Must be less than ip.porthilast.
-.It Li ip.porthilast
+.It Li ip.porthilast Pq Va net.inet.ip.porthilast
 Maximum dynamic/private port number for TCP/UDP port allocation.
 Dynamic/private ports can be used by ordinary user processes
 or programs executed by ordinary users.
 Cannot be less than 49152 or greater than 65535.
 Must be greater than ip.porthifirst.
-.It Li ip.portlast
+.It Li ip.portlast Pq Va net.inet.ip.portlast
 Maximum registered port number for TCP/UDP port allocation.
 Registered ports can be used by ordinary user processes
 or programs executed by ordinary users.
 Cannot be less than 1024 or greater than 49151.
 Must be greater than ip.portfirst.
-.It Li ip.redirect
-Returns 1 when
-.Tn ICMP
-redirects may be sent by the host.
-This option is ignored unless the host is routing
-.Tn IP
-packets,
+.It Li ip.redirect Pq Va net.inet.ip.redirect
+Returns 1 when ICMP redirects may be sent by the host.
+This option is ignored unless the host is routing IP packets,
 and should normally be enabled on all systems.
-.It Li ip.sourceroute
+.It Li ip.sourceroute Pq Va net.inet.ip.sourceroute
 Returns 1 when forwarding of source-routed packets is enabled for
 the host.
 When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be changed.
-.It Li ip.stats
+.It Li ip.stats Pq Va net.inet.ip.stats
 Returns the IP statistics in a struct ipstat.
-.It Li ip.ttl
-The maximum time-to-live (hop count) value for an
-.Tn IP
-packet sourced by
-the system.
-This value applies to normal transport protocols, not to
-.Tn ICMP .
-.It Li ipcomp.enable
+.It Li ip.ttl Pq Va net.inet.ip.ttl
+The maximum time-to-live (hop count) value for an IP packet
+sourced by the system.
+This value applies to normal transport protocols, not to ICMP.
+.It Li ipcomp.enable Pq Va net.inet.ipcomp.enable
 Enable the IPComp protocol.
 See
 .Xr ipsecctl 8
 for more information.
-.It Li ipip.allow
+.It Li ipip.allow Pq Va net.inet.ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
 If set to any other value, processing will occur; furthermore, if set
 to 2, no checks for spoofing of loopback addresses will be done.
 This is useful only for debugging purposes, and should never be used
 in production systems.
-.It Li mobileip.allow
+.It Li mobileip.allow Pq Va net.inet.mobileip.allow
 If set to 0, incoming Mobile IP encapsulated packets (RFC 2004) will not be
 processed.
 If set to any other value, processing will occur.
-.It Li tcp.ackonpush
+.It Li tcp.ackonpush Pq Va net.inet.tcp.ackonpush
 Returns 1 if TCP segments with the
 .Dv TH_PUSH
 flag set are being acknowledged immediately, otherwise 0.
-.It Li tcp.baddynamic
+.It Li tcp.baddynamic Pq Va net.inet.tcp.baddynamic
 An array of
 .Li in_port_t
-is returned specifying the bitmask of
-.Tn TCP
-ports between 512
+is returned specifying the bitmask of TCP ports between 512
 and 1023 inclusive that should not be allocated dynamically
 by the kernel (i.e., they must be bound specifically by port number).
-.It Li tcp.ecn
+.It Li tcp.ecn Pq Va net.inet.tcp.ecn
 Returns 1 if Explicit Congestion Notifications for TCP are enabled.
-.It Li tcp.ident
+.It Li tcp.ident Pq Va net.inet.tcp.ident
 A
 .Li struct tcp_ident_mapping
-specifying a local and foreign endpoint of a
-.Tn TCP
+specifying a local and foreign endpoint of a TCP
 socket is filled in with the effective and real UIDs of the process that
 owns the socket.
 If no such socket exists, then the effective and real UID values are
 both set to \-1.
-.It Li tcp.keepidle
+.It Li tcp.keepidle Pq Va net.inet.tcp.keepidle
 If the socket option
 .Dv SO_KEEPALIVE
 has been set on a socket, then this value specifies how much time a
 connection needs to be idle before keepalives are sent.
 See also tcp.slowhz.
-.It Li tcp.keepinittime
+.It Li tcp.keepinittime Pq Va net.inet.tcp.keepinittime
 Time to keep alive the initial SYN packet of a TCP handshake.
-.It Li tcp.keepintvl
+.It Li tcp.keepintvl Pq Va net.inet.tcp.keepintvl
 Time after a keepalive probe is sent until, in the absence of any response,
 another probe is sent.
 See also tcp.slowhz.
-.It Li tcp.always_keepalive
+.It Li tcp.always_keepalive Pq Va net.inet.tcp.always_keepalive
 Act as if the option
 .Dv SO_KEEPALIVE
 was set on all TCP sockets.
-.It Li tcp.mssdflt
+.It Li tcp.mssdflt Pq Va net.inet.tcp.mssdflt
 The maximum segment size that is used as default for non-local connections.
 The default value is 512.
-.It Li tcp.reasslimit
-The maximum number of out-of-order
-.Tn TCP
+.It Li tcp.reasslimit Pq Va net.inet.tcp.reasslimit
+The maximum number of out-of-order TCP
 segments the system will store for reassembly.
-.It Li tcp.rfc1323
-Returns 1 if RFC 1323 extensions to
-.Tn TCP
-are enabled.
-.It Li tcp.rfc3390
-Returns 1 if the
-.Tn TCP
-Initial Window is increased to 4 * MSS or 4380 bytes, as specified in RFC 3390.
-Returns 2 if the
-.Tn TCP
-Initial Window is increased to 10 * MSS or 14600 bytes, as specified in
+.It Li tcp.rfc1323 Pq Va net.inet.tcp.rfc1323
+Returns 1 if RFC 1323 extensions to TCP are enabled.
+.It Li tcp.rfc3390 Pq Va net.inet.tcp.rfc3390
+Returns 1 if the TCP Initial Window
+is increased to 4 * MSS or 4380 bytes, as specified in RFC 3390.
+Returns 2 if the TCP Initial Window
+is increased to 10 * MSS or 14600 bytes, as specified in
 draft-ietf-tcpm-initcwnd.
-.It Li tcp.rootonly
+.It Li tcp.rootonly Pq Va net.inet.tcp.rootonly
 An array of
 .Li in_port_t
-is returned specifying the bitmask of
-.Tn TCP
-ports that can only be bound by processes with root euid.
+is returned specifying the bitmask of TCP ports
+that can only be bound by processes with root euid.
 When running with a
 .Xr securelevel 7
 greater than 0,
 this variable may not be changed.
-.It Li tcp.rstppslimit
+.It Li tcp.rstppslimit Pq Va net.inet.tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
 per second.
 TCP RST packets exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value disables rate limitation.
-.It Li tcp.sack
+.It Li tcp.sack Pq Va net.inet.tcp.sack
 Returns 1 if RFC 2018 Selective Acknowledgements are enabled.
-.It Li tcp.slowhz
+.It Li tcp.slowhz Pq Va net.inet.tcp.slowhz
 The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
 (That is, their values must be divided by the tcp.slowhz value to get times
 in seconds.)
-.It Li tcp.stats
+.It Li tcp.stats Pq Va net.inet.tcp.stats
 Returns the TCP statistics in a struct tcpstat.
-.It Li tcp.synbucketlimit
+.It Li tcp.synbucketlimit Pq Va net.inet.tcp.synbucketlimit
 The maximum number of entries allowed per hash bucket in the TCP SYN cache.
-.It Li tcp.syncachelimit
+.It Li tcp.syncachelimit Pq Va net.inet.tcp.syncachelimit
 The maximum number of entries allowed in the TCP SYN cache.
-.It Li tcp.synhashsize
+.It Li tcp.synhashsize Pq Va net.inet.tcp.synhashsize
 The number of buckets in the TCP SYN cache hash array.
 After the value is set, the actual size changes when the alternative
 SYN cache becomes empty and both SYN caches are swapped.
-.It Li tcp.synuselimit
+.It Li tcp.synuselimit Pq Va net.inet.tcp.synuselimit
 The minimum number of times the hash function for the TCP SYN cache is used
 before it is reseeded.
-.It Li udp.baddynamic
+.It Li udp.baddynamic Pq Va net.inet.udp.baddynamic
 Analogous to
 .Li tcp.baddynamic
-but for
-.Tn UDP
-sockets.
-.It Li udp.checksum
-Returns 1 when
-.Tn UDP
-checksums are being computed and checked.
-Disabling
-.Tn UDP
-checksums is strongly discouraged.
-.It Li udp.recvspace
-Returns the default
-.Tn UDP
-receive buffer size.
-.It Li udp.rootonly
+but for UDP sockets.
+.It Li udp.checksum Pq Va net.inet.udp.checksum
+Returns 1 when UDP checksums are being computed and checked.
+Disabling UDP checksums is strongly discouraged.
+.It Li udp.recvspace Pq Va net.inet.udp.recvspace
+Returns the default UDP receive buffer size.
+.It Li udp.rootonly Pq Va net.inet.udp.rootonly
 Analogous to
 .Li tcp.rootonly
-but for
-.Tn UDP
-sockets.
-.It Li udp.sendspace
-Returns the default
-.Tn UDP
-send buffer size.
-.It Li udp.stats
+but for UDP sockets.
+.It Li udp.sendspace Pq Va net.inet.udp.sendspace
+Returns the default UDP send buffer size.
+.It Li udp.stats Pq Va net.inet.udp.stats
 Returns the UDP statistics in a struct udpstat.
 .El
 .It Dv PF_INET6
@@ -1704,15 +1680,15 @@ The currently defined protocols and names are:
 The variables are as follows:
 .Pp
 .Bl -tag -width "123456" -compact
-.It Li icmp6.errppslimit
+.It Li icmp6.errppslimit Pq Va net.inet6.icmp6.errppslimit
 This variable specifies the maximum number of outgoing ICMPv6 error messages
 per second.
 ICMPv6 error messages exceeding this value are subject to rate limitation
 and will not go out from the node.
 A negative value will disable the rate limitation.
 .Pp
-.It Li icmp6.mtudisc_hiwat
-.It Li icmp6.mtudisc_lowat
+.It Li icmp6.mtudisc_hiwat Pq Va net.inet6.icmp6.mtudisc_hiwat
+.It Li icmp6.mtudisc_lowat Pq Va net.inet6.icmp6.mtudisc_lowat
 These variables define the maximum number of routing table entries
 created due to path MTU discovery
 .Pq preventing denial-of-service attacks with ICMPv6 too big messages .
@@ -1727,20 +1703,20 @@ is used when we have unverified ICMPv6 too big messages.
 Verification is performed by using address/port pairs kept in connected PCBs.
 A negative value disables the upper limit.
 .Pp
-.It Li icmp6.nd6_debug
+.It Li icmp6.nd6_debug Pq Va net.inet6.icmp6.nd6_debug
 If set to non-zero, IPv6 neighbor discovery will generate debugging
 messages.
 The debug output is useful for diagnosing IPv6 interoperability issues.
 The flag must be set to 0 for normal operation.
 .Pp
-.It Li icmp6.nd6_delay
+.It Li icmp6.nd6_delay Pq Va net.inet6.icmp6.nd6_delay
 This variable specifies the
 .Dv DELAY_FIRST_PROBE_TIME
 timing constant in IPv6 neighbor discovery specification
 .Pq RFC 4861 ,
 in seconds.
 .Pp
-.It Li icmp6.nd6_maxnudhint
+.It Li icmp6.nd6_maxnudhint Pq Va net.inet6.icmp6.nd6_maxnudhint
 IPv6 neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
 This variable defines the number of consecutive hints the neighbor discovery
@@ -1750,38 +1726,38 @@ a maximum of 3 consecutive hints.
 After receiving 3 hints, the neighbor discovery layer will instead perform
 the normal neighbor discovery process.
 .Pp
-.It Li icmp6.nd6_mmaxtries
+.It Li icmp6.nd6_mmaxtries Pq Va net.inet6.icmp6.nd6_mmaxtries
 This variable specifies the
 .Dv MAX_MULTICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
 .Pq RFC 4861 .
 .Pp
-.It Li icmp6.nd6_prune
+.It Li icmp6.nd6_prune Pq Va net.inet6.icmp6.nd6_prune
 This variable specifies the interval between IPv6 neighbor cache babysitting
 in seconds.
 .Pp
-.It Li icmp6.nd6_umaxtries
+.It Li icmp6.nd6_umaxtries Pq Va net.inet6.icmp6.nd6_umaxtries
 This variable specifies the
 .Dv MAX_UNICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
 .Pq RFC 4861 .
 .Pp
-.It Li icmp6.redirtimeout
+.It Li icmp6.redirtimeout Pq Va net.inet6.icmp6.redirtimeout
 The variable specifies the lifetime of routing entries generated by
 incoming ICMPv6 redirects.
 .Pp
-.It Li ip6.auto_flowlabel
+.It Li ip6.auto_flowlabel Pq Va net.inet6.ip6.auto_flowlabel
 On connected transport protocol packets,
 fill the IPv6 flowlabel field to help intermediate routers identify
 packet flows.
 .Pp
-.It Li ip6.dad_count
+.It Li ip6.dad_count Pq Va net.inet6.ip6.dad_count
 This variable configures the number of IPv6 DAD
 .Pq duplicated address detection
 probe packets.
 These packets are generated when IPv6 interfaces are first brought up.
 .Pp
-.It Li ip6.dad_pending
+.It Li ip6.dad_pending Pq Va net.inet6.ip6.dad_pending
 This variable displays the number of pending IPv6 DAD
 .Pq duplicated address detection
 before completion.
@@ -1789,13 +1765,13 @@ It is used to make sure that DAD is completed before
 .Xr netstart 8
 is executed.
 .Pp
-.It Li ip6.defmcasthlim
+.It Li ip6.defmcasthlim Pq Va net.inet6.ip6.defmcasthlim
 The default hop limit value for an IPv6 multicast packet sourced by the node.
 This value applies to all the transport protocols on top of IPv6.
 Methods for overriding this value are documented in
 .Xr ip6 4 .
 .Pp
-.It Li ip6.forwarding
+.It Li ip6.forwarding Pq Va net.inet6.ip6.forwarding
 Returns 1 when IPv6 forwarding is enabled for the node,
 meaning that the node is acting as a router.
 Returns 0 when IPv6 forwarding is disabled for the node,
@@ -1808,17 +1784,17 @@ cases quite differently, and changing this variable during operation
 may cause serious trouble.
 Hence, this variable should only be set at bootstrap time.
 .Pp
-.It Li ip6.hdrnestlimit
+.It Li ip6.hdrnestlimit Pq Va net.inet6.ip6.hdrnestlimit
 The number of IPv6 extension headers permitted on incoming IPv6 packets.
 If set to 0, the node will accept as many extension headers as possible.
 .Pp
-.It Li ip6.hlim
+.It Li ip6.hlim Pq Va net.inet6.ip6.hlim
 The default hop limit value for an IPv6 unicast packet sourced by the node.
 This value applies to all the transport protocols on top of IPv6.
 Methods for overriding this value are documented in
 .Xr ip6 4 .
 .Pp
-.It Li ip6.ifq
+.It Li ip6.ifq Pq Va net.inet6.ip6.ifq
 Fifth level comprises an array of
 .Li struct ifqueue
 structures containing information about IPv6 packet input queue.
@@ -1827,73 +1803,73 @@ The fifth level names for the elements of
 are detailed above in
 .Li ip.ifq .
 .Pp
-.It Li ip6.log_interval
+.It Li ip6.log_interval Pq Va net.inet6.ip6.log_interval
 This variable permits adjusting the amount of logs generated by the
 IPv6 packet forwarding engine.
 The value indicates the number of
 seconds of interval which must elapse between log output.
 .Pp
-.It Li ip6.maxdynroutes
+.It Li ip6.maxdynroutes Pq Va net.inet6.ip6.maxdynroutes
 Maximum number of routes created by redirect.
 Set to negative to disable.
 The default value is 4096.
 .Pp
-.It Li ip6.maxfragpackets
+.It Li ip6.maxfragpackets Pq Va net.inet6.ip6.maxfragpackets
 The maximum number of fragmented packets the node will accept.
 0 means that the node will not accept any fragmented packets.
 \-1 means that the node will accept as many fragmented packets as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .Pp
-.It Li ip6.maxfrags
+.It Li ip6.maxfrags Pq Va net.inet6.ip6.maxfrags
 The maximum number of fragments the node will accept.
 0 means that the node will not accept any fragments.
 \-1 means that the node will accept as many fragments as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
 .Pp
-.It Li ip6.maxifprefixes
+.It Li ip6.maxifprefixes Pq Va net.inet6.ip6.maxifprefixes
 Maximum number of prefixes created by route advertisements per interface.
 Set to negative to disable.
 The default value is 16.
 .Pp
-.It Li ip6.maxifdefrouters
+.It Li ip6.maxifdefrouters Pq Va net.inet6.ip6.maxifdefrouters
 Maximum number of default routers created by route advertisements per
 interface.
 Set to negative to disable.
 The default value is 16.
 .Pp
-.It Li ip6.mforwarding
+.It Li ip6.mforwarding Pq Va net.inet6.ip6.mforwarding
 If set to 1, then multicast forwarding is enabled for the host.
 The default is 0.
 .Pp
-.It Li ip6.multicast_mtudisc
+.It Li ip6.multicast_mtudisc Pq Va net.inet6.ip6.multicast_mtudisc
 This variable controls generation of ICMPv6 Too Big messages
 when the machine is performing as an IPv6 multicast router.
 If set to 1, an ICMPv6 Too Big message will be generated for multicast packets
 which were too big to be forwarded.
 If set to 0, the ICMPv6 Too Big message will be suppressed.
 .Pp
-.It Li ip6.multipath
+.It Li ip6.multipath Pq Va net.inet6.ip6.multipath
 This variable enables multipath routing for IPv6 addresses.
 If set to 0, only the first route selected will be used for a given
 destination regardless of how many routes exist in the routing table.
 .Pp
-.It Li ip6.mtudisctimeout
+.It Li ip6.mtudisctimeout Pq Va net.inet6.ip6.mtudisctimeout
 Number of seconds in which a route added by the Path MTU
 Discovery engine will time out.
 When the route times out, the Path MTU Discovery engine will attempt
 to probe a larger path MTU.
 .Pp
-.It Li ip6.neighborgcthresh
+.It Li ip6.neighborgcthresh Pq Va net.inet6.ip6.neighborgcthresh
 Maximum number of entries in neighbor cache.
 Set to negative to disable.
 The default value is 2048.
 .Pp
-.It Li ip6.redirect
+.It Li ip6.redirect Pq Va net.inet6.ip6.redirect
 Returns 1 when ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,
 and should normally be enabled on all systems.
 .Pp
-.It Li ip6.use_deprecated
+.It Li ip6.use_deprecated Pq Va net.inet6.ip6.use_deprecated
 This variable controls the use of deprecated addresses, specified in
 RFC 4862 5.5.4.
 .El
@@ -1902,11 +1878,8 @@ We reuse
 .Li net.inet.tcp
 and
 .Li net.inet.udp
-for
-.Tn TCP/UDP
-over
-.Tn IPv6 .
-.It Dv PF_KEY
+for TCP/UDP over IPv6.
+.It Dv PF_KEY Pq Va net.key
 Return
 .Xr ipsec 4
 database dumps.
@@ -1931,10 +1904,10 @@ Get or set global information about MPLS (Multiprotocol Label Switching).
 .It Dv MPLSCTL_MAXINKLOOP Ta integer Ta yes
 .El
 .Bl -tag -width "123456"
-.It Dv MPLSCTL_DEFTTL
+.It Dv MPLSCTL_DEFTTL Pq Va net.mpls.ttl
 Set or get the default TTL value which is used for MPLS (Shim) Header.
 The default is 255.
-.It Dv MPLSCTL_IFQUEUE
+.It Dv MPLSCTL_IFQUEUE Pq Va net.mpls.ifq
 Fourth level comprises an array of
 .Li struct ifqueue
 structures containing information about MPLS packet input queue.
@@ -1944,26 +1917,26 @@ The forth level names for the elements of
 in the
 .Dv PF_INET
 section.
-.It Dv MPLSCTL_MAPTTL_IP
+.It Dv MPLSCTL_MAPTTL_IP Pq Va net.mpls.mapttl_ip
 If set to 1 the TTL field is synchronized between the IP header and the
 MPLS label stack.
 If set to 0 the IP header TTL is not modified while passing through MPLS
 and the MPLS label stack is initialized with the
 .Dv MPLSCTL_DEFTTL .
 The default is 1.
-.It Dv MPLSCTL_MAPTTL_IP6
+.It Dv MPLSCTL_MAPTTL_IP6 Pq Va net.mpls.mapttl_ip6
 If set to 1 the TTL field is synchronized between the IPv6 header and the
 MPLS label stack.
 If set to 0 the IPv6 header TTL is not modified while passing through MPLS
 and the MPLS label stack is initialized with the
 .Dv MPLSCTL_DEFTTL .
 The default is 0.
-.It Dv MPLSCTL_MAXINKLOOP
+.It Dv MPLSCTL_MAXINKLOOP Pq Va net.mpls.maxloop_inkernel
 Set or get the maxinum number of label stack operations (push, swap, pop)
 that can be made on a packet.
 The default is 16.
 .El
-.It Dv PF_PIPEX
+.It Dv PF_PIPEX Pq Va net.pipex
 Get or set global information about PIPEX.
 .Pp
 The currently defined variable names are:
@@ -1974,10 +1947,10 @@ The currently defined variable names are:
 .It Dv PIPEXCTL_OUTQ Ta node Ta not applicable
 .El
 .Bl -tag -width "123456"
-.It Dv PIPEXCTL_ENABLE
+.It Dv PIPEXCTL_ENABLE Pq Va net.pipex.enable
 If set to 1, enable PIPEX processing.
 The default is 0.
-.It Dv PIPEXCTL_INQ
+.It Dv PIPEXCTL_INQ Pq Va net.pipex.inq
 Fourth level comprises an array of
 .Li struct ifqueue
 structures containing information about the PIPEX packet input queue.
@@ -1988,7 +1961,7 @@ are the same as described in
 in the
 .Dv PF_INET
 section.
-.It Dv PIPEXCTL_OUTQ
+.It Dv PIPEXCTL_OUTQ Pq Va net.pipex.outq
 Fourth level comprises an array of
 .Li struct ifqueue
 structures containing information about PIPEX packet output queue.
@@ -2032,22 +2005,26 @@ it is possible to access filesystem dependent information.
 .Pp
 Some filesystems may contain settings.
 .Bl -tag -width "123"
-.It FFS
+.It FFS Pq Va vfs.ffs
 .Bl -column "FFS_SD_DIRECT_BLK_PTRS" "integer" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.\" XXX
 .It Dv FFS_ASYNCFREE Ta "integer" Ta "yes"
+.\" XXX
 .It Dv FFS_CLUSTERREAD Ta "integer" Ta "yes"
+.\" XXX
 .It Dv FFS_CLUSTERWRITE Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_DIRSIZE Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_MAXMEM Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_MEM Ta "integer" Ta "no"
-.It Dv FFS_MAXSOFTDEPS Ta "integer" Ta "yes"
+.It Dv FFS_MAX_SOFTDEPS Ta "integer" Ta "yes"
+.\" XXX
 .It Dv FFS_REALLOCBLOCKS Ta "integer" Ta "yes"
 .It Dv FFS_SD_BLK_LIMIT_HIT Ta "integer" Ta "yes"
 .It Dv FFS_SD_BLK_LIMIT_PUSH Ta "integer" Ta "yes"
 .It Dv FFS_SD_DIR_ENTRY Ta "integer" Ta "yes"
 .It Dv FFS_SD_DIRECT_BLK_PTRS Ta "integer" Ta "yes"
-.It Dv FFS_SD_INDR_BLK_PTRS Ta "integer" Ta "yes"
+.It Dv FFS_SD_INDIR_BLK_PTRS Ta "integer" Ta "yes"
 .It Dv FFS_SD_INO_LIMIT_HIT Ta "integer" Ta "yes"
 .It Dv FFS_SD_INO_LIMIT_PUSH Ta "integer" Ta "yes"
 .It Dv FFS_SD_INODE_BITMAP Ta "integer" Ta "yes"
@@ -2056,34 +2033,51 @@ Some filesystems may contain settings.
 .It Dv FFS_SD_WORKLIST_PUSH Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
+.\" XXX
 .It Dv FFS_CLUSTERREAD
 Enable combining multiple reads into one request to improve performance.
+.\" XXX
 .It Dv FFS_CLUSTERWRITE
 Enable combining multiple writes into one request.
-.It Dv FFS_DIRHASH_DIRSIZE
+.It Dv FFS_DIRHASH_DIRSIZE Pq Va vfs.ffs.dirhash_dirsize
 The minimum size of a directory, in bytes, before it is considered for hashing.
-.It Dv FFS_DIRHASH_MAXMEM
+.It Dv FFS_DIRHASH_MAXMEM Pq Va vfs.ffs.dirhash_maxmem
 The maximum amount of memory, in bytes, to be used for storing directory
 hashes.
-.It Dv FFS_DIRHASH_MEM
+.It Dv FFS_DIRHASH_MEM Pq Va vfs.ffs.dirhash_mem
 The amount of memory currently used by all directory hashes.
+.\" XXX: no description
+.It Dv FFS_MAX_SOFTDEPS Pq Va vfs.ffs.max_softdeps
+.\" XXX
 .It Dv FFS_REALLOCBLOCKS
 When enabled, the kernel will attempt to relocate growing files so that they
 are contiguous on disk, reducing fragmentation.
+.\" XXX: no description
+.It Dv FFS_SD_BLK_LIMIT_HIT Pq Va vfs.ffs.sd_blk_limit_hit
+.It Dv FFS_SD_BLK_LIMIT_PUSH Pq Va vfs.ffs.sd_blk_limit_push
+.It Dv FFS_SD_DIR_ENTRY Pq Va vfs.ffs.sd_dir_entry
+.It Dv FFS_SD_DIRECT_BLK_PTRS Pq Va vfs.ffs.sd_direct_blk_ptrs
+.It Dv FFS_SD_INDIR_BLK_PTRS Pq Va vfs.ffs.sd_indir_blk_ptrs
+.It Dv FFS_SD_INO_LIMIT_HIT Pq Va vfs.ffs.sd_ino_limit_hit
+.It Dv FFS_SD_INO_LIMIT_PUSH Pq Va vfs.ffs.sd_ino_limit_push
+.It Dv FFS_SD_INODE_BITMAP Pq Va vfs.ffs.sd_inode_bitmap
+.It Dv FFS_SD_SYNC_LIMIT_HIT Pq Va vfs.ffs.sd_sync_limit_hit
+.It Dv FFS_SD_TICKDELAY Pq Va vfs.ffs.sd_tickdelay
+.It Dv FFS_SD_WORKLIST_PUSH Pq Va vfs.ffs.sd_worklist_push
 .El
-.It NFS
+.It NFS Pq Va vfs.nfs
 .Bl -column "Third level name" "struct nfsstats" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv NFS_NFSSTATS Ta "struct nfsstats" Ta "yes"
 .It Dv NFS_NIOTHREADS Ta "int" Ta "yes"
 .El
 .Bl -tag -width Ds
-.It Dv NFS_NIOTHREADS
+.It Dv NFS_NIOTHREADS Pq Va vfs.nfs.iothreads
 The number of I/O kernel threads for NFS clients.
 The default is 4;
 the maximum is 20.
 .El
-.It FUSE
+.It FUSE Pq Va vfs.fuse
 .Bl -column "FUSEFS_POOL_NBPAGES" "Type" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv FUSEFS_INFBUFS Ta "int" Ta "no"
@@ -2092,13 +2086,13 @@ the maximum is 20.
 .It Dv FUSEFS_WAITFBUFS Ta "int" Ta "no"
 .El
 .Bl -tag -width Ds
-.It Dv FUSEFS_INFBUFS
+.It Dv FUSEFS_INFBUFS Pq Va vfs.fuse.fusefs_fbufs_in
 The number of inbound fusebufs.
-.It Dv FUSEFS_OPENDEVS
+.It Dv FUSEFS_OPENDEVS Pq Va vfs.fuse.fusefs_open_devices
 The number of FUSE devices opened.
-.It Dv FUSEFS_POOL_NBPAGES
+.It Dv FUSEFS_POOL_NBPAGES Pq Va vfs.fuse.fusefs_pool_pages
 The number of pages used for fusebuf memory.
-.It Dv FUSEFS_WAITFBUFS
+.It Dv FUSEFS_WAITFBUFS Pq Va vfs.fuse.fusefs_fbufs_wait
 The number of fusebufs waiting for a response.
 .El
 .El
@@ -2114,6 +2108,7 @@ privileges may change the value.
 .It Dv VM_ANONMIN Ta "integer" Ta "yes"
 .It Dv VM_LOADAVG Ta "struct loadavg" Ta "no"
 .It Dv VM_MAXSLP Ta "integer" Ta "no"
+.\" XXX
 .It Dv VM_METER Ta "struct vmtotal" Ta "no"
 .It Dv VM_NKMEMPAGES Ta "integer" Ta "no"
 .It Dv VM_PSSTRINGS Ta "struct psstrings" Ta "no"
@@ -2124,29 +2119,29 @@ privileges may change the value.
 .It Dv VM_VTEXTMIN Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv VM_ANONMIN
+.It Dv VM_ANONMIN Pq Va vm.anonmin
 Percentage of physical memory available for
 pages which contain anonymous mapping.
-.It Dv VM_LOADAVG
+.It Dv VM_LOADAVG Pq Va vm.loadavg
 Return the load average history.
 The returned data consists of a
 .Li struct loadavg .
-.It Dv VM_MAXSLP
+.It Dv VM_MAXSLP Pq Va vm.maxslp
 The time for a process to be blocked before being swappable,
 in seconds.
-.It Dv VM_METER
+.It Dv VM_METER Pq Va vm.vmmeter
 Return the system wide virtual memory statistics.
 The returned data consists of a
 .Li struct vmtotal .
-.It Dv VM_NKMEMPAGES
+.It Dv VM_NKMEMPAGES Pq Va vm.nkmempages
 Number of pages in kmem_map.
-.It Dv VM_PSSTRINGS
+.It Dv VM_PSSTRINGS Pq Va vm.psstrings
 Returns the address of the process
 .Li struct ps_strings .
 The
 .Xr ps 1
 program uses it to locate the argument and environment strings.
-.It Dv VM_SWAPENCRYPT
+.It Dv VM_SWAPENCRYPT Pq Va vm.swapencrypt
 Contains statistics about swap encryption.
 The string and integer information available for the third level is
 detailed below.
@@ -2157,15 +2152,15 @@ detailed below.
 .It Dv SWPENC_ENABLE Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv SWPENC_CREATED
+.It Dv SWPENC_CREATED Pq Va vm.swapencrypt.keyscreated
 The number of encryption keys that have been randomly created.
 The swap partition is divided into sections of normally 512KB.
 Each section has its own encryption key.
-.It Dv SWPENC_DELETED
+.It Dv SWPENC_DELETED Pq Va vm.swapencrypt.keysdeleted
 The number of encryption keys that have been deleted, thus effectively
 erasing the data that has been encrypted with them.
 Encryption keys are deleted when their reference counter reaches zero.
-.It Dv SWPENC_ENABLE
+.It Dv SWPENC_ENABLE Pq Va vm.swapencrypt.enable
 Set to 1 to enable swap encryption for all processes.
 A 0 disables swap encryption.
 Pages still on swap receive a grandfather clause.
@@ -2175,14 +2170,14 @@ When swap encryption is turned on, automatic
 .Xr crash 8
 dumps are disabled.
 .El
-.It Dv VM_USPACE
+.It Dv VM_USPACE Pq Va vm.uspace
 The number of bytes allocated for each kernel stack.
-.It Dv VM_UVMEXP
+.It Dv VM_UVMEXP Pq Va vm.uvmexp
 Contains statistics about the UVM memory management system.
-.It Dv VM_VNODEMIN
+.It Dv VM_VNODEMIN Pq Va vm.vnodemin
 Percentage of physical memory available for
 pages which contain cached file data.
-.It Dv VM_VTEXTMIN
+.It Dv VM_VTEXTMIN Pq Va vm.vtextmin
 Percentage of physical memory available for
 pages which contain cached executable data.
 .El
@@ -2217,27 +2212,15 @@ definitions for packet input/output queue identifiers
 definitions for third level PIPEX identifiers
 .It In netinet/in.h
 definitions for third level IPv4/v6 identifiers and
-fourth level
-.Tn IP
-and
-.Tn IPv6
-identifiers
+fourth level IP and IPv6 identifiers
 .It In netinet/icmp_var.h
-definitions for fourth level
-.Tn ICMP
-identifiers
+definitions for fourth level ICMP identifiers
 .It In netinet/icmp6.h
-definitions for fourth level
-.Tn ICMPv6
-identifiers
+definitions for fourth level ICMPv6 identifiers
 .It In netinet/tcp_var.h
-definitions for fourth level
-.Tn TCP
-identifiers
+definitions for fourth level TCP identifiers
 .It In netinet/udp_var.h
-definitions for fourth level
-.Tn UDP
-identifiers
+definitions for fourth level UDP identifiers
 .It In machine/cpu.h
 definitions for second level CPU identifiers
 .El
