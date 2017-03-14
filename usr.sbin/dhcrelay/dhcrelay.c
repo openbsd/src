@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.58 2017/02/13 22:49:38 krw Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.59 2017/03/14 09:21:26 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -83,11 +83,6 @@ ssize_t	 relay_agentinfo_remove(struct packet_ctx *, struct dhcp_packet *,
 
 time_t cur_time;
 
-int log_perror = 1;
-
-u_int16_t server_port;
-u_int16_t client_port;
-int log_priority;
 struct interface_info *interfaces = NULL;
 int server_fd;
 int oflag;
@@ -232,10 +227,6 @@ main(int argc, char *argv[])
 		fatalx("interface '%s' does not have an address",
 		    interfaces->name);
 
-	/* Default DHCP/BOOTP ports. */
-	server_port = htons(SERVER_PORT);
-	client_port = htons(CLIENT_PORT);
-
 	/* We need at least one server. */
 	if (!sp)
 		usage();
@@ -249,14 +240,14 @@ main(int argc, char *argv[])
 	bzero(&laddr, sizeof laddr);
 	laddr.sin_len = sizeof laddr;
 	laddr.sin_family = AF_INET;
-	laddr.sin_port = server_port;
+	laddr.sin_port = htons(SERVER_PORT);
 	laddr.sin_addr.s_addr = interfaces->primary_address.s_addr;
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp->next) {
 		if (sp->intf != NULL)
 			break;
 
-		sp->to.sin_port = server_port;
+		sp->to.sin_port = htons(SERVER_PORT);
 		sp->to.sin_family = AF_INET;
 		sp->to.sin_len = sizeof sp->to;
 		sp->fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -318,7 +309,6 @@ main(int argc, char *argv[])
 	if (daemonize) {
 		if (rdaemon(devnull) == -1)
 			fatal("rdaemon");
-		log_perror = 0;
 	}
 	log_init(0, LOG_DAEMON);	/* stop loggoing to stderr */
 	log_setverbose(0);
@@ -354,10 +344,10 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		bzero(&to, sizeof(to));
 		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
 			to.sin_addr = packet->yiaddr;
-			to.sin_port = client_port;
+			to.sin_port = htons(CLIENT_PORT);
 		} else {
 			to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-			to.sin_port = client_port;
+			to.sin_port = htons(CLIENT_PORT);
 		}
 		to.sin_family = AF_INET;
 		to.sin_len = sizeof to;
@@ -554,11 +544,11 @@ got_response(struct protocol *l)
 	pc.pc_src.ss_len = sizeof(struct sockaddr_in);
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &sp->to.sin_addr,
 	    sizeof(ss2sin(&pc.pc_src)->sin_addr));
-	ss2sin(&pc.pc_src)->sin_port = server_port;
+	ss2sin(&pc.pc_src)->sin_port = htons(SERVER_PORT);
 
 	pc.pc_dst.ss_family = AF_INET;
 	pc.pc_dst.ss_len = sizeof(struct sockaddr_in);
-	ss2sin(&pc.pc_dst)->sin_port = client_port;
+	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
 	if (bootp_packet_handler)
 		(*bootp_packet_handler)(NULL, &u.packet, result, &pc);
