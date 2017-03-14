@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.22 2015/12/28 22:08:18 mmcc Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.23 2017/03/14 16:46:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include "local.h"
 
+#define	INITIAL_LEN	127			/* plus one for the NUL */
+
 int
 asprintf(char **str, const char *fmt, ...)
 {
@@ -35,10 +37,10 @@ asprintf(char **str, const char *fmt, ...)
 	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
-	f._bf._base = f._p = malloc(128);
+	f._bf._base = f._p = malloc(INITIAL_LEN + 1);
 	if (f._bf._base == NULL)
 		goto err;
-	f._bf._size = f._w = 127;		/* Leave room for the NUL */
+	f._bf._size = f._w = INITIAL_LEN;
 	va_start(ap, fmt);
 	ret = __vfprintf(&f, fmt, ap);
 	va_end(ap);
