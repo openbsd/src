@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.150 2017/03/13 20:22:11 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.151 2017/03/14 01:34:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -626,7 +626,8 @@ mdoc_nm_pre(MDOC_ARGS)
 		len = html_strlen(meta->name);
 
 	t = print_otag(h, TAG_COLGROUP, "");
-	print_otag(h, TAG_COL, "shw", len);
+	/* Increase width to make even bold text fit. */
+	print_otag(h, TAG_COL, "shw", len + 2);
 	print_otag(h, TAG_COL, "");
 	print_tagq(h, t);
 	print_otag(h, TAG_TR, "");
