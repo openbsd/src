@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.110 2017/02/09 15:36:46 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.111 2017/03/14 10:27:10 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -157,11 +157,14 @@ mfc_find(struct ifnet *ifp, struct in_addr *origin, struct in_addr *group,
 	if (rt == NULL)
 		return (NULL);
 
-	/* Return first ocurrence if interface is not specified. */
-	if (ifp == NULL)
-		return (rt);
-
 	do {
+		/* Don't consider non multicast routes. */
+		if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
+		    (RTF_HOST | RTF_MULTICAST))
+			continue;
+		/* Return first occurrence if interface is not specified. */
+		if (ifp == NULL)
+			return (rt);
 		if (rt->rt_ifidx == ifp->if_index)
 			return (rt);
 	} while ((rt = rtable_iterate(rt)) != NULL);
