@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.34 2017/02/27 11:38:08 jca Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.35 2017/03/14 15:15:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -644,14 +644,6 @@ static int
 ensure_ibuf(struct asr_query *as, size_t n)
 {
 	char	*t;
-
-	if (as->as.dns.ibuf == NULL) {
-		as->as.dns.ibuf = malloc(n);
-		if (as->as.dns.ibuf == NULL)
-			return (-1); /* errno set */
-		as->as.dns.ibufsize = n;
-		return (0);
-	}
 
 	if (as->as.dns.ibufsize >= n)
 		return (0);
