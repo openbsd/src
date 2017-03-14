@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_helper.h,v 1.6 2015/01/18 19:52:44 djm Exp $	*/
+/*	$OpenBSD: test_helper.h,v 1.7 2017/03/14 01:10:07 dtucker Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller <djm@mindrot.org>
  *
@@ -63,6 +63,9 @@ void assert_size_t(const char *file, int line,
 void assert_u_int(const char *file, int line,
     const char *a1, const char *a2,
     u_int aa1, u_int aa2, enum test_predicate pred);
+void assert_long(const char *file, int line,
+    const char *a1, const char *a2,
+    long aa1, long aa2, enum test_predicate pred);
 void assert_long_long(const char *file, int line,
     const char *a1, const char *a2,
     long long aa1, long long aa2, enum test_predicate pred);
@@ -106,6 +109,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_EQ)
 #define ASSERT_U_INT_EQ(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_EQ)
+#define ASSERT_LONG_EQ(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_EQ)
 #define ASSERT_LONG_LONG_EQ(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_EQ)
 #define ASSERT_CHAR_EQ(a1, a2) \
@@ -135,6 +140,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_NE)
 #define ASSERT_U_INT_NE(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_NE)
+#define ASSERT_LONG_NE(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_NE)
 #define ASSERT_LONG_LONG_NE(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_NE)
 #define ASSERT_CHAR_NE(a1, a2) \
@@ -162,6 +169,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LT)
 #define ASSERT_U_INT_LT(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LT)
+#define ASSERT_LONG_LT(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LT)
 #define ASSERT_LONG_LONG_LT(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LT)
 #define ASSERT_CHAR_LT(a1, a2) \
@@ -189,6 +198,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LE)
 #define ASSERT_U_INT_LE(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LE)
+#define ASSERT_LONG_LE(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LE)
 #define ASSERT_LONG_LONG_LE(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_LE)
 #define ASSERT_CHAR_LE(a1, a2) \
@@ -216,6 +227,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GT)
 #define ASSERT_U_INT_GT(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GT)
+#define ASSERT_LONG_GT(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GT)
 #define ASSERT_LONG_LONG_GT(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GT)
 #define ASSERT_CHAR_GT(a1, a2) \
@@ -243,6 +256,8 @@ void assert_u64(const char *file, int line,
 	assert_size_t(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GE)
 #define ASSERT_U_INT_GE(a1, a2) \
 	assert_u_int(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GE)
+#define ASSERT_LONG_GE(a1, a2) \
+	assert_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GE)
 #define ASSERT_LONG_LONG_GE(a1, a2) \
 	assert_long_long(__FILE__, __LINE__, #a1, #a2, a1, a2, TEST_GE)
 #define ASSERT_CHAR_GE(a1, a2) \
