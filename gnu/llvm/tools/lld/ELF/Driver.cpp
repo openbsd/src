@@ -502,7 +502,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->DefineCommon = getArg(Args, OPT_define_common, OPT_no_define_common,
-      !Config->Relocatable);
+                                !Config->Relocatable);
   Config->Discard = getDiscardOption(Args);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
   Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
