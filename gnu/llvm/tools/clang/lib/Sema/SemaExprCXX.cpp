@@ -6712,6 +6712,11 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
   CXXMemberCallExpr *CE =
     new (Context) CXXMemberCallExpr(Context, ME, None, ResultType, VK,
                                     Exp.get()->getLocEnd());
+
+  if (CheckFunctionCall(Method, CE,
+                        Method->getType()->castAs<FunctionProtoType>()))
+    return ExprError();
+
   return CE;
 }
 
@@ -7184,14 +7189,6 @@ public:
   ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
 
   ExprResult TransformBlockExpr(BlockExpr *E) { return Owned(E); }
-
-  ExprResult TransformObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
-    return Owned(E);
-  }
-
-  ExprResult TransformObjCIvarRefExpr(ObjCIvarRefExpr *E) {
-    return Owned(E);
-  }
 
   ExprResult Transform(Expr *E) {
     ExprResult Res;

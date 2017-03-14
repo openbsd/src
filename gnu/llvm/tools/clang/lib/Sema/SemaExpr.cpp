@@ -342,7 +342,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
   }
 
   // See if this is a deleted function.
-  SmallVector<DiagnoseIfAttr *, 4> DiagnoseIfWarnings;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isDeleted()) {
       auto *Ctor = dyn_cast<CXXConstructorDecl>(FD);
@@ -365,11 +364,8 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     if (getLangOpts().CUDA && !CheckCUDACall(Loc, FD))
       return true;
 
-    if (const DiagnoseIfAttr *A =
-            checkArgIndependentDiagnoseIf(FD, DiagnoseIfWarnings)) {
-      emitDiagnoseIfDiagnostic(Loc, A);
+    if (diagnoseArgIndependentDiagnoseIfAttrs(FD, Loc))
       return true;
-    }
   }
 
   // [OpenMP 4.0], 2.15 declare reduction Directive, Restrictions
@@ -384,9 +380,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     Diag(D->getLocation(), diag::note_entity_declared_at) << D;
     return true;
   }
-
-  for (const auto *W : DiagnoseIfWarnings)
-    emitDiagnoseIfDiagnostic(Loc, W);
 
   DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass,
                              ObjCPropertyAccess);
@@ -5189,16 +5182,6 @@ static void checkDirectCallValidity(Sema &S, const Expr *Fn,
         << Attr->getCond()->getSourceRange() << Attr->getMessage();
     return;
   }
-
-  SmallVector<DiagnoseIfAttr *, 4> Nonfatal;
-  if (const DiagnoseIfAttr *Attr = S.checkArgDependentDiagnoseIf(
-          Callee, ArgExprs, Nonfatal, /*MissingImplicitThis=*/true)) {
-    S.emitDiagnoseIfDiagnostic(Fn->getLocStart(), Attr);
-    return;
-  }
-
-  for (const auto *W : Nonfatal)
-    S.emitDiagnoseIfDiagnostic(Fn->getLocStart(), W);
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -11496,7 +11479,7 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
       return checkPseudoObjectAssignment(S, OpLoc, Opc, LHSExpr, RHSExpr);
 
     // Don't resolve overloads if the other type is overloadable.
-    if (pty->getKind() == BuiltinType::Overload) {
+    if (getLangOpts().CPlusPlus && pty->getKind() == BuiltinType::Overload) {
       // We can't actually test that if we still have a placeholder,
       // though.  Fortunately, none of the exceptions we see in that
       // code below are valid when the LHS is an overload set.  Note
@@ -11521,17 +11504,16 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
     // An overload in the RHS can potentially be resolved by the type
     // being assigned to.
     if (Opc == BO_Assign && pty->getKind() == BuiltinType::Overload) {
-      if (LHSExpr->isTypeDependent() || RHSExpr->isTypeDependent())
-        return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
-
-      if (LHSExpr->getType()->isOverloadableType())
+      if (getLangOpts().CPlusPlus &&
+          (LHSExpr->isTypeDependent() || RHSExpr->isTypeDependent() ||
+           LHSExpr->getType()->isOverloadableType()))
         return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
 
       return CreateBuiltinBinOp(OpLoc, Opc, LHSExpr, RHSExpr);
     }
 
     // Don't resolve overloads if the other type is overloadable.
-    if (pty->getKind() == BuiltinType::Overload &&
+    if (getLangOpts().CPlusPlus && pty->getKind() == BuiltinType::Overload &&
         LHSExpr->getType()->isOverloadableType())
       return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
 
