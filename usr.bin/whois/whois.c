@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.53 2015/12/09 19:29:49 mmcc Exp $   */
+/*      $OpenBSD: whois.c,v 1.54 2017/03/15 16:45:25 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -79,7 +79,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, flags, rval;
-	char *host, *name, *country;
+	char *host, *name, *country, *server;
 
 	country = host = NULL;
 	flags = rval = 0;
@@ -147,10 +147,13 @@ main(int argc, char *argv[])
 
 	if (host == NULL && country == NULL && !(flags & WHOIS_QUICK))
 		flags |= WHOIS_RECURSE;
-	for (name = *argv; (name = *argv) != NULL; argv++)
-		rval += whois(name, host ? host : choose_server(name, country),
-		    port_whois, flags);
-	exit(rval);
+	for (name = *argv; (name = *argv) != NULL; argv++) {
+		server = host ? host : choose_server(name, country);
+		rval += whois(name, server, port_whois, flags);
+		if (host == NULL)
+			free(server);
+	}
+	return (rval);
 }
 
 int
@@ -279,11 +282,9 @@ whois(const char *query, const char *server, const char *port, int flags)
 char *
 choose_server(const char *name, const char *country)
 {
-	static char *server;
+	char *server;
 	const char *qhead;
-	char *nserver;
 	char *ep;
-	size_t len;
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
@@ -307,16 +308,13 @@ choose_server(const char *name, const char *country)
 			return (NICHOST);
 	} else if (isdigit((unsigned char)*(++qhead)))
 		return (ANICHOST);
-	len = strlen(qhead) + sizeof(QNICHOST_TAIL);
-	if ((nserver = realloc(server, len)) == NULL)
-		err(1, "realloc");
-	server = nserver;
 
 	/*
 	 * Post-2003 ("new") gTLDs are all supposed to have "whois.nic.domain"
 	 * (per registry agreement), some older gTLDs also support this...
 	 */
-	snprintf(server, len, "whois.nic.%s", qhead);
+	if (asprintf(&server, "whois.nic.%s", qhead) == -1)
+		err(1, NULL);
 
 	/* most ccTLDs don't do this, but QNICHOST/whois-servers mostly works */
 	if ((strlen(qhead) == 2 ||
@@ -333,8 +331,9 @@ choose_server(const char *name, const char *country)
 	    strcasecmp(qhead, "museum") == 0 ||
 	     /* for others, if whois.nic.TLD doesn't exist, try whois-servers */
 	    getaddrinfo(server, NULL, &hints, &res) != 0)) {
-		strlcpy(server, qhead, len);
-		strlcat(server, QNICHOST_TAIL, len);
+		free(server);
+		if (asprintf(&server, "%s%s", qhead, QNICHOST_TAIL) == -1)
+			err(1, NULL);
 	}
 
 	return (server);
