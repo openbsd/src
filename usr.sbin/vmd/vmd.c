@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.53 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.54 2017/03/15 17:53:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -235,10 +235,11 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		if ((vm = vm_getbyid(vmr.vmr_id)) == NULL)
+			break;
 		if (vmr.vmr_result == 0) {
-			vm = vm_getbyid(vmr.vmr_id);
 			if (vm->vm_from_config)
-				vm->vm_running = 0;
+				vm_stop(vm, 0);
 			else
 				vm_remove(vm);
 		}
@@ -250,7 +251,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		if (vmr.vmr_result == 0) {
 			if (vm->vm_from_config)
-				vm->vm_running = 0;
+				vm_stop(vm, 0);
 			else
 				vm_remove(vm);
 		} else if (vmr.vmr_result == EAGAIN) {
@@ -263,8 +264,10 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vir);
 		memcpy(&vir, imsg->data, sizeof(vir));
 		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL) {
-			(void)strlcpy(vir.vir_ttyname, vm->vm_ttyname,
-			    sizeof(vir.vir_ttyname));
+			memset(vir.vir_ttyname, 0, sizeof(vir.vir_ttyname));
+			if (vm->vm_ttyname != NULL)
+				strlcpy(vir.vir_ttyname, vm->vm_ttyname,
+				    sizeof(vir.vir_ttyname));
 			/* get the user id who started the vm */
 			vir.vir_uid = vm->vm_uid;
 			vir.vir_gid = vm->vm_params.vmc_gid;
