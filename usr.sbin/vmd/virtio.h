@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.10 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.11 2017/03/15 18:06:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -31,8 +31,9 @@
 #define VIONET_QUEUE_SIZE	64
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
 
-/* Version of the VMM Control Interface */
-#define VMMCI_VERSION		1
+/* VMM Control Interface shutdown timeout (in seconds) */
+#define VMMCI_TIMEOUT		3
+#define VMMCI_SHUTDOWN_TIMEOUT	30
 
 /* All the devices we support have either 1 or 2 queues */
 #define VIRTIO_MAX_QUEUES	2
@@ -145,6 +146,7 @@ enum vmmci_cmd {
 
 struct vmmci_dev {
 	struct virtio_io_cfg cfg;
+	struct event timeout;
 	struct timeval time;
 	enum vmmci_cmd cmd;
 	uint32_t vm_id;
@@ -174,5 +176,7 @@ int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *);
 int vmmci_ctl(unsigned int);
+void vmmci_ack(unsigned int);
+void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);

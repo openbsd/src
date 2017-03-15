@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.66 2017/03/01 18:00:50 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.67 2017/03/15 18:06:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -377,6 +377,12 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 #endif
 
 		switch (imsg.hdr.type) {
+		case IMSG_VMDOP_VM_SHUTDOWN:
+			vm->vm_shutdown = 1;
+			break;
+		case IMSG_VMDOP_VM_REBOOT:
+			vm->vm_shutdown = 0;
+			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",
 			    __func__, imsg.hdr.type,

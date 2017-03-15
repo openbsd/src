@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.2 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.3 2017/03/15 18:06:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -304,6 +304,34 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(iev);
+}
+
+/*
+ * vm_ctl
+ *
+ * Tell the vmm parent process to shutdown or reboot the VM and exit.
+ */
+__dead void
+vm_shutdown(unsigned int cmd)
+{
+	struct privsep	*ps = &env->vmd_ps;
+
+	switch (cmd) {
+	case VMMCI_NONE:
+	case VMMCI_SHUTDOWN:
+		(void)proc_compose(ps, PROC_VMM,
+		    IMSG_VMDOP_VM_SHUTDOWN, NULL, 0);
+		break;
+	case VMMCI_REBOOT:
+		(void)proc_compose(ps, PROC_VMM,
+		    IMSG_VMDOP_VM_REBOOT, NULL, 0);
+		break;
+	default:
+		fatalx("invalid vm ctl command: %d", cmd);
+	}
+	proc_flush_imsg(ps, PROC_VMM, -1);
+
+	_exit(0);
 }
 
 /*

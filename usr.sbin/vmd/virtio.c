@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.33 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.34 2017/03/15 18:06:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -57,6 +57,7 @@ int nr_vionet;
 #define VIRTIO_NET_F_MAC	(1<<5)
 
 #define VMMCI_F_TIMESYNC	(1<<0)
+#define VMMCI_F_ACK		(1<<1)
 
 const char *
 vioblk_cmd_name(uint32_t type)
@@ -1202,6 +1203,8 @@ out:
 int
 vmmci_ctl(unsigned int cmd)
 {
+	struct timeval tv = { 0, 0 };
+
 	if ((vmmci.cfg.device_status &
 	    VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) == 0)
 		return (-1);
@@ -1211,6 +1214,7 @@ vmmci_ctl(unsigned int cmd)
 
 	switch (cmd) {
 	case VMMCI_NONE:
+		break;
 	case VMMCI_SHUTDOWN:
 	case VMMCI_REBOOT:
 		/* Update command */
@@ -1226,12 +1230,68 @@ vmmci_ctl(unsigned int cmd)
 		/* Trigger interrupt */
 		vmmci.cfg.isr_status = VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
 		vcpu_assert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
+
+		/* Add ACK timeout */
+		tv.tv_sec = VMMCI_TIMEOUT;
+		evtimer_add(&vmmci.timeout, &tv);
 		break;
 	default:
 		fatalx("invalid vmmci command: %d", cmd);
 	}
 
 	return (0);
+}
+
+void
+vmmci_ack(unsigned int cmd)
+{
+	struct timeval	 tv = { 0, 0 };
+
+	switch (cmd) {
+	case VMMCI_NONE:
+		break;
+	case VMMCI_SHUTDOWN:
+		/*
+		 * The shutdown was requested by the VM if we don't have
+		 * a pending shutdown request.  In this case add a short
+		 * timeout to give the VM a chance to reboot before the
+		 * timer is expired.
+		 */
+		if (vmmci.cmd == 0) {
+			log_debug("%s: vm %u requested shutdown", __func__,
+			    vmmci.vm_id);
+			tv.tv_sec = VMMCI_TIMEOUT;
+			evtimer_add(&vmmci.timeout, &tv);
+			return;
+		}
+		/* FALLTHROUGH */
+	case VMMCI_REBOOT:
+		/*
+		 * If the VM acknowleged our shutdown request, give it
+		 * enough time to shutdown or reboot gracefully.  This
+		 * might take a considerable amount of time (running
+		 * rc.shutdown on the VM), so increase the timeout before
+		 * killing it forcefully.
+		 */
+		if (cmd == vmmci.cmd &&
+		    evtimer_pending(&vmmci.timeout, NULL)) {
+			log_debug("%s: vm %u acknowledged shutdown request",
+			    __func__, vmmci.vm_id);
+			tv.tv_sec = VMMCI_SHUTDOWN_TIMEOUT;
+			evtimer_add(&vmmci.timeout, &tv);
+		}
+		break;
+	default:
+		log_warnx("%s: illegal request %u", __func__, cmd);
+		break;
+	}
+}
+
+void
+vmmci_timeout(int fd, short type, void *arg)
+{
+	log_debug("%s: vm %u shutdown", __progname, vmmci.vm_id);
+	vm_shutdown(vmmci.cmd == VMMCI_REBOOT ? VMMCI_REBOOT : VMMCI_SHUTDOWN);
 }
 
 int
@@ -1262,6 +1322,9 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
 			vmmci.cfg.device_status = *data;
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
+			vmmci_ack(*data);
 			break;
 		}
 	} else {
@@ -1502,7 +1565,10 @@ virtio_init(struct vmop_create_params *vmc, int *child_disks, int *child_taps)
 		return;
 	}
 
-	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC;
+	memset(&vmmci, 0, sizeof(vmmci));
+	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC|VMMCI_F_ACK;
 	vmmci.vm_id = vcp->vcp_id;
 	vmmci.irq = pci_get_dev_irq(id);
+
+	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
 }

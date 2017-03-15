@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.1 2017/01/21 11:23:14 reyk Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.2 2017/03/15 18:06:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -51,6 +51,7 @@ struct vmmci_softc {
 
 int	vmmci_match(struct device *, void *, void *);
 void	vmmci_attach(struct device *, struct device *, void *);
+int	vmmci_activate(struct device *, int);
 
 int	vmmci_config_change(struct virtio_softc *);
 void	vmmci_tick(void *);
@@ -60,7 +61,8 @@ struct cfattach vmmci_ca = {
 	sizeof(struct vmmci_softc),
 	vmmci_match,
 	vmmci_attach,
-	NULL
+	NULL,
+	vmmci_activate
 };
 
 /* Configuration registers */
@@ -70,6 +72,7 @@ struct cfattach vmmci_ca = {
 
 /* Feature bits */
 #define VMMCI_F_TIMESYNC	(1<<0)
+#define VMMCI_F_ACK		(1<<1)
 
 struct cfdriver vmmci_cd = {
 	NULL, "vmmci", DV_DULL
@@ -100,7 +103,7 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	features = VMMCI_F_TIMESYNC;
+	features = VMMCI_F_TIMESYNC|VMMCI_F_ACK;
 	features = virtio_negotiate_features(vsc, features, NULL);
 
 	if (features & VMMCI_F_TIMESYNC) {
@@ -118,13 +121,42 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+vmmci_activate(struct device *self, int act)
+{
+	struct vmmci_softc	*sc = (struct vmmci_softc *)self;
+	struct virtio_softc	*vsc = sc->sc_virtio;
+
+	if ((vsc->sc_features & VMMCI_F_ACK) == 0)
+		return (0);
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		printf("%s: powerdown\n", sc->sc_dev.dv_xname);
+
+		/*
+		 * Tell the host that we are shutting down.  The host will
+		 * start a timer and kill our VM if we didn't reboot before
+		 * expiration.  This avoids being stuck in the
+		 * "Please press any key to reboot" handler on RB_HALT;
+		 * without hooking into the MD code directly.
+		 */
+		virtio_write_device_config_4(vsc, VMMCI_CONFIG_COMMAND,
+		    VMMCI_SHUTDOWN);
+		break;
+	default:
+		break;
+	}
+	return (0);
+}
+
+int
 vmmci_config_change(struct virtio_softc *vsc)
 {
-	struct vmmci_softc *sc = (struct vmmci_softc *)vsc->sc_child;
-	int cmd;
+	struct vmmci_softc	*sc = (struct vmmci_softc *)vsc->sc_child;
+	uint32_t		 cmd;
 
 	/* Check for command */
-	cmd = virtio_read_device_config_1(vsc, VMMCI_CONFIG_COMMAND);
+	cmd = virtio_read_device_config_4(vsc, VMMCI_CONFIG_COMMAND);
 	if (cmd == sc->sc_cmd)
 		return (0);
 	sc->sc_cmd = cmd;
@@ -141,8 +173,13 @@ vmmci_config_change(struct virtio_softc *vsc)
 		break;
 	default:
 		printf("%s: invalid command %d\n", sc->sc_dev.dv_xname, cmd);
+		cmd = VMMCI_NONE;		
 		break;
 	}
+
+	if ((cmd != VMMCI_NONE) &&
+	    (vsc->sc_features & VMMCI_F_ACK))
+		virtio_write_device_config_4(vsc, VMMCI_CONFIG_COMMAND, cmd);
 
 	return (1);
 }
