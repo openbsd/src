@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2017/03/01 07:43:33 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.16 2017/03/15 12:42:12 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -86,9 +86,9 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
 		if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
-			log_warnx("%s: fd %d: not found",
+			log_warnx("%s: lost control connection: fd %d",
 			    __func__, imsg->hdr.peerid);
-			return (-1);
+			return (0);
 		}
 		imsg_compose_event(&c->iev, imsg->hdr.type,
 		    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
