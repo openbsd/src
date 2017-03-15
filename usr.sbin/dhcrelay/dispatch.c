@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.19 2017/02/13 22:49:38 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.20 2017/03/15 14:31:49 rzalamena Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@
 #include <net/if_types.h>
 
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <errno.h>
 #include <ifaddrs.h>
@@ -64,6 +65,14 @@
 #include "dhcpd.h"
 #include "log.h"
 
+/*
+ * Macros implementation used to generate link-local addresses. This
+ * code was copied from: sys/netinet6/in6_ifattach.c.
+ */
+#define EUI64_UBIT		0x02
+#define EUI64_TO_IFID(in6) \
+	do { (in6)->s6_addr[8] ^= EUI64_UBIT; } while (0)
+
 struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
@@ -75,83 +84,154 @@ void (*bootp_packet_handler)(struct interface_info *,
 static int interface_status(struct interface_info *ifinfo);
 
 struct interface_info *
-get_interface(const char *ifname, void (*handler)(struct protocol *),
-    int isserver)
+iflist_getbyname(const char *name)
 {
-	struct interface_info		*iface;
+	struct interface_info	*intf;
+
+	TAILQ_FOREACH(intf, &intflist, entry) {
+		if (strcmp(intf->name, name) != 0)
+			continue;
+
+		return intf;
+	}
+
+	return NULL;
+}
+
+void
+setup_iflist(void)
+{
+	struct interface_info		*intf;
+	struct sockaddr_dl		*sdl;
 	struct ifaddrs			*ifap, *ifa;
+	struct if_data			*ifi;
 	struct sockaddr_in		*sin;
-	int				 found = 0;
+	struct sockaddr_in6		*sin6;
 
-	if ((iface = calloc(1, sizeof(*iface))) == NULL)
-		fatalx("failed to allocate memory");
-
-	if (strlcpy(iface->name, ifname, sizeof(iface->name)) >=
-	    sizeof(iface->name))
-		fatalx("interface name '%s' too long", ifname);
-
-	if (getifaddrs(&ifap) != 0)
+	TAILQ_INIT(&intflist);
+	if (getifaddrs(&ifap))
 		fatalx("getifaddrs failed");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
-		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP)))
+		    (ifa->ifa_flags & IFF_POINTOPOINT))
 			continue;
 
-		if (strcmp(ifname, ifa->ifa_name))
-			continue;
+		/* Find interface or create it. */
+		intf = iflist_getbyname(ifa->ifa_name);
+		if (intf == NULL) {
+			intf = calloc(1, sizeof(*intf));
+			if (intf == NULL)
+				fatal("calloc");
 
-		found = 1;
+			strlcpy(intf->name, ifa->ifa_name,
+			    sizeof(intf->name));
+			TAILQ_INSERT_HEAD(&intflist, intf, entry);
+		}
 
-		/*
-		 * If we have the capability, extract link information
-		 * and record it in a linked list.
-		 */
+		/* Signal disabled interface. */
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			intf->dead = 1;
+
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			struct sockaddr_dl *foo =
-			    (struct sockaddr_dl *)ifa->ifa_addr;
-			struct if_data *ifi =
-			    (struct if_data *)ifa->ifa_data;
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			ifi = (struct if_data *)ifa->ifa_data;
 
-			iface->index = foo->sdl_index;
-			iface->hw_address.hlen = foo->sdl_alen;
-			if (ifi->ifi_type == IFT_ENC)
-				iface->hw_address.htype = HTYPE_IPSEC_TUNNEL;
+			/* Skip non ethernet interfaces. */
+			if (ifi->ifi_type != IFT_ETHER &&
+			    ifi->ifi_type != IFT_ENC) {
+				TAILQ_REMOVE(&intflist, intf, entry);
+				free(intf);
+				continue;
+			}
+
+			if (ifi->ifi_type == IFT_ETHER)
+				intf->hw_address.htype = HTYPE_ETHER;
 			else
-				iface->hw_address.htype = HTYPE_ETHER; /*XXX*/
-			memcpy(iface->hw_address.haddr,
-			    LLADDR(foo), foo->sdl_alen);
+				intf->hw_address.htype = HTYPE_IPSEC_TUNNEL;
+
+			intf->index = sdl->sdl_index;
+			intf->hw_address.hlen = sdl->sdl_alen;
+			memcpy(intf->hw_address.haddr,
+			    LLADDR(sdl), sdl->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
-			/* We already have the primary address. */
-			if (iface->primary_address.s_addr != 0)
-				continue;
-
 			sin = (struct sockaddr_in *)ifa->ifa_addr;
-			if (sin->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
+			if (sin->sin_addr.s_addr == htonl(INADDR_LOOPBACK) ||
+			    intf->primary_address.s_addr != INADDR_ANY)
 				continue;
 
-			iface->primary_address = sin->sin_addr;
+			intf->primary_address = sin->sin_addr;
+		} else if (ifa->ifa_addr->sa_family == AF_INET6) {
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			/* Remove the scope from address if link-local. */
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+				intf->linklocal = sin6->sin6_addr;
+				intf->linklocal.s6_addr[2] = 0;
+				intf->linklocal.s6_addr[3] = 0;
+			} else
+				intf->gipv6 = 1;
+
+			/* At least one IPv6 address was found. */
+			intf->ipv6 = 1;
 		}
 	}
 
 	freeifaddrs(ifap);
 
-	if (!found) {
-		free(iface);
-		return (NULL);
-	}
+	/*
+	 * Generate link-local IPv6 address for interfaces without it.
+	 *
+	 * For IPv6 DHCP Relay it doesn't matter what is used for
+	 * link-addr field, so let's generate an address that won't
+	 * change during execution so we can always find the interface
+	 * to relay packets back. This is only used for layer 2 relaying
+	 * when the interface might not have an address.
+	 */
+	TAILQ_FOREACH(intf, &intflist, entry) {
+		if (memcmp(&intf->linklocal, &in6addr_any,
+		    sizeof(in6addr_any)) != 0)
+			continue;
 
-	if (strlcpy(iface->ifr.ifr_name, ifname,
-	    sizeof(iface->ifr.ifr_name)) >= sizeof(iface->ifr.ifr_name))
+		intf->linklocal.s6_addr[0] = 0xfe;
+		intf->linklocal.s6_addr[1] = 0x80;
+		intf->linklocal.s6_addr[8] = intf->hw_address.haddr[0];
+		intf->linklocal.s6_addr[9] = intf->hw_address.haddr[1];
+		intf->linklocal.s6_addr[10] = intf->hw_address.haddr[2];
+		intf->linklocal.s6_addr[11] = 0xff;
+		intf->linklocal.s6_addr[12] = 0xfe;
+		intf->linklocal.s6_addr[13] = intf->hw_address.haddr[3];
+		intf->linklocal.s6_addr[14] = intf->hw_address.haddr[4];
+		intf->linklocal.s6_addr[15] = intf->hw_address.haddr[5];
+		EUI64_TO_IFID(&intf->linklocal);
+	}
+}
+
+struct interface_info *
+register_interface(const char *ifname, void (*handler)(struct protocol *),
+    int isserver)
+{
+	struct interface_info		*intf;
+
+	if ((intf = iflist_getbyname(ifname)) == NULL)
+		return NULL;
+
+	/* Don't register disabled interfaces. */
+	if (intf->dead)
+		return NULL;
+
+	/* Check if we already registered the interface. */
+	if (intf->ifr.ifr_name[0] != 0)
+		return intf;
+
+	if (strlcpy(intf->ifr.ifr_name, ifname,
+	    sizeof(intf->ifr.ifr_name)) >= sizeof(intf->ifr.ifr_name))
 		fatalx("interface name '%s' too long", ifname);
 
-	/* Register the interface... */
-	if_register_receive(iface, isserver);
-	if_register_send(iface);
-	add_protocol(iface->name, iface->rfdesc, handler, iface);
+	if_register_receive(intf, isserver);
+	if_register_send(intf);
+	add_protocol(intf->name, intf->rfdesc, handler, intf);
 
-	return (iface);
+	return intf;
 }
 
 /*

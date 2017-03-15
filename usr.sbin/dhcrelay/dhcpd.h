@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.19 2017/03/14 09:21:26 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.20 2017/03/15 14:31:49 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,8 @@
  * see ``http://www.vix.com/isc''.  To learn more about Vixie
  * Enterprises, see ``http://www.vix.com''.
  */
+
+#include <sys/queue.h>
 
 #define	SERVER_PORT	67
 #define	CLIENT_PORT	68
@@ -90,7 +92,6 @@ enum dhcp_relay_mode {
 };
 
 struct interface_info {
-	struct interface_info	*next;
 	struct hardware		 hw_address;
 	struct in_addr		 primary_address;
 	char			 name[IFNAMSIZ];
@@ -105,7 +106,14 @@ struct interface_info {
 	int			 errors;
 	int			 dead;
 	u_int16_t		 index;
+
+	int			 ipv6; /* Has any IPv6 address. */
+	int			 gipv6; /* Has global IPv6 address. */
+	struct in6_addr		 linklocal; /* IPv6 link-local address. */
+
+	TAILQ_ENTRY(interface_info) entry;
 };
+TAILQ_HEAD(iflist, interface_info);
 
 struct timeout {
 	struct timeout	*next;
@@ -143,7 +151,9 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 /* dispatch.c */
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, struct packet_ctx *);
-struct interface_info *get_interface(const char *,
+struct interface_info *iflist_getbyname(const char *);
+void setup_iflist(void);
+struct interface_info *register_interface(const char *,
     void (*)(struct protocol *), int isserver);
 void dispatch(void);
 void got_one(struct protocol *);
@@ -162,6 +172,7 @@ ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
 
 /* dhcrelay.c */
 extern int server_fd;
+extern struct iflist intflist;
 
 /* crap */
 extern time_t cur_time;
@@ -170,4 +181,10 @@ static inline struct sockaddr_in *
 ss2sin(struct sockaddr_storage *ss)
 {
 	return ((struct sockaddr_in *)ss);
+}
+
+static inline struct sockaddr_in6 *
+ss2sin6(struct sockaddr_storage *ss)
+{
+	return ((struct sockaddr_in6 *)ss);
 }

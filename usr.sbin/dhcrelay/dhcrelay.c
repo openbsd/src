@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.59 2017/03/14 09:21:26 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.60 2017/03/15 14:31:49 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -84,6 +84,7 @@ ssize_t	 relay_agentinfo_remove(struct packet_ctx *, struct dhcp_packet *,
 time_t cur_time;
 
 struct interface_info *interfaces = NULL;
+struct iflist intflist;
 int server_fd;
 int oflag;
 
@@ -113,6 +114,8 @@ main(int argc, char *argv[])
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_setverbose(1);
 
+	setup_iflist();
+
 	while ((ch = getopt(argc, argv, "aC:di:oR:r")) != -1) {
 		switch (ch) {
 		case 'C':
@@ -125,7 +128,7 @@ main(int argc, char *argv[])
 			if (interfaces != NULL)
 				usage();
 
-			interfaces = get_interface(optarg, got_one, 0);
+			interfaces = iflist_getbyname(optarg);
 			if (interfaces == NULL)
 				fatalx("interface '%s' not found", optarg);
 			break;
@@ -172,7 +175,8 @@ main(int argc, char *argv[])
 		if ((sp = calloc(1, sizeof(*sp))) == NULL)
 			fatalx("calloc");
 
-		if ((sp->intf = get_interface(argv[0], got_one, 1)) != NULL) {
+		if ((sp->intf = register_interface(argv[0], got_one,
+		    1)) != NULL) {
 			if (drm == DRM_LAYER3)
 				fatalx("don't mix interfaces with hosts");
 
@@ -218,8 +222,10 @@ main(int argc, char *argv[])
 			fatal("open(%s)", _PATH_DEVNULL);
 	}
 
-	if (interfaces == NULL)
+	if (interfaces == NULL ||
+	    register_interface(interfaces->name, got_one, 0) == NULL)
 		fatalx("no interface given");
+
 	/* We need an address for running layer 3 mode. */
 	if (drm == DRM_LAYER3 &&
 	    (interfaces->hw_address.htype != HTYPE_IPSEC_TUNNEL &&
