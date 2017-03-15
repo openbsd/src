@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.86 2017/02/22 16:16:35 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.87 2017/03/15 10:17:08 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -72,6 +72,7 @@ static	void		 pg_error_badrequest(const char *);
 static	void		 pg_error_internal(void);
 static	void		 pg_index(const struct req *);
 static	void		 pg_noresult(const struct req *, const char *);
+static	void		 pg_redirect(const struct req *, const char *);
 static	void		 pg_search(const struct req *);
 static	void		 pg_searchres(const struct req *,
 				struct manpage *, size_t);
@@ -536,6 +537,23 @@ pg_error_internal(void)
 }
 
 static void
+pg_redirect(const struct req *req, const char *name)
+{
+	printf("Status: 303 See Other\r\n");
+	printf("Location: http://%s/", HTTP_HOST);
+	if (*scriptname != '\0')
+		printf("%s/", scriptname);
+	if (strcmp(req->q.manpath, req->p[0]))
+		printf("%s/", req->q.manpath);
+	if (req->q.arch != NULL)
+		printf("%s/", req->q.arch);
+	printf("%s", name);
+	if (req->q.sec != NULL)
+		printf(".%s", req->q.sec);
+	printf("\r\nContent-Type: text/html; charset=utf-8\r\n\r\n");
+}
+
+static void
 pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 {
 	char		*arch, *archend;
@@ -952,9 +970,13 @@ pg_search(const struct req *req)
 		}
 	}
 
-	if (0 == mansearch(&search, &paths, argc, argv, &res, &ressz))
+	res = NULL;
+	ressz = 0;
+	if (req->isquery && req->q.equal && argc == 1)
+		pg_redirect(req, argv[0]);
+	else if (mansearch(&search, &paths, argc, argv, &res, &ressz) == 0)
 		pg_noresult(req, "You entered an invalid query.");
-	else if (0 == ressz)
+	else if (ressz == 0)
 		pg_noresult(req, "No results found.");
 	else
 		pg_searchres(req, res, ressz);
