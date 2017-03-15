@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.12 2017/02/25 07:28:32 jsg Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.13 2017/03/15 04:31:41 dtucker Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -127,6 +127,7 @@ fmt_test(void)
 
 	for (i = 0; i < DDATA_LENGTH; i++) {
 		strlcpy(buf, "UNSET", FMT_SCALED_STRSIZE);
+		errno = 0;
 		ret = fmt_scaled(ddata[i].input, buf);
 		e = errno;
 		if (verbose) {
@@ -138,7 +139,7 @@ fmt_test(void)
 		if (ret == -1)
 			errs += assert_int(i, 1, ret, ddata[i].err == 0 ? 0 : -1);
 		if (ddata[i].err)
-			errs += assert_errno(i, 2, ddata[i].err, errno);
+			errs += assert_errno(i, 2, ddata[i].err, e);
 		else
 			errs += assert_str(i, 3, ddata[i].expect, buf);
 	}
@@ -150,8 +151,6 @@ fmt_test(void)
 
 
 #define	IMPROBABLE	(-42)
-
-extern int errno;
 
 struct {					/* the test cases */
 	char *input;
@@ -179,7 +178,6 @@ struct {					/* the test cases */
 	{ "1234567890", 1234567890LL, 0 },	/* should work */
 	{ "1.5E",	1729382256910270464LL, 0 },		/* big */
 	{ "32948093840918378473209480483092", 0, ERANGE },  /* too big */
-	{ "329480938409.8378473209480483092", 0, ERANGE },  /* fraction too big */
 	{ "1.5Q",	0, EINVAL },		/* invalid multiplier */
 	{ "1ab",	0, EINVAL },		/* ditto */
 	{ "3&",		0, EINVAL },		/* ditto */
@@ -200,16 +198,15 @@ print_errno(int e)
 		case EINVAL: printf("EINVAL"); break;
 		case EDOM:   printf("EDOM"); break;
 		case ERANGE: printf("ERANGE"); break;
-		default: printf("errno %d", errno);
+		default: printf("errno %d", e);
 	}
 }
 
 /** Print one result */
 static void
-print(char *input, long long result, int ret)
+print(char *input, long long result, int ret, int e)
 {
-	int e = errno;
-	printf("\"%10s\" --> %lld (%d)", input, result, ret);
+	printf("\"%40s\" --> %lld (%d)", input, result, ret);
 	if (ret == -1) {
 		printf(" -- ");
 		print_errno(e);
@@ -226,17 +223,16 @@ scan_test(void)
 
 	for (i = 0; i < SDATA_LENGTH; i++) {
 		result = IMPROBABLE;
+		errno = 0;
 		/* printf("Calling scan_scaled(%s, ...)\n", sdata[i].input); */
 		ret = scan_scaled(sdata[i].input, &result);
 		e = errno;	/* protect across printfs &c. */
 		if (verbose)
-			print(sdata[i].input, result, ret);
-		errno = e;
+			print(sdata[i].input, result, ret, e);
 		if (ret == -1)
 			errs += assert_int(i, 1, ret, sdata[i].err == 0 ? 0 : -1);
-		errno = e;
 		if (sdata[i].err)
-			errs += assert_errno(i, 2, sdata[i].err, errno);
+			errs += assert_errno(i, 2, sdata[i].err, e);
 		else 
 			errs += assert_llong(i, 3, sdata[i].result, result);
 	}
