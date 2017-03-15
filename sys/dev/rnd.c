@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.191 2016/12/08 05:32:49 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.192 2017/03/15 15:24:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -142,7 +142,7 @@
  * (See M. Matsumoto & Y. Kurita, 1992.  Twisted GFSR generators.  ACM
  * Transactions on Modeling and Computer Simulation 2(3):179-194.
  * Also see M. Matsumoto & Y. Kurita, 1994.  Twisted GFSR generators
- * II.  ACM Transactions on Mdeling and Computer Simulation 4:254-266)
+ * II.  ACM Transactions on Modeling and Computer Simulation 4:254-266)
  *
  * Thanks to Colin Plumb for suggesting this.
  *
@@ -262,7 +262,7 @@ static __inline struct rand_event *
 rnd_put(void)
 {
 	u_int idx = rnd_event_idx++;
-	
+
 	/* allow wrapping. caller will use xor. */
 	idx = idx % QEVLEN;
 
