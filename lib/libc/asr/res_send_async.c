@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.35 2017/03/14 15:15:19 deraadt Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.36 2017/03/15 15:54:41 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -648,7 +648,7 @@ ensure_ibuf(struct asr_query *as, size_t n)
 	if (as->as.dns.ibufsize >= n)
 		return (0);
 
-	t = realloc(as->as.dns.ibuf, n);
+	t = recallocarray(as->as.dns.ibuf, as->as.dns.ibufsize, n, 1);
 	if (t == NULL)
 		return (-1); /* errno set */
 	as->as.dns.ibuf = t;
