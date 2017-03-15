@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
+/* $OpenBSD: lcd.c,v 1.8 2017/03/15 11:13:34 aoyama Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -163,21 +163,17 @@ int
 lcdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
-	size_t len;
-	size_t i, n;
+	size_t len, i;
 	char buf[LCD_MAXBUFLEN];
 
-	len = n = uio->uio_resid;
+	len = uio->uio_resid;
 
 	if (len > LCD_MAXBUFLEN)
 		return EIO;
 
-	while (n > 0) {
-		error = uiomove(buf, n, uio);
-		if (error)
-			return EIO;
-		n = uio->uio_resid;
-	}
+	error = uiomove(buf, len, uio);
+	if (error)
+		return EIO;
 
 	for (i = 0; i < len; i++) {
 		lcdput((int)buf[i]);
