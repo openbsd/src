@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.86 2017/02/05 18:13:28 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.87 2017/03/15 11:29:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -433,8 +433,14 @@ man_br_pre(MAN_ARGS)
 static int
 man_SH_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_HEAD)
-		print_otag(h, TAG_H1, "c", "Sh");
+	char	*id;
+
+	if (n->type == ROFFT_HEAD) {
+		id = html_make_id(n);
+		print_otag(h, TAG_H1, "cTi", "Sh", id);
+		print_otag(h, TAG_A, "chR", "selflink", id);
+		free(id);
+	}
 	return 1;
 }
 
@@ -496,8 +502,14 @@ man_SM_pre(MAN_ARGS)
 static int
 man_SS_pre(MAN_ARGS)
 {
-	if (n->type == ROFFT_HEAD)
-		print_otag(h, TAG_H2, "c", "Ss");
+	char	*id;
+
+	if (n->type == ROFFT_HEAD) {
+		id = html_make_id(n);
+		print_otag(h, TAG_H2, "cTi", "Ss", id);
+		print_otag(h, TAG_A, "chR", "selflink", id);
+		free(id);
+	}
 	return 1;
 }
 
@@ -654,7 +666,7 @@ man_UR_pre(MAN_ARGS)
 	assert(n->type == ROFFT_HEAD);
 	if (n->child != NULL) {
 		assert(n->child->type == ROFFT_TEXT);
-		print_otag(h, TAG_A, "ch", "Lk", n->child->string);
+		print_otag(h, TAG_A, "cTh", "Lk", n->child->string);
 	}
 
 	assert(n->next->type == ROFFT_BODY);

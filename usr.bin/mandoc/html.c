@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.79 2017/03/14 01:34:57 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.80 2017/03/15 11:29:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,8 +26,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "mandoc.h"
 #include "mandoc_aux.h"
+#include "mandoc.h"
+#include "roff.h"
 #include "out.h"
 #include "html.h"
 #include "manconf.h"
@@ -232,6 +233,28 @@ print_metaf(struct html *h, enum mandoc_esc deco)
 	default:
 		break;
 	}
+}
+
+char *
+html_make_id(const struct roff_node *n)
+{
+	const struct roff_node	*nch;
+	char			*buf, *cp;
+
+	for (nch = n->child; nch != NULL; nch = nch->next)
+		if (nch->type != ROFFT_TEXT)
+			return NULL;
+
+	buf = NULL;
+	deroff(&buf, n);
+
+	/* http://www.w3.org/TR/html5/dom.html#the-id-attribute */
+
+	for (cp = buf; *cp != '\0'; cp++)
+		if (*cp == ' ')
+			*cp = '_';
+
+	return buf;
 }
 
 int

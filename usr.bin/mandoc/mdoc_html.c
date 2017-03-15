@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.151 2017/03/14 01:34:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.152 2017/03/15 11:29:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -47,7 +47,6 @@ struct	htmlmdoc {
 };
 
 static	char		 *cond_id(const struct roff_node *);
-static	char		 *make_id(const struct roff_node *);
 static	void		  print_mdoc_head(MDOC_ARGS);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
@@ -476,28 +475,6 @@ mdoc_root_pre(MDOC_ARGS)
 }
 
 static char *
-make_id(const struct roff_node *n)
-{
-	const struct roff_node	*nch;
-	char			*buf, *cp;
-
-	for (nch = n->child; nch != NULL; nch = nch->next)
-		if (nch->type != ROFFT_TEXT)
-			return NULL;
-
-	buf = NULL;
-	deroff(&buf, n);
-
-	/* http://www.w3.org/TR/html5/dom.html#the-id-attribute */
-
-	for (cp = buf; *cp != '\0'; cp++)
-		if (*cp == ' ')
-			*cp = '_';
-
-	return buf;
-}
-
-static char *
 cond_id(const struct roff_node *n)
 {
 	if (n->child != NULL &&
@@ -509,7 +486,7 @@ cond_id(const struct roff_node *n)
 	     (n->parent->tok == MDOC_Xo &&
 	      n->parent->parent->prev == NULL &&
 	      n->parent->parent->parent->tok == MDOC_It)))
-		return make_id(n);
+		return html_make_id(n);
 	return NULL;
 }
 
@@ -520,7 +497,7 @@ mdoc_sh_pre(MDOC_ARGS)
 
 	switch (n->type) {
 	case ROFFT_HEAD:
-		id = make_id(n);
+		id = html_make_id(n);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
 		print_otag(h, TAG_A, "chR", "selflink", id);
 		free(id);
@@ -543,7 +520,7 @@ mdoc_ss_pre(MDOC_ARGS)
 	if (n->type != ROFFT_HEAD)
 		return 1;
 
-	id = make_id(n);
+	id = html_make_id(n);
 	print_otag(h, TAG_H2, "cTi", "Ss", id);
 	print_otag(h, TAG_A, "chR", "selflink", id);
 	free(id);
@@ -953,7 +930,7 @@ mdoc_sx_pre(MDOC_ARGS)
 {
 	char	*id;
 
-	id = make_id(n);
+	id = html_make_id(n);
 	print_otag(h, TAG_A, "cThR", "Sx", id);
 	free(id);
 	return 1;
@@ -1126,7 +1103,7 @@ mdoc_er_pre(MDOC_ARGS)
 	    (n->parent->tok == MDOC_It ||
 	     (n->parent->tok == MDOC_Bq &&
 	      n->parent->parent->parent->tok == MDOC_It)) ?
-	    make_id(n) : NULL;
+	    html_make_id(n) : NULL;
 
 	if (id != NULL)
 		print_otag(h, TAG_A, "chR", "selflink", id);
