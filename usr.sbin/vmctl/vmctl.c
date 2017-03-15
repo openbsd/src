@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.26 2017/03/03 09:12:40 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.27 2017/03/15 18:00:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -409,8 +409,10 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			    maxmem);
 
 			if (vir->vir_id != 0) {
+				if (*vmi->vir_ttyname == '\0')
+					tty = "-";
 				/* get tty - skip /dev/ path */
-				if ((tty = strrchr(vmi->vir_ttyname,
+				else if ((tty = strrchr(vmi->vir_ttyname,
 				    '/')) == NULL || ++tty == '\0')
 					tty = list[i].vir_ttyname;
 
