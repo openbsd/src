@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.31 2013/11/28 18:24:55 deraadt Exp $	 */
+/* $OpenBSD: commands.c,v 1.32 2017/03/15 04:24:14 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -70,13 +70,13 @@ next_field(char *str)
 	size_t span;
 
 	span = strcspn(str, spaces);
-	if (span == strlen(str)) 
+	if (span == strlen(str))
 		return (NULL);
 
 	str += span;
 	*str++  = '\0';
 
-	while (strcspn(str, spaces) == 0) 
+	while (strcspn(str, spaces) == 0)
 		str++;
 
 	if (*str == '\0')
@@ -301,7 +301,7 @@ kill_procs(char *str)
 		} else {
 			/* translate the name into a number */
 			for (signum = 0; signum < NSIG; signum++) {
-				if (strcasecmp(sys_signame[signum], 
+				if (strcasecmp(sys_signame[signum],
 				    str) == 0)
 					break;
 			}

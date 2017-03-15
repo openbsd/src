@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.25 2015/01/16 06:40:13 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.26 2017/03/15 04:24:14 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -58,7 +58,7 @@ atoiwi(char *str)
 		    strncmp(str, "all", len) == 0 ||
 		    strncmp(str, "maximum", len) == 0) {
 			return (Infinity);
-		} 
+		}
 		i = (int)strtonum(str, 0, INT_MAX, &errstr);
 		if (errstr) {
 			return (Invalid);

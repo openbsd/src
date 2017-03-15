@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.88 2015/11/05 17:17:13 espie Exp $	*/
+/*	$OpenBSD: top.c,v 1.89 2017/03/15 04:24:14 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -711,7 +711,7 @@ rundisplay(void)
 					new_message(MT_standout,
 					    "Processes should be a "
 					    "non-negative number");
- 					putr();
+					putr();
 					no_command = Yes;
 				}
 			} else
@@ -811,7 +811,7 @@ rundisplay(void)
 					}
 				} else if ((uid = userid(tempbuf)) == (uid_t)-1) {
 						new_message(MT_standout,
-					    	    " %s: unknown user", tempbuf);
+						    " %s: unknown user", tempbuf);
 						no_command = Yes;
 				} else {
 					ps.uid = uid;
@@ -880,7 +880,7 @@ rundisplay(void)
 		case CMD_command:
 			show_args = (show_args == No) ? Yes : No;
 			break;
-		
+
 		case CMD_threads:
 			ps.threads = !ps.threads;
 			old_threads = ps.threads;
@@ -934,7 +934,7 @@ rundisplay(void)
 		case CMD_add:
 			ps.uid = (uid_t)-1;	/* uid */
 			ps.huid = (uid_t)-1;
-			ps.pid = (pid_t)-1; 	/* pid */
+			ps.pid = (pid_t)-1;	/* pid */
 			ps.system = old_system;
 			ps.command = NULL;	/* grep */
 			hlpid = -1;

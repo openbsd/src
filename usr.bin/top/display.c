@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.51 2016/08/27 04:07:42 guenther Exp $	 */
+/* $OpenBSD: display.c,v 1.52 2017/03/15 04:24:14 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -868,7 +868,7 @@ anykey(void)
 	standendp();
 	if (smart_terminal)
 		refresh();
-	else 
+	else
 		fflush(stdout);
 	while (1) {
 		len = read(STDIN_FILENO, &ch, 1);

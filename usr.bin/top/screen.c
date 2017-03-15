@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.20 2010/02/05 10:21:10 otto Exp $	 */
+/* $OpenBSD: screen.c,v 1.21 2017/03/15 04:24:14 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -116,11 +116,11 @@ init_termcap(int interactive)
 	else
 		screen_width -= 1;
 
-        /* get necessary capabilities */
-        if (tgetstr("cl", NULL) == NULL || tgetstr("cm", NULL) == NULL) {
-                smart_terminal = No;
-                return;
-        }
+	/* get necessary capabilities */
+	if (tgetstr("cl", NULL) == NULL || tgetstr("cm", NULL) == NULL) {
+		smart_terminal = No;
+		return;
+	}
 
 	/* get the actual screen size with an ioctl, if needed */
 	/*

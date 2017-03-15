@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.87 2016/07/28 21:45:00 tedu Exp $	 */
+/* $OpenBSD: machine.c,v 1.88 2017/03/15 04:24:14 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -93,9 +93,9 @@ char	*state_abbrev[] = {
 };
 
 /* these are for calculating cpu state percentages */
-static int64_t     **cp_time;
-static int64_t     **cp_old;
-static int64_t     **cp_diff;
+static int64_t	**cp_time;
+static int64_t	**cp_old;
+static int64_t	**cp_diff;
 
 /* these are for detailing the process states */
 int process_states[8];
@@ -126,14 +126,14 @@ char	*ordernames[] = {
 };
 
 /* these are for keeping track of the proc array */
-static int      nproc;
-static int      onproc = -1;
-static int      pref_len;
+static int	nproc;
+static int	onproc = -1;
+static int	pref_len;
 static struct kinfo_proc *pbase;
 static struct kinfo_proc **pref;
 
 /* these are for getting the memory statistics */
-static int      pageshift;	/* log base 2 of the pagesize */
+static int	pageshift;	/* log base 2 of the pagesize */
 
 /* define pagetok in terms of pageshift */
 #define pagetok(size) ((size) << pageshift)
