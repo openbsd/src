@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.12 2016/03/30 23:34:12 bru Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.13 2017/03/15 21:43:45 bru Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -124,6 +124,12 @@ struct ubcmtp_finger {
 #define UBCMTP_SN_WIDTH		25
 #define UBCMTP_SN_COORD		250
 #define UBCMTP_SN_ORIENT	10
+
+/* Identify clickpads in ubcmtp_configure. */
+#define IS_CLICKPAD(ubcmtp_type) (ubcmtp_type != UBCMTP_TYPE1)
+
+/* Use a constant, synaptics-compatible pressure value for now. */
+#define DEFAULT_PRESSURE	40
 
 struct ubcmtp_limit {
 	int limit;
@@ -316,17 +322,6 @@ static struct ubcmtp_dev ubcmtp_devices[] = {
 	},
 };
 
-/* coordinates for each tracked finger */
-struct ubcmtp_pos {
-	int	down;
-	int	x;
-	int	y;
-	int	z;
-	int	w;
-	int	dx;
-	int	dy;
-};
-
 struct ubcmtp_softc {
 	struct device		sc_dev;		/* base device */
 
@@ -335,7 +330,6 @@ struct ubcmtp_softc {
 	struct uhidev		sc_hdev;
 	struct usbd_device	*sc_udev;
 	struct device		*sc_wsmousedev;
-	int			wsmode;
 
 	int			tp_ifacenum;	/* trackpad interface number */
 	struct usbd_interface	*sc_tp_iface;	/* trackpad interface */
@@ -355,7 +349,8 @@ struct ubcmtp_softc {
 	uint32_t		sc_status;
 #define UBCMTP_ENABLED		1
 
-	struct ubcmtp_pos	pos[UBCMTP_MAX_FINGERS];
+	struct mtpoint		frame[UBCMTP_MAX_FINGERS];
+	int			contacts;
 	int			btn;
 };
 
@@ -371,6 +366,7 @@ int	ubcmtp_match(struct device *, void *, void *);
 void	ubcmtp_attach(struct device *, struct device *, void *);
 int	ubcmtp_detach(struct device *, int);
 int	ubcmtp_activate(struct device *, int);
+int	ubcmtp_configure(struct ubcmtp_softc *);
 
 const struct wsmouse_accessops ubcmtp_accessops = {
 	ubcmtp_enable,
@@ -489,6 +485,8 @@ ubcmtp_attach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	if (sc->sc_wsmousedev != NULL && ubcmtp_configure(sc))
+		ubcmtp_disable(sc);
 }
 
 int
@@ -516,6 +514,24 @@ ubcmtp_activate(struct device *self, int act)
 	}
 
 	return (rv);
+}
+
+int
+ubcmtp_configure(struct ubcmtp_softc *sc)
+{
+	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+
+	hw->type = WSMOUSE_TYPE_ELANTECH;	/* see ubcmtp_ioctl */
+	hw->hw_type = (IS_CLICKPAD(sc->dev_type->type)
+	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
+	hw->x_min = sc->dev_type->l_x.min;
+	hw->x_max = sc->dev_type->l_x.max;
+	hw->y_min = sc->dev_type->l_y.min;
+	hw->y_max = sc->dev_type->l_y.max;
+	hw->mt_slots = UBCMTP_MAX_FINGERS;
+	hw->flags = WSMOUSEHW_MT_TRACKING;
+
+	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
 }
 
 int
@@ -608,12 +624,12 @@ ubcmtp_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 			    wsmode);
 			return (EINVAL);
 		}
+		wsmouse_set_mode(sc->sc_wsmousedev, wsmode);
 
 		DPRINTF("%s: changing mode to %s\n",
 		    sc->sc_dev.dv_xname, (wsmode == WSMOUSE_COMPAT ? "compat" :
 		    "native"));
 
-		sc->wsmode = wsmode;
 		break;
 
 	default:
@@ -779,7 +795,7 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ubcmtp_softc *sc = priv;
 	struct ubcmtp_finger *pkt;
 	u_int32_t pktlen;
-	int i, diff = 0, finger = 0, fingers = 0, s, t;
+	int i, s, btn, contacts, fingers;
 
 	if (usbd_is_dying(sc->sc_udev) || !(sc->sc_status & UBCMTP_ENABLED))
 		return;
@@ -803,76 +819,30 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	pkt = (struct ubcmtp_finger *)(sc->tp_pkt + sc->tp_offset);
 	fingers = (pktlen - sc->tp_offset) / sizeof(struct ubcmtp_finger);
 
+	contacts = 0;
 	for (i = 0; i < fingers; i++) {
-		if ((int16_t)letoh16(pkt[i].touch_major) == 0) {
-			/* finger lifted */
-			sc->pos[i].down = 0;
-			diff = 1;
-			continue;
-		}
-
-		if (!sc->pos[finger].down) {
-			sc->pos[finger].down = 1;
-			diff = 1;
-		}
-
-		if ((t = (int16_t)letoh16(pkt[i].abs_x)) != sc->pos[finger].x) {
-			sc->pos[finger].x = t;
-			diff = 1;
-		}
-
-		if ((t = (int16_t)letoh16(pkt[i].abs_y)) != sc->pos[finger].y) {
-			sc->pos[finger].y = t;
-			diff = 1;
-		}
-
-		if ((t = (int16_t)letoh16(pkt[i].rel_x)) != sc->pos[finger].dx) {
-			sc->pos[finger].dx = t;
-			diff = 1;
-		}
-
-		if ((t = (int16_t)letoh16(pkt[i].rel_y)) != sc->pos[finger].dy) {
-			sc->pos[finger].dy = t;
-			diff = 1;
-		}
-
-		finger++;
+		if ((int16_t)letoh16(pkt[i].touch_major) == 0)
+			continue; /* finger lifted */
+		sc->frame[contacts].x = (int16_t)letoh16(pkt[i].abs_x);
+		sc->frame[contacts].y = (int16_t)letoh16(pkt[i].abs_y);
+		sc->frame[contacts].pressure = DEFAULT_PRESSURE;
+		contacts++;
 	}
 
-	if (sc->dev_type->type == UBCMTP_TYPE2 ||
-	    sc->dev_type->type == UBCMTP_TYPE3 ||
-	    sc->dev_type->type == UBCMTP_TYPE4) {
-		if (sc->dev_type->type == UBCMTP_TYPE2)
-			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE2_BTOFF]));
-		else if (sc->dev_type->type == UBCMTP_TYPE3)
-			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE3_BTOFF]));
-		else if (sc->dev_type->type == UBCMTP_TYPE4)
-			t = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE4_BTOFF]));
+	btn = sc->btn;
+	if (sc->dev_type->type == UBCMTP_TYPE2)
+		sc->btn = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE2_BTOFF]));
+	else if (sc->dev_type->type == UBCMTP_TYPE3)
+		sc->btn = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE3_BTOFF]));
+	else if (sc->dev_type->type == UBCMTP_TYPE4)
+		sc->btn = !!((int16_t)letoh16(sc->tp_pkt[UBCMTP_TYPE4_BTOFF]));
 
-		if (sc->btn != t) {
-			sc->btn = t;
-			diff = 1;
-
-			DPRINTF("%s: [button]\n", sc->sc_dev.dv_xname);
-		}
-	}
-
-	if (diff) {
+	if (contacts || sc->contacts || sc->btn != btn) {
+		sc->contacts = contacts;
 		s = spltty();
-
-		DPRINTF("%s: ", sc->sc_dev.dv_xname);
-
-		if (sc->wsmode == WSMOUSE_NATIVE) {
-			DPRINTF("absolute input %d, %d (finger %d, button %d)\n",
-			    sc->pos[0].x, sc->pos[0].y, finger, sc->btn);
-			WSMOUSE_TOUCH(sc->sc_wsmousedev, sc->btn, sc->pos[0].x,
-			    sc->pos[0].y, (finger ? 50 : 0), finger);
-		} else {
-			DPRINTF("relative input %d, %d (button %d)\n",
-			    sc->pos[0].dx, sc->pos[0].dy, sc->btn);
-			WSMOUSE_INPUT(sc->sc_wsmousedev, sc->btn,
-			    sc->pos[0].dx, sc->pos[0].dy, 0, 0);
-		}
+		wsmouse_buttons(sc->sc_wsmousedev, sc->btn);
+		wsmouse_mtframe(sc->sc_wsmousedev, sc->frame, contacts);
+		wsmouse_input_sync(sc->sc_wsmousedev);
 		splx(s);
 	}
 }
