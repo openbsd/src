@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.88 2017/03/15 13:18:48 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.89 2017/03/15 13:49:26 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -649,9 +649,12 @@ pg_searchres(const struct req *req, struct manpage *r, size_t sz)
 		for (i = 0; i < sz; i++) {
 			printf("  <tr>\n"
 			       "    <td>"
-			       "<a class=\"Xr\" href=\"/%s%s%s/%s\">",
-			    scriptname, *scriptname == '\0' ? "" : "/",
-			    req->q.manpath, r[i].file);
+			       "<a class=\"Xr\" href=\"/");
+			if (*scriptname != '\0')
+				printf("%s/", scriptname);
+			if (strcmp(req->q.manpath, req->p[0]))
+				printf("%s/", req->q.manpath);
+			printf("%s\">", r[i].file);
 			html_print(r[i].names);
 			printf("</a></td>\n"
 			       "    <td><span class=\"Nd\">");
