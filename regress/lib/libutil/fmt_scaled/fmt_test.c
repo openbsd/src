@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.13 2017/03/15 04:31:41 dtucker Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.14 2017/03/15 05:00:58 dtucker Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <util.h>
@@ -187,7 +188,23 @@ struct {					/* the test cases */
 	{ "",		0, 0 },			/* boundary */
 	{ "--1", -1, EINVAL },
 	{ "++42", -1, EINVAL },
+	{ "SCALE_OVERFLOW", 0, ERANGE },
+	{ "SCALE_UNDERFLOW", 0, ERANGE },
+#if 0
+	{ "LLONG_MAX_K", (LLONG_MAX / 1024) * 1024, 0 },
+	{ "LLONG_MIN_K", (LLONG_MIN / 1024) * 1024, 0 },
+	{ "LLONG_MAX", LLONG_MAX, 0 },	/* upper limit */
+	{ "LLONG_MIN", LLONG_MIN, 0 },	/* lower limit */
 	/* { "9223372036854775808", -9223372036854775808LL, 0 }, */	/* XXX  */
+#endif
+#if LLONG_MAX == 0x7fffffffffffffffLL
+	{ "9223372036854775808", 0, ERANGE },
+	{ "9223372036854775809", 0, ERANGE },
+#endif
+#if LLONG_MIN == (-0x7fffffffffffffffLL-1)
+	{ "-9223372036854775809", 0, ERANGE },
+	{ "-9223372036854775810", 0, ERANGE },
+#endif
 };
 #	define SDATA_LENGTH (sizeof sdata/sizeof *sdata)
 
@@ -220,15 +237,39 @@ scan_test(void)
 	unsigned int i, errs = 0, e;
 	int ret;
 	long long result;
+	char buf[1024], *input;
 
 	for (i = 0; i < SDATA_LENGTH; i++) {
 		result = IMPROBABLE;
+
+		input = sdata[i].input;
+		/* some magic values for architecture dependent limits */
+		if (strcmp(input, "LLONG_MAX") == 0) {
+			snprintf(buf, sizeof buf," %lld", LLONG_MAX);
+			input = buf;
+		} else if (strcmp(input, "LLONG_MIN") == 0) {
+			snprintf(buf, sizeof buf," %lld", LLONG_MIN);
+			input = buf;
+		} else if (strcmp(input, "LLONG_MAX_K") == 0) {
+			snprintf(buf, sizeof buf," %lldK", LLONG_MAX/1024);
+			input = buf;
+		} else if (strcmp(input, "LLONG_MIN_K") == 0) {
+			snprintf(buf, sizeof buf," %lldK", LLONG_MIN/1024);
+			input = buf;
+		} else if (strcmp(input, "SCALE_OVERFLOW") == 0) {
+			snprintf(buf, sizeof buf," %lldK", (LLONG_MAX/1024)+1);
+			input = buf;
+		} else if (strcmp(input, "SCALE_UNDERFLOW") == 0) {
+			snprintf(buf, sizeof buf," %lldK", (LLONG_MIN/1024)-1);
+			input = buf;
+		}
+
 		errno = 0;
 		/* printf("Calling scan_scaled(%s, ...)\n", sdata[i].input); */
-		ret = scan_scaled(sdata[i].input, &result);
+		ret = scan_scaled(input, &result);
 		e = errno;	/* protect across printfs &c. */
 		if (verbose)
-			print(sdata[i].input, result, ret, e);
+			print(input, result, ret, e);
 		if (ret == -1)
 			errs += assert_int(i, 1, ret, sdata[i].err == 0 ? 0 : -1);
 		if (sdata[i].err)
