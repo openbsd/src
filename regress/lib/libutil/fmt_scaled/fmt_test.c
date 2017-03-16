@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.14 2017/03/15 05:00:58 dtucker Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.15 2017/03/16 02:42:31 dtucker Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -190,18 +190,25 @@ struct {					/* the test cases */
 	{ "++42", -1, EINVAL },
 	{ "SCALE_OVERFLOW", 0, ERANGE },
 	{ "SCALE_UNDERFLOW", 0, ERANGE },
-#if 0
 	{ "LLONG_MAX_K", (LLONG_MAX / 1024) * 1024, 0 },
 	{ "LLONG_MIN_K", (LLONG_MIN / 1024) * 1024, 0 },
 	{ "LLONG_MAX", LLONG_MAX, 0 },	/* upper limit */
-	{ "LLONG_MIN", LLONG_MIN, 0 },	/* lower limit */
-	/* { "9223372036854775808", -9223372036854775808LL, 0 }, */	/* XXX  */
-#endif
+
+	/*
+	 * Lower limit is a bit special: because scan_scaled accumulates into a
+	 * signed long long it can only handle up to the negative value of
+	 * LLONG_MAX not LLONG_MIN.
+	 */
+	{ "NEGATIVE_LLONG_MAX", LLONG_MAX*-1, 0 },	/* lower limit */
+	{ "LLONG_MIN", 0, ERANGE },	/* can't handle */
 #if LLONG_MAX == 0x7fffffffffffffffLL
+	{ "-9223372036854775807", -9223372036854775807, 0 },
+	{ "9223372036854775807", 9223372036854775807, 0 },
 	{ "9223372036854775808", 0, ERANGE },
 	{ "9223372036854775809", 0, ERANGE },
 #endif
 #if LLONG_MIN == (-0x7fffffffffffffffLL-1)
+	{ "-9223372036854775808", 0, ERANGE },
 	{ "-9223372036854775809", 0, ERANGE },
 	{ "-9223372036854775810", 0, ERANGE },
 #endif
@@ -262,10 +269,16 @@ scan_test(void)
 		} else if (strcmp(input, "SCALE_UNDERFLOW") == 0) {
 			snprintf(buf, sizeof buf," %lldK", (LLONG_MIN/1024)-1);
 			input = buf;
+		} else if (strcmp(input, "NEGATIVE_LLONG_MAX") == 0) {
+			snprintf(buf, sizeof buf," %lld", LLONG_MAX*-1);
+			input = buf;
 		}
+		if (verbose && input != sdata[i].input)
+			printf("expand '%s' -> '%s'\n", sdata[i].input,
+			    input);
 
-		errno = 0;
 		/* printf("Calling scan_scaled(%s, ...)\n", sdata[i].input); */
+		errno = 0;
 		ret = scan_scaled(input, &result);
 		e = errno;	/* protect across printfs &c. */
 		if (verbose)
