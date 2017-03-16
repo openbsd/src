@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.138 2016/11/14 09:21:35 tb Exp $
+.\"	$OpenBSD: sh.1,v 1.139 2017/03/16 19:15:19 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2016 $
+.Dd $Mdocdate: March 16 2017 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -121,8 +121,6 @@ Do not expand file name patterns.
 When a utility is first executed,
 hash (record) its location
 so that future invocations do not need to search for it.
-Builtins are not hashed, regardless of whether this option is set or not.
-This option is set by default for non-interactive shells.
 .It Fl i
 Enable behaviour convenient for an interactive shell.
 This option is set by default
@@ -510,6 +508,14 @@ is a colon,
 .Ev OPTARG
 is set to the unsupported option,
 otherwise an error message is displayed.
+.It Ic hash Op Fl r | Ar utility
+Add
+.Ar utility
+to the hash list
+or remove
+.Pq Fl r
+all utilities from the hash list.
+Without arguments, show the utilities currently hashed.
 .It Ic jobs Oo Fl l | p Oc Op Ar id ...
 Display the status of all jobs in the current shell environment,
 or those selected by
