@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.275 2017/03/13 22:47:31 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.276 2017/03/16 14:27:23 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 13 2017 $
+.Dd $Mdocdate: March 16 2017 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -1102,7 +1102,6 @@ If set to any number, show all routes with that number priority.
 If set to a negative number, show routes that do not have the positive
 priority value.
 .El
-.\" XXX - document NET_RT_FLAGS
 .Pp
 An optional seventh level name can be provided to select the routing table
 on which to run the operation.
@@ -1868,7 +1867,7 @@ We reuse
 and
 .Li net.inet.udp
 for TCP/UDP over IPv6.
-.It Dv PF_KEY Pq Va net.key
+.It Dv PF_KEY
 Return
 .Xr ipsec 4
 database dumps.
@@ -1936,7 +1935,7 @@ The currently defined variable names are:
 .It Dv PIPEXCTL_OUTQ Ta node Ta not applicable
 .El
 .Bl -tag -width "123456"
-.It Dv PIPEXCTL_ENABLE Pq Va net.pipex.enable
+.It Dv PIPEXCTL_ENABLE
 If set to 1, enable PIPEX processing.
 The default is 0.
 .It Dv PIPEXCTL_INQ Pq Va net.pipex.inq
