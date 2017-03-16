@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.140 2017/03/16 19:59:15 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.141 2017/03/16 20:06:37 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -782,6 +782,10 @@ should be a signal name
 or number.
 .It Ic true
 Return a true (zero) value.
+.It Ic type Ar command ...
+For each
+.Ar command ,
+show how the shell would interpret it.
 .It Ic ulimit Op Fl f Ar n
 Limit the maximum size of a file that can be created to
 .Ar n
