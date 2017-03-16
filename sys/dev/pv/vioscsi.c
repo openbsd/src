@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.2 2017/01/21 11:33:01 reyk Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.3 2017/03/16 21:07:07 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -32,12 +32,23 @@
 enum { vioscsi_debug = 0 };
 #define DPRINTF(f...) do { if (vioscsi_debug) printf(f); } while (0)
 
+#define STATE_ASSERT(vr, want) do {					\
+		if (vr->vr_state != want) {				\
+			panic("%s:%d: vr_state is %d should be %d\n",	\
+			    __func__, __LINE__, vr->vr_state, want);	\
+		} \
+	} while (0)
+
+
+enum vioscsi_req_state { FREE, ALLOC, INQUEUE, DONE };
+
 struct vioscsi_req {
 	struct virtio_scsi_req_hdr	 vr_req;
 	struct virtio_scsi_res_hdr	 vr_res;
 	struct scsi_xfer		*vr_xs;
 	bus_dmamap_t			 vr_control;
 	bus_dmamap_t			 vr_data;
+	enum vioscsi_req_state		 vr_state;
 };
 
 struct vioscsi_softc {
@@ -168,6 +179,7 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 	int slot = vr - sc->sc_reqs;
 
 	DPRINTF("vioscsi_scsi_cmd: enter\n");
+	STATE_ASSERT(vr, ALLOC);
 
 	// TODO(matthew): Support bidirectional SCSI commands?
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
@@ -245,6 +257,7 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 		virtio_enqueue(vq, slot, vr->vr_data, 0);
 
 	virtio_enqueue_commit(vsc, vq, slot, 1);
+	vr->vr_state = INQUEUE;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
 		DPRINTF("vioscsi_scsi_cmd: polling...\n");
@@ -272,8 +285,8 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
     struct vioscsi_req *vr)
 {
 	struct scsi_xfer *xs = vr->vr_xs;
-
-	DPRINTF("vioscsi_req_done: enter\n");
+	STATE_ASSERT(vr, INQUEUE);
+	DPRINTF("vioscsi_req_done: enter vr: %p xs: %p\n", vr, xs);
 
 	int isread = !!(xs->flags & SCSI_DATA_IN);
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
@@ -307,6 +320,7 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 
 done:
 	vr->vr_xs = NULL;
+	vr->vr_state = DONE;
 	scsi_done(xs);
 }
 
@@ -354,6 +368,7 @@ vioscsi_req_get(void *cookie)
 	if (vr == NULL)
 		goto err1;
 
+	STATE_ASSERT(vr, FREE);
 	vr->vr_req.id = slot;
 	vr->vr_req.task_attr = VIRTIO_SCSI_S_SIMPLE;
 
@@ -374,6 +389,7 @@ vioscsi_req_get(void *cookie)
 		goto err4;
 
 	DPRINTF("vioscsi_req_get: %p, %d\n", vr, slot);
+	vr->vr_state = ALLOC;
 
 	return (vr);
 
@@ -404,7 +420,12 @@ vioscsi_req_put(void *cookie, void *io)
 	bus_dmamap_destroy(vsc->sc_dmat, vr->vr_data);
 
 	int s = splbio();
-	virtio_dequeue_commit(vq, slot);
+	if (vr->vr_state == DONE) {
+		virtio_dequeue_commit(vq, slot);
+	} else if (vr->vr_state != ALLOC) {
+		panic("invalid vr_state[%d]: %d", slot, vr->vr_state);
+	}
+	vr->vr_state = FREE;
 	splx(s);
 }
 
