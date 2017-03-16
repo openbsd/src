@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.132 2017/03/16 15:07:45 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.133 2017/03/16 15:16:21 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -316,14 +316,16 @@ monthly mailing list digests without greylist delays every time.
 .Pp
 .Xr spamd-setup 8
 should be run periodically by
-.Xr cron 8 .
+.Xr cron 8
+to update the blacklists configured in
+.Xr spamd.conf 5 .
+Use
+.Xr crontab 1
+to uncomment the entry in root's crontab.
 When run in blacklist-only mode,
 the
 .Fl b
 flag should be specified.
-Use
-.Xr crontab 1
-to uncomment the entry in root's crontab.
 .Pp
 .Xr spamlogd 8
 should be used to update the whitelist entries in
