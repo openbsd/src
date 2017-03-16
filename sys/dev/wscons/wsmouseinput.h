@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.5 2017/03/06 09:53:01 mpi Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.6 2017/03/16 10:03:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -179,10 +179,8 @@ void wstpad_init_deceleration(struct wsmouseinput *);
 int wstpad_configure(struct wsmouseinput *);
 void wstpad_reset(struct wsmouseinput *);
 
-int wstpad_get_params(struct wsmouseinput *,
-    struct wsmouse_param *, u_int);
-int wstpad_set_params(struct wsmouseinput *,
-    const struct wsmouse_param *, u_int);
+int wstpad_get_param(struct wsmouseinput *, int, int *);
+int wstpad_set_param(struct wsmouseinput *, int, int);
 
 
 #define FOREACHBIT(v, i) \
@@ -210,20 +208,6 @@ int wstpad_set_params(struct wsmouseinput *,
 #define IS_TOUCHPAD(input)			\
     ((input)->hw.hw_type == WSMOUSEHW_TOUCHPAD	\
     || (input)->hw.hw_type == WSMOUSEHW_CLICKPAD)
-
-#define WSMOUSECFG_MATCH(key, group)		\
-    ((key) < WSMOUSECFG_##group##_MAX &&	\
-    (key) >= (WSMOUSECFG_##group##_MAX & ~0xff))
-
-#define IS_WSMOUSECFG_KEY(key)			\
-    (WSMOUSECFG_MATCH((key), FILTER)		\
-    || WSMOUSECFG_MATCH((key), TP_OPTS)		\
-    || WSMOUSECFG_MATCH((key), TP))
-
-#define WSMOUSECFG_SIZE				\
-    ((WSMOUSECFG_FILTER_MAX & 0xff)		\
-    + (WSMOUSECFG_TP_OPTS_MAX & 0xff)		\
-    + (WSMOUSECFG_TP_MAX & 0xff))
 
 #endif /* _KERNEL */
 

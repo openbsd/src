@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.37 2017/03/06 09:08:45 mpi Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.38 2017/03/16 10:03:27 mpi Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -172,37 +172,6 @@ struct wssrcops wsmouse_srcops = {
 	wsmouse_mux_open, wsmouse_mux_close, wsmousedoioctl, NULL, NULL
 };
 #endif
-
-static const size_t cfg_filter[] = {
-	[WSMOUSECFG_DX_SCALE & 0xff] =
-	    offsetof(struct wsmouseinput, filter.h.scale),
-	[WSMOUSECFG_DY_SCALE & 0xff] =
-	    offsetof(struct wsmouseinput, filter.v.scale),
-	[WSMOUSECFG_PRESSURE_LO & 0xff] =
-	    offsetof(struct wsmouseinput, filter.pressure_lo),
-	[WSMOUSECFG_PRESSURE_HI & 0xff] =
-	    offsetof(struct wsmouseinput, filter.pressure_hi),
-	[WSMOUSECFG_TRKMAXDIST & 0xff] =
-	    offsetof(struct wsmouseinput, filter.tracking_maxdist),
-	[WSMOUSECFG_SWAPXY & 0xff] =
-	    offsetof(struct wsmouseinput, filter.swapxy),
-	[WSMOUSECFG_X_INV & 0xff] =
-	    offsetof(struct wsmouseinput, filter.h.inv),
-	[WSMOUSECFG_Y_INV & 0xff] =
-	    offsetof(struct wsmouseinput, filter.v.inv),
-	[WSMOUSECFG_DX_MAX & 0xff] =
-	    offsetof(struct wsmouseinput, filter.h.dmax),
-	[WSMOUSECFG_DY_MAX & 0xff] =
-	    offsetof(struct wsmouseinput, filter.v.dmax),
-	[WSMOUSECFG_X_HYSTERESIS & 0xff] =
-	    offsetof(struct wsmouseinput, filter.h.hysteresis),
-	[WSMOUSECFG_Y_HYSTERESIS & 0xff] =
-	    offsetof(struct wsmouseinput, filter.v.hysteresis),
-	[WSMOUSECFG_DECELERATION & 0xff] =
-	    offsetof(struct wsmouseinput, filter.dclr),
-
-	[WSMOUSECFG_FILTER_MAX & 0xff] = 0
-};
 
 /*
  * Print function (for parent devices).
@@ -470,7 +439,7 @@ wsmouse_param_ioctl(struct wsmouse_softc *sc,
 	struct wsmouse_param *buf;
 	int error, s, size;
 
-	if (params == NULL || nparams > WSMOUSECFG_SIZE)
+	if (params == NULL || nparams > WSMOUSECFG_MAX)
 		return (EINVAL);
 
 	size = nparams * sizeof(struct wsmouse_param);
@@ -1335,49 +1304,61 @@ wsmouse_mt_init(struct device *sc, int num_slots, int tracking)
 }
 
 int
-wsmouse_validate_keys(const struct wsmouse_param *params, u_int nparams)
-{
-	int i, k;
-
-	if (params == NULL || nparams > WSMOUSECFG_SIZE)
-		return (-1);
-	for (i = 0; i < nparams; i++) {
-		k = params[i].key;
-		if (!IS_WSMOUSECFG_KEY(k)) {
-			printf("wsmouse parameter: invalid key %d\n", k);
-			return (-1);
-		}
-	}
-	return (0);
-}
-
-int
 wsmouse_get_params(struct device *sc,
     struct wsmouse_param *params, u_int nparams)
 {
 	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
-	int i, key, delegate = 0;
-	void *p;
-
-	if (wsmouse_validate_keys(params, nparams))
-		return (-1);
+	int i, key, error = 0;
 
 	for (i = 0; i < nparams; i++) {
 		key = params[i].key;
-		if (WSMOUSECFG_MATCH(key, FILTER)) {
-			p = input;
-			p += cfg_filter[key & 0xff];
-			if (p != input)
-				params[i].value = *((int *) p);
-			else
-				printf("wsmouse_get_params: "
-				    "ignoring key %d\n", key);
-		} else {
-			delegate = 1;
+		switch (key) {
+		case WSMOUSECFG_DX_SCALE:
+			params[i].value = input->filter.h.scale;
+			break;
+		case WSMOUSECFG_DY_SCALE:
+			params[i].value = input->filter.v.scale;
+			break;
+		case WSMOUSECFG_PRESSURE_LO:
+			params[i].value = input->filter.pressure_lo;
+			break;
+		case WSMOUSECFG_PRESSURE_HI:
+			params[i].value = input->filter.pressure_hi;
+			break;
+		case WSMOUSECFG_TRKMAXDIST:
+			params[i].value = input->filter.tracking_maxdist;
+			break;
+		case WSMOUSECFG_SWAPXY:
+			params[i].value = input->filter.swapxy;
+			break;
+		case WSMOUSECFG_X_INV:
+			params[i].value = input->filter.h.inv;
+			break;
+		case WSMOUSECFG_Y_INV:
+			params[i].value = input->filter.v.inv;
+			break;
+		case WSMOUSECFG_DX_MAX:
+			params[i].value = input->filter.h.dmax;
+			break;
+		case WSMOUSECFG_DY_MAX:
+			params[i].value = input->filter.v.dmax;
+			break;
+		case WSMOUSECFG_X_HYSTERESIS:
+			params[i].value = input->filter.h.hysteresis;
+			break;
+		case WSMOUSECFG_Y_HYSTERESIS:
+			params[i].value = input->filter.v.hysteresis;
+			break;
+		case WSMOUSECFG_DECELERATION:
+			params[i].value = input->filter.dclr;
+			break;
+		default:
+			error = wstpad_get_param(input, key, &params[i].value);
+			if (error != 0)
+				return (error);
+			break;
 		}
 	}
-	if (delegate)
-		return (wstpad_get_params(input, params, nparams));
 
 	return (0);
 }
@@ -1387,58 +1368,74 @@ wsmouse_set_params(struct device *sc,
     const struct wsmouse_param *params, u_int nparams)
 {
 	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
-	int i, key, val, delegate = 0;
-	void *p;
-
-	if (wsmouse_validate_keys(params, nparams))
-		return (-1);
+	int i, val, key, needreset = 0, error = 0;
 
 	for (i = 0; i < nparams; i++) {
 		key = params[i].key;
-		if (!(WSMOUSECFG_MATCH(key, FILTER))) {
-			delegate = 1;
-			continue;
-		}
 		val = params[i].value;
-		switch (key) {
+		switch (params[i].key) {
 		case WSMOUSECFG_PRESSURE_LO:
 			input->filter.pressure_lo = val;
 			if (val > input->filter.pressure_hi)
 				input->filter.pressure_hi = val;
-			input->touch.min_pressure =
-			    input->filter.pressure_hi;
-			continue;
+			input->touch.min_pressure = input->filter.pressure_hi;
+			break;
 		case WSMOUSECFG_PRESSURE_HI:
 			input->filter.pressure_hi = val;
 			if (val < input->filter.pressure_lo)
 				input->filter.pressure_lo = val;
 			input->touch.min_pressure = val;
-			continue;
+			break;
 		case WSMOUSECFG_X_HYSTERESIS:
 			input->filter.h.hysteresis = val;
 			input->filter.h.acc = 0;
-			continue;
+			break;
 		case WSMOUSECFG_Y_HYSTERESIS:
 			input->filter.v.hysteresis = val;
 			input->filter.v.acc = 0;
-			continue;
+			break;
 		case WSMOUSECFG_DECELERATION:
 			input->filter.dclr = val;
 			wstpad_init_deceleration(input);
-			continue;
+			break;
+		case WSMOUSECFG_DX_SCALE:
+			input->filter.h.scale = val;
+			break;
+		case WSMOUSECFG_DY_SCALE:
+			input->filter.v.scale = val;
+			break;
+		case WSMOUSECFG_TRKMAXDIST:
+			input->filter.tracking_maxdist = val;
+			break;
+		case WSMOUSECFG_SWAPXY:
+			input->filter.swapxy = val;
+			break;
+		case WSMOUSECFG_X_INV:
+			input->filter.h.inv = val;
+			break;
+		case WSMOUSECFG_Y_INV:
+			input->filter.v.inv = val;
+			break;
+		case WSMOUSECFG_DX_MAX:
+			input->filter.h.dmax = val;
+			break;
+		case WSMOUSECFG_DY_MAX:
+			input->filter.v.dmax = val;
+			break;
 		default:
-			p = input;
-			p += cfg_filter[key & 0xff];
-			if (p != input)
-				*((int *) p) = val;
-			else
-				printf("wsmouse_set_params: "
-				    "ignoring key %d\n", key);
-			continue;
+			needreset = 1;
+			error = wstpad_set_param(input, key, val);
+			if (error != 0)
+				return (error);
+			break;
 		}
 	}
-	if (delegate)
-		return (wstpad_set_params(input, params, nparams));
+
+	/* Reset soft-states if touchpad parameters changed */
+	if (needreset) {
+		wstpad_reset(input);
+		return (wstpad_configure(input));
+	}
 
 	return (0);
 }
@@ -1476,6 +1473,7 @@ wsmouse_configure(struct device *sc,
     struct wsmouse_param *params, u_int nparams)
 {
 	struct wsmouseinput *input = &((struct wsmouse_softc *) sc)->sc_input;
+	int error;
 
 	if (!(input->flags & CONFIGURED)) {
 		if (input->hw.x_max && input->hw.y_max) {
@@ -1500,8 +1498,10 @@ wsmouse_configure(struct device *sc,
 			    "Initialization failed.\n");
 			return (-1);
 		}
-		if (params != NULL)
-			wsmouse_set_params(sc, params, nparams);
+		if (params != NULL) {
+			if ((error = wsmouse_set_params(sc, params, nparams)))
+				return (error);
+		}
 		input->flags |= CONFIGURED;
 	}
 	if (IS_TOUCHPAD(input))

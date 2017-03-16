@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.78 2017/02/27 15:59:56 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.79 2017/03/16 10:03:27 mpi Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -280,89 +280,56 @@ struct wsmouse_calibcoords {
  * Keys of the configuration parameters in WSMOUSEIO_GETPARAMS/
  * WSMOUSEIO_SETPARAMS calls. Arbitrary subsets can be passed, provided
  * that all keys are valid and that the number of key/value pairs doesn't
- * exceed the enum size.
- *
- * Most parameters in the "FILTER" group concern coordinate handling.
- * DX_MAX, DY_MAX, HYSTERESIS, and DECELERATION only apply to touchpads in
- * WSMOUSE_COMPAT mode.
- *
- * WSMOUSECFG_DX_SCALE, WSMOUSECFG_DY_SCALE:
- *	Scale factors in [*.12] fixed-point format.
- * WSMOUSECFG_PRESSURE_LO, WSMOUSECFG_PRESSURE_HI:
- *	Pressure limits defining the end and the start of touches.
- * WSMOUSECFG_TRKMAXDIST:
- *	When tracking MT contacts, don't pair points with a distance that
- *	exceeds this limit.
- * WSMOUSECFG_SWAPXY:
- *	Swap the X- and Y-axis.
- * WSMOUSECFG_X_INV, WSMOUSECFG_Y_INV:
- *	Map an absolute coordinate C to (INV - C), negate relative coordinates.
- * WSMOUSECFG_DX_MAX, WSMOUSECFG_DY_MAX:
- *	Ignore deltas that are greater than these limits.
- * WSMOUSECFG_X_HYSTERESIS, WSMOUSECFG_Y_HYSTERESIS:
- *	If these values are non-zero, changes of output coordinates will lag
- *	behind the input by [+hysteresis] units, or [-hysteresis] units,
- *	respectively.
- * WSMOUSECFG_DECELERATION:
- *	A distance defining the thresholds for deceleration, see
- *	wstpad_decelerate().
- *
- * The "TP_OPTS" group consists exclusively of flags that control touchpad
- * behaviour. Softbuttons at the bottom edge of a touchpad (SOFTBUTTONS)
- * will not include a middle-button area if SOFTMBTN is not set. Likewise,
- * if edge scrolling is active, HORIZSCROLL must be set in addition in order
- * to enable horizontal scrolling.
- *
- * The first parameters in the "TP" group (*_EDGE) determine the size of the
- * edge areas, and the width of the middle-button area (CENTERWIDTH). The
- * values are ratios to the width or height of the touchpad surface and have
- * a [*.12] fixed-point format.
+ * exceed WSMOUSECFG_MAX.
  */
-#define wsmousecfg_group(group)	\
-    WSMOUSECFG_##group##_MAX,	\
-    WSMOUSECFG_##group##_ADV = (WSMOUSECFG_##group##_MAX | 0xff)
-
 enum wsmousecfg {
-	WSMOUSECFG_DX_SCALE,
-	WSMOUSECFG_DY_SCALE,
-	WSMOUSECFG_PRESSURE_LO,
-	WSMOUSECFG_PRESSURE_HI,
-	WSMOUSECFG_TRKMAXDIST,
-	WSMOUSECFG_SWAPXY,
-	WSMOUSECFG_X_INV,
-	WSMOUSECFG_Y_INV,
-	WSMOUSECFG_DX_MAX,
-	WSMOUSECFG_DY_MAX,
-	WSMOUSECFG_X_HYSTERESIS,
-	WSMOUSECFG_Y_HYSTERESIS,
-	WSMOUSECFG_DECELERATION,
+ 	/*
+ 	 * Coordinate handling.
+ 	 */
+	WSMOUSECFG_DX_SCALE = 0,/* Xscale factor in [*.12] fixed-point format */
+	WSMOUSECFG_DY_SCALE,	/* Yscale factor in [*.12] fixed-point format */
+	WSMOUSECFG_PRESSURE_LO,	/* pressure limits defining start of touch */
+	WSMOUSECFG_PRESSURE_HI,	/* pressure limits defining end of touch */
+	WSMOUSECFG_TRKMAXDIST,	/* max distance to pair points for MT contact */
+	WSMOUSECFG_SWAPXY,	/* swap X- and Y-axis */
+	WSMOUSECFG_X_INV,	/* map absolute coordinate X to (INV - X) */
+	WSMOUSECFG_Y_INV,	/* map absolute coordinate Y to (INV - Y) */
 
-	wsmousecfg_group(FILTER),
+	/*
+	 * Coordinate handling, applying only in WSMOUSE_COMPAT  mode.
+	 */
+	WSMOUSECFG_DX_MAX = 32,	/* ignore X deltas greater than this limit */
+	WSMOUSECFG_DY_MAX,	/* ignore Y deltas greater than this limit */
+	WSMOUSECFG_X_HYSTERESIS,/* retard value for X coordinates */
+	WSMOUSECFG_Y_HYSTERESIS,/* retard value for Y coordinates */
+	WSMOUSECFG_DECELERATION,/* threshold (distance) for deceleration */
 
-	WSMOUSECFG_SOFTBUTTONS,
-	WSMOUSECFG_SOFTMBTN,
+	/*
+	 * Touchpad features
+	 */
+	WSMOUSECFG_SOFTBUTTONS = 64,	/* has "soft" buttons */
+	WSMOUSECFG_SOFTMBTN,	/* coordinates of middle-button area */
 	WSMOUSECFG_TOPBUTTONS,
 	WSMOUSECFG_TWOFINGERSCROLL,
 	WSMOUSECFG_EDGESCROLL,
-	WSMOUSECFG_HORIZSCROLL,
+	WSMOUSECFG_HORIZSCROLL,	/* enable horizontal scrolling */
 	WSMOUSECFG_SWAPSIDES,
 	WSMOUSECFG_DISABLE,
 
-	wsmousecfg_group(TP_OPTS),
-
-	WSMOUSECFG_LEFT_EDGE,
-	WSMOUSECFG_RIGHT_EDGE,
-	WSMOUSECFG_TOP_EDGE,
-	WSMOUSECFG_BOTTOM_EDGE,
-	WSMOUSECFG_CENTERWIDTH,
+	/*
+	 * Touchpad options
+	 */
+	WSMOUSECFG_LEFT_EDGE = 128,	/* ratios of the left edge */
+	WSMOUSECFG_RIGHT_EDGE,	/* ratios of the right edge */
+	WSMOUSECFG_TOP_EDGE,	/* ratios of the top edge */
+	WSMOUSECFG_BOTTOM_EDGE,	/* ratios of the bottom edge */
+	WSMOUSECFG_CENTERWIDTH,	/* width of the middle-button area */
 	WSMOUSECFG_HORIZSCROLLDIST,
 	WSMOUSECFG_VERTSCROLLDIST,
 	WSMOUSECFG_F2WIDTH,
 	WSMOUSECFG_F2PRESSURE,
-
-	wsmousecfg_group(TP),
 };
-#undef wsmousecfg_group
+#define WSMOUSECFG_MAX	32	/* max size of param array per ioctl */
 
 struct wsmouse_param {
 	enum wsmousecfg key;

@@ -96,21 +96,20 @@ struct tpad_touch {
 /*
  * wstpad.features
  */
-#define WSTPAD_SOFTBUTTONS	(1 << (WSMOUSECFG_SOFTBUTTONS & 0xff))
-#define WSTPAD_SOFTMBTN		(1 << (WSMOUSECFG_SOFTMBTN & 0xff))
-#define WSTPAD_TOPBUTTONS	(1 << (WSMOUSECFG_TOPBUTTONS & 0xff))
-#define WSTPAD_F2SCROLL		(1 << (WSMOUSECFG_TWOFINGERSCROLL & 0xff))
-#define WSTPAD_EDGESCROLL	(1 << (WSMOUSECFG_EDGESCROLL & 0xff))
-#define WSTPAD_HORIZSCROLL	(1 << (WSMOUSECFG_HORIZSCROLL & 0xff))
-#define WSTPAD_SWAPSIDES	(1 << (WSMOUSECFG_SWAPSIDES & 0xff))
-#define WSTPAD_DISABLE		(1 << (WSMOUSECFG_DISABLE & 0xff))
+#define WSTPAD_SOFTBUTTONS	(1 << 0)
+#define WSTPAD_SOFTMBTN		(1 << 1)
+#define WSTPAD_TOPBUTTONS	(1 << 2)
+#define WSTPAD_TWOFINGERSCROLL	(1 << 3)
+#define WSTPAD_EDGESCROLL	(1 << 4)
+#define WSTPAD_HORIZSCROLL	(1 << 5)
+#define WSTPAD_SWAPSIDES	(1 << 6)
+#define WSTPAD_DISABLE		(1 << 7)
 
 #define WSTPAD_MT		(1 << 31)
 
 
-#define WSTPAD_TOUCHPAD_DEFAULTS (WSTPAD_F2SCROLL)
-#define WSTPAD_CLICKPAD_DEFAULTS \
-    (WSTPAD_SOFTBUTTONS | WSTPAD_F2SCROLL)
+#define WSTPAD_TOUCHPAD_DEFAULTS (WSTPAD_TWOFINGERSCROLL)
+#define WSTPAD_CLICKPAD_DEFAULTS (WSTPAD_SOFTBUTTONS | WSTPAD_TWOFINGERSCROLL)
 
 
 struct wstpad {
@@ -178,30 +177,6 @@ struct wstpad {
 		int vdist;
 	} scroll;
 };
-
-static const size_t cfg_tp[] = {
-	[WSMOUSECFG_LEFT_EDGE & 0xff] =
-	    offsetof(struct wstpad, params.left_edge),
-	[WSMOUSECFG_RIGHT_EDGE & 0xff] =
-	    offsetof(struct wstpad, params.right_edge),
-	[WSMOUSECFG_TOP_EDGE & 0xff] =
-	    offsetof(struct wstpad, params.top_edge),
-	[WSMOUSECFG_BOTTOM_EDGE & 0xff] =
-	    offsetof(struct wstpad, params.bottom_edge),
-	[WSMOUSECFG_CENTERWIDTH & 0xff] =
-	    offsetof(struct wstpad, params.center_width),
-	[WSMOUSECFG_HORIZSCROLLDIST & 0xff] =
-            offsetof(struct wstpad, scroll.hdist),
-	[WSMOUSECFG_VERTSCROLLDIST & 0xff] =
-            offsetof(struct wstpad, scroll.vdist),
-	[WSMOUSECFG_F2WIDTH & 0xff] =
-	    offsetof(struct wstpad, params.f2width),
-	[WSMOUSECFG_F2PRESSURE & 0xff] =
-	    offsetof(struct wstpad, params.f2pressure),
-
-	[WSMOUSECFG_TP_MAX & 0xff] = 0
-};
-
 
 /*
  * Coordinates in the wstpad struct are "normalized" device coordinates,
@@ -1027,7 +1002,7 @@ wstpad_configure(struct wsmouseinput *input)
 		else
 			tp->features |= WSTPAD_CLICKPAD_DEFAULTS;
 		if (input->hw.contacts_max == 1) {
-			tp->features &= ~WSTPAD_F2SCROLL;
+			tp->features &= ~WSTPAD_TWOFINGERSCROLL;
 			tp->features |= WSTPAD_EDGESCROLL;
 		}
 		tp->scroll.hdist = 5 * h_unit;
@@ -1061,7 +1036,7 @@ wstpad_configure(struct wsmouseinput *input)
 		tp->freeze |= T_EDGE;
 	}
 
-	if (tp->features & WSTPAD_F2SCROLL) {
+	if (tp->features & WSTPAD_TWOFINGERSCROLL) {
 		tp->handlers |= 1 << F2SCROLL_HDLR;
 	} else if (tp->features & WSTPAD_EDGESCROLL) {
 		tp->handlers |= 1 << EDGESCROLL_HDLR;
@@ -1081,10 +1056,6 @@ wstpad_configure(struct wsmouseinput *input)
 void
 wstpad_reset(struct wsmouseinput *input)
 {
-	struct wstpad *tp = input->tp;
-
-	if (tp == NULL)
-		return;
 	if (input->sbtn.buttons) {
 		input->sbtn.sync = input->sbtn.buttons;
 		input->sbtn.buttons = 0;
@@ -1092,66 +1063,149 @@ wstpad_reset(struct wsmouseinput *input)
 }
 
 int
-wstpad_set_params(struct wsmouseinput *input,
-    const struct wsmouse_param *params, u_int nparams)
+wstpad_set_param(struct wsmouseinput *input, int key, int val)
 {
 	struct wstpad *tp = input->tp;
-	int i, key, val;
 	u_int flag;
-	void *p;
 
 	if (tp == NULL)
-		return (-1);
+		return (EINVAL);
 
-	for (i = 0; i < nparams; i++) {
-		key = params[i].key;
-		val = params[i].value;
-		if (WSMOUSECFG_MATCH(key, TP_OPTS)) {
-			flag = 1 << (key & 0xff);
-			if (val)
-				tp->features |= flag;
-			else
-				tp->features &= ~flag;
-		} else { /* WSMOUSECFG_MATCH(k, TP) */
-			p = tp;
-			p += cfg_tp[key & 0xff];
-			if (p != tp) {
-				*((int *) p) = val;
-			} else {
-				printf("wstpad_set_params: "
-				    "ignoring key %d\n", key);
-			}
+	switch (key) {
+	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_DISABLE:
+		switch (key) {
+		case WSMOUSECFG_SOFTBUTTONS:
+			flag = WSTPAD_SOFTBUTTONS;
+			break;
+		case WSMOUSECFG_SOFTMBTN:
+			flag = WSTPAD_SOFTMBTN;
+			break;
+		case WSMOUSECFG_TOPBUTTONS:
+			flag = WSTPAD_TOPBUTTONS;
+			break;
+		case WSMOUSECFG_TWOFINGERSCROLL:
+			flag = WSTPAD_TWOFINGERSCROLL;
+			break;
+		case WSMOUSECFG_EDGESCROLL:
+			flag = WSTPAD_EDGESCROLL;
+			break;
+		case WSMOUSECFG_HORIZSCROLL:
+			flag = WSTPAD_HORIZSCROLL;
+			break;
+		case WSMOUSECFG_SWAPSIDES:
+			flag = WSTPAD_SWAPSIDES;
+			break;
+		case WSMOUSECFG_DISABLE:
+			flag = WSTPAD_DISABLE;
+			break;
 		}
+		if (val)
+			tp->features |= flag;
+		else
+			tp->features &= ~flag;
+		break;
+	case WSMOUSECFG_LEFT_EDGE:
+		tp->params.left_edge = val;
+		break;
+	case WSMOUSECFG_RIGHT_EDGE:
+		tp->params.right_edge = val;
+		break;
+	case WSMOUSECFG_TOP_EDGE:
+		tp->params.top_edge = val;
+		break;
+	case WSMOUSECFG_BOTTOM_EDGE:
+		tp->params.bottom_edge = val;
+		break;
+	case WSMOUSECFG_CENTERWIDTH:
+		tp->params.center_width = val;
+		break;
+	case WSMOUSECFG_HORIZSCROLLDIST:
+		tp->scroll.hdist = val;
+		break;
+	case WSMOUSECFG_VERTSCROLLDIST:
+		tp->scroll.vdist = val;
+		break;
+	case WSMOUSECFG_F2WIDTH:
+		tp->params.f2width = val;
+		break;
+	case WSMOUSECFG_F2PRESSURE:
+		tp->params.f2pressure = val;
+		break;
+	default:
+		return (ENOTSUP);
 	}
-	wstpad_reset(input);
-	return wstpad_configure(input);
+
+	return (0);
 }
 
 int
-wstpad_get_params(struct wsmouseinput *input,
-    struct wsmouse_param *params, u_int nparams)
+wstpad_get_param(struct wsmouseinput *input, int key, int *pval)
 {
 	struct wstpad *tp = input->tp;
-	int i, key;
 	u_int flag;
-	void *p;
 
 	if (tp == NULL)
-		return (-1);
-	for (i = 0; i < nparams; i++) {
-		key = params[i].key;
-		if (WSMOUSECFG_MATCH(key, TP_OPTS)) {
-			flag = 1 << (key & 0xff);
-			params[i].value = !!(tp->features & flag);
-		} else { /* WSMOUSECFG_MATCH(k, TP) */
-			p = tp;
-			p += cfg_tp[key & 0xff];
-			if (p != tp)
-				params[i].value = *((int *) p);
-			else
-				printf("wstpad_get_params: "
-				    "ignoring key %d\n", key);
+		return (EINVAL);
+
+	switch (key) {
+	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_DISABLE:
+		switch (key) {
+		case WSMOUSECFG_SOFTBUTTONS:
+			flag = WSTPAD_SOFTBUTTONS;
+			break;
+		case WSMOUSECFG_SOFTMBTN:
+			flag = WSTPAD_SOFTMBTN;
+			break;
+		case WSMOUSECFG_TOPBUTTONS:
+			flag = WSTPAD_TOPBUTTONS;
+			break;
+		case WSMOUSECFG_TWOFINGERSCROLL:
+			flag = WSTPAD_TWOFINGERSCROLL;
+			break;
+		case WSMOUSECFG_EDGESCROLL:
+			flag = WSTPAD_EDGESCROLL;
+			break;
+		case WSMOUSECFG_HORIZSCROLL:
+			flag = WSTPAD_HORIZSCROLL;
+			break;
+		case WSMOUSECFG_SWAPSIDES:
+			flag = WSTPAD_SWAPSIDES;
+			break;
+		case WSMOUSECFG_DISABLE:
+			flag = WSTPAD_DISABLE;
+			break;
 		}
+		*pval = !!(tp->features & flag);
+		break;
+	case WSMOUSECFG_LEFT_EDGE:
+		*pval = tp->params.left_edge;
+		break;
+	case WSMOUSECFG_RIGHT_EDGE:
+		*pval = tp->params.right_edge;
+		break;
+	case WSMOUSECFG_TOP_EDGE:
+		*pval = tp->params.top_edge;
+		break;
+	case WSMOUSECFG_BOTTOM_EDGE:
+		*pval = tp->params.bottom_edge;
+		break;
+	case WSMOUSECFG_CENTERWIDTH:
+		*pval = tp->params.center_width;
+		break;
+	case WSMOUSECFG_HORIZSCROLLDIST:
+		*pval = tp->scroll.hdist;
+		break;
+	case WSMOUSECFG_VERTSCROLLDIST:
+		*pval = tp->scroll.vdist;
+		break;
+	case WSMOUSECFG_F2WIDTH:
+		*pval = tp->params.f2width;
+		break;
+	case WSMOUSECFG_F2PRESSURE:
+		*pval = tp->params.f2pressure;
+		break;
+	default:
+		return (ENOTSUP);
 	}
 
 	return (0);
