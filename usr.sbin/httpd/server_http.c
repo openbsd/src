@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.115 2017/03/10 21:06:43 reyk Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.116 2017/03/16 10:18:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -1067,6 +1067,14 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 		}
 		if (ret != 0)
 			return (NULL);
+	}
+	if (strstr(val, "$HTTP_HOST") != NULL) {
+		if (desc->http_host == NULL)
+			return (NULL);
+		if ((str = url_encode(desc->http_host)) == NULL)
+			return (NULL);
+		expand_string(buf, len, "$HTTP_HOST", str);
+		free(str);
 	}
 	if (strstr(val, "$REMOTE_") != NULL) {
 		if (strstr(val, "$REMOTE_ADDR") != NULL) {
