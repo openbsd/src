@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.101 2016/06/01 16:57:48 tedu Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.102 2017/03/16 10:32:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -142,7 +142,7 @@ int	force = 0;		/* Force the logs to be rotated */
 char	*conf = CONF;		/* Configuration file to use */
 time_t	timenow;
 char	hostname[HOST_NAME_MAX+1]; /* Hostname */
-char	*daytime;		/* timenow in human readable form */
+char	daytime[33];		/* timenow in human readable form */
 char	*arcdir;		/* Dir to put archives in (if it exists) */
 
 FILE   *openmail(void);
@@ -402,12 +402,18 @@ send_signal(char *pidfile, int signal)
 void
 parse_args(int argc, char **argv)
 {
+	struct timeval now;
+	struct tm *tm;
+	size_t l;
 	char *p;
 	int ch;
 
-	timenow = time(NULL);
-	daytime = ctime(&timenow) + 4;
-	daytime[15] = '\0';
+	gettimeofday(&now, NULL);
+	timenow = now.tv_sec;
+	tm = gmtime(&now.tv_sec);
+	l = strftime(daytime, sizeof(daytime), "%FT%T", tm);
+	snprintf(daytime + l, sizeof(daytime) - l, ".%03ldZ",
+	    now.tv_usec / 1000);
 
 	/* Let's get our hostname */
 	(void)gethostname(hostname, sizeof(hostname));
