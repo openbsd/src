@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.224 2016/12/22 11:04:44 rzalamena Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.225 2017/03/16 10:05:47 mpi Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -340,8 +340,9 @@ parse(char *string, int flags)
 		switch (mib[1]) {
 		case KERN_PROF:
 			mib[2] = GPROF_STATE;
+			mib[3] = 0; /* Assume CPU ID 0 is always valid. */
 			size = sizeof(state);
-			if (sysctl(mib, 3, &state, &size, NULL, 0) == -1) {
+			if (sysctl(mib, 4, &state, &size, NULL, 0) == -1) {
 				if (flags == 0)
 					return;
 				if (!nflag)
