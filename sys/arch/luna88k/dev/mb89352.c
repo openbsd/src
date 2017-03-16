@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.20 2014/10/05 11:46:18 aoyama Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.21 2017/03/16 18:15:20 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -175,6 +175,14 @@ void	spc_print_active_acb(void);
 #endif
 
 extern struct cfdriver spc_cd;
+
+#define breathe() \
+do { \
+	asm volatile ("or %r0, %r0, %r0"); \
+	asm volatile ("or %r0, %r0, %r0"); \
+	asm volatile ("or %r0, %r0, %r0"); \
+	asm volatile ("or %r0, %r0, %r0"); \
+} while (0)
 
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)
@@ -1369,8 +1377,29 @@ spc_dataout_pio(struct spc_softc *sc, u_char *p, int n)
 
 		n -= xfer;
 		out += xfer;
+#if 0
 		bus_space_write_multi_1(iot, ioh, DREG, p, xfer);
 		p += xfer;
+#else
+		switch (xfer) {
+		case 8:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 7:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 6:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 5:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 4:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 3:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 2:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		case 1:
+			bus_space_write_1(iot, ioh, DREG, *p++);
+		}
+#endif
 	}
 
 	if (out == 0) {
@@ -1484,8 +1513,29 @@ spc_datain_pio(struct spc_softc *sc, u_char *p, int n)
 
 		n -= xfer;
 		in += xfer;
+#if 0
 		bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
 		p += xfer;
+#else
+		switch (xfer) {
+		case 8:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 7:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 6:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 5:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 4:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 3:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 2:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		case 1:
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		}
+#endif
 
 		if (intstat != 0)
 			goto phasechange;
@@ -1801,7 +1851,7 @@ dophase:
 	bus_space_write_1(iot, ioh, INTS, ints);
 	ints = 0;
 	while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
-		delay(1);	/* need timeout XXX */
+		breathe();	/* need timeout XXX */
 #endif
 
 	/*
