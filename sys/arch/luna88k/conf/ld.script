@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.4 2013/11/03 09:42:55 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.5 2017/03/16 18:08:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -19,6 +19,14 @@
 OUTPUT_FORMAT("elf32-m88k")
 OUTPUT_ARCH(m88k)
 ENTRY(__start)
+
+PHDRS
+{
+	text			PT_LOAD;
+	data			PT_LOAD;
+	openbsd_randomize	PT_OPENBSD_RANDOMIZE;
+}
+
 SECTIONS
 {
 	.text :
@@ -36,12 +44,16 @@ SECTIONS
 	.data :
 	{
 		*(.data)
-		PROVIDE(edata = ABSOLUTE(.));
-	}
+	} :data
+	.openbsd.randomdata :
+	{
+		*(.openbsd.randomdata)
+	} :data :openbsd_randomize
+	PROVIDE(edata = ABSOLUTE(.));
 	.bss :
 	{
 		*(.bss)
-	}
+	} :data
 	PROVIDE(end = ABSOLUTE(.));
 	/DISCARD/ :
 	{

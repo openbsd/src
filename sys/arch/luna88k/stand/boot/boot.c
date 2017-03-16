@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 2014/02/23 20:01:04 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.5 2017/03/16 18:08:58 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -145,9 +145,7 @@ error:
 int
 boot(int argc, char *argv[])
 {
-	char *line, *lparen, *rparen;
-	char rndpath[MAXPATHLEN];
-	static int rnd_loaded = 0;
+	char *line;
 
 	if (argc < 2)
 		line = default_file;
@@ -155,6 +153,28 @@ boot(int argc, char *argv[])
 		line = argv[1];
 
 	printf("Booting %s\n", line);
+
+	return bootunix(line);
+}
+
+int
+bootunix(char *line)
+{
+	int io;
+#if 0
+	int dev, unit, part;
+#endif
+	u_long marks[MARK_MAX];
+	char *lparen, *rparen;
+	char rndpath[MAXPATHLEN];
+	static int rnd_loaded = 0;
+
+#if 0
+	if (get_boot_device(line, &dev, &unit, &part) != 0) {
+		printf("Bad file name %s\n", line);
+		return ST_ERROR;
+	}
+#endif
 
 	/*
 	 * Try and load randomness from the boot device.
@@ -176,25 +196,6 @@ boot(int argc, char *argv[])
 
 		rnd_loaded = loadrandom(rndpath, rnddata, sizeof(rnddata));
 	}
-
-	return bootunix(line);
-}
-
-int
-bootunix(char *line)
-{
-	int io;
-#if 0
-	int dev, unit, part;
-#endif
-	u_long marks[MARK_MAX];
-
-#if 0
-	if (get_boot_device(line, &dev, &unit, &part) != 0) {
-		printf("Bad file name %s\n", line);
-		return ST_ERROR;
-	}
-#endif
 
 	/* Note marks[MARK_START] is passed as an load address offset */
 	memset(marks, 0, sizeof(marks));
