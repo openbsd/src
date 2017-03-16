@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.23 2017/03/16 13:15:06 jsing Exp $ */
+/* $OpenBSD: buffer.c,v 1.24 2017/03/16 13:29:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,6 @@ BUF_MEM_grow(BUF_MEM *str, size_t len)
 		return (len);
 	}
 	if (str->max >= len) {
-		memset(&str->data[str->length], 0, len - str->length);
 		str->length = len;
 		return (len);
 	}
@@ -115,14 +114,13 @@ BUF_MEM_grow(BUF_MEM *str, size_t len)
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
-	ret = realloc(str->data, n);
+	ret = recallocarray(str->data, str->max, n, 1);
 	if (ret == NULL) {
 		BUFerror(ERR_R_MALLOC_FAILURE);
 		len = 0;
 	} else {
 		str->data = ret;
 		str->max = n;
-		memset(&str->data[str->length], 0, len - str->length);
 		str->length = len;
 	}
 	return (len);
@@ -140,7 +138,6 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 		return (len);
 	}
 	if (str->max >= len) {
-		memset(&str->data[str->length], 0, len - str->length);
 		str->length = len;
 		return (len);
 	}
@@ -150,20 +147,13 @@ BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 		return 0;
 	}
 	n = (len + 3) / 3 * 4;
-	ret = malloc(n);
-	/* we're not shrinking - that case returns above */
-	if ((ret != NULL)  && (str->data != NULL)) {
-		memcpy(ret, str->data, str->max);
-		explicit_bzero(str->data, str->max);
-		free(str->data);
-	}
+	ret = recallocarray(str->data, str->max, n, 1);
 	if (ret == NULL) {
 		BUFerror(ERR_R_MALLOC_FAILURE);
 		len = 0;
 	} else {
 		str->data = ret;
 		str->max = n;
-		memset(&str->data[str->length], 0, len - str->length);
 		str->length = len;
 	}
 	return (len);
