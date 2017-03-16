@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.109 2017/03/11 11:55:03 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.110 2017/03/16 10:02:03 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -426,7 +426,7 @@ void mp_setperf_init(void);
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
 #define CPU_LIDSUSPEND		13	/* lid close causes a suspend */
 #define CPU_LIDACTION		14	/* action caused by lid close */
-#define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keybpoard */
+#define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
 #define CPU_MAXID		16	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \

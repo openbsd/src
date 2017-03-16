@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.154 2017/03/11 11:55:03 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.155 2017/03/16 10:02:03 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -525,7 +525,7 @@ int	cpu_paenable(void *);
 #define CPU_XCRYPT		16	/* supports VIA xcrypt in userland */
 #define CPU_LIDSUSPEND		17	/* lid close causes a suspend */
 #define CPU_LIDACTION		18	/* action caused by lid close */
-#define CPU_FORCEUKBD		19	/* Force ukbd(4) as console keybpoard */
+#define CPU_FORCEUKBD		19	/* Force ukbd(4) as console keyboard */
 #define CPU_MAXID		20	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
