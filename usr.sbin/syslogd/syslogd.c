@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.229 2017/03/16 17:55:22 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.230 2017/03/16 23:55:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -99,6 +99,7 @@
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
 
+#include "log.h"
 #include "syslogd.h"
 #include "evbuffer_tls.h"
 
@@ -316,7 +317,6 @@ void	 ctlconn_cleanup(void);
 struct filed *cfline(char *, char *, char *);
 void	cvthname(struct sockaddr *, char *, size_t);
 int	decode(const char *, const CODE *);
-void	die(int);
 void	markit(void);
 void	fprintlog(struct filed *, int, char *);
 void	init(void);
@@ -464,6 +464,9 @@ main(int argc, char *argv[])
 	if (argc != optind)
 		usage();
 
+	log_init(Debug, LOG_SYSLOG);
+	log_procinit("syslogd");
+	log_setdebug(1);
 	if (Debug)
 		setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -695,8 +698,6 @@ main(int argc, char *argv[])
 
 	logdebug("off & running....\n");
 
-	tzset();
-
 	if (!Debug && !Foreground) {
 		char c;
 
@@ -788,6 +789,7 @@ main(int argc, char *argv[])
 
 	init();
 
+	log_setdebug(0);
 	Startup = 0;
 
 	/* Allocate ctl socket reply buffer if we have a ctl socket */
@@ -1649,6 +1651,18 @@ printsys(char *msg)
 	}
 }
 
+void
+vlogmsg(int pri, const char *proc, const char *fmt, va_list ap)
+{
+	char	msg[ERRBUFSIZE];
+	size_t	l;
+
+	l = snprintf(msg, sizeof(msg), "%s[%d]: ", proc, getpid());
+	if (l < sizeof(msg));
+		vsnprintf(msg + l, sizeof(msg) - l, fmt, ap);
+	logmsg(pri, msg, LocalHostName, ADDDATE);
+}
+
 struct timeval	now;
 
 /*
@@ -2265,7 +2279,7 @@ logerror_reason(const char *message, const char *reason)
 		logmsg(LOG_SYSLOG|LOG_ERR, ebuf, LocalHostName, ADDDATE);
 }
 
-void
+__dead void
 die(int signo)
 {
 	struct filed *f;

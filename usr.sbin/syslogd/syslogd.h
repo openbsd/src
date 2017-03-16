@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.26 2016/10/17 11:19:55 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.27 2017/03/16 23:55:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -19,6 +19,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+
+#include <stdarg.h>
 
 /* Privilege separation */
 void  priv_init(int, int, int, char **);
@@ -49,6 +51,8 @@ extern char *path_ctlsock;
 #define MAXLINE		8192		/* maximum line length */
 #define ERRBUFSIZE	256
 void logdebug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
+void vlogmsg(int pri, const char *, const char *, va_list);
+__dead void die(int);
 extern int Debug;
 extern int Startup;
 

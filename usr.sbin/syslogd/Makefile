@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 2015/01/18 19:37:59 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/03/16 23:55:19 bluhm Exp $
 
 PROG=	syslogd
-SRCS=	syslogd.c ttymsg.c privsep.c privsep_fdpass.c ringbuf.c evbuffer_tls.c
+SRCS=	evbuffer_tls.c log.c privsep.c privsep_fdpass.c	ringbuf.c syslogd.c \
+	ttymsg.c
 MAN=	syslogd.8 syslog.conf.5
 LDADD=	-levent -ltls -lssl -lcrypto
 DPADD=	${LIBEVENT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
