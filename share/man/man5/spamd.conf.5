@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.18 2016/12/13 13:47:36 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.19 2017/03/16 15:09:32 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,12 +24,12 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2016 $
+.Dd $Mdocdate: March 16 2017 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
 .Nm spamd.conf
-.Nd spamd configuration file
+.Nd spamd-setup configuration file
 .Sh SYNOPSIS
 .Nm /etc/mail/spamd.conf
 .Sh DESCRIPTION
@@ -190,6 +190,5 @@ and the sequence \&%A will be expanded in the message by
 .Xr spamd 8
 to display the connecting IP address in the output.
 .Sh SEE ALSO
-.Xr ftp 1 ,
 .Xr spamd 8 ,
 .Xr spamd-setup 8
