@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.139 2017/03/16 19:15:19 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.140 2017/03/16 19:59:15 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -782,6 +782,12 @@ should be a signal name
 or number.
 .It Ic true
 Return a true (zero) value.
+.It Ic ulimit Op Fl f Ar n
+Limit the maximum size of a file that can be created to
+.Ar n
+blocks.
+Without arguments,
+display the current file size limit.
 .It Ic umask Oo Fl S Oc Op Ar mask
 Set the file mode creation mask to
 .Ar mask .
