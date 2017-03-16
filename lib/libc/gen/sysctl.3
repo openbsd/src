@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.276 2017/03/16 14:27:23 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.277 2017/03/16 14:57:15 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1993,21 +1993,13 @@ it is possible to access filesystem dependent information.
 .Pp
 Some filesystems may contain settings.
 .Bl -tag -width "123"
-.It FFS Pq Va vfs.ffs
+.It FFS
 .Bl -column "FFS_SD_DIRECT_BLK_PTRS" "integer" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
-.\" XXX
-.It Dv FFS_ASYNCFREE Ta "integer" Ta "yes"
-.\" XXX
-.It Dv FFS_CLUSTERREAD Ta "integer" Ta "yes"
-.\" XXX
-.It Dv FFS_CLUSTERWRITE Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_DIRSIZE Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_MAXMEM Ta "integer" Ta "yes"
 .It Dv FFS_DIRHASH_MEM Ta "integer" Ta "no"
 .It Dv FFS_MAX_SOFTDEPS Ta "integer" Ta "yes"
-.\" XXX
-.It Dv FFS_REALLOCBLOCKS Ta "integer" Ta "yes"
 .It Dv FFS_SD_BLK_LIMIT_HIT Ta "integer" Ta "yes"
 .It Dv FFS_SD_BLK_LIMIT_PUSH Ta "integer" Ta "yes"
 .It Dv FFS_SD_DIR_ENTRY Ta "integer" Ta "yes"
@@ -2021,12 +2013,6 @@ Some filesystems may contain settings.
 .It Dv FFS_SD_WORKLIST_PUSH Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.\" XXX
-.It Dv FFS_CLUSTERREAD
-Enable combining multiple reads into one request to improve performance.
-.\" XXX
-.It Dv FFS_CLUSTERWRITE
-Enable combining multiple writes into one request.
 .It Dv FFS_DIRHASH_DIRSIZE Pq Va vfs.ffs.dirhash_dirsize
 The minimum size of a directory, in bytes, before it is considered for hashing.
 .It Dv FFS_DIRHASH_MAXMEM Pq Va vfs.ffs.dirhash_maxmem
@@ -2034,26 +2020,32 @@ The maximum amount of memory, in bytes, to be used for storing directory
 hashes.
 .It Dv FFS_DIRHASH_MEM Pq Va vfs.ffs.dirhash_mem
 The amount of memory currently used by all directory hashes.
-.\" XXX: no description
 .It Dv FFS_MAX_SOFTDEPS Pq Va vfs.ffs.max_softdeps
-.\" XXX
-.It Dv FFS_REALLOCBLOCKS
-When enabled, the kernel will attempt to relocate growing files so that they
-are contiguous on disk, reducing fragmentation.
-.\" XXX: no description
+Maximum strcuctures before slowdowns.
 .It Dv FFS_SD_BLK_LIMIT_HIT Pq Va vfs.ffs.sd_blk_limit_hit
+Number of times block slowdown imposed.
 .It Dv FFS_SD_BLK_LIMIT_PUSH Pq Va vfs.ffs.sd_blk_limit_push
+Number of times block limit neared.
 .It Dv FFS_SD_DIR_ENTRY Pq Va vfs.ffs.sd_dir_entry
+Bufs redirtied as dir entry cannot write.
 .It Dv FFS_SD_DIRECT_BLK_PTRS Pq Va vfs.ffs.sd_direct_blk_ptrs
+Bufs redirtied as direct ptrs not written.
 .It Dv FFS_SD_INDIR_BLK_PTRS Pq Va vfs.ffs.sd_indir_blk_ptrs
+Bufs redirtied as indirect ptrs not written.
 .It Dv FFS_SD_INO_LIMIT_HIT Pq Va vfs.ffs.sd_ino_limit_hit
+Number of times inode limit imposed.
 .It Dv FFS_SD_INO_LIMIT_PUSH Pq Va vfs.ffs.sd_ino_limit_push
+Number of times inode limit neared.
 .It Dv FFS_SD_INODE_BITMAP Pq Va vfs.ffs.sd_inode_bitmap
+Bufs redirtied as inode bitmap not written.
 .It Dv FFS_SD_SYNC_LIMIT_HIT Pq Va vfs.ffs.sd_sync_limit_hit
+Number of synchronous slowdowns imposed.
 .It Dv FFS_SD_TICKDELAY Pq Va vfs.ffs.sd_tickdelay
+Ticks to pause during slowdown.
 .It Dv FFS_SD_WORKLIST_PUSH Pq Va vfs.ffs.sd_worklist_push
+Number of worklist cleanups.
 .El
-.It NFS Pq Va vfs.nfs
+.It NFS
 .Bl -column "Third level name" "struct nfsstats" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv NFS_NFSSTATS Ta "struct nfsstats" Ta "yes"
@@ -2065,7 +2057,7 @@ The number of I/O kernel threads for NFS clients.
 The default is 4;
 the maximum is 20.
 .El
-.It FUSE Pq Va vfs.fuse
+.It FUSE
 .Bl -column "FUSEFS_POOL_NBPAGES" "Type" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv FUSEFS_INFBUFS Ta "int" Ta "no"
@@ -2128,7 +2120,7 @@ Returns the address of the process
 The
 .Xr ps 1
 program uses it to locate the argument and environment strings.
-.It Dv VM_SWAPENCRYPT Pq Va vm.swapencrypt
+.It Dv VM_SWAPENCRYPT
 Contains statistics about swap encryption.
 The string and integer information available for the third level is
 detailed below.
