@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.234 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.235 2017/03/16 10:13:11 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -892,10 +892,22 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 				}
 			}
 change:
-			if (info->rti_info[RTAX_GATEWAY] != NULL && (error =
-			    rt_setgate(rt, info->rti_info[RTAX_GATEWAY],
-			    tableid)))
-				break;
+			if (info->rti_info[RTAX_GATEWAY] != NULL) {
+				/*
+				 * When updating the gateway, make sure it's
+				 * valid.
+				 */
+				if (!newgate && rt->rt_gateway->sa_family !=
+				    info->rti_info[RTAX_GATEWAY]->sa_family) {
+				    	error = EINVAL;
+					break;
+				}
+
+				error = rt_setgate(rt,
+				    info->rti_info[RTAX_GATEWAY], tableid);
+				if (error)
+					break;
+			}
 #ifdef MPLS
 			if ((rtm->rtm_flags & RTF_MPLS) &&
 			    info->rti_info[RTAX_SRC] != NULL) {
