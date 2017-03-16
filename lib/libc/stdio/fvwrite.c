@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.c,v 1.18 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: fvwrite.c,v 1.19 2017/03/16 14:26:18 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "local.h"
 #include "fvwrite.h"
 
@@ -105,14 +106,12 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 			if ((fp->_flags & (__SALC | __SSTR)) ==
 			    (__SALC | __SSTR) && fp->_w < len) {
 				size_t blen = fp->_p - fp->_bf._base;
+				int pgmsk = getpagesize() - 1;
 				unsigned char *_base;
 				int _size;
 
-				/* Allocate space exponentially. */
-				_size = fp->_bf._size;
-				do {
-					_size = (_size << 1) + 1;
-				} while (_size < blen + len);
+				/* Round up to nearest page. */
+				_size = ((blen + len + 1 + pgmsk) & ~pgmsk) - 1;
 				_base = realloc(fp->_bf._base, _size + 1);
 				if (_base == NULL)
 					goto err;
