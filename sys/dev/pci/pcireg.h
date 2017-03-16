@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.50 2016/06/02 21:01:51 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.51 2017/03/16 22:05:44 deraadt Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -592,6 +592,15 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_SLCSR_LACS	0x01000000
 #define PCI_PCIE_RCSR		0x1c
 #define PCI_PCIE_LCAP2		0x2c
+
+/*
+ * PCI Express; enhanced capabilities
+ */
+#define PCI_PCIE_ECAP		0x100
+#define	PCI_PCIE_ECAP_ID(x)	(((x) & 0x0000ffff))
+#define PCI_PCIE_ECAP_VER(x)	(((x) >> 16) & 0x0f)
+#define	PCI_PCIE_ECAP_NEXT(x)	((x) >> 20)
+#define PCI_PCIE_ECAP_LAST	0x0
 
 /*
  * Extended Message Signaled Interrups; access via capability pointer.
