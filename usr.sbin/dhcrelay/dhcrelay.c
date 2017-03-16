@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.60 2017/03/15 14:31:49 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.61 2017/03/16 09:17:20 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -84,6 +84,7 @@ ssize_t	 relay_agentinfo_remove(struct packet_ctx *, struct dhcp_packet *,
 time_t cur_time;
 
 struct interface_info *interfaces = NULL;
+struct server_list *servers;
 struct iflist intflist;
 int server_fd;
 int oflag;
@@ -92,13 +93,6 @@ enum dhcp_relay_mode	 drm = DRM_UNKNOWN;
 const char		*rai_circuit = NULL;
 const char		*rai_remote = NULL;
 int			 rai_replace = 0;
-
-struct server_list {
-	struct interface_info *intf;
-	struct server_list *next;
-	struct sockaddr_in to;
-	int fd;
-} *servers;
 
 int
 main(int argc, char *argv[])
@@ -208,7 +202,7 @@ main(int argc, char *argv[])
 			drm = DRM_LAYER3;
 			sp->next = servers;
 			servers = sp;
-			memcpy(&sp->to.sin_addr, iap, sizeof *iap);
+			memcpy(&ss2sin(&sp->to)->sin_addr, iap, sizeof(*iap));
 		} else
 			free(sp);
 
@@ -253,9 +247,9 @@ main(int argc, char *argv[])
 		if (sp->intf != NULL)
 			break;
 
-		sp->to.sin_port = htons(SERVER_PORT);
-		sp->to.sin_family = AF_INET;
-		sp->to.sin_len = sizeof sp->to;
+		ss2sin(&sp->to)->sin_port = htons(SERVER_PORT);
+		ss2sin(&sp->to)->sin_family = AF_INET;
+		ss2sin(&sp->to)->sin_len = sizeof(struct sockaddr_in);
 		sp->fd = socket(AF_INET, SOCK_DGRAM, 0);
 		if (sp->fd == -1)
 			fatal("socket");
@@ -270,7 +264,7 @@ main(int argc, char *argv[])
 		    -1)
 			fatal("bind");
 		if (connect(sp->fd, (struct sockaddr *)&sp->to,
-		    sizeof sp->to) == -1)
+		    sp->to.ss_len) == -1)
 			fatal("connect");
 		add_protocol("server", sp->fd, got_response, sp);
 	}
@@ -435,7 +429,8 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		if (send(sp->fd, packet, length, 0) != -1) {
 			log_debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
-			    packet->chaddr), inet_ntoa(sp->to.sin_addr));
+			    packet->chaddr),
+			    inet_ntoa(ss2sin(&sp->to)->sin_addr));
 		}
 	}
 
@@ -531,7 +526,8 @@ got_response(struct protocol *l)
 		 * Ignore ECONNREFUSED as too many dhcp servers send a bogus
 		 * icmp unreach for every request.
 		 */
-		log_warn("recv failed for %s", inet_ntoa(sp->to.sin_addr));
+		log_warn("recv failed for %s",
+		    inet_ntoa(ss2sin(&sp->to)->sin_addr));
 		return;
 	}
 	if (result == -1 && errno == ECONNREFUSED)
@@ -548,7 +544,7 @@ got_response(struct protocol *l)
 	memset(&pc, 0, sizeof(pc));
 	pc.pc_src.ss_family = AF_INET;
 	pc.pc_src.ss_len = sizeof(struct sockaddr_in);
-	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &sp->to.sin_addr,
+	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &ss2sin(&sp->to)->sin_addr,
 	    sizeof(ss2sin(&pc.pc_src)->sin_addr));
 	ss2sin(&pc.pc_src)->sin_port = htons(SERVER_PORT);
 

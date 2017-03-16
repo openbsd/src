@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.20 2017/03/15 14:31:49 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.21 2017/03/16 09:17:20 rzalamena Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -127,6 +127,13 @@ struct protocol {
 	int fd;
 	void (*handler)(struct protocol *);
 	void *local;
+};
+
+struct server_list {
+	struct interface_info *intf;
+	struct server_list *next;
+	struct sockaddr_storage to;
+	int fd;
 };
 
 #define	DHCPD_LOG_FACILITY	LOG_DAEMON
