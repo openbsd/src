@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.3 2017/03/16 21:07:07 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.4 2017/03/16 21:08:03 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -227,8 +227,12 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 	int s = splbio();
 	int r = virtio_enqueue_reserve(vq, slot, nsegs);
 	splx(s);
-	if (r)
-		goto stuffup;
+	if (r) {
+		xs->error = XS_NO_CCB;
+		xs->resid = xs->datalen;
+		scsi_done(xs);
+		return;
+	}
 
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
