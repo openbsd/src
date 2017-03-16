@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.25 2017/03/13 23:20:12 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.26 2017/03/16 20:15:07 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -178,7 +178,6 @@ void pmap_release(pmap_t pm);
 paddr_t arm_kvm_stolen;
 paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 void pmap_remove_avail(paddr_t base, paddr_t end);
-void pmap_avail_fixup(void);
 vaddr_t pmap_map_stolen(vaddr_t);
 void pmap_physload_avail(void);
 extern caddr_t msgbufaddr;
@@ -475,8 +474,6 @@ pmap_remove_pv(struct pte_desc *pted)
 	LIST_REMOVE(pted, pted_pv_list);
 }
 
-volatile int supportuserland;
-
 int
 pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
@@ -771,7 +768,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		pmap_kremove_pg(va);
 }
 
-
 void
 pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
     vm_prot_t prot, int flags, int cache)
@@ -788,8 +784,6 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		break;
 	case PMAP_CACHE_DEV:
 		break;
-	case PMAP_CACHE_PTE:
-		break;
 	default:
 		panic("pmap_fill_pte:invalid cache mode");
 	}
@@ -805,7 +799,6 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pted->pted_pte = pa & PTE_RPGN;
 	pted->pted_pte |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
 }
-
 
 /*
  * Garbage collects the physical map system for pages which are
@@ -902,6 +895,7 @@ pmap_pinit(pmap_t pm)
 }
 
 int pmap_vp_poolcache = 0; // force vp poolcache to allocate late.
+
 /*
  * Create and return a physical map.
  */
@@ -1107,7 +1101,8 @@ VP_Lx(paddr_t pa)
 	return pa | Lx_TYPE_PT;
 }
 
-void pmap_setup_avail( uint64_t ram_start, uint64_t ram_end, uint64_t kvo);
+void pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo);
+
 /*
  * Initialize pmap setup.
  * ALL of the code which deals with avail needs rewritten as an actual
@@ -1218,9 +1213,6 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 			}
 		}
 	}
-
-	pmap_curmaxkvaddr = VM_MAX_KERNEL_ADDRESS;
-
 
 	// XXX should this extend the l2 bootstrap mappings for kernel entries?
 
@@ -1472,7 +1464,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 	return TRUE;
 }
 
-
 void
 pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 {
@@ -1528,7 +1519,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	splx(s);
 }
 
-
 void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
@@ -1548,7 +1538,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 }
 
 void
-pmap_init()
+pmap_init(void)
 {
 	uint64_t tcr;
 
@@ -1583,8 +1573,7 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 		cpu_icache_sync_range(va, len);
 }
 
-
-STATIC uint64_t ap_bits_user [8] = {
+STATIC uint64_t ap_bits_user[8] = {
 	[PROT_NONE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AP(2),
 	[PROT_READ]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
 	[PROT_WRITE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
@@ -1595,7 +1584,7 @@ STATIC uint64_t ap_bits_user [8] = {
 	[PROT_EXEC|PROT_WRITE|PROT_READ]= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
 };
 
-STATIC uint64_t ap_bits_kern [8] = {
+STATIC uint64_t ap_bits_kern[8] = {
 	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
 	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(2),
 	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
@@ -1645,10 +1634,6 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		break;
 	case PMAP_CACHE_DEV:
 		attr |= ATTR_IDX(PTE_ATTR_DEV);
-		attr |= ATTR_SH(SH_INNER);
-		break;
-	case PMAP_CACHE_PTE:
-		attr |= ATTR_IDX(PTE_ATTR_CI); // inner and outer uncached, XXX?
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	default:
@@ -1714,7 +1699,8 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
  * It's purpose is to tell the caller that a fault was generated either
  * for this emulation, or to tell the caller that it's a legit fault.
  */
-int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
+int
+pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 {
 	struct pte_desc *pted;
 	struct vm_page *pg;
@@ -1820,7 +1806,11 @@ int pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	return 1;
 }
 
-void pmap_postinit(void) {}
+void
+pmap_postinit(void)
+{
+}
+
 void
 pmap_map_section(vaddr_t l1_addr, vaddr_t va, paddr_t pa, int flags, int cache)
 {
@@ -1849,9 +1839,6 @@ panic("%s called", __func__);
 	case PMAP_CACHE_CI:
 		cache_bits = L1_MODE_DEV;
 		break;
-	case PMAP_CACHE_PTE:
-		cache_bits = L1_MODE_PTE;
-		break;
 	}
 
 	l1[va>>VP_IDX1_POS] = (pa & L1_S_RPGN) | ap_flag | cache_bits | L1_TYPE_S;
@@ -1867,8 +1854,8 @@ vsize_t pmap_map_chunk(vaddr_t l1, vaddr_t va, paddr_t pa, vsize_t sz, int prot,
 	return 0;
 }
 
-
-void pmap_update()
+void
+pmap_update(pmap_t pm)
 {
 }
 
@@ -1877,18 +1864,20 @@ vaddr_t zero_page;
 vaddr_t copy_src_page;
 vaddr_t copy_dst_page;
 
-
-int pmap_is_referenced(struct vm_page *pg)
+int
+pmap_is_referenced(struct vm_page *pg)
 {
 	return ((pg->pg_flags & PG_PMAP_REF) != 0);
 }
 
-int pmap_is_modified(struct vm_page *pg)
+int
+pmap_is_modified(struct vm_page *pg)
 {
 	return ((pg->pg_flags & PG_PMAP_MOD) != 0);
 }
 
-int pmap_clear_modify(struct vm_page *pg)
+int
+pmap_clear_modify(struct vm_page *pg)
 {
 	struct pte_desc *pted;
 	uint64_t *pl3 = NULL;
@@ -1918,7 +1907,8 @@ int pmap_clear_modify(struct vm_page *pg)
  * When this turns off read permissions it also disables write permissions
  * so that mod is correctly tracked after clear_ref; FAULT_READ; FAULT_WRITE;
  */
-int pmap_clear_reference(struct vm_page *pg)
+int
+pmap_clear_reference(struct vm_page *pg)
 {
 	struct pte_desc *pted;
 
@@ -1941,12 +1931,15 @@ int pmap_clear_reference(struct vm_page *pg)
 	return 0;
 }
 
-void pmap_copy(pmap_t src_pmap, pmap_t dst_pmap, vaddr_t src, vsize_t sz, vaddr_t dst)
+void
+pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
+	vsize_t len, vaddr_t src_addr)
 {
-	//printf("%s\n", __func__);
+	/* NOOP */
 }
 
-void pmap_unwire(pmap_t pm, vaddr_t va)
+void
+pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pte_desc *pted;
 
@@ -1959,23 +1952,21 @@ void pmap_unwire(pmap_t pm, vaddr_t va)
 	}
 }
 
-void pmap_remove_holes(struct vmspace *vm)
+void
+pmap_remove_holes(struct vmspace *vm)
 {
 	/* NOOP */
 }
 
-void pmap_virtual_space(vaddr_t *start, vaddr_t *end)
+void
+pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 	*start = virtual_avail;
 	*end = virtual_end;
 }
 
-vaddr_t  pmap_curmaxkvaddr;
-
-void pmap_avail_fixup(void);
-
 void
-pmap_setup_avail( uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
+pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
 {
 	/* This makes several assumptions
 	 * 1) kernel will be located 'low' in memory
@@ -1992,7 +1983,6 @@ pmap_setup_avail( uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
 	pmap_avail_kvo = kvo;
 	pmap_avail[0].start = ram_start;
 	pmap_avail[0].size = ram_end-ram_start;
-
 
 	// XXX - support more than one region
 	pmap_memregions[0].start = ram_start;
@@ -2211,6 +2201,7 @@ pmap_physload_avail(void)
 
 	}
 }
+
 void
 pmap_show_mapping(uint64_t va)
 {

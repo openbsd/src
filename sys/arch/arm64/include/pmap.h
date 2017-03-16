@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.2 2017/03/12 16:35:56 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.3 2017/03/16 20:15:07 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -43,8 +43,7 @@ void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
 #define PMAP_CACHE_WT		(PMAP_MD1)	 	/* writethru */
 #define PMAP_CACHE_WB		(PMAP_MD1|PMAP_MD0)	/* writeback */
-#define PMAP_CACHE_PTE		(PMAP_MD2)		/* PTE mapping */
-#define PMAP_CACHE_DEV		(PMAP_MD2|PMAP_MD0)	/* device mapping */
+#define PMAP_CACHE_DEV		(PMAP_MD2)		/* device mapping */
 #define PMAP_CACHE_BITS		(PMAP_MD0|PMAP_MD1|PMAP_MD2)	
 
 #define PTED_VA_MANAGED_M	(PMAP_MD3)
@@ -98,19 +97,6 @@ void pmap_postinit(void);
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
-
-/*
- * Physical / virtual address structure. In a number of places (particularly
- * during bootstrapping) we need to keep track of the physical and virtual
- * addresses of various pages
- */
-typedef struct pv_addr {
-	SLIST_ENTRY(pv_addr) pv_list;
-	paddr_t pv_pa;
-	vaddr_t pv_va;
-} pv_addr_t;
-
-extern vaddr_t	pmap_curmaxkvaddr;
 
 #ifndef _LOCORE
 

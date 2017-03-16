@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.3 2017/02/17 19:14:58 patrick Exp $ */
+/* $OpenBSD: pte.h,v 1.4 2017/03/16 20:15:07 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -86,9 +86,6 @@
 //#define	L2_INVAL	L0_INVAL
 #define		L2_BLOCK	L0_BLOCK
 //#define	L2_TABLE	L0_TABLE
-
-#define		L2_SHIFT		21
-#define		L2_SIZE		(1 << L2_SHIFT)
 
 // page mapping
 #define		L3_P		(3)
