@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.200 2017/03/06 08:59:07 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.201 2017/03/16 10:42:01 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -376,7 +376,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 				retlt->ia6t_expire = maxexpire;
 		}
 		if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
-			time_t maxexpire;
+			time_t expire, maxexpire;
 			struct in6_addrlifetime *retlt =
 			    &ifr->ifr_ifru.ifru_lifetime;
 
@@ -388,8 +388,13 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			    (time_t)~(1ULL << ((sizeof(maxexpire) * 8) - 1));
 			if (ia6->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia6->ia6_updatetime) {
-				retlt->ia6t_preferred = ia6->ia6_updatetime +
+				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_pltime;
+				if (expire != 0) {
+					expire -= time_uptime;
+					expire += time_second;
+				}
+				retlt->ia6t_preferred = expire;
 			} else
 				retlt->ia6t_preferred = maxexpire;
 		}
