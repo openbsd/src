@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.8 2015/02/14 14:54:13 aoyama Exp $ */
+/* $OpenBSD: spc.c,v 1.9 2017/03/16 18:13:44 miod Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -68,7 +68,7 @@ struct scsi_adapter spc_switch = {
 
 /* bus space tag for spc */
 struct luna88k_bus_space_tag spc_bst = {
-	4,	/* when reading/writing 1 byte, the stride is 4. */
+	2,	/* when reading/writing 1 byte, the stride is 4. */
 	0,	/* not used */
 	0,	/* not used */
 	0,	/* not used */

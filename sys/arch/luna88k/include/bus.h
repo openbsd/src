@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2015/03/03 23:50:37 aoyama Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2017/03/16 18:13:44 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -176,13 +176,13 @@ bus_space_free(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    (*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)))
+    (*(volatile u_int8_t *)((h) + ((o) << (t->bs_stride_1))))
 
 #define	__bus_space_read_2(t, h, o)					\
-    (*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)))
+    (*(volatile u_int16_t *)((h) + ((o) << (t->bs_stride_2))))
 
 #define	__bus_space_read_4(t, h, o)					\
-    (*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)))
+    (*(volatile u_int32_t *)((h) + ((o) << (t->bs_stride_4))))
 
 #define bus_space_read_2(t, h, o)					\
     ((IS_TAG_LITTLE_ENDIAN(t)) ? 					\
@@ -311,13 +311,13 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
  */
 
 #define	bus_space_write_1(t, h, o, v)					\
-    ((void)(*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)) = (v)))
+    ((void)(*(volatile u_int8_t *)((h) + ((o) << (t->bs_stride_1))) = (v)))
 
 #define	__bus_space_write_2(t, h, o, v)					\
-    ((void)(*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)) = (v)))
+    ((void)(*(volatile u_int16_t *)((h) + ((o) << (t->bs_stride_2))) = (v)))
 
 #define	__bus_space_write_4(t, h, o, v)					\
-    ((void)(*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)) = (v)))
+    ((void)(*(volatile u_int32_t *)((h) + ((o) << (t->bs_stride_4))) = (v)))
 
 #define	bus_space_write_2(t, h, o, v)					\
     __bus_space_write_2(t, h, o,					\

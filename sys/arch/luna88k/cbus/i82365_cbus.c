@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.3 2015/03/13 12:12:42 aoyama Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.4 2017/03/16 18:13:43 miod Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -100,18 +100,18 @@ void	pcic_cbus_attach(struct device *, struct device *, void *);
 
 /* bus space tag for pcic_cbus */
 struct luna88k_bus_space_tag pcic_cbus_io_bst = {
-	.bs_stride_1 = 1,
-	.bs_stride_2 = 1,
-	.bs_stride_4 = 1,
+	.bs_stride_1 = 0,
+	.bs_stride_2 = 0,
+	.bs_stride_4 = 0,
 	.bs_stride_8 = 0,	/* not used */
 	.bs_offset = PCEXIO_BASE,
 	.bs_flags = TAG_LITTLE_ENDIAN
 };
 
 struct luna88k_bus_space_tag pcic_cbus_mem_bst = {
-	.bs_stride_1 = 1,
-	.bs_stride_2 = 1,
-	.bs_stride_4 = 1,
+	.bs_stride_1 = 0,
+	.bs_stride_2 = 0,
+	.bs_stride_4 = 0,
 	.bs_stride_8 = 0,	/* not used */
 	.bs_offset = PCEXMEM_BASE,
 	.bs_flags = TAG_LITTLE_ENDIAN
