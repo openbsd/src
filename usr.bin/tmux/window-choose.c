@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.87 2017/02/16 10:53:25 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.88 2017/03/17 14:41:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -93,7 +93,7 @@ static const char window_choose_keys_emacs[] = "0123456789"
 	                                       "abcdefghijklmnoprstuvwxyz"
 	                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const char window_choose_keys_vi[] = "0123456789"
-	                                    "abcdefhilmnoprstuvwxyz"
+	                                    "abcdefimnoprstuvwxyz"
 	                                    "ABCDEFIJKMNOPQRSTUVWXYZ";
 
 static void	window_choose_free1(struct window_choose_mode_data *);
@@ -563,8 +563,6 @@ window_choose_translate_key(key_code key)
 	case '\r':
 	case KEYC_BSPACE:
 	case ' ':
-	case KEYC_LEFT:
-	case KEYC_RIGHT:
 	case KEYC_LEFT|KEYC_CTRL:
 	case KEYC_RIGHT|KEYC_CTRL:
 	case KEYC_MOUSEDOWN1_PANE:
@@ -584,12 +582,18 @@ window_choose_translate_key(key_code key)
 	case '\006': /* C-f */
 	case KEYC_NPAGE:
 		return (KEYC_NPAGE);
+	case 'h':
+	case KEYC_LEFT:
+		return (KEYC_LEFT);
 	case 'j':
 	case KEYC_DOWN:
 		return (KEYC_DOWN);
 	case 'k':
 	case KEYC_UP:
 		return (KEYC_UP);
+	case 'l':
+	case KEYC_RIGHT:
+		return (KEYC_RIGHT);
 	case 'g':
 	case KEYC_HOME:
 		return (KEYC_HOME);
