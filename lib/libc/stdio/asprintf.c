@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.24 2017/03/16 14:32:02 millert Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.25 2017/03/17 14:53:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -50,7 +50,9 @@ asprintf(char **str, const char *fmt, ...)
 	*f._p = '\0';
 	if (ret + 1 > INITIAL_SIZE && ret + 1 < pgsz / 2) {
 		/* midsize allocations can try to conserve memory */
-		unsigned char *_base = realloc(f._bf._base, ret + 1);
+		unsigned char *_base = recallocarray(f._bf._base,
+		    f._bf._size + 1, ret + 1, 1);
+
 		if (_base == NULL)
 			goto err;
 		*str = (char *)_base;
