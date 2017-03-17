@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.28 2016/09/14 08:59:56 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.29 2017/03/17 20:57:57 eric Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -295,17 +295,6 @@ m_composev(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid,
 void
 m_create(struct mproc *p, uint32_t type, uint32_t peerid, pid_t pid, int fd)
 {
-	if (p->m_buf == NULL) {
-		p->m_alloc = 128;
-		log_trace(TRACE_MPROC, "mproc: %s -> %s: allocating %zu",
-		    proc_name(smtpd_process),
-		    proc_name(p->proc),
-		    p->m_alloc);
-		p->m_buf = malloc(p->m_alloc);
-		if (p->m_buf == NULL)
-			fatal("warn: m_create: malloc");
-	}
-
 	p->m_pos = 0;
 	p->m_type = type;
 	p->m_peerid = peerid;
@@ -324,7 +313,7 @@ m_add(struct mproc *p, const void *data, size_t len)
 		fatal(NULL);
 	}
 
-	alloc = p->m_alloc;
+	alloc = p->m_alloc ? p->m_alloc : 128;
 	while (p->m_pos + len > alloc)
 		alloc *= 2;
 	if (alloc != p->m_alloc) {
@@ -334,7 +323,7 @@ m_add(struct mproc *p, const void *data, size_t len)
 		    p->m_alloc,
 		    alloc);
 
-		tmp = realloc(p->m_buf, alloc);
+		tmp = recallocarray(p->m_buf, p->m_alloc, alloc, 1);
 		if (tmp == NULL)
 			fatal("realloc");
 		p->m_alloc = alloc;
