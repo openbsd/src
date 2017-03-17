@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.c,v 1.19 2017/03/16 14:26:18 millert Exp $ */
+/*	$OpenBSD: fvwrite.c,v 1.20 2017/03/17 16:06:33 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,8 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 
 				/* Round up to nearest page. */
 				_size = ((blen + len + 1 + pgmsk) & ~pgmsk) - 1;
-				_base = realloc(fp->_bf._base, _size + 1);
+				_base = recallocarray(fp->_bf._base,
+				    fp->_bf._size + 1, _size + 1, 1);
 				if (_base == NULL)
 					goto err;
 				fp->_w += _size - fp->_bf._size;
