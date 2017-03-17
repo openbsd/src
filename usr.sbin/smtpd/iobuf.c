@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.9 2015/12/14 10:22:12 jung Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.10 2017/03/17 20:56:04 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -53,7 +53,7 @@ iobuf_init(struct iobuf *io, size_t size, size_t max)
 	if (size > max)
 		return (-1);
 
-	if ((io->buf = malloc(size)) == NULL)
+	if ((io->buf = calloc(size, 1)) == NULL)
 		return (-1);
 
 	io->size = size;
@@ -110,7 +110,7 @@ iobuf_extend(struct iobuf *io, size_t n)
 	if (io->max - io->size < n)
 		return (-1);
 
-	t = realloc(io->buf, io->size + n);
+	t = recallocarray(io->buf, io->size, io->size + n, 1);
 	if (t == NULL)
 		return (-1);
 
