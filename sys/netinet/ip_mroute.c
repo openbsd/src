@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.111 2017/03/14 10:27:10 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.112 2017/03/17 14:59:29 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -293,6 +293,11 @@ get_sg_cnt(unsigned int rtableid, struct sioc_sg_req *req)
 
 	req->pktcnt = req->bytecnt = req->wrong_if = 0;
 	do {
+		/* Don't consider non multicast routes. */
+		if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
+		    (RTF_HOST | RTF_MULTICAST))
+			continue;
+
 		mfc = (struct mfc *)rt->rt_llinfo;
 		req->pktcnt += mfc->mfc_pkt_cnt;
 		req->bytecnt += mfc->mfc_byte_cnt;
@@ -1174,6 +1179,11 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp0, struct rtentry *rt)
 	 *		- there are group members downstream on interface
 	 */
 	do {
+		/* Don't consider non multicast routes. */
+		if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
+		    (RTF_HOST | RTF_MULTICAST))
+			continue;
+
 		mfc = (struct mfc *)rt->rt_llinfo;
 		mfc->mfc_pkt_cnt++;
 		mfc->mfc_byte_cnt += m->m_pkthdr.len;
