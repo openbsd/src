@@ -2101,6 +2101,7 @@
 ./usr/share/man/man8/dhclient.8
 ./usr/share/man/man8/dhcpd.8
 ./usr/share/man/man8/dhcrelay.8
+./usr/share/man/man8/dhcrelay6.8
 ./usr/share/man/man8/disklabel.8
 ./usr/share/man/man8/diskless.8
 ./usr/share/man/man8/dmesg.8

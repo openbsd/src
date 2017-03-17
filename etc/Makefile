@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.452 2017/02/27 21:53:11 rpe Exp $
+#	$OpenBSD: Makefile,v 1.453 2017/03/17 17:57:40 rzalamena Exp $
 
 .include <bsd.own.mk>
 
@@ -50,8 +50,8 @@ EXAMPLES_600=bgpd.conf doas.conf dvmrpd.conf eigrpd.conf hostapd.conf \
 	ripd.conf sasyncd.conf snmpd.conf vm.conf ypldap.conf
 
 # -r-xr-xr-x
-RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dvmrpd eigrpd ftpd \
-	ftpproxy ftpproxy6 hostapd hotplugd httpd identd ifstated \
+RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
+	eigrpd ftpd ftpproxy ftpproxy6 hostapd hotplugd httpd identd ifstated \
 	iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
 	lpd mopd mountd mrouted nfsd npppd nsd ntpd ospf6d ospfd \
 	pflogd portmap radiusd rarpd rbootd rebound relayd ripd route6d \

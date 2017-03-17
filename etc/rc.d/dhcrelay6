@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: dhcrelay6,v 1.1 2017/03/17 17:57:40 rzalamena Exp $
+
+daemon="/usr/sbin/dhcrelay6"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1
