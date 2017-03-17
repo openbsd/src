@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.94 2017/01/25 06:15:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.95 2017/03/17 17:19:16 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1176,15 +1176,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL, curproc);
 
 	if (result == 0) {
-		int netlocked = (rw_status(&netlock) == RW_WRITE);
-
-		/*
-		 * This process may already have the NET_LOCK(), if we
-		 * faulted in copyin() or copyout() in the network stack.
-		 */
-		if (netlocked)
-			rw_exit_write(&netlock);
-
 		/* NOTE: vnode now locked! */
 		if (rw == UIO_READ)
 			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
@@ -1192,9 +1183,6 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			result = VOP_WRITE(vn, &uio,
 			    (flags & PGO_PDFREECLUST) ? IO_NOCACHE : 0,
 			    curproc->p_ucred);
-
-		if (netlocked)
-			rw_enter_write(&netlock);
 
 		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
 			VOP_UNLOCK(vn, curproc);

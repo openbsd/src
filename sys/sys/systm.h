@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.124 2017/02/14 09:46:21 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.125 2017/03/17 17:19:16 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -293,31 +293,23 @@ int	uiomove(void *, size_t, struct uio *);
 
 #include <sys/rwlock.h>
 
-extern struct rwlock netlock;
-
 #define	NET_LOCK(s)							\
 do {									\
-	rw_enter_write(&netlock);					\
 	s = splsoftnet();						\
 } while (0)
 
 #define	NET_UNLOCK(s)							\
 do {									\
 	splx(s);							\
-	rw_exit_write(&netlock);					\
 } while (0)
 
 #define	NET_ASSERT_LOCKED()						\
 do {									\
-	if (rw_status(&netlock) != RW_WRITE)				\
-		splassert_fail(RW_WRITE, rw_status(&netlock), __func__);\
 	splsoftassert(IPL_SOFTNET);					\
 } while (0)
 
 #define	NET_ASSERT_UNLOCKED()						\
 do {									\
-	if (rw_status(&netlock) == RW_WRITE)				\
-		splassert_fail(0, rw_status(&netlock), __func__);	\
 } while (0)
 
 __returns_twice int	setjmp(label_t *);

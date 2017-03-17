@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1018 2017/03/09 05:47:28 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.1019 2017/03/17 17:19:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1154,20 +1154,26 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 /* END state table stuff */
 
 void
-pf_purge_expired_rules(void)
+pf_purge_expired_rules(int locked)
 {
 	struct pf_rule	*r;
 
-	NET_ASSERT_LOCKED();
-
 	if (SLIST_EMPTY(&pf_rule_gcl))
 		return;
+
+	if (!locked)
+		rw_enter_write(&pf_consistency_lock);
+	else
+		rw_assert_wrlock(&pf_consistency_lock);
 
 	while ((r = SLIST_FIRST(&pf_rule_gcl)) != NULL) {
 		SLIST_REMOVE(&pf_rule_gcl, r, pf_rule, gcle);
 		KASSERT(r->rule_flag & PFRULE_EXPIRED);
 		pf_purge_rule(r);
 	}
+
+	if (!locked)
+		rw_exit_write(&pf_consistency_lock);
 }
 
 void
@@ -1188,7 +1194,7 @@ pf_purge_thread(void *v)
 		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
 			pf_purge_expired_fragments();
 			pf_purge_expired_src_nodes(0);
-			pf_purge_expired_rules();
+			pf_purge_expired_rules(0);
 			nloops = 0;
 		}
 
@@ -1235,20 +1241,26 @@ pf_state_expires(const struct pf_state *state)
 }
 
 void
-pf_purge_expired_src_nodes(void)
+pf_purge_expired_src_nodes(int waslocked)
 {
 	struct pf_src_node		*cur, *next;
-
-	NET_ASSERT_LOCKED();
+	int				 locked = waslocked;
 
 	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
 	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 
 		if (cur->states == 0 && cur->expire <= time_uptime) {
-			next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
-			pf_remove_src_node(cur);
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				next = RB_NEXT(pf_src_tree,
+				    &tree_src_tracking, cur);
+				locked = 1;
+			}
 		}
 	}
+
+	if (locked && !waslocked)
+		rw_exit_write(&pf_consistency_lock);
 }
 
 void
@@ -1293,10 +1305,7 @@ pf_remove_state(struct pf_state *cur)
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW) {
-		/* XXXSMP breaks atomicity */
-		rw_exit_write(&netlock);
 		export_pflow(cur);
-		rw_enter_write(&netlock);
 	}
 #endif	/* NPFLOW > 0 */
 #if NPFSYNC > 0
@@ -1321,12 +1330,13 @@ pf_remove_divert_state(struct pf_state_key *sk)
 	}
 }
 
+/* callers should hold the write_lock on pf_consistency_lock */
 void
 pf_free_state(struct pf_state *cur)
 {
 	struct pf_rule_item *ri;
 
-	NET_ASSERT_LOCKED();
+	splsoftassert(IPL_SOFTNET);
 
 #if NPFSYNC > 0
 	if (pfsync_state_in_use(cur))
@@ -1361,8 +1371,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 {
 	static struct pf_state	*cur = NULL;
 	struct pf_state		*next;
-
-	NET_ASSERT_LOCKED();
+	int			 locked = 0;
 
 	while (maxcheck--) {
 		/* wrap to start of list when we hit the end */
@@ -1377,14 +1386,25 @@ pf_purge_expired_states(u_int32_t maxcheck)
 
 		if (cur->timeout == PFTM_UNLINKED) {
 			/* free removed state */
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				locked = 1;
+			}
 			pf_free_state(cur);
 		} else if (pf_state_expires(cur) <= time_uptime) {
 			/* remove and free expired state */
 			pf_remove_state(cur);
+			if (! locked) {
+				rw_enter_write(&pf_consistency_lock);
+				locked = 1;
+			}
 			pf_free_state(cur);
 		}
 		cur = next;
 	}
+
+	if (locked)
+		rw_exit_write(&pf_consistency_lock);
 }
 
 int

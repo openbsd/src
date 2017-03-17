@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.307 2017/01/30 17:41:34 benno Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.308 2017/03/17 17:19:16 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,6 +111,7 @@ void			 pf_qid2qname(u_int16_t, char *);
 void			 pf_qid_unref(u_int16_t);
 
 struct pf_rule		 pf_default_rule, pf_default_rule_new;
+struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
 
 struct {
 	char		statusif[IFNAMSIZ];
@@ -986,7 +987,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			return (EACCES);
 		}
 
-	NET_LOCK(s);
+	if (flags & FWRITE)
+		rw_enter_write(&pf_consistency_lock);
+	else
+		rw_enter_read(&pf_consistency_lock);
+
+	s = splsoftnet();
 	switch (cmd) {
 
 	case DIOCSTART:
@@ -2382,7 +2388,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 fail:
-	NET_UNLOCK(s);
+	splx(s);
+	if (flags & FWRITE)
+		rw_exit_write(&pf_consistency_lock);
+	else
+		rw_exit_read(&pf_consistency_lock);
 	return (error);
 }
 
