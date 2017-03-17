@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay6.c,v 1.1 2017/03/17 14:45:16 rzalamena Exp $	*/
+/*	$OpenBSD: dhcrelay6.c,v 1.2 2017/03/17 16:45:27 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -120,8 +120,9 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dlov] [-I interface-id] "
-	    "[-R remote-id] -i interface\n\tdestination ...\n",
+	fprintf(stderr, "usage: %s [-dlov] [-E enterprise-number] "
+	    "[-I interface-id] [-R remote-id]\n"
+	    "\t-i interface destination ...\n",
 	    __progname);
 	exit(1);
 }

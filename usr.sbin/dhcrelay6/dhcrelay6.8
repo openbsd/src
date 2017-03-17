@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay6.8,v 1.1 2017/03/17 14:45:16 rzalamena Exp $
+.\"	$OpenBSD: dhcrelay6.8,v 1.2 2017/03/17 16:45:27 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -49,8 +49,7 @@
 .Op Fl I Ar interface-id
 .Op Fl R Ar remote-id
 .Fl i Ar interface
-.Ar destination
-.Op Ar ... destinationN
+.Ar destination ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,11 +68,11 @@ original request came.
 .Pp
 The
 .Ar destination
-might be an address followed by an '%' and interface or just an
-interface (e.g. '2001:db8::1%em0' or 'em1').
+might be an address followed by a `%' and an interface name,
+or just an interface name (e.g. "2001:db8::1%em0" or "em1").
 When no address is specified
 .Nm
-will use multicast in the specified interface.
+will use multicast on the specified interface.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -86,10 +85,8 @@ will run in the foreground and log to
 .It Fl E Ar enterprise-number
 Choose the
 .Ar enterprise-number
-that will be used by the Remote-ID option (this only has effect when
-using
-.Fl R Ar remote-id
-).
+that will be used by the Remote-ID option (this only has effect when using
+.Fl R ) .
 .It Fl I Ar interface-id
 The
 .Ar interface-id
@@ -102,12 +99,11 @@ default.
 Avoid using this option when using Lightweight DHCPv6 Relay Mode
 (layer 2 relay), otherwise
 .Nm
-will always send replies back to the client interface which will break
+will always send replies back to the client interface, which will break
 networks with multiple DHCPv6 layer 2 relay agents.
 .It Fl i Ar interface
-The name of the network interface that
-.Nm
-will received the client DHCPv6 requests.
+The name of the network interface
+which will receive client DHCPv6 requests.
 For layer 3 mode at least one IPv6 local, site or global address has to
 be configured on this interface.
 .It Fl l
@@ -115,9 +111,10 @@ Use the Lightweight DHCPv6 Relay Agent mode (layer 2 relaying).
 .It Fl o
 Add the Interface-ID option.
 This option is activated by default when using layer 2 relaying.
-.It Fl R
-Enable and add the specified Relay Agent Remote-ID option to identify
-this relay segment.
+.It Fl R Ar remote-id
+Enable and add the specified Relay Agent
+.Ar remote-id
+to identify this relay segment.
 .It Fl v
 Debug mode.
 This option will make
@@ -127,8 +124,8 @@ run in the foreground, log to
 and show verbose messages.
 .El
 .Sh EXAMPLES
-Relay multicast packets in the current network to an unicast address
-(relay must have a global address in em0):
+Relay multicast packets in the current network to a unicast address
+(the relay must have a global address in em0):
 .Pp
 .Dl # dhcrelay6 -i em0 2001:db8::1000%em0
 .Pp
@@ -147,11 +144,8 @@ Same thing as before but with a custom Interface-ID:
 .Dl # dhcrelay6 -o -I \(dqOpenBSD Router 1\(dq -i em0 2001:db8::1000%em0
 .Pp
 Use Lightweight DHCPv6 Relay Agent (layer 2 relay) in a bridged or
-switched network (no IPv6 address required). Only makes sense when
-.Ar em0
-and
-.Ar em1
-are configured in a
+switched network (no IPv6 address required).
+Only makes sense when em0 and em1 are configured in a
 .Xr bridge 4 ,
 since
 .Nm
@@ -160,11 +154,10 @@ Interface-ID option.
 .Pp
 .Dl # dhcrelay6 -l -i em0 em1
 .Pp
-Identify a segment using Lightweight DHCPv6 Relay Agent (layer 2
-relay) with Remote-ID (option 37) instead of Interface-ID:
+Identify a segment using Lightweight DHCPv6 Relay Agent (layer 2 relay)
+with a Remote-ID (option 37) instead of an Interface-ID:
 .Pp
-.Dl # dhcrelay6 -l -R \(dqOpenBSD Router A\(dq -i em0 em1
-.Pp
+.Dl # dhcrelay6 -l -R \&"OpenBSD Router A\&" -i em0 em1
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr dhcrelay 8
