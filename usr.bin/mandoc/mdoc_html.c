@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.152 2017/03/15 11:29:50 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.153 2017/03/17 12:06:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -499,7 +499,8 @@ mdoc_sh_pre(MDOC_ARGS)
 	case ROFFT_HEAD:
 		id = html_make_id(n);
 		print_otag(h, TAG_H1, "cTi", "Sh", id);
-		print_otag(h, TAG_A, "chR", "selflink", id);
+		if (id != NULL)
+			print_otag(h, TAG_A, "chR", "selflink", id);
 		free(id);
 		break;
 	case ROFFT_BODY:
@@ -522,7 +523,8 @@ mdoc_ss_pre(MDOC_ARGS)
 
 	id = html_make_id(n);
 	print_otag(h, TAG_H2, "cTi", "Ss", id);
-	print_otag(h, TAG_A, "chR", "selflink", id);
+	if (id != NULL)
+		print_otag(h, TAG_A, "chR", "selflink", id);
 	free(id);
 	return 1;
 }
