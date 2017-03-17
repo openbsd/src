@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.104 2017/03/17 17:00:38 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.105 2017/03/17 18:33:04 jmc Exp $
 .\"
 .Dd $Mdocdate: March 17 2017 $
 .Dt MALLOC 3
@@ -126,7 +126,7 @@ allocations is explicitly discarded (meaning, pages of memory
 are disposed via
 .Xr munmap 2 ,
 and smaller allocations are cleared with
-.Xr explicit_bzero 3 Ns ).
+.Xr explicit_bzero 3 ) .
 If
 .Fa ptr
 is a
