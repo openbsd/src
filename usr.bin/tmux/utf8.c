@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.35 2017/01/18 10:08:05 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.36 2017/03/17 14:51:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -112,7 +112,7 @@ utf8_width(wchar_t wc)
 
 	width = wcwidth(wc);
 	if (width < 0 || width > 0xff) {
-		log_debug("Unicode %04x, wcwidth() %d", wc, width);
+		log_debug("Unicode %04lx, wcwidth() %d", (long)wc, width);
 		return (-1);
 	}
 	return (width);

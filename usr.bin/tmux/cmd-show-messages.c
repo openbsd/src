@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.24 2017/01/24 19:59:19 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.25 2017/03/17 14:51:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -81,8 +81,8 @@ cmd_show_messages_jobs(struct cmdq_item *item, int blank)
 			cmdq_print(item, "%s", "");
 			blank = 0;
 		}
-		cmdq_print(item, "Job %u: %s [fd=%d, pid=%d, status=%d]",
-		    n, job->cmd, job->fd, job->pid, job->status);
+		cmdq_print(item, "Job %u: %s [fd=%d, pid=%ld, status=%d]",
+		    n, job->cmd, job->fd, (long)job->pid, job->status);
 		n++;
 	}
 	return (n != 0);
