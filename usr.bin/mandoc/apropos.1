@@ -1,7 +1,7 @@
-.\"	$OpenBSD: apropos.1,v 1.32 2017/01/31 19:43:23 schwarze Exp $
+.\"	$OpenBSD: apropos.1,v 1.33 2017/03/17 17:24:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011, 2012, 2014 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011, 2012, 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2017 $
+.Dd $Mdocdate: March 17 2017 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -237,7 +237,28 @@ is evaluated case-insensitively.
 Has no effect on substring terms.
 .El
 .Pp
-Results are sorted by manual sections and names, with output formatted as
+Results are sorted according to the following criteria:
+.Bl -enum
+.It
+The manpath directory tree the page is found in, according to the
+order specified with
+.Fl M ,
+.Fl m ,
+the
+.Ev MANPATH
+environment variable, the
+.Xr man.conf 5
+configuration file, or the default documented in
+.Xr man.conf 5 .
+.It
+The section number in ascending numerical order.
+.It
+The page name in ascending
+.Xr ascii 7
+alphabetical order, case-insensitive.
+.El
+.Pp
+Each output line is formatted as
 .Pp
 .D1 name[, name...](sec) \- description
 .Pp
