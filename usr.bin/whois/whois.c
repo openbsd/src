@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.54 2017/03/15 16:45:25 millert Exp $   */
+/*      $OpenBSD: whois.c,v 1.55 2017/03/17 14:59:01 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -73,13 +73,13 @@ const char *ip_whois[] = { LNICHOST, RNICHOST, PNICHOST, BNICHOST,
 
 __dead void usage(void);
 int whois(const char *, const char *, const char *, int);
-char *choose_server(const char *, const char *);
+char *choose_server(const char *, const char *, char **);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, flags, rval;
-	char *host, *name, *country, *server;
+	char *host, *name, *country;
 
 	country = host = NULL;
 	flags = rval = 0;
@@ -148,10 +148,11 @@ main(int argc, char *argv[])
 	if (host == NULL && country == NULL && !(flags & WHOIS_QUICK))
 		flags |= WHOIS_RECURSE;
 	for (name = *argv; (name = *argv) != NULL; argv++) {
-		server = host ? host : choose_server(name, country);
+		char *tofree = NULL;
+		const char *server =
+		    host ? host : choose_server(name, country, &tofree);
 		rval += whois(name, server, port_whois, flags);
-		if (host == NULL)
-			free(server);
+		free(tofree);
 	}
 	return (rval);
 }
@@ -280,7 +281,7 @@ whois(const char *query, const char *server, const char *port, int flags)
  * ASN (starts with AS). Fall back to NICHOST for the non-handle case.
  */
 char *
-choose_server(const char *name, const char *country)
+choose_server(const char *name, const char *country, char **tofree)
 {
 	char *server;
 	const char *qhead;
@@ -336,6 +337,7 @@ choose_server(const char *name, const char *country)
 			err(1, NULL);
 	}
 
+	*tofree = server;
 	return (server);
 }
 
