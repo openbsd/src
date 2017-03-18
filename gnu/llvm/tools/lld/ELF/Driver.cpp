@@ -537,6 +537,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ZCombreloc = !hasZOption(Args, "nocombreloc");
   Config->ZExecstack = hasZOption(Args, "execstack");
   Config->ZNodelete = hasZOption(Args, "nodelete");
+  Config->ZNodlopen = hasZOption(Args, "nodlopen");
   Config->ZNow = hasZOption(Args, "now");
   Config->ZOrigin = hasZOption(Args, "origin");
   Config->ZRelro = !hasZOption(Args, "norelro");
