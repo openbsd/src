@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.cgi.8,v 1.20 2017/03/17 12:55:52 schwarze Exp $
+.\"	$OpenBSD: man.cgi.8,v 1.21 2017/03/18 16:48:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2017 $
+.Dd $Mdocdate: March 18 2017 $
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -186,11 +186,6 @@ Otherwise, a leading slash is needed.
 This is used in generated HTML code.
 .It Dv CUSTOMIZE_TITLE
 An ASCII string to be used for the HTML <TITLE> element.
-.It Dv HTTP_HOST
-The FQDN of the (possibly virtual) host the HTTP server is running on.
-This is used for
-.Ic Location:
-headers in HTTP 303 responses.
 .It Dv MAN_DIR
 A file system path to the
 .Nm
