@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2017/01/25 10:43:37 patrick Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2017/03/18 16:33:57 kettenis Exp $	*/
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -28,17 +28,13 @@
 
 #include "SYS.h"
 
+/* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
+#define TCB_OFFSET_ERRNO	(-12)
+
 _ENTRY(CERROR)
-	stp	x0, x30, [sp,#-16]!
-	bl	_C_LABEL(__errno)
-	ldp	x1, x30, [sp],#16
-	str	w1, [x0]
+	mrs	x1, tpidr_el0
+	str	w0, [x1, #TCB_OFFSET_ERRNO]
 	movn	x0, #0
 	movn	x1, #0
 	ret
 END(CERROR)
-
-#if !defined(__PIC__)
-.Lerrno:
-	.word	errno
-#endif
