@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.2 2017/03/18 12:50:14 kettenis Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,31 +34,25 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
-
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(sbrk, _sbrk)
-#endif
+	.globl	_C_LABEL(_end)
 
 	.data
 	.align	0
-	.globl	CURBRK
-	.type	CURBRK,#object
-	.globl	minbrk
-	.type	minbrk,#object
-CURBRK:
-	.quad	_C_LABEL(end)
-_ASM_LABEL(minbrk):
-	.quad	_C_LABEL(end)
+	.globl	__curbrk
+	.type	__curbrk,#object
+	.hidden	__curbrk
+__curbrk:
+	.quad	_C_LABEL(_end)
+	END(__curbrk)
 
 /*
  * Change the data segment size
  */
-SYSENTRY(_sbrk)
+ENTRY(sbrk)
 #ifdef __PIC__
 	/* Setup the GOT */
-	adrp	x3, :got:CURBRK
-	ldr	x2, [x3, #:got_lo12:CURBRK]
+	adrp	x3, :got:__curbrk
+	ldr	x2, [x3, #:got_lo12:__curbrk]
 #else
 	ldr	x2, .Lcurbrk
 #endif
@@ -82,5 +76,7 @@ SYSENTRY(_sbrk)
 	.align	0
 #if !defined(__PIC__)
 .Lcurbrk:
-	.word	CURBRK
+	.word	__curbrk
 #endif
+END(sbrk)
+	.weak	sbrk

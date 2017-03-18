@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: brk.S,v 1.2 2017/03/18 12:50:13 kettenis Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -35,27 +35,23 @@
 #include "SYS.h"
 
 	.globl	_C_LABEL(end)
-	.globl	CURBRK
-
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(brk, _brk)
-#endif
+	.globl	__curbrk
 
 	.data
 	.align	0
-	.globl	_C_LABEL(__minbrk)
-	.type	_C_LABEL(__minbrk),#object
-_C_LABEL(__minbrk):
-	.quad	_C_LABEL(end)
+	.type	__minbrk,#object
+__minbrk:
+	.quad	_C_LABEL(_end)
+	END(__minbrk)
 
 /*
  * Change the data segment size
  */
-SYSENTRY(_brk)
+ENTRY(brk)
 #ifdef __PIC__
 	/* Setup the GOT */
-	adrp	x3, :got:minbrk
-	ldr	x1, [x3, #:got_lo12:minbrk]
+	adrp	x3, :got:__minbrk
+	ldr	x1, [x3, #:got_lo12:__minbrk]
 #else
 	ldr	x1, .Lminbrk
 #endif
@@ -75,8 +71,8 @@ SYSENTRY(_brk)
 	bcs	CERROR
 
 #ifdef __PIC__
-	adrp	x3, :got:minbrk
-	ldr	x1, [x3, #:got_lo12:minbrk]
+	adrp	x3, :got:__curbrk
+	ldr	x1, [x3, #:got_lo12:__curbrk]
 #else
 	ldr	x1, .Lcurbrk
 #endif
@@ -90,7 +86,9 @@ SYSENTRY(_brk)
 	.align	3
 #if !defined(__PIC__)
 .Lminbrk:
-	.quad	_C_LABEL(__minbrk)
+	.quad	__minbrk
 .Lcurbrk:
-	.quad	CURBRK
+	.quad	__curbrk
 #endif
+END(brk)
+	.weak	brk
