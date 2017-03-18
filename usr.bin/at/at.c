@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.78 2016/10/31 17:22:07 schwarze Exp $	*/
+/*	$OpenBSD: at.c,v 1.79 2017/03/18 02:58:54 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -557,7 +557,8 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		job->queue = queue;
 		if (numjobs == maxjobs) {
 			size_t newjobs = maxjobs * 2;
-			newatjobs = reallocarray(atjobs, newjobs, sizeof(job));
+			newatjobs = recallocarray(atjobs, maxjobs,
+			    newjobs, sizeof(job));
 			if (newatjobs == NULL)
 				fatal(NULL);
 			atjobs = newatjobs;
