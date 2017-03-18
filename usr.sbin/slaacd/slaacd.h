@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.2 2017/03/18 21:22:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -19,7 +19,7 @@
  */
 
 #define	SLAACD_SOCKET		"/var/run/slaacd.sock"
-#define SLAACD_USER		"_rtadvd" /* XXX for now "_slaacd" */
+#define SLAACD_USER		"_slaacd"
 
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
