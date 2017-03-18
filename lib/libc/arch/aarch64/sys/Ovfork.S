@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.2 2017/03/18 23:41:24 kettenis Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
 
 #include "SYS.h"
 
-/*
- * pid = vfork();
- *
- * On return from the SWI:
- * r1 == 0 in parent process, r1 == 1 in child process.
- * r0 == pid of child in parent, r0 == pid of parent in child.
- */
 	.text
 	.align	0
 
@@ -48,8 +41,6 @@ SYSENTRY_HIDDEN(vfork)
 	mov	x2, x30
 	SYSTRAP(vfork)
 	bcs	CERROR
-	sub	x1, x1, #1	/* r1 == 0xffffffff if parent, 0 if child */
-	and	x0, x0, x1	/* r0 == 0 if child, else unchanged */
 	mov	x30, x2
 	ret
 SYSCALL_END_HIDDEN(vfork)
