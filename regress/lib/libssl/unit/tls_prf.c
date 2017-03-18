@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.1 2017/03/10 15:06:15 jsing Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.2 2017/03/18 12:59:07 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -22,7 +22,7 @@
 int tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
     int seed2_len, const void *seed3, int seed3_len, const void *seed4,
     int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
-    int slen, unsigned char *out1, unsigned char *out2, int olen);
+    int slen, unsigned char *out, int olen);
 
 #define TLS_PRF_OUT_LEN 128
 
@@ -175,7 +175,7 @@ hexdump(const unsigned char *buf, size_t len)
 static int
 do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 {
-	unsigned char *out = NULL, *tmp = NULL;
+	unsigned char *out = NULL;
 	const SSL_CIPHER *cipher;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
@@ -186,8 +186,6 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 
 	if ((out = malloc(TLS_PRF_OUT_LEN)) == NULL)
 		errx(1, "failed to allocate out");
-	if ((tmp = malloc(TLS_PRF_OUT_LEN)) == NULL)
-		errx(1, "failed to allocate tmp");
 
 	if ((ssl_ctx = SSL_CTX_new(tpt->ssl_method())) == NULL)
 		errx(1, "failed to create SSL context");
@@ -203,13 +201,12 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 
 	for (len = 1; len <= TLS_PRF_OUT_LEN; len++) {
 		memset(out, 'A', TLS_PRF_OUT_LEN);
-		memset(tmp, 'B', TLS_PRF_OUT_LEN);
 
 		if (tls1_PRF(ssl, TLS_PRF_SEED1, sizeof(TLS_PRF_SEED1),
 		    TLS_PRF_SEED2, sizeof(TLS_PRF_SEED2), TLS_PRF_SEED3,
 		    sizeof(TLS_PRF_SEED3), TLS_PRF_SEED4, sizeof(TLS_PRF_SEED4),
 		    TLS_PRF_SEED5, sizeof(TLS_PRF_SEED5), TLS_PRF_SECRET,
-		    sizeof(TLS_PRF_SECRET), out, tmp, len) != 1) {
+		    sizeof(TLS_PRF_SECRET), out, len) != 1) {
 			fprintf(stderr, "FAIL: tls_PRF failed for len %i\n",
 			    len);
 			goto failure;
@@ -234,7 +231,6 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 	SSL_CTX_free(ssl_ctx);
 
 	free(out);
-	free(tmp);
 
 	return failure;
 }
