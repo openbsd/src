@@ -1,0 +1,126 @@
+.\"	$OpenBSD: slaacd.8,v 1.1 2017/03/18 17:33:13 florian Exp $
+.\"
+.\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
+.\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 18 2017 $
+.Dt SLAACD 8
+.Os
+.Sh NAME
+.Nm slaacd
+.Nd a stateless address autoconfiguration daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl dv
+.Op Fl s Ar socket
+.Sh DESCRIPTION
+.Nm
+is a stateless address autoconfiguration daemon.
+It listens for IPv6 router advertisment messages on interfaces that are
+configured with
+.Xr ifconfig 8
+for IPv6 autoconfiguration.
+From the router advertisments it constructs address proposals and sends them
+to
+.Xr netcfgd 8 .
+.Pp
+.Nm
+monitors network interface states (interface going up or down,
+autoconfiguration enabled or disabled etc) and sends router solicitations
+when necessary.
+.Pp
+.Nm
+is usually started at boot time, and can be enabled by
+setting the following in
+.Pa /etc/rc.conf.local :
+.Pp
+.Dl slaacd_flags=\&"\&"
+.Pp
+See
+.Xr rc 8
+and
+.Xr rc.conf 8
+for more information on the boot process
+and enabling daemons.
+.Pp
+A running
+.Nm
+can be controlled with the
+.Xr slaacdctl 8
+utility.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
+.It Fl s Ar socket
+Use an alternate location for the default control socket.
+.It Fl v
+Produce more verbose output.
+.El
+.Sh FILES
+.Bl -tag -width "/var/run/slaacd.sockXX" -compact
+.It Pa /var/run/slaacd.sock
+.Ux Ns -domain
+socket used for communication with
+.Xr slaacdctl 8 .
+.El
+.Sh SEE ALSO
+.Xr ifconfig 8
+.Xr netcfgd 8
+.Xr slaacdctl 8
+.Sh STANDARDS
+.Rs
+.%A T. Narten
+.%A E. Nordmark
+.%A W. Simpson
+.%A H. Soliman
+.%D September 2007
+.%R RFC 4861
+.%T Neighbor Discovery for IP version 6 (IPv6)
+.Re
+.Pp
+.Rs
+.%A J. Jeong
+.%A S. Park
+.%A L. Beloeil
+.%A S. Madanapalli
+.%D November 2010
+.%R RFC 6106
+.%T IPv6 Router Advertisement Options for DNS Configuration
+.Re
+.Pp
+.Rs
+.%A R. Draves
+.%A D. Thaler
+.%D November 2005 
+.%R RFC 4191
+.%T Default Router Preferences and More-Specific Routes
+.Re
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 6.2 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Florian Obser Aq Mt florian@openbsd.org .
