@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.102 2017/03/08 19:40:46 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.103 2017/03/18 19:50:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2017 $
+.Dd $Mdocdate: March 18 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -611,8 +611,16 @@ Meta data is not available in this case.
 .It Ev MANPAGER
 Any non-empty value of the environment variable
 .Ev MANPAGER
-will be used instead of the standard pagination program,
-.Xr more 1 .
+is used instead of the standard pagination program,
+.Xr more 1 ;
+see
+.Xr man 1
+for details.
+Only used if
+.Fl a
+or
+.Fl l
+is specified.
 .It Ev PAGER
 Specifies the pagination program to use when
 .Ev MANPAGER
@@ -620,7 +628,12 @@ is not defined.
 If neither PAGER nor MANPAGER is defined,
 .Xr more 1
 .Fl s
-will be used.
+is used.
+Only used if
+.Fl a
+or
+.Fl l
+is specified.
 .El
 .Sh EXIT STATUS
 The

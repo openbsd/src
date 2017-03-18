@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apropos.1,v 1.33 2017/03/17 17:24:26 schwarze Exp $
+.\"	$OpenBSD: apropos.1,v 1.34 2017/03/18 19:50:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011, 2012, 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2017 $
+.Dd $Mdocdate: March 18 2017 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -362,25 +362,25 @@ Text production:
 .It Ev MANPAGER
 Any non-empty value of the environment variable
 .Ev MANPAGER
-will be used instead of the standard pagination program,
-.Xr more 1 .
-.It Ev MANPATH
-The standard search path used by
+is used instead of the standard pagination program,
+.Xr more 1 ;
+see
 .Xr man 1
-may be changed by specifying a path in the
-.Ev MANPATH
-environment variable.
-Invalid paths, or paths without manual databases, are ignored.
+for details.
+Only used if
+.Fl a
+or
+.Fl l
+is specified.
+.It Ev MANPATH
+A colon-separated list of directories to search for manual pages; see
+.Xr man 1
+for details.
 Overridden by
-.Fl M .
-If
-.Ev MANPATH
-begins with a colon, it is appended to the default list;
-if it ends with a colon, it is prepended to the default list;
-or if it contains two adjacent colons,
-the standard search path is inserted between the colons.
-If none of these conditions are met, it overrides the
-standard search path.
+.Fl M ,
+ignored if
+.Fl l
+is specified.
 .It Ev PAGER
 Specifies the pagination program to use when
 .Ev MANPAGER
@@ -388,7 +388,12 @@ is not defined.
 If neither PAGER nor MANPAGER is defined,
 .Xr more 1
 .Fl s
-will be used.
+is used.
+Only used if
+.Fl a
+or
+.Fl l
+is specified.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/man.conf" -compact

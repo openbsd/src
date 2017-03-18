@@ -1,7 +1,7 @@
-.\"	$OpenBSD: makewhatis.8,v 1.12 2014/11/28 19:25:03 schwarze Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.13 2017/03/18 19:50:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011, 2012 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011, 2012, 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2014 $
+.Dd $Mdocdate: March 18 2017 $
 .Dt MAKEWHATIS 8
 .Os
 .Sh NAME
@@ -135,6 +135,16 @@ from the database in
 If fatal parse errors are encountered while parsing, the offending file
 is printed to stderr, omitted from the index, and the parse continues
 with the next input file.
+.Sh ENVIRONMENT
+.Bl -tag -width MANPATH
+.It Ev MANPATH
+A colon-separated list of directories to create databases in.
+Ignored if a
+.Ar dir
+argument or the
+.Fl t
+option is specified.
+.El
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa mandoc.db
