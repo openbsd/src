@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.103 2017/03/18 12:58:18 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.104 2017/03/18 13:01:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1023,7 +1023,6 @@ int
 tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 {
 	unsigned char buf1[EVP_MAX_MD_SIZE];
-	unsigned char buf2[12];
 	size_t hlen;
 
 	if (!tls1_handshake_hash_value(s, buf1, sizeof(buf1), &hlen))
@@ -1037,7 +1036,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 	    out, 12))
 		return 0;
 
-	return sizeof(buf2);
+	return 12;
 }
 
 int
