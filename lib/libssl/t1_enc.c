@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.104 2017/03/18 13:01:55 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.105 2017/03/18 13:04:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1033,10 +1033,10 @@ tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 
 	if (!tls1_PRF(s, str, slen, buf1, hlen, NULL, 0, NULL, 0, NULL, 0,
 	    s->session->master_key, s->session->master_key_length,
-	    out, 12))
+	    out, TLS1_FINISH_MAC_LENGTH))
 		return 0;
 
-	return 12;
+	return TLS1_FINISH_MAC_LENGTH;
 }
 
 int
