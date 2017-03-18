@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2011/11/29 04:36:15 kurt Exp $
+# $OpenBSD: Makefile,v 1.2 2017/03/18 16:58:22 kettenis Exp $
 
 .include <bsd.obj.mk>
 
@@ -43,6 +43,7 @@ AE_OBJDIR!=    if [ -d $(AE_DIR)/${__objdir} ]; then \
 
 LDADD=-laa
 LDFLAGS=  -L$(AA_OBJDIR)
+LDFLAGS+= -Wl,--disable-new-dtags
 LDFLAGS+= -Wl,-rpath,$(AA_OBJDIR) 
 LDFLAGS+= -Wl,-rpath,$(AB_OBJDIR) 
 LDFLAGS+= -Wl,-rpath,$(AC_OBJDIR) 

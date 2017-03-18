@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2014/07/16 20:04:21 okan Exp $
+# $OpenBSD: Makefile,v 1.3 2017/03/18 16:58:22 kettenis Exp $
 
 PROGS=		prog1 prog2 prog3 prog4
 SRCS=		main.c
 OBJS=		main.o
 LDFLAGS+=	-Wl,-E
+LDFLAGS+=	-Wl,--disable-new-dtags
 LDFLAGS+=	-Wl,-rpath,$(IF1_OBJDIR) -L$(IF1_OBJDIR)
 LDFLAGS+=	-Wl,-rpath,$(IF2_OBJDIR) -L$(IF2_OBJDIR)
 LDFLAGS+=	-Wl,-rpath,$(IF3_OBJDIR) -L$(IF3_OBJDIR)
