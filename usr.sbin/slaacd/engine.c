@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2017/03/19 16:10:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -146,6 +146,7 @@ struct slaacd_iface {
 	int				 running;
 	int				 autoconfprivacy;
 	struct ether_addr		 hw_address;
+	struct sockaddr_in6		 ll_address;
 	LIST_HEAD(, radv)		 radvs;
 };
 
@@ -354,6 +355,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				memcpy(&iface->hw_address,
 				    &imsg_ifinfo.hw_address,
 				    sizeof(struct ether_addr));
+				memcpy(&iface->ll_address,
+				    &imsg_ifinfo.ll_address,
+				    sizeof(struct sockaddr_in6));
 				LIST_INIT(&iface->radvs);
 				LIST_INSERT_HEAD(&slaacd_interfaces,
 				    iface, entries);
@@ -375,6 +379,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				memcpy(&iface->hw_address,
 				    &imsg_ifinfo.hw_address,
 				    sizeof(struct ether_addr));
+				memcpy(&iface->ll_address,
+				    &imsg_ifinfo.ll_address,
+				    sizeof(struct sockaddr_in6));
 			}
 			break;
 		case IMSG_REMOVE_IF:
@@ -526,6 +533,8 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	cei.running = iface->running;
 	cei.autoconfprivacy = iface->autoconfprivacy;
 	memcpy(&cei.hw_address, &iface->hw_address, sizeof(struct ether_addr));
+	memcpy(&cei.ll_address, &iface->ll_address,
+	    sizeof(struct sockaddr_in6));
 	engine_imsg_compose_frontend(IMSG_CTL_SHOW_INTERFACE_INFO, pid, &cei,
 	    sizeof(cei));
 	LIST_FOREACH(ra, &iface->radvs, entries) {

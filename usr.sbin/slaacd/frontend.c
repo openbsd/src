@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.2 2017/03/19 16:10:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -63,7 +63,7 @@ void		 route_receive(int, short, void *);
 void		 icmp6_receive(int, short, void *);
 int		 get_flags(char *);
 int		 get_xflags(char *);
-int		 get_lladdr(char *, struct ether_addr *);
+void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 void		 send_solicitation(uint32_t);
 
 struct imsgev			*iev_main;
@@ -498,8 +498,9 @@ frontend_startup(void)
 		imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING);
 		imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
-		if (get_lladdr(ifnidx->if_name, &imsg_ifinfo.hw_address) < 0)
-			fatal("cannot get lladdr");
+		get_lladdr(ifnidx->if_name, &imsg_ifinfo.hw_address,
+		    &imsg_ifinfo.ll_address);
+
 		frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0, 0,
 		    &imsg_ifinfo, sizeof(imsg_ifinfo));
 	}
@@ -578,34 +579,48 @@ route_receive(int fd, short events, void *arg)
 	}
 }
 
-int
-get_lladdr(char *if_name, struct ether_addr *hw_address)
+void
+get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 {
 	struct ifaddrs		*ifap, *ifa;
 	struct sockaddr_dl	*sdl;
+	struct sockaddr_in6	*sin6;
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
+	memset(mac, 0, sizeof(*mac));
+	memset(ll, 0, sizeof(*ll));
+
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(if_name, ifa->ifa_name) != 0)
 			continue;
-		if (ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
 
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if (sdl->sdl_type != IFT_ETHER ||
-		    sdl->sdl_alen != ETHER_ADDR_LEN)
-			continue;
+		switch(ifa->ifa_addr->sa_family) {
+		case AF_LINK:
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			if (sdl->sdl_type != IFT_ETHER ||
+			    sdl->sdl_alen != ETHER_ADDR_LEN)
+				continue;
 
-		memcpy(hw_address->ether_addr_octet, LLADDR(sdl),
-		    ETHER_ADDR_LEN);
-		freeifaddrs(ifap);
-		return (0);
+			memcpy(mac->ether_addr_octet, LLADDR(sdl),
+			    ETHER_ADDR_LEN);
+			break;
+		case AF_INET6:
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+				sin6->sin6_scope_id = ntohs(*(u_int16_t *)
+				    &sin6->sin6_addr.s6_addr[2]);
+				sin6->sin6_addr.s6_addr[2] =
+				    sin6->sin6_addr.s6_addr[3] = 0;
+				memcpy(ll, sin6, sizeof(*ll));
+			}
+			break;
+		default:
+			break;
+		}
 	}
-
 	freeifaddrs(ifap);
-	return (-1);
 }
 
 void

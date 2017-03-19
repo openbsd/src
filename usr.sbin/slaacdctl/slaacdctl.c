@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacdctl.c,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: slaacdctl.c,v 1.2 2017/03/19 16:10:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -192,7 +192,12 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t index: %3u ", cei->if_index);
 		printf("running: %3s ", cei->running ? "yes" : "no");
 		printf("privacy: %3s\n", cei->autoconfprivacy ? "yes" : "no");
-		printf("\tlladdr:  %s\n", ether_ntoa(&cei->hw_address));
+		printf("\tlladdr: %s\n", ether_ntoa(&cei->hw_address));
+		if (getnameinfo((struct sockaddr *)&cei->ll_address,
+		    cei->ll_address.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+		    NI_NUMERICHOST | NI_NUMERICSERV))
+			err(1, "cannot get link local address");
+		printf("\t inet6: %s\n", hbuf);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE_INFO_RA:
 		cei_ra = imsg->data;
