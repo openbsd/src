@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.80 2017/03/13 01:00:15 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.81 2017/03/19 16:55:31 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -709,7 +709,7 @@ xen_barrier_task(void *arg)
  * This code achieves two goals: 1) makes sure that *after* masking
  * the interrupt source we're not getting more task_adds: intr_barrier
  * will take care of that, and 2) makes sure that the interrupt task
- * is finished executing the current task and won't be called again:
+ * has finished executing the current task and won't be called again:
  * it sets up a barrier task to await completion of the current task
  * and relies on the interrupt masking to prevent submission of new
  * tasks in the future.
@@ -725,7 +725,7 @@ xen_intr_barrier(xen_intr_handle_t xih)
 
 	/*
 	 * XXX This will need to be revised once intr_barrier starts
-	 * using an argument.
+	 * using its argument.
 	 */
 	intr_barrier(NULL);
 
@@ -1085,9 +1085,8 @@ xen_grant_table_alloc(struct xen_softc *sc, grant_ref_t *ref)
 		if (ge->ge_table[i].frame != 0)
 			continue;
 		*ref = ge->ge_start + i;
-		/* XXX Mark as taken */
 		ge->ge_table[i].flags = GTF_invalid;
-		ge->ge_table[i].frame = 0xffffffff;
+		ge->ge_table[i].frame = 0xffffffff; /* Mark as taken */
 		if ((ge->ge_next = i + 1) == GNTTAB_NEPG)
 			ge->ge_next = ge->ge_reserved;
 		ge->ge_free--;
