@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1812 2017/01/13 14:19:42 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1813 2017/03/19 07:27:15 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1398,6 +1398,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_14_RESERVED_2,
 	    "AMD64 14h Reserved",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_A1100_HB_1,
+	    "A1100 Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_A1100_HB_2,
+	    "A1100 Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_A1100_PCIE_1,
+	    "A1100 PCIE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -21928,6 +21940,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Virtio RNG",
 	},
 	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_GPU,
+	    "Virtio GPU",
+	},
+	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO_INPUT,
+	    "Virtio Input",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CMIC_LE,
 	    "CMIC-LE",
 	},
@@ -22906,6 +22926,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL4,
 	    "Qemu Serial 4x",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SDMMC,
+	    "SD/MMC",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_HB,
+	    "Host",
 	},
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_QXL,

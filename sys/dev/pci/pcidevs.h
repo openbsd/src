@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1812 2017/01/13 14:19:42 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.1813 2017/03/19 07:27:15 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -761,6 +761,9 @@
 #define	PCI_PRODUCT_AMD_AMD64_14_NB_PM	0x1716		/* AMD64 14h NB Power */
 #define	PCI_PRODUCT_AMD_AMD64_14_RESERVED_1	0x1718		/* AMD64 14h Reserved */
 #define	PCI_PRODUCT_AMD_AMD64_14_RESERVED_2	0x1719		/* AMD64 14h Reserved */
+#define	PCI_PRODUCT_AMD_A1100_HB_1	0x1a00		/* A1100 Host */
+#define	PCI_PRODUCT_AMD_A1100_HB_2	0x1a01		/* A1100 Host */
+#define	PCI_PRODUCT_AMD_A1100_PCIE_1	0x1a02		/* A1100 PCIE */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI */
 #define	PCI_PRODUCT_AMD_PCHOME_PCI	0x2001		/* 79c978 PChome-PCI */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI */
@@ -6269,6 +6272,8 @@
 #define	PCI_PRODUCT_QUMRANET_VIO_CONS	0x1003		/* Virtio Console */
 #define	PCI_PRODUCT_QUMRANET_VIO_SCSI	0x1004		/* Virtio SCSI */
 #define	PCI_PRODUCT_QUMRANET_VIO_RNG	0x1005		/* Virtio RNG */
+#define	PCI_PRODUCT_QUMRANET_VIO_GPU	0x1050		/* Virtio GPU */
+#define	PCI_PRODUCT_QUMRANET_VIO_INPUT	0x1052		/* Virtio Input */
 
 /* Ross -> Pequr -> ServerWorks -> Broadcom ServerWorks products */
 #define	PCI_PRODUCT_RCC_CMIC_LE	0x0000		/* CMIC-LE */
@@ -6550,6 +6555,8 @@
 #define	PCI_PRODUCT_REDHAT_SERIAL	0x0002		/* Qemu Serial */
 #define	PCI_PRODUCT_REDHAT_SERIAL2	0x0003		/* Qemu Serial 2x */
 #define	PCI_PRODUCT_REDHAT_SERIAL4	0x0004		/* Qemu Serial 4x */
+#define	PCI_PRODUCT_REDHAT_SDMMC	0x0007		/* SD/MMC */
+#define	PCI_PRODUCT_REDHAT_HB	0x0008		/* Host */
 #define	PCI_PRODUCT_REDHAT_QXL	0x0100		/* QXL Video */
 
 /* RICOH products */
