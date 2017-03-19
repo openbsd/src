@@ -142,6 +142,12 @@ DefinedRegular<ELFT> *SymbolTable<ELFT>::addIgnored(StringRef Name,
   SymbolBody *S = find(Name);
   if (!S || S->isInCurrentDSO())
     return nullptr;
+  if (Visibility == STV_DEFAULT) {
+    for (SymbolVersion &Ver : Config->VersionScriptGlobals) {
+      if (!Ver.HasWildcard && Ver.Name == S->getName())
+        S->symbol()->VersionId = VER_NDX_GLOBAL;
+    }
+  }
   return addAbsolute(Name, Visibility);
 }
 
