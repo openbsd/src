@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.24 2017/03/02 07:27:13 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.25 2017/03/19 03:42:38 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3445,8 +3445,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 
 		/* Handle vmd(8) injected interrupts */
-		/* XXX - 0x20 should be changed to PIC's vector base */
-
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF) {
 			if (!vcpu->vc_irqready) {
@@ -3456,7 +3454,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				break;
 			}
 
-			eii = (irq & 0xFF) + 0x20;
+			eii = (irq & 0xFF);
 			eii |= (1ULL << 31);	/* Valid */
 			eii |= (0ULL << 8);	/* Hardware Interrupt */
 			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
