@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.2 2017/03/19 16:10:23 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.3 2017/03/19 16:11:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -58,6 +58,7 @@
 
 __dead void	 frontend_shutdown(void);
 void		 frontend_sig_handler(int, short, void *);
+void		 update_iface(uint32_t, char*);
 void		 frontend_startup(void);
 void		 route_receive(int, short, void *);
 void		 icmp6_receive(int, short, void *);
@@ -472,38 +473,43 @@ get_xflags(char *if_name)
 }
 
 void
-frontend_startup(void)
+update_iface(uint32_t if_index, char* if_name)
 {
-	struct if_nameindex	*ifnidxp, *ifnidx;
 	struct imsg_ifinfo	 imsg_ifinfo;
 	int			 flags, xflags;
 
-	event_add(&ev_route, NULL);
-	event_add(&icmp6ev.ev, NULL);
+	flags = get_flags(if_name);
+	xflags = get_xflags(if_name);
+
+	if (!(xflags & IFXF_AUTOCONF6))
+		return;
 
 	memset(&imsg_ifinfo, 0, sizeof(imsg_ifinfo));
+
+	imsg_ifinfo.if_index = if_index;
+	imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP |
+	    IFF_RUNNING);
+	imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
+	get_lladdr(if_name, &imsg_ifinfo.hw_address, &imsg_ifinfo.ll_address);
+
+	frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0, 0, &imsg_ifinfo,
+	    sizeof(imsg_ifinfo));
+}
+
+void
+frontend_startup(void)
+{
+	struct if_nameindex	*ifnidxp, *ifnidx;
+
+	event_add(&ev_route, NULL);
+	event_add(&icmp6ev.ev, NULL);
 
 	if ((ifnidxp = if_nameindex()) == NULL)
 		fatalx("if_nameindex");
 
 	for(ifnidx = ifnidxp; ifnidx->if_index !=0 && ifnidx->if_name != NULL;
-	    ifnidx++) {
-		flags = get_flags(ifnidx->if_name);
-		xflags = get_xflags(ifnidx->if_name);
-
-		if (!(xflags & IFXF_AUTOCONF6))
-			continue;
-
-		imsg_ifinfo.if_index = ifnidx->if_index;
-		imsg_ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING);
-		imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
-		get_lladdr(ifnidx->if_name, &imsg_ifinfo.hw_address,
-		    &imsg_ifinfo.ll_address);
-
-		frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0, 0,
-		    &imsg_ifinfo, sizeof(imsg_ifinfo));
-	}
+	    ifnidx++)
+		update_iface(ifnidx->if_index, ifnidx->if_name);
 
 	if_freenameindex(ifnidxp);
 }
@@ -515,7 +521,6 @@ route_receive(int fd, short events, void *arg)
 
 	struct if_msghdr	*ifm;
 	struct rt_msghdr	*rtm;
-	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
 	int			 flags, xflags, if_index;
 	char			 ifnamebuf[IFNAMSIZ];
@@ -555,23 +560,15 @@ route_receive(int fd, short events, void *arg)
 				if_index = ifm->ifm_index;
 				frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
 				    0, &if_index, sizeof(if_index));
-			} else {
-				imsg_ifinfo.if_index = ifm->ifm_index;
-				imsg_ifinfo.running = (flags & (IFF_UP |
-				    IFF_RUNNING)) == (IFF_UP | IFF_RUNNING);
-				imsg_ifinfo.autoconfprivacy = !(xflags &
-				    IFXF_INET6_NOPRIVACY);
-				frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0,
-				    0, &imsg_ifinfo, sizeof(imsg_ifinfo));
-
-				log_debug("RTM_IFINFO: %s(%d) autoconf6%s",
-				   if_name, ifm->ifm_index, xflags &
-				    IFXF_INET6_NOPRIVACY ? "" : "privacy");
-			}
+			} else
+				update_iface(ifm->ifm_index, if_name);
 		}
 		break;
 	case RTM_NEWADDR:
-		log_debug("RTM_NEWADDR");
+		ifm = (struct if_msghdr *)rtm;
+		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);
+		update_iface(ifm->ifm_index, if_name);
 		break;
 	default:
 		log_debug("unexpected RTM: %d", rtm->rtm_type);
