@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.377 2016/07/20 20:45:13 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.378 2017/03/19 16:01:08 tb Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2616,7 +2616,8 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		    sd->mds.mdd_crypto.key_disk != NULL)
 			bv->bv_nodisk++;
 #endif
-		bv->bv_percent = sr_rebuild_percent(sd);
+		if (bv->bv_status == BIOC_SVREBUILD)
+			bv->bv_percent = sr_rebuild_percent(sd);
 
 		strlcpy(bv->bv_dev, sd->sd_meta->ssd_devname,
 		    sizeof(bv->bv_dev));
