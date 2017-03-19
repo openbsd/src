@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.1 2017/03/18 17:33:13 florian Exp $
+.\"	$OpenBSD: slaacd.8,v 1.2 2017/03/19 11:52:24 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2017 $
+.Dd $Mdocdate: March 19 2017 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -27,18 +27,20 @@
 .Op Fl s Ar socket
 .Sh DESCRIPTION
 .Nm
-is a stateless address autoconfiguration daemon.
-It listens for IPv6 router advertisment messages on interfaces that are
+is a stateless address autoconfiguration (SLAAC) daemon.
+It listens for IPv6 router advertisement messages on interfaces that are
 configured with
 .Xr ifconfig 8
+using
+.Cm autoconf
 for IPv6 autoconfiguration.
-From the router advertisments it constructs address proposals and sends them
+From the router advertisements it constructs address proposals and sends them
 to
 .Xr netcfgd 8 .
 .Pp
 .Nm
 monitors network interface states (interface going up or down,
-autoconfiguration enabled or disabled etc) and sends router solicitations
+autoconfiguration enabled or disabled etc.) and sends router solicitations
 when necessary.
 .Pp
 .Nm
@@ -82,8 +84,8 @@ socket used for communication with
 .Xr slaacdctl 8 .
 .El
 .Sh SEE ALSO
-.Xr ifconfig 8
-.Xr netcfgd 8
+.Xr ifconfig 8 ,
+.Xr netcfgd 8 ,
 .Xr slaacdctl 8
 .Sh STANDARDS
 .Rs
@@ -109,7 +111,7 @@ socket used for communication with
 .Rs
 .%A R. Draves
 .%A D. Thaler
-.%D November 2005 
+.%D November 2005
 .%R RFC 4191
 .%T Default Router Preferences and More-Specific Routes
 .Re
