@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.5 2017/01/17 21:51:01 krw Exp $ */
+/* $OpenBSD: i8253.c,v 1.6 2017/03/19 23:03:44 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -53,10 +53,9 @@ i8253_init(uint32_t vm_id)
 	memset(&i8253_counter, 0, sizeof(struct i8253_counter));
 	gettimeofday(&i8253_counter[0].tv, NULL);
 	i8253_counter[0].start = 0xFFFF;
-	i8253_counter[0].mode = TIMER_RATEGEN;
+	i8253_counter[0].mode = TIMER_INTTC;
 	evtimer_set(&i8253_counter[0].timer, i8253_fire,
 	    (void *)(intptr_t)vm_id);
-	i8253_reset(0);
 }
 
 /*
@@ -159,7 +158,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				i8253_counter[sel].start =
 				    i8253_counter[sel].ilatch;
 				i8253_counter[sel].last_w = 0;
-				mode = out_data & 0xe;
+				mode = (out_data & 0xe) >> 1;
 
 				i8253_counter[sel].mode = mode;
 
@@ -207,13 +206,6 @@ i8253_reset(uint8_t chn)
 		return;
 	}
 
-	if (i8253_counter[chn].mode != TIMER_RATEGEN &&
-	    i8253_counter[chn].mode != (TIMER_RATEGEN | 0x8)) {
-		log_warnx("%s: unsupported counter mode 0x%x",
-		    __func__, i8253_counter[chn].mode);
-		return;
-	}
-
 	evtimer_del(&i8253_counter[chn].timer);
 	timerclear(&tv);
 
@@ -242,5 +234,6 @@ i8253_fire(int fd, short type, void *arg)
 
 	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 0);
 
-	evtimer_add(&i8253_counter[0].timer, &tv);
+	if (i8253_counter[0].mode != TIMER_INTTC)
+		evtimer_add(&i8253_counter[0].timer, &tv);
 }
