@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.61 2015/02/28 21:51:56 bentley Exp $
+.\" $OpenBSD: cdio.1,v 1.62 2017/03/19 18:40:11 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: March 19 2017 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 The
 .Nm
 program is a compact disc control utility,
-with support for playing audio CDs and TAO CD writing.
+with support for playing audio CDs and Track-At-Once (TAO) CD writing.
 .Pp
 If no command is given,
 .Nm
@@ -236,7 +236,7 @@ Stop the disc.
 .Ar trackfile ...
 .Xc
 .Bq command line only
-\ \&Write a track-at-once CD containing the specified
+\ \&Write a TAO CD containing the specified
 .Ar trackfile .
 .Pp
 The options are as follows:
