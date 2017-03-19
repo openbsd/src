@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.277 2016/12/20 13:28:51 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.278 2017/03/19 22:23:33 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 20 2016 $
+.Dd $Mdocdate: March 19 2017 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -151,17 +151,6 @@ This is currently implemented for mapping between
 DARPA Internet addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of ARP.
-.It Cm autoconf
-Enable autoconfiguration.
-Valid for
-.Dq inet6
-only.
-If
-.Cm autoconf
-is enabled router advertisements are accepted on this interface and
-the kernel sends periodic router solicitations from this interface.
-.It Fl autoconf
-Disable autoconfiguration.
 .It Cm broadcast Ar addr
 (inet only)
 Specify the address to use to represent broadcasts to the
@@ -1129,8 +1118,10 @@ protocol when supported by the access point.
 .nr nS 1
 .Bk -words
 .Nm ifconfig
-.Ar inet6-interface
+.Ar interface
+.Cm inet6
 .Op Oo Fl Oc Ns Cm anycast
+.Op Oo Fl Oc Ns Cm autoconf
 .Op Oo Fl Oc Ns Cm autoconfprivacy
 .Op Cm eui64
 .Op Cm pltime Ar n
@@ -1147,6 +1138,14 @@ interface:
 Set the IPv6 anycast address bit.
 .It Fl anycast
 Clear the IPv6 anycast address bit.
+.It Cm autoconf
+Enable autoconfiguration.
+If
+.Cm autoconf
+is enabled router advertisements are accepted on this interface and
+the kernel sends periodic router solicitations from this interface.
+.It Fl autoconf
+Disable autoconfiguration.
 .It Cm autoconfprivacy
 Enable privacy extensions for stateless IPv6 address autoconfiguration
 (RFC 4941) on the interface.
