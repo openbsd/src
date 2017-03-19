@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.26 2017/03/13 01:10:03 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.27 2017/03/19 16:26:28 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -469,7 +469,7 @@ xbf_load_xs(struct scsi_xfer *xs, int desc)
 	if (error) {
 		DPRINTF("%s: failed to load %d bytes of data\n",
 		    sc->sc_dev.dv_xname, xs->datalen);
-		return (-1);
+		return (error);
 	}
 
 	for (i = 0; i < map->dm_nsegs; i++) {
@@ -652,7 +652,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		else
 			error = xbf_bounce_xs(xs, desc);
 		if (error)
-			return (error);
+			return (-1);
 	} else {
 		DPRINTF("%s: desc %d %s%s lba %llu\n", sc->sc_dev.dv_xname,
 		    desc, operation == XBF_OP_FLUSH ? "flush" : "barrier",
@@ -675,7 +675,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 
 	xen_intr_signal(sc->sc_xih);
 
-	return desc;
+	return (desc);
 }
 
 int
