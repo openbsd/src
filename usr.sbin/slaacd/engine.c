@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2017/03/19 16:10:23 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2017/03/19 16:12:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -104,6 +104,9 @@ struct radv_prefix {
 	int			autonomous;
 	uint32_t		vltime;
 	uint32_t		pltime;
+	struct sockaddr_in6	addr;
+	struct sockaddr_in6	priv_addr;
+	struct in6_addr		mask;
 };
 
 struct radv_rdns {
@@ -162,6 +165,8 @@ struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
 void			 parse_ra(struct slaacd_iface *, struct imsg_ra *);
+void			 gen_addrs(struct slaacd_iface *, struct radv_prefix *);
+void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
@@ -561,6 +566,10 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 			cei_ra_prefix.autonomous = prefix->autonomous;
 			cei_ra_prefix.vltime = prefix->vltime;
 			cei_ra_prefix.pltime = prefix->pltime;
+			cei_ra_prefix.addr = prefix->addr;
+			if(iface->autoconfprivacy)
+				cei_ra_prefix.priv_addr = prefix->priv_addr;
+			cei_ra_prefix.mask = prefix->mask;
 			engine_imsg_compose_frontend(
 			    IMSG_CTL_SHOW_INTERFACE_INFO_RA_PREFIX, pid,
 			    &cei_ra_prefix, sizeof(cei_ra_prefix));
@@ -808,6 +817,8 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			if (radv->min_lifetime > prefix->pltime)
 				radv->min_lifetime = prefix->pltime;
 
+			gen_addrs(iface, prefix);
+
 			LIST_INSERT_HEAD(&radv->prefixes, prefix, entries);
 
 			break;
@@ -900,6 +911,94 @@ err:
 	free_ra(radv);
 }
 
+void
+gen_addrs(struct slaacd_iface *iface, struct radv_prefix *prefix)
+{
+	/* from in6_ifadd() in nd6_rtr.c */
+	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
+#define s6_addr32 __u6_addr.__u6_addr32
+
+	/* XXX from in6_ifattach.c */
+#define EUI64_GBIT	0x01
+#define EUI64_UBIT	0x02
+
+	struct in6_addr	priv_in6;
+	
+	arc4random_buf(&priv_in6.s6_addr32[2], 8);
+	/* make sure to set "u" bit to local, and "g" bit to individual. */
+	priv_in6.s6_addr[8] &= ~EUI64_GBIT; /* g bit to "individual" */
+	priv_in6.s6_addr[8] |= EUI64_UBIT;  /* u bit to "local" */
+	/* convert EUI64 into IPv6 interface identifier */
+	priv_in6.s6_addr[8] ^= EUI64_UBIT;
+
+	in6_prefixlen2mask(&prefix->mask, prefix->prefix_len);
+
+	memset(&prefix->addr, 0, sizeof(prefix->addr));
+	memset(&prefix->priv_addr, 0, sizeof(prefix->addr));
+
+	prefix->addr.sin6_family = prefix->priv_addr.sin6_family = AF_INET6;
+	prefix->addr.sin6_len = prefix->priv_addr.sin6_len =
+	    sizeof(prefix->addr);
+
+	memcpy(&prefix->addr.sin6_addr, &prefix->prefix,
+	    sizeof(prefix->addr.sin6_addr));
+	memcpy(&prefix->priv_addr.sin6_addr, &prefix->prefix,
+	    sizeof(prefix->priv_addr.sin6_addr));
+
+	prefix->addr.sin6_addr.s6_addr32[0] &= prefix->mask.s6_addr32[0];
+	prefix->addr.sin6_addr.s6_addr32[1] &= prefix->mask.s6_addr32[1];
+	prefix->addr.sin6_addr.s6_addr32[2] &= prefix->mask.s6_addr32[2];
+	prefix->addr.sin6_addr.s6_addr32[3] &= prefix->mask.s6_addr32[3];
+
+	prefix->priv_addr.sin6_addr.s6_addr32[0] &= prefix->mask.s6_addr32[0];
+	prefix->priv_addr.sin6_addr.s6_addr32[1] &= prefix->mask.s6_addr32[1];
+	prefix->priv_addr.sin6_addr.s6_addr32[2] &= prefix->mask.s6_addr32[2];
+	prefix->priv_addr.sin6_addr.s6_addr32[3] &= prefix->mask.s6_addr32[3];
+
+	prefix->addr.sin6_addr.s6_addr32[0] |=
+	    (iface->ll_address.sin6_addr.s6_addr32[0] &
+	    ~prefix->mask.s6_addr32[0]);
+	prefix->addr.sin6_addr.s6_addr32[1] |=
+	    (iface->ll_address.sin6_addr.s6_addr32[1] &
+	    ~prefix->mask.s6_addr32[1]);
+	prefix->addr.sin6_addr.s6_addr32[2] |=
+	    (iface->ll_address.sin6_addr.s6_addr32[2] &
+	    ~prefix->mask.s6_addr32[2]);
+	prefix->addr.sin6_addr.s6_addr32[3] |=
+	    (iface->ll_address.sin6_addr.s6_addr32[3] &
+	    ~prefix->mask.s6_addr32[3]);
+
+	prefix->priv_addr.sin6_addr.s6_addr32[0] |=
+	    (priv_in6.s6_addr32[0] & ~prefix->mask.s6_addr32[0]);
+	prefix->priv_addr.sin6_addr.s6_addr32[1] |=
+	    (priv_in6.s6_addr32[1] & ~prefix->mask.s6_addr32[1]);
+	prefix->priv_addr.sin6_addr.s6_addr32[2] |=
+	    (priv_in6.s6_addr32[2] & ~prefix->mask.s6_addr32[2]);
+	prefix->priv_addr.sin6_addr.s6_addr32[3] |=
+	    (priv_in6.s6_addr32[3] & ~prefix->mask.s6_addr32[3]);
+
+#undef s6_addr32	
+}
+
+/* from sys/netinet6/in6.c */
+void
+in6_prefixlen2mask(struct in6_addr *maskp, int len)
+{
+	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	int bytelen, bitlen, i;
+
+	if (0 > len || len > 128)
+		fatal("%s: invalid prefix length(%d)\n", __func__, len);
+
+	bzero(maskp, sizeof(*maskp));
+	bytelen = len / 8;
+	bitlen = len % 8;
+	for (i = 0; i < bytelen; i++)
+		maskp->s6_addr[i] = 0xff;
+	/* len == 128 is ok because bitlen == 0 then */
+	if (bitlen)
+		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
+}
 
 void
 debug_log_ra(struct imsg_ra *ra)
