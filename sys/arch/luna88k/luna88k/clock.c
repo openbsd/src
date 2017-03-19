@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.11 2016/09/04 00:56:08 aoyama Exp $ */
+/* $OpenBSD: clock.c,v 1.12 2017/03/19 10:57:29 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -212,35 +212,19 @@ resettodr()
 }
 
 /*
- * *clock_reg[CPU]
- * Points to the clock register for each CPU.
- */
-volatile u_int32_t *clock_reg[] = {
-	(u_int32_t *)OBIO_CLOCK0,
-	(u_int32_t *)OBIO_CLOCK1,
-	(u_int32_t *)OBIO_CLOCK2,
-	(u_int32_t *)OBIO_CLOCK3
-};
-
-/*
  * Clock interrupt routine
  */
 int
 clockintr(void *eframe)
 {
-#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
-	u_int cpu = ci->ci_cpuid;
-#else
-	u_int cpu = cpu_number();
-#endif
 
 #ifdef MULTIPROCESSOR
 	if (CPU_IS_PRIMARY(ci))
 #endif
 		clockevc->ec_count++;
 
-	*clock_reg[cpu] = 0xffffffff;
+	*(volatile uint32_t *)(ci->ci_clock_ack) = ~0;
 	if (clockinitted)
 		hardclock(eframe);
 	return 1;

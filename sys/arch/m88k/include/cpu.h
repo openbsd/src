@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2015/07/02 01:33:59 dlg Exp $ */
+/*	$OpenBSD: cpu.h,v 1.65 2017/03/19 10:57:29 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -218,7 +218,7 @@ void	m88k_broadcast_ipi(int);
 
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
-void	set_cpu_number(cpuid_t);
+struct cpu_info *set_cpu_number(cpuid_t);
 
 /*
  * The md code may hardcode this in some very specific situations.
