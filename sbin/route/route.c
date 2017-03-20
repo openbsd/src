@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.197 2017/03/02 17:09:21 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.198 2017/03/20 19:01:38 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -2011,10 +2011,12 @@ void
 print_rtdns(struct sockaddr_rtdns *rtdns)
 {
 	struct in_addr	 server;
-	char		*src = rtdns->sr_dns;
+	struct in6_addr	 in6;
 	size_t		 srclen, offset;
 	unsigned int	 servercnt;
 	int		 i;
+	char		*src = rtdns->sr_dns;
+	char		 ntopbuf[INET6_ADDRSTRLEN];
 
 	offset = offsetof(struct sockaddr_rtdns, sr_dns);
 	if (rtdns->sr_len <= offset) {
@@ -2044,7 +2046,17 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		}
 		break;
 	case AF_INET6:
-		printf("<AF_INET6> printing not yet implemented\n");
+		servercnt = srclen / sizeof(struct in6_addr);
+		if (servercnt * sizeof(struct in6_addr) != srclen) {
+			printf("<invalid server count>\n");
+			return;
+		}
+		for (i = 0; i < servercnt; i++) {
+			memcpy(&in6, src, sizeof(in6));
+			src += sizeof(in6);
+			printf("%s ", inet_ntop(AF_INET6, &in6, ntopbuf,
+			    INET6_ADDRSTRLEN));
+		}
 		break;
 	default:
 		break;
@@ -2058,11 +2070,16 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 void
 print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 {
-	struct in_addr	 dest, gateway;
-	unsigned char	*src = rtstatic->sr_static;
-	size_t		 srclen, offset;
-	int		 bits, bytes;
-	char		 ntoabuf[INET_ADDRSTRLEN];
+	struct sockaddr_in6	 gateway6;
+	struct in6_addr		 prefix;
+	struct in_addr		 dest, gateway;
+	size_t			 srclen, offset;
+	int			 bits, bytes;
+	uint8_t			 prefixlen;
+	unsigned char		*src = rtstatic->sr_static;
+	char			 ntoabuf[INET_ADDRSTRLEN];
+	char			 hbuf[NI_MAXHOST];
+	char			 ntopbuf[INET6_ADDRSTRLEN];
 
 	offset = offsetof(struct sockaddr_rtstatic, sr_static);
 	if (rtstatic->sr_len <= offset) {
@@ -2101,7 +2118,29 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 		}
 		break;
 	case AF_INET6:
-		printf("<AF_INET6 printing not yet implemented>");
+		while (srclen >= sizeof(prefixlen) + sizeof(prefix) +
+		    sizeof(gateway6)) {
+			memcpy(&prefixlen, src, sizeof(prefixlen));
+			srclen -= sizeof(prefixlen);
+			src += sizeof(prefixlen);
+
+			memcpy(&prefix, src, sizeof(prefix));
+			srclen -= sizeof(prefix);
+			src += sizeof(prefix);
+
+			memcpy(&gateway6, src, sizeof(gateway6));
+			srclen -= sizeof(gateway6);
+			src += sizeof(gateway6);
+
+			if (getnameinfo((struct sockaddr *)&gateway6,
+			    gateway6.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+			    NI_NUMERICHOST | NI_NUMERICSERV)) {
+				printf("cannot get gateway address");
+				return;
+			}
+			printf("%s/%hhu %s ", inet_ntop(AF_INET6, &prefix,
+			    ntopbuf, INET6_ADDRSTRLEN), prefixlen, hbuf);
+		}
 		break;
 	default:
 		printf("<unknown address family %d>", rtstatic->sr_family);
