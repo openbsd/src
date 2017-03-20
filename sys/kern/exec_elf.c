@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.139 2017/03/05 00:45:30 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.140 2017/03/20 00:05:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -802,6 +802,7 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	 * linked binaries
 	 */
 	if (error == 0) {
+		memset(&ai, 0, sizeof ai);
 		a = ai;
 
 		a->au_id = AUX_phdr;
