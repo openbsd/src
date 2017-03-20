@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.58 2016/03/17 21:36:48 krw Exp $
+ * $OpenBSD: skeylogin.c,v 1.59 2017/03/20 18:34:52 tedu Exp $
  */
 
 #ifdef	QUOTA
@@ -449,7 +449,7 @@ skey_fakeprompt(char *username, char *skeyprompt)
 
 		/* Collapse the hash */
 		ptr = hash_collapse(up);
-		memset(up, 0, strlen(up));
+		explicit_bzero(up, strlen(up));
 
 		/* See if the random file's there, else use ctime */
 		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1 &&
@@ -482,7 +482,7 @@ skey_fakeprompt(char *username, char *skeyprompt)
 		SHA1End(&ctx, up);
 
 		/* Zero out */
-		memset(secret, 0, secretlen);
+		explicit_bzero(secret, secretlen);
 
 		/* Now hash the hash */
 		SHA1Init(&ctx);
@@ -500,7 +500,7 @@ skey_fakeprompt(char *username, char *skeyprompt)
 		/* Sequence number */
 		ptr = ((up[2] + up[3]) % 99) + 1;
 
-		memset(up, 0, 20); /* SHA1 specific */
+		explicit_bzero(up, 20); /* SHA1 specific */
 		free(up);
 
 		(void)snprintf(skeyprompt, SKEY_MAX_CHALLENGE,
