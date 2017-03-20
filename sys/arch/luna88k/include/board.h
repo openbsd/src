@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.13 2017/03/20 19:38:56 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.14 2017/03/20 19:40:47 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -89,6 +89,16 @@
 #define INT_ST_MASK1	U(0x65000004) 	/* interrupt status register CPU 1 */
 #define INT_ST_MASK2	U(0x65000008) 	/* interrupt status register CPU 2 */
 #define INT_ST_MASK3	U(0x6500000C) 	/* interrupt status register CPU 3 */
+#define  INT_LEVEL	           8	/* # of interrupt level + 1 */
+#define  INT_SET_LV7	U(0x00000000) 	/* disable interrupts */
+#define  INT_SET_LV6	U(0x00000000) 	/* enable level 7 */
+#define  INT_SET_LV5	U(0x84000000) 	/* enable level 7-6 */
+#define  INT_SET_LV4	U(0xC4000000) 	/* enable level 7-5 */
+#define  INT_SET_LV3	U(0xE4000000) 	/* enable level 7-4 */
+#define  INT_SET_LV2	U(0xF4000000) 	/* enable level 7-3 */
+#define  INT_SET_LV1	U(0xFC000000) 	/* enable level 7-2 */
+#define  INT_SET_LV0	U(0xFC000000) 	/* enable interrupts */
+#define  INT_SLAVE_MASK	U(0x84000000) 	/* slave can only enable 6 and 1 */
 
 #define SOFT_INT0	U(0x69000000) 	/* software interrupt CPU 0 */
 #define SOFT_INT1	U(0x69000004) 	/* software interrupt CPU 1 */
