@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.31 2016/12/05 10:58:07 schwarze Exp $
+.\" $OpenBSD: doas.conf.5,v 1.32 2017/03/20 14:35:06 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 5 2016 $
+.Dd $Mdocdate: March 20 2017 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -121,8 +121,9 @@ If quotes or backslashes are used in a word,
 it is not considered a keyword.
 .El
 .Sh EXAMPLES
-The following example permits users in group wsrc to build ports;
-wheel to execute commands as any user while keeping the environment
+The following example permits user aja to install packages
+from a preferred mirror;
+group wheel to execute commands as any user while keeping the environment
 variables
 .Ev PS1
 and
@@ -133,14 +134,7 @@ unsetting
 permits tedu to run procmap as root without a password;
 and additionally permits root to run unrestricted commands as itself.
 .Bd -literal -offset indent
-# Non-exhaustive list of variables needed to
-# build release(8) and ports(7)
-permit nopass setenv { \e
-        FTPMODE PKG_CACHE PKG_PATH SM_PATH SSH_AUTH_SOCK \e
-        DESTDIR DISTDIR FETCH_CMD FLAVOR GROUP MAKE MAKECONF \e
-        MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_DBDIR \e
-        PKG_DESTDIR PKG_TMPDIR PORTSDIR RELEASEDIR SHARED_ONLY \e
-        SUBPACKAGE WRKOBJDIR SUDO_PORT_V1 } :wsrc
+permit persist setenv { PKG_CACHE PKG_PATH } aja cmd pkg_add
 permit setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
 permit nopass keepenv root as root
