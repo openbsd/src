@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.2 2017/03/20 16:13:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -85,6 +85,8 @@ pid_t	 engine_pid;
 
 uint32_t cmd_opts;
 
+char	*csock;
+
 void
 main_sig_handler(int sig, short event, void *arg)
 {
@@ -121,12 +123,11 @@ main(int argc, char *argv[])
 	struct event	 ev_sigint, ev_sigterm, ev_sighup;
 	int		 ch;
 	int		 debug = 0, engine_flag = 0, frontend_flag = 0;
-	char		*sockname;
 	char		*saved_argv0;
 	int		 pipe_main2frontend[2];
 	int		 pipe_main2engine[2];
 
-	sockname = SLAACD_SOCKET;
+	csock = SLAACD_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
 	log_setverbose(1);
@@ -147,7 +148,7 @@ main(int argc, char *argv[])
 			frontend_flag = 1;
 			break;
 		case 's':
-			sockname = optarg;
+			csock = optarg;
 			break;
 		case 'v':
 			if (cmd_opts & OPT_VERBOSE)
@@ -167,7 +168,7 @@ main(int argc, char *argv[])
 	if (engine_flag)
 		engine(debug, cmd_opts & OPT_VERBOSE);
 	else if (frontend_flag)
-		frontend(debug, cmd_opts & OPT_VERBOSE, sockname);
+		frontend(debug, cmd_opts & OPT_VERBOSE, csock);
 
 	/* Check for root privileges. */
 	if (geteuid())
@@ -196,13 +197,10 @@ main(int argc, char *argv[])
 	engine_pid = start_child(PROC_ENGINE, saved_argv0, pipe_main2engine[1],
 	    debug, cmd_opts & OPT_VERBOSE, NULL);
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
-	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE, sockname);
+	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE, csock);
 
 	slaacd_process = PROC_MAIN;
 	
-	if ((csock = strdup(sockname)) == NULL)
-		fatal("strdup");
-
 	setproctitle(log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 

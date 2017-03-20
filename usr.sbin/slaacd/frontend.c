@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2017/03/19 16:11:38 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2017/03/20 16:13:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -75,7 +75,6 @@ struct iovec			 sndiov[2];
 struct nd_router_solicit	 rs;
 struct sockaddr_in6		 dst;
 int		 icmp6sock, routesock, xflagssock;
-char		*csock;
 
 struct icmp6_ev {
 	struct event		 ev;
@@ -118,9 +117,7 @@ frontend(int debug, int verbose, char *sockname)
 	log_setverbose(verbose);
 
 	/* Create slaacd control socket outside chroot. */
-	if ((csock = strdup(sockname)) == NULL)
-		fatal("strdup");
-	if (control_init(csock) == -1)
+	if (control_init(sockname) == -1)
 		fatalx("control socket setup failed");
 
 	if ((pw = getpwnam(SLAACD_USER)) == NULL)
