@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.55 2016/09/07 17:30:12 natano Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.56 2017/03/20 16:44:03 jca Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -558,22 +558,35 @@ ntfs_calccfree(struct ntfsmount *ntmp, cn_t *cfreep)
 	u_int8_t *tmp;
 	int j, error;
 	cn_t cfree = 0;
-	size_t bmsize, i;
+	uint64_t bmsize, offset;
+	size_t chunksize, i;
 
 	vp = ntmp->ntm_sysvn[NTFS_BITMAPINO];
 
 	bmsize = VTOF(vp)->f_size;
 
-	tmp = malloc(bmsize, M_TEMP, M_WAITOK);
+	if (bmsize > 1024 * 1024)
+		chunksize = 1024 * 1024;
+	else
+		chunksize = bmsize;
 
-	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
-			       0, bmsize, tmp, NULL);
-	if (error)
-		goto out;
+	tmp = malloc(chunksize, M_TEMP, M_WAITOK);
 
-	for(i=0;i<bmsize;i++)
-		for(j=0;j<8;j++)
-			if(~tmp[i] & (1 << j)) cfree++;
+	for (offset = 0; offset < bmsize; offset += chunksize) {
+		if (chunksize > bmsize - offset)
+			chunksize = bmsize - offset;
+
+		error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
+		    offset, chunksize, tmp, NULL);
+		if (error)
+			goto out;
+
+		for (i = 0; i < chunksize; i++)
+			for (j = 0; j < 8; j++)
+				if (~tmp[i] & (1 << j))
+					cfree++;
+	}
+
 	*cfreep = cfree;
 
     out:
