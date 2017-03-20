@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.60 2016/08/27 01:50:07 guenther Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.61 2017/03/20 15:31:23 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,8 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-d] [-c check]\n", __progname);
+	fprintf(stderr, "usage: %s [-d] [-c check] [-f file]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -116,7 +117,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");
 
-	while ((ch = getopt(argc, argv, "c:d")) != -1) {
+	while ((ch = getopt(argc, argv, "c:df:")) != -1) {
 		switch (ch) {
 		case 'c':
 			check_period = strtonum(optarg, 1, 600, &errstr);
@@ -125,6 +126,12 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			debug = 1;
+			break;
+		case 'f':
+			configfile = optarg;
+			if (access(configfile, R_OK) != 0)
+				err(1, "access configuration file %s",
+				    configfile);
 			break;
 		default:
 			usage();

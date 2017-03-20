@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.8,v 1.22 2015/07/27 17:28:40 sobrado Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.23 2017/03/20 15:31:23 bluhm Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2015 $
+.Dd $Mdocdate: March 20 2017 $
 .Dt SENSORSD 8
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm sensorsd
 .Op Fl d
 .Op Fl c Ar check
+.Op Fl f Ar file
 .Sh DESCRIPTION
 The
 .Nm
@@ -68,6 +69,11 @@ Do not daemonize.
 If this option is specified,
 .Nm
 will run in the foreground.
+.It Fl f Ar file
+Read configuration from
+.Ar file
+instead of the default configuration file
+.Pa /etc/sensorsd.conf .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
