@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.13 2014/11/21 12:28:13 aoyama Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.14 2017/03/20 19:42:51 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,7 +43,9 @@
 /*  start, size, prot, cacheability */
 const struct pmap_table
 luna88k_board_table[] = {
+#if 0
 	{ PROM_ADDR,		PROM_SPACE,		R,	CI },
+#endif
 	{ FUSE_ROM_ADDR,	FUSE_ROM_SPACE,		R,	CI },
 	{ NVRAM_ADDR,		NVRAM_SPACE,		RW,	CI },
 	{ NVRAM_ADDR_88K2,	PAGE_SIZE,		RW,	CI },
@@ -62,7 +64,9 @@ luna88k_board_table[] = {
 	{ EXT_B_ADDR,		EXT_B_SPACE,		RW,	CI },
 #endif
 	{ PC_BASE,		PC_SPACE,		RW,	CI },
+#if 0
 	{ MROM_ADDR,		MROM_SPACE,		R,	CI },
+#endif
 	{ BMAP_RFCNT,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_BMSEL,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_BMP,		BMAP_BMAP0 - BMAP_BMP,	RW,	CI, TRUE },
@@ -75,6 +79,7 @@ luna88k_board_table[] = {
 	{ BMAP_BMAP6,		BMAP_BMAP7 - BMAP_BMAP6, RW,	CI, TRUE },
 	{ BMAP_BMAP7,		BMAP_FN - BMAP_BMAP7,	RW,	CI, TRUE },
 	{ BMAP_FN,		PAGE_SIZE,		RW,	CI },
+#if 0
 	{ BMAP_FN0,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_FN1,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_FN2,		PAGE_SIZE,		RW,	CI },
@@ -85,9 +90,12 @@ luna88k_board_table[] = {
 	{ BMAP_FN7,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_PALLET0,		PAGE_SIZE,		RW,	CI },
 	{ BMAP_PALLET1,		PAGE_SIZE,		RW,	CI },
+#endif
 	{ BMAP_PALLET2,		PAGE_SIZE,		RW,	CI },
+#if 0
 	{ BOARD_CHECK_REG,	PAGE_SIZE,		RW,	CI },
 	{ BMAP_CRTC,		PAGE_SIZE,		RW,	CI },
+#endif
 	{ SCSI_ADDR,		PAGE_SIZE,		RW,	CI },
 	{ LANCE_ADDR,		PAGE_SIZE,		RW,	CI },
 	{ 0,			0xffffffff,		0,	0 },
