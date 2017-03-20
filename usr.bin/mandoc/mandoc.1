@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.103 2017/03/18 19:50:58 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.104 2017/03/20 14:30:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2017 $
+.Dd $Mdocdate: March 20 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Op Fl acfhkl
 .Op Fl I Cm os Ns = Ns Ar name
 .Op Fl K Ar encoding
-.Op Fl m Ns Ar format
+.Op Fl mdoc | man
 .Op Fl O Ar option
 .Op Fl T Ar output
 .Op Fl W Ar level
@@ -44,9 +44,7 @@ reads
 .Xr mdoc 7
 or
 .Xr man 7
-text from stdin, implying
-.Fl m Ns Cm andoc ,
-and produces
+text from stdin and produces
 .Fl T Cm locale
 output.
 .Pp
@@ -84,10 +82,10 @@ Override the default operating system
 .Ar name
 for the
 .Xr mdoc 7
-.Sq \&Os
+.Ic \&Os
 and for the
 .Xr man 7
-.Sq \&TH
+.Ic \&TH
 macro.
 .It Fl K Ar encoding
 Specify the input encoding.
@@ -138,13 +136,28 @@ Also reverts any earlier
 and
 .Fl k
 options.
-.It Fl m Ns Ar format
-Input format.
-See
-.Sx Input Formats
-for available formats.
-Defaults to
-.Fl m Ns Cm andoc .
+.It Fl mdoc | man
+With
+.Fl mdoc ,
+all input files are interpreted as
+.Xr mdoc 7 .
+With
+.Fl man ,
+all input files are interpreted as
+.Xr man 7 .
+By default, the input language is automatically detected for each file:
+if the the first macro is
+.Ic \&Dd
+or
+.Ic \&Dt ,
+the
+.Xr mdoc 7
+parser is used; otherwise, the
+.Xr man 7
+parser is used.
+With other arguments,
+.Fl m
+is silently ignored.
 .It Fl O Ar option
 Comma-separated output options.
 .It Fl T Ar output
@@ -209,49 +222,6 @@ also supports the options
 described in the
 .Xr apropos 1
 manual.
-.Ss Input Formats
-The
-.Nm
-utility accepts
-.Xr mdoc 7
-and
-.Xr man 7
-input with
-.Fl m Ns Cm doc
-and
-.Fl m Ns Cm an ,
-respectively.
-The
-.Xr mdoc 7
-format is
-.Em strongly
-recommended;
-.Xr man 7
-should only be used for legacy manuals.
-.Pp
-A third option,
-.Fl m Ns Cm andoc ,
-which is also the default, determines encoding on-the-fly: if the first
-non-comment macro is
-.Sq \&Dd
-or
-.Sq \&Dt ,
-the
-.Xr mdoc 7
-parser is used; otherwise, the
-.Xr man 7
-parser is used.
-.Pp
-If multiple
-files are specified with
-.Fl m Ns Cm andoc ,
-each has its file-type determined this way.
-If multiple files are
-specified and
-.Fl m Ns Cm doc
-or
-.Fl m Ns Cm an
-is specified, then this format is used exclusively.
 .Ss Output Formats
 The
 .Nm
@@ -391,7 +361,7 @@ The string
 for example,
 .Ar ../src/%I.html ,
 is used as a template for linked header files (usually via the
-.Sq \&In
+.Ic \&In
 macro).
 Instances of
 .Sq \&%I
@@ -404,7 +374,7 @@ The string
 for example,
 .Ar ../html%S/%N.%S.html ,
 is used as a template for linked manuals (usually via the
-.Sq \&Xr
+.Ic \&Xr
 macro).
 Instances of
 .Sq \&%N
@@ -450,7 +420,7 @@ If the input format is
 .Xr man 7 ,
 the input is copied to the output, expanding any
 .Xr roff 7
-.Sq so
+.Ic so
 requests.
 The parser is also run, and as usual, the
 .Fl W
