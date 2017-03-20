@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.20 2017/01/28 17:53:17 jmc Exp $
+.\"	$OpenBSD: acme-client.1,v 1.21 2017/03/20 15:45:14 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: March 20 2017 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -107,16 +107,8 @@ as above:
 A daily
 .Xr cron 8
 job can renew the certificates:
-.Bd -literal -offset indent
-#! /bin/sh
-
-acme-client www.example.com
-
-if [ $? -eq 0 ]
-then
-	/etc/rc.d/httpd reload
-fi
-.Ed
+.Pp
+.Dl acme-client www.example.com && rcctl reload httpd
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr acme-client.conf 5 ,
