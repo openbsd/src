@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.10 2016/09/01 00:02:57 aoyama Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.11 2017/03/20 19:37:54 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ le_attach(struct device *parent, struct device *self, void *aux)
 
 	lesc->sc_r1 = (struct lereg1 *)ma->ma_addr;	/* LANCE */
 
-	sc->sc_mem = (void *)0x71010000;		/* SRAM */
+	sc->sc_mem = (void *)(TRI_PORT_RAM + 0x10000);	/* SRAM */
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
 	sc->sc_memsize = 64 * 1024;			/* 64KB */
@@ -191,7 +191,7 @@ myetheraddr(uint8_t *ether)
 		}
 		break;
 	case LUNA_88K2: 
-		ds1220 = (void *)0xF1000008;
+		ds1220 = (void *)(LANCE_ADDR + 8);
 		loc = 12;
 		for (i = 0; i < 6; i++) {
 			unsigned u, l, hex;

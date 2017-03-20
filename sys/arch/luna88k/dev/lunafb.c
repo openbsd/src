@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.23 2017/01/15 20:22:33 fcambus Exp $ */
+/* $OpenBSD: lunafb.c,v 1.24 2017/03/20 19:37:54 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -48,8 +48,9 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
+#include <machine/cpu.h>
 
 struct bt454 {
 	volatile u_int8_t bt_addr;	/* map address register */
@@ -58,23 +59,23 @@ struct bt454 {
 
 struct bt458 {
 	volatile u_int8_t bt_addr;	/* map address register */
-		unsigned :24;
+	unsigned :24;
 	volatile u_int8_t bt_cmap;	/* colormap data register */
-		unsigned :24;
+	unsigned :24;
 	volatile u_int8_t bt_ctrl;	/* control register */
-		unsigned :24;
+	unsigned :24;
 	volatile u_int8_t bt_omap;	/* overlay (cursor) map register */
-		unsigned :24;
+	unsigned :24;
 };
 
-#define	OMFB_RFCNT	0xB1000000	/* video h-origin/v-origin */
-#define	OMFB_PLANEMASK	0xB1040000	/* planemask register */
-#define	OMFB_FB_WADDR	0xB1080008	/* common plane */
-#define	OMFB_FB_RADDR	0xB10C0008	/* plane #0 */
+#define	OMFB_RFCNT	BMAP_RFCNT	/* video h-origin/v-origin */
+#define	OMFB_PLANEMASK	BMAP_BMSEL	/* planemask register */
+#define	OMFB_FB_WADDR	(BMAP_BMP + 8)	/* common plane */
+#define	OMFB_FB_RADDR	(BMAP_BMAP0 + 8)/* plane #0 */
 #define OMFB_FB_PLANESIZE  0x40000	/* size of 1 plane, 2048 / 8 * 1024 */
-#define	OMFB_ROPFUNC	0xB12C0000	/* ROP function code */
-#define	OMFB_RAMDAC	0xC1100000	/* Bt454/Bt458 RAMDAC */
-#define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + PAGE_SIZE)
+#define	OMFB_ROPFUNC	BMAP_FN		/* ROP function code */
+#define	OMFB_RAMDAC	BMAP_PALLET2	/* Bt454/Bt458 RAMDAC */
+#define	OMFB_SIZE	(BMAP_FN0 - BMAP_BMP + PAGE_SIZE)
 
 struct hwcmap {
 #define CMAP_SIZE 256

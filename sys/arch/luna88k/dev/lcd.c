@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.8 2017/03/15 11:13:34 aoyama Exp $ */
+/* $OpenBSD: lcd.c,v 1.9 2017/03/20 19:37:54 miod Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/fcntl.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/conf.h>
 #include <machine/lcd.h>
 
@@ -82,7 +83,7 @@ struct lcd_softc {
 	int sc_opened;
 };
 
-struct cfattach lcd_ca = {
+const struct cfattach lcd_ca = {
 	sizeof(struct lcd_softc), lcd_match, lcd_attach
 };
 
@@ -266,7 +267,7 @@ lcdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 void
 lcdbusywait()
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int msb, s;
 
 	s = splhigh();
@@ -287,7 +288,7 @@ lcdbusywait()
 void
 lcdput(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();
@@ -304,7 +305,7 @@ lcdput(int cc)
 void
 lcdctrl(int cc)
 {
-	struct pio *p1 = (struct pio *)0x4D000000;
+	struct pio *p1 = (struct pio *)OBIO_PIO1_BASE;
 	int s;
 
 	lcdbusywait();

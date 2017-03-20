@@ -1,4 +1,4 @@
-/*	$OpenBSD: omrasops1.c,v 1.2 2014/01/02 15:30:34 aoyama Exp $	*/
+/*	$OpenBSD: omrasops1.c,v 1.3 2017/03/20 19:37:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -83,6 +83,9 @@
 
 #include <luna88k/dev/maskbits.h>
 #include <luna88k/dev/omrasops.h>
+
+#include <machine/board.h>
+#define	OMFB_FB_WADDR	(BMAP_BMP + 8)	/* common plane */
 
 /* prototypes */
 int om1_windowmove(struct rasops_info *, u_int16_t, u_int16_t,
@@ -183,9 +186,9 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					nl = nlMiddle;
 					while (nl--) {
 						if (rop == RR_CLEAR)
-							W(pdst) = 0;
+							*W(pdst) = 0;
 						else
-							W(pdst) = R(psrc);
+							*W(pdst) = *R(psrc);
 						psrc++;
 						pdst++;
 					}
@@ -193,7 +196,7 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					nl = nlMiddle + 1;
 					while (--nl) {
 						if (rop == RR_CLEAR)
-							W(pdst) = 0;
+							*W(pdst) = 0;
 						else
 							getunalignedword(R(psrc),
 							    xoffSrc, *W(pdst));
@@ -234,7 +237,7 @@ om1_windowmove(struct rasops_info *ri, u_int16_t sx, u_int16_t sy,
 					--psrc;
 					--pdst;
 					if (rop == RR_CLEAR)
-						W(pdst) = 0;
+						*W(pdst) = 0;
 					else
 						getunalignedword(R(psrc), xoffSrc,
 						    *W(pdst));

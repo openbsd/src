@@ -15,16 +15,6 @@
  */
 
 /*
- * Base addresses of LUNA's frame buffer
- * XXX: We consider only 1bpp and 4bpp for now
- */
-
-#define OMFB_PLANEMASK	0xB1040000	/* BMSEL register */
-#define OMFB_FB_WADDR   0xB1080008      /* common plane */
-#define OMFB_FB_RADDR   0xB10C0008      /* plane #0 */
-#define OMFB_ROPFUNC	0xB12C0000	/* common ROP function */
-
-/*
  * Helper macros
  */
 #define W(addr)  ((u_int32_t *)(addr))

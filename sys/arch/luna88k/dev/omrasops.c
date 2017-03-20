@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.13 2014/10/01 10:06:27 aoyama Exp $ */
+/* $OpenBSD: omrasops.c,v 1.14 2017/03/20 19:37:54 miod Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -48,6 +48,10 @@
 #include <dev/rasops/rasops.h>
 
 #include <luna88k/dev/omrasops.h>
+
+#include <machine/board.h>
+#define	OMFB_PLANEMASK	BMAP_BMSEL	/* planemask register */
+#define	OMFB_ROPFUNC	BMAP_FN		/* ROP function code */
 
 /* wscons emulator operations */
 int	om_copycols(void *, int, int, int, int);
