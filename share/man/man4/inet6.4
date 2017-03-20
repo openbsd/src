@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.34 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: inet6.4,v 1.35 2017/03/20 23:52:05 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 20 2017 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -117,6 +117,14 @@ and does not support IPv4 mapped addresses,
 where IPv4 traffic is seen as if it comes from an IPv6 address like
 .Li ::ffff:10.1.1.1 .
 Where both IPv4 and IPv6 traffic need to be accepted, listen on two sockets.
+.Pp
+It is also advisable to explicitly reject all packets to your network
+not used by any of your interface prefixes.
+Otherwise packets that have a destination address belonging to your network
+may be routed back to your provider via the default route.
+Set a reject route for your assigned prefix:
+.Pp
+.Dl # route -add net 2001:db8::/48 ::1 -reject
 .Sh ADDRESSING
 IPv6 addresses are 16 byte quantities, stored in network standard byteorder.
 The include file
