@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.12 2014/01/06 21:28:53 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.13 2017/03/20 19:38:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -44,26 +44,11 @@
 #else
 #define U(num)  num/**/U
 #endif
-#define UDEFINED
 
 /* machtype values */
 #define LUNA_88K	0x1
 #define LUNA_88K2	0x2
 
-#define	SYSV_BASE	U(0x00000000) 	/* system virtual base */
-#define VEQR_ADDR	U(0x00000000)
-
-#define OBIO_START	U(0x41000000)
-#define OBIO_SIZE	U(0xBf000000)
-
-#define OBIO1_BASE	U(0x41000000) 	/* on board i/o 1 base */
-#define OBIO1_SPACE	U(0x1f000000) 	/* on board i/o 1 space */
-#define OBIO2_BASE	U(0x61000000) 	/* on board i/o 2 base */
-#define OBIO2_SPACE	U(0x1f000000) 	/* on board i/o 2 space */
-#define OBIO3_BASE	U(0x80000000)	/* on board i/o 3 base */
-#define OBIO3_SPACE	U(0x80000000)	/* on board i/o 3 space */
-
-#define	MAXU_ADDR	U(0x40000000) 	/* size of user virtual space */
 #define MAXPHYSMEM	U(0x10000000) 	/* max physical memory */
 
 #define PROM_ADDR	U(0x41000000) 	/* PROM */
@@ -104,21 +89,7 @@
 #define INT_ST_MASK1	U(0x65000004) 	/* interrupt status register CPU 1 */
 #define INT_ST_MASK2	U(0x65000008) 	/* interrupt status register CPU 2 */
 #define INT_ST_MASK3	U(0x6500000C) 	/* interrupt status register CPU 3 */
-#define  INT_LEVEL	           8	/* # of interrupt level + 1 */
-#define  INT_SET_LV7	U(0x00000000) 	/* disable interrupts */
-#define  INT_SET_LV6	U(0x00000000) 	/* enable level 7 */
-#define  INT_SET_LV5	U(0x84000000) 	/* enable level 7-6 */
-#define  INT_SET_LV4	U(0xC4000000) 	/* enable level 7-5 */
-#define  INT_SET_LV3	U(0xE4000000) 	/* enable level 7-4 */
-#define  INT_SET_LV2	U(0xF4000000) 	/* enable level 7-3 */
-#define  INT_SET_LV1	U(0xFC000000) 	/* enable level 7-2 */
-#define  INT_SET_LV0	U(0xFC000000) 	/* enable interrupts */
-#define  INT_SLAVE_MASK	U(0x84000000) 	/* slave can only enable 6 and 1 */
-#define	 INT_CLOCK_MASK	0xBFFFFFFF 	/* mask clock */
 
-#define NON_MASKABLE_LEVEL 7		/* non-maskable-interrupt (abort) */
-#define	CLOCK_INT_LEVEL	6		/* clock interrupt level */
-#define SOFT_INT_LEVEL	1		/* software interrupt level */
 #define SOFT_INT0	U(0x69000000) 	/* software interrupt CPU 0 */
 #define SOFT_INT1	U(0x69000004) 	/* software interrupt CPU 1 */
 #define SOFT_INT2	U(0x69000008) 	/* software interrupt CPU 2 */
@@ -127,7 +98,6 @@
 #define SOFT_INT_FLAG1	U(0x6B000000) 	/* software interrupt flag CPU 1 */
 #define SOFT_INT_FLAG2	U(0x6B000000) 	/* software interrupt flag CPU 2 */
 #define SOFT_INT_FLAG3	U(0x6B000000) 	/* software interrupt flag CPU 3  */
-#define  SOFT_INT_BIT	31		/* software interrupt flag bit */
 #define RESET_CPU0	U(0x6D000000) 	/* reset CPU 0 */
 #define RESET_CPU1	U(0x6D000004) 	/* reset CPU 1 */
 #define RESET_CPU2	U(0x6D000008)	/* reset CPU 2 */
@@ -137,7 +107,6 @@
 #define TRI_PORT_RAM_SPACE	0x20000
 #define EXT_A_ADDR	U(0x81000000) 	/* extension board A */
 #define EXT_A_SPACE	U(0x02000000) 
-#define	EU_BASE		U(0x81fe0000) 	/* VME expand board */
 #define EXT_B_ADDR	U(0x83000000) 	/* extension board B */
 #define EXT_B_SPACE	U(0x01000000) 
 #define	PC_BASE		U(0x90000000) 	/* pc-98 extension board */
@@ -177,9 +146,6 @@
 #define BMAP_IDENTROM   U(0xD1800000)   /* bitmap-board identify ROM */
 #define SCSI_ADDR	U(0xE1000000) 	/* SCSI address */
 #define LANCE_ADDR	U(0xF1000000) 	/* LANCE */
-#define	EXT_IACK_ADDR	0xFFFFFFF7 	/* IACK Space for Extended Board */
-
-#define	VDMA_STD(x)	((int)(x))
 
 #define CMMU_I0		U(0xFFF07000) 	/* CMMU instruction cpu 0 */
 #define CMMU_D0		U(0xFFF06000) 	/* CMMU data cpu 0 */
