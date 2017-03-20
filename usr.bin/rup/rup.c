@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.30 2015/08/20 22:32:41 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.31 2017/03/20 16:10:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -131,7 +131,7 @@ remember_rup_data(char *host, struct statstime *st)
 		struct rup_data *newrup;
 
 		newsize = rup_data_max + 16;
-		newrup = reallocarray(rup_data, newsize,
+		newrup = recallocarray(rup_data, rup_data_max, newsize,
 		    sizeof(struct rup_data));
 		if (newrup == NULL) {
 			err(1, NULL);
