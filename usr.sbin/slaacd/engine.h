@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.h,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: engine.h,v 1.2 2017/03/20 16:15:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,6 +15,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+struct imsg_proposal {
+	uint32_t			if_index;
+	struct sockaddr_in6		addr;
+	struct in6_addr			mask;
+	struct sockaddr_in6		gateway;
+	struct sockaddr_rtdns		rdns;
+	struct sockaddr_rtsearch	dnssl;
+};
 
 void		 engine(int, int);
 int		 engine_imsg_compose_frontend(int, pid_t, void *, uint16_t);

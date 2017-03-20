@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.3 2017/03/19 16:12:22 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.4 2017/03/20 16:15:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -55,6 +55,7 @@
 #include <sys/uio.h>
 
 #include <net/if.h>
+#include <net/route.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -68,6 +69,7 @@
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -170,10 +172,12 @@ void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
+void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
 void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
+int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
@@ -275,6 +279,14 @@ engine_imsg_compose_frontend(int type, pid_t pid, void *data,
     uint16_t datalen)
 {
 	return (imsg_compose_event(iev_frontend, type, 0, pid, -1,
+	    data, datalen));
+}
+
+int
+engine_imsg_compose_main(int type, pid_t pid, void *data,
+    uint16_t datalen)
+{
+	return (imsg_compose_event(iev_main, type, 0, pid, -1,
 	    data, datalen));
 }
 
@@ -1242,7 +1254,13 @@ update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 {
 
 	struct radv		*old_ra;
+	struct radv_prefix	*prefix;
+	struct radv_rdns	*rdns;
+	struct radv_dnssl	*dnssl;
+	struct imsg_proposal	 proposal;
 	struct timeval		 tv;
+	size_t			 len;
+	char			*p;
 
 	old_ra = find_ra(iface, &ra->from);
 
@@ -1266,6 +1284,74 @@ update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 
 	evtimer_set(&ra->timer, ra_timeout, iface);
 	evtimer_add(&ra->timer, &tv);
+
+	/*
+	 * XXX we need to figure out what actually changed in the RA and
+	 * adjust our proposal accordingly
+	 */
+
+	memset(&proposal, 0, sizeof(proposal));
+
+	proposal.if_index = iface->if_index;
+
+	proposal.rdns.sr_family = AF_INET6;
+	rdns = LIST_FIRST(&ra->rdns_servers);
+	p = proposal.rdns.sr_dns;
+	while (rdns != NULL && proposal.rdns.sr_len + sizeof(rdns->rdns) <=
+	    RTDNS_LEN) {
+		/* XXX lifetime */
+		memcpy(p, &rdns->rdns, sizeof(rdns->rdns));
+		p += sizeof(rdns->rdns);
+		proposal.rdns.sr_len += sizeof(rdns->rdns);
+		rdns = LIST_NEXT(rdns, entries);
+	}
+
+	if (proposal.rdns.sr_len > 0)
+		proposal.rdns.sr_len += offsetof(struct sockaddr_rtdns, sr_dns);
+
+	proposal.dnssl.sr_family = AF_INET6;
+	dnssl = LIST_FIRST(&ra->dnssls);
+	while(dnssl != NULL) {
+		len = strlcat(proposal.dnssl.sr_search, dnssl->dnssl,
+		    RTSEARCH_LEN);
+		if (len >= RTSEARCH_LEN) {
+			log_warn("search too long");
+			break;
+		}
+		proposal.dnssl.sr_len = len + 1;
+		dnssl = LIST_NEXT(dnssl, entries);
+		if (dnssl != NULL) {
+			len = strlcat(proposal.dnssl.sr_search, " ",
+			    RTSEARCH_LEN);
+			if (len >= RTSEARCH_LEN) {
+				log_warn("search too long");
+				break;
+			}
+			proposal.dnssl.sr_len = len + 1;
+		}
+	}
+	if (proposal.dnssl.sr_len > 0)
+		proposal.dnssl.sr_len += offsetof(struct sockaddr_rtsearch,
+		    sr_search);
+
+	LIST_FOREACH(prefix, &ra->prefixes, entries) {
+		proposal.addr = prefix->addr;
+		proposal.mask = prefix->mask;
+		proposal.gateway = ra->from;
+
+		send_proposal(&proposal);
+
+		if (iface->autoconfprivacy) {
+			proposal.addr = prefix->priv_addr;
+			send_proposal(&proposal);
+		}
+	}
+}
+
+void
+send_proposal(struct imsg_proposal *proposal)
+{
+	engine_imsg_compose_main(IMSG_PROPOSAL, 0, proposal, sizeof(*proposal));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.5 2017/03/20 16:13:27 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.6 2017/03/20 16:15:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -63,6 +63,7 @@ enum imsg_type {
 	IMSG_REMOVE_IF,
 	IMSG_RA,
 	IMSG_CTL_SEND_SOLICITATION,
+	IMSG_PROPOSAL,
 };
 
 extern const char* imsg_type_name[];

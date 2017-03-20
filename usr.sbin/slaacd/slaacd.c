@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.2 2017/03/20 16:13:27 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.3 2017/03/20 16:15:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/wait.h>
 
 #include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
@@ -34,6 +35,7 @@
 #include <event.h>
 #include <imsg.h>
 #include <pwd.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +65,7 @@ const char* imsg_type_name[] = {
 	"IMSG_REMOVE_IF",
 	"IMSG_RA",
 	"IMSG_CTL_SEND_SOLICITATION",
+	"IMSG_PROPOSAL",
 };
 
 __dead void	usage(void);
@@ -74,6 +77,7 @@ static pid_t	start_child(int, char *, int, int, int, char *);
 
 void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
+void	handle_proposal(struct imsg_proposal *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 
@@ -84,6 +88,8 @@ pid_t	 frontend_pid;
 pid_t	 engine_pid;
 
 uint32_t cmd_opts;
+
+int	 routesock;
 
 char	*csock;
 
@@ -203,6 +209,9 @@ main(int argc, char *argv[])
 	
 	setproctitle(log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
+
+	if ((routesock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+		fatal("route socket");
 
 	event_init();
 
@@ -383,11 +392,12 @@ main_dispatch_frontend(int fd, short event, void *bula)
 void
 main_dispatch_engine(int fd, short event, void *bula)
 {
-	struct imsgev	*iev = bula;
-	struct imsgbuf  *ibuf;
-	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	struct imsg_proposal	 proposal;
+	ssize_t			 n;
+	int			 shut = 0;
 
 	ibuf = &iev->ibuf;
 
@@ -411,6 +421,13 @@ main_dispatch_engine(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_PROPOSAL:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(proposal))
+				fatal("%s: IMSG_PROPOSAL wrong "
+				    "length: %d", __func__, imsg.hdr.len);
+			memcpy(&proposal, imsg.data, sizeof(proposal));
+			handle_proposal(&proposal);
+			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -491,4 +508,122 @@ main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
 		return (-1);
 	imsg_flush(engine_buf);
 	return (0);
+}
+
+#define	ROUNDUP(a)	\
+    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+void
+handle_proposal(struct imsg_proposal *proposal)
+{
+	static int			 seq = 0;
+	struct rt_msghdr		 rtm;
+	struct sockaddr_rtstatic	 rtstatic;
+	struct sockaddr_in6		 ifa, mask, gateway;
+	struct in6_addr			 prefix;
+	struct iovec			 iov[11];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+	uint8_t				 prefixlen;
+	char				*p;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_index = proposal->if_index;
+	rtm.rtm_seq = ++seq;
+	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
+	rtm.rtm_addrs = RTA_NETMASK | RTA_IFA | RTA_STATIC;
+	rtm.rtm_flags = RTF_UP;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	memset(&mask, 0, sizeof(mask));
+	mask.sin6_family = AF_INET6;
+	mask.sin6_len = sizeof(struct sockaddr_in6);
+	mask.sin6_addr = proposal->mask;
+
+	ifa = proposal->addr;
+
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = sizeof(mask);
+	rtm.rtm_msglen += sizeof(mask);
+	padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	iov[iovcnt].iov_base = &ifa;
+	iov[iovcnt++].iov_len = sizeof(ifa);
+	rtm.rtm_msglen += sizeof(ifa);
+	padlen = ROUNDUP(sizeof(ifa)) - sizeof(ifa);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (proposal->rdns.sr_len > 0) {
+		rtm.rtm_addrs |= RTA_DNS;
+
+		iov[iovcnt].iov_base = &proposal->rdns;
+		iov[iovcnt++].iov_len = proposal->rdns.sr_len;
+		rtm.rtm_msglen += proposal->rdns.sr_len;
+		padlen = ROUNDUP(proposal->rdns.sr_len) -
+		    proposal->rdns.sr_len;
+		if (padlen > 0) {
+			iov[iovcnt].iov_base = &pad;
+			iov[iovcnt++].iov_len = padlen;
+			rtm.rtm_msglen += padlen;
+		}
+	}
+
+	/* setup default route ::/0 */
+	prefixlen = 0;
+	memset(&prefix, 0, sizeof(prefix));
+	gateway = proposal->gateway;
+
+	memset(&rtstatic, 0, sizeof(rtstatic));
+	rtstatic.sr_family = AF_INET6;
+	rtstatic.sr_len = offsetof(struct sockaddr_rtstatic, sr_static) +
+	    sizeof(uint8_t) + sizeof(struct in6_addr) +
+	    sizeof(struct sockaddr_in6);
+	p = rtstatic.sr_static;
+	memcpy(p, &prefixlen, sizeof(prefixlen));
+	p += sizeof(prefixlen);
+	memcpy(p, &prefix, sizeof(prefix));
+	p += sizeof(prefix);
+	memcpy(p, &gateway, sizeof(gateway));
+
+	iov[iovcnt].iov_base = &rtstatic;
+	iov[iovcnt++].iov_len = rtstatic.sr_len;
+	rtm.rtm_msglen += rtstatic.sr_len;
+	padlen = ROUNDUP(rtstatic.sr_len) - rtstatic.sr_len;
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (proposal->dnssl.sr_len > 0) {
+		rtm.rtm_addrs |= RTA_SEARCH;
+		iov[iovcnt].iov_base = &proposal->dnssl;
+		iov[iovcnt++].iov_len = proposal->dnssl.sr_len;
+		rtm.rtm_msglen += proposal->dnssl.sr_len;
+		padlen = ROUNDUP(proposal->dnssl.sr_len) -
+		    proposal->dnssl.sr_len;
+		if (padlen > 0) {
+			iov[iovcnt].iov_base = &pad;
+			iov[iovcnt++].iov_len = padlen;
+			rtm.rtm_msglen += padlen;
+		}
+	}
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send proposal");
 }
