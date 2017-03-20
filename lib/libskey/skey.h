@@ -10,7 +10,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.20 2014/03/20 20:39:13 naddy Exp $
+ * $OpenBSD: skey.h,v 1.21 2017/03/20 21:11:21 tb Exp $
  */
 
 #ifndef _SKEY_H_
@@ -56,9 +56,6 @@ struct mc {
 
 /* Size of a binary key (not NULL-terminated) */
 #define SKEY_BINKEY_SIZE	8
-
-/* Location of random file for bogus challenges */
-#define _SKEY_RAND_FILE_PATH_	"/var/db/host.random"
 
 /* Directory for S/Key per-user files */
 #define _PATH_SKEYDIR		"/etc/skey"

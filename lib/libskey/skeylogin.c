@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.59 2017/03/20 18:34:52 tedu Exp $
+ * $OpenBSD: skeylogin.c,v 1.60 2017/03/20 21:11:21 tb Exp $
  */
 
 #ifdef	QUOTA
@@ -419,9 +419,8 @@ hash_collapse(u_char *s)
 static void
 skey_fakeprompt(char *username, char *skeyprompt)
 {
-	char hseed[SKEY_MAX_SEED_LEN], *secret, pbuf[SKEY_MAX_PW_LEN+1], *p, *u;
-	u_char flg = 1, *up;
-	size_t secretlen;
+	char secret[SKEY_MAX_SEED_LEN], pbuf[SKEY_MAX_PW_LEN+1], *p, *u;
+	u_char *up;
 	SHA1_CTX ctx;
 	u_int ptr;
 	int i;
@@ -443,46 +442,21 @@ skey_fakeprompt(char *username, char *skeyprompt)
 
 	/* Hash the username if possible */
 	if ((up = SHA1Data(username, strlen(username), NULL)) != NULL) {
-		struct stat sb;
-		time_t t;
-		int fd;
-
 		/* Collapse the hash */
 		ptr = hash_collapse(up);
 		explicit_bzero(up, strlen(up));
 
-		/* See if the random file's there, else use ctime */
-		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1 &&
-		    fstat(fd, &sb) == 0 &&
-		    sb.st_size > (off_t)SKEY_MAX_SEED_LEN &&
-		    lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN),
-		    SEEK_SET) != -1 && read(fd, hseed,
-		    SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN) {
-			close(fd);
-			fd = -1;
-			secret = hseed;
-			secretlen = SKEY_MAX_SEED_LEN;
-			flg = 0;
-		} else if (!stat(_PATH_MEM, &sb) || !stat("/", &sb)) {
-			t = sb.st_ctime;
-			secret = ctime(&t);
-			secretlen = strlen(secret);
-			flg = 0;
-		}
-		if (fd != -1)
-			close(fd);
-	}
+		/* Put that in your pipe and smoke it */
+		arc4random_buf(secret, sizeof(secret));
 
-	/* Put that in your pipe and smoke it */
-	if (flg == 0) {
 		/* Hash secret value with username */
 		SHA1Init(&ctx);
-		SHA1Update(&ctx, secret, secretlen);
+		SHA1Update(&ctx, secret, sizeof(secret));
 		SHA1Update(&ctx, username, strlen(username));
 		SHA1End(&ctx, up);
 
 		/* Zero out */
-		explicit_bzero(secret, secretlen);
+		explicit_bzero(secret, sizeof(secret));
 
 		/* Now hash the hash */
 		SHA1Init(&ctx);
