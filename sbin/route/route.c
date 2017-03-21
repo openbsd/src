@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.198 2017/03/20 19:01:38 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.199 2017/03/21 06:23:48 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -2074,7 +2074,7 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 	struct in6_addr		 prefix;
 	struct in_addr		 dest, gateway;
 	size_t			 srclen, offset;
-	int			 bits, bytes;
+	int			 bits, bytes, error;
 	uint8_t			 prefixlen;
 	unsigned char		*src = rtstatic->sr_static;
 	char			 ntoabuf[INET_ADDRSTRLEN];
@@ -2132,13 +2132,14 @@ print_rtstatic(struct sockaddr_rtstatic *rtstatic)
 			srclen -= sizeof(gateway6);
 			src += sizeof(gateway6);
 
-			if (getnameinfo((struct sockaddr *)&gateway6,
+			if ((error = getnameinfo((struct sockaddr *)&gateway6,
 			    gateway6.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-			    NI_NUMERICHOST | NI_NUMERICSERV)) {
-				printf("cannot get gateway address");
+			    NI_NUMERICHOST | NI_NUMERICSERV))) {
+				warnx("cannot get gateway address: %s",
+				    gai_strerror(error));
 				return;
 			}
-			printf("%s/%hhu %s ", inet_ntop(AF_INET6, &prefix,
+			printf("%s/%u %s ", inet_ntop(AF_INET6, &prefix,
 			    ntopbuf, INET6_ADDRSTRLEN), prefixlen, hbuf);
 		}
 		break;
