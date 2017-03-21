@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.92 2017/01/27 13:38:40 jsg Exp $
+# $OpenBSD: Makefile.cross,v 1.93 2017/03/21 10:41:33 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -62,7 +62,8 @@ CROSSENV=	AR=${CROSSDIR}/usr/${TARGET_CANON}/bin/ar \
 		HOSTLDFLAGS=\"${LDFLAGS}\" \
 		CFLAGS=\"${CROSSCFLAGS}\" CPPFLAGS=\"${CROSSCPPFLAGS}\" \
 		CXXFLAGS=\"${CROSSCXXFLAGS}\" \
-		LDFLAGS=\"${CROSSLDFLAGS}\"
+		LDFLAGS=\"${CROSSLDFLAGS}\" \
+		CROSSDIR=\"${CROSSDIR}\"
 CROSSADDPATH=:${CROSSDIR}/usr/${TARGET_CANON}/bin
 CROSSPATH=	/usr/bin:/bin:/usr/sbin:/sbin${CROSSADDPATH}
 CROSSLANGS?=	c c++
@@ -181,19 +182,21 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	(cd ${.CURDIR}/${BINUTILS_DIR}; \
+	    env CROSSDIR=${CROSSDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    PATH=${CROSSPATH} \
 	    ${MAKE} -f Makefile.bsd-wrapper depend && \
+	    env CROSSDIR=${CROSSDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper all && \
-	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    env CROSSDIR=${CROSSDIR} DESTDIR=${CROSSDIR} \
 	    COMPILER_VERSION=${COMPILER_VERSION} \
-	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
 	    ${MAKE} -f Makefile.bsd-wrapper install)
 	@for cmd in ${BINUTILS}; do \
@@ -274,17 +277,17 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	ln -sf ${TARGET_CANON}-cpp ${CROSSDIR}/usr/${TARGET_CANON}/bin/cpp
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    env CROSSDIR=${CROSSDIR} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
-	    CROSSDIR=${CROSSDIR} \
 	    MACHINE=${TARGET} \
 	    PATH=${CROSSPATH} ${MAKE} depend  )
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
+	    env CROSSDIR=${CROSSDIR} \
 	    PIE_DEFAULT=${PIE_DEFAULT} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH} TARGET_CPU=${TARGET_CPU} \
-	    CROSSDIR=${CROSSDIR} \
 	    MACHINE=${TARGET} \
 	    ${MAKE} all )
 	(cd ${.CURDIR}/gnu/usr.bin/cc; \
