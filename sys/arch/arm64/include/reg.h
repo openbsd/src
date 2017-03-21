@@ -1,4 +1,4 @@
-/* $OpenBSD: reg.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: reg.h,v 1.2 2017/03/21 18:43:40 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,11 +19,12 @@
 #define _MACHINE_REG_H_
 
 struct reg {
-	unsigned long x[30];
-	unsigned long x_sp;
-	unsigned long x_lr;
-	unsigned long x_pc;
-	unsigned long x_cpsr;
+	uint64_t	r_reg[30];
+	uint64_t	r_lr;
+	uint64_t	r_sp;
+	uint64_t	r_pc;
+	uint64_t	r_spsr;
+	uint64_t	r_tpidr;
 };
 
 struct fpreg {

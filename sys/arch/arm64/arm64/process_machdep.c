@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.2 2017/03/21 18:43:40 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -53,12 +53,22 @@
 int
 process_read_regs(struct proc *p, struct reg *regs)
 {
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
+	memcpy(&regs->r_reg[0], &tf->tf_x[0], sizeof(regs->r_reg));
+	regs->r_lr = tf->tf_lr;
+	regs->r_sp = tf->tf_sp;
+	regs->r_pc = tf->tf_elr;
+	regs->r_spsr = tf->tf_spsr;
+	regs->r_tpidr = (uint64_t)p->p_addr->u_pcb.pcb_tcb;
+
 	return(0);
 }
 
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
+	memset(regs, 0, sizeof(*regs));
 	return(0);
 }
 
