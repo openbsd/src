@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.339 2017/03/12 03:18:57 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.340 2017/03/21 07:24:36 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1637,7 +1637,7 @@ setifnwkey(const char *val, int d)
 	nwkey.i_defkid = 1;
 	if (d == -1) {
 		/* disable WEP encryption */
-		nwkey.i_wepon = 0;
+		nwkey.i_wepon = IEEE80211_NWKEY_OPEN;
 		i = 0;
 	} else if (strcasecmp("persist", val) == 0) {
 		/* use all values from persistent memory */
@@ -2120,7 +2120,7 @@ ieee80211_status(void)
 		}
 	}
 
-	if (inwkey == 0 && nwkey.i_wepon > 0) {
+	if (inwkey == 0 && nwkey.i_wepon > IEEE80211_NWKEY_OPEN) {
 		fputs(" nwkey ", stdout);
 		/* try to retrieve WEP keys */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
