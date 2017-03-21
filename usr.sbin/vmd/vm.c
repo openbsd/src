@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.3 2017/03/15 18:06:18 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.4 2017/03/21 03:29:57 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1288,5 +1288,34 @@ mutex_unlock(pthread_mutex_t *m)
 	if (ret) {
 		errno = ret;
 		fatal("could not release mutex");
+	}
+}
+
+/*
+ * set_return_data
+ *
+ * Utility function for manipulating register data in vm exit info structs. This
+ * function ensures that the data is copied to the vei->vei.vei_data field with
+ * the proper size for the operation being performed.
+ *
+ * Parameters:
+ *  vei: exit information
+ *  data: return data
+ */
+void
+set_return_data(union vm_exit *vei, uint32_t data)
+{
+	switch (vei->vei.vei_size) {
+	case 1:
+		vei->vei.vei_data &= ~0xFF;
+		vei->vei.vei_data |= (uint8_t)data;
+		break;
+	case 2:
+		vei->vei.vei_data &= ~0xFFFF;
+		vei->vei.vei_data |= (uint16_t)data;
+		break;
+	case 4:
+		vei->vei.vei_data = data;
+		break;	
 	}
 }
