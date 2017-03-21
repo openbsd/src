@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.21 2017/03/18 19:50:58 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.22 2017/03/21 18:05:55 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: March 18 2017 $
+.Dd $Mdocdate: March 21 2017 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -294,13 +294,7 @@ for example
 .Pa cat1/foo.0
 and
 .Pa man1/foo.1 ,
-exist in the same directory, and at least one of them is selected,
-only the newer one is used.
-However, if both the
-.Fl a
-and the
-.Fl w
-options are specified, both file names are printed.
+exist in the same directory, only the unformatted version is used.
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
