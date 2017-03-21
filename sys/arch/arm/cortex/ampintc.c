@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.18 2017/03/07 16:11:18 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.19 2017/03/21 21:51:03 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -132,7 +132,7 @@ struct ampintc_softc {
 	int			 sc_nintr;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_d_ioh, sc_p_ioh;
-	int			 sc_boot_cpu_mask;
+	uint8_t			 sc_cpu_mask[ICD_ICTR_CPU_M + 1];
 	struct evcount		 sc_spur;
 	struct interrupt_controller sc_ic;
 };
@@ -178,7 +178,7 @@ void		 ampintc_eoi(uint32_t);
 void		 ampintc_set_priority(int, int);
 void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
-void		 ampintc_route(int, int , int);
+void		 ampintc_route(int, int , struct cpu_info *);
 
 struct cfattach	ampintc_ca = {
 	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
@@ -214,7 +214,8 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ampintc_softc *sc = (struct ampintc_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int i, nintr;
+	int i, nintr, ncpu;
+	uint32_t ictr;
 
 	ampintc = sc;
 
@@ -234,17 +235,16 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	evcount_attach(&sc->sc_spur, "irq1023/spur", NULL);
 
-	nintr = 32 * (bus_space_read_4(sc->sc_iot, sc->sc_d_ioh,
-	    ICD_ICTR) & ICD_ICTR_ITL_M);
+	ictr = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICTR);
+	nintr = 32 * ((ictr >> ICD_ICTR_ITL_SH) & ICD_ICTR_ITL_M);
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
 	sc->sc_nintr = nintr;
-	printf(" nirq %d\n", nintr);
+	ncpu = ((ictr >> ICD_ICTR_CPU_SH) & ICD_ICTR_CPU_M) + 1;
+	printf(" nirq %d, ncpu %d\n", nintr, ncpu);
 
-	/* Uniprocessor implementations may return zero. */
-	sc->sc_boot_cpu_mask = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh,
-	    ICD_IPTRn(0));
-	if (sc->sc_boot_cpu_mask == 0)
-		sc->sc_boot_cpu_mask = 0x01;
+	KASSERT(curcpu()->ci_cpuid <= ICD_ICTR_CPU_M);
+	sc->sc_cpu_mask[curcpu()->ci_cpuid] =
+	    bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(0));
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 0; i < nintr/32; i++) {
@@ -358,9 +358,7 @@ ampintc_calc_mask(void)
 	struct cpu_info		*ci = curcpu();
         struct ampintc_softc	*sc = ampintc;
 	struct intrhand		*ih;
-	int			 irq, cpu;
-
-	cpu = ffs(sc->sc_boot_cpu_mask) - 1;
+	int			 irq;
 
 	for (irq = 0; irq < sc->sc_nintr; irq++) {
 		int max = IPL_NONE;
@@ -387,10 +385,10 @@ ampintc_calc_mask(void)
 		if (min != IPL_NONE) {
 			ampintc_set_priority(irq, min);
 			ampintc_intr_enable(irq);
-			ampintc_route(irq, IRQ_ENABLE, cpu);
+			ampintc_route(irq, IRQ_ENABLE, ci);
 		} else {
 			ampintc_intr_disable(irq);
-			ampintc_route(irq, IRQ_DISABLE, cpu);
+			ampintc_route(irq, IRQ_DISABLE, ci);
 		}
 	}
 	ampintc_setipl(ci->ci_cpl);
@@ -459,16 +457,19 @@ ampintc_eoi(uint32_t eoi)
 }
 
 void
-ampintc_route(int irq, int enable, int cpu)
+ampintc_route(int irq, int enable, struct cpu_info *ci)
 {
-	uint8_t  val;
 	struct ampintc_softc	*sc = ampintc;
+	uint8_t			 mask, val;
+
+	KASSERT(ci->ci_cpuid <= ICD_ICTR_CPU_M);
+	mask = sc->sc_cpu_mask[ci->ci_cpuid];
 
 	val = bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq));
 	if (enable == IRQ_ENABLE)
-		val |= (1 << cpu);
+		val |= mask;
 	else
-		val &= ~(1 << cpu);
+		val &= ~mask;
 	bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(irq), val);
 }
 
