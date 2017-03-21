@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.50 2017/03/12 03:13:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.51 2017/03/21 07:59:54 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -55,6 +55,8 @@ void	 ieee80211_node2req(struct ieee80211com *,
 	    const struct ieee80211_node *, struct ieee80211_nodereq *);
 void	 ieee80211_req2node(struct ieee80211com *,
 	    const struct ieee80211_nodereq *, struct ieee80211_node *);
+void	 ieee80211_disable_wep(struct ieee80211com *); 
+void	 ieee80211_disable_rsn(struct ieee80211com *); 
 
 void
 ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
@@ -166,6 +168,32 @@ ieee80211_req2node(struct ieee80211com *ic, const struct ieee80211_nodereq *nr,
 	ni->ni_state = nr->nr_state;
 }
 
+void
+ieee80211_disable_wep(struct ieee80211com *ic)
+{
+	struct ieee80211_key *k;
+	int i;
+	
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		k = &ic->ic_nw_keys[i];
+		if (k->k_cipher != IEEE80211_CIPHER_NONE)
+			(*ic->ic_delete_key)(ic, NULL, k);
+		memset(k, 0, sizeof(*k));
+	}
+	ic->ic_flags &= ~IEEE80211_F_WEPON;
+}
+
+void
+ieee80211_disable_rsn(struct ieee80211com *ic)
+{
+	ic->ic_flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+	memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
+	ic->ic_rsnprotos = 0;
+	ic->ic_rsnakms = 0;
+	ic->ic_rsngroupcipher = 0;
+	ic->ic_rsnciphers = 0;
+}
+
 static int
 ieee80211_ioctl_setnwkeys(struct ieee80211com *ic,
     const struct ieee80211_nwkey *nwkey)
@@ -212,6 +240,8 @@ ieee80211_ioctl_setnwkeys(struct ieee80211com *ic,
 
 	ic->ic_def_txkey = nwkey->i_defkid - 1;
 	ic->ic_flags |= IEEE80211_F_WEPON;
+	if (ic->ic_flags & IEEE80211_F_RSNON)
+		ieee80211_disable_rsn(ic);
 
 	return ENETRESET;
 }
@@ -464,6 +494,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (psk->i_enabled) {
 			ic->ic_flags |= IEEE80211_F_PSK;
 			memcpy(ic->ic_psk, psk->i_psk, sizeof(ic->ic_psk));
+			if (ic->ic_flags & IEEE80211_F_WEPON)
+				ieee80211_disable_wep(ic);
 		} else {
 			ic->ic_flags &= ~IEEE80211_F_PSK;
 			memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
@@ -496,6 +528,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		kr = (struct ieee80211_keyrun *)data;
 		error = ieee80211_keyrun(ic, kr->i_macaddr);
+		if (error == 0 && (ic->ic_flags & IEEE80211_F_WEPON))
+			ieee80211_disable_wep(ic);
 		break;
 	case SIOCS80211POWER:
 		if ((error = suser(curproc, 0)) != 0)
