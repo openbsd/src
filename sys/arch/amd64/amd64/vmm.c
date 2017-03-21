@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.120 2017/03/19 03:42:38 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.121 2017/03/21 02:30:33 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4449,6 +4449,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
+		break;
 	case 0x80000001: 	/* Extended function info */
 		*rax = curcpu()->ci_efeature_eax;
 		*rbx = 0;	/* Reserved */
