@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.177 2017/02/16 10:53:25 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.178 2017/03/21 19:28:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -112,18 +112,17 @@ make_label(const char *label)
 {
 	char		*base, resolved[PATH_MAX], *path, *s;
 	struct stat	 sb;
-	u_int		 uid;
+	uid_t		 uid;
 	int		 saved_errno;
 
 	if (label == NULL)
 		label = "default";
-
 	uid = getuid();
 
 	if ((s = getenv("TMUX_TMPDIR")) != NULL && *s != '\0')
 		xasprintf(&base, "%s/tmux-%u", s, uid);
 	else
-		xasprintf(&base, "%s/tmux-%u", _PATH_TMP, uid);
+		xasprintf(&base, "%s/tmux-%ld", _PATH_TMP, (long)uid);
 
 	if (mkdir(base, S_IRWXU) != 0 && errno != EEXIST)
 		goto fail;
