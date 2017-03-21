@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.121 2017/03/21 02:30:33 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.122 2017/03/21 02:57:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2337,6 +2337,16 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		goto exit;
 	}
 
+	if (vmwrite(VMCS_CR4_MASK, CR4_VMXE)) {
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (vmwrite(VMCS_CR0_MASK, CR0_NE)) {
+		ret = EINVAL;
+		goto exit;
+	}
+
 	/*
 	 * Set up the VMCS for the register state we want during VCPU start.
 	 * This matches what the CPU state would be after a bootloader
@@ -4083,28 +4093,96 @@ vmx_handle_inout(struct vcpu *vcpu)
 int
 vmx_handle_cr(struct vcpu *vcpu)
 {
-	uint64_t insn_length, exit_qual;
-	uint8_t crnum, dir;
-
+	uint64_t insn_length, exit_qual, regval, ectls, r;
+	uint8_t crnum, dir, reg;
+	struct vmx_msr_store *msr_store;
+	
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
-		printf("vmx_handle_cr: can't obtain instruction length\n");
+		printf("%s: can't obtain instruction length\n", __func__);
 		return (EINVAL);
 	}
 
 	if (vmx_get_exit_qualification(&exit_qual)) {
-		printf("vmx_handle_cr: can't get exit qual\n");
+		printf("%s: can't get exit qual\n", __func__);
 		return (EINVAL);
 	}
 
 	/* Low 4 bits of exit_qual represent the CR number */
 	crnum = exit_qual & 0xf;
 
+	/*
+	 * Bits 5:4 indicate the direction of operation (or special CR-modifying
+	 * instruction
+	 */
 	dir = (exit_qual & 0x30) >> 4;
+
+	/* Bits 11:8 encode the source/target register */
+	reg = (exit_qual & 0xf00) >> 8;
 
 	switch (dir) {
 	case CR_WRITE:
-		DPRINTF("vmx_handle_cr: mov to cr%d @ %llx\n",
-	    	    crnum, vcpu->vc_gueststate.vg_rip);
+		DPRINTF("%s: mov to cr%d @ %llx\n", __func__, crnum,
+		    vcpu->vc_gueststate.vg_rip);
+		if (crnum == 0 || crnum == 4) {
+			switch (reg) {
+			case 0: r = vcpu->vc_gueststate.vg_rax; break;
+			case 1: r = vcpu->vc_gueststate.vg_rcx; break;
+			case 2: r = vcpu->vc_gueststate.vg_rdx; break;
+			case 3: r = vcpu->vc_gueststate.vg_rbx; break;
+			case 4: if (vmread(VMCS_GUEST_IA32_RSP, &r)) {
+					printf("%s: unable to read guest "
+					    "RSP\n", __func__);
+					return (EINVAL);
+				}
+				break;
+			case 5: r = vcpu->vc_gueststate.vg_rbp; break;
+			case 6: r = vcpu->vc_gueststate.vg_rsi; break;
+			case 7: r = vcpu->vc_gueststate.vg_rdi; break;
+			case 8: r = vcpu->vc_gueststate.vg_r8; break;
+			case 9: r = vcpu->vc_gueststate.vg_r9; break;
+			case 10: r = vcpu->vc_gueststate.vg_r10; break;
+			case 11: r = vcpu->vc_gueststate.vg_r11; break;
+			case 12: r = vcpu->vc_gueststate.vg_r12; break;
+			case 13: r = vcpu->vc_gueststate.vg_r13; break;
+			case 14: r = vcpu->vc_gueststate.vg_r14; break;
+			case 15: r = vcpu->vc_gueststate.vg_r15; break;
+			}
+		}
+
+		if (crnum == 0) {
+			r |= CR0_NE;
+			if (vmwrite(VMCS_GUEST_IA32_CR0, r)) {
+				printf("%s: can't write guest cr0\n", __func__);
+				return (EINVAL);
+			}
+
+			if (r & CR0_PG) {
+				msr_store = (struct vmx_msr_store *)
+				    vcpu->vc_vmx_msr_exit_load_va;
+				if (msr_store[0].vms_data & EFER_LME) {
+					msr_store[0].vms_data |= EFER_LMA;
+					if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
+						printf("%s: can't read entry "
+					 	    "controls", __func__);
+						return (EINVAL);
+					}
+					ectls |= IA32_VMX_IA32E_MODE_GUEST;
+					if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
+						printf("%s: can't write entry "
+						    "controls", __func__);
+						return (EINVAL);
+					}
+				}
+			}
+		}
+
+		if (crnum == 4) {
+			regval |= CR4_VMXE;
+			if (vmwrite(VMCS_GUEST_IA32_CR4, regval)) {
+				printf("%s: can't write guest cr4\n", __func__);
+				return (EINVAL);
+			}
+		}
 		break;
 	case CR_READ:
 		DPRINTF("vmx_handle_cr: mov from cr%d @ %llx\n",
