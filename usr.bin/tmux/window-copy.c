@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.168 2017/03/08 20:05:25 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.169 2017/03/21 09:51:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2038,7 +2038,7 @@ window_copy_cursor_down(struct window_pane *wp, int scroll_only)
 		data->lastsx = ox;
 	}
 
-	if (s->sel.lineflag == LINE_SEL_RIGHT_LEFT && oy == data->sely)
+	if (s->sel.lineflag == LINE_SEL_RIGHT_LEFT && oy == data->endsely)
 		window_copy_other_end(wp);
 
 	data->cx = data->lastcx;
