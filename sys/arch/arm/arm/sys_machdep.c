@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.4 2017/03/21 21:43:11 kettenis Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -63,12 +63,46 @@ arm32_sync_icache(p, args, retval)
 	register_t *retval;
 {
 	struct arm_sync_icache_args ua;
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vm_map_entry *entry;
+	vaddr_t va;
+	vsize_t sz, chunk;
 	int error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	cpu_icache_sync_range(ua.addr, ua.len);
+	va = ua.addr;
+	sz = ua.len;
+
+	vm_map_lock_read(map);
+
+	if (va + sz <= vm_map_min(map) || va >= vm_map_max(map) ||
+	    va + sz < va)
+		goto out;
+
+	if (va < vm_map_min(map)) {
+		sz -= vm_map_min(map) - va;
+		va = vm_map_min(map);
+	} else if (va + sz >= vm_map_max(map)) {
+		sz = vm_map_max(map) - va;
+	}
+
+	chunk = PAGE_SIZE - (va & PAGE_MASK);
+	while (sz > 0) {
+		if (chunk > sz)
+			chunk = sz;
+
+		if (uvm_map_lookup_entry(map, va, &entry))
+			cpu_icache_sync_range(va, chunk);
+
+		va += chunk;
+		sz -= chunk;
+		chunk = PAGE_SIZE;
+	}
+
+out:
+	vm_map_unlock_read(map);
 
 	*retval = 0;
 	return(0);
