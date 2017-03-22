@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.2 2017/03/22 07:31:35 guenther Exp $	*/
 /*-
  * Copyright (c) 2014 The FreeBSD Foundation
  * All rights reserved.
@@ -28,15 +28,14 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-
+#include "DEFS.h"
 #include <machine/setjmp.h>
 
 ENTRY(sigsetjmp)
 	cmp	x1, #0
-	b.eq	_C_LABEL(_setjmp)
-	b	_C_LABEL(setjmp)
-//END(sigsetjmp)
+	b.eq	_HIDDEN(_setjmp)
+	b	_HIDDEN(setjmp)
+END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	/* Load the _setjmp magic */
@@ -45,9 +44,9 @@ ENTRY(siglongjmp)
 
 	/* Check the magic */
 	cmp	x2, x3
-	b.eq	_C_LABEL(_longjmp)
-	b	_C_LABEL(longjmp)
+	b.eq	_HIDDEN(_longjmp)
+	b	_HIDDEN(longjmp)
 .Lmagic:
 	.align	3
 	.quad	_JB_MAGIC__SETJMP
-//END(siglongjmp)
+END(siglongjmp)
