@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.21 2017/03/20 15:45:14 ajacoutot Exp $
+.\"	$OpenBSD: acme-client.1,v 1.22 2017/03/22 11:14:14 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: March 22 2017 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -98,17 +98,21 @@ Default challengedir.
 returns 1 on failure, 2 if the certificates didn't change (up to date),
 or 0 if certificates were changed (revoked or updated).
 .Sh EXAMPLES
+To initialize a new account and Domain key:
+.Pp
+.Dl # acme-client -vAD example.com
+.Pp
 To create and submit a new key for a single domain, assuming that the
 web server has already been configured to map the challenge directory
 as above:
 .Pp
-.Dl # acme-client -vD www.example.com
+.Dl # acme-client -vD example.com
 .Pp
 A daily
 .Xr cron 8
 job can renew the certificates:
 .Pp
-.Dl acme-client www.example.com && rcctl reload httpd
+.Dl acme-client example.com && rcctl reload httpd
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr acme-client.conf 5 ,

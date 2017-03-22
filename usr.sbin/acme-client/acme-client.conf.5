@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.8 2017/01/21 15:53:15 jmc Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.9 2017/03/22 11:14:14 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2017 $
+.Dd $Mdocdate: March 22 2017 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -134,6 +134,11 @@ that will be returned by the CA.
 It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
+This is a combination of the
+.Ar domain certificate
+and the
+.Ar domain chain certificate
+in one file, and is required by most browsers.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
@@ -151,8 +156,28 @@ domain example.com {
 	alternative names { secure.example.com www.example.com }
 	domain key "/etc/ssl/private/example.com.key"
 	domain certificate "/etc/ssl/example.com.crt"
+	domain full chain certificate "/etc/ssl/example.com.fullchain.pem"
 	sign with letsencrypt
 	challengedir "/var/www/acme"
+}
+.Ed
+.Pp
+An
+.Xr httpd.conf 5
+server declaration to use that certificate looks like this:
+.Bd -literal -offset indent
+server "example.com" {
+        alias "www.example.com"
+        alias "secure.example.com"
+        listen on $ext_addr port 80
+        listen on $ext_addr tls port 443
+        tls certificate "/etc/ssl/example.com.fullchain.pem"
+        tls key "/etc/ssl/private/example.com.key"
+        location "/.well-known/acme-challenge/*" {
+                root "/acme"
+                root strip 2
+        }
+        root "/htdocs"
 }
 .Ed
 .Sh FILES
