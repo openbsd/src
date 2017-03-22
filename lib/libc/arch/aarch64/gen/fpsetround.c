@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2017/03/22 07:32:34 guenther Exp $	*/
 /*
  * Copyright (C) 2014 Andrew Turner
  * All rights reserved.
@@ -30,10 +30,6 @@
 
 #include <sys/types.h>
 #include <ieeefp.h>
-
-#ifdef __weak_alias
-__weak_alias(_fpsetround,fpsetround);
-#endif
 
 fp_rnd
 fpsetround(fp_rnd rnd_dir)
