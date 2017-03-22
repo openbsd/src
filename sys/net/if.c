@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.491 2017/03/17 17:19:16 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.492 2017/03/22 12:45:22 mikeb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1508,7 +1508,7 @@ if_down(struct ifnet *ifp)
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags &= ~IFF_UP;
-	microtime(&ifp->if_lastchange);
+	getmicrotime(&ifp->if_lastchange);
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	}
@@ -1527,7 +1527,7 @@ if_up(struct ifnet *ifp)
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
-	microtime(&ifp->if_lastchange);
+	getmicrotime(&ifp->if_lastchange);
 
 #ifdef INET6
 	/* Userland expects the kernel to set ::1 on default lo(4). */
@@ -2158,7 +2158,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	}
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0)
-		microtime(&ifp->if_lastchange);
+		getmicrotime(&ifp->if_lastchange);
 
 	return (error);
 }
