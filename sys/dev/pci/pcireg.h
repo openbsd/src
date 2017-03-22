@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.51 2017/03/16 22:05:44 deraadt Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.52 2017/03/22 07:21:39 jsg Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -152,6 +152,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_SATCOM			0x0f
 #define	PCI_CLASS_CRYPTO			0x10
 #define	PCI_CLASS_DASP				0x11
+#define	PCI_CLASS_ACCELERATOR			0x12
+#define	PCI_CLASS_INSTRUMENTATION		0x13
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -168,6 +170,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
 #define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
 #define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
+#define	PCI_SUBCLASS_MASS_STORAGE_UFS		0x09
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -178,6 +181,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_ISDN		0x04
 #define	PCI_SUBCLASS_NETWORK_WORLDFIP		0x05
 #define	PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP	0x06
+#define	PCI_SUBCLASS_NETWORK_INFINIBAND		0x07
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
@@ -210,6 +214,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_RACEWAY		0x08
 #define	PCI_SUBCLASS_BRIDGE_STPCI		0x09
 #define	PCI_SUBCLASS_BRIDGE_INFINIBAND		0x0a
+#define	PCI_SUBCLASS_BRIDGE_AS			0x0b
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /* 0x07 communications subclasses */
@@ -228,6 +233,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
 #define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
 #define	PCI_SUBCLASS_SYSTEM_SDHC		0x05
+#define	PCI_SUBCLASS_SYSTEM_IOMMU		0x06
+#define	PCI_SUBCLASS_SYSTEM_ROOTCOMPEVENT	0x07
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
 /* 0x09 input subclasses */

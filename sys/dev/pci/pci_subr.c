@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.21 2007/02/21 13:08:22 dlg Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.22 2017/03/22 07:21:39 jsg Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ const struct pci_class pci_subclass_mass_storage[] = {
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,		},
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,		},
+	{ "UFS",		PCI_SUBCLASS_MASS_STORAGE_UFS,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -85,6 +86,7 @@ const struct pci_class pci_subclass_network[] = {
 	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
 	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,		},
 	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	},
+	{ "InfiniBand",		PCI_SUBCLASS_NETWORK_INFINIBAND,	},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -126,6 +128,7 @@ const struct pci_class pci_subclass_bridge[] = {
 	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,		},
 	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
+	{ "advanced switching",	PCI_SUBCLASS_BRIDGE_AS,			},
 	{ 0 },
 };
 
@@ -147,6 +150,8 @@ const struct pci_class pci_subclass_system[] = {
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
 	{ "PCI Hot-Plug",	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG,		},
 	{ "SD Host Controller",	PCI_SUBCLASS_SYSTEM_SDHC,		},
+	{ "IOMMU",		PCI_SUBCLASS_SYSTEM_IOMMU,		},
+	{ "root complex event",	PCI_SUBCLASS_SYSTEM_ROOTCOMPEVENT,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SYSTEM_MISC,		},
 	{ 0 },
 };
@@ -271,6 +276,10 @@ const struct pci_class pci_class[] = {
 	    pci_subclass_crypto,				},
 	{ "DASP",		PCI_CLASS_DASP,
 	    pci_subclass_dasp,					},
+	{ "accelerator",	PCI_CLASS_ACCELERATOR,
+	    NULL,						},
+	{ "instrumentation",	PCI_CLASS_INSTRUMENTATION,
+	    NULL,						},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    0,							},
 	{ 0 },
