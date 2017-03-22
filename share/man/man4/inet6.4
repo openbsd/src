@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.35 2017/03/20 23:52:05 jmc Exp $
+.\"	$OpenBSD: inet6.4,v 1.36 2017/03/22 07:06:23 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: March 22 2017 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -157,7 +157,7 @@ to effect
 matching on incoming messages.
 .Pp
 The IPv6 specification defines scoped address,
-like link-local or site-local address.
+like link-local addresses.
 A scoped address is ambiguous to the kernel,
 if it is specified without a scope identifier.
 To manipulate scoped addresses properly from userland,
@@ -166,8 +166,6 @@ A compact description of the advanced API is available in
 .Xr ip6 4 .
 If scoped addresses are specified without explicit scope,
 the kernel may raise an error.
-Note that scoped addresses are not for daily use at this moment,
-both from a specification and an implementation point of view.
 .Pp
 KAME implementation supports extended numeric IPv6 address notation
 for link-local addresses,
@@ -206,12 +204,6 @@ socket, kernel memory accesses via
 .Xr kvm 3
 and some other occasions.
 HOWEVER, users should never use the embedded form.
-For details please consult
-.Lk http://www.kame.net/dev/cvsweb2.cgi/kame/IMPLEMENTATION .
-Note that the above URL describes the situation with the latest KAME tree,
-not the
-.Ox
-tree.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
