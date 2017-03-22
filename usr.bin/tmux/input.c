@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.117 2017/02/19 07:55:11 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.118 2017/03/22 07:16:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1764,6 +1764,9 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 8:
 			gc->attr |= GRID_ATTR_HIDDEN;
 			break;
+		case 9:
+			gc->attr |= GRID_ATTR_STRIKETHROUGH;
+			break;
 		case 22:
 			gc->attr &= ~(GRID_ATTR_BRIGHT|GRID_ATTR_DIM);
 			break;
@@ -1781,6 +1784,9 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 			break;
 		case 28:
 			gc->attr &= ~GRID_ATTR_HIDDEN;
+			break;
+		case 29:
+			gc->attr &= ~GRID_ATTR_STRIKETHROUGH;
 			break;
 		case 30:
 		case 31:

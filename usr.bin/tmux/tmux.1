@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.538 2017/02/15 08:47:55 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.539 2017/03/22 07:16:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2017 $
+.Dd $Mdocdate: March 22 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2664,8 +2664,9 @@ or a comma-delimited list of one or more of:
 .Ic blink ,
 .Ic reverse ,
 .Ic hidden ,
-or
 .Ic italics ,
+or
+.Ic strikethrough
 to turn an attribute on, or an attribute prefixed with
 .Ql no
 to turn one off.
