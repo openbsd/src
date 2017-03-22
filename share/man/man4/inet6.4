@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.37 2017/03/22 17:19:32 bluhm Exp $
+.\"	$OpenBSD: inet6.4,v 1.38 2017/03/22 19:57:55 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,38 +53,26 @@ The
 .Nm
 family is comprised of the
 Internet Protocol version 6
-.Pq Tn IPv6
+.Pq IPv6
 network protocol, Internet Control
 Message Protocol version 6
-.Pq Tn ICMPv6 ,
+.Pq ICMPv6 ,
 Transmission Control Protocol
-.Pq Tn TCP ,
+.Pq TCP ,
 and User Datagram Protocol
-.Pq Tn UDP .
-.Tn TCP
-is used to support the
+.Pq UDP .
+TCP is used to support the
 .Dv SOCK_STREAM
-abstraction while
-.Tn UDP
-is used to support the
+abstraction while UDP is used to support the
 .Dv SOCK_DGRAM
 abstraction.
-Note that
-.Tn TCP
-and
-.Tn UDP
-are common to
+Note that TCP and UDP are common to
 .Xr inet 4
 and
 .Nm inet6 .
-A raw interface to
-.Tn IPv6
-is available
-by creating an Internet socket of type
+A raw interface to IPv6 is available by creating an Internet socket of type
 .Dv SOCK_RAW .
-The
-.Tn ICMPv6
-message protocol is accessible from a raw socket.
+The ICMPv6 message protocol is accessible from a raw socket.
 .\" .Pp
 .\" The 128-bit IPv6 address contains both network and host parts.
 .\" However, direct examination of addresses is discouraged.
