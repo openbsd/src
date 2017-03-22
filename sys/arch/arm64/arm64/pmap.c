@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.26 2017/03/16 20:15:07 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.27 2017/03/22 10:47:29 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -255,6 +255,27 @@ const struct kmem_pa_mode kp_lN = {
 	.kp_zero = 1,
 };
 
+const uint64_t ap_bits_user[8] = {
+	[PROT_NONE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AP(2),
+	[PROT_READ]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
+	[PROT_WRITE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
+	[PROT_WRITE|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
+	[PROT_EXEC]			= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(2),
+	[PROT_EXEC|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(3),
+	[PROT_EXEC|PROT_WRITE]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
+	[PROT_EXEC|PROT_WRITE|PROT_READ]= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
+};
+
+const uint64_t ap_bits_kern[8] = {
+	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
+	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(2),
+	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
+	[PROT_WRITE|PROT_READ]			= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
+	[PROT_EXEC]				= ATTR_UXN|ATTR_AF|ATTR_AP(2),
+	[PROT_EXEC|PROT_READ]			= ATTR_UXN|ATTR_AF|ATTR_AP(2),
+	[PROT_EXEC|PROT_WRITE]			= ATTR_UXN|ATTR_AF|ATTR_AP(0),
+	[PROT_EXEC|PROT_WRITE|PROT_READ]	= ATTR_UXN|ATTR_AF|ATTR_AP(0),
+};
 
 /*
  * This is used for pmap_kernel() mappings, they are not to be removed
@@ -1222,7 +1243,9 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 	// enable mappings for existing 'allocated' mapping in the bootstrap
 	// page tables
 	extern uint64_t *pagetable;
-	extern int *_end;
+	extern char __text_start[], _etext[];
+	extern char __rodata_start[], _erodata[];
+	extern char _end[];
 	vp2 = (void *)((long)&pagetable + kvo);
 	struct mem_region *mp;
 	ssize_t size;
@@ -1234,11 +1257,21 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 		{
 			paddr_t mappa = pa & ~(L2_SIZE-1);
 			vaddr_t mapva = mappa - kvo;
-			if (mapva < (vaddr_t)&_end)
+			int prot = PROT_READ | PROT_WRITE;
+
+			if (mapva < (vaddr_t)_end)
 				continue;
+
+			if (mapva >= (vaddr_t)__text_start &&
+			    mapva < (vaddr_t)_etext)
+				prot = PROT_READ | PROT_EXEC;
+			else if (mapva >= (vaddr_t)__rodata_start &&
+			    mapva < (vaddr_t)_erodata)
+				prot = PROT_READ;
+
 			vp2->l2[VP_IDX2(mapva)] = mappa | L2_BLOCK |
-			    ATTR_AF | ATTR_IDX(PTE_ATTR_WB) |
-			    ATTR_SH(SH_INNER);
+			    ATTR_IDX(PTE_ATTR_WB) | ATTR_SH(SH_INNER) |
+			    ap_bits_kern[prot];
 		}
 	}
 
@@ -1572,28 +1605,6 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 	if (pr == curproc->p_p)
 		cpu_icache_sync_range(va, len);
 }
-
-STATIC uint64_t ap_bits_user[8] = {
-	[PROT_NONE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AP(2),
-	[PROT_READ]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
-	[PROT_WRITE]			= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
-	[PROT_WRITE|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
-	[PROT_EXEC]			= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(2),
-	[PROT_EXEC|PROT_READ]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(3),
-	[PROT_EXEC|PROT_WRITE]		= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
-	[PROT_EXEC|PROT_WRITE|PROT_READ]= ATTR_nG|ATTR_PXN|ATTR_AF|ATTR_AP(1),
-};
-
-STATIC uint64_t ap_bits_kern[8] = {
-	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
-	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(2),
-	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
-	[PROT_WRITE|PROT_READ]			= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
-	[PROT_EXEC]				= ATTR_UXN|ATTR_AF|ATTR_AP(2),
-	[PROT_EXEC|PROT_READ]			= ATTR_UXN|ATTR_AF|ATTR_AP(2),
-	[PROT_EXEC|PROT_WRITE]			= ATTR_UXN|ATTR_AF|ATTR_AP(0),
-	[PROT_EXEC|PROT_WRITE|PROT_READ]	= ATTR_UXN|ATTR_AF|ATTR_AP(0),
-};
 
 void
 pmap_pte_insert(struct pte_desc *pted)

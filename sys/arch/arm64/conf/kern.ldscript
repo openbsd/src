@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.4 2017/01/23 14:11:21 kettenis Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.5 2017/03/22 10:47:29 kettenis Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -12,34 +12,35 @@ PHDRS
 	openbsd_randomize PT_OPENBSD_RANDOMIZE;
 }
 
-__ALIGN_SIZE = 0x1000;
+__ALIGN_SIZE = 0x200000;
 __kernel_base = @KERNEL_BASE_VIRT@;
 
 ENTRY(_start)
 SECTIONS
 {
 	. = __kernel_base;
+	PROVIDE (__text_start = .);
 	.text :
 	{
 		*(.text .text.*)
 		*(.stub)
 		*(.glue_7t) *(.glue_7)
 	} :text =0
-	PROVIDE (__etext = .);
 	PROVIDE (_etext = .);
 	PROVIDE (etext = .);
 
 	/* Move rodata to the next page, so we can nuke X and W bit on it */
 	. = ALIGN(__ALIGN_SIZE);
+	PROVIDE (__rodata_start = .);
 	.rodata :
 	{
 		*(.rodata .rodata.*)
 	} :rodata
-	PROVIDE (erodata = .);
-	_erodata = .;
+	PROVIDE (_erodata = .);
 
 	/* Move .random to the next page, so we can add W bit on it and .data */
 	. = ALIGN(__ALIGN_SIZE);
+	PROVIDE (__data_start = .);
 	.openbsd.randomdata :
 	{
 		*(.openbsd.randomdata)
@@ -52,8 +53,7 @@ SECTIONS
 	{
 		*(.sdata .sdata.*)
 	} :data
-	PROVIDE (edata = .);
-	_edata = .;
+	PROVIDE (_edata = .);
 
 	PROVIDE (__bss_start = .);
 	.sbss :
@@ -74,6 +74,6 @@ SECTIONS
 		   .bss section disappears because there are no input sections.  */
 		. = ALIGN(64 / 8);
 	} :data
+	PROVIDE (_end = .);
 	PROVIDE (end = .);
-	_end = .;
 }
