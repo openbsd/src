@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.22 2017/03/21 18:05:55 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.23 2017/03/22 13:30:11 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)man.1	8.2 (Berkeley) 1/2/94
 .\"
-.Dd $Mdocdate: March 21 2017 $
+.Dd $Mdocdate: March 22 2017 $
 .Dt MAN 1
 .Os
 .Sh NAME
@@ -190,9 +190,7 @@ For each output format, the available options are described in the
 .Xr mandoc 1
 manual.
 .It Fl S Ar subsection
-Restricts the directories that
-.Nm
-will search to those of a specific
+Only show pages for the specified
 .Xr machine 1
 architecture.
 .Ar subsection
@@ -276,13 +274,8 @@ See the
 .Xr mandoc 1
 manual for details.
 .It Fl w
-List the pathnames of the manual pages which
-.Nm
-would display for the specified
-.Ar section
-and
-.Ar name
-combination.
+List the pathnames of all matching manual pages instead of displaying
+any of them.
 .El
 .Pp
 Guidelines for writing
@@ -382,10 +375,12 @@ default man configuration file
 .El
 .Sh EXIT STATUS
 .Ex -std man
+See
+.Xr mandoc 1
+for details.
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr intro 1 ,
-.Xr whatis 1 ,
 .Xr whereis 1 ,
 .Xr intro 2 ,
 .Xr intro 3 ,
