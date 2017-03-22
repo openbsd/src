@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.36 2017/03/22 07:06:23 jmc Exp $
+.\"	$OpenBSD: inet6.4,v 1.37 2017/03/22 17:19:32 bluhm Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -124,7 +124,7 @@ Otherwise packets that have a destination address belonging to your network
 may be routed back to your provider via the default route.
 Set a reject route for your assigned prefix:
 .Pp
-.Dl # route -add net 2001:db8::/48 ::1 -reject
+.Dl # route add -net 2001:db8::/48 ::1 -reject
 .Sh ADDRESSING
 IPv6 addresses are 16 byte quantities, stored in network standard byteorder.
 The include file
