@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.59 2012/07/08 17:54:57 naddy Exp $
+# $OpenBSD: Makefile,v 1.60 2017/03/23 13:57:07 bluhm Exp $
 
 # you can update the *.ok files with: make -i | patch
 # TARGETS
@@ -27,7 +27,8 @@ IKEDELTESTS+=16 17 18 19 20 21 22 23
 IKEDELTESTS+=29 30 31 32 33 34 35 36 37 38 39 40
 IKEDELTESTS+=41 42 43 46 47
 
-SHELL=/bin/sh
+SHELL=		/bin/sh
+IPSECCTL?=	/sbin/ipsecctl
 
 .MAIN: all
 
@@ -36,7 +37,7 @@ IPSEC_TARGETS+=ipsec${n}
 
 ipsec${n}:
 	cat ${.CURDIR}/ipsec${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - | diff -u ${.CURDIR}/ipsec${n}.ok /dev/stdin
+	    ${IPSECCTL} -nv -f - | diff -u ${.CURDIR}/ipsec${n}.ok /dev/stdin
 .endfor
 
 .for n in ${TCPMD5TESTS}
@@ -44,7 +45,7 @@ TCPMD5_TARGETS+=tcpmd5${n}
 
 tcpmd5${n}:
 	cat ${.CURDIR}/tcpmd5${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nkv -f - | diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
+	    ${IPSECCTL} -nkv -f - | diff -u ${.CURDIR}/tcpmd5${n}.ok /dev/stdin
 .endfor
 
 .for n in ${SATESTS}
@@ -52,7 +53,7 @@ SA_TARGETS+=sa${n}
 
 sa${n}:
 	cat ${.CURDIR}/sa${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -knv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
+	    ${IPSECCTL} -knv -f - | diff -u ${.CURDIR}/sa${n}.ok /dev/stdin
 .endfor
 
 .for n in ${SAFAIL}
@@ -60,7 +61,7 @@ SAFAIL_TARGETS+=safail${n}
 
 safail${n}:
 	cat ${.CURDIR}/safail${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/safail${n}.ok /dev/stdin
+	    ${IPSECCTL} -nv -f - 2>&1 | diff -u ${.CURDIR}/safail${n}.ok /dev/stdin
 .endfor
 
 .for n in ${IPSECFAIL}
@@ -68,7 +69,7 @@ IPSECFAIL_TARGETS+=ipsecfail${n}
 
 ipsecfail${n}:
 	cat ${.CURDIR}/ipsecfail${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/ipsecfail${n}.ok /dev/stdin
+	    ${IPSECCTL} -nv -f - 2>&1 | diff -u ${.CURDIR}/ipsecfail${n}.ok /dev/stdin
 .endfor
 
 .for n in ${IKETESTS}
@@ -76,7 +77,7 @@ IKE_TARGETS+=ike${n}
 
 ike${n}:
 	cat ${.CURDIR}/ike${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - | diff -u ${.CURDIR}/ike${n}.ok /dev/stdin
+	    ${IPSECCTL} -nv -f - | diff -u ${.CURDIR}/ike${n}.ok /dev/stdin
 .endfor
 
 .for n in ${IKEFAIL}
@@ -84,7 +85,7 @@ IKEFAIL_TARGETS+=ikefail${n}
 
 ikefail${n}:
 	cat ${.CURDIR}/ikefail${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -nv -f - 2>&1 | diff -u ${.CURDIR}/ikefail${n}.ok /dev/stdin
+	    ${IPSECCTL} -nv -f - 2>&1 | diff -u ${.CURDIR}/ikefail${n}.ok /dev/stdin
 .endfor
 
 .for n in ${IKEDELTESTS}
@@ -92,7 +93,7 @@ IKEDEL_TARGETS+=ikedel${n}
 
 ikedel${n}:
 	cat ${.CURDIR}/ikedel${n}.in | sed -e 's,DIR,${.CURDIR},g' | \
-	    ipsecctl -dnv -f - | diff -u ${.CURDIR}/ikedel${n}.ok /dev/stdin
+	    ${IPSECCTL} -dnv -f - | diff -u ${.CURDIR}/ikedel${n}.ok /dev/stdin
 .endfor
 
 ipsec:		${IPSEC_TARGETS}
