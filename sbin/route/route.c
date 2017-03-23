@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.199 2017/03/21 06:23:48 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.200 2017/03/23 13:28:25 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -2172,5 +2172,5 @@ print_rtsearch(struct sockaddr_rtsearch *rtsearch)
 		return;
 	}
 
-	printf("%*s\n", (int)srclen, src);
+	printf("%.*s\n", (int)srclen, src);
 }
