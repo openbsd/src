@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.33 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: main.c,v 1.34 2017/03/23 12:58:28 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,6 +85,9 @@ main(int argc, char *argv[])
 			goto usage;
 		}
 
+	if (getuid() != 0)
+		errx(EXIT_FAILURE, "must be run as root");
+
 	/* parse config file */
 	if ((conf = parse_config(conffile, popts)) == NULL)
 		exit(EXIT_FAILURE);
@@ -99,9 +102,6 @@ main(int argc, char *argv[])
 
 	argc--;
 	argv++;
-
-	if (getuid() != 0)
-		errx(EXIT_FAILURE, "must be run as root");
 
 	if (domain->cert != NULL) {
 		if ((certdir = dirname(domain->cert)) != NULL) {
