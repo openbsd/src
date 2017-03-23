@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.7 2017/03/23 06:59:31 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.8 2017/03/23 07:59:41 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -35,13 +35,21 @@
 #define MC_RATE_MASK 0xf
 
 #define NVRAM_CENTURY 0x32
+#define NVRAM_MEMSIZE_LO 0x34
+#define NVRAM_MEMSIZE_HI 0x35
+#define NVRAM_HIMEMSIZE_LO 0x5B
+#define NVRAM_HIMEMSIZE_MID 0x5C
+#define NVRAM_HIMEMSIZE_HI 0x5D
+#define NVRAM_SMP_COUNT 0x5F
+
+#define NVRAM_SIZE 0x60
 
 #define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
 struct mc146818 {
 	time_t now;
 	uint8_t idx;
-	uint8_t regs[MC_NREGS + MC_NVRAM_SIZE];
+	uint8_t regs[NVRAM_SIZE];
 	uint32_t vm_id;
 	struct event sec;
 	struct timeval sec_tv;
@@ -120,14 +128,28 @@ rtc_fireper(int fd, short type, void *arg)
  *
  * Parameters:
  *  vm_id: VM ID to which this RTC belongs
+ *  memlo: size of memory in bytes between 16MB .. 4GB
+ *  memhi: size of memory in bytes after 4GB
  */
 void
-mc146818_init(uint32_t vm_id)
+mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 {
 	memset(&rtc, 0, sizeof(rtc));
 	time(&rtc.now);
 
 	rtc.regs[MC_REGB] = MC_REGB_24HR;
+
+	memlo /= 65536;
+	memhi /= 65536;
+
+	rtc.regs[NVRAM_MEMSIZE_HI] = (memlo >> 8) & 0xFF;
+	rtc.regs[NVRAM_MEMSIZE_LO] = memlo & 0xFF;
+	rtc.regs[NVRAM_HIMEMSIZE_HI] = (memhi >> 16) & 0xFF;
+	rtc.regs[NVRAM_HIMEMSIZE_MID] = (memhi >> 8) & 0xFF;
+	rtc.regs[NVRAM_HIMEMSIZE_LO] = memhi & 0xFF;
+
+	rtc.regs[NVRAM_SMP_COUNT] = 0;
+	
 	rtc_updateregs();
 	rtc.vm_id = vm_id;
 
@@ -230,8 +252,12 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	uint32_t data = vei->vei.vei_data & 0xFF;
 
 	if (port == IO_RTC) {
+		/* Discard NMI bit */
+		if (data & 0x80)
+			data &= ~0x80;
+
 		if (dir == 0) {
-			if (data <= (MC_NREGS + MC_NVRAM_SIZE))
+			if (data < (NVRAM_SIZE))
 				rtc.idx = data;
 			else {
 				log_warnx("%s: mc146818 bogus register 0x%x",

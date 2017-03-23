@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.4 2017/03/21 03:29:57 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.5 2017/03/23 07:59:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -373,6 +373,10 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
  *
  * Sets up the guest physical memory ranges that the VM can access.
  *
+ * Parameters:
+ *  vcp: VM create parameters describing the VM whose memory map
+ *       is being created
+ *
  * Return values:
  *  nothing
  */
@@ -526,6 +530,15 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	int i;
+	uint64_t memlo, memhi;
+
+	/* Calculate memory size for NVRAM registers */
+	memlo = memhi = 0;
+	if (vcp->vcp_nmemranges > 2)
+		memlo = vcp->vcp_memranges[2].vmr_size - 15 * 0x100000;
+
+	if (vcp->vcp_nmemranges > 3)
+		memhi = vcp->vcp_memranges[3].vmr_size;
 
 	/* Reset the IO port map */
 	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
@@ -538,7 +551,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	ioports_map[TIMER_BASE + TIMER_CNTR2] = vcpu_exit_i8253;
 
 	/* Init mc146818 RTC */
-	mc146818_init(vcp->vcp_id);
+	mc146818_init(vcp->vcp_id, memlo, memhi);
 	ioports_map[IO_RTC] = vcpu_exit_mc146818;
 	ioports_map[IO_RTC + 1] = vcpu_exit_mc146818;
 

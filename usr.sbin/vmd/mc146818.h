@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.h,v 1.2 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: mc146818.h,v 1.3 2017/03/23 07:59:41 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -15,6 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-void mc146818_init(uint32_t);
+void mc146818_init(uint32_t, uint64_t, uint64_t);
 uint8_t vcpu_exit_mc146818(struct vm_run_params *vrp);
 void dump_mc146818(void);
