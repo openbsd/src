@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.7 2017/03/19 03:42:38 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.8 2017/03/23 06:56:33 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include "proc.h"
 #include "i8259.h"
+#include "vmm.h"
 
 struct i8259 {
 	uint8_t irr;
@@ -328,14 +329,11 @@ i8259_write_datareg(uint8_t n, uint8_t data)
 static void
 i8259_specific_eoi(uint8_t n, uint8_t data)
 {
-	uint8_t oldisr;
-
 	if (!(pics[n].isr & (1 << (data & 0x7)))) {
 		log_warnx("%s: %s pic specific eoi irq %d while not in"
 		    " service", __func__, i8259_pic_name(n), (data & 0x7));
 	}
 
-	oldisr = pics[n].isr;
 	pics[n].isr &= ~(1 << (data & 0x7));
 }
 
@@ -635,7 +633,7 @@ vcpu_exit_i8259(struct vm_run_params *vrp)
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		i8259_io_write(vei);
 	} else {
-		vei->vei.vei_data = i8259_io_read(vei);
+		set_return_data(vei, i8259_io_read(vei));
 	}
 
 	return (0xFF);
