@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.17 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: mkdir.2,v 1.18 2017/03/23 18:40:01 millert Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 23 2017 $
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -101,7 +101,9 @@ bytes.
 .It Bq Er ENOENT
 A component of the path prefix does not exist.
 .It Bq Er EACCES
-Search permission is denied for a component of the path prefix.
+Search permission is denied for a component of the path prefix,
+or write permission is denied
+on the parent directory of the directory to be created.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EROFS
