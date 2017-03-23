@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdos.c,v 1.10 2016/12/17 16:12:15 krw Exp $	*/
+/*	$OpenBSD: msdos.c,v 1.11 2017/03/23 18:16:06 patrick Exp $	*/
 /*	$NetBSD: msdos.c,v 1.16 2016/01/30 09:59:27 mlelstv Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ msdos_prep_opts(fsinfo_t *fsopts)
 	.minimum = _min,						\
 	.maximum = sizeof(_type) == 1 ? 0xff :				\
 	    (sizeof(_type) == 2 ? 0xffff :				\
-	    (sizeof(_type) == 4 ? 0xffffffff : 0xffffffffffffffffLL)),	\
+	    (sizeof(_type) == 4 ? 0xffffffff : 0x7fffffffffffffffLL)),	\
 },
 ALLOPTS
 #undef AOPT
