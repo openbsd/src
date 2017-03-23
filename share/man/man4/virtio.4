@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.11 2017/01/26 01:19:17 jsg Exp $
+.\"     $OpenBSD: virtio.4,v 1.12 2017/03/23 08:18:37 mlarkin Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2017 $
+.Dd $Mdocdate: March 23 2017 $
 .Dt VIRTIO 4
 .Os
 .Sh NAME
@@ -28,7 +28,8 @@ The
 .Nm
 driver provides support service for paravirtualized devices using the VirtIO
 protocol.
-Such devices are provided by bhyve, KVM, QEMU, and VirtualBox.
+Such devices are provided by bhyve, KVM, QEMU, VirtualBox, and
+.Xr vmm 4
 .Pp
 Currently there are drivers for the following
 .Nm
@@ -45,6 +46,9 @@ VirtIO memory ballooning driver
 VirtIO random number device
 .It Xr vioscsi 4
 VirtIO SCSI adapter
+.It Xr vmmci 4
+.Xr vmm 4
+control interface (OpenBSD guest VMs only)
 .El
 .Pp
 The
