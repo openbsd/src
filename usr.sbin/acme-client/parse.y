@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2017/03/23 12:59:32 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1032,10 +1032,6 @@ conf_check_file(char *s, int dontstat)
 		return (1);
 	if (stat(s, &st)) {
 		warn("cannot stat %s", s);
-		return (0);
-	}
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		warnx("%s: owner not root or current user", s);
 		return (0);
 	}
 	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
