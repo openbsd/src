@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.6 2017/03/19 23:10:23 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.7 2017/03/23 06:59:31 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -47,7 +47,6 @@ struct mc146818 {
 	struct timeval sec_tv;
 	struct event per;
 	struct timeval per_tv;
-	uint8_t irq_blocked;
 };
 
 struct mc146818 rtc;
@@ -109,11 +108,7 @@ rtc_fireper(int fd, short type, void *arg)
 {
 	rtc.regs[MC_REGC] |= MC_REGC_PF;
 
-	if (!rtc.irq_blocked)
-		vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
-
-	/* Next irq is blocked until read of REGC */
-	rtc.irq_blocked = 1;
+	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
 
 	evtimer_add(&rtc.per, &rtc.per_tv);
 }
@@ -138,6 +133,8 @@ mc146818_init(uint32_t vm_id)
 
 	timerclear(&rtc.sec_tv);
 	rtc.sec_tv.tv_sec = 1;
+
+	timerclear(&rtc.per_tv);
 
 	evtimer_set(&rtc.sec, rtc_fire1, NULL);
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
@@ -230,7 +227,7 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 	uint16_t port = vei->vei.vei_port;
 	uint8_t dir = vei->vei.vei_dir;
-	uint32_t data = vei->vei.vei_data;
+	uint32_t data = vei->vei.vei_data & 0xFF;
 
 	if (port == IO_RTC) {
 		if (dir == 0) {
@@ -244,7 +241,7 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 		} else {
 			log_warnx("%s: mc146818 illegal read from port 0x%x",
 			    __func__, port);
-			vei->vei.vei_data = 0xFF;
+			set_return_data(vei, 0xFF);
 		}
 	} else if (port == IO_RTC + 1) {
 		if (dir == 0) {
@@ -271,11 +268,10 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 			rtc.idx = MC_REGD;
 		} else {
 			data = rtc.regs[rtc.idx];
-			vei->vei.vei_data = data;
+			set_return_data(vei, data);
 
 			if (rtc.idx == MC_REGC) {
 				/* Reset IRQ state */
-				rtc.irq_blocked = 0;
 				rtc.regs[MC_REGC] &= ~MC_REGC_PF;
 			}
 			rtc.idx = MC_REGD;
