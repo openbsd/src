@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.27 2016/12/18 08:00:20 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.28 2017/03/23 04:10:10 tb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -94,8 +94,10 @@ ieee80211_tkip_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 void
 ieee80211_tkip_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
 {
-	if (k->k_priv != NULL)
-		free(k->k_priv, M_DEVBUF, 0);
+	if (k->k_priv != NULL) {
+		explicit_bzero(k->k_priv, sizeof(struct ieee80211_tkip_ctx));
+		free(k->k_priv, M_DEVBUF, sizeof(struct ieee80211_tkip_ctx));
+	}
 	k->k_priv = NULL;
 }
 

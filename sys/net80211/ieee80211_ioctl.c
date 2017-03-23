@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.51 2017/03/21 07:59:54 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.52 2017/03/23 04:10:10 tb Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ ieee80211_disable_wep(struct ieee80211com *ic)
 		k = &ic->ic_nw_keys[i];
 		if (k->k_cipher != IEEE80211_CIPHER_NONE)
 			(*ic->ic_delete_key)(ic, NULL, k);
-		memset(k, 0, sizeof(*k));
+		explicit_bzero(k, sizeof(*k));
 	}
 	ic->ic_flags &= ~IEEE80211_F_WEPON;
 }
@@ -187,7 +187,7 @@ void
 ieee80211_disable_rsn(struct ieee80211com *ic)
 {
 	ic->ic_flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
-	memset(ic->ic_psk, 0, sizeof(ic->ic_psk));
+	explicit_bzero(ic->ic_psk, sizeof(ic->ic_psk));
 	ic->ic_rsnprotos = 0;
 	ic->ic_rsnakms = 0;
 	ic->ic_rsngroupcipher = 0;
