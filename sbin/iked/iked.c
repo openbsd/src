@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.33 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.34 2017/03/23 05:29:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -141,6 +141,9 @@ main(int argc, char *argv[])
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
+
+	if (opts & IKED_OPT_NOACTION)
+		ps->ps_noaction = 1;
 
 	if (!debug && daemon(0, 0) == -1)
 		err(1, "failed to daemonize");
