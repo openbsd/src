@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.2 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: i8253.h,v 1.3 2017/03/23 07:02:47 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -21,6 +21,11 @@
 #define TIMER_BASE	0x40	/* 8253 timer 0 */
 #define TIMER_CTRL	0x43	/* 8253 timer control */
 #define NS_PER_TICK	(1000000000 / TIMER_FREQ)
+#define TIMER_RB_COUNT	0x20	/* read back count value */
+#define TIMER_RB_STATUS	0x10	/* read back status */
+#define TIMER_RB_C0	0x2	/* read back channel 0 */
+#define TIMER_RB_C1	0x4	/* read back channel 1 */
+#define TIMER_RB_C2	0x8	/* read back channel 1 */
 
 /* i8253 registers */
 struct i8253_counter {
@@ -31,6 +36,7 @@ struct i8253_counter {
 	uint8_t last_r;		/* last read byte (MSB/LSB) */
 	uint8_t last_w;		/* last written byte (MSB/LSB) */
 	uint8_t mode;		/* counter mode */
+	uint8_t rbs;		/* channel is in readback status mode */
 	struct event timer;	/* timer event for this counter */
 };
 
@@ -38,3 +44,4 @@ void i8253_init(uint32_t);
 void i8253_reset(uint8_t);
 void i8253_fire(int, short, void *);
 uint8_t vcpu_exit_i8253(struct vm_run_params *);
+void i8253_do_readback(uint32_t);
