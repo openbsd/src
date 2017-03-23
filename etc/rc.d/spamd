@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: spamd,v 1.7 2015/07/15 13:50:54 ajacoutot Exp $
+# $OpenBSD: spamd,v 1.8 2017/03/23 10:10:54 ajacoutot Exp $
 
 daemon="/usr/libexec/spamd"
 
@@ -10,17 +10,15 @@ pexp="spamd: \[priv\].*"
 rc_reload=NO
 
 rc_pre() {
-	[ X"${spamd_black}" != X"NO" ] && \
+	if [ X"${spamd_black}" != X"NO" ]; then
 		daemon_flags="-b ${daemon_flags}"
-	return 0
+		spamd_setup_flags="-b"
+	fi
 }
 
 rc_start() {
 	${rcexec} "${daemon} ${daemon_flags}" || return 1
-	spamd_setup_flags="-D"
-	[ X"${spamd_black}" != X"NO" ] && \
-		spamd_setup_flags="-b ${spamd_setup_flags}"
-	/usr/libexec/spamd-setup ${spamd_setup_flags}
+	/usr/libexec/spamd-setup -D ${spamd_setup_flags}
 }
 
 rc_cmd $1
