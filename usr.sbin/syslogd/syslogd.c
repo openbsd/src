@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.230 2017/03/16 23:55:19 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.231 2017/03/24 22:13:00 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -506,47 +506,35 @@ main(int argc, char *argv[])
 	}
 
 	if (socket_bind("udp", NULL, "syslog", SecureMode,
-	    &fd_udp, &fd_udp6) == -1) {
+	    &fd_udp, &fd_udp6) == -1)
 		logerrorx("socket bind *");
-		if (!Debug)
-			die(0);
-	}
 	if ((fd_bind = reallocarray(NULL, nbind, sizeof(*fd_bind))) == NULL)
 		err(1, "bind fd");
 	for (i = 0; i < nbind; i++) {
 		if (socket_bind("udp", bind_host[i], bind_port[i], 0,
-		    &fd_bind[i], &fd_bind[i]) == -1) {
+		    &fd_bind[i], &fd_bind[i]) == -1)
 			logerrorx("socket bind udp");
-			if (!Debug)
-				die(0);
-		}
 	}
 	if ((fd_listen = reallocarray(NULL, nlisten, sizeof(*fd_listen)))
 	    == NULL)
 		err(1, "listen fd");
 	for (i = 0; i < nlisten; i++) {
 		if (socket_bind("tcp", listen_host[i], listen_port[i], 0,
-		    &fd_listen[i], &fd_listen[i]) == -1) {
+		    &fd_listen[i], &fd_listen[i]) == -1)
 			logerrorx("socket listen tcp");
-			if (!Debug)
-				die(0);
-		}
 	}
 	fd_tls = -1;
 	if (tls_host && socket_bind("tls", tls_host, tls_port, 0,
-	    &fd_tls, &fd_tls) == -1) {
+	    &fd_tls, &fd_tls) == -1)
 		logerrorx("socket listen tls");
-		if (!Debug)
-			die(0);
-	}
 
 	if ((fd_unix = reallocarray(NULL, nunix, sizeof(*fd_unix))) == NULL)
 		err(1, "malloc unix");
 	for (i = 0; i < nunix; i++) {
 		fd_unix[i] = unix_socket(path_unix[i], SOCK_DGRAM, 0666);
 		if (fd_unix[i] == -1) {
-			if (i == 0 && !Debug)
-				die(0);
+			if (i == 0)
+				logerrorx("log socket failed");
 			continue;
 		}
 		double_sockbuf(fd_unix[i], SO_RCVBUF);
@@ -554,29 +542,28 @@ main(int argc, char *argv[])
 
 	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1) {
 		logerror("socketpair");
-		die(0);
+		fd_sendsys = -1;
+	} else {
+		double_sockbuf(pair[0], SO_RCVBUF);
+		double_sockbuf(pair[1], SO_SNDBUF);
+		fd_sendsys = pair[0];
 	}
-	double_sockbuf(pair[0], SO_RCVBUF);
-	double_sockbuf(pair[1], SO_SNDBUF);
-	fd_sendsys = pair[0];
 
 	fd_ctlsock = fd_ctlconn = -1;
 	if (path_ctlsock != NULL) {
 		fd_ctlsock = unix_socket(path_ctlsock, SOCK_STREAM, 0600);
 		if (fd_ctlsock == -1) {
 			logdebug("can't open %s (%d)\n", path_ctlsock, errno);
-			if (!Debug)
-				die(0);
 		} else {
 			if (listen(fd_ctlsock, 5) == -1) {
 				logerror("ctlsock listen");
-				die(0);
+				close(fd_ctlsock);
+				fd_ctlsock = -1;
 			}
 		}
 	}
 
-	fd_klog = open(_PATH_KLOG, O_RDONLY, 0);
-	if (fd_klog == -1) {
+	if ((fd_klog = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
 		logdebug("can't open %s (%d)\n", _PATH_KLOG, errno);
 	} else {
 		if (ioctl(fd_klog, LIOCSFD, &pair[1]) == -1)
@@ -916,7 +903,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 		    "proto %s, host %s, port %s: %s",
 		    proto, host ? host : "*", port, gai_strerror(error));
 		logerrorx(ebuf);
-		die(0);
+		return (-1);
 	}
 
 	for (res = res0; res; res = res->ai_next) {
@@ -3014,7 +3001,7 @@ unix_socket(char *path, int type, mode_t mode)
 	    sizeof(s_un.sun_path)) {
 		snprintf(ebuf, sizeof(ebuf), "socket path too long: %s", path);
 		logerrorx(ebuf);
-		die(0);
+		return (-1);
 	}
 
 	if ((fd = socket(AF_UNIX, type, 0)) == -1) {
