@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.76 2017/03/24 20:27:27 patrick Exp $
+#	$OpenBSD: RAMDISK,v 1.77 2017/03/24 20:31:58 patrick Exp $
 
 machine		armv7 arm
 
@@ -142,6 +142,7 @@ mvsysctrl*	at fdt?
 mvmbus*		at fdt?
 mvxhci*		at fdt?
 usb*		at mvxhci?
+mvahci*		at fdt?
 
 crosec*		at iic?
 wskbd*		at crosec? mux 1
