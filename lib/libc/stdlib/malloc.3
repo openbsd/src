@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.105 2017/03/17 18:33:04 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.106 2017/03/24 16:17:50 otto Exp $
 .\"
-.Dd $Mdocdate: March 17 2017 $
+.Dd $Mdocdate: March 24 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -447,6 +447,13 @@ A byte after the requested size has been overwritten,
 indicating a heap overflow.
 The offset at which corruption was detected is printed before the @,
 and the requested length of the allocation after the @.
+.It Dq recorded old size oldsize != size
+.Fn recallocarray
+has detected that the given old size does not equal the recorded size in its
+meta data.
+Enabling option C allows
+.Fn recallocarray
+to catch more of these cases.
 .It Dq recursive call
 An attempt was made to call recursively into these functions, i.e., from a
 signal handler.
@@ -462,12 +469,6 @@ functions nor utilize any other functions which may call
 routines).
 .It Dq unknown char in MALLOC_OPTIONS
 We found something we didn't understand.
-.It Dq malloc cache overflow/underflow
-The internal malloc page cache has been corrupted.
-.It Dq malloc free slot lost
-The internal malloc page cache has been corrupted.
-.It Dq guard size
-An inconsistent guard size was detected.
 .It any other error
 .Fn malloc
 detected an internal error;
