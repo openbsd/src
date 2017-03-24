@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.255 2017/03/22 07:16:54 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.256 2017/03/24 14:45:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1228,11 +1228,7 @@ tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_rawstring(struct tty *tty, const struct tty_ctx *ctx)
 {
-	u_int	 i;
-	u_char	*str = ctx->ptr;
-
-	for (i = 0; i < ctx->num; i++)
-		tty_putc(tty, str[i]);
+	tty_add(tty, ctx->ptr, ctx->num);
 	tty_invalidate(tty);
 }
 
