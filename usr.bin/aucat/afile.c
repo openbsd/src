@@ -534,7 +534,7 @@ afile_aiff_readhdr(struct afile *f)
 	unsigned int csize, rsize, nfr = 0, pos = 0, offs;
 	int comm_done = 0, comp;
 
-	if (!afile_readhdr(f, &form, sizeof(struct wav_riff)))
+	if (!afile_readhdr(f, &form, sizeof(struct aiff_form)))
 		return 0;
 	if (memcmp(&form.id, &aiff_id_form, 4) != 0) {
 		log_puts(f->path);
@@ -656,7 +656,7 @@ afile_au_readhdr(struct afile *f)
 	struct au_hdr hdr;
 	unsigned int fmt;
 
-	if (!afile_readhdr(f, &hdr, sizeof(struct wav_riff)))
+	if (!afile_readhdr(f, &hdr, sizeof(struct au_hdr)))
 		return 0;
 	if (memcmp(&hdr.id, &au_id, 4) != 0) {
 		log_puts(f->path);
