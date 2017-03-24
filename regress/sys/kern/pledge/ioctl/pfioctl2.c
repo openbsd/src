@@ -1,6 +1,6 @@
-/*	$OpenBSD: pfioctl2.c,v 1.1 2017/01/26 04:58:08 benno Exp $ */
+/*	$OpenBSD: pfioctl2.c,v 1.2 2017/03/24 21:18:00 benno Exp $ */
 /*
- * Copyright (c) 2016 Sebastian Benoit <benoit@openbsd.org>
+ * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
