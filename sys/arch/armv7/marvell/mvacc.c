@@ -1,4 +1,4 @@
-/* $OpenBSD: mvacc.c,v 1.2 2016/10/07 07:25:58 patrick Exp $ */
+/* $OpenBSD: mvacc.c,v 1.3 2017/03/24 15:22:45 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,9 +42,9 @@
 
 static const uint32_t mvacc_cpu_freqs[] = {
 	0, 0, 0, 0,
-	1066000, 0, 0, 0,
-	1322000, 0, 0, 0,
-	1600000,
+	1066000000, 0, 0, 0,
+	1322000000, 0, 0, 0,
+	1600000000,
 };
 
 static const int mvacc_l2clk_ratios[32][2] = {
@@ -141,7 +141,7 @@ mvacc_get_frequency(void *cookie, uint32_t *cells)
 	switch (cells[0])
 	{
 	case 0: /* TCLK */
-		return tclk ? 200000 : 250000;
+		return tclk ? 200000000 : 250000000;
 	case 1: /* CPUCLK */
 		return mvacc_cpu_freqs[cpu];
 	case 2: /* L2CLK */
