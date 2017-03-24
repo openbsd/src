@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.12 2017/03/16 12:14:37 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.13 2017/03/24 16:24:36 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 				break;
 			left -= wret;
 			if (iov != localiov) {
-				bcopy(iov, localiov,
+				memmove(localiov, iov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
@@ -141,7 +141,7 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 			}
 			logdebug("ttymsg delayed write\n");
 			if (iov != localiov) {
-				bcopy(iov, localiov,
+				memmove(localiov, iov,
 				    iovcnt * sizeof(struct iovec));
 				iov = localiov;
 			}
