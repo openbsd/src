@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.9 2017/03/24 09:11:49 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.10 2017/03/24 11:08:43 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -556,7 +556,7 @@ static void
 i8259_io_write(union vm_exit *vei)
 {
 	uint16_t port = vei->vei.vei_port;
-	uint8_t data = get_input_data(vei);
+	uint8_t data = vei->vei.vei_data;
 	uint8_t n = 0;
 
 	switch (port) {
