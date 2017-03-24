@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.123 2017/03/24 08:02:02 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.124 2017/03/24 08:52:53 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4073,14 +4073,20 @@ vmx_handle_inout(struct vcpu *vcpu)
 	case IO_ICU2 ... IO_ICU2 + 1:
 	case 0x3f8 ... 0x3ff:
 	case 0xcf8:
-	case 0xcfc:
+	case 0xcfc ... 0xcff:
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
 		ret = EAGAIN;
 		break;
 	default:
 		/* Read from unsupported ports returns FFs */
-		if (vcpu->vc_exit.vei.vei_dir == 1)
-			vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
+		if (vcpu->vc_exit.vei.vei_dir == 1) {
+			if (vcpu->vc_exit.vei.vei_size == 4)
+				vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
+			else if (vcpu->vc_exit.vei.vei_size == 2)
+				vcpu->vc_gueststate.vg_rax |= 0xFFFF;
+			else if (vcpu->vc_exit.vei.vei_size == 1)
+				vcpu->vc_gueststate.vg_rax |= 0xFF;
+		}
 		ret = 0;
 	}
 
