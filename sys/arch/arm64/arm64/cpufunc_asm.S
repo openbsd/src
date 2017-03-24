@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.2 2017/03/12 21:05:25 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.3 2017/03/24 19:48:01 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -109,6 +109,14 @@ ENTRY(cpu_tlb_flush_all_asid)
 	isb
 	ret
 END(cpu_tlb_flush_all_asid)
+
+ENTRY(cpu_tlb_flush_asid_all)
+	dsb	ishst
+	tlbi	aside1is, x0
+	dsb	ish
+	isb
+	ret
+END(cpu_tlb_flush_asid_all)
 
 /*
  * void cpu_dcache_wb_range(vaddr_t, vsize_t)

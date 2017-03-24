@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.2 2017/03/24 19:48:01 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -65,17 +65,13 @@ ENTRY(cpu_switchto)
 	strb	w5, [x1, #(P_STAT) ] 		// Mark new on cpu
 	ldr 	x5, [x1, #(P_ADDR) ]		// load new pcb
 	str	x5, [x2, #(CI_CURPCB)]
-	ldr	x20, [x5, #(PCB_PAGEDIR)]
 	str	x1, [x2, #(CI_CURPROC)]
 
 	ldr	x4, [x5, #(PCB_TCB)]
 	msr	tpidr_el0, x4			// load user tls
 
 	ldr 	x19, [x5, #(PCB_SP) ]		// load new stack pointer
-        //msr	ttbr0_el1, x20
 	mov	x0, x1
-	mov	x1, x20
-	mov	x2, x5
 	bl	pmap_setttb
 	mov	x3, x19
 

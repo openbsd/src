@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc.h,v 1.1 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: cpufunc.h,v 1.2 2017/03/24 19:48:01 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -43,6 +43,7 @@ void cpu_setttb(vaddr_t);
 void cpu_tlb_flush(void);
 void cpu_tlb_flush_asid(vaddr_t);
 void cpu_tlb_flush_all_asid(vaddr_t);
+void cpu_tlb_flush_asid_all(vaddr_t);
 void cpu_icache_sync_range(vaddr_t, vsize_t);
 void cpu_idcache_wbinv_range(vaddr_t, vsize_t);
 void cpu_dcache_wbinv_range(vaddr_t, vsize_t);

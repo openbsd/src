@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 2017/02/19 19:42:40 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2017/03/24 19:48:01 kettenis Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -63,7 +63,6 @@ struct pcb
 member PCB_ONFAULT pcb_onfault
 member PCB_FLAGS pcb_flags
 member PCB_SP pcb_sp
-member PCB_PAGEDIR pcb_pagedir
 member PCB_TCB pcb_tcb
 
 struct trapframe
