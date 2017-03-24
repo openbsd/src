@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.13 2017/03/23 08:20:18 mlarkin Exp $
+.\"     $OpenBSD: virtio.4,v 1.14 2017/03/24 07:55:28 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2017 $
+.Dd $Mdocdate: March 24 2017 $
 .Dt VIRTIO 4
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@ The
 driver provides support service for paravirtualized devices using the VirtIO
 protocol.
 Such devices are provided by bhyve, KVM, QEMU, VirtualBox, and
-.Xr vmm 4
+.Xr vmm 4 .
 .Pp
 Currently there are drivers for the following
 .Nm
@@ -40,6 +40,8 @@ devices:
 VirtIO network device
 .It Xr vioblk 4
 VirtIO disk
+.It Xr viocon 4
+VirtIO console device
 .It Xr viomb 4
 VirtIO memory ballooning driver
 .It Xr viornd 4
