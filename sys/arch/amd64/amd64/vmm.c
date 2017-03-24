@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.124 2017/03/24 08:52:53 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.125 2017/03/24 09:06:02 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3377,7 +3377,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	uint64_t exit_reason, cr3, vmcs_ptr, insn_error;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
-	uint64_t eii, procbased;
+	uint64_t eii, procbased, int_st;
 	uint16_t irq;
 
 	resume = 0;
@@ -3404,7 +3404,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		case VMX_EXIT_EPT_VIOLATION:
 			break;
 		case VMX_EXIT_CPUID:
-			break;	
+			break;
 #ifdef VMM_DEBUG
 		case VMX_EXIT_TRIPLE_FAULT:
 			DPRINTF("%s: vm %d vcpu %d triple fault\n",
@@ -3481,24 +3481,27 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF) {
-			if (!vcpu->vc_irqready) {
-				printf("vcpu_run_vmx: error - irq injected"
-				    " while not ready\n");
+			if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
+				printf("%s: can't get interruptibility state\n",
+				    __func__);
 				ret = EINVAL;
 				break;
 			}
 
-			eii = (irq & 0xFF);
-			eii |= (1ULL << 31);	/* Valid */
-			eii |= (0ULL << 8);	/* Hardware Interrupt */
-			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
-				printf("vcpu_run_vmx: can't vector "
-				    "interrupt to guest\n");
-				ret = EINVAL;
-				break;
-			}
+			/* Interruptbility state 0x3 covers NMIs and STI */
+			if (!(int_st & 0x3) && vcpu->vc_irqready) {
+				eii = (irq & 0xFF);
+				eii |= (1ULL << 31);	/* Valid */
+				eii |= (0ULL << 8);	/* Hardware Interrupt */
+				if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+					printf("vcpu_run_vmx: can't vector "
+					    "interrupt to guest\n");
+					ret = EINVAL;
+					break;
+				}
 
-			irq = 0xFFFF;
+				irq = 0xFFFF;
+			}
 		} else if (!vcpu->vc_intr) {
 			/*
 			 * Disable window exiting
@@ -3774,7 +3777,7 @@ vmx_get_exit_info(uint64_t *rip, uint64_t *exit_reason)
 int
 vmx_handle_exit(struct vcpu *vcpu)
 {
-	uint64_t exit_reason, rflags;
+	uint64_t exit_reason, rflags, istate;
 	int update_rip, ret = 0;
 
 	update_rip = 0;
@@ -3845,6 +3848,23 @@ vmx_handle_exit(struct vcpu *vcpu)
 		if (vmwrite(VMCS_GUEST_IA32_RIP,
 		    vcpu->vc_gueststate.vg_rip)) {
 			printf("vmx_handle_exit: can't advance rip\n");
+			return (EINVAL);
+		}
+
+		if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST,
+		    &istate)) {
+			printf("%s: can't read interruptibility state\n",
+			    __func__);
+			return (EINVAL);
+		}
+
+		/* Interruptibilty state 0x3 covers NMIs and STI */
+		istate &= ~0x3;
+
+		if (vmwrite(VMCS_GUEST_INTERRUPTIBILITY_ST,
+		    istate)) {
+			printf("%s: can't write interruptibility state\n",
+			    __func__);
 			return (EINVAL);
 		}
 	}
