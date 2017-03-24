@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.7 2017/03/23 07:02:47 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.8 2017/03/24 09:11:49 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -133,7 +133,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 	struct timeval now, delta;
 	union vm_exit *vei = vrp->vrp_exit;
 
-	out_data = vei->vei.vei_data & 0xFF;
+	out_data = get_input_data(vei);
 
 	if (vei->vei.vei_port == TIMER_CTRL) {
 		if (vei->vei.vei_dir == VEI_DIR_OUT) { /* OUT instruction */
