@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.2 2017/03/18 12:59:07 jsing Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.3 2017/03/25 13:37:40 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,10 @@
 
 #include "ssl_locl.h"
 
-int tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
-    int seed2_len, const void *seed3, int seed3_len, const void *seed4,
-    int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
-    int slen, unsigned char *out, int olen);
+int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
+    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
+    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
+    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len);
 
 #define TLS_PRF_OUT_LEN 128
 
@@ -202,11 +202,11 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 	for (len = 1; len <= TLS_PRF_OUT_LEN; len++) {
 		memset(out, 'A', TLS_PRF_OUT_LEN);
 
-		if (tls1_PRF(ssl, TLS_PRF_SEED1, sizeof(TLS_PRF_SEED1),
-		    TLS_PRF_SEED2, sizeof(TLS_PRF_SEED2), TLS_PRF_SEED3,
-		    sizeof(TLS_PRF_SEED3), TLS_PRF_SEED4, sizeof(TLS_PRF_SEED4),
-		    TLS_PRF_SEED5, sizeof(TLS_PRF_SEED5), TLS_PRF_SECRET,
-		    sizeof(TLS_PRF_SECRET), out, len) != 1) {
+		if (tls1_PRF(ssl, TLS_PRF_SECRET, sizeof(TLS_PRF_SECRET),
+		    TLS_PRF_SEED1, sizeof(TLS_PRF_SEED1), TLS_PRF_SEED2,
+		    sizeof(TLS_PRF_SEED2), TLS_PRF_SEED3, sizeof(TLS_PRF_SEED3),
+		    TLS_PRF_SEED4, sizeof(TLS_PRF_SEED4), TLS_PRF_SEED5,
+		    sizeof(TLS_PRF_SEED5), out, len) != 1) {
 			fprintf(stderr, "FAIL: tls_PRF failed for len %i\n",
 			    len);
 			goto failure;
