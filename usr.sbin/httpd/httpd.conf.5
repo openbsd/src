@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.80 2017/03/16 10:18:11 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.81 2017/03/25 17:25:34 claudio Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2017 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -564,6 +564,13 @@ will be used (secure protocols; TLSv1.2-only).
 Refer to the
 .Xr tls_config_parse_protocols 3
 function for other valid protocol string values.
+.It Ic ticket Ic lifetime Ar seconds
+Enable TLS session tickets with a
+.Ar seconds
+session lifetime.
+It is possible to set
+.Ar seconds
+to default to use the httpd default timeout of 2 hours.
 .El
 .El
 .Sh TYPES

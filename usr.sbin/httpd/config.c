@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.50 2016/11/06 10:49:38 beck Exp $	*/
+/*	$OpenBSD: config.c,v 1.51 2017/03/25 17:25:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -146,6 +146,7 @@ config_getcfg(struct httpd *env, struct imsg *imsg)
 	memcpy(&cf, imsg->data, sizeof(cf));
 	env->sc_opts = cf.cf_opts;
 	env->sc_flags = cf.cf_flags;
+	memcpy(env->sc_tls_sid, cf.cf_tls_sid, sizeof(env->sc_tls_sid));
 
 	what = ps->ps_what[privsep_process];
 
@@ -238,6 +239,9 @@ config_setserver(struct httpd *env, struct server *srv)
 		close(srv->srv_s);
 		srv->srv_s = -1;
 	}
+
+	explicit_bzero(&srv->srv_conf.tls_ticket_key,
+	    sizeof(srv->srv_conf.tls_ticket_key));
 
 	return (0);
 }

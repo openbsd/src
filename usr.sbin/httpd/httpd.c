@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.64 2017/01/23 04:25:05 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.65 2017/03/25 17:25:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -57,6 +57,8 @@ int		 parent_dispatch_server(int, struct privsep_proc *,
 		    struct imsg *);
 int		 parent_dispatch_logger(int, struct privsep_proc *,
 		    struct imsg *);
+void		 parent_tls_ticket_rekey_start(struct server *);
+void		 parent_tls_ticket_rekey(int, short, void *);
 
 struct httpd			*httpd_env;
 
@@ -252,6 +254,9 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
+	/* initialize the TLS session id to a random key for all procs */
+	arc4random_buf(env->sc_tls_sid, sizeof(env->sc_tls_sid));
+
 	if (parent_configure(env) == -1)
 		fatalx("configuration failed");
 
@@ -287,6 +292,10 @@ parent_configure(struct httpd *env)
 	TAILQ_FOREACH(srv, env->sc_servers, srv_entry) {
 		if (srv->srv_conf.flags & SRVFLAG_LOCATION)
 			continue;
+		/* start the rekey of the tls ticket keys */
+		if (srv->srv_conf.flags & SRVFLAG_TLS &&
+		    srv->srv_conf.tls_ticket_lifetime)
+			parent_tls_ticket_rekey_start(srv);
 		if (config_setserver(env, srv) == -1)
 			fatal("send server");
 	}
@@ -306,6 +315,7 @@ parent_configure(struct httpd *env)
 			continue;
 		cf.cf_opts = env->sc_opts;
 		cf.cf_flags = env->sc_flags;
+		memcpy(cf.cf_tls_sid, env->sc_tls_sid, sizeof(cf.cf_tls_sid));
 
 		proc_compose(env->sc_ps, id, IMSG_CFG_DONE, &cf, sizeof(cf));
 	}
@@ -449,6 +459,38 @@ parent_dispatch_logger(int fd, struct privsep_proc *p, struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+void
+parent_tls_ticket_rekey_start(struct server *srv)
+{
+	struct timeval		 tv;
+
+	server_generate_ticket_key(&srv->srv_conf);
+
+	evtimer_set(&srv->srv_evt, parent_tls_ticket_rekey, srv);
+	timerclear(&tv);
+	tv.tv_sec = srv->srv_conf.tls_ticket_lifetime / 4;
+	evtimer_add(&srv->srv_evt, &tv);
+}
+
+void
+parent_tls_ticket_rekey(int fd, short events, void *arg)
+{
+	struct server		*srv = arg;
+	struct timeval		 tv;
+
+	server_generate_ticket_key(&srv->srv_conf);
+	proc_compose_imsg(httpd_env->sc_ps, PROC_SERVER, -1,
+	    IMSG_TLSTICKET_REKEY, -1, -1, &srv->srv_conf.tls_ticket_key,
+	    sizeof(srv->srv_conf.tls_ticket_key));
+	explicit_bzero(&srv->srv_conf.tls_ticket_key,
+	    sizeof(srv->srv_conf.tls_ticket_key));
+
+	evtimer_set(&srv->srv_evt, parent_tls_ticket_rekey, srv);
+	timerclear(&tv);
+	tv.tv_sec = srv->srv_conf.tls_ticket_lifetime / 4;
+	evtimer_add(&srv->srv_evt, &tv);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.130 2017/02/07 12:27:42 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.131 2017/03/25 17:25:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -76,6 +76,9 @@
 #define SERVER_MIN_PREFETCHED	32
 #define SERVER_HSTS_DEFAULT_AGE	31536000
 #define SERVER_MAX_RANGES	4
+#define SERVER_DEF_TLS_LIFETIME	(2 * 3600)
+#define SERVER_MIN_TLS_LIFETIME	(60)
+#define SERVER_MAX_TLS_LIFETIME	(24 * 3600)
 
 #define MEDIATYPE_NAMEMAX	128	/* file name extension */
 #define MEDIATYPE_TYPEMAX	64	/* length of type/subtype */
@@ -109,6 +112,7 @@ enum httpchunk {
 struct ctl_flags {
 	uint8_t		 cf_opts;
 	uint32_t	 cf_flags;
+	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
 };
 
 enum key_type {
@@ -219,7 +223,8 @@ enum imsg_type {
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
 	IMSG_LOG_ERROR,
-	IMSG_LOG_OPEN
+	IMSG_LOG_OPEN,
+	IMSG_TLSTICKET_REKEY
 };
 
 enum privsep_procid {
@@ -444,6 +449,12 @@ struct auth {
 };
 TAILQ_HEAD(serverauth, auth);
 
+struct server_tls_ticket {
+	uint32_t	tt_id;
+	uint32_t 	tt_keyrev;
+	unsigned char	tt_key[TLS_TICKET_KEY_SIZE];
+};
+
 struct server_config {
 	uint32_t		 id;
 	uint32_t		 parent_id;
@@ -477,6 +488,8 @@ struct server_config {
 	uint8_t			*tls_ocsp_staple;
 	size_t			 tls_ocsp_staple_len;
 	char			*tls_ocsp_staple_file;
+	struct server_tls_ticket tls_ticket_key;
+	int			 tls_ticket_lifetime;
 
 	uint32_t		 flags;
 	int			 strip;
@@ -540,6 +553,8 @@ struct httpd {
 	char			*sc_chroot;
 	char			*sc_logdir;
 
+	uint8_t			 sc_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
+
 	struct serverlist	*sc_servers;
 	struct mediatypes	*sc_mediatypes;
 	struct media_type	 sc_default_type;
@@ -573,6 +588,7 @@ void	 server(struct privsep *, struct privsep_proc *);
 int	 server_tls_cmp(struct server *, struct server *, int);
 int	 server_tls_load_keypair(struct server *);
 int	 server_tls_load_ocsp(struct server *);
+void	 server_generate_ticket_key(struct server_config *);
 int	 server_privinit(struct server *);
 void	 server_purge(struct server *);
 void	 serverconfig_free(struct server_config *);

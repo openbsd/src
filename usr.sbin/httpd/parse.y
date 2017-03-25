@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2017/02/07 12:27:42 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2017/03/25 17:25:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -130,10 +130,10 @@ typedef struct {
 %}
 
 %token	ACCESS ALIAS AUTO BACKLOG BODY BUFFER CERTIFICATE CHROOT CIPHERS COMMON
-%token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LISTEN
-%token	LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY OCSP ON PORT PREFORK
-%token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TIMEOUT
-%token	TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
+%token	COMBINED CONNECTION DHE DIRECTORY ECDHE ERR FCGI INDEX IP KEY LIFETIME
+%token	LISTEN LOCATION LOG LOGDIR MATCH MAXIMUM NO NODELAY OCSP ON PORT PREFORK
+%token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
+%token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
@@ -766,6 +766,23 @@ tlsopts		: CERTIFICATE STRING		{
 			}
 			free($2);
 		}
+		| TICKET LIFETIME DEFAULT	{
+			srv_conf->tls_ticket_lifetime = SERVER_DEF_TLS_LIFETIME;
+		}
+		| TICKET LIFETIME NUMBER	{
+			if ($3 != 0 && $3 < SERVER_MIN_TLS_LIFETIME) {
+				yyerror("ticket lifetime too small");
+				YYERROR;
+			}
+			if ($3 > SERVER_MAX_TLS_LIFETIME) {
+				yyerror("ticket lifetime too large");
+				YYERROR;
+			}
+			srv_conf->tls_ticket_lifetime = $3;
+		}
+		| NO TICKET			{
+			srv_conf->tls_ticket_lifetime = 0;
+		}
 		;
 
 root		: ROOT rootflags
@@ -1218,6 +1235,7 @@ lookup(char *s)
 		{ "index",		INDEX },
 		{ "ip",			IP },
 		{ "key",		KEY },
+		{ "lifetime",		LIFETIME },
 		{ "listen",		LISTEN },
 		{ "location",		LOCATION },
 		{ "log",		LOG },
@@ -1246,6 +1264,7 @@ lookup(char *s)
 		{ "subdomains",		SUBDOMAINS },
 		{ "syslog",		SYSLOG },
 		{ "tcp",		TCP },
+		{ "ticket",		TICKET },
 		{ "timeout",		TIMEOUT },
 		{ "tls",		TLS },
 		{ "type",		TYPE },
