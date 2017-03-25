@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.26 2017/01/24 11:29:30 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.27 2017/03/25 16:28:25 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -72,23 +72,25 @@ Reset the configured switches.
 .It Cm reset vms
 Reset and terminate all VMs.
 .It Xo Cm start Ar name
+.Op Fl b Ar path
 .Op Fl c
 .Op Fl d Ar path
 .Op Fl i Ar count
-.Op Fl k Ar path
 .Op Fl m Ar size
 .Op Fl n Ar switch
 .Xc
 Starts a VM defined by the specified name and parameters:
 .Bl -tag -width "-i count"
+.It Fl b Ar path
+Boot the VM with the specified kernel or BIOS image.
+If not specified, the default is to boot using the BIOS image in
+.Pa /etc/firmware/vmm-bios .
 .It Fl c
 Automatically connect to the VM console.
 .It Fl d Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
 .It Fl i Ar count
 Number of network interfaces to add to the VM.
-.It Fl k Ar path
-Boot the VM with a kernel loaded from the host, not the first disk image.
 .It Fl m Ar size
 Memory
 .Ar size
@@ -161,7 +163,7 @@ $ vmctl create disk.img -s 4.5G
 Create a new VM with 1GB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-# vmctl start "myvm" -m 1G -i 1 -d disk.img -k /bsd
+# vmctl start "myvm" -m 1G -i 1 -d disk.img
 .Ed
 .Pp
 .Xr vmd 8

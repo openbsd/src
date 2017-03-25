@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.48 2017/03/15 18:06:18 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.49 2017/03/25 16:28:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -37,6 +37,7 @@
 #define VMD_CONF		"/etc/vm.conf"
 #define SOCKET_NAME		"/var/run/vmd.sock"
 #define VMM_NODE		"/dev/vmm"
+#define VM_DEFAULT_BIOS		"/etc/firmware/vmm-bios"
 #define VM_DEFAULT_KERNEL	"/bsd"
 #define VM_DEFAULT_DEVICE	"hd0a"
 #define VM_BOOT_CONF		"/etc/boot.conf"

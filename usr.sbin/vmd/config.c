@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.27 2017/03/25 16:28:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -163,8 +163,19 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/* Open external kernel for child */
 	if (strlen(vcp->vcp_kernel) &&
 	    (kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
-		log_warn("%s: can't open kernel %s", __func__,
-		    vcp->vcp_kernel);
+		log_warn("%s: can't open kernel/BIOS boot image %s",
+		    __func__, vcp->vcp_kernel);
+		goto fail;
+	}
+
+	/*
+	 * Try to open the default BIOS image if no kernel/BIOS has
+	 * been specified.  The BIOS is an external firmware file that is
+	 * typically distributed separately due to an incompatible license.
+	 */
+	if (kernfd == -1 &&
+	    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
+		log_warn("%s: can't open %s", __func__, VM_DEFAULT_BIOS);
 		goto fail;
 	}
 

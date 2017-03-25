@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmd.8,v 1.6 2016/06/10 18:32:40 jmc Exp $
+.\"	$OpenBSD: vmd.8,v 1.7 2017/03/25 16:28:25 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2016 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt VMD 8
 .Os
 .Sh NAME
@@ -86,7 +86,13 @@ Multiple
 options increase the verbosity.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/vmd.sockXX" -compact
+.Bl -tag -width "/etc/firmware/vmm-biosXX" -compact
+.It Pa /etc/firmware/vmm-bios
+Default BIOS boot image.
+The BIOS is an external firmware file that is distributed separately
+due to an incompatible license.
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 1 .
 .It Pa /etc/vm.conf
 Default configuration file.
 This is optional.

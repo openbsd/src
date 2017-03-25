@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2017/03/01 21:22:57 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2017/03/25 16:28:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ struct ctl_command ctl_commands[] = {
 	{ "reload",	CMD_RELOAD,	ctl_reload,	"" },
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all|vms|switches]" },
 	{ "start",	CMD_START,	ctl_start,	"\"name\""
-	    " [-c] [-k kernel] [-m size]\n"
+	    " [-c] [-b image] [-m size]\n"
 	    "\t\t[-n switch] [-i count] [-d disk]*" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"id" },
@@ -538,18 +538,18 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((ch = getopt(argc, argv, "ck:m:n:d:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:cm:n:d:i:")) != -1) {
 		switch (ch) {
-		case 'c':
-			tty_autoconnect = 1;
-			break;
-		case 'k':
+		case 'b':
 			if (res->path)
-				errx(1, "kernel specified multiple times");
+				errx(1, "boot image specified multiple times");
 			if (realpath(optarg, path) == NULL)
-				err(1, "invalid kernel path");
+				err(1, "invalid boot image path");
 			if ((res->path = strdup(path)) == NULL)
 				errx(1, "strdup");
+			break;
+		case 'c':
+			tty_autoconnect = 1;
 			break;
 		case 'm':
 			if (res->size)

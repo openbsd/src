@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.16 2017/03/02 07:33:37 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.17 2017/03/25 16:28:25 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2017 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ For example:
 ramdisk="/bsd.rd"
 vm "vm1.example.com" {
 	memory 512M
-	kernel $ramdisk
+	boot $ramdisk
 }
 .Ed
 .Sh VM CONFIGURATION
@@ -97,6 +97,10 @@ This name can be any string, and is typically a hostname.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
+.It Cm boot Ar path
+Kernel or BIOS image to load when booting the VM.
+If not specified, the default is to boot using the BIOS image in
+.Pa /etc/firmware/vmm-bios .
 .It Cm enable
 Automatically start the VM.
 This is the default if neither
@@ -161,8 +165,6 @@ If the
 is greater than the number of
 .Ic interface
 statements, additional default interfaces will be added.
-.It Cm kernel Ar path
-Kernel to load when booting the VM.
 .It Cm memory Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
@@ -265,15 +267,12 @@ Stop the switch from forwarding packets.
 .Sh EXAMPLES
 Create a new VM with 1GB memory, 1 network interface connected to
 .Dq uplink ,
-one disk image
-.Sq disk.img
-and boot from kernel
-.Sq /bsd :
+and one disk image
+.Sq disk.img :
 .Bd -literal -offset indent
 vm "vm2.example.com" {
 	memory 1G
 	disk "/var/vmm/vm2-disk.img"
-	kernel "/bsd"
 	interface { switch "uplink" }
 }
 .Ed

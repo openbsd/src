@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.24 2017/02/04 07:23:25 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.25 2017/03/25 16:28:25 reyk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@ static uint32_t push_bootargs(bios_memmap_t *, size_t);
 static size_t push_stack(uint32_t, uint32_t, uint32_t, uint32_t);
 static void push_gdt(void);
 static void push_pt(void);
-static size_t mread(FILE *, paddr_t, size_t);
 static void marc4random_buf(paddr_t, int);
 static void mbzero(paddr_t, int);
 static void mbcopy(void *, paddr_t, int);
@@ -257,13 +256,13 @@ push_pt(void)
 }
 
 /*
- * loadelf_main
+ * loadfile_elf
  *
  * Loads an ELF kernel to it's defined load address in the guest VM.
  * The kernel is loaded to its defined start point as set in the ELF header.
  *
  * Parameters:
- *  fd: file descriptor of a kernel file to load
+ *  fp: file of a kernel file to load
  *  vcp: the VM create parameters, holding the exact memory map
  *  (out) vrs: register state to set on init for this kernel
  *  bootdev: the optional non-default boot device
@@ -274,7 +273,7 @@ push_pt(void)
  *  various error codes returned from read(2) or loadelf functions
  */
 int
-loadelf_main(FILE *fp, struct vm_create_params *vcp,
+loadfile_elf(FILE *fp, struct vm_create_params *vcp,
     struct vcpu_reg_state *vrs, uint32_t bootdev, uint32_t howto)
 {
 	int r;
@@ -293,7 +292,8 @@ loadelf_main(FILE *fp, struct vm_create_params *vcp,
 	} else if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
 		r = elf64_exec(fp, &hdr.elf64, marks, LOAD_ALL);
-	}
+	} else
+		errno = ENOEXEC;
 
 	if (r)
 		return (r);
@@ -312,6 +312,8 @@ loadelf_main(FILE *fp, struct vm_create_params *vcp,
 	vrs->vrs_gprs[VCPU_REGS_RSP] = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
 #endif
 	vrs->vrs_gdtr.vsi_base = GDT_PAGE;
+
+	log_debug("%s: loaded ELF kernel", __func__);
 
 	return (0);
 }
@@ -484,7 +486,7 @@ push_stack(uint32_t bootargsz, uint32_t end, uint32_t bootdev, uint32_t howto)
  * Return values:
  *  returns 'sz' if successful, or 0 otherwise.
  */
-static size_t
+size_t
 mread(FILE *fp, paddr_t addr, size_t sz)
 {
 	size_t ct;
