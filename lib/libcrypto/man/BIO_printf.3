@@ -1,0 +1,86 @@
+.\"	$OpenBSD: BIO_printf.3,v 1.1 2017/03/25 17:15:59 schwarze Exp $
+.\"	OpenSSL 2ca2e917 Mon Mar 20 16:25:22 2017 -0400
+.\"
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 25 2017 $
+.Dt BIO_PRINTF 3
+.Os
+.Sh NAME
+.Nm BIO_printf ,
+.Nm BIO_vprintf ,
+.Nm BIO_snprintf ,
+.Nm BIO_vsnprintf
+.Nd formatted output to a BIO
+.Sh SYNOPSIS
+.In openssl/bio.h
+.Ft int
+.Fo BIO_printf
+.Fa "BIO *bio"
+.Fa "const char *format"
+.Fa ...
+.Fc
+.Ft int
+.Fo BIO_vprintf
+.Fa "BIO *bio"
+.Fa "const char *format"
+.Fa "va_list args"
+.Fc
+.Ft int
+.Fo BIO_snprintf
+.Fa "char *buf"
+.Fa "size_t n"
+.Fa "const char *format"
+.Fa ...
+.Fc
+.Ft int
+.Fo BIO_vsnprintf
+.Fa "char *buf"
+.Fa "size_t n"
+.Fa "const char *format"
+.Fa "va_list args"
+.Fc
+.Sh DESCRIPTION
+.Fn BIO_vprintf
+is a wrapper around
+.Xr vfprintf 3 ,
+sending the output to the specified
+.Fa bio .
+.Pp
+.Fn BIO_printf
+is a wrapper around
+.Fn BIO_vprintf .
+.Pp
+.Fn BIO_snprintf
+and
+.Fn BIO_vsnprintf
+are wrappers around
+.Xr vsnprintf 3 .
+.Sh RETURN VALUES
+These functions return the number of bytes written,
+or -1 if an error occurs.
+.Pp
+In contrast to
+.Xr snprintf 3
+and
+.Xr vsnprintf 3 ,
+.Fn BIO_snprintf
+and
+.Fn BIO_vsnprintf
+also return -1 if
+.Fa n
+is too small to hold the complete output.
+.Sh SEE ALSO
+.Xr BIO_new 3
