@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.105 2017/03/18 13:04:30 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.106 2017/03/25 13:36:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,10 +144,10 @@
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 
-int tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
-    int seed2_len, const void *seed3, int seed3_len, const void *seed4,
-    int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
-    int slen, unsigned char *out, int olen);
+int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
+    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
+    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
+    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len);
 
 void
 tls1_cleanup_key_block(SSL *s)
@@ -231,10 +231,10 @@ tls1_record_sequence_increment(unsigned char *seq)
  * TLS P_hash() data expansion function - see RFC 5246, section 5.
  */
 static int
-tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
-    const void *seed1, int seed1_len, const void *seed2, int seed2_len,
-    const void *seed3, int seed3_len, const void *seed4, int seed4_len,
-    const void *seed5, int seed5_len, unsigned char *out, int olen)
+tls1_P_hash(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
+    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
+    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
+    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len)
 {
 	unsigned char A1[EVP_MAX_MD_SIZE], hmac[EVP_MAX_MD_SIZE];
 	size_t A1_len, hmac_len;
@@ -249,7 +249,7 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 
 	EVP_MD_CTX_init(&ctx);
 
-	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
+	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, secret, secret_len);
 	if (!mac_key)
 		goto err;
 	if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
@@ -285,16 +285,16 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 		if (!EVP_DigestSignFinal(&ctx, hmac, &hmac_len))
 			goto err;
 
-		if (hmac_len > olen)
-			hmac_len = olen;
+		if (hmac_len > out_len)
+			hmac_len = out_len;
 
 		for (i = 0; i < hmac_len; i++)
 			out[i] ^= hmac[i];
 
 		out += hmac_len;
-		olen -= hmac_len;
+		out_len -= hmac_len;
 
-		if (olen == 0)
+		if (out_len == 0)
 			break;
 
 		if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
@@ -316,17 +316,16 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *sec, int sec_len,
 	return ret;
 }
 
-/* seed1 through seed5 are virtually concatenated */
 int
-tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
-    int seed2_len, const void *seed3, int seed3_len, const void *seed4,
-    int seed4_len, const void *seed5, int seed5_len, const unsigned char *sec,
-    int slen, unsigned char *out, int olen)
+tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
+    const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,
+    const void *seed3, size_t seed3_len, const void *seed4, size_t seed4_len,
+    const void *seed5, size_t seed5_len, unsigned char *out, size_t out_len)
 {
 	const EVP_MD *md;
-	size_t hlen;
+	size_t half_len;
 
-	memset(out, 0, olen);
+	memset(out, 0, out_len);
 
 	if (!ssl_get_handshake_evp_md(s, &md))
 		return (0);
@@ -336,23 +335,24 @@ tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
 		 * Partition secret between MD5 and SHA1, then XOR result.
 		 * If the secret length is odd, a one byte overlap is used.
 		 */
-		hlen = slen - (slen / 2);
-		if (!tls1_P_hash(EVP_md5(), sec, hlen, seed1, seed1_len, seed2,
-		    seed2_len, seed3, seed3_len, seed4, seed4_len, seed5,
-		    seed5_len, out, olen))
+		half_len = secret_len - (secret_len / 2);
+		if (!tls1_P_hash(EVP_md5(), secret, half_len, seed1, seed1_len,
+		    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
+		    seed5, seed5_len, out, out_len))
 			return (0);
 
-		sec += slen - hlen;
-		if (!tls1_P_hash(EVP_sha1(), sec, hlen, seed1, seed1_len, seed2,
-		    seed2_len, seed3, seed3_len, seed4, seed4_len, seed5,
-		    seed5_len, out, olen))
+		secret += secret_len - half_len;
+		if (!tls1_P_hash(EVP_sha1(), secret, half_len, seed1, seed1_len,
+		    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
+		    seed5, seed5_len, out, out_len))
 			return (0);
 
 		return (1);
 	}
 
-	if (!tls1_P_hash(md, sec, slen, seed1, seed1_len, seed2, seed2_len,
-	    seed3, seed3_len, seed4, seed4_len, seed5, seed5_len, out, olen))
+	if (!tls1_P_hash(md, secret, secret_len, seed1, seed1_len,
+	    seed2, seed2_len, seed3, seed3_len, seed4, seed4_len,
+	    seed5, seed5_len, out, out_len))
 		return (0);
 
 	return (1);
@@ -361,13 +361,15 @@ tls1_PRF(SSL *s, const void *seed1, int seed1_len, const void *seed2,
 static int
 tls1_generate_key_block(SSL *s, unsigned char *km, int num)
 {
+	if (num < 0)
+		return (0);
+
 	return tls1_PRF(s,
+	    s->session->master_key, s->session->master_key_length,
 	    TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
 	    s->s3->server_random, SSL3_RANDOM_SIZE,
 	    s->s3->client_random, SSL3_RANDOM_SIZE,
-	    NULL, 0, NULL, 0,
-	    s->session->master_key, s->session->master_key_length,
-	    km, num);
+	    NULL, 0, NULL, 0, km, num);
 }
 
 /*
@@ -1020,19 +1022,19 @@ tls1_enc(SSL *s, int send)
 }
 
 int
-tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
+tls1_final_finish_mac(SSL *s, const char *str, int str_len, unsigned char *out)
 {
-	unsigned char buf1[EVP_MAX_MD_SIZE];
-	size_t hlen;
+	unsigned char buf[EVP_MAX_MD_SIZE];
+	size_t hash_len;
 
-	if (!tls1_handshake_hash_value(s, buf1, sizeof(buf1), &hlen))
+	if (str_len < 0)
 		return 0;
 
-	if (hlen > INT_MAX)
+	if (!tls1_handshake_hash_value(s, buf, sizeof(buf), &hash_len))
 		return 0;
 
-	if (!tls1_PRF(s, str, slen, buf1, hlen, NULL, 0, NULL, 0, NULL, 0,
-	    s->session->master_key, s->session->master_key_length,
+	if (!tls1_PRF(s, s->session->master_key, s->session->master_key_length,
+	    str, str_len, buf, hash_len, NULL, 0, NULL, 0, NULL, 0,
 	    out, TLS1_FINISH_MAC_LENGTH))
 		return 0;
 
@@ -1125,12 +1127,15 @@ int
 tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     int len)
 {
+	if (len < 0)
+		return 0;
+
 	/* XXX - check return value. */
-	tls1_PRF(s,
+	tls1_PRF(s, p, len,
 	    TLS_MD_MASTER_SECRET_CONST, TLS_MD_MASTER_SECRET_CONST_SIZE,
 	    s->s3->client_random, SSL3_RANDOM_SIZE, NULL, 0,
 	    s->s3->server_random, SSL3_RANDOM_SIZE, NULL, 0,
-	    p, len, s->session->master_key, SSL_MAX_MASTER_KEY_LENGTH);
+	    s->session->master_key, SSL_MAX_MASTER_KEY_LENGTH);
 
 	return (SSL_MAX_MASTER_KEY_LENGTH);
 }
@@ -1193,9 +1198,8 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	    TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0)
 		goto err1;
 
-	rv = tls1_PRF(s, val, vallen, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-	    s->session->master_key, s->session->master_key_length,
-	    out, olen);
+	rv = tls1_PRF(s, s->session->master_key, s->session->master_key_length,
+	    val, vallen, NULL, 0, NULL, 0, NULL, 0, NULL, 0, out, olen);
 
 	goto ret;
 err1:
