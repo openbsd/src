@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.76 2017/03/01 10:35:24 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.77 2017/03/25 18:58:59 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -198,6 +198,9 @@ sub handle_options
 		Sys::Syslog::openlog($state->{cmd}, "nofatal");
 	}
 	$state->{wantntogo} = $state->{extra_stats};
+	if (defined $ENV{PKG_CHECKSUM}) {
+		$state->{subst}->add('checksum', 1);
+	}
 }
 
 sub init

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.95 2017/03/16 15:57:47 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.96 2017/03/25 18:58:59 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -93,7 +93,7 @@ sub tie_files
 		return unless -f $realname;
 		# and do a sanity check that this file wasn't altered
 		return unless (stat _)[7] == $self->{size};
-		if (!$state->{quick}) {
+		if ($state->defines('checksum')) {
 			my $d = $self->compute_digest($realname, $self->{d});
 			# XXX we don't have to display anything here
 			# because delete will take care of that

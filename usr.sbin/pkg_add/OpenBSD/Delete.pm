@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.147 2017/03/09 15:36:14 espie Exp $
+# $OpenBSD: Delete.pm,v 1.148 2017/03/25 18:58:59 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -412,7 +412,7 @@ sub is_intact
 		$state->log("Couldn't delete #1 (no checksum)", $realname);
 		return 0;
 	}
-	return 1 if $self->{quick};
+	return 1 unless $state->defines('checksum');
 	my $d = $self->compute_digest($realname, $self->{d});
 	return 1 if $d->equals($self->{d});
 	if ($self->fullname eq $realname) {
