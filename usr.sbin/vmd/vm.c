@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.7 2017/03/25 07:46:24 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.8 2017/03/25 15:47:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -573,6 +573,9 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 
 	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
 	ioports_map[PCI_MODE1_DATA_REG] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 1] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 2] = vcpu_exit_pci;
+	ioports_map[PCI_MODE1_DATA_REG + 3] = vcpu_exit_pci;
 	pci_init();
 
 	/* Initialize virtio devices */
@@ -938,6 +941,9 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 		pci_handle_address_reg(vrp);
 		break;
 	case PCI_MODE1_DATA_REG:
+	case PCI_MODE1_DATA_REG + 1:
+	case PCI_MODE1_DATA_REG + 2:
+	case PCI_MODE1_DATA_REG + 3:
 		pci_handle_data_reg(vrp);
 		break;
 	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
@@ -970,7 +976,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	if (ioports_map[vei->vei.vei_port] != NULL)
 		intr = ioports_map[vei->vei.vei_port](vrp);
 	else if (vei->vei.vei_dir == VEI_DIR_IN)
-			vei->vei.vei_data = 0xFFFFFFFF;
+			set_return_data(vei, 0xFFFFFFFF);
 
 	if (intr != 0xFF)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);

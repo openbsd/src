@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.13 2017/01/21 12:45:41 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.14 2017/03/25 15:47:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -26,6 +26,7 @@
 #include <string.h>
 #include "vmd.h"
 #include "pci.h"
+#include "vmm.h"
 
 struct pci pci;
 
@@ -214,14 +215,14 @@ pci_handle_address_reg(struct vm_run_params *vrp)
 	 * The guest wrote to the address register.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		pci.pci_addr_reg = vei->vei.vei_data;
+		pci.pci_addr_reg = get_input_data(vei);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
 		 *
 		 * The guest read the address register
 		 */
-		vei->vei.vei_data = pci.pci_addr_reg;
+		set_return_data(vei, pci.pci_addr_reg);
 	}
 }
 
@@ -258,7 +259,8 @@ pci_handle_io(struct vm_run_params *vrp)
 		if (fn(vei->vei.vei_dir, reg -
 		    PCI_MAPREG_IO_ADDR(pci.pci_devices[l].pd_bar[k]),
 		    &vei->vei.vei_data, &intr,
-		    pci.pci_devices[l].pd_bar_cookie[k])) {
+		    pci.pci_devices[l].pd_bar_cookie[k],
+		    vei->vei.vei_size)) {
 			log_warnx("%s: pci i/o access function failed",
 			    __progname);
 		}
@@ -267,7 +269,7 @@ pci_handle_io(struct vm_run_params *vrp)
 		    __progname, (uint64_t)reg);
 		/* Reads from undefined ports return 0xFF */
 		if (dir == 1)
-			vei->vei.vei_data = 0xFFFFFFFF;
+			set_return_data(vei, 0xFFFFFFFF);
 	}
 
 	if (intr != 0xFF) {
@@ -281,7 +283,7 @@ void
 pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	union vm_exit *vei = vrp->vrp_exit;
-	uint8_t b, d, f, o, baridx;
+	uint8_t b, d, f, o, baridx, ofs, sz;
 	int ret;
 	pci_cs_fn_t csfunc;
 
@@ -289,11 +291,15 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	if (!(pci.pci_addr_reg & PCI_MODE1_ENABLE)) {
 		/* if read, return FFs */
 		if (vei->vei.vei_dir == VEI_DIR_IN)
-			vei->vei.vei_data = 0xffffffff;
+			set_return_data(vei, 0xFFFFFFFF);
 		log_warnx("invalid address register during pci read: "
 		    "0x%llx", (uint64_t)pci.pci_addr_reg);
 		return;
 	}
+
+	/* I/Os to 0xCFC..0xCFF are permitted */
+	ofs = vei->vei.vei_port - 0xCFC;
+	sz = vei->vei.vei_size;
 
 	b = (pci.pci_addr_reg >> 16) & 0xff;
 	d = (pci.pci_addr_reg >> 11) & 0x1f;
@@ -310,6 +316,8 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	}
 
 	/* No config space function, fallback to default simple r/w impl. */
+
+	o += ofs;
 
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -335,7 +343,16 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 			else
 				vei->vei.vei_data = 0;
 		}
-		pci.pci_devices[d].pd_cfg_space[o / 4] = vei->vei.vei_data;
+
+		/* XXX - discard writes to reassign IRQs / pins */
+		if (o != 0x3c)
+			pci.pci_devices[d].pd_cfg_space[o / 4] =
+			    get_input_data(vei);
+
+		/* IOBAR registers must have bit 0 set */
+		if (o == 0x10)
+			pci.pci_devices[d].pd_cfg_space[o / 4] |= 1; 
+			
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -343,6 +360,6 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		 * The guest read from the config space location determined by
 		 * the current value in the address register.
 		 */
-		vei->vei.vei_data = pci.pci_devices[d].pd_cfg_space[o / 4];
+		set_return_data(vei, pci.pci_devices[d].pd_cfg_space[o / 4]);
 	}
 }

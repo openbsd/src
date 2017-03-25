@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.4 2017/01/13 14:50:56 reyk Exp $	*/
+/*	$OpenBSD: pci.h,v 1.5 2017/03/25 15:47:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -29,7 +29,7 @@
 
 typedef int (*pci_cs_fn_t)(int dir, uint8_t reg, uint32_t *data);
 typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,
-    void *);
+    void *, uint8_t);
 typedef int (*pci_mmiobar_fn_t)(int dir, uint32_t ofs, uint32_t *data);
 
 union pci_dev {

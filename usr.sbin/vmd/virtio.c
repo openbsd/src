@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.34 2017/03/15 18:06:18 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.35 2017/03/25 15:47:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -235,7 +235,7 @@ viornd_notifyq(void)
 
 int
 virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *unused)
+    void *unused, uint8_t sz)
 {
 	*intr = 0xFF;
 
@@ -605,7 +605,7 @@ out:
 
 int
 virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *cookie)
+    void *cookie, uint8_t sz)
 {
 	struct vioblk_dev *dev = (struct vioblk_dev *)cookie;
 
@@ -643,11 +643,85 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		}
 	} else {
 		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
-			*data = (uint32_t)(dev->sz >> 32);
-			break;
 		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
-			*data = (uint32_t)(dev->sz);
+			switch (sz) {
+			case 4:
+				*data = (uint32_t)(dev->sz);
+				break;
+			case 2:
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->sz) & 0xFFFF;
+				break;
+			case 1:
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz) & 0xFF;
+				break;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 8) & 0xFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 16) & 0xFF;
+			} else if (sz == 2) {
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->sz >> 16) & 0xFFFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 24) & 0xFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
+			switch (sz) {
+			case 4:
+				*data = (uint32_t)(dev->sz >> 32);
+				break;
+			case 2:
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->sz >> 32) & 0xFFFF;
+				break;
+			case 1:
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 32) & 0xFF;
+				break;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 40) & 0xFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 6:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 48) & 0xFF;
+			} else if (sz == 2) {
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->sz >> 48) & 0xFFFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 7:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->sz >> 56) & 0xFF;
+			}
+			/* XXX handle invalid sz */
 			break;
 		case VIRTIO_CONFIG_DEVICE_FEATURES:
 			*data = dev->cfg.device_feature;
@@ -680,7 +754,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 int
 virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *cookie)
+    void *cookie, uint8_t sz)
 {
 	struct vionet_dev *dev = (struct vionet_dev *)cookie;
 
@@ -1296,7 +1370,7 @@ vmmci_timeout(int fd, short type, void *arg)
 
 int
 vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *unused)
+    void *unused, uint8_t sz)
 {
 	*intr = 0xFF;
 
