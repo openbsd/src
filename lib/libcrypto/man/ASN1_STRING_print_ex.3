@@ -1,8 +1,9 @@
-.\"	$OpenBSD: ASN1_STRING_print_ex.3,v 1.6 2016/12/08 21:48:50 jmc Exp $
+.\"	$OpenBSD: ASN1_STRING_print_ex.3,v 1.7 2017/03/25 16:30:10 schwarze Exp $
+.\"	OpenSSL 9e183d22 Sat Mar 11 08:56:44 2017 -0500
 .\"	OpenSSL bb9ad09e Mon Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson.
-.\" Copyright (c) 2002, 2004, 2007, 2013, 2016 The OpenSSL Project.
+.\" Copyright (c) 2002, 2004, 2007, 2013, 2016, 2017 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,13 +50,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 8 2016 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt ASN1_STRING_PRINT_EX 3
 .Os
 .Sh NAME
 .Nm ASN1_STRING_print_ex ,
 .Nm ASN1_STRING_print_ex_fp ,
-.Nm ASN1_STRING_print
+.Nm ASN1_STRING_print ,
+.Nm ASN1_tag2str
 .Nd ASN1_STRING output routines
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -75,6 +77,10 @@
 .Fo ASN1_STRING_print
 .Fa "BIO *out"
 .Fa "ASN1_STRING *str"
+.Fc
+.Ft const char *
+.Fo ASN1_tag2str
+.Fa "int tag"
 .Fc
 .Sh DESCRIPTION
 These functions output an
@@ -105,6 +111,10 @@ but using a different format to
 .Fn ASN1_STRING_print_ex .
 It replaces unprintable characters (other than CR, LF) with
 .Sq \&. .
+.Pp
+.Fn ASN1_tag2str
+returns a human-readable name of the specified ASN.1
+.Fa tag .
 .Pp
 .Fn ASN1_STRING_print
 is a legacy function which should be avoided in new
