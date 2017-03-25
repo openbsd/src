@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.6 2017/03/24 08:04:02 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.7 2017/03/25 07:46:24 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1332,4 +1332,27 @@ set_return_data(union vm_exit *vei, uint32_t data)
 		vei->vei.vei_data = data;
 		break;	
 	}
+}
+
+/*
+ * get_input_data
+ *
+ * Utility function for manipulating register data in vm exit info structs. This
+ * function ensures that the data is copied from the vei->vei.vei_data field with
+ * the proper size for the operation being performed.
+ *
+ * Parameters:
+ *  vei: exit information
+ */
+uint32_t
+get_input_data(union vm_exit *vei)
+{
+	switch (vei->vei.vei_size) {
+	case 1: return vei->vei.vei_data & 0xFF;
+	case 2: return vei->vei.vei_data & 0xFFFF;
+	case 4: return vei->vei.vei_data;
+	}
+
+	log_warnx("%s: invalid i/o size %d", __func__, vei->vei.vei_size);
+	return 0;
 }

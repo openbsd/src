@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.8 2017/03/23 07:59:41 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.9 2017/03/25 07:46:24 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -249,7 +249,9 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 	uint16_t port = vei->vei.vei_port;
 	uint8_t dir = vei->vei.vei_dir;
-	uint32_t data = vei->vei.vei_data & 0xFF;
+	uint32_t data;
+
+	data = get_input_data(vei);
 
 	if (port == IO_RTC) {
 		/* Discard NMI bit */
@@ -259,16 +261,10 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 		if (dir == 0) {
 			if (data < (NVRAM_SIZE))
 				rtc.idx = data;
-			else {
-				log_warnx("%s: mc146818 bogus register 0x%x",
-				    __func__, data);
+			else
 				rtc.idx = MC_REGD;
-			}
-		} else {
-			log_warnx("%s: mc146818 illegal read from port 0x%x",
-			    __func__, port);
-			set_return_data(vei, 0xFF);
-		}
+		} else
+			set_return_data(vei, rtc.idx);
 	} else if (port == IO_RTC + 1) {
 		if (dir == 0) {
 			switch (rtc.idx) {
@@ -291,7 +287,6 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 				log_warnx("%s: mc146818 illegal reg %x\n",
 				    __func__, rtc.idx);
 			}
-			rtc.idx = MC_REGD;
 		} else {
 			data = rtc.regs[rtc.idx];
 			set_return_data(vei, data);
@@ -300,7 +295,6 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 				/* Reset IRQ state */
 				rtc.regs[MC_REGC] &= ~MC_REGC_PF;
 			}
-			rtc.idx = MC_REGD;
 		}
 	} else {
 		log_warnx("%s: mc146818 unknown port 0x%x",
