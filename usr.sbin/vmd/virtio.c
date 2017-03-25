@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.37 2017/03/25 16:24:44 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.38 2017/03/25 16:34:26 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -412,7 +412,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	used = (struct vring_used *)(vr +
 	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
 
-
 	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIOBLK_QUEUE_MASK;
 
 	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
@@ -420,184 +419,189 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		goto out;
 	}
 
-	cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
-	cmd_desc = &desc[cmd_desc_idx];
+	while (idx != (avail->idx & VIOBLK_QUEUE_MASK)) {
 
-	if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
-		log_warnx("unchained vioblk cmd descriptor received "
-		    "(idx %d)", cmd_desc_idx);
-		goto out;
-	}
+		cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
+		cmd_desc = &desc[cmd_desc_idx];
 
-	/* Read command from descriptor ring */
-	if (read_mem(cmd_desc->addr, &cmd, cmd_desc->len)) {
-		log_warnx("vioblk: command read_mem error @ 0x%llx",
-		    cmd_desc->addr);
-		goto out;
-	}
-
-	switch (cmd.type) {
-	case VIRTIO_BLK_T_IN:
-		/* first descriptor */
-		secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-		secdata_desc = &desc[secdata_desc_idx];
-
-		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			log_warnx("unchained vioblk data descriptor "
-			    "received (idx %d)", cmd_desc_idx);
+		if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
+			log_warnx("unchained vioblk cmd descriptor received "
+			    "(idx %d)", cmd_desc_idx);
 			goto out;
 		}
 
-		secbias = 0;
-		do {
-			/* read the data (use current data descriptor) */
-			/*
-			 * XXX waste to malloc secdata in vioblk_do_read
-			 * and free it here over and over
-			 */
-			secdata = vioblk_do_read(dev, cmd.sector + secbias,
-			    (ssize_t)secdata_desc->len);
-			if (secdata == NULL) {
-				log_warnx("vioblk: block read error, "
-				    "sector %lld", cmd.sector);
+		/* Read command from descriptor ring */
+		if (read_mem(cmd_desc->addr, &cmd, cmd_desc->len)) {
+			log_warnx("vioblk: command read_mem error @ 0x%llx",
+			    cmd_desc->addr);
+			goto out;
+		}
+
+		switch (cmd.type) {
+		case VIRTIO_BLK_T_IN:
+			/* first descriptor */
+			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
+			secdata_desc = &desc[secdata_desc_idx];
+
+			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
+				log_warnx("unchained vioblk data descriptor "
+				    "received (idx %d)", cmd_desc_idx);
 				goto out;
 			}
 
-			if (write_mem(secdata_desc->addr, secdata,
-			    secdata_desc->len)) {
-				log_warnx("can't write sector "
-				    "data to gpa @ 0x%llx",
-				    secdata_desc->addr);
-				dump_descriptor_chain(desc, cmd_desc_idx);
+			secbias = 0;
+			do {
+				/* read the data (use current data descriptor) */
+				/*
+				 * XXX waste to malloc secdata in vioblk_do_read
+				 * and free it here over and over
+				 */
+				secdata = vioblk_do_read(dev, cmd.sector + secbias,
+				    (ssize_t)secdata_desc->len);
+				if (secdata == NULL) {
+					log_warnx("vioblk: block read error, "
+					    "sector %lld", cmd.sector);
+					goto out;
+				}
+
+				if (write_mem(secdata_desc->addr, secdata,
+				    secdata_desc->len)) {
+					log_warnx("can't write sector "
+					    "data to gpa @ 0x%llx",
+					    secdata_desc->addr);
+					dump_descriptor_chain(desc, cmd_desc_idx);
+					free(secdata);
+					goto out;
+				}
+
 				free(secdata);
+
+				secbias += (secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE);
+				secdata_desc_idx = secdata_desc->next &
+				    VIOBLK_QUEUE_MASK;
+				secdata_desc = &desc[secdata_desc_idx];
+			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
+
+			ds_desc_idx = secdata_desc_idx;
+			ds_desc = secdata_desc;
+
+			ds = VIRTIO_BLK_S_OK;
+			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+				log_warnx("can't write device status data @ "
+				    "0x%llx", ds_desc->addr);
+				dump_descriptor_chain(desc, cmd_desc_idx);
 				goto out;
 			}
+
+
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->idx++;
+
+			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
+			    VIOBLK_QUEUE_MASK;
+
+			if (write_mem(q_gpa, vr, vr_sz)) {
+				log_warnx("vioblk: error writing vio ring");
+			}
+			break;
+		case VIRTIO_BLK_T_OUT:
+			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
+			secdata_desc = &desc[secdata_desc_idx];
+
+			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
+				log_warnx("wr vioblk: unchained vioblk data "
+				    "descriptor received (idx %d)", cmd_desc_idx);
+				goto out;
+			}
+
+			secdata = malloc(MAXPHYS);
+			if (secdata == NULL) {
+				log_warn("wr vioblk: malloc error, len %d",
+				    secdata_desc->len);
+				goto out;
+			}
+
+			secbias = 0;
+			do {
+				if (read_mem(secdata_desc->addr, secdata,
+				    secdata_desc->len)) {
+					log_warnx("wr vioblk: can't read "
+					    "sector data @ 0x%llx",
+					    secdata_desc->addr);
+					dump_descriptor_chain(desc, cmd_desc_idx);
+					free(secdata);
+					goto out;
+				}
+
+				if (vioblk_do_write(dev, cmd.sector + secbias,
+				    secdata, (ssize_t)secdata_desc->len)) {
+					log_warnx("wr vioblk: disk write error");
+					free(secdata);
+					goto out;
+				}
+
+				secbias += secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE;
+
+				secdata_desc_idx = secdata_desc->next &
+				    VIOBLK_QUEUE_MASK;
+				secdata_desc = &desc[secdata_desc_idx];
+			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
 
 			free(secdata);
 
-			secbias += (secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE);
-			secdata_desc_idx = secdata_desc->next &
-			    VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-		} while (secdata_desc->flags & VRING_DESC_F_NEXT);
+			ds_desc_idx = secdata_desc_idx;
+			ds_desc = secdata_desc;
 
-		ds_desc_idx = secdata_desc_idx;
-		ds_desc = secdata_desc;
-
-		ds = VIRTIO_BLK_S_OK;
-		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-			log_warnx("can't write device status data @ "
-			    "0x%llx", ds_desc->addr);
-			dump_descriptor_chain(desc, cmd_desc_idx);
-			goto out;
-		}
-
-
-		ret = 1;
-		dev->cfg.isr_status = 1;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
-		used->idx++;
-
-		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-		    VIOBLK_QUEUE_MASK;
-
-		if (write_mem(q_gpa, vr, vr_sz)) {
-			log_warnx("vioblk: error writing vio ring");
-		}
-		break;
-	case VIRTIO_BLK_T_OUT:
-		secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-		secdata_desc = &desc[secdata_desc_idx];
-
-		if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			log_warnx("wr vioblk: unchained vioblk data "
-			    "descriptor received (idx %d)", cmd_desc_idx);
-			goto out;
-		}
-
-		secdata = malloc(MAXPHYS);
-		if (secdata == NULL) {
-			log_warn("wr vioblk: malloc error, len %d",
-			    secdata_desc->len);
-			goto out;
-		}
-
-		secbias = 0;
-		do {
-			if (read_mem(secdata_desc->addr, secdata,
-			    secdata_desc->len)) {
-				log_warnx("wr vioblk: can't read "
-				    "sector data @ 0x%llx",
-				    secdata_desc->addr);
+			ds = VIRTIO_BLK_S_OK;
+			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+				log_warnx("wr vioblk: can't write device status "
+				    "data @ 0x%llx", ds_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
-				free(secdata);
 				goto out;
 			}
 
-			if (vioblk_do_write(dev, cmd.sector + secbias,
-			    secdata, (ssize_t)secdata_desc->len)) {
-				log_warnx("wr vioblk: disk write error");
-				free(secdata);
-				goto out;
-			}
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->idx++;
 
-			secbias += secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE;
-
-			secdata_desc_idx = secdata_desc->next &
+			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
 			    VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-		} while (secdata_desc->flags & VRING_DESC_F_NEXT);
+			if (write_mem(q_gpa, vr, vr_sz))
+				log_warnx("wr vioblk: error writing vio ring");
+			break;
+		case VIRTIO_BLK_T_FLUSH:
+		case VIRTIO_BLK_T_FLUSH_OUT:
+			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
+			ds_desc = &desc[ds_desc_idx];
 
-		free(secdata);
+			ds = VIRTIO_BLK_S_OK;
+			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+				log_warnx("fl vioblk: can't write device status "
+				    "data @ 0x%llx", ds_desc->addr);
+				dump_descriptor_chain(desc, cmd_desc_idx);
+				goto out;
+			}
 
-		ds_desc_idx = secdata_desc_idx;
-		ds_desc = secdata_desc;
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->idx++;
 
-		ds = VIRTIO_BLK_S_OK;
-		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-			log_warnx("wr vioblk: can't write device status "
-			    "data @ 0x%llx", ds_desc->addr);
-			dump_descriptor_chain(desc, cmd_desc_idx);
-			goto out;
+			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
+			    VIOBLK_QUEUE_MASK;
+			if (write_mem(q_gpa, vr, vr_sz)) {
+				log_warnx("fl vioblk: error writing vio ring");
+			}
+			break;
 		}
 
-		ret = 1;
-		dev->cfg.isr_status = 1;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
-		used->idx++;
-
-		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-		    VIOBLK_QUEUE_MASK;
-		if (write_mem(q_gpa, vr, vr_sz))
-			log_warnx("wr vioblk: error writing vio ring");
-		break;
-	case VIRTIO_BLK_T_FLUSH:
-	case VIRTIO_BLK_T_FLUSH_OUT:
-		ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-		ds_desc = &desc[ds_desc_idx];
-
-		ds = VIRTIO_BLK_S_OK;
-		if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-			log_warnx("fl vioblk: can't write device status "
-			    "data @ 0x%llx", ds_desc->addr);
-			dump_descriptor_chain(desc, cmd_desc_idx);
-			goto out;
-		}
-
-		ret = 1;
-		dev->cfg.isr_status = 1;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
-		used->idx++;
-
-		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-		    VIOBLK_QUEUE_MASK;
-		if (write_mem(q_gpa, vr, vr_sz)) {
-			log_warnx("fl vioblk: error writing vio ring");
-		}
-		break;
+		idx = (idx + 1) & VIOBLK_QUEUE_MASK;
 	}
 out:
 	free(vr);
