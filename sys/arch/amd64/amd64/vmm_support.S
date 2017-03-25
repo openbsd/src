@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.6 2017/02/20 07:36:20 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.7 2017/03/25 15:25:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -472,9 +472,9 @@ _C_LABEL(svm_enter_guest):
 	/* %rax at 0x08(%rsi) is not needed in SVM */
 	movq	0x00(%rsi), %rsi
 
-	vmload
-	vmrun
-	vmsave
+	vmload	%rax
+	vmrun	%rax
+	vmsave	%rax
 
 	/* Preserve guest registers not saved in VMCB */
 	pushq	%rsi
