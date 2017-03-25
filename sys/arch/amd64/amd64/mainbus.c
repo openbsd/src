@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.38 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.39 2017/03/25 22:24:01 deraadt Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -159,6 +159,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if NPCI > 0
 	union mainbus_attach_args	mba;
 #endif
+#if NVMM > 0
+	extern int vmm_enabled(void);
+#endif
 	extern void			(*setperf_setup)(struct cpu_info *);
 
 	printf("\n");
@@ -246,8 +249,10 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NVMM > 0
-	mba.mba_busname = "vmm";
-	config_found(self, &mba.mba_busname, mainbus_print);
+	if (vmm_enabled()) {
+		mba.mba_busname = "vmm";
+		config_found(self, &mba.mba_busname, mainbus_print);
+	}
 #endif /* NVMM > 0 */
 
 #if NEFIFB > 0
