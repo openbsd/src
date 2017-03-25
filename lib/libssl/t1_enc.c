@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.106 2017/03/25 13:36:56 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.107 2017/03/25 13:42:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1130,12 +1130,12 @@ tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	if (len < 0)
 		return 0;
 
-	/* XXX - check return value. */
-	tls1_PRF(s, p, len,
+	if (!tls1_PRF(s, p, len,
 	    TLS_MD_MASTER_SECRET_CONST, TLS_MD_MASTER_SECRET_CONST_SIZE,
 	    s->s3->client_random, SSL3_RANDOM_SIZE, NULL, 0,
 	    s->s3->server_random, SSL3_RANDOM_SIZE, NULL, 0,
-	    s->session->master_key, SSL_MAX_MASTER_KEY_LENGTH);
+	    s->session->master_key, SSL_MAX_MASTER_KEY_LENGTH))
+		return 0;
 
 	return (SSL_MAX_MASTER_KEY_LENGTH);
 }
