@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.175 2017/02/27 22:25:58 benno Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.176 2017/03/25 23:14:04 claudio Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 27 2017 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1470,7 +1470,7 @@ http protocol "https" {
 	match header append "X-Forwarded-For" \e
 		value "$REMOTE_ADDR"
 	match header append "X-Forwarded-By" \e
-		value "$REMOTE_ADDR:$SERVER_PORT"
+		value "$SERVER_ADDR:$SERVER_PORT"
 	match header set "Keep-Alive" value "$TIMEOUT"
 
 	match query hash "sessid"
