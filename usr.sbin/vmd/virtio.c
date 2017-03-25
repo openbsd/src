@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.35 2017/03/25 15:47:37 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.36 2017/03/25 16:05:33 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -637,6 +637,18 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
 			dev->cfg.device_status = *data;
+			if (dev->cfg.device_status == 0) {
+				log_debug("%s: device reset", __func__);
+				dev->cfg.guest_feature = 0;
+				dev->cfg.queue_address = 0;
+				vioblk_update_qa(dev);
+				dev->cfg.queue_size = 0;
+				vioblk_update_qs(dev);
+				dev->cfg.queue_select = 0;
+				dev->cfg.queue_notify = 0;
+				dev->cfg.isr_status = 0;
+				dev->vq[0].last_avail = 0;
+			}
 			break;
 		default:
 			break;
@@ -787,12 +799,20 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
 			dev->cfg.device_status = *data;
-			if (*data == 0) {
+			if (dev->cfg.device_status == 0) {
+				log_debug("%s: device reset", __func__);
+				dev->cfg.guest_feature = 0;
+				dev->cfg.queue_address = 0;
+				vionet_update_qa(dev);
+				dev->cfg.queue_size = 0;
+				vionet_update_qs(dev);
+				dev->cfg.queue_select = 0;
+				dev->cfg.queue_notify = 0;
+				dev->cfg.isr_status = 0;
 				dev->vq[0].last_avail = 0;
 				dev->vq[0].notified_avail = 0;
 				dev->vq[1].last_avail = 0;
 				dev->vq[1].notified_avail = 0;
-				/* XXX do proper reset */
 			}
 			break;
 		default:
