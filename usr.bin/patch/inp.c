@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.46 2016/07/19 06:43:27 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.47 2017/03/25 23:13:45 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -106,22 +106,22 @@ scan_input(const char *filename)
 }
 
 static bool
-reallocate_lines(size_t *lines_allocated)
+reallocate_lines(size_t *lines_allocatedp)
 {
 	char	**p;
 	size_t	new_size;
 
-	new_size = *lines_allocated * 3 / 2;
+	new_size = *lines_allocatedp * 3 / 2;
 	p = reallocarray(i_ptr, new_size + 2, sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;
 		free(i_ptr);
 		i_ptr = NULL;
-		*lines_allocated = 0;
+		*lines_allocatedp = 0;
 		return false;
 	}
-	*lines_allocated = new_size;
+	*lines_allocatedp = new_size;
 	i_ptr = p;
 	return true;
 }
