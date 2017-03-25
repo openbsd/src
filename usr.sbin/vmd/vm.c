@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.9 2017/03/25 16:28:25 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.10 2017/03/25 22:36:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1426,16 +1426,26 @@ set_return_data(union vm_exit *vei, uint32_t data)
  *
  * Parameters:
  *  vei: exit information
+ *  data: location to store the result
  */
-uint32_t
-get_input_data(union vm_exit *vei)
+void
+get_input_data(union vm_exit *vei, uint32_t *data)
 {
 	switch (vei->vei.vei_size) {
-	case 1: return vei->vei.vei_data & 0xFF;
-	case 2: return vei->vei.vei_data & 0xFFFF;
-	case 4: return vei->vei.vei_data;
+	case 1:
+		*data &= 0xFFFFFF00;
+		*data |= (uint8_t)vei->vei.vei_data;
+		break;
+	case 2:
+		*data &= 0xFFFF0000;
+		*data |= (uint16_t)vei->vei.vei_data;
+		break;
+	case 4:
+		*data = vei->vei.vei_data;
+		break;
+	default:
+		log_warnx("%s: invalid i/o size %d", __func__,
+		    vei->vei.vei_size);
 	}
 
-	log_warnx("%s: invalid i/o size %d", __func__, vei->vei.vei_size);
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.38 2017/03/25 16:34:26 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.39 2017/03/25 22:36:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -750,7 +750,15 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			*data = dev->cfg.queue_address;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
-			*data = dev->cfg.queue_size;
+			if (sz == 4)
+				*data = dev->cfg.queue_size;
+			else if (sz == 2) {
+				*data &= 0xFFFF0000;
+				*data |= (uint16_t)dev->cfg.queue_size;
+			} else if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint8_t)dev->cfg.queue_size;
+			}
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
 			*data = dev->cfg.queue_select;
@@ -759,7 +767,15 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			*data = dev->cfg.queue_notify;
 			break;
 		case VIRTIO_CONFIG_DEVICE_STATUS:
-			*data = dev->cfg.device_status;
+			if (sz == 4)
+				*data = dev->cfg.device_status;
+			else if (sz == 2) {
+				*data &= 0xFFFF0000;
+				*data |= (uint16_t)dev->cfg.device_status;
+			} else if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint8_t)dev->cfg.device_status;
+			}
 			break;
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = dev->cfg.isr_status;

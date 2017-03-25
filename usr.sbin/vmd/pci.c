@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.14 2017/03/25 15:47:37 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.15 2017/03/25 22:36:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -215,7 +215,7 @@ pci_handle_address_reg(struct vm_run_params *vrp)
 	 * The guest wrote to the address register.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		pci.pci_addr_reg = get_input_data(vei);
+		get_input_data(vei, &pci.pci_addr_reg);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -346,8 +346,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 
 		/* XXX - discard writes to reassign IRQs / pins */
 		if (o != 0x3c)
-			pci.pci_devices[d].pd_cfg_space[o / 4] =
-			    get_input_data(vei);
+			get_input_data(vei, &pci.pci_devices[d].pd_cfg_space[o / 4]);
 
 		/* IOBAR registers must have bit 0 set */
 		if (o == 0x10)
@@ -360,6 +359,26 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		 * The guest read from the config space location determined by
 		 * the current value in the address register.
 		 */
-		set_return_data(vei, pci.pci_devices[d].pd_cfg_space[o / 4]);
+		if (d > pci.pci_dev_ct || b > 0 || f > 0)
+			set_return_data(vei, 0xFFFFFFFF);
+		else {
+			switch (sz) {
+			case 4:
+				set_return_data(vei, pci.pci_devices[d].pd_cfg_space[o / 4]);
+				break;
+			case 2:
+				if (ofs == 0)
+					set_return_data(vei,
+					    pci.pci_devices[d].pd_cfg_space[o / 4]);
+				else
+					set_return_data(vei,
+					    pci.pci_devices[d].pd_cfg_space[o / 4] >> 16);
+				break;
+			case 1:
+				set_return_data(vei,
+				    pci.pci_devices[d].pd_cfg_space[o / 4] >> (ofs * 3));
+				break;
+			}
+		}
 	}
 }
