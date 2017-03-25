@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.36 2017/03/25 16:05:33 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.37 2017/03/25 16:24:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -292,6 +292,7 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = viornd.cfg.isr_status;
+			viornd.cfg.isr_status = 0;
 			break;
 		}
 	}
@@ -758,6 +759,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = dev->cfg.isr_status;
+			dev->cfg.isr_status = 0;
 			break;
 		}
 	}
@@ -852,6 +854,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = dev->cfg.isr_status;
+			dev->cfg.isr_status = 0;
 			break;
 		}
 	}
@@ -1463,6 +1466,7 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		case VIRTIO_CONFIG_ISR_STATUS:
 			*data = vmmci.cfg.isr_status;
+			vmmci.cfg.isr_status = 0;
 			break;
 		}
 	}
