@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.28 2016/04/28 16:39:45 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.29 2017/03/25 14:15:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,10 +249,7 @@ extern "C" {
 /* ExtensionType value from RFC 7301. */
 #define TLSEXT_TYPE_application_layer_protocol_negotiation 16
 
-/* ExtensionType value for TLS padding extension.
- * (TEMPORARY - registered 2014-03-12, expires 2015-03-12)
- * https://tools.ietf.org/html/draft-agl-tls-padding-03
- */
+/* ExtensionType value from RFC 7685. */
 #define TLSEXT_TYPE_padding	21
 
 /* ExtensionType value from RFC 4507. */
