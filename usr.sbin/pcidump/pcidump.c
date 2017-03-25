@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.42 2017/03/16 22:05:46 deraadt Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.43 2017/03/25 07:33:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -392,6 +392,7 @@ void
 dump_pcie_enhanced_caplist(int bus, int dev, int func)
 {
 	u_int32_t reg;
+	u_int32_t capidx;
 	u_int16_t ptr;
 	u_int16_t ecap;
 
@@ -407,10 +408,12 @@ dump_pcie_enhanced_caplist(int bus, int dev, int func)
 
 		ecap = PCI_PCIE_ECAP_ID(reg);
 		if (ecap >= nitems(pci_enhanced_capnames))
-			ecap = 0;
+			capidx = 0;
+		else
+			capidx = ecap;
 
 		printf("\t0x%04x: Enhanced Capability 0x%02x: ", ptr, ecap);
-		printf("%s\n", pci_enhanced_capnames[ecap]);
+		printf("%s\n", pci_enhanced_capnames[capidx]);
 
 		ptr = PCI_PCIE_ECAP_NEXT(reg);
 

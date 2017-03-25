@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.52 2017/03/22 07:21:39 jsg Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.53 2017/03/25 07:33:46 mlarkin Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_ECAP		0x100
 #define	PCI_PCIE_ECAP_ID(x)	(((x) & 0x0000ffff))
 #define PCI_PCIE_ECAP_VER(x)	(((x) >> 16) & 0x0f)
-#define	PCI_PCIE_ECAP_NEXT(x)	((x) >> 20)
+#define	PCI_PCIE_ECAP_NEXT(x)	(((x) >> 20) & 0xffc)
 #define PCI_PCIE_ECAP_LAST	0x0
 
 /*
