@@ -1,5 +1,5 @@
-.\"	$OpenBSD: RSA_public_encrypt.3,v 1.5 2016/12/11 12:21:48 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"	$OpenBSD: RSA_public_encrypt.3,v 1.6 2017/03/25 18:17:45 schwarze Exp $
+.\"	OpenSSL RSA_public_encrypt.pod b41f6b64 Mar 10 15:49:04 2017 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2004 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: March 25 2017 $
 .Dt RSA_PUBLIC_ENCRYPT 3
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@
 .Ft int
 .Fo RSA_public_encrypt
 .Fa "int flen"
-.Fa "unsigned char *from"
+.Fa "const unsigned char *from"
 .Fa "unsigned char *to"
 .Fa "RSA *rsa"
 .Fa "int padding"
@@ -68,7 +68,7 @@
 .Ft int
 .Fo RSA_private_decrypt
 .Fa "int flen"
-.Fa "unsigned char *from"
+.Fa "const unsigned char *from"
 .Fa "unsigned char *to"
 .Fa "RSA *rsa"
 .Fa "int padding"
