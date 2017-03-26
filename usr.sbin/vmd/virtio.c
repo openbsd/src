@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.39 2017/03/25 22:36:53 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.40 2017/03/26 22:19:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -513,37 +513,48 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
 				log_warnx("wr vioblk: unchained vioblk data "
-				    "descriptor received (idx %d)", cmd_desc_idx);
+				    "descriptor received (idx %d)",
+				    cmd_desc_idx);
 				goto out;
 			}
 
-			secdata = malloc(MAXPHYS);
-			if (secdata == NULL) {
-				log_warn("wr vioblk: malloc error, len %d",
-				    secdata_desc->len);
+			if (secdata_desc->len > dev->max_xfer) {
+				log_warnx("%s: invalid read size %d requested",
+				    __func__, secdata_desc->len);
 				goto out;
 			}
 
+			secdata = NULL;
 			secbias = 0;
 			do {
+				secdata = realloc(secdata, secdata_desc->len);
+				if (secdata == NULL) {
+					log_warn("wr vioblk: malloc error, "
+					    "len %d", secdata_desc->len);
+					goto out;
+				}
+
 				if (read_mem(secdata_desc->addr, secdata,
 				    secdata_desc->len)) {
 					log_warnx("wr vioblk: can't read "
 					    "sector data @ 0x%llx",
 					    secdata_desc->addr);
-					dump_descriptor_chain(desc, cmd_desc_idx);
+					dump_descriptor_chain(desc,
+					    cmd_desc_idx);
 					free(secdata);
 					goto out;
 				}
 
 				if (vioblk_do_write(dev, cmd.sector + secbias,
 				    secdata, (ssize_t)secdata_desc->len)) {
-					log_warnx("wr vioblk: disk write error");
+					log_warnx("wr vioblk: disk write "
+					    "error");
 					free(secdata);
 					goto out;
 				}
 
-				secbias += secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE;
+				secbias += secdata_desc->len /
+				    VIRTIO_BLK_SECTOR_SIZE;
 
 				secdata_desc_idx = secdata_desc->next &
 				    VIOBLK_QUEUE_MASK;
@@ -557,16 +568,18 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			ds = VIRTIO_BLK_S_OK;
 			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
-				log_warnx("wr vioblk: can't write device status "
-				    "data @ 0x%llx", ds_desc->addr);
+				log_warnx("wr vioblk: can't write device "
+				    "status data @ 0x%llx", ds_desc->addr);
 				dump_descriptor_chain(desc, cmd_desc_idx);
 				goto out;
 			}
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
+			    cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
+			    cmd_desc->len;
 			used->idx++;
 
 			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
@@ -589,8 +602,10 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-			used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
+			    cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
+			    cmd_desc->len;
 			used->idx++;
 
 			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
@@ -598,6 +613,38 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			if (write_mem(q_gpa, vr, vr_sz)) {
 				log_warnx("fl vioblk: error writing vio ring");
 			}
+			break;
+		case VIRTIO_BLK_T_GET_ID:
+			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
+			ds_desc = &desc[ds_desc_idx];
+
+			ds = VIRTIO_BLK_S_UNSUPP;
+			if (write_mem(ds_desc->addr, &ds, ds_desc->len)) {
+				log_warnx("%s: get id : can't write device "
+				    "status data @ 0x%llx", __func__,
+				    ds_desc->addr);
+				dump_descriptor_chain(desc, cmd_desc_idx);
+				goto out;
+			}
+
+			ret = 1;
+			dev->cfg.isr_status = 1;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].id =
+			    cmd_desc_idx;
+			used->ring[used->idx & VIOBLK_QUEUE_MASK].len =
+			    cmd_desc->len;
+			used->idx++;
+
+			dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
+			    VIOBLK_QUEUE_MASK;
+			if (write_mem(q_gpa, vr, vr_sz)) {
+				log_warnx("%s: get id : error writing vio ring",
+				    __func__);
+			}
+			break;
+		default:
+			log_warnx("%s: unknown command 0x%x", __func__,
+			    cmd.type);
 			break;
 		}
 
@@ -615,6 +662,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	struct vioblk_dev *dev = (struct vioblk_dev *)cookie;
 
 	*intr = 0xFF;
+
 
 	if (dir == 0) {
 		switch (reg) {
@@ -737,6 +785,46 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (sz == 1) {
 				*data &= 0xFFFFFF00;
 				*data |= (uint32_t)(dev->sz >> 56) & 0xFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8:
+			switch (sz) {
+			case 4:
+				*data = (uint32_t)(dev->max_xfer);
+				break;
+			case 2:
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->max_xfer) & 0xFFFF;
+				break;
+			case 1:
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->max_xfer) & 0xFF;
+				break;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 9:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->max_xfer >> 8) & 0xFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 10:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->max_xfer >> 16) & 0xFF;
+			} else if (sz == 2) {
+				*data &= 0xFFFF0000;
+				*data |= (uint32_t)(dev->max_xfer >> 16) & 0xFFFF;
+			}
+			/* XXX handle invalid sz */
+			break;
+		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 11:
+			if (sz == 1) {
+				*data &= 0xFFFFFF00;
+				*data |= (uint32_t)(dev->max_xfer >> 24) & 0xFF;
 			}
 			/* XXX handle invalid sz */
 			break;
@@ -1566,6 +1654,8 @@ virtio_init(struct vmop_create_params *vmc, int *child_disks, int *child_taps)
 			vioblk[i].vq[0].last_avail = 0;
 			vioblk[i].fd = child_disks[i];
 			vioblk[i].sz = sz / 512;
+			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
+			vioblk[i].max_xfer = 1048576;
 		}
 	}
 
