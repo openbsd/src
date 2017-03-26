@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.27 2017/03/25 16:28:25 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.28 2017/03/26 00:46:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -126,7 +126,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	unsigned int		 i;
-	int			 fd = -1;
+	int			 fd = -1, vmboot = 0;
 	int			 kernfd = -1, *diskfds = NULL, *tapfds = NULL;
 	int			 saved_errno = 0;
 	char			 ifname[IF_NAMESIZE], *s;
@@ -160,8 +160,13 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	vm->vm_peerid = peerid;
 	vm->vm_uid = uid;
 
+	/* Boot ELF kernel from disk image if path matches the root disk */
+	if (vcp->vcp_ndisks &&
+	    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
+		vmboot = 1;
+
 	/* Open external kernel for child */
-	if (strlen(vcp->vcp_kernel) &&
+	if (strlen(vcp->vcp_kernel) && !vmboot &&
 	    (kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
 		log_warn("%s: can't open kernel/BIOS boot image %s",
 		    __func__, vcp->vcp_kernel);
@@ -173,7 +178,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	 * been specified.  The BIOS is an external firmware file that is
 	 * typically distributed separately due to an incompatible license.
 	 */
-	if (kernfd == -1 &&
+	if (kernfd == -1 && !vmboot &&
 	    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
 		log_warn("%s: can't open %s", __func__, VM_DEFAULT_BIOS);
 		goto fail;
