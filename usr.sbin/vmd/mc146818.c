@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.10 2017/03/25 22:36:53 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.11 2017/03/26 17:04:03 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -249,7 +249,7 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	union vm_exit *vei = vrp->vrp_exit;
 	uint16_t port = vei->vei.vei_port;
 	uint8_t dir = vei->vei.vei_dir;
-	uint32_t data;
+	uint32_t data = 0;
 
 	get_input_data(vei, &data);
 
