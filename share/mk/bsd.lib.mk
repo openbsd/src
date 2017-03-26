@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.79 2016/11/08 19:04:49 natano Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.80 2017/03/26 18:50:37 guenther Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -169,14 +169,14 @@ OBJS+=	${SRCS:N*.h:R:S/$/.o/}
 lib${LIB}.a: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.a
-	@${AR} cq lib${LIB}.a `${LORDER} ${OBJS} | tsort -q`
+	@${AR} cqD lib${LIB}.a `${LORDER} ${OBJS} | tsort -q`
 	${RANLIB} lib${LIB}.a
 
 POBJS+=	${OBJS:.o=.po}
 lib${LIB}_p.a: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
-	@${AR} cq lib${LIB}_p.a `${LORDER} ${POBJS} | tsort -q`
+	@${AR} cqD lib${LIB}_p.a `${LORDER} ${POBJS} | tsort -q`
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
@@ -190,7 +190,7 @@ ${FULLSHLIBNAME}.a: ${SOBJS}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
 	@rm -f ${.TARGET}
 	@echo ${PICFLAG} ${LDADD} > .ldadd
-	ar cq ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
+	ar cqD ${FULLSHLIBNAME}.a ${SOBJS} .ldadd ${SYMBOLSMAP}
 
 # all .do files...
 DOBJS+=	${OBJS:.o=.do}
@@ -207,9 +207,9 @@ ${DIST_LIB}: ${SELECTED_DOBJS}
 	@echo building distrib ${DIST_LIB} library from ${SELECTED_DOBJS}
 	@rm -f ${DIST_LIB}
 .if !empty(SELECTED_DOBJS)
-	@${AR} cq ${DIST_LIB} `${LORDER} ${SELECTED_DOBJS} | tsort -q`
+	@${AR} cqD ${DIST_LIB} `${LORDER} ${SELECTED_DOBJS} | tsort -q`
 .else
-	@${AR} cq ${DIST_LIB}
+	@${AR} cqD ${DIST_LIB}
 .endif
 	${RANLIB} ${DIST_LIB}
 
