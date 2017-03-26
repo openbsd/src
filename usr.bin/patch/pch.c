@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.55 2016/09/02 09:48:03 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.56 2017/03/26 15:28:12 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -157,7 +157,7 @@ grow_hunkmax(void)
 	if (new_p_len == NULL)
 		free(p_len);
 
-	new_p_char = reallocarray(p_char, new_hunkmax, sizeof(char));
+	new_p_char = recallocarray(p_char, hunkmax, new_hunkmax, sizeof(char));
 	if (new_p_char == NULL)
 		free(p_char);
 
