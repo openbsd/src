@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.8 2017/01/24 12:53:52 deraadt Exp $ */
+/*	$Id: keyproc.c,v 1.9 2017/03/26 18:41:02 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -187,9 +187,9 @@ keyproc(int netsock, const char *keyfile,
 				warn("asprintf");
 				goto out;
 			}
-			pp = realloc(sans, sansz + strlen(san));
+			pp = recallocarray(sans, sansz, sansz + strlen(san), 1);
 			if (pp == NULL) {
-				warn("realloc");
+				warn("recallocarray");
 				goto out;
 			}
 			sans = pp;

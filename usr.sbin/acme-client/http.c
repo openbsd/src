@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.19 2017/02/03 08:08:15 guenther Exp $ */
+/*	$Id: http.c,v 1.20 2017/03/26 18:41:02 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -422,9 +422,10 @@ http_body_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 			return NULL;
 		else if (ssz == 0)
 			break;
-		pp = realloc(trans->bbuf, trans->bbufsz + ssz);
+		pp = recallocarray(trans->bbuf,
+		    trans->bbufsz, trans->bbufsz + ssz, 1);
 		if (pp == NULL) {
-			warn("realloc");
+			warn("recallocarray");
 			return NULL;
 		}
 		trans->bbuf = pp;
@@ -616,9 +617,10 @@ http_head_read(const struct http *http, struct httpxfer *trans, size_t *sz)
 			return NULL;
 		else if (ssz == 0)
 			break;
-		pp = realloc(trans->hbuf, trans->hbufsz + ssz);
+		pp = recallocarray(trans->hbuf,
+		    trans->hbufsz, trans->hbufsz + ssz, 1);
 		if (pp == NULL) {
-			warn("realloc");
+			warn("recallocarray");
 			return NULL;
 		}
 		trans->hbuf = pp;
