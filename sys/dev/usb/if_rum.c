@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.120 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.121 2017/03/26 15:31:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -254,7 +254,7 @@ rum_attachhook(struct device *self)
 		    sc->sc_dev.dv_xname);
 	}
 
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, size);
 }
 
 void

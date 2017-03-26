@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.45 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.46 2017/03/26 15:31:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -621,7 +621,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	usb_device_request_t req;
 	const char *name;
 	u_char *fw, *ptr;
-	size_t size;
+	size_t fwsize, size;
 	uint32_t addr;
 	int s, mlen, error;
 
@@ -635,7 +635,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	} else
 		name = "athn-ar9271";
 	/* Read firmware image from the filesystem. */
-	if ((error = loadfirmware(name, &fw, &size)) != 0) {
+	if ((error = loadfirmware(name, &fw, &fwsize)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
 		    usc->usb_dev.dv_xname, name, error);
 		return (error);
@@ -646,6 +646,7 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = AR_FW_DOWNLOAD;
 	USETW(req.wIndex, 0);
+	size = fwsize;
 	while (size > 0) {
 		mlen = MIN(size, 4096);
 
@@ -653,14 +654,14 @@ athn_usb_load_firmware(struct athn_usb_softc *usc)
 		USETW(req.wLength, mlen);
 		error = usbd_do_request(usc->sc_udev, &req, ptr);
 		if (error != 0) {
-			free(fw, M_DEVBUF, 0);
+			free(fw, M_DEVBUF, fwsize);
 			return (error);
 		}
 		addr += mlen >> 8;
 		ptr  += mlen;
 		size -= mlen;
 	}
-	free(fw, M_DEVBUF, 0);
+	free(fw, M_DEVBUF, fwsize);
 
 	/* Start firmware. */
 	if (usc->flags & ATHN_USB_FLAG_AR7010)

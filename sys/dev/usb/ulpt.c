@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.53 2016/03/03 18:13:24 stefan Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.54 2017/03/26 15:31:15 deraadt Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -713,7 +713,7 @@ close_pipe:
 	usbd_close_pipe(sc->sc_out_pipe);
 	sc->sc_out_pipe = NULL;
 free_ucode:
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, ucode_size);
 
 	return (error);
 }

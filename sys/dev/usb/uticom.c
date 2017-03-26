@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.30 2016/05/24 05:35:01 mpi Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.31 2017/03/26 15:31:15 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -863,7 +863,7 @@ uticom_download_fw(struct uticom_softc *sc, int pipeno,
 	if (!buffer) {
 		printf("%s: uticom_download_fw: out of memory\n",
 		    sc->sc_dev.dv_xname);
-		free(firmware, M_DEVBUF, 0);
+		free(firmware, M_DEVBUF, firmware_size);
 		return ENOMEM;
 	}
 
@@ -913,12 +913,12 @@ uticom_download_fw(struct uticom_softc *sc, int pipeno,
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
 
 finish:
-	free(firmware, M_DEVBUF, 0);
+	free(firmware, M_DEVBUF, firmware_size);
 	usbd_free_buffer(oxfer);
 	usbd_free_xfer(oxfer);
 	oxfer = NULL;
 	usbd_abort_pipe(pipe);
 	usbd_close_pipe(pipe);
-	free(buffer, M_USBDEV, 0);
+	free(buffer, M_USBDEV, buffer_size);
 	return err;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.131 2016/09/19 16:46:10 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.132 2017/03/26 15:31:15 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1398,7 +1398,7 @@ usbd_get_cdesc(struct usbd_device *dev, int index, u_int *lenp)
 		cdesc = malloc(len, M_TEMP, M_WAITOK);
 		err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdesc);
 		if (err) {
-			free(cdesc, M_TEMP, 0);
+			free(cdesc, M_TEMP, len);
 			return (0);
 		}
 	}
@@ -1435,7 +1435,7 @@ usb_free_device(struct usbd_device *dev)
 	if (dev->serial != NULL)
 		free(dev->serial, M_USB, USB_MAX_STRING_LEN);
 
-	free(dev, M_USB, 0);
+	free(dev, M_USB, sizeof *dev);
 }
 
 /*

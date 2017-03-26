@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.192 2016/06/17 07:59:16 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.193 2017/03/26 15:31:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3647,7 +3647,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 	while (remain > 0) {
 		if (remain < 3) {
 			printf("%s: ucode file incomplete!\n", DEVNAME(sc));
-			free(ucode, M_DEVBUF, 0);
+			free(ucode, M_DEVBUF, ucode_size);
 			return (USBD_INVAL);
 		}
 
@@ -3661,7 +3661,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 		if (error != USBD_NORMAL_COMPLETION) {
 			printf("%s: ucode upload error=%s!\n",
 			    DEVNAME(sc), usbd_errstr(error));
-			free(ucode, M_DEVBUF, 0);
+			free(ucode, M_DEVBUF, ucode_size);
 			return (USBD_INVAL);
 		}
 		DPRINTF(1, "%s: uploaded %d bytes ucode to addr 0x%x\n",
@@ -3670,7 +3670,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 		offset += len;
 		remain -= len;
 	}
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, ucode_size);
 
 	/* activate microcode */
 	cbuf = 0;
@@ -3726,7 +3726,7 @@ uvideo_ucode_loader_apple_isight(struct uvideo_softc *sc)
 		if (len < 1 || len > 1023) {
 			printf("%s: ucode header contains wrong value!\n",
 			    DEVNAME(sc));
-			free(ucode, M_DEVBUF, 0);
+			free(ucode, M_DEVBUF, ucode_size);
 			return (USBD_INVAL);
 		}
 		code += 4;
@@ -3743,14 +3743,14 @@ uvideo_ucode_loader_apple_isight(struct uvideo_softc *sc)
 			if (error) {
 				printf("%s: ucode load failed: %s\n",
 				    DEVNAME(sc), usbd_errstr(error));
-				free(ucode, M_DEVBUF, 0);
+				free(ucode, M_DEVBUF, ucode_size);
 				return (USBD_INVAL);
 			}
 
 			code += llen;
 		}
 	}
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, ucode_size);
 
 	/* send finished request */
 	cbuf = 0;

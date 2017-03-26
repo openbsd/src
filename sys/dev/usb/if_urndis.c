@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.63 2017/01/22 10:17:39 dlg Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.64 2017/03/26 15:31:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -182,7 +182,7 @@ urndis_ctrl_recv(struct urndis_softc *sc)
 
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_SHORT_XFER) {
 		printf("%s: %s\n", DEVNAME(sc), usbd_errstr(err));
-		free(buf, M_TEMP, 0);
+		free(buf, M_TEMP, RNDIS_RESPONSE_LEN);
 		return NULL;
 	}
 
@@ -197,7 +197,7 @@ urndis_ctrl_recv(struct urndis_softc *sc)
 		    DEVNAME(sc),
 		    letoh32(hdr->rm_len),
 		    RNDIS_RESPONSE_LEN);
-		free(buf, M_TEMP, 0);
+		free(buf, M_TEMP, RNDIS_RESPONSE_LEN);
 		return NULL;
 	}
 
@@ -432,7 +432,7 @@ urndis_ctrl_init(struct urndis_softc *sc)
 	    letoh32(msg->rm_max_xfersz)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	free(msg, M_TEMP, 0);
+	free(msg, M_TEMP, sizeof *msg);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: init failed\n", DEVNAME(sc));
@@ -471,7 +471,7 @@ urndis_ctrl_halt(struct urndis_softc *sc)
 	    letoh32(msg->rm_rid)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	free(msg, M_TEMP, 0);
+	free(msg, M_TEMP, sizeof *msg);
 
 	if (rval != RNDIS_STATUS_SUCCESS)
 		printf("%s: halt failed\n", DEVNAME(sc));
@@ -518,7 +518,7 @@ urndis_ctrl_query(struct urndis_softc *sc, u_int32_t oid,
 	    letoh32(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg));
-	free(msg, M_TEMP, 0);
+	free(msg, M_TEMP, sizeof *msg + qlen);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: query failed\n", DEVNAME(sc));
@@ -571,7 +571,7 @@ urndis_ctrl_set(struct urndis_softc *sc, u_int32_t oid, void *buf, size_t len)
 	    letoh32(msg->rm_devicevchdl)));
 
 	rval = urndis_ctrl_send(sc, msg, sizeof(*msg) + len);
-	free(msg, M_TEMP, 0);
+	free(msg, M_TEMP, sizeof *msg + len);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: set failed\n", DEVNAME(sc));
@@ -635,7 +635,7 @@ urndis_ctrl_set_param(struct urndis_softc *sc,
 	    letoh32(param->rm_valuelen)));
 
 	rval = urndis_ctrl_set(sc, OID_GEN_RNDIS_CONFIG_PARAMETER, param, tlen);
-	free(param, M_TEMP, 0);
+	free(param, M_TEMP, tlen);
 	if (rval != RNDIS_STATUS_SUCCESS)
 		printf("%s: set param failed 0x%x\n", DEVNAME(sc), rval);
 
@@ -668,7 +668,7 @@ urndis_ctrl_reset(struct urndis_softc *sc)
 	    letoh32(reset->rm_rid)));
 
 	rval = urndis_ctrl_send(sc, reset, sizeof(*reset));
-	free(reset, M_TEMP, 0);
+	free(reset, M_TEMP, sizeof *reset);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: reset failed\n", DEVNAME(sc));
@@ -708,7 +708,7 @@ urndis_ctrl_keepalive(struct urndis_softc *sc)
 	    letoh32(keep->rm_rid)));
 
 	rval = urndis_ctrl_send(sc, keep, sizeof(*keep));
-	free(keep, M_TEMP, 0);
+	free(keep, M_TEMP, sizeof *keep);
 
 	if (rval != RNDIS_STATUS_SUCCESS) {
 		printf("%s: keepalive failed\n", DEVNAME(sc));

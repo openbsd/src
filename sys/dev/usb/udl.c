@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.85 2016/11/06 12:58:01 mpi Exp $ */
+/*	$OpenBSD: udl.c,v 1.86 2017/03/26 15:31:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1418,7 +1418,7 @@ void
 udl_free_huffman(struct udl_softc *sc)
 {
 	if (sc->sc_huffman != NULL) {
-		free(sc->sc_huffman, M_DEVBUF, 0);
+		free(sc->sc_huffman, M_DEVBUF, sc->sc_huffman_size);
 		sc->sc_huffman = NULL;
 		sc->sc_huffman_size = 0;
 		DPRINTF(1, "%s: huffman table freed\n", DN(sc));
@@ -1438,7 +1438,7 @@ udl_fbmem_alloc(struct udl_softc *sc)
 		if (sc->sc_fbmem == NULL)
 			return (-1);
 	}
-
+	sc->sc_fbmemsize = size;
 	return (0);
 }
 
@@ -1446,8 +1446,9 @@ void
 udl_fbmem_free(struct udl_softc *sc)
 {
 	if (sc->sc_fbmem != NULL) {
-		free(sc->sc_fbmem, M_DEVBUF, 0);
+		free(sc->sc_fbmem, M_DEVBUF, sc->sc_fbmemsize);
 		sc->sc_fbmem = NULL;
+		sc->sc_fbmemsize = 0;
 	}
 }
 

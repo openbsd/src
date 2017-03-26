@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.21 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.22 2017/03/26 15:31:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -75,6 +75,7 @@ struct udl_softc {
 	uint8_t			 sc_depth;
 	uint8_t			 sc_cursor_on;
 	uint8_t			*sc_fbmem;	/* framebuffer for X11 */
+	size_t			 sc_fbmemsize;
 	uint16_t		 sc_chip;
 #define DLALL	0x0000
 #define	DL125	0x0000				/* max 1280x1024, 1440x900 */

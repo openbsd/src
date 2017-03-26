@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.116 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.117 2017/03/26 15:31:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -262,7 +262,7 @@ zyd_attachhook(struct device *self)
 	}
 
 	error = zyd_loadfirmware(sc, fw, size);
-	free(fw, M_DEVBUF, 0);
+	free(fw, M_DEVBUF, size);
 	if (error != 0) {
 		printf("%s: could not load firmware (error=%d)\n",
 		    sc->sc_dev.dv_xname, error);

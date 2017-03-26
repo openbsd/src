@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.55 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.56 2017/03/26 15:31:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -416,12 +416,12 @@ int
 otus_load_firmware(struct otus_softc *sc, const char *name, uint32_t addr)
 {
 	usb_device_request_t req;
-	size_t size;
+	size_t fwsize, size;
 	u_char *fw, *ptr;
 	int mlen, error;
 
 	/* Read firmware image from the filesystem. */
-	if ((error = loadfirmware(name, &fw, &size)) != 0) {
+	if ((error = loadfirmware(name, &fw, &fwsize)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
 		    sc->sc_dev.dv_xname, name, error);
 		return error;
@@ -431,6 +431,7 @@ otus_load_firmware(struct otus_softc *sc, const char *name, uint32_t addr)
 	USETW(req.wIndex, 0);
 
 	ptr = fw;
+	size = fwsize;
 	addr >>= 8;
 	while (size > 0) {
 		mlen = MIN(size, 4096);
@@ -445,7 +446,7 @@ otus_load_firmware(struct otus_softc *sc, const char *name, uint32_t addr)
 		ptr  += mlen;
 		size -= mlen;
 	}
-	free(fw, M_DEVBUF, 0);
+	free(fw, M_DEVBUF, fwsize);
 	return error;
 }
 
