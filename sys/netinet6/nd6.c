@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.206 2017/03/08 09:34:43 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.207 2017/03/26 08:49:22 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -748,8 +748,6 @@ nd6_free(struct rtentry *rt, int gc)
 
 	splsoftassert(IPL_SOFTNET);
 
-	nd6_invalidate(rt);
-
 	/*
 	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
 	 * even though it is not harmful, it was not really necessary.
@@ -830,6 +828,8 @@ nd6_free(struct rtentry *rt, int gc)
 	 * a side effect (XXX).
 	 */
 	next = TAILQ_NEXT(ln, ln_list);
+
+	nd6_invalidate(rt);
 
 	/*
 	 * Detach the route from the routing tree and the list of neighbor
