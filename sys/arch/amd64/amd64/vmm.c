@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.127 2017/03/26 18:29:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.128 2017/03/26 18:34:55 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4378,6 +4378,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		 *  context id (CPUIDECX_CNXTID)
 		 *  silicon debug (CPUIDECX_SDBG)
 		 *  xTPR (CPUIDECX_XTPR)
+		 *  AVX (CPUIDECX_AVX)
 		 *  perf/debug (CPUIDECX_PDCM)
 		 *  pcid (CPUIDECX_PCID)
 		 *  direct cache access (CPUIDECX_DCA)
