@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.28 2017/03/26 00:46:00 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.29 2017/03/26 18:32:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -160,17 +160,17 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	vm->vm_peerid = peerid;
 	vm->vm_uid = uid;
 
-	/* Boot ELF kernel from disk image if path matches the root disk */
-	if (vcp->vcp_ndisks &&
-	    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
-		vmboot = 1;
-
-	/* Open external kernel for child */
-	if (strlen(vcp->vcp_kernel) && !vmboot &&
-	    (kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
-		log_warn("%s: can't open kernel/BIOS boot image %s",
-		    __func__, vcp->vcp_kernel);
-		goto fail;
+	if (strlen(vcp->vcp_kernel)) {
+		/* Boot kernel from disk image if path matches the root disk */
+		if (vcp->vcp_ndisks &&
+		    strcmp(vcp->vcp_kernel, vcp->vcp_disks[0]) == 0)
+			vmboot = 1;
+		/* Open external kernel for child */
+		else if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+			log_warn("%s: can't open kernel/BIOS boot image %s",
+			    __func__, vcp->vcp_kernel);
+			goto fail;
+		}
 	}
 
 	/*
