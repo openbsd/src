@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.126 2017/03/25 22:24:01 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.127 2017/03/26 18:29:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4400,7 +4400,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		    CPUIDECX_VMX | CPUIDECX_DTES64 |
 		    CPUIDECX_DSCPL | CPUIDECX_SMX |
 		    CPUIDECX_CNXTID | CPUIDECX_SDBG |
-		    CPUIDECX_XTPR |
+		    CPUIDECX_XTPR | CPUIDECX_AVX |
 		    CPUIDECX_PCID | CPUIDECX_DCA |
 		    CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
 		*rdx = curcpu()->ci_feature_flags &
