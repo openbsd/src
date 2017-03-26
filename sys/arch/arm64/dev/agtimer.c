@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.7 2017/02/18 00:47:18 patrick Exp $ */
+/* $OpenBSD: agtimer.c,v 1.8 2017/03/26 18:27:55 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -33,9 +33,9 @@
 #include <dev/ofw/openfirm.h>
 
 /* registers */
-#define GTIMER_CNTP_CTL_ENABLE		(1 << 0)
-#define GTIMER_CNTP_CTL_IMASK		(1 << 1)
-#define GTIMER_CNTP_CTL_ISTATUS		(1 << 2)
+#define GTIMER_CNTV_CTL_ENABLE		(1 << 0)
+#define GTIMER_CNTV_CTL_IMASK		(1 << 1)
+#define GTIMER_CNTV_CTL_ISTATUS		(1 << 2)
 
 #define TIMER_FREQUENCY		24 * 1000 * 1000 /* ARM core clock */
 int32_t agtimer_frequency = TIMER_FREQUENCY;
@@ -96,7 +96,7 @@ agtimer_readcnt64(void)
 	uint64_t val;
 
 	__asm volatile("isb" : : : "memory");
-	__asm volatile("MRS %x0, CNTPCT_EL0" : "=r" (val));
+	__asm volatile("MRS %x0, CNTVCT_EL0" : "=r" (val));
 
 	return (val);
 }
@@ -116,7 +116,7 @@ agtimer_get_ctrl(void)
 {
 	uint32_t val;
 
-	__asm volatile("MRS %x0, CNTP_CTL_EL0" : "=r" (val));
+	__asm volatile("MRS %x0, CNTV_CTL_EL0" : "=r" (val));
 
 	return (val);
 }
@@ -124,7 +124,7 @@ agtimer_get_ctrl(void)
 static inline int
 agtimer_set_ctrl(uint32_t val)
 {
-	__asm volatile("MSR CNTP_CTL_EL0, %x0" : : "r" (val));
+	__asm volatile("MSR CNTV_CTL_EL0, %x0" : : "r" (val));
 	__asm volatile("isb" : : : "memory");
 
 	return (0);
@@ -133,7 +133,7 @@ agtimer_set_ctrl(uint32_t val)
 static inline int
 agtimer_set_tval(uint32_t val)
 {
-	__asm volatile("MSR CNTP_TVAL_EL0, %x0" : : "r" (val));
+	__asm volatile("MSR CNTV_TVAL_EL0, %x0" : : "r" (val));
 	__asm volatile("isb" : : : "memory");
 
 	return (0);
@@ -296,18 +296,16 @@ agtimer_cpu_initclocks()
 	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
 	pc->pc_ticks_err_sum = 0;
 
-	/* Setup secure and non-secure timer IRQs. */
-	arm_intr_establish_fdt_idx(sc->sc_node, 0, IPL_CLOCK,
-	    agtimer_intr, NULL, "tick");
-	arm_intr_establish_fdt_idx(sc->sc_node, 1, IPL_CLOCK,
+	/* configure virtual timer interupt */
+	arm_intr_establish_fdt_idx(sc->sc_node, 2, IPL_CLOCK,
 	    agtimer_intr, NULL, "tick");
 
 	next = agtimer_readcnt64() + sc->sc_ticks_per_intr;
 	pc->pc_nexttickevent = pc->pc_nextstatevent = next;
 
 	reg = agtimer_get_ctrl();
-	reg &= ~GTIMER_CNTP_CTL_IMASK;
-	reg |= GTIMER_CNTP_CTL_ENABLE;
+	reg &= ~GTIMER_CNTV_CTL_IMASK;
+	reg |= GTIMER_CNTV_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
 }
@@ -381,8 +379,8 @@ agtimer_startclock(void)
 	pc->pc_nexttickevent = pc->pc_nextstatevent = nextevent;
 
 	reg = agtimer_get_ctrl();
-	reg &= ~GTIMER_CNTP_CTL_IMASK;
-	reg |= GTIMER_CNTP_CTL_ENABLE;
+	reg &= ~GTIMER_CNTV_CTL_IMASK;
+	reg |= GTIMER_CNTV_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
 }
