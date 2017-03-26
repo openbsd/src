@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.1 2015/04/19 06:27:17 sf Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.2 2017/03/26 23:27:44 jca Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -97,7 +97,8 @@ singlebyte:
  * Create writeable aliases of memory we need
  * to write to as kernel is mapped read-only
  */
-void *codepatch_maprw(vaddr_t *nva, vaddr_t dest)
+void *
+codepatch_maprw(vaddr_t *nva, vaddr_t dest)
 {
 	paddr_t kva = trunc_page((paddr_t)dest);
 	paddr_t po = (paddr_t)dest & PAGE_MASK;
@@ -116,7 +117,8 @@ void *codepatch_maprw(vaddr_t *nva, vaddr_t dest)
 	return (void *)(*nva + po);
 }
 
-void codepatch_unmaprw(vaddr_t nva)
+void
+codepatch_unmaprw(vaddr_t nva)
 {
 	if (nva == 0)
 		return;
