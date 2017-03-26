@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.128 2017/03/26 18:34:55 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.129 2017/03/26 21:47:34 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4239,20 +4239,24 @@ vmx_handle_cr(struct vcpu *vcpu)
  * Handler for rdmsr instructions. Bitmap MSRs are allowed implicit access
  * and won't end up here. This handler is primarily intended to catch otherwise
  * unknown MSR access for possible later inclusion in the bitmap list. For
- * each MSR access that ends up here, we log the access.
+ * each MSR access that ends up here, we log the access (when VMM_DEBUG is
+ * enabled)
  *
  * Parameters:
  *  vcpu: vcpu structure containing instruction info causing the exit
  *
  * Return value:
  *  0: The operation was successful
- *  1: An error occurred
+ *  EINVAL: An error occurred
  */
 int
 vmx_handle_rdmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
-	uint64_t *rax, *rcx, *rdx, msr;
+	uint64_t *rax, *rdx;
+#ifdef VMM_DEBUG
+	uint64_t *rcx;
+#endif /* VMM_DEBUG */
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -4263,16 +4267,17 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 	KASSERT(insn_length == 2);
 
 	rax = &vcpu->vc_gueststate.vg_rax;
-	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
-	msr = rdmsr(*rcx);
-	*rax = msr & 0xFFFFFFFFULL;
-	*rdx = msr >> 32;
+	*rax = 0;
+	*rdx = 0;
 
-	/* XXX log the access for now, to be able to identify unknown MSRs */
-	printf("%s: rdmsr exit, msr=0x%llx, data returned to "
+#ifdef VMM_DEBUG
+	/* Log the access, to be able to identify unknown MSRs */
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	DPRINTF("%s: rdmsr exit, msr=0x%llx, data returned to "
 	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
+#endif /* VMM_DEBUG */
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
@@ -4283,21 +4288,24 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
  * vmx_handle_wrmsr
  *
  * Handler for wrmsr instructions. This handler logs the access, and discards
- * the written data. Any valid wrmsr will not end up here (it will be
- * whitelisted in the MSR bitmap).
+ * the written data (when VMM_DEBUG is enabled). Any valid wrmsr will not end
+ * up here (it will be whitelisted in the MSR bitmap).
  *
  * Parameters:
  *  vcpu: vcpu structure containing instruction info causing the exit
  *
  * Return value:
  *  0: The operation was successful
- *  1: An error occurred
+ *  EINVAL: An error occurred
  */
 int
 vmx_handle_wrmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
-	uint64_t *rax, *rcx, *rdx;
+	uint64_t *rax, *rdx;
+#ifdef VMM_DEBUG
+	uin64_t *rcx;
+#endif /* VMM_DEBUG */
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -4308,12 +4316,14 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	KASSERT(insn_length == 2);
 
 	rax = &vcpu->vc_gueststate.vg_rax;
-	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
-	/* XXX log the access for now, to be able to identify unknown MSRs */
-	printf("%s: wrmsr exit, msr=0x%llx, discarding data written from "
+#ifdef VMM_DEBUG
+	/* Log the access, to be able to identify unknown MSRs */
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data written from "
 	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
+#endif /* VMM_DEBUG */
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
