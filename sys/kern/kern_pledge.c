@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.196 2017/03/18 01:50:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.197 2017/03/26 22:42:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1152,7 +1152,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case MTIOCTOP:
 			/* for pax(1) and such, checking tapes... */
 			if (fp->f_type == DTYPE_VNODE &&
-			    (vp->v_type == VCHR || vp->v_type == VBLK))
+			    vp->v_type == VCHR &&
+			    (vp->v_flag & VISTTY) == 0)
 				return (0);
 			break;
 		}
