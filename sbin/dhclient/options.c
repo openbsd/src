@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.82 2017/03/08 14:19:00 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.83 2017/03/26 21:33:36 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -236,11 +236,10 @@ pretty_print_string(unsigned char *dst, size_t dstlen, unsigned char *src,
 
 	for (; src < origsrc + srclen; src++) {
 		if (*src && strchr("\"'$`\\", *src))
-			opcount = snprintf(dst, dstlen, "\\%c", *src);
-		else {
+			vis(visbuf, *src, VIS_ALL | VIS_OCTAL, *src+1);
+		else
 			vis(visbuf, *src, VIS_OCTAL, *src+1);
-			opcount = snprintf(dst, dstlen, "%s", visbuf);
-		}
+		opcount = snprintf(dst, dstlen, "%s", visbuf);
 		if (opcount == -1)
 			return (-1);
 		total += opcount;
