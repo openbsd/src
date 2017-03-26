@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.19 2017/02/01 20:21:19 tb Exp $	*/
+/*	$OpenBSD: read.c,v 1.20 2017/03/26 19:55:07 martijn Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -166,11 +166,9 @@ lines(struct tailfile *tf, off_t off)
 		if (recno >= lineno) {
 			nlineno = (lineno + 1024) > off ?
 			    (size_t) off : lineno + 1024;
-			lines = reallocarray(lines, nlineno, sizeof(*lines));
-			if (lines == NULL)
+			if ((lines = recallocarray(lines, lineno, nlineno,
+			    sizeof(*lines))) == NULL)
 				err(1, NULL);
-			bzero(lines + recno,
-			    (nlineno - lineno) * sizeof(*lines));
 			lineno = nlineno;
 		}
 		if (ch == '\n') {
