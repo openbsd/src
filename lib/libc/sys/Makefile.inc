@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.146 2016/07/04 18:01:44 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.147 2017/03/26 19:03:38 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -122,25 +122,26 @@ TRIM=${LD} -x -r ${.TARGET}.o -o ${.TARGET} && rm -f ${.TARGET}.o
 TRIM.debug=${LD} -X -r ${.TARGET}.o -o ${.TARGET} && rm -f ${.TARGET}.o
 
 
+GEN_PREFIX=.file "${@:R}.S"\n\#include "SYS.h"
 # Pick one of these to set what ASM is generated...
 GENERATE.rsyscall=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nRSYSCALL(${.PREFIX})\n'
+	printf '${GEN_PREFIX}\nRSYSCALL(${.PREFIX})\n'
 GENERATE.rsyscall_noerr=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX})\n'
+	printf '${GEN_PREFIX}\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX})\n'
 GENERATE.pseudo=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^_//})\n'
+	printf '${GEN_PREFIX}\nPSEUDO(${.PREFIX},${.PREFIX:S/^_//})\n'
 GENERATE.pseudo_noerr=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/^_//})\n'
+	printf '${GEN_PREFIX}\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/^_//})\n'
 GENERATE.rsyscall_hidden=\
 	echo creating ${.TARGET} && \
-	printf '\#include "SYS.h"\nRSYSCALL_HIDDEN(${.PREFIX:S/^_//})\n'
+	printf '${GEN_PREFIX}\nRSYSCALL_HIDDEN(${.PREFIX:S/^_//})\n'
 
 # ...and one of these to control how it's compiled
-FINISH=	${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} -x assembler-with-cpp -
+FINISH=	${COMPILE.S} ${CFLAGS:M-[ID]*} ${CFLAGS:M-pipe} ${AINC} -P -x assembler-with-cpp -
 FINISH.po=${FINISH} -o ${.TARGET}.o -DPROF		&& ${TRIM.debug}
 FINISH.so=${FINISH} -o ${.TARGET}   ${PICFLAG}
 FINISH.do=${FINISH} -o ${.TARGET}.o ${DIST_CFLAGS}	&& ${TRIM}
