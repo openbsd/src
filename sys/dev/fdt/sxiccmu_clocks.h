@@ -61,11 +61,17 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 
 #define H3_CLK_PLL_PERIPH0	9
 
+#define H3_CLK_AXI		15
+#define H3_CLK_AHB1		16
+#define H3_CLK_APB1		17
 #define H3_CLK_APB2		18
+#define H3_CLK_AHB2		19
 
 #define H3_CLK_BUS_MMC0		22
 #define H3_CLK_BUS_MMC1		23
 #define H3_CLK_BUS_MMC2		24
+
+#define H3_CLK_BUS_EMAC		27
 
 #define H3_CLK_BUS_EHCI0	33
 #define H3_CLK_BUS_EHCI1	34
@@ -83,6 +89,8 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define H3_CLK_BUS_UART2	64
 #define H3_CLK_BUS_UART3	65
 
+#define H3_CLK_BUS_EPHY		67
+
 #define H3_CLK_MMC0		71
 #define H3_CLK_MMC1		74
 #define H3_CLK_MMC2		77
@@ -92,10 +100,14 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define H3_CLK_USB_PHY2		90
 #define H3_CLK_USB_PHY3		91
 
+#define H3_CLK_LOSC		254
+#define H3_CLK_HOSC		253
+
 struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_BUS_MMC0] = { 0x0060, 8 },
 	[H3_CLK_BUS_MMC1] = { 0x0060, 9 },
 	[H3_CLK_BUS_MMC2] = { 0x0060, 10 },
+	[H3_CLK_BUS_EMAC] = { 0x0060, 17, H3_CLK_AHB2 },
 	[H3_CLK_BUS_EHCI0] = { 0x0060, 24 },
 	[H3_CLK_BUS_EHCI1] = { 0x0060, 25 },
 	[H3_CLK_BUS_EHCI2] = { 0x0060, 26 },
@@ -109,6 +121,7 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_BUS_UART1] = { 0x006c, 17, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART2] = { 0x006c, 18, H3_CLK_APB2 },
 	[H3_CLK_BUS_UART3] = { 0x006c, 19, H3_CLK_APB2 },
+	[H3_CLK_BUS_EPHY]  = { 0x0070, 0 },
 	[H3_CLK_MMC0]      = { 0x0088, 31 },
 	[H3_CLK_MMC1]      = { 0x008c, 31 },
 	[H3_CLK_MMC2]      = { 0x0090, 31 },
@@ -155,6 +168,8 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 #define H3_RST_BUS_MMC1		8
 #define H3_RST_BUS_MMC2		9
 
+#define H3_RST_BUS_EMAC		12
+
 #define H3_RST_BUS_EHCI0	18
 #define H3_RST_BUS_EHCI1	19
 #define H3_RST_BUS_EHCI2	20
@@ -164,6 +179,8 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 #define H3_RST_BUS_OHCI2	24
 #define H3_RST_BUS_OHCI3	25
 
+#define H3_RST_BUS_EPHY		39
+
 struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[H3_RST_USB_PHY1] =  { 0x00cc, 1 },
@@ -172,6 +189,7 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_BUS_MMC0] =  { 0x02c0, 8 },
 	[H3_RST_BUS_MMC1] =  { 0x02c0, 9 },
 	[H3_RST_BUS_MMC2] =  { 0x02c0, 10 },
+	[H3_RST_BUS_EMAC] =  { 0x02c0, 17 },
 	[H3_RST_BUS_EHCI0] = { 0x02c0, 24 },
 	[H3_RST_BUS_EHCI1] = { 0x02c0, 25 },
 	[H3_RST_BUS_EHCI2] = { 0x02c0, 26 },
@@ -180,4 +198,5 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_BUS_OHCI1] = { 0x02c0, 29 },
 	[H3_RST_BUS_OHCI2] = { 0x02c0, 30 },
 	[H3_RST_BUS_OHCI3] = { 0x02c0, 31 },
+	[H3_RST_BUS_EPHY]  = { 0x02c8, 2 },
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.2 2017/03/26 17:36:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -53,6 +53,7 @@ struct sxiccmu_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_node;
 
 	struct sxiccmu_ccu_bit	*sc_gates;
 	int			sc_ngates;
@@ -117,8 +118,9 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxiccmu_softc *sc = (struct sxiccmu_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int node = faa->fa_node;
+	int node;
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (faa->fa_nreg > 0 && bus_space_map(sc->sc_iot,
 	    faa->fa_reg[0].addr, faa->fa_reg[0].size, 0, &sc->sc_ioh))
@@ -126,7 +128,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (OF_is_compatible(node, "allwinner,sun50i-a64-ccu")) {
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun50i-a64-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun50i_a64_gates;
 		sc->sc_ngates = nitems(sun50i_a64_gates);
@@ -134,7 +136,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nresets = nitems(sun50i_a64_resets);
 		sc->sc_get_frequency = sxiccmu_a64_get_frequency;
 		sc->sc_set_frequency = sxiccmu_a64_set_frequency;
-	} else if (OF_is_compatible(node, "allwinner,sun8i-h3-ccu")) {
+	} else if (OF_is_compatible(sc->sc_node, "allwinner,sun8i-h3-ccu")) {
 		KASSERT(faa->fa_nreg > 0);
 		sc->sc_gates = sun8i_h3_gates;
 		sc->sc_ngates = nitems(sun8i_h3_gates);
@@ -143,12 +145,12 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_get_frequency = sxiccmu_h3_get_frequency;
 		sc->sc_set_frequency = sxiccmu_h3_set_frequency;
 	} else {
-		for (node = OF_child(node); node; node = OF_peer(node))
+		for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
 			sxiccmu_attach_clock(sc, node);
 	}
 
 	if (sc->sc_gates) {
-		sc->sc_cd.cd_node = node;
+		sc->sc_cd.cd_node = sc->sc_node;
 		sc->sc_cd.cd_cookie = sc;
 		sc->sc_cd.cd_get_frequency = sxiccmu_ccu_get_frequency;
 		sc->sc_cd.cd_set_frequency = sxiccmu_ccu_set_frequency;
@@ -157,7 +159,7 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_resets) {
-		sc->sc_rd.rd_node = node;
+		sc->sc_rd.rd_node = sc->sc_node;
 		sc->sc_rd.rd_cookie = sc;
 		sc->sc_rd.rd_reset = sxiccmu_ccu_reset;
 		reset_register(&sc->sc_rd);
@@ -165,9 +167,9 @@ sxiccmu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
- * Device trees for the Allwinner SoCs have basically a clock node per
- * register of the clock control unit.  Attaching a separate driver to
- * each of them would be crazy, so we handle them here.
+ * Classic device trees for the Allwinner SoCs have basically a clock
+ * node per register of the clock control unit.  Attaching a separate
+ * driver to each of them would be crazy, so we handle them here.
  */
 
 struct sxiccmu_clock {
@@ -643,8 +645,9 @@ sxiccmu_reset(void *cookie, uint32_t *cells, int assert)
 }
 
 /*
- * Device trees for the Allwinner A80 have most of the clock nodes
- * replaced with a single clock control unit node.
+ * Newer device trees, such as those for the Allwinner H3/A64 have
+ * most of the clock nodes replaced with a single clock control unit
+ * node.
  */
 
 uint32_t
@@ -662,12 +665,24 @@ sxiccmu_ccu_get_frequency(void *cookie, uint32_t *cells)
 	return sc->sc_get_frequency(sc, idx);
 }
 
+/* Allwinner H3/A64 */
+#define CCU_AHB1_APB1_CFG_REG		0x0054
+#define CCU_AHB1_CLK_SRC_SEL		(3 << 12)
+#define CCU_AHB1_CLK_SRC_SEL_LOSC	(0 << 12)
+#define CCU_AHB1_CLK_SRC_SEL_OSC24M	(1 << 12)
+#define CCU_AHB1_CLK_SRC_SEL_AXI	(2 << 12)
+#define CCU_AHB1_CLK_SRC_SEL_PERIPH0	(3 << 12)
+#define CCU_AHB1_PRE_DIV(x)		((((x) >> 6) & 3) + 1)
+#define CCU_AHB1_CLK_DIV_RATIO(x)	(1 << (((x) >> 4) & 3))
+#define CCU_AHB2_CFG_REG		0x005c
+#define CCU_AHB2_CLK_CFG		(3 << 0)
+
 uint32_t
 sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	switch (idx) {
 	case A64_CLK_PLL_PERIPH0:
-		/* XXX default value. */
+		/* Not hardcoded, but recommended. */
 		return 600000000;
 	case A64_CLK_PLL_PERIPH0_2X:
 		return sxiccmu_a64_get_frequency(sc, A64_CLK_PLL_PERIPH0) * 2;
@@ -683,13 +698,56 @@ sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 uint32_t
 sxiccmu_h3_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t parent;
+	uint32_t reg, div;
+
 	switch (idx) {
+	case H3_CLK_LOSC:
+		return clock_get_frequency(sc->sc_node, "losc");
+	case H3_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
 	case H3_CLK_PLL_PERIPH0:
-		/* XXX default value. */
+		/* Not hardcoded, but recommended. */
 		return 600000000;
 	case H3_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
+	case H3_CLK_AHB1:
+		reg = SXIREAD4(sc, CCU_AHB1_APB1_CFG_REG);
+		div = CCU_AHB1_CLK_DIV_RATIO(reg);
+		switch (reg & CCU_AHB1_CLK_SRC_SEL) {
+		case CCU_AHB1_CLK_SRC_SEL_LOSC:
+			parent = H3_CLK_LOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_OSC24M:
+			parent = H3_CLK_HOSC;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_AXI:
+			parent = H3_CLK_AXI;
+			break;
+		case CCU_AHB1_CLK_SRC_SEL_PERIPH0:
+			parent = H3_CLK_PLL_PERIPH0;
+			div *= CCU_AHB1_PRE_DIV(reg);
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
+	case H3_CLK_AHB2:
+		reg = SXIREAD4(sc, CCU_AHB2_CFG_REG);
+		switch (reg & CCU_AHB2_CLK_CFG) {
+		case 0:
+			parent = H3_CLK_AHB1;
+			div = 1;
+			break;
+		case 1:
+			parent = H3_CLK_PLL_PERIPH0;
+			div = 2;
+			break;
+		default:
+			return 0;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
