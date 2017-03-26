@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.197 2017/03/26 22:42:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.198 2017/03/26 22:47:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1159,8 +1159,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
-	if ((p->p_p->ps_pledge & PLEDGE_DRM)) {
 #if NDRM > 0
+	if ((p->p_p->ps_pledge & PLEDGE_DRM)) {
 		if ((fp->f_type == DTYPE_VNODE) &&
 		    (vp->v_type == VCHR) &&
 		    (cdevsw[major(vp->v_rdev)].d_open == drmopen)) {
@@ -1168,11 +1168,11 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			if (error == 0)
 				return 0;
 		}
-#endif /* NDRM > 0 */
 	}
+#endif /* NDRM > 0 */
 
-	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
 #if NAUDIO > 0
+	if ((p->p_p->ps_pledge & PLEDGE_AUDIO)) {
 		switch (com) {
 		case AUDIO_GETPOS:
 		case AUDIO_GETPAR:
@@ -1184,8 +1184,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			    cdevsw[major(vp->v_rdev)].d_open == audioopen)
 				return (0);
 		}
-#endif /* NAUDIO > 0 */
 	}
+#endif /* NAUDIO > 0 */
 
 	if ((p->p_p->ps_pledge & PLEDGE_DISKLABEL)) {
 		switch (com) {
@@ -1213,8 +1213,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
-	if ((p->p_p->ps_pledge & PLEDGE_PF)) {
 #if NPF > 0
+	if ((p->p_p->ps_pledge & PLEDGE_PF)) {
 		switch (com) {
 		case DIOCADDRULE:
 		case DIOCGETSTATUS:
@@ -1234,8 +1234,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				return (0);
 			break;
 		}
-#endif
 	}
+#endif
 
 	if ((p->p_p->ps_pledge & PLEDGE_TTY)) {
 		switch (com) {
@@ -1303,8 +1303,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
-	if ((p->p_p->ps_pledge & PLEDGE_VMM)) {
 #if NVMM > 0
+	if ((p->p_p->ps_pledge & PLEDGE_VMM)) {
 		if ((fp->f_type == DTYPE_VNODE) &&
 		    (vp->v_type == VCHR) &&
 		    (cdevsw[major(vp->v_rdev)].d_open == vmmopen)) {
@@ -1312,8 +1312,8 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			if (error == 0)
 				return 0;
 		}
-#endif
 	}
+#endif
 
 	return pledge_fail(p, error, PLEDGE_TTY);
 }
