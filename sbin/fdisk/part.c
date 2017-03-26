@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.76 2016/12/27 15:01:03 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.77 2017/03/26 00:22:49 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,19 +37,19 @@ static const struct part_type {
 	char	guid[37];
 } part_types[] = {
 	{ 0x00, "unused      ", "00000000-0000-0000-0000-000000000000" },
-	{ 0x01, "DOS FAT-12  ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x01, "FAT12       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x02, "XENIX /     "},   /* XENIX / filesystem */
 	{ 0x03, "XENIX /usr  "},   /* XENIX /usr filesystem */
-	{ 0x04, "DOS FAT-16  ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x04, "FAT16S      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x05, "Extended DOS"},   /* Extended DOS */
-	{ 0x06, "DOS > 32MB  ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x06, "FAT16B      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x07, "NTFS        ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x08, "AIX fs      "},   /* AIX filesystem */
 	{ 0x09, "AIX/Coherent"},   /* AIX boot partition or Coherent */
 	{ 0x0A, "OS/2 Bootmgr"},   /* OS/2 Boot Manager or OPUS */
-	{ 0x0B, "Win95 FAT-32", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0C, "Win95 FAT32L", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0E, "DOS FAT-16  ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0B, "FAT32       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0C, "FAT32L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0E, "FAT16L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0F, "Extended LBA"},   /* Extended DOS LBA-mapped */
 	{ 0x10, "OPUS        "},   /* OPUS */
 	{ 0x11, "OS/2 hidden ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
