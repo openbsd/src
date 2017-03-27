@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.338 2017/01/26 08:24:34 benno Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.339 2017/03/27 17:38:09 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -753,7 +753,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	memset(&pr, 0, sizeof(pr));
 	if (anchorname[0] == '/') {
 		if ((npath = calloc(1, PATH_MAX)) == NULL)
-			errx(1, "pfctl_rules: calloc");
+			err(1, "calloc");
 		strlcpy(npath, anchorname, PATH_MAX);
 	} else {
 		if (path[0])
