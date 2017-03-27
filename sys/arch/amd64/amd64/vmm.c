@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.129 2017/03/26 21:47:34 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.130 2017/03/27 19:00:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4304,7 +4304,7 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	uint64_t insn_length;
 	uint64_t *rax, *rdx;
 #ifdef VMM_DEBUG
-	uin64_t *rcx;
+	uint64_t *rcx;
 #endif /* VMM_DEBUG */
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
