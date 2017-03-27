@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.198 2017/03/26 22:47:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.199 2017/03/27 00:33:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -65,6 +65,7 @@
 #include <sys/pledge.h>
 
 #include "audio.h"
+#include "bpfilter.h"
 #include "pf.h"
 #include "pty.h"
 
@@ -1136,6 +1137,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
+#if BPFFILTER > 0
 	if ((p->p_p->ps_pledge & PLEDGE_BPF)) {
 		switch (com) {
 		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
@@ -1145,6 +1147,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			break;
 		}
 	}
+#endif /* BPFFILTER > 0 */
 
 	if ((p->p_p->ps_pledge & PLEDGE_TAPE)) {
 		switch (com) {
