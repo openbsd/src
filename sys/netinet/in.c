@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.135 2017/02/16 10:15:12 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.136 2017/03/27 09:38:03 rzalamena Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -614,6 +614,16 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
 
+	if (ia->ia_netmask == 0) {
+		if (IN_CLASSA(i))
+			ia->ia_netmask = IN_CLASSA_NET;
+		else if (IN_CLASSB(i))
+			ia->ia_netmask = IN_CLASSB_NET;
+		else
+			ia->ia_netmask = IN_CLASSC_NET;
+		ia->ia_sockmask.sin_addr.s_addr = ia->ia_netmask;
+	}
+
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
@@ -641,15 +651,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	if (error)
 		goto out;
 
-	if (ia->ia_netmask == 0) {
-		if (IN_CLASSA(i))
-			ia->ia_netmask = IN_CLASSA_NET;
-		else if (IN_CLASSB(i))
-			ia->ia_netmask = IN_CLASSB_NET;
-		else
-			ia->ia_netmask = IN_CLASSC_NET;
-		ia->ia_sockmask.sin_addr.s_addr = ia->ia_netmask;
-	}
 
 	ia->ia_net = i & ia->ia_netmask;
 	in_socktrim(&ia->ia_sockmask);
