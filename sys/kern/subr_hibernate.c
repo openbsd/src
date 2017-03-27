@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.120 2016/09/27 02:53:49 dlg Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.121 2017/03/27 20:26:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1925,12 +1925,12 @@ hibernate_alloc(void)
 
 	pmap_activate(curproc);
 	pmap_kenter_pa(HIBERNATE_HIBALLOC_PAGE, HIBERNATE_HIBALLOC_PAGE,
-		PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE);
 
 	/* Allocate a piglet, store its addresses in the supplied globals */
 	if (uvm_pmr_alloc_piglet(&global_piglet_va, &global_piglet_pa,
 	    HIBERNATE_CHUNK_SIZE * 4, HIBERNATE_CHUNK_SIZE))
-		return (ENOMEM);
+		goto unmap;
 
 	/*
 	 * Allocate VA for the temp page.
@@ -1942,11 +1942,16 @@ hibernate_alloc(void)
 	hibernate_temp_page = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any,
 	    &kp_none, &kd_nowait);
 	if (!hibernate_temp_page) {
-		DPRINTF("out of memory allocating hibernate_temp_page\n");
-		return (ENOMEM);
+		uvm_pmr_free_piglet(global_piglet_va,
+		    4 * HIBERNATE_CHUNK_SIZE);
+		global_piglet_va = 0;
+		goto unmap;
 	}
-
 	return (0);
+unmap:
+	pmap_kremove(HIBERNATE_HIBALLOC_PAGE, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	return (ENOMEM);
 }
 
 /*
