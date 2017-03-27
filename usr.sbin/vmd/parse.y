@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2017/03/27 00:28:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -89,7 +89,7 @@ static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
 static struct vmd_if		*vif;
-static struct vmd_vm        *vm;
+static struct vmd_vm		*vm;
 static unsigned int		 vsw_unit;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vcp_disable;
@@ -424,7 +424,7 @@ owner_id	: /* none */		{
 			$$.uid = 0;
 			$$.gid = -1;
 		}
-		| NUMBER 		{
+		| NUMBER		{
 			$$.uid = $1;
 			$$.gid = -1;
 		}

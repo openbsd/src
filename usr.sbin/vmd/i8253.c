@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.11 2017/03/25 22:36:53 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.12 2017/03/27 00:28:04 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -180,7 +180,6 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 					    ticks % i8253_counter[sel].start;
 				} else
 					i8253_counter[sel].olatch = 0;
-				
 				goto ret;
 			} else if (rw != TIMER_16BIT) {
 				log_warnx("%s: i8253 PIT: unsupported counter "

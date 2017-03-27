@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.13 2017/03/26 22:19:47 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.14 2017/03/27 00:28:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,8 +18,8 @@
 
 #include <dev/pv/virtioreg.h>
 
-#define VIRTQUEUE_ALIGN(n)      (((n)+(VIRTIO_PAGE_SIZE-1))&    \
-	~(VIRTIO_PAGE_SIZE-1))
+#define VIRTQUEUE_ALIGN(n)	(((n)+(VIRTIO_PAGE_SIZE-1))&    \
+				    ~(VIRTIO_PAGE_SIZE-1))
 
 /* Queue sizes must be power of two */
 #define VIORND_QUEUE_SIZE	64

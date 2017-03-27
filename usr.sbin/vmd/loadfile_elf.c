@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.25 2017/03/25 16:28:25 reyk Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.26 2017/03/27 00:28:04 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -395,12 +395,12 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 	memmap_sz = 3 * sizeof(int) + n * sizeof(bios_memmap_t);
 	ba[0] = 0x0;    /* memory map */
 	ba[1] = memmap_sz;
-	ba[2] = memmap_sz;     /* next */
+	ba[2] = memmap_sz;	/* next */
 	memcpy(&ba[3], memmap, n * sizeof(bios_memmap_t));
 	i = memmap_sz / sizeof(int);
 
 	/* Serial console device, COM1 @ 0x3f8 */
-	consdev.consdev = makedev(8, 0);        /* com1 @ 0x3f8 */
+	consdev.consdev = makedev(8, 0);	/* com1 @ 0x3f8 */
 	consdev.conspeed = 9600;
 	consdev.consaddr = 0x3f8;
 	consdev.consfreq = 0;

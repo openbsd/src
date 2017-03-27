@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.15 2017/03/25 22:36:53 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.16 2017/03/27 00:28:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -86,8 +86,8 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 			return (1);
 
 		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
-		     PCI_MAPREG_IO_ADDR(pci.pci_next_io_bar) |
-		     PCI_MAPREG_TYPE_IO;
+		    PCI_MAPREG_IO_ADDR(pci.pci_next_io_bar) |
+		    PCI_MAPREG_TYPE_IO;
 		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
@@ -350,8 +350,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 
 		/* IOBAR registers must have bit 0 set */
 		if (o == 0x10)
-			pci.pci_devices[d].pd_cfg_space[o / 4] |= 1; 
-			
+			pci.pci_devices[d].pd_cfg_space[o / 4] |= 1;
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction

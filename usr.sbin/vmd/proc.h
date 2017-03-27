@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.11 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.12 2017/03/27 00:28:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -154,8 +154,8 @@ struct privsep_fd {
 #define DPRINTF(x...)	do {} while(0)
 #endif
 
-#define PROC_PARENT_SOCK_FILENO 3
-#define PROC_MAX_INSTANCES      32
+#define PROC_PARENT_SOCK_FILENO	3
+#define PROC_MAX_INSTANCES	32
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,

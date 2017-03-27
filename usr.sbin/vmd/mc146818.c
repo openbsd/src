@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.11 2017/03/26 17:04:03 kettenis Exp $ */
+/* $OpenBSD: mc146818.c,v 1.12 2017/03/27 00:28:04 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -149,7 +149,7 @@ mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 	rtc.regs[NVRAM_HIMEMSIZE_LO] = memhi & 0xFF;
 
 	rtc.regs[NVRAM_SMP_COUNT] = 0;
-	
+
 	rtc_updateregs();
 	rtc.vm_id = vm_id;
 
