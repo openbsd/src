@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1814 2017/03/19 10:45:12 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1815 2017/03/27 01:50:27 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5673,7 +5673,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADROFXGO1400	0x00cc		/* Quadro FX Go1400 */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX1400	0x00ce		/* Quadro FX 1400 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_ISA	0x00d0		/* nForce3 ISA */
-#define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 Host */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB2	0x00d2		/* nForce3 */
 #define	PCI_PRODUCT_NVIDIA_CK804_MEM	0x00d3		/* CK804 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_SMB	0x00d4		/* nForce3 SMBus */
@@ -5686,7 +5686,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB	0x00dd		/* nForce3 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_LAN4	0x00df		/* nForce3 LAN */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_ISA	0x00e0		/* nForce3 250 ISA */
-#define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB	0x00e1		/* nForce3 250 PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB	0x00e1		/* nForce3 250 Host */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_AGP	0x00e2		/* nForce3 250 AGP */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA	0x00e3		/* nForce3 250 SATA */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SMB	0x00e4		/* nForce3 250 SMBus */
@@ -5743,7 +5743,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE8800GTX	0x0191		/* GeForce 8800 GTX */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE8800GTS	0x0193		/* GeForce 8800 GTS */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2_11	0x01a0		/* GeForce2 Crush11 */
-#define	PCI_PRODUCT_NVIDIA_NFORCE_PCHB	0x01a4		/* nForce PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_PCHB	0x01a4		/* nForce Host */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_DDR2	0x01aa		/* nForce 220 DDR */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_DDR	0x01ab		/* nForce 420 DDR */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MEM	0x01ac		/* nForce 220/420 */
@@ -6228,6 +6228,10 @@
 /* Omega Micro products */
 #define	PCI_PRODUCT_OMEGA_82C092G	0x1221		/* 82C092G */
 
+/* OpenBSD VMM products */
+#define	PCI_PRODUCT_OPENBSD_PCHB	0x0666		/* VMM Host */
+#define	PCI_PRODUCT_OPENBSD_CONTROL	0x0777		/* VMM Control */
+
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 Host */
 #define	PCI_PRODUCT_OPTI_82C558	0xc558		/* 82C558 ISA */
@@ -6238,10 +6242,6 @@
 #define	PCI_PRODUCT_OPTI_82C701	0xc701		/* 82C701 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
 #define	PCI_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
-
-/* OpenBSD VMM products */
-#define	PCI_PRODUCT_OPENBSD_PCHB	0x0666		/* VMM PCI Host Bridge */
-#define	PCI_PRODUCT_OPENBSD_CONTROL	0x0777		/* VMM Control Interface */
 
 /* Option products */
 #define	PCI_PRODUCT_OPTION_F32	0x000c		/* 3G+ UMTS HSDPA */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1814 2017/03/19 10:45:12 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1815 2017/03/27 01:50:27 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19657,7 +19657,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
-	    "nForce3 PCI Host",
+	    "nForce3 Host",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB2,
@@ -19709,7 +19709,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
-	    "nForce3 250 PCI Host",
+	    "nForce3 250 Host",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_AGP,
@@ -19937,7 +19937,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_PCHB,
-	    "nForce PCI Host",
+	    "nForce Host",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_DDR2,
@@ -21848,6 +21848,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C092G",
 	},
 	{
+	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
+	    "VMM Host",
+	},
+	{
+	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_CONTROL,
+	    "VMM Control",
+	},
+	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
 	    "82C557 Host",
 	},
@@ -21882,14 +21890,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C861,
 	    "82C861",
-	},
-	{
-	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
-	    "VMM PCI Host Bridge",
-	},
-	{
-	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_CONTROL,
-	    "VMM Control Interface",
 	},
 	{
 	    PCI_VENDOR_OPTION, PCI_PRODUCT_OPTION_F32,
