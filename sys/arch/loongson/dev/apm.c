@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.31 2016/10/08 05:49:08 guenther Exp $	*/
+/*	$OpenBSD: apm.c,v 1.32 2017/03/27 18:24:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -393,7 +393,6 @@ apm_suspend(int state)
 		uvm_pmr_zero_everything();
 		if (hibernate_suspend()) {
 			printf("apm: hibernate_suspend failed");
-			hibernate_free();
 			uvm_pmr_dirty_everything();
 			return (ECANCELED);
 		}
