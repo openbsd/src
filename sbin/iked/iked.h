@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.111 2017/03/27 10:21:19 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.112 2017/03/27 10:43:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -666,6 +666,9 @@ int	 config_getreset(struct iked *, struct imsg *);
 int	 config_setpolicy(struct iked *, struct iked_policy *,
 	    enum privsep_procid);
 int	 config_getpolicy(struct iked *, struct imsg *);
+int	 config_setflow(struct iked *, struct iked_policy *,
+	    enum privsep_procid);
+int	 config_getflow(struct iked *, struct imsg *);
 int	 config_setsocket(struct iked *, struct sockaddr_storage *, in_port_t,
 	    enum privsep_procid);
 int	 config_getsocket(struct iked *env, struct imsg *,

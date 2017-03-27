@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.147 2017/03/27 10:29:02 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.148 2017/03/27 10:43:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -195,6 +195,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getpfkey(env, imsg));
 	case IMSG_CFG_POLICY:
 		return (config_getpolicy(env, imsg));
+	case IMSG_CFG_FLOW:
+		return (config_getflow(env, imsg));
 	case IMSG_CFG_USER:
 		return (config_getuser(env, imsg));
 	case IMSG_COMPILE:

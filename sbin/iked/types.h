@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.27 2017/03/27 10:21:19 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.28 2017/03/27 10:43:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -104,6 +104,7 @@ enum imsg_type {
 	IMSG_PFKEY_SOCKET,
 	IMSG_IKE_MESSAGE,
 	IMSG_CFG_POLICY,
+	IMSG_CFG_FLOW,
 	IMSG_CFG_USER,
 	IMSG_CERTREQ,
 	IMSG_CERT,

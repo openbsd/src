@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.46 2017/03/27 10:29:02 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.47 2017/03/27 10:43:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -625,23 +625,17 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
     enum privsep_procid id)
 {
 	struct iked_proposal	*prop;
-	struct iked_flow	*flow;
 	struct iked_transform	*xform;
-	size_t			 size, iovcnt, j, c = 0;
+	size_t			 iovcnt, j, c = 0;
 	struct iovec		 iov[IOV_MAX];
 
 	iovcnt = 1;
-	size = sizeof(*pol);
 	TAILQ_FOREACH(prop, &pol->pol_proposals, prop_entry) {
-		size += (prop->prop_nxforms * sizeof(*xform)) +
-		    (sizeof(*prop));
 		iovcnt += prop->prop_nxforms + 1;
 	}
 
-	iovcnt += pol->pol_nflows;
-
 	if (iovcnt > IOV_MAX) {
-		log_warn("%s: too many proposals/flows", __func__);
+		log_warn("%s: too many proposals", __func__);
 		return (-1);
 	}
 
@@ -660,18 +654,42 @@ config_setpolicy(struct iked *env, struct iked_policy *pol,
 		}
 	}
 
-	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
-		iov[c].iov_base = flow;
-		iov[c++].iov_len = sizeof(*flow);
-	}
-
 	print_policy(pol);
 
 	if (env->sc_opts & IKED_OPT_NOACTION)
 		return (0);
 
-	if (proc_composev(&env->sc_ps, id, IMSG_CFG_POLICY, iov, iovcnt) == -1)
+	if (proc_composev(&env->sc_ps, id, IMSG_CFG_POLICY, iov,
+	    iovcnt) == -1) {
+		log_debug("%s: proc_composev failed", __func__);
 		return (-1);
+	}
+
+	return (0);
+}
+
+int
+config_setflow(struct iked *env, struct iked_policy *pol,
+    enum privsep_procid id)
+{
+	struct iked_flow	*flow;
+	struct iovec		 iov[2];
+
+	if (env->sc_opts & IKED_OPT_NOACTION)
+		return (0);
+
+	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
+		iov[0].iov_base = &pol->pol_id;
+		iov[0].iov_len = sizeof(pol->pol_id);
+		iov[1].iov_base = flow;
+		iov[1].iov_len = sizeof(*flow);
+
+		if (proc_composev(&env->sc_ps, id, IMSG_CFG_FLOW,
+		    iov, 2) == -1) {
+			log_debug("%s: proc_composev failed", __func__);
+			return (-1);
+		}
+	}
 
 	return (0);
 }
@@ -682,7 +700,6 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 	struct iked_policy	*pol;
 	struct iked_proposal	 pp, *prop;
 	struct iked_transform	 xf, *xform;
-	struct iked_flow	*flow;
 	off_t			 offset = 0;
 	unsigned int		 i, j;
 	uint8_t			*buf = (uint8_t *)imsg->data;
@@ -719,16 +736,8 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 		}
 	}
 
-	for (i = 0; i < pol->pol_nflows; i++) {
-		if ((flow = calloc(1, sizeof(*flow))) == NULL)
-			fatal("config_getpolicy: new flow");
-
-		memcpy(flow, buf + offset, sizeof(*flow));
-		offset += sizeof(*flow);
-
-		if (RB_INSERT(iked_flows, &pol->pol_flows, flow))
-			free(flow);
-	}
+	/* Flows are sent separately */
+	pol->pol_nflows = 0;
 
 	TAILQ_INSERT_TAIL(&env->sc_policies, pol, pol_entry);
 
@@ -738,6 +747,45 @@ config_getpolicy(struct iked *env, struct imsg *imsg)
 			config_free_policy(env, env->sc_defaultcon);
 		env->sc_defaultcon = pol;
 	}
+
+	return (0);
+}
+
+int
+config_getflow(struct iked *env, struct imsg *imsg)
+{
+	struct iked_policy	*pol;
+	struct iked_flow	*flow;
+	off_t			 offset = 0;
+	unsigned int		 id;
+	uint8_t			*buf = (uint8_t *)imsg->data;
+
+	if (IMSG_DATA_SIZE(imsg) < sizeof(id))
+		fatalx("bad length imsg received");
+
+	memcpy(&id, buf, sizeof(id));
+	offset += sizeof(id);
+
+	TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
+		if (pol->pol_id == id)
+			break;
+	}
+	if (pol == NULL) {
+		log_warnx("%s: unknown policy %u", __func__, id);
+		return (-1);
+	}
+
+	if ((flow = calloc(1, sizeof(*flow))) == NULL)
+		fatal("config_getpolicy: new flow");
+
+	memcpy(flow, buf + offset, sizeof(*flow));
+
+	if (RB_INSERT(iked_flows, &pol->pol_flows, flow)) {
+		log_warnx("%s: received duplicate flow", __func__);
+		free(flow);
+		return (-1);
+	}
+	pol->pol_nflows++;
 
 	return (0);
 }
