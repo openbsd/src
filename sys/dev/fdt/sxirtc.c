@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.2 2017/03/27 14:03:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -150,6 +150,14 @@ sxirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	    dt.dt_hour > 23 || dt.dt_wday > 6 ||
 	    dt.dt_day > 31 || dt.dt_day == 0 ||
 	    dt.dt_mon > 12 || dt.dt_mon == 0)
+		return 1;
+
+	/*
+	 * Reject the first year that can be represented by the clock.
+	 * This avoids reporting a bogus time if the RTC isn't battery
+	 * powered.
+	 */
+	if (dt.dt_year == sc->base_year)
 		return 1;
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
