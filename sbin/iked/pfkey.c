@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.56 2017/03/27 10:24:36 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.57 2017/03/27 10:29:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -531,7 +531,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		sa_ltime_hard.sadb_lifetime_bytes = lt->lt_bytes;
 		sa_ltime_hard.sadb_lifetime_addtime = lt->lt_seconds;
 
-		/* double the lifetime for IP compression; disable byte lifetime */
+		/* double the lifetime for ipcomp; disable byte lifetime */
 		if (satype == SADB_X_SATYPE_IPCOMP) {
 			sa_ltime_hard.sadb_lifetime_addtime *= 2;
 			sa_ltime_hard.sadb_lifetime_bytes = 0;

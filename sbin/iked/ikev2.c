@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.146 2017/03/27 10:24:36 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.147 2017/03/27 10:29:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -5302,7 +5302,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	struct iked_sa			*sa;
 	struct ikev2_delete		*del;
 	uint32_t			 spi32;
-	int			 	 acquired;
+	int				 acquired;
 
 	key.csa_spi = *drop;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);

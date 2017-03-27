@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.20 2017/03/27 10:06:41 reyk Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.21 2017/03/27 10:29:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,7 @@ static const uint8_t ecdsa_sha512[] = {
 };
 
 static const struct {
-	int	 	 sc_keytype;
+	int		 sc_keytype;
 	const EVP_MD	*(*sc_md)(void);
 	uint8_t		 sc_len;
 	const uint8_t	*sc_oid;
