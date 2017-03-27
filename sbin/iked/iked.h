@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.112 2017/03/27 10:43:53 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.113 2017/03/27 17:17:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -258,8 +258,8 @@ struct iked_policy {
 	unsigned int			 pol_ipproto;
 
 	struct iked_addr		 pol_peer;
-	struct group			*pol_peerdh;
 	struct iked_static_id		 pol_peerid;
+	uint32_t			 pol_peerdh;
 
 	struct iked_addr		 pol_local;
 	struct iked_static_id		 pol_localid;

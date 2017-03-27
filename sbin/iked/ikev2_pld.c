@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.60 2017/03/27 10:21:19 reyk Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.61 2017/03/27 17:17:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1202,13 +1202,13 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		memcpy(&group, buf, len);
 		group = betoh16(group);
-		if ((msg->msg_policy->pol_peerdh = group_get(group))
-		    == NULL) {
-			log_debug("%s: unable to select DH group %d", __func__,
+		if (group_getid(group) == NULL) {
+			log_debug("%s: unable to select DH group %u", __func__,
 			    group);
 			return (-1);
 		}
-		log_debug("%s: responder selected DH group %d", __func__,
+		msg->msg_policy->pol_peerdh = group;
+		log_debug("%s: responder selected DH group %u", __func__,
 		    group);
 		sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSED);
 		msg->msg_sa = NULL;

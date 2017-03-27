@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.148 2017/03/27 10:43:53 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.149 2017/03/27 17:17:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -900,8 +900,12 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		return (-1);
 
 	/* Pick peer's DH group if asked */
-	/* XXX free old sa_dhgroup ? */
-	sa->sa_dhgroup = pol->pol_peerdh;
+	if (pol->pol_peerdh > 0 && sa->sa_dhgroup == NULL &&
+	    (sa->sa_dhgroup = group_get(pol->pol_peerdh)) == NULL) {
+		log_warnx("%s: invalid peer DH group %u", __func__,
+		    pol->pol_peerdh);
+		return (-1);
+	}
 	sa->sa_reqid = 0;
 
 	if (ikev2_sa_initiator(env, sa, NULL, NULL) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.18 2017/01/04 12:31:01 mikeb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.19 2017/03/27 17:17:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,7 @@ extern int crypto_scalarmult_curve25519(unsigned char a[CURVE25519_SIZE],
 	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)))
 	__attribute__((__bounded__(__minbytes__, 3, CURVE25519_SIZE)));
 
-struct group_id ike_groups[] = {
+const struct group_id ike_groups[] = {
 	{ GROUP_MODP, 1, 768,
 	    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
 	    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
@@ -274,18 +274,10 @@ group_free(struct group *group)
 struct group *
 group_get(uint32_t id)
 {
-	struct group_id	*p = NULL;
-	struct group	*group;
-	unsigned int	 i, items;
+	const struct group_id	*p;
+	struct group		*group;
 
-	items = sizeof(ike_groups) / sizeof(ike_groups[0]);
-	for (i = 0; i < items; i++) {
-		if (id == ike_groups[i].id) {
-			p = &ike_groups[i];
-			break;
-		}
-	}
-	if (p == NULL)
+	if ((p = group_getid(id)) == NULL)
 		return (NULL);
 
 	if ((group = calloc(1, sizeof(*group))) == NULL)
@@ -325,6 +317,22 @@ group_get(uint32_t id)
 	}
 
 	return (group);
+}
+
+const struct group_id *
+group_getid(uint32_t id)
+{
+	const struct group_id	*p = NULL;
+	unsigned int		 i, items;
+
+	items = sizeof(ike_groups) / sizeof(ike_groups[0]);
+	for (i = 0; i < items; i++) {
+		if (id == ike_groups[i].id) {
+			p = &ike_groups[i];
+			break;
+		}
+	}
+	return (p);
 }
 
 int
