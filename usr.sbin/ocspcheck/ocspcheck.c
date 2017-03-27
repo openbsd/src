@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.17 2017/02/25 23:48:08 beck Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.18 2017/03/27 18:14:20 beck Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -606,6 +606,9 @@ main(int argc, char **argv)
 	dspew("	  [Body]=[%ld bytes]\n", hget->bodypartsz);
 	if (hget->bodypartsz <= 0)
 		errx(1, "No body in reply from %s", host);
+
+	if (hget->code != 200)
+		errx(1, "http reply code %d from %s", hget->code, host);
 
 	/*
 	 * Validate the OCSP response we got back
