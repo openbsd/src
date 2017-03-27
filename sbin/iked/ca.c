@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.42 2017/01/20 14:08:08 mikeb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.43 2017/03/27 10:06:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -61,6 +61,7 @@ int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 	    void *, size_t);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t);
+int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
 int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
@@ -82,6 +83,8 @@ struct ca_store {
 
 	struct iked_id	 ca_privkey;
 	struct iked_id	 ca_pubkey;
+
+	uint8_t		 ca_privkey_method;
 };
 
 pid_t
@@ -125,6 +128,10 @@ ca_getkey(struct privsep *ps, struct iked_id *key, enum imsg_type type)
 	if (type == IMSG_PRIVKEY) {
 		name = "private";
 		id = &store->ca_privkey;
+
+		store->ca_privkey_method = ca_privkey_to_method(key);
+		if (store->ca_privkey_method == IKEV2_AUTH_NONE)
+			fatalx("ca: failed to get auth method for privkey");
 	} else if (type == IMSG_PUBKEY) {
 		name = "public";
 		id = &store->ca_pubkey;
@@ -323,10 +330,18 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 	struct iked_policy	*policy = sa->sa_policy;
 	uint8_t			 type = policy->pol_auth.auth_method;
 
-	/* switch encoding to IKEV2_AUTH_SIG if SHA2 is supported */
-	if (sa->sa_sigsha2 && type == IKEV2_AUTH_RSA_SIG) {
-		log_debug("%s: switching from RSA_SIG to SIG", __func__);
-		type = IKEV2_AUTH_SIG;
+	if (id == PROC_CERT) {
+		/* switch encoding to IKEV2_AUTH_SIG if SHA2 is supported */
+		if (sa->sa_sigsha2 && type == IKEV2_AUTH_RSA_SIG) {
+			log_debug("%s: switching RSA_SIG to SIG", __func__);
+			type = IKEV2_AUTH_SIG;
+		} else if (!sa->sa_sigsha2 && type == IKEV2_AUTH_SIG_ANY) {
+			log_debug("%s: switching SIG to RSA_SIG(*)", __func__);
+			/* XXX ca might auto-switch to ECDSA */
+			type = IKEV2_AUTH_RSA_SIG;
+		} else if (type == IKEV2_AUTH_SIG) {
+			log_debug("%s: using SIG (RFC7427)", __func__);
+		}
 	}
 
 	if (type == IKEV2_AUTH_SHARED_KEY_MIC) {
@@ -389,6 +404,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 		}
 		break;
 	case IKEV2_CERT_RSA_KEY:
+	case IKEV2_CERT_ECDSA:
 		ret = ca_validate_pubkey(env, &id, ptr, len);
 		break;
 	default:
@@ -439,6 +455,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
 	switch (type) {
 	case IKEV2_CERT_RSA_KEY:
+	case IKEV2_CERT_ECDSA:
 		if (store->ca_pubkey.id_type != type ||
 		    (buf = store->ca_pubkey.id_buf) == NULL)
 			return (-1);
@@ -525,12 +542,13 @@ ca_getauth(struct iked *env, struct imsg *imsg)
 	bzero(&policy, sizeof(policy));
 	memcpy(&sa.sa_hdr, &sh, sizeof(sh));
 	sa.sa_policy = &policy;
-	policy.pol_auth.auth_method = method;
 	if (sh.sh_initiator)
 		id = &sa.sa_icert;
 	else
 		id = &sa.sa_rcert;
 	memcpy(id, &store->ca_privkey, sizeof(*id));
+	policy.pol_auth.auth_method = method == IKEV2_AUTH_SIG ?
+	    method : store->ca_privkey_method;
 
 	if (ikev2_msg_authsign(env, &sa, &policy.pol_auth, authmsg) != 0) {
 		log_debug("%s: AUTH sign failed", __func__);
@@ -833,6 +851,7 @@ int
 ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 {
 	RSA		*rsa = NULL;
+	EC_KEY		*ec = NULL;
 	uint8_t		*d;
 	int		 len = 0;
 	int		 ret = -1;
@@ -842,6 +861,7 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		id->id_type = 0;
 		id->id_offset = 0;
 		ibuf_release(id->id_buf);
+		id->id_buf = NULL;
 
 		if ((rsa = EVP_PKEY_get1_RSA(key)) == NULL)
 			goto done;
@@ -853,10 +873,33 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		d = ibuf_data(id->id_buf);
 		if (i2d_RSAPublicKey(rsa, &d) != len) {
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			goto done;
 		}
 
 		id->id_type = IKEV2_CERT_RSA_KEY;
+		break;
+	case EVP_PKEY_EC:
+		id->id_type = 0;
+		id->id_offset = 0;
+		ibuf_release(id->id_buf);
+		id->id_buf = NULL;
+
+		if ((ec = EVP_PKEY_get1_EC_KEY(key)) == NULL)
+			goto done;
+		if ((len = i2d_EC_PUBKEY(ec, NULL)) <= 0)
+			goto done;
+		if ((id->id_buf = ibuf_new(NULL, len)) == NULL)
+			goto done;
+
+		d = ibuf_data(id->id_buf);
+		if (i2d_EC_PUBKEY(ec, &d) != len) {
+			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
+			goto done;
+		}
+
+		id->id_type = IKEV2_CERT_ECDSA;
 		break;
 	default:
 		log_debug("%s: unsupported key type %d", __func__, key->type);
@@ -870,6 +913,8 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
  done:
 	if (rsa != NULL)
 		RSA_free(rsa);
+	if (ec != NULL)
+		EC_KEY_free(ec);
 	return (ret);
 }
 
@@ -877,6 +922,7 @@ int
 ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 {
 	RSA		*rsa = NULL;
+	EC_KEY		*ec = NULL;
 	uint8_t		*d;
 	int		 len = 0;
 	int		 ret = -1;
@@ -886,6 +932,7 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		id->id_type = 0;
 		id->id_offset = 0;
 		ibuf_release(id->id_buf);
+		id->id_buf = NULL;
 
 		if ((rsa = EVP_PKEY_get1_RSA(key)) == NULL)
 			goto done;
@@ -897,10 +944,33 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		d = ibuf_data(id->id_buf);
 		if (i2d_RSAPrivateKey(rsa, &d) != len) {
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			goto done;
 		}
 
 		id->id_type = IKEV2_CERT_RSA_KEY;
+		break;
+	case EVP_PKEY_EC:
+		id->id_type = 0;
+		id->id_offset = 0;
+		ibuf_release(id->id_buf);
+		id->id_buf = NULL;
+
+		if ((ec = EVP_PKEY_get1_EC_KEY(key)) == NULL)
+			goto done;
+		if ((len = i2d_ECPrivateKey(ec, NULL)) <= 0)
+			goto done;
+		if ((id->id_buf = ibuf_new(NULL, len)) == NULL)
+			goto done;
+
+		d = ibuf_data(id->id_buf);
+		if (i2d_ECPrivateKey(ec, &d) != len) {
+			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
+			goto done;
+		}
+
+		id->id_type = IKEV2_CERT_ECDSA;
 		break;
 	default:
 		log_debug("%s: unsupported key type %d", __func__, key->type);
@@ -914,7 +984,55 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
  done:
 	if (rsa != NULL)
 		RSA_free(rsa);
+	if (ec != NULL)
+		EC_KEY_free(ec);
 	return (ret);
+}
+
+int
+ca_privkey_to_method(struct iked_id *privkey)
+{
+	BIO		*rawcert = NULL;
+	EC_KEY		*ec = NULL;
+	const EC_GROUP	*group = NULL;
+	uint8_t	 method = IKEV2_AUTH_NONE;
+
+	switch (privkey->id_type) {
+	case IKEV2_CERT_RSA_KEY:
+		method = IKEV2_AUTH_RSA_SIG;
+		break;
+	case IKEV2_CERT_ECDSA:
+		if ((rawcert = BIO_new_mem_buf(ibuf_data(privkey->id_buf),
+		    ibuf_length(privkey->id_buf))) == NULL)
+			goto out;
+		if ((ec = d2i_ECPrivateKey_bio(rawcert, NULL)) == NULL)
+			goto out;
+		if ((group = EC_KEY_get0_group(ec)) == NULL)
+			goto out;
+		switch (EC_GROUP_get_degree(group)) {
+		case 256:
+			method = IKEV2_AUTH_ECDSA_256;
+			break;
+		case 384:
+			method = IKEV2_AUTH_ECDSA_384;
+			break;
+		case 521:
+			method = IKEV2_AUTH_ECDSA_521;
+			break;
+		}
+	}
+
+	log_debug("%s: type %s method %s", __func__,
+	    print_map(privkey->id_type, ikev2_cert_map),
+	    print_map(method, ikev2_auth_map));
+
+ out:
+	if (ec != NULL)
+		EC_KEY_free(ec);
+	if (rawcert != NULL)
+		BIO_free(rawcert);
+
+	return (method);
 }
 
 char *
@@ -1047,6 +1165,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 {
 	BIO		*rawcert = NULL;
 	RSA		*peerrsa = NULL, *localrsa = NULL;
+	EC_KEY		*peerec = NULL;
 	EVP_PKEY	*peerkey = NULL, *localkey = NULL;
 	int		 ret = -1;
 	FILE		*fp = NULL;
@@ -1084,12 +1203,21 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		if ((rawcert = BIO_new_mem_buf(data, len)) == NULL)
 			goto done;
 
-		if ((peerrsa = d2i_RSAPublicKey_bio(rawcert, NULL)) == NULL)
-			goto sslerr;
 		if ((peerkey = EVP_PKEY_new()) == NULL)
 			goto sslerr;
-		if (!EVP_PKEY_set1_RSA(peerkey, peerrsa))
+		if ((peerrsa = d2i_RSAPublicKey_bio(rawcert, NULL))) {
+			if (!EVP_PKEY_set1_RSA(peerkey, peerrsa)) {
+				goto sslerr;
+			}
+		} else if (BIO_reset(rawcert) == 1 &&
+		    (peerec = d2i_EC_PUBKEY_bio(rawcert, NULL))) {
+			if (!EVP_PKEY_set1_EC_KEY(peerkey, peerec)) {
+				goto sslerr;
+			}
+		} else {
+			log_debug("%s: unknown key type received", __func__);
 			goto sslerr;
+		}
 	}
 
 	lc_string(idstr);
@@ -1101,7 +1229,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		goto done;
 	localkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
 	if (localkey == NULL) {
-		/* reading PKCS #8 failed, try PEM */
+		/* reading PKCS #8 failed, try PEM RSA */
 		rewind(fp);
 		localrsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
 		fclose(fp);
@@ -1134,6 +1262,8 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		EVP_PKEY_free(localkey);
 	if (peerrsa != NULL)
 		RSA_free(peerrsa);
+	if (peerec != NULL)
+		EC_KEY_free(peerec);
 	if (localrsa != NULL)
 		RSA_free(localrsa);
 	if (rawcert != NULL)

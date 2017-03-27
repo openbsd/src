@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.19 2014/11/10 13:57:32 jmc Exp $
+.\" $OpenBSD: iked.8,v 1.20 2017/03/27 10:06:41 reyk Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2014 $
+.Dd $Mdocdate: March 27 2017 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@ is provided by
 .Xr isakmpd 8 .
 .Pp
 .Nm
-supports mutual authentication using RSA public keys and X.509 certificates.
+supports mutual authentication using RSA or ECDSA public keys and X.509
+certificates.
 See the
 .Sx PUBLIC KEY AUTHENTICATION
 section below and PKI AND CERTIFICATE AUTHORITY COMMANDS in

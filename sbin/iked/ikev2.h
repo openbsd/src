@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.25 2017/01/20 13:46:10 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.26 2017/03/27 10:06:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -409,6 +409,12 @@ struct ikev2_cert {
 #define IKEV2_CERT_HASHURL_X509		12	/* RFC4306 */
 #define IKEV2_CERT_HASHURL_X509_BUNDLE	13	/* RFC4306 */
 #define IKEV2_CERT_OCSP			14	/* RFC4806 */
+/*
+ * As of November 2014, work was still in progress to add a more generic
+ * format for raw public keys (RFC7296), so we use a number in IANA's private
+ * use range (201-255, same RFC) for ECDSA.
+ */
+#define IKEV2_CERT_ECDSA		201	/* Private */
 
 extern struct iked_constmap ikev2_cert_map[];
 
@@ -456,6 +462,12 @@ struct ikev2_auth {
 #define IKEV2_AUTH_GSPM			12	/* RFC6467 */
 #define IKEV2_AUTH_NULL			13	/* RFC7619 */
 #define IKEV2_AUTH_SIG			14	/* RFC7427 */
+#define IKEV2_AUTH_SIG_ANY		255	/* Internal (any signature) */
+/*
+ * AUTH_SIG also serves as an indication that a given policy has
+ * been configured to accept RSA or ECDSA payloads, as long as it
+ * successfully authenticates against a configured CA.
+ */
 
 extern struct iked_constmap ikev2_auth_map[];
 

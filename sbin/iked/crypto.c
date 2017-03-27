@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.19 2015/10/31 19:28:19 naddy Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.20 2017/03/27 10:06:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -39,36 +39,52 @@
 #include "iked.h"
 #include "ikev2.h"
 
-/* RFC 7427, A.1 */
-static const uint8_t sha256WithRSAEncryption[] = {
+/* RFC 7427, A.1 RSA */
+static const uint8_t sha256WithRSA[] = {
 	0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
 	0xf7, 0x0d, 0x01, 0x01, 0x0b, 0x05, 0x00
 };
-static const uint8_t sha384WithRSAEncryption[] = {
+static const uint8_t sha384WithRSA[] = {
 	0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
 	0xf7, 0x0d, 0x01, 0x01, 0x0c, 0x05, 0x00
 };
-static const uint8_t sha512WithRSAEncryption[] = {
+static const uint8_t sha512WithRSA[] = {
 	0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
 	0xf7, 0x0d, 0x01, 0x01, 0x0d, 0x05, 0x00
 };
+/* RFC 7427, A.3 ECDSA */
+static const uint8_t ecdsa_sha256[] = {
+	0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce,
+	0x3d, 0x04, 0x03, 0x02
+};
+static const uint8_t ecdsa_sha384[] = {
+	0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce,
+	0x3d, 0x04, 0x03, 0x03
+};
+static const uint8_t ecdsa_sha512[] = {
+	0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce,
+	0x3d, 0x04, 0x03, 0x04
+};
 
-struct {
+static const struct {
+	int	 	 sc_keytype;
+	const EVP_MD	*(*sc_md)(void);
 	uint8_t		 sc_len;
 	const uint8_t	*sc_oid;
-	const EVP_MD	*(*sc_md)(void);
 } schemes[] = {
-	{ sizeof(sha256WithRSAEncryption),
-	    sha256WithRSAEncryption, EVP_sha256 },
-	{ sizeof(sha384WithRSAEncryption),
-	    sha384WithRSAEncryption, EVP_sha384 },
-	{ sizeof(sha512WithRSAEncryption),
-	    sha512WithRSAEncryption, EVP_sha512 },
+	{ EVP_PKEY_RSA, EVP_sha256, sizeof(sha256WithRSA), sha256WithRSA },
+	{ EVP_PKEY_RSA, EVP_sha384, sizeof(sha384WithRSA), sha384WithRSA },
+	{ EVP_PKEY_RSA, EVP_sha512, sizeof(sha512WithRSA), sha512WithRSA },
+	{ EVP_PKEY_EC,  EVP_sha256, sizeof(ecdsa_sha256),  ecdsa_sha256 },
+	{ EVP_PKEY_EC,  EVP_sha384, sizeof(ecdsa_sha384),  ecdsa_sha384 },
+	{ EVP_PKEY_EC,  EVP_sha512, sizeof(ecdsa_sha512),  ecdsa_sha512 },
 };
 
 int	_dsa_verify_init(struct iked_dsa *, const uint8_t *, size_t);
-size_t	_dsa_verify_offset(struct iked_dsa *, uint8_t *);
+int	_dsa_verify_prepare(struct iked_dsa *, uint8_t **, size_t *,
+	    uint8_t **);
 int	_dsa_sign_encode(struct iked_dsa *, uint8_t *, size_t *);
+int	_dsa_sign_ecdsa(struct iked_dsa *, uint8_t *, size_t);
 
 struct iked_hash *
 hash_new(uint8_t type, uint16_t id)
@@ -358,6 +374,7 @@ struct ibuf *
 cipher_setiv(struct iked_cipher *encr, void *iv, size_t len)
 {
 	ibuf_release(encr->encr_iv);
+	encr->encr_iv = NULL;
 	if (iv != NULL) {
 		if (len < encr->encr_ivlength) {
 			log_debug("%s: invalid IV length %zu", __func__, len);
@@ -573,6 +590,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 	BIO		*rawcert = NULL;
 	X509		*cert = NULL;
 	RSA		*rsa = NULL;
+	EC_KEY		*ec = NULL;
 	EVP_PKEY	*pkey = NULL;
 
 	ibuf_release(dsa->dsa_keydata);
@@ -609,7 +627,25 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 		if (!EVP_PKEY_set1_RSA(pkey, rsa))
 			goto sslerr;
 
-		RSA_free(rsa);	/* pkey now has the reference */
+		RSA_free(rsa);		/* pkey now has the reference */
+		dsa->dsa_cert = NULL;
+		dsa->dsa_key = pkey;
+		break;
+	case IKEV2_CERT_ECDSA:
+		if (dsa->dsa_sign) {
+			if ((ec = d2i_ECPrivateKey_bio(rawcert, NULL)) == NULL)
+				goto sslerr;
+		} else {
+			if ((ec = d2i_EC_PUBKEY_bio(rawcert, NULL)) == NULL)
+				goto sslerr;
+		}
+
+		if ((pkey = EVP_PKEY_new()) == NULL)
+			goto sslerr;
+		if (!EVP_PKEY_set1_EC_KEY(pkey, ec))
+			goto sslerr;
+
+		EC_KEY_free(ec);	/* pkey now has the reference */
 		dsa->dsa_cert = NULL;
 		dsa->dsa_key = pkey;
 		break;
@@ -629,6 +665,8 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 
 	if (rsa != NULL)
 		RSA_free(rsa);
+	if (ec != NULL)
+		EC_KEY_free(ec);
 	if (pkey != NULL)
 		EVP_PKEY_free(pkey);
 	if (cert != NULL)
@@ -636,6 +674,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 	if (rawcert != NULL)
 		BIO_free(rawcert);
 	ibuf_release(dsa->dsa_keydata);
+	dsa->dsa_keydata = NULL;
 	return (NULL);
 }
 
@@ -644,6 +683,7 @@ _dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len)
 {
 	uint8_t			 oidlen;
 	size_t			 i;
+	int			 keytype;
 
 	if (dsa->dsa_priv != NULL)
 		return (0);
@@ -656,23 +696,30 @@ _dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len)
 		    print_map(dsa->dsa_method, ikev2_auth_map));
 		return (-1);
 	}
+	if (dsa->dsa_key == NULL) {
+		log_debug("%s: dsa_key not set for %s", __func__,
+		    print_map(dsa->dsa_method, ikev2_auth_map));
+		return (-1);
+	}
+	keytype = EVP_PKEY_type(((EVP_PKEY *)dsa->dsa_key)->type);
 	if (sig == NULL) {
 		log_debug("%s: signature missing", __func__);
 		return (-1);
 	}
-	if (len < 1) {
+	if (len < sizeof(oidlen)) {
 		log_debug("%s: signature (%zu) too small for oid length",
 		    __func__, len);
 		return (-1);
 	}
 	memcpy(&oidlen, sig, sizeof(oidlen));
-	if (len < (size_t)oidlen + 1) {
+	if (len < (size_t)oidlen + sizeof(oidlen)) {
 		log_debug("%s: signature (%zu) too small for oid (%u)",
 		    __func__, len, oidlen);
 		return (-1);
 	}
 	for (i = 0; i < nitems(schemes); i++) {
-		if (oidlen == schemes[i].sc_len &&
+		if (keytype == schemes[i].sc_keytype &&
+		    oidlen == schemes[i].sc_len &&
 		    memcmp(sig + 1, schemes[i].sc_oid,
 		    schemes[i].sc_len) == 0) {
 			dsa->dsa_priv = (*schemes[i].sc_md)();
@@ -727,32 +774,98 @@ dsa_update(struct iked_dsa *dsa, const void *buf, size_t len)
 int
 _dsa_sign_encode(struct iked_dsa *dsa, uint8_t *ptr, size_t *offp)
 {
+	int		 keytype;
+	size_t		 i;
+
 	if (offp)
 		*offp = 0;
 	if (dsa->dsa_method != IKEV2_AUTH_SIG)
 		return (0);
-	if (dsa->dsa_priv != EVP_sha256())
+	if (dsa->dsa_key == NULL)
+		return (-1);
+	keytype = EVP_PKEY_type(((EVP_PKEY *)dsa->dsa_key)->type);
+	for (i = 0; i < nitems(schemes); i++) {
+		/* XXX should avoid calling sc_md() each time... */
+		if (keytype == schemes[i].sc_keytype &&
+		    (dsa->dsa_priv == (*schemes[i].sc_md)()))
+			break;
+	}
+	if (i >= nitems(schemes))
 		return (-1);
 	if (ptr) {
-		ptr[0] = sizeof(sha256WithRSAEncryption);
-		memcpy(ptr + 1, sha256WithRSAEncryption,
-		    sizeof(sha256WithRSAEncryption));
+		ptr[0] = schemes[i].sc_len;
+		memcpy(ptr + sizeof(ptr[0]), schemes[i].sc_oid,
+		    schemes[i].sc_len);
 	}
 	if (offp)
-		*offp = 1 + sizeof(sha256WithRSAEncryption);
+		*offp = sizeof(ptr[0]) + schemes[i].sc_len;
 	return (0);
+}
+
+/* Export size of encoded signature hash type */
+size_t
+dsa_prefix(struct iked_dsa *dsa)
+{
+	size_t		off = 0;
+
+	if (_dsa_sign_encode(dsa, NULL, &off) < 0)
+		fatal("dsa_prefix: internal error");
+	return off;
 }
 
 size_t
 dsa_length(struct iked_dsa *dsa)
 {
-	size_t		off = 0;
-
 	if (dsa->dsa_hmac)
 		return (EVP_MD_size(dsa->dsa_priv));
-	if (_dsa_sign_encode(dsa, NULL, &off) < 0)
-		fatal("dsa_length: internal error");
-	return (EVP_PKEY_size(dsa->dsa_key) + off);
+	switch (dsa->dsa_method) {
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+		/* size of concat(r|s) */
+		return (2 * ((EVP_PKEY_bits(dsa->dsa_key) + 7) / 8));
+	}
+	return (dsa_prefix(dsa) + EVP_PKEY_size(dsa->dsa_key));
+}
+
+int
+_dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
+{
+	ECDSA_SIG	*obj = NULL;
+	uint8_t		*otmp = NULL, *tmp;
+	unsigned int	 tmplen;
+	int		 ret = -1;
+	int		 bnlen, off;
+
+	if (len % 2)
+		goto done;	/* must be even */
+	bnlen = len/2;
+	/*
+	 * (a) create DER signature into 'tmp' buffer
+	 * (b) convert buffer to ECDSA_SIG object
+	 * (c) concatenate the padded r|s BIGNUMS into 'ptr'
+	 */
+	if ((tmplen = EVP_PKEY_size(dsa->dsa_key)) == 0)
+		goto done;
+	if ((otmp = tmp = calloc(1, tmplen)) == NULL)
+		goto done;
+	if (!EVP_SignFinal(dsa->dsa_ctx, tmp, &tmplen, dsa->dsa_key))
+		goto done;
+	if (d2i_ECDSA_SIG(&obj, (const uint8_t **)&tmp, tmplen) == NULL)
+		goto done;
+	if (BN_num_bytes(obj->r) > bnlen || BN_num_bytes(obj->s) > bnlen)
+		goto done;
+	memset(ptr, 0, len);
+	off = bnlen - BN_num_bytes(obj->r);
+	BN_bn2bin(obj->r, ptr + off);
+	off = 2 * bnlen - BN_num_bytes(obj->s);
+	BN_bn2bin(obj->s, ptr + off);
+	ret = 0;
+ done:
+	free(otmp);
+	if (obj)
+		ECDSA_SIG_free(obj);
+	return (ret);
 }
 
 ssize_t
@@ -769,36 +882,92 @@ dsa_sign_final(struct iked_dsa *dsa, void *buf, size_t len)
 		if (!HMAC_Final(dsa->dsa_ctx, buf, &siglen))
 			return (-1);
 	} else {
-		if (_dsa_sign_encode(dsa, ptr, &off) < 0)
-			return (-1);
-		if (!EVP_SignFinal(dsa->dsa_ctx, ptr + off, &siglen,
-		    dsa->dsa_key))
-			return (-1);
-		siglen += off;
+		switch (dsa->dsa_method) {
+		case IKEV2_AUTH_ECDSA_256:
+		case IKEV2_AUTH_ECDSA_384:
+		case IKEV2_AUTH_ECDSA_521:
+			if (_dsa_sign_ecdsa(dsa, buf, len) < 0)
+				return (-1);
+			siglen = len;
+			break;
+		default:
+			if (_dsa_sign_encode(dsa, ptr, &off) < 0)
+				return (-1);
+			if (!EVP_SignFinal(dsa->dsa_ctx, ptr + off, &siglen,
+			    dsa->dsa_key))
+				return (-1);
+			siglen += off;
+			break;
+		}
 	}
 
 	return (siglen);
 }
 
-size_t
-_dsa_verify_offset(struct iked_dsa *dsa, uint8_t *ptr)
+int
+_dsa_verify_prepare(struct iked_dsa *dsa, uint8_t **sigp, size_t *lenp,
+    uint8_t **freemep)
 {
-	/*
-	 * XXX assumes that _dsa_verify_init() has already checked
-	 * the encoded method.
-	 */
-	if (dsa->dsa_method == IKEV2_AUTH_SIG)
-		return (ptr[0] + 1);
-	return (0);
+	ECDSA_SIG	*obj = NULL;
+	uint8_t		*ptr = NULL;
+	size_t		 bnlen, len, off;
+	int		 ret = -1;
+
+	*freemep = NULL;	/* don't return garbage in case of an error */
+
+	switch (dsa->dsa_method) {
+	case IKEV2_AUTH_SIG:
+		/*
+		 * The first byte of the signature encodes the OID
+		 * prefix length which we need to skip.
+		 */
+		off = (*sigp)[0] + 1;
+		*sigp = *sigp + off;
+		*lenp = *lenp - off;
+		*freemep = NULL;
+		ret = 0;
+		break;
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+		/*
+		 * sigp points to concatenation r|s, while EVP_VerifyFinal()
+		 * expects the signature as a DER-encoded blob (of the two
+		 * values), so we need to convert the signature in a new
+		 * buffer (we cannot override the given buffer) and the caller
+		 * has to free this buffer ('freeme').
+		 */
+		if (*lenp < 64 || *lenp > 132 || *lenp % 2)
+			goto done;
+		bnlen = (*lenp)/2;
+		/* sigp points to concatenation: r|s */
+		if ((obj = ECDSA_SIG_new()) == NULL ||
+		    BN_bin2bn(*sigp, bnlen, obj->r) == NULL ||
+		    BN_bin2bn(*sigp+bnlen, bnlen, obj->s) == NULL ||
+		    (len = i2d_ECDSA_SIG(obj, &ptr)) == 0)
+			goto done;
+		*lenp = len;
+		*sigp = ptr;
+		*freemep = ptr;
+		ptr = NULL;
+		ret = 0;
+		break;
+	default:
+		return (0);
+	}
+ done:
+	free(ptr);
+	if (obj)
+		ECDSA_SIG_free(obj);
+	return (ret);
 }
 
 ssize_t
 dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 {
 	uint8_t		 sig[EVP_MAX_MD_SIZE];
+	uint8_t		*ptr = buf, *freeme = NULL;
 	unsigned int	 siglen = sizeof(sig);
-	uint8_t		*ptr = buf;
-	size_t		 off = 0;
 
 	if (dsa->dsa_hmac) {
 		if (!HMAC_Final(dsa->dsa_ctx, sig, &siglen))
@@ -806,13 +975,15 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 		if (siglen != len || memcmp(buf, sig, siglen) != 0)
 			return (-1);
 	} else {
-		if ((off = _dsa_verify_offset(dsa, ptr)) >= len)
+		if (_dsa_verify_prepare(dsa, &ptr, &len, &freeme) < 0)
 			return (-1);
-		if (EVP_VerifyFinal(dsa->dsa_ctx, ptr + off, len - off,
+		if (EVP_VerifyFinal(dsa->dsa_ctx, ptr, len,
 		    dsa->dsa_key) != 1) {
+			free(freeme);
 			ca_sslerror(__func__);
 			return (-1);
 		}
+		free(freeme);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.143 2017/03/13 18:49:20 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.144 2017/03/27 10:06:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -323,6 +323,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		id->id_type = type;
 		id->id_offset = 0;
 		ibuf_release(id->id_buf);
+		id->id_buf = NULL;
 
 		if (type != IKEV2_AUTH_NONE) {
 			if (len <= 0 ||
@@ -498,13 +499,39 @@ done:
 }
 
 int
-ikev2_ike_auth_compatible(struct iked_sa *sa, uint8_t want, uint8_t have)
+ikev2_ike_auth_compatible(struct iked_sa *sa, uint8_t policy, uint8_t wire)
 {
-	if (want == have)
+	if (wire == IKEV2_AUTH_SIG_ANY)		/* internal, not on wire */
+		return (-1);
+	if (policy == wire || policy == IKEV2_AUTH_NONE)
 		return (0);
-	if (sa->sa_sigsha2 &&
-	    have == IKEV2_AUTH_SIG && want == IKEV2_AUTH_RSA_SIG)
-		return (0);
+	switch (policy) {
+	case IKEV2_AUTH_SIG_ANY:
+		switch (wire) {
+		case IKEV2_AUTH_SIG:
+		case IKEV2_AUTH_RSA_SIG:
+		case IKEV2_AUTH_ECDSA_256:
+		case IKEV2_AUTH_ECDSA_384:
+		case IKEV2_AUTH_ECDSA_521:
+			return (0);
+		}
+		break;
+	case IKEV2_AUTH_SIG:
+	case IKEV2_AUTH_RSA_SIG:
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+		switch (wire) {
+		/*
+		 * XXX Maybe we need an indication saying:
+		 * XXX Accept AUTH_SIG as long as its DSA?
+		 */
+		case IKEV2_AUTH_SIG:
+			if (sa->sa_sigsha2)
+				return (0);
+		}
+		break;
+	}
 	return (-1);
 }
 
@@ -592,8 +619,10 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 
 		if (ikev2_ike_auth_compatible(sa,
 		    ikeauth.auth_method, msg->msg_auth.id_type) < 0) {
-			log_warnx("%s: unexpected auth method %s", __func__,
-			    print_map(msg->msg_auth.id_type, ikev2_auth_map));
+			log_warnx("%s: unexpected auth method %s, was "
+			    "expecting %s", __func__,
+			    print_map(msg->msg_auth.id_type, ikev2_auth_map),
+			    print_map(ikeauth.auth_method, ikev2_auth_map));
 			return (-1);
 		}
 		ikeauth.auth_method = msg->msg_auth.id_type;
@@ -1177,6 +1206,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		if (inet_pton(AF_INET, (char *)polid->id_data, &in4) != 1 ||
 		    ibuf_add(id->id_buf, &in4, sizeof(in4)) != 0) {
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			return (-1);
 		}
 		break;
@@ -1184,6 +1214,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		if (inet_pton(AF_INET6, (char *)polid->id_data, &in6) != 1 ||
 		    ibuf_add(id->id_buf, &in6, sizeof(in6)) != 0) {
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			return (-1);
 		}
 		break;
@@ -1196,6 +1227,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 			if (name)
 				X509_NAME_free(name);
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			return (-1);
 		}
 		X509_NAME_free(name);
@@ -1204,6 +1236,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 		if (ibuf_add(id->id_buf,
 		    polid->id_data, polid->id_length) != 0) {
 			ibuf_release(id->id_buf);
+			id->id_buf = NULL;
 			return (-1);
 		}
 		break;

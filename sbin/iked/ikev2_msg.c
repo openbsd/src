@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.49 2017/03/13 17:41:14 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.50 2017/03/27 10:06:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -814,7 +814,7 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
     struct iked_auth *auth, struct ibuf *authmsg)
 {
 	uint8_t				*key, *psk = NULL;
-	ssize_t				 keylen;
+	ssize_t				 keylen, siglen;
 	struct iked_hash		*prf = sa->sa_prf;
 	struct iked_id			*id;
 	struct iked_dsa			*dsa = NULL;
@@ -872,9 +872,16 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	if ((ret = dsa_sign_final(dsa,
-	    ibuf_data(buf), ibuf_size(buf))) == -1) {
+	if ((siglen = dsa_sign_final(dsa,
+	    ibuf_data(buf), ibuf_size(buf))) < 0) {
 		log_debug("%s: failed to create auth signature", __func__);
+		ibuf_release(buf);
+		goto done;
+	}
+
+	if (ibuf_setsize(buf, siglen) < 0) {
+		log_debug("%s: failed to set auth signature size to %zd",
+		    __func__, siglen);
 		ibuf_release(buf);
 		goto done;
 	}
