@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.35 2017/02/03 08:23:46 guenther Exp $ */
-/*	$OpenBSD: aldap.c,v 1.35 2017/02/03 08:23:46 guenther Exp $ */
+/*	$Id: aldap.c,v 1.36 2017/03/27 04:46:47 jmatthew Exp $ */
+/*	$OpenBSD: aldap.c,v 1.36 2017/03/27 04:46:47 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -1205,30 +1205,19 @@ char *
 parseval(char *p, size_t len)
 {
 	char	 hex[3];
-	char	*cp = p, *buffer, *newbuffer;
-	size_t	 size, newsize, i, j;
+	char	*buffer;
+	size_t	 i, j;
 
-	size = 50;
-	if ((buffer = calloc(1, size)) == NULL)
+	if ((buffer = calloc(1, len + 1)) == NULL)
 		return NULL;
 
 	for (i = j = 0; j < len; i++) {
-		if (i >= size) {
-			newsize = size + 1024;
-			if ((newbuffer = realloc(buffer, newsize)) == NULL) {
-				free(buffer);
-				return (NULL);
-			}
-			buffer = newbuffer;
-			size = newsize;
-		}
-
-		if (cp[j] == '\\') {
-			strlcpy(hex, cp + j + 1, sizeof(hex));
+		if (p[j] == '\\') {
+			strlcpy(hex, p + j + 1, sizeof(hex));
 			buffer[i] = (char)strtoumax(hex, NULL, 16);
 			j += 3;
 		} else {
-			buffer[i] = cp[j];
+			buffer[i] = p[j];
 			j++;
 		}
 	}
