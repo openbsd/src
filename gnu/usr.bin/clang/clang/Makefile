@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2017/01/24 08:44:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2017/03/27 15:32:38 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -13,15 +13,18 @@ LDADD+=	-ltermlib
 DPADD+=	${LIBTERMLIB}
 
 LINKS=	${BINDIR}/clang ${BINDIR}/clang++ \
-	${BINDIR}/clang ${BINDIR}/clang-cpp \
-	${BINDIR}/clang ${BINDIR}/cc \
+	${BINDIR}/clang ${BINDIR}/clang-cpp
+MLINKS=	clang.1 clang++.1 \
+	clang.1 clang-cpp.1
+
+.if ${COMPILER_VERSION:L} == "clang"
+LINKS+=	${BINDIR}/clang ${BINDIR}/cc \
 	${BINDIR}/clang ${BINDIR}/c++ \
 	${BINDIR}/clang ${LIBEXECDIR}/cpp
-MLINKS=	clang.1 clang++.1 \
-	clang.1 clang-cpp.1 \
-	clang.1 cc.1 \
+MLINKS+=clang.1 cc.1 \
 	clang.1 c++.1 \
 	clang.1 cpp.1
+.endif
 
 CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/clang/include
 
