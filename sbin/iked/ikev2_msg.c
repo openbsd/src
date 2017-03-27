@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.50 2017/03/27 10:06:41 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.51 2017/03/27 10:21:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -183,12 +183,15 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		ibuf_release(msg->msg_auth.id_buf);
 		ibuf_release(msg->msg_id.id_buf);
 		ibuf_release(msg->msg_cert.id_buf);
+		ibuf_release(msg->msg_cookie);
 
 		msg->msg_nonce = NULL;
 		msg->msg_ke = NULL;
 		msg->msg_auth.id_buf = NULL;
 		msg->msg_id.id_buf = NULL;
 		msg->msg_cert.id_buf = NULL;
+		msg->msg_cookie = NULL;
+
 		config_free_proposals(&msg->msg_proposals, 0);
 	}
 

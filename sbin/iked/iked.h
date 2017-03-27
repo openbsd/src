@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.110 2017/03/27 10:06:41 reyk Exp $	*/
+/*	$OpenBSD: iked.h,v 1.111 2017/03/27 10:21:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -502,6 +502,7 @@ struct iked_message {
 	struct iked_id		 msg_auth;	/* AUTH payload */
 	struct iked_id		 msg_id;
 	struct iked_id		 msg_cert;
+	struct ibuf		*msg_cookie;
 
 	/* Parse stack */
 	struct iked_proposal	*msg_prop;
