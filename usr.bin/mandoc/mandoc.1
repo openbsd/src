@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.107 2017/03/27 15:16:46 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.108 2017/03/27 18:51:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,11 +23,11 @@
 .Nd format manual pages
 .Sh SYNOPSIS
 .Nm mandoc
-.Op Fl acfhkl
+.Op Fl ac
 .Op Fl I Cm os Ns = Ns Ar name
 .Op Fl K Ar encoding
 .Op Fl mdoc | man
-.Op Fl O Ar option
+.Op Fl O Ar options
 .Op Fl T Ar output
 .Op Fl W Ar level
 .Op Ar
@@ -130,7 +130,7 @@ parser is used.
 With other arguments,
 .Fl m
 is silently ignored.
-.It Fl O Ar option
+.It Fl O Ar options
 Comma-separated output options.
 .It Fl T Ar output
 Output format.

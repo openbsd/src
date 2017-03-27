@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.25 2017/03/27 14:39:56 schwarze Exp $
+.\"	$OpenBSD: man.1,v 1.26 2017/03/27 18:51:20 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,16 +41,10 @@
 .Nm man
 .Op Fl acfhklw
 .Op Fl C Ar file
-.Op Fl I Cm os Ns = Ns Ar name
-.Op Fl K Ar encoding
 .Op Fl M Ar path
 .Op Fl m Ar path
-.Op Fl O Ar option Ns = Ns Ar value
 .Op Fl S Ar subsection
-.Op Fl s Ar section
-.Op Fl T Ar output
-.Op Fl W Ar level
-.Op Ar section
+.Op Oo Fl s Oc Ar section
 .Ar name ...
 .Sh DESCRIPTION
 The
