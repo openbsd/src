@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.378 2017/03/19 16:01:08 tb Exp $ */
+/* $OpenBSD: softraid.c,v 1.379 2017/03/27 17:42:19 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5070,6 +5070,8 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 		 * I/O function, based on the type of device it is.
 		 */
 		my->subfn = get_hibernate_io_function(my->subdev);
+		if (!my->subfn)
+			return (ENODEV);
 
 		/*
 		 * Find blkno where this raid partition starts on
