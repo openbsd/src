@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.44 2017/03/13 18:49:20 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.45 2017/03/27 10:24:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -153,6 +153,8 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	ibuf_release(sa->sa_eap.id_buf);
 	free(sa->sa_eapid);
 	ibuf_release(sa->sa_eapmsk);
+
+	free(sa->sa_tag);
 
 	free(sa);
 }

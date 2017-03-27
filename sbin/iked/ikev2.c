@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.145 2017/03/27 10:21:19 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.146 2017/03/27 10:24:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -3207,6 +3207,11 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		nsa->sa_addrpool6 = sa->sa_addrpool6;
 		sa->sa_addrpool6 = NULL;
 		RB_INSERT(iked_addrpool6, &env->sc_addrpool6, nsa);
+	}
+	/* Transfer other attributes */
+	if (sa->sa_tag) {
+		nsa->sa_tag = sa->sa_tag;
+		sa->sa_tag = NULL;
 	}
 
 	log_debug("%s: activating new IKE SA", __func__);

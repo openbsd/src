@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.55 2017/03/13 17:41:14 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.56 2017/03/27 10:24:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -449,6 +449,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	struct iovec		 iov[IOV_CNT];
 	uint32_t		 jitter;
 	int			 iov_cnt;
+	int			 ret;
 
 	sa_srcid = sa_dstid = NULL;
 
@@ -734,7 +735,12 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		iov_cnt++;
 	}
 
-	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
+	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
+
+	free(sa_srcid);
+	free(sa_dstid);
+
+	return ret;
 }
 
 int
