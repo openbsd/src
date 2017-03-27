@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.105 2017/03/21 18:25:32 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.106 2017/03/27 14:39:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2017 $
+.Dd $Mdocdate: March 27 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -68,11 +68,6 @@ It can be specified to override
 .It Fl f
 A synonym for
 .Xr whatis 1 .
-This overrides any earlier
-.Fl k
-and
-.Fl l
-options.
 .It Fl h
 Display only the SYNOPSIS lines.
 Implies
@@ -123,19 +118,9 @@ Otherwise, input is interpreted as
 .It Fl k
 A synonym for
 .Xr apropos 1 .
-This overrides any earlier
-.Fl f
-and
-.Fl l
-options.
 .It Fl l
 A synonym for
 .Fl a .
-Also reverts any earlier
-.Fl f
-and
-.Fl k
-options.
 .It Fl mdoc | man
 With
 .Fl mdoc ,
@@ -222,6 +207,9 @@ also supports the options
 described in the
 .Xr apropos 1
 manual.
+The options
+.Fl fkl
+are mutually exclusive and override each other.
 .Ss Output Formats
 The
 .Nm
