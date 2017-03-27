@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.18 2017/03/27 18:14:20 beck Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.19 2017/03/27 18:26:53 beck Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -568,10 +568,13 @@ main(int argc, char **argv)
 	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
 		exit(1);
 
+	dspew("Built an %ld byte ocsp request\n", request->size);
+
 	if ((host = url2host(request->url, &port, &path)) == NULL)
 		errx(1, "Invalid OCSP url %s from %s", request->url,
 		    certfile);
-	dspew("Built an %ld byte ocsp request\n", request->size);
+	if (*path == '\0')
+		path = "/";
 	vspew("Using %s to host %s, port %d, path %s\n",
 	    port == 443 ? "https" : "http", host, port, path);
 
