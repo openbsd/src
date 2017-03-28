@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.149 2017/03/27 17:17:49 mikeb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.150 2017/03/28 16:15:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -259,7 +259,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else {
 			log_warnx("%s: peer certificate is invalid", __func__);
 			ikev2_send_auth_failed(env, sa);
-			return (-1);
+			break;
 		}
 		if (ikev2_ike_auth(env, sa) != 0)
 			log_debug("%s: failed to send ike auth", __func__);
