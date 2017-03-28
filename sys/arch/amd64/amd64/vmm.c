@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.130 2017/03/27 19:00:38 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.131 2017/03/28 21:38:44 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -148,6 +148,8 @@ int vmx_handle_exit(struct vcpu *);
 int vmm_handle_cpuid(struct vcpu *);
 int vmx_handle_rdmsr(struct vcpu *);
 int vmx_handle_wrmsr(struct vcpu *);
+int vmx_handle_cr0_write(struct vcpu *, uint64_t);
+int vmx_handle_cr4_write(struct vcpu *, uint64_t);
 int vmx_handle_cr(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
@@ -4113,6 +4115,100 @@ vmx_handle_inout(struct vcpu *vcpu)
 }
 
 /*
+ * vmx_handle_cr0_write
+ *
+ * Write handler for CR0. This function ensures valid values are written into
+ * CR0 for the cpu/vmm mode in use (cr0 must-be-0 and must-be-1 bits, etc).
+ *
+ * Parameters
+ *  vcpu: The vcpu taking the cr0 write exit
+ *     r: The guest's desired (incoming) cr0 value
+ *
+ * Return values:
+ *  0: if succesful
+ *  EINVAL: if an error occurred
+ */ 
+int
+vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
+{
+	struct vmx_msr_store *msr_store;
+	uint64_t ectls;
+
+	/*
+	 * XXX this is the place to place handling of the must1,must0 bits
+	 *     and the cr0 write shadow
+	 */
+
+	/* CR0 must always have NE set */
+	r |= CR0_NE;
+
+	if (vmwrite(VMCS_GUEST_IA32_CR0, r)) {
+		printf("%s: can't write guest cr0\n", __func__);
+		return (EINVAL);
+	}
+
+	/* If the guest hasn't enabled paging, nothing more to do. */
+	if (!(r & CR0_PG))
+		return (0);
+
+	/*
+	 * If the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
+	 * control must be set to the same as EFER_LME.
+	 */
+	msr_store = (struct vmx_msr_store *) vcpu->vc_vmx_msr_exit_save_va;
+
+	if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
+		printf("%s: can't read entry controls", __func__);
+		return (EINVAL);
+	}
+
+	if (msr_store[0].vms_data & EFER_LME)
+		ectls |= IA32_VMX_IA32E_MODE_GUEST;
+	else
+		ectls &= ~IA32_VMX_IA32E_MODE_GUEST;
+
+	if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
+		printf("%s: can't write entry controls", __func__);
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+/*
+ * vmx_handle_cr4_write
+ *
+ * Write handler for CR4. This function ensures valid values are written into
+ * CR4 for the cpu/vmm mode in use (cr4 must-be-0 and must-be-1 bits, etc).
+ *
+ * Parameters
+ *  vcpu: The vcpu taking the cr4 write exit
+ *     r: The guest's desired (incoming) cr4 value
+ *
+ * Return values:
+ *  0: if succesful
+ *  EINVAL: if an error occurred
+ */ 
+int
+vmx_handle_cr4_write(struct vcpu *vcpu, uint64_t r)
+{
+	/*
+	 * XXX this is the place to place handling of the must1,must0 bits
+	 *     and the cr4 write shadow
+	 */
+
+	/* CR4_VMXE must always be enabled */
+	r |= CR4_VMXE;
+
+	if (vmwrite(VMCS_GUEST_IA32_CR4, r)) {
+		printf("%s: can't write guest cr4\n", __func__);
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+/*
  * vmx_handle_cr
  *
  * Handle reads/writes to control registers (except CR3)
@@ -4120,9 +4216,8 @@ vmx_handle_inout(struct vcpu *vcpu)
 int
 vmx_handle_cr(struct vcpu *vcpu)
 {
-	uint64_t insn_length, exit_qual, regval, ectls, r;
+	uint64_t insn_length, exit_qual, r;
 	uint8_t crnum, dir, reg;
-	struct vmx_msr_store *msr_store;
 	
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -4148,8 +4243,8 @@ vmx_handle_cr(struct vcpu *vcpu)
 
 	switch (dir) {
 	case CR_WRITE:
-		DPRINTF("%s: mov to cr%d @ %llx\n", __func__, crnum,
-		    vcpu->vc_gueststate.vg_rip);
+		DPRINTF("%s: mov to cr%d @ %llx, data=%llx\n", __func__, crnum,
+		    vcpu->vc_gueststate.vg_rip, r);
 		if (crnum == 0 || crnum == 4) {
 			switch (reg) {
 			case 0: r = vcpu->vc_gueststate.vg_rax; break;
@@ -4176,40 +4271,12 @@ vmx_handle_cr(struct vcpu *vcpu)
 			}
 		}
 
-		if (crnum == 0) {
-			r |= CR0_NE;
-			if (vmwrite(VMCS_GUEST_IA32_CR0, r)) {
-				printf("%s: can't write guest cr0\n", __func__);
-				return (EINVAL);
-			}
+		if (crnum == 0)
+			vmx_handle_cr0_write(vcpu, r);
+			
+		if (crnum == 4)
+			vmx_handle_cr4_write(vcpu, r);
 
-			if (r & CR0_PG) {
-				msr_store = (struct vmx_msr_store *)
-				    vcpu->vc_vmx_msr_exit_load_va;
-				if (msr_store[0].vms_data & EFER_LME) {
-					msr_store[0].vms_data |= EFER_LMA;
-					if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
-						printf("%s: can't read entry "
-					 	    "controls", __func__);
-						return (EINVAL);
-					}
-					ectls |= IA32_VMX_IA32E_MODE_GUEST;
-					if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
-						printf("%s: can't write entry "
-						    "controls", __func__);
-						return (EINVAL);
-					}
-				}
-			}
-		}
-
-		if (crnum == 4) {
-			regval |= CR4_VMXE;
-			if (vmwrite(VMCS_GUEST_IA32_CR4, regval)) {
-				printf("%s: can't write guest cr4\n", __func__);
-				return (EINVAL);
-			}
-		}
 		break;
 	case CR_READ:
 		DPRINTF("vmx_handle_cr: mov from cr%d @ %llx\n",
