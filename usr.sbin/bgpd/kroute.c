@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.211 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.212 2017/03/28 05:04:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2200,9 +2200,10 @@ knexthop_send_update(struct knexthop_node *kn)
 		kr = kn->kroute;
 		n.valid = kroute_validate(&kr->r);
 		n.connected = kr->r.flags & F_CONNECTED;
-		if ((n.gateway.v4.s_addr =
-		    kr->r.nexthop.s_addr) != 0)
+		if (kr->r.nexthop.s_addr != 0) {
 			n.gateway.aid = AID_INET;
+			n.gateway.v4.s_addr = kr->r.nexthop.s_addr;
+		}
 		if (n.connected) {
 			n.net.aid = AID_INET;
 			n.net.v4.s_addr = kr->r.prefix.s_addr;
@@ -2221,7 +2222,7 @@ knexthop_send_update(struct knexthop_node *kn)
 		}
 		if (n.connected) {
 			n.net.aid = AID_INET6;
-			memcpy(&n.net.v6, &kr6->r.nexthop,
+			memcpy(&n.net.v6, &kr6->r.prefix,
 			    sizeof(struct in6_addr));
 			n.netlen = kr6->r.prefixlen;
 		}
