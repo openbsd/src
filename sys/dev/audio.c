@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.161 2017/03/11 10:12:45 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.162 2017/03/28 05:20:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -615,13 +615,13 @@ audio_setpar(struct audio_softc *sc)
 	if (sc->mode & AUMODE_PLAY) {
 		if (sc->pchan < 1)
 			sc->pchan = 1;
-		if (sc->pchan > 64)
+		else if (sc->pchan > 64)
 			sc->pchan = 64;
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		if (sc->rchan < 1)
 			sc->rchan = 1;
-		if (sc->rchan > 64)
+		else if (sc->rchan > 64)
 			sc->rchan = 64;
 	}
 	switch (sc->sw_enc) {
@@ -637,15 +637,15 @@ audio_setpar(struct audio_softc *sc)
 	}
 	if (sc->bits < 8)
 		sc->bits = 8;
-	if (sc->bits > 32)
+	else if (sc->bits > 32)
 		sc->bits = 32;
 	if (sc->bps < 1)
 		sc->bps = 1;
-	if (sc->bps > 4)
+	else if (sc->bps > 4)
 		sc->bps = 4;
 	if (sc->rate < 4000)
 		sc->rate = 4000;
-	if (sc->rate > 192000)
+	else if (sc->rate > 192000)
 		sc->rate = 192000;
 
 	/*
@@ -810,7 +810,7 @@ audio_setpar(struct audio_softc *sc)
 	sc->round -= sc->round % mult;
 	if (sc->round > max)
 		sc->round = max;
-	if (sc->round < min)
+	else if (sc->round < min)
 		sc->round = min;
 	sc->round = sc->round;
 
@@ -822,7 +822,7 @@ audio_setpar(struct audio_softc *sc)
 		max = sc->play.datalen / sc->play.blksz;
 		if (sc->nblks > max)
 			sc->nblks = max;
-		if (sc->nblks < 2)
+		else if (sc->nblks < 2)
 			sc->nblks = 2;
 		sc->play.len = sc->nblks * sc->play.blksz;
 		sc->nblks = sc->nblks;
