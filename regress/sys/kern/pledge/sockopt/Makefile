@@ -36,8 +36,9 @@ REGRESS_TARGETS +=	run-regress-${promises}-${domain}-${type}-${protocol}-${call}
 run-regress-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname}-${optval}-${errno}-${abort}:
 	@echo "\n$@"
 	rm -f sockopt sockopt.core
-	COPTS='-DPROMISES=\"${promises}\" -DDOMAIN=${domain} -DTYPE=${type} \
-	    -DPROTOCOL=${protocol} -DCALL=\"${call}\" \
+	cd ${.CURDIR} && \
+	    COPTS='-DPROMISES=\"${promises}\" -DDOMAIN=${domain} \
+	    -DTYPE=${type} -DPROTOCOL=${protocol} -DCALL=\"${call}\" \
 	    -DLEVEL=${level} -DOPTNAME=${optname} -DOPTVAL=${optval} \
 	    -DERRNO=${errno}' ${.MAKE} sockopt
 .if "${abort}" == 0
