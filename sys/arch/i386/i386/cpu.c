@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.80 2016/10/21 06:20:58 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.81 2017/03/28 17:28:35 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -603,6 +603,7 @@ cpu_hatch(void *v)
 
 	npxinit(ci);
 
+	ci->ci_curpmap = pmap_kernel();
 	cpu_init(ci);
 
 	/* Re-initialise memory range handling on AP */
