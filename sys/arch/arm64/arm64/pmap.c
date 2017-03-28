@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.28 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.29 2017/03/28 18:23:53 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1132,6 +1132,9 @@ CTASSERT(sizeof(struct pmapvp0) == 8192);
 int mappings_allocated = 0;
 int pted_allocated = 0;
 
+extern char __text_start[], _etext[];
+extern char __rodata_start[], _erodata[];
+
 vaddr_t
 pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
     long ram_start, long ram_end)
@@ -1241,8 +1244,6 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 	// enable mappings for existing 'allocated' mapping in the bootstrap
 	// page tables
 	extern uint64_t *pagetable;
-	extern char __text_start[], _etext[];
-	extern char __rodata_start[], _erodata[];
 	extern char _end[];
 	vp2 = (void *)((long)&pagetable + kvo);
 	struct mem_region *mp;
@@ -1273,36 +1274,15 @@ pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart, long kernelend,
 		}
 	}
 
-	// At this point we are still running on the bootstrap page tables
-	// however all memory allocated for the final page tables is
-	// 'allocated' and should now be mapped
-	// This means we are able to use the virtual addressing to
-	// enter the final mappings into the new mapping tables.
-
-#if 0
-	vm_prot_t prot;
-
-	for (mp = pmap_allocated; mp->size != 0; mp++) {
-		vaddr_t va;
-		paddr_t pa;
-		vsize_t size;
-		extern char *etext();
-		//printf("mapping %08x sz %08x\n", mp->start, mp->size);
-		for (pa = mp->start, va = pa + kvo, size = mp->size & ~0xfff;
-		    size > 0;
-		    va += PAGE_SIZE, pa+= PAGE_SIZE, size -= PAGE_SIZE)
-		{
-			pa = va - kvo;
-			prot = PROT_READ|PROT_WRITE;
-			if ((vaddr_t)va >= (vaddr_t)kernelstart &&
-			    (vaddr_t)va < (vaddr_t)etext)
-				prot |= PROT_EXEC; // XXX remove WRITE?
-			pmap_kenter_cache(va, pa, prot, PMAP_CACHE_WB);
-		}
-	}
-#endif
 	pmap_avail_fixup();
 
+	/*
+	 * At this point we are still running on the bootstrap page
+	 * tables however all memory for the final page tables is
+	 * 'allocated' and should now be mapped.  This means we are
+	 * able to use the virtual addressing to enter the final
+	 * mappings into the new mapping tables.
+	 */
 	vstart = pmap_map_stolen(kernelstart);
 
 	void (switch_mmu_kernel)(long);
@@ -2117,42 +2097,33 @@ pmap_steal_avail(size_t size, int align, void **kva)
 vaddr_t
 pmap_map_stolen(vaddr_t kernel_start)
 {
-	int prot;
 	struct mem_region *mp;
-	uint64_t pa, va, e;
-	extern char *etext();
+	paddr_t pa;
+	vaddr_t va;
+	uint64_t e;
 
-
-	int oldprot = 0;
-	printf("mapping self\n");
 	for (mp = pmap_allocated; mp->size; mp++) {
-		printf("start %16llx end %16llx\n", mp->start, mp->start + mp->size);
-		printf("exe range %16llx %16llx\n", kernel_start,
-		    (uint64_t)&etext);
 		for (e = 0; e < mp->size; e += PAGE_SIZE) {
-			/* XXX - is this a kernel text mapping? */
-			/* XXX - Do we care about KDB ? */
+			int prot = PROT_READ | PROT_WRITE;
+
 			pa = mp->start + e;
 			va = pa - pmap_avail_kvo;
+
 			if (va < VM_MIN_KERNEL_ADDRESS ||
 			    va >= VM_MAX_KERNEL_ADDRESS)
 				continue;
-			if ((vaddr_t)va >= (vaddr_t)kernel_start &&
-			    (vaddr_t)va < (vaddr_t)&etext) {
-				prot = PROT_READ|PROT_WRITE|
-				    PROT_EXEC;
-			} else {
-				prot = PROT_READ|PROT_WRITE;
-			}
-			if (prot != oldprot) {
-				printf("mapping  v %16llx p %16llx prot %x\n", va,
-				    pa, prot);
-				oldprot = prot;
-			}
+
+			if (va >= (vaddr_t)__text_start &&
+			    va < (vaddr_t)_etext)
+				prot = PROT_READ | PROT_EXEC;
+			else if (va >= (vaddr_t)__rodata_start &&
+			    va < (vaddr_t)_erodata)
+				prot = PROT_READ;
+
 			pmap_kenter_cache(va, pa, prot, PMAP_CACHE_WB);
 		}
 	}
-	printf("last mapping  v %16llx p %16llx\n", va, pa);
+
 	return va + PAGE_SIZE;
 }
 
