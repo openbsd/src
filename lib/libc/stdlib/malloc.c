@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.217 2017/03/24 16:23:05 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.218 2017/03/28 16:56:38 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1703,6 +1703,9 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 	if (p == NULL)
 		return omalloc(pool, newsize, 1, f);
 
+	if (oldsize == newsize)
+		return p;
+
 	r = find(pool, p);
 	if (r == NULL) {
 		if (mopts.malloc_mt) {
@@ -1791,7 +1794,7 @@ recallocarray_p(void *ptr, size_t oldnmemb, size_t newnmemb, size_t size)
 	if (newsize <= oldsize) {
 		size_t d = oldsize - newsize;
 
-		if (d < oldsize / 2 && d < getpagesize()) {
+		if (d < oldsize / 2 && d < MALLOC_PAGESIZE) {
 			memset((char *)ptr + newsize, 0, d);
 			return ptr;
 		}
