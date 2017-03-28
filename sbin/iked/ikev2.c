@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.150 2017/03/28 16:15:33 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.151 2017/03/28 16:25:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -2147,7 +2147,8 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
 		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
-		if (!msg->msg_responded && !msg->msg_error) {
+		if (sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) &&
+		    !msg->msg_responded && !msg->msg_error) {
 			(void)ikev2_send_ike_e(env, sa, NULL,
 			    IKEV2_PAYLOAD_NONE, IKEV2_EXCHANGE_INFORMATIONAL,
 			    1);
