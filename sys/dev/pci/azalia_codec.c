@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.171 2015/12/02 03:11:32 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.172 2017/03/28 04:54:44 ratchov Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -66,7 +66,8 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10134206:
 		this->name = "Cirrus Logic CS4206";
 		if (this->subid == 0xcb8910de ||	/* APPLE_MBA3_1 */
-		    this->subid == 0x72708086) {	/* APPLE_MBA4_1 */
+		    this->subid == 0x72708086 ||	/* APPLE_MBA4_1 */
+		    this->subid == 0xcb7910de) {	/* APPLE_MBP5_5 */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_1 |
 			    AZ_QRK_GPIO_UNMUTE_3;
 		}
