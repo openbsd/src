@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2017/03/27 10:43:53 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.64 2017/03/28 16:56:39 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -379,7 +379,7 @@ typedef struct {
 
 %}
 
-%token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK PORT
+%token	FROM ESP AH IN PEER ON OUT TO SRCID DSTID PSK PORT
 %token	FILENAME AUTHXF PRFXF ENCXF ERROR IKEV2 IKESA CHILDSA
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
@@ -1135,7 +1135,6 @@ lookup(char *s)
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
-		{ "rsa",		RSA },
 		{ "sa",			SA },
 		{ "set",		SET },
 		{ "skip",		SKIP },
