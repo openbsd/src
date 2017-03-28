@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.232 2017/03/26 18:38:16 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.233 2017/03/28 00:04:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1646,7 +1646,7 @@ vlogmsg(int pri, const char *proc, const char *fmt, va_list ap)
 	size_t	l;
 
 	l = snprintf(msg, sizeof(msg), "%s[%d]: ", proc, getpid());
-	if (l < sizeof(msg));
+	if (l < sizeof(msg))
 		vsnprintf(msg + l, sizeof(msg) - l, fmt, ap);
 	logmsg(pri, msg, LocalHostName, ADDDATE);
 }
