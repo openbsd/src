@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.54 2017/01/24 09:02:33 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.55 2017/03/28 21:36:27 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -252,6 +252,7 @@
 #define	CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define	CPUID_FFXSR	0x02000000	/* fast FP/MMX save/restore */
 #define	CPUID_PAGE1GB	0x04000000	/* 1-GByte pages */
+#define CPUID_RDTSCP	0x08000000	/* RDTSCP / IA32_TSC_AUX available */
 #define	CPUID_LONG	0x20000000	/* long mode */
 #define	CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define	CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */

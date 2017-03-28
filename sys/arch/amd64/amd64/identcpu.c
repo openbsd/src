@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.81 2017/02/14 15:39:14 reyk Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.82 2017/03/28 21:36:27 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ const struct {
 	{ CPUID_MMXX,		"MMXX" },
 	{ CPUID_FFXSR,		"FFXSR" },
 	{ CPUID_PAGE1GB,	"PAGE1GB" },
+	{ CPUID_RDTSCP,		"RDTSCP" },
 	{ CPUID_LONG,		"LONG" },
 	{ CPUID_3DNOW2,		"3DNOW2" },
 	{ CPUID_3DNOW,		"3DNOW" }
