@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.43 2017/03/27 10:06:41 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.44 2017/03/28 19:52:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1184,6 +1184,8 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		break;
 	default:
 		/* Some types like ASN1_DN will not be mapped to file names */
+		log_debug("%s: unsupported public key type %s",
+		    __func__, print_map(id->id_type, ikev2_id_map));
 		return (-1);
 	}
 
@@ -1222,11 +1224,15 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 
 	lc_string(idstr);
 	if (strlcpy(file, IKED_PUBKEY_DIR, sizeof(file)) >= sizeof(file) ||
-	    strlcat(file, idstr, sizeof(file)) >= sizeof(file))
+	    strlcat(file, idstr, sizeof(file)) >= sizeof(file)) {
+		log_debug("%s: public key id too long %s", __func__, idstr);
 		goto done;
+	}
 
-	if ((fp = fopen(file, "r")) == NULL)
+	if ((fp = fopen(file, "r")) == NULL) {
+		log_debug("%s: could not open public key %s", __func__, file);
 		goto done;
+	}
 	localkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
 	if (localkey == NULL) {
 		/* reading PKCS #8 failed, try PEM RSA */
@@ -1245,8 +1251,10 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 	if (localkey == NULL)
 		goto sslerr;
 
-	if (!EVP_PKEY_cmp(peerkey, localkey))
+	if (!EVP_PKEY_cmp(peerkey, localkey)) {
+		log_debug("%s: public key does not match %s", __func__, file);
 		goto done;
+	}
 
 	log_debug("%s: valid public key in file %s", __func__, file);
 
