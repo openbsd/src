@@ -1,4 +1,4 @@
-/* $OpenBSD: vfp.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: vfp.c,v 1.2 2017/03/28 23:47:17 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -34,6 +34,7 @@ static inline void set_vfp_enable(int val)
 		v &= ~(VFP_UFPEN);
 	}
 	__asm __volatile("msr cpacr_el1, %x0" :: "r" (v));
+	__asm __volatile("isb");
 }
 
 static inline int get_vfp_enable()
