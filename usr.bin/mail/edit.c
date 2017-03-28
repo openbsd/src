@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.19 2009/10/27 23:59:40 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.20 2017/03/28 09:14:43 natano Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ visual(void *v)
 int
 edit1(int *msgvec, int type)
 {
-	int c, i;
+	int nl = 0, c, i;
 	FILE *fp;
 	struct sigaction oact;
 	sigset_t oset;
@@ -115,10 +115,18 @@ edit1(int *msgvec, int type)
 			mp->m_flag |= MODIFY;
 			rewind(fp);
 			while ((c = getc(fp)) != EOF) {
-				if (c == '\n')
+				if (c == '\n') {
 					mp->m_lines++;
+					nl++;
+				} else
+					nl = 0;
 				if (putc(c, otf) == EOF)
 					break;
+			}
+			for (; nl < 2; nl++) {
+				mp->m_lines++;
+				mp->m_size++;
+				putc('\n', otf);
 			}
 			if (ferror(otf))
 				warn("%s", tmpdir);
