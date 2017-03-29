@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.61 2017/03/29 00:18:51 jsg Exp $ */
+/*	$OpenBSD: umodem.c,v 1.62 2017/03/29 01:27:40 jsg Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -237,19 +237,10 @@ umodem_match(struct device *parent, void *match, void *aux)
 
 	ret = UMATCH_NONE;
 
-	/* protocol of 0 so won't match the test below */
-	if (UGETW(dd->idVendor) == USB_VENDOR_ATMEL &&
-	    UGETW(dd->idProduct) == USB_PRODUCT_ATMEL_AT91_CDC_ACM)
-		ret = UMATCH_VENDOR_PRODUCT;
-
 	if (UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
 	    UGETW(dd->idProduct) == USB_PRODUCT_KYOCERA_AHK3001V &&
 	    id->bInterfaceNumber == 0)
 		ret = UMATCH_VENDOR_PRODUCT;
-
-	if (UGETW(dd->idVendor) == USB_VENDOR_ARDUINO &&
-	    UGETW(dd->idProduct) == USB_PRODUCT_ARDUINO_LEONARDO)
-	    ret = UMATCH_VENDOR_PRODUCT;
 
 	if (ret == UMATCH_NONE &&
 	    id->bInterfaceClass == UICLASS_CDC &&
