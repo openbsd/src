@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.13 2015/10/10 21:15:25 doug Exp $	*/
+/*	$OpenBSD: kill.c,v 1.14 2017/03/29 22:40:15 millert Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +51,7 @@ int
 main(int argc, char *argv[])
 {
 	int errors, numsig, pid;
-	char *ep;
+	const char *errstr;
 
 	if (pledge("stdio proc", NULL) == -1)
 		err(1, "pledge");
@@ -70,14 +71,13 @@ main(int argc, char *argv[])
 		if (argc == 1) {
 			if (!isdigit((unsigned char)**argv))
 				usage();
-			numsig = strtol(*argv, &ep, 10);
-			if (*ep)
+			numsig = strtonum(*argv, 1, NSIG + 127, &errstr);
+			if (errstr != NULL) {
+				if (errno == ERANGE)
+					nosig(*argv);
 				errx(1, "illegal signal number: %s", *argv);
-			if (numsig >= 128)
-				numsig -= 128;
-			if (numsig <= 0 || numsig >= NSIG)
-				nosig(*argv);
-			printf("%s\n", sys_signame[numsig]);
+			}
+			printf("%s\n", sys_signame[numsig & 127]);
 			exit(0);
 		}
 		printsignals(stdout);
@@ -105,11 +105,12 @@ main(int argc, char *argv[])
 				if ((numsig = signame_to_signum(*argv)) < 0)
 					nosig(*argv);
 			} else if (isdigit((unsigned char)**argv)) {
-				numsig = strtol(*argv, &ep, 10);
-				if (*ep)
+				numsig = strtonum(*argv, 0, NSIG - 1, &errstr);
+				if (errstr != NULL) {
+					if (errno == ERANGE)
+						nosig(*argv);
 					errx(1, "illegal signal number: %s", *argv);
-				if (numsig < 0 || numsig >= NSIG)
-					nosig(*argv);
+				}
 			} else
 				nosig(*argv);
 		}
@@ -120,8 +121,8 @@ main(int argc, char *argv[])
 		usage();
 
 	for (errors = 0; argc; argc--, argv++) {
-		pid = strtol(*argv, &ep, 10);
-		if (!**argv || *ep) {
+		pid = strtonum(*argv, -INT_MAX, INT_MAX, &errstr);
+		if (errstr != NULL) {
 			warnx("illegal process id: %s", *argv);
 			errors = 1;
 		} else if (kill(pid, numsig) == -1) {
