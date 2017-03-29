@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.41 2017/01/31 21:35:07 sthen Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.42 2017/03/29 08:19:13 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -419,6 +419,7 @@ ca_create(struct ca *ca)
 	chmod(path, 0600);
 
 	ca_setenv("$ENV::CERT_CN", "VPN CA");
+	ca_setenv("$ENV::REQ_EXT", "x509v3_CA");
 	ca_setcnf(ca, "ca");
 
 	snprintf(path, sizeof(path), "%s/private/ca.csr", ca->sslpath);
