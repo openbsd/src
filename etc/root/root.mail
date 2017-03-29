@@ -31,7 +31,7 @@ during install/upgrade -- a mirror URLs from https://www.openbsd.org/ftp.html
 is stored into the file /etc/installurl.  Installation of packages is
 as simple as:
 
- # pkg_add -v rsync chromium emacs-24.5p0-no_x11
+ # pkg_add -v rsync chromium emacs-25.1p3-no_x11
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
