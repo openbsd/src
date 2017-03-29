@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.147 2017/03/26 19:03:38 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.148 2017/03/29 16:29:02 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -122,7 +122,7 @@ TRIM=${LD} -x -r ${.TARGET}.o -o ${.TARGET} && rm -f ${.TARGET}.o
 TRIM.debug=${LD} -X -r ${.TARGET}.o -o ${.TARGET} && rm -f ${.TARGET}.o
 
 
-GEN_PREFIX=.file "${@:R}.S"\n\#include "SYS.h"
+GEN_PREFIX=\t.file "${@:R}.S"\n\#include "SYS.h"
 # Pick one of these to set what ASM is generated...
 GENERATE.rsyscall=\
 	echo creating ${.TARGET} && \
