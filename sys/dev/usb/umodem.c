@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.60 2016/05/24 05:35:01 mpi Exp $ */
+/*	$OpenBSD: umodem.c,v 1.61 2017/03/29 00:18:51 jsg Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -254,7 +254,8 @@ umodem_match(struct device *parent, void *match, void *aux)
 	if (ret == UMATCH_NONE &&
 	    id->bInterfaceClass == UICLASS_CDC &&
 	    id->bInterfaceSubClass == UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
-	    id->bInterfaceProtocol == UIPROTO_CDC_AT)
+	    (id->bInterfaceProtocol == UIPROTO_CDC_AT ||
+	    id->bInterfaceProtocol == UIPROTO_CDC_NOCLASS))
 		ret = UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
 	if (ret == UMATCH_NONE)
