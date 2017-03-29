@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.135 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.136 2017/03/29 16:42:25 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -965,6 +965,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
     struct iwi_notif *notif)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
 	struct ifnet *ifp = &ic->ic_if;
 
 	switch (notif->type) {
@@ -1028,6 +1029,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 			break;
 
 		case IWI_ASSOCIATED:
+			if (ic->ic_flags & IEEE80211_F_RSNON)
+				ni->ni_rsn_supp_state = RSNA_SUPP_PTKSTART;
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 			break;
 
@@ -2038,6 +2041,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	config.disable_multicast_decryption = 1;
 	config.silence_threshold = 30;
 	config.report_noise = 1;
+	config.allow_mgt = 1;
 	config.answer_pbreq =
 #ifndef IEEE80211_STA_ONLY
 	    (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 :
