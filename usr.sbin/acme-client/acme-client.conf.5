@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.9 2017/03/22 11:14:14 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.10 2017/03/29 17:16:24 tj Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2017 $
+.Dd $Mdocdate: March 29 2017 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ An example authority block:
 authority letsencrypt {
 	agreement url https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf
 	api url "https://acme-v01.api.letsencrypt.org/directory"
-	account key /etc/ssl/private/my-acme.key
+	account key "/etc/ssl/private/my-acme.key"
 }
 .Ed
 .Sh DOMAINS
