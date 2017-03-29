@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.107 2017/03/26 09:21:33 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.108 2017/03/29 17:38:37 otto Exp $
 .\"
-.Dd $Mdocdate: March 26 2017 $
+.Dd $Mdocdate: March 29 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ If
 .Fa ptr
 was previously freed by
 .Fn free
-or an allocation function,
+or a reallocation function,
 the behavior is undefined and the double free is a security concern.
 .Sh RETURN VALUES
 Upon successful completion, the allocation functions
@@ -406,22 +406,17 @@ This is a rather weird condition that is most likely to indicate a
 seriously overloaded system or a ulimit restriction.
 .It Dq bogus pointer (double free?)
 An attempt to
-.Fn free ,
-.Fn realloc ,
+.Fn free
 or
-.Fn reallocarray
-an unallocated pointer was made.
+reallocate an unallocated pointer was made.
 .It Dq chunk is already free
 There was an attempt to free a chunk that had already been freed.
 .It Dq use after free
 A chunk has been modified after it was freed.
 .It Dq modified chunk-pointer
 The pointer passed to
-.Fn free ,
-.Fn realloc ,
-or
-.Fn reallocarray
-has been modified.
+.Fn free
+or a reallocation function has been modified.
 .It Dq chunk canary corrupted address offset@length
 A byte after the requested size has been overwritten,
 indicating a heap overflow.
@@ -431,7 +426,9 @@ and the requested length of the allocation after the @.
 .Fn recallocarray
 has detected that the given old size does not equal the recorded size in its
 meta data.
-Enabling option C allows
+Enabling option
+.Cm C
+allows
 .Fn recallocarray
 to catch more of these cases.
 .It Dq recursive call
