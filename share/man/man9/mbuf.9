@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.105 2016/10/17 02:53:47 lteo Exp $
+.\"     $OpenBSD: mbuf.9,v 1.106 2017/03/29 23:05:05 claudio Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 17 2016 $
+.Dd $Mdocdate: March 29 2017 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@
 .Ft void
 .Fn m_cat "struct mbuf *m" "struct mbuf *n"
 .Ft struct mbuf *
-.Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp"
+.Fn m_devget "char *buf" "int totlen" "int off"
 .Ft int
 .Fn m_apply "struct mbuf *m" "int off" "int len" \
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
@@ -660,7 +660,7 @@ Concatenate the mbuf chain pointed to by
 to the mbuf chain pointed to by
 .Fa m .
 The mbuf chains must be of the same type.
-.It Fn m_devget "char *buf" "int totlen" "int off" "struct ifnet *ifp"
+.It Fn m_devget "char *buf" "int totlen" "int off"
 Copy
 .Fa totlen
 bytes of data from device local memory pointed to by
