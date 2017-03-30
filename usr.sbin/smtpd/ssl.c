@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.87 2016/09/02 09:43:54 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.88 2017/03/30 15:41:04 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -267,6 +267,7 @@ ssl_ctx_create(const char *pkiname, char *cert, off_t cert_len, const char *ciph
 	    SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TICKET);
 	SSL_CTX_set_options(ctx,
 	    SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+	SSL_CTX_set_options(ctx, SSL_OP_NO_CLIENT_RENEGOTIATION);
 	SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
 
 	if (ciphers == NULL)
