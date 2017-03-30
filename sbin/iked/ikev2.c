@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.151 2017/03/28 16:25:21 reyk Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.152 2017/03/30 15:48:30 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -904,16 +904,16 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	    (sa->sa_dhgroup = group_get(pol->pol_peerdh)) == NULL) {
 		log_warnx("%s: invalid peer DH group %u", __func__,
 		    pol->pol_peerdh);
-		return (-1);
+		goto closeonly;
 	}
 	sa->sa_reqid = 0;
 
 	if (ikev2_sa_initiator(env, sa, NULL, NULL) == -1)
-		goto done;
+		goto closeonly;
 
 	if (pol->pol_local.addr.ss_family == AF_UNSPEC) {
 		if (socket_getaddr(sock->sock_fd, &ss) == -1)
-			goto done;
+			goto closeonly;
 	} else
 		memcpy(&ss, &pol->pol_local.addr, pol->pol_local.addr.ss_len);
 
@@ -1028,11 +1028,12 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_EXCHANGE_TIMEOUT);
 
  done:
+	ikev2_msg_cleanup(env, &req);
+ closeonly:
 	if (ret == -1) {
 		log_debug("%s: closing SA", __func__);
 		sa_free(env, sa);
 	}
-	ikev2_msg_cleanup(env, &req);
 
 	return (ret);
 }
