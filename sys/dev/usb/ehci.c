@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.197 2017/03/10 11:18:48 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.198 2017/03/30 14:44:36 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -487,7 +487,7 @@ ehci_init(struct ehci_softc *sc)
 	ehci_free_sqh(sc, sc->sc_async_head);
 #endif
  bad1:
-	free(sc->sc_softitds, M_USB, sc->sc_flsize);
+	free(sc->sc_softitds, M_USB, 0);
 	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
 	return (err);
 }
@@ -942,7 +942,7 @@ ehci_detach(struct device *self, int flags)
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
-	free(sc->sc_softitds, M_USB, sc->sc_flsize);
+	free(sc->sc_softitds, M_USB, 0);
 	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
 	/* XXX free other data structures XXX */
 
