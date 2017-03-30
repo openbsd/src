@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.27 2017/03/15 18:00:11 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.28 2017/03/30 03:39:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -120,8 +120,10 @@ vm_start(const char *name, int memsize, int nnics, char **nics,
 
 	for (i = 0 ; i < ndisks; i++)
 		strlcpy(vcp->vcp_disks[i], disks[i], VMM_MAX_PATH_DISK);
-	for (i = 0 ; i < nnics; i++)
+	for (i = 0 ; i < nnics; i++) {
 		strlcpy(vmc->vmc_ifswitch[i], nics[i], IF_NAMESIZE);
+		vmc->vmc_ifflags[i] = VMIFF_UP;
+	}
 	if (name != NULL)
 		strlcpy(vcp->vcp_name, name, VMM_MAX_NAME_LEN);
 	if (kernel != NULL)
