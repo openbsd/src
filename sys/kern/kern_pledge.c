@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.200 2017/03/28 16:03:31 bluhm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.201 2017/03/30 15:22:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1137,7 +1137,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
-#if BPFFILTER > 0
+#if NBPFILTER > 0
 	if ((p->p_p->ps_pledge & PLEDGE_BPF)) {
 		switch (com) {
 		case BIOCGSTATS:	/* bpf: tcpdump privsep on ^C */
@@ -1147,7 +1147,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			break;
 		}
 	}
-#endif /* BPFFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 	if ((p->p_p->ps_pledge & PLEDGE_TAPE)) {
 		switch (com) {
