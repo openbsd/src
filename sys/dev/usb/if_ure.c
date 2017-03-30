@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.4 2017/03/11 13:40:46 kettenis Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.5 2017/03/30 07:23:50 kettenis Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -118,7 +118,6 @@ void		ure_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		ure_txeof(struct usbd_xfer *, void *, usbd_status);
 int		ure_rx_list_init(struct ure_softc *);
 int		ure_tx_list_init(struct ure_softc *);
-struct mbuf *	ure_newbuf(void);
 
 void		ure_tick_task(void *);
 void		ure_tick(void *);
@@ -1299,17 +1298,13 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		total_len -= pktlen;
 		buf += sizeof(rxhdr);
 
-		m = ure_newbuf();
+		m = m_devget(buf, pktlen, ETHER_ALIGN);
 		if (m == NULL) {
 			DPRINTF(("unable to allocate mbuf for next packet\n"));
 			ifp->if_ierrors++;
 			goto done;
 		}
 
-		m->m_pkthdr.len = m->m_len = pktlen;
-		m_adj(m, ETHER_ALIGN);
-
-		memcpy(mtod(m, char *), buf, pktlen);
 		ml_enqueue(&ml, m);
 	} while (total_len > 0);
 
@@ -1428,24 +1423,6 @@ ure_rx_list_init(struct ure_softc *sc)
 	}
 
 	return 0;
-}
-
-struct mbuf *
-ure_newbuf(void)
-{
-	struct mbuf *m;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return NULL;
-
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
-		return NULL;
-	}
-
-	return m;
 }
 
 int
