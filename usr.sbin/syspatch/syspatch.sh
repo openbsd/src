@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.92 2017/02/13 14:59:09 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.93 2017/03/31 16:02:31 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -182,7 +182,7 @@ ls_missing()
 
 	# don't output anything on stdout to prevent corrupting the patch list
 	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
-		>/dev/null
+		>/dev/null 2>&1
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
@@ -231,6 +231,7 @@ sp_cleanup()
 
 	# remove non matching release /var/syspatch/ content
 	for _d in ${_PDIR}/*; do
+		[[ -e ${_d} ]] || continue
 		[[ ${_d##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]]|_) ]] &&
 			[[ -f ${_d}/rollback.tgz ]] || rm -r ${_d}
 	done
