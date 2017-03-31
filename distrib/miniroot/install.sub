@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.988 2017/03/13 17:08:31 rpe Exp $
+#	$OpenBSD: install.sub,v 1.989 2017/03/31 18:36:49 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1539,9 +1539,9 @@ install_files() {
 
 # Fetch install sets from an HTTP server possibly using a proxy.
 install_http() {
-	local _f _flist _file_list _prompt _tls _http_proto _http_server
+	local _d _f _flist _file_list _prompt _tls _http_proto _url_base
 	local _idx=/tmp/i/index.txt _sha=/tmp/i/SHA256 _sig=/tmp/i/SHA256.sig
-	local _url_base _install_url _mirror_url _mirror_srv _mirror_dir
+	local _iu_url _iu_srv _iu_dir _mirror_url _mirror_srv _mirror_dir
 
 	# N.B.: Don't make INSTALL_MIRROR a local variable! It preserves the
 	# mirror information if install_http() is called multiple times with
@@ -1565,16 +1565,18 @@ install_http() {
 	fi
 
 	# Use information from /etc/installurl as defaults for upgrades.
-	# Format of installurl: _http_proto://_http_server/_url_path
+	# Format of installurl: _http_proto://_iu_srv/_iu_dir
+	#                       ^--------- _iu_url ---------^
 	if [[ $MODE == upgrade ]] &&
-		_install_url=$(stripcom /mnt/etc/installurl); then
-		_http_server=${_install_url#*://}
-		_http_server=${_http_server%%/*}
+		_iu_url=$(stripcom /mnt/etc/installurl); then
+		_iu_srv=${_iu_url#*://}
+		_iu_srv=${_iu_srv%%/*}
+		_iu_dir=${_iu_url##*$_iu_srv*(/)}
 	fi
 
 	# Get server IP address or hostname and optionally the http protocol.
 	while :; do
-		ask_until "$_prompt" "${_http_server:-$HTTP_SERVER}"
+		ask_until "$_prompt" "${_iu_srv:-$HTTP_SERVER}"
 		case $resp in
 		done)	return
 			;;
@@ -1619,22 +1621,29 @@ install_http() {
 	# Format: _mirror_srv/_mirror_dir location_info
 	#         ^---- _mirror_url ----^
 	set -- $(grep -i "^$HTTP_SERVER" $HTTP_LIST 2>/dev/null | sed '$!d')
-	_mirror_url=$1
+	_mirror_url=${1%%*(/)}
 	_mirror_srv=${_mirror_url%%/*}
-	_mirror_dir=${_mirror_url#*$_mirror_srv}
+	_mirror_dir=${_mirror_url##*$_mirror_srv*(/)}
 
-	resp=$_mirror_dir/$HTTP_SETDIR
-	# If there is no directory specified, don't use this entry!
-	[[ -z $_mirror_dir ]] && resp=
-	if (($# > 1)); then
-		# It's a mirror, since it has location info.
-		resp=$_mirror_dir/$HTTP_SETDIR
-		INSTALL_MIRROR=$_mirror_url
+	# Decide on the default for the "Server directory" question.
+	if [[ -n $_mirror_url ]]; then
+		# Use directory information from cgi server if HTTP_SERVER was
+		# found in HTTP_LIST. That is either an official mirror or the
+		# server used in a previous installation or upgrade.
+		_d=$_mirror_dir/$HTTP_SETDIR
+
+		# Preserve the information that it is an official mirror if
+		# location is present in $2.
+		(($# > 1)) && INSTALL_MIRROR=$_mirror_url
+	elif [[ -n $_iu_url ]]; then
+		# Otherwise, if it exists, use directory information from
+		# installurl(5) during upgrade.
+		_d=$_iu_dir/$HTTP_SETDIR
+	else
+		_d=pub/OpenBSD/$HTTP_SETDIR
 	fi
 
-	# Set HTTP_DIR to a default path in case it was not defined yet.
-	: ${HTTP_DIR:=pub/OpenBSD/$HTTP_SETDIR}
-	ask_until "Server directory?" "${resp:-$HTTP_DIR}"
+	ask_until "Server directory?" "$_d"
 	HTTP_DIR=${resp##+(/)}
 	_url_base="$_http_proto://$HTTP_SERVER/$HTTP_DIR"
 
@@ -1685,8 +1694,13 @@ install_http() {
 
 	# Remember the sets location which is used later for creating the
 	# installurl(5) file and to tell the cgi server.
-	INSTALL_URL=${_url_base%/$HTTP_SETDIR}
-	[[ -n $INSTALL_MIRROR ]] && INSTALL_URL=$_http_proto://$INSTALL_MIRROR
+	if [[ -n $INSTALL_MIRROR ]]; then
+		INSTALL_URL=$_http_proto://$INSTALL_MIRROR
+	else
+		# Remove the architecture and snaphots or version part.
+		INSTALL_URL=${_url_base%/$ARCH}
+		INSTALL_URL=${INSTALL_URL%@(/$VERSION|/snapshots)}
+	fi
 }
 
 # Ask for the path to the set files on an already mounted filesystem and start
