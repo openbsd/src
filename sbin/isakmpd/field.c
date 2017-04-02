@@ -1,4 +1,4 @@
-/* $OpenBSD: field.c,v 1.21 2017/02/03 08:23:46 guenther Exp $	 */
+/* $OpenBSD: field.c,v 1.22 2017/04/02 21:23:44 tom Exp $	 */
 /* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
@@ -96,13 +96,13 @@ extract_val(u_int8_t *buf, size_t len, u_int32_t *val)
 static char *
 field_debug_num(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-	char           *retval = NULL;
+	char           *retval;
 	u_int32_t       val;
 
 	if (extract_val(buf, len, &val))
-		return 0;
-	/* 3 decimal digits are enough to represent each byte.  */
-	(void)asprintf(&retval, "%u", val);
+		return NULL;
+	if (asprintf(&retval, "%u", val) == -1)
+		return NULL;
 	return retval;
 }
 
@@ -119,13 +119,13 @@ field_debug_mask(u_int8_t *buf, size_t len, struct constant_map **maps)
 	size_t          buf_sz;
 
 	if (extract_val(buf, len, &val))
-		return 0;
+		return NULL;
 
 	/* Size for brackets, two spaces and a NUL terminator.  */
 	buf_sz = 4;
 	retval = malloc(buf_sz);
 	if (!retval)
-		return 0;
+		return NULL;
 
 	strlcpy(retval, "[ ", buf_sz);
 	for (bit = 1; bit; bit <<= 1) {
@@ -135,7 +135,7 @@ field_debug_mask(u_int8_t *buf, size_t len, struct constant_map **maps)
 			new_buf = realloc(retval, buf_sz);
 			if (!new_buf) {
 				free(retval);
-				return 0;
+				return NULL;
 			}
 			retval = new_buf;
 			strlcat(retval, name, buf_sz);
@@ -153,7 +153,7 @@ field_debug_mask(u_int8_t *buf, size_t len, struct constant_map **maps)
 static char *
 field_debug_ign(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-	return 0;
+	return NULL;
 }
 
 /*
@@ -166,7 +166,7 @@ field_debug_cst(u_int8_t *buf, size_t len, struct constant_map **maps)
 	u_int32_t       val;
 
 	if (extract_val(buf, len, &val))
-		return 0;
+		return NULL;
 
 	return strdup(constant_name_maps(maps, val));
 }
