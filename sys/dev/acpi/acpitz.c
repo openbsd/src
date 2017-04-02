@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.51 2016/05/24 04:37:39 semarie Exp $ */
+/* $OpenBSD: acpitz.c,v 1.52 2017/04/02 00:28:56 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -355,7 +355,7 @@ acpitz_refresh(void *arg)
 	    sc->sc_devnode->name);
 
 	/* get _TMP and debounce the value */
-	if (-1 == (sc->sc_tmp = acpitz_gettempreading(sc, "_TMP"))) {
+	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
 		printf("%s: %s: failed to read temp\n", DEVNAME(sc),
 		    sc->sc_devnode->name);
 		return;
