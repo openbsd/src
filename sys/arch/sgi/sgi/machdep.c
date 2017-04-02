@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.154 2017/01/06 15:37:44 fcambus Exp $ */
+/*	$OpenBSD: machdep.c,v 1.155 2017/04/02 15:48:19 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -749,7 +749,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s", version);
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 	printf("rsvd mem = %lu (%luMB)\n", ptoa((psize_t)rsvdmem),

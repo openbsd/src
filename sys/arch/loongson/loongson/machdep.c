@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2017/03/07 11:49:42 natano Exp $ */
+/*	$OpenBSD: machdep.c,v 1.75 2017/04/02 15:48:19 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -977,7 +977,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	printf("%s", version);
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 
