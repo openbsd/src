@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.29 2017/03/28 18:23:53 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.30 2017/04/02 18:06:57 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1304,24 +1304,21 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 	int idx0;
 
 	if (l1_pa == 0) {
-		// if this is called from pmap_vp_enter, this is a normally
-		// mapped page, call pmap_extract to get pa
+		/*
+		 * if this is called from pmap_vp_enter, this is a
+		 * normally mapped page, call pmap_extract to get pa
+		 */
 		pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa);
 	}
 
-	if (l1_pa & (Lx_TABLE_ALIGN-1)) {
+	if (l1_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
-	}
 
 	pg_entry = VP_Lx(l1_pa);
 
 	idx0 = VP_IDX0(va);
 	pm->pm_vp.l0->vp[idx0] = l1_va;
-
 	pm->pm_vp.l0->l0[idx0] = pg_entry;
-	__asm __volatile("dsb sy");
-
-	cpu_dcache_wb_range((vaddr_t)&pm->pm_vp.l0->l0[idx0], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX1_POS);
 }
@@ -1334,29 +1331,26 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 	int idx0, idx1;
 
 	if (l2_pa == 0) {
-		// if this is called from pmap_vp_enter, this is a normally
-		// mapped page, call pmap_extract to get pa
+		/*
+		 * if this is called from pmap_vp_enter, this is a
+		 * normally mapped page, call pmap_extract to get pa
+		 */
 		pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa);
 	}
 
-	if (l2_pa & (Lx_TABLE_ALIGN-1)) {
+	if (l2_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
-	}
 
 	pg_entry = VP_Lx(l2_pa);
 
 	idx0 = VP_IDX0(va);
 	idx1 = VP_IDX1(va);
-	if (pm->have_4_level_pt) {
+	if (pm->have_4_level_pt)
 		vp1 = pm->pm_vp.l0->vp[idx0];
-	} else {
+	else
 		vp1 = pm->pm_vp.l1;
-	}
 	vp1->vp[idx1] = l2_va;
 	vp1->l1[idx1] = pg_entry;
-
-	__asm __volatile("dsb sy");
-	cpu_dcache_wb_range((vaddr_t)&vp1->l1[idx1], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX2_POS);
 }
@@ -1370,32 +1364,28 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	int idx0, idx1, idx2;
 
 	if (l3_pa == 0) {
-		// if this is called from pmap_vp_enter, this is a normally
-		// mapped page, call pmap_extract to get pa
+		/*
+		 * if this is called from pmap_vp_enter, this is a
+		 * normally mapped page, call pmap_extract to get pa
+		 */
 		pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa);
 	}
 
-	if (l3_pa & (Lx_TABLE_ALIGN-1)) {
+	if (l3_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
-	}
 
 	pg_entry = VP_Lx(l3_pa);
 
 	idx0 = VP_IDX0(va);
 	idx1 = VP_IDX1(va);
 	idx2 = VP_IDX2(va);
-
-	if (pm->have_4_level_pt) {
+	if (pm->have_4_level_pt)
 		vp1 = pm->pm_vp.l0->vp[idx0];
-	} else {
+	else
 		vp1 = pm->pm_vp.l1;
-	}
 	vp2 = vp1->vp[idx1];
-
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
-	__asm __volatile("dsb sy");
-	cpu_dcache_wb_range((vaddr_t)&vp2->l2[idx2], 8);
 
 	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX3_POS);
 }
@@ -1577,14 +1567,16 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 	pmap_t pm = pted->pted_pmap;
 	uint64_t attr = 0;
 
-	// see mair in locore.S
+	/* see mair in locore.S */
 	switch (pted->pted_va & PMAP_CACHE_BITS) {
 	case PMAP_CACHE_WB:
-		attr |= ATTR_IDX(PTE_ATTR_WB); // inner and outer writeback
+		/* inner and outer writeback */
+		attr |= ATTR_IDX(PTE_ATTR_WB);
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	case PMAP_CACHE_WT:
-		attr |= ATTR_IDX(PTE_ATTR_WT); // inner and outer writethrough
+		 /* inner and outer writethrough */
+		attr |= ATTR_IDX(PTE_ATTR_WT);
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	case PMAP_CACHE_CI:
@@ -1599,19 +1591,14 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		panic("pmap_pte_insert: invalid cache mode");
 	}
 
-	// kernel mappings are global, so nG should not be set
-
-	if (pm == pmap_kernel()) {
+	/* kernel mappings are global, so nG should not be set */
+	if (pm == pmap_kernel())
 		access_bits = ap_bits_kern[pted->pted_pte & PROT_MASK];
-	} else {
+	else
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
-	}
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
-
 	*pl3 = pte;
-	cpu_dcache_wb_range((vaddr_t) pl3, 8);
-	__asm __volatile("dsb sy");
 }
 
 void
@@ -1624,11 +1611,10 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	struct pmapvp3 *vp3;
 	pmap_t pm = pted->pted_pmap;
 
-	if (pm->have_4_level_pt) {
+	if (pm->have_4_level_pt)
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(pted->pted_va)];
-	} else {
+	else
 		vp1 = pm->pm_vp.l1;
-	}
 	if (vp1->vp[VP_IDX1(pted->pted_va)] == NULL) {
 		panic("have a pted, but missing the l2 for %x va pmap %x",
 		    pted->pted_va, pm);
@@ -1646,9 +1632,6 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
 	if (remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
-	__asm __volatile("dsb sy");
-
-	cpu_dcache_wb_range((vaddr_t)&vp3->l3[VP_IDX3(pted->pted_va)], 8);
 
 	arm64_tlbi_asid(pted->pted_va, pm->pm_asid);
 }
