@@ -203,7 +203,7 @@ bfd_elf64_archive_write_armap (bfd *arch,
       /* For each symbol which is used defined in this object, write out
 	 the object file's address in the archive */
 
-      while (map[count].u.abfd == current)
+      while (count < symbol_count && map[count].u.abfd == current)
 	{
 	  bfd_putb64 ((bfd_vma) archive_member_file_ptr, buf);
 	  if (bfd_bwrite (buf, 8, arch) != 8)
