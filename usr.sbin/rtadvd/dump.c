@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.21 2016/08/02 17:00:09 jca Exp $	*/
+/*	$OpenBSD: dump.c,v 1.22 2017/04/02 22:57:20 deraadt Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -89,12 +89,15 @@ ether_str(struct sockaddr_dl *sdl)
 char *
 lifetime(int lt)
 {
-	char *str = NULL;
+	char *str;
 
-	if (lt == ND6_INFINITE_LIFETIME)
-		(void)asprintf(&str, "infinity");
-	else
-		(void)asprintf(&str, "%ld", (long)lt);
+	if (lt == ND6_INFINITE_LIFETIME) {
+		if (asprintf(&str, "infinity") < 0)
+			return (NULL);
+	} else {
+		if (asprintf(&str, "%ld", (long)lt) < 0)
+			return (NULL);
+	}
 	return str;
 }
 
