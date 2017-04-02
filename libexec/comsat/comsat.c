@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.45 2016/04/02 16:33:28 millert Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.46 2017/04/02 00:53:37 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
-	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) == -1) {
+	if ((uf = open(_PATH_UTMP, O_RDONLY)) == -1) {
 		syslog(LOG_ERR, "open: %s: %m", _PATH_UTMP);
 		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
@@ -194,8 +194,7 @@ doreadutmp(void)
 			utmp = u;
 			utmpsize = nutmpsize;
 		}
-		(void)lseek(uf, 0, SEEK_SET);
-		nutmp = read(uf, utmp, statbf.st_size)/sizeof(struct utmp);
+		nutmp = pread(uf, utmp, statbf.st_size, 0)/sizeof(struct utmp);
 		dsyslog(LOG_DEBUG, "read %d utmp entries", nutmp);
 	}
 	(void)alarm(15);
