@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.145 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.146 2017/04/02 12:56:39 jca Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -826,15 +826,14 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 int
 tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 {
+	uint64_t counters[tcps_ncounters];
 	struct tcpstat tcpstat;
-	struct counters_ref cr;
-	uint64_t *counters;
 	struct syn_cache_set *set;
 	int i = 0;
 
 #define ASSIGN(field)	do { tcpstat.field = counters[i++]; } while (0)
 
-	counters = counters_enter(&cr, tcpcounters);
+	counters_read(tcpcounters, counters, nitems(counters));
 	ASSIGN(tcps_connattempt);
 	ASSIGN(tcps_accepts);
 	ASSIGN(tcps_connects);
@@ -932,7 +931,6 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 	ASSIGN(tcps_sack_rexmit_bytes);
 	ASSIGN(tcps_sack_rcv_opts);
 	ASSIGN(tcps_sack_snd_opts);
-	counters_leave(&cr, tcpcounters);
 
 #undef ASSIGN
 
