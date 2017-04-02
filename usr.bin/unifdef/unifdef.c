@@ -56,7 +56,7 @@
 
 static const char copyright[] =
     #include "version.h"
-    "@(#) $Author: mmcc $\n"
+    "@(#) $Author: deraadt $\n"
     "@(#) $URL: http://dotat.at/prog/unifdef $\n"
 ;
 
@@ -1530,17 +1530,9 @@ static char *
 astrcat(const char *s1, const char *s2)
 {
 	char *s;
-	int len;
-	size_t size;
 
-	len = snprintf(NULL, 0, "%s%s", s1, s2);
-	if (len < 0)
-		err(2, "snprintf");
-	size = (size_t)len + 1;
-	s = (char *)malloc(size);
-	if (s == NULL)
-		err(2, "malloc");
-	snprintf(s, size, "%s%s", s1, s2);
+	if (asprintf(&s, "%s%s", s1, s2) < 0)
+		err(2, "asprintf");
 	return (s);
 }
 
