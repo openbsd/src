@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.57 2016/09/06 13:41:29 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.58 2017/04/02 03:51:13 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -81,6 +81,9 @@ LEAF(cpu_idle_leave, 0)
 END(cpu_idle_leave)
 
 LEAF(cpu_idle_cycle, 0)
+#ifdef CPU_OCTEON
+	wait
+#endif
 	j	ra
 	 NOP
 END(cpu_idle_cycle)
