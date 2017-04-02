@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.181 2017/03/17 17:19:16 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.182 2017/04/02 23:40:08 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1015,10 +1015,10 @@ soshutdown(struct socket *so, int how)
 	s = solock(so);
 	switch (how) {
 	case SHUT_RD:
+		sorflush(so);
+		break;
 	case SHUT_RDWR:
 		sorflush(so);
-		if (how == SHUT_RD)
-			break;
 		/* FALLTHROUGH */
 	case SHUT_WR:
 		error = (*pr->pr_usrreq)(so, PRU_SHUTDOWN, NULL, NULL, NULL,
