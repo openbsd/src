@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.44 2017/04/02 20:57:22 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.45 2017/04/03 14:16:34 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -138,7 +138,7 @@ parse_string(FILE *cfile)
 
 	token = next_token(&val, cfile);
 	if (token != TOK_STRING) {
-		parse_warn("expecting a string");
+		parse_warn("expecting string.");
 		if (token != ';')
 			skip_to_semi(cfile);
 		return (NULL);
@@ -177,7 +177,7 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 	}
 
 	if (!len) {
-		parse_warn("expecting CIDR subnet.");
+		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
 		return (0);
 	} else if (token != '/') {
@@ -185,7 +185,7 @@ parse_cidr(FILE *cfile, unsigned char *cidr)
 		skip_to_semi(cfile);
 		return (0);
 	} else if (!parse_decimal(cfile, cidr, 'B') || *cidr > 32) {
-		parse_warn("Expecting CIDR prefix length.");
+		parse_warn("expecting decimal value <= 32.");
 		skip_to_semi(cfile);
 		return (0);
 	}
@@ -216,7 +216,7 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
 		skip_to_semi(cfile);
 		return (0);
 	} else {
-		parse_warn("expecting decimal octet.");
+		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
 		return (0);
 	}
@@ -254,7 +254,7 @@ parse_ethernet(FILE *cfile, struct ether_addr *hardware)
 		parse_warn("expecting ':'.");
 		skip_to_semi(cfile);
 	} else {
-		parse_warn("expecting hex octet.");
+		parse_warn("expecting hex value.");
 		skip_to_semi(cfile);
 	}
 }
