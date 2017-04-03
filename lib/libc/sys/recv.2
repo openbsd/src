@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.43 2015/02/16 16:20:15 tedu Exp $
+.\"	$OpenBSD: recv.2,v 1.44 2017/04/03 19:42:04 otto Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: February 16 2015 $
+.Dd $Mdocdate: April 3 2017 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -364,3 +364,15 @@ The
 .Fn recv
 function call appeared in
 .Bx 4.2 .
+.Sh CAVEATS
+Calling
+.Fn recvmsg
+with a control message having no or an empty scatter/gather array
+exposes variations in implementations.
+To avoid these, always use an 
+.Fa iovec
+with at least a one byte buffer and set
+.Fa msg_iov
+and an
+.Fa msg_iovlen
+to use this vector.
