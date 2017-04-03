@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.45 2016/09/01 09:50:38 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.46 2017/04/03 20:59:19 fcambus Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ die_you_gravy_sucking_pig_dog(void)
 		*arg++ = NULL;
 		execve(path, args, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", path);
-		warn(path);
+		warn("%s", path);
 	}
 	if (access(_PATH_RC, R_OK) != -1) {
 		pid_t pid;
