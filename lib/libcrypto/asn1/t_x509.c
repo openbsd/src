@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: t_x509.c,v 1.28 2017/04/03 15:52:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -398,7 +398,7 @@ ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	int gmt = 0;
 	int i;
 	int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
-	char *f = NULL;
+	char *f = "";
 	int f_len = 0;
 
 	i = tm->length;
