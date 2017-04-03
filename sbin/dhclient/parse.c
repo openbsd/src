@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.45 2017/04/03 14:16:34 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.46 2017/04/03 15:34:46 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -127,9 +127,6 @@ parse_semi(FILE *cfile)
 	return (1);
 }
 
-/*
- * string-parameter :== STRING SEMI
- */
 char *
 parse_string(FILE *cfile)
 {
@@ -147,10 +144,6 @@ parse_string(FILE *cfile)
 	if (!s)
 		fatalx("no memory for string %s.", val);
 
-	if (!parse_semi(cfile)) {
-		free(s);
-		return (NULL);
-	}
 	return (s);
 }
 

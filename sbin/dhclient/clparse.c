@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.106 2017/04/03 14:16:34 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.107 2017/04/03 15:34:46 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -281,11 +281,13 @@ parse_client_statement(FILE *cfile, struct interface_info *ifi)
 		string = parse_string(cfile);
 		free(config->filename);
 		config->filename = string;
+		parse_semi(cfile);
 		break;
 	case TOK_SERVER_NAME:
 		string = parse_string(cfile);
 		free(config->server_name);
 		config->server_name = string;
+		parse_semi(cfile);
 		break;
 	case TOK_FIXED_ADDR:
 		if (parse_ip_addr(cfile, &config->address))
@@ -585,16 +587,16 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		return;
 	case TOK_FILENAME:
 		lease->filename = parse_string(cfile);
-		return;
+		break;
 	case TOK_SERVER_NAME:
 		lease->server_name = parse_string(cfile);
-		return;
+		break;
 	case TOK_SSID:
 		val = parse_string(cfile);
 		if (val)
 			strlcpy(lease->ssid, val, sizeof(lease->ssid));
 		free(val);
-		return;
+		break;
 	case TOK_RENEW:
 		lease->renewal = parse_date(cfile);
 		return;
@@ -666,13 +668,9 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				hunkix += len;
 				break;
 			case 't': /* Text string. */
-				token = next_token(&val, cfile);
-				if (token != TOK_STRING) {
-					parse_warn("expecting string.");
-					if (token != ';')
-						skip_to_semi(cfile);
+				val = parse_string(cfile);
+				if (val == NULL)
 					return (-1);
-				}
 				len = strlen(val);
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
@@ -683,6 +681,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				memcpy(&hunkbuf[hunkix], val, len + 1);
 				nul_term = 1;
 				hunkix += len;
+				free(val);
 				break;
 			case 'I': /* IP address. */
 				if (!parse_ip_addr(cfile, &ip_addr))
