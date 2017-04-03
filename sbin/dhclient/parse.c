@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.46 2017/04/03 15:34:46 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.47 2017/04/03 18:23:36 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -57,6 +57,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "dhcp.h"
 #include "dhcpd.h"
@@ -130,8 +131,9 @@ parse_semi(FILE *cfile)
 char *
 parse_string(FILE *cfile)
 {
+	static char unvisbuf[1500];
 	char *val, *s;
-	int token;
+	int i, token;
 
 	token = next_token(&val, cfile);
 	if (token != TOK_STRING) {
@@ -140,9 +142,16 @@ parse_string(FILE *cfile)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	s = strdup(val);
+
+	i = strnunvis(unvisbuf, val, sizeof(unvisbuf));
+	if (i == -1) {
+		parse_warn("could not unvis string");
+		return (NULL);
+	}
+	s = malloc(i+1);
 	if (!s)
 		fatalx("no memory for string %s.", val);
+	memcpy(s, unvisbuf, i+1);	/* copy terminating NUL */
 
 	return (s);
 }
