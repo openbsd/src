@@ -1,7 +1,7 @@
-.\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
+.\"	$OpenBSD: CMSG_DATA.3,v 1.6 2017/04/03 19:40:43 otto Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
-.Dd $Mdocdate: March 24 2008 $
+.Dd $Mdocdate: April 3 2017 $
 .Dt CMSG_DATA 3
 .Os
 .Sh NAME
@@ -95,10 +95,16 @@ union {
 	struct cmsghdr hdr;
 	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
 } cmsgbuf;
+struct iovec io_vector[1];
+
+io_vector[0].iov_base = &ch;
+io_vector[0].iov_len = 1;
 
 memset(&msg, 0, sizeof(msg));
 msg.msg_control = &cmsgbuf.buf;
 msg.msg_controllen = sizeof(cmsgbuf.buf);
+msg.msg_iov = io_vector;
+msg.msg_iovlen = 1;
 
 cmsg = CMSG_FIRSTHDR(&msg);
 cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -118,10 +124,16 @@ union {
 	struct cmsghdr hdr;
 	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
 } cmsgbuf;
+struct iovec io_vector[1];
+
+io_vector[0].iov_base = &ch;
+io_vector[0].iov_len = 1;
 
 memset(&msg, 0, sizeof(msg));
 msg.msg_control = &cmsgbuf.buf;
 msg.msg_controllen = sizeof(cmsgbuf.buf);
+msg.msg_iov = io_vector;
+msg.msg_iovlen = 1;
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");
