@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.47 2017/04/03 17:07:58 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.48 2017/04/03 17:23:39 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -170,6 +170,7 @@ doreadutmp(void)
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static time_t utmpmtime;	/* last modification time for utmp */
 	struct stat statbf;
+	int n;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
@@ -195,7 +196,10 @@ doreadutmp(void)
 			utmp = u;
 			utmpsize = nutmpsize;
 		}
-		nutmp = pread(uf, utmp, statbf.st_size, 0)/sizeof(struct utmp);
+		n = pread(uf, utmp, statbf.st_size, 0);
+		if (n == -1)
+			n = 0;
+		nutmp = n / sizeof(struct utmp);
 		dsyslog(LOG_DEBUG, "read %d utmp entries", nutmp);
 	}
 	(void)alarm(15);
