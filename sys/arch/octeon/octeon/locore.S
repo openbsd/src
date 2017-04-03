@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2016/08/14 08:23:52 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.11 2017/04/03 13:51:54 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -75,11 +75,12 @@ start:
 	nop
 #if defined(MULTIPROCESSOR)
 	rdhwr   t2, $0
-1:	ll	t0, cpu_spinup_mask
+	LA	t1, cpu_spinup_mask
+1:	ll	t0, 0(t1)
 	bne	t2, t0, 1b
 	nop
 	move	t0, zero
-	sc	t0, cpu_spinup_mask
+	sc	t0, 0(t1)
 	beqz	t0, 1b
 	nop
 	j	hw_cpu_spinup_trampoline
