@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.107 2017/04/03 15:34:46 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.108 2017/04/03 19:59:39 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -278,13 +278,13 @@ parse_client_statement(FILE *cfile, struct interface_info *ifi)
 		parse_reject_statement(cfile);
 		break;
 	case TOK_FILENAME:
-		string = parse_string(cfile);
+		string = parse_string(cfile, NULL);
 		free(config->filename);
 		config->filename = string;
 		parse_semi(cfile);
 		break;
 	case TOK_SERVER_NAME:
-		string = parse_string(cfile);
+		string = parse_string(cfile, NULL);
 		free(config->server_name);
 		config->server_name = string;
 		parse_semi(cfile);
@@ -551,7 +551,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
     struct interface_info *ifi)
 {
 	char *val;
-	int token;
+	int len, token;
 
 	token = next_token(&val, cfile);
 
@@ -586,15 +586,17 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		skip_to_semi(cfile);
 		return;
 	case TOK_FILENAME:
-		lease->filename = parse_string(cfile);
+		lease->filename = parse_string(cfile, NULL);
 		break;
 	case TOK_SERVER_NAME:
-		lease->server_name = parse_string(cfile);
+		lease->server_name = parse_string(cfile, NULL);
 		break;
 	case TOK_SSID:
-		val = parse_string(cfile);
-		if (val)
-			strlcpy(lease->ssid, val, sizeof(lease->ssid));
+		val = parse_string(cfile, &len);
+		if (val && len <= sizeof(lease->ssid)) {
+			memset(lease->ssid, 0, sizeof(lease->ssid));
+			memcpy(lease->ssid, val, len);
+		}
 		free(val);
 		break;
 	case TOK_RENEW:
@@ -668,10 +670,9 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				hunkix += len;
 				break;
 			case 't': /* Text string. */
-				val = parse_string(cfile);
+				val = parse_string(cfile, &len);
 				if (val == NULL)
 					return (-1);
-				len = strlen(val);
 				if (hunkix + len + 1 > sizeof(hunkbuf)) {
 					parse_warn("option data buffer "
 					    "overflow");
