@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.405 2017/03/08 20:54:30 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.406 2017/04/04 13:01:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -526,6 +526,7 @@ main(int argc, char *argv[])
 	if (ioctl(sock, SIOCG80211NWID, (caddr_t)&ifr) == 0) {
 		memset(ifi->ssid, 0, sizeof(ifi->ssid));
 		memcpy(ifi->ssid, nwid.i_nwid, nwid.i_len);
+		ifi->ssid_len = nwid.i_len;
 	}
 
 	/* Put us into the correct rdomain */
@@ -775,7 +776,9 @@ state_reboot(void *xifi)
 	/* Run through the list of leases and see if one can be used. */
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
 	TAILQ_FOREACH(lp, &client->leases, next) {
-		if (strcmp(lp->ssid, ifi->ssid) != 0)
+		if (lp->ssid_len != ifi->ssid_len)
+			continue;
+		if (memcmp(lp->ssid, ifi->ssid, lp->ssid_len) != 0)
 			continue;
 		if ((lp->options[i].len != 0) && ((lp->options[i].len !=
 		    config->send_options[i].len) ||
@@ -957,6 +960,7 @@ dhcpack(struct interface_info *ifi, struct in_addr client_addr,
 
 	client->new = lease;
 	memcpy(client->new->ssid, ifi->ssid, sizeof(client->new->ssid));
+	client->new->ssid_len = ifi->ssid_len;
 
 	/* Stop resending DHCPREQUEST. */
 	cancel_timeout();
@@ -1086,8 +1090,12 @@ newlease:
 	TAILQ_FOREACH_SAFE(lease, &client->leases, next, pl) {
 		if (lease->is_static)
 			break;
-		if (client->active && strcmp(client->active->ssid,
-		    lease->ssid) != 0)
+		if (client->active == NULL)
+		       continue;
+		if (client->active->ssid_len != lease->ssid_len)
+			continue;
+		if (memcmp(client->active->ssid, lease->ssid, lease->ssid_len)
+		    != 0)
 			continue;
 		if (client->active == lease)
 			seen = 1;
@@ -1489,7 +1497,9 @@ state_panic(void *xifi)
 	/* Run through the list of leases and see if one can be used. */
 	time(&cur_time);
 	TAILQ_FOREACH(lp, &client->leases, next) {
-		if (strcmp(lp->ssid, ifi->ssid) != 0)
+		if (lp->ssid_len != ifi->ssid_len)
+			continue;
+		if (memcmp(lp->ssid, ifi->ssid, lp->ssid_len) != 0)
 			continue;
 		if (addressinuse(ifi, lp->address, ifname) &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
@@ -1999,14 +2009,14 @@ lease_as_string(struct interface_info *ifi, char *type,
 		p += rslt;
 		sz -= rslt;
 	}
-	if (strlen(lease->ssid)) {
+	if (lease->ssid_len != 0) {
 		rslt = snprintf(p, sz, "  ssid ");
 		if (rslt == -1 || rslt >= sz)
 			return (NULL);
 		p += rslt;
 		sz -= rslt;
 		rslt = pretty_print_string(p, sz, lease->ssid,
-		    strlen(lease->ssid), 1);
+		    lease->ssid_len, 1);
 		if (rslt == -1 || rslt >= sz)
 			return (NULL);
 		p += rslt;
@@ -2463,6 +2473,7 @@ clone_lease(struct client_lease *oldlease)
 	newlease->address = oldlease->address;
 	newlease->next_server = oldlease->next_server;
 	memcpy(newlease->ssid, oldlease->ssid, sizeof(newlease->ssid));
+	newlease->ssid_len = oldlease->ssid_len;
 
 	if (oldlease->server_name) {
 		newlease->server_name = strdup(oldlease->server_name);

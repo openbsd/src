@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.108 2017/04/03 19:59:39 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.109 2017/04/04 13:01:20 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -505,7 +505,9 @@ parse_client_lease_statement(FILE *cfile, int is_static,
 	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
 		if (lp->is_static != is_static)
 			continue;
-		if (strcmp(lp->ssid, ifi->ssid) != 0)
+		if (lp->ssid_len != lease->ssid_len)
+			continue;
+		if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
 			continue;
 		if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
 		    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
@@ -596,6 +598,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		if (val && len <= sizeof(lease->ssid)) {
 			memset(lease->ssid, 0, sizeof(lease->ssid));
 			memcpy(lease->ssid, val, len);
+			lease->ssid_len = len;
 		}
 		free(val);
 		break;

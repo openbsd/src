@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.162 2017/04/03 19:59:39 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.163 2017/04/04 13:01:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -69,7 +69,8 @@ struct client_lease {
 	char			*server_name;
 	char			*filename;
 	char			*resolv_conf;
-	char			 ssid[33];
+	char			 ssid[32];
+	uint8_t			 ssid_len;
 	unsigned int		 is_static;
 	unsigned int		 is_bootp;
 	unsigned int		 is_invalid;
@@ -144,7 +145,8 @@ struct client_state {
 struct interface_info {
 	struct ether_addr	hw_address;
 	char		 name[IFNAMSIZ];
-	char		 ssid[33];
+	char		 ssid[32];
+	uint8_t		 ssid_len;
 	struct client_state	*client;
 	int		 bfdesc; /* bpf - reading & broadcast writing*/
 	int		 ufdesc; /* udp - unicast writing */
