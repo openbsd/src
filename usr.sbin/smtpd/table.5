@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.6 2017/02/06 06:27:01 tb Exp $
+.\"	$OpenBSD: table.5,v 1.7 2017/04/04 14:33:44 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 6 2017 $
+.Dd $Mdocdate: April 4 2017 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -41,7 +41,10 @@ table mymapping { key1 = value1, key2 = value2, key3 = value3 }
 .Pp
 When using a
 .Ql file
-table, a list will be written with each value on a line by itself:
+table, a list will be written with each value on a line by itself.
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
 .Bd -literal -offset indent
 value1
 value2
