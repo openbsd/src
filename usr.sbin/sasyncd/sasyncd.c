@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.24 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.25 2017/04/04 14:04:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 	if (conf_parse_file(cfgfile) == 0 ) {
 		if (!cfgstate.sharedkey) {
 			fprintf(stderr, "config: "
-			    "no shared key specified, cannot continue");
+			    "no shared key specified, cannot continue\n");
 			exit(1);
 		}
 	} else {
