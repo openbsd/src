@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.166 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.167 2017/04/04 00:40:52 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -787,6 +787,9 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 			    le32toh(((uint32_t *)tlv_data)[0]),
 			    le32toh(((uint32_t *)tlv_data)[1]),
 			    le32toh(((uint32_t *)tlv_data)[2]));
+			break;
+
+		case IWM_UCODE_TLV_FW_MEM_SEG:
 			break;
 
 		default:
@@ -6673,6 +6676,13 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 		}
 
+		/*
+		 * Firmware versions 21 and 22 generate some DEBUG_LOG_MSG
+		 * messages. Just ignore them for now.
+		 */
+		case IWM_DEBUG_LOG_MSG:
+			break;
+
 		case IWM_MCAST_FILTER_CMD:
 			break;
 
@@ -6858,12 +6868,14 @@ static const struct pci_matchid iwm_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3168_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8265_1 },
 };
 
 int
@@ -7029,6 +7041,12 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 		break;
+	case PCI_PRODUCT_INTEL_WL_3168_1:
+		sc->sc_fwname = "iwm-3168-22";
+		sc->host_interrupt_operation_mode = 0;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_7000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
+		break;
 	case PCI_PRODUCT_INTEL_WL_7260_1:
 	case PCI_PRODUCT_INTEL_WL_7260_2:
 		sc->sc_fwname = "iwm-7260-16";
@@ -7046,6 +7064,12 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_8260_1:
 	case PCI_PRODUCT_INTEL_WL_8260_2:
 		sc->sc_fwname = "iwm-8000C-16";
+		sc->host_interrupt_operation_mode = 0;
+		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
+		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;
+		break;
+	case PCI_PRODUCT_INTEL_WL_8265_1:
+		sc->sc_fwname = "iwm-8265-22";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_8000;
 		sc->sc_fwdmasegsz = IWM_FWDMASEGSZ_8000;

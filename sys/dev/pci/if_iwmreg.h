@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.24 2017/01/31 10:17:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.25 2017/04/04 00:40:52 claudio Exp $	*/
 
 /******************************************************************************
  *
@@ -906,6 +906,7 @@ struct iwm_ucode_header {
 #define IWM_UCODE_TLV_FW_DBG_CONF	39
 #define IWM_UCODE_TLV_FW_DBG_TRIGGER	40
 #define IWM_UCODE_TLV_FW_GSCAN_CAPA	50
+#define IWM_UCODE_TLV_FW_MEM_SEG	51
 
 struct iwm_ucode_tlv {
 	uint32_t type;		/* see above */
