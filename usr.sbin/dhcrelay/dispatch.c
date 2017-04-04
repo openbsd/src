@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.20 2017/03/15 14:31:49 rzalamena Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.21 2017/04/04 15:52:12 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -342,7 +342,7 @@ void
 got_one(struct protocol *l)
 {
 	struct packet_ctx pc;
-	size_t result;
+	ssize_t result;
 	union {
 		/*
 		 * Packet input buffer.  Must be as large as largest
