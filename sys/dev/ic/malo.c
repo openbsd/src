@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.113 2017/01/22 10:17:38 dlg Exp $ */
+/*	$OpenBSD: malo.c,v 1.114 2017/04/04 04:38:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1748,11 +1748,11 @@ malo_load_bootimg(struct malo_softc *sc)
 {
 	char *name = "malo8335-h";
 	uint8_t	*ucode;
-	size_t size;
+	size_t usize;
 	int error, i;
 
 	/* load boot firmware */
-	if ((error = loadfirmware(name, &ucode, &size)) != 0) {
+	if ((error = loadfirmware(name, &ucode, &usize)) != 0) {
 		printf("%s: error %d, could not read firmware %s\n",
 		    sc->sc_dev.dv_xname, error, name);
 		return (EIO);
@@ -1765,11 +1765,11 @@ malo_load_bootimg(struct malo_softc *sc)
 	 */
 	DPRINTF(1, "%s: loading boot firmware\n", sc->sc_dev.dv_xname);
 	malo_mem_write2(sc, 0xbef8, 0x001);
-	malo_mem_write2(sc, 0xbefa, size);
+	malo_mem_write2(sc, 0xbefa, usize);
 	malo_mem_write4(sc, 0xbefc, 0);
 
 	bus_space_write_region_1(sc->sc_mem1_bt, sc->sc_mem1_bh, 0xbf00,
-	    ucode, size);
+	    ucode, usize);
 
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
@@ -1788,10 +1788,10 @@ malo_load_bootimg(struct malo_softc *sc)
 	if (i == 10) {
 		printf("%s: timeout at boot firmware load!\n",
 		    sc->sc_dev.dv_xname);
-		free(ucode, M_DEVBUF, size);
+		free(ucode, M_DEVBUF, usize);
 		return (ETIMEDOUT);
 	}
-	free(ucode, M_DEVBUF, size);
+	free(ucode, M_DEVBUF, usize);
 
 	/* tell the card we're done and... */
 	malo_mem_write2(sc, 0xbef8, 0x001);
@@ -1843,7 +1843,7 @@ malo_load_firmware(struct malo_softc *sc)
 		    BUS_DMASYNC_POSTWRITE);
 		delay(500);
 	}
-	free(ucode, M_DEVBUF, 0);
+	free(ucode, M_DEVBUF, size);
 
 	DPRINTF(1, "%s: firmware upload finished\n", sc->sc_dev.dv_xname);
 
