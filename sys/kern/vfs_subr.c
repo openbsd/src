@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.257 2017/01/15 23:18:05 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.258 2017/04/04 18:17:02 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1311,7 +1311,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EOPNOTSUPP);
 
 		/* Make a copy, clear out kernel pointers */
-		tmpvfsp = malloc(sizeof(*tmpvfsp), M_TEMP, M_WAITOK);
+		tmpvfsp = malloc(sizeof(*tmpvfsp), M_TEMP, M_WAITOK|M_ZERO);
 		memcpy(tmpvfsp, vfsp, sizeof(*tmpvfsp));
 		tmpvfsp->vfc_vfsops = NULL;
 		tmpvfsp->vfc_next = NULL;
