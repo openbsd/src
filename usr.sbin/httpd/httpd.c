@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.65 2017/03/25 17:25:34 claudio Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.66 2017/04/04 20:16:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -322,7 +322,7 @@ parent_configure(struct httpd *env)
 
 	ret = 0;
 
-	config_purge(env, CONFIG_ALL);
+	config_purge(env, CONFIG_ALL & ~CONFIG_SERVERS);
 	return (ret);
 }
 
