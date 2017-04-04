@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.21 2017/03/16 09:17:20 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.22 2017/04/04 15:50:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -56,9 +56,9 @@ struct packet_ctx {
 	struct sockaddr_storage		 pc_src;
 	struct sockaddr_storage		 pc_dst;
 
-	u_int8_t			*pc_circuit;
+	const char 			*pc_circuit;
 	int				 pc_circuitlen;
-	u_int8_t			*pc_remote;
+	const char			*pc_remote;
 	int				 pc_remotelen;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.61 2017/03/16 09:17:20 rzalamena Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.62 2017/04/04 15:50:29 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -567,7 +567,7 @@ relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf,
 		return;
 
 	if (rai_remote != NULL) {
-		pc->pc_remote = (u_int8_t *)rai_remote;
+		pc->pc_remote = rai_remote;
 		pc->pc_remotelen = strlen(rai_remote);
 	} else
 		pc->pc_remotelen = 0;
@@ -590,7 +590,7 @@ relay_agentinfo(struct packet_ctx *pc, struct interface_info *intf,
 			    sizeof(sin->sin_addr);
 		}
 	} else {
-		pc->pc_circuit = (u_int8_t *)rai_circuit;
+		pc->pc_circuit = rai_circuit;
 		pc->pc_circuitlen = strlen(rai_circuit);
 	}
 }
