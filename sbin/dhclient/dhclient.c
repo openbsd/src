@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.406 2017/04/04 13:01:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.407 2017/04/04 15:15:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -169,6 +169,7 @@ struct client_lease *packet_to_lease(struct interface_info *, struct in_addr,
     struct option_data *);
 void go_daemon(void);
 int rdaemon(int);
+void	take_charge(struct interface_info *);
 
 #define	ROUNDUP(a) \
 	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -261,6 +262,22 @@ routehandler(struct interface_info *ifi)
 		goto done;
 
 	switch (rtm->rtm_type) {
+	case RTM_PROPOSAL:
+		if (rtm->rtm_index != ifi->index ||
+		    rtm->rtm_priority != RTP_PROPOSAL_DHCLIENT)
+			goto done;
+		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
+			if (rtm->rtm_seq == client->xid) {
+				client->flags |= IN_CHARGE;
+				goto done;
+			} else if ((client->flags & IN_CHARGE) != 0) {
+				rslt = asprintf(&errmsg, "yielding "
+				    "responsibility for %s",
+				    ifi->name);
+				goto die;
+			}
+		}
+		break;
 	case RTM_NEWADDR:
 		ifam = (struct ifa_msghdr *)rtm;
 		if (ifam->ifam_index != ifi->index)
@@ -641,8 +658,9 @@ main(int argc, char *argv[])
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		fatal("socket(PF_ROUTE, SOCK_RAW)");
 
-	rtfilter = ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
-	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
+	rtfilter = ROUTE_FILTER(RTM_PROPOSAL) | ROUTE_FILTER(RTM_NEWADDR) |
+	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_IFINFO) |
+	    ROUTE_FILTER(RTM_IFANNOUNCE);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
@@ -650,6 +668,8 @@ main(int argc, char *argv[])
 	if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER, &ifi->rdomain,
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
+
+	take_charge(ifi);
 
 	/* Register the interface. */
 	if_register_receive(ifi);
@@ -2957,4 +2977,59 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 	}
 
 	return (0);
+}
+
+void
+take_charge(struct interface_info *ifi)
+{
+	struct	pollfd fds[1];
+	struct	rt_msghdr rtm;
+	time_t	start_time, cur_time;
+	int	retries;
+
+	if (time(&start_time) == -1)
+		fatal("time");
+
+	/*
+	 * Send RTM_PROPOSAL with RTF_PROTO3 set.
+	 *
+	 * When it comes back, we're in charge and other dhclients are
+	 * dead processes walking.
+	 */
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = ifi->rdomain;
+	rtm.rtm_index = ifi->index;
+	rtm.rtm_seq = ifi->client->xid = arc4random();
+	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
+	rtm.rtm_addrs = 0;
+	rtm.rtm_flags = RTF_UP | RTF_PROTO3;
+
+	retries = 0;
+	while ((ifi->client->flags & IN_CHARGE) == 0) {
+		if (write(routefd, &rtm, sizeof(rtm)) == -1)
+			fatal("tried to take charge");
+		time(&cur_time);
+		if ((cur_time - start_time) > 3) {
+			if (++retries <= 3) {
+				if (time(&start_time) == -1)
+					fatal("time");
+			} else {
+				fatalx("failed to take charge of %s",
+				    ifi->name);
+			}
+		}
+		fds[0].fd = routefd;
+		fds[0].events = POLLIN;
+		if (poll(fds, 1, 3) == -1) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
+			fatal("routefd poll");
+		}
+		if ((fds[0].revents & (POLLIN | POLLHUP)))
+			routehandler(ifi);
+	}
 }

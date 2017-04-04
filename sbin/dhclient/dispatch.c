@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.117 2017/03/08 15:46:36 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.118 2017/04/04 15:15:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -233,21 +233,17 @@ interface_link_forceup(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_warn("interface_link_forceup: SIOCGIFFLAGS failed");
+		log_warn("SIOCGIFFLAGS");
 		return;
 	}
 
-	/* Force it down and up so others notice link state change. */
-	ifr.ifr_flags &= ~IFF_UP;
-	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_warn("interface_link_forceup: SIOCSIFFLAGS DOWN failed");
-		return;
-	}
-
-	ifr.ifr_flags |= IFF_UP;
-	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
-		log_warn("interface_link_forceup: SIOCSIFFLAGS UP failed");
-		return;
+	/* Force it up if it isn't already. */
+	if ((ifr.ifr_flags & IFF_UP) == 0) {
+		ifr.ifr_flags |= IFF_UP;
+		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+			log_warn("SIOCSIFFLAGS");
+			return;
+		}
 	}
 }
 
