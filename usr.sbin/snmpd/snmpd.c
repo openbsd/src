@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.35 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.36 2017/04/04 02:37:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -375,16 +375,19 @@ snmpd_engine_time(void)
 }
 
 char *
-tohexstr(u_int8_t *str, int len)
+tohexstr(u_int8_t *bstr, int len)
 {
 #define MAXHEXSTRLEN		256
 	static char hstr[2 * MAXHEXSTRLEN + 1];
-	char *r = hstr;
+	static const char hex[] = "0123456789abcdef";
+	int i;
 
 	if (len > MAXHEXSTRLEN)
 		len = MAXHEXSTRLEN;	/* truncate */
-	while (len-- > 0)
-		r += snprintf(r, len * 2, "%0*x", 2, *str++);
-	*r = '\0';
+	for (i = 0; i < len; i++) {
+		hstr[i + i] = hex[bstr[i] >> 4];
+		hstr[i + i + 1] = hex[bstr[i] & 0x0f];
+	}
+	hstr[i + i] = '\0';
 	return hstr;
 }
