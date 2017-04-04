@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2015/08/29 17:22:41 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2017/04/04 00:03:12 deraadt Exp $
 
 KERNELS += GENERIC.MP bsd.mp
 
 KERNELS += GENERIC.MP bsd.mp
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
-	cp ${DESTDIR}/usr/mdec/bootxx ${RELEASEDIR}
-	cp ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}
-	cp ${DESTDIR}/usr/mdec/netboot.mop ${RELEASEDIR}
+	cp -p ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
+	cp -p ${DESTDIR}/usr/mdec/bootxx ${RELEASEDIR}
+	cp -p ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}
+	cp -p ${DESTDIR}/usr/mdec/netboot.mop ${RELEASEDIR}
 
 MDEXT=	bsd.rd cd${OSrev}.iso \
 	miniroot${OSrev}.fs \

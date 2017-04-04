@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2016/05/29 07:38:01 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2017/04/04 00:03:12 deraadt Exp $
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/BOOTARM.EFI ${RELEASEDIR}
+	cp -p ${DESTDIR}/usr/mdec/BOOTARM.EFI ${RELEASEDIR}
 
 MDEXT=	bsd.rd BOOTARM.EFI \
 	miniroot-am335x-${OSrev}.fs miniroot-beagle-${OSrev}.fs \

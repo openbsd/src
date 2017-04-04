@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2011/07/22 09:30:54 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2017/04/04 00:03:12 deraadt Exp $
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}/boot
-	cp ${DESTDIR}/usr/mdec/boot.elf ${RELEASEDIR}/boot.elf
+	cp -p ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}/boot
+	cp -p ${DESTDIR}/usr/mdec/boot.elf ${RELEASEDIR}/boot.elf
 
 MDEXT=	bsd.bin bsd.rd boot boot.elf miniroot${OSrev}.fs
