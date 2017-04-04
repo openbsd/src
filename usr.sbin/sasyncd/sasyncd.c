@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.25 2017/04/04 14:04:54 reyk Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.26 2017/04/04 22:37:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -135,7 +135,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dv] [-c config-file]\n", __progname);
+	fprintf(stderr, "usage: %s [-dnv] [-c config-file]\n", __progname);
 	exit(1);
 }
 
@@ -144,7 +144,7 @@ main(int argc, char **argv)
 {
 	extern char	*__progname;
 	char		*cfgfile = 0;
-	int		 ch;
+	int		 ch, noaction = 0;
 
 	if (geteuid() != 0) {
 		/* No point in continuing. */
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	while ((ch = getopt(argc, argv, "c:dv")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dnv")) != -1) {
 		switch (ch) {
 		case 'c':
 			if (cfgfile)
@@ -162,6 +162,9 @@ main(int argc, char **argv)
 			break;
 		case 'd':
 			cfgstate.debug++;
+			break;
+		case 'n':
+			noaction = 1;
 			break;
 		case 'v':
 			cfgstate.verboselevel++;
@@ -196,6 +199,11 @@ main(int argc, char **argv)
 		}
 	} else {
 		exit(1);
+	}
+
+	if (noaction) {
+		fprintf(stderr, "configuration OK\n");
+		exit(0);
 	}
 
 	carp_demote(CARP_INC, 0);
