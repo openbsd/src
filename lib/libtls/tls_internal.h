@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.54 2017/04/05 03:13:53 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.55 2017/04/05 03:19:22 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -110,6 +110,9 @@ struct tls_conninfo {
 	char *issuer;
 	char *subject;
 
+	u_int8_t *peer_cert;
+	size_t peer_cert_len;
+
 	time_t notbefore;
 	time_t notafter;
 };
@@ -166,6 +169,7 @@ struct tls {
 	struct tls_sni_ctx *sni_ctx;
 
 	X509 *ssl_peer_cert;
+	STACK_OF(X509) *ssl_peer_chain;
 
 	struct tls_conninfo *conninfo;
 
@@ -237,6 +241,7 @@ struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
 int tls_hex_string(const unsigned char *_in, size_t _inlen, char **_out,
     size_t *_outlen);
 int tls_cert_hash(X509 *_cert, char **_hash);
+void tls_config_skip_private_key_check(struct tls_config *config);
 
 __END_HIDDEN_DECLS
 

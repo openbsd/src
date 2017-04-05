@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.60 2017/04/05 03:13:53 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.61 2017/04/05 03:19:22 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -528,6 +528,8 @@ tls_reset(struct tls *ctx)
 	ctx->ssl_conn = NULL;
 	ctx->ssl_ctx = NULL;
 	ctx->ssl_peer_cert = NULL;
+	/* X509 objects in chain are freed with the SSL */
+	ctx->ssl_peer_chain = NULL;
 
 	ctx->socket = -1;
 	ctx->state = 0;
@@ -625,6 +627,7 @@ tls_handshake(struct tls *ctx)
 
 	if (rv == 0) {
 		ctx->ssl_peer_cert = SSL_get_peer_certificate(ctx->ssl_conn);
+		ctx->ssl_peer_chain = SSL_get_peer_cert_chain(ctx->ssl_conn);
 		if (tls_conninfo_populate(ctx) == -1)
 		    rv = -1;
 		if (ctx->ocsp == NULL)

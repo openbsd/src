@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_peer.c,v 1.6 2016/08/22 17:08:10 jsing Exp $ */
+/* $OpenBSD: tls_peer.c,v 1.7 2017/04/05 03:19:22 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -79,5 +79,16 @@ tls_peer_cert_notafter(struct tls *ctx)
 	if (ctx->conninfo == NULL)
 		return (-1);
 	return (ctx->conninfo->notafter);
+}
+
+const uint8_t *
+tls_peer_cert_chain_pem(struct tls *ctx, size_t *size)
+{
+	if (ctx->ssl_peer_cert == NULL)
+		return (NULL);
+	if (ctx->conninfo == NULL)
+		return (NULL);
+	*size = ctx->conninfo->peer_cert_len;
+	return (ctx->conninfo->peer_cert);
 }
 
