@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.83 2017/04/05 03:20:19 beck Exp $
+.\"     $OpenBSD: nc.1,v 1.84 2017/04/05 06:55:59 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -331,6 +331,10 @@ for SOCKS, 3128 for HTTPS).
 An IPv6 address can be specified unambiguously by enclosing
 .Ar proxy_address
 in square brackets.
+.It Fl Z Ar peercertfile
+Specifies the filename in which the peer supplied certificates will be saved
+in PEM format.
+May only be used with TLS.
 .It Fl z
 Specifies that
 .Nm
@@ -338,10 +342,6 @@ should just scan for listening daemons, without sending any data to them.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
-.It Fl Z Ar peercertfile
-Specifies the filename in which the peer supplied certificates will be saved
-in PEM format.
-May only be used with TLS.
 .El
 .Pp
 .Ar destination

@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.179 2017/04/05 03:20:19 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.180 2017/04/05 06:55:59 jmc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1708,6 +1708,7 @@ help(void)
 	\t-w timeout	Timeout for connects and final net reads\n\
 	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
 	\t-x addr[:port]\tSpecify proxy address and port\n\
+	\t-Z		Peer certificate file\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
 	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
 	exit(1);
@@ -1724,7 +1725,8 @@ usage(int ret)
 	    "[-R CAfile]\n"
 	    "\t  [-s source] [-T keyword] [-V rtable] [-w timeout] "
 	    "[-X proxy_protocol]\n"
-	    "\t  [-x proxy_address[:port]] [destination] [port]\n");
+	    "\t  [-x proxy_address[:port]] [-Z peercertfile] "
+	    "[destination] [port]\n");
 	if (ret)
 		exit(1);
 }
