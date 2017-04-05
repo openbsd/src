@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.733 2017/03/22 07:16:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.734 2017/04/05 10:49:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1021,7 +1021,6 @@ LIST_HEAD(tty_terms, tty_term);
 
 struct tty {
 	struct client	*client;
-	char		*path;
 
 	u_int		 sx;
 	u_int		 sy;
@@ -1285,6 +1284,7 @@ struct cmd_entry {
 
 /* Client connection. */
 struct client {
+	const char	*name;
 	struct tmuxpeer	*peer;
 	struct cmdq_list queue;
 

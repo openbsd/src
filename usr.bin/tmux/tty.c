@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.257 2017/04/05 10:45:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.258 2017/04/05 10:49:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -94,8 +94,6 @@ tty_create_log(void)
 int
 tty_init(struct tty *tty, struct client *c, int fd, char *term)
 {
-	char	*path;
-
 	if (!isatty(fd))
 		return (-1);
 
@@ -105,12 +103,10 @@ tty_init(struct tty *tty, struct client *c, int fd, char *term)
 		tty->term_name = xstrdup("unknown");
 	else
 		tty->term_name = xstrdup(term);
+
 	tty->fd = fd;
 	tty->client = c;
 
-	if ((path = ttyname(fd)) == NULL)
-		return (-1);
-	tty->path = xstrdup(path);
 	tty->cstyle = 0;
 	tty->ccolour = xstrdup("");
 
@@ -125,8 +121,9 @@ tty_init(struct tty *tty, struct client *c, int fd, char *term)
 int
 tty_resize(struct tty *tty)
 {
-	struct winsize	ws;
-	u_int		sx, sy;
+	struct client	*c = tty->client;
+	struct winsize	 ws;
+	u_int		 sx, sy;
 
 	if (ioctl(tty->fd, TIOCGWINSZ, &ws) != -1) {
 		sx = ws.ws_col;
@@ -139,7 +136,8 @@ tty_resize(struct tty *tty)
 		sx = 80;
 		sy = 24;
 	}
-	log_debug("%s: %s now %ux%u", __func__, tty->path, sx, sy);
+	log_debug("%s: %s now %ux%u", __func__, c->name, sx, sy);
+
 	if (!tty_set_size(tty, sx, sy))
 		return (0);
 	tty_invalidate(tty);
@@ -160,13 +158,14 @@ static void
 tty_read_callback(__unused int fd, __unused short events, void *data)
 {
 	struct tty	*tty = data;
+	struct client	*c = tty->client;
 	size_t		 size = EVBUFFER_LENGTH(tty->in);
 	int		 nread;
 
 	nread = evbuffer_read(tty->in, tty->fd, -1);
 	if (nread == -1)
 		return;
-	log_debug("%s: read %d bytes (already %zu)", tty->path, nread, size);
+	log_debug("%s: read %d bytes (already %zu)", c->name, nread, size);
 
 	while (tty_keys_next(tty))
 		;
@@ -176,13 +175,14 @@ static void
 tty_write_callback(__unused int fd, __unused short events, void *data)
 {
 	struct tty	*tty = data;
+	struct client	*c = tty->client;
 	size_t		 size = EVBUFFER_LENGTH(tty->out);
 	int		 nwrite;
 
 	nwrite = evbuffer_write(tty->out, tty->fd);
 	if (nwrite == -1)
 		return;
-	log_debug("%s: wrote %d bytes (of %zu)", tty->path, nwrite, size);
+	log_debug("%s: wrote %d bytes (of %zu)", c->name, nwrite, size);
 
 	if (EVBUFFER_LENGTH(tty->out) != 0)
 		event_add(&tty->event_out, NULL);
@@ -351,7 +351,6 @@ tty_free(struct tty *tty)
 	tty_close(tty);
 
 	free(tty->ccolour);
-	free(tty->path);
 	free(tty->term_name);
 }
 
@@ -424,8 +423,10 @@ tty_putcode_ptr2(struct tty *tty, enum tty_code_code code, const void *a,
 static void
 tty_add(struct tty *tty, const char *buf, size_t len)
 {
+	struct client	*c = tty->client;
+
 	evbuffer_add(tty->out, buf, len);
-	log_debug("%s: %.*s", tty->path, (int)len, (const char *)buf);
+	log_debug("%s: %.*s", c->name, (int)len, (const char *)buf);
 
 	if (tty_log_fd != -1)
 		write(tty_log_fd, buf, len);

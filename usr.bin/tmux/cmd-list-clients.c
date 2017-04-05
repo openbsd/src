@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.31 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.32 2017/04/05 10:49:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,7 +29,7 @@
  */
 
 #define LIST_CLIENTS_TEMPLATE					\
-	"#{client_tty}: #{session_name} "			\
+	"#{client_name}: #{session_name} "			\
 	"[#{client_width}x#{client_height} #{client_termname}]"	\
 	"#{?client_utf8, (utf8),} #{?client_readonly, (ro),}"
 

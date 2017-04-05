@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.123 2017/03/08 13:36:12 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.124 2017/04/05 10:49:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1139,11 +1139,11 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 	if (ft->s == NULL)
 		ft->s = c->session;
 
+	format_add(ft, "client_name", "%s", c->name);
 	format_add(ft, "client_pid", "%ld", (long) c->pid);
 	format_add(ft, "client_height", "%u", tty->sy);
 	format_add(ft, "client_width", "%u", tty->sx);
-	if (tty->path != NULL)
-		format_add(ft, "client_tty", "%s", tty->path);
+	format_add(ft, "client_tty", "%s", c->ttyname);
 	format_add(ft, "client_control_mode", "%d",
 		!!(c->flags & CLIENT_CONTROL));
 
