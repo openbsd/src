@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.53 2017/01/29 17:52:11 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.54 2017/04/05 03:13:53 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -53,6 +53,7 @@ struct tls_keypair {
 	size_t key_len;
 	char *ocsp_staple;
 	size_t ocsp_staple_len;
+	char *cert_hash;
 };
 
 #define TLS_MIN_SESSION_TIMEOUT (4)
@@ -96,6 +97,7 @@ struct tls_config {
 	int verify_depth;
 	int verify_name;
 	int verify_time;
+	int skip_private_key_check;
 };
 
 struct tls_conninfo {
@@ -232,6 +234,9 @@ int tls_ocsp_verify_cb(SSL *ssl, void *arg);
 int tls_ocsp_stapling_cb(SSL *ssl, void *arg);
 void tls_ocsp_free(struct tls_ocsp *ctx);
 struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
+int tls_hex_string(const unsigned char *_in, size_t _inlen, char **_out,
+    size_t *_outlen);
+int tls_cert_hash(X509 *_cert, char **_hash);
 
 __END_HIDDEN_DECLS
 

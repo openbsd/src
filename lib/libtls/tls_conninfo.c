@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.13 2017/01/09 15:31:20 jsing Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.14 2017/04/05 03:13:53 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -23,7 +23,7 @@
 #include <tls.h>
 #include "tls_internal.h"
 
-static int
+int
 tls_hex_string(const unsigned char *in, size_t inlen, char **out,
     size_t *outlen)
 {
@@ -56,35 +56,16 @@ tls_hex_string(const unsigned char *in, size_t inlen, char **out,
 static int
 tls_get_peer_cert_hash(struct tls *ctx, char **hash)
 {
-	char d[EVP_MAX_MD_SIZE], *dhex = NULL;
-	int dlen, rv = -1;
-
 	*hash = NULL;
 	if (ctx->ssl_peer_cert == NULL)
 		return (0);
 
-	if (X509_digest(ctx->ssl_peer_cert, EVP_sha256(), d, &dlen) != 1) {
-		tls_set_errorx(ctx, "digest failed");
-		goto err;
-	}
-
-	if (tls_hex_string(d, dlen, &dhex, NULL) != 0) {
-		tls_set_errorx(ctx, "digest hex string failed");
-		goto err;
-	}
-
-	if (asprintf(hash, "SHA256:%s", dhex) == -1) {
-		tls_set_errorx(ctx, "out of memory");
+	if (tls_cert_hash(ctx->ssl_peer_cert, hash) == -1) {
+		tls_set_errorx(ctx, "unable to compute peer certificate hash - out of memory");
 		*hash = NULL;
-		goto err;
+		return -1;
 	}
-
-	rv = 0;
-
-err:
-	free(dhex);
-
-	return (rv);
+	return 0;
 }
 
 static int
@@ -294,3 +275,4 @@ tls_conn_version(struct tls *ctx)
 		return (NULL);
 	return (ctx->conninfo->version);
 }
+

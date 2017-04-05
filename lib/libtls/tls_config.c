@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.36 2017/01/31 16:18:57 beck Exp $ */
+/* $OpenBSD: tls_config.c,v 1.37 2017/04/05 03:13:53 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -135,6 +135,7 @@ tls_keypair_free(struct tls_keypair *keypair)
 	free(keypair->cert_mem);
 	free(keypair->key_mem);
 	free(keypair->ocsp_staple);
+	free(keypair->cert_hash);
 
 	free(keypair);
 }
@@ -759,6 +760,12 @@ void
 tls_config_verify_client_optional(struct tls_config *config)
 {
 	config->verify_client = 2;
+}
+
+void
+tls_config_skip_private_key_check(struct tls_config *config)
+{
+	config->skip_private_key_check = 1;
 }
 
 int
