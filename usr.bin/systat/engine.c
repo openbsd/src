@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.20 2017/04/05 04:44:03 deraadt Exp $	 */
+/* $Id: engine.c,v 1.21 2017/04/05 15:57:11 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -347,6 +347,8 @@ print_bar_title(field_def *fld)
 		}
 
 		len = snprintf(buf, sizeof(buf), "%d\\", val);
+		if (len >= sizeof(buf))
+			len = strlen(buf);
 		while (cur < pos - len) {
 			tbprintf(" ");
 			cur++;
