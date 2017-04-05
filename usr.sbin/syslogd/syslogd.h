@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.28 2017/04/05 11:31:45 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.29 2017/04/05 21:55:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -37,7 +37,7 @@ int   priv_getnameinfo(struct sockaddr *, socklen_t, char *, size_t);
 /* Terminal message */
 #define TTYMSGTIME	1		/* timeout used by ttymsg */
 #define TTYMAXDELAY	256		/* max events in ttymsg */
-char *ttymsg(struct iovec *, int, char *);
+void ttymsg(struct iovec *, int, char *);
 
 /* File descriptor send/recv */
 void send_fd(int, int);

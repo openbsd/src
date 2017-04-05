@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.14 2017/04/05 11:31:45 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.15 2017/04/05 21:55:31 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -60,37 +60,35 @@ void ttycb(int, short, void *);
 /*
  * Display the contents of a uio structure on a terminal.
  * Schedules an event if write would block, waiting up to TTYMSGTIME
- * seconds.  Returns pointer to error string on unexpected error;
- * string is not newline-terminated.  Various "normal" errors are ignored
- * (exclusive-use, lack of permission, etc.).
+ * seconds.
  */
-char *
+void
 ttymsg(struct iovec *iov, int iovcnt, char *utline)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
-	static char ebuf[ERRBUFSIZE];
 	int cnt, fd;
 	size_t left;
 	ssize_t wret;
 	struct iovec localiov[6];
 
-	if (iovcnt < 0 || (size_t)iovcnt > nitems(localiov))
-		return ("too many iov's (change code in syslogd/ttymsg.c)");
+	if (iovcnt < 0 || (size_t)iovcnt > nitems(localiov)) {
+		log_warnx("too many iov's (change code in syslogd/ttymsg.c)");
+		return;
+	}
 
 	/*
 	 * Ignore lines that start with "ftp" or "uucp".
 	 */
 	if ((strncmp(utline, "ftp", 3) == 0) ||
 	    (strncmp(utline, "uucp", 4) == 0))
-		return (NULL);
+		return;
 
 	(void) strlcpy(device + sizeof(_PATH_DEV) - 1, utline,
 	    sizeof(device) - (sizeof(_PATH_DEV) - 1));
 	if (strchr(device + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
-		(void) snprintf(ebuf, sizeof(ebuf), "'/' in \"%s\"",
-		    device);
-		return (ebuf);
+		log_warnx("'/' in tty device \"%s\"", device);
+		return;
 	}
 
 	/*
@@ -98,11 +96,9 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 	 * if not running as root; not an error.
 	 */
 	if ((fd = priv_open_tty(device)) < 0) {
-		if (errno == EBUSY || errno == EACCES)
-			return (NULL);
-		(void) snprintf(ebuf, sizeof(ebuf),
-		    "%s: %s", device, strerror(errno));
-		return (ebuf);
+		if (errno != EBUSY && errno != EACCES)
+			log_warn("priv_open_tty device \"%s\"", device);
+		return;
 	}
 
 	left = 0;
@@ -136,9 +132,9 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 			struct timeval		 to;
 
 			if (tty_delayed >= TTYMAXDELAY) {
-				(void) snprintf(ebuf, sizeof(ebuf),
-				    "%s: too many delayed writes", device);
-				goto error;
+				log_warnx("tty device \"%s\": %s",
+				    device, "too many delayed writes");
+				break;
 			}
 			log_debug("ttymsg delayed write");
 			if (iov != localiov) {
@@ -147,9 +143,9 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 				iov = localiov;
 			}
 			if ((td = malloc(sizeof(*td))) == NULL) {
-				(void) snprintf(ebuf, sizeof(ebuf),
-				    "%s: malloc: %s", device, strerror(errno));
-				goto error;
+				log_warn("allocate delay tty device \"%s\"",
+				    device);
+				break;
 			}
 			td->td_length = 0;
 			if (left > MAXLINE)
@@ -169,23 +165,19 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 			to.tv_sec = TTYMSGTIME;
 			to.tv_usec = 0;
 			event_add(&td->td_event, &to);
-			return (NULL);
+			return;
 		}
 		/*
 		 * We get ENODEV on a slip line if we're running as root,
 		 * and EIO if the line just went away.
 		 */
-		if (errno == ENODEV || errno == EIO)
-			break;
-		(void) snprintf(ebuf, sizeof(ebuf),
-		    "%s: %s", device, strerror(errno));
- error:
-		(void) close(fd);
-		return (ebuf);
+		if (errno != ENODEV && errno != EIO)
+			log_warn("writev tty device \"%s\"", device);
+		break;
 	}
 
 	(void) close(fd);
-	return (NULL);
+	return;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.238 2017/04/05 21:30:04 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.239 2017/04/05 21:55:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -2068,7 +2068,7 @@ void
 wallmsg(struct filed *f, struct iovec *iov)
 {
 	struct utmp ut;
-	char utline[sizeof(ut.ut_line) + 1], *p;
+	char utline[sizeof(ut.ut_line) + 1];
 	static int reenter;			/* avoid calling ourselves */
 	FILE *uf;
 	int i;
@@ -2087,8 +2087,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 		strncpy(utline, ut.ut_line, sizeof(utline) - 1);
 		utline[sizeof(utline) - 1] = '\0';
 		if (f->f_type == F_WALL) {
-			if ((p = ttymsg(iov, 6, utline)) != NULL)
-				log_warnx("%s", p);
+			ttymsg(iov, 6, utline);
 			continue;
 		}
 		/* should we send the message to this user? */
@@ -2097,8 +2096,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 				break;
 			if (!strncmp(f->f_un.f_uname[i], ut.ut_name,
 			    UT_NAMESIZE)) {
-				if ((p = ttymsg(iov, 6, utline)) != NULL)
-					log_warnx("%s", p);
+				ttymsg(iov, 6, utline);
 				break;
 			}
 		}
