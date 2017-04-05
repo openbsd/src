@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.148 2017/03/25 18:58:59 espie Exp $
+# $OpenBSD: Delete.pm,v 1.149 2017/04/05 11:57:58 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,7 @@ sub delete_package
 				return;
 			}
 		} else {
+			$state->errsay("NOT deleting #1: use fwupdate -d", $pkgname);
 			return;
 		}
 	}
