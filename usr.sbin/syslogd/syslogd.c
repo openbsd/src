@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.233 2017/03/28 00:04:43 jsg Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.234 2017/04/05 00:35:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -3085,8 +3085,7 @@ ctlconn_cleanup(void)
 {
 	struct filed *f;
 
-	if (close(fd_ctlconn) == -1)
-		logerror("close ctlconn");
+	close(fd_ctlconn);
 	fd_ctlconn = -1;
 	event_del(ev_ctlread);
 	event_del(ev_ctlwrite);
