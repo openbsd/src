@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.235 2017/04/05 11:31:45 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.236 2017/04/05 15:16:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -470,16 +470,12 @@ main(int argc, char *argv[])
 	if (Debug)
 		setvbuf(stdout, NULL, _IOLBF, 0);
 
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1) {
-		logerror("Couldn't open /dev/null");
-		die(0);
-	}
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1)
+		fatal("open %s", _PATH_DEVNULL);
 	for (fd = nullfd + 1; fd <= STDERR_FILENO; fd++) {
 		if (fcntl(fd, F_GETFL) == -1 && errno == EBADF)
-			if (dup2(nullfd, fd) == -1) {
-				logerror("dup2");
-				die(0);
-			}
+			if (dup2(nullfd, fd) == -1)
+				fatal("dup2 null");
 	}
 
 	if (PrivChild > 1)
@@ -500,16 +496,14 @@ main(int argc, char *argv[])
 	if (linesize < MAXLINE)
 		linesize = MAXLINE;
 	linesize++;
-	if ((linebuf = malloc(linesize)) == NULL) {
-		logerror("Couldn't allocate line buffer");
-		die(0);
-	}
+	if ((linebuf = malloc(linesize)) == NULL)
+		fatal("allocate line buffer");
 
 	if (socket_bind("udp", NULL, "syslog", SecureMode,
 	    &fd_udp, &fd_udp6) == -1)
 		logerrorx("socket bind *");
 	if ((fd_bind = reallocarray(NULL, nbind, sizeof(*fd_bind))) == NULL)
-		err(1, "bind fd");
+		fatal("allocate bind fd");
 	for (i = 0; i < nbind; i++) {
 		if (socket_bind("udp", bind_host[i], bind_port[i], 0,
 		    &fd_bind[i], &fd_bind[i]) == -1)
@@ -517,7 +511,7 @@ main(int argc, char *argv[])
 	}
 	if ((fd_listen = reallocarray(NULL, nlisten, sizeof(*fd_listen)))
 	    == NULL)
-		err(1, "listen fd");
+		fatal("allocate listen fd");
 	for (i = 0; i < nlisten; i++) {
 		if (socket_bind("tcp", listen_host[i], listen_port[i], 0,
 		    &fd_listen[i], &fd_listen[i]) == -1)
@@ -529,7 +523,7 @@ main(int argc, char *argv[])
 		logerrorx("socket listen tls");
 
 	if ((fd_unix = reallocarray(NULL, nunix, sizeof(*fd_unix))) == NULL)
-		err(1, "malloc unix");
+		fatal("allocate unix fd");
 	for (i = 0; i < nunix; i++) {
 		fd_unix[i] = unix_socket(path_unix[i], SOCK_DGRAM, 0666);
 		if (fd_unix[i] == -1) {
@@ -782,10 +776,8 @@ main(int argc, char *argv[])
 
 	/* Allocate ctl socket reply buffer if we have a ctl socket */
 	if (fd_ctlsock != -1 &&
-	    (ctl_reply = malloc(CTL_REPLY_MAXSIZE)) == NULL) {
-		logerror("Couldn't allocate ctlsock reply buffer");
-		die(0);
-	}
+	    (ctl_reply = malloc(CTL_REPLY_MAXSIZE)) == NULL)
+		fatal("allocate control socket reply buffer");
 	reply_text = ctl_reply + CTL_HDR_LEN;
 
 	if (!Debug) {
@@ -2418,10 +2410,8 @@ init(void)
 			SIMPLEQ_INSERT_TAIL(&Files, f, f_next);
 	}
 	free(cline);
-	if (!feof(cf)) {
-		logerror("Unable to read config file");
-		die(0);
-	}
+	if (!feof(cf))
+		fatal("read config file");
 
 	/* Match and initialize the memory buffers */
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
@@ -2568,10 +2558,8 @@ cfline(char *line, char *progblock, char *hostblock)
 	log_debug("cfline(\"%s\", f, \"%s\", \"%s\")",
 	    line, progblock, hostblock);
 
-	if ((f = calloc(1, sizeof(*f))) == NULL) {
-		logerror("Couldn't allocate struct filed");
-		die(0);
-	}
+	if ((f = calloc(1, sizeof(*f))) == NULL)
+		fatal("allocate struct filed");
 	for (i = 0; i <= LOG_NFACILITIES; i++)
 		f->f_pmask[i] = INTERNAL_NOPRI;
 
