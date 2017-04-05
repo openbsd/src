@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.19 2016/01/02 20:01:48 benno Exp $	 */
+/* $Id: engine.c,v 1.20 2017/04/05 04:44:03 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -125,7 +125,7 @@ tbprintf(char *format, ...)
 		return 0;
 
 	va_start(arg, format);
-	len=vsnprintf(tb_ptr, tb_len, format, arg);
+	len = vsnprintf(tb_ptr, tb_len, format, arg);
 	va_end(arg);
 	
 	if (len > tb_len)
