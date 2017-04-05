@@ -33,8 +33,8 @@ our %args = (
 	loggrep => {
 	    qr{Keyfile /etc/ssl/private/localhost.key} => 1,
 	    qr{Certfile /etc/ssl/localhost.crt} => 1,
-	    qr/syslogd: tls logger .* accepted/ => 1,
-	    qr/syslogd: tls logger .* connection close/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* accepted/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* connection close/ => 1,
 	},
     },
     file => {

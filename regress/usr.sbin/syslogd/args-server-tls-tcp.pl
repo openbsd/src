@@ -24,7 +24,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=4',
 	    get_testgrep() => 1,
-	    qr/syslogd: loghost .* connection error/ => 2,
+	    qr/syslogd\[\d+\]: loghost .* connection error/ => 1,
 	},
     },
     server => {
@@ -39,7 +39,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: /.
+	    qr/syslogd\[\d+\]: loghost .* connection error: /.
 		qr/handshake failed: error:.*:SSL routines:/.
 		qr/CONNECT_CR_SRVR_HELLO:wrong version number/ => 1,
 	},

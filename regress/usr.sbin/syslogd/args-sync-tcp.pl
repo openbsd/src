@@ -24,7 +24,7 @@ our %args = (
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep("Accepted", 5, 2)
 		or die ref($self), " server did not accept second connection";
-	    ${$self->{syslogd}}->loggrep(qr/syslogd: dropped \d+ messages?/, 5)
+	    ${$self->{syslogd}}->loggrep(qr/: dropped \d+ messages? to/, 5)
 		or die ref($self), " syslogd did not write dropped message";
 	})},
     },

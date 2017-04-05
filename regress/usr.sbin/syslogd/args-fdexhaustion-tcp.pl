@@ -37,11 +37,11 @@ our %args = (
 	loggrep => { get_testlog() => 0 },
     },
     multifile => [
-	(map { { loggrep => qr/syslogd: accept deferred/ } } 0..13),
+	(map { { loggrep => qr/syslogd\[\d+\]: accept deferred/ } } 0..13),
 	(map { { loggrep => { qr/./s => 0 } } } 14..19),
     ],
     file => {
-	loggrep => qr/syslogd: accept deferred: Too many open files/,
+	loggrep => qr/syslogd\[\d+\]: accept deferred: Too many open files/,
     },
     pipe => { nocheck => 1 },
     tty => { nocheck => 1 },

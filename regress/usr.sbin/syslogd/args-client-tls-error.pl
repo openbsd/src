@@ -28,8 +28,8 @@ our %args = (
     syslogd => {
 	options => ["-S", "127.0.0.1:6514"],
 	loggrep => {
-	    qr/syslogd: tls logger .* accept/ => 1,
-	    qr/syslogd: tls logger .* connection error/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* accept/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* connection error/ => 1,
 	},
     },
     server => {
@@ -42,8 +42,8 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: tls logger .* connection error: read failed: $errors/
-		=> 1,
+	    qr/syslogd\[\d+\]: tls logger .* connection error: /.
+		qr/read failed: $errors/ => 1,
 	},
     },
     pipe => { nocheck => 1, },

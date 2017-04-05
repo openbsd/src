@@ -28,7 +28,7 @@ our %args = (
 	options => ["-S", "127.0.0.1"],
 	loggrep => {
 	    get_testgrep() => 1,
-	    qr/syslogd: tls logger .* accepted/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* accepted/ => 1,
 	},
     },
 );

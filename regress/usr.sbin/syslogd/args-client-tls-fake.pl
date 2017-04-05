@@ -33,7 +33,7 @@ our %args = (
 	loggrep => {
 	    qr{Server CAfile fake-ca.crt} => 1,
 	    qr{tls logger .* accepted} => 1,
-	    qr/syslogd: tls logger .* connection error: /.
+	    qr/syslogd\[\d+\]: tls logger .* connection error: /.
 		qr/handshake failed: error:.*:rsa routines:/.
 		qr/CRYPTO_internal:/ => 1,
 	},
@@ -41,13 +41,14 @@ our %args = (
     server => {
 	func => sub {
 	    my $self = shift;
-	    read_message($self, qr/syslogd: tls logger .* connection error/);
+	    read_message($self, qr/tls logger .* connection error/);
 	},
 	loggrep => {},
     },
     file => {
 	loggrep => {
-	    qr/syslogd: tls logger .* connection error: handshake failed/ => 1,
+	    qr/syslogd\[\d+\]: tls logger .* connection error: /.
+		qr/handshake failed/ => 1,
 	},
     },
     pipe => { nocheck => 1, },

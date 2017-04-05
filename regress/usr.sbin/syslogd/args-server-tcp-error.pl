@@ -28,7 +28,7 @@ our %args = (
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/127.0.0.1:\d+/ => '>=4',
 	    get_testgrep() => 1,
-	    qr/syslogd: loghost .* connection error/ => 2,
+	    qr/syslogd\[\d+\]: loghost .* connection error/ => 1,
 	},
     },
     server => {
@@ -42,7 +42,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: loghost .* connection error: $errors/ => 1,
+	    qr/syslogd\[\d+\]: loghost .* connection error: $errors/ => 1,
 	},
     },
 );

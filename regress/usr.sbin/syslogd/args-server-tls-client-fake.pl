@@ -16,9 +16,9 @@ our %args = (
 	loggrep => {
 	    qr/ClientCertfile client.crt/ => 1,
 	    qr/ClientKeyfile client.key/ => 1,
-	    qr/syslogd: loghost .* connection error: /.
+	    qr/syslogd\[\d+\]: loghost .* connection error: /.
 		qr/handshake failed: error:.*:SSL routines:/.
-		qr/CONNECT_CR_FINISHED:tlsv1 alert decrypt error/ => 2,
+		qr/CONNECT_CR_FINISHED:tlsv1 alert decrypt error/ => 1,
 	    get_testgrep() => 1,
 	},
     },

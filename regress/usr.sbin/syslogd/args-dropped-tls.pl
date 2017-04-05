@@ -22,7 +22,7 @@ our %args = (
 	    write_message($self, get_thirdlog());
 	    ${$self->{server}}->loggrep(get_secondlog(), 5)
 		or die ref($self), " server did not receive second log";
-	    ${$self->{syslogd}}->loggrep(qr/syslogd: dropped \d+ messages?/, 5)
+	    ${$self->{syslogd}}->loggrep(qr/: dropped \d+ messages? to/, 5)
 		or die ref($self), " syslogd did not write dropped message";
 	})},
     },
@@ -49,7 +49,7 @@ our %args = (
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
 	    get_charlog() => '~333',
-	    qr/syslogd: dropped [67][0-9] messages to loghost/ => 1,
+	    qr/syslogd\[\d+\]: dropped [67][0-9] messages to loghost/ => 1,
 	},
     },
     file => {
@@ -58,7 +58,7 @@ our %args = (
 	    get_secondlog() => 1,
 	    get_thirdlog() => 1,
 	    get_charlog() => 400,
-	    qr/syslogd: dropped [67][0-9] messages to loghost/ => 1,
+	    qr/syslogd\[\d+\]: dropped [67][0-9] messages to loghost/ => 1,
 	},
     },
 );

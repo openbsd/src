@@ -27,7 +27,7 @@ our %args = (
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
 	    get_testgrep() => 1,
-	    qr/syslogd: tcp logger .* accepted/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* accepted/ => 1,
 	},
     },
 );

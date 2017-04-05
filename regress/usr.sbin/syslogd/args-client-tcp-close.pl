@@ -26,8 +26,8 @@ our %args = (
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
-	    qr/syslogd: tcp logger .* accepted/ => 1,
-	    qr/syslogd: tcp logger .* connection close/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* accepted/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* connection close/ => 1,
 	}
     },
     server => {
@@ -40,7 +40,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: tcp logger .* connection close/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* connection close/ => 1,
 	},
     },
     pipe => { nocheck => 1 },

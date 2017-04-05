@@ -13,8 +13,8 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    write_message($self, get_testlog());
-	    ${$self->{server}}->loggrep("syslogd: exiting", 8)
-		or die ref($self), " no 'syslogd: exiting' server log";
+	    ${$self->{server}}->loggrep(qr/: exiting on signal/, 8)
+		or die ref($self), " no ': exiting on signal' server log";
 	},
     },
     syslogd => {
@@ -22,16 +22,18 @@ our %args = (
 	    qr/syslogd  PSIG  SIGTERM caught handler/ => 1,
 	    qr/syslogd  RET   execve 0/ => 2,
 	},
-	loggrep => qr/\[unpriv\] syslogd child about to exit/,
+	loggrep => {
+	    qr/syslogd: exited/ => 1,
+	},
     },
     server => {
 	func => sub {
 	    my $self = shift;
 	    read_message($self, get_testgrep());
 	    ${$self->{syslogd}}->kill_syslogd('TERM');
-	    read_message($self, qr/syslogd: exiting/);
+	    read_message($self, qr/: exiting on signal/);
 	},
-	down => qr/syslogd: exiting on signal 15/,
+	down => qr/syslogd\[\d+\]: exiting on signal 15/,
     },
 );
 

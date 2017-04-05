@@ -21,8 +21,8 @@ our %args = (
 	    qr/ internet6? stream tcp \w+ (127.0.0.1|\[::1\]):514$/ => 1,
 	},
 	loggrep => {
-	    qr/syslogd: tcp logger .* accepted/ => 1,
-	    qr/syslogd: tcp logger .* connection close/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* accepted/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* connection close/ => 1,
 	},
     },
     file => {

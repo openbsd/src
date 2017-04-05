@@ -26,7 +26,7 @@ our %args = (
 	loghost => '@tcp://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTCP \@tcp:\/\/127.0.0.1:\d+/ => '>=6',
-	    qr/syslogd: (connect .*|.*connection error): $errors/ => '>=2',
+	    qr/syslogd\[\d+\]: (connect .*|.*connection error): $errors/ => 1,
 	    get_between2loggrep(),
 	},
     },
@@ -49,14 +49,14 @@ our %args = (
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,
-	    qr/syslogd: loghost .* connection close/ => 1,
-	    qr/syslogd: (connect .*|.*connection error): $errors/ => 1,
+	    qr/syslogd\[\d+\]: loghost .* connection close/ => 1,
+	    qr/syslogd\[\d+\]: (connect .*|.*connection error): $errors/ => 1,
 	    get_between2loggrep(),
 	},
     },
     file => {
 	loggrep => {
-	    qr/syslogd: (connect .*|.*connection error): $errors/ => '>=1',
+	    qr/syslogd\[\d+\]: (connect .*|.*connection error): $errors/ => 1,
 	    get_between2loggrep(),
 	},
     },

@@ -28,8 +28,8 @@ our %args = (
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],
 	loggrep => {
-	    qr/syslogd: tcp logger .* accept/ => 1,
-	    qr/syslogd: tcp logger .* connection error/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* accept/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* connection error/ => 1,
 	},
     },
     server => {
@@ -42,7 +42,7 @@ our %args = (
     },
     file => {
 	loggrep => {
-	    qr/syslogd: tcp logger .* connection error: $errors/ => 1,
+	    qr/syslogd\[\d+\]: tcp logger .* connection error: $errors/ => 1,
 	},
     },
     pipe => { nocheck => 1 },

@@ -55,10 +55,11 @@ our %args = (
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
-	    qr/syslogd: start/ => 1,
-	    qr/syslogd: restart/ => 1,
+	    qr/syslogd\[\d+\]: start/ => 1,
+	    qr/syslogd\[\d+\]: restart/ => 1,
 	    get_charlog() => '~88',
-	    qr/syslogd: dropped 2[0-3][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd\[\d+\]: dropped 2[0-3][0-9] messages to remote loghost/
+		=> 1,
 	},
     },
     file => {
@@ -66,10 +67,11 @@ our %args = (
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 1,
-	    qr/syslogd: start/ => 1,
-	    qr/syslogd: restart/ => 1,
+	    qr/syslogd\[\d+\]: start/ => 1,
+	    qr/syslogd\[\d+\]: restart/ => 1,
 	    get_charlog() => 300,
-	    qr/syslogd: dropped 2[0-3][0-9] messages to remote loghost/ => 1,
+	    qr/syslogd\[\d+\]: dropped 2[0-3][0-9] messages to remote loghost/
+		=> 1,
 	},
     },
 );

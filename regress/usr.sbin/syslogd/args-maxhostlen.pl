@@ -11,7 +11,7 @@ our %args = (
     syslogd => {
 	loghost => '@'.('X'x256).':514',
 	loggrep => {
-	    qr/syslogd: host too long "\@X+/ => 2,
+	    qr/syslogd: host too long "\@X+/ => 1,
 	    get_testgrep() => 1,
 	},
     },
