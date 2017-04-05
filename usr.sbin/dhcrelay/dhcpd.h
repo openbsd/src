@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.22 2017/04/04 15:50:29 reyk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.23 2017/04/05 14:40:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -168,14 +168,14 @@ void add_protocol(char *, int, void (*)(struct protocol *), void *);
 void remove_protocol(struct protocol *);
 
 /* packet.c */
-void assemble_hw_header(struct interface_info *, unsigned char *,
-    int *, struct packet_ctx *);
-void assemble_udp_ip_header(struct interface_info *, unsigned char *,
-    int *, struct packet_ctx *pc, unsigned char *, int);
-ssize_t decode_hw_header(struct interface_info *, unsigned char *,
-    int, struct packet_ctx *);
-ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
-    int, struct packet_ctx *, int);
+ssize_t assemble_hw_header(unsigned char *, size_t, size_t,
+    struct packet_ctx *, unsigned int);
+ssize_t assemble_udp_ip_header(unsigned char *, size_t, size_t,
+    struct packet_ctx *pc, unsigned char *, size_t);
+ssize_t decode_hw_header(unsigned char *, size_t, size_t, struct packet_ctx *,
+    unsigned int);
+ssize_t decode_udp_ip_header(unsigned char *, size_t, size_t,
+    struct packet_ctx *);
 
 /* dhcrelay.c */
 extern int server_fd;

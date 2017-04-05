@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.17 2017/02/13 22:49:38 krw Exp $ */
+/*	$OpenBSD: bpf.c,v 1.18 2017/04/05 14:40:56 reyk Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -335,7 +335,10 @@ send_packet(struct interface_info *interface,
 {
 	unsigned char buf[256];
 	struct iovec iov[2];
-	int result, bufp = 0;
+	ssize_t bufp;
+	int result;
+
+	result = -1;
 
 	if (interface->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
 		socklen_t slen = pc->pc_dst.ss_len;
@@ -345,9 +348,12 @@ send_packet(struct interface_info *interface,
 	}
 
 	/* Assemble the headers... */
-	assemble_hw_header(interface, buf, &bufp, pc);
-	assemble_udp_ip_header(interface, buf, &bufp, pc,
-	    (unsigned char *)raw, len);
+	if ((bufp = assemble_hw_header(buf, sizeof(buf), 0, pc,
+	    interface->hw_address.htype)) == -1)
+		goto done;
+	if ((bufp = assemble_udp_ip_header(buf, sizeof(buf), bufp, pc,
+	    (unsigned char *)raw, len)) == -1)
+		goto done;
 
 	/* Fire it off */
 	iov[0].iov_base = (char *)buf;
@@ -366,7 +372,8 @@ ssize_t
 receive_packet(struct interface_info *interface, unsigned char *buf,
     size_t len, struct packet_ctx *pc)
 {
-	int length = 0, offset = 0;
+	int length = 0;
+	ssize_t offset = 0;
 	struct bpf_hdr hdr;
 
 	/*
@@ -430,32 +437,32 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		interface->rbuf_offset += hdr.bh_hdrlen;
 
 		/* Decode the physical header... */
-		offset = decode_hw_header(interface,
-		    interface->rbuf, interface->rbuf_offset, pc);
+		offset = decode_hw_header(interface->rbuf,
+		    interface->rbuf_len, interface->rbuf_offset, pc,
+		    interface->hw_address.htype);
 
 		/*
-		 * If a physical layer checksum failed (dunno of any
-		 * physical layer that supports this, but WTH), skip
-		 * this packet.
+		 * If decoding or a physical layer checksum failed
+		 * (dunno of any physical layer that supports this, but WTH),
+		 * skip this packet.
 		 */
 		if (offset < 0) {
 			interface->rbuf_offset += hdr.bh_caplen;
 			continue;
 		}
-		interface->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
 
 		/* Decode the IP and UDP headers... */
-		offset = decode_udp_ip_header(interface, interface->rbuf,
-		    interface->rbuf_offset, pc, hdr.bh_caplen);
+		offset = decode_udp_ip_header(interface->rbuf,
+		    interface->rbuf_len, offset, pc);
 
 		/* If the IP or UDP checksum was bad, skip the packet... */
 		if (offset < 0) {
 			interface->rbuf_offset += hdr.bh_caplen;
 			continue;
 		}
-		interface->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
+
+		hdr.bh_caplen -= offset - interface->rbuf_offset;
+		interface->rbuf_offset = offset;
 
 		/*
 		 * If there's not enough room to stash the packet data,
