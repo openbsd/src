@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.178 2017/03/09 13:58:00 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.179 2017/04/05 03:20:19 beck Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -106,6 +106,7 @@ int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
+FILE	*Zflag;					/* file to save peer cert */
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -132,6 +133,7 @@ int	unix_listen(char *);
 void	set_common_sockopts(int, int);
 int	map_tos(char *, int *);
 int	map_tls(char *, int *);
+void    save_peer_cert(struct tls *_tls_ctx, FILE *_fp);
 void	report_connect(const struct sockaddr *, socklen_t, char *);
 void	report_tls(struct tls *tls_ctx, char * host, char *tls_expectname);
 void	usage(int);
@@ -165,7 +167,7 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	while ((ch = getopt(argc, argv,
-	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z")) != -1) {
+	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:Z:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -279,6 +281,12 @@ main(int argc, char *argv[])
 			if ((proxy = strdup(optarg)) == NULL)
 				err(1, NULL);
 			break;
+		case 'Z':
+			if (strcmp(optarg, "-") == 0)
+				Zflag = stderr;
+			else if ((Zflag = fopen(optarg, "w")) == NULL)
+				err(1, "can't open %s", optarg);
+			break;
 		case 'z':
 			zflag = 1;
 			break;
@@ -385,6 +393,8 @@ main(int argc, char *argv[])
 		errx(1, "you must specify -c to use -C");
 	if (Kflag && !usetls)
 		errx(1, "you must specify -c to use -K");
+	if (Zflag && !usetls)
+		errx(1, "you must specify -c to use -Z");
 	if (oflag && !Cflag)
 		errx(1, "you must specify -C to use -o");
 	if (tls_cachanged && !usetls)
@@ -766,6 +776,11 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 	if (tls_expecthash && tls_peer_cert_hash(tls_ctx) &&
 	    strcmp(tls_expecthash, tls_peer_cert_hash(tls_ctx)) != 0)
 		errx(1, "peer certificate is not %s", tls_expecthash);
+	if (Zflag) {
+		save_peer_cert(tls_ctx, Zflag);
+		if (Zflag != stderr && (fclose(Zflag) != 0))
+			err(1, "fclose failed saving peer cert");
+	}
 }
 
 struct tls *
@@ -1546,6 +1561,21 @@ map_tls(char *s, int *val)
 		}
 	}
 	return (0);
+}
+
+void
+save_peer_cert(struct tls *tls_ctx, FILE *fp)
+{
+	const char *pem;
+	size_t plen;
+	FILE *out;
+
+	if ((pem = tls_peer_cert_chain_pem(tls_ctx, &plen)) == NULL)
+		errx(1, "Can't get peer certificate");
+	if (fprintf(fp, "%.*s", plen, pem) < 0)
+		err(1, "unable to save peer cert");
+	if (fflush(fp) != 0)
+		err(1, "unable to flush peer cert");
 }
 
 void
