@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.55 2017/02/17 14:49:03 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.56 2017/04/05 22:27:03 dhill Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -181,7 +181,7 @@ ipcomp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = IPPROTO_IPCOMP;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	tc->tc_dst = tdb->tdb_dst;
 
 	return crypto_dispatch(crp);
 }
@@ -317,8 +317,8 @@ ipcomp_input_cb(struct cryptop *crp)
 		/* Finally, let's relink */
 		m1->m_next = mo;
 	} else {
-		bcopy(mtod(m1, u_char *) + roff + hlen,
-		    mtod(m1, u_char *) + roff,
+		memmove(mtod(m1, u_char *) + roff,
+		    mtod(m1, u_char *) + roff + hlen,
 		    m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
 		m->m_pkthdr.len -= hlen;
@@ -501,7 +501,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_skip = skip;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+	tc->tc_dst = tdb->tdb_dst;
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
