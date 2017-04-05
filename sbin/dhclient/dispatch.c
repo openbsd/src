@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.118 2017/04/04 15:15:48 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.119 2017/04/05 18:22:30 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -73,6 +73,7 @@
 struct dhcp_timeout timeout;
 
 void packethandler(struct interface_info *ifi);
+void sendhup(struct client_lease *);
 
 void
 get_hw_address(struct interface_info *ifi)
@@ -337,4 +338,26 @@ get_rdomain(char *name)
 
 	close(s);
 	return rv;
+}
+
+/*
+ * Inform the [priv] process a HUP was received and it should restart.
+ */
+void
+sendhup(struct client_lease *active)
+{
+	struct imsg_hup imsg;
+	int rslt;
+
+	if (active)
+		imsg.addr = active->address;
+	else
+		imsg.addr.s_addr = INADDR_ANY;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
+	    &imsg, sizeof(imsg));
+	if (rslt == -1)
+		log_warn("sendhup: imsg_compose");
+
+	flush_unpriv_ibuf("sendhup");
 }

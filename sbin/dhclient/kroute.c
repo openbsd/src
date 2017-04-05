@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.85 2017/03/08 15:07:32 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.86 2017/04/05 18:22:31 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -510,28 +510,6 @@ priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 	close(s);
 
 	active_addr = imsg->addr;
-}
-
-/*
- * Inform the [priv] process a HUP was received and it should restart.
- */
-void
-sendhup(struct client_lease *active)
-{
-	struct imsg_hup imsg;
-	int rslt;
-
-	if (active)
-		imsg.addr = active->address;
-	else
-		imsg.addr.s_addr = INADDR_ANY;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
-	    &imsg, sizeof(imsg));
-	if (rslt == -1)
-		log_warn("sendhup: imsg_compose");
-
-	flush_unpriv_ibuf("sendhup");
 }
 
 /*
