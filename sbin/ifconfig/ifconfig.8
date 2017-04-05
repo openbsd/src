@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.280 2017/03/20 14:06:26 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.281 2017/04/05 08:45:33 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: April 5 2017 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -400,7 +400,7 @@ output from
 .Cm hwfeatures
 shows the maximum supported MTU.
 .It Cm netmask Ar mask
-(inet and inet6)
+(inet and inet6 only)
 Specify how much of the address to reserve for subdividing
 networks into subnetworks.
 The mask includes the network part of the local address
@@ -508,7 +508,7 @@ Disable automatic point-to-point link detection on
 .It Cm blocknonip Ar interface
 Mark
 .Ar interface
-so that no non-IPv4, IPv6, ARP, or Reverse
+so that only IPv4, IPv6, ARP, and Reverse
 ARP packets are accepted from it or forwarded to it from other
 bridge member interfaces.
 .It Cm -blocknonip Ar interface
@@ -1520,7 +1520,7 @@ Remove the trunk port
 Set the trunk protocol.
 Refer to
 .Xr trunk 4
-for a complete list of the available protocols,
+for a complete list of the available protocols.
 .El
 .Sh TUNNEL
 .nr nS 1
