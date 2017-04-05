@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.84 2017/04/05 14:48:48 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.85 2017/04/05 14:50:05 jca Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ rtsock_cb(int fd, short event, void *arg)
 void
 sock_cb(int fd, short event, void *arg)
 {
-	int i;
+	ssize_t len;
 	int *hlimp = NULL;
 	struct icmp6_hdr *icp;
 	int ifindex = 0;
@@ -478,7 +478,7 @@ sock_cb(int fd, short event, void *arg)
 	 * receive options.
 	 */
 	rcvmhdr.msg_controllen = rcvcmsgbuflen;
-	if ((i = recvmsg(sock, &rcvmhdr, 0)) < 0)
+	if ((len = recvmsg(sock, &rcvmhdr, 0)) < 0)
 		return;
 
 	/* extract optional information via Advanced API */
@@ -516,8 +516,8 @@ sock_cb(int fd, short event, void *arg)
 		return;
 	}
 
-	if (i < sizeof(struct icmp6_hdr)) {
-		log_warnx("packet size(%d) is too short", i);
+	if (len < sizeof(struct icmp6_hdr)) {
+		log_warnx("packet size(%zd) is too short", len);
 		return;
 	}
 
@@ -548,15 +548,14 @@ sock_cb(int fd, short event, void *arg)
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
-		if (i < sizeof(struct nd_router_solicit)) {
-			log_info("RS from %s on %s does not have enough "
-			    "length (len = %d)",
+		if (len < sizeof(struct nd_router_solicit)) {
+			log_info("RS from %s on %s too short (len = %zd)",
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
-			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
+			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), len);
 			return;
 		}
-		rs_input(i, (struct nd_router_solicit *)icp, pi, &from);
+		rs_input(len, (struct nd_router_solicit *)icp, pi, &from);
 		break;
 	case ND_ROUTER_ADVERT:
 		/*
@@ -581,15 +580,14 @@ sock_cb(int fd, short event, void *arg)
 			    if_indextoname(pi->ipi6_ifindex, ifnamebuf));
 			return;
 		}
-		if (i < sizeof(struct nd_router_advert)) {
-			log_info("RA from %s on %s does not have enough "
-			    "length (len = %d)",
+		if (len < sizeof(struct nd_router_advert)) {
+			log_info("RA from %s on %s too short (len = %zd)",
 			    inet_ntop(AF_INET6, &from.sin6_addr, ntopbuf,
 			    INET6_ADDRSTRLEN),
-			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), i);
+			    if_indextoname(pi->ipi6_ifindex, ifnamebuf), len);
 			return;
 		}
-		ra_input(i, (struct nd_router_advert *)icp, pi, &from);
+		ra_input(len, (struct nd_router_advert *)icp, pi, &from);
 		break;
 	default:
 		/*
@@ -1255,9 +1253,10 @@ ra_output(struct rainfo *rainfo)
 	    rainfo->ifname, rainfo->waiting);
 
 	len = sendmsg(sock, &sndmhdr, 0);
-
-	if (len < 0)
+	if (len < 0) {
 		log_warn("sendmsg on %s", rainfo->ifname);
+		return;
+	}
 
 	/* update counter */
 	if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)
