@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.132 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.133 2017/04/05 22:45:21 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -890,7 +890,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 	DPRINTF(("usbd_probe_and_attach trying device specific drivers\n"));
 	dv = config_found(parent, &uaa, usbd_print);
 	if (dv) {
-		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
+		dev->subdevs = mallocarray(2, sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL) {
 			err = USBD_NOMEM;
 			goto fail;
@@ -988,7 +988,7 @@ generic:
 	dv = config_found(parent, &uaa, usbd_print);
 	if (dv != NULL) {
 		if (dev->ndevs == 0) {
-			dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
+			dev->subdevs = mallocarray(2, sizeof dv, M_USB, M_NOWAIT);
 			if (dev->subdevs == NULL) {
 				err = USBD_NOMEM;
 				goto fail;
