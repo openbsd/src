@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.256 2017/03/24 14:45:00 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.257 2017/04/05 10:45:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -602,8 +602,17 @@ tty_emulate_repeat(struct tty *tty, enum tty_code_code code,
 static void
 tty_repeat_space(struct tty *tty, u_int n)
 {
-	while (n-- > 0)
-		tty_putc(tty, ' ');
+	static char s[500];
+
+	if (*s != ' ')
+		memset(s, ' ', sizeof s);
+
+	while (n > sizeof s) {
+		tty_putn(tty, s, sizeof s, sizeof s);
+		n -= sizeof s;
+	}
+	if (n != 0)
+		tty_putn(tty, s, n, n);
 }
 
 /*
@@ -856,8 +865,6 @@ tty_cmd_deletecharacter(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_clearcharacter(struct tty *tty, const struct tty_ctx *ctx)
 {
-	u_int	i;
-
 	tty_attributes(tty, &grid_default_cell, ctx->wp);
 
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
@@ -865,10 +872,8 @@ tty_cmd_clearcharacter(struct tty *tty, const struct tty_ctx *ctx)
 	if (tty_term_has(tty->term, TTYC_ECH) &&
 	    !tty_fake_bce(tty, ctx->wp, ctx->bg))
 		tty_putcode1(tty, TTYC_ECH, ctx->num);
-	else {
-		for (i = 0; i < ctx->num; i++)
-			tty_putc(tty, ' ');
-	}
+	else
+		tty_repeat_space(tty, ctx->num);
 }
 
 void
