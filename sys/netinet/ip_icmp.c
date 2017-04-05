@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.163 2017/02/07 22:30:16 jmatthew Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.164 2017/04/05 13:35:18 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -929,7 +929,7 @@ icmp_sysctl_icmpstat(void *oldp, size_t *oldlenp, void *newp)
 	int i;
 
 	CTASSERT(sizeof(icmpstat) == (nitems(counters) * sizeof(u_long)));
-
+	memset(&icmpstat, 0, sizeof icmpstat);
 	counters_read(icmpcounters, counters, nitems(counters));
 
 	for (i = 0; i < nitems(counters); i++)

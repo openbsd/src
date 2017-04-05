@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.146 2017/04/02 12:56:39 jca Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.147 2017/04/05 13:35:18 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -833,6 +833,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 
 #define ASSIGN(field)	do { tcpstat.field = counters[i++]; } while (0)
 
+	memset(&tcpstat, 0, sizeof tcpstat);
 	counters_read(tcpcounters, counters, nitems(counters));
 	ASSIGN(tcps_connattempt);
 	ASSIGN(tcps_accepts);

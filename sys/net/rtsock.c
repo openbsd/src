@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.235 2017/03/16 10:13:11 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.236 2017/04/05 13:35:18 deraadt Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1642,6 +1642,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		tableid = w.w_arg;
 		if (!rtable_exists(tableid))
 			return (ENOENT);
+		memset(&tableinfo, 0, sizeof tableinfo);
 		tableinfo.rti_tableid = tableid;
 		tableinfo.rti_domainid = rtable_l2(tableid);
 		error = sysctl_rdstruct(where, given, new,
@@ -1673,7 +1674,7 @@ sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
 	int i;
 
 	CTASSERT(sizeof(rtstat) == (nitems(counters) * sizeof(uint32_t)));
-
+	memset(&rtstat, 0, sizeof rtstat);
 	counters_read(rtcounters, counters, nitems(counters));
 
 	for (i = 0; i < nitems(counters); i++)

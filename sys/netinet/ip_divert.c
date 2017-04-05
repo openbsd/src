@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.45 2017/03/13 20:18:21 claudio Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.46 2017/04/05 13:35:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -344,7 +344,7 @@ divert_sysctl_divstat(void *oldp, size_t *oldlenp, void *newp)
 	int i;
 
 	CTASSERT(sizeof(divstat) == (nitems(counters) * sizeof(u_long)));
-
+	memset(&divstat, 0, sizeof divstat);
 	counters_read(divcounters, counters, nitems(counters));
 
 	for (i = 0; i < nitems(counters); i++)

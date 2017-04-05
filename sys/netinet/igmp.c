@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.64 2017/02/05 16:23:38 jca Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.65 2017/04/05 13:35:18 deraadt Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -707,7 +707,7 @@ igmp_sysctl_igmpstat(void *oldp, size_t *oldlenp, void *newp)
 	int i;
 
 	CTASSERT(sizeof(igmpstat) == (nitems(counters) * sizeof(u_long)));
-
+	memset(&igmpstat, 0, sizeof igmpstat);
 	counters_read(igmpcounters, counters, nitems(counters));
 
 	for (i = 0; i < nitems(counters); i++)
