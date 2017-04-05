@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.91 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.92 2017/04/05 03:59:13 deraadt Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -424,6 +424,7 @@ sysctl_clockrate(char *where, size_t *sizep, void *newp)
 	/*
 	 * Construct clockinfo structure.
 	 */
+	memset(&clkinfo, 0, sizeof clkinfo);
 	clkinfo.tick = tick;
 	clkinfo.tickadj = tickadj;
 	clkinfo.hz = hz;
