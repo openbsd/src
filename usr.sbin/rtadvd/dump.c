@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.22 2017/04/02 22:57:20 deraadt Exp $	*/
+/*	$OpenBSD: dump.c,v 1.23 2017/04/05 13:38:18 jca Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ rtadvd_dump(void)
 	int first;
 	struct timeval now, next;
 	char *origin, *vltime, *pltime, *flags;
-	char *vltimexpire=NULL, *pltimexpire=NULL;
+	char *vltimexpire, *pltimexpire;
 	char ctimebuf[26];
 
 	gettimeofday(&now, NULL);
@@ -186,16 +186,23 @@ rtadvd_dump(void)
 			default:
 				origin = "";
 			}
-			if (pfx->vltimeexpire != 0)
+			if (pfx->vltimeexpire != 0) {
 				/* truncate to onwire value */
-				asprintf(&vltimexpire, "(decr,expire %u)",
+				if (asprintf(&vltimexpire, "(decr,expire %u)",
 				    (u_int32_t)(pfx->vltimeexpire > now.tv_sec ?
-				    pfx->vltimeexpire - now.tv_sec : 0));
-			if (pfx->pltimeexpire != 0)
+				    pfx->vltimeexpire - now.tv_sec : 0)) == -1)
+					vltimexpire = NULL;
+			} else
+				vltimexpire = NULL;
+
+			if (pfx->pltimeexpire != 0) {
 				/* truncate to onwire value */
-				asprintf(&pltimexpire, "(decr,expire %u)",
+				if (asprintf(&pltimexpire, "(decr,expire %u)",
 				    (u_int32_t)(pfx->pltimeexpire > now.tv_sec ?
-				    pfx->pltimeexpire - now.tv_sec : 0));
+				    pfx->pltimeexpire - now.tv_sec : 0)) == -1)
+					pltimexpire = NULL;
+			} else
+				pltimexpire = NULL;
 
 			vltime = lifetime(pfx->validlifetime);
 			pltime = lifetime(pfx->preflifetime);
