@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.323 2017/04/05 04:00:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.324 2017/04/05 04:15:44 guenther Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -370,6 +370,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_clockrate(oldp, oldlenp, newp));
 	case KERN_BOOTTIME: {
 		struct timeval bt;
+		memset(&bt, 0, sizeof bt);
 		TIMESPEC_TO_TIMEVAL(&bt, &boottime);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
 	  }
