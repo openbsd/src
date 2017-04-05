@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.54 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.55 2017/04/05 10:45:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,7 +28,7 @@
 
 #include "tmux.h"
 
-char		 *cfg_file;
+static char	 *cfg_file;
 int		  cfg_finished;
 static char	**cfg_causes;
 static u_int	  cfg_ncauses;
