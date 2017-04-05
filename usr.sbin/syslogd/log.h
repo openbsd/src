@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2017/03/16 23:55:19 bluhm Exp $	*/
+/*	$OpenBSD: log.h,v 1.2 2017/04/05 11:31:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,8 @@ void	log_warnx(const char *, ...)
 void	log_info(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	log_debug(const char *, ...)
+	    __attribute__((__format__ (printf, 1, 2)));
+void	log_debugadd(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));

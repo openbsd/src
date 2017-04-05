@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2017/03/16 23:55:19 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2017/04/05 11:31:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,8 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
@@ -30,6 +32,8 @@ static int		 debug;
 static int		 verbose;
 static int		 facility;
 static const char	*log_procname;
+static char		*debug_ebuf;
+static size_t		 debug_length;
 
 void
 log_init(int n_debug, int fac)
@@ -40,6 +44,12 @@ log_init(int n_debug, int fac)
 	verbose = n_debug;
 	facility = fac;
 	log_procinit(__progname);
+
+	if (debug_ebuf == NULL)
+		if ((debug_ebuf = malloc(ERRBUFSIZE)) == NULL)
+			err(1, "allocate debug buffer");
+	debug_ebuf[0] = '\0';
+	debug_length = 0;
 
 	tzset();
 }
@@ -150,16 +160,42 @@ log_info(int pri, const char *emsg, ...)
 void
 log_debug(const char *emsg, ...)
 {
-	char	 ebuf[ERRBUFSIZE];
 	va_list	 ap;
 	int	 saved_errno;
 
 	if (verbose) {
 		saved_errno = errno;
 		va_start(ap, emsg);
-		vsnprintf(ebuf, sizeof(ebuf), emsg, ap);
-		fprintf(stderr, "%s\n", ebuf);
+		if (debug_length < ERRBUFSIZE - 1)
+			vsnprintf(debug_ebuf + debug_length,
+			    ERRBUFSIZE - debug_length, emsg, ap);
+		fprintf(stderr, "%s\n", debug_ebuf);
 		fflush(stderr);
+		va_end(ap);
+		errno = saved_errno;
+	}
+	debug_ebuf[0] = '\0';
+	debug_length = 0;
+}
+
+void
+log_debugadd(const char *emsg, ...)
+{
+	size_t	 l;
+	va_list	 ap;
+	int	 saved_errno;
+
+	if (verbose) {
+		saved_errno = errno;
+		va_start(ap, emsg);
+		if (debug_length < ERRBUFSIZE - 1) {
+			l = vsnprintf(debug_ebuf + debug_length,
+			    ERRBUFSIZE - debug_length, emsg, ap);
+			if (l < ERRBUFSIZE - debug_length)
+				debug_length += l;
+			else
+				debug_length = ERRBUFSIZE - 1;
+		}
 		va_end(ap);
 		errno = saved_errno;
 	}

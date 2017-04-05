@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.13 2017/03/24 16:24:36 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.14 2017/04/05 11:31:45 bluhm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "syslogd.h"
 
 #ifndef nitems
@@ -139,7 +140,7 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 				    "%s: too many delayed writes", device);
 				goto error;
 			}
-			logdebug("ttymsg delayed write\n");
+			log_debug("ttymsg delayed write");
 			if (iov != localiov) {
 				memmove(localiov, iov,
 				    iovcnt * sizeof(struct iovec));

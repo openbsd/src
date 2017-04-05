@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.27 2017/03/16 23:55:19 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.28 2017/04/05 11:31:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -50,7 +50,6 @@ extern char *path_ctlsock;
 
 #define MAXLINE		8192		/* maximum line length */
 #define ERRBUFSIZE	256
-void logdebug(const char *, ...) __attribute__((__format__ (printf, 1, 2)));
 void vlogmsg(int pri, const char *, const char *, va_list);
 __dead void die(int);
 extern int Debug;

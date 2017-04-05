@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.234 2017/04/05 00:35:02 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.235 2017/04/05 11:31:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -553,7 +553,7 @@ main(int argc, char *argv[])
 	if (path_ctlsock != NULL) {
 		fd_ctlsock = unix_socket(path_ctlsock, SOCK_STREAM, 0600);
 		if (fd_ctlsock == -1) {
-			logdebug("can't open %s (%d)\n", path_ctlsock, errno);
+			log_debug("can't open %s (%d)", path_ctlsock, errno);
 		} else {
 			if (listen(fd_ctlsock, 5) == -1) {
 				logerror("ctlsock listen");
@@ -564,10 +564,10 @@ main(int argc, char *argv[])
 	}
 
 	if ((fd_klog = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
-		logdebug("can't open %s (%d)\n", _PATH_KLOG, errno);
+		log_debug("can't open %s (%d)", _PATH_KLOG, errno);
 	} else if (fd_sendsys != -1) {
 		if (ioctl(fd_klog, LIOCSFD, &pair[1]) == -1)
-			logdebug("LIOCSFD errno %d\n", errno);
+			log_debug("LIOCSFD errno %d", errno);
 	}
 	if (fd_sendsys != -1)
 		close(pair[1]);
@@ -599,7 +599,7 @@ main(int argc, char *argv[])
 				/* avoid reading default certs in chroot */
 				tls_config_set_ca_mem(client_config, "", 0);
 			} else
-				logdebug("CAfile %s\n", CAfile);
+				log_debug("CAfile %s", CAfile);
 		}
 		if (ClientCertfile && ClientKeyfile) {
 			if (tls_config_set_cert_file(client_config,
@@ -607,14 +607,14 @@ main(int argc, char *argv[])
 				logerrortlsconf("Load client TLS cert failed",
 				    client_config);
 			else
-				logdebug("ClientCertfile %s\n", ClientCertfile);
+				log_debug("ClientCertfile %s", ClientCertfile);
 
 			if (tls_config_set_key_file(client_config,
 			    ClientKeyfile) == -1)
 				logerrortlsconf("Load client TLS key failed",
 				    client_config);
 			else
-				logdebug("ClientKeyfile %s\n", ClientKeyfile);
+				log_debug("ClientKeyfile %s", ClientKeyfile);
 		} else if (ClientCertfile || ClientKeyfile) {
 			logerrorx("options -c and -k must be used together");
 		}
@@ -642,7 +642,7 @@ main(int argc, char *argv[])
 				free(p);
 				continue;
 			}
-			logdebug("Keyfile %s\n", p);
+			log_debug("Keyfile %s", p);
 			free(p);
 			if (asprintf(&p, "/etc/ssl/%s.crt", names[i]) == -1)
 				continue;
@@ -652,7 +652,7 @@ main(int argc, char *argv[])
 				free(p);
 				continue;
 			}
-			logdebug("Certfile %s\n", p);
+			log_debug("Certfile %s", p);
 			free(p);
 			break;
 		}
@@ -665,7 +665,7 @@ main(int argc, char *argv[])
 				/* avoid reading default certs in chroot */
 				tls_config_set_ca_mem(server_config, "", 0);
 			} else
-				logdebug("Server CAfile %s\n", ServerCAfile);
+				log_debug("Server CAfile %s", ServerCAfile);
 			tls_config_verify_client(server_config);
 		}
 		if (tls_config_set_protocols(server_config,
@@ -684,7 +684,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	logdebug("off & running....\n");
+	log_debug("off & running....");
 
 	if (!Debug && !Foreground) {
 		char c;
@@ -844,7 +844,7 @@ main(int argc, char *argv[])
 	evtimer_add(ev_mark, &to);
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: start", LocalHostName, ADDDATE);
-	logdebug("syslogd: started\n");
+	log_debug("syslogd: started");
 
 	sigemptyset(&sigmask);
 	if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
@@ -929,7 +929,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 		    sizeof(hostname), servname, sizeof(servname),
 		    NI_NUMERICHOST | NI_NUMERICSERV |
 		    (res->ai_socktype == SOCK_DGRAM ? NI_DGRAM : 0)) != 0) {
-			logdebug("Malformed bind address\n");
+			log_debug("Malformed bind address");
 			hostname[0] = servname[0] = '\0';
 		}
 		if (shutread && shutdown(*fdp, SHUT_RD) == -1) {
@@ -1014,7 +1014,7 @@ udp_readcb(int fd, short event, void *arg)
 
 		linebuf[n] = '\0';
 		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
-		logdebug("cvthname res: %s\n", resolve);
+		log_debug("cvthname res: %s", resolve);
 		printline(resolve, linebuf);
 	} else if (n < 0 && errno != EINTR && errno != EWOULDBLOCK)
 		logerror("recvfrom udp");
@@ -1046,7 +1046,7 @@ reserve_accept4(int lfd, int event, struct event *ev,
 	int		 afd;
 
 	if (event & EV_TIMEOUT) {
-		logdebug("Listen again\n");
+		log_debug("Listen again");
 		/* Enable the listen event, there is no timeout anymore. */
 		event_set(ev, lfd, EV_READ|EV_PERSIST, cb, ev);
 		event_add(ev, NULL);
@@ -1109,17 +1109,17 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 			logerror("accept tcp socket");
 		return;
 	}
-	logdebug("Accepting tcp connection\n");
+	log_debug("Accepting tcp connection");
 
 	if (getnameinfo((struct sockaddr *)&ss, sslen, hostname,
 	    sizeof(hostname), servname, sizeof(servname),
 	    NI_NUMERICHOST | NI_NUMERICSERV) != 0 ||
 	    asprintf(&peername, ss.ss_family == AF_INET6 ?
 	    "[%s]:%s" : "%s:%s", hostname, servname) == -1) {
-		logdebug("Malformed accept address\n");
+		log_debug("Malformed accept address");
 		peername = hostname_unknown;
 	}
-	logdebug("Peer addresss and port %s\n", peername);
+	log_debug("Peer addresss and port %s", peername);
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		snprintf(ebuf, sizeof(ebuf), "malloc \"%s\"", peername);
 		logerror(ebuf);
@@ -1148,18 +1148,18 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 		}
 		buffertls_set(&p->p_buftls, p->p_bufev, p->p_ctx, fd);
 		buffertls_accept(&p->p_buftls, fd);
-		logdebug("tcp accept callback: tls context success\n");
+		log_debug("tcp accept callback: tls context success");
 	}
 	if (!NoDNS && peername != hostname_unknown &&
 	    priv_getnameinfo((struct sockaddr *)&ss, ss.ss_len, hostname,
 	    sizeof(hostname)) != 0) {
-		logdebug("Host name for accept address (%s) unknown\n",
+		log_debug("Host name for accept address (%s) unknown",
 		    hostname);
 	}
 	if (peername == hostname_unknown ||
 	    (p->p_hostname = strdup(hostname)) == NULL)
 		p->p_hostname = hostname_unknown;
-	logdebug("Peer hostname %s\n", hostname);
+	log_debug("Peer hostname %s", hostname);
 	p->p_peername = peername;
 	bufferevent_enable(p->p_bufev, EV_READ);
 
@@ -1200,7 +1200,7 @@ octet_counting(struct evbuffer *evbuf, char **msg, int drain)
 	/* Using atoi() is safe as buf starts with 1 to 5 digits and a space. */
 	len = atoi(buf);
 	if (drain)
-		logdebug(" octet counting %d", len);
+		log_debugadd(" octet counting %d", len);
 	if (p + len > end)
 		return (0);
 	if (drain)
@@ -1231,7 +1231,7 @@ non_transparent_framing(struct evbuffer *evbuf, char **msg)
 	}
 	if (p + 1 - buf >= INT_MAX)
 		return (-1);
-	logdebug(" non transparent framing");
+	log_debugadd(" non transparent framing");
 	if (p >= end)
 		return (0);
 	/*
@@ -1253,19 +1253,19 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 	int			 len;
 
 	while (EVBUFFER_LENGTH(bufev->input) > 0) {
-		logdebug("%s logger \"%s\"", p->p_ctx ? "tls" : "tcp",
+		log_debugadd("%s logger \"%s\"", p->p_ctx ? "tls" : "tcp",
 		    p->p_peername);
 		msg = NULL;
 		len = octet_counting(bufev->input, &msg, 1);
 		if (len < 0)
 			len = non_transparent_framing(bufev->input, &msg);
 		if (len < 0)
-			logdebug("unknown method");
+			log_debugadd("unknown method");
 		if (msg == NULL) {
-			logdebug(", incomplete frame");
+			log_debugadd(", incomplete frame");
 			break;
 		}
-		logdebug(", use %d bytes\n", len);
+		log_debug(", use %d bytes", len);
 		if (len > 0 && msg[len-1] == '\n')
 			msg[len-1] = '\0';
 		if (len == 0 || msg[len-1] != '\0') {
@@ -1278,11 +1278,11 @@ tcp_readcb(struct bufferevent *bufev, void *arg)
 	}
 	/* Maximum frame has 5 digits, 1 space, MAXLINE chars, 1 new line. */
 	if (EVBUFFER_LENGTH(bufev->input) >= 5 + 1 + MAXLINE + 1) {
-		logdebug(", use %zu bytes\n", EVBUFFER_LENGTH(bufev->input));
+		log_debug(", use %zu bytes", EVBUFFER_LENGTH(bufev->input));
 		printline(p->p_hostname, EVBUFFER_DATA(bufev->input));
 		evbuffer_drain(bufev->input, -1);
 	} else if (EVBUFFER_LENGTH(bufev->input) > 0)
-		logdebug(", buffer %zu bytes\n", EVBUFFER_LENGTH(bufev->input));
+		log_debug(", buffer %zu bytes", EVBUFFER_LENGTH(bufev->input));
 }
 
 void
@@ -1346,7 +1346,7 @@ tcp_dropcb(struct bufferevent *bufev, void *arg)
 	/*
 	 * Drop data received from the forward log server.
 	 */
-	logdebug("loghost \"%s\" did send %zu bytes back\n",
+	log_debug("loghost \"%s\" did send %zu bytes back",
 	    f->f_un.f_forw.f_loghost, EVBUFFER_LENGTH(bufev->input));
 	evbuffer_drain(bufev->input, -1);
 }
@@ -1360,7 +1360,7 @@ tcp_writecb(struct bufferevent *bufev, void *arg)
 	/*
 	 * Successful write, connection to server is good, reset wait time.
 	 */
-	logdebug("loghost \"%s\" successful write\n", f->f_un.f_forw.f_loghost);
+	log_debug("loghost \"%s\" successful write", f->f_un.f_forw.f_loghost);
 	f->f_un.f_forw.f_reconnectwait = 0;
 
 	if (f->f_un.f_forw.f_dropped > 0 &&
@@ -1392,7 +1392,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		    "syslogd: loghost \"%s\" connection error: %s",
 		    f->f_un.f_forw.f_loghost, f->f_un.f_forw.f_ctx ?
 		    tls_error(f->f_un.f_forw.f_ctx) : strerror(errno));
-	logdebug("%s\n", ebuf);
+	log_debug("%s", ebuf);
 
 	/* The SIGHUP handler may also close the socket, so invalidate it. */
 	if (f->f_un.f_forw.f_ctx) {
@@ -1421,7 +1421,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		/* Without '\n' discard everything. */
 		if (p == end)
 			evbuffer_drain(bufev->output, -1);
-		logdebug("loghost \"%s\" dropped partial message\n",
+		log_debug("loghost \"%s\" dropped partial message",
 		    f->f_un.f_forw.f_loghost);
 		f->f_un.f_forw.f_dropped++;
 	}
@@ -1444,7 +1444,7 @@ tcp_connectcb(int fd, short event, void *arg)
 		tcp_connect_retry(bufev, f);
 		return;
 	}
-	logdebug("tcp connect callback: socket success, event %#x\n", event);
+	log_debug("tcp connect callback: socket success, event %#x", event);
 	f->f_file = s;
 
 	bufferevent_setfd(bufev, s);
@@ -1476,7 +1476,7 @@ tcp_connectcb(int fd, short event, void *arg)
 			logerrorctx(ebuf, f->f_un.f_forw.f_ctx);
 			goto error;
 		}
-		logdebug("tcp connect callback: tls context success\n");
+		log_debug("tcp connect callback: tls context success");
 
 		buffertls_set(&f->f_un.f_forw.f_buftls, bufev,
 		    f->f_un.f_forw.f_ctx, s);
@@ -1509,7 +1509,7 @@ tcp_connect_retry(struct bufferevent *bufev, struct filed *f)
 	to.tv_sec = f->f_un.f_forw.f_reconnectwait;
 	to.tv_usec = 0;
 
-	logdebug("tcp connect retry: wait %d\n",
+	log_debug("tcp connect retry: wait %d",
 	    f->f_un.f_forw.f_reconnectwait);
 	bufferevent_setfd(bufev, -1);
 	/* We can reuse the write event as bufferevent is disabled. */
@@ -1665,7 +1665,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 	char timestamp[33];
 	char prog[NAME_MAX+1];
 
-	logdebug("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
+	log_debug("logmsg: pri 0%o, flags 0x%x, from %s, msg %s",
 	    pri, flags, from, msg);
 
 	/*
@@ -1819,7 +1819,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 			strlcpy(f->f_lasttime, timestamp,
 			    sizeof(f->f_lasttime));
 			f->f_prevcount++;
-			logdebug("msg repeated %d times, %ld sec of %d\n",
+			log_debug("msg repeated %d times, %ld sec of %d",
 			    f->f_prevcount, (long)(now.tv_sec - f->f_time),
 			    repeatinterval[f->f_repeatcount]);
 			/*
@@ -1927,16 +1927,16 @@ fprintlog(struct filed *f, int flags, char *msg)
 	}
 	v++;
 
-	logdebug("Logging to %s", TypeNames[f->f_type]);
+	log_debugadd("Logging to %s", TypeNames[f->f_type]);
 	f->f_time = now.tv_sec;
 
 	switch (f->f_type) {
 	case F_UNUSED:
-		logdebug("\n");
+		log_debug("%s", "");
 		break;
 
 	case F_FORWUDP:
-		logdebug(" %s\n", f->f_un.f_forw.f_loghost);
+		log_debug(" %s", f->f_un.f_forw.f_loghost);
 		l = snprintf(line, MINIMUM(MAX_UDPMSG + 1, sizeof(line)),
 		    "<%d>%.32s %s%s%s", f->f_prevpri, (char *)iov[0].iov_base,
 		    IncludeHostname ? LocalHostName : "",
@@ -1966,10 +1966,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORWTCP:
 	case F_FORWTLS:
-		logdebug(" %s", f->f_un.f_forw.f_loghost);
+		log_debugadd(" %s", f->f_un.f_forw.f_loghost);
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
 		    MAX_TCPBUF) {
-			logdebug(" (dropped)\n");
+			log_debug(" (dropped)");
 			f->f_un.f_forw.f_dropped++;
 			break;
 		}
@@ -1985,7 +1985,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    IncludeHostname ? LocalHostName : "",
 		    IncludeHostname ? " " : "");
 		if (l < 0) {
-			logdebug(" (dropped snprintf)\n");
+			log_debug(" (dropped snprintf)");
 			f->f_un.f_forw.f_dropped++;
 			break;
 		}
@@ -1997,17 +1997,17 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    IncludeHostname ? " " : "",
 		    (char *)iov[4].iov_base);
 		if (l < 0) {
-			logdebug(" (dropped evbuffer_add_printf)\n");
+			log_debug(" (dropped evbuffer_add_printf)");
 			f->f_un.f_forw.f_dropped++;
 			break;
 		}
 		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_WRITE);
-		logdebug("\n");
+		log_debug("%s", "");
 		break;
 
 	case F_CONSOLE:
 		if (flags & IGN_CONS) {
-			logdebug(" (ignored)\n");
+			log_debug(" (ignored)");
 			break;
 		}
 		/* FALLTHROUGH */
@@ -2015,7 +2015,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 	case F_TTY:
 	case F_FILE:
 	case F_PIPE:
-		logdebug(" %s\n", f->f_un.f_fname);
+		log_debug(" %s", f->f_un.f_fname);
 		if (f->f_type != F_FILE && f->f_type != F_PIPE) {
 			v->iov_base = "\r\n";
 			v->iov_len = 2;
@@ -2079,14 +2079,14 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_USERS:
 	case F_WALL:
-		logdebug("\n");
+		log_debug("%s", "");
 		v->iov_base = "\r\n";
 		v->iov_len = 2;
 		wallmsg(f, iov);
 		break;
 
 	case F_MEMBUF:
-		logdebug("\n");
+		log_debug("%s", "");
 		snprintf(line, sizeof(line), "%.32s %s %s",
 		    (char *)iov[0].iov_base, (char *)iov[2].iov_base,
 		    (char *)iov[4].iov_base);
@@ -2156,16 +2156,16 @@ cvthname(struct sockaddr *f, char *result, size_t res_len)
 {
 	if (getnameinfo(f, f->sa_len, result, res_len, NULL, 0,
 	    NI_NUMERICHOST|NI_NUMERICSERV|NI_DGRAM) != 0) {
-		logdebug("Malformed from address\n");
+		log_debug("Malformed from address");
 		strlcpy(result, hostname_unknown, res_len);
 		return;
 	}
-	logdebug("cvthname(%s)\n", result);
+	log_debug("cvthname(%s)", result);
 	if (NoDNS)
 		return;
 
 	if (priv_getnameinfo(f, f->sa_len, result, res_len) != 0)
-		logdebug("Host name for from address (%s) unknown\n", result);
+		log_debug("Host name for from address (%s) unknown", result);
 }
 
 void
@@ -2196,7 +2196,7 @@ init_signalcb(int signum, short event, void *arg)
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart",
 	    LocalHostName, ADDDATE);
-	logdebug("syslogd: restarted\n");
+	log_debug("syslogd: restarted");
 
 	if (tcpbuf_dropped > 0) {
 		snprintf(ebuf, sizeof(ebuf),
@@ -2210,19 +2210,7 @@ init_signalcb(int signum, short event, void *arg)
 void
 logevent(int severity, const char *msg)
 {
-	logdebug("libevent: [%d] %s\n", severity, msg);
-}
-
-void
-logdebug(const char *fmt, ...)
-{
-	va_list ap;
-
-	if (Debug) {
-		va_start(ap, fmt);
-		vprintf(fmt, ap);
-		va_end(ap);
-	}
+	log_debug("libevent: [%d] %s", severity, msg);
 }
 
 void
@@ -2260,7 +2248,7 @@ logerror_reason(const char *message, const char *reason)
 	else
 		(void)snprintf(ebuf, sizeof(ebuf), "syslogd: %s", message);
 	errno = 0;
-	logdebug("%s\n", ebuf);
+	log_debug("%s", ebuf);
 	if (Startup)
 		fprintf(stderr, "%s\n", ebuf);
 	else
@@ -2296,12 +2284,12 @@ die(int signo)
 	}
 
 	if (signo) {
-		logdebug("syslogd: exiting on signal %d\n", signo);
+		log_debug("syslogd: exiting on signal %d", signo);
 		(void)snprintf(ebuf, sizeof(ebuf), "exiting on signal %d",
 		    signo);
 		logerrorx(ebuf);
 	}
-	logdebug("[unpriv] syslogd child about to exit\n");
+	log_debug("[unpriv] syslogd child about to exit");
 	exit(0);
 }
 
@@ -2318,11 +2306,11 @@ init(void)
 	int i;
 	size_t s;
 
-	logdebug("init\n");
+	log_debug("init");
 
 	/* If config file has been modified, then just die to restart */
 	if (priv_config_modified()) {
-		logdebug("config file changed: dying\n");
+		log_debug("config file changed: dying");
 		die(0);
 	}
 
@@ -2363,7 +2351,7 @@ init(void)
 		if (f->f_type == F_MEMBUF) {
 			f->f_program = NULL;
 			f->f_hostname = NULL;
-			logdebug("add %p to mb\n", f);
+			log_debug("add %p to mb", f);
 			SIMPLEQ_INSERT_HEAD(&mb, f, f_next);
 		} else
 			free(f);
@@ -2372,7 +2360,7 @@ init(void)
 
 	/* open the configuration file */
 	if ((cf = priv_open_config()) == NULL) {
-		logdebug("cannot open %s\n", ConfFile);
+		log_debug("cannot open %s", ConfFile);
 		SIMPLEQ_INSERT_TAIL(&Files,
 		    cfline("*.ERR\t/dev/console", "*", "*"), f_next);
 		SIMPLEQ_INSERT_TAIL(&Files,
@@ -2439,7 +2427,7 @@ init(void)
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		if (f->f_type != F_MEMBUF)
 			continue;
-		logdebug("Initialize membuf %s at %p\n",
+		log_debug("Initialize membuf %s at %p",
 		    f->f_un.f_mb.f_mname, f);
 
 		SIMPLEQ_FOREACH(m, &mb, f_next) {
@@ -2450,14 +2438,14 @@ init(void)
 				break;
 		}
 		if (m == NULL) {
-			logdebug("Membuf no match\n");
+			log_debug("Membuf no match");
 			f->f_un.f_mb.f_rb = ringbuf_init(f->f_un.f_mb.f_len);
 			if (f->f_un.f_mb.f_rb == NULL) {
 				f->f_type = F_UNUSED;
 				logerror("Failed to allocate membuf");
 			}
 		} else {
-			logdebug("Membuf match f:%p, m:%p\n", f, m);
+			log_debug("Membuf match f:%p, m:%p", f, m);
 			f->f_un = m->f_un;
 			m->f_un.f_mb.f_rb = NULL;
 		}
@@ -2471,7 +2459,7 @@ init(void)
 			logerrorx("Mismatched membuf");
 			ringbuf_free(m->f_un.f_mb.f_rb);
 		}
-		logdebug("Freeing membuf %p\n", m);
+		log_debug("Freeing membuf %p", m);
 
 		free(m);
 	}
@@ -2545,7 +2533,7 @@ find_dup(struct filed *f)
 			if (strcmp(list->f_un.f_fname, f->f_un.f_fname) == 0 &&
 			    progmatches(list->f_program, f->f_program) &&
 			    progmatches(list->f_hostname, f->f_hostname)) {
-				logdebug("duplicate %s\n", f->f_un.f_fname);
+				log_debug("duplicate %s", f->f_un.f_fname);
 				return (list);
 			}
 			break;
@@ -2554,7 +2542,7 @@ find_dup(struct filed *f)
 			    f->f_un.f_mb.f_mname) == 0 &&
 			    progmatches(list->f_program, f->f_program) &&
 			    progmatches(list->f_hostname, f->f_hostname)) {
-				logdebug("duplicate membuf %s\n",
+				log_debug("duplicate membuf %s",
 				    f->f_un.f_mb.f_mname);
 				return (list);
 			}
@@ -2577,7 +2565,7 @@ cfline(char *line, char *progblock, char *hostblock)
 	struct filed *xf, *f, *d;
 	struct timeval to;
 
-	logdebug("cfline(\"%s\", f, \"%s\", \"%s\")\n",
+	log_debug("cfline(\"%s\", f, \"%s\", \"%s\")",
 	    line, progblock, hostblock);
 
 	if ((f = calloc(1, sizeof(*f))) == NULL) {
@@ -2935,7 +2923,7 @@ getmsgbufsize(void)
 	mib[1] = KERN_MSGBUFSIZE;
 	size = sizeof msgbufsize;
 	if (sysctl(mib, 2, &msgbufsize, &size, NULL, 0) == -1) {
-		logdebug("couldn't get kern.msgbufsize\n");
+		log_debug("couldn't get kern.msgbufsize");
 		return (0);
 	}
 	return (msgbufsize);
@@ -2979,7 +2967,7 @@ markit(void)
 
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		if (f->f_prevcount && now.tv_sec >= REPEATTIME(f)) {
-			logdebug("flush %s: repeated %d times, %d sec.\n",
+			log_debug("flush %s: repeated %d times, %d sec",
 			    TypeNames[f->f_type], f->f_prevcount,
 			    repeatinterval[f->f_repeatcount]);
 			fprintlog(f, 0, (char *)NULL);
@@ -3112,7 +3100,7 @@ ctlsock_acceptcb(int fd, short event, void *arg)
 			logerror("accept ctlsock");
 		return;
 	}
-	logdebug("Accepting control connection\n");
+	log_debug("Accepting control connection");
 
 	if (fd_ctlconn != -1)
 		ctlconn_cleanup();
@@ -3198,7 +3186,7 @@ ctlconn_readcb(int fd, short event, void *arg)
 	memset(reply_hdr, '\0', sizeof(*reply_hdr));
 
 	ctl_cmd.cmd = ntohl(ctl_cmd.cmd);
-	logdebug("ctlcmd %x logname \"%s\"\n", ctl_cmd.cmd, ctl_cmd.logname);
+	log_debug("ctlcmd %x logname \"%s\"", ctl_cmd.cmd, ctl_cmd.logname);
 
 	switch (ctl_cmd.cmd) {
 	case CMD_READ:
@@ -3263,7 +3251,7 @@ ctlconn_readcb(int fd, short event, void *arg)
 	reply_hdr->flags = htonl(flags);
 
 	ctl_reply_size = CTL_REPLY_SIZE;
-	logdebug("ctlcmd reply length %lu\n", (u_long)ctl_reply_size);
+	log_debug("ctlcmd reply length %lu", (u_long)ctl_reply_size);
 
 	/* Otherwise, set up to write out reply */
 	ctl_state = (ctl_cmd.cmd == CMD_READ_CONT) ?
