@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.29 2015/05/08 19:12:51 miod Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.30 2017/04/06 17:33:39 jmc Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -71,9 +71,8 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-an]\n"
 	    "       %s [-n] [-f file] name ...\n"
-	    "       %s [-n] [-f file] name=value ...\n"
-	    "       %s [-n] [-f file] name+=value ...\n",
-	    __progname, __progname, __progname, __progname);
+	    "       %s [-n] [-f file] name=value ...\n",
+	    __progname, __progname, __progname);
 	exit(1);
 }
 
