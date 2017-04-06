@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.91 2016/09/27 12:32:26 fcambus Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.92 2017/04/06 14:25:18 dhill Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -90,7 +90,7 @@ spd_table_add(unsigned int rtableid)
 			return (NULL);
 
 		if (spd_tables != NULL) {
-			bcopy(spd_tables, p, sizeof(*rnh) * (spd_table_max+1));
+			memcpy(p, spd_tables, sizeof(*rnh) * (spd_table_max+1));
 			free(spd_tables, M_RTABLE, 0);
 		}
 		spd_tables = p;
@@ -672,7 +672,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	if (ipa == NULL)
 		return ENOMEM;
 
-	bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
+	ipa->ipa_addr = *gw;
 
 	timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
 

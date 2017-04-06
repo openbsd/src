@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.145 2017/02/28 09:59:34 mpi Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.146 2017/04/06 14:25:18 dhill Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -518,8 +518,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		}
 
 		tdbi = (struct tdb_ident *)(mtag + 1);
-		bcopy(&tdbp->tdb_dst, &tdbi->dst,
-		    sizeof(union sockaddr_union));
+		tdbi->dst = tdbp->tdb_dst;
 		tdbi->proto = tdbp->tdb_sproto;
 		tdbi->spi = tdbp->tdb_spi;
 		tdbi->rdomain = tdbp->tdb_rdomain;
@@ -739,7 +738,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 		dst.sin_len = sizeof(struct sockaddr_in);
 		dst.sin_addr.s_addr = ip->ip_dst.s_addr;
 
-		bcopy((caddr_t)ip + hlen, &spi, sizeof(u_int32_t));
+		memcpy(&spi, (caddr_t)ip + hlen, sizeof(u_int32_t));
 
 		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
 		    proto);
