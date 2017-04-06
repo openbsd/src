@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.218 2017/03/28 16:56:38 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.219 2017/04/06 08:39:47 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1738,8 +1738,8 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 				    oldsize);
 		}
 	} else if (oldsize != sz - mopts.malloc_guard)
-		wrterror(pool, "recorded old size %zu != %zu", oldsize,
-		    sz - mopts.malloc_guard);
+		wrterror(pool, "recorded old size %zu != %zu",
+		    sz - mopts.malloc_guard, oldsize);
 
 	newptr = omalloc(pool, newsize, 0, f);
 	if (newptr == NULL)
