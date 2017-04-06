@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.67 2017/03/15 18:06:18 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.68 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -103,7 +103,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
 	int			 res = 0, cmd = 0, verbose;
-	struct vmd_vm		*vm;
+	struct vmd_vm		*vm = NULL;
 	struct vm_terminate_params vtp;
 	struct vmop_result	 vmr;
 	uint32_t		 id = 0;
@@ -133,6 +133,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_START_VM_END:
 		res = vmm_start_vm(imsg, &id);
+		/* Check if the ID can be mapped correctly */
+		if ((id = vm_id2vmid(id, NULL)) == 0)
+			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
@@ -140,7 +143,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vtp, imsg->data, sizeof(vtp));
 		id = vtp.vtp_vm_id;
 
-		if ((vm = vm_getbyid(id)) != NULL &&
+		if (id == 0) {
+			res = ENOENT;
+		} else if ((vm = vm_getbyvmid(id)) != NULL &&
 		    vm->vm_shutdown == 0) {
 			log_debug("%s: sending shutdown request to vm %d",
 			    __func__, id);
@@ -160,6 +165,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				res = 0;
 		} else {
 			/* Terminate VMs that are unknown or shutting down */
+			vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
 			res = terminate_vm(&vtp);
 			vm_remove(vm);
 		}
@@ -206,6 +212,8 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if ((vm = vm_getbyvmid(imsg->hdr.peerid)) != NULL)
 				vm_remove(vm);
 		}
+		if (id == 0)
+			id = imsg->hdr.peerid;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
@@ -265,16 +273,16 @@ vmm_sighdlr(int sig, short event, void *arg)
 				if (terminate_vm(&vtp) == 0) {
 					memset(&vmr, 0, sizeof(vmr));
 					vmr.vmr_result = ret;
-					vmr.vmr_id = vmid;
+					vmr.vmr_id = vm_id2vmid(vmid, vm);
 					if (proc_compose_imsg(ps, PROC_PARENT,
 					    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
 					    0, -1, &vmr, sizeof(vmr)) == -1)
 						log_warnx("could not signal "
 						    "termination of VM %u to "
-						    "parent", vmid);
+						    "parent", vm->vm_vmid);
 				} else
 					log_warnx("could not terminate VM %u",
-					    vmid);
+					    vm->vm_vmid);
 
 				vm_remove(vm);
 			} else
@@ -298,7 +306,7 @@ vmm_shutdown(void)
 	struct vmd_vm *vm, *vm_next;
 
 	TAILQ_FOREACH_SAFE(vm, env->vmd_vms, vm_entry, vm_next) {
-		vtp.vtp_vm_id = vm->vm_params.vmc_params.vcp_id;
+		vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
 
 		/* XXX suspend or request graceful shutdown */
 		(void)terminate_vm(&vtp);
@@ -370,11 +378,9 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		if (n == 0)
 			break;
 
-#if DEBUG > 1
-		log_debug("%s: got imsg %d from %s",
+		dprintf("%s: got imsg %d from %s",
 		    __func__, imsg.hdr.type,
 		    vm->vm_params.vmc_params.vcp_name);
-#endif
 
 		switch (imsg.hdr.type) {
 		case IMSG_VMDOP_VM_SHUTDOWN:
@@ -618,6 +624,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 			continue;
 		}
 		memcpy(&vir.vir_info, &info[i], sizeof(vir.vir_info));
+		vir.vir_info.vir_id = vm_id2vmid(info[i].vir_id, NULL);
 		if (proc_compose_imsg(ps, PROC_PARENT, -1,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
 		    &vir, sizeof(vir)) == -1)

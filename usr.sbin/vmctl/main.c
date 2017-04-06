@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2017/03/25 16:28:25 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -194,8 +194,8 @@ vmmaction(struct parse_result *res)
 
 	switch (res->action) {
 	case CMD_START:
-		ret = vm_start(res->name, res->size, res->nifs, res->nets,
-		    res->ndisks, res->disks, res->path);
+		ret = vm_start(res->id, res->name, res->size, res->nifs,
+		    res->nets, res->ndisks, res->disks, res->path);
 		if (ret) {
 			errno = ret;
 			err(1, "start VM operation failed");
@@ -533,8 +533,9 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	if (argc < 2)
 		ctl_usage(res->ctl);
 
-	if ((res->name = strdup(argv[1])) == NULL)
-		errx(1, "strdup");
+	if (parse_vmid(res, argv[1]) == -1)
+		errx(1, "invalid id: %s", argv[1]);
+
 	argc--;
 	argv++;
 

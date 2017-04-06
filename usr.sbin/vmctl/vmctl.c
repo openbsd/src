@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.28 2017/03/30 03:39:35 claudio Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.29 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -52,6 +52,7 @@ int info_console;
  * Request vmd to start the VM defined by the supplied parameters
  *
  * Parameters:
+ *  start_id: optional ID of the VM
  *  name: optional name of the VM
  *  memsize: memory size (MB) of the VM to create
  *  nnics: number of vionet network interfaces to create
@@ -65,8 +66,8 @@ int info_console;
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-vm_start(const char *name, int memsize, int nnics, char **nics,
-    int ndisks, char **disks, char *kernel)
+vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
+    char **nics, int ndisks, char **disks, char *kernel)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -117,6 +118,7 @@ vm_start(const char *name, int memsize, int nnics, char **nics,
 	vcp->vcp_ncpus = 1;
 	vcp->vcp_ndisks = ndisks;
 	vcp->vcp_nnics = nnics;
+	vcp->vcp_id = start_id;
 
 	for (i = 0 ; i < ndisks; i++)
 		strlcpy(vcp->vcp_disks[i], disks[i], VMM_MAX_PATH_DISK);
@@ -410,7 +412,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			(void)fmt_scaled(vir->vir_memory_size * 1024 * 1024,
 			    maxmem);
 
-			if (vir->vir_id != 0) {
+			if (vir->vir_creator_pid != 0 && vir->vir_id != 0) {
 				if (*vmi->vir_ttyname == '\0')
 					tty = "-";
 				/* get tty - skip /dev/ path */
@@ -427,8 +429,8 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 				    tty, user, vir->vir_name);
 			} else {
 				/* disabled vm */
-				printf("%5s %5s %5zd %7s %7s %7s %12s %s\n",
-				    "-", "-",
+				printf("%5u %5s %5zd %7s %7s %7s %12s %s\n",
+				    vir->vir_id, "-",
 				    vir->vir_ncpus, maxmem, curmem,
 				    "-", user, vir->vir_name);
 			}

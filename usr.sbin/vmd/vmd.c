@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.55 2017/03/15 19:54:52 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.56 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -115,9 +115,9 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 				cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
 				break;
 			}
-			id = vm->vm_params.vmc_params.vcp_id;
+			id = vm->vm_vmid;
 		} else
-			vm = vm_getbyid(id);
+			vm = vm_getbyvmid(id);
 		if (vm_checkperm(vm, vid.vid_uid) != 0) {
 			res = EPERM;
 			cmd = IMSG_VMDOP_TERMINATE_VM_RESPONSE;
@@ -233,13 +233,13 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 
 		log_info("%s: started vm %d successfully, tty %s",
-		    vcp->vcp_name, vcp->vcp_id, vm->vm_ttyname);
+		    vcp->vcp_name, vm->vm_vmid, vm->vm_ttyname);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
 		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
-		if ((vm = vm_getbyid(vmr.vmr_id)) == NULL)
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
 		if (vmr.vmr_result == 0) {
 			/* Mark VM as shutting down */
@@ -249,7 +249,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
 		IMSG_SIZE_CHECK(imsg, &vmr);
 		memcpy(&vmr, imsg->data, sizeof(vmr));
-		if ((vm = vm_getbyid(vmr.vmr_id)) == NULL)
+		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
 		if (vmr.vmr_result == 0) {
 			if (vm->vm_from_config)
@@ -265,7 +265,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 		IMSG_SIZE_CHECK(imsg, &vir);
 		memcpy(&vir, imsg->data, sizeof(vir));
-		if ((vm = vm_getbyid(vir.vir_info.vir_id)) != NULL) {
+		if ((vm = vm_getbyvmid(vir.vir_info.vir_id)) != NULL) {
 			memset(vir.vir_ttyname, 0, sizeof(vir.vir_ttyname));
 			if (vm->vm_ttyname != NULL)
 				strlcpy(vir.vir_ttyname, vm->vm_ttyname,
@@ -295,7 +295,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 			if (!vm->vm_running) {
 				memset(&vir, 0, sizeof(vir));
-				vir.vir_info.vir_id = 0;
+				vir.vir_info.vir_id = vm->vm_vmid;
 				strlcpy(vir.vir_info.vir_name,
 				    vm->vm_params.vmc_params.vcp_name,
 				    VMM_MAX_NAME_LEN);
@@ -656,6 +656,8 @@ vm_getbyvmid(uint32_t vmid)
 {
 	struct vmd_vm	*vm;
 
+	if (vmid == 0)
+		return (NULL);
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (vm->vm_vmid == vmid)
 			return (vm);
@@ -669,12 +671,34 @@ vm_getbyid(uint32_t id)
 {
 	struct vmd_vm	*vm;
 
+	if (id == 0)
+		return (NULL);
 	TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 		if (vm->vm_params.vmc_params.vcp_id == id)
 			return (vm);
 	}
 
 	return (NULL);
+}
+
+uint32_t
+vm_id2vmid(uint32_t id, struct vmd_vm *vm)
+{
+	if (vm == NULL && (vm = vm_getbyid(id)) == NULL)
+		return (0);
+	dprintf("%s: vmm id %u is vmid %u", __func__,
+	    id, vm->vm_vmid);
+	return (vm->vm_vmid);
+}
+
+uint32_t
+vm_vmid2id(uint32_t vmid, struct vmd_vm *vm)
+{
+	if (vm == NULL && (vm = vm_getbyvmid(vmid)) == NULL)
+		return (0);
+	dprintf("%s: vmid %u is vmm id %u", __func__,
+	    vmid, vm->vm_params.vmc_params.vcp_id);
+	return (vm->vm_params.vmc_params.vcp_id);
 }
 
 struct vmd_vm *
@@ -770,7 +794,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	errno = 0;
 	*ret_vm = NULL;
 
-	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL) {
+	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||
+	    (vm = vm_getbyvmid(vcp->vcp_id)) != NULL) {
 		if (vm_checkperm(vm, uid) != 0 || vmc->vmc_flags != 0) {
 			errno = EPERM;
 			goto fail;
@@ -807,6 +832,9 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 	} else if (strlen(vcp->vcp_kernel) == 0 && vcp->vcp_ndisks == 0) {
 		log_warnx("no kernel or disk specified");
+		goto fail;
+	} else if (strlen(vcp->vcp_name) == 0) {
+		log_warnx("invalid VM name");
 		goto fail;
 	}
 

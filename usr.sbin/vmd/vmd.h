@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.49 2017/03/25 16:28:25 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.50 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -159,7 +159,6 @@ TAILQ_HEAD(switchlist, vmd_switch);
 struct vmd_vm {
 	struct vmop_create_params vm_params;
 	pid_t			 vm_pid;
-	/* Userspace ID of VM. The user never sees this */
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_disks[VMM_MAX_DISKS_PER_VM];
@@ -201,8 +200,10 @@ struct vmd {
 
 /* vmd.c */
 void	 vmd_reload(unsigned int, const char *);
-struct vmd_vm *vm_getbyvmid(uint32_t);
 struct vmd_vm *vm_getbyid(uint32_t);
+struct vmd_vm *vm_getbyvmid(uint32_t);
+uint32_t vm_id2vmid(uint32_t, struct vmd_vm *);
+uint32_t vm_vmid2id(uint32_t, struct vmd_vm *);
 struct vmd_vm *vm_getbyname(const char *);
 struct vmd_vm *vm_getbypid(pid_t);
 void	 vm_stop(struct vmd_vm *, int);

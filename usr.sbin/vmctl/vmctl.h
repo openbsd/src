@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.13 2017/03/01 21:22:57 reyk Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.14 2017/04/06 18:07:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -77,7 +77,8 @@ __dead void
 
 /* vmctl.c */
 int	 create_imagefile(const char *, long);
-int	 vm_start(const char *, int, int, char **, int, char **, char *);
+int	 vm_start(uint32_t, const char *, int, int, char **, int,
+	    char **, char *);
 int	 vm_start_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *);
 int	 terminate_vm_complete(struct imsg *, int *);
