@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.12 2016/12/17 16:12:15 krw Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.13 2017/04/06 19:09:45 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -60,8 +60,6 @@
 #else /* DEBUG */
 #define	INODE_WARNX(__x)
 #endif /* DEBUG */
-
-#define CD9660MAXPATH 4096
 
 #define ISO_STRING_FILTER_NONE = 0x00
 #define ISO_STRING_FILTER_DCHARS = 0x01
@@ -320,7 +318,7 @@ int	cd9660_setup_boot_volume_descriptor(iso9660_disk *,
 int	cd9660_write_image(iso9660_disk *, const char *image);
 int	cd9660_copy_file(iso9660_disk *, FILE *, off_t, const char *);
 
-void	cd9660_compute_full_filename(cd9660node *, char *);
+char	*cd9660_compute_full_filename(cd9660node *);
 int	cd9660_compute_record_size(iso9660_disk *, cd9660node *);
 
 /* Debugging functions */

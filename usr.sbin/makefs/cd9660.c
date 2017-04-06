@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.19 2016/12/17 16:12:15 krw Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.20 2017/04/06 19:09:45 natano Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
 
 /*
@@ -101,6 +101,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <limits.h>
 
 #include "makefs.h"
 #include "cd9660.h"
@@ -1453,16 +1454,22 @@ cd9660_generate_path_table(iso9660_disk *diskStructure)
 	return pathTableSize;
 }
 
-void
-cd9660_compute_full_filename(cd9660node *node, char *buf)
+char *
+cd9660_compute_full_filename(cd9660node *node)
 {
+	static char buf[PATH_MAX];
 	int len;
 
-	len = CD9660MAXPATH + 1;
-	len = snprintf(buf, len, "%s/%s/%s", node->node->root,
+	len = snprintf(buf, PATH_MAX, "%s/%s/%s", node->node->root,
 	    node->node->path, node->node->name);
-	if (len > CD9660MAXPATH)
-		errx(1, "Pathname too long.");
+	if (len < 0) {
+		warn(NULL);
+		return NULL;
+	} else if (len >= PATH_MAX) {
+		warnc(ENAMETOOLONG, NULL);
+		return NULL;
+	}
+	return buf;
 }
 
 /*

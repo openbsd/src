@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.7 2016/12/17 16:22:04 krw Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.8 2017/04/06 19:09:45 natano Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -234,19 +234,14 @@ cd9660_write_path_tables(iso9660_disk *diskStructure, FILE *fd)
 static int
 cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 {
-	char *buf;
 	char *temp_file_name;
-	int ret;
 	off_t working_sector;
 	int cur_sector_offset;
 	iso_directory_record_cd9660 temp_record;
 	cd9660node *temp;
-	int rv = 0;
 
 	/* Todo : clean up variables */
 
-	temp_file_name = ecalloc(CD9660MAXPATH + 1, 1);
-	buf = emalloc(diskStructure->sectorSize);
 	if ((writenode->level != 0) &&
 	    !(writenode->node->type & S_IFDIR)) {
 		fsinode *inode = writenode->node->inode;
@@ -258,12 +253,12 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 			INODE_WARNX(("%s: writing inode %d blocks at %" PRIu32,
 			    __func__, (int)inode->st.st_ino, inode->ino));
 			inode->flags |= FI_WRITTEN;
-			cd9660_compute_full_filename(writenode,
-			    temp_file_name);
-			ret = cd9660_copy_file(diskStructure, fd,
-			    writenode->fileDataSector, temp_file_name);
-			if (ret == 0)
-				goto out;
+			temp_file_name = cd9660_compute_full_filename(writenode);
+			if (temp_file_name == NULL)
+				return 0;
+			if (cd9660_copy_file(diskStructure, fd,
+			    writenode->fileDataSector, temp_file_name) == 0)
+				return 0;
 		}
 	} else {
 		/*
@@ -324,7 +319,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 				    temp->su_tail_size, fd);
 			if (ferror(fd)) {
 				warnx("%s: write error", __func__);
-				goto out;
+				return 0;
 			}
 			cur_sector_offset += temp_record.length[0];
 
@@ -334,16 +329,11 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 		 * Recurse on children.
 		 */
 		TAILQ_FOREACH(temp, &writenode->cn_children, cn_next_child) {
-			if ((ret = cd9660_write_file(diskStructure, fd, temp))
-			    == 0)
-				goto out;
+			if (cd9660_write_file(diskStructure, fd, temp) == 0)
+				return 0;
 		}
 	}
-	rv = 1;
-out:
-	free(temp_file_name);
-	free(buf);
-	return rv;
+	return 1;
 }
 
 /*
