@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.112 2017/03/17 14:59:29 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.113 2017/04/06 17:36:18 dhill Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -951,10 +951,10 @@ add_mfc(struct socket *so, struct mbuf *m)
 	 */
 	if (mrt_api_config & MRT_API_FLAGS_ALL) {
 		struct mfcctl2 *mp2 = mtod(m, struct mfcctl2 *);
-		bcopy(mp2, (caddr_t)&mfcctl2, sizeof(*mp2));
+		memcpy((caddr_t)&mfcctl2, mp2, sizeof(*mp2));
 	} else {
 		struct mfcctl *mp = mtod(m, struct mfcctl *);
-		bcopy(mp, (caddr_t)&mfcctl2, sizeof(*mp));
+		memcpy((caddr_t)&mfcctl2, mp, sizeof(*mp));
 		memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 		    sizeof(mfcctl2) - sizeof(struct mfcctl));
 	}
@@ -988,7 +988,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 
 	mp = mtod(m, struct mfcctl *);
 
-	bcopy(mp, (caddr_t)&mfcctl2, sizeof(*mp));
+	memcpy((caddr_t)&mfcctl2, mp, sizeof(*mp));
 	memset((caddr_t)&mfcctl2 + sizeof(struct mfcctl), 0,
 	    sizeof(mfcctl2) - sizeof(struct mfcctl));
 

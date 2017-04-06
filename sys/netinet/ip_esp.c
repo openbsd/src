@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.146 2017/02/07 18:18:16 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.147 2017/04/06 17:36:18 dhill Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -504,7 +504,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
+	tc->tc_dst = tdb->tdb_dst;
 
 	/* Decryption descriptor */
 	if (espx) {
@@ -707,8 +707,9 @@ esp_input_cb(struct cryptop *crp)
 		 * overlapping copy of the remainder of the mbuf over the ESP
 		 * header.
 		 */
-		bcopy(mtod(m1, u_char *) + roff + hlen,
-		    mtod(m1, u_char *) + roff, m1->m_len - (roff + hlen));
+		memmove(mtod(m1, u_char *) + roff, 
+		    mtod(m1, u_char *) + roff + hlen,
+		    m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
 		m->m_pkthdr.len -= hlen;
 	}
@@ -910,7 +911,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/* Initialize ESP header. */
-	bcopy((caddr_t) &tdb->tdb_spi, mtod(mo, caddr_t) + roff,
+	memcpy(mtod(mo, caddr_t) + roff, (caddr_t) &tdb->tdb_spi,
 	    sizeof(u_int32_t));
 	tdb->tdb_rpl++;
 	replay = htonl((u_int32_t)tdb->tdb_rpl);
@@ -992,7 +993,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
 	tc->tc_rdomain = tdb->tdb_rdomain;
-	memcpy(&tc->tc_dst, &tdb->tdb_dst, sizeof(union sockaddr_union));
+	tc->tc_dst = tdb->tdb_dst;
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
