@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2017/03/21 12:06:55 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2017/04/06 12:20:48 gsoares Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,5 +162,5 @@ void
 fatalx(const char *emsg)
 {
 	errno = 0;
-	fatal(emsg);
+	fatal("%s", emsg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.23 2016/09/28 15:03:03 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.24 2017/04/06 12:20:48 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -491,5 +491,5 @@ ca_engine_init(struct relayd *x_env)
 
  fail:
 	ssl_error(__func__, errstr);
-	fatalx(errstr);
+	fatalx("%s", errstr);
 }
