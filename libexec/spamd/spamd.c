@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.150 2017/01/23 09:21:04 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.151 2017/04/06 15:30:12 beck Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -1287,7 +1287,7 @@ main(int argc, char *argv[])
 		case 'c':
 			maxcon = strtonum(optarg, 1, maxfiles, &errstr);
 			if (errstr) {
-				fprintf(stderr, "-c %s: %sn", optarg, errstr);
+				fprintf(stderr, "-c %s: %s\n", optarg, errstr);
 				usage();
 			}
 			break;
