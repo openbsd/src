@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.46 2017/04/06 03:15:29 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.47 2017/04/06 07:07:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -476,7 +476,7 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 	/* Mask off unsupported voltage levels and select the lowest. */
 	DPRINTF(1,("%s: host_ocr=%x ", DEVNAME(sc), host_ocr));
 	host_ocr &= card_ocr;
-b	for (bit = 4; bit < 23; bit++) {
+	for (bit = 4; bit < 23; bit++) {
 		if (ISSET(host_ocr, 1<<bit)) {
 			host_ocr &= 3<<bit;
 			break;
