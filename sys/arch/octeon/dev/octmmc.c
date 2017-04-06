@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.1 2016/12/21 13:59:57 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.2 2017/04/06 15:29:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -246,9 +246,9 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 
 error:
 	if (sc->sc_dma_ih != NULL)
-		octeon_intr_disestablish(sc->sc_dma_ih);
+		octeon_intr_disestablish_fdt(sc->sc_dma_ih);
 	if (sc->sc_cmd_ih != NULL)
-		octeon_intr_disestablish(sc->sc_cmd_ih);
+		octeon_intr_disestablish_fdt(sc->sc_cmd_ih);
 	if (sc->sc_dma_data != NULL)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_data);
 	if (sc->sc_dma_ioh != 0)
