@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.19 2016/12/08 16:27:46 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.20 2017/04/06 15:25:24 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -152,6 +152,14 @@ octeon_intr_establish(int irq, int level,
 }
 
 void *
+octeon_intr_establish_fdt(int node, int level,
+    int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
+{
+	return octeon_intr_establish_fdt_idx(node, 0, level, ih_fun,
+	    ih_arg, ih_what);
+}
+
+void *
 octeon_intr_establish_fdt_idx(int node, int idx, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
@@ -214,6 +222,12 @@ octeon_intr_disestablish(void *_ih)
 
 	octeon_intr_makemasks();
 	splx(s);	/* causes hw mask update */
+}
+
+void
+octeon_intr_disestablish_fdt(void *ih)
+{
+	octeon_intr_disestablish(ih);
 }
 
 void

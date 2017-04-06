@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2016/12/08 16:27:46 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.9 2017/04/06 15:25:24 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -202,10 +202,14 @@ void	octeon_intr_init(void);
 void	octeon_setintrmask(int);
 void   *octeon_intr_establish(int, int, int (*)(void *),
 	    void *, const char *);
-void	*octeon_intr_establish_fdt_idx(int, int, int, int (*)(void *),
-	    void *, const char *);
 void	octeon_intr_disestablish(void *);
 void	octeon_intr_init(void);
+
+void	*octeon_intr_establish_fdt(int, int, int (*)(void *),
+	    void *, const char *);
+void	*octeon_intr_establish_fdt_idx(int, int, int, int (*)(void *),
+	    void *, const char *);
+void	 octeon_intr_disestablish_fdt(void *);
 
 #endif /* _LOCORE */
 
