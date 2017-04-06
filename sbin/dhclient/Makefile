@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2017/02/12 13:15:50 krw Exp $
+# $OpenBSD: Makefile,v 1.18 2017/04/06 22:41:39 krw Exp $
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.
@@ -42,5 +42,8 @@ DPADD+= ${LIBUTIL}
 MAN=	dhclient.8 dhclient.conf.5 dhclient.leases.5
 
 CFLAGS+=-Wall
+CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=-Wmissing-declarations
+CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
 
 .include <bsd.prog.mk>
