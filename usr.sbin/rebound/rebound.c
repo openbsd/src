@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.80 2016/10/23 17:06:41 naddy Exp $ */
+/* $OpenBSD: rebound.c,v 1.81 2017/04/06 21:16:14 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -650,8 +650,10 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 		}
 
 		for (i = 0; i < r; i++) {
-			if (kev[i].filter == EVFILT_SIGNAL) {
-				if (kev[i].ident == SIGHUP) {
+			struct kevent *ke = &kev[i];
+			switch (ke->filter) {
+			case EVFILT_SIGNAL:
+				if (ke->ident == SIGHUP) {
 					logmsg(LOG_INFO, "hupped, exiting");
 					exit(0);
 				} else {
@@ -662,11 +664,13 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 					    "%d active, %llu hits",
 					    cachecount, cachehits);
 				}
-			} else if (kev[i].filter == EVFILT_PROC) {
+				break;
+			case EVFILT_PROC:
 				logmsg(LOG_INFO, "parent died");
 				exit(0);
-			} else if (kev[i].filter == EVFILT_WRITE) {
-				req = kev[i].udata;
+				break;
+			case EVFILT_WRITE:
+				req = ke->udata;
 				req = tcpphasetwo(req);
 				if (req) {
 					EV_SET(&ch[0], req->s, EVFILT_WRITE,
@@ -675,26 +679,31 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 					    EV_ADD, 0, 0, req);
 					kevent(kq, ch, 2, NULL, 0, NULL);
 				}
-			} else if (kev[i].filter != EVFILT_READ) {
+				break;
+			case EVFILT_READ:
+				if (ke->ident == ud || ke->ident == ud6) {
+					if ((req = newrequest(ke->ident, &remoteaddr.a))) {
+						EV_SET(&ch[0], req->s, EVFILT_READ,
+						    EV_ADD, 0, 0, req);
+						kevent(kq, ch, 1, NULL, 0, NULL);
+					}
+				} else if (ke->ident == ld || ke->ident == ld6) {
+					if ((req = newtcprequest(ke->ident, &remoteaddr.a))) {
+						EV_SET(&ch[0], req->s,
+						    req->tcp == 1 ? EVFILT_WRITE :
+						    EVFILT_READ, EV_ADD, 0, 0, req);
+						kevent(kq, ch, 1, NULL, 0, NULL);
+					}
+				} else {
+					req = ke->udata;
+					if (req->tcp == 0)
+						sendreply(req);
+					freerequest(req);
+				}
+				break;
+			default:
 				logerr("don't know what happened");
-			} else if (kev[i].ident == ud || kev[i].ident == ud6) {
-				if ((req = newrequest(kev[i].ident, &remoteaddr.a))) {
-					EV_SET(&ch[0], req->s, EVFILT_READ,
-					    EV_ADD, 0, 0, req);
-					kevent(kq, ch, 1, NULL, 0, NULL);
-				}
-			} else if (kev[i].ident == ld || kev[i].ident == ld6) {
-				if ((req = newtcprequest(kev[i].ident, &remoteaddr.a))) {
-					EV_SET(&ch[0], req->s,
-					    req->tcp == 1 ? EVFILT_WRITE :
-					    EVFILT_READ, EV_ADD, 0, 0, req);
-					kevent(kq, ch, 1, NULL, 0, NULL);
-				}
-			} else {
-				req = kev[i].udata;
-				if (req->tcp == 0)
-					sendreply(req);
-				freerequest(req);
+				break;
 			}
 		}
 
@@ -820,32 +829,35 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 			r = kevent(kq, NULL, 0, &kev, 1, timeout);
 			if (r == -1)
 				logerr("kevent failed (%d)", errno);
-
 			if (r == 0) {
 				/* timeout expired */
 				logerr("child died without HUP");
-			} else if (kev.filter == EVFILT_VNODE) {
+			}
+			switch (kev.filter) {
+			case EVFILT_VNODE:
 				/* config file changed */
 				logmsg(LOG_INFO, "config changed, reloading");
 				close(conffd);
 				conffd = -1;
 				sleep(1);
 				raise(SIGHUP);
-			} else if (kev.filter == EVFILT_SIGNAL &&
-			    kev.ident == SIGHUP) {
-				/* signaled. kill child. */
-				logmsg(LOG_INFO, "received HUP, restarting");
-				hupped = 1;
-				if (childdead)
-					break;
-				kill(child, SIGHUP);
-			} else if (kev.filter == EVFILT_SIGNAL &&
-			    kev.ident == SIGTERM) {
-				/* good bye */
-				logmsg(LOG_INFO, "received TERM, quitting");
-				kill(child, SIGTERM);
-				exit(0);
-			} else if (kev.filter == EVFILT_PROC) {
+				break;
+			case EVFILT_SIGNAL:
+				if (kev.ident == SIGHUP) {
+					/* signaled. kill child. */
+					logmsg(LOG_INFO, "received HUP, restarting");
+					hupped = 1;
+					if (childdead)
+						break;
+					kill(child, SIGHUP);
+				} else if (kev.ident == SIGTERM) {
+					/* good bye */
+					logmsg(LOG_INFO, "received TERM, quitting");
+					kill(child, SIGTERM);
+					exit(0);
+				}
+				break;
+			case EVFILT_PROC:
 				/* child died. wait for our own HUP. */
 				logmsg(LOG_INFO, "observed child exit");
 				childdead = 1;
@@ -854,8 +866,10 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 				memset(&ts, 0, sizeof(ts));
 				ts.tv_sec = 1;
 				timeout = &ts;
-			} else {
+				break;
+			default:
 				logerr("don't know what happened");
+				break;
 			}
 		}
 		wait(NULL);
