@@ -1,4 +1,4 @@
-/* $OpenBSD: env.c,v 1.5 2016/09/15 00:58:23 deraadt Exp $ */
+/* $OpenBSD: env.c,v 1.6 2017/04/06 21:12:06 tedu Exp $ */
 /*
  * Copyright (c) 2016 Ted Unangst <tedu@openbsd.org>
  *
@@ -69,7 +69,7 @@ freenode(struct envnode *node)
 }
 
 static struct env *
-createenv(struct rule *rule)
+createenv(const struct rule *rule)
 {
 	struct env *env;
 	u_int i;
@@ -186,7 +186,7 @@ fillenv(struct env *env, const char **envlist)
 }
 
 char **
-prepenv(struct rule *rule)
+prepenv(const struct rule *rule)
 {
 	static const char *safeset[] = {
 		"DISPLAY", "HOME", "LOGNAME", "MAIL",
