@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.34 2016/01/09 04:14:42 jcs Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.35 2017/04/06 04:48:54 deraadt Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -201,8 +201,6 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = dev;
 
-	sc->sc_msr = sc->sc_mcr = 0;
-
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		DPRINTF(("ucycom_open: uhidev_open %d\n", err));
@@ -216,11 +214,11 @@ ucycom_attach(struct device *parent, struct device *self, void *aux)
 	/* bulkin, bulkout set above */
 	bzero(&uca, sizeof uca);
 	uca.bulkin = uca.bulkout = -1;
-	uca.uhidev = sc->sc_hdev.sc_parent;
 	uca.ibufsize = sc->sc_ilen - 1;
 	uca.obufsize = sc->sc_olen - 1;
 	uca.ibufsizepad = 1;
 	uca.opkthdrlen = 0;
+	uca.uhidev = sc->sc_hdev.sc_parent;
 	uca.device = uaa->device;
 	uca.iface = uaa->iface;
 	uca.methods = &ucycom_methods;

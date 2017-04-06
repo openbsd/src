@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.25 2016/09/02 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.26 2017/04/06 04:48:54 deraadt Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -253,7 +253,6 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 
         sc->sc_udev = dev;
 	sc->sc_dtr = sc->sc_rts = -1;
-	sc->sc_lsr = sc->sc_msr = 0;
 
 	DPRINTF(("\n\nuchcom attach: sc=%p\n", sc));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslhcom.c,v 1.4 2016/01/09 04:14:42 jcs Exp $	*/
+/*	$OpenBSD: uslhcom.c,v 1.5 2017/04/06 04:48:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 SASANO Takayoshi <uaa@openbsd.org>
@@ -134,12 +134,9 @@ uslhcom_attach(struct device *parent, struct device *self, void *aux)
 	int err, repid, size, rsize;
 	void *desc;
 
-	sc->sc_udev = dev;
-	sc->sc_lsr = sc->sc_msr = 0;
 	sc->sc_hdev.sc_intr = uslhcom_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
-	sc->sc_hdev.sc_isize = sc->sc_hdev.sc_osize = sc->sc_hdev.sc_fsize = 0;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	for (repid = 0; repid < uha->parent->sc_nrepid; repid++) {
@@ -152,6 +149,8 @@ uslhcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	sc->sc_udev = dev;
 
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
@@ -172,6 +171,7 @@ uslhcom_attach(struct device *parent, struct device *self, void *aux)
 	       version.product_id, version.product_revision);
 
 	/* setup ucom layer */
+	bzero(&uca, sizeof uca);
 	uca.portno = UCOM_UNK_PORTNO;
 	uca.bulkin = uca.bulkout = -1;
 	uca.ibufsize = uca.ibufsizepad = 0;
