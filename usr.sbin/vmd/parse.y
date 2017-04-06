@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2017/04/06 21:35:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD DISK DOWN GROUP INTERFACE NIFS PATH SIZE SWITCH UP VMID
-%token	ENABLE DISABLE VM KERNEL LLADDR MEMORY OWNER LOCKED
+%token	ENABLE DISABLE VM BOOT LLADDR MEMORY OWNER LOCKED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
@@ -357,7 +357,7 @@ vm_opts		: disable			{
 			free($2);
 			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
-		| KERNEL string			{
+		| BOOT string			{
 			if (vcp->vcp_kernel[0] != '\0') {
 				yyerror("kernel specified more than once");
 				free($2);
@@ -605,6 +605,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "add",		ADD },
+		{ "boot",		BOOT },
 		{ "disable",		DISABLE },
 		{ "disk",		DISK },
 		{ "down",		DOWN },
@@ -614,7 +615,6 @@ lookup(char *s)
 		{ "include",		INCLUDE },
 		{ "interface",		INTERFACE },
 		{ "interfaces",		NIFS },
-		{ "kernel",		KERNEL },
 		{ "lladdr",		LLADDR },
 		{ "locked",		LOCKED },
 		{ "memory",		MEMORY },
