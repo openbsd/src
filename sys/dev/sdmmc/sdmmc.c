@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.45 2017/01/21 05:42:04 guenther Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.46 2017/04/06 03:15:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -476,7 +476,7 @@ sdmmc_set_bus_power(struct sdmmc_softc *sc, u_int32_t host_ocr,
 	/* Mask off unsupported voltage levels and select the lowest. */
 	DPRINTF(1,("%s: host_ocr=%x ", DEVNAME(sc), host_ocr));
 	host_ocr &= card_ocr;
-	for (bit = 4; bit < 23; bit++) {
+b	for (bit = 4; bit < 23; bit++) {
 		if (ISSET(host_ocr, 1<<bit)) {
 			host_ocr &= 3<<bit;
 			break;
@@ -508,7 +508,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 void
 sdmmc_function_free(struct sdmmc_function *sf)
 {
-	free(sf, M_DEVBUF, 0);
+	free(sf, M_DEVBUF, sizeof *sf);
 }
 
 /*
@@ -803,7 +803,7 @@ sdmmc_ioctl(struct device *self, u_long request, caddr_t addr)
 
 exec_done:
 		if (ucmd->c_data)
-			free(data, M_TEMP, 0);
+			free(data, M_TEMP, ucmd->c_datalen);
 		break;
 
 	default:

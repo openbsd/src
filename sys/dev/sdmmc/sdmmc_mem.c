@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.29 2016/05/05 20:40:48 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.30 2017/04/06 03:15:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -442,7 +442,7 @@ sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
 
 out:
 	if (ptr != NULL)
-		free(ptr, M_DEVBUF, 0);
+		free(ptr, M_DEVBUF, datalen);
 
 	return error;
 }
