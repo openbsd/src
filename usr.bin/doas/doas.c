@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.70 2017/03/09 21:25:01 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.71 2017/04/06 21:14:12 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -129,7 +129,7 @@ match(uid_t uid, gid_t *groups, int ngroups, uid_t target, const char *cmd,
 }
 
 static int
-permit(uid_t uid, gid_t *groups, int ngroups, struct rule **lastr,
+permit(uid_t uid, gid_t *groups, int ngroups, const struct rule **lastr,
     uid_t target, const char *cmd, const char **cmdargs)
 {
 	int i;
@@ -176,7 +176,7 @@ static void __dead
 checkconfig(const char *confpath, int argc, char **argv,
     uid_t uid, gid_t *groups, int ngroups, uid_t target)
 {
-	struct rule *rule;
+	const struct rule *rule;
 
 	setresuid(uid, uid, uid);
 	parseconfig(confpath, 0);
@@ -251,7 +251,7 @@ main(int argc, char **argv)
 	char cmdline[LINE_MAX];
 	char myname[_PW_NAME_LEN + 1];
 	struct passwd *pw;
-	struct rule *rule;
+	const struct rule *rule;
 	uid_t uid;
 	uid_t target = 0;
 	gid_t groups[NGROUPS_MAX + 1];
