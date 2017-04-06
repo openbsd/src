@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.30 2016/03/21 23:23:15 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.31 2017/04/06 16:56:44 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -276,6 +276,36 @@ sub get_between2loggrep {
 
 sub get_downlog {
 	return $downlog;
+}
+
+sub selector2config {
+    my %s2m = @_;
+    my $conf = "";
+    my $i = 0;
+    foreach my $sel (sort keys %s2m) {
+	$conf .= "$sel\t\$objdir/file-$i.log\n";
+	$i++;
+    }
+    return $conf;
+}
+
+sub selector2loggrep {
+    my %s2m = @_;
+    my %allmsg;
+    @allmsg{map { @$_} values %s2m} = ();
+    my @loggrep;
+    foreach my $sel (sort keys %s2m) {
+	my @m = @{$s2m{$sel}};
+	my %msg;
+	@msg{@m} = ();
+	my %nomsg = %allmsg;
+	delete @nomsg{@m};
+	push @loggrep, {
+	    (map { qr/: $_$/ => 1 } sort keys %msg),
+	    (map { qr/: $_$/ => 0 } sort keys %nomsg),
+	};
+    }
+    return @loggrep;
 }
 
 sub check_logs {
