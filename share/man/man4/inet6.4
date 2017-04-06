@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.39 2017/03/27 17:02:15 jmc Exp $
+.\"	$OpenBSD: inet6.4,v 1.40 2017/04/06 17:36:00 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2017 $
+.Dd $Mdocdate: April 6 2017 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -74,24 +74,6 @@ A raw interface to IPv6 is available by creating an Internet socket of type
 .Dv SOCK_RAW .
 The ICMPv6 message protocol is accessible from a raw socket.
 .Pp
-For security reasons,
-.Ox
-does not route IPv4 traffic to an
-.Dv AF_INET6
-socket,
-and does not support IPv4 mapped addresses,
-where IPv4 traffic is seen as if it comes from an IPv6 address like
-.Li ::ffff:10.1.1.1 .
-Where both IPv4 and IPv6 traffic need to be accepted, listen on two sockets.
-.Pp
-It is also advisable to explicitly reject all packets to your network
-not used by any of your interface prefixes.
-Otherwise packets that have a destination address belonging to your network
-may be routed back to your provider via the default route.
-Set a reject route for your assigned prefix:
-.Pp
-.Dl # route add -net 2001:db8::/48 ::1 -reject
-.Pp
 IPv6 addresses are 128-bit quantities,
 stored in network standard byteorder.
 The include file
@@ -122,6 +104,17 @@ which is equal to IPv6 address
 to effect
 .Dq wildcard
 matching on incoming messages.
+.Pp
+For security reasons,
+.Ox
+does not route IPv4 traffic to an
+.Dv AF_INET6
+socket,
+and does not support IPv4 mapped addresses,
+where IPv4 traffic is seen as if it comes from an IPv6 address like
+.Li ::ffff:10.1.1.1 .
+Where both IPv4 and IPv6 traffic need to be accepted,
+bind and listen on two sockets.
 .Pp
 Global addresses utilise the first 48 bits of the address
 for the routing prefix.
@@ -210,3 +203,11 @@ HOWEVER, users should never use the embedded form.
 .Re
 .Sh HISTORY
 The implementation described herein appeared in WIDE/KAME project.
+.Sh CAVEATS
+It is advisable to explicitly reject all packets to your network
+not used by any of your interface prefixes.
+Otherwise packets that have a destination address belonging to your network
+may be routed back to your provider via the default route.
+Set a reject route for your assigned prefix:
+.Pp
+.Dl # route add -net 2001:db8::/48 ::1 -reject
