@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.78 2016/09/18 23:56:45 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.79 2017/04/07 04:45:24 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -240,7 +240,7 @@ acpicpu_set_pdc(struct acpicpu_softc *sc)
 
 	if (aml_searchname(sc->sc_devnode, "_OSC")) {
 		/* Query _OSC */
-		memset(&osc_cmd, 0, sizeof(cmd) * 4);
+		memset(&osc_cmd, 0, sizeof(osc_cmd));
 		osc_cmd[0].type = AML_OBJTYPE_BUFFER;
 		osc_cmd[0].v_buffer = (uint8_t *)&cpu_oscuuid;
 		osc_cmd[0].length = sizeof(cpu_oscuuid);
@@ -269,7 +269,7 @@ acpicpu_set_pdc(struct acpicpu_softc *sc)
 		}
 
 		/* Evaluate _OSC */
-		memset(&osc_cmd, 0, sizeof(cmd) * 4);
+		memset(&osc_cmd, 0, sizeof(osc_cmd));
 		osc_cmd[0].type = AML_OBJTYPE_BUFFER;
 		osc_cmd[0].v_buffer = (uint8_t *)&cpu_oscuuid;
 		osc_cmd[0].length = sizeof(cpu_oscuuid);
