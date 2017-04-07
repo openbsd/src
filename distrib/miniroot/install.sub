@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.992 2017/04/07 21:44:07 rpe Exp $
+#	$OpenBSD: install.sub,v 1.993 2017/04/07 22:02:29 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -193,14 +193,14 @@ show_cols() {
 # after the first '#' from other lines. Strip leading and trailing
 # whitespace if IFS is set.
 stripcom () {
-	local _l
+	local _file=$1 _line
 
-	[[ -f $1 ]] || return
+	[[ -f $_file ]] || return
 
 	set -o noglob
-	while read _l; do
-		[[ -n ${_l%%#*} ]] && echo $_l
-	done <$1
+	while read _line; do
+		[[ -n ${_line%%#*} ]] && echo $_line
+	done <$_file
 	set +o noglob
 }
 
