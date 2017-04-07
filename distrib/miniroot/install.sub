@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.993 2017/04/07 22:02:29 rpe Exp $
+#	$OpenBSD: install.sub,v 1.994 2017/04/07 22:15:17 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2124,25 +2124,24 @@ ifstart () {
 	((NIFS++))
 	while :; do
 		if [ "$cmd2" ]; then
-			# we are carrying over from the 'read dt dtaddr'
-			# last time
+			# We are carrying over from the 'read dt dtaddr'
+			# last time.
 			set -- $cmd2
 			af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
-			# make sure and get any remaining args in ext2,
-			# like the read below
+			# Make sure and get any remaining args in ext2,
+			# like the read below.
 			i=1
 			while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 			ext2="$@"
 		else
-			# read the next line or exit the while loop
+			# Read the next line or exit the while loop.
 			read af name mask bcaddr ext1 ext2 || break
 		fi
-		# $af can be "dhcp", "rtsol", an address family,
-		# commands, or a comment.
+		# $af can be "dhcp", "rtsol", an address family, commands,
+		# or a comment.
 		case "$af" in
 		"#"*|"!"*|"bridge"|"")
-			# skip comments, user commands, bridges,
-			# and empty lines
+			# Skip comments, user commands, bridges, and empty lines.
 			continue
 			;;
 		"dhcp")	[ "$name" = "NONE" ] && name=
@@ -2166,7 +2165,7 @@ ifstart () {
 			;;
 		*)	read dt dtaddr
 			if [ "$name" = "alias" ]; then
-				# perform a 'shift' of sorts
+				# Perform a 'shift' of sorts.
 				alias=$name
 				name=$mask
 				mask=$bcaddr

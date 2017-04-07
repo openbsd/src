@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.173 2017/04/07 21:44:07 rpe Exp $
+#	$OpenBSD: netstart,v 1.174 2017/04/07 22:15:17 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -22,7 +22,10 @@ stripcom() {
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
+	# Note: Do not rename the 'if' variable which is documented as being
+	# usable in hostname.if(5) files.
 	if=$1
+
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
 	[[ $if != +([[:alpha:]])+([[:digit:]]) ]] && return
