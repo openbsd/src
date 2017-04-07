@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.83 2017/03/26 21:33:36 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.84 2017/04/07 15:03:01 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -389,16 +389,14 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
  * Must special case DHO_DOMAIN_SEARCH because it is encoded as described
  * in RFC 1035 section 4.1.4.
  */
-int
-pretty_print_domain_search(unsigned char *dst, size_t dstlen,
-    unsigned char *src, size_t srclen)
+char *
+pretty_print_domain_search(unsigned char *src, size_t srclen)
 {
+	static char domain_search[DHCP_DOMAIN_SEARCH_LEN];
 	int offset, len, expanded_len, domains;
-	unsigned char *domain_search, *cursor;
+	unsigned char *cursor;
 
-	domain_search = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
-	if (domain_search == NULL)
-		fatalx("Can't allocate storage for expanded domain-search\n");
+	memset(domain_search, 0, sizeof(domain_search));
 
 	/* Compute expanded length. */
 	expanded_len = len = 0;
@@ -412,22 +410,15 @@ pretty_print_domain_search(unsigned char *dst, size_t dstlen,
 		}
 		len = expand_search_domain_name(src, srclen, &offset,
 		    domain_search);
-		if (len == -1) {
-			free(domain_search);
-			return (-1);
-		}
+		if (len == -1)
+			return (NULL);
 		domains++;
 		expanded_len += len;
-		if (domains > DHCP_DOMAIN_SEARCH_CNT) {
-			free(domain_search);
-			return (-1);
-		}
+		if (domains > DHCP_DOMAIN_SEARCH_CNT)
+			return (NULL);
 	}
 
-	strlcat(dst, domain_search, dstlen);
-	free(domain_search);
-
-	return (0);
+	return (domain_search);
 }
 
 /*

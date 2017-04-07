@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.407 2017/04/04 15:15:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.408 2017/04/07 15:03:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1266,7 +1266,7 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lease;
 	char *pretty, *buf;
-	int i, sz;
+	int i;
 
 	lease = calloc(1, sizeof(struct client_lease));
 	if (!lease) {
@@ -1289,18 +1289,13 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
 		switch (i) {
 		case DHO_DOMAIN_SEARCH:
 			/* Must decode the option into text to check names. */
-			buf = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
+			buf = pretty_print_domain_search(options[i].data,
+			    options[i].len);
 			if (buf == NULL)
-				fatalx("No memory to decode domain search");
-			sz = pretty_print_domain_search(buf,
-			    DHCP_DOMAIN_SEARCH_LEN,
-			    options[i].data, options[i].len);
-			if (strlen(buf) == 0)
 				continue;
-			if (sz == -1 || !res_hnok_list(buf))
+			if (!res_hnok_list(buf))
 				log_warnx("Bogus data for option %s",
 				    dhcp_options[i].name);
-			free(buf);
 			break;
 		case DHO_DOMAIN_NAME:
 			/*
@@ -2707,24 +2702,20 @@ resolv_conf_contents(struct interface_info *ifi,
 {
 	char *dn, *ns, *nss[MAXNS], *contents, *courtesy, *p, *buf;
 	size_t len;
-	int i, rslt, sz;
+	int i, rslt;
 
 	memset(nss, 0, sizeof(nss));
 
 	if (domainsearch->len) {
-		buf = calloc(1, DHCP_DOMAIN_SEARCH_LEN);
+		buf = pretty_print_domain_search(domainsearch->data,
+		    domainsearch->len);
 		if (buf == NULL)
-			fatalx("No memory to decode domain search");
-		sz = pretty_print_domain_search(buf, DHCP_DOMAIN_SEARCH_LEN,
-		    domainsearch->data, domainsearch->len);
-		if (sz == -1)
 			dn = strdup("");
 		else {
 			rslt = asprintf(&dn, "search %s\n", buf);
 			if (rslt == -1)
 				dn = NULL;
 		}
-		free(buf);
 	} else if (domainname->len) {
 		rslt = asprintf(&dn, "search %s\n",
 		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
