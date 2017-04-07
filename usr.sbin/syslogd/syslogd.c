@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.240 2017/04/05 22:15:35 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.241 2017/04/07 15:36:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -1134,7 +1134,7 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	p->p_peername = peername;
 	bufferevent_enable(p->p_bufev, EV_READ);
 
-	log_info(LOG_INFO, "%s logger \"%s\" accepted",
+	log_info(LOG_DEBUG, "%s logger \"%s\" accepted",
 	    p->p_ctx ? "tls" : "tcp", peername);
 }
 
@@ -1261,7 +1261,7 @@ tcp_closecb(struct bufferevent *bufev, short event, void *arg)
 	struct peer		*p = arg;
 
 	if (event & EVBUFFER_EOF) {
-		log_info(LOG_INFO, "%s logger \"%s\" connection close",
+		log_info(LOG_DEBUG, "%s logger \"%s\" connection close",
 		    p->p_ctx ? "tls" : "tcp", p->p_peername);
 	} else {
 		log_info(LOG_NOTICE, "%s logger \"%s\" connection error: %s",
@@ -2146,15 +2146,14 @@ void
 init_signalcb(int signum, short event, void *arg)
 {
 	init();
-
 	log_info(LOG_INFO, "restart");
-	log_debug("syslogd: restarted");
 
 	if (tcpbuf_dropped > 0) {
 		log_info(LOG_WARNING, "dropped %d message%s to remote loghost",
 		    tcpbuf_dropped, tcpbuf_dropped == 1 ? "" : "s");
 		tcpbuf_dropped = 0;
 	}
+	log_debug("syslogd: restarted");
 }
 
 void
@@ -2189,7 +2188,7 @@ die(int signo)
 	}
 
 	if (signo)
-		log_warnx("exiting on signal %d", signo);
+		log_info(LOG_ERR, "exiting on signal %d", signo);
 	log_debug("syslogd: exited");
 	exit(0);
 }
