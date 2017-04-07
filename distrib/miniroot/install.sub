@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.994 2017/04/07 22:15:17 rpe Exp $
+#	$OpenBSD: install.sub,v 1.995 2017/04/07 22:53:25 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2131,29 +2131,30 @@ ifstart () {
 			# Make sure and get any remaining args in ext2,
 			# like the read below.
 			i=1
-			while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
+			while [ $i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 			ext2="$@"
 		else
 			# Read the next line or exit the while loop.
 			read af name mask bcaddr ext1 ext2 || break
 		fi
-		# $af can be "dhcp", "rtsol", an address family, commands,
+		# $af can be "dhcp", "up", "rtsol", an address family, commands,
 		# or a comment.
 		case "$af" in
 		"#"*|"!"*|"bridge"|"")
 			# Skip comments, user commands, bridges, and empty lines.
 			continue
 			;;
-		"dhcp")	[ "$name" = "NONE" ] && name=
+		"dhcp")
+			[ "$name" = "NONE" ] && name=
 			[ "$mask" = "NONE" ] && mask=
 			[ "$bcaddr" = "NONE" ] && bcaddr=
-			dhcpif="$dhcpif $if"
 			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
 			if [[ -x /sbin/dhclient ]]; then
 				cmd="$cmd; dhclient $if"
 			else
 				cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
 			fi
+			dhcpif="$dhcpif $if"
 			;;
 		"rtsol")
 			if ifconfig $if inet6 >/dev/null 2>&1; then
@@ -2163,7 +2164,8 @@ ifstart () {
 				cmd="$cmd; echo no INET6 support - skipping rtsol request."
 			fi
 			;;
-		*)	read dt dtaddr
+		*)
+			read dt dtaddr
 			if [ "$name" = "alias" ]; then
 				# Perform a 'shift' of sorts.
 				alias=$name
@@ -2177,7 +2179,8 @@ ifstart () {
 			fi
 			cmd="ifconfig $if $af $alias $name"
 			case "$dt" in
-			dest)	cmd="$cmd $dtaddr"
+			dest)
+				cmd="$cmd $dtaddr"
 				;;
 			*)
 				cmd2="$dt $dtaddr"
@@ -2190,7 +2193,7 @@ ifstart () {
 					return
 				fi
 				[ "$mask" ] && cmd="$cmd netmask $mask"
-				if [ "$bcaddr" -a X"$bcaddr" != "XNONE" ]; then
+				if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
 					cmd="$cmd broadcast $bcaddr"
 				fi
 				;;
@@ -2202,7 +2205,8 @@ ifstart () {
 				[ "$mask" ] && cmd="$cmd prefixlen $mask"
 				cmd="$cmd $bcaddr"
 				;;
-			*)	cmd="$cmd $mask $bcaddr"
+			*)
+				cmd="$cmd $mask $bcaddr"
 				;;
 			esac
 			cmd="$cmd $ext1 $ext2"

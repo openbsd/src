@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.174 2017/04/07 22:15:17 rpe Exp $
+#	$OpenBSD: netstart,v 1.175 2017/04/07 22:53:25 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -51,7 +51,7 @@ ifstart() {
 			# We are carrying over from the 'read dt dtaddr'
 			# last time.
 			set -- $cmd2
-			af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
+			af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
 			# Make sure and get any remaining args in ext2,
 			# like the read below.
 			i=1
@@ -64,7 +64,8 @@ ifstart() {
 		# $af can be "dhcp", "up", "rtsol", an address family, commands,
 		# or a comment.
 		case "$af" in
-		"#"*|"") # Skip comments and empty lines.
+		"#"*|"")
+			# Skip comments and empty lines.
 			continue
 			;;
 		"!"*) # Parse commands.
@@ -84,7 +85,7 @@ ifstart() {
 			;;
 		*)
 			read dt dtaddr
-			if [ "$name"  = "alias" ]; then
+			if [ "$name" = "alias" ]; then
 				# Perform a 'shift' of sorts.
 				alias=$name
 				name=$mask
@@ -131,7 +132,7 @@ ifstart() {
 			;;
 		esac
 		eval "$cmd"
-	done </etc/hostname.$if
+	done <$file
 }
 
 # Start multiple interfaces by driver name.
