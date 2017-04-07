@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2017/04/07 13:30:43 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.85 2017/04/07 14:17:38 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -288,6 +288,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 		octeon_ver = OCTEON_2;
 		break;
 	case MIPS_CN71XX:
+	case MIPS_CN73XX:
 		octeon_ver = OCTEON_3;
 		break;
 	}
