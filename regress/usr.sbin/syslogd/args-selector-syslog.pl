@@ -11,10 +11,12 @@ use warnings;
 use Sys::Syslog;
 
 my %selector2messages = (
-    "syslog.*"       => [qw{ start .*accepted .*close exiting.* }],
-    "syslog.debug"   => [qw{ start .*accepted .*close exiting.* }],
-    "syslog.info"    => [qw{ start .*accepted .*close exiting.* }],
-    "syslog.notice"  => [qw{ exiting.* }],
+    "syslog.*"       =>
+	[qw{ start .*accepted .*close .*accepted .*peer exiting.* }],
+    "syslog.debug"   =>
+	[qw{ start .*accepted .*close .*accepted .*peer exiting.* }],
+    "syslog.info"    => [qw{ start .*peer exiting.* }],
+    "syslog.notice"  => [qw{ .*peer exiting.* }],
     "syslog.warning" => [qw{ exiting.* }],
     "syslog.err"     => [qw{ exiting.* }],
     "syslog.crit"    => [],
@@ -25,7 +27,25 @@ my %selector2messages = (
 
 our %args = (
     client => {
-	logsock => { type => "tcp", host => "127.0.0.1", port => 514 },
+	connect => { domain => AF_INET, proto => "tcp", addr => "127.0.0.1",
+	    port => 514 },
+	redo => 2,
+	func => sub {
+	    my $self = shift;
+	    $self->{redo}--;
+	    if ($self->{redo}) {
+		write_message($self, get_testlog());
+		IO::Handle::flush(\*STDOUT);
+		${$self->{syslogd}}->loggrep(get_testgrep(), 2);
+	    } else {
+		write_message($self, get_testlog());
+		IO::Handle::flush(\*STDOUT);
+		${$self->{syslogd}}->loggrep(get_testgrep(), 2);
+		setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
+		    or die "set socket linger failed: $!";
+		write_shutdown($self);
+	    }
+	},
     },
     syslogd => {
 	options => ["-T", "127.0.0.1:514"],

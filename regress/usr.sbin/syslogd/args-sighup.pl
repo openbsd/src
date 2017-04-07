@@ -54,6 +54,13 @@ our %args = (
 		check_pattern($name, $file, $pattern, \&filegrep);
 	}
     },
+    file => {
+	loggrep => {
+	    qr/syslogd\[\d+\]: start/ => 0,
+	    qr/syslogd\[\d+\]: restart/ => 1,
+	    qr/syslogd\[\d+\]: exiting/ => 1,
+	},
+    },
 );
 
 1;

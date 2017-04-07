@@ -44,6 +44,13 @@ our %args = (
 	})},
 	loggrep => { get_between2loggrep() },
     },
+    file => {
+	loggrep => {
+	    qr/syslogd\[\d+\]: start/ => 2,
+	    qr/syslogd\[\d+\]: restart/ => 0,
+	    qr/syslogd\[\d+\]: exiting/ => 1,
+	},
+    },
 );
 
 1;

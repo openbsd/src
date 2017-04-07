@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.31 2017/04/06 16:56:44 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.32 2017/04/07 15:49:46 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -297,11 +297,11 @@ sub selector2loggrep {
     foreach my $sel (sort keys %s2m) {
 	my @m = @{$s2m{$sel}};
 	my %msg;
-	@msg{@m} = ();
+	$msg{$_}++ foreach (@m);
 	my %nomsg = %allmsg;
 	delete @nomsg{@m};
 	push @loggrep, {
-	    (map { qr/: $_$/ => 1 } sort keys %msg),
+	    (map { qr/: $_$/ => $msg{$_} } sort keys %msg),
 	    (map { qr/: $_$/ => 0 } sort keys %nomsg),
 	};
     }
