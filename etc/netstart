@@ -1,12 +1,13 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.172 2016/12/06 14:01:43 mpi Exp $
+#	$OpenBSD: netstart,v 1.173 2017/04/07 21:44:07 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
 
-# Strip comment lines from a file.
-# Strip leading and trailing whitespace if IFS is set.
+# Echo file $1 to stdout. Skip comment lines and delete everything
+# after the first '#' from other lines. Strip leading and trailing
+# whitespace if IFS is set.
 # Usage: stripcom /path/to/file
 stripcom() {
 	local _file=$1 _line
