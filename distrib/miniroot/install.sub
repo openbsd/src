@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.990 2017/04/04 17:50:45 rpe Exp $
+#	$OpenBSD: install.sub,v 1.991 2017/04/07 21:00:42 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -258,19 +258,26 @@ lease_value () {
 # Device related functions
 # ------------------------------------------------------------------------------
 
-# Show device name, label and size for the provided list of disk devices.
+# Show device name, info, NAA and size for the provided list of disk devices.
 # Create device nodes as needed and cleanup afterwards.
 diskinfo() {
-	local _d
+	local _d _i _n _s
 
 	for _d; do
+		# Extract disk information enclosed in <> from dmesg.
+		_i=$(dmesg | sed -n '/^'$_d' at /h;${g;s/^.*<\(.*\)>.*$/\1/p;}')
+		_i=${_i##+([[:space:],])}
+		_i=${_i%%+([[:space:],])}
+
+		# Extract Network Address Authority information from dmesg..
+		_n=$(dmesg | sed -En '/^'$_d' at /h;${g;s/^.* ([a-z0-9]+\.[a-zA-Z0-9_]+)$/\1/p;}')
+
+		# Extract disk size from disklabel output.
 		make_dev $_d
-		echo -n "$_d: "
-		disklabel -dpg $_d 2>/dev/null |
-		sed	-e '/^label: /{s,,,;s/ *$//;s/^$/<no label>/;h;d;}' \
-			-e '/.*# total bytes: \(.*\)/{s//(\1)/;H;}' \
-			-e '$!d;x;s/\n/ /'
+		_s=$(disklabel -dpg $_d 2>/dev/null | sed -n '/.*# total bytes: \(.*\)/{s//(\1)/p;}')
 		rm -f /dev/{r,}$_d?
+
+		echo "$_d: $_i $_n $_s"
 	done
 }
 
