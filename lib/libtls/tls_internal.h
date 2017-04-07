@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.55 2017/04/05 03:19:22 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.56 2017/04/07 08:48:30 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -110,7 +110,7 @@ struct tls_conninfo {
 	char *issuer;
 	char *subject;
 
-	u_int8_t *peer_cert;
+	uint8_t *peer_cert;
 	size_t peer_cert_len;
 
 	time_t notbefore;
