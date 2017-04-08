@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.60 2014/11/04 07:36:47 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.61 2017/04/08 03:36:50 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1611,6 +1611,7 @@ struct msk_rx_desc {
 	u_int8_t		sk_opcode;
 } __packed;
 
+#define SK_Y2_RXOPC_ADDR64	0x21
 #define SK_Y2_RXOPC_BUFFER	0x40
 #define SK_Y2_RXOPC_PACKET	0x41
 #define SK_Y2_RXOPC_OWN		0x80
@@ -1624,6 +1625,7 @@ struct msk_tx_desc {
 
 #define SK_Y2_TXCTL_LASTFRAG	0x80
 
+#define SK_Y2_TXOPC_ADDR64	0x21
 #define SK_Y2_TXOPC_BUFFER	0x40
 #define SK_Y2_TXOPC_PACKET	0x41
 #define SK_Y2_TXOPC_OWN		0x80
