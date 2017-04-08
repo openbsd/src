@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.128 2017/03/09 20:31:41 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.129 2017/04/08 03:29:13 mlarkin Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -375,11 +375,6 @@ trap(struct trapframe *frame)
 			goto we_re_toast;
 
 		pcb = &p->p_addr->u_pcb;
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame->tf_err & PGEX_P)
-			goto we_re_toast;
-#endif
 		cr2 = rcr2();
 		KERNEL_LOCK();
 		/* This will only trigger if SMEP is enabled */
