@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.66 2016/05/24 05:35:01 mpi Exp $ */
+/*	$OpenBSD: uhid.c,v 1.67 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ uhidclose(dev_t dev, int flag, int mode, struct proc *p)
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
 	clfree(&sc->sc_q);
-	free(sc->sc_obuf, M_USBDEV, 0);
+	free(sc->sc_obuf, M_USBDEV, sc->sc_hdev.sc_osize);
 	sc->sc_async = NULL;
 	uhidev_close(&sc->sc_hdev);
 

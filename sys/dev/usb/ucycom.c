@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.35 2017/04/06 04:48:54 deraadt Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.36 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -291,11 +291,11 @@ ucycom_close(void *addr, int portno)
 
 	s = splusb();
 	if (sc->sc_obuf != NULL) {
-		free(sc->sc_obuf, M_USBDEV, 0);
+		free(sc->sc_obuf, M_USBDEV, sc->sc_olen);
 		sc->sc_obuf = NULL;
 	}
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV, 0);
+		free(sc->sc_ibuf, M_USBDEV, sc->sc_ilen);
 		sc->sc_ibuf = NULL;
 	}
 	splx(s);

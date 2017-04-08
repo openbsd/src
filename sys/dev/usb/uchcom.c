@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.26 2017/04/06 04:48:54 deraadt Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.27 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ struct uchcom_softc
 	struct usbd_interface	*sc_iface;
 	/* */
 	int			 sc_intr_endpoint;
-	int			 sc_intr_size;
 	struct usbd_pipe	*sc_intr_pipe;
 	u_char			*sc_intr_buf;
+	int			 sc_isize;
 	/* */
 	uint8_t			 sc_version;
 	int			 sc_dtr;
@@ -272,7 +272,7 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 		goto failed;
 
 	sc->sc_intr_endpoint = endpoints.ep_intr;
-	sc->sc_intr_size = endpoints.ep_intr_size;
+	sc->sc_isize = endpoints.ep_intr_size;
 
 	/* setup ucom layer */
 	uca.portno = UCOM_UNK_PORTNO;
@@ -770,13 +770,13 @@ uchcom_setup_intr_pipe(struct uchcom_softc *sc)
 	usbd_status err;
 
 	if (sc->sc_intr_endpoint != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_intr_size, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 		err = usbd_open_pipe_intr(sc->sc_iface,
 					  sc->sc_intr_endpoint,
 					  USBD_SHORT_XFER_OK,
 					  &sc->sc_intr_pipe, sc,
 					  sc->sc_intr_buf,
-					  sc->sc_intr_size,
+					  sc->sc_isize,
 					  uchcom_intr, USBD_DEFAULT_INTERVAL);
 		if (err) {
 			printf("%s: cannot open interrupt pipe: %s\n",
@@ -799,7 +799,7 @@ uchcom_close_intr_pipe(struct uchcom_softc *sc)
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
 			       sc->sc_dev.dv_xname, usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV, 0);
+		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }

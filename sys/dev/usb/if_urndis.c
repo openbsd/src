@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.64 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.65 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -241,7 +241,7 @@ urndis_ctrl_handle(struct urndis_softc *sc, struct rndis_comp_hdr *hdr,
 			rval = RNDIS_STATUS_FAILURE;
 	}
 
-	free(hdr, M_TEMP, 0);
+	free(hdr, M_TEMP, RNDIS_RESPONSE_LEN);
 
 	return rval;
 }
@@ -1431,10 +1431,10 @@ urndis_attach(struct device *parent, struct device *self, void *aux)
 	if (bufsz == ETHER_ADDR_LEN) {
 		memcpy(eaddr, buf, ETHER_ADDR_LEN);
 		printf(", address %s\n", ether_sprintf(eaddr));
-		free(buf, M_TEMP, 0);
+		free(buf, M_TEMP, bufsz);
 	} else {
 		printf(", invalid address\n");
-		free(buf, M_TEMP, 0);
+		free(buf, M_TEMP, bufsz);
 		splx(s);
 		return;
 	}

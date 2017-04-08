@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.89 2016/09/02 09:14:59 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.90 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -215,7 +215,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	hub->ports = mallocarray(nports, sizeof(struct usbd_port),
 	    M_USBDEV, M_NOWAIT);
 	if (hub->ports == NULL) {
-		free(hub, M_USBDEV, 0);
+		free(hub, M_USBDEV, sizeof *hub);
 		return;
 	}
 	dev->hub = hub;
@@ -340,11 +340,11 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 
  bad:
 	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV, 0);
+		free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
 	if (hub) {
 		if (hub->ports)
 			free(hub->ports, M_USBDEV, 0);
-		free(hub, M_USBDEV, 0);
+		free(hub, M_USBDEV, sizeof *hub);
 	}
 	dev->hub = NULL;
 }
@@ -477,10 +477,10 @@ uhub_detach(struct device *self, int flags)
 	if (hub->ports[0].tt)
 		free(hub->ports[0].tt, M_USBDEV, 0);
 	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV, 0);
+		free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
 	if (hub->ports)
 		free(hub->ports, M_USBDEV, 0);
-	free(hub, M_USBDEV, 0);
+	free(hub, M_USBDEV, sizeof *hub);
 	sc->sc_hub->hub = NULL;
 
 	return (0);

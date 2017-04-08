@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.87 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.88 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -469,6 +469,7 @@ kue_attachhook(struct device *self)
 		    sc->kue_dev.dv_xname);
 		return;
 	}
+	sc->kue_mcfilterslen = KUE_MCFILTCNT(sc);
 
 	s = splnet();
 
@@ -541,7 +542,7 @@ kue_detach(struct device *self, int flags)
 	s = splusb();		/* XXX why? */
 
 	if (sc->kue_mcfilters != NULL) {
-		free(sc->kue_mcfilters, M_USBDEV, 0);
+		free(sc->kue_mcfilters, M_USBDEV, sc->kue_mcfilterslen);
 		sc->kue_mcfilters = NULL;
 	}
 

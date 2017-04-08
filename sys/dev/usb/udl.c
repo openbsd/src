@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.86 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: udl.c,v 1.87 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -648,6 +648,8 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 		    DN(sc));
 		return (ENOMEM);
 	}
+	sc->sc_cbslen = sc->sc_ri.ri_rows * sc->sc_ri.ri_cols *
+	    sizeof(*sc->sc_cbs);
 
 	sc->sc_nscreens++;
 
@@ -669,7 +671,7 @@ udl_free_screen(void *v, void *cookie)
 
 	/* free character backing store */
 	if (sc->sc_cbs != NULL)
-		free(sc->sc_cbs, M_DEVBUF, 0);
+		free(sc->sc_cbs, M_DEVBUF, sc->sc_cbslen);
 
 	sc->sc_nscreens--;
 }
@@ -1518,7 +1520,7 @@ udl_cmd_free_buf(struct udl_softc *sc)
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
 	if (cb->buf != NULL) {
-		free(cb->buf, M_DEVBUF, 0);
+		free(cb->buf, M_DEVBUF, UDL_CMD_MAX_XFER_SIZE);
 		cb->buf = NULL;
 	}
 	cb->off = 0;

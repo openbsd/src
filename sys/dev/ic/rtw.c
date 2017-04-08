@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.97 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.98 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -4057,11 +4057,11 @@ rtw_attach(struct rtw_softc *sc)
 
 fail8:
 	sr = &sc->sc_srom;
-	sr->sr_size = 0;
 	if (sr->sr_content != NULL) {
-		free(sr->sr_content, M_DEVBUF, 0);
+		free(sr->sr_content, M_DEVBUF, sr->sr_size);
 		sr->sr_content = NULL;
 	}
+	sr->sr_size = 0;
 
 fail7:
 	rtw_rxdesc_dmamaps_destroy(sc->sc_dmat, &sc->sc_rxsoft[0],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.193 2017/03/26 15:31:15 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.194 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1654,7 +1654,7 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 
 	if (fb->buf != NULL) {
-		free(fb->buf, M_DEVBUF, 0);
+		free(fb->buf, M_DEVBUF, fb->buf_size);
 		fb->buf = NULL;
 	}
 
@@ -3402,7 +3402,7 @@ uvideo_queryctrl(void *v, struct v4l2_queryctrl *qctrl)
 	qctrl->flags = 0;
 
 out:
-	free(ctrl_data, M_USBDEV, 0);
+	free(ctrl_data, M_USBDEV, ctrl_len);
 
 	return (ret);
 }
@@ -3453,7 +3453,7 @@ uvideo_g_ctrl(void *v, struct v4l2_control *gctrl)
 	}
 
 out:
-	free(ctrl_data, M_USBDEV, 0);
+	free(ctrl_data, M_USBDEV, ctrl_len);
 
 	return (0);
 }
@@ -3500,7 +3500,7 @@ uvideo_s_ctrl(void *v, struct v4l2_control *sctrl)
 	if (error != USBD_NORMAL_COMPLETION)
 		ret = EINVAL;
 
-	free(ctrl_data, M_USBDEV, 0);
+	free(ctrl_data, M_USBDEV, ctrl_len);
 
 	return (ret);
 }

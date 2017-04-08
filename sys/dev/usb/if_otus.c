@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.56 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.57 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -482,6 +482,7 @@ otus_open_pipes(struct otus_softc *sc)
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
+	sc->ibuflen = isize;
 	error = usbd_open_pipe_intr(sc->sc_iface, AR_EPT_INTR_RX_NO,
 	    USBD_SHORT_XFER_OK, &sc->cmd_rx_pipe, sc, sc->ibuf, isize,
 	    otus_intr, USBD_DEFAULT_INTERVAL);
@@ -558,7 +559,7 @@ otus_close_pipes(struct otus_softc *sc)
 		usbd_close_pipe(sc->cmd_rx_pipe);
 	}
 	if (sc->ibuf != NULL)
-		free(sc->ibuf, M_USBDEV, 0);
+		free(sc->ibuf, M_USBDEV, sc->ibuflen);
 	if (sc->data_tx_pipe != NULL)
 		usbd_close_pipe(sc->data_tx_pipe);
 	if (sc->cmd_tx_pipe != NULL)

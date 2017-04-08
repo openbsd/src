@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.8 2016/11/06 12:58:01 mpi Exp $   */
+/*	$OpenBSD: usps.c,v 1.9 2017/04/08 02:57:25 deraadt Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -283,8 +283,8 @@ fail:
 		usbd_close_pipe(sc->sc_ipipe);
 	if (sc->sc_xfer != NULL)
 		usbd_free_xfer(sc->sc_xfer);
-	if (sc->sc_intrbuf != NULL) 
-		free(sc->sc_intrbuf, M_USBDEV, 0);
+	if (sc->sc_intrbuf != NULL)
+		free(sc->sc_intrbuf, M_USBDEV, sc->sc_isize);
 }
 
 int
@@ -300,7 +300,7 @@ usps_detach(struct device *self, int flags)
 		usbd_abort_pipe(sc->sc_ipipe);
 		usbd_close_pipe(sc->sc_ipipe);
 		if (sc->sc_intrbuf != NULL)
-			free(sc->sc_intrbuf, M_USBDEV, 0);
+			free(sc->sc_intrbuf, M_USBDEV, sc->sc_isize);
 		sc->sc_ipipe = NULL;
 	}
 	if (sc->sc_xfer != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.133 2017/04/05 22:45:21 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.134 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -639,7 +639,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	usb_status_t ds;
 	usb_config_descriptor_t cd, *cdp;
 	usbd_status err;
-	int i, ifcidx, nifc, len, selfpowered, power;
+	int i, ifcidx, nifc, cdplen, selfpowered, power;
 
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
 
@@ -674,13 +674,13 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		return (err);
 	if (cd.bDescriptorType != UDESC_CONFIG)
 		return (USBD_INVAL);
-	len = UGETW(cd.wTotalLength);
-	cdp = malloc(len, M_USB, M_NOWAIT);
+	cdplen = UGETW(cd.wTotalLength);
+	cdp = malloc(cdplen, M_USB, M_NOWAIT);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
 	/* Get the full descriptor. */
 	for (i = 0; i < 3; i++) {
-		err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdp);
+		err = usbd_get_desc(dev, UDESC_CONFIG, index, cdplen, cdp);
 		if (!err)
 			break;
 		usbd_delay_ms(dev, 200);
@@ -795,7 +795,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	free(cdp, M_USB, 0);
+	free(cdp, M_USB, cdplen);
 	return (err);
 }
 
@@ -813,6 +813,7 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	p = malloc(dev->bus->pipe_size, M_USB, M_NOWAIT|M_ZERO);
 	if (p == NULL)
 		return (USBD_NOMEM);
+	p->pipe_size = dev->bus->pipe_size;
 	p->device = dev;
 	p->iface = iface;
 	p->endpoint = ep;
@@ -823,7 +824,7 @@ usbd_setup_pipe(struct usbd_device *dev, struct usbd_interface *iface,
 	if (err) {
 		DPRINTF(("%s: endpoint=0x%x failed, error=%s\n", __func__,
 			 ep->edesc->bEndpointAddress, usbd_errstr(err)));
-		free(p, M_USB, 0);
+		free(p, M_USB, dev->bus->pipe_size);
 		return (err);
 	}
 	*pipe = p;
@@ -938,7 +939,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 		dev->subdevs = mallocarray(nifaces + 2, sizeof(dv), M_USB,
 		    M_NOWAIT | M_ZERO);
 		if (dev->subdevs == NULL) {
-			free(ifaces, M_USB, 0);
+			free(ifaces, M_USB, nifaces * sizeof(*ifaces));
 			err = USBD_NOMEM;
 			goto fail;
 		}
@@ -955,7 +956,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				usbd_claim_iface(dev, i);
 			}
 		}
-		free(ifaces, M_USB, 0);
+		free(ifaces, M_USB, nifaces * sizeof(*ifaces));
 
 		if (dev->ndevs > 0) {
 			for (i = 0; i < nifaces; i++) {
@@ -968,7 +969,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 				goto fail;
 		}
 
-		free(dev->subdevs, M_USB, 0);
+		free(dev->subdevs, M_USB, (nifaces + 2) * sizeof(dv));
 		dev->subdevs = NULL;
 	}
 	/* No interfaces were attached in any of the configurations. */
@@ -1282,7 +1283,7 @@ usbd_print(void *aux, const char *pnp)
 	DPRINTFN(15, ("usbd_print dev=%p\n", uaa->device));
 	if (pnp) {
 		if (!uaa->usegeneric) {
-			free(devinfop, M_TEMP, 0);
+			free(devinfop, M_TEMP, DEVINFOSIZE);
 			return (QUIET);
 		}
 		printf("%s at %s", devinfop, pnp);
@@ -1296,7 +1297,7 @@ usbd_print(void *aux, const char *pnp)
 
 	if (!pnp)
 		printf(" %s\n", devinfop);
-	free(devinfop, M_TEMP, 0);
+	free(devinfop, M_TEMP, DEVINFOSIZE);
 	return (UNCONF);
 }
 

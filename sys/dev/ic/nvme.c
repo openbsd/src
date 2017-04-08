@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.53 2016/11/15 12:17:42 mpi Exp $ */
+/*	$OpenBSD: nvme.c,v 1.54 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1220,7 +1220,7 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 free_sq:
 	nvme_dmamem_free(sc, q->q_sq_dmamem);
 free:
-	free(q, M_DEVBUF, 0);
+	free(q, M_DEVBUF, sizeof *q);
 
 	return (NULL);
 }
@@ -1232,7 +1232,7 @@ nvme_q_free(struct nvme_softc *sc, struct nvme_queue *q)
 	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_POSTWRITE);
 	nvme_dmamem_free(sc, q->q_cq_dmamem);
 	nvme_dmamem_free(sc, q->q_sq_dmamem);
-	free(q, M_DEVBUF, 0);
+	free(q, M_DEVBUF, sizeof *q);
 }
 
 int
@@ -1299,7 +1299,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
 ndmfree:
-	free(ndm, M_DEVBUF, 0);
+	free(ndm, M_DEVBUF, sizeof *ndm);
 
 	return (NULL);
 }
@@ -1318,6 +1318,6 @@ nvme_dmamem_free(struct nvme_softc *sc, struct nvme_dmamem *ndm)
 	bus_dmamem_unmap(sc->sc_dmat, ndm->ndm_kva, ndm->ndm_size);
 	bus_dmamem_free(sc->sc_dmat, &ndm->ndm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, ndm->ndm_map);
-	free(ndm, M_DEVBUF, 0);
+	free(ndm, M_DEVBUF, sizeof *ndm);
 }
 

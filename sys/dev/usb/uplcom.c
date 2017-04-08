@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.68 2016/09/02 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.69 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	struct ucom_attach_args uca;
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
@@ -308,7 +308,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	 * USB-RSAQ1 has two interface
 	 *
 	 *  USB-RSAQ1       | USB-RSAQ2
- 	 * -----------------+-----------------
+	 * -----------------+-----------------
 	 * Interface 0      |Interface 0
 	 *  Interrupt(0x81) | Interrupt(0x81)
 	 * -----------------+ BulkIN(0x02)
@@ -399,12 +399,12 @@ uplcom_detach(struct device *self, int flags)
 
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));
 
-        if (sc->sc_intr_pipe != NULL) {
-                usbd_abort_pipe(sc->sc_intr_pipe);
-                usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV, 0);
-                sc->sc_intr_pipe = NULL;
-        }
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
+		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
+		sc->sc_intr_pipe = NULL;
+	}
 
 	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
@@ -417,16 +417,16 @@ uplcom_detach(struct device *self, int flags)
 usbd_status
 uplcom_reset(struct uplcom_softc *sc)
 {
-        usb_device_request_t req;
+	usb_device_request_t req;
 	usbd_status err;
 
-        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-        req.bRequest = UPLCOM_SET_REQUEST;
-        USETW(req.wValue, 0);
-        USETW(req.wIndex, sc->sc_iface_number);
-        USETW(req.wLength, 0);
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = UPLCOM_SET_REQUEST;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, 0);
 
-        err = usbd_do_request(sc->sc_udev, &req, 0);
+	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
 		return (EIO);
 
@@ -719,7 +719,7 @@ uplcom_close(void *addr, int portno)
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
 				sc->sc_dev.dv_xname, usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV, 0);
+		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }

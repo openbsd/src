@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.117 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.118 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -251,18 +251,18 @@ zyd_attachhook(struct device *self)
 	struct zyd_softc *sc = (struct zyd_softc *)self;
 	const char *fwname;
 	u_char *fw;
-	size_t size;
+	size_t fwsize;
 	int error;
 
 	fwname = (sc->mac_rev == ZYD_ZD1211) ? "zd1211" : "zd1211b";
-	if ((error = loadfirmware(fwname, &fw, &size)) != 0) {
+	if ((error = loadfirmware(fwname, &fw, &fwsize)) != 0) {
 		printf("%s: error %d, could not read firmware file %s\n",
 		    sc->sc_dev.dv_xname, error, fwname);
 		return;
 	}
 
-	error = zyd_loadfirmware(sc, fw, size);
-	free(fw, M_DEVBUF, size);
+	error = zyd_loadfirmware(sc, fw, fwsize);
+	free(fw, M_DEVBUF, fwsize);
 	if (error != 0) {
 		printf("%s: could not load firmware (error=%d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -466,7 +466,7 @@ zyd_open_pipes(struct zyd_softc *sc)
 	sc->ibuf = malloc(isize, M_USBDEV, M_NOWAIT);
 	if (sc->ibuf == NULL)
 		return ENOMEM;
-
+	sc->ibuflen = isize;
 	error = usbd_open_pipe_intr(sc->sc_iface, 0x83, USBD_SHORT_XFER_OK,
 	    &sc->zyd_ep[ZYD_ENDPT_IIN], sc, sc->ibuf, isize, zyd_intr,
 	    USBD_DEFAULT_INTERVAL);
@@ -522,7 +522,7 @@ zyd_close_pipes(struct zyd_softc *sc)
 		}
 	}
 	if (sc->ibuf != NULL) {
-		free(sc->ibuf, M_USBDEV, 0);
+		free(sc->ibuf, M_USBDEV, sc->ibuflen);
 		sc->ibuf = NULL;
 	}
 }

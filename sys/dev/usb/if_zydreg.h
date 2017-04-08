@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zydreg.h,v 1.28 2014/07/12 15:26:54 stsp Exp $	*/
+/*	$OpenBSD: if_zydreg.h,v 1.29 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1220,6 +1220,7 @@ struct zyd_softc {
 #define ZYD_ENDPT_CNT	4
 	struct usbd_pipe		*zyd_ep[ZYD_ENDPT_CNT];
 	uint8_t 			*ibuf;
+	size_t				ibuflen;
 
 	struct zyd_rx_data		rx_data[ZYD_RX_LIST_CNT];
 	struct zyd_tx_data		tx_data[ZYD_TX_LIST_CNT];

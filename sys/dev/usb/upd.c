@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.25 2016/01/09 04:14:42 jcs Exp $ */
+/*	$OpenBSD: upd.c,v 1.26 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -181,8 +181,6 @@ upd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hdev.sc_intr = upd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_reports = NULL;
-	sc->sc_sensors = NULL;
 	SLIST_INIT(&sc->sc_root_sensors);
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
@@ -287,8 +285,8 @@ upd_detach(struct device *self, int flags)
 			sensor_detach(&sc->sc_sensordev, &sensor->ksensor);
 	}
 
-	free(sc->sc_reports, M_USBDEV, 0);
-	free(sc->sc_sensors, M_USBDEV, 0);
+	free(sc->sc_reports, M_USBDEV, sc->sc_max_repid * sizeof(struct upd_report));
+	free(sc->sc_sensors, M_USBDEV, UPD_MAX_SENSORS * sizeof(struct upd_sensor));
 	return (0);
 }
 

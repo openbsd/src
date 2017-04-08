@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.64 2015/03/14 03:38:49 jsg Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.65 2017/04/08 02:57:25 deraadt Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -370,7 +370,7 @@ ubsa_detach(struct device *self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV, 0);
+		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 
@@ -628,7 +628,7 @@ ubsa_close(void *addr, int portno)
 			printf("%s: close interrupt pipe failed: %s\n",
 			    sc->sc_dev.dv_xname,
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV, 0);
+		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }

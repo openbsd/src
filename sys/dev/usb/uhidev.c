@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.74 2016/06/13 10:15:03 mpi Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.75 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		if (usbd_get_report_descriptor(sc->sc_udev, sc->sc_ifaceno,
 		    desc, size)) {
 			printf("%s: no report descriptor\n", DEVNAME(sc));
-			free(desc, M_USBDEV, 0);
+			free(desc, M_USBDEV, size);
 			return;
 		}
 	}
@@ -405,7 +405,7 @@ uhidev_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc_repdesc != NULL)
-		free(sc->sc_repdesc, M_USBDEV, 0);
+		free(sc->sc_repdesc, M_USBDEV, sc->sc_repdesc_size);
 
 	/*
 	 * XXX Check if we have only one children claiming all the Report
@@ -573,7 +573,7 @@ out2:
 	usbd_close_pipe(sc->sc_ipipe);
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
-	free(sc->sc_ibuf, M_USBDEV, 0);
+	free(sc->sc_ibuf, M_USBDEV, sc->sc_isize);
 	scd->sc_state &= ~UHIDEV_OPEN;
 	sc->sc_refcnt = 0;
 	sc->sc_ipipe = NULL;
@@ -634,7 +634,7 @@ uhidev_close(struct uhidev *scd)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV, 0);
+		free(sc->sc_ibuf, M_USBDEV, sc->sc_isize);
 		sc->sc_ibuf = NULL;
 	}
 }

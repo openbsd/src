@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.44 2017/02/10 08:07:21 ratchov Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.45 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -772,11 +772,11 @@ alloc_all_jacks(struct umidi_softc *sc)
 static void
 free_all_jacks(struct umidi_softc *sc)
 {
-	int s;
+	int s, jacks = sc->sc_in_num_jacks + sc->sc_out_num_jacks;
 
 	s = splusb();
 	if (sc->sc_out_jacks) {
-		free(sc->sc_jacks, M_USBDEV, 0);
+		free(sc->sc_jacks, M_USBDEV, jacks * sizeof(*sc->sc_out_jacks));
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	}
 	splx(s);
@@ -951,9 +951,11 @@ alloc_all_mididevs(struct umidi_softc *sc, int nmidi)
 static void
 free_all_mididevs(struct umidi_softc *sc)
 {
-	sc->sc_num_mididevs = 0;
 	if (sc->sc_mididevs)
-		free(sc->sc_mididevs, M_USBDEV, 0);
+		free(sc->sc_mididevs, M_USBDEV,
+		    sc->sc_num_mididevs * sizeof(*sc->sc_mididevs));
+	sc->sc_mididevs = NULL;
+	sc->sc_num_mididevs = 0;
 }
 
 static usbd_status

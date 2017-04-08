@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.34 2015/08/15 19:29:00 miod Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.35 2017/04/08 02:57:25 deraadt Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -469,9 +469,9 @@ pcic_event_process(h, pe)
 				break;
 			if (pe2->pe_type == PCIC_EVENT_INSERTION) {
 				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-				free(pe1, M_TEMP, 0);
+				free(pe1, M_TEMP, sizeof *pe1);
 				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-				free(pe2, M_TEMP, 0);
+				free(pe2, M_TEMP, sizeof *pe2);
 			}
 		}
 		splx(s);
@@ -493,9 +493,9 @@ pcic_event_process(h, pe)
 				break;
 			if (pe2->pe_type == PCIC_EVENT_REMOVAL) {
 				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-				free(pe1, M_TEMP, 0);
+				free(pe1, M_TEMP, sizeof *pe1);
 				SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
-				free(pe2, M_TEMP, 0);
+				free(pe2, M_TEMP, sizeof *pe1);
 			}
 		}
 		splx(s);
@@ -507,7 +507,7 @@ pcic_event_process(h, pe)
 	default:
 		panic("pcic_event_thread: unknown event %d", pe->pe_type);
 	}
-	free(pe, M_TEMP, 0);
+	free(pe, M_TEMP, sizeof *pe);
 }
 
 void

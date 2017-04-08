@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.232 2016/08/14 04:08:03 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.233 2017/04/08 02:57:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2293,7 +2293,7 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 done:
 	error = 0;
 bail:
-	free(p, M_DEVBUF, 0);
+	free(p, M_DEVBUF, sizeof *p);
 	dma_free(vpdbuf, sizeof(*vpdbuf));
 	dma_free(inqbuf, sizeof(*inqbuf));
 

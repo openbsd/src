@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.90 2017/03/17 09:25:59 mpi Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.91 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -271,7 +271,7 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	pipe->methods->close(pipe);
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
-	free(pipe, M_USB, 0);
+	free(pipe, M_USB, pipe->pipe_size);
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1122,4 +1122,3 @@ usbd_str(usb_string_descriptor_t *p, int l, const char *s)
 		USETW2(p->bString[i], 0, s[i]);
 	return (2 * i + 2);
 }
-

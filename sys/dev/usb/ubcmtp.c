@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.14 2017/03/17 09:26:28 mpi Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.15 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -581,11 +581,11 @@ ubcmtp_disable(void *v)
 	}
 
 	if (sc->tp_pkt != NULL) {
-		free(sc->tp_pkt, M_USBDEV, 0);
+		free(sc->tp_pkt, M_USBDEV, sc->tp_maxlen);
 		sc->tp_pkt = NULL;
 	}
 	if (sc->bt_pkt != NULL) {
-		free(sc->bt_pkt, M_USBDEV, 0);
+		free(sc->bt_pkt, M_USBDEV, sc->bt_maxlen);
 		sc->bt_pkt = NULL;
 	}
 }
@@ -777,14 +777,14 @@ fail2:
 		usbd_close_pipe(sc->sc_tp_pipe);
 	}
 	if (sc->tp_pkt != NULL)
-		free(sc->tp_pkt, M_USBDEV, 0);
+		free(sc->tp_pkt, M_USBDEV, sc->tp_maxlen);
 fail1:
 	if (sc->sc_bt_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_bt_pipe);
 		usbd_close_pipe(sc->sc_bt_pipe);
 	}
 	if (sc->bt_pkt != NULL)
-		free(sc->bt_pkt, M_USBDEV, 0);
+		free(sc->bt_pkt, M_USBDEV, sc->bt_maxlen);
 
 	return (1);
 }

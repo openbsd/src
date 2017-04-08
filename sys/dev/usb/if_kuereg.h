@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kuereg.h,v 1.11 2013/11/11 12:38:39 pirofti Exp $ */
+/*	$OpenBSD: if_kuereg.h,v 1.12 2017/04/08 02:57:25 deraadt Exp $ */
 /*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -179,6 +179,7 @@ struct kue_softc {
 	int			kue_if_flags;
 	u_int16_t		kue_rxfilt;
 	u_int8_t		*kue_mcfilters;
+	size_t			kue_mcfilterslen;
 	struct kue_cdata	kue_cdata;
 
 	char			kue_attached;

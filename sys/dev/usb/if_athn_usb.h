@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.7 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.8 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -434,6 +434,7 @@ struct athn_usb_softc {
 	struct usbd_pipe		*rx_intr_pipe;
 	struct usbd_pipe		*tx_intr_pipe;
 	uint8_t 			*ibuf;
+	size_t				ibuflen;
 
 	struct ar_wmi_cmd_reg_write	wbuf[AR_MAX_WRITE_COUNT];
 	int				wcount;

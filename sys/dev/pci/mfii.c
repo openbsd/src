@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.42 2017/02/11 04:12:28 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.43 2017/04/08 02:57:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -719,7 +719,7 @@ mfii_syspd(struct mfii_softc *sc)
 	return (0);
 
 free_pdsc:
-	free(sc->sc_pd, M_DEVBUF, 0);
+	free(sc->sc_pd, M_DEVBUF, sizeof(*sc->sc_pd));
 	return (1);
 }
 
@@ -795,7 +795,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, m->mdm_map);
 mdmfree:
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof *m);
 
 	return (NULL);
 }
@@ -807,7 +807,7 @@ mfii_dmamem_free(struct mfii_softc *sc, struct mfii_dmamem *m)
 	bus_dmamem_unmap(sc->sc_dmat, m->mdm_kva, m->mdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->mdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->mdm_map);
-	free(m, M_DEVBUF, 0);
+	free(m, M_DEVBUF, sizeof *m);
 }
 
 void

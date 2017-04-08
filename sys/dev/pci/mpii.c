@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.110 2017/01/16 18:18:16 mikeb Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.111 2017/04/08 02:57:25 deraadt Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -1764,7 +1764,7 @@ mpii_event_raid(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 				dev->slot = sc->sc_vd_id_low;
 				dev->dev_handle = lemtoh16(&ce->vol_dev_handle);
 				if (mpii_insert_dev(sc, dev)) {
-					free(dev, M_DEVBUF, 0);
+					free(dev, M_DEVBUF, sizeof *dev);
 					break;
 				}
 				sc->sc_vd_count++;
@@ -1871,7 +1871,7 @@ mpii_event_sas(void *xsc)
 			dev->expander = lemtoh16(&tcl->expander_handle);
 
 			if (mpii_insert_dev(sc, dev)) {
-				free(dev, M_DEVBUF, 0);
+				free(dev, M_DEVBUF, sizeof *dev);
 				break;
 			}
 
@@ -1894,7 +1894,7 @@ mpii_event_sas(void *xsc)
 				    DETACH_FORCE);
 			}
 
-			free(dev, M_DEVBUF, 0);
+			free(dev, M_DEVBUF, sizeof *dev);
 			break;
 		}
 	}
@@ -2419,7 +2419,7 @@ free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
 mdmfree:
-	free(mdm, M_DEVBUF, 0);
+	free(mdm, M_DEVBUF, sizeof *mdm);
 
 	return (NULL);
 }
@@ -2433,7 +2433,7 @@ mpii_dmamem_free(struct mpii_softc *sc, struct mpii_dmamem *mdm)
 	bus_dmamem_unmap(sc->sc_dmat, mdm->mdm_kva, mdm->mdm_size);
 	bus_dmamem_free(sc->sc_dmat, &mdm->mdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, mdm->mdm_map);
-	free(mdm, M_DEVBUF, 0);
+	free(mdm, M_DEVBUF, sizeof *mdm);
 }
 
 int
@@ -2565,7 +2565,7 @@ free_maps:
 
 	mpii_dmamem_free(sc, sc->sc_requests);
 free_ccbs:
-	free(sc->sc_ccbs, M_DEVBUF, 0);
+	free(sc->sc_ccbs, M_DEVBUF, (sc->sc_max_cmds-1) * sizeof(*ccb));
 
 	return (1);
 }
@@ -2627,7 +2627,8 @@ mpii_alloc_replies(struct mpii_softc *sc)
 	sc->sc_replies = mpii_dmamem_alloc(sc, sc->sc_reply_size *
 	    sc->sc_num_reply_frames);
 	if (sc->sc_replies == NULL) {
-		free(sc->sc_rcbs, M_DEVBUF, 0);
+		free(sc->sc_rcbs, M_DEVBUF,
+		    sc->sc_num_reply_frames * sizeof(struct mpii_rcb));
 		return (1);
 	}
 
@@ -3241,7 +3242,7 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 	scsi_io_put(&sc->sc_iopool, ccb);
 
 done:
-	free(vpg, M_TEMP, 0);
+	free(vpg, M_TEMP, pagelen);
 	return (rv);
 }
 
@@ -3328,7 +3329,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 	    &hdr, 1, vpg, pagelen) != 0) {
 		printf("%s: unable to fetch raid volume page 0\n",
 		    DEVNAME(sc));
-		free(vpg, M_TEMP, 0);
+		free(vpg, M_TEMP, pagelen);
 		return (EINVAL);
 	}
 
@@ -3373,7 +3374,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 	}
 
 	if ((rv = mpii_bio_hs(sc, NULL, 0, vpg->hot_spare_pool, &hcnt)) != 0) {
-		free(vpg, M_TEMP, 0);
+		free(vpg, M_TEMP, pagelen);
 		return (rv);
 	}
 
@@ -3387,7 +3388,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 		strlcpy(bv->bv_dev, scdev->dv_xname, sizeof(bv->bv_dev));
 	}
 
-	free(vpg, M_TEMP, 0);
+	free(vpg, M_TEMP, pagelen);
 	return (0);
 }
 
@@ -3428,7 +3429,7 @@ mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 	    &hdr, 1, vpg, pagelen) != 0) {
 		printf("%s: unable to fetch raid volume page 0\n",
 		    DEVNAME(sc));
-		free(vpg, M_TEMP, 0);
+		free(vpg, M_TEMP, pagelen);
 		return (EINVAL);
 	}
 
@@ -3436,7 +3437,7 @@ mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 		int		nvdsk = vpg->num_phys_disks;
 		int		hsmap = vpg->hot_spare_pool;
 
-		free(vpg, M_TEMP, 0);
+		free(vpg, M_TEMP, pagelen);
 		return (mpii_bio_hs(sc, bd, nvdsk, hsmap, NULL));
 	}
 
@@ -3444,7 +3445,7 @@ mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 	    bd->bd_diskid;
 	dn = pd->phys_disk_num;
 
-	free(vpg, M_TEMP, 0);
+	free(vpg, M_TEMP, pagelen);
 	return (mpii_bio_disk(sc, bd, dn));
 }
 
@@ -3484,7 +3485,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 	    MPII_PG_EXTENDED, &ehdr, 1, cpg, pagelen) != 0) {
 		printf("%s: unable to fetch raid config page 0\n",
 		    DEVNAME(sc));
-		free(cpg, M_TEMP, 0);
+		free(cpg, M_TEMP, pagelen);
 		return (EINVAL);
 	}
 
@@ -3503,7 +3504,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 			if (bd != NULL && bd->bd_diskid == nhs + nvdsk) {
 				u_int8_t dn = el->phys_disk_num;
 
-				free(cpg, M_TEMP, 0);
+				free(cpg, M_TEMP, pagelen);
 				return (mpii_bio_disk(sc, bd, dn));
 			}
 			nhs++;
@@ -3513,7 +3514,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 	if (hscnt)
 		*hscnt = nhs;
 
-	free(cpg, M_TEMP, 0);
+	free(cpg, M_TEMP, pagelen);
 	return (0);
 }
 
@@ -3544,7 +3545,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	    &hdr, 1, ppg, sizeof(*ppg)) != 0) {
 		printf("%s: unable to fetch raid drive page 0\n",
 		    DEVNAME(sc));
-		free(ppg, M_TEMP, 0);
+		free(ppg, M_TEMP, sizeof(*ppg));
 		return (EINVAL);
 	}
 
@@ -3552,7 +3553,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 
 	if ((dev = mpii_find_dev(sc, lemtoh16(&ppg->dev_handle))) == NULL) {
 		bd->bd_status = BIOC_SDINVALID;
-		free(ppg, M_TEMP, 0);
+		free(ppg, M_TEMP, sizeof(*ppg));
 		return (0);
 	}
 
@@ -3597,7 +3598,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	    sizeof(ppg->product_id));
 	scsi_strvis(bd->bd_serial, ppg->serial, sizeof(ppg->serial));
 
-	free(ppg, M_TEMP, 0);
+	free(ppg, M_TEMP, sizeof(*ppg));
 	return (0);
 }
 
@@ -3650,7 +3651,7 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 	    MPII_PG_POLL, &hdr, 1, vpg, pagelen) != 0) {
 		DNPRINTF(MPII_D_MISC, "%s: unable to fetch raid volume "
 		    "page 0\n", DEVNAME(sc));
-		free(vpg, M_TEMP, 0);
+		free(vpg, M_TEMP, pagelen);
 		return (EINVAL);
 	}
 
@@ -3678,7 +3679,7 @@ mpii_bio_volstate(struct mpii_softc *sc, struct bioc_vol *bv)
 		break;
 	}
 
-	free(vpg, M_TEMP, 0);
+	free(vpg, M_TEMP, pagelen);
 	return (0);
 }
 

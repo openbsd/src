@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.46 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.47 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -391,6 +391,7 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 		    usc->usb_dev.dv_xname);
 		goto fail;
 	}
+	usc->ibuflen = isize;
 	error = usbd_open_pipe_intr(usc->sc_iface, AR_PIPE_RX_INTR,
 	    USBD_SHORT_XFER_OK, &usc->rx_intr_pipe, usc, usc->ibuf, isize,
 	    athn_usb_intr, USBD_DEFAULT_INTERVAL);
@@ -433,7 +434,7 @@ athn_usb_close_pipes(struct athn_usb_softc *usc)
 		usc->rx_intr_pipe = NULL;
 	}
 	if (usc->ibuf != NULL) {
-		free(usc->ibuf, M_USBDEV, 0);
+		free(usc->ibuf, M_USBDEV, usc->ibuflen);
 		usc->ibuf = NULL;
 	}
 }

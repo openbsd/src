@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslhcom.c,v 1.5 2017/04/06 04:48:54 deraadt Exp $	*/
+/*	$OpenBSD: uslhcom.c,v 1.6 2017/04/08 02:57:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 SASANO Takayoshi <uaa@openbsd.org>
@@ -432,8 +432,7 @@ uslhcom_open(void *arg, int portno)
 	if (usbd_is_dying(sc->sc_udev))
 		return EIO;
 
-	sc->sc_ibuf = malloc(sc->sc_hdev.sc_osize + sizeof(u_char),
-			     M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = malloc(sc->sc_hdev.sc_isize, M_USBDEV, M_WAITOK);
 
 	uslhcom_set_baud_rate(&config, 9600);
 	config.parity = UART_CONFIG_PARITY_NONE;
@@ -461,7 +460,7 @@ uslhcom_close(void *arg, int portno)
 
 	s = splusb();
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV, 0);
+		free(sc->sc_ibuf, M_USBDEV, sc->sc_hdev.sc_isize);
 		sc->sc_ibuf = NULL;
 	}
 	splx(s);

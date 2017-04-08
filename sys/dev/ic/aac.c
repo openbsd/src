@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.67 2016/03/27 11:06:19 mpi Exp $	*/
+/*	$OpenBSD: aac.c,v 1.68 2017/04/08 02:57:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -996,7 +996,7 @@ aac_alloc_commands(struct aac_softc *sc)
  exit_map:
 	bus_dmamem_free(sc->aac_dmat, &fm->aac_seg, fm->aac_nsegs);
  exit_alloc:
-	free(fm, M_DEVBUF, 0);
+	free(fm, M_DEVBUF, sizeof *fm);
  exit:
 	AAC_LOCK_RELEASE(&sc->aac_io_lock);
 	return (error);
@@ -1030,7 +1030,7 @@ aac_free_commands(struct aac_softc *sc)
 		bus_dmamem_unmap(sc->aac_dmat, (caddr_t)fm->aac_fibs,
 				 AAC_FIBMAP_SIZE);
 		bus_dmamem_free(sc->aac_dmat, &fm->aac_seg, fm->aac_nsegs);
-		free(fm, M_DEVBUF, 0);
+		free(fm, M_DEVBUF, sizeof *fm);
 	}
 }
 
