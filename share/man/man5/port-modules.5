@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.214 2017/02/08 17:36:47 danj Exp $
+.\"	$OpenBSD: port-modules.5,v 1.215 2017/04/08 13:29:37 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2017 $
+.Dd $Mdocdate: April 8 2017 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -671,6 +671,29 @@ to the directory name under
 .Pa ${LOCALBASE}/share/schemas/
 where schemas files will be installed.
 .It devel/gettext
+.It devel/meson
+Adds
+.Pa devel/meson
+and
+.Pa devel/ninja
+to
+.Ev BUILD_DEPENDS .
+Sets up
+.Cm configure
+target.
+If
+.Ev CONFIGURE_STYLE
+was not set before, sets its value to `meson'.
+Changes default value of
+.Ev SEPARATE_BUILD
+to `Yes' because meson requires out-of-source build.
+Also this module have following knob:
+.Bl -tag -width Ds
+.It MODMESON_WANTCOLOR
+If set to `Yes', meson will colorize its output.
+Should not be used in ports Makefiles.
+Default value is `No'.
+.El
 .It devel/pmk
 Sets
 .Ev CONFIGURE_SCRIPT ,
