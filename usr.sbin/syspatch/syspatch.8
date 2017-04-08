@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.15 2017/02/07 17:58:43 jmc Exp $
+.\"	$OpenBSD: syspatch.8,v 1.16 2017/04/08 20:36:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2017 $
+.Dd $Mdocdate: April 8 2017 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ binary patches.
 When run without any options,
 .Nm syspatch
 will apply
-.Pa all
+.Em all
 missing patches by saving the original release kernel if needed, creating a
 rollback tarball containing the files it is about to replace, then extracting
 and installing all files contained in the syspatch tarball.
