@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.85 2017/04/08 17:00:10 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.86 2017/04/08 18:54:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -249,44 +249,48 @@ pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
  * Must special case *_CLASSLESS_* route options due to the variable size
  * of the CIDR element in its CIA format.
  */
-int
-pretty_print_classless_routes(unsigned char *dst, size_t dstlen,
-    unsigned char *src, size_t srclen)
+char *
+pretty_print_classless_routes(unsigned char *src, size_t srclen)
 {
-	struct in_addr mask, gateway;
-	int opcount = 0, total = 0, bits, bytes;
-	char ntoabuf[INET_ADDRSTRLEN];
+	static char string[8196];
+	char bitsbuf[5];	/* to hold "/nn " */
+	struct in_addr net, gateway;
+	int bits, bytes, rslt;
 
-	while (srclen && dstlen) {
+	memset(string, 0, sizeof(string));
+
+	while (srclen) {
 		bits = *src;
 		src++;
 		srclen--;
+
 		bytes = (bits + 7) / 8;
-		if (srclen < bytes || bytes > sizeof(mask.s_addr))
-			break;
-		memset(&mask, 0, sizeof(mask));
-		memcpy(&mask.s_addr, src, bytes);
+		if (srclen < (bytes + sizeof(gateway.s_addr)) ||
+		    bytes > sizeof(net.s_addr))
+			return (NULL);
+		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ", bits);
+		if (rslt == -1 || rslt >= sizeof(bitsbuf))
+			return (NULL);
+
+		memset(&net, 0, sizeof(net));
+		memcpy(&net.s_addr, src, bytes);
 		src += bytes;
 		srclen -= bytes;
-		strlcpy(ntoabuf, inet_ntoa(mask), sizeof(ntoabuf));
-		if (srclen < sizeof(gateway.s_addr))
-			break;
+
 		memcpy(&gateway.s_addr, src, sizeof(gateway.s_addr));
 		src += sizeof(gateway.s_addr);
 		srclen -= sizeof(gateway.s_addr);
-		opcount = snprintf(dst, dstlen, "%s%s/%u %s",
-		    total ? ", " : "", ntoabuf, bits,
-		    inet_ntoa(gateway));
-		if (opcount == -1)
-			return (-1);
-		total += opcount;
-		if (opcount >= dstlen)
-			break;
-		dst += opcount;
-		dstlen -= opcount;
+
+		if (strlen(string) > 0)
+			strlcat(string, ", ", sizeof(string));
+		strlcat(string, inet_ntoa(net), sizeof(string));
+		strlcat(string, bitsbuf, sizeof(string));
+		rslt = strlcat(string, inet_ntoa(gateway), sizeof(string));
+		if (rslt >= sizeof(string))
+			return (NULL);
 	}
 
-	return (total);
+	return (string);
 }
 
 int
@@ -441,9 +445,10 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	switch (code) {
 	case DHO_CLASSLESS_STATIC_ROUTES:
 	case DHO_CLASSLESS_MS_STATIC_ROUTES:
-		opcount = pretty_print_classless_routes(op, opleft, dp, len);
-		if (opcount >= opleft || opcount == -1)
+		buf = pretty_print_classless_routes(dp, len);
+		if (buf == NULL)
 			goto toobig;
+		strlcat(optbuf, buf, sizeof(optbuf));
 		goto done;
 	default:
 		break;
