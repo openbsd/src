@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.86 2017/04/08 18:54:52 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.87 2017/04/08 20:16:04 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -255,7 +255,8 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen)
 	static char string[8196];
 	char bitsbuf[5];	/* to hold "/nn " */
 	struct in_addr net, gateway;
-	int bits, bytes, rslt;
+	unsigned int bytes;
+	int bits, rslt;
 
 	memset(string, 0, sizeof(string));
 
@@ -297,7 +298,8 @@ int
 expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
     unsigned char *domain_search)
 {
-	int domain_name_len, i, label_len, pointer, pointed_len;
+	unsigned int i;
+	int domain_name_len, label_len, pointer, pointed_len;
 	char *cursor;
 
 	cursor = domain_search + strlen(domain_search);
@@ -379,7 +381,8 @@ char *
 pretty_print_domain_search(unsigned char *src, size_t srclen)
 {
 	static char domain_search[DHCP_DOMAIN_SEARCH_LEN];
-	int offset, len, expanded_len, domains;
+	unsigned int offset;
+	int len, expanded_len, domains;
 	unsigned char *cursor;
 
 	memset(domain_search, 0, sizeof(domain_search));

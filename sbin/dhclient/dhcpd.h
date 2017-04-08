@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.168 2017/04/08 18:54:52 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.169 2017/04/08 20:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -204,7 +204,7 @@ int peek_token(char **, FILE *);
 extern int warnings_occurred;
 void skip_to_semi(FILE *);
 int parse_semi(FILE *);
-char *parse_string(FILE *, int *);
+char *parse_string(FILE *, unsigned int *);
 int parse_ip_addr(FILE *, struct in_addr *);
 int parse_cidr(FILE *, unsigned char *);
 void parse_ethernet(FILE *, struct ether_addr *);
@@ -255,8 +255,8 @@ void routehandler(struct interface_info *);
 void assemble_eh_header(struct interface_info *, struct ether_header *);
 ssize_t decode_hw_header(unsigned char *, int, struct ether_addr *);
 ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
-    int);
-u_int32_t checksum(unsigned char *, unsigned, u_int32_t);
+    u_int32_t);
+u_int32_t checksum(unsigned char *, u_int32_t, u_int32_t);
 u_int32_t wrapsum(u_int32_t);
 
 /* clparse.c */

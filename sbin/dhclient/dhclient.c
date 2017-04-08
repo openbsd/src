@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.409 2017/04/08 17:00:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.410 2017/04/08 20:16:04 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2276,7 +2276,8 @@ get_ifname(struct interface_info *ifi, char *arg)
 {
 	struct ifgroupreq ifgr;
 	struct ifg_req *ifg;
-	int s, len;
+	unsigned int len;
+	int s;
 
 	if (strcmp(arg, "egress") == 0) {
 		s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -2867,7 +2868,7 @@ void
 add_classless_static_routes(struct option_data *opt, struct in_addr iface)
 {
 	struct in_addr	 dest, netmask, gateway;
-	int		 bits, bytes, i;
+	unsigned int	 i, bits, bytes;
 
 	i = 0;
 	while (i < opt->len) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.86 2017/04/05 18:22:31 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.87 2017/04/08 20:16:04 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -544,8 +544,7 @@ resolv_conf_priority(struct interface_info *ifi)
 	struct sockaddr_rtlabel *sa_rl;
 	pid_t pid;
 	ssize_t len;
-	u_int32_t seq;
-	int s, rslt, iovcnt = 0;
+	int s, seq, rslt, iovcnt = 0;
 
 	rslt = 0;
 

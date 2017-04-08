@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.109 2017/04/04 13:01:20 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.110 2017/04/08 20:16:04 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -64,7 +64,8 @@ void parse_client_statement(FILE *, struct interface_info *);
 int parse_X(FILE *, u_int8_t *, int);
 int parse_option_list(FILE *, u_int8_t *, size_t);
 void parse_interface_declaration(FILE *, struct interface_info *);
-void parse_client_lease_statement(FILE *, int, struct interface_info *);
+void parse_client_lease_statement(FILE *, unsigned int,
+    struct interface_info *);
 void parse_client_lease_declaration(FILE *, struct client_lease *,
     struct interface_info *);
 int parse_option_decl(FILE *, struct option_data *);
@@ -359,9 +360,10 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 int
 parse_option_list(FILE *cfile, u_int8_t *list, size_t sz)
 {
-	int	 ix, i, j;
-	int	 token;
-	char	*val;
+	unsigned int	 ix, j;
+	int		 i;
+	int		 token;
+	char		*val;
 
 	memset(list, DHO_PAD, sz);
 	ix = 0;
@@ -465,7 +467,7 @@ parse_interface_declaration(FILE *cfile, struct interface_info *ifi)
  *		client-lease-declarations client-lease-declaration
  */
 void
-parse_client_lease_statement(FILE *cfile, int is_static,
+parse_client_lease_statement(FILE *cfile, unsigned int is_static,
     struct interface_info *ifi)
 {
 	struct client_state	*client = ifi->client;
@@ -553,7 +555,8 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
     struct interface_info *ifi)
 {
 	char *val;
-	int len, token;
+	unsigned int len;
+	int token;
 
 	token = next_token(&val, cfile);
 
@@ -632,7 +635,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	u_int8_t	 buf[4];
 	u_int8_t	 cidr[5];
 	u_int8_t	 hunkbuf[1024];
-	int		 hunkix = 0;
+	unsigned int	 hunkix = 0;
 	char		*fmt;
 	struct in_addr	 ip_addr;
 	u_int8_t	*dp;
