@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.166 2017/04/07 15:03:00 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.167 2017/04/08 17:00:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,7 @@ extern struct in_addr active_addr;
 int cons_options(struct interface_info *, struct option_data *);
 char *pretty_print_option(unsigned int, struct option_data *, int);
 char *pretty_print_domain_search(unsigned char *, size_t);
-int pretty_print_string(unsigned char *, size_t, unsigned char *, size_t, int);
+char *pretty_print_string(unsigned char *, size_t, int);
 int pretty_print_classless_routes(unsigned char *, size_t, unsigned char *,
     size_t);
 void do_packet(struct interface_info *, unsigned int, struct in_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.408 2017/04/07 15:03:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.409 2017/04/08 17:00:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,7 @@ void rewrite_client_leases(struct interface_info *);
 void rewrite_option_db(struct interface_info *, struct client_lease *,
     struct client_lease *);
 char *lease_as_string(struct interface_info *, char *, struct client_lease *);
+void append_statement(char *, size_t, char *, char *);
 
 struct client_lease *packet_to_lease(struct interface_info *, struct in_addr,
     struct option_data *);
@@ -1958,89 +1959,61 @@ rewrite_option_db(struct interface_info *ifi, struct client_lease *offered,
 	write_option_db(db, strlen(db));
 }
 
+void
+append_statement(char *string, size_t sz, char *s1, char *s2)
+{
+	strlcat(string, s1, sz);
+	strlcat(string, s2, sz);
+	strlcat(string, ";\n", sz);
+}
+
 char *
 lease_as_string(struct interface_info *ifi, char *type,
     struct client_lease *lease)
 {
-	static char leasestr[8192];
+	static char string[8192];
+	char timebuf[27];	/* to hold "6 2017/04/08 05:47:50 UTC;" */
 	struct option_data *opt;
-	char *p;
-	size_t sz, rsltsz;
-	int i, rslt;
+	char *buf;
+	size_t rslt;
+	int i;
 
-	sz = sizeof(leasestr);
-	p = leasestr;
-	memset(p, 0, sz);
+	memset(string, 0, sizeof(string));
 
-	rslt = snprintf(p, sz, "%s {\n"
-	    "%s  interface \"%s\";\n  fixed-address %s;\n",
-	    type, (lease->is_bootp) ? "  bootp;\n" : "", ifi->name,
+	strlcat(string, type, sizeof(string));
+	strlcat(string, " {\n", sizeof(string));
+	strlcat(string, (lease->is_bootp) ? "  bootp;\n" : "", sizeof(string));
+
+	buf = pretty_print_string(ifi->name, strlen(ifi->name), 1);
+	if (buf == NULL)
+		return (NULL);
+	append_statement(string, sizeof(string), "  interface ", buf);
+
+	append_statement(string, sizeof(string), "  fixed-address ",
 	    inet_ntoa(lease->address));
-	if (rslt == -1 || rslt >= sz)
-		return (NULL);
-	p += rslt;
-	sz -= rslt;
-
-	rslt = snprintf(p, sz, "  next-server %s;\n",
+	append_statement(string, sizeof(string), "  next-server ",
 	    inet_ntoa(lease->next_server));
-	if (rslt == -1 || rslt >= sz)
-		return (NULL);
-	p += rslt;
-	sz -= rslt;
 
 	if (lease->filename) {
-		rslt = snprintf(p, sz, "  filename ");
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = pretty_print_string(p, sz, lease->filename,
+		buf = pretty_print_string(lease->filename,
 		    strlen(lease->filename), 1);
-		if (rslt == -1 || rslt >= sz)
+		if (buf == NULL)
 			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = snprintf(p, sz, ";\n");
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
+		append_statement(string, sizeof(string), "  filename ", buf);
 	}
 	if (lease->server_name) {
-		rslt = snprintf(p, sz, "  server-name ");
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = pretty_print_string(p, sz, lease->server_name,
+		buf = pretty_print_string(lease->server_name,
 		    strlen(lease->server_name), 1);
-		if (rslt == -1 || rslt >= sz)
+		if (buf == NULL)
 			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = snprintf(p, sz, ";\n");
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
+		append_statement(string, sizeof(string), "  server-name ",
+		    buf);
 	}
 	if (lease->ssid_len != 0) {
-		rslt = snprintf(p, sz, "  ssid ");
-		if (rslt == -1 || rslt >= sz)
+		buf = pretty_print_string(lease->ssid, lease->ssid_len, 1);
+		if (buf == NULL)
 			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = pretty_print_string(p, sz, lease->ssid,
-		    lease->ssid_len, 1);
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
-		rslt = snprintf(p, sz, ";\n");
-		if (rslt == -1 || rslt >= sz)
-			return (NULL);
-		p += rslt;
-		sz -= rslt;
+		append_statement(string, sizeof(string), "  ssid ", buf);
 	}
 
 	for (i = 0; i < 256; i++) {
@@ -2048,37 +2021,37 @@ lease_as_string(struct interface_info *ifi, char *type,
 		if (opt->len == 0)
 			continue;
 
-		rslt = snprintf(p, sz, "  option %s %s;\n",
-		    dhcp_options[i].name, pretty_print_option(i, opt,  1));
-		if (rslt == -1 || rslt >= sz)
+		buf = pretty_print_option(i, opt, 1);
+		if (buf == NULL)
 			return (NULL);
-		p += rslt;
-		sz -= rslt;
+		strlcat(string, "  option ", sizeof(string));
+		strlcat(string, dhcp_options[i].name, sizeof(string));
+		append_statement(string, sizeof(string), " ", buf);
 	}
 
-	rsltsz = strftime(p, sz, "  renew " DB_TIMEFMT ";\n",
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
 	    gmtime(&lease->renewal));
-	if (rsltsz == 0)
+	if (rslt == 0)
 		return (NULL);
-	p += rsltsz;
-	sz -= rsltsz;
-	rsltsz = strftime(p, sz, "  rebind " DB_TIMEFMT ";\n",
+	append_statement(string, sizeof(string), "  renew ", timebuf);
+
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
 	    gmtime(&lease->rebind));
-	if (rsltsz == 0)
+	if (rslt == 0)
 		return (NULL);
-	p += rsltsz;
-	sz -= rsltsz;
-	rsltsz = strftime(p, sz, "  expire " DB_TIMEFMT ";\n",
+	append_statement(string, sizeof(string), "  rebind ", timebuf);
+
+	rslt = strftime(timebuf, sizeof(timebuf), DB_TIMEFMT,
 	    gmtime(&lease->expiry));
-	if (rsltsz == 0)
+	if (rslt == 0)
 		return (NULL);
-	p += rsltsz;
-	sz -= rsltsz;
-	rslt = snprintf(p, sz, "}\n");
-	if (rslt == -1 || rslt >= sz)
+	append_statement(string, sizeof(string), "  expire ", timebuf);
+
+	rslt = strlcat(string, "}\n", sizeof(string));
+	if (rslt >= sizeof(string))
 		return (NULL);
 
-	return (leasestr);
+	return (string);
 }
 
 void

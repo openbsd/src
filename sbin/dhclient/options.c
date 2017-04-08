@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.84 2017/04/07 15:03:01 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.85 2017/04/08 17:00:10 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -215,52 +215,34 @@ cons_options(struct interface_info *ifi, struct option_data *options)
  * represented as '"' delimited strings and safely passed to scripts. Surround
  * result with double quotes if emit_punct is true.
  */
-int
-pretty_print_string(unsigned char *dst, size_t dstlen, unsigned char *src,
-    size_t srclen, int emit_punct)
+char *
+pretty_print_string(unsigned char *src, size_t srclen, int emit_punct)
 {
+	static char string[8196];
 	char visbuf[5];
 	unsigned char *origsrc = src;
-	int opcount = 0, total = 0;
+	size_t rslt = 0;
 
-	if (emit_punct) {
-		opcount = snprintf(dst, dstlen, "\"");
-		if (opcount == -1)
-			return (-1);
-		total += opcount;
-		if (opcount >= dstlen)
-			goto done;
-		dstlen -= opcount;
-		dst += opcount;
-	}
+	memset(string, 0, sizeof(string));
+
+	if (emit_punct)
+		rslt = strlcat(string, "\"", sizeof(string));
 
 	for (; src < origsrc + srclen; src++) {
 		if (*src && strchr("\"'$`\\", *src))
 			vis(visbuf, *src, VIS_ALL | VIS_OCTAL, *src+1);
 		else
 			vis(visbuf, *src, VIS_OCTAL, *src+1);
-		opcount = snprintf(dst, dstlen, "%s", visbuf);
-		if (opcount == -1)
-			return (-1);
-		total += opcount;
-		if (opcount >= dstlen)
-			goto done;
-		dstlen -= opcount;
-		dst += opcount;
+		rslt = strlcat(string, visbuf, sizeof(string));
 	}
 
-	if (emit_punct) {
-		opcount = snprintf(dst, dstlen, "\"");
-		if (opcount == -1)
-			return (-1);
-		total += opcount;
-		if (opcount >= dstlen)
-			goto done;
-		dstlen -= opcount;
-		dst += opcount;
-	}
-done:
-	return (total);
+	if (emit_punct)
+		rslt = strlcat(string, "\"", sizeof(string));
+
+	if (rslt >= sizeof(string))
+		return (NULL);
+
+	return (string);
 }
 
 /*
@@ -428,9 +410,9 @@ char *
 pretty_print_option(unsigned int code, struct option_data *option,
     int emit_punct)
 {
-	static char optbuf[32768]; /* XXX */
+	static char optbuf[8192]; /* XXX */
 	int hunksize = 0, numhunk = -1, numelem = 0;
-	char fmtbuf[32], *op = optbuf;
+	char fmtbuf[32], *op = optbuf, *buf;
 	int i, j, k, opleft = sizeof(optbuf);
 	unsigned char *data = option->data;
 	unsigned char *dp = data;
@@ -563,8 +545,11 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		for (j = 0; j < numelem; j++) {
 			switch (fmtbuf[j]) {
 			case 't':
-				opcount = pretty_print_string(op, opleft,
-				    dp, len, emit_punct);
+				buf = pretty_print_string(dp, len, emit_punct);
+				if (buf == NULL)
+					opcount = -1;
+				else
+					opcount = strlcat(op, buf, opleft);
 				break;
 			case 'I':
 				memcpy(&foo.s_addr, dp, sizeof(foo.s_addr));
