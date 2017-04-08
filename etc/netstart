@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.175 2017/04/07 22:53:25 rpe Exp $
+#	$OpenBSD: netstart,v 1.176 2017/04/08 08:33:05 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -24,23 +24,22 @@ stripcom() {
 ifstart() {
 	# Note: Do not rename the 'if' variable which is documented as being
 	# usable in hostname.if(5) files.
-	if=$1
+	local if=$1 _file=/etc/hostname.$1 _stat
 
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
 	[[ $if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
-	file=/etc/hostname.$if
-	if ! [ -f $file ]; then
-		echo "netstart: $file: No such file or directory"
+	if [[ ! -f $_file ]]; then
+		echo "netstart: $_file: No such file or directory"
 		return
 	fi
 	# Not using stat(1), we can't rely on having /usr yet.
-	set -A stat -- $(ls -nL $file)
-	if [ "${stat[0]#???????} ${stat[2]} ${stat[3]}" != "--- 0 0" ]; then
-		echo "WARNING: $file is insecure, fixing permissions"
-		chmod -LR o-rwx $file
-		chown -LR root.wheel $file
+	set -A _stat -- $(ls -nL $_file)
+	if [ "${_stat[0]#???????} ${_stat[2]} ${_stat[3]}" != "--- 0 0" ]; then
+		echo "WARNING: $_file is insecure, fixing permissions"
+		chmod -LR o-rwx $_file
+		chown -LR root.wheel $_file
 	fi
 	# Check for ifconfig'able interface.
 	(ifconfig $if || ifconfig $if create) >/dev/null 2>&1 || return
@@ -132,7 +131,7 @@ ifstart() {
 			;;
 		esac
 		eval "$cmd"
-	done <$file
+	done <$_file
 }
 
 # Start multiple interfaces by driver name.
