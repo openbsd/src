@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.1 2017/02/24 10:03:12 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.2 2017/04/08 22:38:17 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -319,7 +319,7 @@ pciecam_intr_map(struct pci_attach_args *pa,
 	struct pciecam_intr_handle *ih;
 	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_tag;
+	ih->ih_tag = pa->pa_intrtag;
 	ih->ih_intrpin = pa->pa_intrpin;
 	ih->ih_msi = 0;
 	*ihp = (pci_intr_handle_t)ih;
