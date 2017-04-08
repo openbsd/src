@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.40 2017/03/26 22:19:47 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.41 2017/04/08 19:08:18 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1044,7 +1044,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, ssize_t sz, int *spc)
 	idx = dev->vq[0].last_avail & VIONET_QUEUE_MASK;
 
 	if ((dev->vq[0].notified_avail & VIONET_QUEUE_MASK) == idx) {
-		log_warnx("vionet queue notify - no space, dropping packet");
+		log_debug("vionet queue notify - no space, dropping packet");
 		goto out;
 	}
 
