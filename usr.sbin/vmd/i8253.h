@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.3 2017/03/23 07:02:47 mlarkin Exp $ */
+/* $OpenBSD: i8253.h,v 1.4 2017/04/08 19:06:04 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -38,6 +38,7 @@ struct i8253_counter {
 	uint8_t mode;		/* counter mode */
 	uint8_t rbs;		/* channel is in readback status mode */
 	struct event timer;	/* timer event for this counter */
+	uint32_t vm_id;		/* owning VM id */
 };
 
 void i8253_init(uint32_t);
