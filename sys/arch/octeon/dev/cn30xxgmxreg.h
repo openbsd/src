@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxgmxreg.h,v 1.5 2016/06/22 13:09:35 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxreg.h,v 1.6 2017/04/08 10:53:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -627,6 +627,11 @@
 #define	INF_MODE_P0MII				0x0000000000000004ULL
 #define	INF_MODE_EN				0x0000000000000002ULL
 #define	INF_MODE_TYPE				0x0000000000000001ULL
+
+/* Interface mode, applicable on CN68xx and CN7xxx (?) */
+#define	INF_MODE_MODE				0x0000000000000070ULL
+#define	INF_MODE_MODE_SGMII			0x0000000000000020ULL
+#define	INF_MODE_MODE_XAUI			0x0000000000000030ULL
 
 #define	MIO_QLM_CFG(x)				(0x0001180000001590ULL + (x)*8)
 

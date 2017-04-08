@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.32 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.33 2017/04/08 10:53:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -428,6 +428,21 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 		}
 		break;
 	}
+	case OCTEON_MODEL_FAMILY_CN71XX:
+		switch (inf_mode & INF_MODE_MODE) {
+		case INF_MODE_MODE_SGMII:
+			sc->sc_nports = 4;
+			for (i = 0; i < sc->sc_nports; i++)
+				sc->sc_port_types[i] = GMX_SGMII_PORT;
+			break;
+#ifdef notyet
+		case INF_MODE_MODE_XAUI:
+#endif
+		default:
+			sc->sc_nports = 0;
+			result = 1;
+		}
+		break;
 	case OCTEON_MODEL_FAMILY_CN38XX:
 	case OCTEON_MODEL_FAMILY_CN56XX:
 	case OCTEON_MODEL_FAMILY_CN58XX:
