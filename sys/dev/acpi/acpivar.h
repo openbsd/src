@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.86 2017/03/12 21:30:44 jcs Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.87 2017/04/08 01:20:10 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -373,6 +373,9 @@ void	acpi_pciroots_attach(struct device *, void *, cfprint_t);
 
 void	*acpi_intr_establish(int, int, int, int (*)(void *), void *,
 	    const char *);
+
+struct acpi_q *acpi_maptable(struct acpi_softc *sc, paddr_t,
+	    const char *, const char *, const char *, int);
 
 #endif
 

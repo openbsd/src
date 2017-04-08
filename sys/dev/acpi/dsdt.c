@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.231 2017/02/16 18:02:22 jcs Exp $ */
+/* $OpenBSD: dsdt.c,v 1.232 2017/04/08 01:20:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -46,9 +46,6 @@
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
 
-struct acpi_q		*acpi_maptable(struct acpi_softc *sc, paddr_t,
-			    const char *, const char *,
-			    const char *, int);
 struct aml_scope	*aml_load(struct acpi_softc *, struct aml_scope *,
 			    struct aml_value *, struct aml_value *);
 
