@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.12 2017/03/25 22:36:53 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.13 2017/04/08 19:06:29 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -346,8 +346,15 @@ i8259_specific_eoi(uint8_t n, uint8_t data)
 static void
 i8259_nonspecific_eoi(uint8_t n, uint8_t data)
 {
-	log_warnx("%s: %s pic nonspecific eoi not supported", __func__,
-	    i8259_pic_name(n));
+	int i = 0;
+
+	while (i < 8) {
+		if ((pics[n].isr & (1 << (i & 0x7)))) {
+			i8259_specific_eoi(n, i);
+			return;
+		}
+		i++;
+	}
 }
 
 /*
