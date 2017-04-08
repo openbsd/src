@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.327 2017/04/08 01:20:10 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.328 2017/04/08 04:06:01 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2405,6 +2405,7 @@ acpi_sleep_state(struct acpi_softc *sc, int sleepmode)
 	}
 #endif /* HIBERNATE */
 
+	sensor_quiesce();
 	if (config_suspend_all(DVACT_QUIESCE))
 		goto fail_quiesce;
 
@@ -2484,6 +2485,7 @@ fail_suspend:
 
 fail_quiesce:
 	config_suspend_all(DVACT_WAKEUP);
+	sensor_restart();
 
 #ifdef HIBERNATE
 	if (sleepmode == ACPI_SLEEP_HIBERNATE) {

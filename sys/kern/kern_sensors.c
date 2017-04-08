@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.36 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.37 2017/04/08 04:06:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/timeout.h>
 #include <sys/task.h>
 #include <sys/rwlock.h>
+#include <sys/atomic.h>
 
 #include <sys/sensors.h>
 #include "hotplug.h"
@@ -233,17 +234,37 @@ sensor_task_tick(void *arg)
 	task_add(sensors_taskq, &st->task);
 }
 
+static int sensors_quiesced;
+static int sensors_running;
+
+void
+sensor_quiesce(void)
+{
+	sensors_quiesced = 1;
+	while (sensors_running > 0)
+		tsleep(&sensors_running, PZERO, "sensorpause", 0);
+	
+}
+void
+sensor_restart(void)
+{
+	sensors_quiesced = 0;
+}
+
 void
 sensor_task_work(void *xst)
 {
 	struct sensor_task *st = xst;
 	unsigned int period = 0;
 
+	atomic_inc_int(&sensors_running);
 	rw_enter_write(&st->lock);
 	period = st->period;
-	if (period > 0)
+	if (period > 0 && !sensors_quiesced)
 		st->func(st->arg);
 	rw_exit_write(&st->lock);
+	if (sensors_quiesced && atomic_dec_int_nv(&sensors_running) == 0)
+		wakeup(&sensors_running);
 
 	if (period == 0)
 		free(st, M_DEVBUF, sizeof(*st));
