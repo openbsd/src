@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.48 2016/09/01 08:40:39 natano Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.49 2017/04/09 18:15:09 dhill Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1754,7 +1754,7 @@ ntfs_toupper_use(struct mount *mp, struct ntfsmount *ntmp, struct proc *p)
 	 * XXX for now, just the first 256 entries are used anyway,
 	 * so don't bother reading more
 	 */
-	ntfs_toupper_tab = malloc(256 * 256 * sizeof(wchar), M_NTFSRDATA,
+	ntfs_toupper_tab = mallocarray(256 * 256, sizeof(wchar), M_NTFSRDATA,
 	    M_WAITOK);
 
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
