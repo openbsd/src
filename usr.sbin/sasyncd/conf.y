@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.18 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.y,v 1.19 2017/04/09 02:40:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -293,8 +293,10 @@ yylex(void)
 	if (!confptr)
 		confptr = confbuf;
 	else {
-		for (p = confptr; *p && p < confbuf + conflen; p++)
+		for (p = confptr; p < confbuf + conflen && *p; p++)
 			;
+		if (p == confbuf + conflen)
+			return 0;
 		p++;
 		if (!*p)
 			return 0;
@@ -389,7 +391,7 @@ conf_parse_file(char *cfgfile)
 
 	/* Prepare the buffer somewhat in the way of strsep() */
 	buf[conflen] = (char)0;
-	for (s = buf, d = s; *s && s < buf + conflen; s++) {
+	for (s = buf, d = s; s < buf + conflen && *s; s++) {
 		if (isspace(*s) && isspace(*(s+1)))
 			continue;
 		if (*s == '#') {
