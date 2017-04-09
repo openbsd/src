@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.15 2016/01/12 16:21:09 stefan Exp $ */
+/* $OpenBSD: wsevent.c,v 1.16 2017/04/09 18:05:17 dhill Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -109,7 +109,7 @@ wsevent_init(struct wseventvar *ev)
 		return;
 	}
 	ev->get = ev->put = 0;
-	ev->q = malloc(WSEVENT_QSIZE * sizeof(struct wscons_event),
+	ev->q = mallocarray(WSEVENT_QSIZE, sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 }
 
