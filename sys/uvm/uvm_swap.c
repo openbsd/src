@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.140 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.141 2017/04/09 18:14:39 dhill Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -320,8 +320,8 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 	 */
 	sdp->swd_decrypt = malloc(SWD_DCRYPT_SIZE(npages), M_VMSWAP,
 	    M_WAITOK|M_ZERO);
-	sdp->swd_keys = malloc(SWD_KEY_SIZE(npages) * sizeof(struct swap_key),
-	    M_VMSWAP, M_WAITOK|M_ZERO);
+	sdp->swd_keys = mallocarray(SWD_KEY_SIZE(npages),
+	    sizeof(struct swap_key), M_VMSWAP, M_WAITOK|M_ZERO);
 }
 
 #endif /* UVM_SWAP_ENCRYPT */
