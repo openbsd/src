@@ -14,6 +14,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"time"
 	"unsafe"
 )
@@ -30,7 +31,7 @@ type ProtocolVersion uint32
 func (pv ProtocolVersion) String() string {
 	name, ok := protocolNames[pv]
 	if !ok {
-		return "unknown protocol version"
+		return fmt.Sprintf("unknown protocol version %x", pv)
 	}
 	return name
 }
@@ -56,7 +57,7 @@ func ProtocolVersionFromString(version string) (ProtocolVersion, error) {
 			return proto, nil
 		}
 	}
-	return 0, errors.New("unknown protocol version")
+	return 0, fmt.Errorf("unknown protocol version %q", version)
 }
 
 // TLSConfig provides configuration options for a TLS context.
