@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.112 2017/01/22 10:17:37 dlg Exp $  */
+/*      $OpenBSD: ath.c,v 1.113 2017/04/09 18:07:19 dhill Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2973,7 +2973,7 @@ ath_getchannels(struct ath_softc *sc, HAL_BOOL outdoor, HAL_BOOL xchanmode)
 	int i, ix, nchan;
 
 	sc->sc_nchan = 0;
-	chans = malloc(IEEE80211_CHAN_MAX * sizeof(HAL_CHANNEL),
+	chans = mallocarray(IEEE80211_CHAN_MAX, sizeof(HAL_CHANNEL),
 			M_TEMP, M_NOWAIT);
 	if (chans == NULL) {
 		printf("%s: unable to allocate channel table\n", ifp->if_xname);

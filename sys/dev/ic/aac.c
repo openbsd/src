@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.68 2017/04/08 02:57:24 deraadt Exp $	*/
+/*	$OpenBSD: aac.c,v 1.69 2017/04/09 18:07:19 dhill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1277,7 +1277,7 @@ aac_init(struct aac_softc *sc)
 
 	/* Allocate some FIBs and associated command structs */
 	TAILQ_INIT(&sc->aac_fibmap_tqh);
-	sc->aac_commands = malloc(AAC_MAX_FIBS * sizeof(struct aac_command),
+	sc->aac_commands = mallocarray(AAC_MAX_FIBS, sizeof(struct aac_command),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	while (sc->total_fibs < AAC_MAX_FIBS) {
 		if (aac_alloc_commands(sc) != 0)

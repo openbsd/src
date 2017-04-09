@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.52 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: adw.c,v 1.53 2017/04/09 18:07:19 dhill Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -144,7 +144,7 @@ adw_alloc_carriers(ADW_SOFTC *sc)
          * Allocate the control structure.
          */
 	sc->sc_control->carriers = 
-		malloc(sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, M_DEVBUF, 
+		mallocarray(ADW_MAX_CARRIER, sizeof(ADW_CARRIER), M_DEVBUF,
 		       M_NOWAIT);
 	if (sc->sc_control->carriers == NULL)
 		return (ENOMEM);
