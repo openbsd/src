@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2017/04/06 22:41:39 krw Exp $
+# $OpenBSD: Makefile,v 1.19 2017/04/09 20:44:13 krw Exp $
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.
@@ -45,5 +45,6 @@ CFLAGS+=-Wall
 CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=-Wmissing-declarations
 CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+=-Wsign-compare
 
 .include <bsd.prog.mk>

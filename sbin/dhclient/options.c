@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.87 2017/04/08 20:16:04 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.88 2017/04/09 20:44:13 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -270,7 +270,7 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen)
 		    bytes > sizeof(net.s_addr))
 			return (NULL);
 		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ", bits);
-		if (rslt == -1 || rslt >= sizeof(bitsbuf))
+		if (rslt == -1 || (unsigned int)rslt >= sizeof(bitsbuf))
 			return (NULL);
 
 		memset(&net, 0, sizeof(net));
@@ -286,8 +286,8 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen)
 			strlcat(string, ", ", sizeof(string));
 		strlcat(string, inet_ntoa(net), sizeof(string));
 		strlcat(string, bitsbuf, sizeof(string));
-		rslt = strlcat(string, inet_ntoa(gateway), sizeof(string));
-		if (rslt >= sizeof(string))
+		if (strlcat(string, inet_ntoa(gateway), sizeof(string)) >=
+		    sizeof(string))
 			return (NULL);
 	}
 

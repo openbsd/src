@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.87 2017/04/08 20:16:04 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.88 2017/04/09 20:44:13 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -638,14 +638,8 @@ create_route_label(struct sockaddr_rtlabel *label)
 	len = snprintf(label->sr_label, sizeof(label->sr_label), "DHCLIENT %d",
 	    (int)getpid());
 
-	if (len == -1) {
-		log_warn("creating route label");
-		return (1);
-	}
-
-	if (len >= sizeof(label->sr_label)) {
-		log_warnx("creating route label: label too long (%d vs %zu)",
-		    len, sizeof(label->sr_label));
+	if (len == -1 || (unsigned int)len >= sizeof(label->sr_label)) {
+		log_warn("could not create route label");
 		return (1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.410 2017/04/08 20:16:04 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.411 2017/04/09 20:44:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -256,9 +256,11 @@ routehandler(struct interface_info *ifi)
 	do {
 		n = read(routefd, rtmmsg, 2048);
 	} while (n == -1 && errno == EINTR);
+	if (n == -1)
+		goto done;
 
 	rtm = (struct rt_msghdr *)rtmmsg;
-	if (n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
+	if ((size_t)n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
 	    rtm->rtm_version != RTM_VERSION)
 		goto done;
 
@@ -268,7 +270,7 @@ routehandler(struct interface_info *ifi)
 		    rtm->rtm_priority != RTP_PROPOSAL_DHCLIENT)
 			goto done;
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
-			if (rtm->rtm_seq == client->xid) {
+			if (rtm->rtm_seq == (int32_t)client->xid) {
 				client->flags |= IN_CHARGE;
 				goto done;
 			} else if ((client->flags & IN_CHARGE) != 0) {
@@ -620,7 +622,7 @@ main(int argc, char *argv[])
 	} else if (fstat(tailfd, &sb) == -1) {
 		fatal("Cannot stat /etc/resolv.conf.tail");
 	} else {
-		if (sb.st_size > 0 && sb.st_size < SIZE_MAX) {
+		if (sb.st_size > 0 && sb.st_size < LLONG_MAX) {
 			config->resolv_tail = calloc(1, sb.st_size + 1);
 			if (config->resolv_tail == NULL) {
 				fatalx("no memory for resolv.conf.tail "
@@ -2591,7 +2593,7 @@ priv_write_file(char *path, int flags, mode_t mode,
 	n = write(fd, contents, sz);
 	if (n == -1)
 		log_warn("Couldn't write contents to '%s'", path);
-	else if (n < sz)
+	else if ((size_t)n < sz)
 		log_warnx("Short contents write to '%s' (%zd vs %zu)", path,
 		    n, sz);
 
