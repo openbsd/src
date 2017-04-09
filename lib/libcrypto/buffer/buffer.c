@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.24 2017/03/16 13:29:56 jsing Exp $ */
+/* $OpenBSD: buffer.c,v 1.25 2017/04/09 15:03:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,33 +97,7 @@ BUF_MEM_free(BUF_MEM *a)
 int
 BUF_MEM_grow(BUF_MEM *str, size_t len)
 {
-	char *ret;
-	size_t n;
-
-	if (str->length >= len) {
-		str->length = len;
-		return (len);
-	}
-	if (str->max >= len) {
-		str->length = len;
-		return (len);
-	}
-	/* This limit is sufficient to ensure (len+3)/3*4 < 2**31 */
-	if (len > LIMIT_BEFORE_EXPANSION) {
-		BUFerror(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	n = (len + 3) / 3 * 4;
-	ret = recallocarray(str->data, str->max, n, 1);
-	if (ret == NULL) {
-		BUFerror(ERR_R_MALLOC_FAILURE);
-		len = 0;
-	} else {
-		str->data = ret;
-		str->max = n;
-		str->length = len;
-	}
-	return (len);
+	return BUF_MEM_grow_clean(str, len);
 }
 
 int
