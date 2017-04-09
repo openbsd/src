@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.37 2017/04/08 04:06:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.38 2017/04/09 15:47:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -263,8 +263,10 @@ sensor_task_work(void *xst)
 	if (period > 0 && !sensors_quiesced)
 		st->func(st->arg);
 	rw_exit_write(&st->lock);
-	if (sensors_quiesced && atomic_dec_int_nv(&sensors_running) == 0)
-		wakeup(&sensors_running);
+	if (atomic_dec_int_nv(&sensors_running) == 0) {
+		if (sensors_quiesced)
+			wakeup(&sensors_running);
+	}
 
 	if (period == 0)
 		free(st, M_DEVBUF, sizeof(*st));
