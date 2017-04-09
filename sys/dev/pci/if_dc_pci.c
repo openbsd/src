@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.74 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.75 2017/04/09 18:16:00 dhill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -360,8 +360,8 @@ dc_pci_attach(struct device *parent, struct device *self, void *aux)
 			sc->dc_type = DC_TYPE_PNIC;
 			sc->dc_flags |= DC_TX_STORENFWD|DC_TX_INTR_ALWAYS;
 			sc->dc_flags |= DC_PNIC_RX_BUG_WAR;
-			sc->dc_pnic_rx_buf = malloc(ETHER_MAX_DIX_LEN * 5, M_DEVBUF,
-			    M_NOWAIT);
+			sc->dc_pnic_rx_buf = mallocarray(5, ETHER_MAX_DIX_LEN,
+			    M_DEVBUF, M_NOWAIT);
 			if (sc->dc_pnic_rx_buf == NULL)
 				panic("dc_pci_attach");
 			if (sc->dc_revision < DC_REVISION_82C169)

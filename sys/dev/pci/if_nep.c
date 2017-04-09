@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.27 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.28 2017/04/09 18:16:00 dhill Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1561,7 +1561,7 @@ nep_up(struct nep_softc *sc)
 		return;
 	sc->sc_rbdesc = NEP_DMA_KVA(sc->sc_rbring);
 
-	sc->sc_rb = malloc(sizeof(struct nep_block) * NEP_NRBDESC,
+	sc->sc_rb = malloc(NEP_NRBDESC, sizeof(struct nep_block),
 	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i < NEP_NRBDESC; i++) {
 		rb = &sc->sc_rb[i];
@@ -1592,7 +1592,7 @@ nep_up(struct nep_softc *sc)
 		goto free_rxmbox;
 	sc->sc_txdesc = NEP_DMA_KVA(sc->sc_txring);
 
-	sc->sc_txbuf = malloc(sizeof(struct nep_buf) * NEP_NTXDESC,
+	sc->sc_txbuf = mallocarray(NEP_NTXDESC, sizeof(struct nep_buf),
 	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i < NEP_NTXDESC; i++) {
 		txb = &sc->sc_txbuf[i];
