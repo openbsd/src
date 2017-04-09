@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.h,v 1.13 2017/04/06 19:09:45 natano Exp $	*/
+/*	$OpenBSD: cd9660.h,v 1.14 2017/04/09 09:58:53 natano Exp $	*/
 /*	$NetBSD: cd9660.h,v 1.21 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
@@ -61,30 +61,7 @@
 #define	INODE_WARNX(__x)
 #endif /* DEBUG */
 
-#define ISO_STRING_FILTER_NONE = 0x00
-#define ISO_STRING_FILTER_DCHARS = 0x01
-#define ISO_STRING_FILTER_ACHARS = 0x02
-
-/*
-Extended preferences type, in the spirit of what makefs gives us (only ints)
-*/
-typedef struct {
-	const char  *shortName;		/* Short option */
-	const char	*name;		/* option name */
-	char		*value;		/* where to stuff the value */
-	int		minLength;	/* minimum for value */
-	int		maxLength;	/* maximum for value */
-	const char	*desc;		/* option description */
-	int		filterFlags;
-} string_option_t;
-
 /******** STRUCTURES **********/
-
-/*Defaults*/
-#define ISO_DEFAULT_VOLUMEID "MAKEFS_CD9660_IMAGE"
-#define ISO_DEFAULT_APPID "MAKEFS"
-#define ISO_DEFAULT_PUBLISHER "MAKEFS"
-#define ISO_DEFAULT_PREPARER "MAKEFS"
 
 #define ISO_VOLUME_DESCRIPTOR_STANDARD_ID "CD001"
 #define ISO_VOLUME_DESCRIPTOR_BOOT 0
