@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.28 2017/04/09 18:16:00 dhill Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.29 2017/04/09 19:59:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1561,7 +1561,7 @@ nep_up(struct nep_softc *sc)
 		return;
 	sc->sc_rbdesc = NEP_DMA_KVA(sc->sc_rbring);
 
-	sc->sc_rb = malloc(NEP_NRBDESC, sizeof(struct nep_block),
+	sc->sc_rb = mallocarray(NEP_NRBDESC, sizeof(struct nep_block),
 	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i < NEP_NRBDESC; i++) {
 		rb = &sc->sc_rb[i];
