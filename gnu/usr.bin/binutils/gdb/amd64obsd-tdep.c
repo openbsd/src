@@ -370,7 +370,11 @@ amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
-  if (name && strncmp(name, "Xintr", 5) == 0)
+  if (name && ((strncmp(name, "Xintr", 5) == 0)
+	       || (strncmp (name, "Xresume", 7) == 0)
+	       || (strncmp (name, "Xrecurse", 8) == 0)
+	       || (strcmp (name, "Xdoreti") == 0)
+	       || (strncmp (name, "Xsoft", 5) == 0)))
     addr = sp + 8;		/* It's an interrupt frame.  */
   else
     addr = sp;
@@ -435,9 +439,12 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
   return (name && ((strcmp (name, "calltrap") == 0)
 		   || (strcmp (name, "alltraps") == 0)
-		   || (strcmp (name, "osyscall1") == 0)
 		   || (strcmp (name, "Xsyscall") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)));
+		   || (strncmp (name, "Xintr", 5) == 0)
+		   || (strncmp (name, "Xresume", 7) == 0)
+		   || (strncmp (name, "Xrecurse", 8) == 0)
+		   || (strcmp (name, "Xdoreti") == 0)
+		   || (strncmp (name, "Xsoft", 5) == 0)));
 }
 
 static const struct frame_unwind amd64obsd_trapframe_unwind = {
