@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.45 2017/04/04 14:08:19 jmc Exp $
+.\"	$OpenBSD: recv.2,v 1.46 2017/04/10 16:20:31 jca Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: April 4 2017 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -172,7 +172,7 @@ This structure has the following form, as defined in
 struct msghdr {
 	void		*msg_name;	/* optional address */
 	socklen_t	msg_namelen;	/* size of address */
-	struct		iovec *msg_iov;	/* scatter/gather array */
+	struct iovec	*msg_iov;	/* scatter/gather array */
 	unsigned int	msg_iovlen;	/* # elements in msg_iov */
 	void		*msg_control;	/* ancillary data, see below */
 	socklen_t	msg_controllen; /* ancillary data buffer len */
