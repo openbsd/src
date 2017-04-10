@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.126 2017/04/08 03:36:50 jmatthew Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.127 2017/04/10 02:15:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1164,7 +1164,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(2, ("mskc_attach: allocate interrupt\n"));
 
 	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		goto fail_1;
 	}
