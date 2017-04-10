@@ -230,6 +230,7 @@
 ./usr/lib/clang/4.0.0
 ./usr/lib/clang/4.0.0/include
 ./usr/lib/clang/4.0.0/include/arm_acle.h
+./usr/lib/clang/4.0.0/include/arm_neon.h
 ./usr/lib/clang/4.0.0/include/module.modulemap
 ./usr/lib/clang/4.0.0/include/stdalign.h
 ./usr/lib/clang/4.0.0/include/stdatomic.h
