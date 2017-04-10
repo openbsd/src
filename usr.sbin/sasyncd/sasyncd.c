@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.26 2017/04/04 22:37:01 jsg Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.27 2017/04/10 09:27:08 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -195,6 +195,11 @@ main(int argc, char **argv)
 		if (!cfgstate.sharedkey) {
 			fprintf(stderr, "config: "
 			    "no shared key specified, cannot continue\n");
+			exit(1);
+		}
+		if (!cfgstate.carp_ifname || !*cfgstate.carp_ifname) {
+			fprintf(stderr, "config: "
+			    "no carp interface specified, cannot continue\n");
 			exit(1);
 		}
 	} else {
