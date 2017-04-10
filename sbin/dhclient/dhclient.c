@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.411 2017/04/09 20:44:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.412 2017/04/10 21:47:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -129,7 +129,6 @@ char		*resolv_conf_contents(struct interface_info *ifi,
 		     struct option_data *, struct option_data *,
 		     struct option_data *);
 void		 write_resolv_conf(u_int8_t *, size_t);
-void		 write_option_db(u_int8_t *, size_t);
 
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
@@ -177,6 +176,7 @@ void	take_charge(struct interface_info *);
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static FILE *leaseFile;
+static FILE *optionDB;
 
 void
 sighdlr(int sig)
@@ -410,8 +410,10 @@ routehandler(struct interface_info *ifi)
 				}
 			} else {
 				/* Let monitoring programs see link loss. */
-				if (strlen(path_option_db))
-					write_option_db("", 0);
+				if (optionDB) {
+					rewind(optionDB);
+					ftruncate(fileno(optionDB), 0);
+				}
 				/* No need to wait for anything but link. */
 				cancel_timeout();
 			}
@@ -639,15 +641,6 @@ main(int argc, char *argv[])
 		close(tailfd);
 	}
 
-	if ((fd = open(path_dhclient_db,
-	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
-		fatal("can't open and lock %s", path_dhclient_db);
-	read_client_leases(ifi);
-	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
-		fatal("can't open %s", path_dhclient_db);
-	rewrite_client_leases(ifi);
-	close(fd);
-
 	/*
 	 * Do the initial status check and possible force up before creating
 	 * the routing socket. If we bounce the interface down and up while
@@ -673,6 +666,20 @@ main(int argc, char *argv[])
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
 	take_charge(ifi);
+
+	if ((fd = open(path_dhclient_db,
+	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
+		fatal("can't open and lock %s", path_dhclient_db);
+	read_client_leases(ifi);
+	if ((leaseFile = fopen(path_dhclient_db, "w")) == NULL)
+		fatal("can't open %s", path_dhclient_db);
+	rewrite_client_leases(ifi);
+	close(fd);
+
+	if (strlen(path_option_db) != 0) {
+		if ((optionDB = fopen(path_option_db, "w")) == NULL)
+			fatal("can't open %s", path_option_db);
+	}
 
 	/* Register the interface. */
 	if_register_receive(ifi);
@@ -1899,7 +1906,6 @@ rewrite_client_leases(struct interface_info *ifi)
 	if (!leaseFile)	/* XXX */
 		fatalx("lease file not open");
 
-	fflush(leaseFile);
 	rewind(leaseFile);
 
 	/*
@@ -1933,32 +1939,28 @@ void
 rewrite_option_db(struct interface_info *ifi, struct client_lease *offered,
     struct client_lease *effective)
 {
-	u_int8_t db[8192];
 	char *leasestr;
-	size_t n;
 
-	if (strlen(path_option_db) == 0)
+	if (!optionDB)
 		return;
 
-	memset(db, 0, sizeof(db));
+	rewind(optionDB);
 
 	leasestr = lease_as_string(ifi, "offered", offered);
-	if (leasestr) {
-		n = strlcat(db, leasestr, sizeof(db));
-		if (n >= sizeof(db))
-			log_warnx("cannot fit offered lease into option db");
-	} else
+	if (leasestr)
+		fprintf(optionDB, "%s", leasestr);
+	else
 		log_warnx("cannot make offered lease into string");
 
 	leasestr = lease_as_string(ifi, "effective", effective);
-	if (leasestr) {
-		n = strlcat(db, leasestr, sizeof(db));
-		if (n >= sizeof(db))
-			log_warnx("cannot fit effective lease into option db");
-	} else
+	if (leasestr)
+		fprintf(optionDB, "%s", leasestr);
+	else
 		log_warnx("cannot make effective lease into string");
 
-	write_option_db(db, strlen(db));
+	fflush(optionDB);
+	ftruncate(fileno(optionDB), ftello(optionDB));
+	fsync(fileno(optionDB));
 }
 
 void
@@ -2543,38 +2545,6 @@ apply_ignore_list(char *ignore_list)
 
 	config->ignored_option_count = ix;
 	memcpy(config->ignored_options, list, sizeof(config->ignored_options));
-}
-
-void
-write_option_db(u_int8_t *contents, size_t sz)
-{
-	int rslt;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_OPTION_DB,
-	    0, 0, -1, contents, sz);
-	if (rslt == -1)
-		log_warn("write_option_db: imsg_compose");
-
-	flush_unpriv_ibuf("write_option_db");
-}
-
-void
-priv_write_option_db(struct imsg *imsg)
-{
-	u_int8_t *contents;
-	size_t sz;
-
-	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
-		log_warnx("short IMSG_WRITE_OPTION_DB");
-		return;
-	}
-
-	contents = imsg->data;
-	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
-
-	priv_write_file(path_option_db,
-	    O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW,
-	    S_IRUSR | S_IWUSR | S_IRGRP, contents, sz);
 }
 
 void

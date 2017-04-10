@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.45 2017/03/08 19:43:42 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.46 2017/04/10 21:47:44 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -101,10 +101,6 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 				ifi->flags |= IFI_HUP;
 				quit = SIGHUP;
 			}
-			break;
-
-		case IMSG_WRITE_OPTION_DB:
-			priv_write_option_db(&imsg);
 			break;
 
 		default:
