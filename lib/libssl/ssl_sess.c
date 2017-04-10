@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.70 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.71 2017/04/10 17:27:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -705,11 +705,8 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	free(ss->internal->tlsext_ecpointformatlist);
 	free(ss->internal->tlsext_supportedgroups);
 
-	explicit_bzero(ss->internal, sizeof(*ss->internal));
-	free(ss->internal);
-
-	explicit_bzero(ss, sizeof(*ss));
-	free(ss);
+	freezero(ss->internal, sizeof(*ss->internal));
+	freezero(ss, sizeof(*ss));
 }
 
 int
