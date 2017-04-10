@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.3,v 1.6 2017/04/10 14:00:51 schwarze Exp $
+.\"	$OpenBSD: ssl.3,v 1.7 2017/04/10 15:37:55 schwarze Exp $
 .\"	OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\"
 .\" This file was written by Ralf S. Engelschall <rse@openssl.org>,
@@ -238,8 +238,12 @@ Constructors and destructors:
 .Xr SSL_SESSION_free 3
 .Pp
 Accessors:
+.Xr SSL_SESSION_get_compress_id 3 ,
 .Xr SSL_SESSION_get_ex_new_index 3 ,
-.Xr SSL_SESSION_get_time 3
+.Xr SSL_SESSION_get_id 3 ,
+.Xr SSL_SESSION_get_time 3 ,
+.Xr SSL_SESSION_get0_peer 3 ,
+.Xr SSL_SESSION_set1_id_context 3
 .Pp
 Encoding and decoding:
 .Xr d2i_SSL_SESSION 3 ,

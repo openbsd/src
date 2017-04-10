@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_copy_session_id.3,v 1.1 2016/12/07 18:09:31 schwarze Exp $
+.\"	$OpenBSD: SSL_copy_session_id.3,v 1.2 2017/04/10 15:37:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_COPY_SESSION_ID 3
 .Os
 .Sh NAME
@@ -59,6 +59,8 @@ and by
 .Xr BIO_ssl_copy_session_id 3 ,
 .Xr SSL_dup 3 ,
 .Xr SSL_get_session 3 ,
+.Xr SSL_SESSION_get_id 3 ,
+.Xr SSL_SESSION_new 3 ,
 .Xr SSL_set_session 3 ,
 .Xr SSL_set_session_id_context 3
 .Sh HISTORY

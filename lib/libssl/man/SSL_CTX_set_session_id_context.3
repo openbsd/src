@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_session_id_context.3,v 1.2 2016/12/01 19:50:12 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_session_id_context.3,v 1.3 2017/04/10 15:37:55 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_CTX_SET_SESSION_ID_CONTEXT 3
 .Os
 .Sh NAME
@@ -149,4 +149,5 @@ The error is logged to the error stack.
 The operation succeeded.
 .El
 .Sh SEE ALSO
-.Xr ssl 3
+.Xr ssl 3 ,
+.Xr SSL_SESSION_set1_id_context 3
