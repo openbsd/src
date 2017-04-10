@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.138 2017/03/10 16:03:27 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.139 2017/04/10 17:25:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1834,9 +1834,7 @@ ssl3_free(SSL *s)
 	DH_free(S3I(s)->tmp.dh);
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 
-	if (S3I(s)->tmp.x25519 != NULL)
-		explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
-	free(S3I(s)->tmp.x25519);
+	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
@@ -1870,9 +1868,7 @@ ssl3_clear(SSL *s)
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	S3I(s)->tmp.ecdh = NULL;
 
-	if (S3I(s)->tmp.x25519 != NULL)
-		explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
-	free(S3I(s)->tmp.x25519);
+	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
 
 	rp = s->s3->rbuf.buf;
