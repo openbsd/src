@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdr.h,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: hdr.h,v 1.16 2017/04/10 13:56:16 fcambus Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -85,9 +85,6 @@ struct hashtab	{		/* hash table for vocabulary	*/
 } voc[HTSIZE];
 
 struct text {
-#ifdef OLDSTUFF
-	int seekadr;		/* DATFILE must be < 2**16	*/
-#endif /* OLDSTUFF */
 	char *seekadr;		/* Msg start in virtual disk	*/
 	int txtlen;		/* length of msg starting here	*/
 };
