@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_num_renegotiations.3,v 1.1 2016/12/10 13:54:32 schwarze Exp $
+.\"	$OpenBSD: SSL_num_renegotiations.3,v 1.2 2017/04/10 14:00:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_NUM_RENEGOTIATIONS 3
 .Os
 .Sh NAME
@@ -64,6 +64,7 @@ These functions are implemented as macros.
 All these functions return a number of renegotiations.
 .Sh SEE ALSO
 .Xr BIO_set_ssl_renegotiate_bytes 3 ,
+.Xr SSL_ctrl 3 ,
 .Xr SSL_read 3 ,
 .Xr SSL_renegotiate 3 ,
 .Xr SSL_write 3

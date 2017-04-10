@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_ctrl.3,v 1.2 2016/11/30 13:21:23 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_ctrl.3,v 1.3 2017/04/10 14:00:51 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -93,4 +93,17 @@ functions depend on the command supplied via the
 .Fn cmd
 parameter.
 .Sh SEE ALSO
-.Xr ssl 3
+.Xr ssl 3 ,
+.Xr SSL_CTX_add_extra_chain_cert 3 ,
+.Xr SSL_CTX_sess_number 3 ,
+.Xr SSL_CTX_sess_set_cache_size 3 ,
+.Xr SSL_CTX_set_max_cert_list 3 ,
+.Xr SSL_CTX_set_mode 3 ,
+.Xr SSL_CTX_set_options 3 ,
+.Xr SSL_CTX_set_session_cache_mode 3 ,
+.Xr SSL_CTX_set_tlsext_servername_callback 3 ,
+.Xr SSL_CTX_set_tlsext_status_cb 3 ,
+.Xr SSL_CTX_set_tlsext_ticket_key_cb 3 ,
+.Xr SSL_num_renegotiations 3 ,
+.Xr SSL_session_reused 3 ,
+.Xr SSL_set_max_send_fragment 3

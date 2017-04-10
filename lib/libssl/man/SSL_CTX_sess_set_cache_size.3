@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_set_cache_size.3,v 1.2 2016/11/30 16:24:56 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_set_cache_size.3,v 1.3 2017/04/10 14:00:51 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_CTX_SESS_SET_CACHE_SIZE 3
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ returns the previously valid size.
 .Fn SSL_CTX_sess_get_cache_size
 returns the currently valid size.
 .Sh SEE ALSO
-.Xr ssl 3 ,
+.Xr SSL_CTX_ctrl 3 ,
 .Xr SSL_CTX_flush_sessions 3 ,
 .Xr SSL_CTX_sess_number 3 ,
 .Xr SSL_CTX_set_session_cache_mode 3

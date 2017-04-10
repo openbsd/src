@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.1 2016/12/01 21:12:49 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_tlsext_status_cb.3,v 1.2 2017/04/10 14:00:51 schwarze Exp $
 .\"	OpenSSL 43c34894 Nov 30 16:04:51 2015 +0000
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2016 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt SSL_CTX_SET_TLSEXT_STATUS_CB 3
 .Os
 .Sh NAME
@@ -164,3 +164,5 @@ return 0 on error or 1 on success.
 .Fn SSL_get_tlsext_status_ocsp_resp
 returns the length of the OCSP response data or -1 if there is no OCSP
 response data.
+.Sh SEE ALSO
+.Xr SSL_CTX_callback_ctrl 3
