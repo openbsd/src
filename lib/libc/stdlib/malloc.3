@@ -30,18 +30,19 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.109 2017/04/06 17:00:52 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.110 2017/04/10 05:45:02 otto Exp $
 .\"
-.Dd $Mdocdate: April 6 2017 $
+.Dd $Mdocdate: April 10 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
 .Nm calloc ,
-.Nm reallocarray ,
-.Nm recallocarray ,
 .Nm realloc ,
 .Nm free
+.Nm reallocarray ,
+.Nm recallocarray ,
+.Nm freezero ,
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -50,15 +51,23 @@
 .Ft void *
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
-.Fn reallocarray "void *ptr" "size_t nmemb" "size_t size"
-.Ft void *
-.Fn recallocarray "void *ptr" "size_t oldnmemb" "size_t nmemb" "size_t size"
-.Ft void *
 .Fn realloc "void *ptr" "size_t size"
 .Ft void
 .Fn free "void *ptr"
+.Ft void *
+.Fn reallocarray "void *ptr" "size_t nmemb" "size_t size"
+.Ft void *
+.Fn recallocarray "void *ptr" "size_t oldnmemb" "size_t nmemb" "size_t size"
+.Ft void
+.Fn freezero "void *ptr" "size_t size"
 .Vt char *malloc_options ;
 .Sh DESCRIPTION
+The standard functions
+.Fn malloc ,
+.Fn calloc ,
+and
+.Fn realloc
+allocate memory space.
 The
 .Fn malloc
 function allocates uninitialized space for an object of
@@ -103,6 +112,26 @@ behaves like
 and allocates a new object.
 .Pp
 The
+.Fn free
+function causes the space pointed to by
+.Fa ptr
+to be either placed on a list of free blocks to make it available for future
+allocation or, when appropiate, to be returned to the kernel using
+.Xr munmap 2 .
+If
+.Fa ptr
+is a
+.Dv NULL
+pointer, no action occurs.
+If
+.Fa ptr
+was previously freed by
+.Fn free
+or a reallocation function,
+the behavior is undefined and the double free is a security concern.
+.Pp
+Designed for safe allocation of arrays,
+the
 .Fn reallocarray
 function is similar to
 .Fn realloc
@@ -115,7 +144,8 @@ and checks for integer overflow in the calculation
 *
 .Fa size .
 .Pp
-The
+Used for the allocation of memory holding sensitive data,
+the
 .Fn recallocarray
 function is similar to
 .Fn reallocarray
@@ -150,23 +180,25 @@ is the size of the earlier allocation that returned
 otherwise the behaviour is undefined.
 .Pp
 The
+.Fn freezero
+function is similar to the
 .Fn free
-function causes the space pointed to by
-.Fa ptr
-to be either placed on a list of free pages to make it available for future
-allocation or, if required, to be returned to the kernel using
-.Xr munmap 2 .
+function except it ensures the memory being deallocated is explicitly
+discarded.
 If
 .Fa ptr
-is a
-.Dv NULL
-pointer, no action occurs.
+is
+.Dv NULL ,
+no action occurs.
 If
 .Fa ptr
-was previously freed by
-.Fn free
-or a reallocation function,
-the behavior is undefined and the double free is a security concern.
+is not
+.Dv NULL ,
+the
+.Fa size
+argument must be the size of the earlier allocation that returned
+.Fa ptr ,
+otherwise the behaviour is undefined.
 .Sh RETURN VALUES
 Upon successful completion, the allocation functions
 return a pointer to the allocated space; otherwise, a
@@ -319,10 +351,8 @@ function should be used for resizing objects containing sensitive data like
 keys.
 To avoid leaking information,
 it guarantees memory is cleared before placing it on the internal free list.
-A
-.Fn free
-call for such an object should still be preceded by a call to
-.Xr explicit_bzero 3 .
+Deallocation of such an object should be done by calling
+.Fn freezero .
 .Sh ENVIRONMENT
 .Bl -tag -width "/etc/malloc.conf"
 .It Ev MALLOC_OPTIONS
@@ -539,6 +569,10 @@ The
 .Fn recallocarray
 function appeared in
 .Ox 6.1 .
+The
+.Fn freezero
+function appeared in
+.Ox 6.2 .
 .Sh CAVEATS
 When using
 .Fn malloc ,

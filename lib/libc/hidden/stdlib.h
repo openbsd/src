@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.9 2017/03/06 18:44:21 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.10 2017/04/10 05:45:02 otto Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -84,6 +84,7 @@ PROTO_NORMAL(erand48);
 PROTO_NORMAL(exit);
 PROTO_DEPRECATED(fcvt);
 /*PROTO_NORMAL(free);			not yet, breaks emacs */
+PROTO_NORMAL(freezero);
 PROTO_DEPRECATED(gcvt);
 PROTO_DEPRECATED(getbsize);
 PROTO_NORMAL(getenv);

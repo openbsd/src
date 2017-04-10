@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.219 2017/04/06 08:39:47 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.220 2017/04/10 05:45:02 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -185,7 +185,7 @@ struct malloc_readonly {
 	int	malloc_realloc;		/* always realloc? */
 	int	malloc_xmalloc;		/* xmalloc behaviour? */
 	int	chunk_canaries;		/* use canaries after chunks? */
-	int	internal_recallocarray;	/* use better recallocarray? */
+	int	internal_funcs;		/* use better recallocarray/freezero? */
 	u_int	malloc_cache;		/* free pages we cache */
 	size_t	malloc_guard;		/* use guard pages after allocations? */
 #ifdef MALLOC_STATS
@@ -343,7 +343,14 @@ unmap(struct dir_info *d, void *p, size_t sz, int clear)
 	if (sz != PAGEROUND(sz))
 		wrterror(d, "munmap round");
 
-	if (psz > mopts.malloc_cache) {
+	rsz = mopts.malloc_cache - d->free_regions_size;
+
+	/*
+	 * normally the cache holds recently freed regions, but if the region
+	 * to unmap is larger than the cache size or we're clearing and the
+	 * cache is full, just munmap
+	 */
+	if (psz > mopts.malloc_cache || (clear && rsz == 0)) {
 		i = munmap(p, sz);
 		if (i)
 			wrterror(d, "munmap %p", p);
@@ -351,7 +358,6 @@ unmap(struct dir_info *d, void *p, size_t sz, int clear)
 		return;
 	}
 	tounmap = 0;
-	rsz = mopts.malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
 	offset = getrbyte(d);
@@ -1234,7 +1240,7 @@ _malloc_init(int from_rthreads)
 	if (from_rthreads)
 		mopts.malloc_mt = 1;
 	else
-		mopts.internal_recallocarray = 1;
+		mopts.internal_funcs = 1;
 
 	/*
 	 * Options have been set and will never be reset.
@@ -1297,7 +1303,7 @@ validate_junk(struct dir_info *pool, void *p)
 }
 
 static void
-ofree(struct dir_info *argpool, void *p, int clear)
+ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 {
 	struct dir_info *pool;
 	struct region_info *r;
@@ -1326,6 +1332,25 @@ ofree(struct dir_info *argpool, void *p, int clear)
 	}
 
 	REALSIZE(sz, r);
+	if (check) {
+		if (sz <= MALLOC_MAXCHUNK) {
+			if (mopts.chunk_canaries) {
+				struct chunk_info *info =
+				     (struct chunk_info *)r->size;
+				uint32_t chunknum =
+				     find_chunknum(pool, r, p, 0);
+
+				if (info->bits[info->offset + chunknum] !=
+				    argsz)
+					wrterror(pool, "recorded old size %hu"
+					    " != %zu",
+					    info->bits[info->offset + chunknum],
+					    argsz);
+			}	
+		} else if (argsz != sz - mopts.malloc_guard)
+			wrterror(pool, "recorded old size %zu != %zu",
+			    sz - mopts.malloc_guard, argsz);
+	}
 	if (sz > MALLOC_MAXCHUNK) {
 		if (!MALLOC_MOVE_COND(sz)) {
 			if (r->p != p)
@@ -1411,13 +1436,48 @@ free(void *ptr)
 		malloc_recurse(d);
 		return;
 	}
-	ofree(d, ptr, 0);
+	ofree(d, ptr, 0, 0, 0);
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
 	errno = saved_errno;
 }
 /*DEF_STRONG(free);*/
 
+static void
+freezero_p(void *ptr, size_t sz)
+{
+	explicit_bzero(ptr, sz);
+	free(ptr);
+}
+
+void
+freezero(void *ptr, size_t sz)
+{
+	struct dir_info *d;
+	int saved_errno = errno;
+
+	/* This is legal. */
+	if (ptr == NULL)
+		return;
+
+	if (!mopts.internal_funcs)
+		return freezero_p(ptr, sz);
+
+	d = getpool();
+	if (d == NULL)
+		wrterror(d, "freezero() called before allocation");
+	_MALLOC_LOCK(d->mutex);
+	d->func = "freezero";
+	if (d->active++) {
+		malloc_recurse(d);
+		return;
+	}
+	ofree(d, ptr, 1, 1, sz);
+	d->active--;
+	_MALLOC_UNLOCK(d->mutex);
+	errno = saved_errno;
+}
+DEF_WEAK(freezero);
 
 static void *
 orealloc(struct dir_info *argpool, void *p, size_t newsz, void *f)
@@ -1591,7 +1651,7 @@ gotit:
 		}
 		if (newsz != 0 && oldsz != 0)
 			memcpy(q, p, oldsz < newsz ? oldsz : newsz);
-		ofree(pool, p, 0);
+		ofree(pool, p, 0, 0, 0);
 		ret = q;
 	} else {
 		/* oldsz == newsz */
@@ -1751,7 +1811,7 @@ orecallocarray(struct dir_info *argpool, void *p, size_t oldsize,
 	} else
 		memcpy(newptr, p, newsize);
 
-	ofree(pool, p, 1);
+	ofree(pool, p, 1, 0, 0);
 
 done:
 	if (argpool != pool) {
@@ -1824,7 +1884,7 @@ recallocarray(void *ptr, size_t oldnmemb, size_t newnmemb, size_t size)
 	void *r;
 	int saved_errno = errno;
 
-	if (!mopts.internal_recallocarray)
+	if (!mopts.internal_funcs)
 		return recallocarray_p(ptr, oldnmemb, newnmemb, size);
 
 	d = getpool();
@@ -2275,8 +2335,8 @@ malloc_exit(void)
 		     __progname);
 		write(fd, buf, strlen(buf));
 		snprintf(buf, sizeof(buf),
-		    "MT=%d IRC=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
-		    mopts.malloc_mt, mopts.internal_recallocarray,
+		    "MT=%d I=%d F=%d U=%d J=%d R=%d X=%d C=%d cache=%u G=%zu\n",
+		    mopts.malloc_mt, mopts.internal_funcs,
 		    mopts.malloc_freenow,
 		    mopts.malloc_freeunmap, mopts.malloc_junk,
 		    mopts.malloc_realloc, mopts.malloc_xmalloc,

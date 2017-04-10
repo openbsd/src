@@ -1418,6 +1418,7 @@ ecvt
 exit
 fcvt
 free
+freezero
 gcvt
 getenv
 getopt
