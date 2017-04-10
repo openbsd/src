@@ -1,8 +1,8 @@
-.\"	$OpenBSD: SSL_CTX_ctrl.3,v 1.4 2017/04/10 15:54:46 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\"	$OpenBSD: SSL_get_server_tmp_key.3,v 1.1 2017/04/10 15:54:46 schwarze Exp $
+.\"	OpenSSL SSL_get_server_tmp_key.pod 508fafd8 Apr 3 15:41:21 2017 +0100
 .\"
-.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
-.\" Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Matt Caswell <matt@openssl.org>
+.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,62 +49,36 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: April 10 2017 $
-.Dt SSL_CTX_CTRL 3
+.Dt SSL_GET_SERVER_TMP_KEY 3
 .Os
 .Sh NAME
-.Nm SSL_CTX_ctrl ,
-.Nm SSL_CTX_callback_ctrl ,
-.Nm SSL_ctrl ,
-.Nm SSL_callback_ctrl
-.Nd internal handling functions for SSL_CTX and SSL objects
+.Nm SSL_get_server_tmp_key
+.Nd temporary server key during a handshake
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft long
-.Fn SSL_CTX_ctrl "SSL_CTX *ctx" "int cmd" "long larg" "void *parg"
-.Ft long
-.Fn SSL_CTX_callback_ctrl "SSL_CTX *" "int cmd" "void (*fp)()"
-.Ft long
-.Fn SSL_ctrl "SSL *ssl" "int cmd" "long larg" "void *parg"
-.Ft long
-.Fn SSL_callback_ctrl "SSL *" "int cmd" "void (*fp)()"
+.Fo SSL_get_server_tmp_key
+.Fa "SSL *ssl"
+.Fa "EVP_PKEY **key"
+.Fc
 .Sh DESCRIPTION
-The
-.Fn SSL_*_ctrl
-family of functions is used to manipulate settings of
-the
-.Vt SSL_CTX
-and
-.Vt SSL
-objects.
-Depending on the command
-.Fa cmd
-the arguments
-.Fa larg ,
-.Fa parg ,
-or
-.Fa fp
-are evaluated.
-These functions should never be called directly.
-All functionalities needed are made available via other functions or macros.
+.Fn SSL_get_server_tmp_key
+retrieves the temporary key provided by the server
+and used during key exchange.
+For example, if ECDHE is in use,
+this represents the server's public ECDHE key.
+.Pp
+In case of success, a copy of the key is stored in
+.Pf * Fa key .
+It is the caller's responsibility to free this key after use using
+.Xr EVP_PKEY_free 3 .
+.Pp
+This function may only be called by the client.
+.Pp
+This function is implemented as a macro.
 .Sh RETURN VALUES
-The return values of the
-.Fn SSL*_ctrl
-functions depend on the command supplied via the
-.Fn cmd
-parameter.
+.Fn SSL_get_server_tmp_key
+returns 1 on success or 0 on failure.
 .Sh SEE ALSO
-.Xr ssl 3 ,
-.Xr SSL_CTX_add_extra_chain_cert 3 ,
-.Xr SSL_CTX_sess_number 3 ,
-.Xr SSL_CTX_sess_set_cache_size 3 ,
-.Xr SSL_CTX_set_max_cert_list 3 ,
-.Xr SSL_CTX_set_mode 3 ,
-.Xr SSL_CTX_set_options 3 ,
-.Xr SSL_CTX_set_session_cache_mode 3 ,
-.Xr SSL_CTX_set_tlsext_servername_callback 3 ,
-.Xr SSL_CTX_set_tlsext_status_cb 3 ,
-.Xr SSL_CTX_set_tlsext_ticket_key_cb 3 ,
-.Xr SSL_get_server_tmp_key 3 ,
-.Xr SSL_num_renegotiations 3 ,
-.Xr SSL_session_reused 3 ,
-.Xr SSL_set_max_send_fragment 3
+.Xr EVP_PKEY_free 3 ,
+.Xr SSL_ctrl 3
