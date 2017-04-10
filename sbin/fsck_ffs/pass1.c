@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.43 2015/08/22 06:00:27 deraadt Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.44 2017/04/10 08:19:12 fcambus Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -126,11 +126,9 @@ pass1(void)
 				}
 				break;
 			}
-			if (inosused < 0)
-				inosused = 0;
 		}
 		/*
- 		 * Allocate inoinfo structures for the allocated inodes.
+		 * Allocate inoinfo structures for the allocated inodes.
 		 */
 		inostathead[c].il_numalloced = inosused;
 		if (inosused == 0) {
