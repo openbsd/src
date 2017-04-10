@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2016/05/10 18:39:47 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.12 2017/04/10 14:35:30 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-#if !defined(__LANGUAGE_ASSEMBLY)
+#if !defined(__ASSEMBLER__)
 #include <sys/types.h>
 
 /*
@@ -69,7 +69,7 @@ struct	sigcontext {
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 
-#else /* __LANGUAGE_ASSEMBLY */
+#else /* __ASSEMBLER__ */
 #define SC_ONSTACK	(0 * REGSZ)
 #define	SC_MASK		(1 * REGSZ)
 #define	SC_PC		(2 * REGSZ)
@@ -79,6 +79,6 @@ struct	sigcontext {
 #define	SC_FPREGS	(37 * REGSZ)
 #define	SC_FPUSED	(70 * REGSZ)
 #define	SC_FPC_EIR	(71 * REGSZ)
-#endif /* __LANGUAGE_ASSEMBLY */
+#endif /* __ASSEMBLER__ */
 
 #endif	/* !_MIPS64_SIGNAL_H_ */
