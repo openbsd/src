@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.35 2017/01/31 15:57:43 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.36 2017/04/10 17:11:13 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -75,11 +75,13 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 	union tls_addr addrbuf;
 	struct tls *conn_ctx;
 	const char *name;
+	int match;
 
 	if ((conn_ctx = SSL_get_app_data(ssl)) == NULL)
 		goto err;
 
-	if ((name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) == NULL) {
+	if ((name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)) ==
+	    NULL) {
 		/*
 		 * The servername callback gets called even when there is no
 		 * TLS servername extension provided by the client. Sigh!
@@ -98,7 +100,10 @@ tls_servername_cb(SSL *ssl, int *al, void *arg)
 
 	/* Find appropriate SSL context for requested servername. */
 	for (sni_ctx = ctx->sni_ctx; sni_ctx != NULL; sni_ctx = sni_ctx->next) {
-		if (tls_check_name(ctx, sni_ctx->ssl_cert, name) == 0) {
+		if (tls_check_name(ctx, sni_ctx->ssl_cert, name,
+		    &match) == -1)
+			goto err;
+		if (match) {
 			SSL_set_SSL_CTX(conn_ctx->ssl_conn, sni_ctx->ssl_ctx);
 			return (SSL_TLSEXT_ERR_OK);
 		}

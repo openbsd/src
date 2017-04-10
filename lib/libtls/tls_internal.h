@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.56 2017/04/07 08:48:30 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.57 2017/04/10 17:11:13 jsing Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -186,7 +186,8 @@ void tls_sni_ctx_free(struct tls_sni_ctx *sni_ctx);
 struct tls *tls_new(void);
 struct tls *tls_server_conn(struct tls *ctx);
 
-int tls_check_name(struct tls *ctx, X509 *cert, const char *servername);
+int tls_check_name(struct tls *ctx, X509 *cert, const char *servername,
+    int *match);
 int tls_configure_server(struct tls *ctx);
 
 int tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx);

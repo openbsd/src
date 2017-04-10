@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.40 2017/01/26 12:56:37 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.41 2017/04/10 17:11:13 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -289,7 +289,7 @@ int
 tls_handshake_client(struct tls *ctx)
 {
 	X509 *cert = NULL;
-	int ssl_ret;
+	int match, ssl_ret;
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
@@ -311,11 +311,11 @@ tls_handshake_client(struct tls *ctx)
 			tls_set_errorx(ctx, "no server certificate");
 			goto err;
 		}
-		if ((rv = tls_check_name(ctx, cert,
-		    ctx->servername)) != 0) {
-			if (rv != -2)
-				tls_set_errorx(ctx, "name `%s' not present in"
-				    " server certificate", ctx->servername);
+		if (tls_check_name(ctx, cert, ctx->servername, &match) == -1)
+			goto err;
+		if (!match) {
+			tls_set_errorx(ctx, "name `%s' not present in"
+			    " server certificate", ctx->servername);
 			goto err;
 		}
 	}
