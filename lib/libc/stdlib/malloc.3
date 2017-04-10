@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.110 2017/04/10 05:45:02 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.111 2017/04/10 06:31:31 jmc Exp $
 .\"
 .Dd $Mdocdate: April 10 2017 $
 .Dt MALLOC 3
@@ -39,10 +39,10 @@
 .Nm malloc ,
 .Nm calloc ,
 .Nm realloc ,
-.Nm free
+.Nm free ,
 .Nm reallocarray ,
 .Nm recallocarray ,
-.Nm freezero ,
+.Nm freezero
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -116,7 +116,7 @@ The
 function causes the space pointed to by
 .Fa ptr
 to be either placed on a list of free blocks to make it available for future
-allocation or, when appropiate, to be returned to the kernel using
+allocation or, when appropriate, to be returned to the kernel using
 .Xr munmap 2 .
 If
 .Fa ptr
