@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2017/03/18 17:33:13 florian Exp $
+#	$OpenBSD: Makefile,v 1.1 2017/04/10 13:35:42 florian Exp $
 
-PROG=	slaacdctl
-SRCS=	slaacdctl.c parser.c
+PROG=	slaacctl
+SRCS=	slaacctl.c parser.c
 
-MAN=	slaacdctl.8
+MAN=	slaacctl.8
 
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes

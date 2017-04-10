@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: parser.c,v 1.1 2017/04/10 13:35:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
