@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.44 2017/03/02 17:44:32 bluhm Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.45 2017/04/10 14:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -258,15 +258,20 @@ print_flags(uint32_t flags)
 	static char fstr[80];
 	struct idname *entry;
 	size_t len;
-	int i, comma = 0;
+	int i, comma = 0, n;
 
 	len = snprintf(fstr, sizeof(fstr), "%#x<", flags);
+	if (len >= sizeof(fstr))
+		return (NULL);
 	for (i = 0; i < 32; i++) {
 		if ((flags & (1 << i)) == 0 ||
 		    (entry = lookup(flag_types, 1 << i)) == NULL)
 			continue;
-		len += snprintf(fstr + len, sizeof(fstr) - len - 1,
+		n = snprintf(fstr + len, sizeof(fstr) - len - 1,
 		    comma ? ",%s" : "%s", entry->name);
+		if ((size_t)n >= sizeof(fstr) - len - 1)
+			return (NULL);
+		len += n;
 		comma = 1;
 	}
 	strlcat(fstr, ">", sizeof(fstr));
