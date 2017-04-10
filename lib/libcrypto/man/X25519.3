@@ -1,8 +1,8 @@
-.\"	$OpenBSD: EVP_PKEY_CTX_new.3,v 1.5 2017/04/10 17:45:06 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\"	$OpenBSD: X25519.3,v 1.1 2017/04/10 17:45:06 schwarze Exp $
+.\"	OpenSSL X25519.pod 69687aa8 Mar 28 23:57:28 2017 +0200
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2006, 2009, 2015 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,91 +49,51 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: April 10 2017 $
-.Dt EVP_PKEY_CTX_NEW 3
+.Dt X25519 3
 .Os
 .Sh NAME
-.Nm EVP_PKEY_CTX_new ,
-.Nm EVP_PKEY_CTX_new_id ,
-.Nm EVP_PKEY_CTX_dup ,
-.Nm EVP_PKEY_CTX_free
-.Nd public key algorithm context functions
-.Sh SYNOPSIS
-.In openssl/evp.h
-.Ft EVP_PKEY_CTX *
-.Fo EVP_PKEY_CTX_new
-.Fa "EVP_PKEY *pkey"
-.Fa "ENGINE *e"
-.Fc
-.Ft EVP_PKEY_CTX *
-.Fo EVP_PKEY_CTX_new_id
-.Fa "int id"
-.Fa "ENGINE *e"
-.Fc
-.Ft EVP_PKEY_CTX *
-.Fo EVP_PKEY_CTX_dup
-.Fa "EVP_PKEY_CTX *ctx"
-.Fc
-.Ft void
-.Fo EVP_PKEY_CTX_free
-.Fa "EVP_PKEY_CTX *ctx"
-.Fc
+.Nm X25519
+.Nd EVP_PKEY X25519 support
 .Sh DESCRIPTION
 The
-.Fn EVP_PKEY_CTX_new
-function allocates a public key algorithm context using the algorithm
-specified in
-.Fa pkey
-and the
-.Vt ENGINE
-.Fa e .
-.Pp
-The
-.Fn EVP_PKEY_CTX_new_id
-function allocates a public key algorithm context using the algorithm
-specified by
-.Fa id
-and
-.Vt ENGINE
-.Fa e .
-It is normally used when no
+.Nm
 .Vt EVP_PKEY
-structure is associated with the operations, for example during
-parameter generation of key generation for some algorithms.
+implementation supports key generation and key derivation using X25519.
+It has associated private and public key formats compatible with
+draft-ietf-curdle-pkix-03.
 .Pp
-.Fn EVP_PKEY_CTX_dup
-duplicates the context
-.Fa ctx .
+No additional parameters can be set during key generation.
 .Pp
-.Fn EVP_PKEY_CTX_free
-frees up the context
-.Fa ctx .
-If
-.Fa ctx
-is a
-.Dv NULL
-pointer, no action occurs.
-.Sh RETURN VALUES
-.Fn EVP_PKEY_CTX_new ,
-.Fn EVP_PKEY_CTX_new_id ,
-and
-.Fn EVP_PKEY_CTX_dup
-return either the newly allocated
-.Vt EVP_PKEY_CTX
-structure or
-.Dv NULL
-if an error occurred.
+The peer public key must be set using
+.Xr EVP_PKEY_derive_set_peer 3
+when performing key derivation.
+.Pp
+A context for the
+.Nm
+algorithm can be obtained by calling:
+.Pp
+.Dl EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+.Sh EXAMPLES
+Generate an
+.Nm
+private key and write it to standard output in PEM format:
+.Bd -literal
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+
+EVP_PKEY *pkey = NULL;
+EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+EVP_PKEY_keygen_init(pctx);
+EVP_PKEY_keygen(pctx, &pkey);
+EVP_PKEY_CTX_free(pctx);
+PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
+.Ed
+.Pp
+The key derivation example in
+.Xr EVP_PKEY_derive 3
+can be used with
+.Nm .
 .Sh SEE ALSO
-.Xr EVP_PKEY_new 3 ,
-.Xr X25519 3
-.Sh HISTORY
-These functions were first added to OpenSSL 1.0.0.
-.Sh CAVEATS
-The
-.Vt EVP_PKEY_CTX
-structure is an opaque public key algorithm context used by the OpenSSL
-high level public key API.
-Contexts
-.Sy MUST NOT
-be shared between threads.
-It is not permissible to use the same context simultaneously in two
-threads.
+.Xr EVP_PKEY_CTX_new 3 ,
+.Xr EVP_PKEY_derive 3 ,
+.Xr EVP_PKEY_keygen 3
