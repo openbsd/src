@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.11 2017/03/10 16:03:27 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.12 2017/04/10 06:09:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1999,9 +1999,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 
 err:
 	DH_free(dh_clnt);
-	if (key != NULL)
-		explicit_bzero(key, key_size);
-	free(key);
+	freezero(key, key_size);
 
 	return (ret);
 }
@@ -2086,9 +2084,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	ret = 1;
 
  err:
-	if (key != NULL)
-		explicit_bzero(key, key_size);
-	free(key);
+	freezero(key, key_size);
 
 	BN_CTX_free(bn_ctx);
 	EC_KEY_free(ecdh);
@@ -2130,14 +2126,9 @@ ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
 	ret = 1;
 
  err:
-	if (private_key != NULL)
-		explicit_bzero(private_key, X25519_KEY_LENGTH);
-	if (shared_key != NULL)
-		explicit_bzero(shared_key, X25519_KEY_LENGTH);
-
 	free(public_key);
-	free(private_key);
-	free(shared_key);
+	freezero(private_key, X25519_KEY_LENGTH);
+	freezero(shared_key, X25519_KEY_LENGTH);
 
 	return (ret);
 }
