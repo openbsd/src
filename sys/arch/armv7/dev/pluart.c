@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.1 2016/08/31 16:19:40 jsg Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.2 2017/04/11 15:16:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -260,6 +260,7 @@ pluartattach(struct device *parent, struct device *self, void *aux)
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
 		printf(": console");
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 	}
 
 	timeout_set(&sc->sc_diag_tmo, pluart_diag, sc);
@@ -308,8 +309,18 @@ pluart_intr(void *arg)
 
 	p = sc->sc_ibufp;
 
-	while(ISSET(bus_space_read_4(iot, ioh, UART_FR), UART_FR_RXFF)) {
-		c = bus_space_read_1(iot, ioh, UART_DR);
+	while (ISSET(bus_space_read_4(iot, ioh, UART_FR), UART_FR_RXFF)) {
+		c = bus_space_read_2(iot, ioh, UART_DR);
+		if (c & UART_DR_BE) {
+#ifdef DDB
+			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+				if (db_console)
+					Debugger();
+				continue;
+			}
+#endif
+			c = 0;
+		}
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
