@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.2 2017/03/21 18:43:40 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.3 2017/04/11 06:52:13 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -68,7 +68,11 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
-	memset(regs, 0, sizeof(*regs));
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
+		memcpy(regs, &p->p_addr->u_pcb.pcb_fpstate, sizeof(*regs));
+	else
+		memset(regs, 0, sizeof(*regs));
+
 	return(0);
 }
 

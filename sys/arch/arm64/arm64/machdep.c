@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.12 2017/03/13 00:53:56 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.13 2017/04/11 06:52:13 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,6 +42,7 @@
 #include <machine/kcore.h>
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
+#include <machine/vfp.h>
 #include <arm64/arm64/arm64var.h>
 
 #include <machine/db_machdep.h>
@@ -454,6 +455,11 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
 	struct trapframe *tf;
+
+	/* If we were using the FPU, forget about it. */
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		vfp_discard(p);
+	p->p_addr->u_pcb.pcb_flags &= ~PCB_FPU;
 
 	tf = p->p_addr->u_pcb.pcb_tf;
 

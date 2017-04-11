@@ -1,4 +1,4 @@
-/* $OpenBSD: reg.h,v 1.2 2017/03/21 18:43:40 kettenis Exp $ */
+/* $OpenBSD: reg.h,v 1.3 2017/04/11 06:52:13 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,7 +28,7 @@ struct reg {
 };
 
 struct fpreg {
-	uint64_t	fp_registers[64]; // really 32 128 bit registers.
+	__uint128_t	fp_reg[32];
 	uint32_t	fp_sr;
 	uint32_t	fp_cr;
 };
