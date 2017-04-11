@@ -2027,6 +2027,7 @@
 ./usr/share/man/man3/UI_create_method.3
 ./usr/share/man/man3/UI_get_string_type.3
 ./usr/share/man/man3/UI_new.3
+./usr/share/man/man3/X25519.3
 ./usr/share/man/man3/X509V3_get_d2i.3
 ./usr/share/man/man3/X509_ALGOR_dup.3
 ./usr/share/man/man3/X509_ATTRIBUTE_new.3
