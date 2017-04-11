@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.412 2017/04/10 21:47:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.413 2017/04/11 10:40:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2548,34 +2548,6 @@ apply_ignore_list(char *ignore_list)
 }
 
 void
-priv_write_file(char *path, int flags, mode_t mode,
-    u_int8_t *contents, size_t sz)
-{
-	ssize_t n;
-	int fd;
-
-	fd = open(path, flags, mode);
-	if (fd == -1) {
-		log_warn("Couldn't open '%s'", path);
-		return;
-	}
-
-	n = write(fd, contents, sz);
-	if (n == -1)
-		log_warn("Couldn't write contents to '%s'", path);
-	else if ((size_t)n < sz)
-		log_warnx("Short contents write to '%s' (%zd vs %zu)", path,
-		    n, sz);
-
-	if (fchown(fd, 0, 0) == -1)
-		log_warn("fchown(fd, %d, %d) of '%s' failed", 0, 0, path);
-	if (fchmod(fd, mode) == -1)
-		log_warn("fchmod(fd, 0x%x) of '%s' failed", mode, path);
-
-	close(fd);
-}
-
-void
 set_lease_times(struct client_lease *lease)
 {
 	time_t cur_time, time_max;
@@ -2740,28 +2712,6 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 		log_warn("write_resolv_conf: imsg_compose");
 
 	flush_unpriv_ibuf("write_resolv_conf");
-}
-
-void
-priv_write_resolv_conf(struct interface_info *ifi, struct imsg *imsg)
-{
-	u_int8_t *contents;
-	size_t sz;
-
-	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
-		log_warnx("short IMSG_WRITE_RESOLV_CONF");
-		return;
-	}
-
-	if (!resolv_conf_priority(ifi))
-		return;
-
-	contents = imsg->data;
-	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
-
-	priv_write_file("/etc/resolv.conf",
-	    O_WRONLY | O_CREAT | O_TRUNC,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, contents, sz);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.169 2017/04/08 20:16:04 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.170 2017/04/11 10:40:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -172,6 +172,7 @@ struct dhcp_timeout {
 	void	*arg;
 };
 
+#define	_PATH_RESOLV_CONF	"/etc/resolv.conf"
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 

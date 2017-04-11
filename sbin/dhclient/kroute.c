@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.88 2017/04/09 20:44:13 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.89 2017/04/11 10:40:14 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 
 #include <arpa/inet.h>
@@ -30,6 +31,7 @@
 #include <netinet/if_ether.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
 #include <imsg.h>
 #include <limits.h>
@@ -529,6 +531,47 @@ priv_cleanup(struct interface_info *ifi, struct imsg_hup *imsg)
 
 	dimsg.addr = imsg->addr;
 	priv_delete_address(ifi, &dimsg);
+}
+
+/*
+ * priv_write_resolv_conf writes out a new resolv.conf.
+ */
+void
+priv_write_resolv_conf(struct interface_info *ifi, struct imsg *imsg)
+{
+	u_int8_t *contents;
+	ssize_t n;
+	size_t sz;
+	int fd;
+
+
+	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
+		log_warnx("short IMSG_WRITE_RESOLV_CONF");
+		return;
+	}
+
+	if (!resolv_conf_priority(ifi))
+		return;
+
+	contents = imsg->data;
+	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
+
+	fd = open(_PATH_RESOLV_CONF, O_WRONLY | O_CREAT | O_TRUNC,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	if (fd == -1) {
+		log_warn("Couldn't open '%s'", _PATH_RESOLV_CONF);
+		return;
+	}
+
+	n = write(fd, contents, sz);
+	if (n == -1)
+		log_warn("Couldn't write contents to '%s'", _PATH_RESOLV_CONF);
+	else if ((size_t)n < sz)
+		log_warnx("Short contents write to '%s' (%zd vs %zu)",
+		    _PATH_RESOLV_CONF, n, sz);
+
+	close(fd);
 }
 
 int
