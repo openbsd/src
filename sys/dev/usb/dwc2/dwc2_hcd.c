@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.17 2017/04/09 18:09:41 dhill Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.18 2017/04/11 14:43:49 dhill Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -2184,14 +2184,14 @@ int dwc2_hcd_init(struct dwc2_hsotg *hsotg,
 	dev_dbg(hsotg->dev, "hcfg=%08x\n", DWC2_READ_4(hsotg, HCFG));
 
 #ifdef CONFIG_USB_DWC2_TRACK_MISSED_SOFS
-	hsotg->frame_num_array = mallocarray(FRAME_NUM_ARRAY_SIZE,
-					sizeof(*hsotg->frame_num_array), 
-					M_DEVBUF, M_ZERO | M_WAITOK);
+	hsotg->frame_num_array = malloc(sizeof(*hsotg->frame_num_array) *
+					FRAME_NUM_ARRAY_SIZE, M_DEVBUF,
+					M_ZERO | M_WAITOK);
 	if (!hsotg->frame_num_array)
 		goto error1;
-	hsotg->last_frame_num_array = mallocarray(FRAME_NUM_ARRAY_SIZE,
-			sizeof(*hsotg->last_frame_num_array), 
-			M_DEVBUF, M_ZERO | M_WAITOK);
+	hsotg->last_frame_num_array = malloc(
+			sizeof(*hsotg->last_frame_num_array) *
+			FRAME_NUM_ARRAY_SIZE, M_DEVBUF, M_ZERO | M_WAITOK);
 	if (!hsotg->last_frame_num_array)
 		goto error1;
 	hsotg->last_frame_num = HFNUM_MAX_FRNUM;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.306 2017/04/09 17:57:58 dhill Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.307 2017/04/11 14:43:49 dhill Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -795,8 +795,8 @@ carp_clone_create(struct if_clone *ifc, int unit)
 #ifdef INET6
 	sc->sc_im6o.im6o_hlim = CARP_DFLTTL;
 #endif /* INET6 */
-	sc->sc_imo.imo_membership = (struct in_multi **)mallocarray(
-	    IP_MIN_MEMBERSHIPS, sizeof(struct in_multi *), M_IPMOPTS,
+	sc->sc_imo.imo_membership = (struct in_multi **)malloc(
+	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 	    M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.337 2017/04/09 17:57:58 dhill Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.338 2017/04/11 14:43:49 dhill Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1344,8 +1344,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * allocate one and initialize to default values.
 		 */
 		imo = malloc(sizeof(*imo), M_IPMOPTS, M_WAITOK|M_ZERO);
-		immp = (struct in_multi **)mallocarray(
-		    IP_MIN_MEMBERSHIPS, sizeof(*immp), M_IPMOPTS,
+		immp = (struct in_multi **)malloc(
+		    (sizeof(*immp) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 		    M_WAITOK|M_ZERO);
 		*imop = imo;
 		imo->imo_ifidx = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.234 2017/04/09 18:16:00 dhill Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.235 2017/04/11 14:43:49 dhill Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1097,7 +1097,7 @@ azalia_init_rirb(azalia_t *az, int resuming)
 		DPRINTF(("%s: RIRB allocation succeeded.\n", __func__));
 
 		/* setup the unsolicited response queue */
-		az->unsolq = mallocarray(UNSOLQ_SIZE, sizeof(rirb_entry_t),
+		az->unsolq = malloc(sizeof(rirb_entry_t) * UNSOLQ_SIZE,
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (az->unsolq == NULL) {
 			DPRINTF(("%s: can't allocate unsolicited response queue.\n",

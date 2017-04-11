@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.58 2017/04/09 17:57:58 dhill Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.59 2017/04/11 14:43:49 dhill Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -129,8 +129,8 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 
-	sc->sc_imo.imo_membership = mallocarray(
-	    IP_MIN_MEMBERSHIPS, sizeof(struct in_multi *), M_IPMOPTS,
+	sc->sc_imo.imo_membership = malloc(
+	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
 	    M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.190 2017/04/09 18:15:32 dhill Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.191 2017/04/11 14:43:49 dhill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2566,7 +2566,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 	/* allocate and setup our reordering buffer */
-	ba->ba_buf = mallocarray(IEEE80211_BA_MAX_WINSZ, sizeof(*ba->ba_buf),
+	ba->ba_buf = malloc(IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ba->ba_buf == NULL)
 		goto refuse;
