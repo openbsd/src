@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.995 2017/04/07 22:53:25 rpe Exp $
+#	$OpenBSD: install.sub,v 1.996 2017/04/11 19:23:10 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1707,7 +1707,7 @@ install_http() {
 	else
 		# Remove the architecture and snaphots or version part.
 		INSTALL_URL=${_url_base%/$ARCH}
-		INSTALL_URL=${INSTALL_URL%@(/$VERSION|/snapshots)}
+		INSTALL_URL=${INSTALL_URL%@(/$VNAME|/snapshots)}
 	fi
 }
 
