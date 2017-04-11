@@ -25,10 +25,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sysexits.3,v 1.12 2015/12/30 16:41:52 tedu Exp $
+.\" $OpenBSD: sysexits.3,v 1.13 2017/04/11 17:01:11 schwarze Exp $
 .\" $FreeBSD: src/share/man/man3/sysexits.3,v 1.4.2.1 1999/08/29 16:45:41 peter Exp $
 .\"
-.Dd $Mdocdate: December 30 2015 $
+.Dd $Mdocdate: April 11 2017 $
 .Dt SYSEXITS 3
 .Os
 .Sh NAME
@@ -37,10 +37,8 @@
 .Sh SYNOPSIS
 .In sysexits.h
 .Sh DESCRIPTION
-Some programs use defined error codes to distinguish between possible errors.
-However, most programs in
-.Ox
-do not.
+A few programs exit with the following non-portable error codes.
+Do not use them.
 .Pp
 The successful exit is always indicated by a status of 0, or
 .Dv EX_OK .
