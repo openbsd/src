@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.89 2017/04/11 10:40:14 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.90 2017/04/11 13:59:27 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -35,6 +35,7 @@
 #include <ifaddrs.h>
 #include <imsg.h>
 #include <limits.h>
+#include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +51,8 @@
     ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 struct in_addr active_addr;
+struct in_addr deleting;
+struct in_addr adding;
 
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
@@ -64,7 +67,42 @@ void	delete_route(struct interface_info *, int, struct rt_msghdr *);
 #define	ROUTE_LABEL_DHCLIENT_DEAD	6
 
 /*
- * Do equivalent of
+ * check_route_label examines the label associated with a route and
+ * returns a value indicating that there was no label (ROUTE_LABEL_NONE),
+ * that the route was created by the current process
+ * (ROUTE_LABEL_DHCLIENT_OURS), a dead process (ROUTE_LABEL_DHCLIENT_DEAD), or
+ * an indeterminate process (ROUTE_LABEL_DHCLIENT_UNKNOWN).
+ */
+int
+check_route_label(struct sockaddr_rtlabel *label)
+{
+	pid_t pid;
+
+	if (!label)
+		return (ROUTE_LABEL_NONE);
+
+	if (strncmp("DHCLIENT ", label->sr_label, 9) != 0)
+		return (ROUTE_LABEL_NOT_DHCLIENT);
+
+	pid = (pid_t)strtonum(label->sr_label + 9, 1, INT_MAX, NULL);
+	if (pid <= 0)
+		return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
+
+	if (pid == getpid())
+		return (ROUTE_LABEL_DHCLIENT_OURS);
+
+	if (kill(pid, 0) == -1) {
+		if (errno == ESRCH)
+			return (ROUTE_LABEL_DHCLIENT_DEAD);
+		else
+			return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
+	}
+
+	return (ROUTE_LABEL_DHCLIENT_LIVE);
+}
+
+/*
+ * [priv_]flush_routes do the equivalent of
  *
  *	route -q $rdomain -n flush -inet -iface $interface
  *	arp -dan
@@ -182,6 +220,179 @@ priv_flush_routes(struct interface_info *ifi, struct imsg_flush_routes *imsg)
 	free(buf);
 }
 
+/*
+ * delete_route deletes a single route from the routing table.
+ */
+void
+delete_route(struct interface_info *ifi, int s, struct rt_msghdr *rtm)
+{
+	static int seqno;
+	ssize_t rlen;
+
+	rtm->rtm_type = RTM_DELETE;
+	rtm->rtm_tableid = ifi->rdomain;
+	rtm->rtm_seq = seqno++;
+
+	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
+	if (rlen == -1) {
+		if (errno != ESRCH)
+			fatal("RTM_DELETE write");
+	} else if (rlen < (int)rtm->rtm_msglen)
+		fatalx("short RTM_DELETE write (%zd)\n", rlen);
+}
+
+/*
+ * add_direct_route is the equivalent of
+ *
+ *     route add -net $dest -netmask $mask -cloning -iface $iface
+ */
+void
+add_direct_route(struct in_addr dest, struct in_addr mask,
+    struct in_addr iface)
+{
+	struct in_addr ifa = { INADDR_ANY };
+
+	add_route(dest, mask, iface, ifa,
+	    RTA_DST | RTA_NETMASK | RTA_GATEWAY, RTF_CLONING | RTF_STATIC);
+}
+
+/*
+ * add_default_route is the equivalent of
+ *
+ *	route -q $rdomain add default -iface $router
+ *
+ *	or
+ *
+ *	route -q $rdomain add default $router
+ */
+void
+add_default_route(struct in_addr addr, struct in_addr gateway)
+{
+	struct in_addr netmask, dest;
+	int addrs, flags;
+
+	memset(&netmask, 0, sizeof(netmask));
+	memset(&dest, 0, sizeof(dest));
+	addrs = RTA_DST | RTA_NETMASK;
+	flags = 0;
+
+	/*
+	 * When 'addr' and 'gateway' are identical the desired behaviour is
+	 * to emulate the '-iface' variant of 'route'. This is done by
+	 * claiming there is no gateway address to use.
+	 */
+	if (memcmp(&gateway, &addr, sizeof(addr)) != 0) {
+		addrs |= RTA_GATEWAY | RTA_IFA;
+		flags |= RTF_GATEWAY | RTF_STATIC;
+	}
+
+	add_route(dest, netmask, gateway, addr, addrs, flags);
+}
+
+/*
+ * add_static_routes() accepts a list of static routes in the format
+ * specified for DHCP option 33 (static-routes) and adds them to the
+ * routing table.
+ */
+void
+add_static_routes(struct option_data *static_routes, struct in_addr iface)
+{
+	struct in_addr		 dest, netmask, gateway;
+	struct in_addr		 *addr;
+	int			 i;
+
+	netmask.s_addr = INADDR_ANY;	/* Not used for CLASSFULL! */
+
+	for (i = 0; (i + 2*sizeof(*addr)) <= static_routes->len;
+	    i += 2*sizeof(*addr)) {
+		addr = (struct in_addr *)&static_routes->data[i];
+		if (addr->s_addr == INADDR_ANY)
+			continue; /* RFC 2132 says 0.0.0.0 is not allowed. */
+
+		dest.s_addr = addr->s_addr;
+		gateway.s_addr = (addr+1)->s_addr;
+
+		/* XXX Order implies priority but we're ignoring that. */
+		add_route(dest, netmask, gateway, iface,
+		    RTA_DST | RTA_GATEWAY | RTA_IFA, RTF_GATEWAY | RTF_STATIC);
+	}
+}
+
+/*
+ *
+ * add_classless_static_routes() accepts a list of static routes in the
+ * format specified for DHCP options 121 (classless-static-routes) and
+ * 249 (classless-ms-static-routes).
+ */
+void
+add_classless_static_routes(struct option_data *opt, struct in_addr iface)
+{
+	struct in_addr	 dest, netmask, gateway;
+	unsigned int	 i, bits, bytes;
+
+	i = 0;
+	while (i < opt->len) {
+		bits = opt->data[i++];
+		bytes = (bits + 7) / 8;
+
+		if (bytes > sizeof(netmask))
+			return;
+		else if (i + bytes > opt->len)
+			return;
+
+		if (bits)
+			netmask.s_addr = htonl(0xffffffff << (32 - bits));
+		else
+			netmask.s_addr = INADDR_ANY;
+
+		memcpy(&dest, &opt->data[i], bytes);
+		dest.s_addr = dest.s_addr & netmask.s_addr;
+		i += bytes;
+
+		if (i + sizeof(gateway) > opt->len)
+			return;
+		memcpy(&gateway, &opt->data[i], sizeof(gateway));
+		i += sizeof(gateway);
+
+		if (gateway.s_addr == INADDR_ANY)
+			add_direct_route(dest, netmask, iface);
+		else
+			add_route(dest, netmask, gateway, iface,
+			    RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA,
+			    RTF_GATEWAY | RTF_STATIC);
+	}
+}
+
+/*
+ * create_route_label constructs a short string that can be uses to label
+ * a route so that subsequent route examinations can find routes added by
+ * dhclient. The label includes the pid so that routes can be further
+ * identified as coming from a particular dhclient instance.
+ */
+int
+create_route_label(struct sockaddr_rtlabel *label)
+{
+	int len;
+
+	memset(label, 0, sizeof(*label));
+
+	label->sr_len = sizeof(label);
+	label->sr_family = AF_UNSPEC;
+
+	len = snprintf(label->sr_label, sizeof(label->sr_label), "DHCLIENT %d",
+	    (int)getpid());
+
+	if (len == -1 || (unsigned int)len >= sizeof(label->sr_label)) {
+		log_warn("could not create route label");
+		return (1);
+	}
+
+	return (0);
+}
+
+/*
+ * [priv_]add_route() add a single route to the routing table.
+ */
 void
 add_route(struct in_addr dest, struct in_addr netmask,
     struct in_addr gateway, struct in_addr ifa, int addrs, int flags)
@@ -318,7 +529,8 @@ priv_add_route(struct interface_info *ifi, struct imsg_add_route *imsg)
 }
 
 /*
- * Delete all existing inet addresses on interface.
+ * delete_addresses deletes all existing inet addresses on the specified
+ * interface.
  */
 void
 delete_addresses(struct interface_info *ifi)
@@ -534,8 +746,21 @@ priv_cleanup(struct interface_info *ifi, struct imsg_hup *imsg)
 }
 
 /*
- * priv_write_resolv_conf writes out a new resolv.conf.
+ * [priv_]write_resolv_conf write out a new resolv.conf.
  */
+void
+write_resolv_conf(u_int8_t *contents, size_t sz)
+{
+	int rslt;
+
+	rslt = imsg_compose(unpriv_ibuf, IMSG_WRITE_RESOLV_CONF,
+	    0, 0, -1, contents, sz);
+	if (rslt == -1)
+		log_warn("write_resolv_conf: imsg_compose");
+
+	flush_unpriv_ibuf("write_resolv_conf");
+}
+
 void
 priv_write_resolv_conf(struct interface_info *ifi, struct imsg *imsg)
 {
@@ -574,6 +799,10 @@ priv_write_resolv_conf(struct interface_info *ifi, struct imsg *imsg)
 	close(fd);
 }
 
+/*
+ * resolve_conf_priority decides if the interface is the best one to
+ * suppy the contents of the resolv.conf file.
+ */
 int
 resolv_conf_priority(struct interface_info *ifi)
 {
@@ -668,55 +897,103 @@ done:
 	return (rslt);
 }
 
-int
-create_route_label(struct sockaddr_rtlabel *label)
+/*
+ * resolv_conf_contents creates a string that are the resolv.conf contents
+ * that should be used when the interface is determined to be the one to
+ * create /etc/resolv.conf
+ */
+char *
+resolv_conf_contents(struct interface_info *ifi,
+    struct option_data *domainname, struct option_data *nameservers,
+    struct option_data *domainsearch)
 {
-	int len;
+	char *dn, *ns, *nss[MAXNS], *contents, *courtesy, *p, *buf;
+	size_t len;
+	int i, rslt;
 
-	memset(label, 0, sizeof(*label));
+	memset(nss, 0, sizeof(nss));
 
-	label->sr_len = sizeof(label);
-	label->sr_family = AF_UNSPEC;
+	if (domainsearch->len) {
+		buf = pretty_print_domain_search(domainsearch->data,
+		    domainsearch->len);
+		if (buf == NULL)
+			dn = strdup("");
+		else {
+			rslt = asprintf(&dn, "search %s\n", buf);
+			if (rslt == -1)
+				dn = NULL;
+		}
+	} else if (domainname->len) {
+		rslt = asprintf(&dn, "search %s\n",
+		    pretty_print_option(DHO_DOMAIN_NAME, domainname, 0));
+		if (rslt == -1)
+			dn = NULL;
+	} else
+		dn = strdup("");
+	if (dn == NULL)
+		fatalx("no memory for domainname");
 
-	len = snprintf(label->sr_label, sizeof(label->sr_label), "DHCLIENT %d",
-	    (int)getpid());
-
-	if (len == -1 || (unsigned int)len >= sizeof(label->sr_label)) {
-		log_warn("could not create route label");
-		return (1);
+	if (nameservers->len) {
+		ns = pretty_print_option(DHO_DOMAIN_NAME_SERVERS, nameservers,
+		    0);
+		for (i = 0; i < MAXNS; i++) {
+			p = strsep(&ns, " ");
+			if (p == NULL)
+				break;
+			if (*p == '\0')
+				continue;
+			rslt = asprintf(&nss[i], "nameserver %s\n", p);
+			if (rslt == -1)
+				fatalx("no memory for nameserver");
+		}
 	}
 
-	return (0);
-}
+	len = strlen(dn);
+	for (i = 0; i < MAXNS; i++)
+		if (nss[i])
+			len += strlen(nss[i]);
 
-int
-check_route_label(struct sockaddr_rtlabel *label)
-{
-	pid_t pid;
+	if (len > 0 && config->resolv_tail)
+		len += strlen(config->resolv_tail);
 
-	if (!label)
-		return (ROUTE_LABEL_NONE);
-
-	if (strncmp("DHCLIENT ", label->sr_label, 9) != 0)
-		return (ROUTE_LABEL_NOT_DHCLIENT);
-
-	pid = (pid_t)strtonum(label->sr_label + 9, 1, INT_MAX, NULL);
-	if (pid <= 0)
-		return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
-
-	if (pid == getpid())
-		return (ROUTE_LABEL_DHCLIENT_OURS);
-
-	if (kill(pid, 0) == -1) {
-		if (errno == ESRCH)
-			return (ROUTE_LABEL_DHCLIENT_DEAD);
-		else
-			return (ROUTE_LABEL_DHCLIENT_UNKNOWN);
+	if (len == 0) {
+		free(dn);
+		return (NULL);
 	}
 
-	return (ROUTE_LABEL_DHCLIENT_LIVE);
+	rslt = asprintf(&courtesy, "# Generated by %s dhclient\n", ifi->name);
+	if (rslt == -1)
+		fatalx("no memory for courtesy line");
+	len += strlen(courtesy);
+
+	len++; /* Need room for terminating NUL. */
+	contents = calloc(1, len);
+	if (contents == NULL)
+		fatalx("no memory for resolv.conf contents");
+
+	strlcat(contents, courtesy, len);
+	free(courtesy);
+
+	strlcat(contents, dn, len);
+	free(dn);
+
+	for (i = 0; i < MAXNS; i++) {
+		if (nss[i]) {
+			strlcat(contents, nss[i], len);
+			free(nss[i]);
+		}
+	}
+
+	if (config->resolv_tail)
+		strlcat(contents, config->resolv_tail, len);
+
+	return (contents);
 }
 
+/*
+ * populate_rti_info populates the rti_info with pointers to the
+ * sockaddr's contained in a rtm message.
+ */
 void
 populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 {
@@ -735,24 +1012,10 @@ populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 	}
 }
 
-void
-delete_route(struct interface_info *ifi, int s, struct rt_msghdr *rtm)
-{
-	static int seqno;
-	ssize_t rlen;
-
-	rtm->rtm_type = RTM_DELETE;
-	rtm->rtm_tableid = ifi->rdomain;
-	rtm->rtm_seq = seqno++;
-
-	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
-	if (rlen == -1) {
-		if (errno != ESRCH)
-			fatal("RTM_DELETE write");
-	} else if (rlen < (int)rtm->rtm_msglen)
-		fatalx("short RTM_DELETE write (%zd)\n", rlen);
-}
-
+/*
+ * flush_unpriv_ibuf makes sure queued messages are delivered to the
+ * imsg socket.
+ */
 void
 flush_unpriv_ibuf(const char *who)
 {
