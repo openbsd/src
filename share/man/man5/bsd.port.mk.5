@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.456 2017/03/01 10:41:40 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.457 2017/04/11 20:40:33 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 1 2017 $
+.Dd $Mdocdate: April 11 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1239,7 +1239,7 @@ preferring various gnu programs, unless
 explicitly ask for them.
 Read-only, available for debugging purposes.
 .It Ev CLANG_ARCHS, GCC3_ARCHS , GCC4_ARCHS
-List of architectures using Clang 3.9.1, GCC 3.3.6 or GCC 4.2.1.
+List of architectures using Clang, GCC 3.3.6 or GCC 4.2.1 as the base compiler.
 Read-only.
 Use with
 .Ev NOT_FOR_ARCHS
@@ -1747,6 +1747,11 @@ Controls the behavior of
 related targets, see
 .Cm print-package-args
 for details.
+.It Ev LIBCXX
+List of standard C++ libraries for the base compiler.
+Read-only.
+Use in
+.Ev WANTLIB .
 .It Ev LIBTOOL
 Location of the libtool binary.
 Default:
