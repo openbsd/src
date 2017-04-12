@@ -1,4 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2017/01/18 11:56:10 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2017/04/12 14:46:31 bluhm Exp $
+
+# This regress test uses a disk template to create 15 partitions on
+# a vnd device.  All are initialized with a ffs file system.  Then
+# they are mounted nestedly in /mnt, see disktemplate for the tree
+# layout.  The unmount-nested test uses umount -f to unmount /mnt,
+# without -f it does not work.  It is checked that the kernel does
+# the unmount recursively.  There must be no dangling mount points.
+# The whole tests have to be run as root.
 
 CLEANFILES=	diskimage stamp-*
 
