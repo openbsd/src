@@ -1,4 +1,10 @@
-# $OpenBSD $
+# $OpenBSD: Makefile,v 1.3 2017/04/12 11:55:41 bluhm Exp $
+
+# This table lists pledge(2), socket(2), getsockopt(2), and setsockopt(2)
+# calls with their expected outcome.  The constants are compiled into
+# the sockopt.c program using the C preprocessor.  For each line the
+# program is built and run.  The test checks the ktrace output and
+# core file.
 
 #	promises	domain		type		protocol	call	level		optname			optval	errno		abort
 TESTS =	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	get	SOL_SOCKET	SO_ERROR		0	0		0	\
