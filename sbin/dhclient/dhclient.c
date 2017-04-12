@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.414 2017/04/11 13:59:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.415 2017/04/12 14:08:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -260,13 +260,13 @@ routehandler(struct interface_info *ifi)
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
 			if (rtm->rtm_seq == (int32_t)client->xid) {
 				client->flags |= IN_CHARGE;
-				goto done;
 			} else if ((client->flags & IN_CHARGE) != 0) {
 				rslt = asprintf(&errmsg, "yielding "
 				    "responsibility for %s",
 				    ifi->name);
 				goto die;
 			}
+			goto done;
 		}
 		break;
 	case RTM_NEWADDR:
