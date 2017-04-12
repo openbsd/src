@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.26 2017/03/25 22:24:01 deraadt Exp $ */
+/* $OpenBSD: vmm.c,v 1.27 2017/04/12 05:46:59 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4353,7 +4353,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		} else {
 			/* Unsupported subleaf */
 			DPRINTF("%s: function 0x07 (SEFF) unsupported subleaf "
-			    "0x%llx not supported\n", __func__, *ecx);
+			    "0x%x not supported\n", __func__, *ecx);
 			*eax = 0;
 			*ebx = 0;
 			*ecx = 0;
