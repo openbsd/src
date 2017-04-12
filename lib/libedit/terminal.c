@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.17 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.18 2017/04/12 18:24:37 tb Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -272,14 +272,12 @@ terminal_init(EditLine *el)
 	if (el->el_terminal.t_fkey == NULL)
 		goto fail3;
 	el->el_terminal.t_loc = 0;
-	el->el_terminal.t_str = reallocarray(NULL, T_str, sizeof(char *));
+	el->el_terminal.t_str = calloc(T_str, sizeof(char *));
 	if (el->el_terminal.t_str == NULL)
 		goto fail4;
-	(void) memset(el->el_terminal.t_str, 0, T_str * sizeof(char *));
-	el->el_terminal.t_val = reallocarray(NULL, T_val, sizeof(int));
+	el->el_terminal.t_val = calloc(T_val, sizeof(int));
 	if (el->el_terminal.t_val == NULL)
 		goto fail5;
-	(void) memset(el->el_terminal.t_val, 0, T_val * sizeof(int));
 	(void) terminal_set(el, NULL);
 	terminal_init_arrow(el);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.27 2016/05/22 23:09:56 schwarze Exp $	*/
+/*	$OpenBSD: chared.c,v 1.28 2017/04/12 18:24:37 tb Exp $	*/
 /*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -390,25 +390,20 @@ cv__endword(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 protected int
 ch_init(EditLine *el)
 {
-	el->el_line.buffer = reallocarray(NULL, EL_BUFSIZ,
-	    sizeof(*el->el_line.buffer));
+	el->el_line.buffer = calloc(EL_BUFSIZ, sizeof(*el->el_line.buffer));
 	if (el->el_line.buffer == NULL)
 		return -1;
-
-	(void) memset(el->el_line.buffer, 0, EL_BUFSIZ *
-	    sizeof(*el->el_line.buffer));
 	el->el_line.cursor = el->el_line.buffer;
 	el->el_line.lastchar = el->el_line.buffer;
 	el->el_line.limit = &el->el_line.buffer[EL_BUFSIZ - EL_LEAVE];
 
-	el->el_chared.c_undo.buf = reallocarray(NULL, EL_BUFSIZ,
+	el->el_chared.c_undo.buf = calloc(EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_undo.buf));
 	if (el->el_chared.c_undo.buf == NULL)
 		return -1;
-	(void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ *
-	    sizeof(*el->el_chared.c_undo.buf));
 	el->el_chared.c_undo.len = -1;
 	el->el_chared.c_undo.cursor = 0;
+
 	el->el_chared.c_redo.buf = reallocarray(NULL, EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_redo.buf));
 	if (el->el_chared.c_redo.buf == NULL)
@@ -420,12 +415,10 @@ ch_init(EditLine *el)
 	el->el_chared.c_vcmd.action = NOP;
 	el->el_chared.c_vcmd.pos = el->el_line.buffer;
 
-	el->el_chared.c_kill.buf = reallocarray(NULL, EL_BUFSIZ,
+	el->el_chared.c_kill.buf = calloc(EL_BUFSIZ,
 	    sizeof(*el->el_chared.c_kill.buf));
 	if (el->el_chared.c_kill.buf == NULL)
 		return -1;
-	(void) memset(el->el_chared.c_kill.buf, 0, EL_BUFSIZ *
-	    sizeof(*el->el_chared.c_kill.buf));
 	el->el_chared.c_kill.mark = el->el_line.buffer;
 	el->el_chared.c_kill.last = el->el_chared.c_kill.buf;
 	el->el_chared.c_resizefun = NULL;
@@ -494,13 +487,10 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate line buffer.
 	 */
-	newbuffer = reallocarray(el->el_line.buffer, newsz,
+	newbuffer = recallocarray(el->el_line.buffer, sz, newsz,
 	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
-
-	/* zero the newly added memory, leave old data in */
-	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
 
 	oldbuf = el->el_line.buffer;
 
@@ -513,13 +503,10 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate kill buffer.
 	 */
-	newbuffer = reallocarray(el->el_chared.c_kill.buf, newsz,
+	newbuffer = recallocarray(el->el_chared.c_kill.buf, sz, newsz,
 	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
-
-	/* zero the newly added memory, leave old data in */
-	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
 
 	oldkbuf = el->el_chared.c_kill.buf;
 
@@ -532,13 +519,10 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 	/*
 	 * Reallocate undo buffer.
 	 */
-	newbuffer = reallocarray(el->el_chared.c_undo.buf,
-	    newsz, sizeof(*newbuffer));
+	newbuffer = recallocarray(el->el_chared.c_undo.buf, sz, newsz,
+	    sizeof(*newbuffer));
 	if (!newbuffer)
 		return 0;
-
-	/* zero the newly added memory, leave old data in */
-	(void) memset(&newbuffer[sz], 0, (newsz - sz) * sizeof(*newbuffer));
 	el->el_chared.c_undo.buf = newbuffer;
 
 	newbuffer = reallocarray(el->el_chared.c_redo.buf,

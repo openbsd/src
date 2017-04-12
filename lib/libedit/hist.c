@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.17 2016/04/11 20:43:33 schwarze Exp $	*/
+/*	$OpenBSD: hist.c,v 1.18 2017/04/12 18:24:37 tb Exp $	*/
 /*	$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
@@ -193,11 +193,10 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 {
 	wchar_t *newbuf;
 
-	newbuf = reallocarray(el->el_history.buf, newsz, sizeof(*newbuf));
+	newbuf = recallocarray(el->el_history.buf, oldsz, newsz,
+	    sizeof(*newbuf));
 	if (!newbuf)
 		return 0;
-
-	(void) memset(&newbuf[oldsz], '\0', (newsz - oldsz) * sizeof(*newbuf));
 
 	el->el_history.last = newbuf +
 				(el->el_history.last - el->el_history.buf);
