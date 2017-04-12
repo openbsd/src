@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.31 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.32 2017/04/12 19:12:01 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -53,6 +53,8 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 #include "log.h"
+
+int	parse_cidr(FILE *, unsigned char *, unsigned char *);
 
 /*
  * conf-file :== parameters declarations EOF

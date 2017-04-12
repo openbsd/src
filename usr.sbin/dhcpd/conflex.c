@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.17 2017/02/13 22:33:39 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.18 2017/04/12 19:12:01 krw Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -82,6 +82,7 @@ static void skip_to_eol(FILE *);
 static int read_string(FILE *);
 static int read_num_or_name(int, FILE *);
 static int intern(char *, int);
+static int kw_cmp(const void *, const void *);
 
 void
 new_parse(char *name)
@@ -343,7 +344,7 @@ static const struct keywords {
 	{ "vendor-class",		TOK_VENDOR_CLASS }
 };
 
-int
+static int
 kw_cmp(const void *k, const void *e)
 {
 	return (strcasecmp(k, ((const struct keywords *)e)->k_name));
