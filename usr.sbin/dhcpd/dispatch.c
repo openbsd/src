@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.42 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.43 2017/04/12 19:17:30 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -156,13 +156,13 @@ discover_interfaces(int *rdomain)
 		/* If we have the capability, extract link information
 		   and record it in a linked list. */
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			struct sockaddr_dl *foo =
+			struct sockaddr_dl *sdl =
 			    ((struct sockaddr_dl *)(ifa->ifa_addr));
-			tmp->index = foo->sdl_index;
-			tmp->hw_address.hlen = foo->sdl_alen;
+			tmp->index = sdl->sdl_index;
+			tmp->hw_address.hlen = sdl->sdl_alen;
 			tmp->hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy(tmp->hw_address.haddr,
-			    LLADDR(foo), foo->sdl_alen);
+			    LLADDR(sdl), sdl->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
 
