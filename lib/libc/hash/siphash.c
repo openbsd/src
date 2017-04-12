@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.5 2015/09/11 09:18:27 guenther Exp $ */
+/*	$OpenBSD: siphash.c,v 1.6 2017/04/12 17:41:49 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -113,9 +113,8 @@ SipHash_Final(void *dst, SIPHASH_CTX *ctx, int rc, int rf)
 {
 	uint64_t r;
 
-	r = SipHash_End(ctx, rc, rf);
-
-	*(uint64_t *)dst = htole64(r);
+	r = htole64(SipHash_End(ctx, rc, rf));
+	memcpy(dst, &r, sizeof r);
 }
 DEF_WEAK(SipHash_Final);
 
