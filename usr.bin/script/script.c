@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.32 2015/10/20 14:55:21 semarie Exp $	*/
+/*	$OpenBSD: script.c,v 1.33 2017/04/12 14:49:05 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ volatile sig_atomic_t sigdeadstatus;
 volatile sig_atomic_t flush;
 
 struct	termios tt;
+int		istty;
 
 __dead void done(int);
 void dooutput(void);
@@ -99,7 +100,6 @@ main(int argc, char *argv[])
 {
 	extern char *__progname;
 	struct sigaction sa;
-	struct termios rtt;
 	struct winsize win;
 	char ibuf[BUFSIZ];
 	ssize_t cc, off;
@@ -126,16 +126,22 @@ main(int argc, char *argv[])
 	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
 		err(1, "%s", fname);
 
-	(void)tcgetattr(STDIN_FILENO, &tt);
-	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
+	if (isatty(0)) {
+		if (tcgetattr(STDIN_FILENO, &tt) == 0 &&
+		    ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == 0)
+			istty = 1;
+	}
 	if (openpty(&master, &slave, NULL, &tt, &win) == -1)
 		err(1, "openpty");
 
 	(void)printf("Script started, output file is %s\n", fname);
-	rtt = tt;
-	cfmakeraw(&rtt);
-	rtt.c_lflag &= ~ECHO;
-	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+	if (istty) {
+		struct termios rtt = tt;
+
+		cfmakeraw(&rtt);
+		rtt.c_lflag &= ~ECHO;
+		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
+	}
 
 	bzero(&sa, sizeof sa);
 	sigemptyset(&sa.sa_mask);
@@ -331,7 +337,8 @@ done(int eval)
 		(void)fclose(fscript);
 		(void)close(master);
 	} else {
-		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
+		if (istty)
+			(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
 		(void)printf("Script done, output file is %s\n", fname);
 	}
 	exit(eval);
