@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.90 2017/04/11 13:59:27 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.91 2017/04/12 12:22:25 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -49,6 +49,26 @@
 
 #define ROUNDUP(a) \
     ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
+/*
+ * flush_unpriv_ibuf makes sure queued messages are delivered to the
+ * imsg socket.
+ */
+void
+flush_unpriv_ibuf(const char *who)
+{
+	while (unpriv_ibuf->w.queued) {
+		if (msgbuf_write(&unpriv_ibuf->w) <= 0) {
+			if (errno == EAGAIN)
+				break;
+			if (quit == 0)
+				quit = INTERNALSIG;
+			if (errno != EPIPE && errno != 0)
+				log_warn("%s: msgbuf_write", who);
+			break;
+		}
+	}
+}
 
 struct in_addr active_addr;
 struct in_addr deleting;
@@ -1009,25 +1029,5 @@ populate_rti_info(struct sockaddr **rti_info, struct rt_msghdr *rtm)
 			    ROUNDUP(sa->sa_len));
 		} else
 			rti_info[i] = NULL;
-	}
-}
-
-/*
- * flush_unpriv_ibuf makes sure queued messages are delivered to the
- * imsg socket.
- */
-void
-flush_unpriv_ibuf(const char *who)
-{
-	while (unpriv_ibuf->w.queued) {
-		if (msgbuf_write(&unpriv_ibuf->w) <= 0) {
-			if (errno == EAGAIN)
-				break;
-			if (quit == 0)
-				quit = INTERNALSIG;
-			if (errno != EPIPE && errno != 0)
-				log_warn("%s: msgbuf_write", who);
-			break;
-		}
 	}
 }
