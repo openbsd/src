@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2017/02/13 19:13:14 krw Exp $
+# $OpenBSD: Makefile,v 1.7 2017/04/12 19:19:11 krw Exp $
 
 .include <bsd.own.mk>
 
@@ -13,3 +13,6 @@ LDADD+=-lcrypto
 CFLAGS+=-Wall
 
 .include <bsd.prog.mk>
+CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=-Wmissing-declarations
+CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
