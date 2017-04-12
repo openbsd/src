@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2015/11/19 19:43:40 tedu Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2017/04/12 14:53:27 millert Exp $	*/
 
 /* parse.y - parser for flex input */
 
@@ -102,9 +102,6 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
 		if ( !func(c) ) \
 			ccladd( currccl, c ); \
 	}while(0)
-
-/* While POSIX defines isblank(), it's not ANSI C. */
-#define IS_BLANK(c) ((c) == ' ' || (c) == '\t')
 
 /* On some over-ambitious machines, such as DEC Alpha's, the default
  * token type is "long" instead of "int"; this leads to problems with
@@ -884,7 +881,7 @@ ccl		:  ccl CHAR '-' CHAR
 ccl_expr:	   
            CCE_ALNUM	{ CCL_EXPR(isalnum); }
 		|  CCE_ALPHA	{ CCL_EXPR(isalpha); }
-		|  CCE_BLANK	{ CCL_EXPR(IS_BLANK); }
+		|  CCE_BLANK	{ CCL_EXPR(isblank); }
 		|  CCE_CNTRL	{ CCL_EXPR(iscntrl); }
 		|  CCE_DIGIT	{ CCL_EXPR(isdigit); }
 		|  CCE_GRAPH	{ CCL_EXPR(isgraph); }
@@ -905,7 +902,7 @@ ccl_expr:
 
         |  CCE_NEG_ALNUM	{ CCL_NEG_EXPR(isalnum); }
 		|  CCE_NEG_ALPHA	{ CCL_NEG_EXPR(isalpha); }
-		|  CCE_NEG_BLANK	{ CCL_NEG_EXPR(IS_BLANK); }
+		|  CCE_NEG_BLANK	{ CCL_NEG_EXPR(isblank); }
 		|  CCE_NEG_CNTRL	{ CCL_NEG_EXPR(iscntrl); }
 		|  CCE_NEG_DIGIT	{ CCL_NEG_EXPR(isdigit); }
 		|  CCE_NEG_GRAPH	{ CCL_NEG_EXPR(isgraph); }
