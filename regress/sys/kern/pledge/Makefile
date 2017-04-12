@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2017/03/28 16:16:30 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2017/04/12 13:14:08 bluhm Exp $
 
-#SUBDIR +=	sigabrt
+SUBDIR +=	sigabrt
 SUBDIR +=	generic
 SUBDIR +=	ioctl
 SUBDIR +=	sendrecvfd
