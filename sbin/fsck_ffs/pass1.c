@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.44 2017/04/10 08:19:12 fcambus Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.45 2017/04/12 15:23:08 millert Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -116,9 +116,14 @@ pass1(void)
 		 */
 		if (preen && usedsoftdep) {
 			cp = &cg_inosused(&cgrp)[(inosused - 1) / CHAR_BIT];
-			for ( ; inosused > 0; inosused -= CHAR_BIT, cp--) {
-				if (*cp == 0)
+			for ( ; inosused != 0; cp--) {
+				if (*cp == 0) {
+					if (inosused > CHAR_BIT)
+						inosused -= CHAR_BIT;
+					else
+						inosused = 0;
 					continue;
+				}
 				for (i = 1 << (CHAR_BIT - 1); i > 0; i >>= 1) {
 					if (*cp & i)
 						break;
