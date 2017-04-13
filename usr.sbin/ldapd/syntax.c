@@ -1,4 +1,4 @@
-/*	$OpenBSD: syntax.c,v 1.3 2015/10/11 03:23:28 guenther Exp $ */
+/*	$OpenBSD: syntax.c,v 1.4 2017/04/13 14:48:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -266,20 +266,22 @@ syntax_is_time(struct schema *schema, char *value, size_t len, int gen)
 	int	 n;
 	char	*p = value;
 
-#define CHECK_RANGE(min, max)	\
+#define CHECK_RANGE(min, max) \
+	do {						\
 		if (!isdigit((unsigned char)p[0]) ||	\
 		    !isdigit((unsigned char)p[1]))	\
 			return 0;			\
 		n = (p[0] - '0') * 10 + (p[1] - '0');	\
 		if (n < min || n > max)			\
 			return 0;			\
-		p += 2;
+		p += 2;					\
+	} while (0)
 
 	if (gen)
-		CHECK_RANGE(0, 99)		/* century */
-	CHECK_RANGE(0, 99)			/* year */
-	CHECK_RANGE(1, 12)			/* month */
-	CHECK_RANGE(1, 31)			/* day */
+		CHECK_RANGE(0, 99);		/* century */
+	CHECK_RANGE(0, 99);			/* year */
+	CHECK_RANGE(1, 12);			/* month */
+	CHECK_RANGE(1, 31);			/* day */
 	/* FIXME: should check number of days in month */
 	CHECK_RANGE(0, 23);			/* hour */
 
