@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.174 2016/09/04 17:22:40 jsing Exp $
+;	$OpenBSD: syscalls.master,v 1.175 2017/04/13 04:06:46 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -126,7 +126,7 @@
 			    struct sigaction *osa); }
 47	STD NOLOCK	{ gid_t sys_getgid(void); }
 48	STD NOLOCK	{ int sys_sigprocmask(int how, sigset_t mask); }
-49	STD		{ int sys_getlogin59(char *namebuf, u_int namelen); }
+49	OBSOL		ogetlogin
 50	STD		{ int sys_setlogin(const char *namebuf); }
 #ifdef ACCOUNTING
 51	STD		{ int sys_acct(const char *path); }

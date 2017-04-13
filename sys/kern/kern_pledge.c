@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.202 2017/04/11 15:55:41 bluhm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.203 2017/04/13 04:06:46 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -121,7 +121,6 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_getegid] = PLEDGE_STDIO,
 	[SYS_getresgid] = PLEDGE_STDIO,
 	[SYS_getgroups] = PLEDGE_STDIO,
-	[SYS_getlogin59] = PLEDGE_STDIO,
 	[SYS_getlogin_r] = PLEDGE_STDIO,
 	[SYS_getpgrp] = PLEDGE_STDIO,
 	[SYS_getpgid] = PLEDGE_STDIO,

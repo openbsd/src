@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.68 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.69 2017/04/13 04:06:46 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -998,24 +998,6 @@ crfromxucred(struct ucred *cr, const struct xucred *xcr)
 	memcpy(cr->cr_groups, xcr->cr_groups,
 	    sizeof(cr->cr_groups[0]) * xcr->cr_ngroups);
 	return (0);
-}
-
-/*
- * Get login name, if available.
- */
-int
-sys_getlogin59(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_getlogin59_args /* {
-		syscallarg(char *) namebuf;
-		syscallarg(u_int) namelen;
-	} */ *uap = v;
-	struct session *s = p->p_p->ps_pgrp->pg_session;
-
-	if (SCARG(uap, namelen) > sizeof(s->s_login))
-		SCARG(uap, namelen) = sizeof(s->s_login);
-	return (copyout((caddr_t)s->s_login,
-	    (caddr_t)SCARG(uap, namebuf), SCARG(uap, namelen)));
 }
 
 /*
