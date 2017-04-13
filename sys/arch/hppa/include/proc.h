@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.5 2011/11/08 15:39:50 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.6 2017/04/13 03:52:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,6 @@ struct mdproc {
 	vaddr_t md_bpva;
 	u_int	md_bpsave[2];
 };
-
-#define __HAVE_MD_TCB
 
 /* md_flags */
 

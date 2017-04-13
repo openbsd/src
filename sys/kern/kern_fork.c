@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.195 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.196 2017/04/13 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -64,10 +64,7 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
-
-#ifdef __HAVE_MD_TCB
-# include <machine/tcb.h>
-#endif
+#include <machine/tcb.h>
 
 int	nprocesses = 1;		/* process 0 */
 int	nthreads = 1;		/* proc 0 */

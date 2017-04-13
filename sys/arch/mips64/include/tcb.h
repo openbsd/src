@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.1 2011/10/27 04:01:17 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.2 2017/04/13 03:52:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -21,7 +21,9 @@
 
 #ifdef _KERNEL
 
-#error "not yet"
+/* Not a real register; just saved in struct mdproc */
+#define TCB_SET(p, addr)	((p)->p_md.md_tcb = (addr))
+#define TCB_GET(p)		((p)->p_md.md_tcb)
 
 #else /* _KERNEL */
 

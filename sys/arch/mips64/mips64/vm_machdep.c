@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2017/04/13 03:52:25 guenther Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -117,8 +117,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 */
 	if (stack != NULL)
 		p2->p_md.md_regs->sp = (u_int64_t)stack;
-	if (tcb != NULL)
-		TCB_SET(p2, tcb);
+	p2->p_md.md_tcb = tcb != NULL ? tcb : p1->p_md.md_tcb;
 
 	/*
 	 * Copy the process control block to the new proc and

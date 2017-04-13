@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.10 2016/08/16 13:03:58 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.11 2017/04/13 03:52:25 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@ struct mdproc {
 	volatile int md_astpending;	/* AST pending for this process */
 	int	md_flags;		/* machine-dependent flags */
 	vaddr_t	md_uarea;		/* allocated uarea virtual addr */
+	void	*md_tcb;		/* user-space thread-control-block */
 
 	/* ptrace fields */
 	vaddr_t	md_ss_addr;		/* single step address */

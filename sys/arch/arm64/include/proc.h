@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 2017/04/13 03:52:25 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -41,7 +41,5 @@
 struct mdproc {
 	volatile int md_astpending;
 };
-
-#define __HAVE_MD_TCB
 
 #endif /* _MACHINE_PROC_H_ */

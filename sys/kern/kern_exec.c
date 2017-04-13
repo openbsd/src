@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.187 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.188 2017/04/13 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -61,10 +61,7 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef __HAVE_MD_TCB
-# include <machine/tcb.h>
-#endif
+#include <machine/tcb.h>
 
 const struct kmem_va_mode kv_exec = {
 	.kv_wait = 1,

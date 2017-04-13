@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.208 2017/01/24 00:58:55 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.209 2017/04/13 03:52:25 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -68,10 +68,7 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#ifdef  __HAVE_MD_TCB
-# include <machine/tcb.h>
-#endif
+#include <machine/tcb.h>
 
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
