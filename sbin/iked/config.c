@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.47 2017/03/27 10:43:53 mikeb Exp $	*/
+/*	$OpenBSD: config.c,v 1.48 2017/04/13 07:04:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -97,6 +97,7 @@ void
 config_free_sa(struct iked *env, struct iked_sa *sa)
 {
 	timer_del(env, &sa->sa_timer);
+	timer_del(env, &sa->sa_keepalive);
 	timer_del(env, &sa->sa_rekey);
 
 	config_free_proposals(&sa->sa_proposals, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.152 2017/03/30 15:48:30 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.153 2017/04/13 07:04:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,7 @@ void	 ikev2_ike_sa_rekey_timeout(struct iked *, void *);
 void	 ikev2_ike_sa_rekey_schedule(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
+void	 ikev2_ike_sa_keepalive(struct iked *, void *);
 
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_sa *, struct iked_message *);
@@ -1200,6 +1201,10 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		timer_del(env, &sa->sa_timer);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+		timer_set(env, &sa->sa_keepalive, ikev2_ike_sa_keepalive, sa);
+		if (sa->sa_usekeepalive)
+			timer_add(env, &sa->sa_keepalive,
+			    IKED_IKE_SA_KEEPALIVE_TIMEOUT);
 		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
 		if (sa->sa_policy->pol_rekey)
 			ikev2_ike_sa_rekey_schedule(env, sa);
@@ -2473,6 +2478,10 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		timer_del(env, &sa->sa_timer);
 		timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 		timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+		timer_set(env, &sa->sa_keepalive, ikev2_ike_sa_keepalive, sa);
+		if (sa->sa_usekeepalive)
+			timer_add(env, &sa->sa_keepalive,
+			    IKED_IKE_SA_KEEPALIVE_TIMEOUT);
 		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
 		if (sa->sa_policy->pol_rekey)
 			ikev2_ike_sa_rekey_schedule(env, sa);
@@ -3142,6 +3151,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	nsa->sa_fd = sa->sa_fd;
 	nsa->sa_natt = sa->sa_natt;
 	nsa->sa_udpencap = sa->sa_udpencap;
+	nsa->sa_usekeepalive = sa->sa_usekeepalive;
 
 	/* Transfer old addresses */
 	memcpy(&nsa->sa_local, &sa->sa_local, sizeof(nsa->sa_local));
@@ -3226,6 +3236,10 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	timer_set(env, &nsa->sa_timer, ikev2_ike_sa_alive, nsa);
 	timer_add(env, &nsa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	timer_set(env, &nsa->sa_keepalive, ikev2_ike_sa_keepalive, nsa);
+	if (nsa->sa_usekeepalive)
+		timer_add(env, &nsa->sa_keepalive,
+		    IKED_IKE_SA_KEEPALIVE_TIMEOUT);
 	timer_set(env, &nsa->sa_rekey, ikev2_ike_sa_rekey, nsa);
 	if (nsa->sa_policy->pol_rekey)
 		ikev2_ike_sa_rekey_schedule(env, nsa);
@@ -3234,6 +3248,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	/* unregister DPD keep alive timer & rekey first */
 	if (sa->sa_state == IKEV2_STATE_ESTABLISHED) {
 		timer_del(env, &sa->sa_rekey);
+		timer_del(env, &sa->sa_keepalive);
 		timer_del(env, &sa->sa_timer);
 	}
 
@@ -3624,6 +3639,26 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 
 	/* re-register */
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+}
+
+void
+ikev2_ike_sa_keepalive(struct iked *env, void *arg)
+{
+	struct iked_sa			*sa = arg;
+	uint8_t				 marker = 0xff;
+
+	if (sendtofrom(sa->sa_fd, &marker, sizeof(marker), 0,
+	    (struct sockaddr *)&sa->sa_peer.addr, sa->sa_peer.addr.ss_len,
+	    (struct sockaddr *)&sa->sa_local.addr, sa->sa_local.addr.ss_len)
+	    == -1)
+		log_warn("%s: sendtofrom: peer %s local %s", __func__,
+		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
+	else
+		log_debug("%s: peer %s local %s", __func__,
+		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
+	timer_add(env, &sa->sa_keepalive, IKED_IKE_SA_KEEPALIVE_TIMEOUT);
 }
 
 int

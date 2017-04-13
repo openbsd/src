@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.61 2017/03/27 17:17:49 mikeb Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.62 2017/04/13 07:04:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1148,6 +1148,9 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			 */
 			if (msg->msg_sa != NULL)
 				msg->msg_sa->sa_udpencap = 1;
+			/* Send keepalive, since we are behind a NAT-gw */
+			if (type == IKEV2_N_NAT_DETECTION_DESTINATION_IP)
+				msg->msg_sa->sa_usekeepalive = 1;
 		}
 		print_hex(md, 0, sizeof(md));
 		break;

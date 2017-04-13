@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.113 2017/03/27 17:17:49 mikeb Exp $	*/
+/*	$OpenBSD: iked.h,v 1.114 2017/04/13 07:04:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -376,6 +376,7 @@ struct iked_sa {
 
 	int				 sa_natt;	/* for IKE messages */
 	int				 sa_udpencap;	/* for pfkey */
+	int				 sa_usekeepalive;/* NAT-T keepalive */
 
 	int				 sa_state;
 	unsigned int			 sa_stateflags;
@@ -445,6 +446,9 @@ struct iked_sa {
 #define IKED_IKE_SA_REKEY_TIMEOUT	 120		/* 2 minutes */
 #define IKED_IKE_SA_DELETE_TIMEOUT	 120		/* 2 minutes */
 #define IKED_IKE_SA_ALIVE_TIMEOUT	 60		/* 1 minute */
+
+	struct iked_timer		 sa_keepalive;	/* keepalive timer */
+#define IKED_IKE_SA_KEEPALIVE_TIMEOUT	 20
 
 	struct iked_timer		 sa_rekey;	/* rekey timeout */
 
