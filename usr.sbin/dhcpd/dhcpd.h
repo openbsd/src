@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.60 2017/02/16 00:24:43 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.61 2017/04/13 14:59:40 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -266,109 +266,10 @@ struct class {
 	struct group *group;
 };
 
-/* DHCP client lease structure... */
-struct client_lease {
-	struct client_lease *next;	/* Next lease in list. */
-	time_t expiry, renewal, rebind;	/* Lease timeouts. */
-	struct iaddr address;		/* Address being leased. */
-	char *server_name;		/* Name of boot server. */
-	char *filename;			/* File to boot. */
-	struct string_list *medium;	/* Network medium. */
-
-	unsigned int is_static : 1;	/* Lease is from config file. */
-	unsigned int is_bootp: 1;	/* Lease was aquired with BOOTP. */
-
-	struct option_data options[256];/* Options supplied with lease. */
-};
-
 /* privsep message. fixed length for easy parsing */
 struct pf_cmd {
 	struct in_addr ip;
 	u_int32_t type;
-};
-
-/* Possible states in which the client can be. */
-enum dhcp_state {
-	S_REBOOTING,
-	S_INIT,
-	S_SELECTING,
-	S_REQUESTING,
-	S_BOUND,
-	S_RENEWING,
-	S_REBINDING
-};
-
-/* Configuration information from the config file... */
-struct client_config {
-	struct option_data defaults[256]; /* Default values for options. */
-	enum {
-		ACTION_DEFAULT,		/* Use server value if present,
-					   otherwise default. */
-		ACTION_SUPERSEDE,	/* Always use default. */
-		ACTION_PREPEND,		/* Prepend default to server. */
-		ACTION_APPEND		/* Append default to server. */
-	} default_actions[256];
-
-	struct option_data send_options[256]; /* Send these to server. */
-	u_int8_t required_options[256]; /* Options server must supply. */
-	u_int8_t requested_options[256]; /* Options to request from server. */
-	int requested_option_count;	/* Number of requested options. */
-	time_t timeout;			/* Start to panic if we don't get a
-					   lease in this time period when
-					   SELECTING. */
-	time_t initial_interval;	/* All exponential backoff intervals
-					   start here. */
-	time_t retry_interval;		/* If the protocol failed to produce
-					   an address before the timeout,
-					   try the protocol again after this
-					   many seconds. */
-	time_t select_interval;		/* Wait this many seconds from the
-					   first DHCPDISCOVER before
-					   picking an offered lease. */
-	time_t reboot_timeout;		/* When in INIT-REBOOT, wait this
-					   long before giving up and going
-					   to INIT. */
-	time_t backoff_cutoff;		/* When doing exponential backoff,
-					   never back off to an interval
-					   longer than this amount. */
-	struct string_list *media;	/* Possible network media values. */
-	char *script_name;		/* Name of config script. */
-	enum { IGNORE, ACCEPT, PREFER } bootp_policy;
-					/* Ignore, accept or prefer BOOTP
-					   responses. */
-	struct string_list *medium;	/* Current network medium. */
-
-	struct iaddrlist *reject_list;	/* Servers to reject. */
-};
-
-/* Per-interface state used in the dhcp client... */
-struct client_state {
-	struct client_lease *active;		  /* Currently active lease. */
-	struct client_lease *new;			       /* New lease. */
-	struct client_lease *offered_leases;	    /* Leases offered to us. */
-	struct client_lease *leases;		/* Leases we currently hold. */
-	struct client_lease *alias;			     /* Alias lease. */
-
-	enum dhcp_state state;		/* Current state for this interface. */
-	struct iaddr destination;		    /* Where to send packet. */
-	u_int32_t xid;					  /* Transaction ID. */
-	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
-	time_t first_sending;			/* When was first copy sent? */
-	time_t interval;	      /* What's the current resend interval? */
-	struct string_list *medium;		   /* Last media type tried. */
-
-	struct dhcp_packet packet;		    /* Outgoing DHCP packet. */
-	int packet_length;	       /* Actual length of generated packet. */
-
-	struct iaddr requested_address;	    /* Address we would like to get. */
-
-	struct client_config *config;	    /* Information from config file. */
-
-	char **scriptEnv;  /* Client script env */
-	int scriptEnvsize; /* size of the env table */
-
-	struct string_list *env;	       /* Client script environment. */
-	int envc;			/* Number of entries in environment. */
 };
 
 /* Information about each network interface. */
@@ -390,8 +291,6 @@ struct interface_info {
 
 	struct ifreq *ifp;		/* Pointer to ifreq struct. */
 
-	/* Only used by DHCP client code. */
-	struct client_state *client;
 	int noifmedia;
 	int errors;
 	int dead;
