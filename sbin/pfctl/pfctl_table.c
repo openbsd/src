@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.74 2015/01/20 17:19:05 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.75 2017/04/13 07:30:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -496,7 +496,7 @@ print_astats(struct pfr_astats *as, int dns)
 		printf("\tWeight:             %d\n", as->pfras_a.pfra_weight);	
 	if (as->pfras_a.pfra_ifname[0])
 		printf("\tInterface:          %s\n", as->pfras_a.pfra_ifname);
- 	if (as->pfras_a.pfra_fback == PFR_FB_NOCOUNT)
+	if (as->pfras_a.pfra_fback == PFR_FB_NOCOUNT)
 		return;
 	for (dir = 0; dir < PFR_DIR_MAX; dir++)
 		for (op = 0; op < PFR_OP_ADDR_MAX; op++)
