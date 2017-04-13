@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.31 2017/04/04 12:56:24 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.32 2017/04/13 20:48:29 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1474,8 +1474,8 @@ pmap_init(void)
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, IPL_VM, 0,
 	    "pted", NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
-	pool_init(&pmap_vp_pool, sizeof(struct pmapvp2), PAGE_SIZE, IPL_VM, 0,
-	    "vp", NULL);
+	pool_init(&pmap_vp_pool, sizeof(struct pmapvp2), PAGE_SIZE, IPL_VM,
+	    PR_WAITOK, "vp", NULL);
 	/* pool_setlowat(&pmap_vp_pool, 20); */
 
 	pmap_initialized = 1;
