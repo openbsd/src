@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.4 2017/03/16 20:15:07 kettenis Exp $ */
+/* $OpenBSD: pte.h,v 1.5 2017/04/13 23:29:02 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -70,7 +70,6 @@
 	/* 0x2 also marks an invalid address */
 #define		L0_TABLE	0x3 /* A next-level table */
 
-
 /* Level 1 table, 1GiB per entry */
 #define		L1_SHIFT	30
 #define		L1_SIZE		(1 << L1_SHIFT)
@@ -82,15 +81,15 @@
 /* Level 2 table, 2MiB per entry */
 #define		L2_SHIFT	21
 #define		L2_SIZE		(1 << L2_SHIFT)
-//#define	L2_OFFSET	L2_SIZE - 1)
-//#define	L2_INVAL	L0_INVAL
+#define		L2_OFFSET	(L2_SIZE - 1)
+#define		L2_INVAL	L0_INVAL
 #define		L2_BLOCK	L0_BLOCK
-//#define	L2_TABLE	L0_TABLE
+#define		L2_TABLE	L0_TABLE
 
-// page mapping
-#define		L3_P		(3)
+/* page mapping */
+#define		L3_P		0x3
 
-#define		Ln_ENTRIES		(1 << 9)
+#define		Ln_ENTRIES	(1 << 9)
 #define		Ln_ADDR_MASK	(Ln_ENTRIES - 1)
 #define		Ln_TABLE_MASK	((1 << 12) - 1)
 
