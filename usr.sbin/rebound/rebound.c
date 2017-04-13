@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.81 2017/04/06 21:16:14 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.82 2017/04/13 15:32:15 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -848,7 +848,7 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 					logmsg(LOG_INFO, "received HUP, restarting");
 					hupped = 1;
 					if (childdead)
-						break;
+						goto doublebreak;
 					kill(child, SIGHUP);
 				} else if (kev.ident == SIGTERM) {
 					/* good bye */
@@ -862,7 +862,7 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 				logmsg(LOG_INFO, "observed child exit");
 				childdead = 1;
 				if (hupped)
-					break;
+					goto doublebreak;
 				memset(&ts, 0, sizeof(ts));
 				ts.tv_sec = 1;
 				timeout = &ts;
@@ -872,6 +872,7 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 				break;
 			}
 		}
+doublebreak:
 		wait(NULL);
 	}
 	return 1;
