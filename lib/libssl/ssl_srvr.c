@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.12 2017/04/14 15:19:39 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.13 2017/04/14 15:26:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1989,8 +1989,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
 	if (!X25519(shared_key, S3I(s)->tmp.x25519, CBS_data(&ecpoint)))
 		goto err;
 
-	explicit_bzero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
-	free(S3I(s)->tmp.x25519);
+	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
 
 	s->session->master_key_length =
@@ -2000,9 +1999,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, unsigned char *p, long n)
 	ret = 1;
 
  err:
-	if (shared_key != NULL)
-		explicit_bzero(shared_key, X25519_KEY_LENGTH);
-	free(shared_key);
+	freezero(shared_key, X25519_KEY_LENGTH);
 
 	return (ret);
 }
