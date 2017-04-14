@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.40 2017/01/06 14:22:30 kettenis Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.41 2017/04/14 07:22:02 kettenis Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 #define	__dead		__volatile
 #define	__pure		__const
 #endif
-#elif !defined(__STRICT_ANSI__)
+#else
 #define __dead		__attribute__((__noreturn__))
 #define __pure		__attribute__((__const__))
 #endif
