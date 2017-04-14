@@ -3072,7 +3072,11 @@ error  \n");
 	    {
 		FD_SET (stderr_pipe[0], &readfds);
 	    }
-	    if (protocol_pipe[0] >= 0)
+	    if (protocol_pipe[0] >= 0
+#ifdef SERVER_FLOWCONTROL
+	    && !have_flowcontrolled
+#endif
+	    )
 	    {
 		FD_SET (protocol_pipe[0], &readfds);
 	    }
