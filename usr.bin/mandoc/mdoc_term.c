@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.246 2017/04/14 18:23:29 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.247 2017/04/14 19:34:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1991,6 +1991,7 @@ static int
 termp_lk_pre(DECL_ARGS)
 {
 	const struct roff_node *link, *descr;
+	int display;
 
 	if (NULL == (link = n->child))
 		return 0;
@@ -2006,9 +2007,18 @@ termp_lk_pre(DECL_ARGS)
 		term_word(p, ":");
 	}
 
+	display = term_strlen(p, link->string) >= 26;
+	if (display) {
+		term_newln(p);
+		p->offset += term_len(p, p->defindent + 1);
+	}
+
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, link->string);
 	term_fontpop(p);
+
+	if (display)
+		term_newln(p);
 
 	return 0;
 }
