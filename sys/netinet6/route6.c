@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.20 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: route6.c,v 1.21 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 int
-route6_input(struct mbuf **mp, int *offp, int proto)
+route6_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct ip6_hdr *ip6;
 	struct mbuf *m = *mp;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.7 2017/03/13 20:18:21 claudio Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.8 2017/04/14 20:46:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -73,7 +73,6 @@ div6stat_inc(enum div6stat_counters c)
 extern struct	inpcbtable	divb6table;
 
 void	 divert6_init(void);
-int	 divert6_input(struct mbuf **, int *, int);
 int	 divert6_packet(struct mbuf *, int, u_int16_t);
 int	 divert6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 divert6_usrreq(struct socket *,

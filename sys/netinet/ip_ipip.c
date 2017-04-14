@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.73 2017/04/05 13:35:18 deraadt Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.74 2017/04/14 20:46:31 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -96,7 +96,7 @@ ipip_init(void)
  * Really only a wrapper for ipip_input(), for use with pr_input.
  */
 int
-ip4_input(struct mbuf **mp, int *offp, int proto)
+ip4_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {

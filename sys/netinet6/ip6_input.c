@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.182 2017/04/06 02:11:08 dhill Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.183 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -532,7 +532,8 @@ ip6_local(struct mbuf *m, int off, int nxt)
 				goto bad;
 		}
 
-		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
+		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt,
+		    AF_INET6);
 	}
 	return;
  bad:

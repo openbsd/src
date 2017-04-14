@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.65 2017/04/05 13:35:18 deraadt Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.66 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ void igmp_checktimer(struct ifnet *);
 void igmp_sendpkt(struct ifnet *, struct in_multi *, int, in_addr_t);
 int rti_fill(struct in_multi *);
 struct router_info * rti_find(struct ifnet *);
-int igmp_input_if(struct ifnet *, struct mbuf **, int *, int);
+int igmp_input_if(struct ifnet *, struct mbuf **, int *, int, int);
 int igmp_sysctl_igmpstat(void *, size_t *, void *);
 
 void
@@ -209,7 +209,7 @@ rti_delete(struct ifnet *ifp)
 }
 
 int
-igmp_input(struct mbuf **mp, int *offp, int proto)
+igmp_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct ifnet *ifp;
 
@@ -221,13 +221,13 @@ igmp_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	proto = igmp_input_if(ifp, mp, offp, proto);
+	proto = igmp_input_if(ifp, mp, offp, proto, af);
 	if_put(ifp);
 	return proto;
 }
 
 int
-igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
+igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
@@ -490,7 +490,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
 	 */
-	return rip_input(mp, offp, proto);
+	return rip_input(mp, offp, proto, af);
 }
 
 void

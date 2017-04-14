@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.32 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.33 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ void	udp6_ctlinput(int, struct sockaddr *, u_int, void *);
 #endif /* INET6 */
 void	 udp_ctlinput(int, struct sockaddr *, u_int, void *);
 void	 udp_init(void);
-int	 udp_input(struct mbuf **, int *, int);
+int	 udp_input(struct mbuf **, int *, int, int);
 #ifdef INET6
 int	 udp6_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	struct mbuf *);

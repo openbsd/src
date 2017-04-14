@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.21 2017/03/07 23:35:06 jca Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.22 2017/04/14 20:46:31 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr)
  *
@@ -72,7 +72,7 @@ struct etherip_header {
 struct tdb;
 
 int	etherip_output(struct mbuf *, struct tdb *, struct mbuf **, int);
-int	etherip_input(struct mbuf **, int *, int);
+int	etherip_input(struct mbuf **, int *, int, int);
 int	etherip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 extern int etherip_allow;

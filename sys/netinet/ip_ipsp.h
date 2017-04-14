@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.178 2017/02/07 22:28:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.179 2017/04/14 20:46:31 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -478,7 +478,7 @@ void	ipe4_input(struct mbuf *, int, int);
 int	ipip_input(struct mbuf **, int *, struct ifnet *, int);
 int	ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 
-int	ip4_input(struct mbuf **, int *, int);
+int	ip4_input(struct mbuf **, int *, int, int);
 
 /* XF_AH */
 int 	ah_attach(void);
@@ -488,12 +488,12 @@ int	ah_input(struct mbuf *, struct tdb *, int, int);
 int	ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-int	ah4_input(struct mbuf **, int *, int);
+int	ah4_input(struct mbuf **, int *, int, int);
 void	ah4_ctlinput(int, struct sockaddr *, u_int, void *);
 void	udpencap_ctlinput(int, struct sockaddr *, u_int, void *);
 
 #ifdef INET6
-int	ah6_input(struct mbuf **, int *, int);
+int	ah6_input(struct mbuf **, int *, int, int);
 #endif /* INET6 */
 
 /* XF_ESP */
@@ -504,11 +504,11 @@ int	esp_input(struct mbuf *, struct tdb *, int, int);
 int	esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-int	esp4_input(struct mbuf **, int *, int);
+int	esp4_input(struct mbuf **, int *, int, int);
 void	esp4_ctlinput(int, struct sockaddr *, u_int, void *);
 
 #ifdef INET6
-int 	esp6_input(struct mbuf **, int *, int);
+int 	esp6_input(struct mbuf **, int *, int, int);
 #endif /* INET6 */
 
 /* XF_IPCOMP */
@@ -518,9 +518,9 @@ int	ipcomp_zeroize(struct tdb *);
 int	ipcomp_input(struct mbuf *, struct tdb *, int, int);
 int	ipcomp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 int	ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	ipcomp4_input(struct mbuf **, int *, int);
+int	ipcomp4_input(struct mbuf **, int *, int, int);
 #ifdef INET6
-int	ipcomp6_input(struct mbuf **, int *, int);
+int	ipcomp6_input(struct mbuf **, int *, int, int);
 #endif /* INET6 */
 
 /* XF_TCPSIGNATURE */

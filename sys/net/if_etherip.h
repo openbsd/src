@@ -73,11 +73,11 @@ struct etherip_header {
 
 int ip_etherip_sysctl(int *, uint, void *, size_t *, void *, size_t);
 int ip_etherip_output(struct ifnet *, struct mbuf *);
-int ip_etherip_input(struct mbuf **, int *, int);
+int ip_etherip_input(struct mbuf **, int *, int, int);
 
 #ifdef INET6
 int ip6_etherip_output(struct ifnet *, struct mbuf *);
-int ip6_etherip_input(struct mbuf **, int *, int);
+int ip6_etherip_input(struct mbuf **, int *, int, int);
 #endif /* INET6 */
 
 

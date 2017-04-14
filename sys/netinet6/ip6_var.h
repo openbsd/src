@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.71 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.72 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -333,16 +333,16 @@ void	ip6_randomid_init(void);
 u_int32_t ip6_randomid(void);
 void	ip6_send(struct mbuf *);
 
-int	route6_input(struct mbuf **, int *, int);
+int	route6_input(struct mbuf **, int *, int, int);
 
 void	frag6_init(void);
-int	frag6_input(struct mbuf **, int *, int);
+int	frag6_input(struct mbuf **, int *, int, int);
 int	frag6_deletefraghdr(struct mbuf *, int);
 void	frag6_slowtimo(void);
 void	frag6_drain(void);
 
 void	rip6_init(void);
-int	rip6_input(struct mbuf **mp, int *offp, int proto);
+int	rip6_input(struct mbuf **, int *, int, int);
 void	rip6_ctlinput(int, struct sockaddr *, u_int, void *);
 int	rip6_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	rip6_output(struct mbuf *, struct socket *, struct sockaddr *,
@@ -352,7 +352,7 @@ int	rip6_usrreq(struct socket *,
 int	rip6_attach(struct socket *, int);
 int	rip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-int	dest6_input(struct mbuf **, int *, int);
+int	dest6_input(struct mbuf **, int *, int, int);
 int	none_input(struct mbuf **, int *, int);
 
 int	in6_pcbselsrc(struct in6_addr **, struct sockaddr_in6 *,

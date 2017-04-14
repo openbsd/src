@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.52 2017/02/20 06:30:39 jca Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.53 2017/04/14 20:46:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -316,7 +316,7 @@ pfsyncstat_inc(enum pfsync_counters c)
 #define PFSYNC_S_DEFER	0xfe
 #define PFSYNC_S_NONE	0xff
 
-int			pfsync_input(struct mbuf **, int *, int);
+int			pfsync_input(struct mbuf **, int *, int, int);
 int			pfsync_sysctl(int *, u_int,  void *, size_t *,
 			    void *, size_t);
 

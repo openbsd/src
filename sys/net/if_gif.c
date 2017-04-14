@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.91 2017/01/29 19:58:47 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.92 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -716,7 +716,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 }
 
 int
-in_gif_input(struct mbuf **mp, int *offp, int proto)
+in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
@@ -762,7 +762,7 @@ in_gif_input(struct mbuf **mp, int *offp, int proto)
 
 inject:
 	/* No GIF interface was configured */
-	return ip4_input(mp, offp, proto);
+	return ip4_input(mp, offp, proto, af);
 }
 
 #ifdef INET6
@@ -839,7 +839,7 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf **m0)
 	return 0;
 }
 
-int in6_gif_input(struct mbuf **mp, int *offp, int proto)
+int in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
@@ -888,6 +888,6 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 inject:
 	/* No GIF tunnel configured */
-	return ip4_input(mp, offp, proto);
+	return ip4_input(mp, offp, proto, af);
 }
 #endif /* INET6 */

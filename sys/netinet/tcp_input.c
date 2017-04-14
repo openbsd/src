@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.338 2017/02/09 15:19:32 jca Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.339 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ tcp_flush_queue(struct tcpcb *tp)
  * protocol specification dated September, 1981 very closely.
  */
 int
-tcp_input(struct mbuf **mp, int *offp, int proto)
+tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
@@ -383,7 +383,6 @@ tcp_input(struct mbuf **mp, int *offp, int proto)
 	struct tdb *tdb;
 	int error;
 #endif /* IPSEC */
-	int af;
 #ifdef TCP_ECN
 	u_char iptos;
 #endif

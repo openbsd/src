@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.16 2017/03/27 23:49:03 jca Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.17 2017/04/14 20:46:31 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -405,7 +405,7 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 }
 
 int
-ip_etherip_input(struct mbuf **mp, int *offp, int proto)
+ip_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -453,7 +453,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto)
 		 * This is tricky but the path will be removed soon when
 		 * implementation of etherip is removed from gif(4).
 		 */
-		return etherip_input(mp, offp, proto);
+		return etherip_input(mp, offp, proto, af);
 #else
 		etheripstat.etherips_noifdrops++;
 		m_freem(m);
@@ -567,7 +567,7 @@ drop:
 }
 
 int
-ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
+ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -613,7 +613,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 		 * This is tricky but the path will be removed soon when
 		 * implementation of etherip is removed from gif(4).
 		 */
-		return etherip_input(mp, offp, proto);
+		return etherip_input(mp, offp, proto, af);
 #else
 		etheripstat.etherips_noifdrops++;
 		m_freem(m);

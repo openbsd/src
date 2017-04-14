@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.296 2017/04/05 13:35:18 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.297 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ found:
 	 * Switch out to protocol's input routine.
 	 */
 	ipstat_inc(ips_delivered);
-	(*inetsw[ip_protox[ip->ip_p]].pr_input)(&m, &hlen, ip->ip_p);
+	(*inetsw[ip_protox[ip->ip_p]].pr_input)(&m, &hlen, ip->ip_p, AF_INET);
 	return;
 bad:
 	m_freem(m);

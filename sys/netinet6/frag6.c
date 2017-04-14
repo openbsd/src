@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.72 2017/02/05 16:04:14 jca Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.73 2017/04/14 20:46:31 bluhm Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ frag6_init(void)
  * Fragment input
  */
 int
-frag6_input(struct mbuf **mp, int *offp, int proto)
+frag6_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp, *t;
 	struct ip6_hdr *ip6;
