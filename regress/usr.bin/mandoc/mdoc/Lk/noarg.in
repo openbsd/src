@@ -5,10 +5,13 @@
 .Nm Lk-noarg
 .Nd hyperlink macro without arguments
 .Sh DESCRIPTION
+multiple arguments
+.Lk http://www.bsd.lv/ the bsd.lv project ,
 two arguments
 .Lk http://mdocml.bsd.lv/ mandoc
 one argument
 .Lk http://www.openbsd.org/
 no argument
 .Lk
+.Pp
 end of test document
