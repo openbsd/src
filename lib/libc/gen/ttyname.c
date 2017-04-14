@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.19 2016/11/09 19:09:52 millert Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.20 2017/04/14 15:02:51 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,7 @@ oldttyname(struct stat *sb, char *buf, size_t len)
 	while ((dirp = readdir(dp))) {
 		if (dirp->d_type != DT_CHR && dirp->d_type != DT_UNKNOWN)
 			continue;
-		if (fstatat(dirfd(dp), dirp->d_name, &dsb, AT_SYMLINK_NOFOLLOW) 
+		if (fstatat(dirfd(dp), dirp->d_name, &dsb, AT_SYMLINK_NOFOLLOW)
 		    || !S_ISCHR(dsb.st_mode) || sb->st_rdev != dsb.st_rdev)
 			continue;
 		if (dirp->d_namlen > len - sizeof(_PATH_DEV)) {
