@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.92 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.93 2017/04/14 20:50:35 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -856,7 +856,6 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 	in6_recoverscope(&src, &ip6->ip6_src);
 	in6_recoverscope(&dst, &ip6->ip6_dst);
 
-#define satoin6(sa)	(satosin6(sa)->sin6_addr)
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET6 ||
