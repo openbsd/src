@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.245 2017/02/17 19:14:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.246 2017/04/14 18:23:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2001,9 +2001,9 @@ termp_lk_pre(DECL_ARGS)
 			term_word(p, descr->string);
 			descr = descr->next;
 		}
+		term_fontpop(p);
 		p->flags |= TERMP_NOSPACE;
 		term_word(p, ":");
-		term_fontpop(p);
 	}
 
 	term_fontpush(p, TERMFONT_BOLD);
