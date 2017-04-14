@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.492 2017/03/22 12:45:22 mikeb Exp $	*/
+/*	$OpenBSD: if.c,v 1.493 2017/04/14 15:11:31 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1368,7 +1368,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
-		if (ifp->if_flags & IFF_POINTOPOINT)
+		if (ifp->if_flags & IFF_POINTOPOINT) {
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if (ifa->ifa_addr->sa_family !=
 				    addr->sa_family || ifa->ifa_dstaddr == NULL)
@@ -1376,6 +1376,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 				if (equal(addr, ifa->ifa_dstaddr))
 					return (ifa);
 			}
+		}
 	}
 	return (NULL);
 }
