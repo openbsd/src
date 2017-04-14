@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.13 2017/04/14 15:26:53 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.14 2017/04/14 15:32:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2696,17 +2696,14 @@ ssl3_send_newsession_ticket(SSL *s)
 
 		s->internal->state = SSL3_ST_SW_SESSION_TICKET_B;
 
-		explicit_bzero(senc, slen_full);
-		free(senc);
+		freezero(senc, slen_full);
 	}
 
 	/* SSL3_ST_SW_SESSION_TICKET_B */
 	return (ssl3_handshake_write(s));
 
  err:
-	if (senc != NULL)
-		explicit_bzero(senc, slen_full);
-	free(senc);
+	freezero(senc, slen_full);
 
 	return (-1);
 }
