@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.166 2017/01/05 12:42:18 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.167 2017/04/14 18:06:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,13 +201,13 @@ int			 set_rule_peers(struct ipsec_rule *r,
 void			 expand_any(struct ipsec_addr_wrap *);
 int			 expand_rule(struct ipsec_rule *, struct ipsec_hosts *,
 			     u_int8_t, u_int32_t, struct ipsec_key *,
-			     struct ipsec_key *, int);
+			     struct ipsec_key *, char *);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_hosts *,
 			     struct ike_mode *, struct ike_mode *, u_int8_t,
 			     u_int8_t, u_int8_t, char *, char *,
 			     struct ike_auth *, char *);
-int			 add_sagroup(struct ipsec_rule *);
+int			 add_sagroup(struct ipsec_rule *, char *);
 int			 get_id_type(char *);
 
 struct ipsec_transforms *ipsec_transforms;
@@ -263,7 +263,7 @@ typedef struct {
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
 %token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFETIME
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT TAG
-%token	INCLUDE
+%token	INCLUDE BUNDLE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -284,6 +284,7 @@ typedef struct {
 %type	<v.spis>		spispec
 %type	<v.authkeys>		authkeyspec
 %type	<v.enckeys>		enckeyspec
+%type	<v.string>		bundlestring
 %type	<v.keys>		keyspec
 %type	<v.transforms>		transforms
 %type	<v.ikemode>		ikemode
@@ -333,13 +334,13 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 				YYERROR;
 
 			if (expand_rule(r, NULL, 0, $3.spiin, $4.keyin, NULL,
-			    0))
+			    NULL))
 				errx(1, "tcpmd5rule: expand_rule");
 		}
 		;
 
 sarule		: satype tmode hosts spispec transforms authkeyspec
-		    enckeyspec {
+		    enckeyspec bundlestring {
 			struct ipsec_rule	*r;
 
 			r = create_sa($1, $2, &$3, $4.spiout, $5, $6.keyout,
@@ -348,7 +349,7 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 				YYERROR;
 
 			if (expand_rule(r, NULL, 0, $4.spiin, $6.keyin,
-			    $7.keyin, 1))
+			    $7.keyin, $8))
 				errx(1, "sarule: expand_rule");
 		}
 		;
@@ -361,7 +362,7 @@ flowrule	: FLOW satype dir proto hosts peers ids type {
 			if (r == NULL)
 				YYERROR;
 
-			if (expand_rule(r, &$6, $3, 0, NULL, NULL, 0))
+			if (expand_rule(r, &$6, $3, 0, NULL, NULL, NULL))
 				errx(1, "flowrule: expand_rule");
 		}
 		;
@@ -375,7 +376,7 @@ ikerule		: IKE ikemode satype tmode proto hosts peers
 			if (r == NULL)
 				YYERROR;
 
-			if (expand_rule(r, &$7, 0, 0, NULL, NULL, 0))
+			if (expand_rule(r, &$7, 0, 0, NULL, NULL, NULL))
 				errx(1, "ikerule: expand_rule");
 		}
 		;
@@ -806,6 +807,10 @@ enckeyspec	: /* empty */			{
 		}
 		;
 
+bundlestring	: /* empty */			{ $$ = NULL; }
+		| BUNDLE STRING			{ $$ = $2; }
+		;
+
 keyspec		: STRING			{
 			unsigned char	*hex;
 			unsigned char	*p = strchr($1, ':');
@@ -950,6 +955,7 @@ lookup(char *s)
 		{ "any",		ANY },
 		{ "auth",		AUTHXF },
 		{ "authkey",		AUTHKEY },
+		{ "bundle",		BUNDLE },
 		{ "bypass",		BYPASS },
 		{ "comp",		COMPXF },
 		{ "deny",		DENY },
@@ -2338,14 +2344,15 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 }
 
 int
-add_sagroup(struct ipsec_rule *r)
+add_sagroup(struct ipsec_rule *r, char *bundle)
 {
 	struct ipsec_rule	*rp, *last, *group;
 	int			 found = 0;
 
 	TAILQ_FOREACH(rp, &ipsec->group_queue, group_entry) {
 		if ((strcmp(rp->src->name, r->src->name) == 0) &&
-		    (strcmp(rp->dst->name, r->dst->name) == 0)) {
+		    (strcmp(rp->dst->name, r->dst->name) == 0) &&
+		    (strcmp(rp->bundle, bundle) == 0)) {
 			found = 1;
 			break;
 		}
@@ -2365,6 +2372,7 @@ add_sagroup(struct ipsec_rule *r)
 		TAILQ_INSERT_TAIL(&ipsec->group_queue, r, group_entry);
 		TAILQ_INIT(&r->dst_group_queue);
 		TAILQ_INSERT_TAIL(&r->dst_group_queue, r, dst_group_entry);
+		r->bundle = bundle;
 	}
 
 	return (0);
@@ -2624,7 +2632,7 @@ set_rule_peers(struct ipsec_rule *r, struct ipsec_hosts *peers)
 int
 expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
     u_int8_t direction, u_int32_t spi, struct ipsec_key *authkey,
-    struct ipsec_key *enckey, int group)
+    struct ipsec_key *enckey, char *bundle)
 {
 	struct ipsec_rule	*r, *revr;
 	struct ipsec_addr_wrap	*src, *dst;
@@ -2653,7 +2661,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 			r->nr = ipsec->rule_nr++;
 			if (ipsecctl_add_rule(ipsec, r))
 				goto out;
-			if (group && add_sagroup(r))
+			if (bundle && add_sagroup(r, bundle))
 				goto out;
 
 			if (direction == IPSEC_INOUT) {
@@ -2665,7 +2673,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
 					goto out;
-				if (group && add_sagroup(revr))
+				if (bundle && add_sagroup(revr, bundle))
 					goto out;
 			} else if (spi != 0 || authkey || enckey) {
 				/* Create and add reverse sa rule. */
@@ -2676,7 +2684,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
 					goto out;
-				if (group && add_sagroup(revr))
+				if (bundle && add_sagroup(revr, bundle))
 					goto out;
 			}
 			added++;

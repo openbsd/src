@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.69 2015/12/09 21:41:50 naddy Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.70 2017/04/14 18:06:28 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -216,6 +216,7 @@ struct ipsec_rule {
 	TAILQ_ENTRY(ipsec_rule) dst_group_entry;
 
 	struct dst_group_queue	dst_group_queue;
+	char			*bundle;
 };
 
 TAILQ_HEAD(ipsec_rule_queue, ipsec_rule);
