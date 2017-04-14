@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.110 2017/03/16 10:02:03 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.111 2017/04/14 01:02:28 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ struct vmx {
  * SVM for AMD CPUs
  */
 struct svm {
+	uint32_t	svm_max_asid;
 };
 
 union vmm_cpu_cap {
