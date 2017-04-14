@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.103 2017/03/04 21:41:13 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.104 2017/04/14 18:24:15 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1472,8 +1472,8 @@ pre_lk(DECL_ARGS)
 			print_word(descr->string);
 			descr = descr->next;
 		}
-		print_word(":");
 		font_pop();
+		print_word(":");
 	}
 
 	font_push('B');
