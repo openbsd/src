@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.32 2017/04/13 20:48:29 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.33 2017/04/15 11:15:02 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -35,7 +35,6 @@
 #include <ddb/db_output.h>
 
 void pmap_setttb(struct proc *p);
-void arm64_tlbi_asid(vaddr_t va, int asid);
 void pmap_free_asid(pmap_t pm);
 
 /*
@@ -68,34 +67,13 @@ pmap_pa_is_mem(uint64_t pa)
 static inline void
 ttlb_flush(pmap_t pm, vaddr_t va)
 {
-	arm64_tlbi_asid(va, pm->pm_asid);
-}
-
-static inline void
-ttlb_flush_range(pmap_t pm, vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = va + size;
-
-	/* if size is over 512 pages, just flush the entire cache !?!?! */
-	if (size >= (512 * PAGE_SIZE)) {
-		cpu_tlb_flush();
-		return;
-	}
-
-	for ( ; va < eva; va += PAGE_SIZE)
-		arm64_tlbi_asid(va, pm->pm_asid);
-}
-
-void
-arm64_tlbi_asid(vaddr_t va, int asid)
-{
 	vaddr_t resva;
 
 	resva = ((va >> PAGE_SHIFT) & ((1ULL << 44) - 1));
-	if (asid == -1) {
+	if (pm == pmap_kernel()) {
 		cpu_tlb_flush_all_asid(resva);
 	} else {
-		resva |= (unsigned long long)asid << 48;
+		resva |= (uint64_t)pm->pm_asid << 48;
 		cpu_tlb_flush_asid(resva);
 	}
 }
@@ -1267,8 +1245,6 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 	idx0 = VP_IDX0(va);
 	pm->pm_vp.l0->vp[idx0] = l1_va;
 	pm->pm_vp.l0->l0[idx0] = pg_entry;
-
-	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX1_POS);
 }
 
 void
@@ -1299,8 +1275,6 @@ pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
 		vp1 = pm->pm_vp.l1;
 	vp1->vp[idx1] = l2_va;
 	vp1->l1[idx1] = pg_entry;
-
-	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX2_POS);
 }
 
 void
@@ -1334,8 +1308,6 @@ pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
 	vp2 = vp1->vp[idx1];
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
-
-	ttlb_flush_range(pm, va & ~PAGE_MASK, 1<<VP_IDX3_POS);
 }
 
 /*
@@ -1578,7 +1550,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	if (remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
 
-	arm64_tlbi_asid(pted->pted_va, pm->pm_asid);
+	ttlb_flush(pm, pted->pted_va);
 }
 
 /*
