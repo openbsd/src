@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.17 2016/12/08 16:24:51 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.18 2017/04/15 04:18:40 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -250,6 +250,9 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case OCTEON_MODEL_FAMILY_CN61XX:
 		ngmx = 2;
+		break;
+	case OCTEON_MODEL_FAMILY_CN73XX:
+		ngmx = 0;
 		break;
 	}
 	for (i = 0; i < ngmx; i++) {
