@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.40 2017/04/06 17:36:00 jmc Exp $
+.\"	$OpenBSD: inet6.4,v 1.41 2017/04/15 18:45:15 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2017 $
+.Dd $Mdocdate: April 15 2017 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -38,38 +38,24 @@
 .In sys/types.h
 .In netinet/in.h
 .Sh DESCRIPTION
-The
-.Nm
-family is an updated version of the
-.Xr inet 4
-family.
-While
-.Xr inet 4
-implements Internet Protocol version 4,
-.Nm
-implements Internet Protocol version 6.
-.Pp
-The
-.Nm
-family is comprised of the
-Internet Protocol version 6
-.Pq IPv6
-network protocol, Internet Control
-Message Protocol version 6
+The Internet Protocol version 6 family
+is an updated version of the Internet Protocol version 4 family.
+It comprises Internet Protocol version 6
+.Pq IPv6 ,
+Internet Control Message Protocol version 6
 .Pq ICMPv6 ,
 Transmission Control Protocol
 .Pq TCP ,
 and User Datagram Protocol
 .Pq UDP .
-TCP is used to support the
+.Xr tcp 4
+is used to support the
 .Dv SOCK_STREAM
-abstraction while UDP is used to support the
+abstraction while
+.Xr udp 4
+is used to support the
 .Dv SOCK_DGRAM
 abstraction.
-Note that TCP and UDP are common to
-.Xr inet 4
-and
-.Nm inet6 .
 A raw interface to IPv6 is available by creating an Internet socket of type
 .Dv SOCK_RAW .
 The ICMPv6 message protocol is accessible from a raw socket.
@@ -97,10 +83,8 @@ struct sockaddr_in6 {
 .Pp
 Sockets may be created with the local address
 .Dq ::
-.Po
-which is equal to IPv6 address
-.Dv 0:0:0:0:0:0:0:0
-.Pc
+(which is equal to IPv6 address
+.Dv 0:0:0:0:0:0:0:0 )
 to effect
 .Dq wildcard
 matching on incoming messages.
@@ -112,7 +96,7 @@ does not route IPv4 traffic to an
 socket,
 and does not support IPv4 mapped addresses,
 where IPv4 traffic is seen as if it comes from an IPv6 address like
-.Li ::ffff:10.1.1.1 .
+.Dq ::ffff:10.1.1.1 .
 Where both IPv4 and IPv6 traffic need to be accepted,
 bind and listen on two sockets.
 .Pp
@@ -162,11 +146,9 @@ sockets, kernel memory access via
 and some other occasions.
 HOWEVER, users should never use the embedded form.
 .Sh SEE ALSO
-.Xr ioctl 2 ,
 .Xr socket 2 ,
 .Xr sysctl 3 ,
 .Xr icmp6 4 ,
-.Xr intro 4 ,
 .Xr ip6 4 ,
 .Xr tcp 4 ,
 .Xr udp 4
