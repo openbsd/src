@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.77 2016/11/29 08:55:06 mpi Exp $ */
+/*	$OpenBSD: arp.c,v 1.78 2017/04/15 11:50:24 bluhm Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -86,7 +86,7 @@ static pid_t pid;
 static int replace;	/* replace entries when adding */
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
-static int s = -1;
+static int rtsock = -1;
 static int rdomain;
 
 extern int h_errno;
@@ -243,12 +243,12 @@ getsocket(void)
 {
 	socklen_t len = sizeof(rdomain);
 
-	if (s >= 0)
+	if (rtsock >= 0)
 		return;
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s < 0)
-		err(1, "socket");
-	if (setsockopt(s, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
+	if (rtsock < 0)
+		err(1, "routing socket");
+	if (setsockopt(rtsock, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)
@@ -668,14 +668,14 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if (write(s, (char *)&m_rtmsg, l) < 0)
+	if (write(rtsock, (char *)&m_rtmsg, l) < 0)
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
 			return (-1);
 		}
 
 	do {
-		l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
+		l = read(rtsock, (char *)&m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
 	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 
