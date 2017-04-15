@@ -71,7 +71,7 @@ extern config_parser_state_type* cfg_parser;
 %token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT VAR_VERSION
 %token VAR_MAX_REFRESH_TIME VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME VAR_MIN_RETRY_TIME
-%token VAR_MULTI_MASTER_CHECK
+%token VAR_MULTI_MASTER_CHECK VAR_MINIMAL_RESPONSES
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -102,7 +102,8 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_rrl_ipv4_prefix_length | server_rrl_ipv6_prefix_length | server_rrl_whitelist_ratelimit |
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
 	server_zonefiles_write | server_log_time_ascii | server_round_robin |
-	server_reuseport | server_version | server_ip_freebind;
+	server_reuseport | server_version | server_ip_freebind |
+	server_minimal_responses;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -289,6 +290,17 @@ server_round_robin: VAR_ROUND_ROBIN STRING
 		else {
 			cfg_parser->opt->round_robin = (strcmp($2, "yes")==0);
 			round_robin = cfg_parser->opt->round_robin;
+		}
+	}
+	;
+server_minimal_responses: VAR_MINIMAL_RESPONSES STRING 
+	{ 
+		OUTYY(("P(server_minimal_responses:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else {
+			cfg_parser->opt->minimal_responses = (strcmp($2, "yes")==0);
+			minimal_responses = cfg_parser->opt->minimal_responses;
 		}
 	}
 	;

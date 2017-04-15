@@ -16,6 +16,7 @@
 #include "rdata.h"
 
 int round_robin = 0;
+int minimal_responses = 0;
 
 static void
 encode_dname(query_type *q, domain_type *domain)

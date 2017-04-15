@@ -711,6 +711,9 @@ add_rrset(struct query   *query,
 	assert(rrset_rrclass(rrset) == CLASS_IN);
 
 	result = answer_add_rrset(answer, section, owner, rrset);
+	if(minimal_responses && section != AUTHORITY_SECTION &&
+		query->qtype != TYPE_NS)
+		return result;
 	switch (rrset_rrtype(rrset)) {
 	case TYPE_NS:
 #if defined(INET6)
@@ -1007,7 +1010,8 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 		return;
 	}
 
-	if (q->qclass != CLASS_ANY && q->zone->ns_rrset && answer_needs_ns(q)) {
+	if (q->qclass != CLASS_ANY && q->zone->ns_rrset && answer_needs_ns(q)
+		&& !minimal_responses) {
 		add_rrset(q, answer, OPTIONAL_AUTHORITY_SECTION, q->zone->apex,
 			  q->zone->ns_rrset);
 	}

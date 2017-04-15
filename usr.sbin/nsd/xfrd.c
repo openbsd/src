@@ -1892,13 +1892,13 @@ xfrd_parse_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet,
 			zone->soa_disk_acquired = xfrd_time();
 			if(zone->soa_nsd.serial == soa->serial)
 				zone->soa_nsd_acquired = xfrd_time();
+			xfrd_set_zone_state(zone, xfrd_zone_ok);
+ 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s is ok",
+				zone->apex_str));
 			if(zone->zone_options->pattern->multi_master_check) {
 				region_destroy(tempregion);
 				return xfrd_packet_drop;
 			}
-			xfrd_set_zone_state(zone, xfrd_zone_ok);
- 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s is ok",
-				zone->apex_str));
 			if(zone->soa_notified_acquired == 0) {
 				/* not notified or anything, so stop asking around */
 				zone->round_num = -1; /* next try start a new round */

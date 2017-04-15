@@ -145,6 +145,8 @@ struct query;
 
 /* use round robin rotation */
 extern int round_robin;
+/* use minimal responses (more minimal, with additional only for referrals) */
+extern int minimal_responses;
 
 /*
  * Encode RR with OWNER as owner name into QUERY.  Returns the number

@@ -427,8 +427,7 @@ grow_ram_hash(udb_base* udb, udb_ptr** newhash)
 
 void udb_base_link_ptr(udb_base* udb, udb_ptr* ptr)
 {
-	uint32_t i = chunk_hash_ptr(ptr->data) & udb->ram_mask;
-	assert((size_t)i < udb->ram_size);
+	uint32_t i;
 #ifdef UDB_CHECK
 	assert(udb_valid_dataptr(udb, ptr->data)); /* must be to whole chunk*/
 #endif
@@ -441,6 +440,9 @@ void udb_base_link_ptr(udb_base* udb, udb_ptr* ptr)
 			grow_ram_hash(udb, newram);
 		}
 	}
+	i = chunk_hash_ptr(ptr->data) & udb->ram_mask;
+	assert((size_t)i < udb->ram_size);
+
 	ptr->prev = NULL;
 	ptr->next = udb->ram_hash[i];
 	udb->ram_hash[i] = ptr;

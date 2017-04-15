@@ -752,7 +752,9 @@ add_RR(namedb_type* db, const dname_type* dname,
 	rr_type *rrs_old;
 	ssize_t rdata_num;
 	int rrnum;
+#ifdef NSEC3
 	int rrset_added = 0;
+#endif
 	domain = domain_table_find(db->domains, dname);
 	if(!domain) {
 		/* create the domain */
@@ -770,7 +772,9 @@ add_RR(namedb_type* db, const dname_type* dname,
 		rrset->rrs = 0;
 		rrset->rr_count = 0;
 		domain_add_rrset(domain, rrset);
+#ifdef NSEC3
 		rrset_added = 1;
+#endif
 	}
 
 	/* dnames in rdata are normalized, conform RFC 4035,

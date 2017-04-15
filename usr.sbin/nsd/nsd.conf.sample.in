@@ -132,6 +132,9 @@ server:
 	# round robin rotation of records in the answer.
 	# round-robin: no
 
+	# minimal-responses only emits extra data for referrals.
+	# minimal-responses: no
+
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
 	

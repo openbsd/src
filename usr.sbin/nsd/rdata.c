@@ -58,6 +58,8 @@ lookup_table_type dns_algorithms[] = {
 	{ 12, "ECC-GOST" },		/* RFC 5933 */
 	{ 13, "ECDSAP256SHA256" },	/* RFC 6605 */
 	{ 14, "ECDSAP384SHA384" },	/* RFC 6605 */
+	{ 15, "ED25519" },		/* RFC 8080 */
+	{ 16, "ED448" },		/* RFC 8080 */
 	{ 252, "INDIRECT" },
 	{ 253, "PRIVATEDNS" },
 	{ 254, "PRIVATEOID" },

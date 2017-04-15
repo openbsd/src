@@ -250,7 +250,7 @@ zparser_conv_serial(region_type *region, const char *serialstr)
 
 	serial = strtoserial(serialstr, &t);
 	if (*t != '\0') {
-		zc_error_prev_line("serial is expected");
+		zc_error_prev_line("serial is expected or serial too big");
 	} else {
 		serial = htonl(serial);
 		r = alloc_rdata_init(region, &serial, sizeof(serial));

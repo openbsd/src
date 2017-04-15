@@ -369,6 +369,14 @@ Enable round robin rotation of records in the answer.  This changes the
 order of records in the answer and this may balance load across them.
 The default is no.
 .TP
+.B minimal\-responses:\fR <yes or no>
+Enable minimal responses for smaller answers.  This makes packets smaller.
+Extra data is only added for referrals, when it is really necessary.
+This is different from the \-\-enable-minimal-responses configure time option,
+that reduces packets, but exactly to the fragmentation length, the nsd.conf
+option reduces packets as small as possible.
+The default is no.
+.TP
 .B zonefiles\-check:\fR <yes or no>
 Make NSD check the mtime of zone files on start and sighup.  If you
 disable it it starts faster (less disk activity in case of a lot of zones).

@@ -37,7 +37,9 @@
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 #endif /* HAVE_MMAP */
+#ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
+#endif
 #ifndef USE_MINI_EVENT
 #  ifdef HAVE_EVENT_H
 #    include <event.h>
