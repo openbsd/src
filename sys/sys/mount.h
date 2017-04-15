@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.128 2017/01/10 19:48:32 bluhm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.129 2017/04/15 13:56:43 bluhm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -347,6 +347,7 @@ LIST_HEAD(vnodelst, vnode);
 
 struct mount {
 	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
+	SLIST_ENTRY(mount) mnt_dounmount;	/* unmount work queue */
 	const struct vfsops *mnt_op;		/* operations on fs */
 	struct vfsconf  *mnt_vfc;               /* configuration info */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
