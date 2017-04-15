@@ -1280,6 +1280,8 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		    goto r_sparc_plt32;
 		  break;
 		}
+	      else if (r_type == R_SPARC_WPLT30)
+		break;
 
 	      /* It does not make sense to have a procedure linkage
                  table entry for a local symbol.  */
@@ -2676,6 +2678,11 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 		 for a local symbol if you assemble a call from one
 		 section to another when using -K pic.  We treat it as
 		 WDISP30.  */
+	      if (h == NULL)
+		break;
+	    }
+	  else if (r_type == R_SPARC_WPLT30)
+	    {
 	      if (h == NULL)
 		break;
 	    }
