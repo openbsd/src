@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.40 2016/04/05 18:18:42 jca Exp $
+.\"	$OpenBSD: ndp.8,v 1.41 2017/04/15 11:42:09 bluhm Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 5 2016 $
+.Dd $Mdocdate: April 15 2017 $
 .Dt NDP 8
 .Os
 .Sh NAME
@@ -187,8 +187,7 @@ making it possible to merge output with
 Most useful when used with
 .Fl A .
 .It Fl V Ar rdomain
-Set the routing domain to be used.
-The default is 0.
+Select the routing domain.
 .El
 .Sh EXIT STATUS
 .Ex -std ndp

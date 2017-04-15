@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.79 2016/11/29 08:55:06 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.80 2017/04/15 11:42:09 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ void rtr_flush(void);
 void harmonize_rtr(void);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
-static int rdomain = 0;
+static int rdomain;
 
 static char *rtpref_str[] = {
 	"medium",		/* 00 */
@@ -161,7 +161,8 @@ main(int argc, char *argv[])
 
 	pid = getpid();
 	thiszone = gmt2local(0);
-	while ((ch = getopt(argc, argv, "acd:f:i:nprstA:HPRV:")) != -1)
+	rdomain = getrtable();
+	while ((ch = getopt(argc, argv, "acd:f:i:nprstA:HPRV:")) != -1) {
 		switch (ch) {
 		case 'a':
 		case 'c':
@@ -217,7 +218,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
-
+	}
 	argc -= optind;
 	argv += optind;
 
