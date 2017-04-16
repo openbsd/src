@@ -59,7 +59,7 @@ static bool getColorDiagnostics(opt::InputArgList &Args) {
   auto *Arg = Args.getLastArg(OPT_color_diagnostics, OPT_color_diagnostics_eq,
                               OPT_no_color_diagnostics);
   if (!Arg)
-    return Default;
+    return false;
   if (Arg->getOption().getID() == OPT_color_diagnostics)
     return true;
   if (Arg->getOption().getID() == OPT_no_color_diagnostics)
