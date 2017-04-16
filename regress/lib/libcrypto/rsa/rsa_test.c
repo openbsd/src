@@ -212,9 +212,6 @@ static int pad_unknown(void)
     return (0);
 }
 
-static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
-
 int main(int argc, char *argv[])
 {
     int err = 0;
