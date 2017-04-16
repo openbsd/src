@@ -1,4 +1,4 @@
-.\" $OpenBSD: ure.4,v 1.4 2017/03/11 13:52:32 kettenis Exp $
+.\" $OpenBSD: ure.4,v 1.5 2017/04/16 20:26:34 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd $Mdocdate: March 11 2017 $
+.Dd $Mdocdate: April 16 2017 $
 .Dt URE 4
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nd RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device
 .Sh SYNOPSIS
 .Cd "ure*   at uhub?"
+.Cd "rgephy* at mii?"
 .Cd "rlphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -54,6 +55,8 @@ For more information on configuring this device, see
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
+.Xr rgephy 4 ,
+.Xr rlphy 4 ,
 .Xr uhub 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
