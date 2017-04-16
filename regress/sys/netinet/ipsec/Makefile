@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/04/14 19:03:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2017/04/16 16:59:53 kettenis Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -130,6 +130,8 @@ RT_IN_IF ?=	vio1
 RT_OUT_IF ?=	vio2
 ECO_IN_IF ?=	vio1
 
+.MAIN: all
+
 .if empty (IPS_SSH) || empty (RT_SSH) || empty (ECO_SSH)
 regress:
 	@echo this tests needs three remote machines to operate on
@@ -137,11 +139,8 @@ regress:
 	@echo fill out these variables for additional tests, then
 	@echo check wether your test machines are set up properly
 	@echo SKIPPED
-.endif
 
-.MAIN: all
-
-.if make (regress) || make (all)
+.elif make (regress) || make (all)
 .BEGIN: ipsec.conf addr.py
 	@echo
 	${SUDO} true
