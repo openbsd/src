@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.180 2017/04/05 06:55:59 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.181 2017/04/16 15:11:01 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -540,18 +540,19 @@ main(int argc, char *argv[])
 				s = local_listen(host, uport, hints);
 			if (s < 0)
 				err(1, NULL);
-			/*
-			 * For UDP and -k, don't connect the socket, let it
-			 * receive datagrams from multiple socket pairs.
-			 */
-			if (uflag && kflag)
+			if (uflag && kflag) {
+				/*
+				 * For UDP and -k, don't connect the socket,
+				 * let it receive datagrams from multiple
+				 * socket pairs.
+				 */
 				readwrite(s, NULL);
-			/*
-			 * For UDP and not -k, we will use recvfrom() initially
-			 * to wait for a caller, then use the regular functions
-			 * to talk to the caller.
-			 */
-			else if (uflag && !kflag) {
+			} else if (uflag && !kflag) {
+				/*
+				 * For UDP and not -k, we will use recvfrom()
+				 * initially to wait for a caller, then use
+				 * the regular functions to talk to the caller.
+				 */
 				int rv, plen;
 				char buf[16384];
 				struct sockaddr_storage z;
