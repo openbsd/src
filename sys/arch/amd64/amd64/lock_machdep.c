@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.11 2017/03/07 14:41:57 visa Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.12 2017/04/16 14:28:07 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -19,8 +19,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
-#include <machine/atomic.h>
 #include <machine/lock.h>
 #include <machine/cpufunc.h>
 
@@ -31,7 +31,7 @@ __mp_lock_init(struct __mp_lock *mpl)
 {
 	memset(mpl->mpl_cpus, 0, sizeof(mpl->mpl_cpus));
 	mpl->mpl_users = 0;
-	mpl->mpl_ticket = 0;
+	mpl->mpl_ticket = 1;
 }
 
 #if defined(MP_LOCKDEBUG)
@@ -64,17 +64,6 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 #endif
 }
 
-static inline u_int
-fetch_and_add(u_int *var, u_int value)
-{
-	asm volatile("lock; xaddl %%eax, %2;"
-	    : "=a" (value)
-	    : "a" (value), "m" (*var)
-	    : "memory");
-
-	return (value);
-}
-
 void
 __mp_lock(struct __mp_lock *mpl)
 {
@@ -83,7 +72,7 @@ __mp_lock(struct __mp_lock *mpl)
 
 	disable_intr();
 	if (cpu->mplc_depth++ == 0)
-		cpu->mplc_ticket = fetch_and_add(&mpl->mpl_users, 1);
+		cpu->mplc_ticket = atomic_inc_int_nv(&mpl->mpl_users);
 	write_rflags(rf);
 
 	__mp_lock_spin(mpl, cpu->mplc_ticket);

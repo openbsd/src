@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.20 2017/03/07 14:41:57 visa Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.21 2017/04/16 14:28:07 visa Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -37,8 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
-#include <machine/atomic.h>
 #include <machine/lock.h>
 #include <machine/cpufunc.h>
 
@@ -50,7 +50,7 @@ __mp_lock_init(struct __mp_lock *mpl)
 {
 	memset(mpl->mpl_cpus, 0, sizeof(mpl->mpl_cpus));
 	mpl->mpl_users = 0;
-	mpl->mpl_ticket = 0;
+	mpl->mpl_ticket = 1;
 }
 
 #if defined(MP_LOCKDEBUG)
@@ -61,17 +61,6 @@ __mp_lock_init(struct __mp_lock *mpl)
 /* CPU-dependent timing, needs this to be settable from ddb. */
 extern int __mp_lock_spinout;
 #endif
-
-static inline u_int
-fetch_and_add(u_int *var, u_int value)
-{
-	asm volatile("lock; xaddl %%eax, %2;"
-	    : "=a" (value)
-	    : "a" (value), "m" (*var)
-	    : "memory");
- 
-	return (value);
-}
 
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl, u_int me)
@@ -102,7 +91,7 @@ __mp_lock(struct __mp_lock *mpl)
 
 	disable_intr();
 	if (cpu->mplc_depth++ == 0)
-		cpu->mplc_ticket = fetch_and_add(&mpl->mpl_users, 1);
+		cpu->mplc_ticket = atomic_inc_int_nv(&mpl->mpl_users);
 	write_eflags(ef);
 
 	__mp_lock_spin(mpl, cpu->mplc_ticket);
