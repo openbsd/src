@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.37 2016/09/17 19:33:59 guenther Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.38 2017/04/16 14:25:42 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -360,7 +360,7 @@ buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
 		    bp->b_bufsize, UVM_PLA_NOWAIT, where);
 		if (r == 0)
 			break;
-	} while	((bufbackoff(where, 100) == 0) && (flags & UVM_PLA_WAITOK));
+	} while	((bufbackoff(where, atop(bp->b_bufsize)) == 0));
 
 	/*
 	 * bufbackoff() failed, so there's no more we can do without

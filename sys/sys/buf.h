@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.105 2017/02/28 10:49:37 natano Exp $	*/
+/*	$OpenBSD: buf.h,v 1.106 2017/04/16 14:25:42 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -287,7 +287,7 @@ struct buf *incore(struct vnode *, daddr_t);
 void bufcache_take(struct buf *);
 void bufcache_release(struct buf *);
 
-void buf_flip_high(struct buf *);
+int buf_flip_high(struct buf *);
 void buf_flip_dma(struct buf *);
 struct buf *bufcache_getcleanbuf(int, int);
 struct buf *bufcache_getanycleanbuf(void);
@@ -311,7 +311,6 @@ int	buf_dealloc_mem(struct buf *);
 void	buf_fix_mapping(struct buf *, vsize_t);
 void	buf_alloc_pages(struct buf *, vsize_t);
 void	buf_free_pages(struct buf *);
-
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), dev_t dev, int flags,

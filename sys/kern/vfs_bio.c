@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.180 2017/02/28 10:49:37 natano Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.181 2017/04/16 14:25:42 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -59,6 +59,12 @@
 #include <sys/specdev.h>
 #include <uvm/uvm_extern.h>
 
+/* XXX Should really be in buf.h, but for uvm_constraint_range.. */
+int	buf_realloc_pages(struct buf *, struct uvm_constraint_range *, int);
+
+struct uvm_constraint_range high_constraint;
+int fliphigh;
+
 int nobuffers;
 int needbuffer;
 struct bio_ops bioops;
@@ -66,6 +72,8 @@ struct bio_ops bioops;
 /* private bufcache functions */
 void bufcache_init(void);
 void bufcache_adjust(void);
+struct buf *bufcache_gethighcleanbuf(void);
+struct buf *bufcache_getdmacleanbuf(void);
 
 /*
  * Buffer pool for I/O buffers.
@@ -131,10 +139,28 @@ void
 bufinit(void)
 {
 	u_int64_t dmapages;
+	u_int64_t highpages;
 
 	dmapages = uvm_pagecount(&dma_constraint);
 	/* take away a guess at how much of this the kernel will consume */
 	dmapages -= (atop(physmem) - atop(uvmexp.free));
+
+	/* See if we have memory above the dma accessible region. */
+	high_constraint.ucr_low = dma_constraint.ucr_high;
+	high_constraint.ucr_high = no_constraint.ucr_high;
+	if (high_constraint.ucr_low != high_constraint.ucr_high)
+		high_constraint.ucr_low++;
+	highpages = uvm_pagecount(&high_constraint);
+
+	/*
+	 * Do we have any significant amount of high memory above
+	 * the DMA region? if so enable moving buffers there, if not,
+	 * don't bother.
+	 */
+	if (highpages > dmapages / 4)
+		fliphigh = 1;
+	else
+		fliphigh = 0;
 
 	/*
 	 * If MD code doesn't say otherwise, use up to 10% of DMA'able
@@ -243,8 +269,8 @@ bufadjust(int newbufpages)
 	 * adjusted bufcachepercent - or the pagedaemon has told us
 	 * to give back memory *now* - so we give it all back.
 	 */
-	while ((bp = bufcache_getanycleanbuf()) &&
-	    (bcstats.numbufpages > targetpages)) {
+	while ((bp = bufcache_getdmacleanbuf()) &&
+	    (bcstats.dmapages > targetpages)) {
 		bufcache_take(bp);
 		if (bp->b_vp) {
 			RBT_REMOVE(buf_rb_bufs, &bp->b_vp->v_bufs_tree, bp);
@@ -284,6 +310,49 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 	long pdelta, oldbufpages;
 
 	/*
+	 * If we will accept high memory for this backoff
+	 * try to steal it from the high memory buffer cache.
+	 */
+	if (range->ucr_high > dma_constraint.ucr_high) {
+		struct buf *bp;
+		int64_t start = bcstats.numbufpages, recovered = 0;
+		int s = splbio();
+
+		while ((recovered < size) &&
+		    (bp = bufcache_gethighcleanbuf())) {
+			bufcache_take(bp);
+			if (bp->b_vp) {
+				RBT_REMOVE(buf_rb_bufs,
+				    &bp->b_vp->v_bufs_tree, bp);
+				brelvp(bp);
+			}
+			buf_put(bp);
+			recovered = start - bcstats.numbufpages;
+		}
+		bufcache_adjust();
+		splx(s);
+
+		/* If we got enough, return success */
+		if (recovered >= size)
+			return 0;
+
+		/*
+		 * If we needed only memory above DMA,
+		 * return failure
+		 */
+		if (range->ucr_low > dma_constraint.ucr_high)
+			return -1;
+
+		/* Otherwise get the rest from DMA */
+		size -= recovered;
+	}
+
+	/*
+	 * XXX Otherwise do the dma memory cache dance. this needs
+	 * refactoring later to get rid of 'bufpages'
+	 */
+
+	/*
 	 * Back off by at least bufbackpages. If the page daemon gave us
 	 * a larger size, back off by that much.
 	 */
@@ -301,29 +370,62 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 		return(0);
 }
 
-void
+
+/*
+ * Opportunistically flip a buffer into high memory. Will move the buffer
+ * if memory is available without sleeping, and return 0, otherwise will
+ * fail and return -1 with the buffer unchanged.
+ */
+
+int
 buf_flip_high(struct buf *bp)
 {
+	int s;
+	int ret = -1;
+
 	KASSERT(ISSET(bp->b_flags, B_BC));
 	KASSERT(ISSET(bp->b_flags, B_DMA));
 	KASSERT(bp->cache == DMA_CACHE);
-	CLR(bp->b_flags, B_DMA);
-	/* XXX does nothing to buffer for now */
+	KASSERT(fliphigh);
+
+	/* Attempt to move the buffer to high memory if we can */
+	s = splbio();
+	if (buf_realloc_pages(bp, &high_constraint, UVM_PLA_NOWAIT) == 0) {
+		KASSERT(!ISSET(bp->b_flags, B_DMA));
+		bcstats.highflips++;
+		ret = 0;
+	} else
+		bcstats.highflops++;
+	splx(s);
+
+	return ret;
 }
 
+/*
+ * Flip a buffer to dma reachable memory, when we need it there for
+ * I/O. This can sleep since it will wait for memory alloacation in the
+ * DMA reachable area since we have to have the buffer there to proceed.
+ */
 void
 buf_flip_dma(struct buf *bp)
 {
 	KASSERT(ISSET(bp->b_flags, B_BC));
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
+	KASSERT(bp->cache < NUM_CACHES);
+
 	if (!ISSET(bp->b_flags, B_DMA)) {
-		KASSERT(bp->cache > DMA_CACHE);
-		KASSERT(bp->cache < NUM_CACHES);
-		/* XXX does not flip buffer for now */
-		/* make buffer hot, in DMA_CACHE, once it gets released. */
+		int s = splbio();
+
+		/* move buf to dma reachable memory */
+		(void) buf_realloc_pages(bp, &dma_constraint, UVM_PLA_WAITOK);
+		KASSERT(ISSET(bp->b_flags, B_DMA));
+		bcstats.dmaflips++;
+		splx(s);
+	}
+
+	if (bp->cache > DMA_CACHE) {
 		CLR(bp->b_flags, B_COLD);
 		CLR(bp->b_flags, B_WARM);
-		SET(bp->b_flags, B_DMA);
 		bp->cache = DMA_CACHE;
 	}
 }
@@ -800,7 +902,7 @@ brelse(struct buf *bp)
 	}
 
 	/* Wake up any processes waiting for any buffer to become free. */
-	if (needbuffer && bcstats.numbufpages < targetpages &&
+	if (needbuffer && bcstats.dmapages < targetpages &&
 	    bcstats.kvaslots_avail > RESERVE_SLOTS) {
 		needbuffer = 0;
 		wakeup(&needbuffer);
@@ -939,8 +1041,8 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * new allocation, free enough buffers first
 		 * to stay at the target with our new allocation.
 		 */
-		while ((bcstats.numbufpages + npages > targetpages) &&
-		    (bp = bufcache_getanycleanbuf())) {
+		while ((bcstats.dmapages + npages > targetpages) &&
+		    (bp = bufcache_getdmacleanbuf())) {
 			bufcache_take(bp);
 			if (bp->b_vp) {
 				RBT_REMOVE(buf_rb_bufs,
@@ -955,7 +1057,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * above, and couldn't get down - Wake the cleaner
 		 * and wait for it to push some buffers out.
 		 */
-		if ((bcstats.numbufpages + npages > targetpages ||
+		if ((bcstats.dmapages + npages > targetpages ||
 		    bcstats.kvaslots_avail <= RESERVE_SLOTS) &&
 		    curproc != syncerproc && curproc != cleanerproc) {
 			wakeup(&bd_req);
@@ -964,7 +1066,7 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 			splx(s);
 			return (NULL);
 		}
-		if (bcstats.numbufpages + npages > bufpages) {
+		if (bcstats.dmapages + npages > bufpages) {
 			/* cleaner or syncer */
 			nobuffers = 1;
 			tsleep(&nobuffers, PRIBIO, "nobuffers", 0);
@@ -1195,10 +1297,12 @@ bcstats_print(
 	    bcstats.numbufs, bcstats.busymapped, bcstats.delwribufs);
 	(*pr)("kvaslots %lld avail kva slots %lld\n",
 	    bcstats.kvaslots, bcstats.kvaslots_avail);
-    	(*pr)("bufpages %lld, dirtypages %lld\n",
-	    bcstats.numbufpages,  bcstats.numdirtypages);
+    	(*pr)("bufpages %lld, dmapages %lld, dirtypages %lld\n",
+	    bcstats.numbufpages, bcstats.dmapages, bcstats.numdirtypages);
 	(*pr)("pendingreads %lld, pendingwrites %lld\n",
 	    bcstats.pendingreads, bcstats.pendingwrites);
+	(*pr)("highflips %lld, highflops %lld, dmaflips %lld\n",
+	    bcstats.highflips, bcstats.highflops, bcstats.dmaflips);
 }
 #endif
 
@@ -1330,19 +1434,39 @@ bufcache_getcleanbuf(int cachenum, int discard)
 	while ((bp = TAILQ_FIRST(&cache->coldqueue))) {
 		if ((!discard) &&
 		    cachenum < NUM_CACHES - 1 && ISSET(bp->b_flags, B_WARM)) {
+			int64_t pages = atop(bp->b_bufsize);
+			struct bufcache *newcache;
+
+			KASSERT(bp->cache == cachenum);
+
 			/*
 			 * If this buffer was warm before, move it to
-			 *  the hot queue in the next cache
+			 * the hot queue in the next cache
 			 */
+
+			if (fliphigh) {
+				/*
+				 * If we are in the DMA cache, try to flip the
+				 * buffer up high to move it on to the other
+				 * caches. if we can't move the buffer to high
+				 * memory without sleeping, we give it up and
+				 * return it rather than fight for more memory
+				 * against non buffer cache competitors.
+				 */
+				SET(bp->b_flags, B_BUSY);
+				if (bp->cache == 0 && buf_flip_high(bp) == -1) {
+					CLR(bp->b_flags, B_BUSY);
+					return bp;
+				}
+				CLR(bp->b_flags, B_BUSY);
+			}
+
+			/* Move the buffer to the hot queue in the next cache */
 			TAILQ_REMOVE(&cache->coldqueue, bp, b_freelist);
 			CLR(bp->b_flags, B_WARM);
 			CLR(bp->b_flags, B_COLD);
-			int64_t pages = atop(bp->b_bufsize);
-			KASSERT(bp->cache == cachenum);
-			if (bp->cache == 0)
-				buf_flip_high(bp);
 			bp->cache++;
-			struct bufcache *newcache = &cleancache[bp->cache];
+			newcache= &cleancache[bp->cache];
 			newcache->cachepages += pages;
 			newcache->hotbufpages += pages;
 			chillbufs(newcache, &newcache->hotqueue,
@@ -1381,11 +1505,16 @@ bufcache_getcleanbuf_range(int start, int end, int discard)
 }
 
 struct buf *
-bufcache_getanycleanbuf(void)
+bufcache_gethighcleanbuf(void)
 {
-	return bufcache_getcleanbuf_range(DMA_CACHE, NUM_CACHES -1, 0);
+	return bufcache_getcleanbuf_range(DMA_CACHE + 1, NUM_CACHES -1, 0);
 }
 
+struct buf *
+bufcache_getdmacleanbuf(void)
+{
+	return bufcache_getcleanbuf_range(DMA_CACHE, DMA_CACHE, 0);
+}
 
 struct buf *
 bufcache_getdirtybuf(void)
@@ -1400,10 +1529,10 @@ bufcache_take(struct buf *bp)
 	int64_t pages;
 
 	splassert(IPL_BIO);
-
 	KASSERT(ISSET(bp->b_flags, B_BC));
 	KASSERT(bp->cache >= DMA_CACHE);
 	KASSERT((bp->cache < NUM_CACHES));
+
 	pages = atop(bp->b_bufsize);
 	struct bufcache *cache = &cleancache[bp->cache];
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
@@ -1459,10 +1588,18 @@ bufcache_release(struct buf *bp)
 	struct bufqueue *queue;
 	int64_t pages;
 	struct bufcache *cache = &cleancache[bp->cache];
+
 	pages = atop(bp->b_bufsize);
 	KASSERT(ISSET(bp->b_flags, B_BC));
-	KASSERT((ISSET(bp->b_flags, B_DMA) && bp->cache == 0)
-	    || ((!ISSET(bp->b_flags, B_DMA)) && bp->cache > 0));
+	if (fliphigh) {
+		if (ISSET(bp->b_flags, B_DMA) && bp->cache > 0)
+			panic("B_DMA buffer release from cache %d",
+			    bp->cache);
+		else if ((!ISSET(bp->b_flags, B_DMA)) && bp->cache == 0)
+			panic("Non B_DMA buffer release from cache %d",
+			    bp->cache);
+	}
+
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		int64_t *queuepages;
 		if (ISSET(bp->b_flags, B_WARM | B_COLD)) {
