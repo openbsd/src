@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.48 2016/10/08 05:52:06 guenther Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.49 2017/04/16 17:16:21 bluhm Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -162,7 +162,11 @@ do {									\
 	panic("BUG at %s:%d", __FILE__, __LINE__);			\
 } while (0)
 
-#define BUG_ON(x) KASSERT(!(x))
+#ifndef DIAGNOSTIC
+#define BUG_ON(x)	((void)(x))
+#else
+#define BUG_ON(x)	KASSERT(!(x))
+#endif
 
 #define BUILD_BUG_ON(x) CTASSERT(!(x))
 #define BUILD_BUG_ON_NOT_POWER_OF_2(x)
