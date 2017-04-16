@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.129 2017/04/15 13:56:43 bluhm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.130 2017/04/16 14:24:03 beck Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -487,6 +487,9 @@ struct bcachestats {
 	int64_t delwribufs;		/* delayed write buffers */
 	int64_t kvaslots;		/* kva slots total */
 	int64_t kvaslots_avail;		/* available kva slots */
+	int64_t highflips;		/* total flips to above DMA */
+	int64_t highflops;		/* total failed flips to above DMA */
+	int64_t dmaflips;		/* total flips from high to DMA */
 };
 #ifdef _KERNEL
 extern struct bcachestats bcstats;
