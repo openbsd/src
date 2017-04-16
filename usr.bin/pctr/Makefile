@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2012/09/12 09:19:54 haesbaert Exp $
+#	$OpenBSD: Makefile,v 1.9 2017/04/16 10:16:35 jsg Exp $
 
 MAN=pctr.1
 
-CFLAGS+=-W -Wall -Werror
+CFLAGS+=-W -Wall
 CDIAGFLAGS=
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"

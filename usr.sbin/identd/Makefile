@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2016/02/01 19:08:33 jca Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/04/16 10:16:35 jsg Exp $
 
 PROG=	identd
 LDADD=	-levent
 DPADD=	${LIBEVENT}
-CFLAGS+= -Wall -Werror
+CFLAGS+= -Wall
 
 MAN=	identd.8
 
