@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.294 2017/02/12 08:56:17 landry Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.295 2017/04/16 08:50:49 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -104,10 +104,6 @@ etc
         private			uname=root mode=0700
         ..
         lib
-        ..
-        acme
-            private		uname=root mode=0700
-            ..
         ..
     ..
 ..
