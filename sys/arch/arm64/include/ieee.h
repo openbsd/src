@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.2 2017/01/11 00:18:22 patrick Exp $ */
+/*	$OpenBSD: ieee.h,v 1.3 2017/04/16 16:14:37 kettenis Exp $ */
 /*	$NetBSD: ieee.h,v 1.1 1996/09/30 16:34:25 ws Exp $ */
 
 /*
@@ -90,6 +90,8 @@
 #define	EXT_FRACLBITS	32
 #define	EXT_FRACBITS	112
 
+#define	EXT_IMPLICIT_NBIT
+
 #define	EXT_TO_ARRAY32(p, a) do {		\
 	(a)[0] = (uint32_t)(p)->ext_fracl;	\
 	(a)[1] = (uint32_t)(p)->ext_fraclm;	\
@@ -108,13 +110,6 @@ struct ieee_double {
 	u_int	dbl_frach:20;
 	u_int	dbl_exp:11;
 	u_int	dbl_sign:1;
-};
-
-struct ieee_ldouble {
-	u_long	ldbl_fracl;
-	u_long	ldbl_frach:20;
-	u_int	ldbl_exp:11;
-	u_int	ldbl_sign:1;
 };
 
 struct ieee_ext {
