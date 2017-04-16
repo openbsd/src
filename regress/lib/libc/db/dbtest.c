@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.14 2015/10/23 18:47:21 mmcc Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.15 2017/04/16 16:04:48 kettenis Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -685,7 +685,7 @@ rfile(name, lenp)
 	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
 	    fstat(fd, &sb))
 		dberr("%s: %s\n", name, strerror(errno));
-	if (sb.st_size > (off_t)SIZE_MAX)
+	if (sb.st_size > (off_t)INT_MAX)
 		dberr("%s: %s\n", name, strerror(E2BIG));
 	if ((p = (void *)malloc((u_int)sb.st_size)) == NULL)
 		dberr("%s", strerror(errno));
