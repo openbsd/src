@@ -1,10 +1,7 @@
-# $OpenBSD: Makefile,v 1.1 2016/09/05 10:56:50 pascal Exp $
+# $OpenBSD: Makefile,v 1.2 2017/04/17 19:58:53 pascal Exp $
 
 PROG=	llc
 NOMAN=
-
-LDADD+=	-ltermlib
-DPADD+=	${LIBTERMLIB}
 
 SRCS=	llc.cpp
 

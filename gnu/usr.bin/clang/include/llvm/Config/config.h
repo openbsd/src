@@ -242,7 +242,7 @@
 #define HAVE_SYS_UIO_H 1
 
 /* Define if the setupterm() function is supported this platform. */
-#define HAVE_TERMINFO 1
+/* #undef HAVE_TERMINFO */
 
 /* Define if the xar_open() function is supported this platform. */
 /* #undef HAVE_LIBXAR */
