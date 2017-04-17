@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.106 2017/03/09 17:06:35 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.107 2017/04/17 06:40:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,7 +100,6 @@ server_redraw_window(struct window *w)
 		if (c->session != NULL && c->session->curw->window == w)
 			server_redraw_client(c);
 	}
-	w->flags |= WINDOW_REDRAW;
 }
 
 void
