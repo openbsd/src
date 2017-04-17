@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.19 2016/09/26 16:55:02 rzalamena Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.20 2017/04/17 16:03:15 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -134,6 +134,7 @@ dns_dispatch_imsg(void)
 	struct ntp_addr		*h, *hn;
 	struct ibuf		*buf;
 	const char		*str;
+	size_t			 len;
 
 	if (((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
 		return (-1);
@@ -155,9 +156,9 @@ dns_dispatch_imsg(void)
 			name = imsg.data;
 			if (imsg.hdr.len < 1 + IMSG_HEADER_SIZE)
 				fatalx("invalid %s received", str);
-			imsg.hdr.len -= 1 + IMSG_HEADER_SIZE;
-			if (name[imsg.hdr.len] != '\0' ||
-			    strlen(name) != imsg.hdr.len)
+			len = imsg.hdr.len - 1 - IMSG_HEADER_SIZE;
+			if (name[len] != '\0' ||
+			    strlen(name) != len)
 				fatalx("invalid %s received", str);
 			if ((cnt = host_dns(name, &hn)) == -1)
 				break;
