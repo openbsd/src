@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.61 2017/04/13 14:59:40 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.62 2017/04/17 18:31:08 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -548,7 +548,7 @@ ssize_t decode_hw_header(struct interface_info *, unsigned char *,
     int, struct hardware *);
 ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
     int, struct sockaddr_in *, int);
-u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
+u_int32_t	checksum(unsigned char *, u_int32_t, u_int32_t);
 u_int32_t	wrapsum(u_int32_t);
 
 /* icmp.c */

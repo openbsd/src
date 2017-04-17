@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.12 2017/02/13 19:13:14 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.13 2017/04/17 18:31:08 krw Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -58,13 +58,10 @@
 #include "dhcpd.h"
 #include "log.h"
 
-u_int32_t	checksum(unsigned char *, unsigned, u_int32_t);
-u_int32_t	wrapsum(u_int32_t);
-
 u_int32_t
-checksum(unsigned char *buf, unsigned nbytes, u_int32_t sum)
+checksum(unsigned char *buf, u_int32_t nbytes, u_int32_t sum)
 {
-	int i;
+	unsigned int i;
 
 	/* Checksum all the pairs of bytes first... */
 	for (i = 0; i < (nbytes & ~1U); i += 2) {
