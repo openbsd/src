@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.234 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.235 2017/04/17 20:48:21 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
-	struct ip *ip;
+	struct ip *ip = NULL;
 	struct udphdr *uh;
 	struct inpcb *inp = NULL;
 	struct mbuf *opts = NULL;
@@ -167,7 +167,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif /* INET6 */
 	} srcsa, dstsa;
 #ifdef INET6
-	struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6 = NULL;
 #endif /* INET6 */
 #ifdef IPSEC
 	struct m_tag *mtag;
@@ -180,31 +180,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif /* define(IPSEC) || defined(PIPEX) */
 
 	udpstat_inc(udps_ipackets);
-
-	switch (mtod(m, struct ip *)->ip_v) {
-	case 4:
-		ip = mtod(m, struct ip *);
-#ifdef INET6
-		ip6 = NULL;
-#endif /* INET6 */
-		srcsa.sa.sa_family = AF_INET;
-#ifdef IPSEC
-		protoff = offsetof(struct ip, ip_p);
-#endif /* IPSEC */
-		break;
-#ifdef INET6
-	case 6:
-		ip = NULL;
-		ip6 = mtod(m, struct ip6_hdr *);
-		srcsa.sa.sa_family = AF_INET6;
-#ifdef IPSEC
-		protoff = offsetof(struct ip6_hdr, ip6_nxt);
-#endif /* IPSEC */
-		break;
-#endif /* INET6 */
-	default:
-		goto bad;
-	}
 
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (!uh) {
@@ -223,7 +198,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	 * If not enough data to reflect UDP length, drop.
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
-	if (ip) {
+	switch (af) {
+	case AF_INET:
 		if (m->m_pkthdr.len - iphlen != len) {
 			if (len > (m->m_pkthdr.len - iphlen) ||
 			    len < sizeof(struct udphdr)) {
@@ -232,9 +208,15 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 			m_adj(m, len - (m->m_pkthdr.len - iphlen));
 		}
-	}
+		ip = mtod(m, struct ip *);
+		/*
+		 * Save a copy of the IP header in case we want restore it
+		 * for sending an ICMP error message in response.
+		 */
+		save_ip = *ip;
+		break;
 #ifdef INET6
-	else if (ip6) {
+	case AF_INET6:
 		/* jumbograms */
 		if (len == 0 && m->m_pkthdr.len - iphlen > 0xffff)
 			len = m->m_pkthdr.len - iphlen;
@@ -242,28 +224,18 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			udpstat_inc(udps_badlen);
 			goto bad;
 		}
-	}
-#endif
-	else /* shouldn't happen */
-		goto bad;
-
-	/*
-	 * Save a copy of the IP header in case we want restore it
-	 * for sending an ICMP error message in response.
-	 */
-	if (ip)
-		save_ip = *ip;
-
-#ifdef INET6
-	if (ip6) {
+		ip6 = mtod(m, struct ip6_hdr *);
 		/* Be proactive about malicious use of IPv4 mapped address */
 		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
 			/* XXX stat */
 			goto bad;
 		}
-	}
+		break;
 #endif /* INET6 */
+	default:
+		unhandled_af(af);
+	}
 
 	/*
 	 * Checksum extended UDP header and data.
@@ -335,14 +307,16 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			skip -= sizeof(struct udphdr);
 
 			espstat.esps_udpencin++;
+			protoff = af == AF_INET ? offsetof(struct ip, ip_p) :
+			    offsetof(struct ip6_hdr, ip6_nxt);
 			ipsec_common_input(m, skip, protoff,
-			    srcsa.sa.sa_family, IPPROTO_ESP, 1);
+			    af, IPPROTO_ESP, 1);
 			return IPPROTO_DONE;
 		}
 	}
 #endif
 
-	switch (srcsa.sa.sa_family) {
+	switch (af) {
 	case AF_INET:
 		bzero(&srcsa, sizeof(struct sockaddr_in));
 		srcsa.sin.sin_len = sizeof(struct sockaddr_in);
@@ -621,7 +595,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		    &tdbi->dst, tdbi->proto);
 	} else
 		tdb = NULL;
-	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
+	ipsp_spd_lookup(m, af, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp, 0);
 	if (error) {
 		udpstat_inc(udps_nosec);
