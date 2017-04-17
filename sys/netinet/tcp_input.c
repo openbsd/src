@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.339 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.340 2017/04/17 20:59:35 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 {
 	struct mbuf *m = *mp;
 	int iphlen = *offp;
-	struct ip *ip;
+	struct ip *ip = NULL;
 	struct inpcb *inp = NULL;
 	u_int8_t *optp = NULL;
 	int optlen = 0;
@@ -399,51 +399,9 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 		goto drop;
 
 	/*
-	 * Before we do ANYTHING, we have to figure out if it's TCP/IPv6 or
-	 * TCP/IPv4.
-	 */
-	switch (mtod(m, struct ip *)->ip_v) {
-#ifdef INET6
-	case 6:
-		af = AF_INET6;
-		break;
-#endif
-	case 4:
-		af = AF_INET;
-		break;
-	default:
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
-
-	/*
 	 * Get IP and TCP header together in first mbuf.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
-	switch (af) {
-	case AF_INET:
-#ifdef DIAGNOSTIC
-		if (iphlen < sizeof(struct ip)) {
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-#endif /* DIAGNOSTIC */
-		break;
-#ifdef INET6
-	case AF_INET6:
-#ifdef DIAGNOSTIC
-		if (iphlen < sizeof(struct ip6_hdr)) {
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
-#endif /* DIAGNOSTIC */
-		break;
-#endif
-	default:
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
-
 	IP6_EXTHDR_GET(th, struct tcphdr *, m, iphlen, sizeof(*th));
 	if (!th) {
 		tcpstat_inc(tcps_rcvshort);
@@ -451,10 +409,6 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	tlen = m->m_pkthdr.len - iphlen;
-	ip = NULL;
-#ifdef INET6
-	ip6 = NULL;
-#endif
 	switch (af) {
 	case AF_INET:
 		ip = mtod(m, struct ip *);
@@ -497,6 +451,8 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		break;
 #endif
+	default:
+		unhandled_af(af);
 	}
 
 	/*
