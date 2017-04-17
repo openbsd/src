@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.104 2017/04/14 18:24:15 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.105 2017/04/17 12:52:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1463,12 +1463,13 @@ pre_lk(DECL_ARGS)
 {
 	const struct roff_node *link, *descr;
 
-	if (NULL == (link = n->child))
+	if ((link = n->child) == NULL)
 		return 0;
 
-	if (NULL != (descr = link->next)) {
+	/* Link text. */
+	if ((descr = link->next) != NULL && !(descr->flags & NODE_DELIMC)) {
 		font_push('I');
-		while (NULL != descr) {
+		while (descr != NULL && !(descr->flags & NODE_DELIMC)) {
 			print_word(descr->string);
 			descr = descr->next;
 		}
@@ -1476,9 +1477,16 @@ pre_lk(DECL_ARGS)
 		print_word(":");
 	}
 
+	/* Link target. */
 	font_push('B');
 	print_word(link->string);
 	font_pop();
+
+	/* Trailing punctuation. */
+	while (descr != NULL) {
+		print_word(descr->string);
+		descr = descr->next;
+	}
 	return 0;
 }
 

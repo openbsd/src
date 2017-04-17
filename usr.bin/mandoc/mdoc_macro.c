@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.174 2017/02/16 09:47:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.175 2017/04/17 12:52:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -901,8 +901,10 @@ in_line(MACRO_PROT_ARGS)
 		}
 	}
 
-	if (scope)
+	if (scope && tok != MDOC_Lk) {
 		rew_elem(mdoc, tok);
+		scope = 0;
+	}
 
 	/*
 	 * If no elements have been collected and we're allowed to have
@@ -922,6 +924,8 @@ in_line(MACRO_PROT_ARGS)
 	}
 	if (nl)
 		append_delims(mdoc, line, pos, buf);
+	if (scope)
+		rew_elem(mdoc, tok);
 }
 
 static void
