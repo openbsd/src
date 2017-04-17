@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.98 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.99 2017/04/17 21:10:03 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -124,6 +124,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct mbuf *opts = NULL;
 	struct counters_ref ref;
 	uint64_t *counters;
+
+	KASSERT(af == AF_INET);
 
 	ripsrc.sin_addr = ip->ip_src;
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {

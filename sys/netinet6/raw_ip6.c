@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.109 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.110 2017/04/17 21:10:03 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -124,6 +124,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct inpcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
+
+	KASSERT(af == AF_INET6);
 
 	rip6stat_inc(rip6s_ipackets);
 
