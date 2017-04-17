@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.12 2016/11/29 17:15:27 mestre Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.13 2017/04/17 16:37:39 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -137,6 +137,7 @@ dns_dispatch_imsg(int fd, short events, void *p)
 	struct imsgev		*iev = env->sc_iev;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	int			 shut = 0;
+	size_t			 len;
 
 	if ((events & (EV_READ | EV_WRITE)) == 0)
 		fatalx("unknown event");
@@ -166,9 +167,9 @@ dns_dispatch_imsg(int fd, short events, void *p)
 			name = imsg.data;
 			if (imsg.hdr.len < 1 + IMSG_HEADER_SIZE)
 				fatalx("invalid IMSG_HOST_DNS received");
-			imsg.hdr.len -= 1 + IMSG_HEADER_SIZE;
-			if (name[imsg.hdr.len] != '\0' ||
-			    strlen(name) != imsg.hdr.len)
+			len = imsg.hdr.len - 1 - IMSG_HEADER_SIZE;
+			if (name[len] != '\0' ||
+			    strlen(name) != len)
 				fatalx("invalid IMSG_HOST_DNS received");
 			if ((cnt = host_dns(name, &hn)) == -1)
 				break;
