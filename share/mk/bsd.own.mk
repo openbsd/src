@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.182 2016/12/18 17:02:21 patrick Exp $
+#	$OpenBSD: bsd.own.mk,v 1.183 2017/04/17 15:53:21 kettenis Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -16,6 +16,7 @@ SKEY?=		yes
 YP?=		yes
 
 CLANG_ARCH=aarch64
+GCC4_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
 GCC3_ARCH=m88k
 
 # m88k: ?
@@ -23,12 +24,28 @@ PIE_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
 STATICPIE_ARCH=alpha amd64 arm hppa i386 mips64 mips64el powerpc sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
-.if !empty(CLANG_ARCH:M${_arch})
-COMPILER_VERSION?=clang
-.elif !empty(GCC3_ARCH:M${_arch})
+.if !empty(GCC3_ARCH:M${_arch})
 COMPILER_VERSION?=gcc3
-.else
+.elif !empty(GCC4_ARCH:M${_arch})
 COMPILER_VERSION?=gcc4
+.elif !empty(CLANG_ARCH:M${_arch})
+COMPILER_VERSION?=clang
+.endif
+
+.if !empty(GCC3_ARCH:M${_arch})
+BUILD_GCC3?=yes
+.else
+BUILD_GCC3?=no
+.endif
+.if !empty(GCC4_ARCH:M${_arch})
+BUILD_GCC4?=yes
+.else
+BUILD_GCC4?=no
+.endif
+.if !empty(CLANG_ARCH:M${_arch})
+BUILD_CLANG?=yes
+.else
+BUILD_CLANG?=no
 .endif
 
 .if !empty(STATICPIE_ARCH:M${_arch})

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.218 2017/03/12 23:28:13 guenther Exp $
+#	$OpenBSD: Makefile,v 1.219 2017/04/17 15:53:21 kettenis Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -42,13 +42,15 @@ RDIRS=	../lib/libcurses ../lib/libedit \
 	../usr.bin/lex ../gnu/lib/libreadline \
 	../sys/arch/${MACHINE}
 
-.if ${COMPILER_VERSION:L} == "gcc3"
+.if ${BUILD_GCC3:L} == "yes"
 RDIRS+= ../gnu/usr.bin/gcc ../gnu/lib/libobjc
 PRDIRS+= ../gnu/lib/libstdc++
-.elif ${COMPILER_VERSION:L} == "gcc4"
+.endif
+.if ${BUILD_GCC4:L} == "yes"
 RDIRS+= ../gnu/usr.bin/cc/libobjc
 PRDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/include
-.elif ${COMPILER_VERSION:L} == "clang"
+.endif
+.if ${BUILD_CLANG:L} == "yes"
 RDIRS+= ../lib/libcxxabi ../lib/libcxx
 .endif
 

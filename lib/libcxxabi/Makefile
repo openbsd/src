@@ -1,8 +1,13 @@
-# $OpenBSD: Makefile,v 1.7 2017/04/06 09:28:29 kettenis Exp $
+# $OpenBSD: Makefile,v 1.8 2017/04/17 15:53:21 kettenis Exp $
 
 .include <bsd.own.mk>
 
-.if ${COMPILER_VERSION:L} == "clang"
+.if ${COMPILER_VERSION:L} != "clang"
+CC=		clang
+CXX=		clang++
+.endif
+
+.if ${BUILD_CLANG:L} == "yes"
 
 HDRDIR=		${.CURDIR}/include
 SRCDIR=		${.CURDIR}/src
