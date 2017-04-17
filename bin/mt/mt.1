@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.28 2010/09/03 13:14:55 jmc Exp $
+.\"	$OpenBSD: mt.1,v 1.29 2017/04/17 22:42:57 jmc Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: April 17 2017 $
 .Dt MT 1
 .Os
 .Sh NAME
@@ -176,8 +176,6 @@ is not given.
 .Bl -tag -width /usr/src/sys/scsi/scsi_tape.h -compact
 .It Pa /dev/rst*
 raw SCSI tape interface
-.It Pa /dev/rmt*
-raw magnetic tape interface
 .It Pa /usr/src/sys/scsi/scsi_tape.h
 list of SCSI2 density codes
 .El
