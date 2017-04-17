@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.60 2017/03/20 21:11:21 tb Exp $
+ * $OpenBSD: skeylogin.c,v 1.61 2017/04/17 21:55:20 deraadt Exp $
  */
 
 #ifdef	QUOTA
@@ -474,8 +474,7 @@ skey_fakeprompt(char *username, char *skeyprompt)
 		/* Sequence number */
 		ptr = ((up[2] + up[3]) % 99) + 1;
 
-		explicit_bzero(up, 20); /* SHA1 specific */
-		free(up);
+		freezero(up, 20); /* SHA1 specific */
 
 		(void)snprintf(skeyprompt, SKEY_MAX_CHALLENGE,
 		    "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
