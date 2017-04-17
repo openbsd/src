@@ -1,7 +1,7 @@
-/*	$OpenBSD: mansearch.h,v 1.21 2016/08/01 10:32:39 schwarze Exp $ */
+/*	$OpenBSD: mansearch.h,v 1.22 2017/04/17 20:04:26 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,9 @@
 #define	MANDOCDB_VERSION 1
 
 #define	MACRO_MAX	 36
+#define	KEY_arch	 0
+#define	KEY_sec		 1
+#define	KEY_Nm		 38
 #define	KEY_Nd		 39
 #define	KEY_MAX		 40
 
