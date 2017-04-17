@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.201 2017/03/16 10:42:01 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.202 2017/04/17 10:29:01 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -665,6 +665,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * to see if the address is deprecated or invalidated, but initialize
 	 * these members for applications.
 	 */
+	ia6->ia6_updatetime = time_uptime;
 	ia6->ia6_lifetime = ifra->ifra_lifetime;
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_expire =
