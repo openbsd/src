@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.295 2017/04/16 08:50:49 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.296 2017/04/17 21:45:34 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -134,10 +134,6 @@ usr
         arpa			gname=bin uname=root mode=0755
         ..
         g++			gname=bin uname=root mode=0755
-            std			gname=bin uname=root mode=0755
-            ..
-        ..
-        objc			gname=bin uname=root mode=0755
         ..
         openssl			gname=bin uname=root mode=0755
         ..
