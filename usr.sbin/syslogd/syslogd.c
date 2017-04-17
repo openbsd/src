@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.241 2017/04/07 15:36:16 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.242 2017/04/17 14:18:44 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -209,6 +209,7 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	PrivChild = 0;		/* Exec the privileged parent process */
+int	Repeat = 0;		/* 0 msg repeated, 1 in files only, 2 never */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, refrain from doing DNS lookups */
 int	ZuluTime = 0;		/* display date and time in UTC ISO format */
@@ -369,8 +370,8 @@ main(int argc, char *argv[])
 	tls_hostport = tls_host = NULL;
 	nbind = nlisten = 0;
 
-	while ((ch = getopt(argc, argv, "46a:C:c:dFf:hK:k:m:nP:p:S:s:T:U:uVZ"))
-	    != -1)
+	while ((ch = getopt(argc, argv,
+	    "46a:C:c:dFf:hK:k:m:nP:p:rS:s:T:U:uVZ")) != -1) {
 		switch (ch) {
 		case '4':		/* disable IPv6 */
 			Family = PF_INET;
@@ -425,6 +426,9 @@ main(int argc, char *argv[])
 		case 'p':		/* path */
 			path_unix[0] = optarg;
 			break;
+		case 'r':
+			Repeat++;
+			break;
 		case 'S':		/* allow tls and listen on address */
 			tls_hostport = optarg;
 			if ((p = strdup(optarg)) == NULL)
@@ -455,6 +459,7 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	if (argc != optind)
 		usage();
 
@@ -1490,10 +1495,10 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-46dFhnuVZ] [-a path] [-C CAfile] [-c cert_file]\n"
-	    "\t[-f config_file] [-K CAfile] [-k key_file] [-m mark_interval]\n"
-	    "\t[-p log_socket] [-S listen_address] [-s reporting_socket]\n"
-	    "\t[-T listen_address] [-U bind_address]\n");
+	    "usage: syslogd [-46dFhnruVZ] [-a path] [-C CAfile]\n"
+	    "\t[-c cert_file] [-f config_file] [-K CAfile] [-k key_file]\n"
+	    "\t[-m mark_interval] [-p log_socket] [-S listen_address]\n"
+	    "\t[-s reporting_socket] [-T listen_address] [-U bind_address]\n");
 	exit(1);
 }
 
@@ -1766,7 +1771,10 @@ logline(int pri, int flags, char *from, char *msg)
 		/*
 		 * suppress duplicate lines to this file
 		 */
-		if ((flags & MARK) == 0 && msglen == f->f_prevlen &&
+		if ((Repeat == 0 || (Repeat == 1 &&
+		    (f->f_type != F_PIPE && f->f_type != F_FORWUDP &&
+		    f->f_type != F_FORWTCP && f->f_type != F_FORWTLS))) &&
+		    (flags & MARK) == 0 && msglen == f->f_prevlen &&
 		    !strcmp(msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
 			strlcpy(f->f_lasttime, timestamp,
