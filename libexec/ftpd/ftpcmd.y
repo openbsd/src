@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.64 2016/08/26 06:32:10 tedu Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.65 2017/04/17 21:49:01 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ cmd
 	| PASS SP password CRLF
 		{
 			quit = monitor_pass($3);
-			memset($3, 0, strlen($3));
+			explicit_bzero($3, strlen($3));
 			free($3);
 
 			/* Terminate unprivileged pre-auth slave */
