@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: checkflist,v 1.12 2014/08/26 20:19:26 rpe Exp $
+#	$OpenBSD: checkflist,v 1.13 2017/04/17 19:44:59 deraadt Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -38,6 +38,12 @@ arch=`machine`
 
 for i in base comp etc game man; do
 	cat ./lists/$i/mi ./lists/$i/md.${arch}
+	if [ $i = comp ]; then
+		[ -f ./lists/comp/gcc.${arch} ] && \
+		    cat ./lists/comp/gcc.${arch}
+		[ -f ./lists/comp/clang.${arch} ] && \
+		    cat ./lists/comp/clang.${arch}
+	fi
 done | sort >$TMP1
 
 ( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) | \

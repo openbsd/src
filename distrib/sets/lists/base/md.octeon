@@ -448,3 +448,5 @@
 ./usr/local/libdata/perl5/site_perl/mips64-openbsd
 ./usr/sbin/eeprom
 ./usr/sbin/pcidump
+./usr/lib/libstdc++.so.57.0
+./usr/lib/libobjc.so.6.0

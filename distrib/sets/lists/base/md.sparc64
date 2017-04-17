@@ -495,3 +495,5 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/lib/libstdc++.so.57.0
+./usr/lib/libobjc.so.6.0

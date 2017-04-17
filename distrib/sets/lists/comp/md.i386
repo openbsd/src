@@ -663,3 +663,7 @@
 ./usr/libdata/ldscripts/elf_i386_obsd.xw
 ./usr/libdata/ldscripts/elf_i386_obsd.xz
 ./usr/share/info/bfd.info
+./usr/bin/clang
+./usr/bin/clang++
+./usr/bin/clang-cpp
+./usr/bin/ld.lld

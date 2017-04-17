@@ -631,7 +631,6 @@
 ./usr/lib/libmenuw.so.6.0
 ./usr/lib/libncurses.so.14.0
 ./usr/lib/libncursesw.so.14.0
-./usr/lib/libobjc.so.6.0
 ./usr/lib/libossaudio.so.4.0
 ./usr/lib/libpanel.so.6.0
 ./usr/lib/libpanelw.so.6.0
@@ -644,7 +643,6 @@
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.6.1
 ./usr/lib/libssl.so.43.2
-./usr/lib/libstdc++.so.57.0
 ./usr/lib/libtermcap.so.14.0
 ./usr/lib/libtermlib.so.14.0
 ./usr/lib/libtls.so.15.5
