@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.3 2016/11/25 12:43:26 gerhard Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.4 2017/04/18 13:27:55 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -339,6 +339,11 @@ struct umb_softc {
 	int			 sc_maxpktlen;
 	int			 sc_maxsessions;
 
+	int			 sc_maxdgram;
+	int			 sc_align;
+	int			 sc_ndp_div;
+	int			 sc_ndp_remainder;
+
 #define UMBFLG_FCC_AUTH_REQUIRED	0x0001
 	uint32_t		 sc_flags;
 	int			 sc_cid;
@@ -368,7 +373,7 @@ struct umb_softc {
 	void			*sc_tx_buf;
 	int			 sc_tx_bufsz;
 	struct usbd_pipe	*sc_tx_pipe;
-	struct mbuf		*sc_tx_m;
+	struct mbuf_list	 sc_tx_ml;
 	uint32_t		 sc_tx_seq;
 
 	uint32_t		 sc_tid;
