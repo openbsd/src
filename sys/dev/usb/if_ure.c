@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.5 2017/03/30 07:23:50 kettenis Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.6 2017/04/18 00:18:51 jmatthew Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -398,17 +398,25 @@ ure_iff(struct ure_softc *sc)
 	if (usbd_is_dying(sc->ure_udev))
 		return;
 
+	rxmode = ure_read_4(sc, URE_PLA_RCR, URE_MCU_TYPE_PLA);
+	rxmode &= ~URE_RCR_ACPT_ALL;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	rxmode = URE_RCR_APM;
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxmode |= URE_RCR_AB;
+
+	/*
+	 * Always accept frames destined to our station address.
+	 * Always accept broadcast frames.
+	 */
+	rxmode |= URE_RCR_APM | URE_RCR_AB;
+
 	if (ifp->if_flags & IFF_PROMISC || sc->ure_ac.ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
+		rxmode |= URE_RCR_AM;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxmode |= URE_RCR_AAP;
-		rxmode |= URE_RCR_AM;
 		hashes[0] = hashes[1] = 0xffffffff;
 	} else {
+		rxmode |= URE_RCR_AM;
+
 		ETHER_FIRST_MULTI(step, &sc->ure_ac, enm);
 		while (enm != NULL) {
 			hash = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN)
@@ -424,7 +432,6 @@ ure_iff(struct ure_softc *sc)
 		hash = swap32(hashes[0]);
 		hashes[0] = swap32(hashes[1]);
 		hashes[1] = hash;
-		rxmode |= URE_RCR_AM;
 	}
 
 	ure_write_4(sc, URE_PLA_MAR0, URE_MCU_TYPE_PLA, hashes[0]);
