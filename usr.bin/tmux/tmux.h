@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.735 2017/04/17 06:40:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.736 2017/04/18 15:44:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1043,6 +1043,7 @@ struct tty {
 	struct evbuffer	*in;
 	struct event	 event_out;
 	struct evbuffer	*out;
+	size_t		 written;
 
 	struct termios	 tio;
 

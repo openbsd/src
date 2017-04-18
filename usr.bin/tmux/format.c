@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.124 2017/04/05 10:49:46 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.125 2017/04/18 15:44:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1154,6 +1154,7 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 
 	format_add_tv(ft, "client_created", &c->creation_time);
 	format_add_tv(ft, "client_activity", &c->activity_time);
+	format_add(ft, "client_written", "%zu", tty->written);
 
 	name = server_client_get_key_table(c);
 	if (strcmp(c->keytable->name, name) == 0)
