@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.53 2017/04/17 20:04:26 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.54 2017/04/18 13:57:12 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -513,6 +513,8 @@ buildoutput(size_t im, struct dbm_page *page)
 		output = mandoc_malloc(sz);
 		i = 0;
 		lstcat(output, &i, input, " # ");
+		output[i++] = '\0';
+		assert(i == sz);
 		return output;
 	}
 
