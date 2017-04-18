@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.44 2017/04/18 03:25:22 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.45 2017/04/18 03:28:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.44 2017/04/18 03:25:22 yasuoka Exp $
+ * $Id: npppd.c,v 1.45 2017/04/18 03:28:04 yasuoka Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -235,9 +235,12 @@ npppd_get_npppd()
 int
 npppd_init(npppd *_this, const char *config_file)
 {
-	int i, status = -1;
-	const char *pidpath0;
-	FILE *pidfp = NULL;
+	int		 i, status = -1, value;
+	const char	*pidpath0;
+	FILE		*pidfp = NULL;
+	struct tunnconf	*tunn;
+	int		 mib[] = { CTL_NET, PF_PIPEX, PIPEXCTL_ENABLE };
+	size_t		 size;
 
 	memset(_this, 0, sizeof(npppd));
 #ifndef	NO_ROUTE_FOR_POOLED_ADDRESS
@@ -286,6 +289,17 @@ npppd_init(npppd *_this, const char *config_file)
 	/* load configuration */
 	if ((status = npppd_reload_config(_this)) != 0)
 		return status;
+
+	TAILQ_FOREACH(tunn, &_this->conf.tunnconfs, entry) {
+		if (tunn->pipex) {
+			size = sizeof(value);
+			if (!sysctl(mib, nitems(mib), &value, &size, NULL, 0)
+			    && value == 0)
+				log_printf(LOG_WARNING,
+					"pipex(4) is disabled by sysctl");
+			break;
+		}
+	}
 
 	if ((_this->map_user_ppp = hash_create(
 	    (int (*) (const void *, const void *))strcmp, str_hash,
