@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.34 2016/09/04 14:39:32 florian Exp $ */
+/*	$OpenBSD: identd.c,v 1.35 2017/04/18 03:54:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -128,7 +128,6 @@ void	identd_response(int, short, void *);
 int	fetchuid(struct ident_client *);
 
 const char *gethost(struct sockaddr_storage *);
-const char *getport(struct sockaddr_storage *);
 const char *gentoken(void);
 
 struct loggers {
@@ -1146,19 +1145,6 @@ gethost(struct sockaddr_storage *ss)
 
 	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf),
 	    NULL, 0, NI_NUMERICHOST) != 0)
-		return ("(unknown)");
-
-	return (buf);
-}
-
-const char *
-getport(struct sockaddr_storage *ss)
-{
-	struct sockaddr *sa = (struct sockaddr *)ss;
-	static char buf[NI_MAXSERV];
-
-	if (getnameinfo(sa, sa->sa_len, NULL, 0, buf, sizeof(buf),
-	    NI_NUMERICSERV) != 0)
 		return ("(unknown)");
 
 	return (buf);
