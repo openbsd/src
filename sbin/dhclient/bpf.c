@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.47 2017/02/12 15:53:15 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.48 2017/04/18 13:44:03 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -350,12 +350,12 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 	 */
 	do {
 		/* If the buffer is empty, fill it. */
-		if (ifi->rbuf_offset == ifi->rbuf_len) {
+		if (ifi->rbuf_offset >= ifi->rbuf_len) {
 			length = read(ifi->bfdesc, ifi->rbuf, ifi->rbuf_max);
 			if (length <= 0)
 				return (length);
 			ifi->rbuf_offset = 0;
-			ifi->rbuf_len = BPF_WORDALIGN(length);
+			ifi->rbuf_len = length;
 		}
 
 		/*
