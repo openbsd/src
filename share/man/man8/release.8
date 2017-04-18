@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.86 2017/01/24 14:08:53 tb Exp $
+.\"	$OpenBSD: release.8,v 1.87 2017/04/18 13:21:36 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: April 18 2017 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -128,7 +128,16 @@ Reboot.
 .Ss 3. Build a new base system
 The build process will place the object files in a tree under
 .Pa /usr/obj .
-This directory should be empty and owned by build:wobj with mode 770.
+This directory must be owned by build:wobj with mode 770.
+.Pp
+The first time, the
+.Pa /usr/obj
+directory
+.Em must be
+cleaned out completely before proceeding to avoid permission issues.
+After a succesful
+.Nm
+build, this is no longer needed.
 .Pp
 Create the tree of obj directories and begin the build:
 .Bd -literal -offset indent
