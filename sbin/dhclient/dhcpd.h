@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.170 2017/04/11 10:40:14 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.171 2017/04/18 13:59:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -254,9 +254,8 @@ void routehandler(struct interface_info *);
 
 /* packet.c */
 void assemble_eh_header(struct interface_info *, struct ether_header *);
-ssize_t decode_hw_header(unsigned char *, int, struct ether_addr *);
-ssize_t decode_udp_ip_header(unsigned char *, int, struct sockaddr_in *,
-    u_int32_t);
+ssize_t decode_hw_header(unsigned char *, u_int32_t, struct ether_addr *);
+ssize_t decode_udp_ip_header(unsigned char *, u_int32_t, struct sockaddr_in *);
 u_int32_t checksum(unsigned char *, u_int32_t, u_int32_t);
 u_int32_t wrapsum(u_int32_t);
 
