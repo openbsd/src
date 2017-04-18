@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: makelocatedb,v 1.1 2014/07/09 19:23:28 espie Exp $
+#	$OpenBSD: makelocatedb,v 1.2 2017/04/18 07:13:39 espie Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -35,8 +35,15 @@ fi
 arch=`machine`
 lists=`pwd`/lists
 
+cd ${lists}
 for i in base comp etc game man; do
-	cat ${lists}/$i/mi ${lists}/$i/md.${arch} | \
+	{
+	case $i in
+		comp)
+		    [ -f $i/gcc.${arch} ] && cat $i/gcc.${arch}
+		    [ -f $i/clang.${arch} ] && cat $i/clang.${arch}
+		;;
+	esac; cat $i/mi $i/md.${arch} ; } | \
 	    sed -e "s,^\.,$i${RELEASE}:,"
 done | sort | /usr/libexec/locate.mklocatedb
 
