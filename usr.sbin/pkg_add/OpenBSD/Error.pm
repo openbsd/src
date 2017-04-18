@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.31 2012/04/28 15:22:49 espie Exp $
+# $OpenBSD: Error.pm,v 1.32 2017/04/18 15:12:00 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,9 @@ sub fillup_names
 
 	for my $sym (keys %POSIX::) {
 		next unless $sym =~ /^SIG([A-Z].*)/;
-		$signal_name[eval "&POSIX::$sym()"] = $1;
+		my $i = eval "&POSIX::$sym()";
+		next unless defined $i;
+		$signal_name[$i] = $1;
 	}
 	# extra BSD signals
 	$signal_name[5] = 'TRAP';
@@ -113,7 +115,7 @@ sub find_signal
 
 sub child_error
 {
-	my $error = $?;
+	my $error = shift // $?;
 
 	my $extra = "";
 
