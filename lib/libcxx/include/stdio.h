@@ -121,6 +121,8 @@ extern "C++" {
 #undef clearerr
 #undef feof
 #undef ferror
+#undef putchar
+#undef getchar
 
 #endif
 
