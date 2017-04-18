@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.296 2017/04/17 21:45:34 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.297 2017/04/18 15:15:09 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -132,8 +132,6 @@ usr
     # ./usr/include
     include			gname=bin uname=root mode=0755
         arpa			gname=bin uname=root mode=0755
-        ..
-        g++			gname=bin uname=root mode=0755
         ..
         openssl			gname=bin uname=root mode=0755
         ..
