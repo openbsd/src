@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.222 2017/04/17 16:36:35 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.223 2017/04/18 15:46:44 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2018,6 +2018,9 @@ omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill, voi
 		else
 			memset(p, SOME_JUNK, psz - mopts.malloc_guard);
 	}
+	else if (mopts.chunk_canaries)
+		fill_canary(p, sz - mopts.malloc_guard,
+		    psz - mopts.malloc_guard);
 
 	return p;
 }
