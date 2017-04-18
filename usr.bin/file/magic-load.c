@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.23 2016/05/01 14:57:15 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.24 2017/04/18 14:16:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -78,9 +78,7 @@ magic_make_pattern(struct magic_line *ml, const char *name, regex_t *re,
 static int
 magic_set_result(struct magic_line *ml, const char *s)
 {
-	const char	*fmt;
-	const char	*endfmt;
-	const char	*cp;
+	const char	*fmt, *endfmt, *cp;
 	regex_t		*re = NULL;
 	regmatch_t	 pmatch;
 	size_t		 fmtlen;
