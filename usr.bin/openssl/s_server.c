@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.25 2017/01/20 08:57:12 deraadt Exp $ */
+/* $OpenBSD: s_server.c,v 1.26 2017/04/18 02:15:50 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1590,10 +1590,7 @@ err:
 		SSL_free(con);
 	}
 	BIO_printf(bio_s_out, "CONNECTION CLOSED\n");
-	if (buf != NULL) {
-		explicit_bzero(buf, bufsize);
-		free(buf);
-	}
+	freezero(buf, bufsize);
 	if (ret >= 0)
 		BIO_printf(bio_s_out, "ACCEPT\n");
 	return (ret);

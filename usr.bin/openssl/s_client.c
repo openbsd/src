@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.31 2017/01/24 09:07:40 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.32 2017/04/18 02:15:50 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1266,18 +1266,9 @@ end:
 	free(pass);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
-	if (cbuf != NULL) {
-		explicit_bzero(cbuf, BUFSIZZ);
-		free(cbuf);
-	}
-	if (sbuf != NULL) {
-		explicit_bzero(sbuf, BUFSIZZ);
-		free(sbuf);
-	}
-	if (mbuf != NULL) {
-		explicit_bzero(mbuf, BUFSIZZ);
-		free(mbuf);
-	}
+	freezero(cbuf, BUFSIZZ);
+	freezero(sbuf, BUFSIZZ);
+	freezero(mbuf, BUFSIZZ);
 	if (bio_c_out != NULL) {
 		BIO_free(bio_c_out);
 		bio_c_out = NULL;

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.42 2017/01/21 09:29:09 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.43 2017/04/18 02:15:50 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -397,10 +397,7 @@ password_callback(char *buf, int bufsiz, int verify, void *arg)
 			} while (ok < 0 &&
 			    UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
 
-		if (buff) {
-			explicit_bzero(buff, (unsigned int) bufsiz);
-			free(buff);
-		}
+		freezero(buff, (unsigned int) bufsiz);
 		if (ok >= 0)
 			res = strlen(buf);
 		if (ok == -1) {
