@@ -224,11 +224,11 @@
 ./usr/lib/clang/4.0.0/include/xsaveoptintrin.h
 ./usr/lib/clang/4.0.0/include/xsavesintrin.h
 ./usr/lib/clang/4.0.0/include/xtestintrin.h
-./usr/share/man/man1/clang++.1
-./usr/share/man/man1/clang-cpp.1
-./usr/share/man/man1/clang.1
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
 ./usr/lib/libc++abi_p.a
 ./usr/lib/libcompiler_rt.a
+./usr/share/man/man1/clang++.1
+./usr/share/man/man1/clang-cpp.1
+./usr/share/man/man1/clang.1

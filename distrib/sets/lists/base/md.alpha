@@ -66,6 +66,8 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd6.1/4.2.1/collect2
 ./usr/lib/gcc-lib/alpha-unknown-openbsd6.1/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/alpha-unknown-openbsd6.1/4.2.1/specs
+./usr/lib/libobjc.so.6.0
+./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/.packlist
 ./usr/libdata/perl5/alpha-openbsd/B
@@ -508,5 +510,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/lib/libstdc++.so.57.0
-./usr/lib/libobjc.so.6.0

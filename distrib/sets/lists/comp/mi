@@ -1495,6 +1495,7 @@
 ./usr/lib/rcrt0.o
 ./usr/libexec/cpp
 ./usr/sbin/kgmon
+./usr/share/info/binutils.info
 ./usr/share/man/man1/addr2line.1
 ./usr/share/man/man1/ar.1
 ./usr/share/man/man1/c++filt.1
@@ -2844,4 +2845,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/share/info/binutils.info
