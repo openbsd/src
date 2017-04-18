@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -470,17 +470,14 @@ v_end(GS *gp)
 		/* Free FREF's. */
 		while ((frp = TAILQ_FIRST(&gp->frefq))) {
 			TAILQ_REMOVE(&gp->frefq, frp, q);
-			if (frp->name != NULL)
-				free(frp->name);
-			if (frp->tname != NULL)
-				free(frp->tname);
+			free(frp->name);
+			free(frp->tname);
 			free(frp);
 		}
 	}
 
 	/* Free key input queue. */
-	if (gp->i_event != NULL)
-		free(gp->i_event);
+	free(gp->i_event);
 
 	/* Free cut buffers. */
 	cut_close(gp);
@@ -514,8 +511,7 @@ v_end(GS *gp)
 
 #if defined(DEBUG) || defined(PURIFY)
 	/* Free any temporary space. */
-	if (gp->tmp_bp != NULL)
-		free(gp->tmp_bp);
+	free(gp->tmp_bp);
 
 #if defined(DEBUG)
 	/* Close debugging file descriptor. */

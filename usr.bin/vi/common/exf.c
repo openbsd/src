@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.44 2016/08/01 18:27:35 bentley Exp $	*/
+/*	$OpenBSD: exf.c,v 1.45 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,8 +76,7 @@ file_add(SCR *sp, CHAR_T *name)
 		TAILQ_FOREACH_SAFE(frp, &gp->frefq, q, tfrp) {
 			if (frp->name == NULL) {
 				TAILQ_REMOVE(&gp->frefq, frp, q);
-				if (frp->name != NULL)
-					free(frp->name);
+				free(frp->name);
 				free(frp);
 				continue;
 			}
@@ -197,8 +196,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 			F_SET(frp, FR_TMPFILE);
 		if ((frp->tname = strdup(tname)) == NULL ||
 		    (frp->name == NULL && (frp->name = strdup(tname)) == NULL)) {
-			if (frp->tname != NULL)
-				free(frp->tname);
+			free(frp->tname);
 			msgq(sp, M_SYSERR, NULL);
 			(void)unlink(tname);
 			goto err;
@@ -410,10 +408,9 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 
 	return (0);
 
-err:	if (frp->name != NULL) {
-		free(frp->name);
-		frp->name = NULL;
-	}
+err:
+	free(frp->name);
+	frp->name = NULL;
 	if (frp->tname != NULL) {
 		(void)unlink(frp->tname);
 		free(frp->tname);
@@ -422,10 +419,8 @@ err:	if (frp->name != NULL) {
 
 oerr:	if (F_ISSET(ep, F_RCV_ON))
 		(void)unlink(ep->rcv_path);
-	if (ep->rcv_path != NULL) {
-		free(ep->rcv_path);
-		ep->rcv_path = NULL;
-	}
+	free(ep->rcv_path);
+	ep->rcv_path = NULL;
 	if (ep->db != NULL)
 		(void)ep->db->close(ep->db);
 	free(ep);
@@ -659,8 +654,7 @@ file_end(SCR *sp, EXF *ep, int force)
 		frp->tname = NULL;
 		if (F_ISSET(frp, FR_TMPFILE)) {
 			TAILQ_REMOVE(&sp->gp->frefq, frp, q);
-			if (frp->name != NULL)
-				free(frp->name);
+			free(frp->name);
 			free(frp);
 		}
 		sp->frp = NULL;
@@ -704,11 +698,8 @@ file_end(SCR *sp, EXF *ep, int force)
 		(void)close(ep->fcntl_fd);
 	if (ep->rcv_fd != -1)
 		(void)close(ep->rcv_fd);
-	if (ep->rcv_path != NULL)
-		free(ep->rcv_path);
-	if (ep->rcv_mpath != NULL)
-		free(ep->rcv_mpath);
-
+	free(ep->rcv_path);
+	free(ep->rcv_mpath);
 	free(ep);
 	return (0);
 }
@@ -1358,8 +1349,7 @@ file_aw(SCR *sp, int flags)
 void
 set_alt_name(SCR *sp, char *name)
 {
-	if (sp->alt_name != NULL)
-		free(sp->alt_name);
+	free(sp->alt_name);
 	if (name == NULL)
 		sp->alt_name = NULL;
 	else if ((sp->alt_name = strdup(name)) == NULL)

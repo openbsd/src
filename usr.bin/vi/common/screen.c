@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.13 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: screen.c,v 1.14 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -176,22 +176,17 @@ screen_end(SCR *sp)
 		text_lfree(&sp->tiq);
 
 	/* Free alternate file name. */
-	if (sp->alt_name != NULL)
-		free(sp->alt_name);
+	free(sp->alt_name);
 
 	/* Free up search information. */
-	if (sp->re != NULL)
-		free(sp->re);
+	free(sp->re);
 	if (F_ISSET(sp, SC_RE_SEARCH))
 		regfree(&sp->re_c);
-	if (sp->subre != NULL)
-		free(sp->subre);
+	free(sp->subre);
 	if (F_ISSET(sp, SC_RE_SUBST))
 		regfree(&sp->subre_c);
-	if (sp->repl != NULL)
-		free(sp->repl);
-	if (sp->newl != NULL)
-		free(sp->newl);
+	free(sp->repl);
+	free(sp->newl);
 
 	/* Free all the options */
 	opts_free(sp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_init.c,v 1.7 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: v_init.c,v 1.8 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -81,16 +81,10 @@ v_screen_end(SCR *sp)
 
 	if ((vip = VIP(sp)) == NULL)
 		return (0);
-	if (vip->keyw != NULL)
-		free(vip->keyw);
-	if (vip->rep != NULL)
-		free(vip->rep);
-	if (vip->ps != NULL)
-		free(vip->ps);
-
-	if (HMAP != NULL)
-		free(HMAP);
-
+	free(vip->keyw);
+	free(vip->rep);
+	free(vip->ps);
+	free(HMAP);
 	free(vip);
 	sp->vi_private = NULL;
 

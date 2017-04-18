@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.29 2016/09/02 15:38:42 martijn Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.30 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -187,8 +187,7 @@ subagain:	return (ex_subagain(sp, cmdp));
 	if (p[0] == '\0' || p[0] == delim) {
 		if (p[0] == delim)
 			++p;
-		if (sp->repl != NULL)
-			free(sp->repl);
+		free(sp->repl);
 		sp->repl = NULL;
 		sp->repl_len = 0;
 	} else if (p[0] == '%' && (p[1] == '\0' || p[1] == delim))
@@ -227,8 +226,7 @@ tilde:				++p;
 			++len;
 		}
 		if ((sp->repl_len = len) != 0) {
-			if (sp->repl != NULL)
-				free(sp->repl);
+			free(sp->repl);
 			if ((sp->repl = malloc(len)) == NULL) {
 				msgq(sp, M_SYSERR, NULL);
 				FREE_SPACE(sp, bp, blen);
@@ -857,8 +855,7 @@ err:		rval = 1;
 
 	if (bp != NULL)
 		FREE_SPACE(sp, bp, blen);
-	if (lb != NULL)
-		free(lb);
+	free(lb);
 	return (rval);
 }
 
@@ -917,10 +914,8 @@ re_compile(SCR *sp, char *ptrn, size_t plen, char **ptrnp, size_t *lenp,
 				return (1);
 
 		/* Discard previous pattern. */
-		if (*ptrnp != NULL) {
-			free(*ptrnp);
-			*ptrnp = NULL;
-		}
+		free(*ptrnp);
+		*ptrnp = NULL;
 		if (lenp != NULL)
 			*lenp = plen;
 

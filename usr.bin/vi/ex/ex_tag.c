@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.24 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.25 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -102,8 +102,7 @@ ex_tag_push(SCR *sp, EXCMD *cmdp)
 	exp = EXP(sp);
 	switch (cmdp->argc) {
 	case 1:
-		if (exp->tag_last != NULL)
-			free(exp->tag_last);
+		free(exp->tag_last);
 
 		if ((exp->tag_last = strdup(cmdp->argv[0]->bp)) == NULL) {
 			msgq(sp, M_SYSERR, NULL);
@@ -208,10 +207,8 @@ ex_tag_push(SCR *sp, EXCMD *cmdp)
 
 err:
 alloc_err:
-	if (rtqp != NULL)
-		free(rtqp);
-	if (rtp != NULL)
-		free(rtp);
+	free(rtqp);
+	free(rtp);
 	tagq_free(sp, tqp);
 	return (1);
 }
@@ -861,8 +858,7 @@ ex_tag_free(SCR *sp)
 		tagq_free(sp, tqp);	/* tagq_free removes tqp from queue. */
 	while ((tfp = TAILQ_FIRST(&exp->tagfq)) != NULL)
 		tagf_free(sp, tfp);
-	if (exp->tag_last != NULL)
-		free(exp->tag_last);
+	free(exp->tag_last);
 	return (0);
 }
 

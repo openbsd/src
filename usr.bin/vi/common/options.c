@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.22 2016/08/01 18:27:35 bentley Exp $	*/
+/*	$OpenBSD: options.c,v 1.23 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -1129,9 +1129,7 @@ opts_free(SCR *sp)
 		if (optlist[cnt].type != OPT_STR ||
 		    F_ISSET(&optlist[cnt], OPT_GLOBAL))
 			continue;
-		if (O_STR(sp, cnt) != NULL)
-			free(O_STR(sp, cnt));
-		if (O_D_STR(sp, cnt) != NULL)
-			free(O_D_STR(sp, cnt));
+		free(O_STR(sp, cnt));
+		free(O_D_STR(sp, cnt));
 	}
 }

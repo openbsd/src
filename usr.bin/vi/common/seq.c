@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.13 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: seq.c,v 1.14 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -58,8 +58,7 @@ seq_set(SCR *sp, CHAR_T *name, size_t nlen, CHAR_T *input, size_t ilen,
 			sv_errno = errno;
 			goto mem1;
 		}
-		if (qp->output != NULL)
-			free(qp->output);
+		free(qp->output);
 		qp->olen = olen;
 		qp->output = p;
 		return (0);
@@ -95,8 +94,7 @@ seq_set(SCR *sp, CHAR_T *name, size_t nlen, CHAR_T *input, size_t ilen,
 	} else if ((qp->output = v_strdup(sp, output, olen)) == NULL) {
 		sv_errno = errno;
 		free(qp->input);
-mem3:		if (qp->name != NULL)
-			free(qp->name);
+mem3:		free(qp->name);
 mem2:		free(qp);
 mem1:		errno = sv_errno;
 		msgq(sp, M_SYSERR, NULL);
@@ -148,11 +146,9 @@ int
 seq_mdel(SEQ *qp)
 {
 	LIST_REMOVE(qp, q);
-	if (qp->name != NULL)
-		free(qp->name);
+	free(qp->name);
 	free(qp->input);
-	if (qp->output != NULL)
-		free(qp->output);
+	free(qp->output);
 	free(qp);
 	return (0);
 }
@@ -250,12 +246,9 @@ seq_close(GS *gp)
 	SEQ *qp;
 
 	while ((qp = LIST_FIRST(&gp->seqq)) != NULL) {
-		if (qp->name != NULL)
-			free(qp->name);
-		if (qp->input != NULL)
-			free(qp->input);
-		if (qp->output != NULL)
-			free(qp->output);
+		free(qp->name);
+		free(qp->input);
+		free(qp->output);
 		LIST_REMOVE(qp, q);
 		free(qp);
 	}

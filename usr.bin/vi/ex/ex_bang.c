@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.10 2016/01/06 22:29:38 millert Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.11 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -63,8 +63,7 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 
 	/* Set the "last bang command" remembered value. */
 	exp = EXP(sp);
-	if (exp->lastbcomm != NULL)
-		free(exp->lastbcomm);
+	free(exp->lastbcomm);
 	if ((exp->lastbcomm = strdup(ap->bp)) == NULL) {
 		msgq(sp, M_SYSERR, NULL);
 		return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.26 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.27 2017/04/18 01:45:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -569,8 +569,7 @@ sscr_setprompt(SCR *sp, char *buf, size_t len)
 	SCRIPT *sc;
 
 	sc = sp->script;
-	if (sc->sh_prompt)
-		free(sc->sh_prompt);
+	free(sc->sh_prompt);
 	MALLOC(sp, sc->sh_prompt, len + 1);
 	if (sc->sh_prompt == NULL) {
 		sscr_end(sp);
