@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.737 2017/04/18 18:21:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.738 2017/04/18 21:41:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1071,7 +1071,6 @@ struct tty {
 		TTY_VT220,
 		TTY_VT320,
 		TTY_VT420,
-		TTY_ITERM2,
 		TTY_UNKNOWN
 	} term_type;
 
@@ -1086,8 +1085,7 @@ struct tty {
 	struct tty_key	*key_tree;
 };
 #define TTY_TYPES \
-	{ "VT100", "VT101", "VT102", "VT220", "VT320", "VT420", "iTerm2", \
-	  "Unknown" }
+	{ "VT100", "VT101", "VT102", "VT220", "VT320", "VT420", "Unknown" }
 
 /* TTY command context. */
 struct tty_ctx {
