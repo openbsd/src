@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.27 2016/08/27 04:21:08 guenther Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.28 2017/04/18 02:29:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -497,8 +497,7 @@ pfkey_snapshot(void *v)
 				    m->sadb_msg_len * CHUNK, p->name);
 			}
 		}
-		explicit_bzero(sadb, sadbsz);
-		free(sadb);
+		freezero(sadb, sadbsz);
 	}
 
 	/* Parse SPD data */
@@ -528,8 +527,7 @@ pfkey_snapshot(void *v)
 			}
 		}
 		/* Cleanup. */
-		explicit_bzero(spd, spdsz);
-		free(spd);
+		freezero(spd, spdsz);
 	}
 
 	net_ctl_send_endsnap(p);

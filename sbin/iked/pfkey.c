@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.57 2017/03/27 10:29:02 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.58 2017/04/18 02:29:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -850,8 +850,7 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 	log_debug("%s: last_used %llu", __func__, *last_used);
 
 done:
-	explicit_bzero(data, n);
-	free(data);
+	freezero(data, n);
 	return (ret);
 }
 
@@ -958,8 +957,7 @@ pfkey_sa_getspi(int sd, uint8_t satype, struct iked_childsa *sa,
 	log_debug("%s: spi 0x%08x", __func__, *spip);
 
 done:
-	explicit_bzero(data, n);
-	free(data);
+	freezero(data, n);
 	return (ret);
 }
 
