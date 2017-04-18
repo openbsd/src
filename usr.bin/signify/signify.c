@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.126 2016/10/06 22:38:25 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.127 2017/04/18 02:20:50 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -244,8 +244,7 @@ writekeyfile(const char *filename, const char *comment, const void *buf,
 	fd = xopen(filename, O_CREAT|oflags|O_NOFOLLOW|O_WRONLY, mode);
 	header = createheader(comment, buf, buflen);
 	writeall(fd, header, strlen(header), filename);
-	explicit_bzero(header, strlen(header));
-	free(header);
+	freezero(header, strlen(header));
 	close(fd);
 }
 
