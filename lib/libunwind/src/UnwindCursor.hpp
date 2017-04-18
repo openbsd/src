@@ -588,6 +588,12 @@ private:
     return 0;
   }
 #endif
+
+#if defined (_LIBUNWIND_TARGET_SPARC64)
+  compact_unwind_encoding_t dwarfEncoding(Registers_sparc64 &) const {
+    return 0;
+  }
+#endif
 #endif // _LIBUNWIND_SUPPORT_DWARF_UNWIND
 
 

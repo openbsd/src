@@ -53,6 +53,11 @@
 #  define _LIBUNWIND_CONTEXT_SIZE 16
 #  define _LIBUNWIND_CURSOR_SIZE 28
 #  define _LIBUNWIND_HIGHEST_DWARF_REGISTER 32
+# elif defined(__sparc__) && defined(__arch64__)
+#  define _LIBUNWIND_TARGET_SPARC64 1
+#  define _LIBUNWIND_CONTEXT_SIZE 33
+#  define _LIBUNWIND_CURSOR_SIZE 45
+#  define _LIBUNWIND_HIGHEST_DWARF_REGISTER 32
 # else
 #  error "Unsupported architecture."
 # endif
