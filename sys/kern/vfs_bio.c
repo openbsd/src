@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.181 2017/04/16 14:25:42 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.182 2017/04/18 13:41:32 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1507,13 +1507,17 @@ bufcache_getcleanbuf_range(int start, int end, int discard)
 struct buf *
 bufcache_gethighcleanbuf(void)
 {
-	return bufcache_getcleanbuf_range(DMA_CACHE + 1, NUM_CACHES -1, 0);
+	if (!fliphigh)
+		return NULL;
+	return bufcache_getcleanbuf_range(DMA_CACHE + 1, NUM_CACHES - 1, 0);
 }
 
 struct buf *
 bufcache_getdmacleanbuf(void)
 {
-	return bufcache_getcleanbuf_range(DMA_CACHE, DMA_CACHE, 0);
+	if (fliphigh)
+		return bufcache_getcleanbuf_range(DMA_CACHE, DMA_CACHE, 0);
+	return bufcache_getcleanbuf_range(DMA_CACHE, NUM_CACHES - 1, 0);
 }
 
 struct buf *
