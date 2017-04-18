@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.92 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.93 2017/04/18 01:24:47 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1006,6 +1006,7 @@ Static void
 pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 {
 	int proto, hlen = 0;
+	struct mbuf *n;
 
 	KASSERT(m0->m_pkthdr.len >= PIPEX_PPPMINLEN);
 	proto = pipex_ppp_proto(m0, session, 0, &hlen);
@@ -1037,6 +1038,15 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 		return;
 	}
 #endif
+	m_adj(m0, hlen);
+	if (!ALIGNED_POINTER(mtod(m0, caddr_t), uint32_t)) {
+		n = m_dup_pkt(m0, 0, M_NOWAIT);
+		if (n == NULL)
+			goto drop;
+		m_freem(m0);
+		m0 = n;
+	}
+
 	switch (proto) {
 	case PPP_IP:
 		if (session->ip_forward == 0)
@@ -1047,7 +1057,6 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 			 * is required, discard it.
 			 */
 			goto drop;
-		m_adj(m0, hlen);
 		pipex_ip_input(m0, session);
 		return;
 #ifdef INET6
@@ -1060,7 +1069,6 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 			 * is required, discard it.
 			 */
 			goto drop;
-		m_adj(m0, hlen);
 		pipex_ip6_input(m0, session);
 		return;
 #endif
@@ -1090,23 +1098,10 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 	ifp = session->pipex_iface->ifnet_this;
 	m0->m_pkthdr.ph_ifidx = ifp->if_index;
 
-	PIPEX_PULLUP(m0, sizeof(struct ip));
-	if (m0 == NULL)
-		goto drop;
-
-#if 0
-	/*
-	 * XXX: hsuenaga
-	 * we need to know openbsd manners to adjust alignment
-	 */
-	if (!ALIGNED_POINTER(mtod(m0, caddr_t), struct ip *)) {
-		/* ip_output() assumes ip packet is aligned.  */
-		if ((m0 = m_copyup(m0, sizeof(struct ip),
-		    ((max_linkhdr + 3) & ~3))) == NULL)
-			goto drop;
-	}
-#endif
 	if (ISSET(session->ppp_flags, PIPEX_PPP_INGRESS_FILTER)) {
+		PIPEX_PULLUP(m0, sizeof(struct ip));
+		if (m0 == NULL)
+			goto drop;
 		/* ingress filter */
 		ip = mtod(m0, struct ip *);
 		if ((ip->ip_src.s_addr & session->ip_netmask.sin_addr.s_addr) !=
@@ -1176,19 +1171,6 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 	/* change recvif */
 	ifp = session->pipex_iface->ifnet_this;
 	m0->m_pkthdr.ph_ifidx = ifp->if_index;
-
-#if 0 /* XXX: alignment */
-	PIPEX_PULLUP(m0, sizeof(struct ip6_hdr));
-	if (m0 == NULL)
-		goto drop;
-
-	if (!ALIGNED_POINTER(mtod(m0, caddr_t), struct ip6_hdr *)) {
-		/* ip6_output() assumes ip packet is aligned.  */
-		if ((m0 = m_copyup(m0, sizeof(struct ip6_hdr),
-		    ((max_linkhdr + 3) & ~3))) == NULL)
-			goto drop;
-	}
-#endif
 
 	/*
 	 * XXX: what is reasonable ingress filter ???
