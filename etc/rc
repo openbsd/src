@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.493 2017/02/26 16:51:18 matthieu Exp $
+#	$OpenBSD: rc,v 1.494 2017/04/18 23:06:50 schwarze Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -504,8 +504,7 @@ if [[ ! -f /etc/motd ]]; then
 fi
 if T=$(mktemp /tmp/_motd.XXXXXXXXXX); then
 	sysctl -n kern.version | sed 1q >$T
-	echo "" >>$T
-	sed '1,/^$/d' </etc/motd >>$T
+	sed -n '/^$/,$p' </etc/motd >>$T
 	cmp -s $T /etc/motd || cp $T /etc/motd
 	rm -f $T
 fi
