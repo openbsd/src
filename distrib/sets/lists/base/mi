@@ -3576,6 +3576,7 @@
 ./usr/share/terminfo/e
 ./usr/share/terminfo/e/ecma+color
 ./usr/share/terminfo/e/ecma+sgr
+./usr/share/terminfo/e/ecma+strikeout
 ./usr/share/terminfo/e/elks
 ./usr/share/terminfo/e/elks-ansi
 ./usr/share/terminfo/e/elks-glasstty
@@ -3618,6 +3619,7 @@
 ./usr/share/terminfo/f/f200vi-w
 ./usr/share/terminfo/f/falco
 ./usr/share/terminfo/f/falco-p
+./usr/share/terminfo/f/fbterm
 ./usr/share/terminfo/f/fenix
 ./usr/share/terminfo/f/fenixw
 ./usr/share/terminfo/f/fixterm
@@ -4966,6 +4968,7 @@
 ./usr/share/terminfo/v/vt-utf8
 ./usr/share/terminfo/v/vt100
 ./usr/share/terminfo/v/vt100+
+./usr/share/terminfo/v/vt100+4bsd
 ./usr/share/terminfo/v/vt100+enq
 ./usr/share/terminfo/v/vt100+fnkeys
 ./usr/share/terminfo/v/vt100+keypad
