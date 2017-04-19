@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.206 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.207 2017/04/19 15:44:45 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -135,7 +135,6 @@ static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
 static int icmp6_redirect_lowat = -1;
 
 void	icmp6_errcount(int, int);
-int	icmp6_rip6_input(struct mbuf **, int);
 int	icmp6_ratelimit(const struct in6_addr *, const int, const int);
 const char *icmp6_redirect_diag(struct in6_addr *, struct in6_addr *,
 	    struct in6_addr *);
@@ -761,9 +760,7 @@ badlen:
 raw:
 #endif
 	/* deliver the packet to appropriate sockets */
-	icmp6_rip6_input(&m, *offp);
-
-	return IPPROTO_DONE;
+	return rip6_input(mp, offp, proto, af);
 
  freeit:
 	m_freem(m);
@@ -1039,104 +1036,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 */
 	LIST_FOREACH(mc, &icmp6_mtudisc_callbacks, mc_list)
 		(*mc->mc_func)(&sin6, m->m_pkthdr.ph_rtableid);
-}
-
-/*
- * XXX almost dup'ed code with rip6_input.
- */
-int
-icmp6_rip6_input(struct mbuf **mp, int off)
-{
-	struct mbuf *m = *mp;
-	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct inpcb *in6p;
-	struct inpcb *last = NULL;
-	struct sockaddr_in6 rip6src;
-	struct icmp6_hdr *icmp6;
-	struct mbuf *opts = NULL;
-
-	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
-	if (icmp6 == NULL) {
-		/* m is already reclaimed */
-		return IPPROTO_DONE;
-	}
-
-	bzero(&rip6src, sizeof(rip6src));
-	rip6src.sin6_len = sizeof(struct sockaddr_in6);
-	rip6src.sin6_family = AF_INET6;
-	/* KAME hack: recover scopeid */
-	in6_recoverscope(&rip6src, &ip6->ip6_src);
-
-	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
-		if (!(in6p->inp_flags & INP_IPV6))
-			continue;
-		if (in6p->inp_ipv6.ip6_nxt != IPPROTO_ICMPV6)
-			continue;
-#if NPF > 0
-		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
-			struct pf_divert *divert;
-
-			/* XXX rdomain support */
-			if ((divert = pf_find_divert(m)) == NULL)
-				continue;
-			if (IN6_IS_ADDR_UNSPECIFIED(&divert->addr.v6))
-				goto divert_reply;
-			if (!IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6,
-			    &divert->addr.v6))
-				continue;
-		} else
- divert_reply:
-#endif
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_laddr6) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, &ip6->ip6_dst))
-			continue;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))
-			continue;
-		if (in6p->inp_icmp6filt
-		    && ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-				 in6p->inp_icmp6filt))
-			continue;
-		if (last) {
-			struct	mbuf *n;
-			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				if (last->inp_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, n, &opts);
-				/* strip intermediate headers */
-				m_adj(n, off);
-				if (sbappendaddr(&last->inp_socket->so_rcv,
-				    sin6tosa(&rip6src), n, opts) == 0) {
-					/* should notify about lost packet */
-					m_freem(n);
-					m_freem(opts);
-				} else
-					sorwakeup(last->inp_socket);
-				opts = NULL;
-			}
-		}
-		last = in6p;
-	}
-	if (last) {
-		if (last->inp_flags & IN6P_CONTROLOPTS)
-			ip6_savecontrol(last, m, &opts);
-		/* strip intermediate headers */
-		m_adj(m, off);
-		if (sbappendaddr(&last->inp_socket->so_rcv,
-		    sin6tosa(&rip6src), m, opts) == 0) {
-			m_freem(m);
-			m_freem(opts);
-		} else
-			sorwakeup(last->inp_socket);
-	} else {
-		struct counters_ref ref;
-		uint64_t *counters;
-
-		m_freem(m);
-		counters = counters_enter(&ref, ip6counters);
-		counters[ip6s_delivered]--;
-		counters_leave(&ref, ip6counters);
-	}
-	return IPPROTO_DONE;
 }
 
 /*
