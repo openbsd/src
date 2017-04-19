@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.739 2017/04/19 06:52:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.740 2017/04/19 14:00:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1338,7 +1338,7 @@ struct client {
 #define CLIENT_DEAD 0x200
 #define CLIENT_BORDERS 0x400
 #define CLIENT_READONLY 0x800
-/* 0x1000 unused */
+#define CLIENT_DETACHING 0x1000
 #define CLIENT_CONTROL 0x2000
 #define CLIENT_CONTROLCONTROL 0x4000
 #define CLIENT_FOCUSED 0x8000
@@ -1838,6 +1838,7 @@ void	 server_client_create(int);
 int	 server_client_open(struct client *, char **);
 void	 server_client_unref(struct client *);
 void	 server_client_lost(struct client *);
+void	 server_client_suspend(struct client *);
 void	 server_client_detach(struct client *, enum msgtype);
 void	 server_client_exec(struct client *, const char *);
 void	 server_client_loop(void);
