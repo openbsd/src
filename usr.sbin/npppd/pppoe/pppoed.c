@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.20 2016/05/28 07:00:18 natano Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.21 2017/04/19 05:36:13 natano Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.20 2016/05/28 07:00:18 natano Exp $
+ * $Id: pppoed.c,v 1.21 2017/04/19 05:36:13 natano Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -273,7 +273,7 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 		goto fail;
 	}
 
-	if ((_this->bpf = priv_open("/dev/bpf0", O_RDWR)) == -1) {
+	if ((_this->bpf = priv_open("/dev/bpf", O_RDWR)) == -1) {
 		pppoed_log(_pppoed, log_level, "Cannot open bpf: %m");
 		goto fail;
 	}

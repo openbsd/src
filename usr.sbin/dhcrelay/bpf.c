@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.18 2017/04/05 14:40:56 reyk Exp $ */
+/*	$OpenBSD: bpf.c,v 1.19 2017/04/19 05:36:12 natano Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -72,7 +72,7 @@ if_register_bpf(struct interface_info *info)
 	int sock;
 
 	/* Open the BPF device */
-	if ((sock = open("/dev/bpf0", O_RDWR)) == -1)
+	if ((sock = open("/dev/bpf", O_RDWR)) == -1)
 		fatal("Can't open bpf device");
 
 	/* Set the BPF device to point at this interface. */

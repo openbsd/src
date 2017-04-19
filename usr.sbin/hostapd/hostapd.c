@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.37 2016/05/28 07:00:18 natano Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.38 2017/04/19 05:36:13 natano Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -173,7 +173,7 @@ hostapd_bpf_open(u_int flags)
 	int fd = -1;
 	struct bpf_version bpv;
 
-	if ((fd = open("/dev/bpf0", flags)) == -1) {
+	if ((fd = open("/dev/bpf", flags)) == -1) {
 		hostapd_fatal("unable to open BPF device: %s\n",
 		    strerror(errno));
 	}

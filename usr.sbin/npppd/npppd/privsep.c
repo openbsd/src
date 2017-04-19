@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.22 2016/05/28 07:00:18 natano Exp $ */
+/*	$OpenBSD: privsep.c,v 1.23 2017/04/19 05:36:13 natano Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -983,7 +983,7 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 		int readonly;
 	} const allow_paths[] = {
 		{ NPPPD_DIR "/",	1,	1 },
-		{ "/dev/bpf0",		0,	0 },
+		{ "/dev/bpf",		0,	0 },
 		{ "/etc/resolv.conf",	0,	1 },
 		{ "/dev/tun",		1,	0 },
 		{ "/dev/pppx",		1,	0 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.16 2016/05/28 07:00:18 natano Exp $ */
+/*	$OpenBSD: pf.c,v 1.17 2017/04/19 05:36:13 natano Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -98,7 +98,7 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 		insns
 	};
 
-	if ((fd = open("/dev/bpf0", mode)) == -1) {
+	if ((fd = open("/dev/bpf", mode)) == -1) {
 		syslog(LOG_ERR,"pfInit: open bpf %m");
 		return (-1);
 	}

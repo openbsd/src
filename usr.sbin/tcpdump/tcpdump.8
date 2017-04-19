@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.91 2016/05/08 08:20:50 natano Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.92 2017/04/19 05:36:13 natano Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: May 8 2016 $
+.Dd $Mdocdate: April 19 2017 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 prints out the headers of packets on a network interface that match the boolean
 .Ar expression .
 You must have read access to
-.Pa /dev/bpf0 .
+.Pa /dev/bpf .
 .Pp
 The options are as follows:
 .Bl -tag -width "-c count"

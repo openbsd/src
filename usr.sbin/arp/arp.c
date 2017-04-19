@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.78 2017/04/15 11:50:24 bluhm Exp $ */
+/*	$OpenBSD: arp.c,v 1.79 2017/04/19 05:36:12 natano Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -821,7 +821,7 @@ wake(const char *ether_addr, const char *iface)
 	char			*pname = NULL;
 	int			 bpf;
 
-	if ((bpf = open("/dev/bpf0", O_RDWR)) == -1)
+	if ((bpf = open("/dev/bpf", O_RDWR)) == -1)
 		err(1, "Failed to bind to bpf");
 
 	if (iface == NULL) {
