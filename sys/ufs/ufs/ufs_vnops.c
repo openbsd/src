@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.133 2016/10/07 07:51:16 natano Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.134 2017/04/19 17:26:13 dhill Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1432,7 +1432,7 @@ ufs_readdir(void *v)
 	char *edp;
 	caddr_t diskbuf;
 	size_t count, entries;
-	int readcnt, error;
+	int bufsize, readcnt, error;
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 	int ofmt = VTOI(ap->a_vp)->i_ump->um_maxsymlinklen == 0;
 #endif
@@ -1461,7 +1461,8 @@ ufs_readdir(void *v)
 	auio.uio_resid = readcnt;
 	auio.uio_segflg = UIO_SYSSPACE;
 	aiov.iov_len = readcnt;
-	diskbuf = malloc(readcnt, M_TEMP, M_WAITOK);
+	bufsize = readcnt;
+	diskbuf = malloc(bufsize, M_TEMP, M_WAITOK);
 	aiov.iov_base = diskbuf;
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	readcnt -= auio.uio_resid;
@@ -1514,7 +1515,7 @@ ufs_readdir(void *v)
 	if ((char *)dp + offsetof(struct direct, d_name) < edp &&
 	    dp->d_reclen <= offsetof(struct direct, d_name))
 		error = EIO;
-	free(diskbuf, M_TEMP, 0);
+	free(diskbuf, M_TEMP, bufsize);
 
 	uio->uio_offset = off;
 	*ap->a_eofflag = DIP(VTOI(ap->a_vp), size) <= off;
