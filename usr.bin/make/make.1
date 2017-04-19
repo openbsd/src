@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.124 2017/01/01 01:08:11 tb Exp $
+.\"	$OpenBSD: make.1,v 1.125 2017/04/19 09:32:46 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 1 2017 $
+.Dd $Mdocdate: April 19 2017 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -209,7 +209,7 @@ is defined,
 will wait between 0 and ${RANDOM_DELAY} seconds before starting a command.
 A given random seed can be forced by setting
 .Va RANDOM_SEED ,
-but this does not guarantee reproductibility.
+but this does not guarantee reproducibility.
 .It Ar q
 .Sq quick death
 option: after a fatal error, instead of waiting for other jobs to die,
@@ -1342,7 +1342,7 @@ recognizes standard special targets:
 .It Ic .DEFAULT
 If there is a
 .Ic .DEFAULT
-target rule, with commands but no prequisites, and
+target rule, with commands but no prerequisites, and
 .Nm
 can't figure out another way to build a target, it will use that
 list of commands, setting
