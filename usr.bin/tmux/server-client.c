@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.218 2017/04/18 20:37:49 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.219 2017/04/19 06:52:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1269,8 +1269,8 @@ server_client_check_redraw(struct client *c)
 		screen_redraw_update(c); /* will adjust flags */
 	}
 
-	flags = tty->flags & (TTY_FREEZE|TTY_NOCURSOR);
-	tty->flags = (tty->flags & ~TTY_FREEZE) | TTY_NOCURSOR;
+	flags = tty->flags & (TTY_BLOCK|TTY_FREEZE|TTY_NOCURSOR);
+	tty->flags = (tty->flags & ~(TTY_BLOCK|TTY_FREEZE)) | TTY_NOCURSOR;
 
 	if (c->flags & CLIENT_REDRAW) {
 		tty_update_mode(tty, tty->mode, NULL);
