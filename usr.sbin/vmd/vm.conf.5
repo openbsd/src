@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.17 2017/03/25 16:28:25 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.18 2017/04/19 15:38:32 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2017 $
+.Dd $Mdocdate: April 19 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ is specified.
 Do not start this VM.
 .It Cm disk Ar path
 Disk image file (may be specified multiple times to add multiple disk images).
-.It Cm interface Oo name Oc Op Brq ...
+.It Oo Cm local Oc Cm interface Oo name Oc Op Brq ...
 Network interface to add to the VM.
 The optional
 .Ar name
@@ -123,6 +123,7 @@ to select the next available
 interface on the VM host side (the default) or
 .Ar tapN
 to select a specific one.
+.Pp
 Valid options are:
 .Bl -tag -width Ds
 .It Cm group Ar group-name
@@ -158,6 +159,13 @@ This is the default.
 .It Cm down
 Stop the interface from forwarding packets.
 .El
+.Pp
+A
+.Cm local
+interface will auto-generate an IPv4 subnet for the interface,
+configure a gateway address on the VM host side,
+and run a simple DHCP (BOOTP) server for the VM.
+This option can be used for layer 3 mode without configuring a switch.
 .It Cm interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.
 If the

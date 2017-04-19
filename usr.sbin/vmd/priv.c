@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.6 2017/03/02 07:33:37 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.7 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_bridge.h>
+
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <event.h>
@@ -80,6 +82,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct ifreq		 ifr;
 	struct ifbreq		 ifbr;
 	struct ifgroupreq	 ifgr;
+	struct ifaliasreq	 ifra;
 	char			 type[IF_NAMESIZE];
 
 	switch (imsg->hdr.type) {
@@ -89,6 +92,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_PRIV_IFUP:
 	case IMSG_VMDOP_PRIV_IFDOWN:
 	case IMSG_VMDOP_PRIV_IFGROUP:
+	case IMSG_VMDOP_PRIV_IFADDR:
 		IMSG_SIZE_CHECK(imsg, &vfr);
 		memcpy(&vfr, imsg->data, sizeof(vfr));
 
@@ -160,6 +164,25 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    errno != EEXIST)
 			log_warn("SIOCAIFGROUP");
 		break;
+	case IMSG_VMDOP_PRIV_IFADDR:
+		memset(&ifra, 0, sizeof(ifra));
+
+		/* Set the interface address */
+		strlcpy(ifra.ifra_name, vfr.vfr_name, sizeof(ifra.ifra_name));
+
+		memcpy(&ifra.ifra_addr, &vfr.vfr_ifra.ifra_addr,
+		    sizeof(ifra.ifra_addr));
+		ifra.ifra_addr.sa_family = AF_INET;
+		ifra.ifra_addr.sa_len = sizeof(struct sockaddr_in);
+
+		memcpy(&ifra.ifra_mask, &vfr.vfr_ifra.ifra_mask,
+		    sizeof(ifra.ifra_mask));
+		ifra.ifra_mask.sa_family = AF_INET;
+		ifra.ifra_mask.sa_len = sizeof(struct sockaddr_in);
+
+		if (ioctl(env->vmd_fd, SIOCAIFADDR, &ifra) < 0)
+			log_warn("SIOCAIFADDR");
+		break;
 	default:
 		return (-1);
 	}
@@ -227,6 +250,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 	struct vmd_switch	*vsw;
 	unsigned int		 i;
 	struct vmop_ifreq	 vfr, vfbr;
+	struct sockaddr_in	*sin4;
 
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
 		vif = &vm->vm_ifs[i];
@@ -298,6 +322,27 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		proc_compose(ps, PROC_PRIV, (vif->vif_flags & VMIFF_UP) ?
 		    IMSG_VMDOP_PRIV_IFUP : IMSG_VMDOP_PRIV_IFDOWN,
 		    &vfr, sizeof(vfr));
+
+		if (vm->vm_params.vmc_ifflags[i] & VMIFF_LOCAL) {
+			sin4 = (struct sockaddr_in *)&vfr.vfr_ifra.ifra_mask;
+			sin4->sin_family = AF_INET;
+			sin4->sin_len = sizeof(*sin4);
+			sin4->sin_addr.s_addr = htonl(0xfffffffe);
+
+			sin4 = (struct sockaddr_in *)&vfr.vfr_ifra.ifra_addr;
+			sin4->sin_family = AF_INET;
+			sin4->sin_len = sizeof(*sin4);
+			if ((sin4->sin_addr.s_addr =
+			    vm_priv_addr(vm->vm_vmid, i, 0)) == 0)
+				return (-1);
+
+			log_debug("%s: interface %s address %s/31",
+			    __func__, vfr.vfr_name,
+			    inet_ntoa(sin4->sin_addr));
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADDR,
+			    &vfr, sizeof(vfr));
+		}
 	}
 
 	return (0);
@@ -345,4 +390,47 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 
 	vsw->sw_running = 1;
 	return (0);
+}
+
+uint32_t
+vm_priv_addr(uint32_t vmid, int idx, int isvm)
+{
+	in_addr_t	prefix, mask, addr;
+
+	/*
+	 * 1. Set the address prefix and mask, 100.64.0.0/10 by default.
+	 * XXX make the global prefix configurable.
+	 */
+	prefix = inet_addr(VMD_DHCP_PREFIX);
+	mask = prefixlen2mask(VMD_DHCP_PREFIXLEN);
+
+	/* 2. Encode the VM ID as a per-VM subnet range N, 10.64.N.0/24. */
+	addr = vmid << 8;
+
+	/*
+	 * 3. Assign a /31 subnet M per VM interface, 10.64.N.M/31.
+	 * Each subnet contains exactly two IP addresses; skip the
+	 * first subnet to avoid a gateway address ending with .0.
+	 */
+	addr |= (idx + 1) * 2;
+
+	/* 4. Use the first address for the gateway, the second for the VM. */
+	if (isvm)
+		addr++;
+
+	/* 5. Convert to network byte order and add the prefix. */
+	addr = htonl(addr) | prefix;
+
+	/*
+	 * Validate the results:
+	 * - the address should not exceed the prefix (eg. VM ID to high).
+	 * - up to 126 interfaces can be encoded per VM.
+	 */
+	if (prefix != (addr & mask) || idx >= 0x7f) {
+		log_warnx("%s: dhcp address range exceeded,"
+		    " vm id %u interface %d", __func__, vmid, idx);
+		return (0);
+	}
+
+	return (addr);
 }

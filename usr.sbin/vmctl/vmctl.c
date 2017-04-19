@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.29 2017/04/06 18:07:13 reyk Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.30 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -123,8 +123,16 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 	for (i = 0 ; i < ndisks; i++)
 		strlcpy(vcp->vcp_disks[i], disks[i], VMM_MAX_PATH_DISK);
 	for (i = 0 ; i < nnics; i++) {
-		strlcpy(vmc->vmc_ifswitch[i], nics[i], IF_NAMESIZE);
 		vmc->vmc_ifflags[i] = VMIFF_UP;
+
+		if (strcmp(".", nics[i]) == 0) {
+			/* Add a "local" interface */
+			strlcpy(vmc->vmc_ifswitch[i], "", IF_NAMESIZE);
+			vmc->vmc_ifflags[i] |= VMIFF_LOCAL;
+		} else {
+			/* Add a interface to a switch */
+			strlcpy(vmc->vmc_ifswitch[i], nics[i], IF_NAMESIZE);
+		}
 	}
 	if (name != NULL)
 		strlcpy(vcp->vcp_name, name, VMM_MAX_NAME_LEN);

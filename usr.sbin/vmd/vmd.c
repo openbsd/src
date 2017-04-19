@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.56 2017/04/06 18:07:13 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.57 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1044,4 +1044,16 @@ get_string(uint8_t *ptr, size_t len)
 			break;
 
 	return strndup(ptr, i);
+}
+
+uint32_t
+prefixlen2mask(uint8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	if (prefixlen > 32)
+		prefixlen = 32;
+
+	return (htonl(0xffffffff << (32 - prefixlen)));
 }

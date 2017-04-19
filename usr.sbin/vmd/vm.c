@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.11 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: vm.c,v 1.12 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -656,7 +656,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int *child_disks,
 	pci_init();
 
 	/* Initialize virtio devices */
-	virtio_init(vmc, child_disks, child_taps);
+	virtio_init(current_vm, child_disks, child_taps);
 }
 
 /*

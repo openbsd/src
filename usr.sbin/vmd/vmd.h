@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.50 2017/04/06 18:07:13 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.51 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -23,6 +23,8 @@
 #include <machine/vmmvar.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <limits.h>
 #include <stdio.h>
@@ -47,6 +49,10 @@
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
 #define VM_DEFAULT_MEMORY	512
+
+/* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
+#define VMD_DHCP_PREFIX		"100.64.0.0"
+#define VMD_DHCP_PREFIXLEN	10
 
 #ifdef VMD_DEBUG
 #define dprintf(x...)   do { log_debug(x); } while(0)
@@ -74,6 +80,7 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFUP,
 	IMSG_VMDOP_PRIV_IFDOWN,
 	IMSG_VMDOP_PRIV_IFGROUP,
+	IMSG_VMDOP_PRIV_IFADDR,
 	IMSG_VMDOP_VM_SHUTDOWN,
 	IMSG_VMDOP_VM_REBOOT
 };
@@ -102,6 +109,7 @@ struct vmop_ifreq {
 	uint32_t		 vfr_id;
 	char			 vfr_name[IF_NAMESIZE];
 	char			 vfr_value[VM_NAME_MAX];
+	struct ifaliasreq	 vfr_ifra;
 };
 
 struct vmop_create_params {
@@ -116,7 +124,8 @@ struct vmop_create_params {
 	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
 #define VMIFF_UP		0x01
 #define VMIFF_LOCKED		0x02
-#define VMIFF_OPTMASK		VMIFF_LOCKED
+#define VMIFF_LOCAL		0x04
+#define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL)
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
@@ -198,6 +207,38 @@ struct vmd {
 	int			 vmd_ptmfd;
 };
 
+static inline struct sockaddr_in *
+ss2sin(struct sockaddr_storage *ss)
+{
+	return ((struct sockaddr_in *)ss);
+}
+
+static inline struct sockaddr_in6 *
+ss2sin6(struct sockaddr_storage *ss)
+{
+	return ((struct sockaddr_in6 *)ss);
+}
+
+struct packet_ctx {
+	uint8_t			 pc_htype;
+	uint8_t			 pc_hlen;
+	uint8_t			 pc_smac[ETHER_ADDR_LEN];
+	uint8_t			 pc_dmac[ETHER_ADDR_LEN];
+
+	struct sockaddr_storage	 pc_src;
+	struct sockaddr_storage	 pc_dst;
+};
+
+/* packet.c */
+ssize_t	 assemble_hw_header(unsigned char *, size_t, size_t,
+	    struct packet_ctx *, unsigned int);
+ssize_t	 assemble_udp_ip_header(unsigned char *, size_t, size_t,
+	    struct packet_ctx *pc, unsigned char *, size_t);
+ssize_t	 decode_hw_header(unsigned char *, size_t, size_t, struct packet_ctx *,
+	    unsigned int);
+ssize_t	 decode_udp_ip_header(unsigned char *, size_t, size_t,
+	    struct packet_ctx *);
+
 /* vmd.c */
 void	 vmd_reload(unsigned int, const char *);
 struct vmd_vm *vm_getbyid(uint32_t);
@@ -216,6 +257,7 @@ void	 vm_closetty(struct vmd_vm *);
 void	 switch_remove(struct vmd_switch *);
 struct vmd_switch *switch_getbyname(const char *);
 char	*get_string(uint8_t *, size_t);
+uint32_t prefixlen2mask(uint8_t);
 
 /* priv.c */
 void	 priv(struct privsep *, struct privsep_proc *);
@@ -224,6 +266,7 @@ int	 priv_findname(const char *, const char **);
 int	 priv_validgroup(const char *);
 int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
 int	 vm_priv_brconfig(struct privsep *, struct vmd_switch *);
+uint32_t vm_priv_addr(uint32_t, int, int);
 
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);

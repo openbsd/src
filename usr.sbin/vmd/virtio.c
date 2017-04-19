@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.41 2017/04/08 19:08:18 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.42 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1251,15 +1251,17 @@ vionet_notifyq(struct vionet_dev *dev)
 	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx;
 	size_t pktsz;
-	int ret, num_enq, ofs;
-	char *vr, *pkt;
+	ssize_t dhcpsz;
+	int ret, num_enq, ofs, spc;
+	char *vr, *pkt, *dhcppkt;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct ether_header *eh;
 
-	vr = pkt = NULL;
-	ret = 0;
+	vr = pkt = dhcppkt = NULL;
+	ret = spc = 0;
+	dhcpsz = 0;
 
 	/* Invalid queue? */
 	if (dev->cfg.queue_notify != 1) {
@@ -1373,8 +1375,13 @@ vionet_notifyq(struct vionet_dev *dev)
 			log_debug("vionet: wrong source address %s for vm %d",
 			    ether_ntoa((struct ether_addr *)
 			    eh->ether_shost), dev->vm_id);
+		else if (dev->local && dhcpsz == 0 &&
+		    (dhcpsz = dhcp_request(dev, pkt, pktsz, &dhcppkt)) != -1) {
+			log_debug("vionet: dhcp request,"
+			    " local response size %zd", dhcpsz);
+
 		/* XXX signed vs unsigned here, funky cast */
-		else if (write(dev->fd, pkt, pktsz) != (int)pktsz) {
+		} else if (write(dev->fd, pkt, pktsz) != (int)pktsz) {
 			log_warnx("vionet: tx failed writing to tap: "
 			    "%d", errno);
 			goto out;
@@ -1398,9 +1405,15 @@ vionet_notifyq(struct vionet_dev *dev)
 		log_warnx("vionet: tx error writing vio ring");
 	}
 
+	if (dhcpsz > 0) {
+		if (vionet_enq_rx(dev, dhcppkt, dhcpsz, &spc))
+			ret = 1;
+	}
+
 out:
 	free(vr);
 	free(pkt);
+	free(dhcppkt);
 
 	return (ret);
 }
@@ -1582,8 +1595,9 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 }
 
 void
-virtio_init(struct vmop_create_params *vmc, int *child_disks, int *child_taps)
+virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 {
+	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	static const uint8_t zero_mac[6];
 	uint8_t id;
@@ -1713,6 +1727,7 @@ virtio_init(struct vmop_create_params *vmc, int *child_disks, int *child_taps)
 			vionet[i].fd = child_taps[i];
 			vionet[i].rx_pending = 0;
 			vionet[i].vm_id = vcp->vcp_id;
+			vionet[i].vm_vmid = vm->vm_vmid;
 			vionet[i].irq = pci_get_dev_irq(id);
 
 			event_set(&vionet[i].event, vionet[i].fd,
@@ -1747,11 +1762,15 @@ virtio_init(struct vmop_create_params *vmc, int *child_disks, int *child_taps)
 			}
 			vionet[i].lockedmac =
 			    vmc->vmc_ifflags[i] & VMIFF_LOCKED ? 1 : 0;
+			vionet[i].local =
+			    vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
+			vionet[i].idx = i;
 
-			log_debug("%s: vm \"%s\" vio%u lladdr %s%s",
+			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s",
 			    __func__, vcp->vcp_name, i,
 			    ether_ntoa((void *)vionet[i].mac),
-			    vionet[i].lockedmac ? " (locked)" : "");
+			    vionet[i].lockedmac ? ", locked" : "",
+			    vionet[i].local ? ", local" : "");
 		}
 	}
 

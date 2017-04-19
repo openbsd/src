@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2017/04/06 21:35:22 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -116,10 +116,11 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD DISK DOWN GROUP INTERFACE NIFS PATH SIZE SWITCH UP VMID
-%token	ENABLE DISABLE VM BOOT LLADDR MEMORY OWNER LOCKED
+%token	ENABLE DISABLE VM BOOT LLADDR MEMORY OWNER LOCKED LOCAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
+%type	<v.number>	local
 %type	<v.number>	locked
 %type	<v.number>	updown
 %type	<v.lladdr>	lladdr
@@ -325,36 +326,38 @@ vm_opts		: disable			{
 			free($2);
 			vmc.vmc_flags |= VMOP_CREATE_DISK;
 		}
-		| INTERFACE optstring iface_opts_o {
+		| local INTERFACE optstring iface_opts_o {
 			unsigned int	i;
 			char		type[IF_NAMESIZE];
 
 			i = vcp_nnics;
 			if (++vcp_nnics > VMM_MAX_NICS_PER_VM) {
 				yyerror("too many interfaces: %zu", vcp_nnics);
-				free($2);
+				free($3);
 				YYERROR;
 			}
 
-			if ($2 != NULL) {
-				if (strcmp($2, "tap") != 0 &&
-				    (priv_getiftype($2, type, NULL) == -1 ||
+			if ($1)
+				vmc.vmc_ifflags[i] |= VMIFF_LOCAL;
+			if ($3 != NULL) {
+				if (strcmp($3, "tap") != 0 &&
+				    (priv_getiftype($3, type, NULL) == -1 ||
 				    strcmp(type, "tap") != 0)) {
-					yyerror("invalid interface: %s", $2);
-					free($2);
+					yyerror("invalid interface: %s", $3);
+					free($3);
 					YYERROR;
 				}
 
-				if (strlcpy(vmc.vmc_ifnames[i], $2,
+				if (strlcpy(vmc.vmc_ifnames[i], $3,
 				    sizeof(vmc.vmc_ifnames[i])) >=
 				    sizeof(vmc.vmc_ifnames[i])) {
 					yyerror("interface name too long: %s",
-					    $2);
-					free($2);
+					    $3);
+					free($3);
 					YYERROR;
 				}
 			}
-			free($2);
+			free($3);
 			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
 		| BOOT string			{
@@ -547,6 +550,10 @@ lladdr		: STRING			{
 		}
 		;
 
+local		: /* empty */			{ $$ = 0; }
+		| LOCAL				{ $$ = 1; }
+		;
+
 locked		: /* empty */			{ $$ = 0; }
 		| LOCKED			{ $$ = 1; }
 		;
@@ -616,6 +623,7 @@ lookup(char *s)
 		{ "interface",		INTERFACE },
 		{ "interfaces",		NIFS },
 		{ "lladdr",		LLADDR },
+		{ "local",		LOCAL },
 		{ "locked",		LOCKED },
 		{ "memory",		MEMORY },
 		{ "owner",		OWNER },

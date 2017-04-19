@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.14 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.15 2017/04/19 15:38:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -118,9 +118,13 @@ struct vionet_dev {
 	int fd, rx_added;
 	int rx_pending;
 	uint32_t vm_id;
+	uint32_t vm_vmid;
 	int irq;
 	uint8_t mac[6];
+
+	int idx;
 	int lockedmac;
+	int local;
 };
 
 struct virtio_net_hdr {
@@ -154,7 +158,8 @@ struct vmmci_dev {
 	int irq;
 };
 
-void virtio_init(struct vmop_create_params *, int *, int *);
+/* virtio.c */
+void virtio_init(struct vmd_vm *, int *, int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
@@ -181,3 +186,6 @@ void vmmci_ack(unsigned int);
 void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);
+
+/* dhcp.c */
+ssize_t dhcp_request(struct vionet_dev *, char *, size_t, char **);
