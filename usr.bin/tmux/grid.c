@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.68 2017/03/22 07:16:54 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.69 2017/04/19 12:44:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -89,7 +89,7 @@ grid_need_extended_cell(const struct grid_cell_entry *gce,
 		return (1);
 	if (gc->data.size != 1 || gc->data.width != 1)
 		return (1);
-	if ((gc->fg & COLOUR_FLAG_RGB) ||(gc->bg & COLOUR_FLAG_RGB))
+	if ((gc->fg & COLOUR_FLAG_RGB) || (gc->bg & COLOUR_FLAG_RGB))
 		return (1);
 	return (0);
 }
