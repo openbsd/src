@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.205 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.206 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1020,14 +1020,14 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.ph_rtableid);
 
 	if (rt != NULL && ISSET(rt->rt_flags, RTF_HOST) &&
-	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
-	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
+	    !(rt->rt_locks & RTV_MTU) &&
+	    (rt->rt_mtu > mtu || rt->rt_mtu == 0)) {
 		struct ifnet *ifp;
 
 		ifp = if_get(rt->rt_ifidx);
 		if (ifp != NULL && mtu < ifp->if_mtu) {
 			icmp6stat_inc(icp6s_pmtuchg);
-			rt->rt_rmx.rmx_mtu = mtu;
+			rt->rt_mtu = mtu;
 		}
 		if_put(ifp);
 	}
@@ -1963,8 +1963,8 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
 		rtdeletemsg(rt, ifp, r->rtt_tableid);
 	} else {
-		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
-			rt->rt_rmx.rmx_mtu = 0;
+		if (!(rt->rt_locks & RTV_MTU))
+			rt->rt_mtu = 0;
 	}
 
 	if_put(ifp);

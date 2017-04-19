@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.338 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.339 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ reroute:
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
+		if ((mtu = ro->ro_rt->rt_mtu) == 0)
 			mtu = ifp->if_mtu;
 
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
@@ -399,7 +399,7 @@ sendit:
 	 * the route's MTU is locked.
 	 */
 	if ((flags & IP_MTUDISC) && ro && ro->ro_rt &&
-	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+	    (ro->ro_rt->rt_locks & RTV_MTU) == 0)
 		ip->ip_off |= htons(IP_DF);
 
 #ifdef IPSEC
@@ -488,9 +488,9 @@ sendit:
 		 */
 		if (rtisvalid(ro->ro_rt) &&
 		    ISSET(ro->ro_rt->rt_flags, RTF_HOST) &&
-		    !(ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) &&
-		    (ro->ro_rt->rt_rmx.rmx_mtu > ifp->if_mtu)) {
-			ro->ro_rt->rt_rmx.rmx_mtu = ifp->if_mtu;
+		    !(ro->ro_rt->rt_locks & RTV_MTU) &&
+		    (ro->ro_rt->rt_mtu > ifp->if_mtu)) {
+			ro->ro_rt->rt_mtu = ifp->if_mtu;
 		}
 		ipstat_inc(ips_cantfrag);
 		goto bad;
@@ -611,7 +611,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct ifnet *ifp,
 		DPRINTF(("%s: spi %08x mtu %d rt %p cloned %d\n", __func__,
 		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned));
 		if (rt != NULL) {
-			rt->rt_rmx.rmx_mtu = tdb->tdb_mtu;
+			rt->rt_mtu = tdb->tdb_mtu;
 			if (ro && ro->ro_rt != NULL) {
 				rtfree(ro->ro_rt);
 				ro->ro_rt = rtalloc(&ro->ro_dst, RT_RESOLVE,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.165 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.166 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -1021,12 +1021,12 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 
 		mtu = ntohs(icp->icmp_ip.ip_len);
 		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
-		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
+		if (mtu > rt->rt_mtu && rt->rt_mtu != 0)
 			mtu -= (icp->icmp_ip.ip_hl << 2);
 
 		/* If we still can't guess a value, try the route */
 		if (mtu == 0) {
-			mtu = rt->rt_rmx.rmx_mtu;
+			mtu = rt->rt_mtu;
 
 			/* If no route mtu, default to the interface mtu */
 
@@ -1048,11 +1048,11 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	 *	  on a route.  We should be using a separate flag
 	 *	  for the kernel to indicate this.
 	 */
-	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+	if ((rt->rt_locks & RTV_MTU) == 0) {
 		if (mtu < 296 || mtu > ifp->if_mtu)
-			rt->rt_rmx.rmx_locks |= RTV_MTU;
-		else if (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)
-			rt->rt_rmx.rmx_mtu = mtu;
+			rt->rt_locks |= RTV_MTU;
+		else if (rt->rt_mtu > mtu || rt->rt_mtu == 0)
+			rt->rt_mtu = mtu;
 	}
 
 	if_put(ifp);
@@ -1084,8 +1084,8 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 			(*ctlfunc)(PRC_MTUINC, sintosa(&sin),
 			    r->rtt_tableid, NULL);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			rt->rt_rmx.rmx_mtu = 0;
+		if ((rt->rt_locks & RTV_MTU) == 0)
+			rt->rt_mtu = 0;
 	}
 
 	if_put(ifp);

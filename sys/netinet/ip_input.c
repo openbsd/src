@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.297 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.298 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1512,8 +1512,8 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 
 #ifdef IPSEC
 		if (rt != NULL) {
-			if (rt->rt_rmx.rmx_mtu)
-				destmtu = rt->rt_rmx.rmx_mtu;
+			if (rt->rt_mtu)
+				destmtu = rt->rt_mtu;
 			else {
 				struct ifnet *destifp;
 

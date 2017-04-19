@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.226 2017/02/21 15:33:52 dhill Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.227 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -143,9 +143,9 @@ struct idgen32_ctx ip6_id_ctx;
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
  *
- * type of "mtu": rt_rmx.rmx_mtu is u_long, ifnet.ifr_mtu is int, and
+ * type of "mtu": rt_mtu is u_long, ifnet.ifr_mtu is int, and
  * nd_ifinfo.linkmtu is u_int32_t.  so we use u_long to hold largest one,
- * which is rt_rmx.rmx_mtu.
+ * which is rt_mtu.
  */
 int
 ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
@@ -1016,7 +1016,7 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup)
 	int error = 0;
 
 	if (rt != NULL) {
-		mtu = rt->rt_rmx.rmx_mtu;
+		mtu = rt->rt_mtu;
 		if (mtu == 0)
 			mtu = ifp->if_mtu;
 		else if (mtu < IPV6_MMTU) {
@@ -1032,8 +1032,8 @@ ip6_getpmtu(struct rtentry *rt, struct ifnet *ifp, u_long *mtup)
 			 * field isn't locked).
 			 */
 			mtu = ifp->if_mtu;
-			if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
-				rt->rt_rmx.rmx_mtu = mtu;
+			if (!(rt->rt_locks & RTV_MTU))
+				rt->rt_mtu = mtu;
 		}
 	} else {
 		mtu = ifp->if_mtu;

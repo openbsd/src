@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.54 2017/02/09 15:19:32 jca Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.55 2017/04/19 15:21:54 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ tcp_timer_rexmt(void *arg)
 		rt = in_pcbrtentry(inp);
 		/* Check if path MTU discovery is disabled already */
 		if (rt && (rt->rt_flags & RTF_HOST) &&
-		    (rt->rt_rmx.rmx_locks & RTV_MTU))
+		    (rt->rt_locks & RTV_MTU))
 			goto leave;
 
 		rt = NULL;
@@ -282,8 +282,8 @@ tcp_timer_rexmt(void *arg)
 		}
 		if (rt != NULL) {
 			/* Disable path MTU discovery */
-			if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
-				rt->rt_rmx.rmx_locks |= RTV_MTU;
+			if ((rt->rt_locks & RTV_MTU) == 0) {
+				rt->rt_locks |= RTV_MTU;
 				in_rtchange(inp, 0);
 			}
 
