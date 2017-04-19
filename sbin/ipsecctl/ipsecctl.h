@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.70 2017/04/14 18:06:28 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.71 2017/04/19 15:59:38 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -37,7 +37,7 @@ enum {
 #define RULE_FLOW	0x01
 #define RULE_SA		0x02
 #define RULE_IKE	0x04
-#define RULE_GROUP	0x08
+#define RULE_BUNDLE	0x08
 
 enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
@@ -169,7 +169,7 @@ extern const struct ipsec_xf authxfs[];
 extern const struct ipsec_xf encxfs[];
 extern const struct ipsec_xf compxfs[];
 
-TAILQ_HEAD(dst_group_queue, ipsec_rule);
+TAILQ_HEAD(dst_bundle_queue, ipsec_rule);
 
 /* Complete state of one rule. */
 struct ipsec_rule {
@@ -212,21 +212,21 @@ struct ipsec_rule {
 	u_int32_t	 nr;
 
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
-	TAILQ_ENTRY(ipsec_rule) group_entry;
-	TAILQ_ENTRY(ipsec_rule) dst_group_entry;
+	TAILQ_ENTRY(ipsec_rule) bundle_entry;
+	TAILQ_ENTRY(ipsec_rule) dst_bundle_entry;
 
-	struct dst_group_queue	dst_group_queue;
+	struct dst_bundle_queue	dst_bundle_queue;
 	char			*bundle;
 };
 
 TAILQ_HEAD(ipsec_rule_queue, ipsec_rule);
-TAILQ_HEAD(ipsec_group_queue, ipsec_rule);
+TAILQ_HEAD(ipsec_bundle_queue, ipsec_rule);
 
 struct ipsecctl {
 	u_int32_t	rule_nr;
 	int		opts;
 	struct ipsec_rule_queue rule_queue;
-	struct ipsec_group_queue group_queue;
+	struct ipsec_bundle_queue bundle_queue;
 };
 
 int	parse_rules(const char *, struct ipsecctl *);

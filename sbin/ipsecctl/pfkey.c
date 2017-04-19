@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.59 2017/04/18 02:29:56 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.60 2017/04/19 15:59:38 bluhm Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -51,7 +51,7 @@ static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *, u_int8_t);
-static int	pfkey_sagroup(int, u_int8_t, u_int8_t, u_int8_t,
+static int	pfkey_sabundle(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr_wrap *, u_int32_t,
 		    struct ipsec_addr_wrap *, u_int32_t);
 static int	pfkey_reply(int, u_int8_t **, ssize_t *);
@@ -626,7 +626,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 }
 
 static int
-pfkey_sagroup(int sd, u_int8_t satype, u_int8_t satype2, u_int8_t action,
+pfkey_sabundle(int sd, u_int8_t satype, u_int8_t satype2, u_int8_t action,
     struct ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_addr_wrap *dst2,
     u_int32_t spi2)
 {
@@ -1180,7 +1180,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		default:
 			return -1;
 		}
-	} else if (r->type == RULE_GROUP) {
+	} else if (r->type == RULE_BUNDLE) {
 		switch (r->satype) {
 		case IPSEC_AH:
 			satype = SADB_SATYPE_AH;
@@ -1221,7 +1221,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		}
 		switch (action) {
 		case ACTION_ADD:
-			ret = pfkey_sagroup(fd, satype, satype2,
+			ret = pfkey_sabundle(fd, satype, satype2,
 			    SADB_X_GRPSPIS, r->dst, r->spi, r->dst2, r->spi2);
 			break;
 		case ACTION_DELETE:

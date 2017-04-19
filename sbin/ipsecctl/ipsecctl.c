@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.81 2017/03/02 17:44:32 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.82 2017/04/19 15:59:38 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -48,7 +48,7 @@ void		 ipsecctl_print_port(u_int16_t, const char *);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
-void		 ipsecctl_print_sagroup(struct ipsec_rule *, int);
+void		 ipsecctl_print_sabundle(struct ipsec_rule *, int);
 int		 ipsecctl_flush(int);
 void		 ipsecctl_get_rules(struct ipsecctl *);
 void		 ipsecctl_print_title(char *);
@@ -103,7 +103,7 @@ ipsecctl_rules(char *filename, int opts)
 	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
 	TAILQ_INIT(&ipsec.rule_queue);
-	TAILQ_INIT(&ipsec.group_queue);
+	TAILQ_INIT(&ipsec.bundle_queue);
 
 	if (parse_rules(filename, &ipsec) < 0) {
 		warnx("Syntax error in config file: ipsec rules not loaded");
@@ -119,7 +119,7 @@ ipsecctl_rules(char *filename, int opts)
 
 	}
 
-	/* This also frees the rules in ipsec.group_queue. */
+	/* This also frees the rules in ipsec.bundle_queue. */
 	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
 		TAILQ_REMOVE(&ipsec.rule_queue, rp, rule_entry);
 		ipsecctl_free_rule(rp);
@@ -382,9 +382,9 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 }
 
 void
-ipsecctl_print_sagroup(struct ipsec_rule *r, int opts)
+ipsecctl_print_sabundle(struct ipsec_rule *r, int opts)
 {
-	printf("[group %s to ", satype[r->proto]);
+	printf("[bundle %s to ", satype[r->proto]);
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x with %s to ", r->spi, satype[r->proto2]);
 	ipsecctl_print_addr(r->dst2);
@@ -405,8 +405,8 @@ ipsecctl_print_rule(struct ipsec_rule *r, int opts)
 		ipsecctl_print_sa(r, opts);
 	if (r->type & RULE_IKE)
 		ike_print_config(r, opts);
-	if (r->type & RULE_GROUP)
-		ipsecctl_print_sagroup(r, opts);
+	if (r->type & RULE_BUNDLE)
+		ipsecctl_print_sabundle(r, opts);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.167 2017/04/14 18:06:28 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.168 2017/04/19 15:59:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -191,7 +191,7 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_hosts *,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
-struct ipsec_rule	*create_sagroup(struct ipsec_addr_wrap *, u_int8_t,
+struct ipsec_rule	*create_sabundle(struct ipsec_addr_wrap *, u_int8_t,
 			     u_int32_t, struct ipsec_addr_wrap *, u_int8_t,
 			     u_int32_t);
 struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_hosts *,
@@ -207,7 +207,7 @@ struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_hosts *,
 			     struct ike_mode *, struct ike_mode *, u_int8_t,
 			     u_int8_t, u_int8_t, char *, char *,
 			     struct ike_auth *, char *);
-int			 add_sagroup(struct ipsec_rule *, char *);
+int			 add_sabundle(struct ipsec_rule *, char *);
 int			 get_id_type(char *);
 
 struct ipsec_transforms *ipsec_transforms;
@@ -2344,12 +2344,12 @@ validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
 }
 
 int
-add_sagroup(struct ipsec_rule *r, char *bundle)
+add_sabundle(struct ipsec_rule *r, char *bundle)
 {
-	struct ipsec_rule	*rp, *last, *group;
+	struct ipsec_rule	*rp, *last, *sabundle;
 	int			 found = 0;
 
-	TAILQ_FOREACH(rp, &ipsec->group_queue, group_entry) {
+	TAILQ_FOREACH(rp, &ipsec->bundle_queue, bundle_entry) {
 		if ((strcmp(rp->src->name, r->src->name) == 0) &&
 		    (strcmp(rp->dst->name, r->dst->name) == 0) &&
 		    (strcmp(rp->bundle, bundle) == 0)) {
@@ -2358,20 +2358,20 @@ add_sagroup(struct ipsec_rule *r, char *bundle)
 		}
 	}
 	if (found) {
-		last = TAILQ_LAST(&rp->dst_group_queue, dst_group_queue);
-		TAILQ_INSERT_TAIL(&rp->dst_group_queue, r, dst_group_entry);
+		last = TAILQ_LAST(&rp->dst_bundle_queue, dst_bundle_queue);
+		TAILQ_INSERT_TAIL(&rp->dst_bundle_queue, r, dst_bundle_entry);
 
-		group = create_sagroup(last->dst, last->satype, last->spi,
+		sabundle = create_sabundle(last->dst, last->satype, last->spi,
 		    r->dst, r->satype, r->spi);
-		if (group == NULL)
+		if (sabundle == NULL)
 			return (1);
-		group->nr = ipsec->rule_nr++;
-		if (ipsecctl_add_rule(ipsec, group))
+		sabundle->nr = ipsec->rule_nr++;
+		if (ipsecctl_add_rule(ipsec, sabundle))
 			return (1);
 	} else {
-		TAILQ_INSERT_TAIL(&ipsec->group_queue, r, group_entry);
-		TAILQ_INIT(&r->dst_group_queue);
-		TAILQ_INSERT_TAIL(&r->dst_group_queue, r, dst_group_entry);
+		TAILQ_INSERT_TAIL(&ipsec->bundle_queue, r, bundle_entry);
+		TAILQ_INIT(&r->dst_bundle_queue);
+		TAILQ_INSERT_TAIL(&r->dst_bundle_queue, r, dst_bundle_entry);
 		r->bundle = bundle;
 	}
 
@@ -2433,16 +2433,16 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 }
 
 struct ipsec_rule *
-create_sagroup(struct ipsec_addr_wrap *dst, u_int8_t proto, u_int32_t spi,
+create_sabundle(struct ipsec_addr_wrap *dst, u_int8_t proto, u_int32_t spi,
     struct ipsec_addr_wrap *dst2, u_int8_t proto2, u_int32_t spi2)
 {
 	struct ipsec_rule *r;
 
 	r = calloc(1, sizeof(struct ipsec_rule));
 	if (r == NULL)
-		err(1, "create_sagroup: calloc");
+		err(1, "create_sabundle: calloc");
 
-	r->type |= RULE_GROUP;
+	r->type |= RULE_BUNDLE;
 
 	r->dst = copyhost(dst);
 	r->dst2 = copyhost(dst2);
@@ -2661,7 +2661,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 			r->nr = ipsec->rule_nr++;
 			if (ipsecctl_add_rule(ipsec, r))
 				goto out;
-			if (bundle && add_sagroup(r, bundle))
+			if (bundle && add_sabundle(r, bundle))
 				goto out;
 
 			if (direction == IPSEC_INOUT) {
@@ -2673,7 +2673,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
 					goto out;
-				if (bundle && add_sagroup(revr, bundle))
+				if (bundle && add_sabundle(revr, bundle))
 					goto out;
 			} else if (spi != 0 || authkey || enckey) {
 				/* Create and add reverse sa rule. */
@@ -2684,7 +2684,7 @@ expand_rule(struct ipsec_rule *rule, struct ipsec_hosts *peers,
 				revr->nr = ipsec->rule_nr++;
 				if (ipsecctl_add_rule(ipsec, revr))
 					goto out;
-				if (bundle && add_sagroup(revr, bundle))
+				if (bundle && add_sabundle(revr, bundle))
 					goto out;
 			}
 			added++;
