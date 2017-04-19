@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/01/20 04:54:44 claudio Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/04/19 12:44:05 bluhm Exp $
 
 REGRESS_TARGETS=	hit miss
 REGRESS_ROOT_TARGETS=	hit miss
@@ -9,7 +9,7 @@ REGRESS_ROOT_TARGETS=	hit miss
 .SILENT: .BEGIN .END .INTERRUPT
 
 .BEGIN:
-	${SUDO} pfctl -qt __regress_tbl -T add -f ./table.in
+	${SUDO} pfctl -qt __regress_tbl -T add -f ${.CURDIR}/table.in
 
 .END:
 	${SUDO} pfctl -qt __regress_tbl -T kill
@@ -21,7 +21,7 @@ REGRESS_ROOT_TARGETS=	hit miss
 .endif
 
 hit:
-	for i in `cat ./table.hit`; do \
+	for i in `cat ${.CURDIR}/table.hit`; do \
 		echo -n "hit $$i "; \
 		${SUDO} pfctl -qt __regress_tbl -T test $$i || exit 1; \
 		echo success; \
@@ -29,7 +29,7 @@ hit:
 	exit 0
 
 miss:
-	for i in `cat ./table.miss`; do \
+	for i in `cat ${.CURDIR}/table.miss`; do \
 		echo -n "miss $$i "; \
 		${SUDO} pfctl -qt __regress_tbl -T test $$i && exit 1; \
 		echo success; \
