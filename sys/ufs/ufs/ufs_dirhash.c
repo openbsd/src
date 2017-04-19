@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.38 2016/09/15 02:00:18 dlg Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.39 2017/04/19 17:26:45 dhill Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -246,11 +246,13 @@ fail:
 		for (i = 0; i < narrays; i++)
 			if (dh->dh_hash[i] != NULL)
 				DIRHASH_BLKFREE(dh->dh_hash[i]);
-		free(dh->dh_hash, M_DIRHASH, 0);
+		free(dh->dh_hash, M_DIRHASH,
+		    narrays * sizeof(dh->dh_hash[0]));
 	}
 	if (dh->dh_blkfree != NULL)
-		free(dh->dh_blkfree, M_DIRHASH, 0);
-	free(dh, M_DIRHASH, 0);
+		free(dh->dh_blkfree, M_DIRHASH,
+		    nblocks * sizeof(dh->dh_blkfree[0]));
+	free(dh, M_DIRHASH, sizeof(*dh));
 	ip->i_dirhash = NULL;
 	DIRHASHLIST_LOCK();
 	ufs_dirhashmem -= memreqd;
@@ -282,13 +284,15 @@ ufsdirhash_free(struct inode *ip)
 	if (dh->dh_hash != NULL) {
 		for (i = 0; i < dh->dh_narrays; i++)
 			DIRHASH_BLKFREE(dh->dh_hash[i]);
-		free(dh->dh_hash, M_DIRHASH, 0);
-		free(dh->dh_blkfree, M_DIRHASH, 0);
+		free(dh->dh_hash, M_DIRHASH,
+		    dh->dh_narrays * sizeof(dh->dh_hash[0]));
+		free(dh->dh_blkfree, M_DIRHASH,
+		    dh->dh_nblk * sizeof(dh->dh_blkfree[0]));
 		mem += dh->dh_narrays * sizeof(*dh->dh_hash) +
 		    dh->dh_narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
 	}
-	free(dh, M_DIRHASH, 0);
+	free(dh, M_DIRHASH, sizeof(*dh));
 	ip->i_dirhash = NULL;
 
 	DIRHASHLIST_LOCK();
@@ -996,7 +1000,7 @@ ufsdirhash_recycle(int wanted)
 	struct dirhash *dh;
 	doff_t **hash;
 	u_int8_t *blkfree;
-	int i, mem, narrays;
+	int i, mem, narrays, nblk;
 
 	DIRHASHLIST_LOCK();
 	while (wanted + ufs_dirhashmem > ufs_dirhashmaxmem) {
@@ -1023,6 +1027,7 @@ ufsdirhash_recycle(int wanted)
 		blkfree = dh->dh_blkfree;
 		dh->dh_blkfree = NULL;
 		narrays = dh->dh_narrays;
+		nblk = dh->dh_nblk;
 		mem = narrays * sizeof(*dh->dh_hash) +
 		    narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
@@ -1032,8 +1037,8 @@ ufsdirhash_recycle(int wanted)
 		DIRHASHLIST_UNLOCK();
 		for (i = 0; i < narrays; i++)
 			DIRHASH_BLKFREE(hash[i]);
-		free(hash, M_DIRHASH, 0);
-		free(blkfree, M_DIRHASH, 0);
+		free(hash, M_DIRHASH, narrays * sizeof(hash[0]));
+		free(blkfree, M_DIRHASH, nblk * sizeof(blkfree[0]));
 
 		/* Account for the returned memory, and repeat if necessary. */
 		DIRHASHLIST_LOCK();
