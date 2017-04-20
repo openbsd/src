@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.16 2016/06/13 01:26:14 dlg Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.17 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -45,14 +45,14 @@ __mtx_init(struct mutex *mtx, int wantipl)
 
 #ifdef MULTIPROCESSOR
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
-	while (mtx_enter_try(mtx) == 0)
+	while (__mtx_enter_try(mtx) == 0)
 		SPINLOCK_SPIN_HOOK;
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *owner, *ci = curcpu();
 	int s;
@@ -82,7 +82,7 @@ mtx_enter_try(struct mutex *mtx)
 }
 #else
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -101,15 +101,15 @@ mtx_enter(struct mutex *mtx)
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
-	mtx_enter(mtx);
+	__mtx_enter(mtx);
 	return (1);
 }
 #endif
 
 void
-mtx_leave(struct mutex *mtx)
+__mtx_leave(struct mutex *mtx)
 {
 	int s;
 

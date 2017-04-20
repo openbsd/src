@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.7 2009/08/13 13:24:55 weingart Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.8 2017/04/20 13:57:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -44,14 +44,69 @@
 
 #include <machine/mutex.h>
 
+#define MTX_LO_FLAGS(flags) \
+	((!((flags) & MTX_NOWITNESS) ? LO_WITNESS : 0) | \
+	 ((flags) & MTX_DUPOK ? LO_DUPOK : 0) | \
+	 LO_INITIALIZED | (LO_CLASS_MUTEX << LO_CLASSSHIFT))
+
+#define __MTX_S(x) #x
+#define __MTX_LINE __MTX_S(__LINE__)
+#define __MTX_NAME __FILE__ ":" __MTX_S(__LINE__)
+
+#define MTX_LO_INITIALIZER(name, flags) \
+	{ .lo_type = &(struct lock_type){ .lt_name = __MTX_NAME }, \
+	  .lo_name = (name) != NULL ? (name) : __MTX_NAME, \
+	  .lo_flags = MTX_LO_FLAGS(flags) }
+
+#define MTX_NOWITNESS	0x01
+#define MTX_DUPOK	0x02
+
+#define MUTEX_INITIALIZER(ipl) \
+	MUTEX_INITIALIZER_FLAGS(ipl, NULL, 0)
+
 /*
  * Some architectures need to do magic for the ipl, so they need a macro.
  */
-#ifndef mtx_init
-void mtx_init(struct mutex *, int);
+#ifndef _mtx_init
+void _mtx_init(struct mutex *, int);
 #endif
-void mtx_enter(struct mutex *);
-void mtx_leave(struct mutex *);
-int mtx_enter_try(struct mutex *);
+
+void	__mtx_enter(struct mutex *);
+int	__mtx_enter_try(struct mutex *);
+void	__mtx_leave(struct mutex *);
+
+#ifdef WITNESS
+
+void	_mtx_init_flags(struct mutex *, int, const char *, int,
+	    struct lock_type *);
+
+void	_mtx_enter(struct mutex *, const char *, int);
+int	_mtx_enter_try(struct mutex *, const char *, int);
+void	_mtx_leave(struct mutex *, const char *, int);
+
+#define mtx_init_flags(m, ipl, name, flags) do {			\
+	static struct lock_type __lock_type = { .lt_name = #m };	\
+	_mtx_init_flags(m, ipl, name, flags, &__lock_type);		\
+} while (0)
+
+#define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
+#define mtx_enter(m)		_mtx_enter(m, __FILE__, __LINE__)
+#define mtx_enter_try(m)	_mtx_enter_try(m, __FILE__, __LINE__)
+#define mtx_leave(m)		_mtx_leave(m, __FILE__, __LINE__)
+
+#else /* WITNESS */
+
+#define mtx_init(m, ipl)	__mtx_init(m, ipl)
+
+#define mtx_init_flags(m, ipl, name, flags) do {			\
+	(void)(name); (void)(flags);					\
+	__mtx_init(m, ipl);						\
+} while (0)
+
+#define mtx_enter __mtx_enter
+#define mtx_leave __mtx_leave
+#define mtx_enter_try __mtx_enter_try
+
+#endif /* WITNESS */
 
 #endif

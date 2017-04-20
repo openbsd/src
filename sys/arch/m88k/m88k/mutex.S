@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.15 2016/06/13 23:51:59 dlg Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.16 2017/04/20 13:57:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -45,7 +45,7 @@ ENTRY(__mtx_init)
 /*
  * void mtx_enter(struct mutex *mtx)
  */
-ENTRY(mtx_enter)
+ENTRY(__mtx_enter)
 	subu	%r31, %r31, 8
 	st	%r1,  %r31, 4		/* save return address */
 
@@ -138,7 +138,7 @@ enter_panic:
 /*
  * int mtx_enter_try(struct mutex *mtx)
  */
-ENTRY(mtx_enter_try)
+ENTRY(__mtx_enter_try)
 	subu	%r31, %r31, 8
 	st	%r1,  %r31, 4		/* save return address */
 
@@ -232,7 +232,7 @@ enter_try_panic:
 /*
  * void mtx_leave(struct mutex *mtx)
  */
-ENTRY(mtx_leave)
+ENTRY(__mtx_leave)
 	ld	%r3,  %r2,  MTX_OLDIPL
 	ld	%r4,  %r2,  MTX_WANTIPL
 #ifdef DIAGNOSTIC

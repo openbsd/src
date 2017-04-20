@@ -1,6 +1,6 @@
 #ifndef _M88K_MUTEX_H_
 #define _M88K_MUTEX_H_
-/*	$OpenBSD: mutex.h,v 1.4 2015/07/03 15:12:49 miod Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.5 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -27,11 +27,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/_lock.h>
+
 struct mutex {
 	volatile int mtx_lock;	/* mutex.S relies upon this field being first */
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;
+#ifdef WITNESS
+	struct lock_object mtx_lock_obj;
+#endif
 };
 
 /*
@@ -48,10 +53,17 @@ struct mutex {
 #define __MUTEX_IPL(ipl) (ipl)
 #endif
 
-#define	MUTEX_INITIALIZER(ipl)	{ 0, __MUTEX_IPL((ipl)), IPL_NONE, NULL }
+#ifdef WITNESS
+#define	MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ 0, __MUTEX_IPL((ipl)), IPL_NONE, NULL, \
+	  MTX_LO_INITIALIZER(name, flags) }
+#else
+#define	MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ 0, __MUTEX_IPL((ipl)), IPL_NONE, NULL }
+#endif
 
 void __mtx_init(struct mutex *, int);
-#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+#define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
 
@@ -72,6 +84,7 @@ void __mtx_init(struct mutex *, int);
 
 #endif
 
+#define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
 #endif	/* _M88K_MUTEX_H_ */

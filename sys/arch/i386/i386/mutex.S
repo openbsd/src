@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.10 2017/03/07 14:03:22 visa Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.11 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -45,7 +45,7 @@ ENTRY(__mtx_init)
 
 #define SOFF	8
 
-ENTRY(mtx_enter)
+ENTRY(__mtx_enter)
 	pushl	%ebp
 	movl	%esp, %ebp	
 1:	movl	SOFF(%ebp), %ecx
@@ -93,7 +93,7 @@ ENTRY(mtx_enter)
 6:	.asciz	"mtx_enter: locking against myself"
 #endif
 
-ENTRY(mtx_enter_try)
+ENTRY(__mtx_enter_try)
 	pushl	%ebp
 	movl	%esp, %ebp	
 1:	movl	SOFF(%ebp), %ecx
@@ -140,8 +140,8 @@ ENTRY(mtx_enter_try)
 5:	.asciz	"mtx_enter_try: locking against myself"
 #endif
 
-	
-ENTRY(mtx_leave)
+
+ENTRY(__mtx_leave)
 	pushl	%ebp
 	movl	%esp, %ebp
 	movl	SOFF(%ebp), %ecx

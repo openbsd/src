@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.3 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.4 2017/04/20 13:57:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -54,13 +54,13 @@ extern int __mp_lock_spinout;
 #endif
 
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
 #if defined(MP_LOCKDEBUG)
 	int nticks = __mp_lock_spinout;
 #endif
 
-	while (mtx_enter_try(mtx) == 0) {
+	while (__mtx_enter_try(mtx) == 0) {
 		SPINLOCK_SPIN_HOOK;
 
 #if defined(MP_LOCKDEBUG)
@@ -73,7 +73,7 @@ mtx_enter(struct mutex *mtx)
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *owner, *ci = curcpu();
 	int s;
@@ -103,7 +103,7 @@ mtx_enter_try(struct mutex *mtx)
 }
 #else
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -122,15 +122,15 @@ mtx_enter(struct mutex *mtx)
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
-	mtx_enter(mtx);
+	__mtx_enter(mtx);
 	return (1);
 }
 #endif
 
 void
-mtx_leave(struct mutex *mtx)
+__mtx_leave(struct mutex *mtx)
 {
 	int s;
 

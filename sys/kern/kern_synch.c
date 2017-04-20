@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.139 2017/04/20 13:33:00 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.140 2017/04/20 13:57:30 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -170,6 +170,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 #ifdef MULTIPROCESSOR
 	int hold_count;
 #endif
+	WITNESS_SAVE_DECL(lock_fl);
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	KASSERT(mtx != NULL);
@@ -202,6 +203,8 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	sleep_setup_timeout(&sls, timo);
 	sleep_setup_signal(&sls, priority);
 
+	WITNESS_SAVE(MUTEX_LOCK_OBJECT(mtx), lock_fl);
+
 	/* XXX - We need to make sure that the mutex doesn't
 	 * unblock splsched. This can be made a bit more
 	 * correct when the sched_lock is a mutex.
@@ -217,6 +220,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	if ((priority & PNORELOCK) == 0) {
 		mtx_enter(mtx);
 		MUTEX_OLDIPL(mtx) = spl; /* put the ipl back */
+		WITNESS_RESTORE(MUTEX_LOCK_OBJECT(mtx), lock_fl);
 	} else
 		splx(spl);
 

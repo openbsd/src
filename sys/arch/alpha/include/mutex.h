@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.7 2015/04/17 12:38:54 dlg Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.8 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,10 +28,15 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
+#include <sys/_lock.h>
+
 struct mutex {
 	void *mtx_owner;
 	int mtx_wantipl;
 	int mtx_oldipl;
+#ifdef WITNESS
+	struct lock_object mtx_lock_obj;
+#endif
 };
 
 /*
@@ -48,10 +53,16 @@ struct mutex {
 #define __MUTEX_IPL(ipl) (ipl)
 #endif
 
-#define MUTEX_INITIALIZER(ipl) { NULL, __MUTEX_IPL((ipl)), IPL_NONE }
+#ifdef WITNESS
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
+#else
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE }
+#endif
 
 void __mtx_init(struct mutex *, int);
-#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+#define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
@@ -68,6 +79,7 @@ void __mtx_init(struct mutex *, int);
 #define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
 
+#define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
 #endif	/* _MACHINE_MUTEX_H_ */

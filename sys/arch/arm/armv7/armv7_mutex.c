@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_mutex.c,v 1.2 2013/05/09 14:27:17 patrick Exp $	*/
+/*	$OpenBSD: armv7_mutex.c,v 1.3 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -43,7 +43,7 @@
  * raising semantics of the mutexes.
  */
 void
-mtx_init(struct mutex *mtx, int wantipl)
+__mtx_init(struct mutex *mtx, int wantipl)
 {
 	mtx->mtx_oldipl = 0;
 	mtx->mtx_wantipl = wantipl;
@@ -51,7 +51,7 @@ mtx_init(struct mutex *mtx, int wantipl)
 }
 
 void
-mtx_enter(struct mutex *mtx)
+__mtx_enter(struct mutex *mtx)
 {
 	if (mtx->mtx_wantipl != IPL_NONE)
 		mtx->mtx_oldipl = _splraise(mtx->mtx_wantipl);
@@ -64,7 +64,7 @@ mtx_enter(struct mutex *mtx)
 }
 
 int
-mtx_enter_try(struct mutex *mtx)
+__mtx_enter_try(struct mutex *mtx)
 {
 	if (mtx->mtx_wantipl != IPL_NONE)
 		mtx->mtx_oldipl = _splraise(mtx->mtx_wantipl);
@@ -82,7 +82,7 @@ mtx_enter_try(struct mutex *mtx)
 }
 
 void
-mtx_leave(struct mutex *mtx)
+__mtx_leave(struct mutex *mtx)
 {
 	MUTEX_ASSERT_LOCKED(mtx);
 	mtx->mtx_lock = 0;

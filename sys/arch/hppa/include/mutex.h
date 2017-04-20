@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.6 2015/05/02 10:59:47 dlg Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.7 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,6 +28,8 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
+#include <sys/_lock.h>
+
 #define	MUTEX_UNLOCKED	{ 1, 1, 1, 1 }
 
 /* Note: mtx_lock must be 16-byte aligned. */
@@ -38,6 +40,9 @@ struct mutex {
 	int mtx_wantipl;
 	int mtx_oldipl;
 	void *mtx_owner;
+#ifdef WITNESS
+	struct lock_object mtx_lock_obj;
+#endif
 };
 
 /*
@@ -50,14 +55,22 @@ struct mutex {
 #ifdef MULTIPROCESSOR
 #define __MUTEX_IPL(ipl) \
     (((ipl) > IPL_NONE && (ipl) < IPL_AUDIO) ? IPL_AUDIO : (ipl))
-#define MUTEX_INITIALIZER(ipl) { MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL }
-#else
+#ifdef WITNESS
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL, \
+	  MTX_LO_INITIALIZER(name, flags) }
+#else /* WITNESS */
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ MUTEX_UNLOCKED, __MUTEX_IPL((ipl)), 0, NULL }
+#endif /* WITNESS */
+#else /* MULTIPROCESSOR */
 #define __MUTEX_IPL(ipl) (ipl)
-#define MUTEX_INITIALIZER(ipl) { __MUTEX_IPL((ipl)), 0, NULL }
-#endif
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ __MUTEX_IPL((ipl)), 0, NULL }
+#endif /* MULTIPROCESSOR */
 
 void __mtx_init(struct mutex *, int);
-#define mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
+#define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
@@ -74,6 +87,7 @@ void __mtx_init(struct mutex *, int);
 #define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
 
+#define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
 #endif

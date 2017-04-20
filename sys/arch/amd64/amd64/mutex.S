@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.11 2017/03/07 14:03:22 visa Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.12 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -44,7 +44,7 @@ ENTRY(__mtx_init)
 	movq	$0, MTX_OWNER(%rdi)
 	ret
 
-ENTRY(mtx_enter)
+ENTRY(__mtx_enter)
 1:	movl	MTX_WANTIPL(%rdi), %eax
 	movq	CPUVAR(SELF), %rcx
 	movl	CPU_INFO_ILEVEL(%rcx), %edx	# oipl = cpl;
@@ -89,7 +89,7 @@ ENTRY(mtx_enter)
 5:	.asciz	"mtx_enter: locking against myself"
 #endif
 
-ENTRY(mtx_enter_try)
+ENTRY(__mtx_enter_try)
 1:	movl	MTX_WANTIPL(%rdi), %eax
 	movq	CPUVAR(SELF), %rcx
 	movl	CPU_INFO_ILEVEL(%rcx), %edx	# oipl = cpl;
@@ -133,7 +133,7 @@ ENTRY(mtx_enter_try)
 #endif
 
 
-ENTRY(mtx_leave)
+ENTRY(__mtx_leave)
 	movq	%rdi, %rax
 #ifdef DIAGNOSTIC
 	movq	CPUVAR(SELF), %rcx

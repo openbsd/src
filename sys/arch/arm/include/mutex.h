@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.2 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.3 2017/04/20 13:57:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,6 +28,8 @@
 #ifndef _ARM_MUTEX_H_
 #define _ARM_MUTEX_H_
 
+#include <sys/_lock.h>
+
 /*
  * Simple non-mp implementation.
  */
@@ -35,11 +37,20 @@ struct mutex {
 	int mtx_lock;
 	int mtx_wantipl;
 	int mtx_oldipl;
+#ifdef WITNESS
+	struct lock_object mtx_lock_obj;
+#endif
 };
 
-void mtx_init(struct mutex *, int);
+void __mtx_init(struct mutex *, int);
 
-#define MUTEX_INITIALIZER(ipl) { 0, ipl, 0 }
+#ifdef WITNESS
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ 0, ipl, 0, MTX_LO_INITIALIZER(name, flags) }
+#else
+#define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
+	{ 0, ipl, 0 }
+#endif
 
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
@@ -56,6 +67,7 @@ void mtx_init(struct mutex *, int);
 #define MUTEX_ASSERT_UNLOCKED(mtx) do { } while (0)
 #endif
 
+#define MUTEX_LOCK_OBJECT(mtx)	(&(mtx)->mtx_lock_obj)
 #define MUTEX_OLDIPL(mtx)	(mtx)->mtx_oldipl
 
 #endif
