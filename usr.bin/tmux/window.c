@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.189 2017/04/20 09:43:45 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.190 2017/04/20 17:49:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -883,7 +883,7 @@ window_pane_spawn(struct window_pane *wp, int argc, char **argv,
 	ws.ws_col = screen_size_x(&wp->base);
 	ws.ws_row = screen_size_y(&wp->base);
 
-	wp->pid = pty_fork(ptm_fd, &wp->fd, wp->tty, sizeof wp->tty, &ws);
+	wp->pid = fdforkpty(ptm_fd, &wp->fd, wp->tty, NULL, &ws);
 	switch (wp->pid) {
 	case -1:
 		wp->fd = -1;

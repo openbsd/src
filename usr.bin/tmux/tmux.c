@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.180 2017/04/19 12:44:29 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.181 2017/04/20 17:49:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "tmux.h"
 
@@ -260,8 +261,8 @@ main(int argc, char **argv)
 	if (shellcmd != NULL && argc != 0)
 		usage();
 
-	if (pty_open(&ptm_fd) != 0)
-		errx(1, "open(\"/dev/ptm\"");
+	if ((ptm_fd = getptmfd()) == -1)
+		err(1, "getptmfd");
 	if (pledge("stdio rpath wpath cpath flock fattr unix getpw sendfd "
 	    "recvfd proc exec tty ps", NULL) != 0)
 		err(1, "pledge");

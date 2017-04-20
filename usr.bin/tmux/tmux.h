@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.743 2017/04/20 09:43:45 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.744 2017/04/20 17:49:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2306,9 +2306,5 @@ void		 style_apply_update(struct grid_cell *, struct options *,
 		     const char *);
 int		 style_equal(const struct grid_cell *,
 		     const struct grid_cell *);
-
-/* pty.c */
-int		 pty_open(int *);
-pid_t		 pty_fork(int, int *, char *, size_t, struct winsize *);
 
 #endif /* TMUX_H */
