@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2017/04/12 08:02:10 jsg Exp $
+# $OpenBSD: Makefile,v 1.10 2017/04/20 10:32:23 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,11 @@ HEADERS+=	adxintrin.h \
 		avx512vlintrin.h \
 		avx512dqintrin.h \
 		avx512vldqintrin.h \
-		pkuintrin.h \
 		avxintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
 		cpuid.h \
+		clflushoptintrin.h \
 		emmintrin.h \
 		f16cintrin.h \
 		fma4intrin.h \
@@ -51,6 +51,7 @@ HEADERS+=	adxintrin.h \
 		mmintrin.h \
 		mm_malloc.h \
 		nmmintrin.h \
+		pkuintrin.h \
 		pmmintrin.h \
 		popcntintrin.h \
 		prfchwintrin.h \
