@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.242 2017/04/08 20:53:54 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.243 2017/04/20 14:23:53 visa Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -15,6 +15,7 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		ACCOUNTING	# acct(2) process accounting
 option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
+#option		WITNESS		# witness(4) lock checker
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
 option		POOL_DEBUG	# pool corruption detection
