@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.3 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.4 2017/04/20 16:07:52 visa Exp $	*/
 /*
  * Copyright (c) 2011,2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -84,11 +84,9 @@
  */
 
 
-/* If <machine/tcb.h> doesn't provide a better way, then use the default */
-#ifdef	TCB_GET
+/* All archs but mips64 have fast TCB_GET() and don't need caching */
+#ifndef	__mips64__
 # define TCB_HAVE_MD_GET	1
-#else
-# define TCB_GET()		__get_tcb()
 #endif
 #ifdef	TCB_SET
 # define TCB_HAVE_MD_SET	1

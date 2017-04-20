@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.3 2017/04/20 15:42:26 visa Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.4 2017/04/20 16:07:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -41,6 +41,25 @@ __mips64_set_tcb(struct proc *p, void *tcb)
 
 /* ELF TLS ABI calls for small TCB, with static TLS data after it */
 #define TLS_VARIANT	1
+
+static inline void *
+__mips64_get_tcb(void)
+{
+	void *tcb;
+
+	/*
+	 * This invokes emulation in kernel if the system does not implement
+	 * the RDHWR instruction or the UserLocal register.
+	 */
+	__asm__ volatile (
+	"	.set	push\n"
+	"	.set	mips64r2\n"
+	"	rdhwr	%0, $29\n"
+	"	.set	pop\n" : "=r" (tcb));
+	return tcb;
+}
+
+#define TCB_GET()		__mips64_get_tcb()
 
 #endif /* _KERNEL */
 

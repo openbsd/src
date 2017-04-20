@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.h,v 1.2 2016/05/10 05:42:31 guenther Exp $ */
+/*	$OpenBSD: cancel.h,v 1.3 2017/04/20 16:07:52 visa Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,11 +26,12 @@ __BEGIN_HIDDEN_DECLS
 __dead void	_thread_canceled(void);
 __END_HIDDEN_DECLS
 
-#ifdef __LIBC__
+#if defined(__LIBC__) && !defined(TCB_HAVE_MD_SET)
 /*
- * Redirect macros that would use the syscall to instead use our callback
+ * Override TIB_GET macro to use the caching callback
  */
-#define __get_tcb()	_thread_cb.tc_tcb()
+#undef TIB_GET
+#define TIB_GET()	TCB_TO_TIB(_thread_cb.tc_tcb())
 #endif
 
 #define PREP_CANCEL_POINT(tib)						\
