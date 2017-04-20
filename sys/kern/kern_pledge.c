@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.204 2017/04/17 20:22:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.205 2017/04/20 15:21:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -545,7 +545,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 }
 
 int
-pledge_syscall(struct proc *p, int code, int *tval)
+pledge_syscall(struct proc *p, int code, uint64_t *tval)
 {
 	p->p_pledge_syscall = code;
 	*tval = 0;
