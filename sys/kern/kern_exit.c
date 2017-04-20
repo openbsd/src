@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.159 2017/02/08 20:58:30 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.160 2017/04/20 12:59:36 visa Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
+#include <sys/witness.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -428,6 +429,8 @@ reaper(void)
 		/* Remove us from the deadproc list. */
 		LIST_REMOVE(p, p_hash);
 		mtx_leave(&deadproc_mutex);
+
+		WITNESS_THREAD_EXIT(p);
 
 		KERNEL_LOCK();
 

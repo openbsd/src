@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.210 2017/04/14 15:11:31 bluhm Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.211 2017/04/20 12:59:36 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/pledge.h>
+#include <sys/witness.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1845,6 +1846,8 @@ userret(struct proc *p)
 		single_thread_check(p, 0);
 		KERNEL_UNLOCK();
 	}
+
+	WITNESS_WARN(WARN_PANIC, NULL, "userret: returning");
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }

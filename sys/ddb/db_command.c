@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.71 2016/04/19 12:23:25 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.72 2017/04/20 12:59:36 visa Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -112,6 +112,9 @@ void	db_struct_offset_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_struct_layout_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_show_regs(db_expr_t, boolean_t, db_expr_t, char *);
 void	db_write_cmd(db_expr_t, boolean_t, db_expr_t, char *);
+void	db_witness_display(db_expr_t, int, db_expr_t, char *);
+void	db_witness_list(db_expr_t, int, db_expr_t, char *);
+void	db_witness_list_all(db_expr_t, int, db_expr_t, char *);
 
 
 /*
@@ -553,6 +556,9 @@ struct db_command db_show_all_cmds[] = {
 	{ "nfsreqs",	db_show_all_nfsreqs,	0, NULL },
 	{ "nfsnodes",	db_show_all_nfsnodes,	0, NULL },
 #endif
+#ifdef WITNESS
+	{ "locks",	db_witness_list_all,	0, NULL },
+#endif
 	{ NULL, 	NULL, 			0, NULL }
 };
 
@@ -562,6 +568,9 @@ struct db_command db_show_cmds[] = {
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
+#ifdef WITNESS
+	{ "locks",	db_witness_list,	0,	NULL },
+#endif
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "mbuf",	db_mbuf_print_cmd,	0,	NULL },
@@ -586,6 +595,9 @@ struct db_command db_show_cmds[] = {
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+#ifdef WITNESS
+	{ "witness",	db_witness_display,	0,	NULL },
+#endif
 	{ NULL,		NULL,			0,	NULL }
 };
 

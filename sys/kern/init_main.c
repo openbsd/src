@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.267 2017/03/06 10:48:16 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.268 2017/04/20 12:59:36 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/mbuf.h>
 #include <sys/pipe.h>
 #include <sys/task.h>
+#include <sys/witness.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -215,6 +216,8 @@ main(void *framep)
 	consinit();
 
 	printf("%s\n", copyright);
+
+	WITNESS_INITIALIZE();
 
 	KERNEL_LOCK_INIT();
 	SCHED_LOCK_INIT();
