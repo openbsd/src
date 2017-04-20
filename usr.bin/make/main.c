@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.121 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.122 2017/04/20 03:04:11 dlg Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -310,14 +310,14 @@ MainParseArgs(int argc, char **argv)
 			Lst_AtEnd(&makefiles, optarg);
 			break;
 		case 'j': {
-		   char *endptr;
+			const char *errstr;
 
 			forceJobs = true;
-			maxJobs = strtol(optarg, &endptr, 0);
-			if (endptr == optarg) {
+			maxJobs = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr != NULL) {
 				fprintf(stderr,
-					"make: illegal argument to -j option -- %s -- not a number\n",
-					optarg);
+				    "make: illegal argument to -j option"
+				    " -- %s -- %s\n", optarg, errstr);
 				usage();
 			}
 			record_option(c, optarg);
