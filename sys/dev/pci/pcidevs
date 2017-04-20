@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1815 2017/03/27 01:50:27 jsg Exp $
+$OpenBSD: pcidevs,v 1.1816 2017/04/20 14:43:59 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3119,7 +3119,6 @@ product INTEL BAYTRAIL_I2C_4	0x0f44	Bay Trail I2C
 product INTEL BAYTRAIL_I2C_5	0x0f45	Bay Trail I2C
 product INTEL BAYTRAIL_I2C_6	0x0f46	Bay Trail I2C 
 product INTEL BAYTRAIL_I2C_7	0x0f47	Bay Trail I2C
-product INTEL BAYTRAIL_I2C_8	0x0f48	Bay Trail I2C 
 product INTEL BAYTRAIL_PCIE_1	0x0f48	Bay Trail PCIE
 product INTEL BAYTRAIL_PCIE_2	0x0f4a	Bay Trail PCIE
 product INTEL BAYTRAIL_PCIE_3	0x0f4c	Bay Trail PCIE
@@ -6410,6 +6409,7 @@ product PLX PEX_8533		0x8533	PEX 8533
 product PLX PEX_8547		0x8547	PEX 8547
 product PLX PEX_8548		0x8548	PEX 8548
 product	PLX PEX_8603		0x8603	PEX 8603
+product PLX PEX_8605		0x8605	PEX 8605
 product PLX PEX_8612		0x8612	PEX 8612
 product PLX PEX_8613		0x8613	PEX 8613
 product PLX PEX_8614		0x8614	PEX 8614
