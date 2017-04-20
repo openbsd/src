@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.160 2017/01/24 22:40:55 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.161 2017/04/20 14:13:00 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -139,6 +139,8 @@ struct srpl_rc bpf_d_rc = SRPL_RC_INITIALIZER(bpf_d_ref, bpf_d_unref, NULL);
 
 void bpf_insn_dtor(void *, void *);
 struct srp_gc bpf_insn_gc = SRP_GC_INITIALIZER(bpf_insn_dtor, NULL);
+
+struct rwlock bpf_sysctl_lk = RWLOCK_INITIALIZER("bpfsz");
 
 int
 bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
@@ -1633,7 +1635,6 @@ int
 bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	static struct rwlock bpf_sysctl_lk = RWLOCK_INITIALIZER("bpfsz");
 	int flags = RW_INTR;
 	int error;
 

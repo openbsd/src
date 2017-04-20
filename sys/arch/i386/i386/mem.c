@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.51 2016/09/25 15:23:37 deraadt Exp $ */
+/*	$OpenBSD: mem.c,v 1.52 2017/04/20 14:13:00 visa Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -116,10 +116,10 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
+static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 	vaddr_t o, v;
 	size_t c;
 	struct iovec *iov;

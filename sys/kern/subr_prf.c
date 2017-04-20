@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.87 2016/05/17 23:43:47 bluhm Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.88 2017/04/20 14:13:00 visa Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -93,7 +93,8 @@
 int	 kprintf(const char *, int, void *, char *, va_list);
 void	 kputchar(int, int, struct tty *);
 
-struct mutex kprintf_mutex = MUTEX_INITIALIZER(IPL_HIGH);
+struct mutex kprintf_mutex =
+    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "kprintf", MTX_NOWITNESS);
 
 /*
  * globals

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.26 2017/03/03 20:49:47 bluhm Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.27 2017/04/20 14:13:00 visa Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -70,7 +70,8 @@ extern char *trap_type[];
 extern int trap_types;
 
 #ifdef MULTIPROCESSOR
-struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
+struct mutex ddb_mp_mutex =
+    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "ddb_mp_mutex", MTX_NOWITNESS);
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
 boolean_t	 db_switch_cpu;

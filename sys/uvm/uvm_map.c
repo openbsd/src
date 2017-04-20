@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.229 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.230 2017/04/20 14:13:00 visa Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2407,7 +2407,7 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	map->s_start = map->s_end = 0; /* Empty stack area by default. */
 	map->flags = flags;
 	map->timestamp = 0;
-	rw_init(&map->lock, "vmmaplk");
+	rw_init_flags(&map->lock, "vmmaplk", RWL_DUPOK);
 	mtx_init(&map->mtx, IPL_VM);
 	mtx_init(&map->flags_lock, IPL_VM);
 

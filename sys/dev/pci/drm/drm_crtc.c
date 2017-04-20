@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_crtc.c,v 1.23 2016/04/08 08:27:53 kettenis Exp $	*/
+/*	$OpenBSD: drm_crtc.c,v 1.24 2017/04/20 14:13:00 visa Exp $	*/
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -642,7 +642,7 @@ int drm_crtc_init(struct drm_device *dev, struct drm_crtc *crtc,
 	crtc->invert_dimensions = false;
 
 	drm_modeset_lock_all(dev);
-	rw_init(&crtc->mutex, "crtcl");
+	rw_init_flags(&crtc->mutex, "crtcl", RWL_DUPOK);
 	mutex_lock_nest_lock(&crtc->mutex, &dev->mode_config.mutex);
 
 	ret = drm_mode_object_get(dev, &crtc->base, DRM_MODE_OBJECT_CRTC);
