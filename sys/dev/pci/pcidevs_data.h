@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1815 2017/03/27 01:50:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1816 2017/04/20 14:43:59 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -10009,10 +10009,6 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_I2C_7,
-	    "Bay Trail I2C",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_I2C_8,
 	    "Bay Trail I2C",
 	},
 	{
@@ -22430,6 +22426,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8603,
 	    "PEX 8603",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8605,
+	    "PEX 8605",
 	},
 	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_PEX_8612,
