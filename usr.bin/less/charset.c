@@ -164,7 +164,9 @@ int
 control_char(LWCHAR c)
 {
 	c &= 0377;
-	return (iscntrl((unsigned char)c));
+	if (utf_mode)
+		return (iscntrl((unsigned char)c));
+	return (iscntrl((unsigned char)c) || !isprint((unsigned char)c));
 }
 
 /*
