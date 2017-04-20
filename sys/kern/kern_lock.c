@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.48 2017/04/20 13:20:17 visa Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.49 2017/04/20 15:06:47 visa Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -37,11 +37,9 @@
 
 #include <sys/param.h>
 #include <sys/lock.h>
-#include <sys/mplock.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
 #include <sys/witness.h>
-#include <sys/_lock.h>
 
 #ifdef MP_LOCKDEBUG
 /* CPU-dependent timing, this needs to be settable from ddb. */
