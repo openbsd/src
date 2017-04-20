@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.170 2017/03/24 07:14:27 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.171 2017/04/20 09:20:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1641,7 +1641,7 @@ window_copy_copy_pipe(struct window_pane *wp, struct session *s,
 		return;
 	expanded = format_single(NULL, arg, NULL, s, NULL, wp);
 
-	job = job_run(expanded, s, NULL, NULL, NULL, NULL);
+	job = job_run(expanded, s, NULL, NULL, NULL, NULL, NULL);
 	bufferevent_write(job->event, buf, len);
 
 	free(expanded);

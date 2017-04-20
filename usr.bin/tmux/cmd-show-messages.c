@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.25 2017/03/17 14:51:41 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.26 2017/04/20 09:20:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -76,7 +76,7 @@ cmd_show_messages_jobs(struct cmdq_item *item, int blank)
 	u_int		 n;
 
 	n = 0;
-	LIST_FOREACH(job, &all_jobs, lentry) {
+	LIST_FOREACH(job, &all_jobs, entry) {
 		if (blank) {
 			cmdq_print(item, "%s", "");
 			blank = 0;

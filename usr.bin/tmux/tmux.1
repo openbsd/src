@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.542 2017/04/19 06:52:27 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.543 2017/04/20 09:20:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2017 $
+.Dd $Mdocdate: April 20 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3490,6 +3490,8 @@ does not wait for
 .Ql #()
 commands to finish; instead, the previous result from running the same command is used,
 or a placeholder if the command has not been run before.
+If the command hasn't exited, the most recent line of output will be used, but the status
+line will not be updated more than once a second.
 Commands are executed with the
 .Nm
 global environment set (see the
