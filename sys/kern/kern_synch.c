@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.138 2017/01/31 12:16:20 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.139 2017/04/20 13:33:00 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/pool.h>
 #include <sys/refcnt.h>
 #include <sys/atomic.h>
+#include <sys/witness.h>
 #include <ddb/db_output.h>
 
 #include <machine/spinlock.h>
@@ -236,6 +237,7 @@ rwsleep(const volatile void *ident, struct rwlock *wl, int priority,
 {
 	struct sleep_state sls;
 	int error, error1;
+	WITNESS_SAVE_DECL(lock_fl);
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	rw_assert_wrlock(wl);
@@ -244,14 +246,18 @@ rwsleep(const volatile void *ident, struct rwlock *wl, int priority,
 	sleep_setup_timeout(&sls, timo);
 	sleep_setup_signal(&sls, priority);
 
+	WITNESS_SAVE(&wl->rwl_lock_obj, lock_fl);
+
 	rw_exit_write(wl);
 
 	sleep_finish(&sls, 1);
 	error1 = sleep_finish_timeout(&sls);
 	error = sleep_finish_signal(&sls);
 
-	if ((priority & PNORELOCK) == 0)
+	if ((priority & PNORELOCK) == 0) {
 		rw_enter_write(wl);
+		WITNESS_RESTORE(&wl->rwl_lock_obj, lock_fl);
+	}
 
 	/* Signal errors are higher priority than timeouts. */
 	if (error == 0 && error1 != 0)

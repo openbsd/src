@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.20 2016/09/21 10:19:13 dlg Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.21 2017/04/20 13:33:00 visa Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -54,14 +54,48 @@
 #ifndef _SYS_RWLOCK_H
 #define _SYS_RWLOCK_H
 
+#include <sys/_lock.h>
+
 struct proc;
 
 struct rwlock {
 	volatile unsigned long	 rwl_owner;
 	const char		*rwl_name;
+#ifdef WITNESS
+	struct lock_object	 rwl_lock_obj;
+#endif
 };
 
-#define RWLOCK_INITIALIZER(name)	{ 0, name }
+#define RWLOCK_LO_FLAGS(flags) \
+	((ISSET(flags, RWL_DUPOK) ? LO_DUPOK : 0) |			\
+	 (ISSET(flags, RWL_NOWITNESS) ? 0 : LO_WITNESS) |		\
+	 (ISSET(flags, RWL_IS_VNODE) ? LO_IS_VNODE : 0) |		\
+	 LO_INITIALIZED | LO_SLEEPABLE | LO_UPGRADABLE |		\
+	 (LO_CLASS_RWLOCK << LO_CLASSSHIFT))
+
+#define RRWLOCK_LO_FLAGS(flags) \
+	((ISSET(flags, RWL_DUPOK) ? LO_DUPOK : 0) |			\
+	 (ISSET(flags, RWL_NOWITNESS) ? 0 : LO_WITNESS) |		\
+	 (ISSET(flags, RWL_IS_VNODE) ? LO_IS_VNODE : 0) |		\
+	 LO_INITIALIZED | LO_RECURSABLE | LO_SLEEPABLE | LO_UPGRADABLE | \
+	 (LO_CLASS_RRWLOCK << LO_CLASSSHIFT))
+
+#define RWLOCK_LO_INITIALIZER(name, flags) \
+	{ .lo_type = &(struct lock_type){ .lt_name = name },		\
+	  .lo_name = (name),						\
+	  .lo_flags = RWLOCK_LO_FLAGS(flags) }
+
+#define RWL_DUPOK		0x01
+#define RWL_NOWITNESS		0x02
+#define RWL_IS_VNODE		0x04
+
+#ifdef WITNESS
+#define RWLOCK_INITIALIZER(name) \
+	{ 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0) }
+#else
+#define RWLOCK_INITIALIZER(name) \
+	{ 0, name }
+#endif
 
 #define RWLOCK_WAIT		0x01UL
 #define RWLOCK_WRWANT		0x02UL
@@ -97,12 +131,29 @@ struct rrwlock {
 
 #ifdef _KERNEL
 
-void	rw_init(struct rwlock *, const char *);
+void	_rw_init_flags(struct rwlock *, const char *, int, struct lock_type *);
 
-void	rw_enter_read(struct rwlock *);
-void	rw_enter_write(struct rwlock *);
-void	rw_exit_read(struct rwlock *);
-void	rw_exit_write(struct rwlock *);
+#ifdef WITNESS
+#define rw_init_flags(rwl, name, flags) do {				\
+	static struct lock_type __lock_type = { .lt_name = #rwl };	\
+	_rw_init_flags(rwl, name, flags, &__lock_type);			\
+} while (0)
+#define rw_init(rwl, name)	rw_init_flags(rwl, name, 0)
+#else /* WITNESS */
+#define rw_init_flags(rwl, name, flags) \
+				_rw_init_flags(rwl, name, flags, NULL)
+#define rw_init(rwl, name)	_rw_init_flags(rwl, name, 0, NULL)
+#endif /* WITNESS */
+
+void	_rw_enter_read(struct rwlock * LOCK_FL_VARS);
+void	_rw_enter_write(struct rwlock * LOCK_FL_VARS);
+void	_rw_exit_read(struct rwlock * LOCK_FL_VARS);
+void	_rw_exit_write(struct rwlock * LOCK_FL_VARS);
+
+#define rw_enter_read(rwl)	_rw_enter_read(rwl LOCK_FILE_LINE)
+#define rw_enter_write(rwl)	_rw_enter_write(rwl LOCK_FILE_LINE)
+#define rw_exit_read(rwl)	_rw_exit_read(rwl LOCK_FILE_LINE)
+#define rw_exit_write(rwl)	_rw_exit_write(rwl LOCK_FILE_LINE)
 
 #ifdef DIAGNOSTIC
 void	rw_assert_wrlock(struct rwlock *);
@@ -114,14 +165,32 @@ void	rw_assert_unlocked(struct rwlock *);
 #define rw_assert_unlocked(rwl)	((void)0)
 #endif
 
-int	rw_enter(struct rwlock *, int);
-void	rw_exit(struct rwlock *);
+int	_rw_enter(struct rwlock *, int LOCK_FL_VARS);
+void	_rw_exit(struct rwlock * LOCK_FL_VARS);
 int	rw_status(struct rwlock *);
 
-void	rrw_init(struct rrwlock *, char *);
-int	rrw_enter(struct rrwlock *, int);
-void	rrw_exit(struct rrwlock *);
+#define rw_enter(rwl, flags)	_rw_enter(rwl, flags LOCK_FILE_LINE)
+#define rw_exit(rwl)		_rw_exit(rwl LOCK_FILE_LINE)
+
+void	_rrw_init_flags(struct rrwlock *, char *, int, struct lock_type *);
+int	_rrw_enter(struct rrwlock *, int LOCK_FL_VARS);
+void	_rrw_exit(struct rrwlock * LOCK_FL_VARS);
 int	rrw_status(struct rrwlock *);
+
+#ifdef WITNESS
+#define rrw_init_flags(rrwl, name, flags) do {				\
+	static struct lock_type __lock_type = { .lt_name = #rrwl };	\
+	_rrw_init_flags(rrwl, name, flags, &__lock_type);		\
+} while (0)
+#define rrw_init(rrwl, name)	rrw_init_flags(rrwl, name, 0)
+#else /* WITNESS */
+#define rrw_init_flags(rrwl, name, flags) \
+				_rrw_init_flags(rrwl, name, 0, NULL)
+#define rrw_init(rrwl, name)	_rrw_init_flags(rrwl, name, 0, NULL)
+#endif /* WITNESS */
+
+#define rrw_enter(rrwl, flags)	_rrw_enter(rrwl, flags LOCK_FILE_LINE)
+#define rrw_exit(rrwl)		_rrw_exit(rrwl LOCK_FILE_LINE)
 
 #endif /* _KERNEL */
 
