@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2016/12/22 15:33:36 visa Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2017/04/20 15:42:26 visa Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -43,6 +43,7 @@ member	p_cpu
 member	p_stat
 member	p_vmspace
 member	P_ASTPENDING	p_md.md_astpending
+member	P_TCB		p_md.md_tcb
 
 struct	pcb
 member	pcb_regs

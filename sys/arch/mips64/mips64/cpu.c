@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.64 2017/04/07 14:17:38 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.65 2017/04/20 15:42:26 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -51,6 +51,7 @@ struct cpuset cpus_running;
 #endif
 
 vaddr_t	cache_valias_mask;
+int	cpu_has_userlocal;
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach

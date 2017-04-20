@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.58 2017/04/02 03:51:13 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.59 2017/04/20 15:42:26 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -284,6 +284,21 @@ ctx3:
 	li	v0, COP_0_DIAG_ITLB_CLEAR | COP_0_DIAG_BTB_CLEAR | COP_0_DIAG_RAS_DISABLE
 	dmtc0	v0, COP_0_DIAG
 #endif
+
+#ifdef CPU_MIPS64R2
+	/*
+	 * Restore UserLocal register.
+	 */
+	lw	t1, cpu_has_userlocal
+	beq	t1, zero, 1f
+	 nop
+	.set	push
+	.set	mips64r2
+	ld	t0, P_TCB(s0)
+	dmtc0	t0, COP_0_USERLOCAL
+	.set	pop
+1:
+#endif /* CPU_MIPS64R2 */
 
 	/*
 	 * Restore registers and return.

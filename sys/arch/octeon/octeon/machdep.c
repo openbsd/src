@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2017/04/07 14:17:38 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.86 2017/04/20 15:42:26 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -619,7 +619,19 @@ octeon_ioclock_speed(void)
 void
 octeon_tlb_init(void)
 {
+	uint32_t hwrena = 0;
 	uint32_t pgrain = 0;
+
+	/*
+	 * If the UserLocal register is available, let userspace
+	 * access it using the RDHWR instruction.
+	 */
+	if (cp0_get_config_3() & CONFIG3_ULRI) {
+		cp0_set_userlocal(NULL);
+		hwrena |= HWRENA_ULR;
+		cpu_has_userlocal = 1;
+	}
+	cp0_set_hwrena(hwrena);
 
 #ifdef MIPS_PTE64
 	pgrain |= PGRAIN_ELPA;

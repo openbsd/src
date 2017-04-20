@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.4 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.5 2017/04/20 15:42:26 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@
 #define	COP_0_CONFIG		$16
 
 /* MIPS64 release 2 */
+#define	COP_0_USERLOCAL		$4, 2
 #define	COP_0_TLB_PG_GRAIN	$5, 1
 #define	COP_0_EBASE		$15, 1
 
@@ -325,6 +326,11 @@
 #define	PGRAIN_ELPA		0x20000000
 #define	PGRAIN_ESP		0x10000000
 #define	PGRAIN_IEC		0x08000000
+
+/*
+ * HWREna register
+ */
+#define	HWRENA_ULR		0x20000000u
 
 #endif	/* _KERNEL || _STANDALONE */
 

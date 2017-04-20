@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2017/04/20 15:42:26 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,7 @@
 #include <machine/frame.h>
 #include <machine/mips_opcode.h>
 #include <machine/regnum.h>
+#include <machine/tcb.h>
 #include <machine/trap.h>
 
 #ifdef DDB
@@ -715,9 +716,44 @@ fault_common_no_miss:
 	    }
 
 	case T_RES_INST+T_USER:
+	    {
+		register_t *regs = (register_t *)trapframe;
+		caddr_t va;
+		InstFmt inst;
+
+		/* Compute the instruction's address. */
+		va = (caddr_t)trapframe->pc;
+		if (trapframe->cause & CR_BR_DELAY)
+			va += 4;
+
+		/* Get the faulting instruction. */
+		if (copyin(va, &inst, sizeof(inst)) != 0) {
+			i = SIGBUS;
+			typ = BUS_OBJERR;
+			break;
+		}
+		
+		/* Emulate "RDHWR rt, UserLocal". */
+		if (inst.RType.op == OP_SPECIAL3 &&
+		    inst.RType.rs == 0 &&
+		    inst.RType.rd == 29 &&
+		    inst.RType.shamt == 0 &&
+		    inst.RType.func == OP_RDHWR) {
+			regs[inst.RType.rt] = (register_t)TCB_GET(p);
+
+			/* Figure out where to continue. */
+			if (trapframe->cause & CR_BR_DELAY)
+				trapframe->pc = MipsEmulateBranch(trapframe,
+				    trapframe->pc, 0, 0);
+			else
+				trapframe->pc += 4;
+			return;
+		}
+
 		i = SIGILL;
 		typ = ILL_ILLOPC;
 		break;
+	    }
 
 	case T_COP_UNUSABLE+T_USER:
 		/*

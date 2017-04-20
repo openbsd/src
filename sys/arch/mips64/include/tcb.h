@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2017/04/20 15:42:26 visa Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -21,8 +21,20 @@
 
 #ifdef _KERNEL
 
-/* Not a real register; just saved in struct mdproc */
-#define TCB_SET(p, addr)	((p)->p_md.md_tcb = (addr))
+static inline void
+__mips64_set_tcb(struct proc *p, void *tcb)
+{
+#ifdef CPU_MIPS64R2
+	extern int cpu_has_userlocal;
+
+	if (cpu_has_userlocal)
+		cp0_set_userlocal(tcb);
+#endif
+
+	p->p_md.md_tcb = tcb;
+}
+
+#define TCB_SET(p, addr)	__mips64_set_tcb(p, addr)
 #define TCB_GET(p)		((p)->p_md.md_tcb)
 
 #else /* _KERNEL */

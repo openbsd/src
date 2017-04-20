@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.8 2012/09/29 21:37:03 miod Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.9 2017/04/20 15:42:26 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -170,6 +170,8 @@ typedef union {
 #define	OP_LDL		032
 #define	OP_LDR		033
 
+#define	OP_SPECIAL3	037
+
 #define	OP_LB		040
 #define	OP_LH		041
 #define	OP_LWL		042
@@ -336,5 +338,10 @@ typedef union {
 #define	OP_MSUB		05
 #define	OP_NMADD	06
 #define	OP_NMSUB	07
+
+/*
+ * Values for the 'func' field when 'op' == OP_SPECIAL3.
+ */
+#define	OP_RDHWR	073
 
 #endif /* !_MIPS64_MIPS_OPCODE_H_ */

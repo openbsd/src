@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.115 2017/04/07 14:17:38 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.116 2017/04/20 15:42:26 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -414,6 +414,7 @@ void	cp0_calibrate(struct cpu_info *);
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 extern register_t protosr;
+extern int cpu_has_userlocal;
 
 struct exec_package;
 struct user;
@@ -494,6 +495,31 @@ void	cp0_set_config(register_t);
 void	cp0_set_pagegrain(uint32_t);
 void	cp0_set_trapbase(register_t);
 u_int	cp1_get_prid(void);
+
+static inline uint32_t
+cp0_get_hwrena(void)
+{
+	uint32_t value;
+	__asm__ volatile ("mfc0 %0, $7" : "=r" (value));
+	return value;
+}
+
+static inline void
+cp0_set_hwrena(uint32_t value)
+{
+	__asm__ volatile ("mtc0 %0, $7" : : "r" (value));
+}
+
+static inline void
+cp0_set_userlocal(void *value)
+{
+	__asm__ volatile (
+	"	.set	push\n"
+	"	.set	mips64r2\n"
+	"	dmtc0	%0, $4, 2\n"
+	"	.set	pop\n"
+	: : "r" (value));
+}
 
 /*
  * Cache routines (may be overridden)
