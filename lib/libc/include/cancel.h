@@ -1,4 +1,4 @@
-/*	$OpenBSD: cancel.h,v 1.3 2017/04/20 16:07:52 visa Exp $ */
+/*	$OpenBSD: cancel.h,v 1.4 2017/04/20 17:16:32 visa Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,7 +26,7 @@ __BEGIN_HIDDEN_DECLS
 __dead void	_thread_canceled(void);
 __END_HIDDEN_DECLS
 
-#if defined(__LIBC__) && !defined(TCB_HAVE_MD_SET)
+#if defined(__LIBC__) && !defined(TCB_HAVE_MD_GET)
 /*
  * Override TIB_GET macro to use the caching callback
  */
