@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.6 2016/09/17 15:56:58 guenther Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.7 2017/04/20 10:03:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -36,7 +36,7 @@
 /* ELF TLS ABI calls for big TCB, with static TLS data at negative offsets */
 #define TLS_VARIANT	2
 
-register void *__tcb __asm__ ("%g7");
+register void *__tcb __asm__ ("g7");
 #define TCB_GET()		(__tcb)
 #define TCB_SET(tcb)		((__tcb) = (tcb))
 

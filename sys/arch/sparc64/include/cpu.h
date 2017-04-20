@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.89 2016/08/17 11:09:01 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.90 2017/04/20 10:03:40 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -171,7 +171,7 @@ extern struct cpu_info *cpus;
 
 #ifdef MULTIPROCESSOR
 
-register struct cpu_info *__curcpu asm ("%g7");
+register struct cpu_info *__curcpu asm ("g7");
 
 #define curcpu()	(__curcpu->ci_self)
 #define cpu_number()	(__curcpu->ci_number)
