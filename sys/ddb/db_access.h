@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.h,v 1.7 2016/04/19 10:24:42 mpi Exp $	*/
+/*	$OpenBSD: db_access.h,v 1.8 2017/04/20 12:41:43 visa Exp $	*/
 /*	$NetBSD: db_access.h,v 1.6 1994/10/09 08:29:57 mycroft Exp $	*/
 
 /*
@@ -38,3 +38,13 @@ void db_put_value(db_addr_t, size_t, db_expr_t);
 
 void db_read_bytes(db_addr_t, size_t, char *);
 void db_write_bytes(db_addr_t, size_t, char *);
+
+#define DB_STACK_TRACE_MAX	19
+
+struct db_stack_trace {
+	unsigned int	st_count;
+	db_addr_t	st_pc[DB_STACK_TRACE_MAX];
+};
+
+void db_print_stack_trace(struct db_stack_trace *);
+void db_save_stack_trace(struct db_stack_trace *);

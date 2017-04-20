@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.30 2016/09/03 21:43:46 jasper Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.31 2017/04/20 12:41:43 visa Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_access.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_var.h>
@@ -241,4 +242,16 @@ db_stack_dump(void)
 	    256 /* low limit */, "", printf);
 	printf("End of stack trace.\n");
 	intrace = 0;
+}
+
+void
+db_print_stack_trace(struct db_stack_trace *st)
+{
+	unsigned int i;
+
+	for (i = 0; i < st->st_count; i++) {
+		printf("#%-2u ", i);
+		db_printsym(st->st_pc[i], DB_STGY_PROC, printf);
+		printf("\n");
+	}
 }
