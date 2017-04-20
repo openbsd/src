@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.18 2017/04/20 17:48:30 nicm Exp $
+.\"	$OpenBSD: openpty.3,v 1.19 2017/04/20 19:30:42 jmc Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,9 +34,12 @@
 .Dt OPENPTY 3
 .Os
 .Sh NAME
+.Nm getptmfd ,
 .Nm openpty ,
+.Nm fdopenpty ,
 .Nm login_tty ,
-.Nm forkpty
+.Nm forkpty ,
+.Nm fdforkpty
 .Nd tty utility functions
 .Sh SYNOPSIS
 .In termios.h
