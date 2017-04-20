@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.17 2015/08/28 19:54:06 kettenis Exp $
+.\"	$OpenBSD: openpty.3,v 1.18 2017/04/20 17:48:30 nicm Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2015 $
+.Dd $Mdocdate: April 20 2017 $
 .Dt OPENPTY 3
 .Os
 .Sh NAME
@@ -42,11 +42,17 @@
 .In termios.h
 .In util.h
 .Ft int
+.Fn getptmfd "void"
+.Ft int
 .Fn openpty "int *amaster" "int *aslave" "char *name" "struct termios *termp" "struct winsize *winp"
+.Ft int
+.Fn fdopenpty "int ptmfd" "int *amaster" "int *aslave" "char *name" "struct termios *termp" "struct winsize *winp"
 .Ft int
 .Fn login_tty "int fd"
 .Ft pid_t
 .Fn forkpty "int *amaster" "char *name" "struct termios *termp" "struct winsize *winp"
+.Ft pid_t
+.Fn fdforkpty "int ptmfd" "int *amaster" "char *name" "struct termios *termp" "struct winsize *winp"
 .Sh DESCRIPTION
 The
 .Fn openpty ,
@@ -88,6 +94,22 @@ the caller, permissions are set to correct values, and all earlier
 uses of that device are revoked (see
 .Xr revoke 2
 for details).
+.Pp
+The
+.Fn fdopenpty
+and
+.Fn fdforkpty
+functions work like
+.Fn openpty
+and
+.Fn forkpty
+but expect a
+.Pa /dev/ptm
+file descriptor
+.Fa ptmfd
+obtained from the
+.Fn getptmfd
+function.
 .Pp
 The
 .Fn login_tty
@@ -151,12 +173,35 @@ slave pseudo terminals
 pseudo terminal management device
 .El
 .Sh ERRORS
+.Fn getptmfd
+may fail and set
+.Va errno
+for any of the errors specified for the routine
+.Xr open 2 .
+.Pp
 .Fn openpty
+and
+.Fn fdopenpty
 will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOENT
 There are no available ttys.
 .El
+.Pp
+.Fn fdopenpty
+and
+.Fn fdforkpty
+will fail if
+.Fn getptmfd
+fails.
+.Fn forkpty
+and
+.Fn fdforkpty
+will fail if either
+.Fn openpty
+or
+.Fn fork
+fails.
 .Pp
 .Fn login_tty
 will fail if
@@ -164,12 +209,6 @@ will fail if
 fails to set
 .Fa fd
 to the controlling terminal of the current process.
-.Fn forkpty
-will fail if either
-.Fn openpty
-or
-.Fn fork
-fails.
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr revoke 2 ,

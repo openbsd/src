@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.20 2016/08/30 14:44:45 guenther Exp $	*/
+/*	$OpenBSD: pty.c,v 1.21 2017/04/20 17:48:30 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,24 +44,41 @@
 #include "util.h"
 
 int
+getptmfd(void)
+{
+	return (open(PATH_PTMDEV, O_RDWR|O_CLOEXEC));
+}
+
+int
 openpty(int *amaster, int *aslave, char *name, struct termios *termp,
     struct winsize *winp)
 {
-	int master, slave, fd;
+	int ptmfd;
+
+	if ((ptmfd = getptmfd()) == -1)
+		return (-1);
+	if (fdopenpty(ptmfd, amaster, aslave, name, termp, winp) == -1) {
+		close(ptmfd);
+		return (-1);
+	}
+	close(ptmfd);
+	return (0);
+}
+
+int
+fdopenpty(int ptmfd, int *amaster, int *aslave, char *name,
+    struct termios *termp, struct winsize *winp)
+{
+	int master, slave;
 	struct ptmget ptm;
 
 	/*
 	 * Use /dev/ptm and the PTMGET ioctl to get a properly set up and
 	 * owned pty/tty pair.
 	 */
-	fd = open(PATH_PTMDEV, O_RDWR|O_CLOEXEC);
-	if (fd == -1)
+	if (ioctl(ptmfd, PTMGET, &ptm) == -1)
 		return (-1);
-	if ((ioctl(fd, PTMGET, &ptm) == -1)) {
-		close(fd);
-		return (-1);
-	}
-	close(fd);
+
 	master = ptm.cfd;
 	slave = ptm.sfd;
 	if (name) {
@@ -82,10 +99,27 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 pid_t
 forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 {
+	int ptmfd;
+	pid_t pid;
+
+	if ((ptmfd = getptmfd()) == -1)
+		return (-1);
+	if ((pid = fdforkpty(ptmfd, amaster, name, termp, winp)) == -1) {
+		close(ptmfd);
+		return (-1);
+	}
+	close(ptmfd);
+	return (pid);
+}
+
+pid_t
+fdforkpty(int ptmfd, int *amaster, char *name, struct termios *termp,
+    struct winsize *winp)
+{
 	int master, slave;
 	pid_t pid;
 
-	if (openpty(&master, &slave, name, termp, winp) == -1)
+	if (fdopenpty(ptmfd, &master, &slave, name, termp, winp) == -1)
 		return (-1);
 	switch (pid = fork()) {
 	case -1:
