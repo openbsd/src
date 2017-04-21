@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.42 2017/02/03 11:57:27 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.43 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -81,7 +81,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
 			key = key_string_lookup_key(bd->key);
 
-			if (bd->can_repeat)
+			if (bd->flags & KEY_BINDING_REPEAT)
 				repeat = 1;
 
 			width = utf8_cstrwidth(table->name);
@@ -101,7 +101,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 
 			if (!repeat)
 				r = "";
-			else if (bd->can_repeat)
+			else if (bd->flags & KEY_BINDING_REPEAT)
 				r = "-r ";
 			else
 				r = "   ";

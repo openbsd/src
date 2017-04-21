@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.70 2017/03/08 13:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.71 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,7 +92,7 @@ cmd_attach_session(struct cmdq_item *item, int dflag, int rflag,
 			environ_update(s->options, c->environ, s->environ);
 
 		c->session = s;
-		if (!item->repeat)
+		if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 			server_client_set_key_table(c, NULL);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.52 2017/04/20 09:20:22 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.53 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -65,6 +65,7 @@ static enum cmd_retval
 cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
+	struct cmdq_shared		*shared = item->shared;
 	struct cmd_if_shell_data	*cdata;
 	char				*shellcmd, *cmd, *cause;
 	struct cmd_list			*cmdlist;
@@ -100,7 +101,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 			}
 			return (CMD_RETURN_ERROR);
 		}
-		new_item = cmdq_get_command(cmdlist, NULL, &item->mouse, 0);
+		new_item = cmdq_get_command(cmdlist, NULL, &shared->mouse, 0);
 		cmdq_insert_after(item, new_item);
 		cmd_list_free(cmdlist);
 		return (CMD_RETURN_NORMAL);
@@ -125,7 +126,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->item = item;
 	else
 		cdata->item = NULL;
-	memcpy(&cdata->mouse, &item->mouse, sizeof cdata->mouse);
+	memcpy(&cdata->mouse, &shared->mouse, sizeof cdata->mouse);
 
 	job_run(shellcmd, s, cwd, NULL, cmd_if_shell_callback,
 	    cmd_if_shell_free, cdata);

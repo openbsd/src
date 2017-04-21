@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.37 2017/01/07 15:28:13 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.38 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -62,7 +62,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c = item->state.c;
 	struct window_pane	*wp = item->state.tflag.wp;
 	struct session		*s = item->state.tflag.s;
-	struct mouse_event	*m = &item->mouse;
+	struct mouse_event	*m = &item->shared->mouse;
 	struct utf8_data	*ud, *uc;
 	wchar_t			 wc;
 	int			 i, literal;

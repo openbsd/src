@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.129 2017/04/20 09:43:45 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.130 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -554,10 +554,12 @@ format_create(struct cmdq_item *item, int tag, int flags)
 	format_add(ft, "socket_path", "%s", socket_path);
 	format_add_tv(ft, "start_time", &start_time);
 
-	if (item != NULL && item->cmd != NULL)
-		format_add(ft, "command", "%s", item->cmd->entry->name);
-	if (item != NULL && item->formats != NULL)
-		format_merge(ft, item->formats);
+	if (item != NULL) {
+		if (item->cmd != NULL)
+			format_add(ft, "command", "%s", item->cmd->entry->name);
+		if (item->shared != NULL && item->shared->formats != NULL)
+			format_merge(ft, item->shared->formats);
+	}
 
 	return (ft);
 }

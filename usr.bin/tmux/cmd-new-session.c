@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.102 2017/03/08 13:36:12 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.103 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -297,7 +297,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		} else if (c->session != NULL)
 			c->last_session = c->session;
 		c->session = s;
-		if (!item->repeat)
+		if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 			server_client_set_key_table(c, NULL);
 		status_timer_start(c);
 		notify_client("client-session-changed", c);

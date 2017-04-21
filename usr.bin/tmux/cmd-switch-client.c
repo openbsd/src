@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.48 2017/02/06 15:00:41 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.49 2017/04/21 14:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -108,7 +108,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	if (c->session != NULL && c->session != s)
 		c->last_session = c->session;
 	c->session = s;
-	if (!item->repeat)
+	if (~item->shared->flags & CMDQ_SHARED_REPEAT)
 		server_client_set_key_table(c, NULL);
 	status_timer_start(c);
 	session_update_activity(s, NULL);
