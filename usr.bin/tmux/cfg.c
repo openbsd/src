@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.56 2017/04/21 13:15:43 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.57 2017/04/21 14:04:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -42,6 +42,8 @@ cfg_done(__unused struct cmdq_item *item, __unused void *data)
 
 	if (!RB_EMPTY(&sessions))
 		cfg_show_causes(RB_MIN(sessions, &sessions));
+
+	status_prompt_load_history();
 
 	return (CMD_RETURN_NORMAL);
 }
