@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2017/04/21 11:02:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -959,7 +959,9 @@ parse_config(const char *filename)
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		log_warn("failed to open %s", filename);
-		return (0);
+		if (errno == ENOENT)
+			return (0);
+		return (-1);
 	}
 	topfile = file;
 	setservent(1);
