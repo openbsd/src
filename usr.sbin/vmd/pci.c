@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.16 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.17 2017/04/21 04:18:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -345,7 +345,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		}
 
 		/* XXX - discard writes to reassign IRQs / pins */
-		if (o != 0x3c)
+		if (o != 0x3c && o != 0x30 && o != 0x38)
 			get_input_data(vei, &pci.pci_devices[d].pd_cfg_space[o / 4]);
 
 		/* IOBAR registers must have bit 0 set */
