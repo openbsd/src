@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.169 2017/04/21 16:40:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.170 2017/04/21 17:54:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -376,11 +376,11 @@ void	iwm_phy_ctxt_cmd_data(struct iwm_softc *, struct iwm_phy_context_cmd *,
 int	iwm_phy_ctxt_cmd(struct iwm_softc *, struct iwm_phy_ctxt *, uint8_t,
 	    uint8_t, uint32_t, uint32_t);
 int	iwm_send_cmd(struct iwm_softc *, struct iwm_host_cmd *);
-int	iwm_send_cmd_pdu(struct iwm_softc *, uint8_t, uint32_t, uint16_t,
+int	iwm_send_cmd_pdu(struct iwm_softc *, uint32_t, uint32_t, uint16_t,
 	    const void *);
 int	iwm_send_cmd_status(struct iwm_softc *, struct iwm_host_cmd *,
 	    uint32_t *);
-int	iwm_send_cmd_pdu_status(struct iwm_softc *, uint8_t, uint16_t,
+int	iwm_send_cmd_pdu_status(struct iwm_softc *, uint32_t, uint16_t,
 	    const void *, uint32_t *);
 void	iwm_free_resp(struct iwm_softc *, struct iwm_host_cmd *);
 void	iwm_cmd_done(struct iwm_softc *, struct iwm_rx_packet *);
@@ -3764,8 +3764,8 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 }
 
 int
-iwm_send_cmd_pdu(struct iwm_softc *sc, uint8_t id, uint32_t flags, uint16_t len,
-    const void *data)
+iwm_send_cmd_pdu(struct iwm_softc *sc, uint32_t id, uint32_t flags,
+    uint16_t len, const void *data)
 {
 	struct iwm_host_cmd cmd = {
 		.id = id,
@@ -3818,7 +3818,7 @@ iwm_send_cmd_status(struct iwm_softc *sc, struct iwm_host_cmd *cmd,
 }
 
 int
-iwm_send_cmd_pdu_status(struct iwm_softc *sc, uint8_t id, uint16_t len,
+iwm_send_cmd_pdu_status(struct iwm_softc *sc, uint32_t id, uint16_t len,
     const void *data, uint32_t *status)
 {
 	struct iwm_host_cmd cmd = {
