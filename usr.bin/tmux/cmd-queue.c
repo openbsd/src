@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.51 2017/04/21 20:26:34 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.52 2017/04/21 20:34:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,6 +158,8 @@ cmdq_get_command(struct cmd_list *cmdlist, struct cmd_find_state *current,
 	shared = xcalloc(1, sizeof *shared);
 	if (current != NULL)
 		cmd_find_copy_state(&shared->current, current);
+	else
+		cmd_find_clear_state(&shared->current, 0);
 	if (m != NULL)
 		memcpy(&shared->mouse, m, sizeof shared->mouse);
 
@@ -205,6 +207,7 @@ cmdq_fire_command(struct cmdq_item *item)
 		retval = CMD_RETURN_ERROR;
 		goto out;
 	}
+
 	if (item->client == NULL)
 		item->client = cmd_find_client(item, NULL, 1);
 
