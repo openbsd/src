@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.339 2017/03/27 17:38:09 benno Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.340 2017/04/21 23:22:49 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -72,6 +72,8 @@ int	 pfctl_kill_src_nodes(int, const char *, int);
 int	 pfctl_net_kill_states(int, const char *, int, int);
 int	 pfctl_label_kill_states(int, const char *, int, int);
 int	 pfctl_id_kill_states(int, int);
+int	 pfctl_key_kill_states(int, const char *, int, int);
+int	 pfctl_parse_host(char *, struct pf_rule_addr *);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
 int	 pfctl_load_limit(struct pfctl *, unsigned int, unsigned int);
@@ -681,6 +683,122 @@ pfctl_id_kill_states(int dev, int opts)
 		fprintf(stderr, "killed %d states\n", psk.psk_killed);
 
 	return (0);
+}
+
+int
+pfctl_key_kill_states(int dev, const char *iface, int opts, int rdomain)
+{
+	struct pfioc_state_kill psk;
+	char *s, *token, *tokens[4];
+	struct protoent *p;
+	u_int i, sidx, didx;
+
+	if (state_killers != 2 || (strlen(state_kill[1]) == 0)) {
+		warnx("no key specified");
+		usage();
+	}
+	memset(&psk, 0, sizeof(psk));
+
+	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
+	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
+		errx(1, "invalid interface: %s", iface);
+
+	psk.psk_rdomain = rdomain;
+
+	s = strdup(state_kill[1]);
+	if (!s)
+		errx(1, "pfctl_key_kill_states: strdup");
+	i = 0;
+	while ((token = strsep(&s, " \t")) != NULL)
+		if (*token != '\0') {
+			if (i < 4)
+				tokens[i] = token;
+			i++;
+		}
+	if (i != 4)
+		errx(1, "pfctl_key_kill_states: key must be "
+		    "\"protocol host1:port1 direction host2:port2\" format");
+
+	if ((p = getprotobyname(tokens[0])) == NULL)
+		errx(1, "invalid protocol: %s", tokens[0]);
+	psk.psk_proto = p->p_proto;
+
+	if (strcmp(tokens[2], "->") == 0) {
+		sidx = 1;
+		didx = 3;
+	} else if (strcmp(tokens[2], "<-") == 0) {
+		sidx = 3;
+		didx = 1;
+	} else
+		errx(1, "invalid direction: %s", tokens[2]);
+
+	if (pfctl_parse_host(tokens[sidx], &psk.psk_src) == -1)
+		errx(1, "invalid host: %s", tokens[sidx]);
+	if (pfctl_parse_host(tokens[didx], &psk.psk_dst) == -1)
+		errx(1, "invalid host: %s", tokens[didx]);
+
+	if (ioctl(dev, DIOCKILLSTATES, &psk))
+		err(1, "DIOCKILLSTATES");
+
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "killed %d states\n", psk.psk_killed);
+
+	return (0);
+}
+
+int
+pfctl_parse_host(char *str, struct pf_rule_addr *addr)
+{
+	char *s = NULL, *sbs, *sbe;
+	struct addrinfo hints, *ai;
+	struct sockaddr_in *sin4;
+	struct sockaddr_in6 *sin6;
+
+	s = strdup(str);
+	if (!s)
+		errx(1, "pfctl_parse_host: strdup");
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if ((sbs = strchr(s, '[')) != NULL && (sbe = strrchr(s, ']')) != NULL) {
+		hints.ai_family = AF_INET6;
+		*(sbs++) = *sbe = '\0';
+	} else if ((sbs = strchr(s, ':')) != NULL) {
+		hints.ai_family = AF_INET;
+		*(sbs++) = '\0';
+	} else
+		goto error;
+
+	if (getaddrinfo(s, sbs, &hints, &ai) != 0)
+		goto error;
+
+	switch (ai->ai_family) {
+	case AF_INET:
+		sin4 = (struct sockaddr_in *)ai->ai_addr;
+		addr->addr.v.a.addr.v4 = sin4->sin_addr;
+		addr->port[0] = sin4->sin_port;
+		break;
+
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)ai->ai_addr;
+		addr->addr.v.a.addr.v6 = sin6->sin6_addr;
+		addr->port[0] = sin6->sin6_port;
+		break;
+	}
+	freeaddrinfo(ai);
+	free(s);
+
+	memset(&addr->addr.v.a.mask, 0xff, sizeof(struct pf_addr));
+	addr->port_op = PF_OP_EQ;
+	addr->addr.type = PF_ADDR_ADDRMASK;
+
+	return (0);
+
+ error:
+	free(s);
+	return (-1);
 }
 
 void
@@ -2427,6 +2545,8 @@ main(int argc, char *argv[])
 			pfctl_label_kill_states(dev, ifaceopt, opts, rdomain);
 		else if (!strcmp(state_kill[0], "id"))
 			pfctl_id_kill_states(dev, opts);
+		else if (!strcmp(state_kill[0], "key"))
+			pfctl_key_kill_states(dev, ifaceopt, opts, rdomain);
 		else
 			pfctl_net_kill_states(dev, ifaceopt, opts, rdomain);
 	}
