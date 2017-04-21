@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.68 2017/04/06 18:07:13 reyk Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.69 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -174,6 +174,9 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
 		res = get_info_vm(ps, imsg, 0);
 		cmd = IMSG_VMDOP_GET_INFO_VM_END_DATA;
+		break;
+	case IMSG_VMDOP_CONFIG:
+		config_getconfig(env, imsg);
 		break;
 	case IMSG_CTL_RESET:
 		IMSG_SIZE_CHECK(imsg, &mode);

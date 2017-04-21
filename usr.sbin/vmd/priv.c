@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.7 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.8 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -102,6 +102,9 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("%s: rejected priv operation on interface: %s",
 			    __func__, vfr.vfr_name);
 		break;
+	case IMSG_VMDOP_CONFIG:
+	case IMSG_CTL_RESET:
+		break;
 	default:
 		return (-1);
 	}
@@ -183,6 +186,12 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(env->vmd_fd, SIOCAIFADDR, &ifra) < 0)
 			log_warn("SIOCAIFADDR");
 		break;
+	case IMSG_VMDOP_CONFIG:
+		config_getconfig(env, imsg);
+		break;
+	case IMSG_CTL_RESET:
+		config_getreset(env, imsg);
+		break;
 	default:
 		return (-1);
 	}
@@ -245,6 +254,7 @@ priv_validgroup(const char *name)
 int
 vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 {
+	struct vmd		*env = ps->ps_env;
 	struct vm_create_params	*vcp = &vm->vm_params.vmc_params;
 	struct vmd_if		*vif;
 	struct vmd_switch	*vsw;
@@ -333,7 +343,8 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			sin4->sin_family = AF_INET;
 			sin4->sin_len = sizeof(*sin4);
 			if ((sin4->sin_addr.s_addr =
-			    vm_priv_addr(vm->vm_vmid, i, 0)) == 0)
+			    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+			    vm->vm_vmid, i, 0)) == 0)
 				return (-1);
 
 			log_debug("%s: interface %s address %s/31",
@@ -393,16 +404,18 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 }
 
 uint32_t
-vm_priv_addr(uint32_t vmid, int idx, int isvm)
+vm_priv_addr(struct address *h, uint32_t vmid, int idx, int isvm)
 {
-	in_addr_t	prefix, mask, addr;
+	in_addr_t		prefix, mask, addr;
 
 	/*
 	 * 1. Set the address prefix and mask, 100.64.0.0/10 by default.
-	 * XXX make the global prefix configurable.
 	 */
-	prefix = inet_addr(VMD_DHCP_PREFIX);
-	mask = prefixlen2mask(VMD_DHCP_PREFIXLEN);
+	if (h->ss.ss_family != AF_INET ||
+	    h->prefixlen < 0 || h->prefixlen > 32)
+		fatal("local prefix");
+	prefix = ss2sin(&h->ss)->sin_addr.s_addr;
+	mask = prefixlen2mask(h->prefixlen);
 
 	/* 2. Encode the VM ID as a per-VM subnet range N, 10.64.N.0/24. */
 	addr = vmid << 8;

@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.18 2017/04/19 15:38:32 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.19 2017/04/21 07:03:26 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2017 $
+.Dd $Mdocdate: April 21 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -31,11 +31,14 @@ The VMM subsystem is responsible for creating, destroying, and
 executing VMs.
 .Sh SECTIONS
 .Nm
-is divided into three main sections:
+is divided into four main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
 configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr vmd 8 .
 .It Sy VM Configuration
 Configuration for each individual virtual machine.
 .It Sy Switch Configuration
@@ -85,6 +88,19 @@ vm "vm1.example.com" {
 	boot $ramdisk
 }
 .Ed
+.Sh GLOBAL CONFIGURATION
+The following setting can be configured globally:
+.Bl -tag -width Ds
+.It Ic local prefix Ar address Ns Li / Ns Ar prefix
+Set the network prefix that is used to allocate subnets for
+local interfaces, see
+.Ic local interface
+in the
+.Sx VM CONFIGURATION
+section below.
+The default is
+.Ar 100.64.0.0/10 .
+.El
 .Sh VM CONFIGURATION
 Each
 .Ic vm

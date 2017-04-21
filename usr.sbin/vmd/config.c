@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2017/03/26 18:32:39 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.30 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -50,7 +50,9 @@ config_init(struct vmd *env)
 	/* Global configuration */
 	ps->ps_what[PROC_PARENT] = CONFIG_ALL;
 	ps->ps_what[PROC_VMM] = CONFIG_VMS;
-	ps->ps_what[PROC_PRIV] = 0;
+
+	if (host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix) == -1)
+		return (-1);
 
 	/* Other configuration */
 	what = ps->ps_what[privsep_process];
@@ -77,6 +79,10 @@ config_purge(struct vmd *env, unsigned int reset)
 	struct vmd_switch	*vsw;
 	unsigned int		 what;
 
+	/* Reset global configuration (prefix was verified before) */
+	(void)host(VMD_DHCP_PREFIX, &env->vmd_cfg.cfg_localprefix);
+
+	/* Reset other configuration */
 	what = ps->ps_what[privsep_process] & reset;
 	if (what & CONFIG_VMS && env->vmd_vms != NULL) {
 		while ((vm = TAILQ_FIRST(env->vmd_vms)) != NULL)
@@ -88,6 +94,31 @@ config_purge(struct vmd *env, unsigned int reset)
 			switch_remove(vsw);
 		env->vmd_nswitches = 0;
 	}
+}
+
+int
+config_setconfig(struct vmd *env)
+{
+	struct privsep	*ps = &env->vmd_ps;
+	unsigned int	 id;
+
+	for (id = 0; id < PROC_MAX; id++) {
+		if (id == privsep_process)
+			continue;
+		proc_compose(ps, id, IMSG_VMDOP_CONFIG, &env->vmd_cfg,
+		    sizeof(env->vmd_cfg));
+	}
+
+	return (0);
+}
+
+int
+config_getconfig(struct vmd *env, struct imsg *imsg)
+{
+	IMSG_SIZE_CHECK(imsg, &env->vmd_cfg);
+	memcpy(&env->vmd_cfg, imsg->data, sizeof(env->vmd_cfg));
+
+	return (0);
 }
 
 int

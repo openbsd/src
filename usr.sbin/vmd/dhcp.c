@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.1 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.2 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include "virtio.h"
 
 static const uint8_t broadcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+extern struct vmd *env;
 
 ssize_t
 dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
@@ -81,13 +82,15 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	resp.hlen = req.hlen;
 	resp.xid = req.xid;
 
-	if ((in.s_addr = vm_priv_addr(dev->vm_vmid, dev->idx, 1)) == 0)
+	if ((in.s_addr = vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+	    dev->vm_vmid, dev->idx, 1)) == 0)
 		return (-1);
 	memcpy(&resp.yiaddr, &in, sizeof(in));
 	memcpy(&ss2sin(&pc.pc_dst)->sin_addr, &in, sizeof(in));
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
-	if ((in.s_addr = vm_priv_addr(dev->vm_vmid, dev->idx, 0)) == 0)
+	if ((in.s_addr = vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+	    dev->vm_vmid, dev->idx, 0)) == 0)
 		return (-1);
 	memcpy(&resp.siaddr, &in, sizeof(in));
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &in, sizeof(in));

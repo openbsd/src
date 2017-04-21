@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD DISK DOWN GROUP INTERFACE NIFS PATH SIZE SWITCH UP VMID
-%token	ENABLE DISABLE VM BOOT LLADDR MEMORY OWNER LOCKED LOCAL
+%token	ENABLE DISABLE VM BOOT LLADDR MEMORY OWNER LOCKED LOCAL PREFIX
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	disable
@@ -134,6 +134,7 @@ grammar		: /* empty */
 		| grammar include '\n'
 		| grammar '\n'
 		| grammar varset '\n'
+		| grammar main '\n'
 		| grammar switch '\n'
 		| grammar vm '\n'
 		| grammar error '\n'		{ file->errors++; }
@@ -167,6 +168,22 @@ varset		: STRING '=' STRING		{
 				fatalx("cannot store variable");
 			free($1);
 			free($3);
+		}
+		;
+
+main		: LOCAL PREFIX STRING {
+			struct address	 h;
+
+			/* The local prefix is IPv4-only */
+			if (host($3, &h) == -1 ||
+			    h.ss.ss_family != AF_INET ||
+			    h.prefixlen > 32 || h.prefixlen < 0) {
+				yyerror("invalid local prefix: %s", $3);
+				free($3);
+				YYERROR;
+			}
+
+			memcpy(&env->vmd_cfg.cfg_localprefix, &h, sizeof(h));
 		}
 		;
 
@@ -627,6 +644,7 @@ lookup(char *s)
 		{ "locked",		LOCKED },
 		{ "memory",		MEMORY },
 		{ "owner",		OWNER },
+		{ "prefix",		PREFIX },
 		{ "size",		SIZE },
 		{ "switch",		SWITCH },
 		{ "up",			UP },
@@ -1093,4 +1111,44 @@ parse_disk(char *word)
 	vcp->vcp_ndisks++;
 
 	return (0);
+}
+
+int
+host(const char *str, struct address *h)
+{
+	struct addrinfo		 hints, *res;
+	int			 prefixlen;
+	char			*s, *p;
+	const char		*errstr;
+
+	if ((s = strdup(str)) == NULL) {
+		log_warn("strdup");
+		goto fail;
+	}
+
+	if ((p = strrchr(s, '/')) != NULL) {
+		*p++ = '\0';
+		prefixlen = strtonum(p, 0, 128, &errstr);
+		if (errstr) {
+			log_warnx("prefixlen is %s: %s", errstr, p);
+			goto fail;
+		}
+	} else
+		prefixlen = 128;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
+		memset(h, 0, sizeof(*h));
+		memcpy(&h->ss, res->ai_addr, res->ai_addrlen);
+		h->prefixlen = prefixlen;
+		freeaddrinfo(res);
+		free(s);
+		return (0);
+	}
+
+ fail:
+	free(s);
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.51 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.52 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -51,8 +51,7 @@
 #define VM_DEFAULT_MEMORY	512
 
 /* 100.64.0.0/10 from rfc6598 (IPv4 Prefix for Shared Address Space) */
-#define VMD_DHCP_PREFIX		"100.64.0.0"
-#define VMD_DHCP_PREFIXLEN	10
+#define VMD_DHCP_PREFIX		"100.64.0.0/10"
 
 #ifdef VMD_DEBUG
 #define dprintf(x...)   do { log_debug(x); } while(0)
@@ -82,7 +81,8 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFGROUP,
 	IMSG_VMDOP_PRIV_IFADDR,
 	IMSG_VMDOP_VM_SHUTDOWN,
-	IMSG_VMDOP_VM_REBOOT
+	IMSG_VMDOP_VM_REBOOT,
+	IMSG_VMDOP_CONFIG
 };
 
 struct vmop_result {
@@ -189,9 +189,23 @@ struct vmd_vm {
 };
 TAILQ_HEAD(vmlist, vmd_vm);
 
+struct address {
+	struct sockaddr_storage	 ss;
+	int			 prefixlen;
+	TAILQ_ENTRY(address)	 entry;
+};
+TAILQ_HEAD(addresslist, address);
+
+struct vmd_config {
+	struct address		 cfg_localprefix;
+};
+
 struct vmd {
 	struct privsep		 vmd_ps;
 	const char		*vmd_conffile;
+
+	/* global configuration that is sent to the children */
+	struct vmd_config	 vmd_cfg;
 
 	int			 vmd_debug;
 	int			 vmd_verbose;
@@ -199,7 +213,6 @@ struct vmd {
 
 	uint32_t		 vmd_nvm;
 	struct vmlist		*vmd_vms;
-
 	uint32_t		 vmd_nswitches;
 	struct switchlist	*vmd_switches;
 
@@ -266,7 +279,7 @@ int	 priv_findname(const char *, const char **);
 int	 priv_validgroup(const char *);
 int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
 int	 vm_priv_brconfig(struct privsep *, struct vmd_switch *);
-uint32_t vm_priv_addr(uint32_t, int, int);
+uint32_t vm_priv_addr(struct address *, uint32_t, int, int);
 
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);
@@ -286,6 +299,8 @@ __dead void vm_shutdown(unsigned int);
 /* control.c */
 int	 config_init(struct vmd *);
 void	 config_purge(struct vmd *, unsigned int);
+int	 config_setconfig(struct vmd *);
+int	 config_getconfig(struct vmd *, struct imsg *);
 int	 config_setreset(struct vmd *, unsigned int);
 int	 config_getreset(struct vmd *, struct imsg *);
 int	 config_setvm(struct privsep *, struct vmd_vm *, uint32_t, uid_t);
@@ -300,5 +315,6 @@ void	 vmboot_close(FILE *, struct vmboot_params *);
 /* parse.y */
 int	 parse_config(const char *);
 int	 cmdline_symset(char *);
+int	 host(const char *, struct address *);
 
 #endif /* VMD_H */

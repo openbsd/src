@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.57 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.58 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -562,6 +562,10 @@ vmd_configure(void)
 			return (-1);
 	}
 
+	/* Send shared global configuration to all children */
+	if (config_setconfig(env) == -1)
+		return (-1);
+
 	return (0);
 }
 
@@ -598,6 +602,10 @@ vmd_reload(unsigned int reset, const char *filename)
 				if (vm->vm_running == 0)
 					vm_remove(vm);
 			}
+
+			/* Update shared global configuration in all children */
+			if (config_setconfig(env) == -1)
+				return;
 		}
 
 		if (parse_config(filename) == -1) {

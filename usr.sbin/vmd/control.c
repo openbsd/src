@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.16 2017/03/15 12:42:12 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.17 2017/04/21 07:03:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -79,6 +79,7 @@ int
 control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_conn		*c;
+	struct privsep		*ps = p->p_ps;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
@@ -92,6 +93,12 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		imsg_compose_event(&c->iev, imsg->hdr.type,
 		    0, 0, -1, imsg->data, IMSG_DATA_SIZE(imsg));
+		break;
+	case IMSG_VMDOP_CONFIG:
+		config_getconfig(ps->ps_env, imsg);
+		break;
+	case IMSG_CTL_RESET:
+		config_getreset(ps->ps_env, imsg);
 		break;
 	default:
 		return (-1);
