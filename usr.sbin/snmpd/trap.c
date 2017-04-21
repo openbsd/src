@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2016/11/09 20:31:56 jca Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2017/04/21 13:46:15 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -70,6 +70,7 @@ trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
 
 	*varcpy = NULL;
 	varbind = NULL;
+	iter = NULL;
 	seensysuptime = seentrapoid = 0;
 
 	if (pdu->hdr->flags & AGENTX_NON_DEFAULT_CONTEXT) {
