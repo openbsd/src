@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.75 2017/04/21 14:01:19 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.76 2017/04/21 19:33:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,7 +100,7 @@ key_bindings_add(const char *name, key_code key, int repeat,
 		free(bd);
 	}
 
-	bd = xmalloc(sizeof *bd);
+	bd = xcalloc(1, sizeof *bd);
 	bd->key = key;
 	RB_INSERT(key_bindings, &table->key_bindings, bd);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.224 2017/04/21 17:22:20 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.225 2017/04/21 19:33:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -900,6 +900,8 @@ retry:
 		log_debug("key table %s (no pane)", table->name);
 	else
 		log_debug("key table %s (pane %%%u)", table->name, wp->id);
+	if (c->flags & CLIENT_REPEAT)
+		log_debug("currently repeating");
 
 	/* Try to see if there is a key binding in the current table. */
 	bd_find.key = key;
