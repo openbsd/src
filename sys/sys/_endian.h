@@ -1,4 +1,4 @@
-/*	$OpenBSD: _endian.h,v 1.1 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: _endian.h,v 1.2 2017/04/21 19:04:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -110,22 +110,22 @@
 #define __swap16(x) __statement({					\
 	__uint16_t __swap16_x = (x);					\
 									\
-	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
-	    __swap16md(__swap16_x);					\
+	(__uint16_t)(__builtin_constant_p(x) ? __swap16gen(__swap16_x) :\
+	    __swap16md(__swap16_x));					\
 })
 
 #define __swap32(x) __statement({					\
 	__uint32_t __swap32_x = (x);					\
 									\
-	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
-	    __swap32md(__swap32_x);					\
+	(__uint32_t)(__builtin_constant_p(x) ? __swap32gen(__swap32_x) :\
+	    __swap32md(__swap32_x));					\
 })
 
 #define __swap64(x) __statement({					\
 	__uint64_t __swap64_x = (x);					\
 									\
-	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
-	    __swap64md(__swap64_x);					\
+	(__uint64_t)(__builtin_constant_p(x) ? __swap64gen(__swap64_x) :\
+	    __swap64md(__swap64_x));					\
 })
 
 #else
