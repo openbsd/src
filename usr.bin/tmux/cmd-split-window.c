@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.80 2017/03/09 17:02:38 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.81 2017/04/21 17:22:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -172,12 +172,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (to_free != NULL)
 		free((void *)to_free);
 
-	cmd_find_clear_state(&fs, NULL, 0);
-	fs.s = s;
-	fs.wl = wl;
-	fs.w = w;
-	fs.wp = new_wp;
-	cmd_find_log_state(__func__, &fs);
+	cmd_find_from_winlink_pane(&fs, wl, new_wp);
 	hooks_insert(s->hooks, item, &fs, "after-split-window");
 
 	return (CMD_RETURN_NORMAL);

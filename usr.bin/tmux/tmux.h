@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.747 2017/04/21 16:04:18 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.748 2017/04/21 17:22:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1744,15 +1744,17 @@ int		 cmd_find_valid_state(struct cmd_find_state *);
 void		 cmd_find_copy_state(struct cmd_find_state *,
 		     struct cmd_find_state *);
 void		 cmd_find_log_state(const char *, struct cmd_find_state *);
-int		 cmd_find_from_session(struct cmd_find_state *,
+void		 cmd_find_from_session(struct cmd_find_state *,
 		     struct session *);
-int		 cmd_find_from_winlink(struct cmd_find_state *,
+void		 cmd_find_from_winlink(struct cmd_find_state *,
 		     struct winlink *);
 int		 cmd_find_from_session_window(struct cmd_find_state *,
 		     struct session *, struct window *);
 int		 cmd_find_from_window(struct cmd_find_state *, struct window *);
 int		 cmd_find_from_pane(struct cmd_find_state *,
 		     struct window_pane *);
+void		 cmd_find_from_winlink_pane(struct cmd_find_state *,
+		     struct winlink *, struct window_pane *);
 
 /* cmd.c */
 int		 cmd_pack_argv(int, char **, char *, size_t);

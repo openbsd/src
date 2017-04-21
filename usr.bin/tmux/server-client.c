@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.223 2017/04/21 16:04:18 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.224 2017/04/21 17:22:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -946,11 +946,7 @@ retry:
 
 		/* Find default state if the pane is known. */
 		if (KEYC_IS_MOUSE(key) && m->valid && wp != NULL) {
-			cmd_find_clear_state(&fs, NULL, 0);
-			fs.s = s;
-			fs.wl = fs.s->curw;
-			fs.w = fs.wl->window;
-			fs.wp = wp;
+			cmd_find_from_winlink_pane(&fs, s->curw, wp);
 			cmd_find_log_state(__func__, &fs);
 
 			if (!cmd_find_valid_state(&fs))
