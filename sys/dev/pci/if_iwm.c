@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.167 2017/04/04 00:40:52 claudio Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.168 2017/04/21 16:39:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1461,11 +1461,17 @@ iwm_apm_init(struct iwm_softc *sc)
 		 * just to discard the value. But that's the way the hardware
 		 * seems to like it.
 		 */
-		iwm_read_prph(sc, IWM_OSC_CLK);
-		iwm_read_prph(sc, IWM_OSC_CLK);
+		if (iwm_nic_lock(sc)) {
+			iwm_read_prph(sc, IWM_OSC_CLK);
+			iwm_read_prph(sc, IWM_OSC_CLK);
+			iwm_nic_unlock(sc);
+		}
 		iwm_set_bits_prph(sc, IWM_OSC_CLK, IWM_OSC_CLK_FORCE_CONTROL);
-		iwm_read_prph(sc, IWM_OSC_CLK);
-		iwm_read_prph(sc, IWM_OSC_CLK);
+		if (iwm_nic_lock(sc)) {
+			iwm_read_prph(sc, IWM_OSC_CLK);
+			iwm_read_prph(sc, IWM_OSC_CLK);
+			iwm_nic_unlock(sc);
+		}
 	}
 
 	/*
@@ -1476,8 +1482,11 @@ iwm_apm_init(struct iwm_softc *sc)
 	 * set by default in "CLK_CTRL_REG" after reset.
 	 */
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
-		iwm_write_prph(sc, IWM_APMG_CLK_EN_REG,
-		    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+		if (iwm_nic_lock(sc)) {
+			iwm_write_prph(sc, IWM_APMG_CLK_EN_REG,
+			    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+			iwm_nic_unlock(sc);
+		}
 		DELAY(20);
 
 		/* Disable L1-Active */
@@ -1485,8 +1494,11 @@ iwm_apm_init(struct iwm_softc *sc)
 		    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
 		/* Clear the interrupt in APMG if the NIC is in RFKILL */
-		iwm_write_prph(sc, IWM_APMG_RTC_INT_STT_REG,
-		    IWM_APMG_RTC_INT_STT_RFKILL);
+		if (iwm_nic_lock(sc)) {
+			iwm_write_prph(sc, IWM_APMG_RTC_INT_STT_REG,
+			    IWM_APMG_RTC_INT_STT_RFKILL);
+			iwm_nic_unlock(sc);
+		}
 	}
  out:
 	if (err)
@@ -1539,11 +1551,11 @@ iwm_stop_device(struct iwm_softc *sc)
 	iwm_disable_interrupts(sc);
 	sc->sc_flags &= ~IWM_FLAG_USE_ICT;
 
-	/* Deactivate TX scheduler. */
-	iwm_write_prph(sc, IWM_SCD_TXFACT, 0);
-
 	/* Stop all DMA channels. */
 	if (iwm_nic_lock(sc)) {
+		/* Deactivate TX scheduler. */
+		iwm_write_prph(sc, IWM_SCD_TXFACT, 0);
+
 		for (chnl = 0; chnl < IWM_FH_TCSR_CHNL_NUM; chnl++) {
 			IWM_WRITE(sc,
 			    IWM_FH_TCSR_CHNL_TX_CONFIG_REG(chnl), 0);
@@ -1566,10 +1578,12 @@ iwm_stop_device(struct iwm_softc *sc)
 	for (qid = 0; qid < nitems(sc->txq); qid++)
 		iwm_reset_tx_ring(sc, &sc->txq[qid]);
 
-	/*
-	 * Power-down device's busmaster DMA clocks
-	 */
-	iwm_write_prph(sc, IWM_APMG_CLK_DIS_REG, IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+	if (iwm_nic_lock(sc)) {
+		/* Power-down device's busmaster DMA clocks */
+		iwm_write_prph(sc, IWM_APMG_CLK_DIS_REG,
+		    IWM_APMG_CLK_VAL_DMA_CLK_RQT);
+		iwm_nic_unlock(sc);
+	}
 	DELAY(5);
 
 	/* Make sure (redundant) we've released our request to stay awake */
@@ -2838,10 +2852,9 @@ iwm_firmware_load_chunk(struct iwm_softc *sc, uint32_t dst_addr,
 		    DEVNAME(sc), dst_addr, byte_cnt);
 
 	if (dst_addr >= IWM_FW_MEM_EXTENDED_START &&
-	    dst_addr <= IWM_FW_MEM_EXTENDED_END && iwm_nic_lock(sc)) {
+	    dst_addr <= IWM_FW_MEM_EXTENDED_END) {
 		iwm_clear_bits_prph(sc, IWM_LMPM_CHICK,
 		    IWM_LMPM_CHICK_EXTENDED_ADDR_SPACE);
-		iwm_nic_unlock(sc);
 	}
 
 	return err;
@@ -2961,7 +2974,11 @@ iwm_load_firmware_8000(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 	/* configure the ucode to be ready to get the secured image */
 	/* release CPU reset */
-	iwm_write_prph(sc, IWM_RELEASE_CPU_RESET, IWM_RELEASE_CPU_RESET_BIT);
+	if (iwm_nic_lock(sc)) {
+		iwm_write_prph(sc, IWM_RELEASE_CPU_RESET,
+		    IWM_RELEASE_CPU_RESET_BIT);
+		iwm_nic_unlock(sc);
+	}
 
 	/* load to FW the binary Secured sections of CPU1 */
 	err = iwm_load_cpu_sections_8000(sc, fws, 1, &first_ucode_section);
