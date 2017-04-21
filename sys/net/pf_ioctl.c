@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.308 2017/03/17 17:19:16 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.309 2017/04/21 23:21:02 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1444,11 +1444,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCKILLSTATES: {
 		struct pf_state		*s, *nexts;
-		struct pf_state_key	*sk;
+		struct pf_state_item	*si, *sit;
+		struct pf_state_key	*sk, key;
 		struct pf_addr		*srcaddr, *dstaddr;
 		u_int16_t		 srcport, dstport;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
-		u_int			 killed = 0;
+		u_int			 i, killed = 0;
+		const int 		 dirs[] = { PF_IN, PF_OUT };
+		int			 sidx, didx;
 
 		if (psk->psk_pfcmp.id) {
 			if (psk->psk_pfcmp.creatorid == 0)
@@ -1457,6 +1460,57 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_remove_state(s);
 				psk->psk_killed = 1;
 			}
+			break;
+		}
+
+		if (psk->psk_af && psk->psk_proto &&
+		    psk->psk_src.port_op == PF_OP_EQ &&
+		    psk->psk_dst.port_op == PF_OP_EQ) {
+
+			key.af = psk->psk_af;
+			key.proto = psk->psk_proto;
+			key.rdomain = psk->psk_rdomain;
+
+			for (i = 0; i < nitems(dirs); i++) {
+				if (dirs[i] == PF_IN) {
+					sidx = 0;
+					didx = 1;
+				} else {
+					sidx = 1;
+					didx = 0;
+				}
+				PF_ACPY(&key.addr[sidx],
+				    &psk->psk_src.addr.v.a.addr, key.af);
+				PF_ACPY(&key.addr[didx],
+				    &psk->psk_dst.addr.v.a.addr, key.af);
+				key.port[sidx] = psk->psk_src.port[0];
+				key.port[didx] = psk->psk_dst.port[0];
+
+				sk = RB_FIND(pf_state_tree, &pf_statetbl, &key);
+				if (sk == NULL)
+					continue;
+
+				TAILQ_FOREACH_SAFE(si, &sk->states, entry, sit)
+					if (((si->s->key[PF_SK_WIRE]->af ==
+					    si->s->key[PF_SK_STACK]->af &&
+					    sk == (dirs[i] == PF_IN ?
+					    si->s->key[PF_SK_WIRE] :
+					    si->s->key[PF_SK_STACK])) ||
+					    (si->s->key[PF_SK_WIRE]->af !=
+					    si->s->key[PF_SK_STACK]->af &&
+					    dirs[i] == PF_IN &&
+					    (sk == si->s->key[PF_SK_STACK] ||
+					    sk == si->s->key[PF_SK_WIRE]))) &&
+					    (!psk->psk_ifname[0] ||
+					    (si->s->kif != pfi_all &&
+					    !strcmp(psk->psk_ifname,
+					    si->s->kif->pfik_name)))) {
+						pf_remove_state(si->s);
+						killed++;
+					}
+			}
+			if (killed)
+				psk->psk_killed = killed;
 			break;
 		}
 
