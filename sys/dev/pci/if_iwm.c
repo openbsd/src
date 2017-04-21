@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.168 2017/04/21 16:39:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.169 2017/04/21 16:40:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1646,12 +1646,14 @@ iwm_nic_config(struct iwm_softc *sc)
 int
 iwm_nic_rx_init(struct iwm_softc *sc)
 {
-	if (!iwm_nic_lock(sc))
-		return EBUSY;
-
 	memset(sc->rxq.stat, 0, sizeof(*sc->rxq.stat));
 
 	iwm_disable_rx_dma(sc);
+
+	if (!iwm_nic_lock(sc))
+		return EBUSY;
+
+	/* reset and flush pointers */
 	IWM_WRITE(sc, IWM_FH_MEM_RCSR_CHNL0_RBDCB_WPTR, 0);
 	IWM_WRITE(sc, IWM_FH_MEM_RCSR_CHNL0_FLUSH_RB_REQ, 0);
 	IWM_WRITE(sc, IWM_FH_RSCSR_CHNL0_RDPTR, 0);
