@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.225 2017/04/21 19:33:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.226 2017/04/21 22:23:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -950,9 +950,6 @@ retry:
 		if (KEYC_IS_MOUSE(key) && m->valid && wp != NULL) {
 			cmd_find_from_winlink_pane(&fs, s->curw, wp);
 			cmd_find_log_state(__func__, &fs);
-
-			if (!cmd_find_valid_state(&fs))
-				fatalx("invalid key state");
 			key_bindings_dispatch(bd, c, m, &fs);
 		} else
 			key_bindings_dispatch(bd, c, m, NULL);
