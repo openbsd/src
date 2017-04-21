@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.46 2016/11/18 16:16:39 jca Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.47 2017/04/21 13:50:23 jca Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,7 @@
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
 int	 snmpe_parse(struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
-void	 snmpe_response(int, struct snmp_message *);
+void	 snmpe_response(struct snmp_message *);
 unsigned long
 	 snmpe_application(struct ber_element *);
 void	 snmpe_sig_handler(int sig, short, void *);
@@ -489,6 +489,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	if ((msg = calloc(1, sizeof(*msg))) == NULL)
 		return;
 
+	msg->sm_sock = fd;
 	msg->sm_slen = sizeof(msg->sm_ss);
 	if ((len = recvfromto(fd, msg->sm_data, sizeof(msg->sm_data), 0,
 	    (struct sockaddr *)&msg->sm_ss, &msg->sm_slen,
@@ -520,7 +521,7 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 	if (snmpe_parse(msg) == -1) {
 		if (msg->sm_usmerr != 0 && MSG_REPORT(msg)) {
 			usm_make_report(msg);
-			snmpe_response(fd, msg);
+			snmpe_response(msg);
 			return;
 		} else {
 			snmp_msgfree(msg);
@@ -528,22 +529,22 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 		}
 	}
 
-	snmpe_dispatchmsg(msg, fd);
+	snmpe_dispatchmsg(msg);
 }
 
 void
-snmpe_dispatchmsg(struct snmp_message *msg, int sock)
+snmpe_dispatchmsg(struct snmp_message *msg)
 {
 	if (snmpe_parsevarbinds(msg) == 1)
 		return;
 
 	/* not dispatched to subagent; respond directly */
 	msg->sm_context = SNMP_C_GETRESP;
-	snmpe_response(sock, msg);
+	snmpe_response(msg);
 }
 
 void
-snmpe_response(int fd, struct snmp_message *msg)
+snmpe_response(struct snmp_message *msg)
 {
 	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	u_int8_t		*ptr = NULL;
@@ -580,7 +581,7 @@ snmpe_response(int fd, struct snmp_message *msg)
 		goto done;
 
 	usm_finalize_digest(msg, ptr, len);
-	len = sendtofrom(fd, ptr, len, 0,
+	len = sendtofrom(msg->sm_sock, ptr, len, 0,
 	    (struct sockaddr *)&msg->sm_ss, msg->sm_slen,
 	    (struct sockaddr *)&msg->sm_local_ss, msg->sm_local_slen);
 	if (len != -1)
