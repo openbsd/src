@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.16 2016/11/01 09:07:18 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.17 2017/04/21 14:09:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -178,7 +178,7 @@ alerts_check_bell(struct window *w)
 		s = wl->session;
 		if (s->curw != wl) {
 			wl->flags |= WINLINK_BELL;
-			notify_winlink("alert-bell", s, wl);
+			notify_winlink("alert-bell", wl);
 		}
 
 		if (s->flags & SESSION_ALERTED)
@@ -239,7 +239,7 @@ alerts_check_activity(struct window *w)
 			continue;
 
 		wl->flags |= WINLINK_ACTIVITY;
-		notify_winlink("alert-activity", s, wl);
+		notify_winlink("alert-activity", wl);
 
 		if (s->flags & SESSION_ALERTED)
 			continue;
@@ -275,7 +275,7 @@ alerts_check_silence(struct window *w)
 		if (s->curw == wl)
 			continue;
 		wl->flags |= WINLINK_SILENCE;
-		notify_winlink("alert-silence", s, wl);
+		notify_winlink("alert-silence", wl);
 
 		if (s->flags & SESSION_ALERTED)
 			continue;

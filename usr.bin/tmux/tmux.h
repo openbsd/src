@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.745 2017/04/21 14:01:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.746 2017/04/21 14:09:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1563,7 +1563,7 @@ void printflike(4, 5) hooks_insert(struct hooks *, struct cmdq_item *,
 void	notify_input(struct window_pane *, struct evbuffer *);
 void	notify_client(const char *, struct client *);
 void	notify_session(const char *, struct session *);
-void	notify_winlink(const char *, struct session *, struct winlink *);
+void	notify_winlink(const char *, struct winlink *);
 void	notify_session_window(const char *, struct session *, struct window *);
 void	notify_window(const char *, struct window *);
 void	notify_pane(const char *, struct window_pane *);
@@ -1747,7 +1747,7 @@ void		 cmd_find_log_state(const char *, struct cmd_find_state *);
 int		 cmd_find_from_session(struct cmd_find_state *,
 		     struct session *);
 int		 cmd_find_from_winlink(struct cmd_find_state *,
-		     struct session *, struct winlink *);
+		     struct winlink *);
 int		 cmd_find_from_session_window(struct cmd_find_state *,
 		     struct session *, struct window *);
 int		 cmd_find_from_window(struct cmd_find_state *, struct window *);
