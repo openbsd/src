@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.51 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.52 2017/04/22 12:08:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -891,7 +891,7 @@ cmd_find_from_client(struct cmd_find_state *fs, struct client *c)
 		}
 		if (wl != NULL) {
 			fs->s = s;
-			fs->wl = s->curw; /* use active session */
+			fs->wl = s->curw; /* use current session */
 			fs->w = fs->wl->window;
 			fs->wp = fs->w->active; /* use active pane */
 

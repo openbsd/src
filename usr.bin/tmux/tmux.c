@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.181 2017/04/20 17:49:26 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.182 2017/04/22 12:08:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -23,7 +23,6 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <langinfo.h>
 #include <locale.h>
 #include <paths.h>
