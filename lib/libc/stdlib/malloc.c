@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.223 2017/04/18 15:46:44 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.224 2017/04/22 09:12:49 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1334,7 +1334,7 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 	REALSIZE(sz, r);
 	if (check) {
 		if (sz <= MALLOC_MAXCHUNK) {
-			if (mopts.chunk_canaries) {
+			if (mopts.chunk_canaries && sz > 0) {
 				struct chunk_info *info =
 				    (struct chunk_info *)r->size;
 				uint32_t chunknum =
@@ -1342,14 +1342,19 @@ ofree(struct dir_info *argpool, void *p, int clear, int check, size_t argsz)
 
 				if (info->bits[info->offset + chunknum] <
 				    argsz)
-					wrterror(pool, "recorded old size %hu"
+					wrterror(pool, "recorded size %hu"
 					    " < %zu",
 					    info->bits[info->offset + chunknum],
 					    argsz);
+			} else {
+				if (sz < argsz)
+					wrterror(pool, "chunk size %zu < %zu",
+					    sz, argsz);
 			}
-		} else if (sz - mopts.malloc_guard < argsz)
-			wrterror(pool, "recorded old size %zu < %zu",
+		} else if (sz - mopts.malloc_guard < argsz) {
+			wrterror(pool, "recorded size %zu < %zu",
 			    sz - mopts.malloc_guard, argsz);
+		}
 	}
 	if (sz > MALLOC_MAXCHUNK) {
 		if (!MALLOC_MOVE_COND(sz)) {
