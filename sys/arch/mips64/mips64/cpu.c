@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.65 2017/04/20 15:42:26 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.66 2017/04/22 15:43:35 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -205,6 +205,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		case 0x05:
 			printf("STC Loongson3%c CPU", 'A' + vers_min - 5);
 			break;
+		case 0x08:
+			printf("STC Loongson3A2000/3B2000 CPU");
+			break;
 		default:
 			printf("Unknown STC Loongson CPU type (%02x)",
 			    ch->c0prid & 0xff);
@@ -303,6 +306,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			break;
 		case 0x05:
 			printf("STC Loongson3%c FPU", 'A' + vers_min - 5);
+			break;
+		case 0x08:
+			printf("STC Loongson3A2000/3B2000 FPU");
 			break;
 		default:
 			printf("Unknown STC Loongson FPU type (%02x)",
