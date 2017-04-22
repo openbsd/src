@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.105 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.106 2017/04/22 10:26:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -83,8 +83,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (self->entry == &cmd_has_session_entry) {
 		/*
-		 * cmd_prepare() will fail if the session cannot be found,
-		 * hence always return success here.
+		 * cmd_find_target() will fail if the session cannot be found,
+		 * so always return success here.
 		 */
 		return (CMD_RETURN_NORMAL);
 	}
@@ -102,15 +102,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		if ((as = session_find(newname)) != NULL) {
 			if (args_has(args, 'A')) {
-				/*
-				 * This item is now destined for
-				 * attach-session. Because attach-session will
-				 * have already been prepared, copy this
-				 * session into its tflag so it can be used.
-				 */
-				cmd_find_from_session(&item->target, as);
 				return (cmd_attach_session(item,
-				    args_get(args, 't'), args_has(args, 'D'),
+				    newname, args_has(args, 'D'),
 				    0, NULL, args_has(args, 'E')));
 			}
 			cmdq_error(item, "duplicate session: %s", newname);
