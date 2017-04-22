@@ -1,4 +1,4 @@
-.\" $OpenBSD: witness.4,v 1.2 2017/04/22 11:05:04 visa Exp $
+.\" $OpenBSD: witness.4,v 1.3 2017/04/22 11:12:04 visa Exp $
 .\"
 .\" Copyright (c) 2001 John H. Baldwin <jhb@FreeBSD.org>
 .\" All rights reserved.
@@ -53,7 +53,9 @@ or attempt an upgrade on a shared lock held by another thread.
 If any of these checks fail, then the kernel will panic.
 .Sh SEE ALSO
 .Xr ddb 4 ,
-.Xr options 4
+.Xr options 4 ,
+.Xr mutex 9 ,
+.Xr rwlock 9
 .Sh HISTORY
 The
 .Nm
