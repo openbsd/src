@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.42 2017/02/14 18:13:05 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.43 2017/04/22 06:13:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -112,6 +112,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (fwrite(bufdata, 1, bufsize, f) != bufsize) {
 		cmdq_error(item, "%s: write error", file);
 		fclose(f);
+		free(file);
 		return (CMD_RETURN_ERROR);
 	}
 

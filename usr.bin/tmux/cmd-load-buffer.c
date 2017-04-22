@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.49 2017/02/14 18:13:05 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.50 2017/04/22 06:13:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -127,6 +127,7 @@ error:
 	free(pdata);
 	if (f != NULL)
 		fclose(f);
+	free(file);
 	return (CMD_RETURN_ERROR);
 }
 

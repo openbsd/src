@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.33 2017/03/08 14:43:40 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.34 2017/04/22 06:13:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -433,7 +433,7 @@ options_match(const char *s, int *idx, int* ambiguous)
 
 	if (*name == '@') {
 		*ambiguous = 0;
-		return (xstrdup(name));
+		return (name);
 	}
 
 	found = NULL;
