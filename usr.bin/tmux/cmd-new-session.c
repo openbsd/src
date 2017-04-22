@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.103 2017/04/21 14:01:19 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.104 2017/04/22 08:56:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -324,8 +324,10 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		free(cp);
 	}
 
-	if (!detached)
+	if (!detached) {
 		c->flags |= CLIENT_ATTACHED;
+		cmd_find_from_session(&item->shared->current, s);
+	}
 
 	if (to_free != NULL)
 		free((void *)to_free);

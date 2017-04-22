@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.81 2017/04/21 17:22:20 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.82 2017/04/22 08:56:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -53,6 +53,7 @@ const struct cmd_entry cmd_split_window_entry = {
 static enum cmd_retval
 cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 {
+	struct cmd_find_state	*current = &item->shared->current;
 	struct args		*args = self->args;
 	struct client		*c = item->state.c;
 	struct session		*s = item->state.tflag.s;
@@ -156,6 +157,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (!args_has(args, 'd')) {
 		window_set_active_pane(w, new_wp);
 		session_select(s, wl->idx);
+		cmd_find_from_session(current, s);
 		server_redraw_session(s);
 	} else
 		server_status_session(s);

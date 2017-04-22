@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.68 2017/04/21 14:09:44 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.69 2017/04/22 08:56:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,6 +52,7 @@ static enum cmd_retval
 cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct cmd_find_state	*current = &item->shared->current;
 	struct session		*s = item->state.tflag.s;
 	struct winlink		*wl = item->state.tflag.wl;
 	struct client		*c = item->state.c;
@@ -132,6 +133,7 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	if (!detached) {
 		session_select(s, wl->idx);
+		cmd_find_from_winlink(current, wl);
 		server_redraw_session_group(s);
 	} else
 		server_status_session_group(s);

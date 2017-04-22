@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.30 2016/10/16 22:06:40 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.31 2017/04/22 08:56:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -63,6 +63,7 @@ static enum cmd_retval
 cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct cmd_find_state	*current = &item->shared->current;
 	struct session		*dst_s;
 	struct winlink		*src_wl, *dst_wl;
 	struct window		*src_w, *dst_w;
@@ -146,6 +147,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (!args_has(args, 'd')) {
 		window_set_active_pane(dst_w, src_wp);
 		session_select(dst_s, dst_idx);
+		cmd_find_from_session(current, dst_s);
 		server_redraw_session(dst_s);
 	} else
 		server_status_session(dst_s);
