@@ -1871,6 +1871,7 @@
 ./usr/share/man/man4/wdsc.4
 ./usr/share/man/man4/we.4
 ./usr/share/man/man4/wi.4
+./usr/share/man/man4/witness.4
 ./usr/share/man/man4/wpi.4
 ./usr/share/man/man4/wscons.4
 ./usr/share/man/man4/wsdisplay.4
