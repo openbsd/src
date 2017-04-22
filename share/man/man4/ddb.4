@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.85 2017/01/24 05:32:00 mpi Exp $
+.\"	$OpenBSD: ddb.4,v 1.86 2017/04/22 11:05:04 visa Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: January 24 2017 $
+.Dd $Mdocdate: April 22 2017 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -621,6 +621,15 @@ printout, if those are available.
 .It Ic show extents
 Prints a detailed list of all extents.
 .\" --------------------
+.It Ic show locks Op Ar addr
+Prints the list of locks held by a thread.
+If an optional address is not specified,
+.Li curproc
+is assumed.
+The
+.Cm option WITNESS
+is required for this command to be available.
+.\" --------------------
 .It Ic show malloc Op Ar addr
 Prints malloc debugging information if available.
 If an optional address is specified, only information about that address
@@ -824,6 +833,16 @@ Displays all watchpoints set with the
 .Ic watch
 command.
 .\" --------------------
+.It Ic show witness Op Cm /b
+Prints the current order list.
+If the
+.Cm /b
+modifier is specified, the list of found lock order violations is printed
+instead.
+The
+.Cm option WITNESS
+is required for this command to be available.
+.\" --------------------
 .It Ic show all procs Op Cm /anow
 Display information on all processes.
 .Pp
@@ -877,6 +896,12 @@ Displays
 .Dq interesting
 address information.
 .El
+.\" --------------------
+.It Ic show all locks
+Prints the list of locks held by all threads in the system.
+The
+.Cm option WITNESS
+is required for this command to be available.
 .\" --------------------
 .It Ic show all mounts Op Cm /f
 Display information on all mounted filesystems.
@@ -1196,6 +1221,7 @@ It may be followed by a ':' and modifiers as described above.
 .Sh SEE ALSO
 .Xr gdb 1 ,
 .Xr nm 1 ,
+.Xr witness 4 ,
 .Xr sysctl.conf 5 ,
 .Xr hangman 6 ,
 .Xr kgdb 7 ,

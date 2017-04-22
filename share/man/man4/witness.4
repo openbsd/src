@@ -1,4 +1,4 @@
-.\" $OpenBSD: witness.4,v 1.1 2017/04/22 04:00:21 visa Exp $
+.\" $OpenBSD: witness.4,v 1.2 2017/04/22 11:05:04 visa Exp $
 .\"
 .\" Copyright (c) 2001 John H. Baldwin <jhb@FreeBSD.org>
 .\" All rights reserved.
@@ -32,9 +32,6 @@
 .Sh NAME
 .Nm witness
 .Nd lock validation facility
-.Sh SYNOPSIS
-.Cd options WITNESS
-.Cd options WITNESS_COUNT
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,39 +51,9 @@ code also checks various other conditions such as verifying that one
 does not recurse on a non-recursive lock,
 or attempt an upgrade on a shared lock held by another thread.
 If any of these checks fail, then the kernel will panic.
-.Pp
-The
-.Dv WITNESS_COUNT
-kernel option controls the maximum number of
-.Nm
-entries that are tracked in the kernel.
-.Pp
-The
-.Nm
-code also provides three extra
-.Xr ddb 4
-commands if
-.Nm
-is compiled into the kernel:
-.Bl -ohang
-.It Ic show locks Op Ar addr
-Prints the list of locks held by a thread
-along with the filename and line number at which each lock was last acquired
-by the thread.
-If an optional address is not specified,
-.Li curproc
-is assumed.
-.It Ic show all locks
-Prints the list of locks held by all threads in the system.
-.It Ic show witness Op Cm /b
-Prints the current order list to the kernel console.
-If the
-.Cm /b
-modifier is specified, the list of found lock order violations is printed
-instead.
-.El
 .Sh SEE ALSO
-.Xr ddb 4
+.Xr ddb 4 ,
+.Xr options 4
 .Sh HISTORY
 The
 .Nm

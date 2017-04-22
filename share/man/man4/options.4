@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.247 2017/03/20 11:04:25 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.248 2017/04/22 11:05:04 visa Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: March 20 2017 $
+.Dd $Mdocdate: April 22 2017 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -151,6 +151,15 @@ Turns on debugging for the Virtual File System interface.
 See
 .Xr vfs 9
 for details.
+.It Cd option WITNESS
+Compiles in a lock checker for detecting lock order violations in the kernel.
+See
+.Xr witness 4
+for details.
+.It Cd option WITNESS_COUNT= Ns Ar integer
+Maximum number of lock types that are tracked by
+.Xr witness 4 .
+It defaults to 1536.
 .El
 .Sh FILE SYSTEMS
 .Bl -ohang
