@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2016/11/26 16:31:32 martijn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2017/04/22 12:34:44 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -84,14 +84,15 @@ parse_uboot_root(void)
 	char *p;
 	size_t len;
 
-        /*
-         * Turn the U-Boot root device (rootdev=/dev/octcf0) into a boot device.
-         */
-        p = strrchr(uboot_rootdev, '/');
-        if (p == NULL)
-                p = strchr(uboot_rootdev, '=');
+	/*
+	 * Turn the U-Boot root device (rootdev=/dev/octcf0) into a boot device.
+	 */
+	p = strrchr(uboot_rootdev, '/');
+	if (p == NULL) {
+		p = strchr(uboot_rootdev, '=');
 		if (p == NULL)
 			return;
+	}
 	p++;
 
 	len = strlen(p);
