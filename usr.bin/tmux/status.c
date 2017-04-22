@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.162 2017/02/09 12:09:33 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.163 2017/04/22 12:55:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1497,6 +1497,7 @@ status_prompt_complete(struct session *session, const char *s)
 		out = status_prompt_complete_prefix(list, size);
 	if (out != NULL) {
 		xasprintf(&tmp, "-%c%s%s", copy[1], out, colon);
+		free(out);
 		out = tmp;
 		goto found;
 	}
