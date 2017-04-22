@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.19 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.20 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_rename_window_entry = {
 	.args = { "t:", 1, 1 },
 	.usage = CMD_TARGET_WINDOW_USAGE " new-name",
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_rename_window_exec
@@ -46,7 +46,7 @@ static enum cmd_retval
 cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
-	struct winlink	*wl = item->state.tflag.wl;
+	struct winlink	*wl = item->target.wl;
 
 	window_set_name(wl->window, args->argv[0]);
 	options_set_number(wl->window->options, "automatic-rename", 0);

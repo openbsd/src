@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.69 2017/04/22 08:56:24 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.70 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -42,7 +42,7 @@ const struct cmd_entry cmd_new_window_entry = {
 	.usage = "[-adkP] [-c start-directory] [-F format] [-n window-name] "
 		 CMD_TARGET_WINDOW_USAGE " [command]",
 
-	.tflag = CMD_WINDOW_INDEX,
+	.target = { 't', CMD_FIND_WINDOW, CMD_FIND_WINDOW_INDEX },
 
 	.flags = 0,
 	.exec = cmd_new_window_exec
@@ -53,10 +53,10 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
 	struct cmd_find_state	*current = &item->shared->current;
-	struct session		*s = item->state.tflag.s;
-	struct winlink		*wl = item->state.tflag.wl;
-	struct client		*c = item->state.c;
-	int			 idx = item->state.tflag.idx;
+	struct session		*s = item->target.s;
+	struct winlink		*wl = item->target.wl;
+	struct client		*c = cmd_find_client(item, NULL, 1);
+	int			 idx = item->target.idx;
 	const char		*cmd, *path, *template, *cwd, *to_free;
 	char		       **argv, *cause, *cp;
 	int			 argc, detached;

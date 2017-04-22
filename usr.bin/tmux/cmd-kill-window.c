@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-window.c,v 1.23 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-kill-window.c,v 1.24 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_kill_window_entry = {
 	.args = { "at:", 0, 0 },
 	.usage = "[-a] " CMD_TARGET_WINDOW_USAGE,
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = 0,
 	.exec = cmd_kill_window_exec
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_unlink_window_entry = {
 	.args = { "kt:", 0, 0 },
 	.usage = "[-k] " CMD_TARGET_WINDOW_USAGE,
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = 0,
 	.exec = cmd_kill_window_exec
@@ -56,9 +56,9 @@ static enum cmd_retval
 cmd_kill_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct winlink		*wl = item->state.tflag.wl, *wl2, *wl3;
+	struct winlink		*wl = item->target.wl, *wl2, *wl3;
 	struct window		*w = wl->window;
-	struct session		*s = item->state.tflag.s;
+	struct session		*s = item->target.s;
 
 	if (self->entry == &cmd_unlink_window_entry) {
 		if (!args_has(self->args, 'k') && !session_is_linked(s, w)) {

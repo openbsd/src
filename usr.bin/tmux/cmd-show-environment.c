@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.22 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.23 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,7 +41,7 @@ const struct cmd_entry cmd_show_environment_entry = {
 	.args = { "gst:", 0, 1 },
 	.usage = "[-gs] " CMD_TARGET_SESSION_USAGE " [name]",
 
-	.tflag = CMD_SESSION_CANFAIL,
+	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_show_environment_exec
@@ -97,7 +97,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 	const char		*target;
 
 	if ((target = args_get(args, 't')) != NULL) {
-		if (item->state.tflag.s == NULL) {
+		if (item->target.s == NULL) {
 			cmdq_error(item, "no such session: %s", target);
 			return (CMD_RETURN_ERROR);
 		}
@@ -106,7 +106,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(self->args, 'g'))
 		env = global_environ;
 	else {
-		if (item->state.tflag.s == NULL) {
+		if (item->target.s == NULL) {
 			target = args_get(args, 't');
 			if (target != NULL)
 				cmdq_error(item, "no such session: %s", target);
@@ -114,7 +114,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 				cmdq_error(item, "no current session");
 			return (CMD_RETURN_ERROR);
 		}
-		env = item->state.tflag.s->environ;
+		env = item->target.s->environ;
 	}
 
 	if (args->argc != 0) {

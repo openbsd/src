@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.22 2016/11/14 16:27:12 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.23 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,7 +34,7 @@ const struct cmd_entry cmd_rotate_window_entry = {
 	.args = { "Dt:U", 0, 0 },
 	.usage = "[-DU] " CMD_TARGET_WINDOW_USAGE,
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = 0,
 	.exec = cmd_rotate_window_exec
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_rotate_window_entry = {
 static enum cmd_retval
 cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct winlink		*wl = item->state.tflag.wl;
+	struct winlink		*wl = item->target.wl;
 	struct window		*w = wl->window;
 	struct window_pane	*wp, *wp2;
 	struct layout_cell	*lc;

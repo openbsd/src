@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.33 2017/03/09 17:02:38 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.34 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@ const struct cmd_entry cmd_respawn_window_entry = {
 	.args = { "kt:", 0, -1 },
 	.usage = "[-k] " CMD_TARGET_WINDOW_USAGE " [command]",
 
-	.tflag = CMD_WINDOW,
+	.target = { 't', CMD_FIND_WINDOW, 0 },
 
 	.flags = 0,
 	.exec = cmd_respawn_window_exec
@@ -47,8 +47,8 @@ static enum cmd_retval
 cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct session		*s = item->state.tflag.s;
-	struct winlink		*wl = item->state.tflag.wl;
+	struct session		*s = item->target.s;
+	struct winlink		*wl = item->target.wl;
 	struct window		*w = wl->window;
 	struct window_pane	*wp;
 	struct environ		*env;

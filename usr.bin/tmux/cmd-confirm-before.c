@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.33 2017/01/15 22:00:56 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.34 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -41,8 +41,6 @@ const struct cmd_entry cmd_confirm_before_entry = {
 	.args = { "p:t:", 1, 1 },
 	.usage = "[-p prompt] " CMD_TARGET_CLIENT_USAGE " command",
 
-	.tflag = CMD_CLIENT,
-
 	.flags = 0,
 	.exec = cmd_confirm_before_exec
 };
@@ -57,9 +55,12 @@ cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
 	struct cmd_confirm_before_data	*cdata;
-	struct client			*c = item->state.c;
+	struct client			*c;
 	char				*cmd, *copy, *new_prompt, *ptr;
 	const char			*prompt;
+
+	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
+		return (CMD_RETURN_ERROR);
 
 	if ((prompt = args_get(args, 'p')) != NULL)
 		xasprintf(&new_prompt, "%s ", prompt);

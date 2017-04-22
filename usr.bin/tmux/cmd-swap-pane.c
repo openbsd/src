@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.30 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.31 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,8 +35,8 @@ const struct cmd_entry cmd_swap_pane_entry = {
 	.args = { "dDs:t:U", 0, 0 },
 	.usage = "[-dDU] " CMD_SRCDST_PANE_USAGE,
 
-	.sflag = CMD_PANE_MARKED,
-	.tflag = CMD_PANE,
+	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = 0,
 	.exec = cmd_swap_pane_exec
@@ -50,10 +50,10 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct layout_cell	*src_lc, *dst_lc;
 	u_int			 sx, sy, xoff, yoff;
 
-	dst_w = item->state.tflag.wl->window;
-	dst_wp = item->state.tflag.wp;
-	src_w = item->state.sflag.wl->window;
-	src_wp = item->state.sflag.wp;
+	dst_w = item->target.wl->window;
+	dst_wp = item->target.wp;
+	src_w = item->source.wl->window;
+	src_wp = item->source.wp;
 	server_unzoom_window(dst_w);
 
 	if (args_has(self->args, 'D')) {

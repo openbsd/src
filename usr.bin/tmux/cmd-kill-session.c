@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-session.c,v 1.22 2016/10/16 19:04:05 nicm Exp $ */
+/* $OpenBSD: cmd-kill-session.c,v 1.23 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_kill_session_entry = {
 	.args = { "aCt:", 0, 0 },
 	.usage = "[-aC] " CMD_TARGET_SESSION_USAGE,
 
-	.tflag = CMD_SESSION,
+	.target = { 't', CMD_FIND_SESSION, 0 },
 
 	.flags = 0,
 	.exec = cmd_kill_session_exec
@@ -49,7 +49,7 @@ cmd_kill_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct session	*s, *sloop, *stmp;
 	struct winlink	*wl;
 
-	s = item->state.tflag.s;
+	s = item->target.s;
 
 	if (args_has(args, 'C')) {
 		RB_FOREACH(wl, winlinks, &s->windows) {

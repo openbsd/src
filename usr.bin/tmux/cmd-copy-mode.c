@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.32 2017/04/21 14:01:19 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.33 2017/04/22 10:22:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.args = { "Met:u", 0, 0 },
 	.usage = "[-Mu] " CMD_TARGET_PANE_USAGE,
 
-	.tflag = CMD_PANE,
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_clock_mode_entry = {
 	.args = { "t:", 0, 0 },
 	.usage = CMD_TARGET_PANE_USAGE,
 
-	.tflag = CMD_PANE,
+	.target = { 't', CMD_FIND_PANE, 0 },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_copy_mode_exec
@@ -59,7 +59,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmdq_shared	*shared = item->shared;
 	struct client		*c = item->client;
 	struct session		*s;
-	struct window_pane	*wp = item->state.tflag.wp;
+	struct window_pane	*wp = item->target.wp;
 
 	if (args_has(args, 'M')) {
 		if ((wp = cmd_mouse_pane(&shared->mouse, &s, NULL)) == NULL)
