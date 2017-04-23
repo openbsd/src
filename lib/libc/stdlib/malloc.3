@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.113 2017/04/17 18:07:15 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.114 2017/04/23 06:36:36 otto Exp $
 .\"
-.Dd $Mdocdate: April 17 2017 $
+.Dd $Mdocdate: April 23 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -155,16 +155,21 @@ and checks for integer overflow in the calculation
 Used for the allocation of memory holding sensitive data,
 the
 .Fn recallocarray
+and
+.Fn freezeo
+functions guarantee that memory becoming unallocated is explicitly
+.Em discarded ,
+meaning pages of memory are disposed via
+.Xr munmap 2
+and cached free objects are cleared with
+.Xr explicit_bzero 3 .
+.Pp
+The
+.Fn recallocarray
 function is similar to
 .Fn reallocarray
 except it ensures newly allocated memory is cleared similar to
 .Fn calloc .
-Memory that becomes unallocated while shrinking or moving existing
-allocations is explicitly discarded (meaning, pages of memory
-are disposed via
-.Xr munmap 2 ,
-and smaller allocations are cleared with
-.Xr explicit_bzero 3 ) .
 If
 .Fa ptr
 is
