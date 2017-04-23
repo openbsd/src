@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.10 2017/01/28 16:01:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.11 2017/04/23 21:04:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -81,6 +81,7 @@ int	ieee80211_mira_check_probe_timers(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 void	ieee80211_mira_probe_next_rate(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
+int	ieee80211_mira_valid_tx_mcs(struct ieee80211com *, int);
 uint32_t ieee80211_mira_valid_rates(struct ieee80211com *,
 	    struct ieee80211_node *);
 uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int);
@@ -991,6 +992,21 @@ ieee80211_mira_probe_next_rate(struct ieee80211_mira_node *mn,
 	ni->ni_txmcs = ieee80211_mira_next_mcs(mn, ni);
 }
 
+int
+ieee80211_mira_valid_tx_mcs(struct ieee80211com *ic, int mcs)
+{
+	uint32_t ntxstreams = 1;
+	static const int max_mcs[] = { 7, 15, 23, 31 };
+
+	if ((ic->ic_tx_mcs_set & IEEE80211_TX_RX_MCS_NOT_EQUAL) == 0)
+		return isset(ic->ic_sup_mcs, mcs);
+
+	ntxstreams += ((ic->ic_tx_mcs_set & IEEE80211_TX_SPATIAL_STREAMS) >> 2);
+	if (ntxstreams < 1 || ntxstreams > 4)
+		panic("invalid number of Tx streams: %u", ntxstreams);
+	return (mcs <= max_mcs[ntxstreams - 1] && isset(ic->ic_sup_mcs, mcs));
+}
+
 uint32_t
 ieee80211_mira_valid_rates(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
@@ -999,8 +1015,11 @@ ieee80211_mira_valid_rates(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	for (i = 0;
 	    i < MIN(IEEE80211_MIRA_NUM_MCS, IEEE80211_HT_NUM_MCS); i++) {
-		if (isset(ic->ic_sup_mcs, i) && isset(ni->ni_rxmcs, i))
-			valid_mcs |= (1 << i);
+		if (!isset(ni->ni_rxmcs, i))
+			continue;
+		if (!ieee80211_mira_valid_tx_mcs(ic, i))
+			continue;
+		valid_mcs |= (1 << i);
 	}
 
 	return valid_mcs;
