@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.202 2017/03/17 17:19:16 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.203 2017/04/23 11:37:11 sthen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -286,7 +286,7 @@ pf_fillup_fragment(struct pf_fragment_cmp *key, struct pf_frent *frent,
 		goto bad_fragment;
 	}
 
-	DPFPRINTF(LOG_NOTICE, key->fr_af == AF_INET ?
+	DPFPRINTF(LOG_INFO, key->fr_af == AF_INET ?
 	    "reass frag %d @ %d-%d" : "reass frag %#08x @ %d-%d",
 	    key->fr_id, frent->fe_off, frent->fe_off + frent->fe_len);
 
@@ -456,7 +456,7 @@ pf_isfull_fragment(struct pf_fragment *frag)
 			return (0);
 		}
 	}
-	DPFPRINTF(LOG_NOTICE, "%d < %d?", off, total);
+	DPFPRINTF(LOG_INFO, "%d < %d?", off, total);
 	if (off < total)
 		return (0);
 	KASSERT(off == total);
@@ -569,7 +569,7 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 		return (PF_DROP);
 	}
 
-	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip->ip_len));
+	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip->ip_len));
 	return (PF_PASS);
 }
 
@@ -676,7 +676,7 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 		return (PF_DROP);
 	}
 
-	DPFPRINTF(LOG_NOTICE, "complete: %p(%d)", m, ntohs(ip6->ip6_plen));
+	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip6->ip6_plen));
 	return (PF_PASS);
 
 fail:

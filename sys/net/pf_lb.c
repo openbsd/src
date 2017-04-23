@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.59 2017/02/08 01:20:40 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.60 2017/04/23 11:37:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -619,9 +619,9 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			return (1);
 	}
 
-	if (pf_status.debug >= LOG_NOTICE &&
+	if (pf_status.debug >= LOG_INFO &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
-		log(LOG_NOTICE, "pf: pf_map_addr: selected address ");
+		log(LOG_INFO, "pf: pf_map_addr: selected address ");
 		pf_print_host(naddr, 0, af);
 		if ((rpool->opts & PF_POOL_TYPEMASK) ==
 		    PF_POOL_LEASTSTATES)
@@ -707,8 +707,8 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 	u_int16_t	nport;
 	int		prefixlen = 96;
 
-	if (pf_status.debug >= LOG_NOTICE) {
-		log(LOG_NOTICE, "pf: af-to %s %s, ",
+	if (pf_status.debug >= LOG_INFO) {
+		log(LOG_INFO, "pf: af-to %s %s, ",
 		    pd->naf == AF_INET ? "inet" : "inet6",
 		    r->rdr.addr.type == PF_ADDR_NONE ? "nat" : "rdr");
 		pf_print_host(&pd->nsaddr, pd->nsport, pd->af);
@@ -815,8 +815,8 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 	PF_ACPY(&pd->nsaddr, &nsaddr, pd->naf);
 	PF_ACPY(&pd->ndaddr, &ndaddr, pd->naf);
 
-	if (pf_status.debug >= LOG_NOTICE) {
-		log(LOG_NOTICE, "pf: af-to %s %s done, prefixlen %d, ",
+	if (pf_status.debug >= LOG_INFO) {
+		log(LOG_INFO, "pf: af-to %s %s done, prefixlen %d, ",
 		    pd->naf == AF_INET ? "inet" : "inet6",
 		    r->rdr.addr.type == PF_ADDR_NONE ? "nat" : "rdr",
 		    prefixlen);
@@ -904,8 +904,8 @@ pf_postprocess_addr(struct pf_state *cur)
 		}
 	}
 	if (slbcount > -1) {
-		if (pf_status.debug >= LOG_NOTICE) {
-			log(LOG_NOTICE, "pf: %s: selected address ", __func__);
+		if (pf_status.debug >= LOG_INFO) {
+			log(LOG_INFO, "pf: %s: selected address ", __func__);
 			pf_print_host(&lookup_addr, sks->port[0],
 			    sks->af);
 			addlog(" decreased state count to %u\n",

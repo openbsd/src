@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.39 2016/11/22 19:29:54 procter Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.40 2017/04/23 11:37:11 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -238,7 +238,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 		optlen = MAX(optlen, 1);	/* paranoia */
 	}
 
-	DPFPRINTF(LOG_NOTICE,
+	DPFPRINTF(LOG_INFO,
 	    "fingerprinted %s:%d  %d:%d:%d:%d:%llx (%d) "
 	    "(TS=%s,M=%s%d,W=%s%d)",
 	    srcname, ntohs(tcp->th_sport),
@@ -269,7 +269,7 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 	if (os == PF_OSFP_ANY)
 		return (1);
 	if (list == NULL) {
-		DPFPRINTF(LOG_NOTICE, "osfp no match against %x", os);
+		DPFPRINTF(LOG_INFO, "osfp no match against %x", os);
 		return (os == PF_OSFP_UNKNOWN);
 	}
 	PF_OSFP_UNPACK(os, os_class, os_version, os_subtype);
@@ -278,14 +278,14 @@ pf_osfp_match(struct pf_osfp_enlist *list, pf_osfp_t os)
 		if ((os_class == PF_OSFP_ANY || en_class == os_class) &&
 		    (os_version == PF_OSFP_ANY || en_version == os_version) &&
 		    (os_subtype == PF_OSFP_ANY || en_subtype == os_subtype)) {
-			DPFPRINTF(LOG_NOTICE,
+			DPFPRINTF(LOG_INFO,
 			    "osfp matched %s %s %s  %x==%x",
 			    entry->fp_class_nm, entry->fp_version_nm,
 			    entry->fp_subtype_nm, os, entry->fp_os);
 			return (1);
 		}
 	}
-	DPFPRINTF(LOG_NOTICE, "fingerprint 0x%x didn't match", os);
+	DPFPRINTF(LOG_INFO, "fingerprint 0x%x didn't match", os);
 	return (0);
 }
 
