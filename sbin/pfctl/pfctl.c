@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.340 2017/04/21 23:22:49 yasuoka Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.341 2017/04/23 07:41:25 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -239,13 +239,13 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-deghnPqrvz] ", __progname);
-	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
-	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
-	fprintf(stderr, "\t[-k host | network | label | id] ");
-	fprintf(stderr, "[-L statefile] [-o level] [-p device]\n");
-	fprintf(stderr, "\t[-S statefile] [-s modifier [-R id]] ");
-	fprintf(stderr, "[-t table -T command [address ...]]\n");
-	fprintf(stderr, "\t[-V rdomain] [-x level]\n");
+	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]");
+	fprintf(stderr, " [-f file]\n");
+	fprintf(stderr, "\t[-i interface] [-K key] [-k key] [-L statefile]");
+	fprintf(stderr, " [-o level]\n");
+	fprintf(stderr, "\t[-p device] [-S statefile] [-s modifier [-R id]]\n");
+	fprintf(stderr, "\t[-t table -T command [address ...]]");
+	fprintf(stderr, " [-V rdomain] [-x level]\n");
 	exit(1);
 }
 
