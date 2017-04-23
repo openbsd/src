@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.266 2017/04/19 06:52:27 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.267 2017/04/23 18:13:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1218,6 +1218,7 @@ tty_cmd_clearscreen(struct tty *tty, const struct tty_ctx *ctx)
 	tty_margin_off(tty);
 
 	if (tty_pane_full_width(tty, ctx) &&
+	    ctx->yoff + wp->sy >= tty->sy - 1 &&
 	    status_at_line(tty->client) <= 0 &&
 	    tty_term_has(tty->term, TTYC_ED)) {
 		tty_cursor_pane(tty, ctx, 0, 0);
