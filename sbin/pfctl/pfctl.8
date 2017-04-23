@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.168 2017/04/21 23:22:49 yasuoka Exp $
+.\" $OpenBSD: pfctl.8,v 1.169 2017/04/23 07:40:34 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2017 $
+.Dd $Mdocdate: April 23 2017 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -39,8 +39,8 @@
 .Op Fl F Ar modifier
 .Op Fl f Ar file
 .Op Fl i Ar interface
-.Op Fl K Ar host | network
-.Op Fl k Ar host | network | label | id
+.Op Fl K Ar key
+.Op Fl k Ar key
 .Op Fl L Ar statefile
 .Op Fl o Ar level
 .Op Fl p Ar device
@@ -216,50 +216,22 @@ Help.
 .It Fl i Ar interface
 Restrict the operation to the given
 .Ar interface .
-.It Fl K Ar host | network
-Kill all of the source tracking entries originating from the specified
-.Ar host
-or
-.Ar network .
+.It Fl K Ar key
+Kill all of the source tracking entries originating from the
+host or network specified by
+.Ar key .
 A second
-.Fl K Ar host
-or
-.Fl K Ar network
-option may be specified, which will kill all the source tracking
-entries from the first host/network to the second.
-.It Xo
+.Fl K
+option may be specified, which will kill all the source tracking entries
+from the first host/network to the second.
+.It Fl k Ar key
+Kill all of the state entries originating from the
+host or network specified by
+.Ar key .
+A second
 .Fl k
-.Ar host | network | label | key | id
-.Xc
-Kill all of the state entries matching the specified
-.Ar host ,
-.Ar network ,
-.Ar label ,
-.Ar key ,
-or
-.Ar id .
-.Pp
-For example, to kill all of the state entries originating from
-.Dq host :
-.Pp
-.Dl # pfctl -k host
-.Pp
-A second
-.Fl k Ar host
-or
-.Fl k Ar network
 option may be specified, which will kill all the state entries
 from the first host/network to the second.
-To kill all of the state entries from
-.Dq host1
-to
-.Dq host2 :
-.Pp
-.Dl # pfctl -k host1 -k host2
-.Pp
-To kill all states originating from 192.168.1.0/24 to 172.16.0.0/16:
-.Pp
-.Dl # pfctl -k 192.168.1.0/24 -k 172.16.0.0/16
 .Pp
 A network prefix length of 0 can be used as a wildcard.
 To kill all states with the target
@@ -267,33 +239,38 @@ To kill all states with the target
 .Pp
 .Dl # pfctl -k 0.0.0.0/0 -k host2
 .Pp
-It is also possible to kill states by rule label, state key or state ID.
+It is also possible to kill states by rule label, state key, or state ID.
 In this mode the first
 .Fl k
-argument is used to specify the type
-of the second argument.
-The following command would kill all states that have been created
-from rules carrying the label
+argument is used to specify the type;
+a second
+.Fl k
+gives the actual target.
+.Pp
+To kill states by rule label,
+use the
+.Cm label
+modifier.
+To kill all states created from rules carrying the label
 .Dq foobar :
 .Pp
 .Dl # pfctl -k label -k foobar
 .Pp
-To kill one specific state by its key
-(protocol, host1, port1, direction, host2 and port2 in the same format
-of pfctl -s state),
+To kill one specific state by its state key
+(as shown by pfctl -s state),
 use the
-.Ar key
-modifier and as a second argument the state key.
-To kill a state whose protocol is TCP and originating from
-10.0.0.101:32123 to 10.0.0.1:80 use:
+.Cm key
+modifier.
+To kill a state originating from 10.0.0.101:32123 to 10.0.0.1:80,
+protocol TCP, use:
 .Pp
 .Dl # pfctl -k key -k 'tcp 10.0.0.1:80 <- 10.0.0.101:32123'
 .Pp
 To kill one specific state by its unique state ID
 (as shown by pfctl -s state -vv),
 use the
-.Ar id
-modifier and as a second argument the state ID and optional creator ID.
+.Cm id
+modifier.
 To kill a state with ID 4823e84500000003 use:
 .Pp
 .Dl # pfctl -k id -k 4823e84500000003
