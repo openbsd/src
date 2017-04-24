@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.63 2017/04/18 13:59:09 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.64 2017/04/24 14:58:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -223,6 +223,7 @@ struct group {
 	int use_lease_addr_for_default_route;
 	int authoritative;
 	int always_reply_rfc1048;
+	int echo_client_id;
 
 	struct tree_cache *options[256];
 };

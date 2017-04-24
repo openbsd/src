@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.18 2017/04/12 19:12:01 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.19 2017/04/24 14:58:36 krw Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -311,6 +311,7 @@ static const struct keywords {
 	{ "dynamic-bootp",		TOK_DYNAMIC_BOOTP },
 	{ "dynamic-bootp-lease-cutoff",	TOK_DYNAMIC_BOOTP_LEASE_CUTOFF },
 	{ "dynamic-bootp-lease-length",	TOK_DYNAMIC_BOOTP_LEASE_LENGTH },
+	{ "echo-client-id",		TOK_ECHO_CLIENT_ID },
 	{ "ends",			TOK_ENDS },
 	{ "ethernet",			TOK_ETHERNET },
 	{ "filename",			TOK_FILENAME },

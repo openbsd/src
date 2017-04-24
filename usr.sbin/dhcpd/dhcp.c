@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.55 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.56 2017/04/24 14:58:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -708,7 +708,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	struct lease_state *state;
 	time_t lease_time, offered_lease_time, max_lease_time, default_lease_time;
 	struct class *vendor_class, *user_class;
-	int ulafdr, i;
+	int ulafdr, echo_client_id, i;
 
 	/* If we're already acking this lease, don't do it again. */
 	if (lease->state) {
@@ -1239,8 +1239,16 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	memset(&state->options[i], 0, sizeof(state->options[i]));
 
 	/* Echo back the client-identifier as RFC 6842 mandates. */
+	if (lease->host)
+		echo_client_id = lease->host->group->echo_client_id;
+	else if (user_class)
+		echo_client_id = user_class->group->echo_client_id;
+	else if (vendor_class)
+		echo_client_id = vendor_class->group->echo_client_id;
+	else
+		echo_client_id = lease->subnet->group->echo_client_id;
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
-	if (lease->client_identifier) {
+	if (lease->client_identifier && echo_client_id) {
 		state->options[i] = new_tree_cache("dhcp-client-identifier");
 		state->options[i]->flags = TC_TEMPORARY;
 		state->options[i]->value = lease->client_identifier;

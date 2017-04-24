@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.32 2017/04/12 19:12:01 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.33 2017/04/24 14:58:36 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -82,6 +82,7 @@ readconf(void)
 	root_group.allow_bootp = 1;
 	root_group.allow_booting = 1;
 	root_group.authoritative = 1;
+	root_group.echo_client_id = 1;
 
 	if ((cfile = fopen(path_dhcpd_conf, "r")) == NULL)
 		fatal("Can't open %s", path_dhcpd_conf);
@@ -317,6 +318,10 @@ parse_statement(FILE *cfile, struct group *group, int type,
 
 	case TOK_ALWAYS_REPLY_RFC1048:
 		group->always_reply_rfc1048 = parse_boolean(cfile);
+		break;
+
+	case TOK_ECHO_CLIENT_ID:
+		group->echo_client_id = parse_boolean(cfile);
 		break;
 
 	case TOK_USE_HOST_DECL_NAMES:
