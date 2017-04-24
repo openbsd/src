@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.996 2017/04/11 19:23:10 rpe Exp $
+#	$OpenBSD: install.sub,v 1.997 2017/04/24 20:27:59 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1003,17 +1003,17 @@ v6_config() {
 	set -- $(v6_info $_if)
 	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
 
-	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'rtsol' "
+	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'autoconf' "
 	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
 	ask_until "$_prompt" "${_addr:-none}"
 
 	case $resp in
 	none)	return
 		;;
-	rtsol)	ifconfig $_if inet6 >/dev/null 2>&1 ||
+	autoconf)
+		ifconfig $_if inet6 >/dev/null 2>&1 ||
 			{ echo "No INET6 support."; return; }
-		ifconfig $_if up
-		ifconfig $_if inet6 autoconf && echo "up\nrtsol" >>$_hn
+		ifconfig $_if inet6 autoconf && echo "inet6 autoconf" >>$_hn
 		return
 		;;
 	esac
@@ -2114,106 +2114,94 @@ get_rootinfo() {
 	SWAPDEV=${ROOTDISK}b
 }
 
+# Parse and "unpack" a hostname.if(5) line given as positional parameters.
+# Fill the _cmds array with the resulting interface configuration commands.
+parse_hn_line() {
+	local _af=0 _name=1 _mask=2 _bc=3 _prefix=2 _c _cmd _prev _daddr
+	local _has_dhclient=false _has_inet6=false
+	set -A _c -- "$@"
+	set -o noglob
+
+	ifconfig $_if inet6 >/dev/null 2>&1 && _has_inet6=true
+	[[ -x /sbin/dhclient ]] && _has_dhclient=true
+
+	case ${_c[_af]} in
+	''|*([[:blank:]])'#'*)
+		return
+		;;
+	inet)	((${#_c[*]} > 1)) || return
+		[[ ${_c[_name]} == alias ]] && _mask=3 _bc=4
+		[[ -n ${_c[_mask]} ]] && _c[_mask]="netmask ${_c[_mask]}"
+		if [[ -n ${_c[_bc]} ]]; then
+			_c[_bc]="broadcast ${_c[_bc]}"
+			[[ ${_c[_bc]} == *NONE ]] && _c[_bc]=
+		fi
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+		;;
+	inet6)	! $_has_inet6 && return
+		((${#_c[*]} > 1)) || return
+		if [[ ${_c[_name]} == autoconf ]]; then
+			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+			rtsolif="$rtsolif $_if"
+			return
+		fi
+		[[ ${_c[_name]} == alias ]] && _prefix=3
+		[[ -n ${_c[_prefix]} ]] && _c[_prefix]="prefixlen ${_c[_prefix]}"
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+		;;
+	dest)	((${#_c[*]} == 2)) && _daddr=${_c[1]} || return
+		! $_has_inet6 && [[ $_daddr == @(*:*) ]] && return
+		_prev=$((${#_cmds[*]} - 1))
+		((_prev >= 0)) || return
+		set -A _c -- ${_cmds[_prev]}
+		_name=3
+		[[ ${_c[_name]} == alias ]] && _name=4
+		_c[_name]="${_c[_name]} $_daddr"
+		_cmds[$_prev]="${_c[@]}"
+		;;
+	dhcp)	! $_has_dhclient && return
+		_c[0]=
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
+		dhcpif="$dhcpif $_if"
+		;;
+	rtsol)	# XXX Support the rtsol keyword for some time to enable a smooth
+		# XXX transition to autoconf.
+		_c[0]=
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up"
+		_cmds[${#_cmds[*]}]="ifconfig $_if inet6 autoconf"
+		rtsolif="$rtsolif $_if"
+		;;
+	'!'*|bridge)
+		# Skip shell commands and bridge in the installer.
+		return
+		;;
+	*)	_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+		;;
+	esac
+	unset _c
+}
+
 # Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
 ifstart () {
-	# Note: Do not rename the 'if' variable which is documented as being
-	# usable in hostname.if(5) files.
-	local _hn=$1 if=${1#/mnt/etc/hostname.}
+	local _hn=$1 _if=${1#/mnt/etc/hostname.} _cmds _i=0 _line
+	set -A _cmds
 
 	((NIFS++))
-	while :; do
-		if [ "$cmd2" ]; then
-			# We are carrying over from the 'read dt dtaddr'
-			# last time.
-			set -- $cmd2
-			af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
-			# Make sure and get any remaining args in ext2,
-			# like the read below.
-			i=1
-			while [ $i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
-			ext2="$@"
-		else
-			# Read the next line or exit the while loop.
-			read af name mask bcaddr ext1 ext2 || break
-		fi
-		# $af can be "dhcp", "up", "rtsol", an address family, commands,
-		# or a comment.
-		case "$af" in
-		"#"*|"!"*|"bridge"|"")
-			# Skip comments, user commands, bridges, and empty lines.
-			continue
-			;;
-		"dhcp")
-			[ "$name" = "NONE" ] && name=
-			[ "$mask" = "NONE" ] && mask=
-			[ "$bcaddr" = "NONE" ] && bcaddr=
-			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 down"
-			if [[ -x /sbin/dhclient ]]; then
-				cmd="$cmd; dhclient $if"
-			else
-				cmd="$cmd; echo /sbin/dhclient missing - skipping dhcp request."
-			fi
-			dhcpif="$dhcpif $if"
-			;;
-		"rtsol")
-			if ifconfig $if inet6 >/dev/null 2>&1; then
-				rtsolif="$rtsolif $if"
-				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
-			else
-				cmd="$cmd; echo no INET6 support - skipping rtsol request."
-			fi
-			;;
-		*)
-			read dt dtaddr
-			if [ "$name" = "alias" ]; then
-				# Perform a 'shift' of sorts.
-				alias=$name
-				name=$mask
-				mask=$bcaddr
-				bcaddr=$ext1
-				ext1=$ext2
-				ext2=
-			else
-				alias=
-			fi
-			cmd="ifconfig $if $af $alias $name"
-			case "$dt" in
-			dest)
-				cmd="$cmd $dtaddr"
-				;;
-			*)
-				cmd2="$dt $dtaddr"
-				;;
-			esac
-			case $af in
-			inet)
-				if [ ! -n "$name" ]; then
-					echo "/etc/hostname.$if: inet alone is invalid"
-					return
-				fi
-				[ "$mask" ] && cmd="$cmd netmask $mask"
-				if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-					cmd="$cmd broadcast $bcaddr"
-				fi
-				;;
-			inet6)
-				if [ ! -n "$name" ]; then
-					echo "/etc/hostname.$if: inet6 alone is invalid"
-					return
-				fi
-				[ "$mask" ] && cmd="$cmd prefixlen $mask"
-				cmd="$cmd $bcaddr"
-				;;
-			*)
-				cmd="$cmd $mask $bcaddr"
-				;;
-			esac
-			cmd="$cmd $ext1 $ext2"
-			;;
-		esac
-		eval "$cmd"
+
+	# Parse the hostname.if(5) file and fill _cmds array with interface
+	# configuration commands.
+	set -o noglob
+	while IFS= read -- _line; do
+		parse_hn_line $_line
 	done <$_hn
+
+	# Apply the interface configuration commands stored in _cmds array.
+	while ((_i < ${#_cmds[*]})); do
+		eval "${_cmds[_i]}"
+		((_i++))
+	done
+	unset _cmds
 }
 
 # Configure the network during upgrade based on the on-disk configuration.
@@ -2262,7 +2250,7 @@ enable_network() {
 
 	# /mnt/etc/mygate, if it exists, contains the address(es) of my
 	# default gateway(s). Use for ipv4 if no interfaces configured via
-	# dhcp. Use for ipv6 if no interfaces configured via rtsol.
+	# dhcp. Use for ipv6 if no interfaces configured via autoconf.
 	[[ -z $dhcpif ]] && stripcom /mnt/etc/mygate | while read _gw; do
 		[[ $_gw == @(*:*) ]] && continue
 		route -qn delete default >/dev/null 2>&1
