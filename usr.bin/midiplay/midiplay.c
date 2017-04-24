@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.18 2016/05/05 09:18:12 ratchov Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.19 2017/04/24 06:45:56 ratchov Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -88,8 +88,6 @@ void playdata(u_char *, u_int, char *);
 void sigalrm(int);
 int main(int argc, char **argv);
 
-extern char *__progname;
-
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
 #define C 0x3c
@@ -126,7 +124,9 @@ u_char sample[] = {
 void
 usage(void)
 {
-	printf("usage: "
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: "
 	       "%s [-gmqvx] [-f device] [-t tempo] [file ...]\n",
 	       __progname);
 	exit(1);
