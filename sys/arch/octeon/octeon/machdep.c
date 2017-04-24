@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2017/04/20 15:42:26 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.87 2017/04/24 13:54:28 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -95,6 +95,8 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 vm_map_t exec_map;
 vm_map_t phys_map;
+
+extern uint8_t dt_blob_start[];
 
 struct boot_desc *octeon_boot_desc;
 struct boot_info *octeon_boot_info;
@@ -396,7 +398,8 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 			memcpy(octeon_fdt, fdt, fdt_size);
 			fdt_init(octeon_fdt);
 		}
-	}
+	} else
+		fdt_init(dt_blob_start);
 
 	/*
 	 * Get a console, very early but after initial mapping setup.
