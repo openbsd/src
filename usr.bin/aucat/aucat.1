@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.113 2016/06/07 06:26:24 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.114 2017/04/24 06:47:41 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2016 $
+.Dd $Mdocdate: April 24 2017 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -179,7 +179,7 @@ then standard output will be used.
 .It Fl p Ar position
 Time offset where the beginning of the file belongs.
 The first sample of the file will be played or recorded when the device
-reaches the given postion.
+reaches the given position.
 The position is expressed as the number of samples (at device sample rate).
 .It Fl q Ar port
 Control audio device properties through this MIDI port.
@@ -225,7 +225,7 @@ All audio files are controlled by the following MMC messages:
 .Bl -tag -width relocate -offset indent
 .It relocate
 All files are relocated to the requested time position.
-If it is beyond the end of a file, the file is temporarly
+If it is beyond the end of a file, the file is temporarily
 disabled until a valid position is requested.
 .It start
 Playback and/or recording is started.
