@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.171 2017/04/24 09:31:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.172 2017/04/24 09:48:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4384,7 +4384,12 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 			add_sta_cmd.tfd_queue_msk |=
 			    htole32(1 << iwm_ac_to_tx_fifo[ac]);
 		}
-		IEEE80211_ADDR_COPY(&add_sta_cmd.addr, in->in_ni.ni_bssid);
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
+			    etherbroadcastaddr);
+		else
+			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
+			    in->in_ni.ni_bssid);
 	}
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
@@ -5024,7 +5029,13 @@ iwm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	    in->in_color));
 	cmd->action = htole32(action);
 
-	cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		cmd->mac_type = htole32(IWM_FW_MAC_TYPE_LISTENER);
+	else if (ic->ic_opmode == IEEE80211_M_STA)
+		cmd->mac_type = htole32(IWM_FW_MAC_TYPE_BSS_STA);
+	else
+		panic("unsupported operating mode %d\n", ic->ic_opmode);
+
 	cmd->tsf_id = htole32(IWM_TSF_ID_A);
 
 	IEEE80211_ADDR_COPY(cmd->node_addr, ic->ic_myaddr);
@@ -5114,6 +5125,7 @@ int
 iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
     int assoc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
 	struct iwm_mac_ctx_cmd cmd;
 
@@ -5121,9 +5133,17 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 
 	iwm_mac_ctxt_cmd_common(sc, in, &cmd, action, assoc);
 
-	/* Allow beacons to pass through as long as we are not associated or we
-	 * do not have dtim period information */
-	if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		cmd.filter_flags = htole32(IWM_MAC_FILTER_IN_PROMISC |
+		    IWM_MAC_FILTER_IN_CONTROL_AND_MGMT |
+		    IWM_MAC_FILTER_IN_BEACON |
+		    IWM_MAC_FILTER_IN_PROBE_REQUEST |
+		    IWM_MAC_FILTER_IN_CRC32);
+	} else if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
+		/* 
+		 * Allow beacons to pass through as long as we are not
+		 * associated or we do not have dtim period information.
+		 */
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_BEACON);
 	else
 		iwm_mac_ctxt_cmd_fill_sta(sc, in, &cmd.sta, assoc);
@@ -5210,7 +5230,10 @@ iwm_auth(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		sc->sc_phyctxt[0].channel = ic->ic_ibss_chan;
+	else
+		sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
 	err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
 	    IWM_FW_CTXT_ACTION_MODIFY, 0);
 	if (err)
@@ -5237,6 +5260,9 @@ iwm_auth(struct iwm_softc *sc)
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
 	}
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return 0;
 
 	/*
 	 * Prevent the FW from wandering off channel during association
@@ -5465,8 +5491,12 @@ iwm_newstate_task(void *psc)
 	if (ostate == IEEE80211_S_SCAN && nstate != ostate)
 		iwm_led_blink_stop(sc);
 
-	if (ostate == IEEE80211_S_RUN && nstate != ostate)
+	if (ostate == IEEE80211_S_RUN && nstate != ostate) {
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			iwm_led_blink_stop(sc);
 		iwm_disable_beacon_filter(sc);
+	}
+
 
 	/* Reset the device if moving out of AUTH, ASSOC, or RUN. */
 	/* XXX Is there a way to switch states without a full reset? */
@@ -5523,8 +5553,16 @@ iwm_newstate_task(void *psc)
 		break;
 
 	case IEEE80211_S_RUN:
+		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+			/* Add a MAC context and a sniffing STA. */
+			err = iwm_auth(sc);
+			if (err)
+				return;
+		}
+
 		/* Configure Rx chains for MIMO. */
-		if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
+		if ((ic->ic_opmode == IEEE80211_M_MONITOR ||
+		    (in->in_ni.ni_flags & IEEE80211_NODE_HT)) &&
 		    !sc->sc_nvm.sku_cap_mimo_disable) {
 			err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
 			    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
@@ -5533,6 +5571,17 @@ iwm_newstate_task(void *psc)
 				    DEVNAME(sc));
 				return;
 			}
+		}
+
+		if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+			err = iwm_update_quotas(sc, in);
+			if (err) {
+				printf("%s: could not update quotas "
+				    "(error %d)\n", DEVNAME(sc), err);
+				return;
+			}
+			iwm_led_blink_start(sc);
+			break;
 		}
 
 		/* We have now been assigned an associd by the AP. */
@@ -5981,6 +6030,7 @@ int
 iwm_init(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int err;
 
 	if (sc->sc_flags & IWM_FLAG_HW_INITED) {
@@ -5998,7 +6048,11 @@ iwm_init(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
-	ieee80211_begin_scan(ifp);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		ieee80211_begin_scan(ifp);
+	else
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+
 	sc->sc_flags |= IWM_FLAG_HW_INITED;
 
 	return 0;
@@ -7265,6 +7319,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_RSN |		/* WPA/RSN */
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
 	    IEEE80211_C_SCANALLBAND |	/* device scans all bands at once */
+	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
