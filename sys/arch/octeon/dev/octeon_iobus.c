@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.18 2017/04/15 04:18:40 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.19 2017/04/24 14:10:19 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -239,6 +239,16 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Attach all subdevices as described in the config file.
 	 */
+
+	if ((soc = OF_finddevice("/soc")) != -1) {
+		memset(&fa, 0, sizeof(fa));
+		fa.fa_name = "";
+		fa.fa_node = soc;
+		fa.fa_iot = &iobus_tag;
+		fa.fa_dmat = &iobus_bus_dma_tag;
+		config_found(self, &fa, NULL);
+	}
+
 	config_search(iobussearch, self, sc);
 
 	chipid = octeon_get_chipid();
@@ -263,15 +273,6 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 		aa.aa_irq = -1;
 		aa.aa_unitno = i;
 		config_found_sm(self, &aa, iobusprint, iobussubmatch);
-	}
-
-	if ((soc = OF_finddevice("/soc")) != -1) {
-		memset(&fa, 0, sizeof(fa));
-		fa.fa_name = "";
-		fa.fa_node = soc;
-		fa.fa_iot = &iobus_tag;
-		fa.fa_dmat = &iobus_bus_dma_tag;
-		config_found(self, &fa, NULL);
 	}
 }
 
