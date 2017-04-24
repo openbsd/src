@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.235 2017/03/06 17:25:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.236 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -55,7 +55,7 @@ static	void	 check_argv(struct roff_man *,
 			struct roff_node *, struct mdoc_argv *);
 static	void	 check_args(struct roff_man *, struct roff_node *);
 static	int	 child_an(const struct roff_node *);
-static	size_t		macro2len(int);
+static	size_t		macro2len(enum roff_tok);
 static	void	 rewrite_macro2len(char **);
 
 static	void	 post_an(POST_ARGS);
@@ -106,8 +106,7 @@ static	void	 post_std(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
 static	void	 post_xx(POST_ARGS);
 
-static	v_post mdoc_valids[MDOC_MAX] = {
-	NULL,		/* Ap */
+static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_dd,	/* Dd */
 	post_dt,	/* Dt */
 	post_os,	/* Os */
@@ -123,6 +122,7 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	post_it,	/* It */
 	NULL,		/* Ad */
 	post_an,	/* An */
+	NULL,		/* Ap */
 	post_defaults,	/* Ar */
 	NULL,		/* Cd */
 	NULL,		/* Cm */
@@ -231,10 +231,11 @@ static	v_post mdoc_valids[MDOC_MAX] = {
 	NULL,		/* Ta */
 	NULL,		/* ll */
 };
+static	const v_post *const mdoc_valids = __mdoc_valids - MDOC_Dd;
 
 #define	RSORD_MAX 14 /* Number of `Rs' blocks. */
 
-static	const int rsord[RSORD_MAX] = {
+static	const enum roff_tok rsord[RSORD_MAX] = {
 	MDOC__A,
 	MDOC__T,
 	MDOC__B,
@@ -282,7 +283,7 @@ void
 mdoc_node_validate(struct roff_man *mdoc)
 {
 	struct roff_node *n;
-	v_post *p;
+	const v_post *p;
 
 	n = mdoc->last;
 	mdoc->last = mdoc->last->child;
@@ -659,9 +660,8 @@ post_eoln(POST_ARGS)
 
 	n = mdoc->last;
 	if (n->child != NULL)
-		mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
-		    n->line, n->pos, "%s %s",
-		    mdoc_macronames[n->tok], n->child->string);
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse, n->line,
+		    n->pos, "%s %s", roff_name[n->tok], n->child->string);
 
 	while (n->child != NULL)
 		roff_node_delete(mdoc, n->child);
@@ -805,7 +805,7 @@ post_std(POST_ARGS)
 			return;
 
 	mandoc_msg(MANDOCERR_ARG_STD, mdoc->parse,
-	    n->line, n->pos, mdoc_macronames[n->tok]);
+	    n->line, n->pos, roff_name[n->tok]);
 }
 
 static void
@@ -840,7 +840,7 @@ post_obsolete(POST_ARGS)
 	n = mdoc->last;
 	if (n->type == ROFFT_ELEM || n->type == ROFFT_BLOCK)
 		mandoc_msg(MANDOCERR_MACRO_OBS, mdoc->parse,
-		    n->line, n->pos, mdoc_macronames[n->tok]);
+		    n->line, n->pos, roff_name[n->tok]);
 }
 
 /*
@@ -1048,7 +1048,7 @@ post_display(POST_ARGS)
 				roff_node_delete(mdoc, n);
 		} else if (n->child == NULL)
 			mandoc_msg(MANDOCERR_BLK_EMPTY, mdoc->parse,
-			    n->line, n->pos, mdoc_macronames[n->tok]);
+			    n->line, n->pos, roff_name[n->tok]);
 		else if (n->tok == MDOC_D1)
 			post_hyph(mdoc);
 		break;
@@ -1071,7 +1071,7 @@ post_display(POST_ARGS)
 			if (np->type == ROFFT_BLOCK && np->tok == MDOC_Bd) {
 				mandoc_vmsg(MANDOCERR_BD_NEST,
 				    mdoc->parse, n->line, n->pos,
-				    "%s in Bd", mdoc_macronames[n->tok]);
+				    "%s in Bd", roff_name[n->tok]);
 				break;
 			}
 		}
@@ -1257,10 +1257,10 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case LIST_item:
 		if ((nch = nit->head->child) != NULL)
-			mandoc_vmsg(MANDOCERR_ARG_SKIP,
-			    mdoc->parse, nit->line, nit->pos,
-			    "It %s", nch->string == NULL ?
-			    mdoc_macronames[nch->tok] : nch->string);
+			mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse,
+			    nit->line, nit->pos, "It %s",
+			    nch->string == NULL ? roff_name[nch->tok] :
+			    nch->string);
 		break;
 	case LIST_column:
 		cols = (int)nbl->norm->Bl.ncols;
@@ -1307,14 +1307,13 @@ post_bl_block(POST_ARGS)
 			if (ni->next == NULL) {
 				mandoc_msg(MANDOCERR_PAR_MOVE,
 				    mdoc->parse, nc->line, nc->pos,
-				    mdoc_macronames[nc->tok]);
+				    roff_name[nc->tok]);
 				mdoc_node_relink(mdoc, nc);
 			} else if (n->norm->Bl.comp == 0 &&
 			    n->norm->Bl.type != LIST_column) {
 				mandoc_vmsg(MANDOCERR_PAR_SKIP,
 				    mdoc->parse, nc->line, nc->pos,
-				    "%s before It",
-				    mdoc_macronames[nc->tok]);
+				    "%s before It", roff_name[nc->tok]);
 				roff_node_delete(mdoc, nc);
 			} else
 				break;
@@ -1331,7 +1330,7 @@ void
 rewrite_macro2len(char **arg)
 {
 	size_t		  width;
-	int		  tok;
+	enum roff_tok	  tok;
 
 	if (*arg == NULL)
 		return;
@@ -1478,8 +1477,7 @@ post_bl(POST_ARGS)
 		}
 
 		mandoc_msg(MANDOCERR_BL_MOVE, mdoc->parse,
-		    nchild->line, nchild->pos,
-		    mdoc_macronames[nchild->tok]);
+		    nchild->line, nchild->pos, roff_name[nchild->tok]);
 
 		/*
 		 * Move the node out of the Bl block.
@@ -1557,7 +1555,7 @@ post_sm(POST_ARGS)
 
 	mandoc_vmsg(MANDOCERR_SM_BAD,
 	    mdoc->parse, nch->line, nch->pos,
-	    "%s %s", mdoc_macronames[mdoc->last->tok], nch->string);
+	    "%s %s", roff_name[mdoc->last->tok], nch->string);
 	mdoc_node_relink(mdoc, nch);
 	return;
 }
@@ -1600,7 +1598,7 @@ post_root(POST_ARGS)
 		mandoc_msg(MANDOCERR_DOC_EMPTY, mdoc->parse, 0, 0, NULL);
 	else if (n->tok != MDOC_Sh)
 		mandoc_msg(MANDOCERR_SEC_BEFORE, mdoc->parse,
-		    n->line, n->pos, mdoc_macronames[n->tok]);
+		    n->line, n->pos, roff_name[n->tok]);
 }
 
 static void
@@ -1634,9 +1632,8 @@ post_rs(POST_ARGS)
 				break;
 
 		if (i == RSORD_MAX) {
-			mandoc_msg(MANDOCERR_RS_BAD,
-			    mdoc->parse, nch->line, nch->pos,
-			    mdoc_macronames[nch->tok]);
+			mandoc_msg(MANDOCERR_RS_BAD, mdoc->parse,
+			    nch->line, nch->pos, roff_name[nch->tok]);
 			i = -1;
 		} else if (nch->tok == MDOC__J || nch->tok == MDOC__B)
 			np->norm->Rs.quote_T++;
@@ -1789,7 +1786,7 @@ post_sh_name(POST_ARGS)
 			/* FALLTHROUGH */
 		default:
 			mandoc_msg(MANDOCERR_NAMESEC_BAD, mdoc->parse,
-			    n->line, n->pos, mdoc_macronames[n->tok]);
+			    n->line, n->pos, roff_name[n->tok]);
 			continue;
 		}
 		break;
@@ -1910,7 +1907,7 @@ post_sh_head(POST_ARGS)
 		    sec != SEC_CUSTOM ? secnames[sec] :
 		    (nch = mdoc->last->child) == NULL ? "" :
 		    nch->type == ROFFT_TEXT ? nch->string :
-		    mdoc_macronames[nch->tok]);
+		    roff_name[nch->tok]);
 
 	/* The SYNOPSIS gets special attention in other areas. */
 
@@ -2019,8 +2016,8 @@ post_ignpar(POST_ARGS)
 		if (np->tok == MDOC_Pp || np->tok == MDOC_Lp) {
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    mdoc->parse, np->line, np->pos,
-			    "%s after %s", mdoc_macronames[np->tok],
-			    mdoc_macronames[mdoc->last->tok]);
+			    "%s after %s", roff_name[np->tok],
+			    roff_name[mdoc->last->tok]);
 			roff_node_delete(mdoc, np);
 		}
 
@@ -2028,8 +2025,8 @@ post_ignpar(POST_ARGS)
 		if (np->tok == MDOC_Pp || np->tok == MDOC_Lp) {
 			mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
 			    np->line, np->pos, "%s at the end of %s",
-			    mdoc_macronames[np->tok],
-			    mdoc_macronames[mdoc->last->tok]);
+			    roff_name[np->tok],
+			    roff_name[mdoc->last->tok]);
 			roff_node_delete(mdoc, np);
 		}
 }
@@ -2062,9 +2059,8 @@ post_prevpar(POST_ARGS)
 		return;
 
 	mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
-	    n->prev->line, n->prev->pos,
-	    "%s before %s", mdoc_macronames[n->prev->tok],
-	    mdoc_macronames[n->tok]);
+	    n->prev->line, n->prev->pos, "%s before %s",
+	    roff_name[n->prev->tok], roff_name[n->tok]);
 	roff_node_delete(mdoc, n->prev);
 }
 
@@ -2085,7 +2081,7 @@ post_par(POST_ARGS)
 	} else if (np->child != NULL)
 		mandoc_vmsg(MANDOCERR_ARG_SKIP,
 		    mdoc->parse, np->line, np->pos, "%s %s",
-		    mdoc_macronames[np->tok], np->child->string);
+		    roff_name[np->tok], np->child->string);
 
 	if ((np = mdoc->last->prev) == NULL) {
 		np = mdoc->last->parent;
@@ -2097,9 +2093,8 @@ post_par(POST_ARGS)
 		return;
 
 	mandoc_vmsg(MANDOCERR_PAR_SKIP, mdoc->parse,
-	    mdoc->last->line, mdoc->last->pos,
-	    "%s after %s", mdoc_macronames[mdoc->last->tok],
-	    mdoc_macronames[np->tok]);
+	    mdoc->last->line, mdoc->last->pos, "%s after %s",
+	    roff_name[mdoc->last->tok], roff_name[np->tok]);
 	roff_node_delete(mdoc, mdoc->last);
 }
 
@@ -2350,7 +2345,7 @@ mdoc_a2sec(const char *p)
 }
 
 static size_t
-macro2len(int macro)
+macro2len(enum roff_tok macro)
 {
 
 	switch (macro) {

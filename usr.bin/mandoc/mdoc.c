@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.150 2017/03/03 13:55:06 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.151 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,41 +33,6 @@
 #include "roff_int.h"
 #include "libmdoc.h"
 
-const	char *const __mdoc_macronames[MDOC_MAX + 1] = {
-	"text",
-	"Ap",		"Dd",		"Dt",		"Os",
-	"Sh",		"Ss",		"Pp",		"D1",
-	"Dl",		"Bd",		"Ed",		"Bl",
-	"El",		"It",		"Ad",		"An",
-	"Ar",		"Cd",		"Cm",		"Dv",
-	"Er",		"Ev",		"Ex",		"Fa",
-	"Fd",		"Fl",		"Fn",		"Ft",
-	"Ic",		"In",		"Li",		"Nd",
-	"Nm",		"Op",		"Ot",		"Pa",
-	"Rv",		"St",		"Va",		"Vt",
-	"Xr",		"%A",		"%B",		"%D",
-	"%I",		"%J",		"%N",		"%O",
-	"%P",		"%R",		"%T",		"%V",
-	"Ac",		"Ao",		"Aq",		"At",
-	"Bc",		"Bf",		"Bo",		"Bq",
-	"Bsx",		"Bx",		"Db",		"Dc",
-	"Do",		"Dq",		"Ec",		"Ef",
-	"Em",		"Eo",		"Fx",		"Ms",
-	"No",		"Ns",		"Nx",		"Ox",
-	"Pc",		"Pf",		"Po",		"Pq",
-	"Qc",		"Ql",		"Qo",		"Qq",
-	"Re",		"Rs",		"Sc",		"So",
-	"Sq",		"Sm",		"Sx",		"Sy",
-	"Tn",		"Ux",		"Xc",		"Xo",
-	"Fo",		"Fc",		"Oo",		"Oc",
-	"Bk",		"Ek",		"Bt",		"Hf",
-	"Fr",		"Ud",		"Lb",		"Lp",
-	"Lk",		"Mt",		"Brq",		"Bro",
-	"Brc",		"%C",		"Es",		"En",
-	"Dx",		"%Q",		"br",		"sp",
-	"%U",		"Ta",		"ll",
-};
-
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 	"split",		"nosplit",		"ragged",
 	"unfilled",		"literal",		"file",
@@ -78,9 +43,7 @@ const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 	"width",		"compact",		"std",
 	"filled",		"words",		"emphasis",
 	"symbolic",		"nested",		"centered"
-	};
-
-const	char * const *mdoc_macronames = __mdoc_macronames + 1;
+};
 const	char * const *mdoc_argnames = __mdoc_argnames;
 
 static	int		  mdoc_ptext(struct roff_man *, int, char *, int);
@@ -117,13 +80,12 @@ mdoc_parseln(struct roff_man *mdoc, int ln, char *buf, int offs)
 void
 mdoc_macro(MACRO_PROT_ARGS)
 {
-	assert(tok > TOKEN_NONE && tok < MDOC_MAX);
-
+	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
 	(*mdoc_macros[tok].fp)(mdoc, tok, line, ppos, pos, buf);
 }
 
 void
-mdoc_tail_alloc(struct roff_man *mdoc, int line, int pos, int tok)
+mdoc_tail_alloc(struct roff_man *mdoc, int line, int pos, enum roff_tok tok)
 {
 	struct roff_node *p;
 
@@ -133,8 +95,8 @@ mdoc_tail_alloc(struct roff_man *mdoc, int line, int pos, int tok)
 }
 
 struct roff_node *
-mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos, int tok,
-		struct roff_node *body)
+mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos,
+    enum roff_tok tok, struct roff_node *body)
 {
 	struct roff_node *p;
 
@@ -151,7 +113,7 @@ mdoc_endbody_alloc(struct roff_man *mdoc, int line, int pos, int tok,
 
 struct roff_node *
 mdoc_block_alloc(struct roff_man *mdoc, int line, int pos,
-	int tok, struct mdoc_arg *args)
+    enum roff_tok tok, struct mdoc_arg *args)
 {
 	struct roff_node *p;
 
@@ -178,7 +140,7 @@ mdoc_block_alloc(struct roff_man *mdoc, int line, int pos,
 
 void
 mdoc_elem_alloc(struct roff_man *mdoc, int line, int pos,
-	int tok, struct mdoc_arg *args)
+     enum roff_tok tok, struct mdoc_arg *args)
 {
 	struct roff_node *p;
 
@@ -338,7 +300,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 {
 	struct roff_node *n;
 	const char	 *cp;
-	int		  tok;
+	enum roff_tok	  tok;
 	int		  i, sv;
 	char		  mac[5];
 

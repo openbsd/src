@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_hash.c,v 1.22 2016/07/15 18:02:32 schwarze Exp $ */
+/*	$OpenBSD: mdoc_hash.c,v 1.23 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,8 +44,8 @@ mdoc_hash_init(void)
 
 	memset(table, UCHAR_MAX, sizeof(table));
 
-	for (i = 0; i < (int)MDOC_MAX; i++) {
-		p = mdoc_macronames[i];
+	for (i = 0; i < (int)(MDOC_MAX - MDOC_Dd); i++) {
+		p = roff_name[MDOC_Dd + i];
 
 		if (isalpha((unsigned char)p[1]))
 			major = 12 * (tolower((unsigned char)p[1]) - 97);
@@ -62,7 +62,7 @@ mdoc_hash_init(void)
 	}
 }
 
-int
+enum roff_tok
 mdoc_hash_find(const char *p)
 {
 	int		  major, i, j;
@@ -85,8 +85,8 @@ mdoc_hash_find(const char *p)
 	for (j = 0; j < 12; j++) {
 		if (UCHAR_MAX == (i = table[major + j]))
 			break;
-		if (0 == strcmp(p, mdoc_macronames[i]))
-			return i;
+		if (strcmp(p, roff_name[MDOC_Dd + i]) == 0)
+			return MDOC_Dd + i;
 	}
 
 	return TOKEN_NONE;

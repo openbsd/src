@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.88 2017/03/17 12:06:02 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.89 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -69,8 +69,7 @@ static	int		  man_in_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
 static	void		  man_root_pre(MAN_ARGS);
 
-static	const struct htmlman mans[MAN_MAX] = {
-	{ man_br_pre, NULL }, /* br */
+static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
 	{ man_SH_pre, NULL }, /* SH */
 	{ man_SS_pre, NULL }, /* SS */
@@ -91,6 +90,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_I_pre, NULL }, /* I */
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
+	{ man_br_pre, NULL }, /* br */
 	{ man_br_pre, NULL }, /* sp */
 	{ NULL, NULL }, /* nf */
 	{ NULL, NULL }, /* fi */
@@ -109,6 +109,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ NULL, NULL }, /* UE */
 	{ man_ign_pre, NULL }, /* ll */
 };
+static	const struct htmlman *const mans = __mans - MAN_TH;
 
 
 /*

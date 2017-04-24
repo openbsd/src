@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.16 2017/04/17 12:52:00 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.17 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -103,8 +103,7 @@ static	void	 md_post_Pf(struct roff_node *);
 static	void	 md_post_Vt(struct roff_node *);
 static	void	 md_post__T(struct roff_node *);
 
-static	const struct md_act md_acts[MDOC_MAX + 1] = {
-	{ NULL, md_pre_Ap, NULL, NULL, NULL }, /* Ap */
+static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dd */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dt */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Os */
@@ -120,6 +119,7 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, md_pre_It, md_post_It, NULL, NULL }, /* It */
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Ad */
 	{ NULL, md_pre_An, NULL, NULL, NULL }, /* An */
+	{ NULL, md_pre_Ap, NULL, NULL, NULL }, /* Ap */
 	{ NULL, md_pre_raw, md_post_raw, "*", "*" }, /* Ar */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Cd */
 	{ NULL, md_pre_raw, md_post_raw, "**", "**" }, /* Cm */
@@ -227,8 +227,8 @@ static	const struct md_act md_acts[MDOC_MAX + 1] = {
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 	{ NULL, NULL, NULL, NULL, NULL }, /* ll */
-	{ NULL, NULL, NULL, NULL, NULL }, /* ROOT */
 };
+static	const struct md_act *const md_acts = __md_acts - MDOC_Dd;
 
 static	int	 outflags;
 #define	MD_spc		 (1 << 0)  /* Blank character before next word. */

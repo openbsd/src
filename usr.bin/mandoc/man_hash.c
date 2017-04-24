@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_hash.c,v 1.25 2016/07/15 18:02:32 schwarze Exp $ */
+/*	$OpenBSD: man_hash.c,v 1.26 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,8 +58,8 @@ man_hash_init(void)
 
 	memset(table, UCHAR_MAX, sizeof(table));
 
-	for (i = 0; i < (int)MAN_MAX; i++) {
-		x = man_macronames[i][0];
+	for (i = 0; i < (int)(MAN_MAX - MAN_TH); i++) {
+		x = *roff_name[MAN_TH + i];
 
 		assert(isalpha((unsigned char)x));
 
@@ -75,11 +75,10 @@ man_hash_init(void)
 	}
 }
 
-int
+enum roff_tok
 man_hash_find(const char *tmp)
 {
 	int		 x, y, i;
-	int		 tok;
 
 	if ('\0' == (x = tmp[0]))
 		return TOKEN_NONE;
@@ -92,9 +91,8 @@ man_hash_find(const char *tmp)
 		if (UCHAR_MAX == (y = table[x + i]))
 			return TOKEN_NONE;
 
-		tok = y;
-		if (0 == strcmp(tmp, man_macronames[tok]))
-			return tok;
+		if (strcmp(tmp, roff_name[MAN_TH + y]) == 0)
+			return MAN_TH + y;
 	}
 
 	return TOKEN_NONE;

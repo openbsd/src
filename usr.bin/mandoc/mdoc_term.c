@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.248 2017/04/17 12:52:00 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.249 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -123,8 +123,7 @@ static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
 static	int	  termp_xx_pre(DECL_ARGS);
 
-static	const struct termact termacts[MDOC_MAX] = {
-	{ termp_ap_pre, NULL }, /* Ap */
+static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL }, /* Dd */
 	{ NULL, NULL }, /* Dt */
 	{ NULL, NULL }, /* Os */
@@ -140,6 +139,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_it_pre, termp_it_post }, /* It */
 	{ termp_under_pre, NULL }, /* Ad */
 	{ termp_an_pre, NULL }, /* An */
+	{ termp_ap_pre, NULL }, /* Ap */
 	{ termp_under_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
 	{ termp_bold_pre, NULL }, /* Cm */
@@ -248,8 +248,10 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ta */
 	{ termp_ll_pre, NULL }, /* ll */
 };
+static	const struct termact *const termacts = __termacts - MDOC_Dd;
 
 static	int	 fn_prio;
+
 
 void
 terminal_mdoc(void *arg, const struct roff_man *mdoc)
@@ -361,7 +363,7 @@ print_mdoc_node(DECL_ARGS)
 		term_tbl(p, n->span);
 		break;
 	default:
-		if (termacts[n->tok].pre &&
+		if (termacts[n->tok].pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
 			chld = (*termacts[n->tok].pre)
 				(p, &npair, meta, n);
@@ -382,7 +384,7 @@ print_mdoc_node(DECL_ARGS)
 	case ROFFT_EQN:
 		break;
 	default:
-		if ( ! termacts[n->tok].post || NODE_ENDED & n->flags)
+		if (termacts[n->tok].post == NULL || n->flags & NODE_ENDED)
 			break;
 		(void)(*termacts[n->tok].post)(p, &npair, meta, n);
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_validate.c,v 1.93 2016/01/08 17:48:04 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.94 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,8 +52,7 @@ static	void	  post_TH(CHKARGS);
 static	void	  post_UC(CHKARGS);
 static	void	  post_UR(CHKARGS);
 
-static	v_check man_valids[MAN_MAX] = {
-	post_vs,    /* br */
+static	const v_check __man_valids[MAN_MAX - MAN_TH] = {
 	post_TH,    /* TH */
 	NULL,       /* SH */
 	NULL,       /* SS */
@@ -74,6 +73,7 @@ static	v_check man_valids[MAN_MAX] = {
 	NULL,       /* I */
 	NULL,       /* IR */
 	NULL,       /* RI */
+	post_vs,    /* br */
 	post_vs,    /* sp */
 	NULL,       /* nf */
 	NULL,       /* fi */
@@ -92,13 +92,14 @@ static	v_check man_valids[MAN_MAX] = {
 	NULL,       /* UE */
 	NULL,       /* ll */
 };
+static	const v_check *man_valids = __man_valids - MAN_TH;
 
 
 void
 man_node_validate(struct roff_man *man)
 {
 	struct roff_node *n;
-	v_check		*cp;
+	const v_check	 *cp;
 
 	n = man->last;
 	man->last = man->last->child;
@@ -245,7 +246,7 @@ check_part(CHKARGS)
 
 	if (n->type == ROFFT_BODY && n->child == NULL)
 		mandoc_msg(MANDOCERR_BLK_EMPTY, man->parse,
-		    n->line, n->pos, man_macronames[n->tok]);
+		    n->line, n->pos, roff_name[n->tok]);
 }
 
 static void
@@ -261,14 +262,13 @@ check_par(CHKARGS)
 		if (n->child == NULL)
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    man->parse, n->line, n->pos,
-			    "%s empty", man_macronames[n->tok]);
+			    "%s empty", roff_name[n->tok]);
 		break;
 	case ROFFT_HEAD:
 		if (n->child != NULL)
 			mandoc_vmsg(MANDOCERR_ARG_SKIP,
-			    man->parse, n->line, n->pos,
-			    "%s %s%s", man_macronames[n->tok],
-			    n->child->string,
+			    man->parse, n->line, n->pos, "%s %s%s",
+			    roff_name[n->tok], n->child->string,
 			    n->child->next != NULL ? " ..." : "");
 		break;
 	default:
@@ -289,7 +289,7 @@ post_IP(CHKARGS)
 		if (n->parent->head->child == NULL && n->child == NULL)
 			mandoc_vmsg(MANDOCERR_PAR_SKIP,
 			    man->parse, n->line, n->pos,
-			    "%s empty", man_macronames[n->tok]);
+			    "%s empty", roff_name[n->tok]);
 		break;
 	default:
 		break;
@@ -477,8 +477,8 @@ post_vs(CHKARGS)
 	case MAN_SH:
 	case MAN_SS:
 		mandoc_vmsg(MANDOCERR_PAR_SKIP, man->parse, n->line, n->pos,
-		    "%s after %s", man_macronames[n->tok],
-		    man_macronames[n->parent->tok]);
+		    "%s after %s", roff_name[n->tok],
+		    roff_name[n->parent->tok]);
 		/* FALLTHROUGH */
 	case TOKEN_NONE:
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.40 2017/02/10 15:44:31 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.41 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -127,23 +127,23 @@ print_mdoc(const struct roff_node *n, int indent)
 		p = n->string;
 		break;
 	case ROFFT_BODY:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_HEAD:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_TAIL:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_ELEM:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		if (n->args) {
 			argv = n->args->argv;
 			argc = n->args->argc;
 		}
 		break;
 	case ROFFT_BLOCK:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		if (n->args) {
 			argv = n->args->argv;
 			argc = n->args->argc;
@@ -255,7 +255,7 @@ print_man(const struct roff_node *n, int indent)
 	case ROFFT_BLOCK:
 	case ROFFT_HEAD:
 	case ROFFT_BODY:
-		p = man_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_ROOT:
 		p = "root";

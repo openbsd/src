@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.144 2017/02/15 14:09:07 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.145 2017/04/24 23:06:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,8 +93,7 @@ static	void		  post_SS(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
 static	void		  post_UR(DECL_ARGS);
 
-static	const struct termact termacts[MAN_MAX] = {
-	{ pre_sp, NULL, MAN_NOTEXT }, /* br */
+static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL, 0 }, /* TH */
 	{ pre_SH, post_SH, 0 }, /* SH */
 	{ pre_SS, post_SS, 0 }, /* SS */
@@ -115,6 +114,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_I, NULL, 0 }, /* I */
 	{ pre_alternate, NULL, 0 }, /* IR */
 	{ pre_alternate, NULL, 0 }, /* RI */
+	{ pre_sp, NULL, MAN_NOTEXT }, /* br */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
 	{ pre_literal, NULL, 0 }, /* nf */
 	{ pre_literal, NULL, 0 }, /* fi */
@@ -133,6 +133,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ NULL, NULL, 0 }, /* UE */
 	{ pre_ll, NULL, MAN_NOTEXT }, /* ll */
 };
+static	const struct termact *termacts = __termacts - MAN_TH;
 
 
 void
