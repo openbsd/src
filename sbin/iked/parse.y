@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2017/03/28 16:56:39 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2017/04/24 07:07:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1807,7 +1807,7 @@ set_policy(char *idstr, int type, struct iked_policy *pol)
 {
 	char		 keyfile[PATH_MAX];
 	const char	*prefix = NULL;
-	EVP_PKEY	*key;
+	EVP_PKEY	*key = NULL;
 
 	switch (type) {
 	case IKEV2_ID_IPV4:
@@ -1822,6 +1822,9 @@ set_policy(char *idstr, int type, struct iked_policy *pol)
 	case IKEV2_ID_UFQDN:
 		prefix = "ufqdn";
 		break;
+	case IKEV2_ID_ASN1_DN:
+		/* public key authentication is not supported with ASN.1 IDs */
+		goto done;
 	default:
 		/* Unspecified ID or public key not supported for this type */
 		log_debug("%s: unknown type = %d", __func__, type);
@@ -1841,6 +1844,7 @@ set_policy(char *idstr, int type, struct iked_policy *pol)
 		    keyfile);
 	}
 
+ done:
 	if (set_policy_auth_method(keyfile, key, pol) < 0) {
 		EVP_PKEY_free(key);
 		log_warnx("%s: failed to set policy auth method for %s",
