@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.5 2017/01/24 10:23:11 patrick Exp $ */
+/* $OpenBSD: trap.c,v 1.6 2017/04/24 08:09:13 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -196,7 +196,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			else
 				sig = SIGSEGV;
 			sv.sival_ptr = (u_int64_t *)far;
-			dumpregs(frame);
 
 			trapsignal(p, sig, 0, SEGV_ACCERR, sv);
 		} else {
@@ -275,16 +274,15 @@ do_el1h_sync(struct trapframe *frame)
 void
 do_el0_sync(struct trapframe *frame)
 {
+	struct proc *p = curproc;
+	union sigval sv;
 	uint32_t exception;
 	uint64_t esr;
 
-	/* Check we have a sane environment when entering from userland */
-//	KASSERT((uintptr_t)get_pcpu() >= VM_MIN_KERNEL_ADDRESS,
-//	    ("Invalid pcpu address from userland: %p (tpidr %lx)",
-//	     get_pcpu(), READ_SPECIALREG(tpidr_el1)));
-
 	esr = READ_SPECIALREG(esr_el1);
 	exception = ESR_ELx_EXCEPTION(esr);
+
+	refreshcreds(p);
 
 	switch(exception) {
 	case EXCP_FP_SIMD:
@@ -303,17 +301,23 @@ do_el0_sync(struct trapframe *frame)
 		vfp_save();
 		data_abort(frame, esr, 1, 0);
 		break;
+	case EXCP_BRK:
+		vfp_save();
+		sv.sival_ptr = (void *)frame->tf_elr;
+		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+		userret(p);
+		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,
 		//    esr);
 		// USERLAND MUST NOT PANIC MACHINE
 		{
 			// only here to debug !?!?
-			void dumpregs(struct trapframe *frame);
+			printf("exception %x esr_el1 %lx\n", exception, esr);
 			dumpregs(frame);
 		}
-		sigexit(curproc, SIGILL);
-		userret(curproc);
+		sigexit(p, SIGILL);
+		userret(p);
 	}
 }
 
