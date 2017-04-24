@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.25 2017/04/04 00:40:52 claudio Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.26 2017/04/24 09:31:31 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -5876,7 +5876,13 @@ struct iwm_rx_packet {
 	 * 31:    flag flush RB request
 	 * 30:    flag ignore TC (terminal counter) request
 	 * 29:    flag fast IRQ request
-	 * 28-14: Reserved
+	 * 28-26: Reserved
+	 * 25:    Offload enabled
+	 * 24:    RPF enabled
+	 * 23:    RSS enabled
+	 * 22:    Checksum enabled
+	 * 21-16: RX queue
+	 * 15-14: Reserved
 	 * 13-00: RX frame size
 	 */
 	uint32_t len_n_flags;
@@ -5885,6 +5891,11 @@ struct iwm_rx_packet {
 } __packed;
 
 #define	IWM_FH_RSCSR_FRAME_SIZE_MSK	0x00003fff
+#define	IWM_FH_RSCSR_FRAME_INVALID	0x55550000
+#define	IWM_FH_RSCSR_FRAME_ALIGN	0x40
+#define	IWM_FH_RSCSR_RPA_EN		(1 << 25)
+#define	IWM_FH_RSCSR_RXQ_POS		16
+#define	IWM_FH_RSCSR_RXQ_MASK		0x3F0000
 
 static uint32_t
 iwm_rx_packet_len(const struct iwm_rx_packet *pkt)
