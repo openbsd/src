@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.19 2017/04/24 14:58:36 krw Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.20 2017/04/24 18:05:52 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -926,11 +926,11 @@ statement
 .Pp
 .D1 Ic echo-client-id Ar flag ;
 .Pp
-is used to enable or disable RFC 6842 compliant behavior.
-If the
+The
 .Ic echo-client-id
-statement is present and has a
-value of true or on, and a DHCP DISCOVER or REQUEST is received which contains
+statement is used to enable or disable RFC 6842 compliant behavior.
+If it is present and has a value of true or on,
+and a DHCP DISCOVER or REQUEST is received which contains
 the client identifier option (Option code 61), the server will copy the option
 into its response (DHCP ACK or NAK) per RFC 6842.
 In other words if the client sends the option it will receive it back.
