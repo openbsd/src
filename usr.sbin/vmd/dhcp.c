@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.2 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.3 2017/04/24 07:14:27 reyk Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -154,7 +154,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 		goto fail;
 	}
 
-	memcpy(respbuf + offset, &resp, sizeof(resp));
+	memcpy(respbuf + offset, &resp, resplen);
 	respbuflen = offset + resplen;
 
 	*obuf = respbuf;
