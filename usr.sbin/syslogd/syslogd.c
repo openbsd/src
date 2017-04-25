@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.242 2017/04/17 14:18:44 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.243 2017/04/25 17:45:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -351,9 +351,9 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 	int		 fd_ctlsock, fd_klog, fd_sendsys, *fd_bind, *fd_listen;
-	int		 fd_tls, *fd_unix, nbind, nlisten;
+	int		*fd_tls, *fd_unix, nbind, nlisten, ntls;
 	char		**bind_host, **bind_port, **listen_host, **listen_port;
-	char		*tls_hostport, *tls_host, *tls_port;
+	char		*tls_hostport, **tls_host, **tls_port;
 
 	/* block signal until handler is set up */
 	sigemptyset(&sigmask);
@@ -366,9 +366,10 @@ main(int argc, char *argv[])
 	path_unix[0] = _PATH_LOG;
 	nunix = 1;
 
-	bind_host = bind_port = listen_host = listen_port = NULL;
-	tls_hostport = tls_host = NULL;
-	nbind = nlisten = 0;
+	bind_host = listen_host = tls_host = NULL;
+	bind_port = listen_port = tls_port = NULL;
+	tls_hostport = NULL;
+	nbind = nlisten = ntls = 0;
 
 	while ((ch = getopt(argc, argv,
 	    "46a:C:c:dFf:hK:k:m:nP:p:rS:s:T:U:uVZ")) != -1) {
@@ -430,11 +431,10 @@ main(int argc, char *argv[])
 			Repeat++;
 			break;
 		case 'S':		/* allow tls and listen on address */
-			tls_hostport = optarg;
-			if ((p = strdup(optarg)) == NULL)
-				err(1, "strdup tls address");
-			if (loghost_parse(p, NULL, &tls_host, &tls_port) == -1)
-				errx(1, "bad tls address: %s", optarg);
+			if (tls_hostport == NULL)
+				tls_hostport = optarg;
+			address_alloc("tls", optarg, &tls_host, &tls_port,
+			    &ntls);
 			break;
 		case 's':
 			path_ctlsock = optarg;
@@ -516,10 +516,13 @@ main(int argc, char *argv[])
 		    &fd_listen[i], &fd_listen[i]) == -1)
 			log_warnx("socket listen tcp failed");
 	}
-	fd_tls = -1;
-	if (tls_host && socket_bind("tls", tls_host, tls_port, 0,
-	    &fd_tls, &fd_tls) == -1)
-		log_warnx("socket listen tls failed");
+	if ((fd_tls = reallocarray(NULL, ntls, sizeof(*fd_tls))) == NULL)
+		fatal("allocate tls fd");
+	for (i = 0; i < ntls; i++) {
+		if (socket_bind("tls", tls_host[i], tls_port[i], 0,
+		    &fd_tls[i], &fd_tls[i]) == -1)
+			log_warnx("socket listen tls failed");
+	}
 
 	if ((fd_unix = reallocarray(NULL, nunix, sizeof(*fd_unix))) == NULL)
 		fatal("allocate unix fd");
@@ -575,8 +578,14 @@ main(int argc, char *argv[])
 				log_warn("tls_config_new server");
 			if ((server_ctx = tls_server()) == NULL) {
 				log_warn("tls_server");
-				close(fd_tls);
-				fd_tls = -1;
+				for (i = 0; i < ntls; i++)
+					close(fd_tls[i]);
+				free(fd_tls);
+				fd_tls = NULL;
+				free(tls_host);
+				free(tls_port);
+				tls_host = tls_port = NULL;
+				ntls = 0;
 			}
 		}
 	}
@@ -623,7 +632,7 @@ main(int argc, char *argv[])
 		const char *names[2];
 
 		names[0] = tls_hostport;
-		names[1] = tls_host;
+		names[1] = tls_host[0];
 
 		for (i = 0; i < 2; i++) {
 			if (asprintf(&p, "/etc/ssl/private/%s.key", names[i])
@@ -673,8 +682,14 @@ main(int argc, char *argv[])
 			    tls_error(server_ctx));
 			tls_free(server_ctx);
 			server_ctx = NULL;
-			close(fd_tls);
-			fd_tls = -1;
+			for (i = 0; i < ntls; i++)
+				close(fd_tls[i]);
+			free(fd_tls);
+			fd_tls = NULL;
+			free(tls_host);
+			free(tls_port);
+			tls_host = tls_port = NULL;
+			ntls = 0;
 		}
 	}
 
@@ -728,11 +743,14 @@ main(int argc, char *argv[])
 	    (ev_sendsys = malloc(sizeof(struct event))) == NULL ||
 	    (ev_udp = malloc(sizeof(struct event))) == NULL ||
 	    (ev_udp6 = malloc(sizeof(struct event))) == NULL ||
-	    (ev_bind = reallocarray(NULL, nbind, sizeof(struct event))) == NULL ||
+	    (ev_bind = reallocarray(NULL, nbind, sizeof(struct event)))
+		== NULL ||
 	    (ev_listen = reallocarray(NULL, nlisten, sizeof(struct event)))
 		== NULL ||
-	    (ev_tls = malloc(sizeof(struct event))) == NULL ||
-	    (ev_unix = reallocarray(NULL, nunix, sizeof(struct event))) == NULL ||
+	    (ev_tls = reallocarray(NULL, ntls, sizeof(struct event)))
+		== NULL ||
+	    (ev_unix = reallocarray(NULL, nunix, sizeof(struct event)))
+		== NULL ||
 	    (ev_hup = malloc(sizeof(struct event))) == NULL ||
 	    (ev_int = malloc(sizeof(struct event))) == NULL ||
 	    (ev_quit = malloc(sizeof(struct event))) == NULL ||
@@ -757,7 +775,9 @@ main(int argc, char *argv[])
 	for (i = 0; i < nlisten; i++)
 		event_set(&ev_listen[i], fd_listen[i], EV_READ|EV_PERSIST,
 		    tcp_acceptcb, &ev_listen[i]);
-	event_set(ev_tls, fd_tls, EV_READ|EV_PERSIST, tls_acceptcb, ev_tls);
+	for (i = 0; i < ntls; i++)
+		event_set(&ev_tls[i], fd_tls[i], EV_READ|EV_PERSIST,
+		    tls_acceptcb, &ev_tls[i]);
 	for (i = 0; i < nunix; i++)
 		event_set(&ev_unix[i], fd_unix[i], EV_READ|EV_PERSIST,
 		    unix_readcb, &ev_unix[i]);
@@ -812,8 +832,9 @@ main(int argc, char *argv[])
 	for (i = 0; i < nlisten; i++)
 		if (fd_listen[i] != -1)
 			event_add(&ev_listen[i], NULL);
-	if (fd_tls != -1)
-		event_add(ev_tls, NULL);
+	for (i = 0; i < ntls; i++)
+		if (fd_tls[i] != -1)
+			event_add(&ev_tls[i], NULL);
 	for (i = 0; i < nunix; i++)
 		if (fd_unix[i] != -1)
 			event_add(&ev_unix[i], NULL);
