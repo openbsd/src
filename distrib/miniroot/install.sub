@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.997 2017/04/24 20:27:59 rpe Exp $
+#	$OpenBSD: install.sub,v 1.998 2017/04/25 19:24:05 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2179,6 +2179,7 @@ parse_hn_line() {
 		;;
 	esac
 	unset _c
+	set +o noglob
 }
 
 # Start interface using the on-disk hostname.if file passed as argument $1.
@@ -2202,6 +2203,7 @@ ifstart () {
 		((_i++))
 	done
 	unset _cmds
+	set +o noglob
 }
 
 # Configure the network during upgrade based on the on-disk configuration.
