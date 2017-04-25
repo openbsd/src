@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.12 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.13 2017/04/25 06:44:35 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -141,26 +141,26 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
  */
 static const struct vcpu_reg_state vcpu_init_flat16 = {
 #ifdef __i386__
-        .vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
-        .vrs_gprs[VCPU_REGS_EIP] = 0xFFF0,
-        .vrs_gprs[VCPU_REGS_ESP] = 0x0,
+	.vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
+	.vrs_gprs[VCPU_REGS_EIP] = 0xFFF0,
+	.vrs_gprs[VCPU_REGS_ESP] = 0x0,
 #else
-        .vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
-        .vrs_gprs[VCPU_REGS_RIP] = 0xFFF0,
-        .vrs_gprs[VCPU_REGS_RSP] = 0x0,
+	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
+	.vrs_gprs[VCPU_REGS_RIP] = 0xFFF0,
+	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
 #endif
-        .vrs_crs[VCPU_REGS_CR0] = 0x60000010,
-        .vrs_crs[VCPU_REGS_CR3] = 0,
-        .vrs_sregs[VCPU_REGS_CS] = { 0xF000, 0xFFFF, 0x809F, 0xF0000},
-        .vrs_sregs[VCPU_REGS_DS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-        .vrs_sregs[VCPU_REGS_ES] = { 0x0, 0xFFFF, 0x8093, 0x0},
-        .vrs_sregs[VCPU_REGS_FS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-        .vrs_sregs[VCPU_REGS_GS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-        .vrs_sregs[VCPU_REGS_SS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-        .vrs_gdtr = { 0x0, 0xFFFF, 0x0, 0x0},
-        .vrs_idtr = { 0x0, 0xFFFF, 0x0, 0x0},
-        .vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
-        .vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
+	.vrs_crs[VCPU_REGS_CR0] = 0x60000010,
+	.vrs_crs[VCPU_REGS_CR3] = 0,
+	.vrs_sregs[VCPU_REGS_CS] = { 0xF000, 0xFFFF, 0x809F, 0xF0000},
+	.vrs_sregs[VCPU_REGS_DS] = { 0x0, 0xFFFF, 0x8093, 0x0},
+	.vrs_sregs[VCPU_REGS_ES] = { 0x0, 0xFFFF, 0x8093, 0x0},
+	.vrs_sregs[VCPU_REGS_FS] = { 0x0, 0xFFFF, 0x8093, 0x0},
+	.vrs_sregs[VCPU_REGS_GS] = { 0x0, 0xFFFF, 0x8093, 0x0},
+	.vrs_sregs[VCPU_REGS_SS] = { 0x0, 0xFFFF, 0x8093, 0x0},
+	.vrs_gdtr = { 0x0, 0xFFFF, 0x0, 0x0},
+	.vrs_idtr = { 0x0, 0xFFFF, 0x0, 0x0},
+	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
+	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 };
 
 /*
