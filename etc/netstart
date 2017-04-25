@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.177 2017/04/24 20:31:48 rpe Exp $
+#	$OpenBSD: netstart,v 1.178 2017/04/25 19:17:33 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -76,6 +76,7 @@ parse_hn_line() {
 		;;
 	esac
 	unset _c
+	set +o noglob
 }
 
 # Start a single interface.
@@ -124,6 +125,7 @@ ifstart() {
 		((_i++))
 	done
 	unset _cmds
+	set +o noglob
 }
 
 # Start multiple interfaces by driver name.
