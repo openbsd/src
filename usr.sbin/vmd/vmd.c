@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.58 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.59 2017/04/25 16:38:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -796,6 +796,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 {
 	struct vmd_vm		*vm = NULL;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
+	static const uint8_t	 zero_mac[ETHER_ADDR_LEN];
+	uint32_t		 rng;
 	unsigned int		 i;
 	struct vmd_switch	*sw;
 
@@ -851,6 +853,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 
 	memcpy(&vm->vm_params, vmc, sizeof(vm->vm_params));
 	vmc = &vm->vm_params;
+	vcp = &vmc->vmc_params;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
 
@@ -862,6 +865,23 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
 			/* inherit per-interface flags from the switch */
 			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);
+		}
+
+		/*
+		 * If the MAC address is zero, always randomize it in vmd(8)
+		 * because we cannot rely on the guest OS to do the right
+		 * thing like OpenBSD does.  Based on ether_fakeaddr()
+		 * from the kernel, incremented by one to differentiate
+		 * the source.
+		 */
+		if (memcmp(zero_mac, &vcp->vcp_macs[i], ETHER_ADDR_LEN) == 0) {
+			rng = arc4random();
+			vcp->vcp_macs[i][0] = 0xfe;
+			vcp->vcp_macs[i][1] = 0xe1;
+			vcp->vcp_macs[i][2] = 0xba + 1;
+			vcp->vcp_macs[i][3] = 0xd0 | ((i + 1) & 0xf);
+			vcp->vcp_macs[i][4] = rng;
+			vcp->vcp_macs[i][5] = rng >> 8;
 		}
 	}
 	vm->vm_kernel = -1;
