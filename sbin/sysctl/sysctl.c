@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.225 2017/03/16 10:05:47 mpi Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.226 2017/04/25 17:33:16 tb Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -441,6 +441,8 @@ parse(char *string, int flags)
 			special |= CHRDEV;
 			break;
 		case KERN_NETLIVELOCKS:
+		case KERN_SOMAXCONN:
+		case KERN_SOMINCONN:
 			special |= UNSIGNED;
 			break;
 		}
@@ -692,20 +694,17 @@ parse(char *string, int flags)
 		return;
 	}
 	if (newsize > 0) {
+		const char *errstr;
+
 		switch (type) {
 		case CTLTYPE_INT:
-			errno = 0;
 			if (special & UNSIGNED)
-				intval = strtoul(newval, &cp, 10);
+				intval = strtonum(newval, 0, UINT_MAX, &errstr);
 			else
-				intval = strtol(newval, &cp, 10);
-			if (*cp != '\0') {
-				warnx("%s: illegal value: %s", string,
-				    (char *)newval);
-				return;
-			}
-			if (errno == ERANGE) {
-				warnx("%s: value %s out of range", string,
+				intval = strtonum(newval, INT_MIN, INT_MAX,
+				    &errstr);
+			if (errstr != NULL) {
+				warnx("%s: value is %s: %s", string, errstr,
 				    (char *)newval);
 				return;
 			}
