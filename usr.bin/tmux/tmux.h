@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.753 2017/04/25 18:20:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.754 2017/04/25 18:30:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1099,6 +1099,7 @@ struct tty_ctx {
 	struct window_pane	*wp;
 
 	const struct grid_cell	*cell;
+	int			 wrapped;
 
 	u_int		 num;
 	void		*ptr;
