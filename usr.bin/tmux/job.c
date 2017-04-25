@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.43 2017/04/20 09:20:22 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.44 2017/04/25 15:35:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,7 +55,12 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
 
-	env = environ_for_session(s);
+	/*
+	 * Do not set TERM during .tmux.conf, it is nice to be able to use
+	 * if-shell to decide on default-terminal based on outside TERM.
+	 */
+	env = environ_for_session(s, !cfg_finished);
+
 	switch (pid = fork()) {
 	case -1:
 		environ_free(env);

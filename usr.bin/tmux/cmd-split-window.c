@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.83 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.84 2017/04/25 15:35:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -144,7 +144,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (envent != NULL)
 		path = envent->value;
 
-	env = environ_for_session(s);
+	env = environ_for_session(s, 0);
 	if (window_pane_spawn(new_wp, argc, argv, path, shell, cwd, env,
 	    s->tio, &cause) != 0) {
 		environ_free(env);
