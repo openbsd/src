@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.752 2017/04/25 15:35:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.753 2017/04/25 18:20:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1470,7 +1470,6 @@ void	proc_kill_peer(struct tmuxpeer *);
 
 /* cfg.c */
 extern int cfg_finished;
-extern struct client *cfg_client;
 void	start_cfg(void);
 int	load_cfg(const char *, struct client *, struct cmdq_item *, int);
 void	set_cfg_file(const char *);
