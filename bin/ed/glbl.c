@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.18 2016/03/22 17:58:28 mmcc Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.19 2017/04/26 21:25:43 naddy Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -67,7 +67,7 @@ build_active_list(int isgcmd)
 			return ERR;
 		if (isbinary)
 			NUL_TO_NEWLINE(s, lp->len);
-		if (!regexec(pat, s, 0, NULL, 0) == isgcmd &&
+		if ((!regexec(pat, s, 0, NULL, 0)) == isgcmd &&
 		    set_active_node(lp) < 0)
 			return ERR;
 	}
