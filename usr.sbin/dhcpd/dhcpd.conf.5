@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.20 2017/04/24 18:05:52 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.21 2017/04/26 21:07:21 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 24 2017 $
+.Dd $Mdocdate: April 26 2017 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -329,7 +329,8 @@ group {
 .Sh REFERENCE: DECLARATIONS
 The
 .Ic shared-network
-statement
+statement informs the DHCP server that some IP subnets actually
+share the same physical network:
 .Bd -unfilled -offset indent
 .Ic shared-network Ar name No {
 .Pf "  " Op Ar parameters
@@ -337,10 +338,6 @@ statement
 }
 .Ed
 .Pp
-The
-.Ic shared-network
-statement is used to inform the DHCP server that some IP subnets actually
-share the same physical network.
 Any subnets in a shared network should be declared within a
 .Ic shared-network
 statement.
@@ -364,7 +361,9 @@ name, enclosed in quotes.
 .Pp
 The
 .Ic subnet
-statement
+statement provides
+.Xr dhcpd 8
+with enough information to tell whether or not an IP address is on that subnet:
 .Bd -unfilled -offset indent
 .Ic subnet Ar subnet-number Ic netmask Ar netmask No {
 .Pf "  " Op Ar parameters
@@ -372,11 +371,6 @@ statement
 }
 .Ed
 .Pp
-The
-.Ic subnet
-statement is used to provide
-.Xr dhcpd 8
-with enough information to tell whether or not an IP address is on that subnet.
 It may also be used to provide subnet-specific parameters and to
 specify what addresses may be dynamically allocated to clients booting
 on that subnet.
@@ -400,18 +394,16 @@ override the subnet mask declared in the subnet statement.
 .Pp
 The
 .Ic range
-statement
-.Pp
-.Xo
+statement gives the lowest and highest IP addresses in a range:
+.Bd -filled -offset indent
 .Ic range Op Ic dynamic-bootp
 .Ar low-address Oo Ar high-address Oc ;
-.Xc
+.Ed
 .Pp
 For any subnet on which addresses will be assigned dynamically, there
 must be at least one
 .Ic range
 statement.
-The range statement gives the lowest and highest IP addresses in a range.
 All IP addresses in the range should be in the subnet in which the
 .Ic range
 statement is declared.
@@ -423,9 +415,9 @@ When specifying a single address,
 .Ar high-address
 can be omitted.
 .Pp
-The
+There must be at least one
 .Ic host
-statement
+statement for every BOOTP client that is to be served:
 .Bd -unfilled -offset indent
 .Ic host Ar hostname No {
 .Pf "  " Op Ar parameters
@@ -433,9 +425,6 @@ statement
 }
 .Ed
 .Pp
-There must be at least one
-.Ic host
-statement for every BOOTP client that is to be served.
 .Ic host
 statements may also be specified for DHCP clients, although this is
 not required unless booting is only enabled for known hosts.
@@ -488,7 +477,8 @@ the BOOTP protocol.
 .Pp
 The
 .Ic group
-statement
+statement is used simply to apply one or more parameters to a group of
+declarations:
 .Bd -unfilled -offset indent
 .Ic group No {
 .Pf "  " Op Ar parameters
@@ -496,10 +486,6 @@ statement
 }
 .Ed
 .Pp
-The
-.Ic group
-statement is used simply to apply one or more parameters to a group of
-declarations.
 It can be used to group hosts, shared networks, subnets, or even other groups.
 .Sh REFERENCE: ALLOW and DENY
 The
@@ -512,93 +498,79 @@ to various sorts of requests.
 .Pp
 The
 .Ar unknown-clients
-keyword
+flag tells
+.Xr dhcpd 8
+whether or not to dynamically assign addresses to unknown clients:
 .Bd -literal -offset indent
 allow unknown-clients;
 deny unknown-clients;
 .Ed
 .Pp
-The
-.Ar unknown-clients
-flag is used to tell
-.Xr dhcpd 8
-whether or not to dynamically assign addresses to unknown clients.
 Dynamic address assignment to unknown clients is allowed by default.
 .Pp
 The
 .Ar bootp
-keyword
+flag tells
+.Xr dhcpd 8
+whether or not to respond to bootp queries:
 .Bd -literal -offset indent
 allow bootp;
 deny bootp;
 .Ed
 .Pp
-The
-.Ar bootp
-flag is used to tell
-.Xr dhcpd 8
-whether or not to respond to bootp queries.
 Bootp queries are allowed by default.
 .Pp
 The
 .Ar booting
-keyword
+flag tells
+.Xr dhcpd 8
+whether or not to respond to queries from a particular client:
 .Bd -literal -offset indent
 allow booting;
 deny booting;
 .Ed
 .Pp
-The
-.Ar booting
-flag is used to tell
-.Xr dhcpd 8
-whether or not to respond to queries from a particular client.
 This keyword only has meaning when it appears in a host declaration.
 By default, booting is allowed, but if it is disabled for a particular client,
 then that client will not be able to get an address from the DHCP server.
 .Sh REFERENCE: PARAMETERS
 The
 .Ic default-lease-time
-statement
+statement specifies the
+.Ar time
+in seconds that will be assigned to a lease
+if the client requesting the lease does not ask for a specific expiration time:
 .Pp
 .D1 Ic default-lease-time Ar time ;
 .Pp
-.Ar time
-should be the length in seconds that will be assigned to a lease if
-the client requesting the lease does not ask for a specific expiration time.
-.Pp
 The
 .Ic max-lease-time
-statement
+statement specifies the maximum
+.Ar time
+in seconds that will be assigned to a lease
+if the client requesting the lease asks for a specific expiration time:
 .Pp
 .D1 Ic max-lease-time Ar time ;
 .Pp
-.Ar time
-should be the maximum length in seconds that will be assigned to a
-lease if the client requesting the lease asks for a specific expiration time.
-.Pp
 The
 .Ic hardware
-statement
+statement allows a
+BOOTP client to be recognized in a
+.Ic host
+statement:
 .Pp
 .D1 Ic hardware Ar hardware-type hardware-address ;
 .Pp
-In order for a BOOTP client to be recognized, its network hardware
-address must be declared using a
-.Ic hardware
-clause in the
-.Ic host
-statement.
 .Ar hardware-type
 must be the name of a hardware interface type.
 Currently, the
-.Ar ethernet ,
-.Ar token-ring
+.Cm ethernet ,
+.Cm token-ring
 and
-.Ar fddi
+.Cm fddi
 physical interface types are recognized,
 although support for DHCP-over-IPSec virtual interface type
-.Ar ipsec-tunnel
+.Cm ipsec-tunnel
 is provided.
 The
 .Ar hardware-address
@@ -610,14 +582,11 @@ statement may also be used for DHCP clients.
 .Pp
 The
 .Ic filename
-statement
+statement can be used to specify the name of the initial boot file which
+is to be loaded by a client:
 .Pp
 .D1 Ic filename Qq Ar filename ;
 .Pp
-The
-.Ic filename
-statement can be used to specify the name of the initial boot file which
-is to be loaded by a client.
 The
 .Ar filename
 should be a filename recognizable to whatever file transfer protocol
@@ -625,29 +594,23 @@ the client can be expected to use to load the file.
 .Pp
 The
 .Ic server-name
-statement
+statement can be used to inform the client of the name of the server
+from which it is booting:
 .Pp
 .D1 Ic server-name Qq Ar name ;
 .Pp
-The
-.Ic server-name
-statement can be used to inform the client of the name of the server
-from which it is booting.
 .Ar name
 should be the name that will be provided to the client.
 .Pp
 The
 .Ic next-server
-statement
+statement specifies the host address of
+the server from which the initial boot file (specified in the
+.Ic filename
+statement) is to be loaded:
 .Pp
 .D1 Ic next-server Ar server-name ;
 .Pp
-The
-.Ic next-server
-statement is used to specify the host address of
-the server from which the initial boot file (specified in the
-.Ic filename
-statement) is to be loaded.
 .Ar server-name
 should be a numeric IP address or a hostname.
 If no
@@ -656,13 +619,10 @@ parameter applies to a given client, the DHCP server's IP address is used.
 .Pp
 The
 .Ic fixed-address
-statement
+statement assigns one or more fixed IP addresses to a client:
 .Pp
 .D1 Ic fixed-address Ar address Op , Ar address ... ;
 .Pp
-The
-.Ic fixed-address
-statement is used to assign one or more fixed IP addresses to a client.
 It should only appear in a
 .Ic host
 declaration.
@@ -689,14 +649,11 @@ table options of
 .Pp
 The
 .Ic dynamic-bootp-lease-cutoff
-statement
+statement sets the ending time for all leases assigned dynamically to
+BOOTP clients:
 .Pp
 .D1 Ic dynamic-bootp-lease-cutoff Ar date ;
 .Pp
-The
-.Ic dynamic-bootp-lease-cutoff
-statement sets the ending time for all leases assigned dynamically to
-BOOTP clients.
 Because BOOTP clients do not have any way of renewing leases,
 and don't know that their leases could expire, by default
 .Xr dhcpd 8
@@ -723,14 +680,10 @@ The time is always in Coordinated Universal Time (UTC), not local time.
 .Pp
 The
 .Ic dynamic-bootp-lease-length
-statement
+statement sets the length of leases dynamically assigned to BOOTP clients:
 .Pp
 .D1 Ic dynamic-bootp-lease-length Ar length ;
 .Pp
-The
-.Ic dynamic-bootp-lease-length
-statement is used to set the length of leases dynamically assigned to
-BOOTP clients.
 At some sites, it may be possible to assume that a lease is no longer in
 use if its holder has not used BOOTP or DHCP to get its address within
 a certain time period.
@@ -745,18 +698,15 @@ Needless to say, this parameter should be adjusted with extreme caution.
 .Pp
 The
 .Ic get-lease-hostnames
-statement
-.Pp
-.D1 Ic get-lease-hostnames Ar flag ;
-.Pp
-The
-.Ic get-lease-hostnames
-statement is used to tell
+statement tells
 .Xr dhcpd 8
 whether or not to look up the hostname corresponding to the IP address of
 each address in the lease pool and use that address for the DHCP
 .Ic hostname
-option.
+option:
+.Pp
+.D1 Ic get-lease-hostnames Ar flag ;
+.Pp
 If
 .Ar flag
 is true, then this lookup is done for all addresses in the current scope.
@@ -764,18 +714,15 @@ By default, or if
 .Ar flag
 is false, no lookups are done.
 .Pp
-The
-.Ic use-host-decl-names
-statement
-.Pp
-.D1 Ic use-host-decl-names Ar flag ;
-.Pp
 If the
 .Ic use-host-decl-names
 parameter is true in a given scope, then for every host declaration within
 that scope, the name provided for the host declaration will be supplied to
-the client as its hostname.
-So, for example,
+the client as its hostname:
+.Pp
+.D1 Ic use-host-decl-names Ar flag ;
+.Pp
+So, for example:
 .Bd -literal -offset indent
 group {
   use-host-decl-names on;
@@ -787,7 +734,7 @@ group {
 }
 .Ed
 .Pp
-is equivalent to
+is equivalent to:
 .Bd -literal -offset indent
 host joe {
   hardware ethernet 08:00:2b:4c:29:32;
@@ -803,10 +750,9 @@ in the host declaration.
 .Pp
 The
 .Ic authoritative
-statement
+statement:
 .Pp
 .D1 Ic authoritative ;
-.Pp
 .D1 Ic not authoritative ;
 .Pp
 The DHCP server will normally assume that the configuration
@@ -824,7 +770,7 @@ level of authority, then the statement
 should be written in the appropriate scope in the configuration file.
 .Pp
 Usually, writing
-.Em not authoritative;
+.Ic not authoritative;
 at the top level of the file should be sufficient.
 However, if a DHCP server is to be set up so that it is aware of some
 networks for which it is authoritative and some networks for which it is not,
@@ -841,7 +787,7 @@ host declarations and not others.
 .Pp
 The
 .Ic use-lease-addr-for-default-route
-statement
+statement:
 .Pp
 .D1 Ic use-lease-addr-for-default-route Ar flag ;
 .Pp
@@ -865,7 +811,7 @@ site, you are probably better off not trying to use this flag.
 .Pp
 The
 .Ic always-reply-rfc1048
-statement
+statement:
 .Pp
 .D1 Ic always-reply-rfc1048 Ar flag ;
 .Pp
@@ -886,14 +832,11 @@ by that scope.
 .Pp
 The
 .Ic server-identifier
-statement
+statement can be used to define the value that is sent in the
+DHCP Server Identifier option for a given scope:
 .Pp
 .D1 Ic server-identifier Ar hostname ;
 .Pp
-The
-.Ic server-identifier
-statement can be used to define the value that is sent in the
-DHCP Server Identifier option for a given scope.
 The value specified
 .Em must
 be an IP address for the DHCP server, and must be reachable by all
@@ -922,13 +865,10 @@ statement.
 .Pp
 The
 .Ic echo-client-id
-statement
+statement enables or disables RFC 6842 compliant behavior:
 .Pp
 .D1 Ic echo-client-id Ar flag ;
 .Pp
-The
-.Ic echo-client-id
-statement is used to enable or disable RFC 6842 compliant behavior.
 If it is present and has a value of true or on,
 and a DHCP DISCOVER or REQUEST is received which contains
 the client identifier option (Option code 61), the server will copy the option
