@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.36 2017/03/07 01:29:53 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.37 2017/04/26 15:50:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -349,10 +349,12 @@ hfsc_pf_addqueue(struct hfsc_if *hif, struct pf_queuespec *q)
 
 	KASSERT(hif != NULL);
 
-	if (q->parent_qid == HFSC_NULLCLASS_HANDLE &&
-	    hif->hif_rootclass == NULL)
-		parent = NULL;
-	else if ((parent = hfsc_clh2cph(hif, q->parent_qid)) == NULL)
+	if (q->parent_qid == 0 && hif->hif_rootclass == NULL) {
+		parent = hfsc_class_create(hif, NULL, NULL, NULL, NULL,
+		    0, 0, HFSC_ROOT_CLASS | q->qid);
+		if (parent == NULL)
+			return (EINVAL);
+	} else if ((parent = hfsc_clh2cph(hif, q->parent_qid)) == NULL)
 		return (EINVAL);
 
 	if (q->qid == 0)
@@ -446,17 +448,22 @@ void
 hfsc_free(unsigned int idx, void *q)
 {
 	struct hfsc_if *hif = q;
-	int i;
+	struct hfsc_class *cl;
+	int i, restart;
 
 	KERNEL_ASSERT_LOCKED();
 	KASSERT(idx == 0); /* when hfsc is enabled we only use the first ifq */
 
 	timeout_del(&hif->hif_defer);
 
-	i = hif->hif_allocated;
-	do
-		hfsc_class_destroy(hif, hif->hif_class_tbl[--i]);
-	while (i > 0);
+	do {
+		restart = 0;
+		for (i = 0; i < hif->hif_allocated; i++) {
+			cl = hif->hif_class_tbl[i];
+			if (hfsc_class_destroy(hif, cl) == EBUSY)
+				restart++;
+		}
+	} while (restart > 0);
 
 	free(hif->hif_class_tbl, M_DEVBUF, hif->hif_allocated * sizeof(void *));
 	free(hif, M_DEVBUF, sizeof(*hif));

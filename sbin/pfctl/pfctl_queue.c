@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.2 2014/04/19 14:22:32 henning Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.3 2017/04/26 15:50:59 mikeb Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -139,18 +139,14 @@ pfctl_update_qstats(int dev)
 			warn("DIOCGETQSTATS");
 			return (-1);
 		}
-//		if (pqs.queue.qname[0] != '_') {
-//			if (pqs.queue.parent[0] && pqs.queue.parent[0] == '_')
-//				pqs.queue.parent[0] = 0;
-			if ((node = pfctl_find_queue_node(pqs.queue.qname,
-			    pqs.queue.ifname)) != NULL) {
-				memcpy(&node->qstats.data, &qstats.data,
-				    sizeof(qstats.data));
-				update_avg(&node->qstats);
-			} else {
-				pfctl_insert_queue_node(pqs.queue, qstats);
-			}
-//		}
+		if ((node = pfctl_find_queue_node(pqs.queue.qname,
+		    pqs.queue.ifname)) != NULL) {
+			memcpy(&node->qstats.data, &qstats.data,
+			    sizeof(qstats.data));
+			update_avg(&node->qstats);
+		} else {
+			pfctl_insert_queue_node(pqs.queue, qstats);
+		}
 	}
 	return (mnr);
 }

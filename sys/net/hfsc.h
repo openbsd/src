@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.11 2015/11/20 03:35:23 dlg Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.12 2017/04/26 15:50:59 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ struct hfsc_sc {
 };
 
 /* special class handles */
-#define	HFSC_NULLCLASS_HANDLE	0
+#define	HFSC_ROOT_CLASS		0x10000
 #define	HFSC_DEFAULT_CLASSES	64
 #define	HFSC_MAX_CLASSES	65535
 

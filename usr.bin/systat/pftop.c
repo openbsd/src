@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.35 2016/12/18 19:39:30 jasper Exp $	 */
+/* $OpenBSD: pftop.c,v 1.36 2017/04/26 15:50:59 mikeb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1544,22 +1544,17 @@ pfctl_update_qstats(void)
 			error("DIOCGETQSTATS: %s", strerror(errno));
 			return (-1);
 		}
-		if (pqs.queue.qname[0] != '_') {
-			if (pqs.queue.parent[0] && pqs.queue.parent[0] == '_')
-				pqs.queue.parent[0] = '\0';
-			qstats.valid = 1;
-			gettimeofday(&qstats.timestamp, NULL);
-			if ((node = pfctl_find_queue_node(pqs.queue.qname,
-			    pqs.queue.ifname)) != NULL) {
-				memcpy(&node->qstats_last, &node->qstats,
-				    sizeof(struct queue_stats));
-				memcpy(&node->qstats, &qstats,
-				    sizeof(struct queue_stats));
-			} else {
-				pfctl_insert_queue_node(pqs.queue, qstats);
-			}
-		} else
-			num_queues--;
+		qstats.valid = 1;
+		gettimeofday(&qstats.timestamp, NULL);
+		if ((node = pfctl_find_queue_node(pqs.queue.qname,
+		    pqs.queue.ifname)) != NULL) {
+			memcpy(&node->qstats_last, &node->qstats,
+			    sizeof(struct queue_stats));
+			memcpy(&node->qstats, &qstats,
+			    sizeof(struct queue_stats));
+		} else {
+			pfctl_insert_queue_node(pqs.queue, qstats);
+		}
 	}
 	return (0);
 }

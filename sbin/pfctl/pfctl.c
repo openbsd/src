@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.341 2017/04/23 07:41:25 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.342 2017/04/26 15:50:59 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1342,7 +1342,7 @@ pfctl_load_queue(struct pfctl *pf, u_int32_t ticket, struct pfctl_qsitem *qi)
 int
 pfctl_load_queues(struct pfctl *pf)
 {
-	struct pfctl_qsitem	*qi, *tempqi, rqi;
+	struct pfctl_qsitem	*qi, *tempqi;
 	u_int32_t		 ticket;
 
 	TAILQ_FOREACH(qi, &qspecs, entries) {
@@ -1362,23 +1362,7 @@ pfctl_load_queues(struct pfctl *pf)
 
 	TAILQ_FOREACH_SAFE(qi, &rootqs, entries, tempqi) {
 		TAILQ_REMOVE(&rootqs, qi, entries);
-
-		/*
-		 * We must have a hidden root queue below the user-
-		 * specified/visible root queue, due to the way the
-		 * dequeueing works far down there... don't ask.
-		 * the _ namespace is reserved for these.
-		 */
-		bzero(&rqi, sizeof(rqi));
-		TAILQ_INIT(&rqi.children);
-		TAILQ_INSERT_TAIL(&rqi.children, qi, entries);
-		snprintf(rqi.qs.qname, PF_QNAME_SIZE, "_root_%s",
-		    qi->qs.ifname);
-		strlcpy(rqi.qs.ifname, qi->qs.ifname, sizeof(rqi.qs.ifname));
-		strlcpy(qi->qs.parent, rqi.qs.qname, sizeof(qi->qs.parent));
-
-		pfctl_load_queue(pf, ticket, &rqi);
-
+		pfctl_load_queue(pf, ticket, qi);
 		TAILQ_INSERT_HEAD(&rootqs, qi, entries);
 	}
 
