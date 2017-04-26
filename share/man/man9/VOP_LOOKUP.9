@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.37 2017/04/26 02:43:34 beck Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.38 2017/04/26 05:55:27 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -585,8 +585,9 @@ Don't wait if the vnode lock is held by someone else
 .It Dv LK_RECURSEFAIL
 Attempt at recursive lock fails.
 .It Dv LK_DRAIN
-Used to mean something else, but is now used abused as s flag to avoid a lock
-inversion deadlock in deadfs. Do not use this, it must die.
+Used to mean something else, but is now used abused as a flag to avoid a lock
+inversion deadlock in deadfs.
+Do not use this, it must die.
 .El
 .Pp
 .Fn VOP_ISLOCKED
