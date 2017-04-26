@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.185 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.186 2017/04/26 07:53:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2386,7 +2386,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, uint8_t nframes,
 		wn->mn.ampdu_size = len;
 		wn->mn.agglen = nframes; 
 		if (ackfailcnt > 0)
-			wn->mn.retries++;
+			wn->mn.retries += ackfailcnt;
 		if (txfail)
 			wn->mn.txfail += nframes;
 		if (ic->ic_state == IEEE80211_S_RUN)
