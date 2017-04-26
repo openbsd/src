@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.297 2017/04/18 15:15:09 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.298 2017/04/26 14:53:11 sthen Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -522,6 +522,8 @@ usr
                 alpha
                 ..
                 amd64
+                ..
+                arm64
                 ..
                 armv7
                 ..

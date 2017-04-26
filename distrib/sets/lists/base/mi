@@ -2628,6 +2628,7 @@
 ./usr/share/man/man8/afterboot.8
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amd64
+./usr/share/man/man8/arm64
 ./usr/share/man/man8/armv7
 ./usr/share/man/man8/hppa
 ./usr/share/man/man8/i386

@@ -2063,6 +2063,8 @@
 ./usr/share/man/man8/amd64/pxeboot.8
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amq.8
+./usr/share/man/man8/arm64/MAKEDEV.8
+./usr/share/man/man8/arm64/eeprom.8
 ./usr/share/man/man8/armv7/MAKEDEV.8
 ./usr/share/man/man8/armv7/eeprom.8
 ./usr/share/man/man8/armv7/gpioctl.8
