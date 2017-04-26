@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.45 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: exf.c,v 1.46 2017/04/26 13:14:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -909,7 +909,7 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 	case OLDFILE:
 		msgstr = LF_ISSET(FS_APPEND) ?
 		    "%s: appended: %lu lines, %lu characters" :
-		    "%s: %lu lines, %lu characters", NULL;
+		    "%s: %lu lines, %lu characters";
 		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		if (len >= sizeof(buf))
 			len = sizeof(buf) - 1;
