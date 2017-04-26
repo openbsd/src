@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.36 2016/06/19 11:54:33 natano Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.37 2017/04/26 02:43:34 beck Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 19 2016 $
+.Dd $Mdocdate: April 26 2017 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -585,11 +585,8 @@ Don't wait if the vnode lock is held by someone else
 .It Dv LK_RECURSEFAIL
 Attempt at recursive lock fails.
 .It Dv LK_DRAIN
-Wait for all activity on the lock to end, then mark it decommissioned.
-This feature is used to ensure that no other activity can occur while the
-underlying object of a vnode is being cleaned out.
-Must be used in combination with
-.Dv LK_EXCLUSIVE .
+Used to mean something else, but is now used abused as s flag to avoid a lock
+inversion deadlock in deadfs. Do not use this, it must die.
 .El
 .Pp
 .Fn VOP_ISLOCKED
