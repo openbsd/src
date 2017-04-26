@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.132 2017/04/02 20:21:44 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.133 2017/04/26 09:53:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -427,7 +427,7 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ret = vm_rwregs((struct vm_rwregs_params *)data, 1);
 		break;
 	default:
-		DPRINTF("vmmioctl: unknown ioctl code 0x%lx\n", cmd);
+		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
 	}
 
@@ -502,7 +502,7 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 
 	/* Not found? exit. */
 	if (error != 0) {
-		DPRINTF("vm_resetcpu: vm id %u not found\n",
+		DPRINTF("%s: vm id %u not found\n", __func__,
 		    vrp->vrp_vm_id);
 		return (error);
 	}
@@ -515,25 +515,25 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 	rw_exit_read(&vm->vm_vcpu_lock);
 
 	if (vcpu == NULL) {
-		DPRINTF("vm_resetcpu: vcpu id %u of vm %u not found\n",
+		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
 		    vrp->vrp_vcpu_id, vrp->vrp_vm_id);
 		return (ENOENT);
 	}
 
 	if (vcpu->vc_state != VCPU_STATE_STOPPED) {
-		DPRINTF("vm_resetcpu: reset of vcpu %u on vm %u attempted "
-		    "while vcpu was in state %u (%s)\n", vrp->vrp_vcpu_id,
-		    vrp->vrp_vm_id, vcpu->vc_state,
+		DPRINTF("%s: reset of vcpu %u on vm %u attempted "
+		    "while vcpu was in state %u (%s)\n", __func__, 
+		    vrp->vrp_vcpu_id, vrp->vrp_vm_id, vcpu->vc_state,
 		    vcpu_state_decode(vcpu->vc_state));
 		
 		return (EBUSY);
 	}
 
-	DPRINTF("vm_resetcpu: resetting vm %d vcpu %d to power on defaults\n",
+	DPRINTF("%s: resetting vm %d vcpu %d to power on defaults\n", __func__,
 	    vm->vm_id, vcpu->vc_id);
 
 	if (vcpu_reset_regs(vcpu, &vrp->vrp_init_state)) {
-		printf("vm_resetcpu: failed\n");
+		printf("%s: failed\n", __func__);
 #ifdef VMM_DEBUG
 		dump_vcpu(vcpu);
 #endif /* VMM_DEBUG */
@@ -1095,7 +1095,7 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 	/* Create a new pmap for this VM */
 	pmap = pmap_create();
 	if (!pmap) {
-		printf("vm_impl_init_vmx: pmap_create failed\n");
+		printf("%s: pmap_create failed\n", __func__);
 		return (ENOMEM);
 	}
 
@@ -1111,21 +1111,20 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
 
 	if (!vm->vm_map) {
-		printf("vm_impl_init_vmx: uvm_map_create failed\n");
+		printf("%s: uvm_map_create failed\n", __func__);
 		pmap_destroy(pmap);
 		return (ENOMEM);
 	}
 
 	/* Map the new map with an anon */
-	DPRINTF("vm_impl_init_vmx: created vm_map @ %p\n", vm->vm_map);
+	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
 	for (i = 0; i < vm->vm_nmemranges; i++) {
 		vmr = &vm->vm_memranges[i];
 		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
 		    PROT_READ | PROT_WRITE | PROT_EXEC,
 		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
 		if (ret) {
-			printf("vm_impl_init_vmx: uvm_share failed (%d)\n",
-			    ret);
+			printf("%s: uvm_share failed (%d)\n", __func__, ret);
 			/* uvm_map_deallocate calls pmap_destroy for us */
 			uvm_map_deallocate(vm->vm_map);
 			vm->vm_map = NULL;
@@ -1136,7 +1135,7 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 	/* Convert the low 512GB of the pmap to EPT */
 	ret = pmap_convert(pmap, PMAP_TYPE_EPT);
 	if (ret) {
-		printf("vm_impl_init_vmx: pmap_convert failed\n");
+		printf("%s: pmap_convert failed\n", __func__);
 		/* uvm_map_deallocate calls pmap_destroy for us */
 		uvm_map_deallocate(vm->vm_map);
 		vm->vm_map = NULL;
@@ -1174,7 +1173,7 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 	/* Create a new pmap for this VM */
 	pmap = pmap_create();
 	if (!pmap) {
-		printf("vm_impl_init_svm: pmap_create failed\n");
+		printf("%s: pmap_create failed\n", __func__);
 		return (ENOMEM);
 	}
 
@@ -1192,21 +1191,20 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 	    VM_MAP_ISVMSPACE | VM_MAP_PAGEABLE);
 
 	if (!vm->vm_map) {
-		printf("vm_impl_init_svm: uvm_map_create failed\n");
+		printf("%s: uvm_map_create failed\n", __func__);
 		pmap_destroy(pmap);
 		return (ENOMEM);
 	}
 
 	/* Map the new map with an anon */
-	DPRINTF("vm_impl_init_svm: created vm_map @ %p\n", vm->vm_map);
+	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
 	for (i = 0; i < vm->vm_nmemranges; i++) {
 		vmr = &vm->vm_memranges[i];
 		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
 		    PROT_READ | PROT_WRITE | PROT_EXEC,
 		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
 		if (ret) {
-			printf("vm_impl_init_svm: uvm_share failed (%d)\n",
-			    ret);
+			printf("%s: uvm_share failed (%d)\n", __func__, ret);
 			/* uvm_map_deallocate calls pmap_destroy for us */
 			uvm_map_deallocate(vm->vm_map);
 			vm->vm_map = NULL;
@@ -3508,15 +3506,15 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 * Disable window exiting
 			 */
 			if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
-				printf("vcpu_run_vmx: can't read"
-				    "procbased ctls on exit\n");
+				printf("%s: can't read procbased ctls on "
+				    "exit\n", __func__);
 				ret = EINVAL;
 				break;
 			} else {
 				procbased &= ~IA32_VMX_INTERRUPT_WINDOW_EXITING;
 				if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
-					printf("vcpu_run_vmx: can't write"
-					   " procbased ctls on exit\n");
+					printf("%s: can't write procbased ctls "
+					    "on exit\n", __func__);
 					ret = EINVAL;
 					break;
 				}
@@ -3544,8 +3542,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			    &vcpu->vc_gueststate.vg_rip, &exit_reason);
 			if (vmread(VMCS_GUEST_IA32_RFLAGS,
 			    &vcpu->vc_gueststate.vg_rflags)) {
-				printf("vcpu_run_vmx: can't read guest rflags"
-				   " during exit\n");
+				printf("%s: can't read guest rflags during "
+				    "exit\n", __func__);
 				ret = EINVAL;
 				break;
                         }
@@ -3562,13 +3560,13 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		if (ret == 0) {
 			resume = 1;
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
-				printf("vcpu_run_vmx: cannot read guest rip\n");
+				printf("%s: cannot read guest rip\n", __func__);
 				ret = EINVAL;
 				break;
 			}
 
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
-				printf("vcpu_run_vmx: cant read exit reason\n");
+				printf("%s: cant read exit reason\n", __func__);
 				ret = EINVAL;
 				break;
 			}
@@ -3610,16 +3608,16 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			 */
 			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
 				if (vmread(VMCS_PROCBASED_CTLS, &procbased)) {
-					printf("vcpu_run_vmx: can't read"
-					   " procbased ctls on intwin exit\n");
+					printf("%s: can't read procbased ctls "
+					    "on intwin exit\n", __func__);
 					ret = EINVAL;
 					break;
 				}
 
 				procbased |= IA32_VMX_INTERRUPT_WINDOW_EXITING;
 				if (vmwrite(VMCS_PROCBASED_CTLS, procbased)) {
-					printf("vcpu_run_vmx: can't write"
-					   " procbased ctls on intwin exit\n");
+					printf("%s: can't write procbased ctls "
+					    "on intwin exit\n", __func__);
 					ret = EINVAL;
 					break;
 				}
@@ -3648,8 +3646,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				yield();
 			}
 		} else if (ret == VMX_FAIL_LAUNCH_INVALID_VMCS) {
-			printf("vcpu_run_vmx: failed launch with invalid "
-			    "vmcs\n");
+			printf("%s: failed launch with invalid vmcs\n",
+			    __func__);
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
@@ -3657,24 +3655,24 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			ret = EINVAL;
 		} else if (ret == VMX_FAIL_LAUNCH_VALID_VMCS) {
 			exit_reason = vcpu->vc_gueststate.vg_exit_reason;
-			printf("vcpu_run_vmx: failed launch with valid "
-			    "vmcs, code=%lld (%s)\n", exit_reason,
+			printf("%s: failed launch with valid vmcs, code=%lld "
+			    "(%s)\n", __func__, exit_reason,
 			    vmx_instruction_error_decode(exit_reason));
 
 			if (vmread(VMCS_INSTRUCTION_ERROR, &insn_error)) {
-				printf("vcpu_run_vmx: can't read"
-				    " insn error field\n");
+				printf("%s: can't read insn error field\n",
+				    __func__);
 			} else
-				printf("vcpu_run_vmx: insn error code = "
-				    "%lld\n", insn_error);
+				printf("%s: insn error code = %lld\n",
+				    __func__, insn_error);
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
 #endif /* VMM_DEBUG */
 			ret = EINVAL;
 		} else {
-			printf("vcpu_run_vmx: failed launch for unknown "
-			    "reason %d\n", ret);
+			printf("%s: failed launch for unknown reason %d\n",
+			    __func__, ret);
 #ifdef VMM_DEBUG
 			vmx_vcpu_dump_regs(vcpu);
 			dump_vcpu(vcpu);
@@ -3715,7 +3713,7 @@ vmx_handle_intr(struct vcpu *vcpu)
 	vaddr_t handler;
 
 	if (vmread(VMCS_EXIT_INTERRUPTION_INFO, &eii)) {
-		printf("vmx_handle_intr: can't obtain intr info\n");
+		printf("%s: can't obtain intr info\n", __func__);
 		return;
 	}
 
@@ -3788,8 +3786,8 @@ vmx_handle_exit(struct vcpu *vcpu)
 	switch (exit_reason) {
 	case VMX_EXIT_INT_WINDOW:
 		if (!(rflags & PSL_I)) {
-			DPRINTF("vmx_handle_exit: impossible interrupt window"
-			   " exit config\n");
+			DPRINTF("%s: impossible interrupt window exit "
+			    "config\n", __func__);
 			ret = EINVAL;
 			break;
 		}
@@ -3830,7 +3828,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 #ifdef VMM_DEBUG
-		DPRINTF("vmx_handle_exit: vm %d vcpu %d triple fault\n",
+		DPRINTF("%s: vm %d vcpu %d triple fault\n", __func__,
 		    vcpu->vc_parent->vm_id, vcpu->vc_id);
 		vmx_vcpu_dump_regs(vcpu);
 		dump_vcpu(vcpu);
@@ -3840,7 +3838,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 		update_rip = 0;
 		break;
 	default:
-		DPRINTF("vmx_handle_exit: unhandled exit %lld (%s)\n",
+		DPRINTF("%s: unhandled exit %lld (%s)\n", __func__,
 		    exit_reason, vmx_exit_reason_decode(exit_reason));
 		return (EINVAL);
 	}
@@ -3848,7 +3846,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 	if (update_rip) {
 		if (vmwrite(VMCS_GUEST_IA32_RIP,
 		    vcpu->vc_gueststate.vg_rip)) {
-			printf("vmx_handle_exit: can't advance rip\n");
+			printf("%s: can't advance rip\n", __func__);
 			return (EINVAL);
 		}
 
@@ -3934,7 +3932,7 @@ int
 vmx_get_exit_qualification(uint64_t *exit_qualification)
 {
 	if (vmread(VMCS_GUEST_EXIT_QUALIFICATION, exit_qualification)) {
-		printf("vmm_get_exit_qualification: cant extract exit qual\n");
+		printf("%s: cant extract exit qual\n", __func__);
 		return (EINVAL);
 	}
 
@@ -3992,14 +3990,15 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 
 	fault_type = vmx_get_guest_faulttype();
 	if (fault_type == -1) {
-		printf("vmx_fault_page: invalid fault type\n");
+		printf("%s: invalid fault type\n", __func__);
 		return (EINVAL);
 	}
 
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
+
 	if (ret)
-		printf("vmx_fault_page: uvm_fault returns %d\n", ret);
+		printf("%s: uvm_fault returns %d\n", __func__, ret);
 
 	return (ret);
 }
@@ -4018,7 +4017,7 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 
 	ret = 0;
 	if (vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &gpa)) {
-		printf("vmm_handle_np_fault: cannot extract faulting pa\n");
+		printf("%s: cannot extract faulting pa\n", __func__);
 		return (EINVAL);
 	}
 
@@ -4051,12 +4050,12 @@ vmx_handle_inout(struct vcpu *vcpu)
 	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
-		printf("vmx_handle_inout: can't obtain instruction length\n");
+		printf("%s: can't obtain instruction length\n", __func__);
 		return (EINVAL);
 	}
 
 	if (vmx_get_exit_qualification(&exit_qual)) {
-		printf("vmx_handle_inout: can't get exit qual\n");
+		printf("%s: can't get exit qual\n", __func__);
 		return (EINVAL);
 	}
 
@@ -4279,19 +4278,19 @@ vmx_handle_cr(struct vcpu *vcpu)
 
 		break;
 	case CR_READ:
-		DPRINTF("vmx_handle_cr: mov from cr%d @ %llx\n",
-		    crnum, vcpu->vc_gueststate.vg_rip);
+		DPRINTF("%s: mov from cr%d @ %llx\n", __func__, crnum,
+		    vcpu->vc_gueststate.vg_rip);
 		break;
 	case CR_CLTS:
-		DPRINTF("vmx_handle_cr: clts instruction @ %llx\n",
+		DPRINTF("%s: clts instruction @ %llx\n", __func__,
 		    vcpu->vc_gueststate.vg_rip);
 		break;
 	case CR_LMSW:
-		DPRINTF("vmx_handle_cr: lmsw instruction @ %llx\n",
+		DPRINTF("%s: lmsw instruction @ %llx\n", __func__,
 		    vcpu->vc_gueststate.vg_rip);
 		break;
 	default:
-		DPRINTF("vmx_handle_cr: unknown cr access @ %llx\n",
+		DPRINTF("%s: unknown cr access @ %llx\n", __func__,
 		    vcpu->vc_gueststate.vg_rip);
 	}
 
