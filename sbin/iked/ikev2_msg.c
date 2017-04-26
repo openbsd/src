@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.51 2017/03/27 10:21:19 reyk Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.52 2017/04/26 10:42:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -331,6 +331,14 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	if (sendtofrom(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
 	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
 	    (struct sockaddr *)&msg->msg_local, msg->msg_locallen) == -1) {
+		if (errno == EADDRNOTAVAIL) {
+			sa_state(env, msg->msg_sa, IKEV2_STATE_CLOSING);
+			timer_del(env, &msg->msg_sa->sa_timer);
+			timer_set(env, &msg->msg_sa->sa_timer,
+			    ikev2_ike_sa_timeout, msg->msg_sa);
+			timer_add(env, &msg->msg_sa->sa_timer,
+			    IKED_IKE_SA_DELETE_TIMEOUT);
+		}
 		log_warn("%s: sendtofrom", __func__);
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.153 2017/04/13 07:04:09 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.154 2017/04/26 10:42:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -87,7 +87,6 @@ int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 void	 ikev2_ike_sa_rekey(struct iked *, void *);
 void	 ikev2_ike_sa_rekey_timeout(struct iked *, void *);
 void	 ikev2_ike_sa_rekey_schedule(struct iked *, struct iked_sa *);
-void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 void	 ikev2_ike_sa_keepalive(struct iked *, void *);
 
