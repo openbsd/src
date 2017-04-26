@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.173 2017/04/26 07:53:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.174 2017/04/26 08:19:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -356,7 +356,7 @@ int	iwm_send_tx_ant_cfg(struct iwm_softc *, uint8_t);
 int	iwm_send_phy_cfg_cmd(struct iwm_softc *);
 int	iwm_load_ucode_wait_alive(struct iwm_softc *, enum iwm_ucode_type);
 int	iwm_run_init_mvm_ucode(struct iwm_softc *, int);
-int	iwm_rx_addbuf(struct iwm_softc *, int, int);
+int	iwm_rx_addbuf(struct iwm_softc *, int);
 int	iwm_calc_rssi(struct iwm_softc *, struct iwm_rx_phy_info *);
 int	iwm_get_signal_strength(struct iwm_softc *, struct iwm_rx_phy_info *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
@@ -1061,7 +1061,7 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 			goto fail;
 		}
 
-		err = iwm_rx_addbuf(sc, IWM_RBUF_SIZE, i);
+		err = iwm_rx_addbuf(sc, i);
 		if (err)
 			goto fail;
 	}
@@ -3161,7 +3161,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 }
 
 int
-iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
+iwm_rx_addbuf(struct iwm_softc *sc, int idx)
 {
 	struct iwm_rx_ring *ring = &sc->rxq;
 	struct iwm_rx_data *data = &ring->data[idx];
@@ -3173,11 +3173,7 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 	if (m == NULL)
 		return ENOBUFS;
 
-	if (size <= MCLBYTES) {
-		MCLGET(m, M_DONTWAIT);
-	} else {
-		MCLGETI(m, M_DONTWAIT, NULL, IWM_RBUF_SIZE);
-	}
+	MCLGETI(m, M_DONTWAIT, NULL, IWM_RBUF_SIZE);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return ENOBUFS;
@@ -3199,7 +3195,8 @@ iwm_rx_addbuf(struct iwm_softc *sc, int size, int idx)
 		return err;
 	}
 	data->m = m;
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, size, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
+	    BUS_DMASYNC_PREREAD);
 
 	/* Update RX descriptor. */
 	ring->desc[idx] = htole32(data->map->dm_segs[0].ds_addr >> 8);
@@ -6565,7 +6562,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 
 		if (code == IWM_REPLY_RX_MPDU_CMD && ++nmpdu == 1) {
 			/* Take mbuf m0 off the RX ring. */
-			if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur)) {
+			if (iwm_rx_addbuf(sc, sc->rxq.cur)) {
 				ifp->if_ierrors++;
 				break;
 			}
