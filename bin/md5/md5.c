@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.89 2016/12/16 17:55:26 krw Exp $	*/
+/*	$OpenBSD: md5.c,v 1.90 2017/04/26 21:10:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -554,6 +554,7 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 	char *lbuf = NULL;
 	FILE *listfp, *fp;
 	size_t len, nread;
+	int *sel_found = NULL;
 	u_char data[32 * 1024];
 	union ANY_CTX context;
 	struct hash_function *hf;
@@ -563,6 +564,12 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 	} else if ((listfp = fopen(file, "r")) == NULL) {
 		warn("cannot open %s", file);
 		return(1);
+	}
+
+	if (sel != NULL) {
+		sel_found = calloc((size_t)selcount, sizeof(*sel_found));
+		if (sel_found == NULL)
+			err(1, NULL);
 	}
 
 	algorithm_max = algorithm_min = strlen(functions[0].name);
@@ -673,13 +680,11 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 		/*
 		 * If only a selection of files is wanted, proceed only
 		 * if the filename matches one of those in the selection.
-		 * Mark found files by setting them to NULL so that we can
-		 * detect files that are missing from the checklist later.
 		 */
-		if (sel) {
+		if (sel != NULL) {
 			for (i = 0; i < selcount; i++) {
-				if (sel[i] && strcmp(sel[i], filename) == 0) {
-					sel[i] = NULL;
+				if (strcmp(sel[i], filename) == 0) {
+					sel_found[i] = 1;
 					break;
 				}
 			}
@@ -725,6 +730,17 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 	if (!found)
 		warnx("%s: no properly formatted checksum lines found", file);
 	free(lbuf);
+	if (sel_found != NULL) {
+		/*
+		 * Mark found files by setting them to NULL so that we can
+		 * detect files that are missing from the checklist later.
+		 */
+		for (i = 0; i < selcount; i++) {
+			if (sel_found[i])
+				sel[i] = NULL;
+		}
+		free(sel_found);
+	}
 	return(error || !found);
 }
 
