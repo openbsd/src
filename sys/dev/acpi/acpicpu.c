@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.79 2017/04/07 04:45:24 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.80 2017/04/27 16:34:18 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -136,10 +136,11 @@ struct acpicpu_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	int			sc_pss_len;
+	int			sc_pss_len;	/* XXX */
 	int			sc_ppc;
 	int			sc_level;
 	struct acpicpu_pss	*sc_pss;
+	size_t			sc_pssfulllen;
 
 	struct acpicpu_pct	sc_pct;
 	/* save compensation for pct access for lying bios' */
@@ -679,8 +680,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 	SLIST_INIT(&sc->sc_cstates);
 
-	sc->sc_pss = NULL;
-
 	if (aml_evalnode(sc->sc_acpi, sc->sc_devnode, 0, NULL, &res) == 0) {
 		if (res.type == AML_OBJTYPE_PROCESSOR) {
 			sc->sc_cpu = res.v_processor.proc_id;
@@ -928,10 +927,11 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 		return (1);
 	}
 
-	free(sc->sc_pss, M_DEVBUF, 0);
+	free(sc->sc_pss, M_DEVBUF, sc->sc_pssfulllen);
 
 	sc->sc_pss = mallocarray(res.length, sizeof(*sc->sc_pss), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
+	sc->sc_pssfulllen = res.length * sizeof(*sc->sc_pss);
 
 	c = 0;
 	for (i = 0; i < res.length; i++) {
