@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.80 2017/03/26 18:50:37 guenther Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.81 2017/04/27 17:41:47 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -183,8 +183,14 @@ SOBJS+=	${OBJS:.o=.so}
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
+.if defined(SYSPATCH)
+	${CC} -shared ${PICFLAG} -o ${.TARGET} \
+	    `readelf -Ws ${LIBDIR}/${.TARGET} | awk '/ FILE/{gsub(/\..*/, ".so", $$NF); sub(".*/", "", $$NF); print $$NF}' | \
+	    grep -v unwind-dw2` ${LDADD}
+.else
 	${CC} -shared ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
+.endif
 
 ${FULLSHLIBNAME}.a: ${SOBJS}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\) ar
