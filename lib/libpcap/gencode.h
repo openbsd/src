@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.16 2014/04/11 04:08:58 lteo Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.17 2017/04/27 15:46:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -193,7 +193,7 @@ struct block *gen_p80211_fcdir(int);
 
 void bpf_optimize(struct block **);
 __dead void bpf_error(const char *, ...)
-    __attribute__((volatile, __format__ (printf, 1, 2)));
+    __attribute__((__format__ (printf, 1, 2)));
 
 void finish_parse(struct block *);
 char *sdup(const char *);
