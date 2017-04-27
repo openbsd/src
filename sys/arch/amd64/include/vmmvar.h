@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.33 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.34 2017/04/27 07:15:35 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -613,10 +613,10 @@ struct vmx_msr_store
  * Storage for guest registers not preserved in VMCS and various exit
  * information.
  *
- * Note that vmx_enter_guest depends on the layout of this struct for
+ * Note that vmx/svm_enter_guest depend on the layout of this struct for
  * field access.
  */
-struct vmx_gueststate
+struct vcpu_gueststate
 {
 	/* %rsi should be first */
 	uint64_t	vg_rsi;			/* 0x00 */
@@ -685,6 +685,8 @@ struct vcpu {
 
 	uint64_t vc_h_xcr0;
 
+	struct vcpu_gueststate vc_gueststate;
+
 	/* VMX only */
 	uint64_t vc_vmx_basic;
 	uint64_t vc_vmx_entry_ctls;
@@ -696,7 +698,6 @@ struct vcpu {
 	uint64_t vc_vmx_procbased_ctls;
 	uint64_t vc_vmx_true_procbased_ctls;
 	uint64_t vc_vmx_procbased2_ctls;
-	struct vmx_gueststate vc_gueststate;
 	vaddr_t vc_vmx_msr_exit_save_va;
 	paddr_t vc_vmx_msr_exit_save_pa;
 	vaddr_t vc_vmx_msr_exit_load_va;
@@ -723,8 +724,8 @@ int	vmwrite(uint64_t, uint64_t);
 int	vmread(uint64_t, uint64_t *);
 void	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
 void	invept(uint64_t, struct vmx_invept_descriptor *);
-int	vmx_enter_guest(uint64_t *, struct vmx_gueststate *, int);
-int	svm_enter_guest(uint64_t, struct vmx_gueststate *,
+int	vmx_enter_guest(uint64_t *, struct vcpu_gueststate *, int);
+int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
     struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
