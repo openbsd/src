@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.177 2017/01/13 09:18:11 fcambus Exp $ */
+/* $OpenBSD: machdep.c,v 1.178 2017/04/27 11:48:08 mpi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -684,9 +684,6 @@ nobootinfo:
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 
-#ifdef KADB
-	boothowto |= RB_KDB;
-#endif
 	for (p = bootinfo.boot_flags; p && *p != '\0'; p++) {
 		/*
 		 * Note that we'd really like to differentiate case here,
