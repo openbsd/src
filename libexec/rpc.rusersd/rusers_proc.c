@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.25 2016/08/16 04:48:04 tedu Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.26 2017/04/27 21:28:00 millert Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -71,7 +71,7 @@ extern int from_inetd;
 FILE *ufp;
 
 static long
-getidle(char *tty, size_t len)
+getidle(char *tty, int len)
 {
 	char devname[PATH_MAX];
 	struct stat st;
