@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.40 2017/04/24 18:15:16 kettenis Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.41 2017/04/27 22:41:46 kettenis Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -273,6 +273,12 @@
 #define CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
 #define CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
 #define CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
+
+/* MPIDR, Multiprocessor Affinity Register */
+#define MPIDR_AFF2		(0xffU << 16)
+#define MPIDR_AFF1		(0xffU << 8)
+#define MPIDR_AFF0		(0xffU << 0)
+#define MPIDR_AFF		(MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0)
 
 /* Fault status register definitions */
 

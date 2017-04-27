@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.37 2017/04/24 18:15:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.38 2017/04/27 22:41:46 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -55,32 +55,62 @@
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/fdt.h>
 
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
 
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
+
 char cpu_model[256];
 
-/* Prototypes */
+int	cpu_match(struct device *, void *, void *);
+void	cpu_attach(struct device *, struct device *, void *);
+
+struct cfattach cpu_ca = {
+	sizeof(struct device), cpu_match, cpu_attach
+};
+
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL
+};
+
 void identify_arm_cpu(struct device *dv, struct cpu_info *);
 
-/*
- * Identify the master (boot) CPU
- */
-  
-void
-cpu_attach(struct device *dv)
+int
+cpu_match(struct device *parent, void *cfdata, void *aux)
 {
-	curcpu()->ci_dev = dv;
+	struct fdt_attach_args *faa = aux;
+	char buf[32];
 
-	/* Get the CPU ID from coprocessor 15 */
+	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "cpu") == 0)
+		return 1;
 
-	curcpu()->ci_arm_cpuid = cpu_id();
-	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
-	curcpu()->ci_arm_cpurev =
-	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+	return 0;
+}
 
-	identify_arm_cpu(dv, curcpu());
+void
+cpu_attach(struct device *parent, struct device *dev, void *aux)
+{
+	struct cpu_info *ci;
+
+	if (dev->dv_unit == 0) {
+		ci = curcpu();
+		ci->ci_dev = dev;
+
+		/* Get the CPU ID from coprocessor 15 */
+		ci->ci_arm_cpuid = cpu_id();
+		ci->ci_arm_cputype =
+		    ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
+		ci->ci_arm_cpurev =
+		    ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+
+		identify_arm_cpu(dev, ci);
+	} else {
+		printf(": not configured");
+	}
 }
 
 enum cpu_class {

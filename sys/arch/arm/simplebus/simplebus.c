@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.12 2017/01/23 06:13:34 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.13 2017/04/27 22:41:46 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -96,11 +96,11 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Scan the whole tree. */
 	sc->sc_early = 1;
-	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) 
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
 		simplebus_attach_node(self, node);
 
 	sc->sc_early = 0;
-	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) 
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
 		simplebus_attach_node(self, node);
 }
 
@@ -123,16 +123,16 @@ simplebus_attach_node(struct device *self, int node)
 {
 	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args	 fa;
-	char			 buffer[128];
+	char			 buf[32];
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
 
-	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
+	if (OF_getproplen(node, "compatible") <= 0)
 		return;
 
-	if (OF_getprop(node, "status", buffer, sizeof(buffer)))
-		if (!strcmp(buffer, "disabled"))
-			return;
+	if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "disabled") == 0)
+		return;
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";

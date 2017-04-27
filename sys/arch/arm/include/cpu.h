@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2017/03/03 14:54:02 tom Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2017/04/27 22:41:46 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -281,8 +281,6 @@ extern int want_resched;	/* resched() was called */
  * cpu device glue (belongs in cpuvar.h)
  */
 
-struct device;
-void	cpu_attach(struct device *);
 int	cpu_alloc_idle_pcb(struct cpu_info *);
 
 /*
