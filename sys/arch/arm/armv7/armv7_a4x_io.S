@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_a4x_io.S,v 1.1 2009/05/08 02:57:32 drahn Exp $ */
+/*	$OpenBSD: armv7_a4x_io.S,v 1.2 2017/04/27 10:57:05 kettenis Exp $ */
 /*	$NetBSD: pxa2x0_a4x_io.S,v 1.1 2002/10/19 19:31:39 bsh Exp $ */
 
 /*
@@ -50,12 +50,11 @@
  */
 
 ENTRY(a4x_bs_r_1)
-	ldrb	r0, [r1, r2, LSL #2]
+	ldr	r0, [r1, r2, LSL #2]
 	mov	pc, lr
 
 ENTRY(a4x_bs_r_2)
-	mov	r2, r2, LSL #2
-	ldrh	r0, [r1, r2]
+	ldr	r0, [r1, r2, LSL #2]
 	mov	pc, lr
 
 ENTRY(a4x_bs_r_4)
@@ -67,12 +66,11 @@ ENTRY(a4x_bs_r_4)
  */
 
 ENTRY(a4x_bs_w_1)
-	strb	r3, [r1, r2, LSL #2]
+	str	r3, [r1, r2, LSL #2]
 	mov	pc, lr
 
 ENTRY(a4x_bs_w_2)
-	mov	r2, r2, LSL #2
-	strh	r3, [r1, r2]
+	str	r3, [r1, r2, LSL #2]
 	mov	pc, lr
 
 ENTRY(a4x_bs_w_4)

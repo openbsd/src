@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_bus_space.c,v 1.3 2017/02/17 19:20:22 patrick Exp $ */
+/*	$OpenBSD: arm64_bus_space.c,v 1.4 2017/04/27 10:57:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -262,13 +262,13 @@ generic_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
 uint8_t
 a4x_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return *(volatile uint8_t *)(h + (o*4));
+	return *(volatile uint32_t *)(h + (o*4));
 }
 
 uint16_t
 a4x_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	return *(volatile uint16_t *)(h + (o*4));
+	return *(volatile uint32_t *)(h + (o*4));
 }
 
 uint32_t
@@ -287,14 +287,14 @@ void
 a4x_space_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     uint8_t v)
 {
-	*(volatile uint8_t *)(h + (o*4)) = v;
+	*(volatile uint32_t *)(h + (o*4)) = v;
 }
 
 void
 a4x_space_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
     uint16_t v)
 {
-	*(volatile uint16_t *)(h + (o*4)) = v;
+	*(volatile uint32_t *)(h + (o*4)) = v;
 }
 
 void
