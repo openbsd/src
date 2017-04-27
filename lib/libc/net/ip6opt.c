@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6opt.c,v 1.8 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: ip6opt.c,v 1.9 2017/04/27 23:52:35 millert Exp $	*/
 /*	$KAME: ip6opt.c,v 1.18 2005/06/15 07:11:35 keiichi Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ inet6_opt_append(void *extbuf, socklen_t extlen, int offset, u_int8_t type,
 	 * The option data length must have a value between 0 and 255,
 	 * inclusive, and is the length of the option data that follows.
 	 */
-	if (len < 0 || len > 255)
+	if (len > 255)
 		return (-1);
 
 	/*
