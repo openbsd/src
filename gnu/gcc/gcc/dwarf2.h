@@ -371,6 +371,8 @@ enum dwarf_attribute
     DW_AT_GNU_vector = 0x2107,
     /* VMS extensions.  */
     DW_AT_VMS_rtnbeg_pd_address = 0x2201,
+    /* Sun extension.  */
+    DW_AT_SUN_amd64_parmdump = 0x2224,
     /* UPC extension.  */
     DW_AT_upc_threads_scaled = 0x3210,
     /* PGI (STMicroelectronics) extensions.  */

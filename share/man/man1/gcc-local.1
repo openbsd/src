@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.51 2017/02/14 12:50:15 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.52 2017/04/27 00:02:03 dlg Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2017 $
+.Dd $Mdocdate: April 27 2017 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -159,6 +159,14 @@ option, similar to
 which includes additional functions to be protected \(em those that
 have local array definitions
 or have references to local frame addresses.
+.It
+On amd64,
+.Fl msave-args
+can be passed to the compiler to have functions save their register
+arguments on the stack, while maintaining compatability with the
+System 5 AMD64 ABI.
+This enables tools and debuggers that understand this semantic to
+trivially generate stack traces that include function arguments.
 .It
 On the alpha, amd64, arm, hppa, i386, mips64, powerpc, sh and sparc64
 architectures,

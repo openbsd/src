@@ -11960,6 +11960,10 @@ gen_subprogram_die (tree decl, dw_die_ref context_die)
   /* Add the calling convention attribute if requested.  */
   add_calling_convention_attribute (subr_die, TREE_TYPE (decl));
 
+#ifdef TARGET_SAVE_ARGS
+  if (TARGET_SAVE_ARGS)
+    add_AT_flag (subr_die, DW_AT_SUN_amd64_parmdump, 1);
+#endif
 }
 
 /* Generate a DIE to represent a declared data object.  */

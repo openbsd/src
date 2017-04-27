@@ -9806,6 +9806,10 @@ building of shared libraries are not supported with the medium model.
 Generate code for the large model: This model makes no assumptions
 about addresses and sizes of sections.  Currently GCC does not implement
 this model.
+
+@item -msave-args
+@opindex msave-args
+Save integer arguments on the stack at function entry.
 @end table
 
 @node IA-64 Options
