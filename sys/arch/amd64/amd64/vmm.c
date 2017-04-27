@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.133 2017/04/26 09:53:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.134 2017/04/27 06:16:39 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <sys/device.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
@@ -31,6 +32,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/fpu.h>
 #include <machine/pmap.h>
 #include <machine/biosvar.h>
 #include <machine/segments.h>
@@ -145,6 +147,7 @@ int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint64_t *, uint64_t *);
 int vmx_handle_exit(struct vcpu *);
+int vmx_handle_xsetbv(struct vcpu *);
 int vmm_handle_cpuid(struct vcpu *);
 int vmx_handle_rdmsr(struct vcpu *);
 int vmx_handle_wrmsr(struct vcpu *);
@@ -360,7 +363,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
 	    "vmpool", NULL);
-	pool_init(&vcpu_pool, sizeof(struct vcpu), 0, IPL_NONE, PR_WAITOK,
+	pool_init(&vcpu_pool, sizeof(struct vcpu), 64, IPL_NONE, PR_WAITOK,
 	    "vcpupl", NULL);
 
 	vmm_softc = sc;
@@ -2373,6 +2376,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
 
+	/* xcr0 power on default sets bit 0 (x87 state) */
+	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87;
+
 	/* Flush the VMCS */
 	if (vmclear(&vcpu->vc_control_pa)) {
 		ret = EINVAL;
@@ -2498,7 +2504,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 	/* Host CR0 */
-	cr0 = rcr0();
+	cr0 = rcr0() & ~CR0_TS;
 	if (vmwrite(VMCS_HOST_IA32_CR0, cr0)) {
 		ret = EINVAL;
 		goto exit;
@@ -3354,6 +3360,42 @@ vcpu_must_stop(struct vcpu *vcpu)
 }
 
 /*
+ * vmm_fpusave
+ *
+ * Modified version of fpusave_cpu from fpu.c that only saves the FPU context
+ * and does not call splipi/splx. Must be called with interrupts disabled.
+ */
+void
+vmm_fpusave(void)
+{
+	struct proc *p;
+	struct cpu_info *ci = curcpu();
+
+	p = ci->ci_fpcurproc;
+	if (p == NULL)
+		return;
+
+	if (ci->ci_fpsaving != 0)
+		panic("%s: recursive save!", __func__);
+	/*
+	 * Set ci->ci_fpsaving, so that any pending exception will be
+	 * thrown away.  (It will be caught again if/when the FPU
+	 * state is restored.)
+	 */
+	ci->ci_fpsaving = 1;
+	if (xsave_mask)
+		xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
+	else
+		fxsave(&p->p_addr->u_pcb.pcb_savefpu);
+	ci->ci_fpsaving = 0;
+
+	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurproc = NULL;
+}
+
+/*
  * vcpu_run_vmx
  *
  * VMX main loop used to run a VCPU.
@@ -3403,6 +3445,8 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		case VMX_EXIT_EPT_VIOLATION:
 			break;
 		case VMX_EXIT_CPUID:
+			break;
+		case VMX_EXIT_XSETBV:
 			break;
 #ifdef VMM_DEBUG
 		case VMX_EXIT_TRIPLE_FAULT:
@@ -3528,9 +3572,75 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Start / resume the VCPU */
 		KERNEL_ASSERT_LOCKED();
+
+		/* Disable interrupts and save the current FPU state. */
+		disable_intr();
+		clts();
+		vmm_fpusave();
+
+		/* Initialize the guest FPU if not inited already */
+		if (!vcpu->vc_fpuinited) {
+			fninit();
+			bzero(&vcpu->vc_g_fpu.fp_fxsave,
+			    sizeof(vcpu->vc_g_fpu.fp_fxsave));
+			vcpu->vc_g_fpu.fp_fxsave.fx_fcw =
+			    __INITIAL_NPXCW__;
+			vcpu->vc_g_fpu.fp_fxsave.fx_mxcsr =
+			    __INITIAL_MXCSR__;
+			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
+
+			vcpu->vc_fpuinited = 1;
+		}
+
+		if (xsave_mask) {
+			/* Restore guest XCR0 and FPU context */
+			if (vcpu->vc_gueststate.vg_xcr0 & ~xsave_mask) {
+				DPRINTF("%s: guest attempted to set invalid "
+				    "bits in xcr0\n", __func__);
+				ret = EINVAL;
+				stts();
+				enable_intr();
+				break;
+			}
+
+			/* Restore guest %xcr0 */
+			xrstor(&vcpu->vc_g_fpu, xsave_mask);
+			xsetbv(0, vcpu->vc_gueststate.vg_xcr0);
+		} else
+			fxrstor(&vcpu->vc_g_fpu.fp_fxsave);
+
 		KERNEL_UNLOCK();
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate, resume);
+
+		/*
+		 * On exit, interrupts are disabled, and we are running with
+		 * the guest FPU state still possibly on the CPU. Save the FPU
+		 * state before re-enabling interrupts.
+		 */
+		if (xsave_mask) {
+			/* Save guest %xcr0 */
+			vcpu->vc_gueststate.vg_xcr0 = xgetbv(0);
+
+			/* Restore host %xcr0 */
+			xsetbv(0, xsave_mask);
+
+			/*
+			 * Save full copy of FPU state - guest content is
+			 * always a subset of host's save area (see xsetbv
+			 * exit handler)
+			 */	
+			xsave(&vcpu->vc_g_fpu, xsave_mask);
+		} else
+			fxsave(&vcpu->vc_g_fpu);
+
+		/*
+		 * FPU state is invalid, set CR0_TS to force DNA trap on next
+		 * access.
+		 */
+		stts();
+
+		enable_intr();
 
 		exit_reason = VM_EXIT_NONE;
 		if (ret == 0) {
@@ -3545,6 +3655,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				printf("%s: can't read guest rflags during "
 				    "exit\n", __func__);
 				ret = EINVAL;
+				KERNEL_LOCK();
 				break;
                         }
 		}
@@ -3824,6 +3935,10 @@ vmx_handle_exit(struct vcpu *vcpu)
 		break;
 	case VMX_EXIT_WRMSR:
 		ret = vmx_handle_wrmsr(vcpu);
+		update_rip = 1;
+		break;
+	case VMX_EXIT_XSETBV:
+		ret = vmx_handle_xsetbv(vcpu);
 		update_rip = 1;
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
@@ -4351,6 +4466,62 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 }
 
 /*
+ * vmx_handle_xsetbv
+ *
+ * Handler for xsetbv instructions. We allow the guest VM to set xcr0 values
+ * limited to the xsave_mask in use in the host.
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing instruction info causing the exit
+ *
+ * Return value:
+ *  0: The operation was successful
+ *  EINVAL: An error occurred
+ */
+int
+vmx_handle_xsetbv(struct vcpu *vcpu)
+{
+	uint64_t insn_length;
+	uint64_t *rax, *rdx, *rcx;;
+
+	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
+		printf("%s: can't obtain instruction length\n", __func__);
+		return (EINVAL);
+	}
+
+	/* All XSETBV instructions are 0x0F 0x01 0xD1 */
+	KASSERT(insn_length == 3);
+
+	rax = &vcpu->vc_gueststate.vg_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	rdx = &vcpu->vc_gueststate.vg_rdx;
+
+	if (*rcx != 0) {
+		DPRINTF("%s: guest specified invalid xcr register number "
+		    "%lld\n", __func__, *rcx);
+		/* XXX this should #GP(0) instead of killing the guest */
+		return (EINVAL);
+	}
+
+	/*
+	 * No bits in %edx are currently supported. Check this, and validate
+	 * against the host mask.
+	 */
+	if (*rdx != 0 || (*rax & ~xsave_mask)) {
+		DPRINTF("%s: guest specified invalid xcr0 content "
+		    "(0x%llx:0x%llx)\n", __func__, *rdx, *rax);
+		/* XXX this should #GP(0) instead of killing the guest */
+		return (EINVAL);
+	}
+
+	vcpu->vc_gueststate.vg_xcr0 = *rax;
+
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	return (0);
+}
+	
+/*
  * vmx_handle_wrmsr
  *
  * Handler for wrmsr instructions. This handler logs the access, and discards
@@ -4413,6 +4584,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
 	uint64_t *rax, *rbx, *rcx, *rdx;
+	uint32_t eax, ebx, ecx, edx;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT) {
@@ -4431,9 +4603,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
+	CPUID_LEAF(rax, 0, eax, ebx, ecx, edx);
+
 	switch (*rax) {
 	case 0x00:	/* Max level and vendor ID */
-		*rax = 0x07; /* cpuid_level */
+		*rax = 0x0d; /* cpuid_level */
 		*rbx = *((uint32_t *)&cpu_vendor);
 		*rdx = *((uint32_t *)&cpu_vendor + 1);
 		*rcx = *((uint32_t *)&cpu_vendor + 2);
@@ -4580,13 +4754,19 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x0d:	/* Processor ext. state information (not supported) */
-		DPRINTF("%s: function 0x0d (ext. state info) not supported\n",
-		    __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x0d:	/* Processor ext. state information */
+		if (*rcx == 0) {
+			*rax = xsave_mask;
+			*rbx = ebx;
+			*rcx = ecx;
+			*rdx = edx;
+		} else {
+			CPUID_LEAF(rax, *rcx, eax, ebx, ecx, edx);
+			*rax = eax;
+			*rbx = ebx;
+			*rcx = ecx;
+			*rdx = edx;
+		}
 		break;
 	case 0x0f:	/* QoS info (not supported) */
 		DPRINTF("%s: function 0x0f (QoS info) not supported\n",

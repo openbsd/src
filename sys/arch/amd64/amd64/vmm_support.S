@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.7 2017/03/25 15:25:20 kettenis Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.8 2017/04/27 06:16:39 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/psl.h>
 #include <machine/specialreg.h>
 
 /*
@@ -154,6 +155,9 @@ skip_init:
 	 */
 
 	pushfq
+	popq	%rax
+	andq	$(~PSL_I), %rax
+	pushq	%rax
 
 	/*
 	 * Save (possibly) lazy-switched selectors
@@ -354,7 +358,6 @@ restore_host:
 	 * first. This is to accommodate possibly lazy-switched
 	 * selectors from above
 	 */
-	cli
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_KERNELGSBASE, %rcx
@@ -371,7 +374,6 @@ restore_host:
 	popq	%rax
 	movq	$MSR_FSBASE, %rcx
 	wrmsr
-	sti
 
 	popw	%ax
 	movw	%ax, %ss

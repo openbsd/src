@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.11 2015/03/25 21:05:18 kettenis Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.12 2017/04/27 06:16:39 mlarkin Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -70,6 +70,37 @@ void fpusave_proc(struct proc *, int);
 void fpusave_cpu(struct cpu_info *, int);
 void fpu_kernel_enter(void);
 void fpu_kernel_exit(void);
+
+#define fninit()		__asm("fninit")
+#define fwait()			__asm("fwait")
+#define fnclex()		__asm("fnclex")
+#define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
+#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
+#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
+#define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
+#define clts()			__asm("clts")
+#define stts()			lcr0(rcr0() | CR0_TS)
+
+static inline void
+xsave(struct savefpu *addr, uint64_t mask)
+{
+	uint32_t lo, hi;
+
+	lo = mask;
+	hi = mask >> 32;
+	__asm volatile("xsave %0" : "=m" (*addr) : "a" (lo), "d" (hi) :
+	    "memory");
+}
+
+static inline void
+xrstor(struct savefpu *addr, uint64_t mask)
+{
+	uint32_t lo, hi;
+
+	lo = mask;
+	hi = mask >> 32;
+	__asm volatile("xrstor %0" : : "m" (*addr), "a" (lo), "d" (hi));
+}
 
 #endif
 

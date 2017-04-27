@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.32 2017/03/23 08:05:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.33 2017/04/27 06:16:39 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -638,6 +638,7 @@ struct vmx_gueststate
 	uint64_t	vg_rip;			/* 0x80 */
 	uint32_t	vg_exit_reason;		/* 0x88 */
 	uint64_t	vg_rflags;		/* 0x90 */
+	uint64_t	vg_xcr0;		/* 0x98 */
 };
 
 /*
@@ -649,6 +650,12 @@ struct vm;
  * Virtual CPU
  */
 struct vcpu {
+	/*
+	 * Guest FPU state - this must remain as the first member of the struct
+	 * to ensure 64-byte alignment (set up during vcpu_pool init)
+	 */
+	struct savefpu vc_g_fpu;
+
 	/* VMCS / VMCB pointer */
 	vaddr_t vc_control_va;
 	uint64_t vc_control_pa;
@@ -673,6 +680,10 @@ struct vcpu {
 
 	uint16_t vc_intr;
 	uint8_t vc_irqready;
+
+	uint8_t vc_fpuinited;
+
+	uint64_t vc_h_xcr0;
 
 	/* VMX only */
 	uint64_t vc_vmx_basic;
