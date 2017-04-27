@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.54 2017/01/25 07:24:34 jmc Exp $
+# $OpenBSD: mdoclint,v 1.55 2017/04/27 22:07:06 schwarze Exp $
 # $NetBSD: mdoclint,v 1.49 2014/06/23 18:10:21 wiz Exp $
 #
 # Copyright (c) 2001-2013 Thomas Klausner
@@ -39,8 +39,9 @@ use Getopt::Std;
 use constant {
 	OPENBSD => 1,
 	NETBSD => 0,
-	SECTION_SEE_ALSO => 2,
-	SECTION_AUTHORS => 3
+	SECTION_NAME => 2,
+	SECTION_SEE_ALSO => 3,
+	SECTION_AUTHORS => 4
 };
 
 use vars qw(
@@ -268,7 +269,7 @@ sub handle_options
 sub verify_xref
 {
 	my ($self, $page, $section, $pre, $post) = @_;
-	if ("$page.$section" eq $self->{fn}) {
+	if ($self->{names}{$page.$section}) {
 		$self->warning("Xref to itself (use .Nm instead)") if $opt_x;
 	}
 	# try to find corresponding man page
@@ -318,8 +319,11 @@ sub new
 		shseen => {},
 		last_error_name => '',
 		current_section_header => '',
+		sec => '0',
+		names => { $fn => 1 },
 		fn => $fn
 	};
+	$o->{sec} = $1 if $fn =~ /\.(.+?)$/;
 	open my $input, '<', $fn or die "can't open input file $fn";
 	$o->{file} = $input;
 	$o->{ln} = 0;
@@ -387,7 +391,9 @@ sub set_section_header
 
 	end_of_section($s);
 
-	if ($section_header eq 'SEE ALSO') {
+	if ($section_header eq 'NAME') {
+		$s->{in_section} = SECTION_NAME;
+	} elsif ($section_header eq 'SEE ALSO') {
 		$s->{in_section} = SECTION_SEE_ALSO;
 	} elsif ($section_header eq 'AUTHORS') {
 		$s->{in_section} = SECTION_AUTHORS;
@@ -466,9 +472,11 @@ sub process_line
 #	    	$section = $1;
 #	}
 	if (/^\.Dt\s+/o) {
-	    if (! /^\.Dt\s+(?:[A-Z\d._-]+)\s+$sections_re(?:\s+$arches_re)?$/o)  {
-		    $s->warning("bad .Dt: `$_'") if $opt_D;
-	    }
+		if (/^\.Dt\s+(?:[A-Z\d._-]+)\s+($sections_re)(?:\s+$arches_re)?$/o)  {
+			$s->{sec} = $1;
+		} else {
+			$s->warning("bad .Dt: `$_'") if $opt_D;
+		}
 	}
 
 	if ($s->{mandoc_p}) {
@@ -485,7 +493,11 @@ sub process_line
 		}
 	}
 
-	if ($s->{in_section} == SECTION_SEE_ALSO) {
+	if ($s->{in_section} == SECTION_NAME) {
+		if (/^\.Nm\s+(\S+)/o) {
+			$s->{names}{$1.$s->{sec}} = 1;
+		}
+	} elsif ($s->{in_section} == SECTION_SEE_ALSO) {
 		if (/^\.Xr\s+(\S+)\s+($sections_re)\s?(.*)?$/o) {
 			my ($saname, $sasection, $sarest) = ($1, $2, $3);
 			$saname =~ s/^\\&//o;
@@ -512,8 +524,7 @@ sub process_line
 			}
 			$s->{sarest} = "";
 		}
-	}
-	if ($s->{in_section} == SECTION_AUTHORS) {
+	} elsif ($s->{in_section} == SECTION_AUTHORS) {
 		if (/^\.An / && not /^\.An -(no|)split/) {
 			$s->{an_found} = 1;
 		}
