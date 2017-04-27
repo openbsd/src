@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.134 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.135 2017/04/27 06:49:05 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4214,7 +4214,7 @@ vmx_handle_inout(struct vcpu *vcpu)
 		break;
 	default:
 		/* Read from unsupported ports returns FFs */
-		if (vcpu->vc_exit.vei.vei_dir == 1) {
+		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
 			if (vcpu->vc_exit.vei.vei_size == 4)
 				vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
 			else if (vcpu->vc_exit.vei.vei_size == 2)
