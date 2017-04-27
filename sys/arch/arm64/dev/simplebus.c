@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.6 2017/02/22 22:55:27 patrick Exp $ */
+/* $OpenBSD: simplebus.c,v 1.7 2017/04/27 10:23:19 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -157,16 +157,16 @@ simplebus_attach_node(struct device *self, int node)
 {
 	struct simplebus_softc	*sc = (struct simplebus_softc *)self;
 	struct fdt_attach_args	 fa;
-	char			 buffer[128];
+	char			 buf[32];
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
 
-	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
+	if (OF_getproplen(node, "compatible") <= 0)
 		return;
 
-	if (OF_getprop(node, "status", buffer, sizeof(buffer)))
-		if (!strcmp(buffer, "disabled"))
-			return;
+	if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "disabled") == 0)
+		return;
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";

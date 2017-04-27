@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.11 2017/02/25 17:04:19 patrick Exp $
+# $OpenBSD: files.arm64,v 1.12 2017/04/27 10:23:19 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -23,6 +23,7 @@ file	arch/arm64/arm64/sig_machdep.c
 file	arch/arm64/arm64/syscall.c
 file	arch/arm64/arm64/sys_machdep.c
 
+file	arch/arm64/arm64/cpu.c
 file	arch/arm64/arm64/intr.c
 file	arch/arm64/arm64/softintr.c
 file	arch/arm64/arm64/vfp.c
@@ -74,6 +75,9 @@ include "dev/ata/files.ata"
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+
+device  cpu {}
+attach  cpu at mainbus
 
 #
 # Machine-independent HID support

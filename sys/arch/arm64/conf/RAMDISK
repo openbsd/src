@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.19 2017/03/10 03:27:50 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.20 2017/04/27 10:23:19 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -45,6 +45,7 @@ config		bsd	root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
+cpu0		at mainbus?
 simplebus*	at fdt?
 
 scsibus*	at scsi?

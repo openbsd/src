@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.3 2017/02/06 19:23:45 patrick Exp $ */
+/* $OpenBSD: armreg.h,v 1.4 2017/04/27 10:23:19 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -66,6 +66,13 @@
 #define	CTR_ILINE_SHIFT		0
 #define	CTR_ILINE_MASK		(0xf << CTR_ILINE_SHIFT)
 #define	CTR_ILINE_SIZE(reg)	(((reg) & CTR_ILINE_MASK) >> CTR_ILINE_SHIFT)
+
+/* MPIDR_EL1 - Multiprocessor Affinity Register */
+#define MPIDR_AFF3		(0xFFULL << 32)
+#define MPIDR_AFF2		(0xFFULL << 16)
+#define MPIDR_AFF1		(0xFFULL << 8)
+#define MPIDR_AFF0		(0xFFULL << 0)
+#define MPIDR_AFF		(MPIDR_AFF3|MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0)
 
 /* DCZID_EL0 - Data Cache Zero ID register */
 #define DCZID_DZP		(1 << 4) /* DC ZVA prohibited if non-0 */

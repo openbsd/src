@@ -1,6 +1,7 @@
-/* $OpenBSD: mainbus.c,v 1.3 2017/02/22 22:55:27 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.4 2017/04/27 10:23:19 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
+ * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +32,11 @@
 int mainbus_match(struct device *, void *, void *);
 void mainbus_attach(struct device *, struct device *, void *);
 
-void mainbus_attach_node(struct device *, int);
+void mainbus_attach_node(struct device *, int, cfmatch_t);
+int mainbus_match_status(struct device *, void *, void *);
+void mainbus_attach_cpus(struct device *, cfmatch_t);
+int mainbus_match_primary(struct device *, void *, void *);
+int mainbus_match_secondary(struct device *, void *, void *);
 
 struct mainbus_softc {
 	struct device		 sc_dev;
@@ -88,7 +93,7 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	char buffer[128];
+	char model[128];
 	int node, len;
 
 	if ((node = OF_peer(0)) == 0)
@@ -102,18 +107,16 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
-	if ((len = OF_getprop(node, "model", buffer, sizeof(buffer))) > 0) {
-		printf(": %s\n", buffer);
+	if ((len = OF_getprop(node, "model", model, sizeof(model))) > 0) {
+		printf(": %s\n", model);
 		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (hw_prod)
-			strlcpy(hw_prod, buffer, len);
+			strlcpy(hw_prod, model, len);
 	} else
 		printf(": unknown model\n");
 
-	/* Attach CPU first. */
-	mainbus_legacy_found(self, "cpu");
-
-	/* TODO: Scan for interrupt controllers and attach them first? */
+	/* Attach primary CPU first. */
+	mainbus_attach_cpus(self, mainbus_match_primary);
 
 	sc->sc_rangeslen = OF_getproplen(OF_peer(0), "ranges");
 	if (sc->sc_rangeslen > 0 && !(sc->sc_rangeslen % sizeof(uint32_t))) {
@@ -123,32 +126,26 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Scan the whole tree. */
-	for (node = OF_child(node);
-	    node != 0;
-	    node = OF_peer(node))
-	{
-		mainbus_attach_node(self, node);
-	}
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node, NULL);
+
+	/* Attach secondary CPUs. */
+	mainbus_attach_cpus(self, mainbus_match_secondary);
 }
 
 /*
  * Look for a driver that wants to be attached to this node.
  */
 void
-mainbus_attach_node(struct device *self, int node)
+mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 {
 	struct mainbus_softc	*sc = (struct mainbus_softc *)self;
 	struct fdt_attach_args	 fa;
-	char			 buffer[128];
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
 
-	if (!OF_getprop(node, "compatible", buffer, sizeof(buffer)))
+	if (OF_getproplen(node, "compatible") <= 0)
 		return;
-
-	if (OF_getprop(node, "status", buffer, sizeof(buffer)))
-		if (!strcmp(buffer, "disabled"))
-			return;
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";
@@ -196,24 +193,72 @@ mainbus_attach_node(struct device *self, int node)
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
-	/* TODO: attach the device's clocks first? */
-
-	config_found(self, &fa, NULL);
+	if (submatch == NULL)
+		submatch = mainbus_match_status;
+	config_found_sm(self, &fa, NULL, submatch);
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
 }
 
-/*
- * Legacy support for SoCs that do not use FDT.
- */
-void
-mainbus_legacy_found(struct device *self, char *name)
+int
+mainbus_match_status(struct device *parent, void *match, void *aux)
 {
-	union mainbus_attach_args ma;
+	struct fdt_attach_args *fa = aux;
+	struct cfdata *cf = match;
+	char buf[32];
 
-	memset(&ma, 0, sizeof(ma));
-	ma.ma_name = name;
+	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "disabled") == 0)
+		return 0;
 
-	config_found(self, &ma, NULL);
+	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+void
+mainbus_attach_cpus(struct device *self, cfmatch_t match)
+{
+	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	int node = OF_finddevice("/cpus");
+	int acells, scells;
+
+	if (node == 0)
+		return;
+
+	acells = sc->sc_acells;
+	scells = sc->sc_scells;
+	sc->sc_acells = OF_getpropint(node, "#address-cells", 2);
+	sc->sc_scells = OF_getpropint(node, "#size-cells", 0);
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node, match);
+
+	sc->sc_acells = acells;
+	sc->sc_scells = scells;
+}
+
+int
+mainbus_match_primary(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *fa = aux;
+	struct cfdata *cf = match;
+	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
+
+	if (fa->fa_nreg < 1 || fa->fa_reg[0].addr != (mpidr & MPIDR_AFF))
+		return 0;
+
+	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+int
+mainbus_match_secondary(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *fa = aux;
+	struct cfdata *cf = match;
+	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
+
+	if (fa->fa_nreg < 1 || fa->fa_reg[0].addr == (mpidr & MPIDR_AFF))
+		return 0;
+
+	return (*cf->cf_attach->ca_match)(parent, match, aux);
 }

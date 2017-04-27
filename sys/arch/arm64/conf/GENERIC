@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.22 2017/03/10 03:27:50 jsg Exp $
+# $OpenBSD: GENERIC,v 1.23 2017/04/27 10:23:19 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -35,6 +35,7 @@ config		bsd	swap generic
 
 # The main bus device
 mainbus0	at root
+cpu0		at mainbus?
 simplebus*	at fdt?
 
 scsibus*	at scsi?

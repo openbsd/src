@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: mainbus.h,v 1.2 2017/04/27 10:23:19 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,7 +23,5 @@ union mainbus_attach_args {
 	const char		*ma_name;
 	struct fdt_attach_args	 ma_faa;
 };
-
-void mainbus_legacy_found(struct device *, char *);
 
 #endif /* __MAINBUS_H__ */
