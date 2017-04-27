@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.52 2017/04/27 00:02:03 dlg Exp $
+.\" $OpenBSD: gcc-local.1,v 1.53 2017/04/27 06:22:11 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -163,7 +163,7 @@ or have references to local frame addresses.
 On amd64,
 .Fl msave-args
 can be passed to the compiler to have functions save their register
-arguments on the stack, while maintaining compatability with the
+arguments on the stack, while maintaining compatibility with the
 System 5 AMD64 ABI.
 This enables tools and debuggers that understand this semantic to
 trivially generate stack traces that include function arguments.
