@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.324 2017/04/05 04:15:44 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.325 2017/04/27 21:39:27 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -431,10 +431,26 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxthread));
 	case KERN_NTHREADS:
 		return (sysctl_rdint(oldp, oldlenp, newp, nthreads));
-	case KERN_SOMAXCONN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &somaxconn));
-	case KERN_SOMINCONN:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &sominconn));
+	case KERN_SOMAXCONN: {
+		int val = somaxconn;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (error)
+			return error;
+		if (val < 0 || val > SHRT_MAX)
+			return EINVAL;
+		somaxconn = val;
+		return 0;
+	}
+	case KERN_SOMINCONN: {
+		int val = sominconn;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (error)
+			return error;
+		if (val < 0 || val > SHRT_MAX)
+			return EINVAL;
+		sominconn = val;
+		return 0;
+	}
 	case KERN_NOSUIDCOREDUMP:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
 	case KERN_FSYNC:
