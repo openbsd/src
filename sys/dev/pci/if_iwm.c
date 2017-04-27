@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.176 2017/04/27 05:46:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.177 2017/04/27 06:14:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3444,7 +3444,7 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 		in->in_mn.ampdu_size = le16toh(tx_resp->byte_cnt);
 		in->in_mn.agglen = tx_resp->frame_count;
 		if (tx_resp->failure_frame > 0)
-			in->in_mn.retries++;
+			in->in_mn.retries += tx_resp->failure_frame;
 		if (txfail)
 			in->in_mn.txfail += tx_resp->frame_count;
 		if (ic->ic_state == IEEE80211_S_RUN)
