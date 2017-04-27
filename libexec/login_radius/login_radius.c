@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.8 2015/11/26 19:59:18 yasuoka Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.9 2017/04/27 20:55:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 	    strcmp(service, "login") ? challenge : NULL, password, &emsg);
 
 	if (c == 0) {
-		if (challenge == NULL || *challenge == '\0')
+		if (*challenge == '\0')
 			(void)fprintf(back, BI_AUTH "\n");
 		else {
 			(void)fprintf(back, BI_VALUE " challenge %s\n",
