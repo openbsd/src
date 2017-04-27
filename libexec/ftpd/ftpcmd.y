@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.65 2017/04/17 21:49:01 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.66 2017/04/27 13:30:54 mikeb Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -956,6 +956,8 @@ check_login
 			else {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
+				state = 0;
+				YYABORT;
 			}
 		}
 	;
@@ -966,6 +968,8 @@ check_login_epsvall
 			if (!logged_in) {
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
+				state = 0;
+				YYABORT;
 			} else if (epsvall) {
 				reply(501, "the command is disallowed "
 				    "after EPSV ALL");
