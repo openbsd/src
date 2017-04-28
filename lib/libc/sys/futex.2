@@ -1,4 +1,4 @@
-.\" $OpenBSD: futex.2,v 1.2 2017/04/28 14:30:54 jmc Exp $
+.\" $OpenBSD: futex.2,v 1.3 2017/04/28 17:54:24 mpi Exp $
 .\"
 .\" Copyright (c) 2017 Martin Pieuchot
 .\"
@@ -127,6 +127,12 @@ A signal arrived.
 .Xr pthread_cond_wait 3 ,
 .Xr pthread_mutex_lock 3 ,
 .Xr tsleep 9
+.Rs
+.%A Ulrich Drepper
+.%T Futexes Are Tricky
+.%U https://www.akkadia.org/drepper/futex.pdf
+.%D November 5, 2011
+.Re
 .Sh HISTORY
 The
 .Fn futex
