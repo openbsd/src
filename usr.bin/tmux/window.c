@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.190 2017/04/20 17:49:26 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.191 2017/04/28 19:12:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -186,7 +186,7 @@ winlink_set_window(struct winlink *wl, struct window *w)
 {
 	if (wl->window != NULL) {
 		TAILQ_REMOVE(&wl->window->winlinks, wl, wentry);
-		window_remove_ref(w);
+		window_remove_ref(wl->window);
 	}
 	TAILQ_INSERT_TAIL(&w->winlinks, wl, wentry);
 	wl->window = w;
