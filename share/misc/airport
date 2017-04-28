@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.57 2016/10/04 17:27:39 fcambus Exp $
+#	$OpenBSD: airport,v 1.58 2017/04/28 13:50:02 benno Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -940,6 +940,7 @@ LCY:London City, England, United Kingdom
 LDB:Londrina, Parana, Brazil
 LDE:Tarbes International, Lourdes/Tarbes, France
 LDU:Lahad Datu, Sabah, Malaysia
+LDY:City of Derry Airport, Londonderry, Northern Ireland, United Kingdom
 LEA:Learmonth, Western Australia, Australia
 LEB:Lebanon Regional, Lebanon/Hanover/White River, New Hampshire, USA
 LED:Pulkovo, St. Petersburg, Russia
