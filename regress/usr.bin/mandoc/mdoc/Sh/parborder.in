@@ -1,0 +1,21 @@
+.Dd April 28, 2017
+.Dt SH-PARBORDER 1
+.Os OpenBSD
+.Sh NAME
+.Nm Sh-parborder
+.Nd paragraph macros at the beginning and end of sections
+.Sh DESCRIPTION
+.Pp
+descriptive text
+.Pp
+.Sh EXAMPLES
+.Pp
+example text
+.Pp
+.Ss Subsection
+.Pp
+subsection text
+.Pp
+.Ss Another subsection
+more subsection text
+.Pp

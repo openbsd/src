@@ -1,0 +1,23 @@
+SH-PARBORDER(1) - General Commands Manual
+
+# NAME
+
+**Sh-parborder** - paragraph macros at the beginning and end of sections
+
+# DESCRIPTION
+
+descriptive text
+
+# EXAMPLES
+
+example text
+
+## Subsection
+
+subsection text
+
+## Another subsection
+
+more subsection text
+
+OpenBSD - April 28, 2017

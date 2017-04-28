@@ -1,11 +1,16 @@
-# $OpenBSD: Makefile,v 1.9 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.10 2017/04/28 16:23:30 schwarze Exp $
 
 REGRESS_TARGETS	 = badNAME before empty emptyNAME first nohead order
-REGRESS_TARGETS	+= orderNAME punctNAME subbefore
+REGRESS_TARGETS	+= orderNAME parbefore parborder punctNAME subbefore
 LINT_TARGETS	 = badNAME before empty emptyNAME first nohead order
-LINT_TARGETS	+= orderNAME punctNAME subbefore
+LINT_TARGETS	+= orderNAME parbefore parborder punctNAME subbefore
 
-SKIP_GROFF	= subbefore first empty
-SKIP_ASCII	= first
+# groff-1.22.3 defects:
+# - .Pp before .Sh NAME causes a blank line before the header line
+# - .Ss before .Sh NAME puts the subsection header before the header line
+# - missing .Sh NAME causes loss of the header and footer lines
+# - .Sh DESCRIPTION Xo aborts the parser
+
+SKIP_GROFF	= parbefore subbefore first empty
 
 .include <bsd.regress.mk>

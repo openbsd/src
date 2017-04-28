@@ -1,0 +1,7 @@
+mandoc: parborder.in:8:2: WARNING: skipping paragraph macro: Pp after Sh
+mandoc: parborder.in:10:2: WARNING: skipping paragraph macro: Pp at the end of Sh
+mandoc: parborder.in:12:2: WARNING: skipping paragraph macro: Pp after Sh
+mandoc: parborder.in:16:2: WARNING: skipping paragraph macro: Pp after Ss
+mandoc: parborder.in:18:2: WARNING: skipping paragraph macro: Pp at the end of Ss
+mandoc: parborder.in:14:2: WARNING: skipping paragraph macro: Pp before Ss
+mandoc: parborder.in:21:2: WARNING: skipping paragraph macro: Pp at the end of Ss

@@ -1,0 +1,9 @@
+.Dd April 28, 2017
+.Dt SH-PARBEFORE 1
+.Os OpenBSD
+.Pp
+.Sh NAME
+.Nm Sh-parbefore
+.Nd paragraph macro before the first section header
+.Sh DESCRIPTION
+some text

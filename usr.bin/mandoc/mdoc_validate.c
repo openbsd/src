@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.236 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.237 2017/04/28 16:23:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2003,6 +2003,9 @@ post_ignpar(POST_ARGS)
 	struct roff_node *np;
 
 	switch (mdoc->last->type) {
+	case ROFFT_BLOCK:
+		post_prevpar(mdoc);
+		return;
 	case ROFFT_HEAD:
 		post_hyph(mdoc);
 		return;
