@@ -1,4 +1,4 @@
-#	$OpenBSD: integrity.sh,v 1.20 2017/01/06 02:26:10 dtucker Exp $
+#	$OpenBSD: integrity.sh,v 1.21 2017/04/28 04:00:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="integrity"
@@ -23,8 +23,9 @@ for m in $macs; do
 	etmo=0
 	ecnt=0
 	skip=0
-	for off in $(jot $tries $startoffset); do
-		if [ $((skip--)) -gt 0 ]; then
+	for off in `jot $tries $startoffset`; do
+		skip=`expr $skip - 1`
+		if [ $skip -gt 0 ]; then
 			# avoid modifying the high bytes of the length
 			continue
 		fi
@@ -46,14 +47,14 @@ for m in $macs; do
 		if [ $? -eq 0 ]; then
 			fail "ssh -m $m succeeds with bit-flip at $off"
 		fi
-		ecnt=$((ecnt+1))
+		ecnt=`expr $ecnt + 1`
 		out=$(egrep -v "^debug" $TEST_SSH_LOGFILE | tail -2 | \
 		     tr -s '\r\n' '.')
 		case "$out" in
-		Bad?packet*)	elen=$((elen+1)); skip=2;;
+		Bad?packet*)	elen=`expr $elen + 1`; skip=3;;
 		Corrupted?MAC* | *message?authentication?code?incorrect*)
-				emac=$((emac+1)); skip=0;;
-		padding*)	epad=$((epad+1)); skip=0;;
+				emac=`expr $emac + 1`; skip=0;;
+		padding*)	epad=`expr $epad + 1`; skip=0;;
 		*)		fail "unexpected error mac $m at $off: $out";;
 		esac
 	done
@@ -61,7 +62,7 @@ for m in $macs; do
 	if [ $emac -eq 0 ]; then
 		fail "$m: no mac errors"
 	fi
-	expect=$((ecnt-epad-elen))
+	expect=`expr $ecnt - $epad - $elen`
 	if [ $emac -ne $expect ]; then
 		fail "$m: expected $expect mac errors, got $emac"
 	fi
