@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.56 2017/04/27 22:27:43 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.57 2017/04/28 14:11:01 schwarze Exp $
 # $NetBSD: mdoclint,v 1.65 2017/04/25 13:17:38 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -41,11 +41,10 @@ use constant {
 	NETBSD => 0,
 	SECTION_NAME => 2,
 	SECTION_SEE_ALSO => 3,
-	SECTION_AUTHORS => 4
 };
 
 use vars qw(
-	$opt_A $opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
+	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
 	$opt_m
 	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v $opt_w
 	$opt_X $opt_x
@@ -54,16 +53,15 @@ use vars qw(
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="AaDdeFfHhlmnoPprSsvwXx";
+my $options="aDdeFfHhlmnoPprSsvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-AaDdfmnoPprSsXx" : "-AaDdeflmnoPprSsXx";
+	my $default = OPENBSD ? "-aDdfmnoPprSsXx" : "-aDdeflmnoPprSsXx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
-	-A	warn about missing .An in AUTHORS section
 	-a	warn about SEE ALSO section problems
 	-D	warn about bad casing and archs in .Dt
 	-d	warn about bad date strings (in .Dd only)
@@ -255,12 +253,12 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_A or $opt_a or $opt_D or $opt_d or $opt_e
+	unless ($opt_a or $opt_D or $opt_d or $opt_e
 		or $opt_f or $opt_H or $opt_l
 		or $opt_m or $opt_n
 		or $opt_o or $opt_P or $opt_p or $opt_r
 		or $opt_S or $opt_s or $opt_X or $opt_x) {
-		$opt_A = $opt_a = $opt_D = $opt_d = $opt_f = $opt_m =
+		$opt_a = $opt_D = $opt_d = $opt_f = $opt_m =
 		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S =
 		    $opt_s = $opt_X = $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
@@ -316,7 +314,6 @@ sub new
 		sasection => 0,
 		saname => '',
 		sarest => ',',
-		inauthors => 0,
 		in_section => 0,
 		inliteral => 0,
 		shseen => {},
@@ -379,12 +376,6 @@ sub end_of_section
 		# to avoid a second warning at EOF
 		$s->{sarest} = "";
 	}
-
-	if ($s->{in_section} == SECTION_AUTHORS) {
-	    if (!$s->{an_found}) {
-		$s->warning("missing .An in AUTHORS section") if $opt_A;
-	    }
-	}
 }
 
 sub set_section_header
@@ -398,8 +389,6 @@ sub set_section_header
 		$s->{in_section} = SECTION_NAME;
 	} elsif ($section_header eq 'SEE ALSO') {
 		$s->{in_section} = SECTION_SEE_ALSO;
-	} elsif ($section_header eq 'AUTHORS') {
-		$s->{in_section} = SECTION_AUTHORS;
 	} else {
 		$s->{in_section} = 0;
 	}
@@ -526,10 +515,6 @@ sub process_line
 				    "`$s->{sarest}'") if $opt_a;
 			}
 			$s->{sarest} = "";
-		}
-	} elsif ($s->{in_section} == SECTION_AUTHORS) {
-		if (/^\.An / && not /^\.An -(no|)split/) {
-			$s->{an_found} = 1;
 		}
 	}
 
