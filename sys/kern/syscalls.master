@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.175 2017/04/13 04:06:46 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.176 2017/04/28 13:50:55 mpi Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -187,7 +187,8 @@
 			    const gid_t *gidset); }
 81	STD		{ int sys_getpgrp(void); }
 82	STD		{ int sys_setpgid(pid_t pid, pid_t pgid); }
-83	OBSOL		osendsyslog
+83	STD NOLOCK	{ int sys_futex(uint32_t *f, int op, int val, \
+			    const struct timespec *timeout, uint32_t *g); }
 84	STD		{ int sys_utimensat(int fd, const char *path, \
 			    const struct timespec *times, int flag); }
 85	STD		{ int sys_futimens(int fd, \

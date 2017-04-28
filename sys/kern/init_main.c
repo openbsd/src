@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.268 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.269 2017/04/28 13:50:55 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ void	db_ctf_init(void);
 void	prof_init(void);
 void	init_exec(void);
 void	kqueue_init(void);
+void	futex_init(void);
 void	taskq_init(void);
 void	timeout_proc_init(void);
 void	pool_gc_pages(void *);
@@ -263,6 +264,11 @@ main(void *framep)
 	 * Initialize kqueues.
 	 */
 	kqueue_init();
+
+	/*
+	 * Initialize futexes.
+	 */
+	futex_init();
 
 	/* Create credentials. */
 	p->p_ucred = crget();

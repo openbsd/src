@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.238 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.239 2017/04/28 13:50:55 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -280,7 +280,10 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* The process of this thread. */
-	TAILQ_ENTRY(proc) p_thr_link;/* Threads in a process linkage. */
+	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
+
+	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
+	struct	futex	*p_futex;	/* Current sleeping futex. */
 
 	/* substructures: */
 	struct	filedesc *p_fd;		/* copy of p_p->ps_fd */
