@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.2 2017/04/05 11:31:45 bluhm Exp $	*/
+/*	$OpenBSD: log.h,v 1.3 2017/04/28 14:52:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,8 +26,6 @@
 
 void	log_init(int, int);
 void	log_procinit(const char *);
-void	log_setdebug(int);
-int	log_getdebug(void);
 void	log_setverbose(int);
 int	log_getverbose(void);
 void	log_warn(const char *, ...)

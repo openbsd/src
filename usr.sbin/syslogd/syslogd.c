@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.243 2017/04/25 17:45:50 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.244 2017/04/28 14:52:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -204,6 +204,7 @@ int	Debug;			/* debug flag */
 int	Foreground;		/* run in foreground, instead of daemonizing */
 char	LocalHostName[HOST_NAME_MAX+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
+int	Started = 0;		/* set after privsep */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
@@ -465,7 +466,6 @@ main(int argc, char *argv[])
 
 	log_init(Debug, LOG_SYSLOG);
 	log_procinit("syslogd");
-	log_setdebug(1);
 	if (Debug)
 		setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -731,6 +731,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio unix inet recvfd", NULL) == -1)
 		err(1, "pledge");
 
+	Started = 1;
+
 	/* Process is now unprivileged and inside a chroot */
 	if (Debug)
 		event_set_log_callback(logevent);
@@ -790,8 +792,6 @@ main(int argc, char *argv[])
 	evtimer_set(ev_mark, mark_timercb, ev_mark);
 
 	init();
-
-	log_setdebug(0);
 
 	/* Allocate ctl socket reply buffer if we have a ctl socket */
 	if (fd_ctlsock != -1 &&
@@ -1627,6 +1627,10 @@ vlogmsg(int pri, const char *proc, const char *fmt, va_list ap)
 	l = snprintf(msg, sizeof(msg), "%s[%d]: ", proc, getpid());
 	if (l < sizeof(msg))
 		vsnprintf(msg + l, sizeof(msg) - l, fmt, ap);
+	if (!Started) {
+		fprintf(stderr, "%s\n", msg);
+		return;
+	}
 	logline(pri, ADDDATE, LocalHostName, msg);
 }
 
@@ -1763,6 +1767,10 @@ logline(int pri, int flags, char *from, char *msg)
 		f->f_file = priv_open_tty(ctty);
 
 		if (f->f_file >= 0) {
+			strlcpy(f->f_lasttime, timestamp,
+			    sizeof(f->f_lasttime));
+			strlcpy(f->f_prevhost, from,
+			    sizeof(f->f_prevhost));
 			fprintlog(f, flags, msg);
 			(void)close(f->f_file);
 			f->f_file = -1;
