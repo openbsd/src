@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.191 2017/04/28 19:12:15 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.192 2017/04/28 19:13:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -186,11 +186,11 @@ winlink_set_window(struct winlink *wl, struct window *w)
 {
 	if (wl->window != NULL) {
 		TAILQ_REMOVE(&wl->window->winlinks, wl, wentry);
-		window_remove_ref(wl->window);
+		window_remove_ref(wl->window, __func__);
 	}
 	TAILQ_INSERT_TAIL(&w->winlinks, wl, wentry);
 	wl->window = w;
-	w->references++;
+	window_add_ref(w, __func__);
 }
 
 void
@@ -200,7 +200,7 @@ winlink_remove(struct winlinks *wwl, struct winlink *wl)
 
 	if (w != NULL) {
 		TAILQ_REMOVE(&w->winlinks, wl, wentry);
-		window_remove_ref(w);
+		window_remove_ref(w, __func__);
 	}
 
 	RB_REMOVE(winlinks, wwl, wl);
@@ -361,8 +361,7 @@ window_create_spawn(const char *name, int argc, char **argv, const char *path,
 static void
 window_destroy(struct window *w)
 {
-	if (!TAILQ_EMPTY(&w->winlinks))
-		fatalx("window destroyed with winlinks");
+	log_debug("window @%u destroyed (%d references)", w->id, w->references);
 
 	RB_REMOVE(windows, &windows, w);
 
@@ -387,11 +386,18 @@ window_destroy(struct window *w)
 }
 
 void
-window_remove_ref(struct window *w)
+window_add_ref(struct window *w, const char *from)
 {
-	if (w->references == 0)
-		fatal("bad reference count");
+	w->references++;
+	log_debug("%s: @%u %s, now %d", __func__, w->id, from, w->references);
+}
+
+void
+window_remove_ref(struct window *w, const char *from)
+{
 	w->references--;
+	log_debug("%s: @%u %s, now %d", __func__, w->id, from, w->references);
+
 	if (w->references == 0)
 		window_destroy(w);
 }

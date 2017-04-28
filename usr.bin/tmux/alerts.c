@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.18 2017/04/28 19:10:48 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.19 2017/04/28 19:13:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -64,7 +64,7 @@ alerts_callback(__unused int fd, __unused short events, __unused void *arg)
 		TAILQ_REMOVE(&alerts_list, w, alerts_entry);
 
 		w->flags &= ~WINDOW_ALERTFLAGS;
-		window_remove_ref(w);
+		window_remove_ref(w, __func__);
 	}
 	alerts_fired = 0;
 }
@@ -148,7 +148,7 @@ alerts_queue(struct window *w, int flags)
 		if (!w->alerts_queued) {
 			w->alerts_queued = 1;
 			TAILQ_INSERT_TAIL(&alerts_list, w, alerts_entry);
-			w->references++;
+			window_add_ref(w, __func__);
 		}
 
 		if (!alerts_fired) {
