@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.63 2017/04/28 22:46:40 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.64 2017/04/28 23:03:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -541,15 +541,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	/* Safety net, error returns must set ctx->error */
 	if (ok <= 0 && ctx->error == X509_V_OK)
 		ctx->error = X509_V_ERR_UNSPECIFIED;
-
-	/*
-	 * Safety net, if user provided verify callback indicates sucess
-	 * make sure they have set error to X509_V_OK
-	 */
-	if (ctx->verify_cb != null_callback && ok == 1)
-		ctx->error = X509_V_OK;
-
-	return(ctx->error == X509_V_OK);
+	return ok;
 }
 
 /* Given a STACK_OF(X509) find the issuer of cert (if any)
