@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.657 2017/01/05 12:42:18 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.658 2017/04/28 14:15:45 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4368,7 +4368,6 @@ expand_divertspec(struct pf_rule *r, struct divertspec *ds)
 		return (1);
 	}
 	if (r->af) {
-		n = ds->addr;
 		for (n = ds->addr; n != NULL; n = n->next)
 			if (n->af == r->af)
 				break;
@@ -5442,7 +5441,6 @@ parse_config(char *filename, struct pfctl *xpf)
 	struct sym	*sym;
 
 	pf = xpf;
-	errors = 0;
 	returnicmpdefault = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
 	returnicmp6default =
 	    (ICMP6_DST_UNREACH << 8) | ICMP6_DST_UNREACH_NOPORT;
