@@ -1,4 +1,4 @@
-/* $OpenBSD: malloc-wrapper.c,v 1.3 2014/04/20 14:32:19 jsing Exp $ */
+/* $OpenBSD: malloc-wrapper.c,v 1.4 2017/04/28 22:38:51 beck Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -165,8 +165,7 @@ CRYPTO_realloc_clean(void *ptr, int old_len, int num, const char *file,
 	ret = malloc(num);
 	if (ret && ptr && old_len > 0) {
 		memcpy(ret, ptr, old_len);
-		explicit_bzero(ptr, old_len);
-		free(ptr);
+		freezero(ptr, old_len);
 	}
 	return ret;
 }
