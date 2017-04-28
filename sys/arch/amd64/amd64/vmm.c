@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.135 2017/04/27 06:49:05 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.136 2017/04/28 07:44:36 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2055,8 +2055,10 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_ENABLE_VPID, 1))
+		    IA32_VMX_ENABLE_VPID, 1)) {
 			want1 |= IA32_VMX_ENABLE_VPID;
+			vcpu->vc_vmx_vpid_enabled = 1;
+		}
 	}
 
 	if (vmm_softc->mode == VMM_MODE_EPT)
@@ -3565,10 +3567,12 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			}
 		}
 
-		/* Invalidate old TLB mappings */
-		vid.vid_vpid = vcpu->vc_parent->vm_id;
-		vid.vid_addr = 0;
-		invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+		if (vcpu->vc_vmx_vpid_enabled) {
+			/* Invalidate old TLB mappings */
+			vid.vid_vpid = vcpu->vc_parent->vm_id;
+			vid.vid_addr = 0;
+			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+		}
 
 		/* Start / resume the VCPU */
 		KERNEL_ASSERT_LOCKED();
