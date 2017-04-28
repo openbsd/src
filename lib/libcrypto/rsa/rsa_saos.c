@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_saos.c,v 1.21 2017/04/28 22:38:51 beck Exp $ */
+/* $OpenBSD: rsa_saos.c,v 1.22 2017/04/28 22:46:40 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -96,8 +96,8 @@ RSA_sign_ASN1_OCTET_STRING(int type, const unsigned char *m, unsigned int m_len,
 	else
 		*siglen = i;
 
-	freezero(s, (unsigned int)j + 1);
-
+	explicit_bzero(s, (unsigned int)j + 1);
+	free(s);
 	return ret;
 }
 
@@ -137,7 +137,9 @@ RSA_verify_ASN1_OCTET_STRING(int dtype, const unsigned char *m,
 		ret = 1;
 err:
 	ASN1_OCTET_STRING_free(sig);
-	freezero(s, siglen);
-
+	if (s != NULL) {
+		explicit_bzero(s, (unsigned int)siglen);
+		free(s);
+	}
 	return ret;
 }
