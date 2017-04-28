@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.4 2017/04/08 19:06:04 mlarkin Exp $ */
+/* $OpenBSD: i8253.h,v 1.5 2017/04/28 08:14:48 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #define TIMER_RB_C2	0x8	/* read back channel 1 */
 
 /* i8253 registers */
-struct i8253_counter {
+struct i8253_channel {
 	struct timeval tv;	/* timer start time */
 	uint16_t start;		/* starting value */
 	uint16_t olatch;	/* output latch */
