@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.31 2016/06/07 06:12:37 deraadt Exp $
+# $OpenBSD: mksubr,v 1.32 2017/04/28 13:53:05 mpi Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -301,6 +301,7 @@ cat <<_EOF_
 #endif
 #include <ufs/ufs/quota.h>
 #include <sys/syslog.h>
+#include <sys/futex.h>
 
 #include "kdump_subr.h"
 
@@ -363,6 +364,7 @@ auto_orz_type "pollfdeventname" "POLL[^_][[:alnum:]_]+[[:space:]]+0x" "sys/poll.
 # exclude EV_{SYSFLAGS,FLAG1}
 auto_orz_type "evflagsname" "EV_[^S][A-Z]+[[:space:]]+0x" "sys/event.h"
 auto_orz_type "syslogflagname" "LOG_[A-Z]+[[:space:]]+0x0*[1248]0*[[:space:]]" "sys/syslog.h"
+auto_orz_type "futexflagname" "FUTEX_[A-Z_]+[[:space:]]+[0-9]+" "sys/futex.h"
 
 cat <<_EOF_
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.129 2016/07/18 09:36:50 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.130 2017/04/28 13:53:05 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -551,6 +551,7 @@ static void (*formatters[])(int) = {
 	uidname,
 	gidname,
 	syslogflagname,
+	futexflagname,
 };
 
 enum {
@@ -634,6 +635,7 @@ enum {
 	Uidname,
 	Gidname,
 	Syslogflagname,
+	Futexflagname,
 };
 
 #define Pptr		Phexlong
@@ -730,6 +732,7 @@ static const formatter scargs[][8] = {
     [SYS_getgroups]	= { Pcount, Pptr },
     [SYS_setgroups]	= { Pcount, Pptr },
     [SYS_setpgid]	= { Ppid_t, Ppid_t },
+    [SYS_futex]		= { Pptr, Futexflagname, Pcount, Pptr, Pptr },
     [SYS_sendsyslog]	= { Pptr, Psize, Syslogflagname },
     [SYS_utimensat]	= { Atfd, Ppath, Pptr, Atflagsname },
     [SYS_futimens]	= { Pfd, Pptr },
