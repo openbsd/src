@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.136 2017/04/28 07:44:36 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.137 2017/04/28 10:09:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2843,6 +2843,9 @@ vcpu_deinit(struct vcpu *vcpu)
  * vm_teardown
  *
  * Tears down (destroys) the vm indicated by 'vm'.
+ *
+ * Parameters:
+ *  vm: vm to be torn down
  */
 void
 vm_teardown(struct vm *vm)
@@ -3122,6 +3125,14 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
  * vm_get_info
  *
  * Returns information about the VM indicated by 'vip'.
+ *
+ * Parameters:
+ *  vip: information structure identifying the VM to queery
+ *
+ * Return values:
+ *  0: the operation succeeded
+ *  ENOMEM: memory allocation error during processng
+ *  EFAULT: error copying data to user process
  */
 int
 vm_get_info(struct vm_info_params *vip)
@@ -3185,6 +3196,13 @@ vm_get_info(struct vm_info_params *vip)
  * vm_terminate
  *
  * Terminates the VM indicated by 'vtp'.
+ *
+ * Parameters:
+ *  vtp: structure defining the VM to terminate
+ *
+ * Return values:
+ *  0: the VM was terminated
+ *  !0: the VM could not be located
  */
 int
 vm_terminate(struct vm_terminate_params *vtp)
@@ -3235,6 +3253,18 @@ vm_terminate(struct vm_terminate_params *vtp)
  * vm_run
  *
  * Run the vm / vcpu specified by 'vrp'
+ *
+ * Parameters:
+ *  vrp: structure defining the VM to run
+ *
+ * Return value:
+ *  ENOENT: the VM defined in 'vrp' could not be located
+ *  EBUSY: the VM defined in 'vrp' is already running
+ *  EFAULT: error copying data from userspace (vmd) on return from previous
+ *      exit.
+ *  EAGAIN: help is needed from vmd(8) (device I/O or exit vmm(4) cannot
+ *      handle in-kernel.)
+ *  0: the run loop exited and no help is needed from vmd(8)
  */
 int
 vm_run(struct vm_run_params *vrp)
@@ -3348,6 +3378,13 @@ vm_run(struct vm_run_params *vrp)
  * such as:
  * - the VM was requested to terminate
  * - the proc running this VCPU has pending signals
+ *
+ * Parameters:
+ *  vcpu: the VCPU to check
+ *
+ * Return values:
+ *  1: the VM owning this VCPU should stop
+ *  0: no stop is needed
  */
 int
 vcpu_must_stop(struct vcpu *vcpu)
