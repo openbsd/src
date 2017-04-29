@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2017/03/05 14:39:53 jsing Exp $
+# $OpenBSD: Makefile,v 1.33 2017/04/29 22:22:24 beck Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -19,6 +19,7 @@ CFLAGS+= -DLIBRESSL_INTERNAL
 CFLAGS+= -I${.CURDIR}
 
 LDADD+= -L${BSDOBJDIR}/lib/libcrypto -lcrypto
+LDADD+= -L${BSDOBJDIR}/lib/libpthread -lpthread
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
