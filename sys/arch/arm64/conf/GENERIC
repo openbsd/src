@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.23 2017/04/27 10:23:19 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.24 2017/04/29 17:24:41 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -47,6 +47,7 @@ uk*		at scsibus?
 
 ampintc*	at fdt?
 ampintcmsi*	at fdt?
+agintc*		at fdt?
 agtimer*	at fdt?
 ahci*		at fdt?
 pciecam*	at fdt?
