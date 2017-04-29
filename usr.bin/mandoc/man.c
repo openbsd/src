@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.117 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.118 2017/04/29 12:43:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -143,26 +143,19 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 {
 	struct roff_node *n;
 	const char	*cp;
-	int		 tok;
-	int		 i, ppos;
+	size_t		 sz;
+	enum roff_tok	 tok;
+	int		 ppos;
 	int		 bline;
-	char		 mac[5];
+
+	/* Determine the line macro. */
 
 	ppos = offs;
-
-	/*
-	 * Copy the first word into a nil-terminated buffer.
-	 * Stop when a space, tab, escape, or eoln is encountered.
-	 */
-
-	i = 0;
-	while (i < 4 && strchr(" \t\\", buf[offs]) == NULL)
-		mac[i++] = buf[offs++];
-
-	mac[i] = '\0';
-
-	tok = (i > 0 && i < 4) ? man_hash_find(mac) : TOKEN_NONE;
-
+	tok = TOKEN_NONE;
+	for (sz = 0; sz < 4 && strchr(" \t\\", buf[offs]) == NULL; sz++)
+		offs++;
+	if (sz > 0 && sz < 4)
+		tok = roffhash_find(man->manmac, buf + ppos, sz);
 	if (tok == TOKEN_NONE) {
 		mandoc_msg(MANDOCERR_MACRO, man->parse,
 		    ln, ppos, buf + ppos - 1);

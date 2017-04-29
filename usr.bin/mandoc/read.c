@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.135 2017/03/07 20:00:02 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.136 2017/04/29 12:43:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -289,14 +289,15 @@ choose_parser(struct mparse *curp)
 	}
 
 	if (format == MPARSE_MDOC) {
-		mdoc_hash_init();
 		curp->man->macroset = MACROSET_MDOC;
-		curp->man->first->tok = TOKEN_NONE;
+		if (curp->man->mdocmac == NULL)
+			curp->man->mdocmac = roffhash_alloc(MDOC_Dd, MDOC_MAX);
 	} else {
-		man_hash_init();
 		curp->man->macroset = MACROSET_MAN;
-		curp->man->first->tok = TOKEN_NONE;
+		if (curp->man->manmac == NULL)
+			curp->man->manmac = roffhash_alloc(MAN_TH, MAN_MAX);
 	}
+	curp->man->first->tok = TOKEN_NONE;
 }
 
 /*
@@ -801,11 +802,13 @@ mparse_alloc(int options, enum mandoclevel wlevel, mandocmsg mmsg,
 	curp->man = roff_man_alloc( curp->roff, curp, curp->defos,
 		curp->options & MPARSE_QUICK ? 1 : 0);
 	if (curp->options & MPARSE_MDOC) {
-		mdoc_hash_init();
 		curp->man->macroset = MACROSET_MDOC;
+		if (curp->man->mdocmac == NULL)
+			curp->man->mdocmac = roffhash_alloc(MDOC_Dd, MDOC_MAX);
 	} else if (curp->options & MPARSE_MAN) {
-		man_hash_init();
 		curp->man->macroset = MACROSET_MAN;
+		if (curp->man->manmac == NULL)
+			curp->man->manmac = roffhash_alloc(MAN_TH, MAN_MAX);
 	}
 	curp->man->first->tok = TOKEN_NONE;
 	return curp;
@@ -831,6 +834,8 @@ void
 mparse_free(struct mparse *curp)
 {
 
+	roffhash_free(curp->man->mdocmac);
+	roffhash_free(curp->man->manmac);
 	roff_man_free(curp->man);
 	roff_free(curp->roff);
 	if (curp->secondary)

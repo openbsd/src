@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.176 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.177 2017/04/29 12:43:55 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -245,7 +245,7 @@ lookup(struct roff_man *mdoc, int from, int line, int ppos, const char *p)
 		return TOKEN_NONE;
 	}
 	if (from == TOKEN_NONE || mdoc_macros[from].flags & MDOC_PARSED) {
-		res = mdoc_hash_find(p);
+		res = roffhash_find(mdoc->mdocmac, p, 0);
 		if (res != TOKEN_NONE) {
 			if (mdoc_macros[res].flags & MDOC_CALLABLE)
 				return res;

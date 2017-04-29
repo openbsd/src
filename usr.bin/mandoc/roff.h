@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.23 2017/04/24 23:06:09 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.24 2017/04/29 12:43:55 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct	ohash;
 struct	mdoc_arg;
 union	mdoc_data;
 
@@ -538,6 +539,8 @@ struct	roff_man {
 	struct roff_meta  meta;    /* Document meta-data. */
 	struct mparse	 *parse;   /* Parse pointer. */
 	struct roff	 *roff;    /* Roff parser state data. */
+	struct ohash	 *mdocmac; /* Mdoc macro lookup table. */
+	struct ohash	 *manmac;  /* Man macro lookup table. */
 	const char	 *defos;   /* Default operating system. */
 	struct roff_node *first;   /* The first node parsed. */
 	struct roff_node *last;    /* The last node parsed. */
@@ -569,4 +572,8 @@ struct	roff_man {
 
 extern	const char *const *roff_name;
 
+
 void		 deroff(char **, const struct roff_node *);
+struct ohash	*roffhash_alloc(enum roff_tok, enum roff_tok);
+enum roff_tok	 roffhash_find(struct ohash *, const char *, size_t);
+void		 roffhash_free(struct ohash *);
