@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.40 2015/09/17 09:51:40 bcook Exp $ */
+/* $OpenBSD: crypto.h,v 1.41 2017/04/29 21:48:43 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -499,9 +499,9 @@ uint64_t OPENSSL_cpu_caps(void);
 
 int OPENSSL_isservice(void);
 
+#ifndef LIBRESSL_INTERNAL
 void OPENSSL_init(void);
 
-#ifndef LIBRESSL_INTERNAL
 /* CRYPTO_memcmp returns zero iff the |len| bytes at |a| and |b| are equal. It
  * takes an amount of time dependent on |len|, but independent of the contents
  * of |a| and |b|. Unlike memcmp, it cannot be used to put elements into a

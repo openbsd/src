@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.12 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: names.c,v 1.13 2017/04/29 21:48:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,8 +70,6 @@ EVP_add_cipher(const EVP_CIPHER *c)
 	if (c == NULL)
 		return 0;
 
-	OPENSSL_init();
-
 	r = OBJ_NAME_add(OBJ_nid2sn(c->nid), OBJ_NAME_TYPE_CIPHER_METH,
 	    (const char *)c);
 	if (r == 0)
@@ -87,8 +85,6 @@ EVP_add_digest(const EVP_MD *md)
 {
 	int r;
 	const char *name;
-
-	OPENSSL_init();
 
 	name = OBJ_nid2sn(md->type);
 	r = OBJ_NAME_add(name, OBJ_NAME_TYPE_MD_METH, (const char *)md);
