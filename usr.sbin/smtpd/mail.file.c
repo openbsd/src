@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		errx(1, "mail.file: filename required");
 
-	if (argc != 0)
+	if (argc > 1)
 		errx(1, "mail.file: only one filename is supported");
 
 	file_engine(argv[0]);
