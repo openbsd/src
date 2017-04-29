@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.25 2017/04/29 21:54:54 beck Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.26 2017/04/29 22:31:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,15 +60,13 @@
 
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
-#include <pthread.h>
 
 #include "ssl_locl.h"
 
-pthread_once_t SSL_library_init_once = PTHREAD_ONCE_INIT;
-
-static void
-SSL_library_init_internal(void)
+int
+SSL_library_init(void)
 {
+
 #ifndef OPENSSL_NO_DES
 	EVP_add_cipher(EVP_des_cbc());
 	EVP_add_cipher(EVP_des_ede3_cbc());
@@ -127,11 +125,6 @@ SSL_library_init_internal(void)
 #endif
 	/* initialize cipher/digest methods table */
 	ssl_load_ciphers();
+	return (1);
 }
 
-int
-SSL_library_init(void)
-{
-	pthread_once(&SSL_library_init_once, SSL_library_init_internal);
-	return 1;
-}
