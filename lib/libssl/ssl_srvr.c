@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.14 2017/04/14 15:32:41 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.15 2017/04/29 23:38:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -720,7 +720,7 @@ ssl3_get_client_hello(SSL *s)
 	uint16_t client_version;
 	uint8_t comp_method;
 	int comp_null;
-	int i, j, ok, al, ret = -1;
+	int i, j, ok, al, ret = -1, cookie_valid = 0;
 	long n;
 	unsigned long id;
 	unsigned char *p, *d;
@@ -887,7 +887,7 @@ ssl3_get_client_hello(SSL *s)
 				SSLerror(s, SSL_R_COOKIE_MISMATCH);
 				goto f_err;
 			}
-			ret = 2;
+			cookie_valid = 1;
 		}
 	}
 
@@ -1059,8 +1059,8 @@ ssl3_get_client_hello(SSL *s)
 		goto err;
 	}
 
-	if (ret < 0)
-		ret = 1;
+	ret = cookie_valid ? 2 : 1;
+
 	if (0) {
 truncated:
 		al = SSL_AD_DECODE_ERROR;
