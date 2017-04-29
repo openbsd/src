@@ -179,7 +179,13 @@
 ./usr/lib/clang/4.0.0/include/avx512dqintrin.h
 ./usr/lib/clang/4.0.0/include/avx512erintrin.h
 ./usr/lib/clang/4.0.0/include/avx512fintrin.h
+./usr/lib/clang/4.0.0/include/avx512ifmaintrin.h
+./usr/lib/clang/4.0.0/include/avx512ifmavlintrin.h
+./usr/lib/clang/4.0.0/include/avx512pfintrin.h
+./usr/lib/clang/4.0.0/include/avx512vbmiintrin.h
+./usr/lib/clang/4.0.0/include/avx512vbmivlintrin.h
 ./usr/lib/clang/4.0.0/include/avx512vlbwintrin.h
+./usr/lib/clang/4.0.0/include/avx512vlcdintrin.h
 ./usr/lib/clang/4.0.0/include/avx512vldqintrin.h
 ./usr/lib/clang/4.0.0/include/avx512vlintrin.h
 ./usr/lib/clang/4.0.0/include/avxintrin.h
@@ -199,6 +205,7 @@
 ./usr/lib/clang/4.0.0/include/mm_malloc.h
 ./usr/lib/clang/4.0.0/include/mmintrin.h
 ./usr/lib/clang/4.0.0/include/module.modulemap
+./usr/lib/clang/4.0.0/include/mwaitxintrin.h
 ./usr/lib/clang/4.0.0/include/nmmintrin.h
 ./usr/lib/clang/4.0.0/include/pkuintrin.h
 ./usr/lib/clang/4.0.0/include/pmmintrin.h
