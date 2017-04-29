@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.6 2017/04/24 08:09:13 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.7 2017/04/29 17:10:43 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -208,9 +208,6 @@ data_abort(struct trapframe *frame, uint64_t esr, int lower, int exe)
 			panic("uvm_fault failed: %lx", frame->tf_elr);
 		}
 	}
-
-	if (lower)
-		userret(p);
 }
 
 void
@@ -305,7 +302,6 @@ do_el0_sync(struct trapframe *frame)
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		userret(p);
 		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,
@@ -317,8 +313,9 @@ do_el0_sync(struct trapframe *frame)
 			dumpregs(frame);
 		}
 		sigexit(p, SIGILL);
-		userret(p);
 	}
+
+	userret(p);
 }
 
 void
