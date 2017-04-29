@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.1 2017/04/29 17:24:41 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.2 2017/04/29 18:13:25 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -624,11 +624,14 @@ agintc_irq_handler(void *frame)
 
 	if (irq == 1023) {
 		sc->sc_spur.ec_count++;
+		ci->ci_idepth--;
 		return;
 	}
 
-	if (irq >= sc->sc_nintr)
+	if (irq >= sc->sc_nintr) {
+		ci->ci_idepth--;
 		return;
+	}
 
 	pri = sc->sc_agintc_handler[irq].iq_irq;
 	s = agintc_splraise(pri);
