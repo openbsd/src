@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 2017/04/27 10:23:19 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 2017/04/29 10:05:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -67,6 +67,8 @@ const struct implementers {
 	{ 0,			"",	NULL },
 };
 
+char cpu_model[64];
+
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
 
@@ -108,6 +110,10 @@ cpu_identify(struct cpu_info *ci)
 
 	printf(" %s %s r%dp%d", impl_name, part_name, CPU_VAR(midr),
 	    CPU_REV(midr));
+
+	if (CPU_IS_PRIMARY(ci))
+		snprintf(cpu_model, sizeof(cpu_model), "%s %s r%dp%d",
+		    impl_name, part_name, CPU_VAR(midr), CPU_REV(midr));
 }
 
 int

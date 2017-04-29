@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.13 2017/04/11 06:52:13 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.14 2017/04/29 10:05:49 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -77,7 +77,6 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 /* the following is used externally (sysctl_hw) */
 char    machine[] = MACHINE;            /* from <machine/param.h> */
-char    cpu_model[] = "arm64"; // XXX FIX
 extern todr_chip_handle_t todr_handle;
 
 int safepri = 0;
