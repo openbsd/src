@@ -1250,6 +1250,7 @@
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
 ./usr/include/sys/fusebuf.h
+./usr/include/sys/futex.h
 ./usr/include/sys/gmon.h
 ./usr/include/sys/gpio.h
 ./usr/include/sys/hibernate.h
