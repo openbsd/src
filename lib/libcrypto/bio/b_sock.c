@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.65 2017/04/30 05:09:22 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.66 2017/04/30 05:43:05 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,36 +78,29 @@
 int
 BIO_get_host_ip(const char *str, unsigned char *ip)
 {
-	int i;
-	int err = 1;
-	struct hostent *he;
+	struct addrinfo *res = NULL;
+	struct addrinfo hints = {
+		.ai_family = AF_INET,
+		.ai_socktype = SOCK_STREAM,
+		.ai_flags = AI_PASSIVE,
+	};
+	uint32_t *iap = (in_addr_t *)ip;
+	int error;
 
-	if (inet_pton(AF_INET, str, ip) == 1)
-		return (1);
+	if (str == NULL) {
+		ERR_asprintf_error_data("NULL host provided");
+		return (0);
+	}
 
-	/* do a gethostbyname */
-	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-	he = BIO_gethostbyname(str);
-	if (he == NULL) {
+	if ((error = getaddrinfo(str, NULL, &hints, &res)) != 0) {
 		BIOerror(BIO_R_BAD_HOSTNAME_LOOKUP);
-		goto err;
+		ERR_asprintf_error_data("getaddrinfo: host='%s' : %s'", str,
+		    gai_strerror(error));
+		return (0);
 	}
-
-	if (he->h_addrtype != AF_INET) {
-		BIOerror(BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
-		goto err;
-	}
-	for (i = 0; i < 4; i++)
-		ip[i] = he->h_addr_list[0][i];
-	err = 0;
-
-err:
-	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
-	if (err) {
-		ERR_asprintf_error_data("host=%s", str);
-		return 0;
-	} else
-		return 1;
+	*iap = (uint32_t)(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+	freeaddrinfo(res);
+	return (1);
 }
 
 int
