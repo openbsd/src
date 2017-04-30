@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.248 2017/04/22 11:05:04 visa Exp $
+.\"	$OpenBSD: options.4,v 1.249 2017/04/30 20:09:28 mpi Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 22 2017 $
+.Dd $Mdocdate: April 30 2017 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -114,16 +114,6 @@ structures is detected.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
-.It Cd option KGDB
-Compiles in a remote kernel debugger stub for diagnosing kernel problems
-using the
-.Dq remote target
-feature of gdb.
-See
-.Xr kgdb 7
-for details.
-.Em Note:
-not available on all architectures.
 .It Cd option KTRACE
 Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.

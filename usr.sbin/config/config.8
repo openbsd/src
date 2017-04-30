@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.61 2016/03/13 08:39:29 jmc Exp $
+.\"	$OpenBSD: config.8,v 1.62 2017/04/30 20:09:27 mpi Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 13 2016 $
+.Dd $Mdocdate: April 30 2017 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -218,10 +218,6 @@ decide what should happen.
 To debug kernels and their crash dumps with gdb, add
 .Dq makeoptions DEBUG="-g"
 to the kernel configuration file, along with (typically)
-.Dq option KGDB .
-Refer to
-.Xr options 4
-for further details.
 .Pp
 Many other statements exist, and the file format is fairly rich; for more
 information see the various configuration files included in the system, as
