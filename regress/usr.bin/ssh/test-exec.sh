@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.59 2017/02/07 23:03:11 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.60 2017/04/30 23:34:55 djm Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -89,12 +89,6 @@ if [ "x$TEST_SSH_PUTTYGEN" != "x" ]; then
 fi
 if [ "x$TEST_SSH_CONCH" != "x" ]; then
 	CONCH="${TEST_SSH_CONCH}"
-fi
-
-SSH_PROTOCOLS=2
-#SSH_PROTOCOLS=`$SSH -Q protocol-version`
-if [ "x$TEST_SSH_PROTOCOLS" != "x" ]; then
-	SSH_PROTOCOLS="${TEST_SSH_PROTOCOLS}"
 fi
 
 # Path to sshd must be absolute for rexec
@@ -246,21 +240,10 @@ fatal ()
 	exit $RESULT
 }
 
-ssh_version ()
-{
-	echo ${SSH_PROTOCOLS} | grep -q "$1"
-}
-
 RESULT=0
 PIDFILE=$OBJ/pidfile
 
 trap fatal 3 2
-
-if ssh_version 1; then
-	PROTO="2,1"
-else
-	PROTO="2"
-fi
 
 # create server config
 cat << EOF > $OBJ/sshd_config
@@ -319,11 +302,8 @@ fi
 
 rm -f $OBJ/known_hosts $OBJ/authorized_keys_$USER
 
-if ssh_version 1; then
-	SSH_KEYTYPES="rsa rsa1"
-else
-	SSH_KEYTYPES="rsa ed25519"
-fi
+SSH_KEYTYPES="rsa ed25519"
+
 trace "generate keys"
 for t in ${SSH_KEYTYPES}; do
 	# generate user key

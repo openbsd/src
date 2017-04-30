@@ -1,4 +1,4 @@
-#	$OpenBSD: reconfigure.sh,v 1.5 2015/03/03 22:35:19 markus Exp $
+#	$OpenBSD: reconfigure.sh,v 1.6 2017/04/30 23:34:55 djm Exp $
 #	Placed in the Public Domain.
 
 tid="simple connect after reconfigure"
@@ -7,12 +7,10 @@ tid="simple connect after reconfigure"
 start_sshd
 
 trace "connect before restart"
-for p in ${SSH_PROTOCOLS} ; do
-	${SSH} -o "Protocol=$p" -F $OBJ/ssh_config somehost true
-	if [ $? -ne 0 ]; then
-		fail "ssh connect with protocol $p failed before reconfigure"
-	fi
-done
+${SSH} -F $OBJ/ssh_config somehost true
+if [ $? -ne 0 ]; then
+	fail "ssh connect with failed before reconfigure"
+fi
 
 $SUDO kill -HUP `cat $PIDFILE`
 sleep 1
@@ -27,9 +25,7 @@ done
 test -f $PIDFILE || fatal "sshd did not restart"
 
 trace "connect after restart"
-for p in ${SSH_PROTOCOLS} ; do
-	${SSH} -o "Protocol=$p" -F $OBJ/ssh_config somehost true
-	if [ $? -ne 0 ]; then
-		fail "ssh connect with protocol $p failed after reconfigure"
-	fi
-done
+${SSH} -F $OBJ/ssh_config somehost true
+if [ $? -ne 0 ]; then
+	fail "ssh connect with failed after reconfigure"
+fi
