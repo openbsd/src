@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.13 2017/04/29 17:24:41 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.14 2017/04/30 14:00:06 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -61,6 +61,7 @@ file	arch/arm64/dev/simplebus.c		simplebus
 file	dev/ofw/fdt.c
 file	dev/ofw/ofw_clock.c
 file	dev/ofw/ofw_gpio.c
+file	dev/ofw/ofw_misc.c
 file	dev/ofw/ofw_pinctrl.c
 file	dev/ofw/ofw_regulator.c
 
