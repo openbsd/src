@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2017/04/17 11:02:31 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2017/04/30 23:33:48 djm Exp $
 
 REGRESS_FAIL_EARLY?=	yes
 
@@ -9,18 +9,10 @@ MALLOC_OPTIONS?=	CFGJRSUX
 TEST_ENV?=		MALLOC_OPTIONS=${MALLOC_OPTIONS}
 
 # XXX detect from ssh binary?
-SSH1?=		no
 OPENSSL?=	yes
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
-.else
-# SSH v.1 requires OpenSSL.
-SSH1=		no
-.endif
-
-.if (${SSH1:L} == "yes")
-CFLAGS+=	-DWITH_SSH1
 .endif
 
 # enable warnings
