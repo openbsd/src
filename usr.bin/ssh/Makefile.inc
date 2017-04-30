@@ -1,30 +1,20 @@
-#	$OpenBSD: Makefile.inc,v 1.51 2017/04/17 11:02:31 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.52 2017/04/30 23:10:43 djm Exp $
 
 .include <bsd.own.mk>
 
 CFLAGS+=	-I${.CURDIR}/..
 CFLAGS+=	-fstack-protector-all
 
-CDIAGFLAGS=	-Wall
-CDIAGFLAGS+=	-Wchar-subscripts
-CDIAGFLAGS+=	-Wcomment
+CDIAGFLAGS=	-Werror -Wextra -Wall -ftrapv
 CDIAGFLAGS+=	-Wextra
-CDIAGFLAGS+=	-Wformat
 CDIAGFLAGS+=	-Wformat-security
-CDIAGFLAGS+=	-Wimplicit
 CDIAGFLAGS+=	-Winline
 CDIAGFLAGS+=	-Wmissing-declarations
 CDIAGFLAGS+=	-Wmissing-prototypes
-CDIAGFLAGS+=	-Wparentheses
+CDIAGFLAGS+=	-Wold-style-definition
 CDIAGFLAGS+=	-Wpointer-arith
-CDIAGFLAGS+=	-Wreturn-type
 CDIAGFLAGS+=	-Wshadow
-CDIAGFLAGS+=	-Wsign-compare
-CDIAGFLAGS+=	-Wstrict-aliasing
 CDIAGFLAGS+=	-Wstrict-prototypes
-CDIAGFLAGS+=	-Wswitch
-CDIAGFLAGS+=	-Wtrigraphs
-CDIAGFLAGS+=	-Wuninitialized
 CDIAGFLAGS+=	-Wunused
 .if ${COMPILER_VERSION:L} != "gcc3"
 CDIAGFLAGS+=	-Wold-style-definition
@@ -34,10 +24,11 @@ CDIAGFLAGS+=	-Wno-unused-parameter # Not clean for this yet
 #CDIAGFLAGS+=	-Wcast-qual # XXX not clean
 #CDIAGFLAGS+=	-Wcast-align # XXX can't be clean with sockaddr casts?
 
-#CDIAGFLAGS+=	-Werror
-#DEBUG=-g
+CDIAGFLAGS+=	-Wno-unused-parameter
 
+DEBUG=-g
 WARNINGS=yes
+INSTALL_STRIP=
 
 SSH1?=		no
 OPENSSL?=	yes

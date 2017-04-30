@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.452 2017/04/28 03:20:27 dtucker Exp $ */
+/* $OpenBSD: ssh.c,v 1.453 2017/04/30 23:10:43 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -659,11 +659,7 @@ main(int ac, char **av)
 			else if (strcmp(optarg, "key-plain") == 0)
 				cp = sshkey_alg_list(0, 1, 0, '\n');
 			else if (strcmp(optarg, "protocol-version") == 0) {
-#ifdef WITH_SSH1
-				cp = xstrdup("1\n2");
-#else
 				cp = xstrdup("2");
-#endif
 			}
 			if (cp == NULL)
 				fatal("Unsupported query \"%s\"", optarg);
@@ -1268,10 +1264,6 @@ main(int ac, char **av)
 		    sizeof(Key));
 
 		PRIV_START;
-#if WITH_SSH1
-		sensitive_data.keys[0] = key_load_private_type(KEY_RSA1,
-		    _PATH_HOST_KEY_FILE, "", NULL, NULL);
-#endif
 		sensitive_data.keys[1] = key_load_private_cert(KEY_ECDSA,
 		    _PATH_HOST_ECDSA_KEY_FILE, "", NULL);
 		sensitive_data.keys[2] = key_load_private_cert(KEY_ED25519,
