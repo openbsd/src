@@ -1260,7 +1260,6 @@
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kernel.h
-./usr/include/sys/kgdb.h
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/limits.h
