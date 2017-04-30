@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2017/02/28 14:15:37 jsing Exp $
+# $OpenBSD: Makefile,v 1.16 2017/04/30 04:44:58 jsing Exp $
 
 LIB=	crypto
 
@@ -13,13 +13,16 @@ CLEANFILES=${PC_FILES} ${VERSION_SCRIPT}
 
 LCRYPTO_SRC=	${.CURDIR}
 
-CFLAGS+= -Wall -Wundef -Werror
+CFLAGS+= -Wall -Wundef
+.if ${COMPILER_VERSION:L} == "gcc4"
+CFLAGS+= -Werror
+.endif
+CFLAGS+= -DLIBRESSL_INTERNAL
 
 .if !defined(NOPIC)
 CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
 .endif
 
-CFLAGS+= -DLIBRESSL_INTERNAL
 # Hardware engines
 CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 
