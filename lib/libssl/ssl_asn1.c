@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.53 2017/04/16 06:26:55 otto Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.54 2017/04/30 04:21:53 jsing Exp $ */
 
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
@@ -52,8 +52,8 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	CBB peer_cert, sidctx, verify_result, hostname, lifetime, ticket;
 	CBB value;
 	unsigned char *data = NULL, *peer_cert_bytes = NULL;
+	size_t data_len = 0;
 	int len, rv = -1;
-	size_t data_len;
 	uint16_t cid;
 
 	if (s == NULL)
@@ -205,12 +205,9 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	rv = (int)data_len;
 
  err:
-	if (data != NULL)
-		explicit_bzero(data, data_len);
-
 	CBB_cleanup(&session);
+	freezero(data, data_len);
 	free(peer_cert_bytes);
-	free(data);
 
 	return rv;
 }
