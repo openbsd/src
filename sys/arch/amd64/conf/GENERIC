@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.442 2017/03/12 21:31:18 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.443 2017/04/30 20:04:42 mpi Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -18,9 +18,6 @@ option		USER_PCICONF	# user-space PCI configuration
 #option		VM86		# Virtual 8086 emulation
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		MTRR		# CPU memory range attributes control
-
-#option		KGDB		# Remote debugger support; exclusive of DDB
-#option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
 option		NTFS		# NTFS support
 option		HIBERNATE	# Hibernate support
