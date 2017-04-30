@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.16 2017/04/27 22:41:46 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.17 2017/04/30 22:35:33 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -39,12 +39,14 @@ void mainbus_attach_framebuffer(struct device *);
 
 struct mainbus_softc {
 	struct device		 sc_dev;
+	int			 sc_node;
 	bus_space_tag_t		 sc_iot;
 	bus_dma_tag_t		 sc_dmat;
 	int			 sc_acells;
 	int			 sc_scells;
 	int			*sc_ranges;
 	int			 sc_rangeslen;
+	int			 sc_early;
 };
 
 struct cfattach mainbus_ca = {
@@ -96,17 +98,16 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	char model[128];
 	int node, len;
 
-	if ((node = OF_peer(0)) == 0)
-		panic("mainbus: no device tree");
-
 	arm_intr_init_fdt();
 
+	sc->sc_node = OF_peer(0);
 	sc->sc_iot = &armv7_bs_tag;
 	sc->sc_dmat = &mainbus_dma_tag;
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
-	if ((len = OF_getprop(node, "model", model, sizeof(model))) > 0) {
+	len = OF_getprop(sc->sc_node, "model", model, sizeof(model));
+	if (len > 0) {
 		printf(": %s\n", model);
 		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (hw_prod)
@@ -127,9 +128,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Scan the whole tree. */
-	for (node = OF_child(node); node != 0; node = OF_peer(node))
+	sc->sc_early = 1;
+	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
 		mainbus_attach_node(self, node, NULL);
 
+	sc->sc_early = 0;
+	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node, NULL);
+	
 	mainbus_attach_framebuffer(self);
 
 	/* Attach secondary CPUs. */
@@ -207,6 +213,7 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 int
 mainbus_match_status(struct device *parent, void *match, void *aux)
 {
+	struct mainbus_softc *sc = (struct mainbus_softc *)parent;
 	struct fdt_attach_args *fa = aux;
 	struct cfdata *cf = match;
 	char buf[32];
@@ -215,7 +222,9 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 	    strcmp(buf, "disabled") == 0)
 		return 0;
 
-	return (*cf->cf_attach->ca_match)(parent, match, aux);
+	if (cf->cf_loc[0] == sc->sc_early)
+		return (*cf->cf_attach->ca_match)(parent, match, aux);
+	return 0;
 }
 
 void
