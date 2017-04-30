@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.63 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.64 2017/04/30 04:18:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,151 +168,71 @@ BIO_socket_ioctl(int fd, long type, void *arg)
 int
 BIO_get_accept_socket(char *host, int bind_mode)
 {
-	int ret = 0;
-	union {
-		struct sockaddr sa;
-		struct sockaddr_in sa_in;
-		struct sockaddr_in6 sa_in6;
-	} server, client;
-	int s = -1, cs, addrlen;
-	unsigned char ip[4];
-	unsigned short port;
-	char *str = NULL, *e;
-	char *h, *p;
-	unsigned long l;
-	int err_num;
+	struct addrinfo hints = {
+		.ai_family = AF_INET,
+		.ai_socktype = SOCK_STREAM,
+		.ai_flags = AI_PASSIVE,
+	};
+	struct addrinfo *res = NULL;
+	char *h, *p, *str = NULL;
+	int error, ret = 0, s = -1;
 
 	if (host == NULL || (str = strdup(host)) == NULL)
 		return (-1);
-
-	h = p = NULL;
+	p = NULL;
 	h = str;
-	for (e = str; *e; e++) {
-		if (*e == ':') {
-			p = e;
-		} else if (*e == '/') {
-			*e = '\0';
-			break;
-		}
-	}
-	/* points at last ':', '::port' is special [see below] */
-	if (p)
-		*p++ = '\0';
-	else
-		p = h, h = NULL;
-
-	do {
-		struct addrinfo *res, hint;
-
-		/*
-		 * '::port' enforces IPv6 wildcard listener. Some OSes,
-		 * e.g. Solaris, default to IPv6 without any hint. Also
-		 * note that commonly IPv6 wildchard socket can service
-		 * IPv4 connections just as well...
-		 */
-		memset(&hint, 0, sizeof(hint));
-		hint.ai_flags = AI_PASSIVE;
-		if (h) {
-			if (strchr(h, ':')) {
-				if (h[1] == '\0')
-					h = NULL;
-				hint.ai_family = AF_INET6;
-			} else if (h[0] == '*' && h[1] == '\0') {
-				hint.ai_family = AF_INET;
-				h = NULL;
-			}
-		}
-
-		if (getaddrinfo(h, p, &hint, &res))
-			break;
-
-		addrlen = res->ai_addrlen <= sizeof(server) ?
-		    res->ai_addrlen : sizeof(server);
-		memcpy(&server, res->ai_addr, addrlen);
-
-		freeaddrinfo(res);
-		goto again;
-	} while (0);
-
-	if (!BIO_get_port(p, &port))
+	if ((p = strrchr(str, ':')) == NULL) {
+		BIOerror(BIO_R_NO_PORT_SPECIFIED);
 		goto err;
+	}
+	*p++ = '\0';
+	if (*p == '\0') {
+		BIOerror(BIO_R_NO_PORT_SPECIFIED);
+		goto err;
+	}
+	if (*h == '\0' || strcmp(h, "*") == 0)
+		h = NULL;
 
-	memset((char *)&server, 0, sizeof(server));
-	server.sa_in.sin_family = AF_INET;
-	server.sa_in.sin_port = htons(port);
-	addrlen = sizeof(server.sa_in);
-
-	if (h == NULL || strcmp(h, "*") == 0)
-		server.sa_in.sin_addr.s_addr = INADDR_ANY;
-	else {
-		if (!BIO_get_host_ip(h, &(ip[0])))
-			goto err;
-		l = (unsigned long)((unsigned long)ip[0]<<24L)|
-		    ((unsigned long)ip[1]<<16L)|
-		    ((unsigned long)ip[2]<< 8L)|
-		    ((unsigned long)ip[3]);
-		server.sa_in.sin_addr.s_addr = htonl(l);
+	if ((error = getaddrinfo(h, p, &hints, &res)) != 0) {
+		ERR_asprintf_error_data("getaddrinfo: '%s:%s': %s'", h, p,
+		    gai_strerror(error));
+		goto err;
+	}
+	if (h == NULL) {
+		struct sockaddr_in *sin = (struct sockaddr_in *)res->ai_addr;
+		sin->sin_addr.s_addr = INADDR_ANY;
 	}
 
-again:
-	s = socket(server.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
+	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (s == -1) {
 		SYSerror(errno);
-		ERR_asprintf_error_data("port='%s'", host);
+		ERR_asprintf_error_data("host='%s'", host);
 		BIOerror(BIO_R_UNABLE_TO_CREATE_SOCKET);
 		goto err;
 	}
-
 	if (bind_mode == BIO_BIND_REUSEADDR) {
 		int i = 1;
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i));
 		bind_mode = BIO_BIND_NORMAL;
 	}
-	if (bind(s, &server.sa, addrlen) == -1) {
-		err_num = errno;
-		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
-		    (err_num == EADDRINUSE)) {
-			client = server;
-			if (h == NULL || strcmp(h, "*") == 0) {
-				if (client.sa.sa_family == AF_INET6) {
-					memset(&client.sa_in6.sin6_addr, 0,
-					    sizeof(client.sa_in6.sin6_addr));
-					client.sa_in6.sin6_addr.s6_addr[15] = 1;
-				} else if (client.sa.sa_family == AF_INET) {
-					client.sa_in.sin_addr.s_addr =
-					    htonl(0x7F000001);
-				} else
-					goto err;
-			}
-			cs = socket(client.sa.sa_family, SOCK_STREAM, IPPROTO_TCP);
-			if (cs != -1) {
-				int ii;
-				ii = connect(cs, &client.sa, addrlen);
-				close(cs);
-				if (ii == -1) {
-					bind_mode = BIO_BIND_REUSEADDR;
-					close(s);
-					goto again;
-				}
-				/* else error */
-			}
-			/* else error */
-		}
-		SYSerror(err_num);
-		ERR_asprintf_error_data("port='%s'", host);
+	if (bind(s, res->ai_addr, res->ai_addrlen) == -1) {
+		SYSerror(errno);
+		ERR_asprintf_error_data("host='%s'", host);
 		BIOerror(BIO_R_UNABLE_TO_BIND_SOCKET);
 		goto err;
 	}
 	if (listen(s, SOMAXCONN) == -1) {
 		SYSerror(errno);
-		ERR_asprintf_error_data("port='%s'", host);
+		ERR_asprintf_error_data("host='%s'", host);
 		BIOerror(BIO_R_UNABLE_TO_LISTEN_SOCKET);
 		goto err;
 	}
 	ret = 1;
+
 err:
 	free(str);
+	freeaddrinfo(res);
 	if ((ret == 0) && (s != -1)) {
 		close(s);
 		s = -1;
