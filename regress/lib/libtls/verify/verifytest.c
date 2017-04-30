@@ -1,4 +1,4 @@
-/*	$OpenBSD: verifytest.c,v 1.6 2017/04/10 17:12:30 jsing Exp $	*/
+/*	$OpenBSD: verifytest.c,v 1.7 2017/04/30 03:53:31 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -504,6 +504,7 @@ do_verify_test(int test_no, struct verify_test *vt)
 
  done:
 	X509_free(cert);
+	tls_free(tls);
 
 	return (failed);
 }
@@ -513,6 +514,8 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 	size_t i;
+
+	tls_init();
 
 	for (i = 0; i < N_VERIFY_TESTS; i++)
 		failed += do_verify_test(i, &verify_tests[i]);
