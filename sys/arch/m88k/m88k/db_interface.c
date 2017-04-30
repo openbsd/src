@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.21 2016/03/09 08:58:50 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.22 2017/04/30 16:45:45 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -435,7 +435,7 @@ kdbprinttrap(int type)
 }
 
 void
-Debugger()
+db_enter(void)
 {
 	asm (ENTRY_ASM); /* entry trap */
 	/* ends up at ddb_entry_trap below */

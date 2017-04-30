@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.13 2017/02/19 08:35:13 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.14 2017/04/30 16:45:45 mpi Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -237,6 +237,6 @@ void
 mips64_ipi_ddb(void)
 {
 #ifdef DDB
-	Debugger();
+	db_enter();
 #endif
 }

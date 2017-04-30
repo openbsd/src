@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.34 2017/03/03 20:49:47 bluhm Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.35 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ db_machine_init(void)
 }
 
 void
-Debugger(void)
+db_enter(void)
 {
 	__asm__("int $3");
 }

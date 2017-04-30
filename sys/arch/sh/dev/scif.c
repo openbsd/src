@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.16 2016/03/05 17:16:33 tobiasu Exp $	*/
+/*	$OpenBSD: scif.c,v 1.17 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -1133,7 +1133,7 @@ scifintr(void *arg)
 #ifdef DDB
 			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE) &&
 			    db_console != 0) {
-				Debugger();
+				db_enter();
 			}
 #endif /* DDB */
 		}

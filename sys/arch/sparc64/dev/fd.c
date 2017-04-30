@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.46 2016/06/07 06:37:33 dlg Exp $	*/
+/*	$OpenBSD: fd.c,v 1.47 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1459,7 +1459,7 @@ loop:
 				printf("fdcintr: block %lld != blkno %lld\n",
 				    (long long)block, (long long)fd->sc_blkno);
 #if defined(FD_DEBUG) && defined(DDB)
-				 Debugger();
+				 db_enter();
 #endif
 			}
 		}

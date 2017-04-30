@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.73 2016/05/04 18:26:12 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.74 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -774,7 +774,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		    (int)sgsize, flags);
 #ifdef DDB
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #endif
 	}		
 #endif	
@@ -843,7 +843,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		iommu_dvmamap_print_map(t, is, map);
 #ifdef DDB
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #endif
 	}
 #endif
@@ -993,7 +993,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		    "failed!\n", (int)sgsize, flags);
 #ifdef DDB
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #else
 		panic("");
 #endif
@@ -1062,7 +1062,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		iommu_dvmamap_print_map(t, is, map);
 #ifdef DDB
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #endif
 	}
 #endif
@@ -1320,7 +1320,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 		printf("iommu_dvmamap_unload: No dvmastart\n");
 #ifdef DDB
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #endif
 		return;
 	}
@@ -1409,7 +1409,7 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 		iommu_dvmamap_print_map(t, is, map);
 #if defined(DDB) && defined(DEBUG)
 		if (iommudebug & IDB_BREAK)
-			Debugger();
+			db_enter();
 #endif
 	}
 

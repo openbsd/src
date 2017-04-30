@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.6 2014/07/11 08:18:30 guenther Exp $	*/
+/*	$OpenBSD: power.c,v 1.7 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Martin Reindl.
@@ -102,7 +102,7 @@ power_intr(void *arg)
 	if (status & BTN_POWER_BIT) {
 #ifdef DEBUG
 		printf("%s switched\n", sc->sc_dev.dv_xname);
-		Debugger();
+		db_enter();
 #endif
 		_reg_write_1(LANDISK_PWRSW_INTCLR, 1);
 		if (allowpowerdown == 1) {

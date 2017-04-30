@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.14 2014/07/11 12:55:32 dlg Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.15 2017/04/30 16:45:45 mpi Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -222,7 +222,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 #if defined(SGMAP_DEBUG) && defined(DDB)
 	if (__C(SGMAP_TYPE,_debug) > 1)
-		Debugger();
+		db_enter();
 #endif
 
 	if (error == 0) {
@@ -281,7 +281,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 #if defined(SGMAP_DEBUG) && defined(DDB)
 	if (__C(SGMAP_TYPE,_debug) > 1)
-		Debugger();
+		db_enter();
 #endif
 
 	if (error == 0) {
@@ -358,7 +358,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 #if defined(SGMAP_DEBUG) && defined(DDB)
 	if (__C(SGMAP_TYPE,_debug) > 1)
-		Debugger();
+		db_enter();
 #endif
 
 	if (error == 0) {

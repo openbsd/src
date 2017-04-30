@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.195 2016/05/23 20:11:49 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.196 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -257,7 +257,7 @@ $virtual_mode
 	stw	t1, R%kernelmapped(t1)
 
 #ifdef DDB
-	.import	Debugger, code
+	.import	db_enter, code
 	/* have to call debugger from here, from virtual mode */
 	ldil	L%boothowto, r1
 	ldw	R%boothowto(r1), r1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.47 2017/03/24 13:04:16 patrick Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.48 2017/04/30 16:45:45 mpi Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -790,7 +790,7 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	ddb_init();
 
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 	printf("board type: %u\n", board_id);
 

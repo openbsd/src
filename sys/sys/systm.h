@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.127 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.128 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -340,7 +340,7 @@ extern int (*mountroot)(void);
 
 #if defined(DDB)
 /* debugger entry points */
-void	Debugger(void);	/* in DDB only */
+void	db_enter(void);	/* in DDB only */
 #endif
 
 #ifdef BOOT_CONFIG

@@ -1,4 +1,4 @@
-/* $OpenBSD: scc.c,v 1.29 2010/07/02 17:27:01 nicm Exp $ */
+/* $OpenBSD: scc.c,v 1.30 2017/04/30 16:45:45 mpi Exp $ */
 /* $NetBSD: scc.c,v 1.58 2002/03/17 19:40:27 atatat Exp $ */
 
 /*
@@ -1084,7 +1084,7 @@ scc_modem_intr(dev)
 	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
 #ifdef DDB
 		splx(s);		/* spl0()? */
-		Debugger();
+		db_enter();
 		return;
 #else
 		/* XXX maybe fall back to PROM? */

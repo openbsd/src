@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.43 2017/03/10 11:18:48 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.44 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1361,7 +1361,7 @@ dwc2_worker(struct task *wk, void *priv)
 	struct dwc2_softc *sc = priv;
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 
-/* Debugger(); */
+/* db_enter(); */
 #if 0
 	struct usbd_xfer *xfer = dwork->xfer;
 	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);

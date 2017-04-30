@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 2016/03/06 13:41:34 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -65,7 +65,7 @@ int db_active = 0;
 int db_trap_glue(struct trapframe *frame); /* called from locore */
 
 void
-Debugger()
+db_enter()
 {
 	ddb_trap();
 }
@@ -189,7 +189,7 @@ db_enter_ddb(void)
 void
 ppc_ipi_db(struct cpu_info *ci)
 {
-	Debugger();
+	db_enter();
 }
 
 void

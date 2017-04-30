@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.2 2017/02/17 17:16:04 patrick Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 }
 
 void
-Debugger(void)
+db_enter(void)
 {
 	asm("brk 0");
 }

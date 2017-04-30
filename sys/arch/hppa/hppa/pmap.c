@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.172 2016/10/19 08:28:20 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.173 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1194,7 +1194,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 			if (pmap_check_alias(pg, va, pte))
-				Debugger();
+				db_enter();
 		}
 	}
 #endif

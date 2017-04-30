@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.32 2015/01/15 17:54:14 miod Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.33 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ void	ncr5380_cmd_timeout(void *);
 
 #ifndef DDB
 /* This is used only in recoverable places. */
-#define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
+#define db_enter() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
 
 #ifdef	NCR5380_DEBUG
@@ -133,7 +133,7 @@ int ncr5380_debug = NCR_DBG_BREAK|NCR_DBG_CMDS;
 struct ncr5380_softc *ncr5380_debug_sc;
 
 #define	NCR_BREAK() \
-	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
+	do { if (ncr5380_debug & NCR_DBG_BREAK) db_enter(); } while (0)
 
 static void ncr5380_show_scsi_cmd(struct scsi_xfer *);
 static void ncr5380_show_sense(struct scsi_xfer *);

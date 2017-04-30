@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.90 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.91 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ panic(const char *fmt, ...)
 
 #ifdef DDB
 	if (db_panic)
-		Debugger();
+		db_enter();
 	else
 		db_stack_dump();
 #endif
@@ -229,7 +229,7 @@ splassert_fail(int wantipl, int haveipl, const char *func)
 	case 3:
 #ifdef DDB
 		db_stack_dump();
-		Debugger();
+		db_enter();
 #endif
 		break;
 	default:

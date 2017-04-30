@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.27 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.28 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ db_stopcpu(int cpu)
 void
 x86_ipi_db(struct cpu_info *ci)
 {
-	Debugger();
+	db_enter();
 }
 #endif /* MULTIPROCESSOR */
 
@@ -396,7 +396,7 @@ db_machine_init(void)
 }
 
 void
-Debugger(void)
+db_enter(void)
 {
 	breakpoint();
 }

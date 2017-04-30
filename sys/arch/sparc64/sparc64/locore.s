@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.184 2016/10/18 00:43:57 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.185 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 #undef	FPPROC
 
 /* Let us use same syntax as C code */
-#define Debugger()	ta	1; nop
+#define db_enter()	ta	1; nop
 
 /* use as needed to align things on longword boundaries */
 #define	_ALIGN	.align 8
@@ -2882,7 +2882,7 @@ sun4v_tl1_ptbl_miss:
 	be,pn	%icc, ufill_trap
 	 nop
 
-	Debugger()
+	db_enter()
 	NOTREACHED
 
 flush_others:
@@ -3274,7 +3274,7 @@ pcbspill:
 	NOTREACHED
 
 pcbspill_fail:
-	Debugger()
+	db_enter()
 	NOTREACHED
 
 
@@ -3858,7 +3858,7 @@ interrupt_vector:
 
 	jmpl	%g2, %g0
 	 nop
-	Debugger()
+	db_enter()
 	NOTREACHED
 #else
 	bgeu,pn	%xcc, 3f

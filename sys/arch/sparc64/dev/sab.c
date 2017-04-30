@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.31 2013/05/30 16:15:01 deraadt Exp $	*/
+/*	$OpenBSD: sab.c,v 1.32 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1398,7 +1398,7 @@ sabtty_abort(sc)
 		if (db_console == 0)
 			return;
 		if (db_active == 0)
-			Debugger();
+			db_enter();
 		else
 			callrom();
 #else

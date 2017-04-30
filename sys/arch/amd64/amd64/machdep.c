@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.227 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.228 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1602,7 +1602,7 @@ init_x86_64(paddr_t first_avail)
 	db_machine_init();
 	ddb_init();
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 }
 

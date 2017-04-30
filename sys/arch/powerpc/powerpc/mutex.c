@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.4 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.5 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -66,7 +66,7 @@ __mtx_enter(struct mutex *mtx)
 #if defined(MP_LOCKDEBUG)
 		if (--nticks == 0) {
 			db_printf("%s: %p lock spun out", __func__, mtx);
-			Debugger();
+			db_enter();
 		}
 #endif
 	}

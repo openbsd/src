@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2017/03/19 10:57:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2017/04/30 16:45:45 mpi Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -248,7 +248,7 @@ consinit()
 	db_machine_init();
 	ddb_init();
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 }
 
@@ -1323,7 +1323,7 @@ luna88k_ipi_handler(struct trapframe *eframe)
 		 * If ddb is hoping to us, it's our turn to enter ddb now.
 		 */
 		if (ci->ci_cpuid == ddb_mp_nextcpu)
-			Debugger();
+			db_enter();
 #endif
 	}
 	if (ipi & CI_IPI_NOTIFY) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.599 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.600 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3377,7 +3377,7 @@ init386(paddr_t first_avail)
 	db_machine_init();
 	ddb_init();
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 
 	softintr_init();

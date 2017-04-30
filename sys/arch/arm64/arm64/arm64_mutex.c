@@ -1,4 +1,4 @@
-/* $OpenBSD: arm64_mutex.c,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: arm64_mutex.c,v 1.2 2017/04/30 16:45:45 mpi Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -61,7 +61,7 @@ mtx_enter(struct mutex *mtx)
 #ifdef MP_LOCKDEBUG
 		if (--ticks == 0) {
 			db_printf("%s(%p): lock spun out", __func__, mtx);
-			Debugger();
+			db_enter();
 			ticks = __mp_lock_spinout;
 		}
 #endif

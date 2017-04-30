@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.2 2017/04/29 18:13:25 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.3 2017/04/30 16:45:45 mpi Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -616,7 +616,7 @@ agintc_irq_handler(void *frame)
 		if ((cnt++ % 100) == 0) {
 			printf("irq  %d fired * _100\n", irq);
 #ifdef DDB
-			Debugger();
+			db_enter();
 #endif
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.98 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.99 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -58,9 +58,9 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
-#define Debugger()	__asm volatile("ta 1; nop");
+#define db_enter()	__asm volatile("ta 1; nop");
 #else
-#define Debugger()
+#define db_enter()
 #define db_printf	printf
 #endif
 
@@ -1526,7 +1526,7 @@ pmap_release(struct pmap *pm)
 						if (pv != NULL) {
 							printf("pmap_release: pm=%p page %llx still in use\n", pm, 
 							       (unsigned long long)(((u_int64_t)i<<STSHIFT)|((u_int64_t)k<<PDSHIFT)|((u_int64_t)j<<PTSHIFT)));
-							Debugger();
+							db_enter();
 						}
 					}
 					stxa(pdirentp, ASI_PHYS_CACHED, 0);
@@ -1749,7 +1749,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			/* We need to flip the valid bit and clear the access statistics. */
 			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_kremove: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 
@@ -1931,7 +1931,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 			/* We need to flip the valid bit and clear the access statistics. */
 			if (pseg_set(pm, va, 0, 0)) {
 				printf("pmap_remove: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			atomic_dec_long(&pm->pm_stats.resident_count);
@@ -2017,7 +2017,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			
@@ -2274,7 +2274,7 @@ pmap_clear_modify(struct vm_page *pg)
 			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va & PV_VAMASK, data, 0)) {
 				printf("pmap_clear_modify: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
@@ -2325,7 +2325,7 @@ pmap_clear_reference(struct vm_page *pg)
 			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va & PV_VAMASK, data, 0)) {
 				printf("pmap_clear_reference: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
@@ -2446,7 +2446,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 
 	if (pseg_set(pmap, va & PV_VAMASK, data, 0)) {
 		printf("pmap_unwire: gotten pseg empty!\n");
-		Debugger();
+		db_enter();
 		/* panic? */
 	}
 	mtx_leave(&pmap->pm_mtx);
@@ -2501,7 +2501,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				KDASSERT((data & TLB_NFO) == 0);
 				if (pseg_set(pv->pv_pmap, pv->pv_va & PV_VAMASK, data, 0)) {
 					printf("pmap_page_protect: gotten pseg empty!\n");
-					Debugger();
+					db_enter();
 					/* panic? */
 				}
 				if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
@@ -2529,7 +2529,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			/* Clear mapping */
 			if (pseg_set(pv->pv_pmap, pv->pv_va & PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
@@ -2556,7 +2556,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pv->pv_va |= pmap_tte2flags(data);
 			if (pseg_set(pv->pv_pmap, pv->pv_va & PV_VAMASK, 0, 0)) {
 				printf("pmap_page_protect: gotten pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
@@ -2647,7 +2647,7 @@ ctx_free(struct pmap *pm)
 		       "ctxbusy[%d] = %p, pm(%p)->pm_ctx = %p\n", 
 		       oldctx, (void *)(u_long)ctxbusy[oldctx], pm,
 		       (void *)(u_long)pm->pm_physaddr);
-		Debugger();
+		db_enter();
 	}
 #endif
 	/* We should verify it has not been stolen and reallocated... */
@@ -2820,7 +2820,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 			    pseg_get(pv->pv_pmap, va) & ~(SUN4U_TLB_CV|SUN4U_TLB_CP),
 				     0)) {
 				printf("pmap_page_cache: aliased pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 		} else if (mode && (!(pv->pv_va & PV_NVC))) {
@@ -2828,7 +2828,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 			if (pseg_set(pv->pv_pmap, va,
 			    pseg_get(pv->pv_pmap, va) | SUN4U_TLB_CV, 0)) {
 				printf("pmap_page_cache: aliased pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 		} else {
@@ -2836,7 +2836,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 			if (pseg_set(pv->pv_pmap, va,
 			    pseg_get(pv->pv_pmap, va) & ~SUN4U_TLB_CV, 0)) {
 				printf("pmap_page_cache: aliased pseg empty!\n");
-				Debugger();
+				db_enter();
 				/* panic? */
 			}
 		}

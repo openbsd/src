@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.50 2014/12/19 07:23:57 deraadt Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.51 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ osiop_scsidone(acb, status)
 	if (acb == NULL || acb->xs == NULL) {
 		printf("osiop_scsidone: NULL acb %p or scsi_xfer\n", acb);
 #if defined(OSIOP_DEBUG) && defined(DDB)
-		Debugger();
+		db_enter();
 #endif
 		return;
 	}
@@ -1126,7 +1126,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		    scraddr, scraddr + sizeof(osiop_script));
 		printf(" istat %x dstat %x sstat0 %x\n", istat, dstat, sstat0);
 #ifdef DDB
-		Debugger();
+		db_enter();
 #endif
 	}
 #endif
@@ -1294,7 +1294,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 			    osiop_read_1(sc, OSIOP_SBCL),
 			    osiop_read_4(sc, OSIOP_DSP));
 #if defined(OSIOP_DEBUG) && defined(DDB)
-			/*Debugger(); XXX is*/
+			/*db_enter(); XXX is*/
 #endif
 		}
 		switch (OSIOP_PHASE(osiop_read_1(sc, OSIOP_SBCL))) {
@@ -1473,7 +1473,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 				    "curaddr %lx curlen %lx i %d\n",
 				    acb->curaddr, acb->curlen, i);
 #if defined(OSIOP_DEBUG) && defined(DDB)
-				Debugger();
+				db_enter();
 #endif
 			}
 #ifdef OSIOP_DEBUG

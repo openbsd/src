@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.17 2017/03/20 19:37:54 miod Exp $ */
+/* $OpenBSD: siotty.c,v 1.18 2017/04/30 16:45:45 mpi Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -162,7 +162,7 @@ siottyintr(int chan)
 #if 0 && defined(DDB) /* ?!?! fails to resume ?!?! */
 			if ((rr & RR_BREAK) && tp->t_dev == cn_tab->cn_dev) {
 				if (db_console)
-					Debugger();
+					db_enter();
 				return;
 			}
 #endif

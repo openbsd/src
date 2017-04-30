@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.47 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.48 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -573,7 +573,7 @@ db_write_bytes(addr, size, data)
 }
 
 void
-Debugger(void)
+db_enter(void)
 {
 	/* We use the breakpoint to trap into DDB */
 	asm("ta 1; nop");

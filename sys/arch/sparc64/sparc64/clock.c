@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.58 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: clock.c,v 1.59 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -740,7 +740,7 @@ clockintr(cap)
 			    "tick_base %llx\n", (long long)t, (long long)clk,
 			    (long long)tk, (long long)tick_base);
 #ifdef DDB
-			Debugger();
+			db_enter();
 #endif
 			tick_base = 0;
 		}

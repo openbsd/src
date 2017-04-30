@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.22 2017/04/20 13:20:17 visa Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.23 2017/04/30 16:45:45 mpi Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -78,7 +78,7 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 
 		if (--nticks <= 0) {
 			db_printf("__mp_lock(%p): lock spun out", mpl);
-			Debugger();
+			db_enter();
 			nticks = __mp_lock_spinout;
 		}
 	}
@@ -118,7 +118,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 #ifdef MP_LOCKDEBUG
 	if (!__mp_lock_held(mpl)) {
 		db_printf("__mp_unlock(%p): not held lock\n", mpl);
-		Debugger();
+		db_enter();
 	}
 #endif
 

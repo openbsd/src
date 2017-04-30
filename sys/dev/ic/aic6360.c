@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.27 2014/09/14 14:17:24 jsg Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.28 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -145,7 +145,7 @@
 #include <dev/ic/aic6360var.h>
 
 #ifndef DDB
-#define	Debugger() panic("should call debugger here (aic6360.c)")
+#define	db_enter() panic("should call debugger here (aic6360.c)")
 #endif /* ! DDB */
 
 #ifdef AIC_DEBUG

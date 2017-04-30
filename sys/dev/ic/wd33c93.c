@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.9 2016/12/26 17:38:14 jca Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.10 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -878,7 +878,7 @@ wd33c93_wait(struct wd33c93_softc *sc, u_char until, int timeo, int line)
 			printf("wd33c93_wait: TIMEO @%d with asr=0x%x csr=0x%x\n",
 			    line, val, csr);
 #ifdef DDB
-			Debugger();
+			db_enter();
 #endif
 #endif
 			return(val); /* Maybe I should abort */
@@ -2144,7 +2144,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb *acb, u_char csr,
 		    sc->sc_dev.dv_xname, asr, csr);
 
 #ifdef DDB
-		Debugger();
+		db_enter();
 #endif
 
 		SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);

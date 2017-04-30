@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.4 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.5 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -80,7 +80,7 @@ __mp_lock_spin(struct __mp_lock *mpl)
 
 	if (nticks == 0) {
 		db_printf("__mp_lock(%p): lock spun out", mpl);
-		Debugger();
+		db_enter();
 	}
 #endif
 }
@@ -128,7 +128,7 @@ __mp_unlock(struct __mp_lock *mpl)
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
 		db_printf("__mp_unlock(%p): not held lock\n", mpl);
-		Debugger();
+		db_enter();
 	}
 #endif
 
@@ -150,7 +150,7 @@ __mp_release_all(struct __mp_lock *mpl)
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
 		db_printf("__mp_release_all(%p): not held lock\n", mpl);
-		Debugger();
+		db_enter();
 	}
 #endif
 
@@ -170,7 +170,7 @@ __mp_release_all_but_one(struct __mp_lock *mpl)
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
 		db_printf("__mp_release_all_but_one(%p): not held lock\n", mpl);
-		Debugger();
+		db_enter();
 	}
 #endif
 

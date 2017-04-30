@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360var.h,v 1.8 2011/04/06 18:14:35 miod Exp $	*/
+/*	$OpenBSD: aic6360var.h,v 1.9 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -194,13 +194,13 @@ struct aic_softc {
 #define AIC_DOBREAK	0x40
 #define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
 #define	AIC_BREAK() \
-	do { if ((aic_debug & AIC_DOBREAK) != 0) Debugger(); } while (0)
+	do { if ((aic_debug & AIC_DOBREAK) != 0) db_enter(); } while (0)
 #define	AIC_ASSERT(x) \
 	do { \
 		if (!(x)) { \
 			printf("%s at line %d: assertion failed\n", \
 			    sc->sc_dev.dv_xname, __LINE__); \
-			Debugger(); \
+			db_enter(); \
 		} \
 	} while (0)
 #else

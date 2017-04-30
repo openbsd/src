@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.162 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: com.c,v 1.163 2017/04/30 16:45:46 mpi Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1088,7 +1088,7 @@ comintr(void *arg)
 					if (ISSET(sc->sc_hwflags,
 					    COM_HW_CONSOLE)) {
 						if (db_console)
-							Debugger();
+							db_enter();
 						goto next;
 					}
 #endif

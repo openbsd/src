@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.85 2017/03/11 11:55:03 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.86 2017/04/30 16:45:46 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1504,7 +1504,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 #ifdef DDB
 	if (ksym == KS_Cmd_Debugger) {
 		if (sc->sc_isconsole && db_console)
-			Debugger();
+			db_enter();
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
@@ -1542,7 +1542,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 #ifdef DDB
 		case 2:
 			if (sc->sc_isconsole && db_console)
-				Debugger();
+				db_enter();
 			/* discard this key (ddb discarded command modifiers) */
 			*type = WSCONS_EVENT_KEY_UP;
 			break;

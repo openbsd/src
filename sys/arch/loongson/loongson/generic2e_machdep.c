@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic2e_machdep.c,v 1.8 2016/08/30 12:15:28 jsg Exp $	*/
+/*	$OpenBSD: generic2e_machdep.c,v 1.9 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -308,7 +308,7 @@ generic2e_isa_intr(uint32_t hwpend, struct trapframe *frame)
 			    " isaimr %08x\n", ocw1, ocw2, frame->ipl,
 			    bonito_imask[frame->ipl], loongson_isaimr);
 #ifdef DDB
-			Debugger();
+			db_enter();
 #endif
 #endif
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.102 2016/07/28 21:57:57 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.103 2017/04/30 16:45:45 mpi Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -619,7 +619,7 @@ cpu_start_secondary(struct cpu_info *ci)
 		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
-		Debugger();
+		db_enter();
 #endif
 	}
 
@@ -655,7 +655,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 		printf("cpu failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
-		Debugger();
+		db_enter();
 #endif
 	}
 }

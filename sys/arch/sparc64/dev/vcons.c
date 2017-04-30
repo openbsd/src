@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.14 2014/05/10 11:49:31 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.15 2017/04/30 16:45:45 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -140,7 +140,7 @@ vcons_cnlookc(dev_t dev, int *cp)
 	if (hv_cons_getchar(&ch) == H_EOK) {
 #ifdef DDB
 		if (ch == -1 && db_console)
-			Debugger();
+			db_enter();
 #endif
 		*cp = ch;
 		return (1);

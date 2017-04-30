@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.38 2016/09/19 21:18:35 jasper Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.39 2017/04/30 16:45:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -125,7 +125,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 int db_active = 0;
 
 void
-Debugger()
+db_enter(void)
 {
 	extern int kernelmapped;	/* from locore.S */
 	if (kernelmapped)

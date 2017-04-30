@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.44 2015/09/11 07:13:58 miod Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.45 2017/04/30 16:45:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -1256,7 +1256,7 @@ userconf_parse(char *cmd)
 			break;
 #if defined(DDB)
 		case 'D':
-			Debugger();
+			db_enter();
 			break;
 #endif
 		case 'd':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.13 2012/10/03 11:18:23 miod Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.14 2017/04/30 16:45:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -177,11 +177,11 @@ LEAF(kdbpokeb, 0)
 	 sw	zero, PCB_ONFAULT(t0)
 END(kdbpokeb)
 
-LEAF(Debugger, 0)
+LEAF(db_enter, 0)
 	break   BREAK_SOVER_VAL
 	jr	ra
 	 NOP
-END(Debugger)
+END(db_enter)
 
 LEAF(setjmp, 0)
 	MFC0	v0, COP_0_STATUS_REG

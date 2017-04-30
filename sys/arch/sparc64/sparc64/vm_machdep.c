@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -264,7 +264,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	printf("cpu_fork: tstate=%lx pc=%lx npc=%lx rsp=%lx\n",
 	       (long)tf2->tf_tstate, (long)tf2->tf_pc, (long)tf2->tf_npc,
 	       (long)(tf2->tf_out[6]));
-	Debugger();
+	db_enter();
 #endif
 }
 

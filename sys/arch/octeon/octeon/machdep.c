@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2017/04/24 13:54:28 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.88 2017/04/30 16:45:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -513,7 +513,7 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 #ifdef DDB
 	db_machine_init();
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 
 #ifdef MULTIPROCESSOR

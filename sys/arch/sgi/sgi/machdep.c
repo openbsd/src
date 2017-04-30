@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.155 2017/04/02 15:48:19 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.156 2017/04/30 16:45:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -653,7 +653,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #ifdef DDB
 	db_machine_init();
 	if (boothowto & RB_KDB)
-		Debugger();
+		db_enter();
 #endif
 
 	/*

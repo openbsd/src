@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.55 2016/06/13 01:08:13 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.56 2017/04/30 16:45:45 mpi Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -109,7 +109,7 @@ strayintr(const struct trapframe64 *fp, int vectored)
 		nstray = 1;
 	}
 #ifdef DDB
-	Debugger();
+	db_enter();
 #endif
 }
 
@@ -213,7 +213,7 @@ intr_establish(int level, struct intrhand *ih)
 	if (!ih->ih_number) {
 		printf("\nintr_establish: NULL vector fun %p arg %p pil %p",
 			  ih->ih_fun, ih->ih_arg, ih->ih_number, ih->ih_pil);
-		Debugger();
+		db_enter();
 	}
 #endif
 
