@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpowvar.h,v 1.2 2014/08/11 18:29:56 miod Exp $	*/
+/*	$OpenBSD: cn30xxpowvar.h,v 1.3 2017/04/30 04:32:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -101,100 +101,6 @@ cn30xxpow_ops_get_work_load(
 	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
 	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, 0x00) |
 	    __BITS64_SET(POW_GET_WORK_LOAD_WAIT, wait);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Status Loads */
-
-/*
- * a) get_cur == 0, get_wqp == 0 (pend_tag)
- * b) get_cur == 0, get_wqp == 1 (pend_wqp)
- * c) get_cur == 1, get_wqp == 0, get_rev == 0 (cur_tag_next)
- * d) get_cur == 1, get_wqp == 0, get_rev == 1 (cur_tag_prev)
- * e) get_cur == 1, get_wqp == 1, get_rev == 0 (cur_wqp_next)
- * f) get_cur == 1, get_wqp == 1, get_rev == 1 (cur_wqp_prev)
- */
-
-static inline uint64_t
-cn30xxpow_ops_pow_status(
-	int coreid,			/* 0-15 */
-	int get_rev,			/* 0-1 */
-	int get_cur,			/* 0-1 */
-	int get_wqp)			/* 0-1 */
-{
-	uint64_t ptr =
-	    POW_OPERATION_BASE_IO_BIT |
-	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
-	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, 0x01) |
-	    __BITS64_SET(POW_STATUS_LOAD_COREID, coreid) |
-	    __BITS64_SET(POW_STATUS_LOAD_GET_REV, get_rev) |
-	    __BITS64_SET(POW_STATUS_LOAD_GET_CUR, get_cur) |
-	    __BITS64_SET(POW_STATUS_LOAD_GET_WQP, get_wqp);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Memory Loads */
-
-/*
- * a) get_des == 0, get_wqp == 0 (tag)
- * b) get_des == 0, get_wqp == 1 (wqe)
- * c) get_des == 1 (desched)
- */
-
-static inline uint64_t
-cn30xxpow_ops_pow_memory(
-	int index,			/* 0-2047 */
-	int get_des,			/* 0-1 */
-	int get_wqp)			/* 0-1 */
-{
-	uint64_t ptr =
-	    POW_OPERATION_BASE_IO_BIT |
-	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
-	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, 0x02) |
-	    __BITS64_SET(POW_MEMORY_LOAD_INDEX, index) |
-	    __BITS64_SET(POW_MEMORY_LOAD_GET_DES, get_des) |
-	    __BITS64_SET(POW_MEMORY_LOAD_GET_WQP, get_wqp);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* POW Index/Pointer Loads */
-
-/*
- * a) get_rmt == 0, get_des_get_tail == 0
- * b) get_rmt == 0, get_des_get_tail == 1
- * c) get_rmt == 1, get_des_get_tail == 0
- * d) get_rmt == 1, get_des_get_tail == 1
- */
-
-static inline uint64_t
-cn30xxpow_ops_pow_idxptr(
-	int qosgrp,			/* 0-7 */
-	int get_des_get_tail,		/* 0-1 */
-	int get_rmt)			/* 0-1 */
-{
-	uint64_t ptr =
-	    POW_OPERATION_BASE_IO_BIT |
-	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
-	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, 0x03) |
-	    __BITS64_SET(POW_IDXPTR_LOAD_QOSGRP, qosgrp) |
-	    __BITS64_SET(POW_IDXPTR_LOAD_GET_DES_GET_TAIL, get_des_get_tail) |
-	    __BITS64_SET(POW_IDXPTR_LOAD_GET_RMT, get_rmt);
-
-	return octeon_xkphys_read_8(ptr);
-}
-
-/* NULL_RD Loads */
-
-static inline uint64_t
-cn30xxpow_ops_null_rd_load(void)
-{
-	uint64_t ptr =
-	    POW_OPERATION_BASE_IO_BIT |
-	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
-	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, 0x04);
 
 	return octeon_xkphys_read_8(ptr);
 }

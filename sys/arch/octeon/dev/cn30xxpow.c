@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpow.c,v 1.8 2016/07/10 10:18:58 visa Exp $	*/
+/*	$OpenBSD: cn30xxpow.c,v 1.9 2017/04/30 04:32:58 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -142,94 +142,6 @@ cn30xxpow_work_response_async(uint64_t scraddr)
 	    NULL :
 	    (uint64_t *)PHYS_TO_XKPHYS(
 		result & POW_IOBDMA_GET_WORK_RESULT_ADDR, CCA_CACHED);
-}
-
-/* ---- status by coreid */
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_pend_tag(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 0, 0, 0);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_pend_wqp(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 0, 0, 1);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_cur_tag_next(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 0, 1, 0);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_cur_tag_prev(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 1, 1, 0);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_cur_wqp_next(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 0, 1, 1);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_coreid_cur_wqp_prev(int coreid)
-{
-	return cn30xxpow_ops_pow_status(coreid, 1, 1, 1);
-}
-
-/* ---- status by index */
-
-static inline uint64_t
-cn30xxpow_status_by_index_tag(int index)
-{
-	return cn30xxpow_ops_pow_memory(index, 0, 0);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_index_wqp(int index)
-{
-	return cn30xxpow_ops_pow_memory(index, 0, 1);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_index_desched(int index)
-{
-	return cn30xxpow_ops_pow_memory(index, 1, 0);
-}
-
-/* ---- status by qos level */
-
-static inline uint64_t
-cn30xxpow_status_by_qos_free_loc(int qos)
-{
-	return cn30xxpow_ops_pow_idxptr(qos, 0, 0);
-}
-
-/* ---- status by desched group */
-
-static inline uint64_t
-cn30xxpow_status_by_grp_nosched_des(int grp)
-{
-	return cn30xxpow_ops_pow_idxptr(grp, 0, 1);
-}
-
-/* ---- status by memory input queue */
-
-static inline uint64_t
-cn30xxpow_status_by_queue_remote_head(int queue)
-{
-	return cn30xxpow_ops_pow_idxptr(queue, 1, 0);
-}
-
-static inline uint64_t
-cn30xxpow_status_by_queue_remote_tail(int queue)
-{
-	return cn30xxpow_ops_pow_idxptr(queue, 1, 0);
 }
 
 /* ---- tag switch */
