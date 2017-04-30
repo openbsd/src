@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.5 2015/05/08 21:30:37 miod Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.6 2017/04/30 17:46:27 beck Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -92,7 +92,7 @@ do_bio_get_host_ip_tests(void)
 	for (i = 0; i < N_BIO_GET_IP_TESTS; i++) {
 		bgit = &bio_get_host_ip_tests[i];
 		memset(&ip, 0, sizeof(ip));
-		
+
 		ret = BIO_get_host_ip(bgit->input, ip.c);
 		if (ret != bgit->ret) {
 			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
@@ -124,7 +124,7 @@ do_bio_get_port_tests(void)
 	for (i = 0; i < N_BIO_GET_PORT_TESTS; i++) {
 		bgpt = &bio_get_port_tests[i];
 		port = 0;
-		
+
 		ret = BIO_get_port(bgpt->input, &port);
 		if (ret != bgpt->ret) {
 			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
