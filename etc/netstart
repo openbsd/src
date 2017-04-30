@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.178 2017/04/25 19:17:33 rpe Exp $
+#	$OpenBSD: netstart,v 1.179 2017/04/30 19:37:13 mpi Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -170,12 +170,10 @@ ifv6autoconf() {
 defaultroute() {
 	[[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
 			[[ $gw == @(*:*) ]] && continue
-			route -qn delete default >/dev/null 2>&1
 			route -qn add -host default $gw && break
 	done
 	[[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
 			[[ $gw == !(*:*) ]] && continue
-			route -qn delete -inet6 default >/dev/null 2>&1
 			route -qn add -host -inet6 default $gw && break
 	done
 }
