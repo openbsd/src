@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.37 2017/04/05 03:13:53 beck Exp $ */
+/* $OpenBSD: tls_config.c,v 1.38 2017/04/30 02:10:22 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -67,6 +67,14 @@ tls_keypair_new(void)
 	return calloc(1, sizeof(struct tls_keypair));
 }
 
+static void
+tls_keypair_clear_key(struct tls_keypair *keypair)
+{
+	freezero(keypair->key_mem, keypair->key_len);
+	keypair->key_mem = NULL;
+	keypair->key_len = 0;
+}
+
 static int
 tls_keypair_set_cert_file(struct tls_keypair *keypair, struct tls_error *error,
     const char *cert_file)
@@ -86,8 +94,7 @@ static int
 tls_keypair_set_key_file(struct tls_keypair *keypair, struct tls_error *error,
     const char *key_file)
 {
-	if (keypair->key_mem != NULL)
-		explicit_bzero(keypair->key_mem, keypair->key_len);
+	tls_keypair_clear_key(keypair);
 	return tls_config_load_file(error, "key", key_file,
 	    &keypair->key_mem, &keypair->key_len);
 }
@@ -96,8 +103,7 @@ static int
 tls_keypair_set_key_mem(struct tls_keypair *keypair, const uint8_t *key,
     size_t len)
 {
-	if (keypair->key_mem != NULL)
-		explicit_bzero(keypair->key_mem, keypair->key_len);
+	tls_keypair_clear_key(keypair);
 	return set_mem(&keypair->key_mem, &keypair->key_len, key, len);
 }
 
