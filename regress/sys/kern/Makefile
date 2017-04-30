@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.68 2017/01/13 01:33:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.69 2017/04/30 09:03:58 mpi Exp $
 
 SUBDIR+= __syscall access accept dup2 dup2_self exec_self execve exit extent
 SUBDIR+= fchdir
 SUBDIR+= fcntl_dup
 SUBDIR+= flock
+SUBDIR+= futex
 SUBDIR+= getpeereid getrusage gettimeofday itimer 
 SUBDIR+= kqueue mbuf minherit
 SUBDIR+= main-thread-exited
