@@ -29,6 +29,7 @@
 ./usr/include/complex.h
 ./usr/include/cpio.h
 ./usr/include/crypto
+./usr/include/crypto/aes.h
 ./usr/include/crypto/arc4.h
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
@@ -846,7 +847,7 @@
 ./usr/include/fuse.h
 ./usr/include/fuse_opt.h
 ./usr/include/g++
-./usr/include/g++/FlexLexer.h
+./usr/include/FlexLexer.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
 ./usr/include/grp.h
