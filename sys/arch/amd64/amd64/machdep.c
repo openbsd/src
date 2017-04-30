@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.226 2017/03/11 11:55:03 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.227 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -86,10 +86,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/syscallargs.h>
-
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
 
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
@@ -267,28 +263,6 @@ void	cpu_init_extents(void);
 void	map_tramps(void);
 void	init_x86_64(paddr_t);
 void	(*cpuresetfn)(void);
-
-#ifdef KGDB
-#ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME	"com"
-#endif /* KGDB_DEVNAME */
-char kgdb_devname[] = KGDB_DEVNAME;
-#if NCOM > 0
-#ifndef KGDBADDR
-#define KGDBADDR	0x3f8
-#endif /* KGDBADDR */
-int comkgdbaddr = KGDBADDR;
-#ifndef KGDBRATE
-#define KGDBRATE	TTYDEF_SPEED
-#endif /* KGDBRATE */
-int comkgdbrate = KGDBRATE;
-#ifndef KGDBMODE
-#define KGDBMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
-#endif /* KGDBMODE */
-int comkgdbmode = KGDBMODE;
-#endif /* NCOM */
-void	kgdb_port_init(void);
-#endif /* KGDB */
 
 #ifdef APERTURE
 int allowaperture = 0;
@@ -1630,28 +1604,7 @@ init_x86_64(paddr_t first_avail)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-#ifdef KGDB
-	kgdb_port_init();
-	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
-	}
-#endif
 }
-
-#ifdef KGDB
-void
-kgdb_port_init(void)
-{
-#if NCOM > 0
-	if (!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = X86_BUS_SPACE_IO;
-		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ,
-		    comkgdbmode);
-	}
-#endif
-} 
-#endif /* KGDB */
 
 void
 cpu_reset(void)

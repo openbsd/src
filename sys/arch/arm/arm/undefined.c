@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.8 2016/06/10 06:32:36 jsg Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.9 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -115,9 +115,6 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 			trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 			return 0;
 		}
-#ifdef KGDB
-		return !kgdb_trap(T_BREAKPOINT, frame);
-#endif
 	}
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.27 2015/02/05 12:04:58 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.28 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -689,9 +689,7 @@ zs_abort(cs)
 		ZS_DELAY();
 	} while (rr0 & ZSRR0_BREAK);
 
-#if defined(KGDB)
-	zskgdb(cs);
-#elif defined(DDB)
+#if defined(DDB)
 	{
 		extern int db_active;
 		

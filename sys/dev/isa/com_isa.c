@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isa.c,v 1.8 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: com_isa.c,v 1.9 2017/04/30 13:04:49 mpi Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -91,10 +91,6 @@ com_isa_probe(struct device *parent, void *match, void *aux)
 	iot = ia->ia_iot;
 	iobase = ia->ia_iobase;
 
-#ifdef KGDB
-	if (iobase == com_kgdb_addr)
-		goto out;
-#endif
 	if (iobase == comconsaddr && !comconsattached)
 		goto out;
 
@@ -129,23 +125,11 @@ com_isa_attach(struct device *parent, struct device *self, void *aux)
 	iobase = ia->ia_iobase;
 	iot = ia->ia_iot;
 
-#ifdef KGDB
-	if ((iobase != comconsaddr) &&
-	    (iobase != com_kgdb_addr)) {
-#else
 	if (iobase != comconsaddr) {
-#endif
 		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 			panic("com_isa_attach: mapping failed");
 	} else {
-#ifdef KGDB
-		if (iobase == comconsaddr)
-			ioh = comconsioh;
-		else
-			ioh = com_kgdb_ioh;
-#else
 		ioh = comconsioh;
-#endif
 	}
 
 	sc->sc_iot = iot;
@@ -157,20 +141,8 @@ com_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	irq = ia->ia_irq;
 	if (irq != IRQUNK) {
-#ifdef KGDB     
-		if (iobase == com_kgdb_addr) {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_HIGH, kgdbintr, sc,
-				sc->sc_dev.dv_xname);
-		} else {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_TTY, comintr, sc,
-				sc->sc_dev.dv_xname);
-		}
-#else   
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 			IST_EDGE, IPL_TTY, comintr, sc,
 			sc->sc_dev.dv_xname);
-#endif /* KGDB */
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.3 2007/03/07 06:23:04 miod Exp $	*/
+/*	$OpenBSD: cons.h,v 1.4 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: cons.h,v 1.3 2000/05/19 05:26:17 eeh Exp $	*/
 
 /*-
@@ -45,8 +45,3 @@ extern void zs_putc(void *arg, int c);
 
 struct zschan *
 zs_get_chan_addr(int zsc_unit, int channel);
-
-#ifdef	KGDB
-void zs_kgdb_init(void);
-void zskgdb(struct zs_chanstate *);
-#endif

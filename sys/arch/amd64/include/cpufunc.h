@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.14 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.15 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -345,7 +345,7 @@ xgetbv(uint32_t reg)
 	return (((uint64_t)hi << 32) | (uint64_t)lo);
 }
 
-/* Break into DDB/KGDB. */
+/* Break into DDB. */
 static __inline void
 breakpoint(void)
 {

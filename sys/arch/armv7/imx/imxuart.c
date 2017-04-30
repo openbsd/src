@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.13 2016/12/28 22:45:24 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.14 2017/04/30 13:04:49 mpi Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -74,7 +74,6 @@ struct imxuart_softc {
 #define COM_HW_FIFO     0x02
 #define COM_HW_SIR      0x20
 #define COM_HW_CONSOLE  0x40
-#define COM_HW_KGDB     0x80
 	u_int8_t	sc_swflags;
 #define COM_SW_SOFTCAR  0x01
 #define COM_SW_CLOCAL   0x02

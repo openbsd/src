@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.26 2016/01/25 14:30:30 mpi Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.27 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -48,8 +48,6 @@ db_breakpoint_t	db_taken_bkpt = 0;
 #endif
 
 int		db_inst_count;
-
-#ifndef KGDB
 
 #include <ddb/db_watch.h>
 #include <ddb/db_output.h>
@@ -295,7 +293,6 @@ db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	db_cmd_loop_done = 1;
 }
-#endif /* NO KGDB */
 
 #ifdef	SOFTWARE_SSTEP
 /*

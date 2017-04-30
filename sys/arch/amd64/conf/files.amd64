@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.87 2017/01/21 10:58:15 reyk Exp $
+#	$OpenBSD: files.amd64,v 1.88 2017/04/30 13:04:49 mpi Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -50,13 +50,11 @@ file	arch/amd64/amd64/dkcsum.c		bios
 
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
-file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
+file	arch/amd64/amd64/db_memrw.c		ddb
 file	arch/amd64/amd64/db_trace.c		ddb
 
 file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
-
-file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 
 # Basic clock - required
 file	arch/amd64/isa/clock.c

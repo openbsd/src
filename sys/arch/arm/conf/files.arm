@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.45 2017/04/27 22:41:46 kettenis Exp $
+#	$OpenBSD: files.arm,v 1.46 2017/04/30 13:04:49 mpi Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # generic networking files
@@ -6,10 +6,9 @@ file	arch/arm/arm/in_cksum_arm.S
 
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb
-file	arch/arm/arm/db_interface.c		(ddb|kgdb)
+file	arch/arm/arm/db_interface.c		ddb
 file	arch/arm/arm/db_trace.c			ddb
 file	arch/arm/arm/db_machdep.c		ddb
-file	arch/arm/arm/kgdb_machdep.c		kgdb
 file	arch/arm/arm/disassem.c			ddb
 
 # FIQ support

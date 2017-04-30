@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.13 2014/12/07 13:12:05 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.14 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
 
 /*-
@@ -558,17 +558,15 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 void
 zs_abort(struct zs_chanstate *cs)
 {
-#if defined(KGDB)
-	zskgdb(cs);
-#elif defined(DDB)
+#if defined(DDB)
 	Debugger();
 #endif
 }
 
 
-/*********************************************************/
-/*  Polled character I/O functions for console and KGDB  */
-/*********************************************************/
+/*****************************************************/
+/*  Polled character I/O functions for console KGDB  */
+/*****************************************************/
 
 struct zschan *
 zs_get_chan_addr(int zs_unit, int channel)

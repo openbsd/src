@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.642 2017/04/28 13:50:54 mpi Exp $
+#	$OpenBSD: files,v 1.643 2017/04/30 13:04:49 mpi Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -594,7 +594,7 @@ file 	net/if_pppoe.c			pppoe	needs-flag
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
 # kernel sources
-file ddb/db_access.c			ddb | kgdb
+file ddb/db_access.c			ddb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
 file ddb/db_ctf.c			ddb & ddbctf
@@ -607,7 +607,7 @@ file ddb/db_input.c			ddb
 file ddb/db_lex.c			ddb
 file ddb/db_output.c			ddb
 file ddb/db_prof.c			ddb & ddbprof & !gprof
-file ddb/db_run.c			ddb | kgdb
+file ddb/db_run.c			ddb
 file ddb/db_struct.c			ddb & ddb_struct
 file ddb/db_sym.c			ddb
 file ddb/db_trap.c			ddb
@@ -683,7 +683,6 @@ file kern/kern_watchdog.c		!small_kernel
 file kern/kern_task.c
 file kern/kern_srp.c
 file kern/kern_xxx.c
-file kern/kgdb_stub.c			kgdb
 file kern/sched_bsd.c
 file kern/subr_autoconf.c
 file kern/subr_disk.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.141 2017/03/05 00:45:31 guenther Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.142 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -265,9 +265,6 @@ void			uao_reference(struct uvm_object *);
 void			uao_reference_locked(struct uvm_object *);
 int			uvm_fault(vm_map_t, vaddr_t, vm_fault_t, vm_prot_t);
 
-#if defined(KGDB)
-void			uvm_chgkprot(caddr_t, size_t, int);
-#endif
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(struct proc *);
 void			uvm_exit(struct process *);

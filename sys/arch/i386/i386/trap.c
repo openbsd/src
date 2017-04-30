@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.129 2017/04/08 03:29:13 mlarkin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.130 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -60,10 +60,6 @@
 #include <machine/trap.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
-#endif
-
-#ifdef KGDB
-#include <sys/kgdb.h>
 #endif
 
 #include <sys/exec.h>
@@ -159,28 +155,13 @@ trap(struct trapframe *frame)
 
 	/* trace trap */
 	case T_TRCTRAP:
-#if !(defined(DDB) || defined(KGDB))
+#ifndef DDB
 		return;	/* Just return if no kernel debugger */
 #endif
 		/* FALLTHROUGH */
 
 	default:
 	we_re_toast:
-#ifdef KGDB
-		if (kgdb_trap(type, frame))
-			return;
-		else {
-			/*
-			 * If this is a breakpoint, don't panic
-			 * if we're not connected.
-			 */
-			if (type == T_BPTFLT) {
-				printf("kgdb: ignored %s\n", trap_type[type]);
-				return;
-			}
-		}
-#endif
-
 #ifdef DDB
 		if (db_ktrap(type, 0, frame))
 			return;
@@ -457,7 +438,7 @@ trap(struct trapframe *frame)
 	}
 
 #if 0  /* Should this be left out?  */
-#if !defined(DDB) && !defined(KGDB)
+#if !defined(DDB)
 	/* XXX need to deal with this when DDB is present, too */
 	case T_TRCTRAP: /* kernel trace trap; someone single stepping lcall's */
 			/* syscall has to turn off the trace bit itself */
@@ -481,18 +462,12 @@ trap(struct trapframe *frame)
 #if NISA > 0
 	case T_NMI:
 	case T_NMI|T_USER:
-#if defined(DDB) || defined(KGDB)
+#ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
-#ifdef KGDB
-		if (kgdb_trap(type, frame))
-			return;
-#endif
-#ifdef DDB
 		if (db_ktrap(type, 0, frame))
 			return;
 #endif
-#endif /* DDB || KGDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 		if (isa_nmi() == 0)
 			return;

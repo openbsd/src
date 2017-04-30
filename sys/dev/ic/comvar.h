@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.52 2016/09/03 14:43:37 jsg Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.53 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ struct com_softc {
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_SIR	0x20
 #define	COM_HW_CONSOLE	0x40
-#define	COM_HW_KGDB	0x80
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
 #define	COM_SW_CLOCAL	0x02
@@ -156,15 +155,6 @@ void	comcnpollc(dev_t, int);
 int	com_common_getc(bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(bus_space_tag_t, bus_space_handle_t, int);
 void	com_raisedtr(void *);
-
-#ifdef KGDB
-extern bus_addr_t com_kgdb_addr;
-extern bus_space_tag_t com_kgdb_iot;
-extern bus_space_handle_t com_kgdb_ioh;
-
-int	com_kgdb_attach(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
-int	kgdbintr(void *);
-#endif
 
 void com_attach_subr(struct com_softc *);
 

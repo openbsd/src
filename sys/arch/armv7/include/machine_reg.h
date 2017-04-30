@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine_reg.h,v 1.1 2013/09/04 14:38:28 patrick Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.2 2017/04/30 13:04:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -43,7 +43,7 @@
 #define MACHINE_AGPIO_VBASE	0xfd300000
 #define MACHINE_VBASE_FREE	0xfd400000
 /* FFUART and/or BTUART are mapped to this area when
-   used for console or kgdb port */
+   used for console */
 
 #define ioreg_read(a)  (*(volatile unsigned *)(a))
 #define ioreg_write(a,v)  (*(volatile unsigned *)(a)=(v))

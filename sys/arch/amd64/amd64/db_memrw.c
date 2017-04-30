@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.7 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.8 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -32,8 +32,6 @@
 
 /*
  * Interface to the debugger for virtual memory read/write.
- * This file is shared by DDB and KGDB, and must work even
- * when only KGDB is included (thus no db_printf calls).
  *
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.

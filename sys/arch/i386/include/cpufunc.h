@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.23 2017/02/06 09:13:41 mpi Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.24 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ wrmsr_locked(u_int msr, u_int code, u_int64_t newval)
 	    : "A" (newval), "c" (msr), "D" (code));
 }
 
-/* Break into DDB/KGDB. */
+/* Break into DDB. */
 static __inline void
 breakpoint(void)
 {

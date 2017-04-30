@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_1000a.c,v 1.8 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_1000a.c,v 1.9 2017/04/30 13:04:49 mpi Exp $ */
 /* $NetBSD: dec_1000a.c,v 1.14 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -102,15 +102,6 @@ static int comcnrate = CONSPEED;
 void _dec_1000a_init(void);
 void dec_1000a_cons_init(void);
 void dec_1000a_device_register(struct device *, void *);
-
-#ifdef KGDB
-#include <machine/db_machdep.h>
-
-const char *kgdb_devlist[] = {
-	"com",
-	NULL,
-};
-#endif /* KGDB */
 
 const struct alpha_variation_table dec_1000_variations[] = {
 	{ 0, "AlphaServer 1000" },
@@ -233,10 +224,6 @@ dec_1000a_cons_init()
 		panic("consinit: unknown console type %lu",
 		    (unsigned long)ctb->ctb_term_type);
 	}
-#ifdef KGDB
-	/* Attach the KGDB device. */
-	alpha_kgdb_init(kgdb_devlist, iot);
-#endif /* KGDB */
 }
 
 void

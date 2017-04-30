@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.3 2017/04/11 15:16:14 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.4 2017/04/30 13:04:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -145,7 +145,6 @@ struct pluart_softc {
 #define COM_HW_FIFO     0x02
 #define COM_HW_SIR      0x20
 #define COM_HW_CONSOLE  0x40
-#define COM_HW_KGDB     0x80
 	u_int8_t	sc_swflags;
 #define COM_SW_SOFTCAR  0x01
 #define COM_SW_CLOCAL   0x02

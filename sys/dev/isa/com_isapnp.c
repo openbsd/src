@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isapnp.c,v 1.4 2008/04/27 09:29:40 kettenis Exp $	*/
+/*	$OpenBSD: com_isapnp.c,v 1.5 2017/04/30 13:04:49 mpi Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -91,10 +91,6 @@ com_isapnp_probe(struct device *parent, void *match, void *aux)
 	iobase = ia->ia_iobase;
 	ioh = ia->ia_ioh;
 
-#ifdef KGDB
-	if (iobase == com_kgdb_addr)
-		return (1);
-#endif
 	/* if it's in use as console, it's there. */
 	if (iobase == comconsaddr && !comconsattached)
 		return (1);
@@ -137,20 +133,8 @@ com_isapnp_attach(struct device *parent, struct device *self, void *aux)
 
 	irq = ia->ia_irq;
         if (irq != IRQUNK) {
-#ifdef KGDB     
-		if (iobase == com_kgdb_addr) {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_HIGH, kgdbintr, sc,
-				sc->sc_dev.dv_xname);
-		} else {
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				IST_EDGE, IPL_TTY, comintr, sc,
-				sc->sc_dev.dv_xname);
-		}
-#else   
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 			IST_EDGE, IPL_TTY, comintr, sc,
 			sc->sc_dev.dv_xname);
-#endif /* KGDB */
 	}
 }

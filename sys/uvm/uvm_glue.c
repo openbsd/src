@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.71 2017/02/14 10:31:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.72 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -99,43 +99,6 @@ uvm_kernacc(caddr_t addr, size_t len, int rw)
 
 	return(rv);
 }
-
-#ifdef KGDB
-/*
- * Change protections on kernel pages from addr to addr+len
- * (presumably so debugger can plant a breakpoint).
- *
- * We force the protection change at the pmap level.  If we were
- * to use vm_map_protect a change to allow writing would be lazily-
- * applied meaning we would still take a protection fault, something
- * we really don't want to do.  It would also fragment the kernel
- * map unnecessarily.  We cannot use pmap_protect since it also won't
- * enforce a write-enable request.  Using pmap_enter is the only way
- * we can ensure the change takes place properly.
- */
-void
-uvm_chgkprot(caddr_t addr, size_t len, int rw)
-{
-	vm_prot_t prot;
-	paddr_t pa;
-	vaddr_t sva, eva;
-
-	prot = rw == B_READ ? PROT_READ : PROT_READ | PROT_WRITE;
-	eva = round_page((vaddr_t)addr + len);
-	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
-		/*
-		 * Extract physical address for the page.
-		 * We use a cheezy hack to differentiate physical
-		 * page 0 from an invalid mapping, not that it
-		 * really matters...
-		 */
-		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
-			panic("chgkprot: invalid page");
-		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
-	}
-	pmap_update(pmap_kernel());
-}
-#endif
 
 /*
  * uvm_vslock: wire user memory for I/O

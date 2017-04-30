@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn300.c,v 1.8 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_kn300.c,v 1.9 2017/04/30 13:04:49 mpi Exp $ */
 /* $NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
@@ -79,15 +79,6 @@ int bootdev_debug;
 void dec_kn300_init (void);
 void dec_kn300_cons_init (void);
 static void dec_kn300_device_register (struct device *, void *);
-
-#ifdef KGDB
-#include <machine/db_machdep.h>
-
-static const char *kgdb_devlist[] = {
-	"com",
-	NULL,
-};
-#endif /* KGDB */
 
 #define	ALPHASERVER_4100	"AlphaServer 4100"
 
@@ -202,10 +193,6 @@ dec_kn300_cons_init()
 		panic("consinit: unknown console type %lu",
 		    (unsigned long)ctb->ctb_term_type);
 	}
-#ifdef KGDB
-	/* Attach the KGDB device. */
-	alpha_kgdb_init(kgdb_devlist, &ccp->cc_iot);
-#endif /* KGDB */
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.27 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: fault.c,v 1.28 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -94,14 +94,8 @@
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#if defined(DDB) || defined(KGDB)
+#ifdef DDB
 #include <machine/db_machdep.h>
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
-#if !defined(DDB)
-#define db_ktrap	kgdb_trap
-#endif
 #endif
 
 #include <arm/db_machdep.h>
@@ -417,7 +411,7 @@ dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 		    tf->tf_svc_sp, tf->tf_svc_lr);
 	printf(", pc =%08lx\n\n", tf->tf_pc);
 
-#if defined(DDB) || defined(KGDB)
+#ifdef DDB
 	db_ktrap(T_FAULT, tf);
 #endif
 	panic("Fatal abort");

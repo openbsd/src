@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2017/03/03 20:49:47 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -93,10 +93,6 @@
 
 #include "isa.h"
 
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
-
 void trap(struct trapframe *);
 void ast(struct trapframe *);
 void syscall(struct trapframe *);
@@ -180,20 +176,6 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-#ifdef KGDB
-		if (kgdb_trap(type, frame))
-			return;
-		else {
-			/*
-			 * If this is a breakpoint, don't panic
-			 * if we're not connected.
-			 */
-			if (type == T_BPTFLT) {
-				printf("kgdb: ignored %s\n", trap_type[type]);
-				return;
-			}
-		}
-#endif
 #ifdef DDB
 		if (db_ktrap(type, 0, frame))
 			return;
@@ -427,19 +409,12 @@ faultcommon:
 #if NISA > 0
 	case T_NMI:
 	case T_NMI|T_USER:
-#if defined(KGDB) || defined(DDB)
+#ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
-#ifdef KGDB
-
-		if (kgdb_trap(type, frame))
-			return;
-#endif
-#ifdef DDB
 		if (db_ktrap(type, 0, frame))
 			return;
 #endif
-#endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 
 		if (x86_nmi() != 0)

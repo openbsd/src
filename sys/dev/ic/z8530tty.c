@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.27 2016/09/04 18:20:34 tedu Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.28 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -314,21 +314,6 @@ zstty_attach(struct device *parent, struct device *self, void *aux)
 	if (i != NULL || o != NULL) {
 		printf(": console%s", i ? (o ? "" : i) : o);
 	}
-
-#ifdef KGDB
-	if (zs_check_kgdb(cs, dev)) {
-		/*
-		 * Allow kgdb to "take over" this port.  Returns true
-		 * if this serial port is in-use by kgdb.
-		 */
-		printf(": kgdb\n");
-		/*
-		 * This is the kgdb port (exclusive use)
-		 * so skip the normal attach code.
-		 */
-		return;
-	}
-#endif
 
 #if defined(__sparc64__)
 	if (strcmp(args->type, "keyboard") == 0 ||

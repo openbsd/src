@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.10 2017/03/07 20:14:20 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.11 2017/04/30 13:04:49 mpi Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -74,7 +74,6 @@ struct exuart_softc {
 #define COM_HW_FIFO     0x02
 #define COM_HW_SIR      0x20
 #define COM_HW_CONSOLE  0x40
-#define COM_HW_KGDB     0x80
 	u_int8_t	sc_swflags;
 #define COM_SW_SOFTCAR  0x01
 #define COM_SW_CLOCAL   0x02

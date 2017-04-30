@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.26 2017/02/06 09:13:41 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.27 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -74,15 +74,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 				  ((ins)&0x3800) == 0x1000))
 
 #define DB_MACHINE_COMMANDS
-
-/*
- * Constants for KGDB.
- */
-typedef	long		kgdb_reg_t;
-#define	KGDB_NUMREGS	16
-#define	KGDB_BUFLEN	512
-
-#define KGDB_ENTER	breakpoint()
 
 /* macro for checking if a thread has used floating-point */
 

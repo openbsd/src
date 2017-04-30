@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.161 2016/09/04 18:20:34 tedu Exp $	*/
+/*	$OpenBSD: com.c,v 1.162 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -115,17 +115,6 @@ tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 
-#ifdef KGDB
-#include <sys/kgdb.h>
-
-bus_addr_t com_kgdb_addr;
-bus_space_tag_t com_kgdb_iot;
-bus_space_handle_t com_kgdb_ioh;
-
-int    com_kgdb_getc(void *);
-void   com_kgdb_putc(void *, int);
-#endif /* KGDB */
-
 #define	DEVUNIT(x)	(minor(x) & 0x7f)
 #define	DEVCUA(x)	(minor(x) & 0x80)
 
@@ -227,11 +216,7 @@ com_activate(struct device *self, int act)
 		com_resume(sc);
 		break;
 	case DVACT_DEACTIVATE:
-#ifdef KGDB
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-#else
 		if (sc->sc_hwflags & COM_HW_CONSOLE) {
-#endif /* KGDB */
 			rv = EBUSY;
 			break;
 		}
@@ -263,14 +248,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc = com_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
-
-#ifdef KGDB
-	/*
-	 * If this is the kgdb port, no other use is permitted.
-	 */
-	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
-		return (EBUSY);
-#endif /* KGDB */
 
 	s = spltty();
 	if (!sc->sc_tty) {
@@ -1080,61 +1057,6 @@ comsoft(void *arg)
 	}
 }
 
-#ifdef KGDB
-
-/*
- * If a line break is set, or data matches one of the characters
- * gdb uses to signal a connection, then start up kgdb. Just gobble
- * any other data. Done in a stand alone function because comintr
- * does tty stuff and we don't have one.
- */
-
-int
-kgdbintr(void *arg)
-{
-	struct com_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_char lsr, data, msr, delta;
-
-	if (!ISSET(sc->sc_hwflags, COM_HW_KGDB))
-		return(0);
-
-	for (;;) {
-		lsr = bus_space_read_1(iot, ioh, com_lsr);
-		if (ISSET(lsr, LSR_RXRDY)) {
-			do {
-				data = bus_space_read_1(iot, ioh, com_data);
-				if (data == 3 || data == '$' || data == '+' ||
-				    ISSET(lsr, LSR_BI)) {
-					kgdb_connect(1);
-					data = 0;
-				}
-				lsr = bus_space_read_1(iot, ioh, com_lsr);
-			} while (ISSET(lsr, LSR_RXRDY));
-
-		}
-		if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-			printf("weird lsr %02x\n", lsr);
-
-		msr = bus_space_read_1(iot, ioh, com_msr);
-
-		if (msr != sc->sc_msr) {
-			delta = msr ^ sc->sc_msr;
-			sc->sc_msr = msr;
-			if (ISSET(delta, MSR_DCD)) {
-				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
-					CLR(sc->sc_mcr, sc->sc_dtr);
-					bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
-				}
-			}
-		}
-		if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
-			return (1);
-	}
-}
-#endif /* KGDB */
-
 int
 comintr(void *arg)
 {
@@ -1231,8 +1153,8 @@ comintr(void *arg)
 }
 
 /*
- * The following functions are polled getc and putc routines, shared
- * by the console and kgdb glue.
+ * The following functions are polled getc and putc routines, used
+ * by the console glue.
  */
 
 int
@@ -1383,54 +1305,10 @@ comcnpollc(dev_t dev, int on)
 }
 #endif	/* COM_CONSOLE */
 
-#ifdef KGDB
-int
-com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
-    int frequency, tcflag_t cflag)
-{
-#ifdef COM_CONSOLE
-	if (iot == comconsiot && iobase == comconsaddr) {
-		return (EBUSY); /* cannot share with console */
-	}
-#endif
-
-	com_kgdb_iot = iot;
-	com_kgdb_addr = iobase;
-
-	if (bus_space_map(com_kgdb_iot, com_kgdb_addr, COM_NPORTS, 0,
-	    &com_kgdb_ioh))
-		panic("com_kgdb_attach: mapping failed");
-
-	/* XXX We currently don't respect KGDBMODE? */
-	cominit(com_kgdb_iot, com_kgdb_ioh, rate, frequency);
-
-	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
-	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
-
-	return (0);
-}
-
-/* ARGSUSED */
-int
-com_kgdb_getc(void *arg)
-{
-
-	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
-}
-
-/* ARGSUSED */
-void
-com_kgdb_putc(void *arg, int c)
-{
-
-	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
-}
-#endif /* KGDB */
-
 void	com_enable_debugport(struct com_softc *);
 void	com_fifo_probe(struct com_softc *);
 
-#if defined(COM_CONSOLE) || defined(KGDB)
+#ifdef COM_CONSOLE
 void
 com_enable_debugport(struct com_softc *sc)
 {
@@ -1438,16 +1316,12 @@ com_enable_debugport(struct com_softc *sc)
 
 	/* Turn on line break interrupt, set carrier. */
 	s = splhigh();
-#ifdef KGDB
-	SET(sc->sc_ier, IER_ERXRDY);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-#endif
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
 
 	splx(s);
 }
-#endif	/* COM_CONSOLE || KGDB */
+#endif	/* COM_CONSOLE */
 
 void
 com_attach_subr(struct com_softc *sc)
@@ -1634,21 +1508,8 @@ com_attach_subr(struct com_softc *sc)
 		panic("comattach: bad fifo type");
 	}
 
-#ifdef KGDB
-	/*
-	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
-	 */
-
-	if (iot == com_kgdb_iot && sc->sc_iobase == com_kgdb_addr &&
-	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
-		SET(sc->sc_hwflags, COM_HW_KGDB);
-	}
-#endif /* KGDB */
-
-#if defined(COM_CONSOLE) || defined(KGDB)
-	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
+#ifdef COM_CONSOLE
+	if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 #endif
 		com_fifo_probe(sc);
 
@@ -1696,8 +1557,8 @@ com_attach_subr(struct com_softc *sc)
 	if (!sc->enable)
 		sc->enabled = 1;
 
-#if defined(COM_CONSOLE) || defined(KGDB)
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
+#ifdef COM_CONSOLE
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 		com_enable_debugport(sc);
 #endif
 }

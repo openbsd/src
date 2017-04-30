@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.89 2017/04/27 11:48:08 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.90 2017/04/30 13:04:49 mpi Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -61,9 +61,6 @@
  */
 #include <sys/stdarg.h>
 
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
 #include <ddb/db_var.h>		/* db_log, db_radix */
@@ -202,9 +199,6 @@ panic(const char *fmt, ...)
 	printf("\n");
 	va_end(ap);
 
-#ifdef KGDB
-	kgdb_panic();
-#endif
 #ifdef DDB
 	if (db_panic)
 		Debugger();
