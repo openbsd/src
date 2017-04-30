@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.64 2017/04/30 04:18:58 beck Exp $ */
+/* $OpenBSD: b_sock.c,v 1.65 2017/04/30 05:09:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -243,23 +243,15 @@ err:
 int
 BIO_accept(int sock, char **addr)
 {
+	char   h[NI_MAXHOST], s[NI_MAXSERV];
+	struct sockaddr_in sin;
+	socklen_t sin_len = sizeof(sin);
 	int ret = -1;
-	unsigned long l;
-	unsigned short port;
-	char *p, *tmp;
 
-	struct {
-		socklen_t len;
-		union {
-			struct sockaddr sa;
-			struct sockaddr_in sa_in;
-			struct sockaddr_in6 sa_in6;
-		} from;
-	} sa;
+	if (addr == NULL)
+		goto end;
 
-	sa.len = sizeof(sa.from);
-	memset(&sa.from, 0, sizeof(sa.from));
-	ret = accept(sock, &sa.from.sa, &sa.len);
+	ret = accept(sock, (struct sockaddr *)&sin, &sin_len);
 	if (ret == -1) {
 		if (BIO_sock_should_retry(ret))
 			return -2;
@@ -267,51 +259,24 @@ BIO_accept(int sock, char **addr)
 		BIOerror(BIO_R_ACCEPT_ERROR);
 		goto end;
 	}
-
-	if (addr == NULL)
-		goto end;
-
-	do {
-		char   h[NI_MAXHOST], s[NI_MAXSERV];
-		size_t nl;
-
-		if (getnameinfo(&sa.from.sa, sa.len, h, sizeof(h),
-		    s, sizeof(s), NI_NUMERICHOST|NI_NUMERICSERV))
-			break;
-		nl = strlen(h) + strlen(s) + 2;
-		p = *addr;
-		if (p)
-			*p = '\0';
-		if (!(tmp = realloc(p, nl))) {
-			close(ret);
-			ret = -1;
-			free(p);
-			*addr = NULL;
-			BIOerror(ERR_R_MALLOC_FAILURE);
-			goto end;
-		}
-		p = tmp;
-		*addr = p;
-		snprintf(*addr, nl, "%s:%s", h, s);
-		goto end;
-	} while (0);
-	if (sa.from.sa.sa_family != AF_INET)
-		goto end;
-	l = ntohl(sa.from.sa_in.sin_addr.s_addr);
-	port = ntohs(sa.from.sa_in.sin_port);
-	if (*addr == NULL) {
-		if ((p = malloc(24)) == NULL) {
-			close(ret);
-			ret = -1;
-			BIOerror(ERR_R_MALLOC_FAILURE);
-			goto end;
-		}
-		*addr = p;
+	/* XXX Crazy API. Can't be helped */
+	if (*addr != NULL) {
+		free(*addr);
+		*addr = NULL;
 	}
-	snprintf(*addr, 24, "%d.%d.%d.%d:%d",
-	    (unsigned char)(l >> 24L) & 0xff, (unsigned char)(l >> 16L) & 0xff,
-	    (unsigned char)(l >> 8L) & 0xff, (unsigned char)(l) & 0xff, port);
 
+	if (sin.sin_family != AF_INET)
+		goto end;
+
+	if (getnameinfo((struct sockaddr *)&sin, sin_len, h, sizeof(h),
+		s, sizeof(s), NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+		goto end;
+
+	if ((asprintf(addr, "%s:%s", h, s)) == -1) {
+		BIOerror(ERR_R_MALLOC_FAILURE);
+		*addr = NULL;
+		goto end;
+	}
 end:
 	return (ret);
 }
