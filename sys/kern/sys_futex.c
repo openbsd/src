@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.1 2017/04/28 13:50:55 mpi Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.2 2017/04/30 10:10:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -85,7 +85,6 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 	uint32_t val = SCARG(uap, val);
 	const struct timespec *timeout = SCARG(uap, timeout);
 	void *g = SCARG(uap, g);
-	int error = 0;
 
 	switch (op) {
 	case FUTEX_WAIT:
@@ -106,11 +105,11 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 		rw_exit_write(&ftlock);
 		break;
 	default:
-		error = ENOSYS;
+		*retval = ENOSYS;
 		break;
 	}
 
-	return (error ? -1 : 0);
+	return 0;
 }
 
 /*
