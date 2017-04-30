@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.52 2017/04/30 23:10:43 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.53 2017/04/30 23:17:37 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -35,13 +35,6 @@ OPENSSL?=	yes
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
-.else
-# SSH v.1 requires OpenSSL.
-SSH1=		no
-.endif
-
-.if (${SSH1:L} == "yes")
-CFLAGS+=	-DWITH_SSH1
 .endif
 
 CFLAGS+=	-DENABLE_PKCS11
