@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.c,v 1.1 2017/04/30 09:03:58 mpi Exp $ */
+/*	$OpenBSD: futex.c,v 1.2 2017/04/30 10:11:03 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -39,6 +39,9 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	struct timespec abs = { 0, 5000 };
 	pthread_t thread;
+
+	/* Invalid operation */
+	assert(futex(&lock, 0xFFFF, 0, 0, NULL) == ENOSYS);
 
 	/* Incorrect pointer */
 	assert(futex_twait((void *)0xdeadbeef, 1, 0, NULL) == EFAULT);
