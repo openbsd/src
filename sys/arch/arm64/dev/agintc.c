@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.3 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: agintc.c,v 1.4 2017/04/30 21:52:40 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  *
@@ -40,6 +40,7 @@
 #define ICC_BPR0	s3_0_c12_c8_3
 
 #define ICC_DIR		s3_0_c12_c11_1
+#define ICC_RPR		s3_0_c12_c11_3
 #define ICC_SGI1R	s3_0_c12_c11_5
 #define ICC_SGI0R	s3_0_c12_c11_7
 
@@ -128,7 +129,6 @@ struct agintc_softc {
 	struct evcount		 sc_spur;
 	int			 sc_ncells;
 	int			 sc_num_redist;
-	int			 sc_pri_shift;
 	struct interrupt_controller sc_ic;
 };
 struct agintc_softc *agintc_sc;
@@ -216,7 +216,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args	*faa = aux;
 	int			 i, j, nintr;
 	int			 psw;
-	uint64_t		 icc_ctlr;
 	int			 offset, nredist;
 	int			 grp1enable;
 
@@ -245,9 +244,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
 	sc->sc_nintr = nintr;
-
-	__asm volatile("mrs %x0, "STR(ICC_CTLR) : "=r"(icc_ctlr));
-	sc->sc_pri_shift = 8 - (((icc_ctlr >> 8) & 0x7)) - 1;
 
 	agintc_sc = sc; /* save this for global access */
 
@@ -282,8 +278,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	printf(" nirq %d, nredist %d, pri_shift %d\n", nintr,
-	    sc->sc_num_redist, sc->sc_pri_shift);
+	printf(" nirq %d, nredist %d\n", nintr, sc->sc_num_redist);
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 1; i < nintr / 32; i++) {
@@ -331,7 +326,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	grp1enable = 1;
 	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
-	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(7));
+	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
 	__asm volatile("msr "STR(ICC_IGRPEN1)", %x0" :: "r"(grp1enable));
 
 	sc->sc_ic.ic_node = faa->fa_node;
@@ -409,12 +404,14 @@ agintc_set_priority(struct agintc_softc *sc, int irq, int pri)
 	uint32_t	 prival;
 
 	/*
-	 * We only use 16 (13 really) interrupt priorities,
-	 * and a CPU is only required to implement bit 4-7 of each field
-	 * so shift into the top bits.
+	 * The interrupt priority registers expose the full range of
+	 * priorities available in secure mode, and at least bit 3-7
+	 * must be implemented.  For non-secure interrupts the top bit
+	 * must be one.  We only use 16 (13 really) interrupt
+	 * priorities, so shift into bits 3-6.
 	 * also low values are higher priority thus NIPL - pri
 	 */
-	prival = ((NIPL - pri) << sc->sc_pri_shift);
+	prival = 0x80 | ((NIPL - pri) << 3);
 	if (irq >= 32) {
 		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh,
 		    GICD_IPRIORITYR(irq), prival);
@@ -429,7 +426,6 @@ void
 agintc_setipl(int new)
 {
 	struct cpu_info		*ci = curcpu();
-	struct agintc_softc	*sc = agintc_sc;
 	int			 psw;
 	uint32_t		 prival;
 
@@ -437,11 +433,16 @@ agintc_setipl(int new)
 	psw = disable_interrupts();
 	ci->ci_cpl = new;
 
-	/* low values are higher priority thus NIPL - pri */
+	/*
+	 * The priority mask register only exposes the priorities
+	 * available in non-secure mode, so the top bit is hidden.  So
+	 * here we shift into bits 4-7.
+	 * low values are higher priority thus NIPL - pri
+	 */
 	if (new == IPL_NONE)
 		prival = 0xff;		/* minimum priority */
 	else
-		prival = ((NIPL - new) << sc->sc_pri_shift);
+		prival = ((NIPL - new) << 4);
 
 	__asm volatile("msr "STR(ICC_PMR)", %x0" : : "r" (prival));
 	restore_interrupts(psw);
