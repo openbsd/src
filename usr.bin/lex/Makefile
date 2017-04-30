@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/03/30 06:38:46 jmc Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/04/30 20:30:39 millert Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -41,11 +41,7 @@ skel.c: flex.skl mkskel.sh flexint.h tables_shared.h
 		sh ${.CURDIR}/mkskel.sh  > ${.TARGET}
 
 includes:
-.if !exists(${DESTDIR}/usr/include/g++)
-	${INSTALL} -d -o root -g bin -m 755 \
-		${DESTDIR}/usr/include/g++
-.endif
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		${.CURDIR}/FlexLexer.h ${DESTDIR}/usr/include/g++/
+		${.CURDIR}/FlexLexer.h ${DESTDIR}/usr/include
 
 .include <bsd.prog.mk>
