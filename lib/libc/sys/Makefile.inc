@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.148 2017/03/29 16:29:02 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.149 2017/04/30 09:01:14 mpi Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -87,6 +87,7 @@ DASM=	${ASM:.o=.do}
 # syscalls that CANNOT FAIL.  They can return whatever value they want,
 # they just never want to set errno.
 ASM_NOERR=__get_tcb.o __set_tcb.o __threxit.o __thrsleep.o __thrwakeup.o \
+	futex.o \
 	getdtablecount.o getegid.o geteuid.o getgid.o getlogin_r.o \
 	getpgrp.o getpid.o getppid.o getrtable.o getthrid.o getuid.o \
 	issetugid.o \

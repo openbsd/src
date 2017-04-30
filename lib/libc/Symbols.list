@@ -77,6 +77,7 @@ _thread_sys_fstatat
 _thread_sys_fstatfs
 _thread_sys_fsync
 _thread_sys_ftruncate
+_thread_sys_futex
 _thread_sys_futimens
 _thread_sys_futimes
 _thread_sys_getdents
@@ -272,6 +273,7 @@ fstatat
 fstatfs
 fsync
 ftruncate
+futex
 futimens
 futimes
 getdents
