@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.179 2017/04/30 19:37:13 mpi Exp $
+#	$OpenBSD: netstart,v 1.180 2017/05/01 14:23:29 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -42,7 +42,7 @@ parse_hn_line() {
 	inet6)	((${#_c[*]} > 1)) || return
 		if [[ ${_c[_name]} == autoconf ]]; then
 			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
-			rtsolif="$rtsolif $_if"
+			V6_AUTOCONF=true
 			return
 		fi
 		[[ ${_c[_name]} == alias ]] && _prefix=3
@@ -60,14 +60,14 @@ parse_hn_line() {
 		;;
 	dhcp)	_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
-		dhcpif="$dhcpif $_if"
+		V4_DHCPCONF=true
 		;;
 	rtsol)	# XXX Support the rtsol keyword for some time to enable a smooth
 		# XXX transition to autoconf.
 		_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up"
 		_cmds[${#_cmds[*]}]="ifconfig $_if inet6 autoconf"
-		rtsolif="$rtsolif $_if"
+		V6_AUTOCONF=true
 		;;
 	'!'*)	_cmd=$(print -- "${_c[@]}" | sed 's/\$if/'$_if'/g')
 		_cmds[${#_cmds[*]}]="${_cmd#!}"
@@ -151,30 +151,18 @@ ifmstart() {
 	done
 }
 
-# IPv6 autoconf the interfaces in the $rtsolif list.
-# Usage: ifv6autoconf
-ifv6autoconf() {
-	local _if
-
-	# $ip6kernel will not have been set if we were invoked with a
-	# list of interface names
-	ifconfig lo0 inet6 >/dev/null 2>&1 || return 0
-
-	for _if in $rtsolif; do
-		ifconfig $_if inet6 autoconf
-	done
-}
-
 # Parse /etc/mygate and add default routes for IPv4 and IPv6
 # Usage: defaultroute
 defaultroute() {
-	[[ -z $dhcpif ]] && stripcom /etc/mygate | while read gw; do
-			[[ $gw == @(*:*) ]] && continue
-			route -qn add -host default $gw && break
+	! $V4_DHCPCONF && stripcom /etc/mygate |
+	while read gw; do
+		[[ $gw == @(*:*) ]] && continue
+		route -qn add -host default $gw && break
 	done
-	[[ -z $rtsolif ]] && stripcom /etc/mygate | while read gw; do
-			[[ $gw == !(*:*) ]] && continue
-			route -qn add -host -inet6 default $gw && break
+	! $V6_AUTOCONF && stripcom /etc/mygate |
+	while read gw; do
+		[[ $gw == !(*:*) ]] && continue
+		route -qn add -host -inet6 default $gw && break
 	done
 }
 
@@ -191,6 +179,9 @@ _rc_parse_conf
 HN_DIR=${HN_DIR:-/etc}
 PRINT_ONLY=false
 USAGE="USAGE: ${0##*/} [-n] [interface ...]"
+V4_DHCPCONF=false
+V6_AUTOCONF=false
+
 while getopts ":n" opt; do
 	case $opt in
 	n)	PRINT_ONLY=true;;
@@ -209,7 +200,6 @@ fi
 # interfaces (or bridges), add default routes and return.
 if (($# > 0)); then
 	for _if; do ifstart $_if; done
-	ifv6autoconf
 	defaultroute
 	return
 fi
@@ -271,8 +261,6 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
 	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
-
-	rtsolif=""
 else
 	ip6kernel=NO
 fi
@@ -286,9 +274,6 @@ ifmstart "" "trunk svlan vlan carp gif gre pfsync pppoe tun bridge switch pflow"
 # The (s)vlan interfaces need to come up after trunk.
 # Configure all the carp interfaces which we know about before default route.
 ifmstart "trunk svlan vlan carp"
-
-# Now that $rtsolif has been populated, IPv6 autoconf those interfaces
-ifv6autoconf
 
 # Look for default routes in /etc/mygate.
 defaultroute
