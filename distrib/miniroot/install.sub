@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.998 2017/04/25 19:24:05 rpe Exp $
+#	$OpenBSD: install.sub,v 1.999 2017/05/01 14:22:36 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2142,7 +2142,7 @@ parse_hn_line() {
 		((${#_c[*]} > 1)) || return
 		if [[ ${_c[_name]} == autoconf ]]; then
 			_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
-			rtsolif="$rtsolif $_if"
+			V6_AUTOCONF=true
 			return
 		fi
 		[[ ${_c[_name]} == alias ]] && _prefix=3
@@ -2162,14 +2162,14 @@ parse_hn_line() {
 	dhcp)	! $_has_dhclient && return
 		_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
-		dhcpif="$dhcpif $_if"
+		V4_DHCPCONF=true
 		;;
 	rtsol)	# XXX Support the rtsol keyword for some time to enable a smooth
 		# XXX transition to autoconf.
 		_c[0]=
 		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up"
 		_cmds[${#_cmds[*]}]="ifconfig $_if inet6 autoconf"
-		rtsolif="$rtsolif $_if"
+		V6_AUTOCONF=true
 		;;
 	'!'*|bridge)
 		# Skip shell commands and bridge in the installer.
@@ -2248,17 +2248,17 @@ enable_network() {
 		ifstart $_hn
 	done
 
-	[[ -n $rtsolif ]] && ifconfig $rtsolif inet6 autoconf
-
 	# /mnt/etc/mygate, if it exists, contains the address(es) of my
 	# default gateway(s). Use for ipv4 if no interfaces configured via
 	# dhcp. Use for ipv6 if no interfaces configured via autoconf.
-	[[ -z $dhcpif ]] && stripcom /mnt/etc/mygate | while read _gw; do
+	! $V4_DHCPCONF && stripcom /mnt/etc/mygate |
+	while read _gw; do
 		[[ $_gw == @(*:*) ]] && continue
 		route -qn delete default >/dev/null 2>&1
 		route -qn add -host default $_gw && break
 	done
-	[[ -z $rtsolif ]] && stripcom /mnt/etc/mygate | while read _gw; do
+	! $V6_AUTOCONF && stripcom /mnt/etc/mygate |
+	while read _gw; do
 		[[ $_gw == !(*:*) ]] && continue
 		route -qn delete -inet6 default >/dev/null 2>&1
 		route -qn add -host -inet6 default $_gw && break
@@ -3052,6 +3052,8 @@ HTTP_SEC=/tmp/i/httpsec
 HTTP_LIST=/tmp/i/httplist
 WLANLIST=/tmp/i/wlanlist
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
+V4_DHCPCONF=false
+V6_AUTOCONF=false
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
