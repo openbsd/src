@@ -1,0 +1,15 @@
+.TH TBL-MOD-EXPAND-TOOWIDE 1 "May 1, 2017" OpenBSD
+.SH NAME
+tbl-mod-expand-toowide \- try to expand columns in a table
+that is already too wide
+.SH DESCRIPTION
+.ll 20n
+In this section, the line length is limited to 20 characters.
+.TS
+tab(:);
+lx l lx.
+x:1234567890:x
+.TE
+.ll 78n
+.PP
+Now we are back to the default terminal width.
