@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.23 2016/01/04 13:30:20 jung Exp $	*/
+/*	$OpenBSD: table.c,v 1.24 2017/05/01 09:29:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -694,6 +694,7 @@ table_dump_lookup(enum table_service s, union lookup *lk)
 		break;
 
 	default:
+		(void)strlcpy(buf, "???", sizeof(buf));
 		break;
 	}
 
