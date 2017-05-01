@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.54 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.55 2017/05/01 12:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -299,7 +299,7 @@ cmdq_format(struct cmdq_item *item, const char *key, const char *fmt, ...)
 	va_end(ap);
 
 	if (shared->formats == NULL)
-		shared->formats = format_create(NULL, FORMAT_NONE, 0);
+		shared->formats = format_create(NULL, NULL, FORMAT_NONE, 0);
 	format_add(shared->formats, key, "%s", value);
 
 	free(value);

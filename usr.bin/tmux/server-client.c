@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.227 2017/04/22 08:56:24 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.228 2017/05/01 12:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -283,6 +283,7 @@ server_client_lost(struct client *c)
 	free(c->prompt_string);
 	free(c->prompt_buffer);
 
+	format_lost_client(c);
 	environ_free(c->environ);
 
 	proc_remove_peer(c->peer);
@@ -1326,7 +1327,7 @@ server_client_set_title(struct client *c)
 
 	template = options_get_string(s->options, "set-titles-string");
 
-	ft = format_create(NULL, FORMAT_NONE, 0);
+	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	title = format_expand_time(ft, template, time(NULL));

@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.163 2017/04/22 12:55:06 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.164 2017/05/01 12:20:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -519,9 +519,9 @@ status_replace(struct client *c, struct winlink *wl, const char *fmt, time_t t)
 	else
 		tag = FORMAT_NONE;
 	if (c->flags & CLIENT_STATUSFORCE)
-		ft = format_create(NULL, tag, FORMAT_STATUS|FORMAT_FORCE);
+		ft = format_create(c, NULL, tag, FORMAT_STATUS|FORMAT_FORCE);
 	else
-		ft = format_create(NULL, tag, FORMAT_STATUS);
+		ft = format_create(c, NULL, tag, FORMAT_STATUS);
 	format_defaults(ft, c, NULL, wl, NULL);
 
 	expanded = format_expand_time(ft, fmt, t);
@@ -663,7 +663,7 @@ status_prompt_set(struct client *c, const char *msg, const char *input,
 	time_t			 t;
 	char			*tmp;
 
-	ft = format_create(NULL, FORMAT_NONE, 0);
+	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	t = time(NULL);
@@ -724,7 +724,7 @@ status_prompt_update(struct client *c, const char *msg, const char *input)
 	time_t			 t;
 	char			*tmp;
 
-	ft = format_create(NULL, FORMAT_NONE, 0);
+	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	t = time(NULL);
