@@ -846,7 +846,6 @@
 ./usr/include/ftw.h
 ./usr/include/fuse.h
 ./usr/include/fuse_opt.h
-./usr/include/g++
 ./usr/include/FlexLexer.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
