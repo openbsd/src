@@ -1,4 +1,6 @@
 ./usr/bin/addr2line
+./usr/bin/as
+./usr/bin/gdb
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/alpha
@@ -80,4 +82,12 @@
 ./usr/libdata/ldscripts/elf64alpha_obsd.xu
 ./usr/libdata/ldscripts/elf64alpha_obsd.xw
 ./usr/libdata/ldscripts/elf64alpha_obsd.xz
+./usr/share/info/annotate.info
+./usr/share/info/as.info
 ./usr/share/info/bfd.info
+./usr/share/info/gdb.info
+./usr/share/info/gdbint.info
+./usr/share/info/ld.info
+./usr/share/info/stabs.info
+./usr/share/man/man1/as.1
+./usr/share/man/man1/gdb.1

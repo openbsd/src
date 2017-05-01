@@ -1,8 +1,6 @@
-./usr/bin/as
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gcov
-./usr/bin/gdb
 ./usr/include/g++
 ./usr/include/g++/algorithm
 ./usr/include/g++/arm-unknown-openbsd6.1
@@ -615,17 +613,9 @@
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libsupc++.a
 ./usr/lib/libsupc++_p.a
-./usr/share/info/annotate.info
-./usr/share/info/as.info
 ./usr/share/info/cpp.info
 ./usr/share/info/cppinternals.info
 ./usr/share/info/gcc.info
 ./usr/share/info/gccint.info
-./usr/share/info/gdb.info
-./usr/share/info/gdbint.info
-./usr/share/info/ld.info
-./usr/share/info/stabs.info
-./usr/share/man/man1/as.1
 ./usr/share/man/man1/gcc.1
 ./usr/share/man/man1/gcov.1
-./usr/share/man/man1/gdb.1

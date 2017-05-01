@@ -1,9 +1,7 @@
-./usr/bin/as
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gccbug
 ./usr/bin/gcov
-./usr/bin/gdb
 ./usr/include/g++
 ./usr/include/g++/algorithm
 ./usr/include/g++/backward
@@ -224,17 +222,9 @@
 ./usr/lib/libobjc_p.a
 ./usr/lib/libstdc++.a
 ./usr/lib/libsupc++.a
-./usr/share/info/annotate.info
-./usr/share/info/as.info
 ./usr/share/info/cpp.info
 ./usr/share/info/cppinternals.info
 ./usr/share/info/gcc.info
 ./usr/share/info/gccint.info
-./usr/share/info/gdb.info
-./usr/share/info/gdbint.info
-./usr/share/info/ld.info
-./usr/share/info/stabs.info
-./usr/share/man/man1/as.1
 ./usr/share/man/man1/gcc.1
 ./usr/share/man/man1/gcov.1
-./usr/share/man/man1/gdb.1
