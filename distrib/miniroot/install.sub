@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.999 2017/05/01 14:22:36 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1000 2017/05/01 14:29:39 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2254,13 +2254,11 @@ enable_network() {
 	! $V4_DHCPCONF && stripcom /mnt/etc/mygate |
 	while read _gw; do
 		[[ $_gw == @(*:*) ]] && continue
-		route -qn delete default >/dev/null 2>&1
 		route -qn add -host default $_gw && break
 	done
 	! $V6_AUTOCONF && stripcom /mnt/etc/mygate |
 	while read _gw; do
 		[[ $_gw == !(*:*) ]] && continue
-		route -qn delete -inet6 default >/dev/null 2>&1
 		route -qn add -host -inet6 default $_gw && break
 	done
 
