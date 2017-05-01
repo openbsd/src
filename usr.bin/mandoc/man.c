@@ -1,7 +1,7 @@
-/*	$OpenBSD: man.c,v 1.118 2017/04/29 12:43:55 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.119 2017/05/01 23:27:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -198,6 +198,20 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 
 	man_breakscope(man, tok);
 	bline = man->flags & MAN_BLINE;
+
+	/*
+	 * If the line in next-line scope ends with \c, keep the
+	 * next-line scope open for the subsequent input line.
+	 * That is not at all portable, only groff >= 1.22.4
+	 * does it, but *if* this weird idiom occurs in a manual
+	 * page, that's very likely what the author intended.
+	 */
+
+	if (bline) {
+		cp = strchr(buf + offs, '\0') - 2;
+		if (cp >= buf && cp[0] == '\\' && cp[1] == 'c')
+			bline = 0;
+	}
 
 	/* Call to handler... */
 
