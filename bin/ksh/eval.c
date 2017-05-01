@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.50 2016/03/05 12:30:17 czarkoff Exp $	*/
+/*	$OpenBSD: eval.c,v 1.51 2017/05/01 19:05:49 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -326,7 +326,7 @@ expand(char *cp,	/* input word */
 						 * expected)
 						 */
 						*dp++ = MAGIC;
-						*dp++ = '@' + 0x80;
+						*dp++ = '@' + 0x80U;
 						break;
 					case '=':
 						/* Enabling tilde expansion
