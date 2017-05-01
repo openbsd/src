@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.494 2017/04/18 23:06:50 schwarze Exp $
+#	$OpenBSD: rc,v 1.495 2017/05/01 14:01:47 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -8,7 +8,6 @@
 set +o sh
 
 # Subroutines (have to come first).
-
 
 # Strip in- and whole-line comments from a file.
 # Strip leading and trailing whitespace if IFS is set.
@@ -81,13 +80,12 @@ wsconsctl_conf() {
 	done
 }
 
+# Push the old seed into the kernel, create a future seed  and create a seed
+# file for the boot-loader.
 random_seed() {
-	# push the old seed into the kernel
 	dd if=/var/db/host.random of=/dev/random bs=65536 count=1 status=none
 	chmod 600 /var/db/host.random
-	# ... and create a future seed
 	dd if=/dev/random of=/var/db/host.random bs=65536 count=1 status=none
-	# and create a seed file for the boot-loader
 	dd if=/dev/random of=/etc/random.seed bs=512 count=1 status=none
 	chmod 600 /etc/random.seed
 }
@@ -277,12 +275,14 @@ if [[ -s /etc/defaultdomain ]]; then
 	domainname "$(stripcom /etc/defaultdomain)"
 fi
 
-# Need to get local functions from rc.subr.
+# Get local functions from rc.subr to load rc.conf into scope.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
-
-# Load rc.conf into scope.
 _rc_parse_conf
 
+# If executed with the 'shutdown' parameter by the halt, reboot or shutdown:
+# - update seed files
+# - execute the rc.d scripts specified by $pkg_scripts in reverse order
+# - bring carp interfaces down gracefully
 if [[ $1 == shutdown ]]; then
 	if echo 2>/dev/null >>/var/db/host.random || \
 	    echo 2>/dev/null >>/etc/random.seed; then
@@ -309,7 +309,6 @@ if [[ $1 == shutdown ]]; then
 		[[ -f /etc/rc.shutdown ]] && sh /etc/rc.shutdown
 	fi
 
-	# Bring carp interfaces down gracefully.
 	ifconfig | while read _if _junk; do
 		[[ $_if == carp+([0-9]): ]] && ifconfig ${_if%:} down
 	done
@@ -320,6 +319,7 @@ fi
 # Add swap block-devices.
 swapctl -A -t blk
 
+# Run filesystem check unless a /fastboot file exists.
 if [[ -e /fastboot ]]; then
 	echo "Fast boot: skipping disk checks."
 elif [[ $1 == autoboot ]]; then
@@ -327,14 +327,22 @@ elif [[ $1 == autoboot ]]; then
 	do_fsck
 fi
 
+# From now on, allow user to interrupt (^C) the boot process.
 trap "echo 'Boot interrupted.'; exit 1" 3
 
+# Unmount all filesystems except root.
 umount -a >/dev/null 2>&1
-mount -a -t nonfs,vnd
-mount -uw /		# root on nfs requires this, others aren't hurt.
-rm -f /fastboot		# XXX (root now writeable)
 
-# Set flags on ttys.  (Do early, in case they use tty for SLIP in netstart.)
+# Mount all filesystems except those of type NFS and VND.
+mount -a -t nonfs,vnd
+
+# Re-mount the root filesystem read/writeable. (root on nfs requires this,
+# others aren't hurt.)
+mount -uw /
+
+rm -f /fastboot
+
+# Set flags on ttys. (Do early, in case they use tty for SLIP in netstart.)
 echo 'setting tty flags'
 ttyflags -a
 
@@ -374,7 +382,6 @@ if [[ $pf != NO ]]; then
 	pfctl -e
 fi
 
-# Fill net.inet.(tcp|udp).baddynamic lists from /etc/services.
 fill_baddynamic udp
 fill_baddynamic tcp
 
@@ -394,7 +401,8 @@ fi
 
 sh /etc/netstart
 
-dmesg >/dev/random	# Any write triggers a rekey.
+# Any write triggers a rekey.
+dmesg >/dev/random
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
@@ -418,7 +426,8 @@ rm -f /etc/nologin /var/spool/lock/LCK.*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 (cd /var/authpf && rm -rf -- *)
 
-dmesg >/var/run/dmesg.boot	# Save a copy of the boot messages.
+# Save a copy of the boot messages.
+dmesg >/var/run/dmesg.boot
 
 make_keys
 
@@ -473,7 +482,7 @@ dev_mkdb
 chmod 666 /dev/tty[pqrstuvwxyzPQRST]*
 chown root:wheel /dev/tty[pqrstuvwxyzPQRST]*
 
-# Check the password temp/lock file.
+# Check for the password temp/lock file.
 if [[ -f /etc/ptmp ]]; then
 	logger -s -p auth.err \
 	    'password file may be incorrect -- /etc/ptmp exists'
@@ -560,7 +569,8 @@ fi
 
 [[ -f /etc/rc.local ]] && sh /etc/rc.local
 
-ifconfig -g carp -carpdemote 128	# Disable carp interlock.
+# Disable carp interlock.
+ifconfig -g carp -carpdemote 128
 
 mixerctl_conf
 
