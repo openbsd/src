@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.137 2017/04/28 10:09:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.138 2017/05/02 02:57:46 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1334,7 +1334,9 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 	uint64_t sel, limit, ar;
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
+	uint64_t *msrs = vrs->vrs_msrs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+	struct vmx_msr_store *msr_store;
 
 	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
 		return (EINVAL);
@@ -1402,6 +1404,14 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 			goto errout;
 	}
 
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	if (regmask & VM_RWREGS_MSRS) {
+		for (i = 0; i < VCPU_REGS_NMSRS; i++) {
+			msrs[i] = msr_store[i].vms_data;
+		}
+	}
+
 	goto out;
 
 errout:
@@ -1448,7 +1458,9 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 	uint64_t limit, ar;
 	uint64_t *gprs = vrs->vrs_gprs;
 	uint64_t *crs = vrs->vrs_crs;
+	uint64_t *msrs = vrs->vrs_msrs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+	struct vmx_msr_store *msr_store;
 
 	if (loadvmcs) {
 		if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
@@ -1516,6 +1528,14 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 			goto errout;
 		if (vmwrite(VMCS_GUEST_IA32_CR4, crs[VCPU_REGS_CR4]))
 			goto errout;
+	}
+
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	if (regmask & VM_RWREGS_MSRS) {
+		for (i = 0; i < VCPU_REGS_NMSRS; i++) {
+			msr_store[i].vms_data = msrs[i];
+		}
 	}
 
 	goto out;
@@ -2128,7 +2148,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * IA32_VMX_LOAD_DEBUG_CONTROLS
 	 * IA32_VMX_LOAD_IA32_PERF_GLOBAL_CTRL_ON_ENTRY
 	 */
-	if (ug == 1)
+	if (ug == 1 && !(vrs->vrs_msrs[VCPU_REGS_EFER] & EFER_LMA))
 		want1 = 0;
 	else
 		want1 = IA32_VMX_IA32E_MODE_GUEST;
@@ -2277,26 +2297,12 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
-	/*
-	 * Make sure LME is enabled in EFER if restricted guest mode is
-	 * needed.
-	 */
-	msr_store[0].vms_index = MSR_EFER;
-	if (ug == 1)
-		msr_store[0].vms_data = 0ULL;	/* Initial value */
-	else
-		msr_store[0].vms_data = EFER_LME;
-
-	msr_store[1].vms_index = MSR_STAR;
-	msr_store[1].vms_data = 0ULL;		/* Initial value */
-	msr_store[2].vms_index = MSR_LSTAR;
-	msr_store[2].vms_data = 0ULL;		/* Initial value */
-	msr_store[3].vms_index = MSR_CSTAR;
-	msr_store[3].vms_data = 0ULL;		/* Initial value */
-	msr_store[4].vms_index = MSR_SFMASK;
-	msr_store[4].vms_data = 0ULL;		/* Initial value */
-	msr_store[5].vms_index = MSR_KERNELGSBASE;
-	msr_store[5].vms_data = 0ULL;		/* Initial value */
+	msr_store[VCPU_REGS_EFER].vms_index = MSR_EFER;
+	msr_store[VCPU_REGS_STAR].vms_index = MSR_STAR;
+	msr_store[VCPU_REGS_LSTAR].vms_index = MSR_LSTAR;
+	msr_store[VCPU_REGS_CSTAR].vms_index = MSR_CSTAR;
+	msr_store[VCPU_REGS_SFMASK].vms_index = MSR_SFMASK;
+	msr_store[VCPU_REGS_KGSBASE].vms_index = MSR_KERNELGSBASE;
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores
@@ -2357,6 +2363,13 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * transition to 'start'.
 	 */
 	ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_ALL, 0, vrs);
+
+	/*
+	 * Make sure LME is enabled in EFER if restricted guest mode is
+	 * needed.
+	 */
+	if (ug == 0)
+		msr_store[VCPU_REGS_EFER].vms_data |= EFER_LME;
 
 	/*
 	 * Set up the MSR bitmap
@@ -4317,7 +4330,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 		return (EINVAL);
 	}
 
-	if (msr_store[0].vms_data & EFER_LME)
+	if (msr_store[VCPU_REGS_EFER].vms_data & EFER_LME)
 		ectls |= IA32_VMX_IA32E_MODE_GUEST;
 	else
 		ectls &= ~IA32_VMX_IA32E_MODE_GUEST;
