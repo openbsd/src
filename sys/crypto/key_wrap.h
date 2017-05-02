@@ -1,4 +1,4 @@
-/*	$OpenBSD: key_wrap.h,v 1.2 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: key_wrap.h,v 1.3 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,7 +20,7 @@
 #define _KEY_WRAP_H_
 
 typedef struct _aes_key_wrap_ctx {
-	rijndael_ctx	ctx;
+	AES_CTX		ctx;
 } aes_key_wrap_ctx;
 
 __BEGIN_DECLS

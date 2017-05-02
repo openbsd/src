@@ -1,4 +1,4 @@
-/*	$OpenBSD: key_wrap.c,v 1.4 2013/06/11 18:45:08 deraadt Exp $	*/
+/*	$OpenBSD: key_wrap.c,v 1.5 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/key_wrap.h>
 
 static const u_int8_t IV[8] =
@@ -32,14 +32,14 @@ static const u_int8_t IV[8] =
 void
 aes_key_wrap_set_key(aes_key_wrap_ctx *ctx, const u_int8_t *K, size_t K_len)
 {
-	rijndael_set_key(&ctx->ctx, K, K_len * NBBY);
+	AES_Setkey(&ctx->ctx, K, K_len);
 }
 
 void
 aes_key_wrap_set_key_wrap_only(aes_key_wrap_ctx *ctx, const u_int8_t *K,
     size_t K_len)
 {
-	rijndael_set_key_enc_only(&ctx->ctx, K, K_len * NBBY);
+	AES_Setkey(&ctx->ctx, K, K_len);
 }
 
 void
@@ -61,7 +61,7 @@ aes_key_wrap(aes_key_wrap_ctx *ctx, const u_int8_t *P, size_t n, u_int8_t *C)
 			memcpy(&B[0], A, 8);
 			memcpy(&B[1], R, 8);
 			/* B = AES(K, B) */
-			rijndael_encrypt(&ctx->ctx, (caddr_t)B, (caddr_t)B);
+			AES_Encrypt(&ctx->ctx, (caddr_t)B, (caddr_t)B);
 			/* MSB(64, B) = MSB(64, B) ^ t */
 			B[0] ^= htobe64(t);
 			/* A = MSB(64, B) */
@@ -96,7 +96,7 @@ aes_key_unwrap(aes_key_wrap_ctx *ctx, const u_int8_t *C, u_int8_t *P, size_t n)
 			/* B = MSB(64, B) | R[i] */
 			memcpy(&B[1], R, 8);
 			/* B = AES-1(K, B) */
-			rijndael_decrypt(&ctx->ctx, (caddr_t)B, (caddr_t)B);
+			AES_Decrypt(&ctx->ctx, (caddr_t)B, (caddr_t)B);
 			/* A = MSB(64, B) */
 			memcpy(A, &B[0], 8);
 			/* R[i] = LSB(64, B) */

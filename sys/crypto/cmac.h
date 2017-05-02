@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmac.h,v 1.2 2012/12/05 23:20:15 deraadt Exp $	*/
+/*	$OpenBSD: cmac.h,v 1.3 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
 #define AES_CMAC_DIGEST_LENGTH	16
 
 typedef struct _AES_CMAC_CTX {
-	rijndael_ctx	rijndael;
+	AES_CTX		aesctx;
 	u_int8_t	X[16];
 	u_int8_t	M_last[16];
 	u_int		M_n;

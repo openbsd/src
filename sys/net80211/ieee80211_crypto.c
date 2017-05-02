@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.69 2017/03/23 04:10:10 tb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.70 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -42,7 +42,7 @@
 #include <crypto/sha1.h>
 #include <crypto/sha2.h>
 #include <crypto/hmac.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/cmac.h>
 #include <crypto/key_wrap.h>
 

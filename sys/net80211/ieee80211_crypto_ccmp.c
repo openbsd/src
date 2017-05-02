@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.19 2017/03/23 04:10:10 tb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.20 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -39,11 +39,11 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_crypto.h>
 
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 
 /* CCMP software crypto context */
 struct ieee80211_ccmp_ctx {
-	rijndael_ctx	rijndael;
+	AES_CTX		aesctx;
 };
 
 /*
@@ -58,7 +58,7 @@ ieee80211_ccmp_set_key(struct ieee80211com *ic, struct ieee80211_key *k)
 	ctx = malloc(sizeof(*ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL)
 		return ENOMEM;
-	rijndael_set_key_enc_only(&ctx->rijndael, k->k_key, 128);
+	AES_Setkey(&ctx->aesctx, k->k_key, 16);
 	k->k_priv = ctx;
 	return 0;
 }
@@ -78,7 +78,7 @@ ieee80211_ccmp_delete_key(struct ieee80211com *ic, struct ieee80211_key *k)
  * CCMP uses the following CCM parameters: M = 8, L = 2
  */
 static void
-ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
+ieee80211_ccmp_phase1(AES_CTX *ctx, const struct ieee80211_frame *wh,
     u_int64_t pn, int lm, u_int8_t b[16], u_int8_t a[16], u_int8_t s0[16])
 {
 	u_int8_t auth[32], nonce[13];
@@ -146,20 +146,20 @@ ieee80211_ccmp_phase1(rijndael_ctx *ctx, const struct ieee80211_frame *wh,
 	memcpy(&b[1], nonce, 13);
 	b[14] = lm >> 8;
 	b[15] = lm & 0xff;
-	rijndael_encrypt(ctx, b, b);
+	AES_Encrypt(ctx, b, b);
 
 	for (i = 0; i < 16; i++)
 		b[i] ^= auth[i];
-	rijndael_encrypt(ctx, b, b);
+	AES_Encrypt(ctx, b, b);
 	for (i = 0; i < 16; i++)
 		b[i] ^= auth[16 + i];
-	rijndael_encrypt(ctx, b, b);
+	AES_Encrypt(ctx, b, b);
 
 	/* construct S_0 */
 	a[ 0] = 1;	/* Flags = L' = (L-1) */
 	memcpy(&a[1], nonce, 13);
 	a[14] = a[15] = 0;
-	rijndael_encrypt(ctx, a, s0);
+	AES_Encrypt(ctx, a, s0);
 }
 
 struct mbuf *
@@ -210,14 +210,14 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	ivp[7] = k->k_tsc >> 40;	/* PN5 */
 
 	/* construct initial B, A and S_0 blocks */
-	ieee80211_ccmp_phase1(&ctx->rijndael, wh, k->k_tsc,
+	ieee80211_ccmp_phase1(&ctx->aesctx, wh, k->k_tsc,
 	    m0->m_pkthdr.len - hdrlen, b, a, s0);
 
 	/* construct S_1 */
 	ctr = 1;
 	a[14] = ctr >> 8;
 	a[15] = ctr & 0xff;
-	rijndael_encrypt(&ctx->rijndael, a, s);
+	AES_Encrypt(&ctx->aesctx, a, s);
 
 	/* encrypt frame body and compute MIC */
 	j = 0;
@@ -260,12 +260,12 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 			if (++j < 16)
 				continue;
 			/* we have a full block, encrypt MIC */
-			rijndael_encrypt(&ctx->rijndael, b, b);
+			AES_Encrypt(&ctx->aesctx, b, b);
 			/* construct a new S_ctr block */
 			ctr++;
 			a[14] = ctr >> 8;
 			a[15] = ctr & 0xff;
-			rijndael_encrypt(&ctx->rijndael, a, s);
+			AES_Encrypt(&ctx->aesctx, a, s);
 			j = 0;
 		}
 
@@ -274,7 +274,7 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		left -= len;
 	}
 	if (j != 0)	/* partial block, encrypt MIC */
-		rijndael_encrypt(&ctx->rijndael, b, b);
+		AES_Encrypt(&ctx->aesctx, b, b);
 
 	/* reserve trailing space for MIC */
 	if (M_TRAILINGSPACE(n) < IEEE80211_CCMP_MICLEN) {
@@ -370,7 +370,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		n0->m_len = n0->m_pkthdr.len;
 
 	/* construct initial B, A and S_0 blocks */
-	ieee80211_ccmp_phase1(&ctx->rijndael, wh, pn,
+	ieee80211_ccmp_phase1(&ctx->aesctx, wh, pn,
 	    n0->m_pkthdr.len - hdrlen, b, a, s0);
 
 	/* copy 802.11 header and clear protected bit */
@@ -382,7 +382,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	ctr = 1;
 	a[14] = ctr >> 8;
 	a[15] = ctr & 0xff;
-	rijndael_encrypt(&ctx->rijndael, a, s);
+	AES_Encrypt(&ctx->aesctx, a, s);
 
 	/* decrypt frame body and compute MIC */
 	j = 0;
@@ -425,12 +425,12 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 			if (++j < 16)
 				continue;
 			/* we have a full block, encrypt MIC */
-			rijndael_encrypt(&ctx->rijndael, b, b);
+			AES_Encrypt(&ctx->aesctx, b, b);
 			/* construct a new S_ctr block */
 			ctr++;
 			a[14] = ctr >> 8;
 			a[15] = ctr & 0xff;
-			rijndael_encrypt(&ctx->rijndael, a, s);
+			AES_Encrypt(&ctx->aesctx, a, s);
 			j = 0;
 		}
 
@@ -439,7 +439,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 		left -= len;
 	}
 	if (j != 0)	/* partial block, encrypt MIC */
-		rijndael_encrypt(&ctx->rijndael, b, b);
+		AES_Encrypt(&ctx->aesctx, b, b);
 
 	/* finalize MIC, U := T XOR first-M-bytes( S_0 ) */
 	for (i = 0; i < IEEE80211_CCMP_MICLEN; i++)

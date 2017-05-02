@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmac.c,v 1.2 2011/01/11 15:42:05 deraadt Exp $	*/
+/*	$OpenBSD: cmac.c,v 1.3 2017/05/02 17:07:06 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/cmac.h>
 
 #define LSHIFT(v, r) do {					\
@@ -50,7 +50,7 @@ AES_CMAC_Init(AES_CMAC_CTX *ctx)
 void
 AES_CMAC_SetKey(AES_CMAC_CTX *ctx, const u_int8_t key[AES_CMAC_KEY_LENGTH])
 {
-	rijndael_set_key_enc_only(&ctx->rijndael, key, 128);
+	AES_Setkey(&ctx->aesctx, key, 16);
 }
 
 void
@@ -65,13 +65,13 @@ AES_CMAC_Update(AES_CMAC_CTX *ctx, const u_int8_t *data, u_int len)
 		if (ctx->M_n < 16 || len == mlen)
 			return;
 		XOR(ctx->M_last, ctx->X);
-		rijndael_encrypt(&ctx->rijndael, ctx->X, ctx->X);
+		AES_Encrypt(&ctx->aesctx, ctx->X, ctx->X);
 		data += mlen;
 		len -= mlen;
 	}
 	while (len > 16) {	/* not last block */
 		XOR(data, ctx->X);
-		rijndael_encrypt(&ctx->rijndael, ctx->X, ctx->X);
+		AES_Encrypt(&ctx->aesctx, ctx->X, ctx->X);
 		data += 16;
 		len -= 16;
 	}
@@ -87,7 +87,7 @@ AES_CMAC_Final(u_int8_t digest[AES_CMAC_DIGEST_LENGTH], AES_CMAC_CTX *ctx)
 
 	/* generate subkey K1 */
 	memset(K, 0, sizeof K);
-	rijndael_encrypt(&ctx->rijndael, K, K);
+	AES_Encrypt(&ctx->aesctx, K, K);
 
 	if (K[0] & 0x80) {
 		LSHIFT(K, K);
@@ -114,7 +114,7 @@ AES_CMAC_Final(u_int8_t digest[AES_CMAC_DIGEST_LENGTH], AES_CMAC_CTX *ctx)
 		XOR(K, ctx->M_last);
 	}
 	XOR(ctx->M_last, ctx->X);
-	rijndael_encrypt(&ctx->rijndael, ctx->X, digest);
+	AES_Encrypt(&ctx->aesctx, ctx->X, digest);
 
 	explicit_bzero(K, sizeof K);
 }
