@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.h,v 1.5 2015/11/07 17:46:49 mikeb Exp $	*/
+/*	$OpenBSD: gmac.h,v 1.6 2017/05/02 11:44:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov
@@ -19,7 +19,7 @@
 #ifndef _GMAC_H_
 #define _GMAC_H_
 
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 
 #define GMAC_BLOCK_LEN		16
 #define GMAC_DIGEST_LEN		16
@@ -32,9 +32,8 @@ typedef struct _GHASH_CTX {
 
 typedef struct _AES_GMAC_CTX {
 	GHASH_CTX	ghash;
-	uint32_t	K[4*(AES_MAXROUNDS + 1)];
+	AES_CTX		K;
 	uint8_t		J[GMAC_BLOCK_LEN];		/* counter block */
-	int		rounds;
 } AES_GMAC_CTX;
 
 __BEGIN_DECLS

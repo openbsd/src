@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmac.c,v 1.9 2016/09/19 18:09:40 tedu Exp $	*/
+/*	$OpenBSD: gmac.c,v 1.10 2017/05/02 11:44:32 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2010 Mike Belopuhov
@@ -25,7 +25,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/gmac.h>
 
 void	ghash_gfmul(uint32_t *, uint32_t *, uint32_t *);
@@ -114,12 +114,11 @@ AES_GMAC_Setkey(void *xctx, const uint8_t *key, uint16_t klen)
 {
 	AES_GMAC_CTX	*ctx = xctx;
 
-	ctx->rounds = rijndaelKeySetupEnc(ctx->K, (u_char *)key,
-	    (klen - AESCTR_NONCESIZE) * 8);
+	AES_Setkey(&ctx->K, key, klen - AESCTR_NONCESIZE);
 	/* copy out salt to the counter block */
 	bcopy(key + klen - AESCTR_NONCESIZE, ctx->J, AESCTR_NONCESIZE);
 	/* prepare a hash subkey */
-	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->ghash.H, ctx->ghash.H);
+	AES_Encrypt(&ctx->K, ctx->ghash.H, ctx->ghash.H);
 }
 
 void
@@ -162,7 +161,7 @@ AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], void *xctx)
 
 	/* do one round of GCTR */
 	ctx->J[GMAC_BLOCK_LEN - 1] = 1;
-	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->J, keystream);
+	AES_Encrypt(&ctx->K, ctx->J, keystream);
 	for (i = 0; i < GMAC_DIGEST_LEN; i++)
 		digest[i] = ctx->ghash.S[i] ^ keystream[i];
 	explicit_bzero(keystream, sizeof(keystream));

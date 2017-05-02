@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.82 2017/02/07 17:25:46 patrick Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.83 2017/05/02 11:44:32 mikeb Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -795,8 +795,8 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_CAST_CBC:
 			txf = &enc_xform_cast5;
 			goto enccommon;
-		case CRYPTO_RIJNDAEL128_CBC:
-			txf = &enc_xform_rijndael128;
+		case CRYPTO_AES_CBC:
+			txf = &enc_xform_aes;
 			goto enccommon;
 		case CRYPTO_AES_CTR:
 			txf = &enc_xform_aes_ctr;
@@ -960,7 +960,7 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_BLF_CBC:
 		case CRYPTO_CAST_CBC:
-		case CRYPTO_RIJNDAEL128_CBC:
+		case CRYPTO_AES_CBC:
 		case CRYPTO_AES_CTR:
 		case CRYPTO_AES_XTS:
 		case CRYPTO_AES_GCM_16:
@@ -1144,7 +1144,7 @@ swcr_init(void)
 	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
-	algs[CRYPTO_RIJNDAEL128_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_CTR] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_XTS] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_AES_GCM_16] = CRYPTO_ALG_FLAG_SUPPORTED;
