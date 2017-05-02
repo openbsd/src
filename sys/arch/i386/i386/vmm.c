@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.28 2017/04/26 08:02:14 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.29 2017/05/02 07:18:19 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1338,7 +1338,9 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 	uint32_t sel, limit, ar;
 	uint32_t *gprs = vrs->vrs_gprs;
 	uint32_t *crs = vrs->vrs_crs;
+	uint32_t *msrs = vrs->vrs_msrs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+	struct vmx_msr_store *msr_store;
 
 	if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
 		return (EINVAL);
@@ -1398,6 +1400,14 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 			goto errout;
 	}
 
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	if (regmask & VM_RWREGS_MSRS) {
+		for (i = 0; i < VCPU_REGS_NMSRS; i++) {
+			msrs[i] = msr_store[i].vms_data;
+		}
+	}
+
 	goto out;
 
 errout:
@@ -1444,7 +1454,9 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 	uint32_t limit, ar;
 	uint32_t *gprs = vrs->vrs_gprs;
 	uint32_t *crs = vrs->vrs_crs;
+	uint32_t *msrs = vrs->vrs_msrs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
+	struct vmx_msr_store *msr_store;
 
 	if (loadvmcs) {
 		if (vcpu_reload_vmcs_vmx(&vcpu->vc_control_pa))
@@ -1504,6 +1516,14 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 			goto errout;
 		if (vmwrite(VMCS_GUEST_IA32_CR4, crs[VCPU_REGS_CR4]))
 			goto errout;
+	}
+
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+	if (regmask & VM_RWREGS_MSRS) {
+		for (i = 0; i < VCPU_REGS_NMSRS; i++) {
+			msr_store[i].vms_data = msrs[i];
+		}
 	}
 
 	goto out;
@@ -2240,7 +2260,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
 	msr_store[0].vms_index = MSR_EFER;
-	msr_store[0].vms_data = 0ULL;		/* Initial value */
 
 	/*
 	 * Currently we have the same count of entry/exit MSRs loads/stores

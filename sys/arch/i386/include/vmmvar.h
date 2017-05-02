@@ -331,9 +331,13 @@ struct vcpu_segment_info {
 #define VCPU_REGS_TR		7
 #define VCPU_REGS_NSREGS	(VCPU_REGS_TR + 1)
 
+#define VCPU_REGS_EFER		0
+#define VCPU_REGS_NMSRS		(VCPU_REGS_EFER + 1)
+
 struct vcpu_reg_state {
 	uint32_t			vrs_gprs[VCPU_REGS_NGPRS];
 	uint32_t			vrs_crs[VCPU_REGS_NCRS];
+	uint32_t			vrs_msrs[VCPU_REGS_NMSRS];
 	struct vcpu_segment_info	vrs_sregs[VCPU_REGS_NSREGS];
 	struct vcpu_segment_info	vrs_gdtr;
 	struct vcpu_segment_info	vrs_idtr;
@@ -418,7 +422,9 @@ struct vm_intr_params {
 #define VM_RWREGS_GPRS	0x1	/* read/write GPRs */
 #define VM_RWREGS_SREGS	0x2	/* read/write segment registers */
 #define VM_RWREGS_CRS	0x4	/* read/write CRs */
-#define VM_RWREGS_ALL	(VM_RWREGS_GPRS | VM_RWREGS_SREGS | VM_RWREGS_CRS)
+#define VM_RWREGS_MSRS	0x8	/* read/write MSRs */
+#define VM_RWREGS_ALL	(VM_RWREGS_GPRS | VM_RWREGS_SREGS | VM_RWREGS_CRS | \
+    VM_RWREGS_MSRS)
 
 struct vm_rwregs_params {
 	uint32_t		vrwp_vm_id;
