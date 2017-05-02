@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.191 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.192 2017/05/02 11:03:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1549,9 +1549,24 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	 * for this APs does not exist or if the new node is the
 	 * potential better one.
 	 */
-	if ((ni = ieee80211_find_node_for_beacon(ic, wh->i_addr2,
-	    &ic->ic_channels[chan], ssid, rxi->rxi_rssi)) != NULL)
+	ni = ieee80211_find_node_for_beacon(ic, wh->i_addr2,
+	    &ic->ic_channels[chan], ssid, rxi->rxi_rssi);
+	if (ni != NULL) {
+		/*
+		 * If we are doing a directed scan for an AP with a hidden SSID
+		 * we must collect the SSID from a probe response to override
+		 * a non-zero-length SSID filled with zeroes that we may have
+		 * received earlier in a beacon.
+		 */
+		if (isprobe && ssid[1] != 0 && ni->ni_essid[0] == '\0') {
+			ni->ni_esslen = ssid[1];
+			memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
+			/* we know that ssid[1] <= IEEE80211_NWID_LEN */
+			memcpy(ni->ni_essid, &ssid[2], ssid[1]);
+		}
+
 		return;
+	}
 
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_debug > 1 &&
@@ -1711,7 +1726,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		}
 	}
 
-	if (ssid[1] != 0 && ni->ni_esslen == 0) {
+	if (ssid[1] != 0 && ni->ni_essid[0] == '\0') {
 		ni->ni_esslen = ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 		/* we know that ssid[1] <= IEEE80211_NWID_LEN */
