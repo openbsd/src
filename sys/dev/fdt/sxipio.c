@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.2 2017/05/02 14:38:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -206,6 +206,36 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %d pins\n", sc->sc_npins);
 }
 
+int
+sxipio_drive(int node)
+{
+	int drive;
+
+	drive = OF_getpropint(node, "allwinner,drive", -1);
+	if (drive >= 0)
+		return drive;
+	drive = OF_getpropint(node, "drive-strength", 0) - 10;
+	if (drive >= 0)
+		return (drive / 10);
+	return -1;
+}
+
+int
+sxipio_pull(int node)
+{
+	int pull;
+
+	pull = OF_getpropint(node, "allwinner,pull", -1);
+	if (pull >= 0)
+		return pull;
+	if (OF_getproplen(node, "bias-disable") == 0)
+		return 0;
+	if (OF_getproplen(node, "bias-pull-up") == 0)
+		return 1;
+	if (OF_getproplen(node, "bias-pull-down") == 0)
+		return 2;
+	return -1;
+}
 
 int
 sxipio_pinctrl(uint32_t phandle, void *cookie)
@@ -213,7 +243,7 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 	struct sxipio_softc *sc = cookie;
 	char func[32];
 	char *names, *name;
-	int port, pin, off;
+	int port, pin, off, mask;
 	int mux, drive, pull;
 	int node;
 	int len;
@@ -225,18 +255,25 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 		return -1;
 
 	len = OF_getprop(node, "allwinner,function", func, sizeof(func));
-	if (len <= 0 || len >= sizeof(func))
-		return -1;
+	if (len <= 0 || len >= sizeof(func)) {
+		len = OF_getprop(node, "function", func, sizeof(func));
+		if (len <= 0 || len >= sizeof(func))
+			return -1;
+	}
 
 	len = OF_getproplen(node, "allwinner,pins");
-	if (len <= 0)
-		return -1;
+	if (len <= 0) {
+		len = OF_getproplen(node, "pins");
+		if (len <= 0)
+			return -1;
+	}
 
 	names = malloc(len, M_TEMP, M_WAITOK);
-	OF_getprop(node, "allwinner,pins", names, len);
+	if (OF_getprop(node, "allwinner,pins", names, len) <= 0)
+		OF_getprop(node, "pins", names, len);
 
-	drive = OF_getpropint(node, "allwinner,drive", 0);
-	pull = OF_getpropint(node, "allwinner,pull", 0);
+	drive = sxipio_drive(node);
+	pull = sxipio_pull(node);
 
 	name = names;
 	while (len > 0) {
@@ -261,11 +298,13 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 		mux = sc->sc_pins[i].funcs[j].mux;
 
 		s = splhigh();
-		off = (pin & 0x7) << 2;
-		SXICMS4(sc, SXIPIO_CFG(port, pin), 0x7 << off, mux << off);
-		off = (pin & 0xf) << 1;
-		SXICMS4(sc, SXIPIO_DRV(port, pin), 0x3 << off, drive << off);
-		SXICMS4(sc, SXIPIO_PUL(port, pin), 0x3 << off, pull << off);
+		off = (pin & 0x7) << 2, mask = (0x7 << off);
+		SXICMS4(sc, SXIPIO_CFG(port, pin), mask, mux << off);
+		off = (pin & 0xf) << 1, mask = (0x3 << off);
+		if (drive >= 0 && drive < 4)
+			SXICMS4(sc, SXIPIO_DRV(port, pin), mask, drive << off);
+		if (pull >= 0 && pull < 3)
+			SXICMS4(sc, SXIPIO_PUL(port, pin), mask, pull << off);
 		splx(s);
 
 		len -= strlen(name) + 1;
