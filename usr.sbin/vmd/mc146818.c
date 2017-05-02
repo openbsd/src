@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.12 2017/03/27 00:28:04 deraadt Exp $ */
+/* $OpenBSD: mc146818.c,v 1.13 2017/05/02 09:51:19 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -27,8 +27,10 @@
 #include <string.h>
 #include <time.h>
 
+#include "vmd.h"
 #include "mc146818.h"
 #include "proc.h"
+#include "virtio.h"
 #include "vmm.h"
 
 #define MC_DIVIDER_MASK 0xe0
@@ -96,8 +98,16 @@ rtc_updateregs(void)
 static void
 rtc_fire1(int fd, short type, void *arg)
 {
-	rtc.now++;
+	time_t old = rtc.now;
+
+	time(&rtc.now);
+
 	rtc_updateregs();
+	if (rtc.now - old > 5) {
+		log_debug("%s: RTC clock drift (%llds), requesting guest "
+		    "resync", __func__, (rtc.now - old));
+		vmmci_ctl(VMMCI_SYNCRTC);
+	}
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
 }
 

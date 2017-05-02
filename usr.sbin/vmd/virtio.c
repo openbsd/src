@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.43 2017/04/25 16:38:23 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.44 2017/05/02 09:51:19 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -58,6 +58,7 @@ int nr_vionet;
 
 #define VMMCI_F_TIMESYNC	(1<<0)
 #define VMMCI_F_ACK		(1<<1)
+#define VMMCI_F_SYNCRTC		(1<<2)
 
 const char *
 vioblk_cmd_name(uint32_t type)
@@ -1453,6 +1454,18 @@ vmmci_ctl(unsigned int cmd)
 		tv.tv_sec = VMMCI_TIMEOUT;
 		evtimer_add(&vmmci.timeout, &tv);
 		break;
+	case VMMCI_SYNCRTC:
+		if (vmmci.cfg.guest_feature & VMMCI_F_SYNCRTC) {
+			/* RTC updated, request guest VM resync of its RTC */
+			vmmci.cmd = cmd;
+
+			vmmci.cfg.isr_status = VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
+			vcpu_assert_pic_irq(vmmci.vm_id, 0, vmmci.irq);
+		} else {
+			log_debug("%s: RTC sync skipped (guest does not "
+			    "support RTC sync)\n", __func__);
+		}
+		break;
 	default:
 		fatalx("invalid vmmci command: %d", cmd);
 	}
@@ -1498,6 +1511,11 @@ vmmci_ack(unsigned int cmd)
 			tv.tv_sec = VMMCI_SHUTDOWN_TIMEOUT;
 			evtimer_add(&vmmci.timeout, &tv);
 		}
+		break;
+	case VMMCI_SYNCRTC:
+		log_debug("%s: vm %u acknowledged RTC sync request",
+		    __func__, vmmci.vm_id);
+		vmmci.cmd = VMMCI_NONE;
 		break;
 	default:
 		log_warnx("%s: illegal request %u", __func__, cmd);
@@ -1774,7 +1792,8 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 	}
 
 	memset(&vmmci, 0, sizeof(vmmci));
-	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC|VMMCI_F_ACK;
+	vmmci.cfg.device_feature = VMMCI_F_TIMESYNC | VMMCI_F_ACK |
+	    VMMCI_F_SYNCRTC;
 	vmmci.vm_id = vcp->vcp_id;
 	vmmci.irq = pci_get_dev_irq(id);
 
