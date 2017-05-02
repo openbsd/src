@@ -1,4 +1,4 @@
-/*	$OpenBSD: flex.skl,v 1.15 2015/11/22 19:55:22 tedu Exp $	*/
+/*	$OpenBSD: flex.skl,v 1.16 2017/05/02 19:16:19 millert Exp $	*/
 
 %# -*-C-*- vi: set ft=c:
 %# This file is processed in several stages.
@@ -1748,6 +1748,8 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, new_size M4_YY_CALL_LAST_ARG );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+		/* "- 2" to take care of EOB's */
+		YY_CURRENT_BUFFER_LVALUE->yy_buf_size = (int) (new_size - 2);
 	}
 
 	YY_G(yy_n_chars) += number_to_move;
