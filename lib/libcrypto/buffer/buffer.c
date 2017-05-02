@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.26 2017/04/09 15:06:20 jsing Exp $ */
+/* $OpenBSD: buffer.c,v 1.27 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,10 +89,7 @@ BUF_MEM_free(BUF_MEM *a)
 	if (a == NULL)
 		return;
 
-	if (a->data != NULL) {
-		explicit_bzero(a->data, a->max);
-		free(a->data);
-	}
+	freezero(a->data, a->max);
 	free(a);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.33 2017/01/31 13:17:21 inoguchi Exp $ */
+/* $OpenBSD: e_aes.c,v 1.34 2017/05/02 03:59:44 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1422,8 +1422,7 @@ aead_aes_gcm_cleanup(EVP_AEAD_CTX *ctx)
 {
 	struct aead_aes_gcm_ctx *gcm_ctx = ctx->aead_state;
 
-	explicit_bzero(gcm_ctx, sizeof(*gcm_ctx));
-	free(gcm_ctx);
+	freezero(gcm_ctx, sizeof(*gcm_ctx));
 }
 
 static int

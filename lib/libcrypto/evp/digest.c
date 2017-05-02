@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: digest.c,v 1.28 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,8 +193,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	if (ctx->digest != type) {
 		if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
 		    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
-			explicit_bzero(ctx->md_data, ctx->digest->ctx_size);
-			free(ctx->md_data);
+			freezero(ctx->md_data, ctx->digest->ctx_size);
 			ctx->md_data = NULL;
 		}
 		ctx->digest = type;
@@ -360,10 +359,8 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
-	    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
-		explicit_bzero(ctx->md_data, ctx->digest->ctx_size);
-		free(ctx->md_data);
-	}
+	    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE))
+		freezero(ctx->md_data, ctx->digest->ctx_size);
 	EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
 	if (ctx->engine)

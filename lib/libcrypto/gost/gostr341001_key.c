@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.8 2017/05/02 03:59:44 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -105,8 +105,7 @@ GOST_KEY_free(GOST_KEY *r)
 	EC_POINT_free(r->pub_key);
 	BN_clear_free(r->priv_key);
 
-	explicit_bzero((void *)r, sizeof(GOST_KEY));
-	free(r);
+	freezero(r, sizeof(GOST_KEY));
 }
 
 int

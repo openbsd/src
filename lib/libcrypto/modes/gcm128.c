@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.15 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: gcm128.c,v 1.16 2017/05/02 03:59:44 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -1538,8 +1538,5 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 {
-	if (ctx) {
-		explicit_bzero(ctx,sizeof(*ctx));
-		free(ctx);
-	}
+	freezero(ctx, sizeof(*ctx));
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.23 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.24 2017/05/02 03:59:44 deraadt Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -151,12 +151,8 @@ EC_GROUP_clear_free(EC_GROUP * group)
 	BN_clear_free(&group->order);
 	BN_clear_free(&group->cofactor);
 
-	if (group->seed) {
-		explicit_bzero(group->seed, group->seed_len);
-		free(group->seed);
-	}
-	explicit_bzero(group, sizeof *group);
-	free(group);
+	freezero(group->seed, group->seed_len);
+	freezero(group, sizeof *group);
 }
 
 
@@ -743,8 +739,7 @@ EC_POINT_clear_free(EC_POINT * point)
 		point->meth->point_clear_finish(point);
 	else if (point->meth->point_finish != 0)
 		point->meth->point_finish(point);
-	explicit_bzero(point, sizeof *point);
-	free(point);
+	freezero(point, sizeof *point);
 }
 
 

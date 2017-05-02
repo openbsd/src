@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.41 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.42 2017/05/02 03:59:45 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,10 +231,7 @@ pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen, PKCS7_RECIP_INFO *ri,
 
 	ret = 1;
 
-	if (*pek) {
-		explicit_bzero(*pek, *peklen);
-		free(*pek);
-	}
+	freezero(*pek, *peklen);
 
 	*pek = ek;
 	*peklen = eklen;
@@ -577,8 +574,7 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			 */
 			if (!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen)) {
 				/* Use random key as MMA defence */
-				explicit_bzero(ek, eklen);
-				free(ek);
+				freezero(ek, eklen);
 				ek = tkey;
 				eklen = tkeylen;
 				tkey = NULL;
@@ -589,16 +585,10 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (EVP_CipherInit_ex(evp_ctx, NULL, NULL, ek, NULL, 0) <= 0)
 			goto err;
 
-		if (ek) {
-			explicit_bzero(ek, eklen);
-			free(ek);
-			ek = NULL;
-		}
-		if (tkey) {
-			explicit_bzero(tkey, tkeylen);
-			free(tkey);
-			tkey = NULL;
-		}
+		freezero(ek, eklen);
+		ek = NULL;
+		freezero(tkey, tkeylen);
+		tkey = NULL;
 
 		if (out == NULL)
 			out = etmp;
@@ -623,14 +613,8 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
 	if (0) {
 err:
-		if (ek) {
-			explicit_bzero(ek, eklen);
-			free(ek);
-		}
-		if (tkey) {
-			explicit_bzero(tkey, tkeylen);
-			free(tkey);
-		}
+		freezero(ek, eklen);
+		freezero(tkey, tkeylen);
 		if (out != NULL)
 			BIO_free_all(out);
 		if (btmp != NULL)

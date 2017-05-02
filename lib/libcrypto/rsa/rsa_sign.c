@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.28 2017/04/28 22:46:40 beck Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.29 2017/05/02 03:59:45 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,10 +135,8 @@ RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	else
 		*siglen = i;
 
-	if (type != NID_md5_sha1) {
-		explicit_bzero(tmps, (unsigned int)j + 1);
-		free(tmps);
-	}
+	if (type != NID_md5_sha1)
+		freezero(tmps, (unsigned int)j + 1);
 	return (ret);
 }
 
@@ -232,12 +230,8 @@ int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 			ret = 1;
 	}
 err:
-	if (sig != NULL)
-		X509_SIG_free(sig);
-	if (s != NULL) {
-		explicit_bzero(s, (unsigned int)siglen);
-		free(s);
-	}
+	X509_SIG_free(sig);
+	freezero(s, (unsigned int)siglen);
 	return ret;
 }
 

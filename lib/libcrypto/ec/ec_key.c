@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec_key.c,v 1.14 2017/05/02 03:59:44 deraadt Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -122,9 +122,7 @@ EC_KEY_free(EC_KEY * r)
 
 	EC_EX_DATA_free_all_data(&r->method_data);
 
-	explicit_bzero((void *) r, sizeof(EC_KEY));
-
-	free(r);
+	freezero(r, sizeof(EC_KEY));
 }
 
 EC_KEY *

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.30 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.31 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -706,12 +706,10 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	numPowers = 1 << window;
 	powerbufLen = sizeof(m->d[0]) * (top * numPowers +
 	    ((2*top) > numPowers ? (2*top) : numPowers));
-	if ((powerbufFree = malloc(powerbufLen +
-	    MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
+	if ((powerbufFree = calloc(powerbufLen +
+	    MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH, 1)) == NULL)
 		goto err;
-
 	powerbuf = MOD_EXP_CTIME_ALIGN(powerbufFree);
-	memset(powerbuf, 0, powerbufLen);
 
 	/* lay down tmp and am right after powers table */
 	tmp.d = (BN_ULONG *)(powerbuf + sizeof(m->d[0]) * top * numPowers);
@@ -901,10 +899,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 err:
 	if ((in_mont == NULL) && (mont != NULL))
 		BN_MONT_CTX_free(mont);
-	if (powerbuf != NULL) {
-		explicit_bzero(powerbuf, powerbufLen);
-		free(powerbufFree);
-	}
+	freezero(powerbufFree, powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
 	BN_CTX_end(ctx);
 	return (ret);
 }

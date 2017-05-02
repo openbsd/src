@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.12 2017/05/02 03:59:44 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -169,9 +169,7 @@ ecdsa_data_free(void *data)
 #endif
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
 
-	explicit_bzero((void *)r, sizeof(ECDSA_DATA));
-
-	free(r);
+	freezero(r, sizeof(ECDSA_DATA));
 }
 
 ECDSA_DATA *

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.48 2017/04/28 22:46:40 beck Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.49 2017/05/02 03:59:45 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,10 +244,7 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
-	if (buf != NULL) {
-		explicit_bzero(buf, num);
-		free(buf);
-	}
+	freezero(buf, num);
 	return r;
 }
 
@@ -468,10 +465,7 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
-	if (buf != NULL) {
-		explicit_bzero(buf, num);
-		free(buf);
-	}
+	freezero(buf, num);
 	return r;
 }
 
@@ -597,10 +591,7 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
-	if (buf != NULL) {
-		explicit_bzero(buf, num);
-		free(buf);
-	}
+	freezero(buf, num);
 	return r;
 }
 
@@ -700,10 +691,7 @@ err:
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 	}
-	if (buf != NULL) {
-		explicit_bzero(buf, num);
-		free(buf);
-	}
+	freezero(buf, num);
 	return r;
 }
 

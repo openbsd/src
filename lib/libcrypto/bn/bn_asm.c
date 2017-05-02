@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_asm.c,v 1.14 2015/02/25 15:39:49 bcook Exp $ */
+/* $OpenBSD: bn_asm.c,v 1.15 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -989,8 +989,7 @@ enter:
 	}
 	memcpy(rp, tp, num * sizeof(BN_ULONG));
 out:
-	explicit_bzero(tp, (num + 2) * sizeof(BN_ULONG));
-	free(tp);
+	freezero(tp, (num + 2) * sizeof(BN_ULONG));
 	return 1;
 }
 #else
@@ -1081,8 +1080,7 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 	}
 	memcpy(rp, tp, num * sizeof(BN_ULONG));
 out:
-	explicit_bzero(tp, (num + 2) * sizeof(BN_ULONG));
-	free(tp);
+	freezero(tp, (num + 2) * sizeof(BN_ULONG));
 	return 1;
 }
 #else

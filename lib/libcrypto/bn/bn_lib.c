@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.37 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.38 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,10 +220,8 @@ BN_clear_free(BIGNUM *a)
 	if (a == NULL)
 		return;
 	bn_check_top(a);
-	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA))) {
-		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
-		free(a->d);
-	}
+	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
+		freezero(a->d, a->dmax * sizeof(a->d[0]));
 	i = BN_get_flags(a, BN_FLG_MALLOCED);
 	explicit_bzero(a, sizeof(BIGNUM));
 	if (i)
@@ -393,10 +391,8 @@ bn_expand2(BIGNUM *b, int words)
 		BN_ULONG *a = bn_expand_internal(b, words);
 		if (!a)
 			return NULL;
-		if (b->d) {
-			explicit_bzero(b->d, b->dmax * sizeof(b->d[0]));
-			free(b->d);
-		}
+		if (b->d)
+			freezero(b->d, b->dmax * sizeof(b->d[0]));
 		b->d = a;
 		b->dmax = words;
 	}

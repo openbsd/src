@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.22 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_sign.c,v 1.23 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,13 +227,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 err:
 	EVP_MD_CTX_cleanup(ctx);
-	if (buf_in != NULL) {
-		explicit_bzero((char *)buf_in, inl);
-		free(buf_in);
-	}
-	if (buf_out != NULL) {
-		explicit_bzero((char *)buf_out, outll);
-		free(buf_out);
-	}
+	freezero((char *)buf_in, inl);
+	freezero((char *)buf_out, outll);
 	return (outl);
 }

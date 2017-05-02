@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.38 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.39 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -401,9 +401,7 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 void
 ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
-	if (str->data != NULL)
-		explicit_bzero(str->data, str->length);
-	free(str->data);
+	freezero(str->data, str->length);
 	str->data = data;
 	str->length = len;
 }
@@ -436,10 +434,8 @@ ASN1_STRING_free(ASN1_STRING *a)
 {
 	if (a == NULL)
 		return;
-	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF)) {
-		explicit_bzero(a->data, a->length);
-		free(a->data);
-	}
+	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF))
+		freezero(a->data, a->length);
 	free(a);
 }
 

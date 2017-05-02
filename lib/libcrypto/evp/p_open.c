@@ -1,4 +1,4 @@
-/* $OpenBSD: p_open.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_open.c,v 1.19 2017/05/02 03:59:44 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,9 +109,7 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 	ret = 1;
 
 err:
-	if (key != NULL)
-		explicit_bzero(key, size);
-	free(key);
+	freezero(key, size);
 	return (ret);
 }
 

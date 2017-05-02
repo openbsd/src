@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.9 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.10 2017/05/02 03:59:44 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -122,12 +122,7 @@ pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 	HMAC_PKEY_CTX *hctx = ctx->data;
 
 	HMAC_CTX_cleanup(&hctx->ctx);
-	if (hctx->ktmp.data) {
-		if (hctx->ktmp.length)
-			explicit_bzero(hctx->ktmp.data, hctx->ktmp.length);
-		free(hctx->ktmp.data);
-		hctx->ktmp.data = NULL;
-	}
+	freezero(hctx->ktmp.data, hctx->ktmp.length);
 	free(hctx);
 }
 

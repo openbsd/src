@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.2 2017/01/29 17:49:23 beck Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.3 2017/05/02 03:59:44 deraadt Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1118,11 +1118,9 @@ ecp_nistz256_pre_comp_clear_free(void *pre_)
 		 * here, but the only place where we allocate this uses
 		 * PRECOMP256_ROW (i.e. 64 P256_POINT_AFFINE) but sets w == 7.
 		 */
-		explicit_bzero(pre->precomp, 37 * sizeof(PRECOMP256_ROW));
-		free(pre->precomp);
+		freezero(pre->precomp, 37 * sizeof(PRECOMP256_ROW));
 	}
-	explicit_bzero(pre, sizeof *pre);
-	free(pre);
+	freezero(pre, sizeof *pre);
 }
 
 static int

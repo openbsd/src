@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.19 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.20 2017/05/02 03:59:44 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -454,10 +454,7 @@ DSA_verify(int type, const unsigned char *dgst, int dgst_len,
 		goto err;
 	ret = DSA_do_verify(dgst, dgst_len, s, dsa);
 err:
-	if (derlen > 0) {
-		explicit_bzero(der, derlen);
-		free(der);
-	}
+	freezero(der, derlen);
 	DSA_SIG_free(s);
 	return ret;
 }

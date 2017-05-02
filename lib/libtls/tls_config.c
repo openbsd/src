@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.38 2017/04/30 02:10:22 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.39 2017/05/02 03:59:45 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -188,9 +188,7 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
  fail:
 	if (fd != -1)
 		close(fd);
-	if (*buf != NULL)
-		explicit_bzero(*buf, *len);
-	free(*buf);
+	freezero(*buf, *len);
 	*buf = NULL;
 	*len = 0;
 
