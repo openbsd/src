@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.450 2017/03/17 17:19:17 mpi Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.451 2017/05/02 12:27:37 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1343,6 +1343,13 @@ struct hfsc_opts {
 	u_int		ulsc_d;
 	u_int		ulsc_m2;
 	int		flags;
+};
+
+struct pfq_ops {
+	void		*(*pfq_alloc)(struct ifnet *);
+	int		 (*pfq_addqueue)(void *, struct pf_queuespec *);
+	void		 (*pfq_free)(void *);
+	int		 (*pfq_qstats)(struct pf_queuespec *, void *, int *);
 };
 
 struct pf_tagname {

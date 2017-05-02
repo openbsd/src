@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.309 2017/04/21 23:21:02 yasuoka Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.310 2017/05/02 12:27:37 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -90,7 +90,6 @@ int			 pfclose(dev_t, int, int, struct proc *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int			 pf_begin_rules(u_int32_t *, const char *);
 int			 pf_rollback_rules(u_int32_t, char *);
-int			 pf_enable_queues(void);
 void			 pf_remove_queues(void);
 int			 pf_commit_queues(void);
 void			 pf_free_queues(struct pf_queuehead *);
@@ -549,31 +548,31 @@ pf_remove_queues(void)
 		if (ifp == NULL)
 			continue;
 
-		KASSERT(HFSC_ENABLED(&ifp->if_snd));
-
 		ifq_attach(&ifp->if_snd, ifq_priq_ops, NULL);
 	}
 }
 
-struct pf_hfsc_queue {
+struct pf_queue_if {
 	struct ifnet		*ifp;
-	struct hfsc_if		*hif;
-	struct pf_hfsc_queue	*next;
+	const struct ifq_ops	*ifqops;
+	const struct pfq_ops	*pfqops;
+	void			*disc;
+	struct pf_queue_if	*next;
 };
 
-static inline struct pf_hfsc_queue *
-pf_hfsc_ifp2q(struct pf_hfsc_queue *list, struct ifnet *ifp)
+static inline struct pf_queue_if *
+pf_ifp2q(struct pf_queue_if *list, struct ifnet *ifp)
 {
-	struct pf_hfsc_queue *phq = list;
+	struct pf_queue_if *qif = list;
 
-	while (phq != NULL) {
-		if (phq->ifp == ifp)
-			return (phq);
+	while (qif != NULL) {
+		if (qif->ifp == ifp)
+			return (qif);
 
-		phq = phq->next;
+		qif = qif->next;
 	}
 
-	return (phq);
+	return (qif);
 }
 
 int
@@ -581,10 +580,13 @@ pf_create_queues(void)
 {
 	struct pf_queuespec	*q;
 	struct ifnet		*ifp;
-	struct pf_hfsc_queue	*list = NULL, *phq;
+	struct pf_queue_if		*list = NULL, *qif;
 	int			 error;
 
-	/* find root queues and alloc hfsc for these interfaces */
+	/*
+	 * Find root queues and allocate traffic conditioner
+	 * private data for these interfaces
+	 */
 	TAILQ_FOREACH(q, pf_queues_active, entries) {
 		if (q->parent_qid != 0)
 			continue;
@@ -593,12 +595,16 @@ pf_create_queues(void)
 		if (ifp == NULL)
 			continue;
 
-		phq = malloc(sizeof(*phq), M_TEMP, M_WAITOK);
-		phq->ifp = ifp;
-		phq->hif = hfsc_pf_alloc(ifp);
+		qif = malloc(sizeof(*qif), M_TEMP, M_WAITOK);
+		qif->ifp = ifp;
 
-		phq->next = list;
-		list = phq;
+		qif->ifqops = ifq_hfsc_ops;
+		qif->pfqops = pfq_hfsc_ops;
+
+		qif->disc = qif->pfqops->pfq_alloc(ifp);
+
+		qif->next = list;
+		list = qif;
 	}
 
 	/* and now everything */
@@ -607,10 +613,10 @@ pf_create_queues(void)
 		if (ifp == NULL)
 			continue;
 
-		phq = pf_hfsc_ifp2q(list, ifp);
-		KASSERT(phq != NULL);
+		qif = pf_ifp2q(list, ifp);
+		KASSERT(qif != NULL);
 
-		error = hfsc_pf_addqueue(phq->hif, q);
+		error = qif->pfqops->pfq_addqueue(qif->disc, q);
 		if (error != 0)
 			goto error;
 	}
@@ -624,8 +630,8 @@ pf_create_queues(void)
 		if (ifp == NULL)
 			continue;
 
-		phq = pf_hfsc_ifp2q(list, ifp);
-		if (phq != NULL)
+		qif = pf_ifp2q(list, ifp);
+		if (qif != NULL)
 			continue;
 
 		ifq_attach(&ifp->if_snd, ifq_priq_ops, NULL);
@@ -633,24 +639,24 @@ pf_create_queues(void)
 
 	/* commit the new queues */
 	while (list != NULL) {
-		phq = list;
-		list = phq->next;
+		qif = list;
+		list = qif->next;
 
-		ifp = phq->ifp;
+		ifp = qif->ifp;
 
-		ifq_attach(&ifp->if_snd, ifq_hfsc_ops, phq->hif);
-		free(phq, M_TEMP, sizeof(*phq));
+		ifq_attach(&ifp->if_snd, qif->ifqops, qif->disc);
+		free(qif, M_TEMP, sizeof(*qif));
 	}
 
 	return (0);
 
 error:
 	while (list != NULL) {
-		phq = list;
-		list = phq->next;
+		qif = list;
+		list = qif->next;
 
-		hfsc_pf_free(phq->hif);
-		free(phq, M_TEMP, sizeof(*phq));
+		qif->pfqops->pfq_free(qif->disc);
+		free(qif, M_TEMP, sizeof(*qif));
 	}
 
 	return (error);
@@ -1082,7 +1088,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(qs, &pq->queue, sizeof(pq->queue));
-		error = hfsc_pf_qstats(qs, pq->buf, &nbytes);
+		error = pfq_hfsc_ops->pfq_qstats(qs, pq->buf, &nbytes);
 		if (error == 0)
 			pq->nbytes = nbytes;
 		break;
@@ -1117,8 +1123,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		/* XXX resolve bw percentage specs */
 		pfi_kif_ref(qs->kif, PFI_KIF_REF_RULE);
-		if (qs->qlimit == 0)
-			qs->qlimit = HFSC_DEFAULT_QLIMIT;
+
 		TAILQ_INSERT_TAIL(pf_queues_inactive, qs, entries);
 
 		break;

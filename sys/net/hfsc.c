@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.37 2017/04/26 15:50:59 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.38 2017/05/02 12:27:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -279,6 +279,24 @@ const struct ifq_ops hfsc_ops = {
 
 const struct ifq_ops * const ifq_hfsc_ops = &hfsc_ops;
 
+/*
+ * pf queue glue.
+ */
+
+void		*hfsc_pf_alloc(struct ifnet *);
+int		 hfsc_pf_addqueue(void *, struct pf_queuespec *);
+void		 hfsc_pf_free(void *);
+int		 hfsc_pf_qstats(struct pf_queuespec *, void *, int *);
+
+const struct pfq_ops hfsc_pf_ops = {
+	hfsc_pf_alloc,
+	hfsc_pf_addqueue,
+	hfsc_pf_free,
+	hfsc_pf_qstats
+};
+
+const struct pfq_ops * const pfq_hfsc_ops = &hfsc_pf_ops;
+
 u_int64_t
 hfsc_microuptime(void)
 {
@@ -323,7 +341,7 @@ hfsc_initialize(void)
 	    IPL_NONE, PR_WAITOK, "hfscintsc", NULL);
 }
 
-struct hfsc_if *
+void *
 hfsc_pf_alloc(struct ifnet *ifp)
 {
 	struct hfsc_if *hif;
@@ -342,8 +360,9 @@ hfsc_pf_alloc(struct ifnet *ifp)
 }
 
 int
-hfsc_pf_addqueue(struct hfsc_if *hif, struct pf_queuespec *q)
+hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 {
+	struct hfsc_if *hif = arg;
 	struct hfsc_class *cl, *parent;
 	struct hfsc_sc rtsc, lssc, ulsc;
 
@@ -416,8 +435,10 @@ hfsc_pf_qstats(struct pf_queuespec *q, void *ubuf, int *nbytes)
 }
 
 void
-hfsc_pf_free(struct hfsc_if *hif)
+hfsc_pf_free(void *arg)
 {
+	struct hfsc_if *hif = arg;
+
 	hfsc_free(0, hif);
 }
 

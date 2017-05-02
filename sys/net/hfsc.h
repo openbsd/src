@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.12 2017/04/26 15:50:59 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.13 2017/05/02 12:27:37 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -34,9 +34,6 @@
 #define	_HFSC_H_
 
 /* hfsc class flags */
-#define	HFSC_RED		0x0001	/* use RED */
-#define	HFSC_ECN		0x0002  /* use RED/ECN */
-#define	HFSC_RIO		0x0004  /* use RIO */
 #define	HFSC_DEFAULTCLASS	0x1000	/* default class */
 
 struct hfsc_pktcntr {
@@ -65,6 +62,13 @@ struct hfsc_sc {
 #define	HFSC_DEFAULTSC		(HFSC_REALTIMESC|HFSC_LINKSHARINGSC)
 
 struct hfsc_class_stats {
+	struct hfsc_pktcntr	xmit_cnt;
+	struct hfsc_pktcntr	drop_cnt;
+
+	u_int			qlength;
+	u_int			qlimit;
+	u_int			period;
+
 	u_int			class_id;
 	u_int32_t		class_handle;
 	struct hfsc_sc		rsc;
@@ -91,12 +95,6 @@ struct hfsc_class_stats {
 	u_int64_t		cur_time;
 	u_int32_t		machclk_freq;
 
-	u_int			qlength;
-	u_int			qlimit;
-	struct hfsc_pktcntr	xmit_cnt;
-	struct hfsc_pktcntr	drop_cnt;
-	u_int			period;
-
 	u_int			vtperiod;	/* vt period sequence no */
 	u_int			parentperiod;	/* parent's vt period seqno */
 	int			nactive;	/* number of active children */
@@ -113,14 +111,10 @@ struct pf_queuespec;
 struct hfsc_if;
 
 extern const struct ifq_ops * const ifq_hfsc_ops;
+extern const struct pfq_ops * const pfq_hfsc_ops;
 
 #define	HFSC_ENABLED(ifq)	((ifq)->ifq_ops == ifq_hfsc_ops)
 #define	HFSC_DEFAULT_QLIMIT	50
-
-struct hfsc_if	*hfsc_pf_alloc(struct ifnet *);
-int		 hfsc_pf_addqueue(struct hfsc_if *, struct pf_queuespec *);
-void		 hfsc_pf_free(struct hfsc_if *);
-int		 hfsc_pf_qstats(struct pf_queuespec *, void *, int *);
 
 void		 hfsc_initialize(void);
 u_int64_t	 hfsc_microuptime(void);
