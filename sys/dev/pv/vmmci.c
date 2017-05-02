@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.2 2017/03/15 18:06:18 reyk Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.3 2017/05/02 09:50:38 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,7 @@ enum vmmci_cmd {
 	VMMCI_NONE = 0,
 	VMMCI_SHUTDOWN,
 	VMMCI_REBOOT,
+	VMMCI_SYNCRTC,
 };
 
 struct vmmci_softc {
@@ -73,6 +74,7 @@ struct cfattach vmmci_ca = {
 /* Feature bits */
 #define VMMCI_F_TIMESYNC	(1<<0)
 #define VMMCI_F_ACK		(1<<1)
+#define VMMCI_F_SYNCRTC		(1<<2)
 
 struct cfdriver vmmci_cd = {
 	NULL, "vmmci", DV_DULL
@@ -103,7 +105,7 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	features = VMMCI_F_TIMESYNC|VMMCI_F_ACK;
+	features = VMMCI_F_TIMESYNC | VMMCI_F_ACK | VMMCI_F_SYNCRTC;
 	features = virtio_negotiate_features(vsc, features, NULL);
 
 	if (features & VMMCI_F_TIMESYNC) {
@@ -171,6 +173,10 @@ vmmci_config_change(struct virtio_softc *vsc)
 	case VMMCI_REBOOT:
 		pvbus_reboot(&sc->sc_dev);
 		break;
+	case VMMCI_SYNCRTC:
+		inittodr(time_second);
+		sc->sc_cmd = VMMCI_NONE;
+		break;	
 	default:
 		printf("%s: invalid command %d\n", sc->sc_dev.dv_xname, cmd);
 		cmd = VMMCI_NONE;		
