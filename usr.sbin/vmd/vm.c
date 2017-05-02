@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.14 2017/05/02 02:58:24 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.15 2017/05/02 07:19:53 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -134,11 +134,13 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 	.vrs_msrs[VCPU_REGS_EFER] = 0ULL,
+#ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL
+#endif
 };
 
 /*
@@ -168,11 +170,13 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 	.vrs_msrs[VCPU_REGS_EFER] = 0ULL,
+#ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL
+#endif
 };
 
 /*
@@ -838,7 +842,7 @@ run_vm(int *child_disks, int *child_taps, struct vmop_create_params *vmc,
 				return (EIO);
 			}
 
-			ret = (long long)exit_status;
+			ret = (intptr_t)exit_status;
 		}
 
 		/* Did the event thread exit? => return with an error */
