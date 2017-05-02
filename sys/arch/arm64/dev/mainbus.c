@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.5 2017/04/30 13:54:00 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.6 2017/05/02 15:13:20 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -149,9 +149,6 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 	struct fdt_attach_args	 fa;
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
-
-	if (OF_getproplen(node, "compatible") <= 0)
-		return;
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";
