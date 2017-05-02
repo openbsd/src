@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.58 2017/05/02 17:44:31 schwarze Exp $
-# $NetBSD: mdoclint,v 1.65 2017/04/25 13:17:38 wiz Exp $
+# $OpenBSD: mdoclint,v 1.59 2017/05/02 17:51:32 schwarze Exp $
+# $NetBSD: mdoclint,v 1.68 2017/05/02 13:59:10 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -45,19 +45,18 @@ use constant {
 
 use vars qw(
 	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
-	$opt_m
-	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v $opt_w
+	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_s $opt_v $opt_w
 	$opt_X $opt_x
 );
 
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="aDdeFfHhlmnoPprSsvwXx";
+my $options="aDdeFfHhlmnoprSsvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-aDdfmnoPprSsXx" : "-aDdeflmnoPprSsXx";
+	my $default = OPENBSD ? "-aDdfmnoprSsXx" : "-aDdeflmnoprSsXx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
@@ -74,7 +73,6 @@ usage:	mdoclint [-$options] file ...
 	-m	warn about man pages that are not in mdoc(7) format
 	-n	warn about .Nd's ending in '.'
 	-o	warn about non-empty .Os strings
-	-P	warn about paragraph problems
 	-p	warn about punctuation problems
 	-r	warn about missing RCS Id
 	-S	warn about any .Sh weirdness
@@ -255,11 +253,10 @@ sub handle_options
 	# default to all warnings if no flag is set
 	unless ($opt_a or $opt_D or $opt_d or $opt_e
 		or $opt_f or $opt_H or $opt_l
-		or $opt_m or $opt_n
-		or $opt_o or $opt_P or $opt_p or $opt_r
+		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
 		or $opt_S or $opt_s or $opt_X or $opt_x) {
 		$opt_a = $opt_D = $opt_d = $opt_f = $opt_m =
-		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S =
+		    $opt_n = $opt_o = $opt_p = $opt_r = $opt_S =
 		    $opt_s = $opt_X = $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
 	}
@@ -403,11 +400,6 @@ sub set_section_header
 		}
 		$s->{shseen}->{$section_header} = 1;
 		$s->{lastsh} = $sections{$section_header};
-	}
-
-	if ($s->{lastline} =~ /^\.Pp/o) {
-		$s->warning("Paragraph problem: section header after .Pp")
-		    if $opt_P;
 	}
 
 	$s->{current_section_header} = $section_header;
@@ -613,15 +605,6 @@ sub process_line
 		if (/^\.Ed\b/o) {
 		    $s->{inliteral} = 0;
 		}
-	} elsif (/^$/o) {
-		$s->warning("Paragraph problem: empty line -- ",
-		    "use .Pp for paragraphs") if $opt_P;
-	}
-	if ($s->{lastline} =~ /^\.Pp/o and /^(\.Ss|\.Pp)/o) {
-		$s->warning("Paragraph problem: $1 after .Pp") if $opt_P;
-	}
-	if (/^\.Pp/o and $s->{lastline} =~ /^(\.S[Ssh])/o) {
-		$s->warning("Paragraph problem: .Pp after $1") if $opt_P;
 	}
 
 	# Check whether the list of possible errors for a function is
@@ -660,10 +643,6 @@ sub finish
 	}
 	if (OPENBSD and not $s->{oxrcsidseen}) {
 		$s->warning("Missing RCS Id") if $opt_r;
-	}
-
-	if ($s->{lastline} =~ /^\.Pp/o) {
-		$s->warning("Paragraph problem: .Pp at EOF") if $opt_P;
 	}
 
 	end_of_section($s);

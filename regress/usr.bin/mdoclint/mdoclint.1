@@ -1,5 +1,5 @@
-.\"	$OpenBSD: mdoclint.1,v 1.17 2017/04/28 14:11:01 schwarze Exp $
-.\" $NetBSD: mdoclint.1,v 1.13 2013/08/21 11:22:15 wiz Exp $
+.\" $OpenBSD: mdoclint.1,v 1.18 2017/05/02 17:51:32 schwarze Exp $
+.\" $NetBSD: mdoclint.1,v 1.15 2017/05/02 13:59:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2017 $
+.Dd $Mdocdate: May 2 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl aDdeFfHhlmnoPprSsvwXx
+.Op Fl aDdeFfHhlmnoprSsvwXx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -41,7 +41,7 @@ is a man page verifier.
 It tries to automatically find as many common
 errors that occur when writing man pages as possible.
 If no flags are given,
-.Fl aDdfmnoPprSsXx
+.Fl aDdfmnoprSsXx
 is assumed (that is, everything except
 .Fl eFHhlvw ) .
 .Pp
@@ -96,9 +96,6 @@ Warn when the .Os macro has an argument (it shouldn't have one at
 least in the base system, because on
 .Ox
 the current version is default).
-.It Fl P
-Warn about paragraph problems, like empty lines or .Pp macros before
-section macros like .Ss and .Sh.
 .It Fl p
 Warn about possible punctuation problems at the end of macro arguments,
 abuse of .Ns to get punctuation directly next to a word,
