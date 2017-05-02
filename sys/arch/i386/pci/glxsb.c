@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.31 2017/02/07 17:25:45 patrick Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.32 2017/05/02 11:47:49 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -40,7 +40,7 @@
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
 #endif
@@ -406,7 +406,7 @@ glxsb_crypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 					return (ENOMEM);
 				}
 				ses->ses_swd_enc = swd;
-				txf = &enc_xform_rijndael128;
+				txf = &enc_xform_aes;
 				if (txf->ctxsize > 0) {
 					swd->sw_kschedule =
 					    malloc(txf->ctxsize,

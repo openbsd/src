@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.36 2017/02/07 17:25:45 patrick Exp $	*/
+/*	$OpenBSD: via.c,v 1.37 2017/05/02 11:47:49 mikeb Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -36,7 +36,7 @@
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
 #endif
@@ -197,9 +197,9 @@ viac3_crypto_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			ses->ses_cw0 = cw0;
 
 			/* Build expanded keys for both directions */
-			rijndaelKeySetupEnc(ses->ses_ekey, c->cri_key,
+			AES_KeySetup_Encrypt(ses->ses_ekey, c->cri_key,
 			    c->cri_klen);
-			rijndaelKeySetupDec(ses->ses_dkey, c->cri_key,
+			AES_KeySetup_Decrypt(ses->ses_dkey, c->cri_key,
 			    c->cri_klen);
 			for (i = 0; i < 4 * (AES_MAXROUNDS + 1); i++) {
 				ses->ses_ekey[i] = ntohl(ses->ses_ekey[i]);

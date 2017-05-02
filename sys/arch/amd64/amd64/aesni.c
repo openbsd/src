@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesni.c,v 1.40 2017/02/07 17:25:45 patrick Exp $	*/
+/*	$OpenBSD: aesni.c,v 1.41 2017/05/02 11:47:49 mikeb Exp $	*/
 /*-
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -28,7 +28,7 @@
 #include <sys/mbuf.h>
 
 #include <crypto/cryptodev.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/gmac.h>
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
