@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.15 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.16 2017/05/02 21:38:26 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -330,11 +330,6 @@ void dumpsys(void);
 void
 boot(int howto)
 {
-#ifdef DIAGNOSTIC
-	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
-#endif
-
 	/*
 	 * If we are still cold then hit the air brakes
 	 * and crash to earth fast
