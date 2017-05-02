@@ -1,4 +1,4 @@
-/*      $OpenBSD: aesctr.c,v 1.2 2014/08/15 14:39:04 mikeb Exp $  */
+/*      $OpenBSD: aesctr.c,v 1.3 2017/05/02 11:46:00 mikeb Exp $  */
 
 /*
  * Copyright (c) 2005 Markus Friedl <markus@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/param.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,9 +151,8 @@ explicit_bzero(void *b, size_t len)
 #define AESCTR_BLOCKSIZE	16
 
 struct aes_ctr_ctx {
-	u_int32_t	ac_ek[4*(AES_MAXROUNDS + 1)];
+	AES_CTX		ac_key;
 	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
-	int		ac_nr;
 };
 
 int  aes_ctr_setkey(void *, u_int8_t *, int);
@@ -182,7 +181,6 @@ docrypt(const unsigned char *key, size_t klen, const unsigned char *iv,
 		out += AESCTR_BLOCKSIZE;
 	}
 	return 0;
-
 }
 
 static int
@@ -242,7 +240,7 @@ run(int num)
 	if (docrypt(data[TST_KEY], length[TST_KEY],
 	    data[TST_IV], data[TST_PLAIN], p,
 	    length[TST_PLAIN], 0) < 0) {
-		warnx("crypt with /dev/crypto failed");
+		warnx("encryption failed");
 		goto done;
 	}
 	fail = !match(data[TST_CIPHER], p, len);
