@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.33 2017/04/15 11:15:02 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.34 2017/05/02 21:24:25 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -322,17 +322,10 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	struct pmapvp2 *vp2;
 	struct pmapvp3 *vp3;
 
-	int vp_pool_flags;
-	if (pm == pmap_kernel()) {
-		vp_pool_flags  = PR_NOWAIT;
-	} else {
-		vp_pool_flags  = PR_WAITOK |PR_ZERO;
-	}
-
 	if (pm->have_4_level_pt) {
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
 		if (vp1 == NULL) {
-			vp1 = pool_get(&pmap_vp_pool, vp_pool_flags);
+			vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 			if (vp1 == NULL) {
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("%s: unable to allocate L1",
@@ -347,7 +340,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 
 	vp2 = vp1->vp[VP_IDX1(va)];
 	if (vp2 == NULL) {
-		vp2 = pool_get(&pmap_vp_pool, vp_pool_flags);
+		vp2 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		if (vp2 == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("%s: unable to allocate L2", __func__);
@@ -358,7 +351,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 
 	vp3 = vp2->vp[VP_IDX2(va)];
 	if (vp3 == NULL) {
-		vp3 = pool_get(&pmap_vp_pool, vp_pool_flags);
+		vp3 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		if (vp3 == NULL) {
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("%s: unable to allocate L3", __func__);
