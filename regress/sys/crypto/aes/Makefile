@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.3 2014/08/15 14:36:19 mikeb Exp $
+#       $OpenBSD: Makefile,v 1.4 2017/05/02 11:33:48 mikeb Exp $
 
 DIR=	${.CURDIR}/../../../../sys
 
@@ -19,7 +19,7 @@ CDIAGFLAGS+=	-Wshadow
 REGRESS_ROOT_TARGETS=	run-regress-${PROG}
 
 .PATH:	${DIR}/crypto
-SRCS+=	rijndael.c
+SRCS+=	aes.c
 
 run-regress-${PROG}: ${PROG}
 	./${PROG} ${.CURDIR}/vectors/*.txt
