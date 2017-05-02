@@ -16,7 +16,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/key_wrap.h>
 
 static void

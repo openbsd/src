@@ -15,7 +15,7 @@
  */
 
 #include <sys/param.h>
-#include <crypto/rijndael.h>
+#include <crypto/aes.h>
 #include <crypto/cmac.h>
 #include <stdio.h>
 #include <string.h>
