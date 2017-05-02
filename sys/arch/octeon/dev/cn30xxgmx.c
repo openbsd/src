@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.33 2017/04/08 10:53:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.34 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,11 +40,13 @@
 #include <machine/octeonvar.h>
 
 #include <octeon/dev/iobusvar.h>
+#include <octeon/dev/cn30xxasxvar.h>
 #include <octeon/dev/cn30xxciureg.h>
 #include <octeon/dev/cn30xxgmxreg.h>
-#include <octeon/dev/cn30xxipdvar.h>
-#include <octeon/dev/cn30xxasxvar.h>
 #include <octeon/dev/cn30xxgmxvar.h>
+#include <octeon/dev/cn30xxipdvar.h>
+#include <octeon/dev/cn30xxpipvar.h>
+#include <octeon/dev/cn30xxsmivar.h>
 
 #define	dprintf(...)
 #define	OCTEON_ETH_KASSERT	KASSERT
@@ -176,63 +178,33 @@ cn30xxgmx_match(struct device *parent, void *match, void *aux)
 }
 
 int
-cn30xxgmx_port_phy_addr(int port)
+cn30xxgmx_get_phy_phandle(int port)
 {
-	static const int octeon_eth_phy_table[] = {
-		/* portwell cam-0100 */
-		0x02, 0x03, 0x22
-	};
 	char name[64];
-	int phynode = 0;
-	int portnode = -1;
-	uint32_t phy = 0;
+	int node;
+	int phandle = 0;
 
 	snprintf(name, sizeof(name),
 	    "/soc/pip@11800a0000000/interface@%x/ethernet@%x",
 	    port / 16, port % 16);
-	portnode = OF_finddevice(name);
-	if (portnode != -1) {
-		phy = OF_getpropint(portnode, "phy-handle", 0);
-		if (phy != 0)
-			phynode = OF_getnodebyphandle(phy);
-		if (phynode != 0)
-			return OF_getpropint(phynode, "reg", 0);
-	}
-
-	switch (octeon_boot_info->board_type) {
-	case BOARD_TYPE_UBIQUITI_E100:	/* port 0: 7, port 1: 6 */
-		if (port > 2)
-			return -1;
-		return 7 - port;
-
-	case BOARD_TYPE_UBIQUITI_E200:
-		if (port >= 0 && port < 4)
-			/* XXX RJ45/SFP combos use the second MDIO. */
-			return port + 4;  /* GMX0: eth[4-7] */
-		else if (port >= 16 && port < 20)
-			return port - 16; /* GMX1: eth[0-3] */
-		return -1;
-
-	case BOARD_TYPE_CN3010_EVB_HS5:
-		if (port >= nitems(octeon_eth_phy_table))
-			return -1;
-		return octeon_eth_phy_table[port];
-
-	default:
-		return -1;
-	}
+	node = OF_finddevice(name);
+	if (node != - 1)
+		phandle = OF_getpropint(node, "phy-handle", 0);
+	return phandle;
 }
 
 void
 cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cn30xxgmx_softc *sc = (void *)self;
-	struct iobus_attach_args *aa = aux;
 	struct cn30xxgmx_attach_args gmx_aa;
+	struct iobus_attach_args *aa = aux;
+	struct cn30xxgmx_port_softc *port_sc;
+	struct cn30xxgmx_softc *sc = (void *)self;
+	struct cn30xxsmi_softc *smi;
 	int i;
 	int phy_addr;
+	int port;
 	int status;
-	struct cn30xxgmx_port_softc *port_sc;
 
 	printf("\n");
 
@@ -254,14 +226,14 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < sc->sc_nports; i++) {
-		phy_addr = cn30xxgmx_port_phy_addr(
-		    GMX_PORT_NUM(sc->sc_unitno, i));
-		if (phy_addr == -1)
+		port = GMX_PORT_NUM(sc->sc_unitno, i);
+		if (cn30xxsmi_get_phy(cn30xxgmx_get_phy_phandle(port), port,
+		    &smi, &phy_addr))
 			continue;
 
 		port_sc = &sc->sc_ports[i];
 		port_sc->sc_port_gmx = sc;
-		port_sc->sc_port_no = GMX_PORT_NUM(sc->sc_unitno, i);
+		port_sc->sc_port_no = port;
 		port_sc->sc_port_type = sc->sc_port_types[i];
 		port_sc->sc_port_ops = cn30xxgmx_port_ops[port_sc->sc_port_type];
 		status = bus_space_map(sc->sc_regt,
@@ -302,6 +274,7 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		gmx_aa.ga_gmx = sc;
 		gmx_aa.ga_gmx_port = port_sc;
 		gmx_aa.ga_phy_addr = phy_addr;
+		gmx_aa.ga_smi = smi;
 
 		config_found(self, &gmx_aa, cn30xxgmx_print);
 

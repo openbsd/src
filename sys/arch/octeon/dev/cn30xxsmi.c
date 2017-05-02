@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.3 2014/08/11 18:08:17 miod Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.4 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -28,47 +28,71 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
+#include <sys/stdint.h>
 
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
+
+#include <machine/fdt.h>
 #include <machine/octeonvar.h>
 
-#include <octeon/dev/cn30xxfpavar.h>
-#include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxsmireg.h>
 #include <octeon/dev/cn30xxsmivar.h>
 
+int	cn30xxsmi_match(struct device *, void *, void *);
+void	cn30xxsmi_attach(struct device *, struct device *, void *);
+
 void	cn30xxsmi_enable(struct cn30xxsmi_softc *);
 
-/* XXX */
-void
-cn30xxsmi_init(struct cn30xxsmi_attach_args *aa,
-    struct cn30xxsmi_softc **rsc)
-{
-	struct cn30xxsmi_softc *sc;
-	int status;
+const struct cfattach cn30xxsmi_ca = {
+	sizeof(struct cn30xxsmi_softc), cn30xxsmi_match, cn30xxsmi_attach
+};
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc == NULL)
-		panic("can't allocate memory: %s", __func__);
+struct cfdriver cn30xxsmi_cd = {
+	NULL, "cn30xxsmi", DV_DULL
+};
 
-	sc->sc_port = aa->aa_port;
-	sc->sc_regt = aa->aa_regt;
-
-	status = bus_space_map(sc->sc_regt, SMI_BASE, SMI_SIZE, 0,
-	    &sc->sc_regh);
-	if (status != 0)
-		panic("can't map %s space", "smi register");
-
-	cn30xxsmi_enable(sc);
-
-	*rsc = sc;
-}
+static SLIST_HEAD(, cn30xxsmi_softc) smi_list =
+    SLIST_HEAD_INITIALIZER(smi_list);
 
 #define	_SMI_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_regt, (sc)->sc_regh, (off))
 #define	_SMI_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
+
+int
+cn30xxsmi_match(struct device *parent, void *match, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "cavium,octeon-3860-mdio");
+}
+
+void
+cn30xxsmi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+	struct cn30xxsmi_softc *sc = (struct cn30xxsmi_softc *)self;
+
+	if (faa->fa_nreg != 1)
+		return;
+
+	sc->sc_node = faa->fa_node;
+	sc->sc_regt = faa->fa_iot;
+
+	if (bus_space_map(sc->sc_regt, faa->fa_reg[0].addr, faa->fa_reg[0].size,
+	    0, &sc->sc_regh)) {
+		printf(": could not map registers\n");
+		return;
+	}
+
+	SLIST_INSERT_HEAD(&smi_list, sc, sc_link);
+
+	printf("\n");
+
+	_SMI_WR8(sc, SMI_CLK_OFFSET, 0x1464);
+	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);
+}
 
 int
 cn30xxsmi_read(struct cn30xxsmi_softc *sc, int phy_addr, int reg)
@@ -123,15 +147,56 @@ cn30xxsmi_write(struct cn30xxsmi_softc *sc, int phy_addr, int reg, int value)
 	}
 }
 
-void
-cn30xxsmi_enable(struct cn30xxsmi_softc *sc)
+int
+cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
+    int *preg)
 {
-	_SMI_WR8(sc, SMI_EN_OFFSET, SMI_EN_EN);
-}
+	/* PHY addresses for Portwell CAM-0100 */
+	static const int cam0100_phys[] = {
+		0x02, 0x03, 0x22
+	};
 
-void
-cn30xxsmi_set_clock(struct cn30xxsmi_softc *sc, uint64_t clock)
-{
-	_SMI_WR8(sc, SMI_CLK_OFFSET, clock);
-}
+	struct cn30xxsmi_softc *smi;
+	int parent, phynode;
+	int reg;
 
+	if (phandle != 0) {
+		phynode = OF_getnodebyphandle(phandle);
+		if (phynode == 0)
+			return ENOENT;
+		reg = OF_getpropint(phynode, "reg", UINT32_MAX);
+		if (reg == UINT32_MAX)
+			return ENOENT;
+
+		parent = OF_parent(phynode);
+		SLIST_FOREACH(smi, &smi_list, sc_link) {
+			if (smi->sc_node == parent)
+				goto found;
+		}
+		return ENOENT;
+	} else {
+		smi = SLIST_FIRST(&smi_list);
+		if (smi == NULL)
+			return ENOENT;
+
+		switch (octeon_boot_info->board_type) {
+		case BOARD_TYPE_UBIQUITI_E100:
+			if (port > 2)
+				return ENOENT;
+			reg = 7 - port;
+			break;
+		case BOARD_TYPE_CN3010_EVB_HS5:
+			if (port >= nitems(cam0100_phys))
+				return ENOENT;
+			reg = cam0100_phys[port];
+			break;
+		default:
+			return ENOENT;
+		}
+	}
+
+found:
+	*psmi = smi;
+	*preg = reg;
+	return 0;
+}

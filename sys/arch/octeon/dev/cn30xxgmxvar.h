@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.6 2016/06/09 15:29:22 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.7 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -90,6 +90,7 @@ struct cn30xxgmx_attach_args {
 	const char		*ga_name;
 	int			ga_portno;
 	int			ga_port_type;
+	struct cn30xxsmi_softc	*ga_smi;
 	int			ga_phy_addr;
 
 	struct cn30xxgmx_softc *ga_gmx;

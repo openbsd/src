@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxsmireg.h,v 1.1 2011/06/16 11:22:30 syuu Exp $	*/
+/*	$OpenBSD: cn30xxsmireg.h,v 1.2 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -40,20 +40,11 @@
 #ifndef _CN30XXSMIREG_H_
 #define _CN30XXSMIREG_H_
 
-#define	SMI_CMD					0x0001180000001800ULL
-#define	SMI_WR_DAT				0x0001180000001808ULL
-#define	SMI_RD_DAT				0x0001180000001810ULL
-#define	SMI_CLK					0x0001180000001818ULL
-#define	SMI_EN					0x0001180000001820ULL
-
 #define	SMI_CMD_OFFSET				0x00ULL
 #define	SMI_WR_DAT_OFFSET			0x08ULL
 #define	SMI_RD_DAT_OFFSET			0x10ULL
 #define	SMI_CLK_OFFSET				0x18ULL
 #define	SMI_EN_OFFSET				0x20ULL
-
-#define SMI_BASE				0x0001180000001800ULL
-#define SMI_SIZE				0x028ULL
 
 /* SMI CMD */
 #define SMI_CMD_63_17			0xfffffffffffe0000ULL

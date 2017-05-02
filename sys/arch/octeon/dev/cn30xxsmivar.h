@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmivar.h,v 1.2 2011/06/24 02:13:23 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxsmivar.h,v 1.3 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,23 +29,19 @@
 #ifndef _CN30XXSMIVAR_H_
 #define _CN30XXSMIVAR_H_
 
-/* XXX */
 struct cn30xxsmi_softc {
-	int			sc_port;
+	struct device		sc_dev;
+	int			sc_node;
+
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
+
+	SLIST_ENTRY(cn30xxsmi_softc) sc_link;
 };
 
-/* XXX */
-struct cn30xxsmi_attach_args {
-	int			aa_port;
-	bus_space_tag_t		aa_regt;
-};
+int	cn30xxsmi_read(struct cn30xxsmi_softc *, int, int);
+void	cn30xxsmi_write(struct cn30xxsmi_softc *, int, int, int);
 
-void			cn30xxsmi_init(struct cn30xxsmi_attach_args *,
-			    struct cn30xxsmi_softc **);
-int			cn30xxsmi_read(struct cn30xxsmi_softc *, int, int);
-void			cn30xxsmi_write(struct cn30xxsmi_softc *, int, int, int);
-void			cn30xxsmi_set_clock(struct cn30xxsmi_softc *, uint64_t);
+int	cn30xxsmi_get_phy(int, int, struct cn30xxsmi_softc **, int *);
 
 #endif

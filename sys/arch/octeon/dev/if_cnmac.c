@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.63 2017/04/02 15:25:05 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.64 2017/05/02 13:26:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -254,6 +254,7 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_port_type = ga->ga_port_type;
 	sc->sc_gmx = ga->ga_gmx;
 	sc->sc_gmx_port = ga->ga_gmx_port;
+	sc->sc_smi = ga->ga_smi;
 	sc->sc_phy_addr = ga->ga_phy_addr;
 
 	sc->sc_init_flag = 0;
@@ -287,7 +288,6 @@ octeon_eth_attach(struct device *parent, struct device *self, void *aux)
 	octeon_eth_pip_init(sc);
 	octeon_eth_ipd_init(sc);
 	octeon_eth_pko_init(sc);
-	octeon_eth_smi_init(sc);
 
 	sc->sc_gmx_port->sc_ipd = sc->sc_ipd;
 	sc->sc_gmx_port->sc_port_mii = &sc->sc_mii;
@@ -370,17 +370,6 @@ octeon_eth_pko_init(struct octeon_eth_softc *sc)
 	pko_aa.aa_cmd_buf_pool = OCTEON_POOL_NO_CMD;
 	pko_aa.aa_cmd_buf_size = OCTEON_POOL_NWORDS_CMD;
 	cn30xxpko_init(&pko_aa, &sc->sc_pko);
-}
-
-void
-octeon_eth_smi_init(struct octeon_eth_softc *sc)
-{
-	struct cn30xxsmi_attach_args smi_aa;
-
-	smi_aa.aa_port = sc->sc_port;
-	smi_aa.aa_regt = sc->sc_regt;
-	cn30xxsmi_init(&smi_aa, &sc->sc_smi);
-	cn30xxsmi_set_clock(sc->sc_smi, 0x1464ULL); /* XXX */
 }
 
 /* ---- XXX */
