@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.21 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.22 2017/05/02 04:11:08 deraadt Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -186,10 +186,8 @@ set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx, CONF_VALUE *cnf)
 	return 1;
 
 err:
-	if (fnm)
-		sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
-	if (rnm)
-		sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
+	sk_GENERAL_NAME_pop_free(fnm, GENERAL_NAME_free);
+	sk_X509_NAME_ENTRY_pop_free(rnm, X509_NAME_ENTRY_free);
 	return -1;
 }
 
@@ -300,8 +298,7 @@ crldp_from_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 	return point;
 
 err:
-	if (point)
-		DIST_POINT_free(point);
+	DIST_POINT_free(point);
 	return NULL;
 }
 

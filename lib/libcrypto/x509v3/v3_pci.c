@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pci.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_pci.c,v 1.13 2017/05/02 04:11:08 deraadt Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -298,18 +298,12 @@ r2i_pci(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value)
 	goto end;
 
 err:
-	if (language) {
-		ASN1_OBJECT_free(language);
-		language = NULL;
-	}
-	if (pathlen) {
-		ASN1_INTEGER_free(pathlen);
-		pathlen = NULL;
-	}
-	if (policy) {
-		ASN1_OCTET_STRING_free(policy);
-		policy = NULL;
-	}
+	ASN1_OBJECT_free(language);
+	language = NULL;
+	ASN1_INTEGER_free(pathlen);
+	pathlen = NULL;
+	ASN1_OCTET_STRING_free(policy);
+	policy = NULL;
 end:
 	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
 	return pci;
