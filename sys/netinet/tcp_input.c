@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.341 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.342 2017/05/03 19:58:12 millert Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1374,16 +1374,13 @@ trimthenstep6:
 	/*
 	 * If last ACK falls within this segment's sequence numbers,
 	 * record its timestamp if it's more recent.
-	 * Cf fix from Braden, see Stevens p. 870
+	 * NOTE that the test is modified according to the latest
+	 * proposal of the tcplw@cray.com list (Braden 1993/04/26).
 	 */
 	if (opti.ts_present && TSTMP_GEQ(opti.ts_val, tp->ts_recent) &&
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
-		if (SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
-		    ((tiflags & (TH_SYN|TH_FIN)) != 0)))
-			tp->ts_recent = opti.ts_val;
-		else
-			tp->ts_recent = 0;
 		tp->ts_recent_age = tcp_now;
+		tp->ts_recent = opti.ts_val;
 	}
 
 	/*
