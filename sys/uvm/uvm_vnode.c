@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.95 2017/03/17 17:19:16 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.96 2017/05/03 02:43:15 guenther Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ uvn_init(void)
 
 	LIST_INIT(&uvn_wlist);
 	/* note: uvn_sync_q init'd in uvm_vnp_sync() */
-	rw_init(&uvn_sync_lock, "uvnsync");
+	rw_init_flags(&uvn_sync_lock, "uvnsync", RWL_IS_VNODE);
 }
 
 /*
