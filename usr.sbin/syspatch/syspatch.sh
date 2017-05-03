@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.95 2017/04/30 13:41:10 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.96 2017/05/03 12:26:52 ajacoutot Exp $
 #
 # Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -180,9 +180,13 @@ ls_missing()
 {
 	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
-	# don't output anything on stdout to prevent corrupting the patch list
+	# return inmediately if we cannot reach the mirror server
+	unpriv ftp -MVo /dev/null ${_MIRROR%syspatch/*} >/dev/null
+
+	# don't output anything on stdout to prevent corrupting the patch list;
+	# redirect stderr as well in case there's no patch available
 	unpriv -f "${_sha}.sig" ftp -MVo "${_sha}.sig" "${_MIRROR}/SHA256.sig" \
-		>/dev/null 2>&1
+		>/dev/null 2>&1 || return 0 # empty directory
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
@@ -300,7 +304,8 @@ shift $((OPTIND - 1))
 (($# != 0)) && usage
 
 if ((OPTIND == 1)); then
-	for _PATCH in $(ls_missing); do
+	_PATCHES=$(ls_missing)
+	for _PATCH in ${_PATCHES}; do
 		apply_patch ${_OSrev}-${_PATCH}
 	done
 	sp_cleanup
