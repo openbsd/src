@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.11 2017/04/18 13:27:55 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.12 2017/05/03 15:32:31 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1646,7 +1646,6 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 
 		/* Only pick the first one */
 		memcpy(&ipv4elem, data + off, sizeof (ipv4elem));
-		ipv4elem.addr = letoh32(ipv4elem.addr);
 		ipv4elem.prefixlen = letoh32(ipv4elem.prefixlen);
 
 		memset(&ifra, 0, sizeof (ifra));
@@ -1660,8 +1659,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		sin->sin_len = sizeof (ifra.ifra_dstaddr);
 		if (avail & MBIM_IPCONF_HAS_GWINFO) {
 			off = letoh32(ic->ipv4_gwoffs);
-			sin->sin_addr.s_addr =
-			    letoh32(*((uint32_t *)(data + off)));
+			sin->sin_addr.s_addr = *((uint32_t *)(data + off));
 		}
 
 		sin = (struct sockaddr_in *)&ifra.ifra_mask;
@@ -1690,7 +1688,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		while (n-- > 0) {
 			if (off + sizeof (uint32_t) > len)
 				break;
-			val = letoh32(*((uint32_t *)(data + off)));
+			val = *((uint32_t *)(data + off));
 			if (i < UMB_MAX_DNSSRV)
 				sc->sc_info.ipv4dns[i++] = val;
 			off += sizeof (uint32_t);
