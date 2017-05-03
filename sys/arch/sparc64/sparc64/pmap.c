@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.100 2017/05/03 12:27:00 dlg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1041,6 +1041,7 @@ remap_data:
 	/*
 	 * Allocate and clear out pmap_kernel()->pm_segs[]
 	 */
+	mtx_init(&pmap_kernel()->pm_mtx, IPL_VM);
 	pmap_kernel()->pm_refs = 1;
 	pmap_kernel()->pm_ctx = 0;
 	{
