@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.123 2017/02/12 08:59:52 landry Exp $
+#	$OpenBSD: special,v 1.124 2017/05/03 11:55:36 gsoares Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -111,6 +111,7 @@ sshd_config	type=file mode=0644 uname=root gname=wheel
 ..	#ssh
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
+vm.conf		type=file mode=0644 uname=root gname=wheel optional
 weekly		type=file mode=0644 uname=root gname=wheel
 weekly.local	type=file mode=0644 uname=root gname=wheel optional
 ypldap.conf	type=file mode=0600 uname=root gname=wheel optional

@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.116 2017/02/27 21:53:11 rpe Exp $
+#	$OpenBSD: changelist,v 1.117 2017/05/03 11:55:36 gsoares Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -136,6 +136,7 @@
 /etc/sysmerge.ignore
 /etc/ttys
 /etc/usermgmt.conf
+/etc/vm.conf
 /etc/weekly
 /etc/weekly.local
 /etc/wsconsctl.conf
