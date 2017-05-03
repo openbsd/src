@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.126 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.127 2017/05/03 06:58:11 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -371,7 +371,6 @@ void	uaudio_chan_rintr
 
 int	uaudio_open(void *, int);
 void	uaudio_close(void *);
-int	uaudio_drain(void *);
 void	uaudio_get_minmax_rates
 	(int, const struct as_info *, const struct audio_params *,
 	 int, int, int, u_long *, u_long *);
@@ -563,7 +562,6 @@ int
 uaudio_detach(struct device *self, int flags)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
-	int rv = 0;
 
 	/*
 	 * sc_alts may be NULL if uaudio_identify_as() failed, in
@@ -571,14 +569,8 @@ uaudio_detach(struct device *self, int flags)
 	 * nothing to detach.
 	 */
 	if (sc->sc_alts == NULL)
-		return (rv);
-
-	/* Wait for outstanding requests to complete. */
-	uaudio_drain(sc);
-
-	rv = config_detach_children(self, flags);
-
-	return (rv);
+		return (0);
+	return (config_detach_children(self, flags));
 }
 
 const usb_interface_descriptor_t *
@@ -2107,24 +2099,6 @@ uaudio_close(void *addr)
 		uaudio_chan_close(sc, &sc->sc_playchan);
 	if (sc->sc_recchan.altidx != -1)
 		uaudio_chan_close(sc, &sc->sc_recchan);
-}
-
-int
-uaudio_drain(void *addr)
-{
-	struct uaudio_softc *sc = addr;
-	struct chan *pchan = &sc->sc_playchan;
-	struct chan *rchan = &sc->sc_recchan;
-	int ms = 0;
-
-	/* Wait for outstanding requests to complete. */
-	if (pchan->altidx != -1 && sc->sc_alts[pchan->altidx].sc_busy)
-		ms = max(ms, pchan->reqms);
-	if (rchan->altidx != -1 && sc->sc_alts[rchan->altidx].sc_busy)
-		ms = max(ms, rchan->reqms);
-	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * ms);
-
-	return (0);
 }
 
 int
