@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.227 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.228 2017/05/03 08:35:55 rzalamena Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ struct ip6_exthdrs {
 int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **, int, int);
 int ip6_getpcbopt(struct ip6_pktopts *, int, struct mbuf *);
 int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int, int, int);
-int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
+int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *, unsigned int);
 int ip6_getmoptions(int, struct ip6_moptions *, struct mbuf *);
 int ip6_copyexthdr(struct mbuf **, caddr_t, int);
 int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
@@ -1265,7 +1265,7 @@ do { \
 		case IPV6_LEAVE_GROUP:
 			error =	ip6_setmoptions(optname,
 						&inp->inp_moptions6,
-						m);
+						m, inp->inp_rtableid);
 			break;
 
 		case IPV6_PORTRANGE:
@@ -1875,7 +1875,8 @@ ip6_freepcbopts(struct ip6_pktopts *pktopt)
  * Set the IP6 multicast options in response to user setsockopt().
  */
 int
-ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
+ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
+    unsigned int rtableid)
 {
 	int error = 0;
 	u_int loop, ifindex;
@@ -2004,8 +2005,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			dst.sin6_len = sizeof(dst);
 			dst.sin6_family = AF_INET6;
 			dst.sin6_addr = mreq->ipv6mr_multiaddr;
-			rt = rtalloc(sin6tosa(&dst), RT_RESOLVE,
-			    m->m_pkthdr.ph_rtableid);
+			rt = rtalloc(sin6tosa(&dst), RT_RESOLVE, rtableid);
 			if (rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
