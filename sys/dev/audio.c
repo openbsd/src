@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.162 2017/03/28 05:20:22 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.163 2017/05/03 06:56:54 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -724,14 +724,13 @@ audio_setpar(struct audio_softc *sc)
 		if (sc->bits == 8) {
 			sc->conv_enc = slinear8_to_mulaw;
 			sc->conv_dec = mulaw_to_slinear8;
-			break;
 		} else if (sc->bits == 24) {
 			sc->conv_enc = slinear24_to_mulaw24;
 			sc->conv_dec = mulaw24_to_slinear24;
-			break;
+		} else {
+			sc->sw_enc = sc->hw_enc;
+			sc->conv_dec = sc->conv_enc = NULL;
 		}
-		sc->sw_enc = sc->hw_enc;
-		sc->conv_dec = sc->conv_enc = NULL;
 		break;
 	default:
 		printf("%s: setpar: enc = %d, bits = %d: emulation skipped\n",
