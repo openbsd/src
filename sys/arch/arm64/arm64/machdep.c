@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.16 2017/05/02 21:38:26 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.17 2017/05/03 22:35:49 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -316,81 +316,51 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
-void bootsync(int);
 void dumpsys(void);
 
-/*
- * void boot(int howto, char *bootstr)
- *
- * Reboots the system
- *
- * Deal with any syncing, unmounting, dumping and shutdown hooks,
- * then reset the CPU.
- */
-void
+int	waittime = -1;
+
+__dead void
 boot(int howto)
 {
-	/*
-	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
-	 */
 	if (cold) {
-		if (!TAILQ_EMPTY(&alldevs))
-			config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
-		if ((howto & (RB_HALT | RB_USERREQ)) != RB_USERREQ) {
-			printf("The operating system has halted.\n");
-			printf("Please press any key to reboot.\n\n");
-			cngetc();
-		}
-		printf("rebooting...\n");
-		delay(500000);
-		if (cpuresetfn)
-			(*cpuresetfn)();
-		printf("reboot failed; spinning\n");
-		while(1);
-		/*NOTREACHED*/
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
 	}
 
-	/* Disable console buffering */
-/*	cnpollc(1);*/
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
 
-	/*
-	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the
-	 * unmount.  It looks like syslogd is getting woken up only to find
-	 * that it cannot page part of the binary in as the filesystem has
-	 * been unmounted.
-	 */
-	if (!(howto & RB_NOSYNC))
-		bootsync(howto);
-
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
+	}
 	if_downall();
 
 	uvm_shutdown();
-
-	/* Say NO to interrupts */
 	splhigh();
+	cold = 1;
 
-	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 		dumpsys();
 
-	/* Run any shutdown hooks */
-	if (!TAILQ_EMPTY(&alldevs))
-		config_suspend(TAILQ_FIRST(&alldevs), DVACT_POWERDOWN);
+haltsys:
+	config_suspend_all(DVACT_POWERDOWN);
 
-	/* Make sure IRQ's are disabled */
-	// FIXME
-
-	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN) {
-
+	if ((howto & RB_HALT) != 0) {
+		if ((howto & RB_POWERDOWN) != 0) {
 			printf("\nAttempting to power down...\n");
 			delay(500000);
 			if (powerdownfn)
 				(*powerdownfn)();
 		}
 
+		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -401,48 +371,12 @@ boot(int howto)
 	if (cpuresetfn)
 		(*cpuresetfn)();
 	printf("reboot failed; spinning\n");
-	while(1);
-	/*NOTREACHED*/
+	for (;;)
+		continue;
+	/* NOTREACHED */
 }
 
 /* Sync the discs and unmount the filesystems */
-
-void
-bootsync(int howto)
-{
-	static int bootsyncdone = 0;
-
-	if (bootsyncdone) return;
-
-	bootsyncdone = 1;
-
-#if 0
-	/* Make sure we can still manage to do things */
-	if (__get_daif() & I_bit) {
-		/*
-		 * If we get here then boot has been called without RB_NOSYNC
-		 * and interrupts were disabled. This means the boot() call
-		 * did not come from a user process e.g. shutdown, but must
-		 * have come from somewhere in the kernel.
-		 */
-		IRQenable;
-		printf("Warning IRQ's disabled during boot()\n");
-	}
-#endif
-
-	vfs_shutdown();
-
-	/*
-	 * If we've been adjusting the clock, the todr
-	 * will be out of synch; adjust it now unless
-	 * the system has been sitting in ddb.
-	 */
-	if ((howto & RB_TIMEBAD) == 0) {
-		resettodr();
-	} else {
-		printf("WARNING: not updating battery clock\n");
-	}
-}
 
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
