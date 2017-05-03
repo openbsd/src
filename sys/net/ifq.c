@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.10 2017/05/03 03:14:32 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.11 2017/05/03 20:55:29 mikeb Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -383,8 +383,19 @@ ifq_mfreem(struct ifqueue *ifq, struct mbuf *m)
 {
 	IFQ_ASSERT_SERIALIZED(ifq);
 
+	ifq->ifq_len--;
 	ifq->ifq_qdrops++;
 	ml_enqueue(&ifq->ifq_free, m);
+}
+
+void
+ifq_mfreeml(struct ifqueue *ifq, struct mbuf_list *ml)
+{
+	IFQ_ASSERT_SERIALIZED(ifq);
+
+	ifq->ifq_len -= ml_len(ml);
+	ifq->ifq_qdrops += ml_len(ml);
+	ml_enlist(&ifq->ifq_free, ml);
 }
 
 /*
