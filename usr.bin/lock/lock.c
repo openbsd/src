@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.33 2016/05/28 16:11:10 tedu Exp $	*/
+/*	$OpenBSD: lock.c,v 1.34 2017/05/03 09:51:39 mestre Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 			warnx("\apasswords didn't match.");
 			exit(1);
 		}
-		s[0] = '\0';
+		explicit_bzero(s, sizeof(s));
 	}
 
 	/* set signal handlers */
@@ -205,10 +205,16 @@ main(int argc, char *argv[])
 				p = NULL;
 			else
 				p = s;
-			if (auth_userokay(pw->pw_name, nstyle, "auth-lock", p))
+			if (auth_userokay(pw->pw_name, nstyle, "auth-lock",
+			    p)) {
+				explicit_bzero(s, sizeof(s));
 				break;
-		} else if (strcmp(s, s1) == 0)
+			}
+		} else if (strcmp(s, s1) == 0) {
+			explicit_bzero(s, sizeof(s));
+			explicit_bzero(s1, sizeof(s1));
 			break;
+		}
 		(void)putc('\a', stderr);
 		cnt %= tries;
 		if (++cnt > backoff) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.12 2016/03/22 00:06:55 bluhm Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.13 2017/05/03 09:51:39 mestre Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 				    tt->name);
 				exit(1);
 			}
-			memset(secret, 0, sizeof(secret));
+			explicit_bzero(secret, sizeof(secret));
 			if (parse_secret(hexformat, seed, secret)) {
 				fprintf(stderr,
 				    "%sinit: Invalid secret entered.\n",

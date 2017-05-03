@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.33 2015/12/01 00:00:19 millert Exp $	*/
+/*	$OpenBSD: skey.c,v 1.34 2017/05/03 09:51:39 mestre Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -122,8 +122,12 @@ main(int argc, char *argv[])
 		exit(1);
 
 	/* Crunch seed and passphrase into starting key */
-	if (keycrunch(key, seed, passwd) != 0)
+	if (keycrunch(key, seed, passwd) != 0) {
+		explicit_bzero(passwd, sizeof(passwd));
 		errx(1, "key crunch failed");
+	}
+
+	explicit_bzero(passwd, sizeof(passwd));
 
 	if (cnt == 1) {
 		while (n-- != 0)

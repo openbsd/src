@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.63 2017/03/02 10:38:09 natano Exp $	*/
+/*	$OpenBSD: init.c,v 1.64 2017/05/03 09:51:39 mestre Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -561,12 +561,13 @@ f_single_user(void)
 			write(STDERR_FILENO, banner, sizeof banner - 1);
 			for (;;) {
 				int ok = 0;
-				clear = readpassphrase("Password:", pbuf, sizeof(pbuf), RPP_ECHO_OFF);
+				clear = readpassphrase("Password:", pbuf,
+				    sizeof(pbuf), RPP_ECHO_OFF);
 				if (clear == NULL || *clear == '\0')
 					_exit(0);
 				if (crypt_checkpass(clear, pp->pw_passwd) == 0)
 					ok = 1;
-				memset(clear, 0, strlen(clear));
+				explicit_bzero(pbuf, sizeof(pbuf));
 				if (ok)
 					break;
 				warning("single-user login failed\n");
