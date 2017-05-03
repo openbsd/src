@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gai_strerror.3,v 1.9 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: gai_strerror.3,v 1.10 2017/05/03 01:58:33 deraadt Exp $
 .\"	$KAME: gai_strerror.3,v 1.1 2005/01/05 03:04:47 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: May 3 2017 $
 .Dt GAI_STRERROR 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ The following error codes and their meaning are defined in
 .Bl -tag -width "EAI_ADDRFAMILYXX" -offset indent -compact
 .It Dv EAI_ADDRFAMILY
 address family for
-.Fa hostname
+.Fa name
 not supported
 .It Dv EAI_AGAIN
 temporary failure in name resolution
@@ -57,31 +57,31 @@ invalid value for
 non-recoverable failure in name resolution
 .It Dv EAI_FAMILY
 .Fa ai_family
-not supported.
+not supported
 .It Dv EAI_MEMORY
 memory allocation failure
 .It Dv EAI_NODATA
 no address associated with
-.Fa hostname
+.Fa name
 .It Dv EAI_NONAME
-.Fa hostname
+.Fa name
 or
-.Fa servname
+.Fa service
 not provided, or not known
 .It Dv EAI_OVERFLOW
 argument buffer overflow
 .It Dv EAI_PROTOCOL
 resolved protocol is unknown
 .It Dv EAI_SERVICE
-.Fa servname
+.Fa service
 not supported for
 .Fa ai_socktype
 .It Dv EAI_SOCKTYPE
 .Fa ai_socktype
 not supported
 .It Dv EAI_SYSTEM
-system error returned in
-.Va errno
+system error (returned in
+.Va errno )
 .El
 .Sh RETURN VALUES
 .Fn gai_strerror
