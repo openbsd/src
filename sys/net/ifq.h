@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.11 2017/05/03 03:14:32 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.12 2017/05/03 03:41:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -81,6 +81,11 @@ struct ifqueue {
  * transmission. It does this by queueing the packet on an ifqueue and
  * notifying the driver to start transmission of the queued packets.
  *
+ * A network device may have multiple contexts for the transmission
+ * of packets, ie, independent transmit rings. An network device
+ * represented by a struct ifnet may have multiple ifqueue structures,
+ * each of which represents an independent context.
+ *
  * struct ifqueue also provides the point where conditioning of
  * traffic (ie, priq and hfsc) is implemented, and provides some
  * infrastructure to assist in the implementation of network drivers.
@@ -96,9 +101,9 @@ struct ifqueue {
  * == Network Stack API
  *
  * The network stack is responsible for initialising and destroying
- * the ifqueue structure, changing the traffic conditioner on an
- * interface queue, enqueuing packets for transmission, and notifying
- * the driver to start transmission.
+ * the ifqueue structures, changing the traffic conditioner on an
+ * interface, enqueuing packets for transmission, and notifying
+ * the driver to start transmission of a particular ifqueue.
  *
  * === ifq_init()
  *
@@ -118,6 +123,11 @@ struct ifqueue {
  * the ifqueue. All the pending mbufs are removed from the previous
  * conditioner and requeued on the new.
  *
+ * === ifq_idx()
+ *
+ * ifq_idx() selects a specific ifqueue from the current ifnet
+ * structure for use in the transmission of the mbuf.
+ *
  * === ifq_enqueue()
  *
  * ifq_enqueue() attempts to fit an mbuf onto the ifqueue. The
@@ -127,12 +137,11 @@ struct ifqueue {
  * === ifq_start()
  *
  * Once a packet has been successfully queued with ifq_enqueue(),
- * the network card is notified with a call to if_start(). If an
- * interface is marked with IFXF_MPSAFE in its if_xflags field,
- * if_start() calls ifq_start() to dispatch the interfaces start
- * routine. Calls to ifq_start() run in the ifqueue serialisation
- * context, guaranteeing that only one instance of ifp->if_start()
- * will be running in the system at any point in time.
+ * the network card is notified with a call to ifq_start().
+ * Calls to ifq_start() run in the ifqueue serialisation context,
+ * guaranteeing that only one instance of ifp->if_qstart() will be
+ * running on behalf of a specific ifqueue in the system at any point
+ * in time.
  *
  * == Traffic conditioners API
  *
@@ -220,17 +229,29 @@ struct ifqueue {
  *
  * == Attach
  *
- * A driver advertises it's ability to run its start routine by setting
- * the IFXF_MPSAFE flag in ifp->if_xflags before calling if_attach():
+ * A driver advertises it's ability to run its start routine without
+ * the kernel lock by setting the IFXF_MPSAFE flag in ifp->if_xflags
+ * before calling if_attach(). Advertising an MPSAFE start routine
+ * also implies that the driver understands that a network card can
+ * have multiple rings or transmit queues, and therefore provides
+ * if_qstart function (which takes an ifqueue pointer) instead of an
+ * if_start function (which takes an ifnet pointer).
  *
- *	ifp->if_xflags = IFXF_MPSAFE;
- *	ifp->if_start = drv_start;
- *	if_attach(ifp);
+ *	void	drv_start(struct ifqueue *);
  *
- * The network stack will then wrap its calls to ifp->if_start with
- * ifq_start() to guarantee there is only one instance of that function
- * running in the system and to serialise it with other work the driver
- * may provide.
+ *	void
+ *	drv_attach()
+ *	{
+ *	...
+ *		ifp->if_xflags = IFXF_MPSAFE;
+ *		ifp->if_qstart = drv_start;
+ *		if_attach(ifp);
+ *	}
+ *
+ * The network stack will then call ifp->if_qstart via ifq_start()
+ * to guarantee there is only one instance of that function running
+ * in the system and to serialise it with other work the driver may
+ * provide.
  *
  * == Initialise
  *
@@ -253,24 +274,25 @@ struct ifqueue {
  * packets:
  *
  *	void
- *	drv_start(struct ifnet *ifp)
+ *	drv_start(struct ifqueue *ifq)
  *	{
+ *		struct ifnet *ifp = ifq->ifq_if;
  *		struct drv_softc *sc = ifp->if_softc;
  *		struct mbuf *m;
  *		int kick = 0;
  *
  *		if (NO_LINK) {
- *			ifq_purge(&ifp->if_snd);
+ *			ifq_purge(ifq);
  *			return;
  *		}
  *
  *		for (;;) {
  *			if (NO_SPACE) {
- *				ifq_set_oactive(&ifp->if_snd);
+ *				ifq_set_oactive(ifq);
  *				break;
  *			}
  *
- *			m = ifq_dequeue(&ifp->if_snd);
+ *			m = ifq_dequeue(ifq);
  *			if (m == NULL)
  *				break;
  *
@@ -291,16 +313,14 @@ struct ifqueue {
  * processing:
  *
  *	void
- *	drv_txeof(struct drv_softc *sc)
+ *	drv_txeof(struct ifqueue *ifq)
  *	{
- *		struct ifnet *ifp = &sc->sc_if;
- *
  *		while (COMPLETED_PKTS) {
  *			// unmap packets, m_freem() the mbufs.
  *		}
  *
- *		if (ifq_is_oactive(&ifp->if_snd))
- *			ifq_restart(&ifp->if_snd);
+ *		if (ifq_is_oactive(ifq))
+ *			ifq_restart(ifq);
  *	}
  *
  * == Stop
@@ -313,16 +333,25 @@ struct ifqueue {
  *	drv_down(struct drv_softc *sc)
  *	{
  *		struct ifnet *ifp = &sc->sc_if;
+ *		struct ifqueue *ifq;
+ *		int i;
  *
  *		CLR(ifp->if_flags, IFF_RUNNING);
  *		DISABLE_INTERRUPTS();
  *
- *		ifq_barrier(&ifp->if_snd);
+ *		for (i = 0; i < sc->sc_num_queues; i++) {
+ * 			ifq = ifp->if_ifqs[i];
+ *			ifq_barrier(ifq);
+ *		}
+ *
  *		intr_barrier(sc->sc_ih);
  *
  *		FREE_RESOURCES();
  *
- *		ifq_clr_oactive();
+ *		for (i = 0; i < sc->sc_num_queues; i++) {
+ * 			ifq = ifp->if_ifqs[i];
+ *			ifq_clr_oactive(ifq);
+ *		}
  *	}
  *
  */
