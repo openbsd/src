@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.18 2017/03/24 09:34:12 nicm Exp $
+.\" $OpenBSD: imsg_init.3,v 1.19 2017/05/03 15:49:10 reyk Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 24 2017 $
+.Dd $Mdocdate: May 3 2017 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -489,7 +489,7 @@ child_main(struct imsgbuf *ibuf)
 	...
 	idata = 42;
 	imsg_compose(ibuf, IMSG_A_MESSAGE,
-		0, 0, -1, &idata, sizeof idata);
+	    0, 0, -1, &idata, sizeof idata);
 	...
 }
 .Ed
