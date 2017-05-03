@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.164 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.165 2017/05/03 05:53:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -661,7 +661,7 @@ status_prompt_set(struct client *c, const char *msg, const char *input,
 {
 	struct format_tree	*ft;
 	time_t			 t;
-	char			*tmp;
+	char			*tmp, *cp;
 
 	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
@@ -689,6 +689,12 @@ status_prompt_set(struct client *c, const char *msg, const char *input,
 	if (~flags & PROMPT_INCREMENTAL)
 		c->tty.flags |= (TTY_NOCURSOR|TTY_FREEZE);
 	c->flags |= CLIENT_STATUS;
+
+	if ((flags & PROMPT_INCREMENTAL) && *tmp != '\0') {
+		xasprintf(&cp, "=%s", tmp);
+		c->prompt_callbackfn(c->prompt_data, cp, 0);
+		free(cp);
+	}
 
 	free(tmp);
 	format_free(ft);

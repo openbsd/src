@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.171 2017/04/20 09:20:22 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.172 2017/05/03 05:53:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2479,4 +2479,17 @@ window_copy_drag_update(__unused struct client *c, struct mouse_event *m)
 	window_copy_update_cursor(wp, x, y);
 	if (window_copy_update_selection(wp, 1))
 		window_copy_redraw_selection(wp, old_cy);
+}
+
+const char *
+window_copy_search_string(struct window_pane *wp)
+{
+	struct window_copy_mode_data	*data;
+
+	if (wp->mode != &window_copy_mode)
+		return ("");
+	data = wp->modedata;
+	if (data->searchtype == WINDOW_COPY_OFF || data->searchstr == NULL)
+		return ("");
+	return (data->searchstr);
 }
