@@ -77,6 +77,8 @@ cleantags(void)
 	 */
 	while ((tp = taglist.tl_first) != TAG_END) {
 		TAG_RM(tp);
+		free(tp->tag_file);
+		free(tp->tag_pattern);
 		free(tp);
 	}
 	curtag = NULL;
