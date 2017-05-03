@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.10 2017/03/07 01:29:53 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.11 2017/05/03 03:14:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -42,6 +42,7 @@ struct ifqueue {
 	struct mutex		 ifq_mtx;
 	const struct ifq_ops	*ifq_ops;
 	void			*ifq_q;
+	struct mbuf_list	 ifq_free;
 	unsigned int		 ifq_len;
 	unsigned int		 ifq_oactive;
 
@@ -160,6 +161,15 @@ struct ifqueue {
  *
  * The queue lock acquired with ifq_q_enter() is released with
  * ifq_q_leave().
+ *
+ * === ifq_mfreem()
+ *
+ * A goal of the API is to avoid freeing an mbuf while mutexs are
+ * held. Because the ifq API manages the lock on behalf of the backend
+ * ifqops, the backend should not directly free mbufs. If a conditioner
+ * backend needs to drop a packet during the handling of ifqop_deq_begin,
+ * it may free it by calling ifq_mfreem(). This accounts for the drop,
+ * and schedules the free of the mbuf outside the hold of ifq_mtx.
  *
  *
  * == Network Driver API
@@ -342,6 +352,7 @@ struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
 void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_dequeue(struct ifqueue *);
+void		 ifq_mfreem(struct ifqueue *, struct mbuf *);
 unsigned int	 ifq_purge(struct ifqueue *);
 void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);

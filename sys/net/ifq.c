@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.9 2017/03/07 15:42:02 mikeb Exp $ */
+/*	$OpenBSD: ifq.c,v 1.10 2017/05/03 03:14:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -70,6 +70,7 @@ void	ifq_barrier_task(void *);
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
 {
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct task work;
 
 	if (ISSET(t->t_flags, TASK_ONQUEUE))
@@ -96,9 +97,20 @@ ifq_serialize(struct ifqueue *ifq, struct task *t)
 			mtx_enter(&ifq->ifq_task_mtx);
 		}
 
+		/*
+		 * ifq->ifq_free is only modified by dequeue, which
+		 * is only called from within this serialization
+		 * context. it is therefore safe to access and modify
+		 * here without taking ifq->ifq_mtx.
+		 */
+		ml = ifq->ifq_free;
+		ml_init(&ifq->ifq_free);
+
 		ifq->ifq_serializer = NULL;
 	}
 	mtx_leave(&ifq->ifq_task_mtx);
+
+	ml_purge(&ml);
 }
 
 int
@@ -177,6 +189,7 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 	ifq->ifq_ops = &priq_ops;
 	ifq->ifq_q = priq_ops.ifqop_alloc(idx, NULL);
 
+	ml_init(&ifq->ifq_free);
 	ifq->ifq_len = 0;
 
 	ifq->ifq_packets = 0;
@@ -363,6 +376,15 @@ ifq_q_leave(struct ifqueue *ifq, void *q)
 {
 	KASSERT(q == ifq->ifq_q);
 	mtx_leave(&ifq->ifq_mtx);
+}
+
+void
+ifq_mfreem(struct ifqueue *ifq, struct mbuf *m)
+{
+	IFQ_ASSERT_SERIALIZED(ifq);
+
+	ifq->ifq_qdrops++;
+	ml_enqueue(&ifq->ifq_free, m);
 }
 
 /*
