@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.36 2017/04/26 15:50:59 mikeb Exp $	 */
+/* $OpenBSD: pftop.c,v 1.37 2017/05/03 14:01:29 mikeb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -150,7 +150,6 @@ field_def fields[] = {
 	{"QUEUE", 15, 30, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"BW", 4, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"SCH", 3, 4, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
-	{"PRIO", 1, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"DROP_P", 6, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"DROP_B", 6, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"QLEN", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
@@ -194,14 +193,13 @@ field_def fields[] = {
 #define FLD_QUEUE   FIELD_ADDR(fields,25)
 #define FLD_BANDW   FIELD_ADDR(fields,26)
 #define FLD_SCHED   FIELD_ADDR(fields,27)
-#define FLD_PRIO    FIELD_ADDR(fields,28)
-#define FLD_DROPP   FIELD_ADDR(fields,29)
-#define FLD_DROPB   FIELD_ADDR(fields,30)
-#define FLD_QLEN    FIELD_ADDR(fields,31)
-#define FLD_BORR    FIELD_ADDR(fields,32)
-#define FLD_SUSP    FIELD_ADDR(fields,33)
-#define FLD_PKTSPS  FIELD_ADDR(fields,34)
-#define FLD_BYTESPS FIELD_ADDR(fields,35)
+#define FLD_DROPP   FIELD_ADDR(fields,28)
+#define FLD_DROPB   FIELD_ADDR(fields,29)
+#define FLD_QLEN    FIELD_ADDR(fields,30)
+#define FLD_BORR    FIELD_ADDR(fields,31)
+#define FLD_SUSP    FIELD_ADDR(fields,32)
+#define FLD_PKTSPS  FIELD_ADDR(fields,33)
+#define FLD_BYTESPS FIELD_ADDR(fields,34)
 
 /* Define views */
 field_def *view0[] = {
@@ -247,7 +245,7 @@ field_def *view7[] = {
 };
 
 field_def *view8[] = {
-	FLD_QUEUE, FLD_BANDW, FLD_SCHED, FLD_PRIO, FLD_PKTS, FLD_BYTES,
+	FLD_QUEUE, FLD_BANDW, FLD_SCHED, FLD_PKTS, FLD_BYTES,
 	FLD_DROPP, FLD_DROPB, FLD_QLEN, FLD_BORR, FLD_SUSP, FLD_PKTSPS,
 	FLD_BYTESPS, NULL
 };
