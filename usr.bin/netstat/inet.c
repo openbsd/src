@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.156 2017/03/07 23:35:06 jca Exp $	*/
+/*	$OpenBSD: inet.c,v 1.157 2017/05/04 14:23:00 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -315,7 +315,8 @@ netdomainpr(struct kinfo_file *kf, int proto)
 	}
 
 	if (Aflag)
-		printf("%#*llx%s ", FAKE_PTR(kf->so_pcb));
+		printf("%#*llx%s ", FAKE_PTR(kf->so_protocol == IPPROTO_TCP ?
+		    kf->inp_ppcb : kf->so_pcb));
 
 	printf("%-7.7s %6llu %6llu ",
 	    isip6 ? name6: name, kf->so_rcv_cc, kf->so_snd_cc);
