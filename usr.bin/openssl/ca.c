@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.23 2017/01/20 08:57:11 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.24 2017/05/04 12:36:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,6 +205,48 @@ static char *section = NULL;
 
 static int preserve = 0;
 static int msie_hack = 0;
+
+
+/*
+ * Set a certificate time based on user provided input. Make sure
+ * what we put in the certificate is legit for RFC 5280. Returns
+ * 0 on success, -1 on an invalid time string. Strings must be
+ * YYYYMMDDHHMMSSZ for post 2050 dates. YYYYMMDDHHMMSSZ or
+ * YYMMDDHHMMSSZ is accepted for pre 2050 dates, and fixed up to
+ * be the correct format in the certificate.
+ */
+static int
+setCertificateTime(ASN1_TIME *x509time, char *timestring)
+{
+	struct tm tm1, tm2;
+	char *rfctime = timestring;
+	int type;
+
+	memset(&tm1, 0, sizeof(tm1));
+	memset(&tm2, 0, sizeof(tm2));
+	type = ASN1_time_parse(timestring, strlen(timestring), &tm1, 0);
+	if (type == -1) {
+		return (-1);
+	}
+
+	/* RFC 5280 section 4.1.2.5 */
+	if (tm1.tm_year < 150 && type != V_ASN1_UTCTIME) {
+		if (strlen(timestring) == 15) {
+			/* Fix date if possible */
+			rfctime = timestring + 2;
+			type = ASN1_time_parse(rfctime, strlen(rfctime),
+			    &tm2, 0);
+			if (type != V_ASN1_UTCTIME ||
+			    tm1.tm_year != tm2.tm_year)
+				return (-1);
+		} else
+			return (-1);
+	}
+	if (tm1.tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
+		return (-1);
+	ASN1_TIME_set_string(x509time, rfctime);
+	return (0);
+}
 
 
 int
@@ -905,10 +947,6 @@ bad:
 			if (startdate == NULL)
 				ERR_clear_error();
 		}
-		if (startdate && !ASN1_TIME_set_string(NULL, startdate)) {
-			BIO_printf(bio_err, "start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
-			goto err;
-		}
 		if (startdate == NULL)
 			startdate = "today";
 
@@ -918,16 +956,12 @@ bad:
 			if (enddate == NULL)
 				ERR_clear_error();
 		}
-		if (enddate && !ASN1_TIME_set_string(NULL, enddate)) {
-			BIO_printf(bio_err, "end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
-			goto err;
-		}
-		if (days == 0) {
+		if (days == 0 && enddate == NULL) {
 			if (!NCONF_get_number(conf, section,
-			    ENV_DEFAULT_DAYS, &days))
+				ENV_DEFAULT_DAYS, &days))
 				days = 0;
 		}
-		if (!enddate && (days == 0)) {
+		if (enddate == NULL && days == 0) {
 			BIO_printf(bio_err,
 			    "cannot lookup how many days to certify for\n");
 			goto err;
@@ -1774,13 +1808,19 @@ again2:
 
 	if (strcmp(startdate, "today") == 0)
 		X509_gmtime_adj(X509_get_notBefore(ret), 0);
-	else
-		ASN1_TIME_set_string(X509_get_notBefore(ret), startdate);
+	else if (setCertificateTime(X509_get_notBefore(ret), startdate) == -1) {
+		BIO_printf(bio_err, "Invalid start date %s\n",
+		    startdate);
+		goto err;
+	}
 
 	if (enddate == NULL)
 		X509_time_adj_ex(X509_get_notAfter(ret), days, 0, NULL);
-	else
-		ASN1_TIME_set_string(X509_get_notAfter(ret), enddate);
+	else if (setCertificateTime(X509_get_notAfter(ret), enddate) == -1) {
+		BIO_printf(bio_err, "Invalid end date %s\n",
+		    enddate);
+		goto err;
+	}
 
 	if (!X509_set_subject_name(ret, subject))
 		goto err;
