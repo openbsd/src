@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.211 2017/03/16 19:30:57 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.212 2017/05/04 20:41:10 tb Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: March 16 2017 $
+.Dd $Mdocdate: May 4 2017 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -116,43 +116,9 @@ Use of the
 .Fl A
 flag lists all the filesystems compiled into the running kernel.
 .Sh FILES
-.Bl -tag -width <uvm/uvm_swap_encrypt.h> -compact
-.It In sys/sysctl.h
-definitions for top level identifiers and second level kernel and hardware
-identifiers
-.It In sys/socket.h
-definitions for second level network identifiers
-.It In sys/gmon.h
-definitions for third level profiling identifiers
-.It In uvm/uvm_param.h
-definitions for second level virtual memory identifiers
-.It In uvm/uvm_swap_encrypt.h
-definitions for third level virtual memory identifiers
-.It In netinet/in.h
-definitions for third level IPv4/v6 identifiers and
-fourth level IPv4/v6 identifiers
-.It In netinet/ip_divert.h
-definitions for fourth level divert identifiers
-.It In netinet/icmp_var.h
-definitions for fourth level ICMP identifiers
-.It In netinet6/icmp6.h
-definitions for fourth level ICMPv6 identifiers
-.It In netinet/tcp_var.h
-definitions for fourth level TCP identifiers
-.It In netinet/udp_var.h
-definitions for fourth level UDP identifiers
-.It In ddb/db_var.h
-definitions for second level ddb identifiers
-.It In sys/mount.h
-definitions for second level vfs identifiers
-.It In nfs/nfs.h
-definitions for third level NFS identifiers
-.It In miscfs/fuse/fusefs.h
-definitions for third level fusefs identifiers
-.It In ufs/ffs/ffs_extern.h
-definitions for third level FFS identifiers
-.It In machine/cpu.h
-definitions for second level CPU identifiers
+.Bl -tag -width "/etc/sysctl.confXX" -compact
+.It Pa /etc/sysctl.conf
+sysctl variables to set at system startup
 .El
 .Sh EXAMPLES
 To retrieve the maximum number of processes allowed
