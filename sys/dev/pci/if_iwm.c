@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.177 2017/04/27 06:14:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.178 2017/05/04 09:03:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -920,7 +920,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
 	    	rv = 1;
 	} else {
-		printf("%s: device timeout\n", DEVNAME(sc));
+		printf("%s: acquiring device failed\n", DEVNAME(sc));
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
 	}
 
