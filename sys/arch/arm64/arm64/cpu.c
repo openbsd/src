@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2017/04/29 10:05:49 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.3 2017/05/04 20:51:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -26,13 +26,18 @@
 #include <dev/ofw/fdt.h>
 
 /* CPU Identification */
-#define CPU_IMPL_ARM            0x41
+#define CPU_IMPL_ARM		0x41
+#define CPU_IMPL_CAVIUM		0x43
 
-#define CPU_PART_CORTEX_A53     0xd03
-#define CPU_PART_CORTEX_A35     0xd04
-#define CPU_PART_CORTEX_A57     0xd07
-#define CPU_PART_CORTEX_A72     0xd08
-#define CPU_PART_CORTEX_A73     0xd09
+#define CPU_PART_CORTEX_A53	0xd03
+#define CPU_PART_CORTEX_A35	0xd04
+#define CPU_PART_CORTEX_A57	0xd07
+#define CPU_PART_CORTEX_A72	0xd08
+#define CPU_PART_CORTEX_A73	0xd09
+
+#define CPU_PART_THUNDERX_T88	0x0a1
+#define CPU_PART_THUNDERX_T81	0x0a2
+#define CPU_PART_THUNDERX_T83	0x0a3
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -57,14 +62,22 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ 0x0, "Unknown" },
 };
 
+struct cpu_cores cpu_cores_cavium[] = {
+	{ CPU_PART_THUNDERX_T88, "ThunderX T88" },
+	{ CPU_PART_THUNDERX_T81, "ThunderX T81" },
+	{ CPU_PART_THUNDERX_T83, "ThunderX T83" },
+	{ 0x0, "Unknown" },
+};
+
 /* arm cores makers */
 const struct implementers {
 	int			id;
 	char			*name;
 	struct cpu_cores	*corelist;
 } cpu_implementers[] = {
-	{ CPU_IMPL_ARM,		"ARM",	cpu_cores_arm },
-	{ 0,			"",	NULL },
+	{ CPU_IMPL_ARM,		"ARM",		cpu_cores_arm },
+	{ CPU_IMPL_CAVIUM,	"Cavium",	cpu_cores_cavium },
+	{ 0,			"",		NULL },
 };
 
 char cpu_model[64];
