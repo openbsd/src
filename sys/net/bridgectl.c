@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.5 2017/01/11 08:47:48 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.6 2017/05/04 15:00:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -479,7 +479,7 @@ bridge_rtfind(struct bridge_softc *sc, struct ifbaconf *baconf)
 				bcopy(&n->brt_addr, &bareq.ifba_dst,
 				    sizeof(bareq.ifba_dst));
 				bridge_copyaddr(&n->brt_tunnel.brtag_peer.sa,
-				    (struct sockaddr *)&bareq.ifba_dstsa);
+				    sstosa(&bareq.ifba_dstsa));
 				bareq.ifba_age = n->brt_age;
 				bareq.ifba_flags = n->brt_flags;
 				error = copyout((caddr_t)&bareq,

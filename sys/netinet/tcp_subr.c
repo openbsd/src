@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.161 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.162 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -694,8 +694,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 * payload.
 		 */
 		inp = in6_pcbhashlookup(&tcbtable, &sa6->sin6_addr,
-		    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
-		    th.th_sport, rdomain);
+		    th.th_dport, &sa6_src->sin6_addr, th.th_sport, rdomain);
 		if (cmd == PRC_MSGSIZE) {
 			/*
 			 * Depending on the value of "valid" and routing table

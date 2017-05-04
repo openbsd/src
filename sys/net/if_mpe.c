@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.58 2017/01/24 10:08:30 krw Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.59 2017/05/04 15:00:24 bluhm Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -139,7 +139,7 @@ void
 mpestart(struct ifnet *ifp0)
 {
 	struct mbuf		*m;
-	struct sockaddr		*sa = (struct sockaddr *)&mpedst;
+	struct sockaddr		*sa = sstosa(&mpedst);
 	sa_family_t		 af;
 	struct rtentry		*rt;
 	struct ifnet		*ifp;

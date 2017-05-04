@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.74 2017/04/14 20:46:31 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.75 2017/05/04 15:00:24 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -294,8 +294,7 @@ ipip_input(struct mbuf **mp, int *offp, struct ifnet *gifp, int proto)
 			sin6->sin6_addr = ip6->ip6_src;
 #endif /* INET6 */
 		}
-		rt = rtalloc((struct sockaddr *)&ss, 0,
-		    m->m_pkthdr.ph_rtableid);
+		rt = rtalloc(sstosa(&ss), 0, m->m_pkthdr.ph_rtableid);
 		if ((rt != NULL) && (rt->rt_flags & RTF_LOCAL)) {
 			ipipstat_inc(ipips_spoof);
 			m_freem(m);

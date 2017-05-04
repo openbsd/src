@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.20 2017/03/02 03:09:50 renato Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.21 2017/05/04 15:00:24 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -379,8 +379,7 @@ mpw_start(struct ifnet *ifp)
 		return;
 	}
 
-	rt = rtalloc((struct sockaddr *)&sc->sc_nexthop, RT_RESOLVE,
-	    ifp->if_rdomain);
+	rt = rtalloc(sstosa(&sc->sc_nexthop), RT_RESOLVE, ifp->if_rdomain);
 	if (!rtisvalid(rt)) {
 		IFQ_PURGE(&ifp->if_snd);
 		goto rtfree;
@@ -397,7 +396,7 @@ mpw_start(struct ifnet *ifp)
 	 * the right place.
 	 */
 	memcpy(&ss, &sc->sc_nexthop, sizeof(sc->sc_nexthop));
-	((struct sockaddr *)&ss)->sa_family = AF_MPLS;
+	ss.ss_family = AF_MPLS;
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
@@ -438,7 +437,7 @@ mpw_start(struct ifnet *ifp)
 
 		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-		mpls_output(p, m, (struct sockaddr *)&ss, rt);
+		mpls_output(p, m, sstosa(&ss), rt);
 	}
 
 	if_put(p);

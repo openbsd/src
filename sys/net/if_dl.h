@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dl.h,v 1.11 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_dl.h,v 1.12 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
 
 /*
@@ -73,13 +73,13 @@ struct sockaddr_dl {
 
 #ifdef _KERNEL
 
-static __inline struct sockaddr_dl *
+static inline struct sockaddr_dl *
 satosdl(struct sockaddr *sa)
 {
 	return ((struct sockaddr_dl *)(sa));
 }
 
-static __inline struct sockaddr *
+static inline struct sockaddr *
 sdltosa(struct sockaddr_dl *sdl)
 {
 	return ((struct sockaddr *)(sdl));

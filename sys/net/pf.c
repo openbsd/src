@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1019 2017/03/17 17:19:16 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1020 2017/05/04 15:00:24 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5691,7 +5691,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 	if (kif != NULL && kif->pfik_ifp->if_type == IFT_ENC)
 		goto out;
 
-	rt = rtalloc((struct sockaddr *)&ss, 0, rtableid);
+	rt = rtalloc(sstosa(&ss), 0, rtableid);
 	if (rt != NULL) {
 		/* No interface given, this is a no-route check */
 		if (kif == NULL)
@@ -5758,7 +5758,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 #endif /* INET6 */
 	}
 
-	rt = rtalloc((struct sockaddr *)&ss, RT_RESOLVE, rtableid);
+	rt = rtalloc(sstosa(&ss), RT_RESOLVE, rtableid);
 	if (rt != NULL) {
 		if (rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;

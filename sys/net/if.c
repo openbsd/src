@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.493 2017/04/14 15:11:31 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.494 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1325,7 +1325,7 @@ if_congested(void)
 
 #define	equal(a1, a2)	\
 	(bcmp((caddr_t)(a1), (caddr_t)(a2),	\
-	((struct sockaddr *)(a1))->sa_len) == 0)
+	(a1)->sa_len) == 0)
 
 /*
  * Locate an interface based on a complete address.

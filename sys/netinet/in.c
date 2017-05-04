@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.136 2017/03/27 09:38:03 rzalamena Exp $	*/
+/*	$OpenBSD: in.c,v 1.137 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -434,13 +434,13 @@ in_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		/* address must be specified on ADD and DELETE */
-		sa = (struct sockaddr *)&iflr->addr;
+		sa = sstosa(&iflr->addr);
 		if (sa->sa_family != AF_INET)
 			return EINVAL;
 		if (sa->sa_len != sizeof(struct sockaddr_in))
 			return EINVAL;
 		/* XXX need improvement */
-		sa = (struct sockaddr *)&iflr->dstaddr;
+		sa = sstosa(&iflr->dstaddr);
 		if (sa->sa_family
 		 && sa->sa_family != AF_INET)
 			return EINVAL;
@@ -471,12 +471,11 @@ in_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		memcpy(ifra.ifra_name, iflr->iflr_name,
 		    sizeof(ifra.ifra_name));
 
-		memcpy(&ifra.ifra_addr, &iflr->addr, 
-		    ((struct sockaddr *)&iflr->addr)->sa_len);
+		memcpy(&ifra.ifra_addr, &iflr->addr, iflr->addr.ss_len);
 
-		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) {	/*XXX*/
+		if (iflr->dstaddr.ss_family) {	/*XXX*/
 			memcpy(&ifra.ifra_dstaddr, &iflr->dstaddr,
-			    ((struct sockaddr *)&iflr->dstaddr)->sa_len);
+			    iflr->dstaddr.ss_len);
 		}
 
 		ifra.ifra_mask.sin_family = AF_INET;

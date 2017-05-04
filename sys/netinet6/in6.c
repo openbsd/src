@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.202 2017/04/17 10:29:01 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.203 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -970,13 +970,13 @@ in6_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
 		/* address must be specified on ADD and DELETE */
-		sa = (struct sockaddr *)&iflr->addr;
+		sa = sstosa(&iflr->addr);
 		if (sa->sa_family != AF_INET6)
 			return EINVAL;
 		if (sa->sa_len != sizeof(struct sockaddr_in6))
 			return EINVAL;
 		/* XXX need improvement */
-		sa = (struct sockaddr *)&iflr->dstaddr;
+		sa = sstosa(&iflr->dstaddr);
 		if (sa->sa_family && sa->sa_family != AF_INET6)
 			return EINVAL;
 		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in6))
@@ -1031,8 +1031,7 @@ in6_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		bzero(&ifra, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name, sizeof(ifra.ifra_name));
 
-		bcopy(&iflr->addr, &ifra.ifra_addr,
-		    ((struct sockaddr *)&iflr->addr)->sa_len);
+		bcopy(&iflr->addr, &ifra.ifra_addr, iflr->addr.ss_len);
 		if (hostid) {
 			/* fill in hostid part */
 			ifra.ifra_addr.sin6_addr.s6_addr32[2] =
@@ -1041,9 +1040,9 @@ in6_lifaddr_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			    hostid->s6_addr32[3];
 		}
 
-		if (((struct sockaddr *)&iflr->dstaddr)->sa_family) {	/*XXX*/
+		if (iflr->dstaddr.ss_family) {	/*XXX*/
 			bcopy(&iflr->dstaddr, &ifra.ifra_dstaddr,
-			    ((struct sockaddr *)&iflr->dstaddr)->sa_len);
+			    iflr->dstaddr.ss_len);
 			if (hostid) {
 				ifra.ifra_dstaddr.sin6_addr.s6_addr32[2] =
 				    hostid->s6_addr32[2];

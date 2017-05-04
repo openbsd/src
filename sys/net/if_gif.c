@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.93 2017/04/14 20:50:35 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.94 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -358,10 +358,8 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 #endif
 		case SIOCSLIFPHYADDR:
-			src = (struct sockaddr *)
-				&(((struct if_laddrreq *)data)->addr);
-			dst = (struct sockaddr *)
-				&(((struct if_laddrreq *)data)->dstaddr);
+			src = sstosa(&(((struct if_laddrreq *)data)->addr));
+			dst = sstosa(&(((struct if_laddrreq *)data)->dstaddr));
 			break;
 		default:
 			return (EINVAL);
@@ -557,8 +555,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* copy src */
 		src = sc->gif_psrc;
-		dst = (struct sockaddr *)
-			&(((struct if_laddrreq *)data)->addr);
+		dst = sstosa(&(((struct if_laddrreq *)data)->addr));
 		size = sizeof(((struct if_laddrreq *)data)->addr);
 		if (src->sa_len > size)
 			return (EINVAL);
@@ -566,8 +563,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* copy dst */
 		src = sc->gif_pdst;
-		dst = (struct sockaddr *)
-			&(((struct if_laddrreq *)data)->dstaddr);
+		dst = sstosa(&(((struct if_laddrreq *)data)->dstaddr));
 		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
 		if (src->sa_len > size)
 			return (EINVAL);

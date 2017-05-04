@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.93 2017/02/22 13:46:53 renato Exp $	*/
+/*	$OpenBSD: in6.h,v 1.94 2017/05/04 15:00:24 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -438,19 +438,19 @@ struct in6_ifaddr;
  * casts or defines.
  */
 
-static __inline struct sockaddr_in6 *
+static inline struct sockaddr_in6 *
 satosin6(struct sockaddr *sa)
 {
 	return ((struct sockaddr_in6 *)(sa));
 }
 
-static __inline struct sockaddr *
+static inline struct sockaddr *
 sin6tosa(struct sockaddr_in6 *sin6)
 {
 	return ((struct sockaddr *)(sin6));
 }
 
-static __inline struct in6_ifaddr *
+static inline struct in6_ifaddr *
 ifatoia6(struct ifaddr *ifa)
 {
 	return ((struct in6_ifaddr *)(ifa));

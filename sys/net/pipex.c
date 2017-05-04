@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.93 2017/04/18 01:24:47 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.94 2017/05/04 15:00:24 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -471,7 +471,7 @@ pipex_add_session(struct pipex_session_req *req,
 	case PIPEX_PROTO_PPTP:
 	case PIPEX_PROTO_L2TP:
 		chain = PIPEX_PEER_ADDR_HASHTABLE(
-		    pipex_sockaddr_hash_key((struct sockaddr *)&session->peer));
+		    pipex_sockaddr_hash_key(&session->peer.sa));
 		LIST_INSERT_HEAD(chain, session, peer_addr_chain);
 	}
 
@@ -1412,7 +1412,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	session->stat.opackets++;
 	session->stat.obytes += len;
 
-	over_ifp->if_output(over_ifp, m0, (struct sockaddr *)&session->peer,
+	over_ifp->if_output(over_ifp, m0, &session->peer.sa,
 	    NULL);
 }
 #endif /* PIPEX_PPPOE */
@@ -1779,8 +1779,7 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 
 	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
 	LIST_FOREACH(session, list, peer_addr_chain) {
-		if (pipex_sockaddr_compar_addr(
-		    (struct sockaddr *)&session->peer, sa) != 0)
+		if (pipex_sockaddr_compar_addr(&session->peer.sa, sa) != 0)
 			continue;
 		if (session->peer_session_id == id)
 			break;
@@ -2217,8 +2216,7 @@ pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 
 	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
 	LIST_FOREACH(session, list, peer_addr_chain) {
-		if (pipex_sockaddr_compar_addr(
-		    (struct sockaddr *)&session->peer, sa) != 0)
+		if (pipex_sockaddr_compar_addr(&session->peer.sa, sa) != 0)
 			continue;
 		if (session->proto.l2tp.peer_tunnel_id != tunnel_id)
 			continue;

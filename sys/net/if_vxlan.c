@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.59 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.60 2017/05/04 15:00:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -334,8 +334,8 @@ vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	} else {
 		/* Reset current configuration */
 		af = sc->sc_src.ss_family;
-		src = (struct sockaddr *)&sc->sc_src;
-		dst = (struct sockaddr *)&sc->sc_dst;
+		src = sstosa(&sc->sc_src);
+		dst = sstosa(&sc->sc_dst);
 		reset = 1;
 	}
 
@@ -418,8 +418,8 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLIFPHYADDR:
 		error = vxlan_config(ifp,
-		    (struct sockaddr *)&lifr->addr,
-		    (struct sockaddr *)&lifr->dstaddr);
+		    sstosa(&lifr->addr),
+		    sstosa(&lifr->dstaddr));
 		break;
 
 	case SIOCDIFPHYADDR:
@@ -616,8 +616,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		    vni == sc->sc_vnetid &&
 		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid)) {
 			sc_cand = sc;
-			if (vxlan_sockaddr_cmp(srcsa,
-			    (struct sockaddr *)&sc->sc_dst) == 0)
+			if (vxlan_sockaddr_cmp(srcsa, sstosa(&sc->sc_dst)) == 0)
 				goto found;
 		}
 	}
@@ -805,8 +804,8 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	m->m_len = sizeof(*vu);
 	m->m_pkthdr.len += sizeof(*vu);
 
-	src = (struct sockaddr *)&sc->sc_src;
-	dst = (struct sockaddr *)&sc->sc_dst;
+	src = sstosa(&sc->sc_src);
+	dst = sstosa(&sc->sc_dst);
 	af = src->sa_family;
 
 	vu = mtod(m, struct vxlanudphdr *);
