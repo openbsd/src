@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2017/04/16 16:59:53 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.9 2017/05/04 22:10:39 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -22,7 +22,7 @@
 # 8 -> f : tunnel v6 forward v6
 #
 #               1400        1300
-# +---+   0   +---+   1   +---+   2   +---+
+# +---+   06  +---+   1   +---+   2   +---+
 # |SRC| ----> |IPS| ----> |RT | ----> |ECO|
 # +---+ 458 5 +---+ cd    +---+    ef +---+
 #     out    in   out    in   out    in
@@ -32,6 +32,7 @@
 # 2,3 AH
 # 4,5 IPIP
 # 6,7 IPCOMP
+# 8,9 BUNDLE
 
 PREFIX_IPV4 ?=	10.188.1
 PREFIX_IPV6 ?=	fdd7:e83e:66bc:1
@@ -44,6 +45,8 @@ PREFIX_IPV6 ?=	fdd7:e83e:66bc:1
 
 SRC_OUT_IPV4 ?=	${PREFIX_IPV4}00.17
 SRC_OUT_IPV6 ?=	${PREFIX_IPV6}00::17
+SRC_BUNDLE_IPV4 ?=	${PREFIX_IPV4}06.17
+SRC_BUNDLE_IPV6 ?=	${PREFIX_IPV6}06::17
 SRC_ESP_TRANSP_IPV4 ?=	${PREFIX_IPV4}05.17
 SRC_ESP_TRANSP_IPV6 ?=	${PREFIX_IPV6}04::17
 SRC_ESP_TUNNEL_IPV4 ?=	${PREFIX_IPV4}08.17
@@ -60,11 +63,17 @@ SRC_IPCOMP_TRANSP_IPV4 ?=	${PREFIX_IPV4}65.17
 SRC_IPCOMP_TRANSP_IPV6 ?=	${PREFIX_IPV6}64::17
 SRC_IPCOMP_TUNNEL_IPV4 ?=	${PREFIX_IPV4}68.17
 SRC_IPCOMP_TUNNEL_IPV6 ?=	${PREFIX_IPV6}68::17
+SRC_BUNDLE_TRANSP_IPV4 ?=	${PREFIX_IPV4}85.17
+SRC_BUNDLE_TRANSP_IPV6 ?=	${PREFIX_IPV6}84::17
+SRC_BUNDLE_TUNNEL_IPV4 ?=	${PREFIX_IPV4}88.17
+SRC_BUNDLE_TUNNEL_IPV6 ?=	${PREFIX_IPV6}88::17
 
 IPS_IN_IPV4 ?=	${PREFIX_IPV4}00.70
 IPS_IN_IPV6 ?=	${PREFIX_IPV6}00::70
 IPS_OUT_IPV4 ?=	${PREFIX_IPV4}01.70
 IPS_OUT_IPV6 ?=	${PREFIX_IPV6}01::70
+IPS_BUNDLE_IPV4 ?=	${PREFIX_IPV4}06.70
+IPS_BUNDLE_IPV6 ?=	${PREFIX_IPV6}06::70
 IPS_ESP_TRANSP_IPV4 ?=	${PREFIX_IPV4}05.70
 IPS_ESP_TRANSP_IPV6 ?=	${PREFIX_IPV6}05::70
 IPS_ESP_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}12.70
@@ -89,6 +98,12 @@ IPS_IPCOMP_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}72.70
 IPS_IPCOMP_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}6c::70
 IPS_IPCOMP_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}73.70
 IPS_IPCOMP_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}6d::70
+IPS_BUNDLE_TRANSP_IPV4 ?=	${PREFIX_IPV4}85.70
+IPS_BUNDLE_TRANSP_IPV6 ?=	${PREFIX_IPV6}85::70
+IPS_BUNDLE_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}92.70
+IPS_BUNDLE_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}8c::70
+IPS_BUNDLE_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}93.70
+IPS_BUNDLE_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}8d::70
 
 RT_IN_IPV4 ?=	${PREFIX_IPV4}01.71
 RT_IN_IPV6 ?=	${PREFIX_IPV6}01::71
@@ -113,6 +128,10 @@ ECO_IPCOMP_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}74.72
 ECO_IPCOMP_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}6e::72
 ECO_IPCOMP_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}75.72
 ECO_IPCOMP_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}6f::72
+ECO_BUNDLE_TUNNEL4_IPV4 ?=	${PREFIX_IPV4}94.72
+ECO_BUNDLE_TUNNEL4_IPV6 ?=	${PREFIX_IPV6}8e::72
+ECO_BUNDLE_TUNNEL6_IPV4 ?=	${PREFIX_IPV4}95.72
+ECO_BUNDLE_TUNNEL6_IPV6 ?=	${PREFIX_IPV6}8f::72
 
 # Configure Addresses on the machines, there must be routes for the
 # networks.  Adapt interface and addresse variables to your local
@@ -154,13 +173,13 @@ depend: addr.py
 addr.py: Makefile
 	rm -f $@ $@.tmp
 .for host in SRC IPS RT ECO
-.for dir in IN OUT
+.for dir in IN OUT BUNDLE
 .for ipv in IF IPV4 IPV6
 	echo '${host}_${dir}_${ipv}="${${host}_${dir}_${ipv}}"' >>$@.tmp
 .endfor
 .endfor
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for host mode in SRC TRANSP SRC TUNNEL \
     IPS TRANSP IPS TUNNEL4 IPS TUNNEL6 \
     ECO TUNNEL4 ECO TUNNEL6
@@ -217,7 +236,15 @@ run-regress-ping-IPS_IPCOMP_TRANSP_IPV6 \
 	@echo 'request does not create state and echo reply does not pass pf.'
 	@echo DISABLED
 
-.for sec in ESP AH IPIP IPCOMP
+run-regress-ping-small-IPS_BUNDLE_TRANSP_IPV6 \
+    run-regress-ping-big-IPS_BUNDLE_TRANSP_IPV6 \
+    run-regress-tcp-IPS_BUNDLE_TRANSP_IPV6:
+	@echo '\n======== $@ ========'
+	@echo 'IPv6 IPsec input does not filter enc0 interface with pf.  Echo'
+	@echo 'request does not create state and echo reply does not pass pf.'
+	@echo DISABLED
+
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 
 .for host mode in SRC TRANSP SRC TUNNEL \
     IPS TRANSP IPS TUNNEL4 IPS TUNNEL6 \
@@ -230,24 +257,24 @@ ping ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-ping-${len}-${host}_${sec}_${mode}_${ipv}
 run-regress-ping-${len}-${host}_${sec}_${mode}_${ipv}:
 	@echo '\n======== $@ ========'
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' >pkt.in
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' >pkt.out
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.out
 	${ping} ${size} -n -c 1 -w 2 ${${host}_${sec}_${mode}_${ipv}}
 .if "${host}" == SRC || ( "${len}" == small && "${sec}" == IPCOMP )
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.out -
 .else
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1-1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1-1}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1-1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1-1}' |\
 	    diff pkt.out -
 .endif
 
@@ -263,25 +290,25 @@ udp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-udp-${host}_${sec}_${mode}_${ipv}
 run-regress-udp-${host}_${sec}_${mode}_${ipv}:
 	@echo '\n======== $@ ========'
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' >pkt.in
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' >pkt.out
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.out
 	echo $$$$ | nc -n -u -w 1 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
 .if "${sec}" == IPCOMP
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.out -
 .else
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1-1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1-1}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1-1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1-1}' |\
 	    diff pkt.out -
 .endif
 
@@ -290,27 +317,28 @@ tcp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-tcp-${host}_${sec}_${mode}_${ipv}
 run-regress-tcp-${host}_${sec}_${mode}_${ipv}:
 	@echo '\n======== $@ ========'
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' >pkt.in
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' >pkt.out
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.out
 	echo $$$$ | nc -n -N -w 3 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
 .if "${sec}" == IPCOMP
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1}' |\
 	    diff pkt.out -
 .else
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/input ${sec} /{print $$1-4}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1-4}' |\
 	    diff pkt.in -
-	netstat -s -p ${sec:L:S/ipip/ipencap/} |\
-	    awk '/output ${sec} /{print $$1-6}' |\
+	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
+	    awk '/output ${sec:S/BUNDLE/ESP/} /{print $$1-6}' |\
 	    diff pkt.out -
 .endif
+
 .endfor
 .endfor
 
@@ -331,11 +359,13 @@ etc/hostname.${SRC_OUT_IF}: Makefile
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
-	echo '# SRC_OUT' >>$@.tmp
+.for dir in OUT BUNDLE
+	echo '# SRC_${dir}' >>$@.tmp
 .for inet ipv masklen in inet IPV4 255.255.255.0 inet6 IPV6 64
-	echo '${inet} alias ${SRC_OUT_${ipv}} ${masklen}' >>$@.tmp
+	echo '${inet} alias ${SRC_${dir}_${ipv}} ${masklen}' >>$@.tmp
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.endfor
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## SRC_${sec}' >>$@.tmp
 .for mode in TRANSP TUNNEL
 	echo '# SRC_${sec}_${mode}' >>$@.tmp
@@ -375,11 +405,13 @@ ${IPS_SSH}/hostname.${IPS_IN_IF}: Makefile
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
-	echo '# IPS_IN' >>$@.tmp
+.for dir in IN BUNDLE
+	echo '# IPS_${dir}' >>$@.tmp
 .for inet ipv masklen in inet IPV4 255.255.255.0 inet6 IPV6 64
-	echo '${inet} alias ${IPS_IN_${ipv}} ${masklen}' >>$@.tmp
+	echo '${inet} alias ${IPS_${dir}_${ipv}} ${masklen}' >>$@.tmp
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.endfor
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## IPS_${sec}' >>$@.tmp
 	echo '# IPS_${sec}_TRANSP' >>$@.tmp
 .for inet ipv masklen in inet IPV4 255.255.255.0 inet6 IPV6 64
@@ -417,7 +449,7 @@ ${IPS_SSH}/hostname.${IPS_OUT_IF}: Makefile
 	echo '!route add -${inet} ${ECO_IN_${ipv}}/${pfxlen} ${RT_IN_${ipv}}'\
 	    >>$@.tmp
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## IPS_${sec}' >>$@.tmp
 .for mode in TUNNEL4 TUNNEL6
 	echo '# IPS_${sec}_${mode}' >>$@.tmp
@@ -453,7 +485,7 @@ ${RT_SSH}/hostname.${RT_IN_IF}: Makefile
 	echo '!route add -${inet} ${SRC_OUT_${ipv}}/${pfxlen}'\
 	    ${IPS_OUT_${ipv}} >>$@.tmp
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## IPS_${sec}' >>$@.tmp
 .for mode in TUNNEL
 	echo '# SRC_${mode}/pfxlen IPS_OUT' >>$@.tmp
@@ -476,7 +508,7 @@ ${RT_SSH}/hostname.${RT_OUT_IF}: Makefile
 .for inet ipv masklen in inet IPV4 255.255.255.0 inet6 IPV6 64
 	echo '${inet} alias ${RT_OUT_${ipv}} ${masklen}' >>$@.tmp
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## IPS_${sec}' >>$@.tmp
 .for mode in TUNNEL4 TUNNEL6
 	echo '# ECO_${sec}_${mode}/pfxlen ECO_IN' >>$@.tmp
@@ -508,7 +540,7 @@ ${ECO_SSH}/hostname.${ECO_IN_IF}: Makefile
 	    ${RT_OUT_${ipv}}' >>$@.tmp
 .endfor
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	echo '## IPS_${sec}' >>$@.tmp
 .for mode in TUNNEL4 TUNNEL6
 	echo '# ECO_${sec}_${mode}' >>$@.tmp
@@ -559,18 +591,19 @@ check-setup: check-setup-src check-setup-ips check-setup-rt check-setup-eco
 check-setup-src:
 	@echo '\n======== $@ ========'
 .for ping inet ipv in ping inet IPV4 ping6 inet6 IPV6
-.for host dir in SRC OUT
+.for host dir in SRC OUT SRC BUNDLE
 	${ping} -n -c 1 ${${host}_${dir}_${ipv}}  # ${host}_${dir}_${ipv}
 	route -n get -${inet} ${${host}_${dir}_${ipv}} |\
 	    grep -q 'flags: .*LOCAL'  # ${host}_${dir}_${ipv}
 .endfor
 	${ping} -n -c 1 ${IPS_IN_${ipv}}  # IPS_IN_${ipv}
+	${ping} -n -c 1 ${IPS_BUNDLE_${ipv}}  # IPS_BUNDLE_${ipv}
 .for host dir in IPS OUT RT IN RT OUT ECO IN
 	route -n get -${inet} ${${host}_${dir}_${ipv}} |\
 	    fgrep -q 'gateway: ${IPS_IN_${ipv}}' \
 	    # ${host}_${dir}_${ipv} IPS_IN_${ipv}
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for host mode in SRC TRANSP SRC TUNNEL
 	${ping} -n -c 1 ${${host}_${sec}_${mode}_${ipv}} \
 	    # ${host}_${sec}_${mode}_${ipv}
@@ -583,7 +616,7 @@ check-setup-src:
 .endfor
 .endfor
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	route -n get -inet ${IPS_${sec}_TRANSP_IPV4} |\
 	    egrep -q 'flags: .*(CLONING|CLONED)'  # IPS_${sec}_TRANSP_IPV4
 	route -n get -inet6 ${IPS_${sec}_TRANSP_IPV6} |\
@@ -598,20 +631,21 @@ check-setup-src:
 check-setup-ips:
 	@echo '\n======== $@ ========'
 .for ping inet ipv in ping inet IPV4 ping6 inet6 IPV6
-.for host dir in IPS IN IPS OUT
+.for host dir in IPS IN IPS OUT IPS BUNDLE
 	ssh ${IPS_SSH} ${ping} -n -c 1 ${${host}_${dir}_${ipv}} \
 	    # ${host}_${dir}_${ipv}
 	ssh ${IPS_SSH} route -n get -${inet} ${${host}_${dir}_${ipv}} |\
 	    grep -q 'flags: .*LOCAL'  # ${host}_${dir}_${ipv}
 .endfor
 	ssh ${IPS_SSH} ${ping} -n -c 1 ${SRC_OUT_${ipv}}  # SRC_OUT_${ipv}
+	ssh ${IPS_SSH} ${ping} -n -c 1 ${SRC_BUNDLE_${ipv}}  # SRC_BUNDLE_${ipv}
 	ssh ${IPS_SSH} ${ping} -n -c 1 ${RT_IN_${ipv}}  # RT_IN_${ipv}
 .for host dir in RT OUT ECO IN
 	ssh ${IPS_SSH} route -n get -${inet} ${${host}_${dir}_${ipv}} |\
 	    fgrep -q 'gateway: ${RT_IN_${ipv}}' \
 	    # ${host}_${dir}_${ipv} RT_IN_${ipv}
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for host mode in IPS TRANSP IPS TUNNEL4 IPS TUNNEL6
 	ssh ${IPS_SSH} ${ping} -n -c 1 ${${host}_${sec}_${mode}_${ipv}} \
 	    # ${host}_${sec}_${mode}_${ipv}
@@ -635,7 +669,7 @@ check-setup-ips:
 .endfor
 	ssh ${ECO_SSH} netstat -na -f ${inet} -p tcp | fgrep ' *.7 '
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 	ssh ${IPS_SSH} route -n get -inet ${SRC_${sec}_TRANSP_IPV4} |\
 	    egrep -q 'flags: .*(CLONING|CLONED)'  # SRC_${sec}_TRANSP_IPV4
 	ssh ${IPS_SSH} route -n get -inet6 ${SRC_${sec}_TRANSP_IPV6} |\
@@ -663,7 +697,7 @@ check-setup-rt:
 	    # ${host}_${dir}_${ipv} IPS_OUT_${ipv}
 .endfor
 	ssh ${RT_SSH} ${ping} -n -c 1 ${ECO_IN_${ipv}}  # ECO_IN_${ipv}
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for host mode in SRC TUNNEL
 	ssh ${RT_SSH} route -n get -${inet} ${${host}_${sec}_${mode}_${ipv}} |\
 	    fgrep -q 'gateway: ${IPS_OUT_${ipv}}' \
@@ -692,7 +726,7 @@ check-setup-eco:
 	    fgrep -q 'gateway: ${RT_OUT_${ipv}}' \
 	    # ${host}_${dir}_${ipv} RT_OUT_${ipv}
 .endfor
-.for sec in ESP AH IPIP IPCOMP
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for host mode in ECO TUNNEL4 ECO TUNNEL6
 	ssh ${ECO_SSH} ${ping} -n -c 1 ${${host}_${sec}_${mode}_${ipv}} \
 	    # ${host}_${sec}_${mode}_${ipv}
