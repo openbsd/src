@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.57 2017/04/10 17:11:13 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.58 2017/05/04 11:31:45 claudio Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -242,8 +242,10 @@ struct tls_ocsp *tls_ocsp_setup_from_peer(struct tls *ctx);
 int tls_hex_string(const unsigned char *_in, size_t _inlen, char **_out,
     size_t *_outlen);
 int tls_cert_hash(X509 *_cert, char **_hash);
-void tls_config_skip_private_key_check(struct tls_config *config);
 
 __END_HIDDEN_DECLS
+
+/* XXX this function is not fully hidden so relayd can use it */
+void tls_config_skip_private_key_check(struct tls_config *config);
 
 #endif /* HEADER_TLS_INTERNAL_H */
