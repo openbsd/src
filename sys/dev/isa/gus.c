@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.45 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: gus.c,v 1.46 2017/05/04 15:19:01 bluhm Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -858,7 +858,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 	 * flip to the next DMA buffer
 	 */
 
-	sc->sc_dmabuf = ++sc->sc_dmabuf % sc->sc_nbufs;
+	sc->sc_dmabuf = (sc->sc_dmabuf + 1) % sc->sc_nbufs;
 	/*
 	 * See comments below about DMA admission control strategy.
 	 * We can call the upper level here if we have an
@@ -948,7 +948,7 @@ gus_voice_intr(struct gus_softc *sc)
 				   sc->sc_dev.dv_xname, sc->sc_bufcnt);
 			    gus_falsestops++;
 
-			    sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
+			    sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
 			    gus_start_playing(sc, sc->sc_playbuf);
 			} else if (sc->sc_bufcnt < 0) {
 			    panic("%s: negative bufcnt in stopped voice",
@@ -1116,7 +1116,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
 	 * update playbuf to point to the buffer the hardware just started
 	 * playing
 	 */
-	sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
+	sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
 
 	/*
 	 * account for buffer just finished
