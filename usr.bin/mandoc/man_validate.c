@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.94 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.95 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -73,7 +73,6 @@ static	const v_check __man_valids[MAN_MAX - MAN_TH] = {
 	NULL,       /* I */
 	NULL,       /* IR */
 	NULL,       /* RI */
-	post_vs,    /* br */
 	post_vs,    /* sp */
 	NULL,       /* nf */
 	NULL,       /* fi */
@@ -124,6 +123,17 @@ man_node_validate(struct roff_man *man)
 	case ROFFT_TBL:
 		break;
 	default:
+		if (n->tok < ROFF_MAX) {
+			switch (n->tok) {
+			case ROFF_br:
+				post_vs(man, n);
+				break;
+			default:
+				abort();
+			}
+			break;
+		}
+		assert(n->tok >= MAN_TH && n->tok < MAN_MAX);
 		cp = man_valids + n->tok;
 		if (*cp)
 			(*cp)(man, n);

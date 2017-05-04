@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.249 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.250 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -242,7 +242,6 @@ static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ termp_quote_pre, termp_quote_post }, /* En */
 	{ termp_xx_pre, termp_xx_post }, /* Dx */
 	{ NULL, termp____post }, /* %Q */
-	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */
 	{ NULL, termp____post }, /* %U */
 	{ NULL, NULL }, /* Ta */
@@ -363,6 +362,17 @@ print_mdoc_node(DECL_ARGS)
 		term_tbl(p, n->span);
 		break;
 	default:
+		if (n->tok < ROFF_MAX) {
+			switch (n->tok) {
+			case ROFF_br:
+				termp_sp_pre(p, &npair, meta, n);
+				break;
+			default:
+				abort();
+			}
+			break;
+		}
+		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
 		if (termacts[n->tok].pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
 			chld = (*termacts[n->tok].pre)
@@ -384,7 +394,9 @@ print_mdoc_node(DECL_ARGS)
 	case ROFFT_EQN:
 		break;
 	default:
-		if (termacts[n->tok].post == NULL || n->flags & NODE_ENDED)
+		if (n->tok < ROFF_MAX ||
+		    termacts[n->tok].post == NULL ||
+		    n->flags & NODE_ENDED)
 			break;
 		(void)(*termacts[n->tok].post)(p, &npair, meta, n);
 
@@ -1502,7 +1514,7 @@ termp_bd_pre(DECL_ARGS)
 		 */
 		switch (nn->tok) {
 		case MDOC_Sm:
-		case MDOC_br:
+		case ROFF_br:
 		case MDOC_sp:
 		case MDOC_Bl:
 		case MDOC_D1:
@@ -1664,7 +1676,7 @@ termp_sp_pre(DECL_ARGS)
 		} else
 			len = 1;
 		break;
-	case MDOC_br:
+	case ROFF_br:
 		len = 0;
 		break;
 	default:

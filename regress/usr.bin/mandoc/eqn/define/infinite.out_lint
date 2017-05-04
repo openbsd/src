@@ -1,4 +1,4 @@
-mandoc: infinite.in:9:1: ERROR: input stack limit exceeded, infinite loop?
-mandoc: infinite.in:15:1: ERROR: input stack limit exceeded, infinite loop?
-mandoc: infinite.in:21:1: ERROR: input stack limit exceeded, infinite loop?
-mandoc: infinite.in:27:1: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:9:2: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:15:2: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:21:2: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:27:2: ERROR: input stack limit exceeded, infinite loop?

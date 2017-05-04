@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.145 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.146 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,7 +114,6 @@ static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ pre_I, NULL, 0 }, /* I */
 	{ pre_alternate, NULL, 0 }, /* IR */
 	{ pre_alternate, NULL, 0 }, /* RI */
-	{ pre_sp, NULL, MAN_NOTEXT }, /* br */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
 	{ pre_literal, NULL, 0 }, /* nf */
 	{ pre_literal, NULL, 0 }, /* fi */
@@ -456,7 +455,7 @@ pre_sp(DECL_ARGS)
 		}
 	}
 
-	if (n->tok == MAN_br)
+	if (n->tok == ROFF_br)
 		len = 0;
 	else if (n->child == NULL)
 		len = 1;
@@ -985,6 +984,18 @@ print_man_node(DECL_ARGS)
 		break;
 	}
 
+	if (n->tok < ROFF_MAX) {
+		switch (n->tok) {
+		case ROFF_br:
+			pre_sp(p, mt, n, meta);
+			break;
+		default:
+			abort();
+		}
+		return;
+	}
+
+	assert(n->tok >= MAN_TH && n->tok <= MAN_MAX);
 	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
 		term_fontrepl(p, TERMFONT_NONE);
 

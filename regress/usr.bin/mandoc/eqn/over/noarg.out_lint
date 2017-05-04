@@ -1,1 +1,1 @@
-mandoc: noarg.in:9:1: WARNING: missing eqn box, using "": over
+mandoc: noarg.in:9:2: WARNING: missing eqn box, using "": over

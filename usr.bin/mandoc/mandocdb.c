@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.195 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.196 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -287,7 +287,6 @@ static	const struct mdoc_handler __mdocs[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, 0, 0 },  /* En */
 	{ NULL, TYPE_Dx, NODE_NOSRC },  /* Dx */
 	{ NULL, 0, 0 },  /* %Q */
-	{ NULL, 0, 0 },  /* br */
 	{ NULL, 0, 0 },  /* sp */
 	{ NULL, 0, 0 },  /* %U */
 	{ NULL, 0, 0 },  /* Ta */
@@ -1507,8 +1506,11 @@ parse_mdoc(struct mpage *mpage, const struct roff_meta *meta,
 {
 
 	for (n = n->child; n != NULL; n = n->next) {
-		if (n->tok == TOKEN_NONE || n->flags & mdocs[n->tok].taboo)
+		if (n->tok == TOKEN_NONE ||
+		    n->tok < ROFF_MAX ||
+		    n->flags & mdocs[n->tok].taboo)
 			continue;
+		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
 		switch (n->type) {
 		case ROFFT_ELEM:
 		case ROFFT_BLOCK:

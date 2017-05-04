@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.167 2017/04/29 12:43:55 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.168 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -75,6 +75,7 @@ struct	roffreq {
 
 struct	roff {
 	struct mparse	*parse; /* parse point */
+	struct roff_man	*man; /* mdoc or man parser */
 	struct roffnode	*last; /* leaf of stack */
 	int		*rstack; /* stack of inverted `ie' values */
 	struct ohash	*reqtab; /* request lookup table */
@@ -144,7 +145,7 @@ static	void		 roffnode_push(struct roff *, enum roff_tok,
 static	enum rofferr	 roff_block(ROFF_ARGS);
 static	enum rofferr	 roff_block_text(ROFF_ARGS);
 static	enum rofferr	 roff_block_sub(ROFF_ARGS);
-static	enum rofferr	 roff_brp(ROFF_ARGS);
+static	enum rofferr	 roff_br(ROFF_ARGS);
 static	enum rofferr	 roff_cblock(ROFF_ARGS);
 static	enum rofferr	 roff_cc(ROFF_ARGS);
 static	void		 roff_ccond(struct roff *, int, int);
@@ -207,6 +208,7 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 #define	ROFFNUM_WHITE	(1 << 1)  /* Skip whitespace in roff_evalnum(). */
 
 const char *__roff_name[MAN_MAX + 1] = {
+	"br",		NULL,
 	"ab",		"ad",		"af",		"aln",
 	"als",		"am",		"am1",		"ami",
 	"ami1",		"as",		"as1",		"asciify",
@@ -296,14 +298,14 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"Fr",		"Ud",		"Lb",		"Lp",
 	"Lk",		"Mt",		"Brq",		"Bro",
 	"Brc",		"%C",		"Es",		"En",
-	"Dx",		"%Q",		"br",		"sp",
+	"Dx",		"%Q",		"sp",
 	"%U",		"Ta",		"ll",		NULL,
 	"TH",		"SH",		"SS",		"TP",
 	"LP",		"PP",		"P",		"IP",
 	"HP",		"SM",		"SB",		"BI",
 	"IB",		"BR",		"RB",		"R",
 	"B",		"I",		"IR",		"RI",
-	"br",		"sp",		"nf",		"fi",
+	"sp",		"nf",		"fi",
 	"RE",		"RS",		"DT",		"UC",
 	"PD",		"AT",		"in",		"ft",
 	"OP",		"EX",		"EE",		"UR",
@@ -312,6 +314,8 @@ const char *__roff_name[MAN_MAX + 1] = {
 const	char *const *roff_name = __roff_name;
 
 static	struct roffmac	 roffs[TOKEN_NONE] = {
+	{ roff_br, NULL, NULL, 0 },  /* br */
+	{ NULL, NULL, NULL, 0 },  /* ROFF_MAX */
 	{ roff_unsupp, NULL, NULL, 0 },  /* ab */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ad */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* af */
@@ -335,7 +339,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_unsupp, NULL, NULL, 0 },  /* break */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* breakchar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* brnl */
-	{ roff_brp, NULL, NULL, 0 },  /* brp */
+	{ roff_br, NULL, NULL, 0 },  /* brp */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* brpnl */
 	{ roff_unsupp, NULL, NULL, 0 },  /* c2 */
 	{ roff_cc, NULL, NULL, 0 },  /* cc */
@@ -608,6 +612,8 @@ roffhash_alloc(enum roff_tok mintok, enum roff_tok maxtok)
 	mandoc_ohash_init(htab, 8, offsetof(struct roffreq, name));
 
 	for (tok = mintok; tok < maxtok; tok++) {
+		if (roff_name[tok] == NULL)
+			continue;
 		sz = strlen(roff_name[tok]);
 		req = mandoc_malloc(sizeof(*req) + sz + 1);
 		req->tok = tok;
@@ -822,6 +828,7 @@ roff_man_alloc(struct roff *roff, struct mparse *parse,
 	man->defos = defos;
 	man->quick = quick;
 	roff_man_alloc1(man);
+	roff->man = man;
 	return man;
 }
 
@@ -1471,7 +1478,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 
 	/* Execute a roff request or a user defined macro. */
 
-	return (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
+	return (*roffs[t].proc)(r, t, buf, ln, spos, pos, offs);
 }
 
 void
@@ -2631,7 +2638,7 @@ roff_T_(ROFF_ARGS)
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, r->parse,
 		    ln, ppos, "T&");
 	else
-		tbl_restart(ppos, ln, r->tbl);
+		tbl_restart(ln, ppos, r->tbl);
 
 	return ROFF_IGN;
 }
@@ -2758,11 +2765,15 @@ roff_TS(ROFF_ARGS)
 }
 
 static enum rofferr
-roff_brp(ROFF_ARGS)
+roff_br(ROFF_ARGS)
 {
-
-	buf->buf[pos - 1] = '\0';
-	return ROFF_CONT;
+	roff_elem_alloc(r->man, ln, ppos, ROFF_br);
+	if (buf->buf[pos] != '\0')
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, r->parse, ln, pos,
+		    "%s %s", roff_name[tok], buf->buf + pos);
+	r->man->last->flags |= NODE_LINE | NODE_VALID | NODE_ENDED;
+	r->man->next = ROFF_NEXT_SIBLING;
+	return ROFF_IGN;
 }
 
 static enum rofferr

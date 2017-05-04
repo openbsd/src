@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.107 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.108 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
@@ -236,7 +237,6 @@ static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {
 	{ cond_body, pre_en, post_en, NULL, NULL }, /* En */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dx */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
-	{ NULL, pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
@@ -649,7 +649,16 @@ print_node(DECL_ARGS)
 			outflags &= ~(MMAN_spc | MMAN_spc_force);
 		else if (outflags & MMAN_Sm)
 			outflags |= MMAN_spc;
+	} else if (n->tok < ROFF_MAX) {
+		switch (n->tok) {
+		case ROFF_br:
+			pre_br(meta, n);
+			break;
+		default:
+			abort();
+		}
 	} else {
+		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
 		/*
 		 * Conditionally run the pre-node action handler for a
 		 * node.

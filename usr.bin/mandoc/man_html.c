@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.89 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.90 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -90,7 +90,6 @@ static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ man_I_pre, NULL }, /* I */
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
-	{ man_br_pre, NULL }, /* br */
 	{ man_br_pre, NULL }, /* sp */
 	{ NULL, NULL }, /* nf */
 	{ NULL, NULL }, /* fi */
@@ -303,6 +302,18 @@ print_man_node(MAN_ARGS)
 			print_tblclose(h);
 
 		t = h->tag;
+		if (n->tok < ROFF_MAX) {
+			switch(n->tok) {
+			case ROFF_br:
+				man_br_pre(man, n, h);
+				break;
+			default:
+				abort();
+			}
+			break;
+		}
+
+		assert(n->tok >= MAN_TH && n->tok < MAN_MAX);
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(man, n, h);
 

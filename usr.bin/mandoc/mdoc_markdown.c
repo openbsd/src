@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.17 2017/04/24 23:06:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.18 2017/05/04 17:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
@@ -222,7 +223,6 @@ static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ md_cond_body, md_pre_En, md_post_En, NULL, NULL }, /* En */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dx */
 	{ NULL, NULL, md_post_pc, NULL, NULL }, /* %Q */
-	{ NULL, md_pre_br, NULL, NULL, NULL }, /* br */
 	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* sp */
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
@@ -310,8 +310,7 @@ md_node(struct roff_node *n)
 	process_children = 1;
 	n->flags &= ~NODE_ENDED;
 
-	switch (n->type) {
-	case ROFFT_TEXT:
+	if (n->type == ROFFT_TEXT) {
 		if (n->flags & NODE_DELIMC)
 			outflags &= ~(MD_spc | MD_spc_force);
 		else if (outflags & MD_Sm)
@@ -321,14 +320,21 @@ md_node(struct roff_node *n)
 			outflags &= ~(MD_spc | MD_spc_force);
 		else if (outflags & MD_Sm)
 			outflags |= MD_spc;
-		break;
-	default:
+	} else if (n->tok < ROFF_MAX) {
+		switch (n->tok) {
+		case ROFF_br:
+			md_pre_br(n);
+			break;
+		default:
+			abort();
+		}
+	} else {
+		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
 		act = md_acts + n->tok;
 		cond = act->cond == NULL || (*act->cond)(n);
 		if (cond && act->pre != NULL &&
 		    (n->end == ENDBODY_NOT || n->child != NULL))
 			process_children = (*act->pre)(n);
-		break;
 	}
 
 	if (process_children && n->child != NULL)
