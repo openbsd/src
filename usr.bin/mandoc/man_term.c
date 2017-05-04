@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.146 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.147 2017/05/04 22:07:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -455,9 +455,7 @@ pre_sp(DECL_ARGS)
 		}
 	}
 
-	if (n->tok == ROFF_br)
-		len = 0;
-	else if (n->child == NULL)
+	if (n->child == NULL)
 		len = 1;
 	else {
 		if ( ! a2roffsu(n->child->string, &su, SCALE_VS))
@@ -985,13 +983,7 @@ print_man_node(DECL_ARGS)
 	}
 
 	if (n->tok < ROFF_MAX) {
-		switch (n->tok) {
-		case ROFF_br:
-			pre_sp(p, mt, n, meta);
-			break;
-		default:
-			abort();
-		}
+		roff_term_pre(p, n);
 		return;
 	}
 

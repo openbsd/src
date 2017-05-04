@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.156 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.157 2017/05/04 22:07:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -392,13 +392,7 @@ print_mdoc_node(MDOC_ARGS)
 		}
 		assert(h->tblt == NULL);
 		if (n->tok < ROFF_MAX) {
-			switch(n->tok) {
-			case ROFF_br:
-				mdoc_sp_pre(meta, n, h);
-				break;
-			default:
-				abort();
-			}
+			roff_html_pre(h, n);
 			break;
 		}
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
@@ -1335,16 +1329,12 @@ mdoc_sp_pre(MDOC_ARGS)
 	struct roffsu	 su;
 
 	SCALE_VS_INIT(&su, 1);
-
-	if (MDOC_sp == n->tok) {
-		if (NULL != (n = n->child)) {
-			if ( ! a2roffsu(n->string, &su, SCALE_VS))
-				su.scale = 1.0;
-			else if (su.scale < 0.0)
-				su.scale = 0.0;
-		}
-	} else
-		su.scale = 0.0;
+	if (NULL != (n = n->child)) {
+		if ( ! a2roffsu(n->string, &su, SCALE_VS))
+			su.scale = 1.0;
+		else if (su.scale < 0.0)
+			su.scale = 0.0;
+	}
 
 	print_otag(h, TAG_DIV, "suh", &su);
 

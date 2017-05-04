@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.46 2017/03/15 11:29:50 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.47 2017/05/04 22:07:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -115,6 +115,8 @@ struct	html {
 struct	roff_node;
 struct	tbl_span;
 struct	eqn;
+
+void		  roff_html_pre(struct html *, const struct roff_node *);
 
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
