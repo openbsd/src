@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.23 2017/04/28 19:13:55 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.24 2017/05/04 07:16:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -79,8 +79,12 @@ notify_callback(struct cmdq_item *item, void *data)
 
 	log_debug("%s: %s", __func__, ne->name);
 
+	if (strcmp(ne->name, "pane-mode-changed") == 0)
+		control_notify_pane_mode_changed(ne->pane);
 	if (strcmp(ne->name, "window-layout-changed") == 0)
 		control_notify_window_layout_changed(ne->window);
+	if (strcmp(ne->name, "window-pane-changed") == 0)
+		control_notify_window_pane_changed(ne->window);
 	if (strcmp(ne->name, "window-unlinked") == 0)
 		control_notify_window_unlinked(ne->session, ne->window);
 	if (strcmp(ne->name, "window-linked") == 0)
@@ -95,6 +99,8 @@ notify_callback(struct cmdq_item *item, void *data)
 		control_notify_session_created(ne->session);
 	if (strcmp(ne->name, "session-closed") == 0)
 		control_notify_session_closed(ne->session);
+	if (strcmp(ne->name, "session-window-changed") == 0)
+		control_notify_session_window_changed(ne->session);
 
 	notify_hook(item, ne);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.75 2017/04/28 19:13:55 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.76 2017/05/04 07:16:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -553,6 +553,7 @@ session_set_current(struct session *s, struct winlink *wl)
 	s->curw = wl;
 	winlink_clear_flags(wl);
 	window_update_activity(wl->window);
+	notify_session("session-window-changed", s);
 	return (0);
 }
 
