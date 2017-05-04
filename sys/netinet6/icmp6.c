@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.207 2017/04/19 15:44:45 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.208 2017/05/04 17:58:46 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* Give up local */
 			n = m;
-			m = NULL;
+			m = *mp = NULL;
 			goto deliverecho;
 		}
 		/*
@@ -567,7 +567,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 				/* Give up local */
 				m_freem(n0);
 				n = m;
-				m = NULL;
+				m = *mp = NULL;
 				goto deliverecho;
 			}
 			M_MOVE_PKTHDR(n, n0);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.63 2017/04/14 20:46:31 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.64 2017/05/04 17:58:46 bluhm Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -280,7 +280,7 @@ gre_mobile_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	if (m->m_len < sizeof(*mip)) {
-		m = m_pullup(m, sizeof(*mip));
+		m = *mp = m_pullup(m, sizeof(*mip));
 		if (m == NULL)
 			return IPPROTO_DONE;
 	}
@@ -300,7 +300,7 @@ gre_mobile_input(struct mbuf **mp, int *offp, int proto, int af)
 		msiz = MOB_H_SIZ_S;
 
 	if (m->m_len < (ip->ip_hl << 2) + msiz) {
-		m = m_pullup(m, (ip->ip_hl << 2) + msiz);
+		m = *mp = m_pullup(m, (ip->ip_hl << 2) + msiz);
 		if (m == NULL)
 			return IPPROTO_DONE;
 		ip = mtod(m, struct ip *);

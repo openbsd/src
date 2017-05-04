@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.17 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.18 2017/05/04 17:58:46 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -462,7 +462,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	m_adj(m, *offp);
-	m = m_pullup(m, sizeof(struct etherip_header));
+	m = *mp = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
 		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
@@ -480,7 +480,7 @@ ip_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	    sizeof(struct etherip_header));
 
 	m_adj(m, sizeof(struct etherip_header));
-	m = m_pullup(m, sizeof(struct ether_header));
+	m = *mp = m_pullup(m, sizeof(struct ether_header));
 	if (m == NULL) {
 		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
@@ -622,7 +622,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	m_adj(m, *offp);
-	m = m_pullup(m, sizeof(struct etherip_header));
+	m = *mp = m_pullup(m, sizeof(struct etherip_header));
 	if (m == NULL) {
 		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
@@ -639,7 +639,7 @@ ip6_etherip_input(struct mbuf **mp, int *offp, int proto, int af)
 	    sizeof(struct etherip_header));
 
 	m_adj(m, sizeof(struct etherip_header));
-	m = m_pullup(m, sizeof(struct ether_header));
+	m = *mp = m_pullup(m, sizeof(struct ether_header));
 	if (m == NULL) {
 		etheripstat.etherips_adrops++;
 		return IPPROTO_DONE;
