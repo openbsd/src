@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.8 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.9 2017/05/04 08:26:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -88,6 +88,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
 	case IMSG_VMDOP_PRIV_IFCREATE:
+	case IMSG_VMDOP_PRIV_IFRDOMAIN:
 	case IMSG_VMDOP_PRIV_IFADD:
 	case IMSG_VMDOP_PRIV_IFUP:
 	case IMSG_VMDOP_PRIV_IFDOWN:
@@ -123,6 +124,12 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(env->vmd_fd, SIOCIFCREATE, &ifr) < 0 &&
 		    errno != EEXIST)
 			log_warn("SIOCIFCREATE");
+		break;
+	case IMSG_VMDOP_PRIV_IFRDOMAIN:
+		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
+		ifr.ifr_rdomainid = vfr.vfr_id;
+		if (ioctl(env->vmd_fd, SIOCSIFRDOMAIN, &ifr) < 0)
+			log_warn("SIOCSIFRDOMAIN");
 		break;
 	case IMSG_VMDOP_PRIV_IFADD:
 		if (priv_getiftype(vfr.vfr_value, type, NULL) == -1)
@@ -272,6 +279,17 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 		    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 			return (-1);
 
+		/* Set non-default rdomain */
+		if (vif->vif_flags & VMIFF_RDOMAIN) {
+			vfr.vfr_id = vif->vif_rdomain;
+
+			log_debug("%s: interface %s rdomain %u", __func__,
+			    vfr.vfr_name, vfr.vfr_id);
+
+			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+			    &vfr, sizeof(vfr));
+		}
+
 		/* Description can be truncated */
 		(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),
 		    "vm%u-if%u-%s", vm->vm_vmid, i, vcp->vcp_name);
@@ -284,18 +302,25 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 
 		/* Add interface to bridge/switch */
 		if ((vsw = switch_getbyname(vif->vif_switch)) != NULL) {
+			memset(&vfbr, 0, sizeof(vfbr));
+
 			if (strlcpy(vfbr.vfr_name, vsw->sw_ifname,
 			    sizeof(vfbr.vfr_name)) >= sizeof(vfbr.vfr_name))
 				return (-1);
 			if (strlcpy(vfbr.vfr_value, vif->vif_name,
 			    sizeof(vfbr.vfr_value)) >= sizeof(vfbr.vfr_value))
 				return (-1);
+			vfbr.vfr_id = vsw->sw_rdomain;
 
 			log_debug("%s: interface %s add %s", __func__,
 			    vfbr.vfr_name, vfbr.vfr_value);
 
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
 			    &vfbr, sizeof(vfbr));
+			if (vsw->sw_flags & VMIFF_RDOMAIN)
+				proc_compose(ps,
+				    PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+				    &vfbr, sizeof(vfbr));
 			proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFADD,
 			    &vfbr, sizeof(vfbr));
 		} else if (vif->vif_switch != NULL)
@@ -365,12 +390,20 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	struct vmd_if		*vif;
 	struct vmop_ifreq	 vfr;
 
+	memset(&vfr, 0, sizeof(vfr));
+
 	if (strlcpy(vfr.vfr_name, vsw->sw_ifname,
 	    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 		return (-1);
+	vfr.vfr_id = vsw->sw_rdomain;
 
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFCREATE,
 	    &vfr, sizeof(vfr));
+
+	/* Set non-default rdomain */
+	if (vsw->sw_flags & VMIFF_RDOMAIN)
+		proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
+		    &vfr, sizeof(vfr));
 
 	/* Description can be truncated */
 	(void)snprintf(vfr.vfr_value, sizeof(vfr.vfr_value),

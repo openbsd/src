@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.31 2017/05/04 08:26:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -281,6 +281,9 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 				goto fail;
 			}
 		}
+
+		/* non-default rdomain (requires VMIFF_RDOMAIN below) */
+		vif->vif_rdomain = vmc->vmc_ifrdomain[i];
 
 		/* Set the interface status */
 		vif->vif_flags =

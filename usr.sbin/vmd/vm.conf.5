@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.19 2017/04/21 07:03:26 reyk Exp $
+.\" $OpenBSD: vm.conf.5,v 1.20 2017/05/04 08:26:06 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2017 $
+.Dd $Mdocdate: May 4 2017 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -161,6 +161,9 @@ If the
 keyword is specified,
 .Xr vmd 8
 will drop packets from the VM with altered source addresses.
+.It Cm rdomain Ar rdomainid
+Attach the interface to the routing domain with the specified
+.Ar rdomainid .
 .It Cm switch Ar name
 Set the virtual switch
 by
@@ -282,6 +285,12 @@ e.g.\&
 If the type is changed to
 .Ar switch0 ,
 it will be used for each following switch.
+.It Cm rdomain Ar rdomainid
+Set the routing domain of the switch and all of its VM interfaces to
+.Ar rdomainid .
+This overwrites the
+.Cm rdomain
+option of VM interfaces.
 .It Cm up
 Start the switch forwarding packets.
 This is the default.

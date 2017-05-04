@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2017/05/03 08:21:57 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2017/05/04 08:26:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 
 %token	INCLUDE ERROR
 %token	ADD BOOT DISABLE DISK DOWN ENABLE GROUP INTERFACE LLADDR LOCAL LOCKED
-%token	MEMORY NIFS OWNER PATH PREFIX SIZE SWITCH UP VM VMID
+%token	MEMORY NIFS OWNER PATH PREFIX RDOMAIN SIZE SWITCH UP VM VMID
 %token	<v.number>	NUMBER
 %token	<v.string>	STRING
 %type	<v.lladdr>	lladdr
@@ -262,6 +262,14 @@ switch_opts	: disable			{
 		}
 		| LOCKED LLADDR			{
 			vsw->sw_flags |= VMIFF_LOCKED;
+		}
+		| RDOMAIN NUMBER		{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rdomain: %lld", $2);
+				YYERROR;
+			}
+			vsw->sw_flags |= VMIFF_RDOMAIN;
+			vsw->sw_rdomain = $2;
 		}
 		| updown			{
 			if ($1)
@@ -532,6 +540,14 @@ iface_opts	: SWITCH string			{
 				vmc.vmc_ifflags[vcp_nnics] |= VMIFF_LOCKED;
 			memcpy(vcp->vcp_macs[vcp_nnics], $3, ETHER_ADDR_LEN);
 		}
+		| RDOMAIN NUMBER		{
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rdomain: %lld", $2);
+				YYERROR;
+			}
+			vmc.vmc_ifflags[vcp_nnics] |= VMIFF_RDOMAIN;
+			vmc.vmc_ifrdomain[vcp_nnics] = $2;
+		}
 		| updown			{
 			if ($1)
 				vmc.vmc_ifflags[vcp_nnics] |= VMIFF_UP;
@@ -645,6 +661,7 @@ lookup(char *s)
 		{ "memory",		MEMORY },
 		{ "owner",		OWNER },
 		{ "prefix",		PREFIX },
+		{ "rdomain",		RDOMAIN },
 		{ "size",		SIZE },
 		{ "switch",		SWITCH },
 		{ "up",			UP },

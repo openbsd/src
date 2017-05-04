@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.52 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.53 2017/05/04 08:26:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -80,6 +80,7 @@ enum imsg_type {
 	IMSG_VMDOP_PRIV_IFDOWN,
 	IMSG_VMDOP_PRIV_IFGROUP,
 	IMSG_VMDOP_PRIV_IFADDR,
+	IMSG_VMDOP_PRIV_IFRDOMAIN,
 	IMSG_VMDOP_VM_SHUTDOWN,
 	IMSG_VMDOP_VM_REBOOT,
 	IMSG_VMDOP_CONFIG
@@ -125,10 +126,12 @@ struct vmop_create_params {
 #define VMIFF_UP		0x01
 #define VMIFF_LOCKED		0x02
 #define VMIFF_LOCAL		0x04
-#define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL)
+#define VMIFF_RDOMAIN		0x08
+#define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
+	unsigned int		 vmc_ifrdomain[VMM_MAX_NICS_PER_VM];
 	uid_t			 vmc_uid;
 	int64_t			 vmc_gid;
 };
@@ -148,6 +151,7 @@ struct vmd_if {
 	char			*vif_switch;
 	char			*vif_group;
 	int			 vif_fd;
+	unsigned int		 vif_rdomain;
 	unsigned int		 vif_flags;
 	TAILQ_ENTRY(vmd_if)	 vif_entry;
 };
@@ -158,6 +162,7 @@ struct vmd_switch {
 	char			*sw_name;
 	char			 sw_ifname[IF_NAMESIZE];
 	char			*sw_group;
+	unsigned int		 sw_rdomain;
 	unsigned int		 sw_flags;
 	struct viflist		 sw_ifs;
 	int			 sw_running;

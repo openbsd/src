@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.59 2017/04/25 16:38:23 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.60 2017/05/04 08:26:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -863,6 +863,10 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		vm->vm_ifs[i].vif_fd = -1;
 
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
+			/* overwrite the rdomain, if configured on the switch */
+			if (sw->sw_flags & VMIFF_RDOMAIN)
+				vmc->vmc_ifrdomain[i] = sw->sw_rdomain;
+
 			/* inherit per-interface flags from the switch */
 			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);
 		}
