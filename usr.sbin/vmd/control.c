@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2017/04/21 07:03:26 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.18 2017/05/04 16:54:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -363,7 +363,15 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			memcpy(&v, imsg.data, sizeof(v));
 			log_setverbose(v);
 
+			/* FALLTHROUGH */
+		case IMSG_VMDOP_LOAD:
+		case IMSG_VMDOP_RELOAD:
+		case IMSG_CTL_RESET:
 			proc_forward_imsg(ps, &imsg, PROC_PARENT, -1);
+
+			/* Report success to the control client */
+			imsg_compose_event(&c->iev, IMSG_CTL_OK,
+			    0, 0, -1, NULL, 0);
 			break;
 		case IMSG_VMDOP_START_VM_REQUEST:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
@@ -398,11 +406,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				control_close(fd, cs);
 				return;
 			}
-			break;
-		case IMSG_VMDOP_LOAD:
-		case IMSG_VMDOP_RELOAD:
-		case IMSG_CTL_RESET:
-			proc_forward_imsg(ps, &imsg, PROC_PARENT, -1);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

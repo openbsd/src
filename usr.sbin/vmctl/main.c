@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2017/04/19 15:38:32 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2017/05/04 16:54:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -213,21 +213,17 @@ vmmaction(struct parse_result *res)
 	case CMD_LOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_LOAD, 0, 0, -1,
 		    res->path, strlen(res->path) + 1);
-		done = 1;
 		break;
 	case CMD_LOG:
 		imsg_compose(ibuf, IMSG_CTL_VERBOSE, 0, 0, -1,
 		    &res->verbose, sizeof(res->verbose));
-		done = 1;
 		break;
 	case CMD_RELOAD:
 		imsg_compose(ibuf, IMSG_VMDOP_RELOAD, 0, 0, -1, NULL, 0);
-		done = 1;
 		break;
 	case CMD_RESET:
 		imsg_compose(ibuf, IMSG_CTL_RESET, 0, 0, -1,
 		    &res->mode, sizeof(res->mode));
-		done = 1;
 		break;
 	case CMD_CREATE:
 	case NONE:
@@ -257,12 +253,9 @@ vmmaction(struct parse_result *res)
 				if (IMSG_DATA_SIZE(&imsg) == sizeof(ret)) {
 					memcpy(&ret, imsg.data, sizeof(ret));
 					errno = ret;
-					warn("command failed");
-				} else {
-					warnx("command failed");
-				}
-				done = 1;
-				break;
+					err(1, "command failed");
+				} else
+					errx(1, "command failed");
 			}
 
 			ret = 0;
