@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2017/05/04 16:54:41 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2017/05/04 19:41:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -250,7 +250,11 @@ vmmaction(struct parse_result *res)
 				break;
 
 			if (imsg.hdr.type == IMSG_CTL_FAIL) {
-				if (IMSG_DATA_SIZE(&imsg) == sizeof(ret)) {
+				if (IMSG_DATA_SIZE(&imsg) == sizeof(ret))
+					memcpy(&ret, imsg.data, sizeof(ret));
+				else
+					ret = 0;
+				if (ret != 0) {
 					memcpy(&ret, imsg.data, sizeof(ret));
 					errno = ret;
 					err(1, "command failed");

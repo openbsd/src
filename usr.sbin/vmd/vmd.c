@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.60 2017/05/04 08:26:06 reyk Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.61 2017/05/04 19:41:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -137,13 +137,19 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		str = get_string((uint8_t *)imsg->data,
 		    IMSG_DATA_SIZE(imsg));
 	case IMSG_VMDOP_RELOAD:
-		vmd_reload(0, str);
+		if (vmd_reload(0, str) == -1)
+			cmd = IMSG_CTL_FAIL;
+		else
+			cmd = IMSG_CTL_OK;
 		free(str);
 		break;
 	case IMSG_CTL_RESET:
 		IMSG_SIZE_CHECK(imsg, &v);
 		memcpy(&v, imsg->data, sizeof(v));
-		vmd_reload(v, str);
+		if (vmd_reload(v, NULL) == -1)
+			cmd = IMSG_CTL_FAIL;
+		else
+			cmd = IMSG_CTL_OK;
 		break;
 	case IMSG_CTL_VERBOSE:
 		IMSG_SIZE_CHECK(imsg, &verbose);
@@ -152,6 +158,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
 		proc_forward_imsg(ps, imsg, PROC_PRIV, -1);
+		cmd = IMSG_CTL_OK;
 		break;
 	default:
 		return (-1);
@@ -339,7 +346,7 @@ vmd_sighdlr(int sig, short event, void *arg)
 		 * This is safe because libevent uses async signal handlers
 		 * that run in the event loop and not in signal context.
 		 */
-		vmd_reload(0, NULL);
+		(void)vmd_reload(0, NULL);
 		break;
 	case SIGPIPE:
 		log_info("%s: ignoring SIGPIPE", __func__);
@@ -569,7 +576,7 @@ vmd_configure(void)
 	return (0);
 }
 
-void
+int
 vmd_reload(unsigned int reset, const char *filename)
 {
 	struct vmd_vm		*vm, *next_vm;
@@ -605,12 +612,13 @@ vmd_reload(unsigned int reset, const char *filename)
 
 			/* Update shared global configuration in all children */
 			if (config_setconfig(env) == -1)
-				return;
+				return (-1);
 		}
 
 		if (parse_config(filename) == -1) {
 			log_debug("%s: failed to load config file %s",
 			    __func__, filename);
+			return (-1);
 		}
 
 		TAILQ_FOREACH(vsw, env->vmd_switches, sw_entry) {
@@ -620,7 +628,7 @@ vmd_reload(unsigned int reset, const char *filename)
 				log_warn("%s: failed to create switch %s",
 				    __func__, vsw->sw_name);
 				switch_remove(vsw);
-				return;
+				return (-1);
 			}
 		}
 
@@ -633,7 +641,7 @@ vmd_reload(unsigned int reset, const char *filename)
 					continue;
 				}
 				if (config_setvm(&env->vmd_ps, vm, -1, 0) == -1)
-					return;
+					return (-1);
 			} else {
 				log_debug("%s: not creating vm \"%s\": "
 				    "(running)", __func__,
@@ -641,6 +649,8 @@ vmd_reload(unsigned int reset, const char *filename)
 			}
 		}
 	}
+
+	return (0);
 }
 
 void
