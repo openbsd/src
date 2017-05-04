@@ -1,8 +1,8 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.97 2017/05/03 17:23:34 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.98 2017/05/04 12:28:14 ajacoutot Exp $
 #
-# Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -152,7 +152,7 @@ fetch_and_verify()
 
 install_file()
 {
-	# XXX handle symlinks, dir->file, file->dir?
+	# XXX handle hard and symbolic links, dir->file, file->dir?
 	local _dst=$2 _fgrp _fmode _fown _src=$1
 	[[ -f ${_src} && -f ${_dst} ]]
 
