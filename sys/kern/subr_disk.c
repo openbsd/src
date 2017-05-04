@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.229 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.230 2017/05/04 22:47:27 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1245,7 +1245,7 @@ disk_busy(struct disk *diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(struct disk *diskp, long bcount, int read)
+disk_unbusy(struct disk *diskp, long bcount, daddr_t blkno, int read)
 {
 	struct timeval dv_time, diff_time;
 
@@ -1273,7 +1273,8 @@ disk_unbusy(struct disk *diskp, long bcount, int read)
 
 	mtx_leave(&diskp->dk_mtx);
 
-	add_disk_randomness(bcount ^ diff_time.tv_usec);
+	add_disk_randomness(bcount ^ diff_time.tv_usec ^
+	    (blkno >> 32) ^ (blkno & 0xffffffff));
 }
 
 int

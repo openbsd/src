@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.28 2016/01/20 17:23:58 stefan Exp $ */
+/*	$OpenBSD: octcf.c,v 1.29 2017/05/04 22:47:27 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -390,7 +390,7 @@ octcfdone(void *arg)
 		bp->b_flags |= B_ERROR;
 
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
-	    (bp->b_flags & B_READ));
+	    bp->b_blkno, (bp->b_flags & B_READ));
 	biodone(bp);
 }
 

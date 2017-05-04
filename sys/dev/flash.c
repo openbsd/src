@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.31 2015/08/12 22:37:32 krw Exp $	*/
+/*	$OpenBSD: flash.c,v 1.32 2017/05/04 22:47:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -931,7 +931,7 @@ flashdone(void *v)
 
 	/* Instrumentation. */
 	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
-	    (bp->b_flags & B_READ) != 0);
+	    bp->b_blkno, (bp->b_flags & B_READ) != 0);
 
 	if (bp->b_error != 0)
 		bp->b_flags |= B_ERROR;

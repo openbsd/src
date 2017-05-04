@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.103 2015/11/25 04:49:10 tedu Exp $	*/
+/*	$OpenBSD: fd.c,v 1.104 2017/05/04 22:47:27 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -811,7 +811,7 @@ loop:
 		return 1;
 
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0, 0);	/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0, 0);	/* no data on seek */
 
 		/* Make sure seek really happened. */
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
@@ -838,7 +838,7 @@ loop:
 		timeout_del(&fd->fdtimeout_to);
 
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
-		    (bp->b_flags & B_READ));
+		    fd->sc_blkno, (bp->b_flags & B_READ));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 			isadma_abort(fdc->sc_drq);

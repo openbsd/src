@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.120 2016/01/20 17:23:58 stefan Exp $ */
+/*	$OpenBSD: wd.c,v 1.121 2017/05/04 22:47:27 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -568,7 +568,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			    wd->sc_dev.dv_xname);
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
-	    (bp->b_flags & B_READ));
+	    bp->b_blkno, (bp->b_flags & B_READ));
 	biodone(bp);
 	wd->openings++;
 	wdstart(wd);
@@ -589,7 +589,7 @@ wdrestart(void *v)
 		return;
 
 	s = splbio();
-	disk_unbusy(&wd->sc_dk, 0, (bp->b_flags & B_READ));
+	disk_unbusy(&wd->sc_dk, 0, 0, (bp->b_flags & B_READ));
 	__wdstart(v, bp);
 	splx(s);
 }
