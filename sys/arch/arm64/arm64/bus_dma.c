@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.6 2017/02/22 22:55:27 patrick Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.7 2017/05/05 15:04:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -63,9 +63,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-
 #include <machine/bus.h>
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -351,6 +351,33 @@ _dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_mapsize = 0;
 }
 
+static void
+_dmamap_sync_segment(vaddr_t va, vsize_t len, int ops)
+{
+	switch (ops) {
+	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+	case BUS_DMASYNC_PREREAD:
+		cpu_dcache_wbinv_range(va, len);
+		break;
+
+	case BUS_DMASYNC_PREWRITE:
+		cpu_dcache_wb_range(va, len);
+		break;
+
+	/*
+	 * Cortex CPUs can do speculative loads so we need to clean the cache
+	 * after a DMA read to deal with any speculatively loaded cache lines.
+	 * Since these can't be dirty, we can just invalidate them and don't
+	 * have to worry about having to write back their contents.
+	 */
+	case BUS_DMASYNC_POSTREAD:
+	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		membar_sync();
+		cpu_dcache_inv_range(va, len);
+		break;
+	}
+}
+
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
@@ -376,12 +403,10 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	curseg = 0;
 
 	while (size && nsegs) {
-		paddr_t paddr;
 		vaddr_t vaddr;
 		bus_size_t ssize;
 
 		ssize = map->dm_segs[curseg].ds_len;
-		paddr = map->dm_segs[curseg]._ds_paddr;
 		vaddr = map->dm_segs[curseg]._ds_vaddr;
 
 		if (addr != 0) {
@@ -390,7 +415,6 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 				ssize = 0;
 			} else {
 				vaddr += addr;
-				paddr += addr;
 				ssize -= addr;
 				addr = 0;
 			}
@@ -399,21 +423,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 			ssize = size;
 
 		if (ssize != 0) {
-			/*
-			 * If only PREWRITE is requested, writeback.
-			 * PREWRITE with PREREAD writebacks
-			 * and invalidates (if noncoherent) *all* cache levels.
-			 * Otherwise, just invalidate (if noncoherent).
-			 */
-			if (op & BUS_DMASYNC_PREWRITE) {
-				if (op & BUS_DMASYNC_PREREAD)
-					; // XXX MUST ADD CACHEFLUSHING
-				else
-					; // XXX MUST ADD CACHEFLUSHING
-			} else
-			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
-				; // XXX MUST ADD CACHEFLUSHING
-			}
+			_dmamap_sync_segment(vaddr, ssize, op);
 			size -= ssize;
 		}
 		curseg++;
