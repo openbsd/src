@@ -13,6 +13,7 @@
 ./usr/bin/rpcgen
 ./usr/bin/strip
 ./usr/bin/yacc
+./usr/include/FlexLexer.h
 ./usr/include/a.out.h
 ./usr/include/ar.h
 ./usr/include/arpa
@@ -846,7 +847,6 @@
 ./usr/include/ftw.h
 ./usr/include/fuse.h
 ./usr/include/fuse_opt.h
-./usr/include/FlexLexer.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
 ./usr/include/grp.h
@@ -902,6 +902,7 @@
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/ethertypes.h
+./usr/include/net/fq_codel.h
 ./usr/include/net/hfsc.h
 ./usr/include/net/if.h
 ./usr/include/net/if_arp.h
