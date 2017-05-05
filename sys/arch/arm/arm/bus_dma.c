@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.35 2016/09/20 16:31:56 patrick Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.36 2017/05/05 12:54:47 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -490,7 +490,6 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops)
 		cpu_dcache_wbinv_range(va, len);
 		cpu_sdcache_wbinv_range(va, pa, len);
 		break;
-		/* FALLTHROUGH */
 
 	case BUS_DMASYNC_PREREAD: {
 		const size_t line_size = arm_dcache_align;
