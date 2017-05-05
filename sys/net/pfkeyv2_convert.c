@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.59 2017/02/28 16:46:27 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.60 2017/05/05 11:04:18 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -685,12 +685,12 @@ export_address(void **p, struct sockaddr *sa)
 	struct sadb_address *sadb_address = (struct sadb_address *) *p;
 
 	sadb_address->sadb_address_len = (sizeof(struct sadb_address) +
-	    PADUP(SA_LEN(sa))) / sizeof(uint64_t);
+	    PADUP(sa->sa_len)) / sizeof(uint64_t);
 
 	*p += sizeof(struct sadb_address);
-	bcopy(sa, *p, SA_LEN(sa));
+	bcopy(sa, *p, sa->sa_len);
 	((struct sockaddr *) *p)->sa_family = sa->sa_family;
-	*p += PADUP(SA_LEN(sa));
+	*p += PADUP(sa->sa_len);
 }
 
 /*

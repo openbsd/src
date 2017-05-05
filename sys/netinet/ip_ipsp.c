@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.220 2017/02/14 09:51:46 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.221 2017/05/05 11:04:18 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -160,7 +160,7 @@ tdb_hash(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
 	SipHash24_Update(&ctx, &rdomain, sizeof(rdomain));
 	SipHash24_Update(&ctx, &spi, sizeof(spi));
 	SipHash24_Update(&ctx, &proto, sizeof(proto));
-	SipHash24_Update(&ctx, dst, SA_LEN(&dst->sa));
+	SipHash24_Update(&ctx, dst, dst->sa.sa_len);
 
 	return (SipHash24_End(&ctx) & tdb_hashmask);
 }
@@ -237,8 +237,8 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 
 
 		tdbp->tdb_spi = spi;
-		memcpy(&tdbp->tdb_dst.sa, &dst->sa, SA_LEN(&dst->sa));
-		memcpy(&tdbp->tdb_src.sa, &src->sa, SA_LEN(&src->sa));
+		memcpy(&tdbp->tdb_dst.sa, &dst->sa, dst->sa.sa_len);
+		memcpy(&tdbp->tdb_src.sa, &src->sa, src->sa.sa_len);
 		tdbp->tdb_sproto = sproto;
 		tdbp->tdb_flags |= TDBF_INVALID; /* Mark SA invalid for now. */
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
@@ -283,7 +283,7 @@ gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
 		if ((tdbp->tdb_spi == spi) && (tdbp->tdb_sproto == proto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
-		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))
+		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len))
 			break;
 
 	return tdbp;
@@ -313,8 +313,8 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
-		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
-		    !memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))
+		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
+		    !memcmp(&tdbp->tdb_src, src, src->sa.sa_len))
 			break;
 
 	if (tdbp != NULL)
@@ -330,7 +330,7 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
-		    !memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
+		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
 		    tdbp->tdb_src.sa.sa_family == AF_UNSPEC)
 			break;
 
@@ -395,7 +395,7 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 		if ((tdbp->tdb_sproto == sproto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
-		    (!memcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)))) {
+		    (!memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len))) {
 			/* Do IDs match ? */
 			if (!ipsp_aux_match(tdbp, ids, filter, filtermask))
 				continue;
@@ -426,7 +426,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 		if ((tdbp->tdb_sproto == sproto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
-		    (!memcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))) {
+		    (!memcmp(&tdbp->tdb_src, src, src->sa.sa_len))) {
 			/* Check whether IDs match */
 			if (!ipsp_aux_match(tdbp, ids, filter,
 			    filtermask))

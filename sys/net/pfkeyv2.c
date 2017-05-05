@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.153 2017/02/28 16:46:27 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.154 2017/05/05 11:04:18 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -521,8 +521,8 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	if (sa->tdb_last_used)
 		i += sizeof(struct sadb_lifetime);
 
-	i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa));
-	i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_dst.sa));
+	i += sizeof(struct sadb_address) + PADUP(sa->tdb_src.sa.sa_len);
+	i += sizeof(struct sadb_address) + PADUP(sa->tdb_dst.sa.sa_len);
 
 	if (sa->tdb_ids) {
 		i += sizeof(struct sadb_ident) + PADUP(sa->tdb_ids->id_local->len);
@@ -559,7 +559,7 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	if (sa->tdb_onext) {
 		i += sizeof(struct sadb_sa);
 		i += sizeof(struct sadb_address) +
-		    PADUP(SA_LEN(&sa->tdb_onext->tdb_dst.sa));
+		    PADUP(sa->tdb_onext->tdb_dst.sa.sa_len);
 		i += sizeof(struct sadb_protocol);
 	}
 
@@ -1730,8 +1730,8 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	/* How large a buffer do we need... XXX we only do one proposal for now */
 	i = sizeof(struct sadb_msg) +
 	    (laddr == NULL ? 0 : sizeof(struct sadb_address) +
-		PADUP(SA_LEN(&ipo->ipo_src.sa))) +
-	    sizeof(struct sadb_address) + PADUP(SA_LEN(&gw->sa)) +
+		PADUP(ipo->ipo_src.sa.sa_len)) +
+	    sizeof(struct sadb_address) + PADUP(gw->sa.sa_len) +
 	    sizeof(struct sadb_prop) + 1 * sizeof(struct sadb_comb);
 
 	if (ipo->ipo_ids) {
@@ -1767,22 +1767,22 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	if (laddr) {
 		headers[SADB_EXT_ADDRESS_SRC] = p;
-		p += sizeof(struct sadb_address) + PADUP(SA_LEN(&laddr->sa));
+		p += sizeof(struct sadb_address) + PADUP(laddr->sa.sa_len);
 		sadd = (struct sadb_address *) headers[SADB_EXT_ADDRESS_SRC];
 		sadd->sadb_address_len = (sizeof(struct sadb_address) +
-		    SA_LEN(&laddr->sa) + sizeof(uint64_t) - 1) /
+		    laddr->sa.sa_len + sizeof(uint64_t) - 1) /
 		    sizeof(uint64_t);
 		bcopy(laddr, headers[SADB_EXT_ADDRESS_SRC] +
-		    sizeof(struct sadb_address), SA_LEN(&laddr->sa));
+		    sizeof(struct sadb_address), laddr->sa.sa_len);
 	}
 
 	headers[SADB_EXT_ADDRESS_DST] = p;
-	p += sizeof(struct sadb_address) + PADUP(SA_LEN(&gw->sa));
+	p += sizeof(struct sadb_address) + PADUP(gw->sa.sa_len);
 	sadd = (struct sadb_address *) headers[SADB_EXT_ADDRESS_DST];
 	sadd->sadb_address_len = (sizeof(struct sadb_address) +
-	    SA_LEN(&gw->sa) + sizeof(uint64_t) - 1) / sizeof(uint64_t);
+	    gw->sa.sa_len + sizeof(uint64_t) - 1) / sizeof(uint64_t);
 	bcopy(gw, headers[SADB_EXT_ADDRESS_DST] + sizeof(struct sadb_address),
-	    SA_LEN(&gw->sa));
+	    gw->sa.sa_len);
 
 	if (ipo->ipo_ids)
 		export_identities(&p, ipo->ipo_ids, 0, headers);
@@ -1939,8 +1939,8 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 
 	i = sizeof(struct sadb_msg) + sizeof(struct sadb_sa) +
 	    2 * sizeof(struct sadb_lifetime) +
-	    sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa)) +
-	    sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_dst.sa));
+	    sizeof(struct sadb_address) + PADUP(sa->tdb_src.sa.sa_len) +
+	    sizeof(struct sadb_address) + PADUP(sa->tdb_dst.sa.sa_len);
 
 	if (!(p = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
 		rval = ENOMEM;

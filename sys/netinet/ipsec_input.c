@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.147 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.148 2017/05/05 11:04:18 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -806,8 +806,8 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		if (tdbp->tdb_sproto == IPPROTO_ESP &&
 		    ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_UDPENCAP)) ==
 		    TDBF_UDPENCAP) &&
-		    !memcmp(&tdbp->tdb_dst, &dst, SA_LEN(&su_dst->sa)) &&
-		    !memcmp(&tdbp->tdb_src, &src, SA_LEN(&su_src->sa))) {
+		    !memcmp(&tdbp->tdb_dst, &dst, su_dst->sa.sa_len) &&
+		    !memcmp(&tdbp->tdb_src, &src, su_src->sa.sa_len)) {
 			if ((adjust = ipsec_hdrsz(tdbp)) != -1) {
 				/* Store adjusted MTU in tdb */
 				tdbp->tdb_mtu = mtu - adjust;
