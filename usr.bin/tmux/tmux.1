@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.547 2017/05/04 07:16:43 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.548 2017/05/05 11:59:47 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2017 $
+.Dd $Mdocdate: May 5 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3586,6 +3586,7 @@ The following variables are available, where appropriate:
 .It Li "session_id" Ta "" Ta "Unique session ID"
 .It Li "session_many_attached" Ta "" Ta "1 if multiple clients attached"
 .It Li "session_name" Ta "#S" Ta "Name of session"
+.It Li "session_stack" Ta "" Ta "Window indexes in most recent order"
 .It Li "session_width" Ta "" Ta "Width of session"
 .It Li "session_windows" Ta "" Ta "Number of windows in session"
 .It Li "socket_path" Ta "" Ta "Server socket path"
@@ -3605,6 +3606,7 @@ The following variables are available, where appropriate:
 .It Li "window_name" Ta "#W" Ta "Name of window"
 .It Li "window_panes" Ta "" Ta "Number of panes in window"
 .It Li "window_silence_flag" Ta "" Ta "1 if window has silence alert"
+.It Li "window_stack_index" Ta "" Ta "Index in session most recent stack"
 .It Li "window_visible_layout" Ta "" Ta "Window layout description, respecting zoomed window panes"
 .It Li "window_width" Ta "" Ta "Width of window"
 .It Li "window_zoomed_flag" Ta "" Ta "1 if window is zoomed"
