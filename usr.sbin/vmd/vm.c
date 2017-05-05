@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.16 2017/05/05 07:48:02 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.17 2017/05/05 20:16:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -409,22 +409,20 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 __dead void
 vm_shutdown(unsigned int cmd)
 {
-	struct privsep	*ps = &env->vmd_ps;
-
 	switch (cmd) {
 	case VMMCI_NONE:
 	case VMMCI_SHUTDOWN:
-		(void)proc_compose(ps, PROC_VMM,
-		    IMSG_VMDOP_VM_SHUTDOWN, NULL, 0);
+		(void)imsg_compose_event(&current_vm->vm_iev,
+		    IMSG_VMDOP_VM_SHUTDOWN, 0, 0, -1, NULL, 0);
 		break;
 	case VMMCI_REBOOT:
-		(void)proc_compose(ps, PROC_VMM,
-		    IMSG_VMDOP_VM_REBOOT, NULL, 0);
+		(void)imsg_compose_event(&current_vm->vm_iev,
+		    IMSG_VMDOP_VM_REBOOT, 0, 0, -1, NULL, 0);
 		break;
 	default:
 		fatalx("invalid vm ctl command: %d", cmd);
 	}
-	proc_flush_imsg(ps, PROC_VMM, -1);
+	imsg_flush(&current_vm->vm_iev.ibuf);
 
 	_exit(0);
 }
