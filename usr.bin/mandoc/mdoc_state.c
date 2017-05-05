@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_state.c,v 1.6 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_state.c,v 1.7 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -158,7 +158,6 @@ static	const state_handler __state_handlers[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* sp */
 	NULL,		/* %U */
 	NULL,		/* Ta */
-	NULL,		/* ll */
 };
 static const state_handler *const state_handlers = __state_handlers - MDOC_Dd;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.96 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.97 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -87,7 +87,6 @@ static	const v_check __man_valids[MAN_MAX - MAN_TH] = {
 	NULL,       /* EE */
 	post_UR,    /* UR */
 	NULL,       /* UE */
-	NULL,       /* ll */
 };
 static	const v_check *man_valids = __man_valids - MAN_TH;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.148 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.149 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,7 +81,6 @@ static	int		  pre_alternate(DECL_ARGS);
 static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_in(DECL_ARGS);
 static	int		  pre_literal(DECL_ARGS);
-static	int		  pre_ll(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
 
 static	void		  post_IP(DECL_ARGS);
@@ -128,7 +127,6 @@ static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ pre_literal, NULL, 0 }, /* EE */
 	{ pre_UR, post_UR, 0 }, /* UR */
 	{ NULL, NULL, 0 }, /* UE */
-	{ pre_ll, NULL, MAN_NOTEXT }, /* ll */
 };
 static	const struct termact *termacts = __termacts - MAN_TH;
 
@@ -211,14 +209,6 @@ static int
 pre_ign(DECL_ARGS)
 {
 
-	return 0;
-}
-
-static int
-pre_ll(DECL_ARGS)
-{
-
-	term_setwidth(p, n->child != NULL ? n->child->string : NULL);
 	return 0;
 }
 

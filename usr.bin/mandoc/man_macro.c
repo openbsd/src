@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_macro.c,v 1.80 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: man_macro.c,v 1.81 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,7 +74,6 @@ const	struct man_macro __man_macros[MAN_MAX - MAN_TH] = {
 	{ in_line_eoln, MAN_BSCOPE }, /* EE */
 	{ blk_exp, MAN_BSCOPE }, /* UR */
 	{ blk_close, MAN_BSCOPE }, /* UE */
-	{ in_line_eoln, 0 }, /* ll */
 };
 const	struct man_macro *const man_macros = __man_macros - MAN_TH;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.68 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.69 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -264,7 +264,6 @@ static	const struct mdocarg __mdocargs[MDOC_MAX - MDOC_Dd] = {
 	{ ARGSFL_NONE, NULL }, /* sp */
 	{ ARGSFL_NONE, NULL }, /* %U */
 	{ ARGSFL_NONE, NULL }, /* Ta */
-	{ ARGSFL_NONE, NULL }, /* ll */
 };
 static	const struct mdocarg *const mdocargs = __mdocargs - MDOC_Dd;
 

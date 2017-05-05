@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_term.c,v 1.2 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.3 2017/05/05 13:17:04 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <stddef.h>
 
 #include "roff.h"
 #include "out.h"
@@ -28,10 +29,12 @@ typedef	void	(*roff_term_pre_fp)(ROFF_TERM_ARGS);
 
 static	void	  roff_term_pre_br(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ft(ROFF_TERM_ARGS);
+static	void	  roff_term_pre_ll(ROFF_TERM_ARGS);
 
 static	const roff_term_pre_fp roff_term_pre_acts[ROFF_MAX] = {
 	roff_term_pre_br,  /* br */
 	roff_term_pre_ft,  /* ft */
+	roff_term_pre_ll,  /* ft */
 };
 
 
@@ -77,4 +80,10 @@ roff_term_pre_ft(ROFF_TERM_ARGS)
 	default:
 		break;
 	}
+}
+
+static void
+roff_term_pre_ll(ROFF_TERM_ARGS)
+{
+	term_setwidth(p, n->child != NULL ? n->child->string : NULL);
 }

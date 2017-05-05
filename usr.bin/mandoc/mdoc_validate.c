@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.240 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.241 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -228,7 +228,6 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_par,	/* sp */
 	NULL,		/* %U */
 	NULL,		/* Ta */
-	NULL,		/* ll */
 };
 static	const v_post *const mdoc_valids = __mdoc_valids - MDOC_Dd;
 

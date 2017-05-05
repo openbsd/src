@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.19 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.20 2017/05/05 13:17:04 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
@@ -226,7 +225,6 @@ static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* sp */
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
-	{ NULL, NULL, NULL, NULL, NULL }, /* ll */
 };
 static	const struct md_act *const md_acts = __md_acts - MDOC_Dd;
 
@@ -325,11 +323,9 @@ md_node(struct roff_node *n)
 		case ROFF_br:
 			process_children = md_pre_br(n);
 			break;
-		case ROFF_ft:
+		default:
 			process_children = 0;
 			break;
-		default:
-			abort();
 		}
 	} else {
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
