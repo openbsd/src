@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.93 2017/05/05 13:17:04 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.94 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,7 +67,6 @@ static	int		  man_ign_pre(MAN_ARGS);
 static	int		  man_in_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
 static	void		  man_root_pre(MAN_ARGS);
-static	int		  man_sp_pre(MAN_ARGS);
 
 static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL }, /* TH */
@@ -90,7 +89,6 @@ static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ man_I_pre, NULL }, /* I */
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
-	{ man_sp_pre, NULL }, /* sp */
 	{ NULL, NULL }, /* nf */
 	{ NULL, NULL }, /* fi */
 	{ NULL, NULL }, /* RE */
@@ -302,6 +300,7 @@ print_man_node(MAN_ARGS)
 		t = h->tag;
 		if (n->tok < ROFF_MAX) {
 			roff_html_pre(h, n);
+			child = 0;
 			break;
 		}
 
@@ -409,25 +408,6 @@ man_root_post(MAN_ARGS)
 	if (man->os)
 		print_text(h, man->os);
 	print_tagq(h, t);
-}
-
-
-static int
-man_sp_pre(MAN_ARGS)
-{
-	struct roffsu	 su;
-
-	SCALE_VS_INIT(&su, 1);
-	if (NULL != (n = n->child))
-		if ( ! a2roffsu(n->string, &su, SCALE_VS))
-			su.scale = 1.0;
-
-	print_otag(h, TAG_DIV, "suh", &su);
-
-	/* So the div isn't empty: */
-	print_text(h, "\\~");
-
-	return 0;
 }
 
 static int

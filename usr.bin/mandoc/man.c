@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.119 2017/05/01 23:27:23 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.120 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,7 +95,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 		/* Allocate a blank entry. */
 		if (man->last->tok != MAN_SH &&
 		    man->last->tok != MAN_SS) {
-			roff_elem_alloc(man, line, offs, MAN_sp);
+			roff_elem_alloc(man, line, offs, ROFF_sp);
 			man->next = ROFF_NEXT_SIBLING;
 		}
 		return 1;

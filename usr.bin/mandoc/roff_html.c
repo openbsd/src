@@ -1,6 +1,7 @@
-/*	$OpenBSD: roff_html.c,v 1.2 2017/05/05 02:06:17 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.3 2017/05/05 15:16:26 schwarze Exp $ */
 /*
- * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,10 +29,13 @@
 typedef	void	(*roff_html_pre_fp)(ROFF_HTML_ARGS);
 
 static	void	  roff_html_pre_br(ROFF_HTML_ARGS);
+static	void	  roff_html_pre_sp(ROFF_HTML_ARGS);
 
 static	const roff_html_pre_fp roff_html_pre_acts[ROFF_MAX] = {
 	roff_html_pre_br,  /* br */
 	NULL,  /* ft */
+	NULL,  /* ll */
+	roff_html_pre_sp,  /* sp */
 };
 
 
@@ -47,5 +51,21 @@ static void
 roff_html_pre_br(ROFF_HTML_ARGS)
 {
 	print_otag(h, TAG_DIV, "");
+	print_text(h, "\\~");  /* So the div isn't empty. */
+}
+
+static void
+roff_html_pre_sp(ROFF_HTML_ARGS)
+{
+	struct roffsu	 su;
+
+	SCALE_VS_INIT(&su, 1);
+	if ((n = n->child) != NULL) {
+		if (a2roffsu(n->string, &su, SCALE_VS) == 0)
+			su.scale = 1.0;
+		else if (su.scale < 0.0)
+			su.scale = 0.0;
+	}
+	print_otag(h, TAG_DIV, "suh", &su);
 	print_text(h, "\\~");  /* So the div isn't empty. */
 }

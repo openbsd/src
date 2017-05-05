@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.110 2017/05/05 13:17:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.111 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -71,7 +71,6 @@ static	void	  post_nm(DECL_ARGS);
 static	void	  post_percent(DECL_ARGS);
 static	void	  post_pf(DECL_ARGS);
 static	void	  post_sect(DECL_ARGS);
-static	void	  post_sp(DECL_ARGS);
 static	void	  post_vt(DECL_ARGS);
 static	int	  pre__t(DECL_ARGS);
 static	int	  pre_an(DECL_ARGS);
@@ -107,7 +106,7 @@ static	int	  pre_ns(DECL_ARGS);
 static	int	  pre_pp(DECL_ARGS);
 static	int	  pre_rs(DECL_ARGS);
 static	int	  pre_sm(DECL_ARGS);
-static	int	  pre_sp(DECL_ARGS);
+static	void	  pre_sp(DECL_ARGS);
 static	int	  pre_sect(DECL_ARGS);
 static	int	  pre_sy(DECL_ARGS);
 static	void	  pre_syn(const struct roff_node *);
@@ -126,6 +125,7 @@ static	const void_fp roff_manacts[ROFF_MAX] = {
 	pre_br,
 	pre_ft,
 	pre_ll,
+	pre_sp,
 };
 
 static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {
@@ -247,7 +247,6 @@ static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {
 	{ cond_body, pre_en, post_en, NULL, NULL }, /* En */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dx */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
-	{ NULL, pre_sp, post_sp, NULL, NULL }, /* sp */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 };
@@ -1692,22 +1691,17 @@ pre_sm(DECL_ARGS)
 	return 0;
 }
 
-static int
+static void
 pre_sp(DECL_ARGS)
 {
-
-	if (MMAN_PP & outflags) {
+	if (outflags & MMAN_PP) {
 		outflags &= ~MMAN_PP;
 		print_line(".PP", 0);
-	} else
+	} else {
 		print_line(".sp", 0);
-	return 1;
-}
-
-static void
-post_sp(DECL_ARGS)
-{
-
+		if (n->child != NULL)
+			print_word(n->child->string);
+	}
 	outflags |= MMAN_nl;
 }
 

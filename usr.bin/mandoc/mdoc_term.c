@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.253 2017/05/05 13:17:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.254 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,7 +113,7 @@ static	int	  termp_rs_pre(DECL_ARGS);
 static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_skip_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
-static	int	  termp_sp_pre(DECL_ARGS);
+static	int	  termp_pp_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
 static	int	  termp_sy_pre(DECL_ARGS);
 static	int	  termp_tag_pre(DECL_ARGS);
@@ -128,7 +128,7 @@ static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL }, /* Os */
 	{ termp_sh_pre, termp_sh_post }, /* Sh */
 	{ termp_ss_pre, termp_ss_post }, /* Ss */
-	{ termp_sp_pre, NULL }, /* Pp */
+	{ termp_pp_pre, NULL }, /* Pp */
 	{ termp_d1_pre, termp_bl_post }, /* D1 */
 	{ termp_d1_pre, termp_bl_post }, /* Dl */
 	{ termp_bd_pre, termp_bd_post }, /* Bd */
@@ -230,7 +230,7 @@ static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ termp_under_pre, NULL }, /* Fr */
 	{ NULL, NULL }, /* Ud */
 	{ NULL, termp_lb_post }, /* Lb */
-	{ termp_sp_pre, NULL }, /* Lp */
+	{ termp_pp_pre, NULL }, /* Lp */
 	{ termp_lk_pre, NULL }, /* Lk */
 	{ termp_under_pre, NULL }, /* Mt */
 	{ termp_quote_pre, termp_quote_post }, /* Brq */
@@ -241,7 +241,6 @@ static	const struct termact __termacts[MDOC_MAX - MDOC_Dd] = {
 	{ termp_quote_pre, termp_quote_post }, /* En */
 	{ termp_xx_pre, termp_xx_post }, /* Dx */
 	{ NULL, termp____post }, /* %Q */
-	{ termp_sp_pre, NULL }, /* sp */
 	{ NULL, termp____post }, /* %U */
 	{ NULL, NULL }, /* Ta */
 };
@@ -1493,9 +1492,9 @@ termp_bd_pre(DECL_ARGS)
 		 * anyway, so don't sweat it.
 		 */
 		switch (nn->tok) {
-		case MDOC_Sm:
 		case ROFF_br:
-		case MDOC_sp:
+		case ROFF_sp:
+		case MDOC_Sm:
 		case MDOC_Bl:
 		case MDOC_D1:
 		case MDOC_Dl:
@@ -1642,37 +1641,10 @@ termp_in_post(DECL_ARGS)
 }
 
 static int
-termp_sp_pre(DECL_ARGS)
+termp_pp_pre(DECL_ARGS)
 {
-	struct roffsu	 su;
-	int		 i, len;
-
-	switch (n->tok) {
-	case MDOC_sp:
-		if (n->child) {
-			if ( ! a2roffsu(n->child->string, &su, SCALE_VS))
-				su.scale = 1.0;
-			len = term_vspan(p, &su);
-		} else
-			len = 1;
-		break;
-	case ROFF_br:
-		len = 0;
-		break;
-	default:
-		len = 1;
-		fn_prio = 0;
-		break;
-	}
-
-	if (0 == len)
-		term_newln(p);
-	else if (len < 0)
-		p->skipvsp -= len;
-	else
-		for (i = 0; i < len; i++)
-			term_vspace(p);
-
+	fn_prio = 0;
+	term_vspace(p);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.20 2017/05/05 13:17:04 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.21 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -222,7 +222,6 @@ static	const struct md_act __md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ md_cond_body, md_pre_En, md_post_En, NULL, NULL }, /* En */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Dx */
 	{ NULL, NULL, md_post_pc, NULL, NULL }, /* %Q */
-	{ NULL, md_pre_Pp, NULL, NULL, NULL }, /* sp */
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
 };
@@ -322,6 +321,9 @@ md_node(struct roff_node *n)
 		switch (n->tok) {
 		case ROFF_br:
 			process_children = md_pre_br(n);
+			break;
+		case ROFF_sp:
+			process_children = md_pre_Pp(n);
 			break;
 		default:
 			process_children = 0;

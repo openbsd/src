@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.152 2017/04/29 12:43:55 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.153 2017/05/05 15:16:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -251,7 +251,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		 * blank lines aren't allowed, but enough manuals assume this
 		 * behaviour that we want to work around it.
 		 */
-		roff_elem_alloc(mdoc, line, offs, MDOC_sp);
+		roff_elem_alloc(mdoc, line, offs, ROFF_sp);
 		mdoc->last->flags |= NODE_VALID | NODE_ENDED;
 		mdoc->next = ROFF_NEXT_SIBLING;
 		return 1;
