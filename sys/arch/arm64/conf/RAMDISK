@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.24 2017/04/30 17:42:32 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.25 2017/05/05 15:23:46 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -63,6 +63,8 @@ ahci*		at fdt?
 ehci*		at fdt?
 pciecam*	at fdt?
 pci*		at pciecam?
+sdhc*		at fdt?
+sdmmc*		at sdhc?
 xhci*		at fdt?
 
 # NS16550 compatible serial ports
