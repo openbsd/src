@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.1 2017/03/09 20:01:10 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.2 2017/05/05 17:38:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -22,7 +22,7 @@
 #include <machine/bus.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_misc.h>
 
 struct regmap {
 	uint32_t		rm_phandle;
