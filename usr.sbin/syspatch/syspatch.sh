@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.98 2017/05/04 12:28:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.99 2017/05/05 08:07:36 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -26,7 +26,7 @@ sp_err()
 
 usage()
 {
-	sp_err "usage: ${0##*/} [-c | -l | -r]"
+	sp_err "usage: ${0##*/} [-c | -l | -R | -r]"
 }
 
 apply_patch()
@@ -206,7 +206,7 @@ rollback_patch()
 	local _explodir _file _files _patch _ret=0
 
 	_patch="$(ls_installed | tail -1)"
-	[[ -n ${_patch} ]]
+	[[ -n ${_patch} ]] || return # function used as a while condition
 
 	_explodir=${_TMP}/${_patch}-rollback
 	_patch=${_OSrev}-${_patch}
@@ -297,12 +297,13 @@ readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
 trap 'set +e; rm -rf "${_TMP}"' EXIT
 trap exit HUP INT TERM
 
-while getopts clr arg; do
+while getopts clRr arg; do
 	case ${arg} in
-		c) ls_missing;;
-		l) ls_installed;;
-		r) rollback_patch;;
-		*) usage;;
+		c) ls_missing ;;
+		l) ls_installed ;;
+		R) while rollback_patch; do :; done ;;
+		r) rollback_patch ;;
+		*) usage ;;
 	esac
 done
 shift $((OPTIND - 1))

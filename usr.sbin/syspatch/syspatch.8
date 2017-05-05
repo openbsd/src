@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.16 2017/04/08 20:36:50 schwarze Exp $
+.\"	$OpenBSD: syspatch.8,v 1.17 2017/05/05 08:07:36 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2017 $
+.Dd $Mdocdate: May 5 2017 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd manage base system binary patches
 .Sh SYNOPSIS
 .Nm syspatch
-.Op Fl c | l | r
+.Op Fl c | l | R | r
 .Sh DESCRIPTION
 .Nm
 is a utility to fetch, verify, install and revert
@@ -44,6 +44,8 @@ List available patches; suitable for
 .Xr cron 8 .
 .It Fl l
 List installed patches.
+.It Fl R
+Revert all patches.
 .It Fl r
 Revert the most recently installed patch.
 .El
