@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1816 2017/04/20 14:43:59 jsg Exp $
+$OpenBSD: pcidevs,v 1.1817 2017/05/05 11:26:35 jmatthew Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5297,6 +5297,7 @@ product MOXA CP114		0x1141	CP-114
 product MOXA C104H		0x1040	C104H
 product MOXA CP104UL		0x1041	CP-104UL
 product MOXA CP104JU		0x1042	CP-104JU
+product MOXA CP104EL		0x1043	CP-104EL
 product MOXA C168H		0x1680	C168H
 product MOXA CP168U		0x1681  CP-168U
 
