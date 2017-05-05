@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.3 2016/08/22 19:31:27 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.1 2017/05/05 20:13:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sunxi,v 1.18 2017/01/21 08:26:49 patrick Exp $
+#	$OpenBSD: files.sunxi,v 1.19 2017/05/05 20:13:54 kettenis Exp $
 
 device	sxiintc
 attach	sxiintc at fdt
@@ -22,6 +22,3 @@ file	arch/armv7/sunxi/sxiahci.c		sxiahci
 device	sxie: ether, ifnet, mii, ifmedia
 attach	sxie at fdt
 file	arch/armv7/sunxi/sxie.c			sxie
-
-attach	dwge at fdt with dwge_fdt
-file	arch/armv7/sunxi/if_dwge_fdt.c		dwge_fdt
