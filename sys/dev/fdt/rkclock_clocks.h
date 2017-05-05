@@ -1,9 +1,13 @@
 /* Public Domain */
 
+#define RK3399_CLK_EMMC		78
+
 #define RK3399_CLK_UART0	81
 #define RK3399_CLK_UART1	82
 #define RK3399_CLK_UART2	83
 #define RK3399_CLK_UART3	84
+
+#define RK3399_ACLK_EMMC	240
 
 #define RK3399_HCLK_HOST0	456
 #define RK3399_HCLK_HOST0_ARB	457

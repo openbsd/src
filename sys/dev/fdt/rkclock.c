@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.1 2017/04/30 17:42:32 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.2 2017/05/05 13:23:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,6 +30,7 @@
 
 /* Registers */
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 
 #include "rkclock_clocks.h"
 
@@ -213,6 +214,9 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	switch (idx) {
+	case RK3399_CLK_EMMC:
+		/* Enabled by frimware! */
+		break;
 	case RK3399_CLK_UART0:
 	case RK3399_CLK_UART1:
 	case RK3399_CLK_UART2:
@@ -223,6 +227,9 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_HCLK_HOST0_ARB:
 	case RK3399_HCLK_HOST1:
 	case RK3399_HCLK_HOST1_ARB:
+		/* Enabled by firmware! */
+		break;
+	case RK3399_ACLK_EMMC:
 		/* Enabled by firmware! */
 		break;
 	default:
