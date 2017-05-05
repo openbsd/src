@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.150 2017/02/16 14:38:07 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.151 2017/05/05 02:31:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2017 $
+.Dd $Mdocdate: May 5 2017 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -476,7 +476,6 @@ in the alphabetical
 .It Sx \&Ap Ta apostrophe without surrounding whitespace (no arguments)
 .It Sx \&Sm Ta switch horizontal spacing mode: Op Cm on | off
 .It Sx \&Bk , \&Ek Ta keep block: Fl words
-.It Sx \&br Ta force output line break in text mode (no arguments)
 .It Sx \&sp Ta force vertical space: Op Ar height
 .El
 .Ss Semantic markup for command line utilities:
@@ -2749,14 +2748,6 @@ Examples:
 .Dl \&.Xr mandoc 1
 .Dl \&.Xr mandoc 1 \&;
 .Dl \&.Xr mandoc 1 \&Ns s behaviour
-.Ss \&br
-Emits a line-break.
-This macro should not be used; it is implemented for compatibility with
-historical manuals.
-.Pp
-Consider using
-.Sx \&Pp
-in the event of natural paragraph breaks.
 .Ss \&sp
 Emits vertical space.
 This macro should not be used; it is implemented for compatibility with
@@ -3056,7 +3047,6 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Va  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Vt  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Xr  Ta    Yes      Ta    Yes      Ta    2
-.It Sx \&br  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&sp  Ta    \&No     Ta    \&No     Ta    1
 .El
 .Ss Delimiters

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.44 2015/01/29 00:33:14 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.45 2017/05/05 02:31:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: May 5 2017 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -266,7 +266,6 @@ in the alphabetical reference below.
 .It Sx TP Ta tagged paragraph: Op Ar width
 .It Sx HP Ta hanged paragraph: Op Ar width
 .It Sx PD Ta set vertical paragraph distance: Op Ar height
-.It Sx \&br Ta force output line break in text mode (no arguments)
 .It Sx \&sp Ta force vertical space: Op Ar height
 .It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
 .It Sx in Ta additional indent: Op Ar width
@@ -748,12 +747,10 @@ The
 argument is a scaling width as described in
 .Xr roff 7 .
 If 0, this is equivalent to the
-.Sx \&br
-macro.
+.Xr roff 7
+.Ic \&br
+request.
 Defaults to 1, if unspecified.
-.Pp
-See also
-.Sx \&br .
 .Sh MACRO SYNTAX
 The
 .Nm
@@ -778,8 +775,6 @@ is equivalent to
 If next-line macros are invoked consecutively, only the last is used.
 If a next-line macro is followed by a non-next-line macro, an error is
 raised, except for
-.Sx \&br
-and
 .Sx \&sp .
 .Pp
 The syntax is as follows:
@@ -808,7 +803,6 @@ The syntax is as follows:
 .It Sx \&SM  Ta    n         Ta    next-line Ta    \&
 .It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
 .It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
-.It Sx \&br  Ta    0         Ta    current   Ta    compat
 .It Sx \&fi  Ta    0         Ta    current   Ta    compat
 .It Sx \&in  Ta    1         Ta    current   Ta    compat
 .It Sx \&nf  Ta    0         Ta    current   Ta    compat
