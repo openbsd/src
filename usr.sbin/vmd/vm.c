@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.15 2017/05/02 07:19:53 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.16 2017/05/05 07:48:02 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -139,7 +139,8 @@ static const struct vcpu_reg_state vcpu_init_flat32 = {
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
-	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL
+	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
+	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
 #endif
 };
 
@@ -175,7 +176,8 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
-	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL
+	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
+	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
 #endif
 };
 
