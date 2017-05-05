@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.54 2017/04/06 03:15:29 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.55 2017/05/05 15:10:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <dev/sdmmc/sdhcreg.h>
@@ -316,6 +317,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		if (ISSET(caps2, SDHC_DDR50_SUPP))
 			saa.caps |= SMC_CAPS_MMC_DDR52;
 	}
+
+	if (ISSET(sc->sc_flags, SDHC_F_NODDR50))
+		saa.caps &= ~SMC_CAPS_MMC_DDR52;
 
 	hp->sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (hp->sdmmc == NULL) {
@@ -683,6 +687,9 @@ int
 sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	struct sdhc_host *hp = sch;
+
+	if (hp->sc->sc_signal_voltage)
+		return hp->sc->sc_signal_voltage(hp->sc, signal_voltage);
 
 	if (SDHC_SPEC_VERSION(hp->version) < SDHC_SPEC_V3)
 		return EINVAL;

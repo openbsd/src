@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.9 2016/04/30 11:32:23 kettenis Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.10 2017/05/05 15:10:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -32,6 +32,7 @@ struct sdhc_softc {
 	bus_dma_tag_t sc_dmat;
 
 	int (*sc_card_detect)(struct sdhc_softc *);
+	int (*sc_signal_voltage)(struct sdhc_softc *, int);
 };
 
 /* Host controller functions called by the attachment driver. */
@@ -45,5 +46,6 @@ void	sdhc_needs_discover(struct sdhc_softc *);
 
 /* flag values */
 #define SDHC_F_NOPWR0		(1 << 0)
+#define SDHC_F_NODDR50		(1 << 1)
 
 #endif
