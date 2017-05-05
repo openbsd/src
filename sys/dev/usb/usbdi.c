@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.91 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.92 2017/05/05 11:28:48 jsg Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -728,12 +728,6 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	}
 #endif
 
-#ifdef DIAGNOSTIC
-	if (pipe == NULL) {
-		printf("usb_transfer_complete: pipe==0, xfer=%p\n", xfer);
-		return;
-	}
-#endif
 	/* XXXX */
 	if (polling)
 		pipe->running = 0;
