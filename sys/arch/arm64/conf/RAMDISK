@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.25 2017/05/05 15:23:46 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.26 2017/05/05 17:43:47 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -92,6 +92,7 @@ usb*		at dwctwo?
 # Rockchip SoCs
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
+rkpinctrl*	at fdt? early 1
 
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.13 2017/05/05 15:23:46 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.14 2017/05/05 17:43:47 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -68,3 +68,7 @@ file	dev/fdt/rkclock.c		rkclock
 device	rkgrf
 attach	rkgrf at fdt
 file	dev/fdt/rkgrf.c			rkgrf
+
+device	rkpinctrl
+attach	rkpinctrl at fdt
+file	dev/fdt/rkpinctrl.c		rkpinctrl
