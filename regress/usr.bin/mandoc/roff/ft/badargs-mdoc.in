@@ -1,0 +1,18 @@
+.Dd May 5, 2017
+.Dt FT-BADARGS-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm ft-badargs-mdoc
+.Nd font request with bad arguments
+.Sh DESCRIPTION
+default font
+.ft B
+bold
+.ft foo
+still bold
+.ft I bogus
+italic
+.ft P
+back to bold
+.ft
+back to italic

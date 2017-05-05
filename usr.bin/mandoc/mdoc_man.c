@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.108 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.109 2017/05/05 02:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -92,6 +92,7 @@ static	int	  pre_fl(DECL_ARGS);
 static	int	  pre_fn(DECL_ARGS);
 static	int	  pre_fo(DECL_ARGS);
 static	int	  pre_ft(DECL_ARGS);
+static	int	  pre_Ft(DECL_ARGS);
 static	int	  pre_in(DECL_ARGS);
 static	int	  pre_it(DECL_ARGS);
 static	int	  pre_lk(DECL_ARGS);
@@ -146,14 +147,14 @@ static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, pre_fd, post_fd, NULL, NULL }, /* Fd */
 	{ NULL, pre_fl, post_fl, NULL, NULL }, /* Fl */
 	{ NULL, pre_fn, post_fn, NULL, NULL }, /* Fn */
-	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ft */
+	{ NULL, pre_Ft, post_font, NULL, NULL }, /* Ft */
 	{ NULL, pre_sy, post_font, NULL, NULL }, /* Ic */
 	{ NULL, pre_in, post_in, NULL, NULL }, /* In */
 	{ NULL, pre_li, post_font, NULL, NULL }, /* Li */
 	{ cond_head, pre_enc, NULL, "\\- ", NULL }, /* Nd */
 	{ NULL, pre_nm, post_nm, NULL, NULL }, /* Nm */
 	{ cond_body, pre_enc, post_enc, "[", "]" }, /* Op */
-	{ NULL, pre_ft, post_font, NULL, NULL }, /* Ot */
+	{ NULL, pre_Ft, post_font, NULL, NULL }, /* Ot */
 	{ NULL, pre_em, post_font, NULL, NULL }, /* Pa */
 	{ NULL, pre_ex, NULL, NULL, NULL }, /* Rv */
 	{ NULL, NULL, NULL, NULL, NULL }, /* St */
@@ -652,7 +653,10 @@ print_node(DECL_ARGS)
 	} else if (n->tok < ROFF_MAX) {
 		switch (n->tok) {
 		case ROFF_br:
-			pre_br(meta, n);
+			do_sub = pre_br(meta, n);
+			break;
+		case ROFF_ft:
+			do_sub = pre_ft(meta, n);
 			break;
 		default:
 			abort();
@@ -1312,12 +1316,21 @@ post_fo(DECL_ARGS)
 }
 
 static int
-pre_ft(DECL_ARGS)
+pre_Ft(DECL_ARGS)
 {
 
 	pre_syn(n);
 	font_push('I');
 	return 1;
+}
+
+static int
+pre_ft(DECL_ARGS)
+{
+	print_line(".ft", 0);
+	print_word(n->child->string);
+	outflags |= MMAN_nl;
+	return 0;
 }
 
 static int

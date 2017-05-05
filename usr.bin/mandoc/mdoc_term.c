@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.251 2017/05/04 22:07:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.252 2017/05/05 02:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -364,6 +364,7 @@ print_mdoc_node(DECL_ARGS)
 	default:
 		if (n->tok < ROFF_MAX) {
 			roff_term_pre(p, n);
+			chld = 0;
 			break;
 		}
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);

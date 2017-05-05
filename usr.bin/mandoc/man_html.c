@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.91 2017/05/04 22:07:44 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.92 2017/05/05 02:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -100,7 +100,6 @@ static	const struct htmlman __mans[MAN_MAX - MAN_TH] = {
 	{ man_ign_pre, NULL }, /* PD */
 	{ man_ign_pre, NULL }, /* AT */
 	{ man_in_pre, NULL }, /* in */
-	{ man_ign_pre, NULL }, /* ft */
 	{ man_OP_pre, NULL }, /* OP */
 	{ NULL, NULL }, /* EX */
 	{ NULL, NULL }, /* EE */

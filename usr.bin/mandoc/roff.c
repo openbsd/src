@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.168 2017/05/04 17:48:24 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.169 2017/05/05 02:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -180,6 +180,7 @@ static	enum rofferr	 roff_line_ignore(ROFF_ARGS);
 static	void		 roff_man_alloc1(struct roff_man *);
 static	void		 roff_man_free1(struct roff_man *);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
+static	enum rofferr	 roff_onearg(ROFF_ARGS);
 static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 				int, int);
 static	enum rofferr	 roff_parsetext(struct buf *, int, int *);
@@ -208,7 +209,7 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 #define	ROFFNUM_WHITE	(1 << 1)  /* Skip whitespace in roff_evalnum(). */
 
 const char *__roff_name[MAN_MAX + 1] = {
-	"br",		NULL,
+	"br",		"ft",		NULL,
 	"ab",		"ad",		"af",		"aln",
 	"als",		"am",		"am1",		"ami",
 	"ami1",		"as",		"as1",		"asciify",
@@ -307,7 +308,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"B",		"I",		"IR",		"RI",
 	"sp",		"nf",		"fi",
 	"RE",		"RS",		"DT",		"UC",
-	"PD",		"AT",		"in",		"ft",
+	"PD",		"AT",		"in",
 	"OP",		"EX",		"EE",		"UR",
 	"UE",		"ll",		NULL
 };
@@ -315,6 +316,7 @@ const	char *const *roff_name = __roff_name;
 
 static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_br, NULL, NULL, 0 },  /* br */
+	{ roff_onearg, NULL, NULL, 0 },  /* ft */
 	{ NULL, NULL, NULL, 0 },  /* ROFF_MAX */
 	{ roff_unsupp, NULL, NULL, 0 },  /* ab */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ad */
@@ -2761,6 +2763,34 @@ roff_TS(ROFF_ARGS)
 		r->first_tbl = r->last_tbl = tbl;
 
 	r->tbl = r->last_tbl = tbl;
+	return ROFF_IGN;
+}
+
+static enum rofferr
+roff_onearg(ROFF_ARGS)
+{
+	struct roff_node	*n;
+	char			*cp;
+
+	roff_elem_alloc(r->man, ln, ppos, tok);
+	n = r->man->last;
+
+	cp = buf->buf + pos;
+	if (*cp != '\0') {
+		while (*cp != '\0' && *cp != ' ')
+			cp++;
+		while (*cp == ' ')
+			*cp++ = '\0';
+		if (*cp != '\0')
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS,
+			    r->parse, ln, cp - buf->buf,
+			    "%s ... %s", roff_name[tok], cp);
+		roff_word_alloc(r->man, ln, pos, buf->buf + pos);
+	}
+
+	n->flags |= NODE_LINE | NODE_VALID | NODE_ENDED;
+	r->man->last = n;
+	r->man->next = ROFF_NEXT_SIBLING;
 	return ROFF_IGN;
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.107 2017/05/04 22:07:44 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.108 2017/05/05 02:06:17 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ DPADD += ${LIBUTIL}
 LDADD	+= -lutil -lz
 
 SRCS=	mandoc_aux.c mandoc_ohash.c mandoc.c chars.c preconv.c read.c \
-	roff.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
+	roff.c roff_validate.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
 SRCS+=	mdoc_macro.c mdoc.c \
 	mdoc_argv.c mdoc_state.c mdoc_validate.c att.c msec.c st.c
 SRCS+=	man_macro.c man.c man_validate.c

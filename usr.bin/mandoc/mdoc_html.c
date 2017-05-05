@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.157 2017/05/04 22:07:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.158 2017/05/05 02:06:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -393,6 +393,7 @@ print_mdoc_node(MDOC_ARGS)
 		assert(h->tblt == NULL);
 		if (n->tok < ROFF_MAX) {
 			roff_html_pre(h, n);
+			child = 0;
 			break;
 		}
 		assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);

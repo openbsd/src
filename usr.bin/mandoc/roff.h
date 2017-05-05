@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.25 2017/05/04 17:48:24 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.26 2017/05/05 02:06:17 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,6 +67,7 @@ enum	roff_type {
 
 enum	roff_tok {
 	ROFF_br = 0,
+	ROFF_ft,
 	ROFF_MAX,
 	ROFF_ab,
 	ROFF_ad,
@@ -156,7 +157,6 @@ enum	roff_tok {
 	ROFF_fschar,
 	ROFF_fspacewidth,
 	ROFF_fspecial,
-	/* MAN_ft; ignored in mdoc(7) */
 	ROFF_ftr,
 	ROFF_fzoom,
 	ROFF_gcolor,
@@ -464,7 +464,6 @@ enum	roff_tok {
 	MAN_PD,
 	MAN_AT,
 	MAN_in,
-	MAN_ft,
 	MAN_OP,
 	MAN_EX,
 	MAN_EE,
@@ -576,3 +575,4 @@ void		 deroff(char **, const struct roff_node *);
 struct ohash	*roffhash_alloc(enum roff_tok, enum roff_tok);
 enum roff_tok	 roffhash_find(struct ohash *, const char *, size_t);
 void		 roffhash_free(struct ohash *);
+void		 roff_validate(struct roff_man *);

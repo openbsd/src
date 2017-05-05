@@ -1,0 +1,9 @@
+FT-BADARGS-MDOC(1)          General Commands Manual         FT-BADARGS-MDOC(1)
+
+NNAAMMEE
+     fftt--bbaaddaarrggss--mmddoocc - font request with bad arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     default font bboolldd ssttiillll bboolldd _i_t_a_l_i_c bbaacckk ttoo bboolldd _b_a_c_k _t_o _i_t_a_l_i_c
+
+OpenBSD                           May 5, 2017                          OpenBSD
