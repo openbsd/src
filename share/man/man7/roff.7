@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.57 2017/05/05 02:31:23 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.58 2017/05/05 15:54:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1542,6 +1542,16 @@ is discouraged.
 Use
 .Xr ln 1
 instead.
+.Ss \&sp
+Break the output line and emit vertical space.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Cm \&sp Op Ar height
+.Pp
+The argument follows the syntax of
+.Sx Scaling Widths
+and defaults to one blank line
+.Pq Li 1v .
 .Ss \&spacewidth
 Set the space width from the font metrics file.
 This is a Heirloom extension and currently ignored.
