@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigprocmask.2,v 1.11 2014/12/14 07:42:50 schwarze Exp $
+.\"	$OpenBSD: sigprocmask.2,v 1.12 2017/05/05 02:12:39 millert Exp $
 .\"	$NetBSD: sigprocmask.2,v 1.6 1995/02/27 12:37:33 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigprocmask.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 14 2014 $
+.Dd $Mdocdate: May 5 2017 $
 .Dt SIGPROCMASK 2
 .Os
 .Sh NAME
@@ -85,6 +85,20 @@ quietly disallows
 or
 .Dv SIGSTOP
 to be blocked.
+.Pp
+Only signals which are in the pending state will be blocked.
+Signals that are explicitly ignored or for which no handler has
+been installed and where the default action is to discard the signal
+are not held as pending and will be discarded regardless of the
+signal mask.
+.Pp
+Blocked signals remain in the pending state until another call to
+.Fn sigprocmask
+removes the pending signal(s) from the mask.
+If there are unblocked signals that are pending after the signal
+mask is updated, at least one will be delivered before
+.Fn sigprocmask
+returns.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -100,10 +114,11 @@ has a value other than those listed here.
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
+.Xr sigpending 2 ,
 .Xr sigsuspend 2 ,
 .Xr sigsetops 3
 .Sh STANDARDS
 The
 .Fn sigprocmask
-function call is expected to conform to
+function conforms to
 .St -p1003.1-2008 .
