@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.48 2017/04/05 03:19:22 beck Exp $ */
+/* $OpenBSD: tls.h,v 1.49 2017/05/06 20:57:45 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -187,6 +187,7 @@ const char *tls_conn_servername(struct tls *_ctx);
 const char *tls_conn_version(struct tls *_ctx);
 
 uint8_t *tls_load_file(const char *_file, size_t *_len, char *_password);
+void tls_unload_file(uint8_t *_buf, size_t len);
 
 int tls_ocsp_process_response(struct tls *_ctx, const unsigned char *_response,
     size_t _size);

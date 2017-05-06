@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.5 2016/11/04 15:59:16 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.6 2017/05/06 20:57:45 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -177,4 +177,10 @@ tls_load_file(const char *name, size_t *len, char *password)
 		EVP_PKEY_free(key);
 
 	return (NULL);
+}
+
+void
+tls_unload_file(uint8_t *buf, size_t len)
+{
+	freezero(buf, len);
 }

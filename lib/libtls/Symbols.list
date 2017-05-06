@@ -79,4 +79,5 @@ tls_peer_ocsp_url
 tls_read
 tls_reset
 tls_server
+tls_unload_file
 tls_write
