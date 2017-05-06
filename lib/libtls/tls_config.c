@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.39 2017/05/02 03:59:45 deraadt Exp $ */
+/* $OpenBSD: tls_config.c,v 1.40 2017/05/06 20:59:28 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -207,6 +207,8 @@ tls_config_new(void)
 	if ((config->keypair = tls_keypair_new()) == NULL)
 		goto err;
 
+	config->refcount = 1;
+
 	/*
 	 * Default configuration.
 	 */
@@ -250,6 +252,9 @@ tls_config_free(struct tls_config *config)
 	struct tls_keypair *kp, *nkp;
 
 	if (config == NULL)
+		return;
+
+	if (--config->refcount > 0)
 		return;
 
 	for (kp = config->keypair; kp != NULL; kp = nkp) {
