@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.221 2017/05/05 11:04:18 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.222 2017/05/06 15:55:15 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -113,25 +113,58 @@ RBT_GENERATE(ipsec_ids_flows, ipsec_ids, id_node_id, ipsp_ids_flow_cmp);
 
 struct xformsw xformsw[] = {
 #ifdef IPSEC
-	{ XF_IP4,	     0,               "IPv4 Simple Encapsulation",
-	  ipe4_attach,       ipe4_init,       ipe4_zeroize,
-	  (int (*)(struct mbuf *, struct tdb *, int, int))ipe4_input,
-	  ipip_output, },
-	{ XF_AH,	 XFT_AUTH,	    "IPsec AH",
-	  ah_attach,	ah_init,   ah_zeroize,
-	  ah_input,	 	ah_output, },
-	{ XF_ESP,	 XFT_CONF|XFT_AUTH, "IPsec ESP",
-	  esp_attach,	esp_init,  esp_zeroize,
-	  esp_input,	esp_output, },
-	{ XF_IPCOMP,	XFT_COMP, "IPcomp",
-	  ipcomp_attach,    ipcomp_init, ipcomp_zeroize,
-	  ipcomp_input,     ipcomp_output, },
+{
+  .xf_type	= XF_IP4,
+  .xf_flags	= 0,
+  .xf_name	= "IPv4 Simple Encapsulation",
+  .xf_attach	= ipe4_attach,
+  .xf_init	= ipe4_init,
+  .xf_zeroize	= ipe4_zeroize,
+  .xf_input	= ipe4_input,
+  .xf_output	= ipip_output,
+},
+{
+  .xf_type	= XF_AH,
+  .xf_flags	= XFT_AUTH,
+  .xf_name	= "IPsec AH",
+  .xf_attach	= ah_attach,
+  .xf_init	= ah_init,
+  .xf_zeroize	= ah_zeroize,
+  .xf_input	= ah_input,
+  .xf_output	= ah_output,
+},
+{
+  .xf_type	= XF_ESP,
+  .xf_flags	= XFT_CONF|XFT_AUTH,
+  .xf_name	= "IPsec ESP",
+  .xf_attach	= esp_attach,
+  .xf_init	= esp_init,
+  .xf_zeroize	= esp_zeroize,
+  .xf_input	= esp_input,
+  .xf_output	= esp_output,
+},
+{
+  .xf_type	= XF_IPCOMP,
+  .xf_flags	= XFT_COMP,
+  .xf_name	= "IPcomp",
+  .xf_attach	= ipcomp_attach,
+  .xf_init	= ipcomp_init,
+  .xf_zeroize	= ipcomp_zeroize,
+  .xf_input	= ipcomp_input,
+  .xf_output	= ipcomp_output,
+},
 #endif /* IPSEC */
 #ifdef TCP_SIGNATURE
-	{ XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
-	  tcp_signature_tdb_attach, 	tcp_signature_tdb_init,
-	  tcp_signature_tdb_zeroize,	tcp_signature_tdb_input,
-	  tcp_signature_tdb_output, }
+{
+  .xf_type	= XF_TCPSIGNATURE,
+  .xf_flags	= XFT_AUTH,
+  .xf_name	= "TCP MD5 Signature Option, RFC 2385",
+  .xf_attach	= tcp_signature_tdb_attach,
+  .xf_init	= tcp_signature_tdb_init,
+  .xf_zeroize	= tcp_signature_tdb_zeroize,
+  .xf_input	= tcp_signature_tdb_input,
+  .xf_output	= tcp_signature_tdb_output,
+}
 #endif /* TCP_SIGNATURE */
 };
 
