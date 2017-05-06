@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.2 2017/05/06 16:18:36 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.3 2017/05/06 20:37:25 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -31,6 +31,52 @@ ssl_clamp_version_range(uint16_t *min_ver, uint16_t *max_ver,
 	if (*max_ver > clamp_max)
 		*max_ver = clamp_max;
 
+	return 1;
+}
+
+int
+ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
+    uint16_t *out_ver)
+{
+	uint16_t min_version, max_version;
+
+	if (ver == 0) {
+		*out_ver = meth->internal->min_version;
+		return 1;
+	}
+
+	min_version = ver;
+	max_version = max_ver;
+
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    meth->internal->min_version, meth->internal->max_version))
+		return 0;
+
+	*out_ver = min_version;
+	
+	return 1;
+}
+
+int
+ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
+    uint16_t *out_ver)
+{
+	uint16_t min_version, max_version;
+
+	if (ver == 0) {
+		*out_ver = meth->internal->max_version;
+		return 1;
+	}
+
+	min_version = min_ver;
+	max_version = ver;
+
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    meth->internal->min_version, meth->internal->max_version))
+		return 0;
+
+	*out_ver = max_version;
+	
 	return 1;
 }
 

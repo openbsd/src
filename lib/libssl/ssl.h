@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.127 2017/02/05 15:06:05 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.128 2017/05/06 20:37:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1129,6 +1129,9 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 
 #define SSL_CTRL_SET_DH_AUTO			118
 
+#define SSL_CTRL_SET_MIN_PROTO_VERSION			123
+#define SSL_CTRL_SET_MAX_PROTO_VERSION			124
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1176,6 +1179,12 @@ int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups);
 
 int SSL_set1_groups(SSL *ssl, const int *groups, size_t groups_len);
 int SSL_set1_groups_list(SSL *ssl, const char *groups);
+
+int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, uint16_t version);
+int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, uint16_t version);
+
+int SSL_set_min_proto_version(SSL *ssl, uint16_t version);
+int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 
 #ifndef LIBRESSL_INTERNAL
 #define SSL_CTRL_SET_CURVES			SSL_CTRL_SET_GROUPS
