@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.5 2017/01/31 20:53:50 jmc Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.6 2017/05/06 21:06:19 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,11 +17,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2017 $
+.Dd $Mdocdate: May 6 2017 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
 .Nm tls_load_file ,
+.Nm tls_unload_file ,
 .Nm tls_config_set_ca_file ,
 .Nm tls_config_set_ca_path ,
 .Nm tls_config_set_ca_mem ,
@@ -51,6 +52,11 @@
 .Fa "const char *file"
 .Fa "size_t *len"
 .Fa "char *password"
+.Fc
+.Ft void
+.Fo tls_unload_file
+.Fa "uint8_t *buf"
+.Fa "size_t len"
 .Fc
 .Ft int
 .Fo tls_config_set_ca_file
@@ -176,7 +182,7 @@
 .Fn tls_config_verify_client_optional "struct tls_config *config"
 .Sh DESCRIPTION
 .Fn tls_load_file
-loads a certificate or key from disk into memory to be loaded with
+loads a certificate or key from disk into memory to be used with
 .Fn tls_config_set_ca_mem ,
 .Fn tls_config_set_cert_mem
 or
@@ -184,6 +190,11 @@ or
 A private key will be decrypted if the optional
 .Ar password
 argument is specified.
+.Pp
+.Fn tls_unload_file
+unloads the memory that was returned from an earlier
+.Fn tls_load_file
+call, ensuring that the memory contents is discarded.
 .Pp
 .Fn tls_config_set_ca_file
 sets the filename used to load a file
