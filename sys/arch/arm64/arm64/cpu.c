@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2017/05/06 06:43:02 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2017/05/06 11:27:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -51,7 +51,7 @@ struct cpu_cores {
 };
 
 struct cpu_cores cpu_cores_none[] = {
-	{ 0x0, "Unknown" },
+	{ 0, NULL },
 };
 
 struct cpu_cores cpu_cores_arm[] = {
@@ -60,7 +60,7 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_A57, "Cortex-A57" },
 	{ CPU_PART_CORTEX_A72, "Cortex-A72" },
 	{ CPU_PART_CORTEX_A73, "Cortex-A73" },
-	{ 0x0, "Unknown" },
+	{ 0 },
 };
 
 struct cpu_cores cpu_cores_cavium[] = {
@@ -68,7 +68,7 @@ struct cpu_cores cpu_cores_cavium[] = {
 	{ CPU_PART_THUNDERX_T81, "ThunderX T81" },
 	{ CPU_PART_THUNDERX_T83, "ThunderX T83" },
 	{ CPU_PART_THUNDERX2_T99, "ThunderX2 T99" },
-	{ 0x0, "Unknown" },
+	{ 0 },
 };
 
 /* arm cores makers */
@@ -77,9 +77,9 @@ const struct implementers {
 	char			*name;
 	struct cpu_cores	*corelist;
 } cpu_implementers[] = {
-	{ CPU_IMPL_ARM,		"ARM",		cpu_cores_arm },
-	{ CPU_IMPL_CAVIUM,	"Cavium",	cpu_cores_cavium },
-	{ 0,			"",		NULL },
+	{ CPU_IMPL_ARM,	"ARM", cpu_cores_arm },
+	{ CPU_IMPL_CAVIUM, "Cavium", cpu_cores_cavium },
+	{ 0 },
 };
 
 char cpu_model[64];
@@ -99,8 +99,8 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 	uint64_t midr, impl, part;
-	char *impl_name = "Unknown";
-	char *part_name = "Unknown";
+	char *impl_name = NULL;
+	char *part_name = NULL;
 	struct cpu_cores *coreselecter = cpu_cores_none;
 	int i;
 
@@ -123,12 +123,19 @@ cpu_identify(struct cpu_info *ci)
 		}
 	}
 
-	printf(" %s %s r%dp%d", impl_name, part_name, CPU_VAR(midr),
-	    CPU_REV(midr));
+	if (impl_name && part_name) {
+		printf(" %s %s r%dp%d", impl_name, part_name, CPU_VAR(midr),
+		    CPU_REV(midr));
 
-	if (CPU_IS_PRIMARY(ci))
-		snprintf(cpu_model, sizeof(cpu_model), "%s %s r%dp%d",
-		    impl_name, part_name, CPU_VAR(midr), CPU_REV(midr));
+		if (CPU_IS_PRIMARY(ci))
+			snprintf(cpu_model, sizeof(cpu_model), "%s %s r%dp%d",
+			    impl_name, part_name, CPU_VAR(midr), CPU_REV(midr));
+	} else {
+		printf(" Unknown, MIDR 0x%llx", midr);
+
+		if (CPU_IS_PRIMARY(ci))
+			snprintf(cpu_model, sizeof(cpu_model), "Unknown");
+	}
 }
 
 int
