@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.1 2017/05/05 15:23:46 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.2 2017/05/06 16:25:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/sdmmc/sdhcreg.h>
@@ -78,7 +79,10 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	pinctrl_byname(faa->fa_node, "default");
+
 	clock_enable_all(faa->fa_node);
+	reset_deassert_all(faa->fa_node);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    sdhc_intr, sc, sc->sc.sc_dev.dv_xname);
