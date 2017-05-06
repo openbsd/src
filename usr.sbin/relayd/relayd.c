@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.165 2017/01/24 10:49:14 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.166 2017/05/06 19:44:53 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -543,17 +543,11 @@ purge_table(struct relayd *env, struct tablelist *head, struct table *table)
 }
 
 void
-purge_key(char **ptr, off_t len)
+purge_key(char **key, off_t len)
 {
-	char	*key = *ptr;
+	freezero(*key, len);
 
-	if (key == NULL || len == 0)
-		return;
-
-	explicit_bzero(key, len);
-	free(key);
-
-	*ptr = NULL;
+	*key = NULL;
 }
 
 void
