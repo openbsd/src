@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.3 2017/05/06 21:50:40 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.4 2017/05/06 21:56:43 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -32,6 +32,8 @@ unsigned char *client_readptr, *client_writeptr;
 
 unsigned char server_buffer[CIRCULAR_BUFFER_SIZE];
 unsigned char *server_readptr, *server_writeptr;
+
+char *cafile, *certfile, *keyfile;
 
 int debug = 0;
 
@@ -266,35 +268,26 @@ test_tls_socket(struct tls *client, struct tls *server)
 	return (failure);
 }
 
-int
-main(int argc, char **argv)
+static int
+do_tls_tests(void)
 {
 	struct tls_config *client_cfg, *server_cfg;
 	struct tls *client, *server;
 	int failure = 0;
-
-	if (argc != 4) {
-		fprintf(stderr, "usage: %s keyfile certfile cafile\n",
-		    argv[0]);
-		return (1);
-	}
-
-	if (tls_init() == -1)
-		errx(1, "failed to initialise tls");
 
 	if ((client = tls_client()) == NULL)
 		errx(1, "failed to create tls client");
 	if ((client_cfg = tls_config_new()) == NULL)
 		errx(1, "failed to create tls client config");
 	tls_config_insecure_noverifyname(client_cfg);
-	if (tls_config_set_ca_file(client_cfg, argv[3]) == -1)
+	if (tls_config_set_ca_file(client_cfg, cafile) == -1)
 		errx(1, "failed to set ca: %s", tls_config_error(client_cfg));
 
 	if ((server = tls_server()) == NULL)
 		errx(1, "failed to create tls server");
 	if ((server_cfg = tls_config_new()) == NULL)
 		errx(1, "failed to create tls server config");
-	if (tls_config_set_keypair_file(server_cfg, argv[1], argv[2]) == -1)
+	if (tls_config_set_keypair_file(server_cfg, certfile, keyfile) == -1)
 		errx(1, "failed to set keypair: %s",
 		    tls_config_error(server_cfg));
 
@@ -330,6 +323,29 @@ main(int argc, char **argv)
 
 	tls_free(client);
 	tls_free(server);
+
+	return (failure);
+}
+
+int
+main(int argc, char **argv)
+{
+	int failure = 0;
+
+	if (argc != 4) {
+		fprintf(stderr, "usage: %s cafile certfile keyfile\n",
+		    argv[0]);
+		return (1);
+	}
+
+	cafile = argv[1];
+	certfile = argv[2];
+	keyfile = argv[3];
+
+	if (tls_init() == -1)
+		errx(1, "failed to initialise tls");
+
+	failure |= do_tls_tests();
 
 	return (failure);
 }
