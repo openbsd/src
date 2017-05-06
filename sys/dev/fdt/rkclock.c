@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.2 2017/05/05 13:23:52 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.3 2017/05/06 16:29:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,6 +31,7 @@
 /* Registers */
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
+#define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
 
 #include "rkclock_clocks.h"
 
@@ -211,26 +212,26 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 void
 rk3399_enable(void *cookie, uint32_t *cells, int on)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
 
 	switch (idx) {
 	case RK3399_CLK_EMMC:
-		/* Enabled by frimware! */
-		break;
 	case RK3399_CLK_UART0:
 	case RK3399_CLK_UART1:
 	case RK3399_CLK_UART2:
 	case RK3399_CLK_UART3:
-		/* Enabled by firmware? */
-		break;
+	case RK3399_CLK_MAC_RX:
+	case RK3399_CLK_MAC_TX:
+	case RK3399_CLK_MAC:
+	case RK3399_ACLK_EMMC:
+	case RK3399_ACLK_GMAC:
+	case RK3399_PCLK_GMAC:
 	case RK3399_HCLK_HOST0:
 	case RK3399_HCLK_HOST0_ARB:
 	case RK3399_HCLK_HOST1:
 	case RK3399_HCLK_HOST1_ARB:
-		/* Enabled by firmware! */
-		break;
-	case RK3399_ACLK_EMMC:
-		/* Enabled by firmware! */
+		/* Enabled by default. */
 		break;
 	default:
 		printf("%s: 0x%08x\n", __func__, idx);
@@ -241,9 +242,12 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 void
 rk3399_reset(void *cookie, uint32_t *cells, int on)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t mask = (1 << (idx % 16));
 
-	printf("%s: 0x%08x\n", __func__, idx);
+	HWRITE4(sc, RK3399_CRU_SOFTRST_CON(idx / 16),
+	    mask << 16 | (on ? mask : 0));
 }
 
 uint32_t
