@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.12 2017/04/10 06:09:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.13 2017/05/06 22:24:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,7 +292,7 @@ ssl3_connect(SSL *s)
 				break;
 			}
 			/* Check if it is anon DH/ECDH. */
-			if (!(S3I(s)->tmp.new_cipher->algorithm_auth &
+			if (!(S3I(s)->hs.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
@@ -417,7 +417,7 @@ ssl3_connect(SSL *s)
 				s->internal->state = SSL3_ST_CW_FINISHED_A;
 			s->internal->init_num = 0;
 
-			s->session->cipher = S3I(s)->tmp.new_cipher;
+			s->session->cipher = S3I(s)->hs.new_cipher;
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
 				goto end;
@@ -453,7 +453,7 @@ ssl3_connect(SSL *s)
 			/* clear flags */
 			s->s3->flags &= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
-				S3I(s)->tmp.next_state = SSL_ST_OK;
+				S3I(s)->hs.next_state = SSL_ST_OK;
 				if (s->s3->flags &
 				    SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
 					s->internal->state = SSL_ST_OK;
@@ -463,11 +463,11 @@ ssl3_connect(SSL *s)
 			} else {
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
-					S3I(s)->tmp.next_state =
+					S3I(s)->hs.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
 
-				S3I(s)->tmp.next_state = SSL3_ST_CR_FINISHED_A;
+				S3I(s)->hs.next_state = SSL3_ST_CR_FINISHED_A;
 			}
 			s->internal->init_num = 0;
 			break;
@@ -512,7 +512,7 @@ ssl3_connect(SSL *s)
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-			s->internal->state = S3I(s)->tmp.next_state;
+			s->internal->state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL_ST_OK:
@@ -899,7 +899,7 @@ ssl3_get_server_hello(SSL *s)
 		SSLerror(s, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
 		goto f_err;
 	}
-	S3I(s)->tmp.new_cipher = cipher;
+	S3I(s)->hs.new_cipher = cipher;
 
 	if (!tls1_handshake_hash_init(s))
 		goto err;
@@ -908,7 +908,7 @@ ssl3_get_server_hello(SSL *s)
 	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
+	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) &&
 	    !tls1_digest_cached_records(s)) {
 		al = SSL_AD_INTERNAL_ERROR;
@@ -1116,7 +1116,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	long alg_a;
 	int al;
 
-	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 	sc = SSI(s)->sess_cert;
 
 	if (*nn < 0)
@@ -1283,7 +1283,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, unsigned char **pp, long *nn)
 	int nid;
 	int al;
 
-	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 	sc = SSI(s)->sess_cert;
 
 	if (*nn < 0)
@@ -1368,8 +1368,8 @@ ssl3_get_server_key_exchange(SSL *s)
 	const		 EVP_MD *md = NULL;
 	RSA		*rsa = NULL;
 
-	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
-	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
+	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 
 	/*
 	 * Use same message size as in ssl3_get_certificate_request()
@@ -1590,7 +1590,7 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	/* TLS does not like anon-DH with client cert */
-	if (S3I(s)->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+	if (S3I(s)->hs.new_cipher->algorithm_auth & SSL_aNULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
 		SSLerror(s, SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
 		goto err;
@@ -2274,7 +2274,7 @@ ssl3_send_client_key_exchange(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (s->internal->state == SSL3_ST_CW_KEY_EXCH_A) {
-		alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
+		alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 
 		if ((sess_cert = SSI(s)->sess_cert) == NULL) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
@@ -2558,8 +2558,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	SESS_CERT	*sc;
 	DH		*dh;
 
-	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
-	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
+	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 
 	/* We don't have a certificate. */
 	if (alg_a & SSL_aNULL)

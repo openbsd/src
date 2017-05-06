@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.74 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.75 2017/05/06 22:24:57 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -268,7 +268,7 @@ dtls1_connect(SSL *s)
 
 			if (D1I(s)->send_cookie) {
 				s->internal->state = SSL3_ST_CW_FLUSH;
-				S3I(s)->tmp.next_state = SSL3_ST_CR_SRVR_HELLO_A;
+				S3I(s)->hs.next_state = SSL3_ST_CR_SRVR_HELLO_A;
 			} else
 				s->internal->state = SSL3_ST_CR_SRVR_HELLO_A;
 
@@ -324,7 +324,7 @@ dtls1_connect(SSL *s)
 				break;
 			}
 			/* Check if it is anon DH. */
-			if (!(S3I(s)->tmp.new_cipher->algorithm_auth &
+			if (!(S3I(s)->hs.new_cipher->algorithm_auth &
 			    SSL_aNULL)) {
 				ret = ssl3_get_server_certificate(s);
 				if (ret <= 0)
@@ -372,11 +372,11 @@ dtls1_connect(SSL *s)
 				goto end;
 			dtls1_stop_timer(s);
 			if (S3I(s)->tmp.cert_req)
-				S3I(s)->tmp.next_state = SSL3_ST_CW_CERT_A;
+				S3I(s)->hs.next_state = SSL3_ST_CW_CERT_A;
 			else
-				S3I(s)->tmp.next_state = SSL3_ST_CW_KEY_EXCH_A;
+				S3I(s)->hs.next_state = SSL3_ST_CW_KEY_EXCH_A;
 			s->internal->init_num = 0;
-			s->internal->state = S3I(s)->tmp.next_state;
+			s->internal->state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL3_ST_CW_CERT_A:
@@ -435,7 +435,7 @@ dtls1_connect(SSL *s)
 			s->internal->state = SSL3_ST_CW_FINISHED_A;
 			s->internal->init_num = 0;
 
-			s->session->cipher = S3I(s)->tmp.new_cipher;
+			s->session->cipher = S3I(s)->hs.new_cipher;
 			if (!tls1_setup_key_block(s)) {
 				ret = -1;
 				goto end;
@@ -466,7 +466,7 @@ dtls1_connect(SSL *s)
 			/* clear flags */
 			s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
-				S3I(s)->tmp.next_state = SSL_ST_OK;
+				S3I(s)->hs.next_state = SSL_ST_OK;
 				if (s->s3->flags & SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
 					s->internal->state = SSL_ST_OK;
 					s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
@@ -476,10 +476,10 @@ dtls1_connect(SSL *s)
 
 				/* Allow NewSessionTicket if ticket expected */
 				if (s->internal->tlsext_ticket_expected)
-					S3I(s)->tmp.next_state =
+					S3I(s)->hs.next_state =
 					    SSL3_ST_CR_SESSION_TICKET_A;
 				else
-					S3I(s)->tmp.next_state =
+					S3I(s)->hs.next_state =
 					    SSL3_ST_CR_FINISHED_A;
 			}
 			s->internal->init_num = 0;
@@ -527,14 +527,14 @@ dtls1_connect(SSL *s)
 				/* If the write error was fatal, stop trying */
 				if (!BIO_should_retry(s->wbio)) {
 					s->internal->rwstate = SSL_NOTHING;
-					s->internal->state = S3I(s)->tmp.next_state;
+					s->internal->state = S3I(s)->hs.next_state;
 				}
 
 				ret = -1;
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-			s->internal->state = S3I(s)->tmp.next_state;
+			s->internal->state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL_ST_OK:

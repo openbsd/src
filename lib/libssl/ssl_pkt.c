@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.10 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.11 2017/05/06 22:24:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1235,7 +1235,7 @@ start:
 		}
 
 		/* Check we have a cipher to change to */
-		if (S3I(s)->tmp.new_cipher == NULL) {
+		if (S3I(s)->hs.new_cipher == NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
 			goto f_err;
@@ -1360,14 +1360,14 @@ ssl3_do_change_cipher_spec(SSL *s)
 	else
 		i = SSL3_CHANGE_CIPHER_CLIENT_READ;
 
-	if (S3I(s)->tmp.key_block == NULL) {
+	if (S3I(s)->hs.key_block == NULL) {
 		if (s->session == NULL || s->session->master_key_length == 0) {
 			/* might happen if dtls1_read_bytes() calls this */
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
 			return (0);
 		}
 
-		s->session->cipher = S3I(s)->tmp.new_cipher;
+		s->session->cipher = S3I(s)->hs.new_cipher;
 		if (!tls1_setup_key_block(s))
 			return (0);
 	}

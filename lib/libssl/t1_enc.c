@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.108 2017/04/10 16:48:43 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.109 2017/05/06 22:24:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,9 +152,9 @@ int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
 void
 tls1_cleanup_key_block(SSL *s)
 {
-	freezero(S3I(s)->tmp.key_block, S3I(s)->tmp.key_block_length);
-	S3I(s)->tmp.key_block = NULL;
-	S3I(s)->tmp.key_block_length = 0;
+	freezero(S3I(s)->hs.key_block, S3I(s)->hs.key_block_len);
+	S3I(s)->hs.key_block = NULL;
+	S3I(s)->hs.key_block_len = 0;
 }
 
 int
@@ -417,10 +417,10 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	aead_ctx->fixed_nonce_len = iv_len;
 	aead_ctx->variable_nonce_len = 8;  /* always the case, currently. */
 	aead_ctx->variable_nonce_in_record =
-	    (S3I(s)->tmp.new_cipher->algorithm2 &
+	    (S3I(s)->hs.new_cipher->algorithm2 &
 	    SSL_CIPHER_ALGORITHM2_VARIABLE_NONCE_IN_RECORD) != 0;
 	aead_ctx->xor_fixed_nonce =
-	    S3I(s)->tmp.new_cipher->algorithm_enc == SSL_CHACHA20POLY1305;
+	    S3I(s)->hs.new_cipher->algorithm_enc == SSL_CHACHA20POLY1305;
 	aead_ctx->tag_len = EVP_AEAD_max_overhead(aead);
 
 	if (aead_ctx->xor_fixed_nonce) {
@@ -464,7 +464,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 	mac_type = S3I(s)->tmp.new_mac_pkey_type;
 
 	if (is_read) {
-		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->internal->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
 		else
 			s->internal->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
@@ -481,7 +481,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 			goto err;
 		s->read_hash = mac_ctx;
 	} else {
-		if (S3I(s)->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->internal->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		else
 			s->internal->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -528,15 +528,15 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read, char use_client_keys,
 		    mac_secret_size, (unsigned char *)mac_secret);
 	}
 
-	if (S3I(s)->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
+	if (S3I(s)->hs.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
 		int nid;
-		if (S3I(s)->tmp.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
+		if (S3I(s)->hs.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
 			nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
 		else
 			nid = NID_id_tc26_gost_28147_param_Z;
 
 		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GOST_SET_SBOX, nid, 0);
-		if (S3I(s)->tmp.new_cipher->algorithm_mac == SSL_GOST89MAC)
+		if (S3I(s)->hs.new_cipher->algorithm_mac == SSL_GOST89MAC)
 			EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_GOST_SET_SBOX, nid, 0);
 	}
 
@@ -591,7 +591,7 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	if (aead != NULL) {
 		key_len = EVP_AEAD_key_length(aead);
-		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->tmp.new_cipher);
+		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(S3I(s)->hs.new_cipher);
 	} else {
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
@@ -603,7 +603,7 @@ tls1_change_cipher_state(SSL *s, int which)
 
 	mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
-	key_block = S3I(s)->tmp.key_block;
+	key_block = S3I(s)->hs.key_block;
 	client_write_mac_secret = key_block;
 	key_block += mac_secret_size;
 	server_write_mac_secret = key_block;
@@ -627,7 +627,7 @@ tls1_change_cipher_state(SSL *s, int which)
 		iv = server_write_iv;
 	}
 
-	if (key_block - S3I(s)->tmp.key_block != S3I(s)->tmp.key_block_length) {
+	if (key_block - S3I(s)->hs.key_block != S3I(s)->hs.key_block_len) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err2;
 	}
@@ -663,7 +663,7 @@ tls1_setup_key_block(SSL *s)
 	const EVP_MD *mac = NULL;
 	int ret = 0;
 
-	if (S3I(s)->tmp.key_block_length != 0)
+	if (S3I(s)->hs.key_block_len != 0)
 		return (1);
 
 	if (s->session->cipher &&
@@ -703,8 +703,8 @@ tls1_setup_key_block(SSL *s)
 	}
 	key_block_len = (mac_secret_size + key_len + iv_len) * 2;
 
-	S3I(s)->tmp.key_block_length = key_block_len;
-	S3I(s)->tmp.key_block = key_block;
+	S3I(s)->hs.key_block_len = key_block_len;
+	S3I(s)->hs.key_block = key_block;
 
 	if (!tls1_generate_key_block(s, key_block, key_block_len))
 		goto err;

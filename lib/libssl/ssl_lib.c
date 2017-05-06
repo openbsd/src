@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.159 2017/05/06 20:37:25 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.160 2017/05/06 22:24:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2088,7 +2088,7 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 int
 ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-	const SSL_CIPHER	*cs = S3I(s)->tmp.new_cipher;
+	const SSL_CIPHER	*cs = S3I(s)->hs.new_cipher;
 	unsigned long		 alg_a;
 
 	alg_a = cs->algorithm_auth;
@@ -2116,9 +2116,9 @@ ssl_get_server_send_pkey(const SSL *s)
 	int		 i;
 
 	c = s->cert;
-	ssl_set_cert_masks(c, S3I(s)->tmp.new_cipher);
+	ssl_set_cert_masks(c, S3I(s)->hs.new_cipher);
 
-	alg_a = S3I(s)->tmp.new_cipher->algorithm_auth;
+	alg_a = S3I(s)->hs.new_cipher->algorithm_auth;
 
 	if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
@@ -2189,9 +2189,9 @@ ssl_get_auto_dh(SSL *s)
 
 	if (s->cert->dh_tmp_auto == 2) {
 		keylen = 1024;
-	} else if (S3I(s)->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+	} else if (S3I(s)->hs.new_cipher->algorithm_auth & SSL_aNULL) {
 		keylen = 1024;
-		if (S3I(s)->tmp.new_cipher->strength_bits == 256)
+		if (S3I(s)->hs.new_cipher->strength_bits == 256)
 			keylen = 3072;
 	} else {
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)

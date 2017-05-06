@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.141 2017/05/06 20:37:24 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.142 2017/05/06 22:24:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2504,7 +2504,7 @@ ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	int		ret = 0;
 	unsigned long	alg_k;
 
-	alg_k = S3I(s)->tmp.new_cipher->algorithm_mkey;
+	alg_k = S3I(s)->hs.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST)) {
@@ -2720,7 +2720,7 @@ ssl3_renegotiate_check(SSL *s)
 long
 ssl_get_algorithm2(SSL *s)
 {
-	long	alg2 = S3I(s)->tmp.new_cipher->algorithm2;
+	long	alg2 = S3I(s)->hs.new_cipher->algorithm2;
 
 	if (s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
