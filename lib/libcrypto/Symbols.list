@@ -131,6 +131,7 @@ ASN1_TIME_new
 ASN1_TIME_print
 ASN1_TIME_set
 ASN1_TIME_set_string
+ASN1_TIME_set_tm
 ASN1_TIME_to_generalizedtime
 ASN1_TYPE_cmp
 ASN1_TYPE_free
@@ -1580,6 +1581,9 @@ Gost2814789_ecb_encrypt
 Gost2814789_set_key
 Gost2814789_set_sbox
 Gost28147_TestParamSet
+HKDF
+HKDF_expand
+HKDF_extract
 HMAC
 HMAC_CTX_cleanup
 HMAC_CTX_copy
