@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.11 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.12 2017/05/06 17:12:59 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -300,6 +300,16 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 ASN1_TIME *
 ASN1_TIME_set(ASN1_TIME *s, time_t t)
 {
+	return (ASN1_TIME_adj(s, t, 0, 0));
+}
+
+ASN1_TIME *
+ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm)
+{
+	time_t t;
+
+	if ((t = timegm(tm)) == -1)
+		return NULL;
 	return (ASN1_TIME_adj(s, t, 0, 0));
 }
 

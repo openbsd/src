@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.42 2016/12/30 16:29:45 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.43 2017/05/06 17:12:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -939,6 +939,7 @@ extern const ASN1_ITEM ASN1_TIME_it;
 extern const ASN1_ITEM ASN1_OCTET_STRING_NDEF_it;
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t);
+ASN1_TIME *ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm);
 ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day,
     long offset_sec);
 int ASN1_TIME_check(ASN1_TIME *t);
