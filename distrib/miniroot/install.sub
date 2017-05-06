@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1000 2017/05/01 14:29:39 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1001 2017/05/06 06:49:12 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1945,7 +1945,7 @@ user_setup() {
 		y|yes)	_q="No really, what is the lower-case loginname, or 'no'?"
 			continue
 			;;
-		root|daemon|operator|bin|sshd|www|nobody|ftp)
+		root|daemon|operator|bin|build|sshd|www|nobody|ftp)
 			;;
 		[a-z]*([a-z0-9_]))
 			((${#resp} <= 31)) && break
