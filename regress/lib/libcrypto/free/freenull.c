@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.3 2017/05/06 21:22:58 jsing Exp $ */
+/* $OpenBSD: freenull.c,v 1.4 2017/05/06 21:23:57 jsing Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -31,7 +31,11 @@ main(int argc, char **argv)
 	ASN1_OBJECT_free(NULL);
 	ASN1_OCTET_STRING_free(NULL);
 
+	BIO_free_all(NULL);
+
 	DIST_POINT_free(NULL);
+
+	EVP_PKEY_free(NULL);
 
 	GENERAL_NAME_free(NULL);
 	GENERAL_SUBTREE_free(NULL);
