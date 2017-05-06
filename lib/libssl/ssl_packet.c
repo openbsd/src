@@ -1,3 +1,4 @@
+/* $OpenBSD: ssl_packet.c,v 1.6 2017/05/06 16:18:36 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *

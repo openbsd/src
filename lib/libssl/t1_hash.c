@@ -1,3 +1,4 @@
+/* $OpenBSD: t1_hash.c,v 1.2 2017/05/06 16:18:36 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
