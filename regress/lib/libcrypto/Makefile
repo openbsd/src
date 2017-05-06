@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2017/01/25 06:44:22 beck Exp $
+#	$OpenBSD: Makefile,v 1.28 2017/05/06 20:42:57 beck Exp $
 
 SUBDIR= \
 	aead \
@@ -23,6 +23,7 @@ SUBDIR= \
 	exp \
 	gcm128 \
 	gost \
+	hkdf \
 	hmac \
 	idea \
 	ige \
