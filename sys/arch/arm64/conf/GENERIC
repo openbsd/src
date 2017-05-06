@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.29 2017/05/05 17:43:47 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.30 2017/05/06 18:25:43 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -86,6 +86,7 @@ usb*		at dwctwo?
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
+rkgpio*		at fdt?
 
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs

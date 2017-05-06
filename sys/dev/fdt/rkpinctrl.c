@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.1 2017/05/05 17:43:47 kettenis Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.2 2017/05/06 18:25:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,12 +29,14 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
+#include <arm64/dev/simplebusvar.h>
+
 /* Registers */
 #define RK3399_GRF_GPIO2A_IOMUX		0xe000
 #define RK3399_PMUGRF_GPIO0A_IOMUX	0x0000
 
 struct rkpinctrl_softc {
-	struct device		sc_dev;
+	struct simplebus_softc	sc_sbus;
 
 	struct regmap		*sc_grf;
 	struct regmap		*sc_pmu;
@@ -78,9 +80,10 @@ rkpinctrl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf("\n");
-
 	pinctrl_register(faa->fa_node, rk3399_pinctrl, sc);
+
+	/* Attach GPIO banks. */
+	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
 }
 
 /* 
