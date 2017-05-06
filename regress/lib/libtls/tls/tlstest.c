@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.4 2017/05/06 21:56:43 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.5 2017/05/06 22:46:58 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -151,7 +151,8 @@ do_tls_close(char *name, struct tls *ctx)
 }
 
 static int
-do_client_server_test(char *desc, struct tls *client, struct tls *server_cctx)
+do_client_server_handshake(char *desc, struct tls *client,
+    struct tls *server_cctx)
 {
 	int i, client_done, server_done;
 
@@ -167,9 +168,14 @@ do_client_server_test(char *desc, struct tls *client, struct tls *server_cctx)
 		printf("FAIL: %s TLS handshake did not complete\n", desc);
 		return (1);
 	}
-	printf("INFO: %s TLS handshake completed successfully\n", desc);
 
-	/* XXX - Do some reads and writes... */
+	return (0);
+}
+
+static int
+do_client_server_close(char *desc, struct tls *client, struct tls *server_cctx)
+{
+	int i, client_done, server_done;
 
 	i = client_done = server_done = 0;
 	do {
@@ -183,6 +189,23 @@ do_client_server_test(char *desc, struct tls *client, struct tls *server_cctx)
 		printf("FAIL: %s TLS close did not complete\n", desc);
 		return (1);
 	}
+
+	return (0);
+}
+
+static int
+do_client_server_test(char *desc, struct tls *client, struct tls *server_cctx)
+{
+	if (do_client_server_handshake(desc, client, server_cctx) != 0)
+		return (1);
+
+	printf("INFO: %s TLS handshake completed successfully\n", desc);
+
+	/* XXX - Do some reads and writes... */
+
+	if (do_client_server_close(desc, client, server_cctx) != 0)
+		return (1);
+
 	printf("INFO: %s TLS close completed successfully\n", desc);
 
 	return (0);
