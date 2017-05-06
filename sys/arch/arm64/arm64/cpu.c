@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2017/05/04 20:51:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2017/05/06 06:43:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -38,6 +38,7 @@
 #define CPU_PART_THUNDERX_T88	0x0a1
 #define CPU_PART_THUNDERX_T81	0x0a2
 #define CPU_PART_THUNDERX_T83	0x0a3
+#define CPU_PART_THUNDERX2_T99	0x0af
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -66,6 +67,7 @@ struct cpu_cores cpu_cores_cavium[] = {
 	{ CPU_PART_THUNDERX_T88, "ThunderX T88" },
 	{ CPU_PART_THUNDERX_T81, "ThunderX T81" },
 	{ CPU_PART_THUNDERX_T83, "ThunderX T83" },
+	{ CPU_PART_THUNDERX2_T99, "ThunderX2 T99" },
 	{ 0x0, "Unknown" },
 };
 
