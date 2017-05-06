@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.1 2017/05/02 04:03:06 beck Exp $ */
+/* $OpenBSD: freenull.c,v 1.2 2017/05/06 21:21:00 jsing Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -27,7 +27,6 @@
 int
 main(int argc, char **argv)
 {
-	int failed = 0;
 	ASN1_OBJECT_free(NULL);
 	ASN1_INTEGER_free(NULL);
 	ASN1_OCTET_STRING_free(NULL);
@@ -38,6 +37,8 @@ main(int argc, char **argv)
 	GENERAL_NAME_free(NULL);
 	sk_GENERAL_NAME_pop_free(NULL, GENERAL_NAME_free);
 	sk_X509_NAME_ENTRY_pop_free(NULL, X509_NAME_ENTRY_free);
+
 	printf("PASS\n");
-	return (failed);
+
+	return (0);
 }
