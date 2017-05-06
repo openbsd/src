@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.24 2017/05/05 15:48:50 millert Exp $
+.\"	$OpenBSD: kill.2,v 1.25 2017/05/06 22:37:43 millert Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)kill.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 5 2017 $
+.Dd $Mdocdate: May 6 2017 $
 .Dt KILL 2
 .Os
 .Sh NAME
@@ -87,6 +87,13 @@ system processes and the process sending the signal.
 If the user is not the superuser, the signal is sent to all processes
 with the same uid as the user excluding the process sending the signal.
 No error is returned if any process could be signaled.
+.It \&If Fa pid No \&is negative but not -1 :
+.Fa sig
+is sent to all processes whose process group ID
+is equal to the absolute value of
+.Fa pid ;
+this is a variant of
+.Xr killpg 3 .
 .El
 .Pp
 If the value of
@@ -121,13 +128,6 @@ The following signals are allowed through to this class of processes:
 .Dv SIGHUP ,
 .Dv SIGUSR1 ,
 .Dv SIGUSR2 .
-.Pp
-For compatibility with System V,
-if the process number is negative but not \-1,
-the signal is sent to all processes whose process group ID
-is equal to the absolute value of the process number.
-This is a variant of
-.Xr killpg 3 .
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
