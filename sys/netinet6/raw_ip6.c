@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.111 2017/04/19 15:44:45 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.112 2017/05/06 16:35:59 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -129,14 +129,6 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	if (proto != IPPROTO_ICMPV6)
 		rip6stat_inc(rip6s_ipackets);
-
-	/* Be proactive about malicious use of IPv4 mapped address */
-	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-		/* XXX stat */
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
 
 	bzero(&rip6src, sizeof(rip6src));
 	rip6src.sin6_len = sizeof(struct sockaddr_in6);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.236 2017/05/04 17:58:46 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.237 2017/05/06 16:35:59 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -225,12 +225,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			goto bad;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
-		/* Be proactive about malicious use of IPv4 mapped address */
-		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-			/* XXX stat */
-			goto bad;
-		}
 		break;
 #endif /* INET6 */
 	default:

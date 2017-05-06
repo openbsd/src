@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.343 2017/05/04 17:58:46 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.344 2017/05/06 16:35:59 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -423,13 +423,6 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 #ifdef TCP_ECN
 		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 #endif
-
-		/* Be proactive about malicious use of IPv4 mapped address */
-		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-			/* XXX stat */
-			goto drop;
-		}
 
 		/*
 		 * Be proactive about unspecified IPv6 address in source.
