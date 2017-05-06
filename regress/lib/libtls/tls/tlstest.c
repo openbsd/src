@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.2 2017/01/17 13:19:36 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.3 2017/05/06 21:50:40 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -323,13 +323,13 @@ main(int argc, char **argv)
 	if (tls_configure(server, server_cfg) == -1)
 		errx(1, "failed to configure server: %s", tls_error(server));
 
+	tls_config_free(client_cfg);
+	tls_config_free(server_cfg);
+
 	failure |= test_tls_socket(client, server);
 
 	tls_free(client);
 	tls_free(server);
-
-	tls_config_free(client_cfg);
-	tls_config_free(server_cfg);
 
 	return (failure);
 }
