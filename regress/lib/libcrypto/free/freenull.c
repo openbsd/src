@@ -1,4 +1,4 @@
-/* $OpenBSD: freenull.c,v 1.2 2017/05/06 21:21:00 jsing Exp $ */
+/* $OpenBSD: freenull.c,v 1.3 2017/05/06 21:22:58 jsing Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -27,16 +27,21 @@
 int
 main(int argc, char **argv)
 {
-	ASN1_OBJECT_free(NULL);
 	ASN1_INTEGER_free(NULL);
+	ASN1_OBJECT_free(NULL);
 	ASN1_OCTET_STRING_free(NULL);
-	NAME_CONSTRAINTS_free(NULL);
-	GENERAL_SUBTREE_free(NULL);
+
 	DIST_POINT_free(NULL);
-	X509_NAME_ENTRY_free(NULL);
+
 	GENERAL_NAME_free(NULL);
+	GENERAL_SUBTREE_free(NULL);
+
+	NAME_CONSTRAINTS_free(NULL);
+
 	sk_GENERAL_NAME_pop_free(NULL, GENERAL_NAME_free);
 	sk_X509_NAME_ENTRY_pop_free(NULL, X509_NAME_ENTRY_free);
+
+	X509_NAME_ENTRY_free(NULL);
 
 	printf("PASS\n");
 
