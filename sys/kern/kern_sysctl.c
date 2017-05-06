@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.325 2017/04/27 21:39:27 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.326 2017/05/06 18:18:11 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1160,7 +1160,8 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		case AF_INET6: {
 			struct inpcb *inpcb = so->so_pcb;
 
-			kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
+			if (show_pointers)
+				kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
 			kf->inp_lport = inpcb->inp_lport;
 			kf->inp_laddru[0] = inpcb->inp_laddr6.s6_addr32[0];
 			kf->inp_laddru[1] = inpcb->inp_laddr6.s6_addr32[1];
