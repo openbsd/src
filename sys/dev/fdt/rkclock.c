@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.3 2017/05/06 16:29:19 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.4 2017/05/06 16:36:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -212,7 +212,6 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 void
 rk3399_enable(void *cookie, uint32_t *cells, int on)
 {
-	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
 
 	switch (idx) {
