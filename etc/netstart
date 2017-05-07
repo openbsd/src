@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.181 2017/05/01 16:23:42 rpe Exp $
+#	$OpenBSD: netstart,v 1.182 2017/05/07 07:55:17 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -90,7 +90,7 @@ ifstart() {
 	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
 
 	if [[ ! -f $_file ]]; then
-		echo "netstart: $_file: No such file or directory"
+		echo "${0##*/}: $_file: No such file or directory"
 		return
 	fi
 
