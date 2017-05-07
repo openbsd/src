@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.41 2017/04/10 17:11:13 jsing Exp $ */
+/* $OpenBSD: tls_client.c,v 1.42 2017/05/07 03:27:06 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -230,6 +230,8 @@ tls_connect_common(struct tls *ctx, const char *servername)
 			goto err;
 		}
 	}
+
+	ctx->state |= TLS_CONNECTED;
 	rv = 0;
 
  err:
@@ -294,6 +296,11 @@ tls_handshake_client(struct tls *ctx)
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
 		tls_set_errorx(ctx, "not a client context");
+		goto err;
+	}
+
+	if ((ctx->state & TLS_CONNECTED) == 0) {
+		tls_set_errorx(ctx, "context not connected");
 		goto err;
 	}
 
