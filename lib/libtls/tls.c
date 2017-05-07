@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.62 2017/05/06 20:59:28 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.63 2017/05/07 01:59:34 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -624,6 +624,11 @@ tls_handshake(struct tls *ctx)
 
 	if ((ctx->flags & (TLS_CLIENT | TLS_SERVER_CONN)) == 0) {
 		tls_set_errorx(ctx, "invalid operation for context");
+		goto out;
+	}
+
+	if ((ctx->state & TLS_HANDSHAKE_COMPLETE) != 0) {
+		tls_set_errorx(ctx, "handshake already completed");
 		goto out;
 	}
 
