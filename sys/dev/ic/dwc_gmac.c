@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.5 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.6 2017/05/07 14:11:45 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -173,13 +173,10 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk, int phyloc)
 		enaddr[5] = (machi >> 8) & 0x0ff;
 	}
 
-	/*
-	 * Init chip and do initial setup
-	 */
 	if (dwc_gmac_reset(sc) != 0)
 		return;	/* not much to cleanup, haven't attached yet */
-	dwc_gmac_write_hwaddr(sc, enaddr);
-	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
+
+	printf("%s: address: %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
 	memcpy(sc->sc_ac.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 
@@ -760,8 +757,9 @@ dwc_gmac_init(struct ifnet *ifp)
 	    2 << GMAC_BUSMODE_PBL_SHIFT);
 
 	/*
-	 * Program promiscuous mode and multicast filters
+	 * Program address filters
 	 */
+	dwc_gmac_write_hwaddr(sc, sc->sc_ac.ac_enaddr);
 	dwc_gmac_iff(sc);
 
 	/*
