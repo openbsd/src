@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.182 2017/05/07 07:55:17 rpe Exp $
+#	$OpenBSD: netstart,v 1.183 2017/05/07 09:40:15 rpe Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -96,7 +96,7 @@ ifstart() {
 
 	# Not using stat(1), we can't rely on having /usr yet.
 	set -A _stat -- $(ls -nL $_file)
-	if [ "${_stat[0]#???????} ${_stat[2]} ${_stat[3]}" != "--- 0 0" ]; then
+	if [[ "${_stat[0]}${_stat[2]}${_stat[3]}" != *---00 ]]; then
 		echo "WARNING: $_file is insecure, fixing permissions"
 		chmod -LR o-rwx $_file
 		chown -LR root.wheel $_file
