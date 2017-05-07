@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.6 2017/03/11 09:09:14 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.7 2017/05/07 11:07:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -46,6 +46,7 @@ EFI_MEMORY_DESCRIPTOR	*mmap = NULL;
 UINTN			 mmap_key;
 UINTN			 mmap_ndesc;
 UINTN			 mmap_descsiz;
+UINT32			 mmap_version;
 
 static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
@@ -233,8 +234,9 @@ void *
 efi_makebootargs(char *bootargs)
 {
 	void *fdt = NULL;
-	char bootduid[8];
-	u_char zero[8];
+	u_char bootduid[8];
+	u_char zero[8] = { 0 };
+	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
 	void *node;
 	size_t len;
 	int i;
@@ -256,16 +258,51 @@ efi_makebootargs(char *bootargs)
 	fdt_node_add_property(node, "bootargs", bootargs, len);
 
 	/* Pass DUID of the boot disk. */
-	memset(&zero, 0, sizeof(zero));
 	memcpy(&bootduid, diskinfo.disklabel.d_uid, sizeof(bootduid));
 	if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
 		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
 		    sizeof(bootduid));
 	}
 
+	/* Pass EFI system table. */
+	fdt_node_add_property(node, "openbsd,uefi-system-table",
+	    &uefi_system_table, sizeof(uefi_system_table));
+
+	/* Placeholders for EFI memory map. */
+	fdt_node_add_property(node, "openbsd,uefi-mmap-start", zero, 8);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-size", zero, 4);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-desc-size", zero, 4);
+	fdt_node_add_property(node, "openbsd,uefi-mmap-desc-ver", zero, 4);
+
 	fdt_finalize();
 
 	return fdt;
+}
+
+void
+efi_updatefdt(void)
+{
+	uint64_t uefi_mmap_start = htobe64((uintptr_t)mmap);
+	uint32_t uefi_mmap_size = htobe32(mmap_ndesc * mmap_descsiz);
+	uint32_t uefi_mmap_desc_size = htobe32(mmap_descsiz);
+	uint32_t uefi_mmap_desc_ver = htobe32(mmap_version);
+	void *node;
+
+	node = fdt_find_node("/chosen");
+	if (!node)
+		return;
+
+	/* Pass EFI memory map. */
+	fdt_node_set_property(node, "openbsd,uefi-mmap-start",
+	    &uefi_mmap_start, sizeof(uefi_mmap_start));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-size",
+	    &uefi_mmap_size, sizeof(uefi_mmap_size));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-desc-size",
+	    &uefi_mmap_desc_size, sizeof(uefi_mmap_desc_size));
+	fdt_node_set_property(node, "openbsd,uefi-mmap-desc-ver",
+	    &uefi_mmap_desc_ver, sizeof(uefi_mmap_desc_ver));
+
+	fdt_finalize();
 }
 
 u_long efi_loadaddr;
@@ -303,6 +340,7 @@ efi_cleanup(void)
 	/* retry once in case of failure */
 	for (retry = 1; retry >= 0; retry--) {
 		efi_memprobe_internal();	/* sync the current map */
+		efi_updatefdt();
 		status = EFI_CALL(BS->ExitBootServices, IH, mmap_key);
 		if (status == EFI_SUCCESS)
 			break;
@@ -512,6 +550,7 @@ efi_memprobe_internal(void)
 	mmap_key = mapkey;
 	mmap_ndesc = n;
 	mmap_descsiz = mmsiz;
+	mmap_version = mmver;
 }
 
 /*

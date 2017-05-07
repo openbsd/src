@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.2 2017/05/07 11:07:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -219,7 +219,7 @@ fdt_node_property(void *node, char *name, char **out)
 }
 
 int
-fdt_node_set_property(void *node, char *name, char *data, int len)
+fdt_node_set_property(void *node, char *name, void *data, int len)
 {
 	uint32_t *ptr, *next;
 	uint32_t nameid;
@@ -263,7 +263,7 @@ fdt_node_set_property(void *node, char *name, char *data, int len)
 }
 
 int
-fdt_node_add_property(void *node, char *name, char *data, int len)
+fdt_node_add_property(void *node, char *name, void *data, int len)
 {
 	char *dummy;
 
