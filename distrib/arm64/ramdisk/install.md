@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2017/03/10 05:49:08 jsg Exp $
+#	$OpenBSD: install.md,v 1.5 2017/05/07 12:00:12 jsg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ md_prep_fdisk() {
 	local _disk=$1 _d
 
 	local bootparttype="C"
-	local bootsectorstart="2048"
+	local bootsectorstart="8192"
 	local bootsectorsize="32768"
 	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
