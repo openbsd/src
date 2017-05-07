@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.5 2017/05/06 22:46:58 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.6 2017/05/07 01:56:24 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -350,6 +350,65 @@ do_tls_tests(void)
 	return (failure);
 }
 
+static int
+do_tls_ordering_tests(void)
+{
+	struct tls *client = NULL, *server = NULL, *server_cctx = NULL;
+	struct tls_config *client_cfg, *server_cfg;
+	int failure = 0;
+
+	circular_init();
+
+	if ((client = tls_client()) == NULL)
+		errx(1, "failed to create tls client");
+	if ((client_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls client config");
+	tls_config_insecure_noverifyname(client_cfg);
+	if (tls_config_set_ca_file(client_cfg, cafile) == -1)
+		errx(1, "failed to set ca: %s", tls_config_error(client_cfg));
+
+	if ((server = tls_server()) == NULL)
+		errx(1, "failed to create tls server");
+	if ((server_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls server config");
+	if (tls_config_set_keypair_file(server_cfg, certfile, keyfile) == -1)
+		errx(1, "failed to set keypair: %s",
+		    tls_config_error(server_cfg));
+
+	if (tls_configure(client, client_cfg) == -1)
+		errx(1, "failed to configure client: %s", tls_error(client));
+	if (tls_configure(server, server_cfg) == -1)
+		errx(1, "failed to configure server: %s", tls_error(server));
+
+	tls_config_free(client_cfg);
+	tls_config_free(server_cfg);
+
+	if (tls_accept_cbs(server, &server_cctx, server_read, server_write,
+	    NULL) == -1)
+		errx(1, "failed to accept: %s", tls_error(server));
+
+	if (tls_connect_cbs(client, client_read, client_write, NULL,
+	    "test") == -1)
+		errx(1, "failed to connect: %s", tls_error(client));
+
+	if (do_client_server_handshake("ordering", client, server_cctx) != 0) {
+		failure = 1;
+		goto done;
+	}
+
+	if (do_client_server_close("ordering", client, server_cctx) != 0) {
+		failure = 1;
+		goto done;
+	}
+
+ done:
+	tls_free(client);
+	tls_free(server);
+	tls_free(server_cctx);
+
+	return (failure);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -369,6 +428,7 @@ main(int argc, char **argv)
 		errx(1, "failed to initialise tls");
 
 	failure |= do_tls_tests();
+	failure |= do_tls_ordering_tests();
 
 	return (failure);
 }
