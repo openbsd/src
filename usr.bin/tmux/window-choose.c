@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.90 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.91 2017/05/07 22:27:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,6 +57,8 @@ enum window_choose_input_type {
 };
 
 const struct window_mode window_choose_mode = {
+	.name = "choose-mode",
+
 	.init = window_choose_init,
 	.free = window_choose_free,
 	.resize = window_choose_resize,
