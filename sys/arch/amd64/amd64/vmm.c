@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.139 2017/05/05 07:46:59 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.140 2017/05/07 21:17:00 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4659,7 +4659,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
-	CPUID_LEAF(rax, 0, eax, ebx, ecx, edx);
+	CPUID_LEAF(*rax, 0, eax, ebx, ecx, edx);
 
 	switch (*rax) {
 	case 0x00:	/* Max level and vendor ID */
@@ -4684,7 +4684,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		 *  context id (CPUIDECX_CNXTID)
 		 *  silicon debug (CPUIDECX_SDBG)
 		 *  xTPR (CPUIDECX_XTPR)
-		 *  AVX (CPUIDECX_AVX)
 		 *  perf/debug (CPUIDECX_PDCM)
 		 *  pcid (CPUIDECX_PCID)
 		 *  direct cache access (CPUIDECX_DCA)
@@ -4702,14 +4701,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		 *  hypervisor (CPUIDECX_HV)
 		 */
 		*rcx = (cpu_ecxfeature | CPUIDECX_HV) &
-		    ~(CPUIDECX_EST | CPUIDECX_TM2 |
-		    CPUIDECX_MWAIT | CPUIDECX_PDCM |
-		    CPUIDECX_VMX | CPUIDECX_DTES64 |
-		    CPUIDECX_DSCPL | CPUIDECX_SMX |
-		    CPUIDECX_CNXTID | CPUIDECX_SDBG |
-		    CPUIDECX_XTPR | CPUIDECX_AVX |
-		    CPUIDECX_PCID | CPUIDECX_DCA |
-		    CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
+		    ~(CPUIDECX_EST | CPUIDECX_TM2 | CPUIDECX_MWAIT |
+		    CPUIDECX_PDCM | CPUIDECX_VMX | CPUIDECX_DTES64 |
+		    CPUIDECX_DSCPL | CPUIDECX_SMX | CPUIDECX_CNXTID |
+		    CPUIDECX_SDBG | CPUIDECX_XTPR | CPUIDECX_PCID |
+		    CPUIDECX_DCA | CPUIDECX_X2APIC | CPUIDECX_DEADLINE);
 		*rdx = curcpu()->ci_feature_flags &
 		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
 		      CPUID_HTT | CPUID_DS | CPUID_APIC |
@@ -4765,16 +4761,30 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			 *  INVPCID (SEFF0EBX_INVPCID)
 			 *  RTM (SEFF0EBX_RTM)
 			 *  PQM (SEFF0EBX_PQM)
+			 *  AVX512F (SEFF0EBX_AVX512F)
+			 *  AVX512DQ (SEFF0EBX_AVX512DQ)
+			 *  AVX512IFMA (SEFF0EBX_AVX512IFMA)
+			 *  AVX512PF (SEFF0EBX_AVX512PF)
+			 *  AVX512ER (SEFF0EBX_AVX512ER)
+			 *  AVX512CD (SEFF0EBX_AVX512CD)
+			 *  AVX512BW (SEFF0EBX_AVX512BW)
+			 *  AVX512VL (SEFF0EBX_AVX512VL)
 			 *  MPX (SEFF0EBX_MPX)
 			 *  PCOMMIT (SEFF0EBX_PCOMMIT)
 			 *  PT (SEFF0EBX_PT)
+			 *  AVX512VBMI (SEFF0ECX_AVX512VBMI)
 			 */
 			*rax = 0;	/* Highest subleaf supported */
 			*rbx = curcpu()->ci_feature_sefflags_ebx &
 			    ~(SEFF0EBX_SGX | SEFF0EBX_HLE | SEFF0EBX_INVPCID |
 			      SEFF0EBX_RTM | SEFF0EBX_PQM | SEFF0EBX_MPX |
-			      SEFF0EBX_PCOMMIT | SEFF0EBX_PT);
-			*rcx = curcpu()->ci_feature_sefflags_ecx;
+			      SEFF0EBX_PCOMMIT | SEFF0EBX_PT |
+			      SEFF0EBX_AVX512F | SEFF0EBX_AVX512DQ |
+			      SEFF0EBX_AVX512IFMA | SEFF0EBX_AVX512PF |
+			      SEFF0EBX_AVX512ER | SEFF0EBX_AVX512CD |
+			      SEFF0EBX_AVX512BW | SEFF0EBX_AVX512VL);
+			*rcx = curcpu()->ci_feature_sefflags_ecx &
+			    ~(SEFF0ECX_AVX512VBMI);
 			*rdx = 0;
 		} else {
 			/* Unsupported subleaf */
@@ -4816,8 +4826,13 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			*rbx = ebx;
 			*rcx = ecx;
 			*rdx = edx;
+		} else if (*rcx == 1) {
+			*rax = 0;
+			*rbx = 0;
+			*rcx = 0;
+			*rdx = 0;
 		} else {
-			CPUID_LEAF(rax, *rcx, eax, ebx, ecx, edx);
+			CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
 			*rax = eax;
 			*rbx = ebx;
 			*rcx = ecx;
