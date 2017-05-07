@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.4 2016/05/19 19:32:07 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.5 2017/05/07 11:25:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -219,7 +219,7 @@ fdt_node_property(void *node, char *name, char **out)
 }
 
 int
-fdt_node_set_property(void *node, char *name, char *data, int len)
+fdt_node_set_property(void *node, char *name, void *data, int len)
 {
 	uint32_t *ptr, *next;
 	uint32_t nameid;
@@ -245,7 +245,7 @@ fdt_node_set_property(void *node, char *name, char *data, int len)
 			curlen = betoh32(*(ptr + 1));
 			delta = roundup(len, sizeof(uint32_t)) -
 			    roundup(curlen, sizeof(uint32_t));
-			memmove((char *)next + delta, next, 
+			memmove((char *)next + delta, next,
 			    tree.end - (char *)next);
 			tree.struct_size += delta;
 			if (tree.strings > tree.tree)
@@ -263,7 +263,7 @@ fdt_node_set_property(void *node, char *name, char *data, int len)
 }
 
 int
-fdt_node_add_property(void *node, char *name, char *data, int len)
+fdt_node_add_property(void *node, char *name, void *data, int len)
 {
 	char *dummy;
 
