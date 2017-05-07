@@ -37,7 +37,7 @@
 int
 killpg(pid_t pgid, int sig)
 {
-	if (pgid == 1) {
+	if (pgid < 0 || pgid == 1) {
 		errno = ESRCH;
 		return (-1);
 	}
