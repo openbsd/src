@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.15 2017/04/14 15:20:55 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.16 2017/05/07 05:03:41 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -21,6 +21,8 @@
 #include <openssl/opensslconf.h>
 
 #include "bytestring.h"
+
+#define CBB_INITIAL_SIZE 64
 
 static int
 cbb_init(CBB *cbb, uint8_t *buf, size_t cap)
@@ -49,10 +51,11 @@ CBB_init(CBB *cbb, size_t initial_capacity)
 
 	memset(cbb, 0, sizeof(*cbb));
 
-	if (initial_capacity > 0) {
-		if ((buf = malloc(initial_capacity)) == NULL)
-			return 0;
-	}
+	if (initial_capacity == 0)
+		initial_capacity = CBB_INITIAL_SIZE;
+
+	if ((buf = malloc(initial_capacity)) == NULL)
+		return 0;
 
 	if (!cbb_init(cbb, buf, initial_capacity)) {
 		free(buf);
