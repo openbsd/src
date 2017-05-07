@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.75 2017/05/06 22:24:57 beck Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.76 2017/05/07 04:22:24 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -198,12 +198,12 @@ dtls1_connect(SSL *s)
 
 
 	for (;;) {
-		state = s->internal->state;
+		state = S3I(s)->hs.state;
 
-		switch (s->internal->state) {
+		switch (S3I(s)->hs.state) {
 		case SSL_ST_RENEGOTIATE:
 			s->internal->renegotiate = 1;
-			s->internal->state = SSL_ST_CONNECT;
+			S3I(s)->hs.state = SSL_ST_CONNECT;
 			s->ctx->internal->stats.sess_connect_renegotiate++;
 			/* break */
 		case SSL_ST_BEFORE:
@@ -239,7 +239,7 @@ dtls1_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			s->internal->state = SSL3_ST_CW_CLNT_HELLO_A;
+			S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->internal->stats.sess_connect++;
 			s->internal->init_num = 0;
 			/* mark client_random uninitialized */
@@ -267,10 +267,10 @@ dtls1_connect(SSL *s)
 				goto end;
 
 			if (D1I(s)->send_cookie) {
-				s->internal->state = SSL3_ST_CW_FLUSH;
+				S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 				S3I(s)->hs.next_state = SSL3_ST_CR_SRVR_HELLO_A;
 			} else
-				s->internal->state = SSL3_ST_CR_SRVR_HELLO_A;
+				S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
 
 			s->internal->init_num = 0;
 
@@ -288,9 +288,9 @@ dtls1_connect(SSL *s)
 			else {
 				if (s->internal->hit) {
 
-					s->internal->state = SSL3_ST_CR_FINISHED_A;
+					S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
 				} else
-					s->internal->state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
+					S3I(s)->hs.state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
 			}
 			s->internal->init_num = 0;
 			break;
@@ -303,9 +303,9 @@ dtls1_connect(SSL *s)
 				goto end;
 			dtls1_stop_timer(s);
 			if ( D1I(s)->send_cookie) /* start again, with a cookie */
-				s->internal->state = SSL3_ST_CW_CLNT_HELLO_A;
+				S3I(s)->hs.state = SSL3_ST_CW_CLNT_HELLO_A;
 			else
-				s->internal->state = SSL3_ST_CR_CERT_A;
+				S3I(s)->hs.state = SSL3_ST_CR_CERT_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -317,9 +317,9 @@ dtls1_connect(SSL *s)
 			if (ret == 2) {
 				s->internal->hit = 1;
 				if (s->internal->tlsext_ticket_expected)
-					s->internal->state = SSL3_ST_CR_SESSION_TICKET_A;
+					S3I(s)->hs.state = SSL3_ST_CR_SESSION_TICKET_A;
 				else
-					s->internal->state = SSL3_ST_CR_FINISHED_A;
+					S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
 				s->internal->init_num = 0;
 				break;
 			}
@@ -330,12 +330,12 @@ dtls1_connect(SSL *s)
 				if (ret <= 0)
 					goto end;
 				if (s->internal->tlsext_status_expected)
-					s->internal->state = SSL3_ST_CR_CERT_STATUS_A;
+					S3I(s)->hs.state = SSL3_ST_CR_CERT_STATUS_A;
 				else
-					s->internal->state = SSL3_ST_CR_KEY_EXCH_A;
+					S3I(s)->hs.state = SSL3_ST_CR_KEY_EXCH_A;
 			} else {
 				skip = 1;
-				s->internal->state = SSL3_ST_CR_KEY_EXCH_A;
+				S3I(s)->hs.state = SSL3_ST_CR_KEY_EXCH_A;
 			}
 			s->internal->init_num = 0;
 			break;
@@ -345,7 +345,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_get_server_key_exchange(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CR_CERT_REQ_A;
+			S3I(s)->hs.state = SSL3_ST_CR_CERT_REQ_A;
 			s->internal->init_num = 0;
 
 			/* at this point we check that we have the
@@ -361,7 +361,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_get_certificate_request(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CR_SRVR_DONE_A;
+			S3I(s)->hs.state = SSL3_ST_CR_SRVR_DONE_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -376,7 +376,7 @@ dtls1_connect(SSL *s)
 			else
 				S3I(s)->hs.next_state = SSL3_ST_CW_KEY_EXCH_A;
 			s->internal->init_num = 0;
-			s->internal->state = S3I(s)->hs.next_state;
+			S3I(s)->hs.state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL3_ST_CW_CERT_A:
@@ -387,7 +387,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_send_client_certificate(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CW_KEY_EXCH_A;
+			S3I(s)->hs.state = SSL3_ST_CW_KEY_EXCH_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -403,9 +403,9 @@ dtls1_connect(SSL *s)
 			/* For TLS, cert_req is set to 2, so a cert chain
 			 * of nothing is sent, but no verify packet is sent */
 			if (S3I(s)->tmp.cert_req == 1) {
-				s->internal->state = SSL3_ST_CW_CERT_VRFY_A;
+				S3I(s)->hs.state = SSL3_ST_CW_CERT_VRFY_A;
 			} else {
-				s->internal->state = SSL3_ST_CW_CHANGE_A;
+				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
 				S3I(s)->change_cipher_spec = 0;
 			}
 
@@ -418,7 +418,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_send_client_verify(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CW_CHANGE_A;
+			S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
 			s->internal->init_num = 0;
 			S3I(s)->change_cipher_spec = 0;
 			break;
@@ -432,7 +432,7 @@ dtls1_connect(SSL *s)
 			if (ret <= 0)
 				goto end;
 
-			s->internal->state = SSL3_ST_CW_FINISHED_A;
+			S3I(s)->hs.state = SSL3_ST_CW_FINISHED_A;
 			s->internal->init_num = 0;
 
 			s->session->cipher = S3I(s)->hs.new_cipher;
@@ -461,14 +461,14 @@ dtls1_connect(SSL *s)
 			    TLS_MD_CLIENT_FINISH_CONST_SIZE);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CW_FLUSH;
+			S3I(s)->hs.state = SSL3_ST_CW_FLUSH;
 
 			/* clear flags */
 			s->s3->flags&= ~SSL3_FLAGS_POP_BUFFER;
 			if (s->internal->hit) {
 				S3I(s)->hs.next_state = SSL_ST_OK;
 				if (s->s3->flags & SSL3_FLAGS_DELAY_CLIENT_FINISHED) {
-					s->internal->state = SSL_ST_OK;
+					S3I(s)->hs.state = SSL_ST_OK;
 					s->s3->flags |= SSL3_FLAGS_POP_BUFFER;
 					S3I(s)->delay_buf_pop_ret = 0;
 				}
@@ -490,7 +490,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_get_new_session_ticket(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CR_FINISHED_A;
+			S3I(s)->hs.state = SSL3_ST_CR_FINISHED_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -499,7 +499,7 @@ dtls1_connect(SSL *s)
 			ret = ssl3_get_cert_status(s);
 			if (ret <= 0)
 				goto end;
-			s->internal->state = SSL3_ST_CR_KEY_EXCH_A;
+			S3I(s)->hs.state = SSL3_ST_CR_KEY_EXCH_A;
 			s->internal->init_num = 0;
 			break;
 
@@ -513,9 +513,9 @@ dtls1_connect(SSL *s)
 			dtls1_stop_timer(s);
 
 			if (s->internal->hit)
-				s->internal->state = SSL3_ST_CW_CHANGE_A;
+				S3I(s)->hs.state = SSL3_ST_CW_CHANGE_A;
 			else
-				s->internal->state = SSL_ST_OK;
+				S3I(s)->hs.state = SSL_ST_OK;
 
 
 			s->internal->init_num = 0;
@@ -527,14 +527,14 @@ dtls1_connect(SSL *s)
 				/* If the write error was fatal, stop trying */
 				if (!BIO_should_retry(s->wbio)) {
 					s->internal->rwstate = SSL_NOTHING;
-					s->internal->state = S3I(s)->hs.next_state;
+					S3I(s)->hs.state = S3I(s)->hs.next_state;
 				}
 
 				ret = -1;
 				goto end;
 			}
 			s->internal->rwstate = SSL_NOTHING;
-			s->internal->state = S3I(s)->hs.next_state;
+			S3I(s)->hs.state = S3I(s)->hs.next_state;
 			break;
 
 		case SSL_ST_OK:
@@ -583,11 +583,11 @@ dtls1_connect(SSL *s)
 					goto end;
 			}
 
-			if ((cb != NULL) && (s->internal->state != state)) {
-				new_state = s->internal->state;
-				s->internal->state = state;
+			if ((cb != NULL) && (S3I(s)->hs.state != state)) {
+				new_state = S3I(s)->hs.state;
+				S3I(s)->hs.state = state;
 				cb(s, SSL_CB_CONNECT_LOOP, 1);
-				s->internal->state = new_state;
+				S3I(s)->hs.state = new_state;
 			}
 		}
 		skip = 0;

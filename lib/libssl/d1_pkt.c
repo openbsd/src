@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.62 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.63 2017/05/07 04:22:24 beck Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -685,7 +685,7 @@ start:
 	 * so process data buffered during the last handshake
 	 * in advance, if any.
 	 */
-	if (s->internal->state == SSL_ST_OK && rr->length == 0) {
+	if (S3I(s)->hs.state == SSL_ST_OK && rr->length == 0) {
 		pitem *item;
 		item = pqueue_pop(D1I(s)->buffered_app_data.q);
 		if (item) {
@@ -1028,9 +1028,9 @@ start:
 			goto start;
 		}
 
-		if (((s->internal->state&SSL_ST_MASK) == SSL_ST_OK) &&
+		if (((S3I(s)->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->internal->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			S3I(s)->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 			s->internal->renegotiate = 1;
 			s->internal->new_session = 1;
 		}
@@ -1089,12 +1089,12 @@ start:
 		 */
 		if (S3I(s)->in_read_app_data &&
 		    (S3I(s)->total_renegotiations != 0) &&
-		    (((s->internal->state & SSL_ST_CONNECT) &&
-		    (s->internal->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-		    (s->internal->state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
-		    (s->internal->state & SSL_ST_ACCEPT) &&
-		    (s->internal->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-		    (s->internal->state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
+		    (((S3I(s)->hs.state & SSL_ST_CONNECT) &&
+		    (S3I(s)->hs.state >= SSL3_ST_CW_CLNT_HELLO_A) &&
+		    (S3I(s)->hs.state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
+		    (S3I(s)->hs.state & SSL_ST_ACCEPT) &&
+		    (S3I(s)->hs.state <= SSL3_ST_SW_HELLO_REQ_A) &&
+		    (S3I(s)->hs.state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
 			S3I(s)->in_read_app_data = 2;
 			return (-1);
 		} else {

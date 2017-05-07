@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.142 2017/05/06 22:24:57 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.143 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2540,7 +2540,7 @@ ssl3_shutdown(SSL *s)
 	 * Don't do anything much if we have not done the handshake or
 	 * we don't want to send messages :-)
 	 */
-	if ((s->internal->quiet_shutdown) || (s->internal->state == SSL_ST_BEFORE)) {
+	if ((s->internal->quiet_shutdown) || (S3I(s)->hs.state == SSL_ST_BEFORE)) {
 		s->internal->shutdown = (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 		return (1);
 	}
@@ -2704,7 +2704,7 @@ ssl3_renegotiate_check(SSL *s)
 			 * to SSL_ST_ACCEPT.
 			 */
 			/* SSL_ST_ACCEPT */
-			s->internal->state = SSL_ST_RENEGOTIATE;
+			S3I(s)->hs.state = SSL_ST_RENEGOTIATE;
 			S3I(s)->renegotiate = 0;
 			S3I(s)->num_renegotiations++;
 			S3I(s)->total_renegotiations++;

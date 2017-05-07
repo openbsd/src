@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.128 2017/05/06 20:37:25 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.129 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -932,12 +932,12 @@ extern "C" {
 #define SSL_CB_HANDSHAKE_DONE		0x20
 
 /* Is the SSL_connection established? */
-#define SSL_get_state(a)		SSL_state(a)
-#define SSL_is_init_finished(a)		(SSL_state(a) == SSL_ST_OK)
-#define SSL_in_init(a)			(SSL_state(a)&SSL_ST_INIT)
-#define SSL_in_before(a)		(SSL_state(a)&SSL_ST_BEFORE)
-#define SSL_in_connect_init(a)		(SSL_state(a)&SSL_ST_CONNECT)
-#define SSL_in_accept_init(a)		(SSL_state(a)&SSL_ST_ACCEPT)
+#define SSL_get_state(a)		(SSL_state((a)))
+#define SSL_is_init_finished(a)		(SSL_state((a)) == SSL_ST_OK)
+#define SSL_in_init(a)			(SSL_state((a))&SSL_ST_INIT)
+#define SSL_in_before(a)		(SSL_state((a))&SSL_ST_BEFORE)
+#define SSL_in_connect_init(a)		(SSL_state((a))&SSL_ST_CONNECT)
+#define SSL_in_accept_init(a)		(SSL_state((a))&SSL_ST_ACCEPT)
 
 /* The following 2 states are kept in ssl->rstate when reads fail,
  * you should not need these */

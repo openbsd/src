@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.33 2017/02/07 02:08:38 beck Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.34 2017/05/07 04:22:24 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -62,6 +62,8 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+
+#include "ssl_locl.h"
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
@@ -666,4 +668,11 @@ SSL_state_func_code(int state) {
 		break;
 	}
 	return 0xfff;
+}
+
+void
+SSL_error_internal(const SSL *s, int r, char *f, int l)
+{
+	ERR_PUT_error(ERR_LIB_SSL,
+	    (SSL_state_func_code(S3I(s)->hs.state)), r, f, l);
 }

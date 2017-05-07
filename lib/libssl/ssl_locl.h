@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.180 2017/05/06 22:24:58 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.181 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,6 +432,9 @@ typedef struct ssl_session_internal_st {
 #define SSI(s) (s->session->internal)
 
 typedef struct ssl_handshake_st {
+	/* state contains one of the SSL3_ST_* values. */
+	int state;
+
 	/* used when SSL_ST_FLUSH_DATA is entered */
 	int next_state;
 
@@ -776,7 +779,6 @@ typedef struct ssl_internal_st {
 		 	 * 2 if we are a server and are inside a handshake
 	                 * (i.e. not just sending a HelloRequest) */
 
-	int state;	/* where we are */
 	int rstate;	/* where we are when reading */
 
 	int mac_packet;
@@ -1379,9 +1381,9 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     unsigned mac_secret_length);
 int SSL_state_func_code(int _state);
 
-#define SSLerror(s, r)  ERR_PUT_error(ERR_LIB_SSL,			\
-    (SSL_state_func_code(s->internal->state)),(r),__FILE__,__LINE__)
+#define SSLerror(s, r) SSL_error_internal(s, r, __FILE__, __LINE__)
 #define SSLerrorx(r) ERR_PUT_error(ERR_LIB_SSL,(0xfff),(r),__FILE__,__LINE__)
+void SSL_error_internal(const SSL *s, int r, char *f, int l);
 
 __END_HIDDEN_DECLS
 

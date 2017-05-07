@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.8 2017/05/06 22:24:57 beck Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.9 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,7 +171,7 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (s->internal->state == a) {
+	if (S3I(s)->hs.state == a) {
 		md_len = TLS1_FINISH_MAC_LENGTH;
 		OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 
@@ -199,7 +199,7 @@ ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
 			goto err;
 
-		s->internal->state = b;
+		S3I(s)->hs.state = b;
 	}
 
 	return (ssl3_handshake_write(s));
@@ -227,7 +227,7 @@ ssl3_take_mac(SSL *s)
 	if (S3I(s)->hs.new_cipher == NULL)
 		return;
 
-	if (s->internal->state & SSL_ST_CONNECT) {
+	if (S3I(s)->hs.state & SSL_ST_CONNECT) {
 		sender = TLS_MD_SERVER_FINISH_CONST;
 		slen = TLS_MD_SERVER_FINISH_CONST_SIZE;
 	} else {
@@ -313,13 +313,13 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 {
 	unsigned char *p;
 
-	if (s->internal->state == a) {
+	if (S3I(s)->hs.state == a) {
 		p = (unsigned char *)s->internal->init_buf->data;
 		*p = SSL3_MT_CCS;
 		s->internal->init_num = 1;
 		s->internal->init_off = 0;
 
-		s->internal->state = b;
+		S3I(s)->hs.state = b;
 	}
 
 	/* SSL3_ST_CW_CHANGE_B */
@@ -442,7 +442,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	p = (unsigned char *)s->internal->init_buf->data;
 
 	/* s->internal->init_num < 4 */
-	if (s->internal->state == st1) {
+	if (S3I(s)->hs.state == st1) {
 		int skip_message;
 
 		do {
@@ -504,7 +504,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			goto err;
 		}
 		S3I(s)->tmp.message_size = l;
-		s->internal->state = stn;
+		S3I(s)->hs.state = stn;
 
 		s->internal->init_msg = s->internal->init_buf->data + 4;
 		s->internal->init_num = 0;

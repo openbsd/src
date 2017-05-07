@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.116 2017/05/06 22:24:58 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.117 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -967,7 +967,7 @@ skip_ext:
 		 * includes the 5-byte record header in the buffer, while the
 		 * code in s3_clnt.c does not.
 		 */
-		if (s->internal->state == SSL23_ST_CW_CLNT_HELLO_A)
+		if (S3I(s)->hs.state == SSL23_ST_CW_CLNT_HELLO_A)
 			hlen -= 5;
 		if (hlen > 0xff && hlen < 0x200) {
 			hlen = 0x200 - hlen;

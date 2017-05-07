@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.160 2017/05/06 22:24:57 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.161 2017/05/07 04:22:24 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,8 +183,6 @@ SSL_clear(SSL *s)
 
 	s->internal->type = 0;
 
-	s->internal->state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
-
 	s->version = s->method->internal->version;
 	s->client_version = s->version;
 	s->internal->rwstate = SSL_NOTHING;
@@ -211,6 +209,8 @@ SSL_clear(SSL *s)
 			return (0);
 	} else
 		s->method->internal->ssl_clear(s);
+
+	S3I(s)->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 
 	return (1);
 }
@@ -2397,7 +2397,7 @@ SSL_set_accept_state(SSL *s)
 {
 	s->server = 1;
 	s->internal->shutdown = 0;
-	s->internal->state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
+	S3I(s)->hs.state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->internal->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
@@ -2410,7 +2410,7 @@ SSL_set_connect_state(SSL *s)
 {
 	s->server = 0;
 	s->internal->shutdown = 0;
-	s->internal->state = SSL_ST_CONNECT|SSL_ST_BEFORE;
+	S3I(s)->hs.state = SSL_ST_CONNECT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->internal->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
@@ -2544,7 +2544,7 @@ SSL_dup(SSL *s)
 	ret->internal->quiet_shutdown = s->internal->quiet_shutdown;
 	ret->internal->shutdown = s->internal->shutdown;
 	/* SSL_dup does not really work at any state, though */
-	ret->internal->state = s->internal->state;
+	S3I(ret)->hs.state = S3I(s)->hs.state;
 	ret->internal->rstate = s->internal->rstate;
 
 	/*
@@ -2804,13 +2804,13 @@ void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type, int val)
 int
 SSL_state(const SSL *ssl)
 {
-	return (ssl->internal->state);
+	return (S3I(ssl)->hs.state);
 }
 
 void
 SSL_set_state(SSL *ssl, int state)
 {
-	ssl->internal->state = state;
+	S3I(ssl)->hs.state = state;
 }
 
 void
