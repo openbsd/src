@@ -354,7 +354,7 @@ codel_next_packet(struct codel *cd, struct codel_params *cp, int64_t now,
 	return (m);
 }
 
-enum { ACCEPTING, FIRSTDROP, DROPPING, CONTROL, RECOVERY };
+enum { INITIAL, ACCEPTING, FIRSTDROP, DROPPING, CONTROL, RECOVERY };
 
 static inline int
 codel_state_change(struct codel *cd, int64_t now, struct mbuf *m, int drop,
@@ -367,7 +367,7 @@ codel_state_change(struct codel *cd, int64_t now, struct mbuf *m, int drop,
 		if (!drop)
 			return (RECOVERY);
 		else if (now >= cd->next)
-			return (state == CONTROL ? DROPPING : CONTROL);
+			return (state == DROPPING ? CONTROL : DROPPING);
 	} else if (drop)
 		return (FIRSTDROP);
 
@@ -387,7 +387,7 @@ codel_dequeue(struct codel *cd, struct codel_params *cp, int64_t now,
 
 	*dpkts = *dbytes = 0;
 
-	state = cd->dropping ? DROPPING : ACCEPTING;
+	state = INITIAL;
 
 	while (!done) {
 		m = codel_next_packet(cd, cp, now, &drop);
