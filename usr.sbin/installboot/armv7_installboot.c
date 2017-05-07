@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.2 2016/06/02 06:21:10 jsg Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.3 2017/05/07 10:40:17 kettenis Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -182,6 +182,22 @@ write_efisystem(struct disklabel *dl, char part)
 		goto umount;
 	}
 
+#ifdef __aarch64__
+	/*
+	 * Copy BOOTAA64.EFI to /efi/boot/bootaa64.efi.
+	 */
+	pathlen = strlen(dst);
+	if (strlcat(dst, "/bootaa64.efi", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /bootaa64.efi path");
+		goto umount;
+	}
+	src = fileprefix(root, "/usr/mdec/BOOTAA64.EFI");
+	if (src == NULL) {
+		rslt = -1;
+		goto umount;
+	}
+#else
 	/*
 	 * Copy BOOTARM.EFI to /efi/boot/bootarm.efi.
 	 */
@@ -196,6 +212,7 @@ write_efisystem(struct disklabel *dl, char part)
 		rslt = -1;
 		goto umount;
 	}
+#endif
 	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
