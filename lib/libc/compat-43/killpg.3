@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: killpg.3,v 1.13 2015/01/29 01:46:30 schwarze Exp $
+.\"	$OpenBSD: killpg.3,v 1.14 2017/05/07 21:19:29 millert Exp $
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: May 7 2017 $
 .Dt KILLPG 3
 .Os
 .Sh NAME
@@ -38,8 +38,9 @@
 .Ft int
 .Fn killpg "pid_t pgrp" "int sig"
 .Sh DESCRIPTION
+The
 .Fn killpg
-sends the signal
+function sends the signal
 .Fa sig
 to the process group
 .Fa pgrp .
@@ -81,6 +82,14 @@ of the sending process.
 .Xr getpgrp 2 ,
 .Xr kill 2 ,
 .Xr sigaction 2
+.Sh STANDARDS
+The
+.Fn killpg
+function conforms to the X/Open System Interfaces option of the
+.St -p1003.1-2008
+specification.
+.Pp
+The handling of process group 0 is an extension to that standard.
 .Sh HISTORY
 The
 .Fn killpg
