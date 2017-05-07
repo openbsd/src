@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.225 2017/05/03 17:51:57 mikeb Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.226 2017/05/07 17:53:30 mikeb Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ struct pkthdr_pf {
 struct	pkthdr {
 	void			*ph_cookie;	/* additional data */
 	SLIST_HEAD(, m_tag)	 ph_tags;	/* list of packet tags */
-	int64_t			 ph_timestamp;	/* packet timestamp */
 	int			 len;		/* total packet length */
 	u_int16_t		 ph_tagsset;	/* mtags attached */
 	u_int16_t		 ph_flowid;	/* pseudo unique flow id */
