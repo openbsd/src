@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.39 2016/07/08 22:27:58 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.40 2017/05/07 17:30:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,7 +58,6 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	p = mandoc_calloc(1, sizeof(struct termp));
 
 	p->line = 1;
-	p->tabwidth = 5;
 	p->defrmargin = p->lastrmargin = 78;
 	p->fontq = mandoc_reallocarray(NULL,
 	     (p->fontsz = 8), sizeof(enum termfont));

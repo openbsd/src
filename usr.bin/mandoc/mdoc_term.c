@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.254 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.255 2017/05/07 17:30:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -259,7 +259,9 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 	p = (struct termp *)arg;
 	p->overstep = 0;
 	p->rmargin = p->maxrmargin = p->defrmargin;
-	p->tabwidth = term_len(p, 5);
+	term_tab_set(p, NULL);
+	term_tab_set(p, "T");
+	term_tab_set(p, ".5i");
 
 	n = mdoc->first->child;
 	if (p->synopsisonly) {
@@ -1126,8 +1128,14 @@ static void
 termp_bl_post(DECL_ARGS)
 {
 
-	if (n->type == ROFFT_BLOCK)
-		term_newln(p);
+	if (n->type != ROFFT_BLOCK)
+		return;
+	term_newln(p);
+	if (n->tok != MDOC_Bl || n->norm->Bl.type != LIST_column)
+		return;
+	term_tab_set(p, NULL);
+	term_tab_set(p, "T");
+	term_tab_set(p, ".5i");
 }
 
 static int
@@ -1270,6 +1278,9 @@ termp_sh_pre(DECL_ARGS)
 		break;
 	case ROFFT_BODY:
 		p->offset = term_len(p, p->defindent);
+		term_tab_set(p, NULL);
+		term_tab_set(p, "T");
+		term_tab_set(p, ".5i");
 		switch (n->sec) {
 		case SEC_DESCRIPTION:
 			fn_prio = 0;
@@ -1320,6 +1331,9 @@ termp_d1_pre(DECL_ARGS)
 		return 1;
 	term_newln(p);
 	p->offset += term_len(p, p->defindent + 1);
+	term_tab_set(p, NULL);
+	term_tab_set(p, "T");
+	term_tab_set(p, ".5i");
 	return 1;
 }
 
@@ -1425,7 +1439,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	size_t			 tabwidth, lm, len, rm, rmax;
+	size_t			 lm, len, rm, rmax;
 	struct roff_node	*nn;
 	int			 offset;
 
@@ -1465,9 +1479,11 @@ termp_bd_pre(DECL_ARGS)
 	    DISP_centered != n->norm->Bd.type)
 		return 1;
 
-	tabwidth = p->tabwidth;
-	if (DISP_literal == n->norm->Bd.type)
-		p->tabwidth = term_len(p, 8);
+	if (n->norm->Bd.type == DISP_literal) {
+		term_tab_set(p, NULL);
+		term_tab_set(p, "T");
+		term_tab_set(p, "8n");
+	}
 
 	lm = p->offset;
 	rm = p->rmargin;
@@ -1491,9 +1507,9 @@ termp_bd_pre(DECL_ARGS)
 		 * notion of selective eoln whitespace is pretty dumb
 		 * anyway, so don't sweat it.
 		 */
+		if (nn->tok < ROFF_MAX)
+			continue;
 		switch (nn->tok) {
-		case ROFF_br:
-		case ROFF_sp:
 		case MDOC_Sm:
 		case MDOC_Bl:
 		case MDOC_D1:
@@ -1511,7 +1527,6 @@ termp_bd_pre(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 	}
 
-	p->tabwidth = tabwidth;
 	p->rmargin = rm;
 	p->maxrmargin = rmax;
 	return 0;
@@ -1582,6 +1597,9 @@ termp_ss_pre(DECL_ARGS)
 		break;
 	case ROFFT_BODY:
 		p->offset = term_len(p, p->defindent);
+		term_tab_set(p, NULL);
+		term_tab_set(p, "T");
+		term_tab_set(p, ".5i");
 		break;
 	default:
 		break;

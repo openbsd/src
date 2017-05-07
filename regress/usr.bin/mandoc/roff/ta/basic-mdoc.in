@@ -1,0 +1,34 @@
+.Dd May 7, 2017
+.Dt TA-BASIC-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm ta-basic-mdoc
+.Nd setting tabstop positions in mdoc(7)
+.Sh DESCRIPTION
+.Bd -unfilled
+default:
+1	2	3
+10n:
+.ta 10n
+1	2	3
+none:
+.ta
+1	2	3
+3n +6n T 4n +2n:
+.ta 3n +6n T 4n +2n
+1	2	3	4	5	6	7	8	9
+.Ed
+.Pp
+literal:
+.Bd -literal -compact
+1	2	3
+.Ed
+.Pp
+after literal:
+.br
+1	2	3
+.Pp
+default unit:
+.br
+.ta 3 +4 12
+1	2	3	4

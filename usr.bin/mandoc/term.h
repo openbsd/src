@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.63 2017/05/04 22:07:44 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.64 2017/05/07 17:30:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,7 +64,6 @@ struct	termp {
 	size_t		  maxrmargin;	/* Max right margin. */
 	size_t		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
-	size_t		  tabwidth;	/* Distance of tab positions. */
 	size_t		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See termp_flushln(). */
@@ -129,6 +128,9 @@ int		  term_hspan(const struct termp *, const struct roffsu *);
 int		  term_vspan(const struct termp *, const struct roffsu *);
 size_t		  term_strlen(const struct termp *, const char *);
 size_t		  term_len(const struct termp *, size_t);
+
+void		  term_tab_set(const struct termp *, const char *);
+size_t		  term_tab_next(size_t);
 
 void		  term_fontpush(struct termp *, enum termfont);
 void		  term_fontpop(struct termp *);
