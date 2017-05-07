@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.758 2017/05/04 07:16:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.759 2017/05/07 21:25:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -91,9 +91,10 @@ struct tmuxproc;
 #define KEYC_ESCAPE 0x200000000000ULL
 #define KEYC_CTRL   0x400000000000ULL
 #define KEYC_SHIFT  0x800000000000ULL
+#define KEYC_XTERM 0x1000000000000ULL
 
 /* Mask to obtain key w/o modifiers. */
-#define KEYC_MASK_MOD (KEYC_ESCAPE|KEYC_CTRL|KEYC_SHIFT)
+#define KEYC_MASK_MOD (KEYC_ESCAPE|KEYC_CTRL|KEYC_SHIFT|KEYC_XTERM)
 #define KEYC_MASK_KEY (~KEYC_MASK_MOD)
 
 /* Is this a mouse key? */

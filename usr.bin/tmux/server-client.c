@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.228 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.229 2017/05/07 21:25:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -904,7 +904,7 @@ retry:
 		log_debug("currently repeating");
 
 	/* Try to see if there is a key binding in the current table. */
-	bd_find.key = key;
+	bd_find.key = (key & ~KEYC_XTERM);
 	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd != NULL) {
 		/*

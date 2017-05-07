@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.59 2017/02/01 09:55:07 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.60 2017/05/07 21:25:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -201,6 +201,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 			return;
 		}
 	}
+	key &= ~KEYC_XTERM;
 
 	/* Otherwise look the key up in the table. */
 	for (i = 0; i < nitems(input_keys); i++) {
