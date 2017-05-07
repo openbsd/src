@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.6 2017/05/07 01:56:24 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.7 2017/05/07 01:58:29 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -392,6 +392,12 @@ do_tls_ordering_tests(void)
 		errx(1, "failed to connect: %s", tls_error(client));
 
 	if (do_client_server_handshake("ordering", client, server_cctx) != 0) {
+		failure = 1;
+		goto done;
+	}
+
+	if (tls_handshake(client) != -1) {
+		printf("FAIL: TLS handshake succeeded twice\n");
 		failure = 1;
 		goto done;
 	}
