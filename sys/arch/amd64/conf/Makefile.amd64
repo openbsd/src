@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.75 2017/01/25 11:15:07 kettenis Exp $
+#	$OpenBSD: Makefile.amd64,v 1.76 2017/05/08 00:13:38 dlg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -32,6 +32,9 @@ CMACHFLAGS=	-mcmodel=kernel -mno-red-zone -mno-sse2 -mno-sse -mno-3dnow \
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
+.endif
+.if ${IDENT:M-DDDB}
+CMACHFLAGS+=	-msave-args
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 CMACHFLAGS+=	-Wa,-n

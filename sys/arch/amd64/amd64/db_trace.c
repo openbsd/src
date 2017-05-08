@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.26 2017/04/20 12:41:43 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.27 2017/05/08 00:13:38 dlg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ db_numargs(struct callframe *fp, const char *sym)
 #ifdef DDBCTF
 	return db_ctf_func_numargs(sym);
 #else
-	return 0;
+	return 6;
 #endif /* DDBCTF */
 }
 
@@ -175,12 +175,21 @@ db_is_trap(const char *name)
 	return NONE;
 }
 
+const unsigned long *db_reg_args[6] = {
+	(unsigned long *)&ddb_regs.tf_rdi,
+	(unsigned long *)&ddb_regs.tf_rsi,
+	(unsigned long *)&ddb_regs.tf_rdx,
+	(unsigned long *)&ddb_regs.tf_rcx,
+	(unsigned long *)&ddb_regs.tf_r8,
+	(unsigned long *)&ddb_regs.tf_r9,
+};
+
 void
 db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
 	struct callframe *frame, *lastframe;
-	long		*argp, *arg0;
+	unsigned long	*argp, *arg0;
 	db_addr_t	callpc;
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
@@ -220,7 +229,8 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	lastframe = 0;
 	while (count && frame != 0) {
 		int		narg;
-		char *	name;
+		unsigned int	i;
+		char *		name;
 		db_expr_t	offset;
 		db_sym_t	sym;
 
@@ -229,7 +239,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (lastframe == 0 && sym == NULL) {
 			/* Symbol not found, peek at code */
-			long	instr = db_get_value(callpc, 8, FALSE);
+			unsigned long instr = db_get_value(callpc, 8, FALSE);
 
 			offset = 1;
 			if ((instr & 0x00ffffff) == 0x00e58955 ||
@@ -249,18 +259,32 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
-			/*
-			 * We have a breakpoint before the frame is set up
-			 * Use %rsp instead
-			 */
+			/* We have a breakpoint before the frame is set up */
+			for (i = min(6, narg); i > 0; i--) {
+				(*pr)("%lx", *db_reg_args[i]);
+				if (--narg != 0)
+					(*pr)(",");
+			}
+
+			/* Use %rsp instead */
 			arg0 =
 			    &((struct callframe *)(ddb_regs.tf_rsp-8))->f_arg0;
 		} else {
+			argp = (unsigned long *)frame;
+			for (i = min(6, narg); i > 0; i--) {
+				argp--;
+				(*pr)("%lx", db_get_value((db_addr_t)argp,
+				    sizeof(*argp), FALSE));
+				if (--narg != 0)
+					(*pr)(",");
+			}
+			
 			arg0 = &frame->f_arg0;
 		}
 
 		for (argp = arg0; narg > 0; ) {
-			(*pr)("%lx", db_get_value((db_addr_t)argp, 8, FALSE));
+			(*pr)("%lx", db_get_value((db_addr_t)argp,
+			    sizeof(*argp), FALSE));
 			argp++;
 			if (--narg != 0)
 				(*pr)(",");
