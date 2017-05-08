@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.82 2017/01/22 01:20:36 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.83 2017/05/08 02:34:01 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -258,8 +258,9 @@ int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
 
-void	_dl_thread_kern_go(void);
-void	_dl_thread_kern_stop(void);
+typedef void lock_cb(int);
+void	_dl_thread_kern_go(lock_cb *);
+lock_cb	*_dl_thread_kern_stop(void);
 
 char	*_dl_getenv(const char *, char **);
 void	_dl_unsetenv(const char *, char **);

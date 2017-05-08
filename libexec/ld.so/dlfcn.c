@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.96 2017/01/23 13:00:09 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.97 2017/05/08 02:34:01 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -43,13 +43,14 @@ int _dl_errno;
 static int _dl_tracelib;
 
 static int _dl_real_close(void *handle);
-static void (*_dl_thread_fnc)(int) = NULL;
+static lock_cb *_dl_thread_fnc = NULL;
 static elf_object_t *obj_from_addr(const void *addr);
 
 void *
 dlopen(const char *libname, int flags)
 {
 	elf_object_t *object;
+	lock_cb *cb;
 	int failed = 0;
 	int obj_flags;
 
@@ -68,7 +69,7 @@ dlopen(const char *libname, int flags)
 
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 
 	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
@@ -134,7 +135,7 @@ loaded:
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
 
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 
 	DL_DEB(("dlopen: %s: done (%s).\n", libname,
 	    failed ? "failed" : "success"));
@@ -256,12 +257,13 @@ __strong_alias(_dlctl,dlctl);
 int
 dlclose(void *handle)
 {
+	lock_cb *cb;
 	int retval;
 
 	if (handle == RTLD_DEFAULT)
 		return 0;
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 
 	if (_dl_debug_map && _dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_DELETE;
@@ -274,7 +276,7 @@ dlclose(void *handle)
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)(void))_dl_debug_map->r_brk))();
 	}
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 	return (retval);
 }
 
@@ -515,18 +517,21 @@ _dl_show_objects(void)
 		    _dl_symcachestat_lookups));
 }
 
-void
+lock_cb *
 _dl_thread_kern_stop(void)
 {
-	if (_dl_thread_fnc != NULL)
-		(*_dl_thread_fnc)(0);
+	lock_cb *cb = _dl_thread_fnc;
+
+	if (cb != NULL)
+		(*cb)(0);
+	return cb;
 }
 
 void
-_dl_thread_kern_go(void)
+_dl_thread_kern_go(lock_cb *cb)
 {
-	if (_dl_thread_fnc != NULL)
-		(*_dl_thread_fnc)(1);
+	if (cb != NULL)
+		(*cb)(1);
 }
 
 int

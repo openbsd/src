@@ -896,8 +896,9 @@ void *
 _dl_malloc(size_t size)
 {
 	void *r = NULL;
+	lock_cb *cb;
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 	if (g_pool == NULL)
 		omalloc_init(&g_pool);
 	g_pool->func = "malloc():";
@@ -908,7 +909,7 @@ _dl_malloc(size_t size)
 	r = omalloc(size, 0);
 	g_pool->active--;
 ret:
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 	return r;
 }
 
@@ -1007,11 +1008,13 @@ ofree(void *p)
 void
 _dl_free(void *ptr)
 {
+	lock_cb *cb;
+
 	/* This is legal. */
 	if (ptr == NULL)
 		return;
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 	if (g_pool == NULL)
 		wrterror("free() called before allocation");
 	g_pool->func = "free():";
@@ -1022,7 +1025,7 @@ _dl_free(void *ptr)
 	ofree(ptr);
 	g_pool->active--;
 ret:
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 }
 
 
@@ -1036,8 +1039,9 @@ void *
 _dl_calloc(size_t nmemb, size_t size)
 {
 	void *r = NULL;
+	lock_cb *cb;
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 	if (g_pool == NULL)
 		omalloc_init(&g_pool);
 	g_pool->func = "calloc():";
@@ -1055,7 +1059,7 @@ _dl_calloc(size_t nmemb, size_t size)
 	r = omalloc(size, 1);
 	g_pool->active--;
 ret:
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 	return r;
 }
 
@@ -1089,8 +1093,9 @@ void *
 _dl_realloc(void *ptr, size_t size)
 {
 	void *r = NULL;
+	lock_cb *cb;
 
-	_dl_thread_kern_stop();
+	cb = _dl_thread_kern_stop();
 	if (g_pool == NULL)
 		omalloc_init(&g_pool);
 	g_pool->func = "realloc():";
@@ -1101,7 +1106,7 @@ _dl_realloc(void *ptr, size_t size)
 	r = orealloc(ptr, size);
 	g_pool->active--;
 ret:
-	_dl_thread_kern_go();
+	_dl_thread_kern_go(cb);
 	return r;
 }
 
