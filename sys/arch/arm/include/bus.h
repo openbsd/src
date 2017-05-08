@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 2016/10/05 07:44:24 patrick Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 2017/05/08 00:27:45 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -604,19 +604,20 @@ bs_c_8_proto(f);
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
-#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
-#define	BUS_DMA_ZERO		0x800	/* dmamem_alloc returns zeroed mem */
+#define	BUS_DMA_WAITOK		0x0000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x0001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x0002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x0004	/* hint: map memory DMA coherent */
+#define	BUS_DMA_STREAMING	0x0008	/* hint: sequential, unidirectional */
+#define	BUS_DMA_BUS1		0x0010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x0020
+#define	BUS_DMA_BUS3		0x0040
+#define	BUS_DMA_BUS4		0x0080
+#define	BUS_DMA_READ		0x0100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x0200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x0400	/* hint: map non-cached memory */
+#define	BUS_DMA_ZERO		0x0800	/* dmamem_alloc returns zeroed mem */
+#define	BUS_DMA_64BIT		0x1000	/* device handles 64bit dva */
 
 /*
  * Private flags stored in the DMA map.

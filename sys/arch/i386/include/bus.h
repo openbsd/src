@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.66 2015/02/27 18:59:43 guenther Exp $	*/
+/*	$OpenBSD: bus.h,v 1.67 2017/05/08 00:27:45 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -528,6 +528,7 @@ extern const struct i386_bus_space_ops i386_bus_space_mem_ops;
 #define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x0800	/* map memory uncached */
 #define	BUS_DMA_ZERO		0x1000	/* dmamem_alloc return zeroed mem */
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

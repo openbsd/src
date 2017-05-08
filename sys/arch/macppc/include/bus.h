@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.25 2016/05/03 12:23:25 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.26 2017/05/08 00:27:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -489,6 +489,7 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_space_handle_t h2,
 #define	BUS_DMA_STREAMING	0x0400	/* hint: sequential, unidirectional */
 #define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
 #define	BUS_DMA_NOCACHE		0x1000	/* map memory uncached */
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 
 /* Forwards needed by prototypes below. */

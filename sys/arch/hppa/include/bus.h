@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.31 2011/11/14 14:29:53 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.32 2017/05/08 00:27:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -299,6 +299,7 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_DMA_READ		0x0400	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x0800	/* mapping is memory -> device only */
 #define	BUS_DMA_ZERO		0x1000	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

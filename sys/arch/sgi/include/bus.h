@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.26 2014/03/10 21:32:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.27 2017/05/08 00:27:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -318,6 +318,7 @@ bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
 #define	BUS_DMA_STREAMING	0x0400	/* hint: sequential, unidirectional */
 #define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
 #define	BUS_DMA_NOCACHE		0x1000
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

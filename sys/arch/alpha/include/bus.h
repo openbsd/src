@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.30 2016/05/03 11:22:08 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.31 2017/05/08 00:27:45 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -464,6 +464,7 @@ struct alpha_bus_space {
 #define	BUS_DMA_READ		0x0200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
 #define	BUS_DMA_ZERO		0x1000	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 /*
  * Private flags stored in the DMA map.

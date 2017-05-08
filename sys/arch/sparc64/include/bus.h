@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.31 2017/02/13 01:34:37 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.32 2017/05/08 00:27:45 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -370,6 +370,7 @@ bus_space_barrier(t, h, o, s, f)
 #define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
 #define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
 #define	BUS_DMA_OVERRUN		0x1000  /* tolerate DMA overruns */
+#define	BUS_DMA_64BIT		0x2000	/* device handles 64bit dva */
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */

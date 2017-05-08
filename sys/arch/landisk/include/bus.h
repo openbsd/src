@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2011/03/23 16:54:35 pirofti Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2017/05/08 00:27:45 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -421,19 +421,20 @@ struct _bus_space {
 /*
  * Flags used in various bus DMA methods.
  */
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* map memory to not require sync */
-#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
-#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_WAITOK		0x0000	/* safe to sleep (pseudo-flag) */
+#define	BUS_DMA_NOWAIT		0x0001	/* not safe to sleep */
+#define	BUS_DMA_ALLOCNOW	0x0002	/* perform resource allocation now */
+#define	BUS_DMA_COHERENT	0x0004	/* map memory to not require sync */
+#define	BUS_DMA_STREAMING	0x0008	/* hint: sequential, unidirectional */
+#define	BUS_DMA_BUS1		0x0010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x0020
+#define	BUS_DMA_BUS3		0x0040
+#define	BUS_DMA_BUS4		0x0080
+#define	BUS_DMA_READ		0x0100	/* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x0200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x0400	/* hint: map non-cached memory */
+#define	BUS_DMA_ZERO		0x0800	/* zero memory in dmamem_alloc */
+#define	BUS_DMA_64BIT		0x1000	/* device handles 64bit dva */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
