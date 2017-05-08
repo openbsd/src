@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.38 2017/05/02 12:27:37 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.39 2017/05/08 11:30:53 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -391,6 +391,14 @@ hfsc_pf_addqueue(void *arg, struct pf_queuespec *q)
 	ulsc.m1 = q->upperlimit.m1.absolute;
 	ulsc.d  = q->upperlimit.d;
 	ulsc.m2 = q->upperlimit.m2.absolute;
+
+	/* Compatibility with older pfctl, return an EINVAL after 6.2 */
+	if (rtsc.m1 == 0 && rtsc.m2 == 0 && lssc.m1 == 0 &&
+	    lssc.m2 == 0 && ulsc.m1 == 0 && ulsc.m2 == 0 &&
+	    q->parent_qid == 0 && strncmp(q->qname, "_root_", 6) == 0) {
+		hfsc_class_destroy(hif, parent);
+		parent = NULL;
+	}
 
 	cl = hfsc_class_create(hif, &rtsc, &lssc, &ulsc,
 	    parent, q->qlimit, q->flags, q->qid);
