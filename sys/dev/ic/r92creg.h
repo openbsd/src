@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.6 2017/02/01 12:46:40 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.7 2017/05/08 12:27:59 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -469,7 +469,7 @@
 #define R92C_RQPN_LD		0x80000000
 
 /* Bits for R92C_TDECTRL. */
-#define R92C_TDECTRL_BLK_DESC_NUM_M	0x0000000f
+#define R92C_TDECTRL_BLK_DESC_NUM_M	0x000000f0
 #define R92C_TDECTRL_BLK_DESC_NUM_S	4
 
 /* Bits for R92C_FWHW_TXQ_CTRL. */
@@ -1241,7 +1241,7 @@ struct r92c_tx_desc_usb {
 #define R88E_RXDW3_RPT_TX2	2
 #define R88E_RXDW3_RPT_HIS	3
 
-#define R92C_TXDW4_RTSRATE_M	0x0000003f
+#define R92C_TXDW4_RTSRATE_M	0x0000001f
 #define R92C_TXDW4_RTSRATE_S	0
 #define R92C_TXDW4_QOS		0x00000040
 #define R92C_TXDW4_HWSEQ	0x00000080
