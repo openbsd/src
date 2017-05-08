@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.19 2017/02/12 01:01:39 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.20 2017/05/08 18:19:02 mestre Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -154,7 +154,7 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc, uint32_t chip_type)
 	if (sc->chip & RTWN_CHIP_92C) {
 		sc->ntxchains = (sc->chip & RTWN_CHIP_92C_1T2R) ? 1 : 2;
 		sc->nrxchains = 2;
-	} else if (sc->chip & RTWN_CHIP_88C) {
+	} else {
 		sc->ntxchains = 1;
 		sc->nrxchains = 1;
 	}
