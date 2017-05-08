@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.80 2017/01/24 03:57:35 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.81 2017/05/08 08:46:39 rzalamena Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ struct ifnet {				/* and the entries */
 	caddr_t if_bridgeport;		/* used by bridge ports */
 	caddr_t if_switchport;		/* used by switch ports */
 	caddr_t if_mcast;		/* used by multicast code */
+	caddr_t if_mcast6;		/* used by IPv6 multicast code */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {
 		caddr_t	carp_s;		/* carp structure (used by !carp ifs) */

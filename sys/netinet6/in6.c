@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.203 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.204 2017/05/08 08:46:39 rzalamena Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
-		return (mrt6_ioctl(cmd, data));
+		return (mrt6_ioctl(so, cmd, data));
 	}
 #endif
 

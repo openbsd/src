@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.18 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.19 2017/05/08 08:46:39 rzalamena Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -195,13 +195,13 @@ struct sioc_mif_req6 {
  * The kernel's multicast-interface structure.
  */
 struct mif6 {
+	mifi_t		m6_mifi;	/* mif index			     */
         u_char		m6_flags;	/* MIFF_ flags defined above         */
 	u_int		m6_rate_limit;	/* max rate			     */
 #ifdef notyet
 	struct tbf      *m6_tbf;	/* token bucket structure at intf.   */
 #endif
 	struct in6_addr	m6_lcl_addr;	/* local interface address           */
-	struct ifnet    *m6_ifp;	/* pointer to interface              */
 	u_int64_t	m6_pkt_in;	/* # pkts in on interface            */
 	u_int64_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_int64_t	m6_bytes_in;	/* # bytes in on interface	     */
@@ -248,9 +248,9 @@ struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
 
 int	ip6_mrouter_set(int, struct socket *, struct mbuf *);
 int	ip6_mrouter_get(int, struct socket *, struct mbuf *);
-int	ip6_mrouter_done(void);
+int	ip6_mrouter_done(struct socket *);
 void	ip6_mrouter_detach(struct ifnet *);
-int	mrt6_ioctl(u_long, caddr_t);
+int	mrt6_ioctl(struct socket *, u_long, caddr_t);
 int	mrt6_sysctl_mif(void *, size_t *);
 int	mrt6_sysctl_mfc(void *, size_t *);
 #endif /* _KERNEL */

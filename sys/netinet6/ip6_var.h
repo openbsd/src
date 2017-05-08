@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.72 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.73 2017/05/08 08:46:39 rzalamena Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ extern int	ip6_maxifprefixes; /* Max acceptable prefixes via RA per IF */
 extern int	ip6_maxifdefrouters; /* Max acceptable def routers via RA */
 extern int	ip6_maxdynroutes; /* Max # of routes created via redirect */
 
-extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
+extern struct socket *ip6_mrouter[RT_TABLEID_MAX]; /* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
