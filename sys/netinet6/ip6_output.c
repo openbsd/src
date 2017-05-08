@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.229 2017/05/08 08:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.230 2017/05/08 13:51:10 rzalamena Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -592,13 +592,6 @@ reroute:
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 
-		/*
-		 *  XXX: if we have to send an ICMPv6 error to the sender,
-		 *       we need the M_LOOP flag since icmp6_error() expects
-		 *       the IPv6 and the hop-by-hop options header are
-		 *       continuous unless the flag is set.
-		 */
-		m->m_flags |= M_LOOP;
 		m->m_pkthdr.ph_ifidx = ifp->if_index;
 		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
 		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
@@ -607,7 +600,6 @@ reroute:
 			error = EINVAL;/* better error? */
 			goto done;
 		}
-		m->m_flags &= ~M_LOOP; /* XXX */
 		m->m_pkthdr.ph_ifidx = 0;
 	}
 
