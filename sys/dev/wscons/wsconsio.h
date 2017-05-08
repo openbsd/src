@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.79 2017/03/16 10:03:27 mpi Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.80 2017/05/08 20:55:29 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -303,31 +303,34 @@ enum wsmousecfg {
 	WSMOUSECFG_X_HYSTERESIS,/* retard value for X coordinates */
 	WSMOUSECFG_Y_HYSTERESIS,/* retard value for Y coordinates */
 	WSMOUSECFG_DECELERATION,/* threshold (distance) for deceleration */
+	WSMOUSECFG_STRONG_HYSTERESIS,	/* apply the filter continuously */
+	WSMOUSECFG_SMOOTHING,	/* smoothing factor (0-7) */
 
 	/*
 	 * Touchpad features
 	 */
-	WSMOUSECFG_SOFTBUTTONS = 64,	/* has "soft" buttons */
-	WSMOUSECFG_SOFTMBTN,	/* coordinates of middle-button area */
-	WSMOUSECFG_TOPBUTTONS,
-	WSMOUSECFG_TWOFINGERSCROLL,
-	WSMOUSECFG_EDGESCROLL,
-	WSMOUSECFG_HORIZSCROLL,	/* enable horizontal scrolling */
-	WSMOUSECFG_SWAPSIDES,
-	WSMOUSECFG_DISABLE,
+	WSMOUSECFG_SOFTBUTTONS = 64,	/* 2 soft-buttons at the bottom edge */
+	WSMOUSECFG_SOFTMBTN,		/* add a middle-button area */
+	WSMOUSECFG_TOPBUTTONS,		/* 3 soft-buttons at the top edge */
+	WSMOUSECFG_TWOFINGERSCROLL,	/* enable two-finger scrolling */
+	WSMOUSECFG_EDGESCROLL,		/* enable edge scrolling */
+	WSMOUSECFG_HORIZSCROLL,		/* enable horizontal edge scrolling */
+	WSMOUSECFG_SWAPSIDES,		/* invert soft-button/scroll areas */
+	WSMOUSECFG_DISABLE,		/* disable all output except for
+					   clicks in the top-button area */
 
 	/*
 	 * Touchpad options
 	 */
-	WSMOUSECFG_LEFT_EDGE = 128,	/* ratios of the left edge */
-	WSMOUSECFG_RIGHT_EDGE,	/* ratios of the right edge */
-	WSMOUSECFG_TOP_EDGE,	/* ratios of the top edge */
-	WSMOUSECFG_BOTTOM_EDGE,	/* ratios of the bottom edge */
-	WSMOUSECFG_CENTERWIDTH,	/* width of the middle-button area */
-	WSMOUSECFG_HORIZSCROLLDIST,
-	WSMOUSECFG_VERTSCROLLDIST,
-	WSMOUSECFG_F2WIDTH,
-	WSMOUSECFG_F2PRESSURE,
+	WSMOUSECFG_LEFT_EDGE = 128,	/* ratio: left edge / total width */
+	WSMOUSECFG_RIGHT_EDGE,		/* ratio: right edge / total width */
+	WSMOUSECFG_TOP_EDGE,		/* ratio: top edge / total height */
+	WSMOUSECFG_BOTTOM_EDGE,		/* ratio: bottom edge / total height */
+	WSMOUSECFG_CENTERWIDTH,		/* ratio: center width / total width */
+	WSMOUSECFG_HORIZSCROLLDIST,	/* distance mapped to a scroll event */
+	WSMOUSECFG_VERTSCROLLDIST,	/* distance mapped to a scroll event */
+	WSMOUSECFG_F2WIDTH,		/* width limit for single touches */
+	WSMOUSECFG_F2PRESSURE,		/* pressure limit for single touches */
 };
 #define WSMOUSECFG_MAX	32	/* max size of param array per ioctl */
 

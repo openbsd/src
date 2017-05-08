@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouseinput.h,v 1.6 2017/03/16 10:03:27 mpi Exp $ */
+/* $OpenBSD: wsmouseinput.h,v 1.7 2017/05/08 20:55:29 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -103,9 +103,11 @@ struct axis_filter {
 	int rmdr;
 	/* Invert coordinates. */
 	int inv;
-	/* Hysteresis limit and accumulated deltas. */
+	/* Hysteresis limit, accumulated deltas, and weighted delta average. */
 	int hysteresis;
 	int acc;
+	int avg;
+	int avg_rmdr;
 	/* A [*.12] coefficient for "magnitudes", used for deceleration. */
 	int mag_scale;
 	int dclr_rmdr;
@@ -136,6 +138,7 @@ struct wsmouseinput {
 
 		int dclr;	/* deceleration threshold */
 		int mag;	/* weighted average of delta magnitudes */
+		u_int mode;	/* hysteresis type, smoothing factor */
 
 		int ratio;	/* X/Y ratio */
 
@@ -158,6 +161,11 @@ struct wsmouseinput {
 #define RESYNC			(1 << 16)
 #define TRACK_INTERVAL		(1 << 17)
 #define CONFIGURED		(1 << 18)
+
+/* filter.mode (bit 0-2: smoothing factor, bit 3: hysteresis type) */
+#define STRONG_HYSTERESIS	(1 << 3)
+#define SMOOTHING_MASK		7
+#define FILTER_MODE_DEFAULT	STRONG_HYSTERESIS
 
 struct evq_access {
 	struct wseventvar *evar;

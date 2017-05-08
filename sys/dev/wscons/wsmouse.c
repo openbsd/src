@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.38 2017/03/16 10:03:27 mpi Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.39 2017/05/08 20:55:29 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1352,6 +1352,14 @@ wsmouse_get_params(struct device *sc,
 		case WSMOUSECFG_DECELERATION:
 			params[i].value = input->filter.dclr;
 			break;
+		case WSMOUSECFG_STRONG_HYSTERESIS:
+			params[i].value =
+			    !!(input->filter.mode & STRONG_HYSTERESIS);
+			break;
+		case WSMOUSECFG_SMOOTHING:
+			params[i].value =
+			    input->filter.mode & SMOOTHING_MASK;
+			break;
 		default:
 			error = wstpad_get_param(input, key, &params[i].value);
 			if (error != 0)
@@ -1421,6 +1429,16 @@ wsmouse_set_params(struct device *sc,
 			break;
 		case WSMOUSECFG_DY_MAX:
 			input->filter.v.dmax = val;
+			break;
+		case WSMOUSECFG_STRONG_HYSTERESIS:
+			if (val)
+				input->filter.mode |= STRONG_HYSTERESIS;
+			else
+				input->filter.mode &= ~STRONG_HYSTERESIS;
+			break;
+		case WSMOUSECFG_SMOOTHING:
+			input->filter.mode &= ~SMOOTHING_MASK;
+			input->filter.mode |= (val & SMOOTHING_MASK);
 			break;
 		default:
 			needreset = 1;

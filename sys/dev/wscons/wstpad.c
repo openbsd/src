@@ -762,28 +762,7 @@ wstpad_track_interval(struct wsmouseinput *input, struct timespec *time)
 	input->intv.track = 1;
 }
 
-/*
- * If hysteresis values are set, the sum of the output motion deltas will
- * lag behind the input deltas within a window bounded by +[hysteresis]
- * and -[hysteresis]. It may suppress accidental movements when a touch
- * starts or ends, or when small corrections with changing directions are
- * being made. In the synaptics driver the default threshold is 0.5 percent
- * of the diagonal of the touchpad surface, the wstpad default is about
- * 0.36 percent. The fields filter.h.acc and filter.v.acc accumulate the
- * deltas up to the threshold values.
- */
-void
-wstpad_hysteresis(int *acc, int *delta, int hysteresis)
-{
-	*acc += *delta;
-	if (*acc > hysteresis)
-		*delta = *acc - hysteresis;
-	else if (*acc < -hysteresis)
-		*delta = *acc + hysteresis;
-	else
-		*delta = 0;
-	*acc -= *delta;
-}
+
 
 /*
  * The default acceleration options of X don't work convincingly with
@@ -797,7 +776,7 @@ wstpad_hysteresis(int *acc, int *delta, int hysteresis)
  * by the factor 2/8, deltas with magnitudes from 7 to 11 by factors
  * ranging from 3/8 to 7/8.
  */
-void
+int
 wstpad_decelerate(struct wsmouseinput *input, int *dx, int *dy)
 {
 	int h = abs(*dx) * input->filter.h.mag_scale;
@@ -819,8 +798,93 @@ wstpad_decelerate(struct wsmouseinput *input, int *dx, int *dy)
 		input->filter.v.dclr_rmdr = (v >= 0 ? v & 7 : -(-v & 7));
 		*dx = h / 8;
 		*dy = v / 8;
+		return (1);
+	}
+	return (0);
+}
+
+/*
+ * The hysteresis filter may suppress noise and accidental pointer
+ * movements.  The "strong" variant applies independently to the axes,
+ * and it is applied continuously.  It takes effect whenever the
+ * orientation on an axis changes, which makes pointer paths more stable.
+ * The "weak" variant is more precise and does not affect paths, it just
+ * filters noise at the start- and stop-points of a movement.
+ */
+void
+wstpad_strong_hysteresis(int *dx, int *dy,
+    int *h_acc, int *v_acc, int h_threshold, int v_threshold)
+{
+	*h_acc += *dx;
+	*v_acc += *dy;
+	if (*h_acc > h_threshold)
+		*dx = *h_acc - h_threshold;
+	else if (*h_acc < -h_threshold)
+		*dx = *h_acc + h_threshold;
+	else
+		*dx = 0;
+	*h_acc -= *dx;
+	if (*v_acc > v_threshold)
+		*dy = *v_acc - v_threshold;
+	else if (*v_acc < -v_threshold)
+		*dy = *v_acc + v_threshold;
+	else
+		*dy = 0;
+	*v_acc -= *dy;
+}
+
+void
+wstpad_weak_hysteresis(int *dx, int *dy,
+    int *h_acc, int *v_acc, int h_threshold, int v_threshold)
+{
+	*h_acc += *dx;
+	*v_acc += *dy;
+	if ((*dx > 0 && *h_acc < *dx)
+	    || (*dx < 0 && *h_acc > *dx))
+		*h_acc = *dx;
+	if ((*dy > 0 && *v_acc < *dy)
+	    || (*dy < 0 && *v_acc > *dy))
+		*v_acc = *dy;
+	if (abs(*h_acc) < h_threshold
+	    && abs(*v_acc) < v_threshold)
+		*dx = *dy = 0;
+}
+
+void
+wstpad_filter(struct wsmouseinput *input, int *dx, int *dy)
+{
+	struct axis_filter *h = &input->filter.h;
+	struct axis_filter *v = &input->filter.v;
+	int strength = input->filter.mode & 7;
+
+	if ((h->dmax && (abs(*dx) > h->dmax))
+	    || (v->dmax && (abs(*dy) > v->dmax)))
+		*dx = *dy = 0;
+
+	if (h->hysteresis || v->hysteresis) {
+		if (input->filter.mode & STRONG_HYSTERESIS)
+			wstpad_strong_hysteresis(dx, dy, &h->acc,
+			    &v->acc, h->hysteresis, v->hysteresis);
+		else
+			wstpad_weak_hysteresis(dx, dy, &h->acc,
+			    &v->acc, h->hysteresis, v->hysteresis);
+	}
+
+	if (input->filter.dclr && wstpad_decelerate(input, dx, dy))
+		/* Strong smoothing may hamper the precision at low speeds. */
+		strength = imin(strength, 2);
+
+	if (strength) {
+		/* Use a weighted decaying average for smoothing. */
+		*dx = *dx * (8 - strength) + h->avg * strength + h->avg_rmdr;
+		*dy = *dy * (8 - strength) + v->avg * strength + v->avg_rmdr;
+		h->avg_rmdr = (*dx >= 0 ? *dx & 7 : -(-*dx & 7));
+		v->avg_rmdr = (*dy >= 0 ? *dy & 7 : -(-*dy & 7));
+		*dx = h->avg = *dx / 8;
+		*dy = v->avg = *dy / 8;
 	}
 }
+
 
 /*
  * Compatibility-mode conversions. This function transforms and filters
@@ -830,8 +894,6 @@ wstpad_decelerate(struct wsmouseinput *input, int *dx, int *dy)
 void
 wstpad_compat_convert(struct wsmouseinput *input, struct evq_access *evq)
 {
-	struct axis_filter *h = &input->filter.h;
-	struct axis_filter *v = &input->filter.v;
 	int dx, dy;
 
 	if (input->flags & TRACK_INTERVAL)
@@ -840,19 +902,15 @@ wstpad_compat_convert(struct wsmouseinput *input, struct evq_access *evq)
 	dx = (input->motion.sync & SYNC_X) ? input->motion.x_delta : 0;
 	dy = (input->motion.sync & SYNC_Y) ? input->motion.y_delta : 0;
 
-	if ((h->dmax && (abs(dx) > h->dmax))
-	    || (v->dmax && (abs(dy) > v->dmax)))
-		dx = dy = 0;
+	if ((input->touch.sync & SYNC_CONTACTS)
+	    || input->mt.ptr != input->mt.prev_ptr) {
+		input->filter.h.acc = input->filter.v.acc = 0;
+		input->filter.h.avg = input->filter.v.avg = 0;
+	}
+
+	wstpad_filter(input, &dx, &dy);
 
 	if (dx || dy) {
-		if (input->touch.sync & SYNC_CONTACTS)
-			h->acc = v->acc = 0;
-		if (h->hysteresis)
-			wstpad_hysteresis(&h->acc, &dx, h->hysteresis);
-		if (v->hysteresis)
-			wstpad_hysteresis(&v->acc, &dy, v->hysteresis);
-		if (input->filter.dclr)
-			wstpad_decelerate(input, &dx, &dy);
 		input->motion.dx = dx;
 		input->motion.dy = dy;
 		if ((dx || dy) && !(input->motion.sync & SYNC_DELTAS)) {
@@ -987,6 +1045,7 @@ wstpad_configure(struct wsmouseinput *input)
 		input->filter.v.scale = input->filter.h.scale;
 		input->filter.h.hysteresis = h_unit;
 		input->filter.v.hysteresis = v_unit;
+		input->filter.mode = FILTER_MODE_DEFAULT;
 		input->filter.dclr = h_unit - h_unit / 5;
 		wstpad_init_deceleration(input);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.15 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.16 2017/05/08 20:55:29 bru Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -130,6 +130,10 @@ struct ubcmtp_finger {
 
 /* Use a constant, synaptics-compatible pressure value for now. */
 #define DEFAULT_PRESSURE	40
+
+static struct wsmouse_param ubcmtp_params[] = {
+	{ WSMOUSECFG_STRONG_HYSTERESIS, 0 }
+};
 
 struct ubcmtp_limit {
 	int limit;
@@ -531,7 +535,8 @@ ubcmtp_configure(struct ubcmtp_softc *sc)
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
-	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
+	return wsmouse_configure(sc->sc_wsmousedev,
+	    ubcmtp_params, nitems(ubcmtp_params));
 }
 
 int
