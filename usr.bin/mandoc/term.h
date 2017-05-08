@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.64 2017/05/07 17:30:58 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.65 2017/05/08 15:33:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,6 +68,7 @@ struct	termp {
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See termp_flushln(). */
 	int		  overstep;	/* See termp_flushln(). */
+	int		  ti;		/* Temporary indent for one line. */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
 #define	TERMP_SENTENCE	 (1 << 0)	/* Space before a sentence. */

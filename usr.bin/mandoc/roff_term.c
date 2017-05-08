@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.5 2017/05/07 17:30:58 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.6 2017/05/08 15:33:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -32,6 +32,7 @@ static	void	  roff_term_pre_ft(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ll(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_sp(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ta(ROFF_TERM_ARGS);
+static	void	  roff_term_pre_ti(ROFF_TERM_ARGS);
 
 static	const roff_term_pre_fp roff_term_pre_acts[ROFF_MAX] = {
 	roff_term_pre_br,  /* br */
@@ -39,6 +40,7 @@ static	const roff_term_pre_fp roff_term_pre_acts[ROFF_MAX] = {
 	roff_term_pre_ll,  /* ft */
 	roff_term_pre_sp,  /* sp */
 	roff_term_pre_ta,  /* ta */
+	roff_term_pre_ti,  /* ti */
 };
 
 
@@ -120,4 +122,44 @@ roff_term_pre_ta(ROFF_TERM_ARGS)
 	term_tab_set(p, NULL);
 	for (n = n->child; n != NULL; n = n->next)
 		term_tab_set(p, n->string);
+}
+
+static void
+roff_term_pre_ti(ROFF_TERM_ARGS)
+{
+	struct roffsu	 su;
+	const char	*cp;
+	int		 len, sign;
+
+	roff_term_pre_br(p, n);
+
+	if (n->child == NULL)
+		return;
+	cp = n->child->string;
+	if (*cp == '+') {
+		sign = 1;
+		cp++;
+	} else if (*cp == '-') {
+		sign = -1;
+		cp++;
+	} else
+		sign = 0;
+
+	if (a2roffsu(cp, &su, SCALE_EM) == 0)
+		return;
+	len = term_hspan(p, &su) / 24;
+
+	if (sign == 0) {
+		p->ti = len - p->offset;
+		p->offset = len;
+	} else if (sign == 1) {
+		p->ti = len;
+		p->offset += len;
+	} else if ((size_t)len < p->offset) {
+		p->ti = -len;
+		p->offset -= len;
+	} else {
+		p->ti = -p->offset;
+		p->offset = 0;
+	}
 }

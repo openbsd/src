@@ -1,0 +1,21 @@
+.Dd May 8, 2017
+.Dt TI-BASIC-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm ti-basic-mdoc
+.Nd temporary indent in mdoc(7)
+.Sh DESCRIPTION
+initial text
+.ti 10n
+This text is indented.
+However, the indent is temporary,
+so as soon as the line wraps, it is gone.
+.ti +10n
+The temporary indent can be relative.
+All the same, it will expire in the usual way.
+.ti -3n
+It is also possible to temporarily reduce the indentation,
+but that will also last until the next line break only.
+.ti -10n
+Reducing by more than the current offset
+starts the next line at the physical left margin.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.29 2017/05/07 17:30:58 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.30 2017/05/08 15:33:43 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -71,6 +71,7 @@ enum	roff_tok {
 	ROFF_ll,
 	ROFF_sp,
 	ROFF_ta,
+	ROFF_ti,
 	ROFF_MAX,
 	ROFF_ab,
 	ROFF_ad,
@@ -275,7 +276,6 @@ enum	roff_tok {
 	ROFF_tc,
 	ROFF_TE,
 	ROFF_TH,
-	ROFF_ti,
 	ROFF_tkf,
 	ROFF_tl,
 	ROFF_tm,

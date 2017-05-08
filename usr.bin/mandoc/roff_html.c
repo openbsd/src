@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_html.c,v 1.4 2017/05/07 17:30:58 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.5 2017/05/08 15:33:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,6 +37,7 @@ static	const roff_html_pre_fp roff_html_pre_acts[ROFF_MAX] = {
 	NULL,  /* ll */
 	roff_html_pre_sp,  /* sp */
 	NULL,  /* ta */
+	NULL,  /* ti */
 };
 
 

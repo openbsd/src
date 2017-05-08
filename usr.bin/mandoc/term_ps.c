@@ -1,7 +1,7 @@
-/*	$OpenBSD: term_ps.c,v 1.47 2017/02/09 17:19:07 schwarze Exp $ */
+/*	$OpenBSD: term_ps.c,v 1.48 2017/05/08 15:33:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1215,6 +1215,9 @@ ps_endline(struct termp *p)
 	}
 
 	ps_closepage(p);
+
+	p->offset -= p->ti;
+	p->ti = 0;
 }
 
 static void
