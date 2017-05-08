@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.178 2017/05/04 09:03:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.179 2017/05/08 08:57:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -241,7 +241,7 @@ struct iwm_nvm_section {
 	uint8_t *data;
 };
 
-int	iwm_is_mimo_plcp(uint8_t);
+int	iwm_is_mimo_ht_plcp(uint8_t);
 int	iwm_is_mimo_mcs(int);
 int	iwm_store_cscheme(struct iwm_softc *, uint8_t *, size_t);
 int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
@@ -5375,8 +5375,9 @@ iwm_setrates(struct iwm_node *in)
 		if (j >= nitems(lq->rs_table))
 			break;
 		tab = 0;
-		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
-		    ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
+		if (ni->ni_flags & IEEE80211_NODE_HT) {
+		    	if (ht_plcp == IWM_RATE_HT_SISO_MCS_INV_PLCP)
+				continue;
 	 		/* Do not mix SISO and MIMO HT rates. */
 			if ((mimo && !iwm_is_mimo_ht_plcp(ht_plcp)) ||
 			    (!mimo && iwm_is_mimo_ht_plcp(ht_plcp)))
@@ -5392,8 +5393,7 @@ iwm_setrates(struct iwm_node *in)
 					break;
 				}
 			}
-		}
-		if (tab == 0 && plcp != IWM_RATE_INVM_PLCP) {
+		} else if (plcp != IWM_RATE_INVM_PLCP) {
 			for (i = ni->ni_txrate; i >= 0; i--) {
 				if (iwm_rates[ridx].rate == (rs->rs_rates[i] &
 				    IEEE80211_RATE_VAL)) {
@@ -5416,10 +5416,16 @@ iwm_setrates(struct iwm_node *in)
 		lq->rs_table[j++] = htole32(tab);
 	}
 
+	lq->mimo_delim = (mimo ? j : 0);
+
 	/* Fill the rest with the lowest possible rate */
-	i = j > 0 ? j - 1 : 0;
-	while (j < nitems(lq->rs_table))
-		lq->rs_table[j++] = lq->rs_table[i];
+	while (j < nitems(lq->rs_table)) {
+		tab = iwm_rates[ridx_min].plcp;
+		if (IWM_RIDX_IS_CCK(ridx_min))
+			tab |= IWM_RATE_MCS_CCK_MSK;
+		tab |= IWM_RATE_MCS_ANT_A_MSK;
+		lq->rs_table[j++] = htole32(tab);
+	}
 
 	lq->single_stream_ant_msk = IWM_ANT_A;
 	lq->dual_stream_ant_msk = IWM_ANT_AB;
