@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.69 2017/01/30 21:54:30 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.70 2017/05/08 12:28:39 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1968,11 +1968,10 @@ urtwn_bb_init(void *cookie)
 		urtwn_bb_write(sc, R92C_AFE_XTAL_CTRL,
 		    RW(reg, R92C_AFE_XTAL_CTRL_ADDR,
 		    crystalcap | crystalcap << 6));
-	} else {
-		if (urtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) &
-		    R92C_HSSI_PARAM2_CCK_HIPWR)
-			sc->sc_sc.sc_flags |= RTWN_FLAG_CCK_HIPWR;
 	}
+
+	if (urtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) & R92C_HSSI_PARAM2_CCK_HIPWR)
+		sc->sc_sc.sc_flags |= RTWN_FLAG_CCK_HIPWR;
 }
 
 int
