@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.99 2017/05/05 08:07:36 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.100 2017/05/08 09:45:14 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -186,7 +186,8 @@ ls_missing()
 	local _c _l="$(ls_installed)" _sha=${_TMP}/SHA256
 
 	# return inmediately if we cannot reach the mirror server
-	unpriv ftp -MVo /dev/null ${_MIRROR%syspatch/*} >/dev/null
+	[[ -d ${_MIRROR#file://*} ]] ||
+		unpriv ftp -MVo /dev/null ${_MIRROR%syspatch/*} >/dev/null
 
 	# don't output anything on stdout to prevent corrupting the patch list;
 	# redirect stderr as well in case there's no patch available
