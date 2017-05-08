@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctf.h,v 1.3 2016/11/10 13:19:49 mpi Exp $	*/
+/*	$OpenBSD: ctf.h,v 1.4 2017/05/08 11:14:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -24,32 +24,32 @@
  */
 
 struct ctf_header {
-	unsigned short		cth_magic;
-	unsigned char		cth_version;
-	unsigned char		cth_flags;
-	unsigned int		cth_parlabel;
-	unsigned int		cth_parname;
-	unsigned int		cth_lbloff;
-	unsigned int		cth_objtoff;
-	unsigned int		cth_funcoff;
-	unsigned int		cth_typeoff;
-	unsigned int		cth_stroff;
-	unsigned int		cth_strlen;
+	uint16_t		cth_magic;
+	uint8_t			cth_version;
+	uint8_t			cth_flags;
+	uint32_t		cth_parlabel;
+	uint32_t		cth_parname;
+	uint32_t		cth_lbloff;
+	uint32_t		cth_objtoff;
+	uint32_t		cth_funcoff;
+	uint32_t		cth_typeoff;
+	uint32_t		cth_stroff;
+	uint32_t		cth_strlen;
 };
 
 #define CTF_F_COMPRESS		(1 << 0)	/* zlib compression */
 
 struct ctf_lblent {
-	unsigned int		ctl_label;
-	unsigned int		ctl_typeidx;
+	uint32_t		ctl_label;
+	uint32_t		ctl_typeidx;
 };
 
 struct ctf_stype {
-	unsigned int		cts_name;
-	unsigned short		cts_info;
+	uint32_t		cts_name;
+	uint16_t		cts_info;
 	union {
-		unsigned short _size;
-		unsigned short _type;
+		uint16_t _size;
+		uint16_t _type;
 	} _ST;
 #define cts_size _ST._size
 #define cts_type _ST._type
@@ -61,20 +61,20 @@ struct ctf_type {
 #define ctt_info _ctt_stype.cts_info
 #define ctt_size _ctt_stype.cts_size
 #define ctt_type _ctt_stype.cts_type
-	unsigned int		ctt_lsizehi;
-	unsigned int		ctt_lsizelo;
+	uint32_t		ctt_lsizehi;
+	uint32_t		ctt_lsizelo;
 };
 
 struct ctf_array {
-	unsigned short		cta_contents;
-	unsigned short		cta_index;
-	unsigned int		cta_nelems;
+	uint16_t		cta_contents;
+	uint16_t		cta_index;
+	uint32_t		cta_nelems;
 };
 
 struct ctf_member {
-	unsigned int		ctm_name;
-	unsigned short		ctm_type;
-	unsigned short		ctm_offset;
+	uint32_t		ctm_name;
+	uint16_t		ctm_type;
+	uint16_t		ctm_offset;
 };
 
 struct ctf_lmember {
@@ -82,14 +82,14 @@ struct ctf_lmember {
 #define ctlm_name _ctlm_member.ctm_name
 #define ctlm_type _ctlm_member.ctm_type
 #define ctlm_pad0 _ctlm_member.ctm_offset
-	unsigned int		ctlm_offsethi;
-	unsigned int		ctlm_offsetlo;
+	uint32_t		ctlm_offsethi;
+	uint32_t		ctlm_offsetlo;
 };
 
 #define CTF_LSTRUCT_THRESH	8192
 
 struct ctf_enum {
-	unsigned int		cte_name;
+	uint32_t		cte_name;
 	int			cte_value;
 };
 
@@ -99,6 +99,7 @@ struct ctf_enum {
 #define CTF_MAX_NAME		0x7fffffff
 #define CTF_MAX_VLEN		0x03ff
 #define CTF_MAX_SIZE		0xfffe
+#define CTF_LSIZE_SENT		CTF_MAX_SIZE+1	/* sentinel for cts vs ctt */
 
 #define CTF_STRTAB_0		0
 #define CTF_STRTAB_1		1
@@ -179,5 +180,7 @@ struct ctf_enum {
  */
 #define CTF_LMEM_OFFSET(m) \
 	(((uint64_t)(m)->ctlm_offsethi) << 32 | (m)->ctlm_offsetlo)
+#define CTF_OFFSET_TO_LMEMHI(off)	((uint32_t)((uint64_t)(off) >> 32))
+#define CTF_OFFSET_TO_LMEMLO(off)	((uint32_t)(off))
 
 #endif /* _SYS_CTF_H_ */
