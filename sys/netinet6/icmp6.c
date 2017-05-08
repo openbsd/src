@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.209 2017/05/08 13:51:09 rzalamena Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.210 2017/05/08 16:14:47 rzalamena Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -595,9 +595,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 			    sizeof(*nicmp6));
 			noff = off;
 		}
-		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
-		nicmp6->icmp6_code = 0;
 		if (n) {
+			nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
+			nicmp6->icmp6_code = 0;
 			icmp6stat_inc(icp6s_reflect);
 			icmp6stat_inc(icp6s_outhist + ICMP6_ECHO_REPLY);
 			icmp6_reflect(n, noff);
