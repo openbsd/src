@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.20 2017/03/27 23:59:08 deraadt Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.21 2017/05/08 20:15:34 beck Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -564,7 +564,7 @@ main(int argc, char **argv)
 	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
 		exit(1);
 
-	dspew("Built an %ld byte ocsp request\n", request->size);
+	dspew("Built an %zu byte ocsp request\n", request->size);
 
 	if ((host = url2host(request->url, &port, &path)) == NULL)
 		errx(1, "Invalid OCSP url %s from %s", request->url,
@@ -601,7 +601,7 @@ main(int argc, char **argv)
 	dspew("Server at %s returns:\n", host);
 	for (i = 0; i < httphsz; i++)
 		dspew("	  [%s]=[%s]\n", httph[i].key, httph[i].val);
-	dspew("	  [Body]=[%ld bytes]\n", hget->bodypartsz);
+	dspew("	  [Body]=[%zu bytes]\n", hget->bodypartsz);
 	if (hget->bodypartsz <= 0)
 		errx(1, "No body in reply from %s", host);
 
