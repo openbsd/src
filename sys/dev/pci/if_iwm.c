@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.180 2017/05/08 12:41:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.181 2017/05/08 14:27:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3630,6 +3630,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	int group_id;
 	size_t hdrlen, datasz;
 	uint8_t *data;
+	int generation = sc->sc_generation;
 
 	code = hcmd->id;
 	async = hcmd->flags & IWM_CMD_ASYNC;
@@ -3651,7 +3652,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	 * Is the hardware still available?  (after e.g. above wait).
 	 */
 	s = splnet();
-	if (sc->sc_flags & IWM_FLAG_STOPPED) {
+	if (generation != sc->sc_generation) {
 		err = ENXIO;
 		goto out;
 	}
@@ -3764,7 +3765,6 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
 	if (!async) {
-		int generation = sc->sc_generation;
 		err = tsleep(desc, PCATCH, "iwmcmd", hz);
 		if (err == 0) {
 			/* if hardware is no longer up, return error */
