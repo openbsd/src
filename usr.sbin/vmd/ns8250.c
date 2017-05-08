@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.7 2017/03/21 03:29:57 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.8 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -31,6 +31,7 @@
 #include "proc.h"
 #include "vmd.h"
 #include "vmm.h"
+#include "atomicio.h"
 
 extern char *__progname;
 struct ns8250_dev com1_dev;
@@ -483,4 +484,42 @@ vcpu_exit_com(struct vm_run_params *vrp)
 
 	mutex_unlock(&com1_dev.mutex);
 	return (intr);
+}
+
+int
+ns8250_dump(int fd)
+{
+	log_debug("%s: sending UART", __func__);
+	if (atomicio(vwrite, fd, &com1_dev.regs,
+	    sizeof(com1_dev.regs)) != sizeof(com1_dev.regs)) {
+		log_warnx("%s: error writing UART to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+ns8250_restore(int fd, int con_fd, uint32_t vmid)
+{
+	int ret;
+	log_debug("%s: receiving UART", __func__);
+	if (atomicio(read, fd, &com1_dev.regs,
+	    sizeof(com1_dev.regs)) != sizeof(com1_dev.regs)) {
+		log_warnx("%s: error reading UART from fd", __func__);
+		return (-1);
+	}
+
+	ret = pthread_mutex_init(&com1_dev.mutex, NULL);
+	if (ret) {
+		errno = ret;
+		fatal("could not initialize com1 mutex");
+	}
+	com1_dev.fd = con_fd;
+	com1_dev.irq = 4;
+	com1_dev.rcv_pending = 0;
+
+	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
+	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_add(&com1_dev.event, NULL);
+	return (0);
 }

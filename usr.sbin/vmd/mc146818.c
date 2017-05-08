@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.13 2017/05/02 09:51:19 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.14 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -26,12 +26,14 @@
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "vmd.h"
 #include "mc146818.h"
 #include "proc.h"
 #include "virtio.h"
 #include "vmm.h"
+#include "atomicio.h"
 
 #define MC_DIVIDER_MASK 0xe0
 #define MC_RATE_MASK 0xf
@@ -312,4 +314,42 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	}
 
 	return 0xFF;
+}
+
+int
+mc146818_dump(int fd)
+{
+	log_debug("%s: sending RTC", __func__);
+	if (atomicio(vwrite, fd, &rtc, sizeof(rtc)) != sizeof(rtc)) {
+		log_warnx("%s: error writing RTC to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+mc146818_restore(int fd, uint32_t vm_id)
+{
+	log_debug("%s: restoring RTC", __func__);
+	if (atomicio(read, fd, &rtc, sizeof(rtc)) != sizeof(rtc)) {
+		log_warnx("%s: error reading RTC from fd", __func__);
+		return (-1);
+	}
+	rtc.vm_id = vm_id;
+
+	memset(&rtc.sec, 0, sizeof(struct event));
+	memset(&rtc.per, 0, sizeof(struct event));
+	evtimer_set(&rtc.sec, rtc_fire1, NULL);
+	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+
+	evtimer_add(&rtc.per, &rtc.per_tv);
+	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	return (0);
+}
+
+void
+mc146818_stop()
+{
+	evtimer_del(&rtc.per);
+	evtimer_del(&rtc.sec);
 }

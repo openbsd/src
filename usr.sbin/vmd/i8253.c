@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.14 2017/04/28 08:14:48 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.15 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -25,10 +25,12 @@
 #include <event.h>
 #include <string.h>
 #include <stddef.h>
+#include <unistd.h>
 
 #include "i8253.h"
 #include "proc.h"
 #include "vmm.h"
+#include "atomicio.h"
 
 extern char *__progname;
 
@@ -340,4 +342,47 @@ i8253_fire(int fd, short type, void *arg)
 
 	if (ctr->mode != TIMER_INTTC)
 		evtimer_add(&ctr->timer, &tv);
+}
+
+int
+i8253_dump(int fd)
+{
+	log_debug("%s: sending PIT", __func__);
+	if (atomicio(vwrite, fd, &i8253_channel, sizeof(i8253_channel)) !=
+	    sizeof(i8253_channel)) {
+		log_warnx("%s: error writing PIT to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+i8253_restore(int fd, uint32_t vm_id)
+{
+	log_debug("%s: restoring PIT", __func__);
+	if (atomicio(read, fd, &i8253_channel, sizeof(i8253_channel)) !=
+	    sizeof(i8253_channel)) {
+		log_warnx("%s: error reading PIT from fd", __func__);
+		return (-1);
+	}
+	memset(&i8253_channel[0].timer, 0, sizeof(struct event));
+	memset(&i8253_channel[1].timer, 0, sizeof(struct event));
+	memset(&i8253_channel[2].timer, 0, sizeof(struct event));
+	i8253_channel[0].vm_id = vm_id;
+	i8253_channel[1].vm_id = vm_id;
+	i8253_channel[2].vm_id = vm_id;
+
+	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
+	evtimer_set(&i8253_channel[1].timer, i8253_fire, &i8253_channel[1]);
+	evtimer_set(&i8253_channel[2].timer, i8253_fire, &i8253_channel[2]);
+	i8253_reset(0);
+	return (0);
+}
+
+void
+i8253_stop()
+{
+	evtimer_del(&i8253_channel[0].timer);
+	evtimer_del(&i8253_channel[1].timer);
+	evtimer_del(&i8253_channel[2].timer);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.16 2017/05/02 09:51:19 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.17 2017/05/08 09:08:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -161,19 +161,27 @@ struct vmmci_dev {
 
 /* virtio.c */
 void virtio_init(struct vmd_vm *, int *, int *);
+int virtio_dump(int);
+int virtio_restore(int, struct vmd_vm *, int *, int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+int viornd_dump(int);
+int viornd_restore(int);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
 
 int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+int vioblk_dump(int);
+int vioblk_restore(int, struct vm_create_params *, int *);
 void vioblk_update_qs(struct vioblk_dev *);
 void vioblk_update_qa(struct vioblk_dev *);
 int vioblk_notifyq(struct vioblk_dev *);
 
 int virtio_net_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+int vionet_dump(int);
+int vionet_restore(int, struct vmd_vm *, int *);
 void vionet_update_qs(struct vionet_dev *);
 void vionet_update_qa(struct vionet_dev *);
 int vionet_notifyq(struct vionet_dev *);
@@ -182,6 +190,8 @@ void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+int vmmci_dump(int);
+int vmmci_restore(int, uint32_t);
 int vmmci_ctl(unsigned int);
 void vmmci_ack(unsigned int);
 void vmmci_timeout(int, short, void *);

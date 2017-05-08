@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.h,v 1.2 2016/10/03 06:00:17 mlarkin Exp $ */
+/* $OpenBSD: i8259.h,v 1.3 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -66,3 +66,5 @@ uint8_t vcpu_exit_i8259(struct vm_run_params *);
 void i8259_init(void);
 uint16_t i8259_ack(void);
 uint8_t i8259_is_pending(void);
+int i8259_restore(int);
+int i8259_dump(int);

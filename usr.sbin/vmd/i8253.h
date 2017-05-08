@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.5 2017/04/28 08:14:48 mlarkin Exp $ */
+/* $OpenBSD: i8253.h,v 1.6 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -44,5 +44,8 @@ struct i8253_channel {
 void i8253_init(uint32_t);
 void i8253_reset(uint8_t);
 void i8253_fire(int, short, void *);
+int i8253_dump(int);
+int i8253_restore(int, uint32_t);
 uint8_t vcpu_exit_i8253(struct vm_run_params *);
 void i8253_do_readback(uint32_t);
+void i8253_stop(void);

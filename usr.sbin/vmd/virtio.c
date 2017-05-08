@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.44 2017/05/02 09:51:19 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.45 2017/05/08 09:08:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -42,6 +42,7 @@
 #include "vmm.h"
 #include "virtio.h"
 #include "loadfile.h"
+#include "atomicio.h"
 
 extern char *__progname;
 
@@ -51,6 +52,7 @@ struct vionet_dev *vionet;
 struct vmmci_dev vmmci;
 
 int nr_vionet;
+int nr_vioblk;
 
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
 
@@ -1648,6 +1650,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 	    + sizeof(uint16_t) * (2 + VIORND_QUEUE_SIZE));
 
 	if (vcp->vcp_ndisks > 0) {
+		nr_vioblk = vcp->vcp_ndisks;
 		vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
 		if (vioblk == NULL) {
 			log_warn("%s: calloc failure allocating vioblks",
@@ -1798,4 +1801,270 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 	vmmci.irq = pci_get_dev_irq(id);
 
 	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+}
+
+int
+vmmci_restore(int fd, uint32_t vm_id)
+{
+	uint8_t id;
+
+	log_debug("%s: receiving vmmci", __func__);
+	if (atomicio(read, fd, &vmmci, sizeof(vmmci)) != sizeof(vmmci)) {
+		log_warnx("%s: error reading vmmci from fd", __func__);
+		return (-1);
+	}
+
+	if (pci_add_device(&id, PCI_VENDOR_OPENBSD,
+	    PCI_PRODUCT_OPENBSD_CONTROL,
+	    PCI_CLASS_COMMUNICATIONS,
+	    PCI_SUBCLASS_COMMUNICATIONS_MISC,
+	    PCI_VENDOR_OPENBSD,
+	    PCI_PRODUCT_VIRTIO_VMMCI, 1, NULL)) {
+		log_warnx("%s: can't add PCI vmm control device",
+		    __progname);
+		return (-1);
+	}
+
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vmmci_io, NULL)) {
+		log_warnx("%s: can't add bar for vmm control device",
+		    __progname);
+		return (-1);
+	}
+	vmmci.vm_id = vm_id;
+	memset(&vmmci.timeout, 0, sizeof(struct event));
+	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+	return (0);
+}
+
+int
+viornd_restore(int fd)
+{
+	uint8_t id;
+
+	log_debug("%s: receiving viornd", __func__);
+	if (atomicio(read, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
+		log_warnx("%s: error reading viornd from fd", __func__);
+		return (-1);
+	}
+	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+	    PCI_PRODUCT_QUMRANET_VIO_RNG, PCI_CLASS_SYSTEM,
+	    PCI_SUBCLASS_SYSTEM_MISC,
+	    PCI_VENDOR_OPENBSD,
+	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, NULL)) {
+		log_warnx("%s: can't add PCI virtio rng device",
+		    __progname);
+		return (-1);
+	}
+
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_rnd_io, NULL)) {
+		log_warnx("%s: can't add bar for virtio rng device",
+		    __progname);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params *vcp = &vmc->vmc_params;
+	uint8_t i, id;
+	int ret;
+
+	nr_vionet = vcp->vcp_nnics;
+	if (vcp->vcp_nnics > 0) {
+		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
+		if (vionet == NULL) {
+			log_warn("%s: calloc failure allocating vionets",
+			    __progname);
+			return (-1);
+		}
+		log_debug("%s: receiving vionet", __func__);
+		if (atomicio(read, fd, vionet,
+		    vcp->vcp_nnics * sizeof(struct vionet_dev)) !=
+		    vcp->vcp_nnics * sizeof(struct vionet_dev)) {
+			log_warnx("%s: error reading vionet from fd",
+			    __func__);
+			return (-1);
+		}
+
+		/* Virtio network */
+		for (i = 0; i < vcp->vcp_nnics; i++) {
+			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
+			    PCI_SUBCLASS_SYSTEM_MISC,
+			    PCI_VENDOR_OPENBSD,
+			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
+				log_warnx("%s: can't add PCI virtio net device",
+				    __progname);
+				return (-1);
+			}
+
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
+			    &vionet[i])) {
+				log_warnx("%s: can't add bar for virtio net "
+				    "device", __progname);
+				return (-1);
+			}
+
+			memset(&vionet[i].mutex, 0, sizeof(pthread_mutex_t));
+			ret = pthread_mutex_init(&vionet[i].mutex, NULL);
+
+			if (ret) {
+				errno = ret;
+				log_warn("%s: could not initialize mutex "
+				    "for vionet device", __progname);
+				return (-1);
+			}
+			vionet[i].fd = child_taps[i];
+			vionet[i].rx_pending = 0;
+			vionet[i].vm_id = vcp->vcp_id;
+			vionet[i].vm_vmid = vm->vm_vmid;
+
+			memset(&vionet[i].event, 0, sizeof(struct event));
+			event_set(&vionet[i].event, vionet[i].fd,
+			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
+			if (event_add(&vionet[i].event, NULL)) {
+				log_warn("could not initialize vionet event "
+				    "handler");
+				return (-1);
+			}
+		}
+	}
+	return (0);
+}
+
+int
+vioblk_restore(int fd, struct vm_create_params *vcp, int *child_disks)
+{
+	uint8_t i, id;
+	off_t sz;
+
+	nr_vioblk = vcp->vcp_ndisks;
+	vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
+	if (vioblk == NULL) {
+		log_warn("%s: calloc failure allocating vioblks", __progname);
+		return (-1);
+	}
+	log_debug("%s: receiving vioblk", __func__);
+	if (atomicio(read, fd, vioblk,
+	    nr_vioblk * sizeof(struct vioblk_dev)) !=
+	    nr_vioblk * sizeof(struct vioblk_dev)) {
+		log_warnx("%s: error reading vioblk from fd", __func__);
+		return (-1);
+	}
+	for (i = 0; i < vcp->vcp_ndisks; i++) {
+		if ((sz = lseek(child_disks[i], 0, SEEK_END)) == -1)
+			continue;
+
+		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+		    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
+		    PCI_CLASS_MASS_STORAGE,
+		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
+		    PCI_VENDOR_OPENBSD,
+		    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
+			log_warnx("%s: can't add PCI virtio block "
+			    "device", __progname);
+			return (-1);
+		}
+		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
+		    &vioblk[i])) {
+			log_warnx("%s: can't add bar for virtio block "
+			    "device", __progname);
+			return (-1);
+		}
+		vioblk[i].fd = child_disks[i];
+	}
+	return (0);
+}
+
+int
+virtio_restore(int fd, struct vmd_vm *vm, int *child_disks, int *child_taps)
+{
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct vm_create_params *vcp = &vmc->vmc_params;
+	int ret;
+
+	if ((ret = viornd_restore(fd)) == -1)
+		return ret;
+
+	if ((ret = vioblk_restore(fd, vcp, child_disks)) == -1)
+		return ret;
+
+	if ((ret = vionet_restore(fd, vm, child_taps)) == -1)
+		return ret;
+
+	if ((ret = vmmci_restore(fd, vcp->vcp_id)) == -1)
+		return ret;
+
+	return (0);
+}
+
+int
+viornd_dump(int fd)
+{
+	log_debug("%s: sending viornd", __func__);
+	if (atomicio(vwrite, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
+		log_warnx("%s: error writing viornd to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+vmmci_dump(int fd)
+{
+	log_debug("%s: sending vmmci", __func__);
+	if (atomicio(vwrite, fd, &vmmci, sizeof(vmmci)) != sizeof(vmmci)) {
+		log_warnx("%s: error writing vmmci to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+vionet_dump(int fd)
+{
+	log_debug("%s: sending vionet", __func__);
+	if (atomicio(vwrite, fd, vionet,
+	    nr_vionet * sizeof(struct vionet_dev)) !=
+	    nr_vionet * sizeof(struct vionet_dev)) {
+		log_warnx("%s: error writing vionet to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+vioblk_dump(int fd)
+{
+	log_debug("%s: sending vioblk", __func__);
+	if (atomicio(vwrite, fd, vioblk,
+	    nr_vioblk * sizeof(struct vioblk_dev)) !=
+	    nr_vioblk * sizeof(struct vioblk_dev)) {
+		log_warnx("%s: error writing vioblk to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+virtio_dump(int fd)
+{
+	int ret;
+
+	if ((ret = viornd_dump(fd)) == -1)
+		return ret;
+
+	if ((ret = vioblk_dump(fd)) == -1)
+		return ret;
+
+	if ((ret = vionet_dump(fd)) == -1)
+		return ret;
+
+	if ((ret = vmmci_dump(fd)) == -1);
+		return ret;
+
+	return (0);
 }

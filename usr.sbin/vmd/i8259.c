@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.13 2017/04/08 19:06:29 mlarkin Exp $ */
+/* $OpenBSD: i8259.c,v 1.14 2017/05/08 09:08:40 reyk Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -23,9 +23,11 @@
 
 #include <machine/vmmvar.h>
 
+#include <unistd.h>
 #include "proc.h"
 #include "i8259.h"
 #include "vmm.h"
+#include "atomicio.h"
 
 struct i8259 {
 	uint8_t irr;
@@ -646,4 +648,26 @@ vcpu_exit_i8259(struct vm_run_params *vrp)
 	}
 
 	return (0xFF);
+}
+
+int
+i8259_dump(int fd)
+{
+	log_debug("%s: sending PIC", __func__);
+	if (atomicio(vwrite, fd, &pics, sizeof(pics)) != sizeof(pics)) {
+		log_warnx("%s: error writing PIC to fd", __func__);
+		return (-1);
+	}
+	return (0);
+}
+
+int
+i8259_restore(int fd)
+{
+	log_debug("%s: restoring PIC", __func__);
+	if (atomicio(read, fd, &pics, sizeof(pics)) != sizeof(pics)) {
+		log_warnx("%s: error reading PIC from fd", __func__);
+		return (-1);
+	}
+	return (0);
 }
