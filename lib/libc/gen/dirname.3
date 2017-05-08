@@ -1,4 +1,4 @@
-.\" $OpenBSD: dirname.3,v 1.20 2013/09/30 12:02:32 millert Exp $
+.\" $OpenBSD: dirname.3,v 1.21 2017/05/08 14:45:47 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2013 $
+.Dd $Mdocdate: May 8 2017 $
 .Dt DIRNAME 3
 .Os
 .Sh NAME
@@ -70,8 +70,9 @@ The path component to be returned was larger than
 .Sh STANDARDS
 The
 .Fn dirname
-function conforms to
-.St -xpg4.2 .
+function conforms to the X/Open System Interfaces option of the
+.St -p1003.1-2008
+specification.
 .Sh HISTORY
 The
 .Fn dirname
