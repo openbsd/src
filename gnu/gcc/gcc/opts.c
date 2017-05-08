@@ -195,6 +195,18 @@ complain_wrong_lang (const char *text, const struct cl_option *option,
   free (bad_lang);
 }
 
+static const char *bad_option = NULL;
+
+void
+late_options_error (void)
+{
+  if (bad_option)
+    {
+      input_location = unknown_location;
+      error ("unrecognized command line option \"%s\"", bad_option);
+    }
+}
+
 /* Handle the switch beginning at ARGV for the language indicated by
    LANG_MASK.  Returns the number of switches consumed.  */
 static unsigned int
@@ -226,8 +238,16 @@ handle_option (const char **argv, unsigned int lang_mask)
       opt_index = find_opt (opt + 1, lang_mask | CL_COMMON | CL_TARGET);
     }
 
-  if (opt_index == cl_options_count)
-    goto done;
+  if (opt_index == cl_options_count) 
+    {
+      /* ignore unknown -Wno-* options */
+      if (value == 0 && opt[1] == 'W')
+	{
+	  bad_option = argv[0];
+	  result = 1;
+	}
+      goto done;
+    }
 
   option = &cl_options[opt_index];
 

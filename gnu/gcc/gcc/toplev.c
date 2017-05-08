@@ -2045,7 +2045,10 @@ toplev_main (unsigned int argc, const char **argv)
     do_compile ();
 
   if (errorcount || sorrycount)
+  { 
+    late_options_error ();
     return (FATAL_EXIT_CODE);
+  }
 
   return (SUCCESS_EXIT_CODE);
 }

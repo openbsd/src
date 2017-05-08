@@ -88,6 +88,7 @@ extern unsigned num_in_fnames;
 size_t find_opt (const char *input, int lang_mask);
 extern void prune_options (int *argcp, char ***argvp);
 extern void decode_options (unsigned int argc, const char **argv);
+extern void late_options_error (void);
 extern int option_enabled (int opt_idx);
 extern bool get_option_state (int, struct cl_option_state *);
 
