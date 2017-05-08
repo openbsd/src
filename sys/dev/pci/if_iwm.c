@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.179 2017/05/08 08:57:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.180 2017/05/08 12:41:23 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -908,6 +908,11 @@ iwm_nic_lock(struct iwm_softc *sc)
 {
 	int rv = 0;
 
+	if (sc->sc_nic_locks > 0) {
+		sc->sc_nic_locks++;
+		return 1; /* already locked */
+	}
+
 	IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
@@ -919,6 +924,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY
 	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
 	    	rv = 1;
+		sc->sc_nic_locks++;
 	} else {
 		printf("%s: acquiring device failed\n", DEVNAME(sc));
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
@@ -930,8 +936,12 @@ iwm_nic_lock(struct iwm_softc *sc)
 void
 iwm_nic_unlock(struct iwm_softc *sc)
 {
-	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+	if (sc->sc_nic_locks > 0) {
+		if (--sc->sc_nic_locks == 0)
+			IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
+			    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+	} else
+		printf("%s: NIC already unlocked\n", DEVNAME(sc));
 }
 
 void
@@ -1211,6 +1221,11 @@ iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
 	    ring->desc_dma.size, BUS_DMASYNC_PREWRITE);
 	sc->qfullmsk &= ~(1 << ring->qid);
+	/* 7000 family NICs are locked while commands are in progress. */
+	if (ring->qid == IWM_CMD_QUEUE && ring->queued > 0) {
+		if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+			iwm_nic_unlock(sc);
+	}
 	ring->queued = 0;
 	ring->cur = 0;
 }
@@ -1589,6 +1604,10 @@ iwm_stop_device(struct iwm_softc *sc)
 	/* Make sure (redundant) we've released our request to stay awake */
 	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
+	if (sc->sc_nic_locks > 0)
+		printf("%s: %d active NIC locks forcefully cleared\n",
+		    DEVNAME(sc), sc->sc_nic_locks);
+	sc->sc_nic_locks = 0;
 
 	/* Stop the device, and put it in low power state */
 	iwm_apm_stop(sc);
@@ -3724,21 +3743,23 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
 	    sizeof (*desc), BUS_DMASYNC_PREWRITE);
 
-	IWM_SETBITS(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
-	if (!iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
-	    (IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY |
-	     IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP), 15000)) {
-		printf("%s: acquiring device failed\n", DEVNAME(sc));
-		err = EBUSY;
-		goto out;
+	/*
+	 * Wake up the NIC to make sure that the firmware will see the host
+	 * command - we will let the NIC sleep once all the host commands
+	 * returned. This needs to be done only on 7000 family NICs.
+	 */
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000) {
+		if (ring->queued == 0 && !iwm_nic_lock(sc)) {
+			err = EBUSY;
+			goto out;
+		}
 	}
 
 #if 0
 	iwm_update_sched(sc, ring->qid, ring->cur, 0, 0);
 #endif
 	/* Kick command ring. */
+	ring->queued++;
 	ring->cur = (ring->cur + 1) % IWM_TX_RING_COUNT;
 	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
@@ -3859,6 +3880,18 @@ iwm_cmd_done(struct iwm_softc *sc, struct iwm_rx_packet *pkt)
 		data->m = NULL;
 	}
 	wakeup(&ring->desc[pkt->hdr.idx]);
+
+	if (ring->queued == 0) {
+		DPRINTF(("%s: unexpected firmware response to command 0x%x\n",
+		    DEVNAME(sc), IWM_WIDE_ID(pkt->hdr.flags, pkt->hdr.code)));
+	} else if (--ring->queued == 0) {
+		/* 
+		 * 7000 family NICs are locked while commands are in progress.
+		 * All commands are now done so we may unlock the NIC again.
+		 */
+		if (sc->sc_device_family == IWM_DEVICE_FAMILY_7000)
+			iwm_nic_unlock(sc);
+	}
 }
 
 #if 0
@@ -6739,9 +6772,6 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 		ADVANCE_RXQ(sc);
 	}
-
-	IWM_CLRBITS(sc, IWM_CSR_GP_CNTRL,
-	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_ACCESS_REQ);
 
 	/*
 	 * Tell the firmware what we have processed.
