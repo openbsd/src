@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.114 2017/03/03 09:41:20 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.115 2017/05/08 09:11:20 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -306,25 +306,24 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		 * connect system call but with the wait timing out so
 		 * that interruptible mounts don't hang here for a long time.
 		 */
-		s = splsoftnet();
+		s = solock(so);
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-			(void) tsleep((caddr_t)&so->so_timeo, PSOCK,
-				"nfscon", 2 * hz);
+			sosleep(so, &so->so_timeo, PSOCK, "nfscon", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
-				splx(s);
+				sounlock(s);
 				goto bad;
 			}
 		}
 		if (so->so_error) {
 			error = so->so_error;
 			so->so_error = 0;
-			splx(s);
+			sounlock(s);
 			goto bad;
 		}
-		splx(s);
+		sounlock(s);
 	}
 	/*
 	 * Always set receive timeout to detect server crash and reconnect.
