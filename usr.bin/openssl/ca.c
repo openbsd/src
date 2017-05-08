@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.24 2017/05/04 12:36:13 beck Exp $ */
+/* $OpenBSD: ca.c,v 1.25 2017/05/08 21:12:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,36 +218,14 @@ static int msie_hack = 0;
 static int
 setCertificateTime(ASN1_TIME *x509time, char *timestring)
 {
-	struct tm tm1, tm2;
-	char *rfctime = timestring;
-	int type;
-
+	struct tm tm1;
 	memset(&tm1, 0, sizeof(tm1));
-	memset(&tm2, 0, sizeof(tm2));
-	type = ASN1_time_parse(timestring, strlen(timestring), &tm1, 0);
-	if (type == -1) {
+	if (ASN1_time_parse(timestring, strlen(timestring), &tm1, 0) == -1)
 		return (-1);
-	}
-
-	/* RFC 5280 section 4.1.2.5 */
-	if (tm1.tm_year < 150 && type != V_ASN1_UTCTIME) {
-		if (strlen(timestring) == 15) {
-			/* Fix date if possible */
-			rfctime = timestring + 2;
-			type = ASN1_time_parse(rfctime, strlen(rfctime),
-			    &tm2, 0);
-			if (type != V_ASN1_UTCTIME ||
-			    tm1.tm_year != tm2.tm_year)
-				return (-1);
-		} else
-			return (-1);
-	}
-	if (tm1.tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
+	if (!ASN1_TIME_set_tm(x509time, &tm1))
 		return (-1);
-	ASN1_TIME_set_string(x509time, rfctime);
-	return (0);
+	return 0;
 }
-
 
 int
 ca_main(int argc, char **argv)
