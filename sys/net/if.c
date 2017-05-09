@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.494 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.495 2017/05/09 09:31:07 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1504,15 +1504,10 @@ if_downall(void)
 void
 if_down(struct ifnet *ifp)
 {
-	struct ifaddr *ifa;
-
 	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags &= ~IFF_UP;
 	getmicrotime(&ifp->if_lastchange);
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
-	}
 	IFQ_PURGE(&ifp->if_snd);
 
 	if_linkstate(ifp);
