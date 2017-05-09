@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2017/04/17 15:53:21 kettenis Exp $
+# $OpenBSD: Makefile,v 1.8 2017/05/09 21:09:27 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -64,6 +64,7 @@ GEN_SRCS=	absvdi2 \
 		divti3 \
 		divtf3 \
 		divxc3 \
+		emutls \
 		enable_execute_stack \
 		eprintf \
 		extendsfdf2 \

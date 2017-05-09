@@ -549,8 +549,6 @@ protected:
 public:
   OpenBSDTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : OSTargetInfo<Target>(Triple, Opts) {
-    this->TLSSupported = false;
-
       switch (Triple.getArch()) {
         default:
         case llvm::Triple::x86:
