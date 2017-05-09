@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.207 2017/03/26 08:49:22 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.208 2017/05/09 09:32:21 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -748,10 +748,6 @@ nd6_free(struct rtentry *rt, int gc)
 
 	splsoftassert(IPL_SOFTNET);
 
-	/*
-	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
-	 * even though it is not harmful, it was not really necessary.
-	 */
 	ifp = if_get(rt->rt_ifidx);
 
 	if (!ip6_forwarding) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.230 2017/05/08 13:51:10 rzalamena Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.231 2017/05/09 09:32:21 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -699,15 +699,6 @@ reroute:
 		hlen = unfragpartlen;
 		if (mtu > IPV6_MAXPACKET)
 			mtu = IPV6_MAXPACKET;
-
-#if 0
-		/* Notify a proper path MTU to applications. */
-		mtu32 = (u_int32_t)mtu;
-		bzero(&ip6cp, sizeof(ip6cp));
-		ip6cp.ip6c_cmdarg = (void *)&mtu32;
-		pfctlinput2(PRC_MSGSIZE, sin6tosa(&ro_pmtu->ro_dst),
-		    (void *)&ip6cp);
-#endif
 
 		/*
 		 * Change the next header field of the last header in the
