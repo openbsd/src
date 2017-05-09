@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.4 2016/09/18 13:31:12 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.5 2017/05/09 11:09:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -41,8 +41,8 @@ struct ddb_ctf {
 	struct ctf_header 	*cth;
 	const char 		*data;
 	off_t			 dlen;
-	unsigned int 		 ctf_found;
-	unsigned int 		 nsyms;
+	uint32_t 		 ctf_found;
+	uint32_t 		 nsyms;
         size_t			 ctftab_size;
 	const char		*ctftab;
 };
@@ -58,8 +58,8 @@ struct db_ctf_forall_arg {
 	db_sym_t	sym;
 };
 
-static const char	*db_ctf_lookup_name(unsigned int);
-static const char	*db_ctf_idx2sym(size_t *, unsigned char);
+static const char	*db_ctf_lookup_name(uint32_t);
+static const char	*db_ctf_idx2sym(size_t *, uint8_t);
 static const char	*db_elf_find_ctftab(db_symtab_t *, size_t *);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
 static int		 db_ctf_print_functions();
@@ -192,7 +192,7 @@ db_dump_ctf_header(void)
  * as the symbol table.
  */
 static const char *
-db_ctf_idx2sym(size_t *idx, unsigned char type)
+db_ctf_idx2sym(size_t *idx, uint8_t type)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp, *symtab_start;
@@ -230,15 +230,15 @@ int
 db_ctf_func_numargs(const char *funcname)
 {
 	const char		*s;
-	unsigned short		*fsp, kind, vlen;
+	uint16_t		*fsp, kind, vlen;
 	size_t			 idx = 0;
 	int			 nargs;
 
 	if (!db_ctf.ctf_found)
 		return (0);
 
-	fsp = (unsigned short *)(db_ctf.data + db_ctf.cth->cth_funcoff);
-	while (fsp < (unsigned short *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
+	fsp = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
+	while (fsp < (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
 		kind = CTF_INFO_KIND(*fsp);
 		vlen = CTF_INFO_VLEN(*fsp);
 		s = db_ctf_idx2sym(&idx, STT_FUNC);
@@ -276,7 +276,7 @@ db_ctf_func_numargs(const char *funcname)
 static int
 db_ctf_print_functions(void)
 {
-	unsigned short		*fsp, kind, vlen;
+	uint16_t		*fsp, kind, vlen;
 	size_t			 idx = 0, i = 0;
 	const char		*s;
 	int			 l;
@@ -284,8 +284,8 @@ db_ctf_print_functions(void)
 	if (!db_ctf.ctf_found)
 		return 1;
 
-	fsp = (unsigned short *)(db_ctf.data + db_ctf.cth->cth_funcoff);
-	while (fsp < (unsigned short *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
+	fsp = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
+	while (fsp < (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
 		kind = CTF_INFO_KIND(*fsp);
 		vlen = CTF_INFO_VLEN(*fsp);
 		fsp++;
@@ -306,7 +306,7 @@ db_ctf_print_functions(void)
 }
 
 static const char *
-db_ctf_lookup_name(unsigned int offset)
+db_ctf_lookup_name(uint32_t offset)
 {
 	const char		*name;
 
