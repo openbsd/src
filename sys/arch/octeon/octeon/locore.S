@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2017/04/03 13:51:54 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.12 2017/05/09 15:11:33 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,10 @@
 #include <octeon/dev/cn30xxcorereg.h>
 
 #include "assym.h"
+
+#define RNG_CONTROL_ADDR	0x9001180040000000
+#define RNG_CONTROL_ENABLE	0x3
+#define RNG_ENTROPY_ADDR	0x9001400000000000
 
 	.set	noreorder		# Noreorder is default style!
 	.set	mips64r2
@@ -92,6 +96,33 @@ start:
 	nop
 #endif
 2:
+	/*
+	 * Augment the randomdata section using entropy from the RNG.
+	 */
+
+	/* Enable the RNG. */
+	dli	t0, RNG_CONTROL_ADDR
+	ld	t1, (t0)
+	ori	t1, RNG_CONTROL_ENABLE
+	sd	t1, (t0)
+
+	LA	t0, __kernel_randomdata
+	LA	t1, __kernel_randomdata_end
+	dli	t2, RNG_ENTROPY_ADDR
+1:
+	/* Delay to let entropy accumulate. */
+	li	v0, 0x1000
+2:
+	bne	v0, zero, 2b
+	subu	v0, v0, 1
+	/* Mix entropy. */
+	ld	v0, (t0)			# load from randomdata
+	ld	v1, (t2)			# load entropy
+	xor	v0, v0, v1			# mix entropy
+	daddu	t0, t0, 8			# advance ptr
+	blt	t0, t1, 1b
+	sd	v0, -8(t0)			# store to randomdata
+
 	/*
 	 * Initialize stack and call machine startup.
 	 */
