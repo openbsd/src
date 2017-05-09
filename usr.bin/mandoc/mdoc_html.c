@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.160 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.161 2017/05/09 14:09:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -357,9 +357,9 @@ print_mdoc_node(MDOC_ARGS)
 		 * Make sure that if we're in a literal mode already
 		 * (i.e., within a <PRE>) don't print the newline.
 		 */
-		if (' ' == *n->string && NODE_LINE & n->flags)
-			if ( ! (HTML_LITERAL & h->flags))
-				print_otag(h, TAG_BR, "");
+		if (*n->string == ' ' && n->flags & NODE_LINE &&
+		    (h->flags & (HTML_LITERAL | HTML_NONEWLINE)) == 0)
+			print_otag(h, TAG_BR, "");
 		if (NODE_DELIMC & n->flags)
 			h->flags |= HTML_NOSPACE;
 		print_text(h, n->string);

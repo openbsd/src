@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.152 2017/05/07 21:44:33 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.153 2017/05/09 14:09:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -871,10 +871,11 @@ print_man_node(DECL_ARGS)
 		 * If we have a space as the first character, break
 		 * before printing the line's data.
 		 */
-		if ('\0' == *n->string) {
+		if (*n->string == '\0') {
 			term_vspace(p);
 			return;
-		} else if (' ' == *n->string && NODE_LINE & n->flags)
+		} else if (*n->string == ' ' && n->flags & NODE_LINE &&
+		    (p->flags & TERMP_NONEWLINE) == 0)
 			term_newln(p);
 
 		term_word(p, n->string);
