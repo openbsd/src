@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.760 2017/05/07 22:27:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.761 2017/05/09 13:04:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1306,6 +1306,7 @@ struct client {
 
 	size_t		 written;
 	size_t		 discarded;
+	size_t		 redraw;
 
 	void		(*stdin_callback)(struct client *, int, void *);
 	void		*stdin_callback_data;
