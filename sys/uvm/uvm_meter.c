@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.36 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.37 2017/05/09 09:36:04 mpi Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -108,14 +108,14 @@ uvm_loadav(struct loadavg *avg)
 
 	LIST_FOREACH(p, &allproc, p_list) {
 		switch (p->p_stat) {
+		case SSTOP:
 		case SSLEEP:
-			if (p->p_priority > PZERO || p->p_slptime > 1)
-				continue;
-		/* FALLTHROUGH */
+			break;
 		case SRUN:
 		case SONPROC:
 			if (p == p->p_cpu->ci_schedstate.spc_idleproc)
 				continue;
+		/* FALLTHROUGH */
 		case SIDL:
 			nrun++;
 			if (p->p_cpu)
@@ -136,7 +136,7 @@ uvm_loadav(struct loadavg *avg)
 		spc->spc_ldavg = (cexp[0] * spc->spc_ldavg +
 		    nrun_cpu[CPU_INFO_UNIT(ci)] * FSCALE *
 		    (FSCALE - cexp[0])) >> FSHIFT;
-	}		
+	}
 }
 
 /*
@@ -254,24 +254,19 @@ uvm_total(struct vmtotal *totalp)
 
 	/* calculate process statistics */
 	LIST_FOREACH(p, &allproc, p_list) {
-		if (p->p_flag & P_SYSTEM)
-			continue;
 		switch (p->p_stat) {
 		case 0:
 			continue;
 
 		case SSLEEP:
 		case SSTOP:
-			if (p->p_priority <= PZERO)
-				totalp->t_dw++;
-			else if (p->p_slptime < maxslp)
-				totalp->t_sl++;
-			if (p->p_slptime >= maxslp)
-				continue;
+			totalp->t_sl++;
 			break;
 		case SRUN:
-		case SIDL:
 		case SONPROC:
+			if (p == p->p_cpu->ci_schedstate.spc_idleproc)
+				continue;
+		case SIDL:
 			totalp->t_rq++;
 			if (p->p_stat == SIDL)
 				continue;
