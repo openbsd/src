@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.4 2017/02/19 08:59:41 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.5 2017/05/09 15:29:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -102,6 +102,8 @@ const struct legacy_io_range rs780e_legacy_ranges[] = {
 	/* pckbc */
 	{ IO_KBD,	IO_KBD },
 	{ IO_KBD + 4,	IO_KBD + 4 },
+	/* SMBus */
+	{ 0x1000,	0x100f },
 
 	{ 0, 0 }
 };
