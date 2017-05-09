@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.17 2017/05/05 08:07:36 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.18 2017/05/09 12:23:04 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2017 $
+.Dd $Mdocdate: May 9 2017 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -36,6 +36,8 @@ will apply
 missing patches by saving the original release kernel if needed, creating a
 rollback tarball containing the files it is about to replace, then extracting
 and installing all files contained in the syspatch tarball.
+Patches are cumulative and as such it is not possible to install only a subset
+of them.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
