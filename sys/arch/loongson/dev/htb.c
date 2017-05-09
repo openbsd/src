@@ -1,4 +1,4 @@
-/*	$OpenBSD: htb.c,v 1.1 2016/11/17 14:41:21 visa Exp $	*/
+/*	$OpenBSD: htb.c,v 1.2 2017/05/09 15:20:55 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -393,7 +393,7 @@ int
 htb_mem_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	if (offs < HTB_MEM_BASE || offs >= HTB_MEM_BASE + HTB_MEM_SIZE)
+	if (offs < HTB_MEM_BASE || offs + size > HTB_MEM_BASE + HTB_MEM_SIZE)
 		return EINVAL;
 
 	*bshp = t->bus_base + offs;
