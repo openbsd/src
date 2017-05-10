@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.69 2017/04/10 05:45:02 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.70 2017/05/10 21:48:29 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -113,7 +113,8 @@ long	 labs(long);
 ldiv_t	 ldiv(long, long);
 void	*malloc(size_t);
 #if __BSD_VISIBLE
-void	freezero(void *, size_t);
+void	freezero(void *, size_t)
+		 __attribute__ ((__bounded__(__buffer__,1,2)));
 void	*reallocarray(void *, size_t, size_t);
 void	*recallocarray(void *, size_t, size_t, size_t);
 #endif /* __BSD_VISIBLE */
