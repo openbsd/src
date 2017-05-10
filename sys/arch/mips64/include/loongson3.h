@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3.h,v 1.2 2016/12/12 16:25:47 visa Exp $	*/
+/*	$OpenBSD: loongson3.h,v 1.3 2017/05/10 16:04:21 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -99,6 +99,7 @@ loongson3_get_cpuid(void)
  * HyperTransport registers
  */
 
+#define LS3_HT1_MEM_BASE(n)		(LS3_MEM_BASE(n)+0x00000e0000000000ull)
 #define LS3_HT1_CFG_BASE(n)		(LS3_MEM_BASE(n)+0x00000efdfb000000ull)
 
 #define LS3_HT_ISR_OFFSET(x)		(0x80 + (x) * 4)

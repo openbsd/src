@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.6 2017/05/10 15:21:02 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.7 2017/05/10 16:04:21 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -25,6 +25,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/timetc.h>
 
 #include <mips64/archtype.h>
 #include <mips64/loongson3.h>
@@ -45,6 +46,15 @@
 #include <loongson/dev/htbreg.h>
 #include <loongson/dev/htbvar.h>
 #include <loongson/dev/leiocvar.h>
+
+#define HPET_FREQ		14318780
+#define HPET_MMIO_BASE		0x20000
+
+#define HPET_CONFIGURATION	0x10
+#define HPET_MAIN_COUNTER	0xf0
+
+#define HPET_REGVAL32(x) \
+	REGVAL32(LS3_HT1_MEM_BASE(0) + HPET_MMIO_BASE + (x))
 
 #define IRQ_CASCADE 2
 
@@ -79,6 +89,17 @@ void	 rs780e_eoi(int);
 void	 rs780e_set_imask(uint32_t);
 void	 rs780e_irq_mask(int);
 void	 rs780e_irq_unmask(int);
+
+u_int	 rs780e_get_timecount(struct timecounter *);
+
+struct timecounter rs780e_timecounter = {
+	.tc_get_timecount = rs780e_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffffu,	/* truncated to 32 bits */
+	.tc_frequency = HPET_FREQ,
+	.tc_name = "hpet",
+	.tc_quality = 100
+};
 
 /* Firmware entry points */
 void	(*generic3a_reboot_entry)(void);
@@ -374,6 +395,9 @@ rs780e_setup(void)
 void
 rs780sb_setup(pci_chipset_tag_t pc, int dev)
 {
+	pcitag_t tag;
+	pcireg_t reg;
+
 	/*
 	 * Set up the PIC in the southbridge.
 	 */
@@ -393,6 +417,32 @@ rs780sb_setup(pci_chipset_tag_t pc, int dev)
 	REGVAL8(HTB_IO_BASE + IO_ICU2 + PIC_OCW1) = 0xff;
 
 	loongson3_register_ht_pic(&rs780e_pic);
+
+	/*
+	 * Set up the HPET.
+	 *
+	 * Unfortunately, PMON does not initialize the MMIO base address or
+	 * the tick period, even though it should because it has a complete
+	 * view of the system's resources.
+	 * Use the same address as in Linux in the hope of avoiding
+	 * address space conflicts.
+	 */
+
+	tag = pci_make_tag(pc, 0, dev, 0);
+
+	/* Set base address for HPET MMIO. */
+	pci_conf_write(pc, tag, 0xb4, HPET_MMIO_BASE);
+
+	/* Enable decoding of HPET MMIO. */
+	reg = pci_conf_read(pc, tag, 0x40);
+	reg |= 1u << 28;
+	pci_conf_write(pc, tag, 0x40, reg);
+
+	/* Enable the HPET. */
+	reg = HPET_REGVAL32(HPET_CONFIGURATION);
+	HPET_REGVAL32(HPET_CONFIGURATION) = reg | 1u;
+
+	tc_init(&rs780e_timecounter);
 }
 
 void
@@ -453,4 +503,10 @@ void
 rs780e_irq_unmask(int irq)
 {
 	rs780e_set_imask(rs780e_imask | (1u << irq));
+}
+
+u_int
+rs780e_get_timecount(struct timecounter *arg)
+{
+	return HPET_REGVAL32(HPET_MAIN_COUNTER);
 }
