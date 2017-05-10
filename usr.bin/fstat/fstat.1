@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.54 2017/01/21 12:21:56 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.55 2017/05/10 09:09:45 sthen Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: January 21 2017 $
+.Dd $Mdocdate: May 10 2017 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -217,6 +217,9 @@ For example, the addresses mentioned above are the addresses which the
 .Ic netstat -A
 command would print for TCP, UDP, and
 .Ux Ns -domain.
+These addresses are only visible to the superuser, otherwise 0x0 is printed.
+Sockets that have been disassociated from a protocol control block
+will always print 0x0.
 A unidirectional
 .Ux Ns -domain
 socket indicates the direction of flow with
