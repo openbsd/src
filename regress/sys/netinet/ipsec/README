@@ -8,6 +8,9 @@ Currently ICMP ping, UDP and TCP packets are protected with ESP and AH.
 Transport and tunnel mode are tested with all combinations of IPv4
 and IPv6.
 
+The BPF output of the enc0 interface is checked.
+
 TODO:
-Tests for IPCOMP/IPIP and path MTU discovery are planned.
-BPF output of enc0 and pflog0 should be checked.
+BPF output of pflog0 should be checked.
+Tests for fragments and path MTU discovery are planned.
+Test TCP MD5 signatures.
