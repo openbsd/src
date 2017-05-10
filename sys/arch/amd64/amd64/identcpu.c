@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.83 2017/04/14 01:02:28 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.84 2017/05/10 12:36:35 tb Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -669,14 +669,6 @@ identifycpu(struct cpu_info *ci)
 		if (cpu_ecxfeature & CPUIDECX_EST)
 			setperf_setup = est_init;
 
-#ifdef CRYPTO
-		if (cpu_ecxfeature & CPUIDECX_PCLMUL)
-			amd64_has_pclmul = 1;
-
-		if (cpu_ecxfeature & CPUIDECX_AES)
-			amd64_has_aesni = 1;
-#endif
-
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
 
@@ -702,7 +694,16 @@ identifycpu(struct cpu_info *ci)
 		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
 		sensordev_install(&ci->ci_sensordev);
 	}
+#endif
 
+#ifdef CRYPTO
+	if (ci->ci_flags & CPUF_PRIMARY) {
+		if (cpu_ecxfeature & CPUIDECX_PCLMUL)
+			amd64_has_pclmul = 1;
+
+		if (cpu_ecxfeature & CPUIDECX_AES)
+			amd64_has_aesni = 1;
+	}
 #endif
 
 	if (!strcmp(cpu_vendor, "AuthenticAMD"))
