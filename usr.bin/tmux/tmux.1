@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.549 2017/05/07 22:27:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.550 2017/05/10 13:05:41 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 7 2017 $
+.Dd $Mdocdate: May 10 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2331,7 +2331,7 @@ abc123
 Commands which set options are as follows:
 .Bl -tag -width Ds
 .It Xo Ic set-option
-.Op Fl agoqsuw
+.Op Fl aFgoqsuw
 .Op Fl t Ar target-session | Ar target-window
 .Ar option Ar value
 .Xc
@@ -2347,6 +2347,8 @@ otherwise a session option.
 If
 .Fl g
 is given, the global session or window option is set.
+.Fl F
+expands formats in the option value.
 The
 .Fl u
 flag unsets an option, so a session inherits the option from the global
@@ -2897,7 +2899,7 @@ The default is
 .Ql \ -_@ .
 .El
 .It Xo Ic set-window-option
-.Op Fl agoqu
+.Op Fl aFgoqu
 .Op Fl t Ar target-window
 .Ar option Ar value
 .Xc
@@ -2905,6 +2907,7 @@ The default is
 Set a window option.
 The
 .Fl a ,
+.Fl F ,
 .Fl g ,
 .Fl o ,
 .Fl q
