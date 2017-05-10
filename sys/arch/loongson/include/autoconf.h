@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.15 2017/02/19 08:59:41 visa Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.16 2017/05/10 15:21:02 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,6 +36,7 @@
 #include <machine/bus.h>
 
 struct bonito_config;
+struct htb_config;
 struct mips_isa_chipset;
 
 /*
@@ -63,6 +64,7 @@ struct platform {
 	char				*product;
 
 	const struct bonito_config	*bonito_config;
+	const struct htb_config		*htb_config;
 	struct mips_isa_chipset		*isa_chipset;
 	const struct legacy_io_range	*legacy_io_ranges;
 

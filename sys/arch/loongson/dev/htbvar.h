@@ -1,4 +1,4 @@
-/*	$OpenBSD: htbvar.h,v 1.1 2016/11/17 14:41:21 visa Exp $	*/
+/*	$OpenBSD: htbvar.h,v 1.2 2017/05/10 15:21:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -18,6 +18,10 @@
 
 #ifndef _LOONGSON_DEV_HTBVAR_H_
 #define _LOONGSON_DEV_HTBVAR_H_
+
+struct htb_config {
+	void		(*hc_attach_hook)(pci_chipset_tag_t);
+};
 
 extern struct mips_isa_chipset htb_isa_chipset;
 extern struct mips_bus_space htb_pci_mem_space_tag;

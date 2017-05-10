@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.5 2017/05/09 15:29:10 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.6 2017/05/10 15:21:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -65,7 +65,9 @@ paddr_t	 ls3_ipi_base[MAXCPUS];
 int	(*ls3_ipi_handler)(void *);
 #endif /* MULTIPROCESSOR */
 
+void	 rs780e_pci_attach_hook(pci_chipset_tag_t);
 void	 rs780e_setup(void);
+void	 rs780sb_setup(pci_chipset_tag_t, int);
 
 void	 rs780e_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *iba);
@@ -87,6 +89,10 @@ struct mips_isa_chipset rs780e_isa_chipset = {
 	.ic_attach_hook = rs780e_isa_attach_hook,
 	.ic_intr_establish = rs780e_isa_intr_establish,
 	.ic_intr_disestablish = rs780e_isa_intr_disestablish
+};
+
+const struct htb_config rs780e_htb_config = {
+	.hc_attach_hook = rs780e_pci_attach_hook
 };
 
 const struct legacy_io_range rs780e_legacy_ranges[] = {
@@ -113,6 +119,7 @@ const struct platform rs780e_platform = {
 	.vendor = "Loongson",
 	.product = "LS3A with RS780E",
 
+	.htb_config = &rs780e_htb_config,
 	.isa_chipset = &rs780e_isa_chipset,
 	.legacy_io_ranges = rs780e_legacy_ranges,
 
@@ -337,12 +344,36 @@ generic3a_ipi_intr(uint32_t hwpend, struct trapframe *frame)
  */
 
 void
+rs780e_pci_attach_hook(pci_chipset_tag_t pc)
+{
+	pcireg_t id, tag;
+	int dev, sbdev = -1;
+
+	for (dev = pci_bus_maxdevs(pc, 0); dev >= 0; dev--) {
+		tag = pci_make_tag(pc, 0, dev, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (id == PCI_ID_CODE(PCI_VENDOR_ATI,
+		    PCI_PRODUCT_ATI_SBX00_SMB)) {
+			sbdev = dev;
+			break;
+		}
+	}
+
+	if (sbdev != -1)
+		rs780sb_setup(pc, sbdev);
+}
+
+void
 rs780e_setup(void)
 {
 	generic3a_setup();
 
 	htb_early_setup();
+}
 
+void
+rs780sb_setup(pci_chipset_tag_t pc, int dev)
+{
 	/*
 	 * Set up the PIC in the southbridge.
 	 */
