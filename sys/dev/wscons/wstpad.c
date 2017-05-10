@@ -1019,30 +1019,35 @@ int
 wstpad_configure(struct wsmouseinput *input)
 {
 	struct wstpad *tp;
-	int width, height, diag, h_unit, v_unit;
+	int width, height, diag, h_res, v_res, h_unit, v_unit;
 
-	/*
-	 * TODO: The default configurations don't use the resolution values
-	 * and the X/Y ratio yet. The parameters are derived from the length
-	 * of the diagonal in device units, with some magic constants which
-	 * are partly adapted from libinput or synaptics code, or are based
-	 * on tests and guess work.
-	 */
 	width = abs(input->hw.x_max - input->hw.x_min);
 	height = abs(input->hw.y_max - input->hw.y_min);
 	if (width == 0 || height == 0)
 		return (-1);	/* We can't do anything. */
-
-	diag = isqrt(width * width + height * height);
-	h_unit = v_unit = imax(diag / 280, 3);
 
 	if (input->tp == NULL && wstpad_init(input))
 		return (-1);
 	tp = input->tp;
 
 	if (!(input->flags & CONFIGURED)) {
+		/*
+		 * The filter parameters are derived from the length of the
+		 * diagonal in device units, with some magic constants which
+		 * are partly adapted from libinput or synaptics code, or are
+		 * based on tests and guess work.  The absolute resolution
+		 * values might not be reliable, but if they are present the
+	         * settings are adapted to the ratio.
+		 */
+		h_res = input->hw.h_res;
+		v_res = input->hw.v_res;
+		if (h_res == 0 || v_res == 0)
+			h_res = v_res = 1;
+		diag = isqrt(width * width + height * height);
 		input->filter.h.scale = (imin(920, diag) << 12) / diag;
-		input->filter.v.scale = input->filter.h.scale;
+		input->filter.v.scale = input->filter.h.scale * h_res / v_res;
+		h_unit = imax(diag / 280, 3);
+		v_unit = imax((h_unit * v_res + h_res / 2) / h_res, 3);
 		input->filter.h.hysteresis = h_unit;
 		input->filter.v.hysteresis = v_unit;
 		input->filter.mode = FILTER_MODE_DEFAULT;
