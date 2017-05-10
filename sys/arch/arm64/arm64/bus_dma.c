@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.7 2017/05/05 15:04:51 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.8 2017/05/10 21:58:55 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -501,7 +501,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	sva = va;
 	ssize = size;
 	pmap_flags = PMAP_WIRED | PMAP_CANFAIL;
-	cache = PMAP_CACHE_DEFAULT;
+	cache = PMAP_CACHE_WB;
 	if (((t->_flags & BUS_DMA_COHERENT) == 0 &&
 	   (flags & BUS_DMA_COHERENT)) || (flags & BUS_DMA_NOCACHE))
 		cache = PMAP_CACHE_CI;

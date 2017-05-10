@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.4 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.5 2017/05/10 21:58:55 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -20,6 +20,7 @@
 #include <arm64/pte.h>
 
 #define PMAP_PA_MASK  ~((paddr_t)PAGE_MASK) /* to remove the flags */
+#define PMAP_NOCACHE	0x1 /* non-cacheable memory */
 
 typedef struct pmap *pmap_t;
 
@@ -39,7 +40,6 @@ typedef struct pmap *pmap_t;
 
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 /* cache flags */
-#define PMAP_CACHE_DEFAULT	0	/* WB cache managed mem, devices not */
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
 #define PMAP_CACHE_WT		(PMAP_MD1)	 	/* writethru */
 #define PMAP_CACHE_WB		(PMAP_MD1|PMAP_MD0)	/* writeback */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.34 2017/05/02 21:24:25 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.35 2017/05/10 21:58:55 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -36,33 +36,6 @@
 
 void pmap_setttb(struct proc *p);
 void pmap_free_asid(pmap_t pm);
-
-/*
- * using PHYS_TO_VM_PAGE does not do what is desired, so instead of
- * using that API, create our own which will store ranges of memory
- * and default to caching those pages when mapped
- */
-
-struct {
-	uint64_t start;
-	uint64_t end;
-} pmap_memregions[8];
-
-int pmap_memcount = 0;
-
-int
-pmap_pa_is_mem(uint64_t pa)
-{
-	int i;
-	/* NOTE THIS REQUIRES TABLE TO BE SORTED */
-	for (i = 0; i < pmap_memcount; i++) {
-		if (pa < pmap_memregions[i].start)
-			return 0;
-		if (pa < pmap_memregions[i].end)
-			return 1;
-	}
-	return 0;
-}
 
 static inline void
 ttlb_flush(pmap_t pm, vaddr_t va)
@@ -442,6 +415,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	int s, cache, error;
 	int need_sync = 0;
 
+	cache = (pa & PMAP_NOCACHE) ? PMAP_CACHE_CI : PMAP_CACHE_WB;
+	pg = PHYS_TO_VM_PAGE(pa);
+
 	/* MP - Acquire lock for this pmap */
 
 	s = splvm();
@@ -471,16 +447,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pool_put(&pmap_pted_pool, pted);
 			goto out;
 		}
-	}
-
-	/* Calculate PTE */
-	if (pmap_pa_is_mem(pa)) {
-		pg = PHYS_TO_VM_PAGE(pa);
-		/* max cacheable */
-		cache = PMAP_CACHE_WB; /* managed memory is cacheable */
-	} else {
-		pg = NULL;
-		cache = PMAP_CACHE_CI;
 	}
 
 	/*
@@ -624,16 +590,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	pm->pm_stats.resident_count++;
 
-	if (cache == PMAP_CACHE_DEFAULT) {
-		if (pmap_pa_is_mem(pa)) {
-			/* MAXIMUM cacheability */
-			cache = PMAP_CACHE_WB; /* managed memory is cacheable */
-		} else {
-			printf("entering page unmapped %llx %llx\n", va, pa);
-			cache = PMAP_CACHE_CI;
-		}
-	}
-
 	flags |= PMAP_WIRED; /* kernel mappings are always wired. */
 	/* Calculate PTE */
 	pmap_fill_pte(pm, va, pa, pted, prot, flags, cache);
@@ -653,7 +609,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	_pmap_kenter_pa(va, pa, prot, prot, PMAP_CACHE_DEFAULT);
+	_pmap_kenter_pa(va, pa, prot, prot,
+	    (pa & PMAP_NOCACHE) ? PMAP_CACHE_CI : PMAP_CACHE_WB);
 }
 
 void
@@ -1777,11 +1734,6 @@ pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo)
 	pmap_avail_kvo = kvo;
 	pmap_avail[0].start = ram_start;
 	pmap_avail[0].size = ram_end-ram_start;
-
-	/* XXX - support more than one region */
-	pmap_memregions[0].start = ram_start;
-	pmap_memregions[0].end = ram_end;
-	pmap_memcount = 1;
 
 	/* XXX - multiple sections */
 	physmem = atop(pmap_avail[0].size);
