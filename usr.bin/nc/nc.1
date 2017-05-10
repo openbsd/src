@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.84 2017/04/05 06:55:59 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.85 2017/05/10 21:56:53 bluhm Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 5 2017 $
+.Dd $Mdocdate: May 10 2017 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -50,6 +50,7 @@
 .Op Fl s Ar source
 .Op Fl T Ar keyword
 .Op Fl V Ar rtable
+.Op Fl W Ar recvlimit
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
 .Op Fl x Ar proxy_address Ns Op : Ns Ar port
@@ -288,6 +289,10 @@ Set the routing table to be used.
 Have
 .Nm
 give more verbose output.
+.It Fl W Ar recvlimit
+Terminate after receiving
+.Ar recvlimit
+packets from the network.
 .It Fl w Ar timeout
 Connections which cannot be established or are idle timeout after
 .Ar timeout

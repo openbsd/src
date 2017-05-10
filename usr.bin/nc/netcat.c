@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.181 2017/04/16 15:11:01 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.182 2017/05/10 21:56:53 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -108,6 +108,7 @@ char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
 FILE	*Zflag;					/* file to save peer cert */
 
+int recvcount, recvlimit;
 int timeout = -1;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX+1];
@@ -167,7 +168,8 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	while ((ch = getopt(argc, argv,
-	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:Z:z")) != -1) {
+	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vW:w:X:x:Z:z"))
+	    != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -269,6 +271,11 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			vflag = 1;
+			break;
+		case 'W':
+			recvlimit = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "receive limit %s: %s", errstr, optarg);
 			break;
 		case 'w':
 			timeout = strtonum(optarg, 0, INT_MAX / 1000, &errstr);
@@ -1166,6 +1173,12 @@ readwrite(int net_fd, struct tls *tls_ctx)
 				shutdown(pfd[POLL_NETIN].fd, SHUT_RD);
 				pfd[POLL_NETIN].fd = -1;
 			}
+			if (recvlimit > 0 && ++recvcount >= recvlimit) {
+				if (pfd[POLL_NETIN].fd != -1)
+					shutdown(pfd[POLL_NETIN].fd, SHUT_RD);
+				pfd[POLL_NETIN].fd = -1;
+				pfd[POLL_STDIN].fd = -1;
+			}
 			/* read something - poll stdout */
 			if (netinbufpos > 0)
 				pfd[POLL_STDOUT].events = POLLOUT;
@@ -1706,6 +1719,7 @@ help(void)
 	\t-u		UDP mode\n\
 	\t-V rtable	Specify alternate routing table\n\
 	\t-v		Verbose\n\
+	\t-W recvlimit	Terminate after receiving a number of packets\n\
 	\t-w timeout	Timeout for connects and final net reads\n\
 	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
 	\t-x addr[:port]\tSpecify proxy address and port\n\
@@ -1724,10 +1738,11 @@ usage(int ret)
 	    "\t  [-i interval] [-K keyfile] [-M ttl] [-m minttl] [-O length]\n"
 	    "\t  [-o staplefile] [-P proxy_username] [-p source_port] "
 	    "[-R CAfile]\n"
-	    "\t  [-s source] [-T keyword] [-V rtable] [-w timeout] "
-	    "[-X proxy_protocol]\n"
-	    "\t  [-x proxy_address[:port]] [-Z peercertfile] "
-	    "[destination] [port]\n");
+	    "\t  [-s source] [-T keyword] [-V rtable] [-W recvlimit] "
+	    "[-w timeout]\n"
+	    "\t  [-X proxy_protocol] [-x proxy_address[:port]] "
+	    "[-Z peercertfile]\n"
+	    "\t  [destination] [port]\n");
 	if (ret)
 		exit(1);
 }
