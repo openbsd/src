@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.141 2016/08/14 22:47:26 guenther Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.142 2017/05/10 08:37:15 mpi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -358,13 +358,12 @@ dovmstat(u_int interval, int reps)
 			warn("could not read vm.vmmeter");
 			memset(&total, 0, sizeof(total));
 		}
-		(void)printf(" %u %u %u ",
-		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
+		(void)printf("%2u %3u", total.t_rq - 1, total.t_sl);
 #define	rate(x)	((unsigned)((((unsigned)x) + halfuptime) / uptime)) /* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
-		(void)printf("%6u %7u ",
-		    pgtok(uvmexp.active + uvmexp.swpginuse),
-		    pgtok(uvmexp.free));
+		(void)printf("%5uM %6uM ",
+		    pgtok(uvmexp.active + uvmexp.swpginuse) / 1024,
+		    pgtok(uvmexp.free) / 1024);
 		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
 		(void)printf("%3u ", rate(uvmexp.pageins - ouvmexp.pageins));
@@ -410,7 +409,7 @@ printhdr(void)
 		(void)printf("%*s  traps           cpu\n",
 		   ndrives * 3, "");
 
-	(void)printf(" r b w    avm     fre  flt  re  pi  po  fr  sr ");
+	(void)printf(" r   s   avm     fre  flt  re  pi  po  fr  sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
 			(void)printf("%c%c%c ", dr_name[i][0],

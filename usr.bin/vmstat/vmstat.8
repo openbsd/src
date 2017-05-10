@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.37 2016/03/30 06:58:06 jmc Exp $
+.\"	$OpenBSD: vmstat.8,v 1.38 2017/05/10 08:37:15 mpi Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vmstat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: March 30 2016 $
+.Dd $Mdocdate: May 10 2017 $
 .Dt VMSTAT 8
 .Os
 .Sh NAME
@@ -121,16 +121,11 @@ Information about the numbers of processes in various states.
 .Bl -tag -width 4n -compact
 .It Li r
 in run queue
-.It Li b
-blocked for resources (I/O, paging, etc.)
-.It Li w
-runnable or short sleeper (< 20 secs) but swapped
+.It Li s
+sleeping
 .El
 .It Li memory
 Information about the usage of virtual and real memory.
-Virtual pages
-(reported in units of 1024 bytes) are considered active if they belong
-to processes which are running or have run in the last 20 seconds.
 .Pp
 .Bl -tag -width 4n -compact
 .It Li avm
