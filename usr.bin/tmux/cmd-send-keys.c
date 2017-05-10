@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.40 2017/05/09 17:56:55 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.41 2017/05/10 10:46:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,7 +73,7 @@ cmd_send_keys_inject(struct client *c, struct cmdq_item *item, key_code key)
 	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
 	if (bd != NULL) {
 		table->references++;
-		key_bindings_dispatch(bd, c, NULL, &item->target);
+		key_bindings_dispatch(bd, item, c, NULL, &item->target);
 		key_bindings_unref_table(table);
 	}
 }

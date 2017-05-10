@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.230 2017/05/09 13:04:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.231 2017/05/10 10:46:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -947,7 +947,7 @@ retry:
 		server_status_client(c);
 
 		/* Execute the key binding. */
-		key_bindings_dispatch(bd, c, m, &fs);
+		key_bindings_dispatch(bd, NULL, c, m, &fs);
 		key_bindings_unref_table(table);
 		return;
 	}
