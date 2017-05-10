@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.762 2017/05/10 10:46:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.763 2017/05/10 16:48:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1345,6 +1345,7 @@ struct client {
 #define CLIENT_STATUSFORCE 0x80000
 #define CLIENT_DOUBLECLICK 0x100000
 #define CLIENT_TRIPLECLICK 0x200000
+#define CLIENT_SIZECHANGED 0x400000
 	int		 flags;
 	struct key_table *keytable;
 

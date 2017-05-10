@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.22 2017/02/08 13:53:32 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.23 2017/05/10 16:48:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,6 +59,9 @@ recalculate_sizes(void)
 		ssx = ssy = UINT_MAX;
 		TAILQ_FOREACH(c, &clients, entry) {
 			if (c->flags & CLIENT_SUSPENDED)
+				continue;
+			if ((c->flags & (CLIENT_CONTROL|CLIENT_SIZECHANGED)) ==
+			    CLIENT_CONTROL)
 				continue;
 			if (c->session == s) {
 				if (c->tty.sx < ssx)
