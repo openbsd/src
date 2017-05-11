@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.128 2015/09/26 17:55:00 kettenis Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.129 2017/05/11 00:42:05 dlg Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -605,6 +605,12 @@ uvm_km_page_init(void)
 	/* nothing */
 }
 
+void
+uvm_km_page_latethread(void)
+{
+	/* nothing */
+}
+
 #else
 /*
  * uvm_km_page allocator, non __HAVE_PMAP_DIRECT archs
@@ -678,7 +684,11 @@ uvm_km_page_init(void)
 	/* tone down if really high */
 	if (uvm_km_pages.lowat > 512)
 		uvm_km_pages.lowat = 512;
+}
 
+void
+uvm_km_page_lateinit(void)
+{
 	kthread_create_deferred(uvm_km_createthread, NULL);
 }
 

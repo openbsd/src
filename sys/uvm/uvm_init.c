@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.39 2015/03/14 03:38:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.40 2017/05/11 00:42:05 dlg Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -114,30 +114,35 @@ uvm_init(void)
 	pmap_init();
 
 	/*
-	 * step 6: init the kernel memory allocator.   after this call the
+	 * step 6: init uvm_km_page allocator memory.
+	 */
+	uvm_km_page_init();
+
+	/*
+	 * step 7: init the kernel memory allocator.   after this call the
 	 * kernel memory allocator (malloc) can be used.
 	 */
 	kmeminit();
 
 	/*
-	 * step 6.5: init the dma allocator, which is backed by pools.
+	 * step 7.5: init the dma allocator, which is backed by pools.
 	 */
 	dma_alloc_init();
 
 	/*
-	 * step 7: init all pagers and the pager_map.
+	 * step 8: init all pagers and the pager_map.
 	 */
 	uvm_pager_init();
 
 	/*
-	 * step 8: init anonymous memory system
+	 * step 9: init anonymous memory system
 	 */
 	amap_init();
 
 	/*
-	 * step 9: init uvm_km_page allocator memory.
+	 * step 10: start uvm_km_page allocator thread.
 	 */
-	uvm_km_page_init();
+	uvm_km_page_lateinit();
 
 	/*
 	 * the VM system is now up!  now that malloc is up we can
