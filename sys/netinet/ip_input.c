@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.298 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.299 2017/05/11 11:36:20 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
 int	ip_input_ipsec_fwd_check(struct mbuf *, int);
 int	ip_input_ipsec_ours_check(struct mbuf *, int);
 #endif /* IPSEC */
-	
+
 static void ip_send_dispatch(void *);
 static struct task ipsend_task = TASK_INITIALIZER(ip_send_dispatch, &ipsend_mq);
 /*
@@ -353,7 +353,7 @@ ipv4_input(struct mbuf *m)
 	 * to be sent and the original packet to be freed).
 	 */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m, ifp)) {
-	        goto out;
+		goto out;
 	}
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
@@ -663,8 +663,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 
 			if (IN_CLASSFULBROADCAST(ip->ip_dst.s_addr,
 			    ifatoia(ifa)->ia_addr.sin_addr.s_addr)) {
-			    	match = 1;
-			    	break;
+				match = 1;
+				break;
 			}
 		}
 		KERNEL_UNLOCK();
@@ -816,7 +816,8 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp)
 		if (ecn0 == IPTOS_ECN_NOTECT)
 			goto dropfrag;
 		if (ecn0 != IPTOS_ECN_CE)
-			LIST_FIRST(&fp->ipq_fragq)->ipqe_ip->ip_tos |= IPTOS_ECN_CE;
+			LIST_FIRST(&fp->ipq_fragq)->ipqe_ip->ip_tos |=
+			    IPTOS_ECN_CE;
 	}
 	if (ecn == IPTOS_ECN_NOTECT && ecn0 != IPTOS_ECN_NOTECT)
 		goto dropfrag;
@@ -1555,7 +1556,7 @@ freecopy:
 
 int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen) 
+    size_t newlen)
 {
 	int error;
 #ifdef MROUTING
@@ -1601,18 +1602,18 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 					      ip_mtudisc_timeout);
 		return (error);
 	case IPCTL_IPSEC_ENC_ALGORITHM:
-	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_enc, sizeof(ipsec_def_enc)));
 	case IPCTL_IPSEC_AUTH_ALGORITHM:
-	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_auth,
 				       sizeof(ipsec_def_auth)));
 	case IPCTL_IPSEC_IPCOMP_ALGORITHM:
-	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
+		return (sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_comp,
 				       sizeof(ipsec_def_comp)));
 	case IPCTL_IFQUEUE:
-	        return (sysctl_niq(name + 1, namelen - 1,
+		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ipintrq));
 	case IPCTL_STATS:
 		return (ip_sysctl_ipstat(oldp, oldlenp, newp));
