@@ -527,8 +527,13 @@ fqcodel_enq(struct ifqueue *ifq, struct mbuf *m)
 				backlog = codel_backlog(&flow->cd);
 			}
 		}
+
 		KASSERT(flow != NULL);
 		m = codel_commit(&flow->cd, NULL);
+
+		fqc->drop_cnt.packets++;
+		fqc->drop_cnt.bytes += m->m_pkthdr.len;
+
 		DPRINTF("%s: dropping from flow %u\n", __func__,
 		    flow->id);
 		return (m);
