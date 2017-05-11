@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2017/05/11 11:42:45 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2017/05/11 12:18:37 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -230,39 +230,6 @@ run-regress-send-ping-${host}_${dir}_${ipv}:
 	${ping} -n -c 1 -w 2 ${${host}_${dir}_${ipv}}
 .endfor
 .endfor
-
-# disable some tests, they do not pass yet due to kernel bugs
-
-run-regress-bpf-ping-IPS_ESP_TRANSP_IPV6 \
-    run-regress-send-ping-small-IPS_ESP_TRANSP_IPV6 \
-    run-regress-send-ping-big-IPS_ESP_TRANSP_IPV6:
-	@echo '\n======== $@ ========'
-	@echo 'IPv6 IPsec input does not filter enc0 interface with pf.  Echo'
-	@echo 'request does not create state and echo reply does not pass pf.'
-	@echo DISABLED
-
-run-regress-bpf-tcp-IPS_ESP_TRANSP_IPV6 \
-    run-regress-send-tcp-IPS_ESP_TRANSP_IPV6:
-	@echo '\n======== $@ ========'
-	@echo 'IPv6 IPsec input does not filter enc0 interface with pf.  TCP'
-	@echo 'SYN does not create state and SYN+ACK does not pass pf.'
-	@echo DISABLED
-
-run-regress-send-ping-IPS_IPCOMP_TRANSP_IPV6 \
-    run-regress-send-ping-small-IPS_IPCOMP_TRANSP_IPV6 \
-    run-regress-send-ping-big-IPS_IPCOMP_TRANSP_IPV6:
-	@echo '\n======== $@ ========'
-	@echo 'IPv6 IPsec input does not filter enc0 interface with pf.  Echo'
-	@echo 'request does not create state and echo reply does not pass pf.'
-	@echo DISABLED
-
-run-regress-send-ping-small-IPS_BUNDLE_TRANSP_IPV6 \
-    run-regress-send-ping-big-IPS_BUNDLE_TRANSP_IPV6 \
-    run-regress-send-tcp-IPS_BUNDLE_TRANSP_IPV6:
-	@echo '\n======== $@ ========'
-	@echo 'IPv6 IPsec input does not filter enc0 interface with pf.  Echo'
-	@echo 'request does not create state and echo reply does not pass pf.'
-	@echo DISABLED
 
 # send IPsec packets from SRC to IPS and expect response
 
