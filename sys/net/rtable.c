@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.58 2017/02/28 09:50:13 mpi Exp $ */
+/*	$OpenBSD: rtable.c,v 1.59 2017/05/11 14:03:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -909,9 +909,18 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	srp_leave(&sr); /* an can't go away while we have the lock */
 
 	/* Make sure we've got a perfect match. */
-	if (!an_match(an, dst, plen))
+	if (!an_match(an, dst, plen)) {
 		error = ESRCH;
-	else {
+	} else if (SRPL_FIRST_LOCKED(&an->an_rtlist) == rt &&
+		SRPL_NEXT_LOCKED(rt, rt_next) == NULL) {
+		/*
+		 * If there's only one entry on the list do not go
+		 * through an insert/remove cycle.  This is done to
+		 * guarantee that ``an->an_rtlist''  is never empty
+		 * when a node is in the tree.
+		 */
+		rt->rt_priority = prio;
+	} else {
 		rtref(rt); /* keep rt alive in between remove and insert */
 		SRPL_REMOVE_LOCKED(&rt_rc, &an->an_rtlist,
 		    rt, rtentry, rt_next);
