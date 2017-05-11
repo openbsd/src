@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.101 2017/02/11 03:44:22 visa Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.102 2017/05/11 15:47:45 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2011  Miodrag Vallat.
@@ -483,8 +483,7 @@ int	xbridge_space_region_mem(bus_space_tag_t, bus_space_handle_t,
 void	xbridge_space_barrier(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, int);
 
-bus_addr_t xbridge_pa_to_device(paddr_t);
-paddr_t	xbridge_device_to_pa(bus_addr_t);
+bus_addr_t xbridge_pa_to_device(paddr_t, int);
 
 int	xbridge_rbus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
@@ -553,7 +552,6 @@ static const struct machine_bus_dma_tag xbridge_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap,
 	xbridge_pa_to_device,
-	xbridge_device_to_pa,
 	BRIDGE_DMA_DIRECT_LENGTH - 1
 };
 
@@ -1987,15 +1985,12 @@ xbridge_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t offs,
  */
 
 bus_addr_t
-xbridge_pa_to_device(paddr_t pa)
+xbridge_pa_to_device(paddr_t pa, int flags)
 {
+	KASSERTMSG(pa - dma_constraint.ucr_low < BRIDGE_DMA_DIRECT_LENGTH,
+	    "pa 0x%lx not in dma constraint range! (0x%lx-0x%lx)",
+	    pa, dma_constraint.ucr_low, dma_constraint.ucr_high);
 	return (pa - dma_constraint.ucr_low) + BRIDGE_DMA_DIRECT_BASE;
-}
-
-paddr_t
-xbridge_device_to_pa(bus_addr_t addr)
-{
-	return (addr - BRIDGE_DMA_DIRECT_BASE) + dma_constraint.ucr_low;
 }
 
 /*

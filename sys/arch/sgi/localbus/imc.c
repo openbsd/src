@@ -1,4 +1,4 @@
-/*	$OpenBSD: imc.c,v 1.21 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: imc.c,v 1.22 2017/05/11 15:47:45 visa Exp $	*/
 /*	$NetBSD: imc.c,v 1.32 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -157,8 +157,7 @@ static bus_space_t imcbus_eisa_mem_tag = {
 };
 #endif
 
-bus_addr_t imc_pa_to_device(paddr_t);
-paddr_t	 imc_device_to_pa(bus_addr_t);
+bus_addr_t imc_pa_to_device(paddr_t, int);
 
 /* can't be static for gio_cnattach() */
 struct machine_bus_dma_tag imc_bus_dma_tag = {
@@ -178,7 +177,6 @@ struct machine_bus_dma_tag imc_bus_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap,
 	imc_pa_to_device,
-	imc_device_to_pa,
 	0
 };
 
@@ -465,15 +463,9 @@ imc_eisa_mem_region(bus_space_tag_t t, bus_space_handle_t bsh,
 #endif
 
 bus_addr_t
-imc_pa_to_device(paddr_t pa)
+imc_pa_to_device(paddr_t pa, int flags)
 {
 	return (bus_addr_t)pa;
-}
-
-paddr_t
-imc_device_to_pa(bus_addr_t addr)
-{
-	return (paddr_t)addr;
 }
 
 /*

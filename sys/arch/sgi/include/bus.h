@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.27 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.28 2017/05/11 15:47:45 visa Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -344,7 +344,8 @@ struct machine_bus_dma_segment {
 	bus_size_t	ds_len;		/* length of transfer */
 
 	paddr_t		_ds_paddr;	/* CPU address */
-	vaddr_t		_ds_vaddr;	/* CPU address */
+	vaddr_t		_ds_vaddr;	/* CPU address - only valid after
+					   calling bus_dmamap_load*() */
 };
 typedef struct machine_bus_dma_segment	bus_dma_segment_t;
 
@@ -393,8 +394,7 @@ struct machine_bus_dma_tag {
 	/*
 	 * internal memory address translation information.
 	 */
-	bus_addr_t (*_pa_to_device)(paddr_t);
-	paddr_t	(*_device_to_pa)(bus_addr_t);
+	bus_addr_t (*_pa_to_device)(paddr_t, int);
 	bus_addr_t _dma_mask;
 };
 

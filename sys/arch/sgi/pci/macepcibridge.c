@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.47 2014/05/19 21:18:42 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.48 2017/05/11 15:47:45 visa Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -101,8 +101,7 @@ void	*mace_pcibr_rbus_parent_mem(struct pci_attach_args *);
 void	*mace_pcib_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 void	 mace_pcib_space_barrier(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, int);
-bus_addr_t mace_pcibr_pa_to_device(paddr_t);
-paddr_t	 mace_pcibr_device_to_pa(bus_addr_t);
+bus_addr_t mace_pcibr_pa_to_device(paddr_t, int);
 
 int	mace_pcibr_rbus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
@@ -193,7 +192,6 @@ struct machine_bus_dma_tag mace_pci_bus_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap,
 	mace_pcibr_pa_to_device,
-	mace_pcibr_device_to_pa,
 	CRIME_MEMORY_MASK
 };
 
@@ -709,20 +707,9 @@ mace_pcib_space_barrier(bus_space_tag_t t, bus_space_handle_t h,
  */
 
 bus_addr_t
-mace_pcibr_pa_to_device(paddr_t pa)
+mace_pcibr_pa_to_device(paddr_t pa, int flags)
 {
 	return (pa & CRIME_MEMORY_MASK);
-}
-
-paddr_t
-mace_pcibr_device_to_pa(bus_addr_t addr)
-{
-	paddr_t pa = (paddr_t)addr & CRIME_MEMORY_MASK;
-
-	if (pa >= 256 * 1024 * 1024)
-		pa |= CRIME_MEMORY_OFFSET;
-
-	return (pa);
 }
 
 /*

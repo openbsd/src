@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.40 2015/09/05 21:13:24 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.41 2017/05/11 15:47:45 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -421,7 +421,7 @@ void
 _dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	vm_page_t m;
-	bus_addr_t addr;
+	paddr_t pa;
 	struct pglist mlist;
 	int curseg;
 
@@ -430,10 +430,10 @@ _dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 	 */
 	TAILQ_INIT(&mlist);
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += PAGE_SIZE) {
-			m = PHYS_TO_VM_PAGE((*t->_device_to_pa)(addr));
+		for (pa = segs[curseg]._ds_paddr;
+		    pa < (segs[curseg]._ds_paddr + segs[curseg].ds_len);
+		    pa += PAGE_SIZE) {
+			m = PHYS_TO_VM_PAGE(pa);
 			TAILQ_INSERT_TAIL(&mlist, m, pageq);
 		}
 	}
@@ -452,7 +452,6 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	vaddr_t va, sva;
 	size_t ssize;
 	paddr_t pa;
-	bus_addr_t addr;
 	int curseg, error, pmap_flags;
 	const struct kmem_dyn_mode *kd;
 
@@ -472,7 +471,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 #endif
 
 	if (nsegs == 1) {
-		pa = (*t->_device_to_pa)(segs[0].ds_addr);
+		pa = segs[0]._ds_paddr;
 		if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
 			*kvap = (caddr_t)PHYS_TO_XKPHYS(pa, CCA_NC);
 		else
@@ -494,14 +493,13 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 	if (flags & (BUS_DMA_COHERENT | BUS_DMA_NOCACHE))
 		pmap_flags |= PMAP_NOCACHE;
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
-		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		for (pa = segs[curseg]._ds_paddr;
+		    pa < (segs[curseg]._ds_paddr + segs[curseg].ds_len);
+		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 #ifdef DIAGNOSTIC
 			if (size == 0)
 				panic("_dmamem_map: size botch");
 #endif
-			pa = (*t->_device_to_pa)(addr);
 			error = pmap_enter(pmap_kernel(), va, pa,
 			    PROT_READ | PROT_WRITE,
 			    PROT_READ | PROT_WRITE | pmap_flags);
@@ -567,7 +565,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return ((*t->_device_to_pa)(segs[i].ds_addr) + off);
+		return segs[i]._ds_paddr + off;
 	}
 
 	/* Page not found. */
@@ -644,7 +642,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 */
 		if (first) {
 			map->dm_segs[seg].ds_addr =
-			    (*t->_pa_to_device)(curaddr);
+			    (*t->_pa_to_device)(curaddr, map->_dm_flags);
 			map->dm_segs[seg].ds_len = sgsize;
 			map->dm_segs[seg]._ds_paddr = curaddr;
 			map->dm_segs[seg]._ds_vaddr = vaddr;
@@ -661,7 +659,8 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 				if (++seg >= map->_dm_segcnt)
 					break;
 				map->dm_segs[seg].ds_addr =
-				    (*t->_pa_to_device)(curaddr);
+				    (*t->_pa_to_device)(curaddr,
+				        map->_dm_flags);
 				map->dm_segs[seg].ds_len = sgsize;
 				map->dm_segs[seg]._ds_paddr = curaddr;
 				map->dm_segs[seg]._ds_vaddr = vaddr;
@@ -721,25 +720,27 @@ _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
+	segs[curseg]._ds_paddr = VM_PAGE_TO_PHYS(m);
 	lastaddr = segs[curseg].ds_addr =
-	    (*t->_pa_to_device)(VM_PAGE_TO_PHYS(m));
+	    (*t->_pa_to_device)(segs[curseg]._ds_paddr, flags);
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = TAILQ_NEXT(m, pageq);
 
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
-		curaddr = VM_PAGE_TO_PHYS(m);
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < low || curaddr >= high) {
+		if (pa < low || pa >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address 0x%lx\n", pa);
 			panic("_dmamem_alloc_range");
 		}
 #endif
-		curaddr = (*t->_pa_to_device)(curaddr);
+		curaddr = (*t->_pa_to_device)(pa, flags);
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
 			curseg++;
+			segs[curseg]._ds_paddr = pa;
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
