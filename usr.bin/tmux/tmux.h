@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.763 2017/05/10 16:48:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.764 2017/05/11 07:34:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1621,7 +1621,7 @@ void	environ_put(struct environ *, const char *);
 void	environ_unset(struct environ *, const char *);
 void	environ_update(struct options *, struct environ *, struct environ *);
 void	environ_push(struct environ *);
-void	environ_log(struct environ *, const char *);
+void printflike(2, 3) environ_log(struct environ *, const char *, ...);
 struct environ *environ_for_session(struct session *, int);
 
 /* tty.c */
