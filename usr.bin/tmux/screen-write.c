@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.119 2017/04/29 21:27:46 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.120 2017/05/11 11:39:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -943,9 +943,9 @@ screen_write_clearstartofscreen(struct screen_write_ctx *ctx, u_int bg)
 	if (s->cy > 0)
 		grid_view_clear(s->grid, 0, 0, sx, s->cy, bg);
 	if (s->cx > sx - 1)
-		grid_view_clear(s->grid, 0, s->cy, sx, 1, 8);
+		grid_view_clear(s->grid, 0, s->cy, sx, 1, bg);
 	else
-		grid_view_clear(s->grid, 0, s->cy, s->cx + 1, 1, 8);
+		grid_view_clear(s->grid, 0, s->cy, s->cx + 1, 1, bg);
 
 	screen_write_collect_clear(ctx, 0, s->cy);
 	screen_write_collect_flush(ctx, 0);
