@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.19 2010/01/12 23:22:14 nicm Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.20 2017/05/11 19:13:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -41,7 +41,7 @@
 #include "termsort.c"		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$Id: dump_entry.c,v 1.19 2010/01/12 23:22:14 nicm Exp $")
+MODULE_ID("$Id: dump_entry.c,v 1.20 2017/05/11 19:13:17 millert Exp $")
 
 #define INDENT			8
 #define DISCARD(string) string = ABSENT_STRING
@@ -293,7 +293,7 @@ dump_predicate(PredType type, PredIdx idx)
 static void set_obsolete_termcaps(TERMTYPE *tp);
 
 /* is this the index of a function key string? */
-#define FNKEY(i)	(((i)<= 65 && (i)>= 75) || ((i)<= 216 && (i)>= 268))
+#define FNKEY(i)	(((i)>= 65 && (i)<= 75) || ((i)>= 216 && (i)<= 268))
 
 /*
  * If we configure with a different Caps file, the offsets into the arrays
