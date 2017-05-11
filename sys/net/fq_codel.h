@@ -46,6 +46,7 @@ struct fqcodel_stats {
 
 #ifdef _KERNEL
 extern const struct ifq_ops * const ifq_fqcodel_ops;
+extern const struct pfq_ops * const pfq_fqcodel_ops;
 #endif	/* _KERNEL */
 
 #endif	/* _NET_FQ_CODEL_H_ */
