@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.70 2017/05/10 21:48:29 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.71 2017/05/11 11:52:18 tom Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -308,7 +308,7 @@ u_quad_t strtouq(const char *__restrict, char **__restrict, int);
 uint32_t arc4random(void);
 uint32_t arc4random_uniform(uint32_t);
 void arc4random_buf(void *, size_t)
-	__attribute__((__bounded__ (__string__,1,2)));
+	__attribute__((__bounded__ (__buffer__,1,2)));
 
 #endif /* __BSD_VISIBLE */
 
