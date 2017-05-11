@@ -403,8 +403,6 @@ codel_dequeue(struct codel *cd, struct codel_params *cp, int64_t now,
 	unsigned short delta;
 	int drop, state, done = 0;
 
-	*dpkts = *dbytes = 0;
-
 	state = INITIAL;
 
 	while (!done) {
