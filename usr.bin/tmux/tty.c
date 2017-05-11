@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.272 2017/05/10 18:40:13 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.273 2017/05/11 11:38:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -846,9 +846,13 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 	tty_region_off(tty);
 	tty_margin_off(tty);
 
+	/*
+	 * Clamp the width to cellsize - note this is not cellused, because
+	 * there may be empty background cells after it (from BCE).
+	 */
 	sx = screen_size_x(s);
-	if (sx > s->grid->linedata[s->grid->hsize + py].cellused)
-		sx = s->grid->linedata[s->grid->hsize + py].cellused;
+	if (sx > s->grid->linedata[s->grid->hsize + py].cellsize)
+		sx = s->grid->linedata[s->grid->hsize + py].cellsize;
 	if (sx > tty->sx)
 		sx = tty->sx;
 
