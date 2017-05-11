@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.66 2017/04/22 15:43:35 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.67 2017/05/11 15:42:10 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -448,6 +448,8 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
+	mips64_ipi_init();
+
 	CPU_INFO_FOREACH(cii, ci) {
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
@@ -458,11 +460,6 @@ cpu_boot_secondary_processors(void)
 		sched_init_cpu(ci);
 		cpu_boot_secondary(ci);
 	}
-
-       /* This must called after xheart0 has initialized, so here is 
-	* the best place to do so.
-	*/
-       mips64_ipi_init();
 }
 
 void
