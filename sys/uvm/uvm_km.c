@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.129 2017/05/11 00:42:05 dlg Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.130 2017/05/11 06:55:47 dlg Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -606,7 +606,7 @@ uvm_km_page_init(void)
 }
 
 void
-uvm_km_page_latethread(void)
+uvm_km_page_lateinit(void)
 {
 	/* nothing */
 }
