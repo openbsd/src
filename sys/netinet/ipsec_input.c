@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.148 2017/05/05 11:04:18 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.149 2017/05/11 12:14:43 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -591,6 +591,32 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		return;
 #ifdef INET6
 	case AF_INET6:
+#if NPF > 0
+		/*
+		 * In the IPv4 case all packets run through ipv4_input()
+		 * twice.  As the ip6_local() shortcut avoids this, IPv6
+		 * packets in transport mode have to be be passed to pf
+		 * explicitly.  In tunnel mode the inner IP header will
+		 * run through ip_input() and pf already.
+		 */
+		if ((tdbp->tdb_flags & TDBF_TUNNELING) == 0) {
+			struct ifnet *ifp;
+
+			/* This is the enc0 interface unless for ipcomp. */
+			if ((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL) {
+				m_freem(m);
+				return;
+			}
+			if (pf_test(AF_INET6, PF_IN, ifp, &m) != PF_PASS) {
+				if_put(ifp);
+				m_freem(m);
+				return;
+			}
+			if_put(ifp);
+			if (m == NULL)
+				return;
+		}
+#endif
 		ip6_local(m, skip, prot);
 		return;
 #endif /* INET6 */
