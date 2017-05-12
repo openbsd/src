@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbdvar.h,v 1.2 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wskbdvar.h,v 1.3 2017/05/12 09:16:55 mpi Exp $ */
 /* $NetBSD: wskbdvar.h,v 1.8 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
@@ -58,6 +58,7 @@ struct wskbd_consops {
 	void    (*getc)(void *, u_int *, int *);
 	void    (*pollc)(void *, int);
 	void	(*bell)(void *, u_int, u_int, u_int);
+	void	(*debugger)(void *);
 };
 
 /*

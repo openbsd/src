@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.86 2017/04/30 16:45:46 mpi Exp $ */
+/* $OpenBSD: wskbd.c,v 1.87 2017/05/12 09:16:55 mpi Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -211,6 +211,7 @@ void	update_modifier(struct wskbd_internal *, u_int, int, int);
 int	internal_command(struct wskbd_softc *, u_int *, keysym_t, keysym_t);
 int	wskbd_translate(struct wskbd_internal *, u_int, int);
 int	wskbd_enable(struct wskbd_softc *, int);
+void	wskbd_debugger(struct wskbd_softc *);
 #if NWSDISPLAY > 0
 void	change_displayparam(struct wskbd_softc *, int, int, int);
 #endif
@@ -1503,8 +1504,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 
 #ifdef DDB
 	if (ksym == KS_Cmd_Debugger) {
-		if (sc->sc_isconsole && db_console)
-			db_enter();
+		wskbd_debugger(sc);
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
@@ -1541,8 +1541,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		switch (kbd_reset) {
 #ifdef DDB
 		case 2:
-			if (sc->sc_isconsole && db_console)
-				db_enter();
+			wskbd_debugger(sc);
 			/* discard this key (ddb discarded command modifiers) */
 			*type = WSCONS_EVENT_KEY_UP;
 			break;
@@ -1821,4 +1820,18 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 
 	id->t_symbols[0] = res;
 	return (1);
+}
+
+void
+wskbd_debugger(struct wskbd_softc *sc)
+{
+#ifdef DDB
+	if (sc->sc_isconsole && db_console) {
+		if (sc->id->t_consops->debugger != NULL) {
+			(*sc->id->t_consops->debugger)
+				(sc->id->t_consaccesscookie);
+		} else
+			db_enter();
+	}
+#endif
 }

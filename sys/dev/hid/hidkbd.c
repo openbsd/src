@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.3 2017/05/10 09:48:04 mpi Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.4 2017/05/12 09:16:55 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -269,19 +269,6 @@ hidkbd_input(struct hidkbd *kbd, uint8_t *data, u_int len)
 		 */
 		kbd->sc_data = *ud;
 		timeout_add_msec(&kbd->sc_delay, 20);
-#ifdef DDB
-	} else if (kbd->sc_console_keyboard && !kbd->sc_polling) {
-		/*
-		 * For the console keyboard we can't deliver CTL-ALT-ESC
-		 * from the interrupt routine.  Doing so would start
-		 * polling from inside the interrupt routine and that
-		 * loses bigtime.
-		 */
-		/* if (!timeout_pending(&kbd->sc_delay)) */ {
-			kbd->sc_data = *ud;
-			timeout_add(&kbd->sc_delay, 1);
-		}
-#endif
 	} else {
 		hidkbd_decode(kbd, ud);
 	}
