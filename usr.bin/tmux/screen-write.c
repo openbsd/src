@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.122 2017/05/12 13:00:56 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.123 2017/05/12 13:29:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -389,6 +389,8 @@ static void
 screen_write_initctx(struct screen_write_ctx *ctx, struct tty_ctx *ttyctx)
 {
 	struct screen	*s = ctx->s;
+
+	memset(ttyctx, 0, sizeof *ttyctx);
 
 	ttyctx->wp = ctx->wp;
 
