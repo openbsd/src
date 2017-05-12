@@ -36,12 +36,9 @@ struct fqcodel_stats {
 	uint32_t		target;
 	uint32_t		interval;
 
-	uint32_t		minqlen;
-	uint32_t		maxqlen;
-
 	/* the values below are used to calculate standard deviation */
-	uint64_t		qlensum;   /* sum of queue lenghts */
-	uint64_t		qlensumsq; /* sum of squared queue lenghts */
+	uint64_t		delaysum;  /* sum of delays, us */
+	uint64_t		delaysumsq;/* sum of squared delays, us */
 };
 
 #ifdef _KERNEL

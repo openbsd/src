@@ -61,6 +61,7 @@ struct codel {
 
 	int64_t		 start;		/* The moment queue was above target */
 	int64_t		 next;		/* Next interval */
+	int64_t		 delay;		/* Delay incurred by the last packet */
 };
 
 struct codel_params {
@@ -74,9 +75,6 @@ struct codel_params {
 void		 codel_initparams(struct codel_params *, unsigned int,
 		    unsigned int, int);
 void		 codel_freeparams(struct codel_params *);
-void		 codel_gettime(int64_t *);
-unsigned int	 codel_backlog(struct codel *);
-unsigned int	 codel_qlength(struct codel *);
 void		 codel_enqueue(struct codel *, int64_t, struct mbuf *);
 struct mbuf	*codel_dequeue(struct codel *, struct codel_params *, int64_t,
 		    struct mbuf_list *, uint64_t *, uint64_t *);
@@ -276,7 +274,7 @@ codel_freeparams(struct codel_params *cp)
 	cp->intervals = NULL;
 }
 
-void
+static inline void
 codel_gettime(int64_t *now)
 {
 	struct timespec tv;
@@ -285,16 +283,22 @@ codel_gettime(int64_t *now)
 	*now = tv.tv_sec * 1000000000LL + tv.tv_nsec;
 }
 
-unsigned int
+static inline unsigned int
 codel_backlog(struct codel *cd)
 {
 	return (cd->backlog);
 }
 
-unsigned int
+static inline unsigned int
 codel_qlength(struct codel *cd)
 {
 	return (ml_len(&cd->q));
+}
+
+static inline int64_t
+codel_delay(struct codel *cd)
+{
+	return (cd->delay);
 }
 
 void
@@ -464,6 +468,9 @@ codel_dequeue(struct codel *cd, struct codel_params *cp, int64_t now,
 			break;
 		}
 	}
+
+	if (m != NULL)
+		cd->delay = now - m->m_pkthdr.ph_timestamp;
 
 	return (m);
 }
@@ -740,7 +747,8 @@ fqcodel_pf_qstats(struct pf_queuespec *qs, void *ubuf, int *nbytes)
 	struct ifnet *ifp = qs->kif->pfik_ifp;
 	struct fqcodel_stats stats;
 	struct fqcodel *fqc;
-	unsigned int i, qlen;
+	int64_t delay;
+	unsigned int i;
 	int error = 0;
 
 	if (ifp == NULL)
@@ -762,25 +770,17 @@ fqcodel_pf_qstats(struct pf_queuespec *qs, void *ubuf, int *nbytes)
 	stats.qlength = ifq_len(&ifp->if_snd);
 	stats.qlimit = fqc->qlimit;
 
-	stats.flows = stats.maxqlen = stats.minqlen = 0;
-	stats.qlensum = stats.qlensumsq = 0;
+	stats.flows = 0;
+	stats.delaysum = stats.delaysumsq = 0;
 
 	for (i = 0; i < fqc->nflows; i++) {
-		qlen = codel_qlength(&fqc->flows[i].cd);
-		if (qlen == 0)
+		if (codel_qlength(&fqc->flows[i].cd) == 0)
 			continue;
-		if (stats.minqlen == 0)
-			stats.minqlen = qlen;
-		else
-			stats.minqlen = MIN(stats.minqlen, qlen);
-		if (stats.maxqlen == 0)
-			stats.maxqlen = qlen;
-		else
-			stats.maxqlen = MAX(stats.maxqlen, qlen);
+		/* Scale down to microseconds to avoid overflows */
+		delay = codel_delay(&fqc->flows[i].cd) / 1000;
+		stats.delaysum += delay;
+		stats.delaysumsq += delay * delay;
 		stats.flows++;
-
-		stats.qlensum += qlen;
-		stats.qlensumsq += (uint64_t)qlen * (uint64_t)qlen;
 	}
 
 	ifq_q_leave(&ifp->if_snd, fqc);
