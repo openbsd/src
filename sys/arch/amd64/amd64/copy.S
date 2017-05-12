@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.7 2015/04/25 21:31:24 guenther Exp $	*/
+/*	$OpenBSD: copy.S,v 1.8 2017/05/12 19:25:19 kettenis Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -138,7 +138,12 @@ ENTRY(copyout)
 	rep
 	movsq
 	movb	%al,%cl
-	andb	$7,%cl
+	shrb	$2,%cl
+	andb	$1,%cl
+	rep
+	movsl
+	movb	%al,%cl
+	andb	$3,%cl
 	rep
 	movsb
 	SMAP_CLAC
@@ -168,7 +173,12 @@ ENTRY(copyin)
 	rep
 	movsq
 	movb	%al,%cl
-	andb	$7,%cl
+	shrb	$2,%cl
+	andb	$1,%cl
+	rep
+	movsl
+	movb	%al,%cl
+	andb	$3,%cl
 	rep
 	movsb
 
