@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.273 2017/05/11 11:38:49 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.274 2017/05/12 10:49:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -798,6 +798,7 @@ tty_clear_area(struct tty *tty, const struct window_pane *wp, u_int py,
     u_int ny, u_int px, u_int nx, u_int bg)
 {
 	u_int	yy;
+	char	tmp[64];
 
 	log_debug("%s: %u,%u at %u,%u", __func__, nx, ny, px, py);
 
@@ -813,6 +814,17 @@ tty_clear_area(struct tty *tty, const struct window_pane *wp, u_int py,
 		    tty_term_has(tty->term, TTYC_ED)) {
 			tty_cursor(tty, 0, py);
 			tty_putcode(tty, TTYC_ED);
+			return;
+		}
+
+		/*
+		 * If we're setting a background colour (so it is not default),
+		 * we can use DECFRA.
+		 */
+		if (tty->term_type == TTY_VT420 && bg != 8) {
+			xsnprintf(tmp, sizeof tmp, "\033[32;%u;%u;%u;%u$x",
+			    py + 1, px + 1, py + ny, px + nx);
+			tty_puts(tty, tmp);
 			return;
 		}
 	}
