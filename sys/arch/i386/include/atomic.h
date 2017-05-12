@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.15 2015/05/30 08:41:30 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.16 2017/05/12 08:46:28 mpi Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -42,18 +42,18 @@
  * void atomic_setbits_int(volatile u_int *a, u_int mask) { *a |= mask; }
  * void atomic_clearbits_int(volatile u_int *a, u_int mas) { *a &= ~mask; }
  */
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 
-#ifdef MULTIPROCESSOR
-#define LOCK "lock"
+#if defined(MULTIPROCESSOR) || !defined(_KERNEL)
+#define _LOCK "lock"
 #else
-#define LOCK
+#define _LOCK
 #endif
 
 static inline unsigned int
 _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
 {
-	__asm volatile(LOCK " cmpxchgl %2, %1"
+	__asm volatile(_LOCK " cmpxchgl %2, %1"
 	    : "=a" (n), "=m" (*p)
 	    : "r" (n), "a" (e), "m" (*p));
 
@@ -64,7 +64,7 @@ _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
 static inline unsigned long
 _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 {
-	__asm volatile(LOCK " cmpxchgl %2, %1"
+	__asm volatile(_LOCK " cmpxchgl %2, %1"
 	    : "=a" (n), "=m" (*p)
 	    : "r" (n), "a" (e), "m" (*p));
 
@@ -75,7 +75,7 @@ _atomic_cas_ulong(volatile unsigned long *p, unsigned long e, unsigned long n)
 static inline void *
 _atomic_cas_ptr(volatile void *p, void *e, void *n)
 {
-	__asm volatile(LOCK " cmpxchgl %2, %1"
+	__asm volatile(_LOCK " cmpxchgl %2, %1"
 	    : "=a" (n), "=m" (*(unsigned long *)p)
 	    : "r" (n), "a" (e), "m" (*(unsigned long *)p));
 
@@ -131,7 +131,7 @@ _atomic_swap_ptr(volatile void *p, void *n)
 static inline void
 _atomic_inc_int(volatile unsigned int *p)
 {
-	__asm volatile(LOCK " incl %0"
+	__asm volatile(_LOCK " incl %0"
 	    : "+m" (*p));
 }
 #define atomic_inc_int(_p) _atomic_inc_int(_p)
@@ -139,7 +139,7 @@ _atomic_inc_int(volatile unsigned int *p)
 static inline void
 _atomic_inc_long(volatile unsigned long *p)
 {
-	__asm volatile(LOCK " incl %0"
+	__asm volatile(_LOCK " incl %0"
 	    : "+m" (*p));
 }
 #define atomic_inc_long(_p) _atomic_inc_long(_p)
@@ -147,7 +147,7 @@ _atomic_inc_long(volatile unsigned long *p)
 static inline void
 _atomic_dec_int(volatile unsigned int *p)
 {
-	__asm volatile(LOCK " decl %0"
+	__asm volatile(_LOCK " decl %0"
 	    : "+m" (*p));
 }
 #define atomic_dec_int(_p) _atomic_dec_int(_p)
@@ -155,7 +155,7 @@ _atomic_dec_int(volatile unsigned int *p)
 static inline void
 _atomic_dec_long(volatile unsigned long *p)
 {
-	__asm volatile(LOCK " decl %0"
+	__asm volatile(_LOCK " decl %0"
 	    : "+m" (*p));
 }
 #define atomic_dec_long(_p) _atomic_dec_long(_p)
@@ -163,7 +163,7 @@ _atomic_dec_long(volatile unsigned long *p)
 static inline void
 _atomic_add_int(volatile unsigned int *p, unsigned int v)
 {
-	__asm volatile(LOCK " addl %1,%0"
+	__asm volatile(_LOCK " addl %1,%0"
 	    : "+m" (*p)
 	    : "a" (v));
 }
@@ -172,7 +172,7 @@ _atomic_add_int(volatile unsigned int *p, unsigned int v)
 static inline void
 _atomic_add_long(volatile unsigned long *p, unsigned long v)
 {
-	__asm volatile(LOCK " addl %1,%0"
+	__asm volatile(_LOCK " addl %1,%0"
 	    : "+m" (*p)
 	    : "a" (v));
 }
@@ -181,7 +181,7 @@ _atomic_add_long(volatile unsigned long *p, unsigned long v)
 static inline void
 _atomic_sub_int(volatile unsigned int *p, unsigned int v)
 {
-	__asm volatile(LOCK " subl %1,%0"
+	__asm volatile(_LOCK " subl %1,%0"
 	    : "+m" (*p)
 	    : "a" (v));
 }
@@ -190,7 +190,7 @@ _atomic_sub_int(volatile unsigned int *p, unsigned int v)
 static inline void
 _atomic_sub_long(volatile unsigned long *p, unsigned long v)
 {
-	__asm volatile(LOCK " subl %1,%0"
+	__asm volatile(_LOCK " subl %1,%0"
 	    : "+m" (*p)
 	    : "a" (v));
 }
@@ -202,7 +202,7 @@ _atomic_add_int_nv(volatile unsigned int *p, unsigned int v)
 {
 	unsigned int rv = v;
 
-	__asm volatile(LOCK " xaddl %0,%1"
+	__asm volatile(_LOCK " xaddl %0,%1"
 	    : "+a" (rv), "+m" (*p));
 
 	return (rv + v);
@@ -214,7 +214,7 @@ _atomic_add_long_nv(volatile unsigned long *p, unsigned long v)
 {
 	unsigned long rv = v;
 
-	__asm volatile(LOCK " xaddl %0,%1"
+	__asm volatile(_LOCK " xaddl %0,%1"
 	    : "+a" (rv), "+m" (*p));
 
 	return (rv + v);
@@ -226,7 +226,7 @@ _atomic_sub_int_nv(volatile unsigned int *p, unsigned int v)
 {
 	unsigned int rv = 0 - v;
 
-	__asm volatile(LOCK " xaddl %0,%1"
+	__asm volatile(_LOCK " xaddl %0,%1"
 	    : "+a" (rv), "+m" (*p));
 
 	return (rv - v);
@@ -238,7 +238,7 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 {
 	unsigned long rv = 0 - v;
 
-	__asm volatile(LOCK " xaddl %0,%1"
+	__asm volatile(_LOCK " xaddl %0,%1"
 	    : "+a" (rv), "+m" (*p));
 
 	return (rv - v);
@@ -257,7 +257,7 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 
 #define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || !defined(_KERNEL)
 #define membar_enter()		__membar("lock; addl $0,0(%%esp)")
 #define membar_exit()		__membar("")
 #define membar_producer()	__membar("")
@@ -271,6 +271,8 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #define membar_sync()		__membar("")
 #endif
 
+#ifdef _KERNEL
+
 /* virtio needs MP membars even on SP kernels */
 #define virtio_membar_producer()	__membar("")
 #define virtio_membar_consumer()	__membar("")
@@ -279,7 +281,7 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 static __inline u_int64_t
 i386_atomic_testset_uq(volatile u_int64_t *ptr, u_int64_t val)
 {
-	__asm__ volatile ("\n1:\t" LOCK " cmpxchg8b (%1); jnz 1b" : "+A" (val) :
+	__asm__ volatile ("\n1:\t" _LOCK " cmpxchg8b (%1); jnz 1b" : "+A" (val) :
 	    "r" (ptr), "b" ((u_int32_t)val), "c" ((u_int32_t)(val >> 32)));
 	return val;
 }
@@ -301,23 +303,22 @@ i386_atomic_testset_i(volatile int *ptr, unsigned long val)
 static __inline void
 i386_atomic_setbits_l(volatile u_int32_t *ptr, unsigned long bits)
 {
-	__asm volatile(LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(_LOCK " orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
 
 static __inline void
 i386_atomic_clearbits_l(volatile u_int32_t *ptr, unsigned long bits)
 {
 	bits = ~bits;
-	__asm volatile(LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
+	__asm volatile(_LOCK " andl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 }
-
-int ucas_32(volatile int32_t *, int32_t, int32_t);
-#define futex_atomic_ucas_int32 ucas_32
 
 #define atomic_setbits_int i386_atomic_setbits_l
 #define atomic_clearbits_int i386_atomic_clearbits_l
 
-#undef LOCK
+#endif /* _KERNEL */
 
-#endif /* defined(_KERNEL) && !defined(_LOCORE) */
+#undef _LOCK
+
+#endif /* !defined(_LOCORE) */
 #endif /* _MACHINE_ATOMIC_H_ */
