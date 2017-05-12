@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.54 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: nvme.c,v 1.55 2017/05/12 22:16:54 jcs Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -747,7 +747,8 @@ nvme_scsi_capacity16(struct scsi_xfer *xs)
 		return;
 	}
 
-	nsze = lemtoh64(&ns->nsze);
+	/* sd_read_cap_16() will add one */
+	nsze = lemtoh64(&ns->nsze) - 1;
 	f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
 
 	memset(&rcd, 0, sizeof(rcd));
@@ -779,7 +780,8 @@ nvme_scsi_capacity(struct scsi_xfer *xs)
 		return;
 	}
 
-	nsze = lemtoh64(&ns->nsze);
+	/* sd_read_cap_10() will add one */
+	nsze = lemtoh64(&ns->nsze) - 1;
 	if (nsze > 0xffffffff)
 		nsze = 0xffffffff;
 
