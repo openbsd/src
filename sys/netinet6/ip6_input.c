@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.185 2017/05/11 11:36:20 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.186 2017/05/12 14:04:09 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -469,6 +469,24 @@ ip6_input(struct mbuf *m)
 		KERNEL_UNLOCK();
 		goto out;
 	}
+
+#ifdef IPSEC
+	if (ipsec_in_use) {
+		int rv;
+
+		KERNEL_LOCK();
+		rv = ip_input_ipsec_fwd_check(m, off, AF_INET6);
+		KERNEL_UNLOCK();
+		if (rv != 0) {
+			ipstat_inc(ips_cantforward);
+			goto bad;
+		}
+		/*
+		 * Fall through, forward packet. Outbound IPsec policy
+		 * checking will occur in ip6_forward().
+		 */
+	}
+#endif /* IPSEC */
 
 	ip6_forward(m, rt, srcrt);
 	if_put(ifp);
