@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.66 2016/08/09 11:04:46 schwarze Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.67 2017/05/12 14:37:52 schwarze Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -533,6 +533,7 @@ x_delete(int nc, int push)
 	}
 	memmove(xcp, xcp+nc, xep - xcp + 1);	/* Copies the null */
 	x_adj_ok = 0;			/* don't redraw */
+	xlp_valid = false;
 	x_zots(xcp);
 	/*
 	 * if we are already filling the line,
@@ -1909,7 +1910,8 @@ x_e_putc(int c)
 			x_col--;
 			break;
 		default:
-			x_col++;
+			if (!isu8cont(c))
+				x_col++;
 			break;
 		}
 	}
