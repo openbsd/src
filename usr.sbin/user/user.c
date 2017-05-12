@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.118 2016/11/30 23:58:07 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.119 2017/05/12 18:03:00 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1359,7 +1359,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 			up->u_flags |= F_PASSWORD;
 			memsave(&up->u_password, pwp->pw_passwd,
 			    strlen(pwp->pw_passwd));
-			memset(pwp->pw_passwd, 'X', strlen(pwp->pw_passwd));
+			explicit_bzero(pwp->pw_passwd, strlen(pwp->pw_passwd));
 		}
 	}
 	endpwent();
@@ -1788,7 +1788,7 @@ useradd(int argc, char **argv)
 			break;
 		case 'p':
 			memsave(&u.u_password, optarg, strlen(optarg));
-			memset(optarg, 'X', strlen(optarg));
+			explicit_bzero(optarg, strlen(optarg));
 			break;
 		case 'r':
 			defaultfield = 1;
@@ -1929,7 +1929,7 @@ usermod(int argc, char **argv)
 			break;
 		case 'p':
 			memsave(&u.u_password, optarg, strlen(optarg));
-			memset(optarg, 'X', strlen(optarg));
+			explicit_bzero(optarg, strlen(optarg));
 			u.u_flags |= F_PASSWORD;
 			break;
 		case 's':
