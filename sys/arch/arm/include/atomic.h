@@ -1,11 +1,9 @@
-/*	$OpenBSD: atomic.h,v 1.16 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.17 2017/05/12 08:53:46 mpi Exp $	*/
 
 /* Public Domain */
 
 #ifndef _ARM_ATOMIC_H_
 #define _ARM_ATOMIC_H_
-
-#if defined(_KERNEL)
 
 /*
  * Compare and set:
@@ -14,7 +12,7 @@
  * 	*ptr = new
  * return (ret)
  */
-#define def_atomic_cas(_f, _t)					\
+#define _def_atomic_cas(_f, _t)					\
 static inline _t						\
 _f(volatile _t *p, _t e, _t n)					\
 {								\
@@ -36,9 +34,9 @@ _f(volatile _t *p, _t e, _t n)					\
 	);							\
 	return (ret);						\
 }
-def_atomic_cas(_atomic_cas_uint, unsigned int)
-def_atomic_cas(_atomic_cas_ulong, unsigned long)
-#undef def_atomic_cas
+_def_atomic_cas(_atomic_cas_uint, unsigned int)
+_def_atomic_cas(_atomic_cas_ulong, unsigned long)
+#undef _def_atomic_cas
 
 #define atomic_cas_uint(_p, _e, _n) _atomic_cas_uint((_p), (_e), (_n))
 #define atomic_cas_ulong(_p, _e, _n) _atomic_cas_ulong((_p), (_e), (_n))
@@ -73,7 +71,7 @@ _atomic_cas_ptr(volatile void *p, void *e, void *n)
  * *p = val
  * return (ret)
  */
-#define def_atomic_swap(_f, _t)					\
+#define _def_atomic_swap(_f, _t)				\
 static inline _t						\
 _f(volatile _t *p, _t v)					\
 {								\
@@ -90,9 +88,9 @@ _f(volatile _t *p, _t v)					\
 	);							\
 	return (ret);						\
 }
-def_atomic_swap(_atomic_swap_uint, unsigned int)
-def_atomic_swap(_atomic_swap_ulong, unsigned long)
-#undef def_atomic_swap
+_def_atomic_swap(_atomic_swap_uint, unsigned int)
+_def_atomic_swap(_atomic_swap_ulong, unsigned long)
+#undef _def_atomic_swap
 
 #define atomic_swap_uint(_p, _v) _atomic_swap_uint((_p), (_v))
 #define atomic_swap_ulong(_p, _v) _atomic_swap_ulong((_p), (_v))
@@ -121,7 +119,7 @@ _atomic_swap_ptr(volatile void *p, void *v)
  * *p += 1
  * return (*p)
  */
-#define def_atomic_inc_nv(_f, _t)				\
+#define _def_atomic_inc_nv(_f, _t)				\
 static inline _t						\
 _f(volatile _t *p)						\
 {								\
@@ -139,9 +137,9 @@ _f(volatile _t *p)						\
 	);							\
 	return (ret);						\
 }
-def_atomic_inc_nv(_atomic_inc_int_nv, unsigned int)
-def_atomic_inc_nv(_atomic_inc_long_nv, unsigned long)
-#undef def_atomic_inc_nv
+_def_atomic_inc_nv(_atomic_inc_int_nv, unsigned int)
+_def_atomic_inc_nv(_atomic_inc_long_nv, unsigned long)
+#undef _def_atomic_inc_nv
 
 #define atomic_inc_int_nv(_p) _atomic_inc_int_nv((_p))
 #define atomic_inc_long_nv(_p) _atomic_inc_long_nv((_p))
@@ -151,7 +149,7 @@ def_atomic_inc_nv(_atomic_inc_long_nv, unsigned long)
  * *p -= 1
  * return (*p)
  */
-#define def_atomic_dec_nv(_f, _t)				\
+#define _def_atomic_dec_nv(_f, _t)				\
 static inline _t						\
 _f(volatile _t *p)						\
 {								\
@@ -169,9 +167,9 @@ _f(volatile _t *p)						\
 	);							\
 	return (ret);						\
 }
-def_atomic_dec_nv(_atomic_dec_int_nv, unsigned int)
-def_atomic_dec_nv(_atomic_dec_long_nv, unsigned long)
-#undef def_atomic_dec_nv
+_def_atomic_dec_nv(_atomic_dec_int_nv, unsigned int)
+_def_atomic_dec_nv(_atomic_dec_long_nv, unsigned long)
+#undef _def_atomic_dec_nv
 
 #define atomic_dec_int_nv(_p) _atomic_dec_int_nv((_p))
 #define atomic_dec_long_nv(_p) _atomic_dec_long_nv((_p))
@@ -181,7 +179,7 @@ def_atomic_dec_nv(_atomic_dec_long_nv, unsigned long)
  * *p += v
  * return (*p)
  */
-#define def_atomic_add_nv(_f, _t)				\
+#define _def_atomic_add_nv(_f, _t)				\
 static inline _t						\
 _f(volatile _t *p, _t v)					\
 {								\
@@ -199,9 +197,9 @@ _f(volatile _t *p, _t v)					\
 	);							\
 	return (ret);						\
 }
-def_atomic_add_nv(_atomic_add_int_nv, unsigned int)
-def_atomic_add_nv(_atomic_add_long_nv, unsigned long)
-#undef def_atomic_add_nv
+_def_atomic_add_nv(_atomic_add_int_nv, unsigned int)
+_def_atomic_add_nv(_atomic_add_long_nv, unsigned long)
+#undef _def_atomic_add_nv
 
 #define atomic_add_int_nv(_p, _v) _atomic_add_int_nv((_p), (_v))
 #define atomic_add_long_nv(_p, _v) _atomic_add_long_nv((_p), (_v))
@@ -211,7 +209,7 @@ def_atomic_add_nv(_atomic_add_long_nv, unsigned long)
  * *p -= v
  * return (*p)
  */
-#define def_atomic_sub_nv(_f, _t)				\
+#define _def_atomic_sub_nv(_f, _t)				\
 static inline _t						\
 _f(volatile _t *p, _t v)					\
 {								\
@@ -229,12 +227,27 @@ _f(volatile _t *p, _t v)					\
 	);							\
 	return (ret);						\
 }
-def_atomic_sub_nv(_atomic_sub_int_nv, unsigned int)
-def_atomic_sub_nv(_atomic_sub_long_nv, unsigned long)
-#undef def_atomic_sub_nv
+_def_atomic_sub_nv(_atomic_sub_int_nv, unsigned int)
+_def_atomic_sub_nv(_atomic_sub_long_nv, unsigned long)
+#undef _def_atomic_sub_nv
 
 #define atomic_sub_int_nv(_p, _v) _atomic_sub_int_nv((_p), (_v))
 #define atomic_sub_long_nv(_p, _v) _atomic_sub_long_nv((_p), (_v))
+
+#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+
+#define membar_enter()		__membar("dmb sy")
+#define membar_exit()		__membar("dmb sy")
+#define membar_producer()	__membar("dmb st")
+#define membar_consumer()	__membar("dmb sy")
+#define membar_sync()		__membar("dmb sy")
+
+#if defined(_KERNEL)
+
+/* virtio needs MP membars even on SP kernels */
+#define virtio_membar_producer()	__membar("dmb st")
+#define virtio_membar_consumer()	__membar("dmb sy")
+#define virtio_membar_sync()		__membar("dmb sy")
 
 /*
  * Set bits
@@ -277,18 +290,6 @@ atomic_clearbits_int(volatile unsigned int *p, unsigned int v)
 	    : "memory", "cc"
 	);
 }
-
-#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
-
-#define membar_enter()		__membar("dmb sy")
-#define membar_exit()		__membar("dmb sy")
-#define membar_producer()	__membar("dmb st")
-#define membar_consumer()	__membar("dmb sy")
-#define membar_sync()		__membar("dmb sy")
-
-#define virtio_membar_producer()	__membar("dmb st")
-#define virtio_membar_consumer()	__membar("dmb sy")
-#define virtio_membar_sync()		__membar("dmb sy")
 
 #endif /* defined(_KERNEL) */
 #endif /* _ARM_ATOMIC_H_ */
