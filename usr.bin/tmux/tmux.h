@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.764 2017/05/11 07:34:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.765 2017/05/12 10:45:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -792,6 +792,7 @@ struct window_pane {
 	struct event	 modetimer;
 	time_t		 modelast;
 	u_int		 modeprefix;
+	char		*searchstr;
 
 	TAILQ_ENTRY(window_pane) entry;
 	RB_ENTRY(window_pane) tree_entry;
@@ -2177,7 +2178,6 @@ void		 window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *, int);
 void		 window_copy_start_drag(struct client *, struct mouse_event *);
 int		 window_copy_scroll_position(struct window_pane *);
-const char	*window_copy_search_string(struct window_pane *);
 
 /* window-choose.c */
 extern const struct window_mode window_choose_mode;

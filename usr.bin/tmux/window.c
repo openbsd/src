@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.193 2017/05/04 07:16:43 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.194 2017/05/12 10:45:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -828,6 +828,7 @@ static void
 window_pane_destroy(struct window_pane *wp)
 {
 	window_pane_reset_mode(wp);
+	free(wp->searchstr);
 
 	if (wp->fd != -1) {
 		bufferevent_free(wp->event);

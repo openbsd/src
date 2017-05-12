@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.134 2017/05/07 22:27:57 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.135 2017/05/12 10:45:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1376,8 +1376,8 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 
 	format_add(ft, "pane_synchronized", "%d",
 	    !!options_get_number(wp->window->options, "synchronize-panes"));
-	format_add(ft, "pane_search_string", "%s",
-	    window_copy_search_string(wp));
+	if (wp->searchstr != NULL)
+		format_add(ft, "pane_search_string", "%s", wp->searchstr);
 
 	format_add(ft, "pane_tty", "%s", wp->tty);
 	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
