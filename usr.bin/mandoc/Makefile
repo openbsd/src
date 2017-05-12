@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.109 2017/05/07 17:30:58 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.110 2017/05/12 17:35:34 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -46,11 +46,13 @@ CLEANFILES += man.cgi cgi.o
 LIBMDOC_OBJS =	mdoc_argv.o mdoc_macro.o mdoc_state.o \
 		mdoc_validate.o mdoc.o att.o st.o
 LIBMAN_OBJS =	man.o man_macro.o man_validate.o
-LIBROFF_OBJS =	roff.o eqn.o tbl.o tbl_data.o tbl_layout.o tbl_opts.o
+LIBROFF_OBJS =	roff.o roff_validate.o eqn.o \
+		tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
 		mandoc.o mandoc_aux.o mandoc_ohash.o \
 		chars.o msec.o preconv.o read.o
-HTML_OBJS =	html.o mdoc_html.o man_html.o tbl_html.o eqn_html.o out.o
+HTML_OBJS =	html.o roff_html.o mdoc_html.o man_html.o \
+		tbl_html.o eqn_html.o out.o
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
 		dbm_map.o dbm.o mansearch.o cgi.o
 
