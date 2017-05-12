@@ -1,11 +1,9 @@
-/* $OpenBSD: atomic.h,v 1.2 2017/02/04 04:17:43 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.3 2017/05/12 08:48:31 mpi Exp $ */
 
 /* Public Domain */
 
 #ifndef _MACHINE_ATOMIC_H_
 #define _MACHINE_ATOMIC_H_
-
-#if defined(_KERNEL)
 
 #define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
 
@@ -14,6 +12,8 @@
 #define membar_producer()	__membar("dmb st")
 #define membar_consumer()	__membar("dmb ld")
 #define membar_sync()		__membar("dmb sy")
+
+#if defined(_KERNEL)
 
 /* virtio needs MP membars even on SP kernels */
 #define virtio_membar_producer()	__membar("dmb st")
