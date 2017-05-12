@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.136 2017/05/12 13:27:57 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.137 2017/05/12 22:42:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -298,6 +298,7 @@ format_job_get(struct format_tree *ft, const char *cmd)
 			xasprintf(&fj->out, "<'%s' didn't start>", fj->cmd);
 		}
 		fj->last = t;
+		fj->updated = 0;
 	}
 
 	if (ft->flags & FORMAT_STATUS)
