@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.71 2017/05/12 13:00:56 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.72 2017/05/12 15:18:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -472,7 +472,7 @@ grid_clear(struct grid *gd, u_int px, u_int py, u_int nx, u_int ny, u_int bg)
 			gd->linedata[yy].cellsize = px;
 			continue;
 		}
-		grid_expand_line(gd, yy, px + nx, bg);
+		grid_expand_line(gd, yy, px + nx, 8); /* default bg first */
 		for (xx = px; xx < px + nx; xx++)
 			grid_clear_cell(gd, xx, yy, bg);
 	}
