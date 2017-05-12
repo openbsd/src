@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.123 2017/05/12 13:29:05 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.124 2017/05/12 14:56:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -630,7 +630,7 @@ screen_write_clearcharacter(struct screen_write_ctx *ctx, u_int nx, u_int bg)
 	screen_write_initctx(ctx, &ttyctx);
 	ttyctx.bg = bg;
 
-	grid_view_clear(s->grid, s->cx, s->cy, nx, 1, 8);
+	grid_view_clear(s->grid, s->cx, s->cy, nx, 1, bg);
 
 	screen_write_collect_flush(ctx, 0);
 	ttyctx.num = nx;
