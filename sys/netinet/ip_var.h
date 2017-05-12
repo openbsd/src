@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.72 2017/05/12 14:04:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.73 2017/05/12 23:05:58 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	    struct mbuf *);
 void	 ipintr(void);
 void	 ipv4_input(struct mbuf *);
+void	 ip_local(struct mbuf *, int, int);
 void	 ip_forward(struct mbuf *, struct ifnet *, struct rtentry *, int);
 int	 ip_input_ipsec_fwd_check(struct mbuf *, int, int);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf *);

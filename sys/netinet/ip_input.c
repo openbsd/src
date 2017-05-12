@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.300 2017/05/12 14:04:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.301 2017/05/12 23:05:58 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -483,9 +483,6 @@ ip_ours(struct mbuf *m)
 
 	hlen = ip->ip_hl << 2;
 
-	/* pf might have modified stuff, might have to chksum */
-	in_proto_cksum_out(m, NULL);
-
 	/*
 	 * If offset or IP_MF are set, must reassemble.
 	 * Otherwise, nothing need be done.
@@ -570,11 +567,26 @@ found:
 				ip_freef(fp);
 	}
 
+	ip_local(m, hlen, ip->ip_p);
+	return;
+bad:
+	m_freem(m);
+}
+
+void
+ip_local(struct mbuf *m, int off, int nxt)
+{
+	KERNEL_ASSERT_LOCKED();
+
+	/* pf might have modified stuff, might have to chksum */
+	in_proto_cksum_out(m, NULL);
+
 #ifdef IPSEC
 	if (ipsec_in_use) {
-		if (ip_input_ipsec_ours_check(m, hlen) != 0) {
+		if (ip_input_ipsec_ours_check(m, off) != 0) {
 			ipstat_inc(ips_cantforward);
-			goto bad;
+			m_freem(m);
+			return;
 		}
 	}
 	/* Otherwise, just fall through and deliver the packet */
@@ -584,10 +596,7 @@ found:
 	 * Switch out to protocol's input routine.
 	 */
 	ipstat_inc(ips_delivered);
-	(*inetsw[ip_protox[ip->ip_p]].pr_input)(&m, &hlen, ip->ip_p, AF_INET);
-	return;
-bad:
-	m_freem(m);
+	(*inetsw[ip_protox[nxt]].pr_input)(&m, &off, nxt, AF_INET);
 }
 
 int
