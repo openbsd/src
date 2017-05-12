@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.80 2017/03/15 11:29:50 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.81 2017/05/12 17:56:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -607,15 +607,21 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			SCALE_VS_INIT(su, i);
 			break;
 		case 'w':
-		case 'W':
 			if ((arg2 = va_arg(ap, char *)) == NULL)
 				break;
 			su = &mysu;
 			a2width(arg2, su);
-			/* Increase width to make even bold text fit. */
-			su->scale *= 1.1;
-			if (fmt[-1] == 'W')
+			if (*fmt == '+') {
+				/* Increase to make even bold text fit. */
+				su->scale *= 1.15;
+				/* Add padding. */
+				su->scale += 3.0;
+				fmt++;
+			}
+			if (*fmt == '-') {
 				su->scale *= -1.0;
+				fmt++;
+			}
 			break;
 		default:
 			abort();

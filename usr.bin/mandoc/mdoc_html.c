@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.161 2017/05/09 14:09:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.162 2017/05/12 17:56:39 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -766,7 +766,7 @@ mdoc_it_pre(MDOC_ARGS)
 			    (n->parent->prev == NULL ||
 			     n->parent->prev->body == NULL ||
 			     n->parent->prev->body->child != NULL)) {
-				t = print_otag(h, TAG_DT, "csWl",
+				t = print_otag(h, TAG_DT, "csw+-l",
 				    cattr, bl->norm->Bl.width);
 				print_text(h, "\\ ");
 				print_tagq(h, t);
@@ -774,7 +774,7 @@ mdoc_it_pre(MDOC_ARGS)
 				print_text(h, "\\ ");
 				print_tagq(h, t);
 			}
-			print_otag(h, TAG_DT, "csWl", cattr,
+			print_otag(h, TAG_DT, "csw+-l", cattr,
 			    bl->norm->Bl.width);
 			break;
 		case ROFFT_BODY:
@@ -837,7 +837,7 @@ mdoc_bl_pre(MDOC_ARGS)
 
 		t = print_otag(h, TAG_COLGROUP, "");
 		for (i = 0; i < bl->ncols - 1; i++)
-			print_otag(h, TAG_COL, "sww", bl->cols[i]);
+			print_otag(h, TAG_COL, "sw+w", bl->cols[i]);
 		print_otag(h, TAG_COL, "swW", bl->cols[i]);
 		print_tagq(h, t);
 		return 0;
@@ -884,7 +884,7 @@ mdoc_bl_pre(MDOC_ARGS)
 		cattr = "Bl-tag";
 		if (bl->offs)
 			print_otag(h, TAG_DIV, "cswl", cattr, bl->offs);
-		print_otag(h, TAG_DL, "cswl", cattr, bl->width);
+		print_otag(h, TAG_DL, "csw+l", cattr, bl->width);
 		return 1;
 	case LIST_column:
 		elemtype = TAG_TABLE;
