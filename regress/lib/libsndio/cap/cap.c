@@ -51,20 +51,20 @@ cap_pr(struct sio_cap *cap)
 				fprintf(stderr, " %d", cap->rate[i]);
 		}
 		fprintf(stderr, "\n");
-	}	
+	}
 }
 
 void
 usage(void) {
 	fprintf(stderr, "usage: cap [-pr]\n");
 }
- 
+
 int
 main(int argc, char **argv) {
 	int ch;
 	unsigned mode = SIO_PLAY | SIO_REC;
 	struct sio_hdl *hdl;
-	
+
 	while ((ch = getopt(argc, argv, "pr")) != -1) {
 		switch(ch) {
 		case 'p':
@@ -80,7 +80,7 @@ main(int argc, char **argv) {
 		}
 	}
 	if (mode == 0) {
-		fprintf(stderr, "-p and -r flags are mutualy exclusive\n");
+		fprintf(stderr, "-p and -r flags are mutually exclusive\n");
 		exit(1);
 	}
 	hdl = sio_open(NULL, mode, 0);
@@ -89,7 +89,7 @@ main(int argc, char **argv) {
 		exit(1);
 	}
 	if (!sio_getcap(hdl, &cap)) {
-		fprintf(stderr, "sio_setcap() failed\n");
+		fprintf(stderr, "sio_getcap() failed\n");
 		exit(1);
 	}
 	cap_pr(&cap);
