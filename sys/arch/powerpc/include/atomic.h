@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2015/05/06 03:30:03 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2017/05/12 08:47:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -47,6 +47,8 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 	    "	bne-	1b		\n"
 	    "	sync" : "=&r" (tmp) : "r" (v), "r" (uip) : "cc", "memory");
 }
+
+#endif /* defined(_KERNEL) */
 
 static inline unsigned int
 _atomic_cas_uint(volatile unsigned int *p, unsigned int o, unsigned int n)
@@ -273,7 +275,7 @@ _atomic_addic_long_nv(volatile unsigned long *p, unsigned long v)
 
 #define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || !defined(_KERNEL)
 #define membar_enter()		__membar("isync")
 #define membar_exit()		__membar("sync")
 #define membar_producer()	__membar("sync")
@@ -287,5 +289,4 @@ _atomic_addic_long_nv(volatile unsigned long *p, unsigned long v)
 #define membar_sync()		__membar("")
 #endif
 
-#endif /* defined(_KERNEL) */
 #endif /* _POWERPC_ATOMIC_H_ */
