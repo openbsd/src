@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.18 2017/01/17 12:30:35 rzalamena Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.19 2017/05/12 13:40:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1022,6 +1022,7 @@ switch_flow_classifier_icmpv4(struct mbuf *m, int *offset,
 	return (m);
 }
 
+#ifdef INET6
 struct mbuf *
 switch_flow_classifier_nd6(struct mbuf *m, int *offset,
     struct switch_flow_classify *swfcl)
@@ -1137,6 +1138,7 @@ switch_flow_classifier_icmpv6(struct mbuf *m, int *offset,
 
 	return (m);
 }
+#endif /* INET6 */
 
 struct mbuf *
 switch_flow_classifier_ipv4(struct mbuf *m, int *offset,
@@ -1179,6 +1181,7 @@ switch_flow_classifier_ipv4(struct mbuf *m, int *offset,
 	return (m);
 }
 
+#ifdef INET6
 struct mbuf *
 switch_flow_classifier_ipv6(struct mbuf *m, int *offset,
     struct switch_flow_classify *swfcl)
@@ -1218,6 +1221,7 @@ switch_flow_classifier_ipv6(struct mbuf *m, int *offset,
 
 	return (m);
 }
+#endif /* INET6 */
 
 struct mbuf *
 switch_flow_classifier_arp(struct mbuf *m, int *offset,
@@ -1320,8 +1324,10 @@ switch_flow_classifier_ether(struct mbuf *m, int *offset,
 		return switch_flow_classifier_arp(m, offset, swfcl);
 	case ETHERTYPE_IP:
 		return switch_flow_classifier_ipv4(m, offset, swfcl);
+#ifdef INET6
 	case ETHERTYPE_IPV6:
 		return switch_flow_classifier_ipv6(m, offset, swfcl);
+#endif /* INET6 */
 	case ETHERTYPE_MPLS:
 		/* unsupported yet */
 		break;

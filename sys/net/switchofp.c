@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.60 2017/03/01 09:32:07 mpi Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.61 2017/05/12 13:40:29 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -781,6 +781,7 @@ struct ofp_oxm_class ofp_oxm_handlers[] = {
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
+#ifdef INET6
 	{
 		OFP_XM_T_IPV6_SRC,
 		sizeof(struct in6_addr),
@@ -837,6 +838,7 @@ struct ofp_oxm_class ofp_oxm_handlers[] = {
 		swofp_ox_match_ether_addr,	swofp_ox_set_ether_addr,
 		swofp_ox_cmp_ether_addr
 	},
+#endif /* INET6 */
 	{
 		OFP_XM_T_MPLS_LABEL,
 		sizeof(uint32_t),
@@ -906,6 +908,7 @@ struct ofp_oxm_class ofp_oxm_nxm_handlers[] = {
 		swofp_ox_match_ipv4_addr,	swofp_ox_set_ipv4_addr,
 		swofp_ox_cmp_ipv4_addr
 	},
+#ifdef INET6
 	{
 		OFP_XM_NXMT_TUNNEL_IPV6_SRC,
 		sizeof(struct in6_addr),
@@ -920,6 +923,7 @@ struct ofp_oxm_class ofp_oxm_nxm_handlers[] = {
 		swofp_ox_match_ipv6_addr,	swofp_ox_set_ipv6_addr,
 		swofp_ox_cmp_ipv6_addr
 	},
+#endif /* INET6 */
 };
 
 /*
@@ -1698,6 +1702,7 @@ swofp_ox_cmp_data(struct ofp_ox_match *target,
 	return !((tmth & tmask) == (kmth & kmask));
 }
 
+#ifdef INET6
 int
 swofp_ox_cmp_ipv6_addr(struct ofp_ox_match *target,
     struct ofp_ox_match *key, int strict)
@@ -1770,6 +1775,7 @@ swofp_ox_cmp_ipv6_addr(struct ofp_ox_match *target,
 		return memcmp(&tmth, &kmth, sizeof(tmth));
 	}
 }
+#endif /* INET6 */
 
 int
 swofp_ox_cmp_ipv4_addr(struct ofp_ox_match *target,
@@ -2716,6 +2722,7 @@ swofp_ox_set_ether_addr(struct switch_flow_classify *swfcl,
 	return (0);
 }
 
+#ifdef INET6
 int
 swofp_ox_match_ipv6_addr(struct switch_flow_classify *swfcl,
     struct ofp_ox_match *oxm)
@@ -2778,6 +2785,7 @@ swofp_ox_match_ipv6_addr(struct switch_flow_classify *swfcl,
 
 	return memcmp(&in, &mth, sizeof(in));
 }
+#endif /* INET6 */
 
 int
 swofp_ox_match_ipv4_addr(struct switch_flow_classify *swfcl,
@@ -3689,6 +3697,7 @@ swofp_apply_set_field_tcp(struct mbuf *m, int off,
 	return (m);
 }
 
+#ifdef INET6
 struct mbuf *
 swofp_apply_set_field_nd6(struct mbuf *m, int off,
     struct switch_flow_classify *pre_swfcl, struct switch_flow_classify *swfcl)
@@ -3810,6 +3819,7 @@ swofp_apply_set_field_icmpv6(struct mbuf *m, int off,
 
 	return (m);
 }
+#endif /* INET6 */
 
 struct mbuf *
 swofp_apply_set_field_icmpv4(struct mbuf *m, int off,
@@ -3836,6 +3846,7 @@ swofp_apply_set_field_icmpv4(struct mbuf *m, int off,
 	return (m);
 }
 
+#ifdef INET6
 struct mbuf *
 swofp_apply_set_field_ipv6(struct mbuf *m, int off,
     struct switch_flow_classify *pre_swfcl, struct switch_flow_classify *swfcl)
@@ -3913,6 +3924,7 @@ swofp_apply_set_field_ipv6(struct mbuf *m, int off,
 
 	return (m);
 }
+#endif /* INET6 */
 
 struct mbuf *
 swofp_apply_set_field_ipv4(struct mbuf *m, int off,
@@ -4093,8 +4105,10 @@ swofp_apply_set_field_ether(struct mbuf *m, int off,
 		return swofp_apply_set_field_arp(m, off, pre_swfcl, swfcl);
 	case ETHERTYPE_IP:
 		return swofp_apply_set_field_ipv4(m, off, pre_swfcl, swfcl);
+#ifdef INET6
 	case ETHERTYPE_IPV6:
 		return swofp_apply_set_field_ipv6(m, off, pre_swfcl, swfcl);
+#endif /* INET6 */
 	case ETHERTYPE_MPLS:
 		/* unsupported yet */
 		break;
@@ -4125,8 +4139,8 @@ swofp_apply_set_field_tunnel(struct mbuf *m, int off,
 			    pre_swfcl->swfcl_tunnel->tun_ipv4_src;
 			brtag->brtag_peer.sin.sin_addr =
 			    pre_swfcl->swfcl_tunnel->tun_ipv4_dst;
-		} else if (!IN6_ARE_ADDR_EQUAL(
-		    &pre_swfcl->swfcl_tunnel->tun_ipv6_dst, &in6addr_any)) {
+		} else if (!IN6_IS_ADDR_UNSPECIFIED(
+		    &pre_swfcl->swfcl_tunnel->tun_ipv6_dst)) {
 			brtag->brtag_peer.sin6.sin6_family =
 			    brtag->brtag_local.sin.sin_family = AF_INET6;
 			brtag->brtag_local.sin6.sin6_addr =
