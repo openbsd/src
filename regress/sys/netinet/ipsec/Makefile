@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2017/05/11 12:18:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2017/05/12 00:09:17 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -164,13 +164,14 @@ regress:
 	@echo
 	${SUDO} true
 	ssh -t ${IPS_SSH} ${SUDO} true
-	rm -f stamp-ipsec stamp-bpf stamp-stop
+	rm -f stamp-ipsec stamp-pfctl stamp-bpf stamp-pflog stamp-stop
 .endif
 
 depend: addr.py
 
 # Create python include file containing the addresses.
 addr.py: Makefile
+	@echo '\n======== $@ ========'
 	rm -f $@ $@.tmp
 .for host in SRC IPS RT ECO
 .for dir in IN OUT BUNDLE
@@ -202,14 +203,32 @@ stamp-ipsec: addr.py ipsec.conf
 	    -f - -D FROM=to -D TO=from -D LOCAL=peer -D PEER=local
 	@date >$@
 
+# load a pf log enc0 pass any rule into the kernel of the IPS machine
+stamp-pfctl: addr.py pf.conf
+	@echo '\n======== $@ ========'
+	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | \
+	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
+	@date >$@
+
 DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
 
 # run tcpdump on enc device of IPS machine
 stamp-bpf: Makefile
 	@echo '\n======== $@ ========'
 	rm -f enc0.tcpdump
-	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD}' enc0" || true
+	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} enc0'" || true
 	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} enc0 >enc0.tcpdump &
+	sleep 5  # XXX
+	rm -f stamp-stop
+	@date >$@
+
+# run tcpdump on pflog device of IPS machine
+stamp-pflog: stamp-pfctl
+	@echo '\n======== $@ ========'
+	rm -f pflog0.tcpdump
+	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} pflog0'" || true
+	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} pflog0 >pflog0.tcpdump &
 	sleep 5  # XXX
 	rm -f stamp-stop
 	@date >$@
@@ -218,6 +237,17 @@ stamp-stop:
 	@echo '\n======== $@ ========'
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD}'"
 	@date >$@
+
+# Disable tests that do not pass.
+
+run-regress-pflog-ping-IPS_AH_TRANSP_IPV6 \
+    run-regress-pflog-udp-IPS_AH_TRANSP_IPV6 \
+    run-regress-pflog-tcp-IPS_AH_TRANSP_IPV6:
+	@echo '\n======== $@ ========'
+	@echo IPv6 AH packets are treated as their payload protocol by pf.
+	@echo So they match the floating state on the physical interface
+	@echo and are not logged by the enc0 pf rule.
+	@echo DISABLED
 
 # Ping all addresses.  This ensures that the IP addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
@@ -356,7 +386,7 @@ REGEX_RPL_UDP=	.* udp
 REGEX_RPL_TCP=	S .* ack
 
 .for host in IPS ECO
-.for sec in ESP AH IPCOMP BUNDLE
+.for sec in ESP AH IPIP IPCOMP BUNDLE
 .for mode in TRANSP TUNNEL4 TUNNEL6
 .for ipv in IPV4 IPV6
 
@@ -379,11 +409,9 @@ REGEX_RPL_${host}_${sec}_${mode}_${ipv}_TCP=\
     ${REGEX_RPL_${host}_${sec}_${mode}_${ipv}_UDP}
 
 .for proto in PING UDP TCP
+
 run-regress-bpf-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 	@echo '\n======== $@ ========'
-.if "${sec}" == IPCOMP && "${sec}" != PING
-	@echo packet too small to be compressed
-.else
 	grep -q '\
 	    ${REGEX_${sec}}\
 	    ${REGEX_REQ_${mode}}\
@@ -394,17 +422,30 @@ run-regress-bpf-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 	    ${REGEX_RPL_${mode}}\
 	    ${REGEX_RPL_${host}_${sec}_${mode}_${ipv}_${proto}}\
 	    ${REGEX_RPL_${proto}} ' enc0.tcpdump
-.endif
-.endfor
 
+run-regress-pflog-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
+	@echo '\n======== $@ ========'
+	grep -q '\
+	    rule .*regress.0/(match) .*\
+	    pass in on enc0: .*\
+	    ${REGEX_REQ_${host}_${sec}_${mode}_${ipv}_${proto}}\
+	    ${REGEX_REQ_${proto}} ' pflog0.tcpdump
+	grep -q '\
+	    rule .*/(match) .*\
+	    pass out on enc0: .*\
+	    ${REGEX_RPL_${host}_${sec}_${mode}_${ipv}_${proto}}\
+	    ${REGEX_RPL_${proto}} ' pflog0.tcpdump
+
+.endfor
 .endfor
 .endfor
 .endfor
 .endfor
 
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-send-/} \
-    ${TARGETS:N*_IPIP_*:N*_BUNDLE_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:S/^/run-regress-bpf-/:S/-big-/-/}
-${REGRESS_TARGETS:Mrun-regress-send-*}: stamp-ipsec stamp-bpf
+    ${TARGETS:N*_IPIP_*:N*_BUNDLE_*:N*_IN_*:N*_OUT_*:N*-SRC_*:Nudp-*_IPCOMP_*:Ntcp-*_IPCOMP_*:N*-small-*:S/-big-/-/:S/^/run-regress-bpf-/} \
+    ${TARGETS:N*_IPIP_*:N*_IPCOMP_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:S/-big-/-/:S/^/run-regress-pflog-/}
+${REGRESS_TARGETS:Mrun-regress-send-*}: stamp-ipsec stamp-bpf stamp-pflog
 
 CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcdump
 
@@ -741,6 +782,8 @@ check-setup-ips:
 	ssh ${IPS_SSH} sysctl net.inet.ah.enable | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipip.allow | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipcomp.enable | fgrep =1
+	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 
 check-setup-rt:
 	@echo '\n======== $@ ========'
