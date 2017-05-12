@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.70 2017/04/25 18:20:51 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.71 2017/05/12 13:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -284,7 +284,7 @@ grid_clear_history(struct grid *gd)
 
 /* Scroll a region up, moving the top line into the history. */
 void
-grid_scroll_history_region(struct grid *gd, u_int upper, u_int lower)
+grid_scroll_history_region(struct grid *gd, u_int upper, u_int lower, u_int bg)
 {
 	struct grid_line	*gl_history, *gl_upper, *gl_lower;
 	u_int			 yy;
@@ -309,7 +309,7 @@ grid_scroll_history_region(struct grid *gd, u_int upper, u_int lower)
 
 	/* Then move the region up and clear the bottom line. */
 	memmove(gl_upper, gl_upper + 1, (lower - upper) * sizeof *gl_upper);
-	memset(gl_lower, 0, sizeof *gl_lower);
+	grid_empty_line(gd, lower, bg);
 
 	/* Move the history offset down over the line. */
 	gd->hscrolled++;

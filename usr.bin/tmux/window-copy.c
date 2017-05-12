@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.174 2017/05/12 10:45:38 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.175 2017/05/12 13:00:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -321,7 +321,7 @@ window_copy_vadd(struct window_pane *wp, const char *fmt, va_list ap)
 		 * (so it's on a new line).
 		 */
 		screen_write_carriagereturn(&back_ctx);
-		screen_write_linefeed(&back_ctx, 0);
+		screen_write_linefeed(&back_ctx, 0, 8);
 	} else
 		data->backing_written = 1;
 	old_cy = backing->cy;
