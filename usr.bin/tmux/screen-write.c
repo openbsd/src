@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.120 2017/05/11 11:39:30 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.121 2017/05/12 10:50:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -606,7 +606,7 @@ screen_write_deletecharacter(struct screen_write_ctx *ctx, u_int nx, u_int bg)
 
 /* Clear nx characters. */
 void
-screen_write_clearcharacter(struct screen_write_ctx *ctx, u_int nx)
+screen_write_clearcharacter(struct screen_write_ctx *ctx, u_int nx, u_int bg)
 {
 	struct screen	*s = ctx->s;
 	struct tty_ctx	 ttyctx;
@@ -623,6 +623,7 @@ screen_write_clearcharacter(struct screen_write_ctx *ctx, u_int nx)
 		return;
 
 	screen_write_initctx(ctx, &ttyctx);
+	ttyctx.bg = bg;
 
 	grid_view_clear(s->grid, s->cx, s->cy, nx, 1, 8);
 
