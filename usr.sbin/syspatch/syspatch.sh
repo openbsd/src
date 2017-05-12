@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.100 2017/05/08 09:45:14 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.101 2017/05/12 15:04:07 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -286,7 +286,9 @@ _OSrev=${_KERNV[0]%.*}${_KERNV[0]#*.}
 
 _MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
 	print -r -- "${_line}"; done </etc/installurl | tail -1)
-[[ -z ${_MIRROR} ]] && sp_err "${0##*/}: no URL configured in /etc/installurl"
+[[ ${_MIRROR} == @(file|http|https)://*/*[!/] ]] ||
+	sp_err "${0##*/}: invalid URL configured in /etc/installurl"
+
 _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
