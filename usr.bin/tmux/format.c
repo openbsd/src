@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.137 2017/05/12 22:42:46 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.138 2017/05/12 22:43:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -194,7 +194,6 @@ format_job_update(struct job *job)
 	struct format_job	*fj = job->data;
 	char			*line;
 	time_t			 t;
-	struct client		*c;
 
 	if ((line = evbuffer_readline(job->event->input)) == NULL)
 		return;
