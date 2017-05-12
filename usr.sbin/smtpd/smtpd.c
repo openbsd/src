@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.288 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.289 2017/05/12 20:15:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1194,8 +1194,8 @@ purge_task(void)
 			log_warn("warn: purge_task: fork");
 			break;
 		case 0:
-			if ((pw = getpwnam(SMTPD_USER)) == NULL)
-				fatalx("unknown user " SMTPD_USER);
+			if ((pw = getpwnam(SMTPD_QUEUE_USER)) == NULL)
+				fatalx("unknown user " SMTPD_QUEUE_USER);
 			if (chroot(PATH_SPOOL PATH_PURGE) == -1)
 				fatal("smtpd: chroot");
 			if (chdir("/") == -1)
