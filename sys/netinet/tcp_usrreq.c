@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.148 2017/05/12 20:34:29 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.149 2017/05/13 17:41:57 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -242,8 +242,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			    &mtod(nam, struct sockaddr_in6 *)->sin6_addr;
 
 			if (IN6_IS_ADDR_UNSPECIFIED(addr6) ||
-			    IN6_IS_ADDR_MULTICAST(addr6) ||
-			    IN6_IS_ADDR_V4MAPPED(addr6)) {
+			    IN6_IS_ADDR_MULTICAST(addr6)) {
 				error = EINVAL;
 				break;
 			}
