@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.224 2017/04/22 09:12:49 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.225 2017/05/13 07:11:29 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1974,15 +1974,20 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 }
 
 static void *
-omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill, void *f)
+omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill,
+    void *f)
 {
 	size_t psz;
 	void *p;
 
+	/* If between half a page and a page, avoid MALLOC_MOVE. */
+	if (sz > MALLOC_MAXCHUNK && sz < MALLOC_PAGESIZE)
+		sz = MALLOC_PAGESIZE;
 	if (alignment <= MALLOC_PAGESIZE) {
 		/*
-		 * max(size, alignment) is enough to assure the requested alignment,
-		 * since the allocator always allocates power-of-two blocks.
+		 * max(size, alignment) is enough to assure the requested
+		 * alignment, since the allocator always allocates
+		 * power-of-two blocks.
 		 */
 		if (sz < alignment)
 			sz = alignment;
