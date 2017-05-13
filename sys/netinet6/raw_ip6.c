@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.113 2017/05/08 08:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.114 2017/05/13 17:44:00 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -343,7 +343,6 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	priv = 0;
 	if ((so->so_state & SS_PRIV) != 0)
 		priv = 1;
-	dst = &satosin6(dstaddr)->sin6_addr;
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
 		    in6p->inp_outputopts6,
@@ -352,6 +351,16 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		optp = &opt;
 	} else
 		optp = in6p->inp_outputopts6;
+
+	if (dstaddr->sa_family != AF_INET6) {
+		error = EAFNOSUPPORT;
+		goto bad;
+	}
+	dst = &satosin6(dstaddr)->sin6_addr;
+	if (IN6_IS_ADDR_V4MAPPED(dst)) {
+		error = EADDRNOTAVAIL;
+		goto bad;
+	}
 
 	/*
 	 * For an ICMPv6 packet, we should know its type and code
@@ -691,11 +700,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 			tmp = *mtod(nam, struct sockaddr_in6 *);
 			dst = &tmp;
-
-			if (dst->sin6_family != AF_INET6) {
-				error = EAFNOSUPPORT;
-				break;
-			}
 		}
 		error = rip6_output(m, so, sin6tosa(dst), control);
 		m = NULL;
