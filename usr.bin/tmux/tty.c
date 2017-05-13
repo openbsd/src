@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.281 2017/05/12 23:10:19 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.282 2017/05/13 07:30:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1145,11 +1145,10 @@ void
 tty_cmd_clearstartofline(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
-	u_int			 nx, py = ctx->yoff + ctx->ocy;
+	u_int			 py = ctx->yoff + ctx->ocy;
 
 	tty_default_attributes(tty, wp, ctx->bg);
 
-	nx = screen_size_x(wp->screen) - ctx->ocx;
 	tty_clear_line(tty, wp, py, ctx->xoff, ctx->ocx + 1, ctx->bg);
 }
 
