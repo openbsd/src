@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.5 2017/03/16 21:08:50 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.6 2017/05/14 12:17:47 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -302,9 +302,11 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	    offsetof(struct vioscsi_req, vr_res),
 	    sizeof(struct virtio_scsi_res_hdr),
 	    BUS_DMASYNC_POSTREAD);
-	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
+	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 		bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
+	}
 
 	if (vr->vr_res.response != VIRTIO_SCSI_S_OK) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -360,10 +362,9 @@ void *
 vioscsi_req_get(void *cookie)
 {
 	struct vioscsi_softc *sc = cookie;
-	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_dev.dv_parent;
 	struct virtqueue *vq = &sc->sc_vqs[2];
 	struct vioscsi_req *vr = NULL;
-	int r, s, slot;
+	int s, slot;
 
 	s = splbio();
 	if (virtio_enqueue_prep(vq, &slot) == 0)
@@ -371,58 +372,27 @@ vioscsi_req_get(void *cookie)
 	splx(s);
 
 	if (vr == NULL)
-		goto err1;
+		return NULL;
 
 	STATE_ASSERT(vr, FREE);
 	vr->vr_req.id = slot;
 	vr->vr_req.task_attr = VIRTIO_SCSI_S_SIMPLE;
 
-	r = bus_dmamap_create(vsc->sc_dmat,
-	    offsetof(struct vioscsi_req, vr_xs), 1,
-	    offsetof(struct vioscsi_req, vr_xs), 0,
-	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_control);
-	if (r != 0)
-		goto err2;
-	r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, sc->sc_seg_max,
-	    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
-	if (r != 0)
-		goto err3;
-	r = bus_dmamap_load(vsc->sc_dmat, vr->vr_control,
-	    vr, offsetof(struct vioscsi_req, vr_xs), NULL,
-	    BUS_DMA_NOWAIT);
-	if (r != 0)
-		goto err4;
-
 	DPRINTF("vioscsi_req_get: %p, %d\n", vr, slot);
 	vr->vr_state = ALLOC;
 
 	return (vr);
-
-err4:
-	bus_dmamap_destroy(vsc->sc_dmat, vr->vr_data);
-err3:
-	bus_dmamap_destroy(vsc->sc_dmat, vr->vr_control);
-err2:
-	s = splbio();
-	virtio_enqueue_abort(vq, slot);
-	splx(s);
-err1:
-	return (NULL);
 }
 
 void
 vioscsi_req_put(void *cookie, void *io)
 {
 	struct vioscsi_softc *sc = cookie;
-	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_dev.dv_parent;
 	struct virtqueue *vq = &sc->sc_vqs[2];
 	struct vioscsi_req *vr = io;
 	int slot = vr - sc->sc_reqs;
 
 	DPRINTF("vioscsi_req_put: %p, %d\n", vr, slot);
-
-	bus_dmamap_destroy(vsc->sc_dmat, vr->vr_control);
-	bus_dmamap_destroy(vsc->sc_dmat, vr->vr_data);
 
 	int s = splbio();
 	if (vr->vr_state == DONE) {
@@ -438,8 +408,9 @@ int
 vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
     int qsize, uint32_t seg_max)
 {
+	struct vioscsi_req *vr;
 	size_t allocsize;
-	int r, rsegs;
+	int i, r, rsegs;
 	void *vaddr;
 
 	allocsize = qsize * sizeof(struct vioscsi_req);
@@ -459,5 +430,32 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	}
 	sc->sc_reqs = vaddr;
 	memset(vaddr, 0, allocsize);
+
+	for (i = 0; i < qsize; i++) {
+		/* Create the DMA maps for each allocated request */
+		vr = &sc->sc_reqs[i];
+		r = bus_dmamap_create(vsc->sc_dmat,
+		    offsetof(struct vioscsi_req, vr_xs), 1,
+		    offsetof(struct vioscsi_req, vr_xs), 0,
+		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_control);
+		if (r != 0) {
+			printf("bus_dmamap_create vr_control failed, error  %d\n", r);
+			return 1;
+		}
+		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, sc->sc_seg_max,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
+		if (r != 0) {
+			printf("bus_dmamap_create vr_data failed, error %d\n", r );
+			return 1;
+		}
+		r = bus_dmamap_load(vsc->sc_dmat, vr->vr_control,
+		    vr, offsetof(struct vioscsi_req, vr_xs), NULL,
+		    BUS_DMA_NOWAIT);
+		if (r != 0) {
+			printf("bus_dmamap_load vr_control failed, error %d\n", r );
+			return 1;
+		}
+	}
+
 	return 0;
 }
