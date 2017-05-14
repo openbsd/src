@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.26 2016/01/08 20:26:54 zhuk Exp $
+.\"	$OpenBSD: printcap.5,v 1.27 2017/05/14 12:01:52 ajacoutot Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: May 14 2017 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ for a complete discussion on how to set up the database for a given printer.
 Refer to
 .Xr termcap 5
 for a description of the file layout.
-.Bl -column "Name" "Type" "/var/spool/output" "Description"
+.Bl -column "Name" "Type" "/var/spool/output/lpd" "Description"
 .It Sy Name Ta Sy Type Ta Sy Default Ta Sy Description
 .It "af	str" Ta Dv NULL Ta "name of accounting file"
 .It "br" Ta "num" Ta "none" Ta "if lp is a tty, set baud rate"
@@ -108,7 +108,7 @@ blocks); 0=unlimited
 .It "rw" Ta "bool" Ta "false" Ta "open printer device for reading and writing"
 .It "sb" Ta "bool" Ta "false" Ta "short banner (one line only)"
 .It "sc" Ta "bool" Ta "false" Ta "suppress multiple copies"
-.It "sd" Ta "str" Ta Pa /var/spool/output Ta "spool directory"
+.It "sd" Ta "str" Ta Pa /var/spool/output/lpd Ta "spool directory"
 .It "sf" Ta "bool" Ta "false" Ta "suppress form feeds"
 .It "sh" Ta "bool" Ta "false" Ta "suppress printing of burst page header"
 .It "st" Ta "str" Ta Pa status Ta "status file name"
