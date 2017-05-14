@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.242 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.243 2017/05/14 13:59:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1867,7 +1867,7 @@ post_sh_see_also(POST_ARGS)
 			if (isalpha((const unsigned char)*name))
 				return;
 		lastpunct = n->string;
-		if (n->next == NULL)
+		if (n->next == NULL || n->next->tok == MDOC_Rs)
 			mandoc_vmsg(MANDOCERR_XR_PUNCT, mdoc->parse,
 			    n->line, n->pos, "%s after %s(%s)",
 			    lastpunct, lastname, lastsec);
