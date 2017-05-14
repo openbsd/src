@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.60 2017/05/14 13:20:02 schwarze Exp $
-# $NetBSD: mdoclint,v 1.68 2017/05/02 13:59:10 wiz Exp $
+# $OpenBSD: mdoclint,v 1.61 2017/05/14 20:02:00 schwarze Exp $
+# $NetBSD: mdoclint,v 1.70 2017/05/14 18:04:23 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -40,11 +40,10 @@ use constant {
 	OPENBSD => 1,
 	NETBSD => 0,
 	SECTION_NAME => 2,
-	SECTION_SEE_ALSO => 3,
 };
 
 use vars qw(
-	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
+	$opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
 	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w
 	$opt_X $opt_x
 );
@@ -250,11 +249,10 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_a or $opt_D or $opt_d or $opt_e
-		or $opt_f or $opt_H or $opt_l
+	unless ($opt_D or $opt_d or $opt_e or $opt_f or $opt_H or $opt_l
 		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
 		or $opt_S or $opt_X or $opt_x) {
-		$opt_a = $opt_D = $opt_d = $opt_f = $opt_m =
+		$opt_D = $opt_d = $opt_f = $opt_m =
 		    $opt_n = $opt_o = $opt_p = $opt_r = $opt_S =
 		    $opt_X = $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
@@ -307,9 +305,6 @@ sub new
 		oxrcsidseen => 0,
 		nxrcsidseen => 0,
 		lastsh => 0,
-		sasection => 0,
-		saname => '',
-		sarest => ',',
 		in_section => 0,
 		inliteral => 0,
 		shseen => {},
@@ -362,29 +357,13 @@ sub parse_macro_args
 	return @params;
 }
 
-sub end_of_section
-{
-	my ($s) = @_;
-
-	if ($s->{in_section} == SECTION_SEE_ALSO and not $s->{sarest} eq "") {
-		$s->warning("unneeded characters at end of SEE ALSO: ",
-		    "`$s->{sarest}'") if $opt_a;
-		# to avoid a second warning at EOF
-		$s->{sarest} = "";
-	}
-}
-
 sub set_section_header
 {
 	my ($s, $section_header) = @_;
 	$section_header = join(' ', $s->parse_macro_args($section_header));
 
-	end_of_section($s);
-
 	if ($section_header eq 'NAME') {
 		$s->{in_section} = SECTION_NAME;
-	} elsif ($section_header eq 'SEE ALSO') {
-		$s->{in_section} = SECTION_SEE_ALSO;
 	} else {
 		$s->{in_section} = 0;
 	}
@@ -476,33 +455,6 @@ sub process_line
 	if ($s->{in_section} == SECTION_NAME) {
 		if (/^\.Nm\s+(\S+)/o) {
 			$s->{names}{$1.$s->{sec}} = 1;
-		}
-	} elsif ($s->{in_section} == SECTION_SEE_ALSO) {
-		if (/^\.Xr\s+(\S+)\s+($sections_re)\s?(.*)?$/o) {
-			my ($saname, $sasection, $sarest) = ($1, $2, $3);
-			$saname =~ s/^\\&//o;
-			if ($s->{sasection} gt $sasection
-			    or ($s->{sasection} eq $sasection and
-			    (lc($s->{saname}) gt lc($saname)))) {
-				$s->warning("SEE ALSO: `.Xr $s->{saname} ",
-				    "$s->{sasection}' should be after ",
-				    "`.Xr $saname $sasection'") if $opt_a;
-			}
-			if ($s->{sarest} ne ",") {
-				$s->warning("SEE ALSO: .Xr not separated ",
-				    "by comma, but `$s->{sarest}'") if $opt_a;
-			}
-			$s->{saname} = $saname;
-			$s->{sasection} = $sasection;
-			$s->{sarest} = $sarest;
-		}
-		if (/^\.Rs(?:\s+|$)/o) {
-			if ($s->{sarest} ne "") {
-				$s->warning("SEE ALSO: Not necessary to ",
-				    "separate .Xr from .Rs by ",
-				    "`$s->{sarest}'") if $opt_a;
-			}
-			$s->{sarest} = "";
 		}
 	}
 
@@ -640,12 +592,6 @@ sub finish
 	if (OPENBSD and not $s->{oxrcsidseen}) {
 		$s->warning("Missing RCS Id") if $opt_r;
 	}
-
-	end_of_section($s);
-
-#    	if (not ($fn =~ /$section$/)) {
-#		$s->warning("section doesn't match (internal value: $section)");
-#    	}
 	if ($s->{mandoc_p}) {
 		foreach my $i (qw(NAME SYNOPSIS DESCRIPTION)) {
 			if (not ($s->{shseen}{$i})) {
