@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.84 2017/01/24 10:08:30 krw Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.85 2017/05/15 14:09:13 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -165,9 +165,9 @@ gre_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	s = splnet();
+	NET_LOCK(s);
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
-	splx(s);
+	NET_UNLOCK(s);
 
 	return (0);
 }
@@ -178,11 +178,11 @@ gre_clone_destroy(struct ifnet *ifp)
 	struct gre_softc *sc = ifp->if_softc;
 	int s;
 
-	s = splnet();
 	timeout_del(&sc->sc_ka_snd);
 	timeout_del(&sc->sc_ka_hold);
+	NET_LOCK(s);
 	LIST_REMOVE(sc, sc_list);
-	splx(s);
+	NET_UNLOCK(s);
 
 	if_detach(ifp);
 
@@ -441,12 +441,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct ifkalivereq *ikar = (struct ifkalivereq *)data;
 	struct gre_softc *sc = ifp->if_softc;
-	int s;
 	struct sockaddr_in si;
 	int error = 0;
 	struct proc *prc = curproc;		/* XXX */
 
-	s = splnet();
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -564,7 +562,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENOTTY;
 	}
 
-	splx(s);
 	return (error);
 }
 
