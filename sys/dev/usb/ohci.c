@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.149 2017/03/10 11:18:48 mpi Exp $ */
+/*	$OpenBSD: ohci.c,v 1.150 2017/05/15 10:52:08 mpi Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1649,7 +1649,7 @@ ohci_add_ed(struct ohci_soft_ed *sed, struct ohci_soft_ed *head)
 {
 	DPRINTFN(8,("ohci_add_ed: sed=%p head=%p\n", sed, head));
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 	sed->next = head->next;
 	sed->ed.ed_nexted = head->ed.ed_nexted;
 	head->next = sed;
@@ -1664,7 +1664,7 @@ ohci_rem_ed(struct ohci_soft_ed *sed, struct ohci_soft_ed *head)
 {
 	struct ohci_soft_ed *p;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	/* XXX */
 	for (p = head; p != NULL && p->next != sed; p = p->next)
@@ -1692,7 +1692,7 @@ ohci_hash_add_td(struct ohci_softc *sc, struct ohci_soft_td *std)
 {
 	int h = HASH(std->physaddr);
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	LIST_INSERT_HEAD(&sc->sc_hash_tds[h], std, hnext);
 }
@@ -1717,7 +1717,7 @@ ohci_hash_add_itd(struct ohci_softc *sc, struct ohci_soft_itd *sitd)
 {
 	int h = HASH(sitd->physaddr);
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10,("ohci_hash_add_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));
@@ -1729,7 +1729,7 @@ ohci_hash_add_itd(struct ohci_softc *sc, struct ohci_soft_itd *sitd)
 void
 ohci_hash_rem_itd(struct ohci_softc *sc, struct ohci_soft_itd *sitd)
 {
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10,("ohci_hash_rem_itd: sitd=%p physaddr=0x%08lx\n",
 		    sitd, (u_long)sitd->physaddr));

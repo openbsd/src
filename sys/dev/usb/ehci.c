@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.199 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.200 2017/05/15 10:52:08 mpi Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1512,7 +1512,7 @@ ehci_open(struct usbd_pipe *pipe)
 void
 ehci_add_qh(struct ehci_soft_qh *sqh, struct ehci_soft_qh *head)
 {
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	usb_syncmem(&head->dma, head->offs + offsetof(struct ehci_qh, qh_link),
 	    sizeof(head->qh.qh_link), BUS_DMASYNC_POSTWRITE);
@@ -1536,7 +1536,7 @@ ehci_add_qh(struct ehci_soft_qh *sqh, struct ehci_soft_qh *head)
 void
 ehci_rem_qh(struct ehci_softc *sc, struct ehci_soft_qh *sqh)
 {
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 	/* XXX */
 	usb_syncmem(&sqh->dma, sqh->offs + offsetof(struct ehci_qh, qh_link),
 	    sizeof(sqh->qh.qh_link), BUS_DMASYNC_POSTWRITE);

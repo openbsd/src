@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.44 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.45 2017/05/15 10:52:08 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -532,7 +532,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	bool wake;
 	int err;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTF("xfer=%p\n", xfer);
 

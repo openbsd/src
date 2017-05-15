@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.142 2017/03/10 11:18:48 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.143 2017/05/15 10:52:08 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -870,7 +870,7 @@ uhci_add_hs_ctrl(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *eqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_add_hs_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_hctl_end;
@@ -890,7 +890,7 @@ uhci_remove_hs_ctrl(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *pqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_remove_hs_ctrl: sqh=%p\n", sqh));
 #ifdef UHCI_CTL_LOOP
@@ -923,7 +923,7 @@ uhci_add_ls_ctrl(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *eqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_add_ls_ctrl: sqh=%p\n", sqh));
 	eqh = sc->sc_lctl_end;
@@ -940,7 +940,7 @@ uhci_remove_ls_ctrl(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *pqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_remove_ls_ctrl: sqh=%p\n", sqh));
 	/* See comment in uhci_remove_hs_ctrl() */
@@ -962,7 +962,7 @@ uhci_add_bulk(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *eqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_add_bulk: sqh=%p\n", sqh));
 	eqh = sc->sc_bulk_end;
@@ -980,7 +980,7 @@ uhci_remove_bulk(struct uhci_softc *sc, struct uhci_soft_qh *sqh)
 {
 	struct uhci_soft_qh *pqh;
 
-	SPLUSBCHECK;
+	splsoftassert(IPL_SOFTUSB);
 
 	DPRINTFN(10, ("uhci_remove_bulk: sqh=%p\n", sqh));
 	uhci_rem_loop(sc);
