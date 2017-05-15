@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.114 2017/04/23 06:36:36 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.115 2017/05/15 18:05:34 tb Exp $
 .\"
-.Dd $Mdocdate: April 23 2017 $
+.Dd $Mdocdate: May 15 2017 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ Used for the allocation of memory holding sensitive data,
 the
 .Fn recallocarray
 and
-.Fn freezeo
+.Fn freezero
 functions guarantee that memory becoming unallocated is explicitly
 .Em discarded ,
 meaning pages of memory are disposed via
