@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoclint.1,v 1.20 2017/05/14 20:02:00 schwarze Exp $
+.\" $OpenBSD: mdoclint.1,v 1.21 2017/05/15 17:24:48 schwarze Exp $
 .\" $NetBSD: mdoclint.1,v 1.15 2017/05/02 13:59:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2017 $
+.Dd $Mdocdate: May 15 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdeFfHhlmnoprSvwXx
+.Op Fl DdeFfhlmnoprSvwXx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -43,7 +43,7 @@ errors that occur when writing man pages as possible.
 If no flags are given,
 .Fl DdfmnoprSXx
 is assumed (that is, everything except
-.Fl eFHhlvw ) .
+.Fl eFhlvw ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -60,19 +60,6 @@ Warn about possible .Fn abuse; its arguments should be put in
 .Sq \&"
 separately, not together and separated by commas.
 Those will be automatically added by mdoc.
-.It Fl H
-Show warnings for characters that might generate problems in
-HTML output:
-.Sq \*(Lt
-and
-.Sq \*(Gt .
-Replace a pair of angle quotes with the .Aq macro.
-Otherwise, the replacements are
-.Dq \e*(Lt
-and
-.Dq \e*(Gt .
-This option is off by default,
-as these characters no longer pose any problems.
 .It Fl h
 Display usage.
 .It Fl l

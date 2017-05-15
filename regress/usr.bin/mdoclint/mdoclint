@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.62 2017/05/15 13:36:05 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.63 2017/05/15 17:24:48 schwarze Exp $
 # $NetBSD: mdoclint,v 1.71 2017/05/15 09:33:03 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -42,7 +42,7 @@ use constant {
 };
 
 use vars qw(
-	$opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_l
+	$opt_D $opt_d $opt_e $opt_F $opt_f $opt_h $opt_l
 	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w
 	$opt_X $opt_x
 );
@@ -64,7 +64,6 @@ usage:	mdoclint [-$options] file ...
 	-e	warn about unsorted errors (for functions)
 	-F	fix whitespace problems (asks before overwriting)
 	-f	warn about possible incorrect .Fn syntax
-	-H	warn about characters that produce problems in HTML output
 	-h	display this help text
 	-l	warn about unknown libraries
 	-m	warn about man pages that are not in mdoc(7) format
@@ -247,7 +246,7 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_d or $opt_e or $opt_f or $opt_H or $opt_l
+	unless ($opt_D or $opt_d or $opt_e or $opt_f or $opt_l
 		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
 		or $opt_S or $opt_X or $opt_x) {
 		$opt_D = $opt_d = $opt_f = $opt_m =
@@ -442,18 +441,6 @@ sub process_line
 
 	if (/^\.Fn.*,.+/o) {
 		$s->warning("possible .Fn misuse: `$_'") if $opt_f;
-	}
-	if (OPENBSD) {
-		if (/^(?:[<>])/o or /[^\\][<>]/o) {
-			$s->warning("use \*(Lt \*(Gt (or .Aq) ",
-			    "instead of < >: `$_'") if $opt_H;
-		}
-	}
-	if (NETBSD) {
-		if (/^(?:[<>&])/o or /[^\\][<>&]/o) {
-			$s->warning("use \*[Lt] \*[Gt] (or .Aq) \*[Am] ",
-			    "instead of < > &: `$_'") if $opt_H;
-		}
 	}
 
 	if (/\b(Free|Net|DragonFly|Open)BSD\b/o
