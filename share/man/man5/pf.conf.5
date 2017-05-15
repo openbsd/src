@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.558 2017/05/15 11:24:37 mikeb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.559 2017/05/15 17:16:31 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1565,7 +1565,7 @@ pass out on em0 inet proto tcp from any to any port 25 \e
       set queue mail
 .Ed
 .Pp
-Additionally to the bandwidth management a fair traffic sharing option
+In addition to bandwidth management, a fair traffic sharing option
 is provided via a flow queue.
 When packets are classified by the stateful inspection engine, a flow
 identifier is assigned to all packets belonging to this state.
@@ -1577,12 +1577,12 @@ Configuration of a flow queue is similar to a regular one, however flow
 queues don't build a hierarchy and thus only one flow queue may be
 specified per interface.
 .Pp
-The core parameter of a flow queue is a number of expected simultaneous
+The core parameter of a flow queue is the number of expected simultaneous
 connections, or
 .Cm flows ,
 bounded by the resolution of the flow identifier (the current
 implementation is able to classify traffic into 32767 distinct flows).
-Thus minimal flow queue configuration is:
+Thus a minimal flow queue configuration is:
 .Bd -literal -offset indent
 queue fq on em0 flows 1024
 .Ed
@@ -1601,7 +1601,6 @@ An additional configuration option
 .Cm qlimit
 sets the queue depth shared among all flows.
 The default is 1024.
-.El
 .Sh TABLES
 Tables are named structures which can hold a collection of addresses and
 networks.
