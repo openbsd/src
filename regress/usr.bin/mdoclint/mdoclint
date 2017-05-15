@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.61 2017/05/14 20:02:00 schwarze Exp $
-# $NetBSD: mdoclint,v 1.70 2017/05/14 18:04:23 wiz Exp $
+# $OpenBSD: mdoclint,v 1.62 2017/05/15 13:36:05 schwarze Exp $
+# $NetBSD: mdoclint,v 1.71 2017/05/15 09:33:03 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -39,7 +39,6 @@ use Getopt::Std;
 use constant {
 	OPENBSD => 1,
 	NETBSD => 0,
-	SECTION_NAME => 2,
 };
 
 use vars qw(
@@ -55,12 +54,11 @@ my $options="aDdeFfHhlmnoprSvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-aDdfmnoprSXx" : "-aDdeflmnoprSXx";
+	my $default = OPENBSD ? "-DdfmnoprSXx" : "-DdeflmnoprSXx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
-	-a	warn about SEE ALSO section problems
 	-D	warn about bad casing and archs in .Dt
 	-d	warn about bad date strings (in .Dd only)
 	-e	warn about unsorted errors (for functions)
@@ -304,8 +302,6 @@ sub new
 		changes => 0,
 		oxrcsidseen => 0,
 		nxrcsidseen => 0,
-		lastsh => 0,
-		in_section => 0,
 		inliteral => 0,
 		shseen => {},
 		last_error_name => '',
@@ -351,9 +347,6 @@ sub parse_macro_args
 			push(@params, $1);
 		}
 	}
-	if (@params > 9 and OPENBSD) {
-		$s->warning("$string holds >9 parameters");
-	}
 	return @params;
 }
 
@@ -362,22 +355,11 @@ sub set_section_header
 	my ($s, $section_header) = @_;
 	$section_header = join(' ', $s->parse_macro_args($section_header));
 
-	if ($section_header eq 'NAME') {
-		$s->{in_section} = SECTION_NAME;
-	} else {
-		$s->{in_section} = 0;
-	}
-
 	if (not $sections{$section_header}) {
 		$s->warning("unknown section header: ",
 		    "`$section_header'") if $opt_S;
 	} else {
-		if ($s->{lastsh} >= $sections{$section_header}) {
-			$s->warning("section header ",
-			    "`$section_header' in wrong order") if $opt_S;
-		}
 		$s->{shseen}->{$section_header} = 1;
-		$s->{lastsh} = $sections{$section_header};
 	}
 
 	$s->{current_section_header} = $section_header;
@@ -452,7 +434,7 @@ sub process_line
 		}
 	}
 
-	if ($s->{in_section} == SECTION_NAME) {
+	if ($s->{current_section_header} eq "NAME") {
 		if (/^\.Nm\s+(\S+)/o) {
 			$s->{names}{$1.$s->{sec}} = 1;
 		}
