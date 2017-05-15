@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.4 2017/05/06 16:36:56 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.5 2017/05/15 23:04:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,9 +29,12 @@
 #include <dev/ofw/fdt.h>
 
 /* Registers */
+#define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
+#define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
+#define RK3399_CRU_SDMMC_CON(i)		(0x0580 + (i) * 4)
 
 #include "rkclock_clocks.h"
 
@@ -155,6 +158,20 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 /* 
  * Rockchip RK3399 
  */
+uint32_t
+rk3399_get_pll(struct rkclock_softc *sc, bus_size_t base)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	uint32_t reg;
+
+	reg = HREAD4(sc, base);
+	fbdiv = reg & 0xfff;
+	reg = HREAD4(sc, base + 4);
+	postdiv2 = (reg >> 12) & 0x7;
+	postdiv1 = (reg >> 8) & 0x7;
+	refdiv = reg & 0x3f;
+	return 24000000ULL * fbdiv / refdiv / postdiv1 / postdiv2;
+}
 
 uint32_t
 rk3399_get_frequency(void *cookie, uint32_t *cells)
@@ -164,6 +181,10 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t reg, mux, div_con;
 
 	switch (idx) {
+	case RK3399_PLL_CPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_CPLL_CON(0));
+	case RK3399_PLL_GPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_GPLL_CON(0));
 	case RK3399_CLK_UART0:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(33));
 		mux = (reg >> 8) & 0x3;
@@ -192,6 +213,12 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		if (mux == 2)
 			return 24000000 / (div_con + 1);
 		break;
+	case RK3399_HCLK_SDMMC:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(13));
+		mux = (reg >> 15) & 0x1;
+		div_con = (reg >> 8) & 0x1f;
+		idx = mux ? RK3399_PLL_GPLL : RK3399_PLL_GPLL;
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
 	default:
 		break;
 	}
@@ -215,6 +242,7 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	switch (idx) {
+	case RK3399_CLK_SDMMC:
 	case RK3399_CLK_EMMC:
 	case RK3399_CLK_UART0:
 	case RK3399_CLK_UART1:
@@ -223,6 +251,8 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_CLK_MAC_RX:
 	case RK3399_CLK_MAC_TX:
 	case RK3399_CLK_MAC:
+	case RK3399_CLK_SDMMC_DRV:
+	case RK3399_CLK_SDMMC_SAMPLE:
 	case RK3399_ACLK_EMMC:
 	case RK3399_ACLK_GMAC:
 	case RK3399_PCLK_GMAC:
@@ -230,6 +260,7 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	case RK3399_HCLK_HOST0_ARB:
 	case RK3399_HCLK_HOST1:
 	case RK3399_HCLK_HOST1_ARB:
+	case RK3399_HCLK_SDMMC:
 		/* Enabled by default. */
 		break;
 	default:
