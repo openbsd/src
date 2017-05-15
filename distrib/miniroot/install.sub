@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1002 2017/05/15 16:55:53 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1003 2017/05/15 17:02:48 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3042,22 +3042,22 @@ fi
 # Start listener process looking for dmesg changes.
 start_dmesg_listener
 
-ROOTDISK=
-ROOTDEV=
-
-SETDIR="$VNAME/$ARCH"
 CGI_INFO=/tmp/i/cgiinfo
-CGI_TZ=
-CGI_TIME=
 CGI_METHOD=
-INSTALL_METHOD=
+CGI_TIME=
+CGI_TZ=
 HTTP_DIR=
-HTTP_SEC=/tmp/i/httpsec
 HTTP_LIST=/tmp/i/httplist
-WLANLIST=/tmp/i/wlanlist
+HTTP_SEC=/tmp/i/httpsec
+INSTALL_METHOD=
+NIFS=0
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
+ROOTDEV=
+ROOTDISK=
+SETDIR="$VNAME/$ARCH"
 V4_DHCPCONF=false
 V6_AUTOCONF=false
+WLANLIST=/tmp/i/wlanlist
 
 # Do not limit ourselves during installs or upgrades.
 for _opt in d f l m n p s; do
@@ -3083,9 +3083,7 @@ else
 fi
 
 # Scan /var/run/dmesg.boot for interesting devices.
-NIFS=0
 DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
-
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 CONSOLE=${CONSOLE% }
 [[ -n $CONSOLE ]] && CSPEED=$(stty speed </dev/console)
