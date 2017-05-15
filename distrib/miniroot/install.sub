@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1001 2017/05/06 06:49:12 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1002 2017/05/15 16:55:53 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -511,7 +511,7 @@ lock() {
 
 # Release lock.
 unlock() {
-	rm -d /tmp/i/lock 2>/dev/null
+	rm -df /tmp/i/lock 2>/dev/null
 }
 
 # Add trap to kill the listener process.
@@ -520,6 +520,36 @@ retrap() {
 		INT EXIT TERM
 }
 
+# Start listener process looking for dmesg changes.
+start_dmesg_listener() {
+	local _update=/tmp/i/update
+
+	# Make sure lock is initially released.
+	unlock
+
+	# The dmesg listener will check for the existence of this file and sends
+	# a signal to the child process if the dmesg output differs from the
+	# contents of that file.
+	rm -f $_update
+
+	$AUTO && return
+
+	(
+	while :; do
+		lock
+		if [[ -e $_update && "$(dmesg)" != "$(<$_update)" ]]; then
+			dmesg >$_update
+			kill -TERM 2>/dev/null $$ || exit 1
+		fi
+		unlock
+		sleep .5
+	done
+	) |&
+	CPPID=$!
+
+	# Kill the child on exit.
+	retrap
+}
 
 # ------------------------------------------------------------------------------
 # Functions to ask (or auto-answer) questions
@@ -3009,32 +3039,8 @@ fi
 #	NCPU	    - the number of cpus for mp capable arches
 . install.md
 
-# Make sure lock is initially released.
-rm -df /tmp/i/lock
-
-# The dmesg listener will check for the existence of this file and sends a
-# signal to the child process if the dmesg output differs from the contents
-# of that file.
-rm -f /tmp/i/update
-
-if ! $AUTO; then
-	# Start listener process looking for dmesg changes.
-	(
-		while :; do
-			lock
-			if [[ -e /tmp/i/update && "$(dmesg)" != "$(</tmp/i/update)" ]]; then
-				dmesg >/tmp/i/update
-				kill -TERM 2>/dev/null $$ || exit 1
-			fi
-			unlock
-			sleep .5
-		done
-	) |&
-	CPPID=$!
-
-	# Kill the child on exit.
-	retrap
-fi
+# Start listener process looking for dmesg changes.
+start_dmesg_listener
 
 ROOTDISK=
 ROOTDEV=
