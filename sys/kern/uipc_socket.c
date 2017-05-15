@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.182 2017/04/02 23:40:08 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.183 2017/05/15 12:26:00 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1038,10 +1038,12 @@ sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
 	struct protosw *pr = so->so_proto;
+	sa_family_t af = pr->pr_domain->dom_family;
 	struct sockbuf asb;
 
 	sb->sb_flags |= SB_NOINTR;
-	sblock(sb, M_WAITOK, NULL);
+	sblock(sb, M_WAITOK,
+	    (af != PF_LOCAL && af != PF_ROUTE) ? &netlock : NULL);
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;

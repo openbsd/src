@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.75 2017/03/17 17:19:16 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.76 2017/05/15 12:26:00 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -299,7 +299,11 @@ soassertlocked(struct socket *so)
 int
 sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 {
-	return tsleep(ident, prio, wmesg, timo);
+	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
+	    (so->so_proto->pr_domain->dom_family != PF_ROUTE)) {
+		return rwsleep(ident, &netlock, prio, wmesg, timo);
+	} else
+		return tsleep(ident, prio, wmesg, timo);
 }
 
 /*

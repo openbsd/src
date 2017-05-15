@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.203 2017/04/23 11:37:11 sthen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.204 2017/05/15 12:26:00 mpi Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -175,6 +175,8 @@ pf_purge_expired_fragments(void)
 {
 	struct pf_fragment	*frag;
 	int32_t			 expire;
+
+	NET_ASSERT_LOCKED();
 
 	expire = time_uptime - pf_default_rule.timeout[PFTM_FRAG];
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
