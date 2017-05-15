@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.21 2017/05/04 15:00:24 bluhm Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.22 2017/05/15 14:03:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -268,7 +268,6 @@ mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ether_header *eh, ehc;
 	struct shim_hdr *shim;
-	int s;
 
 	if (sc->sc_type == IMR_TYPE_NONE) {
 		m_freem(m);
@@ -324,10 +323,7 @@ mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	}
 
 	ml_enqueue(&ml, m);
-
-	s = splnet();
 	if_input(ifp, &ml);
-	splx(s);
 
 	return (0);
 }
