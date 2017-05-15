@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.245 2017/03/03 14:06:32 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.246 2017/05/15 15:14:11 schwarze Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -599,7 +599,7 @@ sub register_manpage
 	# XXX don't bother register stuff from partial packages
 	return if defined $self->{tempname};
 	my $fname = $self->fullname;
-	if ($fname =~ m,^(.*/man)/((?:man|cat).*),) {
+	if ($fname =~ m,^(.*/man(?:/\w+)?)/((?:man|cat)[1-9n]\w*/.*),) {
 		push(@{$state->{$key}{$1}}, $2);
     	}
 }
