@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.6 2017/05/14 12:17:47 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.7 2017/05/15 19:02:16 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -40,6 +40,12 @@ enum { vioscsi_debug = 0 };
 	} while (0)
 
 
+#define MAX_XFER	MAX(MAXPHYS,MAXBSIZE)
+/* Number of DMA segments for buffers that the device must support */
+#define SEG_MAX		(MAX_XFER/PAGE_SIZE + 1)
+/* In the virtqueue, we need space for header and footer, too */
+#define ALLOC_SEGS	(SEG_MAX + 2)
+
 enum vioscsi_req_state { FREE, ALLOC, INQUEUE, DONE };
 
 struct vioscsi_req {
@@ -60,8 +66,6 @@ struct vioscsi_softc {
 	struct virtqueue	 sc_vqs[3];
 	struct vioscsi_req	*sc_reqs;
 	bus_dma_segment_t        sc_reqs_segs[1];
-
-	u_int32_t		 sc_seg_max;
 };
 
 int		 vioscsi_match(struct device *, void *, void *);
@@ -137,11 +141,14 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t max_target = virtio_read_device_config_2(vsc,
 	    VIRTIO_SCSI_CONFIG_MAX_TARGET);
 
-	sc->sc_seg_max = seg_max;
+	if (seg_max < SEG_MAX) {
+		printf("\nMax number of segments %d too small\n", seg_max);
+		goto err;
+	}
 
 	for (i = 0; i < nitems(sc->sc_vqs); i++) {
-		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
-		    1 + howmany(MAXPHYS, NBPG), vioscsi_vq_names[i]);
+		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAX_XFER,
+		    ALLOC_SEGS, vioscsi_vq_names[i]);
 		if (rv) {
 			printf(": failed to allocate virtqueue %d\n", i);
 			return;
@@ -167,6 +174,11 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus *)config_found(self, &saa, scsiprint);
+	return;
+
+err:
+	vsc->sc_child = VIRTIO_CHILD_ERROR;
+	return;
 }
 
 void
@@ -442,8 +454,8 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 			printf("bus_dmamap_create vr_control failed, error  %d\n", r);
 			return 1;
 		}
-		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, sc->sc_seg_max,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
+		r = bus_dmamap_create(vsc->sc_dmat, MAX_XFER, SEG_MAX,
+		    MAX_XFER, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
 		if (r != 0) {
 			printf("bus_dmamap_create vr_data failed, error %d\n", r );
 			return 1;
