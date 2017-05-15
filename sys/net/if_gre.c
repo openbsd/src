@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.85 2017/05/15 14:09:13 mpi Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.86 2017/05/15 14:33:20 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -86,7 +86,6 @@ int	gre_clone_create(struct if_clone *, int);
 int	gre_clone_destroy(struct ifnet *);
 
 struct gre_softc_head gre_softc_list;
-struct gre_softc_head mobileip_softc_list;
 
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
@@ -114,7 +113,6 @@ void
 greattach(int n)
 {
 	LIST_INIT(&gre_softc_list);
-	LIST_INIT(&mobileip_softc_list);
 	if_clone_attach(&gre_cloner);
 	if_clone_attach(&mobileip_cloner);
 }
