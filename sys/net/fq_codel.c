@@ -157,9 +157,6 @@ const struct pfq_ops * const pfq_fqcodel_ops = &fqcodel_pf_ops;
 /* Default aggregate queue depth */
 static const unsigned int fqcodel_qlimit = 1024;
 
-/* Packet drop threshold */
-static const unsigned int fqcodel_threshold = 64;
-
 /*
  * CoDel implementation
  */
