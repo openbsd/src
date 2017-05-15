@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.183 2017/05/15 12:26:00 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.184 2017/05/15 13:00:10 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1862,12 +1862,13 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_SPLICE:
 		    {
 			off_t len;
-			int s = splsoftnet();
+			int s;
 
+			s = solock(so);
 			m->m_len = sizeof(off_t);
 			len = so->so_sp ? so->so_sp->ssp_len : 0;
 			memcpy(mtod(m, off_t *), &len, sizeof(off_t));
-			splx(s);
+			sounlock(s);
 			break;
 		    }
 #endif /* SOCKET_SPLICE */
