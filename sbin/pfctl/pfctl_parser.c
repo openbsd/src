@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.310 2017/05/15 11:23:25 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.311 2017/05/15 16:56:42 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1176,7 +1176,7 @@ print_bwspec(const char *prefix, struct pf_queue_bwspec *bw)
 		printf("%s%u%%", prefix, bw->percent);
 	else if (bw->absolute) {
 		rate = bw->absolute;
-		for (i = 0; rate >= 1000 && i <= 3; i++)
+		for (i = 0; rate >= 1000 && i <= 3 && (rate % 1000 == 0); i++)
 			rate /= 1000;
 		printf("%s%u%c", prefix, rate, unit[i]);
 	}
