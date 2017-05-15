@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.309 2016/10/26 14:15:59 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.310 2017/05/15 11:23:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,7 +41,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <net/pfvar.h>
-#include <net/hfsc.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -1197,18 +1196,27 @@ print_scspec(const char *prefix, struct pf_queue_scspec *sc)
 void
 print_queuespec(struct pf_queuespec *q)
 {
-	/* hide the _root_ifname queues */
-	if (q->qname[0] == '_')
-		return;
 	printf("queue %s", q->qname);
-	if (q->parent[0] && q->parent[0] != '_')
+	if (q->parent[0])
 		printf(" parent %s", q->parent);
 	else if (q->ifname[0])
 		printf(" on %s", q->ifname);
-	print_scspec(" bandwidth ", &q->linkshare);
-	print_scspec(", min ", &q->realtime);
-	print_scspec(", max ", &q->upperlimit);
-	if (q->flags & HFSC_DEFAULTCLASS)
+	if (q->flags & PFQS_FLOWQUEUE) {
+		printf(" flows %u", q->flowqueue.flows);
+		if (q->flowqueue.quantum > 0)
+			printf(" quantum %u", q->flowqueue.quantum);
+		if (q->flowqueue.interval > 0)
+			printf(" interval %ums",
+			    q->flowqueue.interval / 1000000);
+		if (q->flowqueue.target > 0)
+			printf(" target %ums",
+			    q->flowqueue.target / 1000000);
+	} else {
+		print_scspec(" bandwidth ", &q->linkshare);
+		print_scspec(", min ", &q->realtime);
+		print_scspec(", max ", &q->upperlimit);
+	}
+	if (q->flags & PFQS_DEFAULT)
 		printf(" default");
 	if (q->qlimit)
 		printf(" qlimit %u", q->qlimit);

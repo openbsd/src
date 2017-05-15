@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.310 2017/05/02 12:27:37 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.311 2017/05/15 11:23:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,6 +61,7 @@
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/hfsc.h>
+#include <net/fq_codel.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -598,8 +599,13 @@ pf_create_queues(void)
 		qif = malloc(sizeof(*qif), M_TEMP, M_WAITOK);
 		qif->ifp = ifp;
 
-		qif->ifqops = ifq_hfsc_ops;
-		qif->pfqops = pfq_hfsc_ops;
+		if (q->flags & PFQS_FLOWQUEUE) {
+			qif->ifqops = ifq_fqcodel_ops;
+			qif->pfqops = pfq_fqcodel_ops;
+		} else {
+			qif->ifqops = ifq_hfsc_ops;
+			qif->pfqops = pfq_hfsc_ops;
+		}
 
 		qif->disc = qif->pfqops->pfq_alloc(ifp);
 
@@ -1088,7 +1094,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(qs, &pq->queue, sizeof(pq->queue));
-		error = pfq_hfsc_ops->pfq_qstats(qs, pq->buf, &nbytes);
+		if (qs->flags & PFQS_FLOWQUEUE)
+			error = pfq_fqcodel_ops->pfq_qstats(qs, pq->buf,
+			    &nbytes);
+		else
+			error = pfq_hfsc_ops->pfq_qstats(qs, pq->buf,
+			    &nbytes);
 		if (error == 0)
 			pq->nbytes = nbytes;
 		break;

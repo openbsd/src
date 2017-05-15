@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.3 2017/04/26 15:50:59 mikeb Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.4 2017/05/15 11:23:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -26,12 +26,14 @@
 #include <arpa/inet.h>
 
 #include <err.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include <net/hfsc.h>
+#include <net/fq_codel.h>
 
 #include "pfctl.h"
 #include "pfctl_parser.h"
@@ -40,7 +42,10 @@
 #define STAT_INTERVAL	5
 
 struct queue_stats {
-	struct hfsc_class_stats	 data;
+	union {
+		struct hfsc_class_stats	hfsc;
+		struct fqcodel_stats	fqc;
+	}			 data;
 	int			 avgn;
 	double			 avg_bytes;
 	double			 avg_packets;
@@ -196,14 +201,33 @@ pfctl_print_queue_node(int dev, struct pfctl_queue_node *node, int opts)
 void
 pfctl_print_queue_nodestat(int dev, const struct pfctl_queue_node *node)
 {
+	struct hfsc_class_stats *stats =
+	    (struct hfsc_class_stats *)&node->qstats.data.hfsc;
+	struct fqcodel_stats *fqstats =
+	    (struct fqcodel_stats *)&node->qstats.data.fqc;
+
 	printf("  [ pkts: %10llu  bytes: %10llu  "
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
-	    (unsigned long long)node->qstats.data.xmit_cnt.packets,
-	    (unsigned long long)node->qstats.data.xmit_cnt.bytes,
-	    (unsigned long long)node->qstats.data.drop_cnt.packets,
-	    (unsigned long long)node->qstats.data.drop_cnt.bytes);
-	printf("  [ qlength: %3d/%3d ]\n", node->qstats.data.qlength,
-	    node->qstats.data.qlimit);
+	    (unsigned long long)stats->xmit_cnt.packets,
+	    (unsigned long long)stats->xmit_cnt.bytes,
+	    (unsigned long long)stats->drop_cnt.packets,
+	    (unsigned long long)stats->drop_cnt.bytes);
+	if (node->qs.flags & PFQS_FLOWQUEUE) {
+		double avg = 0, dev = 0;
+
+		if (fqstats->flows > 0) {
+			avg = (double)fqstats->delaysum /
+			    (double)fqstats->flows;
+			dev = sqrt(fmax(0, (double)fqstats->delaysumsq /
+			    (double)fqstats->flows) - avg * avg);
+		}
+
+		printf("  [ qlength: %3d/%3d  avg delay: %.3fms std-dev: %.3fms"
+		    "  flows: %3d ]\n", stats->qlength, stats->qlimit,
+		    avg / 1000, dev / 1000, fqstats->flows);
+	} else
+		printf("  [ qlength: %3d/%3d ]\n", stats->qlength,
+		    stats->qlimit);
 
 	if (node->qstats.avgn < 2)
 		return;
@@ -216,19 +240,22 @@ pfctl_print_queue_nodestat(int dev, const struct pfctl_queue_node *node)
 void
 update_avg(struct queue_stats *s)
 {
+	struct hfsc_class_stats *stats =
+	    (struct hfsc_class_stats *)&s->data;
+
 	if (s->avgn > 0) {
-		if (s->data.xmit_cnt.bytes >= s->prev_bytes)
+		if (stats->xmit_cnt.bytes >= s->prev_bytes)
 			s->avg_bytes = ((s->avg_bytes * (s->avgn - 1)) +
-			    (s->data.xmit_cnt.bytes - s->prev_bytes)) /
+			    (stats->xmit_cnt.bytes - s->prev_bytes)) /
 			    s->avgn;
-		if (s->data.xmit_cnt.packets >= s->prev_packets)
+		if (stats->xmit_cnt.packets >= s->prev_packets)
 			s->avg_packets = ((s->avg_packets * (s->avgn - 1)) +
-			    (s->data.xmit_cnt.packets - s->prev_packets)) /
+			    (stats->xmit_cnt.packets - s->prev_packets)) /
 			    s->avgn;
 	}
 
-	s->prev_bytes = s->data.xmit_cnt.bytes;
-	s->prev_packets = s->data.xmit_cnt.packets;
+	s->prev_bytes = stats->xmit_cnt.bytes;
+	s->prev_packets = stats->xmit_cnt.packets;
 	if (s->avgn < AVGN_MAX)
 		s->avgn++;
 }

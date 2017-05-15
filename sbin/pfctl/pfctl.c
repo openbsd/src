@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.342 2017/04/26 15:50:59 mikeb Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.343 2017/05/15 11:23:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,7 +40,6 @@
 #include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
-#include <net/hfsc.h>
 #include <sys/sysctl.h>
 
 #include <err.h>
@@ -1313,7 +1312,7 @@ pfctl_find_childqs(struct pfctl_qsitem *qi)
 	TAILQ_FOREACH(p, &qi->children, entries)
 		flags |= pfctl_find_childqs(p);
 
-	if (qi->qs.flags & HFSC_DEFAULTCLASS && !TAILQ_EMPTY(&qi->children))
+	if (qi->qs.flags & PFQS_DEFAULT && !TAILQ_EMPTY(&qi->children))
 		errx(1, "default queue %s is not a leaf queue", qi->qs.qname);
 
 	return (flags);
@@ -1420,7 +1419,8 @@ pfctl_check_qassignments(struct pf_ruleset *rs)
 	if (rs->anchor->path[0] == 0) {
 		TAILQ_FOREACH(qi, &rootqs, entries) {
 			flags = pfctl_find_childqs(qi);
-			if (!(flags & HFSC_DEFAULTCLASS))
+			if (!(qi->qs.flags & PFQS_FLOWQUEUE) &&
+			    !(flags & PFQS_DEFAULT))
 				errx(1, "no default queue specified");
 		}
 	}

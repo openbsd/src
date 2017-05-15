@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.451 2017/05/02 12:27:37 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.452 2017/05/15 11:23:25 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1310,6 +1310,13 @@ struct pf_queue_scspec {
 	u_int			d;
 };
 
+struct pf_queue_fqspec {
+	u_int		flows;
+	u_int		quantum;
+	u_int		target;
+	u_int		interval;
+};
+
 struct pf_queuespec {
 	TAILQ_ENTRY(pf_queuespec)	 entries;
 	char				 qname[PF_QNAME_SIZE];
@@ -1318,12 +1325,16 @@ struct pf_queuespec {
 	struct pf_queue_scspec		 realtime;
 	struct pf_queue_scspec		 linkshare;
 	struct pf_queue_scspec		 upperlimit;
+	struct pf_queue_fqspec		 flowqueue;
 	struct pfi_kif			*kif;
 	u_int				 flags;
 	u_int				 qlimit;
 	u_int32_t			 qid;
 	u_int32_t			 parent_qid;
 };
+
+#define PFQS_FLOWQUEUE			0x0001
+#define PFQS_DEFAULT			0x1000 /* maps to HFSC_DEFAULTCLASS */
 
 struct priq_opts {
 	int		flags;

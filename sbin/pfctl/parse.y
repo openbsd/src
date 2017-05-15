@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.658 2017/04/28 14:15:45 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.659 2017/05/15 11:23:25 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -36,7 +36,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <net/pfvar.h>
-#include <net/hfsc.h>
 #include <arpa/inet.h>
 
 #include <stdio.h>
@@ -306,15 +305,25 @@ struct node_sc {
 	struct node_queue_bw	m2;
 };
 
+struct node_fq {
+	u_int			flows;
+	u_int			quantum;
+	u_int			target;
+	u_int			interval;
+};
+
 struct queue_opts {
 	int		 marker;
 #define	QOM_BWSPEC	0x01
 #define	QOM_PARENT	0x02
 #define	QOM_DEFAULT	0x04
 #define	QOM_QLIMIT	0x08
+#define	QOM_FLOWS	0x10
+#define	QOM_QUANTUM	0x20
 	struct node_sc	 realtime;
 	struct node_sc	 linkshare;
 	struct node_sc	 upperlimit;
+	struct node_fq	 flowqueue;
 	char		*parent;
 	int		 flags;
 	u_int		 qlimit;
@@ -459,7 +468,7 @@ int	parseport(char *, struct range *r, int);
 %token	SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
 %token	ANTISPOOF FOR INCLUDE MATCHES
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN LEASTSTATES STATICPORT PROBABILITY
-%token	WEIGHT BANDWIDTH
+%token	WEIGHT BANDWIDTH FLOWS QUANTUM
 %token	QUEUE PRIORITY QLIMIT RTABLE RDOMAIN MINIMUM BURST PARENT
 %token	LOAD RULESET_OPTIMIZATION RTABLE RDOMAIN PRIO ONCE DEFAULT
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
@@ -1319,6 +1328,11 @@ queue_opt	: BANDWIDTH scspec optscs			{
 				yyerror("bandwidth cannot be respecified");
 				YYERROR;
 			}
+			if (queue_opts.marker & QOM_FLOWS) {
+				yyerror("bandwidth cannot be specified for "
+				    "a flow queue");
+				YYERROR;
+			}
 			queue_opts.marker |= QOM_BWSPEC;
 			queue_opts.linkshare = $2;
 			queue_opts.realtime= $3.realtime;
@@ -1338,9 +1352,9 @@ queue_opt	: BANDWIDTH scspec optscs			{
 				YYERROR;
 			}
 			queue_opts.marker |= QOM_DEFAULT;
-			queue_opts.flags |= HFSC_DEFAULTCLASS;
+			queue_opts.flags |= PFQS_DEFAULT;
 		}
-		| QLIMIT NUMBER	{
+		| QLIMIT NUMBER					{
 			if (queue_opts.marker & QOM_QLIMIT) {
 				yyerror("qlimit cannot be respecified");
 				YYERROR;
@@ -1351,6 +1365,37 @@ queue_opt	: BANDWIDTH scspec optscs			{
 			}
 			queue_opts.marker |= QOM_QLIMIT;
 			queue_opts.qlimit = $2;
+		}
+		| FLOWS NUMBER					{
+			if (queue_opts.marker & QOM_FLOWS) {
+				yyerror("number of flows cannot be respecified");
+				YYERROR;
+			}
+			if (queue_opts.marker & QOM_BWSPEC) {
+				yyerror("bandwidth cannot be specified for "
+				    "a flow queue");
+				YYERROR;
+			}
+			if ($2 < 1 || $2 > 32767) {
+				yyerror("number of flows out of range: "
+				    "max 32767");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_FLOWS;
+			queue_opts.flags |= PFQS_FLOWQUEUE;
+			queue_opts.flowqueue.flows = $2;
+		}
+		| QUANTUM NUMBER				{
+			if (queue_opts.marker & QOM_QUANTUM) {
+				yyerror("quantum cannot be respecified");
+				YYERROR;
+			}
+			if ($2 < 1 || $2 > 65535) {
+				yyerror("quantum out of range: max 65535");
+				YYERROR;
+			}
+			queue_opts.marker |= QOM_QUANTUM;
+			queue_opts.flowqueue.quantum = $2;
 		}
 		;
 
@@ -4298,6 +4343,10 @@ expand_queue(char *qname, struct node_if *interfaces, struct queue_opts *opts)
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		bzero(&qspec, sizeof(qspec));
+		if ((opts->flags & PFQS_FLOWQUEUE) && opts->parent) {
+			yyerror("discipline doesn't support hierarchy");
+			return (1);
+		}
 		if (strlcpy(qspec.qname, qname, sizeof(qspec.qname)) >=
 		    sizeof(qspec.qname)) {
 			yyerror("queuename too long");
@@ -4330,6 +4379,11 @@ expand_queue(char *qname, struct node_if *interfaces, struct queue_opts *opts)
 		qspec.upperlimit.m2.absolute = opts->upperlimit.m2.bw_absolute;
 		qspec.upperlimit.m2.percent = opts->upperlimit.m2.bw_percent;
 		qspec.upperlimit.d = opts->upperlimit.d;
+
+		qspec.flowqueue.flows = opts->flowqueue.flows;
+		qspec.flowqueue.quantum = opts->flowqueue.quantum;
+		qspec.flowqueue.interval = opts->flowqueue.interval;
+		qspec.flowqueue.target = opts->flowqueue.target;
 
 		qspec.flags = opts->flags;
 		qspec.qlimit = opts->qlimit;
@@ -4985,6 +5039,7 @@ lookup(char *s)
 		{ "fingerprints",	FINGERPRINTS},
 		{ "flags",		FLAGS},
 		{ "floating",		FLOATING},
+		{ "flows",		FLOWS},
 		{ "flush",		FLUSH},
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
@@ -5036,6 +5091,7 @@ lookup(char *s)
 		{ "probability",	PROBABILITY},
 		{ "proto",		PROTO},
 		{ "qlimit",		QLIMIT},
+		{ "quantum",		QUANTUM},
 		{ "queue",		QUEUE},
 		{ "quick",		QUICK},
 		{ "random",		RANDOM},
