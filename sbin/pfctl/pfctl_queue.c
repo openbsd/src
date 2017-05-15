@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.4 2017/05/15 11:23:25 mikeb Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.5 2017/05/15 16:24:44 mikeb Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -219,7 +219,7 @@ pfctl_print_queue_nodestat(int dev, const struct pfctl_queue_node *node)
 			avg = (double)fqstats->delaysum /
 			    (double)fqstats->flows;
 			dev = sqrt(fmax(0, (double)fqstats->delaysumsq /
-			    (double)fqstats->flows) - avg * avg);
+			    (double)fqstats->flows - avg * avg));
 		}
 
 		printf("  [ qlength: %3d/%3d  avg delay: %.3fms std-dev: %.3fms"
