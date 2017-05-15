@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.10 2015/02/10 23:54:09 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.11 2017/05/15 09:17:33 mpi Exp $	*/
 
 /* Public Domain */
 
@@ -55,6 +55,7 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 		"r"(uip), "r"(~v) : "memory");
 }
 
+#endif /* defined(_KERNEL) */
 
 static inline unsigned int
 _atomic_cas_uint(volatile unsigned int *p, unsigned int o, unsigned int n)
@@ -210,5 +211,4 @@ _atomic_add_long_nv(volatile unsigned long *uip, unsigned long v)
 #define atomic_add_long_nv(_uip, _v) _atomic_add_long_nv((_uip), (_v))
 #define atomic_sub_long_nv(_uip, _v) _atomic_add_long_nv((_uip), 0 - (_v))
 
-#endif /* defined(_KERNEL) */
 #endif /* _MIPS64_ATOMIC_H_ */
