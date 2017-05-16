@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.163 2017/05/03 06:56:54 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.164 2017/05/16 05:48:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,9 +50,8 @@
 #define DEVNAME(sc)		((sc)->dev.dv_xname)
 #define AUDIO_UNIT(n)		(minor(n) & 0x0f)
 #define AUDIO_DEV(n)		(minor(n) & 0xf0)
-#define AUDIO_DEV_SOUND		0	/* minor of /dev/sound0 */
+#define AUDIO_DEV_AUDIO		0	/* minor of /dev/audio0 */
 #define AUDIO_DEV_MIXER		0x10	/* minor of /dev/mixer0 */
-#define AUDIO_DEV_AUDIO		0x80	/* minor of /dev/audio0 */
 #define AUDIO_DEV_AUDIOCTL	0xc0	/* minor of /dev/audioctl */
 #define AUDIO_BUFSZ		65536	/* buffer size in bytes */
 
@@ -1136,7 +1135,6 @@ audio_detach(struct device *self, int flags)
 	 * close uses device_lookup, it returns EXIO and does nothing
 	 */
 	mn = self->dv_unit;
-	vdevgone(maj, mn | AUDIO_DEV_SOUND, mn | AUDIO_DEV_SOUND, VCHR);
 	vdevgone(maj, mn | AUDIO_DEV_AUDIO, mn | AUDIO_DEV_AUDIO, VCHR);
 	vdevgone(maj, mn | AUDIO_DEV_AUDIOCTL, mn | AUDIO_DEV_AUDIOCTL, VCHR);
 	vdevgone(maj, mn | AUDIO_DEV_MIXER, mn | AUDIO_DEV_MIXER, VCHR);
@@ -1607,7 +1605,6 @@ audioopen(dev_t dev, int flags, int mode, struct proc *p)
 		error = ENXIO;
 	else {
 		switch (AUDIO_DEV(dev)) {
-		case AUDIO_DEV_SOUND:
 		case AUDIO_DEV_AUDIO:
 			error = audio_open(sc, flags);
 			break;
@@ -1633,7 +1630,6 @@ audioclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (sc == NULL)
 		return ENXIO;
 	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_SOUND:
 	case AUDIO_DEV_AUDIO:
 		error = audio_close(sc);
 		break;
@@ -1658,7 +1654,6 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 	if (sc == NULL)
 		return ENXIO;
 	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_SOUND:
 	case AUDIO_DEV_AUDIO:
 		error = audio_read(sc, uio, ioflag);
 		break;
@@ -1683,7 +1678,6 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 	if (sc == NULL)
 		return ENXIO;
 	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_SOUND:
 	case AUDIO_DEV_AUDIO:
 		error = audio_write(sc, uio, ioflag);
 		break;
@@ -1708,7 +1702,6 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	if (sc == NULL)
 		return ENXIO;
 	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_SOUND:
 	case AUDIO_DEV_AUDIO:
 		error = audio_ioctl(sc, cmd, addr);
 		break;
@@ -1743,7 +1736,6 @@ audiopoll(dev_t dev, int events, struct proc *p)
 	if (sc == NULL)
 		return POLLERR;
 	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_SOUND:
 	case AUDIO_DEV_AUDIO:
 		revents = audio_poll(sc, events, p);
 		break;
