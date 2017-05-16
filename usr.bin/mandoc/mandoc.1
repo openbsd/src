@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.108 2017/03/27 18:51:20 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.109 2017/05/16 19:05:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2017 $
+.Dd $Mdocdate: May 16 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -146,13 +146,14 @@ to be reported on the standard error output and to affect the exit status.
 The
 .Ar level
 can be
+.Cm style ,
 .Cm warning ,
 .Cm error ,
 or
 .Cm unsupp ;
 .Cm all
 is an alias for
-.Cm warning .
+.Cm style .
 By default,
 .Nm
 is silent.
@@ -594,27 +595,32 @@ option:
 .Pp
 .Bl -tag -width Ds -compact
 .It 0
-No warnings or errors occurred, or those that did were ignored because
-they were lower than the requested
+No style suggestions, warnings or errors occurred, or those that
+did were ignored because they were lower than the requested
 .Ar level .
+.It 1
+At least one style suggestion occurred, but no warning or error, and
+.Fl W Cm style
+was specified.
 .It 2
 At least one warning occurred, but no error, and
 .Fl W Cm warning
+or
+.Fl W Cm style
 was specified.
 .It 3
 At least one parsing error occurred,
 but no unsupported feature was encountered, and
 .Fl W Cm error
-or
-.Fl W Cm warning
-was specified.
+or a lower
+.Ar level
+was requested.
 .It 4
 At least one unsupported feature was encountered, and
-.Fl W Cm unsupp ,
-.Fl W Cm error
-or
-.Fl W Cm warning
-was specified.
+.Fl W Cm unsupp
+or a lower
+.Ar level
+was requested.
 .It 5
 Invalid command line arguments were specified.
 No input files have been read.
@@ -714,9 +720,22 @@ rendering can be produced.
 Documents causing warnings may render poorly when using other
 formatting tools instead of
 .Nm .
+.It Cm style
+An input file uses dubious or discouraged style.
+This is not a complaint about the syntax, and probably neither
+formatting nor portability are in danger.
+While great care is taken to avoid false positives on the higher
+message levels, the
+.Cm style
+level tries to reduce the probability that issues go unnoticed,
+so it may occasionally issue bogus suggestions.
+Please use your good judgement to decide whether any particular
+.Cm style
+suggestion really justifies a change to the input file.
 .El
 .Pp
 Messages of the
+.Cm style ,
 .Cm warning ,
 .Cm error ,
 and

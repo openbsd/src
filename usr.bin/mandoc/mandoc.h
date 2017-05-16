@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.157 2017/03/06 17:25:24 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.158 2017/05/16 19:05:36 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
  */
 enum	mandoclevel {
 	MANDOCLEVEL_OK = 0,
-	MANDOCLEVEL_RESERVED,
+	MANDOCLEVEL_STYLE, /* style suggestions */
 	MANDOCLEVEL_WARNING, /* warnings: syntax, whitespace, etc. */
 	MANDOCLEVEL_ERROR, /* input has been thrown away */
 	MANDOCLEVEL_UNSUPP, /* input needs unimplemented features */
@@ -43,6 +43,8 @@ enum	mandoclevel {
  */
 enum	mandocerr {
 	MANDOCERR_OK,
+
+	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
 
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 

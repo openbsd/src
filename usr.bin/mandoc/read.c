@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.136 2017/04/29 12:43:55 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.137 2017/05/16 19:05:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -71,7 +71,7 @@ static	void	  mparse_parse_buffer(struct mparse *, struct buf,
 
 static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
 	MANDOCERR_OK,
-	MANDOCERR_WARNING,
+	MANDOCERR_STYLE,
 	MANDOCERR_WARNING,
 	MANDOCERR_ERROR,
 	MANDOCERR_UNSUPP,
@@ -82,6 +82,7 @@ static	const enum mandocerr	mandoclimits[MANDOCLEVEL_MAX] = {
 static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ok",
 
+	"generic style suggestion",
 	"generic warning",
 
 	/* related to the prologue */
@@ -237,7 +238,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 static	const char * const	mandoclevels[MANDOCLEVEL_MAX] = {
 	"SUCCESS",
-	"RESERVED",
+	"STYLE",
 	"WARNING",
 	"ERROR",
 	"UNSUPP",
