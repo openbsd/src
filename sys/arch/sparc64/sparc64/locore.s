@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.185 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.186 2017/05/16 20:53:42 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5967,6 +5967,21 @@ Lcopyout_done:
 	membar	#StoreStore|#StoreLoad
 	retl			! New instr
 	 clr	%o0			! return 0
+
+ENTRY(copyin32)
+	andcc	%o0, 0x3, %g0
+	bnz,pn	%xcc, Lcopyfault
+	 nop
+	GET_CPCB(%o3)
+	set	Lcopyfault, %o4
+	membar	#Sync
+	stx	%o4, [%o3 + PCB_ONFAULT]
+	lduwa	[%o0] ASI_AIUS, %o2
+	stw	%o2, [%o1]
+	membar	#Sync
+	stx	%g0, [%o3 + PCB_ONFAULT]
+	retl
+	 clr	%o0
 
 ! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
 ! Note that although we were in bcopy, there is no state to clean up;
