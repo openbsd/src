@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.116 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.117 2017/05/16 13:05:07 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -795,7 +795,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 
 	rt = rt_mcast_add(ifp, origin, group);
 	if (rt == NULL)
-		return (-1);
+		return (EHOSTUNREACH);
 
 	mfc = malloc(sizeof(*mfc), M_MRTABLE, wait | M_ZERO);
 	if (mfc == NULL) {
@@ -937,11 +937,8 @@ mfc_add(struct mfcctl2 *mfcctl2, struct in_addr *origin,
 
 	ifp = if_lookupbyvif(vidx, rtableid);
 	if (ifp == NULL ||
-	    (v = (struct vif *)ifp->if_mcast) == NULL) {
-		DPRINTF("origin %#08X group %#08X parent %d vif doesn't exist",
-		    origin->s_addr, group->s_addr, vidx);
-		return (-1);
-	}
+	    (v = (struct vif *)ifp->if_mcast) == NULL)
+		return (EHOSTUNREACH);
 
 	memset(&mfcctl, 0, sizeof(mfcctl));
 	if (mfcctl2 == NULL) {
@@ -1121,7 +1118,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			 * If none found, drop packet.
 			 */
 			if ((v = (struct vif *)ifp->if_mcast) == NULL)
-				goto fail;
+				return (EHOSTUNREACH);
 			/*
 			 * Make a copy of the header to send to the user level
 			 * process
@@ -1129,7 +1126,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			mm = m_copym(m, 0, hlen, M_NOWAIT);
 			if (mm == NULL ||
 			    (mm = m_pullup(mm, hlen)) == NULL)
-				goto fail;
+				return (ENOBUFS);
 
 			/*
 			 * Send message to routing daemon to install
@@ -1148,7 +1145,6 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				log(LOG_WARNING, "ip_mforward: ip_mrouter "
 				    "socket queue full\n");
 				++mrtstat.mrts_upq_sockfull;
-			fail:
 				return (ENOBUFS);
 			}
 
