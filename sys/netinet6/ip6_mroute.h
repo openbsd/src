@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.19 2017/05/08 08:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.20 2017/05/16 08:50:18 rzalamena Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -215,36 +215,12 @@ struct mf6c {
 	struct sockaddr_in6  mf6c_origin;	/* IPv6 origin of mcasts     */
 	struct sockaddr_in6  mf6c_mcastgrp;	/* multicast group associated*/
 	mifi_t		 mf6c_parent;		/* incoming IF               */
-	struct if_set	 mf6c_ifset;		/* set of outgoing IFs */
 
 	u_int64_t	mf6c_pkt_cnt;		/* pkt count for src-grp     */
 	u_int64_t	mf6c_byte_cnt;		/* byte count for src-grp    */
 	u_int64_t	mf6c_wrong_if;		/* wrong if for src-grp	     */
 	int		mf6c_expire;		/* time to clean entry up    */
-	struct timeval  mf6c_last_assert;	/* last time I sent an assert*/
-	struct rtdetq  *mf6c_stall;		/* pkts waiting for route */
-	struct mf6c    *mf6c_next;		/* hash table linkage */
 };
-
-/*
- * Argument structure used for pkt info. while upcall is made
- */
-#ifndef _NETINET_IP_MROUTE_H_
-struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
-	struct mbuf	*m;		/* A copy of the packet		    */
-	struct ifnet	*ifp;		/* Interface pkt came in on	    */
-	struct rtdetq	*next;
-};
-#endif /* _NETINET_IP_MROUTE_H_ */
-
-#define MF6CTBLSIZ	256
-#if (MF6CTBLSIZ & (MF6CTBLSIZ - 1)) == 0	  /* from sys:route.h */
-#define MF6CHASHMOD(h)	((h) & (MF6CTBLSIZ - 1))
-#else
-#define MF6CHASHMOD(h)	((h) % MF6CTBLSIZ)
-#endif
-
-#define MAX_UPQ6	4		/* max. no of pkts in upcall Q */
 
 int	ip6_mrouter_set(int, struct socket *, struct mbuf *);
 int	ip6_mrouter_get(int, struct socket *, struct mbuf *);
