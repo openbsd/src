@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.208 2017/05/09 09:32:21 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.209 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ nd6_purge(struct ifnet *ifp)
 	struct nd_defrouter *dr, *ndr;
 	struct nd_prefix *pr, *npr;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Nuke default router list entries toward ifp.
@@ -746,7 +746,7 @@ nd6_free(struct rtentry *rt, int gc)
 	struct nd_defrouter *dr;
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp = if_get(rt->rt_ifidx);
 
@@ -1130,7 +1130,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 	struct rtentry *rt;
 	int error = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:

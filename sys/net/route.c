@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.355 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.356 2017/05/16 12:24:01 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 	struct rtentry		*rt0, *rt = NULL;
 	int			 error = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	rt = rtable_match(tableid, dst, src);
 	if (rt != NULL) {
@@ -833,7 +833,7 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	struct rtentry	*rt;
 	int		 error;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (!rtable_exists(tableid))
 		return (EAFNOSUPPORT);
@@ -920,7 +920,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct sockaddr_mpls	*sa_mpls;
 #endif
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (!rtable_exists(tableid))
 		return (EAFNOSUPPORT);

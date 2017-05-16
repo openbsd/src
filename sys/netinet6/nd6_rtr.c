@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.157 2017/03/06 08:56:39 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.158 2017/05/16 12:24:04 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ nd6_rs_output(struct ifnet* ifp, struct in6_ifaddr *ia6)
 	caddr_t mac;
 	int icmp6len, maxlen;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	KASSERT(ia6 != NULL);
 	KASSERT(ifp->if_flags & IFF_RUNNING);
@@ -870,7 +870,7 @@ defrtrlist_update(struct nd_defrouter *new)
 	struct nd_defrouter *dr, *n;
 	struct in6_ifextra *ext = new->ifp->if_afdata[AF_INET6];
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp->if_index)) != NULL) {
 		/* entry exists */
@@ -1014,7 +1014,7 @@ purge_detached(struct ifnet *ifp)
 	struct in6_ifaddr *ia6;
 	struct ifaddr *ifa, *ifa_next;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, pr_next) {
 		/*
@@ -1050,7 +1050,7 @@ nd6_prelist_add(struct nd_prefix *pr, struct nd_defrouter *dr,
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
 	int i;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (ip6_maxifprefixes >= 0) {
 		if (ext->nprefixes >= ip6_maxifprefixes / 2) {
@@ -1110,7 +1110,7 @@ prelist_remove(struct nd_prefix *pr)
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
 	int e;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* make sure to invalidate the prefix until it is really freed. */
 	pr->ndpr_vltime = 0;
@@ -1165,7 +1165,7 @@ prelist_update(struct nd_prefix *new, struct nd_defrouter *dr, struct mbuf *m)
 	struct in6_addrlifetime lt6_tmp;
 	char addr[INET6_ADDRSTRLEN];
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	auth = 0;
 	if (m) {
@@ -1833,7 +1833,7 @@ in6_ifadd(struct nd_prefix *pr, int privacy)
 	struct in6_addr mask, rand_ifid;
 	int prefixlen = pr->ndpr_plen;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	in6_prefixlen2mask(&mask, prefixlen);
 
@@ -2014,7 +2014,7 @@ in6_init_address_ltimes(struct nd_prefix *new, struct in6_addrlifetime *lt6)
 void
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway))

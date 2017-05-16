@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1022 2017/05/15 12:26:00 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1023 2017/05/16 12:24:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -895,7 +895,7 @@ int
 pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
     struct pf_state_key **sks, struct pf_state *s)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	s->kif = kif;
 	if (*skw == *sks) {
@@ -1275,7 +1275,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 void
 pf_remove_state(struct pf_state *cur)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* handle load balancing related tasks */
 	pf_postprocess_addr(cur);

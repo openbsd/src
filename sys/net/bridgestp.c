@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.64 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.65 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1584,7 +1584,7 @@ bstp_notify_rtage(struct bstp_port *bp, int pending)
 {
 	int age = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	switch (bp->bp_protover) {
 	case BSTP_PROTO_STP:

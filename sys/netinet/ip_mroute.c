@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.115 2017/05/16 08:32:17 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.116 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ ip_mrouter_done(struct socket *so)
 	struct ifnet *ifp;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Delete all remaining installed multicast routes. */
 	rtable_walk(rtableid, AF_INET, mrouter_rtwalk_delete, NULL);
@@ -659,7 +659,7 @@ add_vif(struct socket *so, struct mbuf *m)
 	int error;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (m == NULL || m->m_len < sizeof(struct vifctl))
 		return (EINVAL);
@@ -722,7 +722,7 @@ del_vif(struct socket *so, struct mbuf *m)
 	vifi_t *vifip;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (m == NULL || m->m_len < sizeof(vifi_t))
 		return (EINVAL);
@@ -964,7 +964,7 @@ add_mfc(struct socket *so, struct mbuf *m)
 	int mfcctl_size = sizeof(struct mfcctl);
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (mrt_api_config & MRT_API_FLAGS_ALL)
 		mfcctl_size = sizeof(struct mfcctl2);
@@ -1002,7 +1002,7 @@ del_mfc(struct socket *so, struct mbuf *m)
 	struct mfcctl *mp;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * XXX: for deleting MFC entries the information in entries

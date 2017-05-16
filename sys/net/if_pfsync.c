@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.250 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.251 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1180,7 +1180,7 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 {
 	struct tdb		*tdb;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* check for invalid values */
 	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
@@ -1686,7 +1686,7 @@ pfsync_insert_state(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (ISSET(st->rule.ptr->rule_flag, PFRULE_NOSYNC) ||
 	    st->key[PF_SK_WIRE]->proto == IPPROTO_PFSYNC) {
@@ -1716,7 +1716,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (!sc->sc_defer ||
 	    ISSET(st->state_flags, PFSTATE_NOSYNC) ||
@@ -1756,7 +1756,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pf_pdesc pdesc;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
@@ -1821,7 +1821,7 @@ pfsync_deferred(struct pf_state *st, int drop)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(pd, &sc->sc_deferrals, pd_entry) {
 		 if (pd->pd_st == st) {
@@ -1840,7 +1840,7 @@ pfsync_update_state(struct pf_state *st)
 	struct pfsync_softc *sc = pfsyncif;
 	int sync = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
@@ -2009,7 +2009,7 @@ pfsync_delete_state(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
@@ -2056,7 +2056,7 @@ pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 		struct pfsync_clr clr;
 	} __packed r;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;

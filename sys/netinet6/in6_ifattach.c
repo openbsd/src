@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.101 2016/12/29 12:17:22 mpi Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.102 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct in6_addr *ifid)
 	struct in6_ifaddr *ia6;
 	int error, flags;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * configure link-local address.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.67 2017/05/04 17:58:46 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.68 2017/05/16 12:24:01 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ igmp_fasttimo(void)
 {
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -571,7 +571,7 @@ igmp_checktimer(struct ifnet *ifp)
 	struct in_multi *inm;
 	struct ifmaddr *ifma;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET)
@@ -600,7 +600,7 @@ igmp_slowtimo(void)
 {
 	struct router_info *rti;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&

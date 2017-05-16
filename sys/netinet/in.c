@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.137 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.138 2017/05/16 12:24:01 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	int error;
 	int newifaddr;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -600,7 +600,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia, struct sockaddr_in *sin,
 	struct sockaddr_in oldaddr;
 	int error = 0, rterror;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Always remove the address from the tree to make sure its
@@ -700,7 +700,7 @@ in_purgeaddr(struct ifaddr *ifa)
 	struct in_ifaddr *ia = ifatoia(ifa);
 	extern int ifatrash;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	in_ifscrub(ifp, ia);
 
@@ -798,7 +798,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 	struct in_multi *inm;
 	struct ifreq ifr;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * See if address already in list.
@@ -860,7 +860,7 @@ in_delmulti(struct in_multi *inm)
 	struct ifreq ifr;
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (--inm->inm_refcnt == 0) {
 		/*

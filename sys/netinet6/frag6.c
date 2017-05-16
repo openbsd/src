@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.73 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.74 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ frag6_slowtimo(void)
 {
 	struct ip6q *q6, *nq6;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	IP6Q_LOCK();
 	TAILQ_FOREACH_SAFE(q6, &frag6_queue, ip6q_queue, nq6)

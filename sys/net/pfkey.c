@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.40 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.41 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -137,7 +137,7 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 {
 	struct mbuf *packet2;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (more) {
 		if (!(packet2 = m_dup_pkt(packet, 0, M_DONTWAIT)))

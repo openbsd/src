@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.151 2017/05/12 23:05:58 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.152 2017/05/16 12:24:02 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -119,7 +119,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	char buf[INET6_ADDRSTRLEN];
 #endif
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	IPSEC_ISTAT(espstat.esps_input, ahstat.ahs_input,
 	    ipcompstat.ipcomps_input);
@@ -799,7 +799,7 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	struct sockaddr_in dst, src;
 	union sockaddr_union *su_dst, *su_src;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	icp = (struct icmp *)((caddr_t) ip - offsetof(struct icmp, icmp_ip));
 	mtu = ntohs(icp->icmp_nextmtu);

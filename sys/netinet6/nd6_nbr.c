@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.115 2017/02/09 15:23:35 jca Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.116 2017/05/16 12:24:04 mpi Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -571,7 +571,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
@@ -1099,7 +1099,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (!dad_init) {
 		TAILQ_INIT(&dadq);

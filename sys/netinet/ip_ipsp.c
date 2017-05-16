@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.222 2017/05/06 15:55:15 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.223 2017/05/16 12:24:01 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -211,7 +211,7 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 	u_int32_t spi;
 	int nums;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Don't accept ranges only encompassing reserved SPIs. */
 	if (sproto != IPPROTO_IPCOMP &&
@@ -306,7 +306,7 @@ gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 	u_int32_t hashval;
 	struct tdb *tdbp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (tdbh == NULL)
 		return (struct tdb *) NULL;
@@ -507,7 +507,7 @@ tdb_walk(u_int rdomain, int (*walker)(struct tdb *, void *, int), void *arg)
 	int i, rval = 0;
 	struct tdb *tdbp, *next;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (tdbh == NULL)
 		return ENOENT;
@@ -605,7 +605,7 @@ tdb_rehash(void)
 	u_int i, old_hashmask = tdb_hashmask;
 	u_int32_t hashval;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	tdb_hashmask = (tdb_hashmask << 1) | 1;
 
@@ -664,7 +664,7 @@ puttdb(struct tdb *tdbp)
 {
 	u_int32_t hashval;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (tdbh == NULL) {
 		arc4random_buf(&tdbkey, sizeof(tdbkey));
@@ -718,7 +718,7 @@ tdb_delete(struct tdb *tdbp)
 	struct tdb *tdbpp;
 	u_int32_t hashval;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (tdbh == NULL)
 		return;

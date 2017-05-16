@@ -508,7 +508,7 @@ ip6_mrouter_done(struct socket *so)
 	struct ifnet *ifp;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Delete all remaining installed multicast routes. */
 	rtable_walk(rtableid, AF_INET6, mrouter6_rtwalk_delete, NULL);
@@ -561,7 +561,7 @@ add_m6if(struct socket *so, struct mif6ctl *mifcp)
 	int error;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (mifcp->mif6c_mifi >= MAXMIFS)
 		return EINVAL;
@@ -618,7 +618,7 @@ del_m6if(struct socket *so, mifi_t *mifip)
 	struct inpcb *inp = sotoinpcb(so);
 	struct ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (*mifip >= MAXMIFS)
 		return EINVAL;
@@ -802,7 +802,7 @@ add_m6fc(struct socket *so, struct mf6cctl *mfccp)
 	struct inpcb *inp = sotoinpcb(so);
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	return mf6c_add(mfccp, &mfccp->mf6cc_origin.sin6_addr,
 	    &mfccp->mf6cc_mcastgrp.sin6_addr, mfccp->mf6cc_parent,
@@ -816,7 +816,7 @@ del_m6fc(struct socket *so, struct mf6cctl *mfccp)
 	struct rtentry *rt;
 	unsigned int rtableid = inp->inp_rtableid;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	while ((rt = mf6c_find(NULL, &mfccp->mf6cc_origin.sin6_addr,
 	    &mfccp->mf6cc_mcastgrp.sin6_addr, rtableid)) != NULL) {
@@ -860,7 +860,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	struct sockaddr_in6 sin6;
 	unsigned int rtableid = ifp->if_rdomain;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Don't forward a packet with Hop limit of zero or one,
@@ -1101,7 +1101,7 @@ phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m)
 	struct sockaddr_in6 *dst6, sin6;
 	int error = 0;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Make a new reference to the packet; make sure that

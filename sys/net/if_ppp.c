@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.105 2017/03/08 11:35:34 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.106 2017/05/16 12:24:01 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -992,7 +992,7 @@ pppintr(void)
 	struct ppp_pkt *pkt;
 	struct mbuf *m;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 		if (!(sc->sc_flags & SC_TBUSY) &&

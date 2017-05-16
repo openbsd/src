@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.496 2017/05/15 12:26:00 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.497 2017/05/16 12:24:01 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -410,7 +410,7 @@ if_attachsetup(struct ifnet *ifp)
 {
 	unsigned long ifidx;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_INIT(&ifp->if_groups);
 
@@ -1143,7 +1143,7 @@ if_clone_create(const char *name, int rdomain)
 	struct ifnet *ifp;
 	int unit, ret;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
@@ -1177,7 +1177,7 @@ if_clone_destroy(const char *name)
 	struct ifnet *ifp;
 	int ret;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1516,7 +1516,7 @@ if_downall(void)
 void
 if_down(struct ifnet *ifp)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp->if_flags &= ~IFF_UP;
 	getmicrotime(&ifp->if_lastchange);
@@ -1532,7 +1532,7 @@ if_down(struct ifnet *ifp)
 void
 if_up(struct ifnet *ifp)
 {
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	ifp->if_flags |= IFF_UP;
 	getmicrotime(&ifp->if_lastchange);

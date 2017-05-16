@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.296 2017/05/15 12:57:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.297 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1467,7 +1467,7 @@ bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
 			break;
 		}
 
-		splsoftassert(IPL_SOFTNET);
+		NET_ASSERT_LOCKED();
 
 		tdb = gettdb(ifp->if_rdomain, spi, &dst, proto);
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&

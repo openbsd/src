@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.53 2017/05/08 21:13:26 rzalamena Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.54 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ mld6_checktimer(struct ifnet *ifp)
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET6)

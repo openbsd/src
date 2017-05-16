@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.60 2017/01/22 10:17:39 dlg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.61 2017/05/16 12:24:01 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -344,7 +344,7 @@ pppoeintr(void)
 {
 	struct mbuf *m;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	while ((m = niq_dequeue(&pppoediscinq)) != NULL)
 		pppoe_disc_input(m);

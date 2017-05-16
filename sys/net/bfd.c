@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.61 2017/03/10 02:12:46 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.62 2017/05/16 12:24:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -235,8 +235,6 @@ bfd_clear_task(void *arg)
 {
 	struct rtentry *rt = (struct rtentry *)arg;
 	struct bfd_config *bfd;
-
-	splsoftassert(IPL_SOFTNET);
 
 	if ((bfd = bfd_lookup(rt)) == NULL)
 		return;

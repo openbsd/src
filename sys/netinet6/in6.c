@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.204 2017/05/08 08:46:39 rzalamena Exp $	*/
+/*	$OpenBSD: in6.c,v 1.205 2017/05/16 12:24:02 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -500,7 +500,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct rtentry *rt;
 	char addr[INET6_ADDRSTRLEN];
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Validate parameters */
 	if (ifp == NULL || ifra == NULL) /* this maybe redundant */
@@ -900,7 +900,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	extern int ifatrash;
 	int plen;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Release the reference to the base prefix. */
 	if (ia6->ia6_ndpr == NULL) {
@@ -1170,7 +1170,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	int	error = 0, plen, ifacount = 0;
 	struct ifaddr *ifa;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/*
 	 * Give the interface a chance to initialize
@@ -1226,7 +1226,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	*errorp = 0;
 	/*
@@ -1294,7 +1294,7 @@ in6_delmulti(struct in6_multi *in6m)
 	struct	in6_ifreq ifr;
 	struct	ifnet *ifp;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (--in6m->in6m_refcnt == 0) {
 		/*

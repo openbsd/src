@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.154 2017/05/05 11:04:18 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.155 2017/05/16 12:24:01 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -823,7 +823,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	u_int rdomain;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
@@ -2168,7 +2168,7 @@ pfkeyv2_ipo_walk(u_int rdomain, int (*walker)(struct ipsec_policy *, void *),
 	int rval = 0;
 	struct ipsec_policy *ipo;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
 		if (ipo->ipo_rdomain != rdomain)
@@ -2245,7 +2245,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	int error = EINVAL;
 	u_int rdomain;
 
-	splsoftassert(IPL_SOFTNET);
+	NET_ASSERT_LOCKED();
 
 	if (new)
 		return (EPERM);
