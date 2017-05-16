@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.73 2017/05/13 07:30:50 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.74 2017/05/16 12:57:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -665,8 +665,7 @@ grid_string_cells_bg(const struct grid_cell *gc, int *values)
 
 /*
  * Returns ANSI code to set particular attributes (colour, bold and so on)
- * given a current state. The output buffer must be able to hold at least 57
- * bytes.
+ * given a current state.
  */
 static void
 grid_string_cells_code(const struct grid_cell *lastgc,
