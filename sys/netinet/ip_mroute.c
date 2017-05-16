@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.117 2017/05/16 13:05:07 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.118 2017/05/16 13:09:21 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -79,9 +79,12 @@
 /* #define MCAST_DEBUG */
 
 #ifdef MCAST_DEBUG
+int mcast_debug = 1;
 #define DPRINTF(fmt, args...)						\
 	do {								\
-		printf("%s:%d " fmt "\n", __func__, __LINE__, ## args);	\
+		if (mcast_debug)					\
+			printf("%s:%d " fmt "\n",			\
+			    __func__, __LINE__, ## args);		\
 	} while (0)
 #else
 #define DPRINTF(fmt, args...)			\
@@ -471,8 +474,10 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 		rtable_walk(rtableid, AF_INET, mrt_rtwalk_mfcsysctl, &msa);
 
 	if (msa.msa_minfos != NULL && msa.msa_needed > 0 &&
-	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0)
+	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0) {
+		free(msa.msa_minfos, M_TEMP, *oldlenp);
 		return (error);
+	}
 
 	free(msa.msa_minfos, M_TEMP, *oldlenp);
 	*oldlenp = msa.msa_needed;
@@ -1292,7 +1297,11 @@ rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
 	int			 rv;
 	unsigned int		 rtableid = ifp->if_rdomain;
 
-	if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == NULL) {
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			break;
+	}
+	if (ifa == NULL) {
 		DPRINTF("ifa == NULL");
 		return (NULL);
 	}
