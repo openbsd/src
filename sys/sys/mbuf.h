@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.227 2017/05/10 21:41:27 kettenis Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.228 2017/05/16 15:57:03 kettenis Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -86,7 +86,10 @@ struct m_hdr {
 	u_int	mh_len;			/* amount of data in this mbuf */
 	short	mh_type;		/* type of data in this mbuf */
 	u_short	mh_flags;		/* flags; see below */
-} __aligned(8);
+#ifndef __LP64__
+	u_int	mh_pad;			/* pad to 8-byte boundary */
+#endif
+};
 
 /* pf stuff */
 struct pf_state_key;
