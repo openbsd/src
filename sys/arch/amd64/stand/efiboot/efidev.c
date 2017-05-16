@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.25 2017/05/11 01:37:24 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.26 2017/05/16 02:56:23 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -789,7 +789,7 @@ efi_dump_diskinfo(void)
 		printf("hd%d\t%u\t%u\t%u%s\t0x%x\t0x%x\t%s\n",
 		    (bdi->bios_number & 0x7f),
 		    ed->blkio->Media->BlockSize,
-		    ed->blkio->Media->IoAlign, (int)siz, sizu,
+		    ed->blkio->Media->IoAlign, (unsigned)siz, sizu,
 		    bdi->flags, bdi->checksum,
 		    (ed->blkio->Media->RemovableMedia)? "Removable" : "");
 	}
