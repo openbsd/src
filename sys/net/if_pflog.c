@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.78 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.79 2017/05/16 11:35:36 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -83,7 +83,6 @@ int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
 void	pflog_bpfcopy(const void *, void *, size_t);
 
-LIST_HEAD(, pflog_softc)	pflogif_list;
 struct if_clone	pflog_cloner =
     IF_CLONE_INITIALIZER("pflog", pflog_clone_create, pflog_clone_destroy);
 
@@ -94,7 +93,6 @@ struct mbuf	 *pflog_mhdr = NULL, *pflog_mptr = NULL;
 void
 pflogattach(int npflog)
 {
-	LIST_INIT(&pflogif_list);
 	if (pflog_mhdr == NULL)
 		if ((pflog_mhdr = m_get(M_DONTWAIT, MT_HEADER)) == NULL)
 			panic("pflogattach: no mbuf");
@@ -109,6 +107,8 @@ pflogifs_resize(size_t n)
 {
 	struct ifnet	**p;
 	int		  i;
+
+	NET_ASSERT_LOCKED();
 
 	if (n > SIZE_MAX / sizeof(*p))
 		return (EINVAL);
@@ -161,14 +161,13 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&pflogif->sc_if.if_bpf, ifp, DLT_PFLOG, PFLOG_HDRLEN);
 #endif
 
-	s = splnet();
-	LIST_INSERT_HEAD(&pflogif_list, pflogif, sc_list);
+	NET_LOCK(s);
 	if (unit + 1 > npflogifs && pflogifs_resize(unit + 1) != 0) {
-		splx(s);
+		NET_UNLOCK(s);
 		return (ENOMEM);
 	}
 	pflogifs[unit] = ifp;
-	splx(s);
+	NET_UNLOCK(s);
 
 	return (0);
 }
@@ -179,15 +178,13 @@ pflog_clone_destroy(struct ifnet *ifp)
 	struct pflog_softc	*pflogif = ifp->if_softc;
 	int			 s, i;
 
-	s = splnet();
+	NET_LOCK(s);
 	pflogifs[pflogif->sc_unit] = NULL;
-	LIST_REMOVE(pflogif, sc_list);
-
 	for (i = npflogifs; i > 0 && pflogifs[i - 1] == NULL; i--)
 		; /* nothing */
 	if (i < npflogifs)
 		pflogifs_resize(i);	/* error harmless here */
-	splx(s);
+	NET_UNLOCK(s);
 
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF, 0);
