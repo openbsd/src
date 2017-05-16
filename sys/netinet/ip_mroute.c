@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.114 2017/05/16 08:28:29 rzalamena Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.115 2017/05/16 08:32:17 rzalamena Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -109,10 +109,10 @@ int mrouter_rtwalk_delete(struct rtentry *, void *, unsigned int);
 int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
-void update_mfc_params(struct mfcctl2 *, unsigned int);
+void update_mfc_params(struct mfcctl2 *, int, unsigned int);
 void mfc_expire_route(struct rtentry *, struct rttimer *);
 int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
-    int, unsigned int);
+    int, unsigned int, int);
 int add_mfc(struct socket *, struct mbuf *);
 int del_mfc(struct socket *, struct mbuf *);
 int set_api_config(struct socket *, struct mbuf *); /* chose API capabilities */
@@ -786,7 +786,7 @@ mfc_expire_route(struct rtentry *rt, struct rttimer *rtt)
 
 int
 mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
-    struct sockaddr *group, struct mfcctl2 *mfccp)
+    struct sockaddr *group, struct mfcctl2 *mfccp, int wait)
 {
 	struct vif		*v = (struct vif *)ifp->if_mcast;
 	struct rtentry		*rt;
@@ -797,7 +797,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	if (rt == NULL)
 		return (-1);
 
-	mfc = malloc(sizeof(*mfc), M_MRTABLE, M_NOWAIT | M_ZERO);
+	mfc = malloc(sizeof(*mfc), M_MRTABLE, wait | M_ZERO);
 	if (mfc == NULL) {
 		DPRINTF("origin %#08X group %#08X parent %d (%s) "
 		    "malloc failed",
@@ -834,7 +834,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 }
 
 void
-update_mfc_params(struct mfcctl2 *mfccp, unsigned int rtableid)
+update_mfc_params(struct mfcctl2 *mfccp, int wait, unsigned int rtableid)
 {
 	struct rtentry		*rt;
 	struct mfc		*mfc;
@@ -904,7 +904,8 @@ update_mfc_params(struct mfcctl2 *mfccp, unsigned int rtableid)
 		DPRINTF("add route (group %#08X) for vif %d (%s)",
 		    mfccp->mfcc_mcastgrp.s_addr, i, ifp->if_xname);
 
-		mfc_add_route(ifp, sintosa(&osin), sintosa(&msin), mfccp);
+		mfc_add_route(ifp, sintosa(&osin), sintosa(&msin),
+		    mfccp, wait);
 	}
 
 	/* Create route for the parent interface. */
@@ -923,12 +924,12 @@ update_mfc_params(struct mfcctl2 *mfccp, unsigned int rtableid)
 
 	DPRINTF("add upstream route (group %#08X) for if %s",
 	    mfccp->mfcc_mcastgrp.s_addr, ifp->if_xname);
-	mfc_add_route(ifp, sintosa(&osin), sintosa(&msin), mfccp);
+	mfc_add_route(ifp, sintosa(&osin), sintosa(&msin), mfccp, wait);
 }
 
 int
 mfc_add(struct mfcctl2 *mfcctl2, struct in_addr *origin,
-    struct in_addr *group, int vidx, unsigned int rtableid)
+    struct in_addr *group, int vidx, unsigned int rtableid, int wait)
 {
 	struct ifnet		*ifp;
 	struct vif		*v;
@@ -950,7 +951,7 @@ mfc_add(struct mfcctl2 *mfcctl2, struct in_addr *origin,
 	} else
 		memcpy(&mfcctl, mfcctl2, sizeof(mfcctl));
 
-	update_mfc_params(&mfcctl, rtableid);
+	update_mfc_params(&mfcctl, wait, rtableid);
 
 	return (0);
 }
@@ -985,7 +986,7 @@ add_mfc(struct socket *so, struct mbuf *m)
 	}
 
 	if (mfc_add(&mfcctl2, &mfcctl2.mfcc_origin, &mfcctl2.mfcc_mcastgrp,
-	    mfcctl2.mfcc_parent, rtableid) == -1)
+	    mfcctl2.mfcc_parent, rtableid, M_WAITOK) == -1)
 		return (EINVAL);
 
 	return (0);
@@ -1152,7 +1153,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			}
 
 			mfc_add(NULL, &ip->ip_src, &ip->ip_dst, v->v_id,
-			    rtableid);
+			    rtableid, M_NOWAIT);
 		}
 
 		return (0);
