@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.166 2016/10/19 08:28:20 guenther Exp $ */
+/*	$OpenBSD: pmap.c,v 1.167 2017/05/16 20:52:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1792,6 +1792,30 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		kaddr += l;
 		len -= l;
 	}
+	curpcb->pcb_onfault = oldh;
+	return 0;
+}
+
+int
+copyin32(const uint32_t *udaddr, uint32_t *kaddr)
+{
+	volatile uint32_t *p;
+	u_int32_t oldsr;
+	faultbuf env;
+	void *oldh = curpcb->pcb_onfault;
+
+	if ((u_int)udaddr & 0x3)
+		return EFAULT;
+
+	p = PPC_USER_ADDR + ((u_int)udaddr & ~PPC_SEGMENT_MASK);
+	oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)udaddr);
+	if (setfault(&env)) {
+		pmap_popusr(oldsr);
+		curpcb->pcb_onfault = oldh;
+		return EFAULT;
+	}
+	*kaddr = *p;
+	pmap_popusr(oldsr);
 	curpcb->pcb_onfault = oldh;
 	return 0;
 }
