@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.8 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.9 2017/05/16 13:30:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -96,11 +96,11 @@ void	_mtx_leave(struct mutex *, const char *, int);
 
 #else /* WITNESS */
 
-#define mtx_init(m, ipl)	__mtx_init(m, ipl)
+#define mtx_init(m, ipl)	_mtx_init(m, ipl)
 
 #define mtx_init_flags(m, ipl, name, flags) do {			\
 	(void)(name); (void)(flags);					\
-	__mtx_init(m, ipl);						\
+	_mtx_init(m, ipl);						\
 } while (0)
 
 #define mtx_enter __mtx_enter
