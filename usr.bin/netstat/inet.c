@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.157 2017/05/04 14:23:00 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.158 2017/05/16 21:42:14 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -170,12 +170,18 @@ protopr(kvm_t *kvmd, u_long pcbaddr, u_int tableid, int proto)
 				 * pointer (inp_ppcb) so check both.
 				 */
 				if (pcbaddr == kf[i].so_pcb) {
-					inpcb_dump(pcbaddr, kf[i].so_protocol,
+					inpcb_dump(kf[i].so_pcb,
+					    kf[i].so_protocol,
 					    kf[i].so_family);
 					return;
 				} else if (pcbaddr == kf[i].inp_ppcb &&
 				    kf[i].so_protocol == IPPROTO_TCP) {
-					tcpcb_dump(pcbaddr);
+					if (vflag)
+						inpcb_dump(kf[i].so_pcb,
+						    kf[i].so_protocol,
+						    kf[i].so_family);
+					else
+						tcpcb_dump(kf[i].inp_ppcb);
 					return;
 				}
 				break;
