@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.17 2017/03/03 08:56:18 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.18 2017/05/16 02:53:28 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -52,7 +52,9 @@ static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 u_long			 efi_loadaddr;
 
-static int	 efi_device_path_cmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+static int	 efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+static int	 efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *,
+		    int);
 static void	 efi_heap_init(void);
 static void	 efi_memprobe_internal(void);
 static void	 efi_video_init(void);
@@ -159,7 +161,7 @@ struct disklist_lh efi_disklist;
 void
 efi_diskprobe(void)
 {
-	int			 i, bootdev;
+	int			 i, bootdev = 0, depth = -1;
 	UINTN			 sz;
 	EFI_STATUS		 status;
 	EFI_HANDLE		*handles = NULL;
@@ -180,8 +182,10 @@ efi_diskprobe(void)
 	if (handles == NULL || EFI_ERROR(status))
 		panic("BS->LocateHandle() returns %d", status);
 
+	if (efi_bootdp != NULL)
+		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
+
 	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
-		bootdev = 0;
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &blkio_guid,
 		    (void **)&blkio);
 		if (EFI_ERROR(status))
@@ -193,53 +197,57 @@ efi_diskprobe(void)
 		di = alloc(sizeof(struct diskinfo));
 		efid_init(di, blkio);
 
-		if (efi_bootdp == NULL)
+		if (efi_bootdp == NULL || depth == -1 || bootdev != 0)
 			goto next;
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
 		    (void **)&dp);
 		if (EFI_ERROR(status))
 			goto next;
-		if (!efi_device_path_cmp(efi_bootdp, dp, HARDWARE_DEVICE_PATH)&&
-		    !efi_device_path_cmp(efi_bootdp, dp, ACPI_DEVICE_PATH) &&
-		    !efi_device_path_cmp(efi_bootdp, dp, MESSAGING_DEVICE_PATH))
-			bootdev = 1;
-next:
-		if (bootdev)
+		if (efi_device_path_ncmp(efi_bootdp, dp, depth) == 0) {
 			TAILQ_INSERT_HEAD(&efi_disklist, di, list);
-		else
-			TAILQ_INSERT_TAIL(&efi_disklist, di, list);
+			bootdev = 1;
+			continue;
+		}
+next:
+		TAILQ_INSERT_TAIL(&efi_disklist, di, list);
 	}
 
 	free(handles, sz);
 }
 
 static int
-efi_device_path_cmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int dptype)
+efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 {
-	int		 cmp;
-	EFI_DEVICE_PATH	*dp, *dpt_a = NULL, *dpt_b = NULL;
+	int	i;
 
-	for (dp = dpa; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
-		if (DevicePathType(dp) == dptype) {
-			dpt_a = dp;
-			break;
-		}
-	}
-	for (dp = dpb; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
-		if (DevicePathType(dp) == dptype) {
-			dpt_b = dp;
-			break;
-		}
+	for (i = 0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp), i++) {
+		if (DevicePathType(dp) == dptype)
+			return (i);
 	}
 
-	if (dpt_a && dpt_b) {
-		cmp = DevicePathNodeLength(dpt_a) - DevicePathNodeLength(dpt_b);
+	return (-1);
+}
+
+static int
+efi_device_path_ncmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int deptn)
+{
+	int	 i, cmp;
+
+	for (i = 0; i < deptn; i++) {
+		if (IsDevicePathEnd(dpa) || IsDevicePathEnd(dpb))
+			return ((IsDevicePathEnd(dpa) && IsDevicePathEnd(dpb))
+			    ? 0 : (IsDevicePathEnd(dpa))? -1 : 1);
+		cmp = DevicePathNodeLength(dpa) - DevicePathNodeLength(dpb);
 		if (cmp)
 			return (cmp);
-		return (memcmp(dpt_a, dpt_b, DevicePathNodeLength(dpt_a)));
+		cmp = memcmp(dpa, dpb, DevicePathNodeLength(dpa));
+		if (cmp)
+			return (cmp);
+		dpa = NextDevicePathNode(dpa);
+		dpb = NextDevicePathNode(dpb);
 	}
 
-	return ((uintptr_t)dpt_a - (uintptr_t)dpt_b);
+	return (0);
 }
 
 /***********************************************************************
