@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.37 2017/05/03 14:01:29 mikeb Exp $	 */
+/* $OpenBSD: pftop.c,v 1.38 2017/05/16 22:29:07 mikeb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1608,7 +1608,7 @@ calc_pps(u_int64_t new_pkts, u_int64_t last_pkts, double interval)
 void
 print_queue_node(struct pfctl_queue_node *node)
 {
-	u_int	rate;
+	u_int	rate, rtmp;
 	int 	i;
 	double	interval, pps, bps;
 	static const char unit[] = " KMG";
@@ -1624,8 +1624,12 @@ print_queue_node(struct pfctl_queue_node *node)
 	// XXX: missing min, max, burst
 	tb_start();
 	rate = node->qs.linkshare.m2.absolute;
-	for (i = 0; rate >= 1000 && i <= 3; i++)
-		rate /= 1000;
+	for (i = 0; rate > 9999 && i <= 3; i++) {
+		rtmp = rate / 1000;
+		if (rtmp <= 9999)
+			rtmp += (rate % 1000) / 500;
+		rate = rtmp;
+	}
 	tbprintf("%u%c", rate, unit[i]);
 	print_fld_tb(FLD_BANDW);
 
