@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.26 2015/02/12 01:24:10 henning Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.27 2017/05/16 11:36:16 mpi Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -64,7 +64,6 @@ struct pfloghdr {
 struct pflog_softc {
 	struct ifnet		sc_if;		/* the interface */
 	int			sc_unit;
-	LIST_ENTRY(pflog_softc)	sc_list;
 };
 
 #if NPFLOG > 0
