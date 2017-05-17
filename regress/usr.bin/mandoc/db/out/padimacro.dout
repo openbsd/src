@@ -1,8 +1,14 @@
 initial magic 0x3a7d0cdb
 version       0x00000001
-macros offset 0x00000014
-end offset    0x0000013c
-page count    0
+macros offset 0x0000004c
+end offset    0x00000174
+page count    1
+=== PAGES ===
+page name # [fh1t]empty 
+page sect # 1 
+page desc # no title 
+page file src # man1/empty.1 
+=== END OF PAGES ===
 macros count  36
 === MACROS ===
 macro 00 entry count 0

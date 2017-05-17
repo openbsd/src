@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2016/09/23 15:08:10 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2017/05/17 22:07:46 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -14,10 +14,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# D: dbm_dump	M: man	O: out	E: err
+D_MOE_TESTS =	empty
 DO_MO_TESTS =	onepage twopages threepages threemacros
 DO_MO_TESTS +=	sortpages sortpages_rev so so_rev sortnames
 DO_MO_TESTS +=	twosect twoarch threearch fn in va sh xr
-DO_MOE_TESTS =	empty
 DOE_M_TESTS =	padipage padfpage padmpage 
 DOE_M_TESTS +=	padmacros padimacro padmmacro
 DOE_M_TESTS +=	padientry padfentry padmentry padfmagic
@@ -26,13 +27,13 @@ DOE_MOE_TESTS += baddesc0 baddesc badfile0 badfile
 DE_M_TESTS =	nonexistent short badimagic badversion badmacrosp badendp
 DE_M_TESTS +=	badnpages badnmacros badmacrop badfmagic
 
-DO_TESTS =	${DO_MO_TESTS} ${DO_MOE_TESTS}
+DO_TESTS =	${DO_MO_TESTS}
 DOE_TESTS =	${DOE_M_TESTS} ${DOE_MOE_TESTS}
 DE_TESTS =	${DE_M_TESTS}
 DOB_TESTS =	${DO_TESTS} ${DOE_TESTS}
 DEB_TESTS =	${DOE_TESTS} ${DE_TESTS}
-MOB_TESTS =	${DO_MO_TESTS} ${DO_MOE_TESTS} ${DOE_MOE_TESTS}
-MEB_TESTS =	${DO_MOE_TESTS} ${DOE_MOE_TESTS}
+MOB_TESTS =	${DO_MO_TESTS} ${D_MOE_TESTS} ${DOE_MOE_TESTS}
+MEB_TESTS =	${D_MOE_TESTS} ${DOE_MOE_TESTS}
 ALL_TESTS =	${DO_TESTS} ${DOE_TESTS} ${DE_TESTS}
 
 REGRESS_TARGETS = ${ALL_TESTS} diff.derr diff.mout diff.merr
@@ -100,13 +101,13 @@ all.derr: ${DEB_TESTS:C/$/.derr/}
 
 # === RUNNING MAKEWHATIS AND MAN =======================================
 
-empty.db empty.mout empty.merr:
+empty.mout empty.merr:
 	@rm -rf man
 	@mkdir man
 	@makewhatis man
 	@if man -kM man something > empty.mout 2> empty.merr; \
 		then false; else test $$? -eq 5; fi
-	@mv man/mandoc.db empty.db
+	@rm -f man/mandoc.db
 	@rmdir man
 
 onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
@@ -439,11 +440,11 @@ badfile.db: binedit threepages.db
 padmacros.db: binedit onepage.db
 	@./binedit c16rw0f < onepage.db > $@
 
-padimacro.db: binedit empty.db
-	@./binedit c8rdwri4wac4s4c136rwi4ww0f < empty.db > $@
+padimacro.db: binedit onepage.db
+	@./binedit c8rdwri4wac4s4c136rwi4ww0f < onepage.db > $@
 
-padmmacro.db: binedit empty.db
-	@./binedit c8rdwri4wac8s4c132rwi4ww0f < empty.db > $@
+padmmacro.db: binedit onepage.db
+	@./binedit c8rdwri4wac8s4c132rwi4ww0f < onepage.db > $@
 
 padientry.db: binedit threemacros.db
 	@./binedit c8rdwac4rdwarw2f < threemacros.db > $@
@@ -454,8 +455,8 @@ padfentry.db: binedit threemacros.db
 padmentry.db: binedit threemacros.db
 	@./binedit c8rdwac4rdwarw2c8s8c8w0w0f < threemacros.db > $@
 
-padfmagic.db: binedit empty.db
-	@./binedit c12rdi4waw0f < empty.db > $@
+padfmagic.db: binedit onepage.db
+	@./binedit c12rdi4waw0f < onepage.db > $@
 
 nonexistent.db:
 	@rm -rf nonexistent.db
@@ -463,29 +464,29 @@ nonexistent.db:
 short.db:
 	@echo 'sho' > $@
 
-badimagic.db: binedit empty.db
-	@./binedit riwf < empty.db > $@
+badimagic.db: binedit onepage.db
+	@./binedit riwf < onepage.db > $@
 
-badversion.db: binedit empty.db
-	@./binedit c4riwf < empty.db > $@
+badversion.db: binedit onepage.db
+	@./binedit c4riwf < onepage.db > $@
 
-badmacrosp.db: binedit empty.db
-	@./binedit c8rw1000f < empty.db > $@
+badmacrosp.db: binedit onepage.db
+	@./binedit c8rw1000f < onepage.db > $@
 
-badendp.db: binedit empty.db
-	@./binedit c12riwf < empty.db > $@
+badendp.db: binedit onepage.db
+	@./binedit c12riwf < onepage.db > $@
 
-badnpages.db: binedit empty.db
-	@./binedit c16rw-1f < empty.db > $@
+badnpages.db: binedit onepage.db
+	@./binedit c16rw-1f < onepage.db > $@
 
-badnmacros.db: binedit empty.db
-	@./binedit c8rdwariwf < empty.db > $@
+badnmacros.db: binedit onepage.db
+	@./binedit c8rdwariwf < onepage.db > $@
 
-badmacrop.db: binedit empty.db
-	@./binedit c8rdwac4rw1000f < empty.db > $@
+badmacrop.db: binedit onepage.db
+	@./binedit c8rdwac4rw1000f < onepage.db > $@
 
-badfmagic.db: binedit empty.db
-	@./binedit c12rdwariwf < empty.db > $@
+badfmagic.db: binedit onepage.db
+	@./binedit c12rdwariwf < onepage.db > $@
 
 
 # === GETTING ACCESS TO THE UTILITIES ==================================
