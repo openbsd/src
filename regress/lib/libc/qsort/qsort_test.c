@@ -116,7 +116,7 @@ static int
 test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 {
 	int i, j;
-	int errors = 0;
+	int ret = 0;
 
 	/* Fill in x[] based on distribution and 'm' */
 	fill_test_array(x, n, dist, m);
@@ -128,11 +128,12 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted: %zu compares, dist %d, m: %d, n: %d",
 		    compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
 		heapsort(z, n, sizeof(z[0]), cmp);
-		errors += check_result("copy", y, z, dist, m, n);
+		if (check_result("copy", y, z, dist, m, n) != 0)
+			ret = 1;
 	}
 
 	/* Test on reversed copy of x[] */
@@ -142,11 +143,12 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted (%s): %zu compares, dist %d, m: %d, n: %d",
 		    "reversed", compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
 		heapsort(z, n, sizeof(z[0]), cmp);
-		errors += check_result("reversed", y, z, dist, m, n);
+		if (check_result("reversed", y, z, dist, m, n) != 0)
+			ret = 1;
 	}
 
 	/* Test with front half of x[] reversed */
@@ -158,11 +160,12 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted (%s): %zu compares, dist %d, m: %d, n: %d",
 		    "front reversed", compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
 		heapsort(z, n, sizeof(z[0]), cmp);
-		errors += check_result("front reversed", y, z, dist, m, n);
+		if (check_result("front reversed", y, z, dist, m, n) != 0)
+			ret = 1;
 	}
 
 	/* Test with back half of x[] reversed */
@@ -174,11 +177,12 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted (%s): %zu compares, dist %d, m: %d, n: %d",
 		    "back reversed", compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
 		heapsort(z, n, sizeof(z[0]), cmp);
-		errors += check_result("back reversed", y, z, dist, m, n);
+		if (check_result("back reversed", y, z, dist, m, n) != 0)
+			ret = 1;
 	}
 
 	/* Test on sorted copy of x[] */
@@ -189,10 +193,11 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted (%s): %zu compares, dist %d, m: %d, n: %d",
 		    "sorted", compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		errors += check_result("sorted", y, x, dist, m, n);
+		if (check_result("sorted", y, x, dist, m, n) != 0)
+			ret = 1;
 	}
 
 	/* Test with i%5 added to x[i] (dither) */
@@ -202,21 +207,22 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 	if (sigsetjmp(cmpjmp, 1) != 0) {
 		warnx("qsort aborted (%s): %zu compares, dist %d, m: %d, n: %d",
 		    "dithered", compares, dist, m, n);
-		errors++;
+		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
 		heapsort(z, n, sizeof(z[0]), cmp);
-		errors += check_result("dithered", y, z, dist, m, n);
+		if (check_result("dithered", y, z, dist, m, n) != 0)
+			ret = 1;
 	}
 
-	return errors;
+	return ret;
 }
 
 static int
 run_tests(int m, int n)
 {
 	int *x, *y, *z;
-	int errors = 0;
+	int ret = 0;
 	double nlgn;
 	enum distribution dist;
 
@@ -236,13 +242,15 @@ run_tests(int m, int n)
 	if (y == NULL || y == NULL || z == NULL)
 		err(1, NULL);
 
-	for (dist = SAWTOOTH; dist != INVALID; dist++)
-		errors += test_distribution(dist, m, n, x, y, z);
+	for (dist = SAWTOOTH; dist != INVALID; dist++) {
+		if (test_distribution(dist, m, n, x, y, z) != 0)
+			ret = 1;
+	}
 
 	free(x);
 	free(y);
 	free(z);
-	return errors;
+	return ret;
 }
 
 int
@@ -250,13 +258,14 @@ main(int argc, char *argv[])
 {
 	int *nn, nums[] = { 100, 1023, 1024, 1025, 4095, 4096, 4097, -1 };
 	int m, n;
-	int errors = 0;
+	int ret = 0;
 
 	for (nn = nums; (n = *nn) > 0; nn++) {
 		for (m = 1; m < 2 * n; m *= 2) {
-			errors += run_tests(m, n);
+			if (run_tests(m, n) != 0)
+				ret = 1;
 		}
 	}
 
-	return errors;
+	return ret;
 }
