@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.26 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.27 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -142,8 +142,7 @@ ca_init(void)
 
 		pki->pki_pkey = pkey;
 
-		explicit_bzero(pki->pki_key, pki->pki_key_len);
-		free(pki->pki_key);
+		freezero(pki->pki_key, pki->pki_key_len);
 		pki->pki_key = NULL;
 	}
 }
@@ -204,10 +203,8 @@ end:
 			*errstr = ERR_error_string(ERR_peek_last_error(), NULL);
 	}
 
-	if (xsc)
-		X509_STORE_CTX_free(xsc);
-	if (store)
-		X509_STORE_free(store);
+	X509_STORE_CTX_free(xsc);
+	X509_STORE_free(store);
 
 	return ret > 0 ? 1 : 0;
 }

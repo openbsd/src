@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.40 2016/12/03 15:46:33 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.41 2017/05/17 14:00:06 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -272,10 +272,8 @@ io_free(struct io *io)
 		current = NULL;
 
 #ifdef IO_SSL
-	if (io->ssl) {
-		SSL_free(io->ssl);
-		io->ssl = NULL;
-	}
+	SSL_free(io->ssl);
+	io->ssl = NULL;
 #endif
 
 	if (event_initialized(&io->ev))

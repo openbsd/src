@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.198 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: lka.c,v 1.199 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -657,10 +657,8 @@ lka_X509_verify(struct ca_vrfy_req_msg *vrfy,
 		ret = 1;
 
 end:
-	if (x509)
-		X509_free(x509);
-	if (x509_tmp)
-		X509_free(x509_tmp);
+	X509_free(x509);
+	X509_free(x509_tmp);
 	if (x509_chain)
 		sk_X509_pop_free(x509_chain, X509_free);
 

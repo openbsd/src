@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.302 2016/11/30 17:43:32 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.303 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -962,8 +962,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		io_set_read(s->io);
 		io_start_tls(s->io, ssl);
 
-		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		free(resp_ca_cert->cert);
+		freezero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		free(resp_ca_cert);
 		return;
 
@@ -1205,8 +1204,7 @@ smtp_filter_fd(uint64_t id, int fd)
 		    SSL_get_cipher_name(io_ssl(s->io)),
 		    SSL_get_cipher_bits(io_ssl(s->io), NULL),
 		    (s->flags & SF_VERIFIED) ? "YES" : (x ? "FAIL" : "NO"));
-		if (x)
-			X509_free(x);
+		X509_free(x);
 
 		if (s->listener->flags & F_RECEIVEDAUTH) {
 			io_printf(s->tx->oev, " auth=%s", s->username[0] ? "yes" : "no");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.88 2017/03/30 15:41:04 jsing Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.89 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -240,10 +240,8 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 fail:
 	ssl_error("ssl_load_key");
 	free(buf);
-	if (bio != NULL)
-		BIO_free_all(bio);
-	if (key != NULL)
-		EVP_PKEY_free(key);
+	BIO_free_all(bio);
+	EVP_PKEY_free(key);
 	if (fp)
 		fclose(fp);
 	return (NULL);
@@ -397,14 +395,10 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	return (1);
 
  fail:
-	if (rsa != NULL)
-		RSA_free(rsa);
-	if (in != NULL)
-		BIO_free(in);
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
-	if (x509 != NULL)
-		X509_free(x509);
+	RSA_free(rsa);
+	BIO_free(in);
+	EVP_PKEY_free(pkey);
+	X509_free(x509);
 	free(exdata);
 
 	return (0);
@@ -433,12 +427,12 @@ ssl_ctx_fake_private_key(SSL_CTX *ctx, const void *data, size_t datalen,
 
 	if (pkeyptr != NULL)
 		*pkeyptr = pkey;
-	else if (pkey != NULL)
+	else
 		EVP_PKEY_free(pkey);
 
 	if (x509ptr != NULL)
 		*x509ptr = x509;
-	else if (x509 != NULL)
+	else
 		X509_free(x509);
 
 	return (ret);

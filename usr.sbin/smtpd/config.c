@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.37 2016/09/01 10:54:25 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.38 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -70,14 +70,9 @@ purge_config(uint8_t what)
 	}
 	if (what & PURGE_PKI) {
 		while (dict_poproot(env->sc_pki_dict, (void **)&p)) {
-			explicit_bzero(p->pki_cert, p->pki_cert_len);
-			free(p->pki_cert);
-			if (p->pki_key) {
-				explicit_bzero(p->pki_key, p->pki_key_len);
-				free(p->pki_key);
-			}
-			if (p->pki_pkey)
-				EVP_PKEY_free(p->pki_pkey);
+			freezero(p->pki_cert, p->pki_cert_len);
+			freezero(p->pki_key, p->pki_key_len);
+			EVP_PKEY_free(p->pki_pkey);
 			free(p);
 		}
 		free(env->sc_pki_dict);
@@ -86,16 +81,11 @@ purge_config(uint8_t what)
 		iter_dict = NULL;
 		while (dict_iter(env->sc_pki_dict, &iter_dict, &k,
 		    (void **)&p)) {
-			explicit_bzero(p->pki_cert, p->pki_cert_len);
-			free(p->pki_cert);
+			freezero(p->pki_cert, p->pki_cert_len);
 			p->pki_cert = NULL;
-			if (p->pki_key) {
-				explicit_bzero(p->pki_key, p->pki_key_len);
-				free(p->pki_key);
-				p->pki_key = NULL;
-			}
-			if (p->pki_pkey)
-				EVP_PKEY_free(p->pki_pkey);
+			freezero(p->pki_key, p->pki_key_len);
+			p->pki_key = NULL;
+			EVP_PKEY_free(p->pki_pkey);
 			p->pki_pkey = NULL;
 		}
 	}

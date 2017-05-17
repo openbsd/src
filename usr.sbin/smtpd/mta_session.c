@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.96 2016/11/30 17:43:32 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.97 2017/05/17 14:00:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -341,8 +341,7 @@ mta_session_imsg(struct mproc *p, struct imsg *imsg)
 			fatal("mta: ssl_mta_init");
 		io_start_tls(s->io, ssl);
 
-		explicit_bzero(resp_ca_cert->cert, resp_ca_cert->cert_len);
-		free(resp_ca_cert->cert);
+		freezero(resp_ca_cert->cert, resp_ca_cert->cert_len);
 		free(resp_ca_cert);
 		return;
 
