@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.55 2017/04/18 15:04:35 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.56 2017/05/17 21:18:41 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -152,7 +152,8 @@ mansearch(const struct mansearch *search,
 		chdir_status = 1;
 
 		if (dbm_open(MANDOC_DB) == -1) {
-			warn("%s/%s", paths->paths[i], MANDOC_DB);
+			if (errno != ENOENT)
+				warn("%s/%s", paths->paths[i], MANDOC_DB);
 			continue;
 		}
 
