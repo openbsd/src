@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.92 2017/05/09 13:33:50 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.93 2017/05/17 15:39:36 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -236,6 +236,34 @@ struct protosw inet6sw[] = {
   .pr_sysctl	= ipcomp_sysctl
 },
 #endif /* IPSEC */
+{
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &inet6domain,
+  .pr_protocol	= IPPROTO_IPV4,
+  .pr_flags	= PR_ATOMIC|PR_ADDR,
+#if NGIF > 0
+  .pr_input	= in6_gif_input,
+#else
+  .pr_input	= ip4_input,
+#endif
+  .pr_ctloutput	= rip6_ctloutput,
+  .pr_usrreq	= rip6_usrreq,	/* XXX */
+  .pr_attach	= rip6_attach
+},
+{
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &inet6domain,
+  .pr_protocol	= IPPROTO_IPV6,
+  .pr_flags	= PR_ATOMIC|PR_ADDR,
+#if NGIF > 0
+  .pr_input	= in6_gif_input,
+#else
+  .pr_input	= ip4_input,
+#endif
+  .pr_ctloutput	= rip6_ctloutput,
+  .pr_usrreq	= rip6_usrreq,	/* XXX */
+  .pr_attach	= rip6_attach,
+},
 #if NGIF > 0
 {
   .pr_type	= SOCK_RAW,
@@ -248,49 +276,7 @@ struct protosw inet6sw[] = {
   .pr_attach	= rip6_attach,
   .pr_sysctl	= etherip_sysctl
 },
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inet6domain,
-  .pr_protocol	= IPPROTO_IPV6,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= in6_gif_input,
-  .pr_ctloutput	= rip6_ctloutput,
-  .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach
-},
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inet6domain,
-  .pr_protocol	= IPPROTO_IPV4,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= in6_gif_input,
-  .pr_ctloutput	= rip6_ctloutput,
-  .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach
-},
-#else /* NGIF */
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inet6domain,
-  .pr_protocol	= IPPROTO_IPV6,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ip4_input,
-  .pr_ctloutput	= rip6_ctloutput,
-  .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach,
-  .pr_sysctl	= ipip_sysctl
-},
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inet6domain,
-  .pr_protocol	= IPPROTO_IPV4,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ip4_input,
-  .pr_ctloutput	= rip6_ctloutput,
-  .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach
-},
-#endif /* GIF */
+#endif /* NGIF */
 #if NCARP > 0
 {
   .pr_type	= SOCK_RAW,

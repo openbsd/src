@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.77 2017/05/09 13:33:50 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.78 2017/05/17 15:39:36 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -231,19 +231,39 @@ struct protosw inetsw[] = {
   .pr_init	= icmp_init,
   .pr_sysctl	= icmp_sysctl
 },
-#if NGIF > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_IPV4,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
+#if NGIF > 0
   .pr_input	= in_gif_input,
+#else
+  .pr_input	= ip4_input,
+#endif
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach,
   .pr_sysctl	= ipip_sysctl,
   .pr_init	= ipip_init
 },
+#ifdef INET6
+{
+  .pr_type	= SOCK_RAW,
+  .pr_domain	= &inetdomain,
+  .pr_protocol	= IPPROTO_IPV6,
+  .pr_flags	= PR_ATOMIC|PR_ADDR,
+#if NGIF > 0
+  .pr_input	= in_gif_input,
+#else
+  .pr_input	= ip4_input,
+#endif
+  .pr_ctloutput	= rip_ctloutput,
+  .pr_usrreq	= rip_usrreq, /* XXX */
+  .pr_attach	= rip_attach
+},
+#endif
+#if NGIF > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
@@ -255,18 +275,8 @@ struct protosw inetsw[] = {
   .pr_attach	= rip_attach,
   .pr_sysctl	= etherip_sysctl
 },
-#ifdef INET6
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_IPV6,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= in_gif_input,
-  .pr_usrreq	= rip_usrreq, /* XXX */
-  .pr_attach	= rip_attach
-},
-#endif
-#ifdef MPLS
+#endif /* NGIF */
+#if defined(MPLS) && NGIF > 0
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
@@ -276,33 +286,7 @@ struct protosw inetsw[] = {
   .pr_usrreq	= rip_usrreq,
   .pr_attach	= rip_attach
 },
-#endif
-#else /* NGIF */
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_IPIP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ip4_input,
-  .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_sysctl	= ipip_sysctl,
-  .pr_init	= ipip_init
-},
-#ifdef INET6
-{
-  .pr_type	= SOCK_RAW,
-  .pr_domain	= &inetdomain,
-  .pr_protocol	= IPPROTO_IPV6,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= ip4_input,
-  .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq, /* XXX */
-  .pr_attach	= rip_attach
-},
-#endif
-#endif /*NGIF*/
+#endif /* MPLS && GIF */
 {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
