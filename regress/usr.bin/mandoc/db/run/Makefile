@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/05/17 22:07:46 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2017/05/17 22:46:44 schwarze Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 #
@@ -107,7 +107,6 @@ empty.mout empty.merr:
 	@makewhatis man
 	@if man -kM man something > empty.mout 2> empty.merr; \
 		then false; else test $$? -eq 5; fi
-	@rm -f man/mandoc.db
 	@rmdir man
 
 onepage.db onepage.mout: ${.CURDIR}/../man/empty.1
