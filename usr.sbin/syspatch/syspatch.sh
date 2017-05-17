@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.101 2017/05/12 15:04:07 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.102 2017/05/17 13:23:58 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -72,13 +72,14 @@ apply_patch()
 # quick-and-dirty filesystem status and size checks:
 # - assume old files are about the same size as new ones
 # - ignore new (nonexistent) files
+# - ignore rollback tarball: create_rollback() will handle the failure
 # - compute total size of all files per fs, simpler and less margin for error
 # - if we install a kernel, double /bsd size (duplicate it in the list) when:
 #   - we are on an MP system (/bsd.mp does not exist there)
 #   - /bsd.syspatchXX is not present (create_rollback will copy it from /bsd)
 checkfs()
 {
-	local _d _dev _df _files="${@}" _sz
+	local _d _dev _df _files="${@}" _ret _sz
 	[[ -n ${_files} ]]
 
 	if echo "${_files}" | grep -qw bsd; then
@@ -91,9 +92,9 @@ checkfs()
 	# - broken interpolation due to bogus devices like remote filesystems
 	eval $(cd / &&
 		stat -qf "_dev=\"\${_dev} %Sd\" %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" \
-			${_files}) 2>/dev/null
+			${_files}) 2>/dev/null || _ret=$?
 	set -e
-	[[ -z ${_dev} && -n ${_files} ]] && sp_err "Remote filesystem, aborting"
+	[[ ${_ret} == 127 ]] && sp_err "Remote filesystem, aborting" 
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
