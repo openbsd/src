@@ -24,6 +24,8 @@
 /*
  * Test program based on Bentley & McIlroy's "Engineering a Sort Function".
  * Uses heapsort(3) to check the results.
+ * The "killer" input is from:
+ *  http://calmerthanyouare.org/2014/06/11/algorithmic-complexity-attacks-and-libc-qsort.html
  */
 
 enum distribution {
@@ -32,6 +34,7 @@ enum distribution {
     STAGGER,
     PLATEAU,
     SHUFFLE,
+    KILLER,
     INVALID
 };
 
@@ -105,6 +108,15 @@ fill_test_array(int *x, int n, int dist, int m)
 			break;
 		case SHUFFLE:
 			x[i] = arc4random_uniform(m) ? (j += 2) : (k += 2);
+			break;
+		case KILLER:
+			k = n / 2;
+			if (i < k)
+				x[i] = k - i;
+			else if (i > k)
+				x[i] = n + k + 1 - i;
+			else
+				x[i] = k + 1;
 			break;
 		default:
 			err(1, "unexpected distribution %d", dist);
