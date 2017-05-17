@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.14 2017/01/04 15:20:30 millert Exp $ */
+/*	$OpenBSD: qsort.c,v 1.15 2017/05/17 16:58:20 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -85,7 +85,7 @@ qsort(void *aa, size_t n, size_t es, int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int cmp_result, swaptype;
-	size_t d, r;
+	size_t d, r, s;
 	char *a = aa;
 
 loop:	SWAPINIT(a, es);
@@ -139,14 +139,29 @@ loop:	SWAPINIT(a, es);
 	vecswap(a, pb - r, r);
 	r = min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
-	if ((r = pb - pa) > es)
-		qsort(a, r / es, es, cmp);
-	if ((r = pd - pc) > es) { 
-		/* Iterate rather than recurse to save stack space */
-		a = pn - r;
-		n = r / es;
-		goto loop;
+	/*
+	 * To save stack space we sort the smaller side of the partition first
+	 * using recursion and eliminate tail recursion for the larger side.
+	 */
+	r = pb - pa;
+	s = pd - pc;
+	if (r < s) {
+		/* Recurse for 1st side, iterate for 2nd side. */
+		if (s > es) {
+			if (r > es)
+				qsort(a, r / es, es, cmp);
+			a = pn - s;
+			n = s / es;
+			goto loop;
+		}
+	} else {
+		/* Recurse for 2nd side, iterate for 1st side. */
+		if (r > es) {
+			if (s > es)
+				qsort(pn - s, s / es, es, cmp);
+			n = r / es;
+			goto loop;
+		}
 	}
-/*		qsort(pn - r, r / es, es, cmp);*/
 }
 DEF_STRONG(qsort);
