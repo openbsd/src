@@ -256,10 +256,10 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 }
 
 static int
-run_tests(int m, int n)
+run_tests(int n)
 {
 	int *x, *y, *z;
-	int ret = 0;
+	int m, ret = 0;
 	int idx, nlgn = 0;
 	enum distribution dist;
 
@@ -281,8 +281,20 @@ run_tests(int m, int n)
 		err(1, NULL);
 
 	for (dist = SAWTOOTH; dist != INVALID; dist++) {
-		if (test_distribution(dist, m, n, x, y, z) != 0)
-			ret = 1;
+		switch (dist) {
+		case BSD_KILLER:
+		case MED3_KILLER:
+			/* 'm' not used. */
+			if (test_distribution(dist, 0, n, x, y, z) != 0)
+				ret = 1;
+			break;
+		default:
+			for (m = 1; m < 2 * n; m *= 2) {
+				if (test_distribution(dist, m, n, x, y, z) != 0)
+					ret = 1;
+			}
+			break;
+		}
 	}
 
 	free(x);
@@ -295,14 +307,11 @@ int
 main(int argc, char *argv[])
 {
 	int *nn, nums[] = { 100, 1023, 1024, 1025, 4095, 4096, 4097, -1 };
-	int m, n;
-	int ret = 0;
+	int n, ret = 0;
 
 	for (nn = nums; (n = *nn) > 0; nn++) {
-		for (m = 1; m < 2 * n; m *= 2) {
-			if (run_tests(m, n) != 0)
-				ret = 1;
-		}
+		if (run_tests(n) != 0)
+			ret = 1;
 	}
 
 	return ret;
