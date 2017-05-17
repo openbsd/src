@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.56 2017/05/02 11:44:32 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.57 2017/05/17 17:54:29 mikeb Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -59,6 +59,7 @@
 #include <crypto/rmd160.h>
 #include <crypto/blf.h>
 #include <crypto/cast.h>
+#include <crypto/rijndael.h>
 #include <crypto/aes.h>
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
@@ -121,8 +122,8 @@ struct aes_ctr_ctx {
 #define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
 
 struct aes_xts_ctx {
-	AES_CTX key1;
-	AES_CTX key2;
+	rijndael_ctx key1;
+	rijndael_ctx key2;
 	u_int8_t tweak[AES_XTS_BLOCKSIZE];
 };
 
@@ -496,7 +497,7 @@ aes_xts_reinit(caddr_t key, u_int8_t *iv)
 	/* Last 64 bits of IV are always zero */
 	bzero(ctx->tweak + AES_XTS_IVSIZE, AES_XTS_IVSIZE);
 
-	AES_Encrypt(&ctx->key2, ctx->tweak, ctx->tweak);
+	rijndael_encrypt(&ctx->key2, ctx->tweak, ctx->tweak);
 }
 
 void
@@ -509,9 +510,9 @@ aes_xts_crypt(struct aes_xts_ctx *ctx, u_int8_t *data, u_int do_encrypt)
 		block[i] = data[i] ^ ctx->tweak[i];
 
 	if (do_encrypt)
-		AES_Encrypt(&ctx->key1, block, data);
+		rijndael_encrypt(&ctx->key1, block, data);
 	else
-		AES_Decrypt(&ctx->key1, block, data);
+		rijndael_decrypt(&ctx->key1, block, data);
 
 	for (i = 0; i < AES_XTS_BLOCKSIZE; i++)
 		data[i] ^= ctx->tweak[i];
@@ -550,8 +551,8 @@ aes_xts_setkey(void *sched, u_int8_t *key, int len)
 
 	ctx = (struct aes_xts_ctx *)sched;
 
-	AES_Setkey(&ctx->key1, key, len / 2);
-	AES_Setkey(&ctx->key2, key + (len / 2), len / 2);
+	rijndael_set_key(&ctx->key1, key, len * 4);
+	rijndael_set_key(&ctx->key2, key + (len / 2), len * 4);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*      $OpenBSD: aes_xts.c,v 1.3 2017/05/02 11:46:00 mikeb Exp $  */
+/*      $OpenBSD: aes_xts.c,v 1.4 2017/05/17 17:54:29 mikeb Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/types.h>
-#include <crypto/aes.h>
+#include <crypto/rijndael.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -37,8 +37,8 @@
 #define	AES_XTS_BLOCKSIZE	16
 
 struct aes_xts_ctx {
-	AES_CTX key1;
-	AES_CTX key2;
+	rijndael_ctx key1;
+	rijndael_ctx key2;
 	u_int8_t tweak[AES_XTS_BLOCKSIZE];
 };
 

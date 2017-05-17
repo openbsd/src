@@ -26,7 +26,9 @@
 #ifndef _AES_H_
 #define _AES_H_
 
+#ifndef AES_MAXROUNDS
 #define AES_MAXROUNDS	(14)
+#endif
 
 typedef struct aes_ctx {
 	uint32_t sk[60];
