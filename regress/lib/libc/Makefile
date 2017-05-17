@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.48 2016/05/29 17:09:07 beck Exp $
+#	$OpenBSD: Makefile,v 1.49 2017/05/17 14:47:06 millert Exp $
 
 SUBDIR+= _setjmp alloca arc4random-fork
 SUBDIR+= atexit basename cephes cxa-atexit db dirname env
 SUBDIR+= explicit_bzero fmemopen fnmatch fpclassify getcap getopt_long glob
 SUBDIR+= hsearch ifnameindex longjmp locale malloc mkstemp modf netdb
-SUBDIR+= open_memstream orientation popen printf
+SUBDIR+= open_memstream orientation popen printf qsort
 SUBDIR+= regex setjmp setjmp-signal sigsetjmp sprintf stdio_threading
 SUBDIR+= stpncpy strerror strlcat strlcpy strnlen strtod strtol strtonum
 SUBDIR+= telldir time timingsafe vis
