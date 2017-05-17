@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.115 2017/05/08 09:11:20 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.116 2017/05/17 08:59:05 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ nfs_reconnect(struct nfsreq *rep)
 {
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
-	int s, error;
+	int error;
 
 	nfs_disconnect(nmp);
 	while ((error = nfs_connect(nmp, rep)) != 0) {
@@ -407,12 +407,10 @@ nfs_reconnect(struct nfsreq *rep)
 	 * Loop through outstanding request list and fix up all requests
 	 * on old socket.
 	 */
-	s = splsoftnet();
 	TAILQ_FOREACH(rp, &nmp->nm_reqsq, r_chain) {
 		rp->r_flags |= R_MUSTRESEND;
 		rp->r_rexmit = 0;
 	}
-	splx(s);
 	return (0);
 }
 
@@ -737,7 +735,7 @@ nfs_reply(struct nfsreq *myrep)
 	struct mbuf *nam;
 	u_int32_t rxid, *tl, t1;
 	caddr_t cp2;
-	int s, error;
+	int error;
 
 	/*
 	 * Loop around until we get our own reply
@@ -790,7 +788,6 @@ nfsmout:
 		 * Loop through the request list to match up the reply
 		 * Iff no match, just drop the datagram
 		 */
-		s = splsoftnet();
 		TAILQ_FOREACH(rep, &nmp->nm_reqsq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
@@ -820,7 +817,6 @@ nfsmout:
 				break;
 			}
 		}
-		splx(s);
 		/*
 		 * If not matched to a request, drop it.
 		 * If it's mine, get out.
@@ -854,7 +850,7 @@ nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 	struct nfsmount *nmp;
 	struct timeval tv;
 	caddr_t cp2;
-	int t1, i, s, error = 0;
+	int t1, i, error = 0;
 	int trylater_delay;
 	struct nfsreq *rep;
 	int  mrest_len;
@@ -911,7 +907,6 @@ tryagain:
 	 * Chain request into list of outstanding requests. Be sure
 	 * to put it LAST so timer finds oldest requests first.
 	 */
-	s = splsoftnet();
 	if (TAILQ_EMPTY(&nmp->nm_reqsq))
 		timeout_add(&nmp->nm_rtimeout, nfs_ticks);
 	TAILQ_INSERT_TAIL(&nmp->nm_reqsq, rep, r_chain);
@@ -924,7 +919,6 @@ tryagain:
 	if (nmp->nm_so && (nmp->nm_sotype != SOCK_DGRAM ||
 		(nmp->nm_flag & NFSMNT_DUMBTIMR) ||
 		nmp->nm_sent < nmp->nm_cwnd)) {
-		splx(s);
 		if (nmp->nm_soflags & PR_CONNREQUIRED)
 			error = nfs_sndlock(&nmp->nm_flag, rep);
 		if (!error) {
@@ -939,7 +933,6 @@ tryagain:
 			rep->r_flags |= R_SENT;
 		}
 	} else {
-		splx(s);
 		rep->r_rtt = -1;
 	}
 
@@ -952,11 +945,9 @@ tryagain:
 	/*
 	 * RPC done, unlink the request.
 	 */
-	s = splsoftnet();
 	TAILQ_REMOVE(&nmp->nm_reqsq, rep, r_chain);
 	if (TAILQ_EMPTY(&nmp->nm_reqsq))
 		timeout_del(&nmp->nm_rtimeout);
-	splx(s);
 
 	/*
 	 * Decrement the outstanding request count.

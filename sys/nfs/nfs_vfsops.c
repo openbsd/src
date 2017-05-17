@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.113 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.114 2017/05/17 08:59:05 mpi Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -403,11 +403,8 @@ void
 nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp,
     struct nfs_args *nargp)
 {
-	int s;
 	int adjsock = 0;
 	int maxio;
-
-	s = splsoftnet();
 
 #if 0
 	/* Re-bind if rsrvd port requested and wasn't on one */
@@ -418,10 +415,8 @@ nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp,
 	adjsock |= ((nmp->nm_flag & NFSMNT_NOCONN) !=
 	    (argp->flags & NFSMNT_NOCONN));
 
-	/* Update flags atomically.  Don't change the lock bits. */
 	nmp->nm_flag =
 	    (argp->flags & ~NFSMNT_INTERNAL) | (nmp->nm_flag & NFSMNT_INTERNAL);
-	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
 		nmp->nm_timeo = (argp->timeo * NFS_HZ + 5) / 10;
