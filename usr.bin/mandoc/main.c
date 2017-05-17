@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.193 2017/05/16 19:05:36 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.194 2017/05/17 23:39:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -920,8 +920,6 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_UTF8;
 	else if (0 == strcmp(arg, "locale"))
 		curp->outtype = OUTT_LOCALE;
-	else if (0 == strcmp(arg, "xhtml"))
-		curp->outtype = OUTT_HTML;
 	else if (0 == strcmp(arg, "ps"))
 		curp->outtype = OUTT_PS;
 	else if (0 == strcmp(arg, "pdf"))
