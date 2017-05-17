@@ -33,7 +33,8 @@ enum distribution {
     STAGGER,
     PLATEAU,
     SHUFFLE,
-    KILLER,
+    BSD_KILLER,
+    MED3_KILLER,
     INVALID
 };
 
@@ -91,35 +92,60 @@ fill_test_array(int *x, int n, int dist, int m)
 {
 	int i, j, k;
 
-	for (i = 0, j = 0, k = 1; i < n; i++) {
-		switch (dist) {
-		case SAWTOOTH:
+	switch (dist) {
+	case SAWTOOTH:
+		for (i = 0; i < n; i++)
 			x[i] = i % m;
-			break;
-		case RAND:
+		break;
+	case RAND:
+		for (i = 0; i < n; i++)
 			x[i] = arc4random_uniform(m);
-			break;
-		case STAGGER:
+		break;
+	case STAGGER:
+		for (i = 0; i < n; i++)
 			x[i] = (i * m + i) % n;
-			break;
-		case PLATEAU:
+		break;
+	case PLATEAU:
+		for (i = 0; i < n; i++)
 			x[i] = min(i, m);
-			break;
-		case SHUFFLE:
+		break;
+	case SHUFFLE:
+		for (i = 0, j = 0, k = 1; i < n; i++)
 			x[i] = arc4random_uniform(m) ? (j += 2) : (k += 2);
-			break;
-		case KILLER:
-			k = n / 2;
+		break;
+	case BSD_KILLER:
+		/* 4.4BSD insertion sort optimization killer, Mats Linander */
+		k = n / 2;
+		for (i = 0; i < n; i++) {
 			if (i < k)
 				x[i] = k - i;
 			else if (i > k)
 				x[i] = n + k + 1 - i;
 			else
 				x[i] = k + 1;
-			break;
-		default:
-			err(1, "unexpected distribution %d", dist);
 		}
+		break;
+	case MED3_KILLER:
+		/*
+		 * Median of 3 killer, as seen in David R Musser's
+		 * Introspective Sorting and Selection Algorithms
+		 */
+		if (n & 1) {
+			/* odd size, store last at end and make even. */
+			x[n - 1] = n;
+			n--;
+		}
+		k = n / 2;
+		for (i = 0; i < n; i++) {
+			if (i & 1) {
+				x[i] = k + x[i - 1];
+			} else {
+				x[i] = i + 1;
+			}
+		}
+		break;
+	default:
+		err(1, "unexpected distribution %d", dist);
 	}
 }
 
