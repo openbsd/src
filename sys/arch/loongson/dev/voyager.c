@@ -1,4 +1,4 @@
-/*	$OpenBSD: voyager.c,v 1.4 2010/09/20 06:33:48 matthew Exp $	*/
+/*	$OpenBSD: voyager.c,v 1.5 2017/05/17 11:52:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -243,6 +243,8 @@ voyager_intr_establish(void *cookie, int irq, int level, int (*fun)(void *),
 	if (irq < 0 || irq >= nitems(sc->sc_intr))
 		return NULL;
 #endif
+
+	level &= ~IPL_MPSAFE;
 
 	nh = (struct intrhand *)malloc(sizeof *nh, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (nh == NULL)
