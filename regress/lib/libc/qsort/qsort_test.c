@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
-#include <math.h>
 #include <err.h>
 
 /*
@@ -235,16 +234,17 @@ run_tests(int m, int n)
 {
 	int *x, *y, *z;
 	int ret = 0;
-	double nlgn;
+	int idx, nlgn = 0;
 	enum distribution dist;
 
 	/*
-	 * The expected number of compares is A * n * log2(n)
-	 * where A is between 1 and 2.  If A is greater than 1.5
-	 * we'll print a warning.  If A is greater than 10 we
-	 * abort the test since qsort has probably gone quadratic.
+	 * We expect A*n*lg(n) compares where A is between 1 and 2.
+	 * For A > 1.5, print a warning.
+	 * For A > 10 abort the test since qsort has probably gone quadratic.
 	 */
-	nlgn = n * log2(n);
+	for (idx = n - 1; idx > 0; idx >>= 1)
+	    nlgn++;
+	nlgn *= n;
 	max_compares = nlgn * 1.5;
 	abrt_compares = nlgn * 10;
 
