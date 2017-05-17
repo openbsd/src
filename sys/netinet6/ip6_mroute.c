@@ -1108,10 +1108,7 @@ phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m)
 	 * the IPv6 header is actually copied, not just referenced,
 	 * so that ip6_output() only scribbles on the copy.
 	 */
-	mb_copy = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-	if (mb_copy &&
-	    (M_READONLY(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
-		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
+	mb_copy = m_dup_pkt(m, max_linkhdr, M_NOWAIT);
 	if (mb_copy == NULL)
 		return;
 	/* set MCAST flag to the outgoing packet */
