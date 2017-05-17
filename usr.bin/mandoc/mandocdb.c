@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.198 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.199 2017/05/17 22:26:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2082,6 +2082,23 @@ dbwrite(struct dba *dba)
 	int		 status;
 	pid_t		 child;
 
+	/*
+	 * Do not write empty databases, and delete existing ones
+	 * when makewhatis -u causes them to become empty.
+	 */
+
+	dba_array_start(dba->pages);
+	if (dba_array_next(dba->pages) == NULL) {
+		if (unlink(MANDOC_DB) == -1)
+			say(MANDOC_DB, "&unlink");
+		return;
+	}
+
+	/*
+	 * Build the database in a temporary file,
+	 * then atomically move it into place.
+	 */
+
 	if (dba_write(MANDOC_DB "~", dba) != -1) {
 		if (rename(MANDOC_DB "~", MANDOC_DB) == -1) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
@@ -2090,6 +2107,11 @@ dbwrite(struct dba *dba)
 		}
 		return;
 	}
+
+	/*
+	 * We lack write permission and cannot replace the database
+	 * file, but let's at least check whether the data changed.
+	 */
 
 	(void)strlcpy(tfn, "/tmp/mandocdb.XXXXXXXX", sizeof(tfn));
 	if (mkdtemp(tfn) == NULL) {
