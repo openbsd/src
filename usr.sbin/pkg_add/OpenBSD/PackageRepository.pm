@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.142 2017/03/11 11:25:01 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.143 2017/05/18 12:24:15 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -112,8 +112,13 @@ sub installed() { 'OpenBSD::PackageRepository::Installed' }
 sub parse
 {
 	my ($class, $r, $state) = @_;
+
+	$$r =~ s/^installpath(\:|$)/$state->installpath.$1/e;
+
 	my $u = $$r;
 	return undef if $u eq '';
+
+		
 
 	if ($u =~ m/^ftp\:/io) {
 		return $class->ftp->parse_fullurl($r, $state);
@@ -469,6 +474,9 @@ sub parse_fullurl
 	if (!$ok && $o->{path} eq $class->pkg_db."/") {
 		return $class->installed->new(0, $state);
 	} else {
+		if ($o->{path} eq './') {
+			$o->can_be_empty;
+		}
 		return $class->unique($o);
 	}
 }
