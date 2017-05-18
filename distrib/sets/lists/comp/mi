@@ -991,7 +991,6 @@
 ./usr/include/netinet/tcp_seq.h
 ./usr/include/netinet/tcp_timer.h
 ./usr/include/netinet/tcp_var.h
-./usr/include/netinet/tcpip.h
 ./usr/include/netinet/udp.h
 ./usr/include/netinet/udp_var.h
 ./usr/include/netinet6
@@ -1006,7 +1005,6 @@
 ./usr/include/netinet6/mld6_var.h
 ./usr/include/netinet6/nd6.h
 ./usr/include/netinet6/raw_ip6.h
-./usr/include/netinet6/tcpipv6.h
 ./usr/include/netmpls
 ./usr/include/netmpls/mpls.h
 ./usr/include/nfs
