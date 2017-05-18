@@ -22,9 +22,11 @@
 
 /*
  * Test program based on Bentley & McIlroy's "Engineering a Sort Function".
- * Uses heapsort(3) to check the results.
- * The "killer" input is from:
- *  http://calmerthanyouare.org/2014/06/11/algorithmic-complexity-attacks-and-libc-qsort.html
+ * Additional tests include the "median of three" killer from
+ * David R. Musser's "Introspective Sorting and Selection Algorithms"
+ * and 4.4BSD qsort killer input from
+ * http://calmerthanyouare.org/2014/06/11/algorithmic-complexity-attacks-and-libc-qsort.html
+ * Uses mergesort(3) to check the results.
  */
 
 enum distribution {
@@ -168,7 +170,8 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		heapsort(z, n, sizeof(z[0]), cmp);
+		if (mergesort(z, n, sizeof(z[0]), cmp) != 0)
+			err(1, NULL);
 		if (check_result("copy", y, z, dist, m, n) != 0)
 			ret = 1;
 	}
@@ -183,7 +186,8 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		heapsort(z, n, sizeof(z[0]), cmp);
+		if (mergesort(z, n, sizeof(z[0]), cmp) != 0)
+			err(1, NULL);
 		if (check_result("reversed", y, z, dist, m, n) != 0)
 			ret = 1;
 	}
@@ -200,7 +204,8 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		heapsort(z, n, sizeof(z[0]), cmp);
+		if (mergesort(z, n, sizeof(z[0]), cmp) != 0)
+			err(1, NULL);
 		if (check_result("front reversed", y, z, dist, m, n) != 0)
 			ret = 1;
 	}
@@ -217,13 +222,15 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		heapsort(z, n, sizeof(z[0]), cmp);
+		if (mergesort(z, n, sizeof(z[0]), cmp) != 0)
+			err(1, NULL);
 		if (check_result("back reversed", y, z, dist, m, n) != 0)
 			ret = 1;
 	}
 
 	/* Test on sorted copy of x[] */
-	heapsort(x, n, sizeof(x[0]), cmp);
+	if (mergesort(x, n, sizeof(x[0]), cmp) != 0)
+		err(1, NULL);
 	for (i = 0; i < n; i++)
 		y[i] = x[i];
 	compares = 0;
@@ -247,7 +254,8 @@ test_distribution(int dist, int m, int n, int *x, int *y, int *z)
 		ret = 1;
 	} else {
 		qsort(y, n, sizeof(y[0]), cmp_checked);
-		heapsort(z, n, sizeof(z[0]), cmp);
+		if (mergesort(z, n, sizeof(z[0]), cmp) != 0)
+			err(1, NULL);
 		if (check_result("dithered", y, z, dist, m, n) != 0)
 			ret = 1;
 	}
