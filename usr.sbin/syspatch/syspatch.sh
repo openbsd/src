@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.102 2017/05/17 13:23:58 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.103 2017/05/18 12:02:06 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -145,7 +145,7 @@ fetch_and_verify()
 	local _tgz=$1
 	[[ -n ${_tgz} ]]
 
-	unpriv -f "${_TMP}/${_tgz}" ftp -Vm -D "Get/Verify" -o \
+	unpriv -f "${_TMP}/${_tgz}" ftp -VD "Get/Verify" -o \
 		"${_TMP}/${_tgz}" "${_MIRROR}/${_tgz}"
 
 	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
