@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.51 2015/08/29 05:40:01 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.52 2017/05/18 18:50:32 kettenis Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -315,6 +315,10 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 	return (error);
 }
 
+#ifndef MAXSSIZ_GUARD
+#define MAXSSIZ_GUARD	(1024 * 1024)
+#endif
+
 /*
  * exec_setup_stack(): Set up the stack segment for an executable.
  *
@@ -336,7 +340,7 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	epp->ep_maxsaddr = USRSTACK;
 	epp->ep_minsaddr = USRSTACK + MAXSSIZ;
 #else
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+	epp->ep_maxsaddr = USRSTACK - MAXSSIZ - MAXSSIZ_GUARD;
 	epp->ep_minsaddr = USRSTACK;
 #endif
 	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
