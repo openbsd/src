@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.600 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.601 2017/05/18 09:20:06 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3889,6 +3889,16 @@ splassert_check(int wantipl, const char *func)
 		splassert_fail(-1, curcpu()->ci_idepth, func);
 }
 #endif
+
+int
+copyin32(const uint32_t *uaddr, uint32_t *kaddr)
+{
+	if ((vaddr_t)uaddr & 0x3)
+		return EFAULT;
+
+	/* copyin(9) is atomic */
+	return copyin(uaddr, kaddr, sizeof(uint32_t));
+}
 
 /*
  * True if the system has any non-level interrupts which are shared

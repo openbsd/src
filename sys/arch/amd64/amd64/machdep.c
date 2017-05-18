@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.228 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.229 2017/05/18 09:20:06 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1776,6 +1776,16 @@ splassert_check(int wantipl, const char *func)
 	
 }
 #endif
+
+int
+copyin32(const uint32_t *uaddr, uint32_t *kaddr)
+{
+	if ((vaddr_t)uaddr & 0x3)
+		return EFAULT;
+
+	/* copyin(9) is atomic */
+	return copyin(uaddr, kaddr, sizeof(uint32_t));
+}
 
 void
 getbootinfo(char *bootinfo, int bootinfo_size)
