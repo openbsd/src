@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.560 2017/05/16 22:29:02 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.561 2017/05/18 11:50:47 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 16 2017 $
+.Dd $Mdocdate: May 18 2017 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -128,6 +128,9 @@ the pass/block state of a packet remains unchanged.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
+The matching for some parameters can be inverted with the
+.Cm !\&
+operator.
 Certain parameters can be expressed as lists, in which case
 .Xr pfctl 8
 generates all needed rule combinations.
@@ -638,7 +641,7 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .It Cm prio Ar number
 Only match packets which have the given queueing priority assigned.
 .Pp
-.It Cm received-on Ar interface
+.It Oo Cm \&! Oc Ns Cm received-on Ar interface
 Only match packets which were received on the specified
 .Cm interface
 (or interface group).
@@ -733,12 +736,6 @@ to specify that packets must already
 be tagged with the given
 .Ar string
 in order to match the rule.
-Inverse tag matching can also be done
-by specifying the
-.Cm !\&
-operator before the
-.Cm tagged
-keyword.
 .Pp
 .It Cm tos Ar string | number
 This rule applies to packets with the specified TOS bits set.
@@ -2689,7 +2686,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "fragment" | "allow-opts" | "once" |
 		 "divert-packet" "port" port | "divert-reply" |
 		 "divert-to" host "port" port |
-                 "label" string | "tag" string | [ ! ] "tagged" string |
+                 "label" string | "tag" string | [ "!" ] "tagged" string |
                  "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "set queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" | "prio" number |
