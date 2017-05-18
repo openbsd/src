@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.147 2017/05/13 14:38:28 schwarze Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.148 2017/05/18 12:29:54 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 13 2017 $
+.Dd $Mdocdate: May 18 2017 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -145,14 +145,19 @@ environment variable,
 then the
 .Ev PKG_PATH
 environment variable.
+The special url
+.Sq installpath
+refers to the contents of
+.Xr installurl 5 .
 If neither
 .Ev TRUSTED_PKG_PATH
 nor
 .Ev PKG_PATH
 are defined,
 .Nm
-will build its path based on the contents of
-.Xr installurl 5 .
+will use
+.Sq ./:installpath
+as a default.
 Specifying
 .Ql -
 as a package name causes
