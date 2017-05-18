@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.223 2017/05/16 12:24:01 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.224 2017/05/18 10:56:45 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -54,6 +54,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_ipip.h>
 
 #if NPF > 0
 #include <net/pfvar.h>

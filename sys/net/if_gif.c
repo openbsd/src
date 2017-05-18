@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.95 2017/05/17 09:00:08 mpi Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.96 2017/05/18 10:56:45 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_ether.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_ipip.h>
 #include <netinet/ip_ipsp.h>
 
 #ifdef INET6
@@ -750,12 +751,12 @@ in_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;
 		/* We have a configured GIF */
-		return ipip_input(mp, offp, gifp, proto);
+		return ipip_input_gif(mp, offp, proto, af, gifp);
 	}
 
 inject:
 	/* No GIF interface was configured */
-	return ip4_input(mp, offp, proto, af);
+	return ipip_input(mp, offp, proto, af);
 }
 
 #ifdef INET6
@@ -875,11 +876,11 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto, int af)
 	        m->m_pkthdr.ph_ifidx = gifp->if_index;
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;
-		return ipip_input(mp, offp, gifp, proto);
+		return ipip_input_gif(mp, offp, proto, af, gifp);
 	}
 
 inject:
 	/* No GIF tunnel configured */
-	return ip4_input(mp, offp, proto, af);
+	return ipip_input(mp, offp, proto, af);
 }
 #endif /* INET6 */

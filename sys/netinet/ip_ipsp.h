@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.180 2017/05/06 15:55:15 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.181 2017/05/18 10:56:45 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -475,10 +475,6 @@ int	ipe4_attach(void);
 int	ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 int	ipe4_zeroize(struct tdb *);
 int	ipe4_input(struct mbuf *, struct tdb *, int, int);
-int	ipip_input(struct mbuf **, int *, struct ifnet *, int);
-int	ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
-
-int	ip4_input(struct mbuf **, int *, int, int);
 
 /* XF_AH */
 int 	ah_attach(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.78 2017/05/17 15:39:36 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.79 2017/05/18 10:56:45 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ struct protosw inetsw[] = {
 #if NGIF > 0
   .pr_input	= in_gif_input,
 #else
-  .pr_input	= ip4_input,
+  .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq,
@@ -256,7 +256,7 @@ struct protosw inetsw[] = {
 #if NGIF > 0
   .pr_input	= in_gif_input,
 #else
-  .pr_input	= ip4_input,
+  .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreq	= rip_usrreq, /* XXX */

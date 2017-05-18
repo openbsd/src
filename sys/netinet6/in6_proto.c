@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.93 2017/05/17 15:39:36 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.94 2017/05/18 10:56:45 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ struct protosw inet6sw[] = {
 #if NGIF > 0
   .pr_input	= in6_gif_input,
 #else
-  .pr_input	= ip4_input,
+  .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
@@ -258,7 +258,7 @@ struct protosw inet6sw[] = {
 #if NGIF > 0
   .pr_input	= in6_gif_input,
 #else
-  .pr_input	= ip4_input,
+  .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
