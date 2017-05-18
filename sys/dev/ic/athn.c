@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.96 2017/01/17 20:07:39 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.97 2017/05/18 08:35:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2597,7 +2597,8 @@ athn_clock_rate(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int clockrate;	/* MHz. */
 
-	if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+	if (ic->ic_bss->ni_chan != IEEE80211_CHAN_ANYC &&
+	    IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
 		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
 			clockrate = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
 		else
