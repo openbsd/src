@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.344 2017/05/06 16:35:59 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.345 2017/05/18 11:38:07 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -93,7 +93,6 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 #if NPF > 0

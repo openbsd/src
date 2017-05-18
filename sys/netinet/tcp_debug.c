@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.23 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.24 2017/05/18 11:38:07 mpi Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -92,7 +92,6 @@
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/tcp_fsm.h>
 

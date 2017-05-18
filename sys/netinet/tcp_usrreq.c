@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.150 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.151 2017/05/18 11:38:07 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
 #ifdef INET6

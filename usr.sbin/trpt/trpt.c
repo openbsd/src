@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.34 2016/12/23 03:08:32 lteo Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.35 2017/05/18 11:38:07 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 #define	TCPTIMERS
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
 #define	TANAMES
 #include <netinet/tcp_debug.h>
 
