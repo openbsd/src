@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.140 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.141 2017/05/18 07:08:45 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -450,6 +450,15 @@ wakeup_n(const volatile void *ident, int n)
 	for (p = TAILQ_FIRST(qp); p != NULL && n != 0; p = pnext) {
 		pnext = TAILQ_NEXT(p, p_runq);
 #ifdef DIAGNOSTIC
+		/*
+		 * If the rwlock passed to rwsleep() is contended, the
+		 * CPU will end up calling wakeup() between sleep_setup()
+		 * and sleep_finish().
+		 */
+		if (p == curproc) {
+			KASSERT(p->p_stat == SONPROC);
+			continue;
+		}
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("wakeup: p_stat is %d", (int)p->p_stat);
 #endif
