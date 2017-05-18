@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.196 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: locore.S,v 1.197 2017/05/18 15:41:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2735,6 +2735,48 @@ $spstrcpy_exit
 	bv	0(rp)
 	nop
 EXIT(spstrcpy)
+
+/*
+ * int spcopy32 (pa_space_t ssp, const uint32_t *src, pa_space_t dsp,
+ *		uint32_t *dst)
+ * do an atomic space to space copy of a futex
+ */
+LEAF_ENTRY(spcopy32)
+	extru	arg1, 31, 2, t3
+	extru	arg3, 31, 2, t4
+	comb,<>,n 0, t3, $spcopy32_misaligned
+	comb,<>,n 0, t4, $spcopy32_misaligned
+
+	ldo	64(sp), sp
+	stw	rp, HPPA_FRAME_CRP(sp)
+	/* setup fault handler */
+	mfctl	cr29, t1
+	ldw	CI_CURPROC(t1), t3
+	ldil	L%copy_on_fault, t2
+	ldw	P_ADDR(t3), r2
+	ldo	R%copy_on_fault(t2), t2
+	ldw	PCB_ONFAULT+U_PCB(r2), r1
+	stw	t2, PCB_ONFAULT+U_PCB(r2)
+
+	mtsp	arg0, sr1
+	mtsp	arg2, sr2
+
+	ldw	0(sr1, arg1), t1
+	stw	t1, 0(sr2, arg3)
+
+	mtsp	r0, sr1
+	mtsp	r0, sr2
+	/* reset fault handler */
+	stw	r1, PCB_ONFAULT+U_PCB(r2)
+	ldw	HPPA_FRAME_CRP(sp), rp
+	ldo	-64(sp), sp
+	bv	0(rp)
+	copy	r0, ret0
+
+$spcopy32_misaligned
+	bv	0(rp)
+	ldi	EFAULT, ret0
+EXIT(spcopy32)
 
 /*
  * int cpu_switchto(struct proc *old, struct proc *new)
