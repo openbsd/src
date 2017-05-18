@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_mutex.c,v 1.3 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: armv7_mutex.c,v 1.4 2017/05/18 01:27:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -43,7 +43,7 @@
  * raising semantics of the mutexes.
  */
 void
-__mtx_init(struct mutex *mtx, int wantipl)
+_mtx_init(struct mutex *mtx, int wantipl)
 {
 	mtx->mtx_oldipl = 0;
 	mtx->mtx_wantipl = wantipl;

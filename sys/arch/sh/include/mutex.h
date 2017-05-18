@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.3 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.4 2017/05/18 01:27:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -37,7 +37,7 @@ struct mutex {
 	int mtx_oldipl;
 };
 
-void __mtx_init(struct mutex *, int);
+void _mtx_init(struct mutex *, int);
 
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
 	{ 0, (ipl) << 4, 0 }
