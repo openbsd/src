@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.141 2017/05/11 08:00:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.142 2017/05/19 05:57:31 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3895,20 +3895,41 @@ vmx_handle_intr(struct vcpu *vcpu)
 /*
  * vmx_handle_hlt
  *
- * Handle HLT exits
+ * Handle HLT exits. HLTing the CPU with interrupts disabled will terminate
+ * the guest (no NMIs handled) by returning EIO to vmd.
+ *
+ * Paramters:
+ *  vcpu: The VCPU that executed the HLT instruction
+ *
+ * Return Values:
+ *  EINVAL: An error occurred extracting information from the VMCS
+ *  EIO: The guest halted with interrupts disabled
+ *  EAGAIN: Normal return to vmd - vmd should halt scheduling this VCPU
+ *   until a virtual interrupt is ready to inject
+ *
  */
 int
 vmx_handle_hlt(struct vcpu *vcpu)
 {
-	uint64_t insn_length;
+	uint64_t insn_length, rflags;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
 		return (EINVAL);
 	}
 
+	if (vmread(VMCS_GUEST_IA32_RFLAGS, &rflags)) {
+		printf("%s: can't obtain guest rflags\n", __func__);
+		return (EINVAL);
+	}
+
 	/* All HLT insns are 1 byte */
 	KASSERT(insn_length == 1);
+
+	if (!(rflags & PSL_I)) {
+		DPRINTF("%s: guest halted with interrupts disabled\n", __func__);
+		return (EIO);
+	}
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 	return (EAGAIN);
