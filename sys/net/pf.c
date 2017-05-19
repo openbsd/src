@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1024 2017/05/16 22:16:30 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1025 2017/05/19 10:43:05 rzalamena Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2064,12 +2064,18 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
 			break;
 
 		case MLD_LISTENER_QUERY:
-			*icmp_dir = PF_IN;
-			/* FALLTHROUGH */
 		case MLD_LISTENER_REPORT: {
 			struct mld_hdr *mld = &pd->hdr.mld;
 			u_int32_t h;
 
+			/*
+			 * Listener Report can be sent by clients
+			 * without an associated Listener Query.
+			 * In addition to that, when Report is sent as a
+			 * reply to a Query its source and destination
+			 * address are different.
+			 */
+			*icmp_dir = PF_IN;
 			*virtual_type = MLD_LISTENER_QUERY;
 			/* generate fake id for these messages */
 			h = mld->mld_addr.s6_addr32[0] ^
