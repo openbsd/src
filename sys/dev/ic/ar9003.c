@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.45 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.46 2017/05/19 11:42:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -934,7 +934,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	    BUS_DMASYNC_POSTREAD);
 
 	ds = mtod(bf->bf_m, struct ar_rx_status *);
-	if (!(ds->ds_status1 & AR_RXS1_DONE))
+	if (!(ds->ds_status11 & AR_RXS11_DONE))
 		return (EBUSY);
 
 	/* Check that it is a valid Rx status descriptor. */
@@ -1345,7 +1345,7 @@ ar9003_intr(struct athn_softc *sc)
 #endif
 		if (intr & (AR_ISR_RXMINTR | AR_ISR_RXINTM))
 			ar9003_rx_intr(sc, ATHN_QID_LP);
-		if (intr & (AR_ISR_LP_RXOK | AR_ISR_RXERR))
+		if (intr & (AR_ISR_LP_RXOK | AR_ISR_RXERR | AR_ISR_RXEOL))
 			ar9003_rx_intr(sc, ATHN_QID_LP);
 		if (intr & AR_ISR_HP_RXOK)
 			ar9003_rx_intr(sc, ATHN_QID_HP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003reg.h,v 1.8 2012/10/20 09:53:32 stsp Exp $	*/
+/*	$OpenBSD: ar9003reg.h,v 1.9 2017/05/19 11:42:48 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1157,7 +1157,6 @@ struct ar_rx_status {
 #define AR_RXI_DESC_ID_S		16
 
 /* Bits for ds_status1. */
-#define AR_RXS1_DONE			0x00000001
 #define AR_RXS1_RATE_M			0x000003fc
 #define AR_RXS1_RATE_S			2
 
@@ -1175,6 +1174,7 @@ struct ar_rx_status {
 #define AR_RXS5_RSSI_COMBINED_S		24
 
 /* Bits for ds_status11. */
+#define AR_RXS11_DONE			0x00000001
 #define AR_RXS11_FRAME_OK		0x00000002
 #define AR_RXS11_CRC_ERR		0x00000004
 #define AR_RXS11_DECRYPT_CRC_ERR	0x00000008
