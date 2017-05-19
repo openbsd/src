@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.37 2017/05/05 07:46:59 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.38 2017/05/19 06:29:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -682,6 +682,7 @@ struct vcpu {
 
 	struct vm *vc_parent;
 	uint32_t vc_id;
+	uint16_t vc_vpid;
 	u_int vc_state;
 	SLIST_ENTRY(vcpu) vc_vcpu_link;
 

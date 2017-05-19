@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.142 2017/05/19 05:57:31 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.143 2017/05/19 06:29:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -100,6 +100,10 @@ struct vmm_softc {
 	struct rwlock		vm_lock;
 	size_t			vm_ct;		/* number of in-memory VMs */
 	size_t			vm_idx;		/* next unique VM index */
+
+	struct rwlock		vpid_lock;
+	uint16_t		max_vpid;
+	uint8_t			vpids[512];	/* bitmap of used VPID/ASIDs */
 };
 
 int vmm_enabled(void);
@@ -165,6 +169,8 @@ int svm_get_guest_faulttype(void);
 int vmx_get_exit_qualification(uint64_t *);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
+int vmm_alloc_vpid(uint16_t *);
+void vmm_free_vpid(uint16_t);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
@@ -360,6 +366,15 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unknown\n");
 		sc->mode = VMM_MODE_UNKNOWN;
 	}
+
+	if (sc->mode == VMM_MODE_SVM || sc->mode == VMM_MODE_RVI) {
+		sc->max_vpid = ci->ci_vmm_cap.vcc_svm.svm_max_asid;
+	} else {
+		sc->max_vpid = 0xFFF;
+	}
+
+	bzero(&sc->vpids, sizeof(sc->vpids));
+	rw_init(&sc->vpid_lock, "vpidlock");
 
 	pool_init(&vm_pool, sizeof(struct vm), 0, IPL_NONE, PR_WAITOK,
 	    "vmpool", NULL);
@@ -1033,10 +1048,6 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	vmm_softc->vm_ct++;
 	vmm_softc->vm_idx++;
 
-	/*
-	 * XXX we use the vm_id for the VPID/ASID, so we need to prevent
-	 * wrapping around 65536/4096 entries here
-	 */
 	vm->vm_id = vmm_softc->vm_idx;
 	vm->vm_vcpu_ct = 0;
 	vm->vm_vcpus_running = 0;
@@ -1673,6 +1684,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 {
 	struct vmcb *vmcb;
 	int ret;
+	uint16_t asid;
 
 	vmcb = (struct vmcb *)vcpu->vc_control_va;
 
@@ -1728,7 +1740,14 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	svm_setmsrbr(vcpu, MSR_EFER);
 
 	/* Guest VCPU ASID */
-	vmcb->v_asid = vcpu->vc_parent->vm_id;
+	if (vmm_alloc_vpid(&asid)) {
+		DPRINTF("%s: could not allocate asid\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	vmcb->v_asid = asid;
+	vcpu->vc_vpid = asid;
 
 	/* TLB Control */
 	vmcb->v_tlb_control = 2;	/* Flush this guest's TLB entries */
@@ -1747,6 +1766,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmcb->v_efer |= (EFER_LME | EFER_LMA);
 	vmcb->v_cr4 |= CR4_PAE;
 
+exit:
 	return ret;
 }
 
@@ -1949,7 +1969,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
 	uint64_t msr, ctrlval, eptp, cr3;
-	uint16_t ctrl;
+	uint16_t ctrl, vpid;
 	struct vmx_msr_store *msr_store;
 
 	ret = 0;
@@ -2205,12 +2225,20 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
-		    IA32_VMX_ENABLE_VPID, 1))
-			if (vmwrite(VMCS_GUEST_VPID,
-			    (uint16_t)vcpu->vc_parent->vm_id)) {
+		    IA32_VMX_ENABLE_VPID, 1)) {
+			if (vmm_alloc_vpid(&vpid)) {
+				DPRINTF("%s: could not allocate VPID\n",
+				    __func__);
 				ret = EINVAL;
 				goto exit;
 			}
+			if (vmwrite(VMCS_GUEST_VPID, vpid)) {
+				ret = EINVAL;
+				goto exit;
+			}
+
+			vcpu->vc_vpid = vpid;
+		}
 	}
 
 	/*
@@ -2771,6 +2799,7 @@ vcpu_init(struct vcpu *vcpu)
 
 	vcpu->vc_virt_mode = vmm_softc->mode;
 	vcpu->vc_state = VCPU_STATE_STOPPED;
+	vcpu->vc_vpid = 0;
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
@@ -2806,6 +2835,9 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 	if (vcpu->vc_vmx_msr_entry_load_va)
 		km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
+
+	if (vcpu->vc_vmx_vpid_enabled)
+		vmm_free_vpid(vcpu->vc_vpid);
 }
 
 /*
@@ -2831,6 +2863,8 @@ vcpu_deinit_svm(struct vcpu *vcpu)
 	if (vcpu->vc_svm_ioio_va)
 		km_free((void *)vcpu->vc_svm_ioio_va, 3 * PAGE_SIZE, &kv_any,
 		    &vmm_kp_contig);
+
+	vmm_free_vpid(vcpu->vc_vpid);
 }
 
 /*
@@ -4978,6 +5012,72 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	/* XXX removed due to rot */
 	return (0);
+}
+
+/*
+ * vmm_alloc_vpid
+ *
+ * Sets the memory location pointed to by "vpid" to the next available VPID
+ * or ASID.
+ *
+ * Parameters:
+ *  vpid: Pointer to location to receive the next VPID/ASID
+ *
+ * Return Values:
+ *  0: The operation completed successfully
+ *  ENOMEM: No VPIDs/ASIDs were available. Content of 'vpid' is unchanged.
+ */
+int
+vmm_alloc_vpid(uint16_t *vpid)
+{
+	uint16_t i;
+	uint8_t idx, bit;
+	struct vmm_softc *sc = vmm_softc;
+
+	rw_enter_write(&vmm_softc->vpid_lock);	
+	for (i = 1; i <= sc->max_vpid; i++) {
+		idx = i / 8;
+		bit = i - (idx * 8);
+
+		if (!(sc->vpids[idx] & (1 << bit))) {
+			sc->vpids[idx] |= (1 << bit);
+			*vpid = i;
+			DPRINTF("%s: allocated VPID/ASID %d\n", __func__,
+			    i);
+			rw_exit_write(&vmm_softc->vpid_lock);	
+			return 0;
+		}
+	}
+
+	printf("%s: no available %ss\n", __func__,
+	    (sc->mode == VMM_MODE_EPT || sc->mode == VMM_MODE_VMX) ? "VPID" :
+	    "ASID");
+
+	rw_exit_write(&vmm_softc->vpid_lock);	
+	return ENOMEM;
+}
+
+/*
+ * vmm_free_vpid
+ *
+ * Frees the VPID/ASID id supplied in "vpid".
+ *
+ * Parameters:
+ *  vpid: VPID/ASID to free.
+ */
+void
+vmm_free_vpid(uint16_t vpid)
+{
+	uint8_t idx, bit;
+	struct vmm_softc *sc = vmm_softc;
+
+	rw_enter_write(&vmm_softc->vpid_lock);
+	idx = vpid / 8;
+	bit = vpid - (idx * 8);
+	sc->vpids[idx] &= ~(1 << bit);
+
+	DPRINTF("%s: freed VPID/ASID %d\n", __func__, vpid);
+	rw_exit_write(&vmm_softc->vpid_lock);
 }
 
 /*

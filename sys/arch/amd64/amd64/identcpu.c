@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.84 2017/05/10 12:36:35 tb Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.85 2017/05/19 06:29:21 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -950,8 +950,8 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		CPUID(0x8000000A, dummy, ci->ci_vmm_cap.vcc_svm.svm_max_asid,
 		    dummy, dummy);
 
-		if (ci->ci_vmm_cap.vcc_svm.svm_max_asid > 0xFFFF)
-			ci->ci_vmm_cap.vcc_svm.svm_max_asid = 0xFFFF;
+		if (ci->ci_vmm_cap.vcc_svm.svm_max_asid > 0xFFF)
+			ci->ci_vmm_cap.vcc_svm.svm_max_asid = 0xFFF;
 	}
 
 	/*
