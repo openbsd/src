@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.26 2017/02/01 12:46:40 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.27 2017/05/19 10:53:33 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1023,7 +1023,12 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 
 		/* Use AMMR rate for data. */
 		txd->txdw4 |= htole32(R92C_TXDW4_DRVRATE);
-		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, ni->ni_txrate));
+		if (ic->ic_fixed_rate != -1)
+			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE,
+			    ic->ic_fixed_rate));
+		else
+			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE,
+			    ni->ni_txrate));
 		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE_FBLIMIT, 0x1f));
 	} else {
 		txd->txdw1 |= htole32(
