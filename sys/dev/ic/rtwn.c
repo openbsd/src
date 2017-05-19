@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.20 2017/05/08 18:19:02 mestre Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.21 2017/05/19 18:15:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2154,7 +2154,7 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 		uint32_t	adda[16];
 		uint8_t		txpause;
 		uint8_t		bcn_ctrl;
-		uint8_t		ustime_tsf;
+		uint8_t		bcn_ctrl1;
 		uint32_t	gpio_muxcfg;
 		uint32_t	ofdm0_trxpathena;
 		uint32_t	ofdm0_trmuxpar;
@@ -2175,7 +2175,7 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 
 		iq_cal_regs.txpause = rtwn_read_1(sc, R92C_TXPAUSE);
 		iq_cal_regs.bcn_ctrl = rtwn_read_1(sc, R92C_BCN_CTRL);
-		iq_cal_regs.ustime_tsf = rtwn_read_1(sc, R92C_USTIME_TSF);
+		iq_cal_regs.bcn_ctrl1 = rtwn_read_1(sc, R92C_BCN_CTRL1);
 		iq_cal_regs.gpio_muxcfg = rtwn_read_4(sc, R92C_GPIO_MUXCFG);
 	}
 
@@ -2214,10 +2214,12 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 	}
 
 	rtwn_write_1(sc, R92C_TXPAUSE, 0x3f);
-	rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs.bcn_ctrl & ~(0x08));
-	rtwn_write_1(sc, R92C_USTIME_TSF, iq_cal_regs.ustime_tsf & ~(0x08));
+	rtwn_write_1(sc, R92C_BCN_CTRL,
+	    iq_cal_regs.bcn_ctrl & ~(R92C_BCN_CTRL_EN_BCN));
+	rtwn_write_1(sc, R92C_BCN_CTRL1,
+	    iq_cal_regs.bcn_ctrl1 & ~(R92C_BCN_CTRL_EN_BCN));
 	rtwn_write_1(sc, R92C_GPIO_MUXCFG,
-	    iq_cal_regs.gpio_muxcfg & ~(0x20));
+	    iq_cal_regs.gpio_muxcfg & ~(R92C_GPIO_MUXCFG_ENBT));
 
 	rtwn_bb_write(sc, 0x0b68, 0x00080000);
 	if (sc->ntxchains > 1)
@@ -2292,7 +2294,7 @@ rtwn_iq_calib_run(struct rtwn_softc *sc, int n, uint16_t tx[2][2],
 
 		rtwn_write_1(sc, R92C_TXPAUSE, iq_cal_regs.txpause);
 		rtwn_write_1(sc, R92C_BCN_CTRL, iq_cal_regs.bcn_ctrl);
-		rtwn_write_1(sc, R92C_USTIME_TSF, iq_cal_regs.ustime_tsf);
+		rtwn_write_1(sc, R92C_BCN_CTRL1, iq_cal_regs.bcn_ctrl1);
 		rtwn_write_4(sc, R92C_GPIO_MUXCFG, iq_cal_regs.gpio_muxcfg);
 	}
 }
