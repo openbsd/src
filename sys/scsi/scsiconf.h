@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.164 2016/03/10 13:56:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.165 2017/05/19 08:31:43 sf Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -262,6 +262,12 @@ TAILQ_HEAD(scsi_runq, scsi_iohandler);
 struct scsi_iopool {
 	/* access to the IOs */
 	void	*iocookie;
+	/*
+	 * Get an IO. This must reserve all resources that are necessary
+	 * to send the transfer to the device. The resources must stay
+	 * reserved during the lifetime of the IO, as the IO may be re-used
+	 * without being io_put(), first.
+	 */
 	void	*(*io_get)(void *);
 	void	 (*io_put)(void *, void *);
 
@@ -297,7 +303,7 @@ struct scsi_link {
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
-	u_int16_t openings;		/* available operations */
+	u_int16_t openings;		/* available operations per lun */
 	u_int64_t port_wwn;		/* world wide name of port */
 	u_int64_t node_wwn;		/* world wide name of node */
 	u_int16_t adapter_target;	/* what are we on the scsi bus */
