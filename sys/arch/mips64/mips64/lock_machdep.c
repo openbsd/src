@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.4 2017/05/19 00:52:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -82,7 +82,7 @@ __mp_lock(struct __mp_lock *mpl)
 	 */
 	while (1) {
 		sr = disableintr();
-		if (__cpu_cas(&mpl->mpl_count, 0, 1) == 0) {
+		if (atomic_cas_ulong(&mpl->mpl_count, 0, 1) == 0) {
 			mips_sync();
 			mpl->mpl_cpu = ci;
 		}
