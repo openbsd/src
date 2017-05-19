@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.306 2017/04/19 05:27:00 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.307 2017/05/19 12:54:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -70,16 +70,16 @@ struct space_allocation {
 
 /* entries for swap and var are changed by editor_allocspace() */
 struct space_allocation alloc_big[] = {
-	{   MEG(80),         GIG(1),   5, "/"		},
+	{  MEG(150),         GIG(1),   5, "/"		},
 	{   MEG(80),       MEG(256),  10, "swap"	},
 	{  MEG(120),         GIG(4),   8, "/tmp"	},
 	{   MEG(80),         GIG(4),  13, "/var"	},
 	{  MEG(900),         GIG(2),   5, "/usr"	},
 	{  MEG(512),         GIG(1),   3, "/usr/X11R6"	},
-	{    GIG(2),        GIG(10),  10, "/usr/local"	},
+	{ MEG(1200),        GIG(10),  15, "/usr/local"	},
 	{    GIG(1),         GIG(2),   2, "/usr/src"	},
 	{    GIG(3),         GIG(6),   4, "/usr/obj"	},
-	{    GIG(1),       GIG(300),  40, "/home"	}
+	{    GIG(1),       GIG(300),  35, "/home"	}
 	/* Anything beyond this leave for the user to decide */
 };
 
