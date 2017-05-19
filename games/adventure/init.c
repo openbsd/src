@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.15 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: init.c,v 1.16 2017/05/19 08:22:53 tb Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -66,11 +66,11 @@ decr(char a, char b, char c, char d, char e)
 {
 	static char buf[6];
 
-	buf[0] = a - '+';
-	buf[1] = b - '-';
-	buf[2] = c - '#';
-	buf[3] = d - '&';
-	buf[4] = e - '%';
+	buf[0] = a + '+';
+	buf[1] = b + '-';
+	buf[2] = c + '#';
+	buf[3] = d + '&';
+	buf[4] = e + '%';
 	buf[5] = 0;
 	return buf;
 }

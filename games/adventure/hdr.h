@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdr.h,v 1.16 2017/04/10 13:56:16 fcambus Exp $	*/
+/*	$OpenBSD: hdr.h,v 1.17 2017/05/19 08:22:53 tb Exp $	*/
 /*	$NetBSD: hdr.h,v 1.2 1995/03/21 12:05:02 cgd Exp $	*/
 
 /*-
@@ -156,4 +156,4 @@ int	turns, lmwarn, iwest, knfloc, detail,   /* various flags & counters */
 int	demo, limit;
 
 /* We need to get a little tricky to avoid strings */
-#define DECR(a,b,c,d,e) decr(*#a+'+',*#b+'-',*#c+'#',*#d+'&',*#e+'%')
+#define DECR(a,b,c,d,e) decr(*#a-'+',*#b-'-',*#c-'#',*#d-'&',*#e-'%')
