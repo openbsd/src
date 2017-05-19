@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.27 2017/05/19 10:53:33 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.28 2017/05/19 11:30:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1761,9 +1761,8 @@ rtwn_tx_report(struct rtwn_pci_softc *sc, uint8_t *buf, int len)
 	over = (rpt->rptb6 & R92C_RPTB6_RETRY_OVER);
 
 	if (packets > 0) {
-		if (tx_ok)
-			sc->amn.amn_txcnt += packets;
-		if (tries > 1 || drop || expire || over)
+		sc->amn.amn_txcnt += packets;
+		if (!tx_ok || tries > 1 || drop || expire || over)
 			sc->amn.amn_retrycnt++;
 	}
 }
