@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.42 2015/09/13 14:58:20 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.43 2017/05/19 00:49:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -92,11 +92,15 @@ void	intr_barrier(void *);
 static __inline int
 spllower(int ncpl)
 {
-	register int ocpl asm("r28") = ncpl;
-	__asm volatile("copy  %0, %%arg0\n\tbreak %1, %2"
-	    : "+r" (ocpl) : "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SPLLOWER)
-	    : "r26", "memory");
-	return (ocpl);
+	register int arg0 asm("r26") = ncpl;
+	register int ret0 asm("r28");
+
+	__asm volatile("break %1, %2"
+	    : "=r" (ret0)
+	    : "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SPLLOWER), "r" (arg0)
+	    : "memory");
+
+	return (ret0);
 }
 
 static __inline int
