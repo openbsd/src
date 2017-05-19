@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.26 2016/05/23 20:11:49 deraadt Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.27 2017/05/19 00:50:24 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -254,6 +254,31 @@ NON_LEAF(copyout, FRAMESZ(CF_SZ), ra)
 	j	ra
 	 move	v0, zero
 END(copyout)
+
+/*
+ * Copy an aligned 32-bit word atomically from user space into the kernel
+ *	copyin32(from, to)
+ *		uint32_t *from;	(user source address)
+ *		uint32_t *to;	(kernel destination address)
+ */
+NON_LEAF(copyin32, FRAMESZ(CF_SZ), ra)
+	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
+	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
+	PTR_S	ra, CF_RA_OFFS(sp)
+	blt	a0, zero, _copyerr	# make sure address is in user space
+	 li	v0, KT_COPYERR
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t3, CI_CURPROCPADDR(t1)
+	sw	v0, PCB_ONFAULT(t3)
+
+	lw	v1, 0(a0)
+	sw	v1, 0(a1)
+
+	sw	zero, PCB_ONFAULT(t3)
+	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
+	j	ra
+	 move	v0, zero
+END(copyin32)
 
 _copyerr:
 	PTR_L	ra, CF_RA_OFFS(sp)
