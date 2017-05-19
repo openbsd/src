@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.561 2017/05/18 11:50:47 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.562 2017/05/19 09:06:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 18 2017 $
+.Dd $Mdocdate: May 19 2017 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2668,7 +2668,7 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "skip on" ifspec ] |
                  [ "debug" ( "emerg" | "alert" | "crit" | "err" |
                  "warning" | "notice" | "info" | "debug" ) ] |
-		 [ "reassemble" ( "yes" | "no" ) [ "no-df" ] ] )
+                 [ "reassemble" ( "yes" | "no" ) [ "no-df" ] ] )
 
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" [ "(" logopts ")"] ] [ "quick" ]
@@ -2684,22 +2684,22 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  ( "no" | "keep" | "modulate" | "synproxy" ) "state"
                  [ "(" state-opts ")" ] | "scrub" "(" scrubopts ")" |
                  "fragment" | "allow-opts" | "once" |
-		 "divert-packet" "port" port | "divert-reply" |
-		 "divert-to" host "port" port |
+                 "divert-packet" "port" port | "divert-reply" |
+                 "divert-to" host "port" port |
                  "label" string | "tag" string | [ "!" ] "tagged" string |
                  "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "set queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" | "prio" number |
-		 "af-to" af "from" ( redirhost | "{" redirhost-list "}" )
-		 [ "to" ( redirhost | "{" redirhost-list "}" ) ] |
-		 "binat-to" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] [ pooltype ] |
-		 "rdr-to" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] [ pooltype ] |
-		 "nat-to" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] [ pooltype ] [ "static-port" ] |
-		 [ route ] | [ "set tos" tos ] |
-		 [ [ "!" ] "received-on" ( interface-name | interface-group ) ]
+                 "af-to" af "from" ( redirhost | "{" redirhost-list "}" )
+                 [ "to" ( redirhost | "{" redirhost-list "}" ) ] |
+                 "binat-to" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] [ pooltype ] |
+                 "rdr-to" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] [ pooltype ] |
+                 "nat-to" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] [ pooltype ] [ "static-port" ] |
+                 [ route ] | [ "set tos" tos ] |
+                 [ [ "!" ] "received-on" ( interface-name | interface-group ) ]
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
