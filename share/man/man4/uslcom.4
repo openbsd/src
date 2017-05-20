@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uslcom.4,v 1.12 2016/03/31 12:41:46 reyk Exp $
+.\"	$OpenBSD: uslcom.4,v 1.13 2017/05/20 10:25:46 kettenis Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2016 $
+.Dd $Mdocdate: May 20 2017 $
 .Dt USLCOM 4
 .Os
 .Sh NAME
@@ -28,6 +28,10 @@ The
 .Nm
 driver supports Silicon Laboratories CP2101/CP2102/CP2103/CP2104/CP2105
 based serial adapters.
+.Pp
+The CP2101/CP2102/CP2103 devices only support a variaty of baud rates
+up to 921600.
+CP2104 and CP2105 devices support any baud rate up to 2 Mbps.
 .Pp
 The following devices should work with the
 .Nm
