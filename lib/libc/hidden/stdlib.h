@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.10 2017/04/10 05:45:02 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.11 2017/05/20 12:48:56 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ PROTO_DEPRECATED(getloadavg);
 PROTO_DEPRECATED(getprogname);
 PROTO_DEPRECATED(getsubopt);
 PROTO_DEPRECATED(grantpt);
-PROTO_DEPRECATED(heapsort);
+PROTO_NORMAL(heapsort);
 PROTO_DEPRECATED(initstate);
 PROTO_DEPRECATED(jrand48);
 PROTO_DEPRECATED(l64a);

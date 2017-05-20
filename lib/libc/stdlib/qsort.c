@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.15 2017/05/17 16:58:20 millert Exp $ */
+/*	$OpenBSD: qsort.c,v 1.16 2017/05/20 12:48:56 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,18 @@ static __inline void	 swapfunc(char *, char *, size_t, int);
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
+ *
+ * This version differs from Bentley & McIlroy in the following ways:
+ *   1. The partition value is swapped into a[0] instead of being
+ *	stored out of line.
+ *
+ *   2. It uses David Musser's introsort algorithm to fall back to
+ *	heapsort(3) when the recursion depth reaches 2*lg(n + 1).
+ *	This avoids quicksort's quadratic behavior for pathological
+ *	input without appreciably changing the average run time.
+ *
+ *   3. Tail recursion is eliminated when sorting the larger of two
+ *	subpartitions to save stack space.
  */
 #define swapcode(TYPE, parmi, parmj, n) { 		\
 	size_t i = (n) / sizeof (TYPE); 		\
@@ -80,15 +92,20 @@ med3(char *a, char *b, char *c, int (*cmp)(const void *, const void *))
               :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
 }
 
-void
-qsort(void *aa, size_t n, size_t es, int (*cmp)(const void *, const void *))
+static void
+introsort(char *a, size_t n, size_t es, size_t maxdepth,
+    int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int cmp_result, swaptype;
-	size_t d, r, s;
-	char *a = aa;
+	size_t r, s;
 
-loop:	SWAPINIT(a, es);
+loop:	if (maxdepth == 0) {
+		if (heapsort(a, n, es, cmp) == 0)
+			return;
+	}
+	maxdepth--;
+	SWAPINIT(a, es);
 	if (n < 7) {
 		for (pm = a + es; pm < a + n * es; pm += es)
 			for (pl = pm; pl > a && cmp(pl - es, pl) > 0;
@@ -101,16 +118,15 @@ loop:	SWAPINIT(a, es);
 		pl = a;
 		pn = a + (n - 1) * es;
 		if (n > 40) {
-			d = (n / 8) * es;
-			pl = med3(pl, pl + d, pl + 2 * d, cmp);
-			pm = med3(pm - d, pm, pm + d, cmp);
-			pn = med3(pn - 2 * d, pn - d, pn, cmp);
+			s = (n / 8) * es;
+			pl = med3(pl, pl + s, pl + 2 * s, cmp);
+			pm = med3(pm - s, pm, pm + s, cmp);
+			pn = med3(pn - 2 * s, pn - s, pn, cmp);
 		}
 		pm = med3(pl, pm, pn, cmp);
 	}
 	swap(a, pm);
 	pa = pb = a + es;
-
 	pc = pd = a + (n - 1) * es;
 	for (;;) {
 		while (pb <= pc && (cmp_result = cmp(pb, a)) <= 0) {
@@ -149,7 +165,7 @@ loop:	SWAPINIT(a, es);
 		/* Recurse for 1st side, iterate for 2nd side. */
 		if (s > es) {
 			if (r > es)
-				qsort(a, r / es, es, cmp);
+				introsort(a, r / es, es, maxdepth, cmp);
 			a = pn - s;
 			n = s / es;
 			goto loop;
@@ -158,10 +174,24 @@ loop:	SWAPINIT(a, es);
 		/* Recurse for 2nd side, iterate for 1st side. */
 		if (r > es) {
 			if (s > es)
-				qsort(pn - s, s / es, es, cmp);
+				introsort(pn - s, s / es, es, maxdepth, cmp);
 			n = r / es;
 			goto loop;
 		}
 	}
 }
+
+void
+qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *))
+{
+	size_t i, maxdepth = 0;
+
+	/* Approximate 2*ceil(lg(n + 1)) */
+	for (i = n; i > 0; i >>= 1)
+		maxdepth++;
+	maxdepth *= 2;
+
+	introsort(a, n, es, maxdepth, cmp);
+}
+
 DEF_STRONG(qsort);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: heapsort.c,v 1.10 2016/10/22 19:19:34 tb Exp $ */
+/*	$OpenBSD: heapsort.c,v 1.11 2017/05/20 12:48:56 millert Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -172,3 +172,4 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 	free(k);
 	return (0);
 }
+DEF_WEAK(heapsort);
