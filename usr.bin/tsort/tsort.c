@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.35 2016/01/05 16:10:57 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.36 2017/05/20 09:31:19 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -92,15 +92,15 @@ struct node {
 	unsigned int refs;	/* Number of arcs left, coming into this node.
 				 * Note that nodes with a null count can't
 				 * be part of cycles.  */
-	struct link  *arcs;	/* List of forward arcs.  */
-
 	unsigned int order; 	/* Order of nodes according to a hint file.  */
+
+	struct link  *arcs;	/* List of forward arcs.  */
 
 	/* Cycle detection algorithms build a free path of nodes.  */
 	struct node  *from; 	/* Previous node in the current path.  */
-
-	unsigned int mark;	/* Mark processed nodes in cycle discovery.  */
 	struct link  *traverse;	/* Next link to traverse when backtracking.  */
+	unsigned int mark;	/* Mark processed nodes in cycle discovery.  */
+
 	char         k[1];	/* Name of this node.  */
 };
 
@@ -113,7 +113,7 @@ struct array {
 
 static void nodes_init(struct ohash *);
 static struct node *node_lookup(struct ohash *, const char *, const char *);
-static void usage(void);
+static __dead void usage(void);
 static struct node *new_node(const char *, const char *);
 
 static unsigned int read_pairs(FILE *, struct ohash *, int,
