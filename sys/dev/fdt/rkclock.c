@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.5 2017/05/15 23:04:52 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.6 2017/05/20 23:12:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,6 +31,7 @@
 /* Registers */
 #define RK3399_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
 #define RK3399_CRU_GPLL_CON(i)		(0x0080 + (i) * 4)
+#define RK3399_CRU_NPLL_CON(i)		(0x00a0 + (i) * 4)
 #define RK3399_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define RK3399_CRU_CLKGATE_CON(i)	(0x0300 + (i) * 4)
 #define RK3399_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
@@ -185,6 +186,37 @@ rk3399_get_frequency(void *cookie, uint32_t *cells)
 		return rk3399_get_pll(sc, RK3399_CRU_CPLL_CON(0));
 	case RK3399_PLL_GPLL:
 		return rk3399_get_pll(sc, RK3399_CRU_GPLL_CON(0));
+	case RK3399_PLL_NPLL:
+		return rk3399_get_pll(sc, RK3399_CRU_NPLL_CON(0));
+	case RK3399_CLK_SDMMC:
+		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(16));
+		mux = (reg >> 8) & 0x3;
+		div_con = reg & 0x7f;
+		switch (mux) {
+		case 0:
+			idx = RK3399_PLL_CPLL;
+			break;
+		case 1:
+			idx = RK3399_PLL_GPLL;
+			break;
+		case 2:
+			idx = RK3399_PLL_NPLL;
+			break;
+#ifdef notyet
+		case 3:
+			idx = RK3399_PLL_PPLL;
+			break;
+		case 4:
+			idx = RK3399_USB_480M;
+			break;
+#endif
+		case 5:
+			return 24000000 / (div_con + 1);
+		default:
+			return 0;
+		}
+		return rk3399_get_frequency(sc, &idx) / (div_con + 1);
+		break;
 	case RK3399_CLK_UART0:
 		reg = HREAD4(sc, RK3399_CRU_CLKSEL_CON(33));
 		mux = (reg >> 8) & 0x3;
