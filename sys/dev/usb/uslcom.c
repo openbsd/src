@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.39 2016/09/02 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.40 2017/05/20 10:13:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -438,7 +438,7 @@ uslcom_param(void *vsc, int portno, struct termios *t)
 	uint32_t baudrate, flowctrl[4];
 	int data;
 
-	if (t->c_ospeed <= 0 || t->c_ospeed > 921600)
+	if (t->c_ospeed <= 0 || t->c_ospeed > 2000000)
 		return (EINVAL);
 
 	baudrate = t->c_ospeed;
