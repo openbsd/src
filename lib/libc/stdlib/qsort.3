@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.19 2016/03/12 21:31:22 mmcc Exp $
+.\"	$OpenBSD: qsort.3,v 1.20 2017/05/20 13:09:01 millert Exp $
 .\"
-.Dd $Mdocdate: March 12 2016 $
+.Dd $Mdocdate: May 20 2017 $
 .Dt QSORT 3
 .Os
 .Sh NAME
@@ -111,7 +111,9 @@ Algorithm Q.
 .Fn qsort
 takes O N lg N average time.
 This implementation uses median selection to avoid its
-O N**2 worst-case behavior.
+O N**2 worst-case behavior and will fall back to
+.Fn heapsort
+if the recursion depth exceeds 2 lg N.
 .Pp
 The
 .Fn heapsort
@@ -208,6 +210,14 @@ were unable to allocate memory.
 .%V Vol. 23(11)
 .%P pp. 1249\-1265
 .%D November 1993
+.Re
+.Rs
+.%A Musser, D.
+.%T "Introspective Sorting and Selection Algorithms"
+.%J "Software \- Practice and Experience"
+.%V Vol. 27(8)
+.%P pp. 983\-993
+.%D August 1997
 .Re
 .Sh STANDARDS
 Previous versions of
