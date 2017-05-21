@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac_var.h,v 1.3 2016/10/08 11:20:27 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac_var.h,v 1.4 2017/05/21 11:52:04 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac_var.h,v 1.6 2014/11/22 18:31:03 jmcneill Exp $ */
 
 /*-
@@ -88,6 +88,8 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
 	uint16_t sc_mii_clk;
+
+	void (*sc_statchg)(struct device *);
 };
 
 void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.6 2017/05/07 14:11:45 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.7 2017/05/21 11:52:04 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -730,6 +730,9 @@ dwc_gmac_miibus_statchg(struct device *dev)
 	}
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_MAC_FLOWCTRL, flow);
+
+	if (sc->sc_statchg)
+		sc->sc_statchg(dev);
 
 #ifdef DWC_GMAC_DEBUG
 	printf("%s: setting MAC conf register: %08x\n",

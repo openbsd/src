@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge_fdt.c,v 1.2 2017/05/07 12:09:46 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge_fdt.c,v 1.3 2017/05/21 11:52:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -222,11 +222,16 @@ dwge_fdt_attach_allwinner(struct dwge_fdt_softc *sc)
 #define  RK3399_GMAC_PHY_INTF_SEL_RMII	((0x7 << 9) << 16 | (0x4 << 9))
 #define  RK3399_RMII_MODE_RMII		((1 << 6) << 16 | (1 << 6))
 #define  RK3399_RMII_MODE_MII		((1 << 6) << 16 | (0 << 6))
+#define  RK3399_GMAC_CLK_SEL_125	((0x3 << 4) << 16 | (0x0 << 4))
+#define  RK3399_GMAC_CLK_SEL_25		((0x3 << 4) << 16 | (0x3 << 4))
+#define  RK3399_GMAC_CLK_SEL_2_5	((0x3 << 4) << 16 | (0x2 << 4))
 #define RK3399_GRF_SOC_CON6	0xc218
 #define  RK3399_GMAC_RXCLK_DLY_ENA	((1 << 15) << 16 | (1 << 15))
 #define  RK3399_GMAC_CLK_RX_DL_CFG(val) ((0x7f << 8) << 16 | ((val) << 8))
 #define  RK3399_GMAC_TXCLK_DLY_ENA	((1 << 7) << 16 | (1 << 7))
 #define  RK3399_GMAC_CLK_TX_DL_CFG(val) ((0x7f << 0) << 16 | ((val) << 0))
+
+void	dwge_fdt_statchg_rockchip(struct device *);
 
 void
 dwge_fdt_attach_rockchip(struct dwge_fdt_softc *sc)
@@ -255,4 +260,34 @@ dwge_fdt_attach_rockchip(struct dwge_fdt_softc *sc)
 	regmap_write_4(rm, RK3399_GRF_SOC_CON6,
 	    RK3399_GMAC_TXCLK_DLY_ENA | RK3399_GMAC_CLK_TX_DL_CFG(tx_delay) |
 	    RK3399_GMAC_RXCLK_DLY_ENA | RK3399_GMAC_CLK_RX_DL_CFG(rx_delay));
+
+	sc->sc_core.sc_statchg = dwge_fdt_statchg_rockchip;
+}
+
+void
+dwge_fdt_statchg_rockchip(struct device *dev)
+{
+	struct dwge_fdt_softc *sc = (struct dwge_fdt_softc *)dev;
+	struct regmap *rm;
+	uint32_t grf;
+	uint32_t gmac_clk_sel = 0;
+
+	grf = OF_getpropint(sc->sc_node, "rockchip,grf", 0);
+	rm = regmap_byphandle(grf);
+	if (rm == NULL)
+		return;
+
+	switch (IFM_SUBTYPE(sc->sc_core.sc_mii.mii_media_active)) {
+	case IFM_10_T:
+		gmac_clk_sel = RK3399_GMAC_CLK_SEL_2_5;
+		break;
+	case IFM_100_TX:
+		gmac_clk_sel = RK3399_GMAC_CLK_SEL_25;
+		break;
+	case IFM_1000_T:
+		gmac_clk_sel = RK3399_GMAC_CLK_SEL_125;
+		break;
+	}
+
+	regmap_write_4(rm, RK3399_GRF_SOC_CON5, gmac_clk_sel);
 }
