@@ -1,4 +1,4 @@
-/* $OpenBSD: exclock.c,v 1.6 2017/03/12 12:44:35 kettenis Exp $ */
+/* $OpenBSD: exclock.c,v 1.7 2017/05/21 17:49:45 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -104,9 +104,12 @@ struct cfdriver exclock_cd = {
 	NULL, "exclock", DV_DULL
 };
 
-uint32_t exclock_get_frequency(void *, uint32_t *);
-int	exclock_set_frequency(void *, uint32_t *, uint32_t);
-void	exclock_enable(void *, uint32_t *, int);
+uint32_t exynos5250_get_frequency(void *, uint32_t *);
+int	exynos5250_set_frequency(void *, uint32_t *, uint32_t);
+void	exynos5250_enable(void *, uint32_t *, int);
+uint32_t exynos5420_get_frequency(void *, uint32_t *);
+int	exynos5420_set_frequency(void *, uint32_t *, uint32_t);
+void	exynos5420_enable(void *, uint32_t *, int);
 
 int
 exclock_match(struct device *parent, void *match, void *aux)
@@ -134,18 +137,31 @@ exclock_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Exynos 5 CPU freq: %d MHz\n",
 	    exclock_get_armclk() / 1000);
 
+	if (OF_is_compatible(faa->fa_node, "samsung,exynos5250-clock")) {
+		/* Exynos 5250 */
+		sc->sc_cd.cd_enable = exynos5250_enable;
+		sc->sc_cd.cd_get_frequency = exynos5250_get_frequency;
+		sc->sc_cd.cd_set_frequency = exynos5250_set_frequency;
+	} else {
+		/* Exynos 5420/5800 */
+		sc->sc_cd.cd_enable = exynos5420_enable;
+		sc->sc_cd.cd_get_frequency = exynos5420_get_frequency;
+		sc->sc_cd.cd_set_frequency = exynos5420_set_frequency;
+	}
+
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
-	sc->sc_cd.cd_enable = exclock_enable;
-	sc->sc_cd.cd_get_frequency = exclock_get_frequency;
-	sc->sc_cd.cd_set_frequency = exclock_set_frequency;
 	clock_register(&sc->sc_cd);
 
 	cpu_cpuspeed = exclock_cpuspeed;
 }
 
+/*
+ * Exynos 5250
+ */
+
 uint32_t
-exclock_get_frequency(void *cookie, uint32_t *cells)
+exynos5250_get_frequency(void *cookie, uint32_t *cells)
 {
 	uint32_t idx = cells[0];
 
@@ -154,7 +170,7 @@ exclock_get_frequency(void *cookie, uint32_t *cells)
 }
 
 int
-exclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+exynos5250_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	uint32_t idx = cells[0];
 
@@ -163,9 +179,121 @@ exclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 }
 
 void
-exclock_enable(void *cookie, uint32_t *cells, int on)
+exynos5250_enable(void *cookie, uint32_t *cells, int on)
 {
 	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+/*
+ * Exynos 5420/5800
+ */
+
+/* Clocks */
+#define EXYNOS5420_CLK_FIN_PLL		1
+#define EXYNOS5420_CLK_FOUT_RPLL	6
+#define EXYNOS5420_CLK_FOUT_SPLL	8
+#define EXYNOS5420_CLK_SCLK_MMC2	134
+#define EXYNOS5420_CLK_MMC2		353
+#define EXYNOS5420_CLK_SCLK_SPLL	-1
+
+/* Registers */
+#define EXYNOS5420_RPLL_CON0		0x10140
+#define EXYNOS5420_RPLL_CON1		0x10144
+#define EXYNOS5420_SPLL_CON0		0x10160
+#define EXYNOS5420_SRC_TOP6		0x10218
+#define EXYNOS5420_DIV_FSYS1		0x1054c
+#define EXYNOS5420_SRC_FSYS		0x10244
+#define EXYNOS5420_GATE_TOP_SCLK_FSYS	0x10840
+#define EXYNOS5420_GATE_IP_FSYS		0x10944
+
+uint32_t
+exynos5420_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct exclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t reg, div, mux;
+	uint32_t kdiv, mdiv, pdiv, sdiv;
+	uint64_t freq;
+
+	switch (idx) {
+	case EXYNOS5420_CLK_FIN_PLL:
+		return 24000000;
+	case EXYNOS5420_CLK_SCLK_MMC2:
+		reg = HREAD4(sc, EXYNOS5420_DIV_FSYS1);
+		div = ((reg >> 20) & ((1 << 10) - 1)) + 1;
+		reg = HREAD4(sc, EXYNOS5420_SRC_FSYS);
+		mux = ((reg >> 16) & ((1 << 3) - 1));
+		switch (mux) {
+		case 0:
+			idx = EXYNOS5420_CLK_FIN_PLL;
+			break;
+		case 4:
+			idx = EXYNOS5420_CLK_SCLK_SPLL;
+			break;
+		default:
+			idx = 0;
+			break;
+		}
+		return exynos5420_get_frequency(sc, &idx) / div;
+	case EXYNOS5420_CLK_SCLK_SPLL:
+		reg = HREAD4(sc, EXYNOS5420_SRC_TOP6);
+		mux = ((reg >> 8) & ((1 << 1) - 1));
+		switch (mux) {
+		case 0:
+			idx = EXYNOS5420_CLK_FIN_PLL;
+			break;
+		case 1:
+			idx = EXYNOS5420_CLK_FOUT_SPLL;
+			break;
+		}
+		return exynos5420_get_frequency(sc, &idx);
+	case EXYNOS5420_CLK_FOUT_RPLL:
+		reg = HREAD4(sc, EXYNOS5420_RPLL_CON0);
+		mdiv = (reg >> 16) & 0x1ff;
+		pdiv = (reg >> 8) & 0x3f;
+		sdiv = (reg >> 0) & 0x7;
+		reg = HREAD4(sc, EXYNOS5420_RPLL_CON1);
+		kdiv = (reg >> 0) & 0xffff;
+		idx = EXYNOS5420_CLK_FIN_PLL;
+		freq = exynos5420_get_frequency(sc, &idx);
+		freq = ((mdiv << 16) + kdiv) * freq / (pdiv * (1 << sdiv));
+		return (freq >> 16);
+	case EXYNOS5420_CLK_FOUT_SPLL:
+		reg = HREAD4(sc, EXYNOS5420_SPLL_CON0);
+		mdiv = (reg >> 16) & 0x3ff;
+		pdiv = (reg >> 8) & 0x3f;
+		sdiv = (reg >> 0) & 0x7;
+		idx = EXYNOS5420_CLK_FIN_PLL;
+		freq = exynos5420_get_frequency(sc, &idx);
+		return mdiv * freq / (pdiv * (1 << sdiv));
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+int
+exynos5420_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return -1;
+}
+
+void
+exynos5420_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case EXYNOS5420_CLK_SCLK_MMC2:	/* CLK_GATE_TOP_SCLK_FSYS */
+	case EXYNOS5420_CLK_MMC2:	/* CLK_GATE_IP_FSYS */
+		/* Enabled by default. */
+		return;
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 }
