@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1004 2017/05/15 17:12:25 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1005 2017/05/21 09:09:58 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3019,6 +3019,22 @@ if [[ -z $MODE ]]; then
 	esac
 fi
 
+# Do not limit ourselves during installs or upgrades.
+for _opt in d f l m n p s; do
+	ulimit -$_opt unlimited
+done
+
+# umount all filesystems, just in case we are re-running install or upgrade.
+cd /
+umount -af >/dev/null 2>&1
+
+# Make sure only successful dhcp requests retain their state.
+for _if in $(get_ifs dhcp); do
+	set -- $(v4_info $_if)
+	[[ $1 == UP && -n $2 ]] && continue
+	ifconfig $_if delete down -group dhcp 2>/dev/null
+done
+
 # Include machine-dependent functions and definitions.
 #
 # The following functions must be provided:
@@ -3059,11 +3075,6 @@ SETDIR="$VNAME/$ARCH"
 V4_DHCPCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
-
-# Do not limit ourselves during installs or upgrades.
-for _opt in d f l m n p s; do
-	ulimit -$_opt unlimited
-done
 
 # Extract and save one boot's worth of dmesg.
 dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
@@ -3106,17 +3117,6 @@ SANESETS="${SANESETS:-bsd} base${VERSION}.tgz"
 export COLUMNS=$(stty -a </dev/console |
 	sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
 ((COLUMNS == 0)) && COLUMNS=80
-
-# umount all filesystems, just in case we are re-running install or upgrade.
-cd /
-umount -af 1>/dev/null 2>&1
-
-# Make sure only successful dhcp requests retain their state.
-for _if in $(get_ifs dhcp); do
-	set -- $(v4_info $_if)
-	[[ $1 == UP && -n $2 ]] && continue
-	ifconfig $_if delete down -group dhcp 2>/dev/null
-done
 
 # Interactive or automatic installation?
 if ! $AUTO; then
