@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2017/03/24 20:31:58 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.83 2017/05/21 17:44:52 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -128,8 +128,8 @@ usb*		at exehci?
 exdwusb*	at fdt?
 xhci*		at fdt?
 usb*		at xhci?
-exesdhc*	at fdt?
-sdmmc*		at exesdhc?
+dwmmc*		at fdt?
+sdmmc*		at dwmmc?
 exrtc*		at fdt?
 exuart*		at fdt?
 

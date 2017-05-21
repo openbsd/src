@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.2 2017/05/21 16:23:56 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.3 2017/05/21 17:44:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -102,6 +102,7 @@
 #define SDMMC_USRID		0x0068
 #define SDMMC_VERID		0x006c
 #define SDMMC_HCON		0x0070
+#define  SDMMC_HCON_DATA_WIDTH(x)	(((x) >> 7) & 0x7)
 #define SDMMC_UHS_REG		0x0074
 #define SDMMC_RST_n		0x0078
 #define SDMMC_BMOD		0x0080
@@ -111,6 +112,7 @@
 #define SDMMC_IDINTEN		0x0090
 #define SDMMC_DSCADDR		0x0094
 #define SDMMC_BUFADDR		0x0098
+#define SDMMC_CLKSEL		0x009c
 #define SDMMC_CARDTHRCTL	0x0100
 #define  SDMMC_CARDTHRCTL_RDTHR_SHIFT	16
 #define  SDMMC_CARDTHRCTL_RDTHREN	(1 << 0)
@@ -136,6 +138,9 @@ struct dwmmc_softc {
 
 	uint32_t		sc_clkbase;
 	uint32_t		sc_fifo_depth;
+	uint32_t		sc_fifo_width;
+	void (*sc_read_data)(struct dwmmc_softc *, u_char *, int);
+	void (*sc_write_data)(struct dwmmc_softc *, u_char *, int);
 
 	struct device		*sc_sdmmc;
 };
@@ -174,15 +179,18 @@ struct sdmmc_chip_functions dwmmc_chip_functions = {
 };
 
 void	dwmmc_transfer_data(struct dwmmc_softc *, struct sdmmc_command *);
-void	dwmmc_read_data(struct dwmmc_softc *, u_char *, int);
-void	dwmmc_write_data(struct dwmmc_softc *, u_char *, int);
+void	dwmmc_read_data32(struct dwmmc_softc *, u_char *, int);
+void	dwmmc_write_data32(struct dwmmc_softc *, u_char *, int);
+void	dwmmc_read_data64(struct dwmmc_softc *, u_char *, int);
+void	dwmmc_write_data64(struct dwmmc_softc *, u_char *, int);
 
 int
 dwmmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc");
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") |
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc"));
 }
 
 void
@@ -191,8 +199,8 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	struct dwmmc_softc *sc = (struct dwmmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct sdmmcbus_attach_args saa;
+	uint32_t hcon, ciu_div, width;
 	int timeout;
-	int width;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -213,8 +221,36 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
 
+	/*
+	 * Determine FIFO width from hardware configuration register.
+	 * We only support 32-bit and 64-bit FIFOs.
+	 */
+	hcon = HREAD4(sc, SDMMC_HCON);
+	switch (SDMMC_HCON_DATA_WIDTH(hcon)) {
+	case 1:
+		sc->sc_fifo_width = 4;
+		sc->sc_read_data = dwmmc_read_data32;
+		sc->sc_write_data = dwmmc_write_data32;
+		break;
+	case 2:
+		sc->sc_fifo_width = 8;
+		sc->sc_read_data = dwmmc_read_data64;
+		sc->sc_write_data = dwmmc_write_data64;
+		break;
+	default:
+		printf(": unsupported FIFO width\n");
+		return;
+	}
+
+	sc->sc_fifo_depth = OF_getpropint(faa->fa_node, "fifo-depth", 0);
+	if (sc->sc_fifo_depth == 0) {
+		printf(": unsupported FIFO depth\n");
+		return;
+	}
+
 	sc->sc_clkbase = clock_get_frequency(faa->fa_node, "ciu");
-	sc->sc_fifo_depth = OF_getpropint(faa->fa_node, "fifo-depth", 64);
+	ciu_div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", 0);
+	sc->sc_clkbase /= (ciu_div + 1);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
 	    dwmmc_intr, sc, sc->sc_dev.dv_xname);
@@ -223,7 +259,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	printf("\n");
+	printf(": %d MHz base clock\n", sc->sc_clkbase / 1000000);
 
 	HSET4(sc, SDMMC_CTRL, SDMMC_CTRL_ALL_RESET);
 	for (timeout = 10000; timeout > 0; timeout--) {
@@ -527,7 +563,7 @@ dwmmc_transfer_data(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 	u_char *datap = cmd->c_data;
 	uint32_t status;
 	int count, timeout;
-	int fifodr = SDMMC_RINTSTS_DTO;
+	int fifodr = SDMMC_RINTSTS_DTO | SDMMC_RINTSTS_HTO;
 
 	if (ISSET(cmd->c_flags, SCF_CMD_READ))
 		fifodr |= SDMMC_RINTSTS_RXDR;
@@ -540,7 +576,7 @@ dwmmc_transfer_data(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 			cmd->c_error = EIO;
 			return;
 		}
-		if (status & SDMMC_RINTSTS_DATA_TO) {
+		if (status & SDMMC_RINTSTS_DRTO) {
 			cmd->c_error = ETIMEDOUT;
 			return;
 		}
@@ -560,11 +596,11 @@ dwmmc_transfer_data(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ))
 		    count = sc->sc_fifo_depth - count;
 
-		count = MIN(datalen, count * 4);
+		count = MIN(datalen, count * sc->sc_fifo_width);
 		if (ISSET(cmd->c_flags, SCF_CMD_READ))
-			dwmmc_read_data(sc, datap, count);
+			sc->sc_read_data(sc, datap, count);
 		else
-			dwmmc_write_data(sc, datap, count);
+			sc->sc_write_data(sc, datap, count);
 
 		datap += count;
 		datalen -= count;
@@ -581,7 +617,7 @@ dwmmc_transfer_data(struct dwmmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 void
-dwmmc_read_data(struct dwmmc_softc *sc, u_char *datap, int datalen)
+dwmmc_read_data32(struct dwmmc_softc *sc, u_char *datap, int datalen)
 {
 	while (datalen > 3) {
 		*(uint32_t *)datap = HREAD4(sc, SDMMC_FIFO_BASE);
@@ -599,7 +635,7 @@ dwmmc_read_data(struct dwmmc_softc *sc, u_char *datap, int datalen)
 }
 
 void
-dwmmc_write_data(struct dwmmc_softc *sc, u_char *datap, int datalen)
+dwmmc_write_data32(struct dwmmc_softc *sc, u_char *datap, int datalen)
 {
 	while (datalen > 3) {
 		HWRITE4(sc, SDMMC_FIFO_BASE, *((uint32_t *)datap));
@@ -613,6 +649,59 @@ dwmmc_write_data(struct dwmmc_softc *sc, u_char *datap, int datalen)
 		if (datalen > 2)
 			rv |= *datap++ << 16;
 		HWRITE4(sc, SDMMC_FIFO_BASE, rv);
+	}
+	HWRITE4(sc, SDMMC_RINTSTS, SDMMC_RINTSTS_TXDR);
+}
+
+void
+dwmmc_read_data64(struct dwmmc_softc *sc, u_char *datap, int datalen)
+{
+	while (datalen > 7) {
+		*(uint32_t *)datap = HREAD4(sc, SDMMC_FIFO_BASE);
+		datap += 4;
+		datalen -= 4;
+		*(uint32_t *)datap = HREAD4(sc, SDMMC_FIFO_BASE + 4);
+		datap += 4;
+		datalen -= 4;
+	}
+	if (datalen > 0) {
+		uint64_t rv = HREAD4(sc, SDMMC_FIFO_BASE) |
+		    ((uint64_t)HREAD4(sc, SDMMC_FIFO_BASE + 4) << 32);
+		do {
+			*datap++ = rv & 0xff;
+			rv = rv >> 8;
+		} while (--datalen > 0);
+	}
+	HWRITE4(sc, SDMMC_RINTSTS, SDMMC_RINTSTS_RXDR);
+}
+
+void
+dwmmc_write_data64(struct dwmmc_softc *sc, u_char *datap, int datalen)
+{
+	while (datalen > 7) {
+		HWRITE4(sc, SDMMC_FIFO_BASE, *((uint32_t *)datap));
+		datap += 4;
+		datalen -= 4;
+		HWRITE4(sc, SDMMC_FIFO_BASE + 4, *((uint32_t *)datap));
+		datap += 4;
+		datalen -= 4;
+	}
+	if (datalen > 0) {
+		uint32_t rv = *datap++;
+		if (datalen > 1)
+			rv |= *datap++ << 8;
+		if (datalen > 2)
+			rv |= *datap++ << 16;
+		if (datalen > 3)
+			rv |= *datap++ << 24;
+		HWRITE4(sc, SDMMC_FIFO_BASE, rv);
+		if (datalen > 4)
+			rv = *datap++;
+		if (datalen > 5)
+			rv |= *datap++ << 8;
+		if (datalen > 6)
+			rv |= *datap++ << 16;
+		HWRITE4(sc, SDMMC_FIFO_BASE + 4, rv);
 	}
 	HWRITE4(sc, SDMMC_RINTSTS, SDMMC_RINTSTS_TXDR);
 }
