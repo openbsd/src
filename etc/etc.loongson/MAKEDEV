@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.26 2016/09/04 15:38:59 naddy Exp 
-#	OpenBSD: MAKEDEV.common,v 1.93 2016/09/11 03:06:31 deraadt Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.27 2017/05/21 13:00:53 visa Exp 
+#	OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -64,6 +64,7 @@
 #	bio	ioctl tunnel pseudo-device
 #	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
+#	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
@@ -278,6 +279,10 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+drm*)
+	M drm$U c 87 $U 600
+	;;
+
 diskmap)
 	M diskmap c 70 0 640 operator
 	;;
@@ -445,13 +450,14 @@ ramdisk)
 	;;
 
 all)
-	R switch0 switch1 switch2 switch3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
-	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2
-	R tap3 tun0 tun1 tun2 tun3 bio pty0 pty1 pty2 diskmap vscsi0
-	R audio0 audio1 audio2 bpf fuse pppx hotplug ptm local wscons
-	R pci0 pci1 pci2 pci3 uall video0 video1 uk0 random tty00
-	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
-	R tty0b apm pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R drm0 drm1 drm2 drm3 switch0 switch1 switch2 switch3 vnd0
+	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0
+	R cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
+	R pty1 pty2 diskmap vscsi0 audio0 audio1 audio2 bpf fuse pppx
+	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
+	R video1 uk0 random tty00 tty01 tty02 tty03 tty04 tty05 tty06
+	R tty07 tty08 tty09 tty0a tty0b apm pf wd0 wd1 wd2 wd3 std st0
+	R st1 fd
 	;;
 
 wd*|sd*)
