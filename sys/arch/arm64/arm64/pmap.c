@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.35 2017/05/10 21:58:55 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.36 2017/05/21 19:14:36 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -100,6 +100,14 @@ struct pmapvp3 {
 CTASSERT(sizeof(struct pmapvp0) == sizeof(struct pmapvp1));
 CTASSERT(sizeof(struct pmapvp0) == sizeof(struct pmapvp2));
 CTASSERT(sizeof(struct pmapvp0) == sizeof(struct pmapvp3));
+
+/* Allocator for VP pool. */
+void *pmap_vp_page_alloc(struct pool *, int, int *);
+void pmap_vp_page_free(struct pool *, void *);
+
+struct pool_allocator pmap_vp_allocator = {
+	pmap_vp_page_alloc, pmap_vp_page_free, sizeof(struct pmapvp0)
+};
 
 
 void pmap_remove_pted(pmap_t pm, struct pte_desc *pted);
@@ -335,6 +343,30 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 
 	vp3->vp[VP_IDX3(va)] = pted;
 	return 0;
+}
+
+void *
+pmap_vp_page_alloc(struct pool *pp, int flags, int *slowdown)
+{
+	struct kmem_dyn_mode kd = KMEM_DYN_INITIALIZER;
+	void *v;
+
+	kd.kd_waitok = ISSET(flags, PR_WAITOK);
+	kd.kd_slowdown = slowdown;
+
+	KERNEL_LOCK();
+	v = km_alloc(pp->pr_pgsize, &kv_any, &kp_dirty, &kd);
+	KERNEL_UNLOCK();
+
+	return v;
+}
+
+void
+pmap_vp_page_free(struct pool *pp, void *v)
+{
+	KERNEL_LOCK();
+	km_free(v, pp->pr_pgsize, &kv_any, &kp_dirty);
+	KERNEL_UNLOCK();
 }
 
 u_int32_t PTED_MANAGED(struct pte_desc *pted);
@@ -1396,8 +1428,8 @@ pmap_init(void)
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, IPL_VM, 0,
 	    "pted", NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
-	pool_init(&pmap_vp_pool, sizeof(struct pmapvp2), PAGE_SIZE, IPL_VM,
-	    PR_WAITOK, "vp", NULL);
+	pool_init(&pmap_vp_pool, sizeof(struct pmapvp0), PAGE_SIZE, IPL_VM,
+	    PR_WAITOK, "vp", &pmap_vp_allocator);
 	/* pool_setlowat(&pmap_vp_pool, 20); */
 
 	pmap_initialized = 1;
