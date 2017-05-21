@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.1 2017/05/21 08:59:45 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.2 2017/05/21 16:23:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -501,7 +501,7 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmdval & SDMMC_CMD_SEND_AUTO_STOP) {
 		for (timeout = 10000; timeout > 0; timeout--) {
 			status = HREAD4(sc, SDMMC_RINTSTS);
-			if (status & SDMMC_RINTSTS_CD)
+			if (status & SDMMC_RINTSTS_ACD)
 				break;
 			delay(10);
 		}
