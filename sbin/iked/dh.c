@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.19 2017/03/27 17:17:49 mikeb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.20 2017/05/21 02:37:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -262,11 +262,7 @@ group_free(struct group *group)
 		DH_free(group->dh);
 	if (group->ec != NULL)
 		EC_KEY_free(group->ec);
-	if (group->curve25519 != NULL) {
-		explicit_bzero(group->curve25519,
-		    sizeof(struct curve25519_key));
-		free(group->curve25519);
-	}
+	freezero(group->curve25519, sizeof(struct curve25519_key));
 	group->spec = NULL;
 	free(group);
 }

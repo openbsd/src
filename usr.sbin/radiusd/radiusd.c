@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.18 2016/04/16 18:32:29 krw Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.19 2017/05/21 02:37:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -1063,9 +1063,7 @@ radiusd_module_stop(struct radiusd_module *module)
 {
 	module->stopped = true;
 
-	if (module->secret != NULL)
-		explicit_bzero(module->secret, strlen(module->secret));
-	free(module->secret);
+	freezero(module->secret, strlen(module->secret));
 	module->secret = NULL;
 
 	if (module->fd >= 0) {
