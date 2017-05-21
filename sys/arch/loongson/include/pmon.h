@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmon.h,v 1.4 2016/11/22 15:44:24 visa Exp $	*/
+/*	$OpenBSD: pmon.h,v 1.5 2017/05/21 13:00:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Miodrag Vallat.
@@ -195,6 +195,7 @@ struct pmon_env_device {
 const char	*pmon_getenv(const char *);
 
 const struct pmon_env_reset *pmon_get_env_reset(void);
+const struct pmon_env_smbios *pmon_get_env_smbios(void);
 const struct pmon_env_mem *pmon_get_env_mem(void);
 const struct pmon_env_cpu *pmon_get_env_cpu(void);
 const struct pmon_env_sys *pmon_get_env_sys(void);

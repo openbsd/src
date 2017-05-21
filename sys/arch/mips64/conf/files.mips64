@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.26 2015/09/09 15:48:52 visa Exp $
+#	$OpenBSD: files.mips64,v 1.27 2017/05/21 13:00:53 visa Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c		clock
@@ -47,3 +47,4 @@ file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
 
 file	lib/libkern/softfloat.c
+file	lib/libkern/arch/mips64/sync.S			drm

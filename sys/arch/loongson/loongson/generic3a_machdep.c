@@ -1,4 +1,4 @@
-/*	$OpenBSD: generic3a_machdep.c,v 1.7 2017/05/10 16:04:21 visa Exp $	*/
+/*	$OpenBSD: generic3a_machdep.c,v 1.8 2017/05/21 13:00:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -187,6 +187,7 @@ void
 generic3a_setup(void)
 {
 	const struct pmon_env_reset *resetenv = pmon_get_env_reset();
+	const struct pmon_env_smbios *smbios = pmon_get_env_smbios();
 	uint32_t boot_cpuid = loongson3_get_cpuid();
 
 	/* Override the mask if it misses the boot CPU. */
@@ -201,6 +202,10 @@ generic3a_setup(void)
 		generic3a_reboot_entry = resetenv->warm_boot;
 		generic3a_poweroff_entry = resetenv->poweroff;
 	}
+
+	if (smbios != NULL)
+		/* pmon_init() has checked that `vga_bios' points to kseg0. */
+		loongson_videobios = (void *)smbios->vga_bios;
 
 	loongson3_intr_init();
 

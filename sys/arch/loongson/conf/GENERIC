@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2016/11/17 14:44:34 visa Exp $
+#	$OpenBSD: GENERIC,v 1.55 2017/05/21 13:00:53 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -86,6 +86,9 @@ audio*		at azalia?
 piixpm*		at pci?
 iic*		at piixpm?
 spdmem*		at iic?
+radeondrm*	at pci?
+drm*		at radeondrm?
+wsdisplay*	at radeondrm?
 radeonfb*	at pci?
 wsdisplay*	at radeonfb?
 

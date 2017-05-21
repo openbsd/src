@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_bios.c,v 1.9 2016/02/06 11:59:51 kettenis Exp $	*/
+/*	$OpenBSD: radeon_bios.c,v 1.10 2017/05/21 13:00:53 visa Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -37,6 +37,10 @@
 #include <dev/isa/isavar.h>
 #endif
 
+#if defined (__loongson__)
+#include <machine/autoconf.h>
+#endif
+
 /*
  * BIOS.
  */
@@ -46,7 +50,7 @@ bool	 radeon_read_platform_bios(struct radeon_device *);
 bool
 radeon_read_platform_bios(struct radeon_device *rdev)
 {
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__) || defined(__i386__) || defined(__loongson__)
 	uint8_t __iomem *bios;
 	bus_size_t size = 256 * 1024; /* ??? */
 	uint8_t *found = NULL;
@@ -59,7 +63,13 @@ radeon_read_platform_bios(struct radeon_device *rdev)
 
 	rdev->bios = NULL;
 
+#if defined(__loongson__)
+	if (loongson_videobios == NULL)
+		return false;
+	bios = loongson_videobios;
+#else
 	bios = (u8 *)ISA_HOLE_VADDR(0xc0000);
+#endif
 
 	for (i = 0; i + 2 < size; i++) {
 		if (bios[i] == 0x55 && bios[i + 1] == 0xaa) {

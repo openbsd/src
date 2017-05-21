@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2016/09/04 10:51:23 naddy Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 2017/05/21 13:00:53 visa Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,8 @@ cdev_decl(fd);
 #include "apm.h"
 #include "com.h"
 cdev_decl(com);
+#include "drm.h"
+cdev_decl(drm);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
@@ -209,6 +211,18 @@ struct cdevsw	cdevsw[] =
 	cdev_fuse_init(NFUSE,fuse),	/* 73: fuse */
 	cdev_tun_init(NTUN,tap),	/* 74: Ethernet network tunnel */
 	cdev_switch_init(NSWITCH,switch), /* 75: switch(4) control interface */
+	cdev_notdef(),			/* 76 */
+	cdev_notdef(),			/* 77 */
+	cdev_notdef(),			/* 78 */
+	cdev_notdef(),			/* 79 */
+	cdev_notdef(),			/* 80 */
+	cdev_notdef(),			/* 81 */
+	cdev_notdef(),			/* 82 */
+	cdev_notdef(),			/* 83 */
+	cdev_notdef(),			/* 84 */
+	cdev_notdef(),			/* 85 */
+	cdev_notdef(),			/* 86 */
+	cdev_drm_init(NDRM,drm),	/* 87: drm */
 };
 
 int	nchrdev = nitems(cdevsw);
