@@ -1668,7 +1668,7 @@ run_tests(int n)
 	x = reallocarray(NULL, n, sizeof(x[0]));
 	y = reallocarray(NULL, n, sizeof(y[0]));
 	z = reallocarray(NULL, n, sizeof(z[0]));
-	if (y == NULL || y == NULL || z == NULL)
+	if (x == NULL || y == NULL || z == NULL)
 		err(1, NULL);
 
 	for (dist = SAWTOOTH; dist != INVALID; dist++) {
