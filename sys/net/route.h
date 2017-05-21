@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.160 2017/03/07 09:23:27 mpi Exp $	*/
+/*	$OpenBSD: route.h,v 1.161 2017/05/21 16:33:53 jca Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ struct rt_msghdr {
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
-#define RTV_EXPIRE	0x4	/* init or lock _hopcount */
+#define RTV_EXPIRE	0x4	/* init or lock _expire */
 #define RTV_RPIPE	0x8	/* init or lock _recvpipe */
 #define RTV_SPIPE	0x10	/* init or lock _sendpipe */
 #define RTV_SSTHRESH	0x20	/* init or lock _ssthresh */
