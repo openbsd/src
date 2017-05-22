@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1005 2017/05/21 09:09:58 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1006 2017/05/22 17:15:52 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3097,7 +3097,6 @@ fi
 # Scan /var/run/dmesg.boot for interesting devices.
 DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
-CONSOLE=${CONSOLE% }
 [[ -n $CONSOLE ]] && CSPEED=$(stty speed </dev/console)
 
 # Look for the serial device matching the console. If we are not installing
