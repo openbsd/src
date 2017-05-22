@@ -1,6 +1,7 @@
-#       $OpenBSD: Makefile,v 1.2 2017/05/17 20:28:35 millert Exp $
+#       $OpenBSD: Makefile,v 1.3 2017/05/22 17:16:43 millert Exp $
 
 PROG=	qsort_test
+SRCS=	qsort_test.c antiqsort.c
 CFLAGS+=-Wall
 
 qsort-regress: ${PROG}
