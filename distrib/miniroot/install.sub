@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1006 2017/05/22 17:15:52 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1007 2017/05/22 19:03:24 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1936,7 +1936,7 @@ questions() {
 	APERTURE=
 	resp=
 	START_XDM=
-	if [[ -n $DISPLAY ]]; then
+	if [[ -n $(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p') ]]; then
 		if [[ -n $(scan_dmesg '/^[a-z]*[01]: aperture needed/p') ]]; then
 			ask_yn "Do you expect to run the X Window System?" yes &&
 				APERTURE=$MDXAPERTURE
@@ -3094,8 +3094,7 @@ else
 	HTTP_PROTO=http
 fi
 
-# Scan /var/run/dmesg.boot for interesting devices.
-DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
+# Scan /var/run/dmesg.boot for console device.
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 [[ -n $CONSOLE ]] && CSPEED=$(stty speed </dev/console)
 
