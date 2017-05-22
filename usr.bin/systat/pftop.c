@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.38 2017/05/16 22:29:07 mikeb Exp $	 */
+/* $OpenBSD: pftop.c,v 1.39 2017/05/22 14:51:10 mikeb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -148,7 +148,7 @@ field_def fields[] = {
 	{"PEAK", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"ANCHOR", 6, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0},
 	{"QUEUE", 15, 30, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
-	{"BW", 4, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"BW/FL", 4, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"SCH", 3, 4, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"DROP_P", 6, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"DROP_B", 6, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
@@ -1623,15 +1623,27 @@ print_queue_node(struct pfctl_queue_node *node)
 
 	// XXX: missing min, max, burst
 	tb_start();
-	rate = node->qs.linkshare.m2.absolute;
-	for (i = 0; rate > 9999 && i <= 3; i++) {
-		rtmp = rate / 1000;
-		if (rtmp <= 9999)
-			rtmp += (rate % 1000) / 500;
-		rate = rtmp;
+	if (node->qs.flags & PFQS_FLOWQUEUE) {
+		/*
+		 * XXX We're abusing the fact that 'flows' in
+		 * the fqcodel_stats structure is at the same
+		 * spot as the 'period' in hfsc_class_stats.
+		 */
+		tbprintf("%u", node->qstats.data.period);
+	} else {
+		rate = node->qs.linkshare.m2.absolute;
+		for (i = 0; rate > 9999 && i <= 3; i++) {
+			rtmp = rate / 1000;
+			if (rtmp <= 9999)
+				rtmp += (rate % 1000) / 500;
+			rate = rtmp;
+		}
+		tbprintf("%u%c", rate, unit[i]);
 	}
-	tbprintf("%u%c", rate, unit[i]);
 	print_fld_tb(FLD_BANDW);
+
+	print_fld_str(FLD_SCHED, node->qs.flags & PFQS_FLOWQUEUE ?
+	    "flow" : "fifo");
 
 	if (node->qstats.valid && node->qstats_last.valid)
 		interval = calc_interval(&node->qstats.timestamp,
