@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.195 2017/02/13 12:43:43 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.196 2017/05/22 13:43:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -151,10 +151,6 @@ void		 set_local(const char *);
 void		 set_localaddrs(struct table *);
 int		 delaytonum(char *);
 int		 is_if_in_group(const char *, const char *);
-
-static struct filter_conf *create_filter_proc(char *, char *);
-static struct filter_conf *create_filter_chain(char *);
-static int add_filter_arg(struct filter_conf *, char *);
 
 static int config_lo_filter(struct listen_opts *, char *);
 static int config_lo_mask_source(struct listen_opts *);
@@ -922,22 +918,6 @@ main		: BOUNCEWARN {
 			listen_opts.family = AF_UNSPEC;
 			listen_opts.flags |= F_EXT_DSN;
 		} ON listener_type
-		| FILTER STRING STRING {
-			if (!strcmp($3, "chain")) {
-				free($3);
-				if ((filter = create_filter_chain($2)) == NULL) {
-					free($2);
-					YYERROR;
-				}
-			}
-			else {
-				if ((filter = create_filter_proc($2, $3)) == NULL) {
-					free($2);
-					free($3);
-					YYERROR;
-				}
-			}
-		} filter_args
 		| PKI STRING	{
 			char buf[HOST_NAME_MAX+1];
 
@@ -981,15 +961,6 @@ main		: BOUNCEWARN {
 		| CIPHERS STRING {
 			conf->sc_tls_ciphers = $2;
 		}
-		;
-
-filter_args	:
-		| STRING {
-			if (!add_filter_arg(filter, $1)) {
-				free($1);
-				YYERROR;
-			}
-		} filter_args
 		;
 
 table		: TABLE STRING STRING	{
@@ -2182,13 +2153,8 @@ config_listener(struct listener *h,  struct listen_opts *lo)
 	if (lo->hostname == NULL)
 		lo->hostname = conf->sc_hostname;
 
-	if (lo->filtername) {
-		if (dict_get(&conf->sc_filters, lo->filtername) == NULL) {
-			log_warnx("undefined filter: %s", lo->filtername);
-			fatalx(NULL);
-		}
+	if (lo->filtername)
 		(void)strlcpy(h->filter, lo->filtername, sizeof(h->filter));
-	}
 
 	h->pki_name[0] = '\0';
 
@@ -2557,82 +2523,6 @@ is_if_in_group(const char *ifname, const char *groupname)
 end:
 	close(s);
 	return ret;
-}
-
-static struct filter_conf *
-create_filter_proc(char *name, char *prog)
-{
-	struct filter_conf	*f;
-	char			*path;
-
-	if (dict_get(&conf->sc_filters, name)) {
-		yyerror("filter \"%s\" already defined", name);
-		return (NULL);
-	}
-
-	if (asprintf(&path, "%s/filter-%s", PATH_LIBEXEC, prog) == -1) {
-		yyerror("filter \"%s\" asprintf failed", name);
-		return (0);
-	}
-
-	f = xcalloc(1, sizeof(*f), "create_filter");
-	f->path = path;
-	f->name = name;
-	f->argv[f->argc++] = name;
-
-	dict_xset(&conf->sc_filters, name, f);
-
-	return (f);
-}
-
-static struct filter_conf *
-create_filter_chain(char *name)
-{
-	struct filter_conf	*f;
-
-	if (dict_get(&conf->sc_filters, name)) {
-		yyerror("filter \"%s\" already defined", name);
-		return (NULL);
-	}
-
-	f = xcalloc(1, sizeof(*f), "create_filter_chain");
-	f->chain = 1;
-	f->name = name;
-
-	dict_xset(&conf->sc_filters, name, f);
-
-	return (f);
-}
-
-static int
-add_filter_arg(struct filter_conf *f, char *arg)
-{
-	int	i;
-
-	if (f->argc == MAX_FILTER_ARGS) {
-		yyerror("filter \"%s\" is full", f->name);
-		return (0);
-	}
-
-	if (f->chain) {
-		if (dict_get(&conf->sc_filters, arg) == NULL) {
-			yyerror("undefined filter \"%s\"", arg);
-			return (0);
-		}
-		if (dict_get(&conf->sc_filters, arg) == f) {
-			yyerror("filter chain cannot contain itself");
-			return (0);
-		}
-		for (i = 0; i < f->argc; ++i)
-			if (strcasecmp(f->argv[i], arg) == 0) {
-				yyerror("filter chain cannot contain twice the same filter instance");
-				return (0);
-			}
-	}
-
-	f->argv[f->argc++] = arg;
-
-	return (1);
 }
 
 static int

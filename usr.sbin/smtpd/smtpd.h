@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.530 2017/02/13 12:23:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.531 2017/05/22 13:43:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1389,6 +1389,12 @@ int smtp_session(struct listener *, int, const struct sockaddr_storage *,
 void smtp_session_imsg(struct mproc *, struct imsg *);
 void smtp_filter_response(uint64_t, int, int, uint32_t, const char *);
 void smtp_filter_fd(uint64_t, int);
+
+
+/* smtpf_session.c */
+int smtpf_session(struct listener *, int, const struct sockaddr_storage *,
+    const char *);
+void smtpf_session_imsg(struct mproc *, struct imsg *);
 
 
 /* smtpd.c */
