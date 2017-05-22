@@ -14,11 +14,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/time.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <time.h>
 #include <unistd.h>
 #include <err.h>
 
@@ -44,7 +47,7 @@ static size_t compares;
 static size_t max_compares;
 static size_t abrt_compares;
 static sigjmp_buf cmpjmp;
-static bool dump_table, verbose;
+static bool dump_table, timing, verbose;
 
 extern int antiqsort(int n, int *a, int *ptr);
 
@@ -77,11 +80,25 @@ check_result(char *sub, int *got, int *expected, struct test_distribution *d,
 
 	if (verbose || compares > max_compares) {
 		if (sub != NULL) {
-			warnx("%s (%s): m: %d, n: %d, %zu compares, max %zu(%zu)",
-			    d->name, sub, m, n, compares, max_compares, abrt_compares);
+			if (m != 0) {
+				warnx("%s (%s): m: %d, n: %d, %zu compares, "
+				    "max %zu(%zu)", d->name, sub, m, n,
+				    compares, max_compares, abrt_compares);
+			} else {
+				warnx("%s (%s): n: %d, %zu compares, "
+				    "max %zu(%zu)", d->name, sub, n,
+				    compares, max_compares, abrt_compares);
+			}
 		} else {
-			warnx("%s: m: %d, n: %d, %zu compares, max %zu(%zu)",
-			    d->name, m, n, compares, max_compares, abrt_compares);
+			if (m != 0) {
+				warnx("%s: m: %d, n: %d, %zu compares, "
+				    "max %zu(%zu)", d->name, m, n,
+				    compares, max_compares, abrt_compares);
+			} else {
+				warnx("%s: n: %d, %zu compares, "
+				    "max %zu(%zu)", d->name, n,
+				    compares, max_compares, abrt_compares);
+			}
 		}
 	}
 
@@ -188,10 +205,33 @@ fill_med3_killer(int *x, int n, int m)
 	}
 }
 
+static void
+print_timing(struct test_distribution *d, char *sub, int m, int n, double elapsed)
+{
+	if (sub != NULL) {
+		if (m != 0) {
+			warnx("%s (%s): m: %d, n: %d, %f seconds",
+			    d->name, sub, m, n, elapsed);
+		} else {
+			warnx("%s (%s): n: %d, %f seconds",
+			    d->name, sub, n, elapsed);
+		}
+	} else {
+		if (m != 0) {
+			warnx("%s: m: %d, n: %d, %f seconds",
+			    d->name, m, n, elapsed);
+		} else {
+			warnx("%s: n: %d, %f seconds",
+			    d->name, n, elapsed);
+		}
+	}
+}
+
 static int
 do_test(struct test_distribution *d, char *sub, int m, int n, int *y, int *z)
 {
 	int ret = 0;
+	struct timespec before, after;
 
 	compares = 0;
 	if (sigsetjmp(cmpjmp, 1) != 0) {
@@ -204,7 +244,16 @@ do_test(struct test_distribution *d, char *sub, int m, int n, int *y, int *z)
 		}
 		ret = 1;
 	} else {
+		if (timing)
+			clock_gettime(CLOCK_MONOTONIC, &before);
 		qsort(y, n, sizeof(y[0]), cmp_checked);
+		if (timing) {
+			double elapsed;
+			clock_gettime(CLOCK_MONOTONIC, &after);
+			timespecsub(&after, &before, &after);
+			elapsed = after.tv_sec + after.tv_nsec / 1000000000.0;
+			print_timing(d, sub, m, n, elapsed);
+		}
 		if (check_result(sub, y, z, d, m, n) != 0)
 			ret = 1;
 	}
@@ -307,13 +356,18 @@ test_simple(struct test_distribution *d, int n, int *x, int *y, int *z)
 static int
 test_antiqsort(struct test_distribution *d, int n, int *x, int *y, int *z)
 {
+	struct timespec before, after;
 	int i, ret = 0;
 
 	/*
 	 * We expect antiqsort to generate > 1.5 * nlgn compares.
 	 * If introspection is not used, it will be > 10 * nlgn compares.
 	 */
+	if (timing)
+		clock_gettime(CLOCK_MONOTONIC, &before);
 	i = antiqsort(n, x, y);
+	if (timing)
+		clock_gettime(CLOCK_MONOTONIC, &after);
 	if (i > abrt_compares)
 		ret = 1;
 	if (dump_table) {
@@ -325,9 +379,17 @@ test_antiqsort(struct test_distribution *d, int n, int *x, int *y, int *z)
 			printf("%4d, ", x[i]);
 		}
 		printf("%4d\n};\n", x[i]);
-	} else if (verbose || ret != 0) {
-		warnx("%s: n: %d, %d compares, max %zu(%zu)",
-		    d->name, n, i, max_compares, abrt_compares);
+	} else {
+		if (timing) {
+			double elapsed;
+			timespecsub(&after, &before, &after);
+			elapsed = after.tv_sec + after.tv_nsec / 1000000000.0;
+			print_timing(d, NULL, 0, n, elapsed);
+		}
+		if (verbose || ret != 0) {
+			warnx("%s: n: %d, %d compares, max %zu(%zu)",
+			    d->name, n, i, max_compares, abrt_compares);
+		}
 	}
 
 	return ret;
@@ -346,7 +408,7 @@ static struct test_distribution distributions[] = {
 };
 
 static int
-run_tests(int n)
+run_tests(int n, const char *name)
 {
 	int *x, *y, *z;
 	int i, nlgn = 0;
@@ -371,6 +433,8 @@ run_tests(int n)
 		err(1, NULL);
 
 	for (d = distributions; d->name != NULL; d++) {
+		if (name != NULL && strcmp(name, d->name) != 0)
+			continue;
 		if (d->test(d, n, x, y, z) != 0)
 			ret = 1;
 	}
@@ -384,7 +448,7 @@ run_tests(int n)
 __dead void
 usage(void)
 {
-        fprintf(stderr, "usage: qsort_test [-dv] [num ...]\n");
+        fprintf(stderr, "usage: qsort_test [-dvt] [-n test_name] [num ...]\n");
 	exit(1);
 }
 
@@ -393,11 +457,18 @@ main(int argc, char *argv[])
 {
 	char *nums[] = { "100", "1023", "1024", "1025", "4095", "4096", "4097" };
 	int ch, n, ret = 0;
+	char *name = NULL;
 
-        while ((ch = getopt(argc, argv, "dv")) != -1) {
+        while ((ch = getopt(argc, argv, "dn:tv")) != -1) {
                 switch (ch) {
                 case 'd':
                         dump_table = true;
+                        break;
+                case 'n':
+                        name = optarg;
+                        break;
+                case 't':
+                        timing = true;
                         break;
                 case 'v':
                         verbose = true;
@@ -417,7 +488,7 @@ main(int argc, char *argv[])
 
 	while (argc > 0) {
 		n = atoi(*argv);
-		if (run_tests(n) != 0)
+		if (run_tests(n, name) != 0)
 			ret = 1;
 		argc--;
 		argv++;
