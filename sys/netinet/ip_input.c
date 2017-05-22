@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.303 2017/05/22 20:04:12 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.304 2017/05/22 22:23:11 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ ipv4_input(struct mbuf *m)
 		int rv;
 
 		KERNEL_LOCK();
-		rv = ip_input_ipsec_fwd_check(m, hlen, AF_INET);
+		rv = ipsec_forward_check(m, hlen, AF_INET);
 		KERNEL_UNLOCK();
 		if (rv != 0) {
 			ipstat_inc(ips_cantforward);
@@ -580,7 +580,7 @@ ip_local(struct mbuf *m, int off, int nxt)
 
 #ifdef IPSEC
 	if (ipsec_in_use) {
-		if (ip_input_ipsec_ours_check(m, off, nxt, AF_INET) != 0) {
+		if (ipsec_local_check(m, off, nxt, AF_INET) != 0) {
 			ipstat_inc(ips_cantforward);
 			m_freem(m);
 			return;
@@ -678,103 +678,6 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 
 	return (match);
 }
-
-#ifdef IPSEC
-int
-ip_input_ipsec_fwd_check(struct mbuf *m, int hlen, int af)
-{
-	struct tdb *tdb;
-	struct tdb_ident *tdbi;
-	struct m_tag *mtag;
-	int error = 0;
-
-	/*
-	 * IPsec policy check for forwarded packets. Look at
-	 * inner-most IPsec SA used.
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst, tdbi->proto);
-	} else
-		tdb = NULL;
-	ipsp_spd_lookup(m, af, hlen, &error, IPSP_DIRECTION_IN, tdb, NULL, 0);
-
-	return error;
-}
-
-int
-ip_input_ipsec_ours_check(struct mbuf *m, int hlen, int proto, int af)
-{
-	struct tdb *tdb;
-	struct tdb_ident *tdbi;
-	struct m_tag *mtag;
-	int error = 0;
-
-	/*
-	 * If it's a protected packet for us, skip the policy check.
-	 * That's because we really only care about the properties of
-	 * the protected packet, and not the intermediate versions.
-	 * While this is not the most paranoid setting, it allows
-	 * some flexibility in handling nested tunnels (in setting up
-	 * the policies).
-	 */
-	if ((proto == IPPROTO_ESP) || (proto == IPPROTO_AH) ||
-	    (proto == IPPROTO_IPCOMP))
-		return 0;
-
-	/*
-	 * If the protected packet was tunneled, then we need to
-	 * verify the protected packet's information, not the
-	 * external headers. Thus, skip the policy lookup for the
-	 * external packet, and keep the IPsec information linked on
-	 * the packet header (the encapsulation routines know how
-	 * to deal with that).
-	 */
-	if ((proto == IPPROTO_IPV4) || (proto == IPPROTO_IPV6))
-		return 0;
-
-	/*
-	 * When processing IPv6 header chains, do not look at the
-	 * outer header.  The inner protocol is relevant and will
-	 * be checked by the local delivery loop later.
-	 */
-	if ((af == AF_INET6) && ((proto == IPPROTO_DSTOPTS) ||
-	    (proto == IPPROTO_ROUTING) || (proto == IPPROTO_FRAGMENT)))
-		return 0;
-
-	/*
-	 * If the protected packet is TCP or UDP, we'll do the
-	 * policy check in the respective input routine, so we can
-	 * check for bypass sockets.
-	 */
-	if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
-		return 0;
-
-	/*
-	 * IPsec policy check for local-delivery packets. Look at the
-	 * inner-most SA that protected the packet. This is in fact
-	 * a bit too restrictive (it could end up causing packets to
-	 * be dropped that semantically follow the policy, e.g., in
-	 * certain SA-bundle configurations); but the alternative is
-	 * very complicated (and requires keeping track of what
-	 * kinds of tunneling headers have been seen in-between the
-	 * IPsec headers), and I don't think we lose much functionality
-	 * that's needed in the real world (who uses bundles anyway ?).
-	 */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-	if (mtag) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->rdomain, tdbi->spi, &tdbi->dst,
-		    tdbi->proto);
-	} else
-		tdb = NULL;
-	ipsp_spd_lookup(m, af, hlen, &error, IPSP_DIRECTION_IN,
-	    tdb, NULL, 0);
-
-	return error;
-}
-#endif /* IPSEC */
 
 /*
  * Take incoming datagram fragment and try to
