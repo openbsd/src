@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.302 2017/05/16 12:24:01 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.303 2017/05/22 20:04:12 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -129,9 +129,6 @@ static struct mbuf_queue	ipsend_mq;
 void	ip_ours(struct mbuf *);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
-#ifdef IPSEC
-int	ip_input_ipsec_ours_check(struct mbuf *, int);
-#endif /* IPSEC */
 
 static void ip_send_dispatch(void *);
 static struct task ipsend_task = TASK_INITIALIZER(ip_send_dispatch, &ipsend_mq);
@@ -583,7 +580,7 @@ ip_local(struct mbuf *m, int off, int nxt)
 
 #ifdef IPSEC
 	if (ipsec_in_use) {
-		if (ip_input_ipsec_ours_check(m, off) != 0) {
+		if (ip_input_ipsec_ours_check(m, off, nxt, AF_INET) != 0) {
 			ipstat_inc(ips_cantforward);
 			m_freem(m);
 			return;
@@ -707,9 +704,8 @@ ip_input_ipsec_fwd_check(struct mbuf *m, int hlen, int af)
 }
 
 int
-ip_input_ipsec_ours_check(struct mbuf *m, int hlen)
+ip_input_ipsec_ours_check(struct mbuf *m, int hlen, int proto, int af)
 {
-	struct ip *ip = mtod(m, struct ip *);
 	struct tdb *tdb;
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
@@ -723,8 +719,8 @@ ip_input_ipsec_ours_check(struct mbuf *m, int hlen)
 	 * some flexibility in handling nested tunnels (in setting up
 	 * the policies).
 	 */
-	if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH) ||
-	    (ip->ip_p == IPPROTO_IPCOMP))
+	if ((proto == IPPROTO_ESP) || (proto == IPPROTO_AH) ||
+	    (proto == IPPROTO_IPCOMP))
 		return 0;
 
 	/*
@@ -735,7 +731,16 @@ ip_input_ipsec_ours_check(struct mbuf *m, int hlen)
 	 * the packet header (the encapsulation routines know how
 	 * to deal with that).
 	 */
-	if ((ip->ip_p == IPPROTO_IPIP) || (ip->ip_p == IPPROTO_IPV6))
+	if ((proto == IPPROTO_IPV4) || (proto == IPPROTO_IPV6))
+		return 0;
+
+	/*
+	 * When processing IPv6 header chains, do not look at the
+	 * outer header.  The inner protocol is relevant and will
+	 * be checked by the local delivery loop later.
+	 */
+	if ((af == AF_INET6) && ((proto == IPPROTO_DSTOPTS) ||
+	    (proto == IPPROTO_ROUTING) || (proto == IPPROTO_FRAGMENT)))
 		return 0;
 
 	/*
@@ -743,7 +748,7 @@ ip_input_ipsec_ours_check(struct mbuf *m, int hlen)
 	 * policy check in the respective input routine, so we can
 	 * check for bypass sockets.
 	 */
-	if ((ip->ip_p == IPPROTO_TCP) || (ip->ip_p == IPPROTO_UDP))
+	if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
 		return 0;
 
 	/*
@@ -764,7 +769,7 @@ ip_input_ipsec_ours_check(struct mbuf *m, int hlen)
 		    tdbi->proto);
 	} else
 		tdb = NULL;
-	ipsp_spd_lookup(m, AF_INET, hlen, &error, IPSP_DIRECTION_IN,
+	ipsp_spd_lookup(m, af, hlen, &error, IPSP_DIRECTION_IN,
 	    tdb, NULL, 0);
 
 	return error;
