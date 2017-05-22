@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.167 2017/05/04 17:58:46 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.168 2017/05/22 14:26:08 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -591,8 +591,10 @@ reflect:
 
 		icmpstat_inc(icps_reflect);
 		icmpstat_inc(icps_outhist + icp->icmp_type);
-		if (!icmp_reflect(m, &opts, NULL))
+		if (!icmp_reflect(m, &opts, NULL)) {
 			icmp_send(m, opts);
+			m_free(opts);
+		}
 		return IPPROTO_DONE;
 
 	case ICMP_REDIRECT:
