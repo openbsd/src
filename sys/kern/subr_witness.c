@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.2 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from BSDI $Id: subr_witness.c,v 1.2 2017/04/30 16:45:46 mpi Exp $
- *	and BSDI $Id: subr_witness.c,v 1.2 2017/04/30 16:45:46 mpi Exp $
+ *	from BSDI $Id: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $
+ *	and BSDI $Id: subr_witness.c,v 1.3 2017/05/22 13:54:14 visa Exp $
  */
 
 /*
@@ -116,11 +116,6 @@ __FBSDID("$FreeBSD: head/sys/kern/subr_witness.c 313261 2017-02-05 02:27:04Z mar
 #include <ddb/db_access.h>
 #include <ddb/db_var.h>
 #include <ddb/db_output.h>
-
-/* XXX */
-#define CTR1(...)
-#define CTR3(...)
-#define CTR4(...)
 
 #define	LI_RECURSEMASK	0x0000ffff	/* Recursion depth of lock instance. */
 #define	LI_EXCLUSIVE	0x00010000	/* Exclusive lock instance. */
@@ -507,7 +502,6 @@ witness_initialize(void)
 		    (witness_count + 1));
 	}
 
-	CTR1(KTR_WITNESS, "%s: initializing witness", __func__);
 	mtx_init_flags(&w_mtx, IPL_HIGH, "witness lock", MTX_NOWITNESS);
 	for (i = witness_count - 1; i >= 0; i--) {
 		w = &w_data[i];
@@ -736,8 +730,6 @@ witness_defineorder(struct lock_object *lock1, struct lock_object *lock2)
 	}
 
 	/* Try to add the new order. */
-	CTR3(KTR_WITNESS, "%s: adding %s as a child of %s", __func__,
-	    lock2->lo_witness->w_name, lock1->lo_witness->w_name);
 	itismychild(lock1->lo_witness, lock2->lo_witness);
 	mtx_leave(&w_mtx);
 	return (0);
@@ -1071,12 +1063,8 @@ witness_checkorder(struct lock_object *lock, int flags, const char *file,
 	 */
 	if (flags & LOP_NEWORDER &&
 	    !(plock->li_lock == &kernel_lock.mpl_lock_obj &&
-	    (lock->lo_flags & LO_SLEEPABLE) != 0)) {
-		CTR3(KTR_WITNESS, "%s: adding %s as a child of %s", __func__,
-		    w->w_type->lt_name,
-		    plock->li_lock->lo_witness->w_type->lt_name);
+	    (lock->lo_flags & LO_SLEEPABLE) != 0))
 		itismychild(plock->li_lock->lo_witness, w);
-	}
 out:
 	mtx_leave(&w_mtx);
 out_splx:
@@ -1115,9 +1103,6 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 	instance = find_instance(*lock_list, lock);
 	if (instance != NULL) {
 		instance->li_flags++;
-		CTR4(KTR_WITNESS, "%s: pid %d recursed on %s r=%d", __func__,
-		    p->p_p->ps_pid, lock->lo_name,
-		    instance->li_flags & LI_RECURSEMASK);
 		instance->li_file = file;
 		instance->li_line = line;
 		goto out;
@@ -1134,8 +1119,6 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 		if (lle == NULL)
 			goto out;
 		lle->ll_next = *lock_list;
-		CTR3(KTR_WITNESS, "%s: pid %d added lle %p", __func__,
-		    p->p_p->ps_pid, lle);
 		*lock_list = lle;
 	}
 	instance = &lle->ll_children[lle->ll_count++];
@@ -1146,8 +1129,6 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 		instance->li_flags = LI_EXCLUSIVE;
 	else
 		instance->li_flags = 0;
-	CTR4(KTR_WITNESS, "%s: pid %d added %s as lle[%d]", __func__,
-	    p->p_p->ps_pid, lock->lo_name, lle->ll_count - 1);
 out:
 	splx(s);
 }
@@ -1309,9 +1290,6 @@ found:
 	}
 	/* If we are recursed, unrecurse. */
 	if ((instance->li_flags & LI_RECURSEMASK) > 0) {
-		CTR4(KTR_WITNESS, "%s: pid %d unrecursed on %s r=%d", __func__,
-		    p->p_p->ps_pid, instance->li_lock->lo_name,
-		    instance->li_flags);
 		instance->li_flags--;
 		goto out;
 	}
@@ -1323,9 +1301,6 @@ found:
 	}
 
 	/* Otherwise, remove this item from the list. */
-	CTR4(KTR_WITNESS, "%s: pid %d removed %s from lle[%d]", __func__,
-	    p->p_p->ps_pid, instance->li_lock->lo_name,
-	    (*lock_list)->ll_count - 1);
 	for (j = i; j < (*lock_list)->ll_count - 1; j++)
 		(*lock_list)->ll_children[j] =
 		    (*lock_list)->ll_children[j + 1];
@@ -1347,8 +1322,6 @@ found:
 		} else
 			lle = *lock_list;
 		*lock_list = lle->ll_next;
-		CTR3(KTR_WITNESS, "%s: pid %d removed lle %p", __func__,
-		    p->p_p->ps_pid, lle);
 		witness_lock_list_free(lle);
 	}
 out:
