@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.105 2017/05/23 12:05:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.106 2017/05/23 13:08:28 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -287,7 +287,7 @@ _OSrev=${_KERNV[0]%.*}${_KERNV[0]#*.}
 [[ -n ${_OSrev} ]]
 
 _MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
-	print -r -- "${_line}"; done </etc/installurl | tail -1)
+	print -r -- "${_line}"; done </etc/installurl | tail -1) 2>/dev/null
 [[ ${_MIRROR} == @(file|http|https)://*/*[!/] ]] ||
 	sp_err "${0##*/}: invalid URL configured in /etc/installurl"
 
