@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.103 2017/05/18 12:02:06 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.104 2017/05/23 12:01:53 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -31,18 +31,18 @@ usage()
 
 apply_patch()
 {
-	local _explodir _file _files _patch=$1 _ret=0
+	local _edir _file _files _patch=$1 _ret=0
 	[[ -n ${_patch} ]]
 
-	_explodir=${_TMP}/${_patch}
+	_edir=${_TMP}/${_patch}
 
 	fetch_and_verify "syspatch${_patch}.tgz"
 
 	trap '' INT
 	echo "Installing patch ${_patch##${_OSrev}-}"
-	install -d ${_explodir} ${_PDIR}/${_patch}
+	install -d ${_edir} ${_PDIR}/${_patch}
 
-	_files="$(tar xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_explodir})"
+	_files="$(tar xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir})"
 	checkfs ${_files}
 
 	create_rollback ${_patch} "${_files}"
@@ -56,9 +56,9 @@ apply_patch()
 	for _file in ${_files}; do
 		((_ret == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
-			install_kernel ${_explodir}/${_file} || _ret=$?
+			install_kernel ${_edir}/${_file} || _ret=$?
 		else
-			install_file ${_explodir}/${_file} /${_file} || _ret=$?
+			install_file ${_edir}/${_file} /${_file} || _ret=$?
 		fi
 	done
 
@@ -205,30 +205,30 @@ ls_missing()
 
 rollback_patch()
 {
-	local _explodir _file _files _patch _ret=0
+	local _edir _file _files _patch _ret=0
 
 	_patch="$(ls_installed | tail -1)"
 	[[ -n ${_patch} ]] || return # function used as a while condition
 
-	_explodir=${_TMP}/${_patch}-rollback
+	_edir=${_TMP}/${_patch}-rollback
 	_patch=${_OSrev}-${_patch}
 
 	echo "Reverting patch ${_patch##${_OSrev}-}"
-	install -d ${_explodir}
+	install -d ${_edir}
 
-	_files="$(tar xvzphf ${_PDIR}/${_patch}/rollback.tgz -C ${_explodir})"
+	_files="$(tar xvzphf ${_PDIR}/${_patch}/rollback.tgz -C ${_edir})"
 	checkfs ${_files} ${_PDIR} # check for read-only /var/syspatch
 
 	for _file in ${_files}; do
 		((_ret == 0)) || break
 		if [[ ${_file} == @(bsd|bsd.mp) ]]; then
-			install_kernel ${_explodir}/${_file} || _ret=$?
+			install_kernel ${_edir}/${_file} || _ret=$?
 			# remove the backup kernel if all kernel syspatches have
 			# been reverted; non-fatal (`-f')
 			cmp -s /bsd /bsd.syspatch${_OSrev} &&
 				rm -f /bsd.syspatch${_OSrev}
 		else
-			install_file ${_explodir}/${_file} /${_file} || _ret=$?
+			install_file ${_edir}/${_file} /${_file} || _ret=$?
 		fi
 	done
 
