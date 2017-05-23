@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.58 2016/09/04 09:33:49 eric Exp $
+.\" $OpenBSD: smtpctl.8,v 1.59 2017/05/23 06:55:05 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: May 23 2017 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -287,9 +287,11 @@ Disables real-time profiling of
 Disables real-time tracing of
 .Ar subsystem .
 .It Cm update table Ar name
-For table backends that provide caching, causes
-.Xr smtpd 8
-to update the cache.
+Updates the contents of table
+.Ar name ,
+for tables using the
+.Dq file
+backend.
 .El
 .Pp
 When
