@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.104 2017/05/23 12:01:53 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.105 2017/05/23 12:05:53 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -31,7 +31,7 @@ usage()
 
 apply_patch()
 {
-	local _edir _file _files _patch=$1 _ret=0
+	local _edir _file _files _patch=$1 _ret=0 _s
 	[[ -n ${_patch} ]]
 
 	_edir=${_TMP}/${_patch}
@@ -42,9 +42,10 @@ apply_patch()
 	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_edir} ${_PDIR}/${_patch}
 
-	_files="$(tar xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir})"
-	checkfs ${_files}
+	! ${_BSDMP} && [[ ! -f /bsd.mp ]] && _s="-s /^bsd.mp$//"
+	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} ${_s})"
 
+	checkfs ${_files}
 	create_rollback ${_patch} "${_files}"
 
 	# create_rollback(): tar(1) was fed with an empty list of files; that is
