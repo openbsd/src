@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.25 2016/03/06 19:42:27 mpi Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.26 2017/05/23 16:53:15 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -341,6 +341,8 @@ lemote_isa_intr_disestablish(void *v, void *ih)
 uint32_t
 lemote_isa_intr(uint32_t hwpend, struct trapframe *frame)
 {
+	static const struct timeval ierr_interval = { 0, 500000 };
+	static struct timeval ierr_last;
 	uint64_t imr, isr, mask;
 	int bit;
 	struct intrhand *ih;
@@ -414,7 +416,8 @@ lemote_isa_intr(uint32_t hwpend, struct trapframe *frame)
 					if (ret == 1)
 						break;
 				}
-				if (rc == 0)
+				if (rc == 0 &&
+				    ratecheck(&ierr_last, &ierr_interval))
 					printf("spurious isa interrupt %d\n",
 					    bitno);
 
