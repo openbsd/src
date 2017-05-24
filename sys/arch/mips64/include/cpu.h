@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.116 2017/04/20 15:42:26 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.117 2017/05/24 13:33:00 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -233,6 +233,9 @@ extern struct cpu_info *cpu_info_list;
 					    ci != NULL; ci = ci->ci_next)
 
 #define CPU_INFO_UNIT(ci)               ((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
+
+extern void (*cpu_idle_cycle_func)(void);
+#define cpu_idle_cycle()		(*cpu_idle_cycle_func)()
 
 #ifdef MULTIPROCESSOR
 #define MAXCPUS				4

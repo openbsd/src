@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.67 2017/05/11 15:42:10 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.68 2017/05/24 13:33:00 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -49,6 +49,11 @@ struct cpu_info *cpu_info_secondaries;
 #ifdef MULTIPROCESSOR
 struct cpuset cpus_running;
 #endif
+
+extern void cpu_idle_cycle_nop(void);
+extern void cpu_idle_cycle_rm7k(void);
+extern void cpu_idle_cycle_wait(void);
+void (*cpu_idle_cycle_func)(void) = cpu_idle_cycle_nop;
 
 vaddr_t	cache_valias_mask;
 int	cpu_has_userlocal;
@@ -366,6 +371,25 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		else
 			printf("%d way", ci->ci_l3.sets);
 	}
+
+	if (cpuno == 0) {
+		switch (ch->type) {
+		case MIPS_R4600:
+		case MIPS_R4700:
+		case MIPS_R5000:
+		case MIPS_RM52X0:
+		case MIPS_RM7000:
+			cpu_idle_cycle_func = cpu_idle_cycle_rm7k;
+			break;
+		case MIPS_CN50XX:
+		case MIPS_CN61XX:
+		case MIPS_CN71XX:
+		case MIPS_CN73XX:
+			cpu_idle_cycle_func = cpu_idle_cycle_wait;
+			break;
+		}
+	}
+
 	printf("\n");
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.59 2017/04/20 15:42:26 visa Exp $ */
+/*	$OpenBSD: context.S,v 1.60 2017/05/24 13:33:00 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -80,13 +80,38 @@ LEAF(cpu_idle_leave, 0)
 	 NOP
 END(cpu_idle_leave)
 
-LEAF(cpu_idle_cycle, 0)
-#ifdef CPU_OCTEON
-	wait
-#endif
+LEAF(cpu_idle_cycle_nop, 0)
 	j	ra
 	 NOP
-END(cpu_idle_cycle)
+END(cpu_idle_cycle_nop)
+
+LEAF(cpu_idle_cycle_wait, 0)
+	wait
+	j	ra
+	 NOP
+END(cpu_idle_cycle_wait)
+
+LEAF(cpu_idle_cycle_rm7k, 0)
+	/*
+	 * RM7000 errata #38: The R4600, R4640, R4700, R5000, RM52xx,
+	 * and RM7xxx processors do not handle bus signalling properly
+	 * in the standby mode, which can cause incorrect behaviour
+	 * upon leaving the mode. This can be avoided by flushing
+	 * any writes from the pipeline before the WAIT instruction
+	 * is executed.
+	 */
+	mfc0	a0, COP_0_STATUS_REG		# save status
+	ori	a1, a0, SR_INT_ENAB
+	xori	a1, SR_INT_ENAB
+	mtc0	a1, COP_0_STATUS_REG		# disable interrupts
+	sync					# flush pending writes
+	mtc0	a1, COP_0_STATUS_REG		# stall until W stage
+	wait					# enter standby mode
+	mtc0	a0, COP_0_STATUS_REG		# stall until W stage,
+						# and restore status
+	j	ra
+	 NOP
+END(cpu_idle_cycle_rm7k)
 
 /*
  * cpu_switchto_asm(struct proc *oldproc, struct proc *newproc)
