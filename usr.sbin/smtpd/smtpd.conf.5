@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.168 2017/02/13 12:23:47 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.169 2017/05/24 13:26:03 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 13 2017 $
+.Dd $Mdocdate: May 24 2017 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -235,12 +235,19 @@ table, see
 .Xc
 This rule applies to mail destined to
 .Dq localhost
-and to the default server name.
-See the
+and to the default server name
+(the
 .Sx FILES
 entry for
 .Pa /etc/mail/mailname
-below for details of how the server name is determined.
+details how the server name is determined).
+This is the default,
+and may be omitted.
+.Pp
+If specified, the table
+.Ar aliases
+is used for looking up alternative destinations for addresses in these
+.Ar domains .
 .It Xo
 .Ic for
 .Op Ic \&!
