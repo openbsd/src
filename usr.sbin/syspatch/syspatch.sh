@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.108 2017/05/24 08:32:16 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.109 2017/05/24 11:21:13 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -162,7 +162,7 @@ install_file()
 
 	eval $(stat -f "_fmode=%OMp%OLp _fown=%Su _fgrp=%Sg" ${_src})
 
-	install -DFS -m ${_fmode} -o ${_fown} -g ${_fgrp} ${_src} ${_dst}
+	install -DFSp -m ${_fmode} -o ${_fown} -g ${_fgrp} ${_src} ${_dst}
 }
 
 install_kernel()
@@ -174,7 +174,7 @@ install_kernel()
 		[[ ${_kern##*/} == bsd ]] && _bsd=bsd.sp || _bsd=bsd
 	fi
 
-	install -FS ${_kern} /${_bsd:-${_kern##*/}}
+	install -FSp ${_kern} /${_bsd:-${_kern##*/}}
 }
 
 ls_installed()
