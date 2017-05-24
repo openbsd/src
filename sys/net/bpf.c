@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.162 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.163 2017/05/24 16:26:58 bluhm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1824,6 +1824,7 @@ u_int32_t
 bpf_mbuf_ldb(const void *m0, u_int32_t k, int *err)
 {
 	const struct mbuf *m = m0;
+	u_int8_t v;
 
 	while (k >= m->m_len) {
 		k -= m->m_len;
@@ -1834,9 +1835,10 @@ bpf_mbuf_ldb(const void *m0, u_int32_t k, int *err)
 			return (0);
 		}
 	}
+	v = m->m_data[k];
 
 	*err = 0;
-	return (m->m_data[k]);
+	return v;
 }
 
 u_int
