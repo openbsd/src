@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.16 2017/05/20 12:48:56 millert Exp $ */
+/*	$OpenBSD: qsort.c,v 1.17 2017/05/24 21:18:25 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,14 +43,26 @@ static __inline void	 swapfunc(char *, char *, size_t, int);
  *   1. The partition value is swapped into a[0] instead of being
  *	stored out of line.
  *
- *   2. It uses David Musser's introsort algorithm to fall back to
+ *   2. The swap function can swap 32-bit aligned elements on 64-bit
+ *	platforms instead of swapping them as byte-aligned.
+ *
+ *   3. It uses David Musser's introsort algorithm to fall back to
  *	heapsort(3) when the recursion depth reaches 2*lg(n + 1).
  *	This avoids quicksort's quadratic behavior for pathological
  *	input without appreciably changing the average run time.
  *
- *   3. Tail recursion is eliminated when sorting the larger of two
+ *   4. Tail recursion is eliminated when sorting the larger of two
  *	subpartitions to save stack space.
  */
+#define SWAPTYPE_BYTEV	1
+#define SWAPTYPE_INTV	2
+#define SWAPTYPE_LONGV	3
+#define SWAPTYPE_INT	4
+#define SWAPTYPE_LONG	5
+
+#define TYPE_ALIGNED(TYPE, a, es)			\
+	(((char *)a - (char *)0) % sizeof(TYPE) == 0 && es % sizeof(TYPE) == 0)
+
 #define swapcode(TYPE, parmi, parmj, n) { 		\
 	size_t i = (n) / sizeof (TYPE); 		\
 	TYPE *pi = (TYPE *) (parmi); 			\
@@ -62,25 +74,42 @@ static __inline void	 swapfunc(char *, char *, size_t, int);
         } while (--i > 0);				\
 }
 
-#define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
-	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
-
 static __inline void
 swapfunc(char *a, char *b, size_t n, int swaptype)
 {
-	if (swaptype <= 1) 
-		swapcode(long, a, b, n)
-	else
-		swapcode(char, a, b, n)
+	switch (swaptype) {
+	case SWAPTYPE_INT:
+	case SWAPTYPE_INTV:
+		swapcode(int, a, b, n);
+		break;
+	case SWAPTYPE_LONG:
+	case SWAPTYPE_LONGV:
+		swapcode(long, a, b, n);
+		break;
+	default:
+		swapcode(char, a, b, n);
+		break;
+	}
 }
 
-#define swap(a, b)					\
-	if (swaptype == 0) {				\
+#define swap(a, b)	do {				\
+	switch (swaptype) {				\
+	case SWAPTYPE_INT: {				\
+		int t = *(int *)(a);			\
+		*(int *)(a) = *(int *)(b);		\
+		*(int *)(b) = t;			\
+		break;					\
+	    }						\
+	case SWAPTYPE_LONG: {				\
 		long t = *(long *)(a);			\
 		*(long *)(a) = *(long *)(b);		\
 		*(long *)(b) = t;			\
-	} else						\
-		swapfunc(a, b, es, swaptype)
+		break;					\
+	    }						\
+	default:					\
+		swapfunc(a, b, es, swaptype);		\
+	}						\
+} while (0)
 
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
@@ -93,11 +122,11 @@ med3(char *a, char *b, char *c, int (*cmp)(const void *, const void *))
 }
 
 static void
-introsort(char *a, size_t n, size_t es, size_t maxdepth,
+introsort(char *a, size_t n, size_t es, size_t maxdepth, int swaptype,
     int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	int cmp_result, swaptype;
+	int cmp_result;
 	size_t r, s;
 
 loop:	if (maxdepth == 0) {
@@ -105,7 +134,6 @@ loop:	if (maxdepth == 0) {
 			return;
 	}
 	maxdepth--;
-	SWAPINIT(a, es);
 	if (n < 7) {
 		for (pm = a + es; pm < a + n * es; pm += es)
 			for (pl = pm; pl > a && cmp(pl - es, pl) > 0;
@@ -164,8 +192,10 @@ loop:	if (maxdepth == 0) {
 	if (r < s) {
 		/* Recurse for 1st side, iterate for 2nd side. */
 		if (s > es) {
-			if (r > es)
-				introsort(a, r / es, es, maxdepth, cmp);
+			if (r > es) {
+				introsort(a, r / es, es, maxdepth,
+				    swaptype, cmp);
+			}
 			a = pn - s;
 			n = s / es;
 			goto loop;
@@ -173,8 +203,10 @@ loop:	if (maxdepth == 0) {
 	} else {
 		/* Recurse for 2nd side, iterate for 1st side. */
 		if (r > es) {
-			if (s > es)
-				introsort(pn - s, s / es, es, maxdepth, cmp);
+			if (s > es) {
+				introsort(pn - s, s / es, es, maxdepth,
+				    swaptype, cmp);
+			}
 			n = r / es;
 			goto loop;
 		}
@@ -185,13 +217,22 @@ void
 qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void *))
 {
 	size_t i, maxdepth = 0;
+	int swaptype;
 
 	/* Approximate 2*ceil(lg(n + 1)) */
 	for (i = n; i > 0; i >>= 1)
 		maxdepth++;
 	maxdepth *= 2;
 
-	introsort(a, n, es, maxdepth, cmp);
+	if (TYPE_ALIGNED(long, a, es))
+		swaptype = es == sizeof(long) ? SWAPTYPE_LONG : SWAPTYPE_LONGV;
+	else if (sizeof(int) != sizeof(long) && TYPE_ALIGNED(int, a, es))
+		swaptype = es == sizeof(int) ? SWAPTYPE_INT : SWAPTYPE_INTV;
+	else
+		swaptype = SWAPTYPE_BYTEV;
+
+	introsort(a, n, es, maxdepth, swaptype, cmp);
+
 }
 
 DEF_STRONG(qsort);
