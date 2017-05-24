@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.119 2017/05/12 18:03:00 mestre Exp $ */
+/* $OpenBSD: user.c,v 1.120 2017/05/24 09:18:15 mestre Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
@@ -48,7 +49,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <limits.h>
 #include <util.h>
 
 #include "usermgmt.h"
@@ -177,8 +177,31 @@ enum {
 #define UNSET_INACTIVE	"Null (unset)"
 #define UNSET_EXPIRY	"Null (unset)"
 
-static int asystem(const char *fmt, ...)
+static int adduser(char *, user_t *);
+static int append_group(char *, int, const char **);
+static int asystem(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
+static int copydotfiles(char *, char *);
+static int creategid(char *, gid_t, const char *);
+static int getnextgid(uid_t *, uid_t, uid_t);
+static int getnextuid(int, uid_t *, uid_t, uid_t);
+static int is_local(char *, const char *);
+static int modify_gid(char *, char *);
+static int moduser(char *, char *, user_t *);
+static int removehomedir(const char *, uid_t, const char *);
+static int rm_user_from_groups(char *);
+static int save_range(user_t *, char *);
+static int scantime(time_t *, char *);
+static int setdefaults(user_t *);
+static int valid_class(char *);
+static int valid_group(char *);
+static int valid_login(char *);
+static size_t expand_len(const char *, const char *);
+static struct group *find_group_info(const char *);
+static struct passwd *find_user_info(const char *);
+static void checkeuid(void);
+static void memsave(char **, const char *, size_t);
+static void read_defaults(user_t *);
 
 static int	verbose;
 
@@ -267,7 +290,7 @@ checkeuid(void)
 
 /* copy any dot files into the user's home directory */
 static int
-copydotfiles(char *skeldir, uid_t uid, gid_t gid, char *dir)
+copydotfiles(char *skeldir, char *dir)
 {
 	struct dirent	*dp;
 	DIR		*dirp;
@@ -1157,7 +1180,7 @@ adduser(char *login_name, user_t *up)
 				errc(EXIT_FAILURE, saved_errno,
 				    "can't mkdir `%s'", home);
 			}
-			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
+			(void) copydotfiles(up->u_skeldir, home);
 			(void) asystem("%s -R -P %u:%u %s", CHOWN, up->u_uid,
 			    gid, home);
 			(void) asystem("%s -R u+w %s", CHMOD, home);
