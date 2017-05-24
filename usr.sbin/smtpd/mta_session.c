@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.97 2017/05/17 14:00:06 deraadt Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.98 2017/05/24 21:27:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1296,7 +1296,7 @@ mta_io(struct io *io, int evt, void *arg)
 			mta_connect(s);
 			break;
 		}
-		else if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_ANYSSL))) {
+		else if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_SMTPS|MTA_FORCE_ANYSSL))) {
 			/* error in non-strict SSL negotiation, downgrade to plain */
 			if (s->flags & MTA_TLS) {
 				log_info("smtp-out: Error on session %016"PRIx64
@@ -1314,7 +1314,7 @@ mta_io(struct io *io, int evt, void *arg)
 
 	case IO_TLSERROR:
 		log_debug("debug: mta: %p: TLS IO error: %s", s, io_error(io));
-		if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_ANYSSL))) {
+		if (!(s->flags & (MTA_FORCE_TLS|MTA_FORCE_SMTPS|MTA_FORCE_ANYSSL))) {
 			/* error in non-strict SSL negotiation, downgrade to plain */
 			log_info("smtp-out: TLS Error on session %016"PRIx64
 			    ": TLS failed, "
