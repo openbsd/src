@@ -689,7 +689,8 @@ fqcodel_pf_addqueue(void *arg, struct pf_queuespec *qs)
 	struct ifnet *ifp = qs->kif->pfik_ifp;
 	struct fqcodel *fqc = arg;
 
-	KASSERT(qs->parent_qid == 0);
+	if (qs->parent_qid != 0)
+		return (EINVAL);
 
 	if (qs->flowqueue.flows == 0 || qs->flowqueue.flows > M_FLOWID_MASK)
 		return (EINVAL);
