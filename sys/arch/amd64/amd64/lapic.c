@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.45 2016/11/01 01:13:19 yasuoka Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.46 2017/05/25 03:54:10 visa Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -41,6 +41,7 @@
 #include <machine/codepatch.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/lock.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
@@ -571,7 +572,7 @@ lapic_delay(int usec)
 			deltat -= otick - tick;
 		otick = tick;
 
-		x86_pause();
+		SPINLOCK_SPIN_HOOK;
 	}
 }
 
