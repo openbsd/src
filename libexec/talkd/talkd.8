@@ -1,4 +1,4 @@
-.\"	$OpenBSD: talkd.8,v 1.9 2015/11/25 11:21:34 jmc Exp $
+.\"	$OpenBSD: talkd.8,v 1.10 2017/05/25 20:27:55 tedu Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)talkd.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: talkd.8,v 1.9 2015/11/25 11:21:34 jmc Exp $
+.\"	$Id: talkd.8,v 1.10 2017/05/25 20:27:55 tedu Exp $
 .\"
-.Dd $Mdocdate: November 25 2015 $
+.Dd $Mdocdate: May 25 2017 $
 .Dt NTALKD 8
 .Os
 .Sh NAME
@@ -64,7 +64,8 @@ address and the caller and callee client programs establish a
 stream connection through which the conversation takes place.
 .Sh SEE ALSO
 .Xr talk 1 ,
-.Xr write 1
+.Xr write 1 ,
+.Xr inetd 8
 .Sh HISTORY
 The
 .Nm
