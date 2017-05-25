@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.74 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.75 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ strbuf_reset(struct strbuf_ctl *sb)
 	bus_space_write_8(sb->sb_bustag, sb->sb_sb,
 	    STRBUFREG(strbuf_ctl), STRBUF_EN);
 
-	membar(Lookaside);
+	__membar("#Lookaside");
 
 	/* No streaming buffers? Disable them */
 	if (bus_space_read_8(sb->sb_bustag, sb->sb_sb,
@@ -412,7 +412,7 @@ iommu_remove(struct iommu_state *is, struct strbuf_ctl *sb, bus_addr_t va)
 	 * IO operations are strongly ordered WRT each other.  It is
 	 * unclear how they relate to normal memory accesses.
 	 */
-	membar(StoreStore);
+	__membar("#StoreStore");
 
 	IOMMUREG_WRITE(is, iommu_flush, va);
 
@@ -529,7 +529,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 	 * memory is initialized before the IOMMU uses it.
 	 * Is this Needed?  How are IO and memory operations ordered? 
 	 */
-	membar(StoreStore);
+	__membar("#StoreStore");
 
 	bus_space_write_8(sb->sb_bustag, sb->sb_sb,
 		    STRBUFREG(strbuf_flushsync), sf->sbf_flushpa);
@@ -538,7 +538,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 	    ("iommu_strbuf_flush_done: flush = %llx pa = %lx\n", 
 		ldxa(sf->sbf_flushpa, ASI_PHYS_CACHED), sf->sbf_flushpa));
 
-	membar(StoreLoad | Lookaside);
+	__membar("#StoreLoad | #Lookaside");
 
 	for(;;) {
 		int i;
@@ -549,7 +549,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 		 * fetches.
 		 */
 		for (i = 0; i < 1000; ++i) {
-			membar(LoadLoad);
+			__membar("#LoadLoad");
 			/* Bypass non-coherent D$ */
 			/* non-coherent...?   Huh? */
 			flush = ldxa(sf->sbf_flushpa, ASI_PHYS_CACHED);
@@ -1560,14 +1560,14 @@ iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		return;
 
 	if (ops & BUS_DMASYNC_PREWRITE)
-		membar(MemIssue);
+		__membar("#MemIssue");
 
 	if ((ims->ims_flags & IOMMU_MAP_STREAM) &&
 	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE)))
 		_iommu_dvmamap_sync(t, t0, map, offset, len, ops);
 
 	if (ops & BUS_DMASYNC_POSTREAD)
-		membar(MemIssue);
+		__membar("#MemIssue");
 }
 
 /*

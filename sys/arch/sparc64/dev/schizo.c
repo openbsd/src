@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.67 2016/08/23 03:28:01 guenther Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.68 2017/05/25 03:19:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -476,11 +476,11 @@ schizo_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	s = splhigh();
-	membar(Sync);
+	__membar("#Sync");
 	ci->ci_pci_probe = 1;
 	val = bus_space_read_4(pc->bustag, pc->bushandle,
 	    PCITAG_OFFSET(tag) + reg);
-	membar(Sync);
+	__membar("#Sync");
 	if (ci->ci_pci_fault)
 		val = 0xffffffff;
 	ci->ci_pci_probe = ci->ci_pci_fault = 0;

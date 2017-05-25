@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.47 2016/10/13 18:16:42 tom Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.48 2017/05/25 03:19:39 dlg Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1093,7 +1093,7 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 	sc->sc_vd->vd_desc[desc].offset = lba;
 	sc->sc_vd->vd_desc[desc].size = xs->datalen;
 	sc->sc_vd->vd_desc[desc].ncookies = ncookies;
-	membar(Sync);
+	membar_sync();
 	sc->sc_vd->vd_desc[desc].hdr.dstate = VIO_DESC_READY;
 
 	sc->sc_vsd[desc].vsd_xs = xs;

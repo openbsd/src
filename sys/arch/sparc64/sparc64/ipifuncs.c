@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.15 2014/05/10 12:29:58 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.16 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -97,7 +97,7 @@ sun4u_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, arg0);
 		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg1);
 		stxa(IDCR(itid), ASI_INTERRUPT_DISPATCH, 0);
-		membar(Sync);
+		membar_sync();
 
 		for (j = 0; j < 1000000; j++) {
 			if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))

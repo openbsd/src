@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.27 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.28 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -56,24 +56,6 @@
  * Sun 4u control registers. (includes address space definitions
  * and some registers in control space).
  */
-
-/*
- * membar operand macros for use in other macros when # is a special
- * character.  Keep these in sync with what the hardware expects.
- */
-#define C_Lookaside     (0)
-#define C_MemIssue      (1)
-#define C_Sync          (2)
-#define M_LoadLoad      (0)
-#define M_StoreLoad     (1)
-#define M_LoadStore     (2)
-#define M_StoreStore    (3)
-
-#define CMASK_SHIFT     (4)
-#define MMASK_SHIFT     (0)
-
-#define CMASK_GEN(bit)  ((1 << (bit)) << CMASK_SHIFT)
-#define MMASK_GEN(bit)  ((1 << (bit)) << MMASK_SHIFT)
 
 /*
  * The Alternate address spaces. 
@@ -521,22 +503,6 @@
  * Apparently the definition of bypass ASIs is that they all use the 
  * D$ so we need to flush the D$ to make sure we don't get data pollution.
  */
-
-#define sparc_membar(mask) do {						\
-	if (mask)							\
-		__asm volatile("membar %0" : : "n" (mask) : "memory");	\
-	else								\
-		__asm volatile("" : : : "memory");			\
-} while(0)
-
-#define membar sparc_membar
-#define Lookaside       CMASK_GEN(C_Lookaside)
-#define MemIssue        CMASK_GEN(C_MemIssue)
-#define Sync            CMASK_GEN(C_Sync)
-#define LoadLoad        MMASK_GEN(M_LoadLoad)
-#define StoreLoad       MMASK_GEN(M_StoreLoad)
-#define LoadStore       MMASK_GEN(M_LoadStore)
-#define StoreStore      MMASK_GEN(M_StoreStore)
 
 #define sparc_wr(name, val, xor)					\
 do {									\

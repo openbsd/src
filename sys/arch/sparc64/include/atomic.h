@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.13 2014/07/18 12:44:53 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.14 2017/05/25 03:19:39 dlg Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -142,11 +142,13 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 	} while (r != e);
 }
 
-#define membar_enter()		membar(StoreLoad|StoreStore)
-#define membar_exit()		membar(LoadStore|StoreStore)
-#define membar_producer()	membar(StoreStore)
-#define membar_consumer()	membar(LoadLoad)
-#define membar_sync()		membar(Sync)
+#define __membar(_m)		__asm volatile("membar " _m ::: "memory")
+
+#define membar_enter()		__membar("#StoreLoad|#StoreStore")
+#define membar_exit()		__membar("#LoadStore|#StoreStore")
+#define membar_producer()	__membar("#StoreStore")
+#define membar_consumer()	__membar("#LoadLoad")
+#define membar_sync()		__membar("#Sync")
 
 #endif /* defined(_KERNEL) */
 #endif /* _MACHINE_ATOMIC_H_ */

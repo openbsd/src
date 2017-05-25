@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.30 2016/12/20 13:40:50 jsg Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.31 2017/05/25 03:19:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -372,11 +372,11 @@ pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	s = splhigh();
-	membar(Sync);
+	__membar("#Sync");
 	ci->ci_pci_probe = 1;
 	val = bus_space_read_4(pc->bustag, pc->bushandle,
 	    (PCITAG_OFFSET(tag) << 4) + reg);
-	membar(Sync);
+	__membar("#Sync");
 	if (ci->ci_pci_fault)
 		val = 0xffffffff;
 	ci->ci_pci_probe = ci->ci_pci_fault = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.32 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.33 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #ifndef _MACHINE_BUS_H_
 #define _MACHINE_BUS_H_
 
-#include <machine/ctlreg.h>
+#include <sys/atomic.h>
 
 /*
  * Debug hooks
@@ -319,19 +319,19 @@ bus_space_barrier(t, h, o, s, f)
 #ifdef notyet
 	switch (f) {
 	case (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE):
-		membar(LoadLoad|StoreStore);
+		__membar("#LoadLoad|#StoreStore");
 		break;
 	case BUS_SPACE_BARRIER_READ:
-		membar(LoadLoad);
+		membar("#LoadLoad");
 		break;
 	case BUS_SPACE_BARRIER_WRITE:
-		membar(StoreStore);
+		membar("#StoreStore");
 		break;
 	default:
 		break;
 	}
 #else
-	membar(Sync);
+	__membar("#Sync");
 #endif
 }
 

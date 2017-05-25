@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.14 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.15 2017/05/25 03:19:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -119,7 +119,7 @@ __mp_lock(struct __mp_lock *mpl)
 	intr_restore(s);
 
 	__mp_lock_spin(mpl, cpu->mplc_ticket);
-	sparc_membar(LoadLoad | LoadStore);
+	membar_enter();
 }
 
 void
@@ -130,7 +130,7 @@ __mp_unlock(struct __mp_lock *mpl)
 
 	s = intr_disable();
 	if (--cpu->mplc_depth == 0) {
-		sparc_membar(StoreStore | LoadStore);
+		membar_exit();
 		mpl->mpl_ticket++;
 	}
 	intr_restore(s);
@@ -146,7 +146,7 @@ __mp_release_all(struct __mp_lock *mpl)
 	s = intr_disable();
 	rv = cpu->mplc_depth;
 	cpu->mplc_depth = 0;
-	sparc_membar(StoreStore | LoadStore);
+	membar_exit();
 	mpl->mpl_ticket++;
 	intr_restore(s);
 

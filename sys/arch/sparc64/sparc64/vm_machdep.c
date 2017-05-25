@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -314,7 +314,7 @@ fpusave_proc(struct proc *p, int save)
 		sparc64_send_ipi(ci->ci_itid,
 		    save ? ipi_save_fpstate : ipi_drop_fpstate, (vaddr_t)p, 0);
 		while(ci->ci_fpproc == p)
-			sparc_membar(Sync);
+			membar_sync();
 		break;
 	}
 #else

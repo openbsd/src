@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.74 2016/08/23 03:28:01 guenther Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.75 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1120,11 +1120,11 @@ psycho_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	s = splhigh();
-	membar(Sync);
+	__membar("#Sync");
 	ci->ci_pci_probe = 1;
 	val = bus_space_read_4(pc->bustag, pc->bushandle,
 	    PCITAG_OFFSET(tag) + reg);
-	membar(Sync);
+	__membar("#Sync");
 	if (ci->ci_pci_fault)
 		val = 0xffffffff;
 	ci->ci_pci_probe = ci->ci_pci_fault = 0;
@@ -1333,7 +1333,7 @@ psycho_sabre_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		psycho_psychoreg_read(sc, pci_dma_write_sync);
 
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
-		membar(MemIssue);
+		__membar("#MemIssue");
 }
 
 u_int

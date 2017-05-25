@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.18 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.19 2017/05/25 03:19:39 dlg Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ viommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		return;
 
 	if (ops & BUS_DMASYNC_PREWRITE)
-		membar(MemIssue);
+		__membar("#MemIssue");
 
 #if 0
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
@@ -892,7 +892,7 @@ viommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 #endif
 
 	if (ops & BUS_DMASYNC_POSTREAD)
-		membar(MemIssue);
+		__membar("#MemIssue");
 }
 
 int

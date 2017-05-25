@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.209 2016/10/08 05:52:06 guenther Exp $ */
+/* $OpenBSD: drmP.h,v 1.210 2017/05/25 03:19:39 dlg Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -158,7 +158,7 @@ extern struct cfdriver drm_cd;
 #elif defined(__sparc64__)
 #define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
 #define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
-#define DRM_MEMORYBARRIER()		membar(Sync)
+#define DRM_MEMORYBARRIER()		membar_sync()
 #endif
 
 #define smp_mb__before_atomic_dec()	DRM_MEMORYBARRIER()
