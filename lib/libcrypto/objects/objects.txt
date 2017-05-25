@@ -830,6 +830,12 @@ Private 1		: enterprises		: Enterprises
 # RFC 2247
 Enterprises 1466 344	: dcobject		: dcObject
 
+# Extended Validation
+!Alias extendedValidation Enterprises 311 60
+extendedValidation 2 1 1 :			: jurisdictionLocalityName
+extendedValidation 2 1 2 :			: jurisdictionStateOrProvinceName
+extendedValidation 2 1 3 :			: jurisdictionCountryName
+
 # RFC 1495
 Mail 1			: mime-mhs		: MIME MHS
 mime-mhs 1		: mime-mhs-headings	: mime-mhs-headings

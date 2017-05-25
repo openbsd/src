@@ -953,3 +953,6 @@ Ed25519		952
 Ed448		953
 Ed25519ph	954
 Ed448ph		955
+jurisdictionLocalityName	956
+jurisdictionStateOrProvinceName	957
+jurisdictionCountryName		958
