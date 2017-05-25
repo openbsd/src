@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1008 2017/05/25 08:25:00 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1009 2017/05/25 12:10:04 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2662,6 +2662,21 @@ __EOT
 	$AUTO && >/tmp/ai/ai.done
 }
 
+do_autoinstall() {
+	rm -f /tmp/ai/ai.done
+
+	echo "Performing non-interactive $AI_MODE..."
+	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
+		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
+
+	[[ -f /tmp/ai/ai.done ]] || err_exit "failed; check /tmp/ai/ai.log"
+
+	# Email autoinstall protocol to root on next boot.
+	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
+
+	exec reboot
+}
+
 do_install(){
 	local _rootkey _rootpass
 
@@ -3130,17 +3145,7 @@ elif [[ -z $RESPFILE ]]; then
 	get_responsefile ||
 		err_exit "No response file found; non-interactive mode aborted."
 
-	rm -f /tmp/ai/ai.done
-	echo "Performing non-interactive $AI_MODE..."
-	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
-		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
-	if [[ -f /tmp/ai/ai.done ]]; then
-		# Email /tmp/ai/ai.log to root on next boot.
-		prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
-		exec reboot
-	else
-		err_exit "failed; check /tmp/ai/ai.log"
-	fi
+	do_autoinstall
 else
 	cp $RESPFILE /tmp/ai/ai.conf || exit
 fi
