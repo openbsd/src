@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1007 2017/05/22 19:03:24 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1008 2017/05/25 08:25:00 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -60,10 +60,15 @@
 # Misc functions
 # ------------------------------------------------------------------------------
 
+# Print error message to stderr and exit the script.
+err_exit() {
+	print -u2 -- "$*"
+	exit 1
+}
+
 # Show usage of the installer script and exit.
 usage() {
-	echo "usage: ${0##*/} [-a] [-f filename] [-m install | upgrade]" >&2
-	exit 1
+	err_exit "usage: ${0##*/} [-a] [-f filename] [-m install | upgrade]"
 }
 
 # Wait for the ftp process to finish, or be killed after the timeout and
@@ -407,17 +412,14 @@ disklabel_autolayout() {
 		ask "URL to autopartitioning template for disklabel?" none
 		[[ $resp == none ]] && break
 		if ! $FTP_TLS && [[ $resp == https://* ]]; then
-			echo "https not supported on this platform."
-			exit 1
+			err_exit "https not supported on this platform."
 		fi
 		echo "Fetching $resp"
 		if unpriv ftp -Vo - "$resp" >$_dl && [[ -s $_dl ]]; then
 			disklabel -T $_dl -F $_f -w -A $_disk && return
-			echo "Autopartitioning failed"
-			exit 1
+			err_exit "Autopartitioning failed."
 		else
-			echo "No autopartitioning template found."
-			exit 1
+			err_exit "No autopartitioning template found."
 		fi
 	done
 
@@ -684,8 +686,7 @@ _autorespond() {
 		print -r " $_l"
 	done </tmp/ai/ai.conf.tmp >/tmp/ai/ai.conf
 	[[ -n $_def ]] && resp=$_def && return
-	echo "\nQuestion has no answer in response file."
-	exit 1
+	err_exit "\nQuestion has no answer in response file."
 }
 
 # Issue a read into the global variable $resp. If the dmesg output is
@@ -2498,7 +2499,7 @@ install_sets() {
 			;;
 		[nN]*)	isin nfs $_locs && install_nfs && INSTALL_METHOD=nfs
 			;;
-		*)	$AUTO && echo "'$resp' is not a valid choice." && exit 1
+		*)	$AUTO && err_exit "'$resp' is not a valid choice."
 			;;
 		esac
 
@@ -3126,10 +3127,9 @@ Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
 elif [[ -z $RESPFILE ]]; then
-	if ! get_responsefile; then
-		echo "No response file found; non-interactive mode aborted."
-		exit 1
-	fi
+	get_responsefile ||
+		err_exit "No response file found; non-interactive mode aborted."
+
 	rm -f /tmp/ai/ai.done
 	echo "Performing non-interactive $AI_MODE..."
 	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
@@ -3139,8 +3139,7 @@ elif [[ -z $RESPFILE ]]; then
 		prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
 		exec reboot
 	else
-		echo "failed; check /tmp/ai/ai.log"
-		exit 1
+		err_exit "failed; check /tmp/ai/ai.log"
 	fi
 else
 	cp $RESPFILE /tmp/ai/ai.conf || exit
