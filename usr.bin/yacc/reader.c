@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.33 2016/03/22 18:24:34 mmcc Exp $	 */
+/* $OpenBSD: reader.c,v 1.34 2017/05/25 20:11:03 tedu Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -945,7 +945,7 @@ declare_tokens(int assoc)
  * %expect requires special handling as it really isn't part of the yacc
  * grammar only a flag for yacc proper.
  */
-void
+static void
 declare_expect(int assoc)
 {
 	int c;
@@ -1746,7 +1746,7 @@ void
 pack_grammar(void)
 {
 	int i, j;
-	int assoc, prec;
+	int assoc, pprec;
 
 	ritem = reallocarray(NULL, nitems, sizeof(short));
 	if (ritem == NULL)
@@ -1780,11 +1780,11 @@ pack_grammar(void)
 		rlhs[i] = plhs[i]->index;
 		rrhs[i] = j;
 		assoc = TOKEN;
-		prec = 0;
+		pprec = 0;
 		while (pitem[j]) {
 			ritem[j] = pitem[j]->index;
 			if (pitem[j]->class == TERM) {
-				prec = pitem[j]->prec;
+				pprec = pitem[j]->prec;
 				assoc = pitem[j]->assoc;
 			}
 			++j;
@@ -1792,7 +1792,7 @@ pack_grammar(void)
 		ritem[j] = -i;
 		++j;
 		if (rprec[i] == UNDEFINED) {
-			rprec[i] = prec;
+			rprec[i] = pprec;
 			rassoc[i] = assoc;
 		}
 	}

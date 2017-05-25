@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.14 2014/12/02 15:56:22 millert Exp $	*/
+/*	$OpenBSD: closure.c,v 1.15 2017/05/25 20:11:03 tedu Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -43,7 +43,76 @@ static unsigned *first_derives;
 static unsigned *EFF;
 
 
-void
+#ifdef	DEBUG
+
+static void
+print_closure(int n)
+{
+	short *isp;
+
+	printf("\n\nn = %d\n\n", n);
+	for (isp = itemset; isp < itemsetend; isp++)
+		printf("   %d\n", *isp);
+}
+
+static void
+print_EFF(void)
+{
+	int i, j;
+	unsigned int *rowp;
+	unsigned int k, word;
+
+	printf("\n\nEpsilon Free Firsts\n");
+
+	for (i = start_symbol; i < nsyms; i++) {
+		printf("\n%s", symbol_name[i]);
+		rowp = EFF + ((i - start_symbol) * WORDSIZE(nvars));
+		word = *rowp++;
+
+		k = BITS_PER_WORD;
+		for (j = 0; j < nvars; k++, j++) {
+			if (k >= BITS_PER_WORD) {
+				word = *rowp++;
+				k = 0;
+			}
+
+			if (word & (1 << k))
+				printf("  %s", symbol_name[start_symbol + j]);
+		}
+	}
+}
+
+static void
+print_first_derives(void)
+{
+	int i, j;
+	unsigned int *rp;
+	unsigned int k, cword = 0;
+
+	printf("\n\n\nFirst Derives\n");
+
+	for (i = start_symbol; i < nsyms; i++) {
+		printf("\n%s derives\n", symbol_name[i]);
+		rp = first_derives + i * WORDSIZE(nrules);
+		k = BITS_PER_WORD;
+		for (j = 0; j <= nrules; k++, j++) {
+			if (k >= BITS_PER_WORD) {
+				cword = *rp++;
+				k = 0;
+			}
+
+			if (cword & (1 << k))
+				printf("   %d\n", j);
+		}
+	}
+
+	fflush(stdout);
+}
+
+#endif
+
+
+static void
 set_EFF(void)
 {
 	unsigned int *row;
@@ -177,72 +246,3 @@ finalize_closure(void)
 	free(ruleset);
 	free(first_derives + ntokens * WORDSIZE(nrules));
 }
-
-
-#ifdef	DEBUG
-
-void
-print_closure(int n)
-{
-	short *isp;
-
-	printf("\n\nn = %d\n\n", n);
-	for (isp = itemset; isp < itemsetend; isp++)
-		printf("   %d\n", *isp);
-}
-
-void
-print_EFF(void)
-{
-	int i, j;
-	unsigned int *rowp;
-	unsigned int k, word;
-
-	printf("\n\nEpsilon Free Firsts\n");
-
-	for (i = start_symbol; i < nsyms; i++) {
-		printf("\n%s", symbol_name[i]);
-		rowp = EFF + ((i - start_symbol) * WORDSIZE(nvars));
-		word = *rowp++;
-
-		k = BITS_PER_WORD;
-		for (j = 0; j < nvars; k++, j++) {
-			if (k >= BITS_PER_WORD) {
-				word = *rowp++;
-				k = 0;
-			}
-
-			if (word & (1 << k))
-				printf("  %s", symbol_name[start_symbol + j]);
-		}
-	}
-}
-
-void
-print_first_derives(void)
-{
-	int i, j;
-	unsigned int *rp;
-	unsigned int k, cword = 0;
-
-	printf("\n\n\nFirst Derives\n");
-
-	for (i = start_symbol; i < nsyms; i++) {
-		printf("\n%s derives\n", symbol_name[i]);
-		rp = first_derives + i * WORDSIZE(nrules);
-		k = BITS_PER_WORD;
-		for (j = 0; j <= nrules; k++, j++) {
-			if (k >= BITS_PER_WORD) {
-				cword = *rp++;
-				k = 0;
-			}
-
-			if (cword & (1 << k))
-				printf("   %d\n", j);
-		}
-	}
-
-	fflush(stdout);
-}
-
-#endif

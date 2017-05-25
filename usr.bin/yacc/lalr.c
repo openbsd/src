@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.18 2015/12/11 20:25:47 mmcc Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.19 2017/05/25 20:11:03 tedu Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ short *goto_map;
 short *from_state;
 short *to_state;
 
-short **transpose();
+short **transpose(short **, int);
 void set_state_table(void);
 void set_accessing_symbol(void);
 void set_shift_table(void);
@@ -448,7 +448,7 @@ add_lookback_edge(int stateno, int ruleno, int gotono)
 
 
 short **
-transpose(short **R, int n)
+transpose(short **old_R, int n)
 {
 	short **new_R, **temp_R, *nedges, *sp;
 	int i, k;
@@ -456,7 +456,7 @@ transpose(short **R, int n)
 	nedges = NEW2(n, short);
 
 	for (i = 0; i < n; i++) {
-		sp = R[i];
+		sp = old_R[i];
 		if (sp) {
 			while (*sp >= 0)
 				nedges[*sp++]++;
@@ -479,7 +479,7 @@ transpose(short **R, int n)
 	free(nedges);
 
 	for (i = 0; i < n; i++) {
-		sp = R[i];
+		sp = old_R[i];
 		if (sp) {
 			while (*sp >= 0)
 				*temp_R[*sp++]++ = i;

@@ -1,4 +1,4 @@
-/* $OpenBSD: verbose.c,v 1.13 2014/10/09 03:02:18 deraadt Exp $	 */
+/* $OpenBSD: verbose.c,v 1.14 2017/05/25 20:11:03 tedu Exp $	 */
 /* $NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	 */
 
 /*
@@ -298,7 +298,7 @@ print_shifts(action * p)
 
 
 void
-print_reductions(action * p, int defred)
+print_reductions(action * p, int pdefred)
 {
 	int k, anyreds;
 	action *q;
@@ -315,7 +315,7 @@ print_reductions(action * p, int defred)
 		fprintf(verbose_file, "\t.  error\n");
 	else {
 		for (; p; p = p->next) {
-			if (p->action_code == REDUCE && p->number != defred) {
+			if (p->action_code == REDUCE && p->number != pdefred) {
 				k = p->number - 2;
 				if (p->suppressed == 0)
 					fprintf(verbose_file, "\t%s  reduce %d\n",
@@ -323,8 +323,8 @@ print_reductions(action * p, int defred)
 			}
 		}
 
-		if (defred > 0)
-			fprintf(verbose_file, "\t.  reduce %d\n", defred - 2);
+		if (pdefred > 0)
+			fprintf(verbose_file, "\t.  reduce %d\n", pdefred - 2);
 	}
 }
 
@@ -334,14 +334,14 @@ print_gotos(int stateno)
 {
 	int i, k;
 	int as;
-	short *to_state;
+	short *tto_state;
 	shifts *sp;
 
 	putc('\n', verbose_file);
 	sp = shift_table[stateno];
-	to_state = sp->shift;
+	tto_state = sp->shift;
 	for (i = 0; i < sp->nshifts; ++i) {
-		k = to_state[i];
+		k = tto_state[i];
 		as = accessing_symbol[k];
 		if (ISVAR(as))
 			fprintf(verbose_file, "\t%s  goto %d\n",

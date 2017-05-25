@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.28 2016/07/27 20:53:47 tedu Exp $	 */
+/* $OpenBSD: main.c,v 1.29 2017/05/25 20:11:03 tedu Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -122,7 +122,7 @@ done(int k)
 
 
 void
-onintr(int signo)
+onintr(__unused int signo)
 {
 	sigdie = 1;
 	done(1);

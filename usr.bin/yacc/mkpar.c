@@ -1,4 +1,4 @@
-/* $OpenBSD: mkpar.c,v 1.18 2014/03/13 00:59:34 tedu Exp $	 */
+/* $OpenBSD: mkpar.c,v 1.19 2017/05/25 20:11:03 tedu Exp $	 */
 /* $NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	 */
 
 /*
@@ -49,10 +49,10 @@ short final_state;
 static int SRcount;
 static int RRcount;
 
-extern action *parse_actions();
-extern action *get_shifts();
-extern action *add_reductions();
-extern action *add_reduce();
+extern action *parse_actions(int);
+extern action *get_shifts(int);
+extern action *add_reductions(int, action *);
+extern action *add_reduce(action *, int, int);
 
 short sole_reduction(int);
 void free_action_row(action *);
@@ -98,16 +98,16 @@ get_shifts(int stateno)
 {
 	action *actions, *temp;
 	shifts *sp;
-	short *to_state;
+	short *tto_state;
 	int i, k;
 	int symbol;
 
 	actions = 0;
 	sp = shift_table[stateno];
 	if (sp) {
-		to_state = sp->shift;
+		tto_state = sp->shift;
 		for (i = sp->nshifts - 1; i >= 0; i--) {
-			k = to_state[i];
+			k = tto_state[i];
 			symbol = accessing_symbol[k];
 			if (ISTOKEN(symbol)) {
 				temp = NEW(action);
@@ -187,14 +187,14 @@ void
 find_final_state(void)
 {
 	int goal, i;
-	short *to_state;
+	short *tto_state;
 	shifts *p;
 
 	p = shift_table[0];
-	to_state = p->shift;
+	tto_state = p->shift;
 	goal = ritem[1];
 	for (i = p->nshifts - 1; i >= 0; --i) {
-		final_state = to_state[i];
+		final_state = tto_state[i];
 		if (accessing_symbol[final_state] == goal)
 			break;
 	}
