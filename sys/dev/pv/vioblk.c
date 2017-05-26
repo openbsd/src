@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.3 2017/05/26 10:59:55 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.4 2017/05/26 15:26:28 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -306,7 +306,6 @@ vioblk_req_put(void *cookie, void *io)
 
 	s = splbio();
 
-	vr->vr_len = VIOBLK_DONE;
 	virtio_enqueue_trim(vq, slot, ALLOC_SEGS);
 	virtio_dequeue_commit(vq, slot);
 
@@ -365,6 +364,7 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 		xs->error = XS_NOERROR;
 		xs->resid = xs->datalen - vr->vr_len;
 	}
+	vr->vr_len = VIOBLK_DONE;
 	scsi_done(xs);
 }
 
