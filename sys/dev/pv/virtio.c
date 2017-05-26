@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.1 2017/01/21 11:23:01 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.2 2017/05/26 10:59:55 krw Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -706,6 +706,37 @@ virtio_enqueue_abort(struct virtqueue *vq, int slot)
 	}
 	vq_free_entry(vq, qe);
 	return 0;
+}
+
+/*
+ * enqueue_trim: adjust buffer size to given # of segments, a.k.a.
+ * descriptors.
+ */
+void
+virtio_enqueue_trim(struct virtqueue *vq, int slot, int nsegs)
+{
+	struct vring_desc *vd = &vq->vq_desc[0];
+	int i;
+
+	if ((vd[slot].flags & VRING_DESC_F_INDIRECT) == 0) {
+		for (i = 0; i < nsegs; i++) {
+			vd[slot].flags = VRING_DESC_F_NEXT;
+			if (i == (nsegs - 1))
+				vd[slot].flags = 0;
+			slot = vd[slot].next;
+		}
+	} else {
+		struct vq_entry *qe1 = &vq->vq_entries[slot];
+		vd = &vq->vq_desc[qe1->qe_index];
+		vd->len = sizeof(struct vring_desc) * nsegs;
+		vd = vq->vq_indirect;
+		vd += vq->vq_maxnsegs * qe1->qe_index;
+		for (i = 0; i < nsegs; i++) {
+			vd[i].flags = VRING_DESC_F_NEXT;
+			if (i == (nsegs - 1))
+				vd[i].flags = 0;
+		}
+	}
 }
 
 /*

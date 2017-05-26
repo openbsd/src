@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.2 2017/01/21 11:33:01 reyk Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.3 2017/05/26 10:59:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -102,6 +102,7 @@ struct vioblk_softc {
 
 	struct scsi_adapter	 sc_switch;
 	struct scsi_link	 sc_link;
+	struct scsi_iopool	 sc_iopool;
 
 	int			 sc_notify_on_empty;
 
@@ -121,6 +122,9 @@ void	vioblk_reset(struct vioblk_softc *);
 void	vioblk_scsi_cmd(struct scsi_xfer *);
 int	vioblk_dev_probe(struct scsi_link *);
 void	vioblk_dev_free(struct scsi_link *);
+
+void   *vioblk_req_get(void *);
+void	vioblk_req_put(void *, void *);
 
 void	vioblk_scsi_inq(struct scsi_xfer *);
 void	vioblk_scsi_capacity(struct scsi_xfer *);
@@ -227,7 +231,10 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_switch.dev_probe = vioblk_dev_probe;
 	sc->sc_switch.dev_free = vioblk_dev_free;
 
+	scsi_iopool_init(&sc->sc_iopool, sc, vioblk_req_get, vioblk_req_put);
+
 	sc->sc_link.adapter = &sc->sc_switch;
+	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.adapter_softc = self;
 	sc->sc_link.adapter_buswidth = 2;
 	sc->sc_link.luns = 1;
@@ -246,6 +253,64 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 err:
 	vsc->sc_child = VIRTIO_CHILD_ERROR;
 	return;
+}
+
+/*
+ * vioblk_req_get() provides the SCSI layer with all the
+ * resources necessary to start an I/O on the device.
+ *
+ * Since the size of the I/O is unknown at this time the
+ * resouces allocated (a.k.a. reserved) must be sufficient
+ * to allow the maximum possible I/O size.
+ *
+ * When the I/O is actually attempted via vioblk_scsi_cmd()
+ * excess resources will be returned via virtio_enqueue_trim().
+ */
+void *
+vioblk_req_get(void *cookie)
+{
+	struct vioblk_softc *sc = cookie;
+	struct virtqueue *vq = &sc->sc_vq[0];
+	struct virtio_blk_req *vr = NULL;
+	int r, s, slot;
+
+	s = splbio();
+
+	r = virtio_enqueue_prep(vq, &slot);
+	if (r) {
+		DBGPRINT("virtio_enqueue_prep: %d, vq_num: %d, sc_queued: %d",
+		    r, vq->vq_num, sc->sc_queued);
+		splx(s);
+		return NULL;
+	}
+	vr = &sc->sc_reqs[slot];
+	r = virtio_enqueue_reserve(vq, slot, ALLOC_SEGS);
+	if (r) {
+		DBGPRINT("virtio_enqueue_reserve: %d", r);
+		splx(s);
+		return NULL;
+	}
+
+	splx(s);
+
+	return vr;
+}
+
+void
+vioblk_req_put(void *cookie, void *io)
+{
+	struct vioblk_softc *sc = cookie;
+	struct virtqueue *vq = &sc->sc_vq[0];
+	struct virtio_blk_req *vr = io;
+	int s, slot = vr - sc->sc_reqs;
+
+	s = splbio();
+
+	vr->vr_len = VIOBLK_DONE;
+	virtio_enqueue_trim(vq, slot, ALLOC_SEGS);
+	virtio_dequeue_commit(vq, slot);
+
+	splx(s);
 }
 
 int
@@ -285,6 +350,7 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 		bus_dmamap_sync(vsc->sc_dmat, vr->vr_payload, 0, vr->vr_len,
 		    (vr->vr_hdr.type == VIRTIO_BLK_T_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(vsc->sc_dmat, vr->vr_payload);
 	}
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
 	    sizeof(struct virtio_blk_req_hdr), sizeof(uint8_t),
@@ -300,9 +366,6 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 		xs->resid = xs->datalen - vr->vr_len;
 	}
 	scsi_done(xs);
-	vr->vr_len = VIOBLK_DONE;
-
-	virtio_dequeue_commit(vq, slot);
 }
 
 void
@@ -327,7 +390,6 @@ vioblk_reset(struct vioblk_softc *sc)
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = xs->datalen;
 		scsi_done(xs);
-		vr->vr_len = VIOBLK_DONE;
 	}
 }
 
@@ -339,7 +401,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtio_blk_req *vr;
 	int len, s, timeout, isread, slot, ret, nsegs;
-	int error = XS_NO_CCB;
+	int error = XS_DRIVER_STUFFUP;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	struct scsi_rw_12 *rw12;
@@ -420,15 +482,8 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	s = splbio();
-	ret = virtio_enqueue_prep(vq, &slot);
-	if (ret) {
-		DBGPRINT("virtio_enqueue_prep: %d, vq_num: %d, sc_queued: %d",
-		    ret, vq->vq_num, sc->sc_queued);
-		vioblk_scsi_done(xs, XS_NO_CCB);
-		splx(s);
-		return;
-	}
-	vr = &sc->sc_reqs[slot];
+	vr = xs->io;
+	slot = vr - sc->sc_reqs;
 	if (operation != VIRTIO_BLK_T_FLUSH) {
 		len = MIN(xs->datalen, sector_count * VIRTIO_BLK_SECTOR_SIZE);
 		ret = bus_dmamap_load(vsc->sc_dmat, vr->vr_payload,
@@ -438,19 +493,21 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		if (ret) {
 			printf("%s: bus_dmamap_load: %d", __func__, ret);
 			error = XS_DRIVER_STUFFUP;
-			goto out_enq_abort;
+			goto out_done;
 		}
 		nsegs = vr->vr_payload->dm_nsegs + 2;
 	} else {
 		len = 0;
 		nsegs = 2;
 	}
-	ret = virtio_enqueue_reserve(vq, slot, nsegs);
-	if (ret) {
-		DBGPRINT("virtio_enqueue_reserve: %d", ret);
-		bus_dmamap_unload(vsc->sc_dmat, vr->vr_payload);
-		goto out_done;
-	}
+
+	/*
+	 * Adjust reservation to the number needed, or virtio gets upset. Note
+	 * that it may trim UP if 'xs' is being recycled w/o getting a new
+	 * reservation!
+	 */
+	virtio_enqueue_trim(vq, slot, nsegs);
+
 	vr->vr_xs = xs;
 	vr->vr_hdr.type = operation;
 	vr->vr_hdr.ioprio = 0;
@@ -504,12 +561,9 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	return;
 
-out_enq_abort:
-	virtio_enqueue_abort(vq, slot);
 out_done:
-	vioblk_scsi_done(xs, error);
-	vr->vr_len = VIOBLK_DONE;
 	splx(s);
+	vioblk_scsi_done(xs, error);
 }
 
 void

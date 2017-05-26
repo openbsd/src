@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.7 2017/05/15 19:02:16 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.8 2017/05/26 10:59:55 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -237,15 +237,14 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 		nsegs += vr->vr_data->dm_nsegs;
 	}
 
+	/*
+	 * Adjust reservation to the number needed, or virtio gets upset. Note
+	 * that it may trim UP if 'xs' is being recycled w/o getting a new
+	 * reservation!
+	 */
 	int s = splbio();
-	int r = virtio_enqueue_reserve(vq, slot, nsegs);
+	virtio_enqueue_trim(vq, slot, nsegs);
 	splx(s);
-	if (r) {
-		xs->error = XS_NO_CCB;
-		xs->resid = xs->datalen;
-		scsi_done(xs);
-		return;
-	}
 
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
@@ -370,19 +369,34 @@ vioscsi_vq_done(struct virtqueue *vq)
 	return (ret);
 }
 
+/*
+ * vioscso_req_get() provides the SCSI layer with all the
+ * resources necessary to start an I/O on the device.
+ *
+ * Since the size of the I/O is unknown at this time the
+ * resouces allocated (a.k.a. reserved) must be sufficient
+ * to allow the maximum possible I/O size.
+ *
+ * When the I/O is actually attempted via vioscsi_scsi_cmd()
+ * excess resources will be returned via virtio_enqueue_trim().
+ */
 void *
 vioscsi_req_get(void *cookie)
 {
 	struct vioscsi_softc *sc = cookie;
 	struct virtqueue *vq = &sc->sc_vqs[2];
 	struct vioscsi_req *vr = NULL;
-	int s, slot;
+	int r, s, slot;
 
 	s = splbio();
-	if (virtio_enqueue_prep(vq, &slot) == 0)
-		vr = &sc->sc_reqs[slot];
+	r = virtio_enqueue_prep(vq, &slot);
+	if (r == 0)
+		r = virtio_enqueue_reserve(vq, slot, ALLOC_SEGS);
 	splx(s);
 
+	if (r != 0)
+		return NULL;
+	vr = &sc->sc_reqs[slot];
 	if (vr == NULL)
 		return NULL;
 
@@ -407,6 +421,7 @@ vioscsi_req_put(void *cookie, void *io)
 	DPRINTF("vioscsi_req_put: %p, %d\n", vr, slot);
 
 	int s = splbio();
+	virtio_enqueue_trim(vq, slot, ALLOC_SEGS);
 	if (vr->vr_state == DONE) {
 		virtio_dequeue_commit(vq, slot);
 	} else if (vr->vr_state != ALLOC) {
