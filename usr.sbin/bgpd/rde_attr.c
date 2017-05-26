@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.97 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.98 2017/05/26 20:55:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -426,7 +426,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 	u_int8_t	*seg = data;
 	u_int16_t	 seg_size, as_size = 2;
 	u_int8_t	 seg_len, seg_type;
-	int		 error = 0;
+	int		 i, error = 0;
 
 	if (len & 1)
 		/* odd length aspath are invalid */
@@ -460,6 +460,12 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		if (seg_size == 0)
 			/* empty aspath segments are not allowed */
 			return (AS_ERR_BAD);
+
+		 /* RFC 7607 - AS 0 is considered malformed */
+		for (i = 0; i < seg_len; i++) {
+			if (aspath_extract(seg, i) == 0)
+				return (AS_ERR_SOFT);
+		}
 	}
 	return (error);	/* aspath is valid but probably not loop free */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.359 2017/02/13 14:48:44 phessler Exp $ */
+/*	$OpenBSD: session.c,v 1.360 2017/05/26 20:55:30 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2017,6 +2017,14 @@ parse_open(struct peer *peer)
 	memcpy(&short_as, p, sizeof(short_as));
 	p += sizeof(short_as);
 	as = peer->short_as = ntohs(short_as);
+	if (as == 0) {
+		log_peer_warnx(&peer->conf,
+		    "peer requests unacceptable AS %u", as);
+		session_notification(peer, ERR_OPEN, ERR_OPEN_AS,
+		    NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+		return (-1);
+	}
 
 	memcpy(&oholdtime, p, sizeof(oholdtime));
 	p += sizeof(oholdtime);
@@ -2477,6 +2485,14 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			}
 			memcpy(&remote_as, capa_val, sizeof(remote_as));
 			*as = ntohl(remote_as);
+			if (*as == 0) {
+				log_peer_warnx(&peer->conf,
+				    "peer requests unacceptable AS %u", *as);
+				session_notification(peer, ERR_OPEN, ERR_OPEN_AS,
+				    NULL, 0);
+				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+				return (-1);
+			}
 			peer->capa.peer.as4byte = 1;
 			break;
 		default:
