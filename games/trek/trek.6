@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trek.6,v 1.15 2011/12/28 22:06:36 schwarze Exp $
+.\"	$OpenBSD: trek.6,v 1.16 2017/05/26 19:48:28 tedu Exp $
 .\"	$NetBSD: trek.6,v 1.4 1995/04/22 10:59:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)trek.6	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 28 2011 $
+.Dd $Mdocdate: May 26 2017 $
 .Dt TREK 6
 .Os
 .Sh NAME
@@ -52,9 +52,6 @@ Valid responses are
 .Dq medium ,
 and
 .Dq long .
-You may also type
-.Dq restart ,
-which restarts a previously saved game.
 You will then be prompted for the skill, to which you must respond
 .Dq novice ,
 .Dq fair ,
@@ -84,9 +81,6 @@ the game will tell you what it expects if you just type in a question mark.
 .Ic destruct
 .It
 .Ic do Ns ck
-.It
-.Ic dump No (save game to
-.Pa ./trek.dump )
 .It
 .Ic help
 .It
