@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.360 2017/05/26 19:34:12 markus Exp $ */
+/* $OpenBSD: channels.c,v 1.361 2017/05/26 19:35:50 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -236,8 +236,6 @@ channel_lookup(int id)
 	case SSH_CHANNEL_DYNAMIC:
 	case SSH_CHANNEL_OPENING:
 	case SSH_CHANNEL_OPEN:
-	case SSH_CHANNEL_INPUT_DRAINING:
-	case SSH_CHANNEL_OUTPUT_DRAINING:
 	case SSH_CHANNEL_ABANDONED:
 	case SSH_CHANNEL_MUX_PROXY:
 		return (c);
@@ -604,9 +602,6 @@ channel_still_open(void)
 		case SSH_CHANNEL_MUX_CLIENT:
 		case SSH_CHANNEL_MUX_PROXY:
 			return 1;
-		case SSH_CHANNEL_INPUT_DRAINING:
-		case SSH_CHANNEL_OUTPUT_DRAINING:
-			fatal("cannot happen: OUT_DRAIN");
 		default:
 			fatal("%s: bad channel type %d", __func__, c->type);
 			/* NOTREACHED */
@@ -647,9 +642,6 @@ channel_find_open(void)
 		case SSH_CHANNEL_OPEN:
 		case SSH_CHANNEL_X11_OPEN:
 			return i;
-		case SSH_CHANNEL_INPUT_DRAINING:
-		case SSH_CHANNEL_OUTPUT_DRAINING:
-			fatal("cannot happen: OUT_DRAIN");
 		default:
 			fatal("%s: bad channel type %d", __func__, c->type);
 			/* NOTREACHED */
@@ -696,8 +688,6 @@ channel_open_message(void)
 		case SSH_CHANNEL_DYNAMIC:
 		case SSH_CHANNEL_OPEN:
 		case SSH_CHANNEL_X11_OPEN:
-		case SSH_CHANNEL_INPUT_DRAINING:
-		case SSH_CHANNEL_OUTPUT_DRAINING:
 		case SSH_CHANNEL_MUX_PROXY:
 		case SSH_CHANNEL_MUX_CLIENT:
 			snprintf(buf, sizeof buf,
