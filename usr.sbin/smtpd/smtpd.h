@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.531 2017/05/22 13:43:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.532 2017/05/26 21:30:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1246,6 +1246,11 @@ void logit(int, const char *, ...) __attribute__((format (printf, 2, 3)));
 void mda_postfork(void);
 void mda_postprivdrop(void);
 void mda_imsg(struct mproc *, struct imsg *);
+
+
+/* mda_variables.c */
+size_t mda_expand_format(char *, size_t, const struct envelope *,
+    const struct userinfo *);
 
 
 /* makemap.c */
