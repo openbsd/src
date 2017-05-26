@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.79 2017/05/26 15:56:51 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.80 2017/05/26 16:27:25 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -120,11 +120,10 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
     struct ifnet *gifp)
 {
 	struct mbuf *m = *mp;
-	int iphlen = *offp;
 	struct sockaddr_in *sin;
 	struct ifnet *ifp;
 	struct niqueue *ifq = NULL;
-	struct ip *ipo;
+	struct ip *ip;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6;
@@ -160,8 +159,8 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	/* Keep outer ecn field. */
 	switch (oaf) {
 	case AF_INET:
-		ipo = mtod(m, struct ip *);
-		otos = ipo->ip_tos;
+		ip = mtod(m, struct ip *);
+		otos = ip->ip_tos;
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -172,14 +171,13 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	}
 
 	/* Remove outer IP header */
-	m_adj(m, iphlen);
-
-	/* Sanity check */
-	if (m->m_pkthdr.len < sizeof(struct ip)) {
-		ipipstat_inc(ipips_hdrops);
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
+	KASSERT(*offp > 0);
+	m_adj(m, *offp);
+	*offp = 0;
+	ip = NULL;
+#ifdef INET6
+	ip6 = NULL;
+#endif
 
 	switch (proto) {
 	case IPPROTO_IPV4:
@@ -193,6 +191,13 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 #endif
 	default:
 		ipipstat_inc(ipips_family);
+		m_freem(m);
+		return IPPROTO_DONE;
+	}
+
+	/* Sanity check */
+	if (m->m_pkthdr.len < hlen) {
+		ipipstat_inc(ipips_hdrops);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -217,31 +222,30 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	/* Some sanity checks in the inner IP header */
 	switch (proto) {
     	case IPPROTO_IPV4:
-		ipo = mtod(m, struct ip *);
-#ifdef INET6
-		ip6 = NULL;
-#endif
-		itos = ipo->ip_tos;
+		ip = mtod(m, struct ip *);
+		hlen = ip->ip_hl << 2;
+		if (m->m_pkthdr.len < hlen) {
+			ipipstat_inc(ipips_hdrops);
+			m_freem(m);
+			return IPPROTO_DONE;
+		}
+		itos = ip->ip_tos;
 		mode = m->m_flags & (M_AUTH|M_CONF) ?
 		    ECN_ALLOWED_IPSEC : ECN_ALLOWED;
-		if (!ip_ecn_egress(mode, &otos, &ipo->ip_tos)) {
+		if (!ip_ecn_egress(mode, &otos, &ip->ip_tos)) {
 			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
 			ipipstat_inc(ipips_pdrops);
 			m_freem(m);
 			return IPPROTO_DONE;
 		}
 		/* re-calculate the checksum if ip_tos was changed */
-		if (itos != ipo->ip_tos) {
-			hlen = ipo->ip_hl << 2;
-			if (m->m_pkthdr.len >= hlen) {
-				ipo->ip_sum = 0;
-				ipo->ip_sum = in_cksum(m, hlen);
-			}
+		if (itos != ip->ip_tos) {
+			ip->ip_sum = 0;
+			ip->ip_sum = in_cksum(m, hlen);
 		}
 		break;
 #ifdef INET6
     	case IPPROTO_IPV6:
-		ipo = NULL;
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
@@ -253,11 +257,6 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		ip6->ip6_flow &= ~htonl(0xff << 20);
 		ip6->ip6_flow |= htonl((u_int32_t) itos << 20);
 		break;
-#endif
-	default:
-		ipo = NULL;
-#ifdef INET6
-		ip6 = NULL;
 #endif
 	}
 
@@ -272,11 +271,11 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 
 		memset(&ss, 0, sizeof(ss));
 
-		if (ipo) {
+		if (ip) {
 			sin = (struct sockaddr_in *)&ss;
 			sin->sin_family = AF_INET;
 			sin->sin_len = sizeof(*sin);
-			sin->sin_addr = ipo->ip_src;
+			sin->sin_addr = ip->ip_src;
 #ifdef INET6
 		} else if (ip6) {
 			sin6 = (struct sockaddr_in6 *)&ss;
@@ -298,7 +297,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	}
 
 	/* Statistics */
-	ipipstat_add(ipips_ibytes, m->m_pkthdr.len - iphlen);
+	ipipstat_add(ipips_ibytes, m->m_pkthdr.len - hlen);
 
 	/*
 	 * Interface pointer stays the same; if no IPsec processing has
