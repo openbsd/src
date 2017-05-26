@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.417 2017/05/26 14:35:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.418 2017/05/26 14:57:41 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -158,6 +158,7 @@ struct client_lease *packet_to_lease(struct interface_info *, struct in_addr,
 void go_daemon(void);
 int rdaemon(int);
 void	take_charge(struct interface_info *);
+void	set_default_client_identifier(struct interface_info *);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
 #define	ROUNDUP(a) \
@@ -444,7 +445,6 @@ int
 main(int argc, char *argv[])
 {
 	struct interface_info *ifi;
-	struct option_data *opt;
 	struct ifreq ifr;
 	struct ieee80211_nwid nwid;
 	struct stat sb;
@@ -576,24 +576,8 @@ main(int argc, char *argv[])
 	 * Set default client identifier, if needed, *before* reading
 	 * the leases file! Changes to the lladdr will trigger a restart
 	 * and go through here again.
-	 *
-	 * Check both len && data so
-	 *
-	 *     send dhcp-client-identifier "";
-	 *
-	 * can be used to suppress sending the default client
-	 * identifier.
 	 */
-	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
-	if (opt->len == 0 && opt->data == NULL) {
-		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
-		if (opt->data == NULL)
-			fatalx("no memory for default client identifier");
-		opt->data[0] = HTYPE_ETHER;
-		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
-		    ETHER_ADDR_LEN);
-		opt->len = ETHER_ADDR_LEN + 1;
-	}
+	set_default_client_identifier(ifi);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("no such user: _dhcp");
@@ -2684,4 +2668,30 @@ get_recorded_lease(struct interface_info *ifi)
 	}
 
 	return (lp);
+}
+
+void
+set_default_client_identifier(struct interface_info *ifi)
+{
+	struct option_data *opt;
+
+	/*
+	 *
+	 * Check both len && data so
+	 *
+	 *     send dhcp-client-identifier "";
+	 *
+	 * can be used to suppress sending the default client
+	 * identifier.
+	 */
+	opt = &config->send_options[DHO_DHCP_CLIENT_IDENTIFIER];
+	if (opt->len == 0 && opt->data == NULL) {
+		opt->data = calloc(1, ETHER_ADDR_LEN + 1);
+		if (opt->data == NULL)
+			fatalx("no memory for default client identifier");
+		opt->data[0] = HTYPE_ETHER;
+		memcpy(&opt->data[1], ifi->hw_address.ether_addr_octet,
+		    ETHER_ADDR_LEN);
+		opt->len = ETHER_ADDR_LEN + 1;
+	}
 }
