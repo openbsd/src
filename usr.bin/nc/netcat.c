@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.182 2017/05/10 21:56:53 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.183 2017/05/26 16:05:35 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -117,6 +117,7 @@ int ttl = -1;
 int minttl = -1;
 
 void	atelnet(int, unsigned char *, unsigned int);
+int	strtoport(char *portstr, int udp);
 void	build_ports(char *);
 void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
@@ -134,9 +135,9 @@ int	unix_listen(char *);
 void	set_common_sockopts(int, int);
 int	map_tos(char *, int *);
 int	map_tls(char *, int *);
-void    save_peer_cert(struct tls *_tls_ctx, FILE *_fp);
+void	save_peer_cert(struct tls *_tls_ctx, FILE *_fp);
 void	report_connect(const struct sockaddr *, socklen_t, char *);
-void	report_tls(struct tls *tls_ctx, char * host, char *tls_expectname);
+void	report_tls(struct tls *tls_ctx, char * host);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
 ssize_t fillbuf(int, unsigned char *, size_t *, struct tls *);
@@ -152,7 +153,7 @@ main(int argc, char *argv[])
 	struct servent *sv;
 	socklen_t len;
 	struct sockaddr_storage cliaddr;
-	char *proxy, *proxyport = NULL;
+	char *proxy = NULL, *proxyport = NULL;
 	const char *errstr;
 	struct addrinfo proxyhints;
 	char unix_dg_tmp_socket_buf[UNIX_DG_TMP_SOCKET_SIZE];
@@ -780,7 +781,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 		errx(1, "tls handshake failed (%s)", errstr);
 	}
 	if (vflag)
-		report_tls(tls_ctx, host, tls_expectname);
+		report_tls(tls_ctx, host);
 	if (tls_expecthash && tls_peer_cert_hash(tls_ctx) &&
 	    strcmp(tls_expecthash, tls_peer_cert_hash(tls_ctx)) != 0)
 		errx(1, "peer certificate is not %s", tls_expecthash);
@@ -807,7 +808,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 		int gotcert = tls_peer_cert_provided(tls_cctx);
 
 		if (vflag && gotcert)
-			report_tls(tls_cctx, host, tls_expectname);
+			report_tls(tls_cctx, host);
 		if ((TLSopt & TLS_CCERT) && !gotcert)
 			warnx("No client certificate provided");
 		else if (gotcert && tls_peer_cert_hash(tls_ctx) && tls_expecthash &&
@@ -1582,18 +1583,17 @@ save_peer_cert(struct tls *tls_ctx, FILE *fp)
 {
 	const char *pem;
 	size_t plen;
-	FILE *out;
 
 	if ((pem = tls_peer_cert_chain_pem(tls_ctx, &plen)) == NULL)
 		errx(1, "Can't get peer certificate");
-	if (fprintf(fp, "%.*s", plen, pem) < 0)
+	if (fprintf(fp, "%.*s", (int)plen, pem) < 0)
 		err(1, "unable to save peer cert");
 	if (fflush(fp) != 0)
 		err(1, "unable to flush peer cert");
 }
 
 void
-report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
+report_tls(struct tls * tls_ctx, char * host)
 {
 	time_t t;
 	const char *ocsp_url;
