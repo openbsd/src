@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.109 2017/05/24 11:21:13 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.110 2017/05/26 14:43:25 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -236,7 +236,8 @@ rollback_patch()
 		fi
 	done
 
-	((_ret == 0)) && rm -r ${_PDIR}/${_patch} ||
+	((_ret != 0)) || rm -r ${_PDIR}/${_patch} || _ret=$?
+	((_ret == 0)) ||
 		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_ret}
 	rm -rf ${_edir} # don't fill up /tmp when using `-R'; non-fatal
 	trap exit INT
