@@ -1,4 +1,4 @@
-/*	$OpenBSD: play.c,v 1.7 2016/01/07 14:37:51 mestre Exp $	*/
+/*	$OpenBSD: play.c,v 1.8 2017/05/26 19:19:23 tedu Exp $	*/
 /*	$NetBSD: play.c,v 1.3 1995/04/22 10:59:18 cgd Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ const struct cvntab	Comtab[] =
 	{ "m",			"ove",		dowarp,		0 },
 	{ "p",			"hasers",	phaser,		0 },
 	{ "ram",		"",		dowarp,		1 },
-	{ "dump",		"",		dumpgame,	0 },
 	{ "r",			"est",		rest,		0 },
 	{ "sh",			"ield",		shield,		0 },
 	{ "s",			"rscan",	srscan,		0 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.13 2013/06/02 04:28:39 schwarze Exp $	*/
+/*	$OpenBSD: trek.h,v 1.14 2017/05/26 19:19:23 tedu Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -409,10 +409,6 @@ void destruct(int);
 /* dock.c */
 void dock(int);
 void undock(int);
-
-/* dumpgame.c */
-void dumpgame(int);
-int restartgame(void);
 
 /* dumpme.c */
 void dumpme(int);

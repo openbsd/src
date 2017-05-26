@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.12 2016/01/07 14:37:51 mestre Exp $	*/
+/*	$OpenBSD: setup.c,v 1.13 2017/05/26 19:19:23 tedu Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 **	that goes on in here, but it is all straight-line code;
 **	give it a look.
 **
-**	Game restart and tournament games are handled here.
+**	Tournament games are handled here.
 */
 
 const struct cvntab	Lentab[] =
@@ -55,7 +55,6 @@ const struct cvntab	Lentab[] =
 	{ "s",		"hort",		(cmdfun)1,	0 },
 	{ "m",		"edium",	(cmdfun)2,	0 },
 	{ "l",		"ong",		(cmdfun)4,	0 },
-	{ "restart",	"",		(cmdfun)0,	0 },
 	{ NULL,		NULL,		NULL,		0 }
 };
 
@@ -82,18 +81,8 @@ setup(void)
 	struct quad		*q;
 	struct event		*e;
 
-	while (1)
-	{
-		r = getcodpar("What length game", Lentab);
-		Game.length = (long) r->value;
-		if (Game.length == 0)
-		{
-			if (restartgame())
-				continue;
-			return;
-		}
-		break;
-	}
+	r = getcodpar("What length game", Lentab);
+	Game.length = (long) r->value;
 	r = getcodpar("What skill game", Skitab);
 	Game.skill = (long) r->value;
 	Game.tourn = 0;
