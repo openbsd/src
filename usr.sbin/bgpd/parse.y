@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.298 2017/02/22 13:55:14 renato Exp $ */
+/*	$OpenBSD: parse.y,v 1.299 2017/05/26 14:07:03 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -217,6 +217,7 @@ typedef struct {
 %type	<v.filter_set>		filter_set_opt
 %type	<v.filter_set_head>	filter_set filter_set_l
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l filter_prefix_h
+%type	<v.filter_prefix>	filter_prefix_m
 %type	<v.u8>			unaryop equalityop binaryop filter_as_type
 %type	<v.encspec>		encspec
 %%
@@ -1615,8 +1616,22 @@ filter_prefix_h	: IPV4 prefixlenop			 {
 			}
 		}
 		| PREFIX filter_prefix			{ $$ = $2; }
-		| PREFIX '{' filter_prefix_l '}'	{ $$ = $3; }
+		| PREFIX '{' filter_prefix_m '}'	{ $$ = $3; }
 		;
+
+filter_prefix_m	: filter_prefix_l
+		| '{' filter_prefix_l '}'		{ $$ = $2; }
+		| '{' filter_prefix_l '}' filter_prefix_m
+		{
+			struct filter_prefix_l  *p;
+
+			/* merge, both can be lists */
+			for (p = $2; p != NULL && p->next != NULL; p = p->next)
+				;       /* nothing */
+			if (p != NULL)
+				p->next = $4;
+			$$ = $2;
+		} 
 
 filter_prefix_l	: filter_prefix				{ $$ = $1; }
 		| filter_prefix_l comma filter_prefix	{
