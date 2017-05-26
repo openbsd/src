@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.11 2016/09/02 07:46:18 otto Exp $
+# $OpenBSD: Makefile,v 1.12 2017/05/26 20:27:21 tedu Exp $
 
 PATCH=patch
 PATCHOPTIONS=-sN
 
-REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
+REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19
 
 # Currently t3 fails
 
@@ -65,9 +65,17 @@ t13:
 	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
 		(echo "XXX ${*} failed" && false)
 
+t19:
+	@echo t19
+	@mkdir -p d19
+	@cp ${.CURDIR}/t19.in d19/file
+	@${PATCH} -t ${PATCHOPTIONS} < ${.CURDIR}/t19.diff
+	@cmp -s ${.CURDIR}/t19.out d19/file || (echo "XXX t19 failed" && false)
+
+
 # Clean all files generated
 clean:
-	rm -f *.copy *.orig *.rej t5
+	rm -rf *.copy *.orig *.rej t5 d19
 
 .PHONY: t5
 
