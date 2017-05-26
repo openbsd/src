@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.56 2017/03/26 15:28:12 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.57 2017/05/26 20:27:02 tedu Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -254,6 +254,7 @@ intuit_diff_type(void)
 	char	*s, *t;
 	int	indent, retval;
 	struct file_name names[MAX_FILE];
+	int	piece_of_git = 0;
 
 	memset(names, 0, sizeof(names));
 	ok_to_create_file = false;
@@ -298,14 +299,20 @@ intuit_diff_type(void)
 		if (!stars_last_line && strnEQ(s, "*** ", 4))
 			names[OLD_FILE].path = fetchname(s + 4,
 			    &names[OLD_FILE].exists, strippath);
-		else if (strnEQ(s, "--- ", 4))
-			names[NEW_FILE].path = fetchname(s + 4,
+		else if (strnEQ(s, "--- ", 4)) {
+			size_t off = 4;
+			if (piece_of_git && strippath == 957)
+				off = 6;
+			names[NEW_FILE].path = fetchname(s + off,
 			    &names[NEW_FILE].exists, strippath);
-		else if (strnEQ(s, "+++ ", 4))
+		} else if (strnEQ(s, "+++ ", 4)) {
 			/* pretend it is the old name */
-			names[OLD_FILE].path = fetchname(s + 4,
+			size_t off = 4;
+			if (piece_of_git && strippath == 957)
+				off = 6;
+			names[OLD_FILE].path = fetchname(s + off,
 			    &names[OLD_FILE].exists, strippath);
-		else if (strnEQ(s, "Index:", 6))
+		} else if (strnEQ(s, "Index:", 6))
 			names[INDEX_FILE].path = fetchname(s + 6,
 			    &names[INDEX_FILE].exists, strippath);
 		else if (strnEQ(s, "Prereq:", 7)) {
@@ -320,7 +327,8 @@ intuit_diff_type(void)
 				free(revision);
 				revision = NULL;
 			}
-		}
+		} else if (strnEQ(s, "diff --git ", 11))
+			piece_of_git = 1;
 		if ((!diff_type || diff_type == ED_DIFF) &&
 		    first_command_line >= 0 &&
 		    strEQ(s, ".\n")) {
