@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.37 2014/05/16 18:17:03 mpi Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.38 2017/05/26 13:13:50 mpi Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -82,6 +82,8 @@ struct ohci_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+	int sc_flags;			/* misc flags */
+#define OHCIF_RHSC_INTR			0x01
 
 	struct usb_dma sc_hccadma;
 	struct ohci_hcca *sc_hcca;
@@ -106,9 +108,6 @@ struct ohci_softc {
 	struct ohci_soft_itd *sc_freeitds;
 
 	struct usbd_xfer *sc_intrxfer;
-
-	struct ohci_soft_itd *sc_sidone;
-	struct ohci_soft_td *sc_sdone;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
