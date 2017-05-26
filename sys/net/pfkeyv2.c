@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.155 2017/05/16 12:24:01 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.156 2017/05/26 19:11:20 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -92,11 +92,8 @@
 #include <net/pfvar.h>
 #endif
 
-#define PFKEYV2_PROTOCOL 2
-
 /* Static globals */
 static struct pfkeyv2_socket *pfkeyv2_sockets = NULL;
-static struct pfkey_version pfkeyv2_version;
 static uint32_t pfkeyv2_seq = 1;
 static int nregistered = 0;
 static int npromisc = 0;
@@ -2280,27 +2277,4 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 
 	return (error);
-}
-
-int
-pfkeyv2_init(void)
-{
-	int rval;
-
-	bzero(&pfkeyv2_version, sizeof(struct pfkey_version));
-	pfkeyv2_version.protocol = PFKEYV2_PROTOCOL;
-	pfkeyv2_version.create = &pfkeyv2_create;
-	pfkeyv2_version.release = &pfkeyv2_release;
-	pfkeyv2_version.send = &pfkeyv2_send;
-	pfkeyv2_version.sysctl = &pfkeyv2_sysctl;
-
-	rval = pfkey_register(&pfkeyv2_version);
-	return (rval);
-}
-
-int
-pfkeyv2_cleanup(void)
-{
-	pfkey_unregister(&pfkeyv2_version);
-	return (0);
 }
