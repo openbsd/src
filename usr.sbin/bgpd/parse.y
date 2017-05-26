@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.299 2017/05/26 14:07:03 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.300 2017/05/26 14:08:51 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,6 +93,11 @@ static struct filter_rule	*curpeer_filter[2];
 static struct filter_rule	*curgroup_filter[2];
 static u_int32_t		 id;
 
+struct filter_rib_l {
+	struct filter_rib_l	*next;
+	char			 name[PEER_DESCR_LEN];
+};
+
 struct filter_peers_l {
 	struct filter_peers_l	*next;
 	struct filter_peers	 p;
@@ -130,8 +135,9 @@ struct rde_rib	*find_rib(char *);
 int		 get_id(struct peer *);
 int		 merge_prefixspec(struct filter_prefix_l *,
 		    struct filter_prefixlen *);
-int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
-		    struct filter_match_l *, struct filter_set_head *);
+int		 expand_rule(struct filter_rule *, struct filter_rib_l *,
+		    struct filter_peers_l *, struct filter_match_l *,
+		    struct filter_set_head *);
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
 int		 merge_filterset(struct filter_set_head *, struct filter_set *);
@@ -155,6 +161,7 @@ typedef struct {
 		char			*string;
 		struct bgpd_addr	 addr;
 		u_int8_t		 u8;
+		struct filter_rib_l	*filter_rib;
 		struct filter_peers_l	*filter_peers;
 		struct filter_match_l	 filter_match;
 		struct filter_prefix_l	*filter_prefix;
@@ -205,10 +212,11 @@ typedef struct {
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family restart origincode nettype
 %type	<v.number>		yesno inout restricted
-%type	<v.string>		string filter_rib
+%type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction delete
+%type	<v.filter_rib>		filter_rib_h filter_rib_l filter_rib
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
 %type	<v.filter_match>	filter_match filter_elm filter_match_h
 %type	<v.filter_as>		filter_as filter_as_l filter_as_h
@@ -1472,9 +1480,10 @@ encspec		: /* nada */	{
 		}
 		;
 
-filterrule	: action quick filter_rib direction filter_peer_h filter_match_h filter_set
+filterrule	: action quick filter_rib_h direction filter_peer_h filter_match_h filter_set
 		{
 			struct filter_rule	 r;
+			struct filter_rib_l	 *rb, *rbnext;
 
 			bzero(&r, sizeof(r));
 			r.action = $1;
@@ -1484,25 +1493,15 @@ filterrule	: action quick filter_rib direction filter_peer_h filter_match_h filt
 				if (r.dir != DIR_IN) {
 					yyerror("rib only allowed on \"from\" "
 					    "rules.");
-					free($3);
+
+					for (rb = $3; rb != NULL; rb = rbnext) {
+						rbnext = rb->next;
+						free(rb);
+					}
 					YYERROR;
 				}
-				if (!find_rib($3)) {
-					yyerror("rib \"%s\" does not exist.",
-					    $3);
-					free($3);
-					YYERROR;
-				}
-				if (strlcpy(r.rib, $3, sizeof(r.rib)) >=
-				    sizeof(r.rib)) {
-					yyerror("rib name \"%s\" too long: "
-					    "max %zu", $3, sizeof(r.rib) - 1);
-					free($3);
-					YYERROR;
-				}
-				free($3);
 			}
-			if (expand_rule(&r, $5, &$6, $7) == -1)
+			if (expand_rule(&r, $3, $5, &$6, $7) == -1)
 				YYERROR;
 		}
 		;
@@ -1520,8 +1519,38 @@ direction	: FROM		{ $$ = DIR_IN; }
 		| TO		{ $$ = DIR_OUT; }
 		;
 
-filter_rib	: /* empty */	{ $$ = NULL; }
-		| RIB STRING	{ $$ = $2; }
+filter_rib_h	: /* empty */			{ $$ = NULL; }
+		| RIB filter_rib		{ $$ = $2; }
+		| RIB '{' filter_rib_l '}'	{ $$ = $3; }
+
+filter_rib_l	: filter_rib			{ $$ = $1; }
+		| filter_rib_l comma filter_rib	{
+			$3->next = $1;
+			$$ = $3;
+		}
+		;
+
+filter_rib	: STRING	{
+			if (!find_rib($1)) {
+				yyerror("rib \"%s\" does not exist.", $1);
+				free($1);
+				YYERROR;
+			}
+			if (($$ = calloc(1, sizeof(struct filter_rib_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->next = NULL;
+			if (strlcpy($$->name, $1, sizeof($$->name)) >=
+			    sizeof($$->name)) {
+				yyerror("rib name \"%s\" too long: "
+				    "max %zu", $1, sizeof($$->name) - 1);
+				free($1);
+				free($$);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
 
 filter_peer_h	: filter_peer
 		| '{' filter_peer_l '}'		{ $$ = $2; }
@@ -3467,58 +3496,76 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 }
 
 int
-expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
-    struct filter_match_l *match, struct filter_set_head *set)
+expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
+    struct filter_peers_l *peer, struct filter_match_l *match,
+    struct filter_set_head *set)
 {
 	struct filter_rule	*r;
+	struct filter_rib_l	*rb, *rbnext;
 	struct filter_peers_l	*p, *pnext;
 	struct filter_prefix_l	*prefix, *prefix_next;
 	struct filter_as_l	*a, *anext;
 	struct filter_set	*s;
 
-	p = peer;
+	rb = rib;
 	do {
-		a = match->as_l;
+		p = peer;
 		do {
-			prefix = match->prefix_l;
+			a = match->as_l;
 			do {
-				if ((r = calloc(1,
-				    sizeof(struct filter_rule))) == NULL) {
-					log_warn("expand_rule");
-					return (-1);
-				}
+				prefix = match->prefix_l;
+				do {
+					if ((r = calloc(1,
+					    sizeof(struct filter_rule))) ==
+						 NULL) {
+						log_warn("expand_rule");
+						return (-1);
+					}
 
-				memcpy(r, rule, sizeof(struct filter_rule));
-				memcpy(&r->match, match,
-				    sizeof(struct filter_match));
-				TAILQ_INIT(&r->set);
-				copy_filterset(set, &r->set);
+					memcpy(r, rule, sizeof(struct filter_rule));
+					memcpy(&r->match, match,
+					    sizeof(struct filter_match));
+					TAILQ_INIT(&r->set);
+					copy_filterset(set, &r->set);
 
-				if (p != NULL)
-					memcpy(&r->peer, &p->p,
-					    sizeof(struct filter_peers));
+					if (rb != NULL)
+						strlcpy(r->rib, rb->name,
+						     sizeof(r->rib));
 
-				if (prefix != NULL)
-					memcpy(&r->match.prefix, &prefix->p,
-					    sizeof(r->match.prefix));
+					if (p != NULL)
+						memcpy(&r->peer, &p->p,
+						    sizeof(struct filter_peers));
+
+					if (prefix != NULL)
+						memcpy(&r->match.prefix, &prefix->p,
+						    sizeof(r->match.prefix));
+
+					if (a != NULL)
+						memcpy(&r->match.as, &a->a,
+						    sizeof(struct filter_as));
+
+					TAILQ_INSERT_TAIL(filter_l, r, entry);
+
+					if (prefix != NULL)
+						prefix = prefix->next;
+				} while (prefix != NULL);
 
 				if (a != NULL)
-					memcpy(&r->match.as, &a->a,
-					    sizeof(struct filter_as));
+					a = a->next;
+			} while (a != NULL);
 
-				TAILQ_INSERT_TAIL(filter_l, r, entry);
+			if (p != NULL)
+				p = p->next;
+		} while (p != NULL);
 
-				if (prefix != NULL)
-					prefix = prefix->next;
-			} while (prefix != NULL);
+		if (rb != NULL)
+			rb = rb->next;
+	} while (rb != NULL);
 
-			if (a != NULL)
-				a = a->next;
-		} while (a != NULL);
-
-		if (p != NULL)
-			p = p->next;
-	} while (p != NULL);
+	for (rb = rib; rb != NULL; rb = rbnext) {
+		rbnext = rb->next;
+		free(rb);
+	}
 
 	for (p = peer; p != NULL; p = pnext) {
 		pnext = p->next;
