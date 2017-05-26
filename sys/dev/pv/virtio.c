@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.2 2017/05/26 10:59:55 krw Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.3 2017/05/26 15:30:21 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -729,8 +729,7 @@ virtio_enqueue_trim(struct virtqueue *vq, int slot, int nsegs)
 		struct vq_entry *qe1 = &vq->vq_entries[slot];
 		vd = &vq->vq_desc[qe1->qe_index];
 		vd->len = sizeof(struct vring_desc) * nsegs;
-		vd = vq->vq_indirect;
-		vd += vq->vq_maxnsegs * qe1->qe_index;
+		vd = qe1->qe_desc_base;
 		for (i = 0; i < nsegs; i++) {
 			vd[i].flags = VRING_DESC_F_NEXT;
 			if (i == (nsegs - 1))
