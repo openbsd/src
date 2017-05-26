@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.78 2017/05/18 10:56:45 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.79 2017/05/26 15:56:51 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -131,26 +131,21 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 #endif
 	int mode, hlen;
 	u_int8_t itos, otos;
-	u_int8_t v;
 	sa_family_t iaf;
 
 	ipipstat_inc(ipips_ipackets);
 
-	m_copydata(m, 0, 1, &v);
-
-	switch (v >> 4) {
-	case 4:
+	switch (oaf) {
+	case AF_INET:
 		hlen = sizeof(struct ip);
 		break;
 #ifdef INET6
-	case 6:
+	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
 	default:
-		ipipstat_inc(ipips_family);
-		m_freem(m);
-		return IPPROTO_DONE;
+		unhandled_af(oaf);
 	}
 
 	/* Bring the IP header in the first mbuf, if not there already */
@@ -162,21 +157,18 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		}
 	}
 
-
 	/* Keep outer ecn field. */
-	switch (v >> 4) {
-	case 4:
+	switch (oaf) {
+	case AF_INET:
 		ipo = mtod(m, struct ip *);
 		otos = ipo->ip_tos;
 		break;
 #ifdef INET6
-	case 6:
+	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
 		otos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 #endif
-	default:
-		panic("%s: should never reach here", __func__);
 	}
 
 	/* Remove outer IP header */
