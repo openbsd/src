@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.166 2017/01/10 11:41:32 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.167 2017/05/26 19:15:06 stsp Exp $
 
 machine		amd64
 maxusers	4
@@ -44,6 +44,7 @@ acpimadt0	at acpi?
 bytgpio*	at acpi?
 sdhc*		at acpi?
 acpihve*	at acpi?
+chvgpio*        at acpi?
 
 mpbios0		at bios0
 
