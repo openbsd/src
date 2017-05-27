@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.103 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.104 2017/05/27 12:21:50 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -528,7 +528,14 @@ cpu_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	tlbflushg();
+	/*
+	 * Big hammer: flush all TLB entries, including ones from PTE's
+	 * with the G bit set.  This should only be necessary if TLB
+	 * shootdown falls far behind.
+	 */
+	cr4 = rcr4();
+	lcr4(cr4 & ~CR4_PGE);
+	lcr4(cr4);
 #endif
 }
 

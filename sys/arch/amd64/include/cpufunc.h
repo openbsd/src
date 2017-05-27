@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.17 2017/05/27 10:22:50 tedu Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.18 2017/05/27 12:21:50 tedu Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -145,19 +145,6 @@ tlbflush(void)
 	u_int64_t val;
 	__asm volatile("movq %%cr3,%0" : "=r" (val));
 	__asm volatile("movq %0,%%cr3" : : "r" (val));
-}
-
-static __inline void
-tlbflushg(void)
-{
-	/*
-	 * Big hammer: flush all TLB entries, including ones from PTE's
-	 * with the G bit set.  This should only be necessary if TLB
-	 * shootdown falls far behind.
-	 */
-	u_int cr4 = rcr4();
-	lcr4(cr4 & ~CR4_PGE);
-	lcr4(cr4);
 }
 
 #ifdef notyet

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.82 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.83 2017/05/27 12:21:50 tedu Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -410,7 +410,32 @@ cpu_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	tlbflushg();
+	/*
+	 * Big hammer: flush all TLB entries, including ones from PTE's
+	 * with the G bit set.  This should only be necessary if TLB
+	 * shootdown falls far behind.
+	 *
+	 * Intel Architecture Software Developer's Manual, Volume 3,
+	 *	System Programming, section 9.10, "Invalidating the
+	 * Translation Lookaside Buffers (TLBS)":
+	 * "The following operations invalidate all TLB entries, irrespective
+	 * of the setting of the G flag:
+	 * ...
+	 * "(P6 family processors only): Writing to control register CR4 to
+	 * modify the PSE, PGE, or PAE flag."
+	 *
+	 * (the alternatives not quoted above are not an option here.)
+	 *
+	 * If PGE is not in use, we reload CR3 for the benefit of
+	 * pre-P6-family processors.
+	 */
+
+	if (cpu_feature & CPUID_PGE) {
+		cr4 = rcr4();
+		lcr4(cr4 & ~CR4_PGE);
+		lcr4(cr4);
+	} else
+		tlbflush();
 #endif
 }
 
