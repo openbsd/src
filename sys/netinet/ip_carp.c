@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.309 2017/05/04 17:58:46 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.310 2017/05/27 21:55:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2362,6 +2362,7 @@ carp_set_state(struct carp_vhost_entry *vhe, int state)
 	struct carp_softc *sc = vhe->parent_sc;
 	static const char *carp_states[] = { CARP_STATES };
 	int loglevel;
+	struct carp_vhost_entry *vhe0;
 
 	KASSERT(vhe->state != state);
 
@@ -2382,20 +2383,20 @@ carp_set_state(struct carp_vhost_entry *vhe, int state)
 	vhe->state = state;
 	carp_update_lsmask(sc);
 
-	/* only the master vhe creates link state messages */
-	if (!vhe->vhe_leader)
-		return;
+	KERNEL_ASSERT_LOCKED(); /* touching carp_vhosts */
 
-	switch (state) {
-	case BACKUP:
-		sc->sc_if.if_link_state = LINK_STATE_DOWN;
-		break;
-	case MASTER:
-		sc->sc_if.if_link_state = LINK_STATE_UP;
-		break;
-	default:
-		sc->sc_if.if_link_state = LINK_STATE_INVALID;
-		break;
+	sc->sc_if.if_link_state = LINK_STATE_INVALID;
+	SRPL_FOREACH_LOCKED(vhe0, &sc->carp_vhosts, vhost_entries) {
+		/*
+		 * Link must be up if at least one vhe is in state MASTER to
+		 * bring or keep route up.
+		 */
+		if (vhe0->state == MASTER) {
+			sc->sc_if.if_link_state = LINK_STATE_UP;
+			break;
+		} else if (vhe0->state == BACKUP) {
+			sc->sc_if.if_link_state = LINK_STATE_DOWN;
+		}
 	}
 	if_link_state_change(&sc->sc_if);
 }
