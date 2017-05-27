@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.2 2017/05/27 09:54:43 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -105,8 +105,8 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define	VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define	VM_PHYSSEG_MAX		2
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define	VM_PHYSSEG_MAX		32
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
 #endif /* _MACHINE_VMPARAM_H_ */

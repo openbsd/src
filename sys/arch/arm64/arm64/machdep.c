@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.17 2017/05/03 22:35:49 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.18 2017/05/27 09:54:43 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -47,6 +47,8 @@
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+
+#include <dev/acpi/efi.h>
 
 char *boot_args = NULL;
 char *boot_file = "";
@@ -729,19 +731,24 @@ cache_setup(void)
 	}
 }
 
+uint64_t mmap_start;
+uint32_t mmap_size;
+uint32_t mmap_desc_size;
+uint32_t mmap_desc_ver;
+
+EFI_MEMORY_DESCRIPTOR *mmap;
+
 void	collect_kernel_args(char *);
 void	process_kernel_args(void);
 
 void
 initarm(struct arm64_bootparams *abp)
 {
-	//struct efi_map_header *efihdr;
 	vaddr_t vstart, vend;
 	struct cpu_info *pcpup;
 	long kvo = abp->kern_delta;
 	//caddr_t kmdp;
-	paddr_t memstart;
-	psize_t memsize;
+	paddr_t memstart, memend;
 	void *config = abp->arg2;
 	void *fdt = NULL;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -760,7 +767,7 @@ initarm(struct arm64_bootparams *abp)
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
-		char *args, *duid;
+		char *args, *duid, *prop;
 		int len;
 
 		len = fdt_node_property(node, "bootargs", &args);
@@ -770,14 +777,20 @@ initarm(struct arm64_bootparams *abp)
 		len = fdt_node_property(node, "openbsd,bootduid", &duid);
 		if (len == sizeof(bootduid))
 			memcpy(bootduid, duid, sizeof(bootduid));
+
+		len = fdt_node_property(node, "openbsd,uefi-mmap-start", &prop);
+		if (len == sizeof(mmap_start))
+			mmap_start = bemtoh64((uint64_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-size", &prop);
+		if (len == sizeof(mmap_size))
+			mmap_size = bemtoh32((uint32_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-size", &prop);
+		if (len == sizeof(mmap_desc_size))
+			mmap_desc_size = bemtoh32((uint32_t *)prop);
+		len = fdt_node_property(node, "openbsd,uefi-mmap-desc-ver", &prop);
+		if (len == sizeof(mmap_desc_ver))
+			mmap_desc_ver = bemtoh32((uint32_t *)prop);
 	}
-
-	node = fdt_find_node("/memory");
-	if (node == NULL || fdt_get_reg(node, 0, &reg))
-		panic("initarm: no memory specificed");
-
-	memstart = reg.addr;
-	memsize = reg.size;
 
 	/* Set the pcpu data, this is needed by pmap_bootstrap */
 	// smp
@@ -793,10 +806,6 @@ initarm(struct arm64_bootparams *abp)
 
 	cache_setup();
 
-	{
-	extern char bootargs[MAX_BOOT_STRING];
-	printf("memsize %llx %llx bootargs [%s]\n", memstart, memsize, bootargs);
-	}
 	process_kernel_args();
 
 	// XXX
@@ -805,10 +814,13 @@ initarm(struct arm64_bootparams *abp)
 	void _start(void);
 	long kernbase = (long)&_start & ~0x00fff;
 
-	/* Bootstrap enough of pmap  to enter the kernel proper */
+	/* The bootloader has loaded us into a 64MB block. */
+	memstart = KERNBASE + kvo;
+	memend = memstart + 64 * 1024 * 1024;
+
+	/* Bootstrap enough of pmap to enter the kernel proper. */
 	vstart = pmap_bootstrap(kvo, abp->kern_l1pt,
-	    kernbase, esym,
-	    memstart, memstart + memsize);
+	    kernbase, esym, memstart, memend);
 
 	// XX correctly sized?
 	proc0paddr = (struct user *)abp->kern_stack;
@@ -824,23 +836,43 @@ initarm(struct arm64_bootparams *abp)
 	copy_dst_page = vstart;
 	vstart += PAGE_SIZE;
 
-	/*
-	 * Allocate pages for an FDT copy.
-	 */
+	/* Relocate the FDT to safe memory. */
 	if (fdt_get_size(config) != 0) {
 		uint32_t csize, size = round_page(fdt_get_size(config));
+		paddr_t pa;
 		vaddr_t va;
 
-		paddr_t fpa =  pmap_steal_avail(size, PAGE_SIZE, NULL);
-		memcpy((void*)fpa, config, size); // copy to physical address
-		for (va = (vaddr_t)vstart, csize = size;
-		    csize > 0;
-		    csize -= PAGE_SIZE, va += PAGE_SIZE, fpa += PAGE_SIZE)
-		{
-		    pmap_kenter_cache(va, fpa, PROT_READ, PMAP_CACHE_WB);
-		}
+		pa = pmap_steal_avail(size, PAGE_SIZE, NULL);
+		memcpy((void *)pa, config, size); /* copy to physical */
+		for (va = vstart, csize = size; csize > 0;
+		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
+			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
 
 		fdt = (void *)vstart;
+		vstart += size;
+	}
+
+	/* Relocate the EFI memory map too. */
+	if (mmap_start != 0) {
+		uint32_t csize, size = round_page(mmap_size);
+		paddr_t pa, startpa, endpa;
+		vaddr_t va;
+
+		startpa = trunc_page(mmap_start);
+		endpa = round_page(mmap_start + mmap_size);
+		for (pa = startpa, va = vstart; pa < endpa;
+		    pa += PAGE_SIZE, va += PAGE_SIZE)
+			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+		pa = pmap_steal_avail(size, PAGE_SIZE, NULL);
+		memcpy((void *)pa, (caddr_t)vstart + (mmap_start - startpa),
+		    mmap_size); /* copy to physical */
+		pmap_kremove(vstart, endpa - startpa);
+
+		for (va = vstart, csize = size; csize > 0;
+		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
+			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+
+		mmap = (void *)vstart;
 		vstart += size;
 	}
 
@@ -882,7 +914,77 @@ initarm(struct arm64_bootparams *abp)
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
+	/* Make what's left of the initial 64MB block available to UVM. */
 	pmap_physload_avail();
+
+	/* Make all other physical memory available to UVM. */
+	if (mmap && mmap_desc_ver == EFI_MEMORY_DESCRIPTOR_VERSION) {
+		int i;
+
+		/*
+		 * Load all memory marked as EfiConventionalMemory.
+		 * Don't bother with blocks smaller than 64KB.  The
+		 * initial 64MB memory block should be marked as
+		 * EfiLoaderData so it won't be added again here.
+		 */
+		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
+			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
+			    mmap->Type, mmap->PhysicalStart,
+			    mmap->VirtualStart, mmap->NumberOfPages,
+			    mmap->Attribute);
+			if (mmap->Type == EfiConventionalMemory &&
+			    mmap->NumberOfPages >= 16) {
+				uvm_page_physload(atop(mmap->PhysicalStart),
+				    atop(mmap->PhysicalStart) +
+				    mmap->NumberOfPages,
+				    atop(mmap->PhysicalStart),
+				    atop(mmap->PhysicalStart) +
+				    mmap->NumberOfPages, 0);
+				physmem += mmap->NumberOfPages;
+			}
+			mmap = NextMemoryDescriptor(mmap, mmap_desc_size);
+		}
+	} else {
+		paddr_t start, end;
+		int i;
+
+		node = fdt_find_node("/memory");
+		if (node == NULL)
+			panic("%s: no memory specified", __func__);
+
+		for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+			if (fdt_get_reg(node, i, &reg))
+				break;
+			if (reg.size == 0)
+				continue;
+
+			start = reg.addr;
+			end = MIN(reg.addr + reg.size, (paddr_t)-PAGE_SIZE);
+
+			/*
+			 * The intial 64MB block is not excluded, so we need
+			 * to make sure we don't add it here.
+			 */
+			if (start < memend && end > memstart) {
+				if (start < memstart) {
+					uvm_page_physload(atop(start),
+					    atop(memstart), atop(start),
+					    atop(memstart), 0);
+					physmem += atop(memstart - start);
+				}
+				if (end > memend) {
+					uvm_page_physload(atop(memend),
+					    atop(end), atop(memend),
+					    atop(end), 0);
+					physmem += atop(end - memend);
+				}
+			} else {
+				uvm_page_physload(atop(start), atop(end),
+				    atop(start), atop(end), 0);
+				physmem += atop(end - start);
+			}
+		}
+	}
 
 #ifdef DDB
 	db_machine_init();
