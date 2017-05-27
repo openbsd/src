@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.246 2017/05/08 15:47:49 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.247 2017/05/27 10:36:18 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1078,7 +1078,12 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	struct mbuf *m;
 	unsigned remain;
 
-	KASSERT(m0 != NULL);
+	/*
+	 * Limit the size of the new header to MHLEN. In case
+	 * skip = 0 and the first buffer is not a cluster this
+	 * is the maximum space available in that mbuf.
+	 * In other words this code never prepends a mbuf.
+	 */
 	KASSERT(hlen < MHLEN);
 
 	for (m = m0; m && skip > m->m_len; m = m->m_next)
@@ -1089,7 +1094,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	 * At this point skip is the offset into the mbuf m
 	 * where the new header should be placed.  Figure out
 	 * if there's space to insert the new header.  If so,
-	 * and copying the remainder makese sense then do so.
+	 * and copying the remainder makes sense then do so.
 	 * Otherwise insert a new mbuf in the chain, splitting
 	 * the contents of m as needed.
 	 */
@@ -1099,69 +1104,45 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 			memmove(m->m_data-hlen, m->m_data, skip);
 		m->m_data -= hlen;
 		m->m_len += hlen;
-		(*off) = skip;
+		*off = skip;
 	} else if (hlen > M_TRAILINGSPACE(m)) {
-		struct mbuf *n0, *n, **np;
-		int todo, len, done, alloc;
+		struct mbuf *n;
 
-		n0 = NULL;
-		np = &n0;
-		alloc = 0;
-		done = 0;
-		todo = remain;
-		while (todo > 0) {
+		if (remain > 0) {
 			MGET(n, M_DONTWAIT, m->m_type);
-			len = MHLEN;
-			if (n && todo > MHLEN) {
-				MCLGET(n, M_DONTWAIT);
-				len = MCLBYTES;
+			if (n && remain > MLEN) {
+				MCLGETI(n, M_DONTWAIT, NULL, remain);
 				if ((n->m_flags & M_EXT) == 0) {
 					m_free(n);
 					n = NULL;
 				}
 			}
-			if (n == NULL) {
-				m_freem(n0);
-				return NULL;
-			}
-			*np = n;
-			np = &n->m_next;
-			alloc++;
-			len = min(todo, len);
-			memcpy(n->m_data, mtod(m, char *) + skip + done, len);
-			n->m_len = len;
-			done += len;
-			todo -= len;
+			if (n == NULL)
+				return (NULL);
+
+			memcpy(n->m_data, mtod(m, char *) + skip, remain);
+			n->m_len = remain;
+			m->m_len -= remain;
+
+			n->m_next = m->m_next;
+			m->m_next = n;
 		}
 
-		if (hlen <= M_TRAILINGSPACE(m) + remain) {
-			m->m_len = skip + hlen;
+		if (hlen <= M_TRAILINGSPACE(m)) {
+			m->m_len += hlen;
 			*off = skip;
-			if (n0 != NULL) {
-				*np = m->m_next;
-				m->m_next = n0;
-			}
-		}
-		else {
+		} else {
 			n = m_get(M_DONTWAIT, m->m_type);
-			if (n == NULL) {
-				m_freem(n0);
+			if (n == NULL)
 				return NULL;
-			}
-			alloc++;
-
-			if ((n->m_next = n0) == NULL)
-				np = &n->m_next;
-			n0 = n;
-
-			*np = m->m_next;
-			m->m_next = n0;
 
 			n->m_len = hlen;
-			m->m_len = skip;
 
-			m = n;			/* header is at front ... */
-			*off = 0;		/* ... of new mbuf */
+			n->m_next = m->m_next;
+			m->m_next = n;
+
+			*off = 0;	/* header is at front ... */
+			m = n;		/* ... of new mbuf */
 		}
 	} else {
 		/*
