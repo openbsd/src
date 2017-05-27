@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.111 2017/05/26 15:28:00 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.112 2017/05/27 09:05:25 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -145,11 +145,12 @@ create_rollback()
 
 fetch_and_verify()
 {
-	local _tgz=$1
+	local _tgz=$1 _title="Get/Verify"
 	[[ -n ${_tgz} ]]
 
-	unpriv -f "${_TMP}/${_tgz}" ftp -VD "Get/Verify" -o \
-		"${_TMP}/${_tgz}" "${_MIRROR}/${_tgz}"
+	[[ -t 0 ]] || echo "${_title} ${_tgz}"
+	unpriv -f "${_TMP}/${_tgz}" ftp -VD "${_title}" -o "${_TMP}/${_tgz}" \
+		"${_MIRROR}/${_tgz}"
 
 	(cd ${_TMP} && sha256 -qC ${_TMP}/SHA256 ${_tgz})
 }
