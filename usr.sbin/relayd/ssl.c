@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.31 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.32 2017/05/27 08:33:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -18,12 +18,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/queue.h>
+#include <sys/uio.h>
 
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <event.h>
 #include <unistd.h>
 #include <string.h>
 #include <imsg.h>
@@ -33,206 +30,9 @@
 #include <openssl/engine.h>
 
 #include "relayd.h"
+#include "boguskeys.h"
 
-void	ssl_read(int, short, void *);
-void	ssl_write(int, short, void *);
-void	ssl_connect(int, short, void *);
-void	ssl_cleanup(struct ctl_tcp_event *);
 int	ssl_password_cb(char *, int, int, void *);
-
-void
-ssl_read(int s, short event, void *arg)
-{
-	char			 rbuf[SMALL_READ_BUF_SIZE];
-	struct ctl_tcp_event	*cte = arg;
-	int			 retry_flag = EV_READ;
-	int			 tls_err = 0;
-	int			 ret;
-
-	if (event == EV_TIMEOUT) {
-		cte->host->up = HOST_DOWN;
-		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_TLS_READ_TIMEOUT);
-		return;
-	}
-
-	bzero(rbuf, sizeof(rbuf));
-
-	ret = SSL_read(cte->ssl, rbuf, sizeof(rbuf));
-	if (ret <= 0) {
-		tls_err = SSL_get_error(cte->ssl, ret);
-		switch (tls_err) {
-		case SSL_ERROR_WANT_READ:
-			retry_flag = EV_READ;
-			goto retry;
-		case SSL_ERROR_WANT_WRITE:
-			retry_flag = EV_WRITE;
-			goto retry;
-		case SSL_ERROR_ZERO_RETURN: /* FALLTHROUGH */
-		case SSL_ERROR_SYSCALL:
-			if (ret == 0) {
-				cte->host->up = HOST_DOWN;
-				(void)cte->validate_close(cte);
-				ssl_cleanup(cte);
-				hce_notify_done(cte->host, cte->host->he);
-				return;
-			}
-			/* FALLTHROUGH */
-		default:
-			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->conf.name, "cannot read");
-			ssl_cleanup(cte);
-			hce_notify_done(cte->host, HCE_TLS_READ_ERROR);
-			break;
-		}
-		return;
-	}
-	if (ibuf_add(cte->buf, rbuf, ret) == -1)
-		fatal("ssl_read: buf_add error");
-	if (cte->validate_read != NULL) {
-		if (cte->validate_read(cte) != 0)
-			goto retry;
-
-		ssl_cleanup(cte);
-		hce_notify_done(cte->host, cte->host->he);
-		return;
-	}
-
-retry:
-	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_read,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-	return;
-}
-
-void
-ssl_write(int s, short event, void *arg)
-{
-	struct ctl_tcp_event	*cte = arg;
-	int			 retry_flag = EV_WRITE;
-	int			 tls_err = 0;
-	int			 len;
-	int			 ret;
-
-	if (event == EV_TIMEOUT) {
-		cte->host->up = HOST_DOWN;
-		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_TLS_WRITE_TIMEOUT);
-		return;
-	}
-
-	len = strlen(cte->table->sendbuf);
-
-	ret = SSL_write(cte->ssl, cte->table->sendbuf, len);
-	if (ret <= 0) {
-		tls_err = SSL_get_error(cte->ssl, ret);
-		switch (tls_err) {
-		case SSL_ERROR_WANT_READ:
-			retry_flag = EV_READ;
-			goto retry;
-		case SSL_ERROR_WANT_WRITE:
-			retry_flag = EV_WRITE;
-			goto retry;
-		default:
-			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->conf.name, "cannot write");
-			ssl_cleanup(cte);
-			hce_notify_done(cte->host, HCE_TLS_WRITE_ERROR);
-			return;
-		}
-	}
-	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
-		fatalx("ssl_write: cannot create dynamic buffer");
-
-	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, ssl_read,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-	return;
-retry:
-	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_write,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-}
-
-void
-ssl_connect(int s, short event, void *arg)
-{
-	struct ctl_tcp_event	*cte = arg;
-	int			 retry_flag = 0;
-	int			 tls_err = 0;
-	int			 ret;
-
-	if (event == EV_TIMEOUT) {
-		cte->host->up = HOST_DOWN;
-		hce_notify_done(cte->host, HCE_TLS_CONNECT_TIMEOUT);
-		ssl_cleanup(cte);
-		return;
-	}
-
-	ret = SSL_connect(cte->ssl);
-	if (ret <= 0) {
-		tls_err = SSL_get_error(cte->ssl, ret);
-		switch (tls_err) {
-		case SSL_ERROR_WANT_READ:
-			retry_flag = EV_READ;
-			goto retry;
-		case SSL_ERROR_WANT_WRITE:
-			retry_flag = EV_WRITE;
-			goto retry;
-		default:
-			cte->host->up = HOST_DOWN;
-			ssl_error(cte->host->conf.name, "cannot connect");
-			hce_notify_done(cte->host, HCE_TLS_CONNECT_FAIL);
-			ssl_cleanup(cte);
-			return;
-		}
-	}
-
-	if (cte->table->conf.check == CHECK_TCP) {
-		cte->host->up = HOST_UP;
-		hce_notify_done(cte->host, HCE_TLS_CONNECT_OK);
-		ssl_cleanup(cte);
-		return;
-	}
-	if (cte->table->sendbuf != NULL) {
-		event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, ssl_write,
-		    &cte->tv_start, &cte->table->conf.timeout, cte);
-		return;
-	}
-
-	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
-		fatalx("ssl_connect: cannot create dynamic buffer");
-	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_READ, ssl_read,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-	return;
-
-retry:
-	event_again(&cte->ev, s, EV_TIMEOUT|retry_flag, ssl_connect,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-}
-
-void
-ssl_cleanup(struct ctl_tcp_event *cte)
-{
-	close(cte->s);
-	if (cte->ssl != NULL) {
-		SSL_shutdown(cte->ssl);
-		SSL_clear(cte->ssl);
-	}
-	ibuf_free(cte->buf);
-	cte->buf = NULL;
-}
-
-void
-ssl_error(const char *where, const char *what)
-{
-	char		 errbuf[128];
-	unsigned long	 code;
-
-	if (log_getverbose() < 2)
-		return;
-	for (; (code = ERR_get_error()) != 0 ;) {
-		ERR_error_string_n(code, errbuf, sizeof(errbuf));
-		log_debug("SSL library error: %s: %s: %s", where, what, errbuf);
-	}
-}
 
 void
 ssl_init(struct relayd *env)
@@ -250,43 +50,6 @@ ssl_init(struct relayd *env)
 	ENGINE_register_all_complete();
 
 	initialized = 1;
-}
-
-void
-ssl_transaction(struct ctl_tcp_event *cte)
-{
-	if (cte->ssl == NULL) {
-		cte->ssl = SSL_new(cte->table->ssl_ctx);
-		if (cte->ssl == NULL) {
-			ssl_error(cte->host->conf.name, "cannot create object");
-			fatal("cannot create SSL object");
-		}
-	}
-
-	if (SSL_set_fd(cte->ssl, cte->s) == 0) {
-		cte->host->up = HOST_UNKNOWN;
-		ssl_error(cte->host->conf.name, "cannot set fd");
-		ssl_cleanup(cte);
-		hce_notify_done(cte->host, HCE_TLS_CONNECT_ERROR);
-		return;
-	}
-	SSL_set_connect_state(cte->ssl);
-
-	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, ssl_connect,
-	    &cte->tv_start, &cte->table->conf.timeout, cte);
-}
-
-SSL_CTX *
-ssl_ctx_create(struct relayd *env)
-{
-	SSL_CTX	*ctx;
-
-	ctx = SSL_CTX_new(SSLv23_client_method());
-	if (ctx == NULL) {
-		ssl_error("ssl_ctx_create", "cannot create context");
-		fatal("could not create SSL context");
-	}
-	return (ctx);
 }
 
 int
@@ -345,8 +108,6 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	return (buf);
 
  fail:
-	ssl_error(__func__, name);
-
 	free(buf);
 	if (bio != NULL)
 		BIO_free_all(bio);
@@ -355,21 +116,45 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	return (NULL);
 }
 
-X509 *
-ssl_update_certificate(X509 *oldcert, EVP_PKEY *pkey, EVP_PKEY *capkey,
-    X509 *cacert)
+uint8_t *
+ssl_update_certificate(const uint8_t *oldcert, size_t oldlen, EVP_PKEY *pkey,
+    EVP_PKEY *capkey, X509 *cacert, size_t *newlen)
 {
 	char		 name[2][TLS_NAME_SIZE];
+	BIO		*in, *out = NULL;
+	BUF_MEM		*bptr = NULL;
 	X509		*cert = NULL;
+	uint8_t		*newcert = NULL, *foo = NULL;
+
+	/* XXX BIO_new_mem_buf is not using const so work around this */
+	if ((foo = malloc(oldlen)) == NULL) {	
+		log_warn("%s: malloc", __func__);
+		return (NULL);
+	}
+	memcpy(foo, oldcert, oldlen);
+
+	if ((in = BIO_new_mem_buf(foo, oldlen)) == NULL) {
+		log_warnx("%s: BIO_new_mem_buf failed", __func__);
+		goto done;
+	}
+
+	if ((cert = PEM_read_bio_X509(in, NULL,
+	    ssl_password_cb, NULL)) == NULL) {
+		log_warnx("%s: PEM_read_bio_X509 failed", __func__);
+		goto done;
+	}
+
+	BIO_free(in);
+	in = NULL;
 
 	name[0][0] = name[1][0] = '\0';
-	if (!X509_NAME_oneline(X509_get_subject_name(oldcert),
+	if (!X509_NAME_oneline(X509_get_subject_name(cert),
 	    name[0], sizeof(name[0])) ||
-	    !X509_NAME_oneline(X509_get_issuer_name(oldcert),
+	    !X509_NAME_oneline(X509_get_issuer_name(cert),
 	    name[1], sizeof(name[1])))
 		goto done;
 
-	if ((cert = X509_dup(oldcert)) == NULL)
+	if ((cert = X509_dup(cert)) == NULL)
 		goto done;
 
 	/* Update certificate key and use our CA as the issuer */
@@ -377,9 +162,9 @@ ssl_update_certificate(X509 *oldcert, EVP_PKEY *pkey, EVP_PKEY *capkey,
 	X509_set_issuer_name(cert, X509_get_subject_name(cacert));
 
 	/* Sign with our CA */
-	if (!X509_sign(cert, capkey, EVP_sha1())) {
-		X509_free(cert);
-		cert = NULL;
+	if (!X509_sign(cert, capkey, EVP_sha256())) {
+		log_warnx("%s: X509_sign failed", __func__);
+		goto done;
 	}
 
 #if DEBUG_CERT
@@ -390,15 +175,37 @@ ssl_update_certificate(X509 *oldcert, EVP_PKEY *pkey, EVP_PKEY *capkey,
 #endif
 #endif
 
- done:
-	if (cert == NULL)
-		ssl_error(__func__, name[0]);
+	/* write cert as PEM file */
+	out = BIO_new(BIO_s_mem());
+	if (out == NULL) {
+		log_warnx("%s: BIO_new failed", __func__);
+		goto done;
+	}
+	if (!PEM_write_bio_X509(out, cert)) {
+		log_warnx("%s: PEM_write_bio_X509 failed", __func__);
+		goto done;
+	}
+	BIO_get_mem_ptr(out, &bptr);
+	if ((newcert = malloc(bptr->length)) == NULL) {
+		log_warn("%s: malloc", __func__);
+		goto done;
+	}
+	memcpy(newcert, bptr->data, bptr->length);
+	*newlen = bptr->length;
 
-	return (cert);
+done:
+	free(foo);
+	if (in)
+		BIO_free(in);
+	if (out)
+		BIO_free(out);
+	if (cert)
+		X509_free(cert);
+	return (newcert);
 }
 
 int
-ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
+ssl_load_pkey(void *data, char *buf, off_t len,
     X509 **x509ptr, EVP_PKEY **pkeyptr)
 {
 	BIO		*in;
@@ -408,36 +215,38 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	void		*exdata = NULL;
 
 	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_BUF_LIB);
+		log_warnx("%s: BIO_new_mem_buf failed", __func__);
 		return (0);
 	}
 
 	if ((x509 = PEM_read_bio_X509(in, NULL,
 	    ssl_password_cb, NULL)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PEM_LIB);
+		log_warnx("%s: PEM_read_bio_X509 failed", __func__);
 		goto fail;
 	}
 
 	if ((pkey = X509_get_pubkey(x509)) == NULL) {
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_X509_LIB);
+		log_warnx("%s: X509_get_pubkey failed", __func__);
 		goto fail;
 	}
 
 	BIO_free(in);
 
-	if (data != NULL && datalen) {
-		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL ||
-		    (exdata = malloc(datalen)) == NULL) {
-			SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
+	if (data != NULL) {
+		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL) {
+			log_warnx("%s: failed to extract RSA", __func__);
 			goto fail;
 		}
 
-		memcpy(exdata, data, datalen);
-		RSA_set_ex_data(rsa, 0, exdata);
+		RSA_set_ex_data(rsa, 0, data);
 		RSA_free(rsa); /* dereference, will be cleaned up with pkey */
 	}
 
-	*x509ptr = x509;
+	if (x509ptr != NULL)
+		*x509ptr = x509;
+	else
+		X509_free(x509);
+
 	*pkeyptr = pkey;
 
 	return (1);
@@ -456,37 +265,63 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	return (0);
 }
 
+/*
+ * This function is a horrible hack but for RSA privsep to work a private key
+ * with correct size needs to be loaded into the tls config.
+ */
 int
-ssl_ctx_fake_private_key(SSL_CTX *ctx, const void *data, size_t datalen,
-    char *buf, off_t len, X509 **x509ptr, EVP_PKEY **pkeyptr)
+ssl_ctx_fake_private_key(char *buf, off_t len, const char **fake_key)
 {
-	int		 ret = 0;
+	BIO		*in;
 	EVP_PKEY	*pkey = NULL;
 	X509		*x509 = NULL;
+	int		 ret = -1, keylen;
 
-	if (!ssl_load_pkey(data, datalen, buf, len, &x509, &pkey))
+	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
+		log_warnx("%s: BIO_new_mem_buf failed", __func__);
 		return (0);
+	}
 
-	/*
-	 * Use the public key as the "private" key - the secret key
-	 * parameters are hidden in an extra process that will be
-	 * contacted by the RSA engine.  The SSL/TLS library needs at
-	 * least the public key parameters in the current process.
-	 */
-	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-	if (!ret)
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_SSL_LIB);
+	if ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)) == NULL) {
+		log_warnx("%s: PEM_read_bio_X509 failed", __func__);
+		goto fail;
+	}
 
-	if (pkeyptr != NULL)
-		*pkeyptr = pkey;
-	else if (pkey != NULL)
+	if ((pkey = X509_get_pubkey(x509)) == NULL) {
+		log_warnx("%s: X509_get_pubkey failed", __func__);
+		goto fail;
+	}
+
+	keylen = EVP_PKEY_size(pkey) * 8;
+	switch(keylen) {
+	case 1024:
+		*fake_key = bogus_1024;
+		ret = sizeof(bogus_1024);
+		break;
+	case 2048:
+		*fake_key = bogus_2048;
+		ret = sizeof(bogus_2048);
+		break;
+	case 4096:
+		*fake_key = bogus_4096;
+		ret = sizeof(bogus_4096);
+		break;
+	case 8192:
+		*fake_key = bogus_8192;
+		ret = sizeof(bogus_8192);
+		break;
+	default:
+		log_warnx("%s: key size %d not support", __func__, keylen);
+		ret = -1;
+		break;
+	}
+fail:
+	BIO_free(in);
+
+	if (pkey != NULL)
 		EVP_PKEY_free(pkey);
-
-	if (x509ptr != NULL)
-		*x509ptr = x509;
-	else if (x509 != NULL)
+	if (x509 != NULL)
 		X509_free(x509);
-
+	
 	return (ret);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2016/11/24 21:01:18 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.32 2017/05/27 08:33:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -100,8 +100,12 @@ config_init(struct relayd *env)
 		(void)strlcpy(env->sc_proto_default.tlsciphers,
 		    TLSCIPHERS_DEFAULT,
 		    sizeof(env->sc_proto_default.tlsciphers));
-		env->sc_proto_default.tlsecdhcurve = TLSECDHCURVE_DEFAULT;
-		env->sc_proto_default.tlsdhparams = TLSDHPARAMS_DEFAULT;
+		(void)strlcpy(env->sc_proto_default.tlsecdhcurve,
+		    TLSECDHCURVE_DEFAULT,
+		    sizeof(env->sc_proto_default.tlsecdhcurve));
+		(void)strlcpy(env->sc_proto_default.tlsdhparams,
+		    TLSDHPARAM_DEFAULT,
+		    sizeof(env->sc_proto_default.tlsdhparams));
 		env->sc_proto_default.type = RELAY_PROTO_TCP;
 		(void)strlcpy(env->sc_proto_default.name, "default",
 		    sizeof(env->sc_proto_default.name));
@@ -269,6 +273,8 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 		ssl_init(env);
 		if (what & CONFIG_CA_ENGINE)
 			ca_engine_init(env);
+		if (tls_init() == -1)
+			fatalx("unable to initialize TLS");
 	}
 
 	if (privsep_process != PROC_PARENT)

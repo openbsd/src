@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.75 2016/09/03 14:09:04 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.76 2017/05/27 08:33:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -90,9 +90,11 @@ hce_setup_events(void)
 	if (env->sc_conf.flags & F_TLS) {
 		TAILQ_FOREACH(table, env->sc_tables, entry) {
 			if (!(table->conf.flags & F_TLS) ||
-			    table->ssl_ctx != NULL)
+			    table->tls_cfg != NULL)
 				continue;
-			table->ssl_ctx = ssl_ctx_create(env);
+			table->tls_cfg = tls_config_new();
+			tls_config_insecure_noverifycert(table->tls_cfg);
+			tls_config_insecure_noverifyname(table->tls_cfg);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.52 2017/02/09 11:16:22 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.53 2017/05/27 08:33:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -170,7 +170,7 @@ tcp_host_up(struct ctl_tcp_event *cte)
 	}
 
 	if (cte->table->conf.flags & F_TLS) {
-		ssl_transaction(cte);
+		check_tls(cte);
 		return;
 	}
 

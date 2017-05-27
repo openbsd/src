@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.214 2017/01/05 13:53:09 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.215 2017/05/27 08:33:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -181,7 +181,6 @@ typedef struct {
 %type	<v.number>	opttls opttlsclient
 %type	<v.number>	redirect_proto relay_proto match
 %type	<v.number>	action ruleaf key_option
-%type	<v.number>	tlsdhparams tlsecdhcurve
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.addr>	address
@@ -1000,8 +999,10 @@ proto		: relay_proto PROTO STRING	{
 			TAILQ_INIT(&p->rules);
 			(void)strlcpy(p->tlsciphers, TLSCIPHERS_DEFAULT,
 			    sizeof(p->tlsciphers));
-			p->tlsdhparams = TLSDHPARAMS_DEFAULT;
-			p->tlsecdhcurve = TLSECDHCURVE_DEFAULT;
+			(void)strlcpy(p->tlsecdhcurve, TLSECDHCURVE_DEFAULT,
+			    sizeof(p->tlsecdhcurve));
+			(void)strlcpy(p->tlsdhparams, TLSDHPARAM_DEFAULT,
+			    sizeof(p->tlsdhparams));
 			if (last_proto_id == INT_MAX) {
 				yyerror("too many protocols defined");
 				free(p);
@@ -1088,8 +1089,8 @@ tlsflags_l	: tlsflags comma tlsflags_l
 		| tlsflags
 		;
 
-tlsflags	: SESSION TICKETS { proto->tickets = 0; }
-		| NO SESSION TICKETS { proto->tickets = -1; }
+tlsflags	: SESSION TICKETS { proto->tickets = 1; }
+		| NO SESSION TICKETS { proto->tickets = 0; }
 		| CIPHERS STRING		{
 			if (strlcpy(proto->tlsciphers, $2,
 			    sizeof(proto->tlsciphers)) >=
@@ -1101,16 +1102,68 @@ tlsflags	: SESSION TICKETS { proto->tickets = 0; }
 			free($2);
 		}
 		| NO EDH			{
-			proto->tlsdhparams = TLSDHPARAMS_NONE;
+			(void)strlcpy(proto->tlsdhparams, "none",
+			    sizeof(proto->tlsdhparams));
 		}
-		| EDH tlsdhparams		{
-			proto->tlsdhparams = $2;
+		| EDH			{
+			(void)strlcpy(proto->tlsdhparams, "auto",
+			    sizeof(proto->tlsdhparams));
+		}
+		| EDH PARAMS STRING		{
+			struct tls_config	*tls_cfg;
+			if ((tls_cfg = tls_config_new()) == NULL) {
+				yyerror("tls_config_new failed");
+				free($3);
+				YYERROR;
+			}
+			if (tls_config_set_dheparams(tls_cfg, $3) != 0) {
+				yyerror("tls edh params %s: %s", $3,
+				    tls_config_error(tls_cfg));
+				tls_config_free(tls_cfg);
+				free($3);
+				YYERROR;
+			}
+			tls_config_free(tls_cfg);
+			if (strlcpy(proto->tlsdhparams, $3,
+			    sizeof(proto->tlsdhparams)) >=
+			    sizeof(proto->tlsdhparams)) {
+				yyerror("tls edh truncated");
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| NO ECDH			{
-			proto->tlsecdhcurve = 0;
+			(void)strlcpy(proto->tlsecdhcurve, "none",
+			    sizeof(proto->tlsecdhcurve));
 		}
-		| ECDH tlsecdhcurve		{
-			proto->tlsecdhcurve = $2;
+		| ECDH			{
+			(void)strlcpy(proto->tlsecdhcurve, "auto",
+			    sizeof(proto->tlsecdhcurve));
+		}
+		| ECDH CURVE STRING			{
+			struct tls_config	*tls_cfg;
+			if ((tls_cfg = tls_config_new()) == NULL) {
+				yyerror("tls_config_new failed");
+				free($3);
+				YYERROR;
+			}
+			if (tls_config_set_ecdhecurve(tls_cfg, $3) != 0) {
+				yyerror("tls ecdh curve %s: %s", $3,
+				    tls_config_error(tls_cfg));
+				tls_config_free(tls_cfg);
+				free($3);
+				YYERROR;
+			}
+			tls_config_free(tls_cfg);
+			if (strlcpy(proto->tlsecdhcurve, $3,
+			    sizeof(proto->tlsecdhcurve)) >=
+			    sizeof(proto->tlsecdhcurve)) {
+				yyerror("tls ecdh truncated");
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| CA FILENAME STRING		{
 			if (strlcpy(proto->tlsca, $3,
@@ -1547,29 +1600,6 @@ key_option	: /* empty */		{ $$ = KEY_OPTION_NONE; }
 		| REMOVE		{ $$ = KEY_OPTION_REMOVE; }
 		| HASH			{ $$ = KEY_OPTION_HASH; }
 		| LOG			{ $$ = KEY_OPTION_LOG; }
-		;
-
-tlsdhparams	: /* empty */		{ $$ = TLSDHPARAMS_MIN; }
-		| PARAMS NUMBER		{
-			if ($2 < TLSDHPARAMS_MIN) {
-				yyerror("EDH params not supported: %d", $2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		;
-
-tlsecdhcurve	: /* empty */		{ $$ = TLSECDHCURVE_DEFAULT; }
-		| CURVE STRING		{
-			if (strcmp("none", $2) == 0)
-				$$ = 0;
-			else if ((proto->tlsecdhcurve = OBJ_sn2nid($2)) == 0) {
-				yyerror("ECDH curve not supported");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
 		;
 
 relay		: RELAY STRING	{
