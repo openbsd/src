@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2017/05/27 10:40:43 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.8 2017/05/27 10:41:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -98,6 +98,22 @@ const char* if_state_name[] = {
 	"IF_IDLE",
 };
 
+enum proposal_state {
+	PROPOSAL_NOT_CONFIGURED,
+	PROPOSAL_SENT,
+	PROPOSAL_CONFIGURED,
+	PROPOSAL_NEARLY_EXPIRED,
+	PROPSAL_WITHDRAWN,
+};
+
+const char* proposal_state_name[] = {
+	"PROPOSAL_NOT_CONFIGURED",
+	"PROPOSAL_SENT",
+	"PROPOSAL_CONFIGURED",
+	"PROPOSAL_NEARLY_EXPIRED",
+	"PROPSAL_WITHDRAWN",
+};
+
 struct radv_prefix {
 	LIST_ENTRY(radv_prefix)	entries;
 	struct in6_addr		prefix;
@@ -142,6 +158,7 @@ struct radv {
 struct address_proposal {
 	LIST_ENTRY(address_proposal)	 entries;
 	struct event			 timer;
+	enum proposal_state		 state;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -1307,8 +1324,15 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				    (RTR_SOLICITATION_INTERVAL + 1);
 				tv.tv_usec = 0;
 
+				/*
+				 * XXX this must depend on state to not mess
+				 * wiht current back-off timeouts
+				 * we also need to update vltime / pltime
+				 * if addr is configured
+				 */
+#if 0
 				evtimer_add(&addr_proposal->timer, &tv);
-
+#endif
 				if (getnameinfo((struct sockaddr *)
 				    &addr_proposal->addr,
 				    addr_proposal->addr.sin6_len, hbuf,
@@ -1344,6 +1368,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 		fatal("calloc");
 	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
 	    addr_proposal);
+	addr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	addr_proposal->when = ra->when;
 	addr_proposal->uptime = ra->uptime;
 	addr_proposal->if_index = iface->if_index;
@@ -1512,7 +1537,8 @@ address_proposal_timeout(int fd, short events, void *arg)
 		log_warn("cannot get router IP");
 		strlcpy(hbuf, "uknown", sizeof(hbuf));
 	}
-	log_debug("%s: iface %d: %s", __func__, addr_proposal->if_index, hbuf);
+	log_debug("%s: iface %d: %s [%s]", __func__, addr_proposal->if_index,
+	    hbuf, proposal_state_name[addr_proposal->state]);
 }
 
 void
