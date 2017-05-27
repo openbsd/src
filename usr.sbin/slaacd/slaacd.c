@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.3 2017/03/20 16:15:37 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.4 2017/05/27 10:37:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -518,8 +518,7 @@ handle_proposal(struct imsg_proposal *proposal)
 	static int			 seq = 0;
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtstatic	 rtstatic;
-	struct sockaddr_in6		 ifa, mask, gateway;
-	struct in6_addr			 prefix;
+	struct sockaddr_in6		 ifa, mask, gateway, prefix;
 	struct iovec			 iov[11];
 	long				 pad = 0;
 	int				 iovcnt = 0, padlen;
@@ -548,6 +547,12 @@ handle_proposal(struct imsg_proposal *proposal)
 
 	ifa = proposal->addr;
 
+	if (ifa.sin6_family != AF_INET6 || ifa.sin6_len !=
+	    sizeof(struct sockaddr_in6)) {
+		log_warnx("%s: invalid address", __func__);
+		return;
+	}
+
 	iov[iovcnt].iov_base = &mask;
 	iov[iovcnt++].iov_len = sizeof(mask);
 	rtm.rtm_msglen += sizeof(mask);
@@ -568,6 +573,8 @@ handle_proposal(struct imsg_proposal *proposal)
 		rtm.rtm_msglen += padlen;
 	}
 
+	/* XXX validate what we got handed in */
+
 	if (proposal->rdns.sr_len > 0) {
 		rtm.rtm_addrs |= RTA_DNS;
 
@@ -586,13 +593,20 @@ handle_proposal(struct imsg_proposal *proposal)
 	/* setup default route ::/0 */
 	prefixlen = 0;
 	memset(&prefix, 0, sizeof(prefix));
+	prefix.sin6_family = AF_INET6;
+	prefix.sin6_len = sizeof(struct sockaddr_in6);
+
 	gateway = proposal->gateway;
+	if (gateway.sin6_family != AF_INET6 || gateway.sin6_len !=
+	    sizeof(struct sockaddr_in6)) {
+		log_warnx("%s: invalid gateway", __func__);
+		return;
+	}
 
 	memset(&rtstatic, 0, sizeof(rtstatic));
 	rtstatic.sr_family = AF_INET6;
 	rtstatic.sr_len = offsetof(struct sockaddr_rtstatic, sr_static) +
-	    sizeof(uint8_t) + sizeof(struct in6_addr) +
-	    sizeof(struct sockaddr_in6);
+	    sizeof(prefixlen) + sizeof(prefix) + sizeof(gateway);
 	p = rtstatic.sr_static;
 	memcpy(p, &prefixlen, sizeof(prefixlen));
 	p += sizeof(prefixlen);
