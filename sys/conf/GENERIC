@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.243 2017/04/20 14:23:53 visa Exp $
+#	$OpenBSD: GENERIC,v 1.244 2017/05/27 08:02:40 claudio Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -54,7 +54,6 @@ option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 option		ART		# Allotment Routing Table
 option		INET6		# IPv6
 option		IPSEC		# IPsec
-#option		KEY		# PF_KEY (implied by IPSEC)
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 option		PIPEX		# Ppp IP EXtension, for npppd
