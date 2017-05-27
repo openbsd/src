@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.4 2017/05/27 10:37:04 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.5 2017/05/27 10:37:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -519,7 +519,8 @@ handle_proposal(struct imsg_proposal *proposal)
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtstatic	 rtstatic;
 	struct sockaddr_in6		 ifa, mask, gateway, prefix;
-	struct iovec			 iov[11];
+	struct sockaddr_rtlabel		 rl;
+	struct iovec			 iov[13];
 	long				 pad = 0;
 	int				 iovcnt = 0, padlen;
 	uint8_t				 prefixlen;
@@ -534,7 +535,7 @@ handle_proposal(struct imsg_proposal *proposal)
 	rtm.rtm_index = proposal->if_index;
 	rtm.rtm_seq = ++seq;
 	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
-	rtm.rtm_addrs = RTA_NETMASK | RTA_IFA | RTA_STATIC;
+	rtm.rtm_addrs = RTA_NETMASK | RTA_IFA | RTA_LABEL | RTA_STATIC;
 	rtm.rtm_flags = RTF_UP;
 
 	iov[iovcnt].iov_base = &rtm;
@@ -567,6 +568,22 @@ handle_proposal(struct imsg_proposal *proposal)
 	iov[iovcnt++].iov_len = sizeof(ifa);
 	rtm.rtm_msglen += sizeof(ifa);
 	padlen = ROUNDUP(sizeof(ifa)) - sizeof(ifa);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	rl.sr_len = sizeof(rl);
+	rl.sr_family = AF_UNSPEC;
+	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %d", "slaacd",
+	    rtm.rtm_seq) >= sizeof(rl.sr_label))
+		log_warnx("route label truncated");
+
+	iov[iovcnt].iov_base = &rl;
+	iov[iovcnt++].iov_len = sizeof(rl);
+	rtm.rtm_msglen += sizeof(rl);
+	padlen = ROUNDUP(sizeof(rl)) - sizeof(rl);
 	if (padlen > 0) {
 		iov[iovcnt].iov_base = &pad;
 		iov[iovcnt++].iov_len = padlen;
