@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.15 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.16 2017/05/27 15:11:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -41,50 +41,6 @@ __mp_lock_init(struct __mp_lock *mpl)
 /* CPU-dependent timing, needs this to be settable from ddb. */
 extern int __mp_lock_spinout;
 #endif
-
-/*
- * On processors with multiple threads we force a thread switch.
- *
- * On UltraSPARC T2 and its successors, the optimal way to do this
- * seems to be to do three nop reads of %ccr.  This works on
- * UltraSPARC T1 as well, even though three nop casx operations seem
- * to be slightly more optimal.  Since these instructions are
- * effectively nops, executing them on earlier non-CMT processors is
- * harmless, so we make this the default.
- *
- * On SPARC T4 and later, we can use the processor-specific pause
- * instruction.
- *
- * On SPARC64 VI and its successors we execute the processor-specific
- * sleep instruction.
- */
-static __inline void
-__mp_lock_spin_hook(void)
-{
-	__asm volatile(
-		"999:	rd	%%ccr, %%g0			\n"
-		"	rd	%%ccr, %%g0			\n"
-		"	rd	%%ccr, %%g0			\n"
-		"	.section .sun4v_pause_patch, \"ax\"	\n"
-		"	.word	999b				\n"
-		"	.word	0xb7802080	! pause	128	\n"
-		"	.word	999b + 4			\n"
-		"	nop					\n"
-		"	.word	999b + 8			\n"
-		"	nop					\n"
-		"	.previous				\n"
-		"	.section .sun4u_mtp_patch, \"ax\"	\n"
-		"	.word	999b				\n"
-		"	.word	0x81b01060	! sleep		\n"
-		"	.word	999b + 4			\n"
-		"	nop					\n"
-		"	.word	999b + 8			\n"
-		"	nop					\n"
-		"	.previous				\n"
-		: : : "memory");
-}
-
-#define SPINLOCK_SPIN_HOOK __mp_lock_spin_hook()
 
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl, u_int me)
