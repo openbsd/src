@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.34 2016/08/27 03:48:00 guenther Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.35 2017/05/27 07:44:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -336,7 +336,7 @@ rstat_service(struct svc_req *rqstp, SVCXPRT *transp)
 		svcerr_noproc(transp);
 		return;
 	}
-	bzero((char *)&argument, sizeof(argument));
+	memset(&argument, 0, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		return;
