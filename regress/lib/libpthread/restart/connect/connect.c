@@ -1,4 +1,4 @@
-/*	$OpenBSD: connect.c,v 1.2 2016/08/09 02:25:35 guenther Exp $	*/
+/*	$OpenBSD: connect.c,v 1.3 2017/05/27 16:04:38 bluhm Exp $	*/
 /*
  * Federico G. Schwindt <fgsch@openbsd.org>, 2011. Public Domain.
  */
@@ -22,13 +22,20 @@ void *
 thr_connect(void *arg)
 {
 	struct sockaddr_in sa;
-	int s;
+	socklen_t len;
+	int l, s;
 
-	CHECKe(s = socket(AF_INET, SOCK_STREAM, 0));
+	/* Create a bound TCP socket without listen on loopback. */
+	CHECKe(l = socket(AF_INET, SOCK_STREAM, 0));
 	bzero(&sa, sizeof(sa));
 	sa.sin_family = AF_INET;
-	sa.sin_port = htons(23);
-	sa.sin_addr.s_addr = htonl(0xc7b98903);	/* cvs.openbsd.org */
+	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	CHECKe(bind(l, (struct sockaddr *)&sa, sizeof(sa)));
+	len = sizeof(sa);
+	CHECKe(getsockname(l, (struct sockaddr *)&sa, &len));
+
+	/* Connect to the non listen socket will not reply to SYN. */
+	CHECKe(s = socket(AF_INET, SOCK_STREAM, 0));
 	ASSERT(connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1);
 	int err = errno;
 	ASSERT(connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1);
