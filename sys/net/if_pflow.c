@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.77 2017/05/27 21:06:06 benno Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.78 2017/05/27 21:44:22 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -128,7 +128,7 @@ pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 void
 pflow_output_process(void *arg)
 {
-        struct pflow_softc *sc = arg;
+	struct pflow_softc *sc = arg;
 	struct mbuf *m;
 
 	KERNEL_LOCK();
@@ -288,6 +288,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
 	task_del(softnettq, &sc->sc_outputtask);
+	ml_purge(&sc->sc_outputqueue);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
 		error = soclose(sc->so);
