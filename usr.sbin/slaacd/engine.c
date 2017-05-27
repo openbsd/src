@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2017/03/20 16:15:37 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.5 2017/05/27 10:38:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -101,7 +101,7 @@ const char* if_state_name[] = {
 struct radv_prefix {
 	LIST_ENTRY(radv_prefix)	entries;
 	struct in6_addr		prefix;
-	uint8_t			prefix_len;
+	uint8_t			prefix_len; /*XXX int */
 	int			onlink;
 	int			autonomous;
 	uint32_t		vltime;
@@ -142,6 +142,21 @@ struct radv {
 	LIST_HEAD(, radv_dnssl)		 dnssls;
 };
 
+struct address_proposal {
+	LIST_ENTRY(address_proposal)	 entries;
+	struct event			 timer;
+	struct timespec			 when;
+	struct timespec			 uptime;
+	uint32_t			 if_index;
+	struct sockaddr_in6		 addr;
+	struct in6_addr			 mask;
+	struct in6_addr			 prefix;
+	int				 privacy;
+	uint8_t				 prefix_len;
+	uint32_t			 vltime;
+	uint32_t			 pltime;
+};
+
 struct slaacd_iface {
 	LIST_ENTRY(slaacd_iface)	 entries;
 	enum if_state			 state;
@@ -153,6 +168,7 @@ struct slaacd_iface {
 	struct ether_addr		 hw_address;
 	struct sockaddr_in6		 ll_address;
 	LIST_HEAD(, radv)		 radvs;
+	LIST_HEAD(, address_proposal)	 addr_proposals;
 };
 
 LIST_HEAD(, slaacd_iface) slaacd_interfaces;
@@ -168,15 +184,22 @@ void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
 void			 parse_ra(struct slaacd_iface *, struct imsg_ra *);
 void			 gen_addrs(struct slaacd_iface *, struct radv_prefix *);
+void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
+			     struct address_proposal *, int);
+void			 gen_address_proposal(struct slaacd_iface *, struct
+			     radv *, struct radv_prefix *, int);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
+void			 address_proposal_timeout(int, short, void *);
 void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
+struct address_proposal *find_address_proposal(struct slaacd_iface *,
+			    struct radv_prefix *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
@@ -378,6 +401,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				LIST_INIT(&iface->radvs);
 				LIST_INSERT_HEAD(&slaacd_interfaces,
 				    iface, entries);
+				LIST_INIT(&iface->addr_proposals);
 			} else {
 				DEBUG_IMSG("%s: updating %d", __func__,
 				    imsg_ifinfo.if_index);
@@ -924,6 +948,74 @@ err:
 }
 
 void
+gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
+    address_proposal *addr_proposal, int privacy)
+{
+	struct in6_addr	priv_in6;
+
+	/* from in6_ifadd() in nd6_rtr.c */
+	/* XXX from in6.h, guarded by #ifdef _KERNEL   XXX nonstandard */
+#define s6_addr32 __u6_addr.__u6_addr32
+
+	/* XXX from in6_ifattach.c */
+#define EUI64_GBIT	0x01
+#define EUI64_UBIT	0x02
+
+	if (privacy) {	
+		arc4random_buf(&priv_in6.s6_addr32[2], 8);
+		priv_in6.s6_addr[8] &= ~EUI64_GBIT; /* g bit to "individual" */
+		priv_in6.s6_addr[8] |= EUI64_UBIT;  /* u bit to "local" */
+		/* convert EUI64 into IPv6 interface identifier */
+		priv_in6.s6_addr[8] ^= EUI64_UBIT;
+	}
+
+	in6_prefixlen2mask(&addr_proposal->mask, addr_proposal->prefix_len);
+
+	memset(&addr_proposal->addr, 0, sizeof(prefix->addr));
+
+	addr_proposal->addr.sin6_family = AF_INET6;
+	addr_proposal->addr.sin6_len = sizeof(prefix->addr);
+
+	memcpy(&addr_proposal->addr.sin6_addr, &prefix->prefix,
+	    sizeof(addr_proposal->addr.sin6_addr));
+
+	addr_proposal->addr.sin6_addr.s6_addr32[0] &=
+	    addr_proposal->mask.s6_addr32[0];
+	addr_proposal->addr.sin6_addr.s6_addr32[1] &=
+	    addr_proposal->mask.s6_addr32[1];
+	addr_proposal->addr.sin6_addr.s6_addr32[2] &=
+	    addr_proposal->mask.s6_addr32[2];
+	addr_proposal->addr.sin6_addr.s6_addr32[3] &=
+	    addr_proposal->mask.s6_addr32[3];
+
+	if (privacy) {
+		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
+		    (priv_in6.s6_addr32[0] & ~addr_proposal->mask.s6_addr32[0]);
+		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
+		    (priv_in6.s6_addr32[1] & ~addr_proposal->mask.s6_addr32[1]);
+		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
+		    (priv_in6.s6_addr32[2] & ~addr_proposal->mask.s6_addr32[2]);
+		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
+		    (priv_in6.s6_addr32[3] & ~addr_proposal->mask.s6_addr32[3]);
+	} else {
+		addr_proposal->addr.sin6_addr.s6_addr32[0] |=
+		    (iface->ll_address.sin6_addr.s6_addr32[0] &
+		    ~addr_proposal->mask.s6_addr32[0]);
+		addr_proposal->addr.sin6_addr.s6_addr32[1] |=
+		    (iface->ll_address.sin6_addr.s6_addr32[1] &
+		    ~addr_proposal->mask.s6_addr32[1]);
+		addr_proposal->addr.sin6_addr.s6_addr32[2] |=
+		    (iface->ll_address.sin6_addr.s6_addr32[2] &
+		    ~addr_proposal->mask.s6_addr32[2]);
+		addr_proposal->addr.sin6_addr.s6_addr32[3] |=
+		    (iface->ll_address.sin6_addr.s6_addr32[3] &
+		    ~addr_proposal->mask.s6_addr32[3]);
+	}
+
+#undef s6_addr32	
+}
+
+void
 gen_addrs(struct slaacd_iface *iface, struct radv_prefix *prefix)
 {
 	/* from in6_ifadd() in nd6_rtr.c */
@@ -1249,6 +1341,138 @@ parse_dnssl(char* data, int datalen)
 	return nssl;
 }
 
+void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
+{
+	struct radv		*old_ra;
+	struct radv_prefix	*prefix;
+	struct address_proposal	*addr_proposal;
+	struct timeval		 tv;
+	int			 found, found_privacy;
+	char			 hbuf[NI_MAXHOST];
+
+	if ((old_ra = find_ra(iface, &ra->from)) == NULL)
+		LIST_INSERT_HEAD(&iface->radvs, ra, entries);
+	else {
+		LIST_REPLACE(old_ra, ra, entries);
+		free_ra(old_ra);
+	}
+	if (ra->router_lifetime == 0) {
+		/* XXX expire default route */
+	} else {
+		LIST_FOREACH(prefix, &ra->prefixes, entries) {
+			found = 0;
+			found_privacy = 0;
+			LIST_FOREACH(addr_proposal, &iface->addr_proposals,
+			    entries) {
+				if (addr_proposal->privacy) {
+					found_privacy = 1;
+
+					if (!iface->autoconfprivacy)
+						log_debug("%s XXX need to "
+						    "remove privacy address",
+						    __func__);
+
+					/* privacy addresses just expire */
+					continue;
+				}
+
+				found = 1;
+
+				addr_proposal->when = ra->when;
+				addr_proposal->uptime = ra->uptime;
+				addr_proposal->vltime = prefix->vltime;
+				addr_proposal->pltime = prefix->pltime;
+
+				tv.tv_sec = addr_proposal->pltime -
+				    MAX_RTR_SOLICITATIONS *
+				    (RTR_SOLICITATION_INTERVAL + 1);
+				tv.tv_usec = 0;
+
+				evtimer_add(&addr_proposal->timer, &tv);
+
+				if (getnameinfo((struct sockaddr *)
+				    &addr_proposal->addr,
+				    addr_proposal->addr.sin6_len, hbuf,
+				    sizeof(hbuf), NULL, 0, NI_NUMERICHOST |
+				    NI_NUMERICSERV)) {
+					log_warn("cannot get router IP");
+					strlcpy(hbuf, "uknown", sizeof(hbuf));
+				}
+				log_debug("%s: iface %d: %s: %lld s", __func__,
+				    iface->if_index, hbuf, tv.tv_sec);
+			}
+
+			if (!found)
+				/* new proposal */
+				gen_address_proposal(iface, ra, prefix, 0);
+
+			if (!found_privacy && iface->autoconfprivacy)
+				/* new privacy proposal */
+				gen_address_proposal(iface, ra, prefix, 1);
+		}
+	}
+}
+
+void
+gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
+    radv_prefix *prefix, int privacy)
+{
+	struct address_proposal	*addr_proposal;
+	struct timeval		 tv;
+	char			 hbuf[NI_MAXHOST];
+
+	if ((addr_proposal = calloc(1, sizeof(*addr_proposal))) == NULL)
+		fatal("calloc");
+	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
+	    addr_proposal);
+	addr_proposal->when = ra->when;
+	addr_proposal->uptime = ra->uptime;
+	addr_proposal->if_index = iface->if_index;
+	addr_proposal->privacy = privacy;
+	memcpy(&addr_proposal->prefix, &prefix->prefix,
+	    sizeof(addr_proposal->prefix));
+	addr_proposal->prefix_len = prefix->prefix_len;
+
+	/* XXX different vltime / pltime for privacy addresses */
+	addr_proposal->vltime = prefix->vltime;
+	addr_proposal->pltime = prefix->pltime;
+
+	gen_addr(iface, prefix, addr_proposal, privacy);
+
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	evtimer_add(&addr_proposal->timer, &tv);
+
+	LIST_INSERT_HEAD(&iface->addr_proposals, addr_proposal, entries);
+
+	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
+	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV)) {
+		log_warn("cannot get router IP");
+		strlcpy(hbuf, "uknown", sizeof(hbuf));
+	}
+	log_debug("%s: iface %d: %s: %lld s", __func__,
+	    iface->if_index, hbuf, tv.tv_sec);
+}
+
+struct address_proposal *
+find_address_proposal(struct slaacd_iface *iface, struct radv_prefix *prefix)
+{
+	struct address_proposal	*addr_proposal;
+	int count = 0;
+
+	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
+		log_debug("%s: %d", __func__, ++count);
+		if (memcmp(&addr_proposal->prefix, &prefix->prefix,
+		    sizeof(addr_proposal->prefix)) == 0)
+			return (addr_proposal);
+	}
+
+	log_debug("%s: NULL", __func__);
+	return (NULL);
+}
+
+#if 0
 void
 update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 {
@@ -1347,6 +1571,7 @@ update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		}
 	}
 }
+#endif
 
 void
 send_proposal(struct imsg_proposal *proposal)
@@ -1369,6 +1594,23 @@ start_probe(struct slaacd_iface *iface)
 	    iface->if_index, tv.tv_usec);
 
 	evtimer_add(&iface->timer, &tv);
+}
+
+void
+address_proposal_timeout(int fd, short events, void *arg)
+{
+	struct address_proposal	*addr_proposal;
+	char			 hbuf[NI_MAXHOST];
+
+	addr_proposal = (struct address_proposal *)arg;
+
+	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
+	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV)) {
+		log_warn("cannot get router IP");
+		strlcpy(hbuf, "uknown", sizeof(hbuf));
+	}
+	log_debug("%s: iface %d: %s", __func__, addr_proposal->if_index, hbuf);
 }
 
 void
