@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.25 2016/09/03 16:25:03 tedu Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.26 2017/05/27 15:32:51 naddy Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -195,18 +195,6 @@ static const u_int32_t K256[64] = {
 	0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
 };
 
-/* Initial hash value H for SHA-224: */
-static const u_int32_t sha224_initial_hash_value[8] = {
-	0xc1059ed8UL,
-	0x367cd507UL,
-	0x3070dd17UL,
-	0xf70e5939UL,
-	0xffc00b31UL,
-	0x68581511UL,
-	0x64f98fa7UL,
-	0xbefa4fa4UL
-};
-
 /* Initial hash value H for SHA-256: */
 static const u_int32_t sha256_initial_hash_value[8] = {
 	0x6a09e667UL,
@@ -276,6 +264,18 @@ static const u_int64_t sha512_initial_hash_value[8] = {
 };
 
 #if !defined(SHA2_SMALL)
+/* Initial hash value H for SHA-224: */
+static const u_int32_t sha224_initial_hash_value[8] = {
+	0xc1059ed8UL,
+	0x367cd507UL,
+	0x3070dd17UL,
+	0xf70e5939UL,
+	0xffc00b31UL,
+	0x68581511UL,
+	0x64f98fa7UL,
+	0xbefa4fa4UL
+};
+
 /* Initial hash value H for SHA-384 */
 static const u_int64_t sha384_initial_hash_value[8] = {
 	0xcbbb9d5dc1059ed8ULL,
