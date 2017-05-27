@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.11 2017/05/27 10:52:16 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.12 2017/05/27 10:57:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -217,7 +217,8 @@ main(int argc, char *argv[])
 	setproctitle(log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 
-	if ((routesock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+	if ((routesock = socket(PF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
+	    SOCK_NONBLOCK, 0)) < 0)
 		fatal("route socket");
 
 	event_init();
@@ -255,7 +256,7 @@ main(int argc, char *argv[])
 	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf, &iev_engine->ibuf))
 		fatal("could not establish imsg links");
 
-	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0)
 		fatal("socket");
 
 #if 0
