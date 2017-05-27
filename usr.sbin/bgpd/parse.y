@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.301 2017/05/26 20:55:30 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.302 2017/05/27 10:24:44 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2953,6 +2953,8 @@ getcommunity(char *s)
 		return (COMMUNITY_ANY);
 	if (strcmp(s, "neighbor-as") == 0)
 		return (COMMUNITY_NEIGHBOR_AS);
+	if (strcmp(s, "local-as") == 0)
+		return (COMMUNITY_LOCAL_AS);
 	val = strtonum(s, 0, USHRT_MAX, &errstr);
 	if (errstr) {
 		yyerror("Community %s is %s (max: %u)", s, errstr, USHRT_MAX);
@@ -3022,6 +3024,8 @@ getlargecommunity(char *s)
 		return (COMMUNITY_ANY);
 	if (strcmp(s, "neighbor-as") == 0)
 		return (COMMUNITY_NEIGHBOR_AS);
+	if (strcmp(s, "local-as") == 0)
+		return (COMMUNITY_LOCAL_AS);
 	val = strtonum(s, 0, UINT_MAX, &errstr);
 	if (errstr) {
 		yyerror("Large Community %s is %s (max: %u)",

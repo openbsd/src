@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.152 2017/01/13 18:59:12 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.153 2017/05/27 10:24:44 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2017 $
+.Dd $Mdocdate: May 27 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1079,7 +1079,9 @@ is an AS number as explained above under
 .Sx GLOBAL CONFIGURATION .
 It may be set to
 .Ic neighbor-as ,
-which is expanded to the current neighbor remote AS number.
+which is expanded to the current neighbor remote AS number, or
+.Ic local-as ,
+which is expanded to the locally assigned AS number.
 .Pp
 The
 .Ar operator
@@ -1149,7 +1151,9 @@ and
 .Ar local
 may be set to
 .Ic neighbor-as ,
-which is expanded to the current neighbor remote AS number.
+which is expanded to the current neighbor remote AS number, or
+.Ic local-as ,
+which is expanded to the locally assigned AS number.
 .Pp
 .It Xo
 .Ic large-community
@@ -1181,7 +1185,9 @@ and
 .Ar local
 may be set to
 .Ic neighbor-as ,
-which is expanded to the current neighbor remote AS number.
+which is expanded to the current neighbor remote AS number,
+.Ic local-as ,
+which is expanded to the locally assigned AS number.
 .Pp
 .It Xo
 .Ic ext-community

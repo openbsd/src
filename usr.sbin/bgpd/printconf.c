@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.100 2017/01/24 04:22:42 benno Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.101 2017/05/27 10:24:44 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,8 @@ print_community(int as, int type)
 		printf("*:");
 	else if (as == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as:");
+	else if (as == COMMUNITY_LOCAL_AS)
+		printf("local-as:");
 	else
 		printf("%u:", (unsigned int)as);
 
@@ -101,6 +103,8 @@ print_community(int as, int type)
 		printf("* ");
 	else if (type == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as ");
+	else if (type == COMMUNITY_LOCAL_AS)
+		printf("local-as");
 	else
 		printf("%d ", type);
 }
@@ -112,6 +116,8 @@ print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
 		printf("*:");
 	else if (as == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as:");
+	else if (as == COMMUNITY_LOCAL_AS)
+		printf("local-as:");
 	else
 		printf("%lld:", as);
 
@@ -119,6 +125,8 @@ print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
 		printf("*:");
 	else if (ld1 == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as:");
+	else if (ld1 == COMMUNITY_LOCAL_AS)
+		printf("local-as:");
 	else
 		printf("%lld:", ld1);
 
@@ -126,6 +134,8 @@ print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
 		printf("* ");
 	else if (ld2 == COMMUNITY_NEIGHBOR_AS)
 		printf("neighbor-as ");
+	else if (ld2 == COMMUNITY_LOCAL_AS)
+		printf("local-as ");
 	else
 		printf("%lld ", ld2);
 

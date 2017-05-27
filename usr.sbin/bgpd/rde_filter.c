@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.80 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.81 2017/05/27 10:24:44 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -139,6 +139,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				as = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				as = peer->conf.local_as;
+				break;
 			default:
 				as = set->action.community.as;
 				break;
@@ -150,6 +153,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 				fatalx("rde_apply_set bad community string");
 			case COMMUNITY_NEIGHBOR_AS:
 				type = peer->conf.remote_as;
+				break;
+			case COMMUNITY_LOCAL_AS:
+				type = peer->conf.local_as;
 				break;
 			default:
 				type = set->action.community.type;
@@ -165,6 +171,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				as = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				as = peer->conf.local_as;
+				break;
 			case COMMUNITY_ANY:
 			default:
 				as = set->action.community.as;
@@ -176,6 +185,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 				fatalx("rde_apply_set bad community string");
 			case COMMUNITY_NEIGHBOR_AS:
 				type = peer->conf.remote_as;
+				break;
+			case COMMUNITY_LOCAL_AS:
+				type = peer->conf.local_as;
 				break;
 			case COMMUNITY_ANY:
 			default:
@@ -192,6 +204,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				las = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				las = peer->conf.local_as;
+				break;
 			case COMMUNITY_ANY:
 			default:
 				las = set->action.large_community.as;
@@ -204,6 +219,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				ld1 = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				ld1 = peer->conf.local_as;
+				break;
 			case COMMUNITY_ANY:
 			default:
 				ld1 = set->action.large_community.ld1;
@@ -215,6 +233,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 				fatalx("rde_apply_set bad large community string");
 			case COMMUNITY_NEIGHBOR_AS:
 				ld2 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_LOCAL_AS:
+				ld2 = peer->conf.local_as;
 				break;
 			case COMMUNITY_ANY:
 			default:
@@ -231,6 +252,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				las = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				las = peer->conf.local_as;
+				break;
 			case COMMUNITY_ANY:
 			default:
 				las = set->action.large_community.as;
@@ -243,6 +267,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			case COMMUNITY_NEIGHBOR_AS:
 				ld1 = peer->conf.remote_as;
 				break;
+			case COMMUNITY_LOCAL_AS:
+				ld1 = peer->conf.local_as;
+				break;
 			case COMMUNITY_ANY:
 			default:
 				ld1 = set->action.large_community.ld1;
@@ -254,6 +281,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 				fatalx("rde_apply_set bad large community string");
 			case COMMUNITY_NEIGHBOR_AS:
 				ld2 = peer->conf.remote_as;
+				break;
+			case COMMUNITY_LOCAL_AS:
+				ld2 = peer->conf.local_as;
 				break;
 			case COMMUNITY_ANY:
 			default:
@@ -329,6 +359,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		case COMMUNITY_NEIGHBOR_AS:
 			cas = peer->conf.remote_as;
 			break;
+		case COMMUNITY_LOCAL_AS:
+			cas = peer->conf.local_as;
+			break;
 		default:
 			cas = f->match.community.as;
 			break;
@@ -339,6 +372,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			fatalx("rde_apply_set bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			type = peer->conf.remote_as;
+			break;
+		case COMMUNITY_LOCAL_AS:
+			type = peer->conf.local_as;
 			break;
 		default:
 			type = f->match.community.type;
@@ -361,6 +397,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		case COMMUNITY_NEIGHBOR_AS:
 			las = peer->conf.remote_as;
 			break;
+		case COMMUNITY_LOCAL_AS:
+			las = peer->conf.local_as;
+			break;
 		default:
 			las = f->match.large_community.as;
 			break;
@@ -372,6 +411,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 		case COMMUNITY_NEIGHBOR_AS:
 			ld1 = peer->conf.remote_as;
 			break;
+		case COMMUNITY_LOCAL_AS:
+			ld1 = peer->conf.local_as;
+			break;
 		default:
 			ld1 = f->match.large_community.ld1;
 			break;
@@ -382,6 +424,9 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			fatalx("rde_apply_set bad community string");
 		case COMMUNITY_NEIGHBOR_AS:
 			ld2 = peer->conf.remote_as;
+			break;
+		case COMMUNITY_LOCAL_AS:
+			ld2 = peer->conf.local_as;
 			break;
 		default:
 			ld2 = f->match.large_community.ld2;
