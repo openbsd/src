@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.10 2017/05/27 10:50:25 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.11 2017/05/27 10:52:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -67,6 +67,8 @@ enum imsg_type {
 	IMSG_PROPOSAL_ACK,
 	IMSG_CONFIGURE_ADDRESS,
 	IMSG_DEL_ADDRESS,
+	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS,
+	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL,
 };
 
 extern const char* imsg_type_name[];
@@ -122,6 +124,22 @@ struct ctl_engine_info_ra_dnssl {
 	uint32_t		lifetime;
 	char			dnssl[SLAACD_MAX_DNSSL];
 };
+
+struct ctl_engine_info_address_proposal {
+	int64_t				 id;
+	char				 state[32];
+	int				 next_timeout;
+	int				 timeout_count;
+	struct timespec			 when;
+	struct timespec			 uptime;
+	struct sockaddr_in6		 addr;
+	struct in6_addr			 prefix;
+	int				 privacy;
+	uint8_t				 prefix_len;
+	uint32_t			 vltime;
+	uint32_t			 pltime;
+};
+
 
 struct imsg_ifinfo {
 	uint32_t		if_index;

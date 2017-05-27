@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.12 2017/05/27 10:50:25 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.13 2017/05/27 10:52:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -104,15 +104,15 @@ enum proposal_state {
 	PROPOSAL_SENT,
 	PROPOSAL_CONFIGURED,
 	PROPOSAL_NEARLY_EXPIRED,
-	PROPSAL_WITHDRAWN,
+	PROPOSAL_WITHDRAWN,
 };
 
 const char* proposal_state_name[] = {
-	"PROPOSAL_NOT_CONFIGURED",
-	"PROPOSAL_SENT",
-	"PROPOSAL_CONFIGURED",
-	"PROPOSAL_NEARLY_EXPIRED",
-	"PROPSAL_WITHDRAWN",
+	"NOT_CONFIGURED",
+	"SENT",
+	"CONFIGURED",
+	"NEARLY_EXPIRED",
+	"WITHDRAWN",
 };
 
 struct radv_prefix {
@@ -645,10 +645,12 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	struct ctl_engine_info_ra_prefix	 cei_ra_prefix;
 	struct ctl_engine_info_ra_rdns		 cei_ra_rdns;
 	struct ctl_engine_info_ra_dnssl		 cei_ra_dnssl;
+	struct ctl_engine_info_address_proposal	 cei_addr_proposal;
 	struct radv				*ra;
 	struct radv_prefix			*prefix;
 	struct radv_rdns			*rdns;
 	struct radv_dnssl			*dnssl;
+	struct address_proposal			*addr_proposal;
 
 	memset(&cei, 0, sizeof(cei));
 	cei.if_index = iface->if_index;
@@ -707,6 +709,36 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 			    IMSG_CTL_SHOW_INTERFACE_INFO_RA_DNSSL, pid,
 			    &cei_ra_dnssl, sizeof(cei_ra_dnssl));
 		}
+	}
+
+	if (!LIST_EMPTY(&iface->addr_proposals))
+		engine_imsg_compose_frontend(
+		    IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS, pid, NULL, 0);
+
+	LIST_FOREACH(addr_proposal, &iface->addr_proposals, entries) {
+		memset(&cei_addr_proposal, 0, sizeof(cei_addr_proposal));
+		cei_addr_proposal.id = addr_proposal->id;
+		if(strlcpy(cei_addr_proposal.state,
+		    proposal_state_name[addr_proposal->state],
+		    sizeof(cei_addr_proposal.state)) >=
+		    sizeof(cei_addr_proposal.state))
+			log_warn("truncated state name");
+		cei_addr_proposal.next_timeout = addr_proposal->next_timeout;
+		cei_addr_proposal.timeout_count = addr_proposal->timeout_count;
+		cei_addr_proposal.when = addr_proposal->when;
+		cei_addr_proposal.uptime = addr_proposal->uptime;
+		memcpy(&cei_addr_proposal.addr, &addr_proposal->addr, sizeof(
+		    cei_addr_proposal.addr));
+		memcpy(&cei_addr_proposal.prefix, &addr_proposal->prefix,
+		    sizeof(cei_addr_proposal.prefix));
+		cei_addr_proposal.prefix_len = addr_proposal->prefix_len;
+		cei_addr_proposal.privacy = addr_proposal->privacy;
+		cei_addr_proposal.vltime = addr_proposal->vltime;
+		cei_addr_proposal.pltime = addr_proposal->pltime;
+
+		engine_imsg_compose_frontend(
+		    IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL, pid,
+			    &cei_addr_proposal, sizeof(cei_addr_proposal));
 	}
 }
 
