@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.81 2017/05/27 10:24:44 phessler Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.82 2017/05/27 10:33:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -106,7 +106,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			}
 			break;
 		case ACTION_SET_PREPEND_SELF:
-			prep_as = rde_local_as();
+			prep_as = peer->conf.local_as;
 			prepend = set->action.prepend;
 			np = aspath_prepend(asp->aspath, prep_as, prepend, &nl);
 			aspath_put(asp->aspath);

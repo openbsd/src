@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.153 2017/05/27 10:24:44 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.154 2017/05/27 10:33:15 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -873,6 +873,17 @@ If a
 is given,
 .Xr bgpd 8
 binds to this address first.
+.Pp
+.It Ic local-as Ar as-number Op Ar as-number
+Set the AS number sent to the remote system.
+Used as described above under
+.Sx GLOBAL CONFIGURATION
+option
+.Ic AS .
+.Pp
+Since there is no AS path loop check, this option is dangerous, and
+requires you to add filters to prevent receiving your ASNs.
+Intended to be used temporarily, for migrations to another AS.
 .Pp
 .It Ic log no
 Disable neighbor specific logging.

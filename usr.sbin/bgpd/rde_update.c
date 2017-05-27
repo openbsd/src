@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.84 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.85 2017/05/27 10:33:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -746,9 +746,11 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/* aspath */
 	if (!peer->conf.ebgp ||
 	    peer->conf.flags & PEERFLAG_TRANS_AS)
-		pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
+		pdata = aspath_prepend(a->aspath, peer->conf.local_as, 0,
+		    &plen);
 	else
-		pdata = aspath_prepend(a->aspath, rde_local_as(), 1, &plen);
+		pdata = aspath_prepend(a->aspath, peer->conf.local_as, 1,
+		    &plen);
 
 	if (!rde_as4byte(peer))
 		pdata = aspath_deflate(pdata, &plen, &neednewpath);
@@ -881,11 +883,11 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	if (neednewpath) {
 		if (!peer->conf.ebgp ||
 		    peer->conf.flags & PEERFLAG_TRANS_AS)
-			pdata = aspath_prepend(a->aspath, rde_local_as(), 0,
-			    &plen);
+			pdata = aspath_prepend(a->aspath, peer->conf.local_as,
+			    0, &plen);
 		else
-			pdata = aspath_prepend(a->aspath, rde_local_as(), 1,
-			    &plen);
+			pdata = aspath_prepend(a->aspath, peer->conf.local_as,
+			    1, &plen);
 		flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
 		if (!(a->flags & F_PREFIX_ANNOUNCED))
 			flags |= ATTR_PARTIAL;

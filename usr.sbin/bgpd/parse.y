@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.302 2017/05/27 10:24:44 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.303 2017/05/27 10:33:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,7 @@ typedef struct {
 %token	RDOMAIN RD EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
-%token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
+%token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
 %token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT SOCKET RESTRICTED
@@ -1037,6 +1037,17 @@ peeroptsl	: peeropts nl
 
 peeropts	: REMOTEAS as4number	{
 			curpeer->conf.remote_as = $2;
+		}
+		| LOCALAS as4number	{
+			curpeer->conf.local_as = $2;
+			if ($2 > USHRT_MAX)
+				curpeer->conf.local_short_as = AS_TRANS;
+			else
+				curpeer->conf.local_short_as = $2;
+		}
+		| LOCALAS as4number asnumber {
+			curpeer->conf.local_as = $2;
+			curpeer->conf.local_short_as = $3;
 		}
 		| DESCR string		{
 			if (strlcpy(curpeer->conf.descr, $2,
@@ -2369,6 +2380,7 @@ lookup(char *s)
 		{ "large-community",	LARGECOMMUNITY},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
+		{ "local-as",		LOCALAS},
 		{ "localpref",		LOCALPREF},
 		{ "log",		LOG},
 		{ "match",		MATCH},

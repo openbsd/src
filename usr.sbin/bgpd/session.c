@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.360 2017/05/26 20:55:30 phessler Exp $ */
+/*	$OpenBSD: session.c,v 1.361 2017/05/27 10:33:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1467,7 +1467,7 @@ session_open(struct peer *p)
 	if (p->capa.ann.as4byte) {	/* 4 bytes data */
 		u_int32_t	nas;
 
-		nas = htonl(conf->as);
+		nas = htonl(p->conf.local_as);
 		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
 		errs += ibuf_add(opb, &nas, sizeof(nas));
 	}
@@ -1484,7 +1484,7 @@ session_open(struct peer *p)
 	}
 
 	msg.version = 4;
-	msg.myas = htons(conf->short_as);
+	msg.myas = htons(p->conf.local_short_as);
 	if (p->conf.holdtime)
 		msg.holdtime = htons(p->conf.holdtime);
 	else
@@ -2136,7 +2136,7 @@ parse_open(struct peer *peer)
 	/* if remote-as is zero and it's a cloned neighbor, accept any */
 	if (peer->template && !peer->conf.remote_as && as != AS_TRANS) {
 		peer->conf.remote_as = as;
-		peer->conf.ebgp = (peer->conf.remote_as != conf->as);
+		peer->conf.ebgp = (peer->conf.remote_as != peer->conf.local_as);
 		if (!peer->conf.ebgp)
 			/* force enforce_as off for iBGP sessions */
 			peer->conf.enforce_as = ENFORCE_AS_OFF;
@@ -3126,7 +3126,7 @@ session_template_clone(struct peer *p, struct sockaddr *ip, u_int32_t id,
 
 	if (as) {
 		p->conf.remote_as = as;
-		p->conf.ebgp = (p->conf.remote_as != conf->as);
+		p->conf.ebgp = (p->conf.remote_as != p->conf.local_as);
 		if (!p->conf.ebgp)
 			/* force enforce_as off for iBGP sessions */
 			p->conf.enforce_as = ENFORCE_AS_OFF;

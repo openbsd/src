@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.361 2017/01/25 03:21:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.362 2017/05/27 10:33:15 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1103,7 +1103,8 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2 + attrpath_len;
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
-	if (peer->conf.ebgp && !aspath_loopfree(asp->aspath, conf->as))
+	if (peer->conf.ebgp &&
+	    !aspath_loopfree(asp->aspath, peer->conf.local_as))
 		asp->flags |= F_ATTR_LOOP;
 
 	/* parse nlri prefix */

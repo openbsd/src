@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.101 2017/05/27 10:24:44 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.102 2017/05/27 10:33:15 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -424,6 +424,12 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\trib \"%s\"\n", c, p->rib);
 	if (p->remote_as)
 		printf("%s\tremote-as %s\n", c, log_as(p->remote_as));
+	if (p->local_as != conf->as) {
+		printf("%s\tlocal-as %s", c, log_as(p->local_as));
+		if (p->local_as > USHRT_MAX && p->local_short_as != AS_TRANS)
+			printf(" %u", p->local_short_as);
+		printf("\n");
+	}
 	if (p->down)
 		printf("%s\tdown\n", c);
 	if (p->distance > 1)
