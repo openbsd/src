@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.3 2017/05/26 15:30:21 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.4 2017/05/27 10:22:06 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -37,8 +37,6 @@
 
 #include <dev/pv/virtioreg.h>
 #include <dev/pv/virtiovar.h>
-
-#define MINSEG_INDIRECT		2 /* use indirect if nsegs >= this value */
 
 #if VIRTIO_DEBUG
 #define VIRTIO_ASSERT(x)	KASSERT(x)
@@ -275,6 +273,10 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
 
 /*
  * Allocate/free a vq.
+ *
+ * maxnsegs denotes how much space should be allocated for indirect
+ * descriptors. maxnsegs == 1 can be used to disable use indirect
+ * descriptors for this queue.
  */
 int
 virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
@@ -304,10 +306,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	allocsize2 = VIRTQUEUE_ALIGN(sizeof(uint16_t) * hdrlen
 	    + sizeof(struct vring_used_elem) * vq_size);
 	/* allocsize3: indirect table */
-	/* XXX: This is rather inefficient. In practice only a fraction of this
-	 * XXX: memory will be used.
-	 */
-	if (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT)
+	if (sc->sc_indirect && maxnsegs > 1)
 		allocsize3 = sizeof(struct vring_desc) * maxnsegs * vq_size;
 	else
 		allocsize3 = 0;
@@ -511,22 +510,16 @@ virtio_enqueue_prep(struct virtqueue *vq, int *slotp)
 int
 virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 {
-	int indirect;
 	struct vq_entry *qe1 = &vq->vq_entries[slot];
 
 	VIRTIO_ASSERT(qe1->qe_next == -1);
 	VIRTIO_ASSERT(1 <= nsegs && nsegs <= vq->vq_num);
 
-	if ((vq->vq_indirect != NULL) && (nsegs >= MINSEG_INDIRECT) &&
-	    (nsegs <= vq->vq_maxnsegs))
-		indirect = 1;
-	else
-		indirect = 0;
-	qe1->qe_indirect = indirect;
-
-	if (indirect) {
+	if (vq->vq_indirect != NULL && nsegs > 1 && nsegs <= vq->vq_maxnsegs) {
 		struct vring_desc *vd;
 		int i;
+
+		qe1->qe_indirect = 1;
 
 		vd = &vq->vq_desc[qe1->qe_index];
 		vd->addr = vq->vq_dmamap->dm_segs[0].ds_addr +
@@ -550,6 +543,8 @@ virtio_enqueue_reserve(struct virtqueue *vq, int slot, int nsegs)
 		struct vring_desc *vd;
 		struct vq_entry *qe;
 		int i, s;
+
+		qe1->qe_indirect = 0;
 
 		vd = &vq->vq_desc[0];
 		qe1->qe_desc_base = vd;
