@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2017/05/15 20:09:11 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/05/27 10:58:53 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -164,7 +164,7 @@ regress:
 	@echo
 	${SUDO} true
 	ssh -t ${IPS_SSH} ${SUDO} true
-	rm -f stamp-ipsec stamp-pfctl stamp-bpf stamp-pflog stamp-stop
+	rm -f stamp-*
 .endif
 
 depend: addr.py
@@ -214,7 +214,7 @@ stamp-pfctl: addr.py pf.conf
 DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
 
 # run tcpdump on enc device of IPS machine
-stamp-bpf: Makefile
+stamp-bpf: Makefile stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f enc0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} enc0'" || true
@@ -224,7 +224,7 @@ stamp-bpf: Makefile
 	@date >$@
 
 # run tcpdump on pflog device of IPS machine
-stamp-pflog: stamp-pfctl
+stamp-pflog: stamp-pfctl stamp-drop
 	@echo '\n======== $@ ========'
 	rm -f pflog0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD} pflog0'" || true
@@ -237,6 +237,21 @@ stamp-stop:
 	@echo '\n======== $@ ========'
 	sleep 5  # XXX
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'${DUMPCMD}'"
+	@date >$@
+
+# Old TCP connections send packets from time to time.  These confuse
+# the checks that count the IPsec packets with netstat -ss.
+stamp-drop:
+	@echo '\n======== $@ ========'
+	netstat -nv -p tcp |\
+	    perl -ne '\
+		/ ${PREFIX_IPV6}.* ${PREFIX_IPV6}/ ||\
+		/ ${PREFIX_IPV4}.* ${PREFIX_IPV4}/ or next;\
+		my ($$laddr,$$faddr) = (split)[3,4];\
+		my ($$lip,$$lport) = $$laddr =~ /(.*)\.(\d+)/;\
+		my ($$fip,$$fport) = $$faddr =~ /(.*)\.(\d+)/;\
+		print join(" ",$$lip,$$lport,$$fip,$$fport),"\n"' |\
+	    xargs -r -L1 ${SUDO} tcpdrop
 	@date >$@
 
 # Disable tests that do not pass.
@@ -428,12 +443,12 @@ run-regress-pflog-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 	@echo '\n======== $@ ========'
 	grep -q '\
 	    rule .*regress.0/(match) .*\
-	    pass in on enc0: .*\
+	    pass in on enc0:.*\
 	    ${REGEX_REQ_${host}_${sec}_${mode}_${ipv}_${proto}}\
 	    ${REGEX_REQ_${proto}} ' pflog0.tcpdump
 	grep -q '\
 	    rule .*/(match) .*\
-	    pass out on enc0: .*\
+	    pass out on enc0:.*\
 	    ${REGEX_RPL_${host}_${sec}_${mode}_${ipv}_${proto}}\
 	    ${REGEX_RPL_${proto}} ' pflog0.tcpdump
 
@@ -446,9 +461,10 @@ run-regress-pflog-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-send-/} \
     ${TARGETS:N*_IPIP_*:N*_BUNDLE_*:N*_IN_*:N*_OUT_*:N*-SRC_*:Nudp-*_IPCOMP_*:Ntcp-*_IPCOMP_*:N*-small-*:S/-big-/-/:S/^/run-regress-bpf-/} \
     ${TARGETS:N*_IPIP_*:N*_IPCOMP_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:S/-big-/-/:S/^/run-regress-pflog-/}
-${REGRESS_TARGETS:Mrun-regress-send-*}: stamp-ipsec stamp-bpf stamp-pflog
+${REGRESS_TARGETS:Mrun-regress-send-*}: \
+    stamp-ipsec stamp-bpf stamp-pflog stamp-drop
 
-CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcdump
+CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcpdump
 
 # create hostname.if files, copy them to the machines and install addresses
 
@@ -490,13 +506,13 @@ etc/hostname.${SRC_OUT_IF}: Makefile
 .endfor
 .for host in IPS ECO
 .for mode in TUNNEL4 TUNNEL6
-	echo '# ${host}_${sec}_${mode}/pfxlen reject\
+	echo '# ${host}_${sec}_${mode}/pfxlen\
 	    ${SRC_${sec}_TUNNEL_${ipv}}' >>$@.tmp
 .for inet ipv pfxlen in inet IPV4 24 inet6 IPV6 64
 	echo '!route -q delete -${inet}\
 	    ${${host}_${sec}_${mode}_${ipv}}/${pfxlen}' >>$@.tmp
 	echo '!route add -${inet} ${${host}_${sec}_${mode}_${ipv}}/${pfxlen}\
-	    -reject ${SRC_${sec}_TUNNEL_${ipv}}' >>$@.tmp
+	    ${SRC_${sec}_TUNNEL_${ipv}}' >>$@.tmp
 .endfor
 .endfor
 .endfor
@@ -524,12 +540,12 @@ ${IPS_SSH}/hostname.${IPS_IN_IF}: Makefile
 	echo '!route add -inet6 ${SRC_${sec}_TRANSP_IPV6}/64 ${SRC_OUT_IPV6}'\
 	    >>$@.tmp
 .for mode in TUNNEL
-	echo '# SRC_${sec}_${mode}/pfxlen reject ${IPS_IN_${ipv}}' >>$@.tmp
+	echo '# SRC_${sec}_${mode}/pfxlen ${IPS_IN_${ipv}}' >>$@.tmp
 .for inet ipv pfxlen in inet IPV4 24 inet6 IPV6 64
 	echo '!route -q delete -${inet}\
 	    ${SRC_${sec}_${mode}_${ipv}}/${pfxlen}' >>$@.tmp
 	echo '!route add -${inet} ${SRC_${sec}_${mode}_${ipv}}/${pfxlen}\
-	    -reject ${IPS_IN_${ipv}}' >>$@.tmp
+	    ${IPS_IN_${ipv}}' >>$@.tmp
 .endfor
 .endfor
 .endfor
@@ -715,7 +731,7 @@ check-setup-src:
 .endfor
 .for host mode in IPS TUNNEL4 IPS TUNNEL6 ECO TUNNEL4 ECO TUNNEL6
 	route -n get -${inet} ${${host}_${sec}_${mode}_${ipv}} |\
-	    grep -q 'flags: .*REJECT'  # ${host}_${sec}_${mode}_${ipv}
+	    grep -q 'flags: .*STATIC'  # ${host}_${sec}_${mode}_${ipv}
 .endfor
 .endfor
 .endfor
@@ -762,7 +778,7 @@ check-setup-ips:
 .endfor
 .for host mode in SRC TUNNEL
 	ssh ${IPS_SSH} route -n get -${inet} ${${host}_${sec}_${mode}_${ipv}} |\
-	    grep -q 'flags: .*REJECT'  # ${host}_${sec}_${mode}_${ipv}
+	    grep -q 'flags: .*STATIC'  # ${host}_${sec}_${mode}_${ipv}
 .endfor
 .for host mode in IPS TRANSP IPS TUNNEL4 IPS TUNNEL6
 	ssh ${IPS_SSH} netstat -nav -f ${inet} -p udp |\
