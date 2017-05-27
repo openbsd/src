@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2017/05/27 10:47:23 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2017/05/27 10:49:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -54,13 +54,16 @@
 #include "frontend.h"
 #include "control.h"
 
-#define	ALLROUTER	"ff02::2"
+#define	ROUTE_SOCKET_BUF_SIZE	16384
+#define	ALLROUTER		"ff02::2"
 
 __dead void	 frontend_shutdown(void);
 void		 frontend_sig_handler(int, short, void *);
 void		 update_iface(uint32_t, char*);
 void		 frontend_startup(void);
 void		 route_receive(int, short, void *);
+void		 handle_route_message(struct rt_msghdr *, struct sockaddr **);
+void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		 icmp6_receive(int, short, void *);
 int		 get_flags(char *);
 int		 get_xflags(char *);
@@ -515,35 +518,55 @@ frontend_startup(void)
 void
 route_receive(int fd, short events, void *arg)
 {
-	static uint8_t			 buf[2048];
+	static uint8_t			 buf[ROUTE_SOCKET_BUF_SIZE];
 
-	struct if_msghdr		*ifm;
 	struct rt_msghdr		*rtm;
-	struct sockaddr_rtlabel		*rl;
-	struct imsg_proposal_ack	 proposal_ack;
+	struct sockaddr			*sa, *rti_info[RTAX_MAX];
+	size_t				 len, offset;
 	ssize_t				 n;
+	char				*next;
+
+	if ((n = read(fd, &buf, sizeof(buf))) == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return;
+		log_warn("dispatch_rtmsg: read error");
+		return;
+	}
+
+	if (n == 0) {
+		log_warnx("routing socket closed");
+		return;
+	}
+
+	len = n;
+	for (offset = 0; offset < len; offset += rtm->rtm_msglen) {
+		next = buf + offset;
+		rtm = (struct rt_msghdr *)next;
+		if (len < offset + sizeof(u_short) ||
+		    len < offset + rtm->rtm_msglen)
+			fatalx("rtmsg_process: partial rtm in buffer");
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
+
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+		handle_route_message(rtm, rti_info);
+	}
+}
+
+void
+handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
+{
+	struct if_msghdr		*ifm;
+	struct imsg_proposal_ack	 proposal_ack;
+	struct sockaddr_rtlabel		*rl;
 	int64_t				 id, pid;
 	int				 flags, xflags, if_index;
 	char				 ifnamebuf[IFNAMSIZ];
 	char				*if_name;
 	char				**ap, *argv[4], *p;
 	const char			*errstr;
-
-	do {
-		n = read(fd, buf, sizeof(buf));
-	} while (n == -1 && errno == EINTR);
-
-	if (n < 0) {
-		log_debug("read(routesock)");
-		return;
-	}
-
-	rtm = (struct rt_msghdr *) buf;
-	if ((size_t)n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
-	    rtm->rtm_version != RTM_VERSION) {
-		log_debug("invalid route message");
-		return;
-	}
 
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
@@ -585,7 +608,7 @@ route_receive(int fd, short events, void *arg)
 
 		if ((rtm->rtm_flags & (RTF_DONE | RTF_PROTO1)) ==
 		    (RTF_DONE | RTF_PROTO1) && rtm->rtm_addrs == RTA_LABEL) {
-			rl = (struct sockaddr_rtlabel *)(buf + rtm->rtm_hdrlen);
+			rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
 			/* XXX validate rl */
 
 			p = rl->sr_label;
@@ -632,6 +655,25 @@ route_receive(int fd, short events, void *arg)
 	default:
 		log_debug("unexpected RTM: %d", rtm->rtm_type);
 		break;
+	}
+
+}
+
+#define	ROUNDUP(a)	\
+    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+
+void
+get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
+{
+	int	i;
+
+	for (i = 0; i < RTAX_MAX; i++) {
+		if (addrs & (1 << i)) {
+			rti_info[i] = sa;
+			sa = (struct sockaddr *)((char *)(sa) +
+			    ROUNDUP(sa->sa_len));
+		} else
+			rti_info[i] = NULL;
 	}
 }
 
