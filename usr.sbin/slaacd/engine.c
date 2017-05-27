@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2017/05/27 16:16:49 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.18 2017/05/27 18:37:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -113,6 +113,12 @@ const char* proposal_state_name[] = {
 	"CONFIGURED",
 	"NEARLY_EXPIRED",
 	"WITHDRAWN",
+};
+
+const char* rpref_name[] = {
+	"Low",
+	"Medium",
+	"High",
 };
 
 struct radv_prefix {
@@ -673,7 +679,9 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		cei_ra.curhoplimit = ra->curhoplimit;
 		cei_ra.managed = ra->managed;
 		cei_ra.other = ra->other;
-		cei_ra.rpref = ra->rpref;
+		if (strlcpy(cei_ra.rpref, rpref_name[ra->rpref], sizeof(
+		    cei_ra.rpref)) >= sizeof(cei_ra.rpref))
+			log_warn("truncated router preference");
 		cei_ra.router_lifetime = ra->router_lifetime;
 		cei_ra.reachable_time = ra->reachable_time;
 		cei_ra.retrans_time = ra->retrans_time;

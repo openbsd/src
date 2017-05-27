@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.4 2017/05/27 10:53:59 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.5 2017/05/27 18:37:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -221,6 +221,7 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t\tCur Hop Limit: %3u, M: %d, O: %d, Router Lifetime:"
 		    " %5us\n", cei_ra->curhoplimit, cei_ra->managed ? 1: 0,
 		    cei_ra->other ? 1 : 0, cei_ra->router_lifetime);
+		printf("\t\tDefault Router Preference: %s\n", cei_ra->rpref);
 		printf("\t\tReachable Time: %9ums, Retrans Timer: %9ums\n",
 		    cei_ra->reachable_time, cei_ra->retrans_time);
 		break;

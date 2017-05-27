@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.12 2017/05/27 16:16:49 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.13 2017/05/27 18:37:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -101,7 +101,7 @@ struct ctl_engine_info_ra {
 	uint8_t			 curhoplimit;
 	int			 managed;
 	int			 other;
-	enum rpref		 rpref;
+	char			 rpref[sizeof("MEDIUM")];
 	uint16_t		 router_lifetime;	/* in seconds */
 	uint32_t		 reachable_time;	/* in milliseconds */
 	uint32_t		 retrans_time;		/* in milliseconds */
