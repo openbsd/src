@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.10 2016/09/04 08:33:50 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.11 2017/05/27 09:01:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2013 Mark Kettenis <kettenis@openbsd.org>
@@ -44,7 +44,7 @@ SECTIONS
 	{
 		*(.openbsd.randomdata)
 	} :text :openbsd_randomize
-	. = 0x01800000;
+	. = 0x01c00000;
 	.data :
 	{
 		*(.data)
