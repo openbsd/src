@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.11 2017/05/27 10:52:16 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.12 2017/05/27 16:16:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -69,6 +69,7 @@ enum imsg_type {
 	IMSG_DEL_ADDRESS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL,
+	IMSG_FAKE_ACK,
 };
 
 extern const char* imsg_type_name[];

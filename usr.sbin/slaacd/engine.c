@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.16 2017/05/27 10:55:50 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.17 2017/05/27 16:16:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1656,7 +1656,15 @@ update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 void
 send_proposal(struct imsg_proposal *proposal)
 {
+#ifndef SKIP_PROPOSAL
 	engine_imsg_compose_main(IMSG_PROPOSAL, 0, proposal, sizeof(*proposal));
+#else
+	struct imsg_proposal_ack	ack;
+	ack.id = proposal->id;
+	ack.pid = proposal->pid;
+	ack.if_index = proposal->if_index;
+	engine_imsg_compose_frontend(IMSG_FAKE_ACK, 0, &ack, sizeof(ack));
+#endif
 }
 
 void

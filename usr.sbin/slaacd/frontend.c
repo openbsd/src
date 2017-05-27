@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.9 2017/05/27 10:52:16 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.10 2017/05/27 16:16:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -436,6 +436,10 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		case IMSG_CTL_SEND_SOLICITATION:
 			if_index = *((uint32_t *)imsg.data);
 			send_solicitation(if_index);
+			break;
+		case IMSG_FAKE_ACK:
+			frontend_imsg_compose_engine(IMSG_PROPOSAL_ACK,
+			   0, 0, imsg.data, sizeof(struct imsg_proposal_ack));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
