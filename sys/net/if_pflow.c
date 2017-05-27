@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.76 2017/05/15 12:26:00 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.77 2017/05/27 21:06:06 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -67,6 +67,7 @@ struct pflowstats	 pflowstats;
 void	pflowattach(int);
 int	pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt);
+void	pflow_output_process(void *);
 int	pflow_clone_create(struct if_clone *, int);
 int	pflow_clone_destroy(struct ifnet *);
 int	pflow_set(struct pflow_softc *, struct pflowreq *);
@@ -124,11 +125,25 @@ pflow_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return (EAFNOSUPPORT);
 }
 
+void
+pflow_output_process(void *arg)
+{
+        struct pflow_softc *sc = arg;
+	struct mbuf *m;
+
+	KERNEL_LOCK();
+	while ((m = ml_dequeue(&sc->sc_outputqueue)) != NULL) {
+		pflow_sendout_mbuf(sc, m);
+	}
+	KERNEL_UNLOCK();
+}
+
 int
 pflow_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet		*ifp;
 	struct pflow_softc	*pflowif;
+	int			 s;
 
 	if ((pflowif = malloc(sizeof(*pflowif),
 	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
@@ -241,13 +256,18 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hdrlen = PFLOW_HDRLEN;
 	ifp->if_flags = IFF_UP;
 	ifp->if_flags &= ~IFF_RUNNING;	/* not running, need receiver */
+	ml_init(&pflowif->sc_outputqueue);
 	pflow_setmtu(pflowif, ETHERMTU);
 	pflow_init_timeouts(pflowif);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
+	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
+
 	/* Insert into list of pflows */
+	NET_LOCK(s);
 	SLIST_INSERT_HEAD(&pflowif_list, pflowif, sc_next);
+	NET_UNLOCK(s);
 	return (0);
 }
 
@@ -267,6 +287,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (timeout_initialized(&sc->sc_tmo_tmpl))
 		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
+	task_del(softnettq, &sc->sc_outputtask);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
 		error = soclose(sc->so);
@@ -462,14 +483,8 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			/* send templates on startup */
-			if (sc->sc_version == PFLOW_PROTO_10) {
-				/* XXXSMP breaks atomicity */
-				rw_exit_write(&netlock);
-				s = splnet();
+			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
-				splx(s);
-				rw_enter_write(&netlock);
-			}
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
@@ -513,17 +528,16 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		s = splnet();
 		error = pflow_set(sc, &pflowr);
 		splx(s);
-		if (error != 0)
+		if (error != 0) {
+			rw_enter_write(&netlock);
 			return (error);
+		}
 
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
-			if (sc->sc_version == PFLOW_PROTO_10) {
-				s = splnet();
+			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
-				splx(s);
-			}
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
@@ -852,14 +866,11 @@ export_pflow_if(struct pf_state *st, struct pf_state_key *sk,
 int
 copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 {
-	int		s, ret = 0;
+	int		ret = 0;
 
-	s = splnet();
 	if (sc->sc_mbuf == NULL) {
-		if ((sc->sc_mbuf = pflow_get_mbuf(sc, 0)) == NULL) {
-			splx(s);
+		if ((sc->sc_mbuf = pflow_get_mbuf(sc, 0)) == NULL)
 			return (ENOBUFS);
-		}
 	}
 	m_copyback(sc->sc_mbuf, PFLOW_HDRLEN +
 	    (sc->sc_count * sizeof(struct pflow_flow)),
@@ -873,20 +884,17 @@ copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 	if (sc->sc_count >= sc->sc_maxcount)
 		ret = pflow_sendout_v5(sc);
 
-	splx(s);
 	return(ret);
 }
 
 int
 copy_flow_ipfix_4_to_m(struct pflow_ipfix_flow4 *flow, struct pflow_softc *sc)
 {
-	int		s, ret = 0;
+	int		ret = 0;
 
-	s = splnet();
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf =
 		    pflow_get_mbuf(sc, PFLOW_IPFIX_TMPL_IPV4_ID)) == NULL) {
-			splx(s);
 			return (ENOBUFS);
 		}
 		sc->sc_count4 = 0;
@@ -903,20 +911,17 @@ copy_flow_ipfix_4_to_m(struct pflow_ipfix_flow4 *flow, struct pflow_softc *sc)
 
 	if (sc->sc_count4 >= sc->sc_maxcount4)
 		ret = pflow_sendout_ipfix(sc, AF_INET);
-	splx(s);
 	return(ret);
 }
 
 int
 copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow, struct pflow_softc *sc)
 {
-	int		s, ret = 0;
+	int		ret = 0;
 
-	s = splnet();
 	if (sc->sc_mbuf6 == NULL) {
 		if ((sc->sc_mbuf6 =
 		    pflow_get_mbuf(sc, PFLOW_IPFIX_TMPL_IPV6_ID)) == NULL) {
-			splx(s);
 			return (ENOBUFS);
 		}
 		sc->sc_count6 = 0;
@@ -934,7 +939,6 @@ copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow, struct pflow_softc *sc)
 	if (sc->sc_count6 >= sc->sc_maxcount6)
 		ret = pflow_sendout_ipfix(sc, AF_INET6);
 
-	splx(s);
 	return(ret);
 }
 
@@ -1010,9 +1014,7 @@ void
 pflow_timeout(void *v)
 {
 	struct pflow_softc	*sc = v;
-	int			 s;
 
-	s = splnet();
 	switch (sc->sc_version) {
 	case PFLOW_PROTO_5:
 		pflow_sendout_v5(sc);
@@ -1023,32 +1025,24 @@ pflow_timeout(void *v)
 	default: /* NOTREACHED */
 		break;
 	}
-	splx(s);
 }
 
 void
 pflow_timeout6(void *v)
 {
 	struct pflow_softc	*sc = v;
-	int			 s;
 
-	s = splnet();
 	pflow_sendout_ipfix(sc, AF_INET6);
-	splx(s);
 }
 
 void
 pflow_timeout_tmpl(void *v)
 {
 	struct pflow_softc	*sc = v;
-	int			 s;
 
-	s = splnet();
 	pflow_sendout_ipfix_tmpl(sc);
-	splx(s);
 }
 
-/* This must be called in splnet() */
 void
 pflow_flush(struct pflow_softc *sc)
 {
@@ -1065,8 +1059,6 @@ pflow_flush(struct pflow_softc *sc)
 	}
 }
 
-
-/* This must be called in splnet() */
 int
 pflow_sendout_v5(struct pflow_softc *sc)
 {
@@ -1096,11 +1088,11 @@ pflow_sendout_v5(struct pflow_softc *sc)
 	getnanotime(&tv);
 	h->time_sec = htonl(tv.tv_sec);			/* XXX 2038 */
 	h->time_nanosec = htonl(tv.tv_nsec);
-
-	return (pflow_sendout_mbuf(sc, m));
+	ml_enqueue(&sc->sc_outputqueue, m);
+	task_add(softnettq, &sc->sc_outputtask);
+	return (0);
 }
 
-/* This must be called in splnet() */
 int
 pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 {
@@ -1158,10 +1150,11 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	h10->flow_sequence = htonl(sc->sc_sequence);
 	sc->sc_sequence += count;
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
-	return (pflow_sendout_mbuf(sc, m));
+	ml_enqueue(&sc->sc_outputqueue, m);
+	task_add(softnettq, &sc->sc_outputtask);
+	return (0);
 }
 
-/* This must be called in splnet() */
 int
 pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 {
@@ -1199,7 +1192,9 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
 
 	timeout_add_sec(&sc->sc_tmo_tmpl, PFLOW_TMPL_TIMEOUT);
-	return (pflow_sendout_mbuf(sc, m));
+	ml_enqueue(&sc->sc_outputqueue, m);
+	task_add(softnettq, &sc->sc_outputtask);
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.15 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.16 2017/05/27 21:06:06 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -184,6 +184,8 @@ struct pflow_softc {
 	struct timeout		 sc_tmo;
 	struct timeout		 sc_tmo6;
 	struct timeout		 sc_tmo_tmpl;
+	struct mbuf_list	 sc_outputqueue;
+	struct task		 sc_outputtask;
 	struct socket		*so;
 	struct mbuf		*send_nam;
 	struct sockaddr		*sc_flowsrc;
