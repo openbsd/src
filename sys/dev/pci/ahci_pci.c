@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.12 2016/01/14 04:06:53 dlg Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.13 2017/05/27 14:16:45 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -162,24 +162,6 @@ void			ahci_pci_attach(struct device *, struct device *,
 			    void *);
 int			ahci_pci_detach(struct device *, int);
 int			ahci_pci_activate(struct device *, int);
-
-#ifdef HIBERNATE
-#include <sys/hibernate.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
-void			ahci_hibernate_io_start(struct ahci_port *,
-			    struct ahci_ccb *);
-int			ahci_hibernate_io_poll(struct ahci_port *,
-			    struct ahci_ccb *);
-void			ahci_hibernate_load_prdt(struct ahci_ccb *);
-
-int			ahci_hibernate_io(dev_t dev, daddr_t blkno,
-			    vaddr_t addr, size_t size, int wr, void *page);
-#endif
 
 struct cfattach ahci_pci_ca = {
 	sizeof(struct ahci_pci_softc),
