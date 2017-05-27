@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.8 2017/05/26 10:59:55 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.9 2017/05/27 08:35:55 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -197,12 +197,7 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 	// TODO(matthew): Support bidirectional SCSI commands?
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
 	    == (SCSI_DATA_IN | SCSI_DATA_OUT)) {
-	stuffup:
-		xs->error = XS_DRIVER_STUFFUP;
-		xs->resid = xs->datalen;
-		DPRINTF("vioscsi_scsi_cmd: stuffup\n");
-		scsi_done(xs);
-		return;
+		goto stuffup;
 	}
 
 	vr->vr_xs = xs;
@@ -294,6 +289,13 @@ vioscsi_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF("vioscsi_scsi_cmd: done (timeout=%d)\n", timeout);
 	}
 	splx(s);
+	return;
+
+stuffup:
+	xs->error = XS_DRIVER_STUFFUP;
+	xs->resid = xs->datalen;
+	DPRINTF("vioscsi_scsi_cmd: stuffup\n");
+	scsi_done(xs);
 }
 
 void
