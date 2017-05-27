@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.71 2017/04/06 21:14:12 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.72 2017/05/27 09:51:07 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -228,7 +228,7 @@ authuser(char *myname, char *login_style, int persist)
 	if (!auth_userresponse(as, response, 0)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
 		    "failed auth for %s", myname);
-		errc(1, EPERM, NULL);
+		errx(1, "Authorization failed");
 	}
 	explicit_bzero(rbuf, sizeof(rbuf));
 good:
