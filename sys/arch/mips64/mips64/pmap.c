@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.101 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.102 2017/05/27 06:23:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1895,8 +1895,8 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		if (npv == NULL)
 			return ENOMEM;
 
-		if ((*npte & PG_CACHED) != 0 &&
-		    (pg->pg_flags & PGF_CACHED) != 0 && cache_valias_mask != 0) {
+		if (cache_valias_mask != 0 && (*npte & PG_CACHED) != 0 &&
+		    (pg->pg_flags & PGF_CACHED) != 0) {
 			/*
 			 * We have a VAC possibility.  Check if virtual
 			 * address of current mappings are compatible
