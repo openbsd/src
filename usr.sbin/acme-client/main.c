@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.34 2017/03/23 12:58:28 florian Exp $ */
+/*	$Id: main.c,v 1.35 2017/05/27 08:31:08 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -128,23 +128,19 @@ main(int argc, char *argv[])
 	}
 
 	if(domain->chain != NULL) {
-		if ((chainfile = strstr(domain->chain, certdir)) != NULL)
-			chainfile = domain->chain + strlen(certdir);
-		else
-			chainfile = domain->chain;
-
-		if ((chainfile = strdup(chainfile)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+		if ((chainfile = basename(domain->chain)) != NULL) {
+			if ((chainfile = strdup(chainfile)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "basename");
 	}
 
 	if(domain->fullchain != NULL) {
-		if ((fullchainfile = strstr(domain->fullchain, certdir)) != NULL)
-			fullchainfile = domain->fullchain + strlen(certdir);
-		else
-			fullchainfile = domain->fullchain;
-
-		if ((fullchainfile = strdup(fullchainfile)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+		if ((fullchainfile = basename(domain->fullchain)) != NULL) {
+			if ((fullchainfile = strdup(fullchainfile)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		} else
+			err(EXIT_FAILURE, "basename");
 	}
 
 	if ((auth = domain->auth) == NULL) {
