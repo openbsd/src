@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.5 2017/05/09 11:09:38 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.6 2017/05/27 15:05:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -39,31 +39,20 @@ extern db_symtab_t		db_symtab;
 
 struct ddb_ctf {
 	struct ctf_header 	*cth;
-	const char 		*data;
-	off_t			 dlen;
+	const char		*rawctf;	/* raw .SUNW_ctf section */
+        size_t			 rawctflen;	/* raw .SUNW_ctf section size */
+	const char 		*data;		/* decompressed CTF data */
+	size_t			 dlen;		/* decompressed CTF data size */
+	char			*strtab;	/* ELF string table */
 	uint32_t 		 ctf_found;
-	uint32_t 		 nsyms;
-        size_t			 ctftab_size;
-	const char		*ctftab;
 };
 
 struct ddb_ctf db_ctf;
 
-/*
- * We need a way to get the number of symbols, so (ab)use db_elf_sym_forall()
- * to give us the count.
- */
-struct db_ctf_forall_arg {
-	int		cnt;
-	db_sym_t	sym;
-};
-
 static const char	*db_ctf_lookup_name(uint32_t);
 static const char	*db_ctf_idx2sym(size_t *, uint8_t);
-static const char	*db_elf_find_ctftab(db_symtab_t *, size_t *);
+static const char	*db_elf_find_ctf(db_symtab_t *, size_t *);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
-static int		 db_ctf_print_functions();
-static void		 db_ctf_forall(db_sym_t, char *, char *, int, void *);
 
 /*
  * Entrypoint to verify CTF presence, initialize the header, decompress
@@ -72,70 +61,47 @@ static void		 db_ctf_forall(db_sym_t, char *, char *, int, void *);
 void
 db_ctf_init(void)
 {
-	struct db_ctf_forall_arg dfa;
 	db_symtab_t *stab = &db_symtab;
-	const char *ctftab;
-	size_t ctftab_size;
-	int nsyms;
+	size_t rawctflen;
 
 	/* Assume nothing was correct found until proven otherwise. */
 	db_ctf.ctf_found = 0;
 
-	ctftab = db_elf_find_ctftab(stab, &ctftab_size);
-	if (ctftab == NULL) {
+	if (stab->private == NULL)
 		return;
-	}
 
-	db_ctf.ctftab = ctftab;
-	db_ctf.ctftab_size = ctftab_size;
-	db_ctf.cth = (struct ctf_header *)ctftab;
+	db_ctf.strtab = db_elf_find_strtab(stab);
+	if (db_ctf.strtab == NULL)
+		return;
+
+	db_ctf.rawctf = db_elf_find_ctf(stab, &rawctflen);
+	if (db_ctf.rawctf == NULL)
+		return;
+
+	db_ctf.rawctflen = rawctflen;
+	db_ctf.cth = (struct ctf_header *)db_ctf.rawctf;
 	db_ctf.dlen = db_ctf.cth->cth_stroff + db_ctf.cth->cth_strlen;
 
-	/* Now decompress the section, take into account to skip the header */
-	if (db_ctf.cth->cth_flags & CTF_F_COMPRESS) {
-		if ((db_ctf.data =
-		     db_ctf_decompress(db_ctf.ctftab + sizeof(*db_ctf.cth),
-				      db_ctf.ctftab_size - sizeof(*db_ctf.cth),
-				       db_ctf.dlen)) == NULL)
-			return;
-	} else {
-		db_printf("Unsupported non-compressed CTF section encountered\n");
+	if ((db_ctf.cth->cth_flags & CTF_F_COMPRESS) == 0) {
+		printf("unsupported non-compressed CTF section\n");
 		return;
 	}
 
-	/*
-	 * Lookup the total number of kernel symbols. It's unlikely for the
-	 * kernel to have zero symbols so bail out if that's what we end
-	 * up finding.
-	 */
-	dfa.cnt = 0;
-	db_elf_sym_forall(db_ctf_forall, &dfa);
-	nsyms = -dfa.cnt;
-
-	if (nsyms == 0)
+	/* Now decompress the section, take into account to skip the header */
+	db_ctf.data = db_ctf_decompress(db_ctf.rawctf + sizeof(*db_ctf.cth),
+	    db_ctf.rawctflen - sizeof(*db_ctf.cth), db_ctf.dlen);
+	if (db_ctf.data == NULL)
 		return;
-	else
-		db_ctf.nsyms = nsyms;
 
 	/* We made it this far, everything seems fine. */
 	db_ctf.ctf_found = 1;
 }
 
-static void
-db_ctf_forall(db_sym_t sym, char *name, char *suff, int pre, void *varg)
-{
-	struct db_ctf_forall_arg *arg = varg;
-
-	if (arg->cnt-- == 0)
-		arg->sym = sym;
-}
-
 /*
- * Internal helper function - return a pointer to the CTF table
- * for the current symbol table (and update the size).
+ * Internal helper function - return a pointer to the CTF section
  */
 static const char *
-db_elf_find_ctftab(db_symtab_t *stab, size_t *size)
+db_elf_find_ctf(db_symtab_t *stab, size_t *size)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
@@ -161,8 +127,8 @@ db_dump_ctf_header(void)
 	if (!db_ctf.ctf_found)
 		return;
 
-	db_printf("CTF header found at %p (%ld)\n", db_ctf.ctftab,
-		  db_ctf.ctftab_size);
+	db_printf("CTF header found at %p (%ld)\n", db_ctf.rawctf,
+		  db_ctf.rawctflen);
 	db_printf("cth_magic: 0x%04x\n", db_ctf.cth->cth_magic);
 	db_printf("cth_verion: %d\n", db_ctf.cth->cth_version);
 	db_printf("cth_flags: 0x%02x", db_ctf.cth->cth_flags);
@@ -180,10 +146,6 @@ db_dump_ctf_header(void)
 	db_printf("cth_typeoff: %d\n", db_ctf.cth->cth_typeoff);
 	db_printf("cth_stroff: %d\n", db_ctf.cth->cth_stroff);
 	db_printf("cth_strlen: %d\n", db_ctf.cth->cth_strlen);
-
-#if 1
-	db_ctf_print_functions();
-#endif
 }
 
 /*
@@ -194,33 +156,21 @@ db_dump_ctf_header(void)
 static const char *
 db_ctf_idx2sym(size_t *idx, uint8_t type)
 {
-	db_symtab_t *stab = &db_symtab;
-	Elf_Sym *symp, *symtab_start;
-	const Elf_Sym *st;
-	char *strtab;
-	size_t i;
+	Elf_Sym *symp, *symtab_start, *symtab_end;
+	size_t i = *idx + 1;
 
-	if (stab->private == NULL)
-		return (NULL);
+	symtab_start = STAB_TO_SYMSTART(&db_symtab);
+	symtab_end = STAB_TO_SYMEND(&db_symtab);
 
-	strtab = db_elf_find_strtab(stab);
-	if (strtab == NULL)
-		return (NULL);
-
-	symtab_start = STAB_TO_SYMSTART(stab);
-	symp = symtab_start;
-
-	for (i = *idx + 1; i < db_ctf.nsyms; i++) {
-		st = &symp[i];
-
-		if (ELF_ST_TYPE(st->st_info) != type)
+	for (symp = &symtab_start[i]; symp < symtab_end; i++, symp++) {
+		if (ELF_ST_TYPE(symp->st_info) != type)
 			continue;
 
 		*idx = i;
-		return strtab + st->st_name;
+		return db_ctf.strtab + symp->st_name;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -229,79 +179,41 @@ db_ctf_idx2sym(size_t *idx, uint8_t type)
 int
 db_ctf_func_numargs(const char *funcname)
 {
-	const char		*s;
+	uint16_t		*fstart, *fend;
+	const char		*fname;
 	uint16_t		*fsp, kind, vlen;
-	size_t			 idx = 0;
-	int			 nargs;
+	size_t			 i, idx = 0;
 
 	if (!db_ctf.ctf_found)
-		return (0);
+		return 0;
 
-	fsp = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
-	while (fsp < (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
+	fstart = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
+	fend = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff);
+
+	fsp = fstart;
+	while (fsp < fend) {
+		fname = db_ctf_idx2sym(&idx, STT_FUNC);
+		if (fname == NULL)
+			break;
+
 		kind = CTF_INFO_KIND(*fsp);
 		vlen = CTF_INFO_VLEN(*fsp);
-		s = db_ctf_idx2sym(&idx, STT_FUNC);
 		fsp++;
 
 		if (kind == CTF_K_UNKNOWN && vlen == 0)
 			continue;
 
-		nargs = 0;
-		if (s != NULL) {
-			/*
-			 * We have to keep increasing fsp++ while walking the
-			 * table even if we discard the value at that location.
-			 * This is required to keep a moving index.
-			 *
-			 * First increment for the return type, then for each
-			 * parameter type.
-			 */
+		/* Skip return type */
+		fsp++;
+
+		/* Skip argument types */
+		for (i = 0; i < vlen; i++)
 			fsp++;
 
-			while (vlen-- > 0) {
-				nargs++;
-				fsp++;
-			}
-
-			if (strncmp(funcname, s, strlen(funcname)) == 0) {
-				return (nargs);
-			}
-		}
+		if (strcmp(funcname, fname) == 0)
+			return vlen;
 	}
 
-	return (0);
-}
-
-static int
-db_ctf_print_functions(void)
-{
-	uint16_t		*fsp, kind, vlen;
-	size_t			 idx = 0, i = 0;
-	const char		*s;
-	int			 l;
-
-	if (!db_ctf.ctf_found)
-		return 1;
-
-	fsp = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
-	while (fsp < (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff)) {
-		kind = CTF_INFO_KIND(*fsp);
-		vlen = CTF_INFO_VLEN(*fsp);
-		fsp++;
-
-		if (kind == CTF_K_UNKNOWN && vlen == 0)
-			continue;
-
-		l = db_printf("  [%zu] FUNC ", i++);
-		if ((s = db_ctf_idx2sym(&idx, STT_FUNC)) != NULL)
-			db_printf("(%s)", s);
-		db_printf(" returns: %u args: (", *fsp++);
-		while (vlen-- > 0)
-			db_printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
-		db_printf(") idx: %zu\n", idx);
-	}
-	db_printf("\n");
 	return 0;
 }
 
@@ -333,11 +245,9 @@ db_ctf_decompress(const char *buf, size_t size, off_t len)
 	char			*data;
 	int			 error;
 
-	/* XXX: drop malloc(9) usage */
 	data = malloc(len, M_TEMP, M_WAITOK|M_ZERO|M_CANFAIL);
-	if (data == NULL) {
-		return (NULL);
-	}
+	if (data == NULL)
+		return NULL;
 
 	memset(&stream, 0, sizeof(stream));
 	stream.next_in = (void *)buf;
@@ -367,9 +277,9 @@ db_ctf_decompress(const char *buf, size_t size, off_t len)
 		goto exit;
 	}
 
-	return (data);
+	return data;
 
 exit:
 	free(data, M_DEVBUF, sizeof(*data));
-	return (NULL);
+	return NULL;
 }
