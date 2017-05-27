@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.61 2017/05/16 12:24:01 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.62 2017/05/27 18:36:20 mpi Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -232,7 +232,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_sppp.pp_if.if_bpf, &sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
 
-	s = splnet();
+	NET_LOCK(s);
 retry:
 	unique = arc4random();
 	LIST_FOREACH(tmpsc, &pppoe_softc_list, sc_list)
@@ -240,7 +240,7 @@ retry:
 			goto retry;
 	sc->sc_unique = unique;
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
-	splx(s);
+	NET_UNLOCK(s);
 
 	return (0);
 }
@@ -252,10 +252,11 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	struct pppoe_softc *sc = ifp->if_softc;
 	int s;
 
-	s = splnet();
+	NET_LOCK(s);
 	LIST_REMOVE(sc, sc_list);
+	NET_UNLOCK(s);
+
 	timeout_del(&sc->sc_timeout);
-	splx(s);
 
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
@@ -791,7 +792,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	struct proc *p = curproc;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc *)ifp;
 	struct ifnet *eth_if;
-	int s, error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case PPPOESETPARMS:
@@ -927,9 +928,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			error = 0;
 			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 			    (IFF_UP | IFF_RUNNING)) {
-				s = splnet();
 				if_down(ifp);
-				splx(s);
 				if (sc->sc_state >= PPPOE_STATE_PADI_SENT &&
 				    sc->sc_state < PPPOE_STATE_SESSION) {
 					timeout_del(&sc->sc_timeout);
@@ -943,9 +942,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 				error = sppp_ioctl(ifp, SIOCSIFFLAGS, NULL);
 				if (error)
 					return (error);
-				s = splnet();
 				if_up(ifp);
-				splx(s);
 				return (sppp_ioctl(ifp, SIOCSIFFLAGS, NULL));
 			}
 		}
