@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2017/05/27 10:49:38 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2017/05/27 10:50:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -165,7 +165,7 @@ frontend(int debug, int verbose, char *sockname)
 		fatal("ICMP6_FILTER");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
-	    ROUTE_FILTER(RTM_PROPOSAL);
+	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL);
 	if (setsockopt(routesock, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
@@ -560,6 +560,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct if_msghdr		*ifm;
 	struct imsg_proposal_ack	 proposal_ack;
+	struct imsg_del_addr		 del_addr;
 	struct sockaddr_rtlabel		*rl;
 	int64_t				 id, pid;
 	int				 flags, xflags, if_index;
@@ -601,6 +602,20 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
 		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);
 		update_iface(ifm->ifm_index, if_name);
+		break;
+	case RTM_DELADDR:
+		ifm = (struct if_msghdr *)rtm;
+		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
+		    == AF_INET6) {
+			del_addr.if_index = ifm->ifm_index;
+			memcpy(&del_addr.addr, rti_info[RTAX_IFA], sizeof(
+			    del_addr.addr));
+			frontend_imsg_compose_engine(IMSG_DEL_ADDRESS,
+				    0, 0, &del_addr, sizeof(del_addr));
+			log_debug("RTM_DELADDR: %s[%u]", if_name,
+			    ifm->ifm_index);
+		}
 		break;
 	case RTM_PROPOSAL:
 		ifm = (struct if_msghdr *)rtm;

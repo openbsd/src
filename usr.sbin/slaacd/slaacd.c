@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.9 2017/05/27 10:47:23 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.10 2017/05/27 10:50:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -70,6 +70,7 @@ const char* imsg_type_name[] = {
 	"IMSG_PROPOSAL",
 	"IMSG_PROPOSAL_ACK",
 	"IMSG_CONFIGURE_ADDRESS",
+	"IMSG_DEL_ADDRESS",
 };
 
 __dead void	usage(void);

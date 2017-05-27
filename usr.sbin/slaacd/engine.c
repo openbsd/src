@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.11 2017/05/27 10:47:23 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.12 2017/05/27 10:50:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -217,7 +217,10 @@ void			 address_proposal_timeout(int, short, void *);
 void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
-struct address_proposal	*find_address_proposal(struct slaacd_iface *, int64_t);
+struct address_proposal	*find_address_proposal_by_id(struct slaacd_iface *,
+			     int64_t);
+struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
+			     struct sockaddr_in6 *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
@@ -343,6 +346,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg_ifinfo		 imsg_ifinfo;
 	struct imsg_proposal_ack	 proposal_ack;
 	struct address_proposal		*addr_proposal;
+	struct imsg_del_addr		 del_addr;
 	ssize_t				 n;
 	int				 shut = 0, verbose;
 	uint32_t			 if_index;
@@ -500,7 +504,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				break;
 			}
 
-			addr_proposal = find_address_proposal(iface,
+			addr_proposal = find_address_proposal_by_id(iface,
 			    proposal_ack.id);
 			if (addr_proposal == NULL) {
 				log_debug("IMSG_PROPOSAL_ACK: cannot find "
@@ -509,6 +513,30 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			}
 
 			configure_address(iface, addr_proposal);
+
+			break;
+		case IMSG_DEL_ADDRESS:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(del_addr))
+				fatal("%s: IMSG_DEL_ADDRESS wrong length: %d",
+				    __func__, imsg.hdr.len);
+			memcpy(&del_addr, imsg.data, sizeof(del_addr));
+			iface = get_slaacd_iface_by_id(del_addr.if_index);
+			if (iface == NULL) {
+				log_debug("IMSG_DEL_ADDRESS: unknown interface"
+				    ", ignoring");
+				break;
+			}
+
+			addr_proposal = find_address_proposal_by_addr(iface,
+			    &del_addr.addr);
+
+			if (addr_proposal) {
+				/* XXX should we inform netcfgd? */
+				LIST_REMOVE(addr_proposal, entries);
+				evtimer_del(&addr_proposal->timer);
+				free(addr_proposal);
+			}
 
 			break;
 		default:
@@ -1655,6 +1683,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 			log_debug("%s: giving up, no response to proposal",
 			    __func__);
 			LIST_REMOVE(addr_proposal, entries);
+			evtimer_del(&addr_proposal->timer);
 			free(addr_proposal);
 		}
 		break;
@@ -1719,7 +1748,7 @@ find_ra(struct slaacd_iface *iface, struct sockaddr_in6 *from)
 }
 
 struct address_proposal*
-find_address_proposal(struct slaacd_iface *iface, int64_t id)
+find_address_proposal_by_id(struct slaacd_iface *iface, int64_t id)
 {
 	struct address_proposal	*addr_proposal;
 
@@ -1729,5 +1758,18 @@ find_address_proposal(struct slaacd_iface *iface, int64_t id)
 	}
 
 	return (NULL);
-	
+}
+
+struct address_proposal*
+find_address_proposal_by_addr(struct slaacd_iface *iface, struct sockaddr_in6
+    *addr)
+{
+	struct address_proposal	*addr_proposal;
+
+	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
+		if (memcmp(&addr_proposal->addr, addr, sizeof(*addr)) == 0)
+			return (addr_proposal);
+	}
+
+	return (NULL);
 }
