@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.19 2017/05/12 08:47:03 mpi Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.20 2017/05/27 20:12:12 kettenis Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -275,6 +275,9 @@ _atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #define membar_consumer()	__membar("")
 #define membar_sync()		__membar("")
 #endif
+
+#define membar_enter_after_atomic()	__membar("")
+#define membar_exit_before_atomic()	__membar("")
 
 #ifdef _KERNEL
 
