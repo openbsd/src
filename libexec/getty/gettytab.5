@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gettytab.5,v 1.27 2016/01/08 20:26:54 zhuk Exp $
+.\"	$OpenBSD: gettytab.5,v 1.28 2017/05/27 09:31:13 deraadt Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)gettytab.5	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 8 2016 $
+.Dd $Mdocdate: May 27 2017 $
 .Dt GETTYTAB 5
 .Os
 .Sh NAME
@@ -335,16 +335,6 @@ file format appeared in
 .Sh BUGS
 The special characters (erase, kill, etc.) are reset to system defaults by
 .Xr login 1 .
-In
-.Em all
-cases,
-.Ql #
-or
-.Ql ^H
-typed in a login name will be treated as an erase character,
-and
-.Ql @
-will be treated as a kill character.
 .Pp
 The delay stuff is a real crock.
 Apart from its general lack of flexibility, some

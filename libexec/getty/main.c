@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2017/05/27 09:28:28 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2017/05/27 09:31:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -372,13 +372,13 @@ getname(void)
 			lower = 1;
 		else if (isupper(c))
 			upper = 1;
-		else if (c == ERASE || c == '#' || c == '\b') {
+		else if (c == ERASE || c == '\b') {
 			if (np > name) {
 				np--;
 				xputs("\b \b");
 			}
 			continue;
-		} else if (c == KILL || c == '@') {
+		} else if (c == KILL) {
 			putchr(cs);
 			putchr('\r');
 			/* this is the way they do it down under ... */
