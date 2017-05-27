@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.2 2017/04/30 10:10:21 mpi Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.3 2017/05/27 16:42:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -29,6 +29,15 @@
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+
+/*
+ * Atomicity is only needed on MULTIPROCESSOR kernels.  Fall back on
+ * copyin(9) until non-MULTIPROCESSOR architectures have a copyin32(9)
+ * implementation.
+ */
+#ifndef MULTIPROCESSOR
+#define copyin32(uaddr, kaddr)	copyin((uaddr), (kaddr), sizeof(uint32_t))
 #endif
 
 /*
@@ -187,10 +196,8 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout)
 
 	/*
 	 * Read user space futex value
-	 *
-	 * XXX copyin(9) is not guaranteed to be atomic.
 	 */
-	if ((error = copyin(uaddr, &cval, sizeof(cval))))
+	if ((error = copyin32(uaddr, &cval)))
 		return error;
 
 	/* If the value changed, stop here. */
