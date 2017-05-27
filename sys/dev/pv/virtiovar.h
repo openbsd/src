@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.2 2017/05/26 10:59:55 krw Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.3 2017/05/27 10:24:31 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ struct virtqueue {
 	unsigned int		vq_bytesize;
 	bus_dmamap_t		vq_dmamap;
 
-	int			vq_maxsegsize;
 	int			vq_maxnsegs;
 
 	/* free entry management */

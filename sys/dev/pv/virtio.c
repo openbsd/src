@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.4 2017/05/27 10:22:06 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.5 2017/05/27 10:24:31 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -363,7 +363,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		    + vq->vq_indirectoffset);
 	}
 	vq->vq_bytesize = allocsize;
-	vq->vq_maxsegsize = maxsegsize;
 	vq->vq_maxnsegs = maxnsegs;
 
 	/* free slot management */
