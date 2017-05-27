@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.302 2017/05/27 10:24:44 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.303 2017/05/27 12:09:27 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -607,8 +607,8 @@ struct ctl_show_rib {
 	u_int32_t		local_pref;
 	u_int32_t		med;
 	u_int32_t		weight;
+	u_int32_t		flags;
 	u_int16_t		aspath_len;
-	u_int16_t		flags;
 	u_int8_t		prefixlen;
 	u_int8_t		origin;
 	/* plus a aspath_len bytes long aspath */
