@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $OpenBSD: ypbind,v 1.6 2017/05/27 13:51:52 ajacoutot Exp $
+# $OpenBSD: ypbind,v 1.7 2017/05/27 19:55:48 ajacoutot Exp $
 
 daemon="/usr/sbin/ypbind"
 
 . /etc/rc.d/rc.subr
 
+rc_bg=YES
 rc_reload=NO
 
 rc_pre() {

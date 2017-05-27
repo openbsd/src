@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.33 2017/05/27 13:51:52 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.34 2017/05/27 19:55:48 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -79,7 +79,11 @@ Override the
 .Va pexp
 variable or any of the
 .Ic rc_*
-functions and variables, if needed.
+functions and set the
+.Va rc_bg
+or
+.Va rc_reload
+variables, if needed.
 .It
 Define an
 .Ic rc_pre
@@ -187,7 +191,7 @@ variable.
 Start the daemon.
 Defaults to:
 .Bd -literal -offset indent
-${rcexec} "${daemon} ${daemon_flags} ${_bg}"
+${rcexec} "${daemon} ${daemon_flags}"
 .Ed
 .It Ic rc_stop
 Stop the daemon.
@@ -279,6 +283,13 @@ script has to redefine this variable
 .Em after
 sourcing
 .Nm .
+.It Va rc_bg
+Can be set to
+.Cm YES
+in an
+.Nm rc.d
+script to force starting the daemon in background when using the default
+.Ic rc_start .
 .It Va rc_reload
 Can be set to
 .Dq NO
