@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.303 2017/05/27 10:33:15 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.304 2017/05/27 18:04:07 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -677,7 +677,7 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 		;
 
 network		: NETWORK prefix filter_set	{
-			struct network	*n;
+			struct network	*n, *m;
 
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
@@ -686,6 +686,13 @@ network		: NETWORK prefix filter_set	{
 			n->net.prefixlen = $2.len;
 			filterset_move($3, &n->net.attrset);
 			free($3);
+			TAILQ_FOREACH(m, netconf, entry) {
+				if (n->net.prefixlen == m->net.prefixlen &&
+				    prefix_compare(&n->net.prefix,
+				    &m->net.prefix, n->net.prefixlen) == 0)
+					yyerror("duplicate prefix "
+					    "in network statement");
+			}
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
