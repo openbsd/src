@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.6 2017/05/27 10:42:51 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.7 2017/05/27 10:45:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -66,6 +66,7 @@ const char* imsg_type_name[] = {
 	"IMSG_RA",
 	"IMSG_CTL_SEND_SOLICITATION",
 	"IMSG_PROPOSAL",
+	"IMSG_PROPOSAL_ACK",
 };
 
 __dead void	usage(void);
@@ -582,8 +583,9 @@ handle_proposal(struct imsg_proposal *proposal)
 
 	rl.sr_len = sizeof(rl);
 	rl.sr_family = AF_UNSPEC;
-	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %lld", "slaacd",
-	    proposal->seq) >= (ssize_t)sizeof(rl.sr_label))
+	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %lld %d", "slaacd",
+	    proposal->id, (int32_t)proposal->pid) >=
+	    (ssize_t)sizeof(rl.sr_label))
 		log_warnx("route label truncated");
 
 	iov[iovcnt].iov_base = &rl;

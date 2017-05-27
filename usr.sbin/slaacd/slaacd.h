@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.7 2017/05/27 10:40:43 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.8 2017/05/27 10:45:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -64,6 +64,7 @@ enum imsg_type {
 	IMSG_RA,
 	IMSG_CTL_SEND_SOLICITATION,
 	IMSG_PROPOSAL,
+	IMSG_PROPOSAL_ACK,
 };
 
 extern const char* imsg_type_name[];
@@ -126,6 +127,12 @@ struct imsg_ifinfo {
 	int			autoconfprivacy;
 	struct ether_addr	hw_address;
 	struct sockaddr_in6	ll_address;
+};
+
+struct imsg_proposal_ack {
+	int64_t		 id;
+	pid_t		 pid;
+	uint32_t	 if_index;
 };
 
 struct imsg_ra {
