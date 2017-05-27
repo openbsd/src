@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.4 2017/01/24 22:22:20 dlg Exp $ */
+/*	$OpenBSD: atomic.h,v 1.5 2017/05/27 19:47:08 kettenis Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  *
@@ -217,6 +217,14 @@ atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 
 #ifndef membar_sync
 #define membar_sync() __sync_synchronize()
+#endif
+
+#ifndef membar_enter_after_atomic
+#define membar_enter_after_atomic() membar_enter()
+#endif
+
+#ifndef membar_exit_before_atomic
+#define membar_exit_before_atomic() membar_exit()
 #endif
 
 #endif /* _SYS_ATOMIC_H_ */
