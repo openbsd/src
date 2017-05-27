@@ -1,6 +1,6 @@
-#	$OpenBSD: rc.subr,v 1.118 2017/02/17 16:42:41 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.119 2017/05/27 13:51:52 ajacoutot Exp $
 #
-# Copyright (c) 2010, 2011, 2014-2016 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2010, 2011, 2014 Robert Nagy <robert@openbsd.org>
 #
@@ -79,11 +79,28 @@ _rc_exit() {
 	[ X"$1" = X"ok" ] && exit 0 || exit 1
 }
 
+_rc_alarm()
+{
+	trap - ALRM
+	kill -ALRM ${_TIMERSUB} 2>/dev/null # timer may not be running anymore
+	kill $! 2>/dev/null # kill last job if it's running
+}
+
 _rc_wait() {
 	local _i=0
+	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
+		trap "_rc_alarm" ALRM
+		while [ $_i -lt ${daemon_timeout} ]; do
+			_rc_do rc_check && break
+			sleep 1
+			_i=$((_i+1))
+		done & wait
+		pkill -ALRM -P $$
+		return
+	fi
 	while [ $_i -lt ${daemon_timeout} ]; do
 		case "$1" in
-		reload|start)
+		reload)
 			_rc_do rc_check && return 0 ;;
 		stop)
 			_rc_do rc_check || return 0 ;;
@@ -150,7 +167,7 @@ _rc_parse_conf() {
 [ -n "${FUNCS_ONLY}" ] && return
 
 rc_start() {
-	${rcexec} "${daemon} ${daemon_flags} ${_bg}"
+	${rcexec} "${daemon} ${daemon_flags}"
 }
 
 rc_check() {
@@ -166,7 +183,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	local _bg _n
+	local _n _ret
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
@@ -179,7 +196,6 @@ rc_cmd() {
 		_rc_err "$0: $1 is not supported"
 	fi
 
-	[ X"${rc_bg}" = X"YES" ] && _bg="&"
 	[ -n "${_RC_DEBUG}" ] || _n="-n"
 
 	_rc_do _rc_parse_conf ${_RC_RUNFILE}
@@ -200,8 +216,12 @@ rc_cmd() {
 			if type rc_pre >/dev/null; then
 				_rc_do rc_pre || break
 			fi
-			_rc_do rc_start || break
-			_rc_do _rc_wait start || break
+			_rc_do _rc_wait start & _TIMERSUB=$!
+			trap "_rc_alarm" ALRM
+			_rc_do rc_start; _ret=$?
+			kill -ALRM ${_TIMERSUB}
+			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
+			[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
 			_rc_do _rc_write_runfile
 			_rc_exit ok
 		done
