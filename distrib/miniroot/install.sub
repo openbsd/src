@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1009 2017/05/25 12:10:04 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1010 2017/05/27 09:05:18 zhuk Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1319,8 +1319,7 @@ select_sets() {
 	cat <<__EOT
 
 Select sets by entering a set name, a file name pattern or 'all'. De-select
-sets by prepending a '-' to the set name, file name pattern or 'all'. Selected
-sets are labelled '[X]'.
+sets by prepending a '-', e.g.: '-game*'. Selected sets are labelled '[X]'.
 __EOT
 	while :; do
 		for _f in $_avail; do
