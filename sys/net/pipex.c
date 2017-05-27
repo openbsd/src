@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.95 2017/05/27 10:24:02 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.96 2017/05/27 12:39:12 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -92,10 +92,8 @@ struct pipex_hash_head
     pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* peer's address hash */
     pipex_id_hashtable[PIPEX_HASH_SIZE];	/* peer id hash */
 
-struct radix_node_head pipex_rd_head4;
-struct radix_node_head pipex_rd_head6;
-int pipex_rd_head4_initialized;
-int pipex_rd_head6_initialized;
+struct radix_node_head	*pipex_rd_head4 = NULL;
+struct radix_node_head	*pipex_rd_head6 = NULL;
 struct timeout pipex_timer_ch;		/* callout timer context */
 int pipex_prune = 1;			/* walk list every seconds */
 
@@ -158,15 +156,13 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	pipex_iface->ifnet_this = ifp;
 
 	s = splnet();
-	if (!pipex_rd_head4_initialized) {
-		pipex_rd_head4_initialized++;
-		if (!rn_inithead0(&pipex_rd_head4,
+	if (pipex_rd_head4 == NULL) {
+		if (!rn_inithead((void **)&pipex_rd_head4,
 		    offsetof(struct sockaddr_in, sin_addr)))
 			panic("rn_inithead0() failed on pipex_init()");
 	}
-	if (!pipex_rd_head6_initialized) {
-		pipex_rd_head6_initialized++;
-		if (!rn_inithead0(&pipex_rd_head6,
+	if (pipex_rd_head6 == NULL) {
+		if (!rn_inithead((void **)&pipex_rd_head6,
 		    offsetof(struct sockaddr_in6, sin6_addr)))
 			panic("rn_inithead0() failed on pipex_init()");
 	}
@@ -446,7 +442,7 @@ pipex_add_session(struct pipex_session_req *req,
 		}
 
 		rn = rn_addroute(&session->ip_address, &session->ip_netmask,
-		    &pipex_rd_head4, session->ps4_rn, RTP_STATIC);
+		    pipex_rd_head4, session->ps4_rn, RTP_STATIC);
 		if (rn == NULL) {
 			splx(s);
 			pool_put(&pipex_session_pool, session);
@@ -455,7 +451,7 @@ pipex_add_session(struct pipex_session_req *req,
 	}
 	if (0) { /* NOT YET */
 		rn = rn_addroute(&session->ip6_address, &session->ip6_prefixlen,
-		    &pipex_rd_head6, session->ps6_rn, RTP_STATIC);
+		    pipex_rd_head6, session->ps6_rn, RTP_STATIC);
 		if (rn == NULL) {
 			splx(s);
 			pool_put(&pipex_session_pool, session);
@@ -613,7 +609,7 @@ pipex_destroy_session(struct pipex_session *session)
 
 	if (!in_nullhost(session->ip_address.sin_addr)) {
 		rn = rn_delete(&session->ip_address, &session->ip_netmask,
-		    &pipex_rd_head4, (struct radix_node *)session);
+		    pipex_rd_head4, (struct radix_node *)session);
 		KASSERT(rn != NULL);
 	}
 
@@ -659,7 +655,7 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	pipex_in4mask.sin_len = sizeof(pipex_in4mask);
 
 	session = (struct pipex_session *)rn_lookup(&pipex_in4, &pipex_in4mask,
-	    &pipex_rd_head4);
+	    pipex_rd_head4);
 
 #ifdef PIPEX_DEBUG
 	if (session == NULL) {
