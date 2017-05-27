@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.12 2014/03/19 02:16:22 afresh1 Exp $
+# $OpenBSD: Getopt.pm,v 1.13 2017/05/27 10:35:41 zhuk Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -228,6 +228,7 @@ sub create_options
 	my ($self, @l) = @_;
 	my @options = ();
 	# first pass creates accessors
+	push(@l, '-tag=', sub { $self->add_tag($_[2]); });
 	while (my $opt = shift @l) {
 		my $isarray = ($opt =~ s/\@$//);
 		# default code or not
