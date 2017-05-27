@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.13 2017/05/27 18:37:09 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.14 2017/05/27 18:38:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -127,18 +127,18 @@ struct ctl_engine_info_ra_dnssl {
 };
 
 struct ctl_engine_info_address_proposal {
-	int64_t				 id;
-	char				 state[32];
-	int				 next_timeout;
-	int				 timeout_count;
-	struct timespec			 when;
-	struct timespec			 uptime;
-	struct sockaddr_in6		 addr;
-	struct in6_addr			 prefix;
-	int				 privacy;
-	uint8_t				 prefix_len;
-	uint32_t			 vltime;
-	uint32_t			 pltime;
+	int64_t			 id;
+	char			 state[sizeof("PROPOSAL_NEARLY_EXPIRED")];
+	int			 next_timeout;
+	int			 timeout_count;
+	struct timespec		 when;
+	struct timespec		 uptime;
+	struct sockaddr_in6	 addr;
+	struct in6_addr		 prefix;
+	int			 privacy;
+	uint8_t			 prefix_len;
+	uint32_t		 vltime;
+	uint32_t		 pltime;
 };
 
 
