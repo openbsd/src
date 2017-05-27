@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.15 2017/05/27 10:54:44 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.16 2017/05/27 10:55:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -221,7 +221,11 @@ struct address_proposal	*find_address_proposal_by_id(struct slaacd_iface *,
 			     int64_t);
 struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
+void			 find_prefix(struct slaacd_iface *, struct
+			     address_proposal *, struct radv **, struct
+			     radv_prefix **);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
+uint32_t		 real_lifetime(struct timespec *, uint32_t);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
@@ -1384,7 +1388,6 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv		*old_ra;
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
-	struct timeval		 tv;
 	int			 found, found_privacy;
 	char			 hbuf[NI_MAXHOST];
 
@@ -1416,35 +1419,42 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 
 				found = 1;
 
+				if (real_lifetime(&addr_proposal->uptime,
+				    addr_proposal->vltime) >= prefix->vltime) {
+					log_warn("ignoring router advertisement"
+					    " that lowers vltime");
+					continue;
+				}
+
 				addr_proposal->when = ra->when;
 				addr_proposal->uptime = ra->uptime;
 				addr_proposal->vltime = prefix->vltime;
 				addr_proposal->pltime = prefix->pltime;
 
-				if (addr_proposal->state ==
-				    PROPOSAL_CONFIGURED) {
-					log_debug("updating timeout");
-					addr_proposal->next_timeout =
-					    addr_proposal->pltime -
-					    MAX_RTR_SOLICITATIONS *
-					    (RTR_SOLICITATION_INTERVAL + 1);
-					tv.tv_sec = addr_proposal->next_timeout;
-					tv.tv_usec =
-					    arc4random_uniform(1000000);
+				log_debug("%s, state: %s", __func__,
+				    proposal_state_name[addr_proposal->state]);
 
-					evtimer_add(&addr_proposal->timer, &tv);
+				switch (addr_proposal->state) {
+				case PROPOSAL_CONFIGURED:
+				case PROPOSAL_NEARLY_EXPIRED:
+					log_debug("updating address");
+					configure_address(iface, addr_proposal);
+					break;
+				default:
+					if (getnameinfo((struct sockaddr *)
+					    &addr_proposal->addr,
+					    addr_proposal->addr.sin6_len, hbuf,
+					    sizeof(hbuf), NULL, 0,
+					    NI_NUMERICHOST | NI_NUMERICSERV)) {
+						log_warn("cannot get proposal "
+						    "IP");
+						strlcpy(hbuf, "uknown",
+						    sizeof(hbuf));
+					}
+					log_debug("%s: iface %d: %s", __func__,
+					    iface->if_index, hbuf);
+					break;
 				}
-
-				if (getnameinfo((struct sockaddr *)
-				    &addr_proposal->addr,
-				    addr_proposal->addr.sin6_len, hbuf,
-				    sizeof(hbuf), NULL, 0, NI_NUMERICHOST |
-				    NI_NUMERICSERV)) {
-					log_warn("cannot get router IP");
-					strlcpy(hbuf, "uknown", sizeof(hbuf));
-				}
-				log_debug("%s: iface %d: %s: %lld s", __func__,
-				    iface->if_index, hbuf, tv.tv_sec);
 			}
 
 			if (!found)
@@ -1720,6 +1730,30 @@ address_proposal_timeout(int fd, short events, void *arg)
 			free(addr_proposal);
 		}
 		break;
+	case PROPOSAL_CONFIGURED:
+		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld, privacy: %s",
+		    addr_proposal->id, addr_proposal->privacy ? "y" : "n");
+
+		addr_proposal->next_timeout = 1;
+		addr_proposal->timeout_count = 0;
+		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		evtimer_add(&addr_proposal->timer, &tv);
+
+		break;
+	case PROPOSAL_NEARLY_EXPIRED:
+		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
+		    0, &addr_proposal->if_index,
+		    sizeof(addr_proposal->if_index));
+		tv.tv_sec = addr_proposal->next_timeout;
+		tv.tv_usec = arc4random_uniform(1000000);
+		addr_proposal->next_timeout *= 2;
+		evtimer_add(&addr_proposal->timer, &tv);
+		log_debug("%s: scheduling new timeout in %llds.%06ld",
+		    __func__, tv.tv_sec, tv.tv_usec);
+		break;
 	default:
 		log_debug("%s: unhandled state: %s", __func__,
 		    proposal_state_name[addr_proposal->state]);
@@ -1805,4 +1839,52 @@ find_address_proposal_by_addr(struct slaacd_iface *iface, struct sockaddr_in6
 	}
 
 	return (NULL);
+}
+
+/* XXX currently unused */
+void
+find_prefix(struct slaacd_iface *iface, struct address_proposal *addr_proposal,
+    struct radv **result_ra, struct radv_prefix **result_prefix)
+{
+	struct radv		*ra;
+	struct radv_prefix	*prefix;
+	uint32_t		 lifetime, max_lifetime = 0;
+
+	*result_ra = NULL;
+	*result_prefix = NULL;
+
+	LIST_FOREACH(ra, &iface->radvs, entries) {
+		LIST_FOREACH(prefix, &ra->prefixes, entries) {
+			if (memcmp(&prefix->prefix, &addr_proposal->prefix,
+			    sizeof(addr_proposal->prefix)) != 0)
+				continue;
+			lifetime = real_lifetime(&ra->uptime,
+			    prefix->vltime);
+			if (lifetime > max_lifetime) {
+				max_lifetime = lifetime;
+				*result_ra = ra;
+				*result_prefix = prefix;
+			}
+			
+		}
+	}
+}
+
+uint32_t
+real_lifetime(struct timespec *received_uptime, uint32_t ltime)
+{
+	struct timespec	 now, diff;
+	int64_t		 remaining;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &now))
+		fatal("clock_gettime");
+
+	timespecsub(&now, received_uptime, &diff);
+
+	remaining = ((int64_t)ltime) - diff.tv_sec;
+
+	if (remaining < 0)
+		remaining = 0;
+
+	return (remaining);
 }
