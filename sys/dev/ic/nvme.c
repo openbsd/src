@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.55 2017/05/12 22:16:54 jcs Exp $ */
+/*	$OpenBSD: nvme.c,v 1.56 2017/05/27 12:40:51 sf Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -45,6 +45,7 @@ int	nvme_ready(struct nvme_softc *, u_int32_t);
 int	nvme_enable(struct nvme_softc *, u_int);
 int	nvme_disable(struct nvme_softc *);
 int	nvme_shutdown(struct nvme_softc *);
+int	nvme_resume(struct nvme_softc *);
 
 void	nvme_dumpregs(struct nvme_softc *);
 int	nvme_identify(struct nvme_softc *, u_int);
@@ -68,6 +69,7 @@ void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
 struct nvme_queue *
 	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
 int	nvme_q_create(struct nvme_softc *, struct nvme_queue *);
+int	nvme_q_reset(struct nvme_softc *, struct nvme_queue *);
 int	nvme_q_delete(struct nvme_softc *, struct nvme_queue *);
 void	nvme_q_submit(struct nvme_softc *,
 	    struct nvme_queue *, struct nvme_ccb *,
@@ -264,7 +266,6 @@ nvme_attach(struct nvme_softc *sc)
 	struct scsibus_attach_args saa;
 	u_int64_t cap;
 	u_int32_t reg;
-	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
@@ -280,7 +281,7 @@ nvme_attach(struct nvme_softc *sc)
 	printf(", NVMe %d.%d\n", NVME_VS_MJR(reg), NVME_VS_MNR(reg));
 
 	cap = nvme_read8(sc, NVME_CAP);
-	dstrd = NVME_CAP_DSTRD(cap);
+	sc->sc_dstrd = NVME_CAP_DSTRD(cap);
 	if (NVME_CAP_MPSMIN(cap) > PAGE_SHIFT) {
 		printf("%s: NVMe minimum page size %u "
 		    "is greater than CPU page size %u\n", DEVNAME(sc),
@@ -292,6 +293,7 @@ nvme_attach(struct nvme_softc *sc)
 
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mps = 1 << mps;
+	sc->sc_mps_bits = mps;
 	sc->sc_mdts = MAXPHYS;
 	sc->sc_max_sgl = 2;
 
@@ -300,7 +302,7 @@ nvme_attach(struct nvme_softc *sc)
 		return (1);
 	}
 
-	sc->sc_admin_q = nvme_q_alloc(sc, NVME_ADMIN_Q, 128, dstrd);
+	sc->sc_admin_q = nvme_q_alloc(sc, NVME_ADMIN_Q, 128, sc->sc_dstrd);
 	if (sc->sc_admin_q == NULL) {
 		printf("%s: unable to allocate admin queue\n", DEVNAME(sc));
 		return (1);
@@ -330,7 +332,7 @@ nvme_attach(struct nvme_softc *sc)
 		goto free_admin_q;
 	}
 
-	sc->sc_q = nvme_q_alloc(sc, 1, 128, dstrd);
+	sc->sc_q = nvme_q_alloc(sc, 1, 128, sc->sc_dstrd);
 	if (sc->sc_q == NULL) {
 		printf("%s: unable to allocate io q\n", DEVNAME(sc));
 		goto disable;
@@ -370,6 +372,47 @@ free_ccbs:
 	nvme_ccbs_free(sc);
 free_admin_q:
 	nvme_q_free(sc, sc->sc_admin_q);
+
+	return (1);
+}
+
+int
+nvme_resume(struct nvme_softc *sc)
+{
+	if (nvme_disable(sc) != 0) {
+		printf("%s: unable to disable controller\n", DEVNAME(sc));
+		return (1);
+	}
+
+	if (nvme_q_reset(sc, sc->sc_admin_q) != 0) {
+		printf("%s: unable to reset admin queue\n", DEVNAME(sc));
+		return (1);
+	}
+
+	if (nvme_enable(sc, sc->sc_mps_bits) != 0) {
+		printf("%s: unable to enable controller\n", DEVNAME(sc));
+		return (1);
+	}
+
+	sc->sc_q = nvme_q_alloc(sc, 1, 128, sc->sc_dstrd);
+	if (sc->sc_q == NULL) {
+		printf("%s: unable to allocate io q\n", DEVNAME(sc));
+		goto disable;
+	}
+
+	if (nvme_q_create(sc, sc->sc_q) != 0) {
+		printf("%s: unable to create io q\n", DEVNAME(sc));
+		goto free_q;
+	}
+
+	nvme_write4(sc, NVME_INTMC, 1);
+
+	return (0);
+
+free_q:
+	nvme_q_free(sc, sc->sc_q);
+disable:
+	nvme_disable(sc);
 
 	return (1);
 }
@@ -468,6 +511,11 @@ nvme_activate(struct nvme_softc *sc, int act)
 	case DVACT_POWERDOWN:
 		rv = config_activate_children(&sc->sc_dev, act);
 		nvme_shutdown(sc);
+		break;
+	case DVACT_RESUME:
+		rv = nvme_resume(sc);
+		if (rv == 0)
+			rv = config_activate_children(&sc->sc_dev, act);
 		break;
 	default:
 		rv = config_activate_children(&sc->sc_dev, act);
@@ -1079,6 +1127,8 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 	if (rv != 0)
 		goto fail;
 
+	nvme_q_free(sc, q);
+
 fail:
 	scsi_io_put(&sc->sc_iopool, ccb);
 	return (rv);
@@ -1208,6 +1258,7 @@ nvme_q_alloc(struct nvme_softc *sc, u_int16_t id, u_int entries, u_int dstrd)
 	mtx_init(&q->q_cq_mtx, IPL_BIO);
 	q->q_sqtdbl = NVME_SQTDBL(id, dstrd);
 	q->q_cqhdbl = NVME_CQHDBL(id, dstrd);
+
 	q->q_id = id;
 	q->q_entries = entries;
 	q->q_sq_tail = 0;
@@ -1225,6 +1276,25 @@ free:
 	free(q, M_DEVBUF, sizeof *q);
 
 	return (NULL);
+}
+
+int
+nvme_q_reset(struct nvme_softc *sc, struct nvme_queue *q)
+{
+	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
+	memset(NVME_DMA_KVA(q->q_cq_dmamem), 0, NVME_DMA_LEN(q->q_cq_dmamem));
+
+	q->q_sqtdbl = NVME_SQTDBL(q->q_id, sc->sc_dstrd);
+	q->q_cqhdbl = NVME_CQHDBL(q->q_id, sc->sc_dstrd);
+
+	q->q_sq_tail = 0;
+	q->q_cq_head = 0;
+	q->q_cq_phase = NVME_CQE_PHASE;
+
+	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
+	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
+
+	return (0);
 }
 
 void
