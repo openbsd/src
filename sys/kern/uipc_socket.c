@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.184 2017/05/15 13:00:10 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.185 2017/05/27 18:50:53 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1043,7 +1043,8 @@ sorflush(struct socket *so)
 
 	sb->sb_flags |= SB_NOINTR;
 	sblock(sb, M_WAITOK,
-	    (af != PF_LOCAL && af != PF_ROUTE) ? &netlock : NULL);
+	    (af != PF_LOCAL && af != PF_ROUTE && af != PF_KEY) ?
+	    &netlock : NULL);
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;

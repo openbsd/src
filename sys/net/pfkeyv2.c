@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.156 2017/05/26 19:11:20 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.157 2017/05/27 18:50:53 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -795,7 +795,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 int
 pfkeyv2_send(struct socket *socket, void *message, int len)
 {
-	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
+	int i, j, s, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
 	int delflag = 0;
 	struct sockaddr_encap encapdst, encapnetmask;
 	struct ipsec_policy *ipo, *tmpipo;
@@ -820,7 +820,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	u_int rdomain;
 
-	NET_ASSERT_LOCKED();
+	NET_LOCK(s);
 
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
@@ -1356,7 +1356,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = tdb_walk(rdomain, pfkeyv2_dump_walker, &dump_state);
 		if (!rval)
 			goto realret;
-
 		if ((rval == ENOMEM) || (rval == ENOBUFS))
 			rval = 0;
 	}
@@ -1690,6 +1689,8 @@ ret:
 	rval = pfkeyv2_sendmessage(headers, mode, socket, 0, 0, rdomain);
 
 realret:
+	NET_UNLOCK(s);
+
 	if (freeme)
 		free(freeme, M_PFKEY, 0);
 

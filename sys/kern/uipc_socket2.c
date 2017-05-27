@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.76 2017/05/15 12:26:00 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.77 2017/05/27 18:50:53 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -273,7 +273,8 @@ solock(struct socket *so)
 	int s;
 
 	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE))
+	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
+	    (so->so_proto->pr_domain->dom_family != PF_KEY))
 		NET_LOCK(s);
 	else
 		s = -42;
@@ -292,7 +293,8 @@ void
 soassertlocked(struct socket *so)
 {
 	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE))
+	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
+	    (so->so_proto->pr_domain->dom_family != PF_KEY))
 		NET_ASSERT_LOCKED();
 }
 
@@ -300,7 +302,8 @@ int
 sosleep(struct socket *so, void *ident, int prio, const char *wmesg, int timo)
 {
 	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE)) {
+	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
+	    (so->so_proto->pr_domain->dom_family != PF_KEY)) {
 		return rwsleep(ident, &netlock, prio, wmesg, timo);
 	} else
 		return tsleep(ident, prio, wmesg, timo);
