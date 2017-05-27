@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.100 2017/05/03 12:27:00 dlg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.101 2017/05/27 09:03:22 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -2870,6 +2870,7 @@ pmap_get_page(paddr_t *pa, const char *wait, struct pmap *pm)
 		*pa = VM_PAGE_TO_PHYS(pg);
 	} else {
 		uvm_page_physget(pa);
+		prom_claim_phys(*pa, PAGE_SIZE);
 		pmap_zero_phys(*pa);
 	}
 
