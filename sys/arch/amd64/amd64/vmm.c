@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.143 2017/05/19 06:29:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.144 2017/05/27 02:27:48 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -106,6 +106,7 @@ struct vmm_softc {
 	uint8_t			vpids[512];	/* bitmap of used VPID/ASIDs */
 };
 
+void vmx_dump_vmcs_field(uint16_t, const char *);
 int vmm_enabled(void);
 int vmm_probe(struct device *, void *, void *);
 void vmm_attach(struct device *, struct device *, void *);
