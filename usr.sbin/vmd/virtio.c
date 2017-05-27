@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.46 2017/05/11 07:31:20 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.47 2017/05/27 23:58:16 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -335,14 +335,7 @@ vioblk_do_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 		return (NULL);
 	}
 
-	if (lseek(dev->fd, sector * VIRTIO_BLK_SECTOR_SIZE,
-	    SEEK_SET) == -1) {
-		log_warn("seek error in vioblk read");
-		free(buf);
-		return (NULL);
-	}
-
-	if (read(dev->fd, buf, sz) != sz) {
+	if (pread(dev->fd, buf, sz, sector * VIRTIO_BLK_SECTOR_SIZE) != sz) {
 		log_warn("vioblk read error");
 		free(buf);
 		return (NULL);
@@ -354,13 +347,7 @@ vioblk_do_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
 static int
 vioblk_do_write(struct vioblk_dev *dev, off_t sector, char *buf, ssize_t sz)
 {
-	if (lseek(dev->fd, sector * VIRTIO_BLK_SECTOR_SIZE,
-	    SEEK_SET) == -1) {
-		log_warn("seek error in vioblk write");
-		return (1);
-	}
-
-	if (write(dev->fd, buf, sz) != sz) {
+	if (pwrite(dev->fd, buf, sz, sector * VIRTIO_BLK_SECTOR_SIZE) != sz) {
 		log_warn("vioblk write error");
 		return (1);
 	}
