@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2017/05/27 10:53:37 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.15 2017/05/27 10:54:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1688,23 +1688,24 @@ address_proposal_timeout(int fd, short events, void *arg)
 	switch (addr_proposal->state) {
 	case PROPOSAL_NOT_CONFIGURED:
 	case PROPOSAL_SENT:
-		addr_proposal->id = ++proposal_id;
-		memset(&proposal, 0, sizeof(proposal));
-		proposal.if_index = addr_proposal->if_index;
-		proposal.pid = getpid();
-		proposal.id = addr_proposal->id;
-		memcpy(&proposal.addr, &addr_proposal->addr,
-		    sizeof(proposal.addr));
-		memcpy(&proposal.mask, &addr_proposal->mask,
-		    sizeof(proposal.mask));
-
-		proposal.rtm_addrs = RTA_NETMASK | RTA_IFA;
-
-		addr_proposal->state = PROPOSAL_SENT;
-
-		send_proposal(&proposal);
-
 		if (addr_proposal->timeout_count++ < 6) {
+			addr_proposal->id = ++proposal_id;
+
+			memset(&proposal, 0, sizeof(proposal));
+			proposal.if_index = addr_proposal->if_index;
+			proposal.pid = getpid();
+			proposal.id = addr_proposal->id;
+			memcpy(&proposal.addr, &addr_proposal->addr,
+			    sizeof(proposal.addr));
+			memcpy(&proposal.mask, &addr_proposal->mask,
+			    sizeof(proposal.mask));
+
+			proposal.rtm_addrs = RTA_NETMASK | RTA_IFA;
+
+			addr_proposal->state = PROPOSAL_SENT;
+
+			send_proposal(&proposal);
+
 			tv.tv_sec = addr_proposal->next_timeout;
 			tv.tv_usec = arc4random_uniform(1000000);
 			addr_proposal->next_timeout *= 2;
