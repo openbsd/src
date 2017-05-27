@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.304 2017/05/27 18:04:07 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.305 2017/05/27 18:12:23 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1189,6 +1189,12 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.enforce_as = ENFORCE_AS_ON;
 			else
 				curpeer->conf.enforce_as = ENFORCE_AS_OFF;
+		}
+		| ENFORCE LOCALAS yesno {
+			if ($3)
+				curpeer->conf.enforce_local_as = ENFORCE_AS_ON;
+			else
+				curpeer->conf.enforce_local_as = ENFORCE_AS_OFF;
 		}
 		| MAXPREFIX NUMBER restart {
 			if ($2 < 0 || $2 > UINT_MAX) {
@@ -3697,6 +3703,8 @@ neighbor_consistent(struct peer *p)
 	if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
 		p->conf.enforce_as = p->conf.ebgp ?
 		    ENFORCE_AS_ON : ENFORCE_AS_OFF;
+	if (p->conf.enforce_local_as == ENFORCE_AS_UNDEF)
+		p->conf.enforce_local_as = ENFORCE_AS_ON;
 
 	/* EBGP neighbors are not allowed in route reflector clusters */
 	if (p->conf.reflector_client && p->conf.ebgp) {

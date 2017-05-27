@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.102 2017/05/27 10:33:15 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.103 2017/05/27 18:12:23 phessler Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -470,6 +470,10 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tenforce neighbor-as yes\n", c);
 	else
 		printf("%s\tenforce neighbor-as no\n", c);
+	if (p->enforce_local_as == ENFORCE_AS_ON)
+		printf("%s\tenforce local-as yes\n", c);
+	else
+		printf("%s\tenforce local-as no\n", c);
 	if (p->reflector_client) {
 		if (conf->clusterid == 0)
 			printf("%s\troute-reflector\n", c);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.154 2017/05/27 10:33:15 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.155 2017/05/27 18:12:23 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -765,6 +765,20 @@ See also the
 .Ic dump
 section in
 .Sx GLOBAL CONFIGURATION .
+.Pp
+.It Xo
+.Ic enforce local-as
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic no ,
+.Em AS paths
+will not be checked for AS loop detection.
+This feature is similar to allowas-in in some other BGP implementations.
+Since there is no AS path loop check, this feature is dangerous, and
+requires you to add filters to prevent receiving your own prefixes.
+The default value is
+.Ic yes .
 .Pp
 .It Xo
 .Ic enforce neighbor-as

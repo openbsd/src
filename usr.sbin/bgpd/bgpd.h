@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.303 2017/05/27 12:09:27 phessler Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.304 2017/05/27 18:12:23 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -309,6 +309,7 @@ struct peer_config {
 	u_int32_t		 max_prefix;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
+	enum enforce_as		 enforce_local_as;
 	enum reconf_action	 reconf_action;
 	u_int16_t		 max_prefix_restart;
 	u_int16_t		 holdtime;

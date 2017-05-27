@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.362 2017/05/27 10:33:15 phessler Exp $ */
+/*	$OpenBSD: rde.c,v 1.363 2017/05/27 18:12:23 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1104,6 +1104,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
 	if (peer->conf.ebgp &&
+	    peer->conf.enforce_local_as == ENFORCE_AS_ON &&
 	    !aspath_loopfree(asp->aspath, peer->conf.local_as))
 		asp->flags |= F_ATTR_LOOP;
 
