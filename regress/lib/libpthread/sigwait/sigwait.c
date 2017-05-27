@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigwait.c,v 1.6 2014/11/16 05:08:48 guenther Exp $	*/
+/*	$OpenBSD: sigwait.c,v 1.7 2017/05/27 14:24:28 mpi Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -230,6 +230,7 @@ int main (int argc, char *argv[])
 	ASSERT(sigcounts[SIGHUP] == 1);
 	/* Release the waiter thread and allow him to run. */
 	CHECKr(pthread_mutex_unlock (&waiter_mutex));
+	sleep (1);
 
 	/*
 	 * Repeat the above test using pthread_kill and SIGUSR1
