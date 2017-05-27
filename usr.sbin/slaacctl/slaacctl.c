@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.3 2017/05/27 10:52:16 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.4 2017/05/27 10:53:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -226,7 +226,7 @@ show_interface_msg(struct imsg *imsg)
 		break;
 	case IMSG_CTL_SHOW_INTERFACE_INFO_RA_PREFIX:
 		cei_ra_prefix = imsg->data;
-		printf("\t\tprefix: %s/%hhu\n", inet_ntop(AF_INET6,
+		printf("\t\tprefix: %s/%u\n", inet_ntop(AF_INET6,
 		    &cei_ra_prefix->prefix, ntopbuf, INET6_ADDRSTRLEN),
 			    cei_ra_prefix->prefix_len);
 		printf("\t\t\tOn-link: %d, Autonomous address-configuration: %d"
