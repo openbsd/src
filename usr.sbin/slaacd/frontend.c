@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.5 2017/05/27 10:45:14 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.6 2017/05/27 10:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -568,6 +568,12 @@ route_receive(int fd, short events, void *arg)
 		}
 		break;
 	case RTM_NEWADDR:
+		/*
+		 * XXX we get a RTM_NEWADDR if the l2 addr changes, also
+		 * when we configure an ip ourselfs or someone
+		 * configures an ip, don't send solicitations in that
+		 * case
+		 */
 		ifm = (struct if_msghdr *)rtm;
 		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
 		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);

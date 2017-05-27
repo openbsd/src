@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2017/05/27 10:45:14 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.11 2017/05/27 10:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1402,7 +1402,8 @@ void
 configure_address(struct slaacd_iface *iface, struct address_proposal
     *addr_proposal)
 {
-	struct timeval	 tv;
+	struct imsg_configure_address	 address;
+	struct timeval			 tv;
 
 	addr_proposal->next_timeout = addr_proposal->pltime -
 	    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
@@ -1414,6 +1415,15 @@ configure_address(struct slaacd_iface *iface, struct address_proposal
 	addr_proposal->state = PROPOSAL_CONFIGURED;
 
 	log_debug("%s: %d", __func__, iface->if_index);
+
+	address.if_index = iface->if_index;
+	memcpy(&address.addr, &addr_proposal->addr, sizeof(address.addr));
+	memcpy(&address.mask, &addr_proposal->mask, sizeof(address.mask));
+	address.vltime = addr_proposal->vltime;
+	address.pltime = addr_proposal->pltime;
+
+	engine_imsg_compose_main(IMSG_CONFIGURE_ADDRESS, 0, &address,
+	    sizeof(address));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.8 2017/05/27 10:46:27 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.9 2017/05/27 10:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -19,6 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
@@ -29,6 +30,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet6/in6_var.h>
 
 #include <err.h>
 #include <errno.h>
@@ -67,6 +69,7 @@ const char* imsg_type_name[] = {
 	"IMSG_CTL_SEND_SOLICITATION",
 	"IMSG_PROPOSAL",
 	"IMSG_PROPOSAL_ACK",
+	"IMSG_CONFIGURE_ADDRESS",
 };
 
 __dead void	usage(void);
@@ -79,6 +82,7 @@ static pid_t	start_child(int, char *, int, int, int, char *);
 void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
 void	handle_proposal(struct imsg_proposal *);
+void	configure_interface(struct imsg_configure_address *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 
@@ -90,7 +94,7 @@ pid_t	 engine_pid;
 
 uint32_t cmd_opts;
 
-int	 routesock;
+int	 routesock, ioctl_sock;
 
 char	*csock;
 
@@ -249,8 +253,14 @@ main(int argc, char *argv[])
 	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf, &iev_engine->ibuf))
 		fatal("could not establish imsg links");
 
+	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+		fatal("socket");
+
+#if 0
+	/* XXX ioctl SIOCAIFADDR_IN6 */
 	if (pledge("rpath stdio sendfd cpath", NULL) == -1)
 		fatal("pledge");
+#endif
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 
@@ -393,12 +403,13 @@ main_dispatch_frontend(int fd, short event, void *bula)
 void
 main_dispatch_engine(int fd, short event, void *bula)
 {
-	struct imsgev		*iev = bula;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	struct imsg_proposal	 proposal;
-	ssize_t			 n;
-	int			 shut = 0;
+	struct imsgev			*iev = bula;
+	struct imsgbuf			*ibuf;
+	struct imsg			 imsg;
+	struct imsg_proposal		 proposal;
+	struct imsg_configure_address	 address;
+	ssize_t				 n;
+	int				 shut = 0;
 
 	ibuf = &iev->ibuf;
 
@@ -428,6 +439,13 @@ main_dispatch_engine(int fd, short event, void *bula)
 				    "length: %d", __func__, imsg.hdr.len);
 			memcpy(&proposal, imsg.data, sizeof(proposal));
 			handle_proposal(&proposal);
+			break;
+		case IMSG_CONFIGURE_ADDRESS:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(address))
+				fatal("%s: IMSG_CONFIGURE_ADDRESS wrong "
+				    "length: %d", __func__, imsg.hdr.len);
+			memcpy(&address, imsg.data, sizeof(address));
+			configure_interface(&address);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -597,6 +615,45 @@ handle_proposal(struct imsg_proposal *proposal)
 
 	if (writev(routesock, iov, iovcnt) == -1)
 		log_warn("failed to send proposal");
+}
+
+void
+configure_interface(struct imsg_configure_address *address)
+{
+
+	struct in6_aliasreq	 in6_addreq;
+	time_t			 t;
+	char			*if_name;
+
+	memset(&in6_addreq, 0, sizeof(in6_addreq));
+
+	if_name = if_indextoname(address->if_index, in6_addreq.ifra_name);
+	if (if_name == NULL) {
+		log_warn("%s: cannot find interface %d", __func__,
+		    address->if_index);
+		return;
+	}
+
+	memcpy(&in6_addreq.ifra_addr, &address->addr,
+	     sizeof(in6_addreq.ifra_addr));
+	memcpy(&in6_addreq.ifra_prefixmask.sin6_addr, &address->mask,
+	    sizeof(in6_addreq.ifra_prefixmask.sin6_addr));
+	in6_addreq.ifra_prefixmask.sin6_family = AF_INET6;
+	in6_addreq.ifra_prefixmask.sin6_len =
+	    sizeof(in6_addreq.ifra_prefixmask);
+
+	t = time(NULL);
+
+	in6_addreq.ifra_lifetime.ia6t_expire = t + address->vltime;
+	in6_addreq.ifra_lifetime.ia6t_vltime = address->vltime;
+
+	in6_addreq.ifra_lifetime.ia6t_preferred = t + address->pltime;
+	in6_addreq.ifra_lifetime.ia6t_pltime = address->pltime;
+
+	log_debug("%s: %s", __func__, if_name);
+
+	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) < 0)
+		fatal("SIOCAIFADDR_IN6");
 }
 
 #if 0
