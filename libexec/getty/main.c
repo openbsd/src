@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.45 2017/05/27 09:31:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.46 2017/05/27 09:34:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -392,7 +392,11 @@ getname(void)
 		if (IG && (c <= ' ' || c > 0176))
 			continue;
 		*np++ = c;
-		putchr(cs);
+		if (c == '\033') {
+			putchr('^');
+			putchr('[');
+		} else
+			putchr(cs);
 	}
 	signal(SIGINT, SIG_IGN);
 	if (interrupt_flag) {
