@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.26 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: subr.c,v 1.27 2017/05/27 07:37:36 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -259,9 +259,6 @@ setflags(int n)
 	else
 		CLR(oflag, OXTABS);
 
-#ifdef XXX_DELAY
-	SET(f, delaybits());
-#endif
 
 	if (n == 1) {		/* read mode flags */
 		if (RW) {
@@ -321,75 +318,6 @@ out:
 	tmode.c_lflag = lflag;
 }
 
-#ifdef XXX_DELAY
-struct delayval {
-	unsigned int	delay;		/* delay in ms */
-	int		bits;
-};
-
-/*
- * below are random guesses, I can't be bothered checking
- */
-
-struct delayval	crdelay[] = {
-	{ 1,		CR1 },
-	{ 2,		CR2 },
-	{ 3,		CR3 },
-	{ 83,		CR1 },
-	{ 166,		CR2 },
-	{ 0,		CR3 },
-};
-
-struct delayval nldelay[] = {
-	{ 1,		NL1 },		/* special, calculated */
-	{ 2,		NL2 },
-	{ 3,		NL3 },
-	{ 100,		NL2 },
-	{ 0,		NL3 },
-};
-
-struct delayval	bsdelay[] = {
-	{ 1,		BS1 },
-	{ 0,		0 },
-};
-
-struct delayval	ffdelay[] = {
-	{ 1,		FF1 },
-	{ 1750,		FF1 },
-	{ 0,		FF1 },
-};
-
-struct delayval	tbdelay[] = {
-	{ 1,		 TAB1 },
-	{ 2,		 TAB2 },
-	{ 3,		XTABS },	/* this is expand tabs */
-	{ 100,		 TAB1 },
-	{ 0,		 TAB2 },
-};
-
-int
-delaybits()
-{
-	int f;
-
-	f  = adelay(CD, crdelay);
-	f |= adelay(ND, nldelay);
-	f |= adelay(FD, ffdelay);
-	f |= adelay(TD, tbdelay);
-	f |= adelay(BD, bsdelay);
-	return (f);
-}
-
-int
-adelay(int ms, struct delayval *dp)
-{
-	if (ms == 0)
-		return (0);
-	while (dp->delay && ms > dp->delay)
-		dp++;
-	return (dp->bits);
-}
-#endif
 
 void
 makeenv(char *env[])
