@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.247 2017/05/27 10:36:18 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.248 2017/05/27 16:41:10 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -519,10 +519,7 @@ m_defrag(struct mbuf *m, int how)
 	if (m->m_next == NULL)
 		return (0);
 
-#ifdef DIAGNOSTIC
-	if (!(m->m_flags & M_PKTHDR))
-		panic("m_defrag: no packet hdr or not a chain");
-#endif
+	KASSERT(m->m_flags & M_PKTHDR);
 
 	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
 		return (ENOBUFS);
@@ -1078,6 +1075,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	struct mbuf *m;
 	unsigned remain;
 
+	KASSERT(m0->m_flags & M_PKTHDR);
 	/*
 	 * Limit the size of the new header to MHLEN. In case
 	 * skip = 0 and the first buffer is not a cluster this
@@ -1342,6 +1340,8 @@ m_dup_pkt(struct mbuf *m0, unsigned int adj, int wait)
 {
 	struct mbuf *m;
 	int len;
+
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	len = m0->m_pkthdr.len + adj;
 	if (len > MAXMCLBYTES) /* XXX */
