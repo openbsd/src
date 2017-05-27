@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.17 2016/09/04 10:13:35 akfaew Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.18 2017/05/27 14:20:39 mpi Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -152,13 +152,22 @@ _thread_mutex_destroy(void **mutex)
 /*
  * the malloc lock
  */
+#ifndef FUTEX
 #define MALLOC_LOCK_INITIALIZER(n) { \
 	_SPINLOCK_UNLOCKED,	\
 	TAILQ_HEAD_INITIALIZER(malloc_lock[n].lockers), \
 	PTHREAD_MUTEX_DEFAULT,	\
 	NULL,			\
 	0,			\
-	-1 }			\
+	-1 }
+#else
+#define MALLOC_LOCK_INITIALIZER(n) { \
+	_SPINLOCK_UNLOCKED,	\
+	PTHREAD_MUTEX_DEFAULT,	\
+	NULL,			\
+	0,			\
+	-1 }
+#endif
 
 static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
 	MALLOC_LOCK_INITIALIZER(0),
@@ -166,6 +175,7 @@ static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
 	MALLOC_LOCK_INITIALIZER(2),
 	MALLOC_LOCK_INITIALIZER(3)
 };
+
 static pthread_mutex_t malloc_mutex[_MALLOC_MUTEXES] = {
 	&malloc_lock[0],
 	&malloc_lock[1],
@@ -192,7 +202,9 @@ _thread_malloc_reinit(void)
 
 	for (i = 0; i < _MALLOC_MUTEXES; i++) {
 		malloc_lock[i].lock = _SPINLOCK_UNLOCKED;
+#ifndef FUTEX
 		TAILQ_INIT(&malloc_lock[i].lockers);
+#endif
 		malloc_lock[i].owner = NULL;
 		malloc_lock[i].count = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.60 2016/09/04 10:13:35 akfaew Exp $ */
+/*	$OpenBSD: rthread.h,v 1.61 2017/05/27 14:20:39 mpi Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -57,6 +57,24 @@ struct __sem {
 
 TAILQ_HEAD(pthread_queue, pthread);
 
+#ifdef FUTEX
+
+struct pthread_mutex {
+	_atomic_lock_t lock;
+	int type;
+	pthread_t owner;
+	int count;
+	int prioceiling;
+};
+
+struct pthread_cond {
+	_atomic_lock_t seq;
+	clockid_t clock;
+	struct pthread_mutex *mutex;
+};
+
+#else
+
 struct pthread_mutex {
 	_atomic_lock_t lock;
 	struct pthread_queue lockers;
@@ -66,17 +84,18 @@ struct pthread_mutex {
 	int prioceiling;
 };
 
-struct pthread_mutex_attr {
-	int ma_type;
-	int ma_protocol;
-	int ma_prioceiling;
-};
-
 struct pthread_cond {
 	_atomic_lock_t lock;
 	struct pthread_queue waiters;
 	struct pthread_mutex *mutex;
 	clockid_t clock;
+};
+#endif /* FUTEX */
+
+struct pthread_mutex_attr {
+	int ma_type;
+	int ma_protocol;
+	int ma_prioceiling;
 };
 
 struct pthread_cond_attr {
