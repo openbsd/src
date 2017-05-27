@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.45 2016/05/23 20:11:48 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.46 2017/05/27 14:33:39 kettenis Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1032,6 +1032,32 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	mov	zero, v0			/* return 0. */
 	RET
 	END(copyout)
+
+NESTED(copyin32, 2, 16, ra, IM_RA|IM_S0, 0)
+	LDGP(pv)
+	and	a0, 0x3, t0			/* make sure that src addr   */
+	bne	t0, copyfault			/* is properly aligned.	     */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyfault			/* if it's not, error out.   */
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
+	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
+	GET_CURPROC
+	ldq	t0, 0(v0)
+	ldq	s0, P_ADDR(t0)
+	lda	v0, copyerr			/* set up fault handler.     */
+	stq	v0, U_PCB_ONFAULT(s0)
+	ldl	t0, 0(a0)
+	stl	t0, 0(a1)
+	stq	zero, U_PCB_ONFAULT(s0)		/* kill the fault handler.   */
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	mov	zero, v0			/* return 0. */
+	RET
+	END(copyin32)
 
 LEAF(copyerr, 0)
 	LDGP(pv)
