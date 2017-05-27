@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2017/05/27 10:38:54 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2017/05/27 10:39:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -198,8 +198,6 @@ void			 address_proposal_timeout(int, short, void *);
 void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
-struct address_proposal *find_address_proposal(struct slaacd_iface *,
-			    struct radv_prefix *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
@@ -1453,23 +1451,6 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
-}
-
-struct address_proposal *
-find_address_proposal(struct slaacd_iface *iface, struct radv_prefix *prefix)
-{
-	struct address_proposal	*addr_proposal;
-	int count = 0;
-
-	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
-		log_debug("%s: %d", __func__, ++count);
-		if (memcmp(&addr_proposal->prefix, &prefix->prefix,
-		    sizeof(addr_proposal->prefix)) == 0)
-			return (addr_proposal);
-	}
-
-	log_debug("%s: NULL", __func__);
-	return (NULL);
 }
 
 #if 0
