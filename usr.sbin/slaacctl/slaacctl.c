@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.1 2017/04/10 13:35:42 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.2 2017/05/27 10:40:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -233,23 +233,6 @@ show_interface_msg(struct imsg *imsg)
 		    cei_ra_prefix->autonomous ? 1 : 0);
 		printf("\t\t\tvltime: %9u, pltime: %9u\n",
 		    cei_ra_prefix->vltime, cei_ra_prefix->pltime);
-		if (getnameinfo((struct sockaddr *)&cei_ra_prefix->addr,
-		    cei_ra_prefix->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
-		    NI_NUMERICHOST | NI_NUMERICSERV))
-			err(1, "cannot generated address");
-		printf("\t\t\t        address: %s\n", hbuf);
-		if (!IN6_IS_ADDR_UNSPECIFIED(
-		    &cei_ra_prefix->priv_addr.sin6_addr)) {
-			if (getnameinfo((struct sockaddr *)
-			    &cei_ra_prefix->priv_addr,
-			    cei_ra_prefix->priv_addr.sin6_len, hbuf,
-			    sizeof(hbuf), NULL, 0, NI_NUMERICHOST |
-			    NI_NUMERICSERV))
-				err(1, "cannot generated address");
-			printf("\t\t\tprivacy address: %s\n", hbuf);
-		}
-		printf("\t\t\t           mask: %s\n", inet_ntop(AF_INET6,
-		    &cei_ra_prefix->mask, ntopbuf, INET6_ADDRSTRLEN));
 		break;
 	case IMSG_CTL_SHOW_INTERFACE_INFO_RA_RDNS:
 		cei_ra_rdns = imsg->data;

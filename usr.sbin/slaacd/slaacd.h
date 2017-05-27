@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.6 2017/03/20 16:15:37 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.7 2017/05/27 10:40:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -108,9 +108,6 @@ struct ctl_engine_info_ra_prefix {
 	int			autonomous;
 	uint32_t		vltime;
 	uint32_t		pltime;
-	struct sockaddr_in6	addr;
-	struct sockaddr_in6	priv_addr;
-	struct in6_addr		mask;
 };
 
 struct ctl_engine_info_ra_rdns {
