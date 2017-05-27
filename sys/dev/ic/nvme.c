@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.56 2017/05/27 12:40:51 sf Exp $ */
+/*	$OpenBSD: nvme.c,v 1.57 2017/05/27 19:27:45 sf Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1120,7 +1120,6 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = NVM_ADMIN_DEL_IOCQ;
-	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_sq_dmamem));
 	htolem16(&sqe.qid, q->q_id);
 
 	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
