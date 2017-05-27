@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.12 2017/05/27 10:57:23 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.13 2017/05/27 13:10:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -665,14 +665,11 @@ handle_proposal(struct imsg_proposal *proposal)
 {
 	static int			 seq = 0;
 	struct rt_msghdr		 rtm;
-	struct sockaddr_rtstatic	 rtstatic;
-	struct sockaddr_in6		 ifa, mask, gateway, prefix;
+	struct sockaddr_in6		 ifa, mask;
 	struct sockaddr_rtlabel		 rl;
 	struct iovec			 iov[13];
 	long				 pad = 0;
 	int				 iovcnt = 0, padlen;
-	uint8_t				 prefixlen;
-	char				*p;
 
 	memset(&rtm, 0, sizeof(rtm));
 
