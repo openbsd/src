@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2017/05/27 10:41:41 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2017/05/27 10:42:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -159,9 +159,12 @@ struct address_proposal {
 	LIST_ENTRY(address_proposal)	 entries;
 	struct event			 timer;
 	enum proposal_state		 state;
+	int				 next_timeout;
+	int				 timeout_count;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
+	uint64_t			 seq;
 	struct sockaddr_in6		 addr;
 	struct in6_addr			 mask;
 	struct in6_addr			 prefix;
@@ -215,6 +218,7 @@ int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
+int64_t			 proposal_seq;
 
 void
 engine_sig_handler(int sig, short event, void *arg)
@@ -1368,6 +1372,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 		fatal("calloc");
 	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
 	    addr_proposal);
+	addr_proposal->next_timeout = 1;
+	addr_proposal->timeout_count = 0;
 	addr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	addr_proposal->when = ra->when;
 	addr_proposal->uptime = ra->uptime;
@@ -1527,6 +1533,8 @@ void
 address_proposal_timeout(int fd, short events, void *arg)
 {
 	struct address_proposal	*addr_proposal;
+	struct imsg_proposal	 proposal;
+	struct timeval		 tv;
 	char			 hbuf[NI_MAXHOST];
 
 	addr_proposal = (struct address_proposal *)arg;
@@ -1539,6 +1547,43 @@ address_proposal_timeout(int fd, short events, void *arg)
 	}
 	log_debug("%s: iface %d: %s [%s]", __func__, addr_proposal->if_index,
 	    hbuf, proposal_state_name[addr_proposal->state]);
+
+	switch (addr_proposal->state) {
+	case PROPOSAL_NOT_CONFIGURED:
+	case PROPOSAL_SENT:
+		addr_proposal->seq = proposal_seq++;
+		memset(&proposal, 0, sizeof(proposal));
+		proposal.if_index = addr_proposal->if_index;
+		proposal.seq = addr_proposal->seq;
+		memcpy(&proposal.addr, &addr_proposal->addr,
+		    sizeof(proposal.addr));
+		memcpy(&proposal.mask, &addr_proposal->mask,
+		    sizeof(proposal.mask));
+
+		proposal.rtm_addrs = RTA_NETMASK | RTA_IFA;
+
+		addr_proposal->state = PROPOSAL_SENT;
+
+		send_proposal(&proposal);
+
+		if (addr_proposal->timeout_count++ < 6) {
+			tv.tv_sec = addr_proposal->next_timeout;
+			tv.tv_usec = arc4random_uniform(1000000);
+			addr_proposal->next_timeout *= 2;
+			evtimer_add(&addr_proposal->timer, &tv);
+			log_debug("%s: scheduling new timeout in %llds.%06ld",
+			    __func__, tv.tv_sec, tv.tv_usec);
+		} else {
+			log_debug("%s: giving up, no response to proposal",
+			    __func__);
+			LIST_REMOVE(addr_proposal, entries);
+			free(addr_proposal);
+		}
+		break;
+	default:
+		log_debug("%s: unhandled state: %s", __func__,
+		    proposal_state_name[addr_proposal->state]);
+	}
 }
 
 void

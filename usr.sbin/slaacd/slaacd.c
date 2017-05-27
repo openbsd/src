@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.5 2017/05/27 10:37:56 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.6 2017/05/27 10:42:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -512,6 +512,95 @@ main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
 
 #define	ROUNDUP(a)	\
     (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+
+void
+handle_proposal(struct imsg_proposal *proposal)
+{
+	static int			 seq = 0;
+	struct rt_msghdr		 rtm;
+	struct sockaddr_rtstatic	 rtstatic;
+	struct sockaddr_in6		 ifa, mask, gateway, prefix;
+	struct sockaddr_rtlabel		 rl;
+	struct iovec			 iov[13];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+	uint8_t				 prefixlen;
+	char				*p;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_PROPOSAL;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_index = proposal->if_index;
+	rtm.rtm_seq = ++seq;
+	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
+	rtm.rtm_addrs = (proposal->rtm_addrs & (RTA_NETMASK | RTA_IFA)) |
+	    RTA_LABEL;
+	rtm.rtm_flags = RTF_UP;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	if (rtm.rtm_addrs & RTA_NETMASK) {
+		memset(&mask, 0, sizeof(mask));
+		mask.sin6_family = AF_INET6;
+		mask.sin6_len = sizeof(struct sockaddr_in6);
+		mask.sin6_addr = proposal->mask;
+
+		iov[iovcnt].iov_base = &mask;
+		iov[iovcnt++].iov_len = sizeof(mask);
+		rtm.rtm_msglen += sizeof(mask);
+		padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+		if (padlen > 0) {
+			iov[iovcnt].iov_base = &pad;
+			iov[iovcnt++].iov_len = padlen;
+			rtm.rtm_msglen += padlen;
+		}
+	}
+
+	if (rtm.rtm_addrs & RTA_IFA) {
+		memcpy(&ifa, &proposal->addr, sizeof(ifa));
+
+		if (ifa.sin6_family != AF_INET6 || ifa.sin6_len !=
+		    sizeof(struct sockaddr_in6)) {
+			log_warnx("%s: invalid address", __func__);
+			return;
+		}
+
+		iov[iovcnt].iov_base = &ifa;
+		iov[iovcnt++].iov_len = sizeof(ifa);
+		rtm.rtm_msglen += sizeof(ifa);
+		padlen = ROUNDUP(sizeof(ifa)) - sizeof(ifa);
+		if (padlen > 0) {
+			iov[iovcnt].iov_base = &pad;
+			iov[iovcnt++].iov_len = padlen;
+			rtm.rtm_msglen += padlen;
+		}
+	}
+
+	rl.sr_len = sizeof(rl);
+	rl.sr_family = AF_UNSPEC;
+	if (snprintf(rl.sr_label, sizeof(rl.sr_label), "%s: %lld", "slaacd",
+	    proposal->seq) >= (ssize_t)sizeof(rl.sr_label))
+		log_warnx("route label truncated");
+
+	iov[iovcnt].iov_base = &rl;
+	iov[iovcnt++].iov_len = sizeof(rl);
+	rtm.rtm_msglen += sizeof(rl);
+	padlen = ROUNDUP(sizeof(rl)) - sizeof(rl);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send proposal");
+}
+
+#if 0
 void
 handle_proposal(struct imsg_proposal *proposal)
 {
@@ -658,3 +747,4 @@ handle_proposal(struct imsg_proposal *proposal)
 	if (writev(routesock, iov, iovcnt) == -1)
 		log_warn("failed to send proposal");
 }
+#endif
