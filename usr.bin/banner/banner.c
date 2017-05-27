@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.12 2015/11/03 04:54:07 mmcc Exp $	*/
+/*	$OpenBSD: banner.c,v 1.13 2017/05/27 07:55:44 tedu Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -71,9 +71,7 @@ scnline(int key, char *p, int c)
 	 * the results are somewhat mixed.  Sticking to '#' as
 	 * banner(1) does is more consistent.
 	 */
-#ifndef NOHASH_ONLY
 	c = '#';
-#endif
 	
 	for (scnwidth = WIDTH; --scnwidth;) {
 		key <<= 1;
@@ -133,9 +131,6 @@ scan_out(int scfd, char *scsp, int dlm)
 			if (nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BACKGND;
-#ifdef LPD_CHSET				/* <sjg> */
-			*strp++ = BACKGND;
-#endif
 		}
 		while (*--strp == BACKGND && strp >= outbuf)
 			;
