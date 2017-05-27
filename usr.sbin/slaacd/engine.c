@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2017/05/27 10:52:16 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2017/05/27 10:53:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -934,7 +934,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		p += sizeof(struct nd_opt_hdr);
 
 		if (nd_opt_hdr->nd_opt_len * 8 - 2 > len) {
-			log_warnx("invalid option len: %hhu > %ld",
+			log_warnx("invalid option len: %u > %ld",
 			    nd_opt_hdr->nd_opt_len, len);
 			goto err;
 		}
@@ -1033,7 +1033,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		case ND_OPT_MTU:
 		case ND_OPT_ROUTE_INFO:
 #if 0
-			log_debug("\tOption: %hhu (len: %hhu) not implemented",
+			log_debug("\tOption: %u (len: %u) not implemented",
 			    nd_opt_hdr->nd_opt_type, nd_opt_hdr->nd_opt_len *
 			    8);
 #endif
@@ -1188,7 +1188,7 @@ debug_log_ra(struct imsg_ra *ra)
 
 	log_debug("---");
 	log_debug("RA from %s", hbuf);
-	log_debug("\tCur Hop Limit: %hhu", nd_ra->nd_ra_curhoplimit);
+	log_debug("\tCur Hop Limit: %u", nd_ra->nd_ra_curhoplimit);
 	log_debug("\tManaged address configuration: %d",
 	    (nd_ra->nd_ra_flags_reserved & ND_RA_FLAG_MANAGED) ? 1 : 0);
 	log_debug("\tOther configuration: %d",
@@ -1225,11 +1225,11 @@ debug_log_ra(struct imsg_ra *ra)
 		len -= sizeof(struct nd_opt_hdr);
 		p += sizeof(struct nd_opt_hdr);
 		if (nd_opt_hdr->nd_opt_len * 8 - 2 > len) {
-			log_warnx("invalid option len: %hhu > %ld",
+			log_warnx("invalid option len: %u > %ld",
 			    nd_opt_hdr->nd_opt_len, len);
 			return;
 		}
-		log_debug("\tOption: %hhu (len: %hhu)", nd_opt_hdr->nd_opt_type,
+		log_debug("\tOption: %u (len: %u)", nd_opt_hdr->nd_opt_type,
 		    nd_opt_hdr->nd_opt_len * 8);
 		switch (nd_opt_hdr->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
@@ -1258,7 +1258,7 @@ debug_log_ra(struct imsg_ra *ra)
 			}
 			prf = (struct nd_opt_prefix_info*) nd_opt_hdr;
 
-			log_debug("\t\tND_OPT_PREFIX_INFORMATION: %s/%hhu",
+			log_debug("\t\tND_OPT_PREFIX_INFORMATION: %s/%u",
 			    inet_ntop(AF_INET6, &prf->nd_opt_pi_prefix,
 			    ntopbuf, INET6_ADDRSTRLEN),
 			    prf->nd_opt_pi_prefix_len);
