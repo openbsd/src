@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.15 2016/04/25 15:43:34 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.16 2017/05/27 07:39:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -43,11 +43,7 @@
 #include <rpc/rpc.h>
 #include <rpcsvc/rwall.h>
 
-#ifdef OSF
-#define WALL_CMD "/usr/sbin/wall"
-#else
 #define WALL_CMD "/usr/bin/wall -n"
-#endif
 
 void wallprog_1(struct svc_req *, SVCXPRT *);
 
