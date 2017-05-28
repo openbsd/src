@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.99 2017/05/28 18:55:25 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.100 2017/05/28 20:48:29 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1165,7 +1165,7 @@ dropped:
 
 Static struct mbuf *
 pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
-    int plen)
+    int plen, int useq)
 {
 	int proto, ppphlen;
 	u_char code;
@@ -1211,6 +1211,11 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 			m0->m_pkthdr.len = plen;
 		} else
 			m_adj(m0, plen - m0->m_pkthdr.len);
+	}
+
+	if (!useq) {
+		pipex_ppp_input(m0, session, 0);
+		return (NULL);
 	}
 
 	/* input ppp packets to kernel session */
@@ -1316,7 +1321,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
 
 	hlen = sizeof(struct ether_header) + sizeof(struct pipex_pppoe_header);
-	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length)))
+	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length), 0))
 	    == NULL)
 		return (NULL);
 	m_freem(m0);
@@ -1614,7 +1619,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 			pipex_pptp_output(NULL, session, 0, 1);
 	}
 
-	if ((m0 = pipex_common_input(session, m0, hlen, (int)ntohs(gre->len)))
+	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(gre->len), 1))
 	    == NULL) {
 		/* ok,  The packet is for PIPEX */
 		if (!rewind)
@@ -2055,7 +2060,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 
 	length -= hlen + offset;
 	hlen += off0 + offset;
-	if ((m0 = pipex_common_input(session, m0, hlen, length)) == NULL) {
+	if ((m0 = pipex_common_input(session, m0, hlen, length, 1)) == NULL) {
 		/* ok,  The packet is for PIPEX */
 		if (!rewind)
 			session->proto.l2tp.nr_gap += nseq;
