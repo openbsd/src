@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.365 2017/05/28 20:10:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.366 2017/05/28 20:15:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3490,6 +3490,9 @@ peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 	if (imsg_compose(ibuf_se, IMSG_SESSION_RESTARTED, peer->conf.id,
 	    0, -1, &aid, sizeof(aid)) == -1)
 		fatal("%s %d imsg_compose error", __func__, __LINE__);
+
+	log_peer_info(&peer->conf, "received %s EOR marker",
+	    aid2str(aid));
 }
 
 void
@@ -3531,6 +3534,9 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 			fatal("%s %d imsg_compose error in peer_send_eor",
 			    __func__, __LINE__);
 	}
+
+	log_peer_info(&peer->conf, "sending %s EOR marker",
+	    aid2str(aid));
 }
 
 /*
