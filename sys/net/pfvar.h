@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.453 2017/05/15 12:26:00 mpi Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.454 2017/05/28 16:43:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -180,7 +180,6 @@ struct pf_addr_wrap {
 };
 
 #ifdef _KERNEL
-
 struct pfi_dynaddr {
 	TAILQ_ENTRY(pfi_dynaddr)	 entry;
 	struct pf_addr			 pfid_addr4;
@@ -710,7 +709,7 @@ struct pf_state_key {
 	struct pf_state_key	*reverse;
 	struct inpcb		*inp;
 	pf_refcnt_t		 refcnt;
-	u_int8_t	 	 removed;
+	u_int8_t		 removed;
 };
 #define PF_REVERSED_KEY(key, family)				\
 	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
@@ -976,7 +975,8 @@ struct pfr_addr {
 #define	pfra_ip6addr	pfra_u._pfra_ip6addr
 
 enum { PFR_DIR_IN, PFR_DIR_OUT, PFR_DIR_MAX };
-enum { PFR_OP_BLOCK, PFR_OP_MATCH, PFR_OP_PASS, PFR_OP_ADDR_MAX, PFR_OP_TABLE_MAX };
+enum { PFR_OP_BLOCK, PFR_OP_MATCH, PFR_OP_PASS, PFR_OP_ADDR_MAX,
+    PFR_OP_TABLE_MAX };
 #define PFR_OP_XPASS	PFR_OP_ADDR_MAX
 
 struct pfr_astats {
@@ -1602,6 +1602,7 @@ struct pfioc_iface {
 #define DIOCGETQSTATS	_IOWR('D', 96, struct pfioc_qstats)
 
 #ifdef _KERNEL
+
 struct pf_pdesc;
 
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1841,7 +1842,6 @@ void			 pf_rs_initialize(void);
 int			 pf_anchor_copyout(const struct pf_ruleset *,
 			    const struct pf_rule *, struct pfioc_rule *);
 void			 pf_anchor_remove(struct pf_rule *);
-
 #endif /* _KERNEL */
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */
@@ -1861,16 +1861,14 @@ struct pf_os_fingerprint *
 	pf_osfp_validate(void);
 
 #ifdef _KERNEL
-void			 pf_print_host(struct pf_addr *, u_int16_t, sa_family_t);
-
+void			 pf_print_host(struct pf_addr *, u_int16_t,
+			    sa_family_t);
 int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,
 			    struct pf_src_node **, struct pf_rule **);
-
 int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_addr *, struct pf_src_node **,
 			    struct pf_pool *, enum pf_sn_types);
-
 int			 pf_postprocess_addr(struct pf_state *);
 
 struct pf_state_key	*pf_state_key_ref(struct pf_state_key *);
@@ -1889,7 +1887,6 @@ void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
 			    u_int16_t, u_int);
-
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */

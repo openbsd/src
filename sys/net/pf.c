@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1028 2017/05/28 14:54:00 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1029 2017/05/28 16:43:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -238,8 +238,10 @@ struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
-int			 pf_step_into_anchor(struct pf_test_ctx *, struct pf_rule *);
-int			 pf_match_rule(struct pf_test_ctx *, struct pf_ruleset *);
+int			 pf_step_into_anchor(struct pf_test_ctx *,
+			    struct pf_rule *);
+int			 pf_match_rule(struct pf_test_ctx *,
+			    struct pf_ruleset *);
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
@@ -3576,7 +3578,7 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 					ctx->test_status = PF_TEST_FAIL;
 					break;
 				}
-#if NPFLOG > 0 
+#if NPFLOG > 0
 				if (r->log) {
 					REASON_SET(&ctx->reason, PFRES_MATCH);
 					PFLOG_PACKET(ctx->pd, ctx->reason, r,
@@ -3585,7 +3587,7 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 #endif	/* NPFLOG > 0 */
 			} else {
 				/*
- 				 * found matching r
+				 * found matching r
 				 */
 				*ctx->rm = r;
 				/*
