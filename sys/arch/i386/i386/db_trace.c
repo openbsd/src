@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.25 2017/04/20 12:41:43 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.26 2017/05/28 14:24:19 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -87,13 +87,15 @@ void db_nextframe(struct callframe **, db_addr_t *, int *, int,
 int
 db_numargs(struct callframe *fp, const char *sym)
 {
-#ifdef DDBCTF
-	return db_ctf_func_numargs(sym);
-#else
 	int	*argp;
 	int	inst;
 	int	args;
 	extern char	etext[];
+
+#ifdef DDBCTF
+	if ((args = db_ctf_func_numargs(sym)) != -1)
+		return args;
+#endif /* DDBCTF */
 
 	argp = (int *)db_get_value((int)&fp->f_retaddr, 4, FALSE);
 	if (argp < (int *)VM_MIN_KERNEL_ADDRESS || argp > (int *)etext) {
@@ -107,8 +109,7 @@ db_numargs(struct callframe *fp, const char *sym)
 		else
 			args = 5;
 	}
-	return (args);
-#endif
+	return args;
 }
 
 /*

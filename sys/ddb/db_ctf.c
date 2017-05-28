@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.7 2017/05/28 11:41:52 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.8 2017/05/28 14:24:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -160,7 +160,7 @@ db_ctf_func_numargs(const char *funcname)
 	size_t			 i, idx = 0;
 
 	if (!db_ctf.ctf_found)
-		return 0;
+		return -1;
 
 	fstart = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
 	fend = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_typeoff);
@@ -189,7 +189,7 @@ db_ctf_func_numargs(const char *funcname)
 			return vlen;
 	}
 
-	return 0;
+	return -1;
 }
 
 static const char *
