@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.129 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.130 2017/05/28 09:38:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -210,19 +210,15 @@ trunk_clone_destroy(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct trunk_port *tp;
-	int error, s;
+	int error;
 
 	/* Remove any multicast groups that we may have joined. */
 	trunk_ether_purgemulti(tr);
 
-	s = splnet();
-
 	/* Shutdown and remove trunk ports, return on error */
 	while ((tp = SLIST_FIRST(&tr->tr_ports)) != NULL) {
-		if ((error = trunk_port_destroy(tp)) != 0) {
-			splx(s);
+		if ((error = trunk_port_destroy(tp)) != 0)
 			return (error);
-		}
 	}
 
 	ifmedia_delete_instance(&tr->tr_media, IFM_INST_ANY);
@@ -231,8 +227,6 @@ trunk_clone_destroy(struct ifnet *ifp)
 
 	SLIST_REMOVE(&trunk_list, tr, trunk_softc, tr_entries);
 	free(tr, M_DEVBUF, sizeof *tr);
-
-	splx(s);
 
 	return (0);
 }
@@ -474,9 +468,7 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct trunk_reqport *rp = (struct trunk_reqport *)data;
 	struct trunk_softc *tr;
 	struct trunk_port *tp = NULL;
-	int s, error = 0;
-
-	s = splnet();
+	int error = 0;
 
 	/* Should be checked by the caller */
 	if (ifp->if_type != IFT_IEEE8023ADLAG ||
@@ -512,12 +504,9 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		goto fallback;
 	}
 
-	splx(s);
 	return (error);
 
  fallback:
-	splx(s);
-
 	if (tp != NULL)
 		error = (*tp->tp_ioctl)(ifp, cmd, data);
 
@@ -616,9 +605,7 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct trunk_port *tp;
 	struct ifnet *tpif;
-	int s, i, error = 0;
-
-	s = splnet();
+	int i, error = 0;
 
 	bzero(&rpbuf, sizeof(rpbuf));
 
@@ -768,7 +755,6 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
  out:
-	splx(s);
 	return (error);
 }
 
@@ -1014,32 +1000,22 @@ void
 trunk_init(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
-	int s;
-
-	s = splnet();
 
 	ifp->if_flags |= IFF_RUNNING;
 
 	if (tr->tr_init != NULL)
 		(*tr->tr_init)(tr);
-
-	splx(s);
 }
 
 void
 trunk_stop(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
-	int s;
-
-	s = splnet();
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (tr->tr_stop != NULL)
 		(*tr->tr_stop)(tr);
-
-	splx(s);
 }
 
 int
