@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.119 2017/04/05 18:22:30 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.120 2017/05/28 14:37:48 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -251,51 +251,33 @@ interface_link_forceup(char *ifname)
 int
 interface_status(struct interface_info *ifi)
 {
-	struct ifreq ifr;
-	struct ifmediareq ifmr;
-	extern int sock;
+	struct ifaddrs *ifap, *ifa;
+	struct if_data *ifdata;
 
-	/* Get interface flags. */
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, &ifr) == -1) {
-		fatal("ioctl(SIOCGIFFLAGS) on %s", ifi->name);
+	if (getifaddrs(&ifap) != 0)
+		fatalx("getifaddrs failed");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
+		    (ifa->ifa_flags & IFF_POINTOPOINT))
+			continue;
+
+		if (strcmp(ifi->name, ifa->ifa_name) != 0)
+			continue;
+
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+
+		if ((ifa->ifa_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			return 0;
+
+		ifdata = ifa->ifa_data;
+
+		return LINK_STATE_IS_UP(ifdata->ifi_link_state);
 	}
 
-	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
-		goto inactive;
-
-	/* Next, check carrier on the interface if possible. */
-	if (ifi->flags & IFI_NOMEDIA)
-		goto active;
-	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, ifi->name, sizeof(ifmr.ifm_name));
-	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1) {
-		/*
-		 * EINVAL or ENOTTY simply means that the interface does not
-		 * support the SIOCGIFMEDIA ioctl. We regard it alive.
-		 */
-#ifdef DEBUG
-		if (errno != EINVAL && errno != ENOTTY)
-			log_debug("ioctl(SIOCGIFMEDIA) on %s", ifi->name);
-#endif	/* DEBUG */
-
-		ifi->flags |= IFI_NOMEDIA;
-		goto active;
-	}
-	if (ifmr.ifm_status & IFM_AVALID) {
-		if (ifmr.ifm_status & IFM_ACTIVE)
-			goto active;
-		else
-			goto inactive;
-	}
-
-	/* Assume 'active' if IFM_AVALID is not set. */
-
-active:
-	return (1);
-inactive:
-	return (0);
+	return 0;
 }
 
 void
