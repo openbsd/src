@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.11 2015/12/05 19:27:17 mmcc Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.12 2017/05/28 07:40:12 akfaew Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -33,17 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "privsep.h"
 #include "pfctl_parser.h"
 
-#ifndef MIN
-# define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-#endif /* MIN */
-#ifndef MAX
-# define MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif /* MAX */
-
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
 #if 0
 # define DEBUG(fp, str, v...) \
@@ -647,7 +640,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 	nm_class = fingerprint_name_entry(&classes, fp->fp_os.fp_class_nm);
 	if (nm_class->nm_num == 0) {
 		nm_class->nm_num = class;
-		class_count = MAX(class_count, class);
+		class_count = MAXIMUM(class_count, class);
 	}
 
 	nm_version = fingerprint_name_entry(&nm_class->nm_sublist,
@@ -655,7 +648,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 	if (nm_version) {
 		if (nm_version->nm_num == 0) {
 			nm_version->nm_num = version;
-			nm_class->nm_sublist_num = MAX(nm_class->nm_sublist_num,
+			nm_class->nm_sublist_num = MAXIMUM(nm_class->nm_sublist_num,
 			    version);
 		}
 		nm_subtype = fingerprint_name_entry(&nm_version->nm_sublist,
@@ -664,7 +657,7 @@ import_fingerprint(struct pf_osfp_ioctl *fp)
 			if (nm_subtype->nm_num == 0) {
 				nm_subtype->nm_num = subtype;
 				nm_version->nm_sublist_num =
-				    MAX(nm_version->nm_sublist_num, subtype);
+				    MAXIMUM(nm_version->nm_sublist_num, subtype);
 			}
 		}
 	}
@@ -754,7 +747,6 @@ sort_name_list(int opts, struct name_list *nml)
 			LIST_INSERT_AFTER(nmlast, nm, nm_entry);
 		nmlast = nm;
 	}
-	return;
 }
 
 /* parse the next integer in a formatted config file line */
@@ -823,7 +815,7 @@ get_int(u_char **line, size_t *len, int *var, int *mod,
 	}
 
 	for (; i < fieldlen; i++) {
-		if (field[i] < '0'  || field[i] > '9') {
+		if (field[i] < '0' || field[i] > '9') {
 			fprintf(stderr, "%s:%d non-digit character in %s\n",
 			    filename, lineno, name);
 			return (1);
@@ -959,7 +951,7 @@ get_tcpopts(const char *filename, int lineno, const u_char *tcpopts,
 	return (0);
 }
 
-/* rip the next field ouf of a formatted config file line */
+/* rip the next field out of a formatted config file line */
 char *
 get_field(u_char **line, size_t *len, int *fieldlen)
 {
