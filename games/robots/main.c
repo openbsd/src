@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2016/03/07 12:07:57 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2017/05/28 21:01:13 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -159,7 +159,10 @@ main(int ac, char *av[])
 			make_level();
 			play_level();
 		}
-		move(My_pos.y, My_pos.x);
+		if (My_pos.x > X_FIELDSIZE - 16)
+			move(My_pos.y, X_FIELDSIZE - 16);
+		else
+			move(My_pos.y, My_pos.x);
 		printw("AARRrrgghhhh....");
 		refresh();
 		score(score_wfd);
