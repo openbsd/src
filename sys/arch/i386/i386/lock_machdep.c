@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.23 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.24 2017/05/28 08:47:19 mpi Exp $	*/
 /* $NetBSD: lock_machdep.c,v 1.1.2.3 2000/05/03 14:40:30 sommerfeld Exp $ */
 
 /*-
@@ -89,7 +89,7 @@ void
 ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
-	long ef = read_eflags();
+	unsigned long s;
 #ifdef WITNESS
 	int lock_held;
 
@@ -99,10 +99,10 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 		    LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
 #endif
 
-	disable_intr();
+	s = intr_disable();
 	if (cpu->mplc_depth++ == 0)
 		cpu->mplc_ticket = atomic_inc_int_nv(&mpl->mpl_users);
-	write_eflags(ef);
+	intr_restore(s);
 
 	__mp_lock_spin(mpl, cpu->mplc_ticket);
 
@@ -113,7 +113,7 @@ void
 ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
-	int ef = read_eflags();
+	unsigned long s;
 
 #ifdef MP_LOCKDEBUG
 	if (!__mp_lock_held(mpl)) {
@@ -124,23 +124,23 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 
 	WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
 
-	disable_intr();
+	s = intr_disable();
 	if (--cpu->mplc_depth == 0)
 		mpl->mpl_ticket++;
-	write_eflags(ef);
+	intr_restore(s);
 }
 
 int
 ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
-	int ef = read_eflags();
+	unsigned long s;
 	int rv;
 #ifdef WITNESS
 	int i;
 #endif
 
-	disable_intr();
+	s = intr_disable();
 	rv = cpu->mplc_depth;
 #ifdef WITNESS
 	for (i = 0; i < rv; i++)
@@ -148,7 +148,7 @@ ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 #endif
 	cpu->mplc_depth = 0;
 	mpl->mpl_ticket++;
-	write_eflags(ef);
+	intr_restore(s);
 
 	return (rv);
 }
