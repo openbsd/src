@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.65 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: config.c,v 1.66 2017/05/28 15:16:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -52,6 +52,7 @@ new_config(void)
 	conf->min_holdtime = MIN_HOLDTIME;
 	conf->bgpid = get_bgpid();
 	conf->fib_priority = RTP_BGP;
+	conf->default_tableid = getrtable();
 
 	if ((conf->csock = strdup(SOCKET_NAME)) == NULL)
 		fatal(NULL);

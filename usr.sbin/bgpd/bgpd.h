@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.305 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.306 2017/05/28 15:16:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,6 +220,7 @@ struct bgpd_config {
 	char					*rcsock;
 	int					 flags;
 	int					 log;
+	u_int					 default_tableid;
 	u_int32_t				 bgpid;
 	u_int32_t				 clusterid;
 	u_int32_t				 as;
@@ -1011,8 +1012,10 @@ void		 kr_fib_decouple(u_int, u_int8_t);
 void		 kr_fib_decouple_all(u_int8_t);
 void		 kr_fib_update_prio_all(u_int8_t);
 int		 kr_dispatch_msg(void);
-int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *);
-void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *);
+int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *,
+		    struct bgpd_config *);
+void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *,
+		    struct bgpd_config *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
 int		 kr_net_reload(u_int, struct network_head *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.305 2017/05/27 18:12:23 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.306 2017/05/28 15:16:33 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -454,7 +454,7 @@ conf_main	: AS as4number		{
 				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 		}
 		| RDE RIB STRING {
-			if (add_rib($3, 0, F_RIB_NOFIB)) {
+			if (add_rib($3, conf->default_tableid, F_RIB_NOFIB)) {
 				free($3);
 				YYERROR;
 			}
@@ -466,7 +466,8 @@ conf_main	: AS as4number		{
 				yyerror("bad rde rib definition");
 				YYERROR;
 			}
-			if (add_rib($3, 0, F_RIB_NOFIB | F_RIB_NOEVALUATE)) {
+			if (add_rib($3, conf->default_tableid,
+			    F_RIB_NOFIB | F_RIB_NOEVALUATE)) {
 				free($3);
 				YYERROR;
 			}
@@ -2823,8 +2824,9 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 
 	netconf = &conf->networks;
 
-	add_rib("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
-	add_rib("Loc-RIB", 0, F_RIB_LOCAL);
+	add_rib("Adj-RIB-In", conf->default_tableid,
+	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
+	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
 
 	if ((file = pushfile(filename, 1)) == NULL) {
 		free(conf);
@@ -3373,7 +3375,7 @@ int
 add_rib(char *name, u_int rtableid, u_int16_t flags)
 {
 	struct rde_rib	*rr;
-	u_int		 rdom;
+	u_int		 rdom, default_rdom;
 
 	if ((rr = find_rib(name)) == NULL) {
 		if ((rr = calloc(1, sizeof(*rr))) == NULL) {
@@ -3394,9 +3396,12 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 			free(rr);
 			return (-1);
 		}
-		if (rdom != 0) {
-			yyerror("rtable %u does not belong to rdomain 0",
-			    rtableid);
+		if (ktable_exists(conf->default_tableid, &default_rdom) != 1)
+			fatal("default rtable %u does not exist",
+			    conf->default_tableid);
+		if (rdom != default_rdom) {
+			log_warnx("rtable %u does not belong to rdomain %u",
+			    rtableid, default_rdom);
 			free(rr);
 			return (-1);
 		}

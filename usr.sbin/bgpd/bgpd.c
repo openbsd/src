@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.188 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.189 2017/05/28 15:16:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -603,8 +603,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct bgpd_addr))
 				log_warnx("wrong imsg len");
-			else if (kr_nexthop_add(imsg.hdr.peerid, imsg.data) ==
-			    -1)
+			else if (kr_nexthop_add(imsg.hdr.peerid, imsg.data,
+			    conf) == -1)
 				rv = -1;
 			break;
 		case IMSG_NEXTHOP_REMOVE:
@@ -614,7 +614,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 			    sizeof(struct bgpd_addr))
 				log_warnx("wrong imsg len");
 			else
-				kr_nexthop_delete(imsg.hdr.peerid, imsg.data);
+				kr_nexthop_delete(imsg.hdr.peerid, imsg.data,
+				    conf);
 			break;
 		case IMSG_PFTABLE_ADD:
 			if (idx != PFD_PIPE_ROUTE)

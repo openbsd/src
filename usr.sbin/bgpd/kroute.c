@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.212 2017/03/28 05:04:09 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.213 2017/05/28 15:16:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -875,10 +875,13 @@ kr_dispatch_msg(void)
 }
 
 int
-kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
+kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr, struct bgpd_config *conf)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*h;
+
+	if (rtableid == 0)
+		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("kr_nexthop_add: non-existent rtableid %d", rtableid);
@@ -902,10 +905,14 @@ kr_nexthop_add(u_int rtableid, struct bgpd_addr *addr)
 }
 
 void
-kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr)
+kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr,
+    struct bgpd_config *conf)
 {
 	struct ktable		*kt;
 	struct knexthop_node	*kn;
+
+	if (rtableid == 0)
+		rtableid = conf->default_tableid;
 
 	if ((kt = ktable_get(rtableid)) == NULL) {
 		log_warnx("kr_nexthop_delete: non-existent rtableid %d",
