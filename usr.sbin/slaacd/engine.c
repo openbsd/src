@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.20 2017/05/28 15:58:02 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.21 2017/05/28 16:36:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1543,12 +1543,22 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				    sizeof(struct in6_addr)) != 0)
 					continue;
 				if (addr_proposal->privacy) {
-					found_privacy = 1;
+					/*
+					 * create new privacy address if old
+					 * expires
+					 */
+					if (addr_proposal->state !=
+					    PROPOSAL_NEARLY_EXPIRED)
+						found_privacy = 1;
 
 					if (!iface->autoconfprivacy)
 						log_debug("%s XXX need to "
 						    "remove privacy address",
 						    __func__);
+
+					log_debug("%s, privacy addr state: %s",
+					    __func__, proposal_state_name[
+					    addr_proposal->state]);
 
 					/* privacy addresses just expire */
 					continue;
@@ -1900,8 +1910,10 @@ address_proposal_timeout(int fd, short events, void *arg)
 		log_warn("cannot get router IP");
 		strlcpy(hbuf, "uknown", sizeof(hbuf));
 	}
-	log_debug("%s: iface %d: %s [%s]", __func__, addr_proposal->if_index,
-	    hbuf, proposal_state_name[addr_proposal->state]);
+	log_debug("%s: iface %d: %s [%s], priv: %s", __func__,
+	    addr_proposal->if_index, hbuf,
+	    proposal_state_name[addr_proposal->state],
+	    addr_proposal->privacy ? "y" : "n");
 
 	switch (addr_proposal->state) {
 	case PROPOSAL_NOT_CONFIGURED:
@@ -1952,6 +1964,9 @@ address_proposal_timeout(int fd, short events, void *arg)
 
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
+		if (addr_proposal->privacy)
+			break; /* just let it expire */
+
 		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
 		    0, &addr_proposal->if_index,
 		    sizeof(addr_proposal->if_index));
