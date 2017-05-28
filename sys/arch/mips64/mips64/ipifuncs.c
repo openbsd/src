@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.16 2017/05/28 15:46:06 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.17 2017/05/28 17:12:48 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -189,8 +189,7 @@ smp_rendezvous_action(void)
 		;
 
 	/* action function */
-	if (local_action_func != NULL)
-		local_action_func(local_func_arg);
+	(*local_action_func)(local_func_arg);
 
 	/* spin on exit rendezvous */
 	atomic_setbits_int(&smp_rv_waiters[1], cpumask);
@@ -204,8 +203,7 @@ smp_rendezvous_cpus(unsigned long map,
 	unsigned int cpumask = 1 << cpu_number();
 
 	if (cpumask == map) {
-		if (action_func != NULL)
-			action_func(arg);
+		(*action_func)(arg);
 		return;
 	}
 
@@ -228,7 +226,10 @@ smp_rendezvous_cpus(unsigned long map,
 		smp_rendezvous_action();
 
 	while (smp_rv_waiters[1] != smp_rv_map)
-		;
+		continue;
+
+	smp_rv_action_func = NULL;
+
 	/* release lock */
 	mtx_leave(&smp_ipi_mtx);
 }
