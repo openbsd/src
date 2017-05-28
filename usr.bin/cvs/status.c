@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.98 2016/11/03 20:13:41 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.99 2017/05/28 16:58:54 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -235,8 +235,13 @@ cvs_status_local(struct cvs_file *cf)
 				    sizeof(buf));
 			} else {
 				rcsnum_tostr(brev, revbuf, sizeof(revbuf));
-				(void)xsnprintf(buf, sizeof(buf),
-				    "(branch: %s)", revbuf);
+				if (RCSNUM_ISBRANCH(brev)) {
+					xsnprintf(buf, sizeof(buf),
+					    "(branch: %s)", revbuf);
+				} else {
+					xsnprintf(buf, sizeof(buf),
+					    "(revision: %s)", revbuf);
+				}
 				free(brev);
 			}
 
