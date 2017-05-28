@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.61 2017/05/28 19:15:18 mlarkin Exp $
+#	$OpenBSD: airport,v 1.62 2017/05/28 21:18:21 zhuk Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -2006,6 +2006,7 @@ ZGI:Gods River, Manitoba, Canada
 ZGS:Gethsemani, Quebec, Canada
 ZHA:Zhanjiang, China
 ZHO:Houston, British Columbia, Canada
+ZIA:Zhukovsky International, Moscow, Russia
 ZIH:Ixtapa/Zihuatanejo International, Guerrero, Mexico
 ZKG:Kegaska, Quebec, Canada
 ZLO:Aeropuerto International, Manzanillo, Colima, Mexico
