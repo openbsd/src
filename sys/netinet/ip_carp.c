@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.310 2017/05/27 21:55:52 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.311 2017/05/28 12:47:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -870,8 +870,12 @@ int
 carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
+	int s;
 
+	NET_LOCK(s);
 	carpdetach(sc);
+	NET_UNLOCK(s);
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	carp_destroy_vhosts(ifp->if_softc);
