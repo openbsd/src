@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.45 2017/01/09 14:49:21 reyk Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.46 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -519,7 +519,7 @@ relay_dns_result(struct rsession *con, u_int8_t *buf, size_t len)
 	socklen_t		 slen;
 
 	if (priv == NULL)
-		fatalx("relay_dns_result: response to invalid session");
+		fatalx("%s: response to invalid session", __func__);
 
 	if (log_getverbose() > 1)
 		relay_dns_log(con, buf, len);
@@ -547,7 +547,7 @@ relay_dns_cmp(struct rsession *a, struct rsession *b)
 	struct relay_dns_priv	*bp = b->se_priv;
 
 	if (ap == NULL || bp == NULL)
-		fatalx("relay_dns_cmp: invalid session");
+		fatalx("%s: invalid session", __func__);
 
 	return (memcmp(&ap->dp_inkey, &bp->dp_inkey, sizeof(u_int16_t)));
 }

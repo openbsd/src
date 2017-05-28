@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.220 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: relay.c,v 1.221 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -419,7 +419,7 @@ relay_launch(void)
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) &&
 		    relay_tls_ctx_create(rlay) == -1)
-			fatalx("relay_launch: failed to create TLS context");
+			fatalx("%s: failed to create TLS context", __func__);
 
 		TAILQ_FOREACH(rlt, &rlay->rl_tables, rlt_entry) {
 			/*
@@ -433,8 +433,8 @@ relay_launch(void)
 			rlt->rlt_nhosts = 0;
 			TAILQ_FOREACH(host, &rlt->rlt_table->hosts, entry) {
 				if (rlt->rlt_nhosts >= RELAY_MAXHOSTS)
-					fatal("relay_init: "
-					    "too many hosts in table");
+					fatal("%s: too many hosts in table",
+					    __func__);
 				host->idx = rlt->rlt_nhosts;
 				rlt->rlt_host[rlt->rlt_nhosts++] = host;
 			}
@@ -700,7 +700,7 @@ relay_connected(int fd, short sig, void *arg)
 		/* Use defaults */
 		break;
 	default:
-		fatalx("relay_connected: unknown protocol");
+		fatalx("%s: unknown protocol", __func__);
 	}
 
 	/*
@@ -715,7 +715,7 @@ relay_connected(int fd, short sig, void *arg)
 	evbuffer_free(bev->output);
 	bev->output = con->se_out.output;
 	if (bev->output == NULL)
-		fatal("relay_connected: invalid output buffer");
+		fatal("%s: invalid output buffer", __func__);
 	con->se_out.bev = bev;
 
 	/* Initialize the TLS wrapper */
@@ -756,7 +756,7 @@ relay_input(struct rsession *con)
 		/* Use defaults */
 		break;
 	default:
-		fatalx("relay_input: unknown protocol");
+		fatalx("%s: unknown protocol", __func__);
 	}
 
 	/*
@@ -1280,7 +1280,7 @@ relay_from_table(struct rsession *con)
 		    rlay->rl_conf.port);
 		break;
 	default:
-		fatalx("relay_from_table: unsupported mode");
+		fatalx("%s: unsupported mode", __func__);
 		/* NOTREACHED */
 	}
 	if (idx == -1) {
@@ -1331,7 +1331,7 @@ relay_from_table(struct rsession *con)
 	}
 
 	/* Should not happen */
-	fatalx("relay_from_table: no active hosts, desynchronized");
+	fatalx("%s: no active hosts, desynchronized", __func__);
 
  found:
 	if (rlt->rlt_mode == RELAY_DSTMODE_ROUNDROBIN)
@@ -1455,7 +1455,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 	int		 bnds = -1;
 
 	if (relay_inflight < 1) {
-		log_warnx("relay_connect_retry: no connection in flight");
+		log_warnx("%s: no connection in flight", __func__);
 		relay_inflight = 1;
 	}
 
@@ -1463,7 +1463,7 @@ relay_connect_retry(int fd, short sig, void *arg)
 	    con->se_retrycount, con->se_retry, relay_inflight);
 
 	if (sig != EV_TIMEOUT)
-		fatalx("relay_connect_retry: called without timeout");
+		fatalx("%s: called without timeout", __func__);
 
 	evtimer_del(&con->se_inflightevt);
 
@@ -1768,10 +1768,10 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_HOST_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
-			fatalx("relay_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		if ((table = table_find(env, host->conf.tableid)) ==
 		    NULL)
-			fatalx("relay_dispatch_pfe: invalid table id");
+			fatalx("%s: invalid table id", __func__);
 		if (host->up == HOST_UP)
 			table->up--;
 		host->flags |= F_DISABLE;
@@ -1780,14 +1780,14 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_HOST_ENABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
-			fatalx("relay_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		host->flags &= ~(F_DISABLE);
 		host->up = HOST_UNKNOWN;
 		break;
 	case IMSG_TABLE_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((table = table_find(env, id)) == NULL)
-			fatalx("relay_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		table->conf.flags |= F_DISABLE;
 		table->up = 0;
 		TAILQ_FOREACH(host, &table->hosts, entry)
@@ -1796,7 +1796,7 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_TABLE_ENABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((table = table_find(env, id)) == NULL)
-			fatalx("relay_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		table->conf.flags &= ~(F_DISABLE);
 		table->up = 0;
 		TAILQ_FOREACH(host, &table->hosts, entry)
@@ -1806,18 +1806,18 @@ relay_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &st);
 		memcpy(&st, imsg->data, sizeof(st));
 		if ((host = host_find(env, st.id)) == NULL)
-			fatalx("relay_dispatch_pfe: invalid host id");
+			fatalx("%s: invalid host id", __func__);
 		if (host->flags & F_DISABLE)
 			break;
 		if (host->up == st.up) {
 			log_debug("%s: host %d => %d", __func__,
 			    host->conf.id, host->up);
-			fatalx("relay_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		}
 
 		if ((table = table_find(env, host->conf.tableid))
 		    == NULL)
-			fatalx("relay_dispatch_pfe: invalid table id");
+			fatalx("%s: invalid table id", __func__);
 
 		DPRINTF("%s: [%d] state %d for "
 		    "host %u %s", __func__, p->p_ps->ps_instance, st.up,
@@ -2023,7 +2023,7 @@ relay_tls_ctx_create_proto(struct protocol *proto, struct tls_config *tls_cfg)
 
 /*
  * This function is not publicy exported because it is a hack until libtls
- * has a proper privsep setup 
+ * has a proper privsep setup
  */
 void tls_config_skip_private_key_check(struct tls_config *config);
 

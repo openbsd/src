@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.11 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.12 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -59,12 +59,12 @@ init_routes(struct relayd *env)
 		return;
 
 	if ((env->sc_rtsock = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("init_routes: failed to open routing socket");
+		fatal("%s: failed to open routing socket", __func__);
 
 	rtfilter = ROUTE_FILTER(0);
 	if (setsockopt(env->sc_rtsock, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
-		fatal("init_routes: ROUTE_MSGFILTER");
+		fatal("%s: ROUTE_MSGFILTER", __func__);
 }
 
 void
@@ -196,7 +196,7 @@ pfe_route(struct relayd *env, struct ctl_netroute *crt)
 		} else if (crt->nr.prefixlen < 0)
 			rm.rm_hdr.rtm_flags |= RTF_HOST;
 	} else
-		fatal("pfe_route: invalid address family");
+		fatal("%s: invalid address family", __func__);
 
  retry:
 	if (write(env->sc_rtsock, &rm, len) == -1) {

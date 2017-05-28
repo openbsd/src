@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.32 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.33 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -127,7 +127,7 @@ ssl_update_certificate(const uint8_t *oldcert, size_t oldlen, EVP_PKEY *pkey,
 	uint8_t		*newcert = NULL, *foo = NULL;
 
 	/* XXX BIO_new_mem_buf is not using const so work around this */
-	if ((foo = malloc(oldlen)) == NULL) {	
+	if ((foo = malloc(oldlen)) == NULL) {
 		log_warn("%s: malloc", __func__);
 		return (NULL);
 	}
@@ -322,6 +322,6 @@ fail:
 		EVP_PKEY_free(pkey);
 	if (x509 != NULL)
 		X509_free(x509);
-	
+
 	return (ret);
 }

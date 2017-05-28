@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.65 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.66 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1592,7 +1592,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 			/* perform this later */
 			break;
 		default:
-			fatalx("relay_action: invalid action");
+			fatalx("%s: invalid action", __func__);
 			/* NOTREACHED */
 		}
 

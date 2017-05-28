@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.44 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.45 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -53,10 +53,10 @@ icmp_setup(struct relayd *env, struct ctl_icmp_event *cie, int af)
 	if (af == AF_INET6)
 		proto = IPPROTO_ICMPV6;
 	if ((cie->s = socket(af, SOCK_RAW | SOCK_NONBLOCK, proto)) < 0)
-		fatal("icmp_setup: socket");
+		fatal("%s: socket", __func__);
 	val = ICMP_RCVBUF_SIZE;
 	if (setsockopt(cie->s, SOL_SOCKET, SO_RCVBUF, &val, sizeof(val)) == -1)
-		fatal("icmp_setup: setsockopt");
+		fatal("%s: setsockopt", __func__);
 	cie->env = env;
 	cie->af = af;
 }

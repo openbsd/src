@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.76 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: hce.c,v 1.77 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,7 +71,7 @@ hce_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	socket_rlimit(-1);
 
 	if (pledge("stdio recvfd inet", NULL) == -1)
-		fatal("hce: pledge");
+		fatal("%s: pledge", __func__);
 }
 
 void
@@ -161,7 +161,7 @@ hce_launch_checks(int fd, short event, void *arg)
 				continue;
 		}
 		if (table->conf.check == CHECK_NOCHECK)
-			fatalx("hce_launch_checks: unknown check type");
+			fatalx("%s: unknown check type", __func__);
 
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if (host->flags & F_DISABLE || host->conf.parentid)
@@ -205,10 +205,10 @@ hce_notify_done(struct host *host, enum host_error he)
 	char			*codemsg = NULL;
 
 	if ((hostnst = host_find(env, host->conf.id)) == NULL)
-		fatalx("hce_notify_done: desynchronized");
+		fatalx("%s: desynchronized", __func__);
 
 	if ((table = table_find(env, host->conf.tableid)) == NULL)
-		fatalx("hce_notify_done: invalid table id");
+		fatalx("%s: invalid table id", __func__);
 
 	if (hostnst->flags & F_DISABLE) {
 		if (env->sc_conf.opts & RELAYD_OPT_LOGUPDATE) {
@@ -295,7 +295,7 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_HOST_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
-			fatalx("hce_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		host->flags |= F_DISABLE;
 		host->up = HOST_UNKNOWN;
 		host->check_cnt = 0;
@@ -305,7 +305,7 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_HOST_ENABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((host = host_find(env, id)) == NULL)
-			fatalx("hce_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		host->flags &= ~(F_DISABLE);
 		host->up = HOST_UNKNOWN;
 		host->he = HCE_NONE;
@@ -313,7 +313,7 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_TABLE_DISABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((table = table_find(env, id)) == NULL)
-			fatalx("hce_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		table->conf.flags |= F_DISABLE;
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			host->up = HOST_UNKNOWN;
@@ -321,7 +321,7 @@ hce_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_TABLE_ENABLE:
 		memcpy(&id, imsg->data, sizeof(id));
 		if ((table = table_find(env, id)) == NULL)
-			fatalx("hce_dispatch_pfe: desynchronized");
+			fatalx("%s: desynchronized", __func__);
 		table->conf.flags &= ~(F_DISABLE);
 		TAILQ_FOREACH(host, &table->hosts, entry)
 			host->up = HOST_UNKNOWN;

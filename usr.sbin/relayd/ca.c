@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.25 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.26 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,7 @@ ca_launch(void)
 			    NULL, NULL)) == NULL)
 				fatalx("ca_launch: cert");
 
-		        if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
+			if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
 				fatalx("ca_launch: cert");
 
 			hash_string(d, dlen, hash, sizeof(hash));
@@ -136,11 +136,11 @@ ca_launch(void)
 		if (rlay->rl_conf.tls_key_len) {
 			if ((in = BIO_new_mem_buf(rlay->rl_tls_key,
 			    rlay->rl_conf.tls_key_len)) == NULL)
-				fatalx("ca_launch: key");
+				fatalx("%s: key", __func__);
 
 			if ((pkey = PEM_read_bio_PrivateKey(in,
 			    NULL, NULL, NULL)) == NULL)
-				fatalx("ca_launch: PEM");
+				fatalx("%s: PEM", __func__);
 			BIO_free(in);
 
 			rlay->rl_tls_pkey = pkey;
@@ -161,7 +161,7 @@ ca_launch(void)
 			    NULL, NULL)) == NULL)
 				fatalx("ca_launch: cacert");
 
-		        if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
+			if (X509_digest(cert, EVP_sha256(), d, &dlen) != 1)
 				fatalx("ca_launch: cacert");
 
 			hash_string(d, dlen, hash, sizeof(hash));
@@ -174,11 +174,11 @@ ca_launch(void)
 		if (rlay->rl_conf.tls_cakey_len) {
 			if ((in = BIO_new_mem_buf(rlay->rl_tls_cakey,
 			    rlay->rl_conf.tls_cakey_len)) == NULL)
-				fatalx("ca_launch: key");
+				fatalx("%s: key", __func__);
 
 			if ((pkey = PEM_read_bio_PrivateKey(in,
 			    NULL, NULL, NULL)) == NULL)
-				fatalx("ca_launch: PEM");
+				fatalx("%s: PEM", __func__);
 			BIO_free(in);
 
 			rlay->rl_tls_capkey = pkey;
@@ -231,22 +231,19 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, (&cko));
 		bcopy(imsg->data, &cko, sizeof(cko));
 		if (cko.cko_proc > env->sc_conf.prefork_relay)
-			fatalx("ca_dispatch_relay: "
-			    "invalid relay proc");
+			fatalx("%s: invalid relay proc", __func__);
 		if (IMSG_DATA_SIZE(imsg) != (sizeof(cko) + cko.cko_flen))
-			fatalx("ca_dispatch_relay: "
-			    "invalid key operation");
+			fatalx("%s: invalid key operation", __func__);
 		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL ||
 		    (rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
-			fatalx("ca_dispatch_relay: "
-			    "invalid relay key or id");
+			fatalx("%s: invalid relay key or id", __func__);
 
 		DPRINTF("%s:%d: key hash %s proc %d",
 		    __func__, __LINE__, cko.cko_hash, cko.cko_proc);
 
 		from = (u_char *)imsg->data + sizeof(cko);
 		if ((to = calloc(1, cko.cko_tlen)) == NULL)
-			fatalx("ca_dispatch_relay: calloc");
+			fatalx("%s: calloc", __func__);
 
 		switch (imsg->hdr.type) {
 		case IMSG_CA_PRIVENC:
@@ -345,16 +342,16 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 */
 	imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt);
 	if (imsg_flush(ibuf) == -1)
-		log_warn("rsae_send_imsg: imsg_flush");
+		log_warn("%s: imsg_flush", __func__);
 
 	pfd[0].fd = ibuf->fd;
 	pfd[0].events = POLLIN;
 	while (!done) {
 		switch (poll(pfd, 1, RELAY_TLS_PRIV_TIMEOUT)) {
 		case -1:
-			fatal("rsae_send_imsg: poll");
+			fatal("%s: poll", __func__);
 		case 0:
-			log_warnx("rsae_send_imsg: poll timeout");
+			log_warnx("%s: poll timeout", __func__);
 			break;
 		default:
 			break;

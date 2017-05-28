@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.53 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.54 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -123,7 +123,7 @@ tcp_write(int s, short event, void *arg)
 
 	len = sizeof(err);
 	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &err, &len))
-		fatal("tcp_write: getsockopt");
+		fatal("%s: getsockopt", __func__);
 	if (err != 0) {
 		tcp_close(cte, HOST_DOWN);
 		hce_notify_done(cte->host, HCE_TCP_CONNECT_FAIL);
@@ -182,7 +182,7 @@ tcp_host_up(struct ctl_tcp_event *cte)
 	}
 
 	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
-		fatalx("tcp_host_up: cannot create dynamic buffer");
+		fatalx("%s: cannot create dynamic buffer", __func__);
 	event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_READ, tcp_read_buf,
 	    &cte->tv_start, &cte->table->conf.timeout, cte);
 }
@@ -215,7 +215,7 @@ tcp_send_req(int s, short event, void *arg)
 	} while (len > 0);
 
 	if ((cte->buf = ibuf_dynamic(SMALL_READ_BUF_SIZE, UINT_MAX)) == NULL)
-		fatalx("tcp_send_req: cannot create dynamic buffer");
+		fatalx("%s: cannot create dynamic buffer", __func__);
 	event_again(&cte->ev, s, EV_TIMEOUT|EV_READ, tcp_read_buf,
 	    &cte->tv_start, &cte->table->conf.timeout, cte);
 	return;
@@ -259,7 +259,7 @@ tcp_read_buf(int s, short event, void *arg)
 		return;
 	default:
 		if (ibuf_add(cte->buf, rbuf, br) == -1)
-			fatal("tcp_read_buf: buf_add error");
+			fatal("%s: buf_add error", __func__);
 		if (cte->validate_read != NULL) {
 			if (cte->validate_read(cte) != 0)
 				goto retry;

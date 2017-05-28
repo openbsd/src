@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.167 2017/05/27 08:33:25 claudio Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.168 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -475,15 +475,14 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &bnd);
 		bcopy(imsg->data, &bnd, sizeof(bnd));
 		if (bnd.bnd_proc > env->sc_conf.prefork_relay)
-			fatalx("pfe_dispatch_relay: "
-			    "invalid relay proc");
+			fatalx("%s: invalid relay proc", __func__);
 		switch (bnd.bnd_proto) {
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
 			break;
 		default:
-			fatalx("pfe_dispatch_relay: requested socket "
-			    "for invalid protocol");
+			fatalx("%s: requested socket "
+			    "for invalid protocol", __func__);
 			/* NOTREACHED */
 		}
 		s = bindany(&bnd);
@@ -1188,7 +1187,7 @@ pkey_add(struct relayd *env, EVP_PKEY *pkey, char *hash)
 	if (strlcpy(ca_pkey->pkey_hash, hash, sizeof(ca_pkey->pkey_hash)) >=
 	    sizeof(ca_pkey->pkey_hash))
 		return (NULL);
-		
+
 	TAILQ_INSERT_TAIL(env->sc_pkeys, ca_pkey, pkey_entry);
 
 	return (ca_pkey);
@@ -1477,7 +1476,7 @@ socket_rlimit(int maxfd)
 	struct rlimit	 rl;
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("socket_rlimit: failed to get resource limit");
+		fatal("%s: failed to get resource limit", __func__);
 	log_debug("%s: max open files %llu", __func__, rl.rlim_max);
 
 	/*
@@ -1489,7 +1488,7 @@ socket_rlimit(int maxfd)
 	else
 		rl.rlim_cur = MAXIMUM(rl.rlim_max, (rlim_t)maxfd);
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("socket_rlimit: failed to set resource limit");
+		fatal("%s: failed to set resource limit", __func__);
 }
 
 char *
@@ -1639,7 +1638,7 @@ parent_tls_ticket_rekey(int fd, short events, void *arg)
 	struct timeval		 tv;
 	struct relay_ticket_key	 key;
 
-	log_debug("relayd_tls_ticket_rekey: rekeying tickets");
+	log_debug("%s: rekeying tickets", __func__);
 
 	key.tt_keyrev = arc4random();
 	arc4random_buf(key.tt_key, sizeof(key.tt_key));

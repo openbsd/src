@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.20 2016/09/02 14:45:51 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.21 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -39,7 +39,7 @@ check_script(struct relayd *env, struct host *host)
 	struct table		*table;
 
 	if ((table = table_find(env, host->conf.tableid)) == NULL)
-		fatalx("check_script: invalid table id");
+		fatalx("%s: invalid table id", __func__);
 
 	host->last_up = host->up;
 	host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
@@ -61,7 +61,7 @@ script_done(struct relayd *env, struct ctl_script *scr)
 	struct host		*host;
 
 	if ((host = host_find(env, scr->host)) == NULL)
-		fatalx("hce_dispatch_parent: invalid host id");
+		fatalx("%s: invalid host id", __func__);
 
 	if (scr->retval < 0)
 		host->up = HOST_UNKNOWN;
@@ -121,13 +121,13 @@ script_exec(struct relayd *env, struct ctl_script *scr)
 		signal(SIGCHLD, SIG_DFL);
 
 		if ((pw = getpwnam(RELAYD_USER)) == NULL)
-			fatal("script_exec: getpwnam");
+			fatal("%s: getpwnam", __func__);
 		if (chdir("/") == -1)
-			fatal("script_exec: chdir(\"/\")");
+			fatal("%s: chdir(\"/\")", __func__);
 		if (setgroups(1, &pw->pw_gid) ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-			fatal("script_exec: can't drop privileges");
+			fatal("%s: can't drop privileges", __func__);
 
 		/*
 		 * close fds before executing an external program, to

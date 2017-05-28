@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.28 2016/09/02 16:14:09 reyk Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.29 2017/05/28 10:39:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -172,9 +172,9 @@ snmp_getsock(struct relayd *env, struct imsg *imsg)
 	log_debug("%s: got new snmp socket %d", __func__, imsg->fd);
 
 	if ((snmp_agentx = snmp_agentx_alloc(env->sc_snmp)) == NULL)
-		fatal("snmp_getsock: agentx alloc");
+		fatal("%s: agentx alloc", __func__);
 	if ((pdu = snmp_agentx_open_pdu(snmp_agentx, "relayd", NULL)) == NULL)
-		fatal("snmp_getsock: agentx pdu");
+		fatal("%s: agentx pdu", __func__);
 	(void)snmp_agentx_send(snmp_agentx, pdu);
 
 	snmp_event_add(env, EV_WRITE);
