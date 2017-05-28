@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.43 2016/12/05 14:22:34 fcambus Exp $
+#	$OpenBSD: inter.phone,v 1.44 2017/05/28 18:31:35 tedu Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1385,175 +1385,175 @@
 44:984:Premium Rate 'sexual entertainment services':United Kingdom
 44:989:Premium Rate 'sexual entertainment services':United Kingdom
 45:::Denmark
-46:11:Norrkoping (Norrköping):Sweden
-46:120:Atvidaberg (Åtvidaberg):Sweden
-46:121:Soderkoping (Söderköping):Sweden
-46:122:Finspang (Finspång):Sweden
+46:11:Norrkoping (NorrkÃ¶ping):Sweden
+46:120:Atvidaberg (Ã…tvidaberg):Sweden
+46:121:Soderkoping (SÃ¶derkÃ¶ping):Sweden
+46:122:Finspang (FinspÃ¥ng):Sweden
 46:123:Valdemarsvik:Sweden
 46:125:Vikbolandet:Sweden
-46:13:Linkoping (Linköping):Sweden
-46:140:Tranas (Tranås):Sweden
+46:13:Linkoping (LinkÃ¶ping):Sweden
+46:140:Tranas (TranÃ¥s):Sweden
 46:141:Motala:Sweden
-46:142:Mjolby (Mjölby):Sweden
-46:142:Skanninge (Skänninge):Sweden
+46:142:Mjolby (MjÃ¶lby):Sweden
+46:142:Skanninge (SkÃ¤nninge):Sweden
 46:142:Boxholm:Sweden
 46:143:Vadstena:Sweden
-46:144:Odeshog (Ödeshög):Sweden
+46:144:Odeshog (Ã–deshÃ¶g):Sweden
 46:150:Katrineholm:Sweden
-46:151:Vingaker (Vingåker):Sweden
-46:152:Strangnas (Strängnäs):Sweden
-46:155:Nykoping (Nyköping):Sweden
-46:155:Oxelosund (Oxelösund):Sweden
+46:151:Vingaker (VingÃ¥ker):Sweden
+46:152:Strangnas (StrÃ¤ngnÃ¤s):Sweden
+46:155:Nykoping (NykÃ¶ping):Sweden
+46:155:Oxelosund (OxelÃ¶sund):Sweden
 46:156:Trosa:Sweden
-46:156:Vagnharad (Vagnhärad):Sweden
+46:156:Vagnharad (VagnhÃ¤rad):Sweden
 46:157:Flen:Sweden
-46:157:Malmkoping (Malmköping):Sweden
+46:157:Malmkoping (MalmkÃ¶ping):Sweden
 46:158:Gnesta:Sweden
 46:159:Mariefred:Sweden
 46:16:Eskilstuna:Sweden
-46:16:Torshalla (Torshälla):Sweden
-46:171:Enkoping (Enköping):Sweden
-46:173:Oregrund (Öregrund):Sweden
-46:173:Osthammar (Östhammar):Sweden
+46:16:Torshalla (TorshÃ¤lla):Sweden
+46:171:Enkoping (EnkÃ¶ping):Sweden
+46:173:Oregrund (Ã–regrund):Sweden
+46:173:Osthammar (Ã–sthammar):Sweden
 46:174:Alunda:Sweden
 46:175:Hallstavik:Sweden
 46:175:Rimbo:Sweden
-46:176:Norrtalje (Norrtälje):Sweden
+46:176:Norrtalje (NorrtÃ¤lje):Sweden
 46:18:Uppsala:Sweden
-46:19:Orebro (Örebro):Sweden
+46:19:Orebro (Ã–rebro):Sweden
 46:19:Kumla:Sweden
-46:21:Vasteras (Västerås):Sweden
+46:21:Vasteras (VÃ¤sterÃ¥s):Sweden
 46:220:Hallstahammar:Sweden
 46:220:Surahammar:Sweden
-46:221:Koping (Köping):Sweden
+46:221:Koping (KÃ¶ping):Sweden
 46:222:Skinnskatteberg:Sweden
 46:223:Fagersta:Sweden
 46:223:Norberg:Sweden
 46:224:Sala:Sweden
 46:224:Heby:Sweden
 46:225:Hedemora:Sweden
-46:225:Sater (Säter):Sweden
+46:225:Sater (SÃ¤ter):Sweden
 46:226:Avesta:Sweden
 46:226:Krylbo:Sweden
-46:227:Kungsor (Kungsör):Sweden
+46:227:Kungsor (KungsÃ¶r):Sweden
 46:23:Falun:Sweden
 46:240:Ludvika:Sweden
 46:240:Smedjebacken:Sweden
 46:241:Gagnef:Sweden
 46:241:Floda:Sweden
-46:243:Borlange (Borlänge):Sweden
-46:246:Svardsja (Svärdsjä):Sweden
+46:243:Borlange (BorlÃ¤nge):Sweden
+46:246:Svardsja (SvÃ¤rdsjÃ¤):Sweden
 46:246:Enviken:Sweden
 46:247:Leksand:Sweden
-46:247:Insjon (Insjön):Sweden
-46:248:Rattvik (Rättvik):Sweden
+46:247:Insjon (InsjÃ¶n):Sweden
+46:248:Rattvik (RÃ¤ttvik):Sweden
 46:250:Mora:Sweden
 46:250:Orsa:Sweden
-46:251:Alvdalen (Älvdalen):Sweden
+46:251:Alvdalen (Ã„lvdalen):Sweden
 46:253:Idre:Sweden
-46:253:Sarna (Särna):Sweden
+46:253:Sarna (SÃ¤rna):Sweden
 46:258:Furudal:Sweden
-46:26:Gavle (Gävle):Sweden
+46:26:Gavle (GÃ¤vle):Sweden
 46:26:Sandviken:Sweden
-46:270:Soderhamn (Söderhamn):Sweden
+46:270:Soderhamn (SÃ¶derhamn):Sweden
 46:271:Alfta:Sweden
 46:271:Edsbyn:Sweden
-46:278:Bollnas (Bollnäs):Sweden
+46:278:Bollnas (BollnÃ¤s):Sweden
 46:280:Malung:Sweden
 46:281:Vansbro:Sweden
 46:290:Hofors:Sweden
 46:290:Storvik:Sweden
 46:291:Hedesunda:Sweden
-46:291:Oserfarnebo (Österfärnebo):Sweden
-46:292:Tarnsjo (Tärnsjö):Sweden
-46:292:Ostervala (Östervåla):Sweden
+46:291:Oserfarnebo (Ã–sterfÃ¤rnebo):Sweden
+46:292:Tarnsjo (TÃ¤rnsjÃ¶):Sweden
+46:292:Ostervala (Ã–stervÃ¥la):Sweden
 46:293:Tierp:Sweden
-46:293:Soderfors (Söderfors):Sweden
+46:293:Soderfors (SÃ¶derfors):Sweden
 46:294:Karlsholmsbruk:Sweden
-46:294:Skarplinge (Skärplinge):Sweden
-46:295:Orbyhus (Örbyhus):Sweden
+46:294:Skarplinge (SkÃ¤rplinge):Sweden
+46:295:Orbyhus (Ã–rbyhus):Sweden
 46:295:Dannemora:Sweden
 46:297:Ockelbo:Sweden
-46:297:Hanrange (Hanrånge):Sweden
+46:297:Hanrange (HanrÃ¥nge):Sweden
 46:300:Kungsbacka:Sweden
-46:301:Hindas (Hindås):Sweden
+46:301:Hindas (HindÃ¥s):Sweden
 46:302:Lerum:Sweden
-46:303:Kungalv (Kungälv):Sweden
+46:303:Kungalv (KungÃ¤lv):Sweden
 46:304:Orust:Sweden
-46:304:Tjorn (Tjörn):Sweden
-46:31:Goteborg (Göteborg):Sweden
+46:304:Tjorn (TjÃ¶rn):Sweden
+46:31:Goteborg (GÃ¶teborg):Sweden
 46:320:Kinna:Sweden
 46:321:Ulricehamn:Sweden
-46:322:Alingsas (Alingsås):Sweden
-46:322:Vargarda (Vårgårda):Sweden
+46:322:Alingsas (AlingsÃ¥s):Sweden
+46:322:Vargarda (VÃ¥rgÃ¥rda):Sweden
 46:325:Svenljunga:Sweden
 46:325:Tranemo:Sweden
-46:33:Boras (Borås):Sweden
+46:33:Boras (BorÃ¥s):Sweden
 46:340:Varberg:Sweden
 46:345:Hyltebruk:Sweden
 46:345:Torup:Sweden
 46:346:Falkenberg:Sweden
 46:35:Halmstad:Sweden
-46:36:Jonkoping (Jönköping):Sweden
+46:36:Jonkoping (JÃ¶nkÃ¶ping):Sweden
 46:36:Huskvarna:Sweden
-46:370:Varnamo (Värnamo):Sweden
+46:370:Varnamo (VÃ¤rnamo):Sweden
 46:371:Gislaved:Sweden
 46:371:Anderstorp:Sweden
 46:372:Lungby:Sweden
-46:380:Nassjo (Nässjö):Sweden
-46:381:Eksjo (Eksjö):Sweden
-46:382:Savsjo (Sävsjö):Sweden
+46:380:Nassjo (NÃ¤ssjÃ¶):Sweden
+46:381:Eksjo (EksjÃ¶):Sweden
+46:382:Savsjo (SÃ¤vsjÃ¶):Sweden
 46:383:Vetlanda:Sweden
-46:390:Granna (Gränna):Sweden
-46:392:Mullsjo (Mullsjö):Sweden
+46:390:Granna (GrÃ¤nna):Sweden
+46:392:Mullsjo (MullsjÃ¶):Sweden
 46:393:Vaggeryd:Sweden
-46:40:Malmo (Malmö):Sweden
+46:40:Malmo (MalmÃ¶):Sweden
 46:410:Trelleborg:Sweden
 46:411:Ystad:Sweden
-46:413:Eslov (Eslöv):Sweden
-46:413:Hoor (Höör):Sweden
+46:413:Eslov (EslÃ¶v):Sweden
+46:413:Hoor (HÃ¶Ã¶r):Sweden
 46:414:Simrishamn:Sweden
-46:415:Horby (Hörby):Sweden
-46:416:Sjobo (Sjöbo):Sweden
+46:415:Horby (HÃ¶rby):Sweden
+46:416:Sjobo (SjÃ¶bo):Sweden
 46:417:Tomelilla:Sweden
 46:418:Landskrona:Sweden
-46:418:Svalov (Svalöv):Sweden
+46:418:Svalov (SvalÃ¶v):Sweden
 46:42:Helsingborg:Sweden
-46:42:Hoganas (Höganäs):Sweden
+46:42:Hoganas (HÃ¶ganÃ¤s):Sweden
 46:430:Laholm:Sweden
-46:431:Angelholm (Ängelholm):Sweden
-46:431:Bastad (Båstad):Sweden
+46:431:Angelholm (Ã„ngelholm):Sweden
+46:431:Bastad (BÃ¥stad):Sweden
 46:433:Markaryd:Sweden
-46:433:Stromnasbruk (Strömnäsbruk):Sweden
+46:433:Stromnasbruk (StrÃ¶mnÃ¤sbruk):Sweden
 46:435:Klippan:Sweden
 46:435:Perstorp:Sweden
 46:44:Kristianstad:Sweden
-46:451:Hassleholm (Hässleholm):Sweden
+46:451:Hassleholm (HÃ¤ssleholm):Sweden
 46:454:Karlshamn:Sweden
-46:454:Olofstrom (Olofström):Sweden
+46:454:Olofstrom (OlofstrÃ¶m):Sweden
 46:455:Karlskrona:Sweden
-46:456:Solvesborg (Sölvesborg):Sweden
-46:456:Bromolla (Bromölla):Sweden
+46:456:Solvesborg (SÃ¶lvesborg):Sweden
+46:456:Bromolla (BromÃ¶lla):Sweden
 46:457:Ronneby:Sweden
 46:459:Ryd:Sweden
 46:46:Lund:Sweden
-46:470:Vaxjo (Växjö):Sweden
+46:470:Vaxjo (VÃ¤xjÃ¶):Sweden
 46:471:Emmaboda:Sweden
 46:472:Alvesta:Sweden
 46:472:Rydaholm:Sweden
-46:474:Aseda (Åseda):Sweden
+46:474:Aseda (Ã…seda):Sweden
 46:474:Lenhovda:Sweden
-46:476:Almhult (Älmhult):Sweden
+46:476:Almhult (Ã„lmhult):Sweden
 46:477:Tingsryd:Sweden
 46:478:Lessebo:Sweden
 46:479:Osby:Sweden
 46:480:Kalmar:Sweden
 46:481:Nybro:Sweden
-46:485:Oland (Öland):Sweden
-46:486:Torsas (Torsås):Sweden
-46:490:Vastervik (Västervik):Sweden
+46:485:Oland (Ã–land):Sweden
+46:486:Torsas (TorsÃ¥s):Sweden
+46:490:Vastervik (VÃ¤stervik):Sweden
 46:491:Oskarshamn:Sweden
-46:491:Hogsby (Högsby):Sweden
+46:491:Hogsby (HÃ¶gsby):Sweden
 46:492:Vimmerby:Sweden
 46:493:Gamleby:Sweden
 46:494:Kisa:Sweden
@@ -1561,39 +1561,39 @@
 46:495:Virserum:Sweden
 46:496:Mariannelund:Sweden
 46:498:Gotland:Sweden
-46:499:Monsteras (Mönsterås):Sweden
-46:500:Skovde (Skövde):Sweden
+46:499:Monsteras (MÃ¶nsterÃ¥s):Sweden
+46:500:Skovde (SkÃ¶vde):Sweden
 46:501:Mariestad:Sweden
 46:502:Tidaholm:Sweden
 46:503:Hjo:Sweden
 46:504:Tibro:Sweden
 46:505:Karlsborg:Sweden
-46:506:Toreboda (Töreboda):Sweden
+46:506:Toreboda (TÃ¶reboda):Sweden
 46:506:Hova:Sweden
-46:510:Lidkoping (Lidköping):Sweden
+46:510:Lidkoping (LidkÃ¶ping):Sweden
 46:511:Skara:Sweden
-46:511:Gotene (Götene):Sweden
+46:511:Gotene (GÃ¶tene):Sweden
 46:512:Vara:Sweden
 46:512:Nossebro:Sweden
 46:513:Herrljunga:Sweden
-46:514:Grastorp (Grästorp):Sweden
-46:515:Falkoping (Falköping):Sweden
-46:520:Trollhattan (Trollhättan):Sweden
-46:521:Vanersborg (Vänersborg):Sweden
+46:514:Grastorp (GrÃ¤storp):Sweden
+46:515:Falkoping (FalkÃ¶ping):Sweden
+46:520:Trollhattan (TrollhÃ¤ttan):Sweden
+46:521:Vanersborg (VÃ¤nersborg):Sweden
 46:522:Uddevalla:Sweden
 46:523:Lysekil:Sweden
 46:524:Munkedal:Sweden
 46:525:Grebbestad:Sweden
-46:526:Stromstad (Strömstad):Sweden
-46:528:Fargelanda (Färgelanda):Sweden
+46:526:Stromstad (StrÃ¶mstad):Sweden
+46:528:Fargelanda (FÃ¤rgelanda):Sweden
 46:530:Mellerud:Sweden
 46:531:Bengtsfors:Sweden
-46:532:Amal (Åmål):Sweden
-46:533:Saffle (Säffle):Sweden
+46:532:Amal (Ã…mÃ¥l):Sweden
+46:533:Saffle (SÃ¤ffle):Sweden
 46:534:Ed:Sweden
 46:54:Karlstad:Sweden
 46:550:Kristinehamn:Sweden
-46:551:Gullspang (Gullspång):Sweden
+46:551:Gullspang (GullspÃ¥ng):Sweden
 46:552:Dejev:Sweden
 46:553:Molkom:Sweden
 46:554:Kil:Sweden
@@ -1601,105 +1601,105 @@
 46:560:Torsby:Sweden
 46:563:Hagfors:Sweden
 46:563:Munkfors:Sweden
-46:564:Syssleback (Sysslebäck):Sweden
+46:564:Syssleback (SysslebÃ¤ck):Sweden
 46:565:Sunne:Sweden
 46:570:Arvika:Sweden
 46:571:Charlottenberg:Sweden
-46:571:Amotfors (Åmotfors):Sweden
-46:573:Arjang (Årjäng):Sweden
+46:571:Amotfors (Ã…motfors):Sweden
+46:573:Arjang (Ã…rjÃ¤ng):Sweden
 46:580:Kopparberg:Sweden
 46:581:Lindesberg:Sweden
 46:582:Hallsberg:Sweden
 46:583:Askersund:Sweden
-46:584:Laxa (Laxå):Sweden
+46:584:Laxa (LaxÃ¥):Sweden
 46:585:Fjugesta:Sweden
-46:585:Svarta (Svartå):Sweden
+46:585:Svarta (SvartÃ¥):Sweden
 46:586:Karlskoga:Sweden
 46:586:Degerfors:Sweden
 46:587:Nora:Sweden
 46:589:Arboga:Sweden
 46:590:Filipstad:Sweden
-46:591:Hallefors (Hällefors):Sweden
+46:591:Hallefors (HÃ¤llefors):Sweden
 46:591:Grythyttan:Sweden
 46:60:Sundsvall:Sweden
-46:60:Timra (Timrå):Sweden
-46:611:Harnosand (Härnösand):Sweden
+46:60:Timra (TimrÃ¥):Sweden
+46:611:Harnosand (HÃ¤rnÃ¶sand):Sweden
 46:612:Kramfors:Sweden
-46:613:Ullanger (Ullånger):Sweden
-46:620:Solleftea (Sollefteå):Sweden
+46:613:Ullanger (UllÃ¥nger):Sweden
+46:620:Solleftea (SollefteÃ¥):Sweden
 46:621:Junsele:Sweden
 46:623:Ramsele:Sweden
 46:624:Backe:Sweden
-46:63:Ostersund (Östersund):Sweden
+46:63:Ostersund (Ã–stersund):Sweden
 46:640:Krokom:Sweden
 46:642:Lit:Sweden
 46:643:Hallen:Sweden
 46:643:Oviken:Sweden
 46:644:Hammerdal:Sweden
-46:645:Follinge (Föllinge):Sweden
-46:647:Are (Åre):Sweden
-46:647:Jarpen (Järpen):Sweden
+46:645:Follinge (FÃ¶llinge):Sweden
+46:647:Are (Ã…re):Sweden
+46:647:Jarpen (JÃ¤rpen):Sweden
 46:650:Hudiksvall:Sweden
 46:651:Ljusdal:Sweden
-46:652:Bergsjo (Bergsjö):Sweden
+46:652:Bergsjo (BergsjÃ¶):Sweden
 46:653:Delsbo:Sweden
 46:657:Los:Sweden
-46:660:Ornskoldsvik (Örnsköldsvik):Sweden
+46:660:Ornskoldsvik (Ã–rnskÃ¶ldsvik):Sweden
 46:661:Bredbyn:Sweden
-46:662:Bjorna (Björna):Sweden
+46:662:Bjorna (BjÃ¶rna):Sweden
 46:663:Husum:Sweden
-46:670:Stromsund (Strömsund):Sweden
+46:670:Stromsund (StrÃ¶msund):Sweden
 46:671:Hoting:Sweden
-46:672:Gaddede (Gäddede):Sweden
+46:672:Gaddede (GÃ¤ddede):Sweden
 46:680:Sveg:Sweden
-46:682:Ratan (Rätan):Sweden
+46:682:Ratan (RÃ¤tan):Sweden
 46:684:Hede:Sweden
-46:684:Funasdalen (Funäsdalen):Sweden
+46:684:Funasdalen (FunÃ¤sdalen):Sweden
 46:687:Svenstavik:Sweden
-46:690:Ange (Ånge):Sweden
+46:690:Ange (Ã…nge):Sweden
 46:691:Torpshammar:Sweden
 46:692:Liden:Sweden
-46:693:Bracke (Bräcke):Sweden
-46:693:Gallo (Gällö):Sweden
+46:693:Bracke (BrÃ¤cke):Sweden
+46:693:Gallo (GÃ¤llÃ¶):Sweden
 46:695:Stugun:Sweden
 46:696:Hammarstrand:Sweden
 46:8:Stockholm:Sweden
-46:90:Umea (Uneå):Sweden
-46:910:Skelleftea (Skellefteå):Sweden
-46:911:Pitea (Piteå):Sweden
+46:90:Umea (UneÃ¥):Sweden
+46:910:Skelleftea (SkellefteÃ¥):Sweden
+46:911:Pitea (PiteÃ¥):Sweden
 46:912:Byske:Sweden
-46:913:Lovanger (Lövånger):Sweden
-46:914:Burtrask (Burträsk):Sweden
-46:915:Bastutrask (Bastuträsk):Sweden
-46:916:Jorn (Jörn):Sweden
-46:918:Norsjo (Norsjö):Sweden
-46:920:Lulea (Luleå):Sweden
+46:913:Lovanger (LÃ¶vÃ¥nger):Sweden
+46:914:Burtrask (BurtrÃ¤sk):Sweden
+46:915:Bastutrask (BastutrÃ¤sk):Sweden
+46:916:Jorn (JÃ¶rn):Sweden
+46:918:Norsjo (NorsjÃ¶):Sweden
+46:920:Lulea (LuleÃ¥):Sweden
 46:921:Boden:Sweden
 46:922:Haparanda:Sweden
 46:923:Kalix:Sweden
-46:924:Ranea (Råneå):Sweden
-46:925:Lakatrask (Lakaträsk):Sweden
-46:926:Overkalix (Överkalix):Sweden
-46:927:Overtarnea (Övertårneå):Sweden
+46:924:Ranea (RÃ¥neÃ¥):Sweden
+46:925:Lakatrask (LakatrÃ¤sk):Sweden
+46:926:Overkalix (Ã–verkalix):Sweden
+46:927:Overtarnea (Ã–vertÃ¥rneÃ¥):Sweden
 46:928:Harads:Sweden
-46:929:Alvsbyn (Älvsbyn):Sweden
+46:929:Alvsbyn (Ã„lvsbyn):Sweden
 46:930:Nordmaling:Sweden
 46:932:Bjurholm:Sweden
 46:933:Vindeln:Sweden
 46:934:Robertfors:Sweden
-46:935:Vannas (Vännäs):Sweden
+46:935:Vannas (VÃ¤nnÃ¤s):Sweden
 46:940:Vilgelmina:Sweden
-46:941:Asele (Åsele):Sweden
+46:941:Asele (Ã…sele):Sweden
 46:942:Dorotea:Sweden
 46:943:Fredrika:Sweden
 46:950:Lyksele:Sweden
 46:951:Storuman:Sweden
 46:952:Sorsele:Sweden
-46:953:Mala (Malå):Sweden
-46:954:Tarnaby (Tärnaby):Sweden
+46:953:Mala (MalÃ¥):Sweden
+46:954:Tarnaby (TÃ¤rnaby):Sweden
 46:960:Arvidsjaur:Sweden
 46:961:Arjeplog:Sweden
-46:970:Gallivare (Gällivare):Sweden
+46:970:Gallivare (GÃ¤llivare):Sweden
 46:971:Jokkmokk:Sweden
 46:973:Porjus:Sweden
 46:975:Hakkas:Sweden
