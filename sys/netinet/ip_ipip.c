@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.80 2017/05/26 16:27:25 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.81 2017/05/28 13:59:05 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -222,6 +222,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	/* Some sanity checks in the inner IP header */
 	switch (proto) {
     	case IPPROTO_IPV4:
+		iaf = AF_INET;
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 		if (m->m_pkthdr.len < hlen) {
@@ -246,6 +247,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		break;
 #ifdef INET6
     	case IPPROTO_IPV6:
+		iaf = AF_INET6;
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
@@ -299,6 +301,14 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	/* Statistics */
 	ipipstat_add(ipips_ibytes, m->m_pkthdr.len - hlen);
 
+#if NBPFILTER > 0
+	if (gifp && gifp->if_bpf)
+		bpf_mtap_af(gifp->if_bpf, iaf, m, BPF_DIRECTION_IN);
+#endif
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
 	/*
 	 * Interface pointer stays the same; if no IPsec processing has
 	 * been done (or will be done), this will point to a normal
@@ -310,25 +320,15 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	switch (proto) {
 	case IPPROTO_IPV4:
 		ifq = &ipintrq;
-		iaf = AF_INET;
 		break;
 #ifdef INET6
 	case IPPROTO_IPV6:
 		ifq = &ip6intrq;
-		iaf = AF_INET6;
 		break;
 #endif
 	default:
 		panic("%s: should never reach here", __func__);
 	}
-
-#if NBPFILTER > 0
-	if (gifp && gifp->if_bpf)
-		bpf_mtap_af(gifp->if_bpf, iaf, m, BPF_DIRECTION_IN);
-#endif
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 
 	if (niq_enqueue(ifq, m) != 0) {
 		ipipstat_inc(ipips_qfull);
