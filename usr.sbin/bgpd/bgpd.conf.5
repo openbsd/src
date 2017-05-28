@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.155 2017/05/27 18:12:23 phessler Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.156 2017/05/28 15:16:52 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2017 $
+.Dd $Mdocdate: May 28 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -352,9 +352,12 @@ flag.
 If a
 .Ic rtable
 is specified, routes will be exported to the given kernel routing table.
-Currently the routing table must belong to the default routing domain and
-nexthop verification happens on table 0.
-Routes in the specified table will not be considered for nexthop verification.
+Currently the routing table must belong to the routing domain
+.Xr bgpd 8
+was started in.
+Nexthop verification happens in the table
+.Xr bgpd 8
+was started in, routes in the specified table will not be considered.
 .Ic Adj-RIB-In
 and
 .Ic Loc-RIB
@@ -396,10 +399,12 @@ to the local machine.
 .Pp
 .It Ic rtable Ar number
 Work with the given kernel routing table
-instead of the default table,
-.Ar 0 .
-Note that table 0 is used for nexthop verification.
-Routes in the specified table will not be considered for nexthop verification.
+instead of the default table, which is the one
+.Xr bgpd 8
+was started in.
+For nexthop verification,
+.Xr bgpd 8
+will always consult the default table.
 This is the same as using the following syntax:
 .Bd -literal -offset indent
 rde rib Loc-RIB rtable number
