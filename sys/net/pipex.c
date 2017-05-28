@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.97 2017/05/28 12:51:34 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.98 2017/05/28 18:42:00 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -349,7 +349,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    MIN(req->pr_local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
 	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
-		session->proto.pppoe.over_ifp = over_ifp;
+		session->proto.pppoe.over_ifidx = over_ifp->if_index;
 #endif
 #ifdef PIPEX_PPTP
 	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
@@ -1329,14 +1329,11 @@ Static void
 pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 {
 	struct pipex_pppoe_header *pppoe;
-	struct ifnet *ifp, *over_ifp;
+	struct ifnet *ifp;
 	int len, padlen;
 
 	/* save length for pppoe header */
 	len = m0->m_pkthdr.len;
-
-	ifp = session->pipex_iface->ifnet_this;
-	over_ifp = session->proto.pppoe.over_ifp;
 
 	/* prepend protocol header */
 	M_PREPEND(m0, sizeof(struct pipex_pppoe_header), M_NOWAIT);
@@ -1358,14 +1355,19 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	pppoe->session_id = htons(session->session_id);
 	pppoe->length = htons(len);
 
-	m0->m_pkthdr.ph_ifidx = ifp->if_index;
+	m0->m_pkthdr.ph_ifidx = session->proto.pppoe.over_ifidx;
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
 
-	session->stat.opackets++;
-	session->stat.obytes += len;
-
-	over_ifp->if_output(over_ifp, m0, &session->peer.sa,
-	    NULL);
+	ifp = if_get(session->proto.pppoe.over_ifidx);
+	if (ifp != NULL) {
+		ifp->if_output(ifp, m0, &session->peer.sa, NULL);
+		session->stat.opackets++;
+		session->stat.obytes += len;
+	} else {
+		m_freem(m0);
+		session->stat.oerrors++;
+	}
+	if_put(ifp);
 }
 #endif /* PIPEX_PPPOE */
 
