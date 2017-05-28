@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.362 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.363 2017/05/28 20:10:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -544,23 +544,6 @@ session_main(int debug, int verbose)
 			control_dispatch_msg(&pfd[j], &ctl_cnt);
 	}
 
-	/* close pipes */
-	if (ibuf_rde) {
-		msgbuf_write(&ibuf_rde->w);
-		msgbuf_clear(&ibuf_rde->w);
-		close(ibuf_rde->fd);
-		free(ibuf_rde);
-	}
-	if (ibuf_rde_ctl) {
-		msgbuf_clear(&ibuf_rde_ctl->w);
-		close(ibuf_rde_ctl->fd);
-		free(ibuf_rde_ctl);
-	}
-	msgbuf_write(&ibuf_main->w);
-	msgbuf_clear(&ibuf_main->w);
-	close(ibuf_main->fd);
-	free(ibuf_main);
-
 	while ((p = peers) != NULL) {
 		peers = p->next;
 		strlcpy(p->conf.shutcomm,
@@ -586,6 +569,22 @@ session_main(int debug, int verbose)
 	free(mrt_l);
 	free(pfd);
 
+	/* close pipes */
+	if (ibuf_rde) {
+		msgbuf_write(&ibuf_rde->w);
+		msgbuf_clear(&ibuf_rde->w);
+		close(ibuf_rde->fd);
+		free(ibuf_rde);
+	}
+	if (ibuf_rde_ctl) {
+		msgbuf_clear(&ibuf_rde_ctl->w);
+		close(ibuf_rde_ctl->fd);
+		free(ibuf_rde_ctl);
+	}
+	msgbuf_write(&ibuf_main->w);
+	msgbuf_clear(&ibuf_main->w);
+	close(ibuf_main->fd);
+	free(ibuf_main);
 
 	control_shutdown(csock);
 	control_shutdown(rcsock);

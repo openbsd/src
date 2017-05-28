@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.364 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.365 2017/05/28 20:10:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -321,6 +321,10 @@ rde_main(int debug, int verbose)
 			rde_dump_runner();
 	}
 
+	/* do not clean up on shutdown on production, it takes ages. */
+	if (debug)
+		rde_shutdown();
+
 	/* close pipes */
 	if (ibuf_se) {
 		msgbuf_clear(&ibuf_se->w);
@@ -335,10 +339,6 @@ rde_main(int debug, int verbose)
 	msgbuf_clear(&ibuf_main->w);
 	close(ibuf_main->fd);
 	free(ibuf_main);
-
-	/* do not clean up on shutdown on production, it takes ages. */
-	if (debug)
-		rde_shutdown();
 
 	while ((mctx = LIST_FIRST(&rde_mrts)) != NULL) {
 		msgbuf_clear(&mctx->mrt.wbuf);
