@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.59 2017/05/28 12:51:34 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.60 2017/05/28 18:43:51 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -749,7 +749,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		    MIN(req->pr_local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
 	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
-		session->proto.pppoe.over_ifp = over_ifp;
+		session->proto.pppoe.over_ifidx = over_ifp->if_index;
 #endif
 #ifdef PIPEX_PPTP
 	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
