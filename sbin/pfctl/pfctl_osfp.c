@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.24 2017/05/27 19:38:38 akfaew Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.25 2017/05/28 07:17:53 akfaew Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -38,7 +38,8 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-#if 0
+/* #define OSFP_DEBUG	1 */
+#ifdef OSFP_DEBUG
 # define DEBUG(fp, str, v...) \
 	fprintf(stderr, "%s:%s:%s " str "\n", (fp)->fp_os.fp_class_nm, \
 	    (fp)->fp_os.fp_version_nm, (fp)->fp_os.fp_subtype_nm , ## v);
@@ -73,7 +74,9 @@ int			 get_tcpopts(const char *, int, const char *,
 			    pf_tcpopts_t *, int *, int *, int *, int *, int *,
 			    int *);
 void			 import_fingerprint(struct pf_osfp_ioctl *);
+#ifdef OSFP_DEBUG
 const char		*print_ioctl(struct pf_osfp_ioctl *);
+#endif
 void			 print_name_list(int, struct name_list *, const char *);
 void			 sort_name_list(int, struct name_list *);
 struct name_entry	*lookup_name_list(struct name_list *, const char *);
@@ -989,6 +992,7 @@ get_field(char **line, size_t *len, int *fieldlen)
 }
 
 
+#ifdef OSFP_DEBUG
 const char *
 print_ioctl(struct pf_osfp_ioctl *fp)
 {
@@ -1090,3 +1094,4 @@ print_ioctl(struct pf_osfp_ioctl *fp)
 
 	return (buf);
 }
+#endif
