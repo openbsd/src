@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.25 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.26 2017/05/28 12:51:34 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -428,7 +428,6 @@ Static void                  pipex_session_log (struct pipex_session *, int, con
 Static uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
 Static int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
 Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct mbuf_queue *);
-Static void                  pipex_ppp_dequeue (void);
 Static void                  pipex_timer_start (void);
 Static void                  pipex_timer_stop (void);
 Static void                  pipex_timer (void *);

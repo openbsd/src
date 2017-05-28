@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.498 2017/05/28 12:47:24 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.499 2017/05/28 12:51:33 yasuoka Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -959,6 +959,10 @@ if_netisr(void *unused)
 #if NPPPOE > 0
 		if (n & (1 << NETISR_PPPOE))
 			pppoeintr();
+#endif
+#ifdef PIPEX
+		if (n & (1 << NETISR_PIPEX))
+			pipexintr();
 #endif
 		t |= n;
 	}
