@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.144 2017/05/27 02:27:48 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.145 2017/05/28 20:20:00 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -925,7 +925,7 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 }
 
 /*
- * vm_create_check_mem_ranges:
+ * vm_create_check_mem_ranges
  *
  * Make sure that the guest physical memory ranges given by the user process
  * do not overlap and are in ascending order.
