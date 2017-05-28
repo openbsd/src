@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.304 2017/05/22 22:23:11 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.305 2017/05/28 09:25:51 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -564,26 +564,25 @@ found:
 				ip_freef(fp);
 	}
 
-	ip_local(m, hlen, ip->ip_p);
+	ip_deliver(&m, &hlen, ip->ip_p, AF_INET);
 	return;
 bad:
 	m_freem(m);
 }
 
 void
-ip_local(struct mbuf *m, int off, int nxt)
+ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	KERNEL_ASSERT_LOCKED();
 
 	/* pf might have modified stuff, might have to chksum */
-	in_proto_cksum_out(m, NULL);
+	in_proto_cksum_out(*mp, NULL);
 
 #ifdef IPSEC
 	if (ipsec_in_use) {
-		if (ipsec_local_check(m, off, nxt, AF_INET) != 0) {
+		if (ipsec_local_check(*mp, *offp, nxt, af) != 0) {
 			ipstat_inc(ips_cantforward);
-			m_freem(m);
-			return;
+			goto bad;
 		}
 	}
 	/* Otherwise, just fall through and deliver the packet */
@@ -593,7 +592,11 @@ ip_local(struct mbuf *m, int off, int nxt)
 	 * Switch out to protocol's input routine.
 	 */
 	ipstat_inc(ips_delivered);
-	(*inetsw[ip_protox[nxt]].pr_input)(&m, &off, nxt, AF_INET);
+	nxt = (*inetsw[ip_protox[nxt]].pr_input)(mp, offp, nxt, af);
+	KASSERT(nxt == IPPROTO_DONE);
+	return;
+ bad:
+	m_freem(*mp);
 }
 
 int

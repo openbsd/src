@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.153 2017/05/22 22:23:11 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.154 2017/05/28 09:25:51 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -583,7 +583,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
 #if NPF > 0
 	/*
-	 * The ip_local() shortcut avoids running through ip_input() with the
+	 * The ip_deliver() shortcut avoids running through ip_input() with the
 	 * same IP header twice.  Packets in transport mode have to be be
 	 * passed to pf explicitly.  In tunnel mode the inner IP header will
 	 * run through ip_input() and pf anyway.
@@ -609,11 +609,11 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	/* Call the appropriate IPsec transform callback. */
 	switch (af) {
 	case AF_INET:
-		ip_local(m, skip, prot);
+		ip_deliver(&m, &skip, prot, af);
 		return;
 #ifdef INET6
 	case AF_INET6:
-		ip6_local(m, skip, prot);
+		ip6_deliver(&m, &skip, prot, af);
 		return;
 #endif /* INET6 */
 	default:
