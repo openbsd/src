@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.60 2017/05/28 18:57:40 tedu Exp $
+#	$OpenBSD: airport,v 1.61 2017/05/28 19:15:18 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -949,7 +949,7 @@ LED:Pulkovo, St. Petersburg, Russia
 LEH:Le Havre, France
 LEI:Almeria, Spain
 LEJ:Leipzig/Halle, Germany
-LET:Gen Av Cob0, Leticia, Colombia
+LET:Gen Av Cobo, Leticia, Colombia
 LEX:Blue Grass Field, Lexington, Kentucky, USA
 LFT:Lafayette, Louisiana, USA
 LFW:Lome, Togo
