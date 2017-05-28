@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.120 2017/05/27 19:55:48 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.121 2017/05/28 08:38:10 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,7 +45,7 @@ _rc_usage() {
 }
 
 _rc_write_runfile() {
-	[ -d ${_RC_RUNDIR} ] || mkdir -p ${_RC_RUNDIR} && \
+	[ -d ${_RC_RUNDIR} ] || mkdir -p ${_RC_RUNDIR} &&
 		cat >${_RC_RUNFILE} <<EOF
 daemon_class=${daemon_class}
 daemon_flags=${daemon_flags}
@@ -148,8 +148,8 @@ _rc_parse_conf() {
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
 			_key=${_l%%*([[:blank:]])=*}
-			[[ $_key == *_@(flags|rtable|user|timeout) ]] || \
-				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] || \
+			[[ $_key == *_@(flags|rtable|user|timeout) ]] ||
+				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] ||
 				continue
 			[[ $_key == "" ]] && continue
 			_val=${_l##*([!=])=*([[:blank:]])}
@@ -188,8 +188,8 @@ rc_cmd() {
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
-	[ "$(id -u)" -eq 0 ] || \
-		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] || \
+	[ "$(id -u)" -eq 0 ] ||
+		[ X"${rc_usercheck}" != X"NO" -a X"$1" = "Xcheck" ] ||
 		_rc_err "$0: need root privileges"
 
 	if _rc_not_supported $1; then
@@ -236,7 +236,7 @@ rc_cmd() {
 		echo $_n "${INRC:+ }${_name}"
 		_rc_do rc_stop || _rc_exit failed
 		_rc_do _rc_wait stop || _rc_exit failed
-		if type rc_post >/dev/null; then \
+		if type rc_post >/dev/null; then
 			_rc_do rc_post || _rc_exit failed
 		fi
 		_rc_do _rc_rm_runfile
@@ -249,7 +249,7 @@ rc_cmd() {
 		_rc_exit ok
 		;;
 	restart)
-		$0 ${_RC_DEBUG} ${_RC_FORCE} stop && \
+		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
 			$0 ${_RC_DEBUG} ${_RC_FORCE} start
 		;;
 	*)
@@ -285,14 +285,14 @@ eval _rcuser=\${${_name}_user}
 eval _rctimeout=\${${_name}_timeout}
 
 # set default values; duplicated in rcctl(8)
-getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && \
-	daemon_class=${_name} || daemon_class=daemon
+getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && daemon_class=${_name} ||
+	daemon_class=daemon
 [ -z "${daemon_rtable}" ] && daemon_rtable=0
 [ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
 
 # use flags from the rc.d script if daemon is not enabled
-[ -n "${_RC_FORCE}" -o "$1" != "start" ] && [ X"${_rcflags}" = X"NO" ] && \
+[ -n "${_RC_FORCE}" -o "$1" != "start" ] && [ X"${_rcflags}" = X"NO" ] &&
 	unset _rcflags
 
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
@@ -310,5 +310,4 @@ readonly daemon_class
 unset _rcflags _rcrtable _rcuser _rctimeout
 pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
-[ "${daemon_rtable}" -eq 0 ] || \
-	rcexec="route -T ${daemon_rtable} exec ${rcexec}"
+[ "${daemon_rtable}" -eq 0 ] || rcexec="route -T ${daemon_rtable} exec ${rcexec}"
