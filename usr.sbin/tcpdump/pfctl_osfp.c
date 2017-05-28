@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.12 2017/05/28 07:40:12 akfaew Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.13 2017/05/28 10:06:12 akfaew Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -38,7 +38,8 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-#if 0
+/* #define OSFP_DEBUG	1 */
+#ifdef OSFP_DEBUG
 # define DEBUG(fp, str, v...) \
 	fprintf(stderr, "%s:%s:%s " str "\n", (fp)->fp_os.fp_class_nm, \
 	    (fp)->fp_os.fp_version_nm, (fp)->fp_os.fp_subtype_nm , ## v);
@@ -73,7 +74,9 @@ int			 get_tcpopts(const char *, int, const u_char *,
 			    pf_tcpopts_t *, int *, int *, int *, int *, int *,
 			    int *);
 void			 import_fingerprint(struct pf_osfp_ioctl *);
+#ifdef OSFP_DEBUG
 const char		*print_ioctl(struct pf_osfp_ioctl *);
+#endif
 void			 print_name_list(int, struct name_list *, const char *);
 void			 sort_name_list(int, struct name_list *);
 struct name_entry	*lookup_name_list(struct name_list *, const char *);
@@ -243,6 +246,7 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 	free(version);
 	free(subtype);
 	free(desc);
+	free(tcpopts);
 
 	if (opts & PF_OPT_VERBOSE2)
 		printf("Loaded %d passive OS fingerprints\n",
@@ -267,9 +271,9 @@ pfctl_flush_my_fingerprints(struct name_list *list)
 	while ((nm = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(nm, nm_entry);
 		pfctl_flush_my_fingerprints(&nm->nm_sublist);
-		fingerprint_count--;
 		free(nm);
 	}
+	fingerprint_count = 0;
 	class_count = 0;
 }
 
@@ -980,6 +984,7 @@ get_field(u_char **line, size_t *len, int *fieldlen)
 }
 
 
+#ifdef OSFP_DEBUG
 const char *
 print_ioctl(struct pf_osfp_ioctl *fp)
 {
@@ -1081,3 +1086,4 @@ print_ioctl(struct pf_osfp_ioctl *fp)
 
 	return (buf);
 }
+#endif
