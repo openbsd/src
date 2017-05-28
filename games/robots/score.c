@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.14 2016/01/04 17:33:24 mestre Exp $	*/
+/*	$OpenBSD: score.c,v 1.15 2017/05/28 20:34:33 tedu Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ score(int score_wfd)
 	for (scp = Top; scp < &Top[MAXSCORES]; scp++) {
 		if (scp->s_score < 0)
 			break;
-		move((scp - Top) + 1, 15);
+		move((scp - Top) + 1, 6);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score)
 			standout();
 		printw(" %d\t%d\t%-*s ", (scp - Top) + 1, scp->s_score,
