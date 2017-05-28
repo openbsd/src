@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.659 2017/05/15 11:23:25 mikeb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.660 2017/05/28 15:15:21 akfaew Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4596,7 +4596,7 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	rpool->proxy_port[0] = ntohs(rs->rdr->rport.a);
 
 	if (isrdr) {
-		if (!rs->rdr->rport.b && rs->rdr->rport.t && np->port != NULL) {
+		if (!rs->rdr->rport.b && rs->rdr->rport.t) {
 			rpool->proxy_port[1] = ntohs(rs->rdr->rport.a) +
 			    (ntohs(np->port[1]) - ntohs(np->port[0]));
 		} else
