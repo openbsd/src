@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.21 2017/05/28 16:36:53 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.22 2017/05/28 19:13:13 naddy Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -418,7 +418,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
-				fatal("%s: IMSG_CTL_SEND_SOLICITATION wrong "
+				fatal("%s: IMSG_CTL_SHOW_INTERFACE_INFO wrong "
 				    "length: %d", __func__, imsg.hdr.len);
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			engine_showinfo_ctl(&imsg, if_index);
@@ -924,7 +924,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
@@ -933,7 +933,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	}
 
 	if ((size_t)len < sizeof(struct nd_router_advert)) {
-		log_warn("received to short message (%ld) from %s", len, hbuf);
+		log_warn("received too short message (%ld) from %s", len, hbuf);
 		return;
 	}
 
@@ -1228,7 +1228,7 @@ debug_log_ra(struct imsg_ra *ra)
 	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
@@ -1237,7 +1237,7 @@ debug_log_ra(struct imsg_ra *ra)
 	}
 
 	if ((size_t)len < sizeof(struct nd_router_advert)) {
-		log_warn("received to short message (%ld) from %s", len, hbuf);
+		log_warn("received too short message (%ld) from %s", len, hbuf);
 		return;
 	}
 
@@ -1514,7 +1514,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 						    NI_NUMERICSERV)) {
 							log_warn("cannot get "
 							    "proposal IP");
-							strlcpy(hbuf, "uknown",
+							strlcpy(hbuf, "unknown",
 							    sizeof(hbuf));
 						}
 						log_debug("%s: iface %d: %s",
@@ -1595,7 +1595,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					    NI_NUMERICHOST | NI_NUMERICSERV)) {
 						log_warn("cannot get proposal "
 						    "IP");
-						strlcpy(hbuf, "uknown",
+						strlcpy(hbuf, "unknown",
 						    sizeof(hbuf));
 					}
 					log_debug("%s: iface %d: %s", __func__,
@@ -1693,7 +1693,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
@@ -1731,7 +1731,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
@@ -1908,7 +1908,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s [%s], priv: %s", __func__,
 	    addr_proposal->if_index, hbuf,
@@ -1997,7 +1997,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
 		log_warn("cannot get router IP");
-		strlcpy(hbuf, "uknown", sizeof(hbuf));
+		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s [%s]", __func__, dfr_proposal->if_index,
 	    hbuf, proposal_state_name[dfr_proposal->state]);
