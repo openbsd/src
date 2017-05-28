@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.183 2017/05/28 09:59:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.184 2017/05/28 11:03:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5684,6 +5684,10 @@ iwm_endscan_cb(void *arg)
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	/* Check if device was reset while scanning. */
+	if (ic->ic_state != IEEE80211_S_SCAN)
+		return;
+
 	sc->sc_flags &= ~IWM_FLAG_SCANNING;
 	ieee80211_end_scan(&ic->ic_if);
 }
@@ -6159,6 +6163,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	task_del(systq, &sc->ba_task);
 	task_del(systq, &sc->htprot_task);
 
+	sc->sc_flags &= ~IWM_FLAG_SCANNING;
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
 	timeout_del(&sc->sc_calib_to);
