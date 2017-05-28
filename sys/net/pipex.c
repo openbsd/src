@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.98 2017/05/28 18:42:00 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.99 2017/05/28 18:55:25 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1296,6 +1296,8 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found (id=%d)",
 		    __func__, pppoe.session_id));
 #endif
+	if (session && session->proto.pppoe.over_ifidx != m0->m_pkthdr.ph_ifidx)
+		session = NULL;
 
 	return (session);
 }
