@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.153 2017/01/25 03:21:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.154 2017/05/28 12:21:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -37,8 +37,6 @@
  */
 u_int16_t rib_size;
 struct rib_desc *ribs;
-
-LIST_HEAD(, rib_context) rib_dump_h = LIST_HEAD_INITIALIZER(rib_dump_h);
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
 int rib_compare(const struct rib_entry *, const struct rib_entry *);
@@ -136,24 +134,9 @@ rib_desc(struct rib *rib)
 void
 rib_free(struct rib *rib)
 {
-	struct rib_context *ctx, *next;
 	struct rib_desc *rd;
 	struct rib_entry *re, *xre;
 	struct prefix *p, *np;
-
-	/* abort pending rib_dumps */
-	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		if (ctx->ctx_rib == rib) {
-			re = ctx->ctx_re;
-			re_unlock(re);
-			LIST_REMOVE(ctx, entry);
-			if (ctx->ctx_done)
-				ctx->ctx_done(ctx->ctx_arg);
-			else
-				free(ctx);
-		}
-	}
 
 	for (re = RB_MIN(rib_tree, rib_tree(rib)); re != NULL; re = xre) {
 		xre = RB_NEXT(rib_tree, rib_tree(rib), re);
@@ -311,10 +294,9 @@ rib_dump_r(struct rib_context *ctx)
 	struct rib_entry	*re;
 	unsigned int		 i;
 
-	if (ctx->ctx_re == NULL) {
+	if (ctx->ctx_re == NULL)
 		re = RB_MIN(rib_tree, rib_tree(ctx->ctx_rib));
-		LIST_INSERT_HEAD(&rib_dump_h, ctx, entry);
-	} else
+	else
 		re = rib_restart(ctx);
 
 	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
@@ -322,7 +304,7 @@ rib_dump_r(struct rib_context *ctx)
 		    ctx->ctx_aid != re->prefix->aid)
 			continue;
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
-		    re_is_locked(re)) {
+		    !re_is_locked(re)) {
 			/* store and lock last element */
 			ctx->ctx_re = re;
 			re_lock(re);
@@ -331,7 +313,6 @@ rib_dump_r(struct rib_context *ctx)
 		ctx->ctx_upcall(re, ctx->ctx_arg);
 	}
 
-	LIST_REMOVE(ctx, entry);
 	if (ctx->ctx_done)
 		ctx->ctx_done(ctx->ctx_arg);
 	else
@@ -355,23 +336,6 @@ rib_restart(struct rib_context *ctx)
 		rib_remove(ctx->ctx_re);
 	ctx->ctx_re = NULL;
 	return (re);
-}
-
-void
-rib_dump_runner(void)
-{
-	struct rib_context	*ctx, *next;
-
-	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		rib_dump_r(ctx);
-	}
-}
-
-int
-rib_dump_pending(void)
-{
-	return (!LIST_EMPTY(&rib_dump_h));
 }
 
 /* used to bump correct prefix counters */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.361 2017/05/27 10:33:15 phessler Exp $ */
+/*	$OpenBSD: session.c,v 1.362 2017/05/28 12:21:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -195,7 +195,6 @@ session_main(int debug, int verbose)
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
 	u_int			 new_cnt;
-	u_int32_t		 ctl_queued;
 	struct passwd		*pw;
 	struct peer		*p, **peer_l = NULL, *last, *next;
 	struct mrt		*m, *xm, **mrt_l = NULL;
@@ -356,17 +355,7 @@ session_main(int debug, int verbose)
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
-
-		ctl_queued = 0;
-		TAILQ_FOREACH(ctl_conn, &ctl_conns, entry)
-			ctl_queued += ctl_conn->ibuf.w.queued;
-
-		/*
-		 * Do not act as unlimited buffer. Don't read in more
-		 * messages if the ctl sockets are getting full.
-		 */
-		if (ctl_queued < SESSION_CTL_QUEUE_MAX)
-			set_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl);
+		set_pollfd(&pfd[PFD_PIPE_ROUTE_CTL], ibuf_rde_ctl);
 
 		if (pauseaccept == 0) {
 			pfd[PFD_SOCK_CTL].fd = csock;
@@ -1389,6 +1378,13 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 	}
 
 	ibuf_close(&p->wbuf, msg->buf);
+	if (!p->throttled && p->wbuf.queued > SESS_MSG_HIGH_MARK) {
+		if (imsg_compose(ibuf_rde, IMSG_XOFF, p->conf.id, 0, -1,
+		    NULL, 0) == -1)
+			log_peer_warn(&p->conf, "imsg_compose XOFF");
+		p->throttled = 1;
+	}
+
 	free(msg);
 	return (0);
 }
@@ -1773,6 +1769,12 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 				log_peer_warn(&p->conf, "write error");
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return (1);
+		}
+		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
+			if (imsg_compose(ibuf_rde, IMSG_XON, p->conf.id, 0, -1,
+			    NULL, 0) == -1)
+				log_peer_warn(&p->conf, "imsg_compose XON");
+			p->throttled = 0;
 		}
 		if (!(pfd->revents & POLLIN))
 			return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.122 2017/01/13 18:59:12 phessler Exp $ */
+/*	$OpenBSD: session.h,v 1.123 2017/05/28 12:21:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -142,6 +142,7 @@ struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
 	struct imsgbuf		ibuf;
 	int			restricted;
+	int			throttled;
 };
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
@@ -225,6 +226,7 @@ struct peer {
 	u_int8_t		 depend_ok;
 	u_int8_t		 demoted;
 	u_int8_t		 passive;
+	u_int8_t		 throttled;
 };
 
 extern struct peer	*peers;

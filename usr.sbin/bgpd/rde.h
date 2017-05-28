@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.160 2017/01/25 03:21:55 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.161 2017/05/28 12:21:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -81,6 +81,7 @@ struct rde_peer {
 	u_int16_t			 mrt_idx;
 	u_int8_t			 reconf_out;	/* out filter changed */
 	u_int8_t			 reconf_rib;	/* rib changed */
+	u_int8_t			 throttled;
 };
 
 #define AS_SET			1
@@ -267,7 +268,6 @@ struct pt_entry_vpn4 {
 };
 
 struct rib_context {
-	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
 	struct rib			*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
@@ -436,8 +436,6 @@ struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
 		     void *, u_int8_t);
 void		 rib_dump_r(struct rib_context *);
-void		 rib_dump_runner(void);
-int		 rib_dump_pending(void);
 
 static inline struct rib *
 re_rib(struct rib_entry *re)

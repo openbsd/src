@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.87 2017/02/13 14:48:44 phessler Exp $ */
+/*	$OpenBSD: control.c,v 1.88 2017/05/28 12:21:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,11 +213,16 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		return (0);
 	}
 
-	if (pfd->revents & POLLOUT)
+	if (pfd->revents & POLLOUT) {
 		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN) {
 			*ctl_cnt -= control_close(pfd->fd);
 			return (1);
 		}
+		if (c->throttled && c->ibuf.w.queued < CTL_MSG_LOW_MARK) {
+			if (imsg_ctl_rde(IMSG_XON, c->ibuf.pid, NULL, 0) != -1)
+				c->throttled = 0;
+		}
+	}
 
 	if (!(pfd->revents & POLLIN))
 		return (0);
@@ -521,6 +526,11 @@ control_imsg_relay(struct imsg *imsg)
 
 	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
 		return (0);
+
+	if (!c->throttled && c->ibuf.w.queued > CTL_MSG_HIGH_MARK) {
+		if (imsg_ctl_rde(IMSG_XOFF, imsg->hdr.pid, NULL, 0) != -1)
+			c->throttled = 1;
+	}
 
 	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid, -1,
 	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
