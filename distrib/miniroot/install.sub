@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1010 2017/05/27 09:05:18 zhuk Exp $
+#	$OpenBSD: install.sub,v 1.1011 2017/05/28 09:24:56 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -567,13 +567,12 @@ log_answers() {
 
 # Fetch response file for autoinstall.
 get_responsefile() {
-	local _rf _if _mode _lf _hn _path _aifile
+	local _rf _if _lf _hn _path _aifile
 	export AI_MAC= AI_MODE= AI_SERVER=
 
-	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf _mode=upgrade
-	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf _mode=install
-	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$_mode.conf &&
-		AI_MODE=$_mode && return
+	[[ -f /auto_upgrade.conf ]] && _rf=/auto_upgrade.conf AI_MODE=upgrade
+	[[ -f /auto_install.conf ]] && _rf=/auto_install.conf AI_MODE=install
+	[[ -f $_rf ]] && cp $_rf /tmp/ai/ai.$AI_MODE.conf && return
 
 	for _if in ''; do
 		[[ -x /sbin/dhclient ]] || break
@@ -600,7 +599,7 @@ get_responsefile() {
 		_aifile=$(lease_value $_lf filename bootfile-name)
 		[[ $_aifile == ?(*/)auto_@(install|upgrade) ]] || _aifile=
 		_path=${_aifile%auto_@(install|upgrade)}
-		_mode=${_aifile##*?(/)auto_}
+		AI_MODE=${_aifile##*?(/)auto_}
 
 		# Extract installer server ip address from lease file.
 		AI_SERVER=$(lease_value $_lf \
@@ -614,21 +613,20 @@ get_responsefile() {
 	# Fetch response file if server and mode are known, otherwise tell which
 	# one was missing. Try to fetch mac-mode.conf, then hostname-mode.conf,
 	# and finally mode.conf.
-	if [[ -n $AI_SERVER && -n $_mode ]]; then
+	if [[ -n $AI_SERVER && -n $AI_MODE ]]; then
 		AI_MAC=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
-		for _rf in {$AI_MAC-,${_hn:+$_hn-,}}$_mode; do
+		for _rf in {$AI_MAC-,${_hn:+$_hn-,}}$AI_MODE; do
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if unpriv ftp -Vo - "$_url" \
-				>"/tmp/ai/ai.$_mode.conf" 2>/dev/null; then
-				AI_MODE=$_mode
+				>"/tmp/ai/ai.$AI_MODE.conf" 2>/dev/null; then
 				ifconfig $_if delete down 2>/dev/null
 				return 0
 			fi
 		done
 	else
 		[[ -z $AI_SERVER ]] && echo "Could not determine auto server."
-		[[ -z $_mode ]] && echo "Could not determine auto mode."
+		[[ -z $AI_MODE ]] && echo "Could not determine auto mode."
 	fi
 
 	# Ask for url or local path to response file. Provide a default url if
@@ -640,19 +638,20 @@ get_responsefile() {
 	done
 
 	# Ask for the installer mode only if auto-detection failed.
-	_mode=$(echo "$_rf" | sed -En 's/^.*(install|upgrade).conf$/\1/p')
-	while [[ -z $_mode ]]; do
+	AI_MODE=$(echo "$_rf" | sed -En 's/^.*(install|upgrade).conf$/\1/p')
+	while [[ -z $AI_MODE ]]; do
 		ask "(I)nstall or (U)pgrade?"
-		[[ $resp == [iI]* ]] && _mode=install
-		[[ $resp == [uU]* ]] && _mode=upgrade
+		[[ $resp == [iI]* ]] && AI_MODE=install
+		[[ $resp == [uU]* ]] && AI_MODE=upgrade
 	done
 
 	echo "Fetching $_rf"
 	[[ -f $_rf ]] && _rf="file://$_rf"
-	unpriv ftp -Vo - "$_rf" >"/tmp/ai/ai.$_mode.conf" 2>/dev/null &&
-		 AI_MODE=$_mode
-	ifconfig $_if delete down 2>/dev/null
-	[[ -n $AI_MODE ]]
+	if unpriv ftp -Vo - "$_rf" >"/tmp/ai/ai.$AI_MODE.conf" 2>/dev/null; then
+		ifconfig $_if delete down 2>/dev/null
+		return 0
+	fi
+	return 1
 }
 
 # Search question in $RESPFILE, return answer in $resp.
