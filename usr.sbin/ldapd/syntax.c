@@ -1,4 +1,4 @@
-/*	$OpenBSD: syntax.c,v 1.4 2017/04/13 14:48:31 deraadt Exp $ */
+/*	$OpenBSD: syntax.c,v 1.5 2017/05/28 15:48:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -287,9 +287,9 @@ syntax_is_time(struct schema *schema, char *value, size_t len, int gen)
 
 	if (!gen || isdigit((unsigned char)*p)) {
 		CHECK_RANGE(0, 59);		/* minute */
-		if (!gen && isdigit((unsigned char)*p))
+		if (isdigit((unsigned char)*p))
 			CHECK_RANGE(0, 59+gen);	/* second or leap-second */
-		if (*p == '\0')
+		if (!gen && *p == '\0')
 			return 1;
 	}
 						/* fraction */
