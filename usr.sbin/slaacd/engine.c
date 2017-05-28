@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2017/05/28 19:57:38 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.24 2017/05/28 20:40:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -241,7 +241,6 @@ void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
-void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
 struct address_proposal	*find_address_proposal_by_id(struct slaacd_iface *,
@@ -1763,107 +1762,6 @@ configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
 	engine_imsg_compose_main(IMSG_CONFIGURE_DFR, 0, &dfr, sizeof(dfr));
 }
 
-#if 0
-void
-update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
-{
-
-	struct radv		*old_ra;
-	struct radv_prefix	*prefix;
-	struct radv_rdns	*rdns;
-	struct radv_dnssl	*dnssl;
-	struct imsg_proposal	 proposal;
-	struct timeval		 tv;
-	size_t			 len;
-	char			*p;
-
-	old_ra = find_ra(iface, &ra->from);
-
-	if (old_ra == NULL)
-		LIST_INSERT_HEAD(&iface->radvs, ra, entries);
-	else {
-		LIST_REPLACE(old_ra, ra, entries);
-		free_ra(old_ra);
-	}
-
-	/*
-	 * if we haven't gotten an adv the maximum amount of seconds we
-	 * would wait if this were a startup before the previous adv
-	 * expires start the probe process
-	 */
-	tv.tv_sec = ra->min_lifetime - MAX_RTR_SOLICITATIONS *
-	    (RTR_SOLICITATION_INTERVAL + 1);
-	tv.tv_usec = 0;
-
-	log_debug("%s: iface %d: %lld s", __func__, iface->if_index, tv.tv_sec);
-
-	evtimer_set(&ra->timer, ra_timeout, iface);
-	evtimer_add(&ra->timer, &tv);
-
-	/*
-	 * XXX we need to figure out what actually changed in the RA and
-	 * adjust our proposal accordingly
-	 */
-
-	memset(&proposal, 0, sizeof(proposal));
-
-	proposal.if_index = iface->if_index;
-
-	proposal.rdns.sr_family = AF_INET6;
-	rdns = LIST_FIRST(&ra->rdns_servers);
-	p = proposal.rdns.sr_dns;
-	while (rdns != NULL && proposal.rdns.sr_len + sizeof(rdns->rdns) <=
-	    RTDNS_LEN) {
-		/* XXX lifetime */
-		memcpy(p, &rdns->rdns, sizeof(rdns->rdns));
-		p += sizeof(rdns->rdns);
-		proposal.rdns.sr_len += sizeof(rdns->rdns);
-		rdns = LIST_NEXT(rdns, entries);
-	}
-
-	if (proposal.rdns.sr_len > 0)
-		proposal.rdns.sr_len += offsetof(struct sockaddr_rtdns, sr_dns);
-
-	proposal.dnssl.sr_family = AF_INET6;
-	dnssl = LIST_FIRST(&ra->dnssls);
-	while(dnssl != NULL) {
-		len = strlcat(proposal.dnssl.sr_search, dnssl->dnssl,
-		    RTSEARCH_LEN);
-		if (len >= RTSEARCH_LEN) {
-			log_warn("search too long");
-			break;
-		}
-		proposal.dnssl.sr_len = len + 1;
-		dnssl = LIST_NEXT(dnssl, entries);
-		if (dnssl != NULL) {
-			len = strlcat(proposal.dnssl.sr_search, " ",
-			    RTSEARCH_LEN);
-			if (len >= RTSEARCH_LEN) {
-				log_warn("search too long");
-				break;
-			}
-			proposal.dnssl.sr_len = len + 1;
-		}
-	}
-	if (proposal.dnssl.sr_len > 0)
-		proposal.dnssl.sr_len += offsetof(struct sockaddr_rtsearch,
-		    sr_search);
-
-	LIST_FOREACH(prefix, &ra->prefixes, entries) {
-		proposal.addr = prefix->addr;
-		proposal.mask = prefix->mask;
-		proposal.gateway = ra->from;
-
-		send_proposal(&proposal);
-
-		if (iface->autoconfprivacy) {
-			proposal.addr = prefix->priv_addr;
-			send_proposal(&proposal);
-		}
-	}
-}
-#endif
-
 void
 send_proposal(struct imsg_proposal *proposal)
 {
@@ -2064,14 +1962,6 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 		log_debug("%s: unhandled state: %s", __func__,
 		    proposal_state_name[dfr_proposal->state]);
 	}
-}
-
-void
-ra_timeout(int fd, short events, void *arg)
-{
-	struct slaacd_iface	*iface = (struct slaacd_iface *)arg;
-
-	start_probe(iface);
 }
 
 void
