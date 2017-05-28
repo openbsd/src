@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.2 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.3 2017/05/28 20:14:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,6 +58,22 @@ log_fmt_peer(const struct peer_config *peer)
 }
 
 void
+log_peer_info(const struct peer_config *peer, const char *emsg, ...)
+{
+	char	*p, *nfmt;
+	va_list	 ap;
+
+	p = log_fmt_peer(peer);
+	if (asprintf(&nfmt, "%s: %s", p, emsg) == -1)
+		fatal(NULL);
+	va_start(ap, emsg);
+	vlog(LOG_INFO, nfmt, ap);
+	va_end(ap);
+	free(p);
+	free(nfmt);
+}
+
+void
 log_peer_warn(const struct peer_config *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
@@ -73,7 +89,7 @@ log_peer_warn(const struct peer_config *peer, const char *emsg, ...)
 			fatal(NULL);
 	}
 	va_start(ap, emsg);
-	vlog(LOG_CRIT, nfmt, ap);
+	vlog(LOG_ERR, nfmt, ap);
 	va_end(ap);
 	free(p);
 	free(nfmt);
@@ -89,7 +105,7 @@ log_peer_warnx(const struct peer_config *peer, const char *emsg, ...)
 	if (asprintf(&nfmt, "%s: %s", p, emsg) == -1)
 		fatal(NULL);
 	va_start(ap, emsg);
-	vlog(LOG_CRIT, nfmt, ap);
+	vlog(LOG_ERR, nfmt, ap);
 	va_end(ap);
 	free(p);
 	free(nfmt);
@@ -161,21 +177,21 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 			suberrname = suberr_fsm_names[subcode];
 		break;
 	default:
-		logit(LOG_CRIT, "%s: %s notification, unknown errcode "
+		logit(LOG_ERR, "%s: %s notification, unknown errcode "
 		    "%u, subcode %u", p, dir, errcode, subcode);
 		free(p);
 		return;
 	}
 
 	if (uk)
-		logit(LOG_CRIT, "%s: %s notification: %s, unknown subcode %u",
+		logit(LOG_ERR, "%s: %s notification: %s, unknown subcode %u",
 		    p, dir, errnames[errcode], subcode);
 	else {
 		if (suberrname == NULL)
-			logit(LOG_CRIT, "%s: %s notification: %s", p,
+			logit(LOG_ERR, "%s: %s notification: %s", p,
 			    dir, errnames[errcode]);
 		else
-			logit(LOG_CRIT, "%s: %s notification: %s, %s",
+			logit(LOG_ERR, "%s: %s notification: %s, %s",
 			    p, dir, errnames[errcode], suberrname);
 	}
 	free(p);

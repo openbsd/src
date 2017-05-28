@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.306 2017/05/28 15:16:33 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.307 2017/05/28 20:14:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1023,6 +1023,8 @@ int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 
 /* log.c */
+void		 log_peer_info(const struct peer_config *, const char *, ...)
+			__attribute__((__format__ (printf, 2, 3)));
 void		 log_peer_warn(const struct peer_config *, const char *, ...)
 			__attribute__((__format__ (printf, 2, 3)));
 void		 log_peer_warnx(const struct peer_config *, const char *, ...)
