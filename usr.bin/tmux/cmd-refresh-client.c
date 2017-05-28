@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.25 2017/05/10 16:48:36 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.26 2017/05/28 19:00:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -67,10 +67,9 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "not a control client");
 			return (CMD_RETURN_ERROR);
 		}
-		if (tty_set_size(&c->tty, w, h)) {
-			c->flags |= CLIENT_SIZECHANGED;
-			recalculate_sizes();
-		}
+		tty_set_size(&c->tty, w, h);
+		c->flags |= CLIENT_SIZECHANGED;
+		recalculate_sizes();
 	} else if (args_has(args, 'S')) {
 		c->flags |= CLIENT_STATUSFORCE;
 		server_status_client(c);
