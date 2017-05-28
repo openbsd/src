@@ -168,6 +168,7 @@ testseq "abcd\00332X" " $ abcd\b\b\bd  \b\b\b\r\nad"
 # x: Delete character.
 # |: Move to column.
 testseq "abcd\00332|2x" " $ abcd\b\b\bd  \b\b\b\r\nad"
+testseq "\0303\0266a\0033xx" " $ \0303\0266a\b \b\b  \b\b\r"
 
 # Y: Yank to end of line.
 testseq "abcd\0033hYp" " $ abcd\b\bccdd\b\b\r\nabccdd"
