@@ -1,4 +1,4 @@
-/*	$OpenBSD: worker.c,v 1.2 2017/01/13 18:00:10 florian Exp $	*/
+/*	$OpenBSD: worker.c,v 1.3 2017/05/28 10:01:52 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ check_tos(struct ip *ip)
 }
 
 int
-wait_for_reply(int sock, struct msghdr *mhdr)
+wait_for_reply(int sock, struct msghdr *mhdr, int curwaittime)
 {
 	struct pollfd pfd[1];
 	int cc = 0;
@@ -249,35 +249,35 @@ dump_packet(void)
 }
 
 void
-build_probe4(int seq, u_int8_t ttl, int iflag)
+build_probe4(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag)
 {
 	struct ip *ip = (struct ip *)outpacket;
 	u_char *p = (u_char *)(ip + 1);
-	struct udphdr *up = (struct udphdr *)(p + lsrrlen);
-	struct icmp *icmpp = (struct icmp *)(p + lsrrlen);
+	struct udphdr *up = (struct udphdr *)(p + conf->lsrrlen);
+	struct icmp *icmpp = (struct icmp *)(p + conf->lsrrlen);
 	struct packetdata *op;
 	struct timeval tv;
 
 	ip->ip_len = htons(datalen);
 	ip->ip_ttl = ttl;
-	ip->ip_id = htons(ident+seq);
+	ip->ip_id = htons(conf->ident+seq);
 
-	switch (proto) {
+	switch (conf->proto) {
 	case IPPROTO_ICMP:
 		icmpp->icmp_type = icmp_type;
 		icmpp->icmp_code = ICMP_CODE;
 		icmpp->icmp_seq = htons(seq);
-		icmpp->icmp_id = htons(ident);
+		icmpp->icmp_id = htons(conf->ident);
 		op = (struct packetdata *)(icmpp + 1);
 		break;
 	case IPPROTO_UDP:
-		up->uh_sport = htons(ident);
+		up->uh_sport = htons(conf->ident);
 		if (iflag)
-			up->uh_dport = htons(port+seq);
+			up->uh_dport = htons(conf->port+seq);
 		else
-			up->uh_dport = htons(port);
+			up->uh_dport = htons(conf->port);
 		up->uh_ulen = htons((u_short)(datalen - sizeof(struct ip) -
-		    lsrrlen));
+		    conf->lsrrlen));
 		up->uh_sum = 0;
 		op = (struct packetdata *)(up + 1);
 		break;
@@ -305,17 +305,18 @@ build_probe4(int seq, u_int8_t ttl, int iflag)
 	op->sec = htonl(tv.tv_sec + sec_perturb);
 	op->usec = htonl((tv.tv_usec + usec_perturb) % 1000000);
 
-	if (proto == IPPROTO_ICMP && icmp_type == ICMP_ECHO) {
+	if (conf->proto == IPPROTO_ICMP && icmp_type == ICMP_ECHO) {
 		icmpp->icmp_cksum = 0;
 		icmpp->icmp_cksum = in_cksum((u_short *)icmpp,
-		    datalen - sizeof(struct ip) - lsrrlen);
+		    datalen - sizeof(struct ip) - conf->lsrrlen);
 		if (icmpp->icmp_cksum == 0)
 			icmpp->icmp_cksum = 0xffff;
 	}
 }
 
 void
-build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
+build_probe6(struct tr_conf *conf, int seq, u_int8_t hops, int iflag,
+    struct sockaddr *to)
 {
 	struct timeval tv;
 	struct packetdata *op;
@@ -327,18 +328,18 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 		warn("setsockopt IPV6_UNICAST_HOPS");
 
 	if (iflag)
-		((struct sockaddr_in6*)to)->sin6_port = htons(port + seq);
+		((struct sockaddr_in6*)to)->sin6_port = htons(conf->port + seq);
 	else
-		((struct sockaddr_in6*)to)->sin6_port = htons(port);
+		((struct sockaddr_in6*)to)->sin6_port = htons(conf->port);
 	gettime(&tv);
 
-	if (proto == IPPROTO_ICMP) {
+	if (conf->proto == IPPROTO_ICMP) {
 		struct icmp6_hdr *icp = (struct icmp6_hdr *)outpacket;
 
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
 		icp->icmp6_code = 0;
 		icp->icmp6_cksum = 0;
-		icp->icmp6_id = ident;
+		icp->icmp6_id = conf->ident;
 		icp->icmp6_seq = htons(seq);
 		op = (struct packetdata *)(outpacket +
 		    sizeof(struct icmp6_hdr));
@@ -351,23 +352,24 @@ build_probe6(int seq, u_int8_t hops, int iflag, struct sockaddr *to)
 }
 
 void
-send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr *to)
+send_probe(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag,
+	struct sockaddr *to)
 {
 	int i;
 
 	switch (to->sa_family) {
 	case AF_INET:
-		build_probe4(seq, ttl, iflag);
+		build_probe4(conf, seq, ttl, iflag);
 		break;
 	case AF_INET6:
-		build_probe6(seq, ttl, iflag, to);
+		build_probe6(conf, seq, ttl, iflag, to);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", to->sa_family);
 		break;
 	}
 
-	if (dump)
+	if (conf->dump)
 		dump_packet();
 
 	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
@@ -424,14 +426,15 @@ pr_type(u_int8_t t)
 }
 
 int
-packet_ok(int af, struct msghdr *mhdr, int cc, int seq, int iflag)
+packet_ok(struct tr_conf *conf, int af, struct msghdr *mhdr, int cc, int seq,
+    int iflag)
 {
 	switch (af) {
 	case AF_INET:
-		return packet_ok4(mhdr, cc, seq, iflag);
+		return packet_ok4(conf, mhdr, cc, seq, iflag);
 		break;
 	case AF_INET6:
-		return packet_ok6(mhdr, cc, seq, iflag);
+		return packet_ok6(conf, mhdr, cc, seq, iflag);
 		break;
 	default:
 		errx(1, "unsupported AF: %d", af);
@@ -440,7 +443,7 @@ packet_ok(int af, struct msghdr *mhdr, int cc, int seq, int iflag)
 }
 
 int
-packet_ok4(struct msghdr *mhdr, int cc,int seq, int iflag)
+packet_ok4(struct tr_conf *conf, struct msghdr *mhdr, int cc,int seq, int iflag)
 {
 	struct sockaddr_in *from = (struct sockaddr_in *)mhdr->msg_name;
 	struct icmp *icp;
@@ -453,7 +456,7 @@ packet_ok4(struct msghdr *mhdr, int cc,int seq, int iflag)
 	ip = (struct ip *) buf;
 	hlen = ip->ip_hl << 2;
 	if (cc < hlen + ICMP_MINLEN) {
-		if (verbose)
+		if (conf->verbose)
 			printf("packet too short (%d bytes) from %s\n", cc,
 			    inet_ntoa(from->sin_addr));
 		return (0);
@@ -471,38 +474,39 @@ packet_ok4(struct msghdr *mhdr, int cc,int seq, int iflag)
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
 
-		switch (proto) {
+		switch (conf->proto) {
 		case IPPROTO_ICMP:
 			if (icmp_type == ICMP_ECHO &&
 			    type == ICMP_ECHOREPLY &&
-			    icp->icmp_id == htons(ident) &&
+			    icp->icmp_id == htons(conf->ident) &&
 			    icp->icmp_seq == htons(seq))
 				return (-2); /* we got there */
 
 			icmpp = (struct icmp *)((u_char *)hip + hlen);
 			if (hlen + 8 <= cc && hip->ip_p == IPPROTO_ICMP &&
-			    icmpp->icmp_id == htons(ident) &&
+			    icmpp->icmp_id == htons(conf->ident) &&
 			    icmpp->icmp_seq == htons(seq))
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 			break;
 
 		case IPPROTO_UDP:
 			up = (struct udphdr *)((u_char *)hip + hlen);
-			if (hlen + 12 <= cc && hip->ip_p == proto &&
-			    up->uh_sport == htons(ident) &&
-			    ((iflag && up->uh_dport == htons(port + seq)) ||
-			    (!iflag && up->uh_dport == htons(port))))
+			if (hlen + 12 <= cc && hip->ip_p == conf->proto &&
+			    up->uh_sport == htons(conf->ident) &&
+			    ((iflag && up->uh_dport == htons(conf->port +
+			    seq)) ||
+			    (!iflag && up->uh_dport == htons(conf->port))))
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 			break;
 		default:
 			/* this is some odd, user specified proto,
 			 * how do we check it?
 			 */
-			if (hip->ip_p == proto)
+			if (hip->ip_p == conf->proto)
 				return (type == ICMP_TIMXCEED? -1 : code + 1);
 		}
 	}
-	if (verbose) {
+	if (conf->verbose) {
 		int i;
 		in_addr_t *lp = (in_addr_t *)&icp->icmp_ip;
 
@@ -517,7 +521,8 @@ packet_ok4(struct msghdr *mhdr, int cc,int seq, int iflag)
 }
 
 int
-packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
+packet_ok6(struct tr_conf *conf, struct msghdr *mhdr, int cc, int seq,
+    int iflag)
 {
 	struct icmp6_hdr *icp;
 	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
@@ -526,10 +531,10 @@ packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 	struct cmsghdr *cm;
 	int *hlimp;
 	char hbuf[NI_MAXHOST];
-	int useicmp = (proto == IPPROTO_ICMP);
+	int useicmp = (conf->proto == IPPROTO_ICMP);
 
 	if (cc < sizeof(struct icmp6_hdr)) {
-		if (verbose) {
+		if (conf->verbose) {
 			if (getnameinfo((struct sockaddr *)from, from->sin6_len,
 			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 				strlcpy(hbuf, "invalid", sizeof(hbuf));
@@ -568,26 +573,27 @@ packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 		struct udphdr *up;
 
 		hip = (struct ip6_hdr *)(icp + 1);
-		if ((up = get_udphdr(hip, (u_char *)(buf + cc))) == NULL) {
-			if (verbose)
+		if ((up = get_udphdr(conf, hip, (u_char *)(buf + cc))) ==
+		    NULL) {
+			if (conf->verbose)
 				warnx("failed to get upper layer header");
 			return(0);
 		}
 		if (useicmp &&
-		    ((struct icmp6_hdr *)up)->icmp6_id == ident &&
+		    ((struct icmp6_hdr *)up)->icmp6_id == conf->ident &&
 		    ((struct icmp6_hdr *)up)->icmp6_seq == htons(seq))
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
 		else if (!useicmp &&
 		    up->uh_sport == htons(srcport) &&
-		    ((iflag && up->uh_dport == htons(port + seq)) ||
-		    (!iflag && up->uh_dport == htons(port))))
+		    ((iflag && up->uh_dport == htons(conf->port + seq)) ||
+		    (!iflag && up->uh_dport == htons(conf->port))))
 			return (type == ICMP6_TIME_EXCEEDED ? -1 : code + 1);
 	} else if (useicmp && type == ICMP6_ECHO_REPLY) {
-		if (icp->icmp6_id == ident &&
+		if (icp->icmp6_id == conf->ident &&
 		    icp->icmp6_seq == htons(seq))
 			return (ICMP6_DST_UNREACH_NOPORT + 1);
 	}
-	if (verbose) {
+	if (conf->verbose) {
 		char sbuf[NI_MAXHOST], dbuf[INET6_ADDRSTRLEN];
 		u_int8_t *p;
 		int i;
@@ -618,21 +624,21 @@ packet_ok6(struct msghdr *mhdr, int cc, int seq, int iflag)
 }
 
 void
-print(struct sockaddr *from, int cc, const char *to)
+print(struct tr_conf *conf, struct sockaddr *from, int cc, const char *to)
 {
 	char hbuf[NI_MAXHOST];
 	if (getnameinfo(from, from->sa_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
 		strlcpy(hbuf, "invalid", sizeof(hbuf));
-	if (nflag)
+	if (conf->nflag)
 		printf(" %s", hbuf);
 	else
 		printf(" %s (%s)", inetname(from), hbuf);
 
-	if (Aflag)
+	if (conf->Aflag)
 		print_asn((struct sockaddr_storage *)from);
 
-	if (verbose)
+	if (conf->verbose)
 		printf(" %d bytes to %s", cc, to);
 }
 
@@ -640,11 +646,11 @@ print(struct sockaddr *from, int cc, const char *to)
  * Increment pointer until find the UDP or ICMP header.
  */
 struct udphdr *
-get_udphdr(struct ip6_hdr *ip6, u_char *lim)
+get_udphdr(struct tr_conf *conf, struct ip6_hdr *ip6, u_char *lim)
 {
 	u_char *cp = (u_char *)ip6, nh;
 	int hlen;
-	int useicmp = (proto == IPPROTO_ICMP);
+	int useicmp = (conf->proto == IPPROTO_ICMP);
 
 	if (cp + sizeof(*ip6) >= lim)
 		return(NULL);

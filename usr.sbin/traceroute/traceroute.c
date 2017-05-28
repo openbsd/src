@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.152 2017/05/28 10:00:00 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.153 2017/05/28 10:01:52 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -258,9 +258,6 @@
 
 #include "traceroute.h"
 
-struct in_addr	gateway[MAX_LSRR + 1];
-
-int	 lsrrlen = 0;
 int32_t	 sec_perturb;
 int32_t	 usec_perturb;
 
@@ -277,16 +274,7 @@ struct in6_pktinfo *rcvpktinfo;
 
 char	*hostname;
 
-u_short		ident;
 u_int16_t	srcport;
-u_int16_t	port = 32768+666;/* start udp dest port # for probe packets */
-u_char		proto = IPPROTO_UDP;
-
-int		verbose;
-int		curwaittime;	/* time left to wait for response */
-int		nflag;		/* print addresses numerically */
-int		dump;
-int		Aflag;		/* lookup ASN */
 int		last_tos;
 
 void	usage(int);
@@ -297,9 +285,16 @@ int
 main(int argc, char *argv[])
 {
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
-	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
-	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0, error, packetlen;
-	int rcvcmsglen, rcvsock4, rcvsock6, sndsock4, sndsock6, waittime;
+
+	int ch, i;
+	int on = 1;
+	int probe;
+	int seq = 0;
+	int error;
+	int packetlen;
+	int rcvcmsglen;
+	int curwaittime;
+	int rcvsock4, rcvsock6, sndsock4, sndsock6;
 	int v4sock_errno, v6sock_errno;
 	struct addrinfo hints, *res;
 	struct passwd *pw;
@@ -312,27 +307,36 @@ main(int argc, char *argv[])
 	u_int32_t tmprnd;
 	struct ip *ip = NULL;
 	u_int8_t ttl;
-	char *ep, hbuf[NI_MAXHOST], *dest, *source = NULL;
+	char hbuf[NI_MAXHOST];
+	char *dest;
 	const char *errstr;
 	long l;
 	uid_t ouid, uid;
 	gid_t gid;
-	u_int rtableid = 0;
+
 	socklen_t len;
 
 	int	headerlen;	/* How long packet's header is */
 
-	int		nprobes = 3;
-	u_int8_t	max_ttl = IPDEFTTL;
-	u_int8_t	first_ttl = 1;
-
-	int	options = 0;	/* socket options */
 	int	xflag = 0;	/* show ICMP extension header */
-	int	tflag = 0;	/* tos flag was set */
 	int	v6flag = 0;
 
 	struct msghdr	rcvmhdr;
 	struct iovec	rcviov[2];
+
+	/* configuration defaults */
+	struct tr_conf  *conf;
+	if ((conf = calloc(1, sizeof(*conf))) == NULL)
+		err(1,NULL);
+
+	conf->incflag = 1;
+	conf->first_ttl = 1;
+	conf->proto = IPPROTO_UDP;
+	conf->max_ttl = IPDEFTTL;
+	conf->nprobes = 3;
+
+	/* start udp dest port # for probe packets */
+	conf->port = 32768+666;
 
  	memset(&rcvmhdr, 0, sizeof(rcvmhdr));
 	memset(&rcviov, 0, sizeof(rcviov));
@@ -340,7 +344,7 @@ main(int argc, char *argv[])
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
 	v4sock_errno = v6sock_errno = 0;
 
-	waittime = 5 * 1000;
+	conf->waittime = 5 * 1000;
 
 	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
 		v6sock_errno = errno;
@@ -407,83 +411,88 @@ main(int argc, char *argv[])
 	size = sizeof(i);
 	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &i, &size, NULL, 0) == -1)
 		err(1, "sysctl");
-	max_ttl = i;
+	conf->max_ttl = i;
 
 	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:w:vV:" :
 	    "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
-			Aflag = 1;
+			conf->Aflag = 1;
 			break;
 		case 'c':
-			incflag = 0;
+			conf->incflag = 0;
 			break;
 		case 'd':
-			options |= SO_DEBUG;
+			conf->dflag = 1;
 			break;
 		case 'D':
-			dump = 1;
+			conf->dump = 1;
 			break;
 		case 'f':
-			first_ttl = strtonum(optarg, 1, max_ttl, &errstr);
+			conf->first_ttl = strtonum(optarg, 1, conf->max_ttl,
+			    &errstr);
 			if (errstr)
-				errx(1, "min ttl must be 1 to %u.", max_ttl);
+				errx(1, "min ttl must be 1 to %u.",
+				    conf->max_ttl);
 			break;
 		case 'g':
-			if (lsrr >= MAX_LSRR)
+			if (conf->lsrr >= MAX_LSRR)
 				errx(1, "too many gateways; max %d", MAX_LSRR);
-			if (inet_aton(optarg, &gateway[lsrr]) == 0) {
+			if (inet_aton(optarg, &conf->gateway[conf->lsrr]) ==
+			    0) {
 				hp = gethostbyname(optarg);
 				if (hp == 0)
 					errx(1, "unknown host %s", optarg);
-				memcpy(&gateway[lsrr], hp->h_addr,
+				memcpy(&conf->gateway[conf->lsrr], hp->h_addr,
 				    hp->h_length);
 			}
-			if (++lsrr == 1)
-				lsrrlen = 4;
-			lsrrlen += 4;
+			if (++conf->lsrr == 1)
+				conf->lsrrlen = 4;
+			conf->lsrrlen += 4;
 			break;
 		case 'I':
-			if (protoset)
+			if (conf->protoset)
 				errx(1, "protocol already set with -P");
-			protoset = 1;
-			proto = IPPROTO_ICMP;
+			conf->protoset = 1;
+			conf->proto = IPPROTO_ICMP;
 			break;
 		case 'l':
-			ttl_flag = 1;
+			conf->ttl_flag = 1;
 			break;
 		case 'm':
-			max_ttl = strtonum(optarg, first_ttl, MAXTTL, &errstr);
+			conf->max_ttl = strtonum(optarg, conf->first_ttl,
+			    MAXTTL, &errstr);
 			if (errstr)
-				errx(1, "max ttl must be %u to %u.", first_ttl,
-				    MAXTTL);
+				errx(1, "max ttl must be %u to %u.",
+				    conf->first_ttl, MAXTTL);
 			break;
 		case 'n':
-			nflag = 1;
+			conf->nflag = 1;
 			break;
 		case 'p':
-			port = strtonum(optarg, 1, 65535, &errstr);
+			conf->port = strtonum(optarg, 1, 65535, &errstr);
 			if (errstr)
 				errx(1, "port must be >0, <65536.");
 			break;
 		case 'P':
-			if (protoset)
+			if (conf->protoset)
 				errx(1, "protocol already set with -I");
-			protoset = 1;
-			proto = strtonum(optarg, 1, IPPROTO_MAX - 1, &errstr);
+			conf->protoset = 1;
+			conf->proto = strtonum(optarg, 1, IPPROTO_MAX - 1,
+			    &errstr);
 			if (errstr) {
 				struct protoent *pent;
 
 				pent = getprotobyname(optarg);
 				if (pent)
-					proto = pent->p_proto;
+					conf->proto = pent->p_proto;
 				else
 					errx(1, "proto must be >=1, or a "
 					    "name.");
 			}
 			break;
 		case 'q':
-			nprobes = strtonum(optarg, 1, INT_MAX, &errstr);
+			conf->nprobes = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "nprobes must be >0.");
 			break;
@@ -492,15 +501,16 @@ main(int argc, char *argv[])
 			 * set the ip source address of the outbound
 			 * probe (e.g., on a multi-homed host).
 			 */
-			source = optarg;
+			conf->source = optarg;
 			break;
 		case 'S':
-			sump = 1;
+			conf->sump = 1;
 			break;
 		case 't':
-			if (!map_tos(optarg, &tos)) {
+			if (!map_tos(optarg, &conf->tos)) {
 				if (strlen(optarg) > 1 && optarg[0] == '0' &&
 				    optarg[1] == 'x') {
+					char *ep;
 					errno = 0;
 					ep = NULL;
 					l = strtol(optarg, &ep, 16);
@@ -508,38 +518,39 @@ main(int argc, char *argv[])
 					    l < 0 || l > 255)
 						errx(1, "illegal tos value %s",
 						    optarg);
-					tos = (int)l;
+					conf->tos = (int)l;
 				} else {
-					tos = strtonum(optarg, 0, 255, &errstr);
+					conf->tos = strtonum(optarg, 0, 255,
+					    &errstr);
 					if (errstr)
 						errx(1, "illegal tos value %s",
 						    optarg);
 				}
 			}
-			tflag = 1;
-			last_tos = tos;
+			conf->tflag = 1;
+			last_tos = conf->tos;
 			break;
 		case 'v':
-			verbose = 1;
+			conf->verbose = 1;
 			break;
 		case 'V':
-			rtableid = (unsigned int)strtonum(optarg, 0,
+			conf->rtableid = (unsigned int)strtonum(optarg, 0,
 			    RT_TABLEID_MAX, &errstr);
 			if (errstr)
 				errx(1, "rtable value is %s: %s",
 				    errstr, optarg);
 			if (setsockopt(sndsock, SOL_SOCKET, SO_RTABLE,
-			    &rtableid, sizeof(rtableid)) == -1)
+			    &conf->rtableid, sizeof(conf->rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
 			if (setsockopt(rcvsock, SOL_SOCKET, SO_RTABLE,
-			    &rtableid, sizeof(rtableid)) == -1)
+			    &conf->rtableid, sizeof(conf->rtableid)) == -1)
 				err(1, "setsockopt SO_RTABLE");
 			break;
 		case 'w':
-			waittime = strtonum(optarg, 2, INT_MAX, &errstr);
+			conf->waittime = strtonum(optarg, 2, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "wait must be >1 sec.");
-			waittime *= 1000;
+			conf->waittime *= 1000;
 			break;
 		case 'x':
 			xflag = 1;
@@ -555,7 +566,7 @@ main(int argc, char *argv[])
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
-	ident = (getpid() & 0xffff) | 0x8000;
+	conf->ident = (getpid() & 0xffff) | 0x8000;
 	tmprnd = arc4random();
 	sec_perturb = (tmprnd & 0x80000000) ? -(tmprnd & 0x7ff) :
 	    (tmprnd & 0x7ff);
@@ -619,17 +630,17 @@ main(int argc, char *argv[])
 
 	switch (to->sa_family) {
 	case AF_INET:
-		switch (proto) {
+		switch (conf->proto) {
 		case IPPROTO_UDP:
-			headerlen = (sizeof(struct ip) + lsrrlen +
+			headerlen = (sizeof(struct ip) + conf->lsrrlen +
 			    sizeof(struct udphdr) + sizeof(struct packetdata));
 			break;
 		case IPPROTO_ICMP:
-			headerlen = (sizeof(struct ip) + lsrrlen +
+			headerlen = (sizeof(struct ip) + conf->lsrrlen +
 			    sizeof(struct icmp) + sizeof(struct packetdata));
 			break;
 		default:
-			headerlen = (sizeof(struct ip) + lsrrlen +
+			headerlen = (sizeof(struct ip) + conf->lsrrlen +
 			    sizeof(struct packetdata));
 		}
 
@@ -652,36 +663,37 @@ main(int argc, char *argv[])
 		rcvmhdr.msg_controllen = 0;
 
 		ip = (struct ip *)outpacket;
-		if (lsrr != 0) {
+		if (conf->lsrr != 0) {
 			u_char *p = (u_char *)(ip + 1);
 
 			*p++ = IPOPT_NOP;
 			*p++ = IPOPT_LSRR;
-			*p++ = lsrrlen - 1;
+			*p++ = conf->lsrrlen - 1;
 			*p++ = IPOPT_MINOFF;
-			gateway[lsrr] = to4.sin_addr;
-			for (i = 1; i <= lsrr; i++) {
-				memcpy(p, &gateway[i], sizeof(struct in_addr));
+			conf->gateway[conf->lsrr] = to4.sin_addr;
+			for (i = 1; i <= conf->lsrr; i++) {
+				memcpy(p, &conf->gateway[i],
+				    sizeof(struct in_addr));
 				p += sizeof(struct in_addr);
 			}
-			ip->ip_dst = gateway[0];
+			ip->ip_dst = conf->gateway[0];
 		} else
 			ip->ip_dst = to4.sin_addr;
 		ip->ip_off = htons(0);
-		ip->ip_hl = (sizeof(struct ip) + lsrrlen) >> 2;
-		ip->ip_p = proto;
+		ip->ip_hl = (sizeof(struct ip) + conf->lsrrlen) >> 2;
+		ip->ip_p = conf->proto;
 		ip->ip_v = IPVERSION;
-		ip->ip_tos = tos;
+		ip->ip_tos = conf->tos;
 
 		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
 		    sizeof(on)) < 0)
 			err(6, "IP_HDRINCL");
 
-		if (source) {
+		if (conf->source) {
 			memset(&from4, 0, sizeof(from4));
 			from4.sin_family = AF_INET;
-			if (inet_aton(source, &from4.sin_addr) == 0)
-				errx(1, "unknown host %s", source);
+			if (inet_aton(conf->source, &from4.sin_addr) == 0)
+				errx(1, "unknown host %s", conf->source);
 			ip->ip_src = from4.sin_addr;
 			if (ouid != 0 &&
 			    (ntohl(from4.sin_addr.s_addr) & 0xff000000U) ==
@@ -706,7 +718,7 @@ main(int argc, char *argv[])
 		 * are prepended to the packet by the kernel
 		 */
 		packetlen = sizeof(struct ip6_hdr);
-		switch (proto) {
+		switch (conf->proto) {
 		case IPPROTO_UDP:
 			headerlen = sizeof(struct packetdata);
 			packetlen += sizeof(struct udphdr);
@@ -716,7 +728,7 @@ main(int argc, char *argv[])
 			    sizeof(struct packetdata);
 			break;
 		default:
-			errx(1, "Unsupported proto: %hhu", proto);
+			errx(1, "Unsupported proto: %hhu", conf->proto);
 			break;
 		}
 
@@ -748,7 +760,7 @@ main(int argc, char *argv[])
 		/*
 		 * Send UDP or ICMP
 		 */
-		if (proto == IPPROTO_ICMP) {
+		if (conf->proto == IPPROTO_ICMP) {
 			close(sndsock);
 			sndsock = rcvsock;
 		}
@@ -757,13 +769,15 @@ main(int argc, char *argv[])
 		 * Source selection
 		 */
 		memset(&from6, 0, sizeof(from6));
-		if (source) {
+		if (conf->source) {
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET6;
 			hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 			hints.ai_flags = AI_NUMERICHOST;
-			if ((error = getaddrinfo(source, "0", &hints, &res)))
-				errx(1, "%s: %s", source, gai_strerror(error));
+			if ((error = getaddrinfo(conf->source, "0", &hints,
+			    &res)))
+				errx(1, "%s: %s", conf->source,
+				    gai_strerror(error));
 			if (res->ai_addrlen != sizeof(from6))
 				errx(1, "size of sockaddr mismatch");
 			memcpy(&from6, res->ai_addr, res->ai_addrlen);
@@ -776,9 +790,9 @@ main(int argc, char *argv[])
 			nxt.sin6_port = htons(DUMMY_PORT);
 			if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 				err(1, "socket");
-			if (rtableid > 0 &&
-			    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
-			    sizeof(rtableid)) < 0)
+			if (conf->rtableid > 0 &&
+			    setsockopt(dummy, SOL_SOCKET, SO_RTABLE,
+			    &conf->rtableid, sizeof(conf->rtableid)) < 0)
 				err(1, "setsockopt(SO_RTABLE)");
 			if (connect(dummy, (struct sockaddr *)&nxt,
 			    nxt.sin6_len) < 0)
@@ -805,7 +819,7 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	if (options & SO_DEBUG) {
+	if (conf->dflag) {
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
 		    (char *)&on, sizeof(on));
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
@@ -816,7 +830,7 @@ main(int argc, char *argv[])
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
 
-	if (nflag && !Aflag) {
+	if (conf->nflag && !conf->Aflag) {
 		if (pledge("stdio inet", NULL) == -1)
 			err(1, "pledge");
 	} else {
@@ -828,35 +842,37 @@ main(int argc, char *argv[])
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
 		strlcpy(hbuf, "(invalid)", sizeof(hbuf));
 	fprintf(stderr, "%s to %s (%s)", __progname, hostname, hbuf);
-	if (source)
-		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %u hops max, %d byte packets\n", max_ttl, packetlen);
+	if (conf->source)
+		fprintf(stderr, " from %s", conf->source);
+	fprintf(stderr, ", %u hops max, %d byte packets\n", conf->max_ttl,
+	    packetlen);
 	(void) fflush(stderr);
 
-	if (first_ttl > 1)
-		printf("Skipping %u intermediate hops\n", first_ttl - 1);
+	if (conf->first_ttl > 1)
+		printf("Skipping %u intermediate hops\n", conf->first_ttl - 1);
 
-	for (ttl = first_ttl; ttl && ttl <= max_ttl; ++ttl) {
+	for (ttl = conf->first_ttl; ttl && ttl <= conf->max_ttl; ++ttl) {
 		int got_there = 0, unreachable = 0, timeout = 0, loss;
 		in_addr_t lastaddr = 0;
 		struct in6_addr lastaddr6;
 
 		printf("%2u ", ttl);
 		memset(&lastaddr6, 0, sizeof(lastaddr6));
-		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
+		for (probe = 0, loss = 0; probe < conf->nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
 
 			gettime(&t1);
-			send_probe(++seq, ttl, incflag, to);
-			curwaittime = waittime;
-			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
+			send_probe(conf, ++seq, ttl, conf->incflag, to);
+			curwaittime = conf->waittime;
+			while ((cc = wait_for_reply(rcvsock, &rcvmhdr,
+			    curwaittime))) {
 				gettime(&t2);
-				i = packet_ok(to->sa_family, &rcvmhdr, cc, seq,
-				    incflag);
+				i = packet_ok(conf, to->sa_family, &rcvmhdr,
+				    cc, seq, conf->incflag);
 				/* Skip wrong packet */
 				if (i == 0) {
-					curwaittime = waittime -
+					curwaittime = conf->waittime -
 					    ((t2.tv_sec - t1.tv_sec) * 1000 +
 					    (t2.tv_usec - t1.tv_usec) / 1000);
 					if (curwaittime < 0)
@@ -866,7 +882,7 @@ main(int argc, char *argv[])
 				if (to->sa_family == AF_INET) {
 					ip = (struct ip *)packet;
 					if (from4.sin_addr.s_addr != lastaddr) {
-						print(from,
+						print(conf, from,
 						    cc - (ip->ip_hl << 2),
 						    inet_ntop(AF_INET,
 						    &ip->ip_dst, hbuf,
@@ -877,7 +893,8 @@ main(int argc, char *argv[])
 				} else if (to->sa_family == AF_INET6) {
 					if (!IN6_ARE_ADDR_EQUAL(
 					    &from6.sin6_addr, &lastaddr6)) {
-						print(from, cc, rcvpktinfo ?
+						print(conf, from, cc,
+						    rcvpktinfo ?
 						    inet_ntop( AF_INET6,
 						    &rcvpktinfo->ipi6_addr,
 						    hbuf, sizeof(hbuf)) : "?");
@@ -888,7 +905,7 @@ main(int argc, char *argv[])
 					    to->sa_family);
 
 				printf("  %g ms", deltaT(&t1, &t2));
-				if (ttl_flag)
+				if (conf->ttl_flag)
 					printf(" (%u)", v6flag ? rcvhlim :
 					    ip->ip_ttl);
 				if (to->sa_family == AF_INET) {
@@ -899,7 +916,7 @@ main(int argc, char *argv[])
 						break;
 					}
 
-					if (tflag)
+					if (conf->tflag)
 						check_tos(ip);
 				}
 
@@ -914,16 +931,16 @@ main(int argc, char *argv[])
 				printf(" *");
 				timeout++;
 				loss++;
-			} else if (cc && probe == nprobes - 1 &&
-			    (xflag || verbose))
+			} else if (cc && probe == conf->nprobes - 1 &&
+			    (xflag || conf->verbose))
 				print_exthdr(packet, cc);
 			(void) fflush(stdout);
 		}
-		if (sump)
-			printf(" (%d%% loss)", (loss * 100) / nprobes);
+		if (conf->sump)
+			printf(" (%d%% loss)", (loss * 100) / conf->nprobes);
 		putchar('\n');
 		if (got_there ||
-		    (unreachable && (unreachable + timeout) >= nprobes))
+		    (unreachable && (unreachable + timeout) >= conf->nprobes))
 			break;
 	}
 	exit(0);
