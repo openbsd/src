@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.1 2017/05/27 14:20:39 mpi Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.2 2017/05/28 09:45:25 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -94,7 +94,7 @@ _rthread_mutex_trylock(pthread_mutex_t mutex, int trywait,
 	pthread_t self = pthread_self();
 
 	if (atomic_cas_uint(&mutex->lock, UNLOCKED, LOCKED) == UNLOCKED) {
-		membar_enter();
+		membar_enter_after_atomic();
 		mutex->owner = self;
 		return (0);
 	}
@@ -173,7 +173,7 @@ _rthread_mutex_timedlock(pthread_mutex_t *mutexp, int trywait,
 
 	lock = atomic_cas_uint(&mutex->lock, UNLOCKED, LOCKED);
 	if (lock == UNLOCKED) {
-		membar_enter();
+		membar_enter_after_atomic();
 		mutex->owner = self;
 		return (0);
 	}
@@ -194,7 +194,7 @@ _rthread_mutex_timedlock(pthread_mutex_t *mutexp, int trywait,
 		lock = atomic_swap_uint(&mutex->lock, CONTENDED);
 	};
 
-	membar_enter();
+	membar_enter_after_atomic();
 	mutex->owner = self;
 	return (0);
 }
@@ -269,8 +269,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 		}
 	}
 
-	membar_exit();
 	mutex->owner = NULL;
+	membar_exit_before_atomic();
 	if (atomic_dec_int_nv(&mutex->lock) != UNLOCKED) {
 		mutex->lock = UNLOCKED;
 		_wake(&mutex->lock, 1);
