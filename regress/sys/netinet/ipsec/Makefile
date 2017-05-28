@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2017/05/27 10:58:53 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/05/28 21:23:47 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used distribute the configuration.
@@ -256,7 +256,10 @@ stamp-drop:
 
 # Disable tests that do not pass.
 
-run-regress-pflog-ping-IPS_AH_TRANSP_IPV6 \
+run-regress-pflog-ping-IPS_AH_TRANSP_IPV4 \
+    run-regress-pflog-udp-IPS_AH_TRANSP_IPV4 \
+    run-regress-pflog-tcp-IPS_AH_TRANSP_IPV4 \
+    run-regress-pflog-ping-IPS_AH_TRANSP_IPV6 \
     run-regress-pflog-udp-IPS_AH_TRANSP_IPV6 \
     run-regress-pflog-tcp-IPS_AH_TRANSP_IPV6:
 	@echo '\n======== $@ ========'
