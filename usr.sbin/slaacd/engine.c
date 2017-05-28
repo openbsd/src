@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.22 2017/05/28 19:13:13 naddy Exp $	*/
+/*	$OpenBSD: engine.c,v 1.23 2017/05/28 19:57:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1638,6 +1638,7 @@ configure_address(struct slaacd_iface *iface, struct address_proposal
 	memcpy(&address.mask, &addr_proposal->mask, sizeof(address.mask));
 	address.vltime = addr_proposal->vltime;
 	address.pltime = addr_proposal->pltime;
+	address.privacy = addr_proposal->privacy;
 
 	engine_imsg_compose_main(IMSG_CONFIGURE_ADDRESS, 0, &address,
 	    sizeof(address));

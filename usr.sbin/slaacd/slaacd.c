@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.15 2017/05/28 09:35:56 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.16 2017/05/28 19:57:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -666,6 +666,7 @@ configure_interface(struct imsg_configure_address *address)
 
 	in6_addreq.ifra_lifetime.ia6t_preferred = t + address->pltime;
 	in6_addreq.ifra_lifetime.ia6t_pltime = address->pltime;
+	in6_addreq.ifra_flags = IN6_IFF_PRIVACY;
 
 	log_debug("%s: %s", __func__, if_name);
 
