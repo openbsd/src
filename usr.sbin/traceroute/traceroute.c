@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.154 2017/05/28 10:04:27 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.155 2017/05/28 10:06:13 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -283,49 +283,50 @@ void	usage(int);
 int
 main(int argc, char *argv[])
 {
-	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	int	mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	char	hbuf[NI_MAXHOST];
 
-	int ch, i;
-	int on = 1;
-	int probe;
-	int seq = 0;
-	int error;
-	int packetlen;
-	int rcvcmsglen;
-	int curwaittime;
-	int rcvsock4, rcvsock6, sndsock4, sndsock6;
-	int v4sock_errno, v6sock_errno;
-	struct addrinfo hints, *res;
-	struct passwd *pw;
-	size_t size;
-	static u_char *rcvcmsgbuf;
-	struct sockaddr_in from4, to4;
-	struct sockaddr_in6 from6, to6;
-	struct sockaddr *from, *to;
-	struct hostent *hp;
-	u_int32_t tmprnd;
-	struct ip *ip = NULL;
-	u_int8_t ttl;
-	char hbuf[NI_MAXHOST];
-	char *dest;
-	const char *errstr;
-	long l;
-	uid_t ouid, uid;
-	gid_t gid;
-	int last_tos = 0;
+	struct tr_conf		*conf;	/* configuration defaults */
+	struct sockaddr_in	 from4, to4;
+	struct sockaddr_in6	 from6, to6;
+	struct sockaddr		*from, *to;
+	struct addrinfo		 hints, *res;
+	struct hostent		*hp;
+	struct ip		*ip = NULL;
+	struct iovec		 rcviov[2];
+	struct msghdr		 rcvmhdr;
+	static u_char		*rcvcmsgbuf;
+	struct passwd		*pw;
 
-	socklen_t len;
+	long		 l;
+	socklen_t	 len;
+	size_t		 size;
 
-	int	headerlen;	/* How long packet's header is */
+	int		 ch;
+	int		 on = 1;
+	int		 seq = 0;
+	int		 error;
+	int		 curwaittime;
+	int		 headerlen;	/* How long packet's header is */
+	int		 i;
+	int		 last_tos = 0;
+	int		 packetlen;
+	int		 probe;
+	int		 rcvcmsglen;
+	int		 rcvsock4, rcvsock6;
+	int		 sndsock4, sndsock6;
+	u_int32_t	 tmprnd;
+	int		 v4sock_errno, v6sock_errno;
+	int		 v6flag = 0;
+	int		 xflag = 0;	/* show ICMP extension header */
 
-	int	xflag = 0;	/* show ICMP extension header */
-	int	v6flag = 0;
+	char		*dest;
+	const char	*errstr;
+	u_int8_t	 ttl;
 
-	struct msghdr	rcvmhdr;
-	struct iovec	rcviov[2];
+	uid_t		 ouid, uid;
+	gid_t		 gid;
 
-	/* configuration defaults */
-	struct tr_conf  *conf;
 	if ((conf = calloc(1, sizeof(*conf))) == NULL)
 		err(1,NULL);
 

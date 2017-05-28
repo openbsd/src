@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.4 2017/05/28 10:04:27 benno Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.5 2017/05/28 10:06:13 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -87,38 +87,29 @@ struct packetdata {
 } __packed;
 
 struct tr_conf {
-	int		 verbose;
-
-	u_short		 ident;
-
 	int		 incflag;	/* Do not inc the dest. port num */
+	int		 first_ttl;	/* Set the first TTL or hop limit */
+	u_char		 proto;		/* IP payload protocol to use */
+	u_int8_t	 max_ttl;	/* Set the maximum TTL / hop limit */
+	int		 nprobes;
+	u_int16_t 	 port;		/* start udp dest port */
+	int		 waittime;	/* time to wait for a response */
+	int		 Aflag;		/* lookup ASN */
 	int		 dflag;		/* set SO_DEBUG */
 	int		 dump;
-	int		 Aflag;		/* lookup ASN */
-	int		 first_ttl;	/* Set the first TTL or hop limit */
-
-	u_char		 proto;		/* IP payload protocol to use */
+	int		 lsrr;		/* Loose Source Record Route */
+	struct in_addr	 gateway[MAX_LSRR + 1];
+	int		 lsrrlen;
 	int		 protoset;
-
 	int		 ttl_flag;	/* display ttl on returned packet */
-	u_int8_t	 max_ttl;	/* Set the maximum TTL / hop limit */
 	int		 nflag;		/* print addresses numerically */
-
-	u_int16_t 	 port;		/* start udp dest port */
-	int		 nprobes;
 	char		*source;
 	int		 sump;
-
 	int		 tos;
 	int		 tflag;		/* tos value was set */
-
+	int		 verbose;
 	u_int		 rtableid;	/* Set the routing table */
-
-	int		 waittime;	/* time to wait for a response */
-
-	int		 lsrr;		/* Loose Source Record Route */
-	int		 lsrrlen;
-	struct in_addr	 gateway[MAX_LSRR + 1];
+	u_short		 ident;
 };
 
 extern int32_t		 sec_perturb;
