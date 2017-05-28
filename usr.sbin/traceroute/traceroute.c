@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.151 2017/01/24 14:07:41 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.152 2017/05/28 10:00:00 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -270,25 +270,12 @@ u_char	*outpacket;	/* last inbound (icmp) packet */
 int	rcvsock;	/* receive (icmp) socket file descriptor */
 int	sndsock;	/* send (udp) socket file descriptor */
 
-static struct msghdr	rcvmhdr;
-static struct iovec	rcviov[2];
-
 int	rcvhlim;
 struct in6_pktinfo *rcvpktinfo;
 
 	int	datalen;	/* How much data */
-static	int	headerlen;	/* How long packet's header is */
 
 char	*hostname;
-
-static int	nprobes = 3;
-static u_int8_t	max_ttl = IPDEFTTL;
-static u_int8_t	first_ttl = 1;
-
-static int	options;	/* socket options */
-static int	xflag;		/* show ICMP extension header */
-static int	tflag;		/* tos flag was set */
-static int	v6flag;
 
 u_short		ident;
 u_int16_t	srcport;
@@ -302,7 +289,7 @@ int		dump;
 int		Aflag;		/* lookup ASN */
 int		last_tos;
 
-void	usage(void);
+void	usage(int);
 
 #define	TRACEROUTE_USER	"_traceroute"
 
@@ -332,6 +319,23 @@ main(int argc, char *argv[])
 	gid_t gid;
 	u_int rtableid = 0;
 	socklen_t len;
+
+	int	headerlen;	/* How long packet's header is */
+
+	int		nprobes = 3;
+	u_int8_t	max_ttl = IPDEFTTL;
+	u_int8_t	first_ttl = 1;
+
+	int	options = 0;	/* socket options */
+	int	xflag = 0;	/* show ICMP extension header */
+	int	tflag = 0;	/* tos flag was set */
+	int	v6flag = 0;
+
+	struct msghdr	rcvmhdr;
+	struct iovec	rcviov[2];
+
+ 	memset(&rcvmhdr, 0, sizeof(rcvmhdr));
+	memset(&rcviov, 0, sizeof(rcviov));
 
 	rcvsock4 = rcvsock6 = sndsock4 = sndsock6 = -1;
 	v4sock_errno = v6sock_errno = 0;
@@ -541,13 +545,13 @@ main(int argc, char *argv[])
 			xflag = 1;
 			break;
 		default:
-			usage();
+			usage(v6flag);
 		}
 	argc -= optind;
 	argv += optind;
 
 	if (argc < 1 || argc > 2)
-		usage();
+		usage(v6flag);
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 
@@ -926,7 +930,7 @@ main(int argc, char *argv[])
 }
 
 void
-usage(void)
+usage(int v6flag)
 {
 	if (v6flag) {
 		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f first_hop] "
