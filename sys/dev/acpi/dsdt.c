@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.233 2017/04/15 04:54:04 guenther Exp $ */
+/* $OpenBSD: dsdt.c,v 1.234 2017/05/28 15:36:45 anton Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1260,7 +1260,7 @@ aml_find_node(struct aml_node *node, const char *name,
 
 	SIMPLEQ_FOREACH(child, &node->son, sib) {
 		nn = child->name;
-		if ((nn = child->name) != NULL) {
+		if (nn != NULL) {
 			if (*nn == AMLOP_ROOTCHAR) nn++;
 			while (*nn == AMLOP_PARENTPREFIX) nn++;
 			if (strcmp(name, nn) == 0) {
