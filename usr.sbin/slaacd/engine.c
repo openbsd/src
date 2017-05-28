@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2017/05/28 09:35:56 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2017/05/28 15:58:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1496,9 +1496,12 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					switch (dfr_proposal->state) {
 					case PROPOSAL_CONFIGURED:
 					case PROPOSAL_NEARLY_EXPIRED:
-						log_debug("updating dfr");
-						configure_dfr(iface,
-						    dfr_proposal);
+						/*
+						 * nothing to do here
+						 * maybe we should check
+						 * if the route got deleted
+						 * and re-add it 
+						 */
 						break;
 					default:
 						if (getnameinfo((struct
