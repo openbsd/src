@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.17 2017/05/05 20:16:40 reyk Exp $	*/
+/*	$OpenBSD: vm.c,v 1.18 2017/05/28 23:56:13 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1101,10 +1101,14 @@ vcpu_exit(struct vm_run_params *vrp)
 
 	switch (vrp->vrp_exit_reason) {
 	case VMX_EXIT_INT_WINDOW:
+	case SVM_VMEXIT_VINTR:
 	case VMX_EXIT_CPUID:
 	case VMX_EXIT_EXTINT:
+	case SVM_VMEXIT_INTR:
 	case VMX_EXIT_EPT_VIOLATION:
 	case SVM_VMEXIT_NPF:
+	case SVM_VMEXIT_MSR:
+	case SVM_VMEXIT_CPUID:
 		/*
 		 * We may be exiting to vmd to handle a pending interrupt but
 		 * at the same time the last exit type may have been one of
@@ -1135,10 +1139,10 @@ vcpu_exit(struct vm_run_params *vrp)
 		break;
 	case VMX_EXIT_TRIPLE_FAULT:
 	case SVM_VMEXIT_SHUTDOWN:
-		/* XXX reset VM since we do not support reboot yet */
+		/* reset VM */
 		return (EAGAIN);
 	default:
-		log_debug("%s: unknown exit reason %d",
+		log_debug("%s: unknown exit reason 0x%x",
 		    __progname, vrp->vrp_exit_reason);
 	}
 
