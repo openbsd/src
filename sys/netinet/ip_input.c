@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.305 2017/05/28 09:25:51 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.306 2017/05/28 12:22:54 jsg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -595,7 +595,9 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 	nxt = (*inetsw[ip_protox[nxt]].pr_input)(mp, offp, nxt, af);
 	KASSERT(nxt == IPPROTO_DONE);
 	return;
+#ifdef IPSEC
  bad:
+#endif
 	m_freem(*mp);
 }
 
