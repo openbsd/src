@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.17 2017/05/27 20:12:12 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.18 2017/05/28 01:33:26 jsg Exp $	*/
 /* $NetBSD: atomic.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
 
 /*-
@@ -105,17 +105,6 @@ _atomic_swap_ulong(volatile unsigned long *p, unsigned long n)
 	return (n);
 }
 #define atomic_swap_ulong(_p, _n) _atomic_swap_ulong((_p), (_n))
-
-static inline uint64_t
-_atomic_swap_64(volatile uint64_t *p, uint64_t n)
-{
-	__asm volatile("xchgl %0, %1"
-	    : "=a" (n), "=m" (*p)
-	    : "0" (n), "m" (*p));
-
-	return (n);
-}
-#define atomic_swap_64(_p, _n) _atomic_swap_64((_p), (_n))
 
 static inline void *
 _atomic_swap_ptr(volatile void *p, void *n)
