@@ -1,4 +1,4 @@
-/*	$OpenBSD: worker.c,v 1.3 2017/05/28 10:01:52 benno Exp $	*/
+/*	$OpenBSD: worker.c,v 1.4 2017/05/28 10:04:27 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ print_exthdr(u_char *buf, int cc)
 }
 
 void
-check_tos(struct ip *ip)
+check_tos(struct ip *ip, int *last_tos)
 {
 	struct icmp *icp;
 	struct ip *inner_ip;
@@ -211,10 +211,10 @@ check_tos(struct ip *ip)
 	icp = (struct icmp *) (((u_char *)ip)+(ip->ip_hl<<2));
 	inner_ip = (struct ip *) (((u_char *)icp)+8);
 
-	if (inner_ip->ip_tos != last_tos)
+	if (inner_ip->ip_tos != *last_tos)
 		printf (" (TOS=%d!)", inner_ip->ip_tos);
 
-	last_tos = inner_ip->ip_tos;
+	*last_tos = inner_ip->ip_tos;
 }
 
 int

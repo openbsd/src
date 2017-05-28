@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.3 2017/05/28 10:01:52 benno Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.4 2017/05/28 10:04:27 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -112,8 +112,6 @@ struct tr_conf {
 	int		 tos;
 	int		 tflag;		/* tos value was set */
 
-	int		 last_tos;
-
 	u_int		 rtableid;	/* Set the routing table */
 
 	int		 waittime;	/* time to wait for a response */
@@ -146,7 +144,7 @@ void		 icmp4_code(int, int *, int *);
 void		 icmp6_code(int, int *, int *);
 void		 dump_packet(void);
 void		 print_exthdr(u_char *, int);
-void		 check_tos(struct ip*);
+void		 check_tos(struct ip*, int *);
 void		 print(struct tr_conf *, struct sockaddr *, int, const char *);
 const char	*inetname(struct sockaddr*);
 void		 print_asn(struct sockaddr_storage *);
@@ -173,6 +171,5 @@ extern u_int16_t	 srcport;
 
 extern int verbose;
 extern int dump;
-extern int last_tos;
 
 extern char *__progname;

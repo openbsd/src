@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.153 2017/05/28 10:01:52 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.154 2017/05/28 10:04:27 benno Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -275,7 +275,6 @@ struct in6_pktinfo *rcvpktinfo;
 char	*hostname;
 
 u_int16_t	srcport;
-int		last_tos;
 
 void	usage(int);
 
@@ -313,6 +312,7 @@ main(int argc, char *argv[])
 	long l;
 	uid_t ouid, uid;
 	gid_t gid;
+	int last_tos = 0;
 
 	socklen_t len;
 
@@ -917,7 +917,7 @@ main(int argc, char *argv[])
 					}
 
 					if (conf->tflag)
-						check_tos(ip);
+						check_tos(ip, &last_tos);
 				}
 
 				/* time exceeded in transit */
