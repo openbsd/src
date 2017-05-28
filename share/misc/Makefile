@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.15 2016/09/08 02:03:35 bentley Exp $
+#	$OpenBSD: Makefile,v 1.16 2017/05/28 19:42:26 benno Exp $
 #	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
 
 FILES=	airport ascii birthtoken countrycodes \
 	inter.phone license.template mdoc.template mime.types \
-	na.phone operator scsi_modes usb_hid_usages usb_hid_usages \
+	na.phone scsi_modes usb_hid_usages usb_hid_usages \
 	zipcodes 
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
