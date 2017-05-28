@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.130 2017/05/28 09:38:32 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.131 2017/05/28 14:26:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -210,16 +210,18 @@ trunk_clone_destroy(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct trunk_port *tp;
-	int error;
+	int s, error;
 
 	/* Remove any multicast groups that we may have joined. */
 	trunk_ether_purgemulti(tr);
 
 	/* Shutdown and remove trunk ports, return on error */
+	NET_LOCK(s);
 	while ((tp = SLIST_FIRST(&tr->tr_ports)) != NULL) {
 		if ((error = trunk_port_destroy(tp)) != 0)
 			return (error);
 	}
+	NET_UNLOCK(s);
 
 	ifmedia_delete_instance(&tr->tr_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
