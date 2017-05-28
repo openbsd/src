@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.24 2017/02/08 04:30:45 guenther Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.25 2017/05/28 11:41:52 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@
 db_symtab_t db_symtab;
 
 Elf_Sym		*db_elf_sym_lookup(char *);
-static char	*db_elf_find_linetab(db_symtab_t *, size_t *);
 
 /*
  * Find the symbol table and strings; tell ddb about them.
@@ -208,11 +207,11 @@ db_elf_find_strtab(db_symtab_t *stab)
 }
 
 /*
- * Internal helper function - return a pointer to the line table
- * for the current symbol table.
+ * Internal helper function - return a pointer to the section
+ * named ``sname''.
  */
-static char *
-db_elf_find_linetab(db_symtab_t *stab, size_t *size)
+const char *
+db_elf_find_section(db_symtab_t *stab, size_t *size, const char *sname)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
@@ -222,7 +221,7 @@ db_elf_find_linetab(db_symtab_t *stab, size_t *size)
 	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
 		if ((shp[i].sh_flags & SHF_ALLOC) != 0 &&
-		    strcmp(".debug_line", shstrtab+shp[i].sh_name) == 0) {
+		    strcmp(sname, shstrtab+shp[i].sh_name) == 0) {
 			*size = shp[i].sh_size;
 			return ((char *)elf + shp[i].sh_offset);
 		}
@@ -374,7 +373,7 @@ db_elf_line_at_pc(db_sym_t cursym, char **filename,
 	if (stab->private == NULL)
 		return (0);
 
-	linetab = db_elf_find_linetab(stab, &linetab_size);
+	linetab = db_elf_find_section(stab, &linetab_size, ".debug_line");
 	if (linetab == NULL)
 		return (0);
 

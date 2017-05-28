@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.6 2017/05/27 15:05:16 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.7 2017/05/28 11:41:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -51,7 +51,6 @@ struct ddb_ctf db_ctf;
 
 static const char	*db_ctf_lookup_name(uint32_t);
 static const char	*db_ctf_idx2sym(size_t *, uint8_t);
-static const char	*db_elf_find_ctf(db_symtab_t *, size_t *);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
 
 /*
@@ -74,7 +73,7 @@ db_ctf_init(void)
 	if (db_ctf.strtab == NULL)
 		return;
 
-	db_ctf.rawctf = db_elf_find_ctf(stab, &rawctflen);
+	db_ctf.rawctf = db_elf_find_section(stab, &rawctflen, ELF_CTF);
 	if (db_ctf.rawctf == NULL)
 		return;
 
@@ -95,30 +94,6 @@ db_ctf_init(void)
 
 	/* We made it this far, everything seems fine. */
 	db_ctf.ctf_found = 1;
-}
-
-/*
- * Internal helper function - return a pointer to the CTF section
- */
-static const char *
-db_elf_find_ctf(db_symtab_t *stab, size_t *size)
-{
-	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
-	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
-	char *shstrtab;
-	int i;
-
-	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
-
-	for (i = 0; i < elf->e_shnum; i++) {
-		if ((shp[i].sh_flags & SHF_ALLOC) != 0 &&
-		    strcmp(ELF_CTF, shstrtab+shp[i].sh_name) == 0) {
-			*size = shp[i].sh_size;
-			return ((char *)elf + shp[i].sh_offset);
-		}
-	}
-
-	return (NULL);
 }
 
 void
