@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.106 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: import.c,v 1.107 2017/05/28 17:11:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -211,6 +211,17 @@ import_printf(const char *fmt, ...)
 	buf_puts(logbuf, str);
 
 	free(str);
+}
+
+void
+cvs_import_ignored(const char *path)
+{
+	const char *p;
+
+	for (p = path; p[0] == '.' && p[1] == '/';)
+		p += 2;
+
+	import_printf("I %s/%s\n", import_repository, p);
 }
 
 void

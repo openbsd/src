@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.182 2015/04/04 14:19:10 stsp Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.183 2017/05/28 17:11:34 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -388,6 +388,7 @@ void	cvs_remove_local(struct cvs_file *);
 void	cvs_add_local(struct cvs_file *);
 int	update_has_conflict_markers(struct cvs_file *);
 void	cvs_backup_file(struct cvs_file *);
+void	cvs_import_ignored(const char *);
 
 #define CO_MERGE	0x01
 #define CO_SETSTICKY	0x02

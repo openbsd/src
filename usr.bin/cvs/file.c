@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.269 2016/10/15 22:20:17 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.270 2017/05/28 17:11:34 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -484,15 +484,17 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 				continue;
 			}
 
+			(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
+			    cf->file_path, dp->d_name);
+
 			if (cvs_file_chkign(dp->d_name) &&
 			    cvs_cmdop != CVS_OP_RLOG &&
 			    cvs_cmdop != CVS_OP_RTAG) {
+				if (cvs_cmdop == CVS_OP_IMPORT)
+					cvs_import_ignored(fpath);
 				cp += dp->d_reclen;
 				continue;
 			}
-
-			(void)xsnprintf(fpath, PATH_MAX, "%s/%s",
-			    cf->file_path, dp->d_name);
 
 			/*
 			 * nfs and afs will show d_type as DT_UNKNOWN
