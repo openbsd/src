@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.36 2017/01/17 22:10:55 krw Exp $	*/
+/*	$OpenBSD: proc.c,v 1.37 2017/05/28 10:37:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -505,7 +505,7 @@ proc_sig_handler(int sig, short event, void *arg)
 		/* ignore */
 		break;
 	default:
-		fatalx("proc_sig_handler: unexpected signal");
+		fatalx("%s: unexpected signal", __func__);
 		/* NOTREACHED */
 	}
 }
@@ -545,9 +545,9 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 		root = pw->pw_dir;
 
 	if (chroot(root) == -1)
-		fatal("proc_run: chroot");
+		fatal("%s: chroot", __func__);
 	if (chdir("/") == -1)
-		fatal("proc_run: chdir(\"/\")");
+		fatal("%s: chdir(\"/\")", __func__);
 
 	privsep_process = p->p_id;
 
@@ -556,7 +556,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-		fatal("proc_run: cannot drop privileges");
+		fatal("%s: cannot drop privileges", __func__);
 
 	event_init();
 

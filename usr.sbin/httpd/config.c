@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.51 2017/03/25 17:25:34 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.52 2017/05/28 10:37:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -305,9 +305,9 @@ config_settls(struct httpd *env, struct server *srv)
 	}
 
 	if (srv_conf->tls_ocsp_staple_len != 0) {
-		DPRINTF("%s: sending ocsp staple \"%s[%u]\" to %s fd %d", __func__,
-		    srv_conf->name, srv_conf->id, ps->ps_title[PROC_SERVER],
-		    srv->srv_s);
+		DPRINTF("%s: sending ocsp staple \"%s[%u]\" to %s fd %d",
+		    __func__, srv_conf->name, srv_conf->id,
+		    ps->ps_title[PROC_SERVER], srv->srv_s);
 
 		memset(&tls, 0, sizeof(tls));
 		tls.id = srv_conf->id;

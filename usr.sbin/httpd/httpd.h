@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.131 2017/03/25 17:25:34 claudio Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.132 2017/05/28 10:37:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -451,7 +451,7 @@ TAILQ_HEAD(serverauth, auth);
 
 struct server_tls_ticket {
 	uint32_t	tt_id;
-	uint32_t 	tt_keyrev;
+	uint32_t	tt_keyrev;
 	unsigned char	tt_key[TLS_TICKET_KEY_SIZE];
 };
 
@@ -646,8 +646,8 @@ int	 server_writeheader_http(struct client *clt, struct kv *, void *);
 int	 server_headers(struct client *, void *,
 	    int (*)(struct client *, struct kv *, void *), void *);
 int	 server_writeresponse_http(struct client *);
-int	 server_response_http(struct client *, unsigned int, struct media_type *,
-	    off_t, time_t);
+int	 server_response_http(struct client *, unsigned int,
+	    struct media_type *, off_t, time_t);
 void	 server_reset_http(struct client *);
 void	 server_close_http(struct client *);
 int	 server_response(struct httpd *, struct client *);

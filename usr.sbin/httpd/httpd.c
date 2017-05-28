@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.66 2017/04/04 20:16:09 claudio Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.67 2017/05/28 10:37:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -791,7 +791,7 @@ socket_rlimit(int maxfd)
 	struct rlimit	 rl;
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("socket_rlimit: failed to get resource limit");
+		fatal("%s: failed to get resource limit", __func__);
 	log_debug("%s: max open files %llu", __func__, rl.rlim_max);
 
 	/*
@@ -803,7 +803,7 @@ socket_rlimit(int maxfd)
 	else
 		rl.rlim_cur = MAXIMUM(rl.rlim_max, (rlim_t)maxfd);
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("socket_rlimit: failed to set resource limit");
+		fatal("%s: failed to set resource limit", __func__);
 }
 
 char *
