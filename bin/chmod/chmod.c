@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.41 2017/02/17 10:14:12 tb Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.42 2017/05/28 08:03:36 awolk Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -197,14 +197,16 @@ done:
 			*cp++ = '\0';
 			gid = a_gid(cp);
 		}
-#ifdef SUPPORT_DOT
-		/* UID and GID are separated by a dot and UID exists. */
+		/*
+		 * UID and GID are separated by a dot and UID exists.
+		 * required for backwards compatibility pre-dating POSIX.2
+		 * likely to stay here forever
+		 */
 		else if ((cp = strchr(*argv, '.')) != NULL &&
 		    (uid = a_uid(*argv, 1)) == (uid_t)-1) {
 			*cp++ = '\0';
 			gid = a_gid(cp);
 		}
-#endif
 		if (uid == (uid_t)-1)
 			uid = a_uid(*argv, 0);
 	} else
