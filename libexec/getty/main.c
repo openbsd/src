@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2017/05/27 09:34:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2017/05/28 08:51:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -359,6 +359,11 @@ getname(void)
 			}
 			exit(0);
 		}
+		/* Handle 'printables' we cannot erase */
+		if (cs == CTRL('L') || cs == CTRL('K'))
+			continue;
+		if (cs == '\t')
+			cs = ' ';
 		if ((c = cs&0177) == 0)
 			return (0);
 
@@ -374,16 +379,22 @@ getname(void)
 			upper = 1;
 		else if (c == ERASE || c == '\b') {
 			if (np > name) {
-				np--;
-				xputs("\b \b");
+				if (*--np == '\033')
+					xputs("\b\b  \b\b");
+				else if (isprint(*np))
+					xputs("\b \b");
 			}
 			continue;
 		} else if (c == KILL) {
-			putchr(cs);
 			putchr('\r');
-			/* this is the way they do it down under ... */
-			if (np > name)
-				xputs("                                     \r");
+			putf(LM);
+			while (np > name) {
+				if (*--np == '\033')
+					xputs("  ");
+				else if (isprint(*np))
+					putchr(' ');
+			}
+			putchr('\r');
 			prompt();
 			np = name;
 			continue;
