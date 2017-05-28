@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.121 2017/05/28 08:38:10 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.122 2017/05/28 09:31:45 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -184,7 +184,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	local _n _ret
+	local _msg _n _ret
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
@@ -223,8 +223,10 @@ rc_cmd() {
 			kill -ALRM ${_TIMERSUB}
 			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
 			[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
+			[[ "${_ret}" == 142 ]] && [ X"${rc_bg}" != X"YES" ] &&
+				_msg="timeout"
 			_rc_do _rc_write_runfile
-			_rc_exit ok
+			_rc_exit ${_msg:=ok}
 		done
 		# handle failure
 		type rc_post >/dev/null && _rc_do rc_post
