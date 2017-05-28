@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.58 2017/04/28 13:50:02 benno Exp $
+#	$OpenBSD: airport,v 1.59 2017/05/28 18:35:58 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -715,6 +715,7 @@ HUY:Humberside, England, United Kingdom
 HVB:Hervey Bay, Queensland, Australia
 HVN:New Haven Tweed, Connecticut, USA
 HVR:City County, Havre, Montana, USA
+HWD:Hayward Executive Airport, Hayward, California, USA
 HWN:Hwange National Park, Zimbabwe
 HYA:Barnstable County, Hyannis, Massachusetts, USA
 HYD:Begumpet, Hyderabad, India
