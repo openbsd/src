@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.14 2017/05/27 18:38:07 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.15 2017/05/28 09:35:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -70,6 +70,9 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL,
 	IMSG_FAKE_ACK,
+	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS,
+	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL,
+	IMSG_CONFIGURE_DFR,
 };
 
 extern const char* imsg_type_name[];
@@ -141,6 +144,17 @@ struct ctl_engine_info_address_proposal {
 	uint32_t		 pltime;
 };
 
+struct ctl_engine_info_dfr_proposal {
+	int64_t			 id;
+	char			 state[sizeof("PROPOSAL_NEARLY_EXPIRED")];
+	int			 next_timeout;
+	int			 timeout_count;
+	struct timespec		 when;
+	struct timespec		 uptime;
+	struct sockaddr_in6	 addr;
+	uint32_t		 router_lifetime;
+	char			 rpref[sizeof("MEDIUM")];
+};
 
 struct imsg_ifinfo {
 	uint32_t		if_index;

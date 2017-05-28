@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.18 2017/05/27 18:37:09 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.19 2017/05/28 09:35:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -181,6 +181,21 @@ struct address_proposal {
 	uint32_t			 pltime;
 };
 
+struct dfr_proposal {
+	LIST_ENTRY(dfr_proposal)	 entries;
+	struct event			 timer;
+	int64_t				 id;
+	enum proposal_state		 state;
+	int				 next_timeout;
+	int				 timeout_count;
+	struct timespec			 when;
+	struct timespec			 uptime;
+	uint32_t			 if_index;
+	struct sockaddr_in6		 addr;
+	uint32_t			 router_lifetime;
+	enum rpref			 rpref;
+};
+
 struct slaacd_iface {
 	LIST_ENTRY(slaacd_iface)	 entries;
 	enum if_state			 state;
@@ -193,6 +208,7 @@ struct slaacd_iface {
 	struct sockaddr_in6		 ll_address;
 	LIST_HEAD(, radv)		 radvs;
 	LIST_HEAD(, address_proposal)	 addr_proposals;
+	LIST_HEAD(, dfr_proposal)	 dfr_proposals;
 };
 
 LIST_HEAD(, slaacd_iface) slaacd_interfaces;
@@ -214,12 +230,17 @@ void			 gen_address_proposal(struct slaacd_iface *, struct
 void			 configure_address(struct slaacd_iface *, struct
 			     address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
+void			 gen_dfr_proposal(struct slaacd_iface *, struct
+			     radv *);
+void			 configure_dfr(struct slaacd_iface *, struct
+			     dfr_proposal *);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
+void			 dfr_proposal_timeout(int, short, void *);
 void			 ra_timeout(int, short, void *);
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
@@ -227,6 +248,8 @@ struct address_proposal	*find_address_proposal_by_id(struct slaacd_iface *,
 			     int64_t);
 struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
+struct dfr_proposal	*find_dfr_proposal_by_id(struct slaacd_iface *,
+			     int64_t);
 void			 find_prefix(struct slaacd_iface *, struct
 			     address_proposal *, struct radv **, struct
 			     radv_prefix **);
@@ -355,7 +378,8 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg_ra			 ra;
 	struct imsg_ifinfo		 imsg_ifinfo;
 	struct imsg_proposal_ack	 proposal_ack;
-	struct address_proposal		*addr_proposal;
+	struct address_proposal		*addr_proposal = NULL;
+	struct dfr_proposal		*dfr_proposal = NULL;
 	struct imsg_del_addr		 del_addr;
 	ssize_t				 n;
 	int				 shut = 0, verbose;
@@ -437,6 +461,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				LIST_INSERT_HEAD(&slaacd_interfaces,
 				    iface, entries);
 				LIST_INIT(&iface->addr_proposals);
+				LIST_INIT(&iface->dfr_proposals);
 			} else {
 				DEBUG_IMSG("%s: updating %d", __func__,
 				    imsg_ifinfo.if_index);
@@ -517,12 +542,18 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			addr_proposal = find_address_proposal_by_id(iface,
 			    proposal_ack.id);
 			if (addr_proposal == NULL) {
-				log_debug("IMSG_PROPOSAL_ACK: cannot find "
-				    "proposal, ignoring");
-				break;
+				dfr_proposal = find_dfr_proposal_by_id(iface,
+				    proposal_ack.id);
+				if (dfr_proposal == NULL) {
+					log_debug("IMSG_PROPOSAL_ACK: cannot "
+					    "find proposal, ignoring");
+					break;
+				}
 			}
-
-			configure_address(iface, addr_proposal);
+			if (addr_proposal != NULL)
+				configure_address(iface, addr_proposal);
+			else if (dfr_proposal != NULL)
+				configure_dfr(iface, dfr_proposal);
 
 			break;
 		case IMSG_DEL_ADDRESS:
@@ -656,11 +687,13 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	struct ctl_engine_info_ra_rdns		 cei_ra_rdns;
 	struct ctl_engine_info_ra_dnssl		 cei_ra_dnssl;
 	struct ctl_engine_info_address_proposal	 cei_addr_proposal;
+	struct ctl_engine_info_dfr_proposal	 cei_dfr_proposal;
 	struct radv				*ra;
 	struct radv_prefix			*prefix;
 	struct radv_rdns			*rdns;
 	struct radv_dnssl			*dnssl;
 	struct address_proposal			*addr_proposal;
+	struct dfr_proposal			*dfr_proposal;
 
 	memset(&cei, 0, sizeof(cei));
 	cei.if_index = iface->if_index;
@@ -751,6 +784,36 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		engine_imsg_compose_frontend(
 		    IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL, pid,
 			    &cei_addr_proposal, sizeof(cei_addr_proposal));
+	}
+
+	if (!LIST_EMPTY(&iface->dfr_proposals))
+		engine_imsg_compose_frontend(
+		    IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS, pid, NULL, 0);
+
+	LIST_FOREACH(dfr_proposal, &iface->dfr_proposals, entries) {
+		memset(&cei_dfr_proposal, 0, sizeof(cei_dfr_proposal));
+		cei_dfr_proposal.id = dfr_proposal->id;
+		if(strlcpy(cei_dfr_proposal.state,
+		    proposal_state_name[dfr_proposal->state],
+		    sizeof(cei_dfr_proposal.state)) >=
+		    sizeof(cei_dfr_proposal.state))
+			log_warn("truncated state name");
+		cei_dfr_proposal.next_timeout = dfr_proposal->next_timeout;
+		cei_dfr_proposal.timeout_count = dfr_proposal->timeout_count;
+		cei_dfr_proposal.when = dfr_proposal->when;
+		cei_dfr_proposal.uptime = dfr_proposal->uptime;
+		memcpy(&cei_dfr_proposal.addr, &dfr_proposal->addr, sizeof(
+		    cei_dfr_proposal.addr));
+		cei_dfr_proposal.router_lifetime =
+		    dfr_proposal->router_lifetime;
+		if(strlcpy(cei_dfr_proposal.rpref,
+		    rpref_name[dfr_proposal->rpref],
+		    sizeof(cei_dfr_proposal.rpref)) >=
+		    sizeof(cei_dfr_proposal.rpref))
+			log_warn("truncated router preference");
+		engine_imsg_compose_frontend(
+		    IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL, pid,
+			    &cei_dfr_proposal, sizeof(cei_dfr_proposal));
 	}
 }
 
@@ -1396,6 +1459,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv		*old_ra;
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
+	struct dfr_proposal	*dfr_proposal;
 	int			 found, found_privacy;
 	char			 hbuf[NI_MAXHOST];
 
@@ -1408,11 +1472,73 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	if (ra->router_lifetime == 0) {
 		/* XXX expire default route */
 	} else {
+		found = 0;
+		LIST_FOREACH(dfr_proposal, &iface->dfr_proposals, entries) {
+			if (memcmp(&dfr_proposal->addr,
+			    &ra->from, sizeof(struct sockaddr_in6)) ==
+			    0) {
+				found = 1;
+				if (real_lifetime(&dfr_proposal->uptime,
+				    dfr_proposal->router_lifetime) >=
+				    ra->router_lifetime)
+					log_warn("ignoring router advertisement"
+					    " that lowers router lifetime");
+				else {
+					dfr_proposal->when = ra->when;
+					dfr_proposal->uptime = ra->uptime;
+					dfr_proposal->router_lifetime =
+					    ra->router_lifetime;
+
+					log_debug("%s, dfr state: %s",
+					    __func__, proposal_state_name[
+					    dfr_proposal->state]);
+
+					switch (dfr_proposal->state) {
+					case PROPOSAL_CONFIGURED:
+					case PROPOSAL_NEARLY_EXPIRED:
+						log_debug("updating dfr");
+						configure_dfr(iface,
+						    dfr_proposal);
+						break;
+					default:
+						if (getnameinfo((struct
+						    sockaddr *)
+						    &dfr_proposal->addr,
+						    dfr_proposal->
+						    addr.sin6_len, hbuf,
+						    sizeof(hbuf), NULL, 0,
+						    NI_NUMERICHOST |
+						    NI_NUMERICSERV)) {
+							log_warn("cannot get "
+							    "proposal IP");
+							strlcpy(hbuf, "uknown",
+							    sizeof(hbuf));
+						}
+						log_debug("%s: iface %d: %s",
+						     __func__, iface->if_index,
+						     hbuf);
+						break;
+					}
+				}
+
+				break;
+			}
+		}
+		if (!found)
+			/* new proposal */
+			gen_dfr_proposal(iface, ra);
+
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			found = 0;
 			found_privacy = 0;
 			LIST_FOREACH(addr_proposal, &iface->addr_proposals,
 			    entries) {
+				if (prefix->prefix_len ==
+				    addr_proposal-> prefix_len &&
+				    memcmp(&prefix->prefix,
+				    &addr_proposal->prefix,
+				    sizeof(struct in6_addr)) != 0)
+					continue;
 				if (addr_proposal->privacy) {
 					found_privacy = 1;
 
@@ -1439,7 +1565,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				addr_proposal->vltime = prefix->vltime;
 				addr_proposal->pltime = prefix->pltime;
 
-				log_debug("%s, state: %s", __func__,
+				log_debug("%s, addr state: %s", __func__,
 				    proposal_state_name[addr_proposal->state]);
 
 				switch (addr_proposal->state) {
@@ -1558,6 +1684,69 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
 	    iface->if_index, hbuf, tv.tv_sec);
+}
+
+void
+gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
+{
+	struct dfr_proposal	*dfr_proposal;
+	struct timeval		 tv;
+	char			 hbuf[NI_MAXHOST];
+
+	if ((dfr_proposal = calloc(1, sizeof(*dfr_proposal))) == NULL)
+		fatal("calloc");
+	evtimer_set(&dfr_proposal->timer, dfr_proposal_timeout,
+	    dfr_proposal);
+	dfr_proposal->next_timeout = 1;
+	dfr_proposal->timeout_count = 0;
+	dfr_proposal->state = PROPOSAL_NOT_CONFIGURED;
+	dfr_proposal->when = ra->when;
+	dfr_proposal->uptime = ra->uptime;
+	dfr_proposal->if_index = iface->if_index;
+	memcpy(&dfr_proposal->addr, &ra->from,
+	    sizeof(dfr_proposal->addr));
+	dfr_proposal->router_lifetime = ra->router_lifetime;
+	dfr_proposal->rpref = ra->rpref;
+
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	evtimer_add(&dfr_proposal->timer, &tv);
+
+	LIST_INSERT_HEAD(&iface->dfr_proposals, dfr_proposal, entries);
+
+	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
+	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV)) {
+		log_warn("cannot get router IP");
+		strlcpy(hbuf, "uknown", sizeof(hbuf));
+	}
+	log_debug("%s: iface %d: %s: %lld s", __func__,
+	    iface->if_index, hbuf, tv.tv_sec);
+}
+
+void
+configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
+    *dfr_proposal)
+{
+	struct imsg_configure_dfr	 dfr;
+	struct timeval			 tv;
+
+	dfr_proposal->next_timeout = dfr_proposal->router_lifetime -
+	    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
+
+	tv.tv_sec = dfr_proposal->next_timeout;
+	tv.tv_usec = arc4random_uniform(1000000);
+	evtimer_add(&dfr_proposal->timer, &tv);
+
+	dfr_proposal->state = PROPOSAL_CONFIGURED;
+
+	log_debug("%s: %d", __func__, iface->if_index);
+
+	dfr.if_index = iface->if_index;
+	memcpy(&dfr.addr, &dfr_proposal->addr, sizeof(dfr.addr));
+	dfr.router_lifetime = dfr_proposal->router_lifetime;
+
+	engine_imsg_compose_main(IMSG_CONFIGURE_DFR, 0, &dfr, sizeof(dfr));
 }
 
 #if 0
@@ -1777,6 +1966,88 @@ address_proposal_timeout(int fd, short events, void *arg)
 }
 
 void
+dfr_proposal_timeout(int fd, short events, void *arg)
+{
+	struct dfr_proposal	*dfr_proposal;
+	struct imsg_proposal	 proposal;
+	struct timeval		 tv;
+	char			 hbuf[NI_MAXHOST];
+
+	dfr_proposal = (struct dfr_proposal *)arg;
+
+	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
+	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV)) {
+		log_warn("cannot get router IP");
+		strlcpy(hbuf, "uknown", sizeof(hbuf));
+	}
+	log_debug("%s: iface %d: %s [%s]", __func__, dfr_proposal->if_index,
+	    hbuf, proposal_state_name[dfr_proposal->state]);
+
+	switch (dfr_proposal->state) {
+	case PROPOSAL_NOT_CONFIGURED:
+	case PROPOSAL_SENT:
+		if (dfr_proposal->timeout_count++ < 6) {
+			dfr_proposal->id = ++proposal_id;
+
+			memset(&proposal, 0, sizeof(proposal));
+			proposal.if_index = dfr_proposal->if_index;
+			proposal.pid = getpid();
+			proposal.id = dfr_proposal->id;
+			memcpy(&proposal.addr, &dfr_proposal->addr,
+			    sizeof(proposal.addr));
+
+			proposal.rtm_addrs = RTA_GATEWAY;
+
+			dfr_proposal->state = PROPOSAL_SENT;
+
+			send_proposal(&proposal);
+
+			tv.tv_sec = dfr_proposal->next_timeout;
+			tv.tv_usec = arc4random_uniform(1000000);
+			dfr_proposal->next_timeout *= 2;
+			evtimer_add(&dfr_proposal->timer, &tv);
+			log_debug("%s: scheduling new timeout in %llds.%06ld",
+			    __func__, tv.tv_sec, tv.tv_usec);
+		} else {
+			log_debug("%s: giving up, no response to proposal",
+			    __func__);
+			LIST_REMOVE(dfr_proposal, entries);
+			evtimer_del(&dfr_proposal->timer);
+			free(dfr_proposal);
+		}
+		break;
+	case PROPOSAL_CONFIGURED:
+		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld",
+		    dfr_proposal->id);
+
+		dfr_proposal->next_timeout = 1;
+		dfr_proposal->timeout_count = 0;
+		dfr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+		evtimer_add(&dfr_proposal->timer, &tv);
+
+		break;
+	case PROPOSAL_NEARLY_EXPIRED:
+		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
+		    0, &dfr_proposal->if_index,
+		    sizeof(dfr_proposal->if_index));
+		tv.tv_sec = dfr_proposal->next_timeout;
+		tv.tv_usec = arc4random_uniform(1000000);
+		dfr_proposal->next_timeout *= 2;
+		evtimer_add(&dfr_proposal->timer, &tv);
+		log_debug("%s: scheduling new timeout in %llds.%06ld",
+		    __func__, tv.tv_sec, tv.tv_usec);
+		break;
+	default:
+		log_debug("%s: unhandled state: %s", __func__,
+		    proposal_state_name[dfr_proposal->state]);
+	}
+}
+
+void
 ra_timeout(int fd, short events, void *arg)
 {
 	struct slaacd_iface	*iface = (struct slaacd_iface *)arg;
@@ -1856,6 +2127,20 @@ find_address_proposal_by_addr(struct slaacd_iface *iface, struct sockaddr_in6
 
 	return (NULL);
 }
+
+struct dfr_proposal*
+find_dfr_proposal_by_id(struct slaacd_iface *iface, int64_t id)
+{
+	struct dfr_proposal	*dfr_proposal;
+
+	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
+		if (dfr_proposal->id == id)
+			return (dfr_proposal);
+	}
+
+	return (NULL);
+}
+
 
 /* XXX currently unused */
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.14 2017/05/27 16:16:49 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.15 2017/05/28 09:35:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -73,6 +73,9 @@ const char* imsg_type_name[] = {
 	"IMSG_DEL_ADDRESS",
 	"IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL",
 	"IMSG_FAKE_ACK",
+	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS",
+	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL",
+	"IMSG_CONFIGURE_DFR",
 };
 
 __dead void	usage(void);
@@ -86,6 +89,7 @@ void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
 void	handle_proposal(struct imsg_proposal *);
 void	configure_interface(struct imsg_configure_address *);
+void	configure_gateway(struct imsg_configure_dfr *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 
@@ -100,6 +104,8 @@ uint32_t cmd_opts;
 int	 routesock, ioctl_sock;
 
 char	*csock;
+
+int	 rtm_seq = 0;
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -412,6 +418,7 @@ main_dispatch_engine(int fd, short event, void *bula)
 	struct imsg			 imsg;
 	struct imsg_proposal		 proposal;
 	struct imsg_configure_address	 address;
+	struct imsg_configure_dfr	 dfr;
 	ssize_t				 n;
 	int				 shut = 0;
 
@@ -450,6 +457,13 @@ main_dispatch_engine(int fd, short event, void *bula)
 				    "length: %d", __func__, imsg.hdr.len);
 			memcpy(&address, imsg.data, sizeof(address));
 			configure_interface(&address);
+			break;
+		case IMSG_CONFIGURE_DFR:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(dfr))
+				fatal("%s: IMSG_CONFIGURE_DFR wrong "
+				    "length: %d", __func__, imsg.hdr.len);
+			memcpy(&dfr, imsg.data, sizeof(dfr));
+			configure_gateway(&dfr);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -539,7 +553,6 @@ main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
 void
 handle_proposal(struct imsg_proposal *proposal)
 {
-	static int			 seq = 0;
 	struct rt_msghdr		 rtm;
 	struct sockaddr_in6		 ifa, mask;
 	struct sockaddr_rtlabel		 rl;
@@ -554,7 +567,7 @@ handle_proposal(struct imsg_proposal *proposal)
 	rtm.rtm_msglen = sizeof(rtm);
 	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
 	rtm.rtm_index = proposal->if_index;
-	rtm.rtm_seq = ++seq;
+	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
 	rtm.rtm_addrs = (proposal->rtm_addrs & (RTA_NETMASK | RTA_IFA)) |
 	    RTA_LABEL;
@@ -658,6 +671,74 @@ configure_interface(struct imsg_configure_address *address)
 
 	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) < 0)
 		fatal("SIOCAIFADDR_IN6");
+}
+
+void
+configure_gateway(struct imsg_configure_dfr *dfr)
+{
+	struct rt_msghdr		 rtm;
+	struct sockaddr_in6		 dst, gw, mask;
+	struct iovec			 iov[8];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = RTM_ADD;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_index = dfr->if_index;
+	rtm.rtm_seq = ++rtm_seq;
+	rtm.rtm_priority = RTP_BGP;
+	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	memset(&dst, 0, sizeof(mask));
+	dst.sin6_family = AF_INET6;
+	dst.sin6_len = sizeof(struct sockaddr_in6);
+
+	iov[iovcnt].iov_base = &dst;
+	iov[iovcnt++].iov_len = sizeof(dst);
+	rtm.rtm_msglen += sizeof(dst);
+	padlen = ROUNDUP(sizeof(dst)) - sizeof(dst);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memcpy(&gw, &dfr->addr, sizeof(gw));
+	*(u_int16_t *)& gw.sin6_addr.s6_addr[2] = htons(gw.sin6_scope_id);
+	/* gw.sin6_scope_id = 0; XXX route(8) does this*/
+	iov[iovcnt].iov_base = &gw;
+	iov[iovcnt++].iov_len = sizeof(gw);
+	rtm.rtm_msglen += sizeof(gw);
+	padlen = ROUNDUP(sizeof(gw)) - sizeof(gw);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&mask, 0, sizeof(mask));
+	mask.sin6_family = AF_INET6;
+	mask.sin6_len = 0;//sizeof(struct sockaddr_in6);
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = sizeof(mask);
+	rtm.rtm_msglen += sizeof(mask);
+	padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send RTM_ADD");
 }
 
 #if 0

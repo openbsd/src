@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.5 2017/05/27 18:37:09 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.6 2017/05/28 09:35:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -175,6 +175,7 @@ show_interface_msg(struct imsg *imsg)
 	struct ctl_engine_info_ra_rdns		*cei_ra_rdns;
 	struct ctl_engine_info_ra_dnssl		*cei_ra_dnssl;
 	struct ctl_engine_info_address_proposal	*cei_addr_proposal;
+	struct ctl_engine_info_dfr_proposal	*cei_dfr_proposal;
 	struct tm				*t;
 	struct timespec				 now, diff;
 	char					 buf[IF_NAMESIZE], *bufp;
@@ -277,6 +278,34 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t\t%s, %s/%u\n", hbuf, inet_ntop(AF_INET6,
 		    &cei_addr_proposal->prefix, ntopbuf, INET6_ADDRSTRLEN),
 		    cei_addr_proposal->prefix_len);
+		break;
+	case IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS:
+		printf("\tDefault router proposals\n");
+		break;
+	case IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL:
+		cei_dfr_proposal = imsg->data;
+
+		if (getnameinfo((struct sockaddr *)&cei_dfr_proposal->addr,
+		    cei_dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf),
+		    NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV))
+			err(1, "cannot get router IP");
+
+		printf("\t\tid: %4lld, state: %15s\n",
+		    cei_dfr_proposal->id, cei_dfr_proposal->state);
+		printf("\t\trouter lifetime: %10u\n",
+		    cei_dfr_proposal->router_lifetime);
+		printf("\t\tPreference: %s\n", cei_dfr_proposal->rpref);
+		if (clock_gettime(CLOCK_MONOTONIC, &now))
+			err(1, "clock_gettime");
+
+		timespecsub(&now, &cei_dfr_proposal->uptime, &diff);
+
+		t = localtime(&cei_dfr_proposal->when.tv_sec);
+		strftime(whenbuf, sizeof(whenbuf), "%F %T", t);
+		printf("\t\tupdated: %s.%09ld; %lld.%09lds ago\n",
+		    whenbuf, cei_dfr_proposal->when.tv_nsec, diff.tv_sec,
+		    diff.tv_nsec);
+
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
