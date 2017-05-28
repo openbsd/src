@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.155 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: commit.c,v 1.156 2017/05/28 17:01:10 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -363,52 +363,16 @@ cvs_commit_check_files(struct cvs_file *cf)
 		if (tag != NULL && cf->file_rcs != NULL) {
 			brev = rcs_sym_getrev(cf->file_rcs, tag);
 			if (brev != NULL) {
-				if (RCSNUM_ISBRANCH(brev))
-					goto next;
-				free(brev);
-			}
-
-			brev = rcs_translate_tag(tag, cf->file_rcs);
-
-			if (brev == NULL) {
-				if (cf->file_status == FILE_ADDED)
-					goto next;
-				fatal("failed to resolve tag: %s",
-				    cf->file_ent->ce_tag);
-			}
-
-			if ((branch = rcsnum_revtobr(brev)) == NULL) {
-				cvs_log(LP_ERR, "sticky tag %s is not "
-				    "a branch for file %s", tag,
-				    cf->file_path);
-				conflicts_found++;
-				free(brev);
-				return;
-			}
-
-			if (!RCSNUM_ISBRANCHREV(brev)) {
-				cvs_log(LP_ERR, "sticky tag %s is not "
-				    "a branch for file %s", tag,
-				    cf->file_path);
-				conflicts_found++;
-				free(branch);
-				free(brev);
-				return;
-			}
-
-			if (!RCSNUM_ISBRANCH(branch)) {
-				cvs_log(LP_ERR, "sticky tag %s is not "
-				    "a branch for file %s", tag,
-				    cf->file_path);
-				conflicts_found++;
-				free(branch);
-				free(brev);
-				return;
+				if (!RCSNUM_ISBRANCH(brev)) {
+					cvs_log(LP_ERR, "sticky tag %s is not "
+					    "a branch for file %s", tag,
+					    cf->file_path);
+					conflicts_found++;
+				}
 			}
 		}
 	}
 
-next:
 	free(branch);
 	free(brev);
 
