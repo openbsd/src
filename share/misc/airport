@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.62 2017/05/28 21:18:21 zhuk Exp $
+#	$OpenBSD: airport,v 1.63 2017/05/28 21:21:00 ajacoutot Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -215,6 +215,7 @@ BMA:Stockholm-Bromma, Uppland, Sweden
 BMG:Monroe County, Bloomington, Indiana, USA
 BMI:Central Illinois Regional, Bloomington, Illinois, USA
 BNA:Nashville International, Nashville, Tennessee, USA
+BND:Bandar Abbas International, Bandar Abbas, Iran
 BNE:Brisbane International, Queensland, Australia
 BNJ:Hangelar, Bonn, Germany
 BNN:Bronnoysun, Bronnoysund, Norway
