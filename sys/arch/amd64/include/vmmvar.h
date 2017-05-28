@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.38 2017/05/19 06:29:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.39 2017/05/28 23:50:19 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -520,9 +520,9 @@ struct vmcb {
 			uint8_t		v_pad2[0x3];		/* 05Dh-05Fh */
 			uint8_t		v_tpr;			/* 060h */
 			uint8_t		v_irq;			/* 061h */
-			uint8_t		v_misc1;		/* 062h */
-			uint8_t		v_misc2;		/* 063h */
-			uint8_t		v_misc3;		/* 064h */
+			uint8_t		v_intr_misc;		/* 062h */
+			uint8_t		v_intr_masking;		/* 063h */
+			uint8_t		v_intr_vector;		/* 064h */
 			uint8_t		v_pad3[0x3];		/* 065h-067h */
 			uint64_t	v_intr_shadow;		/* 068h */
 			uint64_t	v_exitcode;		/* 070h */
