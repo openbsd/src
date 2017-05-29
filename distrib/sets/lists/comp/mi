@@ -2556,7 +2556,7 @@
 ./usr/share/man/man3/signal.3
 ./usr/share/man/man3/sigpause.3
 ./usr/share/man/man3/sigsetmask.3
-./usr/share/man/man3/sigsetops.3
+./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigvec.3
 ./usr/share/man/man3/sigwait.3
 ./usr/share/man/man3/sin.3
