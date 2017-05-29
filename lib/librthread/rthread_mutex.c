@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.2 2017/05/28 09:45:25 mpi Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.3 2017/05/29 14:47:54 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -37,6 +37,13 @@ enum {
 	LOCKED = 1,	/* locked without waiter */
 	CONTENDED = 2,	/* threads waiting for this mutex */
 };
+
+#define SPIN_COUNT	128
+#if defined(__i386__) || defined(__amd64__)
+#define SPIN_WAIT()	asm volatile("pause": : : "memory")
+#else
+#define SPIN_WAIT()	do { } while (0)
+#endif
 
 static _atomic_lock_t static_init_lock = _SPINLOCK_UNLOCKED;
 
@@ -164,11 +171,11 @@ _rthread_mutex_timedlock(pthread_mutex_t *mutexp, int trywait,
 		return (error);
 
 	/* Try hard to not enter the kernel. */
-	for (i = 0; i < SPINLOCK_SPIN_COUNT; i ++) {
+	for (i = 0; i < SPIN_COUNT; i ++) {
 		if (mutex->lock == UNLOCKED)
 			break;
 
-		SPINLOCK_SPIN_HOOK;
+		SPIN_WAIT();
 	}
 
 	lock = atomic_cas_uint(&mutex->lock, UNLOCKED, LOCKED);

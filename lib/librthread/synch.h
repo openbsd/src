@@ -1,4 +1,4 @@
-/*	$OpenBSD: synch.h,v 1.1 2017/05/27 14:20:39 mpi Exp $ */
+/*	$OpenBSD: synch.h,v 1.2 2017/05/29 14:47:54 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -20,9 +20,6 @@
 #include <sys/futex.h>
 
 REDIRECT_SYSCALL(futex);
-
-#include <machine/lock.h>	/* for SPINLOCK_SPIN_HOOK */
-#define SPINLOCK_SPIN_COUNT	128
 
 static inline int
 _wake(volatile uint32_t *p, int n)
