@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.339 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.340 2017/05/29 14:36:22 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -192,11 +192,9 @@ reroute:
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			struct in_ifaddr *ia;
 
-			KERNEL_LOCK();
 			IFP_TO_IA(ifp, ia);
 			if (ia != NULL)
 				ip->ip_src = ia->ia_addr.sin_addr;
-			KERNEL_UNLOCK();
 		}
 	} else {
 		struct in_ifaddr *ia;
@@ -233,11 +231,10 @@ reroute:
 
 #ifdef IPSEC
 	if (ipsec_in_use || inp != NULL) {
-		KERNEL_LOCK();
+		KERNEL_ASSERT_LOCKED();
 		/* Do we have any pending SAs to apply ? */
 		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
 		    ipsecflowinfo);
-		KERNEL_UNLOCK();
 		if (error != 0) {
 			/* Should silently drop packet */
 			if (error == -EINVAL)
@@ -307,11 +304,9 @@ reroute:
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			struct in_ifaddr *ia;
 
-			KERNEL_LOCK();
 			IFP_TO_IA(ifp, ia);
 			if (ia != NULL)
 				ip->ip_src = ia->ia_addr.sin_addr;
-			KERNEL_UNLOCK();
 		}
 
 		if ((imo == NULL || imo->imo_loop) &&
@@ -407,10 +402,9 @@ sendit:
 	 * Check if the packet needs encapsulation.
 	 */
 	if (tdb != NULL) {
-		KERNEL_LOCK();
+		KERNEL_ASSERT_LOCKED();
 		/* Callee frees mbuf */
 		error = ip_output_ipsec_send(tdb, m, ifp, ro);
-		KERNEL_UNLOCK();
 		goto done;
 	}
 #endif /* IPSEC */

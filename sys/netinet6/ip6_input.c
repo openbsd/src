@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.190 2017/05/28 09:25:51 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.191 2017/05/29 14:36:22 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -474,9 +474,8 @@ ip6_input(struct mbuf *m)
 	if (ipsec_in_use) {
 		int rv;
 
-		KERNEL_LOCK();
+		KERNEL_ASSERT_LOCKED();
 		rv = ipsec_forward_check(m, off, AF_INET6);
-		KERNEL_UNLOCK();
 		if (rv != 0) {
 			ip6stat_inc(ip6s_cantforward);
 			goto bad;

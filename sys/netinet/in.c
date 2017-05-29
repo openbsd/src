@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.138 2017/05/16 12:24:01 mpi Exp $	*/
+/*	$OpenBSD: in.c,v 1.139 2017/05/29 14:36:22 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -798,8 +798,6 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 	struct in_multi *inm;
 	struct ifreq ifr;
 
-	NET_ASSERT_LOCKED();
-
 	/*
 	 * See if address already in list.
 	 */
@@ -901,10 +899,8 @@ in_hasmulti(struct in_addr *ap, struct ifnet *ifp)
 	struct in_multi *inm;
 	int joined;
 
-	KERNEL_LOCK();
 	IN_LOOKUP_MULTI(*ap, ifp, inm);
 	joined = (inm != NULL);
-	KERNEL_UNLOCK();
 
 	return (joined);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.39 2016/06/15 19:39:34 gerhard Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.40 2017/05/29 14:36:22 mpi Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ struct	in_aliasreq {
 	/* struct in_ifaddr *ia; */					\
 do {									\
 	struct ifaddr *ifa;						\
+	NET_ASSERT_LOCKED();						\
 	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) {		\
 		if (ifa->ifa_addr->sa_family == AF_INET)		\
 			break;						\
@@ -142,6 +143,7 @@ do {									\
 	struct ifmaddr *ifma;						\
 									\
 	(inm) = NULL;							\
+	NET_ASSERT_LOCKED();						\
 	TAILQ_FOREACH(ifma, &(ifp)->if_maddrlist, ifma_list)		\
 		if (ifma->ifma_addr->sa_family == AF_INET &&		\
 		    ifmatoinm(ifma)->inm_addr.s_addr == (addr).s_addr) {\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.306 2017/05/28 12:22:54 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.307 2017/05/29 14:36:22 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -441,9 +441,9 @@ ipv4_input(struct mbuf *m)
 	if (ipsec_in_use) {
 		int rv;
 
-		KERNEL_LOCK();
+		KERNEL_ASSERT_LOCKED();
+
 		rv = ipsec_forward_check(m, hlen, AF_INET);
-		KERNEL_UNLOCK();
 		if (rv != 0) {
 			ipstat_inc(ips_cantforward);
 			goto bad;
@@ -667,7 +667,7 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 		 * interface, and that M_BCAST will only be set on a BROADCAST
 		 * interface.
 		 */
-		KERNEL_LOCK();
+		NET_ASSERT_LOCKED();
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -678,7 +678,6 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 				break;
 			}
 		}
-		KERNEL_UNLOCK();
 	}
 
 	return (match);
