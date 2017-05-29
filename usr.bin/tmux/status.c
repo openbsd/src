@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.167 2017/05/29 20:41:29 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.168 2017/05/29 20:42:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -677,9 +677,14 @@ status_prompt_set(struct client *c, const char *msg, const char *input,
 
 	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
-
 	t = time(NULL);
-	tmp = format_expand_time(ft, input, t);
+
+	if (input == NULL)
+		input = "";
+	if (flags & PROMPT_NOFORMAT)
+		tmp = xstrdup(input);
+	else
+		tmp = format_expand_time(ft, input, t);
 
 	status_message_clear(c);
 	status_prompt_clear(c);
