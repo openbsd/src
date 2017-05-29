@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.195 2016/10/21 06:20:58 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.196 2017/05/29 14:19:49 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/lock.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -2520,7 +2519,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 
 		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
-				SPINLOCK_SPIN_HOOK;
+				CPU_BUSY_CYCLE();
 		}
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2558,7 +2557,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 
 		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
-				SPINLOCK_SPIN_HOOK;
+				CPU_BUSY_CYCLE();
 		}
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
@@ -2596,7 +2595,7 @@ pmap_tlb_shoottlb(void)
 
 		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
-				SPINLOCK_SPIN_HOOK;
+				CPU_BUSY_CYCLE();
 		}
 
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2632,7 +2631,7 @@ pmap_tlb_droppmap(struct pmap *pm)
 
 		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 			while (tlb_shoot_wait != 0)
-				SPINLOCK_SPIN_HOOK;
+				CPU_BUSY_CYCLE();
 		}
 
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2654,7 +2653,7 @@ void
 pmap_tlb_shootwait(void)
 {
 	while (tlb_shoot_wait != 0)
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 }
 
 #else

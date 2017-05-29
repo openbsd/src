@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.c,v 1.5 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: mplock.c,v 1.6 2017/05/29 14:19:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 #include <sys/systm.h>
 
 #include <machine/asm_macro.h>
-#include <machine/lock.h>
+#include <machine/cpu.h>
 
 #include <ddb/db_output.h>
 
@@ -41,19 +41,17 @@
 extern int __mp_lock_spinout;
 #endif
 
-#define	SPINLOCK_SPIN_HOOK	do { /* nothing */ } while (0)
-
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl)
 {
 #ifndef MP_LOCKDEBUG
 	while (mpl->mpl_count != 0)
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 #else
 	int nticks = __mp_lock_spinout;
 
 	while (mpl->mpl_count != 0 && nticks-- > 0)
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 
 	if (nticks == 0) {
  		db_printf("__mp_lock(0x%x): lock spun out", mpl);

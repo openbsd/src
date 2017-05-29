@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.57 2016/03/30 15:39:46 afresh1 Exp $ */
+/* $OpenBSD: cpu.h,v 1.58 2017/05/29 14:19:49 mpi Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -246,15 +246,36 @@ void	cpu_pause_resume(unsigned long, int);
 void	cpu_pause_resume_all(int);
 void	cpu_unidle(struct cpu_info *);
 
+/*
+ * On the Alpha, interprocessor interrupts come in at device priority
+ * level.  This can cause some problems while waiting for r/w spinlocks
+ * from a high'ish priority level: IPIs that come in will not be processed.
+ * This can lead to deadlock.
+ *
+ * This hook allows IPIs to be processed while a spinlock's interlock
+ * is released.
+ */
+#define	CPU_BUSY_CYCLE()						\
+do {									\
+	struct cpu_info *__ci = curcpu();				\
+	int __s;							\
+									\
+	if (__ci->ci_ipis != 0) {					\
+		__s = splipi();						\
+		alpha_ipi_process_with_frame(__ci);			\
+		splx(__s);						\
+	}								\
+} while (0)
+
 #else /* ! MULTIPROCESSOR */
 
 #define	curcpu()			(&cpu_info_primary)
 #define	CPU_IS_PRIMARY(ci)		1
 #define cpu_unidle(ci)			do { /* nothing */ } while (0)
+#define CPU_BUSY_CYCLE()		do {} while (0)
 
 #endif /* MULTIPROCESSOR */
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
 
 #define	curproc		curcpu()->ci_curproc
 #define	fpcurproc	curcpu()->ci_fpcurproc

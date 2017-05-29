@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.61 2015/02/11 05:54:48 dlg Exp $	*/
+/*	$OpenBSD: npx.c,v 1.62 2017/05/29 14:19:50 mpi Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -61,7 +61,6 @@
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/i8259.h>
-#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -875,7 +874,7 @@ npxsave_proc(struct proc *p, int save)
 		i386_send_ipi(oci,
 		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-			SPINLOCK_SPIN_HOOK;
+			CPU_BUSY_CYCLE();
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.180 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: machdep.c,v 1.181 2017/05/29 14:19:49 mpi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -104,9 +104,6 @@
 #include <machine/cpuconf.h>
 #ifndef NO_IEEE
 #include <machine/ieeefp.h>
-#endif
-#ifdef MULTIPROCESSOR
-#include <machine/lock.h>
 #endif
 
 #include <dev/pci/pcivar.h>
@@ -1761,7 +1758,7 @@ fpusave_proc(struct proc *p, int save)
 		alpha_pal_swpipl(s);
 
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-			SPINLOCK_SPIN_HOOK;
+			CPU_BUSY_CYCLE();
 #else
 		KASSERT(ci->ci_fpcurproc == p);
 		fpusave_cpu(ci, save);

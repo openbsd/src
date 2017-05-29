@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.5 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.6 2017/05/29 14:19:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -31,7 +31,7 @@
 #include <sys/atomic.h>
 
 #include <machine/intr.h>
-#include <machine/lock.h>
+#include <machine/cpu.h>
 
 #include <ddb/db_output.h>
 
@@ -61,7 +61,7 @@ __mtx_enter(struct mutex *mtx)
 #endif
 
 	while (__mtx_enter_try(mtx) == 0) {
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 
 #if defined(MP_LOCKDEBUG)
 		if (--nticks == 0) {

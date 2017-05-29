@@ -1,4 +1,4 @@
-/* $OpenBSD: lock.h,v 1.9 2015/02/11 03:56:00 dlg Exp $	*/
+/* $OpenBSD: lock.h,v 1.10 2017/05/29 14:19:49 mpi Exp $	*/
 /* $NetBSD: lock.h,v 1.16 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -37,28 +37,5 @@
 
 #ifndef _MACHINE_LOCK_H_
 #define	_MACHINE_LOCK_H_
-
-#if defined(MULTIPROCESSOR)
-/*
- * On the Alpha, interprocessor interrupts come in at device priority
- * level.  This can cause some problems while waiting for r/w spinlocks
- * from a high'ish priority level: IPIs that come in will not be processed.
- * This can lead to deadlock.
- *
- * This hook allows IPIs to be processed while a spinlock's interlock
- * is released.
- */
-#define	SPINLOCK_SPIN_HOOK						\
-do {									\
-	struct cpu_info *__ci = curcpu();				\
-	int __s;							\
-									\
-	if (__ci->ci_ipis != 0) {					\
-		__s = splipi();						\
-		alpha_ipi_process_with_frame(__ci);			\
-		splx(__s);						\
-	}								\
-} while (0)
-#endif /* MULTIPROCESSOR */
 
 #endif /* _MACHINE_LOCK_H_ */

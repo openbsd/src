@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.34 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.35 2017/05/29 14:19:49 mpi Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include <machine/trap.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
-#include <machine/lock.h>
 
 #include <dev/isa/isavar.h>
 
@@ -335,7 +334,7 @@ fpusave_proc(struct proc *p, int save)
 		x86_send_ipi(oci,
 	    	    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-			SPINLOCK_SPIN_HOOK;
+			CPU_BUSY_CYCLE();
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);

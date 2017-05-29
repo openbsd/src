@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.16 2017/05/27 15:11:03 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.17 2017/05/29 14:19:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -20,7 +20,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/lock.h>
+#include <machine/cpu.h>
 #include <machine/psl.h>
 
 #include <ddb/db_output.h>
@@ -47,12 +47,12 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 {
 #ifndef MP_LOCKDEBUG
 	while (mpl->mpl_ticket != me)
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 #else
 	int nticks = __mp_lock_spinout;
 
 	while (mpl->mpl_ticket != me) {
-		SPINLOCK_SPIN_HOOK;
+		CPU_BUSY_CYCLE();
 
 		if (--nticks <= 0) {
 			db_printf("__mp_lock(%p): lock spun out", mpl);

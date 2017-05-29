@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.90 2017/04/20 10:03:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.91 2017/05/29 14:19:50 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -210,7 +210,46 @@ void	cpu_unidle(struct cpu_info *);
 #define curpcb		__curcpu->ci_cpcb
 #define fpproc		__curcpu->ci_fpproc
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+/*
+ * On processors with multiple threads we force a thread switch.
+ *
+ * On UltraSPARC T2 and its successors, the optimal way to do this
+ * seems to be to do three nop reads of %ccr.  This works on
+ * UltraSPARC T1 as well, even though three nop casx operations seem
+ * to be slightly more optimal.  Since these instructions are
+ * effectively nops, executing them on earlier non-CMT processors is
+ * harmless, so we make this the default.
+ *
+ * On SPARC T4 and later, we can use the processor-specific pause
+ * instruction.
+ *
+ * On SPARC64 VI and its successors we execute the processor-specific
+ * sleep instruction.
+ */
+#define CPU_BUSY_CYCLE()						\
+do {									\
+	__asm volatile(							\
+		"999:	rd	%%ccr, %%g0			\n"	\
+		"	rd	%%ccr, %%g0			\n" 	\
+		"	rd	%%ccr, %%g0			\n" 	\
+		"	.section .sun4v_pause_patch, \"ax\"	\n" 	\
+		"	.word	999b				\n" 	\
+		"	.word	0xb7802080	! pause	128	\n" 	\
+		"	.word	999b + 4			\n" 	\
+		"	nop					\n" 	\
+		"	.word	999b + 8			\n" 	\
+		"	nop					\n" 	\
+		"	.previous				\n" 	\
+		"	.section .sun4u_mtp_patch, \"ax\"	\n" 	\
+		"	.word	999b				\n" 	\
+		"	.word	0x81b01060	! sleep		\n" 	\
+		"	.word	999b + 4			\n" 	\
+		"	nop					\n" 	\
+		"	.word	999b + 8			\n" 	\
+		"	nop					\n" 	\
+		"	.previous				\n" 	\
+		: : : "memory");					\
+} while (0)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
