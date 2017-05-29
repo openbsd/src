@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.171 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.172 2017/05/29 06:44:54 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -104,6 +104,8 @@ int	vlan_multi_add(struct ifvlan *, struct ifreq *);
 int	vlan_multi_del(struct ifvlan *, struct ifreq *);
 void	vlan_multi_apply(struct ifvlan *, struct ifnet *, u_long);
 void	vlan_multi_free(struct ifvlan *);
+
+int	vlan_media_get(struct ifvlan *, struct ifreq *);
 
 int	vlan_iff(struct ifvlan *);
 int	vlan_setlladdr(struct ifvlan *, struct ifreq *);
@@ -723,8 +725,17 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCADDMULTI:
 		error = vlan_multi_add(ifv, ifr);
 		break;
+
 	case SIOCDELMULTI:
 		error = vlan_multi_del(ifv, ifr);
+		break;
+
+	case SIOCGIFMEDIA:
+		error = vlan_media_get(ifv, ifr);
+		break;
+
+	case SIOCSIFMEDIA:
+		error = ENOTTY;
 		break;
 
 	case SIOCSIFLLADDR:
@@ -1051,6 +1062,20 @@ forget:
 	free(mc, M_DEVBUF, sizeof(*mc));
 
 	return (0);
+}
+
+int
+vlan_media_get(struct ifvlan *ifv, struct ifreq *ifr)
+{
+	struct ifnet		*ifp0;
+	int			 error;
+
+	ifp0 = if_get(ifv->ifv_ifp0);
+	error = (ifp0 == NULL) ? ENOTTY :
+	    (*ifp0->if_ioctl)(ifp0, SIOCGIFMEDIA, (caddr_t)ifr);
+	if_put(ifp0);
+
+	return (error);
 }
 
 void
