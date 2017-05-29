@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.143 2017/05/18 12:24:15 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.144 2017/05/29 12:54:05 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -113,7 +113,10 @@ sub parse
 {
 	my ($class, $r, $state) = @_;
 
+	{
+	no warnings qw(uninitialized);	# in case installpath is empty
 	$$r =~ s/^installpath(\:|$)/$state->installpath.$1/e;
+	}
 
 	my $u = $$r;
 	return undef if $u eq '';
