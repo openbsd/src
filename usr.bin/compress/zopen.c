@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.21 2016/09/03 11:41:10 tedu Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.22 2017/05/29 14:41:16 fcambus Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -341,12 +341,6 @@ z_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 	rval = close(zs->zs_fd);
 	free(zs);
 	return (rval);
-}
-
-static int
-zclose(void *cookie)
-{
-	return z_close(cookie, NULL, NULL, NULL);
 }
 
 /*-
