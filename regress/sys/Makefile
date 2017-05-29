@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.24 2017/05/29 11:00:04 sf Exp $
+#	$OpenBSD: Makefile,v 1.25 2017/05/29 11:59:32 sf Exp $
 #	$NetBSD: Makefile,v 1.4 1995/04/20 22:41:08 cgd Exp $
 
-SUBDIR=	copy crypto dev ddb ffs fifofs fileops kern
+SUBDIR=	copy crypto dev ddb ffs fifofs fileops kern \
 	net netinet netinet6 nfs ptrace sys uvm
 .if exists(arch/${MACHINE}/Makefile)
 SUBDIR+= arch/${MACHINE}
