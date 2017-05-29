@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.272 2017/05/29 14:05:31 sf Exp $	*/
+/*	$OpenBSD: sd.c,v 1.273 2017/05/29 14:08:49 sf Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -511,10 +511,11 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	disk_closepart(&sc->sc_dk, part, fmt);
 
-	if (sc->sc_dk.dk_openmask == 0) {
-		if ((sc->flags & SDF_DIRTY) != 0)
-			sd_flush(sc, 0);
+	if (((flag & FWRITE) != 0 || sc->sc_dk.dk_openmask == 0) &&
+	    (sc->flags & SDF_DIRTY) != 0)
+		sd_flush(sc, 0);
 
+	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->flags & SDF_DYING) {
 			error = ENXIO;
 			goto die;
