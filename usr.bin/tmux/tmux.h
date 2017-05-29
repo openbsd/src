@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.771 2017/05/29 18:06:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.772 2017/05/29 20:37:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1836,6 +1836,7 @@ void	 server_update_socket(void);
 void	 server_add_accept(int);
 
 /* server-client.c */
+u_int	 server_client_how_many(void);
 void	 server_client_set_identify(struct client *);
 void	 server_client_clear_identify(struct client *, struct window_pane *);
 void	 server_client_set_key_table(struct client *, const char *);

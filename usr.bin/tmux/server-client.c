@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.232 2017/05/16 12:57:26 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.233 2017/05/29 20:37:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -48,6 +48,21 @@ static void	server_client_dispatch(struct imsg *, void *);
 static void	server_client_dispatch_command(struct client *, struct imsg *);
 static void	server_client_dispatch_identify(struct client *, struct imsg *);
 static void	server_client_dispatch_shell(struct client *);
+
+/* Number of attached clients. */
+u_int
+server_client_how_many(void)
+{
+	struct client  	*c;
+	u_int		 n;
+
+	n = 0;
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL && (~c->flags & CLIENT_DETACHING))
+			n++;
+	}
+	return (n);
+}
 
 /* Identify mode callback. */
 static void
