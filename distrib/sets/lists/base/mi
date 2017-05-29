@@ -2648,7 +2648,6 @@
 ./usr/share/man/man9
 ./usr/share/man/mandoc.db
 ./usr/share/misc
-./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/bc.library
 ./usr/share/misc/birthtoken
