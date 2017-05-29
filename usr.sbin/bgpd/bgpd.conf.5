@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.158 2017/05/29 09:56:33 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.159 2017/05/29 20:23:18 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,7 @@ configuration file.
 .It Sy Global Configuration
 Global settings for
 .Xr bgpd 8 .
-.It Sy Routing Domain Configuration
+.It Sy MPLS VPN Configuration
 The definition and properties for BGP MPLS VPNs are set in this section.
 .It Sy Neighbors and Groups
 .Xr bgpd 8
@@ -434,7 +434,7 @@ to EBGP neighbors are not prepended with the local AS.
 The default is
 .Ic no .
 .El
-.Sh ROUTING DOMAIN CONFIGURATION
+.Sh MPLS VPN CONFIGURATION
 .Xr bgpd 8
 supports the setup and distribution of Virtual Private Networks.
 It is possible to import and export prefixes between routing domains.
