@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.499 2017/05/28 12:51:33 yasuoka Exp $	*/
+/*	$OpenBSD: if.c,v 1.500 2017/05/29 06:08:21 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1559,15 +1559,14 @@ if_linkstate_task(void *xifidx)
 	struct ifnet *ifp;
 	int s;
 
-	ifp = if_get(ifidx);
-	if (ifp == NULL)
-		return;
-
 	NET_LOCK(s);
-	if_linkstate(ifp);
-	NET_UNLOCK(s);
 
+	ifp = if_get(ifidx);
+	if (ifp != NULL)
+		if_linkstate(ifp);
 	if_put(ifp);
+
+	NET_UNLOCK(s);
 }
 
 void
