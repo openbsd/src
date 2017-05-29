@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.76 2017/05/29 10:55:34 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.77 2017/05/29 14:28:01 claudio Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -366,28 +366,6 @@ struct mbuf;
 
 #define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
-
-struct pfkey_version {
-	int protocol;
-	int (*create)(struct socket *socket);
-	int (*release)(struct socket *socket);
-	int (*send)(struct socket *socket, void *message, int len);
-	int (*sysctl)(int *, u_int, void *, size_t *, void *, size_t);
-};
-
-struct pfkeyv2_socket {
-	struct pfkeyv2_socket *next;
-	struct socket *socket;
-	int flags;
-	uint32_t pid;
-	uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
-	uint rdomain;
-};
-
-struct dump_state {
-	struct sadb_msg *sadb_msg;
-	struct socket *socket;
-};
 
 int pfkeyv2_parsemessage(void *, int, void **);
 int pfkeyv2_expire(struct tdb *, u_int16_t);

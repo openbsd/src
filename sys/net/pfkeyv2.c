@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.158 2017/05/29 10:55:34 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.159 2017/05/29 14:28:01 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -135,6 +135,20 @@ extern struct radix_node_head **spd_tables;
 #define PFKEY_MSG_MAXSZ 4096
 struct sockaddr pfkey_addr = { 2, PF_KEY, };
 struct domain pfkeydomain;
+
+struct pfkeyv2_socket {
+	struct pfkeyv2_socket *next;
+	struct socket *socket;
+	int flags;
+	uint32_t pid;
+	uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
+	uint rdomain;
+};
+
+struct dump_state {
+	struct sadb_msg *sadb_msg;
+	struct socket *socket;
+};
 
 void pfkey_init(void);
 
