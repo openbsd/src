@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigprocmask.2,v 1.12 2017/05/05 02:12:39 millert Exp $
+.\"	$OpenBSD: sigprocmask.2,v 1.13 2017/05/29 09:40:02 deraadt Exp $
 .\"	$NetBSD: sigprocmask.2,v 1.6 1995/02/27 12:37:33 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigprocmask.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 5 2017 $
+.Dd $Mdocdate: May 29 2017 $
 .Dt SIGPROCMASK 2
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ has a value other than those listed here.
 .Xr sigaction 2 ,
 .Xr sigpending 2 ,
 .Xr sigsuspend 2 ,
-.Xr sigsetops 3
+.Xr sigaddset 3
 .Sh STANDARDS
 The
 .Fn sigprocmask

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.74 2016/05/23 00:18:56 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.75 2017/05/29 09:40:02 deraadt Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/gen ${LIBCSRCDIR}/gen
@@ -52,6 +52,6 @@ MAN+=	__tfork_thread.3 alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 \
 	psignal.3 pw_dup.3 pwcache.3 raise.3 readpassphrase.3 \
 	scandir.3 setjmp.3 setmode.3 setproctitle.3 shm_open.3 \
 	siginterrupt.3 signal.3 \
-	sigsetops.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
+	sigaddset.3 sleep.3 statvfs.3 sysconf.3 sysctl.3 strtofflags.3 \
 	syslog.3 time.3 times.3 toascii.3 tolower.3 toupper.3 \
 	ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3

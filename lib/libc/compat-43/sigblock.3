@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigblock.3,v 1.17 2014/04/07 17:57:56 schwarze Exp $
+.\"	$OpenBSD: sigblock.3,v 1.18 2017/05/29 09:40:02 deraadt Exp $
 .\"
-.Dd $Mdocdate: April 7 2014 $
+.Dd $Mdocdate: May 29 2017 $
 .Dt SIGBLOCK 3
 .Os
 .Sh NAME
@@ -108,7 +108,7 @@ sigprocmask(SIG_BLOCK, NULL, &set);
 .Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
 .Xr sigsetmask 3 ,
-.Xr sigsetops 3
+.Xr sigaddset 3
 .Sh HISTORY
 A
 .Fn sigblock
