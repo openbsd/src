@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.26 2016/06/21 12:31:19 aoyama Exp $	*/
+/* $OpenBSD: subr.S,v 1.27 2017/05/29 06:06:52 mpi Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -371,6 +371,48 @@ ASLOCAL(Lciflt)
 #undef	SRC
 #undef	DEST
 #undef	LEN
+
+/*
+ * Specific flavour for a single 32-bit word copy.
+ * copyin32(from, to)
+ *	r2 == from (user source address)
+ *	r3 == to (kernel destination address)
+ */
+
+#define	SRC	%r2
+#define	DEST	%r3
+
+ENTRY(copyin32)
+	/* check for source alignment */
+	mask	%r8,  SRC,  0x3
+	bcnd	ne0,  %r8,  _ASM_LABEL(copyin32_misaligned)
+
+	/* set up fault handler */
+	ldcr	%r5,  CPU
+	ld	%r6,  %r5,  CI_CURPCB
+	or.u	%r5,  %r0,  %hi16(_ASM_LABEL(Lciflt))
+	or	%r5,  %r5,  %lo16(_ASM_LABEL(Lciflt))
+	st	%r5,  %r6,  PCB_ONFAULT	/* pcb_onfault = Lciflt */
+
+#ifdef ERRATA__XXX_USR
+	NOP
+	ld.usr	%r5,  SRC,  %r0
+	NOP
+	NOP
+	NOP
+#else
+	ld.usr	%r5,  SRC,  %r0
+#endif
+	st	%r5,  DEST, %r0
+	br.n	_ASM_LABEL(Lcidone)
+   	 or	%r2, %r0, %r0	/* successful return */
+
+ASLOCAL(copyin32_misaligned)
+	jmp.n	%r1
+	 or	%r2, %r0, EFAULT	/* return fault */
+
+#undef	SRC
+#undef	DEST
 
 /*######################################################################*/
 /*######################################################################*/
