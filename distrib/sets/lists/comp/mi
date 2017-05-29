@@ -1295,7 +1295,6 @@
 ./usr/include/sys/resource.h
 ./usr/include/sys/resourcevar.h
 ./usr/include/sys/rwlock.h
-./usr/include/sys/scanio.h
 ./usr/include/sys/sched.h
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
@@ -2551,12 +2550,12 @@
 ./usr/share/man/man3/sha1.3
 ./usr/share/man/man3/sha2.3
 ./usr/share/man/man3/shm_open.3
+./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigblock.3
 ./usr/share/man/man3/siginterrupt.3
 ./usr/share/man/man3/signal.3
 ./usr/share/man/man3/sigpause.3
 ./usr/share/man/man3/sigsetmask.3
-./usr/share/man/man3/sigaddset.3
 ./usr/share/man/man3/sigvec.3
 ./usr/share/man/man3/sigwait.3
 ./usr/share/man/man3/sin.3
@@ -2847,5 +2846,4 @@
 ./usr/share/man/man9/wdog_register.9
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
-./usr/share/misc/operator
 ./var/db/libc.tags

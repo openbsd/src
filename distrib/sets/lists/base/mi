@@ -186,6 +186,7 @@
 ./etc/rc.d/rtadvd
 ./etc/rc.d/sasyncd
 ./etc/rc.d/sensorsd
+./etc/rc.d/slaacd
 ./etc/rc.d/slowcgi
 ./etc/rc.d/smtpd
 ./etc/rc.d/sndiod
@@ -617,6 +618,7 @@
 ./usr/lib/libc.so.89.5
 ./usr/lib/libc.so.89.5.a
 ./usr/lib/libcrypto.so.41.2
+./usr/lib/libcrypto.so.41.2.a
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
 ./usr/lib/libevent.so.4.1
@@ -2466,6 +2468,8 @@
 ./usr/sbin/sasyncd
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
+./usr/sbin/slaacctl
+./usr/sbin/slaacd
 ./usr/sbin/slowcgi
 ./usr/sbin/smtpctl
 ./usr/sbin/smtpd
@@ -2648,6 +2652,7 @@
 ./usr/share/man/man9
 ./usr/share/man/mandoc.db
 ./usr/share/misc
+./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/bc.library
 ./usr/share/misc/birthtoken
