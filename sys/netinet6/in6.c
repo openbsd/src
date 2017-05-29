@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.205 2017/05/16 12:24:02 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.206 2017/05/29 20:28:57 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -407,8 +407,7 @@ in6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
+		    (ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0) {
 			return (EINVAL);
 		}
 
