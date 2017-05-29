@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.30 2015/07/09 12:57:55 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.31 2017/05/29 12:28:54 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub prepend
 sub do_something
 {
 	my ($self, $do, $pkgname, @args) = @_;
-	if ($pkgname eq '-') {
+	if (defined $pkgname && $pkgname eq '-') {
 		return OpenBSD::PackageRepository->pipe->new($self->{state})->$do($pkgname, @args);
 	}
 	for my $repo (@{$self->{l}}) {

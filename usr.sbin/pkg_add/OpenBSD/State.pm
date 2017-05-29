@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.45 2017/03/09 14:33:32 espie Exp $
+# $OpenBSD: State.pm,v 1.46 2017/05/29 12:28:54 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,12 @@ sub new
 	bless {state => $state}, $class;
 }
 
+sub locator
+{
+	my $self = shift;
+	return $self->{state}->locator;
+}
+
 sub installed
 {
 	my ($self, $all) = @_;
@@ -37,17 +43,15 @@ sub installed
 sub path_parse
 {
 	my ($self, $pkgname) = @_;
-	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->path_parse($pkgname, $self->{state});
+	return $self->locator->path_parse($pkgname, $self->{state});
 }
 
 sub find
 {
 	my ($self, $pkg) = @_;
-	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->find($pkg, $self->{state});
+	return $self->locator->find($pkg, $self->{state});
 }
 
 sub reinitialize
@@ -57,17 +61,15 @@ sub reinitialize
 sub match_locations
 {
 	my $self = shift;
-	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->match_locations(@_, $self->{state});
+	return $self->locator->match_locations(@_, $self->{state});
 }
 
 sub grabPlist
 {
 	my ($self, $url, $code) = @_;
-	require OpenBSD::PackageLocator;
 
-	return OpenBSD::PackageLocator->grabPlist($url, $code, $self->{state});
+	return $self->locator->grabPlist($url, $code, $self->{state});
 }
 
 sub path
@@ -87,6 +89,12 @@ use OpenBSD::Error;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = ();
+
+sub locator
+{
+	require OpenBSD::PackageLocator;
+	return "OpenBSD::PackageLocator";
+}
 
 sub new
 {

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.21 2017/03/25 22:26:44 sthen Exp $
+# $OpenBSD: FwUpdate.pm,v 1.22 2017/05/29 12:28:54 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -21,19 +21,31 @@ use strict;
 use warnings;
 use OpenBSD::PkgAdd;
 use OpenBSD::PackageRepository;
+use OpenBSD::PackageLocator;
+
+package OpenBSD::FwUpdate::Locator;
+our @ISA = qw(OpenBSD::PackageLocator);
+
+sub add_default
+{
+	my ($self, $state, $p) = @_;
+	my $path = $state->opt('p');
+	if (!$path) {
+		my $dir = OpenBSD::Paths->os_directory;
+		if (!defined $dir) {
+			$state->fatal("Couldn't find/parse OS version");
+		}
+		$path = "http://firmware.openbsd.org/firmware/$dir/";
+	}
+	$p->add(OpenBSD::PackageRepository->new($path, $state));
+}
 
 package OpenBSD::FwUpdate::State;
 our @ISA = qw(OpenBSD::PkgAdd::State);
 
-sub find_path
+sub locator
 {
-	my $state = shift;
-	my $dir = OpenBSD::Paths->os_directory;
-	if (defined $dir) {
-		$state->{path} = "http://firmware.openbsd.org/firmware/$dir/";
-	} else {
-		$state->fatal("Couldn't find/parse OS version");
-	}
+	return "OpenBSD::FwUpdate::Locator";
 }
 
 sub handle_options
@@ -42,11 +54,6 @@ sub handle_options
 	$state->OpenBSD::State::handle_options('adinp:', 
 	    '[-adinv] [-D keyword] [-p path] [driver...]');
 	$state->{not} = $state->opt('n');
-	if ($state->opt('p')) {
-		$state->{path} = $state->opt('p');
-	} else {
-		$state->find_path;
-	}
 	if ($state->opt('i')) {
 		$state->{not} = 1;
 	}
@@ -60,14 +67,13 @@ sub handle_options
 	if ($state->opt('a') && @ARGV != 0) {
 		$state->usage;
 	}
-	$state->{fw_repository} = 
-	    OpenBSD::PackageRepository->new($state->{path}, $state);
 	$state->{fw_verbose} = $state->{v};
 	if ($state->{v}) {
 		$state->{v}--;
 	}
 	if ($state->{fw_verbose}) {
-		$state->say("Path to firmware: #1", $state->{path});
+		$state->say("Path to firmware: #1", 
+		    $state->locator->printable_default_path($state));
 	}
 	$state->{subst}->add('NO_SCP', 1);
 }
@@ -211,7 +217,6 @@ sub find_handle
 	} else {
 		$set = $state->updateset->add_hints($pkgname);
 	}
-	$set->add_repositories($state->{fw_repository});
 	return $set;
 }
 
