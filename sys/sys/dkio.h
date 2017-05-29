@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.9 2011/06/05 18:40:33 matthew Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.10 2017/05/29 14:05:31 sf Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -82,5 +82,7 @@ struct dk_diskmap {
 };
 
 #define	DIOCMAP		_IOWR('d', 119, struct dk_diskmap)
+
+#define	DIOCCACHESYNC	_IOW('d', 120, int)	/* sync cache (force?) */
 
 #endif /* _SYS_DKIO_H_ */

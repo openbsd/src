@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.121 2017/05/04 22:47:27 deraadt Exp $ */
+/*	$OpenBSD: wd.c,v 1.122 2017/05/29 14:05:31 sf Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -138,7 +138,7 @@ void  wdstart(void *);
 void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
-void  wd_flushcache(struct wd_softc *, int);
+int   wd_flushcache(struct wd_softc *, int);
 void  wd_standby(struct wd_softc *, int);
 
 /* XXX: these should go elsewhere */
@@ -848,6 +848,14 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		}
 #endif
 
+	case DIOCCACHESYNC:
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			goto exit;
+		}
+		error = wd_flushcache(wd, AT_WAIT);
+		goto exit;
+
 	default:
 		error = wdc_ioctl(wd->drvp, xfer, addr, flag, p);
 		goto exit;
@@ -1067,13 +1075,13 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 	}
 }
 
-void
+int
 wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct wdc_command wdc_c;
 
 	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
-		return;
+		return EIO;
 	bzero(&wdc_c, sizeof(struct wdc_command));
 	wdc_c.r_command = (wd->sc_flags & WDF_LBA48 ? WDCC_FLUSHCACHE_EXT :
 	    WDCC_FLUSHCACHE);
@@ -1088,20 +1096,28 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
 	}
+	if (wdc_c.flags & ERR_NODEV)
+		return ENODEV;
 	if (wdc_c.flags & AT_TIMEOU) {
 		printf("%s: flush cache command timeout\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
+	}
+	if (wdc_c.flags & AT_ERROR) {
+		if (wdc_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+		printf("%s: flush cache command: error 0x%x\n",
+		    wd->sc_dev.dv_xname, wdc_c.r_error);
+		return EIO;
 	}
 	if (wdc_c.flags & AT_DF) {
 		printf("%s: flush cache command: drive fault\n",
 		    wd->sc_dev.dv_xname);
+		return EIO;
 	}
-	/*
-	 * Ignore error register, it shouldn't report anything else
-	 * than COMMAND ABORTED, which means the device doesn't support
-	 * flush cache
-	 */
+	return 0;
 }
 
 void
