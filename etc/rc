@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.495 2017/05/01 14:01:47 rpe Exp $
+#	$OpenBSD: rc,v 1.496 2017/05/29 09:44:01 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -168,7 +168,7 @@ reorder_libs() {
 	echo -n 'reordering libraries:'
 
 	# Only choose the latest version of the libraries.
-	for _liba in /usr/lib/libc.so.*.a; do
+	for _liba in /usr/lib/libc.so.*.a /usr/lib/libcrypto.so.*.a; do
 		_liba=$(ls ${_liba%%.[0-9]*}*.a | sort -V | tail -1)
 		for _l in $_libas; do
 			[[ $_l == $_liba ]] && continue 2
