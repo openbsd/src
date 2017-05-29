@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.145 2017/05/28 20:20:00 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.146 2017/05/29 05:59:45 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -152,6 +152,8 @@ int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint64_t *, uint64_t *);
 int vmx_handle_exit(struct vcpu *);
+int svm_handle_exit(struct vcpu *);
+int svm_handle_msr(struct vcpu *);
 int vmx_handle_xsetbv(struct vcpu *);
 int vmm_handle_cpuid(struct vcpu *);
 int vmx_handle_rdmsr(struct vcpu *);
@@ -159,21 +161,26 @@ int vmx_handle_wrmsr(struct vcpu *);
 int vmx_handle_cr0_write(struct vcpu *, uint64_t);
 int vmx_handle_cr4_write(struct vcpu *, uint64_t);
 int vmx_handle_cr(struct vcpu *);
+int svm_handle_inout(struct vcpu *);
 int vmx_handle_inout(struct vcpu *);
+int svm_handle_hlt(struct vcpu *);
 int vmx_handle_hlt(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
 int vmm_get_guest_faulttype(void);
 int vmx_get_guest_faulttype(void);
-int svm_get_guest_faulttype(void);
+int svm_get_guest_faulttype(struct vmcb *);
 int vmx_get_exit_qualification(uint64_t *);
+int svm_fault_page(struct vcpu *, paddr_t);
 int vmx_fault_page(struct vcpu *, paddr_t);
 int vmx_handle_np_fault(struct vcpu *);
+int svm_handle_np_fault(struct vcpu *);
 int vmm_alloc_vpid(uint16_t *);
 void vmm_free_vpid(uint16_t);
 const char *vcpu_state_decode(u_int);
 const char *vmx_exit_reason_decode(uint32_t);
+const char *svm_exit_reason_decode(uint32_t);
 const char *vmx_instruction_error_decode(uint32_t);
 void svm_setmsrbr(struct vcpu *, uint32_t);
 void svm_setmsrbw(struct vcpu *, uint32_t);
@@ -298,8 +305,7 @@ vmm_enabled(void)
 	if (found_vmx && found_svm)
 		return (0);
 
-	/* SVM is not implemented yet */
-	if (found_vmx)
+	if (found_vmx || found_svm)
 		return 1;
 
 	return 0;
@@ -369,7 +375,7 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->mode == VMM_MODE_SVM || sc->mode == VMM_MODE_RVI) {
-		sc->max_vpid = ci->ci_vmm_cap.vcc_svm.svm_max_asid;
+		sc->max_vpid = curcpu()->ci_vmm_cap.vcc_svm.svm_max_asid;
 	} else {
 		sc->max_vpid = 0xFFF;
 	}
@@ -398,8 +404,7 @@ vmmopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENODEV);
 
 	/* Don't allow open if we didn't detect any supported CPUs */
-	/* XXX presently this means EPT until SP and SVM are back */
-	if (vmm_softc->mode != VMM_MODE_EPT)
+	if (vmm_softc->mode != VMM_MODE_EPT && vmm_softc->mode != VMM_MODE_RVI)
 		return (ENODEV);
 
 	return 0;
@@ -1227,7 +1232,10 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 		}
 	}
 
-	return (0);
+	/* Convert pmap to RVI */
+	ret = pmap_convert(pmap, PMAP_TYPE_RVI);
+
+	return (ret);
 }
 
 /*
@@ -1698,6 +1706,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * HLT instruction (SVM_INTERCEPT_HLT)
 	 * I/O instructions (SVM_INTERCEPT_INOUT)
 	 * MSR access (SVM_INTERCEPT_MSR)
+	 * shutdown events (SVM_INTERCEPT_SHUTDOWN)
 	 *
 	 * VMRUN instruction (SVM_INTERCEPT_VMRUN)
 	 * VMMCALL instruction (SVM_INTERCEPT_VMMCALL)
@@ -1711,7 +1720,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 */
 	vmcb->v_intercept1 = SVM_INTERCEPT_INTR | SVM_INTERCEPT_NMI |
 	    SVM_INTERCEPT_CPUID | SVM_INTERCEPT_HLT | SVM_INTERCEPT_INOUT |
-	    SVM_INTERCEPT_MSR;
+	    SVM_INTERCEPT_MSR | SVM_INTERCEPT_SHUTDOWN;
 
 	vmcb->v_intercept2 = SVM_INTERCEPT_VMRUN | SVM_INTERCEPT_VMMCALL |
 	    SVM_INTERCEPT_VMLOAD | SVM_INTERCEPT_VMSAVE | SVM_INTERCEPT_STGI |
@@ -1751,7 +1760,16 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vcpu->vc_vpid = asid;
 
 	/* TLB Control */
-	vmcb->v_tlb_control = 2;	/* Flush this guest's TLB entries */
+	vmcb->v_tlb_control = 1;	/* First time in, flush all */
+
+	/* INTR masking */
+	vmcb->v_intr_masking = 1;
+
+	/* PAT */
+	vmcb->v_g_pat = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
+            PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
+            PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
+            PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
 
 	/* NPT */
 	if (vmm_softc->mode == VMM_MODE_RVI) {
@@ -3928,6 +3946,20 @@ vmx_handle_intr(struct vcpu *vcpu)
 }
 
 /*
+ * svm_handle_hlt
+ *
+ * Handle HLT exits
+ */
+int
+svm_handle_hlt(struct vcpu *vcpu)
+{
+	/* All HLT insns are 1 byte */
+	vcpu->vc_gueststate.vg_rip += 1;
+
+	return (EAGAIN);
+}
+
+/*
  * vmx_handle_hlt
  *
  * Handle HLT exits. HLTing the CPU with interrupts disabled will terminate
@@ -3988,6 +4020,75 @@ vmx_get_exit_info(uint64_t *rip, uint64_t *exit_reason)
 			rv |= VMX_EXIT_INFO_HAVE_REASON;
 	}
 	return (rv);
+}
+
+/*
+ * svm_handle_exit
+ *
+ * Handle exits from the VM by decoding the exit reason and calling various
+ * subhandlers as needed.
+ */
+int
+svm_handle_exit(struct vcpu *vcpu)
+{
+	uint64_t exit_reason, rflags;
+	int update_rip, ret = 0;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	update_rip = 0;
+	exit_reason = vcpu->vc_gueststate.vg_exit_reason;
+	rflags = vcpu->vc_gueststate.vg_rflags;
+
+	switch (exit_reason) {
+	case SVM_VMEXIT_VINTR:
+		if (!(rflags & PSL_I)) {
+			DPRINTF("%s: impossible interrupt window exit "
+			    "config\n", __func__);
+			ret = EINVAL;
+			break;
+		}
+
+		update_rip = 0;
+		break;
+	case SVM_VMEXIT_INTR:
+		update_rip = 0;
+		break;
+	case SVM_VMEXIT_SHUTDOWN:
+		update_rip = 0;
+		ret = EAGAIN;
+		break;
+	case SVM_VMEXIT_NPF:
+		ret = svm_handle_np_fault(vcpu);
+		break;
+	case SVM_VMEXIT_CPUID:
+		ret = vmm_handle_cpuid(vcpu);
+		update_rip = 1;
+		break;
+	case SVM_VMEXIT_MSR:
+		ret = svm_handle_msr(vcpu);
+		update_rip = 1;
+		break;
+	case SVM_VMEXIT_IOIO:
+		ret = svm_handle_inout(vcpu);
+		update_rip = 1;
+		break;
+	case SVM_VMEXIT_HLT:
+		ret = svm_handle_hlt(vcpu);
+		update_rip = 1;
+		break;
+	default:
+		DPRINTF("%s: unhandled exit 0x%llx (pa=0x%llx)\n", __func__,
+		    exit_reason, (uint64_t)vcpu->vc_control_pa);
+		return (EINVAL);
+	}
+
+	if (update_rip)
+		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
+
+	/* Enable SVME in EFER (must always be set) */
+	vmcb->v_efer |= EFER_SVME;
+
+	return (ret);
 }
 
 /*
@@ -4198,10 +4299,64 @@ vmx_get_guest_faulttype(void)
  * this PCPU.
  */
 int
-svm_get_guest_faulttype(void)
+svm_get_guest_faulttype(struct vmcb *vmcb)
 {
-	/* XXX removed due to rot */
-	return (-1);
+	if (!(vmcb->v_exitinfo1 & 0x1))
+		return VM_FAULT_INVALID;
+	return VM_FAULT_PROTECT;
+}
+
+/*
+ * svm_fault_page
+ *
+ * Request a new page to be faulted into the UVM map of the VM owning 'vcpu'
+ * at address 'gpa'.
+ */
+int
+svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
+{
+	int fault_type, ret;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	fault_type = svm_get_guest_faulttype(vmcb);
+
+	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
+	    PROT_READ | PROT_WRITE | PROT_EXEC);
+	if (ret)
+		printf("svm_fault_page: uvm_fault returns %d\n", ret);
+
+	return (ret);
+}
+
+/*
+ * svm_handle_np_fault
+ *
+ * High level nested paging handler for SVM. Verifies that a fault is for a
+ * valid memory region, then faults a page, or aborts otherwise.
+ */
+int
+svm_handle_np_fault(struct vcpu *vcpu)
+{
+	uint64_t gpa;
+	int gpa_memtype, ret;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	ret = 0;
+
+	gpa = vmcb->v_exitinfo2;		
+
+	gpa_memtype = vmm_get_guest_memtype(vcpu->vc_parent, gpa);
+	switch (gpa_memtype) {
+	case VMM_MEM_TYPE_REGULAR:
+		ret = svm_fault_page(vcpu, gpa);
+		break;
+	default:
+		printf("unknown memory type %d for GPA 0x%llx\n",
+		    gpa_memtype, gpa);
+		return (EINVAL);
+	}
+
+	return (ret);
 }
 
 /*
@@ -4257,6 +4412,81 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 		printf("unknown memory type %d for GPA 0x%llx\n",
 		    gpa_memtype, gpa);
 		return (EINVAL);
+	}
+
+	return (ret);
+}
+
+/*
+ * svm_handle_inout
+ *
+ * Exit handler for IN/OUT instructions.
+ *
+ * The vmm can handle certain IN/OUTS without exiting to vmd, but most of these
+ * will be passed to vmd for completion.
+ */
+int
+svm_handle_inout(struct vcpu *vcpu)
+{
+	uint64_t insn_length, exit_qual;
+	int ret;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	insn_length = vmcb->v_exitinfo2 - vmcb->v_rip;
+	KASSERT(insn_length == 1 || insn_length == 2);
+
+	exit_qual = vmcb->v_exitinfo1;
+
+	/* Bit 0 - direction */
+	vcpu->vc_exit.vei.vei_dir = (exit_qual & 0x1);
+	/* Bit 2 - string instruction? */
+	vcpu->vc_exit.vei.vei_string = (exit_qual & 0x4) >> 2;
+	/* Bit 3 - REP prefix? */
+	vcpu->vc_exit.vei.vei_rep = (exit_qual & 0x8) >> 3;
+
+	/* Bits 4:6 - size of exit */
+	if (exit_qual & 0x10)
+		vcpu->vc_exit.vei.vei_size = 1;
+	else if (exit_qual & 0x20)
+		vcpu->vc_exit.vei.vei_size = 2;
+	else if (exit_qual & 0x40)
+		vcpu->vc_exit.vei.vei_size = 4;
+
+	/* Bit 16:31 - port */
+	vcpu->vc_exit.vei.vei_port = (exit_qual & 0xFFFF0000) >> 16;
+	/* Data */
+	vcpu->vc_exit.vei.vei_data = vmcb->v_rax;
+
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	/*
+	 * The following ports usually belong to devices owned by vmd.
+	 * Return EAGAIN to signal help needed from userspace (vmd).
+	 * Return 0 to indicate we don't care about this port.
+	 *
+	 * XXX something better than a hardcoded list here, maybe
+	 * configure via vmd via the device list in vm create params?
+	 *
+	 * XXX handle not eax target
+	 */
+	switch (vcpu->vc_exit.vei.vei_port) {
+	case IO_ICU1 ... IO_ICU1 + 1:
+	case 0x40 ... 0x43:
+	case IO_RTC ... IO_RTC + 1:
+	case IO_ICU2 ... IO_ICU2 + 1:
+	case 0x3f8 ... 0x3ff:
+	case 0xcf8:
+	case 0xcfc ... 0xcff:
+	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
+		ret = EAGAIN;
+		break;
+	default:
+		/* Read from unsupported ports returns FFs */
+		if (vcpu->vc_exit.vei.vei_dir == 1) {
+			vcpu->vc_gueststate.vg_rax = 0xFFFFFFFF;
+			vmcb->v_rax = 0xFFFFFFFF;
+		}
+		ret = 0;
 	}
 
 	return (ret);
@@ -4680,6 +4910,54 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 }
 
 /*
+ * svm_handle_msr
+ *
+ * Handler for MSR instructions.
+ *
+ * Parameters:
+ *  vcpu: vcpu structure containing instruction info causing the exit
+ *
+ * Return value:
+ *  Always 0 (successful)
+ */
+int
+svm_handle_msr(struct vcpu *vcpu)
+{
+	uint64_t insn_length, msr;
+	uint64_t *rax, *rcx, *rdx;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	/* All RDMSR / WRMSR instructions are 2 bytes */
+	insn_length = 2;
+
+	rax = &vmcb->v_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
+	rdx = &vcpu->vc_gueststate.vg_rdx;
+
+	/* XXX log the access for now, to be able to identify unknown MSRs */
+	if (vmcb->v_exitinfo1 == 1) {
+		if (*rcx == MSR_EFER) {
+			vmcb->v_efer = *rax | EFER_SVME;
+		} else {
+#ifdef VMM_DEBUG
+			/* Log the access, to be able to identify unknown MSRs */
+			DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
+			    "written from guest=0x%llx:0x%llx\n", __func__,
+			    *rcx, *rdx, *rax);
+#endif /* VMM_DEBUG */
+		}
+	} else {
+		msr = rdmsr(*rcx);
+		*rax = msr & 0xFFFFFFFFULL;
+		*rdx = msr >> 32;
+	}
+
+	vcpu->vc_gueststate.vg_rip += insn_length;
+
+	return (0);
+}
+
+/*
  * vmm_handle_cpuid
  *
  * Exit handler for CPUID instruction
@@ -4696,6 +4974,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
 	uint64_t *rax, *rbx, *rcx, *rdx;
+	struct vmcb *vmcb;
 	uint32_t eax, ebx, ecx, edx;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
@@ -4708,9 +4987,14 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 
 		/* All CPUID instructions are 0x0F 0xA2 */
 		KASSERT(insn_length == 2);
+
+		rax = &vcpu->vc_gueststate.vg_rax;
+	} else {
+		insn_length = 2;
+		vmcb = (struct vmcb *)vcpu->vc_control_va;
+		rax = &vmcb->v_rax;
 	}
 
-	rax = &vcpu->vc_gueststate.vg_rax;
 	rbx = &vcpu->vc_gueststate.vg_rbx;
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
@@ -4768,14 +5052,16 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		      CPUID_PSN | CPUID_SS | CPUID_PBE |
 		      CPUID_MTRR | CPUID_PAT);
 		break;
-	case 0x02:	/* Cache and TLB information (not supported) */
-		DPRINTF("%s: function 0x02 (cache/TLB) not supported\n",
-		    __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x02:	/* Cache and TLB information */
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
+		*rdx = edx;
 		break;
+	/*
+	 * XXX "CPUID leaves above 02H and below 8000000H are only visible when
+	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0
+	 */
 	case 0x03:	/* Processor serial number (not supported) */
 		DPRINTF("%s: function 0x03 (processor serial number) not "
 		"supported\n", __func__);
@@ -4784,13 +5070,19 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = 0;
 		*rdx = 0;
 		break;
-	case 0x04:
-		DPRINTF("%s: function 0x04 (deterministic cache info) not "
-		    "supported\n", __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x04: 	/* Deterministic cache info */
+		if (*rcx == 0) {
+			*rax = eax;
+			*rbx = ebx;
+			*rcx = ecx;
+			*rdx = edx;
+		} else {
+			CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
+			*rax = eax;
+			*rbx = ebx;
+			*rcx = ecx;
+			*rdx = edx;
+		}
 		break;
 	case 0x05:	/* MONITOR/MWAIT (not supported) */
 		DPRINTF("%s: function 0x05 (monitor/mwait) not supported\n",
@@ -5000,19 +5292,189 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
+	
+	if (vmm_softc->mode == VMM_MODE_SVM ||
+	    vmm_softc->mode == VMM_MODE_RVI) {
+		/*
+		 * update rax. the rest of the registers get updated in
+		 * svm_enter_guest
+	 	 */
+		vmcb->v_rax = *rax;
+	}
+
 	return (0);
 }
 
 /*
  * vcpu_run_svm
  *
- * VMM main loop used to run a VCPU.
+ * SVM main loop used to run a VCPU.
+ *
+ * Parameters:
+ *  vcpu: The VCPU to run
+ *  vrp: run parameters
+ *
+ * Return values:
+ *  0: The run loop exited and no help is needed from vmd
+ *  EAGAIN: The run loop exited and help from vmd is needed
+ *  EINVAL: an error occured
  */
 int
 vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
-	/* XXX removed due to rot */
-	return (0);
+	int ret = 0, resume, locked;
+	struct region_descriptor gdt;
+	struct cpu_info *ci;
+	uint64_t exit_reason;
+	struct schedstate_percpu *spc;
+	uint16_t irq;
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	resume = 0;
+	irq = vrp->vrp_irq;
+
+	/*
+	 * If we are returning from userspace (vmd) because we exited
+	 * last time, fix up any needed vcpu state first. Which state
+	 * needs to be fixed up depends on what vmd populated in the
+	 * exit data structure.
+	 */
+	if (vrp->vrp_continue) {
+		switch (vcpu->vc_gueststate.vg_exit_reason) {
+		case SVM_VMEXIT_IOIO:
+			vcpu->vc_gueststate.vg_rax =
+			    vcpu->vc_exit.vei.vei_data;
+			vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
+		}
+	}
+
+	while (ret == 0) {
+		if (!resume) {
+			/*
+			 * We are launching for the first time, or we are
+			 * resuming from a different pcpu, so we need to
+			 * reset certain pcpu-specific values.
+			 */
+			ci = curcpu();
+			setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
+
+			if (ci != vcpu->vc_last_pcpu) {
+				vmcb->v_tlb_control = 3; /* Flush TLB */
+				vmcb->v_vmcb_clean_bits = 0; /* Flush cleanbits cache */
+			}
+
+			vcpu->vc_last_pcpu = ci;
+
+			if (gdt.rd_base == 0) {
+				ret = EINVAL;
+				break;
+			}
+		}
+
+		/* Handle vmd(8) injected interrupts */
+		/* Is there an interrupt pending injection? */
+		if (irq != 0xFFFF) {
+			if (vcpu->vc_irqready) {
+				vmcb->v_eventinj = (irq & 0xFF) | (1<<31);
+			} else {
+				vmcb->v_irq = 1;
+				vmcb->v_intr_misc = 0x10; /* XXX #define ign_tpr */
+				vmcb->v_intr_vector = 0;
+				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
+				vmcb->v_vmcb_clean_bits &= ~(1 << 3);
+				vmcb->v_vmcb_clean_bits &= ~(1 << 0);
+			}
+
+			irq = 0xFFFF;
+		} else if (!vcpu->vc_intr) {
+			/* Disable interrupt window */
+			vmcb->v_intercept1 &= ~SVM_INTERCEPT_VINTR;
+			vmcb->v_vmcb_clean_bits &= ~(1 << 0);
+			vmcb->v_vmcb_clean_bits &= ~(1 << 3);
+			vmcb->v_irq = 0;
+			vmcb->v_intr_vector = 0;
+		}
+
+		/* Start / resume the VCPU */
+		KERNEL_ASSERT_LOCKED();
+		KERNEL_UNLOCK();
+
+		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
+
+		ret = svm_enter_guest(vcpu->vc_control_pa,
+		    &vcpu->vc_gueststate, &gdt);
+
+		vcpu->vc_gueststate.vg_rip = vmcb->v_rip;
+		vmcb->v_tlb_control = 0;
+		vmcb->v_vmcb_clean_bits = 0xFFFFFFFF;
+
+		if (ret || exit_reason != SVM_VMEXIT_INTR) {
+			KERNEL_LOCK();
+			locked = 1;
+		} else
+			locked = 0;
+
+		/* If we exited successfully ... */
+		if (ret == 0) {
+			resume = 1;
+
+			exit_reason = vmcb->v_exitcode;
+			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
+
+			vcpu->vc_gueststate.vg_rflags = vmcb->v_rflags;
+
+			/*
+			 * Handle the exit. This will alter "ret" to EAGAIN if
+			 * the exit handler determines help from vmd is needed.
+			 */
+			ret = svm_handle_exit(vcpu);
+
+			if (!locked)
+				KERNEL_LOCK();
+
+			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
+				vcpu->vc_irqready = 1;
+			else
+				vcpu->vc_irqready = 0;
+
+			/*
+			 * If not ready for interrupts, but interrupts pending,
+			 * enable interrupt window exiting.
+			 */
+			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
+				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
+				vmcb->v_irq = 1;
+				vmcb->v_vmcb_clean_bits &= ~(1 << 0);
+				vmcb->v_vmcb_clean_bits &= ~(1 << 3);
+			}
+
+			/*
+			 * Exit to vmd if we are terminating, failed to enter,
+			 * or need help (device I/O)
+			 */
+			if (ret || vcpu_must_stop(vcpu))
+				break;
+
+			if (vcpu->vc_intr && vcpu->vc_irqready) {
+				ret = EAGAIN;
+				break;
+			}
+
+			/* Check if we should yield - don't hog the cpu */
+			spc = &ci->ci_schedstate;
+			if (spc->spc_schedflags & SPCF_SHOULDYIELD) {
+				resume = 0;
+				yield();
+			}
+		}
+	}
+
+	/*
+	 * We are heading back to userspace (vmd), either because we need help
+	 * handling an exit, a guest interrupt is pending, or we failed in some
+	 * way to enter the guest.
+	 */
+	return (ret);
 }
 
 /*
@@ -5091,15 +5553,15 @@ vmx_exit_reason_decode(uint32_t code)
 {
 	switch (code) {
 	case VMX_EXIT_NMI: return "NMI";
-	case VMX_EXIT_EXTINT: return "external interrupt";
-	case VMX_EXIT_TRIPLE_FAULT: return "triple fault";
+	case VMX_EXIT_EXTINT: return "External interrupt";
+	case VMX_EXIT_TRIPLE_FAULT: return "Triple fault";
 	case VMX_EXIT_INIT: return "INIT signal";
 	case VMX_EXIT_SIPI: return "SIPI signal";
 	case VMX_EXIT_IO_SMI: return "I/O SMI";
 	case VMX_EXIT_OTHER_SMI: return "other SMI";
-	case VMX_EXIT_INT_WINDOW: return "interrupt window";
+	case VMX_EXIT_INT_WINDOW: return "Interrupt window";
 	case VMX_EXIT_NMI_WINDOW: return "NMI window";
-	case VMX_EXIT_TASK_SWITCH: return "task switch";
+	case VMX_EXIT_TASK_SWITCH: return "Task switch";
 	case VMX_EXIT_CPUID: return "CPUID instruction";
 	case VMX_EXIT_GETSEC: return "GETSEC instruction";
 	case VMX_EXIT_HLT: return "HLT instruction";
@@ -5151,6 +5613,161 @@ vmx_exit_reason_decode(uint32_t code)
 	case VMX_EXIT_RDSEED: return "RDSEED instruction";
 	case VMX_EXIT_XSAVES: return "XSAVES instruction";
 	case VMX_EXIT_XRSTORS: return "XRSTORS instruction";
+	default: return "unknown";
+	}
+}
+
+/*
+ * svm_exit_reason_decode
+ *
+ * Returns a human readable string describing exit type 'code'
+ */
+const char *
+svm_exit_reason_decode(uint32_t code)
+{
+	switch (code) {
+	case SVM_VMEXIT_CR0_READ: return "CR0 read";		/* 0x00 */
+	case SVM_VMEXIT_CR1_READ: return "CR1 read";		/* 0x01 */
+	case SVM_VMEXIT_CR2_READ: return "CR2 read";		/* 0x02 */
+	case SVM_VMEXIT_CR3_READ: return "CR3 read";		/* 0x03 */
+	case SVM_VMEXIT_CR4_READ: return "CR4 read";		/* 0x04 */
+	case SVM_VMEXIT_CR5_READ: return "CR5 read";		/* 0x05 */
+	case SVM_VMEXIT_CR6_READ: return "CR6 read";		/* 0x06 */
+	case SVM_VMEXIT_CR7_READ: return "CR7 read";		/* 0x07 */
+	case SVM_VMEXIT_CR8_READ: return "CR8 read";		/* 0x08 */
+	case SVM_VMEXIT_CR9_READ: return "CR9 read";		/* 0x09 */
+	case SVM_VMEXIT_CR10_READ: return "CR10 read";		/* 0x0A */
+	case SVM_VMEXIT_CR11_READ: return "CR11 read";		/* 0x0B */
+	case SVM_VMEXIT_CR12_READ: return "CR12 read";		/* 0x0C */
+	case SVM_VMEXIT_CR13_READ: return "CR13 read";		/* 0x0D */
+	case SVM_VMEXIT_CR14_READ: return "CR14 read";		/* 0x0E */
+	case SVM_VMEXIT_CR15_READ: return "CR15 read";		/* 0x0F */
+	case SVM_VMEXIT_CR0_WRITE: return "CR0 write";		/* 0x10 */
+	case SVM_VMEXIT_CR1_WRITE: return "CR1 write";		/* 0x11 */
+	case SVM_VMEXIT_CR2_WRITE: return "CR2 write";		/* 0x12 */
+	case SVM_VMEXIT_CR3_WRITE: return "CR3 write";		/* 0x13 */
+	case SVM_VMEXIT_CR4_WRITE: return "CR4 write";		/* 0x14 */
+	case SVM_VMEXIT_CR5_WRITE: return "CR5 write";		/* 0x15 */
+	case SVM_VMEXIT_CR6_WRITE: return "CR6 write";		/* 0x16 */
+	case SVM_VMEXIT_CR7_WRITE: return "CR7 write";		/* 0x17 */
+	case SVM_VMEXIT_CR8_WRITE: return "CR8 write";		/* 0x18 */
+	case SVM_VMEXIT_CR9_WRITE: return "CR9 write";		/* 0x19 */
+	case SVM_VMEXIT_CR10_WRITE: return "CR10 write";	/* 0x1A */
+	case SVM_VMEXIT_CR11_WRITE: return "CR11 write";	/* 0x1B */
+	case SVM_VMEXIT_CR12_WRITE: return "CR12 write";	/* 0x1C */
+	case SVM_VMEXIT_CR13_WRITE: return "CR13 write";	/* 0x1D */
+	case SVM_VMEXIT_CR14_WRITE: return "CR14 write";	/* 0x1E */
+	case SVM_VMEXIT_CR15_WRITE: return "CR15 write";	/* 0x1F */
+	case SVM_VMEXIT_DR0_READ: return "DR0 read";	 	/* 0x20 */
+	case SVM_VMEXIT_DR1_READ: return "DR1 read";		/* 0x21 */
+	case SVM_VMEXIT_DR2_READ: return "DR2 read";		/* 0x22 */
+	case SVM_VMEXIT_DR3_READ: return "DR3 read";		/* 0x23 */
+	case SVM_VMEXIT_DR4_READ: return "DR4 read";		/* 0x24 */
+	case SVM_VMEXIT_DR5_READ: return "DR5 read";		/* 0x25 */
+	case SVM_VMEXIT_DR6_READ: return "DR6 read";		/* 0x26 */
+	case SVM_VMEXIT_DR7_READ: return "DR7 read";		/* 0x27 */
+	case SVM_VMEXIT_DR8_READ: return "DR8 read";		/* 0x28 */
+	case SVM_VMEXIT_DR9_READ: return "DR9 read";		/* 0x29 */
+	case SVM_VMEXIT_DR10_READ: return "DR10 read";		/* 0x2A */
+	case SVM_VMEXIT_DR11_READ: return "DR11 read";		/* 0x2B */
+	case SVM_VMEXIT_DR12_READ: return "DR12 read";		/* 0x2C */
+	case SVM_VMEXIT_DR13_READ: return "DR13 read";		/* 0x2D */
+	case SVM_VMEXIT_DR14_READ: return "DR14 read";		/* 0x2E */
+	case SVM_VMEXIT_DR15_READ: return "DR15 read";		/* 0x2F */
+	case SVM_VMEXIT_DR0_WRITE: return "DR0 write";		/* 0x30 */
+	case SVM_VMEXIT_DR1_WRITE: return "DR1 write";		/* 0x31 */
+	case SVM_VMEXIT_DR2_WRITE: return "DR2 write";		/* 0x32 */
+	case SVM_VMEXIT_DR3_WRITE: return "DR3 write";		/* 0x33 */
+	case SVM_VMEXIT_DR4_WRITE: return "DR4 write";		/* 0x34 */
+	case SVM_VMEXIT_DR5_WRITE: return "DR5 write";		/* 0x35 */
+	case SVM_VMEXIT_DR6_WRITE: return "DR6 write";		/* 0x36 */
+	case SVM_VMEXIT_DR7_WRITE: return "DR7 write";		/* 0x37 */
+	case SVM_VMEXIT_DR8_WRITE: return "DR8 write";		/* 0x38 */
+	case SVM_VMEXIT_DR9_WRITE: return "DR9 write";		/* 0x39 */
+	case SVM_VMEXIT_DR10_WRITE: return "DR10 write";	/* 0x3A */
+	case SVM_VMEXIT_DR11_WRITE: return "DR11 write";	/* 0x3B */
+	case SVM_VMEXIT_DR12_WRITE: return "DR12 write";	/* 0x3C */
+	case SVM_VMEXIT_DR13_WRITE: return "DR13 write";	/* 0x3D */
+	case SVM_VMEXIT_DR14_WRITE: return "DR14 write";	/* 0x3E */
+	case SVM_VMEXIT_DR15_WRITE: return "DR15 write";	/* 0x3F */
+	case SVM_VMEXIT_EXCP0: return "Exception 0x00";		/* 0x40 */
+	case SVM_VMEXIT_EXCP1: return "Exception 0x01";		/* 0x41 */
+	case SVM_VMEXIT_EXCP2: return "Exception 0x02";		/* 0x42 */
+	case SVM_VMEXIT_EXCP3: return "Exception 0x03";		/* 0x43 */
+	case SVM_VMEXIT_EXCP4: return "Exception 0x04";		/* 0x44 */
+	case SVM_VMEXIT_EXCP5: return "Exception 0x05";		/* 0x45 */
+	case SVM_VMEXIT_EXCP6: return "Exception 0x06";		/* 0x46 */
+	case SVM_VMEXIT_EXCP7: return "Exception 0x07";		/* 0x47 */
+	case SVM_VMEXIT_EXCP8: return "Exception 0x08";		/* 0x48 */
+	case SVM_VMEXIT_EXCP9: return "Exception 0x09";		/* 0x49 */
+	case SVM_VMEXIT_EXCP10: return "Exception 0x0A";	/* 0x4A */
+	case SVM_VMEXIT_EXCP11: return "Exception 0x0B";	/* 0x4B */
+	case SVM_VMEXIT_EXCP12: return "Exception 0x0C";	/* 0x4C */
+	case SVM_VMEXIT_EXCP13: return "Exception 0x0D";	/* 0x4D */
+	case SVM_VMEXIT_EXCP14: return "Exception 0x0E";	/* 0x4E */
+	case SVM_VMEXIT_EXCP15: return "Exception 0x0F";	/* 0x4F */
+	case SVM_VMEXIT_EXCP16: return "Exception 0x10";	/* 0x50 */
+	case SVM_VMEXIT_EXCP17: return "Exception 0x11";	/* 0x51 */
+	case SVM_VMEXIT_EXCP18: return "Exception 0x12";	/* 0x52 */
+	case SVM_VMEXIT_EXCP19: return "Exception 0x13";	/* 0x53 */
+	case SVM_VMEXIT_EXCP20: return "Exception 0x14";	/* 0x54 */
+	case SVM_VMEXIT_EXCP21: return "Exception 0x15";	/* 0x55 */
+	case SVM_VMEXIT_EXCP22: return "Exception 0x16";	/* 0x56 */
+	case SVM_VMEXIT_EXCP23: return "Exception 0x17";	/* 0x57 */
+	case SVM_VMEXIT_EXCP24: return "Exception 0x18";	/* 0x58 */
+	case SVM_VMEXIT_EXCP25: return "Exception 0x19";	/* 0x59 */
+	case SVM_VMEXIT_EXCP26: return "Exception 0x1A";	/* 0x5A */
+	case SVM_VMEXIT_EXCP27: return "Exception 0x1B";	/* 0x5B */
+	case SVM_VMEXIT_EXCP28: return "Exception 0x1C";	/* 0x5C */
+	case SVM_VMEXIT_EXCP29: return "Exception 0x1D";	/* 0x5D */
+	case SVM_VMEXIT_EXCP30: return "Exception 0x1E";	/* 0x5E */
+	case SVM_VMEXIT_EXCP31: return "Exception 0x1F";	/* 0x5F */
+	case SVM_VMEXIT_INTR: return "External interrupt";	/* 0x60 */
+	case SVM_VMEXIT_NMI: return "NMI";			/* 0x61 */
+	case SVM_VMEXIT_SMI: return "SMI";			/* 0x62 */
+	case SVM_VMEXIT_INIT: return "INIT";			/* 0x63 */
+	case SVM_VMEXIT_VINTR: return "Interrupt window";	/* 0x64 */
+	case SVM_VMEXIT_CR0_SEL_WRITE: return "Sel CR0 write";	/* 0x65 */
+	case SVM_VMEXIT_IDTR_READ: return "IDTR read";		/* 0x66 */
+	case SVM_VMEXIT_GDTR_READ: return "GDTR read";		/* 0x67 */
+	case SVM_VMEXIT_LDTR_READ: return "LDTR read";		/* 0x68 */
+	case SVM_VMEXIT_TR_READ: return "TR read";		/* 0x69 */
+	case SVM_VMEXIT_IDTR_WRITE: return "IDTR write";	/* 0x6A */
+	case SVM_VMEXIT_GDTR_WRITE: return "GDTR write";	/* 0x6B */
+	case SVM_VMEXIT_LDTR_WRITE: return "LDTR write";	/* 0x6C */
+	case SVM_VMEXIT_TR_WRITE: return "TR write";		/* 0x6D */
+	case SVM_VMEXIT_RDTSC: return "RDTSC instruction";	/* 0x6E */
+	case SVM_VMEXIT_RDPMC: return "RDPMC instruction";	/* 0x6F */
+	case SVM_VMEXIT_PUSHF: return "PUSHF instruction";	/* 0x70 */
+	case SVM_VMEXIT_POPF: return "POPF instruction";	/* 0x71 */
+	case SVM_VMEXIT_CPUID: return "CPUID instruction";	/* 0x72 */
+	case SVM_VMEXIT_RSM: return "RSM instruction";		/* 0x73 */
+	case SVM_VMEXIT_IRET: return "IRET instruction";	/* 0x74 */
+	case SVM_VMEXIT_SWINT: return "SWINT instruction";	/* 0x75 */
+	case SVM_VMEXIT_INVD: return "INVD instruction";	/* 0x76 */
+	case SVM_VMEXIT_PAUSE: return "PAUSE instruction";	/* 0x77 */
+	case SVM_VMEXIT_HLT: return "HLT instruction";		/* 0x78 */
+	case SVM_VMEXIT_INVLPG: return "INVLPG instruction";	/* 0x79 */
+	case SVM_VMEXIT_INVLPGA: return "INVLPGA instruction";	/* 0x7A */
+	case SVM_VMEXIT_IOIO: return "I/O instruction";		/* 0x7B */
+	case SVM_VMEXIT_MSR: return "RDMSR/WRMSR instruction";	/* 0x7C */
+	case SVM_VMEXIT_TASK_SWITCH: return "Task switch";	/* 0x7D */
+	case SVM_VMEXIT_FERR_FREEZE: return "FERR_FREEZE";	/* 0x7E */
+	case SVM_VMEXIT_SHUTDOWN: return "Triple fault";	/* 0x7F */
+	case SVM_VMEXIT_VMRUN: return "VMRUN instruction";	/* 0x80 */
+	case SVM_VMEXIT_VMMCALL: return "VMMCALL instruction";	/* 0x81 */
+	case SVM_VMEXIT_VMLOAD: return "VMLOAD instruction";	/* 0x82 */
+	case SVM_VMEXIT_VMSAVE: return "VMSAVE instruction";	/* 0x83 */
+	case SVM_VMEXIT_STGI: return "STGI instruction";	/* 0x84 */
+	case SVM_VMEXIT_CLGI: return "CLGI instruction";	/* 0x85 */
+	case SVM_VMEXIT_SKINIT: return "SKINIT instruction";	/* 0x86 */
+	case SVM_VMEXIT_RDTSCP: return "RDTSCP instruction";	/* 0x87 */
+	case SVM_VMEXIT_ICEBP: return "ICEBP instruction";	/* 0x88 */
+	case SVM_VMEXIT_WBINVD: return "WBINVD instruction";	/* 0x89 */
+	case SVM_VMEXIT_MONITOR: return "MONITOR instruction";	/* 0x8A */
+	case SVM_VMEXIT_MWAIT: return "MWAIT instruction";	/* 0x8B */
+	case SVM_VMEXIT_MWAIT_CONDITIONAL: return "Cond MWAIT";	/* 0x8C */
+	case SVM_VMEXIT_NPF: return "NPT violation";		/* 0x400 */
 	default: return "unknown";
 	}
 }
@@ -6177,8 +6794,6 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 		vmm_decode_msr_value(msr_store[i].vms_index,
 		    msr_store[i].vms_data);
 	}
-
-	DPRINTF(" last PIC irq=%d\n", vcpu->vc_intr);
 }
 
 /*
