@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.175 2017/05/12 13:00:56 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.176 2017/05/29 07:58:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1458,7 +1458,7 @@ window_copy_adjust_selection(struct window_pane *wp, u_int *selx, u_int *sely)
 	}
 
 	*selx = sx;
-	*sely = screen_hsize(s) + sy;
+	*sely = sy;
 	return (relpos);
 }
 
