@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.21 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.22 2017/05/29 11:46:49 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -51,6 +51,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <mips64/cache.h>
 #include <mips64/mips_cpu.h>
 #include <mips64/mips_opcode.h>
 
@@ -227,7 +228,7 @@ void
 tlb_asid_wrap(struct cpu_info *ci)
 {
 	tlb_flush(ci->ci_hw.tlbsize);
-#ifdef CPU_R8000
+#if defined(CPU_OCTEON) || defined(CPU_R8000)
 	Mips_InvalidateICache(ci, 0, ci->ci_l1inst.size);
 #endif
 }
