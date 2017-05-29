@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.367 2017/05/29 12:48:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.368 2017/05/29 13:10:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2419,7 +2419,9 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			re = rib_get(rib, &req->prefix, req->prefixlen);
 		if (re)
 			rde_dump_upcall(re, ctx);
-		rde_dump_done(ctx);
+		imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
+		    -1, NULL, 0);
+		free(ctx);
 		return;
 	default:
 		fatalx("rde_dump_ctx_new: unsupported imsg type");
@@ -2476,12 +2478,7 @@ rde_dump_done(void *arg)
 
 	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
 	    -1, NULL, 0);
-	/*
-	 * ctx is not linked for IMSG_CTL_SHOW_RIB_PREFIX because it
-	 * does not need to use rib_dump_r
-	 */
-	if (ctx->req.type != IMSG_CTL_SHOW_RIB_PREFIX)
-		LIST_REMOVE(ctx, entry);
+	LIST_REMOVE(ctx, entry);
 	free(ctx);
 }
 
