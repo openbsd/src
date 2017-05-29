@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.41 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.42 2017/05/29 18:06:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,7 +122,7 @@ cmd_find_window_match(struct cmd_find_window_list *find_list,
 		}
 
 		if (match_flags & CMD_FIND_WINDOW_BY_CONTENT &&
-		    (sres = window_pane_search(wp, str, &line)) != NULL) {
+		    (sres = window_pane_search_old(wp, str, &line)) != NULL) {
 			xasprintf(&find_data->list_ctx,
 			    "pane %u line %u: \"%s\"", i - 1, line + 1, sres);
 			free(sres);
