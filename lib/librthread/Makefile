@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2016/06/01 04:34:18 tedu Exp $
+#	$OpenBSD: Makefile,v 1.44 2017/05/29 21:19:30 mpi Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -39,9 +39,16 @@ SRCS=	rthread.c \
 	rthread_sig.c \
 	rthread_stack.c \
 	rthread_spin_lock.c \
-	rthread_sync.c \
 	rthread_tls.c \
 	sched_prio.c
+
+.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
+CFLAGS+= -DFUTEX
+SRCS+=	rthread_mutex.c \
+	rthread_cond.c
+.else
+SRCS+=	rthread_sync.c
+.endif
 
 OBJS+= _atomic_lock.o
 
