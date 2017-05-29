@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.29 2017/05/28 14:24:19 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.30 2017/05/29 06:14:10 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -36,9 +36,6 @@
 #include <machine/frame.h>
 #include <machine/trap.h>
 
-#ifdef DDBCTF
-#include <ddb/db_extern.h>
-#endif
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
@@ -82,7 +79,7 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, const char *);
+int db_numargs(struct callframe *, db_sym_t);
 void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
@@ -95,7 +92,7 @@ void db_nextframe(struct callframe **, db_addr_t *, long *, int,
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(struct callframe *fp, const char *sym)
+db_numargs(struct callframe *fp, db_sym_t sym)
 {
 #ifdef DDBCTF
 	int args;
@@ -255,7 +252,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			narg = 0;
 		else {
 			is_trap = NONE;
-			narg = db_numargs(frame, name);
+			narg = db_numargs(frame, sym);
 		}
 
 		(*pr)("%s(", name);

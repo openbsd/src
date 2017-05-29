@@ -99,4 +99,8 @@ void db_elf_sym_forall(db_forall_func_t db_forall_func, void *);
 bool db_dwarf_line_at_pc(const char *, size_t, uintptr_t,
     const char **, const char **, int *);
 
+#ifdef DDBCTF
+int	db_ctf_func_numargs(db_sym_t);
+#endif
+
 #endif /* _DDB_DB_SYM_H_ */

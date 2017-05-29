@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.8 2017/05/28 14:24:19 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.9 2017/05/29 06:14:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -50,7 +50,7 @@ struct ddb_ctf {
 struct ddb_ctf db_ctf;
 
 static const char	*db_ctf_lookup_name(uint32_t);
-static const char	*db_ctf_idx2sym(size_t *, uint8_t);
+static Elf_Sym		*db_ctf_idx2sym(size_t *, uint8_t);
 static char		*db_ctf_decompress(const char *, size_t, off_t);
 
 /*
@@ -128,7 +128,7 @@ db_dump_ctf_header(void)
  * It must be noted this only works if the CTF table has the same order
  * as the symbol table.
  */
-static const char *
+Elf_Sym *
 db_ctf_idx2sym(size_t *idx, uint8_t type)
 {
 	Elf_Sym *symp, *symtab_start, *symtab_end;
@@ -142,7 +142,7 @@ db_ctf_idx2sym(size_t *idx, uint8_t type)
 			continue;
 
 		*idx = i;
-		return db_ctf.strtab + symp->st_name;
+		return symp;
 	}
 
 	return NULL;
@@ -152,14 +152,14 @@ db_ctf_idx2sym(size_t *idx, uint8_t type)
  * For a given function name, return the number of arguments.
  */
 int
-db_ctf_func_numargs(const char *funcname)
+db_ctf_func_numargs(db_sym_t st)
 {
+	Elf_Sym			*symp, *stp = (Elf_Sym *)st;
 	uint16_t		*fstart, *fend;
-	const char		*fname;
 	uint16_t		*fsp, kind, vlen;
 	size_t			 i, idx = 0;
 
-	if (!db_ctf.ctf_found)
+	if (!db_ctf.ctf_found || stp == NULL)
 		return -1;
 
 	fstart = (uint16_t *)(db_ctf.data + db_ctf.cth->cth_funcoff);
@@ -167,8 +167,8 @@ db_ctf_func_numargs(const char *funcname)
 
 	fsp = fstart;
 	while (fsp < fend) {
-		fname = db_ctf_idx2sym(&idx, STT_FUNC);
-		if (fname == NULL)
+		symp = db_ctf_idx2sym(&idx, STT_FUNC);
+		if (symp == NULL)
 			break;
 
 		kind = CTF_INFO_KIND(*fsp);
@@ -185,7 +185,7 @@ db_ctf_func_numargs(const char *funcname)
 		for (i = 0; i < vlen; i++)
 			fsp++;
 
-		if (strcmp(funcname, fname) == 0)
+		if (symp == stp)
 			return vlen;
 	}
 
