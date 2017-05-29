@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.157 2017/05/27 18:50:53 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.158 2017/05/29 10:55:34 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -73,6 +73,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
@@ -82,6 +85,7 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 #include <net/radix.h>
+#include <net/raw_cb.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
@@ -128,6 +132,20 @@ extern struct pool ipsec_policy_pool;
 
 extern struct radix_node_head **spd_tables;
 
+#define PFKEY_MSG_MAXSZ 4096
+struct sockaddr pfkey_addr = { 2, PF_KEY, };
+struct domain pfkeydomain;
+
+void pfkey_init(void);
+
+int pfkeyv2_attach(struct socket *, int);
+int pfkeyv2_detach(struct socket *, struct proc *);
+int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct proc *);
+int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
+    struct mbuf *);
+int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
+
 /*
  * Wrapper around m_devget(); copy data from contiguous buffer to mbuf
  * chain.
@@ -144,20 +162,62 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
 	return (0);
 }
 
+static struct protosw pfkeysw[] = {
+{
+  .pr_type      = SOCK_RAW,
+  .pr_domain    = &pfkeydomain,
+  .pr_protocol  = PF_KEY_V2,
+  .pr_flags     = PR_ATOMIC | PR_ADDR,
+  .pr_output    = pfkeyv2_output,
+  .pr_usrreq    = pfkeyv2_usrreq,
+  .pr_attach    = pfkeyv2_attach,
+  .pr_sysctl    = pfkeyv2_sysctl,
+}
+};
+
+struct domain pfkeydomain = {
+  .dom_family = PF_KEY,
+  .dom_name = "PF_KEY",
+  .dom_init = pfkey_init,
+  .dom_protosw = pfkeysw,
+  .dom_protoswNPROTOSW = &pfkeysw[nitems(pfkeysw)],
+};
+
+void
+pfkey_init(void)
+{
+	rn_init(sizeof(struct sockaddr_encap));
+}
+
+
 /*
- * Create a new PF_KEYv2 socket.
+ * Attach a new PF_KEYv2 socket.
  */
 int
-pfkeyv2_create(struct socket *socket)
+pfkeyv2_attach(struct socket *so, int proto)
 {
 	struct pfkeyv2_socket *pfkeyv2_socket;
+	int error;
+
+	if ((so->so_state & SS_PRIV) == 0)
+		return EACCES;
+
+	if (!(so->so_pcb = malloc(sizeof(struct rawcb),
+	    M_PCB, M_DONTWAIT | M_ZERO)))
+		return (ENOMEM);
+
+	error = raw_attach(so, so->so_proto->pr_protocol);
+	if (error)
+		goto ret;
+
+	((struct rawcb *)so->so_pcb)->rcb_faddr = &pfkey_addr;
 
 	if (!(pfkeyv2_socket = malloc(sizeof(struct pfkeyv2_socket),
 	    M_PFKEY, M_NOWAIT | M_ZERO)))
 		return (ENOMEM);
 
 	pfkeyv2_socket->next = pfkeyv2_sockets;
-	pfkeyv2_socket->socket = socket;
+	pfkeyv2_socket->socket = so;
 	pfkeyv2_socket->pid = curproc->p_p->ps_pid;
 
 	/*
@@ -168,16 +228,23 @@ pfkeyv2_create(struct socket *socket)
 
 	pfkeyv2_sockets = pfkeyv2_socket;
 
+	so->so_options |= SO_USELOOPBACK;
+	soisconnected(so);
+
 	return (0);
+ret:
+	free(so->so_pcb, M_PCB, sizeof(struct rawcb));
+	return (error);
 }
 
 /*
  * Close a PF_KEYv2 socket.
  */
 int
-pfkeyv2_release(struct socket *socket)
+pfkeyv2_detach(struct socket *socket, struct proc *p)
 {
 	struct pfkeyv2_socket **pp;
+	int error;
 
 	for (pp = &pfkeyv2_sockets; *pp && ((*pp)->socket != socket);
 	    pp = &((*pp)->next))
@@ -198,6 +265,75 @@ pfkeyv2_release(struct socket *socket)
 		free(pfkeyv2_socket, M_PFKEY, 0);
 	}
 
+	error = raw_usrreq(socket, PRU_DETACH, NULL, NULL, NULL, p);
+	return (error);
+}
+
+int
+pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *mbuf,
+    struct mbuf *nam, struct mbuf *control, struct proc *p)
+{
+	switch (req) {
+	case PRU_DETACH:
+		return (pfkeyv2_detach(so, p));
+	default:
+		return (raw_usrreq(so, req, mbuf, nam, control, p));
+	}
+}
+
+int
+pfkeyv2_output(struct mbuf *mbuf, struct socket *socket,
+    struct sockaddr *dstaddr, struct mbuf *control)
+{
+	void *message;
+	int error = 0;
+
+#ifdef DIAGNOSTIC
+	if (!mbuf || !(mbuf->m_flags & M_PKTHDR)) {
+		error = EINVAL;
+		goto ret;
+	}
+#endif /* DIAGNOSTIC */
+
+	if (mbuf->m_pkthdr.len > PFKEY_MSG_MAXSZ) {
+		error = EMSGSIZE;
+		goto ret;
+	}
+
+	if (!(message = malloc((unsigned long) mbuf->m_pkthdr.len,
+	    M_PFKEY, M_DONTWAIT))) {
+		error = ENOMEM;
+		goto ret;
+	}
+
+	m_copydata(mbuf, 0, mbuf->m_pkthdr.len, message);
+
+	error = pfkeyv2_send(socket, message, mbuf->m_pkthdr.len);
+
+ret:
+	m_freem(mbuf);
+	return (error);
+}
+
+int
+pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
+{
+	struct mbuf *packet2;
+
+	NET_ASSERT_LOCKED();
+
+	if (more) {
+		if (!(packet2 = m_dup_pkt(packet, 0, M_DONTWAIT)))
+			return (ENOMEM);
+	} else
+		packet2 = packet;
+
+	if (!sbappendaddr(&socket->so_rcv, &pfkey_addr, packet2, NULL)) {
+		m_freem(packet2);
+		return (ENOBUFS);
+	}
+
+	sorwakeup(socket);
 	return (0);
 }
 

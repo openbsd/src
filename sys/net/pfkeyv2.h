@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.75 2017/05/26 19:11:20 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.76 2017/05/29 10:55:34 claudio Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -394,12 +394,8 @@ int pfkeyv2_expire(struct tdb *, u_int16_t);
 int pfkeyv2_acquire(struct ipsec_policy *, union sockaddr_union *,
     union sockaddr_union *, u_int32_t *, struct sockaddr_encap *);
 
-int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
-
-int pfkeyv2_create(struct socket *);
 int pfkeyv2_get(struct tdb *, void **, void **, int *);
 int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
-int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int, u_int);
 int pfkeyv2_dump_policy(struct ipsec_policy *, void **, void **, int *);
