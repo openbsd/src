@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.38 2015/08/21 07:01:38 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.39 2017/05/29 12:58:37 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -47,6 +47,7 @@
 #include "ahci.h"
 #include "softraid.h"
 #include "sd.h"
+#include "nvme.h"
 
 /* Hibernate support */
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
@@ -89,6 +90,8 @@ get_hibernate_io_function(dev_t dev)
 		extern struct cfdriver sd_cd;
 		extern int ahci_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
+		extern int nvme_hibernate_io(dev_t dev, daddr_t blkno,
+		    vaddr_t addr, size_t size, int op, void *page);
 		extern int sr_hibernate_io(dev_t dev, daddr_t blkno,
 		    vaddr_t addr, size_t size, int op, void *page);
 		struct device *dv = disk_lookup(&sd_cd, DISKUNIT(dev));
@@ -98,6 +101,12 @@ get_hibernate_io_function(dev_t dev)
 		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
 		    "ahci") == 0)
 			return ahci_hibernate_io;
+#endif
+#if NNVME > 0
+		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&
+		    strcmp(dv->dv_parent->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    "nvme") == 0)
+			return nvme_hibernate_io;
 #endif
 #if NSOFTRAID > 0
 		if (dv && dv->dv_parent && dv->dv_parent->dv_parent &&

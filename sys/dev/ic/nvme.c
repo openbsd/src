@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.57 2017/05/27 19:27:45 sf Exp $ */
+/*	$OpenBSD: nvme.c,v 1.58 2017/05/29 12:58:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -25,6 +25,8 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 
@@ -85,6 +87,15 @@ void	nvme_dmamem_sync(struct nvme_softc *, struct nvme_dmamem *, int);
 void	nvme_scsi_cmd(struct scsi_xfer *);
 int	nvme_scsi_probe(struct scsi_link *);
 void	nvme_scsi_free(struct scsi_link *);
+
+#ifdef HIBERNATE
+#include <uvm/uvm_extern.h>
+#include <sys/hibernate.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+
+int	nvme_hibernate_io(dev_t, daddr_t, vaddr_t, size_t, int, void *);
+#endif
 
 struct scsi_adapter nvme_switch = {
 	nvme_scsi_cmd,		/* cmd */
@@ -332,7 +343,7 @@ nvme_attach(struct nvme_softc *sc)
 		goto free_admin_q;
 	}
 
-	sc->sc_q = nvme_q_alloc(sc, 1, 128, sc->sc_dstrd);
+	sc->sc_q = nvme_q_alloc(sc, NVME_IO_Q, 128, sc->sc_dstrd);
 	if (sc->sc_q == NULL) {
 		printf("%s: unable to allocate io q\n", DEVNAME(sc));
 		goto disable;
@@ -341,6 +352,12 @@ nvme_attach(struct nvme_softc *sc)
 	if (nvme_q_create(sc, sc->sc_q) != 0) {
 		printf("%s: unable to create io q\n", DEVNAME(sc));
 		goto free_q;
+	}
+
+	sc->sc_hib_q = nvme_q_alloc(sc, NVME_HIB_Q, 4, sc->sc_dstrd);
+	if (sc->sc_hib_q == NULL) {
+		printf("%s: unable to allocate hibernate io queue\n", DEVNAME(sc));
+		goto free_hib_q;
 	}
 
 	nvme_write4(sc, NVME_INTMC, 1);
@@ -364,6 +381,8 @@ nvme_attach(struct nvme_softc *sc)
 
 	return (0);
 
+free_hib_q:
+	nvme_q_free(sc, sc->sc_hib_q);
 free_q:
 	nvme_q_free(sc, sc->sc_q);
 disable:
@@ -394,7 +413,7 @@ nvme_resume(struct nvme_softc *sc)
 		return (1);
 	}
 
-	sc->sc_q = nvme_q_alloc(sc, 1, 128, sc->sc_dstrd);
+	sc->sc_q = nvme_q_alloc(sc, NVME_IO_Q, 128, sc->sc_dstrd);
 	if (sc->sc_q == NULL) {
 		printf("%s: unable to allocate io q\n", DEVNAME(sc));
 		goto disable;
@@ -1392,3 +1411,200 @@ nvme_dmamem_free(struct nvme_softc *sc, struct nvme_dmamem *ndm)
 	free(ndm, M_DEVBUF, sizeof *ndm);
 }
 
+#ifdef HIBERNATE
+
+int
+nvme_hibernate_admin_cmd(struct nvme_softc *sc, struct nvme_sqe *sqe,
+    struct nvme_cqe *cqe, int cid)
+{
+	struct nvme_sqe *asqe = NVME_DMA_KVA(sc->sc_admin_q->q_sq_dmamem);
+	struct nvme_cqe *acqe = NVME_DMA_KVA(sc->sc_admin_q->q_cq_dmamem);
+	struct nvme_queue *q = sc->sc_admin_q;
+	int tail;
+	u_int16_t flags;
+
+	/* submit command */
+	tail = q->q_sq_tail;
+	if (++q->q_sq_tail >= q->q_entries)
+		q->q_sq_tail = 0;
+
+	asqe += tail;
+	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
+	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_POSTWRITE);
+	*asqe = *sqe;
+	asqe->cid = cid;
+	bus_dmamap_sync(sc->sc_dmat, NVME_DMA_MAP(q->q_sq_dmamem),
+	    sizeof(*sqe) * tail, sizeof(*sqe), BUS_DMASYNC_PREWRITE);
+
+	nvme_write4(sc, q->q_sqtdbl, q->q_sq_tail);
+
+	/* wait for completion */
+	acqe += q->q_cq_head;
+	for (;;) {
+		nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
+		flags = lemtoh16(&acqe->flags);
+		if ((flags & NVME_CQE_PHASE) == q->q_cq_phase)
+			break;
+	
+		delay(10);
+	}
+
+	if (++q->q_cq_head >= q->q_entries) {
+		q->q_cq_head = 0;
+		q->q_cq_phase ^= NVME_CQE_PHASE;
+	}
+	nvme_write4(sc, q->q_cqhdbl, q->q_cq_head);
+	if ((NVME_CQE_SC(flags) != NVME_CQE_SC_SUCCESS) || (acqe->cid != cid))
+		return (EIO);
+
+	return (0);
+}
+
+int
+nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
+    int op, void *page)
+{
+	struct nvme_hibernate_page {
+		u_int64_t		prpl[MAXPHYS / PAGE_SIZE];
+
+		struct nvme_softc	*sc;
+		int			nsid;
+		int			sq_tail;
+		int			cq_head;
+		int			cqe_phase;
+
+		daddr_t			poffset;
+		size_t			psize;
+	} *my = page;
+	struct nvme_sqe_io *isqe;
+	struct nvme_cqe *icqe;
+	paddr_t data_phys, page_phys;
+	u_int64_t data_bus_phys, page_bus_phys;
+	u_int16_t flags;
+	int i;
+
+	if (op == HIB_INIT) {
+		struct device *disk;
+		struct device *scsibus;
+		extern struct cfdriver sd_cd;
+		struct scsi_link *link;
+		struct scsibus_softc *bus_sc;
+		struct nvme_sqe_q qsqe;
+		struct nvme_cqe qcqe;
+
+		/* find nvme softc */
+		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
+		scsibus = disk->dv_parent;
+		my->sc = (struct nvme_softc *)disk->dv_parent->dv_parent;
+
+		/* find scsi_link, which tells us the target */
+		my->nsid = 0;
+		bus_sc = (struct scsibus_softc *)scsibus;
+		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
+			if (link->device_softc == disk) {
+				my->nsid = link->target + 1;
+				break;
+			}
+		}
+		if (my->nsid == 0)
+			return (EIO);
+		
+		my->poffset = blkno;
+		my->psize = size;
+
+		memset(NVME_DMA_KVA(my->sc->sc_hib_q->q_cq_dmamem), 0,
+		    my->sc->sc_hib_q->q_entries * sizeof(struct nvme_cqe));
+		memset(NVME_DMA_KVA(my->sc->sc_hib_q->q_sq_dmamem), 0,
+		    my->sc->sc_hib_q->q_entries * sizeof(struct nvme_sqe));
+		
+		my->sq_tail = 0;
+		my->cq_head = 0;
+		my->cqe_phase = NVME_CQE_PHASE;
+
+		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
+
+		memset(&qsqe, 0, sizeof(qsqe));
+		qsqe.opcode = NVM_ADMIN_ADD_IOCQ;
+		htolem64(&qsqe.prp1,
+		    NVME_DMA_DVA(my->sc->sc_hib_q->q_cq_dmamem));
+		htolem16(&qsqe.qsize, my->sc->sc_hib_q->q_entries - 1);
+		htolem16(&qsqe.qid, my->sc->sc_hib_q->q_id);
+		qsqe.qflags = NVM_SQE_CQ_IEN | NVM_SQE_Q_PC;
+		if (nvme_hibernate_admin_cmd(my->sc, (struct nvme_sqe *)&qsqe,
+		    &qcqe, 1) != 0)
+			return (EIO);
+
+		memset(&qsqe, 0, sizeof(qsqe));
+		qsqe.opcode = NVM_ADMIN_ADD_IOSQ;
+		htolem64(&qsqe.prp1,
+		    NVME_DMA_DVA(my->sc->sc_hib_q->q_sq_dmamem));
+		htolem16(&qsqe.qsize, my->sc->sc_hib_q->q_entries - 1);
+		htolem16(&qsqe.qid, my->sc->sc_hib_q->q_id);
+		htolem16(&qsqe.cqid, my->sc->sc_hib_q->q_id);
+		qsqe.qflags = NVM_SQE_Q_PC;
+		if (nvme_hibernate_admin_cmd(my->sc, (struct nvme_sqe *)&qsqe,
+		    &qcqe, 2) != 0)
+			return (EIO);
+
+		return (0);
+	}
+
+	if (op != HIB_W)
+		return (0);
+
+	isqe = NVME_DMA_KVA(my->sc->sc_hib_q->q_sq_dmamem);
+	isqe += my->sq_tail;
+	if (++my->sq_tail == my->sc->sc_hib_q->q_entries)
+		my->sq_tail = 0;
+
+	memset(isqe, 0, sizeof(*isqe));
+	isqe->opcode = NVM_CMD_WRITE;
+	htolem32(&isqe->nsid, my->nsid);
+
+	pmap_extract(pmap_kernel(), addr, &data_phys);
+	data_bus_phys = data_phys;
+	htolem64(&isqe->entry.prp[0], data_bus_phys);
+	if ((size > my->sc->sc_mps) && (size <= my->sc->sc_mps * 2)) {
+		htolem64(&isqe->entry.prp[1], data_bus_phys + my->sc->sc_mps);
+	} else if (size > my->sc->sc_mps * 2) {
+		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
+		page_bus_phys = page_phys;
+		htolem64(&isqe->entry.prp[1], page_bus_phys + 
+		    offsetof(struct nvme_hibernate_page, prpl));
+		for (i = 1; i < (size / my->sc->sc_mps); i++) {
+			htolem64(&my->prpl[i - 1], data_bus_phys +
+			    (i * my->sc->sc_mps));
+		}
+	}
+
+	isqe->slba = blkno + my->poffset;
+	isqe->nlb = (size / DEV_BSIZE) - 1;
+	isqe->cid = blkno % 0xffff;
+
+	nvme_write4(my->sc, NVME_SQTDBL(NVME_HIB_Q, my->sc->sc_dstrd),
+	    my->sq_tail);
+
+	icqe = NVME_DMA_KVA(my->sc->sc_hib_q->q_cq_dmamem);
+	icqe += my->cq_head;
+	for (;;) {
+		flags = lemtoh16(&icqe->flags);
+		if ((flags & NVME_CQE_PHASE) == my->cqe_phase)
+			break;
+	
+		delay(10);
+	}
+
+	if (++my->cq_head == my->sc->sc_hib_q->q_entries) {
+		my->cq_head = 0;
+		my->cqe_phase ^= NVME_CQE_PHASE;
+	}
+	nvme_write4(my->sc, NVME_CQHDBL(NVME_HIB_Q, my->sc->sc_dstrd),
+	    my->cq_head);
+	if ((NVME_CQE_SC(flags) != NVME_CQE_SC_SUCCESS) ||
+	    (icqe->cid != blkno % 0xffff))
+		return (EIO);
+
+	return (0);
+}
+
+#endif
