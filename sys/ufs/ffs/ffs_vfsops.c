@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.165 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.166 2017/05/29 14:07:16 sf Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -456,6 +456,16 @@ success:
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 		}
 		ffs_sbupdate(ump, MNT_WAIT);
+		if (ronly) {
+			int force = 0;
+
+			/*
+			 * Updating mount to readonly. Try a cache flush.
+			 * Ignore error because the ioctl may not be supported.
+			 */
+			VOP_IOCTL(ump->um_devvp, DIOCCACHESYNC, &force,
+			    FWRITE, FSCRED, p);
+               }
 	}
 	return (0);
 

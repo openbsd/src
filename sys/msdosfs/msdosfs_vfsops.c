@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.83 2016/10/10 00:34:50 bluhm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.84 2017/05/29 14:07:16 sf Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/disk.h>
+#include <sys/dkio.h>
 #include <sys/stdint.h>
 
 #include <msdosfs/bpb.h>
@@ -128,8 +129,14 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = vflush(mp, NULLVP, flags);
-			if (!error)
+			if (!error) {
+				int force = 0;
+
 				pmp->pm_flags |= MSDOSFSMNT_RONLY;
+				/* may be not supported, ignore error */
+				VOP_IOCTL(pmp->pm_devvp, DIOCCACHESYNC,
+				    &force, FWRITE, FSCRED, p);
+			}
 		}
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			/* not yet implemented */
