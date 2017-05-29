@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# $OpenBSD: slaacd,v 1.1 2017/05/29 10:24:06 florian Exp $
+
+daemon="/usr/sbin/slaacd"
+
+. /etc/rc.d/rc.subr
+
+rc_reload=NO
+
+rc_cmd $1

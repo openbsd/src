@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.454 2017/04/14 21:37:15 espie Exp $
+#	$OpenBSD: Makefile,v 1.455 2017/05/29 10:24:06 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -55,7 +55,7 @@ RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
 	iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
 	lpd mopd mountd mrouted nfsd npppd nsd ntpd ospf6d ospfd \
 	pflogd portmap radiusd rarpd rbootd rebound relayd ripd route6d \
-	rtadvd sasyncd sensorsd slowcgi smtpd sndiod snmpd spamd \
+	rtadvd sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \
 	spamlogd sshd statd switchd syslogd tftpd tftpproxy unbound \
 	vmd watchdogd wsmoused xenodm ypbind ypldap ypserv
 
