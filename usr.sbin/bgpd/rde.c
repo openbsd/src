@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.366 2017/05/28 20:15:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.367 2017/05/29 12:48:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2476,7 +2476,12 @@ rde_dump_done(void *arg)
 
 	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
 	    -1, NULL, 0);
-	LIST_REMOVE(ctx, entry);
+	/*
+	 * ctx is not linked for IMSG_CTL_SHOW_RIB_PREFIX because it
+	 * does not need to use rib_dump_r
+	 */
+	if (ctx->req.type != IMSG_CTL_SHOW_RIB_PREFIX)
+		LIST_REMOVE(ctx, entry);
 	free(ctx);
 }
 
