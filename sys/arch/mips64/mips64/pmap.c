@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2017/05/27 06:23:49 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2017/05/29 14:03:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -228,7 +228,6 @@ void
 pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
 	struct pmap_invalidate_icache_arg ii_args;
-	unsigned long cpuid = cpu_number();
 	unsigned long cpumask = 0;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -238,12 +237,7 @@ pmap_invalidate_icache(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 		    pmap->pm_asid[ci->ci_cpuid].pma_asidgen != 0)
 			cpumask |= 1ul << ci->ci_cpuid;
 	}
-
-	if (cpumask == 1ul << cpuid) {
-		ci = curcpu();
-		Mips_SyncDCachePage(ci, va, pfn_to_pad(entry));
-		Mips_InvalidateICache(ci, va, PAGE_SIZE);
-	} else if (cpumask != 0) {
+	if (cpumask != 0) {
 		ii_args.va = va;
 		ii_args.entry = entry;
 		smp_rendezvous_cpus(cpumask, pmap_invalidate_icache_action,
