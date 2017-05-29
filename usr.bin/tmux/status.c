@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.166 2017/05/17 15:20:23 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.167 2017/05/29 20:41:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -301,6 +301,13 @@ status_redraw(struct client *c)
 	size_t			 llen, rlen, seplen;
 	int			 larrow, rarrow;
 
+	/* Delete the saved status line, if any. */
+	if (c->old_status != NULL) {
+		screen_free(c->old_status);
+		free(c->old_status);
+		c->old_status = NULL;
+	}
+
 	/* No status line? */
 	if (c->tty.sy == 0 || !options_get_number(s->options, "status"))
 		return (1);
@@ -568,6 +575,12 @@ status_message_set(struct client *c, const char *fmt, ...)
 
 	status_message_clear(c);
 
+	if (c->old_status == NULL) {
+		c->old_status = xmalloc(sizeof *c->old_status);
+		memcpy(c->old_status, &c->status, sizeof *c->old_status);
+		screen_init(&c->status, c->tty.sx, 1, 0);
+	}
+
 	va_start(ap, fmt);
 	xvasprintf(&c->message_string, fmt, ap);
 	va_end(ap);
@@ -670,6 +683,12 @@ status_prompt_set(struct client *c, const char *msg, const char *input,
 
 	status_message_clear(c);
 	status_prompt_clear(c);
+
+	if (c->old_status == NULL) {
+		c->old_status = xmalloc(sizeof *c->old_status);
+		memcpy(c->old_status, &c->status, sizeof *c->old_status);
+		screen_init(&c->status, c->tty.sx, 1, 0);
+	}
 
 	c->prompt_string = format_expand_time(ft, msg, t);
 

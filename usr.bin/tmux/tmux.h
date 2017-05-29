@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.772 2017/05/29 20:37:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.773 2017/05/29 20:41:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1327,6 +1327,8 @@ struct client {
 
 	struct event	 status_timer;
 	struct screen	 status;
+
+	struct screen	*old_status;
 
 #define CLIENT_TERMINAL 0x1
 #define CLIENT_LOGIN 0x2
