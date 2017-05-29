@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.132 2016/09/04 10:51:24 naddy Exp $	*/
+/*	$OpenBSD: st.c,v 1.133 2017/05/29 07:47:13 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1047,7 +1047,6 @@ ststart(struct scsi_xfer *xs)
 void
 st_buf_done(struct scsi_xfer *xs)
 {
-	struct st_softc *st = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
 	int error, s;
 
@@ -1056,14 +1055,6 @@ st_buf_done(struct scsi_xfer *xs)
 		bp->b_error = 0;
 		bp->b_resid = xs->resid;
 		break;
-
-	case XS_NO_CCB:
-		/* The adapter is busy, requeue the buf and try it later. */
-		bufq_requeue(&st->sc_bufq, bp);
-		scsi_xs_put(xs);
-		SET(st->flags, ST_WAITING); /* dont let ststart xsh_add */
-		timeout_add(&st->sc_timeout, 1);
-		return;
 
 	case XS_SENSE:
 	case XS_SHORTSENSE:
