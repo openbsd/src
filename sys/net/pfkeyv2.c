@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.159 2017/05/29 14:28:01 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.160 2017/05/29 20:31:12 claudio Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -96,11 +96,6 @@
 #include <net/pfvar.h>
 #endif
 
-/* Static globals */
-static struct pfkeyv2_socket *pfkeyv2_sockets = NULL;
-static uint32_t pfkeyv2_seq = 1;
-static int nregistered = 0;
-static int npromisc = 0;
 
 static const struct sadb_alg ealgs[] = {
 	{ SADB_EALG_NULL, 0, 0, 0 },
@@ -137,7 +132,7 @@ struct sockaddr pfkey_addr = { 2, PF_KEY, };
 struct domain pfkeydomain;
 
 struct pfkeyv2_socket {
-	struct pfkeyv2_socket *next;
+	LIST_ENTRY(pfkeyv2_socket)	kcb_list;
 	struct socket *socket;
 	int flags;
 	uint32_t pid;
@@ -149,6 +144,13 @@ struct dump_state {
 	struct sadb_msg *sadb_msg;
 	struct socket *socket;
 };
+
+/* Static globals */
+static LIST_HEAD(, pfkeyv2_socket) pfkeyv2_sockets =
+    LIST_HEAD_INITIALIZER(pfkeyv2_sockets);
+static uint32_t pfkeyv2_seq = 1;
+static int nregistered = 0;
+static int npromisc = 0;
 
 void pfkey_init(void);
 
@@ -230,7 +232,7 @@ pfkeyv2_attach(struct socket *so, int proto)
 	    M_PFKEY, M_NOWAIT | M_ZERO)))
 		return (ENOMEM);
 
-	pfkeyv2_socket->next = pfkeyv2_sockets;
+	LIST_INSERT_HEAD(&pfkeyv2_sockets, pfkeyv2_socket, kcb_list);
 	pfkeyv2_socket->socket = so;
 	pfkeyv2_socket->pid = curproc->p_p->ps_pid;
 
@@ -239,8 +241,6 @@ pfkeyv2_attach(struct socket *so, int proto)
 	 * XXX rawcb doesn't store the rdomain like inpcb does.
 	 */
 	pfkeyv2_socket->rdomain = rtable_l2(curproc->p_p->ps_rtableid);
-
-	pfkeyv2_sockets = pfkeyv2_socket;
 
 	so->so_options |= SO_USELOOPBACK;
 	soisconnected(so);
@@ -257,26 +257,23 @@ ret:
 int
 pfkeyv2_detach(struct socket *socket, struct proc *p)
 {
-	struct pfkeyv2_socket **pp;
+	struct pfkeyv2_socket *pp;
 	int error;
 
-	for (pp = &pfkeyv2_sockets; *pp && ((*pp)->socket != socket);
-	    pp = &((*pp)->next))
-		/*EMPTY*/;
+	LIST_FOREACH(pp, &pfkeyv2_sockets, kcb_list)
+		if (pp->socket == socket)
+			break;
 
-	if (*pp) {
-		struct pfkeyv2_socket *pfkeyv2_socket;
+	if (pp) {
+		LIST_REMOVE(pp, kcb_list);
 
-		pfkeyv2_socket = *pp;
-		*pp = (*pp)->next;
-
-		if (pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
+		if (pp->flags & PFKEYV2_SOCKETFLAGS_REGISTERED)
 			nregistered--;
 
-		if (pfkeyv2_socket->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
+		if (pp->flags & PFKEYV2_SOCKETFLAGS_PROMISC)
 			npromisc--;
 
-		free(pfkeyv2_socket, M_PFKEY, 0);
+		free(pp, M_PFKEY, 0);
 	}
 
 	error = raw_usrreq(socket, PRU_DETACH, NULL, NULL, NULL, p);
@@ -427,12 +424,12 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		 * Search for promiscuous listeners, skipping the
 		 * original destination.
 		 */
-		for (s = pfkeyv2_sockets; s; s = s->next)
+		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (s->socket != socket) &&
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s->socket, packet, 1);
-
+		}
 		m_freem(packet);
 		break;
 
@@ -441,7 +438,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 		 * Send the message to all registered sockets that match
 		 * the specified satype (e.g., all IPSEC-ESP negotiators)
 		 */
-		for (s = pfkeyv2_sockets; s; s = s->next)
+		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->rdomain == rdomain)) {
 				if (!satype)    /* Just send to everyone registered */
@@ -452,7 +449,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 						pfkey_sendup(s->socket, packet, 1);
 				}
 			}
-
+		}
 		/* Free last/original copy of the packet */
 		m_freem(packet);
 
@@ -471,18 +468,18 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 			goto ret;
 
 		/* Send to all registered promiscuous listeners */
-		for (s = pfkeyv2_sockets; s; s = s->next)
+		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) &&
 			    (s->rdomain == rdomain))
 				pfkey_sendup(s->socket, packet, 1);
-
+		}
 		m_freem(packet);
 		break;
 
 	case PFKEYV2_SENDMESSAGE_BROADCAST:
 		/* Send message to all sockets */
-		for (s = pfkeyv2_sockets; s; s = s->next) {
+		LIST_FOREACH(s, &pfkeyv2_sockets, kcb_list) {
 			if (s->rdomain == rdomain)
 				pfkey_sendup(s->socket, packet, 1);
 		}
@@ -975,8 +972,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	/* Verify that we received this over a legitimate pfkeyv2 socket */
 	bzero(headers, sizeof(headers));
 
-	for (pfkeyv2_socket = pfkeyv2_sockets; pfkeyv2_socket;
-	    pfkeyv2_socket = pfkeyv2_socket->next)
+	LIST_FOREACH(pfkeyv2_socket, &pfkeyv2_sockets, kcb_list)
 		if (pfkeyv2_socket->socket == socket)
 			break;
 
@@ -1014,7 +1010,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			goto ret;
 
 		/* Send to all promiscuous listeners */
-		for (so = pfkeyv2_sockets; so; so = so->next) {
+		LIST_FOREACH(so, &pfkeyv2_sockets, kcb_list) {
 			if ((so->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
 			    (so->rdomain == rdomain))
 				pfkey_sendup(so->socket, packet, 1);
@@ -1773,7 +1769,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			if ((rval = pfdatatopacket(message, len, &packet)) != 0)
 				goto ret;
 
-			for (so = pfkeyv2_sockets; so; so = so->next)
+			LIST_FOREACH(so, &pfkeyv2_sockets, kcb_list)
 				if ((so != pfkeyv2_socket) &&
 				    (so->rdomain == rdomain) &&
 				    (!smsg->sadb_msg_seq ||
