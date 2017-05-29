@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.63 2017/05/28 21:21:00 ajacoutot Exp $
+#	$OpenBSD: airport,v 1.64 2017/05/29 00:05:28 henning Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1828,6 +1828,7 @@ XBR:Brockville, Ontario, Canada
 XCM:Chatham, Ontario, Canada
 XDM:Drummondville, Quebec, Canada
 XFD:Stratford, Ontario, Canada
+XFW:Flugplatz Hamburg-Finkenwerder, Hamburg, Germany
 XIY:Xianyang, Xi An, China
 XLV:Niagara Falls, Ontario, Canada
 XLZ:Truro, Nova Scotia, Canada
