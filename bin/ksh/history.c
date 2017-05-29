@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.58 2016/08/24 16:09:40 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.59 2017/05/29 13:09:17 tb Exp $	*/
 
 /*
  * command history
@@ -9,8 +9,7 @@
  *	a)	the original in-memory history  mechanism
  *	b)	a more complicated mechanism done by  pc@hillside.co.uk
  *		that more closely follows the real ksh way of doing
- *		things. You need to have the mmap system call for this
- *		to work on your system
+ *		things.
  */
 
 #include <sys/stat.h>
@@ -22,25 +21,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "sh.h"
 
 #ifdef HISTORY
-# include <sys/mman.h>
 
-/*
- *	variables for handling the data file
- */
-static int	histfd;
-static int	hsize;
-
-static int hist_count_lines(unsigned char *, int);
-static int hist_shrink(unsigned char *, int);
-static unsigned char *hist_skip_back(unsigned char *,int *,int);
-static void histload(Source *, unsigned char *, int);
-static void histinsert(Source *, int, unsigned char *);
-static void writehistfile(int, char *);
-static int sprinkle(int);
+static void	history_write(void);
+static FILE	*history_open(void);
+static int	history_load(Source *);
+static void	history_close(void);
 
 static int	hist_execute(char *);
 static int	hist_replace(char **, const char *, const char *, int);
@@ -48,11 +38,14 @@ static char   **hist_get(const char *, int, int);
 static char   **hist_get_oldest(void);
 static void	histbackup(void);
 
+static FILE	*histfh;
 static char   **current;	/* current position in history[] */
 static char    *hname;		/* current name of history file */
 static int	hstarted;	/* set after hist_init() called */
 static Source	*hist_source;
+static uint32_t	line_co;
 
+static struct stat last_sb;
 
 int
 c_fc(char **wp)
@@ -546,15 +539,10 @@ sethistfile(const char *name)
 	/* if the name is the same as the name we have */
 	if (hname && strcmp(hname, name) == 0)
 		return;
-
 	/*
 	 * its a new name - possibly
 	 */
-	if (histfd) {
-		/* yes the file is open */
-		(void) close(histfd);
-		histfd = 0;
-		hsize = 0;
+	if (hname) {
 		afree(hname, APERM);
 		hname = NULL;
 		/* let's reset the history */
@@ -562,6 +550,7 @@ sethistfile(const char *name)
 		hist_source->line = 0;
 	}
 
+	history_close();
 	hist_init(hist_source);
 }
 
@@ -578,6 +567,16 @@ init_histvec(void)
 	}
 }
 
+static void
+history_lock(int operation)
+{
+	while (flock(fileno(histfh), operation) != 0) {
+		if (errno == EINTR || errno == EAGAIN)
+			continue;
+		else
+			break;
+	}
+}
 
 /*
  *	Routines added by Peter Collinson BSDI(Europe)/Hillside Systems to
@@ -594,18 +593,28 @@ init_histvec(void)
 void
 histsave(int lno, const char *cmd, int dowrite)
 {
-	char **hp;
-	char *c, *cp;
+	struct stat	sb;
+	char		**hp, *c, *cp, *encoded;
+
+	if (dowrite && histfh) {
+		history_lock(LOCK_EX);
+		if (fstat(fileno(histfh), &sb) != -1) {
+			if (timespeccmp(&sb.st_mtim, &last_sb.st_mtim, ==))
+				; /* file is unchanged */
+			else {
+				/* reset history */
+				histptr = history - 1;
+				hist_source->line = 0;
+				history_load(hist_source);
+			}
+		}
+	}
 
 	c = str_save(cmd, APERM);
-	if ((cp = strchr(c, '\n')) != NULL)
+	if ((cp = strrchr(c, '\n')) != NULL)
 		*cp = '\0';
 
-	if (histfd && dowrite)
-		writehistfile(lno, c);
-
 	hp = histptr;
-
 	if (++hp >= history + histsize) { /* remove oldest command */
 		afree(*history, APERM);
 		for (hp = history; hp < history + histsize - 1; hp++)
@@ -613,34 +622,88 @@ histsave(int lno, const char *cmd, int dowrite)
 	}
 	*hp = c;
 	histptr = hp;
+
+	if (dowrite && histfh) {
+		/* append to file */
+		if (fseeko(histfh, 0, SEEK_END) == 0 &&
+		    stravis(&encoded, c, VIS_SAFE | VIS_NL) != -1) {
+			fprintf(histfh, "%s\n", encoded);
+			fflush(histfh);
+			fstat(fileno(histfh), &last_sb);
+			line_co++;
+			history_write();
+			free(encoded);
+		}
+		history_lock(LOCK_UN);
+	}
 }
 
-/*
- *	Write history data to a file nominated by HISTFILE. If HISTFILE
- *	is unset then history is still recorded, but the data is not
- *	written to a file. All copies of ksh looking at the file will
- *	maintain the same history. This is ksh behaviour.
- */
+static FILE *
+history_open(void)
+{
+	struct stat	sb;
+	FILE		*f;
+	int		fd, fddup;
 
-/*
- *	History file format:
-	 * Bytes 1, 2: HMAGIC - just to check that we are dealing with
-	   the correct object
-	 * Each command, in the format:
-	   <command byte><command number(4 bytes)><bytes><null>
- */
-#define HMAGIC1		0xab
-#define HMAGIC2		0xcd
-#define COMMAND		0xff
+	if ((fd = open(hname, O_RDWR | O_CREAT | O_EXLOCK, 0600)) == -1)
+		return NULL;
+	if (fstat(fd, &sb) == -1 || sb.st_uid != getuid()) {
+		close(fd);
+		return NULL;
+	}
+	fddup = savefd(fd);
+	if (fddup != fd)
+		close(fd);
+
+	if ((f = fdopen(fddup, "r+")) == NULL)
+		close(fddup);
+	else
+		last_sb = sb;
+
+	return f;
+}
+
+static void
+history_close(void)
+{
+	if (histfh) {
+		fflush(histfh);
+		fclose(histfh);
+		histfh = NULL;
+	}
+}
+
+static int
+history_load(Source *s)
+{
+	char		*p, encoded[LINE + 1], line[LINE + 1];
+
+	rewind(histfh);
+
+	/* just read it all; will auto resize history upon next command */
+	for (line_co = 1; ; line_co++) {
+		p = fgets(encoded, sizeof(encoded), histfh);
+		if (p == NULL || feof(histfh) || ferror(histfh))
+			break;
+		if ((p = strchr(encoded, '\n')) == NULL) {
+			bi_errorf("history file is corrupt");
+			return 1;
+		}
+		*p = '\0';
+		s->line = line_co;
+		s->cmd_offset = line_co;
+		strunvis(line, encoded);
+		histsave(line_co, line, 0);
+	}
+
+	history_write();
+
+	return 0;
+}
 
 void
 hist_init(Source *s)
 {
-	unsigned char	*base;
-	int	lines;
-	int	fd;
-	struct stat sb;
-
 	if (Flag(FTALKING) == 0)
 		return;
 
@@ -652,326 +715,55 @@ hist_init(Source *s)
 	if (hname == NULL)
 		return;
 	hname = str_save(hname, APERM);
-
-  retry:
-	/* we have a file and are interactive */
-	if ((fd = open(hname, O_RDWR|O_CREAT|O_APPEND, 0600)) < 0)
+	histfh = history_open();
+	if (histfh == NULL)
 		return;
-	if (fstat(fd, &sb) == -1 || sb.st_uid != getuid()) {
-		close(fd);
+
+	history_load(s);
+
+	history_lock(LOCK_UN);
+}
+
+static void
+history_write(void)
+{
+	char		*cmd, *encoded;
+	int		i;
+
+	/* see if file has grown over 25% */
+	if (line_co < histsize + (histsize / 4))
 		return;
+
+	/* rewrite the whole caboodle */
+	rewind(histfh);
+	if (ftruncate(fileno(histfh), 0) == -1) {
+		bi_errorf("failed to rewrite history file - %s",
+		    strerror(errno));
 	}
+	for (i = 0; i < histsize; i++) {
+		cmd = history[i];
+		if (cmd == NULL)
+			break;
 
-	histfd = savefd(fd);
-	if (histfd != fd)
-		close(fd);
-
-	(void) flock(histfd, LOCK_EX);
-
-	hsize = lseek(histfd, 0L, SEEK_END);
-
-	if (hsize == 0) {
-		/* add magic */
-		if (sprinkle(histfd)) {
-			hist_finish();
-			return;
-		}
-	}
-	else if (hsize > 0) {
-		/*
-		 * we have some data
-		 */
-		base = mmap(0, hsize, PROT_READ,
-		    MAP_FILE|MAP_PRIVATE, histfd, 0);
-		/*
-		 * check on its validity
-		 */
-		if (base == MAP_FAILED || *base != HMAGIC1 || base[1] != HMAGIC2) {
-			if (base != MAP_FAILED)
-				munmap((caddr_t)base, hsize);
-			hist_finish();
-			if (unlink(hname) != 0)
+		if (stravis(&encoded, cmd, VIS_SAFE | VIS_NL) != -1) {
+			if (fprintf(histfh, "%s\n", encoded) == -1) {
+				free(encoded);
 				return;
-			goto retry;
-		}
-		if (hsize > 2) {
-			lines = hist_count_lines(base+2, hsize-2);
-			if (lines > histsize) {
-				/* we need to make the file smaller */
-				if (hist_shrink(base, hsize))
-					if (unlink(hname) != 0)
-						return;
-				munmap((caddr_t)base, hsize);
-				hist_finish();
-				goto retry;
 			}
-		}
-		histload(hist_source, base+2, hsize-2);
-		munmap((caddr_t)base, hsize);
-	}
-	(void) flock(histfd, LOCK_UN);
-	hsize = lseek(histfd, 0L, SEEK_END);
-}
-
-typedef enum state {
-	shdr,		/* expecting a header */
-	sline,		/* looking for a null byte to end the line */
-	sn1,		/* bytes 1 to 4 of a line no */
-	sn2, sn3, sn4
-} State;
-
-static int
-hist_count_lines(unsigned char *base, int bytes)
-{
-	State state = shdr;
-	int lines = 0;
-
-	while (bytes--) {
-		switch (state) {
-		case shdr:
-			if (*base == COMMAND)
-				state = sn1;
-			break;
-		case sn1:
-			state = sn2; break;
-		case sn2:
-			state = sn3; break;
-		case sn3:
-			state = sn4; break;
-		case sn4:
-			state = sline; break;
-		case sline:
-			if (*base == '\0')
-				lines++, state = shdr;
-		}
-		base++;
-	}
-	return lines;
-}
-
-/*
- *	Shrink the history file to histsize lines
- */
-static int
-hist_shrink(unsigned char *oldbase, int oldbytes)
-{
-	int fd;
-	char	nfile[1024];
-	unsigned char *nbase = oldbase;
-	int nbytes = oldbytes;
-
-	nbase = hist_skip_back(nbase, &nbytes, histsize);
-	if (nbase == NULL)
-		return 1;
-	if (nbase == oldbase)
-		return 0;
-
-	/*
-	 *	create temp file
-	 */
-	(void) shf_snprintf(nfile, sizeof(nfile), "%s.%d", hname, procpid);
-	if ((fd = open(nfile, O_CREAT | O_TRUNC | O_WRONLY, 0600)) < 0)
-		return 1;
-
-	if (sprinkle(fd)) {
-		close(fd);
-		unlink(nfile);
-		return 1;
-	}
-	if (write(fd, nbase, nbytes) != nbytes) {
-		close(fd);
-		unlink(nfile);
-		return 1;
-	}
-	close(fd);
-
-	/*
-	 *	rename
-	 */
-	if (rename(nfile, hname) < 0)
-		return 1;
-	return 0;
-}
-
-
-/*
- *	find a pointer to the data `no' back from the end of the file
- *	return the pointer and the number of bytes left
- */
-static unsigned char *
-hist_skip_back(unsigned char *base, int *bytes, int no)
-{
-	int lines = 0;
-	unsigned char *ep;
-
-	for (ep = base + *bytes; --ep > base; ) {
-		/* this doesn't really work: the 4 byte line number that is
-		 * encoded after the COMMAND byte can itself contain the
-		 * COMMAND byte....
-		 */
-		for (; ep > base && *ep != COMMAND; ep--)
-			;
-		if (ep == base)
-			break;
-		if (++lines == no) {
-			*bytes = *bytes - ((char *)ep - (char *)base);
-			return ep;
+			free(encoded);
 		}
 	}
-	return NULL;
-}
 
-/*
- *	load the history structure from the stored data
- */
-static void
-histload(Source *s, unsigned char *base, int bytes)
-{
-	State state;
-	int	lno = 0;
-	unsigned char	*line = NULL;
+	line_co = histsize;
 
-	for (state = shdr; bytes-- > 0; base++) {
-		switch (state) {
-		case shdr:
-			if (*base == COMMAND)
-				state = sn1;
-			break;
-		case sn1:
-			lno = (((*base)&0xff)<<24);
-			state = sn2;
-			break;
-		case sn2:
-			lno |= (((*base)&0xff)<<16);
-			state = sn3;
-			break;
-		case sn3:
-			lno |= (((*base)&0xff)<<8);
-			state = sn4;
-			break;
-		case sn4:
-			lno |= (*base)&0xff;
-			line = base+1;
-			state = sline;
-			break;
-		case sline:
-			if (*base == '\0') {
-				/* worry about line numbers */
-				if (histptr >= history && lno-1 != s->line) {
-					/* a replacement ? */
-					histinsert(s, lno, line);
-				}
-				else {
-					s->line = lno;
-					s->cmd_offset = lno;
-					histsave(lno, (char *)line, 0);
-				}
-				state = shdr;
-			}
-		}
-	}
-}
-
-/*
- *	Insert a line into the history at a specified number
- */
-static void
-histinsert(Source *s, int lno, unsigned char *line)
-{
-	char **hp;
-
-	if (lno >= s->line-(histptr-history) && lno <= s->line) {
-		hp = &histptr[lno-s->line];
-		afree(*hp, APERM);
-		*hp = str_save((char *)line, APERM);
-	}
-}
-
-/*
- *	write a command to the end of the history file
- *	This *MAY* seem easy but it's also necessary to check
- *	that the history file has not changed in size.
- *	If it has - then some other shell has written to it
- *	and we should read those commands to update our history
- */
-static void
-writehistfile(int lno, char *cmd)
-{
-	int	sizenow;
-	unsigned char	*base;
-	unsigned char	*new;
-	int	bytes;
-	unsigned char	hdr[5];
-	struct iovec	iov[2];
-
-	(void) flock(histfd, LOCK_EX);
-	sizenow = lseek(histfd, 0L, SEEK_END);
-	if (sizenow != hsize) {
-		/*
-		 *	Things have changed
-		 */
-		if (sizenow > hsize) {
-			/* someone has added some lines */
-			bytes = sizenow - hsize;
-			base = mmap(0, sizenow,
-			    PROT_READ, MAP_FILE|MAP_PRIVATE, histfd, 0);
-			if (base == MAP_FAILED)
-				goto bad;
-			new = base + hsize;
-			if (*new != COMMAND) {
-				munmap((caddr_t)base, sizenow);
-				goto bad;
-			}
-			hist_source->line--;
-			histload(hist_source, new, bytes);
-			hist_source->line++;
-			lno = hist_source->line;
-			munmap((caddr_t)base, sizenow);
-			hsize = sizenow;
-		} else {
-			/* it has shrunk */
-			/* but to what? */
-			/* we'll give up for now */
-			goto bad;
-		}
-	}
-	/*
-	 *	we can write our bit now
-	 */
-	hdr[0] = COMMAND;
-	hdr[1] = (lno>>24)&0xff;
-	hdr[2] = (lno>>16)&0xff;
-	hdr[3] = (lno>>8)&0xff;
-	hdr[4] = lno&0xff;
-	iov[0].iov_base = hdr;
-	iov[0].iov_len = 5;
-	iov[1].iov_base = cmd;
-	iov[1].iov_len = strlen(cmd) + 1;
-	(void) writev(histfd, iov, 2);
-	hsize = lseek(histfd, 0L, SEEK_END);
-	(void) flock(histfd, LOCK_UN);
-	return;
-bad:
-	hist_finish();
+	fflush(histfh);
+	fstat(fileno(histfh), &last_sb);
 }
 
 void
 hist_finish(void)
 {
-	(void) flock(histfd, LOCK_UN);
-	(void) close(histfd);
-	histfd = 0;
-}
-
-/*
- *	add magic to the history file
- */
-static int
-sprinkle(int fd)
-{
-	static unsigned char mag[] = { HMAGIC1, HMAGIC2 };
-
-	return(write(fd, mag, 2) != 2);
+	history_close();
 }
 
 #else /* HISTORY */
