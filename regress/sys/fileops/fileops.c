@@ -1,4 +1,4 @@
-/* $OpenBSD: fileops.c,v 1.1 2017/05/29 11:01:16 sf Exp $ */
+/* $OpenBSD: fileops.c,v 1.2 2017/05/29 13:49:40 bluhm Exp $ */
 /*
  * Copyright (c) 2017 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -28,11 +28,6 @@
 #define BUFSIZE (16 * 1024)
 #define HOLESIZE (16 * BUFSIZE)
 
-#define myerr(rc, fmt, ...)				\
-    do { err(rc, fmt "\nFAILED", ## __VA_ARGS__); } while (0)
-#define myerrx(rc, fmt, ...)			\
-    do { errx(rc, fmt "\nFAILED", ## __VA_ARGS__); } while (0)
-
 static int	 debug = 0;
 static int	 fd = -1;
 static off_t	 curpos = 0;
@@ -58,7 +53,8 @@ check_data(const void *buf, size_t size, uint32_t seed)
 	const uint32_t *ibuf = buf;
 	for (size_t i = 0; i < size / 4; i++) {
 		if (ibuf[i] != seed + i) {
-			myerrx(3, "%s: pos %zd/%zd: expected %#08zx got %#08x\n", __func__, 4 * i, size, seed + i, ibuf[i]);
+			errx(3, "%s: pos %zd/%zd: expected %#08zx got %#08x",
+			    __func__, 4 * i, size, seed + i, ibuf[i]);
 		}
 	}
 }
@@ -70,7 +66,8 @@ check_zero(const void *buf, size_t size)
 	const uint32_t *ibuf = buf;
 	for (size_t i = 0; i < size / 4; i++) {
 		if (ibuf[i] != 0) {
-			myerrx(3, "%s: pos %zd/%zd: expected 0 got %#08x\n", __func__, 4 * i, size, ibuf[i]);
+			errx(3, "%s: pos %zd/%zd: expected 0 got %#08x",
+			    __func__, 4 * i, size, ibuf[i]);
 		}
 	}
 }
@@ -80,9 +77,11 @@ check(const char *what, int64_t have, int64_t want)
 {
 	if (have != want) {
 		if (have == -1)
-			myerr(2, "%s returned %lld, expected %lld", what, have, want);
+			err(2, "%s returned %lld, expected %lld",
+			    what, have, want);
 		else
-			myerrx(2, "%s returned %lld, expected %lld", what, have, want);
+			errx(2, "%s returned %lld, expected %lld",
+			    what, have, want);
 	}
 
 	if (debug)
@@ -124,7 +123,7 @@ c_lseek(off_t offset, int whence)
 			curpos += offset;
 			break;
 		default:
-			myerrx(1, "c_lseek not supported");
+			errx(1, "c_lseek not supported");
 	}
 	check("lseek", ret, curpos);
 	if (debug)
@@ -136,7 +135,7 @@ c_mmap(size_t size)
 {
 	mbuf = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, curpos);
 	if (mbuf == MAP_FAILED)
-		myerr(2, "mmap %zd pos %lld failed", size, (long long)curpos);
+		err(2, "mmap %zd pos %lld failed", size, (long long)curpos);
 	curpos += size;
 	if (debug)
 		printf("mmap: %p\n", mbuf);
@@ -147,7 +146,7 @@ c_munmap(size_t size)
 {
 	int ret = munmap(mbuf, size);
 	if (ret != 0)
-		myerr(2, "munmap");
+		err(2, "munmap");
 }
 
 void
@@ -155,7 +154,7 @@ c_open(int flags)
 {
 	fd = open(fname, flags, S_IRUSR|S_IWUSR);
 	if (fd == -1)
-		myerr(1, "open");
+		err(1, "open");
 }
 
 void
@@ -233,7 +232,7 @@ do_mmap(void)
 void
 usage(void)
 {
-	myerrx(1, "usage: fileops (create|read|mmap) filename");
+	errx(1, "usage: fileops (create|read|mmap) filename");
 }
 
 int main(int argc, char **argv)
@@ -244,7 +243,7 @@ int main(int argc, char **argv)
 	fname = argv[2];
 	gbuf = malloc(BUFSIZE);
 	if (gbuf == NULL)
-		myerrx(1, "malloc");
+		err(1, "malloc");
 
 	if (strcmp(argv[1], "create") == 0) {
 		do_create();
@@ -256,6 +255,6 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	printf("ok\n");
+	printf("pass\n");
 	return 0;
 }

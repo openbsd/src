@@ -1,12 +1,10 @@
-# $OpenBSD: Makefile.inc,v 1.1 2017/05/29 11:01:16 sf Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2017/05/29 13:49:40 bluhm Exp $
 
 TESTS=		create read mmap
 
 FILEOPS_MNT=	/mnt/regress-fileops
 FILEOPS_PROG=	${.OBJDIR}/../fileops
-IMG=		${.OBJDIR}/diskimage
-CLEANFILES=	${IMG} stamp-*
-
+CLEANFILES=	diskimage stamp-*
 
 .poison !defined (MOUNT)
 .poison !defined (NEWFS)
@@ -14,8 +12,8 @@ CLEANFILES=	${IMG} stamp-*
 .PHONY: disk mount unconfig clean
 
 disk: unconfig
-	dd if=/dev/urandom of=${IMG} bs=1M count=32
-	vnconfig vnd0 ${IMG}
+	dd if=/dev/urandom of=diskimage bs=1M count=32
+	vnconfig vnd0 diskimage
 	${NEWFS} /dev/rvnd0c
 
 mount: disk
@@ -26,7 +24,7 @@ unconfig:
 	-umount -f /dev/vnd0c 2>/dev/null || true
 	-rmdir ${FILEOPS_MNT} 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
-	-rm -f stamp-setup ${IMG}
+	-rm -f stamp-setup diskimage
 
 stamp-setup:
 	@echo '\n======== $@ ========'
