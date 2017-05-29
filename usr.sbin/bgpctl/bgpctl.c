@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.193 2017/01/23 23:38:51 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.194 2017/05/29 09:56:33 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <net/if.h>
 #include <net/if_media.h>
@@ -117,7 +118,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n, done, ch, nodescr = 0, verbose = 0;
+	int			 fd, n, done, ch, nodescr = 0, verbose = 0, r;
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
@@ -126,10 +127,13 @@ main(int argc, char *argv[])
 	char			*sockname;
 	enum imsg_type		 type;
 
+	r = getrtable();
+	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, r) == -1)
+		err(1, "asprintf");
+
 	if (pledge("stdio rpath wpath cpath unix inet dns", NULL) == -1)
 		err(1, "pledge");
 
-	sockname = SOCKET_NAME;
 	while ((ch = getopt(argc, argv, "ns:")) != -1) {
 		switch (ch) {
 		case 'n':

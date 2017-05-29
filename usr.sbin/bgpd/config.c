@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.66 2017/05/28 15:16:33 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.67 2017/05/29 09:56:33 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -44,7 +45,7 @@ void		free_rdomains(struct rdomain_head *);
 struct bgpd_config *
 new_config(void)
 {
-	struct bgpd_config *conf;
+	struct bgpd_config	*conf;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -54,7 +55,8 @@ new_config(void)
 	conf->fib_priority = RTP_BGP;
 	conf->default_tableid = getrtable();
 
-	if ((conf->csock = strdup(SOCKET_NAME)) == NULL)
+	if (asprintf(&conf->csock, "%s.%d", SOCKET_NAME,
+	    conf->default_tableid) == -1)
 		fatal(NULL);
 
 	if ((conf->filters = calloc(1, sizeof(struct filter_head))) == NULL)
