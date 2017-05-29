@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2017/05/28 09:35:56 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2017/05/29 07:54:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -600,12 +600,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		}
 		break;
 	case RTM_NEWADDR:
-		/*
-		 * XXX we get a RTM_NEWADDR if the l2 addr changes, also
-		 * when we configure an ip ourselfs or someone
-		 * configures an ip, don't send solicitations in that
-		 * case
-		 */
 		ifm = (struct if_msghdr *)rtm;
 		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
 		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);

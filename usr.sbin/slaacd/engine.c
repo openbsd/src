@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.24 2017/05/28 20:40:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.25 2017/05/29 07:54:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -462,11 +462,29 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				LIST_INIT(&iface->addr_proposals);
 				LIST_INIT(&iface->dfr_proposals);
 			} else {
+				int need_refresh = 0;
 				DEBUG_IMSG("%s: updating %d", __func__,
 				    imsg_ifinfo.if_index);
+
+				if (iface->autoconfprivacy !=
+				    imsg_ifinfo.autoconfprivacy) {
+					iface->autoconfprivacy =
+					    imsg_ifinfo.autoconfprivacy;
+					need_refresh = 1;
+				}
+				if (memcmp(&iface->hw_address,
+					    &imsg_ifinfo.hw_address,
+					    sizeof(struct ether_addr)) != 0) {
+					memcpy(&iface->hw_address,
+					    &imsg_ifinfo.hw_address,
+					    sizeof(struct ether_addr));
+					need_refresh = 1;
+				}
+
 				if (!iface->state == IF_DOWN &&
-				    imsg_ifinfo.running)
+				    imsg_ifinfo.running && need_refresh)
 					start_probe(iface);
+
 				iface->running = imsg_ifinfo.running;
 				if (!iface->running) {
 					iface->state = IF_DOWN;
@@ -474,11 +492,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 					    NULL))
 						evtimer_del(&iface->timer);
 				}
-				iface->autoconfprivacy =
-				    imsg_ifinfo.autoconfprivacy;
-				memcpy(&iface->hw_address,
-				    &imsg_ifinfo.hw_address,
-				    sizeof(struct ether_addr));
+				
 				memcpy(&iface->ll_address,
 				    &imsg_ifinfo.ll_address,
 				    sizeof(struct sockaddr_in6));
