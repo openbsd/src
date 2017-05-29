@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.174 2016/10/15 22:20:17 millert Exp $	*/
+/*	$OpenBSD: update.c,v 1.175 2017/05/29 17:18:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -337,8 +337,6 @@ cvs_update_local(struct cvs_file *cf)
 	flags = 0;
 	if (cvs_specified_tag != NULL)
 		tag = cvs_specified_tag;
-	else if (cf->file_ent != NULL && cf->file_ent->ce_tag != NULL)
-		tag = cf->file_ent->ce_tag;
 	else
 		tag = cvs_directory_tag;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.270 2017/05/28 17:11:34 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.271 2017/05/29 17:18:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -675,7 +675,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_ent = NULL;
 
 	if (cf->file_ent != NULL) {
-		if (cf->file_ent->ce_tag != NULL && cvs_specified_tag == NULL)
+		if (cvs_specified_tag == NULL)
 			tag = cf->file_ent->ce_tag;
 
 		if (cf->file_flags & FILE_ON_DISK &&
