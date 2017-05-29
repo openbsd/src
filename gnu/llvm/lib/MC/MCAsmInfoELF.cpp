@@ -31,5 +31,5 @@ MCAsmInfoELF::MCAsmInfoELF() {
   WeakRefDirective = "\t.weak\t";
   PrivateGlobalPrefix = ".L";
   PrivateLabelPrefix = ".L";
-  UsesNonexecutableStackSection = true;
+  UsesNonexecutableStackSection = false;
 }
