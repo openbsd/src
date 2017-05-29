@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.26 2017/05/29 08:15:38 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.27 2017/05/29 08:59:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -295,7 +295,7 @@ engine(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	slaacd_process = PROC_ENGINE;
-	setproctitle(log_procnames[slaacd_process]);
+	setproctitle("%s", log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 
 	if (setgroups(1, &pw->pw_gid) ||

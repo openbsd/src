@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.12 2017/05/29 07:54:46 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.13 2017/05/29 08:59:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -132,7 +132,7 @@ frontend(int debug, int verbose, char *sockname)
 		fatal("chdir(\"/\")");
 
 	slaacd_process = PROC_FRONTEND;
-	setproctitle(log_procnames[slaacd_process]);
+	setproctitle("%s", log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 
 	if ((icmp6sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
