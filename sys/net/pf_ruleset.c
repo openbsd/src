@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.14 2016/09/27 04:57:17 dlg Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.15 2017/05/30 20:00:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,7 +57,7 @@
 
 #ifdef _KERNEL
 #define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
-#define rs_free(x)		free(x, M_TEMP, 0)
+#define rs_free(x, siz)		free(x, M_TEMP, siz)
 
 #else	/* !_KERNEL */
 /* Userland equivalents so we can lend code to pfctl et al. */
@@ -68,7 +68,7 @@
 #include <stdlib.h>
 #include <string.h>
 #define rs_malloc(x)		 calloc(1, x)
-#define rs_free(x)		 free(x)
+#define rs_free(x, siz)		 freezero(x, siz)
 
 #ifdef PFDEBUG
 #include <sys/stdarg.h>	/* for DPFPRINTF() */
@@ -112,7 +112,7 @@ pf_find_anchor(const char *path)
 		return (NULL);
 	strlcpy(key->path, path, sizeof(key->path));
 	found = RB_FIND(pf_anchor_global, &pf_anchors, key);
-	rs_free(key);
+	rs_free(key, sizeof (*key));
 	return (found);
 }
 
@@ -163,7 +163,7 @@ pf_find_or_create_ruleset(const char *path)
 		q++;
 	strlcpy(p, path, MAXPATHLEN);
 	if (!*q) {
-		rs_free(p);
+		rs_free(p, MAXPATHLEN);
 		return (NULL);
 	}
 	while ((r = strchr(q, '/')) != NULL || *q) {
@@ -172,12 +172,12 @@ pf_find_or_create_ruleset(const char *path)
 		if (!*q || strlen(q) >= PF_ANCHOR_NAME_SIZE ||
 		    (parent != NULL && strlen(parent->path) >=
 		    MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1)) {
-			rs_free(p);
+			rs_free(p, MAXPATHLEN);
 			return (NULL);
 		}
 		anchor = rs_malloc(sizeof(*anchor));
 		if (anchor == NULL) {
-			rs_free(p);
+			rs_free(p, MAXPATHLEN);
 			return (NULL);
 		}
 		RB_INIT(&anchor->children);
@@ -194,8 +194,8 @@ pf_find_or_create_ruleset(const char *path)
 			    "pf_find_or_create_ruleset: RB_INSERT1 "
 			    "'%s' '%s' collides with '%s' '%s'",
 			    anchor->path, anchor->name, dup->path, dup->name);
-			rs_free(anchor);
-			rs_free(p);
+			rs_free(anchor, sizeof(*anchor));
+			rs_free(p, MAXPATHLEN);
 			return (NULL);
 		}
 		if (parent != NULL) {
@@ -209,8 +209,8 @@ pf_find_or_create_ruleset(const char *path)
 				    dup->path, dup->name);
 				RB_REMOVE(pf_anchor_global, &pf_anchors,
 				    anchor);
-				rs_free(anchor);
-				rs_free(p);
+				rs_free(anchor, sizeof(*anchor));
+				rs_free(p, MAXPATHLEN);
 				return (NULL);
 			}
 		}
@@ -222,7 +222,7 @@ pf_find_or_create_ruleset(const char *path)
 		else
 			*q = 0;
 	}
-	rs_free(p);
+	rs_free(p, MAXPATHLEN);
 	return (&anchor->ruleset);
 }
 
@@ -245,7 +245,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 		if ((parent = ruleset->anchor->parent) != NULL)
 			RB_REMOVE(pf_anchor_node, &parent->children,
 			    ruleset->anchor);
-		rs_free(ruleset->anchor);
+		rs_free(ruleset->anchor, sizeof(*(ruleset->anchor)));
 		if (parent == NULL)
 			return;
 		ruleset = &parent->ruleset;
@@ -280,7 +280,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 			if (!path[0]) {
 				DPFPRINTF(LOG_NOTICE,
 				    "pf_anchor_setup: .. beyond root");
-				rs_free(path);
+				rs_free(path, MAXPATHLEN);
 				return (1);
 			}
 			if ((p = strrchr(path, '/')) != NULL)
@@ -299,7 +299,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 		*p = 0;
 	}
 	ruleset = pf_find_or_create_ruleset(path);
-	rs_free(path);
+	rs_free(path, MAXPATHLEN);
 	if (ruleset == NULL || ruleset->anchor == NULL) {
 		DPFPRINTF(LOG_NOTICE,
 		    "pf_anchor_setup: ruleset");
@@ -343,13 +343,13 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 			DPFPRINTF(LOG_NOTICE,
 			    "pf_anchor_copyout: '%s' '%s'", a,
 			    r->anchor->path);
-			rs_free(a);
+			rs_free(a, MAXPATHLEN);
 			return (1);
 		}
 		if (strlen(r->anchor->path) > strlen(a))
 			strlcat(pr->anchor_call, r->anchor->path + (a[0] ?
 			    strlen(a) + 1 : 0), sizeof(pr->anchor_call));
-		rs_free(a);
+		rs_free(a, MAXPATHLEN);
 	}
 	if (r->anchor_wildcard)
 		strlcat(pr->anchor_call, pr->anchor_call[0] ? "/*" : "*",
