@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.78 2017/05/27 21:44:22 benno Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.79 2017/05/30 21:57:39 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -279,7 +279,6 @@ pflow_clone_destroy(struct ifnet *ifp)
 
 	error = 0;
 
-	s = splnet();
 	if (timeout_initialized(&sc->sc_tmo))
 		timeout_del(&sc->sc_tmo);
 	if (timeout_initialized(&sc->sc_tmo6))
@@ -299,9 +298,10 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_flowsrc != NULL)
 		free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
 	if_detach(ifp);
+	NET_LOCK(s);
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
+	NET_UNLOCK(s);
 	free(sc, M_DEVBUF, sizeof(*sc));
-	splx(s);
 	return (error);
 }
 
@@ -474,7 +474,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pflow_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct pflowreq		 pflowr;
-	int			 s, error;
+	int			 error;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -494,11 +494,9 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EINVAL);
 		if (ifr->ifr_mtu > MCLBYTES)
 			ifr->ifr_mtu = MCLBYTES;
-		s = splnet();
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pflow_flush(sc);
 		pflow_setmtu(sc, ifr->ifr_mtu);
-		splx(s);
 		break;
 
 	case SIOCGETPFLOW:
@@ -526,9 +524,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* XXXSMP breaks atomicity */
 		rw_exit_write(&netlock);
-		s = splnet();
 		error = pflow_set(sc, &pflowr);
-		splx(s);
 		if (error != 0) {
 			rw_enter_write(&netlock);
 			return (error);
