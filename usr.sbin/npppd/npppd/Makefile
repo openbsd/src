@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2017/02/21 05:17:48 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.20 2017/05/30 17:52:05 yasuoka Exp $
 
 NPPPD_COMMON_DIR=	${.CURDIR}/../common
 
@@ -32,8 +32,6 @@ CPPFLAGS+=	-DUSE_NPPPD_MPPE
 CPPFLAGS+=	-DUSE_NPPPD_PIPEX
 CPPFLAGS+=	-DUSE_NPPPD_RADIUS
 CPPFLAGS+=	-DUSE_SA_COOKIE
-
-CPPFLAGS+=	-DGENERIC_USE -DRADISH
 
 LDADD+=		-levent -lradius -lcrypto -ly -lutil
 DPADD+=		${LIBEVENT} ${LIBRADIUS} ${LIBCRYPTO} ${LIBY} ${LIBUTIL}

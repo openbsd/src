@@ -1,7 +1,4 @@
-/*	$OpenBSD: radish.c,v 1.4 2015/12/17 08:01:55 tb Exp $ */
-#ifndef GENERIC_USE
-#define GENERIC_USE
-#endif
+/*	$OpenBSD: radish.c,v 1.5 2017/05/30 17:52:05 yasuoka Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -42,7 +39,6 @@
  * Email: 	kazu@is.aist-nara.ac.jp
  */
 
-#ifdef RADISH
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -50,40 +46,19 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#if !defined(GENERIC_USE) && !defined(_ROUTE_H_)
-#include <net/route.h>
-#endif
-
-#ifdef KERNEL
-#include <net/radish.h>
-#else /* KERNEL */
 #include "radish.h"
-#endif /* KERNEL */
-
-#if defined(NO_SA_LEN) && !defined(SA_LEN)
-#error	requires sockaddr.sa_len or SA_LEN macro
-#endif
-
 
 #include <netinet/in.h>
-#ifdef GENERIC_USE
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
-#endif
+#include <stdio.h>
 
-#define M_DONTWAIT M_NOWAIT
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifdef KERNEL
-#define FATAL(x)	panic(x)
-#elif defined(GENERIC_USE)
-#define FATAL(x)	return(-1);
-#else
-#define FATAL(x)	exit(1)
-#endif
+#define FATAL(x)			\
+	do {				\
+		fputs(x, stderr);	\
+		abort();		\
+	} while (0/* CONSTCOND */)
 
 static u_char rd_bmask [] = {
 	0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe,
@@ -100,10 +75,8 @@ u_char rd_deleted_km[1024];
  * return 0 if error
  */
 int
-rd_inithead(headp, family, slen, off, alen, match)
-	void **headp;
-	int family, slen, off, alen;
-	int (*match)(void *, void *);
+rd_inithead(void **headp, int family, int slen, int off, int alen,
+    int (*match)(void *, void *))
 {
 	struct radish_head *head;
 	struct radish *new;
@@ -151,10 +124,7 @@ rd_inithead(headp, family, slen, off, alen, match)
 }
 
 struct sockaddr *
-rd_mask(m_arg, head, maskp)
-	struct sockaddr *m_arg;
-	struct radish_head *head;
-	int *maskp; /* return value */
+rd_mask(struct sockaddr *m_arg, struct radish_head *head, int *maskp)
 {
 	u_char *mp, *masks = (u_char *)head->rdh_masks;
 	int off = head->rdh_offset;
@@ -188,15 +158,8 @@ rd_mask(m_arg, head, maskp)
 }
 
 int
-rd_insert(d_arg, m_arg, head, rt)
-	struct sockaddr *d_arg;
-	struct sockaddr *m_arg;
-	struct radish_head *head;
-#ifdef GENERIC_USE
-	void *rt;
-#else /* GENERIC_USE */
-	struct rtentry *rt;
-#endif /* GENERIC_USE */
+rd_insert(struct sockaddr *d_arg, struct sockaddr *m_arg,
+	struct radish_head *head, void *rt)
 {
 	struct radish *cur = head->rdh_top, *parent, *new;
 	int off = head->rdh_offset;
@@ -227,10 +190,6 @@ rd_insert(d_arg, m_arg, head, rt)
 	new->rd_bmask = rd_bmask[r];
 	new->rd_btest = rd_btest[r];
 	new->rd_rtent = rt;
-
-#ifndef GENERIC_USE
-	rt->rt_radish = new;
-#endif /* GENERIC_USE */
 
 	/* masked copy from dest to route */
 	np = (u_char *)new->rd_route;
@@ -265,9 +224,6 @@ rd_insert(d_arg, m_arg, head, rt)
 			if (cur->rd_rtent != NULL)
 				return EEXIST;
 			cur->rd_rtent = rt;
-#ifndef GENERIC_USE
-			rt->rt_radish = cur;
-#endif /* GENERIC_USE */
 			return 0;
 		}
 		/*
@@ -378,10 +334,8 @@ rd_insert(d_arg, m_arg, head, rt)
  * Let the new radish the other child of glue radish.
  */
 int
-rd_glue(cur, new, misbyte, head)
-	struct radish *cur, *new;
-	int misbyte;
-	struct radish_head *head;
+rd_glue(struct radish *cur, struct radish *new, int misbyte,
+    struct radish_head *head)
 {
 	struct radish *parent = cur->rd_p, *glue;
 	u_char *cp = (u_char *)cur->rd_route;
@@ -459,20 +413,14 @@ rd_glue(cur, new, misbyte, head)
  */
 
 int
-rd_match(d_arg, head, rdp)
-	struct sockaddr *d_arg;
-	struct radish_head *head;
-	struct radish **rdp; /* return value */
+rd_match(struct sockaddr *d_arg, struct radish_head *head, struct radish **rdp)
 {
 	return rd_match_next(d_arg, head, rdp, NULL);
 }
 
 int
-rd_match_next(d_arg, head, rdp, cur)
-	struct sockaddr *d_arg;
-	struct radish_head *head;
-	struct radish **rdp; /* return value */
-	struct radish *cur; /* return value */
+rd_match_next(struct sockaddr *d_arg, struct radish_head *head,
+    struct radish **rdp, struct radish *cur)
 {
 	struct radish *target = NULL;
 	int off = head->rdh_offset, i, lim;
@@ -531,14 +479,9 @@ rd_match_next(d_arg, head, rdp, cur)
  * Return a pointer to rtentry if exists. Otherwise, return NULL.
  */
 
-#ifndef GENERIC_USE
-struct rtentry *
-#else /* GENERIC_USE */
 void *
-#endif /* GENERIC_USE */
-rd_lookup(d_arg, m_arg, head)
-	struct sockaddr *d_arg, *m_arg;
-	struct radish_head *head;
+rd_lookup(struct sockaddr *d_arg, struct sockaddr *m_arg,
+    struct radish_head *head)
 {
 	struct radish *cur = head->rdh_top;
 	int off = head->rdh_offset, i, lim, olim = 0, masklen;
@@ -581,30 +524,15 @@ rd_lookup(d_arg, m_arg, head)
  */
 
 int
-#ifndef GENERIC_USE
-rd_delete(d_arg, m_arg, head, rt)
-#else /* GENERIC_USE */
-rd_delete(d_arg, m_arg, head, item)
-#endif /* GENERIC_USE */
-	struct sockaddr *d_arg;
-	struct sockaddr *m_arg;
-	struct radish_head *head;
-#ifndef GENERIC_USE
-	struct rtentry **rt;
-#else /* GENERIC_USE */
-	void **item;
-#endif /* GENERIC_USE */
+rd_delete(struct sockaddr *d_arg, struct sockaddr *m_arg,
+    struct radish_head *head, void **item)
 {
 	struct radish *cur = head->rdh_top;
 	int off = head->rdh_offset, i, lim, masklen;
 	u_char *dp = (u_char *)d_arg + off, *cp;
 
 	rd_mask(m_arg, head, &masklen);
-#ifndef GENERIC_USE
-	*rt = NULL; /* just in case */
-#else /* GENERIC_USE */
 	*item = NULL; /* just in case */
-#endif /* GENERIC_USE */
 
 	while (cur) {
 		/* exit loop if dest does not match with the current node
@@ -644,20 +572,11 @@ rd_delete(d_arg, m_arg, head, item)
 			 */
 			return EFAULT;
 		}
-#ifndef GENERIC_USE
-		*rt = cur->rd_rtent;
-#else /* GENERIC_USE */
 		*item = cur->rd_rtent;
-#endif /* GENERIC_USE */
 		{
-#ifndef SA_LEN
 			/* used to report the deleted entry back */
 			u_char rl = cur->rd_route->sa_len;
 			u_char ml = cur->rd_mask->sa_len;
-#else
-			u_char rl = SA_LEN(cur->rd_route);
-			u_char ml = SA_LEN(cur->rd_mask);
-#endif
 
 			bcopy(cur->rd_route, rd_deleted_km, rl);
 			bcopy(cur->rd_mask, rd_deleted_km + rl, ml);
@@ -699,8 +618,7 @@ rd_delete(d_arg, m_arg, head, item)
  */
 
 void
-rd_unlink(cur, top)
-	struct radish *cur, *top;
+rd_unlink(struct radish *cur, struct radish *top)
 {
 	struct radish *parent, *child;
 
@@ -719,11 +637,7 @@ rd_unlink(cur, top)
 			parent->rd_r = NULL;
 			Free(cur);
 		} else
-#ifndef GENERIC_USE
 			FATAL("rd_unlink");
-#else
-			return;
-#endif
 		if (parent->rd_rtent == NULL && parent != top)
 			/* Parent is not necessary, refine radish. */
 			rd_unlink(parent, top);
@@ -745,19 +659,13 @@ rd_unlink(cur, top)
 			parent->rd_r = child;
 			Free(cur);
 		} else
-#ifndef GENERIC_USE
 			FATAL("rd_unlink");
-#else
-			return;
-#endif
 	}
 }
 
 int
-rd_walktree(h, f, w)
-	struct radish_head *h;
-	register int (*f)(struct radish *, void *);
-	void *w;
+rd_walktree(struct radish_head *h, register int (*f)(struct radish *, void *),
+    void *w)
 {
 	int error = 0;
 	struct radish *par = NULL, *cur, *top = h->rdh_top;
@@ -787,8 +695,7 @@ rd_walktree(h, f, w)
  * it works.
  */
 int
-rd_refines(m_arg, n_arg)
-	void *m_arg, *n_arg;
+rd_refines(void *m_arg, void *n_arg)
 {
 	register caddr_t m = m_arg, n = n_arg;
 	register caddr_t lim, lim2 = lim = n + *(u_char *)n;
@@ -813,4 +720,3 @@ rd_refines(m_arg, n_arg)
 				return 1;
 	return (!masks_are_equal);
 }
-#endif /* RADISH */
