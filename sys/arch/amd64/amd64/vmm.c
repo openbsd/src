@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.146 2017/05/29 05:59:45 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.147 2017/05/30 04:45:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4824,7 +4824,7 @@ int
 vmx_handle_xsetbv(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
-	uint64_t *rax, *rdx, *rcx;;
+	uint64_t *rax, *rdx, *rcx;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
