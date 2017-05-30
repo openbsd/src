@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.123 2017/04/20 15:42:26 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.124 2017/05/30 15:39:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1206,7 +1206,7 @@ stacktrace_subr(struct trapframe *regs, int count,
 	extern char k_general[];
 #ifdef DDB
 	db_expr_t diff;
-	db_sym_t sym;
+	Elf_Sym *sym;
 	char *symname;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.30 2017/05/29 06:14:10 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.31 2017/05/30 15:39:04 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, db_sym_t);
+int db_numargs(struct callframe *, Elf_Sym *);
 void db_nextframe(struct callframe **, db_addr_t *, long *, int,
     int (*) (const char *, ...));
 
@@ -92,7 +92,7 @@ void db_nextframe(struct callframe **, db_addr_t *, long *, int,
  * reliably determine the values currently, just return 0.
  */
 int
-db_numargs(struct callframe *fp, db_sym_t sym)
+db_numargs(struct callframe *fp, Elf_Sym *sym)
 {
 #ifdef DDBCTF
 	int args;
@@ -231,7 +231,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		unsigned int	i;
 		char *		name;
 		db_expr_t	offset;
-		db_sym_t	sym;
+		Elf_Sym *	sym;
 
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
@@ -366,7 +366,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 		struct trapframe *tf;
 		char		*name;
 		db_expr_t	offset;
-		db_sym_t	sym;
+		Elf_Sym *	sym;
 		int		is_trap;
 
 		st->st_pc[st->st_count++] = callpc;

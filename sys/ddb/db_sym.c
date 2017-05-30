@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.52 2017/05/27 16:08:23 claudio Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.53 2017/05/30 15:39:05 mpi Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.24 2000/08/11 22:50:47 tv Exp $	*/
 
 /*
@@ -95,12 +95,12 @@ db_eqname(char *src, char *dst, int c)
  * Find the closest symbol to val, and return its name
  * and the difference between val and the symbol found.
  */
-db_sym_t
+Elf_Sym *
 db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
 	unsigned int	diff;
 	db_expr_t	newdiff;
-	db_sym_t	ret = NULL, sym;
+	Elf_Sym		*ret = NULL, *sym;
 
 	newdiff = diff = ~0;
 	sym = db_elf_sym_search(val, strategy, &newdiff);
@@ -143,7 +143,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 	char		*name;
 	db_expr_t	value;
 	int 		linenum;
-	db_sym_t	cursym;
+	Elf_Sym		*cursym;
 	char		buf[DB_FORMAT_BUF_SIZE];
 
 	if (off <= db_lastsym) {

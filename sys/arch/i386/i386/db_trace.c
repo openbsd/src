@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.27 2017/05/29 06:14:10 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.28 2017/05/30 15:39:04 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
 #define	INTERRUPT	3
 #define	AST		4
 
-int db_numargs(struct callframe *, db_sym_t);
+int db_numargs(struct callframe *, Elf_Sym *);
 void db_nextframe(struct callframe **, db_addr_t *, int *, int,
     int (*pr)(const char *, ...));
 
@@ -82,7 +82,7 @@ void db_nextframe(struct callframe **, db_addr_t *, int *, int,
  * Figure out how many arguments were passed into the frame at "fp".
  */
 int
-db_numargs(struct callframe *fp, db_sym_t sym)
+db_numargs(struct callframe *fp, Elf_Sym *sym)
 {
 	int	*argp;
 	int	inst;
@@ -236,7 +236,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		int		narg;
 		char *	name;
 		db_expr_t	offset;
-		db_sym_t	sym;
+		Elf_Sym		*sym;
 
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
@@ -339,7 +339,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
 		char		*name;
 		db_expr_t	offset;
-		db_sym_t	sym;
+		Elf_Sym		*sym;
 		int		is_trap = 0;
 
 		st->st_pc[st->st_count++] = callpc;

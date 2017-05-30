@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2014/07/13 12:11:01 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2017/05/30 15:39:05 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		} else {
 			char *name;
 			db_expr_t offset;
-			db_sym_t sym;
+			Elf_Sym *sym;
 
 
 			DPRINTF("    (1)newpc 0x%lx, newfp 0x%lx\n",

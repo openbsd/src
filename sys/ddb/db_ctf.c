@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.9 2017/05/29 06:14:10 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.10 2017/05/30 15:39:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -152,7 +152,7 @@ db_ctf_idx2sym(size_t *idx, uint8_t type)
  * For a given function name, return the number of arguments.
  */
 int
-db_ctf_func_numargs(db_sym_t st)
+db_ctf_func_numargs(Elf_Sym *st)
 {
 	Elf_Sym			*symp, *stp = (Elf_Sym *)st;
 	uint16_t		*fstart, *fend;

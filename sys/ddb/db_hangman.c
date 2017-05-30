@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.36 2016/09/16 19:00:25 jasper Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.37 2017/05/30 15:39:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -66,16 +66,16 @@ static const char substchar[]="\\/|\\/O|/-|";
 
 struct db_hang_forall_arg {
 	int cnt;
-	db_sym_t sym;
+	Elf_Sym *sym;
 };
 
 /*
  * Horrible abuse of the forall function, but we're not in a hurry.
  */
-static void db_hang_forall(db_sym_t, char *, char *, int, void *);
+static void db_hang_forall(Elf_Sym *, char *, char *, int, void *);
 
 static void
-db_hang_forall(db_sym_t sym, char *name, char *suff, int pre, void *varg)
+db_hang_forall(Elf_Sym *sym, char *name, char *suff, int pre, void *varg)
 {
 	struct db_hang_forall_arg *arg = varg;
 

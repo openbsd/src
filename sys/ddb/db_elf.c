@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.25 2017/05/28 11:41:52 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.26 2017/05/30 15:39:05 mpi Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ db_elf_sym_lookup(char *symstr)
  * Search for the symbol with the given address (matching within the
  * provided threshold).
  */
-db_sym_t
+Elf_Sym *
 db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
     db_expr_t *diffp)
 {
@@ -324,14 +324,14 @@ db_elf_sym_search(db_addr_t off, db_strategy_t strategy,
 	else
 		*diffp = diff;
 
-	return ((db_sym_t)rsymp);
+	return (rsymp);
 }
 
 /*
  * Return the name and value for a symbol.
  */
 void
-db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
+db_symbol_values(Elf_Sym *sym, char **namep, db_expr_t *valuep)
 {
 	db_symtab_t *stab = &db_symtab;
 	Elf_Sym *symp = (Elf_Sym *)sym;
@@ -362,7 +362,7 @@ db_symbol_values(db_sym_t sym, char **namep, db_expr_t *valuep)
  * if we can find the appropriate debugging symbol.
  */
 int
-db_elf_line_at_pc(db_sym_t cursym, char **filename,
+db_elf_line_at_pc(Elf_Sym *cursym, char **filename,
     int *linenum, db_expr_t off)
 {
 	db_symtab_t *stab = &db_symtab;
@@ -426,7 +426,7 @@ db_elf_sym_forall(db_forall_func_t db_forall_func, void *arg)
 			default:
 				suffix[0] = '\0';
 			}
-			(*db_forall_func)((db_sym_t)symp,
+			(*db_forall_func)(symp,
 			    strtab + symp->st_name, suffix, 0, arg);
 		}
 }
@@ -439,6 +439,6 @@ db_value_of_name(char *name, db_expr_t *valuep)
 	sym = db_elf_sym_lookup(name);
 	if (sym == NULL)
 	    return (0);
-	db_symbol_values((db_sym_t)sym, &name, valuep);
+	db_symbol_values(sym, &name, valuep);
 	return (1);
 }

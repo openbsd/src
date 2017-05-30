@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.73 2017/02/18 06:42:08 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.74 2017/05/30 15:39:05 mpi Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -736,6 +736,8 @@ extern Elf_Dyn		_DYNAMIC[];
 #endif
 
 #ifdef	_KERNEL
+struct exec_package;
+
 int	exec_elf_makecmds(struct proc *, struct exec_package *);
 #endif /* _KERNEL */
 
