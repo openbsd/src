@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.29 2017/03/05 09:55:16 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.30 2017/05/30 14:04:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -280,15 +280,6 @@ noccc:
 	    sc->sc_ncmds > 2 &&
 	    (sc->sc_cap & AHCI_REG_CAP_SNCQ)) {
 		aaa.aaa_capability |= ASAA_CAP_NCQ | ASAA_CAP_PMP_NCQ;
-		/* XXX enabling ASAA_CAP_PMP_NCQ with FBS:
-		 * - some error recovery work required (single device vs port
-		 *   errors)
-		 * - probably need to look at storing our active ccb queue
-		 *   differently so we can group ncq and non-ncq commands
-		 *   for different ports.  as long as we preserve the order for
-		 *   each port, we can reorder commands to get more ncq 
-		 *   commands to run in parallel.
-		 */
 	}
 
 	sc->sc_atascsi = atascsi_attach(&sc->sc_dev, &aaa);
@@ -515,11 +506,6 @@ ahci_port_alloc(struct ahci_softc *sc, u_int port)
 		/* Write DET to zero */
 		ahci_pwrite(ap, AHCI_PREG_SCTL, 0);
 	}
-
-	/* XXX FBS - need to allocate 16x ahci_rfis struct? - but we don't
-	 * know if there's a PMP attached or if the HBA supports FBS yet..
-	 * reallocate when we enable FBS?
-	 */
 
 	/* Allocate RFIS */
 	ap->ap_dmamem_rfis = ahci_dmamem_alloc(sc, sizeof(struct ahci_rfis));
@@ -872,8 +858,6 @@ ahci_default_port_start(struct ahci_port *ap, int fre_only)
 {
 	u_int32_t			r;
 
-	/* XXX FBS: possibly turn FBS on here */
-
 	/* Turn on FRE (and ST) */
 	r = ahci_pread(ap, AHCI_PREG_CMD) & ~AHCI_PREG_CMD_ICC;
 	r |= AHCI_PREG_CMD_FRE;
@@ -927,8 +911,6 @@ ahci_port_stop(struct ahci_port *ap, int stop_fis_rx)
 	if (stop_fis_rx &&
 	    ahci_pwait_clr(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_FR, 1))
 		return (2);
-
-	/* XXX FBS: possibly disable FBS here? */
 
 	return (0);
 }
@@ -995,10 +977,6 @@ ahci_port_softreset(struct ahci_port *ap)
 	/* Clear port errors to permit TFD transfer */
 	ahci_pwrite(ap, AHCI_PREG_SERR, ahci_pread(ap, AHCI_PREG_SERR));
 
-	/* XXX FBS - need to ensure we don't enable FBS here, since we're
-	 * resetting stuff
-	 * (AHCI spec 9.3.8)
-	 */
 	/* Restart port */
 	if (ahci_port_start(ap, 0)) {
 		printf("%s: failed to start port, cannot softreset\n",
@@ -1086,10 +1064,6 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 	int			s;
 	struct ahci_cmd_hdr	*cmd_slot;
 	u_int8_t		*fis;
-
-	/* XXX FBS: ensure fbs is disabled on ap, since we're resetting
-	 * devices (AHCI section 9.3.8)
-	 */
 
 	s = splbio();
 	/* ignore spurious IFS errors while resetting */
@@ -1524,10 +1498,6 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		r = ahci_pread(ap, AHCI_PREG_SERR);
 		ahci_pwrite(ap, AHCI_PREG_SERR, r);
 
-		/* XXX FBS: ensure we don't enable FBS here, since
-		 * we're resetting the port
-		 * (AHCI section 9.3.8)
-		 */
 		/* Restart port */
 		if (ahci_port_start(ap, 0)) {
 			rc = EBUSY;
@@ -1645,7 +1615,6 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		if (ahci_pmp_identify(ap, &ap->ap_pmp_ports)) {
 			pmp_rc = EBUSY;
 		} else {
-			/* XXX enable FBS if available */
 			rc = 0;
 		}
 	}
@@ -1811,11 +1780,6 @@ ahci_start(struct ahci_ccb *ccb)
 	bus_dmamap_sync(sc->sc_dmat, AHCI_DMA_MAP(ap->ap_dmamem_rfis), 0,
 	    sizeof(struct ahci_rfis), BUS_DMASYNC_PREREAD);
 
-	/* XXX FBS: need to figure out whether we still need to keep NCQ and
-	 * non-queued commands separate when FBS is in use.  I guess probably
-	 * not?  it's not particularly clear from the spec..
-	 */
-
 	if (ccb->ccb_xa.flags & ATA_F_NCQ) {
 		/* Issue NCQ commands only when there are no outstanding
 		 * standard commands. */
@@ -1824,10 +1788,6 @@ ahci_start(struct ahci_ccb *ccb)
 		     ap->ap_pmp_ncq_port != ccb->ccb_xa.pmp_port)) {
 			TAILQ_INSERT_TAIL(&ap->ap_ccb_pending, ccb, ccb_entry);
 		} else {
-			/* XXX FBS: if using FBS, set AHCI_PREG_FBS_DEV
-			 * to the port number
-			 */
-
 			KASSERT(ap->ap_active_cnt == 0);
 			ap->ap_sactive |= (1 << ccb->ccb_slot);
 			ccb->ccb_xa.state = ATA_S_ONCHIP;
@@ -1841,10 +1801,6 @@ ahci_start(struct ahci_ccb *ccb)
 		if (ap->ap_sactive != 0 || ap->ap_active_cnt == 2)
 			TAILQ_INSERT_TAIL(&ap->ap_ccb_pending, ccb, ccb_entry);
 		else if (ap->ap_active_cnt < 2) {
-			/* XXX FBS: if using FBS, set AHCI_PREG_FBS_DEV to the
-			 * port number
-			 */
-
 			ap->ap_active |= 1 << ccb->ccb_slot;
 			ccb->ccb_xa.state = ATA_S_ONCHIP;
 			ahci_pwrite(ap, AHCI_PREG_CI, 1 << ccb->ccb_slot);
@@ -1864,11 +1820,6 @@ ahci_issue_pending_ncq_commands(struct ahci_port *ap)
 	nextccb = TAILQ_FIRST(&ap->ap_ccb_pending);
 	if (nextccb == NULL || !(nextccb->ccb_xa.flags & ATA_F_NCQ))
 		return;
-
-	/* XXX FBS:
-	 * - set AHCI_PREG_FBS_DEV for each command
-	 * - one write to AHCI_PREG_CI per command
-	 */
 
 	/* Start all the NCQ commands at the head of the pending list.
 	 * If a port multiplier is attached to the port, we can only
@@ -1930,7 +1881,6 @@ ahci_issue_pending_commands(struct ahci_port *ap, int last_was_ncq)
 			TAILQ_REMOVE(&ap->ap_ccb_pending, nextccb, ccb_entry);
 			ap->ap_active |= 1 << nextccb->ccb_slot;
 			nextccb->ccb_xa.state = ATA_S_ONCHIP;
-			/* XXX FBS: set AHCI_PREG_FBS_DEV here */
 			ahci_pwrite(ap, AHCI_PREG_CI, 1 << nextccb->ccb_slot);
 			if (last_was_ncq)
 				ap->ap_active_cnt++;
@@ -2144,10 +2094,8 @@ ahci_port_intr(struct ahci_port *ap, u_int32_t ci_mask)
 			/* Had to reset device, can't gather extended info. */
 		} else if (ap->ap_sactive) {
 			/* Recover the NCQ error from log page 10h.
-			 * XXX FBS: need to do things to figure out where the
-			 * error came from.  without FBS, we know the PMP port
-			 * responsible because we can only have queued commands
-			 * active for one port at a time.
+			 * We can only have queued commands active for one port
+			 * at a time, so we know which device errored.
 			 */
 			ahci_port_read_ncq_error(ap, &err_slot,
 			    ap->ap_pmp_ncq_port);
@@ -2333,11 +2281,6 @@ failall:
 			    "re-enabling%s slots %08x\n", PORTNAME(ap),
 			    ap->ap_sactive ? " NCQ" : "", ci_saved);
 
-			/* XXX FBS:
-			 * - need to set AHCI_PREG_FBS_DEV for each command
-			 * - can't do multiple commands with a single write to
-			 *   AHCI_PREG_CI
-			 */
 			if (ap->ap_sactive)
 				ahci_pwrite(ap, AHCI_PREG_SACT, ci_saved);
 			ahci_pwrite(ap, AHCI_PREG_CI, ci_saved);
