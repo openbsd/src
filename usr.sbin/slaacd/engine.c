@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.29 2017/05/30 14:21:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.30 2017/05/30 14:23:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1897,6 +1897,20 @@ address_proposal_timeout(int fd, short events, void *arg)
 
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
+		log_debug("%s: rl: %d", __func__,
+		    real_lifetime(&addr_proposal->uptime,
+		    addr_proposal->vltime));
+		/*
+		 * we should have gotten a RTM_DELADDR from the kernel,
+		 * in case we missed it, delete to not waste memory
+		 */
+		if (real_lifetime(&addr_proposal->uptime,
+		    addr_proposal->vltime) == 0) {
+			evtimer_del(&addr_proposal->timer);
+			LIST_REMOVE(addr_proposal, entries);
+			log_debug("%s: removing address proposal", __func__);
+			break;
+		}
 		if (addr_proposal->privacy)
 			break; /* just let it expire */
 
@@ -1982,6 +1996,13 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
+		if (real_lifetime(&dfr_proposal->uptime,
+		    dfr_proposal->router_lifetime) == 0) {
+			evtimer_del(&dfr_proposal->timer);
+			LIST_REMOVE(dfr_proposal, entries);
+			log_debug("%s: removing dfr proposal", __func__);
+			break;
+		}
 		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
 		    0, &dfr_proposal->if_index,
 		    sizeof(dfr_proposal->if_index));
