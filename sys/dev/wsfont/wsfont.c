@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.47 2017/05/30 10:19:22 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.48 2017/05/30 13:14:44 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -43,21 +43,6 @@
 #include "wsfont_glue.h"	/* NRASOPS_ROTATION */
 
 #undef HAVE_FONT
-
-#ifdef FONT_QVSS8x15
-#define HAVE_FONT 1
-#include <dev/wsfont/qvss8x15.h>
-#endif
-
-#ifdef FONT_VT220L8x8
-#define HAVE_FONT 1
-#include <dev/wsfont/vt220l8x8.h>
-#endif
-
-#ifdef FONT_VT220L8x10
-#define HAVE_FONT 1
-#include <dev/wsfont/vt220l8x10.h>
-#endif
 
 #ifdef FONT_BOLD8x16
 #define HAVE_FONT 1
@@ -121,15 +106,6 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_GALLANT12x22
 	BUILTIN_FONT(gallant12x22, 3),
-#endif
-#ifdef FONT_QVSS8x15
-	BUILTIN_FONT(qvss8x15, 4),
-#endif
-#ifdef FONT_VT220L8x8
-	BUILTIN_FONT(vt220l8x8, 5),
-#endif
-#ifdef FONT_VT220L8x10
-	BUILTIN_FONT(vt220l8x10, 6),
 #endif
 #undef BUILTIN_FONT
 };
