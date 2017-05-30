@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.61 2016/03/19 00:11:49 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.62 2017/05/30 15:10:48 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -93,6 +93,8 @@ struct	entry {
 	struct	kinfo_proc *kp;		/* `most interesting' proc */
 } *ep, *ehead = NULL, **nextp = &ehead;
 
+static void	 fmt_putc(int, int *);
+static void	 fmt_puts(const char *, int *);
 static void	 pr_args(struct kinfo_proc *);
 static void	 pr_header(time_t *, int);
 static struct stat
@@ -330,6 +332,50 @@ main(int argc, char *argv[])
 	}
 	exit(0);
 }
+
+static void
+fmt_putc(int c, int *leftp)
+{
+
+	if (*leftp == 0)
+		return;
+	if (*leftp != -1)
+		*leftp -= 1;
+	putchar(c);
+}
+
+static void
+fmt_puts(const char *s, int *leftp)
+{
+	static char *v = NULL;
+	static size_t maxlen = 0;
+	size_t len;
+
+	if (*leftp == 0)
+		return;
+	len = strlen(s) * 4 + 1;
+	if (len > maxlen) {
+		free(v);
+		maxlen = 0;
+		if (len < getpagesize())
+			len = getpagesize();
+		v = malloc(len);
+		if (v == NULL)
+			return;
+		maxlen = len;
+	}
+	strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
+	if (*leftp != -1) {
+		len = strlen(v);
+		if (len > *leftp) {
+			v[*leftp] = '\0';
+			*leftp = 0;
+		} else
+			*leftp -= len;
+	}
+	printf("%s", v);
+}
+
 
 static void
 pr_args(struct kinfo_proc *kp)
