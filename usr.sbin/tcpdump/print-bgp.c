@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.22 2017/05/30 09:40:08 akfaew Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.23 2017/05/30 12:52:59 akfaew Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -249,15 +249,15 @@ static const char *bgpnotify_minor_cease[] = {
 	"Out of Resources",
 };
 
-static const char *bgpnotify_minor_cap[] = {
-	NULL, "Invalid Action Value", "Invalid Capability Length",
-	"Malformed Capability Value", "Unsupported Capability Code",
+/* RFC 7313 */
+static const char *bgpnotify_minor_err[] = {
+	NULL, "Invalid Message Length",
 };
 
 static const char **bgpnotify_minor[] = {
 	NULL, bgpnotify_minor_msg, bgpnotify_minor_open, bgpnotify_minor_update,
 	bgpnotify_minor_holdtime, bgpnotify_minor_fsm, bgpnotify_minor_cease,
-	bgpnotify_minor_cap,
+	bgpnotify_minor_err,
 };
 static const int bgpnotify_minor_siz[] = {
 	0,
@@ -267,7 +267,7 @@ static const int bgpnotify_minor_siz[] = {
 	sizeof(bgpnotify_minor_holdtime)/sizeof(bgpnotify_minor_holdtime[0]),
 	sizeof(bgpnotify_minor_fsm)/sizeof(bgpnotify_minor_fsm[0]),
 	sizeof(bgpnotify_minor_cease)/sizeof(bgpnotify_minor_cease[0]),
-	sizeof(bgpnotify_minor_cap)/sizeof(bgpnotify_minor_cap[0]),
+	sizeof(bgpnotify_minor_err)/sizeof(bgpnotify_minor_err[0]),
 };
 
 static const char *bgpattr_origin[] = {
