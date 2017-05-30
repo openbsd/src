@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.78 2017/05/10 10:46:59 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.79 2017/05/30 08:13:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -244,8 +244,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-k send -X copy-end-of-line",
 		"bind -Tcopy-mode C-n send -X cursor-down",
 		"bind -Tcopy-mode C-p send -X cursor-up",
-		"bind -Tcopy-mode C-r command-prompt -ip'search up' 'send -X search-backward-incremental \"%%%\"'",
-		"bind -Tcopy-mode C-s command-prompt -ip'search down' 'send -X search-forward-incremental \"%%%\"'",
+		"bind -Tcopy-mode C-r command-prompt -ip'search up' -I'#{pane_search_string}' 'send -X search-backward-incremental \"%%%\"'",
+		"bind -Tcopy-mode C-s command-prompt -ip'search down' -I'#{pane_search_string}' 'send -X search-forward-incremental \"%%%\"'",
 		"bind -Tcopy-mode C-v send -X page-down",
 		"bind -Tcopy-mode C-w send -X copy-selection-and-cancel",
 		"bind -Tcopy-mode Escape send -X cancel",
