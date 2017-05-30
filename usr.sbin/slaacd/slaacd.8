@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.3 2017/04/10 14:46:13 jmc Exp $
+.\"	$OpenBSD: slaacd.8,v 1.4 2017/05/30 10:24:05 florian Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2017 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -28,34 +28,22 @@
 .Sh DESCRIPTION
 .Nm
 is a stateless address autoconfiguration (SLAAC) daemon.
-It listens for IPv6 router advertisement messages on interfaces that are
-configured with
+It listens for IPv6 router advertisement messages on interfaces with the
+.Sy AUTCONF6
+flag set.
+.Nm
+derives IPv6 addreses and default routes from received router
+advertisements and installs them in the kernel.
+See
+.Xr hostname.if 5
+and
 .Xr ifconfig 8
-using
-.Cm autoconf
-for IPv6 autoconfiguration.
-From the router advertisements it constructs address proposals and sends them
-to
-.Xr netcfgd 8 .
+on how to enable auto configuration on an interface.
 .Pp
 .Nm
 monitors network interface states (interface going up or down,
-autoconfiguration enabled or disabled etc.) and sends router solicitations
+auto configuration enabled or disabled etc.) and sends router solicitations
 when necessary.
-.Pp
-.Nm
-is usually started at boot time, and can be enabled by
-setting the following in
-.Pa /etc/rc.conf.local :
-.Pp
-.Dl slaacd_flags=\&"\&"
-.Pp
-See
-.Xr rc 8
-and
-.Xr rc.conf 8
-for more information on the boot process
-and enabling daemons.
 .Pp
 A running
 .Nm
@@ -84,8 +72,8 @@ socket used for communication with
 .Xr slaacctl 8 .
 .El
 .Sh SEE ALSO
+.Xr hostname.if 5,
 .Xr ifconfig 8 ,
-.Xr netcfgd 8 ,
 .Xr slaacctl 8
 .Sh STANDARDS
 .Rs
