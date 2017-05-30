@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.47 2016/09/04 09:22:28 mpi Exp $	*/
+/*	$OpenBSD: vector.S,v 1.48 2017/05/30 12:41:55 mlarkin Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -778,6 +778,8 @@ INTRSTUB(ioapic_level,63,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
+	.section .rodata
+
 	.globl _C_LABEL(i8259_stubs)
 _C_LABEL(i8259_stubs):
 	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
@@ -1077,7 +1079,6 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xresume_ioapic_level63)
 #endif
 
-	.data
 /*
  * Soft interrupt handlers
  */
