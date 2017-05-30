@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.147 2017/05/30 04:45:38 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.148 2017/05/30 12:48:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4323,7 +4323,8 @@ svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 	if (ret)
-		printf("svm_fault_page: uvm_fault returns %d\n", ret);
+		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
+		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_rip);
 
 	return (ret);
 }
@@ -4380,7 +4381,8 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 
 	if (ret)
-		printf("%s: uvm_fault returns %d\n", __func__, ret);
+		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
+		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_rip);
 
 	return (ret);
 }
