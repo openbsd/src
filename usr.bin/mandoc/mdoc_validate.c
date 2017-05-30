@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.243 2017/05/14 13:59:53 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.244 2017/05/30 19:29:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,7 @@ static	void	 post_sh_authors(POST_ARGS);
 static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
 static	void	 post_std(POST_ARGS);
+static	void	 post_useless(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
 static	void	 post_xx(POST_ARGS);
 
@@ -199,7 +200,7 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_sm,	/* Sm */
 	post_hyph,	/* Sx */
 	NULL,		/* Sy */
-	NULL,		/* Tn */
+	post_useless,	/* Tn */
 	post_xx,	/* Ux */
 	NULL,		/* Xc */
 	NULL,		/* Xo */
@@ -669,6 +670,7 @@ post_eoln(POST_ARGS)
 {
 	struct roff_node	*n;
 
+	post_useless(mdoc);
 	n = mdoc->last;
 	if (n->child != NULL)
 		mandoc_vmsg(MANDOCERR_ARG_SKIP, mdoc->parse, n->line,
@@ -852,6 +854,16 @@ post_obsolete(POST_ARGS)
 	if (n->type == ROFFT_ELEM || n->type == ROFFT_BLOCK)
 		mandoc_msg(MANDOCERR_MACRO_OBS, mdoc->parse,
 		    n->line, n->pos, roff_name[n->tok]);
+}
+
+static void
+post_useless(POST_ARGS)
+{
+	struct roff_node *n;
+
+	n = mdoc->last;
+	mandoc_msg(MANDOCERR_MACRO_USELESS, mdoc->parse,
+	    n->line, n->pos, roff_name[n->tok]);
 }
 
 /*

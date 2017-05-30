@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.158 2017/05/16 19:05:36 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.159 2017/05/30 19:29:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,6 +45,8 @@ enum	mandocerr {
 	MANDOCERR_OK,
 
 	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
+
+	MANDOCERR_MACRO_USELESS, /* useless macro: macro */
 
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
 

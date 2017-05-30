@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.22 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.23 2017/05/30 19:29:31 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -108,7 +108,7 @@ htmlval: ${_HTMLVALS}
 	@${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
-	@-${MANDOC} ${MOPTS} -Tlint ${.IMPSRC} 2>&1 | \
+	@-${MANDOC} ${MOPTS} -Tlint -Wall ${.IMPSRC} 2>&1 | \
 		sed -E 's/^mandoc: \/[^:]+\//mandoc: /' > ${.TARGET}
 
 .mandoc_lint.diff_lint:
@@ -289,7 +289,7 @@ ${t}.out_markdown: ${t}.in
 
 .for t in ${LINT_TARGETS}
 ${t}.out_lint: ${t}.in
-	-${MANDOC} ${MOPTS} -Tlint ${.ALLSRC} > ${.TARGET} 2>&1
+	-${MANDOC} ${MOPTS} -Tlint -Wall ${.ALLSRC} > ${.TARGET} 2>&1
 .endfor
 
 # --- phony targets ---

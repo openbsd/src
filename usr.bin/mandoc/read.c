@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.137 2017/05/16 19:05:36 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.138 2017/05/30 19:29:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -83,6 +83,9 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ok",
 
 	"generic style suggestion",
+
+	"useless macro",
+
 	"generic warning",
 
 	/* related to the prologue */
