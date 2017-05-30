@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.455 2017/05/30 08:10:01 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.456 2017/05/30 19:37:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1559,7 +1559,7 @@ struct pfioc_iface {
 #define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
 #define DIOCGETTIMEOUT	_IOWR('D', 30, struct pfioc_tm)
 #define DIOCADDSTATE	_IOWR('D', 37, struct pfioc_state)
-#define DIOCCLRRULECTRS	_IO  ('D', 38)
+/* XXX cut 38 */
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.312 2017/05/15 12:26:00 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.313 2017/05/30 19:37:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -915,7 +915,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCSETDEBUG:
 		case DIOCGETSTATES:
 		case DIOCGETTIMEOUT:
-		case DIOCCLRRULECTRS:
 		case DIOCGETLIMIT:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
@@ -1792,20 +1791,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pf_trans_set.debug = *level;
 		pf_trans_set.mask |= PF_TSET_DEBUG;
-		break;
-	}
-
-	case DIOCCLRRULECTRS: {
-		/* obsoleted by DIOCGETRULE with action=PF_GET_CLR_CNTR */
-		struct pf_ruleset	*ruleset = &pf_main_ruleset;
-		struct pf_rule		*rule;
-
-		TAILQ_FOREACH(rule,
-		    ruleset->rules.active.ptr, entries) {
-			rule->evaluations = 0;
-			rule->packets[0] = rule->packets[1] = 0;
-			rule->bytes[0] = rule->bytes[1] = 0;
-		}
 		break;
 	}
 
