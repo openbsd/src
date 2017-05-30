@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.8 2017/05/30 12:47:47 krw Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.9 2017/05/30 19:28:09 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *  - command blocks (in dmamem) should be pre-allocated and mapped
  *  - dmamaps for command blocks should be pre-allocated and loaded
  *  - dmamaps for payload should be pre-allocated
- *      r = virtio_enqueue_prep(sc, vq, &slot);		// allocate a slot
+ *	r = virtio_enqueue_prep(sc, vq, &slot);		// allocate a slot
  *	if (r)		// currently 0 or EAGAIN
  *	  return r;
  *	r = bus_dmamap_load(dmat, dmamap_payload[slot], data, count, ..);
@@ -484,6 +484,26 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *	virtio_enqueue(sc, vq, slot, dmamap_cmd[slot], 0);
  *	virtio_enqueue(sc, vq, slot, dmamap_payload[slot], iswrite);
  *	virtio_enqueue_commit(sc, vq, slot, 1);
+ *
+ * Alternative usage with statically allocated slots:
+ *	<during initialization>
+ *	// while not out of slots, do
+ *	virtio_enqueue_prep(sc, vq, &slot);		// allocate a slot
+ *	virtio_enqueue_reserve(sc, vq, slot, max_segs);	// reserve all slots
+ *						that may ever be needed
+ *
+ *	<when enqueing a request>
+ *	// Don't call virtio_enqueue_prep()
+ *	bus_dmamap_load(dmat, dmamap_payload[slot], data, count, ..);
+ *	bus_dmamap_sync(dmat, dmamap_cmd[slot],... BUS_DMASYNC_PREWRITE);
+ *	bus_dmamap_sync(dmat, dmamap_payload[slot],...);
+ *	virtio_enqueue_trim(sc, vq, slot, num_segs_needed);
+ *	virtio_enqueue(sc, vq, slot, dmamap_cmd[slot], 0);
+ *	virtio_enqueue(sc, vq, slot, dmamap_payload[slot], iswrite);
+ *	virtio_enqueue_commit(sc, vq, slot, 1);
+ *
+ *	<when dequeuing>
+ *	// don't call virtio_dequeue_commit()
  */
 
 /*
@@ -785,6 +805,9 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
 /*
  * dequeue_commit: complete dequeue; the slot is recycled for future use.
  *                 if you forget to call this the slot will be leaked.
+ *
+ *                 Don't call this if you use statically allocated slots
+ *                 and virtio_dequeue_trim().
  */
 int
 virtio_dequeue_commit(struct virtqueue *vq, int slot)
