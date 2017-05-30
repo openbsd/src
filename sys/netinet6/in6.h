@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.95 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: in6.h,v 1.96 2017/05/30 09:10:49 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -411,6 +411,8 @@ struct mbuf;
 struct ifnet;
 struct cmsghdr;
 
+void	ipv6_input(struct ifnet *, struct mbuf *);
+
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
 void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
@@ -711,8 +713,6 @@ ifatoia6(struct ifaddr *ifa)
 
 __BEGIN_DECLS
 struct cmsghdr;
-
-void	   ipv6_input(struct ifnet *, struct mbuf *);
 
 extern int inet6_opt_init(void *, socklen_t);
 extern int inet6_opt_append(void *, socklen_t, int, u_int8_t,
