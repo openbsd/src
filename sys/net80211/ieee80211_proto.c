@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.74 2017/03/02 09:41:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.75 2017/05/30 10:50:33 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -828,8 +828,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	    ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
-	if (ostate == IEEE80211_S_RUN)
-		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+	ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		/*
