@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.209 2017/05/21 13:00:53 visa Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.210 2017/05/30 15:04:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -129,6 +129,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_getsid] = PLEDGE_STDIO,
 	[SYS_getthrid] = PLEDGE_STDIO,
 	[SYS_getrlimit] = PLEDGE_STDIO,
+	[SYS_getrtable] = PLEDGE_STDIO,
 	[SYS_gettimeofday] = PLEDGE_STDIO,
 	[SYS_getdtablecount] = PLEDGE_STDIO,
 	[SYS_getrusage] = PLEDGE_STDIO,
