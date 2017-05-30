@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.21 2017/04/24 20:35:35 benno Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.22 2017/05/30 09:40:08 akfaew Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -226,6 +226,16 @@ static const char *bgpnotify_minor_update[] = {
 	"Invalid Network Field", "Malformed AS_PATH",
 };
 
+static const char *bgpnotify_minor_holdtime[] = {
+	NULL,
+};
+
+/* RFC 6608 */
+static const char *bgpnotify_minor_fsm[] = {
+	"Unspecified Error", "In OpenSent State", "In OpenConfirm State",
+	"In Established State",
+};
+
 /* RFC 4486 */
 #define BGP_NOTIFY_MINOR_CEASE_MAXPRFX  1
 /* draft-ietf-idr-shutdown-07 */
@@ -246,14 +256,16 @@ static const char *bgpnotify_minor_cap[] = {
 
 static const char **bgpnotify_minor[] = {
 	NULL, bgpnotify_minor_msg, bgpnotify_minor_open, bgpnotify_minor_update,
+	bgpnotify_minor_holdtime, bgpnotify_minor_fsm, bgpnotify_minor_cease,
+	bgpnotify_minor_cap,
 };
 static const int bgpnotify_minor_siz[] = {
 	0,
 	sizeof(bgpnotify_minor_msg)/sizeof(bgpnotify_minor_msg[0]),
 	sizeof(bgpnotify_minor_open)/sizeof(bgpnotify_minor_open[0]),
 	sizeof(bgpnotify_minor_update)/sizeof(bgpnotify_minor_update[0]),
-	0,
-	0,
+	sizeof(bgpnotify_minor_holdtime)/sizeof(bgpnotify_minor_holdtime[0]),
+	sizeof(bgpnotify_minor_fsm)/sizeof(bgpnotify_minor_fsm[0]),
 	sizeof(bgpnotify_minor_cease)/sizeof(bgpnotify_minor_cease[0]),
 	sizeof(bgpnotify_minor_cap)/sizeof(bgpnotify_minor_cap[0]),
 };
