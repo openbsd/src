@@ -1,4 +1,12 @@
-# $OpenBSD: Makefile,v 1.4 2017/05/30 20:46:03 zhuk Exp $
+# $OpenBSD: Makefile,v 1.5 2017/05/30 21:59:36 zhuk Exp $
+
+# initial SUID handling bits taken from regress/sys/kern/setuid/
+
+ALLOWED_MOUNTS = ${.OBJDIR} /tmp
+.for d in ${ALLOWED_MOUNTS}
+SUID_MOUNTS  +!= mount | grep ^$$(df -P $d | tail -1 | awk '{ print $$1 }') |\
+    egrep -vw 'nosuid|noexec' | awk '{ print $$3 }' || true
+.endfor
 
 REGRESS_TARGETS = \
 	t-okay \
@@ -70,33 +78,44 @@ ${t}:
 
 .for t in ${REGRESS_TARGETS:M*-run*}
 ${t}:
+. if empty(SUID_MOUNTS)
+	@echo All of directories we are allowed to use for temporary data
+	@echo "(${ALLOWED_MOUNTS})"
+	@echo lie on nosuid filesystems, so we cannot run doas there.
+	@echo SKIPPED
+. else
 	@echo '$@'
-	@${SUDO} rm -Rf $t.root
-	@${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} $t.root/etc
-	@${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} $t.root/bin
-	@${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} $t.root/usr/bin
-	@${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} $t.root/usr/lib
-	@${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} $t.root/usr/libexec
-	@${SUDO} install -o root -g wheel -m 0444 \
-	    ${.CURDIR}/$t.conf $t.root/etc/doas.conf
-	@${SUDO} install -o root -g wheel -m 0400 \
-	    ${.CURDIR}/master.passwd $t.root/etc/master.passwd
-	@${SUDO} pwd_mkdb -d $t.root/etc -p master.passwd
-	@${SUDO} install -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE} \
-	    /usr/libexec/ld.so $t.root/usr/libexec/ld.so
-	@${SUDO} install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    /usr/lib/libc.so.* $t.root/usr/lib
-	@${SUDO} install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    /bin/echo $t.root/bin/echo
-	@${SUDO} install -o ${BINOWN} -g ${BINGRP} -m 4555 \
-	    /usr/bin/doas $t.root/usr/bin/doas
-	@${SUDO} env MALLOC_OPTIONS=S chroot -u nobody $t.root /usr/bin/doas echo okay
-.endfor
-# cleanup copied files
-afterclean: cleanroots
-cleanroots:
-.for t in ${REGRESS_TARGETS:M*-run*}
-	${SUDO} rm -Rf $t.root
+	@mnt=$$(echo '${SUID_MOUNTS}' | cut -d ' ' -f 1); \
+	tdir=$$(mktemp -d $$mnt/$t.root.XXXXXXXX); \
+	trap "${SUDO} rm -Rf $$tdir" EXIT; \
+	chmod g+x $$tdir; \
+	${SUDO} chgrp nobody $$tdir; \
+	${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
+	    $$tdir/etc; \
+	${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
+	    $$tdir/bin; \
+	${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
+	    $$tdir/usr/bin; \
+	${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
+	    $$tdir/usr/lib; \
+	${SUDO} install -d -o ${BINOWN} -g ${BINGRP} -m ${DIRMODE} \
+	    $$tdir/usr/libexec; \
+	${SUDO} install -o root -g wheel -m 0444 \
+	    ${.CURDIR}/$t.conf $$tdir/etc/doas.conf; \
+	${SUDO} install -o root -g wheel -m 0400 \
+	    ${.CURDIR}/master.passwd $$tdir/etc/master.passwd; \
+	${SUDO} pwd_mkdb -d $$tdir/etc -p master.passwd; \
+	${SUDO} install -o ${SHAREOWN} -g ${SHAREGRP} -m ${SHAREMODE} \
+	    /usr/libexec/ld.so $$tdir/usr/libexec/ld.so; \
+	${SUDO} install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    /usr/lib/libc.so.* $$tdir/usr/lib; \
+	${SUDO} install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    /bin/echo $$tdir/bin/echo; \
+	${SUDO} install -o ${BINOWN} -g ${BINGRP} -m 4555 \
+	    /usr/bin/doas $$tdir/usr/bin/doas; \
+	${SUDO} env MALLOC_OPTIONS=S chroot -u nobody $$tdir \
+	    /usr/bin/doas echo okay
+. endif
 .endfor
 
 .include <bsd.regress.mk>
