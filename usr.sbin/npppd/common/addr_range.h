@@ -1,4 +1,4 @@
-/*	$OpenBSD: addr_range.h,v 1.3 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: addr_range.h,v 1.4 2017/05/30 17:22:00 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -38,12 +38,12 @@ struct in_addr_range {
 extern "C" {
 #endif
 
-struct in_addr_range  *in_addr_range_create __P((void));
-void                  in_addr_range_destroy __P((struct in_addr_range *));
-void                  in_addr_range_list_remove_all __P((struct in_addr_range **));
-int                   in_addr_range_list_includes __P((struct in_addr_range **, struct in_addr *));
-int                   in_addr_range_list_add __P((struct in_addr_range **, const char *));
-int                   main __P((int, char *[]));
+struct in_addr_range  *in_addr_range_create(void);
+void                  in_addr_range_destroy(struct in_addr_range *);
+void                  in_addr_range_list_remove_all(struct in_addr_range **);
+int                   in_addr_range_list_includes(struct in_addr_range **, struct in_addr *);
+int                   in_addr_range_list_add(struct in_addr_range **, const char *);
+int                   main(int, char *[]);
 
 #ifdef __cplusplus
 }

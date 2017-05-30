@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.2 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: hash.h,v 1.3 2017/05/30 17:22:00 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: hash.h,v 1.2 2015/12/17 08:01:55 tb Exp $ */
+/* $Id: hash.h,v 1.3 2017/05/30 17:22:00 yasuoka Exp $ */
 #ifndef HASH_H
 #define HASH_H
 
@@ -51,13 +51,13 @@ typedef struct {
 extern "C" {
 #endif
 hash_table  *hash_create(int (*)(const void *, const void *), uint32_t (*) (const void *, int), int);
-hash_link   *hash_first __P((hash_table *));
-hash_link   *hash_next __P((hash_table *));
-hash_link   *hash_lookup __P((hash_table *, const void *));
-int         hash_insert __P((hash_table *, const void *, void *));
-int         hash_delete __P((hash_table *, const void *, int));
-void        hash_delete_all __P((hash_table *, int));
-void        hash_free __P((hash_table *));
+hash_link   *hash_first(hash_table *);
+hash_link   *hash_next(hash_table *);
+hash_link   *hash_lookup(hash_table *, const void *);
+int         hash_insert(hash_table *, const void *, void *);
+int         hash_delete(hash_table *, const void *, int);
+void        hash_delete_all(hash_table *, int);
+void        hash_free(hash_table *);
 
 #ifdef __cplusplus
 }

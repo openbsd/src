@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.16 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: lcp.c,v 1.17 2017/05/30 17:22:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.16 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: lcp.c,v 1.17 2017/05/30 17:22:00 yasuoka Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -67,17 +67,17 @@
 #define	ECHOREP			0x0a
 #define	IDENTIFICATION		0x0c
 
-static void  lcp_resetci __P((fsm *));
-static void  lcp_addci __P((fsm *, u_char *, int *));
-static int   lcp_reqci __P((fsm *, u_char *, int *, int));
-static int   lcp_ackci __P((fsm *, u_char *, int));
-static int   lcp_nakci __P((fsm *, u_char *, int));
-static int   lcp_rejci __P((fsm *, u_char *, int));
-static int   lcp_cilen __P((fsm *));
-static void  lcp_open __P((fsm *));
-static void  lcp_down __P((fsm *));
-static void  lcp_finished __P((fsm *));
-static int   lcp_ext __P((fsm *, int, int, u_char *, int));
+static void  lcp_resetci(fsm *);
+static void  lcp_addci(fsm *, u_char *, int *);
+static int   lcp_reqci(fsm *, u_char *, int *, int);
+static int   lcp_ackci(fsm *, u_char *, int);
+static int   lcp_nakci(fsm *, u_char *, int);
+static int   lcp_rejci(fsm *, u_char *, int);
+static int   lcp_cilen(fsm *);
+static void  lcp_open(fsm *);
+static void  lcp_down(fsm *);
+static void  lcp_finished(fsm *);
+static int   lcp_ext(fsm *, int, int, u_char *, int);
 static void  lcp_timeout(void *);
 static void  lcp_reset_timeout(void *);
 static int   lcp_proxy_recv_ci(fsm *, u_char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.h,v 1.19 2015/12/05 16:10:31 yasuoka Exp $ */
+/*	$OpenBSD: ppp.h,v 1.20 2017/05/30 17:22:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -801,10 +801,10 @@ void       chap_input (chap *, u_char *, int);
 int        chap_proxy_authen_prepare (chap *, dialin_proxy_info *);
 
 #ifdef USE_NPPPD_EAP_RADIUS
-void       eap_init __P((eap *, npppd_ppp *));
-void       eap_stop __P((eap *));
-void       eap_start __P((eap *));
-void       eap_input __P((eap *, u_char *, int));
+void       eap_init(eap *, npppd_ppp *);
+void       eap_stop(eap *);
+void       eap_start(eap *);
+void       eap_input(eap *, u_char *, int);
 #endif
 
 #ifdef	USE_NPPPD_MPPE

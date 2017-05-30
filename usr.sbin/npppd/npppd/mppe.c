@@ -1,4 +1,4 @@
-/*	$OpenBSD: mppe.c,v 1.13 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: mppe.c,v 1.14 2017/05/30 17:22:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: mppe.c,v 1.13 2015/12/05 18:43:36 mmcc Exp $ */
+/* $Id: mppe.c,v 1.14 2017/05/30 17:22:00 yasuoka Exp $ */
 /**@file
  *
  * The implementation of MPPE(Microsoft Point-To-Point Encryption Protocol)
@@ -81,17 +81,17 @@
 #define COHER_GE(a, b) (!COHER_LT((a), (b)))
 
 
-static const char  *mppe_bits_to_string __P((uint32_t));
-static void        mppe_log __P((mppe *, uint32_t, const char *, ...)) __printflike(3,4);
-static int         mppe_rc4_init __P((mppe *, mppe_rc4_t *, int));
-static int         mppe_rc4_setkey __P((mppe *, mppe_rc4_t *));
-static int         mppe_rc4_setoldkey __P((mppe *, mppe_rc4_t *, uint16_t));
-static void        mppe_rc4_destroy __P((mppe *, mppe_rc4_t *));
-static void        mppe_rc4_encrypt __P((mppe *, mppe_rc4_t *, int, u_char *, u_char *));
-static void        *rc4_create_ctx __P((void));
-static int         rc4_key __P((void *, int, u_char *));
-static void        rc4 __P((void *, int, u_char *, u_char *));
-static void        GetNewKeyFromSHA __P((u_char *, u_char *, int, u_char *));
+static const char  *mppe_bits_to_string(uint32_t);
+static void        mppe_log(mppe *, uint32_t, const char *, ...) __printflike(3,4);
+static int         mppe_rc4_init(mppe *, mppe_rc4_t *, int);
+static int         mppe_rc4_setkey(mppe *, mppe_rc4_t *);
+static int         mppe_rc4_setoldkey(mppe *, mppe_rc4_t *, uint16_t);
+static void        mppe_rc4_destroy(mppe *, mppe_rc4_t *);
+static void        mppe_rc4_encrypt(mppe *, mppe_rc4_t *, int, u_char *, u_char *);
+static void        *rc4_create_ctx(void);
+static int         rc4_key(void *, int, u_char *);
+static void        rc4(void *, int, u_char *, u_char *);
+static void        GetNewKeyFromSHA(u_char *, u_char *, int, u_char *);
 
 /**
  * initializing mppe context.

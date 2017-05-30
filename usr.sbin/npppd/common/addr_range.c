@@ -1,4 +1,4 @@
-/*	$OpenBSD: addr_range.c,v 1.5 2015/12/17 18:37:58 mmcc Exp $ */
+/*	$OpenBSD: addr_range.c,v 1.6 2017/05/30 17:22:00 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  * Author:
  *	Yasuoka Masahiko <yasuoka@iij.ad.jp>
  *
- * $Id: addr_range.c,v 1.5 2015/12/17 18:37:58 mmcc Exp $
+ * $Id: addr_range.c,v 1.6 2017/05/30 17:22:00 yasuoka Exp $
  */
 #ifdef ADDR_RANGE_DEBUG
 #define IIJDEBUG
@@ -81,9 +81,9 @@ static int saved_errno;
 #endif
 #include "addr_range.h"
 
-static void  in_addr_range_list_uniq __P((struct in_addr_range **));
-static int   in_addr_range_list_add0 __P((struct in_addr_range **, u_int32_t, u_int32_t));
-static int   bitmask2masklen __P((u_int32_t));
+static void  in_addr_range_list_uniq(struct in_addr_range **);
+static int   in_addr_range_list_add0(struct in_addr_range **, u_int32_t, u_int32_t);
+static int   bitmask2masklen(u_int32_t);
 
 struct in_addr_range *
 in_addr_range_create()
@@ -373,7 +373,7 @@ static int bitmask2masklen(mask)
 #ifdef ADDR_RANGE_DEBUG
 #include <unistd.h>
 
-static void usage __P ((void));
+static void usage(void);
 
 static void
 usage()

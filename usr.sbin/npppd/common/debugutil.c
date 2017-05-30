@@ -1,4 +1,4 @@
-/*	$OpenBSD: debugutil.c,v 1.5 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: debugutil.c,v 1.6 2017/05/30 17:22:00 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@ int debuglevel = 0;
 FILE *debugfp = NULL;
 static int prio_idx_inititialized = 0;
 
-static void  set_prio_idx_init __P((void));
+static void  set_prio_idx_init(void);
 
 #ifndef countof
 #define countof(x)	(sizeof((x)) / sizeof((x)[0]))

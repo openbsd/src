@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_pool.c,v 1.9 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.10 2017/05/30 17:22:00 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -71,7 +71,7 @@
 #define	SA(sin4)	((struct sockaddr *)(sin4))
 
 #define SHUFLLE_MARK 0xffffffffL
-static int  npppd_pool_log __P((npppd_pool *, int, const char *, ...)) __printflike(3, 4);
+static int  npppd_pool_log(npppd_pool *, int, const char *, ...) __printflike(3, 4);
 static int  is_valid_host_address (uint32_t);
 static int  npppd_pool_regist_radish(npppd_pool *, struct in_addr_range *,
     struct sockaddr_npppd *, int );

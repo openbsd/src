@@ -1,4 +1,4 @@
-/*	$OpenBSD: radish.h,v 1.4 2016/09/21 04:45:23 yasuoka Exp $ */
+/*	$OpenBSD: radish.h,v 1.5 2017/05/30 17:22:00 yasuoka Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -38,14 +38,6 @@
  * Author:	Kazu YAMAMOTO
  * Email: 	kazu@is.aist-nara.ac.jp
  */
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(x) x
-#else
-#define __P(x) ()
-#endif /* __STDC__ */
-#endif /* __P */
 
 #ifdef RADISH
 #ifndef _NET_RADISH_H_
@@ -98,32 +90,32 @@ struct radish_head {
  * prototype for radish functions
  */
 
-int rd_inithead __P((void **, int, int, int, int, int (*)(void *, void *)));
-struct sockaddr *rd_mask __P((struct sockaddr *, struct radish_head *, int *));
+int rd_inithead(void **, int, int, int, int, int (*)(void *, void *));
+struct sockaddr *rd_mask(struct sockaddr *, struct radish_head *, int *);
 
 #ifndef GENERIC_USE
-int rd_insert __P((struct sockaddr *, struct sockaddr *,
-		   struct radish_head *, struct rtentry *));
+int rd_insert(struct sockaddr *, struct sockaddr *,
+		   struct radish_head *, struct rtentry *);
 #else /* GENERIC_USE */
-int rd_insert __P((struct sockaddr *, struct sockaddr *,
-		   struct radish_head *, void *));
+int rd_insert(struct sockaddr *, struct sockaddr *,
+		   struct radish_head *, void *);
 #endif /* GENERIC_USE */
-int rd_glue __P((struct radish *, struct radish *, int, struct radish_head *));
-int rd_match __P((struct sockaddr *, struct radish_head *, struct radish **));
-int rd_match_next __P((struct sockaddr *, struct radish_head *, struct radish **, struct radish *));
+int rd_glue(struct radish *, struct radish *, int, struct radish_head *);
+int rd_match(struct sockaddr *, struct radish_head *, struct radish **);
+int rd_match_next(struct sockaddr *, struct radish_head *, struct radish **, struct radish *);
 #ifndef GENERIC_USE
-struct rtentry *rd_lookup __P((struct sockaddr *,
-			      struct sockaddr *, struct radish_head *));
-int rd_delete __P((struct sockaddr *, struct sockaddr *,
-		   struct radish_head *, struct rtentry **));
+struct rtentry *rd_lookup(struct sockaddr *,
+			      struct sockaddr *, struct radish_head *);
+int rd_delete(struct sockaddr *, struct sockaddr *,
+		   struct radish_head *, struct rtentry **);
 #else /* GENERIC_USE */
-void *rd_lookup __P((struct sockaddr *,
-			      struct sockaddr *, struct radish_head *));
-int rd_delete __P((struct sockaddr *, struct sockaddr *,
-		   struct radish_head *, void **));
+void *rd_lookup(struct sockaddr *,
+			      struct sockaddr *, struct radish_head *);
+int rd_delete(struct sockaddr *, struct sockaddr *,
+		   struct radish_head *, void **);
 #endif /* GENERIC_USE */
-void rd_unlink __P((struct radish *, struct radish *));
-int  rd_walktree __P((struct radish_head *, int (*)(struct radish *, void *), void *));
-int  rd_refines __P((void *, void *));
+void rd_unlink(struct radish *, struct radish *);
+int  rd_walktree(struct radish_head *, int (*)(struct radish *, void *), void *);
+int  rd_refines(void *, void *);
 #endif /* !_NET_RADISH_H_ */
 #endif /* RADISH */

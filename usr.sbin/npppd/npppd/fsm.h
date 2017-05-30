@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.h,v 1.5 2012/05/08 13:15:11 yasuoka Exp $ */
+/*	$OpenBSD: fsm.h,v 1.6 2017/05/30 17:22:00 yasuoka Exp $ */
 /*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
@@ -74,34 +74,27 @@ typedef struct fsm {
 
 
 typedef struct fsm_callbacks {
-    void (*resetci)		/* Reset our Configuration Information */
-		__P((fsm *));
-    int  (*cilen)		/* Length of our Configuration Information */
-		__P((fsm *));
+    void (*resetci)(fsm *);	/* Reset our Configuration Information */
+    int  (*cilen)(fsm *);	/* Length of our Configuration Information */
     void (*addci) 		/* Add our Configuration Information */
-		__P((fsm *, u_char *, int *));
+		(fsm *, u_char *, int *);
     int  (*ackci)		/* ACK our Configuration Information */
-		__P((fsm *, u_char *, int));
+		(fsm *, u_char *, int);
     int  (*nakci)		/* NAK our Configuration Information */
-		__P((fsm *, u_char *, int));
+		(fsm *, u_char *, int);
     int  (*rejci)		/* Reject our Configuration Information */
-		__P((fsm *, u_char *, int));
+		(fsm *, u_char *, int);
     int  (*reqci)		/* Request peer's Configuration Information */
-		__P((fsm *, u_char *, int *, int));
-    void (*up)			/* Called when fsm reaches OPENED state */
-		__P((fsm *));
-    void (*down)		/* Called when fsm leaves OPENED state */
-		__P((fsm *));
-    void (*starting)		/* Called when we want the lower layer */
-		__P((fsm *));
-    void (*finished)		/* Called when we don't want the lower layer */
-		__P((fsm *));
-    void (*protreject)		/* Called when Protocol-Reject received */
-		__P((int));
-    void (*retransmit)		/* Retransmission is necessary */
-		__P((fsm *));
+		(fsm *, u_char *, int *, int);
+    void (*up)(fsm *);		/* Called when fsm reaches OPENED state */
+    void (*down)(fsm *);	/* Called when fsm leaves OPENED state */
+		
+    void (*starting)(fsm *);	/* Called when we want the lower layer */
+    void (*finished)(fsm *);	/* Called when we don't want the lower layer */
+    void (*protreject)(int);	/* Called when Protocol-Reject received */
+    void (*retransmit)(fsm *);	/* Retransmission is necessary */
     int  (*extcode)		/* Called when unknown code received */
-		__P((fsm *, int, int, u_char *, int));
+		(fsm *, int, int, u_char *, int);
     char *proto_name;		/* String name for protocol (for messages) */
 } fsm_callbacks;
 
@@ -157,16 +150,16 @@ typedef struct fsm_callbacks {
 /*
  * Prototypes
  */
-void fsm_evtimer_timeout __P((int, short, void *));
-void fsm_init __P((fsm *));
-void fsm_lowerup __P((fsm *));
-void fsm_lowerdown __P((fsm *));
-void fsm_open __P((fsm *));
-void fsm_close __P((fsm *, const char *));
-void fsm_input __P((fsm *, u_char *, int));
-void fsm_protreject __P((fsm *));
-void fsm_sdata __P((fsm *, int, int, u_char *, int));
-void fsm_log __P((fsm *, uint32_t, const char *, ...)) __attribute__((__format__ (__printf__, 3, 4)));
+void fsm_evtimer_timeout(int, short, void *);
+void fsm_init(fsm *);
+void fsm_lowerup(fsm *);
+void fsm_lowerdown(fsm *);
+void fsm_open(fsm *);
+void fsm_close(fsm *, const char *);
+void fsm_input(fsm *, u_char *, int);
+void fsm_protreject(fsm *);
+void fsm_sdata(fsm *, int, int, u_char *, int);
+void fsm_log(fsm *, uint32_t, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));
 
 
 #endif
