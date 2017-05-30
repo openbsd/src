@@ -1,6 +1,5 @@
-.\"	$OpenBSD: airport.7,v 1.1 2017/05/28 19:26:33 benno Exp $
+.\"	$OpenBSD: airport.7,v 1.2 2017/05/30 17:50:08 schwarze Exp $
 .\"
-
 .\" Copyright (c) 2017 Sebastian Benoit.
 .\" All rights reserved.
 .\"
@@ -24,12 +23,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 28 2017 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt AIRPORT 7
 .Os
 .Sh NAME
 .Nm airport
-.Nd List of IATA airport codes
+.Nd list of IATA airport codes
 .Sh DESCRIPTION
 The
 .Nm
@@ -40,14 +39,13 @@ The list is not a complete list of all IATA codes.
 New airports can only be added by
 .Ox
 developers who have visited an airport and thereby have verified its existence.
-.Sh CAVEATS
-There are also railway stations with IATA codes.
-These may not be listed, except if someone landed there by plane and
-survived to update the file.
-.Sh STANDARDS
-.Lk http://www.iata.org/codes
-.%T Airline and Airport Code Search
 .Sh FILES
 .Bl -tag -width /usr/share/misc/airport -compact
 .It Pa /usr/share/misc/airport
 .El
+.Sh SEE ALSO
+.Lk http://www.iata.org/codes "Airline and Airport Code Search"
+.Sh CAVEATS
+There are also railway stations with IATA codes.
+These may not be listed, except if someone landed there by plane and
+survived to update the file.
