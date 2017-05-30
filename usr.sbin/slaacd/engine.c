@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.30 2017/05/30 14:23:10 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.31 2017/05/30 14:45:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1908,6 +1908,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 		    addr_proposal->vltime) == 0) {
 			evtimer_del(&addr_proposal->timer);
 			LIST_REMOVE(addr_proposal, entries);
+			free(addr_proposal);
 			log_debug("%s: removing address proposal", __func__);
 			break;
 		}
@@ -2000,6 +2001,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 		    dfr_proposal->router_lifetime) == 0) {
 			evtimer_del(&dfr_proposal->timer);
 			LIST_REMOVE(dfr_proposal, entries);
+			free(dfr_proposal);
 			log_debug("%s: removing dfr proposal", __func__);
 			break;
 		}
