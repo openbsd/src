@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.175 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.176 2017/05/30 16:16:47 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ tun_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 
-	free(tp, M_DEVBUF, 0);
+	free(tp, M_DEVBUF, sizeof *tp);
 	return (0);
 }
 
