@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2017/05/30 14:45:22 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.32 2017/05/30 14:56:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -228,13 +228,11 @@ void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 			     struct address_proposal *, int);
 void			 gen_address_proposal(struct slaacd_iface *, struct
 			     radv *, struct radv_prefix *, int);
-void			 configure_address(struct slaacd_iface *, struct
-			     address_proposal *);
+void			 configure_address(struct address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
 			     radv *);
-void			 configure_dfr(struct slaacd_iface *, struct
-			     dfr_proposal *);
+void			 configure_dfr(struct dfr_proposal *);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
@@ -565,9 +563,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				}
 			}
 			if (addr_proposal != NULL)
-				configure_address(iface, addr_proposal);
+				configure_address(addr_proposal);
 			else if (dfr_proposal != NULL)
-				configure_dfr(iface, dfr_proposal);
+				configure_dfr(dfr_proposal);
 
 			break;
 		case IMSG_DEL_ADDRESS:
@@ -1513,8 +1511,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					case PROPOSAL_CONFIGURED:
 					case PROPOSAL_NEARLY_EXPIRED:
 						log_debug("updating dfr");
-						configure_dfr(iface,
-						    dfr_proposal);
+						configure_dfr(dfr_proposal);
 						break;
 					default:
 						if (getnameinfo((struct
@@ -1604,7 +1601,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				case PROPOSAL_CONFIGURED:
 				case PROPOSAL_NEARLY_EXPIRED:
 					log_debug("updating address");
-					configure_address(iface, addr_proposal);
+					configure_address(addr_proposal);
 					break;
 				default:
 					if (getnameinfo((struct sockaddr *)
@@ -1635,8 +1632,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 }
 
 void
-configure_address(struct slaacd_iface *iface, struct address_proposal
-    *addr_proposal)
+configure_address(struct address_proposal *addr_proposal)
 {
 	struct imsg_configure_address	 address;
 	struct timeval			 tv;
@@ -1650,9 +1646,9 @@ configure_address(struct slaacd_iface *iface, struct address_proposal
 
 	addr_proposal->state = PROPOSAL_CONFIGURED;
 
-	log_debug("%s: %d", __func__, iface->if_index);
+	log_debug("%s: %d", __func__, addr_proposal->if_index);
 
-	address.if_index = iface->if_index;
+	address.if_index = addr_proposal->if_index;
 	memcpy(&address.addr, &addr_proposal->addr, sizeof(address.addr));
 	memcpy(&address.mask, &addr_proposal->mask, sizeof(address.mask));
 	address.vltime = addr_proposal->vltime;
@@ -1760,8 +1756,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 }
 
 void
-configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
-    *dfr_proposal)
+configure_dfr(struct dfr_proposal *dfr_proposal)
 {
 	struct imsg_configure_dfr	 dfr;
 	struct timeval			 tv;
@@ -1778,7 +1773,7 @@ configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
 
 	dfr_proposal->state = PROPOSAL_CONFIGURED;
 
-	log_debug("%s: %d", __func__, iface->if_index);
+	log_debug("%s: %d", __func__, dfr_proposal->if_index);
 
 	if (prev_state == PROPOSAL_CONFIGURED || prev_state ==
 	    PROPOSAL_NEARLY_EXPIRED) {
@@ -1789,7 +1784,7 @@ configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
 		return;
 	}
 
-	dfr.if_index = iface->if_index;
+	dfr.if_index = dfr_proposal->if_index;
 	memcpy(&dfr.addr, &dfr_proposal->addr, sizeof(dfr.addr));
 	dfr.router_lifetime = dfr_proposal->router_lifetime;
 
