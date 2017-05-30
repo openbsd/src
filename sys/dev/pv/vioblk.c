@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.5 2017/05/30 12:47:47 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.6 2017/05/30 17:47:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -156,9 +156,9 @@ int vioblk_match(struct device *parent, void *match, void *aux)
 }
 
 #if VIRTIO_DEBUG > 0
-#define DBGPRINT(fmt, args...) printf("%s: " fmt "\n", __func__, ## args)
+#define DPRINTF(x...) printf(x)
 #else
-#define DBGPRINT(fmt, args...)		do {} while (0)
+#define DPRINTF(x...)		do {} while (0)
 #endif
 
 void
@@ -247,7 +247,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = 2;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = 2;
-	DBGPRINT("; qsize: %d", qsize);
+	DPRINTF("%s: qsize: %d\n", __func__, qsize);
 	if (features & VIRTIO_BLK_F_RO)
 		sc->sc_link.flags |= SDEV_READONLY;
 
@@ -285,7 +285,7 @@ vioblk_req_get(void *cookie)
 		SLIST_REMOVE_HEAD(&sc->sc_freelist, vr_list);
 	mtx_leave(&sc->sc_vr_mtx);
 
-	DBGPRINT("vioblk_req_get: %p\n", vr);
+	DPRINTF("%s: %p\n", __func__, vr);
 
 	return vr;
 }
@@ -296,7 +296,7 @@ vioblk_req_put(void *cookie, void *io)
 	struct vioblk_softc *sc = cookie;
 	struct virtio_blk_req *vr = io;
 
-	DBGPRINT("vioblk_req_put: %p\n", vr);
+	DPRINTF("%s: %p\n", __func__, vr);
 
 	mtx_enter(&sc->sc_vr_mtx);
 	/*
@@ -356,7 +356,7 @@ vioblk_vq_done1(struct vioblk_softc *sc, struct virtio_softc *vsc,
 
 
 	if (vr->vr_status != VIRTIO_BLK_S_OK) {
-		DBGPRINT("EIO");
+		DPRINTF("%s: EIO\n", __func__);
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = xs->datalen;
 	} else {
@@ -695,14 +695,15 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 			 */
 			vd = &vq->vq_desc[slot];
 			for (r = 0; r < ALLOC_SEGS - 1; r++) {
-				DBGPRINT("vd[%d].next = %d should be %d\n",
-				    r, vd[r].next, (slot + r + 1));
+				DPRINTF("%s: vd[%d].next = %d should be %d\n",
+				    __func__, r, vd[r].next, (slot + r + 1));
 				if (vd[r].next != (slot + r + 1))
 					return i;
 			}
 			if (r == (ALLOC_SEGS -1) && vd[r].next != 0)
 				return i;
-			DBGPRINT("Reserved slots are contiguous as required!\n");
+			DPRINTF("%s: reserved slots are contiguous (good!)\n",
+			    __func__);
 		}
 
 		vr->vr_qe_index = slot;

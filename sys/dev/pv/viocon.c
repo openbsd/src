@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.1 2017/01/21 11:22:38 reyk Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.2 2017/05/30 17:47:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -43,9 +43,9 @@
 #define VIOCON_DEBUG	0
 
 #if VIOCON_DEBUG
-#define DBGPRINT(fmt, args...) printf("%s: " fmt "\n", __func__, ## args)
+#define DPRINTF(x...) printf(x)
 #else
-#define DBGPRINT(fmt, args...)
+#define DPRINTF(x...)
 #endif
 
 struct virtio_feature_name viocon_feature_names[] = {
@@ -196,7 +196,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	    viocon_feature_names);
 
 	printf("\n");
-	DBGPRINT("softc: %p\n", sc);
+	DPRINTF("%s: softc: %p\n", __func__, sc);
 	if (viocon_port_create(sc, 0) != 0) {
 		printf("\n%s: viocon_port_create failed\n", __func__);
 		goto err;
@@ -225,7 +225,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 		return ENOMEM;
 	sc->sc_ports[portidx] = vp;
 	vp->vp_sc = sc;
-	DBGPRINT("vp: %p\n", vp);
+	DPRINTF("%s: vp: %p\n", __func__, vp);
 
 	if (portidx == 0)
 		rxidx = 0;
@@ -242,7 +242,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	vp->vp_rx = &vsc->sc_vqs[rxidx];
 	vp->vp_rx->vq_done = viocon_rx_intr;
 	vp->vp_si = softintr_establish(IPL_TTY, viocon_rx_soft, vp);
-	DBGPRINT("rx: %p\n", vp->vp_rx);
+	DPRINTF("%s: rx: %p\n", __func__, vp->vp_rx);
 
 	snprintf(name, sizeof(name), "p%dtx", portidx);
 	if (virtio_alloc_vq(vsc, &vsc->sc_vqs[txidx], txidx, BUFSIZE, 1,
@@ -252,7 +252,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	}
 	vp->vp_tx = &vsc->sc_vqs[txidx];
 	vp->vp_tx->vq_done = viocon_tx_intr;
-	DBGPRINT("tx: %p\n", vp->vp_tx);
+	DPRINTF("%s: tx: %p\n", __func__, vp->vp_tx);
 
 	vsc->sc_nvqs += 2;
 
@@ -289,7 +289,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	tp->t_hwiflow = vioconhwiflow;
 	tp->t_dev = (sc->sc_dev.dv_unit << 4) | portidx;
 	vp->vp_tty = tp;
-	DBGPRINT("tty: %p\n", tp);
+	DPRINTF("%s: tty: %p\n", __func__, tp);
 
 	virtio_start_vq_intr(vsc, vp->vp_rx);
 	virtio_start_vq_intr(vsc, vp->vp_tx);

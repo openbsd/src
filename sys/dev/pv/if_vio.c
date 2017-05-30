@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.2 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.3 2017/05/30 17:47:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -55,9 +55,9 @@
 #endif
 
 #if VIRTIO_DEBUG
-#define DBGPRINT(fmt, args...) printf("%s: " fmt "\n", __func__, ## args)
+#define DPRINTF(x...) printf(x)
 #else
-#define DBGPRINT(fmt, args...)
+#define DPRINTF(x...)
 #endif
 
 /*
@@ -1035,7 +1035,8 @@ vio_rxeof(struct vio_softc *sc)
 		}
 	}
 	if (m0 != NULL) {
-		DBGPRINT("expected %d buffers, got %d", (int)hdr->num_buffers,
+		DPRINTF("%s: expected %d buffers, got %d\n", __func__,
+		    (int)hdr->num_buffers,
 		    (int)hdr->num_buffers - bufs_left);
 		ifp->if_ierrors++;
 		m_freem(m0);
@@ -1263,7 +1264,7 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 		r = EIO;
 	}
 
-	DBGPRINT("cmd %d %d: %d", cmd, (int)onoff, r);
+	DPRINTF("%s: cmd %d %d: %d\n", __func__, cmd, (int)onoff, r);
 out:
 	vio_ctrl_wakeup(sc, FREE);
 	return r;
