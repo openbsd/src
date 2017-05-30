@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.34 2016/12/30 10:24:15 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.35 2017/05/30 23:30:48 benno Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2016 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -67,6 +67,14 @@ or
 listen on 127.0.0.1
 listen on ::1
 listen on 127.0.0.1 rtable 4
+.It Xo Ic query from Ar address
+.Xc
+Specify a Local IP address the
+.Xr ntpd 8
+daemon should use for outgoing queries.
+.Bd -literal -offset indent
+query from 192.0.2.1
+query from 2001:db8::1
 .Ed
 .It Xo Ic sensor Ar device
 .Op Ic correction Ar microseconds

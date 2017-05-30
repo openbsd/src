@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.134 2017/01/09 14:49:22 reyk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.135 2017/05/30 23:30:48 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,6 +153,8 @@ struct ntp_peer {
 	struct ntp_query		*query;
 	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
 	struct ntp_offset		 update;
+	struct sockaddr_in		 query_addr4;
+	struct sockaddr_in6		 query_addr6;
 	enum client_state		 state;
 	time_t				 next;
 	time_t				 deadline;
@@ -219,6 +221,8 @@ struct ntpd_conf {
 	TAILQ_HEAD(constraints, constraint)		constraints;
 	struct ntp_status				status;
 	struct ntp_freq					freq;
+	struct sockaddr_in				query_addr4;
+	struct sockaddr_in6				query_addr6;
 	u_int32_t					scale;
 	int				        	debug;
 	int				        	verbose;

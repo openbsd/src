@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2015/10/31 19:32:18 naddy Exp $ */
+/*	$OpenBSD: parse.y,v 1.66 2017/05/30 23:30:48 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,6 +58,8 @@ int		 lungetc(int);
 int		 findeol(void);
 
 struct ntpd_conf		*conf;
+struct sockaddr_in		 query_addr4;
+struct sockaddr_in6		 query_addr6;
 
 struct opts {
 	int		weight;
@@ -80,7 +82,7 @@ typedef struct {
 
 %}
 
-%token	LISTEN ON CONSTRAINT CONSTRAINTS FROM
+%token	LISTEN ON CONSTRAINT CONSTRAINTS FROM QUERY
 %token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID STRATUM WEIGHT
 %token	ERROR
 %token	<v.string>		STRING
@@ -130,6 +132,28 @@ main		: LISTEN ON address listen_opts	{
 			free($3->name);
 			free($3);
 		}
+		| QUERY FROM STRING {
+			struct sockaddr_in sin4;
+			struct sockaddr_in6 sin6;
+
+			sin4.sin_family = AF_INET;
+			sin4.sin_len = sizeof(struct sockaddr_in);
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(struct sockaddr_in6);
+
+			if (inet_pton(AF_INET, $3, &sin4.sin_addr) == 1)
+				memcpy(&query_addr4, &sin4, sin4.sin_len);
+			else if (inet_pton(AF_INET6, $3, &sin6.sin6_addr) == 1)
+				memcpy(&query_addr6, &sin6, sin6.sin6_len);
+			else {
+				yyerror("invalid IPv4 or IPv6 address: %s\n",
+				    $3);
+				free($3);
+				YYERROR;
+			}
+
+			free($3);
+		}
 		| SERVERS address server_opts	{
 			struct ntp_peer		*p;
 			struct ntp_addr		*h, *next;
@@ -153,6 +177,8 @@ main		: LISTEN ON address listen_opts	{
 
 				p = new_peer();
 				p->weight = $3.weight;
+				p->query_addr4 = query_addr4;
+				p->query_addr6 = query_addr6;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -190,6 +216,8 @@ main		: LISTEN ON address listen_opts	{
 			}
 
 			p->weight = $3.weight;
+			p->query_addr4 = query_addr4;
+			p->query_addr6 = query_addr6;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -461,6 +489,7 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "listen",		LISTEN},
 		{ "on",			ON},
+		{ "query",		QUERY},
 		{ "refid",		REFID},
 		{ "rtable",		RTABLE},
 		{ "sensor",		SENSOR},
