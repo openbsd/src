@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.149 2017/05/30 17:49:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.150 2017/05/30 19:13:20 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3689,7 +3689,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 
 		/* Start / resume the VCPU */
+#ifdef VMM_DEBUG
 		KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 
 		/* Disable interrupts and save the current FPU state. */
 		disable_intr();
@@ -3790,12 +3792,16 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			resume = 1;
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
 				printf("%s: cannot read guest rip\n", __func__);
+				if (!locked)
+					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
 
 			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
 				printf("%s: cant read exit reason\n", __func__);
+				if (!locked)
+					KERNEL_LOCK();
 				ret = EINVAL;
 				break;
 			}
@@ -3923,6 +3929,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	} else
 		ret = EINVAL;
 
+#ifdef VMM_DEBUG
+	KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 	return (ret);
 }
 
@@ -5466,7 +5475,9 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 
 		/* Start / resume the VCPU */
+#ifdef VMM_DEBUG
 		KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 
 		/* Disable interrupts and save the current FPU state. */
 		disable_intr();
@@ -5611,6 +5622,10 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * handling an exit, a guest interrupt is pending, or we failed in some
 	 * way to enter the guest.
 	 */
+
+#ifdef VMM_DEBUG
+	KERNEL_ASSERT_LOCKED();
+#endif /* VMM_DEBUG */
 	return (ret);
 }
 
