@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.38 2017/05/30 12:09:27 friehm Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.39 2017/05/30 12:24:43 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -173,10 +173,11 @@ The tag contains a
 .It PACKET_TAG_CARP_BAL_IP
 Used by
 .Xr carp 4
-to mark packets received in mode 
+to mark packets received in mode
 .Va balancing ip .
-This packets need some special treatment since they contain layer 3 unicast
-inside layer 2 multicast. The tag contains no data.
+These packets need some special treatment since they contain layer 3 unicast
+inside layer 2 multicast.
+The tag contains no data.
 .El
 .Pp
 .Fn m_tag_find
