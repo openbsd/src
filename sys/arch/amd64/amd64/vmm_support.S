@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.8 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.9 2017/05/30 17:49:47 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -545,7 +545,7 @@ restore_host_svm:
 	 * first. This is to accommodate possibly lazy-switched
 	 * selectors from above
 	 */
-	cli	/* XXX not needed on amd due to implicit clgi on #vmexit */
+	cli
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_KERNELGSBASE, %rcx
@@ -586,6 +586,5 @@ restore_host_svm:
 
 	movq	%rdi, %rax
 	stgi
-	sti
 
 	ret	
