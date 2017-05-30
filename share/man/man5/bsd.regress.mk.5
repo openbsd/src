@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.12 2017/05/29 20:35:47 bluhm Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.13 2017/05/30 12:14:38 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -164,9 +164,9 @@ or
 should have the same effect.
 Tests must be runnable by root, and may also succeed when run as a
 regular user.
-To run tests automatically with
-.Xr cron 8
-they must not assume to have a controlling tty.
+Tests must not assume they have a controlling tty,
+to allow them to be run by
+.Xr cron 8 .
 An individual regress test may create a pseudo tty if it needs one.
 .Pp
 Tests should use the binaries installed and the kernel running on
