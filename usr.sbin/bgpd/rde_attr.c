@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.98 2017/05/26 20:55:30 phessler Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.99 2017/05/30 18:08:15 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1504,4 +1504,36 @@ community_large_delete(struct rde_aspath *asp, int64_t as, int64_t ld1,
 	attr_free(asp, attr);
 	attr_optadd(asp, f, ATTR_LARGE_COMMUNITIES, n, len);
 	free(n);
+}
+
+
+u_char *
+community_ext_delete_non_trans(u_char *data, u_int16_t len, u_int16_t *newlen)
+{
+	u_int8_t	*ext = data, *newdata;
+	u_int16_t	l, nlen = 0;
+
+	for (l = 0; l < len; l += sizeof(u_int64_t)) {
+		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE))
+			nlen += sizeof(u_int64_t);
+	}
+
+	if (nlen == 0) {
+		*newlen = 0;
+		return NULL;
+	}
+
+	newdata = malloc(nlen);
+	if (newdata == NULL)
+		fatal("%s", __func__);;
+
+	for (l = 0, nlen = 0; l < len; l += sizeof(u_int64_t)) {
+		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE)) {
+			memcpy(newdata + nlen, ext + l, sizeof(u_int64_t));
+			nlen += sizeof(u_int64_t);
+		}
+	}
+
+	*newlen = nlen;
+	return newdata;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.85 2017/05/27 10:33:15 phessler Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.86 2017/05/30 18:08:15 benno Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -736,6 +736,8 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	int		 flags, r, ismp = 0, neednewpath = 0;
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0, plen;
 	u_int8_t	 l;
+	u_int16_t	 nlen = 0;
+	u_char		*ndata = NULL;
 
 	/* origin */
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
@@ -849,9 +851,31 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		case ATTR_COMMUNITIES:
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
+		case ATTR_LARGE_COMMUNITIES:
 			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
 			    peer->conf.ebgp) {
 				r = 0;
+				break;
+			}
+			if ((r = attr_write(up_attr_buf + wlen, len,
+			    oa->flags, oa->type, oa->data, oa->len)) == -1)
+				return (-1);
+			break;
+		case ATTR_EXT_COMMUNITIES:
+			/* handle (non-)transitive extended communities */
+			if (peer->conf.ebgp) {
+				ndata = community_ext_delete_non_trans(oa->data,
+				    oa->len, &nlen);
+
+				if (nlen > 0) {
+					if ((r = attr_write(up_attr_buf + wlen,
+					    len, oa->flags, oa->type, ndata,
+					    nlen)) == -1) {
+						free(ndata);
+						return (-1);
+					}
+				} else
+					r = 0;
 				break;
 			}
 			if ((r = attr_write(up_attr_buf + wlen, len,

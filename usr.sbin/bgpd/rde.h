@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.161 2017/05/28 12:21:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.162 2017/05/30 18:08:15 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -386,6 +386,8 @@ void		 community_ext_delete(struct rde_aspath *,
 		    struct filter_extcommunity *, u_int16_t);
 int		 community_ext_conv(struct filter_extcommunity *, u_int16_t,
 		    u_int64_t *);
+u_char		*community_ext_delete_non_trans(u_char *, u_int16_t,
+		    u_int16_t *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
