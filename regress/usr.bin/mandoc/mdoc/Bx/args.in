@@ -9,7 +9,7 @@ no arguments:
 .Bx
 .Pp
 one standard argument:
-.Bx 4.4
+.Bx 4.4 "."
 .Pp
 one non-standard argument:
 .Bx nett
@@ -21,6 +21,6 @@ two standard arguments:
 .Bx 4.3 reno
 .Pp
 more arguments:
-.Bx 4.3 tahoe and some additional words
+.Bx 4.3 tahoe and "Em" some additional words
 .Pp
 end of test document

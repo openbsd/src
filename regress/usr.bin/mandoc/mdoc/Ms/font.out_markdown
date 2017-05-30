@@ -7,7 +7,7 @@ MS-FONT(1) - General Commands Manual
 # DESCRIPTION
 
 normal text
-**bold*emphasis*back** | **after**: **punctuation**
+**bold*emphasis*back** | **after**: **punctuation** *italic*
 trailing text
 
 OpenBSD - November 20, 2014

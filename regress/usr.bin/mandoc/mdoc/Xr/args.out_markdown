@@ -9,13 +9,13 @@ XR-ARGS(1) - General Commands Manual
 One single
 echo(1)
 is fine, and so is an
-echo(1) followed by something else.
+echo(1) followed by something *else*.
 
 But listen for multiple
 echo(1)s.
 
 A call, an
-echo(1), and
+(echo(1)), and
 another
 echo(1).
 

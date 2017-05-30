@@ -11,7 +11,7 @@
 initial text
 .En enclosed words with Fl flags
 middle text
-.En more enclosed words
+.En "(" more enclosed words
 final text
 .Pp
 .Es

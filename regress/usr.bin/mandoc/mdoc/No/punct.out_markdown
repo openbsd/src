@@ -79,7 +79,7 @@ Multiple punctuation:
 \[(arg)].
 
 Quoted:
-a . b Nm
+a . b Nm **bold**
 . b Nm
 .
 

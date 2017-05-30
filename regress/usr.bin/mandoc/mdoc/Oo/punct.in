@@ -6,13 +6,13 @@
 .Nd punctuation handling by the Oo macro
 .Sh DESCRIPTION
 at the beginning:
-.Oo ( z
+.Oo "(" z
 .Oo | z
 .Oo . z
-.Oc Oc Oc
+.Oc Oc "Sy" bold Oc
 .Pp
 in the middle:
-.Oo a ( z
+.Oo a "(" z
 .Oo a | z
 .Oo a . z
 .Oc Oc Oc

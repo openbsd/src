@@ -7,7 +7,7 @@ AD-FONT(1) - General Commands Manual
 # DESCRIPTION
 
 normal text
-*emphasis**bold**back* | *after*: *punctuation*
+*emphasis**bold**back* | *after*: *punctuation* **bold**
 trailing text
 
 OpenBSD - November 20, 2014

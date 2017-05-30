@@ -1,0 +1,45 @@
+Ic-PUNCT(1) - General Commands Manual
+
+# NAME
+
+**Ic-punct** - punctuation handling by the Ic macro
+
+# DESCRIPTION
+
+closing punctuation
+**a**)
+only one
+)
+only more than one
+))
+middle
+**a**) **z**
+start
+) **z**
+dot
+. **z**
+comma
+, **z**
+semicolon
+; **z**
+colon
+: **z**
+quest
+? **z**
+excl
+! **z**
+paren
+) **z**
+bracket
+] **z**
+bar
+| **m**
+op paren
+(**a**
+op bracket
+\[**a**
+
+quoted punctuation:
+**a** (**b** | **c**) **d**, *italic*.
+
+OpenBSD - August 21, 2014

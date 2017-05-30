@@ -6,7 +6,7 @@
 .Nd the standard macro calling other macros
 .Sh STANDARDS
 calling another macro:
-.St Fl called
+.St "Fl" called
 .Pp
 valid argument:
 .St -p1003.1-2004

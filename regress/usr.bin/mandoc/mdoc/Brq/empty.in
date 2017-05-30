@@ -8,7 +8,7 @@
 An empty
 .Brq
 and a full
-.Brq user@host
+.Brq "(" user@host
 quotation.
 And another
-.Bro full Brc one .
+.Bro "(" full Brc one "Sy" bold .

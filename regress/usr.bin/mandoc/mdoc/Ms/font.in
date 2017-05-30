@@ -6,5 +6,5 @@
 .Nd changing fonts inside the mathematical symbol macro
 .Sh DESCRIPTION
 normal text
-.Ms bold\\fIemphasis\\fPback | after : punctuation
+.Ms bold\\fIemphasis\\fPback | after ":" punctuation "Em" italic
 trailing text

@@ -6,7 +6,7 @@
 .Nd mailto
 .Sh DESCRIPTION
 Please send mail to
-.Mt schwarze@openbsd.org .
+.Mt schwarze@openbsd.org ";" "Sy" bold .
 .Pp
 Do not send mail to
 .Mt .

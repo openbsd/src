@@ -6,7 +6,7 @@
 .Nd punctuation after the normal macro
 .Sh DESCRIPTION
 Leading punctuation:
-.No ( b
+.No "(" b
 .No [ b
 .No | b
 .No . b
@@ -29,17 +29,17 @@ Trailing punctuation:
 .No a ?
 .No a !
 .No a )
-.No a ]
+.No a "]"
 .Pp
 Middle punctuation:
 .No a ( b
-.No a [ b
+.No a "[" b
 .No a | b
 .No a . b
 .No a , b
 .No a ; b
 .No a : b
-.No a ? b
+.No a "?" b
 .No a ! b
 .No a ) b
 .No a ] b
@@ -78,6 +78,6 @@ Multiple punctuation:
 .No [ ( arg ) ] .
 .Pp
 Quoted:
-.No "a . b Nm"
+.No "a . b Nm" "Sy" bold
 .No ". b Nm"
 .No "."

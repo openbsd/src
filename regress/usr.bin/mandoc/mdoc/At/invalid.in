@@ -12,6 +12,6 @@ valid argument:
 .At v7
 .Pp
 invalid argument:
-.At murks
+.At murks "Sy" bold
 .Pp
 end of file

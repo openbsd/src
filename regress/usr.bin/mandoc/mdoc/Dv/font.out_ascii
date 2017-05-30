@@ -6,6 +6,6 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      The BUFSIZ macro.
 
-     And with some _e_m_b_e_d_d_e_d string.
+     And with some _e_m_b_e_d_d_e_d string; bboolldd.
 
 OpenBSD                        October 21, 2011                        OpenBSD

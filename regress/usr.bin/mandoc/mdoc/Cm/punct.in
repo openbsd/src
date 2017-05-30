@@ -1,0 +1,42 @@
+.Dd August 21, 2014
+.Dt Cm-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cm-punct
+.Nd punctuation handling by the Cm macro
+.Sh DESCRIPTION
+closing punctuation
+.Cm a )
+only one
+.Cm )
+only more than one
+.Cm ) )
+middle
+.Cm a ) z
+start
+.Cm ) z
+dot
+.Cm . z
+comma
+.Cm , z
+semicolon
+.Cm ; z
+colon
+.Cm : z
+quest
+.Cm ? z
+excl
+.Cm ! z
+paren
+.Cm ) z
+bracket
+.Cm ] z
+bar
+.Cm | m
+op paren
+.Cm ( a
+op bracket
+.Cm [ a
+.Pp
+quoted punctuation:
+.Cm a "(" b "|" c ")" d "." "Em" italic .

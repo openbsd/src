@@ -8,7 +8,7 @@
 An empty
 .Sq
 and a full
-.Sq user@host
+.Sq "(" user@host
 quotation.
 And another
-.So full Sc one .
+.So "(" full Sc one "Sy" bold .

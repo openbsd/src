@@ -79,8 +79,8 @@ Multiple punctuation:
 \[(`arg`)].
 
 Quoted:
-`a . b Nm`
+`a . b Nm` **bold**
 `. b Nm`
-`.`
+.
 
 OpenBSD - November 17, 2014

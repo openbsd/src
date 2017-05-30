@@ -6,7 +6,7 @@
 .Nd internal cross reference without a target
 .Sh DESCRIPTION
 with target:
-.Sx DESCRIPTION
+.Sx DESCRIPTION ";" "Em" italic
 no target:
 .Sx
 end of test document

@@ -20,7 +20,7 @@ no content
 no closing
 &lt;&lt;text
 all
-&lt;&lt;text&gt;&gt;
+&lt;&lt;text&gt;&gt; **bold**
 completely empty
 prefixclosing only
 prefix&gt;&gt;

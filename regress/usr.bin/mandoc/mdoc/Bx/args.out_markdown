@@ -10,7 +10,7 @@ no arguments:
 BSD
 
 one standard argument:
-4\.4BSD
+4\.4BSD.
 
 one non-standard argument:
 nettBSD
@@ -22,7 +22,7 @@ two standard arguments:
 4\.3BSD-Reno
 
 more arguments:
-4\.3BSD-Tahoe and some additional words
+4\.3BSD-Tahoe and *some additional words*
 
 end of test document
 

@@ -9,9 +9,9 @@ SQ-EMPTY(1) - General Commands Manual
 An empty
 ''
 and a full
-'user@host'
+('user@host'
 quotation.
 And another
-'full' one.
+('full' one **bold**.
 
 OpenBSD - October 21, 2010

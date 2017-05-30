@@ -6,7 +6,7 @@
 .Nd error constant macro without an argument
 .Sh DESCRIPTION
 with error:
-.Er ENOENT
+.Er ENOENT ";" "Sy" bold ;
 no error:
 .Er
 end of test document

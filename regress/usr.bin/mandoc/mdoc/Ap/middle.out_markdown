@@ -8,4 +8,7 @@ AP-MIDDLE(1) - General Commands Manual
 
 mandoc(1)'s
 
-OpenBSD - September 30, 2011
+punctuation and called macros:
+**bold**'(**bold**
+
+OpenBSD - May 21, 2017

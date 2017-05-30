@@ -7,7 +7,7 @@ ER-NOARG(1) - General Commands Manual
 # DESCRIPTION
 
 with error:
-`ENOENT`
+`ENOENT`; **bold**;
 no error:
 end of test document
 

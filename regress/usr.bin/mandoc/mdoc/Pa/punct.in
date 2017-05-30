@@ -37,3 +37,6 @@ op paren
 .Pa ( a
 op bracket
 .Pa [ a
+.Pp
+quoted punctuation:
+.Pa a "(" b "|" c ")" d "," "Sy" bold .

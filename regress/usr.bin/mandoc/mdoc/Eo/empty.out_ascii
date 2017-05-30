@@ -5,9 +5,9 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      completely empty  closing only >> content only text opening only << no
-     opening text>> no content <<>> no closing <<text all <<text>> completely
-     empty prefix closing only prefix>> no opening prefixtext>> no closing
-     <<prefix stray closing
+     opening text>> no content <<>> no closing <<text all <<text>> bboolldd
+     completely empty prefix closing only prefix>> no opening prefixtext>> no
+     closing <<prefix stray closing
      >> end of file
 
 OpenBSD                        February 1, 2015                        OpenBSD

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_argv.c,v 1.70 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_argv.c,v 1.71 2017/05/30 16:21:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -553,14 +553,14 @@ args(struct roff_man *mdoc, int line, int *pos,
 			if ( ! (mdoc->flags & MDOC_PHRASE))
 				mandoc_msg(MANDOCERR_ARG_QUOTE,
 				    mdoc->parse, line, *pos, NULL);
-			return ARGS_QWORD;
+			return ARGS_WORD;
 		}
 
 		mdoc->flags &= ~MDOC_PHRASELIT;
 		buf[(*pos)++] = '\0';
 
 		if ('\0' == buf[*pos])
-			return ARGS_QWORD;
+			return ARGS_WORD;
 
 		while (' ' == buf[*pos])
 			(*pos)++;
@@ -569,7 +569,7 @@ args(struct roff_man *mdoc, int line, int *pos,
 			mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
 			    line, *pos, NULL);
 
-		return ARGS_QWORD;
+		return ARGS_WORD;
 	}
 
 	p = &buf[*pos];

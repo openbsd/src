@@ -1,4 +1,4 @@
-.Dd September 30, 2011
+.Dd May 21, 2017
 .Dt AP-MIDDLE 1
 .Os OpenBSD
 .Sh NAME
@@ -6,3 +6,6 @@
 .Nd apostrophe in the middle of a macro line
 .Sh DESCRIPTION
 .Xr mandoc 1 Ap s
+.Pp
+punctuation and called macros:
+.Sy bold Ap ( "Sy" bold

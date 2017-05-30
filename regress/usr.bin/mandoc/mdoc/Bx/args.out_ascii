@@ -6,7 +6,7 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      no arguments: BSD
 
-     one standard argument: 4.4BSD
+     one standard argument: 4.4BSD.
 
      one non-standard argument: nettBSD
 
@@ -14,7 +14,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      two standard arguments: 4.3BSD-Reno
 
-     more arguments: 4.3BSD-Tahoe and some additional words
+     more arguments: 4.3BSD-Tahoe and _s_o_m_e _a_d_d_i_t_i_o_n_a_l _w_o_r_d_s
 
      end of test document
 

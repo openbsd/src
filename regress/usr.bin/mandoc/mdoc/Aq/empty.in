@@ -11,4 +11,4 @@ and a full
 .Aq user@host
 return path.
 And another
-.Ao full Ac one .
+.Ao full Ac one "Sy" bold .

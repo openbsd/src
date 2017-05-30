@@ -1,0 +1,42 @@
+.Dd August 21, 2014
+.Dt CD-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Cd-punct
+.Nd punctuation handling by the Cd macro
+.Sh DESCRIPTION
+closing punctuation
+.Cd a )
+only one
+.Cd )
+only more than one
+.Cd ) )
+middle
+.Cd a ) z
+start
+.Cd ) z
+dot
+.Cd . z
+comma
+.Cd , z
+semicolon
+.Cd ; z
+colon
+.Cd : z
+quest
+.Cd ? z
+excl
+.Cd ! z
+paren
+.Cd ) z
+bracket
+.Cd ] z
+bar
+.Cd | m
+op paren
+.Cd ( a
+op bracket
+.Cd [ a
+.Pp
+quoted punctuation:
+.Cd a "(" b "|" c ")" d "." "Em" italic .

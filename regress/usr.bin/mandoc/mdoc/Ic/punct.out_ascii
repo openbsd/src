@@ -1,0 +1,13 @@
+Ic-PUNCT(1)                 General Commands Manual                Ic-PUNCT(1)
+
+NNAAMMEE
+     IIcc--ppuunncctt - punctuation handling by the Ic macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation aa) only one ) only more than one )) middle aa) zz start
+     ) zz dot . zz comma , zz semicolon ; zz colon : zz quest ? zz excl ! zz paren )
+     zz bracket ] zz bar | mm op paren (aa op bracket [aa
+
+     quoted punctuation: aa (bb | cc) dd, _i_t_a_l_i_c.
+
+OpenBSD                         August 21, 2014                        OpenBSD

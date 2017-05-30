@@ -6,7 +6,7 @@
 .Nd trade name macro without argument
 .Sh DESCRIPTION
 with argument
-.Tn IBM
+.Tn IBM "," "Em" italic
 no argument
 .Tn
 end of test document

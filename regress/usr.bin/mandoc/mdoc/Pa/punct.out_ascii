@@ -8,4 +8,6 @@ DDEESSCCRRIIPPTTIIOONN
      start _~) _z dot _~. _z comma _~, _z semicolon _~; _z colon _~: _z quest _~? _z excl
      _~! _z paren _~) _z bracket _~] _z bar | _m op paren (_a op bracket [_a
 
+     quoted punctuation: _a (_b | _c) _d, bboolldd.
+
 OpenBSD                         August 21, 2014                        OpenBSD

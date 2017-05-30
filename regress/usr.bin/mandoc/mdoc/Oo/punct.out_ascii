@@ -4,7 +4,7 @@ NNAAMMEE
      OOoo--ppuunncctt - punctuation handling by the Oo macro
 
 DDEESSCCRRIIPPTTIIOONN
-     at the beginning: ([z [| z [. z]]]
+     at the beginning: ([z [| z [. z]] bboolldd]
 
      in the middle: [a (z [a | z [a. z]]]
 

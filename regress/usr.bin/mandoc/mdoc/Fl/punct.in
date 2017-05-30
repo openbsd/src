@@ -37,3 +37,6 @@ op paren
 .Fl ( a
 op bracket
 .Fl [ a
+.Pp
+quoted punctuation:
+.Fl a "(" b "|" c ")" d "," "Em" italic .

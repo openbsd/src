@@ -1,0 +1,42 @@
+.Dd August 21, 2014
+.Dt AR-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Va-punct
+.Nd punctuation handling by the Va macro
+.Sh DESCRIPTION
+closing punctuation
+.Va a )
+only one
+.Va )
+only more than one
+.Va ) )
+middle
+.Va a ) z
+start
+.Va ) z
+dot
+.Va . z
+comma
+.Va , z
+semicolon
+.Va ; z
+colon
+.Va : z
+quest
+.Va ? z
+excl
+.Va ! z
+paren
+.Va ) z
+bracket
+.Va ] z
+bar
+.Va | m
+op paren
+.Va ( a
+op bracket
+.Va [ a
+.Pp
+quoted punctuation:
+.Va a "(" b "|" c ")" d "," "Sy" bold .

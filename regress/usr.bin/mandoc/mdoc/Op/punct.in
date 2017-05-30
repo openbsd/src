@@ -6,12 +6,12 @@
 .Nd punctuation handling by the Op macro
 .Sh DESCRIPTION
 at the beginning:
-.Op ( z
+.Op "(" z
 .Op | z
 .Op . z
 .Pp
 in the middle:
-.Op a ( z
+.Op a "(" z
 .Op a | z
 .Op a . z
 .Pp

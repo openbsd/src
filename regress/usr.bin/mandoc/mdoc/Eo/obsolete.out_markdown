@@ -12,7 +12,7 @@ surplus
 initial text
 &lt;&lt;enclosed words with **-flags**&gt;&gt;
 middle text
-&lt;&lt;more enclosed words&gt;&gt;
+(&lt;&lt;more enclosed words&gt;&gt;
 final text
 
 initial text

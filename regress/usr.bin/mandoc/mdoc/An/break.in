@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 inline is the default:
 .An Kristaps ,
-.An Ingo ,
+.An Ingo ","
 and
 .An Joerg .
 empty
@@ -39,7 +39,7 @@ trailing
 .An -nosplit -split bogus
 .Pp
 inline:
-.An Kristaps ,
+.An Kristaps ","
 .An Ingo ,
 and
 .An Joerg .

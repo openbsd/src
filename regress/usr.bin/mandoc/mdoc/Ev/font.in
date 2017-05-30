@@ -10,4 +10,4 @@ The
 variable.
 .Pp
 And with
-.Ev some \\fIembedded\\fP string .
+.Ev some \\fIembedded\\fP string ";" "Sy" bold.

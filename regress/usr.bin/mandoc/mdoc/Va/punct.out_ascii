@@ -1,0 +1,13 @@
+AR-PUNCT(1)                 General Commands Manual                AR-PUNCT(1)
+
+NNAAMMEE
+     VVaa--ppuunncctt - punctuation handling by the Va macro
+
+DDEESSCCRRIIPPTTIIOONN
+     closing punctuation _a) only one ) only more than one )) middle _a) _z start
+     ) _z dot . _z comma , _z semicolon ; _z colon : _z quest ? _z excl ! _z paren )
+     _z bracket ] _z bar | _m op paren (_a op bracket [_a
+
+     quoted punctuation: _a (_b | _c) _d, bboolldd.
+
+OpenBSD                         August 21, 2014                        OpenBSD

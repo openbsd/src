@@ -22,3 +22,4 @@ mandoc: punct.in:70:7: WARNING: skipping empty macro: Li
 mandoc: punct.in:71:7: WARNING: skipping empty macro: Li
 mandoc: punct.in:74:7: WARNING: skipping empty macro: Li
 mandoc: punct.in:75:7: WARNING: skipping empty macro: Li
+mandoc: punct.in:83:2: WARNING: skipping empty macro: Li

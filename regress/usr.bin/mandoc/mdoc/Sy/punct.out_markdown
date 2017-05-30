@@ -79,7 +79,8 @@ Multiple punctuation:
 \[(**arg**)].
 
 Quoted:
-**a . b Nm**
+**a . b Nm** *italic*
 **. b Nm**
+.
 
 OpenBSD - November 17, 2014

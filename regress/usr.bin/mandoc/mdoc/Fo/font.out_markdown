@@ -12,7 +12,7 @@ trailing text
 **prefix*name*suffix**(*type arg*)
 trailing text
 
-**function**(*prefix**bold**suffix*)
+**function**(*prefix**bold**suffix*) **bold**
 trailing text
 
 OpenBSD - July 9, 2012

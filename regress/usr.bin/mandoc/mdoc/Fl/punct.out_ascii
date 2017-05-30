@@ -9,4 +9,6 @@ DDEESSCCRRIIPPTTIIOONN
      excl --! --zz paren --) --zz bracket --] --zz bar -- | --mm op paren (--aa op bracket
      [--aa
 
+     quoted punctuation: --aa (--bb | --cc) --dd, _i_t_a_l_i_c.
+
 OpenBSD                         August 21, 2014                        OpenBSD

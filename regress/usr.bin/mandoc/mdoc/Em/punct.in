@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 Leading punctuation:
 .Em ( b
-.Em [ b
+.Em "[" b
 .Em | b
 .Em . b
 .Em , b
@@ -16,7 +16,7 @@ Leading punctuation:
 .Em ? b
 .Em ! b
 .Em ) b
-.Em ] b
+.Em "]" b
 .Pp
 Trailing punctuation:
 .Em a (
@@ -28,17 +28,17 @@ Trailing punctuation:
 .Em a :
 .Em a ?
 .Em a !
-.Em a )
+.Em a ")"
 .Em a ]
 .Pp
 Middle punctuation:
 .Em a ( b
 .Em a [ b
-.Em a | b
+.Em a "|" b
 .Em a . b
 .Em a , b
 .Em a ; b
-.Em a : b
+.Em a ":" b
 .Em a ? b
 .Em a ! b
 .Em a ) b
@@ -78,5 +78,6 @@ Multiple punctuation:
 .Em [ ( arg ) ] .
 .Pp
 Quoted:
-.Em "a . b Nm"
+.Em "a . b Nm" "Sy" bold
 .Em ". b Nm"
+.Em "."

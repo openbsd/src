@@ -1,0 +1,42 @@
+.Dd August 21, 2014
+.Dt Ic-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ic-punct
+.Nd punctuation handling by the Ic macro
+.Sh DESCRIPTION
+closing punctuation
+.Ic a )
+only one
+.Ic )
+only more than one
+.Ic ) )
+middle
+.Ic a ) z
+start
+.Ic ) z
+dot
+.Ic . z
+comma
+.Ic , z
+semicolon
+.Ic ; z
+colon
+.Ic : z
+quest
+.Ic ? z
+excl
+.Ic ! z
+paren
+.Ic ) z
+bracket
+.Ic ] z
+bar
+.Ic | m
+op paren
+.Ic ( a
+op bracket
+.Ic [ a
+.Pp
+quoted punctuation:
+.Ic a "(" b "|" c ")" d "," "Em" italic .

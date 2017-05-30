@@ -32,7 +32,7 @@ text
 all
 .Eo <<
 text
-.Ec >>
+.Ec >> "Sy" bold
 completely empty
 .No prefix Ns Eo
 .Ec

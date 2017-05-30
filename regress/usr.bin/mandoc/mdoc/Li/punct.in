@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 Leading punctuation:
 .Li ( b
-.Li [ b
+.Li "[" b
 .Li | b
 .Li . b
 .Li , b
@@ -23,7 +23,7 @@ Trailing punctuation:
 .Li a [
 .Li a |
 .Li a .
-.Li a ,
+.Li a ","
 .Li a ;
 .Li a :
 .Li a ?
@@ -37,11 +37,11 @@ Middle punctuation:
 .Li a | b
 .Li a . b
 .Li a , b
-.Li a ; b
+.Li a ";" b
 .Li a : b
 .Li a ? b
 .Li a ! b
-.Li a ) b
+.Li a ")" b
 .Li a ] b
 .Pp
 Isolated punctuation:
@@ -78,6 +78,6 @@ Multiple punctuation:
 .Li [ ( arg ) ] .
 .Pp
 Quoted:
-.Li "a . b Nm"
+.Li "a . b Nm" "Sy" bold
 .Li ". b Nm"
 .Li "."

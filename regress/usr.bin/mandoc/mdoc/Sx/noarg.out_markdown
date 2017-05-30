@@ -7,7 +7,7 @@ SX-NOARG(1) - General Commands Manual
 # DESCRIPTION
 
 with target:
-*DESCRIPTION*
+*DESCRIPTION*; *italic*
 no target:
 end of test document
 

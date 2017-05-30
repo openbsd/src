@@ -8,13 +8,13 @@
 One single
 .Xr echo 1
 is fine, and so is an
-.Xr echo 1 followed by something else.
+.Xr echo 1 followed by something "Em" else .
 .Pp
 But listen for multiple
 .Xr echo 1 Ns s .
 .Pp
 A call, an
-.Xr echo 1 , and
+.Xr "(" echo 1 ")" , and
 another
 .Xr echo 1 .
 .Pp

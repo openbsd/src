@@ -37,3 +37,6 @@ op paren
 .Ar ( a
 op bracket
 .Ar [ a
+.Pp
+quoted punctuation:
+.Ar a "(" b "|" c ")" d "," "Sy" bold .

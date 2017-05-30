@@ -7,7 +7,7 @@ IN-FONT(2) - System Calls Manual
 # DESCRIPTION
 
 normal text
-&lt;*prefix**header**suffix*>
+&lt;*prefix**header**suffix*> | after: punctuation **bold**
 trailing text
 
 OpenBSD - July 9, 2012

@@ -5,11 +5,11 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      One single echo(1) is fine, and so is an echo(1) followed by something
-     else.
+     _e_l_s_e.
 
      But listen for multiple echo(1)s.
 
-     A call, an echo(1), and another echo(1).
+     A call, an (echo(1)), and another echo(1).
 
      Finally, half an echo, no echo and no echo at all.
 

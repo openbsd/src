@@ -6,5 +6,5 @@
 .Nd changing the font inside the include macro
 .Sh DESCRIPTION
 normal text
-.In prefix\\fBheader\\fPsuffix
+.In prefix\\fBheader\\fPsuffix | after ":" punctuation "Sy" bold
 trailing text

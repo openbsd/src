@@ -15,5 +15,5 @@ trailing text
 .Pp
 .Fo function
 .Fa prefix\\fBbold\\fPsuffix
-.Fc
+.Fc "Sy" bold
 trailing text

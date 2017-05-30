@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 Leading punctuation:
 .Sy ( b
-.Sy [ b
+.Sy "[" b
 .Sy | b
 .Sy . b
 .Sy , b
@@ -28,13 +28,13 @@ Trailing punctuation:
 .Sy a :
 .Sy a ?
 .Sy a !
-.Sy a )
+.Sy a ")"
 .Sy a ]
 .Pp
 Middle punctuation:
 .Sy a ( b
 .Sy a [ b
-.Sy a | b
+.Sy a "|" b
 .Sy a . b
 .Sy a , b
 .Sy a ; b
@@ -78,5 +78,6 @@ Multiple punctuation:
 .Sy [ ( arg ) ] .
 .Pp
 Quoted:
-.Sy "a . b Nm"
+.Sy "a . b Nm" "Em" italic
 .Sy ". b Nm"
+.Sy "."
