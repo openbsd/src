@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.11 2011/04/11 19:11:01 matthew Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.12 2017/05/30 08:24:56 fcambus Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -143,17 +143,6 @@ done:
 	return 0;
 #endif	/* PCDISPLAY_SOFTCURSOR */
 }
-
-#if 0
-unsigned int
-pcdisplay_mapchar_simple(void *id, int uni)
-{
-	if (uni < 128)
-		return (uni);
-
-	return (1); /* XXX ??? smiley */
-}
-#endif
 
 int
 pcdisplay_putchar(void *id, int row, int col, u_int c, long attr)

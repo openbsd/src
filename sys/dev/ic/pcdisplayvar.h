@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.11 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.12 2017/05/30 08:24:56 fcambus Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -76,9 +76,6 @@ _pcdisplay_6845_write(struct pcdisplay_handle *ph, int reg, u_int8_t val)
 void	pcdisplay_cursor_init(struct pcdisplayscreen *, int);
 void	pcdisplay_cursor_reset(struct pcdisplayscreen *);
 int	pcdisplay_cursor(void *, int, int, int);
-#if 0
-unsigned int pcdisplay_mapchar_simple(void *, int);
-#endif
 int	pcdisplay_mapchar(void *, int, unsigned int *);
 int	pcdisplay_putchar(void *, int, int, u_int, long);
 struct wsdisplay_charcell;
