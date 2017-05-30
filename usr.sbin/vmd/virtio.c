@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.47 2017/05/27 23:58:16 tedu Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.48 2017/05/30 13:13:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1668,7 +1668,7 @@ virtio_init(struct vmd_vm *vm, int *child_disks, int *child_taps)
 			}
 			vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
 			vioblk[i].vq[0].vq_availoffset =
-			    sizeof(struct vring_desc) * VIORND_QUEUE_SIZE;
+			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE;
 			vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));

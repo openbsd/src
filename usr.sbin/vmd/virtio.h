@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.17 2017/05/08 09:08:40 reyk Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.18 2017/05/30 13:13:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -25,10 +25,10 @@
 #define VIORND_QUEUE_SIZE	64
 #define VIORND_QUEUE_MASK	(VIORND_QUEUE_SIZE - 1)
 
-#define VIOBLK_QUEUE_SIZE	64
+#define VIOBLK_QUEUE_SIZE	128
 #define VIOBLK_QUEUE_MASK	(VIOBLK_QUEUE_SIZE - 1)
 
-#define VIONET_QUEUE_SIZE	64
+#define VIONET_QUEUE_SIZE	128
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
 
 /* VMM Control Interface shutdown timeout (in seconds) */
