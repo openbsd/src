@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.77 2017/02/02 16:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.78 2017/05/30 11:00:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -402,6 +402,8 @@ u_int	ieee80211_mhz2ieee(u_int, u_int);
 u_int	ieee80211_chan2ieee(struct ieee80211com *,
 		const struct ieee80211_channel *);
 u_int	ieee80211_ieee2mhz(u_int, u_int);
+int	ieee80211_min_basic_rate(struct ieee80211com *);
+int	ieee80211_max_basic_rate(struct ieee80211com *);
 int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_next_mode(struct ifnet *);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,

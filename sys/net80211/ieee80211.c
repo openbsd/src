@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.58 2016/01/13 14:33:07 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.59 2017/05/30 11:00:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -710,6 +710,43 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 			}
 		}
 	}
+}
+
+int
+ieee80211_min_basic_rate(struct ieee80211com *ic)
+{
+	struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
+	int i;
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		if (rs->rs_rates[i] & IEEE80211_RATE_BASIC)
+			return i;
+	}
+
+	return 0;
+}
+
+int
+ieee80211_max_basic_rate(struct ieee80211com *ic)
+{
+	struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
+	int i, best, rval, best_rval;
+
+	/* Defaults to 1 Mbit/s on 2GHz and 6 Mbit/s on 5GHz. */
+	best = 0;
+	best_rval = (rs->rs_rates[best] & IEEE80211_RATE_VAL);
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0)
+			continue;
+		rval = (rs->rs_rates[i] & IEEE80211_RATE_VAL);
+		if (rval > best_rval) {
+			best_rval = rval;
+			best = i;
+		}
+	}
+
+	return best;
 }
 
 /*
