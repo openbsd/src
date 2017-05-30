@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.186 2017/04/26 07:53:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.187 2017/05/30 11:01:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2896,8 +2896,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* Choose a TX rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA)
-		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
-		    IWN_RIDX_OFDM6 : IWN_RIDX_CCK1;
+		ridx = wn->ridx[ieee80211_max_basic_rate(ic)];
 	else if (ic->ic_fixed_mcs != -1)
 		ridx = sc->fixed_ridx;
 	else if (ic->ic_fixed_rate != -1)
@@ -3430,6 +3429,7 @@ iwn5000_add_node(struct iwn_softc *sc, struct iwn_node_info *node, int async)
 int
 iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwn_node *wn = (void *)ni;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwn_cmd_link_quality linkq;
@@ -3466,11 +3466,8 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 				break;
 		}
 
-		/* Fill the rest with the lowest legacy rate. */
-		if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
-			rinfo = &iwn_rates[IWN_RIDX_OFDM6];
-		else
-			rinfo = &iwn_rates[IWN_RIDX_CCK1];
+		/* Fill the rest with the lowest basic rate. */
+		rinfo = &iwn_rates[wn->ridx[ieee80211_min_basic_rate(ic)]];
 		while (i < IWN_MAX_TX_RETRIES) {
 			linkq.retry[i].plcp = rinfo->plcp;
 			linkq.retry[i].rflags = rinfo->flags;
