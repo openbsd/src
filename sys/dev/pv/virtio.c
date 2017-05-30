@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.6 2017/05/30 08:35:32 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.7 2017/05/30 11:02:39 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -257,7 +257,11 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
 
 	/* free slot management */
 	SLIST_INIT(&vq->vq_freelist);
-	for (i = 0; i < vq_size; i++) {
+	/*
+	 * virtio_enqueue_trim needs monotonely raising entries, therefore
+	 * initialize in reverse order
+	 */
+	for (i = vq_size - 1; i >= 0; i--) {
 		SLIST_INSERT_HEAD(&vq->vq_freelist, &vq->vq_entries[i],
 		    qe_list);
 		vq->vq_entries[i].qe_index = i;
