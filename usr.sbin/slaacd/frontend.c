@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.14 2017/05/30 18:18:08 deraadt Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.15 2017/05/30 19:27:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -74,8 +74,10 @@ struct imsgev			*iev_main;
 struct imsgev			*iev_engine;
 struct event			 ev_route;
 struct msghdr			 sndmhdr;
-struct iovec			 sndiov[2];
+struct iovec			 sndiov[4];
 struct nd_router_solicit	 rs;
+struct nd_opt_hdr		 nd_opt_hdr;
+struct ether_addr		 nd_opt_source_link_addr;
 struct sockaddr_in6		 dst;
 int		 icmp6sock, routesock, xflagssock;
 
@@ -228,6 +230,9 @@ frontend(int debug, int verbose, char *sockname)
 	rs.nd_rs_cksum = 0;
 	rs.nd_rs_reserved = 0;
 
+	nd_opt_hdr.nd_opt_type = ND_OPT_SOURCE_LINKADDR;
+	nd_opt_hdr.nd_opt_len = 1;
+
 	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
 	if (inet_pton(AF_INET6, ALLROUTER, &dst.sin6_addr.s6_addr) != 1)
@@ -235,13 +240,17 @@ frontend(int debug, int verbose, char *sockname)
 
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
-	sndmhdr.msg_iovlen = 1;
+	sndmhdr.msg_iovlen = 3;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
 	sndmhdr.msg_controllen = sndcmsglen;
 
 	sndmhdr.msg_name = (caddr_t)&dst;
 	sndmhdr.msg_iov[0].iov_base = (caddr_t)&rs;
 	sndmhdr.msg_iov[0].iov_len = sizeof(rs);
+	sndmhdr.msg_iov[1].iov_base = (caddr_t)&nd_opt_hdr;
+	sndmhdr.msg_iov[1].iov_len = sizeof(nd_opt_hdr);
+	sndmhdr.msg_iov[2].iov_base = (caddr_t)&nd_opt_source_link_addr;
+	sndmhdr.msg_iov[2].iov_len = sizeof(nd_opt_source_link_addr);
 
 	cm = CMSG_FIRSTHDR(&sndmhdr);
 
@@ -500,6 +509,9 @@ update_iface(uint32_t if_index, char* if_name)
 	    IFF_RUNNING);
 	imsg_ifinfo.autoconfprivacy = !(xflags & IFXF_INET6_NOPRIVACY);
 	get_lladdr(if_name, &imsg_ifinfo.hw_address, &imsg_ifinfo.ll_address);
+
+	memcpy(&nd_opt_source_link_addr, &imsg_ifinfo.hw_address,
+	    sizeof(nd_opt_source_link_addr));
 
 	frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0, 0, &imsg_ifinfo,
 	    sizeof(imsg_ifinfo));
@@ -820,6 +832,7 @@ send_solicitation(uint32_t if_index)
 	pi = (struct in6_pktinfo *)CMSG_DATA(cm);
 	pi->ipi6_ifindex = if_index;
 
-	if (sendmsg(icmp6sock, &sndmhdr, 0) != sizeof(rs))
+	if (sendmsg(icmp6sock, &sndmhdr, 0) != sizeof(rs) +
+	    sizeof(nd_opt_hdr) + sizeof(nd_opt_source_link_addr))
 		log_warn("sendmsg");
 }
