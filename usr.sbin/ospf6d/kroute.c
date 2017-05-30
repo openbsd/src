@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.50 2016/12/27 17:18:56 jca Exp $ */
+/*	$OpenBSD: kroute.c,v 1.51 2017/05/30 12:42:31 friehm Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -59,6 +59,8 @@ void	kr_redist_remove(struct kroute_node *, struct kroute_node *);
 int	kr_redist_eval(struct kroute *, struct kroute *);
 void	kr_redistribute(struct kroute_node *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
+int	kr_change_fib(struct kroute_node *, struct kroute *, int, int);
+int	kr_delete_fib(struct kroute_node *);
 
 struct kroute_node	*kroute_find(const struct in6_addr *, u_int8_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *,
@@ -141,18 +143,105 @@ kr_init(int fs)
 }
 
 int
-kr_change(struct kroute *kroute)
+kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
+    int action)
+{
+	int			 i;
+	struct kroute_node	*kn, *nkn;
+
+	if (action == RTM_ADD) {
+		/*
+		 * First remove all stale multipath routes.
+		 * This step must be skipped when the action is RTM_CHANGE
+		 * because it is already a single path route that will be
+		 * changed.
+		 */
+		for (kn = kr; kn != NULL; kn = nkn) {
+			for (i = 0; i < krcount; i++) {
+				if (kn->r.scope == kroute[i].scope &&
+				    IN6_ARE_ADDR_EQUAL(&kn->r.nexthop,
+				    &kroute[i].nexthop))
+					break;
+			}
+			nkn = kn->next;
+			if (i == krcount) {
+				/* stale route */
+				if (kr_delete_fib(kn) == -1)
+					log_warnx("kr_delete_fib failed");
+				/*
+				 * if head element was removed we need to adjust
+				 * the head
+				 */
+				if (kr == kn)
+					kr = nkn;
+			}
+		}
+	}
+
+	/*
+	 * now add or change the route
+	 */
+	for (i = 0; i < krcount; i++) {
+		/* nexthop ::1 -> ignore silently */
+		if (IN6_IS_ADDR_LOOPBACK(&kroute[i].nexthop))
+			continue;
+
+		if (action == RTM_ADD && kr) {
+			for (kn = kr; kn != NULL; kn = kn->next) {
+				if (kn->r.scope == kroute[i].scope &&
+				    IN6_ARE_ADDR_EQUAL(&kn->r.nexthop,
+				    &kroute[i].nexthop))
+					break;
+			}
+
+			if (kn != NULL)
+				/* nexthop already present, skip it */
+				continue;
+		} else
+			/* modify first entry */
+			kn = kr;
+
+		/* send update */
+		if (send_rtmsg(kr_state.fd, action, &kroute[i]) == -1)
+			return (-1);
+
+		/* create new entry unless we are changing the first entry */
+		if (action == RTM_ADD)
+			if ((kn = calloc(1, sizeof(*kn))) == NULL)
+				fatal(NULL);
+
+		kn->r.prefix = kroute[i].prefix;
+		kn->r.prefixlen = kroute[i].prefixlen;
+		kn->r.nexthop = kroute[i].nexthop;
+		kn->r.scope = kroute[i].scope;
+		kn->r.flags = kroute[i].flags | F_OSPFD_INSERTED;
+		kn->r.ext_tag = kroute[i].ext_tag;
+		rtlabel_unref(kn->r.rtlabel);	/* for RTM_CHANGE */
+		kn->r.rtlabel = kroute[i].rtlabel;
+
+		if (action == RTM_ADD)
+			if (kroute_insert(kn) == -1) {
+				log_debug("kr_update_fib: cannot insert %s",
+				    log_in6addr(&kn->r.nexthop));
+				free(kn);
+			}
+		action = RTM_ADD;
+	}
+	return  (0);
+}
+
+int
+kr_change(struct kroute *kroute, int krcount)
 {
 	struct kroute_node	*kr;
 	int			 action = RTM_ADD;
 
 	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
-	if ((kr = kroute_find(&kroute->prefix, kroute->prefixlen)) !=
-	    NULL) {
-		if (!(kr->r.flags & F_KERNEL))
-			action = RTM_CHANGE;
-		else {	/* a non-ospf route already exists. not a problem */
+	kr = kroute_find(&kroute->prefix, kroute->prefixlen);
+	if (kr != NULL) {
+		if (kr->r.flags & F_KERNEL) {
+			/* a non-ospf route already exists. not a problem */
 			if (!(kr->r.flags & F_BGPD_INSERTED)) {
 				do {
 					kr->r.flags |= F_OSPFD_INSERTED;
@@ -171,48 +260,30 @@ kr_change(struct kroute *kroute)
 			 * - zero out ifindex (this is no longer relevant)
 			 */
 			action = RTM_CHANGE;
-			kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
-			kr->r.ifindex = 0;
-			rtlabel_unref(kr->r.rtlabel);
-			kr->r.ext_tag = kroute->ext_tag;
-			kr->r.rtlabel = kroute->rtlabel;
-		}
+		} else if (kr->next == NULL)	/* single path OSPF route */
+			action = RTM_CHANGE;
 	}
 
-	/* nexthop within 127/8 -> ignore silently */
-	if (kr && IN6_IS_ADDR_LOOPBACK(&kr->r.nexthop))
-		return (0);
+	return (kr_change_fib(kr, kroute, krcount, action));
+}
 
-	/*
-	 * Ingnore updates that did not change the route.
-	 * Currently only the nexthop can change.
-	 */
-	if (kr && kr->r.scope == kroute->scope &&
-	    IN6_ARE_ADDR_EQUAL(&kr->r.nexthop, &kroute->nexthop))
-		return (0);
+int
+kr_delete_fib(struct kroute_node *kr)
+{
+	if (!(kr->r.flags & F_OSPFD_INSERTED))
+		return 0;
 
-	if (send_rtmsg(kr_state.fd, action, kroute) == -1)
+	if (kr->r.flags & F_KERNEL) {
+		/* remove F_OSPFD_INSERTED flag, route still exists in kernel */
+		kr->r.flags &= ~F_OSPFD_INSERTED;
+		return (0);
+	}
+
+	if (send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r) == -1)
 		return (-1);
 
-	if (action == RTM_ADD) {
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("kr_change");
-			return (-1);
-		}
-		kr->r.prefix = kroute->prefix;
-		kr->r.prefixlen = kroute->prefixlen;
-		kr->r.nexthop = kroute->nexthop;
-		kr->r.scope = kroute->scope;
-		kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
-		kr->r.ext_tag = kroute->ext_tag;
-		kr->r.rtlabel = kroute->rtlabel;
-
-		if (kroute_insert(kr) == -1)
-			free(kr);
-	} else if (kr) {
-		kr->r.nexthop = kroute->nexthop;
-		kr->r.scope = kroute->scope;
-	}
+	if (kroute_remove(kr) == -1)
+		return (-1);
 
 	return (0);
 }
@@ -220,29 +291,18 @@ kr_change(struct kroute *kroute)
 int
 kr_delete(struct kroute *kroute)
 {
-	struct kroute_node	*kr;
+	struct kroute_node	*kr, *nkr;
 
 	if ((kr = kroute_find(&kroute->prefix, kroute->prefixlen)) ==
 	    NULL)
 		return (0);
 
-	if (!(kr->r.flags & F_OSPFD_INSERTED))
-		return (0);
-
-	if (kr->r.flags & F_KERNEL) {
-		/* remove F_OSPFD_INSERTED flag, route still exists in kernel */
-		do {
-			kr->r.flags &= ~F_OSPFD_INSERTED;
-			kr = kr->next;
-		} while (kr);
-		return (0);
+	while (kr != NULL) {
+		nkr = kr->next;
+		if (kr_delete_fib(kr) == -1)
+			return (-1);
+		kr = nkr;
 	}
-
-	if (send_rtmsg(kr_state.fd, RTM_DELETE, kroute) == -1)
-		return (-1);
-
-	if (kroute_remove(kr) == -1)
-		return (-1);
 
 	return (0);
 }
@@ -258,6 +318,7 @@ void
 kr_fib_couple(void)
 {
 	struct kroute_node	*kr;
+	struct kroute_node	*kn;
 
 	if (kr_state.fib_sync == 1)	/* already coupled */
 		return;
@@ -266,7 +327,9 @@ kr_fib_couple(void)
 
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if (!(kr->r.flags & F_KERNEL))
-			send_rtmsg(kr_state.fd, RTM_ADD, &kr->r);
+			for (kn = kr; kn != NULL; kn = kn->next) {
+				send_rtmsg(kr_state.fd, RTM_ADD, &kn->r);
+			}
 
 	log_info("kernel routing table coupled");
 }
@@ -275,13 +338,17 @@ void
 kr_fib_decouple(void)
 {
 	struct kroute_node	*kr;
+	struct kroute_node	*kn;
 
 	if (kr_state.fib_sync == 0)	/* already decoupled */
 		return;
 
-	RB_FOREACH(kr, kroute_tree, &krt)
+	RB_FOREACH(kr, kroute_tree, &krt) {
 		if (!(kr->r.flags & F_KERNEL))
-			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
+			for (kn = kr; kn != NULL; kn = kn->next) {
+				send_rtmsg(kr_state.fd, RTM_DELETE, &kn->r);
+			}
+	}
 
 	kr_state.fib_sync = 0;
 
@@ -932,7 +999,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_flags = RTF_UP;
+	hdr.rtm_flags = RTF_UP|RTF_MPATH;
 	hdr.rtm_priority = RTP_OSPF;
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;

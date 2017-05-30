@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.69 2016/12/27 17:18:56 jca Exp $ */
+/*	$OpenBSD: rde.c,v 1.70 2017/05/30 12:42:31 friehm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -878,28 +878,37 @@ rde_router_id(void)
 void
 rde_send_change_kroute(struct rt_node *r)
 {
+	int			 krcount = 0;
 	struct kroute		 kr;
 	struct rt_nexthop	*rn;
+	struct ibuf		*wbuf;
+
+	if ((wbuf = imsg_create(&iev_main->ibuf, IMSG_KROUTE_CHANGE, 0, 0,
+	    sizeof(kr))) == NULL) {
+		return;
+	}
 
 	TAILQ_FOREACH(rn, &r->nexthop, entry) {
-		if (!rn->invalid)
-			break;
+		if (rn->invalid)
+			continue;
+		krcount++;
+
+		bzero(&kr, sizeof(kr));
+		kr.prefix = r->prefix;
+		kr.nexthop = rn->nexthop;
+		if (IN6_IS_ADDR_LINKLOCAL(&rn->nexthop) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&rn->nexthop))
+			kr.scope = rn->ifindex;
+		kr.ifindex = rn->ifindex;
+		kr.prefixlen = r->prefixlen;
+		kr.ext_tag = r->ext_tag;
+		imsg_add(wbuf, &kr, sizeof(kr));
 	}
-	if (!rn)
+	if (krcount == 0)
 		fatalx("rde_send_change_kroute: no valid nexthop found");
 
-	bzero(&kr, sizeof(kr));
-	kr.prefix = r->prefix;
-	kr.nexthop = rn->nexthop;
-	if (IN6_IS_ADDR_LINKLOCAL(&rn->nexthop) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&rn->nexthop))
-		kr.scope = rn->ifindex;
-	kr.ifindex = rn->ifindex;
-	kr.prefixlen = r->prefixlen;
-	kr.ext_tag = r->ext_tag;
-
-	imsg_compose_event(iev_main, IMSG_KROUTE_CHANGE, 0, 0, -1,
-	    &kr, sizeof(kr));
+	imsg_close(&iev_main->ibuf, wbuf);
+	imsg_event_add(iev_main);
 }
 
 void
