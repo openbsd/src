@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.187 2017/05/30 11:01:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.188 2017/05/30 16:21:55 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -179,6 +179,7 @@ void		iwn5000_update_sched(struct iwn_softc *, int, int, uint8_t,
 void		iwn5000_reset_sched(struct iwn_softc *, int, int);
 int		iwn_tx(struct iwn_softc *, struct mbuf *,
 		    struct ieee80211_node *);
+int		iwn_rval2ridx(int);
 void		iwn_start(struct ifnet *);
 void		iwn_watchdog(struct ifnet *);
 int		iwn_ioctl(struct ifnet *, u_long, caddr_t);
@@ -2854,6 +2855,19 @@ iwn5000_reset_sched(struct iwn_softc *sc, int qid, int idx)
 }
 
 int
+iwn_rval2ridx(int rval)
+{
+	int ridx;
+
+	for (ridx = 0; ridx < nitems(iwn_rates); ridx++) {
+		if (rval == iwn_rates[ridx].rate)
+			break;
+	}
+
+	return ridx;
+}
+
+int
 iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2896,7 +2910,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* Choose a TX rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA)
-		ridx = wn->ridx[ieee80211_max_basic_rate(ic)];
+		ridx = iwn_rval2ridx(ieee80211_min_basic_rate(ic));
 	else if (ic->ic_fixed_mcs != -1)
 		ridx = sc->fixed_ridx;
 	else if (ic->ic_fixed_rate != -1)
@@ -3467,7 +3481,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 		}
 
 		/* Fill the rest with the lowest basic rate. */
-		rinfo = &iwn_rates[wn->ridx[ieee80211_min_basic_rate(ic)]];
+		rinfo = &iwn_rates[iwn_rval2ridx(ieee80211_min_basic_rate(ic))];
 		while (i < IWN_MAX_TX_RETRIES) {
 			linkq.retry[i].plcp = rinfo->plcp;
 			linkq.retry[i].rflags = rinfo->flags;

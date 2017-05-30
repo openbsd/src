@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.59 2017/05/30 11:00:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.60 2017/05/30 16:21:55 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -716,37 +716,45 @@ int
 ieee80211_min_basic_rate(struct ieee80211com *ic)
 {
 	struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
-	int i;
+	int i, min, rval;
+
+	min = -1;
 
 	for (i = 0; i < rs->rs_nrates; i++) {
-		if (rs->rs_rates[i] & IEEE80211_RATE_BASIC)
-			return i;
+		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0)
+			continue;
+		rval = (rs->rs_rates[i] & IEEE80211_RATE_VAL);
+		if (min == -1)
+			min = rval;
+		else if (rval < min)
+			min = rval;
 	}
 
-	return 0;
+	/* Default to 1 Mbit/s on 2GHz and 6 Mbit/s on 5GHz. */
+	if (min == -1)
+		min = IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan) ? 2 : 12;
+
+	return min;
 }
 
 int
 ieee80211_max_basic_rate(struct ieee80211com *ic)
 {
 	struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
-	int i, best, rval, best_rval;
+	int i, max, rval;
 
-	/* Defaults to 1 Mbit/s on 2GHz and 6 Mbit/s on 5GHz. */
-	best = 0;
-	best_rval = (rs->rs_rates[best] & IEEE80211_RATE_VAL);
+	/* Default to 1 Mbit/s on 2GHz and 6 Mbit/s on 5GHz. */
+	max = IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan) ? 2 : 12;
 
 	for (i = 0; i < rs->rs_nrates; i++) {
 		if ((rs->rs_rates[i] & IEEE80211_RATE_BASIC) == 0)
 			continue;
 		rval = (rs->rs_rates[i] & IEEE80211_RATE_VAL);
-		if (rval > best_rval) {
-			best_rval = rval;
-			best = i;
-		}
+		if (rval > max)
+			max = rval;
 	}
 
-	return best;
+	return max;
 }
 
 /*
