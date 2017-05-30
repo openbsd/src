@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.12 2017/05/30 08:24:56 fcambus Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.13 2017/05/30 21:42:54 fcambus Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -44,8 +44,8 @@ void
 pcdisplay_cursor_reset(struct pcdisplayscreen *scr)
 {
 #ifdef PCDISPLAY_SOFTCURSOR
-	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
-	pcdisplay_6845_write(scr->hdl, curend, 0x10);
+	pcdisplay_6845_write(scr->hdl, curstart, 0x20);
+	pcdisplay_6845_write(scr->hdl, curend, 0x00);
 #endif
 }
 
