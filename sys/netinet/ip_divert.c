@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.46 2017/04/05 13:35:18 deraadt Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.47 2017/05/30 07:50:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -134,6 +134,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 
 	if (dir == PF_IN) {
 		ipaddr.sin_addr = sin->sin_addr;
+		/* XXXSMP ifa_ifwithaddr() is not safe. */
 		ifa = ifa_ifwithaddr(sintosa(&ipaddr), m->m_pkthdr.ph_rtableid);
 		if (ifa == NULL) {
 			error = EADDRNOTAVAIL;
@@ -150,7 +151,8 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		ip->ip_sum = in_cksum(m, off);
 		in_proto_cksum_out(m, NULL);
 
-		niq_enqueue(&ipintrq, m);
+		/* XXXSMP ``ifa'' is not reference counted. */
+		ipv4_input(ifa->ifa_ifp, m);
 	} else {
 		error = ip_output(m, NULL, &inp->inp_route,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL, 0);

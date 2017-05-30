@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.191 2017/05/29 14:36:22 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.192 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -158,6 +158,12 @@ ip6_init(void)
 	mq_init(&ip6send_mq, 64, IPL_SOFTNET);
 
 	ip6counters = counters_alloc(ip6s_ncounters);
+}
+
+void
+ipv6_input(struct ifnet *ifp, struct mbuf *m)
+{
+	niq_enqueue(&ip6intrq, m);
 }
 
 /*

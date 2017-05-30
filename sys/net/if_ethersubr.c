@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.244 2017/05/28 12:51:34 yasuoka Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.245 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -374,8 +374,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 decapsulate:
 	switch (etype) {
 	case ETHERTYPE_IP:
-		inq = &ipintrq;
-		break;
+		ipv4_input(ifp, m);
+		return (1);
 
 	case ETHERTYPE_ARP:
 		if (ifp->if_flags & IFF_NOARP)
@@ -394,8 +394,8 @@ decapsulate:
 	 * Schedule IPv6 software interrupt for incoming IPv6 packet.
 	 */
 	case ETHERTYPE_IPV6:
-		inq = &ip6intrq;
-		break;
+		ipv6_input(ifp, m);
+		return (1);
 #endif /* INET6 */
 #if NPPPOE > 0 || defined(PIPEX)
 	case ETHERTYPE_PPPOEDISC:

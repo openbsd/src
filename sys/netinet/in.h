@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.122 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.123 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -800,7 +800,6 @@ __END_DECLS
 
 #ifdef _KERNEL
 extern	   int inetctlerrmap[];
-extern	   struct niqueue ipintrq;	/* ip packet input queue */
 extern	   struct in_addr zeroin_addr;
 
 struct mbuf;
@@ -808,6 +807,8 @@ struct sockaddr;
 struct sockaddr_in;
 struct ifaddr;
 struct in_ifaddr;
+
+void	   ipv4_input(struct ifnet *, struct mbuf *);
 
 int	   in_broadcast(struct in_addr, u_int);
 int	   in_canforward(struct in_addr);

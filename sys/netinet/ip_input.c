@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.307 2017/05/29 14:36:22 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.308 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -208,6 +208,12 @@ ip_init(void)
 }
 
 void
+ipv4_input(struct ifnet *ifp, struct mbuf *m)
+{
+	niq_enqueue(&ipintrq, m);
+}
+
+void
 ipintr(void)
 {
 	struct mbuf *m;
@@ -221,7 +227,7 @@ ipintr(void)
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("ipintr no HDR");
 #endif
-		ipv4_input(m);
+		ip_input(m);
 	}
 }
 
@@ -231,7 +237,7 @@ ipintr(void)
  * Checksum and byte swap header.  Process options. Forward or deliver.
  */
 void
-ipv4_input(struct mbuf *m)
+ip_input(struct mbuf *m)
 {
 	struct ifnet	*ifp;
 	struct rtentry	*rt = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.13 2017/05/18 14:48:27 bluhm Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.14 2017/05/30 07:50:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -768,7 +768,6 @@ umb_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 int
 umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 {
-	struct niqueue *inq;
 	uint8_t ipv;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -789,12 +788,12 @@ umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	ifp->if_ibytes += m->m_pkthdr.len;
 	switch (ipv) {
 	case 4:
-		inq = &ipintrq;
-		break;
+		ipv4_input(ifp, m);
+		return 1;
 #ifdef INET6
 	case 6:
-		inq = &ip6intrq;
-		break;
+		ipv6_input(ifp, m);
+		return 1;
 #endif /* INET6 */
 	default:
 		ifp->if_ierrors++;
@@ -803,7 +802,6 @@ umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		m_freem(m);
 		return 1;
 	}
-	niq_enqueue(inq, m);
 	return 1;
 }
 

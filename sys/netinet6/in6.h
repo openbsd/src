@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.94 2017/05/04 15:00:24 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.95 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -405,7 +405,6 @@ typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
 
 #ifdef _KERNEL
 extern	u_char inet6ctlerrmap[];
-extern	struct niqueue ip6intrq;	/* IP6 packet input queue */
 extern	struct in6_addr zeroin6_addr;
 
 struct mbuf;
@@ -712,6 +711,8 @@ ifatoia6(struct ifaddr *ifa)
 
 __BEGIN_DECLS
 struct cmsghdr;
+
+void	   ipv6_input(struct ifnet *, struct mbuf *);
 
 extern int inet6_opt_init(void *, socklen_t);
 extern int inet6_opt_append(void *, socklen_t, int, u_int8_t,

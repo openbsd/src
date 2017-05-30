@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.60 2017/05/28 18:43:51 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.61 2017/05/30 07:50:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -318,7 +318,6 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct pppx_if	*pxi;
 	uint32_t proto;
 	struct mbuf *top, **mp, *m;
-	struct niqueue *ifq;
 	int tlen;
 	int error = 0;
 	size_t mlen;
@@ -396,20 +395,17 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	switch (proto) {
 	case AF_INET:
-		ifq = &ipintrq;
+		ipv4_input(&pxi->pxi_if, top);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
+		ipv6_input(&pxi->pxi_if, top);
 		break;
 #endif
 	default:
 		m_freem(top);
 		return (EAFNOSUPPORT);
 	}
-
-	if (niq_enqueue(ifq, top) != 0)
-		return (ENOBUFS);
 
 	return (error);
 }

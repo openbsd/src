@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.59 2017/05/04 15:00:24 bluhm Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.60 2017/05/30 07:50:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -396,7 +396,7 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
 #endif
 
-	niq_enqueue(&ipintrq, m);
+	ipv4_input(ifp, m);
 }
 
 #ifdef INET6
@@ -428,6 +428,6 @@ mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
 #endif
 
-	niq_enqueue(&ip6intrq, m);
+	ipv6_input(ifp, m);
 }
 #endif	/* INET6 */

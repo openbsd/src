@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.163 2017/04/14 15:11:31 bluhm Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.164 2017/05/30 07:50:37 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -58,8 +58,6 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/if_ether.h>
 
 #ifdef INET6
 #include <netinet6/in6_ifattach.h>
@@ -417,7 +415,6 @@ void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header ht;
-	struct niqueue *inq = NULL;
 	struct sppp *sp = (struct sppp *)ifp;
 	struct timeval tv;
 	int debug = ifp->if_flags & IFF_DEBUG;
@@ -438,7 +435,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    SPP_ARGS(ifp), m->m_pkthdr.len);
 	  drop:
 		m_freem (m);
-	  dropped:
 		++ifp->if_ierrors;
 		++ifp->if_iqdrops;
 		return;
@@ -503,8 +499,11 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		case PPP_IP:
 			if (sp->state[IDX_IPCP] == STATE_OPENED) {
-				inq = &ipintrq;
 				sp->pp_last_activity = tv.tv_sec;
+				if (ifp->if_flags & IFF_UP) {
+					ipv4_input(ifp, m);
+					return;
+				}
 			}
 			break;
 #ifdef INET6
@@ -515,8 +514,11 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		case PPP_IPV6:
 			if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
-				inq = &ip6intrq;
 				sp->pp_last_activity = tv.tv_sec;
+				if (ifp->if_flags & IFF_UP) {
+					ipv6_input(ifp, m);
+					return;
+				}
 			}
 			break;
 #endif
@@ -533,16 +535,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		goto drop;
 	}
 
-	if (! (ifp->if_flags & IFF_UP) || ! inq)
-		goto drop;
-
-	if (niq_enqueue(inq, m) != 0) {
-		/* Queue overflow. */
-		if (debug)
-			log(LOG_DEBUG, SPP_FMT "protocol queue overflow\n",
-				SPP_ARGS(ifp));
-		goto dropped;
-	}
+	goto drop;
 }
 
 /*

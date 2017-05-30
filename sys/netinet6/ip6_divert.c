@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.46 2017/03/13 20:18:21 claudio Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.47 2017/05/30 07:50:37 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -139,6 +139,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 
 	if (dir == PF_IN) {
 		ip6addr.sin6_addr = sin6->sin6_addr;
+		/* XXXSMP ``ifa'' is not reference counted. */
 		ifa = ifa_ifwithaddr(sin6tosa(&ip6addr),
 		    m->m_pkthdr.ph_rtableid);
 		if (ifa == NULL) {
@@ -154,7 +155,8 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		 */
 		in6_proto_cksum_out(m, NULL);
 
-		niq_enqueue(&ip6intrq, m); /* return error on q full? */
+		/* XXXSMP ``ifa'' is not reference counted. */
+		ipv6_input(ifa->ifa_ifp, m);
 	} else {
 		error = ip6_output(m, NULL, &inp->inp_route6,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);

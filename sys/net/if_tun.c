@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.174 2017/05/27 06:44:14 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.175 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -835,7 +835,6 @@ int
 tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 {
 	struct ifnet		*ifp;
-	struct niqueue		*ifq;
 	u_int32_t		*th;
 	struct mbuf		*top, **mp, *m;
 	int			error = 0, tlen;
@@ -928,27 +927,22 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 	top->m_pkthdr.ph_ifidx = ifp->if_index;
 
+	ifp->if_ipackets++;
+	ifp->if_ibytes += top->m_pkthdr.len;
+
 	switch (ntohl(*th)) {
 	case AF_INET:
-		ifq = &ipintrq;
+		ipv4_input(ifp, top);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
+		ipv6_input(ifp, top);
 		break;
 #endif
 	default:
 		m_freem(top);
 		return (EAFNOSUPPORT);
 	}
-
-	if (niq_enqueue(ifq, top) != 0) {
-		ifp->if_collisions++;
-		return (ENOBUFS);
-	}
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += top->m_pkthdr.len;
 
 	return (error);
 }

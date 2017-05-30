@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.64 2017/05/04 17:58:46 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.65 2017/05/30 07:50:37 mpi Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -93,7 +93,6 @@ int
 gre_input2(struct mbuf *m, int hlen, int proto)
 {
 	struct greip *gip;
-	struct niqueue *ifq;
 	struct gre_softc *sc;
 	u_short flags;
 	u_int af;
@@ -160,13 +159,11 @@ gre_input2(struct mbuf *m, int hlen, int proto)
 			 */
 			if (gre_wccp == 2) 
 				hlen += 4;
-		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
-			ifq = &ipintrq;          /* we are in ip_input */
+		case ETHERTYPE_IP:
 			af = AF_INET;
 			break;
 #ifdef INET6
 		case ETHERTYPE_IPV6:
-		        ifq = &ip6intrq;
 			af = AF_INET6;
 			break;
 #endif
@@ -205,7 +202,19 @@ gre_input2(struct mbuf *m, int hlen, int proto)
 	pf_pkt_addr_changed(m);
 #endif
 
-	niq_enqueue(ifq, m);
+	switch (af) {
+	case AF_INET:
+		ipv4_input(&sc->sc_if, m);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ipv6_input(&sc->sc_if, m);
+		break;
+#endif
+	default:
+		return (0);
+	}
+
 
 	return (1);	/* packet is done, no further processing needed */
 }
@@ -334,7 +343,7 @@ gre_mobile_input(struct mbuf **mp, int *offp, int proto, int af)
 	pf_pkt_addr_changed(m);
 #endif
 
-	niq_enqueue(&ipintrq, m);
+	ipv4_input(&sc->sc_if, m);
 	return IPPROTO_DONE;
 }
 

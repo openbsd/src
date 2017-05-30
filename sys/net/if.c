@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.501 2017/05/30 06:42:13 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.502 2017/05/30 07:50:37 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -734,8 +734,6 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 int
 if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 {
-	struct niqueue *ifq = NULL;
-
 #if NBPFILTER > 0
 	/*
 	 * Only send packets to bpf if they are destinated to local
@@ -758,33 +756,28 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
+	ifp->if_ipackets++;
+	ifp->if_ibytes += m->m_pkthdr.len;
+
 	switch (af) {
 	case AF_INET:
-		ifq = &ipintrq;
+		ipv4_input(ifp, m);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
+		ipv6_input(ifp, m);
 		break;
 #endif /* INET6 */
 #ifdef MPLS
 	case AF_MPLS:
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
 		mpls_input(m);
-		return (0);
+		break;
 #endif /* MPLS */
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname, af);
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
-
-	if (niq_enqueue(ifq, m) != 0)
-		return (ENOBUFS);
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	return (0);
 }
