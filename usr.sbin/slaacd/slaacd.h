@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.15 2017/05/28 09:35:56 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.16 2017/05/30 15:39:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -73,6 +73,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL,
 	IMSG_CONFIGURE_DFR,
+	IMSG_WITHDRAW_DFR,
 };
 
 extern const char* imsg_type_name[];

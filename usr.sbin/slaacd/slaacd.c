@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.20 2017/05/29 20:31:31 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.21 2017/05/30 15:39:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -76,6 +76,7 @@ const char* imsg_type_name[] = {
 	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS",
 	"IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL",
 	"IMSG_CONFIGURE_DFR",
+	"IMSG_WITHDRAW_DFR",
 };
 
 __dead void	usage(void);
@@ -89,7 +90,9 @@ void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_engine(int, short, void *);
 void	handle_proposal(struct imsg_proposal *);
 void	configure_interface(struct imsg_configure_address *);
-void	configure_gateway(struct imsg_configure_dfr *);
+void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
+void	add_gateway(struct imsg_configure_dfr *);
+void	delete_gateway(struct imsg_configure_dfr *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 
@@ -462,7 +465,14 @@ main_dispatch_engine(int fd, short event, void *bula)
 				fatal("%s: IMSG_CONFIGURE_DFR wrong "
 				    "length: %d", __func__, imsg.hdr.len);
 			memcpy(&dfr, imsg.data, sizeof(dfr));
-			configure_gateway(&dfr);
+			add_gateway(&dfr);
+			break;
+		case IMSG_WITHDRAW_DFR:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(dfr))
+				fatal("%s: IMSG_CONFIGURE_DFR wrong "
+				    "length: %d", __func__, imsg.hdr.len);
+			memcpy(&dfr, imsg.data, sizeof(dfr));
+			delete_gateway(&dfr);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -678,7 +688,7 @@ configure_interface(struct imsg_configure_address *address)
 }
 
 void
-configure_gateway(struct imsg_configure_dfr *dfr)
+configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_in6		 dst, gw, mask;
@@ -689,7 +699,7 @@ configure_gateway(struct imsg_configure_dfr *dfr)
 	memset(&rtm, 0, sizeof(rtm));
 
 	rtm.rtm_version = RTM_VERSION;
-	rtm.rtm_type = RTM_ADD;
+	rtm.rtm_type = rtm_type;
 	rtm.rtm_msglen = sizeof(rtm);
 	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
 	rtm.rtm_index = dfr->if_index;
@@ -742,5 +752,17 @@ configure_gateway(struct imsg_configure_dfr *dfr)
 	}
 
 	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send RTM_ADD");
+		log_warn("failed to send route message");
+}
+
+void
+add_gateway(struct imsg_configure_dfr *dfr)
+{
+	configure_gateway(dfr, RTM_ADD);
+}
+
+void
+delete_gateway(struct imsg_configure_dfr *dfr)
+{
+	configure_gateway(dfr, RTM_DELETE);
 }

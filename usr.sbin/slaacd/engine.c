@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.32 2017/05/30 14:56:34 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.33 2017/05/30 15:39:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -233,6 +233,7 @@ void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
 			     radv *);
 void			 configure_dfr(struct dfr_proposal *);
+void			 withdraw_dfr(struct dfr_proposal *);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
 void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
@@ -1792,6 +1793,20 @@ configure_dfr(struct dfr_proposal *dfr_proposal)
 }
 
 void
+withdraw_dfr(struct dfr_proposal *dfr_proposal)
+{
+	struct imsg_configure_dfr	 dfr;
+
+	log_debug("%s: %d", __func__, dfr_proposal->if_index);
+
+	dfr.if_index = dfr_proposal->if_index;
+	memcpy(&dfr.addr, &dfr_proposal->addr, sizeof(dfr.addr));
+	dfr.router_lifetime = dfr_proposal->router_lifetime;
+
+	engine_imsg_compose_main(IMSG_WITHDRAW_DFR, 0, &dfr, sizeof(dfr));
+}
+
+void
 send_proposal(struct imsg_proposal *proposal)
 {
 #ifndef SKIP_PROPOSAL
@@ -1996,6 +2011,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 		    dfr_proposal->router_lifetime) == 0) {
 			evtimer_del(&dfr_proposal->timer);
 			LIST_REMOVE(dfr_proposal, entries);
+			withdraw_dfr(dfr_proposal);
 			free(dfr_proposal);
 			log_debug("%s: removing dfr proposal", __func__);
 			break;
