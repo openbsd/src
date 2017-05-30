@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.33 2017/05/30 15:39:49 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.34 2017/05/30 15:57:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1472,7 +1472,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv		*old_ra;
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
-	struct dfr_proposal	*dfr_proposal;
+	struct dfr_proposal	*dfr_proposal, *tmp;
 	int			 found, found_privacy;
 	char			 hbuf[NI_MAXHOST];
 
@@ -1483,7 +1483,17 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		free_ra(old_ra);
 	}
 	if (ra->router_lifetime == 0) {
-		/* XXX expire default route */
+		LIST_FOREACH_SAFE(dfr_proposal, &iface->dfr_proposals, entries,
+		    tmp) {
+			if (memcmp(&dfr_proposal->addr,
+			    &ra->from, sizeof(struct sockaddr_in6)) ==
+			    0) {
+				LIST_REMOVE(dfr_proposal, entries);
+				evtimer_del(&dfr_proposal->timer);
+				withdraw_dfr(dfr_proposal);
+				free(dfr_proposal);
+			}
+		}
 	} else {
 		found = 0;
 		LIST_FOREACH(dfr_proposal, &iface->dfr_proposals, entries) {
