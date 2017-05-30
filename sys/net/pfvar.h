@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.454 2017/05/28 16:43:45 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.455 2017/05/30 08:10:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1881,7 +1881,7 @@ struct mbuf *		 pf_build_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    u_int16_t, u_int);
+			    u_int16_t, u_int, u_int);
 void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,

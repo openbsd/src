@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1031 2017/05/29 14:18:32 mpi Exp $ */
+/*	$OpenBSD: pf.c,v 1.1032 2017/05/30 08:10:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2693,7 +2693,7 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, u_int rdom)
+    u_int16_t rtag, u_int sack, u_int rdom)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -2708,6 +2708,8 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 	tlen = sizeof(struct tcphdr);
 	if (mss)
 		tlen += 4;
+	if (sack)
+		tlen += 2;
 
 	switch (af) {
 	case AF_INET:
@@ -2782,12 +2784,18 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 	th->th_flags = flags;
 	th->th_win = htons(win);
 
+	opt = (char *)(th + 1);
 	if (mss) {
-		opt = (char *)(th + 1);
 		opt[0] = TCPOPT_MAXSEG;
 		opt[1] = 4;
 		mss = htons(mss);
 		memcpy((opt + 2), &mss, 2);
+		opt += 4;
+	}
+	if (sack) {
+		opt[0] = TCPOPT_SACK_PERMITTED;
+		opt[1] = 2;
+		opt += 2;
 	}
 
 	return (m);
@@ -2800,10 +2808,10 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
     u_int16_t rtag, u_int rdom)
 {
-	struct mbuf     *m;
+	struct mbuf	*m;
 
 	if ((m = pf_build_tcp(r, af, saddr, daddr, sport, dport, seq, ack,
-	     flags, win, mss, ttl, tag, rtag, rdom)) == NULL)
+	    flags, win, mss, ttl, tag, rtag, 0, rdom)) == NULL)
 		return;
 
 	switch (af) {
