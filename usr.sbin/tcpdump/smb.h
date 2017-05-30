@@ -1,4 +1,4 @@
-/*	$OpenBSD: smb.h,v 1.1 2000/12/07 22:36:46 mickey Exp $	*/
+/*	$OpenBSD: smb.h,v 1.2 2017/05/30 20:10:45 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -37,9 +37,7 @@
 #define uchar unsigned char
 #endif
 
-#ifndef MIN
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#endif
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 /* the complete */
 #define SMBmkdir      0x00   /* create directory */

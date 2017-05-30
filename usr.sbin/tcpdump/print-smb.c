@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-smb.c,v 1.4 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-smb.c,v 1.5 2017/05/30 20:10:45 deraadt Exp $	*/
 
 /*
    Copyright (C) Andrew Tridgell 1995-1999
@@ -263,7 +263,7 @@ static void print_trans(uchar *words,uchar *data1,uchar *buf,uchar *maxbuf)
     f4 = "|data ";
   }
 
-  fdata(words+1,f1,MIN(words+1+2*CVAL(words,0),maxbuf));
+  fdata(words+1,f1,MINIMUM(words+1+2*CVAL(words,0),maxbuf));
   fdata(data1+2,f2,maxbuf - (paramlen + datalen));
 
   if (!strcmp(data1+2,"\\MAILSLOT\\BROWSE")) {
@@ -276,8 +276,8 @@ static void print_trans(uchar *words,uchar *data1,uchar *buf,uchar *maxbuf)
     return;
   }
 
-  if (paramlen) fdata(param,f3,MIN(param+paramlen,maxbuf));
-  if (datalen) fdata(data,f4,MIN(data+datalen,maxbuf));
+  if (paramlen) fdata(param,f3,MINIMUM(param+paramlen,maxbuf));
+  if (datalen) fdata(data,f4,MINIMUM(data+datalen,maxbuf));
 }
 
 
@@ -299,10 +299,10 @@ static void print_negprot(uchar *words,uchar *data,uchar *buf,uchar *maxbuf)
   }
 
   if (f1)
-    fdata(words+1,f1,MIN(words + 1 + CVAL(words,0)*2,maxbuf));
+    fdata(words+1,f1,MINIMUM(words + 1 + CVAL(words,0)*2,maxbuf));
 
   if (f2)
-    fdata(data+2,f2,MIN(data + 2 + SVAL(data,0),maxbuf));
+    fdata(data+2,f2,MINIMUM(data + 2 + SVAL(data,0),maxbuf));
 }
 
 static void print_sesssetup(uchar *words,uchar *data,uchar *buf,uchar *maxbuf)
@@ -326,10 +326,10 @@ static void print_sesssetup(uchar *words,uchar *data,uchar *buf,uchar *maxbuf)
   }
 
   if (f1)
-    fdata(words+1,f1,MIN(words + 1 + CVAL(words,0)*2,maxbuf));
+    fdata(words+1,f1,MINIMUM(words + 1 + CVAL(words,0)*2,maxbuf));
 
   if (f2)
-    fdata(data+2,f2,MIN(data + 2 + SVAL(data,0),maxbuf));
+    fdata(data+2,f2,MINIMUM(data + 2 + SVAL(data,0),maxbuf));
 }
 
 
