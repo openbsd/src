@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.148 2017/05/02 11:44:32 mikeb Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.149 2017/05/30 16:07:22 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -313,13 +313,13 @@ esp_zeroize(struct tdb *tdbp)
 
 	if (tdbp->tdb_amxkey) {
 		explicit_bzero(tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
-		free(tdbp->tdb_amxkey, M_XDATA, 0);
+		free(tdbp->tdb_amxkey, M_XDATA, tdbp->tdb_amxkeylen);
 		tdbp->tdb_amxkey = NULL;
 	}
 
 	if (tdbp->tdb_emxkey) {
 		explicit_bzero(tdbp->tdb_emxkey, tdbp->tdb_emxkeylen);
-		free(tdbp->tdb_emxkey, M_XDATA, 0);
+		free(tdbp->tdb_emxkey, M_XDATA, tdbp->tdb_emxkeylen);
 		tdbp->tdb_emxkey = NULL;
 	}
 
