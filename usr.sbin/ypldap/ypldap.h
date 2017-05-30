@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.18 2017/01/20 12:39:36 benno Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.19 2017/05/30 09:33:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -17,9 +17,11 @@
  */
 
 #include <imsg.h>
+#include <tls.h>
 
 #define YPLDAP_USER		"_ypldap"
 #define YPLDAP_CONF_FILE	"/etc/ypldap.conf"
+#define YPLDAP_CERT_FILE	"/etc/ssl/cert.pem"
 #define DEFAULT_INTERVAL	600
 #define LINE_WIDTH		1024
 #define FILTER_WIDTH		128
@@ -91,6 +93,7 @@ struct idm {
 #define F_SSL				 0x00100000
 #define F_CONFIGURING			 0x00200000
 #define F_NEEDAUTH			 0x00400000
+#define F_STARTTLS			 0x00800000
 #define F_FIXED_ATTR(n)			 (1<<n)
 #define F_LIST(n)                        (1<<n)
 	enum client_state		 idm_state;
@@ -124,10 +127,7 @@ struct idm {
 #define ATTR_GR_MAX			 14
 	char				 idm_attrs[14][ATTR_WIDTH];
 	struct env			*idm_env;
-	struct event			 idm_ev;
-#ifdef SSL
-	struct ssl			*idm_ssl;
-#endif
+	struct tls_config		*idm_tls_config;
 };
 
 struct idm_req {
@@ -164,6 +164,7 @@ struct env {
 	char				 sc_domainname[HOST_NAME_MAX+1];
 	struct timeval			 sc_conf_tv;
 	struct event			 sc_conf_ev;
+	char				*sc_cafile;
 	TAILQ_HEAD(idm_list, idm)	 sc_idms;
 	struct imsgev			*sc_iev;
 	struct imsgev			*sc_iev_dns;

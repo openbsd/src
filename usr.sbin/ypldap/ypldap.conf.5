@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.19 2012/04/30 11:28:25 jmatthew Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.20 2017/05/30 09:33:31 jmatthew Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2012 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -52,7 +52,6 @@ Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-
 fixed_gecos="Pulled from LDAP"
 
 fixed attribute gecos $fixed_gecos
@@ -73,6 +72,10 @@ Specify a map that should be provided by
 .Nm
 The currently implemented maps are: passwd.byname, passwd.byuid,
 group.byname, group.bygid.
+.It Ic cafile Ar filename
+Load CA certificates from the specified file to validate the server certificate.
+If not specified, CA certificates will be loaded from
+.Pa /etc/ssl/cert.pem .
 .El
 .Sh DIRECTORIES
 Directories are used to describe the LDAP schema and help
@@ -83,11 +86,23 @@ convert LDAP entries to
 and
 .Xr group 5
 lines.
-A directory declaration is of the following form:
-.Bd -literal -offset indent
-directory "some.host" {
-	# directives
-}
+Each directory section consists of a declaration of the directory
+server name and a set of directives describing how entries from the
+directory are used to construct YP map entries.
+.Bl -tag -width Ds
+.It Ic directory Ar hostname Oo Ic port Ar port Oc Oo tls Oc Brq ...
+Defines a directory by hostname and optionally port number.
+If the
+.Ar tls
+argument is not specified, no transport-level security will be used.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic tls
+Use STARTTLS to negotiate TLS, by default on port 389.
+.It Ic ldaps
+Connect with TLS enabled, by default on port 636.
+.El
+.El
 .Ed
 .Pp
 Valid directives for directories are:

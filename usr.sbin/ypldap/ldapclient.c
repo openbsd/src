@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.38 2017/01/20 12:39:36 benno Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.39 2017/05/30 09:33:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -84,6 +84,7 @@ client_aldap_open(struct ypldap_addr_list *addr)
 
 		warn("connect to %s port %s (%s) failed", hbuf, sbuf, "tcp");
 		close(fd);
+		fd = -1;
 	}
 
 	if (fd == -1)
@@ -97,20 +98,28 @@ client_addr_init(struct idm *idm)
 {
         struct sockaddr_in      *sa_in;
         struct sockaddr_in6     *sa_in6;
-        struct ypldap_addr         *h;
+        struct ypldap_addr      *h;
+	int                     defport;
+
+	if (idm->idm_port != 0)
+		defport = idm->idm_port;
+	else if (idm->idm_flags & F_SSL)
+		defport = LDAPS_PORT;
+	else
+		defport = LDAP_PORT;
 
 	TAILQ_FOREACH(h, &idm->idm_addr, next) {
                 switch (h->ss.ss_family) {
                 case AF_INET:
                         sa_in = (struct sockaddr_in *)&h->ss;
                         if (ntohs(sa_in->sin_port) == 0)
-                                sa_in->sin_port = htons(LDAP_PORT);
+                                sa_in->sin_port = htons(defport);
                         idm->idm_state = STATE_DNS_DONE;
                         break;
                 case AF_INET6:
                         sa_in6 = (struct sockaddr_in6 *)&h->ss;
                         if (ntohs(sa_in6->sin6_port) == 0)
-                                sa_in6->sin6_port = htons(LDAP_PORT);
+                                sa_in6->sin6_port = htons(defport);
                         idm->idm_state = STATE_DNS_DONE;
                         break;
                 default:
@@ -583,6 +592,39 @@ client_try_idm(struct env *env, struct idm *idm)
 	where = "connect";
 	if ((al = client_aldap_open(&idm->idm_addr)) == NULL)
 		return (-1);
+
+	if (idm->idm_flags & F_STARTTLS) {
+		log_debug("requesting starttls");
+		where = "starttls";
+		if (aldap_req_starttls(al) == -1)
+			goto bad;
+
+		where = "parsing";
+		if ((m = aldap_parse(al)) == NULL)
+			goto bad;
+		where = "verifying msgid";
+		if (al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		where = "starttls result";
+		if (aldap_get_resultcode(m) != LDAP_SUCCESS) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		aldap_freemsg(m);
+	}
+
+	if (idm->idm_flags & (F_STARTTLS | F_SSL)) {
+		log_debug("starting tls");
+		where = "enabling tls";
+		if (aldap_tls(al, idm->idm_tls_config, idm->idm_name) < 0) {
+			const char *err;
+			aldap_get_errno(al, &err);
+			log_debug("tls failed: %s", err);
+			goto bad;
+		}
+	}
 
 	if (idm->idm_flags & F_NEEDAUTH) {
 		where = "binding";

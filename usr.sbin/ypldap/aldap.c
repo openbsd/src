@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.36 2017/03/27 04:46:47 jmatthew Exp $ */
-/*	$OpenBSD: aldap.c,v 1.36 2017/03/27 04:46:47 jmatthew Exp $ */
+/*	$Id: aldap.c,v 1.37 2017/05/30 09:33:31 jmatthew Exp $ */
+/*	$OpenBSD: aldap.c,v 1.37 2017/05/30 09:33:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <event.h>
+
 #include "aldap.h"
 
 #if 0
@@ -43,6 +45,9 @@ static int			 isu8cont(unsigned char);
 char				*parseval(char *, size_t);
 int				aldap_create_page_control(struct ber_element *,
 				    int, struct aldap_page_control *);
+int				aldap_send(struct aldap *,
+				    struct ber_element *);
+unsigned long			aldap_application(struct ber_element *);
 
 #ifdef DEBUG
 void			 ldap_debug_elements(struct ber_element *);
@@ -56,13 +61,21 @@ void			 ldap_debug_elements(struct ber_element *);
 #define LDAP_DEBUG(x, y)	do { } while (0)
 #endif
 
+unsigned long
+aldap_application(struct ber_element *elm)
+{
+	return BER_TYPE_OCTETSTRING;
+}
+
 int
 aldap_close(struct aldap *al)
 {
-	if (close(al->ber.fd) == -1)
-		return (-1);
+	if (al->fd != -1)
+		if (close(al->ber.fd) == -1)
+			return (-1);
 
 	ber_free(&al->ber);
+	evbuffer_free(al->buf);
 	free(al);
 
 	return (0);
@@ -75,16 +88,110 @@ aldap_init(int fd)
 
 	if ((a = calloc(1, sizeof(*a))) == NULL)
 		return NULL;
-	a->ber.fd = fd;
+	a->buf = evbuffer_new();
+	a->fd = fd;
+	a->ber.fd = -1;
+	ber_set_application(&a->ber, aldap_application);
 
 	return a;
+}
+
+int
+aldap_tls(struct aldap *ldap, struct tls_config *cfg, const char *name)
+{
+	ldap->tls = tls_client();
+	if (ldap->tls == NULL) {
+		ldap->err = ALDAP_ERR_OPERATION_FAILED;
+		return (-1);
+	}
+
+	if (tls_configure(ldap->tls, cfg) == -1) {
+		ldap->err = ALDAP_ERR_TLS_ERROR;
+		return (-1);
+	}
+
+	if (tls_connect_socket(ldap->tls, ldap->fd, name) == -1) {
+		ldap->err = ALDAP_ERR_TLS_ERROR;
+		return (-1);
+	}
+
+	if (tls_handshake(ldap->tls) == -1) {
+		ldap->err = ALDAP_ERR_TLS_ERROR;
+		return (-1);
+	}
+
+	ldap->fd = -1;
+	return (0);
+}
+
+int
+aldap_send(struct aldap *ldap, struct ber_element *root)
+{
+	int error, wrote;
+	void *ptr;
+	char *data;
+	size_t len, done;
+
+	len = ber_calc_len(root);
+	error = ber_write_elements(&ldap->ber, root);
+	ber_free_elements(root);
+	if (error == -1)
+		return -1;
+
+	ber_get_writebuf(&ldap->ber, &ptr);
+	done = 0;
+	data = ptr;
+	while (len > 0) {
+		if (ldap->tls != NULL) {
+			wrote = tls_write(ldap->tls, data + done, len);
+			if (wrote == TLS_WANT_POLLIN ||
+			    wrote == TLS_WANT_POLLOUT)
+				continue;
+		} else
+			wrote = write(ldap->fd, data + done, len);
+
+		if (wrote == -1)
+			return -1;
+
+		len -= wrote;
+		done += wrote;
+	}
+
+	return 0;
+}
+
+int
+aldap_req_starttls(struct aldap *ldap)
+{
+	struct ber_element *root = NULL, *ber;
+
+	if ((root = ber_add_sequence(NULL)) == NULL)
+		goto fail;
+
+	ber = ber_printf_elements(root, "d{tst", ++ldap->msgid, BER_CLASS_APP,
+	    (unsigned long) LDAP_REQ_EXTENDED, LDAP_STARTTLS_OID,
+	    BER_CLASS_CONTEXT, (unsigned long) 0);
+	if (ber == NULL) {
+		ldap->err = ALDAP_ERR_OPERATION_FAILED;
+		goto fail;
+	}
+
+	if (aldap_send(ldap, root) == -1)
+		goto fail;
+
+	return (ldap->msgid);
+fail:
+	if (root != NULL)
+		ber_free_elements(root);
+
+	ldap->err = ALDAP_ERR_OPERATION_FAILED;
+	return (-1);
 }
 
 int
 aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 {
 	struct ber_element *root = NULL, *elm;
-	int error;
 
 	if (binddn == NULL)
 		binddn = "";
@@ -102,12 +209,10 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 
 	LDAP_DEBUG("aldap_bind", root);
 
-	error = ber_write_elements(&ldap->ber, root);
-	ber_free_elements(root);
-	root = NULL;
-	if (error == -1)
+	if (aldap_send(ldap, root) == -1) {
+		root = NULL;
 		goto fail;
-
+	}
 	return (ldap->msgid);
 fail:
 	if (root != NULL)
@@ -121,7 +226,6 @@ int
 aldap_unbind(struct aldap *ldap)
 {
 	struct ber_element *root = NULL, *elm;
-	int error;
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -132,12 +236,10 @@ aldap_unbind(struct aldap *ldap)
 
 	LDAP_DEBUG("aldap_unbind", root);
 
-	error = ber_write_elements(&ldap->ber, root);
-	ber_free_elements(root);
-	root = NULL;
-	if (error == -1)
+	if (aldap_send(ldap, root) == -1) {
+		root = NULL;
 		goto fail;
-
+	}
 	return (ldap->msgid);
 fail:
 	if (root != NULL)
@@ -154,7 +256,7 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
     struct aldap_page_control *page)
 {
 	struct ber_element *root = NULL, *ber, *c;
-	int i, error;
+	int i;
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -192,10 +294,8 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 
 	LDAP_DEBUG("aldap_search", root);
 
-	error = ber_write_elements(&ldap->ber, root);
-	ber_free_elements(root);
-	root = NULL;
-	if (error == -1) {
+	if (aldap_send(ldap, root) == -1) {
+		root = NULL;
 		ldap->err = ALDAP_ERR_OPERATION_FAILED;
 		goto fail;
 	}
@@ -256,12 +356,44 @@ aldap_parse(struct aldap *ldap)
 	long long		 msgid = 0;
 	struct aldap_message	*m;
 	struct ber_element	*a = NULL, *ep;
+	char			 rbuf[512];
+	int			 ret, retry;
 
 	if ((m = calloc(1, sizeof(struct aldap_message))) == NULL)
 		return NULL;
 
-	if ((m->msg = ber_read_elements(&ldap->ber, NULL)) == NULL)
-		goto parsefail;
+	retry = 0;
+	while (m->msg == NULL) {
+		if (retry || EVBUFFER_LENGTH(ldap->buf) == 0) {
+			if (ldap->tls) {
+				ret = tls_read(ldap->tls, rbuf, sizeof(rbuf));
+				if (ret == TLS_WANT_POLLIN ||
+				    ret == TLS_WANT_POLLOUT)
+					continue;
+			} else
+				ret = read(ldap->fd, rbuf, sizeof(rbuf));
+
+			if (ret == -1) {
+				goto parsefail;
+			}
+
+			evbuffer_add(ldap->buf, rbuf, ret);
+		}
+
+		if (EVBUFFER_LENGTH(ldap->buf) > 0) {
+			ber_set_readbuf(&ldap->ber, EVBUFFER_DATA(ldap->buf),
+			    EVBUFFER_LENGTH(ldap->buf));
+			errno = 0;
+			m->msg = ber_read_elements(&ldap->ber, NULL);
+			if (errno != 0 && errno != ECANCELED) {
+				goto parsefail;
+			}
+
+			retry = 1;
+		}
+	}
+
+	evbuffer_drain(ldap->buf, ldap->ber.br_rptr - ldap->ber.br_rbuf);
 
 	LDAP_DEBUG("message", m->msg);
 
@@ -304,10 +436,17 @@ aldap_parse(struct aldap *ldap)
 		if (ber_scanf_elements(m->protocol_op, "{e", &m->references) != 0)
 			goto parsefail;
 		break;
+	case LDAP_RES_EXTENDED:
+		if (ber_scanf_elements(m->protocol_op, "{E",
+		    &m->body.res.rescode) != 0) {
+			goto parsefail;
+		}
+		break;
 	}
 
 	return m;
 parsefail:
+	evbuffer_drain(ldap->buf, EVBUFFER_LENGTH(ldap->buf));
 	ldap->err = ALDAP_ERR_PARSER_ERROR;
 	aldap_freemsg(m);
 	return NULL;
@@ -1240,6 +1379,9 @@ aldap_get_errno(struct aldap *a, const char **estr)
 		break;
 	case ALDAP_ERR_OPERATION_FAILED:
 		*estr = "operation failed";
+		break;
+	case ALDAP_ERR_TLS_ERROR:
+		*estr = tls_error(a->tls);
 		break;
 	default:
 		*estr = "unknown";

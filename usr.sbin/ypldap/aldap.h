@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.9 2012/04/30 21:40:03 jmatthew Exp $ */
-/*	$OpenBSD: aldap.h,v 1.9 2012/04/30 21:40:03 jmatthew Exp $ */
+/*	$Id: aldap.h,v 1.10 2017/05/30 09:33:31 jmatthew Exp $ */
+/*	$OpenBSD: aldap.h,v 1.10 2017/05/30 09:33:31 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -19,20 +19,31 @@
  */
 
 #include <stdio.h>
+
+#include <tls.h>
+
 #include "ber.h"
 
-#define LDAP_URL "ldap://"
-#define LDAP_PORT 389
-#define LDAP_PAGED_OID  "1.2.840.113556.1.4.319"
+#define LDAP_URL 		"ldap://"
+#define LDAP_PORT 		389
+#define LDAPS_PORT 		636
+#define LDAP_PAGED_OID		"1.2.840.113556.1.4.319"
+#define LDAP_STARTTLS_OID	"1.3.6.1.4.1.1466.20037"
 
 struct aldap {
 #define ALDAP_ERR_SUCCESS		0
 #define ALDAP_ERR_PARSER_ERROR		1
 #define ALDAP_ERR_INVALID_FILTER	2
 #define ALDAP_ERR_OPERATION_FAILED	3
+#define ALDAP_ERR_TLS_ERROR		4
 	u_int8_t	err;
 	int		msgid;
 	struct ber	ber;
+
+	int		fd;
+	struct tls	*tls;
+
+	struct evbuffer *buf;
 };
 
 struct aldap_page_control {
@@ -103,6 +114,9 @@ enum protocol_op {
 	LDAP_REQ_ABANDON_30	= 16,
 
 	LDAP_RES_SEARCH_REFERENCE = 19,
+
+	LDAP_REQ_EXTENDED	= 23,
+	LDAP_RES_EXTENDED	= 24
 };
 
 enum deref_aliases {
@@ -189,10 +203,14 @@ enum subfilter {
 	LDAP_FILT_SUBS_FIN	= 2,
 };
 
-struct aldap		*aldap_init(int fd);
+struct aldap		*aldap_init(int);
+int			 aldap_tls(struct aldap *, struct tls_config *,
+			    const char *);
 int			 aldap_close(struct aldap *);
 struct aldap_message	*aldap_parse(struct aldap *);
 void			 aldap_freemsg(struct aldap_message *);
+
+int	 		 aldap_req_starttls(struct aldap *);
 
 int	 aldap_bind(struct aldap *, char *, char *);
 int	 aldap_unbind(struct aldap *);

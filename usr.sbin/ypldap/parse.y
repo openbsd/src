@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2017/01/05 13:53:10 krw Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2017/05/30 09:33:31 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -101,11 +101,12 @@ typedef struct {
 %token	SERVER FILTER ATTRIBUTE BASEDN BINDDN GROUPDN BINDCRED MAPS CHANGE DOMAIN PROVIDE
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
 %token	PASSWD NAME FIXED LIST GROUPNAME GROUPPASSWD GROUPGID MAP
-%token	INCLUDE DIRECTORY CLASS PORT ERROR GROUPMEMBERS
+%token	INCLUDE DIRECTORY CLASS PORT ERROR GROUPMEMBERS LDAPS TLS CAFILE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	opcode attribute
-%type	<v.string>	port
+%type	<v.number>	port
+%type	<v.number>	ssl
 
 %%
 
@@ -157,8 +158,28 @@ varset		: STRING '=' STRING			{
 		}
 		;
 
-port		: /* empty */	{ $$ = NULL; }
-		| PORT STRING	{ $$ = $2; }
+port		: PORT STRING				{
+			struct servent *servent;
+
+			servent = getservbyname($2, "tcp");
+			if (servent == NULL) {
+				yyerror("port %s is invalid", $2);
+				free($2);
+				YYERROR;
+			}
+			$$ = ntohs(servent->s_port);
+			free($2);
+		}
+		| PORT NUMBER				{
+			if ($2 <= 0 || $2 >= (int)USHRT_MAX) {
+				yyerror("invalid port: %lld", $2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| /* empty */				{
+			$$ = 0;
+		}
 		;
 
 opcode		: GROUP					{ $$ = 0; }
@@ -268,7 +289,12 @@ diropt		: BINDDN STRING				{
 		}
 		;
 
-directory	: DIRECTORY STRING port {
+ssl		: /* empty */				{ $$ = 0; }
+		| LDAPS					{ $$ = F_SSL; }
+		| TLS					{ $$ = F_STARTTLS; }
+		;
+
+directory	: DIRECTORY STRING port ssl {
 			if ((idm = calloc(1, sizeof(*idm))) == NULL)
 				fatal(NULL);
 			idm->idm_id = conf->sc_maxid++;
@@ -280,8 +306,54 @@ directory	: DIRECTORY STRING port {
 				free($2);
 				YYERROR;
 			}
-
 			free($2);
+
+			idm->idm_port = $3;
+
+			if ($4 != 0) {
+				if (tls_init()) {
+					yyerror("tls init failed");
+					YYERROR;
+				}
+
+				idm->idm_flags |= $4;
+				idm->idm_tls_config = tls_config_new();
+				if (idm->idm_tls_config == NULL) {
+					yyerror("tls config failed");
+					YYERROR;
+				}
+
+				if (tls_config_set_protocols(
+				    idm->idm_tls_config,
+				    TLS_PROTOCOLS_ALL) == -1) {
+					yyerror("tls set protocols failed: %s",
+					    tls_config_error(
+					    idm->idm_tls_config));
+					tls_config_free(idm->idm_tls_config);
+					idm->idm_tls_config = NULL;
+					YYERROR;
+				}
+				if (tls_config_set_ciphers(idm->idm_tls_config,
+				    "compat") == -1) {
+					yyerror("tls set ciphers failed: %s",
+					    tls_config_error(
+					    idm->idm_tls_config));
+					tls_config_free(idm->idm_tls_config);
+					idm->idm_tls_config = NULL;
+					YYERROR;
+				}
+
+				if (tls_config_set_ca_file(idm->idm_tls_config,
+				    conf->sc_cafile) == -1) {
+					yyerror("tls set CA bundle failed: %s",
+					    tls_config_error(
+					    idm->idm_tls_config));
+					tls_config_free(idm->idm_tls_config);
+					idm->idm_tls_config = NULL;
+					YYERROR;
+				}
+			}
+
 		} '{' optnl diropts '}'			{
 			TAILQ_INSERT_TAIL(&conf->sc_idms, idm, idm_entry);
 			idm = NULL;
@@ -324,6 +396,10 @@ main		: INTERVAL NUMBER			{
 			}
 			free($3);
 		}
+		| CAFILE STRING				{
+			free(conf->sc_cafile);
+			conf->sc_cafile = $2;
+		} 
 		;
 
 diropts		: diropts diropt nl
@@ -368,6 +444,7 @@ lookup(char *s)
 		{ "basedn",		BASEDN },
 		{ "bindcred",		BINDCRED },
 		{ "binddn",		BINDDN },
+		{ "cafile",		CAFILE },
 		{ "change",		CHANGE },
 		{ "class",		CLASS },
 		{ "directory",		DIRECTORY },
@@ -386,6 +463,7 @@ lookup(char *s)
 		{ "home",		HOME },
 		{ "include",		INCLUDE },
 		{ "interval",		INTERVAL },
+		{ "ldaps",		LDAPS },
 		{ "list",		LIST },
 		{ "map",		MAP },
 		{ "maps",		MAPS },
@@ -395,6 +473,7 @@ lookup(char *s)
 		{ "provide",		PROVIDE },
 		{ "server",		SERVER },
 		{ "shell",		SHELL },
+		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "uid",		UID },
 		{ "user",		USER },
@@ -731,6 +810,11 @@ parse_config(struct env *x_conf, const char *filename, int opts)
 	TAILQ_INIT(&conf->sc_idms);
 	conf->sc_conf_tv.tv_sec = DEFAULT_INTERVAL;
 	conf->sc_conf_tv.tv_usec = 0;
+	conf->sc_cafile = strdup(YPLDAP_CERT_FILE);
+	if (conf->sc_cafile == NULL) {
+		log_warn("malloc");
+		return (-1);
+	}
 
 	errors = 0;
 
