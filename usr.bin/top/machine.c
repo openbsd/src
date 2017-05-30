@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.88 2017/03/15 04:24:14 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.89 2017/05/30 06:01:30 tedu Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -159,14 +159,14 @@ int
 getncpu(void)
 {
 	int mib[] = { CTL_HW, HW_NCPU };
-	int ncpu;
-	size_t size = sizeof(ncpu);
+	int numcpu;
+	size_t size = sizeof(numcpu);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &ncpu, &size, NULL, 0) == -1)
+	    &numcpu, &size, NULL, 0) == -1)
 		return (-1);
 
-	return (ncpu);
+	return (numcpu);
 }
 
 int
@@ -545,7 +545,7 @@ format_comm(struct kinfo_proc *kp)
 }
 
 char *
-format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid,
+format_next_process(caddr_t hndl, char *(*get_userid)(uid_t), pid_t *pid,
     int show_threads)
 {
 	char *p_wait;
@@ -556,7 +556,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t), pid_t *pid,
 	char buf[16];
 
 	/* find and remember the next proc structure */
-	hp = (struct handle *) handle;
+	hp = (struct handle *) hndl;
 	pp = *(hp->next_proc++);
 	hp->remaining--;
 
