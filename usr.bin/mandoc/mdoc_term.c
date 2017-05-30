@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.256 2017/05/09 14:09:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.257 2017/05/30 16:31:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1975,16 +1975,24 @@ termp_li_pre(DECL_ARGS)
 static int
 termp_lk_pre(DECL_ARGS)
 {
-	const struct roff_node *link, *descr;
+	const struct roff_node *link, *descr, *punct;
 	int display;
 
 	if ((link = n->child) == NULL)
 		return 0;
 
+	/* Find beginning of trailing punctuation. */
+	punct = n->last;
+	while (punct != link && punct->flags & NODE_DELIMC)
+		punct = punct->prev;
+	punct = punct->next;
+
 	/* Link text. */
-	if ((descr = link->next) != NULL && !(descr->flags & NODE_DELIMC)) {
+	if ((descr = link->next) != NULL && descr != punct) {
 		term_fontpush(p, TERMFONT_UNDER);
-		while (descr != NULL && !(descr->flags & NODE_DELIMC)) {
+		while (descr != punct) {
+			if (descr->flags & (NODE_DELIMC | NODE_DELIMO))
+				p->flags |= TERMP_NOSPACE;
 			term_word(p, descr->string);
 			descr = descr->next;
 		}
@@ -2004,10 +2012,10 @@ termp_lk_pre(DECL_ARGS)
 	term_fontpop(p);
 
 	/* Trailing punctuation. */
-	while (descr != NULL) {
+	while (punct != NULL) {
 		p->flags |= TERMP_NOSPACE;
-		term_word(p, descr->string);
-		descr = descr->next;
+		term_word(p, punct->string);
+		punct = punct->next;
 	}
 	if (display)
 		term_newln(p);

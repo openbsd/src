@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 multiple arguments
 .Lk http://www.bsd.lv/ the bsd.lv project ,
-.Lk http://www.gnu.org/software/groff/ GNU troff ,
+.Lk http://www.gnu.org/software/groff/ GNU troff ","
 two arguments
 .Lk http://mdocml.bsd.lv/ mandoc
 one argument

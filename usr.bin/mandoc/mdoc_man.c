@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.113 2017/05/08 15:33:43 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.114 2017/05/30 16:31:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1525,16 +1525,22 @@ post_lb(DECL_ARGS)
 static int
 pre_lk(DECL_ARGS)
 {
-	const struct roff_node *link, *descr;
+	const struct roff_node *link, *descr, *punct;
 	int display;
 
 	if ((link = n->child) == NULL)
 		return 0;
 
+	/* Find beginning of trailing punctuation. */
+	punct = n->last;
+	while (punct != link && punct->flags & NODE_DELIMC)
+		punct = punct->prev;
+	punct = punct->next;
+
 	/* Link text. */
-	if ((descr = link->next) != NULL && !(descr->flags & NODE_DELIMC)) {
+	if ((descr = link->next) != NULL && descr != punct) {
 		font_push('I');
-		while (descr != NULL && !(descr->flags & NODE_DELIMC)) {
+		while (descr != punct) {
 			print_word(descr->string);
 			descr = descr->next;
 		}
@@ -1554,9 +1560,9 @@ pre_lk(DECL_ARGS)
 	font_pop();
 
 	/* Trailing punctuation. */
-	while (descr != NULL) {
-		print_word(descr->string);
-		descr = descr->next;
+	while (punct != NULL) {
+		print_word(punct->string);
+		punct = punct->next;
 	}
 	if (display)
 		print_line(".RE", MMAN_nl);

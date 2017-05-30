@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.21 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.22 2017/05/30 16:31:25 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1306,21 +1306,27 @@ md_uri(const char *s)
 static int
 md_pre_Lk(struct roff_node *n)
 {
-	const struct roff_node *link, *descr;
+	const struct roff_node *link, *descr, *punct;
 
 	if ((link = n->child) == NULL)
 		return 0;
 
+	/* Find beginning of trailing punctuation. */
+	punct = n->last;
+	while (punct != link && punct->flags & NODE_DELIMC)
+		punct = punct->prev;
+	punct = punct->next;
+
 	/* Link text. */
 	descr = link->next;
-	if (descr == NULL || descr->flags & NODE_DELIMC)
+	if (descr == punct)
 		descr = link;  /* no text */
 	md_rawword("[");
 	outflags &= ~MD_spc;
 	do {
 		md_word(descr->string);
 		descr = descr->next;
-	} while (descr != NULL && !(descr->flags & NODE_DELIMC));
+	} while (descr != punct);
 	outflags &= ~MD_spc;
 
 	/* Link target. */
@@ -1330,9 +1336,9 @@ md_pre_Lk(struct roff_node *n)
 	md_rawword(")");
 
 	/* Trailing punctuation. */
-	while (descr != NULL) {
-		md_word(descr->string);
-		descr = descr->next;
+	while (punct != NULL) {
+		md_word(punct->string);
+		punct = punct->next;
 	}
 	return 0;
 }

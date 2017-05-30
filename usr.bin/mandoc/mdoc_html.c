@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.163 2017/05/17 17:53:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.164 2017/05/30 16:31:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1307,24 +1307,32 @@ mdoc_pp_pre(MDOC_ARGS)
 static int
 mdoc_lk_pre(MDOC_ARGS)
 {
+	const struct roff_node *link, *descr, *punct;
 	struct tag	*t;
 
-	if ((n = n->child) == NULL)
+	if ((link = n->child) == NULL)
 		return 0;
 
+	/* Find beginning of trailing punctuation. */
+	punct = n->last;
+	while (punct != link && punct->flags & NODE_DELIMC)
+		punct = punct->prev;
+	punct = punct->next;
+
 	/* Link target and link text. */
-	t = print_otag(h, TAG_A, "cTh", "Lk", n->string);
-	if (n->next == NULL || n->next->flags & NODE_DELIMC)
-		print_text(h, n->string);
-	for (n = n->next; n != NULL && !(n->flags & NODE_DELIMC); n = n->next)
-		print_text(h, n->string);
+	t = print_otag(h, TAG_A, "cTh", "Lk", link->string);
+	for (descr = link->next; descr != punct; descr = descr->next) {
+		if (descr->flags & (NODE_DELIMC | NODE_DELIMO))
+			h->flags |= HTML_NOSPACE;
+		print_text(h, descr->string);
+	}
 	print_tagq(h, t);
 
 	/* Trailing punctuation. */
-	while (n != NULL) {
+	while (punct != NULL) {
 		h->flags |= HTML_NOSPACE;
-		print_text(h, n->string);
-		n = n->next;
+		print_text(h, punct->string);
+		punct = punct->next;
 	}
 	return 0;
 }
