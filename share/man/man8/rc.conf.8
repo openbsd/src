@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.28 2015/12/05 21:35:46 jmc Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.29 2017/05/30 12:04:27 tb Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2015 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt RC.CONF 8
 .Os
 .Sh NAME
@@ -139,6 +139,8 @@ rc calls:
 rc calls:
 .Xr ipsecctl 8
 .Fl f Pa /etc/ipsec.conf
+.It Cm library_aslr
+rc reorders some libraries for improved protection against ROP.
 .It Cm multicast
 See
 .Xr netstart 8 .

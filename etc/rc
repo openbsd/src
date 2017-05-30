@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.497 2017/05/29 10:24:06 florian Exp $
+#	$OpenBSD: rc,v 1.498 2017/05/30 12:04:26 tb Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -158,9 +158,12 @@ make_keys() {
 
 # Re-link libraries, placing the objects in a random order.
 reorder_libs() {
-	local _l _liba _libas _tmpdir _remount=false _error=false
-	local _dkdev=$(df /usr/lib | sed '1d;s/ .*//')
-	local _mp=$(mount | grep "^$_dkdev")
+	local _dkdev _l _liba _libas _mp _tmpdir _remount=false _error=false
+
+	[[ $library_aslr == NO ]] && return
+
+	_dkdev=$(df /usr/lib | sed '1d;s/ .*//')
+	_mp=$(mount | grep "^$_dkdev")
 
 	# Skip if /usr/lib is on a nfs mounted filesystem.
 	[[ $_mp == *' type nfs '* ]] && return
