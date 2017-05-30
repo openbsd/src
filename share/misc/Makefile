@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 2017/05/28 19:42:26 benno Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/05/30 14:52:37 millert Exp $
 #	from: @(#)Makefile	5.13 (Berkeley) 5/7/91
 
-FILES=	airport ascii birthtoken countrycodes \
+FILES=	airport birthtoken countrycodes \
 	inter.phone license.template mdoc.template mime.types \
 	na.phone scsi_modes usb_hid_usages usb_hid_usages \
 	zipcodes 
