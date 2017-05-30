@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2017/05/29 08:59:42 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2017/05/30 18:18:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -229,7 +229,7 @@ frontend(int debug, int verbose, char *sockname)
 	rs.nd_rs_reserved = 0;
 
 	memset(&dst, 0, sizeof(dst));
-	dst.sin6_family = AF_INET6;	
+	dst.sin6_family = AF_INET6;
 	if (inet_pton(AF_INET6, ALLROUTER, &dst.sin6_addr.s6_addr) != 1)
 		fatal("inet_pton");
 
@@ -307,7 +307,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	int			 shut = 0;
 
 	DEBUG_IMSG("%s", __func__);
-	
+
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
@@ -631,7 +631,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			p = rl->sr_label;
 
 			for (ap = argv; ap < &argv[3] && (*ap =
-			     strsep(&p, " ")) != NULL;) {
+			    strsep(&p, " ")) != NULL;) {
 				if (**ap != '\0')
 					ap++;
 			}

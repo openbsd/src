@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.34 2017/05/30 15:57:12 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.35 2017/05/30 18:18:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -22,7 +22,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,7 +34,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -236,7 +236,7 @@ void			 configure_dfr(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
-void		 	 update_iface_ra(struct slaacd_iface *, struct radv *);
+void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 send_proposal(struct imsg_proposal *);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
@@ -432,7 +432,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			    "privacy: %s", __func__, imsg_ifinfo.if_index,
 			    ether_ntoa(&imsg_ifinfo.hw_address),
 			    imsg_ifinfo.running ? "yes" : "no",
-			    imsg_ifinfo.autoconfprivacy ? "yes" : "no" );
+			    imsg_ifinfo.autoconfprivacy ? "yes" : "no");
 
 			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
 			if (iface == NULL) {
@@ -492,7 +492,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 					    NULL))
 						evtimer_del(&iface->timer);
 				}
-				
+
 				memcpy(&iface->ll_address,
 				    &imsg_ifinfo.ll_address,
 				    sizeof(struct sockaddr_in6));
@@ -732,7 +732,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		cei_ra.reachable_time = ra->reachable_time;
 		cei_ra.retrans_time = ra->retrans_time;
 		engine_imsg_compose_frontend(IMSG_CTL_SHOW_INTERFACE_INFO_RA,
-		     pid, &cei_ra, sizeof(cei_ra));
+		    pid, &cei_ra, sizeof(cei_ra));
 
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			memset(&cei_ra_prefix, 0, sizeof(cei_ra_prefix));
@@ -1156,7 +1156,7 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 #define EUI64_GBIT	0x01
 #define EUI64_UBIT	0x02
 
-	if (privacy) {	
+	if (privacy) {
 		arc4random_buf(&priv_in6.s6_addr32[2], 8);
 		priv_in6.s6_addr[8] &= ~EUI64_GBIT; /* g bit to "individual" */
 		priv_in6.s6_addr[8] |= EUI64_UBIT;  /* u bit to "local" */
@@ -1207,7 +1207,7 @@ gen_addr(struct slaacd_iface *iface, struct radv_prefix *prefix, struct
 		    ~addr_proposal->mask.s6_addr32[3]);
 	}
 
-#undef s6_addr32	
+#undef s6_addr32
 }
 
 /* from sys/netinet6/in6.c */
@@ -1447,7 +1447,7 @@ parse_dnssl(char* data, int datalen)
 			return NULL;
 		}
 		if (len == 0) {
-			if ( pos < datalen && data[pos + 1] != 0)
+			if (pos < datalen && data[pos + 1] != 0)
 				*nsslp++ = ' '; /* seperator for next domain */
 			else
 				break;
@@ -1539,8 +1539,8 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 							    sizeof(hbuf));
 						}
 						log_debug("%s: iface %d: %s",
-						     __func__, iface->if_index,
-						     hbuf);
+						    __func__, iface->if_index,
+						    hbuf);
 						break;
 					}
 				}
@@ -2065,7 +2065,7 @@ iface_timeout(int fd, short events, void *arg)
 				tv.tv_usec = arc4random_uniform(1000000);
 				evtimer_add(&iface->timer, &tv);
 			}
-			break;		
+			break;
 		case IF_DOWN:
 		case IF_IDLE:
 		default:
@@ -2085,7 +2085,6 @@ find_ra(struct slaacd_iface *iface, struct sockaddr_in6 *from)
 	}
 
 	return (NULL);
-	
 }
 
 struct address_proposal*
@@ -2153,7 +2152,6 @@ find_prefix(struct slaacd_iface *iface, struct address_proposal *addr_proposal,
 				*result_ra = ra;
 				*result_prefix = prefix;
 			}
-			
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.21 2017/05/30 15:39:49 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.22 2017/05/30 18:18:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	    pipe_main2frontend[1], debug, cmd_opts & OPT_VERBOSE, csock);
 
 	slaacd_process = PROC_MAIN;
-	
+
 	log_procinit(log_procnames[slaacd_process]);
 
 	if ((routesock = socket(PF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
@@ -661,7 +661,7 @@ configure_interface(struct imsg_configure_address *address)
 	}
 
 	memcpy(&in6_addreq.ifra_addr, &address->addr,
-	     sizeof(in6_addreq.ifra_addr));
+	    sizeof(in6_addreq.ifra_addr));
 	memcpy(&in6_addreq.ifra_prefixmask.sin6_addr, &address->mask,
 	    sizeof(in6_addreq.ifra_prefixmask.sin6_addr));
 	in6_addreq.ifra_prefixmask.sin6_family = AF_INET6;

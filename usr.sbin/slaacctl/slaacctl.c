@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.6 2017/05/28 09:35:56 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.7 2017/05/30 18:18:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -179,7 +179,7 @@ show_interface_msg(struct imsg *imsg)
 	struct tm				*t;
 	struct timespec				 now, diff;
 	char					 buf[IF_NAMESIZE], *bufp;
-	char				 	 hbuf[NI_MAXHOST], whenbuf[255];
+	char					 hbuf[NI_MAXHOST], whenbuf[255];
 	char					 ntopbuf[INET6_ADDRSTRLEN];
 
 	switch (imsg->hdr.type) {
