@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.3 2017/05/27 10:24:31 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.4 2017/05/30 08:35:32 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -81,7 +81,7 @@
 #endif
 
 struct vq_entry {
-	SIMPLEQ_ENTRY(vq_entry)	qe_list; /* free list */
+	SLIST_ENTRY(vq_entry)	qe_list; /* free list */
 	uint16_t		qe_index; /* index in vq_desc array */
 	/* followings are used only when it is the `head' entry */
 	int16_t			qe_next;     /* next enq slot */
@@ -114,7 +114,7 @@ struct virtqueue {
 
 	/* free entry management */
 	struct vq_entry		*vq_entries;
-	SIMPLEQ_HEAD(, vq_entry) vq_freelist;
+	SLIST_HEAD(, vq_entry) vq_freelist;
 	struct mutex		*vq_freelist_lock;
 
 	/* enqueue/dequeue status */

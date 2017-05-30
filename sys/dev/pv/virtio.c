@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.5 2017/05/27 10:24:31 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.6 2017/05/30 08:35:32 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -256,10 +256,10 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
 	}
 
 	/* free slot management */
-	SIMPLEQ_INIT(&vq->vq_freelist);
+	SLIST_INIT(&vq->vq_freelist);
 	for (i = 0; i < vq_size; i++) {
-		SIMPLEQ_INSERT_TAIL(&vq->vq_freelist,
-				    &vq->vq_entries[i], qe_list);
+		SLIST_INSERT_HEAD(&vq->vq_freelist, &vq->vq_entries[i],
+		    qe_list);
 		vq->vq_entries[i].qe_index = i;
 	}
 
@@ -405,7 +405,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 
 	/* device must be already deactivated */
 	/* confirm the vq is empty */
-	SIMPLEQ_FOREACH(qe, &vq->vq_freelist, qe_list) {
+	SLIST_FOREACH(qe, &vq->vq_freelist, qe_list) {
 		i++;
 	}
 	if (i != vq->vq_num) {
@@ -435,10 +435,10 @@ vq_alloc_entry(struct virtqueue *vq)
 {
 	struct vq_entry *qe;
 
-	if (SIMPLEQ_EMPTY(&vq->vq_freelist))
+	if (SLIST_EMPTY(&vq->vq_freelist))
 		return NULL;
-	qe = SIMPLEQ_FIRST(&vq->vq_freelist);
-	SIMPLEQ_REMOVE_HEAD(&vq->vq_freelist, qe_list);
+	qe = SLIST_FIRST(&vq->vq_freelist);
+	SLIST_REMOVE_HEAD(&vq->vq_freelist, qe_list);
 
 	return qe;
 }
@@ -446,7 +446,7 @@ vq_alloc_entry(struct virtqueue *vq)
 void
 vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
 {
-	SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, qe, qe_list);
+	SLIST_INSERT_HEAD(&vq->vq_freelist, qe, qe_list);
 }
 
 /*
