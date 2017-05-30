@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.23 2017/05/07 22:27:57 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.24 2017/05/30 21:44:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,7 +24,8 @@
 
 #include "tmux.h"
 
-static struct screen *window_clock_init(struct window_pane *);
+static struct screen *window_clock_init(struct window_pane *,
+		    struct cmd_find_state *, struct args *);
 static void	window_clock_free(struct window_pane *);
 static void	window_clock_resize(struct window_pane *, u_int, u_int);
 static void	window_clock_key(struct window_pane *, struct client *,
@@ -145,7 +146,8 @@ window_clock_timer_callback(__unused int fd, __unused short events, void *arg)
 }
 
 static struct screen *
-window_clock_init(struct window_pane *wp)
+window_clock_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
+    __unused struct args *args)
 {
 	struct window_clock_mode_data	*data;
 	struct screen			*s;
