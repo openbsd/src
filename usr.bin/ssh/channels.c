@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.362 2017/05/30 08:49:58 markus Exp $ */
+/* $OpenBSD: channels.c,v 1.363 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2367,9 +2367,8 @@ channel_proxy_downstream(Channel *downstream)
  * replaces local (proxy) channel ID with downstream channel ID.
  */
 int
-channel_proxy_upstream(Channel *c, int type, u_int32_t seq, void *ctxt)
+channel_proxy_upstream(Channel *c, int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = active_state;
 	struct sshbuf *b = NULL;
 	Channel *downstream;
 	const u_char *cp = NULL;
@@ -2449,7 +2448,7 @@ channel_proxy_upstream(Channel *c, int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_data(int type, u_int32_t seq, void *ctxt)
+channel_input_data(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id;
 	const u_char *data;
@@ -2461,7 +2460,7 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 	c = channel_lookup(id);
 	if (c == NULL)
 		packet_disconnect("Received data for nonexistent channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 
 	/* Ignore any data for non-open channels (might happen on close) */
@@ -2509,7 +2508,7 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
+channel_input_extended_data(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id;
 	char *data;
@@ -2522,7 +2521,7 @@ channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
 
 	if (c == NULL)
 		packet_disconnect("Received extended_data for bad channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	if (c->type != SSH_CHANNEL_OPEN) {
 		logit("channel %d: ext data for non open", id);
@@ -2559,7 +2558,7 @@ channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_ieof(int type, u_int32_t seq, void *ctxt)
+channel_input_ieof(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id;
 	Channel *c;
@@ -2569,7 +2568,7 @@ channel_input_ieof(int type, u_int32_t seq, void *ctxt)
 	c = channel_lookup(id);
 	if (c == NULL)
 		packet_disconnect("Received ieof for nonexistent channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	chan_rcvd_ieof(c);
 
@@ -2585,14 +2584,14 @@ channel_input_ieof(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_oclose(int type, u_int32_t seq, void *ctxt)
+channel_input_oclose(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id = packet_get_int();
 	Channel *c = channel_lookup(id);
 
 	if (c == NULL)
 		packet_disconnect("Received oclose for nonexistent channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	packet_check_eom();
 	chan_rcvd_oclose(c);
@@ -2601,7 +2600,7 @@ channel_input_oclose(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_open_confirmation(int type, u_int32_t seq, void *ctxt)
+channel_input_open_confirmation(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id, remote_id;
 	Channel *c;
@@ -2612,7 +2611,7 @@ channel_input_open_confirmation(int type, u_int32_t seq, void *ctxt)
 	if (c==NULL)
 		packet_disconnect("Received open confirmation for "
 		    "unknown channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	if (c->type != SSH_CHANNEL_OPENING)
 		packet_disconnect("Received open confirmation for "
@@ -2653,7 +2652,7 @@ reason2txt(int reason)
 
 /* ARGSUSED */
 int
-channel_input_open_failure(int type, u_int32_t seq, void *ctxt)
+channel_input_open_failure(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int id, reason;
 	char *msg = NULL, *lang = NULL;
@@ -2665,7 +2664,7 @@ channel_input_open_failure(int type, u_int32_t seq, void *ctxt)
 	if (c==NULL)
 		packet_disconnect("Received open failure for "
 		    "unknown channel %d.", id);
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	if (c->type != SSH_CHANNEL_OPENING)
 		packet_disconnect("Received open failure for "
@@ -2692,7 +2691,7 @@ channel_input_open_failure(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
+channel_input_window_adjust(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Channel *c;
 	int id;
@@ -2706,7 +2705,7 @@ channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 		logit("Received window adjust for non-open channel %d.", id);
 		return 0;
 	}
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	adjust = packet_get_int();
 	packet_check_eom();
@@ -2720,7 +2719,7 @@ channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 
 /* ARGSUSED */
 int
-channel_input_status_confirm(int type, u_int32_t seq, void *ctxt)
+channel_input_status_confirm(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Channel *c;
 	struct channel_confirm *cc;
@@ -2736,7 +2735,7 @@ channel_input_status_confirm(int type, u_int32_t seq, void *ctxt)
 		logit("channel_input_status_confirm: %d: unknown", id);
 		return 0;
 	}	
-	if (channel_proxy_upstream(c, type, seq, ctxt))
+	if (channel_proxy_upstream(c, type, seq, ssh))
 		return 0;
 	packet_check_eom();
 	if ((cc = TAILQ_FIRST(&c->status_confirms)) == NULL)
