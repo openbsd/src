@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.48 2017/05/30 13:13:47 mlarkin Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.49 2017/05/30 17:56:47 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -61,6 +61,14 @@ int nr_vioblk;
 #define VMMCI_F_TIMESYNC	(1<<0)
 #define VMMCI_F_ACK		(1<<1)
 #define VMMCI_F_SYNCRTC		(1<<2)
+
+struct ioinfo {
+	uint8_t *buf;
+	ssize_t len;
+	off_t offset;
+	int fd;
+	int error;
+};
 
 const char *
 vioblk_cmd_name(uint32_t type)
@@ -324,35 +332,87 @@ vioblk_update_qs(struct vioblk_dev *dev)
 	dev->cfg.queue_size = dev->vq[dev->cfg.queue_select].qs;
 }
 
-static char *
-vioblk_do_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
+static void
+vioblk_free_info(struct ioinfo *info)
 {
-	char *buf;
+	if (!info)
+		return;
+	free(info->buf);
+	free(info);
+}
 
-	buf = malloc(sz);
-	if (buf == NULL) {
-		log_warn("malloc errror vioblk read");
-		return (NULL);
-	}
+static struct ioinfo *
+vioblk_start_read(struct vioblk_dev *dev, off_t sector, ssize_t sz)
+{
+	struct ioinfo *info;
 
-	if (pread(dev->fd, buf, sz, sector * VIRTIO_BLK_SECTOR_SIZE) != sz) {
+	info = calloc(1, sizeof(*info));
+	if (!info)
+		goto nomem;
+	info->buf = malloc(sz);
+	if (info->buf == NULL)
+		goto nomem;
+	info->len = sz;
+	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
+	info->fd = dev->fd;
+
+	return info;
+
+nomem:
+	free(info);
+	log_warn("malloc errror vioblk read");
+	return (NULL);
+}
+
+
+static const uint8_t *
+vioblk_finish_read(struct ioinfo *info)
+{
+	if (pread(info->fd, info->buf, info->len, info->offset) != info->len) {
+		info->error = errno;
 		log_warn("vioblk read error");
-		free(buf);
-		return (NULL);
+		return NULL;
 	}
 
-	return buf;
+	return info->buf;
+}
+
+static struct ioinfo *
+vioblk_start_write(struct vioblk_dev *dev, off_t sector, paddr_t addr, size_t len)
+{
+	struct ioinfo *info;
+
+	info = calloc(1, sizeof(*info));
+	if (!info)
+		goto nomem;
+	info->buf = malloc(len);
+	if (info->buf == NULL)
+		goto nomem;
+	info->len = len;
+	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
+	info->fd = dev->fd;
+
+	if (read_mem(addr, info->buf, len)) {
+		vioblk_free_info(info);
+		return NULL;
+	}
+
+	return info;
+
+nomem:
+	free(info);
+	log_warn("malloc errror vioblk write");
+	return (NULL);
 }
 
 static int
-vioblk_do_write(struct vioblk_dev *dev, off_t sector, char *buf, ssize_t sz)
+vioblk_finish_write(struct ioinfo *info)
 {
-	if (pwrite(dev->fd, buf, sz, sector * VIRTIO_BLK_SECTOR_SIZE) != sz) {
+	if (pwrite(info->fd, info->buf, info->len, info->offset) != info->len) {
 		log_warn("vioblk write error");
-		return (1);
+		return EIO;
 	}
-
-	return (0);
+	return 0;
 }
 
 /*
@@ -368,7 +428,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	uint8_t ds;
 	int ret;
 	off_t secbias;
-	char *vr, *secdata;
+	char *vr;
 	struct vring_desc *desc, *cmd_desc, *secdata_desc, *ds_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
@@ -441,14 +501,16 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 			secbias = 0;
 			do {
-				/* read the data (use current data descriptor) */
-				/*
-				 * XXX waste to malloc secdata in vioblk_do_read
-				 * and free it here over and over
-				 */
-				secdata = vioblk_do_read(dev, cmd.sector + secbias,
+				struct ioinfo *info;
+				const uint8_t *secdata;
+
+				info = vioblk_start_read(dev, cmd.sector + secbias,
 				    (ssize_t)secdata_desc->len);
+
+				/* read the data (use current data descriptor) */
+				secdata = vioblk_finish_read(info);
 				if (secdata == NULL) {
+					vioblk_free_info(info);
 					log_warnx("vioblk: block read error, "
 					    "sector %lld", cmd.sector);
 					goto out;
@@ -460,11 +522,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					    "data to gpa @ 0x%llx",
 					    secdata_desc->addr);
 					dump_descriptor_chain(desc, cmd_desc_idx);
-					free(secdata);
+					vioblk_free_info(info);
 					goto out;
 				}
 
-				free(secdata);
+				vioblk_free_info(info);
 
 				secbias += (secdata_desc->len / VIRTIO_BLK_SECTOR_SIZE);
 				secdata_desc_idx = secdata_desc->next &
@@ -514,34 +576,30 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				goto out;
 			}
 
-			secdata = NULL;
 			secbias = 0;
 			do {
-				secdata = realloc(secdata, secdata_desc->len);
-				if (secdata == NULL) {
-					log_warn("wr vioblk: malloc error, "
-					    "len %d", secdata_desc->len);
-					goto out;
-				}
+				struct ioinfo *info;
 
-				if (read_mem(secdata_desc->addr, secdata,
-				    secdata_desc->len)) {
+				info = vioblk_start_write(dev, cmd.sector + secbias,
+				    secdata_desc->addr, secdata_desc->len);
+
+				if (info == NULL) {
 					log_warnx("wr vioblk: can't read "
 					    "sector data @ 0x%llx",
 					    secdata_desc->addr);
 					dump_descriptor_chain(desc,
 					    cmd_desc_idx);
-					free(secdata);
 					goto out;
 				}
 
-				if (vioblk_do_write(dev, cmd.sector + secbias,
-				    secdata, (ssize_t)secdata_desc->len)) {
+				if (vioblk_finish_write(info)) {
 					log_warnx("wr vioblk: disk write "
 					    "error");
-					free(secdata);
+					vioblk_free_info(info);
 					goto out;
 				}
+
+				vioblk_free_info(info);
 
 				secbias += secdata_desc->len /
 				    VIRTIO_BLK_SECTOR_SIZE;
@@ -550,8 +608,6 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				    VIOBLK_QUEUE_MASK;
 				secdata_desc = &desc[secdata_desc_idx];
 			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
-
-			free(secdata);
 
 			ds_desc_idx = secdata_desc_idx;
 			ds_desc = secdata_desc;

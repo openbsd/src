@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.18 2017/05/28 23:56:13 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.19 2017/05/30 17:56:47 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1230,9 +1230,10 @@ find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
  *      exist in the guest.
  */
 int
-write_mem(paddr_t dst, void *buf, size_t len)
+write_mem(paddr_t dst, const void *buf, size_t len)
 {
-	char *from = buf, *to;
+	const char *from = buf;
+	char *to;
 	size_t n, off;
 	struct vm_mem_range *vmr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.54 2017/05/04 19:41:58 reyk Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.55 2017/05/30 17:56:47 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -289,7 +289,7 @@ uint32_t vm_priv_addr(struct address *, uint32_t, int, int);
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);
 void	 vmm_shutdown(void);
-int	 write_mem(paddr_t, void *buf, size_t);
+int	 write_mem(paddr_t, const void *buf, size_t);
 int	 read_mem(paddr_t, void *buf, size_t);
 int	 opentap(char *);
 int	 fd_hasdata(int);
