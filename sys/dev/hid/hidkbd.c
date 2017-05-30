@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.4 2017/05/12 09:16:55 mpi Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.5 2017/05/30 07:40:24 mpi Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -494,7 +494,7 @@ hidkbd_cngetc(struct hidkbd *kbd, u_int *type, int *data)
 
 	c = kbd->sc_pollchars[0];
 	kbd->sc_npollchar--;
-	memcpy(kbd->sc_pollchars, kbd->sc_pollchars+1,
+	memmove(kbd->sc_pollchars, kbd->sc_pollchars+1,
 	       kbd->sc_npollchar * sizeof(u_int16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
