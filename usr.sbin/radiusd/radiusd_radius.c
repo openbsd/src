@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.12 2016/03/21 00:49:36 guenther Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.13 2017/05/30 16:30:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -262,10 +262,8 @@ module_radius_stop(void *ctx)
 	struct module_radius_req	*req, *treq;
 	struct module_radius		*module = ctx;
 
-	TAILQ_FOREACH_SAFE(req, &module->req, next, treq) {
+	TAILQ_FOREACH_SAFE(req, &module->req, next, treq)
 		module_radius_req_on_failure(req);
-		TAILQ_REMOVE(&module->req, req, next);
-	}
 
 	for (i = 0; i < module->nserver; i++)
 		radius_server_stop(&module->server[i]);
