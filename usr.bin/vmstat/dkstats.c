@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.39 2016/09/04 14:21:05 tb Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.40 2017/05/30 05:57:46 tedu Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -201,9 +201,9 @@ dkreadstats(void)
 			    (name = strsep(&bufpp, ",")) != NULL; i++)
 				dk_name[i] = name;
 			for (i = 0; i < dk_ndrive; i++) {
-				char *p = strchr(dk_name[i], ':');
-				if (p)
-					*p = '\0';
+				char *ep = strchr(dk_name[i], ':');
+				if (ep)
+					*ep = '\0';
 			}
 			disknames = cur.dk_name[0];	/* To free old names. */
 
@@ -534,9 +534,9 @@ dkinit(int sel)
 			cur.dk_select[i] = sel;
 		}
 		for (i = 0; i < dk_ndrive; i++) {
-			char *p = strchr(cur.dk_name[i], ':');
-			if (p)
-				*p = '\0';
+			char *ep = strchr(cur.dk_name[i], ':');
+			if (ep)
+				*ep = '\0';
 		}
 	} else {
 #if !defined(NOKVM)
