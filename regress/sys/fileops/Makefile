@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2017/05/29 11:01:16 sf Exp $
+# $OpenBSD: Makefile,v 1.2 2017/05/30 08:44:58 sf Exp $
 
-SUBDIR=		msdos32 msdos16 ffs
+SUBDIR=		ffs ext2 msdos16 msdos32
 PROG=		fileops
 NOMAN=		yes
 
