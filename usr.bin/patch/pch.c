@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.57 2017/05/26 20:27:02 tedu Exp $	*/
+/*	$OpenBSD: pch.c,v 1.58 2017/05/30 06:55:40 florian Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -327,7 +327,7 @@ intuit_diff_type(void)
 				free(revision);
 				revision = NULL;
 			}
-		} else if (strnEQ(s, "diff --git ", 11))
+		} else if (strnEQ(s, "diff --git a/", 13))
 			piece_of_git = 1;
 		if ((!diff_type || diff_type == ED_DIFF) &&
 		    first_command_line >= 0 &&
