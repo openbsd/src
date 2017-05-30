@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.28 2017/05/30 12:38:36 naddy Exp $	*/
+/*	$OpenBSD: engine.c,v 1.29 2017/05/30 14:21:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1503,19 +1503,18 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					dfr_proposal->router_lifetime =
 					    ra->router_lifetime;
 
-					log_debug("%s, dfr state: %s",
+					log_debug("%s, dfr state: %s, rl: %d",
 					    __func__, proposal_state_name[
-					    dfr_proposal->state]);
+					    dfr_proposal->state],
+					    real_lifetime(&dfr_proposal->uptime,
+					    dfr_proposal->router_lifetime));
 
 					switch (dfr_proposal->state) {
 					case PROPOSAL_CONFIGURED:
 					case PROPOSAL_NEARLY_EXPIRED:
-						/*
-						 * nothing to do here
-						 * maybe we should check
-						 * if the route got deleted
-						 * and re-add it 
-						 */
+						log_debug("updating dfr");
+						configure_dfr(iface,
+						    dfr_proposal);
 						break;
 					default:
 						if (getnameinfo((struct
@@ -1766,6 +1765,7 @@ configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
 {
 	struct imsg_configure_dfr	 dfr;
 	struct timeval			 tv;
+	enum proposal_state		 prev_state;
 
 	dfr_proposal->next_timeout = dfr_proposal->router_lifetime -
 	    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
@@ -1774,9 +1774,20 @@ configure_dfr(struct slaacd_iface *iface, struct dfr_proposal
 	tv.tv_usec = arc4random_uniform(1000000);
 	evtimer_add(&dfr_proposal->timer, &tv);
 
+	prev_state = dfr_proposal->state;
+
 	dfr_proposal->state = PROPOSAL_CONFIGURED;
 
 	log_debug("%s: %d", __func__, iface->if_index);
+
+	if (prev_state == PROPOSAL_CONFIGURED || prev_state ==
+	    PROPOSAL_NEARLY_EXPIRED) {
+		/*
+		 * nothing to do here, routes do not expire in the kernel
+		 * XXX check if the route got deleted and re-add it?
+		 */
+		return;
+	}
 
 	dfr.if_index = iface->if_index;
 	memcpy(&dfr.addr, &dfr_proposal->addr, sizeof(dfr.addr));
