@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2016/09/01 09:57:45 mpi Exp $
+# $OpenBSD: Makefile,v 1.15 2017/05/30 11:57:59 bluhm Exp $
 
 RDOMAIN?=	5
 
@@ -7,7 +7,7 @@ RDOMAIN?=	5
 .ifmake !obj && !clean && !cleandir && !depend && !regress
 .if (${.TARGET} != all && ! make(all)) || (${.TARGET} == all)
 
-.SILENT: .BEGIN .END .INTERRUPT
+.SILENT: .BEGIN .END
 
 .BEGIN:
 	-${SUDO} ifconfig lo10001 up rdomain ${RDOMAIN} 192.0.2.1/32
@@ -16,12 +16,6 @@ RDOMAIN?=	5
 	-${SUDO} ifconfig lo10004 up rdomain ${RDOMAIN} 192.0.2.4/32
 
 .END:
-	-${SUDO} ifconfig lo10001 destroy
-	-${SUDO} ifconfig lo10002 destroy
-	-${SUDO} ifconfig lo10003 destroy
-	-${SUDO} ifconfig lo10004 destroy
-
-.INTERRUPT:
 	-${SUDO} ifconfig lo10001 destroy
 	-${SUDO} ifconfig lo10002 destroy
 	-${SUDO} ifconfig lo10003 destroy
@@ -184,7 +178,7 @@ rttest${n}:
 n=	14
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
-	${SUDO} ifconfig lo10001 inet6 eui64 
+	${SUDO} ifconfig lo10001 inet6 eui64
 	${SUDO} ifconfig lo10002 inet6 fd88::1/64
 	${SUDO} ifconfig lo10003 inet6 fd99::1/64
 	${RCMD} add -inet6 fd88::666 fd99::1
@@ -205,7 +199,7 @@ rttest${n}:
 n=	16
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
-	${SUDO} ifconfig lo10001 inet6 eui64 
+	${SUDO} ifconfig lo10001 inet6 eui64
 	${SUDO} ifconfig lo10002 inet6 fd88::1/64
 	${SUDO} ifconfig lo10003 inet6 fd99::1/64
 	${RCMD} add -inet6 fd88::666 fd99::1
