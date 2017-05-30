@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-pubkey.c,v 1.62 2017/01/30 01:03:00 djm Exp $ */
+/* $OpenBSD: auth2-pubkey.c,v 1.63 2017/05/30 08:52:19 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -75,7 +75,7 @@ static int
 userauth_pubkey(Authctxt *authctxt)
 {
 	Buffer b;
-	Key *key = NULL;
+	struct sshkey *key = NULL;
 	char *pkalg, *userstyle, *fp = NULL;
 	u_char *pkblob, *sig;
 	u_int alen, blen, slen;
@@ -217,7 +217,8 @@ done:
 }
 
 void
-pubkey_auth_info(Authctxt *authctxt, const Key *key, const char *fmt, ...)
+pubkey_auth_info(Authctxt *authctxt, const struct sshkey *key,
+    const char *fmt, ...)
 {
 	char *fp, *extra;
 	va_list ap;
@@ -758,12 +759,12 @@ match_principals_command(struct passwd *user_pw, const struct sshkey *key)
  * returns 1 if the key is allowed or 0 otherwise.
  */
 static int
-check_authkeys_file(FILE *f, char *file, Key* key, struct passwd *pw)
+check_authkeys_file(FILE *f, char *file, struct sshkey* key, struct passwd *pw)
 {
 	char line[SSH_MAX_PUBKEY_BYTES];
 	int found_key = 0;
 	u_long linenum = 0;
-	Key *found;
+	struct sshkey *found;
 
 	found_key = 0;
 
@@ -873,7 +874,7 @@ check_authkeys_file(FILE *f, char *file, Key* key, struct passwd *pw)
 
 /* Authenticate a certificate key against TrustedUserCAKeys */
 static int
-user_cert_trusted_ca(struct passwd *pw, Key *key)
+user_cert_trusted_ca(struct passwd *pw, struct sshkey *key)
 {
 	char *ca_fp, *principals_file = NULL;
 	const char *reason;
@@ -939,7 +940,7 @@ user_cert_trusted_ca(struct passwd *pw, Key *key)
  * returns 1 if the key is allowed or 0 otherwise.
  */
 static int
-user_key_allowed2(struct passwd *pw, Key *key, char *file)
+user_key_allowed2(struct passwd *pw, struct sshkey *key, char *file)
 {
 	FILE *f;
 	int found_key = 0;
@@ -962,7 +963,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
  * returns 1 if the key is allowed or 0 otherwise.
  */
 static int
-user_key_command_allowed2(struct passwd *user_pw, Key *key)
+user_key_command_allowed2(struct passwd *user_pw, struct sshkey *key)
 {
 	FILE *f = NULL;
 	int r, ok, found_key = 0;
@@ -1085,7 +1086,7 @@ user_key_command_allowed2(struct passwd *user_pw, Key *key)
  * Check whether key authenticates and authorises the user.
  */
 int
-user_key_allowed(struct passwd *pw, Key *key, int auth_attempt)
+user_key_allowed(struct passwd *pw, struct sshkey *key, int auth_attempt)
 {
 	u_int success, i;
 	char *file;
