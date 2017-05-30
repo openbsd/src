@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.7 2017/05/30 11:02:39 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.8 2017/05/30 12:47:47 krw Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -713,18 +713,29 @@ virtio_enqueue_abort(struct virtqueue *vq, int slot)
 void
 virtio_enqueue_trim(struct virtqueue *vq, int slot, int nsegs)
 {
+	struct vq_entry *qe1 = &vq->vq_entries[slot];
 	struct vring_desc *vd = &vq->vq_desc[0];
-	int i;
+	struct vq_entry *qe;
+	int i, s;
 
 	if ((vd[slot].flags & VRING_DESC_F_INDIRECT) == 0) {
-		for (i = 0; i < nsegs; i++) {
-			vd[slot].flags = VRING_DESC_F_NEXT;
-			if (i == (nsegs - 1))
-				vd[slot].flags = 0;
-			slot = vd[slot].next;
+		qe1->qe_indirect = 0;
+		qe1->qe_desc_base = vd;
+		qe1->qe_next = qe1->qe_index;
+
+		/*
+		 * N.B.: the vq_entries are ASSUMED to be a contiguous
+		 *       block with slot being the index to the first one.
+		 */
+		s = slot;
+		for (i = 0; i < nsegs - 1; i++) {
+			qe = &vq->vq_entries[s+1];
+			vd[s].flags = VRING_DESC_F_NEXT;
+			vd[s].next = qe->qe_index;
+			s = qe->qe_index;
 		}
+		vd[s].flags = 0;
 	} else {
-		struct vq_entry *qe1 = &vq->vq_entries[slot];
 		vd = &vq->vq_desc[qe1->qe_index];
 		vd->len = sizeof(struct vring_desc) * nsegs;
 		vd = qe1->qe_desc_base;
@@ -733,6 +744,7 @@ virtio_enqueue_trim(struct virtqueue *vq, int slot, int nsegs)
 			if (i == (nsegs - 1))
 				vd[i].flags = 0;
 		}
+		qe1->qe_next = 0;
 	}
 }
 
