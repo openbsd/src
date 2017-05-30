@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.150 2017/05/30 19:13:20 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.151 2017/05/30 19:31:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3967,12 +3967,29 @@ vmx_handle_intr(struct vcpu *vcpu)
  * svm_handle_hlt
  *
  * Handle HLT exits
+ *
+ * Parameters
+ *  vcpu: The VCPU that executed the HLT instruction
+ *
+ * Return Values:
+ *  EIO: The guest halted with interrupts disabled
+ *  EAGAIN: Normal return to vmd - vmd should halt scheduling this VCPU
+ *   until a virtual interrupt is ready to inject
  */
 int
 svm_handle_hlt(struct vcpu *vcpu)
 {
+	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+	uint64_t rflags = vmcb->v_rflags;
+
 	/* All HLT insns are 1 byte */
 	vcpu->vc_gueststate.vg_rip += 1;
+
+	if (!(rflags & PSL_I)) {
+		DPRINTF("%s: guest halted with interrupts disabled\n",
+		    __func__);
+		return (EIO);
+	}
 
 	return (EAGAIN);
 }
@@ -4012,7 +4029,8 @@ vmx_handle_hlt(struct vcpu *vcpu)
 	KASSERT(insn_length == 1);
 
 	if (!(rflags & PSL_I)) {
-		DPRINTF("%s: guest halted with interrupts disabled\n", __func__);
+		DPRINTF("%s: guest halted with interrupts disabled\n",
+		    __func__);
 		return (EIO);
 	}
 
