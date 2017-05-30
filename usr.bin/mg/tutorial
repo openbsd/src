@@ -314,7 +314,7 @@ called the X (eXtend) command. There are two forms of this:
 
 You've already seen C-x C-f and C-x C-s to open and save a file. There are
 other longer commands. For instance, you can also open a file by typing
-M-x open-file Enter. When you type a command using M-x, mg prompts you for
+M-x find-file Enter. When you type a command using M-x, mg prompts you for
 the command at the bottom of the screen. You can type out the whole command
 if you wish, or you can type out part of the command and then use the TAB key
 for autocompleting the command.
