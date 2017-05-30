@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.311 2017/05/28 12:47:24 mpi Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.312 2017/05/30 12:09:27 friehm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1426,8 +1426,25 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		    (IFF_UP|IFF_RUNNING))
 			continue;
 
-		if (carp_vhe_match(sc, eh->ether_dhost))
+		if (carp_vhe_match(sc, eh->ether_dhost)) {
+			/*
+			 * These packets look like layer 2 multicast but they
+			 * are unicast at layer 3. With help of the tag the
+			 * mbuf's M_MCAST flag can be removed by carp_lsdrop()
+			 * after we have passed layer 2.
+			 */
+			if (sc->sc_balancing == CARP_BAL_IP) {
+				struct m_tag *mtag;
+				mtag = m_tag_get(PACKET_TAG_CARP_BAL_IP, 0,
+				    M_NOWAIT);
+				if (mtag == NULL) {
+					m_freem(m);
+					goto out;
+				}
+				m_tag_prepend(m, mtag);
+			}
 			break;
+		}
 	}
 
 	if (sc == NULL) {
@@ -1460,27 +1477,23 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		return (0);
 	}
 
-	/*
-	 * Clear mcast if received on a carp IP balanced address.
-	 */
-	if (sc->sc_balancing == CARP_BAL_IP &&
-	    ETHER_IS_MULTICAST(eh->ether_dhost))
-		*(eh->ether_dhost) &= ~0x01;
-
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_if, &ml);
+out:
 	SRPL_LEAVE(&sr);
 
 	return (1);
 }
 
 int
-carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
+carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst,
+   int drop)
 {
 	struct ifnet *ifp;
 	struct carp_softc *sc;
 	int match = 1;
 	u_int32_t fold;
+	struct m_tag *mtag;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	KASSERT(ifp != NULL);
@@ -1488,6 +1501,25 @@ carp_lsdrop(struct mbuf *m, sa_family_t af, u_int32_t *src, u_int32_t *dst)
 	sc = ifp->if_softc;
 	if (sc->sc_balancing == CARP_BAL_NONE)
 		goto done;
+
+	/*
+	 * Remove M_MCAST flag from mbuf of balancing ip traffic, since the fact
+	 * that it is layer 2 multicast does not implicate that it is also layer
+	 * 3 multicast.
+	 */
+	if (m->m_flags & M_MCAST &&
+	    (mtag = m_tag_find(m, PACKET_TAG_CARP_BAL_IP, NULL))) {
+		m_tag_delete(m, mtag);
+		m->m_flags &= ~M_MCAST;
+	}
+	
+	/*
+	 * Return without making a drop decision. This allows to clear the
+	 * M_MCAST flag and do nothing else.
+	 */
+	if (!drop)
+		goto done;
+
 	/*
 	 * Never drop carp advertisements.
 	 * XXX Bad idea to pass all broadcast / multicast traffic?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.228 2017/05/16 15:57:03 kettenis Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.229 2017/05/30 12:09:27 friehm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -485,11 +485,12 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_REASSEMBLED	0x0800 /* pf reassembled ipv6 packet */
 #define PACKET_TAG_SRCROUTE		0x1000 /* IPv4 source routing options */
 #define PACKET_TAG_TUNNEL		0x2000	/* Tunnel endpoint address */
+#define PACKET_TAG_CARP_BAL_IP		0x4000  /* carp(4) ip balanced marker */
 
 #define MTAG_BITS \
     ("\20\1IPSEC_IN_DONE\2IPSEC_OUT_DONE\3IPSEC_IN_CRYPTO_DONE" \
     "\4IPSEC_OUT_CRYPTO_NEEDED\5IPSEC_PENDING_TDB\6BRIDGE\7GIF\10GRE\11DLT" \
-    "\12PF_DIVERT\14PF_REASSEMBLED\15SRCROUTE\16TUNNEL")
+    "\12PF_DIVERT\14PF_REASSEMBLED\15SRCROUTE\16TUNNEL\17CARP_BAL_IP")
 
 /*
  * Maximum tag payload length (that is excluding the m_tag structure).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.308 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.309 2017/05/30 12:09:27 friehm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -325,8 +325,9 @@ ip_input(struct mbuf *m)
 	}
 
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ip->ip_p != IPPROTO_ICMP &&
-	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
+	if (ifp->if_type == IFT_CARP &&
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr,
+	    (ip->ip_p == IPPROTO_ICMP ? 0 : 1)))
 		goto bad;
 #endif
 
@@ -433,7 +434,7 @@ ip_input(struct mbuf *m)
 
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP && ip->ip_p == IPPROTO_ICMP &&
-	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr))
+	    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr, &ip->ip_dst.s_addr, 1))
 		goto bad;
 #endif
 	/*

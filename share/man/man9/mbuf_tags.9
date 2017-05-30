@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.37 2015/11/24 19:58:48 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.38 2017/05/30 12:09:27 friehm Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: November 24 2015 $
+.Dd $Mdocdate: May 30 2017 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -170,6 +170,13 @@ Used by the IPv4 stack to keep track of the source route of an incoming
 IP packet, in case a protocol wants to respond over the same route.
 The tag contains a
 .Va struct ip_srcrt .
+.It PACKET_TAG_CARP_BAL_IP
+Used by
+.Xr carp 4
+to mark packets received in mode 
+.Va balancing ip .
+This packets need some special treatment since they contain layer 3 unicast
+inside layer 2 multicast. The tag contains no data.
 .El
 .Pp
 .Fn m_tag_find

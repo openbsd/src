@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.168 2017/05/22 14:26:08 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.169 2017/05/30 12:09:27 friehm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ icmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 #if NCARP > 0
 		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &sin.sin_addr.s_addr,
-		    &ip->ip_dst.s_addr))
+		    &ip->ip_dst.s_addr, 1))
 			goto freeit;
 #endif
 		/*
@@ -582,7 +582,7 @@ reflect:
 #if NCARP > 0
 		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &ip->ip_src.s_addr,
-		    &ip->ip_dst.s_addr))
+		    &ip->ip_dst.s_addr, 1))
 			goto freeit;
 #endif
 		/* Free packet atttributes */
@@ -650,7 +650,7 @@ reflect:
 #if NCARP > 0
 		if (ifp->if_type == IFT_CARP &&
 		    carp_lsdrop(m, AF_INET, &sdst.sin_addr.s_addr,
-		    &ip->ip_dst.s_addr))
+		    &ip->ip_dst.s_addr, 1))
 			goto freeit;
 #endif
 		rtredirect(sintosa(&sdst), sintosa(&sgw),
