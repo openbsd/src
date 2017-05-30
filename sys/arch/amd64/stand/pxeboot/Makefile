@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2016/09/18 16:34:59 jsing Exp $
+#	$OpenBSD: Makefile,v 1.31 2017/05/30 22:32:10 naddy Exp $
 
 MAN=	pxeboot.8
 
@@ -70,6 +70,7 @@ CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
 CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} -I${S}/stand/boot #-DCOMPAT_UFS
 CFLAGS+=-m32
 CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD -fno-pie
+AFLAGS+=${NO_INTEGR_AS}
 # AFLAGS+=-Wa,-a
 AFLAGS+=-m32 # -Wa,-R
 AFLAGS+=-fno-pie
