@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.151 2017/05/30 19:31:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.152 2017/05/30 20:31:24 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3681,6 +3681,29 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			}
 		}
 
+		/* Inject event if present */
+		if (vcpu->vc_event != 0) {
+			eii = (vcpu->vc_event & 0xFF);
+			eii |= (1ULL << 31);	/* Valid */
+			eii |= (1ULL << 11);	/* Send error code */
+			eii |= (3ULL << 8);	/* Hardware Exception */
+			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
+				printf("%s: can't vector event to guest\n",
+				    __func__);
+				ret = EINVAL;
+				break;
+			}
+
+			if (vmwrite(VMCS_ENTRY_EXCEPTION_ERROR_CODE, 0)) {
+				printf("%s: can't write error code to guest\n",
+				    __func__);
+				ret = EINVAL;
+				break;
+			}
+
+			vcpu->vc_event = 0;
+		}
+
 		if (vcpu->vc_vmx_vpid_enabled) {
 			/* Invalidate old TLB mappings */
 			vid.vid_vpid = vcpu->vc_parent->vm_id;
@@ -5490,6 +5513,14 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			vmcb->v_vmcb_clean_bits &= ~(1 << 3);
 			vmcb->v_irq = 0;
 			vmcb->v_intr_vector = 0;
+		}
+
+		/* Inject event if present */
+		if (vcpu->vc_event != 0) {
+			vmcb->v_eventinj = (vcpu->vc_event) | (1 << 31);
+			vmcb->v_eventinj |= (1ULL << 1); /* Send error code */
+			vmcb->v_eventinj |= (3ULL << 8); /* Hardware Exception */
+			vcpu->vc_event = 0;
 		}
 
 		/* Start / resume the VCPU */
