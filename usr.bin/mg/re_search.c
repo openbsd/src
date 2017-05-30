@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.31 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.32 2017/05/30 07:05:22 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -420,17 +420,17 @@ re_backsrch(void)
  * some do-it-yourself control expansion.
  */
 static int
-re_readpattern(char *prompt)
+re_readpattern(char *re_prompt)
 {
 	static int	dofree = 0;
 	int		flags, error, s;
 	char		tpat[NPAT], *rep;
 
 	if (re_pat[0] == '\0')
-		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, prompt);
+		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, re_prompt);
 	else
 		rep = eread("%s: (default %s) ", tpat, NPAT,
-		    EFNUL | EFNEW | EFCR, prompt, re_pat);
+		    EFNUL | EFNEW | EFCR, re_prompt, re_pat);
 	if (rep == NULL)
 		return (ABORT);
 	if (rep[0] != '\0') {

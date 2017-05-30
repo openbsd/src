@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.29 2016/09/12 18:32:54 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.30 2017/05/30 07:05:22 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -117,7 +117,7 @@ do_makedir(char *path)
 {
 	struct stat	 sb;
 	int		 finished, ishere;
-	mode_t		 dir_mode, mode, oumask;
+	mode_t		 dir_mode, f_mode, oumask;
 	char		*slash;
 
 	if ((path = adjustname(path, TRUE)) == NULL)
@@ -131,8 +131,8 @@ do_makedir(char *path)
 	slash = path;
 
 	oumask = umask(0);
-	mode = 0777 & ~oumask;
-	dir_mode = mode | S_IWUSR | S_IXUSR;
+	f_mode = 0777 & ~oumask;
+	dir_mode = f_mode | S_IWUSR | S_IXUSR;
 
 	for (;;) {
 		slash += strspn(slash, "/");
@@ -152,8 +152,8 @@ do_makedir(char *path)
 			continue;
 		}
 
-		if (mkdir(path, finished ? mode : dir_mode) == 0) {
-			if (mode > 0777 && chmod(path, mode) < 0) {
+		if (mkdir(path, finished ? f_mode : dir_mode) == 0) {
+			if (f_mode > 0777 && chmod(path, f_mode) < 0) {
 				umask(oumask);
 				return (ABORT);
 			}

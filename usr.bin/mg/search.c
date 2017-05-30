@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.44 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: search.c,v 1.45 2017/05/30 07:05:22 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -542,16 +542,16 @@ is_prompt(int dir, int flag, int success)
 }
 
 /*
- * Prompt writing routine for the incremental search.  The "prompt" is just
+ * Prompt writing routine for the incremental search.  The "i_prompt" is just
  * a string. The "flag" determines whether pat should be printed.
  */
 static void
-is_dspl(char *prompt, int flag)
+is_dspl(char *i_prompt, int flag)
 {
 	if (flag != FALSE)
-		ewprintf("%s: ", prompt);
+		ewprintf("%s: ", i_prompt);
 	else
-		ewprintf("%s: %s", prompt, pat);
+		ewprintf("%s: %s", i_prompt, pat);
 }
 
 /*
@@ -830,16 +830,16 @@ eq(int bc, int pc, int xcase)
  * expansion.
  */
 int
-readpattern(char *prompt)
+readpattern(char *r_prompt)
 {
 	char	tpat[NPAT], *rep;
 	int	retval;
 
 	if (pat[0] == '\0')
-		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, prompt);
+		rep = eread("%s: ", tpat, NPAT, EFNEW | EFCR, r_prompt);
 	else
 		rep = eread("%s: (default %s) ", tpat, NPAT,
-		    EFNUL | EFNEW | EFCR, prompt, pat);
+		    EFNUL | EFNEW | EFCR, r_prompt, pat);
 
 	/* specified */
 	if (rep == NULL) {

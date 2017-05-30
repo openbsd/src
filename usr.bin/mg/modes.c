@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.20 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: modes.c,v 1.21 2017/05/30 07:05:22 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -23,14 +23,14 @@ struct maps_s	*defb_modes[PBMODES] = { &fundamental_mode };
 int	 defb_flag = 0;
 
 int
-changemode(int f, int n, char *mode)
+changemode(int f, int n, char *newmode)
 {
 	int	 i;
 	struct maps_s	*m;
 
-	if ((m = name_mode(mode)) == NULL) {
+	if ((m = name_mode(newmode)) == NULL) {
 		dobeep();
-		ewprintf("Can't find mode %s", mode);
+		ewprintf("Can't find mode %s", newmode);
 		return (FALSE);
 	}
 	if (!(f & FFARG)) {
