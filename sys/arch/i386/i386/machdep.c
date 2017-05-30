@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.601 2017/05/18 09:20:06 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.602 2017/05/30 15:11:32 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2031,10 +2031,8 @@ identifycpu(struct cpu_info *ci)
 			has_rdrand = 1;
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_RDSEED)
 			has_rdseed = 1;
-#ifndef SMALL_KERNEL
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
-#endif
 	}
 
 #ifndef SMALL_KERNEL

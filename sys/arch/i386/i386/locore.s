@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.173 2017/05/12 08:46:28 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.174 2017/05/30 15:11:32 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@
 #include <machine/i82489reg.h>
 #endif
 
-#ifndef SMALL_KERNEL
 /*
  * As stac/clac SMAP instructions are 3 bytes, we want the fastest
  * 3 byte nop sequence possible here.  This will be replaced by
@@ -76,14 +75,6 @@
 #define SMAP_CLAC	CODEPATCH_START			;\
 			SMAP_NOP			;\
 			CODEPATCH_END(CPTAG_CLAC)
-
-#else
-
-#define SMAP_STAC
-#define SMAP_CLAC
-
-#endif
-
 
 /*
  * override user-land alignment before including asm.h

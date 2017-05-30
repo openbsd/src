@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.83 2017/05/27 12:21:50 tedu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.84 2017/05/30 15:11:32 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -170,7 +170,6 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL /* XXX DV_CPU */
 };
 
-#ifndef SMALL_KERNEL
 void	replacesmap(void);
 
 extern int _stac;
@@ -195,7 +194,6 @@ replacesmap(void)
 
 	splx(s);
 }
-#endif /* !SMALL_KERNEL */
 
 int
 cpu_match(struct device *parent, void *match, void *aux)
@@ -385,12 +383,10 @@ cpu_init(struct cpu_info *ci)
 
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
-#ifndef SMALL_KERNEL
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 		cr4 |= CR4_SMAP;
 	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
 		cr4 |= CR4_UMIP;
-#endif
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.

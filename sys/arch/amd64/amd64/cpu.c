@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.104 2017/05/27 12:21:50 tedu Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.105 2017/05/30 15:11:32 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -125,7 +125,6 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-#ifndef SMALL_KERNEL
 void	replacesmap(void);
 
 extern long _stac;
@@ -148,7 +147,6 @@ replacesmap(void)
 
 	splx(s);
 }
-#endif /* !SMALL_KERNEL */
 
 #ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *);
@@ -496,14 +494,12 @@ cpu_init(struct cpu_info *ci)
 	cr4 = rcr4() | CR4_DEFAULT;
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMEP)
 		cr4 |= CR4_SMEP;
-#ifndef SMALL_KERNEL
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 		cr4 |= CR4_SMAP;
 	if (ci->ci_feature_sefflags_ebx & SEFF0EBX_FSGSBASE)
 		cr4 |= CR4_FSGSBASE;
 	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
 		cr4 |= CR4_UMIP;
-#endif
 	if (cpu_ecxfeature & CPUIDECX_XSAVE)
 		cr4 |= CR4_OSXSAVE;
 	lcr4(cr4);

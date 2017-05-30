@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.18 2017/05/27 12:21:50 tedu Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.19 2017/05/30 15:11:32 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -132,11 +132,9 @@ lcr4(u_int val)
 static __inline u_int
 rcr4(void)
 {
-	u_int val;
 	u_int64_t val64;
 	__asm volatile("movq %%cr4,%0" : "=r" (val64));
-	val = val64;
-	return val;
+	return (u_int) val64;
 }
 
 static __inline void

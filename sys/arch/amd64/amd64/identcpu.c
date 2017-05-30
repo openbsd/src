@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.85 2017/05/19 06:29:21 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.86 2017/05/30 15:11:32 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -652,8 +652,8 @@ identifycpu(struct cpu_info *ci)
 			    ci->ci_dev->dv_xname);
 	}
 
-#ifndef SMALL_KERNEL
 	if (ci->ci_flags & CPUF_PRIMARY) {
+#ifndef SMALL_KERNEL
 		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
 		    ci->ci_pnfeatset >= 0x80000007) {
 			CPUID(0x80000007, dummy, dummy, dummy, val);
@@ -668,6 +668,7 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpu_ecxfeature & CPUIDECX_EST)
 			setperf_setup = est_init;
+#endif
 
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
@@ -678,6 +679,7 @@ identifycpu(struct cpu_info *ci)
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
 	}
+#ifndef SMALL_KERNEL
 	if (!strncmp(mycpu_model, "Intel", 5)) {
 		u_int32_t cflushsz;
 
