@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsort.c,v 1.17 2017/05/24 21:18:25 millert Exp $ */
+/*	$OpenBSD: qsort.c,v 1.18 2017/05/30 14:54:09 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -129,18 +129,18 @@ introsort(char *a, size_t n, size_t es, size_t maxdepth, int swaptype,
 	int cmp_result;
 	size_t r, s;
 
-loop:	if (maxdepth == 0) {
-		if (heapsort(a, n, es, cmp) == 0)
-			return;
-	}
-	maxdepth--;
-	if (n < 7) {
+loop:	if (n < 7) {
 		for (pm = a + es; pm < a + n * es; pm += es)
 			for (pl = pm; pl > a && cmp(pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
+	if (maxdepth == 0) {
+		if (heapsort(a, n, es, cmp) == 0)
+			return;
+	}
+	maxdepth--;
 	pm = a + (n / 2) * es;
 	if (n > 7) {
 		pl = a;
