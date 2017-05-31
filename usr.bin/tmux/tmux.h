@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.776 2017/05/31 08:43:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.777 2017/05/31 10:15:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -744,6 +744,9 @@ struct window_pane {
 
 	u_int		 sx;
 	u_int		 sy;
+
+	u_int		 osx;
+	u_int		 osy;
 
 	u_int		 xoff;
 	u_int		 yoff;

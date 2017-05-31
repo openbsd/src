@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.196 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.197 2017/05/31 10:15:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -800,8 +800,8 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->xoff = 0;
 	wp->yoff = 0;
 
-	wp->sx = sx;
-	wp->sy = sy;
+	wp->sx = wp->osx = sx;
+	wp->sy = wp->osx = sy;
 
 	wp->pipe_fd = -1;
 	wp->pipe_off = 0;
