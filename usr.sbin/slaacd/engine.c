@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.37 2017/05/31 07:30:32 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.38 2017/05/31 09:39:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -233,6 +233,7 @@ void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
 			     radv *);
 void			 configure_dfr(struct dfr_proposal *);
+void			 free_dfr_proposal(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
 void			 debug_log_ra(struct imsg_ra *);
 char			*parse_dnssl(char *, int);
@@ -868,8 +869,7 @@ remove_slaacd_iface(uint32_t if_index)
 			while(!LIST_EMPTY(&iface->dfr_proposals)) {
 				dfr_proposal =
 				    LIST_FIRST(&iface->dfr_proposals);
-				LIST_REMOVE(dfr_proposal, entries);
-				free(dfr_proposal);
+				free_dfr_proposal(dfr_proposal);
 			}
 			free(iface);
 			break;
@@ -1480,10 +1480,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 			if (memcmp(&dfr_proposal->addr,
 			    &ra->from, sizeof(struct sockaddr_in6)) ==
 			    0) {
-				LIST_REMOVE(dfr_proposal, entries);
-				evtimer_del(&dfr_proposal->timer);
-				withdraw_dfr(dfr_proposal);
-				free(dfr_proposal);
+				free_dfr_proposal(dfr_proposal);
 			}
 		}
 	} else {
@@ -1809,6 +1806,23 @@ withdraw_dfr(struct dfr_proposal *dfr_proposal)
 }
 
 void
+free_dfr_proposal(struct dfr_proposal *dfr_proposal)
+{
+
+	LIST_REMOVE(dfr_proposal, entries);
+	evtimer_del(&dfr_proposal->timer);
+	switch (dfr_proposal->state) {
+	case PROPOSAL_CONFIGURED:
+	case PROPOSAL_NEARLY_EXPIRED:
+		withdraw_dfr(dfr_proposal);
+		break;
+	default:
+		break;
+	}
+	free(dfr_proposal);
+}
+
+void
 send_proposal(struct imsg_proposal *proposal)
 {
 #ifndef SKIP_PROPOSAL
@@ -1990,9 +2004,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 		} else {
 			log_debug("%s: giving up, no response to proposal",
 			    __func__);
-			LIST_REMOVE(dfr_proposal, entries);
-			evtimer_del(&dfr_proposal->timer);
-			free(dfr_proposal);
+			free_dfr_proposal(dfr_proposal);
 		}
 		break;
 	case PROPOSAL_CONFIGURED:
@@ -2011,10 +2023,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	case PROPOSAL_NEARLY_EXPIRED:
 		if (real_lifetime(&dfr_proposal->uptime,
 		    dfr_proposal->router_lifetime) == 0) {
-			evtimer_del(&dfr_proposal->timer);
-			LIST_REMOVE(dfr_proposal, entries);
-			withdraw_dfr(dfr_proposal);
-			free(dfr_proposal);
+			free_dfr_proposal(dfr_proposal);
 			log_debug("%s: removing dfr proposal", __func__);
 			break;
 		}
