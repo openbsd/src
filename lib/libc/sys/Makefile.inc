@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.149 2017/04/30 09:01:14 mpi Exp $
+#	$OpenBSD: Makefile.inc,v 1.150 2017/05/31 10:29:47 sthen Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -179,7 +179,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	access.2 acct.2 adjfreq.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 \
 	closefrom.2 connect.2 dup.2 execve.2 fcntl.2 fhopen.2 flock.2 \
-	fork.2 fsync.2 getentropy.2 getdents.2 getdtablecount.2 \
+	fork.2 fsync.2 futex.2 getentropy.2 getdents.2 getdtablecount.2 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 \
 	getpeername.2 getpgrp.2 getpid.2 getpriority.2 getrlimit.2 \
 	getrtable.2 getrusage.2 getsid.2 getsockname.2 getsockopt.2 \
