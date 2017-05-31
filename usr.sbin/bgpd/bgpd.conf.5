@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.159 2017/05/29 20:23:18 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.160 2017/05/31 10:49:10 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: May 31 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1234,6 +1234,11 @@ which is expanded to the locally assigned AS number.
 .Ic ext-community
 .Ar subtype Ar numvalue
 .Xc
+.It Xo
+.Ic ext-community
+.Ar ovs
+.Pq Ic valid | not-found | invalid
+.Xc
 This rule applies only to
 .Em UPDATES
 where the
@@ -1495,6 +1500,11 @@ to do wildcard matching.
 .Ic ext-community Op Ar delete
 .Ar subtype Ar numvalue
 .Xc
+.It Xo
+.Ic ext-community Op Ar delete
+.Ar ovs
+.Pq Ic valid | not-found | invalid
+.Xc
 Set or delete the
 .Em Extended Community
 AS path attribute.
@@ -1512,14 +1522,29 @@ is bigger than 65535 or if the AS_DOT encoding is used.
 IPv4 Address Specific Extended Communities are encoded as
 .Ar IP : Ns Ar local .
 Opaque Extended Communities are encoded with a single numeric value.
+The
+.Ar ovs
+subtype can only be set to
+.Ar valid ,
+.Ar not-found ,
+or
+.Ar invalid .
 Currently the following subtypes are supported:
 .Bd -literal -offset indent
-rt       Route Target
-soo      Source of Origin
+bdc      BGP Data Collection
+defgw	 Default Gateway
+esi-lab  ESI Label
+esi-rt   ES-Import Route Target
+l2vid    L2VPN Identifier
+mac-mob  MAC Mobility
 odi      OSPF Domain Identifier
 ort      OSPF Route Type
 ori      OSPF Router ID
-bdc      BGP Data Collection
+ovs      BGP Origin Validation State
+rt       Route Target
+soo      Route Origin / Source of Origin
+srcas    Source AS
+vrfri    VRF Route Import
 .Ed
 .Pp
 Not all type and subtype value pairs are allowed by IANA and the parser
