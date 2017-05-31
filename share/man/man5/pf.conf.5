@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.564 2017/05/31 09:19:10 bluhm Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.565 2017/05/31 09:30:38 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -809,7 +809,9 @@ port of the packets associated with a stateful connection.
 modifies the specified address and/or port in the packet and recalculates
 IP, TCP, and UDP checksums as necessary.
 .Pp
-Subsequent rules will see packets as they look
+If specified on a
+.Ic match
+rule, subsequent rules will see packets as they look
 after any addresses and ports have been translated.
 These rules will therefore have to filter based on the translated
 address and port number.
