@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.57 2017/05/17 17:54:29 mikeb Exp $	*/
+/*	$OpenBSD: xform.c,v 1.58 2017/05/31 00:34:33 djm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -521,11 +521,10 @@ aes_xts_crypt(struct aes_xts_ctx *ctx, u_int8_t *data, u_int do_encrypt)
 	carry_in = 0;
 	for (i = 0; i < AES_XTS_BLOCKSIZE; i++) {
 		carry_out = ctx->tweak[i] & 0x80;
-		ctx->tweak[i] = (ctx->tweak[i] << 1) | (carry_in ? 1 : 0);
-		carry_in = carry_out;
+		ctx->tweak[i] = (ctx->tweak[i] << 1) | carry_in;
+		carry_in = carry_out >> 7;
 	}
-	if (carry_in)
-		ctx->tweak[0] ^= AES_XTS_ALPHA;
+	ctx->tweak[0] ^= (AES_XTS_ALPHA & -carry_in);
 	explicit_bzero(block, sizeof(block));
 }
 

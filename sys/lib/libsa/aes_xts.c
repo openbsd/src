@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_xts.c,v 1.1 2012/10/09 12:36:50 jsing Exp $	*/
+/*	$OpenBSD: aes_xts.c,v 1.2 2017/05/31 00:34:33 djm Exp $	*/
 /*
  * Copyright (C) 2008, Damien Miller
  *
@@ -64,11 +64,10 @@ aes_xts_crypt(struct aes_xts_ctx *ctx, u_int8_t *data, u_int do_encrypt)
 	carry_in = 0;
 	for (i = 0; i < AES_XTS_BLOCKSIZE; i++) {
 		carry_out = ctx->tweak[i] & 0x80;
-		ctx->tweak[i] = (ctx->tweak[i] << 1) | (carry_in ? 1 : 0);
-		carry_in = carry_out;
+		ctx->tweak[i] = (ctx->tweak[i] << 1) | carry_in;
+		carry_in = carry_out >> 7;
 	}
-	if (carry_in)
-		ctx->tweak[0] ^= AES_XTS_ALPHA;
+	ctx->tweak[0] ^= (AES_XTS_ALPHA & -carry_in);
 	explicit_bzero(block, sizeof(block));
 }
 
