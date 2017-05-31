@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.50 2015/12/29 09:44:46 kettenis Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.51 2017/05/31 05:47:29 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -275,18 +275,20 @@ struct ata_log_page_10h {
 #define SATA_SStatus_DET_NODEV		0x000
 #define SATA_SStatus_DET_NOPHY		0x001
 #define SATA_SStatus_DET_DEV		0x003
-#define SATA_SStatus_DET_OFFLINE	0x008
+#define SATA_SStatus_DET_OFFLINE	0x004
 
 #define SATA_SStatus_SPD		0x0f0
 #define SATA_SStatus_SPD_NONE		0x000
 #define SATA_SStatus_SPD_1_5		0x010
 #define SATA_SStatus_SPD_3_0		0x020
+#define SATA_SStatus_SPD_6_0		0x030
 
 #define SATA_SStatus_IPM		0xf00
 #define SATA_SStatus_IPM_NODEV		0x000
 #define SATA_SStatus_IPM_ACTIVE		0x100
 #define SATA_SStatus_IPM_PARTIAL	0x200
 #define SATA_SStatus_IPM_SLUMBER	0x600
+#define SATA_SStatus_IPM_DEVSLEEP	0x800
 
 #define SATA_SIGNATURE_PORT_MULTIPLIER	0x96690101
 #define SATA_SIGNATURE_ATAPI		0xeb140101
