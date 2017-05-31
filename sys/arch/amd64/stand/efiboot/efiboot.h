@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.h,v 1.1 2015/09/02 01:52:25 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.h,v 1.2 2017/05/31 08:40:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -17,14 +17,18 @@
  */
 
 void	 efi_cleanup(void);
-void	 efi_cons_probe (struct consdev *);
-void	 efi_memprobe (void);
-void	 efi_hardprobe (void);
-void	 efi_diskprobe (void);
-void	 efi_cons_init (struct consdev *);
-int	 efi_cons_getc (dev_t);
-void	 efi_cons_putc (dev_t, int);
+void	 efi_cons_probe(struct consdev *);
+void	 efi_memprobe(void);
+void	 efi_hardprobe(void);
+void	 efi_diskprobe(void);
+void	 efi_cons_init(struct consdev *);
+int	 efi_cons_getc(dev_t);
+void	 efi_cons_putc(dev_t, int);
 int	 efi_cons_getshifts(dev_t dev);
+void	 efi_com_probe(struct consdev *);
+void	 efi_com_init(struct consdev *);
+int	 efi_com_getc(dev_t);
+void	 efi_com_putc(dev_t, int);
 int	 Xvideo_efi(void);
 int	 Xexit_efi(void);
 void	 efi_makebootargs(void);

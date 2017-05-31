@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2016/09/18 16:36:09 jsing Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2017/05/31 08:40:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -85,6 +85,7 @@ int ndevs = nitems(devsw);
 
 struct consdev constab[] = {
 	{ efi_cons_probe, efi_cons_init, efi_cons_getc, efi_cons_putc },
+	{ efi_com_probe, efi_com_init, efi_com_getc, efi_com_putc },
 	{ NULL }
 };
 struct consdev *cn_tab = constab;

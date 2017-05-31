@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.18 2017/05/16 02:53:28 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.19 2017/05/31 08:40:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -387,6 +387,8 @@ static EFI_GUID				 con_guid
 					    = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
 static EFI_GUID				 gop_guid
 					    = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+static EFI_GUID				 serio_guid
+					    = SERIAL_IO_PROTOCOL;
 struct efi_video {
 	int	cols;
 	int	rows;
@@ -501,9 +503,173 @@ efi_cons_getshifts(dev_t dev)
 	return (0);
 }
 
-/* XXX: serial console is not supported yet */
 int com_addr = -1;
 int com_speed = -1;
+
+static SERIAL_IO_INTERFACE	*serios[4];
+
+void
+efi_com_probe(struct consdev *cn)
+{
+	EFI_HANDLE		*handles = NULL;
+	SERIAL_IO_INTERFACE	*serio;
+	EFI_STATUS		 status;
+	EFI_DEVICE_PATH		*dp, *dp0;
+	EFI_DEV_PATH_PTR	 dpp;
+	UINTN			 sz;
+	int			 i, uid = -1;
+
+	sz = 0;
+	status = EFI_CALL(BS->LocateHandle, ByProtocol, &serio_guid, 0, &sz, 0);
+	if (status == EFI_BUFFER_TOO_SMALL) {
+		handles = alloc(sz);
+		status = EFI_CALL(BS->LocateHandle, ByProtocol, &serio_guid,
+		    0, &sz, handles);
+	}
+	if (handles == NULL || EFI_ERROR(status))
+		panic("could not get handles of serial i/o");
+
+	for (i = 0; i < sz / sizeof(EFI_HANDLE); i++) {
+		/*
+		 * Identify port number of the handle.  This assumes ACPI
+		 * UID 0-3 map to legacy COM[1-4] and they use the legacy
+		 * port address.
+		 */
+		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
+		    (void **)&dp0);
+		if (EFI_ERROR(status))
+			continue;
+		uid = -1;
+		for (dp = dp0; !IsDevicePathEnd(dp);
+		    dp = NextDevicePathNode(dp)) {
+			dpp = (EFI_DEV_PATH_PTR)dp;
+			if (DevicePathType(dp) == ACPI_DEVICE_PATH &&
+			    DevicePathSubType(dp) == ACPI_DP)
+				if (dpp.Acpi->HID == EFI_PNP_ID(0x0501)) {
+					uid = dpp.Acpi->UID;
+					break;
+				}
+		}
+		if (uid < 0 || nitems(serios) <= uid)
+			continue;
+
+		/* Prepare SERIAL_IO_INTERFACE */
+		status = EFI_CALL(BS->HandleProtocol, handles[i], &serio_guid,
+		    (void **)&serio);
+		if (EFI_ERROR(status))
+			continue;
+		serios[uid] = serio;
+	}
+	free(handles, sz);
+
+	for (i = 0; i < nitems(serios); i++) {
+		if (serios[i] != NULL)
+			printf(" com%d", i);
+	}
+	cn->cn_pri = CN_LOWPRI;
+	cn->cn_dev = makedev(8, 0);
+}
+
+int
+efi_valid_com(dev_t dev)
+{
+	return (minor(dev) < nitems(serios) && serios[minor(dev)] != NULL);
+}
+
+int
+comspeed(dev_t dev, int sp)
+{
+	EFI_STATUS		 status;
+	SERIAL_IO_INTERFACE	*serio = serios[minor(dev)];
+	int			 newsp;
+
+	if (sp <= 0)
+		return com_speed;
+
+	if (!efi_valid_com(dev))
+		return (-1);
+
+	if (serio->Mode->BaudRate != sp) {
+		status = EFI_CALL(serio->SetAttributes, serio,
+		    sp, serio->Mode->ReceiveFifoDepth,
+		    serio->Mode->Timeout, serio->Mode->Parity,
+		    serio->Mode->DataBits, serio->Mode->StopBits);
+		if (EFI_ERROR(status)) {
+			printf("com%d: SetAttribute() failed with status=%d\n",
+			    minor(dev), status);
+			return (-1);
+		}
+		if (com_speed != -1)
+			printf("\ncom%d: %d baud\n", minor(dev), sp);
+	}
+
+	/* same as comspeed() in libsa/bioscons.c */
+	newsp = com_speed;
+	com_speed = sp;
+
+	return (newsp);
+}
+
+void
+efi_com_init(struct consdev *cn)
+{
+	if (!efi_valid_com(cn->cn_dev))
+		panic("com%d is not probed", minor(cn->cn_dev));
+
+	if (com_speed == -1)
+		comspeed(cn->cn_dev, 9600); /* default speed is 9600 baud */
+}
+
+int
+efi_com_getc(dev_t dev)
+{
+	EFI_STATUS		 status;
+	SERIAL_IO_INTERFACE	*serio;
+	UINTN			 sz;
+	u_char			 buf;
+	static u_char		 lastchar = 0;
+
+	if (!efi_valid_com(dev & 0x7f))
+		panic("com%d is not probed", minor(dev));
+	serio = serios[minor(dev & 0x7f)];
+
+	if (lastchar != 0) {
+		int r = lastchar;
+		if ((dev & 0x80) == 0)
+			lastchar = 0;
+		return (r);
+	}
+
+	for (;;) {
+		sz = 1;
+		status = EFI_CALL(serio->Read, serio, &sz, &buf);
+		if (status == EFI_SUCCESS && sz > 0)
+			break;
+		if (status != EFI_TIMEOUT && EFI_ERROR(status))
+			panic("Error reading from serial status=%d", status);
+		if (dev & 0x80)
+			return (0);
+	}
+
+	if (dev & 0x80)
+		lastchar = buf;
+
+	return (buf);
+}
+
+void
+efi_com_putc(dev_t dev, int c)
+{
+	SERIAL_IO_INTERFACE	*serio;
+	UINTN			 sz = 1;
+	u_char			 buf;
+
+	if (!efi_valid_com(dev))
+		panic("com%d is not probed", minor(dev));
+	serio = serios[minor(dev)];
+	buf = c;
+	EFI_CALL(serio->Write, serio, &sz, &buf);
+}
 
 /***********************************************************************
  * Miscellaneous
