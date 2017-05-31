@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.54 2017/05/15 16:44:04 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.55 2017/05/31 08:43:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,6 +242,8 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SE] = { TTYCODE_STRING, "Se" },
 	[TTYC_SETAB] = { TTYCODE_STRING, "setab" },
 	[TTYC_SETAF] = { TTYCODE_STRING, "setaf" },
+	[TTYC_SETRGBB] = { TTYCODE_STRING, "setrgbb" },
+	[TTYC_SETRGBF] = { TTYCODE_STRING, "setrgbf" },
 	[TTYC_SGR0] = { TTYCODE_STRING, "sgr0" },
 	[TTYC_SITM] = { TTYCODE_STRING, "sitm" },
 	[TTYC_SMACS] = { TTYCODE_STRING, "smacs" },
@@ -521,6 +523,18 @@ tty_term_find(char *name, int fd, char **cause)
 		code->type = TTYCODE_STRING;
 	}
 
+	/* On terminals with RGB colour (TC), fill in setrgbf and setrgbb. */
+	if (tty_term_flag(term, TTYC_TC) &&
+	    !tty_term_has(term, TTYC_SETRGBF) &&
+	    !tty_term_has(term, TTYC_SETRGBB)) {
+		code = &term->codes[TTYC_SETRGBF];
+		code->value.string = xstrdup("\033[38;2;%p1%d;%p2%d;%p3%dm");
+		code->type = TTYCODE_STRING;
+		code = &term->codes[TTYC_SETRGBB];
+		code->value.string = xstrdup("\033[48;2;%p1%d;%p2%d;%p3%dm");
+		code->type = TTYCODE_STRING;
+	}
+
 	return (term);
 
 error:
@@ -574,6 +588,12 @@ const char *
 tty_term_string2(struct tty_term *term, enum tty_code_code code, int a, int b)
 {
 	return (tparm((char *) tty_term_string(term, code), a, b));
+}
+
+const char *
+tty_term_string3(struct tty_term *term, enum tty_code_code code, int a, int b, int c)
+{
+	return (tparm((char *) tty_term_string(term, code), a, b, c));
 }
 
 const char *
