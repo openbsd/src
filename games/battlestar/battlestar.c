@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.20 2016/01/01 15:56:04 tedu Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.21 2017/05/31 19:51:27 tedu Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ main(int argc, char *argv[])
 	char    mainbuf[LINELENGTH];
 	char   *next;
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
 
 	open_score_file();
