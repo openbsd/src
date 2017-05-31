@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.10 2016/06/10 18:36:06 jcs Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.11 2017/05/31 08:23:33 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -54,8 +54,10 @@ int Xregs(void);
 int bootbuf(void *, int);
 
 const struct cmd_table cmd_machine[] = {
+#ifndef EFIBOOT
 	{ "boot",	CMDT_CMD, Xboot },
 	{ "comaddr",	CMDT_CMD, Xcomaddr },
+#endif
 	{ "diskinfo",	CMDT_CMD, Xdiskinfo },
 	{ "memory",	CMDT_CMD, Xmemory },
 #ifdef EFIBOOT
@@ -89,12 +91,11 @@ Xregs(void)
 }
 #endif
 
+#ifndef EFIBOOT
 int
 Xboot(void)
 {
-#ifdef EFIBOOT
 	printf("Not supported yet\n");
-#else
 	int dev, part, st;
 	struct diskinfo *dip;
 	char buf[DEV_BSIZE], *dest = (void *)BOOTBIOS_ADDR;
@@ -151,9 +152,9 @@ Xboot(void)
 
 bad:
 	printf("Invalid device!\n");
-#endif
 	return 0;
 }
+#endif
 
 int
 Xmemory(void)
@@ -224,6 +225,7 @@ Xmemory(void)
 	return 0;
 }
 
+#ifndef EFIBOOT
 int
 Xcomaddr(void)
 {
@@ -234,3 +236,4 @@ Xcomaddr(void)
 
 	return 0;
 }
+#endif
