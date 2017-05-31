@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.78 2017/05/30 11:00:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.79 2017/05/31 09:17:40 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -262,7 +262,7 @@ struct ieee80211com {
 	int			ic_max_nnodes;	/* max length of ic_nnodes */
 	u_int16_t		ic_lintval;	/* listen interval */
 	int16_t			ic_txpower;	/* tx power setting (dBm) */
-	u_int16_t		ic_bmisstimeout;/* beacon miss threshold (ms) */
+	int			ic_bmissthres;	/* beacon miss threshold */
 	int			ic_mgt_timer;	/* mgmt timeout */
 #ifndef IEEE80211_STA_ONLY
 	struct timeout		ic_inact_timeout; /* node inactivity timeout */

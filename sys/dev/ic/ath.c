@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.114 2017/04/11 14:43:49 dhill Exp $  */
+/*      $OpenBSD: ath.c,v 1.115 2017/05/31 09:17:39 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1417,7 +1417,6 @@ ath_beacon_config(struct ath_softc *sc)
 	    __func__, ni->ni_intval, nexttbtt));
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		HAL_BEACON_STATE bs;
-		u_int32_t bmisstime;
 
 		/* NB: no PCF support right now */
 		bzero(&bs, sizeof(bs));
@@ -1427,13 +1426,10 @@ ath_beacon_config(struct ath_softc *sc)
 		bs.bs_nextdtim = nexttbtt;
 		/*
 		 * Calculate the number of consecutive beacons to miss
-		 * before taking a BMISS interrupt.  The configuration
-		 * is specified in ms, so we need to convert that to
-		 * TU's and then calculate based on the beacon interval.
-		 * Note that we clamp the result to at most 10 beacons.
+		 * before taking a BMISS interrupt. 
+		 * Note that we clamp the result to at most 7 beacons.
 		 */
-		bmisstime = MAX(7, ic->ic_bmisstimeout);
-		bs.bs_bmissthreshold = howmany(bmisstime, intval);
+		bs.bs_bmissthreshold = ic->ic_bmissthres;
 		if (bs.bs_bmissthreshold > 7) {
 			bs.bs_bmissthreshold = 7;
 		} else if (bs.bs_bmissthreshold <= 0) {
