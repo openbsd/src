@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.83 2015/10/28 07:28:13 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.84 2017/05/31 04:50:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -246,7 +246,7 @@ dns_imsg(struct mproc *p, struct imsg *imsg)
 
 		as = res_query_async(s->name, C_IN, T_MX, NULL);
 		if (as == NULL) {
-			log_warn("warn: req_query_async: %s", s->name);
+			log_warn("warn: res_query_async: %s", s->name);
 			m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 			m_add_id(s->p, s->reqid);
 			m_add_int(s->p, DNS_EINVAL);
