@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.187 2017/05/31 09:17:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.188 2017/05/31 12:24:06 phessler Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -418,6 +418,7 @@ int	iwm_lmac_scan(struct iwm_softc *);
 int	iwm_config_umac_scan(struct iwm_softc *);
 int	iwm_umac_scan(struct iwm_softc *);
 uint8_t	iwm_ridx2rate(struct ieee80211_rateset *, int);
+int	iwm_rval2ridx(int);
 void	iwm_ack_rates(struct iwm_softc *, struct iwm_node *, int *, int *);
 void	iwm_mac_ctxt_cmd_common(struct iwm_softc *, struct iwm_node *,
 	    struct iwm_mac_ctx_cmd *, uint32_t, int);
@@ -3986,8 +3987,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA) {
 		/* for non-data, use the lowest supported rate */
-		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
-		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
+		ridx = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
 		tx->data_retry_limit = IWM_MGMT_DFAULT_RETRY_LIMIT;
 	} else if (ic->ic_fixed_mcs != -1) {
 		ridx = sc->sc_fixed_ridx;
@@ -5010,6 +5010,19 @@ iwm_ridx2rate(struct ieee80211_rateset *rs, int ridx)
 	}
 
 	return 0;
+}
+
+int
+iwm_rval2ridx(int rval)
+{
+	int ridx;
+
+	for (ridx = 0; ridx < nitems(iwm_rates); ridx++) {
+		if (rval == iwm_rates[ridx].rate)
+			break;
+	}
+
+       return ridx;
 }
 
 void
