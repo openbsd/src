@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.194 2017/05/29 09:56:33 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.195 2017/05/31 10:48:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1598,29 +1598,47 @@ show_ext_community(u_char *data, u_int16_t len)
 		type = data[i];
 		subtype = data[i + 1];
 
-		switch (type & EXT_COMMUNITY_VALUE) {
-		case EXT_COMMUNITY_TWO_AS:
+		printf("%s ", log_ext_subtype(type, subtype));
+
+		switch (type) {
+		case EXT_COMMUNITY_TRANS_TWO_AS:
 			memcpy(&as2, data + i + 2, sizeof(as2));
 			memcpy(&u32, data + i + 4, sizeof(u32));
-			printf("%s %s:%u", log_ext_subtype(subtype),
-			    log_as(ntohs(as2)), ntohl(u32));
+			printf("%s:%u", log_as(ntohs(as2)), ntohl(u32));
 			break;
-		case EXT_COMMUNITY_IPV4:
+		case EXT_COMMUNITY_TRANS_IPV4:
 			memcpy(&ip, data + i + 2, sizeof(ip));
 			memcpy(&u16, data + i + 6, sizeof(u16));
-			printf("%s %s:%hu", log_ext_subtype(subtype),
-			    inet_ntoa(ip), ntohs(u16));
+			printf("%s:%hu", inet_ntoa(ip), ntohs(u16));
 			break;
-		case EXT_COMMUNITY_FOUR_AS:
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
 			memcpy(&as4, data + i + 2, sizeof(as4));
 			memcpy(&u16, data + i + 6, sizeof(u16));
-			printf("%s %s:%hu", log_ext_subtype(subtype),
-			    log_as(ntohl(as4)), ntohs(u16));
+			printf("%s:%hu", log_as(ntohl(as4)), ntohs(u16));
 			break;
-		case EXT_COMMUNITY_OPAQUE:
+		case EXT_COMMUNITY_TRANS_OPAQUE:
+		case EXT_COMMUNITY_TRANS_EVPN:
 			memcpy(&ext, data + i, sizeof(ext));
 			ext = betoh64(ext) & 0xffffffffffffLL;
-			printf("%s 0x%llx", log_ext_subtype(subtype), ext);
+			printf("0x%llx", ext);
+			break;
+		case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+			memcpy(&ext, data + i, sizeof(ext));
+			ext = betoh64(ext) & 0xffffffffffffLL;
+			switch (ext) {
+			case EXT_COMMUNITY_OVS_VALID:
+				printf("valid ");
+				break;
+			case EXT_COMMUNITY_OVS_NOTFOUND:
+				printf("not-found ");
+				break;
+			case EXT_COMMUNITY_OVS_INVALID:
+				printf("invalid ");
+				break;
+			default:
+				printf("0x%llx ", ext);
+				break;
+			}
 			break;
 		default:
 			memcpy(&ext, data + i, sizeof(ext));
