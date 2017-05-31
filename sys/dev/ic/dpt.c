@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.35 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.36 2017/05/31 04:35:38 jsg Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -324,7 +324,7 @@ dpt_init(sc, intrstr)
 	 * dpt0: interrupting at irq 10
 	 * dpt0: 64 queued commands, 1 channel(s), adapter on ID(s) 7
 	 */
-	for (i = 0; ei->ei_vendor[i] != ' ' && i < 8; i++)
+	for (i = 0; ei->ei_vendor[i] != ' ' && i < 7; i++)
 		;
 	ei->ei_vendor[i] = '\0';
 
