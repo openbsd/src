@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2017/03/01 00:58:22 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.19 2017/05/31 09:25:17 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -88,11 +88,11 @@ stamp-stack:
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
 	date >$@
 
-stamp-pf:
+stamp-pf: addr.py pf.conf
 	rm -f stamp-stack stamp-pf
-	echo 'pass proto tcp from port ssh no state\n'\
-	    'pass proto tcp to port ssh no state'|\
-	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | \
+	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e
 	date >$@
 
