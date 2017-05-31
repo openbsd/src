@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.23 2016/09/24 18:39:17 tedu Exp $	*/
+/*	$OpenBSD: event.h,v 1.24 2017/05/31 07:12:28 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -41,7 +41,8 @@
 
 #define EVFILT_SYSCOUNT		7
 
-#define EV_SET(kevp, a, b, c, d, e, f) do {	\
+#define EV_SET(kevp_, a, b, c, d, e, f) do {	\
+	struct kevent *kevp = (kevp_);		\
 	(kevp)->ident = (a);			\
 	(kevp)->filter = (b);			\
 	(kevp)->flags = (c);			\
@@ -118,7 +119,8 @@ SLIST_HEAD(klist, knote);
 
 #ifdef _KERNEL
 
-#define KNOTE(list, hint)	do { \
+#define KNOTE(list_, hint)	do { \
+					struct klist *list = (list_); \
 					if ((list) != NULL) \
 						knote((list), (hint)); \
 				} while (0)
