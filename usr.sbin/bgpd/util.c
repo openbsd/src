@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: util.c,v 1.25 2017/05/31 10:44:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -112,17 +112,17 @@ log_rd(u_int64_t rd)
 
 	rd = betoh64(rd);
 	switch (rd >> 48) {
-	case EXT_COMMUNITY_TWO_AS:
+	case EXT_COMMUNITY_TRANS_TWO_AS:
 		u32 = rd & 0xffffffff;
 		u16 = (rd >> 32) & 0xffff;
 		snprintf(buf, sizeof(buf), "rd %hu:%u", u16, u32);
 		break;
-	case EXT_COMMUNITY_FOUR_AS:
+	case EXT_COMMUNITY_TRANS_FOUR_AS:
 		u32 = (rd >> 16) & 0xffffffff;
 		u16 = rd & 0xffff;
 		snprintf(buf, sizeof(buf), "rd %s:%hu", log_as(u32), u16);
 		break;
-	case EXT_COMMUNITY_IPV4:
+	case EXT_COMMUNITY_TRANS_IPV4:
 		u32 = (rd >> 16) & 0xffffffff;
 		u16 = rd & 0xffff;
 		addr.s_addr = htonl(u32);
@@ -134,30 +134,22 @@ log_rd(u_int64_t rd)
 	return (buf);
 }
 
+const struct ext_comm_pairs iana_ext_comms[] = IANA_EXT_COMMUNITIES;
+
 /* NOTE: this function does not check if the type/subtype combo is
  * actually valid. */
 const char *
-log_ext_subtype(u_int8_t subtype)
+log_ext_subtype(u_int8_t type, u_int8_t subtype)
 {
 	static char etype[6];
+	const struct ext_comm_pairs *cp;
 
-	switch (subtype) {
-	case EXT_COMMUNITY_ROUTE_TGT:
-		return ("rt");	/* route target */
-	case EXT_COMMUNITY_ROUTE_ORIG:
-		return ("soo");	/* source of origin */
-	case EXT_COMMUNITY_OSPF_DOM_ID:
-		return ("odi");	/* ospf domain id */
-	case EXT_COMMUNITY_OSPF_RTR_TYPE:
-		return ("ort");	/* ospf route type */
-	case EXT_COMMUNITY_OSPF_RTR_ID:
-		return ("ori");	/* ospf router id */
-	case EXT_COMMUNITY_BGP_COLLECT:
-		return ("bdc");	/* bgp data collection */
-	default:
-		snprintf(etype, sizeof(etype), "[%u]", subtype);
-		return (etype);
+	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
+		if (type == cp->type && subtype == cp->subtype)
+			return (cp->subname);
 	}
+	snprintf(etype, sizeof(etype), "[%u]", subtype);
+	return (etype);
 }
 
 const char *

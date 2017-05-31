@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.103 2017/05/27 18:12:23 phessler Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.104 2017/05/31 10:44:00 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,25 +145,39 @@ print_largecommunity(int64_t as, int64_t ld1, int64_t ld2)
 void
 print_extcommunity(struct filter_extcommunity *c)
 {
-	switch (c->type & EXT_COMMUNITY_VALUE) {
-	case EXT_COMMUNITY_TWO_AS:
-		printf("%s %hu:%u ", log_ext_subtype(c->subtype),
-		    c->data.ext_as.as, c->data.ext_as.val);
+	printf("%s ", log_ext_subtype(c->type, c->subtype));
+
+	switch (c->type) {
+	case EXT_COMMUNITY_TRANS_TWO_AS:
+		printf("%hu:%u ", c->data.ext_as.as, c->data.ext_as.val);
 		break;
-	case EXT_COMMUNITY_IPV4:
-		printf("%s %s:%u ", log_ext_subtype(c->subtype),
-		    inet_ntoa(c->data.ext_ip.addr), c->data.ext_ip.val);
+	case EXT_COMMUNITY_TRANS_IPV4:
+		printf("%s:%u ", inet_ntoa(c->data.ext_ip.addr),
+		    c->data.ext_ip.val);
 		break;
-	case EXT_COMMUNITY_FOUR_AS:
-		printf("%s %s:%u ", log_ext_subtype(c->subtype),
-		    log_as(c->data.ext_as4.as4), c->data.ext_as.val);
+	case EXT_COMMUNITY_TRANS_FOUR_AS:
+		printf("%s:%u ", log_as(c->data.ext_as4.as4),
+		    c->data.ext_as.val);
 		break;
-	case EXT_COMMUNITY_OPAQUE:
-		printf("%s 0x%llx ", log_ext_subtype(c->subtype),
-		    c->data.ext_opaq);
+	case EXT_COMMUNITY_TRANS_OPAQUE:
+	case EXT_COMMUNITY_TRANS_EVPN:
+		printf("0x%llx ", c->data.ext_opaq);
+		break;
+	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+		switch (c->data.ext_opaq) {
+		case EXT_COMMUNITY_OVS_VALID:
+			printf("valid ");
+			break;
+		case EXT_COMMUNITY_OVS_NOTFOUND:
+			printf("not-found ");
+			break;
+		case EXT_COMMUNITY_OVS_INVALID:
+			printf("invalid ");
+			break;
+		}
 		break;
 	default:
-		printf("0x%x 0x%llx ", c->type, c->data.ext_opaq);
+		printf("0x%llx ", c->data.ext_opaq);
 		break;
 	}
 }

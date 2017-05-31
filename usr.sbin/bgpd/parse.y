@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.307 2017/05/29 07:49:27 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.308 2017/05/31 10:44:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ int		 getcommunity(char *);
 int		 parsecommunity(struct filter_community *, char *);
 int64_t 	 getlargecommunity(char *);
 int		 parselargecommunity(struct filter_largecommunity *, char *);
-int		 parsesubtype(char *);
+int		 parsesubtype(char *, int *, int *);
 int		 parseextvalue(char *, u_int32_t *);
 int		 parseextcommunity(struct filter_extcommunity *, char *,
 		    char *);
@@ -871,13 +871,13 @@ rdomainopts	: RD STRING {
 			}
 			rd = betoh64(rd) & 0xffffffffffffULL;
 			switch (ext.type) {
-			case EXT_COMMUNITY_TWO_AS:
+			case EXT_COMMUNITY_TRANS_TWO_AS:
 				rd |= (0ULL << 48);
 				break;
-			case EXT_COMMUNITY_IPV4:
+			case EXT_COMMUNITY_TRANS_IPV4:
 				rd |= (1ULL << 48);
 				break;
-			case EXT_COMMUNITY_FOUR_AS:
+			case EXT_COMMUNITY_TRANS_FOUR_AS:
 				rd |= (2ULL << 48);
 				break;
 			default:
@@ -3089,26 +3089,23 @@ parselargecommunity(struct filter_largecommunity *c, char *s)
 }
 
 int
-parsesubtype(char *type)
+parsesubtype(char *name, int *type, int *subtype)
 {
-	/* this has to be sorted always */
-	static const struct keywords keywords[] = {
-		{ "bdc",	EXT_COMMUNITY_BGP_COLLECT },
-		{ "odi",	EXT_COMMUNITY_OSPF_DOM_ID },
-		{ "ori",	EXT_COMMUNITY_OSPF_RTR_ID },
-		{ "ort",	EXT_COMMUNITY_OSPF_RTR_TYPE },
-		{ "rt",		EXT_COMMUNITY_ROUTE_TGT },
-		{ "soo",	EXT_COMMUNITY_ROUTE_ORIG }
-	};
-	const struct keywords	*p;
+	const struct ext_comm_pairs *cp;
+	int found = 0;
 
-	p = bsearch(type, keywords, sizeof(keywords)/sizeof(keywords[0]),
-	    sizeof(keywords[0]), kw_cmp);
-
-	if (p)
-		return (p->k_val);
-	else
-		return (-1);
+	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
+		if (strcmp(name, cp->subname) == 0) {
+			if (found == 0) {
+				*type = cp->type;
+				*subtype = cp->subtype;
+			}
+			found++;
+		}
+	}
+	if (found > 1)
+		*type = -1;
+	return (found);
 }
 
 int
@@ -3127,10 +3124,10 @@ parseextvalue(char *s, u_int32_t *v)
 			return (-1);
 		}
 		*v = uval;
-		if (uval > USHRT_MAX)
-			return (EXT_COMMUNITY_FOUR_AS);
+		if (uval <= USHRT_MAX)
+			return (EXT_COMMUNITY_TRANS_TWO_AS);
 		else
-			return (EXT_COMMUNITY_TWO_AS);
+			return (EXT_COMMUNITY_TRANS_FOUR_AS);
 	} else if (strchr(p + 1, '.') == NULL) {
 		/* AS_DOT number (4-byte) */
 		*p++ = '\0';
@@ -3145,7 +3142,7 @@ parseextvalue(char *s, u_int32_t *v)
 			return (-1);
 		}
 		*v = uval | (uvalh << 16);
-		return (EXT_COMMUNITY_FOUR_AS);
+		return (EXT_COMMUNITY_TRANS_FOUR_AS);
 	} else {
 		/* more than one dot -> IP address */
 		if (inet_aton(s, &ip) == 0) {
@@ -3153,7 +3150,7 @@ parseextvalue(char *s, u_int32_t *v)
 			return (-1);
 		}
 		*v = ip.s_addr;
-		return (EXT_COMMUNITY_IPV4);
+		return (EXT_COMMUNITY_TRANS_IPV4);
 	}
 	return (-1);
 }
@@ -3161,21 +3158,59 @@ parseextvalue(char *s, u_int32_t *v)
 int
 parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 {
-	const struct ext_comm_pairs	 iana[] = IANA_EXT_COMMUNITIES;
+	const struct ext_comm_pairs *cp;
 	const char 	*errstr;
 	u_int64_t	 ullval;
 	u_int32_t	 uval;
 	char		*p, *ep;
-	unsigned int	 i;
 	int		 type, subtype;
 
-	if ((subtype = parsesubtype(t)) == -1) {
+	if (parsesubtype(t, &type, &subtype) == 0) {
 		yyerror("Bad ext-community unknown type");
 		return (-1);
 	}
 
-	if ((p = strchr(s, ':')) == NULL) {
-		type = EXT_COMMUNITY_OPAQUE,
+	switch (type) {
+	case -1:
+		if ((p = strchr(s, ':')) == NULL) {
+			yyerror("Bad ext-community %s is %s", s, errstr);
+			return (-1);
+		}
+		*p++ = '\0';
+		if ((type = parseextvalue(s, &uval)) == -1)
+			return (-1);
+		switch (type) {
+		case EXT_COMMUNITY_TRANS_TWO_AS:
+			ullval = strtonum(p, 0, UINT_MAX, &errstr);
+			break;
+		case EXT_COMMUNITY_TRANS_IPV4:
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
+			ullval = strtonum(p, 0, USHRT_MAX, &errstr);
+			break;
+		default:
+			fatalx("parseextcommunity: unexpected result");
+		}
+		if (errstr) {
+			yyerror("Bad ext-community %s is %s", p, errstr);
+			return (-1);
+		}
+		switch (type) {
+		case EXT_COMMUNITY_TRANS_TWO_AS:
+			c->data.ext_as.as = uval;
+			c->data.ext_as.val = ullval;
+			break;
+		case EXT_COMMUNITY_TRANS_IPV4:
+			c->data.ext_ip.addr.s_addr = uval;
+			c->data.ext_ip.val = ullval;
+			break;
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
+			c->data.ext_as4.as4 = uval;
+			c->data.ext_as4.val = ullval;
+			break;
+		}
+		break;
+	case EXT_COMMUNITY_TRANS_OPAQUE:
+	case EXT_COMMUNITY_TRANS_EVPN:
 		errno = 0;
 		ullval = strtoull(s, &ep, 0);
 		if (s[0] == '\0' || *ep != '\0') {
@@ -3187,49 +3222,26 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 			return (-1);
 		}
 		c->data.ext_opaq = ullval;
-	} else {
-		*p++ = '\0';
-		if ((type = parseextvalue(s, &uval)) == -1)
-			return (-1);
-		switch (type) {
-		case EXT_COMMUNITY_TWO_AS:
-			ullval = strtonum(p, 0, UINT_MAX, &errstr);
-			break;
-		case EXT_COMMUNITY_IPV4:
-		case EXT_COMMUNITY_FOUR_AS:
-			ullval = strtonum(p, 0, USHRT_MAX, &errstr);
-			break;
-		default:
-			fatalx("parseextcommunity: unexpected result");
-		}
-		if (errstr) {
-			yyerror("Bad ext-community %s is %s", p,
-			    errstr);
+		break;
+	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+		if (strcmp(s, "valid") == 0)
+			c->data.ext_opaq = EXT_COMMUNITY_OVS_VALID;
+		else if (strcmp(s, "invalid") == 0)
+			c->data.ext_opaq = EXT_COMMUNITY_OVS_INVALID;
+		else if (strcmp(s, "not-found") == 0)
+			c->data.ext_opaq = EXT_COMMUNITY_OVS_NOTFOUND;
+		else {
+			yyerror("Bad ext-community %s is %s", s, errstr);
 			return (-1);
 		}
-		switch (type) {
-		case EXT_COMMUNITY_TWO_AS:
-			c->data.ext_as.as = uval;
-			c->data.ext_as.val = ullval;
-			break;
-		case EXT_COMMUNITY_IPV4:
-			c->data.ext_ip.addr.s_addr = uval;
-			c->data.ext_ip.val = ullval;
-			break;
-		case EXT_COMMUNITY_FOUR_AS:
-			c->data.ext_as4.as4 = uval;
-			c->data.ext_as4.val = ullval;
-			break;
-		}
+		break;
 	}
 	c->type = type;
 	c->subtype = subtype;
 
 	/* verify type/subtype combo */
-	for (i = 0; i < sizeof(iana)/sizeof(iana[0]); i++) {
-		if (iana[i].type == type && iana[i].subtype == subtype) {
-			if (iana[i].transitive)
-				c->type |= EXT_COMMUNITY_TRANSITIVE;
+	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
+		if (cp->type == type && cp->subtype == subtype) {
 			c->flags |= EXT_COMMUNITY_FLAG_VALID;
 			return (0);
 		}

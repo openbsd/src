@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.307 2017/05/28 20:14:15 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.308 2017/05/31 10:44:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -760,18 +760,23 @@ struct filter_peers {
 #define EXT_COMMUNITY_IANA		0x80
 #define EXT_COMMUNITY_TRANSITIVE	0x40
 #define EXT_COMMUNITY_VALUE		0x3f
-/* extended types */
-#define EXT_COMMUNITY_TWO_AS		0	/* 2 octet AS specific */
-#define EXT_COMMUNITY_IPV4		1	/* IPv4 specific */
-#define EXT_COMMUNITY_FOUR_AS		2	/* 4 octet AS specific */
-#define EXT_COMMUNITY_OPAQUE		3	/* opaque ext community */
-/* sub types */
-#define EXT_COMMUNITY_ROUTE_TGT		2	/* RFC 4360 & RFC4364 */
-#define EXT_COMMUNITY_ROUTE_ORIG	3	/* RFC 4360 & RFC4364 */
-#define EXT_COMMUNITY_OSPF_DOM_ID	5	/* RFC 4577 */
-#define EXT_COMMUNITY_OSPF_RTR_TYPE	6	/* RFC 4577 */
-#define EXT_COMMUNITY_OSPF_RTR_ID	7	/* RFC 4577 */
-#define EXT_COMMUNITY_BGP_COLLECT	8	/* RFC 4384 */
+/* extended types transitive */
+#define EXT_COMMUNITY_TRANS_TWO_AS	0x00	/* 2 octet AS specific */
+#define EXT_COMMUNITY_TRANS_IPV4	0x01	/* IPv4 specific */
+#define EXT_COMMUNITY_TRANS_FOUR_AS	0x02	/* 4 octet AS specific */
+#define EXT_COMMUNITY_TRANS_OPAQUE	0x03	/* opaque ext community */
+#define EXT_COMMUNITY_TRANS_EVPN	0x06	/* EVPN RFC7432 */
+/* extended types non-transitive */
+#define EXT_COMMUNITY_NON_TRANS_TWO_AS	0x40	/* 2 octet AS specific */
+#define EXT_COMMUNITY_NON_TRANS_IPV4	0x41	/* IPv4 specific */
+#define EXT_COMMUNITY_NON_TRANS_FOUR_AS	0x42	/* 4 octet AS specific */
+#define EXT_COMMUNITY_NON_TRANS_OPAQUE	0x43	/* opaque ext community */
+
+/* BGP Origin Validation State Extended Community RFC8097 */
+#define EXT_COMMUNITY_OVS_VALID		0
+#define EXT_COMMUNITY_OVS_NOTFOUND	1
+#define EXT_COMMUNITY_OVS_INVALID	2
+
 /* other handy defines */
 #define EXT_COMMUNITY_OPAQUE_MAX	0xffffffffffffULL
 #define EXT_COMMUNITY_FLAG_VALID	0x01
@@ -779,22 +784,41 @@ struct filter_peers {
 struct ext_comm_pairs {
 	u_int8_t	type;
 	u_int8_t	subtype;
-	u_int8_t	transitive;	/* transitive bit needs to be set */
+	const char	*subname;
 };
 
-#define IANA_EXT_COMMUNITIES	{					\
-	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
-	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_ROUTE_ORIG, 0 },		\
-	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_OSPF_DOM_ID, 0 },		\
-	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_BGP_COLLECT, 0 },		\
-	{ EXT_COMMUNITY_FOUR_AS, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
-	{ EXT_COMMUNITY_FOUR_AS, EXT_COMMUNITY_ROUTE_ORIG, 0 },		\
-	{ EXT_COMMUNITY_IPV4, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
-	{ EXT_COMMUNITY_IPV4, EXT_COMMUNITY_ROUTE_ORIG, 0 },		\
-	{ EXT_COMMUNITY_IPV4, EXT_COMMUNITY_OSPF_RTR_ID, 0 },		\
-	{ EXT_COMMUNITY_OPAQUE, EXT_COMMUNITY_OSPF_RTR_TYPE, 0 }	\
+#define IANA_EXT_COMMUNITIES	{				\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x02, "rt" },		\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x03, "soo" },		\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x05, "odi" },		\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x08, "bdc" },		\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x09, "srcas" },		\
+	{ EXT_COMMUNITY_TRANS_TWO_AS, 0x0a, "l2vid" },		\
+								\
+	{ EXT_COMMUNITY_TRANS_FOUR_AS, 0x02, "rt" },		\
+	{ EXT_COMMUNITY_TRANS_FOUR_AS, 0x03, "soo" },		\
+	{ EXT_COMMUNITY_TRANS_FOUR_AS, 0x05, "odi" },		\
+	{ EXT_COMMUNITY_TRANS_FOUR_AS, 0x08, "bdc" },		\
+	{ EXT_COMMUNITY_TRANS_FOUR_AS, 0x09, "srcas" },		\
+								\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x02, "rt" },		\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x03, "soo" },		\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x05, "odi" },		\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x07, "ori" },		\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x0a, "l2vid" },		\
+	{ EXT_COMMUNITY_TRANS_IPV4, 0x0b, "vrfri" },		\
+								\
+	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x06, "ort" },		\
+	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x0d, "defgw" },		\
+								\
+	{ EXT_COMMUNITY_NON_TRANS_OPAQUE, 0x00, "ovs" },	\
+								\
+	{ EXT_COMMUNITY_TRANS_EVPN, 0x00, "mac-mob" },		\
+	{ EXT_COMMUNITY_TRANS_EVPN, 0x01, "esi-lab" },		\
+	{ EXT_COMMUNITY_TRANS_EVPN, 0x02, "esi-rt" },		\
 }
 
+extern const struct ext_comm_pairs iana_ext_comms[];
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
@@ -1079,7 +1103,7 @@ const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *);
 const char	*log_as(u_int32_t);
 const char	*log_rd(u_int64_t);
-const char	*log_ext_subtype(u_int8_t);
+const char	*log_ext_subtype(u_int8_t, u_int8_t);
 const char	*log_shutcomm(const char *);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
