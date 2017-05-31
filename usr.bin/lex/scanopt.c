@@ -1,4 +1,4 @@
-/* $OpenBSD: scanopt.c,v 1.5 2015/12/11 00:08:43 mmcc Exp $ */
+/* $OpenBSD: scanopt.c,v 1.6 2017/05/31 07:20:26 tedu Exp $ */
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -857,7 +857,7 @@ int     scanopt (svoid, arg, optindex)
 }
 
 
-int     scanopt_destroy (svoid)
+void     scanopt_destroy (svoid)
      scanopt_t *svoid;
 {
 	struct _scanopt_t *s;
@@ -867,5 +867,4 @@ int     scanopt_destroy (svoid)
 		free(s->aux);
 		free (s);
 	}
-	return 0;
 }
