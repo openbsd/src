@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.340 2017/03/21 07:24:36 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.341 2017/05/31 05:25:12 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -153,6 +153,8 @@ int	shownet80211chans;
 int	shownet80211nodes;
 int	showclasses;
 
+struct ifencap;
+
 void	notealias(const char *, int);
 void	setifaddr(const char *, int);
 void	setifrtlabel(const char *, int);
@@ -186,10 +188,11 @@ void	settunnelinst(const char *, int);
 void	settunnelttl(const char *, int);
 void	setvnetid(const char *, int);
 void	delvnetid(const char *, int);
-void	getvnetid(void);
+void	getvnetid(struct ifencap *);
 void	setifparent(const char *, int);
 void	delifparent(const char *, int);
-void	getifparent(void);
+void	getifparent(struct ifencap *);
+void	getencap(void);
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
 void	setia6vltime(const char *, int);
@@ -2999,8 +3002,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 		printf("\tpatch: %s\n", ifname);
 #endif
 	vlan_status();
-	getvnetid();
-	getifparent();
+	getencap();
 #ifndef SMALL
 	carp_status();
 	pfsync_status();
@@ -3617,6 +3619,22 @@ setmpwcontrolword(const char *value, int d)
 }
 #endif /* SMALL */
 
+struct ifencap {
+	unsigned int	 ife_flags;
+#define IFE_VNETID_MASK		0xf
+#define IFE_VNETID_NOPE		0x0
+#define IFE_VNETID_NONE		0x1
+#define IFE_VNETID_ANY		0x2
+#define IFE_VNETID_SET		0x3
+	int64_t		 ife_vnetid;
+
+#define IFE_PARENT_MASK		0xf0
+#define IFE_PARENT_NOPE		0x00
+#define IFE_PARENT_NONE		0x10
+#define IFE_PARENT_SET		0x20
+	char		ife_parent[IFNAMSIZ];
+};
+
 void
 setvnetid(const char *id, int param)
 {
@@ -3647,7 +3665,7 @@ delvnetid(const char *ignored, int alsoignored)
 }
 
 void
-getvnetid(void)
+getvnetid(struct ifencap *ife)
 {
 	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
 	    sizeof(ifr.ifr_name))
@@ -3657,17 +3675,17 @@ getvnetid(void)
 		if (errno != EADDRNOTAVAIL)
 			return;
 
-		printf("\tvnetid: none\n");
-
+		ife->ife_flags |= IFE_VNETID_NONE;
 		return;
 	}
 
 	if (ifr.ifr_vnetid < 0) {
-		printf("\tvnetid: any\n");
+		ife->ife_flags |= IFE_VNETID_ANY;
 		return;
 	}
 
-	printf("\tvnetid: %lld\n", ifr.ifr_vnetid);
+	ife->ife_flags |= IFE_VNETID_SET;
+	ife->ife_vnetid = ifr.ifr_vnetid;
 }
 
 void
@@ -3696,10 +3714,9 @@ delifparent(const char *ignored, int alsoignored)
 }
 
 void
-getifparent(void)
+getifparent(struct ifencap *ife)
 {
 	struct if_parent ifp;
-	const char *parent = "none";
 
 	memset(&ifp, 0, sizeof(ifp));
 	if (strlcpy(ifp.ifp_name, name, sizeof(ifp.ifp_name)) >=
@@ -3709,10 +3726,50 @@ getifparent(void)
 	if (ioctl(s, SIOCGIFPARENT, (caddr_t)&ifp) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			return;
-	} else
-		parent = ifp.ifp_parent;
 
-	printf("\tparent: %s\n", parent);
+		ife->ife_flags |= IFE_PARENT_NONE;
+	} else {
+		memcpy(ife->ife_parent, ifp.ifp_parent,
+		    sizeof(ife->ife_parent));
+		ife->ife_flags |= IFE_PARENT_SET;
+	}
+}
+
+void
+getencap(void)
+{
+	struct ifencap ife = { .ife_flags = 0 };
+
+	getvnetid(&ife);
+	getifparent(&ife);
+
+	if (ife.ife_flags == 0)
+		return;
+
+	printf("\tencap:");
+
+	switch (ife.ife_flags & IFE_VNETID_MASK) {
+	case IFE_VNETID_NONE:
+		printf(" vnetid none");
+		break;
+	case IFE_VNETID_ANY:
+		printf(" vnetid any");
+		break;
+	case IFE_VNETID_SET:
+		printf(" vnetid %lld", ife.ife_vnetid);
+		break;
+	}
+
+	switch (ife.ife_flags & IFE_PARENT_MASK) {
+	case IFE_PARENT_NONE:
+		printf(" parent none");
+		break;
+	case IFE_PARENT_SET:
+		printf(" parent %s", ife.ife_parent);
+		break;
+	}
+
+	printf("\n");
 }
 
 static int __tag = 0;
