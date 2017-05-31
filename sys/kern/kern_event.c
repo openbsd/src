@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.78 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.79 2017/05/31 14:52:05 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -512,7 +512,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 			kevp = &kq->kq_kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
 			error = kqueue_register(kq, kevp, p);
-			if (error) {
+			if (error || (kevp->flags & EV_RECEIPT)) {
 				if (SCARG(uap, nevents) != 0) {
 					kevp->flags = EV_ERROR;
 					kevp->data = error;
@@ -788,9 +788,13 @@ start:
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p, p->p_fd);
 			s = splhigh();
-		} else if (kn->kn_flags & EV_CLEAR) {
-			kn->kn_data = 0;
-			kn->kn_fflags = 0;
+		} else if (kn->kn_flags & (EV_CLEAR | EV_DISPATCH)) {
+			if (kn->kn_flags & EV_CLEAR) {
+				kn->kn_data = 0;
+				kn->kn_fflags = 0;
+			}
+			if (kn->kn_flags & EV_DISPATCH)
+				kn->kn_status |= KN_DISABLED;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
 			kq->kq_count--;
 		} else {
