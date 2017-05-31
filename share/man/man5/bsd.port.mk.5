@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.457 2017/04/11 20:40:33 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.458 2017/05/31 08:12:27 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2017 $
+.Dd $Mdocdate: May 31 2017 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1199,6 +1199,15 @@ packages.
 Defaults to
 .Sq no ,
 which does not compute a checksum at all.
+.It Ev CHOSEN_COMPILER
+Usually read-only.
+Compiler suite chosen by the
+.Ev COMPILER
+mechanism.
+Set to
+.Sq irrelevant
+to disable
+.Ev COMPILER .
 .It Ev CLEANDEPENDS
 If set to
 .Sq Yes ,
@@ -1226,6 +1235,70 @@ If the current
 .Ox
 version is >= this version then a notice
 will be displayed instead of the port being built.
+.It Ev COMPILER
+Select a somewhat more recent compiler than gcc 4.2.1.
+Set to a list containing
+.Sq base 
+(clang compiler in base),
+.Sq clang
+(clang compiler in ports),
+or
+.Sq gcc 
+(gcc 4.9 from ports).
+The first compiler that matches criteria
+.Po
+.Ev MODCLANG_ARCHS
+or
+.Ev MODGCC4_ARCHS
+from respective modules
+.Pc
+will be chosen.
+On an architecture using
+.Xr clang 1
+as the default compiler, 
+clang from the base system will always be chosen,
+so it is not necessary to list
+.Sq base
+unless it's the only suitable compiler.
+.Pp
+Common reasons for using
+.Ev COMPILER
+will most often be C++11 support, thread-local-storage support (emulated),
+atomic operations on some arches, sometimes assembler support, ABI
+compatibility with dependent/depending ports, or plain old internal compiler
+errors.
+.Pp
+With
+.Ev COMPILER
+in effect,
+.Ev MODGCC4_ARCHS
+and
+.Ev MODCLANG_ARCHS
+default to
+.Sq * .
+.It Ev COMPILER_LANGS
+If
+.Ev COMPILER
+is in effect,
+the value of
+.Ev COMPILER_LANGS
+will be added to the respective module's supported langs.
+Defaults to
+.Sq c c++ .
+Only
+.Sq c
+and
+.Sq c++
+are supported by this mechanism.
+.Sq fortran
+or
+.Sq java
+still need old modules annotations, so that it's possible
+to select, e.g.,
+.Sq gfortran
+from gcc 4.9 while having clang from base.
+See also
+.Ev CHOSEN_COMPILER .
 .It Ev CONFIG_SITE_LIST
 Used when
 .Li CONFIGURE_STYLE=gnu ,
