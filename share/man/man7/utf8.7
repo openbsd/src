@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utf8.7,v 1.5 2017/05/31 17:16:48 schwarze Exp $
+.\"	$OpenBSD: utf8.7,v 1.6 2017/05/31 17:58:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -21,34 +21,36 @@
 .Nm utf8
 .Nd UTF-8 text encoding
 .Sh DESCRIPTION
-UTF-8 is a multibyte encoding for Unicode text.
+UTF-8 is a multibyte character encoding for Unicode text.
 It is the preferred format for non ASCII text.
 .Pp
-The length of a UTF-8 sequence varies depending on the encoded value.
-If the high bit of the first byte is zero, the sequence length is one and
-the value is the remaining seven bits.
-If the high bit is set, then the number of high bits set, followed by a zero
-bit, indicates the length of the sequence and the value is formed by combining
-the low bits of each byte.
-Continuation bytes all have the same format, with the top two bits set and
-unset, respectively, and six value bits.
-.Pp
-Unicode ranges and their encoding formats:
+Unicode codepoints are encoded as follows:
 .Bl -tag -width Ds
-.It 0x0 - 0x7f
-One byte.
-0.......
-.It 0x80 - 0x7ff
-Two bytes.
-110..... 10.......
-.It 0x800 - 0xffff
-Three bytes.
-1110.... 10...... 10......
-.It 0x1000 - 0x10ffff
-Four bytes.
-11110... 10...... 10...... 10......
+.It U+0000 \(en U+007F:
+One byte: 0....... (compatible with ASCII)
+.It U+0080 \(en U+07FF:
+Two bytes: 110..... 10.......
+.It U+0800 \(en U+D7FF and U+E000 \(en U+FFFF:
+Three bytes: 1110.... 10...... 10......
+.It U+10000 \(en U+10FFFF:
+Four bytes: 11110... 10...... 10...... 10......
 .El
+.Pp
+The bits shown as dots contain the codepoint represented as a binary
+integer.
+.Pp
+Bytes starting with the bit pattern 11...... are called UTF-8 start
+bytes, and those starting with 10...... UTF-8 continuation bytes.
+The number of leading 1 bits in a start byte indicates the total
+number of bytes used to encode the codepoint, including the start
+byte.
+.Pp
+Encodings using more bytes than required are invalid.
+In particular, 11000000 and 11000001 are not valid start bytes,
+the byte after 11100000 must be at least 10100000,
+and the byte after 11110000 must be at least 10010000.
 .Sh SEE ALSO
+.Xr locale 1 ,
 .Xr ascii 7
 .Sh STANDARDS
 .Rs
@@ -58,6 +60,6 @@ Four bytes.
 .%T UTF-8, a transformation format of ISO 10646
 .Re
 .Pp
-The Unicode Standard.
-.Sh CAVEATS
-Beware of overlong encodings.
+.Lk http://www.unicode.org/versions/latest/ "The Unicode Standard"
+.Pp
+.Lk http://www.unicode.org/reports/tr44/ "The Unicode Character Database"
