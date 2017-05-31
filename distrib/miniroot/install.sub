@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1011 2017/05/28 09:24:56 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1012 2017/05/31 07:55:29 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2919,7 +2919,7 @@ do_install(){
 
 		_home=/mnt$_home
 		mkdir -p $_home
-		(cd /mnt/etc/skel; cp -pR . $_home)
+		(cd /mnt/etc/skel; pax -rw -k -pe . $_home)
 		(umask 077 && sed "s,^To: root\$,To: ${ADMIN_NAME} <${ADMIN}>," \
 			/mnt/var/mail/root >/mnt/var/mail/$ADMIN )
 		chown -R 1000:1000 $_home /mnt/var/mail/$ADMIN
