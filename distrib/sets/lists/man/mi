@@ -2039,6 +2039,7 @@
 ./usr/share/man/man7/symlink.7
 ./usr/share/man/man7/tbl.7
 ./usr/share/man/man7/term.7
+./usr/share/man/man7/utf8.7
 ./usr/share/man/man8/Makefile.yp.8
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
