@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.1 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.2 2017/05/31 15:27:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "tmux.h"
 
