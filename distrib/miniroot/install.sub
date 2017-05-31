@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1012 2017/05/31 07:55:29 tb Exp $
+#	$OpenBSD: install.sub,v 1.1013 2017/05/31 08:02:56 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2675,7 +2675,7 @@ do_autoinstall() {
 	exec reboot
 }
 
-do_install(){
+do_install() {
 	local _rootkey _rootpass
 
 	# Ask for and set the system hostname and add the hostname specific
