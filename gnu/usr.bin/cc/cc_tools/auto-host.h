@@ -1,6 +1,6 @@
 /* auto-host.h.  enerated b configure.  */
 /* config.in.  Generated from configure.ac by autoheader.  */
-/* $OpenBSD: auto-host.h,v 1.6 2015/08/23 15:33:18 kettenis Exp $ */
+/* $OpenBSD: auto-host.h,v 1.7 2017/05/31 03:24:20 stefan Exp $ */
 
 /* Define as the number of bits in a byte, if \`limits.h' doesn't. */
 #ifndef USED_FOR_TARGET
@@ -181,7 +181,7 @@
 
 /* Define true if the assembler supports '.long foo@GOTOFF'. */
 #ifndef USED_FOR_TARGET
-#define HAVE_AS_GOTOFF_IN_DATA 0
+#define HAVE_AS_GOTOFF_IN_DATA 1
 #endif
 
 
@@ -315,7 +315,7 @@
 
 /* Define 0/1 if your assembler and linker support COMDAT groups. */
 #ifndef USED_FOR_TARGET
-#define HAVE_COMDAT_GROUP 0
+#define HAVE_COMDAT_GROUP 1
 #endif
 
 
