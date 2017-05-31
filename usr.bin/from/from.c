@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.24 2015/11/05 18:42:41 mmcc Exp $	*/
+/*	$OpenBSD: from.c,v 1.25 2017/05/31 19:41:30 millert Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -98,6 +98,9 @@ main(int argc, char *argv[])
 		newline = 0;
 	}
 	free(line);
+	if (ferror(fp))
+		err(EXIT_FAILURE, "getline");
+	fclose(fp);
 	exit(EXIT_SUCCESS);
 }
 
