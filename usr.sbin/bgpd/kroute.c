@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.214 2017/05/31 10:44:00 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.215 2017/05/31 10:47:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1281,10 +1281,6 @@ kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 		kr->flags |= F_REDISTRIBUTED;
 
 sendit:
-	log_debug("kr_redistribute: %s (%s)", inet_ntoa(kr->prefix),
-	    type == IMSG_NETWORK_ADD ? "IMSG_NETWORK_ADD" :
-	    "IMSG_NETWORK_REMOVE");
-
 	bzero(&net, sizeof(net));
 	net.prefix.aid = AID_INET;
 	net.prefix.v4.s_addr = kr->prefix.s_addr;
@@ -1354,11 +1350,6 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	} else
 		kr6->flags |= F_REDISTRIBUTED;
 sendit:
-	log_debug("kr_redistribute6: %s/%u (%s)",
-	    log_in6addr(&kr6->prefix), kr6->prefixlen,
-	    type == IMSG_NETWORK_ADD ? "IMSG_NETWORK_ADD" :
-	    "IMSG_NETWORK_REMOVE");
-
 	bzero(&net, sizeof(net));
 	net.prefix.aid = AID_INET6;
 	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
@@ -1398,13 +1389,9 @@ kr_reload(void)
 		if (hasdyn) {
 			/* only evaluate the full tree if we need */
 			RB_FOREACH(kr, kroute_tree, &kt->krt)
-				if(!(kr->r.flags & F_DOWN))
-					kr_redistribute(IMSG_NETWORK_ADD,
-					    kt, &kr->r);
+				kr_redistribute(IMSG_NETWORK_ADD, kt, &kr->r);
 			RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
-				if(!(kr6->r.flags & F_DOWN))
-					kr_redistribute6(IMSG_NETWORK_ADD,
-					    kt, &kr6->r);
+				kr_redistribute6(IMSG_NETWORK_ADD, kt, &kr6->r);
 		}
 	}
 
@@ -2515,10 +2502,6 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		if (kt == NULL)
 			continue;
 
-		kr_redistribute(reachable ?
-		    IMSG_NETWORK_ADD : IMSG_NETWORK_REMOVE,
-		    kt, &(kkr->kr->r));
-
 		knexthop_track(kt, kkr->kr);
 	}
 	LIST_FOREACH(kkr6, &kif->kroute6_l, entry) {
@@ -2529,10 +2512,6 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 		if (kt == NULL)
 			continue;
-
-		kr_redistribute6(reachable ?
-		    IMSG_NETWORK_ADD : IMSG_NETWORK_REMOVE,
-		    kt, &(kkr6->kr->r));
 
 		knexthop_track(kt, kkr6->kr);
 	}
