@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.308 2017/05/31 10:44:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.309 2017/05/31 20:01:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3218,7 +3218,7 @@ parseextcommunity(struct filter_extcommunity *c, char *t, char *s)
 			return (-1);
 		}
 		if (errno == ERANGE && ullval > EXT_COMMUNITY_OPAQUE_MAX) {
-			yyerror("Bad ext-community value to big");
+			yyerror("Bad ext-community value too big");
 			return (-1);
 		}
 		c->data.ext_opaq = ullval;
@@ -3504,7 +3504,7 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 	case OP_LE:
 	case OP_GT:
 		if (pl->len_min > max_len) {
-			yyerror("prefixlen %d to big for AF, limit %d",
+			yyerror("prefixlen %d too big for AF, limit %d",
 			    pl->len_min, max_len);
 			return (-1);
 		}
@@ -3516,7 +3516,7 @@ merge_prefixspec(struct filter_prefix_l *p, struct filter_prefixlen *pl)
 		break;
 	case OP_LT:
 		if (pl->len_min > max_len - 1) {
-			yyerror("prefixlen %d to big for AF, limit %d",
+			yyerror("prefixlen %d too big for AF, limit %d",
 			    pl->len_min, max_len - 1);
 			return (-1);
 		}
