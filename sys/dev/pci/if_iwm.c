@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.188 2017/05/31 12:24:06 phessler Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.189 2017/05/31 13:22:16 phessler Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5444,8 +5444,7 @@ iwm_setrates(struct iwm_node *in)
 	 * legacy/HT are assumed to be marked with an 'invalid' PLCP value.
 	 */
 	j = 0;
-	ridx_min = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
-	    IWM_RIDX_OFDM : IWM_RIDX_CCK;
+	ridx_min = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
 	mimo = iwm_is_mimo_mcs(ni->ni_txmcs);
 	ridx_max = (mimo ? IWM_RIDX_MAX : IWM_LAST_HT_SISO_RATE);
 	for (ridx = ridx_max; ridx >= ridx_min; ridx--) {
