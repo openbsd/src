@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.17 2017/01/21 11:29:52 reyk Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.18 2017/05/31 08:57:48 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ int		virtio_pci_setup_msix(struct virtio_pci_softc *, struct pci_attach_args *, 
 void		virtio_pci_free_irqs(struct virtio_pci_softc *);
 int		virtio_pci_poll_intr(void *);
 int		virtio_pci_legacy_intr(void *);
+int		virtio_pci_legacy_intr_mpsafe(void *);
 int		virtio_pci_config_intr(void *);
 int		virtio_pci_queue_intr(void *);
 int		virtio_pci_shared_queue_intr(void *);
@@ -254,6 +255,7 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_irq_type = IRQ_MSIX_SHARED;
 		intrstr = "msix shared";
 	} else {
+		int (*ih_func)(void *) = virtio_pci_legacy_intr;
 		if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 			printf("%s: couldn't map interrupt\n", vsc->sc_dev.dv_xname);
 			goto fail_2;
@@ -263,11 +265,11 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * We always set the IPL_MPSAFE flag in order to do the relatively
 		 * expensive ISR read without lock, and then grab the kernel lock in
 		 * the interrupt handler.
-		 * For now, we don't support IPL_MPSAFE vq_done functions.
 		 */
-		KASSERT((vsc->sc_ipl & IPL_MPSAFE) == 0);
+		if (vsc->sc_ipl & IPL_MPSAFE)
+			ih_func = virtio_pci_legacy_intr_mpsafe;
 		sc->sc_ih[0] = pci_intr_establish(pc, ih, vsc->sc_ipl | IPL_MPSAFE,
-		    virtio_pci_legacy_intr, sc, vsc->sc_dev.dv_xname);
+		    ih_func, sc, vsc->sc_dev.dv_xname);
 		if (sc->sc_ih[0] == NULL) {
 			printf("%s: couldn't establish interrupt", vsc->sc_dev.dv_xname);
 			if (intrstr != NULL)
@@ -551,6 +553,26 @@ virtio_pci_legacy_intr(void *arg)
 	return r;
 }
 
+int
+virtio_pci_legacy_intr_mpsafe(void *arg)
+{
+	struct virtio_pci_softc *sc = arg;
+	struct virtio_softc *vsc = &sc->sc_sc;
+	int isr, r = 0;
+
+	/* check and ack the interrupt */
+	isr = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    VIRTIO_CONFIG_ISR_STATUS);
+	if (isr == 0)
+		return 0;
+	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
+	    (vsc->sc_config_change != NULL)) {
+		r = (vsc->sc_config_change)(vsc);
+	}
+	r |= virtio_check_vqs(vsc);
+	return r;
+}
+
 /*
  * Only used with MSI-X
  */
@@ -603,7 +625,6 @@ virtio_pci_poll_intr(void *arg)
 
 	return r;
 }
-
 
 void
 virtio_pci_kick(struct virtio_softc *vsc, uint16_t idx)
