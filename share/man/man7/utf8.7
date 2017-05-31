@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utf8.7,v 1.2 2017/05/31 09:58:36 tedu Exp $
+.\"	$OpenBSD: utf8.7,v 1.3 2017/05/31 10:09:31 tedu Exp $
 .\"
 .\" Copyright (c) 2017 Ted Unangst
 .\" All rights reserved.
@@ -33,11 +33,16 @@
 UTF-8 is a multibyte encoding for Unicode text.
 It is the preferred format for non ASCII text.
 .Pp
-The first byte of a sequence indicates the length in its high bits.
+The length of a UTF-8 sequence varies depending on the encoded value.
+If the high bit of the first byte is zero, the sequence length is one and
+the value is the remaining seven bits.
+If the high bit is set, then the number of high bits set, followed by a zero
+bit, indicates the length of the sequence and the value is formed by combining
+the low bits of each byte.
 Continuation bytes all have the same format, with the top two bits set and
-unset, respectively.
+unset, respectively, and six value bits.
 .Pp
-Ranges:
+Unicode ranges and their encoding formats:
 .Bl -tag -width Ds
 .It 0x0 - 0x7f
 One byte.
