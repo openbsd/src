@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.63 2017/05/15 17:24:48 schwarze Exp $
-# $NetBSD: mdoclint,v 1.71 2017/05/15 09:33:03 wiz Exp $
+# $OpenBSD: mdoclint,v 1.64 2017/05/31 15:35:22 schwarze Exp $
+# $NetBSD: mdoclint,v 1.72 2017/05/16 13:27:39 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -43,8 +43,7 @@ use constant {
 
 use vars qw(
 	$opt_D $opt_d $opt_e $opt_F $opt_f $opt_h $opt_l
-	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w
-	$opt_X $opt_x
+	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
 );
 
 
@@ -54,7 +53,7 @@ my $options="aDdeFfHhlmnoprSvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-DdfmnoprSXx" : "-DdeflmnoprSXx";
+	my $default = OPENBSD ? "-DdfmnoprSx" : "-DdeflmnoprSx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
@@ -74,20 +73,12 @@ usage:	mdoclint [-$options] file ...
 	-S	warn about any .Sh weirdness
 	-v	verbose output
 	-w	show section header in warnings
-	-X	warn about explicit mentions of the *BSD system names
 	-x	warn about cross-references with missing targets
 Default is $default if no flag is specified.
 EOF
 	exit(0);
 }
 
-
-my %short = (
-    "Free" => ".Fx",
-    "Net" => ".Nx",
-    "DragonFly" => ".Dx",
-    "Open" => ".Ox"
-);
 
 my %libraries = (
     "libarchive" => 1,
@@ -248,10 +239,10 @@ sub handle_options
 	# default to all warnings if no flag is set
 	unless ($opt_D or $opt_d or $opt_e or $opt_f or $opt_l
 		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
-		or $opt_S or $opt_X or $opt_x) {
+		or $opt_S or $opt_x) {
 		$opt_D = $opt_d = $opt_f = $opt_m =
 		    $opt_n = $opt_o = $opt_p = $opt_r = $opt_S =
-		    $opt_X = $opt_x = 1;
+		    $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
 	}
 }
@@ -441,20 +432,6 @@ sub process_line
 
 	if (/^\.Fn.*,.+/o) {
 		$s->warning("possible .Fn misuse: `$_'") if $opt_f;
-	}
-
-	if (/\b(Free|Net|DragonFly|Open)BSD\b/o
-	    and not /\b(?:www|ftp)\.(?:Free|Net|DragonFly|Open)BSD\.org\b/o
-	    and not /\bOpenBSD\::.*3p\b/o
-	    and not /\/pub\/OpenBSD\//o
-	    and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
-		$s->warning("verbose mention of `$1BSD' instead of "
-		    . "`$short{$1}': `$_'") if $opt_X;
-	}
-	if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o
-			or /Bx (DragonFly)/o or /Bx (Net)/o)) {
-		$s->warning("`.Bx $1' found -- use $short{$1} instead")
-		    if $opt_X;
 	}
 	if (/^\.Lb\s+(\S+)/o) {
 		if (not $libraries{$1}) {
