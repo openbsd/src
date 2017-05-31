@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.185 2017/05/27 18:50:53 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.186 2017/05/31 08:55:10 markus Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -483,6 +483,8 @@ restart:
 			s = solock(so);
 			if (resid == 0)
 				so->so_state &= ~SS_ISSENDING;
+			if (top && so->so_options & SO_ZEROIZE)
+				top->m_flags |= M_ZEROIZE;
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
 			    top, addr, control, curproc);
@@ -1591,6 +1593,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 		case SO_REUSEPORT:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
+		case SO_ZEROIZE:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				goto bad;
@@ -1792,6 +1795,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
+		case SO_ZEROIZE:
 			*mtod(m, int *) = so->so_options & optname;
 			break;
 
