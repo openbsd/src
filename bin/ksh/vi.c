@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.46 2017/05/31 06:59:12 anton Exp $	*/
+/*	$OpenBSD: vi.c,v 1.47 2017/05/31 20:18:43 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -956,9 +956,11 @@ vi_cmd(int argcnt, const char *cmd)
 			if (es->linelen == 0)
 				return -1;
 			modified = 1; hnum = hlast;
-			if (es->cursor + argcnt > es->linelen)
-				argcnt = es->linelen - es->cursor;
-			del_range(es->cursor, es->cursor + argcnt);
+			for (cur = es->cursor; cur < es->linelen; cur++)
+				if (!isu8cont(es->cbuf[cur]))
+					if (argcnt-- == 0)
+						break;
+			del_range(es->cursor, cur);
 			insert = INSERT;
 			break;
 
