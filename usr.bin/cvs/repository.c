@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.24 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: repository.c,v 1.25 2017/05/31 16:18:20 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -36,8 +36,8 @@ cvs_repository_unlock(const char *repo)
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", repo, CVS_LOCK);
 
-	/* XXX - this ok? */
-	worklist_run(&repo_locks, worklist_unlink);
+	if (unlink(fpath) == -1 && errno != ENOENT)
+		cvs_log(LP_ERR, "warning: failed to unlink %s", fpath);
 }
 
 void
