@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.88 2017/04/30 13:04:49 mpi Exp $
+#	$OpenBSD: files.amd64,v 1.89 2017/05/31 19:18:19 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -11,6 +11,7 @@ file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/hibernate_machdep.c	hibernate
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/via.c
+file	arch/amd64/amd64/locore.S
 file	arch/amd64/amd64/aes_intel.S		crypto
 file	arch/amd64/amd64/aesni.c		crypto
 file	arch/amd64/amd64/amd64errata.c

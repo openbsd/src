@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.47 2016/06/08 17:24:44 tedu Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.48 2017/05/31 19:18:18 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/hibernate.h>
+#include <uvm/uvm.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -105,6 +106,18 @@ void		aesni_setup(void);
 extern int	amd64_has_aesni;
 #endif
 
+void
+unmap_startup(void)
+{
+	extern void *kernel_text, *endboot;
+	vaddr_t p = (vaddr_t)&kernel_text;
+
+	do {
+		pmap_kremove(p, PAGE_SIZE);
+		p += PAGE_SIZE;
+	} while (p < (vaddr_t)&endboot);
+}
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -122,6 +135,8 @@ cpu_configure(void)
 	lapic_set_lvt();
 	ioapic_enable();
 #endif
+
+	unmap_startup();
 
 #ifdef MULTIPROCESSOR
 	cpu_init_idle_pcbs();

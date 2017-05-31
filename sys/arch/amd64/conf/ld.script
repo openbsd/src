@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.4 2016/09/03 13:13:07 deraadt Exp $	*/
+/*	$OpenBSD: ld.script,v 1.5 2017/05/31 19:18:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -52,7 +52,7 @@ SECTIONS
 		__text_start = ABSOLUTE(.) & 0xfffffffffffff000;
 		__text_size = SIZEOF(.text);
 		__text_load = LOADADDR(.text);
-		locore.o(.text)
+		locore0.o(.text)
 		*(.text .text.*)
 	} :text
 	PROVIDE (__etext = .);

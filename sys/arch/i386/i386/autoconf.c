@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.101 2016/06/08 17:24:44 tedu Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.102 2017/05/31 19:18:18 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -109,6 +109,18 @@ void		viac3_crypto_setup(void);
 extern int	i386_has_xcrypt;
 #endif
 
+void
+unmap_startup(void)
+{
+	extern void *kernel_text, *endboot;
+	vaddr_t p = (vaddr_t)&kernel_text;
+
+	do {
+		pmap_kremove(p, PAGE_SIZE);
+		p += PAGE_SIZE;
+	} while (p < (vaddr_t)&endboot);
+}
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -154,6 +166,8 @@ cpu_configure(void)
 
 	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
 
+	unmap_startup();
+
 #ifdef MULTIPROCESSOR
 	/* propagate TSS configuration to the idle pcb's. */
 	cpu_init_idle_pcbs();
@@ -165,6 +179,7 @@ cpu_configure(void)
 	 * until we can checksum blocks to figure it out.
 	 */
 	cold = 0;
+
 
 	/*
 	 * At this point the RNG is running, and if FSXR is set we can
