@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.67 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.68 2017/05/31 16:14:37 joris Exp $	*/
 /*
  * Copyright (c) 2007 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -179,7 +179,7 @@ cvs_annotate_local(struct cvs_file *cf)
 			rev = rcsnum_parse(cvs_specified_tag);
 			if (rev == NULL)
 				fatal("no such tag %s", cvs_specified_tag);
-                        free(rev);
+			free(rev);
 			rev = rcsnum_alloc();
 			rcsnum_cpy(cf->file_rcs->rf_head, rev, 0);
 		}
