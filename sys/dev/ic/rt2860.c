@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.92 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.93 2017/05/31 03:45:15 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3106,6 +3106,7 @@ rt2860_get_rf(uint16_t rev)
 	case RT3070_RF_3052:	return "RT3052";
 	case RT3070_RF_3320:	return "RT3320";
 	case RT3070_RF_3053:	return "RT3053";
+	case RT5390_RF_5360:	return "RT5360";
 	case RT5390_RF_5390:	return "RT5390";
 	case RT5390_RF_5392:	return "RT5392";
 	default:		return "unknown";

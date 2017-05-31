@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.33 2016/08/17 11:50:52 stsp Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.34 2017/05/31 03:45:15 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -925,6 +925,7 @@ struct rt2860_rxwi {
 #define RT3070_RF_3320	0x000b	/* 1T1R */
 #define RT3070_RF_3053	0x000d	/* dual-band 3T3R */
 #define RT5592_RF_5592	0x000f	/* dual-band 2T2R */
+#define RT5390_RF_5360	0x5360	/* 1T1R */
 #define RT5390_RF_5370	0x5370	/* 1T1R */
 #define RT5390_RF_5372	0x5372	/* 2T2R */
 #define RT5390_RF_5390	0x5390	/* 1T1R */
