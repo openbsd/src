@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.316 2016/10/15 22:20:17 millert Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.317 2017/05/31 16:31:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2589,6 +2589,8 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		cdate = cvs_directory_date;
 
 	if (cdate == -1) {
+		free(frev);
+
 		/* XXX */
 		if (rev->rn_len < 4 || !follow) {
 			return (rev);
