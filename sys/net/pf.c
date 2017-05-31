@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1032 2017/05/30 08:10:01 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1033 2017/05/31 09:19:10 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6132,6 +6132,8 @@ pf_walk_header(struct pf_pdesc *pd, struct ip *h, u_short *reason)
 		REASON_SET(reason, PFRES_SHORT);
 		return (PF_DROP);
 	}
+	if (hlen != sizeof(struct ip))
+		pd->badopts++;
 	end = pd->off + ntohs(h->ip_len);
 	pd->off += hlen;
 	pd->proto = h->ip_p;
@@ -6241,6 +6243,11 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 	pd->proto = h->ip6_nxt;
 
 	for (hdr_cnt = 0; hdr_cnt < pf_hdr_limit; hdr_cnt++) {
+		switch (pd->proto) {
+		case IPPROTO_HOPOPTS:
+		case IPPROTO_DSTOPTS:
+			pd->badopts++;
+		}
 		switch (pd->proto) {
 		case IPPROTO_FRAGMENT:
 			if (fraghdr_cnt++) {
@@ -6396,8 +6403,6 @@ pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
 		pd->tot_len = ntohs(h->ip_len);
 		pd->tos = h->ip_tos & ~IPTOS_ECN_MASK;
 		pd->ttl = h->ip_ttl;
-		if (h->ip_hl > 5)	/* has options */
-			pd->badopts++;
 		pd->virtual_proto = (h->ip_off & htons(IP_MF | IP_OFFMASK)) ?
 		     PF_VPROTO_FRAGMENT : pd->proto;
 
