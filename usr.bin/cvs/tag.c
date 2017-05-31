@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.85 2016/10/27 07:12:02 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.86 2017/05/31 16:13:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -36,7 +36,8 @@ static int tag_add(struct cvs_file *);
 
 struct file_info_list	files_info;
 
-static int	 runflags = 0;
+static int	runflags = 0;
+static int	tag_errors = 0;
 static char	*tag = NULL;
 static char	*tag_date = NULL;
 static char	*tag_name = NULL;
@@ -117,20 +118,23 @@ cvs_tag(int argc, char **argv)
 			fatal("%s", cvs_cmd_rtag.cmd_synopsis);
 
 		for (i = 1; i < argc; i++) {
-			if (argv[i][0] == '/')
+			if (argv[i][0] == '/') {
 				fatal("Absolute path name is invalid: %s",
 				    argv[i]);
+			}
 		}
-	} else if (cvs_cmdop == CVS_OP_TAG && argc == 0)
+	} else if (cvs_cmdop == CVS_OP_TAG && argc == 0) {
 		fatal("%s", cvs_cmd_tag.cmd_synopsis);
+	}
 
 	tag_name = argv[0];
 	argc--;
 	argv++;
 
-	if (!rcs_sym_check(tag_name))
+	if (!rcs_sym_check(tag_name)) {
 		fatal("tag `%s' must not contain the characters `%s'",
 		    tag_name, RCS_SYM_INVALCHAR);
+	}
 
 	if (tag_oldname != NULL) {
 		if (runflags & T_DELETE)
@@ -156,6 +160,11 @@ cvs_tag(int argc, char **argv)
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
+		if (argc > 0)
+			cvs_file_run(argc, argv, &cr);
+		else
+			cvs_file_run(1, &arg, &cr);
+
 		if (runflags & T_BRANCH)
 			cvs_client_send_request("Argument -b");
 
@@ -178,54 +187,47 @@ cvs_tag(int argc, char **argv)
 			cvs_client_send_request("Argument -r%s", tag_oldname);
 
 		cvs_client_send_request("Argument %s", tag_name);
-	} else {
-		if (cvs_cmdop == CVS_OP_RTAG &&
-		    chdir(current_cvsroot->cr_dir) == -1)
-			fatal("cvs_tag: %s", strerror(errno));
+		cvs_client_send_files(argv, argc);
+		cvs_client_senddir(".");
+		cvs_client_send_request((cvs_cmdop == CVS_OP_RTAG) ?
+		    "rtag" : "tag");
+		cvs_client_get_responses();
+
+		return (0);
 	}
 
-	cr.flags = flags;
+	if (cvs_cmdop == CVS_OP_RTAG && chdir(current_cvsroot->cr_dir) == -1)
+		fatal("cvs_tag: %s", strerror(errno));
 
+	TAILQ_INIT(&files_info);
 	cvs_get_repository_name(".", repo, PATH_MAX);
 	line_list = cvs_trigger_getlines(CVS_PATH_TAGINFO, repo);
-	if (line_list != NULL) {
-		TAILQ_INIT(&files_info);
-		cr.fileproc = cvs_tag_check_files;
-		if (argc > 0)
-			cvs_file_run(argc, argv, &cr);
-		else
-			cvs_file_run(1, &arg, &cr);
 
+	cr.flags = flags;
+	cr.fileproc = cvs_tag_check_files;
+
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
+
+	if (tag_errors)
+		fatal("correct the above errors first!");
+
+	if (line_list != NULL) {
 		if (cvs_trigger_handle(CVS_TRIGGER_TAGINFO, repo, NULL,
-		    line_list, &files_info)) {
-			cvs_log(LP_ERR, "Pre-tag check failed");
-			cvs_trigger_freelist(line_list);
-			goto bad;
-		}
+		    line_list, &files_info))
+			fatal("Pre-tag check failed");
 		cvs_trigger_freelist(line_list);
 	}
 
 	cr.fileproc = cvs_tag_local;
 
-	if (cvs_cmdop == CVS_OP_TAG ||
-	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
-		if (argc > 0)
-			cvs_file_run(argc, argv, &cr);
-		else
-			cvs_file_run(1, &arg, &cr);
-	}
+	if (argc > 0)
+		cvs_file_run(argc, argv, &cr);
+	else
+		cvs_file_run(1, &arg, &cr);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
-		cvs_client_send_files(argv, argc);
-		cvs_client_senddir(".");
-
-		cvs_client_send_request((cvs_cmdop == CVS_OP_RTAG) ?
-		    "rtag" : "tag");
-
-		cvs_client_get_responses();
-	}
-
-bad:
 	if (line_list != NULL)
 		cvs_trigger_freeinfo(&files_info);
 
@@ -243,13 +245,16 @@ cvs_tag_check_files(struct cvs_file *cf)
 
 	cvs_file_classify(cf, tag);
 
-	if (cf->file_type == CVS_DIR)
+	if (cf->file_type == CVS_DIR || cf->file_status == FILE_UNKNOWN)
 		return;
 
 	if (runflags & T_CHECK_UPTODATE) {
 		if (cf->file_status != FILE_UPTODATE &&
 		    cf->file_status != FILE_CHECKOUT &&
 		    cf->file_status != FILE_PATCH) {
+			tag_errors++;
+			cvs_log(LP_NOTICE,
+			    "%s is locally modified", cf->file_path);
 			return;
 		}
 	}
@@ -331,16 +336,6 @@ cvs_tag_local(struct cvs_file *cf)
 			    cf->file_path);
 		}
 		return;
-	}
-
-	if (runflags & T_CHECK_UPTODATE) {
-		if (cf->file_status != FILE_UPTODATE &&
-		    cf->file_status != FILE_CHECKOUT &&
-		    cf->file_status != FILE_PATCH) {
-			cvs_log(LP_NOTICE,
-			    "%s is locally modified", cf->file_path);
-			return;
-		}
 	}
 
 	if (runflags & T_DELETE) {
