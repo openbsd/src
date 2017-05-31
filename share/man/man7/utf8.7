@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utf8.7,v 1.1 2017/05/31 08:30:22 tedu Exp $
+.\"	$OpenBSD: utf8.7,v 1.2 2017/05/31 09:58:36 tedu Exp $
 .\"
 .\" Copyright (c) 2017 Ted Unangst
 .\" All rights reserved.
@@ -55,6 +55,13 @@ Four bytes.
 .Sh CAVEATS
 Beware of overlong encodings.
 .Sh STANDARDS
-Unicode.
+.Rs
+.%A F. Yergeau
+.%D November 2003
+.%R RFC 3629
+.%T UTF-8, a transformation format of ISO 10646
+.Re
+.Pp
+The Unicode Standard.
 .Sh SEE ALSO
 .Xr ascii 7
