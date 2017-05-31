@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.185 2017/05/31 08:14:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.186 2017/05/31 08:33:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -367,6 +367,8 @@ void	iwm_rx_rx_mpdu(struct iwm_softc *, struct iwm_rx_packet *,
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *);
 void	iwm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
+	    struct iwm_rx_data *);
+void	iwm_rx_bmiss(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_binding_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
 void	iwm_phy_ctxt_cmd_hdr(struct iwm_softc *, struct iwm_phy_ctxt *,
