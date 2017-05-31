@@ -134,6 +134,9 @@ testseq "abcdef\00334h2Rxy\0033" " $ abcdef\b\b\b\b\bxyxy\b\r\naxyxyf"
 
 # r: Replace character.
 testseq "abcd\00332h2rxiy" " $ abcd\b\b\bxx\byxd\b\b\r\naxyxd"
+testseq "\0303\0266\0033ro" " $ \0303\0266\bo \b\b\r\no"
+testseq "\0342\0202\0254\0033ro" " $ \0342\0202\0254\bo  \b\b\b\r\no"
+testseq "\0303\0266\00332ro" " $ \0303\0266\b\a\r\n\0303\0266"
 
 # S: Substitute whole line.
 testseq "oldst\0033Snew" " $ oldst\b\b\b\b\b     \r $ new\r\nnew"
