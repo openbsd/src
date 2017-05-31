@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.193 2017/05/30 12:09:27 friehm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.194 2017/05/31 05:59:09 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_IPV6);
 struct cpumem *ip6counters;
 
 void ip6_ours(struct mbuf *);
+void ip6_local(struct mbuf *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
@@ -160,28 +161,37 @@ ip6_init(void)
 	ip6counters = counters_alloc(ip6s_ncounters);
 }
 
+/*
+ * Enqueue packet for local delivery.  Queuing is used as a boundary
+ * between the network layer (input/forward path) running without
+ * KERNEL_LOCK() and the transport layer still needing it.
+ */
 void
-ipv6_input(struct ifnet *ifp, struct mbuf *m)
+ip6_ours(struct mbuf *m)
 {
 	niq_enqueue(&ip6intrq, m);
 }
 
 /*
- * IP6 input interrupt handling. Just pass the packet to ip6_input.
+ * Dequeue and process locally delivered packets.
  */
 void
 ip6intr(void)
 {
 	struct mbuf *m;
 
-	while ((m = niq_dequeue(&ip6intrq)) != NULL)
-		ip6_input(m);
+	while ((m = niq_dequeue(&ip6intrq)) != NULL) {
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("ipintr no HDR");
+#endif
+		ip6_local(m);
+	}
 }
 
 void
-ip6_input(struct mbuf *m)
+ipv6_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ifnet *ifp;
 	struct ip6_hdr *ip6;
 	struct sockaddr_in6 sin6;
 	struct rtentry *rt = NULL;
@@ -191,10 +201,6 @@ ip6_input(struct mbuf *m)
 	struct in6_addr odst;
 #endif
 	int srcrt = 0;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		goto bad;
 
 	ip6stat_inc(ip6s_total);
 
@@ -441,8 +447,8 @@ ip6_input(struct mbuf *m)
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst));
 			/* address is not ready, so discard the packet. */
 			nd6log((LOG_INFO,
-			    "ip6_input: packet to an unready address %s->%s\n",
-			    src, dst));
+			    "%s: packet to an unready address %s->%s\n",
+			    __func__, src, dst));
 
 			goto bad;
 		} else {
@@ -494,17 +500,15 @@ ip6_input(struct mbuf *m)
 #endif /* IPSEC */
 
 	ip6_forward(m, rt, srcrt);
-	if_put(ifp);
 	return;
  bad:
 	m_freem(m);
  out:
 	rtfree(rt);
-	if_put(ifp);
 }
 
 void
-ip6_ours(struct mbuf *m)
+ip6_local(struct mbuf *m)
 {
 	int off, nxt;
 
@@ -1456,18 +1460,37 @@ ip6_send_dispatch(void *xmq)
 	struct mbuf *m;
 	struct mbuf_list ml;
 	int s;
+#ifdef IPSEC
+	int locked = 0;
+#endif /* IPSEC */
 
 	mq_delist(mq, &ml);
 	if (ml_empty(&ml))
 		return;
 
-	KERNEL_LOCK();
+#ifdef IPSEC
+	/*
+	 * IPsec is not ready to run without KERNEL_LOCK().  So all
+	 * the traffic on your machine is punished if you have IPsec
+	 * enabled.
+	 */
+	extern int ipsec_in_use;
+	if (ipsec_in_use) {
+		KERNEL_LOCK();
+		locked = 1;
+	}
+#endif /* IPSEC */
+
 	NET_LOCK(s);
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 	}
 	NET_UNLOCK(s);
-	KERNEL_UNLOCK();
+
+#ifdef IPSEC
+	if (locked)
+		KERNEL_UNLOCK();
+#endif /* IPSEC */
 }
 
 void

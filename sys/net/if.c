@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.502 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.503 2017/05/31 05:59:09 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -874,7 +874,10 @@ if_input_process(void *xifidx)
 	struct ifnet *ifp;
 	struct ifih *ifih;
 	struct srp_ref sr;
-	int s;
+	int s, s2;
+#ifdef IPSEC
+	int locked = 0;
+#endif /* IPSEC */
 
 	ifp = if_get(ifidx);
 	if (ifp == NULL)
@@ -887,6 +890,32 @@ if_input_process(void *xifidx)
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
 		add_net_randomness(ml_len(&ml));
 
+#ifdef IPSEC
+	/*
+	 * IPsec is not ready to run without KERNEL_LOCK().  So all
+	 * the traffic on your machine is punished if you have IPsec
+	 * enabled.
+	 */
+	extern int ipsec_in_use;
+	if (ipsec_in_use) {
+		KERNEL_LOCK();
+		locked = 1;
+	}
+#endif /* IPSEC */
+
+	/*
+	 * We grab the NET_LOCK() before processing any packet to
+	 * ensure there's no contention on the routing table lock.
+	 *
+	 * Without it we could race with a userland thread to insert
+	 * a L2 entry in ip{6,}_output().  Such race would result in
+	 * one of the threads sleeping *inside* the IP output path.
+	 *
+	 * Since we have a NET_LOCK() we also use it to serialize access
+	 * to PF globals, pipex globals, unicast and multicast addresses
+	 * lists.
+	 */
+	NET_LOCK(s2);
 	s = splnet();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		/*
@@ -903,7 +932,12 @@ if_input_process(void *xifidx)
 			m_freem(m);
 	}
 	splx(s);
+	NET_UNLOCK(s2);
 
+#ifdef IPSEC
+	if (locked)
+		KERNEL_UNLOCK();
+#endif /* IPSEC */
 out:
 	if_put(ifp);
 }
