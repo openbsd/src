@@ -1545,6 +1545,7 @@
 ./usr/share/man/man2/flock.2
 ./usr/share/man/man2/fork.2
 ./usr/share/man/man2/fsync.2
+./usr/share/man/man2/futex.2
 ./usr/share/man/man2/getdents.2
 ./usr/share/man/man2/getdtablecount.2
 ./usr/share/man/man2/getentropy.2
