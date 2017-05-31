@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-pubkey.c,v 1.66 2017/05/31 09:15:42 deraadt Exp $ */
+/* $OpenBSD: auth2-pubkey.c,v 1.67 2017/05/31 10:54:00 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -584,7 +584,7 @@ match_principals_option(const char *principal_list, struct sshkey_cert *cert)
 }
 
 static int
-process_principals(FILE *f, char *file, struct passwd *pw,
+process_principals(FILE *f, const char *file, struct passwd *pw,
     const struct sshkey_cert *cert)
 {
 	char line[SSH_MAX_PUBKEY_BYTES], *cp, *ep, *line_opts;
@@ -622,8 +622,7 @@ process_principals(FILE *f, char *file, struct passwd *pw,
 		for (i = 0; i < cert->nprincipals; i++) {
 			if (strcmp(cp, cert->principals[i]) == 0) {
 				debug3("%s:%lu: matched principal \"%.100s\"",
-				    file == NULL ? "(command)" : file,
-				    linenum, cert->principals[i]);
+				    file, linenum, cert->principals[i]);
 				if (auth_parse_options(pw, line_opts,
 				    file, linenum) != 1)
 					continue;
@@ -754,7 +753,7 @@ match_principals_command(struct passwd *user_pw, const struct sshkey *key)
 	uid_swapped = 1;
 	temporarily_use_uid(pw);
 
-	ok = process_principals(f, NULL, pw, cert);
+	ok = process_principals(f, "(command)", pw, cert);
 
 	fclose(f);
 	f = NULL;
