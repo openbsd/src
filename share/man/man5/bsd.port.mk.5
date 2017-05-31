@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.458 2017/05/31 08:12:27 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.459 2017/05/31 10:06:02 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -54,7 +54,8 @@ the generation of package information.
 It ends with sections covering obsolete targets, variables and files,
 outlining conversion
 methods from older incarnations of the ports tree or from other
-.Bx variants.
+.Bx
+variants.
 .Pp
 .Nm
 also uses quite a few helper scripts.
@@ -1238,12 +1239,12 @@ will be displayed instead of the port being built.
 .It Ev COMPILER
 Select a somewhat more recent compiler than gcc 4.2.1.
 Set to a list containing
-.Sq base 
+.Sq base
 (clang compiler in base),
 .Sq clang
 (clang compiler in ports),
 or
-.Sq gcc 
+.Sq gcc
 (gcc 4.9 from ports).
 The first compiler that matches criteria
 .Po
@@ -1255,7 +1256,7 @@ from respective modules
 will be chosen.
 On an architecture using
 .Xr clang 1
-as the default compiler, 
+as the default compiler,
 clang from the base system will always be chosen,
 so it is not necessary to list
 .Sq base
