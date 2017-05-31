@@ -148,5 +148,7 @@ void	 packet_read_expect(int expected_type);
 	ssh_packet_set_mux(active_state)
 #define packet_get_mux() \
 	ssh_packet_get_mux(active_state)
+#define packet_clear_keys() \
+	ssh_packet_clear_keys(active_state)
 
 #endif /* _OPACKET_H */
