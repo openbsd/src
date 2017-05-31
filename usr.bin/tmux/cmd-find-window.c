@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.43 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.44 2017/05/31 16:44:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,7 @@ cmd_find_window_exec(struct cmd *self, struct cmdq_item *item)
 		xasprintf(&filter, "#{C:%s}", s);
 	else if (N)
 		xasprintf(&filter, "#{m:*%s*,#{window_name}}", s);
-	else if (T)
+	else
 		xasprintf(&filter, "#{m:*%s*,#{pane_title}}", s);
 
 	new_args = args_parse("", 1, &argv);
