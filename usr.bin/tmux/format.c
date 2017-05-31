@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.141 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.142 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -203,7 +203,7 @@ format_job_update(struct job *job)
 
 	log_debug("%s: %p %s: %s", __func__, fj, fj->cmd, fj->out);
 
-	t = time (NULL);
+	t = time(NULL);
 	if (fj->status && fj->last != t) {
 		if (fj->client != NULL)
 			server_status_client(fj->client);

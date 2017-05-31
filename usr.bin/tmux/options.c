@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.34 2017/04/22 06:13:30 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.35 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,7 +114,7 @@ options_free(struct options *oo)
 {
 	struct options_entry	*o, *tmp;
 
-	RB_FOREACH_SAFE (o, options_tree, &oo->tree, tmp)
+	RB_FOREACH_SAFE(o, options_tree, &oo->tree, tmp)
 		options_remove(o);
 	free(oo);
 }

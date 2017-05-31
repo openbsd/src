@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.44 2017/04/25 15:35:10 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.45 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -158,7 +158,7 @@ job_read_callback(__unused struct bufferevent *bufev, void *data)
 	struct job	*job = data;
 
 	if (job->updatecb != NULL)
-		job->updatecb (job);
+		job->updatecb(job);
 }
 
 /*

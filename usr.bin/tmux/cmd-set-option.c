@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.115 2017/05/10 13:05:41 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.116 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -254,7 +254,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 		RB_FOREACH(w, windows, &windows)
 			layout_fix_panes(w, w->sx, w->sy);
 	}
-	RB_FOREACH (s, sessions, &sessions)
+	RB_FOREACH(s, sessions, &sessions)
 		status_update_saved(s);
 
 	/*

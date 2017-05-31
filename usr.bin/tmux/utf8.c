@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.36 2017/03/17 14:51:41 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.37 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -402,8 +402,7 @@ utf8_rtrimcstr(const char *s, u_int width)
 	next = end - 1;
 
 	at = 0;
-	for (;;)
-	{
+	for (;;) {
 		if (at + next->width > width) {
 			next++;
 			break;

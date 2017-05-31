@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.125 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.126 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -48,7 +48,7 @@ struct screen_write_collect_item {
 
 	struct grid_cell	 gc;
 
-	TAILQ_ENTRY (screen_write_collect_item) entry;
+	TAILQ_ENTRY(screen_write_collect_item) entry;
 };
 struct screen_write_collect_line {
 	TAILQ_HEAD(, screen_write_collect_item) items;

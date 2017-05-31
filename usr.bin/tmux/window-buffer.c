@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.2 2017/05/31 15:26:41 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.3 2017/05/31 17:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -199,7 +199,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata, u_int sx, u_int sy)
 	screen_write_start(&ctx, NULL, &s);
 	screen_write_clearscreen(&ctx, 8);
 
-	pdata = end = paste_buffer_data (pb, &psize);
+	pdata = end = paste_buffer_data(pb, &psize);
 	for (i = 0; i < sy; i++) {
 		at = 0;
 		while (end != pdata + psize && *end != '\n') {
