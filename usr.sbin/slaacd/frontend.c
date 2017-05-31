@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.15 2017/05/30 19:27:16 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.16 2017/05/31 07:14:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -315,21 +315,17 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	ssize_t			 n;
 	int			 shut = 0;
 
-	DEBUG_IMSG("%s", __func__);
-
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_READ, n=%ld", __func__, n);
 	}
 	if (event & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_WRITE, n=%ld", __func__, n);
 	}
 
 	for (;;) {
@@ -338,8 +334,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-
-		DEBUG_IMSG("%s: %s", __func__, imsg_type_name[imsg.hdr.type]);
 		switch (imsg.hdr.type) {
 		case IMSG_SOCKET_IPC:
 			/*
@@ -406,21 +400,17 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 	int			 shut = 0;
 	uint32_t		 if_index;
 
-	DEBUG_IMSG("%s", __func__);
-
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_READ, n=%ld", __func__, n);
 	}
 	if (event & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_WRITE, n=%ld", __func__, n);
 	}
 
 	for (;;) {
@@ -428,8 +418,6 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			fatal("%s: imsg_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
-
-		DEBUG_IMSG("%s: %s", __func__, imsg_type_name[imsg.hdr.type]);
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_END:

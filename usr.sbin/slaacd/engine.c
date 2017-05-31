@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.35 2017/05/30 18:18:08 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.36 2017/05/31 07:14:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -384,21 +384,17 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	int				 shut = 0, verbose;
 	uint32_t			 if_index;
 
-	DEBUG_IMSG("%s", __func__);
-
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_READ, n=%ld", __func__, n);
 	}
 	if (event & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_WRITE, n=%ld", __func__, n);
 	}
 
 	for (;;) {
@@ -406,8 +402,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			fatal("%s: imsg_get error", __func__);
 		if (n == 0)	/* No more messages. */
 			break;
-
-		DEBUG_IMSG("%s: %s", __func__, imsg_type_name[imsg.hdr.type]);
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_LOG_VERBOSE:
@@ -428,16 +422,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
 				    __func__, imsg.hdr.len);
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-			DEBUG_IMSG("%s: IMSG_UPDATE_IF: %d[%s], running: %s, "
-			    "privacy: %s", __func__, imsg_ifinfo.if_index,
-			    ether_ntoa(&imsg_ifinfo.hw_address),
-			    imsg_ifinfo.running ? "yes" : "no",
-			    imsg_ifinfo.autoconfprivacy ? "yes" : "no");
 
 			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
 			if (iface == NULL) {
-				DEBUG_IMSG("%s: new interface: %d", __func__,
-				    imsg_ifinfo.if_index);
 				if ((iface = calloc(1, sizeof(*iface))) == NULL)
 					fatal("calloc");
 				evtimer_set(&iface->timer, iface_timeout,
@@ -463,8 +450,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				LIST_INIT(&iface->dfr_proposals);
 			} else {
 				int need_refresh = 0;
-				DEBUG_IMSG("%s: updating %d", __func__,
-				    imsg_ifinfo.if_index);
 
 				if (iface->autoconfprivacy !=
 				    imsg_ifinfo.autoconfprivacy) {
@@ -503,8 +488,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
 				    __func__, imsg.hdr.len);
 			memcpy(&if_index, imsg.data, sizeof(if_index));
-			DEBUG_IMSG("%s: IMSG_REMOVE_IF: %d", __func__,
-			    if_index);
 			remove_slaacd_iface(if_index);
 			break;
 		case IMSG_RA:
@@ -512,7 +495,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				fatal("%s: IMSG_RA wrong length: %d",
 				    __func__, imsg.hdr.len);
 			memcpy(&ra, imsg.data, sizeof(ra));
-			DEBUG_IMSG("%s: IMSG_RA: %d", __func__, ra->if_index);
 			iface = get_slaacd_iface_by_id(ra.if_index);
 			if (iface != NULL)
 				parse_ra(iface, &ra);
@@ -618,21 +600,17 @@ engine_dispatch_main(int fd, short event, void *bula)
 	ssize_t			 n;
 	int			 shut = 0;
 
-	DEBUG_IMSG("%s", __func__);
-
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_READ, n=%ld", __func__, n);
 	}
 	if (event & EV_WRITE) {
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("msgbuf_write");
 		if (n == 0)	/* Connection closed. */
 			shut = 1;
-		DEBUG_IMSG("%s: EV_WRITE, n=%ld", __func__, n);
 	}
 
 	for (;;) {
@@ -641,7 +619,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 		if (n == 0)	/* No more messages. */
 			break;
 
-		DEBUG_IMSG("%s: %s", __func__, imsg_type_name[imsg.hdr.type]);
 		switch (imsg.hdr.type) {
 		case IMSG_SOCKET_IPC:
 			/*
