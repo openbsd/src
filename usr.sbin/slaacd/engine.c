@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.36 2017/05/31 07:14:58 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.37 2017/05/31 07:30:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -847,6 +847,8 @@ remove_slaacd_iface(uint32_t if_index)
 {
 	struct slaacd_iface	*iface, *tiface;
 	struct radv		*ra;
+	struct address_proposal	*addr_proposal;
+	struct dfr_proposal	*dfr_proposal;
 
 	LIST_FOREACH_SAFE (iface, &slaacd_interfaces, entries, tiface) {
 		if (iface->if_index == if_index) {
@@ -855,6 +857,19 @@ remove_slaacd_iface(uint32_t if_index)
 				ra = LIST_FIRST(&iface->radvs);
 				LIST_REMOVE(ra, entries);
 				free_ra(ra);
+			}
+			/* XXX inform netcfgd? */
+			while(!LIST_EMPTY(&iface->addr_proposals)) {
+				addr_proposal =
+				    LIST_FIRST(&iface->addr_proposals);
+				LIST_REMOVE(addr_proposal, entries);
+				free(addr_proposal);
+			}
+			while(!LIST_EMPTY(&iface->dfr_proposals)) {
+				dfr_proposal =
+				    LIST_FIRST(&iface->dfr_proposals);
+				LIST_REMOVE(dfr_proposal, entries);
+				free(dfr_proposal);
 			}
 			free(iface);
 			break;
