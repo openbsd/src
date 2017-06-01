@@ -32,6 +32,10 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.1/4.2.1/collect2

@@ -29,6 +29,10 @@
 ./etc/firmware/zd1211b
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1/4.2.1
 ./usr/lib/gcc-lib/arm-unknown-openbsd6.1/4.2.1/collect2

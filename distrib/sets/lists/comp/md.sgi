@@ -106,10 +106,6 @@
 ./usr/include/sgi/vmparam.h
 ./usr/include/sgi/z8530var.h
 ./usr/include/unwind.h
-./usr/lib/crtbegin.o
-./usr/lib/crtbeginS.o
-./usr/lib/crtend.o
-./usr/lib/crtendS.o
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32btsmip.x
 ./usr/libdata/ldscripts/elf32btsmip.xbn

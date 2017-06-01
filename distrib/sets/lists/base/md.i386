@@ -69,6 +69,10 @@
 ./sbin/mount_ntfs
 ./sbin/wsconsctl
 ./usr/bin/pctr
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.1
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.1/4.2.1
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.1/4.2.1/collect2

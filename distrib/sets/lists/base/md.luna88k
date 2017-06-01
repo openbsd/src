@@ -1,6 +1,10 @@
 ./etc/examples/wsconsctl.conf
 ./sbin/kbd
 ./sbin/wsconsctl
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1/3.3.6/fPIC/libgcc.a
 ./usr/lib/gcc-lib/m88k-unknown-openbsd6.1/3.3.6/fpic/libgcc.a

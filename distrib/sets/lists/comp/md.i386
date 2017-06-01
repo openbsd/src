@@ -90,10 +90,6 @@
 ./usr/include/pmmintrin.h
 ./usr/include/unwind.h
 ./usr/include/xmmintrin.h
-./usr/lib/crtbegin.o
-./usr/lib/crtbeginS.o
-./usr/lib/crtend.o
-./usr/lib/crtendS.o
 ./usr/lib/libi386.a
 ./usr/lib/libi386_p.a
 ./usr/libdata/ldscripts
