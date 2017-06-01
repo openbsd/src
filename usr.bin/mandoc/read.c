@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.139 2017/05/31 15:30:12 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.140 2017/06/01 15:24:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -86,6 +86,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 
 	"useless macro",
 	"consider using OS macro",
+	"description line ends with a full stop",
 
 	"generic warning",
 

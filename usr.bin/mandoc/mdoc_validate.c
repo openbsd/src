@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.245 2017/05/31 15:30:12 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.246 2017/06/01 15:24:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1064,6 +1064,7 @@ static void
 post_nd(POST_ARGS)
 {
 	struct roff_node	*n;
+	size_t			 sz;
 
 	n = mdoc->last;
 
@@ -1077,6 +1078,11 @@ post_nd(POST_ARGS)
 	if (n->child == NULL)
 		mandoc_msg(MANDOCERR_ND_EMPTY, mdoc->parse,
 		    n->line, n->pos, "Nd");
+	else if (n->last->type == ROFFT_TEXT &&
+	    (sz = strlen(n->last->string)) != 0 &&
+	    n->last->string[sz - 1] == '.')
+		mandoc_msg(MANDOCERR_ND_DOT, mdoc->parse,
+		    n->last->line, n->last->pos + sz - 1, NULL);
 
 	post_hyph(mdoc);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.115 2017/05/31 15:30:12 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.116 2017/06/01 15:24:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2017 $
+.Dd $Mdocdate: June 1 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -763,6 +763,11 @@ macro that could be represented using
 .Ic \&Fx ,
 or
 .Ic \&Dx .
+.It Sy "description line ends with a full stop"
+.Pq mdoc
+Do not use punctuation at the end of an
+.Ic \&Nd
+block.
 .El
 .Ss Warnings related to the document prologue
 .Bl -ohang
