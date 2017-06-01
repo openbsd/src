@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.60 2017/05/08 15:33:43 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.61 2017/06/01 19:05:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 8 2017 $
+.Dd $Mdocdate: June 1 2017 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1923,9 +1923,10 @@ and
 .Ss \eH\(aq Ns Oo +|- Oc Ns Ar number Ns \(aq
 Set the height of the current font; ignored by
 .Xr mandoc 1 .
-.Ss \eh\(aq Ns Ar number Ns \(aq
-Horizontal motion; ignored by
-.Xr mandoc 1 .
+.Ss \eh\(aq Ns Ar width Ns \(aq
+Horizontal motion relative to the current position.
+The default scaling unit is
+.Cm m .
 .Ss \ek[ Ns Ar name ]
 Mark horizontal input place in register; ignored by
 .Xr mandoc 1 .

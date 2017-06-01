@@ -7,11 +7,11 @@
 .Sh DESCRIPTION
 simple: >\h'0'<
 .br
-escape only: >\h'\w'\&''<
+escape only: >\h'\w'\&'M'<
 .br
 escape at the end: >\h'0+\w'\&''<
 .br
-escape at the beginning: >\h'\w'\&'+0'<
+escape at the beginning: >\h'\w'\&'M+0'<
 .br
 escape in the middle: >\h'0+\w'\&'+0'<
 .br
