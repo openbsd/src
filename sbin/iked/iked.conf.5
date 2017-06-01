@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.49 2017/03/27 15:45:19 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.50 2017/06/01 15:23:43 sthen Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2017 $
+.Dd $Mdocdate: June 1 2017 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -572,6 +572,8 @@ from ASN1_DN IDs, for example
 .Ar ASN1_ID//C=DE/../CN=10.1.1.1/..
 will be expanded to
 .Ar 10.1.1.1 .
+.It Ar $eapid
+For a connection using EAP, the identity (username) used by the remote peer.
 .It Ar $domain
 Extract the domain from IDs of type FQDN, UFQDN or ASN1_DN.
 .It Ar $name

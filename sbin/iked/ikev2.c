@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.154 2017/04/26 10:42:38 henning Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.155 2017/06/01 15:23:43 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4555,6 +4555,14 @@ ikev2_sa_tag(struct iked_sa *sa, struct iked_id *id)
 
 	if (strstr(format, "$id") != NULL) {
 		if (expand_string(sa->sa_tag, len, "$id", idrepl) != 0) {
+			log_debug("%s: failed to expand tag", __func__);
+			goto fail;
+		}
+	}
+
+	if (strstr(format, "$eapid") != NULL && sa->sa_eapid != NULL) {
+		if (expand_string(sa->sa_tag, len, "$eapid",
+		    sa->sa_eapid) != 0) {
 			log_debug("%s: failed to expand tag", __func__);
 			goto fail;
 		}
