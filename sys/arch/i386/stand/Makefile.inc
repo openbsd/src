@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.49 2016/11/06 16:04:20 tb Exp $
+#	$OpenBSD: Makefile.inc,v 1.50 2017/06/01 11:18:53 naddy Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Os -Wall -Werror
-CFLAGS+=	-fno-stack-protector -DMDRANDOM
+CFLAGS+=	-ffreestanding -fno-stack-protector -DMDRANDOM
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
 SACFLAGS=-D_STANDALONE
 DEBUGFLAGS=
@@ -23,13 +23,18 @@ CLEANFILES+=	assym.h machine
 
 SACFLAGS+=-nostdinc -fno-builtin -fpack-struct
 
+.include <bsd.own.mk>
+.if ${COMPILER_VERSION:Mclang}
+NO_INTEGR_AS=   -no-integrated-as
+.endif
+
 .if !make(clean) && !make(cleandir) && !make(includes) && !make(libdep) && \
     !make(sadep) && !make(salibdir) && !make(obj)
 .BEGIN:
 	@([ X$(S) = X -o -h machine ] || ln -s $(S)/arch/i386/include machine)
 
 assym.h: ${S}/kern/genassym.sh ${SADIR}/etc/genassym.cf
-	sh ${S}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	sh ${S}/kern/genassym.sh ${CC} ${NO_INTEGR_AS} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${SADIR}/etc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 .endif
