@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.127 2017/04/10 02:15:54 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.128 2017/06/01 23:22:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1489,30 +1489,19 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	cur = frag = *txidx;
 
-#ifdef MSK_DEBUG
-	if (mskdebug >= 2)
-		msk_dump_mbuf(m_head);
-#endif
-
-	/*
-	 * Start packing the mbufs in this chain into
-	 * the fragment pointers. Stop when we run out
-	 * of fragments or hit the end of the mbuf chain.
-	 */
-	if (bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head,
-	    BUS_DMA_NOWAIT)) {
-		DPRINTFN(2, ("msk_encap: dmamap failed\n"));
-		return (ENOBUFS);
+	switch (bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT)) {
+	case 0:
+		break;
+	case EFBIG: /* mbuf chain is too fragmented */
+		if (m_defrag(m_head, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmatag, txmap, m_head,
+		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) == 0)
+			break;
+		/* FALLTHROUGH */
+	default:
+		return (1);
 	}
-
-	entries = txmap->dm_nsegs * 2;
-	if (entries > (MSK_TX_RING_CNT - sc_if->sk_cdata.sk_tx_cnt - 2)) {
-		DPRINTFN(2, ("msk_encap: too few descriptors free\n"));
-		bus_dmamap_unload(sc->sc_dmatag, txmap);
-		return (ENOBUFS);
-	}
-
-	DPRINTFN(2, ("msk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
 	/* Sync the DMA map. */
 	bus_dmamap_sync(sc->sc_dmatag, txmap, 0, txmap->dm_mapsize,
@@ -1585,12 +1574,16 @@ msk_start(struct ifnet *ifp)
 	struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
 	u_int32_t		idx = sc_if->sk_cdata.sk_tx_prod;
-	int			pkts = 0;
+	int			post = 0;
 
-	DPRINTFN(2, ("msk_start\n"));
+	for (;;) {
+		if (sc_if->sk_cdata.sk_tx_cnt + (SK_NTXSEG * 2) + 1 >
+		    MSK_TX_RING_CNT) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
 
-	while (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
-		m_head = ifq_deq_begin(&ifp->if_snd);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
@@ -1600,14 +1593,11 @@ msk_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (msk_encap(sc_if, m_head, &idx)) {
-			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifq_set_oactive(&ifp->if_snd);
-			break;
+			m_freem(m_head);
+			continue;
 		}
 
 		/* now we are committed to transmit the packet */
-		ifq_deq_commit(&ifp->if_snd, m_head);
-		pkts++;
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
@@ -1617,18 +1607,17 @@ msk_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
+		post = 1;
 	}
-	if (pkts == 0)
+	if (post == 0)
 		return;
 
 	/* Transmit */
-	if (idx != sc_if->sk_cdata.sk_tx_prod) {
-		sc_if->sk_cdata.sk_tx_prod = idx;
-		SK_IF_WRITE_2(sc_if, 1, SK_TXQA1_Y2_PREF_PUTIDX, idx);
+	sc_if->sk_cdata.sk_tx_prod = idx;
+	SK_IF_WRITE_2(sc_if, 1, SK_TXQA1_Y2_PREF_PUTIDX, idx);
 
-		/* Set a timeout in case the chip goes out to lunch. */
-		ifp->if_timer = MSK_TX_TIMEOUT;
-	}
+	/* Set a timeout in case the chip goes out to lunch. */
+	ifp->if_timer = MSK_TX_TIMEOUT;
 }
 
 void
