@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.272 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.273 2017/06/01 08:38:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -372,8 +372,10 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				cr->fileproc(cf);
 
 			if (l->flags & FILE_USER_SUPPLIED) {
-				if (cmdp->cmd_flags & CVS_LOCK_REPO)
+				if (cvsroot_is_local() &&
+				    (cmdp->cmd_flags & CVS_LOCK_REPO)) {
 					cvs_repository_unlock(repo);
+				}
 				free(cvs_directory_tag);
 				cvs_directory_tag = NULL;
 			}
