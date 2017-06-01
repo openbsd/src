@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.17 2016/09/26 19:58:26 kettenis Exp $
+.\"	$OpenBSD: acpidump.8,v 1.18 2017/06/01 12:26:14 schwarze Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: September 26 2016 $
+.Dd $Mdocdate: June 1 2017 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -71,9 +71,14 @@ requires the ability to open
 which may be restricted based upon the value of the
 .Ar kern.allowkmem
 .Xr sysctl 8 .
+.Pp
+.Nm
+is run at startup and stores the results in
+.Pa /var/db/acpi .
 .Sh FILES
 .Bl -tag -width /dev/mem
 .It Pa /dev/mem
+.It Pa /var/db/acpi
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
