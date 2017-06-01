@@ -1,5 +1,5 @@
-.\" $OpenBSD: mdoclint.1,v 1.22 2017/05/31 15:35:22 schwarze Exp $
-.\" $NetBSD: mdoclint.1,v 1.18 2017/05/16 13:27:39 wiz Exp $
+.\" $OpenBSD: mdoclint.1,v 1.23 2017/06/01 14:55:24 schwarze Exp $
+.\" $NetBSD: mdoclint.1,v 1.20 2017/06/01 14:38:50 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2017 $
+.Dd $Mdocdate: June 1 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdeFfhlmnoprSvwx
+.Op Fl DdeFhlmnoprSvwx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -41,7 +41,7 @@ is a man page verifier.
 It tries to automatically find as many common
 errors that occur when writing man pages as possible.
 If no flags are given,
-.Fl DdfmnoprSx
+.Fl DdmnoprSx
 is assumed (that is, everything except
 .Fl eFhlvw ) .
 .Pp
@@ -55,11 +55,6 @@ Warn about bad date strings (in the .Dd macro).
 Warn about unsorted errors (for functions).
 .It Fl F
 Delete whitespace at the end of input lines.
-.It Fl f
-Warn about possible .Fn abuse; its arguments should be put in
-.Sq \&"
-separately, not together and separated by commas.
-Those will be automatically added by mdoc.
 .It Fl h
 Display usage.
 .It Fl l

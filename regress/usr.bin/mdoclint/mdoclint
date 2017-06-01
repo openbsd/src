@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.64 2017/05/31 15:35:22 schwarze Exp $
-# $NetBSD: mdoclint,v 1.72 2017/05/16 13:27:39 wiz Exp $
+# $OpenBSD: mdoclint,v 1.65 2017/06/01 14:55:24 schwarze Exp $
+# $NetBSD: mdoclint,v 1.74 2017/06/01 14:38:50 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -42,7 +42,7 @@ use constant {
 };
 
 use vars qw(
-	$opt_D $opt_d $opt_e $opt_F $opt_f $opt_h $opt_l
+	$opt_D $opt_d $opt_e $opt_F $opt_h $opt_l
 	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
 );
 
@@ -53,7 +53,7 @@ my $options="aDdeFfHhlmnoprSvwXx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-DdfmnoprSx" : "-DdeflmnoprSx";
+	my $default = OPENBSD ? "-DdmnoprSx" : "-DdelmnoprSx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
@@ -62,7 +62,6 @@ usage:	mdoclint [-$options] file ...
 	-d	warn about bad date strings (in .Dd only)
 	-e	warn about unsorted errors (for functions)
 	-F	fix whitespace problems (asks before overwriting)
-	-f	warn about possible incorrect .Fn syntax
 	-h	display this help text
 	-l	warn about unknown libraries
 	-m	warn about man pages that are not in mdoc(7) format
@@ -237,10 +236,10 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_d or $opt_e or $opt_f or $opt_l
+	unless ($opt_D or $opt_d or $opt_e or $opt_l
 		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
 		or $opt_S or $opt_x) {
-		$opt_D = $opt_d = $opt_f = $opt_m =
+		$opt_D = $opt_d = $opt_m =
 		    $opt_n = $opt_o = $opt_p = $opt_r = $opt_S =
 		    $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
@@ -430,9 +429,6 @@ sub process_line
 		}
 	}
 
-	if (/^\.Fn.*,.+/o) {
-		$s->warning("possible .Fn misuse: `$_'") if $opt_f;
-	}
 	if (/^\.Lb\s+(\S+)/o) {
 		if (not $libraries{$1}) {
 			$s->warning("Unknown library `$1' used as Lb argument") if $opt_l;
