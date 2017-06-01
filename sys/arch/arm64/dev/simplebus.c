@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.7 2017/04/27 10:23:19 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.8 2017/06/01 21:19:07 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -291,8 +291,8 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int firstseg = *segp;
 	int error;
 
-	error = sc->sc_dmat->_dmamap_load_buffer(t, map, buf, buflen, p,
-	    flags, lastaddrp, segp, first);
+	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
+	    p, flags, lastaddrp, segp, first);
 	if (error)
 		return error;
 
