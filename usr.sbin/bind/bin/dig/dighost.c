@@ -34,8 +34,6 @@
 #include <string.h>
 #include <limits.h>
 
-#include <sys/sysctl.h>
-
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
@@ -2780,15 +2778,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	isc_region_t r;
 	isc_buffer_t *buf = NULL;
 #endif
-	static int checked_jackport;
-	static int jackport;
-
-	if (!checked_jackport) {
-		int dnsjacking[2] = { CTL_KERN, KERN_DNSJACKPORT };
-		size_t portlen = sizeof(jackport);
-		sysctl(dnsjacking, 2, &jackport, &portlen, NULL, 0);
-		checked_jackport = 1;
-	}
 
 	UNUSED(task);
 	INSIST(!free_now);
@@ -2865,7 +2854,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		* sent to 0.0.0.0, :: or to a multicast addresses.
 		* XXXMPA broadcast needs to be handled here as well.
 		*/
-		if (jackport == 0)
 		if ((!isc_sockaddr_eqaddr(&query->sockaddr, &any) &&
 		     !isc_sockaddr_ismulticast(&query->sockaddr)) ||
 		    isc_sockaddr_getport(&query->sockaddr) !=
