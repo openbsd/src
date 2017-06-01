@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.86 2017/05/31 16:13:25 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.87 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -156,7 +156,7 @@ cvs_tag(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 

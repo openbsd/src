@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.107 2017/05/28 17:11:34 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.108 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -127,7 +127,7 @@ cvs_import(int argc, char **argv)
 			logmsg = cvs_logmsg_create(NULL, NULL, NULL, NULL);
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 
 		cvs_client_send_request("Argument -b%s", IMPORT_DEFAULT_BRANCH);

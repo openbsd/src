@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.157 2017/05/31 16:48:16 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.158 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -135,7 +135,7 @@ cvs_commit(int argc, char **argv)
 	if (RB_EMPTY(&files_affected))
 		return (0);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		if (logmsg == NULL) {
 			logmsg = cvs_logmsg_create(NULL, &files_added,
 			    &files_removed, &files_modified);
@@ -308,7 +308,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "cvs_commit_check_files(%s)", cf->file_path);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL)
+	if (cvsroot_is_remote())
 		cvs_remote_classify_file(cf);
 	else
 		cvs_file_classify(cf, cvs_directory_tag);
@@ -355,7 +355,7 @@ cvs_commit_check_files(struct cvs_file *cf)
 		return;
 	}
 
-	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+	if (cvsroot_is_local()) {
 		tag = cvs_directory_tag;
 		if (cf->file_ent != NULL)
 			tag = cf->file_ent->ce_tag;

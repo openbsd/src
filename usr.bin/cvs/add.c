@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.113 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: add.c,v 1.114 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -91,7 +91,7 @@ cvs_add(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_add_remote;
 		flags = 0;
@@ -118,7 +118,7 @@ cvs_add(int argc, char **argv)
 		    (added_files == 1) ? "this file" : "these files");
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_senddir(".");
 		cvs_client_send_files(argv, argc);
 		cvs_client_send_request("add");
@@ -364,7 +364,7 @@ add_directory(struct cvs_file *cf)
 		}
 	}
 
-	if (added == 1 && current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+	if (added == 1 && cvsroot_is_local()) {
 		(void)xsnprintf(msg, sizeof(msg),
 		    "Directory %s added to the repository", cf->file_rpath);
 

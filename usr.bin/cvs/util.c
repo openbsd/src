@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.159 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: util.c,v 1.160 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -574,8 +574,7 @@ cvs_mkpath(const char *path, char *tag)
 	hd.h_data = NULL;
 	hash_table_enter(&created_directories, &hd);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
-	    cvs_server_active == 1)
+	if (cvsroot_is_remote() || cvs_server_active == 1)
 		cvs_validate_directory(path);
 
 	dir = xstrdup(path);
@@ -663,8 +662,7 @@ cvs_mkdir(const char *path, mode_t mode)
 	size_t len;
 	char *sp, *dp, *dir, rpath[PATH_MAX];
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
-	    cvs_server_active == 1)
+	if (cvsroot_is_remote() || cvs_server_active == 1)
 		cvs_validate_directory(path);
 
 	dir = xstrdup(path);

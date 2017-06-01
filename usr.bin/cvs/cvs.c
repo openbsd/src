@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.158 2016/09/04 16:39:50 tb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.159 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006, 2007 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 		fatal("or set the CVSROOT environment variable.");
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cmdp->cmd(cmd_argc, cmd_argv);
 		cvs_cleanup();
 		return (0);

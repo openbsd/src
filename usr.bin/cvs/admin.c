@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.67 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: admin.c,v 1.68 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -144,7 +144,7 @@ cvs_admin(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -200,7 +200,7 @@ cvs_admin(int argc, char **argv)
 
 	cvs_file_run(argc, argv, &cr);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 		cvs_client_send_request("admin");

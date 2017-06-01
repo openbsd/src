@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.99 2017/05/28 16:58:54 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.100 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -87,7 +87,7 @@ cvs_status(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
-	if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+	if (cvsroot_is_local()) {
 		flags |= CR_REPO;
 		cr.fileproc = cvs_status_local;
 	} else {
@@ -106,7 +106,7 @@ cvs_status(int argc, char **argv)
 	else
 		cvs_file_run(1, &arg, &cr);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 		cvs_client_send_request("status");

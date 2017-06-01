@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.162 2016/10/13 20:51:25 fcambus Exp $	*/
+/*	$OpenBSD: diff.c,v 1.163 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -216,7 +216,7 @@ cvs_diff(int argc, char **argv)
 		flags |= CR_REPO;
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -277,15 +277,14 @@ cvs_diff(int argc, char **argv)
 
 	diff_rev1 = diff_rev2 = NULL;
 
-	if (cvs_cmdop == CVS_OP_DIFF ||
-	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+	if (cvs_cmdop == CVS_OP_DIFF || cvsroot_is_local()) {
 		if (argc > 0)
 			cvs_file_run(argc, argv, &cr);
 		else
 			cvs_file_run(1, &arg, &cr);
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 

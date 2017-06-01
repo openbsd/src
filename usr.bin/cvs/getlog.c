@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.100 2016/10/15 22:20:17 millert Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.101 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -135,7 +135,7 @@ cvs_getlog(int argc, char **argv)
 	cr.enterdir = NULL;
 	cr.leavedir = NULL;
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -175,15 +175,14 @@ cvs_getlog(int argc, char **argv)
 
 	cr.flags = flags;
 
-	if (cvs_cmdop == CVS_OP_LOG ||
-	    current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
+	if (cvs_cmdop == CVS_OP_LOG || cvsroot_is_local()) {
 		if (argc > 0)
 			cvs_file_run(argc, argv, &cr);
 		else
 			cvs_file_run(1, &arg, &cr);
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 

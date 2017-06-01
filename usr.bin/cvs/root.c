@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.48 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: root.c,v 1.49 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -203,4 +203,22 @@ cvsroot_get(const char *dir)
 		cvs_log(LP_ERR, "empty %s file", CVS_PATH_ROOTSPEC);
 
 	return cvsroot_parse(line);
+}
+
+int
+cvsroot_is_local(void)
+{
+	if (current_cvsroot == NULL)
+		fatal("cvsroot_is_local: no CVSROOT");
+
+	return (current_cvsroot->cr_method == CVS_METHOD_LOCAL);
+}
+
+int
+cvsroot_is_remote(void)
+{
+	if (current_cvsroot == NULL)
+		fatal("cvsroot_is_remote: no CVSROOT");
+
+	return (current_cvsroot->cr_method != CVS_METHOD_LOCAL);
 }

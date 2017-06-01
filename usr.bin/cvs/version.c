@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.25 2007/05/02 16:26:50 xsa Exp $	*/
+/*	$OpenBSD: version.c,v 1.26 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -35,14 +35,12 @@ cvs_version(int argc, char **argv)
 	if (argc > 1)
 		fatal("version does not take any extra arguments");
 
-	if (current_cvsroot != NULL &&
-	    current_cvsroot->cr_method != CVS_METHOD_LOCAL)
+	if (current_cvsroot != NULL && cvsroot_is_remote())
 		cvs_printf("Client: ");
 
 	cvs_printf("%s\n", CVS_VERSION);
 
-	if (current_cvsroot != NULL &&
-	    current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (current_cvsroot != NULL && cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cvs_client_send_request("version");
 		/* XXX: better way to handle server response? */

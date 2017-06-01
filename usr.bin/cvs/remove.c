@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.83 2015/11/05 09:48:21 nicm Exp $	*/
+/*	$OpenBSD: remove.c,v 1.84 2017/06/01 08:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -81,7 +81,7 @@ cvs_remove(int argc, char **argv)
 			cvs_file_run(1, &arg, &cr);
 	}
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
 
@@ -96,7 +96,7 @@ cvs_remove(int argc, char **argv)
 	else
 		cvs_file_run(1, &arg, &cr);
 
-	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
+	if (cvsroot_is_remote()) {
 		cvs_client_send_files(argv, argc);
 		cvs_client_senddir(".");
 		cvs_client_send_request("remove");
