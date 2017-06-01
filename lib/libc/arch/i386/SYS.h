@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.25 2016/05/07 19:05:21 guenther Exp $
+ *	$OpenBSD: SYS.h,v 1.26 2017/06/01 12:14:48 naddy Exp $
  */
 
 #include <machine/asm.h>
@@ -89,7 +89,7 @@
 	movl	$-1, %eax;				\
 	movl	$-1, %edx	/* for lseek */
 #define HANDLE_ERRNO()					\
-	jnc,pt	99f;					\
+	jnc	99f;					\
 	SET_ERRNO();					\
 	99:
 
