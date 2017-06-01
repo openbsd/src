@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.8 2016/01/02 20:03:28 benno Exp $ */
+/*	$OpenBSD: pf.c,v 1.9 2017/06/01 14:38:28 patrick Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -220,7 +220,8 @@ void
 print_pf(void)
 {
 	char		*debug;
-	time_t		tm;
+	time_t		tm = 0;
+	struct timespec	uptime;
 	int		i;
 	struct pf_status *s = &status;
 
@@ -229,7 +230,8 @@ print_pf(void)
 	if (end > num_disp)
 		end = num_disp;
 
-	tm = time(NULL) - s->since;
+	if (!clock_gettime(CLOCK_UPTIME, &uptime))
+		tm = uptime.tv_sec - s->since;
 
 	ADD_LINE_S("pf", "Status", s->running ? "Enabled" : "Disabled");
 	ADD_LINE_A("pf", "Since", tm);

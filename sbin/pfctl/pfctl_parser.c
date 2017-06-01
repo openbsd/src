@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.311 2017/05/15 16:56:42 mikeb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.312 2017/06/01 14:38:28 patrick Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -519,15 +519,17 @@ void
 print_status(struct pf_status *s, int opts)
 {
 	char			statline[80], *running, *debug;
-	time_t			runtime;
+	time_t			runtime = 0;
+	struct timespec		uptime;
 	int			i;
 	char			buf[PF_MD5_DIGEST_LENGTH * 2 + 1];
 	static const char	hex[] = "0123456789abcdef";
 
-	runtime = time(NULL) - s->since;
+	if (!clock_gettime(CLOCK_UPTIME, &uptime))
+		runtime = uptime.tv_sec - s->since;
 	running = s->running ? "Enabled" : "Disabled";
 
-	if (s->since) {
+	if (runtime) {
 		unsigned int	sec, min, hrs;
 		time_t		day = runtime;
 

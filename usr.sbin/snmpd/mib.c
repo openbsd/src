@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.83 2017/01/31 21:31:04 sthen Exp $	*/
+/*	$OpenBSD: mib.c,v 1.84 2017/06/01 14:38:28 patrick Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1650,7 +1650,8 @@ int
 mib_pfinfo(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	struct pf_status	 s;
-	time_t			 runtime;
+	time_t			 runtime = 0;
+	struct timespec		 uptime;
 	char			 str[11];
 
 	if (pf_get_stats(&s))
@@ -1661,10 +1662,8 @@ mib_pfinfo(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		*elm = ber_add_integer(*elm, s.running);
 		break;
 	case 2:
-		if (s.since > 0)
-			runtime = time(NULL) - s.since;
-		else
-			runtime = 0;
+		if (!clock_gettime(CLOCK_UPTIME, &uptime))
+			runtime = uptime.tv_sec - s.since;
 		runtime *= 100;
 		*elm = ber_add_integer(*elm, runtime);
 		ber_set_header(*elm, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);

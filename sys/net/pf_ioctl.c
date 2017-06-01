@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.313 2017/05/30 19:37:54 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.314 2017/06/01 14:38:28 patrick Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1005,7 +1005,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 		else {
 			pf_status.running = 1;
-			pf_status.since = time_second;
+			pf_status.since = time_uptime;
 			if (pf_status.stateid == 0) {
 				pf_status.stateid = time_second;
 				pf_status.stateid = pf_status.stateid << 32;
@@ -1020,7 +1020,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 		else {
 			pf_status.running = 0;
-			pf_status.since = time_second;
+			pf_status.since = time_uptime;
 			pf_remove_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: stopped");
 		}
@@ -1674,7 +1674,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.counters, sizeof(pf_status.counters));
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
-		pf_status.since = time_second;
+		pf_status.since = time_uptime;
 
 		break;
 	}
