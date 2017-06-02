@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.81 2017/03/19 16:55:31 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.82 2017/06/02 20:25:50 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -988,6 +988,7 @@ xen_grant_table_grow(struct xen_softc *sc)
 {
 	struct xen_add_to_physmap xatp;
 	struct xen_gntent *ge;
+	void *va;
 	paddr_t pa;
 
 	if (sc->sc_gntcnt == sc->sc_gntmax) {
@@ -996,21 +997,21 @@ xen_grant_table_grow(struct xen_softc *sc)
 		return (NULL);
 	}
 
+	va = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
+	if (va == NULL)
+		return (NULL);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)va, &pa)) {
+		printf("%s: grant table page PA extraction failed\n",
+		    sc->sc_dev.dv_xname);
+		km_free(va, PAGE_SIZE, &kv_any, &kp_zero);
+		return (NULL);
+	}
+
 	mtx_enter(&sc->sc_gntlck);
 
 	ge = &sc->sc_gnt[sc->sc_gntcnt];
-	ge->ge_table = km_alloc(PAGE_SIZE, &kv_any, &kp_zero, &kd_nowait);
-	if (ge->ge_table == NULL) {
-		mtx_leave(&sc->sc_gntlck);
-		return (NULL);
-	}
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)ge->ge_table, &pa)) {
-		printf("%s: grant table page PA extraction failed\n",
-		    sc->sc_dev.dv_xname);
-		km_free(ge->ge_table, PAGE_SIZE, &kv_any, &kp_zero);
-		mtx_leave(&sc->sc_gntlck);
-		return (NULL);
-	}
+	ge->ge_table = va;
+
 	xatp.domid = DOMID_SELF;
 	xatp.idx = sc->sc_gntcnt;
 	xatp.space = XENMAPSPACE_grant_table;
