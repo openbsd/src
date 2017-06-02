@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.189 2017/05/31 13:22:16 phessler Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.190 2017/06/02 11:18:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3544,6 +3544,7 @@ iwm_rx_bmiss(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_missed_beacons_notif *mbn = (void *)pkt->data;
+	uint32_t missed;
 
 	if ((ic->ic_opmode != IEEE80211_M_STA) ||
 	    (ic->ic_state != IEEE80211_S_RUN))
@@ -3552,7 +3553,8 @@ iwm_rx_bmiss(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof(*pkt),
 	    sizeof(*mbn), BUS_DMASYNC_POSTREAD);
 
-	if (mbn->consec_missed_beacons_since_last_rx > ic->ic_bmissthres) {
+	missed = le32toh(mbn->consec_missed_beacons_since_last_rx);
+	if (missed > ic->ic_bmissthres && ic->ic_mgt_timer == 0) {
 		/*
 		 * Rather than go directly to scan state, try to send a
 		 * directed probe request first. If that fails then the
