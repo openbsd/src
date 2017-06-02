@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.118 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.119 2017/06/02 15:09:13 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -846,7 +846,6 @@ run_load_microcode(struct run_softc *sc)
 		return EINVAL;
 	}
 
-	run_read(sc, RT2860_ASIC_VER_ID, &tmp);
 	/* write microcode image */
 	run_write_region_1(sc, RT2870_FW_BASE, ucode, size);
 	free(ucode, M_DEVBUF, size);
