@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.128 2017/06/01 23:22:14 dlg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.129 2017/06/02 01:47:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1473,10 +1473,12 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc	*f = NULL;
 	u_int32_t		frag, cur;
-	int			i, entries;
+	int			i, entries = 0;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
 	uint64_t		addr;
+	uint32_t		hiaddr;
+	uint8_t			opcode;
 
 	DPRINTFN(2, ("msk_encap\n"));
 
@@ -1507,29 +1509,35 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	bus_dmamap_sync(sc->sc_dmatag, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
+	opcode = 0;
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		/* high 32 bits of address */
 		addr = txmap->dm_segs[i].ds_addr;
-		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_addr = htole32(addr >> 32);
-		if (i == 0)
-			f->sk_opcode = SK_Y2_TXOPC_ADDR64;
-		else
-			f->sk_opcode = SK_Y2_TXOPC_ADDR64 | SK_Y2_TXOPC_OWN;
+		hiaddr = addr >> 32;
+		if (sc_if->sk_tx_hiaddr != hiaddr) {
+			f = &sc_if->sk_rdata->sk_tx_ring[frag];
+			f->sk_addr = htole32(hiaddr);
+			f->sk_opcode = opcode | SK_Y2_TXOPC_ADDR64;
 
-		SK_INC(frag, MSK_TX_RING_CNT);
+			sc_if->sk_tx_hiaddr = hiaddr;
+
+			SK_INC(frag, MSK_TX_RING_CNT);
+			opcode = SK_Y2_TXOPC_OWN;
+			entries++;
+		}
 
 		/* low 32 bits of address + length */
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_addr = htole32(addr & 0xffffffff);
+		f->sk_addr = htole32(addr);
 		f->sk_len = htole16(txmap->dm_segs[i].ds_len);
 		f->sk_ctl = 0;
-		if (i == 0)
-			f->sk_opcode = SK_Y2_TXOPC_PACKET | SK_Y2_TXOPC_OWN;
-		else
-			f->sk_opcode = SK_Y2_TXOPC_BUFFER | SK_Y2_TXOPC_OWN;
+		f->sk_opcode = opcode |
+		    (i == 0 ? SK_Y2_TXOPC_PACKET : SK_Y2_TXOPC_BUFFER);
 		cur = frag;
+
 		SK_INC(frag, MSK_TX_RING_CNT);
+		opcode = SK_Y2_TXOPC_OWN;
+		entries++;
 	}
 
 	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
@@ -1756,10 +1764,10 @@ msk_txeof(struct sk_if_softc *sc_if)
 	}
 	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? MSK_TX_TIMEOUT : 0;
 
-	if (sc_if->sk_cdata.sk_tx_cnt < MSK_TX_RING_CNT - 2)
-		ifq_clr_oactive(&ifp->if_snd);
-
 	sc_if->sk_cdata.sk_tx_cons = idx;
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 void
@@ -2039,6 +2047,8 @@ msk_init(void *xsc_if)
 	/* Configure XMAC(s) */
 	msk_init_yukon(sc_if);
 	mii_mediachg(mii);
+
+	sc_if->sk_tx_hiaddr = 0;
 
 	/* Configure transmit arbiter(s) */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_ON);
