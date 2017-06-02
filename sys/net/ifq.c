@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.11 2017/05/03 20:55:29 mikeb Exp $ */
+/*	$OpenBSD: ifq.c,v 1.12 2017/06/02 00:07:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -70,7 +70,6 @@ void	ifq_barrier_task(void *);
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct task work;
 
 	if (ISSET(t->t_flags, TASK_ONQUEUE))
@@ -97,20 +96,9 @@ ifq_serialize(struct ifqueue *ifq, struct task *t)
 			mtx_enter(&ifq->ifq_task_mtx);
 		}
 
-		/*
-		 * ifq->ifq_free is only modified by dequeue, which
-		 * is only called from within this serialization
-		 * context. it is therefore safe to access and modify
-		 * here without taking ifq->ifq_mtx.
-		 */
-		ml = ifq->ifq_free;
-		ml_init(&ifq->ifq_free);
-
 		ifq->ifq_serializer = NULL;
 	}
 	mtx_leave(&ifq->ifq_task_mtx);
-
-	ml_purge(&ml);
 }
 
 int
@@ -286,16 +274,36 @@ ifq_enqueue(struct ifqueue *ifq, struct mbuf *m)
 	return (dm == m ? ENOBUFS : 0);
 }
 
+static inline void
+ifq_deq_enter(struct ifqueue *ifq)
+{
+	mtx_enter(&ifq->ifq_mtx);
+}
+
+static inline void
+ifq_deq_leave(struct ifqueue *ifq)
+{
+	struct mbuf_list ml;
+
+	ml = ifq->ifq_free;
+	ml_init(&ifq->ifq_free);
+
+	mtx_leave(&ifq->ifq_mtx);
+
+	if (!ml_empty(&ml))
+		ml_purge(&ml);
+}
+
 struct mbuf *
 ifq_deq_begin(struct ifqueue *ifq)
 {
 	struct mbuf *m = NULL;
 	void *cookie;
 
-	mtx_enter(&ifq->ifq_mtx);
+	ifq_deq_enter(ifq);
 	if (ifq->ifq_len == 0 ||
 	    (m = ifq->ifq_ops->ifqop_deq_begin(ifq, &cookie)) == NULL) {
-		mtx_leave(&ifq->ifq_mtx);
+		ifq_deq_leave(ifq);
 		return (NULL);
 	}
 
@@ -314,7 +322,7 @@ ifq_deq_commit(struct ifqueue *ifq, struct mbuf *m)
 
 	ifq->ifq_ops->ifqop_deq_commit(ifq, m, cookie);
 	ifq->ifq_len--;
-	mtx_leave(&ifq->ifq_mtx);
+	ifq_deq_leave(ifq);
 }
 
 void
@@ -322,7 +330,7 @@ ifq_deq_rollback(struct ifqueue *ifq, struct mbuf *m)
 {
 	KASSERT(m != NULL);
 
-	mtx_leave(&ifq->ifq_mtx);
+	ifq_deq_leave(ifq);
 }
 
 struct mbuf *
@@ -381,7 +389,7 @@ ifq_q_leave(struct ifqueue *ifq, void *q)
 void
 ifq_mfreem(struct ifqueue *ifq, struct mbuf *m)
 {
-	IFQ_ASSERT_SERIALIZED(ifq);
+	MUTEX_ASSERT_LOCKED(&ifq->ifq_mtx);
 
 	ifq->ifq_len--;
 	ifq->ifq_qdrops++;
@@ -391,7 +399,7 @@ ifq_mfreem(struct ifqueue *ifq, struct mbuf *m)
 void
 ifq_mfreeml(struct ifqueue *ifq, struct mbuf_list *ml)
 {
-	IFQ_ASSERT_SERIALIZED(ifq);
+	MUTEX_ASSERT_LOCKED(&ifq->ifq_mtx);
 
 	ifq->ifq_len -= ml_len(ml);
 	ifq->ifq_qdrops += ml_len(ml);
