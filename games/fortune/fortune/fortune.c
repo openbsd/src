@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.55 2016/03/07 22:49:45 tb Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.56 2017/06/02 20:02:39 fcambus Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ fortlen(void)
 	char	line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
-		nchar = (Seekpts[1] - Seekpts[0] <= SLEN);
+		nchar = Seekpts[1] - Seekpts[0];
 	else {
 		open_fp(Fortfile);
 		(void) fseek(Fortfile->inf, (long)Seekpts[0], SEEK_SET);
