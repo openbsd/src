@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.121 2017/06/01 19:05:15 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.122 2017/06/02 19:21:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -402,7 +402,7 @@ term_word(struct termp *p, const char *word)
 	const char	 nbrsp[2] = { ASCII_NBRSP, 0 };
 	const char	*seq, *cp;
 	int		 sz, uc;
-	size_t		 ssz;
+	size_t		 csz, lsz, ssz;
 	enum mandoc_esc	 esc;
 
 	if ( ! (TERMP_NOSPACE & p->flags)) {
@@ -506,6 +506,62 @@ term_word(struct termp *p, const char *word)
 					p->ti -= p->offset;
 					p->offset = 0;
 				}
+			}
+			continue;
+		case ESCAPE_HLINE:
+			if (a2roffsu(seq, &su, SCALE_EM) == 0)
+				continue;
+			uc = term_hspan(p, &su) / 24;
+			if (uc <= 0) {
+				if (p->rmargin <= p->offset)
+					continue;
+				lsz = p->rmargin - p->offset;
+			} else
+				lsz = uc;
+			while (sz &&
+			    strchr(" %&()*+-./0123456789:<=>", *seq)) {
+				seq++;
+				sz--;
+			}
+			if (sz && strchr("cifMmnPpuv", *seq)) {
+				seq++;
+				sz--;
+			}
+			if (sz == 0)
+				uc = -1;
+			else if (*seq == '\\') {
+				seq++;
+				esc = mandoc_escape(&seq, &cp, &sz);
+				switch (esc) {
+				case ESCAPE_UNICODE:
+					uc = mchars_num2uc(cp + 1, sz - 1);
+					break;
+				case ESCAPE_NUMBERED:
+					uc = mchars_num2char(cp, sz);
+					break;
+				case ESCAPE_SPECIAL:
+					uc = mchars_spec2cp(cp, sz);
+					break;
+				default:
+					uc = -1;
+					break;
+				}
+			} else
+				uc = *seq;
+			if (uc < 0x20 || (uc > 0x7E && uc < 0xA0))
+				uc = '_';
+			if (p->enc == TERMENC_ASCII) {
+				cp = ascii_uc2str(uc);
+				csz = term_strlen(p, cp);
+				ssz = strlen(cp);
+			} else
+				csz = (*p->width)(p, uc);
+			while (lsz >= csz) {
+				if (p->enc == TERMENC_ASCII)
+					encode(p, cp, ssz);
+				else
+					encode1(p, uc);
+				lsz -= csz;
 			}
 			continue;
 		case ESCAPE_SKIPCHAR:

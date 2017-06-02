@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.61 2017/06/01 19:05:15 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.62 2017/06/02 19:21:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: June 2 2017 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1937,9 +1937,11 @@ and
 .Ss \eL\(aq Ns Ar number Ns Oo Ar c Oc Ns \(aq
 Vertical line drawing function; ignored by
 .Xr mandoc 1 .
-.Ss \el\(aq Ns Ar number Ns Oo Ar c Oc Ns \(aq
-Horizontal line drawing function; ignored by
-.Xr mandoc 1 .
+.Ss \el\(aq Ns Ar width Ns Oo Ar c Oc Ns \(aq
+Draw a horizontal line of
+.Ar width
+using the glyph
+.Ar c .
 .Ss \eM[ Ns Ar name ]
 Set fill (background) color (groff extension); ignored by
 .Xr mandoc 1 .
