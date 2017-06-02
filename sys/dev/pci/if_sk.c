@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.187 2017/06/01 23:17:01 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.188 2017/06/02 10:47:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -618,6 +618,7 @@ sk_newbuf(struct sk_if_softc *sc_if)
 	bus_dmamap_t		dmamap;
 	u_int			prod;
 	int			error;
+	uint64_t		dva;
 
 	m = MCLGETI(NULL, M_DONTWAIT, NULL, SK_JLEN);
 	if (m == NULL)
@@ -643,8 +644,9 @@ sk_newbuf(struct sk_if_softc *sc_if)
 	c->sk_mbuf = m;
 
 	r = c->sk_desc;
-	r->sk_data_lo = htole32(dmamap->dm_segs[0].ds_addr);
-	r->sk_data_hi = htole32(((u_int64_t)dmamap->dm_segs[0].ds_addr) >> 32);
+	dva = dmamap->dm_segs[0].ds_addr;
+	r->sk_data_lo = htole32(dva);
+	r->sk_data_hi = htole32(dva >> 32);
 	r->sk_ctl = htole32(dmamap->dm_segs[0].ds_len | SK_RXSTAT);
 
 	SK_CDRXSYNC(sc_if, prod, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
@@ -1393,6 +1395,7 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
+	uint64_t		dva;
 
 	DPRINTFN(2, ("sk_encap\n"));
 
@@ -1425,7 +1428,9 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
-		f->sk_data_lo = htole32(txmap->dm_segs[i].ds_addr);
+		dva = txmap->dm_segs[i].ds_addr;
+		f->sk_data_lo = htole32(dva);
+		f->sk_data_hi = htole32(dva >> 32);
 		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
 		if (i == 0)
 			sk_ctl |= SK_TXCTL_FIRSTFRAG;
