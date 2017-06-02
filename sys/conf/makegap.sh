@@ -19,7 +19,7 @@ _C_LABEL(endboot):
 
 	/*
 	 * Randomly bias future data, bss, and rodata objects,
-	 * does not help for objects in locore.S though
+	 * does not help for objects in locore0.S though
 	  */
 	.data
 	.space	$RANDOM % PAGE_SIZE, $PADBYTE
