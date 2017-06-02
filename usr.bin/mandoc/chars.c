@@ -1,7 +1,7 @@
-/*	$OpenBSD: chars.c,v 1.39 2017/02/17 18:26:16 schwarze Exp $ */
+/*	$OpenBSD: chars.c,v 1.40 2017/06/02 12:41:28 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,6 +79,10 @@ static struct ln lines[] = {
 	{ "sh",			"#",		0x0023	},
 	{ "CR",			"_|",		0x21b5	},
 	{ "OK",			"\\/",		0x2713	},
+	{ "CL",			"<club>",	0x2663	},
+	{ "SP",			"<spade>",	0x2660	},
+	{ "HE",			"<heart>",	0x2665	},
+	{ "DI",			"<diamond>",	0x2666	},
 
 	/* Legal symbols. */
 	{ "co",			"(C)",		0x00a9	},
@@ -159,6 +163,7 @@ static struct ln lines[] = {
 	{ "uA",			"=\b^",		0x21d1	},
 	{ "dA",			"=\bv",		0x21d3	},
 	{ "vA",			"^=v",		0x21d5	},
+	{ "an",			"-",		0x23af	},
 
 	/* Logic. */
 	{ "AN",			"^",		0x2227	},
@@ -232,11 +237,20 @@ static struct ln lines[] = {
 	{ "Ah",			"N",		0x2135	},
 	{ "Im",			"I",		0x2111	},
 	{ "Re",			"R",		0x211c	},
+	{ "wp",			"P",		0x2118	},
 	{ "pd",			"a",		0x2202	},
 	{ "-h",			"/h",		0x210f	},
+	{ "hbar",		"/h",		0x210f	},
 	{ "12",			"1/2",		0x00bd	},
 	{ "14",			"1/4",		0x00bc	},
 	{ "34",			"3/4",		0x00be	},
+	{ "18",			"1/8",		0x215B	},
+	{ "38",			"3/8",		0x215C	},
+	{ "58",			"5/8",		0x215D	},
+	{ "78",			"7/8",		0x215E	},
+	{ "S1",			"1",		0x00B9	},
+	{ "S2",			"2",		0x00B2	},
+	{ "S3",			"3",		0x00B3	},
 
 	/* Ligatures. */
 	{ "ff",			"ff",		0xfb00	},
@@ -352,6 +366,8 @@ static struct ln lines[] = {
 	{ "fm",			"\'",		0x2032	},
 	{ "sd",			"''",		0x2033	},
 	{ "mc",			",\bu",		0x00b5	},
+	{ "Of",			"_\ba",		0x00aa	},
+	{ "Om",			"_\bo",		0x00ba	},
 
 	/* Greek characters. */
 	{ "*A",			"A",		0x0391	},
