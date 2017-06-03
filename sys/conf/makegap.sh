@@ -7,15 +7,15 @@ cat << __EOF__
 #include <machine/param.h>
 
 	.text
-	.align	PAGE_SIZE, $PADBYTE
+	.balign	PAGE_SIZE, $PADBYTE
 	.space	$RANDOM, $PADBYTE
-	.align	PAGE_SIZE, $PADBYTE
+	.balign	PAGE_SIZE, $PADBYTE
 
 	.globl	endboot
 _C_LABEL(endboot):
 	.space	PAGE_SIZE, $PADBYTE
-	.space	$RANDOM % PAGE_SIZE,  $PADBYTE
-	.align	16, $PADBYTE
+	.space	$RANDOM % PAGE_SIZE, $PADBYTE
+	.balign	16, $PADBYTE
 
 	/*
 	 * Randomly bias future data, bss, and rodata objects,
