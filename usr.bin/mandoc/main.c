@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.194 2017/05/17 23:39:15 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.195 2017/06/03 12:16:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -907,7 +907,7 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_ASCII;
 	else if (0 == strcmp(arg, "lint")) {
 		curp->outtype = OUTT_LINT;
-		curp->wlevel  = MANDOCLEVEL_WARNING;
+		curp->wlevel  = MANDOCLEVEL_STYLE;
 	} else if (0 == strcmp(arg, "tree"))
 		curp->outtype = OUTT_TREE;
 	else if (0 == strcmp(arg, "man"))

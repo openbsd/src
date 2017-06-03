@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.116 2017/06/01 15:24:41 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.117 2017/06/03 12:16:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: June 3 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -219,7 +219,7 @@ See
 .It Fl T Cm lint
 Parse only: produce no output.
 Implies
-.Fl W Cm warning .
+.Fl W Cm style .
 .It Fl T Cm locale
 Encode output using the current locale.
 This is the default.
@@ -632,7 +632,7 @@ to exit at once, possibly in the middle of parsing or formatting a file.
 Note that selecting
 .Fl T Cm lint
 output mode implies
-.Fl W Cm warning .
+.Fl W Cm style .
 .Sh EXAMPLES
 To page manuals to the terminal:
 .Pp
