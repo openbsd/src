@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1013 2017/05/31 08:02:56 tb Exp $
+#	$OpenBSD: install.sub,v 1.1014 2017/06/03 22:27:41 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2626,6 +2626,7 @@ finish_up() {
 	make_dev $(bioctl $ROOTDISK 2>/dev/null | sed -n 's/.*<\(.*\)>$/\1/p')
 	md_installboot $ROOTDISK
 
+	chmod og-rwx /mnt/bsd{,.mp,.rd} 2>/dev/null
 	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
 		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
