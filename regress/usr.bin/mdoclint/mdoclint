@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.65 2017/06/01 14:55:24 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.66 2017/06/03 12:23:13 schwarze Exp $
 # $NetBSD: mdoclint,v 1.74 2017/06/01 14:38:50 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -43,17 +43,17 @@ use constant {
 
 use vars qw(
 	$opt_D $opt_d $opt_e $opt_F $opt_h $opt_l
-	$opt_m $opt_n $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
+	$opt_m $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
 );
 
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="aDdeFfHhlmnoprSvwXx";
+my $options="DdeFhlmoprSvwx";
 
 sub usage
 	{
-	my $default = OPENBSD ? "-DdmnoprSx" : "-DdelmnoprSx";
+	my $default = OPENBSD ? "-DdmoprSx" : "-DdelmoprSx";
 
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
@@ -65,7 +65,6 @@ usage:	mdoclint [-$options] file ...
 	-h	display this help text
 	-l	warn about unknown libraries
 	-m	warn about man pages that are not in mdoc(7) format
-	-n	warn about .Nd's ending in '.'
 	-o	warn about non-empty .Os strings
 	-p	warn about punctuation problems
 	-r	warn about missing RCS Id
@@ -236,12 +235,10 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_d or $opt_e or $opt_l
-		or $opt_m or $opt_n or $opt_o or $opt_p or $opt_r
-		or $opt_S or $opt_x) {
+	unless ($opt_D or $opt_d or $opt_e or $opt_l or $opt_m
+	    or $opt_o or $opt_p or $opt_r or $opt_S or $opt_x) {
 		$opt_D = $opt_d = $opt_m =
-		    $opt_n = $opt_o = $opt_p = $opt_r = $opt_S =
-		    $opt_x = 1;
+		    $opt_o = $opt_p = $opt_r = $opt_S = $opt_x = 1;
 		$opt_e = $opt_l = 1 if NETBSD;
 	}
 }
@@ -436,10 +433,6 @@ sub process_line
 	}
 	if (/^\.Os\s+(.+)/o) {
 		$s->warning(".Os used with argument `$1'") if $opt_o;
-	}
-
-	if (/^\.Nd.*\.$/o) {
-		$s->warning(".Nd ends with a dot: `$_'") if $opt_n;
 	}
 
 	if (/(\w\w)\.\s+[A-Z]/o and not /^.%T/ and not $s->{inliteral}) {
