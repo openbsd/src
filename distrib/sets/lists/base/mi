@@ -297,6 +297,7 @@
 ./sbin/savecore
 ./sbin/scan_ffs
 ./sbin/scsi
+./sbin/slaacd
 ./sbin/shutdown
 ./sbin/swapctl
 ./sbin/swapon
@@ -2469,7 +2470,6 @@
 ./usr/sbin/sendmail
 ./usr/sbin/sensorsd
 ./usr/sbin/slaacctl
-./usr/sbin/slaacd
 ./usr/sbin/slowcgi
 ./usr/sbin/smtpctl
 ./usr/sbin/smtpd
