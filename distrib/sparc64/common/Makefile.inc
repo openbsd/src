@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2014/11/22 15:02:27 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2017/06/03 22:25:19 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -81,6 +81,7 @@ unconfig:
 install:
 .ifndef NOBSDRD
 	cp bsd.rd ${RELEASEDIR}
+	chmod a+r ${RELEASEDIR}/bsd.rd
 .endif
 	cp ${FS} ${RELEASEDIR}
 .endif

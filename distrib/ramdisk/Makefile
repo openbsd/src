@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2016/10/14 18:44:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.48 2017/06/03 22:25:19 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -128,6 +128,7 @@ clean cleandir:
 .ifdef RELEASEDIR
 beforeinstall:
 	cp bsd.rd ${RELEASEDIR}
+	chmod a+r ${RELEASEDIR}/bsd.rd
 .ifdef MAKEFLOPPY
 	cp ${FLOPPY} ${RELEASEDIR}
 .endif	# MAKEFLOPPY
