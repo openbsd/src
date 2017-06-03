@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.44 2017/05/28 18:31:35 tedu Exp $
+#	$OpenBSD: inter.phone,v 1.45 2017/06/03 00:10:19 halex Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1442,7 +1442,7 @@
 46:241:Gagnef:Sweden
 46:241:Floda:Sweden
 46:243:Borlange (Borlänge):Sweden
-46:246:Svardsja (Svärdsjä):Sweden
+46:246:Svardsjo (Svärdsjö):Sweden
 46:246:Enviken:Sweden
 46:247:Leksand:Sweden
 46:247:Insjon (Insjön):Sweden
@@ -1464,7 +1464,7 @@
 46:290:Hofors:Sweden
 46:290:Storvik:Sweden
 46:291:Hedesunda:Sweden
-46:291:Oserfarnebo (Österfärnebo):Sweden
+46:291:Osterfarnebo (Österfärnebo):Sweden
 46:292:Tarnsjo (Tärnsjö):Sweden
 46:292:Ostervala (Östervåla):Sweden
 46:293:Tierp:Sweden
@@ -1474,7 +1474,7 @@
 46:295:Orbyhus (Örbyhus):Sweden
 46:295:Dannemora:Sweden
 46:297:Ockelbo:Sweden
-46:297:Hanrange (Hanrånge):Sweden
+46:297:Hamrange (Hamrånge):Sweden
 46:300:Kungsbacka:Sweden
 46:301:Hindas (Hindås):Sweden
 46:302:Lerum:Sweden
@@ -1594,7 +1594,7 @@
 46:54:Karlstad:Sweden
 46:550:Kristinehamn:Sweden
 46:551:Gullspang (Gullspång):Sweden
-46:552:Dejev:Sweden
+46:552:Deje:Sweden
 46:553:Molkom:Sweden
 46:554:Kil:Sweden
 46:555:Grums:Sweden
@@ -1664,7 +1664,7 @@
 46:695:Stugun:Sweden
 46:696:Hammarstrand:Sweden
 46:8:Stockholm:Sweden
-46:90:Umea (Uneå):Sweden
+46:90:Umea (Umeå):Sweden
 46:910:Skelleftea (Skellefteå):Sweden
 46:911:Pitea (Piteå):Sweden
 46:912:Byske:Sweden
@@ -1680,7 +1680,7 @@
 46:924:Ranea (Råneå):Sweden
 46:925:Lakatrask (Lakaträsk):Sweden
 46:926:Overkalix (Överkalix):Sweden
-46:927:Overtarnea (Övertårneå):Sweden
+46:927:Overtornea (Övertorneå):Sweden
 46:928:Harads:Sweden
 46:929:Alvsbyn (Älvsbyn):Sweden
 46:930:Nordmaling:Sweden
@@ -1688,11 +1688,11 @@
 46:933:Vindeln:Sweden
 46:934:Robertfors:Sweden
 46:935:Vannas (Vännäs):Sweden
-46:940:Vilgelmina:Sweden
+46:940:Vilhelmina:Sweden
 46:941:Asele (Åsele):Sweden
 46:942:Dorotea:Sweden
 46:943:Fredrika:Sweden
-46:950:Lyksele:Sweden
+46:950:Lycksele:Sweden
 46:951:Storuman:Sweden
 46:952:Sorsele:Sweden
 46:953:Mala (Malå):Sweden
