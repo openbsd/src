@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.95 2016/11/29 09:08:34 mpi Exp $
+#	$OpenBSD: Makefile.alpha,v 1.96 2017/06/03 22:21:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -73,12 +73,13 @@ SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ${LDSCRIPT}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
+		umask 007; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
-SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@
 
 .if ${DEBUG} == "-g"
 STRIPFLAGS=	-S
-SYSTEM_LD_TAIL+=; \
+SYSTEM_LD_TAIL+=; umask 007; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb

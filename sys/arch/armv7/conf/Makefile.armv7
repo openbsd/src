@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.21 2017/01/25 11:15:07 kettenis Exp $
+#	$OpenBSD: Makefile.armv7,v 1.22 2017/06/03 22:21:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -74,14 +74,14 @@ SYSTEM_LD_HEAD+=; \
 		    sed -e 's/@KERNEL_BASE_PHYS@/0/' \
 		    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 		    -e 's/(KERNEL_BASE_phys)/(KERNEL_BASE_virt)/' > ldscript
-
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
+		umask 007; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
-SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@
 
 .if ${DEBUG} == "-g"
 STRIPFLAGS=	-S
-SYSTEM_LD_TAIL+=; \
+SYSTEM_LD_TAIL+=; umask 007; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
@@ -146,7 +146,7 @@ install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
-	cp bsd /nbsd
+	cp -p bsd /nbsd
 	mv /nbsd /bsd
 .endif
 
