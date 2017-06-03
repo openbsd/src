@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.192 2017/05/02 11:03:48 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.193 2017/06/03 15:44:03 tb Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -165,7 +165,7 @@ ieee80211_input_print_task(void *arg1)
 	struct ieee80211printmsg *msg = arg1;
 
 	printf("%s", msg->text);
-	free(msg, M_DEVBUF, 0);
+	free(msg, M_DEVBUF, sizeof *msg);
 }
 
 void
@@ -2632,7 +2632,8 @@ ieee80211_addba_req_refuse(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
 
-	free(ba->ba_buf, M_DEVBUF, 0);
+	free(ba->ba_buf, M_DEVBUF,
+	    IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf));
 	ba->ba_buf = NULL;
 
 	/* MLME-ADDBA.response */
@@ -2765,7 +2766,8 @@ ieee80211_recv_delba(struct ieee80211com *ic, struct mbuf *m,
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
 				m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			free(ba->ba_buf, M_DEVBUF, 0);
+			free(ba->ba_buf, M_DEVBUF,
+			    IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf));
 			ba->ba_buf = NULL;
 		}
 	} else {

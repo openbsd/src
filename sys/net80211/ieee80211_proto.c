@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.76 2017/06/02 15:31:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.77 2017/06/03 15:44:03 tb Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -708,7 +708,8 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
 				m_freem(ba->ba_buf[i].m);
 			/* free reordering buffer */
-			free(ba->ba_buf, M_DEVBUF, 0);
+			free(ba->ba_buf, M_DEVBUF,
+			    IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf));
 			ba->ba_buf = NULL;
 		}
 	}

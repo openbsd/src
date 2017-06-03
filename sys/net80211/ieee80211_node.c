@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.115 2017/03/04 12:44:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.116 2017/06/03 15:44:03 tb Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -202,10 +202,9 @@ ieee80211_node_detach(struct ifnet *ifp)
 	}
 	ieee80211_free_allnodes(ic);
 #ifndef IEEE80211_STA_ONLY
-	if (ic->ic_aid_bitmap != NULL)
-		free(ic->ic_aid_bitmap, M_DEVBUF, 0);
-	if (ic->ic_tim_bitmap != NULL)
-		free(ic->ic_tim_bitmap, M_DEVBUF, 0);
+	free(ic->ic_aid_bitmap, M_DEVBUF,
+	    howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t));
+	free(ic->ic_tim_bitmap, M_DEVBUF, ic->ic_tim_len);
 	timeout_del(&ic->ic_inact_timeout);
 	timeout_del(&ic->ic_node_cache_timeout);
 	timeout_del(&ic->ic_tkip_micfail_timeout);
@@ -1728,7 +1727,8 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 		if (ba->ba_buf != NULL) {
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
 				m_freem(ba->ba_buf[i].m);
-			free(ba->ba_buf, M_DEVBUF, 0);
+			free(ba->ba_buf, M_DEVBUF,
+			    IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf));
 			ba->ba_buf = NULL;
 		}
 	}
