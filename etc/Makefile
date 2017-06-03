@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.455 2017/05/29 10:24:06 florian Exp $
+#	$OpenBSD: Makefile,v 1.456 2017/06/03 22:23:47 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ ALL_KERNELS += $K
 kernels: ${ALL_KERNELS}
 .for CONF K in ${KERNELS}
 	cp ../sys/arch/${MACHINE}/compile/${CONF}/obj/bsd ${RELEASEDIR}/$K
+	chmod a+r ${RELEASEDIR}/$K
 .endfor
 
 # -rw-r--r--
