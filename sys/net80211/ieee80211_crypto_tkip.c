@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.28 2017/03/23 04:10:10 tb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.29 2017/06/03 11:58:10 tb Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -234,6 +234,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	Phase2((u_int8_t *)wepseed, k->k_key, ctx->txttak, k->k_tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
+	explicit_bzero(wepseed, sizeof(wepseed));
 
 	/* encrypt frame body and compute WEP ICV */
 	m = m0;
@@ -389,6 +390,7 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	Phase2((u_int8_t *)wepseed, k->k_key, ctx->rxttak, tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
+	explicit_bzero(wepseed, sizeof(wepseed));
 
 	/* decrypt frame body and compute WEP ICV */
 	m = m0;
