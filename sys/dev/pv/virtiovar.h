@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.5 2017/05/30 12:47:47 krw Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.6 2017/06/03 08:50:38 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -86,9 +86,9 @@ struct vq_entry {
 
 	/* The following are used only in the `head' entry */
 	int16_t			 qe_next;	/* next enq slot */
-	struct vring_desc	*qe_desc_base;	/* pointer to vd array */
 	int16_t			 qe_indirect;	/* 1 if using indirect */
 	int16_t			 qe_vr_index;	/* index in sc_reqs array */
+	struct vring_desc	*qe_desc_base;	/* pointer to vd array */
 };
 
 struct virtqueue {

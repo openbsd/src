@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.7 2017/05/30 19:28:09 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.8 2017/06/03 08:50:38 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -87,12 +87,13 @@ struct virtio_feature_name vioblk_feature_names[] = {
 struct virtio_blk_req {
 	struct virtio_blk_req_hdr	 vr_hdr;
 	uint8_t				 vr_status;
-	struct scsi_xfer		*vr_xs;
+#define VR_DMA_END	offsetof(struct virtio_blk_req, vr_qe_index)
+	int16_t				 vr_qe_index;
 	int				 vr_len;
+	struct scsi_xfer		*vr_xs;
 	bus_dmamap_t			 vr_cmdsts;
 	bus_dmamap_t			 vr_payload;
 	SLIST_ENTRY(virtio_blk_req)	 vr_list;
-	int				 vr_qe_index;
 };
 
 struct vioblk_softc {
@@ -710,8 +711,7 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 		vr->vr_len = VIOBLK_DONE;
 
 		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
-		    offsetof(struct virtio_blk_req, vr_xs), 1,
-		    offsetof(struct virtio_blk_req, vr_xs), 0,
+		    VR_DMA_END, 1, VR_DMA_END, 0,
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_cmdsts);
 		if (r != 0) {
 			printf("cmd dmamap creation failed, err %d\n", r);
@@ -719,8 +719,7 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 			goto err_reqs;
 		}
 		r = bus_dmamap_load(sc->sc_virtio->sc_dmat, vr->vr_cmdsts,
-		    &vr->vr_hdr, offsetof(struct virtio_blk_req, vr_xs), NULL,
-		    BUS_DMA_NOWAIT);
+		    &vr->vr_hdr, VR_DMA_END, NULL, BUS_DMA_NOWAIT);
 		if (r != 0) {
 			printf("command dmamap load failed, err %d\n", r);
 			nreqs = i;
