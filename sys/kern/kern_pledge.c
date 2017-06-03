@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.210 2017/05/30 15:04:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.211 2017/06/03 04:34:41 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -891,6 +891,8 @@ pledge_sendfd(struct proc *p, struct file *fp)
 int
 pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 {
+	int	i;
+
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
@@ -1053,9 +1055,11 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
 		return (0);
 
-	printf("%s(%d): sysctl %d: %d %d %d %d %d %d\n",
-	    p->p_p->ps_comm, p->p_p->ps_pid, miblen, mib[0], mib[1],
-	    mib[2], mib[3], mib[4], mib[5]);
+	printf("%s(%d): sysctl %d:", p->p_p->ps_comm, p->p_p->ps_pid, miblen);
+	for (i = 0; i < miblen; i++)
+		printf(" %d", mib[i]);
+	printf("\n");
+
 	return pledge_fail(p, EINVAL, 0);
 }
 
