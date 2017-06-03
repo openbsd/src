@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.176 2017/05/30 16:16:47 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.177 2017/06/03 11:58:54 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -837,7 +837,7 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	struct ifnet		*ifp;
 	u_int32_t		*th;
 	struct mbuf		*top, **mp, *m;
-	int			error = 0, tlen;
+	int			error = 0, tlen, s;
 	size_t			mlen;
 
 	ifp = &tp->tun_if;
@@ -930,6 +930,8 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 	ifp->if_ipackets++;
 	ifp->if_ibytes += top->m_pkthdr.len;
 
+	NET_LOCK(s);
+
 	switch (ntohl(*th)) {
 	case AF_INET:
 		ipv4_input(ifp, top);
@@ -941,8 +943,11 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 #endif
 	default:
 		m_freem(top);
-		return (EAFNOSUPPORT);
+		error = EAFNOSUPPORT;
+		break;
 	}
+
+	NET_UNLOCK(s);
 
 	return (error);
 }
