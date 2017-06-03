@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>

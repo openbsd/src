@@ -1,7 +1,7 @@
-/*	$OpenBSD: control.h,v 1.1 2017/03/18 17:33:13 florian Exp $	*/
+/*	$OpenBSD: engine.h,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
 
 /*
- * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,20 +16,32 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct {
-	struct event	ev;
-	struct event	evt;
-	int		fd;
-} control_state;
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	entry;
-	struct imsgev		iev;
+struct imsg_proposal {
+	uint32_t			if_index;
+	pid_t				pid;
+	int64_t				id;
+	struct sockaddr_in6		addr;
+	struct in6_addr			mask;
+	struct sockaddr_in6		gateway;
+	struct sockaddr_rtdns		rdns;
+	struct sockaddr_rtsearch	dnssl;
+	int				rtm_addrs;
 };
 
-int	control_init(char *);
-int	control_listen(void);
-void	control_accept(int, short, void *);
-void	control_dispatch_imsg(int, short, void *);
-int	control_imsg_relay(struct imsg *);
-void	control_cleanup(char *);
+struct imsg_configure_address {
+	uint32_t		 if_index;
+	struct sockaddr_in6	 addr;
+	struct in6_addr		 mask;
+	uint32_t		 vltime;
+	uint32_t		 pltime;
+	int			 privacy;
+};
+
+struct imsg_configure_dfr {
+	uint32_t		 if_index;
+	struct sockaddr_in6	 addr;
+	uint32_t		 router_lifetime;
+};
+
+void		 engine(int, int);
+int		 engine_imsg_compose_frontend(int, pid_t, void *, uint16_t);

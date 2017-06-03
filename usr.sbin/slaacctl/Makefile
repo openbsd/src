@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2017/04/10 13:35:42 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/06/03 10:00:29 florian Exp $
 
 PROG=	slaacctl
 SRCS=	slaacctl.c parser.c
@@ -10,7 +10,7 @@ CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
-CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../slaacd
+CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../../sbin/slaacd
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
 

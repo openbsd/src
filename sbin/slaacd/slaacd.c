@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.23 2017/05/30 22:04:46 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>

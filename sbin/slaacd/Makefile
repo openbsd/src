@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/05/27 16:16:49 florian Exp $
+#	$OpenBSD: Makefile,v 1.1 2017/06/03 10:00:29 florian Exp $
 
 PROG=	slaacd
 SRCS=	control.c engine.c frontend.c log.c slaacd.c
