@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.64 2017/05/29 00:05:28 henning Exp $
+#	$OpenBSD: airport,v 1.65 2017/06/03 00:22:34 halex Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -991,7 +991,7 @@ LOS:Murtala Muhammed, Lagos, Nigeria
 LOV:Monclova, Coahuila, Mexico
 LPA:Aeropuerto De Gran Canaria, Canary Islands, Spain
 LPB:El Alto, La Paz, Bolivia
-LPI:Saab, Linkoping, Sweden
+LPI:Linkoping City Airport, Linkoping, Sweden
 LPL:John Lennon, Liverpool, England, United Kingdom
 LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
