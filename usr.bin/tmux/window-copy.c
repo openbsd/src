@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.177 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.178 2017/06/03 17:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1629,7 +1629,7 @@ window_copy_copy_buffer(struct window_pane *wp, const char *bufname, void *buf,
 {
 	struct screen_write_ctx	ctx;
 
-	if (options_get_number(global_options, "set-clipboard")) {
+	if (options_get_number(global_options, "set-clipboard") != 0) {
 		screen_write_start(&ctx, wp, NULL);
 		screen_write_setselection(&ctx, buf, len);
 		screen_write_stop(&ctx);
@@ -1686,7 +1686,7 @@ window_copy_append_selection(struct window_pane *wp, const char *bufname)
 	if (buf == NULL)
 		return;
 
-	if (options_get_number(global_options, "set-clipboard")) {
+	if (options_get_number(global_options, "set-clipboard") != 0) {
 		screen_write_start(&ctx, wp, NULL);
 		screen_write_setselection(&ctx, buf, len);
 		screen_write_stop(&ctx);
