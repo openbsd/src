@@ -1,0 +1,9 @@
+.TH B-BLANK 1 "June 3, 2017" OpenBSD
+.SH NAME
+B-blank \- blank line in font macro next line scope
+.SH DESCRIPTION
+A blank line in
+.B
+
+bold
+next line scope.

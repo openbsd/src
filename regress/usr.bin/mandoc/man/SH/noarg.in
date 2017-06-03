@@ -40,3 +40,7 @@ no-fill mode
 .SH
 .fi
 back in fill mode
+.SH
+
+SEE ALSO
+broken(1)

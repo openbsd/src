@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.163 2017/06/02 19:21:03 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.164 2017/06/03 15:54:09 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -97,6 +97,7 @@ enum	mandocerr {
 	MANDOCERR_FI_SKIP, /* fill mode already enabled, skipping: fi */
 	MANDOCERR_NF_SKIP, /* fill mode already disabled, skipping: nf */
 	MANDOCERR_BLK_LINE, /* line scope broken: macro breaks macro */
+	MANDOCERR_BLK_BLANK, /* skipping blank line in line scope */
 
 	/* related to missing arguments */
 	MANDOCERR_REQ_EMPTY, /* skipping empty request: request */

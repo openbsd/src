@@ -1,1 +1,2 @@
 mandoc: broken.in:10:2: WARNING: line scope broken: RE breaks TP
+mandoc: broken.in:15:1: WARNING: skipping blank line in line scope

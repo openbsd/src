@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2015/04/04 18:52:12 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2017/06/03 15:54:09 schwarze Exp $
 
 REGRESS_TARGETS	= broken broken_eline longarg noarg
 LINT_TARGETS	= broken broken_eline noarg
@@ -10,6 +10,7 @@ LINT_TARGETS	= broken broken_eline noarg
 # - If .HP breaks .SS, a line is broken after the next input line.
 # - If .RS/RE/nf/fi breaks .SS, the next input line becomes bold.
 # - .UR does not break .SS.
+# - blank line in .SS next-line scope causes a blank line
 
 SKIP_GROFF	= broken broken_eline noarg
 

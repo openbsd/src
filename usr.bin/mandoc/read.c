@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.140 2017/06/01 15:24:41 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.141 2017/06/03 15:54:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -135,6 +135,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"fill mode already enabled, skipping",
 	"fill mode already disabled, skipping",
 	"line scope broken",
+	"skipping blank line in line scope",
 
 	/* related to missing macro arguments */
 	"skipping empty request",

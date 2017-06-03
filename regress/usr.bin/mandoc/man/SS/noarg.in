@@ -40,3 +40,7 @@ no-fill mode
 .SS
 .fi
 back in fill mode
+.SS
+
+Subsection
+with a blank line
