@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2017/06/04 14:26:27 patrick Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -157,22 +157,6 @@ DL_SYSCALL2(set_tcb,__set_tcb)
 DL_SYSCALL(thrkill)
 
 DL_SYSCALL(getdents)
-
-	.global		_dl_sigprocmask
-	.type		_dl_sigprocmask%function
-_dl_sigprocmask:
-#if 0
-	teq	r1, #0
-	moveq	r0, #1
-	moveq	r1, #0
-	ldrne	r1, [r1]
-	SYSTRAP(sigprocmask)
-	bcs	.L_cerr
-	teq	r2, #0
-	strne	r0, [r2]
-	mov	r0, #0
-	mov	pc, lr
-#endif
 
 .L_cerr:
 	neg	w0, w0		/* r0 = -errno */
