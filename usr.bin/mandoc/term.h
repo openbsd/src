@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.65 2017/05/08 15:33:43 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.66 2017/06/04 18:48:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,7 +67,7 @@ struct	termp {
 	size_t		  col;		/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See termp_flushln(). */
-	int		  overstep;	/* See termp_flushln(). */
+	size_t		  minbl;	/* Minimum blanks before next field. */
 	int		  ti;		/* Temporary indent for one line. */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
@@ -82,8 +82,8 @@ struct	termp {
 #define	TERMP_NOBREAK	 (1 << 8)	/* See term_flushln(). */
 #define	TERMP_BRTRSP	 (1 << 9)	/* See term_flushln(). */
 #define	TERMP_BRIND	 (1 << 10)	/* See term_flushln(). */
-#define	TERMP_DANGLE	 (1 << 11)	/* See term_flushln(). */
-#define	TERMP_HANG	 (1 << 12)	/* See term_flushln(). */
+#define	TERMP_HANG	 (1 << 11)	/* See term_flushln(). */
+#define	TERMP_NOPAD	 (1 << 12)	/* See term_flushln(). */
 #define	TERMP_NOSPLIT	 (1 << 13)	/* Do not break line before .An. */
 #define	TERMP_SPLIT	 (1 << 14)	/* Break line before .An. */
 #define	TERMP_NONEWLINE	 (1 << 15)	/* No line break in nofill mode. */

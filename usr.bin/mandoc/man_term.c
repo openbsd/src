@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.153 2017/05/09 14:09:37 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.154 2017/06/04 18:48:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -139,7 +139,6 @@ terminal_man(void *arg, const struct roff_man *man)
 	size_t			 save_defindent;
 
 	p = (struct termp *)arg;
-	p->overstep = 0;
 	p->rmargin = p->maxrmargin = p->defrmargin;
 	term_tab_set(p, NULL);
 	term_tab_set(p, "T");

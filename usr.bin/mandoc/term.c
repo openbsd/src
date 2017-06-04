@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.122 2017/06/02 19:21:03 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.123 2017/06/04 18:48:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,11 +82,11 @@ term_end(struct termp *p)
  *    to be broken, start the next line at the right margin instead
  *    of at the offset.  Used together with TERMP_NOBREAK for the tags
  *    in various kinds of tagged lists.
- *  - TERMP_DANGLE: Do not break the output line at the right margin,
+ *  - TERMP_HANG: Do not break the output line at the right margin,
  *    append the next chunk after it even if this one is too long.
  *    To be used together with TERMP_NOBREAK.
- *  - TERMP_HANG: Like TERMP_DANGLE, and also suppress padding before
- *    the next chunk if this column is not full.
+ *  - TERMP_NOPAD: Start writing at the current position,
+ *    do not pad with blank characters up to the offset.
  */
 void
 term_flushln(struct termp *p)
@@ -102,34 +102,15 @@ term_flushln(struct termp *p)
 	size_t		 jhy;	/* last hyph before overflow w/r/t j */
 	size_t		 maxvis; /* output position of visible boundary */
 
-	/*
-	 * First, establish the maximum columns of "visible" content.
-	 * This is usually the difference between the right-margin and
-	 * an indentation, but can be, for tagged lists or columns, a
-	 * small set of values.
-	 *
-	 * The following unsigned-signed subtractions look strange,
-	 * but they are actually correct.  If the int p->overstep
-	 * is negative, it gets sign extended.  Subtracting that
-	 * very large size_t effectively adds a small number to dv.
-	 */
-	dv = p->rmargin > p->offset ? p->rmargin - p->offset : 0;
-	maxvis = (int)dv > p->overstep ? dv - (size_t)p->overstep : 0;
-
-	if (p->flags & TERMP_NOBREAK) {
-		dv = p->maxrmargin > p->offset ?
-		     p->maxrmargin - p->offset : 0;
-		bp = (int)dv > p->overstep ?
-		     dv - (size_t)p->overstep : 0;
-	} else
-		bp = maxvis;
-
-	/*
-	 * Calculate the required amount of padding.
-	 */
-	vbl = p->offset + p->overstep > p->viscol ?
-	      p->offset + p->overstep - p->viscol : 0;
-
+	vbl = (p->flags & TERMP_NOPAD) || p->offset < p->viscol ? 0 :
+	    p->offset - p->viscol;
+	if (p->minbl && vbl < p->minbl)
+		vbl = p->minbl;
+	maxvis = p->rmargin > p->viscol + vbl ?
+	    p->rmargin - p->viscol - vbl : 0;
+	bp = !(p->flags & TERMP_NOBREAK) ? maxvis :
+	    p->maxrmargin > p->viscol + vbl ?
+	    p->maxrmargin - p->viscol - vbl : 0;
 	vis = vend = 0;
 	i = 0;
 
@@ -199,20 +180,13 @@ term_flushln(struct termp *p)
 
 			/* Re-establish indentation. */
 
-			if (p->flags & TERMP_BRIND) {
+			if (p->flags & TERMP_BRIND)
 				vbl += p->rmargin;
-				vend += p->rmargin - p->offset;
-			} else
+			else
 				vbl += p->offset;
-
-			/*
-			 * Remove the p->overstep width.
-			 * Again, if p->overstep is negative,
-			 * sign extension does the right thing.
-			 */
-
-			bp += (size_t)p->overstep;
-			p->overstep = 0;
+			maxvis = p->rmargin > vbl ? p->rmargin - vbl : 0;
+			bp = !(p->flags & TERMP_NOBREAK) ? maxvis :
+			    p->maxrmargin > vbl ?  p->maxrmargin - vbl : 0;
 		}
 
 		/* Write out the [remaining] word. */
@@ -267,32 +241,19 @@ term_flushln(struct termp *p)
 		vis = 0;
 
 	p->col = 0;
-	p->overstep = 0;
-	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE);
+	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE | TERMP_NOPAD);
 
 	if ( ! (TERMP_NOBREAK & p->flags)) {
 		p->viscol = 0;
+		p->minbl = 0;
 		(*p->endline)(p);
 		return;
 	}
 
 	if (TERMP_HANG & p->flags) {
-		p->overstep += (int)(p->offset + vis - p->rmargin +
-		    p->trailspace * (*p->width)(p, ' '));
-
-		/*
-		 * If we have overstepped the margin, temporarily move
-		 * it to the right and flag the rest of the line to be
-		 * shorter.
-		 * If there is a request to keep the columns together,
-		 * allow negative overstep when the column is not full.
-		 */
-		if (p->trailspace && p->overstep < 0)
-			p->overstep = 0;
+		p->minbl = p->trailspace;
 		return;
-
-	} else if (TERMP_DANGLE & p->flags)
-		return;
+	}
 
 	/* Trailing whitespace is significant in some columns. */
 	if (vis && vbl && (TERMP_BRTRSP & p->flags))
@@ -302,7 +263,9 @@ term_flushln(struct termp *p)
 	if (maxvis < vis + p->trailspace * (*p->width)(p, ' ')) {
 		(*p->endline)(p);
 		p->viscol = 0;
-	}
+		p->minbl = 0;
+	} else
+		p->minbl = p->trailspace;
 }
 
 /*
