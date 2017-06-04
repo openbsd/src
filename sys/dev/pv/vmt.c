@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.12 2017/02/03 08:23:01 jsg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.13 2017/06/04 05:04:24 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -23,7 +23,7 @@
 
 /*
  * Protocol reverse engineered by Ken Kato:
- * http://chitchat.at.infoseek.co.jp/vmware/backdoor.html
+ * https://sites.google.com/site/chitchatvmback/backdoor
  */
 
 #include <sys/param.h>
