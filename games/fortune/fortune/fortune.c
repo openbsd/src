@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.56 2017/06/02 20:02:39 fcambus Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.57 2017/06/04 13:39:25 fcambus Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,8 +50,6 @@
 
 #include "pathnames.h"
 #include "strfile.h"
-
-#define	bool	short
 
 #define	MINW	6		/* minimum wait if desired */
 #define	CPERS	20		/* # of chars for each sec */
@@ -82,15 +81,15 @@ typedef struct fd {
 	struct fd	*next, *prev;
 } FILEDESC;
 
-bool	Found_one;			/* did we find a match? */
-bool	Find_files	= 0;	/* just find a list of proper fortune files */
-bool	Wait		= 0;	/* wait desired after fortune */
-bool	Short_only	= 0;	/* short fortune desired */
-bool	Long_only	= 0;	/* long fortune desired */
-bool	Offend		= 0;	/* offensive fortunes only */
-bool	All_forts	= 0;	/* any fortune allowed */
-bool	Equal_probs	= 0;	/* scatter un-allocted prob equally */
-bool	Match		= 0;	/* dump fortunes matching a pattern */
+bool	Found_one	= false;	/* did we find a match? */
+bool	Find_files	= false;	/* display a list of fortune files */
+bool	Wait		= false;	/* wait desired after fortune */
+bool	Short_only	= false;	/* short fortune desired */
+bool	Long_only	= false;	/* long fortune desired */
+bool	Offend		= false;	/* offensive fortunes only */
+bool	All_forts	= false;	/* any fortune allowed */
+bool	Equal_probs	= false;	/* scatter un-allocted prob equally */
+bool	Match		= false;	/* dump fortunes matching a pattern */
 #ifdef DEBUG
 int	Debug = 0;			/* print debug messages */
 #endif
@@ -250,35 +249,35 @@ getargs(int argc, char *argv[])
 #endif /* DEBUG */
 		switch(ch) {
 		case 'a':		/* any fortune */
-			All_forts = 1;
+			All_forts = true;
 			break;
 #ifdef DEBUG
 		case 'D':
 			Debug++;
 			break;
 #endif /* DEBUG */
-		case 'e':
-			Equal_probs = 1;	/* scatter un-allocted prob equally */
+		case 'e':		/* scatter un-allocted prob equally */
+			Equal_probs = true;
 			break;
 		case 'f':		/* find fortune files */
-			Find_files = 1;
+			Find_files = true;
 			break;
 		case 'l':		/* long ones only */
-			Long_only = 1;
-			Short_only = 0;
+			Long_only = true;
+			Short_only = false;
 			break;
 		case 'o':		/* offensive ones only */
-			Offend = 1;
+			Offend = true;
 			break;
 		case 's':		/* short ones only */
-			Short_only = 1;
-			Long_only = 0;
+			Short_only = true;
+			Long_only = false;
 			break;
 		case 'w':		/* give time to read */
-			Wait = 1;
+			Wait = true;
 			break;
 		case 'm':			/* dump out the fortunes */
-			Match = 1;
+			Match = true;
 			pat = optarg;
 			break;
 		case 'i':			/* case-insensitive match */
@@ -380,11 +379,11 @@ add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
 
 	if (dir == NULL) {
 		path = file;
-		was_malloc = 0;
+		was_malloc = false;
 	} else {
 		if (asprintf(&path, "%s/%s", dir, file) == -1)
 			err(1, NULL);
-		was_malloc = 1;
+		was_malloc = true;
 	}
 	if ((isdir = is_dir(path)) && parent != NULL) {
 		if (was_malloc)
@@ -400,7 +399,7 @@ add_file(int percent, char *file, char *dir, FILEDESC **head, FILEDESC **tail,
 				free(path);
 			path = offensive;
 			file = off_name(file);
-			was_malloc = 1;
+			was_malloc = true;
 		}
 	}
 
@@ -420,7 +419,7 @@ over:
 			if (was_malloc)
 				free(path);
 			offensive = NULL;
-			was_malloc = 1;
+			was_malloc = true;
 			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", path));
 			file = off_name(file);
 			goto over;
@@ -886,7 +885,7 @@ pick_child(FILEDESC *parent)
 void
 sum_noprobs(FILEDESC *fp)
 {
-	static bool	did_noprobs = 0;
+	static bool	did_noprobs = false;
 
 	if (did_noprobs)
 		return;
@@ -896,7 +895,7 @@ sum_noprobs(FILEDESC *fp)
 		sum_tbl(&Noprob_tbl, &fp->tbl);
 		fp = fp->next;
 	}
-	did_noprobs = 1;
+	did_noprobs = true;
 }
 
 int
@@ -1099,7 +1098,7 @@ find_matches(void)
 	if ((Fortbuf = malloc(Fort_len + 10)) == NULL)
 		err(1, NULL);
 
-	Found_one = 0;
+	Found_one = false;
 	matches_in_list(File_list);
 	return Found_one;
 }
@@ -1185,7 +1184,7 @@ matches_in_list(FILEDESC *list)
 					    fp->tbl.str_delim);
 					if (!in_file) {
 						printf(" (%s)", fp->name);
-						Found_one = 1;
+						Found_one = true;
 						in_file = 1;
 					}
 					putchar('\n');

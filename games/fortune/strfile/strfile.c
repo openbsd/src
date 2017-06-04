@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.28 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.29 2017/06/04 13:39:25 fcambus Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,9 +67,6 @@
  *	Added ordering options.
  */
 
-#define	TRUE	1
-#define	FALSE	0
-
 #define	STORING_PTRS	(Oflag || Rflag)
 #define	CHUNKSIZE	512
 
@@ -92,11 +90,11 @@ char	*Infile		= NULL,		/* input file name */
 	Outfile[PATH_MAX] = "",		/* output file name */
 	Delimch		= '%';		/* delimiting character */
 
-int	Sflag		= FALSE;	/* silent run flag */
-int	Oflag		= FALSE;	/* ordering flag */
-int	Iflag		= FALSE;	/* ignore case flag */
-int	Rflag		= FALSE;	/* randomize order flag */
-int	Xflag		= FALSE;	/* set rotated bit */
+bool	Sflag		= false;	/* silent run flag */
+bool	Oflag		= false;	/* ordering flag */
+bool	Iflag		= false;	/* ignore case flag */
+bool	Rflag		= false;	/* randomize order flag */
+bool	Xflag		= false;	/* set rotated bit */
 long	Num_pts		= 0;		/* number of pointers/strings */
 
 int32_t	*Seekpts;
@@ -128,11 +126,12 @@ __dead void usage(void);
 int
 main(int ac, char *av[])
 {
+	bool		first;
 	char		*sp, dc;
 	FILE		*inf, *outf;
 	int32_t		last_off, length, pos;
 	int32_t		*p;
-	int		first, cnt;
+	int		cnt;
 	char		*nsp;
 	STR		*fp;
 	static char	string[257];
@@ -189,7 +188,7 @@ main(int ac, char *av[])
 			else
 				fp->first = *nsp;
 			fp->pos = Seekpts[Num_pts - 1];
-			first = FALSE;
+			first = false;
 		}
 	} while (sp != NULL);
 
@@ -267,19 +266,19 @@ getargs(int argc, char *argv[])
 			}
 			break;
 		case 'i':			/* ignore case in ordering */
-			Iflag++;
+			Iflag = true;
 			break;
 		case 'o':			/* order strings */
-			Oflag++;
+			Oflag = true;
 			break;
 		case 'r':			/* randomize pointers */
-			Rflag++;
+			Rflag = true;
 			break;
 		case 's':			/* silent */
-			Sflag++;
+			Sflag = true;
 			break;
 		case 'x':			/* set the rotated bit */
-			Xflag++;
+			Xflag = true;
 			break;
 		case 'h':
 		default:
@@ -380,8 +379,8 @@ unctrl(char c)
 int
 cmp_str(const void *p1, const void *p2)
 {
+	bool	n1, n2;
 	int	c1, c2;
-	int	n1, n2;
 
 # define	SET_N(nf,ch)	(nf = (ch == '\n'))
 # define	IS_END(ch,nf)	(ch == Delimch && nf)
@@ -394,8 +393,8 @@ cmp_str(const void *p1, const void *p2)
 	(void) fseek(Sort_1, ((STR *)p1)->pos, SEEK_SET);
 	(void) fseek(Sort_2, ((STR *)p2)->pos, SEEK_SET);
 
-	n1 = FALSE;
-	n2 = FALSE;
+	n1 = false;
+	n2 = false;
 	while (!isalnum(c1 = getc(Sort_1)) && c1 != '\0')
 		SET_N(n1, c1);
 	while (!isalnum(c2 = getc(Sort_2)) && c2 != '\0')
