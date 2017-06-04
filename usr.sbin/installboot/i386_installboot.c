@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.29 2016/05/31 18:35:58 kettenis Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.30 2017/06/04 13:57:29 naddy Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -649,8 +649,6 @@ devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
 		err(1, "%s: devread: pread", msg);
 }
 
-static char sblock[SBSIZE];
-
 /*
  * Read information about /boot's inode, then put this and filesystem
  * parameters from the superblock into pbr_symbols.
@@ -663,7 +661,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	struct statfs	fssb;
 	struct partition *pp;
 	struct fs	*fs;
-	char		*buf;
+	char		*sblock, *buf;
 	u_int		blk, *ap;
 	struct ufs1_dinode *ip;
 	int		ndb;
@@ -727,6 +725,9 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	close(fd);
 
 	/* Read superblock. */
+	if ((sblock = malloc(SBSIZE)) == NULL)
+		err(1, NULL);
+
 	devread(devfd, sblock, DL_SECTOBLK(dl, pp->p_offset) + SBLOCK,
 	    SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
@@ -794,6 +795,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
 	}
 
+	free (sblock);
 	free (buf);
 
 	return 0;
