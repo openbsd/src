@@ -1,4 +1,4 @@
-/* $OpenBSD: sio.c,v 1.5 2014/06/07 11:55:35 aoyama Exp $ */
+/* $OpenBSD: sio.c,v 1.6 2017/06/04 13:48:13 aoyama Exp $ */
 /* $NetBSD: sio.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 
 /*-
@@ -54,7 +54,7 @@ struct cfdriver sio_cd = {
 	NULL, "sio", DV_DULL, 0
 };
 
-void nullintr(int);
+void nullintr(void *);
 int xsiointr(void *);
 
 int
@@ -80,9 +80,9 @@ sio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": 7201a\n");
 
-	sc->scp_ctl = (caddr_t)ma->ma_addr;
-	sc->scp_intr[0] = sc->scp_intr[1] = nullintr;
+	sc->sc_ctl = (void *)ma->ma_addr;
 	for (channel = 0; channel < 2; channel++) {
+		sc->sc_intrhand[channel].ih_func = nullintr;
 		sio_args.channel = channel;
 		sio_args.hwflags = (channel == sysconsole);
 		config_found(self, (void *)&sio_args, sio_print);
@@ -111,11 +111,16 @@ xsiointr(void *arg)
 {
 	struct sio_softc *sc = arg;
 
-	(*sc->scp_intr[0])(0); 	/* 0: ttya system serial port */
-	(*sc->scp_intr[1])(1);	/* 1: keyboard and mouse */
+	/* channel 0: ttya system serial port */
+	(*sc->sc_intrhand[0].ih_func)(sc->sc_intrhand[0].ih_arg);
+
+	/* channel 1: keyboard and mouse */
+	(*sc->sc_intrhand[1].ih_func)(sc->sc_intrhand[1].ih_arg);
+
 	return 1;
 }
 
-void nullintr(int v)
+void
+nullintr(void *arg)
 {
 }

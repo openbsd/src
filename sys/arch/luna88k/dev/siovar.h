@@ -1,4 +1,4 @@
-/* $OpenBSD: siovar.h,v 1.2 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: siovar.h,v 1.3 2017/06/04 13:48:13 aoyama Exp $ */
 /* $NetBSD: siovar.h,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 
 /*-
@@ -30,12 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct sio_softc {
-	struct device scp_dev;
-	caddr_t scp_ctl;
-	void (*scp_intr[2])(int);
-};
-
 struct sio_attach_args {
 	int channel;
 	int hwflags;
@@ -47,6 +41,15 @@ struct sioreg {
 	volatile u_int8_t sio_cmd;
 	volatile unsigned : 24;
 #define sio_stat sio_cmd
+};
+
+struct sio_softc {
+	struct device sc_dev;
+	struct sioreg *sc_ctl;
+	struct {
+		void (*ih_func)(void *);
+		void *ih_arg;
+	} sc_intrhand[2];
 };
 
 int  getsiocsr(struct sioreg *);

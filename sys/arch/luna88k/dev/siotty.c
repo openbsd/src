@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.18 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: siotty.c,v 1.19 2017/06/04 13:48:13 aoyama Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -76,7 +76,7 @@ struct siotty_softc {
 cdev_decl(sio);
 void siostart(struct tty *);
 int  sioparam(struct tty *, struct termios *);
-void siottyintr(int);
+void siottyintr(void *);
 int  siomctl(struct siotty_softc *, int, int);
 
 int  siotty_match(struct device *, void *, void *);
@@ -103,13 +103,16 @@ siotty_match(struct device *parent, void *cf, void *aux)
 void 
 siotty_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sio_softc *scp = (void *)parent;
+	struct sio_softc *siosc = (void *)parent;
 	struct siotty_softc *sc = (void *)self;
 	struct sio_attach_args *args = aux;
+	int channel;
 
-	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
-	bcopy(ch0_regs, sc->sc_wr, sizeof(ch0_regs));
-	scp->scp_intr[args->channel] = siottyintr;
+	channel = args->channel;
+	sc->sc_ctl = &siosc->sc_ctl[channel];
+	memcpy(sc->sc_wr, ch0_regs, sizeof(ch0_regs));
+	siosc->sc_intrhand[channel].ih_func = siottyintr;
+	siosc->sc_intrhand[channel].ih_arg = sc;
 
 	if (args->hwflags == 1) {
 		printf(" (console)");
@@ -133,7 +136,7 @@ siotty_attach(struct device *parent, struct device *self, void *aux)
 /*--------------------  low level routine --------------------*/
 
 void
-siottyintr(int chan)
+siottyintr(void *arg)
 {
 	struct siotty_softc *sc;
 	struct sioreg *sio;
@@ -141,9 +144,7 @@ siottyintr(int chan)
 	unsigned int code;
 	int rr;
 
-	if (chan >= siotty_cd.cd_ndevs)
-		return;
-	sc = siotty_cd.cd_devs[chan];
+	sc = (struct siotty_softc *)arg;
 	tp = sc->sc_tty;
 	sio = sc->sc_ctl;
 	rr = getsiocsr(sio);

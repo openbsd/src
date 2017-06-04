@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.12 2016/06/05 20:02:36 bru Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.13 2017/06/04 13:48:13 aoyama Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -118,7 +118,7 @@ const struct wsmouse_accessops omms_accessops = {
 };
 #endif
 
-void wsintr(int);
+void wsintr(void *);
 
 int  wsmatch(struct device *, void *, void *);
 void wsattach(struct device *, struct device *, void *);
@@ -152,13 +152,15 @@ void
 wsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ws_softc *sc = (struct ws_softc *)self;
-	struct sio_softc *scp = (struct sio_softc *)parent;
+	struct sio_softc *siosc = (struct sio_softc *)parent;
 	struct sio_attach_args *args = aux;
+	int channel = args->channel;
 	struct wskbddev_attach_args a;
 
-	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
-	bcopy(ch1_regs, sc->sc_wr, sizeof(ch1_regs));
-	scp->scp_intr[1] = wsintr;
+	sc->sc_ctl = &siosc->sc_ctl[channel];
+	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
+	siosc->sc_intrhand[channel].ih_func = wsintr;
+	siosc->sc_intrhand[channel].ih_arg = sc;
 	
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
@@ -216,9 +218,9 @@ ws_submatch_mouse(struct device *parent, void *match, void *aux)
 
 /*ARGSUSED*/
 void
-wsintr(int chan)
+wsintr(void *arg)
 {
-	struct ws_softc *sc = ws_cd.cd_devs[0];
+	struct ws_softc *sc = arg;
 	struct sioreg *sio = sc->sc_ctl;
 	u_int code;
 	int rr;
