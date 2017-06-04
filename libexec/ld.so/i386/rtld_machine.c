@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.36 2017/01/24 07:48:37 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.37 2017/06/04 14:20:12 naddy Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -397,7 +397,8 @@ _dl_bind(elf_object_t *object, int index)
 	{
 		register long syscall_num __asm("eax") = SYS_kbind;
 
-		__asm volatile("pushl 4 %3; pushl %3; pushl %2; pushl %1;"
+		__asm volatile("lea %3, %%edx; pushl 4(%%edx);"
+		    " pushl (%%edx); pushl %2; pushl %1;"
 		    " push %%eax; int $0x80; addl $20, %%esp" :
 		    "+a" (syscall_num) : "r" (&buf), "i" (sizeof(buf)),
 		    "m" (cookie) : "edx", "cc", "memory");
