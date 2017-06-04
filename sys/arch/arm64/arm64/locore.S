@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.17 2017/06/04 14:10:42 patrick Exp $ */
+/* $OpenBSD: locore.S,v 1.18 2017/06/04 14:21:49 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -64,8 +64,6 @@ hyp_vectors:
 abort:
 	b abort
 
-	// First entries in data must be esym
-	// so that bootloader can find them easily.
 	.data
 	.global _C_LABEL(esym)
 _C_LABEL(esym): .xword   _C_LABEL(end)
@@ -100,24 +98,24 @@ initstack_end:
 
 	.text
 ENTRY(sigcode)
-	mov     x0, sp
-	add     x0, x0, #SF_SC
+	mov	x0, sp
+	add	x0, x0, #SF_SC
 
 1:
-	mov     x8, #SYS_sigreturn
-	svc     0
+	mov	x8, #SYS_sigreturn
+	svc	0
 	.globl  _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
 
 	/* sigreturn failed, exit */
-	mov     x8, #SYS_exit
-	svc     0
+	mov	x8, #SYS_exit
+	svc	0
 
-	b       1b
+	b	1b
 END(sigcode)
 	/* This may be copied to the stack, keep it 16-byte aligned */
 	.align  3
-        .global _C_LABEL(esigcode)
+	.global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
 	.globl	sigfill
