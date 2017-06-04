@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.14 2017/04/30 14:00:06 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.15 2017/06/04 14:10:42 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -14,6 +14,7 @@ file	arch/arm64/arm64/copystr.S
 file	arch/arm64/arm64/cpuswitch.S
 file	arch/arm64/arm64/conf.c
 file	arch/arm64/arm64/disksubr.c
+file	arch/arm64/arm64/locore.S
 file	arch/arm64/arm64/machdep.c
 file	arch/arm64/arm64/mem.c
 file	arch/arm64/arm64/pmap.c
