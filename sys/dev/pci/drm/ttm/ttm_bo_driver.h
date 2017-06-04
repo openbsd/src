@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_driver.h,v 1.7 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_driver.h,v 1.8 2017/06/04 14:02:24 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
@@ -516,7 +516,7 @@ struct ttm_bo_global {
  * @man: An array of mem_type_managers.
  * @fence_lock: Protects the synchronizing members on *all* bos belonging
  * to this device.
- * @addr_space_mm: Range manager for the device address space.
+ * @vma_manager: Address space manager
  * lru_lock: Spinlock that protects the buffer+device lru lists and
  * ddestroy lists.
  * @val_seq: Current validation sequence.
@@ -534,7 +534,6 @@ struct ttm_bo_device {
 	struct list_head device_list;
 	struct ttm_bo_global *glob;
 	struct ttm_bo_driver *driver;
-	rwlock_t vm_lock;
 	struct ttm_mem_type_manager man[TTM_NUM_MEM_TYPES];
 	spinlock_t fence_lock;
 
@@ -543,10 +542,9 @@ struct ttm_bo_device {
 	bus_dma_tag_t dmat;
 
 	/*
-	 * Protected by the vm lock.
+	 * Protected by internal locks.
 	 */
-	RB_HEAD(ttm_bo_device_buffer_objects, ttm_buffer_object) addr_space_rb;
-	struct drm_mm addr_space_mm;
+	struct drm_vma_offset_manager vma_manager;
 
 	/*
 	 * Protected by the global:lru lock.
@@ -1010,11 +1008,5 @@ extern struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
 int ttm_agp_tt_populate(struct ttm_tt *ttm);
 void ttm_agp_tt_unpopulate(struct ttm_tt *ttm);
 #endif
-
-int	ttm_bo_cmp_rb_tree_items(struct ttm_buffer_object *a,
-	    struct ttm_buffer_object *b);
-
-RB_PROTOTYPE(ttm_bo_device_buffer_objects, ttm_buffer_object, vm_rb,
-    ttm_bo_cmp_rb_tree_items);
 
 #endif

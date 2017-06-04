@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_vm.c,v 1.10 2016/04/05 08:22:50 kettenis Exp $	*/
+/*	$OpenBSD: ttm_bo_vm.c,v 1.11 2017/06/04 14:02:24 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -34,65 +34,12 @@
 #include <dev/pci/drm/ttm/ttm_module.h>
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_placement.h>
+#include <dev/pci/drm/drm_vma_manager.h>
 
 #define TTM_BO_VM_NUM_PREFAULT 16
 
 ssize_t	 ttm_bo_fbdev_io(struct ttm_buffer_object *, const char __user *,
 	     char __user *, size_t, off_t *, bool);
-struct ttm_buffer_object *
-	 ttm_bo_vm_lookup_rb(struct ttm_bo_device *, unsigned long,
-	     unsigned long);
-
-#undef RB_ROOT
-#define RB_ROOT(head)	(head)->rbh_root
-
-RB_GENERATE(ttm_bo_device_buffer_objects, ttm_buffer_object, vm_rb,
-    ttm_bo_cmp_rb_tree_items);
-
-int
-ttm_bo_cmp_rb_tree_items(struct ttm_buffer_object *a,
-    struct ttm_buffer_object *b)
-{
-
-	if (a->vm_node->start < b->vm_node->start) {
-		return (-1);
-	} else if (a->vm_node->start > b->vm_node->start) {
-		return (1);
-	} else {
-		return (0);
-	}
-}
-
-struct ttm_buffer_object *
-ttm_bo_vm_lookup_rb(struct ttm_bo_device *bdev,
-		    unsigned long page_start,
-		    unsigned long num_pages)
-{
-	unsigned long cur_offset;
-	struct ttm_buffer_object *bo;
-	struct ttm_buffer_object *best_bo = NULL;
-
-	bo = RB_ROOT(&bdev->addr_space_rb);
-	while (bo != NULL) {
-		cur_offset = bo->vm_node->start;
-		if (page_start >= cur_offset) {
-			best_bo = bo;
-			if (page_start == cur_offset)
-				break;
-			bo = RB_RIGHT(bo, vm_rb);
-		} else
-			bo = RB_LEFT(bo, vm_rb);
-	}
-
-	if (unlikely(best_bo == NULL))
-		return NULL;
-
-	if (unlikely((best_bo->vm_node->start + best_bo->num_pages) <
-		     (page_start + num_pages)))
-		return NULL;
-
-	return best_bo;
-}
 
 int ttm_bo_vm_fault(struct uvm_faultinfo *, vaddr_t, vm_page_t *,
         int, int, vm_fault_t, vm_prot_t, int);
@@ -187,9 +134,9 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	}
 
 	page_offset = ((address - ufi->entry->start) >> PAGE_SHIFT) +
-	    bo->vm_node->start - (ufi->entry->offset >> PAGE_SHIFT);
+	    drm_vma_node_start(&bo->vma_node) - (ufi->entry->offset >> PAGE_SHIFT);
 	page_last = ((ufi->entry->end - ufi->entry->start) >> PAGE_SHIFT) +
-	    bo->vm_node->start - (ufi->entry->offset >> PAGE_SHIFT);
+	    drm_vma_node_start(&bo->vma_node) - (ufi->entry->offset >> PAGE_SHIFT);
 
 	if (unlikely(page_offset >= bo->num_pages)) {
 		retval = VM_PAGER_ERROR;
@@ -301,6 +248,30 @@ struct uvm_pagerops ttm_bo_vm_ops = {
 	.pgo_detach = ttm_bo_vm_detach
 };
 
+static struct ttm_buffer_object *ttm_bo_vm_lookup(struct ttm_bo_device *bdev,
+						  unsigned long offset,
+						  unsigned long pages)
+{
+	struct drm_vma_offset_node *node;
+	struct ttm_buffer_object *bo = NULL;
+
+	drm_vma_offset_lock_lookup(&bdev->vma_manager);
+
+	node = drm_vma_offset_lookup_locked(&bdev->vma_manager, offset, pages);
+	if (likely(node)) {
+		bo = container_of(node, struct ttm_buffer_object, vma_node);
+		if (!kref_get_unless_zero(&bo->kref))
+			bo = NULL;
+	}
+
+	drm_vma_offset_unlock_lookup(&bdev->vma_manager);
+
+	if (!bo)
+		pr_err("Could not find buffer object to map\n");
+
+	return bo;
+}
+
 struct uvm_object *
 ttm_bo_mmap(voff_t off, vsize_t size, struct ttm_bo_device *bdev)
 {
@@ -308,14 +279,9 @@ ttm_bo_mmap(voff_t off, vsize_t size, struct ttm_bo_device *bdev)
 	struct ttm_buffer_object *bo;
 	int ret;
 
-	read_lock(&bdev->vm_lock);
-	bo = ttm_bo_vm_lookup_rb(bdev, off >> PAGE_SHIFT, size >> PAGE_SHIFT);
-	if (likely(bo != NULL) && !kref_get_unless_zero(&bo->kref))
-		bo = NULL;
-	read_unlock(&bdev->vm_lock);
-
-	if (unlikely(bo == NULL)) {
-		pr_err("Could not find buffer object to map\n");
+	bo = ttm_bo_vm_lookup(bdev, off >> PAGE_SHIFT, size >> PAGE_SHIFT);
+	if (unlikely(!bo)) {
+ 		ret = -EINVAL;
 		return NULL;
 	}
 
@@ -383,12 +349,7 @@ ssize_t ttm_bo_io(struct ttm_bo_device *bdev, struct file *filp,
 	bool no_wait = false;
 	bool dummy;
 
-	read_lock(&bdev->vm_lock);
-	bo = ttm_bo_vm_lookup_rb(bdev, dev_offset, 1);
-	if (likely(bo != NULL))
-		ttm_bo_reference(bo);
-	read_unlock(&bdev->vm_lock);
-
+	bo = ttm_bo_vm_lookup(bdev, dev_offset, 1);
 	if (unlikely(bo == NULL))
 		return -EFAULT;
 
@@ -402,7 +363,7 @@ ssize_t ttm_bo_io(struct ttm_bo_device *bdev, struct file *filp,
 	if (unlikely(ret != 0))
 		goto out_unref;
 
-	kmap_offset = dev_offset - bo->vm_node->start;
+	kmap_offset = dev_offset - drm_vma_node_start(&bo->vma_node);
 	if (unlikely(kmap_offset >= bo->num_pages)) {
 		ret = -EFBIG;
 		goto out_unref;

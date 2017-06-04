@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_api.h,v 1.5 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_api.h,v 1.6 2017/06/04 14:02:24 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -33,6 +33,7 @@
 #define _TTM_BO_API_H_
 
 #include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_vma_manager.h>
 
 struct ttm_bo_device;
 
@@ -139,7 +140,6 @@ struct ttm_tt;
  * @type: The bo type.
  * @destroy: Destruction function. If NULL, kfree is used.
  * @num_pages: Actual number of pages.
- * @addr_space_offset: Address space offset.
  * @acc_size: Accounted size for this object.
  * @kref: Reference count of this buffer object. When this refcount reaches
  * zero, the object is put on the delayed delete list.
@@ -167,8 +167,7 @@ struct ttm_tt;
  * @reserved: Deadlock-free lock used for synchronization state transitions.
  * @sync_obj: Pointer to a synchronization object.
  * @priv_flags: Flags describing buffer object internal state.
- * @vm_rb: Rb node for the vm rb tree.
- * @vm_node: Address space manager node.
+ * @vma_node: Address space manager node.
  * @offset: The current GPU offset, which can have different meanings
  * depending on the memory type. For SYSTEM type memory, it should be 0.
  * @cur_placement: Hint of current placement.
@@ -197,7 +196,6 @@ struct ttm_buffer_object {
 	enum ttm_bo_type type;
 	void (*destroy) (struct ttm_buffer_object *);
 	unsigned long num_pages;
-	uint64_t addr_space_offset;
 	size_t acc_size;
 
 	/**
@@ -251,13 +249,7 @@ struct ttm_buffer_object {
 	void *sync_obj;
 	unsigned long priv_flags;
 
-	/**
-	 * Members protected by the bdev::vm_lock
-	 */
-
-	RB_ENTRY(ttm_buffer_object) vm_rb;
-	struct drm_mm_node *vm_node;
-
+	struct drm_vma_offset_node vma_node;
 
 	/**
 	 * Special members that are protected by the reserve lock

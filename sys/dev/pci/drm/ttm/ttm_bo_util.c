@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_util.c,v 1.15 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: ttm_bo_util.c,v 1.16 2017/06/04 14:02:24 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -31,6 +31,7 @@
 
 #include <dev/pci/drm/ttm/ttm_bo_driver.h>
 #include <dev/pci/drm/ttm/ttm_placement.h>
+#include <dev/pci/drm/drm_vma_manager.h>
 
 int	 ttm_mem_reg_ioremap(struct ttm_bo_device *, struct ttm_mem_reg *,
 	     void **);
@@ -447,7 +448,7 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	INIT_LIST_HEAD(&fbo->lru);
 	INIT_LIST_HEAD(&fbo->swap);
 	INIT_LIST_HEAD(&fbo->io_reserve_lru);
-	fbo->vm_node = NULL;
+	drm_vma_node_reset(&fbo->vma_node);
 	atomic_set(&fbo->cpu_writers, 0);
 
 	spin_lock(&bdev->fence_lock);
