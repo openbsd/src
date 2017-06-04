@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.197 2017/05/31 10:15:51 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.198 2017/06/04 09:02:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,6 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <vis.h>
 
 #include "tmux.h"
 
@@ -408,7 +409,7 @@ void
 window_set_name(struct window *w, const char *new_name)
 {
 	free(w->name);
-	w->name = xstrdup(new_name);
+	utf8_stravis(&w->name, new_name, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 	notify_window("window-renamed", w);
 }
 

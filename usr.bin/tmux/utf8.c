@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.37 2017/05/31 17:56:48 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.38 2017/06/04 09:02:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -205,6 +205,31 @@ utf8_stravis(char **dst, const char *src, int flag)
 
 	*dst = xrealloc(buf, len + 1);
 	return (len);
+}
+
+/* Does this string contain anything that isn't valid UTF-8? */
+int
+utf8_isvalid(const char *s)
+{
+	struct utf8_data	 ud;
+	const char		*end;
+	enum utf8_state		 more;
+	size_t			 i;
+
+	end = s + strlen(s);
+	while (s < end) {
+		if ((more = utf8_open(&ud, *s)) == UTF8_MORE) {
+			while (++s < end && more == UTF8_MORE)
+				more = utf8_append(&ud, *s);
+			if (more == UTF8_DONE)
+				continue;
+			return (0);
+		}
+		if (*s < 0x20 || *s > 0x7e)
+			return (0);
+		s++;
+	}
+	return (1);
 }
 
 /*

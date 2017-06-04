@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.46 2017/02/08 16:45:18 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.47 2017/06/04 09:02:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "tmux.h"
 
@@ -107,7 +108,7 @@ void
 screen_set_title(struct screen *s, const char *title)
 {
 	free(s->title);
-	s->title = xstrdup(title);
+	utf8_stravis(&s->title, title, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 }
 
 /* Resize screen. */
