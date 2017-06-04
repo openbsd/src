@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.116 2017/06/03 15:44:03 tb Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.117 2017/06/04 12:48:42 tb Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -791,7 +791,7 @@ void
 ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	if (ni->ni_rsnie != NULL) {
-		free(ni->ni_rsnie, M_DEVBUF, 0);
+		free(ni->ni_rsnie, M_DEVBUF, 2 + ni->ni_rsnie[1]);
 		ni->ni_rsnie = NULL;
 	}
 	ieee80211_ba_del(ni);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.193 2017/06/03 15:44:03 tb Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.194 2017/06/04 12:48:42 tb Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1362,14 +1362,17 @@ ieee80211_parse_wpa(struct ieee80211com *ic, const u_int8_t *frm,
 int
 ieee80211_save_ie(const u_int8_t *frm, u_int8_t **ie)
 {
-	if (*ie == NULL || (*ie)[1] != frm[1]) {
+	int olen = *ie ? 2 + (*ie)[1] : 0;
+	int len = 2 + frm[1];
+
+	if (*ie == NULL || olen != len) {
 		if (*ie != NULL)
-			free(*ie, M_DEVBUF, 0);
-		*ie = malloc(2 + frm[1], M_DEVBUF, M_NOWAIT);
+			free(*ie, M_DEVBUF, olen);
+		*ie = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (*ie == NULL)
 			return ENOMEM;
 	}
-	memcpy(*ie, frm, 2 + frm[1]);
+	memcpy(*ie, frm, len);
 	return 0;
 }
 
