@@ -2104,7 +2104,7 @@ optimize_imm ()
 		  (((i.op[op].imms->X_add_number & 0xffff) ^ 0x8000) - 0x8000);
 	      }
 	    if ((i.types[op] & Imm32)
-		&& ((i.op[op].imms->X_add_number & ~(((offsetT) 2 << 31) - 1))
+		&& ((i.op[op].imms->X_add_number & ~(offsetT) 0xffffffffL)
 		    == 0))
 	      {
 		i.op[op].imms->X_add_number = ((i.op[op].imms->X_add_number
@@ -2183,12 +2183,12 @@ optimize_disp ()
 		i.types[op] &= ~Disp64;
 	      }
 	    if ((i.types[op] & Disp32)
-		&& (disp & ~(((offsetT) 2 << 31) - 1)) == 0)
+		&& (disp & ~(offsetT) 0xffffffffL) == 0)
 	      {
 		/* If this operand is at most 32 bits, convert
 		   to a signed 32 bit number and don't use 64bit
 		   displacement.  */
-		disp &= (((offsetT) 2 << 31) - 1);
+		disp &= (offsetT) 0xffffffffL;
 		disp = (disp ^ ((offsetT) 1 << 31)) - ((addressT) 1 << 31);
 		i.types[op] &= ~Disp64;
 	      }
