@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.126 2017/05/31 17:56:48 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.127 2017/06/04 08:02:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1390,7 +1390,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		}
 	}
 
-	/* Update the selection the flag and set the cell. */
+	/* Update the selected flag and set the cell. */
 	selected = screen_check_selection(s, s->cx, s->cy);
 	if (selected && (~gc->flags & GRID_FLAG_SELECTED)) {
 		memcpy(&tmp_gc, gc, sizeof tmp_gc);

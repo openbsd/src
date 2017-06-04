@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.288 2017/06/03 07:15:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.289 2017/06/04 08:02:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1848,7 +1848,7 @@ tty_check_fg(struct tty *tty, const struct window_pane *wp,
 	 */
 	if (~gc->flags & GRID_FLAG_NOPALETTE) {
 		c = gc->fg;
-		if (gc->fg < 8 && gc->attr & GRID_ATTR_BRIGHT)
+		if (c < 8 && gc->attr & GRID_ATTR_BRIGHT)
 			c += 90;
 		if ((c = window_pane_get_palette(wp, c)) != -1)
 			gc->fg = c;
