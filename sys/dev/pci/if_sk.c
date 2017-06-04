@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.188 2017/06/02 10:47:30 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.189 2017/06/04 04:29:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -537,7 +537,8 @@ sk_init_rx_ring(struct sk_if_softc *sc_if)
 		else
 			nexti = i + 1;
 		cd->sk_rx_chain[i].sk_next = &cd->sk_rx_chain[nexti];
-		rd->sk_rx_ring[i].sk_next = htole32(SK_RX_RING_ADDR(sc_if, nexti));
+		htolem32(&rd->sk_rx_ring[i].sk_next,
+		    SK_RX_RING_ADDR(sc_if, nexti));
 	}
 
 	sc_if->sk_cdata.sk_rx_prod = 0;
@@ -584,7 +585,8 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 		else
 			nexti = i + 1;
 		cd->sk_tx_chain[i].sk_next = &cd->sk_tx_chain[nexti];
-		rd->sk_tx_ring[i].sk_next = htole32(SK_TX_RING_ADDR(sc_if, nexti));
+		htolem32(&rd->sk_tx_ring[i].sk_next,
+		    SK_TX_RING_ADDR(sc_if, nexti));
 
 		if (bus_dmamap_create(sc->sc_dmatag, SK_JLEN, SK_NTXSEG,
 		   SK_JLEN, 0, BUS_DMA_NOWAIT, &dmamap))
@@ -645,9 +647,9 @@ sk_newbuf(struct sk_if_softc *sc_if)
 
 	r = c->sk_desc;
 	dva = dmamap->dm_segs[0].ds_addr;
-	r->sk_data_lo = htole32(dva);
-	r->sk_data_hi = htole32(dva >> 32);
-	r->sk_ctl = htole32(dmamap->dm_segs[0].ds_len | SK_RXSTAT);
+	htolem32(&r->sk_data_lo, dva);
+	htolem32(&r->sk_data_hi, dva >> 32);
+	htolem32(&r->sk_ctl, dmamap->dm_segs[0].ds_len | SK_RXSTAT);
 
 	SK_CDRXSYNC(sc_if, prod, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
@@ -1429,14 +1431,14 @@ sk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	for (i = 0; i < txmap->dm_nsegs; i++) {
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
 		dva = txmap->dm_segs[i].ds_addr;
-		f->sk_data_lo = htole32(dva);
-		f->sk_data_hi = htole32(dva >> 32);
+		htolem32(&f->sk_data_lo, dva);
+		htolem32(&f->sk_data_hi, dva >> 32);
 		sk_ctl = txmap->dm_segs[i].ds_len | SK_OPCODE_DEFAULT;
 		if (i == 0)
 			sk_ctl |= SK_TXCTL_FIRSTFRAG;
 		else
 			sk_ctl |= SK_TXCTL_OWN;
-		f->sk_ctl = htole32(sk_ctl);
+		htolem32(&f->sk_ctl, sk_ctl);
 		cur = frag;
 		SK_INC(frag, SK_TX_RING_CNT);
 	}
@@ -1599,11 +1601,11 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		if (cur_rx->sk_mbuf == NULL)
 			break;
 
-		sk_ctl = letoh32(sc_if->sk_rdata->sk_rx_ring[cur].sk_ctl);
+		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
+		sk_ctl = lemtoh32(&cur_desc->sk_ctl);
 		if ((sk_ctl & SK_RXCTL_OWN) != 0)
 			break;
 
-		cur_desc = &sc_if->sk_rdata->sk_rx_ring[cur];
 		dmamap = sc_if->sk_cdata.sk_rx_map[cur];
 
 		bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
@@ -1615,8 +1617,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		if_rxr_put(rxr, 1);
 		SK_INC(cur, SK_RX_RING_CNT);
 
-		total_len = SK_RXBYTES(letoh32(cur_desc->sk_ctl));
-		rxstat = letoh32(cur_desc->sk_xmac_rxstat);
+		total_len = SK_RXBYTES(sk_ctl);
+		rxstat = lemtoh32(&cur_desc->sk_xmac_rxstat);
 
 		if ((sk_ctl & (SK_RXCTL_STATUS_VALID | SK_RXCTL_FIRSTFRAG |
 		    SK_RXCTL_LASTFRAG)) != (SK_RXCTL_STATUS_VALID |
@@ -1661,7 +1663,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
-		sk_ctl = letoh32(cur_tx->sk_ctl);
+		sk_ctl = lemtoh32(&cur_tx->sk_ctl);
 #ifdef SK_DEBUG
 		if (skdebug >= 2)
 			sk_dump_txdesc(cur_tx, idx);
