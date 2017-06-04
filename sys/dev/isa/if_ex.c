@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.45 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.46 2017/06/04 20:28:05 naddy Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -616,7 +616,7 @@ ex_tx_intr(struct ex_softc *sc)
 	ifp->if_timer = 0;
 	while (sc->tx_head != sc->tx_tail) {
 		CSR_WRITE_2(sc, HOST_ADDR_REG, sc->tx_head);
-		if (!CSR_READ_2(sc, IO_PORT_REG) & Done_bit)
+		if (!(CSR_READ_2(sc, IO_PORT_REG) & Done_bit))
 			break;
 		tx_status = CSR_READ_2(sc, IO_PORT_REG);
 		sc->tx_head = CSR_READ_2(sc, IO_PORT_REG);
