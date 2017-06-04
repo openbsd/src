@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_object.h,v 1.2 2014/02/09 23:57:04 jsg Exp $	*/
+/*	$OpenBSD: radeon_object.h,v 1.3 2017/06/04 15:06:22 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -99,13 +99,10 @@ static inline unsigned radeon_bo_gpu_page_alignment(struct radeon_bo *bo)
  * @bo:	radeon object for which we query the offset
  *
  * Returns mmap offset of the object.
- *
- * Note: addr_space_offset is constant after ttm bo init thus isn't protected
- * by any lock.
  */
 static inline u64 radeon_bo_mmap_offset(struct radeon_bo *bo)
 {
-	return bo->tbo.addr_space_offset;
+	return drm_vma_node_offset_addr(&bo->tbo.vma_node);
 }
 
 extern int radeon_bo_wait(struct radeon_bo *bo, u32 *mem_type,
