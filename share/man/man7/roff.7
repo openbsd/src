@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.63 2017/06/04 00:08:56 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.64 2017/06/04 22:43:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1294,7 +1294,9 @@ Set title line length.
 Currently ignored.
 .It Ic \&mc Ar glyph Op Ar dist
 Print margin character in the right margin.
-Currently ignored.
+The
+.Ar dist
+is currently ignored; instead, 1n is used.
 .It Ic \&mediasize Ar media
 Set the device media size.
 This is a Heirloom extension and currently ignored.

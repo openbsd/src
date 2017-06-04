@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.175 2017/06/04 00:08:56 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.176 2017/06/04 22:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -213,8 +213,8 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 #define	ROFFNUM_WHITE	(1 << 1)  /* Skip whitespace in roff_evalnum(). */
 
 const char *__roff_name[MAN_MAX + 1] = {
-	"br",		"ft",		"ll",		"sp",
-	"ta",		"ti",		NULL,
+	"br",		"ft",		"ll",		"mc",
+	"sp",		"ta",		"ti",		NULL,
 	"ab",		"ad",		"af",		"aln",
 	"als",		"am",		"am1",		"ami",
 	"ami1",		"as",		"as1",		"asciify",
@@ -247,7 +247,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"lc",		"lc_ctype",	"lds",		"length",
 	"letadj",	"lf",		"lg",		"lhang",
 	"linetabs",	"lnr",		"lnrf",		"lpfx",
-	"ls",		"lsm",		"lt",		"mc",
+	"ls",		"lsm",		"lt",
 	"mediasize",	"minss",	"mk",		"mso",
 	"na",		"ne",		"nh",		"nhychar",
 	"nm",		"nn",		"nop",		"nr",
@@ -323,6 +323,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_br, NULL, NULL, 0 },  /* br */
 	{ roff_onearg, NULL, NULL, 0 },  /* ft */
 	{ roff_onearg, NULL, NULL, 0 },  /* ll */
+	{ roff_onearg, NULL, NULL, 0 },  /* mc */
 	{ roff_onearg, NULL, NULL, 0 },  /* sp */
 	{ roff_manyarg, NULL, NULL, 0 },  /* ta */
 	{ roff_onearg, NULL, NULL, 0 },  /* ti */
@@ -458,7 +459,6 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ls */
 	{ roff_unsupp, NULL, NULL, 0 },  /* lsm */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* lt */
-	{ roff_line_ignore, NULL, NULL, 0 },  /* mc */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* mediasize */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* minss */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* mk */

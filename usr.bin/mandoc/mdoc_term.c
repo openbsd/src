@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.259 2017/06/04 18:48:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.260 2017/06/04 22:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1411,7 +1411,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	size_t			 lm, len, rm, rmax;
+	size_t			 lm, len;
 	struct roff_node	*nn;
 	int			 offset;
 
@@ -1458,17 +1458,14 @@ termp_bd_pre(DECL_ARGS)
 	}
 
 	lm = p->offset;
-	rm = p->rmargin;
-	rmax = p->maxrmargin;
-	p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
-
+	p->flags |= TERMP_BRNEVER;
 	for (nn = n->child; nn; nn = nn->next) {
 		if (DISP_centered == n->norm->Bd.type) {
 			if (nn->type == ROFFT_TEXT) {
 				len = term_strlen(p, nn->string);
-				p->offset = len >= rm ? 0 :
-				    lm + len >= rm ? rm - len :
-				    (lm + rm - len) / 2;
+				p->offset = len >= p->rmargin ? 0 :
+				    lm + len >= p->rmargin ? p->rmargin - len :
+				    (lm + p->rmargin - len) / 2;
 			} else
 				p->offset = lm;
 		}
@@ -1498,32 +1495,21 @@ termp_bd_pre(DECL_ARGS)
 		term_flushln(p);
 		p->flags |= TERMP_NOSPACE;
 	}
-
-	p->rmargin = rm;
-	p->maxrmargin = rmax;
+	p->flags &= ~TERMP_BRNEVER;
 	return 0;
 }
 
 static void
 termp_bd_post(DECL_ARGS)
 {
-	size_t		 rm, rmax;
-
 	if (n->type != ROFFT_BODY)
 		return;
-
-	rm = p->rmargin;
-	rmax = p->maxrmargin;
-
 	if (DISP_literal == n->norm->Bd.type ||
 	    DISP_unfilled == n->norm->Bd.type)
-		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
-
+		p->flags |= TERMP_BRNEVER;
 	p->flags |= TERMP_NOSPACE;
 	term_newln(p);
-
-	p->rmargin = rm;
-	p->maxrmargin = rmax;
+	p->flags &= ~TERMP_BRNEVER;
 }
 
 static int

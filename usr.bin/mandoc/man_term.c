@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.154 2017/06/04 18:48:09 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.155 2017/06/04 22:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -860,7 +860,6 @@ post_UR(DECL_ARGS)
 static void
 print_man_node(DECL_ARGS)
 {
-	size_t		 rm, rmax;
 	int		 c;
 
 	switch (n->type) {
@@ -928,20 +927,16 @@ out:
 	if (mt->fl & MANT_LITERAL &&
 	    ! (p->flags & (TERMP_NOBREAK | TERMP_NONEWLINE)) &&
 	    (n->next == NULL || n->next->flags & NODE_LINE)) {
-		rm = p->rmargin;
-		rmax = p->maxrmargin;
-		p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
-		p->flags |= TERMP_NOSPACE;
+		p->flags |= TERMP_BRNEVER | TERMP_NOSPACE;
 		if (n->string != NULL && *n->string != '\0')
 			term_flushln(p);
 		else
 			term_newln(p);
-		if (rm < rmax && n->parent->tok == MAN_HP) {
-			p->offset = rm;
-			p->rmargin = rmax;
-		} else
-			p->rmargin = rm;
-		p->maxrmargin = rmax;
+		p->flags &= ~TERMP_BRNEVER;
+		if (p->rmargin < p->maxrmargin && n->parent->tok == MAN_HP) {
+			p->offset = p->rmargin;
+			p->rmargin = p->maxrmargin;
+		}
 	}
 	if (NODE_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;

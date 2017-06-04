@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.66 2017/06/04 18:48:09 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.67 2017/06/04 22:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -35,8 +35,6 @@ enum	termfont {
 	TERMFONT_BI,
 	TERMFONT__MAX
 };
-
-#define	TERM_MAXMARGIN	  100000 /* FIXME */
 
 struct	eqn;
 struct	roff_meta;
@@ -87,6 +85,10 @@ struct	termp {
 #define	TERMP_NOSPLIT	 (1 << 13)	/* Do not break line before .An. */
 #define	TERMP_SPLIT	 (1 << 14)	/* Break line before .An. */
 #define	TERMP_NONEWLINE	 (1 << 15)	/* No line break in nofill mode. */
+#define	TERMP_BRNEVER	 (1 << 16)	/* Don't even break at maxrmargin. */
+#define	TERMP_NOBUF	 (1 << 17)	/* Bypass output buffer. */
+#define	TERMP_NEWMC	 (1 << 18)	/* No .mc printed yet. */
+#define	TERMP_ENDMC	 (1 << 19)	/* Next break ends .mc mode. */
 	int		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	enum termfont	  fontl;	/* Last font set. */
@@ -105,6 +107,7 @@ struct	termp {
 	int		(*hspan)(const struct termp *,
 				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
+	const char	 *mc;		/* Margin character. */
 	struct termp_ps	 *ps;
 };
 

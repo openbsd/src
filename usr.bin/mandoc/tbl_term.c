@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_term.c,v 1.31 2015/10/12 00:07:27 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.32 2017/06/04 22:43:50 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -61,18 +61,12 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	const struct tbl_cell	*cp;
 	const struct tbl_dat	*dp;
 	static size_t		 offset;
-	size_t			 rmargin, maxrmargin, tsz;
+	size_t			 tsz;
 	int			 ic, horiz, spans, vert;
-
-	rmargin = tp->rmargin;
-	maxrmargin = tp->maxrmargin;
-
-	tp->rmargin = tp->maxrmargin = TERM_MAXMARGIN;
 
 	/* Inhibit printing of spaces: we do padding ourselves. */
 
-	tp->flags |= TERMP_NONOSPACE;
-	tp->flags |= TERMP_NOSPACE;
+	tp->flags |= TERMP_NOSPACE | TERMP_NONOSPACE | TERMP_BRNEVER;
 
 	/*
 	 * The first time we're invoked for a given table block,
@@ -84,7 +78,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.slen = term_tbl_strlen;
 		tp->tbl.arg = tp;
 
-		tblcalc(&tp->tbl, sp, rmargin - tp->offset);
+		tblcalc(&tp->tbl, sp, tp->rmargin - tp->offset);
 
 		/* Center the table as a whole. */
 
@@ -95,10 +89,10 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			for (ic = 0; ic < sp->opts->cols; ic++)
 				tsz += tp->tbl.cols[ic].width + 3;
 			tsz -= 3;
-			if (offset + tsz > rmargin)
+			if (offset + tsz > tp->rmargin)
 				tsz -= 1;
-			tp->offset = (offset + rmargin > tsz) ?
-			    (offset + rmargin - tsz) / 2 : 0;
+			tp->offset = (offset + tp->rmargin > tsz) ?
+			    (offset + tp->rmargin - tsz) / 2 : 0;
 		}
 
 		/* Horizontal frame at the start of boxed tables. */
@@ -199,10 +193,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.cols = NULL;
 		tp->offset = offset;
 	}
-
-	tp->flags &= ~TERMP_NONOSPACE;
-	tp->rmargin = rmargin;
-	tp->maxrmargin = maxrmargin;
+	tp->flags &= ~(TERMP_NONOSPACE | TERMP_BRNEVER);
 }
 
 /*
