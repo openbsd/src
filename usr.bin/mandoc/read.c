@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.141 2017/06/03 15:54:09 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.142 2017/06/04 00:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -322,7 +322,6 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 	const char	*save_file;
 	char		*cp;
 	size_t		 pos; /* byte number in the ln buffer */
-	size_t		 j;  /* auxiliary byte number in the blk buffer */
 	enum rofferr	 rr;
 	int		 of;
 	int		 lnn; /* line number in the real file */
@@ -404,79 +403,14 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 				continue;
 			}
 
-			/* Trailing backslash = a plain char. */
-
-			if (blk.buf[i] != '\\' || i + 1 == blk.sz) {
-				ln.buf[pos++] = blk.buf[i++];
-				continue;
-			}
-
-			/*
-			 * Found escape and at least one other character.
-			 * When it's a newline character, skip it.
-			 * When there is a carriage return in between,
-			 * skip that one as well.
-			 */
-
-			if ('\r' == blk.buf[i + 1] && i + 2 < blk.sz &&
-			    '\n' == blk.buf[i + 2])
-				++i;
-			if ('\n' == blk.buf[i + 1]) {
-				i += 2;
-				++lnn;
-				continue;
-			}
-
-			if ('"' == blk.buf[i + 1] || '#' == blk.buf[i + 1]) {
-				j = i;
-				i += 2;
-				/* Comment, skip to end of line */
-				for (; i < blk.sz; ++i) {
-					if (blk.buf[i] != '\n')
-						continue;
-					if (blk.buf[i - 1] == ' ' ||
-					    blk.buf[i - 1] == '\t')
-						mandoc_msg(
-						    MANDOCERR_SPACE_EOL,
-						    curp, curp->line,
-						    pos + i-1 - j, NULL);
-					++i;
-					++lnn;
-					break;
-				}
-
-				/* Backout trailing whitespaces */
-				for (; pos > 0; --pos) {
-					if (ln.buf[pos - 1] != ' ')
-						break;
-					if (pos > 2 && ln.buf[pos - 2] == '\\')
-						break;
-				}
-				break;
-			}
-
-			/* Catch escaped bogus characters. */
-
-			c = (unsigned char) blk.buf[i+1];
-
-			if ( ! (isascii(c) &&
-			    (isgraph(c) || isblank(c)))) {
-				mandoc_vmsg(MANDOCERR_CHAR_BAD, curp,
-				    curp->line, pos, "0x%x", c);
-				i += 2;
-				ln.buf[pos++] = '?';
-				continue;
-			}
-
-			/* Some other escape sequence, copy & cont. */
-
-			ln.buf[pos++] = blk.buf[i++];
 			ln.buf[pos++] = blk.buf[i++];
 		}
 
-		if (pos >= ln.sz)
+		if (pos + 1 >= ln.sz)
 			resize_buf(&ln, 256);
 
+		if (i == blk.sz || blk.buf[i] == '\0')
+			ln.buf[pos++] = '\n';
 		ln.buf[pos] = '\0';
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.174 2017/05/08 20:33:40 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.175 2017/06/04 00:08:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -97,6 +97,7 @@ struct	roff {
 	int		 format; /* current file in mdoc or man format */
 	int		 argc; /* number of args of the last macro */
 	char		 control; /* control character */
+	char		 escape; /* escape character */
 };
 
 struct	roffnode {
@@ -153,6 +154,8 @@ static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
 static	enum rofferr	 roff_ds(ROFF_ARGS);
+static	enum rofferr	 roff_ec(ROFF_ARGS);
+static	enum rofferr	 roff_eo(ROFF_ARGS);
 static	enum rofferr	 roff_eqndelim(struct roff *, struct buf *, int);
 static	int		 roff_evalcond(struct roff *r, int, char *, int *);
 static	int		 roff_evalnum(struct roff *, int,
@@ -383,13 +386,13 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_ds, NULL, NULL, 0 },  /* ds1 */
 	{ roff_unsupp, NULL, NULL, 0 },  /* dwh */
 	{ roff_unsupp, NULL, NULL, 0 },  /* dt */
-	{ roff_unsupp, NULL, NULL, 0 },  /* ec */
+	{ roff_ec, NULL, NULL, 0 },  /* ec */
 	{ roff_unsupp, NULL, NULL, 0 },  /* ecr */
 	{ roff_unsupp, NULL, NULL, 0 },  /* ecs */
 	{ roff_cond, roff_cond_text, roff_cond_sub, ROFFMAC_STRUCT },  /* el */
 	{ roff_unsupp, NULL, NULL, 0 },  /* em */
 	{ roff_EN, NULL, NULL, 0 },  /* EN */
-	{ roff_unsupp, NULL, NULL, 0 },  /* eo */
+	{ roff_eo, NULL, NULL, 0 },  /* eo */
 	{ roff_unsupp, NULL, NULL, 0 },  /* EP */
 	{ roff_EQ, NULL, NULL, 0 },  /* EQ */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* errprint */
@@ -749,7 +752,8 @@ roff_reset(struct roff *r)
 {
 	roff_free1(r);
 	r->format = r->options & (MPARSE_MDOC | MPARSE_MAN);
-	r->control = 0;
+	r->control = '\0';
+	r->escape = '\\';
 }
 
 void
@@ -771,6 +775,7 @@ roff_alloc(struct mparse *parse, int options)
 	r->options = options;
 	r->format = options & (MPARSE_MDOC | MPARSE_MAN);
 	r->rstackpos = -1;
+	r->escape = '\\';
 	return r;
 }
 
@@ -1147,27 +1152,80 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
 	int		 arg_complete; /* argument not interrupted by eol */
+	int		 done;	/* no more input available */
 	char		 term;	/* character terminating the escape */
 
-	expand_count = 0;
+	/* Search forward for comments. */
+
+	done = 0;
 	start = buf->buf + pos;
-	stesc = strchr(start, '\0') - 1;
-	while (stesc-- > start) {
+	for (stesc = buf->buf + pos; *stesc != '\0'; stesc++) {
+		if (stesc[0] != r->escape || stesc[1] == '\0')
+			continue;
+		stesc++;
+		if (*stesc != '"' && *stesc != '#')
+			continue;
+		cp = strchr(stesc--, '\0') - 1;
+		if (*cp == '\n') {
+			done = 1;
+			cp--;
+		}
+		if (*cp == ' ' || *cp == '\t')
+			mandoc_msg(MANDOCERR_SPACE_EOL, r->parse,
+			    ln, cp - buf->buf, NULL);
+		while (stesc > start && stesc[-1] == ' ')
+			stesc--;
+		*stesc = '\0';
+		break;
+	}
+	if (stesc == start)
+		return ROFF_CONT;
+	stesc--;
+
+	/* Notice the end of the input. */
+
+	if (*stesc == '\n') {
+		*stesc-- = '\0';
+		done = 1;
+	}
+
+	expand_count = 0;
+	while (stesc >= start) {
 
 		/* Search backwards for the next backslash. */
 
-		if (*stesc != '\\')
+		if (*stesc != r->escape) {
+			if (*stesc == '\\') {
+				*stesc = '\0';
+				buf->sz = mandoc_asprintf(&nbuf, "%s\\e%s",
+				    buf->buf, stesc + 1) + 1;
+				start = nbuf + pos;
+				stesc = nbuf + (stesc - buf->buf);
+				free(buf->buf);
+				buf->buf = nbuf;
+			}
+			stesc--;
 			continue;
+		}
 
 		/* If it is escaped, skip it. */
 
 		for (cp = stesc - 1; cp >= start; cp--)
-			if (*cp != '\\')
+			if (*cp != r->escape)
 				break;
 
 		if ((stesc - cp) % 2 == 0) {
-			stesc = (char *)cp;
+			while (stesc > cp)
+				*stesc-- = '\\';
 			continue;
+		} else if (stesc[1] != '\0') {
+			*stesc = '\\';
+		} else {
+			*stesc-- = '\0';
+			if (done)
+				continue;
+			else
+				return ROFF_APPEND;
 		}
 
 		/* Decide whether to expand or to check only. */
@@ -1193,6 +1251,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 				mandoc_vmsg(MANDOCERR_ESC_BAD,
 				    r->parse, ln, (int)(stesc - buf->buf),
 				    "%.*s", (int)(cp - stesc), stesc);
+			stesc--;
 			continue;
 		}
 
@@ -1407,7 +1466,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	/* Expand some escape sequences. */
 
 	e = roff_res(r, buf, ln, pos);
-	if (e == ROFF_IGN)
+	if (e == ROFF_IGN || e == ROFF_APPEND)
 		return e;
 	assert(e == ROFF_CONT);
 
@@ -2847,12 +2906,39 @@ roff_cc(ROFF_ARGS)
 	p = buf->buf + pos;
 
 	if (*p == '\0' || (r->control = *p++) == '.')
-		r->control = 0;
+		r->control = '\0';
 
 	if (*p != '\0')
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS, r->parse,
 		    ln, p - buf->buf, "cc ... %s", p);
 
+	return ROFF_IGN;
+}
+
+static enum rofferr
+roff_ec(ROFF_ARGS)
+{
+	const char	*p;
+
+	p = buf->buf + pos;
+	if (*p == '\0')
+		r->escape = '\\';
+	else {
+		r->escape = *p;
+		if (*++p != '\0')
+			mandoc_vmsg(MANDOCERR_ARG_EXCESS, r->parse,
+			    ln, p - buf->buf, "ec ... %s", p);
+	}
+	return ROFF_IGN;
+}
+
+static enum rofferr
+roff_eo(ROFF_ARGS)
+{
+	r->escape = '\0';
+	if (buf->buf[pos] != '\0')
+		mandoc_vmsg(MANDOCERR_ARG_SKIP, r->parse,
+		    ln, pos, "eo %s", buf->buf + pos);
 	return ROFF_IGN;
 }
 
@@ -3383,9 +3469,9 @@ roff_getcontrol(const struct roff *r, const char *cp, int *ppos)
 
 	pos = *ppos;
 
-	if (0 != r->control && cp[pos] == r->control)
+	if (r->control != '\0' && cp[pos] == r->control)
 		pos++;
-	else if (0 != r->control)
+	else if (r->control != '\0')
 		return 0;
 	else if ('\\' == cp[pos] && '.' == cp[pos + 1])
 		pos += 2;

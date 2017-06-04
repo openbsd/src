@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.62 2017/06/02 19:21:03 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.63 2017/06/04 00:08:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2017 $
+.Dd $Mdocdate: June 4 2017 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -806,8 +806,11 @@ This is a Heirloom extension and currently unsupported.
 Set a trap within a diversion.
 Currently unsupported.
 .It Ic \&ec Op Ar char
-Change the escape character.
-Currently unsupported.
+Enable the escape mechanism and change the escape character.
+The
+.Ar char
+argument defaults to the backslash
+.Pq Sq \e .
 .It Ic \&ecr
 Restore the escape character.
 Currently unsupported.
@@ -837,7 +840,6 @@ See
 .Ic \&EQ .
 .It Ic \&eo
 Disable the escape mechanism completely.
-Currently unsupported.
 .It Ic \&EP
 End a picture started by
 .Ic \&BP .
