@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.47 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.48 2017/06/04 19:23:20 naddy Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ struct mbuf *egget(struct eg_softc *, caddr_t, int);
 void egstop(struct eg_softc *);
 
 static __inline void egprintpcb(struct eg_softc *);
-static __inline void egprintstat(u_char);
 static int egoutPCB(struct eg_softc *, u_char);
 static int egreadPCBstat(struct eg_softc *, u_char);
 static int egreadPCBready(struct eg_softc *);
@@ -138,19 +137,6 @@ egprintpcb(struct eg_softc *sc)
 		DPRINTF(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
 }
 
-
-static __inline void
-egprintstat(u_char b)
-{
-	DPRINTF(("%s %s %s %s %s %s %s\n", 
-	    (b & EG_STAT_HCRE)?"HCRE":"",
-	    (b & EG_STAT_ACRF)?"ACRF":"",
-	    (b & EG_STAT_DIR )?"DIR ":"",
-	    (b & EG_STAT_DONE)?"DONE":"",
-	    (b & EG_STAT_ASF3)?"ASF3":"",
-	    (b & EG_STAT_ASF2)?"ASF2":"",
-	    (b & EG_STAT_ASF1)?"ASF1":""));
-}
 
 static int
 egoutPCB(struct eg_softc *sc, u_char b)
