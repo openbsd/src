@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.33 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.34 2017/06/04 06:21:37 sf Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -648,10 +648,10 @@ struct bus_dmamap {
 	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
+	int		_dm_flags;	/* misc. flags */
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
-	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
