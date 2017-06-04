@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.1 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.2 2017/06/04 15:36:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -685,8 +685,10 @@ mode_tree_run_command(struct client *c, struct cmd_find_state *fs,
 	char			*command, *cause;
 
 	command = cmd_template_replace(template, name, 1);
-	if (command == NULL || *command == '\0')
+	if (command == NULL || *command == '\0') {
+		free(command);
 		return;
+	}
 
 	cmdlist = cmd_string_parse(command, NULL, 0, &cause);
 	if (cmdlist == NULL) {
