@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.105 2017/06/03 22:21:33 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.106 2017/06/04 17:03:39 tb Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -128,10 +128,10 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 gap.S:	${SYSTEM_SWAP_DEP} Makefile
-	umask 077; sh $S/conf/makegap.sh 0xcc > gap.S
+	umask 007; sh $S/conf/makegap.sh 0xcc > gap.S
 
 gap.o:	gap.S
-	umask 077; ${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c gap.S
+	umask 007; ${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c gap.S
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} \
