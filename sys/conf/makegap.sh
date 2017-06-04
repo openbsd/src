@@ -25,7 +25,7 @@ _C_LABEL(endboot):
 	.space	$RANDOM % PAGE_SIZE, $PADBYTE
 
 	.section .bss
-	.space	$RANDOM % PAGE_SIZE, $PADBYTE
+	.space	$RANDOM % PAGE_SIZE
 
 	.section .rodata
 	.space	$RANDOM % PAGE_SIZE, $PADBYTE
