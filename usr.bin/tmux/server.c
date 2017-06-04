@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.170 2017/04/22 06:13:30 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.171 2017/06/04 08:25:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -151,7 +151,7 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	}
 	close(pair[0]);
 
-	if (log_get_level() > 3)
+	if (log_get_level() > 1)
 		tty_create_log();
 	if (pledge("stdio rpath wpath cpath fattr unix getpw recvfd proc exec "
 	    "tty ps", NULL) != 0)
@@ -364,6 +364,9 @@ server_signal(int sig)
 			server_update_socket();
 		}
 		server_add_accept(0);
+		break;
+	case SIGUSR2:
+		proc_toggle_log(server_proc);
 		break;
 	}
 }
