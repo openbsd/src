@@ -52,6 +52,10 @@
 #include <machine/segments.h>
 #include <dev/acpi/acpivar.h>
 
+#ifdef __clang__
+#define addr32
+#endif
+
 #define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
 #define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
 #define _ACPI_TRMP_DATA_LABEL(a) a = . - _C_LABEL(acpi_tramp_data_start) + \
@@ -108,7 +112,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	movw	%ax, %ss
 	movw	%cs, %ax
 	movw	%ax, %es
-	lidtl	clean_idt
+	addr32 lidtl	clean_idt
 
 	/*
 	 * Set up stack to grow down from offset 0x0FFE.
@@ -140,7 +144,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * to sleep (although on i386, the saved GDT will most likely
 	 * represent something similar based on machine/segment.h).
 	 */
-	data32 addr32 lgdt	tmp_gdt
+	addr32 lgdtl	tmp_gdt
 
 	/*
 	 * Enable protected mode by setting the PE bit in CR0
@@ -342,7 +346,7 @@ _ACPI_TRMP_LABEL(hibernate_resume_vector_3)
 	movw	%ax, %fs
 	movw	%ax, %gs
 	movl	$0x0FFE, %esp
-	lidtl	clean_idt
+	addr32 lidtl	clean_idt
 
 	/* Jump to the S3 resume vector */
 	ljmp	$(_ACPI_RM_CODE_SEG), $acpi_s3_vector_real
