@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.38 2017/06/04 09:02:36 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.39 2017/06/04 09:02:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -214,7 +214,6 @@ utf8_isvalid(const char *s)
 	struct utf8_data	 ud;
 	const char		*end;
 	enum utf8_state		 more;
-	size_t			 i;
 
 	end = s + strlen(s);
 	while (s < end) {
