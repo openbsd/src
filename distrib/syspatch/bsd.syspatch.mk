@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.8 2017/04/22 13:39:00 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.9 2017/06/05 09:44:56 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -190,6 +190,6 @@ ${ERRATA}/.plist: ${_BUILD_COOKIE}
 	@su ${BUILDUSER} -c 'echo ${SYSPATCH_DIR}/${ERRATA}.patch.sig >> ${.OBJDIR}/${ERRATA}/.plist' || \
 		{ echo "***>   unable to add syspatch to list of files"; \
 		exit 1; };
-	@su ${BUILDUSER} -c 'sed -i "s,^${FAKEROOT}/syspatch/${OSrev}-[^/]*/,./,g" ${.TARGET}' 
+	@su ${BUILDUSER} -c 'sed -i "s,^${FAKEROOT}/syspatch/${OSrev}-[^/]*/,,g" ${.TARGET}' 
 
 .include <bsd.obj.mk>
