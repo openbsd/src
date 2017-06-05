@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.341 2017/05/31 05:25:12 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.342 2017/06/05 05:10:23 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -221,7 +221,6 @@ void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	mpe_status(void);
 void	mpw_status(void);
-void	vlan_status(void);
 void	setrdomain(const char *, int);
 int	prefix(void *val, int);
 void	getifgroups(void);
@@ -3001,7 +3000,6 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	    if_indextoname(ifrdesc.ifr_index, ifname) != NULL)
 		printf("\tpatch: %s\n", ifname);
 #endif
-	vlan_status();
 	getencap();
 #ifndef SMALL
 	carp_status();
@@ -3774,23 +3772,6 @@ getencap(void)
 
 static int __tag = 0;
 static int __have_tag = 0;
-
-void
-vlan_status(void)
-{
-	struct vlanreq vreq;
-
-	bzero((char *)&vreq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&vreq;
-
-	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
-		return;
-
-	if (vreq.vlr_tag || (vreq.vlr_parent[0] != '\0'))
-		printf("\tvlan: %d parent interface: %s\n",
-		    vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
-		    "<none>" : vreq.vlr_parent);
-}
 
 /* ARGSUSED */
 void
