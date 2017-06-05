@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.9 2017/06/05 09:44:56 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.10 2017/06/05 09:46:25 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -19,6 +19,9 @@
 ERRATA?=
 ECURR=${ERRATA:C/_.*//}
 EPREV!=echo ${ECURR} | awk '{printf "%03d\n", $$1 - 1;}'
+
+# use the base and xenocara build user
+BUILDUSER?=	build
 
 # binaries used by this makefile
 FETCH=		/usr/bin/ftp -Vm
