@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.10 2014/05/17 11:51:21 jmatthew Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.11 2017/06/05 04:57:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -98,6 +98,7 @@ struct qla_ccb {
 
 	struct qla_iocb_seg	*ccb_t4segs;
 	u_int64_t		ccb_seg_offset;
+	u_int64_t		ccb_seg_dva;
 
 	SIMPLEQ_ENTRY(qla_ccb)	ccb_link;
 };

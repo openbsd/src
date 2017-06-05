@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlareg.h,v 1.8 2016/05/10 11:16:18 dlg Exp $ */
+/*	$OpenBSD: qlareg.h,v 1.9 2017/06/05 04:57:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -337,17 +337,21 @@ struct qla_init_cb {
 	u_int16_t	icb_exec_throttle;
 	u_int8_t	icb_retry_count;
 	u_int8_t	icb_retry_delay;
-	u_int64_t	icb_portname;
+	u_int32_t	icb_portname_hi;
+	u_int32_t	icb_portname_lo;
 	u_int16_t	icb_hardaddr;
 	u_int8_t	icb_inquiry_data;
 	u_int8_t	icb_login_timeout;
-	u_int64_t	icb_nodename;
+	u_int32_t	icb_nodename_hi;
+	u_int32_t	icb_nodename_lo;
 	u_int16_t	icb_req_out;
 	u_int16_t	icb_resp_in;
 	u_int16_t	icb_req_queue_len;
 	u_int16_t	icb_resp_queue_len;
-	u_int64_t	icb_req_queue_addr;
-	u_int64_t	icb_resp_queue_addr;
+	u_int32_t	icb_req_queue_addr_lo;
+	u_int32_t	icb_req_queue_addr_hi;
+	u_int32_t	icb_resp_queue_addr_lo;
+	u_int32_t	icb_resp_queue_addr_hi;
 	u_int16_t	icb_lun_enables;
 	u_int8_t	icb_cmd_count;
 	u_int8_t	icb_notify_count;
@@ -358,7 +362,7 @@ struct qla_init_cb {
 	u_int8_t	icb_int_delaytimer;
 	u_int16_t	icb_zfwoptions;
 	u_int16_t	icb_reserved4[13];
-} __packed;
+} __packed __aligned(4);
 
 #define QLA_FW_OPTION1_ASYNC_LIP_F8	0x0001
 #define QLA_FW_OPTION1_ASYNC_LIP_RESET	0x0002
@@ -435,7 +439,8 @@ struct qla_port_name_list {
 struct qla_sns_req_hdr {
 	u_int16_t	resp_len;
 	u_int16_t	reserved;
-	u_int64_t	resp_addr;
+	u_int32_t	resp_addr_lo;
+	u_int32_t	resp_addr_hi;
 	u_int16_t	subcmd_len;
 	u_int16_t	reserved2;
 } __packed;
@@ -630,7 +635,7 @@ struct qla_iocb_req34 {
 			u_int32_t req4_seg_base;
 			u_int64_t req4_seg_addr;
 			u_int8_t  req4_reserved[10];
-		} __packed req4;
+		} __packed __aligned(4) req4;
 	} 		req_type;
-} __packed;
+} __packed __aligned(4);
 

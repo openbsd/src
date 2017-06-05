@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.55 2017/01/24 02:28:17 visa Exp $ */
+/*	$OpenBSD: qla.c,v 1.56 2017/06/05 04:57:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -92,7 +92,6 @@ void		qla_put_marker(struct qla_softc *, void *);
 void		qla_put_cmd(struct qla_softc *, void *, struct scsi_xfer *,
 		    struct qla_ccb *);
 struct qla_ccb *qla_handle_resp(struct qla_softc *, u_int16_t);
-void		qla_put_data_seg(struct qla_iocb_seg *, bus_dmamap_t, int);
 
 int		qla_get_port_name_list(struct qla_softc *, u_int32_t);
 struct qla_fc_port *qla_next_fabric_port(struct qla_softc *, u_int32_t *,
@@ -435,6 +434,7 @@ qla_attach(struct qla_softc *sc)
 	int (*loadfirmware)(struct qla_softc *) = NULL;
 #endif
 	u_int16_t firmware_addr = 0;
+	u_int64_t dva;
 	int i, rv;
 
 	TAILQ_INIT(&sc->sc_ports);
@@ -570,8 +570,10 @@ qla_attach(struct qla_softc *sc)
 	memset(icb, 0, sizeof(*icb));
 	icb->icb_version = QLA_ICB_VERSION;
 	/* port and node names are big-endian in the icb */
-	icb->icb_portname = htobe64(sc->sc_port_name);
-	icb->icb_nodename = htobe64(sc->sc_node_name);
+	htobem32(&icb->icb_portname_hi, sc->sc_port_name >> 32);
+	htobem32(&icb->icb_portname_lo, sc->sc_port_name);
+	htobem32(&icb->icb_nodename_hi, sc->sc_node_name >> 32);
+	htobem32(&icb->icb_nodename_lo, sc->sc_node_name);
 	if (sc->sc_nvram_valid) {
 		icb->icb_fw_options = sc->sc_nvram.fw_options;
 		icb->icb_max_frame_len = sc->sc_nvram.frame_payload_size;
@@ -606,10 +608,14 @@ qla_attach(struct qla_softc *sc)
 
 	icb->icb_req_out = 0;
 	icb->icb_resp_in = 0;
-	icb->icb_req_queue_len = htole16(sc->sc_maxcmds);
-	icb->icb_resp_queue_len = htole16(sc->sc_maxcmds);
-	icb->icb_req_queue_addr = htole64(QLA_DMA_DVA(sc->sc_requests));
-	icb->icb_resp_queue_addr = htole64(QLA_DMA_DVA(sc->sc_responses));
+	htolem16(&icb->icb_req_queue_len, sc->sc_maxcmds);
+	htolem16(&icb->icb_resp_queue_len, sc->sc_maxcmds);
+	dva = QLA_DMA_DVA(sc->sc_requests);
+	htolem32(&icb->icb_req_queue_addr_lo, dva);
+	htolem32(&icb->icb_req_queue_addr_hi, dva >> 32);
+	dva = QLA_DMA_DVA(sc->sc_responses);
+	htolem32(&icb->icb_resp_queue_addr_lo, dva);
+	htolem32(&icb->icb_resp_queue_addr_hi, dva >> 32);
 
 	/* adjust firmware options a bit */
 	icb->icb_fw_options |= htole16(QLA_ICB_FW_EXTENDED_INIT_CB);
@@ -1199,6 +1205,7 @@ int
 qla_sns_req(struct qla_softc *sc, struct qla_dmamem *mem, int reqsize)
 {
 	struct qla_sns_req_hdr *header;
+	uint64_t dva;
 	int rv;
 
 	memset(&sc->sc_mbox, 0, sizeof(sc->sc_mbox));
@@ -1207,8 +1214,10 @@ qla_sns_req(struct qla_softc *sc, struct qla_dmamem *mem, int reqsize)
 	qla_mbox_putaddr(sc->sc_mbox, mem);
 
 	header = QLA_DMA_KVA(mem);
-	header->resp_len = htole16((QLA_DMA_LEN(mem) - reqsize) / 2);
-	header->resp_addr = htole64(QLA_DMA_DVA(mem) + reqsize);
+	htolem16(&header->resp_len, (QLA_DMA_LEN(mem) - reqsize) / 2);
+	dva = QLA_DMA_DVA(mem) + reqsize;
+	htolem32(&header->resp_addr_lo, dva);
+	htolem32(&header->resp_addr_hi, dva >> 32);
 	header->subcmd_len = htole16((reqsize - sizeof(*header)) / 2);
 
 	bus_dmamap_sync(sc->sc_dmat, QLA_DMA_MAP(mem), 0, QLA_DMA_LEN(mem),
@@ -2184,7 +2193,7 @@ qla_put_marker(struct qla_softc *sc, void *buf)
 	qla_dump_iocb(sc, buf);
 }
 
-void
+static inline void
 qla_put_data_seg(struct qla_iocb_seg *seg, bus_dmamap_t dmap, int num)
 {
 	uint64_t addr = dmap->dm_segs[num].ds_addr;
@@ -2214,7 +2223,7 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 	} else {
 		dir = xs->flags & SCSI_DATA_IN ? QLA_IOCB_CMD_READ_DATA :
 		    QLA_IOCB_CMD_WRITE_DATA;
-		req->req_seg_count = htole16(ccb->ccb_dmamap->dm_nsegs);
+		htolem16(&req->req_seg_count, ccb->ccb_dmamap->dm_nsegs);
 		if (ccb->ccb_dmamap->dm_nsegs > QLA_IOCB_SEGS_PER_CMD) {
 			req->entry_type = QLA_IOCB_CMD_TYPE_4;
 			for (seg = 0; seg < ccb->ccb_dmamap->dm_nsegs; seg++) {
@@ -2223,9 +2232,7 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 			}
 			req->req_type.req4.req4_seg_type = htole16(1);
 			req->req_type.req4.req4_seg_base = 0;
-			req->req_type.req4.req4_seg_addr =
-			    htole64(QLA_DMA_DVA(sc->sc_segments) +
-			    ccb->ccb_seg_offset);
+			req->req_type.req4.req4_seg_addr = ccb->ccb_seg_dva;
 			memset(req->req_type.req4.req4_reserved, 0,
 			    sizeof(req->req_type.req4.req4_reserved));
 			bus_dmamap_sync(sc->sc_dmat,
@@ -2242,14 +2249,14 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 	}
 
 	/* isp(4) uses head of queue for 'request sense' commands */
-	req->req_flags = htole16(QLA_IOCB_CMD_SIMPLE_QUEUE | dir);
+	htolem16(&req->req_flags, QLA_IOCB_CMD_SIMPLE_QUEUE | dir);
 
 	/*
 	 * timeout is in seconds.  make sure it's at least 1 if a timeout
 	 * was specified in xs
 	 */
 	if (xs->timeout != 0)
-		req->req_time = htole16(MAX(1, xs->timeout/1000));
+		htolem16(&req->req_time, MAX(1, xs->timeout/1000));
 
 	/* lun and target layout vary with firmware attributes */
 	if (sc->sc_expanded_lun) {
@@ -2592,6 +2599,8 @@ qla_alloc_ccbs(struct qla_softc *sc)
 
 		ccb->ccb_seg_offset = i * QLA_MAX_SEGS *
 		    sizeof(struct qla_iocb_seg);
+		htolem64(&ccb->ccb_seg_dva,
+		    QLA_DMA_DVA(sc->sc_segments) + ccb->ccb_seg_offset);
 		ccb->ccb_t4segs = QLA_DMA_KVA(sc->sc_segments) +
 		    ccb->ccb_seg_offset;
 
