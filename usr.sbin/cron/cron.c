@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.74 2016/01/11 14:23:50 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.75 2017/06/05 01:42:45 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -462,7 +462,6 @@ open_socket(void)
 		syslog(LOG_ERR, "(CRON) DEATH (can't listen on socket)");
 		exit(EXIT_FAILURE);
 	}
-	chmod(s_un.sun_path, 0660);
 	if (grp != NULL) {
 		/* pledge won't let us change files to a foreign group. */
 		if (setegid(grp->gr_gid) == 0) {
@@ -470,6 +469,7 @@ open_socket(void)
 			(void)setegid(getgid());
 		}
 	}
+	chmod(s_un.sun_path, 0660);
 
 	return(sock);
 }
