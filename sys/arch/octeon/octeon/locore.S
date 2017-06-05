@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2017/05/09 15:11:33 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.13 2017/06/05 15:23:11 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,10 +44,8 @@
 
 	.set	noreorder		# Noreorder is default style!
 	.set	mips64r2
-	.globl	start
-	.globl	kernel_text
-kernel_text = start
-start:
+	.globl	locore_start
+locore_start:
 /* initialize ebase */
 	dla	t0, 0xffffffff80000000
 	mtc0	t0, COP_0_EBASE
@@ -122,6 +120,17 @@ start:
 	daddu	t0, t0, 8			# advance ptr
 	blt	t0, t1, 1b
 	sd	v0, -8(t0)			# store to randomdata
+
+	/*
+	 * Smash the very early boot code by overwriting it.
+	 */
+	li	v0, 0x00000034			# TEQ zero, zero
+	LA	t0, start
+	LA	t1, endboot
+1:
+	daddu	t0, t0, 4
+	blt	t0, t1, 1b
+	sw	v0, -4(t0)
 
 	/*
 	 * Initialize stack and call machine startup.
