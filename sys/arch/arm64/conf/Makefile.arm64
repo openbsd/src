@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.9 2017/06/05 12:43:59 deraadt Exp $
+#	$OpenBSD: Makefile.arm64,v 1.10 2017/06/05 15:58:33 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -192,7 +192,7 @@ bsd.umg: bsd
 	mkuboot -a arm -o linux -e ${KERNEL_LOAD_ADDR} -l ${KERNEL_LOAD_ADDR} bsd bsd.umg
 
 bsd.rd: bsd
-	cp bsd bsd.rd
+	cp -p bsd bsd.rd
 	rdconfig bsd.rd $S/../distrib/${_mach}/ramdisk/mr.fs
 
 %RULES
