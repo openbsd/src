@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.126 2017/06/05 15:24:57 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.127 2017/06/05 18:31:23 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -226,7 +226,11 @@ rc_cmd() {
 			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
 			[[ "${_ret}" == 142 ]] && [ X"${rc_bg}" != X"YES" ] &&
 				_to="timeout"
-			[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
+			# XXX for unknown reason, rc_check can fail (e.g. redis)
+			# while it just succeeded in _rc_wait; the check is
+			# needed to cope with failing daemons returning 0
+			#[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
+			[[ "${_ret}" == @(0|142) ]] || break
 			_rc_do _rc_write_runfile
 			_rc_exit ${_to:=ok}
 		done
