@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1033 2017/05/31 09:19:10 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1034 2017/06/05 22:18:28 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -923,7 +923,7 @@ int
 pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
     struct pf_state_key **sks, struct pf_state *s)
 {
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	s->kif = kif;
 	if (*skw == *sks) {
@@ -1186,7 +1186,7 @@ pf_purge_expired_rules(void)
 {
 	struct pf_rule	*r;
 
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	if (SLIST_EMPTY(&pf_rule_gcl))
 		return;
@@ -1208,15 +1208,22 @@ pf_purge_thread(void *v)
 
 		NET_LOCK(s);
 
+		PF_LOCK();
 		/* process a fraction of the state table every second */
 		pf_purge_expired_states(1 + (pf_status.states
 		    / pf_default_rule.timeout[PFTM_INTERVAL]));
 
 		/* purge other expired types every PFTM_INTERVAL seconds */
 		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
-			pf_purge_expired_fragments();
 			pf_purge_expired_src_nodes(0);
 			pf_purge_expired_rules();
+		}
+		PF_UNLOCK();
+		/*
+		 * Fragments don't require PF_LOCK(), they use their own lock.
+		 */
+		if (nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
+			pf_purge_expired_fragments();
 			nloops = 0;
 		}
 
@@ -1267,7 +1274,7 @@ pf_purge_expired_src_nodes(void)
 {
 	struct pf_src_node		*cur, *next;
 
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
 	next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
@@ -1303,7 +1310,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 void
 pf_remove_state(struct pf_state *cur)
 {
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	/* handle load balancing related tasks */
 	pf_postprocess_addr(cur);
@@ -1350,7 +1357,7 @@ pf_free_state(struct pf_state *cur)
 {
 	struct pf_rule_item *ri;
 
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 #if NPFSYNC > 0
 	if (pfsync_state_in_use(cur))
@@ -1386,7 +1393,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	static struct pf_state	*cur = NULL;
 	struct pf_state		*next;
 
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_LOCKED();
 
 	while (maxcheck--) {
 		/* wrap to start of list when we hit the end */
@@ -3146,13 +3153,13 @@ pf_socket_lookup(struct pf_pdesc *pd)
 	case IPPROTO_TCP:
 		sport = pd->hdr.tcp.th_sport;
 		dport = pd->hdr.tcp.th_dport;
-		NET_ASSERT_LOCKED();
+		PF_ASSERT_LOCKED();
 		tb = &tcbtable;
 		break;
 	case IPPROTO_UDP:
 		sport = pd->hdr.udp.uh_sport;
 		dport = pd->hdr.udp.uh_dport;
-		NET_ASSERT_LOCKED();
+		PF_ASSERT_LOCKED();
 		tb = &udbtable;
 		break;
 	default:
@@ -6678,6 +6685,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	/* if packet sits in reassembly queue, return without error */
 	if (pd.m == NULL)
 		return PF_PASS;
+
 	if (action != PF_PASS) {
 #if NPFLOG > 0
 		pd.pflog |= PF_LOG_FORCE;
@@ -6696,6 +6704,9 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		}
 	}
 	pd.m->m_pkthdr.pf.flags |= PF_TAG_PROCESSED;
+
+	/* lock the lookup/write section of pf_test() */
+	PF_LOCK();
 
 	switch (pd.virtual_proto) {
 
@@ -6716,7 +6727,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv6 packet with ICMPv4 payload");
-			goto done;
+			goto unlock;
 		}
 		action = pf_test_state_icmp(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
@@ -6741,7 +6752,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			REASON_SET(&reason, PFRES_NORM);
 			DPFPRINTF(LOG_NOTICE,
 			    "dropping IPv4 packet with ICMPv6 payload");
-			goto done;
+			goto unlock;
 		}
 		action = pf_test_state_icmp(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
@@ -6766,7 +6777,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 				pqid = 1;
 			action = pf_normalize_tcp(&pd);
 			if (action == PF_DROP)
-				goto done;
+				goto unlock;
 		}
 		action = pf_test_state(&pd, &s, &reason);
 		if (action == PF_PASS || action == PF_AFRT) {
@@ -6792,6 +6803,15 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 
 		break;
 	}
+
+unlock:
+	PF_UNLOCK();
+
+	/*
+	 * At the moment, we rely on NET_LOCK() to prevent removal of items
+	 * we've collected above ('s', 'r', 'anchor' and 'ruleset').  They'll
+	 * have to be refcounted when NET_LOCK() is gone.
+	 */
 
 done:
 	if (action != PF_DROP) {
@@ -6996,6 +7016,7 @@ done:
 	}
 
 	*m0 = pd.m;
+
 	return (action);
 }
 

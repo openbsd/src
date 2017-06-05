@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.204 2017/05/15 12:26:00 mpi Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.205 2017/06/05 22:18:28 sashan Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -135,6 +136,18 @@ struct pool		 pf_frent_pl, pf_frag_pl;
 struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents;
 
+#ifdef WITH_PF_LOCK
+struct mutex		 pf_frag_mtx;
+
+#define PF_FRAG_LOCK_INIT()	mtx_init(&pf_frag_mtx, IPL_SOFTNET)
+#define PF_FRAG_LOCK()		mtx_enter(&pf_frag_mtx)
+#define PF_FRAG_UNLOCK()	mtx_leave(&pf_frag_mtx)
+#else /* !WITH_PF_LOCK */
+#define PF_FRAG_LOCK_INIT()	(void)(0)
+#define PF_FRAG_LOCK()		(void)(0)
+#define PF_FRAG_UNLOCK()	(void)(0)
+#endif /* WITH_PF_LOCK */
+
 void
 pf_normalize_init(void)
 {
@@ -149,6 +162,8 @@ pf_normalize_init(void)
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
 
 	TAILQ_INIT(&pf_fragqueue);
+
+	PF_FRAG_LOCK_INIT();
 }
 
 static __inline int
@@ -176,15 +191,18 @@ pf_purge_expired_fragments(void)
 	struct pf_fragment	*frag;
 	int32_t			 expire;
 
-	NET_ASSERT_LOCKED();
+	PF_ASSERT_UNLOCKED();
 
 	expire = time_uptime - pf_default_rule.timeout[PFTM_FRAG];
+
+	PF_FRAG_LOCK();
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
 		if (frag->fr_timeout > expire)
 			break;
 		DPFPRINTF(LOG_NOTICE, "expiring %d(%p)", frag->fr_id, frag);
 		pf_free_fragment(frag);
 	}
+	PF_FRAG_UNLOCK();
 }
 
 /*
@@ -533,14 +551,19 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	key.fr_id = ip->ip_id;
 	key.fr_direction = dir;
 
-	if ((frag = pf_fillup_fragment(&key, frent, reason)) == NULL)
+	PF_FRAG_LOCK();
+	if ((frag = pf_fillup_fragment(&key, frent, reason)) == NULL) {
+		PF_FRAG_UNLOCK();
 		return (PF_DROP);
+	}
 
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag))
+	if (!pf_isfull_fragment(frag)) {
+		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
+	}
 
 	/* We have all the data */
 	frent = TAILQ_FIRST(&frag->fr_queue);
@@ -564,6 +587,7 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	ip->ip_off &= ~(IP_MF|IP_OFFMASK);
 
 	if (hdrlen + total > IP_MAXPACKET) {
+		PF_FRAG_UNLOCK();
 		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", total);
 		ip->ip_len = 0;
 		REASON_SET(reason, PFRES_SHORT);
@@ -571,6 +595,7 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 		return (PF_DROP);
 	}
 
+	PF_FRAG_UNLOCK();
 	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip->ip_len));
 	return (PF_PASS);
 }
@@ -610,14 +635,19 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	key.fr_id = fraghdr->ip6f_ident;
 	key.fr_direction = dir;
 
-	if ((frag = pf_fillup_fragment(&key, frent, reason)) == NULL)
+	PF_FRAG_LOCK();
+	if ((frag = pf_fillup_fragment(&key, frent, reason)) == NULL) {
+		PF_FRAG_UNLOCK();
 		return (PF_DROP);
+	}
 
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag))
+	if (!pf_isfull_fragment(frag)) {
+		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
+	}
 
 	/* We have all the data */
 	extoff = frent->fe_extoff;
@@ -671,17 +701,20 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 		ip6->ip6_nxt = proto;
 
 	if (hdrlen - sizeof(struct ip6_hdr) + total > IPV6_MAXPACKET) {
+		PF_FRAG_UNLOCK();
 		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", total);
 		ip6->ip6_plen = 0;
 		REASON_SET(reason, PFRES_SHORT);
 		/* PF_DROP requires a valid mbuf *m0 in pf_test6() */
 		return (PF_DROP);
 	}
+	PF_FRAG_UNLOCK();
 
 	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip6->ip6_plen));
 	return (PF_PASS);
 
 fail:
+	PF_FRAG_UNLOCK();
 	REASON_SET(reason, PFRES_MEMORY);
 	/* PF_DROP requires a valid mbuf *m0 in pf_test6(), will free later */
 	return (PF_DROP);

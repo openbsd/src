@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.2 2016/11/22 19:29:54 procter Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.3 2017/06/05 22:18:28 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,10 @@
 #define _NET_PFVAR_PRIV_H_
 
 #ifdef _KERNEL
+
+#include <sys/rwlock.h>
+
+extern struct rwlock pf_lock;
 
 struct pf_pdesc {
 	struct {
@@ -93,6 +97,36 @@ struct pf_pdesc {
 #endif /* INET6 */
 	} hdr;
 };
+
+#ifdef WITH_PF_LOCK
+extern struct rwlock	pf_lock;
+
+#define PF_LOCK()		do {			\
+		NET_ASSERT_LOCKED();			\
+		rw_enter_write(&pf_lock);		\
+	} while (0)
+
+#define PF_UNLOCK()		do {			\
+		PF_ASSERT_LOCKED();			\
+		rw_exit_write(&pf_lock);		\
+	} while (0)
+
+#define PF_ASSERT_LOCKED()	do {			\
+		if (rw_status(&pf_lock) != RW_WRITE)	\
+			splassert_fail(RW_WRITE,	\
+			    rw_status(&pf_lock),__func__);\
+	} while (0)
+
+#define PF_ASSERT_UNLOCKED()	do {			\
+		if (rw_status(&pf_lock) == RW_WRITE)	\
+			splassert_fail(0, rw_status(&pf_lock), __func__);\
+	} while (0)
+#else /* !WITH_PF_LOCK */
+#define PF_LOCK()		(void)(0)
+#define PF_UNLOCK()		(void)(0)
+#define PF_ASSERT_LOCKED()	(void)(0)
+#define PF_ASSERT_UNLOCKED()	(void)(0)
+#endif /* WITH_PF_LOCK */
 
 #endif /* _KERNEL */
 

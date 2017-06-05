@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.314 2017/06/01 14:38:28 patrick Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.315 2017/06/05 22:18:28 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -128,6 +128,10 @@ struct {
 #define	TAGID_MAX	 50000
 TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
 				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
+
+#ifdef WITH_PF_LOCK
+struct rwlock		 pf_lock = RWLOCK_INITIALIZER("pf_lock");
+#endif /* WITH_PF_LOCK */
 
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
@@ -998,6 +1002,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 	NET_LOCK(s);
+	PF_LOCK();
 	switch (cmd) {
 
 	case DIOCSTART:
@@ -2437,6 +2442,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 fail:
+	PF_UNLOCK();
 	NET_UNLOCK(s);
 	return (error);
 }
