@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.10 2016/09/29 11:04:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.11 2017/06/05 13:54:39 anton Exp $
 
-SUBDIR += main vi
+SUBDIR += main edit
 
 .include <bsd.subdir.mk>
