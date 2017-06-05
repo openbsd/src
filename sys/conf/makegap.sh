@@ -3,8 +3,8 @@
 PADBYTE=$1
 
 cat << __EOF__
-#include <machine/asm.h>
 #include <machine/param.h>
+#include <machine/asm.h>
 
 	.text
 	.balign	PAGE_SIZE, $PADBYTE
