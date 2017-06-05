@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.96 2016/08/19 20:48:36 tedu Exp $
+#	$OpenBSD: files.hppa,v 1.97 2017/06/05 18:59:07 deraadt Exp $
 #
 # hppa-specific configuration info
 
@@ -306,6 +306,7 @@ file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/intr.c
 file	arch/hppa/hppa/vm_machdep.c
 file	arch/hppa/hppa/in_cksum.c
+file	arch/hppa/hppa/locore.S
 file	netinet/in4_cksum.c
 file	arch/hppa/dev/clock.c
 file	arch/hppa/hppa/fpemu.S			fpemul
