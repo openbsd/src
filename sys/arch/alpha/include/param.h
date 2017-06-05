@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.40 2016/09/03 14:25:27 bluhm Exp $ */
+/* $OpenBSD: param.h,v 1.41 2017/06/05 17:49:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,10 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
+#ifndef _LOCORE
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#endif
 #endif
 
 #define	PAGE_SHIFT	13

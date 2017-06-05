@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2016/06/08 17:24:44 tedu Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2017/06/05 17:49:05 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -67,6 +67,17 @@ char			boot_dev[128];
 void	parse_prom_bootdev(void);
 int	atoi(char *);
 
+void
+unmap_startup(void)
+{
+	extern uint32_t kernel_text[], endboot[];
+	uint32_t *word = kernel_text;
+
+	/* Cannot unmap KSEG0; smash with 0x00000000 (call_pall PAL_halt) */
+	while (word < endboot)
+		*word++ = 0x00000000;
+}
+
 /*
  * cpu_configure:
  * called at boot time, configure all devices on system
@@ -76,6 +87,8 @@ cpu_configure()
 {
 	parse_prom_bootdev();
 	softintr_init();
+
+	unmap_startup();
 
 	/*
 	 * Disable interrupts during autoconfiguration.  splhigh() won't

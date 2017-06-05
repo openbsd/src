@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.103 2016/01/08 15:54:12 jcs Exp $
+#	$OpenBSD: files.alpha,v 1.104 2017/06/05 17:49:06 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -297,6 +297,7 @@ file	arch/alpha/alpha/ipifuncs.c		multiprocessor
 file	arch/alpha/alpha/lock_machdep.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
+file	arch/alpha/alpha/locore.s
 file	arch/alpha/alpha/mem.c
 file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
