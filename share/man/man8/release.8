@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.88 2017/04/18 16:21:06 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.89 2017/06/05 22:27:58 tb Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 18 2017 $
+.Dd $Mdocdate: June 5 2017 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -153,7 +153,11 @@ and
 using
 .Xr sysmerge 8
 and
-.Xr MAKEDEV 8 .
+.Xr MAKEDEV 8 :
+.Bd -literal -offset indent
+# sysmerge
+# cd /dev && ./MAKEDEV all
+.Ed
 .Pp
 At this point, the base system is up to date and running the code
 that will be made into a release.
