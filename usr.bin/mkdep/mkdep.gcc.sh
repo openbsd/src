@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.17 2012/08/30 22:06:43 halex Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.18 2017/06/05 14:33:42 espie Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -89,9 +89,9 @@ TMP=`mktemp /tmp/mkdep.XXXXXXXXXX` || exit 1
 trap 'rm -f $TMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 
 if [ "x$file" = x ]; then
-	${CC:-cc} -M "$@" > $TMP
+	${CC:-cc} -M -w "$@" > $TMP
 else
-	${CC:-cc} -M "$@" && cat -- "$file" > $TMP
+	${CC:-cc} -M -w "$@" && cat -- "$file" > $TMP
 fi
 
 if [ $? != 0 ]; then
