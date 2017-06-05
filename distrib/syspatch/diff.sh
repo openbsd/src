@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: diff.sh,v 1.2 2017/04/22 13:42:05 robert Exp $
+# $OpenBSD: diff.sh,v 1.3 2017/06/05 09:42:45 robert Exp $
 #
 # Copyright (c) 2017 Robert Nagy <robert@openbsd.org>
 #
@@ -45,5 +45,4 @@ do
 			echo ${_n}
 			;;
 	esac
-	rm -f ${_o} ${_n}
 done
