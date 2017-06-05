@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.106 2017/06/04 17:03:39 tb Exp $
+#	$OpenBSD: Makefile.i386,v 1.107 2017/06/05 12:43:59 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -41,8 +41,7 @@ DEBUG?=		-g
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
-LDSCRIPT=	${_machdir}/conf/ld.script
-LINKFLAGS=	-T ${LDSCRIPT} -X --warn-common -nopie
+LINKFLAGS=	-T ld.script -X --warn-common -nopie
 
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
@@ -78,7 +77,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_TAIL}
 SYSTEM_HEAD=	locore0.o gap.o
 SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS} param.o ioconf.o
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ${LDSCRIPT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ld.script
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		umask 007; \
@@ -122,6 +121,9 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
+
+ld.script: ${_machdir}/conf/ld.script
+	cp ${_machdir}/conf/ld.script $@
 
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
