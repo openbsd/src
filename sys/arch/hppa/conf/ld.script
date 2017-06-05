@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.17 2011/04/25 20:43:40 kettenis Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.18 2017/06/05 18:56:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -46,7 +46,7 @@ SECTIONS
 		etext = ABSOLUTE(.);
 	} = 0x08000240	/* nop filled */
 
-	. = 0x500000;
+	. = 0x600000;
 
 	.rodata :
 	{
