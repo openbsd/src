@@ -12,7 +12,7 @@ cat << __EOF__
 	.balign	PAGE_SIZE, $PADBYTE
 
 	.globl	endboot
-_C_LABEL(endboot):
+endboot:
 	.space	PAGE_SIZE, $PADBYTE
 	.space	$RANDOM % PAGE_SIZE, $PADBYTE
 	.balign	16, $PADBYTE
