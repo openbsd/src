@@ -1,3 +1,5 @@
+/* $OpenBSD: wstpad.c,v 1.6 2017/06/06 19:47:22 bru Exp $ */
+
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
  *
@@ -23,6 +25,8 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/timeout.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -44,20 +48,38 @@
 #define EDGERATIO_DEFAULT	(4096 / 16)
 #define CENTERWIDTH_DEFAULT	(4096 / 8)
 
+#define TAP_MAXTIME_DEFAULT	180
+#define TAP_CLICKTIME_DEFAULT	180
+#define TAP_LOCKTIME_DEFAULT	0
+
+#define CLICKDELAY_MS		20
 #define FREEZE_MS		100
 
 enum tpad_handlers {
 	SOFTBUTTON_HDLR,
 	TOPBUTTON_HDLR,
+	TAP_HDLR,
 	F2SCROLL_HDLR,
 	EDGESCROLL_HDLR,
 	CLICK_HDLR,
+};
+
+enum tap_state {
+	TAP_DETECT,
+	TAP_IGNORE,
+	TAP_LIFTED,
+	TAP_2ND_TOUCH,
+	TAP_LOCKED,
+	TAP_NTH_TOUCH,
 };
 
 enum tpad_cmd {
 	CLEAR_MOTION_DELTAS,
 	SOFTBUTTON_DOWN,
 	SOFTBUTTON_UP,
+	TAPBUTTON_DOWN,
+	TAPBUTTON_UP,
+	TAPBUTTON_DOUBLECLK,
 	VSCROLL,
 	HSCROLL,
 };
@@ -104,6 +126,7 @@ struct tpad_touch {
 #define WSTPAD_HORIZSCROLL	(1 << 5)
 #define WSTPAD_SWAPSIDES	(1 << 6)
 #define WSTPAD_DISABLE		(1 << 7)
+#define WSTPAD_TAPPING		(1 << 8)
 
 #define WSTPAD_MT		(1 << 31)
 
@@ -167,6 +190,18 @@ struct wstpad {
 
 	u_int softbutton;
 	u_int sbtnswap;
+
+	struct {
+		enum tap_state state;
+		int contacts;
+		u_int button;
+		int maxdist;
+		struct timeout to;
+		/* parameters: */
+		struct timespec maxtime;
+		int clicktime;
+		int locktime;
+	} tap;
 
 	struct {
 		int acc_dx;
@@ -474,6 +509,191 @@ wstpad_softbuttons(struct wsmouseinput *input, u_int *cmds, int hdlr)
 	}
 }
 
+int
+wstpad_is_tap(struct wstpad *tp, struct tpad_touch *t)
+{
+	struct timespec ts;
+	int dx, dy, dist = 0;
+
+	if (t->flags & EDGES)
+		/* No tapping in the edge areas. */
+		return (0);
+
+	/*
+	 * No distance limit applies if there has been more than one contact
+	 * on a single-touch device.  We cannot use (t->x - t->orig.x) in this
+	 * case.  Accumulated deltas might be an alternative, but some
+	 * touchpads provide unreliable coordinates at the start or end of a
+	 * multi-finger touch.
+	 */
+	if (IS_MT(tp) || tp->tap.contacts < 2) {
+		dx = abs(t->x - t->orig.x) << 12;
+		dy = abs(t->y - t->orig.y) * tp->ratio;
+		dist = (dx >= dy ? dx + 3 * dy / 8 : dy + 3 * dx / 8);
+	}
+	if (dist <= (tp->tap.maxdist << 12)) {
+		timespecsub(&tp->time, &t->orig.time, &ts);
+		return (timespeccmp(&ts, &tp->tap.maxtime, <));
+	}
+	return (0);
+}
+
+/*
+ * This handler supports one-, two-, and three-finger-taps, which
+ * are mapped to left-button, right-button and middle-button events,
+ * respectively; moreover, it supports tap-and-drag operations with
+ * "locked drags", which are finished by a timeout or a tap-to-end
+ * gesture.
+ * Please note that if the touch t is derived from MT input it is the
+ * pointer-controlling touch.  If the state of that touch is not
+ * TOUCH_UPDATE then no other touch will be in this state.
+ */
+void
+wstpad_tap(struct wsmouseinput *input, u_int *cmds)
+{
+	struct wstpad *tp = input->tp;
+	struct tpad_touch *t = tp->t;
+	int err = 0;
+
+	if (tp->btns) {
+		/*
+		 * Don't process tapping while hardware buttons are being
+		 * pressed.  If the handler is not in its initial state,
+		 * the "tap button" will be released.
+		 */
+		if (tp->tap.state > TAP_IGNORE) {
+			timeout_del(&tp->tap.to);
+			*cmds |= 1 << TAPBUTTON_UP;
+		}
+		/*
+		 * It might be possible to produce a click within the tap
+		 * timeout; ignore the current touch.
+		 */
+		tp->tap.state = TAP_IGNORE;
+	}
+
+	switch (tp->tap.state) {
+	case TAP_DETECT:
+		if (t->state == TOUCH_END) {
+			if (wstpad_is_tap(tp, t)) {
+				tp->tap.button = (tp->tap.contacts == 2
+				    ? RIGHTBTN : (tp->tap.contacts == 3
+				    ? MIDDLEBTN : LEFTBTN));
+				*cmds |= 1 << TAPBUTTON_DOWN;
+				tp->tap.state = TAP_LIFTED;
+				err = !timeout_add_msec(
+				    &tp->tap.to, tp->tap.clicktime);
+			}
+			tp->tap.contacts = 0;
+		} else if (tp->contacts != tp->tap.contacts) {
+			/* Check t before pointer-control might change. */
+			if (!wstpad_is_tap(tp, t)) {
+				tp->tap.state = TAP_IGNORE;
+				tp->tap.contacts = 0;
+			} else if (tp->contacts > tp->tap.contacts) {
+				tp->tap.contacts = tp->contacts;
+			}
+		}
+		break;
+	case TAP_IGNORE:
+		if (t->state != TOUCH_UPDATE)
+			tp->tap.state = TAP_DETECT;
+		break;
+	case TAP_LIFTED:
+		if (t->state >= TOUCH_BEGIN) {
+			timeout_del(&tp->tap.to);
+			if (tp->tap.button == LEFTBTN) {
+				tp->tap.state = TAP_2ND_TOUCH;
+			} else {
+				*cmds |= 1 << TAPBUTTON_UP;
+				tp->tap.state = TAP_DETECT;
+			}
+		}
+		break;
+	case TAP_2ND_TOUCH:
+		if (t->state == TOUCH_END) {
+			if (wstpad_is_tap(tp, t)) {
+				*cmds |= 1 << TAPBUTTON_DOUBLECLK;
+				tp->tap.state = TAP_LIFTED;
+				err = !timeout_add_msec(
+				    &tp->tap.to, CLICKDELAY_MS);
+			} else if (tp->tap.locktime == 0) {
+				*cmds |= 1 << TAPBUTTON_UP;
+				tp->tap.state = TAP_DETECT;
+			} else {
+				tp->tap.state = TAP_LOCKED;
+				err = !timeout_add_msec(
+				    &tp->tap.to, tp->tap.locktime);
+			}
+		} else if (tp->contacts > 1) {
+			*cmds |= 1 << TAPBUTTON_UP;
+			tp->tap.state = TAP_DETECT;
+		}
+		break;
+	case TAP_LOCKED:
+		if (t->state >= TOUCH_BEGIN) {
+			timeout_del(&tp->tap.to);
+			tp->tap.state = TAP_NTH_TOUCH;
+		}
+		break;
+	case TAP_NTH_TOUCH:
+		if (t->state == TOUCH_END) {
+			if (wstpad_is_tap(tp, t)) {
+				/* "tap-to-end" */
+				*cmds |= 1 << TAPBUTTON_UP;
+				tp->tap.state = TAP_DETECT;
+			} else {
+				tp->tap.state = TAP_LOCKED;
+				err = !timeout_add_msec(
+				    &tp->tap.to, tp->tap.locktime);
+			}
+		} else if (tp->contacts > 1) {
+			*cmds |= 1 << TAPBUTTON_UP;
+			tp->tap.state = TAP_DETECT;
+		}
+		break;
+	}
+
+	if (err) { /* Did timeout_add fail? */
+		if (tp->tap.state == TAP_LIFTED)
+			*cmds &= ~(1 << TAPBUTTON_DOWN);
+		else
+			*cmds |= 1 << TAPBUTTON_UP;
+
+		tp->tap.state = TAP_DETECT;
+	}
+}
+
+void
+wstpad_tap_timeout(void *p)
+{
+	struct wsmouseinput *input = p;
+	struct wstpad *tp = input->tp;
+	struct evq_access evq;
+	u_int btn;
+	int s;
+
+	s = spltty();
+	evq.evar = *input->evar;
+	if (evq.evar != NULL && tp != NULL &&
+	    (tp->tap.state == TAP_LIFTED || tp->tap.state == TAP_LOCKED)) {
+		tp->tap.state = TAP_DETECT;
+		input->sbtn.buttons &= ~tp->tap.button;
+		btn = ffs(tp->tap.button) - 1;
+		evq.put = evq.evar->put;
+		evq.result = EVQ_RESULT_NONE;
+		wsmouse_evq_put(&evq, BTN_UP_EV, btn);
+		wsmouse_evq_put(&evq, SYNC_EV, 0);
+		if (evq.result == EVQ_RESULT_SUCCESS) {
+			evq.evar->put = evq.put;
+			WSEVENT_WAKEUP(evq.evar);
+		} else {
+			input->sbtn.sync |= tp->tap.button;
+		}
+	}
+	splx(s);
+}
+
 /*
  * Suppress accidental pointer movements after a click on a clickpad.
  */
@@ -495,7 +715,7 @@ void
 wstpad_cmds(struct wsmouseinput *input, struct evq_access *evq, u_int cmds)
 {
 	struct wstpad *tp = input->tp;
-	u_int sbtns_dn = 0, sbtns_up = 0;
+	u_int btn, sbtns_dn = 0, sbtns_up = 0;
 	int n;
 
 	FOREACHBIT(cmds, n) {
@@ -513,6 +733,25 @@ wstpad_cmds(struct wsmouseinput *input, struct evq_access *evq, u_int cmds)
 			input->btn.sync &= ~PRIMARYBTN;
 			sbtns_up |= tp->softbutton;
 			tp->softbutton = 0;
+			continue;
+		case TAPBUTTON_DOWN:
+			sbtns_dn |= tp->tap.button;
+			continue;
+		case TAPBUTTON_UP:
+			sbtns_up |= tp->tap.button;
+			continue;
+		case TAPBUTTON_DOUBLECLK:
+			/*
+			 * We cannot add the final BTN_UP event here, a
+			 * delay is required.  This is the reason why the
+			 * tap handler returns from the 2ND_TOUCH state
+			 * into the LIFTED state with a short timeout
+			 * (CLICKDELAY_MS).
+			 */
+			btn = ffs(PRIMARYBTN) - 1;
+			wsmouse_evq_put(evq, BTN_UP_EV, btn);
+			wsmouse_evq_put(evq, SYNC_EV, 0);
+			wsmouse_evq_put(evq, BTN_DOWN_EV, btn);
 			continue;
 		case HSCROLL:
 			input->motion.dw = tp->scroll.dw;
@@ -683,6 +922,9 @@ wstpad_process_input(struct wsmouseinput *input, struct evq_access *evq)
 		case SOFTBUTTON_HDLR:
 		case TOPBUTTON_HDLR:
 			wstpad_softbuttons(input, &cmds, hdlr);
+			continue;
+		case TAP_HDLR:
+			wstpad_tap(input, &cmds);
 			continue;
 		case F2SCROLL_HDLR:
 			wstpad_f2scroll(input, &cmds);
@@ -952,6 +1194,8 @@ wstpad_init(struct wsmouseinput *input)
 	if (input->mt.num_slots)
 		tp->features |= WSTPAD_MT;
 
+	timeout_set(&tp->tap.to, wstpad_tap_timeout, input);
+
 	tp->ratio = input->filter.ratio;
 
 	return (0);
@@ -1059,6 +1303,9 @@ wstpad_configure(struct wsmouseinput *input)
 		tp->params.left_edge = EDGERATIO_DEFAULT;
 		tp->params.right_edge = EDGERATIO_DEFAULT;
 		tp->params.center_width = CENTERWIDTH_DEFAULT;
+		tp->tap.maxtime.tv_nsec = TAP_MAXTIME_DEFAULT * 1000000;
+		tp->tap.clicktime = TAP_CLICKTIME_DEFAULT;
+		tp->tap.locktime = TAP_LOCKTIME_DEFAULT;
 
 		tp->features &= (WSTPAD_MT | WSTPAD_DISABLE);
 		if (input->hw.hw_type == WSMOUSEHW_TOUCHPAD)
@@ -1071,6 +1318,7 @@ wstpad_configure(struct wsmouseinput *input)
 		}
 		tp->scroll.hdist = 5 * h_unit;
 		tp->scroll.vdist = 5 * v_unit;
+		tp->tap.maxdist = 3 * h_unit;
 	}
 
 	tp->edge.left = input->hw.x_min +
@@ -1108,6 +1356,14 @@ wstpad_configure(struct wsmouseinput *input)
 		    ((tp->features & WSTPAD_SWAPSIDES) ? L_EDGE : R_EDGE);
 	}
 
+	if (tp->features & WSTPAD_TAPPING) {
+		tp->tap.clicktime = imin(imax(tp->tap.clicktime, 80), 350);
+		if (tp->tap.locktime)
+			tp->tap.locktime =
+			    imin(imax(tp->tap.locktime, 150), 5000);
+		tp->handlers |= 1 << TAP_HDLR;
+	}
+
 	if (input->hw.hw_type == WSMOUSEHW_CLICKPAD)
 		tp->handlers |= 1 << CLICK_HDLR;
 
@@ -1120,6 +1376,13 @@ wstpad_configure(struct wsmouseinput *input)
 void
 wstpad_reset(struct wsmouseinput *input)
 {
+	struct wstpad *tp = input->tp;
+
+	if (tp != NULL) {
+		timeout_del(&tp->tap.to);
+		tp->tap.state = TAP_DETECT;
+	}
+
 	if (input->sbtn.buttons) {
 		input->sbtn.sync = input->sbtn.buttons;
 		input->sbtn.buttons = 0;
@@ -1136,7 +1399,7 @@ wstpad_set_param(struct wsmouseinput *input, int key, int val)
 		return (EINVAL);
 
 	switch (key) {
-	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_DISABLE:
+	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_TAPPING:
 		switch (key) {
 		case WSMOUSECFG_SOFTBUTTONS:
 			flag = WSTPAD_SOFTBUTTONS;
@@ -1161,6 +1424,9 @@ wstpad_set_param(struct wsmouseinput *input, int key, int val)
 			break;
 		case WSMOUSECFG_DISABLE:
 			flag = WSTPAD_DISABLE;
+			break;
+		case WSMOUSECFG_TAPPING:
+			flag = WSTPAD_TAPPING;
 			break;
 		}
 		if (val)
@@ -1195,6 +1461,15 @@ wstpad_set_param(struct wsmouseinput *input, int key, int val)
 	case WSMOUSECFG_F2PRESSURE:
 		tp->params.f2pressure = val;
 		break;
+	case WSMOUSECFG_TAP_MAXTIME:
+		tp->tap.maxtime.tv_nsec = imin(val, 999) * 1000000;
+		break;
+	case WSMOUSECFG_TAP_CLICKTIME:
+		tp->tap.clicktime = val;
+		break;
+	case WSMOUSECFG_TAP_LOCKTIME:
+		tp->tap.locktime = val;
+		break;
 	default:
 		return (ENOTSUP);
 	}
@@ -1212,7 +1487,7 @@ wstpad_get_param(struct wsmouseinput *input, int key, int *pval)
 		return (EINVAL);
 
 	switch (key) {
-	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_DISABLE:
+	case WSMOUSECFG_SOFTBUTTONS ... WSMOUSECFG_TAPPING:
 		switch (key) {
 		case WSMOUSECFG_SOFTBUTTONS:
 			flag = WSTPAD_SOFTBUTTONS;
@@ -1237,6 +1512,9 @@ wstpad_get_param(struct wsmouseinput *input, int key, int *pval)
 			break;
 		case WSMOUSECFG_DISABLE:
 			flag = WSTPAD_DISABLE;
+			break;
+		case WSMOUSECFG_TAPPING:
+			flag = WSTPAD_TAPPING;
 			break;
 		}
 		*pval = !!(tp->features & flag);
@@ -1267,6 +1545,15 @@ wstpad_get_param(struct wsmouseinput *input, int key, int *pval)
 		break;
 	case WSMOUSECFG_F2PRESSURE:
 		*pval = tp->params.f2pressure;
+		break;
+	case WSMOUSECFG_TAP_MAXTIME:
+		*pval = tp->tap.maxtime.tv_nsec / 1000000;
+		break;
+	case WSMOUSECFG_TAP_CLICKTIME:
+		*pval = tp->tap.clicktime;
+		break;
+	case WSMOUSECFG_TAP_LOCKTIME:
+		*pval = tp->tap.locktime;
 		break;
 	default:
 		return (ENOTSUP);

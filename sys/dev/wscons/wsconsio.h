@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.80 2017/05/08 20:55:29 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.81 2017/06/06 19:47:22 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -318,6 +318,7 @@ enum wsmousecfg {
 	WSMOUSECFG_SWAPSIDES,		/* invert soft-button/scroll areas */
 	WSMOUSECFG_DISABLE,		/* disable all output except for
 					   clicks in the top-button area */
+	WSMOUSECFG_TAPPING,		/* enable tapping */
 
 	/*
 	 * Touchpad options
@@ -331,8 +332,13 @@ enum wsmousecfg {
 	WSMOUSECFG_VERTSCROLLDIST,	/* distance mapped to a scroll event */
 	WSMOUSECFG_F2WIDTH,		/* width limit for single touches */
 	WSMOUSECFG_F2PRESSURE,		/* pressure limit for single touches */
+	WSMOUSECFG_TAP_MAXTIME,		/* max. duration of tap contacts (ms) */
+	WSMOUSECFG_TAP_CLICKTIME,	/* time between the end of a tap and
+					   the button-up-event (ms) */
+	WSMOUSECFG_TAP_LOCKTIME,	/* time between a tap-and-drag action
+					   and the button-up-event (ms) */
 };
-#define WSMOUSECFG_MAX	32	/* max size of param array per ioctl */
+#define WSMOUSECFG_MAX	36	/* max size of param array per ioctl */
 
 struct wsmouse_param {
 	enum wsmousecfg key;
