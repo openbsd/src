@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.500 2017/06/03 22:59:09 deraadt Exp $
+#	$OpenBSD: rc,v 1.501 2017/06/06 13:59:37 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -393,6 +393,8 @@ fill_baddynamic tcp
 
 sysctl_conf
 
+start_daemon slaacd >/dev/null 2>&1
+
 echo 'starting network'
 
 # Set carp interlock by increasing the demotion counter.
@@ -438,7 +440,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd slaacd nsd rebound unbound ntpd
+start_daemon syslogd ldattach pflogd nsd rebound unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
