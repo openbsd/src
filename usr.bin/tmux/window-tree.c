@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.1 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.2 2017/06/06 15:07:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -699,7 +699,7 @@ window_tree_key(struct window_pane *wp, struct client *c,
 		name = window_tree_get_target(item, &fs);
 		window_pane_reset_mode(wp);
 		if (name != NULL)
-			mode_tree_run_command(c, &fs, command, name);
+			mode_tree_run_command(c, NULL, command, name);
 		free(name);
 		free(command);
 		return;
