@@ -5466,7 +5466,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                       options::OPT_fno_strict_overflow)) {
     if (A->getOption().matches(options::OPT_fno_strict_overflow))
       CmdArgs.push_back("-fwrapv");
-  }
+  } else if (getToolChain().getTriple().isOSOpenBSD())
+      CmdArgs.push_back("-fwrapv");
 
   if (Arg *A = Args.getLastArg(options::OPT_freroll_loops,
                                options::OPT_fno_reroll_loops))
