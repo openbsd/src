@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.289 2017/06/04 08:02:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.290 2017/06/06 14:53:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,8 +159,10 @@ tty_read_callback(__unused int fd, __unused short events, void *data)
 	int		 nread;
 
 	nread = evbuffer_read(tty->in, tty->fd, -1);
-	if (nread == -1)
+	if (nread == -1) {
+		event_del(&tty->event_in);
 		return;
+	}
 	log_debug("%s: read %d bytes (already %zu)", c->name, nread, size);
 
 	while (tty_keys_next(tty))
