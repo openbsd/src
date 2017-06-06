@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.32 2017/05/21 13:07:19 visa Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.33 2017/06/06 08:12:01 tb Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 21 2017 $
+.Dd $Mdocdate: June 6 2017 $
 .Dt MAKEDEV 8 loongson
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@ for a more complete discussion of special files.
 .Nm
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device or group of devices.
+Files are created in the current working directory.
 .Pp
 Where a device name is followed by a star
 .Sq * ,

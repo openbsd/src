@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.106 2016/09/04 15:39:53 naddy Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.107 2017/06/06 08:12:01 tb Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.82 2016/09/04 15:38:59 naddy Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.91 2016/09/04 15:38:59 naddy Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.83 2016/09/11 19:59:53 deraadt Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.94 2016/09/11 19:59:51 deraadt Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.8 2016/03/12 17:59:27 espie Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: June 6 2017 $
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@ for a more complete discussion of special files.
 .Nm
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device or group of devices.
+Files are created in the current working directory.
 .Pp
 Where a device name is followed by a star
 .Sq * ,
