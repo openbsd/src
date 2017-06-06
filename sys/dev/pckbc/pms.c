@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.75 2017/05/08 20:55:29 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.76 2017/06/06 21:53:07 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -234,10 +234,6 @@ static const struct alps_model {
 static struct wsmouse_param synaptics_params[] = {
 	{ WSMOUSECFG_PRESSURE_LO, SYNAPTICS_PRESSURE_LO },
 	{ WSMOUSECFG_PRESSURE_HI, SYNAPTICS_PRESSURE_HI }
-};
-
-static struct wsmouse_param elantech_v4_params[] = {
-	{ WSMOUSECFG_STRONG_HYSTERESIS, 0 }
 };
 
 int	pmsprobe(struct device *, void *, void *);
@@ -2046,8 +2042,7 @@ pms_enable_elantech_v4(struct pms_softc *sc)
 			sc->elantech = NULL;
 			goto err;
 		}
-		if (wsmouse_configure(sc->sc_wsmousedev,
-		    elantech_v4_params, nitems(elantech_v4_params))) {
+		if (wsmouse_configure(sc->sc_wsmousedev, NULL, 0)) {
 			free(sc->elantech, M_DEVBUF, 0);
 			sc->elantech = NULL;
 			printf("%s: setup failed\n", DEVNAME(sc));
