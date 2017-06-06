@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.380 2017/04/14 15:11:31 bluhm Exp $ */
+/* $OpenBSD: softraid.c,v 1.381 2017/06/06 19:01:27 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2077,10 +2077,10 @@ sr_ccb_done(struct sr_ccb *ccb)
 			sd->sd_set_chunk_state(sd, ccb->ccb_target,
 			    BIOC_SDOFFLINE);
 		else
-			printf("%s: i/o error on block %lld target %d "
-			    "b_error %d\n", DEVNAME(sc),
-			    (long long)ccb->ccb_buf.b_blkno, ccb->ccb_target,
-			    ccb->ccb_buf.b_error);
+			printf("%s: %s: i/o error %d @ %s block %lld\n",
+			    DEVNAME(sc), sd->sd_meta->ssd_devname,
+			    ccb->ccb_buf.b_error, sd->sd_name,
+			    (long long)ccb->ccb_buf.b_blkno);
 		ccb->ccb_state = SR_CCB_FAILED;
 		wu->swu_ios_failed++;
 	} else {
