@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.5 2017/03/12 01:21:32 jsg Exp $
+.\" $OpenBSD: clang-local.1,v 1.6 2017/06/06 09:42:09 jsg Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 12 2017 $
+.Dd $Mdocdate: June 6 2017 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -69,6 +69,12 @@ flag.
 .It
 Color diagnostic messages are disabled by default and can be re-enabled with
 .Fl fdiagnostics-color .
+.It
+The
+.Fl fwrapv
+option to treat signed integer overflows as defined is enabled by default to
+prevent dangerous optimizations which could remove security critical overflow
+checks.
 .El
 .Sh SEE ALSO
 .Xr clang 1
