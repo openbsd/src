@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.29 2017/06/06 20:33:28 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.30 2017/06/06 21:12:01 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2016 Mike Belopuhov
@@ -142,6 +142,18 @@ struct xbf_dma_mem {
 	caddr_t			 dma_vaddr;
 };
 
+struct xbf_ccb {
+	struct scsi_xfer	*ccb_xfer;  /* associated transfer */
+	bus_dmamap_t		 ccb_dmap;  /* transfer map */
+	struct xbf_dma_mem	 ccb_bbuf;  /* bounce buffer */
+	uint32_t		 ccb_first; /* first descriptor */
+	uint32_t		 ccb_last;  /* last descriptor */
+	uint16_t		 ccb_want;  /* expected chunks */
+	uint16_t		 ccb_seen;  /* completed chunks */
+	TAILQ_ENTRY(xbf_ccb)	 ccb_link;
+};
+TAILQ_HEAD(xbf_ccb_queue, xbf_ccb);
+
 struct xbf_softc {
 	struct device		 sc_dev;
 	struct device		*sc_parent;
@@ -165,10 +177,10 @@ struct xbf_softc {
 	char			 sc_dtype[16];
 	char			 sc_prod[16];
 
-	uint32_t		 sc_maxphys;
 	uint64_t		 sc_disk_size;
 	uint32_t		 sc_block_size;
 
+	/* Ring */
 	struct xbf_ring		*sc_xr;
 	uint32_t		 sc_xr_cons;
 	uint32_t		 sc_xr_prod;
@@ -177,10 +189,16 @@ struct xbf_softc {
 	uint32_t		 sc_xr_ref[XBF_MAX_RING_SIZE];
 	int			 sc_xr_ndesc;
 
-	struct scsi_xfer	**sc_xs;
-	bus_dmamap_t		*sc_xs_map;
-	int			 sc_xs_avail;
-	struct xbf_dma_mem	*sc_xs_bb;
+	/* Maximum number of blocks that one descriptor may refer to */
+	int			 sc_xrd_nblk;
+
+	/* CCBs */
+	int			 sc_nccb;
+	struct xbf_ccb		*sc_ccbs;
+	struct xbf_ccb_queue	 sc_ccb_fq; /* free queue */
+	struct xbf_ccb_queue	 sc_ccb_sq; /* pending requests */
+	struct mutex		 sc_ccb_fqlck;
+	struct mutex		 sc_ccb_sqlck;
 
 	struct scsi_iopool	 sc_iopool;
 	struct scsi_adapter	 sc_switch;
@@ -202,20 +220,16 @@ const struct cfattach xbf_ca = {
 
 void	xbf_intr(void *);
 
-void	*xbf_io_get(void *);
-void	xbf_io_put(void *, void *);
-
-int	xbf_load_xs(struct scsi_xfer *, int);
-int	xbf_bounce_xs(struct scsi_xfer *, int);
-void	xbf_reclaim_xs(struct scsi_xfer *, int);
+int	xbf_load_cmd(struct scsi_xfer *);
+int	xbf_bounce_cmd(struct scsi_xfer *);
+void	xbf_reclaim_cmd(struct scsi_xfer *);
 
 void	xbf_scsi_cmd(struct scsi_xfer *);
 int	xbf_submit_cmd(struct scsi_xfer *);
-int	xbf_poll_cmd(struct scsi_xfer *, int, int);
-void	xbf_complete_cmd(struct scsi_xfer *, int);
+int	xbf_poll_cmd(struct scsi_xfer *);
+void	xbf_complete_cmd(struct xbf_softc *, struct xbf_ccb_queue *, int);
 int	xbf_dev_probe(struct scsi_link *);
 
-void	xbf_scsi_minphys(struct buf *, struct scsi_link *);
 void	xbf_scsi_inq(struct scsi_xfer *);
 void	xbf_scsi_inquiry(struct scsi_xfer *);
 void	xbf_scsi_capacity(struct scsi_xfer *);
@@ -231,6 +245,11 @@ int	xbf_init(struct xbf_softc *);
 int	xbf_ring_create(struct xbf_softc *);
 void	xbf_ring_destroy(struct xbf_softc *);
 void	xbf_stop(struct xbf_softc *);
+
+int	xbf_alloc_ccbs(struct xbf_softc *);
+void	xbf_free_ccbs(struct xbf_softc *);
+void	*xbf_get_ccb(void *);
+void	xbf_put_ccb(void *, void *);
 
 int
 xbf_match(struct device *parent, void *match, void *aux)
@@ -270,8 +289,6 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	printf(" backend %d channel %u: %s\n", sc->sc_domid, sc->sc_xih,
 	    sc->sc_dtype);
 
-	scsi_iopool_init(&sc->sc_iopool, sc, xbf_io_get, xbf_io_put);
-
 	if (xbf_init(sc))
 		goto error;
 
@@ -282,7 +299,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_switch.scsi_cmd = xbf_scsi_cmd;
-	sc->sc_switch.scsi_minphys = xbf_scsi_minphys;
+	sc->sc_switch.scsi_minphys = scsi_minphys;
 	sc->sc_switch.dev_probe = xbf_dev_probe;
 
 	sc->sc_link.adapter = &sc->sc_switch;
@@ -290,7 +307,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = 2;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = 2;
-	sc->sc_link.openings = sc->sc_xr_ndesc - 1;
+	sc->sc_link.openings = sc->sc_nccb;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
@@ -333,52 +350,43 @@ xbf_intr(void *xsc)
 	struct xbf_softc *sc = xsc;
 	struct xbf_ring *xr = sc->sc_xr;
 	struct xbf_dma_mem *dma = &sc->sc_xr_dma;
-	struct scsi_xfer *xs;
+	struct xbf_ccb_queue cq;
+	struct xbf_ccb *ccb, *nccb;
 	uint32_t cons;
-	int desc;
+	int desc, s;
 
-	bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0, dma->dma_size,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	TAILQ_INIT(&cq);
 
-	for (cons = sc->sc_xr_cons; cons != xr->xr_cons; cons++) {
-		desc = cons & (sc->sc_xr_ndesc - 1);
-		xs = sc->sc_xs[desc];
-		if (xs != NULL)
-			xbf_complete_cmd(xs, desc);
+	for (;;) {
+		bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0, dma->dma_size,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		for (cons = sc->sc_xr_cons; cons != xr->xr_cons; cons++) {
+			desc = cons & (sc->sc_xr_ndesc - 1);
+			xbf_complete_cmd(sc, &cq, desc);
+		}
+
+		sc->sc_xr_cons = cons;
+
+		if (TAILQ_EMPTY(&cq))
+			break;
+
+		s = splbio();
+		KERNEL_LOCK();
+		TAILQ_FOREACH_SAFE(ccb, &cq, ccb_link, nccb) {
+			TAILQ_REMOVE(&cq, ccb, ccb_link);
+			xbf_reclaim_cmd(ccb->ccb_xfer);
+			scsi_done(ccb->ccb_xfer);
+		}
+		KERNEL_UNLOCK();
+		splx(s);
 	}
-
-	sc->sc_xr_cons = cons;
-}
-
-void *
-xbf_io_get(void *xsc)
-{
-	struct xbf_softc *sc = xsc;
-	void *rv = sc; /* just has to be !NULL */
-
-	if (sc->sc_state != XBF_CONNECTED &&
-	    sc->sc_state != XBF_CLOSING)
-		rv = NULL;
-
-	return (rv);
-}
-
-void
-xbf_io_put(void *xsc, void *io)
-{
-#ifdef DIAGNOSTIC
-	struct xbf_softc *sc = xsc;
-
-	if (sc != io)
-		panic("xbf_io_put: unexpected io");
-#endif
 }
 
 void
 xbf_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
-	int desc;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
@@ -424,18 +432,16 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 		return;
 	}
 
-	desc = xbf_submit_cmd(xs);
-	if (desc < 0) {
+	if (xbf_submit_cmd(xs)) {
 		xbf_scsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
 	}
 
-	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs, desc, 1000)) {
+	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs)) {
 		printf("%s: op %#x timed out\n", sc->sc_dev.dv_xname,
 		    xs->cmd->opcode);
 		if (sc->sc_state == XBF_CONNECTED) {
-			sc->sc_xs[desc] = NULL;
-			xbf_reclaim_xs(xs, desc);
+			xbf_reclaim_cmd(xs);
 			xbf_scsi_done(xs, XS_TIMEOUT);
 		}
 		return;
@@ -443,16 +449,17 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 }
 
 int
-xbf_load_xs(struct scsi_xfer *xs, int desc)
+xbf_load_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_ccb *ccb = xs->io;
 	struct xbf_sge *sge;
 	union xbf_ring_desc *xrd;
 	bus_dmamap_t map;
-	int i, error, mapflags;
+	int error, mapflags, nsg, seg;
+	int desc, ndesc = 0;
 
-	xrd = &sc->sc_xr->xr_desc[desc];
-	map = sc->sc_xs_map[desc];
+	map = ccb->ccb_dmap;
 
 	mapflags = (sc->sc_domid << 16);
 	if (ISSET(xs->flags, SCSI_NOSLEEP))
@@ -467,48 +474,60 @@ xbf_load_xs(struct scsi_xfer *xs, int desc)
 	error = bus_dmamap_load(sc->sc_dmat, map, xs->data, xs->datalen,
 	    NULL, mapflags);
 	if (error) {
-		DPRINTF("%s: failed to load %d bytes of data\n",
+		printf("%s: failed to load %d bytes of data\n",
 		    sc->sc_dev.dv_xname, xs->datalen);
 		return (error);
 	}
 
-	for (i = 0; i < map->dm_nsegs; i++) {
-		sge = &xrd->xrd_req.req_sgl[i];
-		sge->sge_ref = map->dm_segs[i].ds_addr;
-		sge->sge_first = i > 0 ? 0 :
-		    ((vaddr_t)xs->data & PAGE_MASK) >> XBF_SEC_SHIFT;
+	xrd = &sc->sc_xr->xr_desc[ccb->ccb_first];
+	/* seg is the segment map iterator, nsg is the s-g list iterator */
+	for (seg = 0, nsg = 0; seg < map->dm_nsegs; seg++, nsg++) {
+		if (nsg == XBF_MAX_SGE) {
+			/* Number of segments so far */
+			xrd->xrd_req.req_nsegs = nsg;
+			/* Pick next descriptor */
+			ndesc++;
+			desc = (sc->sc_xr_prod + ndesc) & (sc->sc_xr_ndesc - 1);
+			xrd = &sc->sc_xr->xr_desc[desc];
+			nsg = 0;
+		}
+		sge = &xrd->xrd_req.req_sgl[nsg];
+		sge->sge_ref = map->dm_segs[seg].ds_addr;
+		sge->sge_first = nsg > 0 ? 0 :
+		    (((vaddr_t)xs->data + ndesc * sc->sc_xrd_nblk *
+			(1 << XBF_SEC_SHIFT)) & PAGE_MASK) >> XBF_SEC_SHIFT;
 		sge->sge_last = sge->sge_first +
-		    (map->dm_segs[i].ds_len >> XBF_SEC_SHIFT) - 1;
+		    (map->dm_segs[seg].ds_len >> XBF_SEC_SHIFT) - 1;
 
 		DPRINTF("%s:   seg %d/%d ref %lu len %lu first %u last %u\n",
-		    sc->sc_dev.dv_xname, i + 1, map->dm_nsegs,
-		    map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len,
+		    sc->sc_dev.dv_xname, nsg + 1, map->dm_nsegs,
+		    map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len,
 		    sge->sge_first, sge->sge_last);
 
 		KASSERT(sge->sge_last <= 7);
 	}
 
-	xrd->xrd_req.req_nsegs = map->dm_nsegs;
+	KASSERT(nsg > 0);
+	xrd->xrd_req.req_nsegs = nsg;
 
 	return (0);
 }
 
 int
-xbf_bounce_xs(struct scsi_xfer *xs, int desc)
+xbf_bounce_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_ccb *ccb = xs->io;
 	struct xbf_sge *sge;
 	struct xbf_dma_mem *dma;
 	union xbf_ring_desc *xrd;
 	bus_dmamap_t map;
 	bus_size_t size;
-	int i, error, mapflags;
-
-	xrd = &sc->sc_xr->xr_desc[desc];
-	dma = &sc->sc_xs_bb[desc];
+	int error, mapflags, nsg, seg;
+	int desc, ndesc = 0;
 
 	size = roundup(xs->datalen, PAGE_SIZE);
-	if (size > sc->sc_maxphys)
+	if (size > MAXPHYS)
 		return (EFBIG);
 
 	mapflags = (sc->sc_domid << 16);
@@ -521,6 +540,7 @@ xbf_bounce_xs(struct scsi_xfer *xs, int desc)
 	else
 		mapflags |= BUS_DMA_WRITE;
 
+	dma = &ccb->ccb_bbuf;
 	error = xbf_dma_alloc(sc, dma, size, size / PAGE_SIZE, mapflags);
 	if (error) {
 		DPRINTF("%s: failed to allocate a %lu byte bounce buffer\n",
@@ -536,49 +556,61 @@ xbf_bounce_xs(struct scsi_xfer *xs, int desc)
 	if (ISSET(xs->flags, SCSI_DATA_OUT))
 		memcpy(dma->dma_vaddr, xs->data, xs->datalen);
 
-	for (i = 0; i < map->dm_nsegs; i++) {
-		sge = &xrd->xrd_req.req_sgl[i];
-		sge->sge_ref = map->dm_segs[i].ds_addr;
-		sge->sge_first = i > 0 ? 0 :
-		    ((vaddr_t)dma->dma_vaddr & PAGE_MASK) >> XBF_SEC_SHIFT;
+	xrd = &sc->sc_xr->xr_desc[ccb->ccb_first];
+	/* seg is the map segment iterator, nsg is the s-g element iterator */
+	for (seg = 0, nsg = 0; seg < map->dm_nsegs; seg++, nsg++) {
+		if (nsg == XBF_MAX_SGE) {
+			/* Number of segments so far */
+			xrd->xrd_req.req_nsegs = nsg;
+			/* Pick next descriptor */
+			ndesc++;
+			desc = (sc->sc_xr_prod + ndesc) & (sc->sc_xr_ndesc - 1);
+			xrd = &sc->sc_xr->xr_desc[desc];
+			nsg = 0;
+		}
+		sge = &xrd->xrd_req.req_sgl[nsg];
+		sge->sge_ref = map->dm_segs[seg].ds_addr;
+		sge->sge_first = nsg > 0 ? 0 :
+		    (((vaddr_t)dma->dma_vaddr + ndesc * sc->sc_xrd_nblk *
+			(1 << XBF_SEC_SHIFT)) & PAGE_MASK) >> XBF_SEC_SHIFT;
 		sge->sge_last = sge->sge_first +
-		    (map->dm_segs[i].ds_len >> XBF_SEC_SHIFT) - 1;
+		    (map->dm_segs[seg].ds_len >> XBF_SEC_SHIFT) - 1;
 
 		DPRINTF("%s:   seg %d/%d ref %lu len %lu first %u last %u\n",
-		    sc->sc_dev.dv_xname, i + 1, map->dm_nsegs,
-		    map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len,
+		    sc->sc_dev.dv_xname, nsg + 1, map->dm_nsegs,
+		    map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len,
 		    sge->sge_first, sge->sge_last);
 
 		KASSERT(sge->sge_last <= 7);
 	}
 
-	xrd->xrd_req.req_nsegs = map->dm_nsegs;
+	xrd->xrd_req.req_nsegs = nsg;
 
 	return (0);
 }
 
 void
-xbf_reclaim_xs(struct scsi_xfer *xs, int desc)
+xbf_reclaim_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
-	struct xbf_dma_mem *dma;
+	struct xbf_ccb *ccb = xs->io;
+	struct xbf_dma_mem *dma = &ccb->ccb_bbuf;
 
-	dma = &sc->sc_xs_bb[desc];
 	if (dma->dma_size == 0)
 		return;
 
 	if (ISSET(xs->flags, SCSI_DATA_IN))
 		memcpy(xs->data, (caddr_t)dma->dma_vaddr, xs->datalen);
 
-	xbf_dma_free(sc, dma);
+	xbf_dma_free(sc, &ccb->ccb_bbuf);
 }
 
 int
 xbf_submit_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_ccb *ccb = xs->io;
 	union xbf_ring_desc *xrd;
-	bus_dmamap_t map;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	struct scsi_rw_12 *rw12;
@@ -586,6 +618,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	uint64_t lba = 0;
 	uint32_t nblk = 0;
 	uint8_t operation = 0;
+	unsigned int ndesc = 0;
 	int desc, error;
 
 	switch (xs->cmd->opcode) {
@@ -633,39 +666,58 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		nblk = _4btol(rw16->length);
 	}
 
-	desc = sc->sc_xr_prod & (sc->sc_xr_ndesc - 1);
-	xrd = &sc->sc_xr->xr_desc[desc];
-	map = sc->sc_xs_map[desc];
+	ccb->ccb_want = ccb->ccb_seen = 0;
 
-	xrd->xrd_req.req_op = operation;
-	xrd->xrd_req.req_unit = (uint16_t)sc->sc_unit;
-	xrd->xrd_req.req_sector = lba;
+	do {
+		desc = (sc->sc_xr_prod + ndesc) & (sc->sc_xr_ndesc - 1);
+		if (ndesc == 0)
+			ccb->ccb_first = desc;
+
+		xrd = &sc->sc_xr->xr_desc[desc];
+		xrd->xrd_req.req_op = operation;
+		xrd->xrd_req.req_unit = (uint16_t)sc->sc_unit;
+		xrd->xrd_req.req_sector = lba + ndesc * sc->sc_xrd_nblk;
+
+		ccb->ccb_want |= 1 << ndesc;
+		ndesc++;
+	} while (ndesc * sc->sc_xrd_nblk < nblk);
+
+	ccb->ccb_last = desc;
 
 	if (operation == XBF_OP_READ || operation == XBF_OP_WRITE) {
-		DPRINTF("%s: desc %d %s%s lba %llu nsec %u len %d\n",
-		    sc->sc_dev.dv_xname, desc, operation == XBF_OP_READ ?
-		    "read" : "write", ISSET(xs->flags, SCSI_POLL) ? "-poll" :
-		    "", lba, nblk, xs->datalen);
+		DPRINTF("%s: desc %u,%u %s%s lba %llu nsec %u "
+		    "len %d\n", sc->sc_dev.dv_xname, ccb->ccb_first,
+		    ccb->ccb_last, operation == XBF_OP_READ ? "read" :
+		    "write", ISSET(xs->flags, SCSI_POLL) ? "-poll" : "",
+		    lba, nblk, xs->datalen);
 
 		if (((vaddr_t)xs->data & ((1 << XBF_SEC_SHIFT) - 1)) == 0)
-			error = xbf_load_xs(xs, desc);
+			error = xbf_load_cmd(xs);
 		else
-			error = xbf_bounce_xs(xs, desc);
+			error = xbf_bounce_cmd(xs);
 		if (error)
 			return (-1);
 	} else {
-		DPRINTF("%s: desc %d %s%s lba %llu\n", sc->sc_dev.dv_xname,
-		    desc, operation == XBF_OP_FLUSH ? "flush" : "barrier",
-		    ISSET(xs->flags, SCSI_POLL) ? "-poll" : "", lba);
+		KASSERT(nblk == 0);
+		KASSERT(ndesc == 1);
+		DPRINTF("%s: desc %u %s%s lba %llu\n", sc->sc_dev.dv_xname,
+		    ccb->ccb_first, operation == XBF_OP_FLUSH ? "flush" :
+		    "barrier", ISSET(xs->flags, SCSI_POLL) ? "-poll" : "",
+		    lba);
 		xrd->xrd_req.req_nsegs = 0;
 	}
 
-	sc->sc_xs[desc] = xs;
+	ccb->ccb_xfer = xs;
 
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmap, 0,
+	    ccb->ccb_dmap->dm_mapsize, BUS_DMASYNC_PREREAD |
+	    BUS_DMASYNC_PREWRITE);
 
-	sc->sc_xr_prod++;
+	mtx_enter(&sc->sc_ccb_sqlck);
+	TAILQ_INSERT_TAIL(&sc->sc_ccb_sq, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_sqlck);
+
+	sc->sc_xr_prod += ndesc;
 	sc->sc_xr->xr_prod = sc->sc_xr_prod;
 	sc->sc_xr->xr_cons_event = sc->sc_xr_prod;
 
@@ -675,12 +727,14 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 
 	xen_intr_signal(sc->sc_xih);
 
-	return (desc);
+	return (0);
 }
 
 int
-xbf_poll_cmd(struct scsi_xfer *xs, int desc, int timo)
+xbf_poll_cmd(struct scsi_xfer *xs)
 {
+	int timo = 1000;
+
 	do {
 		if (ISSET(xs->flags, ITSDONE))
 			break;
@@ -695,12 +749,12 @@ xbf_poll_cmd(struct scsi_xfer *xs, int desc, int timo)
 }
 
 void
-xbf_complete_cmd(struct scsi_xfer *xs, int desc)
+xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_ccb *ccb;
 	union xbf_ring_desc *xrd;
 	bus_dmamap_t map;
-	uint64_t id;
+	uint32_t id, chunk;
 	int error;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
@@ -711,37 +765,55 @@ xbf_complete_cmd(struct scsi_xfer *xs, int desc)
 	error = xrd->xrd_rsp.rsp_status == XBF_OK ? XS_NOERROR :
 	    XS_DRIVER_STUFFUP;
 
-	if (sc->sc_xs_bb[desc].dma_size > 0)
-		map = sc->sc_xs_bb[desc].dma_map;
+	id = (uint32_t)xrd->xrd_rsp.rsp_id;
+	mtx_enter(&sc->sc_ccb_sqlck);
+	TAILQ_FOREACH(ccb, &sc->sc_ccb_sq, ccb_link) {
+		if (((id - ccb->ccb_first) & (sc->sc_xr_ndesc - 1)) <=
+		    ((ccb->ccb_last - ccb->ccb_first) & (sc->sc_xr_ndesc - 1)))
+			break;
+	}
+	mtx_leave(&sc->sc_ccb_sqlck);
+	KASSERT(ccb != NULL);
+	chunk = 1 << ((id - ccb->ccb_first) & (sc->sc_xr_ndesc - 1));
+#ifdef XBF_DEBUG
+	if ((ccb->ccb_want & chunk) == 0) {
+		panic("%s: id %#x first %#x want %#x seen %#x chunk %#x",
+		    sc->sc_dev.dv_xname, id, ccb->ccb_first, ccb->ccb_want,
+		    ccb->ccb_seen, chunk);
+	}
+	if ((ccb->ccb_seen & chunk) != 0) {
+		panic("%s: id %#x first %#x want %#x seen %#x chunk %#x",
+		    sc->sc_dev.dv_xname, id, ccb->ccb_first, ccb->ccb_want,
+		    ccb->ccb_seen, chunk);
+	}
+#endif
+	ccb->ccb_seen |= chunk;
+
+	if (ccb->ccb_bbuf.dma_size > 0)
+		map = ccb->ccb_bbuf.dma_map;
 	else
-		map = sc->sc_xs_map[desc];
+		map = ccb->ccb_dmap;
+
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, map);
-
-	sc->sc_xs[desc] = NULL;
 
 	DPRINTF("%s: completing desc %d(%llu) op %u with error %d\n",
 	    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
 	    xrd->xrd_rsp.rsp_op, xrd->xrd_rsp.rsp_status);
 
-	id = xrd->xrd_rsp.rsp_id;
 	memset(xrd, 0, sizeof(*xrd));
-	xrd->xrd_req.req_id = id;
+	xrd->xrd_req.req_id = desc;
 
-	xs->resid = 0;
+	if (ccb->ccb_seen == ccb->ccb_want) {
+		mtx_enter(&sc->sc_ccb_sqlck);
+		TAILQ_REMOVE(&sc->sc_ccb_sq, ccb, ccb_link);
+		mtx_leave(&sc->sc_ccb_sqlck);
 
-	xbf_reclaim_xs(xs, desc);
-	xbf_scsi_done(xs, error);
-}
-
-void
-xbf_scsi_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	struct xbf_softc *sc = sl->adapter_softc;
-
-	if (bp->b_bcount > sc->sc_maxphys)
-		bp->b_bcount = sc->sc_maxphys;
+		ccb->ccb_xfer->resid = 0;
+		ccb->ccb_xfer->error = error;
+		TAILQ_INSERT_TAIL(cq, ccb, ccb_link);
+	}
 }
 
 void
@@ -828,6 +900,8 @@ xbf_scsi_done(struct scsi_xfer *xs, int error)
 {
 	int s;
 
+	KERNEL_ASSERT_LOCKED();
+
 	xs->error = error;
 
 	s = splbio();
@@ -893,7 +967,8 @@ xbf_init(struct xbf_softc *sc)
 	unsigned long long res;
 	const char *action, *prop;
 	char pbuf[sizeof("ring-refXX")];
-	int i, error;
+	unsigned int i;
+	int error;
 
 	prop = "max-ring-page-order";
 	error = xs_getnum(sc->sc_parent, sc->sc_backend, prop, &res);
@@ -1125,7 +1200,7 @@ xbf_dma_free(struct xbf_softc *sc, struct xbf_dma_mem *dma)
 int
 xbf_ring_create(struct xbf_softc *sc)
 {
-	int i, error, nsegs;
+	int i;
 
 	if (xbf_dma_alloc(sc, &sc->sc_xr_dma, sc->sc_xr_size * PAGE_SIZE,
 	    sc->sc_xr_size, sc->sc_domid << 16))
@@ -1137,83 +1212,24 @@ xbf_ring_create(struct xbf_softc *sc)
 
 	sc->sc_xr->xr_prod_event = sc->sc_xr->xr_cons_event = 1;
 
-	/* SCSI transfer map */
-	sc->sc_xs_map = mallocarray(sc->sc_xr_ndesc, sizeof(bus_dmamap_t),
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (sc->sc_xs_map == NULL) {
-		printf("%s: failed to allocate scsi transfer map\n",
-		    sc->sc_dev.dv_xname);
-		goto errout;
-	}
-	sc->sc_xs = mallocarray(sc->sc_xr_ndesc, sizeof(struct scsi_xfer *),
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (sc->sc_xs == NULL) {
-		printf("%s: failed to allocate scsi transfer array\n",
-		    sc->sc_dev.dv_xname);
-		goto errout;
-	}
-	sc->sc_xs_avail = sc->sc_xr_ndesc;
-
-	/* Bounce buffer maps for unaligned buffers */
-	sc->sc_xs_bb = mallocarray(sc->sc_xr_ndesc, sizeof(struct xbf_dma_mem),
-	    M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (sc->sc_xs_bb == NULL) {
-		printf("%s: failed to allocate bounce buffer maps\n",
-		    sc->sc_dev.dv_xname);
-		goto errout;
-	}
-
-	nsegs = MIN(MAXPHYS / PAGE_SIZE, XBF_MAX_SGE);
-	sc->sc_maxphys = nsegs * PAGE_SIZE;
-
-	for (i = 0; i < sc->sc_xr_ndesc; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, sc->sc_maxphys, nsegs,
-		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT, &sc->sc_xs_map[i]);
-		if (error) {
-			printf("%s: failed to create a memory map for "
-			    "the xfer %d (%d)\n", sc->sc_dev.dv_xname, i,
-			    error);
-			goto errout;
-		}
+	for (i = 0; i < sc->sc_xr_ndesc; i++)
 		sc->sc_xr->xr_desc[i].xrd_req.req_id = i;
+
+	/* The number of contiguous blocks addressable by one descriptor */
+	sc->sc_xrd_nblk = (PAGE_SIZE * XBF_MAX_SGE) / (1 << XBF_SEC_SHIFT);
+
+	if (xbf_alloc_ccbs(sc)) {
+		xbf_ring_destroy(sc);
+		return (-1);
 	}
 
 	return (0);
-
- errout:
- 	xbf_ring_destroy(sc);
- 	return (-1);
 }
 
 void
 xbf_ring_destroy(struct xbf_softc *sc)
 {
-	int i;
-
-	for (i = 0; i < sc->sc_xr_ndesc; i++) {
-		if (sc->sc_xs_map == NULL)
-			break;
-		if (sc->sc_xs_map[i] == NULL)
-			continue;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_xs_map[i], 0, 0,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, sc->sc_xs_map[i]);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_xs_map[i]);
-		sc->sc_xs_map[i] = NULL;
-	}
-
-	free(sc->sc_xs, M_DEVBUF, sc->sc_xr_ndesc *
-	    sizeof(struct scsi_xfer *));
-	sc->sc_xs = NULL;
-
-	free(sc->sc_xs_map, M_DEVBUF, sc->sc_xr_ndesc *
-	    sizeof(bus_dmamap_t));
-	sc->sc_xs_map = NULL;
-
-	free(sc->sc_xs_bb, M_DEVBUF, sc->sc_xr_ndesc *
-	    sizeof(struct xbf_dma_mem));
-	sc->sc_xs_bb = NULL;
-
+	xbf_free_ccbs(sc);
 	xbf_dma_free(sc, &sc->sc_xr_dma);
 	sc->sc_xr = NULL;
 }
@@ -1221,34 +1237,127 @@ xbf_ring_destroy(struct xbf_softc *sc)
 void
 xbf_stop(struct xbf_softc *sc)
 {
-	union xbf_ring_desc *xrd;
-	struct scsi_xfer *xs;
+	struct xbf_ccb *ccb, *nccb;
 	bus_dmamap_t map;
-	int desc;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
 	    sc->sc_xr_dma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD |
 	    BUS_DMASYNC_POSTWRITE);
 
-	for (desc = 0; desc < sc->sc_xr_ndesc; desc++) {
-		xs = sc->sc_xs[desc];
-		if (xs == NULL)
-			continue;
-		xrd = &sc->sc_xr->xr_desc[desc];
-		DPRINTF("%s: aborting desc %d(%llu) op %u\n",
-		    sc->sc_dev.dv_xname, desc, xrd->xrd_rsp.rsp_id,
-		    xrd->xrd_rsp.rsp_op);
-		if (sc->sc_xs_bb[desc].dma_size > 0)
-			map = sc->sc_xs_bb[desc].dma_map;
+	TAILQ_FOREACH_SAFE(ccb, &sc->sc_ccb_sq, ccb_link, nccb) {
+		TAILQ_REMOVE(&sc->sc_ccb_sq, ccb, ccb_link);
+
+		if (ccb->ccb_bbuf.dma_size > 0)
+			map = ccb->ccb_bbuf.dma_map;
 		else
-			map = sc->sc_xs_map[desc];
+			map = ccb->ccb_dmap;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
-		xbf_reclaim_xs(xs, desc);
-		xbf_scsi_done(xs, XS_SELTIMEOUT);
-		sc->sc_xs[desc] = NULL;
+
+		xbf_reclaim_cmd(ccb->ccb_xfer);
+		xbf_scsi_done(ccb->ccb_xfer, XS_SELTIMEOUT);
 	}
 
 	xbf_ring_destroy(sc);
+}
+
+int
+xbf_alloc_ccbs(struct xbf_softc *sc)
+{
+	int i, error;
+
+	TAILQ_INIT(&sc->sc_ccb_fq);
+	TAILQ_INIT(&sc->sc_ccb_sq);
+	mtx_init(&sc->sc_ccb_fqlck, IPL_BIO);
+	mtx_init(&sc->sc_ccb_sqlck, IPL_BIO);
+
+	sc->sc_nccb = sc->sc_xr_ndesc / 2;
+
+	sc->sc_ccbs = mallocarray(sc->sc_nccb, sizeof(struct xbf_ccb),
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
+	if (sc->sc_ccbs == NULL) {
+		printf("%s: failed to allocate CCBs\n", sc->sc_dev.dv_xname);
+		return (-1);
+	}
+
+	for (i = 0; i < sc->sc_nccb; i++) {
+		/*
+		 * Each CCB is set up to use up to 2 descriptors and
+		 * each descriptor can transfer XBF_MAX_SGE number of
+		 * pages.
+		 */
+		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 2 *
+		    XBF_MAX_SGE, PAGE_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT,
+		    &sc->sc_ccbs[i].ccb_dmap);
+		if (error) {
+			printf("%s: failed to create a memory map for "
+			    "the xfer %d (%d)\n", sc->sc_dev.dv_xname, i,
+			    error);
+			goto errout;
+		}
+
+		xbf_put_ccb(sc, &sc->sc_ccbs[i]);
+	}
+
+	scsi_iopool_init(&sc->sc_iopool, sc, xbf_get_ccb, xbf_put_ccb);
+
+	return (0);
+
+ errout:
+	xbf_free_ccbs(sc);
+	return (-1);
+}
+
+void
+xbf_free_ccbs(struct xbf_softc *sc)
+{
+	struct xbf_ccb *ccb;
+	int i;
+
+	for (i = 0; i < sc->sc_nccb; i++) {
+		ccb = &sc->sc_ccbs[i];
+		if (ccb->ccb_dmap == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmap, 0, 0,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmap);
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmap);
+	}
+
+	free(sc->sc_ccbs, M_DEVBUF, sc->sc_nccb * sizeof(struct xbf_ccb));
+	sc->sc_ccbs = NULL;
+	sc->sc_nccb = 0;
+}
+
+void *
+xbf_get_ccb(void *xsc)
+{
+	struct xbf_softc *sc = xsc;
+	struct xbf_ccb *ccb;
+
+	if (sc->sc_state != XBF_CONNECTED &&
+	    sc->sc_state != XBF_CLOSING)
+		return (NULL);
+
+	mtx_enter(&sc->sc_ccb_fqlck);
+	ccb = TAILQ_FIRST(&sc->sc_ccb_fq);
+	if (ccb != NULL)
+		TAILQ_REMOVE(&sc->sc_ccb_fq, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_fqlck);
+
+	return (ccb);
+}
+
+void
+xbf_put_ccb(void *xsc, void *io)
+{
+	struct xbf_softc *sc = xsc;
+	struct xbf_ccb *ccb = io;
+
+	ccb->ccb_xfer = NULL;
+
+	mtx_enter(&sc->sc_ccb_fqlck);
+	TAILQ_INSERT_HEAD(&sc->sc_ccb_fq, ccb, ccb_link);
+	mtx_leave(&sc->sc_ccb_fqlck);
 }
