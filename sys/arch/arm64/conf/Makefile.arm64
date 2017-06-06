@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.10 2017/06/05 15:58:33 deraadt Exp $
+#	$OpenBSD: Makefile.arm64,v 1.11 2017/06/06 02:35:40 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -119,7 +119,7 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
-ld.script: ${_archdir}/conf/ldscript.head ${_archdir}/conf/ldscript.tail
+ld.script: ${_archdir}/conf/kern.ldscript
 	cat ${_archdir}/conf/kern.ldscript | \
 	    sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' > ld.script
