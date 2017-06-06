@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.101 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.102 2017/06/06 13:07:22 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -153,12 +153,12 @@ pipex_iface_init(struct pipex_iface_context *pipex_iface, struct ifnet *ifp)
 	if (pipex_rd_head4 == NULL) {
 		if (!rn_inithead((void **)&pipex_rd_head4,
 		    offsetof(struct sockaddr_in, sin_addr)))
-			panic("rn_inithead0() failed on pipex_init()");
+			panic("rn_inithead() failed on pipex_init()");
 	}
 	if (pipex_rd_head6 == NULL) {
 		if (!rn_inithead((void **)&pipex_rd_head6,
 		    offsetof(struct sockaddr_in6, sin6_addr)))
-			panic("rn_inithead0() failed on pipex_init()");
+			panic("rn_inithead() failed on pipex_init()");
 	}
 
 	/* virtual pipex_session entry for multicast */
