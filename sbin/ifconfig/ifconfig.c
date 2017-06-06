@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.342 2017/06/05 05:10:23 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.343 2017/06/06 04:52:40 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -367,6 +367,10 @@ const struct	cmd {
 	{ "scan",	NEXTARG0,	0,		setifscan },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
+	{ "vnetid",	NEXTARG,	0,		setvnetid },
+	{ "-vnetid",	0,		0,		delvnetid },
+	{ "parent",	NEXTARG,	0,		setifparent },
+	{ "-parent",	1,		0,		delifparent },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
@@ -428,10 +432,6 @@ const struct	cmd {
 	{ "deletetunnel",  0,		0,		deletetunnel } ,
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst } ,
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl } ,
-	{ "vnetid",	NEXTARG,	0,		setvnetid },
-	{ "-vnetid",	0,		0,		delvnetid },
-	{ "parent",	NEXTARG,	0,		setifparent },
-	{ "-parent",	1,		0,		delifparent },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
