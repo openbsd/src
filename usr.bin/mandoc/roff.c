@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.176 2017/06/04 22:43:50 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.177 2017/06/06 15:00:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -187,7 +187,8 @@ static	enum rofferr	 roff_nr(ROFF_ARGS);
 static	enum rofferr	 roff_onearg(ROFF_ARGS);
 static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 				int, int);
-static	enum rofferr	 roff_parsetext(struct buf *, int, int *);
+static	enum rofferr	 roff_parsetext(struct roff *, struct buf *,
+				int, int *);
 static	enum rofferr	 roff_res(struct roff *, struct buf *, int, int);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
 static	enum rofferr	 roff_rr(ROFF_ARGS);
@@ -213,15 +214,16 @@ static	enum rofferr	 roff_userdef(ROFF_ARGS);
 #define	ROFFNUM_WHITE	(1 << 1)  /* Skip whitespace in roff_evalnum(). */
 
 const char *__roff_name[MAN_MAX + 1] = {
-	"br",		"ft",		"ll",		"mc",
-	"sp",		"ta",		"ti",		NULL,
+	"br",		"ce",		"ft",		"ll",
+	"mc",		"sp",		"ta",		"ti",
+	NULL,
 	"ab",		"ad",		"af",		"aln",
 	"als",		"am",		"am1",		"ami",
 	"ami1",		"as",		"as1",		"asciify",
 	"backtrace",	"bd",		"bleedat",	"blm",
         "box",		"boxa",		"bp",		"BP",
 	"break",	"breakchar",	"brnl",		"brp",
-	"brpnl",	"c2",		"cc",		"ce",
+	"brpnl",	"c2",		"cc",
 	"cf",		"cflags",	"ch",		"char",
 	"chop",		"class",	"close",	"CL",
 	"color",	"composite",	"continue",	"cp",
@@ -321,6 +323,7 @@ const	char *const *roff_name = __roff_name;
 
 static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_br, NULL, NULL, 0 },  /* br */
+	{ roff_onearg, NULL, NULL, 0 },  /* ce */
 	{ roff_onearg, NULL, NULL, 0 },  /* ft */
 	{ roff_onearg, NULL, NULL, 0 },  /* ll */
 	{ roff_onearg, NULL, NULL, 0 },  /* mc */
@@ -355,7 +358,6 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* brpnl */
 	{ roff_unsupp, NULL, NULL, 0 },  /* c2 */
 	{ roff_cc, NULL, NULL, 0 },  /* cc */
-	{ roff_line_ignore, NULL, NULL, 0 },  /* ce */
 	{ roff_insec, NULL, NULL, 0 },  /* cf */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* cflags */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* ch */
@@ -602,6 +604,8 @@ static	const struct predef predefs[PREDEFS_MAX] = {
 #include "predefs.in"
 };
 
+static	int	 roffce_lines;	/* number of input lines to center */
+static	struct roff_node *roffce_node;  /* active request */
 static	int	 roffit_lines;  /* number of lines to delay */
 static	char	*roffit_macro;  /* nil-terminated macro line */
 
@@ -1385,7 +1389,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
  * Process text streams.
  */
 static enum rofferr
-roff_parsetext(struct buf *buf, int pos, int *offs)
+roff_parsetext(struct roff *r, struct buf *buf, int pos, int *offs)
 {
 	size_t		 sz;
 	const char	*start;
@@ -1406,6 +1410,16 @@ roff_parsetext(struct buf *buf, int pos, int *offs)
 		return ROFF_REPARSE;
 	} else if (roffit_lines > 1)
 		--roffit_lines;
+
+	if (roffce_node != NULL && buf->buf[pos] != '\0') {
+		if (roffce_lines < 1) {
+			r->man->last = roffce_node;
+			r->man->next = ROFF_NEXT_SIBLING;
+			roffce_lines = 0;
+			roffce_node = NULL;
+		} else
+			roffce_lines--;
+	}
 
 	/* Convert all breakable hyphens into ASCII_HYPH. */
 
@@ -1492,7 +1506,7 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 	if (r->tbl != NULL && ( ! ctl || buf->buf[pos] == '\0'))
 		return tbl_read(r->tbl, ln, buf->buf, ppos);
 	if ( ! ctl)
-		return roff_parsetext(buf, pos, offs);
+		return roff_parsetext(r, buf, pos, offs);
 
 	/* Skip empty request lines. */
 
@@ -1531,6 +1545,16 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 		while (buf->buf[pos] == ' ')
 			pos++;
 		return tbl_read(r->tbl, ln, buf->buf, pos);
+	}
+
+	/* For now, let high level macros abort .ce mode. */
+
+	if (ctl && roffce_node != NULL &&
+	    (t == TOKEN_NONE || t == ROFF_EQ || t == ROFF_TS)) {
+		r->man->last = roffce_node;
+		r->man->next = ROFF_NEXT_SIBLING;
+		roffce_lines = 0;
+		roffce_node = NULL;
 	}
 
 	/*
@@ -2834,10 +2858,16 @@ roff_onearg(ROFF_ARGS)
 {
 	struct roff_node	*n;
 	char			*cp;
+	int			 npos;
 
 	if (r->man->flags & (MAN_BLINE | MAN_ELINE) &&
 	    (tok == ROFF_sp || tok == ROFF_ti))
 		man_breakscope(r->man, tok);
+
+	if (tok == ROFF_ce && roffce_node != NULL) {
+		r->man->last = roffce_node;
+		r->man->next = ROFF_NEXT_SIBLING;
+	}
 
 	roff_elem_alloc(r->man, ln, ppos, tok);
 	n = r->man->last;
@@ -2855,8 +2885,29 @@ roff_onearg(ROFF_ARGS)
 		roff_word_alloc(r->man, ln, pos, buf->buf + pos);
 	}
 
-	n->flags |= NODE_LINE | NODE_VALID | NODE_ENDED;
-	r->man->last = n;
+	if (tok == ROFF_ce) {
+		if (r->man->last->tok == ROFF_ce) {
+			roff_word_alloc(r->man, ln, pos, "1");
+			r->man->last->flags |= NODE_NOSRC;
+		}
+		npos = 0;
+		if (roff_evalnum(r, ln, r->man->last->string, &npos,
+		    &roffce_lines, 0) == 0) {
+			mandoc_vmsg(MANDOCERR_CE_NONUM,
+			    r->parse, ln, pos, "ce %s", buf->buf + pos);
+			roffce_lines = 1;
+		}
+		if (roffce_lines < 1) {
+			r->man->last = r->man->last->parent;
+			roffce_node = NULL;
+			roffce_lines = 0;
+		} else
+			roffce_node = r->man->last->parent;
+	} else {
+		n->flags |= NODE_VALID | NODE_ENDED;
+		r->man->last = n;
+	}
+	n->flags |= NODE_LINE;
 	r->man->next = ROFF_NEXT_SIBLING;
 	return ROFF_IGN;
 }

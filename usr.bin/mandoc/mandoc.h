@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.164 2017/06/03 15:54:09 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.165 2017/06/06 15:00:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -185,6 +185,7 @@ enum	mandocerr {
 	MANDOCERR_BD_FILE, /* NOT IMPLEMENTED: Bd -file */
 	MANDOCERR_BD_NOARG, /* skipping display without arguments: Bd */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item: Bl */
+	MANDOCERR_CE_NONUM, /* argument is not numeric, using 1: ce ... */
 	MANDOCERR_NM_NONAME, /* missing manual name, using "": Nm */
 	MANDOCERR_OS_UNAME, /* uname(3) system call failed, using UNKNOWN */
 	MANDOCERR_ST_BAD, /* unknown standard specifier: St standard */

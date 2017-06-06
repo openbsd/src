@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.115 2017/06/04 22:43:50 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.116 2017/06/06 15:00:56 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -124,6 +124,7 @@ static	void	  print_node(DECL_ARGS);
 
 static	const void_fp roff_manacts[ROFF_MAX] = {
 	pre_br,
+	pre_onearg,
 	pre_ft,
 	pre_onearg,
 	pre_onearg,
@@ -1580,6 +1581,9 @@ pre_onearg(DECL_ARGS)
 	if (n->child != NULL)
 		print_word(n->child->string);
 	outflags |= MMAN_nl;
+	if (n->tok == ROFF_ce)
+		for (n = n->child->next; n != NULL; n = n->next)
+			print_node(meta, n);
 }
 
 static int

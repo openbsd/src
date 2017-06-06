@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.117 2017/06/03 12:16:19 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.118 2017/06/06 15:00:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2017 $
+.Dd $Mdocdate: June 6 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1716,6 +1716,11 @@ whatever mode was active before the block.
 A
 .Ic \&Bl
 macro fails to specify the list type.
+.It Sy "argument is not numeric, using 1"
+.Pq roff
+The argument of a
+.Ic \&ce
+request is not a number.
 .It Sy "missing manual name, using \(dq\(dq"
 .Pq mdoc
 The first call to

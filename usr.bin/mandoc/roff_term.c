@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.7 2017/06/04 22:43:50 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.8 2017/06/06 15:00:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -28,6 +28,7 @@
 typedef	void	(*roff_term_pre_fp)(ROFF_TERM_ARGS);
 
 static	void	  roff_term_pre_br(ROFF_TERM_ARGS);
+static	void	  roff_term_pre_ce(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ft(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ll(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_mc(ROFF_TERM_ARGS);
@@ -37,6 +38,7 @@ static	void	  roff_term_pre_ti(ROFF_TERM_ARGS);
 
 static	const roff_term_pre_fp roff_term_pre_acts[ROFF_MAX] = {
 	roff_term_pre_br,  /* br */
+	roff_term_pre_ce,  /* ce */
 	roff_term_pre_ft,  /* ft */
 	roff_term_pre_ll,  /* ll */
 	roff_term_pre_mc,  /* mc */
@@ -62,6 +64,43 @@ roff_term_pre_br(ROFF_TERM_ARGS)
 		p->rmargin = p->maxrmargin;
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 	}
+}
+
+static void
+roff_term_pre_ce(ROFF_TERM_ARGS)
+{
+	const struct roff_node	*nch;
+	size_t			 len, lm;
+
+	roff_term_pre_br(p, n);
+	lm = p->offset;
+	n = n->child->next;
+	while (n != NULL) {
+		nch = n;
+		len = 0;
+		do {
+			if (n->type == ROFFT_TEXT) {
+				if (len)
+					len++;
+				len += term_strlen(p, nch->string);
+			}
+			nch = nch->next;
+		} while (nch != NULL && (n->type != ROFFT_TEXT ||
+		    (n->flags & NODE_LINE) == 0));
+		p->offset = len >= p->rmargin ? 0 :
+		    lm + len >= p->rmargin ? p->rmargin - len :
+		    (lm + p->rmargin - len) / 2;
+		while (n != nch) {
+			if (n->type == ROFFT_TEXT)
+				term_word(p, n->string);
+			else
+				roff_term_pre(p, n);
+			n = n->next;
+		}
+		p->flags |= TERMP_NOSPACE;
+		term_flushln(p);
+	}
+	p->offset = lm;
 }
 
 static void
