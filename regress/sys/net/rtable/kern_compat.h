@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.5 2016/09/21 07:13:02 mpi Exp $ */
+/* 	$OpenBSD: kern_compat.h,v 1.6 2017/06/06 13:19:29 mpi Exp $ */
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -8,6 +8,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/task.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 
 #include <assert.h>
@@ -56,8 +57,8 @@ struct pool {
 #define rtref(_rt)		((_rt)->rt_refcnt++)
 #define rtfree(_rt)		(assert(--(_rt)->rt_refcnt >= 0))
 
-#define mtx_enter(_mtx)		/* nothing */
-#define mtx_leave(_mtx)		/* nothing */
+#define __mtx_enter(_mtx)	/* nothing */
+#define __mtx_leave(_mtx)	/* nothing */
 
 #define task_add(_tq, _t)	((_t)->t_func((_t)->t_arg))
 
