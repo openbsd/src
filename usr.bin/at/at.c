@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.79 2017/03/18 02:58:54 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.80 2017/06/07 23:36:43 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -217,9 +217,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	if ((fd = newjob(runtimer, queue)) == -1)
 		fatal("unable to create atjob file");
 
-	if (fchown(fd, -1, user_gid) != 0)
-		fatal("fchown");
-
 	/*
 	 * We've successfully created the file; let's set the flag so it
 	 * gets removed in case of an interrupt or error.
@@ -256,7 +253,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	}
 
 	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%lu gid=%lu\n# mail %*s %d\n",
-	    (unsigned long)user_uid, (unsigned long)user_gid,
+	    (unsigned long)user_uid, (unsigned long)spool_gid,
 	    MAX_UNAME, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */

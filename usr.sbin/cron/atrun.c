@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.44 2017/06/07 17:59:36 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.45 2017/06/07 23:36:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -314,6 +314,11 @@ run_job(const atjob *job, int dfd, const char *atfile)
 	}
 	if (sb.st_uid != 0 && sb.st_uid != job->uid) {
 		syslog(LOG_WARNING, "(%s) WRONG FILE OWNER (%s)", pw->pw_name,
+		    atfile);
+		_exit(EXIT_FAILURE);
+	}
+	if (sb.st_gid != cron_gid) {
+		syslog(LOG_WARNING, "(%s) WRONG FILE GROUP (%s)", pw->pw_name,
 		    atfile);
 		_exit(EXIT_FAILURE);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.34 2016/01/11 14:23:50 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.35 2017/06/07 23:36:43 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "pathnames.h"
+#include "globals.h"
 #include "macros.h"
 #include "structs.h"
 #include "funcs.h"
@@ -170,7 +171,8 @@ process_crontab(int dfd, const char *uname, const char *fname,
 {
 	struct passwd *pw = NULL;
 	int crontab_fd = -1;
-	user *u;
+	user *u, *new_u;
+	mode_t tabmask, tabperm;
 
 	/* Note: pw must remain NULL for system crontab (see below). */
 	if (fname[0] != '/' && (pw = getpwnam(uname)) == NULL) {
@@ -196,17 +198,20 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		syslog(LOG_WARNING, "(%s) NOT REGULAR (%s)", uname, fname);
 		goto next_crontab;
 	}
-	if (pw != NULL) {
-		/* Looser permissions on system crontab. */
-		if ((statbuf->st_mode & 077) != 0) {
-			syslog(LOG_WARNING, "(%s) BAD FILE MODE (%s)",
-			    uname, fname);
-			goto next_crontab;
-		}
+	/* Looser permissions on system crontab. */
+	tabmask = pw ? ALLPERMS : (ALLPERMS & ~(S_IWUSR|S_IRGRP|S_IROTH));
+	tabperm = pw ? (S_IRUSR|S_IWUSR) : S_IRUSR;
+	if ((statbuf->st_mode & tabmask) != tabperm) {
+		syslog(LOG_WARNING, "(%s) BAD FILE MODE (%s)", uname, fname);
+		goto next_crontab;
 	}
 	if (statbuf->st_uid != 0 && (pw == NULL ||
 	    statbuf->st_uid != pw->pw_uid || strcmp(uname, pw->pw_name) != 0)) {
 		syslog(LOG_WARNING, "(%s) WRONG FILE OWNER (%s)", uname, fname);
+		goto next_crontab;
+	}
+	if (pw != NULL && statbuf->st_gid != cron_gid) {
+		syslog(LOG_WARNING, "(%s) WRONG FILE GROUP (%s)", uname, fname);
 		goto next_crontab;
 	}
 	if (pw != NULL && statbuf->st_nlink != 1) {
@@ -224,21 +229,21 @@ process_crontab(int dfd, const char *uname, const char *fname,
 			TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 			goto next_crontab;
 		}
-
-		/* before we fall through to the code that will reload
-		 * the user, let's deallocate and unlink the user in
-		 * the old database.  This is more a point of memory
-		 * efficiency than anything else, since all leftover
-		 * users will be deleted from the old database when
-		 * we finish with the crontab...
-		 */
-		TAILQ_REMOVE(&old_db->users, u, entries);
-		free_user(u);
 		syslog(LOG_INFO, "(%s) RELOAD (%s)", uname, fname);
 	}
-	u = load_user(crontab_fd, pw, fname);
-	if (u != NULL) {
-		u->mtime = statbuf->st_mtim;
+
+	new_u = load_user(crontab_fd, pw, fname);
+	if (new_u != NULL) {
+		/* Insert user into the new database and remove from old. */
+		new_u->mtime = statbuf->st_mtim;
+		TAILQ_INSERT_TAIL(&new_db->users, new_u, entries);
+		if (u != NULL) {
+			TAILQ_REMOVE(&old_db->users, u, entries);
+			free_user(u);
+		}
+	} else if (u != NULL) {
+		/* New user crontab failed to load, preserve the old one. */
+		TAILQ_REMOVE(&old_db->users, u, entries);
 		TAILQ_INSERT_TAIL(&new_db->users, u, entries);
 	}
 

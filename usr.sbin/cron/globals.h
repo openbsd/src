@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.13 2015/11/06 23:47:42 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.14 2017/06/07 23:36:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,5 +17,6 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+extern gid_t	cron_gid;
 extern int	LineNumber;
 extern char	*__progname;

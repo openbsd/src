@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.32 2015/11/04 20:28:17 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.33 2017/06/07 23:36:43 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -232,11 +232,8 @@ load_env(char *envstr, FILE *f)
 			break;
 		}
 	}
-	if (state != FINI && !(state == VALUE && !quotechar)) {
-		fseek(f, filepos, SEEK_SET);
-		Set_LineNum(fileline);
-		return (FALSE);
-	}
+	if (state != FINI && !(state == VALUE && !quotechar))
+		goto not_env;
 	if (state == VALUE) {
 		/* End of unquoted value: trim trailing whitespace */
 		c = val + strlen(val);
@@ -251,6 +248,10 @@ load_env(char *envstr, FILE *f)
 	 * name and val fields.  Still, it doesn't hurt to be careful...
 	 */
 	if (snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val) >= MAX_ENVSTR)
-		return (FALSE);
+		goto not_env;
 	return (TRUE);
+ not_env:
+	fseek(f, filepos, SEEK_SET);
+	Set_LineNum(fileline);
+	return (FALSE);
 }

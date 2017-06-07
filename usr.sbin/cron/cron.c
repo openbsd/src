@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.75 2017/06/05 01:42:45 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.76 2017/06/07 23:36:43 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -67,6 +67,7 @@ static	at_db			*at_database;
 static	double			batch_maxload = BATCH_MAXLOAD;
 static	int			NoFork;
 static	time_t			StartTime;
+	gid_t			cron_gid;
 
 static void
 usage(void)
@@ -81,6 +82,7 @@ main(int argc, char *argv[])
 {
 	struct sigaction sact;
 	sigset_t blocked, omask;
+	struct group *grp;
 
 	setlocale(LC_ALL, "");
 
@@ -106,6 +108,13 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "(CRON) PLEDGE (%m)");
 		exit(EXIT_FAILURE);
 	}
+
+	if ((grp = getgrnam(CRON_GROUP)) == NULL) {
+		warnx("can't find cron group %s", CRON_GROUP);
+		syslog(LOG_ERR, "(CRON) DEATH (can't find cron group)");
+		exit(EXIT_FAILURE);
+	}
+	cron_gid = grp->gr_gid;
 
 	cronSock = open_socket();
 
@@ -420,11 +429,7 @@ open_socket(void)
 {
 	int		   sock, rc;
 	mode_t		   omask;
-	struct group *grp;
 	struct sockaddr_un s_un;
-
-	if ((grp = getgrnam(CRON_GROUP)) == NULL)
-		syslog(LOG_WARNING, "(CRON) STARTUP (can't find cron group)");
 
 	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (sock == -1) {
@@ -462,12 +467,11 @@ open_socket(void)
 		syslog(LOG_ERR, "(CRON) DEATH (can't listen on socket)");
 		exit(EXIT_FAILURE);
 	}
-	if (grp != NULL) {
-		/* pledge won't let us change files to a foreign group. */
-		if (setegid(grp->gr_gid) == 0) {
-			chown(s_un.sun_path, -1, grp->gr_gid);
-			(void)setegid(getgid());
-		}
+
+	/* pledge won't let us change files to a foreign group. */
+	if (setegid(cron_gid) == 0) {
+		chown(s_un.sun_path, -1, cron_gid);
+		(void)setegid(getgid());
 	}
 	chmod(s_un.sun_path, 0660);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.19 2016/08/30 14:08:16 millert Exp $	*/
+/*	$OpenBSD: user.c,v 1.20 2017/06/07 23:36:43 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,7 @@
 #include "macros.h"
 #include "structs.h"
 #include "funcs.h"
+#include "globals.h"
 
 void
 free_user(user *u)
@@ -46,6 +47,16 @@ free_user(user *u)
 	free(u);
 }
 
+static int ParseErrorCount;
+static const char *CrontabFilename;
+
+static void
+parse_error(const char *msg)
+{
+	ParseErrorCount++;
+	syslog(LOG_ERR, "(CRON) %s:%d (%s)", CrontabFilename, LineNumber, msg);
+}
+
 user *
 load_user(int crontab_fd, struct passwd	*pw, const char *name)
 {
@@ -57,9 +68,11 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name)
 	char **envp = NULL, **tenvp;
 
 	if (!(file = fdopen(crontab_fd, "r"))) {
-		syslog(LOG_ERR, "(%s) FDOPEN (%m)", pw->pw_name);
+		syslog(LOG_ERR, "(%s) FDOPEN (%m)", name);
 		return (NULL);
 	}
+	CrontabFilename = name;
+	LineNumber = 0;
 
 	/* file is open.  build user entry, then read the crontab file.
 	 */
@@ -86,13 +99,24 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name)
 
 	/* load the crontab
 	 */
+	ParseErrorCount = 0;
 	while ((status = load_env(envstr, file)) >= 0) {
 		switch (status) {
 		case FALSE:
 			/* Not an env variable, parse as crontab entry. */
-			e = load_entry(file, NULL, pw, envp);
-			if (e)
+			e = load_entry(file, parse_error, pw, envp);
+			if (e == NULL) {
+				/* Parse error, ignore for non-root entries */
+				if (pw != NULL) {
+					save_errno = errno;
+					free_user(u);
+					u = NULL;
+					errno = save_errno;
+					goto done;
+				}
+			} else {
 				SLIST_INSERT_HEAD(&u->crontab, e, entries);
+			}
 			break;
 		case TRUE:
 			if ((tenvp = env_set(envp, envstr)) == NULL) {
