@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.14 2016/11/28 10:12:50 reyk Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.15 2017/06/07 16:47:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -581,8 +581,7 @@ bridge_ifcost(const char *ifname, const char *val)
 
 	errno = 0;
 	v = strtoul(val, &endptr, 0);
-	if (val[0] == '\0' || endptr[0] != '\0' ||
-	    v < 0 || v > 0xffffffffUL ||
+	if (val[0] == '\0' || endptr[0] != '\0' || v > 0xffffffffUL ||
 	    (errno == ERANGE && v == ULONG_MAX))
 		errx(1, "invalid arg for ifcost: %s", val);
 
