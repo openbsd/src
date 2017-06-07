@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.19 2017/05/30 17:56:47 tedu Exp $	*/
+/*	$OpenBSD: vm.c,v 1.20 2017/06/07 14:53:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1343,6 +1343,27 @@ vcpu_assert_pic_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 		ret = pthread_mutex_unlock(&vcpu_run_mtx[vcpu_id]);
 		if (ret)
 			fatalx("%s: can't unlock vcpu mtx (%d)", __func__, ret);
+	}
+}
+
+/*
+ * vcpu_deassert_pic_irq
+ *
+ * Clears the specified IRQ on the supplied vcpu/vm
+ *
+ * Parameters:
+ *  vm_id: VM ID to clear in
+ *  vcpu_id: VCPU ID to clear in
+ *  irq: IRQ to clear
+ */
+void
+vcpu_deassert_pic_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
+{
+	i8259_deassert_irq(irq);
+
+	if (!i8259_is_pending()) {
+		if (vcpu_pic_intr(vm_id, vcpu_id, 0))
+			fatalx("%s: can't deassert INTR", __func__);
 	}
 }
 
