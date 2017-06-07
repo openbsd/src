@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.67 2017/06/04 22:43:50 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.68 2017/06/07 02:13:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,7 +62,8 @@ struct	termp {
 	size_t		  maxrmargin;	/* Max right margin. */
 	size_t		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
-	size_t		  col;		/* Bytes in buf. */
+	size_t		  col;		/* Byte position in buf. */
+	size_t		  lastcol;	/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See termp_flushln(). */
 	size_t		  minbl;	/* Minimum blanks before next field. */
