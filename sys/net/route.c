@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.357 2017/05/27 09:51:18 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.358 2017/06/07 13:28:02 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 {
 	struct rtentry *nhrt;
 
-	KERNEL_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED();
 
 	KASSERT(ISSET(rt->rt_flags, RTF_GATEWAY));
 
@@ -442,7 +442,7 @@ rt_putgwroute(struct rtentry *rt)
 {
 	struct rtentry *nhrt = rt->rt_gwroute;
 
-	KERNEL_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED();
 
 	if (!ISSET(rt->rt_flags, RTF_GATEWAY) || nhrt == NULL)
 		return;
@@ -624,7 +624,9 @@ out:
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_AUTHOR] = src;
+	KERNEL_LOCK();
 	rtm_miss(RTM_REDIRECT, &info, flags, prio, ifidx, error, rdomain);
+	KERNEL_UNLOCK();
 }
 
 /*
@@ -653,8 +655,10 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	info.rti_flags = rt->rt_flags;
 	ifidx = rt->rt_ifidx;
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
+	KERNEL_LOCK();
 	rtm_miss(RTM_DELETE, &info, info.rti_flags, rt->rt_priority, ifidx,
 	    error, tableid);
+	KERNEL_UNLOCK();
 	if (error == 0)
 		rtfree(rt);
 	return (error);
