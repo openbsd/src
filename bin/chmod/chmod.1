@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.41 2015/12/31 23:38:16 guenther Exp $
+.\"	$OpenBSD: chmod.1,v 1.42 2017/06/07 09:41:57 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: December 31 2015 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -287,15 +287,6 @@ Execute/search bits.
 .It X
 The execute/search bits if the file is a directory or any of the
 execute/search bits are set in the original (unmodified) mode.
-Operations with the
-.Ar perm
-symbol
-.Sq X
-are only meaningful in conjunction with the
-.Ar op
-symbol
-.Sq + ,
-and are ignored in all other cases.
 .It u
 User permission bits in the mode of the original file.
 .It g
@@ -333,7 +324,7 @@ Deny write permission to group and others:
 Set the read and write permissions to the usual defaults, but
 retain any execute permissions that are currently set:
 .Pp
-.Dl $ chmod =rw,+X file
+.Dl $ chmod =rwX file
 .Pp
 Make a directory or file searchable/executable by everyone if it is
 already searchable/executable by anyone:
