@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.77 2017/05/27 18:50:53 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.78 2017/06/07 13:41:02 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -292,10 +292,18 @@ sounlock(int s)
 void
 soassertlocked(struct socket *so)
 {
-	if ((so->so_proto->pr_domain->dom_family != PF_LOCAL) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
-	    (so->so_proto->pr_domain->dom_family != PF_KEY))
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
 		NET_ASSERT_LOCKED();
+		break;
+	case PF_LOCAL:
+	case PF_ROUTE:
+	case PF_KEY:
+	default:
+		KERNEL_ASSERT_LOCKED();
+		break;
+	}
 }
 
 int
