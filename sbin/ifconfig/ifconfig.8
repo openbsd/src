@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.282 2017/05/12 15:11:02 schwarze Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.283 2017/06/07 09:46:32 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 12 2017 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1666,46 +1666,48 @@ device will try to establish a data connection with the service provider.
 .Bk -words
 .Nm ifconfig
 .Ar vlan-interface
-.Op Cm vlan Ar vlan-tag
-.Op Oo Fl Oc Ns Cm vlandev Ar parent-interface
+.Oo Fl Oc Ns Cm parent Ar parent-interface
+.Oo Fl Oc Ns Cm vnetid Ar vlan-tag
 .Ek
 .nr nS 0
 .Pp
-The following options are available for a
+The following options are available for
 .Xr vlan 4
-interface:
-.Bl -tag -width Ds
-.It Cm vlan Ar vlan-tag
-Set the vlan tag value
-to
-.Ar vlan-tag .
-This value is a 12-bit number which is used to create an 802.1Q
-vlan header for packets sent from the vlan interface.
-This value cannot be changed once it is set for an interface.
-.It Cm vlandev Ar parent-interface
-Associate with interface
-.Ar parent-interface .
-Packets transmitted through the vlan interface will be
-diverted to the specified interface
-.Ar parent-interface
-with 802.1Q vlan tagging.
-Packets with 802.1Q tagging received
-by the parent interface with the correct vlan tag will be diverted to
-the associated vlan pseudo-device.
-The vlan interface is assigned a
-copy of the parent interface's flags and the parent's Ethernet address.
-If
-.Cm vlandev
 and
-.Cm vlan
-are not set at the same time, the vlan tag will be inferred from
-the interface name, for instance
-.Cm vlan5
-will be assigned 802.1Q tag 5.
-.It Cm -vlandev
+.Xr svlan 4
+VLAN interfaces:
+.Bl -tag -width Ds
+.It Cm parent Ar parent-interface
+Associate the VLAN interface with the interface
+.Ar parent-interface .
+Packets transmitted on
+.Xr vlan 4
+or
+.Xr svlan 4
+interfaces will be tagged with 802.1Q or 802.1AD headers respectively
+and transmitted on the specified parent interface.
+Packets with 802.1Q or 802.1AD tags received
+by the parent interface with the specified VLAN tag will be diverted to
+the associated VLAN interface.
+Unless a custom Ethernet address is assigned to the VLAN interface,
+it will inherit a copy of the parent interface's Ethernet address.
+.It Cm -parent
 Disassociate from the parent interface.
-This breaks the link between the vlan interface and its parent,
-clears its vlan tag, flags, and link address, and shuts the interface down.
+This breaks the link between the VLAN interface and its parent.
+.It Cm vnetid Ar vlan-tag
+Set the VLAN tag value to
+.Ar vlan-tag .
+This value is a 12-bit number which is used in the 802.1Q or 802.1AD
+headers in packets handled by
+.Xr vlan 4
+or
+.Xr svlan 4
+interfaces respectively.
+Valid tag values are from 1 to 4095 inclusive.
+.It Cm -vnetid
+Clear the tag value.
+Packets on a VLAN interface without a tag set will use a value of
+0 in their headers.
 .El
 .Sh EXAMPLES
 Assign the
