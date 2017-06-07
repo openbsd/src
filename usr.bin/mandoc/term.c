@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.126 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.127 2017/06/07 20:01:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,7 +93,6 @@ term_end(struct termp *p)
 void
 term_flushln(struct termp *p)
 {
-	size_t		 i;     /* current input position in p->tcol->buf */
 	size_t		 vis;   /* current visual position on output */
 	size_t		 vbl;   /* number of blanks to prepend to output */
 	size_t		 vend;	/* end of word visual position on output */
@@ -114,20 +113,24 @@ term_flushln(struct termp *p)
 	    p->maxrmargin > p->viscol + vbl ?
 	    p->maxrmargin - p->viscol - vbl : 0;
 	vis = vend = 0;
-	i = 0;
 
-	while (i < p->lastcol) {
+	if (p->lasttcol == 0)
+		p->tcol->col = 0;
+	while (p->tcol->col < p->lastcol) {
+
 		/*
 		 * Handle literal tab characters: collapse all
 		 * subsequent tabs into a single huge set of spaces.
 		 */
+
 		ntab = 0;
-		while (i < p->lastcol && p->tcol->buf[i] == '\t') {
+		while (p->tcol->col < p->lastcol &&
+		    p->tcol->buf[p->tcol->col] == '\t') {
 			vend = term_tab_next(vis);
 			vbl += vend - vis;
 			vis = vend;
 			ntab++;
-			i++;
+			p->tcol->col++;
 		}
 
 		/*
@@ -137,7 +140,8 @@ term_flushln(struct termp *p)
 		 * space is printed according to regular spacing rules).
 		 */
 
-		for (j = i, jhy = 0; j < p->lastcol; j++) {
+		jhy = 0;
+		for (j = p->tcol->col; j < p->lastcol; j++) {
 			if (p->tcol->buf[j] == ' ' || p->tcol->buf[j] == '\t')
 				break;
 
@@ -169,10 +173,14 @@ term_flushln(struct termp *p)
 		 * Find out whether we would exceed the right margin.
 		 * If so, break to the next line.
 		 */
-		if (vend > bp && 0 == jhy && vis > 0 &&
+
+		if (vend > bp && jhy == 0 && vis > 0 &&
 		    (p->flags & TERMP_BRNEVER) == 0) {
-			vend -= vis;
+			if (p->lasttcol)
+				return;
+
 			endline(p);
+			vend -= vis;
 
 			/* Use pending tabs on the new line. */
 
@@ -192,27 +200,30 @@ term_flushln(struct termp *p)
 			    p->maxrmargin > vbl ?  p->maxrmargin - vbl : 0;
 		}
 
-		/* Write out the [remaining] word. */
-		for ( ; i < p->lastcol; i++) {
-			if (vend > bp && jhy > 0 && i > jhy)
+		/*
+		 * Write out the rest of the word.
+		 */
+
+		for ( ; p->tcol->col < p->lastcol; p->tcol->col++) {
+			if (vend > bp && jhy > 0 && p->tcol->col > jhy)
 				break;
-			if (p->tcol->buf[i] == '\t')
+			if (p->tcol->buf[p->tcol->col] == '\t')
 				break;
-			if (p->tcol->buf[i] == ' ') {
-				j = i;
-				while (i < p->lastcol &&
-				    p->tcol->buf[i] == ' ')
-					i++;
-				dv = (i - j) * (*p->width)(p, ' ');
+			if (p->tcol->buf[p->tcol->col] == ' ') {
+				j = p->tcol->col;
+				while (p->tcol->col < p->lastcol &&
+				    p->tcol->buf[p->tcol->col] == ' ')
+					p->tcol->col++;
+				dv = (p->tcol->col - j) * (*p->width)(p, ' ');
 				vbl += dv;
 				vend += dv;
 				break;
 			}
-			if (p->tcol->buf[i] == ASCII_NBRSP) {
+			if (p->tcol->buf[p->tcol->col] == ASCII_NBRSP) {
 				vbl += (*p->width)(p, ' ');
 				continue;
 			}
-			if (p->tcol->buf[i] == ASCII_BREAK)
+			if (p->tcol->buf[p->tcol->col] == ASCII_BREAK)
 				continue;
 
 			/*
@@ -226,11 +237,13 @@ term_flushln(struct termp *p)
 				vbl = 0;
 			}
 
-			(*p->letter)(p, p->tcol->buf[i]);
-			if (p->tcol->buf[i] == '\b')
-				p->viscol -= (*p->width)(p, p->tcol->buf[i-1]);
+			(*p->letter)(p, p->tcol->buf[p->tcol->col]);
+			if (p->tcol->buf[p->tcol->col] == '\b')
+				p->viscol -= (*p->width)(p,
+				    p->tcol->buf[p->tcol->col - 1]);
 			else
-				p->viscol += (*p->width)(p, p->tcol->buf[i]);
+				p->viscol += (*p->width)(p,
+				    p->tcol->buf[p->tcol->col]);
 		}
 		vis = vend;
 	}
@@ -239,6 +252,7 @@ term_flushln(struct termp *p)
 	 * If there was trailing white space, it was not printed;
 	 * so reset the cursor position accordingly.
 	 */
+
 	if (vis > vbl)
 		vis -= vbl;
 	else
@@ -249,6 +263,7 @@ term_flushln(struct termp *p)
 	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE | TERMP_NOPAD);
 
 	/* Trailing whitespace is significant in some columns. */
+
 	if (vis && vbl && (TERMP_BRTRSP & p->flags))
 		vis += vbl;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.69 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.70 2017/06/07 20:01:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,6 +52,7 @@ struct	termp_tbl {
 struct	termp_col {
 	int		 *buf;		/* Output buffer. */
 	size_t		  maxcols;	/* Allocated bytes in buf. */
+	size_t		  col;		/* Byte in buf to be written. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  offset;	/* Current left margin. */
 };
@@ -61,6 +62,7 @@ struct	termp {
 	struct termp_col *tcols;	/* Array of table columns. */
 	struct termp_col *tcol;		/* Current table column. */
 	size_t		  maxtcol;	/* Allocated table columns. */
+	size_t		  lasttcol;	/* Last column currently used. */
 	size_t		  line;		/* Current output line number. */
 	size_t		  defindent;	/* Default indent for text. */
 	size_t		  defrmargin;	/* Right margin of the device. */
@@ -69,7 +71,7 @@ struct	termp {
 	size_t		  col;		/* Byte position in buf. */
 	size_t		  lastcol;	/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
-	size_t		  trailspace;	/* See termp_flushln(). */
+	size_t		  trailspace;	/* See term_flushln(). */
 	size_t		  minbl;	/* Minimum blanks before next field. */
 	int		  synopsisonly; /* Print the synopsis only. */
 	int		  mdocstyle;	/* Imitate mdoc(7) output. */
