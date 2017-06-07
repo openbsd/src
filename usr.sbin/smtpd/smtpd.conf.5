@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.172 2017/05/28 11:17:33 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.173 2017/06/07 13:25:18 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 28 2017 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -653,34 +653,6 @@ of inflight envelopes falls below
 .Ar num .
 Changing the default value might degrade performance.
 .It Xo
-.Ic listen on socket
-.Op Ic mask-source
-.Xc
-Specify a
-.Ic socket
-to listen on for incoming connections.
-This directive is used to modify the behavior of the listener handling
-messages submitted through the local enqueuer, for example via the
-.Xr mail 1
-utility.
-It is optional: if unspecified then
-.Xr smtpd 8
-will simply listen for connections on the
-.Ic socket
-as if it was configured with no option.
-Clients connecting through the
-.Ic socket
-will always be tagged with the 'local'
-.Ic tag .
-.Pp
-If the
-.Ic mask-source
-parameter is used, then the listener will skip the
-.Ic from
-part when prepending the
-.Dq Received
-header.
-.It Xo
 .Bk -words
 .Ic listen on Ar interface
 .Op Ar family
@@ -823,6 +795,27 @@ If the
 .Ic no-dsn
 parameter is used, DSN (Delivery Status Notification) extension will not
 be enabled.
+.It Xo
+.Ic listen on socket
+.Op Ic mask-source
+.Xc
+Modify behaviour for the listener which handles messages
+submitted through the local enqueuer,
+such as the
+.Xr mail 1
+utility.
+Clients connecting in this manner are tagged with the "local"
+.Ic tag .
+.Pp
+Parameters available are:
+.Bl -tag -width "mask-source"
+.It Ic mask-source
+Skip the
+.Ic from
+part when prepending the
+.Dq Received
+header.
+.El
 .It Ic max-message-size Ar n
 Specify a maximum message size of
 .Ar n
