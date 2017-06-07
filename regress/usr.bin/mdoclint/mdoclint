@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.66 2017/06/03 12:23:13 schwarze Exp $
-# $NetBSD: mdoclint,v 1.74 2017/06/01 14:38:50 wiz Exp $
+# $OpenBSD: mdoclint,v 1.67 2017/06/07 21:05:19 schwarze Exp $
+# $NetBSD: mdoclint,v 1.76 2017/06/07 19:17:29 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -433,12 +433,6 @@ sub process_line
 	}
 	if (/^\.Os\s+(.+)/o) {
 		$s->warning(".Os used with argument `$1'") if $opt_o;
-	}
-
-	if (/(\w\w)\.\s+[A-Z]/o and not /^.%T/ and not $s->{inliteral}) {
-		if ("$1" ne "St") {
-			$s->warning("new sentence, new line: `$_'") if $opt_p;
-		}
 	}
 	if (/^\... .*[^\s][\.();,\[\]\{\}:]$/o
 	    and not /\s\.\.\.$/o and not /\\&.$/o) {

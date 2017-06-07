@@ -1,5 +1,5 @@
-.\" $OpenBSD: mdoclint.1,v 1.24 2017/06/03 12:23:13 schwarze Exp $
-.\" $NetBSD: mdoclint.1,v 1.20 2017/06/01 14:38:50 wiz Exp $
+.\" $OpenBSD: mdoclint.1,v 1.25 2017/06/07 21:05:19 schwarze Exp $
+.\" $NetBSD: mdoclint.1,v 1.22 2017/06/07 19:17:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 3 2017 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -69,9 +69,8 @@ least in the base system, because on
 .Ox
 the current version is default).
 .It Fl p
-Warn about possible punctuation problems at the end of macro arguments,
-abuse of .Ns to get punctuation directly next to a word,
-and sentences not starting on a new line.
+Warn about possible punctuation problems at the end of macro arguments
+and abuse of .Ns to get punctuation directly next to a word.
 .It Fl r
 Warn about missing RCS Id.
 .It Fl S
