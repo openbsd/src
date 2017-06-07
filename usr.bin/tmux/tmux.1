@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.558 2017/06/04 08:25:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.559 2017/06/07 14:37:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2017 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1365,6 +1365,8 @@ The following keys may be used in client mode:
 .It Li "Enter" Ta "Choose selected client"
 .It Li "Up" Ta "Select previous client"
 .It Li "Down" Ta "Select next client"
+.It Li "C-s" Ta "Search by name"
+.It Li "n" Ta "Repeat last search"
 .It Li "t" Ta "Toggle if client is tagged"
 .It Li "T" Ta "Tag no clients"
 .It Li "C-t" Ta "Tag all clients"
@@ -1406,6 +1408,8 @@ The following keys may be used in tree mode:
 .It Li "Enter" Ta "Choose selected item"
 .It Li "Up" Ta "Select previous item"
 .It Li "Down" Ta "Select next item"
+.It Li "C-s" Ta "Search by name"
+.It Li "n" Ta "Repeat last search"
 .It Li "t" Ta "Toggle if item is tagged"
 .It Li "T" Ta "Tag no items"
 .It Li "C-t" Ta "Tag all items"
@@ -3958,6 +3962,8 @@ The following keys may be used in buffer mode:
 .It Li "Enter" Ta "Choose selected buffer"
 .It Li "Up" Ta "Select previous buffer"
 .It Li "Down" Ta "Select next buffer"
+.It Li "C-s" Ta "Search by name or content"
+.It Li "n" Ta "Repeat last search"
 .It Li "t" Ta "Toggle if buffer is tagged"
 .It Li "T" Ta "Tag no buffers"
 .It Li "C-t" Ta "Tag all buffers"
