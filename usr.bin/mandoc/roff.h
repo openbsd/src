@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.33 2017/06/07 00:50:30 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.34 2017/06/07 23:29:31 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -24,6 +24,12 @@ enum	roff_macroset {
 	MACROSET_NONE = 0,
 	MACROSET_MDOC,
 	MACROSET_MAN
+};
+
+enum	mdoc_os {
+	MDOC_OS_OTHER = 0,
+	MDOC_OS_NETBSD,
+	MDOC_OS_OPENBSD
 };
 
 enum	roff_sec {
@@ -528,6 +534,7 @@ struct	roff_meta {
 	char		 *name;    /* Leading manual name. */
 	char		 *date;    /* Normalized date. */
 	int		  hasbody; /* Document is not empty. */
+	enum mdoc_os	  os_e;    /* Operating system. */
 };
 
 struct	roff_man {

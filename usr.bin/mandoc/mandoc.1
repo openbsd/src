@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.118 2017/06/06 15:00:56 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.119 2017/06/07 23:29:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2017 $
+.Dd $Mdocdate: June 7 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -75,6 +75,11 @@ and for the
 .Xr man 7
 .Ic \&TH
 macro.
+This can also be used to perform style checks according to the
+conventions of one operating system while running on a different
+operating system; see
+.Sx Style messages
+for details.
 .It Fl K Ar encoding
 Specify the input encoding.
 The supported
@@ -743,6 +748,15 @@ option or
 .Fl T Cm lint
 output mode.
 .Ss Style messages
+As indicated below, some style checks are only performed if a
+specific operating system name occurs in the arguments of the
+.Ic \&Os
+macro, of the
+.Fl Ios
+command line option, or, if neither are present, in the return value
+of the
+.Xr uname 3
+function.
 .Bl -ohang
 .It Sy "useless macro"
 .Pq mdoc
@@ -763,6 +777,22 @@ macro that could be represented using
 .Ic \&Fx ,
 or
 .Ic \&Dx .
+.It Sy "errnos out of order"
+.Pq mdoc, Nx
+The
+.Ic \&Er
+items in a
+.Ic \&Bl
+list are not in alphabetical order.
+.It Sy "duplicate errno"
+.Pq mdoc, Nx
+A
+.Ic \&Bl
+list contains two consecutive
+.Ic \&It
+entries describing the same
+.Ic \&Er
+number.
 .It Sy "description line ends with a full stop"
 .Pq mdoc
 Do not use punctuation at the end of an
