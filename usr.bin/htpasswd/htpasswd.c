@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.15 2015/11/05 20:07:15 florian Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.16 2017/06/07 09:11:52 awolk Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -47,7 +47,7 @@ int nagcount;
 int
 main(int argc, char** argv)
 {
-	char salt[_PASSWORD_LEN], tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
+	char tmpl[sizeof("/tmp/htpasswd-XXXXXXXXXX")];
 	char hash[_PASSWORD_LEN], pass[1024], pass2[1024];
 	char *line = NULL, *login = NULL, *tok;
 	int c, fd, loginlen, batch = 0;
@@ -133,10 +133,8 @@ main(int argc, char** argv)
 		explicit_bzero(pass2, sizeof(pass2));
 	}
 
-	if (strlcpy(salt, bcrypt_gensalt(8), sizeof(salt)) >= sizeof(salt))
-		errx(1, "salt too long");
-	if (strlcpy(hash, bcrypt(pass, salt), sizeof(hash)) >= sizeof(hash))
-		errx(1, "hash too long");
+	if (crypt_newhash(pass, "bcrypt,a", hash, sizeof(hash)) != 0)
+		err(1, "can't generate hash");
 	explicit_bzero(pass, sizeof(pass));
 
 	if (file == NULL)
