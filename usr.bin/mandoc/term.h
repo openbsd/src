@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.68 2017/06/07 02:13:52 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.69 2017/06/07 17:38:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,24 +49,30 @@ struct	termp_tbl {
 	int		  decimal;	/* decimal point position */
 };
 
+struct	termp_col {
+	int		 *buf;		/* Output buffer. */
+	size_t		  maxcols;	/* Allocated bytes in buf. */
+	size_t		  rmargin;	/* Current right margin. */
+	size_t		  offset;	/* Current left margin. */
+};
+
 struct	termp {
-	enum termtype	  type;
-	struct rofftbl	  tbl;		/* table configuration */
-	int		  synopsisonly; /* print the synopsis only */
-	int		  mdocstyle;	/* imitate mdoc(7) output */
+	struct rofftbl	  tbl;		/* Table configuration. */
+	struct termp_col *tcols;	/* Array of table columns. */
+	struct termp_col *tcol;		/* Current table column. */
+	size_t		  maxtcol;	/* Allocated table columns. */
 	size_t		  line;		/* Current output line number. */
 	size_t		  defindent;	/* Default indent for text. */
 	size_t		  defrmargin;	/* Right margin of the device. */
 	size_t		  lastrmargin;	/* Right margin before the last ll. */
-	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
-	size_t		  maxcols;	/* Max size of buf. */
-	size_t		  offset;	/* Margin offest. */
 	size_t		  col;		/* Byte position in buf. */
 	size_t		  lastcol;	/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See termp_flushln(). */
 	size_t		  minbl;	/* Minimum blanks before next field. */
+	int		  synopsisonly; /* Print the synopsis only. */
+	int		  mdocstyle;	/* Imitate mdoc(7) output. */
 	int		  ti;		/* Temporary indent for one line. */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
@@ -90,7 +96,7 @@ struct	termp {
 #define	TERMP_NOBUF	 (1 << 17)	/* Bypass output buffer. */
 #define	TERMP_NEWMC	 (1 << 18)	/* No .mc printed yet. */
 #define	TERMP_ENDMC	 (1 << 19)	/* Next break ends .mc mode. */
-	int		 *buf;		/* Output buffer. */
+	enum termtype	  type;		/* Terminal, PS, or PDF. */
 	enum termenc	  enc;		/* Type of encoding. */
 	enum termfont	  fontl;	/* Last font set. */
 	enum termfont	 *fontq;	/* Symmetric fonts. */

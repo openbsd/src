@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.260 2017/06/04 22:43:50 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.261 2017/06/07 17:38:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -257,7 +257,7 @@ terminal_mdoc(void *arg, const struct roff_man *mdoc)
 	size_t			 save_defindent;
 
 	p = (struct termp *)arg;
-	p->rmargin = p->maxrmargin = p->defrmargin;
+	p->tcol->rmargin = p->maxrmargin = p->defrmargin;
 	term_tab_set(p, NULL);
 	term_tab_set(p, "T");
 	term_tab_set(p, ".5i");
@@ -314,8 +314,8 @@ print_mdoc_node(DECL_ARGS)
 		return;
 
 	chld = 1;
-	offset = p->offset;
-	rmargin = p->rmargin;
+	offset = p->tcol->offset;
+	rmargin = p->tcol->rmargin;
 	n->flags &= ~NODE_ENDED;
 	n->prev_font = p->fonti;
 
@@ -405,8 +405,8 @@ print_mdoc_node(DECL_ARGS)
 		p->flags |= TERMP_SENTENCE;
 
 	if (n->type != ROFFT_TEXT)
-		p->offset = offset;
-	p->rmargin = rmargin;
+		p->tcol->offset = offset;
+	p->tcol->rmargin = rmargin;
 }
 
 static void
@@ -426,9 +426,9 @@ print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 
 	term_vspace(p);
 
-	p->offset = 0;
+	p->tcol->offset = 0;
 	sz = term_strlen(p, meta->date);
-	p->rmargin = p->maxrmargin > sz ?
+	p->tcol->rmargin = p->maxrmargin > sz ?
 	    (p->maxrmargin + term_len(p, 1) - sz) / 2 : 0;
 	p->trailspace = 1;
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
@@ -436,16 +436,16 @@ print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 	term_word(p, meta->os);
 	term_flushln(p);
 
-	p->offset = p->rmargin;
+	p->tcol->offset = p->tcol->rmargin;
 	sz = term_strlen(p, meta->os);
-	p->rmargin = p->maxrmargin > sz ? p->maxrmargin - sz : 0;
+	p->tcol->rmargin = p->maxrmargin > sz ? p->maxrmargin - sz : 0;
 	p->flags |= TERMP_NOSPACE;
 
 	term_word(p, meta->date);
 	term_flushln(p);
 
-	p->offset = p->rmargin;
-	p->rmargin = p->maxrmargin;
+	p->tcol->offset = p->tcol->rmargin;
+	p->tcol->rmargin = p->maxrmargin;
 	p->trailspace = 0;
 	p->flags &= ~TERMP_NOBREAK;
 	p->flags |= TERMP_NOSPACE;
@@ -453,8 +453,8 @@ print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 	term_word(p, meta->os);
 	term_flushln(p);
 
-	p->offset = 0;
-	p->rmargin = p->maxrmargin;
+	p->tcol->offset = 0;
+	p->tcol->rmargin = p->maxrmargin;
 	p->flags = 0;
 }
 
@@ -494,8 +494,8 @@ print_mdoc_head(struct termp *p, const struct roff_meta *meta)
 
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
 	p->trailspace = 1;
-	p->offset = 0;
-	p->rmargin = 2 * (titlen+1) + vollen < p->maxrmargin ?
+	p->tcol->offset = 0;
+	p->tcol->rmargin = 2 * (titlen+1) + vollen < p->maxrmargin ?
 	    (p->maxrmargin - vollen + term_len(p, 1)) / 2 :
 	    vollen < p->maxrmargin ?  p->maxrmargin - vollen : 0;
 
@@ -503,26 +503,26 @@ print_mdoc_head(struct termp *p, const struct roff_meta *meta)
 	term_flushln(p);
 
 	p->flags |= TERMP_NOSPACE;
-	p->offset = p->rmargin;
-	p->rmargin = p->offset + vollen + titlen < p->maxrmargin ?
-	    p->maxrmargin - titlen : p->maxrmargin;
+	p->tcol->offset = p->tcol->rmargin;
+	p->tcol->rmargin = p->tcol->offset + vollen + titlen <
+	    p->maxrmargin ? p->maxrmargin - titlen : p->maxrmargin;
 
 	term_word(p, volume);
 	term_flushln(p);
 
 	p->flags &= ~TERMP_NOBREAK;
 	p->trailspace = 0;
-	if (p->rmargin + titlen <= p->maxrmargin) {
+	if (p->tcol->rmargin + titlen <= p->maxrmargin) {
 		p->flags |= TERMP_NOSPACE;
-		p->offset = p->rmargin;
-		p->rmargin = p->maxrmargin;
+		p->tcol->offset = p->tcol->rmargin;
+		p->tcol->rmargin = p->maxrmargin;
 		term_word(p, title);
 		term_flushln(p);
 	}
 
 	p->flags &= ~TERMP_NOSPACE;
-	p->offset = 0;
-	p->rmargin = p->maxrmargin;
+	p->tcol->offset = 0;
+	p->tcol->rmargin = p->maxrmargin;
 	free(title);
 	free(volume);
 }
@@ -647,8 +647,8 @@ termp_it_pre(DECL_ARGS)
 
 	if (bl->norm->Bl.offs != NULL) {
 		offset = a2width(p, bl->norm->Bl.offs);
-		if (offset < 0 && (size_t)(-offset) > p->offset)
-			offset = -p->offset;
+		if (offset < 0 && (size_t)(-offset) > p->tcol->offset)
+			offset = -p->tcol->offset;
 		else if (offset > SHRT_MAX)
 			offset = 0;
 	}
@@ -712,8 +712,8 @@ termp_it_pre(DECL_ARGS)
 		 * handling for column for how this changes.
 		 */
 		width = a2width(p, bl->norm->Bl.width) + term_len(p, 2);
-		if (width < 0 && (size_t)(-width) > p->offset)
-			width = -p->offset;
+		if (width < 0 && (size_t)(-width) > p->tcol->offset)
+			width = -p->tcol->offset;
 		else if (width > SHRT_MAX)
 			width = 0;
 		break;
@@ -813,7 +813,7 @@ termp_it_pre(DECL_ARGS)
 	 * necessarily lengthened.  Everybody gets the offset.
 	 */
 
-	p->offset += offset;
+	p->tcol->offset += offset;
 
 	switch (type) {
 	case LIST_bullet:
@@ -823,21 +823,21 @@ termp_it_pre(DECL_ARGS)
 	case LIST_hang:
 	case LIST_tag:
 		if (n->type == ROFFT_HEAD)
-			p->rmargin = p->offset + width;
+			p->tcol->rmargin = p->tcol->offset + width;
 		else
-			p->offset += width;
+			p->tcol->offset += width;
 		break;
 	case LIST_column:
 		assert(width);
-		p->rmargin = p->offset + width;
+		p->tcol->rmargin = p->tcol->offset + width;
 		/*
 		 * XXX - this behaviour is not documented: the
 		 * right-most column is filled to the right margin.
 		 */
 		if (n->type == ROFFT_HEAD)
 			break;
-		if (NULL == n->next && p->rmargin < p->maxrmargin)
-			p->rmargin = p->maxrmargin;
+		if (n->next == NULL && p->tcol->rmargin < p->maxrmargin)
+			p->tcol->rmargin = p->maxrmargin;
 		break;
 	default:
 		break;
@@ -943,7 +943,7 @@ termp_nm_pre(DECL_ARGS)
 	}
 
 	if (n->type == ROFFT_BODY) {
-		if (NULL == n->child)
+		if (n->child == NULL)
 			return 0;
 		p->flags |= TERMP_NOSPACE;
 		cp = NULL;
@@ -952,9 +952,10 @@ termp_nm_pre(DECL_ARGS)
 		if (cp == NULL)
 			cp = meta->name;
 		if (cp == NULL)
-			p->offset += term_len(p, 6);
+			p->tcol->offset += term_len(p, 6);
 		else
-			p->offset += term_len(p, 1) + term_strlen(p, cp);
+			p->tcol->offset += term_len(p, 1) +
+			    term_strlen(p, cp);
 		return 1;
 	}
 
@@ -965,18 +966,18 @@ termp_nm_pre(DECL_ARGS)
 		synopsis_pre(p, n->parent);
 
 	if (n->type == ROFFT_HEAD &&
-	    NULL != n->next && NULL != n->next->child) {
+	    n->next != NULL && n->next->child != NULL) {
 		p->flags |= TERMP_NOSPACE | TERMP_NOBREAK | TERMP_BRIND;
 		p->trailspace = 1;
-		p->rmargin = p->offset + term_len(p, 1);
-		if (NULL == n->child) {
-			p->rmargin += term_strlen(p, meta->name);
-		} else if (n->child->type == ROFFT_TEXT) {
-			p->rmargin += term_strlen(p, n->child->string);
-			if (n->child->next)
+		p->tcol->rmargin = p->tcol->offset + term_len(p, 1);
+		if (n->child == NULL)
+			p->tcol->rmargin += term_strlen(p, meta->name);
+		else if (n->child->type == ROFFT_TEXT) {
+			p->tcol->rmargin += term_strlen(p, n->child->string);
+			if (n->child->next != NULL)
 				p->flags |= TERMP_HANG;
 		} else {
-			p->rmargin += term_len(p, 5);
+			p->tcol->rmargin += term_len(p, 5);
 			p->flags |= TERMP_HANG;
 		}
 	}
@@ -1248,7 +1249,7 @@ termp_sh_pre(DECL_ARGS)
 		term_fontpush(p, TERMFONT_BOLD);
 		break;
 	case ROFFT_BODY:
-		p->offset = term_len(p, p->defindent);
+		p->tcol->offset = term_len(p, p->defindent);
 		term_tab_set(p, NULL);
 		term_tab_set(p, "T");
 		term_tab_set(p, ".5i");
@@ -1279,7 +1280,7 @@ termp_sh_post(DECL_ARGS)
 		break;
 	case ROFFT_BODY:
 		term_newln(p);
-		p->offset = 0;
+		p->tcol->offset = 0;
 		break;
 	default:
 		break;
@@ -1301,7 +1302,7 @@ termp_d1_pre(DECL_ARGS)
 	if (n->type != ROFFT_BLOCK)
 		return 1;
 	term_newln(p);
-	p->offset += term_len(p, p->defindent + 1);
+	p->tcol->offset += term_len(p, p->defindent + 1);
 	term_tab_set(p, NULL);
 	term_tab_set(p, "T");
 	term_tab_set(p, ".5i");
@@ -1332,8 +1333,8 @@ termp_fn_pre(DECL_ARGS)
 		return 0;
 
 	if (pretty) {
-		rmargin = p->rmargin;
-		p->rmargin = p->offset + term_len(p, 4);
+		rmargin = p->tcol->rmargin;
+		p->tcol->rmargin = p->tcol->offset + term_len(p, 4);
 		p->flags |= TERMP_NOBREAK | TERMP_BRIND | TERMP_HANG;
 	}
 
@@ -1349,8 +1350,8 @@ termp_fn_pre(DECL_ARGS)
 		term_flushln(p);
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND | TERMP_HANG);
 		p->flags |= TERMP_NOPAD;
-		p->offset = p->rmargin;
-		p->rmargin = rmargin;
+		p->tcol->offset = p->tcol->rmargin;
+		p->tcol->rmargin = rmargin;
 	}
 
 	p->flags |= TERMP_NOSPACE;
@@ -1427,15 +1428,15 @@ termp_bd_pre(DECL_ARGS)
 	    ! strcmp(n->norm->Bd.offs, "left"))
 		/* nothing */;
 	else if ( ! strcmp(n->norm->Bd.offs, "indent"))
-		p->offset += term_len(p, p->defindent + 1);
+		p->tcol->offset += term_len(p, p->defindent + 1);
 	else if ( ! strcmp(n->norm->Bd.offs, "indent-two"))
-		p->offset += term_len(p, (p->defindent + 1) * 2);
+		p->tcol->offset += term_len(p, (p->defindent + 1) * 2);
 	else {
 		offset = a2width(p, n->norm->Bd.offs);
-		if (offset < 0 && (size_t)(-offset) > p->offset)
-			p->offset = 0;
+		if (offset < 0 && (size_t)(-offset) > p->tcol->offset)
+			p->tcol->offset = 0;
 		else if (offset < SHRT_MAX)
-			p->offset += offset;
+			p->tcol->offset += offset;
 	}
 
 	/*
@@ -1446,9 +1447,9 @@ termp_bd_pre(DECL_ARGS)
 	 * lines are allowed.
 	 */
 
-	if (DISP_literal != n->norm->Bd.type &&
-	    DISP_unfilled != n->norm->Bd.type &&
-	    DISP_centered != n->norm->Bd.type)
+	if (n->norm->Bd.type != DISP_literal &&
+	    n->norm->Bd.type != DISP_unfilled &&
+	    n->norm->Bd.type != DISP_centered)
 		return 1;
 
 	if (n->norm->Bd.type == DISP_literal) {
@@ -1457,17 +1458,18 @@ termp_bd_pre(DECL_ARGS)
 		term_tab_set(p, "8n");
 	}
 
-	lm = p->offset;
+	lm = p->tcol->offset;
 	p->flags |= TERMP_BRNEVER;
-	for (nn = n->child; nn; nn = nn->next) {
-		if (DISP_centered == n->norm->Bd.type) {
+	for (nn = n->child; nn != NULL; nn = nn->next) {
+		if (n->norm->Bd.type == DISP_centered) {
 			if (nn->type == ROFFT_TEXT) {
 				len = term_strlen(p, nn->string);
-				p->offset = len >= p->rmargin ? 0 :
-				    lm + len >= p->rmargin ? p->rmargin - len :
-				    (lm + p->rmargin - len) / 2;
+				p->tcol->offset = len >= p->tcol->rmargin ?
+				    0 : lm + len >= p->tcol->rmargin ?
+				    p->tcol->rmargin - len :
+				    (lm + p->tcol->rmargin - len) / 2;
 			} else
-				p->offset = lm;
+				p->tcol->offset = lm;
 		}
 		print_mdoc_node(p, pair, meta, nn);
 		/*
@@ -1551,10 +1553,10 @@ termp_ss_pre(DECL_ARGS)
 		break;
 	case ROFFT_HEAD:
 		term_fontpush(p, TERMFONT_BOLD);
-		p->offset = term_len(p, (p->defindent+1)/2);
+		p->tcol->offset = term_len(p, (p->defindent+1)/2);
 		break;
 	case ROFFT_BODY:
-		p->offset = term_len(p, p->defindent);
+		p->tcol->offset = term_len(p, p->defindent);
 		term_tab_set(p, NULL);
 		term_tab_set(p, "T");
 		term_tab_set(p, ".5i");
@@ -1801,8 +1803,8 @@ termp_fo_pre(DECL_ARGS)
 		return 1;
 	} else if (n->type == ROFFT_BODY) {
 		if (pretty) {
-			rmargin = p->rmargin;
-			p->rmargin = p->offset + term_len(p, 4);
+			rmargin = p->tcol->rmargin;
+			p->tcol->rmargin = p->tcol->offset + term_len(p, 4);
 			p->flags |= TERMP_NOBREAK | TERMP_BRIND |
 					TERMP_HANG;
 		}
@@ -1814,8 +1816,8 @@ termp_fo_pre(DECL_ARGS)
 			p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND |
 					TERMP_HANG);
 			p->flags |= TERMP_NOPAD;
-			p->offset = p->rmargin;
-			p->rmargin = rmargin;
+			p->tcol->offset = p->tcol->rmargin;
+			p->tcol->rmargin = rmargin;
 		}
 		return 1;
 	}
@@ -1963,7 +1965,7 @@ termp_lk_pre(DECL_ARGS)
 	display = term_strlen(p, link->string) >= 26;
 	if (display) {
 		term_newln(p);
-		p->offset += term_len(p, p->defindent + 1);
+		p->tcol->offset += term_len(p, p->defindent + 1);
 	}
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, link->string);

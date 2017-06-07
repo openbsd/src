@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.8 2017/06/06 15:00:56 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.9 2017/06/07 17:38:08 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -60,8 +60,8 @@ roff_term_pre_br(ROFF_TERM_ARGS)
 {
 	term_newln(p);
 	if (p->flags & TERMP_BRIND) {
-		p->offset = p->rmargin;
-		p->rmargin = p->maxrmargin;
+		p->tcol->offset = p->tcol->rmargin;
+		p->tcol->rmargin = p->maxrmargin;
 		p->flags &= ~(TERMP_NOBREAK | TERMP_BRIND);
 	}
 }
@@ -73,7 +73,7 @@ roff_term_pre_ce(ROFF_TERM_ARGS)
 	size_t			 len, lm;
 
 	roff_term_pre_br(p, n);
-	lm = p->offset;
+	lm = p->tcol->offset;
 	n = n->child->next;
 	while (n != NULL) {
 		nch = n;
@@ -87,9 +87,9 @@ roff_term_pre_ce(ROFF_TERM_ARGS)
 			nch = nch->next;
 		} while (nch != NULL && (n->type != ROFFT_TEXT ||
 		    (n->flags & NODE_LINE) == 0));
-		p->offset = len >= p->rmargin ? 0 :
-		    lm + len >= p->rmargin ? p->rmargin - len :
-		    (lm + p->rmargin - len) / 2;
+		p->tcol->offset = len >= p->tcol->rmargin ? 0 :
+		    lm + len >= p->tcol->rmargin ? p->tcol->rmargin - len :
+		    (lm + p->tcol->rmargin - len) / 2;
 		while (n != nch) {
 			if (n->type == ROFFT_TEXT)
 				term_word(p, n->string);
@@ -100,7 +100,7 @@ roff_term_pre_ce(ROFF_TERM_ARGS)
 		p->flags |= TERMP_NOSPACE;
 		term_flushln(p);
 	}
-	p->offset = lm;
+	p->tcol->offset = lm;
 }
 
 static void
@@ -206,16 +206,16 @@ roff_term_pre_ti(ROFF_TERM_ARGS)
 	len = term_hspan(p, &su) / 24;
 
 	if (sign == 0) {
-		p->ti = len - p->offset;
-		p->offset = len;
+		p->ti = len - p->tcol->offset;
+		p->tcol->offset = len;
 	} else if (sign == 1) {
 		p->ti = len;
-		p->offset += len;
-	} else if ((size_t)len < p->offset) {
+		p->tcol->offset += len;
+	} else if ((size_t)len < p->tcol->offset) {
 		p->ti = -len;
-		p->offset -= len;
+		p->tcol->offset -= len;
 	} else {
-		p->ti = -p->offset;
-		p->offset = 0;
+		p->ti = -p->tcol->offset;
+		p->tcol->offset = 0;
 	}
 }
