@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.9 2017/06/04 08:25:57 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.10 2017/06/07 15:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@ struct tmuxpeer {
 #define PEER_BAD 0x1
 
 	void		(*dispatchcb)(struct imsg *, void *);
-	void		*arg;
+	void		 *arg;
 };
 
 static int	peer_check_version(struct tmuxpeer *, struct imsg *);

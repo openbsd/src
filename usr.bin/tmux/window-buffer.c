@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.4 2017/06/07 14:37:30 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.5 2017/06/07 15:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -238,7 +238,7 @@ window_buffer_search(__unused void *modedata, void *itemdata, const char *ss)
 	if ((pb = paste_get_name(item->name)) == NULL)
 		return (0);
 	if (strstr(item->name, ss) != NULL)
-		return (0);
+		return (1);
 	bufdata = paste_buffer_data(pb, &bufsize);
 	return (memmem(bufdata, bufsize, ss, strlen(ss)) != NULL);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.3 2017/06/07 14:37:30 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.4 2017/06/07 15:27:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -595,7 +595,7 @@ mode_tree_search_for(struct mode_tree_data *mtd)
 			continue;
 		}
 		if (mtd->searchcb(mtd->modedata, mti->itemdata, mtd->ss))
-		    return (mti);
+			return (mti);
 	}
 	return (NULL);
 }
