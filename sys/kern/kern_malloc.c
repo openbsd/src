@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.128 2015/03/14 03:38:50 jsg Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.129 2017/06/07 13:30:36 mpi Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -163,6 +163,9 @@ malloc(size_t size, int type, int flags)
 	if (((unsigned long)type) <= 1 || ((unsigned long)type) >= M_LAST)
 		panic("malloc: bogus type %d", type);
 #endif
+
+	if (!cold)
+		KERNEL_ASSERT_LOCKED();
 
 	KASSERT(flags & (M_WAITOK | M_NOWAIT));
 
@@ -365,6 +368,9 @@ free(void *addr, int type, size_t freedsize)
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 #endif
+
+	if (!cold)
+		KERNEL_ASSERT_LOCKED();
 
 	if (addr == NULL)
 		return;
