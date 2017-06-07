@@ -1,7 +1,7 @@
-/*	$OpenBSD: xbf.c,v 1.30 2017/06/06 21:12:01 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.31 2017/06/07 15:49:21 mikeb Exp $	*/
 
 /*
- * Copyright (c) 2016 Mike Belopuhov
+ * Copyright (c) 2016, 2017 Mike Belopuhov
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -507,7 +507,6 @@ xbf_load_cmd(struct scsi_xfer *xs)
 		KASSERT(sge->sge_last <= 7);
 	}
 
-	KASSERT(nsg > 0);
 	xrd->xrd_req.req_nsegs = nsg;
 
 	return (0);
@@ -698,8 +697,6 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		if (error)
 			return (-1);
 	} else {
-		KASSERT(nblk == 0);
-		KASSERT(ndesc == 1);
 		DPRINTF("%s: desc %u %s%s lba %llu\n", sc->sc_dev.dv_xname,
 		    ccb->ccb_first, operation == XBF_OP_FLUSH ? "flush" :
 		    "barrier", ISSET(xs->flags, SCSI_POLL) ? "-poll" : "",
@@ -757,37 +754,36 @@ xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 	uint32_t id, chunk;
 	int error;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_xr_dma.dma_map, 0,
-	    sc->sc_xr_dma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD |
-	    BUS_DMASYNC_POSTWRITE);
-
 	xrd = &sc->sc_xr->xr_desc[desc];
 	error = xrd->xrd_rsp.rsp_status == XBF_OK ? XS_NOERROR :
 	    XS_DRIVER_STUFFUP;
 
-	id = (uint32_t)xrd->xrd_rsp.rsp_id;
 	mtx_enter(&sc->sc_ccb_sqlck);
+
+	/*
+	 * To find a CCB for id equal to x within an interval [a, b] we must
+	 * locate a CCB such that (x - a) mod N <= (b - a) mod N, where a is
+	 * the first descriptor, b is the last one and N is the ring size.
+	 */
+	id = (uint32_t)xrd->xrd_rsp.rsp_id;
 	TAILQ_FOREACH(ccb, &sc->sc_ccb_sq, ccb_link) {
 		if (((id - ccb->ccb_first) & (sc->sc_xr_ndesc - 1)) <=
 		    ((ccb->ccb_last - ccb->ccb_first) & (sc->sc_xr_ndesc - 1)))
 			break;
 	}
-	mtx_leave(&sc->sc_ccb_sqlck);
 	KASSERT(ccb != NULL);
+
+	/* Assert that this chunk belongs to this CCB */
 	chunk = 1 << ((id - ccb->ccb_first) & (sc->sc_xr_ndesc - 1));
-#ifdef XBF_DEBUG
-	if ((ccb->ccb_want & chunk) == 0) {
-		panic("%s: id %#x first %#x want %#x seen %#x chunk %#x",
-		    sc->sc_dev.dv_xname, id, ccb->ccb_first, ccb->ccb_want,
-		    ccb->ccb_seen, chunk);
-	}
-	if ((ccb->ccb_seen & chunk) != 0) {
-		panic("%s: id %#x first %#x want %#x seen %#x chunk %#x",
-		    sc->sc_dev.dv_xname, id, ccb->ccb_first, ccb->ccb_want,
-		    ccb->ccb_seen, chunk);
-	}
-#endif
+	KASSERT((ccb->ccb_want & chunk) != 0);
+	KASSERT((ccb->ccb_seen & chunk) == 0);
+
+	/* When all chunks are collected remove the CCB from the queue */
 	ccb->ccb_seen |= chunk;
+	if (ccb->ccb_seen == ccb->ccb_want)
+		TAILQ_REMOVE(&sc->sc_ccb_sq, ccb, ccb_link);
+
+	mtx_leave(&sc->sc_ccb_sqlck);
 
 	if (ccb->ccb_bbuf.dma_size > 0)
 		map = ccb->ccb_bbuf.dma_map;
@@ -806,10 +802,6 @@ xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 	xrd->xrd_req.req_id = desc;
 
 	if (ccb->ccb_seen == ccb->ccb_want) {
-		mtx_enter(&sc->sc_ccb_sqlck);
-		TAILQ_REMOVE(&sc->sc_ccb_sq, ccb, ccb_link);
-		mtx_leave(&sc->sc_ccb_sqlck);
-
 		ccb->ccb_xfer->resid = 0;
 		ccb->ccb_xfer->error = error;
 		TAILQ_INSERT_TAIL(cq, ccb, ccb_link);
@@ -900,8 +892,6 @@ xbf_scsi_done(struct scsi_xfer *xs, int error)
 {
 	int s;
 
-	KERNEL_ASSERT_LOCKED();
-
 	xs->error = error;
 
 	s = splbio();
@@ -912,8 +902,6 @@ xbf_scsi_done(struct scsi_xfer *xs, int error)
 int
 xbf_dev_probe(struct scsi_link *link)
 {
-	KASSERT(link->lun == 0);
-
 	if (link->target == 0)
 		return (0);
 
