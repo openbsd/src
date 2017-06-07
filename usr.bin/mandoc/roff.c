@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.177 2017/06/06 15:00:56 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.178 2017/06/07 00:50:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,6 +81,7 @@ struct	roff {
 	struct ohash	*reqtab; /* request lookup table */
 	struct roffreg	*regtab; /* number registers */
 	struct roffkv	*strtab; /* user-defined strings & macros */
+	struct roffkv	*rentab; /* renamed strings & macros */
 	struct roffkv	*xmbtab; /* multi-byte trans table (`tr') */
 	struct roffstr	*xtab; /* single-byte trans table (`tr') */
 	const char	*current_string; /* value of last called user macro */
@@ -173,6 +174,8 @@ static	int		 roff_getregn(const struct roff *,
 				const char *, size_t);
 static	int		 roff_getregro(const struct roff *,
 				const char *name);
+static	const char	*roff_getrenn(const struct roff *,
+				const char *, size_t);
 static	const char	*roff_getstrn(const struct roff *,
 				const char *, size_t);
 static	int		 roff_hasregn(const struct roff *,
@@ -189,8 +192,10 @@ static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 				int, int);
 static	enum rofferr	 roff_parsetext(struct roff *, struct buf *,
 				int, int *);
+static	enum rofferr	 roff_renamed(ROFF_ARGS);
 static	enum rofferr	 roff_res(struct roff *, struct buf *, int, int);
 static	enum rofferr	 roff_rm(ROFF_ARGS);
+static	enum rofferr	 roff_rn(ROFF_ARGS);
 static	enum rofferr	 roff_rr(ROFF_ARGS);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *, int);
@@ -276,7 +281,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"warnscale",	"watch",	"watchlength",	"watchn",
 	"wh",		"while",	"write",	"writec",
 	"writem",	"xflag",	".",		NULL,
-	"text",
+	NULL,		"text",
 	"Dd",		"Dt",		"Os",		"Sh",
 	"Ss",		"Pp",		"D1",		"Dl",
 	"Bd",		"Ed",		"Bl",		"El",
@@ -506,7 +511,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rhang */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rj */
 	{ roff_rm, NULL, NULL, 0 },  /* rm */
-	{ roff_unsupp, NULL, NULL, 0 },  /* rn */
+	{ roff_rn, NULL, NULL, 0 },  /* rn */
 	{ roff_unsupp, NULL, NULL, 0 },  /* rnn */
 	{ roff_rr, NULL, NULL, 0 },  /* rr */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* rs */
@@ -562,6 +567,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_insec, NULL, NULL, 0 },  /* writem */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* xflag */
 	{ roff_cblock, NULL, NULL, 0 },  /* . */
+	{ roff_renamed, NULL, NULL, 0 },
 	{ roff_userdef, NULL, NULL, 0 }
 };
 
@@ -741,8 +747,9 @@ roff_free1(struct roff *r)
 	r->regtab = NULL;
 
 	roff_freestr(r->strtab);
+	roff_freestr(r->rentab);
 	roff_freestr(r->xmbtab);
-	r->strtab = r->xmbtab = NULL;
+	r->strtab = r->rentab = r->xmbtab = NULL;
 
 	if (r->xtab)
 		for (i = 0; i < 128; i++)
@@ -1612,8 +1619,10 @@ roff_parse(struct roff *r, char *buf, int *pos, int ln, int ppos)
 	mac = cp;
 	maclen = roff_getname(r, &cp, ln, ppos);
 
-	t = (r->current_string = roff_getstrn(r, mac, maclen))
-	    ? ROFF_USERDEF : roffhash_find(r->reqtab, mac, maclen);
+	t = (r->current_string = roff_getstrn(r, mac, maclen)) ?
+	    ROFF_USERDEF :
+	    (r->current_string = roff_getrenn(r, mac, maclen)) ?
+	    ROFF_RENAMED : roffhash_find(r->reqtab, mac, maclen);
 
 	if (t != TOKEN_NONE)
 		*pos = cp - buf;
@@ -3056,6 +3065,56 @@ roff_tr(ROFF_ARGS)
 }
 
 static enum rofferr
+roff_rn(ROFF_ARGS)
+{
+	const char	*value;
+	char		*oldn, *newn, *end;
+	size_t		 oldsz, newsz;
+
+	oldn = newn = buf->buf + pos;
+	if (*oldn == '\0')
+		return ROFF_IGN;
+
+	oldsz = roff_getname(r, &newn, ln, pos);
+	if (oldn[oldsz] == '\\' || *newn == '\0')
+		return ROFF_IGN;
+
+	end = newn;
+	newsz = roff_getname(r, &end, ln, newn - buf->buf);
+	if (newsz == 0)
+		return ROFF_IGN;
+
+	/*
+	 * Rename a user-defined macro bearing the old name,
+	 * overriding an existing renamed high-level macro
+	 * bearing the new name, if that exists.
+	 */
+
+	if ((value = roff_getstrn(r, oldn, oldsz)) != NULL) {
+		roff_setstrn(&r->strtab, newn, newsz, value, strlen(value), 0);
+		roff_setstrn(&r->strtab, oldn, oldsz, NULL, 0, 0);
+		roff_setstrn(&r->rentab, newn, newsz, NULL, 0, 0);
+		return ROFF_IGN;
+	}
+
+	/*
+	 * Rename a high-level macro bearing the old name,
+	 * either renaming it a second time if it was already
+	 * renamed before, or renaming it for the first time.
+	 * In both cases, override an existing user-defined
+	 * macro bearing the new name, if that exists.
+	 */
+
+	if ((value = roff_getrenn(r, oldn, oldsz)) != NULL) {
+		roff_setstrn(&r->rentab, newn, newsz, value, strlen(value), 0);
+		roff_setstrn(&r->rentab, oldn, oldsz, NULL, 0, 0);
+	} else
+		roff_setstrn(&r->rentab, newn, newsz, oldn, oldsz, 0);
+	roff_setstrn(&r->strtab, newn, newsz, NULL, 0, 0);
+	return ROFF_IGN;
+}
+
+static enum rofferr
 roff_so(ROFF_ARGS)
 {
 	char *name, *cp;
@@ -3229,6 +3288,22 @@ roff_userdef(ROFF_ARGS)
 	   ROFF_REPARSE : ROFF_APPEND;
 }
 
+/*
+ * Calling a high-level macro that was renamed with .rn.
+ * r->current_string has already been set up by roff_parse().
+ */
+static enum rofferr
+roff_renamed(ROFF_ARGS)
+{
+	char	*nbuf;
+
+	buf->sz = mandoc_asprintf(&nbuf, ".%s %s", r->current_string,
+	    buf->buf + pos) + 1;
+	free(buf->buf);
+	buf->buf = nbuf;
+	return ROFF_CONT;
+}
+
 static size_t
 roff_getname(struct roff *r, char **cpp, int ln, int pos)
 {
@@ -3370,6 +3445,23 @@ roff_getstrn(const struct roff *r, const char *name, size_t len)
 		if (0 == strncmp(name, predefs[i].name, len) &&
 				'\0' == predefs[i].name[(int)len])
 			return predefs[i].str;
+
+	return NULL;
+}
+
+/*
+ * Check whether *name is the renamed name of a high-level macro.
+ * Return the standard name, or NULL if it is not.
+ */
+static const char *
+roff_getrenn(const struct roff *r, const char *name, size_t len)
+{
+	const struct roffkv *n;
+
+	for (n = r->rentab; n; n = n->next)
+		if (0 == strncmp(name, n->key.p, len) &&
+		    '\0' == n->key.p[(int)len])
+			return n->val.p;
 
 	return NULL;
 }
