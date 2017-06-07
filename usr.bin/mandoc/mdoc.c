@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc.c,v 1.153 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.154 2017/06/07 20:30:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -276,7 +276,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	for (c = buf + offs; c != NULL; c = strchr(c + 1, '.')) {
 		if (c - buf < offs + 2)
 			continue;
-		if (end - c < 4)
+		if (end - c < 3)
 			break;
 		if (isalpha((unsigned char)c[-2]) &&
 		    isalpha((unsigned char)c[-1]) &&
