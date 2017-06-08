@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.82 2017/05/14 12:26:59 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.83 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -948,7 +948,10 @@ print_word(struct html *h, const char *cp)
 static void
 a2width(const char *p, struct roffsu *su)
 {
-	if (a2roffsu(p, su, SCALE_MAX) < 2) {
+	const char	*end;
+
+	end = a2roffsu(p, su, SCALE_MAX);
+	if (end == NULL || *end != '\0') {
 		su->unit = SCALE_EN;
 		su->scale = html_strlen(p);
 	} else if (su->scale < 0.0)

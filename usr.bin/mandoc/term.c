@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.127 2017/06/07 20:01:07 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.128 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -477,7 +477,7 @@ term_word(struct termp *p, const char *word)
 				p->flags |= (TERMP_NOSPACE | TERMP_NONEWLINE);
 			continue;
 		case ESCAPE_HORIZ:
-			if (a2roffsu(seq, &su, SCALE_EM) == 0)
+			if (a2roffsu(seq, &su, SCALE_EM) == NULL)
 				continue;
 			uc = term_hspan(p, &su) / 24;
 			if (uc > 0)
@@ -498,7 +498,7 @@ term_word(struct termp *p, const char *word)
 			}
 			continue;
 		case ESCAPE_HLINE:
-			if (a2roffsu(seq, &su, SCALE_EM) == 0)
+			if ((seq = a2roffsu(seq, &su, SCALE_EM)) == NULL)
 				continue;
 			uc = term_hspan(p, &su) / 24;
 			if (uc <= 0) {
@@ -507,16 +507,7 @@ term_word(struct termp *p, const char *word)
 				lsz = p->tcol->rmargin - p->tcol->offset;
 			} else
 				lsz = uc;
-			while (sz &&
-			    strchr(" %&()*+-./0123456789:<=>", *seq)) {
-				seq++;
-				sz--;
-			}
-			if (sz && strchr("cifMmnPpuv", *seq)) {
-				seq++;
-				sz--;
-			}
-			if (sz == 0)
+			if (*seq == '\0')
 				uc = -1;
 			else if (*seq == '\\') {
 				seq++;
@@ -737,7 +728,7 @@ term_setwidth(struct termp *p, const char *wstr)
 		default:
 			break;
 		}
-		if (a2roffsu(wstr, &su, SCALE_MAX))
+		if (a2roffsu(wstr, &su, SCALE_MAX) != NULL)
 			width = term_hspan(p, &su);
 		else
 			iop = 0;

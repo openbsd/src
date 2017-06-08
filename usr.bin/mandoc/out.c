@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.35 2017/05/01 20:53:58 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.36 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -38,10 +38,10 @@ static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
  * Parse the *src string and store a scaling unit into *dst.
  * If the string doesn't specify the unit, use the default.
  * If no default is specified, fail.
- * Return 2 on complete success, 1 when a conversion was done,
- * but there was trailing garbage, and 0 on total failure.
+ * Return a pointer to the byte after the last byte used,
+ * or NULL on total failure.
  */
-int
+const char *
 a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 {
 	char		*endptr;
@@ -49,7 +49,7 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 	dst->unit = def == SCALE_MAX ? SCALE_BU : def;
 	dst->scale = strtod(src, &endptr);
 	if (endptr == src)
-		return 0;
+		return NULL;
 
 	switch (*endptr++) {
 	case 'c':
@@ -87,12 +87,11 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 		/* FALLTHROUGH */
 	default:
 		if (SCALE_MAX == def)
-			return 0;
+			return NULL;
 		dst->unit = def;
 		break;
 	}
-
-	return *endptr == '\0' ? 2 : 1;
+	return endptr;
 }
 
 /*

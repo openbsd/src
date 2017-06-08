@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.95 2017/05/09 14:09:37 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.96 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -356,13 +356,9 @@ fillmode(struct html *h, int want)
 static int
 a2width(const struct roff_node *n, struct roffsu *su)
 {
-
 	if (n->type != ROFFT_TEXT)
 		return 0;
-	if (a2roffsu(n->string, su, SCALE_EN))
-		return 1;
-
-	return 0;
+	return a2roffsu(n->string, su, SCALE_EN) != NULL;
 }
 
 static void

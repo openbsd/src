@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.9 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.10 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -157,7 +157,7 @@ roff_term_pre_sp(ROFF_TERM_ARGS)
 	int		 len;
 
 	if (n->child != NULL) {
-		if (a2roffsu(n->child->string, &su, SCALE_VS) == 0)
+		if (a2roffsu(n->child->string, &su, SCALE_VS) == NULL)
 			su.scale = 1.0;
 		len = term_vspan(p, &su);
 	} else
@@ -201,7 +201,7 @@ roff_term_pre_ti(ROFF_TERM_ARGS)
 	} else
 		sign = 0;
 
-	if (a2roffsu(cp, &su, SCALE_EM) == 0)
+	if (a2roffsu(cp, &su, SCALE_EM) == NULL)
 		return;
 	len = term_hspan(p, &su) / 24;
 

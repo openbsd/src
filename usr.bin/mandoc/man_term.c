@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.156 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.157 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -258,7 +258,7 @@ pre_PD(DECL_ARGS)
 		return 0;
 	}
 	assert(n->type == ROFFT_TEXT);
-	if (a2roffsu(n->string, &su, SCALE_VS))
+	if (a2roffsu(n->string, &su, SCALE_VS) != NULL)
 		mt->pardist = term_vspan(p, &su);
 	return 0;
 }
@@ -372,7 +372,7 @@ pre_in(DECL_ARGS)
 	else
 		cp--;
 
-	if ( ! a2roffsu(++cp, &su, SCALE_EN))
+	if (a2roffsu(++cp, &su, SCALE_EN) == NULL)
 		return 0;
 
 	v = (term_hspan(p, &su) + 11) / 24;
@@ -423,7 +423,7 @@ pre_HP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if ((nn = n->parent->head->child) != NULL &&
-	    a2roffsu(nn->string, &su, SCALE_EN)) {
+	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
 		len = term_hspan(p, &su) / 24;
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
@@ -508,7 +508,7 @@ pre_IP(DECL_ARGS)
 	/* Calculate the offset from the optional second argument. */
 	if ((nn = n->parent->head->child) != NULL &&
 	    (nn = nn->next) != NULL &&
-	    a2roffsu(nn->string, &su, SCALE_EN)) {
+	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
 		len = term_hspan(p, &su) / 24;
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
@@ -590,7 +590,7 @@ pre_TP(DECL_ARGS)
 
 	if ((nn = n->parent->head->child) != NULL &&
 	    nn->string != NULL && ! (NODE_LINE & nn->flags) &&
-	    a2roffsu(nn->string, &su, SCALE_EN)) {
+	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
 		len = term_hspan(p, &su) / 24;
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
@@ -794,7 +794,7 @@ pre_RS(DECL_ARGS)
 	n->aux = SHRT_MAX + 1;
 	if (n->child == NULL)
 		n->aux = mt->lmargin[mt->lmargincur];
-	else if (a2roffsu(n->child->string, &su, SCALE_EN))
+	else if (a2roffsu(n->child->string, &su, SCALE_EN) != NULL)
 		n->aux = term_hspan(p, &su) / 24;
 	if (n->aux < 0 && (size_t)(-n->aux) > mt->offset)
 		n->aux = -mt->offset;

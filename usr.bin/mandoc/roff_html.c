@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_html.c,v 1.7 2017/06/06 15:00:56 schwarze Exp $ */
+/*	$OpenBSD: roff_html.c,v 1.8 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -83,7 +83,7 @@ roff_html_pre_sp(ROFF_HTML_ARGS)
 
 	SCALE_VS_INIT(&su, 1);
 	if ((n = n->child) != NULL) {
-		if (a2roffsu(n->string, &su, SCALE_VS) == 0)
+		if (a2roffsu(n->string, &su, SCALE_VS) == NULL)
 			su.scale = 1.0;
 		else if (su.scale < 0.0)
 			su.scale = 0.0;

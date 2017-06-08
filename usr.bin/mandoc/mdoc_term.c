@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.261 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.262 2017/06/08 12:54:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -531,8 +531,10 @@ static int
 a2width(const struct termp *p, const char *v)
 {
 	struct roffsu	 su;
+	const char	*end;
 
-	if (a2roffsu(v, &su, SCALE_MAX) < 2) {
+	end = a2roffsu(v, &su, SCALE_MAX);
+	if (end == NULL || *end != '\0') {
 		SCALE_HS_INIT(&su, term_strlen(p, v));
 		su.scale /= term_strlen(p, "0");
 	}
