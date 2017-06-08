@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.67 2017/06/07 21:05:19 schwarze Exp $
-# $NetBSD: mdoclint,v 1.76 2017/06/07 19:17:29 wiz Exp $
+# $OpenBSD: mdoclint,v 1.68 2017/06/08 18:25:16 schwarze Exp $
+# $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
 # All rights reserved.
@@ -42,28 +42,24 @@ use constant {
 };
 
 use vars qw(
-	$opt_D $opt_d $opt_e $opt_F $opt_h $opt_l
+	$opt_D $opt_d $opt_F $opt_h
 	$opt_m $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
 );
 
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="DdeFhlmoprSvwx";
+my $options="DdFhmoprSvwx";
 
 sub usage
-	{
-	my $default = OPENBSD ? "-DdmoprSx" : "-DdelmoprSx";
-
+{
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
 	-D	warn about bad casing and archs in .Dt
 	-d	warn about bad date strings (in .Dd only)
-	-e	warn about unsorted errors (for functions)
 	-F	fix whitespace problems (asks before overwriting)
 	-h	display this help text
-	-l	warn about unknown libraries
 	-m	warn about man pages that are not in mdoc(7) format
 	-o	warn about non-empty .Os strings
 	-p	warn about punctuation problems
@@ -72,70 +68,10 @@ usage:	mdoclint [-$options] file ...
 	-v	verbose output
 	-w	show section header in warnings
 	-x	warn about cross-references with missing targets
-Default is $default if no flag is specified.
+Default is -DdmoprSx if no flag is specified.
 EOF
 	exit(0);
 }
-
-
-my %libraries = (
-    "libarchive" => 1,
-    "libarm" => 1,
-    "libarm32" => 1,
-    "libbluetooth" => 1,
-    "libc" => 1,
-    "libcdk" => 1,
-    "libcompat" => 1,
-    "libcrypt" => 1,
-    "libcurses" => 1,
-    "libdm" => 1,
-    "libedit" => 1,
-    "libelf" => 1,
-    "libevent" => 1,
-    "libexecinfo" => 1,
-    "libfetch" => 1,
-    "libform" => 1,
-    "libi386" => 1,
-    "libintl" => 1,
-    "libipsec" => 1,
-    "libiscsi" => 1,
-    "libisns" => 1,
-    "libkvm" => 1,
-    "libm" => 1,
-    "libm68k" => 1,
-    "libmagic" => 1,
-    "libmandoc" => 1,
-    "libmenu" => 1,
-    "libmj" => 1,
-    "libnetpgp" => 1,
-    "libnetpgpverify" => 1,
-    "libnpf" => 1,
-    "libossaudio" => 1,
-    "libpam" => 1,
-    "libpcap" => 1,
-    "libpci" => 1,
-    "libperfuse" => 1,
-    "libpmc" => 1,
-    "libposix" => 1,
-    "libppath" => 1,
-    "libprop" => 1,
-    "libpthread" => 1,
-    "libpthread_dbg" => 1,
-    "libpuffs" => 1,
-    "libquota" => 1,
-    "librefuse" => 1,
-    "libresolv" => 1,
-    "librt" => 1,
-    "librumpclient" => 1,
-    "libsaslc" => 1,
-    "libssp" => 1,
-    "libtermcap" => 1,
-    "libterminfo" => 1,
-    "libusbhid" => 1,
-    "libutil" => 1,
-    "libx86_64" => 1,
-    "libz" => 1
-);
 
 # constants to build
 my %sections;
@@ -235,11 +171,10 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_d or $opt_e or $opt_l or $opt_m
+	unless ($opt_D or $opt_d or $opt_m
 	    or $opt_o or $opt_p or $opt_r or $opt_S or $opt_x) {
 		$opt_D = $opt_d = $opt_m =
 		    $opt_o = $opt_p = $opt_r = $opt_S = $opt_x = 1;
-		$opt_e = $opt_l = 1 if NETBSD;
 	}
 }
 
@@ -290,7 +225,6 @@ sub new
 		nxrcsidseen => 0,
 		inliteral => 0,
 		shseen => {},
-		last_error_name => '',
 		current_section_header => '',
 		sec => '0',
 		names => { $fn => 1 },
@@ -425,12 +359,6 @@ sub process_line
 			$s->{names}{$1.$s->{sec}} = 1;
 		}
 	}
-
-	if (/^\.Lb\s+(\S+)/o) {
-		if (not $libraries{$1}) {
-			$s->warning("Unknown library `$1' used as Lb argument") if $opt_l;
-		}
-	}
 	if (/^\.Os\s+(.+)/o) {
 		$s->warning(".Os used with argument `$1'") if $opt_o;
 	}
@@ -482,29 +410,6 @@ sub process_line
 		if (/^\.Ed\b/o) {
 		    $s->{inliteral} = 0;
 		}
-	}
-
-	# Check whether the list of possible errors for a function is
-	# sorted alphabetically.
-	#
-	# Error names should not be sorted across different lists.
-	# (see bind(2) for an example.)
-	#
-	/^\.Bl\s+/o and $s->{last_error_name} = "";
-
-	if ($s->{current_section_header} eq "ERRORS" and
-	    /^\.It\s+(Bq\s+)?(Er\s+)?(E[\w_]+)$/o) {
-		my $current_error_name = $3;
-
-		if ($s->{last_error_name} eq $current_error_name) {
-			$s->warning("Duplicate item for ",
-			    $current_error_name, ".") if $opt_e;
-		} elsif ($current_error_name lt $s->{last_error_name}) {
-			$s->warning("$s->{last_error_name} and ",
-			    "$current_error_name are not in ",
-			    "alphabetical order.") if $opt_e;
-		}
-		$s->{last_error_name} = $current_error_name;
 	}
 
 	$s->{lastline} = $_;

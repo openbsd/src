@@ -1,5 +1,5 @@
-.\" $OpenBSD: mdoclint.1,v 1.25 2017/06/07 21:05:19 schwarze Exp $
-.\" $NetBSD: mdoclint.1,v 1.22 2017/06/07 19:17:29 wiz Exp $
+.\" $OpenBSD: mdoclint.1,v 1.26 2017/06/08 18:25:16 schwarze Exp $
+.\" $NetBSD: mdoclint.1,v 1.23 2017/06/08 10:19:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2017 $
+.Dd $Mdocdate: June 8 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdeFhlmoprSvwx
+.Op Fl DdFhmoprSvwx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -43,7 +43,7 @@ errors that occur when writing man pages as possible.
 If no flags are given,
 .Fl DdmoprSx
 is assumed (that is, everything except
-.Fl eFhlvw ) .
+.Fl Fhvw ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -51,14 +51,10 @@ The options are as follows:
 Warn about bad casing and architectures in the .Dt macro.
 .It Fl d
 Warn about bad date strings (in the .Dd macro).
-.It Fl e
-Warn about unsorted errors (for functions).
 .It Fl F
 Delete whitespace at the end of input lines.
 .It Fl h
 Display usage.
-.It Fl l
-Warn about unknown libraries used as arguments to Lb.
 .It Fl m
 Warn if man page is not in
 .Xr mdoc 7
