@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.144 2017/06/07 23:29:31 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.145 2017/06/08 00:21:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -173,6 +173,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown AT&T UNIX version",
 	"comma in function argument",
 	"parenthesis in function name",
+	"unknown library name",
 	"invalid content in Rs block",
 	"invalid Boolean argument",
 	"unknown font, skipping request",
