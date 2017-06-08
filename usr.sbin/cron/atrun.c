@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.45 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.46 2017/06/08 16:23:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -193,11 +193,17 @@ atrun(at_db *db, double batch_maxload, time_t now)
 			continue;
 		}
 
-		if (fstatat(dfd, atfile, &sb, AT_SYMLINK_NOFOLLOW) != 0 ||
-		    !S_ISREG(sb.st_mode)) {
+		if (fstatat(dfd, atfile, &sb, AT_SYMLINK_NOFOLLOW) != 0) {
 			TAILQ_REMOVE(&db->jobs, job, entries);
 			free(job);
-			continue;		/* disapeared or not a file */
+			continue;		/* disapeared from queue */
+		}
+		if (!S_ISREG(sb.st_mode)) {
+			syslog(LOG_WARNING, "(CRON) NOT REGULAR (%s)",
+			    atfile);
+			TAILQ_REMOVE(&db->jobs, job, entries);
+			free(job);
+			continue;		/* was a file, no longer is */
 		}
 
 		/*
