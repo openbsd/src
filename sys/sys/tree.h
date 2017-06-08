@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.26 2017/06/08 03:12:53 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.27 2017/06/08 03:37:25 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -817,7 +817,6 @@ void	*_rb_parent(const struct rb_type *, void *);
 void	 _rb_set_left(const struct rb_type *, void *, void *);
 void	 _rb_set_right(const struct rb_type *, void *, void *);
 void	 _rb_set_parent(const struct rb_type *, void *, void *);
-void	*_rb_color(const struct rb_type *, void *);
 void	 _rb_poison(const struct rb_type *, void *, unsigned long);
 int	 _rb_check(const struct rb_type *, void *, unsigned long);
 
