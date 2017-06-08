@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2015/12/25 09:02:57 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.18 2017/06/08 11:47:25 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,21 +40,9 @@
 	.set	mips3
 	.set	noreorder		# Noreorder is default style!
 
-	.globl	start
-	.globl	kernel_text
-kernel_text = start
-start:
-	/*
-	 * On at least the O2, when netbooting the bsd.rd kernel, the
-	 * kernel image gets loaded in CKSEG1, which causes the kernel
-	 * text to be uncached.  Just to be on the safe side, jump to
-	 * our intended execution address.
-	 */
-	LA	v0, 1f
-	jr	v0
-	 NOP
-1:
-
+	.globl	locore_start
+	.ent	locore_start, 0
+locore_start:
 	MFC0	v0, COP_0_STATUS_REG
 	LI	v1, ~SR_INT_ENAB
 	and	v0, v1
@@ -75,6 +63,7 @@ start:
 	jal	main				# main(regs)
 	 move	a0, zero
 	PANIC("Startup failed!")
+	.end	locore_start
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)

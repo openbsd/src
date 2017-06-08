@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.55 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.sgi,v 1.56 2017/06/08 11:47:24 visa Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -20,6 +20,7 @@ file	arch/sgi/sgi/ip30_machdep.c		tgt_octane
 file	arch/sgi/sgi/ip30_nmi.S			tgt_octane & ddb
 file	arch/sgi/sgi/ip32_machdep.c		tgt_o2
 file	arch/sgi/sgi/l1.c			tgt_origin
+file	arch/sgi/sgi/locore.S
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mainbus.c
 file	arch/sgi/sgi/sginode.c			tgt_origin

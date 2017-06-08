@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2015/01/02 22:38:46 sebastia Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2017/06/08 11:47:25 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -129,6 +129,17 @@ int16_t	currentnasid = 0;
 char	osloadpartition[256];
 char	osloadoptions[129];
 
+void
+unmap_startup(void)
+{
+	extern uint32_t kernel_text[], endboot[];
+	uint32_t *word = kernel_text;
+
+	/* Cannot unmap kseg0 or xkphys; smash with trap. */
+	while (word < endboot)
+		*word++ = 0x00000034u;	/* TEQ zero, zero */
+}
+
 /*
  *  Configure all devices found that we know about.
  *  This is done at boot time.
@@ -143,6 +154,8 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", "mainbus") == 0) {
 		panic("no mainbus found");
 	}
+
+	unmap_startup();
 
 	splinit();		/* Initialized, fire up interrupt system */
 	cold = 0;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.80 2017/06/05 12:43:59 deraadt Exp $
+#	$OpenBSD: Makefile.sgi,v 1.81 2017/06/08 11:47:24 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,8 +36,12 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 
 CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float -G 0
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
+SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
+.endif
+.if ${IDENT:M-DSMALL_KERNEL}
+SORTR=		cat
 .endif
 
 DEBUG?=		-g
@@ -72,13 +76,14 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_HEAD=	locore.o param.o ioconf.o
-SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS}
+SYSTEM_HEAD=	locore0.o gap.o
+SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS} param.o ioconf.o
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ld.script
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		umask 007; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} vers.o ${OBJS}
+		echo ${OBJS} param.o ioconf.o vers.o | tr " " "\n" | ${SORTR} > lorder; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_HEAD} `cat lorder`
 SYSTEM_LD_TAIL=	@${SIZE} $@
 
 .if ${DEBUG} == "-g"
@@ -125,8 +130,15 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
+gap.S:	${SYSTEM_SWAP_DEP} Makefile $S/conf/makegap.sh
+	umask 007; sh $S/conf/makegap.sh 0xef > gap.S
+
+gap.o:	gap.S
+	umask 007; ${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c gap.S
+
 clean:
-	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} param.c
+	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} \
+	    gap.S lorder param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
@@ -142,9 +154,10 @@ db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.pl
 	objdump -g db_structinfo.o | perl $S/ddb/parse_structinfo.pl > $@
 	rm -f db_structinfo.o
 
-locore.o: ${_machdir}/${_mach}/locore.S assym.h
+locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
 context.o cp0access.o exception.o exception_tfp.o: assym.h
-lcore_access.o lcore_ddb.o lcore_float.o tlb_tfp.o tlbhandler.o: assym.h
+lcore_access.o lcore_ddb.o lcore_float.o locore.o: assym.h
+tlb_tfp.o tlbhandler.o: assym.h
 cache_tfp_subr.o ip30_nmi.o: assym.h
 
 # The install target can be redefined by putting a
