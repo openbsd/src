@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_tree.c,v 1.6 2016/09/20 01:11:27 dlg Exp $ */
+/*	$OpenBSD: subr_tree.c,v 1.7 2017/06/08 03:12:53 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -590,6 +590,33 @@ _rb_parent(const struct rb_type *t, void *node)
 	struct rb_entry *rbe = rb_n2e(t, node);
 	rbe = RBE_PARENT(rbe);
 	return (rbe == NULL ? NULL : rb_e2n(t, rbe));
+}
+
+void
+_rb_set_left(const struct rb_type *t, void *node, void *left)
+{
+	struct rb_entry *rbe = rb_n2e(t, node);
+	struct rb_entry *rbl = (left == NULL) ? NULL : rb_n2e(t, left);
+
+	RBE_LEFT(rbe) = rbl;
+}
+
+void
+_rb_set_right(const struct rb_type *t, void *node, void *right)
+{
+	struct rb_entry *rbe = rb_n2e(t, node);
+	struct rb_entry *rbr = (right == NULL) ? NULL : rb_n2e(t, right);
+
+	RBE_RIGHT(rbe) = rbr;
+}
+
+void
+_rb_set_parent(const struct rb_type *t, void *node, void *parent)
+{
+	struct rb_entry *rbe = rb_n2e(t, node);
+	struct rb_entry *rbp = (parent == NULL) ? NULL : rb_n2e(t, parent);
+
+	RBE_PARENT(rbe) = rbp;
 }
 
 void

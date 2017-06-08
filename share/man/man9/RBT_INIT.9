@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RBT_INIT.9,v 1.5 2016/09/15 06:07:22 dlg Exp $
+.\"	$OpenBSD: RBT_INIT.9,v 1.6 2017/06/08 03:12:53 dlg Exp $
 .\"
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -38,7 +38,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: June 8 2017 $
 .Dt RBT_INIT 9
 .Os
 .Sh NAME
@@ -61,6 +61,9 @@
 .Nm RBT_LEFT ,
 .Nm RBT_RIGHT ,
 .Nm RBT_PARENT ,
+.Nm RBT_SET_LEFT ,
+.Nm RBT_SET_RIGHT ,
+.Nm RBT_SET_PARENT ,
 .Nm RBT_FOREACH ,
 .Nm RBT_FOREACH_SAFE ,
 .Nm RBT_FOREACH_REVERSE ,
@@ -114,6 +117,12 @@
 .Fn RBT_RIGHT "NAME" "struct TYPE *elm"
 .Ft struct TYPE *
 .Fn RBT_PARENT "NAME" "struct TYPE *elm"
+.Ft void
+.Fn RBT_SET_LEFT "NAME" "struct TYPE *elm" "struct TYPE *left"
+.Ft void
+.Fn RBT_SET_RIGHT "NAME" "struct TYPE *elm" "struct TYPE *right"
+.Ft void
+.Fn RBT_SET_PARENT "NAME" "struct TYPE *elm" "struct TYPE *parent"
 .Fo RBT_FOREACH
 .Fa "VARNAME"
 .Fa "NAME"
@@ -335,6 +344,30 @@ returns a pointer to the parent element of
 .Fa elm
 in a red-black tree of type
 .Fa NAME .
+.Pp
+.Fn RBT_SET_LEFT
+sets the left child pointer of element
+.Fa elm
+to
+.Fa left
+in a red-black tree of type
+.Fa NAME .
+.Pp
+.Fn RBT_SET_RIGHT
+sets the right child pointer of element
+.Fa elm
+to
+.Fa right
+in a red-black tree of type
+.Fa NAME .
+.Pp
+.Fn RBT_SET_PARENT
+sets the parent pointer of element
+.Fa elm
+to
+.Fa parent
+in a red-black tree of type
+.Fa NAME .
 .Ss Red-Black Tree Iterators
 The
 .Fn RBT_FOREACH
@@ -418,6 +451,9 @@ value.
 .Fn RBT_LEFT ,
 .Fn RBT_RIGHT ,
 .Fn RBT_PARENT ,
+.Fn RBT_SET_LEFT ,
+.Fn RBT_SET_RIGHT ,
+.Fn RBT_SET_PARENT ,
 .Fn RBT_FOREACH ,
 .Fn RBT_FOREACH_REVERSE ,
 .Fn RBT_FOREACH_SAFE ,
