@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.343 2017/06/06 04:52:40 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.344 2017/06/08 19:23:39 tedu Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -208,8 +208,6 @@ void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
-void	settimeslot(const char *, int);
-void	timeslot_status(void);
 void	setmpelabel(const char *, int);
 void	process_mpw_commands(void);
 void	setmpwencap(const char *, int);
@@ -437,7 +435,6 @@ const struct	cmd {
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
 	{ "pppoeac",	NEXTARG,	0,		setpppoe_ac },
 	{ "-pppoeac",	1,		0,		setpppoe_ac },
-	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ "authproto",	NEXTARG,	0,		setspppproto },
 	{ "authname",	NEXTARG,	0,		setspppname },
 	{ "authkey",	NEXTARG,	0,		setspppkey },
@@ -2612,110 +2609,6 @@ setmediainst(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
-/*
- * Note: 
- * bits:       0   1   2   3   4   5   ....   24   25   ...   30   31
- * T1 mode:   N/A ch1 ch2 ch3 ch4 ch5        ch24  N/A        N/A  N/A
- * E1 mode:   ts0 ts1 ts2 ts3 ts4 ts5        ts24  ts25       ts30 ts31
- */
-#ifndef SMALL
-/* ARGSUSED */
-void
-settimeslot(const char *val, int d)
-{
-#define SINGLE_CHANNEL	0x1
-#define RANGE_CHANNEL	0x2
-#define ALL_CHANNELS	0xFFFFFFFF
-	unsigned long	ts_map = 0;
-	char		*ptr = (char *)val;
-	int		ts_flag = 0;
-	int		ts = 0, ts_start = 0;
-
-	if (strcmp(val,"all") == 0) {
-		ts_map = ALL_CHANNELS;
-	} else {
-		while (*ptr != '\0') {
-			if (isdigit((unsigned char)*ptr)) {
-				ts = strtoul(ptr, &ptr, 10);
-				ts_flag |= SINGLE_CHANNEL;
-			} else {
-				if (*ptr == '-') {
-					ts_flag |= RANGE_CHANNEL;
-					ts_start = ts;
-				} else {
-					ts_map |= get_ts_map(ts_flag,
-					    ts_start, ts);
-					ts_flag = 0;
-				}
-				ptr++;
-			}
-		}
-		if (ts_flag)
-			ts_map |= get_ts_map(ts_flag, ts_start, ts);
-
-	}
-	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (caddr_t)&ts_map;
-
-	if (ioctl(s, SIOCSIFTIMESLOT, (caddr_t)&ifr) < 0)
-		err(1, "SIOCSIFTIMESLOT");
-}
-
-unsigned long
-get_ts_map(int ts_flag, int ts_start, int ts_stop)
-{
-	int		i = 0;
-	unsigned long	map = 0, mask = 0;
-
-	if ((ts_flag & (SINGLE_CHANNEL | RANGE_CHANNEL)) == 0)
-		return 0;
-	if (ts_flag & RANGE_CHANNEL) { /* Range of channels */
-		for (i = ts_start; i <= ts_stop; i++) {
-			mask = 1 << i;
-			map |=mask;
-		}
-	} else { /* Single channel */
-		mask = 1 << ts_stop;
-		map |= mask;
-	}
-	return map;
-}
-
-void
-timeslot_status(void)
-{
-	char		*sep = " ";
-	unsigned long	 ts_map = 0;
-	int		 i, start = -1;
-
-	ifr.ifr_data = (caddr_t)&ts_map;
-
-	if (ioctl(s, SIOCGIFTIMESLOT, (caddr_t)&ifr) == -1)
-		return;
-
-	printf("\ttimeslot:");
-	for (i = 0; i < sizeof(ts_map) * 8; i++) {
-		if (start == -1 && ts_map & (1 << i))
-			start = i;
-		else if (start != -1 && !(ts_map & (1 << i))) {
-			if (start == i - 1)
-				printf("%s%d", sep, start);
-			else
-				printf("%s%d-%d", sep, start, i-1);
-			sep = ",";
-			start = -1;
-		}
-	}
-	if (start != -1) {
-		if (start == i - 1)
-			printf("%s%d", sep, start);
-		else
-			printf("%s%d-%d", sep, start, i-1);
-	}
-	printf("\n");
-}
-#endif
-
 
 const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
@@ -3005,7 +2898,6 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	carp_status();
 	pfsync_status();
 	pppoe_status();
-	timeslot_status();
 	sppp_status();
 	mpe_status();
 	mpw_status();
