@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.44 2016/04/28 21:32:11 dlg Exp $
+.\" $OpenBSD: vlan.4,v 1.45 2017/06/08 01:17:01 dlg Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2016 $
+.Dd $Mdocdate: June 8 2017 $
 .Dt VLAN 4
 .Os
 .Sh NAME
 .Nm vlan ,
 .Nm svlan
-.Nd IEEE 802.1Q/1AD pseudo-device
+.Nd IEEE 802.1q and 802.1ad pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device vlan"
 .Sh DESCRIPTION
@@ -194,6 +194,7 @@ Originally
 .Sh CAVEATS
 Some Ethernet chips will either discard or truncate
 Ethernet frames that are larger than 1514 bytes.
-This causes a problem as 802.1Q tagged frames can be up to 1518 bytes.
+This causes a problem as 802.1q and 802.1ad tagged frames can be
+up to 1518 bytes.
 Most controller chips can be told not to discard large frames
 and/or to increase the allowed frame size.
