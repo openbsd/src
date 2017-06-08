@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.94 2017/05/23 14:57:30 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.95 2017/06/08 18:33:08 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -228,6 +228,7 @@ ${CROSSGCC}:		${CROSSBINUTILS}
 	    MACHINE_ARCH=${TARGET_ARCH} \
 	    ${MAKE} obj)
 	(cd ${.CURDIR}/gnu/usr.bin/clang; \
+	    CC=clang CXX=clang++ \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    MACHINE_ARCH=${TARGET_ARCH} \
 	    ${MAKE} depend)
