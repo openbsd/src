@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.211 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.212 2017/06/08 17:14:02 bluhm Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -758,6 +758,14 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	struct process *pr = p->p_p;
 	struct sigacts *ps = pr->ps_sigacts;
 	int mask;
+
+	switch (signum) {
+	case SIGILL:
+	case SIGBUS:
+	case SIGSEGV:
+		pr->ps_acflag |= ATRAP;
+		break;
+	}
 
 	mask = sigmask(signum);
 	if ((pr->ps_flags & PS_TRACED) == 0 &&

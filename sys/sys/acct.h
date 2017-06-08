@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.6 2017/06/07 20:53:59 bluhm Exp $	*/
+/*	$OpenBSD: acct.h,v 1.7 2017/06/08 17:14:02 bluhm Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@ struct acct {
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
 #define	APLEDGE	0x20		/* killed due to pledge violation */
+#define	ATRAP	0x40		/* memory access violation */
 	u_int8_t  ac_flag;	/* accounting flags */
 };
 
