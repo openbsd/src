@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_tree.c,v 1.7 2017/06/08 03:12:53 dlg Exp $ */
+/*	$OpenBSD: subr_tree.c,v 1.8 2017/06/08 03:22:56 dlg Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -41,13 +41,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
 #include <sys/tree.h>
 
 static inline void *
 rb_n2e(const struct rb_type *t, void *node)
 {
-	caddr_t addr = (caddr_t)node;
+	unsigned long addr = (unsigned long)node;
 
 	return ((void *)(addr + t->t_offset));
 }
@@ -55,7 +54,7 @@ rb_n2e(const struct rb_type *t, void *node)
 static inline void *
 rb_e2n(const struct rb_type *t, struct rb_entry *rbe)
 {
-	caddr_t addr = (caddr_t)rbe;
+	unsigned long addr = (unsigned long)rbe;
 
 	return ((void *)(addr - t->t_offset));
 }
