@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2017/06/08 11:47:25 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2017/06/08 12:02:52 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
  *
@@ -128,17 +128,6 @@ int16_t	currentnasid = 0;
 
 char	osloadpartition[256];
 char	osloadoptions[129];
-
-void
-unmap_startup(void)
-{
-	extern uint32_t kernel_text[], endboot[];
-	uint32_t *word = kernel_text;
-
-	/* Cannot unmap kseg0 or xkphys; smash with trap. */
-	while (word < endboot)
-		*word++ = 0x00000034u;	/* TEQ zero, zero */
-}
 
 /*
  *  Configure all devices found that we know about.

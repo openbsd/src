@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2017/06/06 14:35:53 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2017/06/08 12:02:52 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -31,17 +31,6 @@ struct device *bootdv = NULL;
 char    bootdev[16];
 enum devclass bootdev_class = DV_DULL;
 extern char uboot_rootdev[];
-
-void
-unmap_startup(void)
-{
-	extern uint32_t kernel_text[], endboot[];
-	uint32_t *word = kernel_text;
-
-	/* Cannot unmap KSEG0; smash with trap. */
-	while (word < endboot)
-		*word++ = 0x00000034u;	/* TEQ zero, zero */
-}
 
 void
 cpu_configure(void)

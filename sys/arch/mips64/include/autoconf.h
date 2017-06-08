@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2010/01/09 20:33:16 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.2 2017/06/08 12:02:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -31,5 +31,7 @@ struct cpu_attach_args {
 };
 
 extern struct cpu_hwinfo bootcpu_hwinfo;
+
+void	unmap_startup(void);
 
 #endif /* _MIPS64_AUTOCONF_H_ */
