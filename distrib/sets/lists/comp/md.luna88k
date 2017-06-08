@@ -58,6 +58,7 @@
 ./usr/include/luna88k/trap.h
 ./usr/include/luna88k/varargs.h
 ./usr/include/luna88k/vmparam.h
+./usr/include/luna88k/xpio.h
 ./usr/include/m88k
 ./usr/include/m88k/_float.h
 ./usr/include/m88k/_types.h
