@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.178 2017/06/07 00:50:30 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.179 2017/06/08 19:35:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -765,6 +765,10 @@ roff_reset(struct roff *r)
 	r->format = r->options & (MPARSE_MDOC | MPARSE_MAN);
 	r->control = '\0';
 	r->escape = '\\';
+	roffce_lines = 0;
+	roffce_node = NULL;
+	roffit_lines = 0;
+	roffit_macro = NULL;
 }
 
 void
