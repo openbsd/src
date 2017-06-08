@@ -1,4 +1,4 @@
-#	$OpenBSD: files.loongson,v 1.24 2016/11/17 14:41:21 visa Exp $
+#	$OpenBSD: files.loongson,v 1.25 2017/06/08 11:44:00 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -21,6 +21,7 @@ file	arch/loongson/loongson/gdium_machdep.c		cpu_loongson2
 file	arch/loongson/loongson/generic2e_machdep.c	cpu_loongson2
 file	arch/loongson/loongson/generic3a_machdep.c	cpu_loongson3
 file	arch/loongson/loongson/isa_machdep.c		isa
+file	arch/loongson/loongson/locore.S
 file	arch/loongson/loongson/loongson2_machdep.c
 file	arch/loongson/loongson/loongson3_intr.c		cpu_loongson3
 file	arch/loongson/loongson/loongson3_machdep.c	cpu_loongson3

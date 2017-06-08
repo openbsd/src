@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2017/01/19 15:09:04 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.8 2017/06/08 11:44:00 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,10 +39,9 @@
 
 	.set	noreorder		# Noreorder is default style!
 
-	.globl	start
-	.globl	kernel_text
-kernel_text = start
-start:
+	.globl	locore_start
+	.ent	locore_start, 0
+locore_start:
 	mfc0    v0, COP_0_STATUS_REG
 	li	v1, ~SR_INT_ENAB
 	and	v0, v1
@@ -74,6 +73,7 @@ start:
 	PTR_L	sp, 0(sp)
 	jr	ra
 	nop
+	.end	locore_start
 
 #ifdef HIBERNATE
 
