@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2017/06/08 05:35:25 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.1 2017/06/08 05:35:25 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -34,8 +34,39 @@
 #include <sh/trap.h>
 #include <sh/mmu_sh4.h>
 
-ENTRY(getramsize)
-	mov	#4, r0
-	trapa	#0x3f
-	rts
+/*
+ * void start(int howto, void *bootinfo);
+ *	Kernel entry point.
+ */	
+NENTRY(start)
+ALTENTRY(kernel_text)
+	/* Set bootstrap stack pointer */
+	mov.l	_L.bootstrap_stack, r15
+
+	/* Mask all interrupt */
+	__INTR_MASK(r0, r1)
+
+	/* MMU off */
+	mov.l	_L.MMUCR, r0
+	xor	r1, r1
+	mov.l	r1, @r0
+	
+	/* Make sure to change register bank 0 */
+	mov	#0x20, r1
+	stc	sr, r0
+	swap.b	r1, r1
+	swap.w	r1, r1
+	not	r1, r1
+	and	r1, r0
+	ldc	r0, sr	/* SR.RB = 0 */
+
+	/* Go! */
+	mov.l	_L.landisk_startup, r0
+	jmp	@r0
 	 nop
+
+	/* NOTREACHED */	
+	.align	2
+_L.landisk_startup:	.long	_C_LABEL(landisk_startup)
+_L.bootstrap_stack:	.long	_C_LABEL(start)
+_L.MMUCR:		.long	SH4_MMUCR

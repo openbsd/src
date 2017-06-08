@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.12 2016/01/08 15:54:13 jcs Exp $
+#	$OpenBSD: files.landisk,v 1.13 2017/06/08 05:35:23 deraadt Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -20,6 +20,7 @@ file	arch/landisk/landisk/consinit.c
 file	arch/landisk/landisk/disksubr.c		disk
 file	arch/landisk/landisk/intr.c
 file	arch/landisk/landisk/machdep.c
+file	arch/landisk/landisk/locore.S
 
 #
 # System bus types
