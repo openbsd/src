@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.121 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.122 2017/06/08 01:34:00 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -75,7 +75,7 @@ struct cfdriver gem_cd = {
 	NULL, "gem", DV_IFNET
 };
 
-void		gem_start(struct ifnet *);
+void		gem_start(struct ifqueue *);
 void		gem_stop(struct ifnet *, int);
 int		gem_ioctl(struct ifnet *, u_long, caddr_t);
 void		gem_tick(void *);
@@ -217,9 +217,9 @@ gem_config(struct gem_softc *sc)
 	/* Initialize ifnet structure. */
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_start = gem_start;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_qstart = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, GEM_NTXDESC - 1);
@@ -542,6 +542,7 @@ gem_stop(struct ifnet *ifp, int softonly)
 	}
 
 	intr_barrier(sc->sc_ih);
+	ifq_barrier(&ifp->if_snd);
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
@@ -1625,12 +1626,12 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct gem_sxd *sd;
-	u_int32_t cons, hwcons;
-	u_int32_t used, free = 0;
+	u_int32_t cons, prod;
+	int free = 0;
 
-	hwcons = status >> 19;
+	prod = status >> 19;
 	cons = sc->sc_tx_cons;
-	while (cons != hwcons) {
+	while (cons != prod) {
 		sd = &sc->sc_txd[cons];
 		if (sd->sd_mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
@@ -1639,25 +1640,23 @@ gem_tint(struct gem_softc *sc, u_int32_t status)
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
 		}
-		free++;
-		if (++cons == GEM_NTXDESC)
-			cons = 0;
+
+		free = 1;
+
+		cons++;
+		cons &= GEM_NTXDESC - 1;
 	}
+
+	if (free == 0)
+		return (0);
 
 	sc->sc_tx_cons = cons;
-	used = atomic_sub_int_nv(&sc->sc_tx_cnt, free);
 
-	if (used == 0)
+	if (sc->sc_tx_prod == cons)
 		ifp->if_timer = 0;
 
-	if (ifq_is_oactive(&ifp->if_snd) && (used + GEM_NTXSEGS <
-	    GEM_NTXDESC - 2)) {
-		ifq_clr_oactive(&ifp->if_snd);
-
-		KERNEL_LOCK();
-		gem_start(ifp);
-		KERNEL_UNLOCK();
-	}
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 
 	return (1);
 }
@@ -1687,35 +1686,43 @@ gem_load_mbuf(struct gem_softc *sc, struct gem_sxd *sd, struct mbuf *m)
 }
 
 void
-gem_start(struct ifnet *ifp)
+gem_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct gem_softc *sc = ifp->if_softc;
 	struct gem_sxd *sd;
 	struct mbuf *m;
-	u_int64_t flags;
+	uint64_t flags, nflags;
 	bus_dmamap_t map;
-	u_int32_t prod, first, last, i;
-	unsigned int used, new;
-
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
-		return;
+	uint32_t prod;
+	uint32_t free, used = 0;
+	uint32_t first, last;
+	int i;
 
 	prod = sc->sc_tx_prod;
-	used = sc->sc_tx_cnt;
-	new = 0;
+
+	/* figure out space */
+	free = sc->sc_tx_cons;
+	if (free <= prod)
+		free += GEM_NTXDESC;
+	free -= prod;
+
+	bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
+	    0, sizeof(struct gem_desc) * GEM_NTXDESC,
+	    BUS_DMASYNC_PREWRITE);
 
 	for (;;) {
-		if (used + new + GEM_NTXSEGS > (GEM_NTXDESC - 2)) {
+		if (used + GEM_NTXSEGS + 1 > free) {
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 
 		first = prod;
-		sd = &sc->sc_txd[prod];
+		sd = &sc->sc_txd[first];
 		map = sd->sd_map;
 
 		if (gem_load_mbuf(sc, sd, m)) {
@@ -1732,35 +1739,37 @@ gem_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
+		nflags = GEM_TD_START_OF_PACKET;
 		for (i = 0; i < map->dm_nsegs; i++) {
+			flags = nflags |
+			    (map->dm_segs[i].ds_len & GEM_TD_BUFSIZE);
+
 			GEM_DMA_WRITE(sc, &sc->sc_txdescs[prod].gd_addr,
 			    map->dm_segs[i].ds_addr);
-			flags = map->dm_segs[i].ds_len & GEM_TD_BUFSIZE;
-			if (i == 0)
-				flags |= GEM_TD_START_OF_PACKET;
-			if (i == (map->dm_nsegs - 1))
-				flags |= GEM_TD_END_OF_PACKET;
 			GEM_DMA_WRITE(sc, &sc->sc_txdescs[prod].gd_flags,
 			    flags);
-			bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
-			    GEM_CDTXOFF(prod), sizeof(struct gem_desc),
-			    BUS_DMASYNC_PREWRITE);
 
 			last = prod;
-			if (++prod == GEM_NTXDESC)
-				prod = 0;
-		}
+			prod++;
+			prod &= GEM_NTXDESC - 1;
 
-		new += map->dm_nsegs;
+			nflags = 0;
+		}
+		GEM_DMA_WRITE(sc, &sc->sc_txdescs[last].gd_flags,
+		    GEM_TD_END_OF_PACKET | flags);
+
+		used += map->dm_nsegs;
 		sc->sc_txd[last].sd_mbuf = m;
 		sc->sc_txd[first].sd_map = sc->sc_txd[last].sd_map;
 		sc->sc_txd[last].sd_map = map;
 	}
 
-	if (new == 0)
-		return;
+	bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
+	    0, sizeof(struct gem_desc) * GEM_NTXDESC,
+	    BUS_DMASYNC_POSTWRITE);
 
-	atomic_add_int(&sc->sc_tx_cnt, new);
+	if (used == 0)
+		return;
 
 	/* Commit. */
 	sc->sc_tx_prod = prod;
