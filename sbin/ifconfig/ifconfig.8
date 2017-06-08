@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.284 2017/06/07 21:47:07 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.285 2017/06/08 00:46:42 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 7 2017 $
+.Dd $Mdocdate: June 8 2017 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -975,7 +975,7 @@ and
 authentication (also known as personal mode) uses a 256-bit pre-shared key.
 .Ar 802.1x
 authentication (also known as enterprise mode) is used with
-an external IEEE 802.1X authentication server,
+an external IEEE 802.1x authentication server,
 such as wpa_supplicant.
 The default value is
 .Dq psk .
@@ -1684,9 +1684,9 @@ Packets transmitted on
 .Xr vlan 4
 or
 .Xr svlan 4
-interfaces will be tagged with 802.1Q or 802.1AD headers respectively
+interfaces will be tagged with 802.1q or 802.1ad headers respectively
 and transmitted on the specified parent interface.
-Packets with 802.1Q or 802.1AD tags received
+Packets with 802.1q or 802.1ad tags received
 by the parent interface with the specified VLAN tag will be diverted to
 the associated VLAN interface.
 Unless a custom Ethernet address is assigned to the VLAN interface,
@@ -1697,7 +1697,7 @@ This breaks the link between the VLAN interface and its parent.
 .It Cm vnetid Ar vlan-tag
 Set the VLAN tag value to
 .Ar vlan-tag .
-This value is a 12-bit number which is used in the 802.1Q or 802.1AD
+This value is a 12-bit number which is used in the 802.1q or 802.1ad
 headers in packets handled by
 .Xr vlan 4
 or
