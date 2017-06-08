@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/06/05 15:23:11 visa Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2017/06/08 12:11:46 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -33,9 +33,11 @@
 
 	.set	noreorder		# Noreorder is default style!
 	.set	mips64r2
-	.globl	start
 	.globl	kernel_text
+	.globl	start
+	.ent	start, 0
 kernel_text = start
 start:
 	j	locore_start
 	nop
+	.end	start

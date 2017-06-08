@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 2017/06/06 14:39:48 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.16 2017/06/08 12:11:46 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,6 +45,7 @@
 	.set	noreorder		# Noreorder is default style!
 	.set	mips64r2
 	.globl	locore_start
+	.ent	locore_start, 0
 locore_start:
 /* initialize ebase */
 	dla	t0, 0xffffffff80000000
@@ -144,6 +145,7 @@ locore_start:
 	PTR_L	sp, 0(sp)
 	jr	ra
 	nop
+	.end	locore_start
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)
