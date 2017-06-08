@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.33 2017/06/07 17:38:08 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.34 2017/06/08 18:11:15 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,6 +28,7 @@
 
 static	size_t	term_tbl_len(size_t, void *);
 static	size_t	term_tbl_strlen(const char *, void *);
+static	size_t	term_tbl_sulen(const struct roffsu *, void *);
 static	void	tbl_char(struct termp *, char, size_t);
 static	void	tbl_data(struct termp *, const struct tbl_opts *,
 			const struct tbl_dat *,
@@ -42,16 +43,20 @@ static	void	tbl_word(struct termp *, const struct tbl_dat *);
 
 
 static size_t
+term_tbl_sulen(const struct roffsu *su, void *arg)
+{
+	return term_hspan((const struct termp *)arg, su) / 24;
+}
+
+static size_t
 term_tbl_strlen(const char *p, void *arg)
 {
-
 	return term_strlen((const struct termp *)arg, p);
 }
 
 static size_t
 term_tbl_len(size_t sz, void *arg)
 {
-
 	return term_len((const struct termp *)arg, sz);
 }
 
@@ -76,6 +81,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	if (tp->tbl.cols == NULL) {
 		tp->tbl.len = term_tbl_len;
 		tp->tbl.slen = term_tbl_strlen;
+		tp->tbl.sulen = term_tbl_sulen;
 		tp->tbl.arg = tp;
 
 		tblcalc(&tp->tbl, sp, tp->tcol->rmargin - tp->tcol->offset);

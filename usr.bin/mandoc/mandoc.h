@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.167 2017/06/08 00:21:23 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.168 2017/06/08 18:11:15 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -246,9 +246,10 @@ enum	tbl_cellt {
  */
 struct	tbl_cell {
 	struct tbl_cell	 *next;
+	char		 *wstr; /* min width represented as a string */
+	size_t		  width; /* minimum column width */
+	size_t		  spacing; /* to the right of the column */
 	int		  vert; /* width of subsequent vertical line */
-	enum tbl_cellt	  pos;
-	size_t		  spacing;
 	int		  col; /* column number, starting from 0 */
 	int		  flags;
 #define	TBL_CELL_TALIGN	 (1 << 0) /* t, T */
@@ -259,6 +260,7 @@ struct	tbl_cell {
 #define	TBL_CELL_UP	 (1 << 5) /* u, U */
 #define	TBL_CELL_WIGN	 (1 << 6) /* z, Z */
 #define	TBL_CELL_WMAX	 (1 << 7) /* x, X */
+	enum tbl_cellt	  pos;
 };
 
 /*
@@ -286,9 +288,10 @@ enum	tbl_datt {
  */
 struct	tbl_dat {
 	struct tbl_cell	 *layout; /* layout cell */
-	int		  spans; /* how many spans follow */
 	struct tbl_dat	 *next;
 	char		 *string; /* data (NULL if not TBL_DATA_DATA) */
+	int		  spans; /* how many spans follow */
+	int		  block; /* T{ text block T} */
 	enum tbl_datt	  pos;
 };
 

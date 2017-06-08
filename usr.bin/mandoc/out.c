@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.36 2017/06/08 12:54:40 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.37 2017/06/08 18:11:15 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -27,9 +27,10 @@
 #include "out.h"
 
 static	void	tblcalc_data(struct rofftbl *, struct roffcol *,
-			const struct tbl_opts *, const struct tbl_dat *);
+			const struct tbl_opts *, const struct tbl_dat *,
+			size_t);
 static	void	tblcalc_literal(struct rofftbl *, struct roffcol *,
-			const struct tbl_dat *);
+			const struct tbl_dat *, size_t);
 static	void	tblcalc_number(struct rofftbl *, struct roffcol *,
 			const struct tbl_opts *, const struct tbl_dat *);
 
@@ -104,6 +105,7 @@ void
 tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	size_t totalwidth)
 {
+	struct roffsu		 su;
 	const struct tbl_opts	*opts;
 	const struct tbl_dat	*dp;
 	struct roffcol		*col;
@@ -144,7 +146,16 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 			col->flags |= dp->layout->flags;
 			if (dp->layout->flags & TBL_CELL_WIGN)
 				continue;
-			tblcalc_data(tbl, col, opts, dp);
+			if (dp->layout->wstr != NULL &&
+			    dp->layout->width == 0 &&
+			    a2roffsu(dp->layout->wstr, &su, SCALE_EN)
+			    != NULL)
+				dp->layout->width =
+				    (*tbl->sulen)(&su, tbl->arg);
+			if (col->width < dp->layout->width)
+				col->width = dp->layout->width;
+			tblcalc_data(tbl, col, opts, dp, dp->block ?
+			    totalwidth / (sp->opts->cols + 1) : 0);
 		}
 	}
 
@@ -232,7 +243,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 
 static void
 tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
-		const struct tbl_opts *opts, const struct tbl_dat *dp)
+    const struct tbl_opts *opts, const struct tbl_dat *dp, size_t mw)
 {
 	size_t		 sz;
 
@@ -249,7 +260,7 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 	case TBL_CELL_CENTRE:
 	case TBL_CELL_LEFT:
 	case TBL_CELL_RIGHT:
-		tblcalc_literal(tbl, col, dp);
+		tblcalc_literal(tbl, col, dp, mw);
 		break;
 	case TBL_CELL_NUMBER:
 		tblcalc_number(tbl, col, opts, dp);
@@ -263,16 +274,29 @@ tblcalc_data(struct rofftbl *tbl, struct roffcol *col,
 
 static void
 tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
-		const struct tbl_dat *dp)
+    const struct tbl_dat *dp, size_t mw)
 {
-	size_t		 sz;
-	const char	*str;
+	const char	*str;	/* Beginning of the first line. */
+	const char	*beg;	/* Beginning of the current line. */
+	char		*end;	/* End of the current line. */
+	size_t		 sz;	/* Length of the current line. */
 
-	str = dp->string ? dp->string : "";
-	sz = (*tbl->slen)(str, tbl->arg);
-
-	if (col->width < sz)
-		col->width = sz;
+	if (dp->string == NULL || *dp->string == '\0')
+		return;
+	str = mw ? mandoc_strdup(dp->string) : dp->string;
+	for (beg = str; beg != NULL && *beg != '\0'; beg = end) {
+		end = mw ? strchr(beg, ' ') : NULL;
+		if (end != NULL) {
+			*end++ = '\0';
+			while (*end == ' ')
+				end++;
+		}
+		sz = (*tbl->slen)(beg, tbl->arg);
+		if (col->width < sz)
+			col->width = sz;
+	}
+	if (mw)
+		free((void *)str);
 }
 
 static void
