@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.4 2017/06/07 15:27:46 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.5 2017/06/09 15:29:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -273,12 +273,15 @@ mode_tree_each_tagged(struct mode_tree_data *mtd, void (*cb)(void *, void *,
 }
 
 struct mode_tree_data *
-mode_tree_start(struct window_pane *wp, void (*buildcb)(void *, u_int,
-    uint64_t *), struct screen *(*drawcb)(void *, void *, u_int, u_int),
+mode_tree_start(struct window_pane *wp, struct args *args,
+    void (*buildcb)(void *, u_int, uint64_t *),
+    struct screen *(*drawcb)(void *, void *, u_int, u_int),
     int (*searchcb)(void *, void *, const char *), void *modedata,
     const char **sort_list, u_int sort_size, struct screen **s)
 {
 	struct mode_tree_data	*mtd;
+	const char		*sort;
+	u_int			 i;
 
 	mtd = xcalloc(1, sizeof *mtd);
 	mtd->references = 1;
@@ -289,6 +292,14 @@ mode_tree_start(struct window_pane *wp, void (*buildcb)(void *, u_int,
 	mtd->sort_list = sort_list;
 	mtd->sort_size = sort_size;
 	mtd->sort_type = 0;
+
+	sort = args_get(args, 'O');
+	if (sort != NULL) {
+		for (i = 0; i < sort_size; i++) {
+			if (strcasecmp(sort, sort_list[i]) == 0)
+				mtd->sort_type = i;
+		}
+	}
 
 	mtd->buildcb = buildcb;
 	mtd->drawcb = drawcb;

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.6 2017/06/09 15:17:20 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.7 2017/06/09 15:29:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -257,7 +257,7 @@ window_buffer_init(struct window_pane *wp, __unused struct cmd_find_state *fs,
 	else
 		data->command = xstrdup(args->argv[0]);
 
-	data->data = mode_tree_start(wp, window_buffer_build,
+	data->data = mode_tree_start(wp, args, window_buffer_build,
 	    window_buffer_draw, window_buffer_search, data,
 	    window_buffer_sort_list, nitems(window_buffer_sort_list), &s);
 
