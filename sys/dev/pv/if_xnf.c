@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.54 2017/03/13 01:10:03 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.55 2017/06/09 14:36:43 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -573,6 +573,8 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 	    m_defrag(m_head, M_DONTWAIT))
 		goto errout;
 
+	flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_NOWAIT;
+
 	for (m = m_head; m != NULL && m->m_len > 0; m = m->m_next) {
 		i = *prod & (XNF_TX_DESC - 1);
 		dmap = sc->sc_tx_dmap[i];
@@ -583,7 +585,6 @@ xnf_encap(struct xnf_softc *sc, struct mbuf *m_head, uint32_t *prod)
 			    txr->txr_prod, *prod, *prod - oprod,
 			    xnf_fragcount(m_head));
 
-		flags = (sc->sc_domid << 16) | BUS_DMA_WRITE | BUS_DMA_WAITOK;
 		if (bus_dmamap_load(sc->sc_dmat, dmap, m->m_data, m->m_len,
 		    NULL, flags)) {
 			DPRINTF("%s: failed to load %u bytes @%lu\n",
