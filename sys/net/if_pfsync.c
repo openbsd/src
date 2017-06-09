@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.252 2017/05/27 18:33:21 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.253 2017/06/09 17:43:06 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -657,6 +657,7 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct pfsync_header *ph;
 	struct pfsync_subheader subh;
 	int offset, noff, len, count, mlen, flags = 0;
+	int e;
 
 	pfsyncstat_inc(pfsyncs_ipackets);
 
@@ -733,8 +734,11 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 			return IPPROTO_DONE;
 		}
 
-		if (pfsync_acts[subh.action].in(n->m_data + noff,
-		    mlen, count, flags) != 0)
+		PF_LOCK();
+		e = pfsync_acts[subh.action].in(n->m_data + noff, mlen, count,
+		    flags);
+		PF_UNLOCK();
+		if (e != 0)
 			goto done;
 
 		offset += mlen * count;
