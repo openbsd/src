@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.784 2017/06/09 15:29:15 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.785 2017/06/09 16:01:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2202,9 +2202,10 @@ void	 mode_tree_each_tagged(struct mode_tree_data *, void (*)(void *, void *,
 void	 mode_tree_up(struct mode_tree_data *, int);
 void	 mode_tree_down(struct mode_tree_data *, int);
 struct mode_tree_data *mode_tree_start(struct window_pane *, struct args *,
-	     void (*)(void *, u_int, uint64_t *), struct screen *(*)(void *,
-	     void *, u_int, u_int), int (*)(void *, void *, const char *),
-	     void *, const char **, u_int, struct screen **);
+	     void (*)(void *, u_int, uint64_t *, const char *),
+	     struct screen *(*)(void *, void *, u_int, u_int),
+	     int (*)(void *, void *, const char *), void *, const char **,
+	     u_int, struct screen **);
 void	 mode_tree_build(struct mode_tree_data *);
 void	 mode_tree_free(struct mode_tree_data *);
 void	 mode_tree_resize(struct mode_tree_data *, u_int, u_int);
