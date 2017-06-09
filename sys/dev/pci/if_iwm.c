@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.190 2017/06/02 11:18:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.191 2017/06/09 13:46:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -460,7 +460,7 @@ void	iwm_attach_hook(struct device *);
 void	iwm_attach(struct device *, struct device *, void *);
 void	iwm_init_task(void *);
 int	iwm_activate(struct device *, int);
-void	iwm_wakeup(struct iwm_softc *);
+int	iwm_resume(struct iwm_softc *);
 
 #if NBPFILTER > 0
 void	iwm_radiotap_attach(struct iwm_softc *);
@@ -7415,7 +7415,8 @@ iwm_init_task(void *arg1)
 	rw_enter_write(&sc->ioctl_rwl);
 	s = splnet();
 
-	iwm_stop(ifp, 0);
+	if (sc->sc_flags & IWM_FLAG_HW_INITED)
+		iwm_stop(ifp, 0);
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwm_init(ifp);
 
@@ -7423,8 +7424,8 @@ iwm_init_task(void *arg1)
 	rw_exit(&sc->ioctl_rwl);
 }
 
-void
-iwm_wakeup(struct iwm_softc *sc)
+int
+iwm_resume(struct iwm_softc *sc)
 {
 	pcireg_t reg;
 
@@ -7432,7 +7433,7 @@ iwm_wakeup(struct iwm_softc *sc)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	task_add(systq, &sc->init_task);
+	return iwm_prepare_card_hw(sc);
 }
 
 int
@@ -7440,14 +7441,23 @@ iwm_activate(struct device *self, int act)
 {
 	struct iwm_softc *sc = (struct iwm_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int err = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
 			iwm_stop(ifp, 0);
 		break;
+	case DVACT_RESUME:
+		err = iwm_resume(sc);
+		if (err)
+			printf("%s: could not initialize hardware\n",
+			    DEVNAME(sc));
+		break;
 	case DVACT_WAKEUP:
-		iwm_wakeup(sc);
+		/* Hardware should be up at this point. */
+		if (iwm_set_hw_ready(sc))
+			task_add(systq, &sc->init_task);
 		break;
 	}
 
