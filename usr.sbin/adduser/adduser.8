@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.45 2017/02/06 06:16:52 tb Exp $
+.\"	$OpenBSD: adduser.8,v 1.46 2017/06/09 16:46:57 tedu Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd $Mdocdate: February 6 2017 $
+.Dd $Mdocdate: June 9 2017 $
 .Dt ADDUSER 8
 .Os
 .Sh NAME
@@ -312,6 +312,9 @@ Parse command-line options.
 The
 .Em adduser.conf
 format is explained within that file and is quite straightforward.
+The configuration file will be created the first time
+.Nm
+is run.
 .\" .Sh FORMAT
 .\" .Bl -tag -width Ds -compact
 .\" .Ql Pa #
