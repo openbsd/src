@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.55 2017/06/09 14:36:43 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.56 2017/06/09 20:38:48 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -451,6 +451,8 @@ xnf_init(struct xnf_softc *sc)
 
 	xnf_iff(sc);
 
+	xnf_rx_ring_fill(sc);
+
 	if (xen_intr_unmask(sc->sc_xih)) {
 		printf("%s: failed to enable interrupts\n", ifp->if_xname);
 		xnf_stop(sc);
@@ -492,6 +494,9 @@ xnf_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	int pkts = 0;
 	uint32_t prod, oprod;
+
+	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(ifq))
+		return;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTREAD);
@@ -901,8 +906,6 @@ xnf_rx_ring_create(struct xnf_softc *sc)
 		}
 		sc->sc_rx_ring->rxr_desc[i].rxd_req.rxq_id = i;
 	}
-
-	xnf_rx_ring_fill(sc);
 
 	return (0);
 
