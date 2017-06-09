@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.85 2017/04/05 14:50:05 jca Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.86 2017/06/09 13:31:03 florian Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ static int prefix_check(struct nd_opt_prefix_info *, struct rainfo *,
 static int nd6_options(struct nd_opt_hdr *, int,
     union nd_opts *, u_int32_t);
 static void free_ndopts(union nd_opts *);
-static void ra_output(struct rainfo *);
+static void ra_output(struct rainfo *, struct sockaddr_in6 *);
 static struct rainfo *if_indextorainfo(int);
 static int rdaemon(int);
 
@@ -293,7 +293,7 @@ die_cb(int sig, short event, void *arg)
 	}
 	for (i = 0; i < retrans; i++) {
 		SLIST_FOREACH(ra, &ralist, entry)
-			ra_output(ra);
+			ra_output(ra, &sin6_allnodes);
 		sleep(MIN_DELAY_BETWEEN_RAS);
 	}
 	exit(0);
@@ -651,11 +651,13 @@ rs_input(int len, struct nd_router_solicit *rs,
 
 	ra->rsinput++;		/* increment statistics */
 
-	/*
-	 * Decide whether to send RA according to the rate-limit
-	 * consideration.
-	 */
-	{
+	if (ndopts.nd_opts_src_lladdr)
+		ra_output(ra, from);
+	else {
+		/*
+		 * Decide whether to send RA according to the rate-limit
+		 * consideration.
+		 */
 		long delay;	/* must not be greater than 1000000 */
 		struct timeval interval, now, min_delay, tm_tmp, next,
 		    computed;
@@ -1038,6 +1040,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 
 		switch (hdr->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
+			ndopts->nd_opt_array[hdr->nd_opt_type] = hdr;
+			break;
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
 		case ND_OPT_ROUTE_INFO:
@@ -1212,7 +1216,7 @@ if_indextorainfo(int index)
 }
 
 static void
-ra_output(struct rainfo *rainfo)
+ra_output(struct rainfo *rainfo, struct sockaddr_in6 *to)
 {
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi;
@@ -1225,7 +1229,7 @@ ra_output(struct rainfo *rainfo)
 
 	make_packet(rainfo);	/* XXX: inefficient */
 
-	sndmhdr.msg_name = &sin6_allnodes;
+	sndmhdr.msg_name = to;
 	sndmhdr.msg_iov[0].iov_base = rainfo->ra_data;
 	sndmhdr.msg_iov[0].iov_len = rainfo->ra_datalen;
 
@@ -1258,16 +1262,18 @@ ra_output(struct rainfo *rainfo)
 		return;
 	}
 
-	/* update counter */
-	if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)
-		rainfo->initcounter++;
 	rainfo->raoutput++;
 
-	/* update timestamp */
-	gettimeofday(&rainfo->lastsent, NULL);
+	if (memcmp(to, &sin6_allnodes, sizeof(sin6_allnodes)) == 0) {
+		/* update counter */
+		if (rainfo->initcounter < MAX_INITIAL_RTR_ADVERTISEMENTS)
+			rainfo->initcounter++;
+		/* update timestamp */
+		gettimeofday(&rainfo->lastsent, NULL);
 
-	/* reset waiting counter */
-	rainfo->waiting = 0;
+		/* reset waiting counter */
+		rainfo->waiting = 0;
+	}
 }
 
 /* process RA timer */
@@ -1278,7 +1284,7 @@ timer_cb(int fd, short event, void *data)
 
 	log_debug("RA timer on %s is expired", rai->ifname);
 
-	ra_output(rai);
+	ra_output(rai, &sin6_allnodes);
 
 	ra_timer_update(rai);
 	evtimer_add(&rai->timer.ev, &rai->timer.tm);
