@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.191 2017/06/09 13:46:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.192 2017/06/09 13:47:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -256,6 +256,7 @@ int	iwm_write_mem(struct iwm_softc *, uint32_t, const void *, int);
 int	iwm_write_mem32(struct iwm_softc *, uint32_t, uint32_t);
 int	iwm_poll_bit(struct iwm_softc *, int, uint32_t, uint32_t, int);
 int	iwm_nic_lock(struct iwm_softc *);
+void	iwm_nic_assert_locked(struct iwm_softc *);
 void	iwm_nic_unlock(struct iwm_softc *);
 void	iwm_set_bits_mask_prph(struct iwm_softc *, uint32_t, uint32_t,
 	    uint32_t);
@@ -832,6 +833,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 uint32_t
 iwm_read_prph(struct iwm_softc *sc, uint32_t addr)
 {
+	iwm_nic_assert_locked(sc);
 	IWM_WRITE(sc,
 	    IWM_HBUS_TARG_PRPH_RADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWM_BARRIER_READ_WRITE(sc);
@@ -841,6 +843,7 @@ iwm_read_prph(struct iwm_softc *sc, uint32_t addr)
 void
 iwm_write_prph(struct iwm_softc *sc, uint32_t addr, uint32_t val)
 {
+	iwm_nic_assert_locked(sc);
 	IWM_WRITE(sc,
 	    IWM_HBUS_TARG_PRPH_WADDR, ((addr & 0x000fffff) | (3 << 24)));
 	IWM_BARRIER_WRITE(sc);
@@ -909,9 +912,8 @@ iwm_poll_bit(struct iwm_softc *sc, int reg, uint32_t bits, uint32_t mask,
 int
 iwm_nic_lock(struct iwm_softc *sc)
 {
-	int rv = 0;
-
 	if (sc->sc_nic_locks > 0) {
+		iwm_nic_assert_locked(sc);
 		sc->sc_nic_locks++;
 		return 1; /* already locked */
 	}
@@ -925,15 +927,25 @@ iwm_nic_lock(struct iwm_softc *sc)
 	if (iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY
-	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
-	    	rv = 1;
+	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 150000)) {
 		sc->sc_nic_locks++;
-	} else {
-		printf("%s: acquiring device failed\n", DEVNAME(sc));
-		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
+		return 1;
 	}
 
-	return rv;
+	printf("%s: acquiring device failed\n", DEVNAME(sc));
+	return 0;
+}
+
+void
+iwm_nic_assert_locked(struct iwm_softc *sc)
+{
+	uint32_t reg = IWM_READ(sc, IWM_CSR_GP_CNTRL);
+	if ((reg & IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY) == 0)
+		panic("%s: mac clock not ready", DEVNAME(sc));
+	if (reg & IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP)
+		panic("%s: mac gone to sleep", DEVNAME(sc));
+	if (sc->sc_nic_locks <= 0)
+		panic("%s: nic locks counter %d", DEVNAME(sc), sc->sc_nic_locks);
 }
 
 void
@@ -1781,8 +1793,7 @@ const uint8_t iwm_ac_to_tx_fifo[] = {
 int
 iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
 {
-	if (!iwm_nic_lock(sc))
-		return EBUSY;
+	iwm_nic_assert_locked(sc);
 
 	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, qid << 8 | 0);
 
@@ -1817,8 +1828,6 @@ iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
 		struct iwm_scd_txq_cfg_cmd cmd;
 		int err;
 
-		iwm_nic_unlock(sc);
-
 		memset(&cmd, 0, sizeof(cmd));
 		cmd.scd_queue = qid;
 		cmd.enable = 1;
@@ -1831,15 +1840,10 @@ iwm_enable_txq(struct iwm_softc *sc, int sta_id, int qid, int fifo)
 		    sizeof(cmd), &cmd);
 		if (err)
 			return err;
-
-		if (!iwm_nic_lock(sc))
-			return EBUSY;
 	}
 
 	iwm_write_prph(sc, IWM_SCD_EN_CTRL,
 	    iwm_read_prph(sc, IWM_SCD_EN_CTRL) | qid);
-
-	iwm_nic_unlock(sc);
 
 	return 0;
 }
@@ -1873,15 +1877,10 @@ iwm_post_alive(struct iwm_softc *sc)
 
 	iwm_write_prph(sc, IWM_SCD_CHAINEXT_EN, 0);
 
-	iwm_nic_unlock(sc);
-
 	/* enable command channel */
 	err = iwm_enable_txq(sc, 0 /* unused */, IWM_CMD_QUEUE, 7);
 	if (err)
-		return err;
-
-	if (!iwm_nic_lock(sc))
-		return EBUSY;
+		goto out;
 
 	/* Activate TX scheduler. */
 	iwm_write_prph(sc, IWM_SCD_TXFACT, 0xff);
@@ -2609,10 +2608,13 @@ iwm_set_hw_address_8000(struct iwm_softc *sc, struct iwm_nvm_data *data,
 
 	if (nvm_hw) {
 		/* Read the mac address from WFMP registers. */
-		uint32_t mac_addr0 =
-		    htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_0));
-		uint32_t mac_addr1 =
-		    htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_1));
+		uint32_t mac_addr0, mac_addr1;
+
+		if (!iwm_nic_lock(sc))
+			goto out;
+		mac_addr0 = htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_0));
+		mac_addr1 = htole32(iwm_read_prph(sc, IWM_WFMP_MAC_ADDR_1));
+		iwm_nic_unlock(sc);
 
 		hw_addr = (const uint8_t *)&mac_addr0;
 		data->hw_addr[0] = hw_addr[3];
@@ -2626,7 +2628,7 @@ iwm_set_hw_address_8000(struct iwm_softc *sc, struct iwm_nvm_data *data,
 
 		return;
 	}
-
+out:
 	printf("%s: mac address not found\n", DEVNAME(sc));
 	memset(data->hw_addr, 0, sizeof(data->hw_addr));
 }
@@ -5560,6 +5562,7 @@ iwm_newstate_task(void *psc)
 {
 	struct iwm_softc *sc = (struct iwm_softc *)psc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
 	enum ieee80211_state nstate = sc->ns_nstate;
 	enum ieee80211_state ostate = ic->ic_state;
 	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
@@ -5580,7 +5583,11 @@ iwm_newstate_task(void *psc)
 	/* XXX Is there a way to switch states without a full reset? */
 	if (ostate > IEEE80211_S_SCAN && nstate < ostate) {
 		iwm_stop_device(sc);
-		iwm_init_hw(sc);
+		err = iwm_init_hw(sc);
+		if (err) {
+			iwm_stop(ifp, 1);
+			return;
+		}
 
 		/* 
 		 * Upon receiving a deauth frame from AP the net80211 stack
@@ -5958,6 +5965,9 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
+	if (!iwm_nic_lock(sc))
+		return EBUSY;
+
 	err = iwm_send_bt_init_conf(sc);
 	if (err) {
 		printf("%s: could not init bt coex (error %d)\n",
@@ -6056,10 +6066,8 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
-	return 0;
-
- err:
-	iwm_stop_device(sc);
+err:
+	iwm_nic_unlock(sc);
 	return err;
 }
 
