@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.125 2017/06/04 09:22:34 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.126 2017/06/09 09:21:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2174,6 +2174,7 @@ input_osc_52(struct window_pane *wp, const char *p)
 	screen_write_start(&ctx, wp, NULL);
 	screen_write_setselection(&ctx, out, outlen);
 	screen_write_stop(&ctx);
+	notify_pane("pane-set-clipboard", wp);
 
 	paste_add(out, outlen);
 }
