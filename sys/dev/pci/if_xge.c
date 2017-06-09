@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.75 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.76 2017/06/09 14:34:10 mikeb Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1116,33 +1116,38 @@ xge_start(struct ifnet *ifp)
 	bus_dmamap_t dmp;
 	struct	mbuf *m;
 	uint64_t par, lcr;
-	int nexttx = 0, ntxd, error, i;
+	int nexttx = 0, ntxd, i;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
 	par = lcr = 0;
 	for (;;) {
-		m = ifq_deq_begin(&ifp->if_snd);
-		if (m == NULL)
-			break;	/* out of packets */
-
 		if (sc->sc_nexttx == sc->sc_lasttx) {
-			ifq_deq_rollback(&ifp->if_snd, m);
+			ifq_set_oactive(&ifp->if_snd);
 			break;	/* No more space */
 		}
+
+		m = ifq_dequeue(&ifp->if_snd);
+		if (m == NULL)
+			break;	/* out of packets */
 
 		nexttx = sc->sc_nexttx;
 		dmp = sc->sc_txm[nexttx];
 
-		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmp, m,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0) {
-			ifq_deq_rollback(&ifp->if_snd, m);
-			printf("%s: bus_dmamap_load_mbuf error %d\n",
-			    XNAME, error);
+		switch (bus_dmamap_load_mbuf(sc->sc_dmat, dmp, m,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) {
+		case 0:
 			break;
+		case EFBIG:
+			if (m_defrag(m, M_DONTWAIT) == 0 &&
+			    bus_dmamap_load_mbuf(sc->sc_dmat, dmp, m,
+			    BUS_DMA_WRITE|BUS_DMA_NOWAIT) == 0)
+				break;
+		default:
+			m_freem(m);
+			continue;
 		}
-		ifq_deq_commit(&ifp->if_snd, m);
 
 		bus_dmamap_sync(sc->sc_dmat, dmp, 0, dmp->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
