@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.237 2017/04/19 15:21:54 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.238 2017/06/09 12:56:43 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -772,20 +772,26 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rt = rtable_lookup(tableid, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_NETMASK], info->rti_info[RTAX_GATEWAY],
 		    prio);
+		if (rt == NULL) {
+			error = ESRCH;
+			break;
+		}
+
+		/* Detaching an interface requires the KERNEL_LOCK(). */
+		ifp = if_get(rt->rt_ifidx);
+		KASSERT(ifp != NULL);
 
 		/*
 		 * Invalidate the cache of automagically created and
 		 * referenced L2 entries to make sure that ``rt_gwroute''
 		 * pointer stays valid for other CPUs.
 		 */
-		if ((rt != NULL) && (ISSET(rt->rt_flags, RTF_CACHED))) {
-			ifp = if_get(rt->rt_ifidx);
-			KASSERT(ifp != NULL);
+		if ((ISSET(rt->rt_flags, RTF_CACHED))) {
 			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
-			if_put(ifp);
 			/* Reset the MTU of the gateway route. */
 			rtable_walk(tableid, rt_key(rt)->sa_family,
 			    route_cleargateway, rt);
+			if_put(ifp);
 			break;
 		}
 
@@ -793,8 +799,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		 * Make sure that local routes are only modified by the
 		 * kernel.
 		 */
-		if ((rt != NULL) &&
-		    ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
+		if (ISSET(rt->rt_flags, RTF_LOCAL|RTF_BROADCAST)) {
+			if_put(ifp);
 			error = EINVAL;
 			break;
 		}
@@ -802,9 +808,8 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 		rtfree(rt);
 		rt = NULL;
 
-		error = rtrequest(RTM_DELETE, info, prio, &rt, tableid);
-		if (error != 0)
-			break;
+		error = rtrequest_delete(info, prio, ifp, &rt, tableid);
+		if_put(ifp);
 		break;
 	case RTM_CHANGE:
 	case RTM_LOCK:

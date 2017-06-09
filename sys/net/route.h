@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.161 2017/05/21 16:33:53 jca Exp $	*/
+/*	$OpenBSD: route.h,v 1.162 2017/06/09 12:56:43 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -459,6 +459,8 @@ int	 rt_ifa_dellocal(struct ifaddr *);
 void	 rtredirect(struct sockaddr *, struct sockaddr *, struct sockaddr *, struct rtentry **, unsigned int);
 int	 rtrequest(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 	     u_int);
+int	 rtrequest_delete(struct rt_addrinfo *, u_int8_t, struct ifnet *,
+	     struct rtentry **, u_int);
 #ifndef SMALL_KERNEL
 void	 rt_if_track(struct ifnet *);
 int	 rt_if_linkstate_change(struct rtentry *, void *, u_int);

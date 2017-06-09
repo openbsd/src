@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.221 2017/06/07 13:28:02 mpi Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.222 2017/06/09 12:56:43 mpi Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -721,9 +721,22 @@ in_losing(struct inpcb *inp)
 		rtm_miss(RTM_LOSING, &info, rt->rt_flags, rt->rt_priority,
 		    rt->rt_ifidx, 0, inp->inp_rtableid);
 		KERNEL_UNLOCK();
-		if (rt->rt_flags & RTF_DYNAMIC)
-			(void)rtrequest(RTM_DELETE, &info, rt->rt_priority,
-			    NULL, inp->inp_rtableid);
+		if (rt->rt_flags & RTF_DYNAMIC) {
+			struct ifnet *ifp;
+
+			ifp = if_get(rt->rt_ifidx);
+			/*
+			 * If the interface is gone, all its attached
+			 * route entries have been removed from the table,
+			 * so we're dealing with a stale cache and have
+			 * nothing to do.
+			 */
+			if (ifp != NULL) {
+				rtrequest_delete(&info, rt->rt_priority, ifp,
+				    NULL, inp->inp_rtableid);
+			}
+			if_put(ifp);
+		}
 		/*
 		 * A new route can be allocated
 		 * the next time output is attempted.

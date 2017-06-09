@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.358 2017/06/07 13:28:02 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.359 2017/06/09 12:56:43 mpi Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -168,8 +168,6 @@ struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
 
 struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *, struct sockaddr *,
 		    u_int);
-int	rtrequest_delete(struct rt_addrinfo *, u_int8_t, struct ifnet *,
-	    struct rtentry **, u_int);
 
 #ifdef DDB
 void	db_print_sa(struct sockaddr *);
@@ -888,16 +886,8 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 
 	rt->rt_flags &= ~RTF_UP;
 
-	if (ifp == NULL) {
-		ifp = if_get(rt->rt_ifidx);
-		if (ifp != NULL) {
-			ifp->if_rtrequest(ifp, RTM_DELETE, rt);
-			if_put(ifp);
-		}
-	} else {
-		KASSERT(ifp->if_index == rt->rt_ifidx);
-		ifp->if_rtrequest(ifp, RTM_DELETE, rt);
-	}
+	KASSERT(ifp->if_index == rt->rt_ifidx);
+	ifp->if_rtrequest(ifp, RTM_DELETE, rt);
 
 	atomic_inc_int(&rttrash);
 
@@ -932,10 +922,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		info->rti_info[RTAX_NETMASK] = NULL;
 	switch (req) {
 	case RTM_DELETE:
-		error = rtrequest_delete(info, prio, NULL, ret_nrt, tableid);
-		if (error)
-			return (error);
-		break;
+		return (EINVAL);
 
 	case RTM_RESOLVE:
 		if (ret_nrt == NULL || (rt = *ret_nrt) == NULL)
@@ -1413,16 +1400,17 @@ rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
 LIST_HEAD(, rttimer_queue)	rttimer_queue_head;
 static int			rt_init_done = 0;
 
-#define RTTIMER_CALLOUT(r)	{				\
-	if (r->rtt_func != NULL) {				\
-		(*r->rtt_func)(r->rtt_rt, r);			\
-	} else {						\
-		struct rt_addrinfo info;			\
-		bzero(&info, sizeof(info));			\
-		info.rti_info[RTAX_DST] = rt_key(r->rtt_rt);	\
-		rtrequest(RTM_DELETE, &info,			\
-		    r->rtt_rt->rt_priority, NULL, r->rtt_tableid);	\
-	}							\
+#define RTTIMER_CALLOUT(r)	{					\
+	if (r->rtt_func != NULL) {					\
+		(*r->rtt_func)(r->rtt_rt, r);				\
+	} else {							\
+		struct ifnet *ifp;					\
+									\
+		ifp = if_get(r->rtt_rt->rt_ifidx);			\
+		if (ifp != NULL) 					\
+			rtdeletemsg(r->rtt_rt, ifp, r->rtt_tableid);	\
+		if_put(ifp);						\
+	}								\
 }
 
 /*
