@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.45 2017/06/08 01:17:01 dlg Exp $
+.\" $OpenBSD: vlan.4,v 1.46 2017/06/09 01:39:07 dlg Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,13 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2017 $
+.Dd $Mdocdate: June 9 2017 $
 .Dt VLAN 4
 .Os
 .Sh NAME
 .Nm vlan ,
 .Nm svlan
-.Nd IEEE 802.1q and 802.1ad pseudo-device
+.Nd IEEE 802.1Q and 802.1ad pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device vlan"
 .Sh DESCRIPTION
@@ -42,7 +42,7 @@ The
 driver provides network interfaces supporting Virtual Local Area
 Networks (VLANs) on Ethernet networks.
 .Nm vlan
-interfaces implement virtual networks using the IEEE 802.1q protocol.
+interfaces implement virtual networks using the IEEE 802.1Q protocol.
 .Nm svlan
 interfaces implement virtual networks using the IEEE 802.1ad protocol.
 .Pp
@@ -74,7 +74,7 @@ or
 .Nm svlan
 interface will be encapsulated in their respective protocols and
 transmitted on the specified physical interface.
-802.1q and 802.1ad packets received on the parent interface will be
+802.1Q and 802.1ad packets received on the parent interface will be
 matched to the
 .Nm vlan
 and
@@ -83,7 +83,7 @@ interfaces by their respective protocol and virtual network
 identifiers, and decapsulated for reception on the associated virtual
 interfaces.
 .Pp
-The 802.1q and 802.1ad protocols include a priority field which may
+The 802.1Q and 802.1ad protocols include a priority field which may
 be altered via
 .Xr pf.conf 5 ;
 see the
@@ -141,10 +141,10 @@ interfaces use the following capability on parent interfaces:
 .Bl -tag -width "IFCAP_VLAN_HWTAGGING" -offset 3n
 .It IFCAP_VLAN_HWTAGGING
 The parent interface will offload the encapsulation and decapsulation
-of 802.1q frames.
+of 802.1Q frames.
 .El
 .Sh EXAMPLES
-Create an 802.1q virtual interface on top of the physical interface
+Create an 802.1Q virtual interface on top of the physical interface
 em0, with virtual network identifier 5:
 .Bd -literal -offset indent
 # ifconfig vlan0 create
@@ -152,7 +152,7 @@ em0, with virtual network identifier 5:
 # ifconfig vlan0 10.1.1.100/24
 .Ed
 .Pp
-Create an 802.1q VLAN interface on network 10, on top of an 802.1ad
+Create an 802.1Q VLAN interface on network 10, on top of an 802.1ad
 provider bridge on network 8, on top of the physical interface bge0:
 .Bd -literal -offset indent
 # ifconfig svlan0 create
@@ -163,12 +163,12 @@ provider bridge on network 8, on top of the physical interface bge0:
 # ifconfig vlan0 10.1.1.101/24
 .Ed
 .Pp
-Configure an 802.1q VLAN interface with a custom MAC address:
+Configure an 802.1Q VLAN interface with a custom MAC address:
 .Bd -literal -offset indent
 # ifconfig vlan0 lladdr fe:e1:ba:d0:84:0e
 .Ed
 .Pp
-Remove a custom MAC address from an 802.1q VLAN interface:
+Remove a custom MAC address from an 802.1Q VLAN interface:
 .Bd -literal -offset indent
 # ifconfig vlan0 lladdr 00:00:00:00:00:00
 .Ed
@@ -181,7 +181,7 @@ Remove a custom MAC address from an 802.1q VLAN interface:
 .Xr ifconfig 8 ,
 .Xr netstart 8
 .Rs
-.%T IEEE 802.1q standard
+.%T IEEE 802.1Q standard
 .%U http://standards.ieee.org/getieee802/802.1.html
 .Re
 .Rs
@@ -194,7 +194,7 @@ Originally
 .Sh CAVEATS
 Some Ethernet chips will either discard or truncate
 Ethernet frames that are larger than 1514 bytes.
-This causes a problem as 802.1q and 802.1ad tagged frames can be
+This causes a problem as 802.1Q and 802.1ad tagged frames can be
 up to 1518 bytes.
 Most controller chips can be told not to discard large frames
 and/or to increase the allowed frame size.
