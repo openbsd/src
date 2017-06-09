@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.5 2017/06/07 15:27:46 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.6 2017/06/09 15:17:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -46,13 +46,13 @@ const struct window_mode window_buffer_mode = {
 };
 
 enum window_buffer_sort_type {
-	WINDOW_BUFFER_BY_NAME,
 	WINDOW_BUFFER_BY_TIME,
+	WINDOW_BUFFER_BY_NAME,
 	WINDOW_BUFFER_BY_SIZE,
 };
 static const char *window_buffer_sort_list[] = {
-	"name",
 	"time",
+	"name",
 	"size"
 };
 
