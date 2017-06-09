@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.112 2017/05/27 09:05:25 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.113 2017/06/09 07:32:26 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -246,7 +246,7 @@ rollback_patch()
 
 sp_cleanup()
 {
-	local _d _k _m
+	local _d _k
 
 	# remove non matching release /var/syspatch/ content
 	for _d in ${_PDIR}/{.[!.],}*; do
@@ -262,9 +262,9 @@ sp_cleanup()
 	done
 
 	# in case a patch added a new directory (install -D)
-	for _m in /etc/mtree/{4.4BSD,BSD.x11}.dist; do
-		[[ -f ${_m} ]] && mtree -qdef ${_m} -p / -U >/dev/null
-	done
+	mtree -qdef /etc/mtree/4.4BSD.dist -p / -U >/dev/null
+	[[ -f /var/sysmerge/xetc.tgz ]] &&
+		mtree -qdef /etc/mtree/BSD.x11.dist -p / -U >/dev/null
 }
 
 unpriv()
@@ -297,7 +297,6 @@ _MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
 	print -r -- "${_line}"; done </etc/installurl | tail -1) 2>/dev/null
 [[ ${_MIRROR} == @(file|http|https)://*/*[!/] ]] ||
 	sp_err "${0##*/}: invalid URL configured in /etc/installurl"
-
 _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 
 (($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
