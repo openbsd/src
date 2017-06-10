@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.65 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.66 2017/06/10 12:58:37 kevlo Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -408,7 +408,7 @@ urndis_ctrl_init(struct urndis_softc *sc)
 	u_int32_t		 rval;
 	struct rndis_comp_hdr	*hdr;
 
-	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK);
+	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (msg == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -454,7 +454,7 @@ urndis_ctrl_halt(struct urndis_softc *sc)
 	struct rndis_halt_req	*msg;
 	u_int32_t		 rval;
 
-	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK);
+	msg = malloc(sizeof(*msg), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (msg == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -488,7 +488,7 @@ urndis_ctrl_query(struct urndis_softc *sc, u_int32_t oid,
 	u_int32_t		 rval;
 	struct rndis_comp_hdr	*hdr;
 
-	msg = malloc(sizeof(*msg) + qlen, M_TEMP, M_WAITOK);
+	msg = malloc(sizeof(*msg) + qlen, M_TEMP, M_WAITOK | M_CANFAIL);
 	if (msg == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -541,7 +541,7 @@ urndis_ctrl_set(struct urndis_softc *sc, u_int32_t oid, void *buf, size_t len)
 	u_int32_t		 rval;
 	struct rndis_comp_hdr	*hdr;
 
-	msg = malloc(sizeof(*msg) + len, M_TEMP, M_WAITOK);
+	msg = malloc(sizeof(*msg) + len, M_TEMP, M_WAITOK | M_CANFAIL);
 	if (msg == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -605,7 +605,7 @@ urndis_ctrl_set_param(struct urndis_softc *sc,
 	else
 		namelen = 0;
 	tlen = sizeof(*param) + len + namelen;
-	param = malloc(tlen, M_TEMP, M_WAITOK);
+	param = malloc(tlen, M_TEMP, M_WAITOK | M_CANFAIL);
 	if (param == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -651,7 +651,7 @@ urndis_ctrl_reset(struct urndis_softc *sc)
 	u_int32_t			 rval;
 	struct rndis_comp_hdr		*hdr;
 
-	reset = malloc(sizeof(*reset), M_TEMP, M_WAITOK);
+	reset = malloc(sizeof(*reset), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (reset == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
@@ -691,7 +691,7 @@ urndis_ctrl_keepalive(struct urndis_softc *sc)
 	u_int32_t			 rval;
 	struct rndis_comp_hdr		*hdr;
 
-	keep = malloc(sizeof(*keep), M_TEMP, M_WAITOK);
+	keep = malloc(sizeof(*keep), M_TEMP, M_WAITOK | M_CANFAIL);
 	if (keep == NULL) {
 		printf("%s: out of memory\n", DEVNAME(sc));
 		return RNDIS_STATUS_FAILURE;
