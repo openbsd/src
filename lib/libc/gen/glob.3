@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.33 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: glob.3,v 1.34 2017/06/10 14:07:23 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt GLOB 3
 .Os
 .Sh NAME
@@ -103,10 +103,7 @@ is used to modify the behavior of
 .Fn glob .
 The value of
 .Fa flags
-is the bitwise inclusive
-.Tn OR
-of any of the following
-values defined in
+is the bitwise inclusive OR of any of the following values defined in
 .In glob.h :
 .Bl -tag -width GLOB_ALTDIRFUNC
 .It Dv GLOB_APPEND
@@ -180,9 +177,7 @@ If the
 .Dv GLOB_NOESCAPE
 flag is set, a backslash character is treated as an ordinary character.
 .It Dv GLOB_NOSORT
-By default, the pathnames are sorted in ascending
-.Tn ASCII
-order;
+By default, the pathnames are sorted in ascending ASCII order;
 this flag prevents that sorting (speeding up
 .Fn glob ) .
 .El
@@ -284,7 +279,7 @@ or read and
 is non-null,
 .Fn glob
 calls
-.Fa (*errfunc)(path, errno) .
+.Fn (*errfunc) path errno .
 This may be unintuitive: a pattern like
 .Dq */Makefile
 will try to
@@ -405,7 +400,7 @@ patterns were matched.
 The scan was stopped because an error was encountered and either
 .Dv GLOB_ERR
 was set, or
-.Fa (*errfunc)()
+.Fa errfunc
 returned non-zero.
 .It Dv GLOB_NOMATCH
 The pattern did not match a pathname and
