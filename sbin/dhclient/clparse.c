@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.110 2017/04/08 20:16:04 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.111 2017/06/10 18:03:50 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -94,7 +94,6 @@ read_client_conf(struct interface_info *ifi)
 	config->backoff_cutoff = 10;	/* max secs between packet retries */
 	config->initial_interval = 1;	/* secs before 1st retry */
 
-	config->bootp_policy = ACCEPT;
 	config->requested_options
 	    [config->requested_option_count++] = DHO_SUBNET_MASK;
 	config->requested_options
