@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.38 2017/04/09 20:44:13 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.39 2017/06/10 17:56:29 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -107,8 +107,6 @@ new_parse(char *name)
 	prev_line = line2;
 	token_line = cur_line;
 	tlname = name;
-
-	warnings_occurred = 0;
 }
 
 static int
