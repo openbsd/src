@@ -1,0 +1,3 @@
+mandoc: punct.in:9:8: STYLE: no blank before trailing delimiter: Fn sin.
+mandoc: punct.in:11:12: STYLE: no blank before trailing delimiter: Fa y:
+mandoc: punct.in:13:18: STYLE: no blank before trailing delimiter: Ft float:

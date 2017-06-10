@@ -10,4 +10,6 @@ DDEESSCCRRIIPPTTIIOONN
 
      quoted punctuation: _a (_b | _c) _d, bboolldd.
 
-OpenBSD                         August 21, 2014                        OpenBSD
+     missing blank: _a_.
+
+OpenBSD                          June 9, 2017                          OpenBSD

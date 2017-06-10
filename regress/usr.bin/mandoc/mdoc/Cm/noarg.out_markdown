@@ -10,6 +10,6 @@ end of line:
 **mt** **-f** *device*
 
 middle of line:
-**ps** **-x** **-o** **command**
+**ps** **-x** **-o** **command.**
 
-OpenBSD - July 2, 2014
+OpenBSD - June 9, 2017

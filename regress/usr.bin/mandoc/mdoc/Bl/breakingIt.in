@@ -9,14 +9,14 @@
 .Bl -tag -width Ds
 Stray text.
 .Ao
-More stray text.
+More stray text
 .It tag
 Tagged text.
 .El
 .Bl -bullet
 Stray text.
 .Ao
-More stray text.
+More stray text
 .It
 Bullet point.
 .El
@@ -24,7 +24,7 @@ Bullet point.
 .It tag
 Tagged text.
 .Ao
-More tagged text.
+More tagged text
 .It tag2
 Yet more tagged text.
 .El
@@ -32,7 +32,7 @@ Yet more tagged text.
 .It
 Item text.
 .Ao
-More item text.
+More item text
 .It
 Bullet point.
 .El

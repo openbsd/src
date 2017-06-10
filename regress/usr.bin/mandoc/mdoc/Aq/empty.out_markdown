@@ -9,9 +9,9 @@ AQ-EMPTY(1) - General Commands Manual
 An empty
 &lt;&gt;
 and a full
-&lt;user@host&gt;
+&lt;user@host:&gt;
 return path.
 And another
-&lt;full&gt; one **bold**.
+&lt;full:&gt; one **bold**.
 
-OpenBSD - August 6, 2010
+OpenBSD - June 9, 2017

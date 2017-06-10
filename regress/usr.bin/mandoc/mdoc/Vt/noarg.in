@@ -1,4 +1,4 @@
-.Dd January 20, 2011
+.Dd June 9, 2017
 .Dt VT-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nd variable type macro without arguments
 .Sh DESCRIPTION
 with arguments
-.Vt signed int
+.Vt signed int.
 no arguments
 .Vt
 end of test document

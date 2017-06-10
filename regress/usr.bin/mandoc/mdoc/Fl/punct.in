@@ -1,4 +1,4 @@
-.Dd August 21, 2014
+.Dd June 9, 2017
 .Dt FL-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -40,3 +40,6 @@ op bracket
 .Pp
 quoted punctuation:
 .Fl a "(" b "|" c ")" d "," "Em" italic .
+.Pp
+trailing delimiter:
+.Fl a.

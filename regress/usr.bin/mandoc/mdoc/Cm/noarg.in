@@ -1,4 +1,4 @@
-.Dd July 2, 2014
+.Dd June 9, 2017
 .Dt CM-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -9,4 +9,4 @@ end of line:
 .Nm mt Fl f Ar device Cm
 .Pp
 middle of line:
-.Nm ps Fl x Cm Fl o Cm command
+.Nm ps Fl x Cm Fl o Cm command.

@@ -1,4 +1,4 @@
-.Dd January 30, 2011
+.Dd June 9, 2017
 .Dt BX-ARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -12,7 +12,7 @@ one standard argument:
 .Bx 4.4 "."
 .Pp
 one non-standard argument:
-.Bx nett
+.Bx nett.
 .Pp
 one semi-standard argument:
 .Bx 4.1c

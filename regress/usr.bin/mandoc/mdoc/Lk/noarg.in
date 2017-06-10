@@ -1,4 +1,4 @@
-.Dd January 19, 2011
+.Dd June 9, 2017
 .Dt LK-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -9,9 +9,9 @@ multiple arguments
 .Lk http://www.bsd.lv/ the bsd.lv project ,
 .Lk http://www.gnu.org/software/groff/ GNU troff ","
 two arguments
-.Lk http://mdocml.bsd.lv/ mandoc
+.Lk http://mdocml.bsd.lv/ mandoc,
 one argument
-.Lk http://www.openbsd.org/
+.Lk http://www.openbsd.org/,
 no argument
 .Lk
 .Pp

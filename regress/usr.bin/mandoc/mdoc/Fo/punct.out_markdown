@@ -7,10 +7,10 @@ FO-PUNCT(1) - General Commands Manual
 # DESCRIPTION
 
 *double*
-**sin**(), cos *italic*
+**sin.**(), cos *italic*
 
-*x*, *y* **bold**
+*x*, *y:* **bold**
 
-*int*, *float* **bold**
+*int*, *float:* **bold**
 
 OpenBSD - May 20, 2017

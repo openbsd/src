@@ -1,10 +1,10 @@
-.Dd January 2, 2011
+.Dd June 9, 2017
 .Dt LB-BADARGS 3
 .Os OpenBSD
 .Sh NAME
 .Nm Lb-badargs
 .Nd bad arguments to the library macro
 .Sh LIBRARY
-.Lb murks
+.Lb murks.
 .Lb
-.Lb mylib another
+.Lb mylib another.

@@ -1,4 +1,4 @@
-.Dd December 3, 2011
+.Dd June 9, 2017
 .Dt XR-ARGS 1
 .Os OpenBSD
 .Sh NAME
@@ -18,8 +18,12 @@ A call, an
 another
 .Xr echo 1 .
 .Pp
-Finally, half an
+Finally, an
+.Xr ( echo 1)
+without a blank, half an
 .Xr echo ,
+no blank after half an
+.Xr echo,
 no echo
 .Xr ,
 and no

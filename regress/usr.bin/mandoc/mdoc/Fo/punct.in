@@ -6,8 +6,8 @@
 .Nd punctuation on function input lines
 .Sh DESCRIPTION
 .Ft double
-.Fn sin "," cos "Em" italic
+.Fn sin. "," cos "Em" italic
 .Pp
-.Fa x "," y "Sy" bold
+.Fa x "," y: "Sy" bold
 .Pp
-.Ft int "," float "Sy" bold
+.Ft int "," float: "Sy" bold

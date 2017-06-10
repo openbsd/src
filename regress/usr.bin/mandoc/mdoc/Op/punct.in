@@ -1,4 +1,4 @@
-.Dd June 24, 2011
+.Dd June 9, 2017
 .Dt OP-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -29,3 +29,6 @@ more than one:
 .Op ( (
 .Op | |
 .Op . .
+.Pp
+Missing blank:
+.Op a.

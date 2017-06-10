@@ -1,4 +1,4 @@
-.Dd August 21, 2014
+.Dd June 9, 2017
 .Dt PA-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -40,3 +40,6 @@ op bracket
 .Pp
 quoted punctuation:
 .Pa a "(" b "|" c ")" d "," "Sy" bold .
+.Pp
+missing blank:
+.Pa a.

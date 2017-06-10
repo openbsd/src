@@ -1,0 +1,5 @@
+mandoc: punct.in:10:9: STYLE: no blank before trailing delimiter: Bsx 5.1,
+mandoc: punct.in:11:10: STYLE: no blank before trailing delimiter: Dx 4.8.0,
+mandoc: punct.in:12:9: STYLE: no blank before trailing delimiter: Fx 11.0,
+mandoc: punct.in:13:8: STYLE: no blank before trailing delimiter: Nx 7.1,
+mandoc: punct.in:15:8: STYLE: no blank before trailing delimiter: Ox 6.1.

@@ -1,0 +1,15 @@
+.Dd June 9, 2017
+.Dt UX-PUNCT 1
+.Os OpenBSD
+.Sh NAME
+.Nm Ux-punct
+.Nd trailing delimiters in Unix macro arguments
+.Sh DESCRIPTION
+In June 2017, the latest release of various Unix-like
+operating systems were
+.Bsx 5.1,
+.Dx 4.8.0,
+.Fx 11.0,
+.Nx 7.1,
+and
+.Ox 6.1.

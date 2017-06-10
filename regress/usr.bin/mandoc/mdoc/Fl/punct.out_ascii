@@ -11,4 +11,6 @@ DDEESSCCRRIIPPTTIIOONN
 
      quoted punctuation: --aa (--bb | --cc) --dd, _i_t_a_l_i_c.
 
-OpenBSD                         August 21, 2014                        OpenBSD
+     trailing delimiter: --aa..
+
+OpenBSD                          June 9, 2017                          OpenBSD

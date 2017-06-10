@@ -6,7 +6,7 @@ LB-BADARGS(3) - Library Functions Manual
 
 # LIBRARY
 
-library &#8220;murks&#8221;  
-library &#8220;mylib&#8221; another
+library &#8220;murks.&#8221;  
+library &#8220;mylib&#8221; another.
 
-OpenBSD - January 2, 2011
+OpenBSD - June 9, 2017

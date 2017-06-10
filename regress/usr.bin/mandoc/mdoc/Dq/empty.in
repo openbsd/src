@@ -1,4 +1,4 @@
-.Dd October 21, 2010
+.Dd June 9, 2017
 .Dt DQ-EMPTY 1
 .Os OpenBSD
 .Sh NAME
@@ -8,7 +8,7 @@
 An empty
 .Dq
 and a full
-.Dq "(" user@host
+.Dq "(" user@host)
 quotation.
 And another
-.Do "(" full Dc one "Sy" bold .
+.Do "(" full) Dc one "Sy" bold .

@@ -1,4 +1,4 @@
-.Dd February 17, 2010
+.Dd June 9, 2017
 .Dt MT-SIMPLE 1
 .Os OpenBSD
 .Sh NAME
@@ -7,6 +7,9 @@
 .Sh DESCRIPTION
 Please send mail to
 .Mt schwarze@openbsd.org ";" "Sy" bold .
+.Pp
+Pay attention to
+.Mt punctuation@localhost.
 .Pp
 Do not send mail to
 .Mt .

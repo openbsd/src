@@ -1,4 +1,4 @@
-.Dd July 6, 2012
+.Dd June 9, 2017
 .Dt OO-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -20,4 +20,8 @@ in the middle:
 at the end:
 .Oo Oo a (
 .Oc |
+.Oc
+.Pp
+missing blank:
+.Oo a.
 .Oc

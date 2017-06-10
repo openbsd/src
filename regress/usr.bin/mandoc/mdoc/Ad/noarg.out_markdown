@@ -7,8 +7,8 @@ AD-NOARG(1) - General Commands Manual
 # DESCRIPTION
 
 with address:
-*0x3bc*
+*0x3bc.*
 no address:
 end of test document
 
-OpenBSD - January 19, 2011
+OpenBSD - June 9, 2017

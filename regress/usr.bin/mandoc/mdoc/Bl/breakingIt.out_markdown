@@ -9,28 +9,28 @@ BL-BREAKINGIT(1) - General Commands Manual
 ## Breaking partial explicit macros
 
 Stray text.
-&lt;More stray text.&gt;
+&lt;More stray text&gt;
 
 tag
 
 > Tagged text.
 
 Stray text.
-&lt;More stray text.&gt;
+&lt;More stray text&gt;
 
 *	Bullet point.
 
 tag
 
 > Tagged text.
-> &lt;More tagged text.&gt;
+> &lt;More tagged text&gt;
 
 tag2
 
 > Yet more tagged text.
 
 *	Item text.
-	&lt;More item text.&gt;
+	&lt;More item text&gt;
 
 *	Bullet point.
 

@@ -1,4 +1,4 @@
-.Dd August 6, 2010
+.Dd June 9, 2017
 .Dt AQ-EMPTY 1
 .Os OpenBSD
 .Sh NAME
@@ -8,7 +8,7 @@
 An empty
 .Aq
 and a full
-.Aq user@host
+.Aq user@host:
 return path.
 And another
-.Ao full Ac one "Sy" bold .
+.Ao full: Ac one "Sy" bold .

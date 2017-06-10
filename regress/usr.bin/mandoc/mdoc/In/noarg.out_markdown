@@ -16,7 +16,7 @@ IN-NOARG(2) - System Calls Manual
 
 # DESCRIPTION
 
-&lt;*math.h*>
+&lt;*math.h:*>
 *double*
 **sin**(*double x*)
 *double*

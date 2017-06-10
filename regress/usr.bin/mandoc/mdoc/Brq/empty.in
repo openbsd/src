@@ -1,4 +1,4 @@
-.Dd October 21, 2010
+.Dd June 9, 2017
 .Dt BRQ-EMPTY 1
 .Os OpenBSD
 .Sh NAME
@@ -8,7 +8,7 @@
 An empty
 .Brq
 and a full
-.Brq "(" user@host
+.Brq "(" user@host)
 quotation.
 And another
-.Bro "(" full Brc one "Sy" bold .
+.Bro "(" full) Brc one "Sy" bold .

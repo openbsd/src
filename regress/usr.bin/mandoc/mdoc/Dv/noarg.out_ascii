@@ -4,6 +4,6 @@ NNAAMMEE
      DDvv--nnooaarrgg - defined variable macro without an argument
 
 DDEESSCCRRIIPPTTIIOONN
-     with variable: NULL no variable: end of test document
+     with variable: NULL. no variable: end of test document
 
-OpenBSD                          July 2, 2014                          OpenBSD
+OpenBSD                          June 9, 2017                          OpenBSD

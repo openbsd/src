@@ -1,4 +1,4 @@
-.Dd January 19, 2011
+.Dd June 9, 2017
 .Dt AD-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nd address macro without an argument
 .Sh DESCRIPTION
 with address:
-.Ad 0x3bc
+.Ad 0x3bc.
 no address:
 .Ad
 end of test document

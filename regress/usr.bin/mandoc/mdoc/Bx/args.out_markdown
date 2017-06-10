@@ -13,7 +13,7 @@ one standard argument:
 4\.4BSD.
 
 one non-standard argument:
-nettBSD
+nett.BSD
 
 one semi-standard argument:
 4\.1cBSD
@@ -26,4 +26,4 @@ more arguments:
 
 end of test document
 
-OpenBSD - January 30, 2011
+OpenBSD - June 9, 2017

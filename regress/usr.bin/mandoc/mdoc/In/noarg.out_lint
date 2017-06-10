@@ -1,2 +1,3 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: In
 mandoc: noarg.in:18:2: WARNING: skipping empty macro: In
+mandoc: noarg.in:15:11: STYLE: no blank before trailing delimiter: In math.h:

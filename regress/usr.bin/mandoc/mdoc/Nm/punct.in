@@ -1,4 +1,4 @@
-.Dd August 21, 2014
+.Dd June 9, 2017
 .Dt NM-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -37,3 +37,6 @@ op paren
 .Nm ( a
 op bracket
 .Nm [ a
+.Pp
+Missing blank:
+.Nm Nm-punct.

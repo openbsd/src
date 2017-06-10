@@ -42,4 +42,7 @@ op bracket
 quoted punctuation:
 **-a** (**-b** | **-c**) **-d**, *italic*.
 
-OpenBSD - August 21, 2014
+trailing delimiter:
+**-a.**
+
+OpenBSD - June 9, 2017

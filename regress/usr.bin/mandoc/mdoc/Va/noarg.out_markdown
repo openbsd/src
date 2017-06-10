@@ -8,8 +8,8 @@ VA-NOARG(1) - General Commands Manual
 
 with arguments
 *int*
-*errno*
+*errno.*
 no arguments
 end of test document
 
-OpenBSD - January 20, 2011
+OpenBSD - June 9, 2017

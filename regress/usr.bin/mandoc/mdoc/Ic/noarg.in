@@ -1,4 +1,4 @@
-.Dd January 19, 2011
+.Dd June 9, 2017
 .Dt IC-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nd interactive command without an argument
 .Sh DESCRIPTION
 with command:
-.Ic ls
+.Ic ls.
 no command:
 .Ic
 end of test document

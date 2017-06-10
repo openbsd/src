@@ -1,0 +1,11 @@
+UX-PUNCT(1)                 General Commands Manual                UX-PUNCT(1)
+
+NNAAMMEE
+     UUxx--ppuunncctt - trailing delimiters in Unix macro arguments
+
+DDEESSCCRRIIPPTTIIOONN
+     In June 2017, the latest release of various Unix-like operating systems
+     were BSD/OS 5.1, DragonFly 4.8.0, FreeBSD 11.0, NetBSD 7.1, and
+     OpenBSD 6.1.
+
+OpenBSD                          June 9, 2017                          OpenBSD

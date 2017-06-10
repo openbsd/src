@@ -1,4 +1,4 @@
-.Dd January 20, 2011
+.Dd June 9, 2017
 .Dt VA-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -7,7 +7,7 @@
 .Sh DESCRIPTION
 with arguments
 .Vt int
-.Va errno
+.Va errno.
 no arguments
 .Va
 end of test document

@@ -1,12 +1,12 @@
-.Dd January 19, 2011
+.Dd June 19, 2017
 .Dt MS-NOARG 1
 .Os OpenBSD
 .Sh NAME
 .Nm Ms-noarg
 .Nd mathematical symbol without an argument
 .Sh DESCRIPTION
-with command:
-.Ms alpha
-no command:
+with symbol:
+.Ms alpha.
+no symbol:
 .Ms
 end of test document

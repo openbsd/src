@@ -1,4 +1,4 @@
-.Dd November 17, 2014
+.Dd June 9, 2017
 .Dt NO-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -81,3 +81,6 @@ Quoted:
 .No "a . b Nm" "Sy" bold
 .No ". b Nm"
 .No "."
+.Pp
+Missing blank:
+.No a.

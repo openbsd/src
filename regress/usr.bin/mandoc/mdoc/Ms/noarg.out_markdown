@@ -6,9 +6,9 @@ MS-NOARG(1) - General Commands Manual
 
 # DESCRIPTION
 
-with command:
-**alpha**
-no command:
+with symbol:
+**alpha.**
+no symbol:
 end of test document
 
-OpenBSD - January 19, 2011
+OpenBSD - June 19, 2017

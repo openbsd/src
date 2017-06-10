@@ -1,4 +1,4 @@
-.Dd January 19, 2011
+.Dd June 9, 2017
 .Dt ER-NOARG 1
 .Os OpenBSD
 .Sh NAME
@@ -7,6 +7,7 @@
 .Sh DESCRIPTION
 with error:
 .Er ENOENT ";" "Sy" bold ;
+.Er EIO.
 no error:
 .Er
 end of test document

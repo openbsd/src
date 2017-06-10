@@ -7,8 +7,8 @@ IC-NOARG(1) - General Commands Manual
 # DESCRIPTION
 
 with command:
-**ls**
+**ls.**
 no command:
 end of test document
 
-OpenBSD - January 19, 2011
+OpenBSD - June 9, 2017

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.247 2017/06/07 23:29:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.248 2017/06/10 01:48:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -73,6 +73,7 @@ static	void	 post_bx(POST_ARGS);
 static	void	 post_defaults(POST_ARGS);
 static	void	 post_display(POST_ARGS);
 static	void	 post_dd(POST_ARGS);
+static	void	 post_delim(POST_ARGS);
 static	void	 post_dt(POST_ARGS);
 static	void	 post_en(POST_ARGS);
 static	void	 post_es(POST_ARGS);
@@ -122,33 +123,33 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_bl,	/* Bl */
 	NULL,		/* El */
 	post_it,	/* It */
-	NULL,		/* Ad */
+	post_delim,	/* Ad */
 	post_an,	/* An */
 	NULL,		/* Ap */
 	post_defaults,	/* Ar */
 	NULL,		/* Cd */
-	NULL,		/* Cm */
-	NULL,		/* Dv */
-	NULL,		/* Er */
-	NULL,		/* Ev */
+	post_delim,	/* Cm */
+	post_delim,	/* Dv */
+	post_delim,	/* Er */
+	post_delim,	/* Ev */
 	post_ex,	/* Ex */
 	post_fa,	/* Fa */
 	NULL,		/* Fd */
-	NULL,		/* Fl */
+	post_delim,	/* Fl */
 	post_fn,	/* Fn */
-	NULL,		/* Ft */
-	NULL,		/* Ic */
-	NULL,		/* In */
+	post_delim,	/* Ft */
+	post_delim,	/* Ic */
+	post_delim,	/* In */
 	post_defaults,	/* Li */
 	post_nd,	/* Nd */
 	post_nm,	/* Nm */
-	NULL,		/* Op */
+	post_delim,	/* Op */
 	post_obsolete,	/* Ot */
 	post_defaults,	/* Pa */
 	post_rv,	/* Rv */
 	post_st,	/* St */
-	NULL,		/* Va */
-	NULL,		/* Vt */
+	post_delim,	/* Va */
+	post_delim,	/* Vt */
 	post_xr,	/* Xr */
 	NULL,		/* %A */
 	post_hyph,	/* %B */ /* FIXME: can be used outside Rs/Re. */
@@ -162,12 +163,12 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_hyph,	/* %T */ /* FIXME: can be used outside Rs/Re. */
 	NULL,		/* %V */
 	NULL,		/* Ac */
-	NULL,		/* Ao */
-	NULL,		/* Aq */
+	post_delim,	/* Ao */
+	post_delim,	/* Aq */
 	post_at,	/* At */
 	NULL,		/* Bc */
 	post_bf,	/* Bf */
-	NULL,		/* Bo */
+	post_delim,	/* Bo */
 	NULL,		/* Bq */
 	post_xx,	/* Bsx */
 	post_bx,	/* Bx */
@@ -177,50 +178,50 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Dq */
 	NULL,		/* Ec */
 	NULL,		/* Ef */
-	NULL,		/* Em */
+	post_delim,	/* Em */
 	NULL,		/* Eo */
 	post_xx,	/* Fx */
-	NULL,		/* Ms */
-	NULL,		/* No */
+	post_delim,	/* Ms */
+	post_delim,	/* No */
 	post_ns,	/* Ns */
 	post_xx,	/* Nx */
 	post_xx,	/* Ox */
 	NULL,		/* Pc */
 	NULL,		/* Pf */
-	NULL,		/* Po */
-	NULL,		/* Pq */
+	post_delim,	/* Po */
+	post_delim,	/* Pq */
 	NULL,		/* Qc */
-	NULL,		/* Ql */
-	NULL,		/* Qo */
-	NULL,		/* Qq */
+	post_delim,	/* Ql */
+	post_delim,	/* Qo */
+	post_delim,	/* Qq */
 	NULL,		/* Re */
 	post_rs,	/* Rs */
 	NULL,		/* Sc */
-	NULL,		/* So */
-	NULL,		/* Sq */
+	post_delim,	/* So */
+	post_delim,	/* Sq */
 	post_sm,	/* Sm */
 	post_hyph,	/* Sx */
-	NULL,		/* Sy */
+	post_delim,	/* Sy */
 	post_useless,	/* Tn */
 	post_xx,	/* Ux */
 	NULL,		/* Xc */
 	NULL,		/* Xo */
 	post_fo,	/* Fo */
 	NULL,		/* Fc */
-	NULL,		/* Oo */
+	post_delim,	/* Oo */
 	NULL,		/* Oc */
 	post_bk,	/* Bk */
 	NULL,		/* Ek */
 	post_eoln,	/* Bt */
-	NULL,		/* Hf */
+	post_obsolete,	/* Hf */
 	post_obsolete,	/* Fr */
 	post_eoln,	/* Ud */
 	post_lb,	/* Lb */
 	post_par,	/* Lp */
-	NULL,		/* Lk */
+	post_delim,	/* Lk */
 	post_defaults,	/* Mt */
-	NULL,		/* Brq */
-	NULL,		/* Bro */
+	post_delim,	/* Brq */
+	post_delim,	/* Bro */
 	NULL,		/* Brc */
 	NULL,		/* %C */
 	post_es,	/* Es */
@@ -403,6 +404,28 @@ check_bsd(struct roff_man *mdoc, int ln, int pos, char *p)
 	if ((cp = strstr(p, "DragonFly")) != NULL)
 		mandoc_msg(MANDOCERR_BX, mdoc->parse,
 		    ln, pos + (cp - p), "Dx");
+}
+
+static void
+post_delim(POST_ARGS)
+{
+	const struct roff_node	*nch;
+	const char		*lc;
+	enum mdelim		 delim;
+
+	nch = mdoc->last->last;
+	if (nch == NULL || nch->type != ROFFT_TEXT)
+		return;
+	lc = strchr(nch->string, '\0') - 1;
+	if (lc <= nch->string)
+		return;
+	delim = mdoc_isdelim(lc);
+	if (delim == DELIM_NONE || delim == DELIM_OPEN)
+		return;
+	mandoc_vmsg(MANDOCERR_DELIM, mdoc->parse,
+	    nch->line, nch->pos + (lc - nch->string),
+	    "%s%s %s", roff_name[mdoc->last->tok],
+	    nch == mdoc->last->child ? "" : " ...", nch->string);
 }
 
 static void
@@ -779,6 +802,8 @@ post_lb(POST_ARGS)
 {
 	struct roff_node	*n;
 
+	post_delim(mdoc);
+
 	n = mdoc->last;
 	assert(n->child->type == ROFFT_TEXT);
 	mdoc->next = ROFF_NEXT_CHILD;
@@ -1027,6 +1052,7 @@ post_fa(POST_ARGS)
 			break;
 		}
 	}
+	post_delim(mdoc);
 }
 
 static void
@@ -1048,6 +1074,9 @@ post_nm(POST_ARGS)
 	    (mdoc->lastsec == SEC_NAME && n->child == NULL))
 		mandoc_msg(MANDOCERR_NM_NONAME, mdoc->parse,
 		    n->line, n->pos, "Nm");
+
+	if (n->type == ROFFT_ELEM)
+		post_delim(mdoc);
 
 	if ((n->type != ROFFT_ELEM && n->type != ROFFT_HEAD) ||
 	    (n->child != NULL && n->child->type == ROFFT_TEXT) ||
@@ -1139,17 +1168,18 @@ post_defaults(POST_ARGS)
 {
 	struct roff_node *nn;
 
+	if (mdoc->last->child != NULL) {
+		post_delim(mdoc);
+		return;
+	}
+
 	/*
 	 * The `Ar' defaults to "file ..." if no value is provided as an
 	 * argument; the `Mt' and `Pa' macros use "~"; the `Li' just
 	 * gets an empty string.
 	 */
 
-	if (mdoc->last->child != NULL)
-		return;
-
 	nn = mdoc->last;
-
 	switch (nn->tok) {
 	case MDOC_Ar:
 		mdoc->next = ROFF_NEXT_CHILD;
@@ -1213,6 +1243,8 @@ post_an(POST_ARGS)
 		if (nch == NULL)
 			mandoc_msg(MANDOCERR_MACRO_EMPTY, mdoc->parse,
 			    np->line, np->pos, "An");
+		else
+			post_delim(mdoc);
 	} else if (nch != NULL)
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
 		    nch->line, nch->pos, "An ... %s", nch->string);
@@ -1240,6 +1272,8 @@ post_xx(POST_ARGS)
 {
 	struct roff_node	*n;
 	const char		*os;
+
+	post_delim(mdoc);
 
 	n = mdoc->last;
 	switch (n->tok) {
@@ -2075,9 +2109,9 @@ post_xr(POST_ARGS)
 	if (nch->next == NULL) {
 		mandoc_vmsg(MANDOCERR_XR_NOSEC, mdoc->parse,
 		    n->line, n->pos, "Xr %s", nch->string);
-		return;
-	}
-	assert(nch->next == n->last);
+	} else
+		assert(nch->next == n->last);
+	post_delim(mdoc);
 }
 
 static void
@@ -2325,6 +2359,8 @@ post_bx(POST_ARGS)
 {
 	struct roff_node	*n, *nch;
 	const char		*macro;
+
+	post_delim(mdoc);
 
 	n = mdoc->last;
 	nch = n->child;

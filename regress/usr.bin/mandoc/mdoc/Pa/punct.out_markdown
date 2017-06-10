@@ -42,4 +42,7 @@ op bracket
 quoted punctuation:
 *a* (*b* | *c*) *d*, **bold**.
 
-OpenBSD - August 21, 2014
+missing blank:
+*a.*
+
+OpenBSD - June 9, 2017

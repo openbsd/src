@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.145 2017/06/08 00:21:23 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.146 2017/06/10 01:48:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,6 +89,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"errnos out of order",
 	"duplicate errno",
 	"description line ends with a full stop",
+	"no blank before trailing delimiter",
 
 	"generic warning",
 

@@ -4,10 +4,10 @@ NNAAMMEE
      FFoo--ppuunncctt - punctuation on function input lines
 
 DDEESSCCRRIIPPTTIIOONN
-     _d_o_u_b_l_e ssiinn(), cos _i_t_a_l_i_c
+     _d_o_u_b_l_e ssiinn..(), cos _i_t_a_l_i_c
 
-     _x, _y bboolldd
+     _x, _y_: bboolldd
 
-     _i_n_t, _f_l_o_a_t bboolldd
+     _i_n_t, _f_l_o_a_t_: bboolldd
 
 OpenBSD                          May 20, 2017                          OpenBSD

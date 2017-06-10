@@ -1,3 +1,6 @@
-mandoc: args.in:24:2: WARNING: skipping empty macro: Xr
-mandoc: args.in:26:2: WARNING: skipping empty macro: Xr
-mandoc: args.in:22:2: WARNING: missing section argument: Xr echo
+mandoc: args.in:28:2: WARNING: skipping empty macro: Xr
+mandoc: args.in:30:2: WARNING: skipping empty macro: Xr
+mandoc: args.in:22:13: STYLE: no blank before trailing delimiter: Xr ... 1)
+mandoc: args.in:24:2: WARNING: missing section argument: Xr echo
+mandoc: args.in:26:2: WARNING: missing section argument: Xr echo,
+mandoc: args.in:26:9: STYLE: no blank before trailing delimiter: Xr echo,

@@ -1,4 +1,4 @@
-.Dd October 21, 2010
+.Dd June 9, 2017
 .Dt QQ-EMPTY 1
 .Os OpenBSD
 .Sh NAME
@@ -8,7 +8,7 @@
 An empty
 .Qq
 and a full
-.Qq "(" user@host
+.Qq "(" user@host)
 quotation.
 And another
-.Qo "(" full Qc one "Sy" bold .
+.Qo "(" full) Qc one "Sy" bold .

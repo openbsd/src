@@ -12,7 +12,7 @@
 .Ft double
 .Fn cos "double x"
 .Sh DESCRIPTION
-.In math.h
+.In math.h:
 .Ft double
 .Fn sin "double x"
 .In

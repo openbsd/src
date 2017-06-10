@@ -10,11 +10,11 @@ multiple arguments
 [the bsd.lv project](http://www.bsd.lv/),
 [GNU troff](http://www.gnu.org/software/groff/),
 two arguments
-[mandoc](http://mdocml.bsd.lv/)
+[mandoc,](http://mdocml.bsd.lv/)
 one argument
-[http://www.openbsd.org/](http://www.openbsd.org/)
+[http://www.openbsd.org/,](http://www.openbsd.org/,)
 no argument
 
 end of test document
 
-OpenBSD - January 19, 2011
+OpenBSD - June 9, 2017

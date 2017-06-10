@@ -1,1 +1,2 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: Ev
+mandoc: noarg.in:9:9: STYLE: no blank before trailing delimiter: Ev HOME.

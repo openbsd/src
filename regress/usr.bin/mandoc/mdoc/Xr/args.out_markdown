@@ -19,10 +19,14 @@ A call, an
 another
 echo(1).
 
-Finally, half an
+Finally, an
+(echo(1))
+without a blank, half an
+echo,
+no blank after half an
 echo,
 no echo
 and no
 echo at all.
 
-OpenBSD - December 3, 2011
+OpenBSD - June 9, 2017

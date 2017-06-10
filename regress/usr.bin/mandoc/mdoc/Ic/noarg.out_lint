@@ -1,1 +1,2 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: Ic
+mandoc: noarg.in:9:7: STYLE: no blank before trailing delimiter: Ic ls.

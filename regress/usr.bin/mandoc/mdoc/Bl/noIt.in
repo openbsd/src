@@ -7,14 +7,14 @@
 .Sh DESCRIPTION
 .Bl -tag -width Ds
 Stray text.
-.Em More stray text.
+.Em More stray text
 .It tag
 Tagged text.
 .El
 .Bl -bullet
 Stray text.
 .Sm off
-.Em More Sy stray Em text.
+.Em More Sy stray Em text
 .Sm on
 .It
 Bullet point.

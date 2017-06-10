@@ -1,4 +1,4 @@
-.Dd November 17, 2014
+.Dd June 9, 2017
 .Dt LI-PUNCT 1
 .Os OpenBSD
 .Sh NAME
@@ -81,3 +81,6 @@ Quoted:
 .Li "a . b Nm" "Sy" bold
 .Li ". b Nm"
 .Li "."
+.Pp
+Missing blank:
+.Li a.
