@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.25 2017/04/15 13:12:08 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.26 2017/06/10 11:28:30 bluhm Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2017 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -79,8 +79,11 @@ Removes scratch and junk files from
 Purges accounting records from
 .Pa /var/account ,
 if they exist.
+Processes that were killed due to pledge or memory access violations
+are reported in the daily mail.
 See
-.Xr accton 8
+.Xr accton 8 ,
+.Xr lastcomm 1 ,
 and
 .Xr sa 8 .
 .It
