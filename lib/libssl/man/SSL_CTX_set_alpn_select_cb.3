@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.1 2016/11/30 16:46:56 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_alpn_select_cb.3,v 1.2 2017/06/10 13:58:59 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Todd Short <tshort@akamai.com>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2016 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt SSL_CTX_SET_ALPN_SELECT_CB 3
 .Os
 .Sh NAME
@@ -75,12 +75,9 @@
 .Ft void
 .Fo SSL_CTX_set_alpn_select_cb
 .Fa "SSL_CTX *ctx"
-.Fa "int (*cb) (SSL *ssl"
-.Fa "const unsigned char **out"
-.Fa "unsigned char *outlen"
-.Fa "const unsigned char *in"
-.Fa "unsigned int inlen"
-.Fa "void *arg)"
+.Fa "int (*cb)(SSL *ssl, const unsigned char **out,\
+ unsigned char *outlen, const unsigned char *in,\
+ unsigned int inlen, void *arg)"
 .Fa "void *arg"
 .Fc
 .Ft int
