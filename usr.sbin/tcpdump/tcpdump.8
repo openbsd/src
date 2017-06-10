@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.92 2017/04/19 05:36:13 natano Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.93 2017/06/10 06:52:28 akfaew Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 19 2017 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -1604,142 +1604,6 @@ requests, and matches them to the replies using the
 .Pq transaction ID .
 If a reply does not closely follow the corresponding request,
 it might not be parsable.
-.Ss KIP AppleTalk (DDP in UDP)
-AppleTalk DDP packets encapsulated in UDP datagrams
-are de-encapsulated and dumped as DDP packets
-.Pq i.e., all the UDP header information is discarded .
-The file
-.Pa /etc/atalk.names
-is used to translate AppleTalk net and node numbers to names.
-Lines in this file have the form
-.Bl -column "number" "name" -offset indent
-.It Sy "number" Ta Ta Sy "name"
-.It "1.254" Ta Ta "ether"
-.It "16.1" Ta Ta "icsd-net"
-.It "1.254.110" Ta Ta "ace"
-.El
-.Pp
-The first two lines give the names of AppleTalk networks.
-The third line gives the name of a particular host
-(a host is distinguished from a net by the 3rd octet in the number;
-a net number
-.Em must
-have two octets and a host number
-.Em must
-have three octets).
-The number and name should be separated by whitespace (blanks or tabs).
-The
-.Pa /etc/atalk.names
-file may contain blank lines or comment lines
-(lines starting with a
-.Ql # ) .
-.Pp
-AppleTalk addresses are printed in the form
-.Pp
-.D1 Ar net . Ns Ar host . Ns Ar port
-.Pp
-For example:
-.Bd -unfilled -offset indent
-144.1.209.2 > icsd-net.112.220
-office.2 > icsd-net.112.220
-jssmag.149.235 > icsd-net.2
-.Ed
-.Pp
-If
-.Pa /etc/atalk.names
-doesn't exist or doesn't contain an entry for some AppleTalk
-host/net number, addresses are printed in numeric form.
-In the first example, NBP
-.Pq DDP port 2
-on net 144.1 node 209
-is sending to whatever is listening on port 220 of net icsd-net node 112.
-The second line is the same except the full name of the source node is known
-.Pq Dq office .
-The third line is a send from port 235 on
-net jssmag node 149 to broadcast on the icsd-net NBP port.
-The broadcast address
-.Pq 255
-is indicated by a net name with no host number;
-for this reason it is a good idea to keep node names and net names distinct in
-.Pa /etc/atalk.names .
-.Pp
-NBP
-.Pq name binding protocol
-and ATP
-.Pq AppleTalk transaction protocol
-packets have their contents interpreted.
-Other protocols just dump the protocol name
-.Po
-or number if no name is registered for the protocol
-.Pc
-and packet size.
-.Pp
-NBP packets are formatted like the following examples:
-.Bd -unfilled
-icsd-net.112.220 > jssmag.2: nbp-lkup 190: "=:LaserWriter@*"
-jssmag.209.2 > icsd-net.112.220: nbp-reply 190: "RM1140:LaserWriter@*" 250
-techpit.2 > icsd-net.112.220: nbp-reply 190: "techpit:LaserWriter@*" 186
-.Ed
-.Pp
-The first line is a name lookup request for laserwriters sent by
-net icsdi-net host
-112 and broadcast on net jssmag.
-The nbp ID for the lookup is 190.
-The second line shows a reply for this request
-.Pq note that it has the same ID
-from host jssmag.209 saying that it has a laserwriter
-resource named RM1140 registered on port 250.
-The third line is another reply to the same request
-saying host techpit has laserwriter techpit registered on port 186.
-.Pp
-ATP packet formatting is demonstrated by the following example:
-.Bd -unfilled -offset indent
-jssmag.209.165 > helios.132: atp-req  12266<0-7> 0xae030001
-helios.132 > jssmag.209.165: atp-resp 12266:0 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:1 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:2 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:3 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:4 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:5 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:6 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp*12266:7 (512) 0xae040000
-jssmag.209.165 > helios.132: atp-req  12266<3,5> 0xae030001
-helios.132 > jssmag.209.165: atp-resp 12266:3 (512) 0xae040000
-helios.132 > jssmag.209.165: atp-resp 12266:5 (512) 0xae040000
-jssmag.209.165 > helios.132: atp-rel  12266<0-7> 0xae030001
-jssmag.209.133 > helios.132: atp-req* 12267<0-7> 0xae030002
-.Ed
-.Pp
-Jssmag.209 initiates transaction ID 12266 with host helios by requesting
-up to 8 packets
-.Sm off
-.Pq the Dq <0\-7> .
-.Sm on
-The hex number at the end of the line is the value of the
-.Ar userdata
-field in the request.
-.Pp
-Helios responds with 8 512-byte packets.
-The
-.Dq : Ns Ar n
-following the
-transaction ID gives the packet sequence number in the transaction
-and the number in parentheses is the amount of data in the packet,
-excluding the ATP header.
-The
-.Ql *
-on packet 7 indicates that the EOM bit was set.
-.Pp
-Jssmag.209 then requests that packets 3 & 5 be retransmitted.
-Helios resends them then jssmag.209 releases the transaction.
-Finally, jssmag.209 initiates the next request.
-The
-.Ql *
-on the request indicates that XO
-.Pq exactly once
-was
-.Em not
-set.
 .Ss IP Fragmentation
 Fragmented Internet datagrams are printed as
 .Bd -ragged -offset indent
@@ -1901,12 +1765,6 @@ question section is printed rather than the real query in the answer section.
 Some believe that inverse queries are themselves a bug and
 prefer to fix the program generating them rather than
 .Nm tcpdump .
-.Pp
-Apple Ethertalk DDP packets could be dumped as easily as KIP DDP packets
-but aren't.
-Even if we were inclined to do anything to promote the use of Ethertalk
-(we aren't, LBL doesn't allow Ethertalk on any of its
-networks so we'd have no way of testing this code).
 .Pp
 A packet trace that crosses a daylight saving time change will give
 skewed time stamps
