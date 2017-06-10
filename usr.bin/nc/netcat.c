@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.183 2017/05/26 16:05:35 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.184 2017/06/10 18:14:10 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -355,6 +355,9 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 		} else if (pledge("stdio inet dns sendfd", NULL) == -1)
 			err(1, "pledge");
+	} else if (Pflag && usetls) {
+		if (pledge("stdio rpath inet dns tty", NULL) == -1)
+			err(1, "pledge");
 	} else if (Pflag) {
 		if (pledge("stdio inet dns tty", NULL) == -1)
 			err(1, "pledge");
@@ -478,12 +481,6 @@ main(int argc, char *argv[])
 	}
 
 	if (usetls) {
-		if (Pflag) {
-			if (pledge("stdio inet dns tty rpath", NULL) == -1)
-				err(1, "pledge");
-		} else if (pledge("stdio inet dns rpath", NULL) == -1)
-			err(1, "pledge");
-
 		if (tls_init() == -1)
 			errx(1, "unable to initialize TLS");
 		if ((tls_cfg = tls_config_new()) == NULL)
@@ -510,7 +507,7 @@ main(int argc, char *argv[])
 		if (TLSopt & TLS_NOVERIFY) {
 			if (tls_expecthash != NULL)
 				errx(1, "-H and -T noverify may not be used"
-				    "together");
+				    " together");
 			tls_config_insecure_noverifycert(tls_cfg);
 		}
 		if (TLSopt & TLS_MUSTSTAPLE)
