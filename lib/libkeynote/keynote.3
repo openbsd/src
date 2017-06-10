@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.52 2015/11/20 16:31:05 mmcc Exp $
+.\" $OpenBSD: keynote.3,v 1.53 2017/06/10 14:15:52 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: November 20 2015 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt KN_INIT 3
 .\" .TH KeyNote 3 local
 .Os
@@ -397,9 +397,9 @@ action authorizers added to session
 .Fa returnvalues
 is an ordered array of strings that contain the return values.
 The lowest-ordered return value is contained in
-.Fa returnvalues[0] ,
+.Fa returnvalues Ns Bq 0 ,
 and the highest-ordered value is
-.Fa returnvalues[numvalues - 1] .
+.Fa returnvalues Ns Bq Fa numvalues No \- 1 .
 If
 .Fa returnvalues
 is
