@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.35 2015/11/20 16:31:05 mmcc Exp $
+.\" $OpenBSD: keynote.4,v 1.36 2017/06/10 14:31:59 schwarze Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -20,7 +20,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: November 20 2015 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt KEYNOTE 4
 .\" .TH KeyNote 4 local
 .Os
@@ -316,7 +316,7 @@ If an action attribute is not defined its value is considered to be
 the empty string.
 .Pp
 Attribute names beginning with the
-.Dq \_
+.Sq _
 character are reserved for use by the KeyNote runtime environment and
 cannot be passed from applications as part of queries.
 The following special attribute names are used:
@@ -333,7 +333,7 @@ Comma separated.
 .El
 .Pp
 In addition, attributes with names of the form
-.Qq \_ Ns Aq N ,
+.Qq _ Ns Aq N ,
 where
 .Aq N
 is an ASCII-encoded integer, are used by the regular expression matching
@@ -511,7 +511,7 @@ for more details) that each clause in the conditions section has two
 logical parts: a `test' and an optional
 .Sq value ,
 which, if present, is separated from the test with the
-.Qq \-\>
+.Qq \->
 token.
 The test subclause is a
 predicate that either succeeds (evaluates to logical
@@ -524,11 +524,11 @@ compliance values given with the query.
 If the value subclause is missing, it is considered to be _MAX_TRUST.
 That is, the clause
 .Pp
-.Dl foo==\&"bar\&";
+.Dl foo=="bar";
 .Pp
 is equivalent to
 .Pp
-.Dl foo==\&"bar\&" -> _MAX_TRUST;
+.Dl foo=="bar" \-> _MAX_TRUST;
 .Pp
 If the value component of a clause is present, in the simplest case it
 contains a string expression representing a possible compliance value.
@@ -663,11 +663,11 @@ A
 expression has the value of the enclosed subexpression.
 .It
 A
-.Qq \&\&
+.Qq &&
 expression has the lower-order (minimum) of its two subexpression values.
 .It
 A
-.Qq \|\|
+.Qq ||
 expression has the higher-order (maximum) of its two subexpression values.
 .It
 A
@@ -682,7 +682,7 @@ order 2.
 .Pp
 For example, consider the following Licensees field:
 .Pp
-.Dl Licensees: (\&"alice\&" && \&"bob\&") || \&"eve\&"
+.Dl Licensees: ("alice" && \&"bob") || \&"eve"
 .Pp
 If the Principal Compliance Value is
 .Qq yes
