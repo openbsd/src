@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.53 2017/04/27 06:22:11 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.54 2017/06/10 16:00:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 27 2017 $
+.Dd $Mdocdate: June 10 2017 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -95,11 +95,11 @@ and silence erroneous warnings when used with
 .It
 .Nm gcc
 recognizes the attribute
-.Dv __nonnull__ ,
+.Cm __nonnull__ ,
 which can be used to mark arguments that can't be
 .Dv NULL .
 The printf format attribute does not imply
-.Dv __nonnull__
+.Cm __nonnull__
 for the format.
 This allows for correct format checking on the
 .Xr err 3
@@ -107,7 +107,7 @@ function family.
 .It
 .Nm gcc
 recognizes the extra attribute
-.Dv __sentinel__ ,
+.Cm __sentinel__ ,
 which can be used to mark varargs function that need a
 .Dv NULL
 pointer to mark argument termination, like
@@ -186,7 +186,7 @@ recognizes a new flag which is enabled by default,
 .Fl Wbounded ,
 to perform basic checks on functions which accept buffers and sizes.
 An extra attribute,
-.Dv __bounded__ ,
+.Cm __bounded__ ,
 has been added to mark functions that can be
 checked this way.
 .It
@@ -292,16 +292,14 @@ function unless the variable or parameter is of type pointer-to-function.
 .El
 .Sh ATTRIBUTES
 The
-.Dv __bounded__
+.Cm __bounded__
 attribute is used to type-check functions whose parameters pass fixed-length
 buffers and their sizes.
 The syntax for normal buffers is:
 .Pp
-.Li __attribute__ ((__bounded__ (
-.Dv __buffer__ ,
-.Va buffer ,
-.Va length
-.Li )))
+.Ic __attribute__ Ns Po Po
+.Cm __bounded__ Ns Pq Cm __buffer__ , Va buffer , length
+.Pc Pc
 .Pp
 where
 .Fa buffer
@@ -320,15 +318,13 @@ Refer to
 for an example of a function with this check.
 .Pp
 For checking strings, just use
-.Dv __string__
+.Cm __string__
 instead of
-.Dv __buffer__ :
+.Cm __buffer__ :
 .Pp
-.Li __attribute__ ((__bounded__ (
-.Dv __string__ ,
-.Va buffer ,
-.Va length
-.Li )))
+.Ic __attribute__ Ns Po Po
+.Cm __bounded__ Ns Pq Cm __string__ , Va buffer , length
+.Pc Pc
 .Pp
 In addition to the checks described above, this also tests if the
 .Va length
@@ -339,15 +335,13 @@ operation.
 is a good example of a string function with this check.
 .Pp
 If a function needs string checking like
-.Dv __string__
+.Cm __string__
 but operates on element counts rather than buffer sizes, use
-.Dv __wcstring__ :
+.Cm __wcstring__ :
 .Pp
-.Li __attribute__ ((__bounded__ (
-.Dv __wcstring__ ,
-.Va buffer ,
-.Va count
-.Li )))
+.Ic __attribute__ Ns Po Po
+.Cm __bounded__ Ns Pq Cm __wcstring__ , Va buffer , count
+.Pc Pc
 .Pp
 An example of a string function with this check is
 .Xr wcslcpy 3 .
@@ -355,15 +349,12 @@ An example of a string function with this check is
 Some functions specify the length as two arguments:
 the number of elements and the size of each element.
 In this case, use the
-.Dv __size__
+.Cm __size__
 attribute:
 .Pp
-.Li __attribute__ ((__bounded__ (
-.Dv __size__ ,
-.Va buffer ,
-.Va nmemb ,
-.Va size
-.Li )))
+.Ic __attribute__ Ns Po Po
+.Cm __bounded__ Ns Pq Cm __size__ , Va buffer , nmemb , size
+.Pc Pc
 .Pp
 where
 .Va buffer
@@ -373,9 +364,9 @@ contains the parameter number of the number of members, and
 .Va size
 has the parameter number of the size of each element.
 The type checks performed by
-.Dv __size__
+.Cm __size__
 are the same as the
-.Dv __buffer__
+.Cm __buffer__
 attribute.
 See
 .Xr fread 3
@@ -384,11 +375,9 @@ for an example of this type of function.
 If a function accepts a buffer parameter and specifies that it has to be of a
 minimum length, the __minbytes__ attribute can be used:
 .Pp
-.Li __attribute__ ((__bounded__ (
-.Dv __minbytes__ ,
-.Va buffer ,
-.Va minsize
-.Li )))
+.Ic __attribute__ Ns Po Po
+.Cm __bounded__ Ns Pq Cm __minbytes__ , Va buffer , minsize
+.Pc Pc
 .Pp
 where
 .Va buffer
