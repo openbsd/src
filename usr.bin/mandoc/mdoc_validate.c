@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.248 2017/06/10 01:48:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.249 2017/06/10 16:53:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -410,9 +410,17 @@ static void
 post_delim(POST_ARGS)
 {
 	const struct roff_node	*nch;
-	const char		*lc;
+	const char		*lc, *cp;
+	int			 nw;
 	enum mdelim		 delim;
+	enum roff_tok		 tok;
 
+	/*
+	 * Find candidates: at least two bytes,
+	 * the last one a closing or middle delimiter.
+	 */
+
+	tok = mdoc->last->tok;
 	nch = mdoc->last->last;
 	if (nch == NULL || nch->type != ROFFT_TEXT)
 		return;
@@ -422,9 +430,74 @@ post_delim(POST_ARGS)
 	delim = mdoc_isdelim(lc);
 	if (delim == DELIM_NONE || delim == DELIM_OPEN)
 		return;
+
+	/*
+	 * Reduce false positives by allowing various cases.
+	 */
+
+	/* Escaped delimiters. */
+	if (lc > nch->string + 1 && lc[-2] == '\\' &&
+	    (lc[-1] == '&' || lc[-1] == 'e'))
+		return;
+
+	/* Specific byte sequences. */
+	switch (*lc) {
+	case ')':
+		for (cp = lc; cp >= nch->string; cp--)
+			if (*cp == '(')
+				return;
+		break;
+	case '.':
+		if (lc > nch->string + 1 && lc[-2] == '.' && lc[-1] == '.')
+			return;
+		if (lc[-1] == '.')
+			return;
+		break;
+	case ';':
+		if (tok == MDOC_Vt)
+			return;
+		break;
+	case '?':
+		if (lc[-1] == '?')
+			return;
+		break;
+	case ']':
+		for (cp = lc; cp >= nch->string; cp--)
+			if (*cp == '[')
+				return;
+		break;
+	case '|':
+		if (lc == nch->string + 1 && lc[-1] == '|')
+			return;
+	default:
+		break;
+	}
+
+	/* Exactly two non-alphanumeric bytes. */
+	if (lc == nch->string + 1 && !isalnum((unsigned char)lc[-1]))
+		return;
+
+	/* At least three alphabetic words with a sentence ending. */
+	if (strchr("!.:?", *lc) != NULL && (tok == MDOC_Em ||
+	    tok == MDOC_Li || tok == MDOC_No || tok == MDOC_Po ||
+	    tok == MDOC_Pq || tok == MDOC_Sy)) {
+		nw = 0;
+		for (cp = lc - 1; cp >= nch->string; cp--) {
+			if (*cp == ' ') {
+				nw++;
+				if (cp > nch->string && cp[-1] == ',')
+					cp--;
+			} else if (isalpha((unsigned int)*cp)) {
+				if (nw > 1)
+					return;
+			} else
+				break;
+		}
+	}
+
 	mandoc_vmsg(MANDOCERR_DELIM, mdoc->parse,
 	    nch->line, nch->pos + (lc - nch->string),
-	    "%s%s %s", roff_name[mdoc->last->tok],
+	    "%s%s %s", roff_name[tok],
 	    nch == mdoc->last->child ? "" : " ...", nch->string);
 }
 
