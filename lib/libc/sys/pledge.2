@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.43 2017/06/07 20:53:59 bluhm Exp $
+.\" $OpenBSD: pledge.2,v 1.44 2017/06/11 18:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2017 $
+.Dd $Mdocdate: June 11 2017 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -573,7 +573,7 @@ or one of its elements, or
 .Fa promises
 points outside the process's allocated address space.
 .It Bq Er EINVAL
-.Ar request
+.Ar promises
 is malformed or contains invalid keywords.
 .It Bq Er ENAMETOOLONG
 An element of
