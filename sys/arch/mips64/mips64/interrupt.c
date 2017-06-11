@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.67 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.68 2017/06/11 10:01:23 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,7 +59,7 @@ struct {
 	uint32_t (*int_hand)(uint32_t, struct trapframe *);
 } cpu_int_tab[NLOWINT];
 
-int_f	*splx_hand = &dummy_splx;
+void	(*splx_hand)(int) = &dummy_splx;
 
 /*
  *  Modern versions of MIPS processors have extended interrupt
@@ -219,6 +219,12 @@ splinit()
 
 	spl0();
 	(void)updateimask(0);
+}
+
+void
+register_splx_handler(void (*handler)(int))
+{
+	splx_hand = handler;
 }
 
 int

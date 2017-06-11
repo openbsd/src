@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.48 2017/02/11 03:44:22 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.49 2017/06/11 10:01:23 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,18 +134,7 @@ void	splinit(void);
 #define	splassert(X)
 #define	splsoftassert(X)
 
-/* Inlines */
-static __inline void register_splx_handler(void (*)(int));
-
-typedef void (int_f)(int);
-extern int_f *splx_hand;
-
-static __inline void
-register_splx_handler(void(*handler)(int))
-{
-	splx_hand = handler;
-}
-
+void	register_splx_handler(void (*)(int));
 int	splraise(int);
 void	splx(int);
 int	spllower(int);
