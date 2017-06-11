@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.77 2015/09/09 18:23:39 deraadt Exp $	*/
+/*	$OpenBSD: sti.c,v 1.78 2017/06/11 02:06:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1130,7 +1130,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
+		if (idx >= STI_NCMAP || count > STI_NCMAP - idx)
 			return EINVAL;
 		if ((ret = copyout(&scr->scr_rcmap[idx], cmapp->red, count)))
 			break;
@@ -1146,7 +1146,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
+		if (idx >= STI_NCMAP || count > STI_NCMAP - idx)
 			return EINVAL;
 		if ((ret = copyin(cmapp->red, &scr->scr_rcmap[idx], count)))
 			break;
