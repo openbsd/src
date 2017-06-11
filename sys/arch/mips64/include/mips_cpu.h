@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.5 2017/04/20 15:42:26 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.6 2017/06/11 03:35:30 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -317,6 +317,21 @@
 #define	CONFIG3_MT		0x00000004
 #define	CONFIG3_SM		0x00000002
 #define	CONFIG3_TL		0x00000001
+
+/*
+ * Config4 register
+ */
+#define	CONFIG4_M		0x80000000u
+#define	CONFIG4_IE		0x60000000u
+#define	CONFIG4_AE		0x10000000u
+#define	CONFIG4_VTLBSizeExt	0x0f000000u	/* when MMUExtDef=3 */
+#define	CONFIG4_KScrExist	0x00ff0000u
+#define	CONFIG4_MMUExtDef	0x0000c000u
+#define	CONFIG4_MMUExtDef_SHIFT	14
+#define	CONFIG4_FTLBPageSize	0x00001f00u	/* when MMUExtDef=2 or 3 */
+#define	CONFIG4_FTLBWays	0x000000f0u	/* when MMUExtDef=2 or 3 */
+#define	CONFIG4_FTLBSets	0x0000000fu	/* when MMUExtDef=2 or 3 */
+#define	CONFIG4_MMUSizeExt	0x000000ffu	/* when MMUExtDef=1 */
 
 /*
  * PageGrain register

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64r2.S,v 1.3 2016/08/14 08:23:52 visa Exp $	*/
+/*	$OpenBSD: mips64r2.S,v 1.4 2017/06/11 03:35:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -40,6 +40,11 @@ LEAF(cp0_get_config_3, 0)
 	j	ra
 	mfc0	v0, COP_0_CONFIG, 3
 END(cp0_get_config_3)
+
+LEAF(cp0_get_config_4, 0)
+	j	ra
+	mfc0	v0, COP_0_CONFIG, 4
+END(cp0_get_config_4)
 
 LEAF(cp0_get_pagegrain, 0)
 	j	ra

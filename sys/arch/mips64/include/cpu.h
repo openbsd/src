@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.117 2017/05/24 13:33:00 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.118 2017/06/11 03:35:30 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -490,6 +490,7 @@ register_t cp0_get_config(void);
 uint32_t cp0_get_config_1(void);
 uint32_t cp0_get_config_2(void);
 uint32_t cp0_get_config_3(void);
+uint32_t cp0_get_config_4(void);
 uint32_t cp0_get_pagegrain(void);
 register_t cp0_get_prid(void);
 void	cp0_reset_cause(register_t);
