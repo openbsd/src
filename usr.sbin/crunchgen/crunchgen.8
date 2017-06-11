@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchgen.8,v 1.9 2017/01/27 15:53:50 schwarze Exp $
+.\"	$OpenBSD: crunchgen.8,v 1.10 2017/06/11 16:58:49 schwarze Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -25,7 +25,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd $Mdocdate: January 27 2017 $
+.Dd $Mdocdate: June 11 2017 $
 .Dt CRUNCHGEN 8
 .Os
 .Sh NAME
@@ -51,7 +51,9 @@
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
 together into a single executable.
-The crunched binary main() function determines which component program
+The crunched binary
+.Fn main
+function determines which component program
 to run by the contents of argv[0].
 The main reason to crunch programs together is for fitting as many programs
 as possible onto an installation or system recovery floppy.
