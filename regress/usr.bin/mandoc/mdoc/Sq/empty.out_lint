@@ -1,2 +1,3 @@
+mandoc: empty.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: empty.in:11:18: STYLE: no blank before trailing delimiter: Sq user@host)
 mandoc: empty.in:14:13: STYLE: no blank before trailing delimiter: So full)

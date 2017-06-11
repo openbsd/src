@@ -1,1 +1,2 @@
+mandoc: beforeNAME.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: beforeNAME.in:4:2: WARNING: content before first section header: Bd

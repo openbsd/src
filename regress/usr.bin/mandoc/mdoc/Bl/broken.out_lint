@@ -1,3 +1,4 @@
 mandoc: broken.in:13:2: WARNING: blocks badly nested: Bo breaks Bl
 mandoc: broken.in:23:2: WARNING: blocks badly nested: Bo breaks Bd
 mandoc: broken.in:25:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: broken.in:1:5: STYLE: Mdocdate missing: Dd February

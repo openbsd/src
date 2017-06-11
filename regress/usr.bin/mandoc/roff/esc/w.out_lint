@@ -1,1 +1,2 @@
 mandoc: w.in:16:15: WARNING: invalid escape sequence: \w'foo
+mandoc: w.in:1:5: STYLE: Mdocdate missing: Dd April

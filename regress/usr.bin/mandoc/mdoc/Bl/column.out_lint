@@ -1,3 +1,4 @@
+mandoc: column.in:1:5: STYLE: Mdocdate missing: Dd October
 mandoc: column.in:71:2: WARNING: wrong number of cells: 2 columns, 1 cells
 mandoc: column.in:74:2: WARNING: wrong number of cells: 2 columns, 4 cells
 mandoc: column.in:75:2: WARNING: wrong number of cells: 2 columns, 5 cells

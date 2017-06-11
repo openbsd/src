@@ -1,3 +1,4 @@
+mandoc: obsolete.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: obsolete.in:8:2: WARNING: obsolete macro: En
 mandoc: obsolete.in:10:2: WARNING: obsolete macro: Es
 mandoc: obsolete.in:12:2: WARNING: obsolete macro: En

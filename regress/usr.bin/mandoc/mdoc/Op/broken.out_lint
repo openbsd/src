@@ -1,2 +1,3 @@
 mandoc: broken.in:10:17: WARNING: blocks badly nested: Do breaks Op
 mandoc: broken.in:15:15: WARNING: blocks badly nested: Do breaks Op
+mandoc: broken.in:1:5: STYLE: Mdocdate missing: Dd July

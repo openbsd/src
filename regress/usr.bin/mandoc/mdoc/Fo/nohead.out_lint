@@ -1,1 +1,2 @@
+mandoc: nohead.in:1:5: STYLE: Mdocdate missing: Dd February
 mandoc: nohead.in:10:2: WARNING: missing function name, using "": Fo

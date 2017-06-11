@@ -1,1 +1,2 @@
+mandoc: emptytag.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: emptytag.in:12:2: WARNING: empty head in list item: Bl -tag It

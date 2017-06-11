@@ -6,3 +6,4 @@ mandoc: escname.in:37:5: ERROR: skipping excess arguments: .de ... excess argume
 mandoc: escname.in:40:1: ERROR: escaped character not allowed in a name: witharg\(
 mandoc: escname.in:42:1: ERROR: escaped character not allowed in a name: de\e
 mandoc: escname.in:42:2: WARNING: skipping empty request: de
+mandoc: escname.in:1:5: STYLE: Mdocdate missing: Dd June

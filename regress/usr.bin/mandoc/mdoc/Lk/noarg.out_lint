@@ -1,3 +1,4 @@
 mandoc: noarg.in:16:2: WARNING: skipping empty macro: Lk
+mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: noarg.in:12:33: STYLE: no blank before trailing delimiter: Lk ... mandoc,
 mandoc: noarg.in:14:28: STYLE: no blank before trailing delimiter: Lk http://www.openbsd.org/,

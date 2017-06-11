@@ -1,2 +1,3 @@
 mandoc: badargs.in:15:2: WARNING: skipping empty macro: St
+mandoc: badargs.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: badargs.in:12:5: ERROR: unknown standard specifier: St -murks

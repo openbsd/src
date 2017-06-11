@@ -1,3 +1,4 @@
+mandoc: punctNAME.in:1:5: STYLE: Mdocdate missing: Dd January
 mandoc: punctNAME.in:6:2: WARNING: missing comma before name: Nm second_name
 mandoc: punctNAME.in:6:17: WARNING: bad NAME section content: text
 mandoc: punctNAME.in:7:2: WARNING: missing comma before name: Nm third_name

@@ -7,6 +7,7 @@ mandoc: line.in:60:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:62:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:65:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:66:1: WARNING: blank line in fill mode, using .sp
+mandoc: line.in:1:5: STYLE: Mdocdate missing: Dd February
 mandoc: line.in:18:2: WARNING: skipping paragraph macro: br after br
 mandoc: line.in:20:2: WARNING: skipping paragraph macro: br before Pp
 mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after Pp

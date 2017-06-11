@@ -15,3 +15,4 @@ mandoc: name.in:33:6: WARNING: undefined string, using "": ble
 mandoc: name.in:33:5: WARNING: whitespace at end of input line
 mandoc: name.in:35:5: WARNING: undefined string, using "": bl
 mandoc: name.in:35:4: WARNING: whitespace at end of input line
+mandoc: name.in:1:5: STYLE: Mdocdate missing: Dd January

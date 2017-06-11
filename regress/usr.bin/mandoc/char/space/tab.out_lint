@@ -1,3 +1,4 @@
+mandoc: tab.in:1:5: STYLE: Mdocdate missing: Dd April
 mandoc: tab.in:10:2: WARNING: tab in filled text
 mandoc: tab.in:12:3: WARNING: tab in filled text
 mandoc: tab.in:14:4: WARNING: tab in filled text

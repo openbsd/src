@@ -1,2 +1,3 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: Ad
+mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: noarg.in:9:10: STYLE: no blank before trailing delimiter: Ad 0x3bc.

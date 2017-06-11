@@ -23,4 +23,5 @@ mandoc: punct.in:71:7: WARNING: skipping empty macro: Em
 mandoc: punct.in:74:7: WARNING: skipping empty macro: Em
 mandoc: punct.in:75:7: WARNING: skipping empty macro: Em
 mandoc: punct.in:83:2: WARNING: skipping empty macro: Em
+mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: punct.in:86:6: STYLE: no blank before trailing delimiter: Em a.

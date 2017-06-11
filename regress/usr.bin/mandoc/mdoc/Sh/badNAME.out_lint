@@ -1,2 +1,3 @@
+mandoc: badNAME.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: badNAME.in:5:2: WARNING: bad NAME section content: Em
 mandoc: badNAME.in:4:2: WARNING: NAME section without description

@@ -14,5 +14,6 @@ mandoc: break.in:73:2: ERROR: inserting missing end of block: Sh breaks Bo
 mandoc: break.in:76:2: WARNING: blocks badly nested: Bl breaks Bo
 mandoc: break.in:75:25: ERROR: appending missing end of block: Bo
 mandoc: break.in:74:2: ERROR: appending missing end of block: Bl
+mandoc: break.in:1:5: STYLE: Mdocdate missing: Dd August
 mandoc: break.in:75:2: WARNING: empty list item: Bl -enum It
 mandoc: break.in:75:2: ERROR: skipping all arguments: It before broken block

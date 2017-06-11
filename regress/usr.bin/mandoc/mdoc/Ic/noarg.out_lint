@@ -1,2 +1,3 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: Ic
+mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: noarg.in:9:7: STYLE: no blank before trailing delimiter: Ic ls.

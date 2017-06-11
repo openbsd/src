@@ -3,3 +3,4 @@ mandoc: invalid.in:15:2: WARNING: skipping empty request: define bruch
 mandoc: invalid.in:21:2: WARNING: skipping empty request: undef
 mandoc: invalid.in:27:2: WARNING: skipping empty request: tdefine
 mandoc: invalid.in:33:2: WARNING: skipping empty request: tdefine
+mandoc: invalid.in:1:5: STYLE: Mdocdate missing: Dd January

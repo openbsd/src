@@ -6,6 +6,7 @@ mandoc: breakingIt.in:44:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:51:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:59:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:67:2: ERROR: inserting missing end of block: It breaks Bd
+mandoc: breakingIt.in:1:5: STYLE: Mdocdate missing: Dd February
 mandoc: breakingIt.in:10:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:11:2: WARNING: moving content out of list: Ao
 mandoc: breakingIt.in:17:1: WARNING: moving content out of list: text

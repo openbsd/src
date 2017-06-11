@@ -1,3 +1,4 @@
 mandoc: brokenbreaker.in:10:2: WARNING: blocks badly nested: Po breaks Ao
 mandoc: brokenbreaker.in:12:2: ERROR: skipping end of block that is not open: Pc
 mandoc: brokenbreaker.in:13:2: WARNING: blocks badly nested: Ao breaks Bo
+mandoc: brokenbreaker.in:1:5: STYLE: Mdocdate missing: Dd December

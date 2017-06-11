@@ -1,1 +1,2 @@
+mandoc: parbefore.in:1:5: STYLE: Mdocdate missing: Dd April
 mandoc: parbefore.in:4:2: WARNING: skipping paragraph macro: Pp before Sh

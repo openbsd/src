@@ -1,3 +1,4 @@
+mandoc: emptyhead.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: emptyhead.in:12:2: WARNING: empty head in list item: Bl -hang It
 mandoc: emptyhead.in:21:2: WARNING: empty head in list item: Bl -ohang It
 mandoc: emptyhead.in:30:2: WARNING: empty head in list item: Bl -inset It

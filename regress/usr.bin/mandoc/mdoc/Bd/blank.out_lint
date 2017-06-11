@@ -5,4 +5,5 @@ mandoc: blank.in:21:36: WARNING: whitespace at end of input line
 mandoc: blank.in:22:37: WARNING: whitespace at end of input line
 mandoc: blank.in:23:32: WARNING: whitespace at end of input line
 mandoc: blank.in:30:8: WARNING: whitespace at end of input line
+mandoc: blank.in:1:5: STYLE: Mdocdate missing: Dd January
 mandoc: blank.in:30:2: WARNING: empty block: Dl

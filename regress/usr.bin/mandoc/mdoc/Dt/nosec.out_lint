@@ -1,1 +1,2 @@
 mandoc: nosec.in:2:2: WARNING: missing manual section, using "": Dt DT-NOSEC
+mandoc: nosec.in:1:5: STYLE: Mdocdate missing: Dd August

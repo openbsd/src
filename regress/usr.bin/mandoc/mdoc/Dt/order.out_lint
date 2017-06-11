@@ -1,1 +1,2 @@
+mandoc: order.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: order.in:3:2: WARNING: prologue macros out of order: Dt after Os

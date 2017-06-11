@@ -1,2 +1,3 @@
+mandoc: orderNAME.in:1:5: STYLE: Mdocdate missing: Dd January
 mandoc: orderNAME.in:5:2: WARNING: description not at the end of NAME
 mandoc: orderNAME.in:4:2: WARNING: NAME section without Nm before Nd

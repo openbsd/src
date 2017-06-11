@@ -1,3 +1,4 @@
+mandoc: emptyitem.in:1:5: STYLE: Mdocdate missing: Dd August
 mandoc: emptyitem.in:10:2: ERROR: skipping all arguments: It head argument
 mandoc: emptyitem.in:12:2: WARNING: empty list item: Bl -bullet It
 mandoc: emptyitem.in:20:2: WARNING: empty list item: Bl -dash It

@@ -1,1 +1,2 @@
 mandoc: noarg.in:11:2: WARNING: skipping empty macro: Cd
+mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd January

@@ -1,1 +1,2 @@
 mandoc: fourargs.in:2:25: ERROR: skipping excess arguments: Dt ... bogus
+mandoc: fourargs.in:1:5: STYLE: Mdocdate missing: Dd February

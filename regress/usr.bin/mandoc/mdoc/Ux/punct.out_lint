@@ -1,3 +1,4 @@
+mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: punct.in:10:9: STYLE: no blank before trailing delimiter: Bsx 5.1,
 mandoc: punct.in:11:10: STYLE: no blank before trailing delimiter: Dx 4.8.0,
 mandoc: punct.in:12:9: STYLE: no blank before trailing delimiter: Fx 11.0,

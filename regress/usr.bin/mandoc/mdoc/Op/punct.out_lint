@@ -1,1 +1,2 @@
+mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: punct.in:34:6: STYLE: no blank before trailing delimiter: Op a.

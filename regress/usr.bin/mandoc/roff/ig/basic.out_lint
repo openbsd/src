@@ -1,3 +1,4 @@
 mandoc: basic.in:19:5: ERROR: skipping excess arguments: .ig ... excess
 mandoc: basic.in:24:2: ERROR: skipping end of block that is not open: ..
 mandoc: basic.in:26:2: ERROR: appending missing end of block: ig
+mandoc: basic.in:1:5: STYLE: Mdocdate missing: Dd July

@@ -6,3 +6,4 @@ mandoc: two.in:29:2: WARNING: blocks badly nested: Aq breaks Bro
 mandoc: two.in:30:2: WARNING: blocks badly nested: Bo breaks Bro
 mandoc: two.in:36:2: WARNING: blocks badly nested: Ao breaks Bo
 mandoc: two.in:41:2: WARNING: blocks badly nested: Aq breaks Bo
+mandoc: two.in:1:5: STYLE: Mdocdate missing: Dd February

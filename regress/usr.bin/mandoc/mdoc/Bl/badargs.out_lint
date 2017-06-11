@@ -1,4 +1,5 @@
 mandoc: badargs.in:78:2: ERROR: skipping all arguments: El tail argument
+mandoc: badargs.in:1:5: STYLE: Mdocdate missing: Dd February
 mandoc: badargs.in:9:13: WARNING: empty argument, using 0n: Bl -offset
 mandoc: badargs.in:14:13: WARNING: empty argument, using 0n: Bl -width
 mandoc: badargs.in:18:11: WARNING: empty argument, using 0n: Bl -width
