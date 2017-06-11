@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2017/04/30 16:45:45 mpi Exp $ */
+/*	$OpenBSD: machdep.c,v 1.89 2017/06/11 03:03:05 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -851,8 +851,11 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 	if (kstack == 0)
 		panic("unable to allocate idle stack\n");
 	ci->ci_curprocpaddr = (void *)kstack;
+
 	cpu_spinup_a0 = (uint64_t)ci;
 	cpu_spinup_sp = (uint64_t)(kstack + USPACE);
+	mips_sync();
+
 	cpu_spinup_mask = (uint32_t)ci->ci_cpuid;
 
 	while (!cpuset_isset(&cpus_running, ci))
