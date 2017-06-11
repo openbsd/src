@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.252 2017/06/11 19:36:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.253 2017/06/11 20:02:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2565,7 +2565,7 @@ out:	mdoc->meta.os_e = strstr(mdoc->meta.os, "OpenBSD") != NULL ?
 			return;
 	if ((n = n->child) == NULL)
 		return;
-	if (strcmp(n->string, "$" "Mdocdate")) {
+	if (strncmp(n->string, "$" "Mdocdate", 9)) {
 		if (mdoc->meta.os_e == MDOC_OS_OPENBSD)
 			mandoc_vmsg(MANDOCERR_MDOCDATE_MISSING,
 			    mdoc->parse, n->line, n->pos,
