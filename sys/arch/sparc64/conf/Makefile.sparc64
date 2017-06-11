@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.83 2017/06/05 12:43:59 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.84 2017/06/11 20:50:33 bluhm Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -141,7 +141,7 @@ install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
-	cp -p bsd /nbsd
+	umask 077; cp bsd /nbsd
 	mv /nbsd /bsd
 .endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.63 2017/06/08 05:35:23 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.64 2017/06/11 20:50:32 bluhm Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -153,7 +153,7 @@ install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
-	cp -p bsd /nbsd
+	umask 077; cp bsd /nbsd
 	mv /nbsd /bsd
 .endif
 

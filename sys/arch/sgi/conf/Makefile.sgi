@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.81 2017/06/08 11:47:24 visa Exp $
+#	$OpenBSD: Makefile.sgi,v 1.82 2017/06/11 20:50:33 bluhm Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -167,7 +167,7 @@ install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME}})
 install-kernel-${MACHINE_NAME}:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
-	cp -p bsd /nbsd
+	umask 077; cp bsd /nbsd
 	mv /nbsd /bsd
 .endif
 
