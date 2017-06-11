@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.249 2017/06/10 16:53:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.250 2017/06/11 14:10:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -182,7 +182,7 @@ static	const v_post __mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Eo */
 	post_xx,	/* Fx */
 	post_delim,	/* Ms */
-	post_delim,	/* No */
+	NULL,		/* No */
 	post_ns,	/* Ns */
 	post_xx,	/* Nx */
 	post_xx,	/* Ox */
@@ -479,8 +479,8 @@ post_delim(POST_ARGS)
 
 	/* At least three alphabetic words with a sentence ending. */
 	if (strchr("!.:?", *lc) != NULL && (tok == MDOC_Em ||
-	    tok == MDOC_Li || tok == MDOC_No || tok == MDOC_Po ||
-	    tok == MDOC_Pq || tok == MDOC_Sy)) {
+	    tok == MDOC_Li || tok == MDOC_Po || tok == MDOC_Pq ||
+	    tok == MDOC_Sy)) {
 		nw = 0;
 		for (cp = lc - 1; cp >= nch->string; cp--) {
 			if (*cp == ' ') {
