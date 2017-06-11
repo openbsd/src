@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.250 2017/06/11 14:10:24 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.251 2017/06/11 17:16:36 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -51,10 +51,10 @@ typedef	void	(*v_post)(POST_ARGS);
 
 static	int	 build_list(struct roff_man *, int);
 static	void	 check_text(struct roff_man *, int, int, char *);
-static	void	 check_bsd(struct roff_man *, int, int, char *);
 static	void	 check_argv(struct roff_man *,
 			struct roff_node *, struct mdoc_argv *);
 static	void	 check_args(struct roff_man *, struct roff_node *);
+static	void	 check_toptext(struct roff_man *, int, int, const char *);
 static	int	 child_an(const struct roff_node *);
 static	size_t		macro2len(enum roff_tok);
 static	void	 rewrite_macro2len(struct roff_man *, char **);
@@ -302,10 +302,11 @@ mdoc_node_validate(struct roff_man *mdoc)
 		if (n->sec != SEC_SYNOPSIS ||
 		    (n->parent->tok != MDOC_Cd && n->parent->tok != MDOC_Fd))
 			check_text(mdoc, n->line, n->pos, n->string);
-		if (n->parent->tok == MDOC_Sh ||
-		    n->parent->tok == MDOC_Ss ||
-		    n->parent->tok == MDOC_It)
-			check_bsd(mdoc, n->line, n->pos, n->string);
+		if (n->parent->tok == MDOC_It ||
+		    (n->parent->type == ROFFT_BODY &&
+		     (n->parent->tok == MDOC_Sh ||
+		      n->parent->tok == MDOC_Ss)))
+			check_toptext(mdoc, n->line, n->pos, n->string);
 		break;
 	case ROFFT_EQN:
 	case ROFFT_TBL:
@@ -388,9 +389,12 @@ check_text(struct roff_man *mdoc, int ln, int pos, char *p)
 }
 
 static void
-check_bsd(struct roff_man *mdoc, int ln, int pos, char *p)
+check_toptext(struct roff_man *mdoc, int ln, int pos, const char *p)
 {
-	const char	*cp;
+	const char	*cp, *cpr;
+
+	if (*p == '\0')
+		return;
 
 	if ((cp = strstr(p, "OpenBSD")) != NULL)
 		mandoc_msg(MANDOCERR_BX, mdoc->parse,
@@ -404,6 +408,19 @@ check_bsd(struct roff_man *mdoc, int ln, int pos, char *p)
 	if ((cp = strstr(p, "DragonFly")) != NULL)
 		mandoc_msg(MANDOCERR_BX, mdoc->parse,
 		    ln, pos + (cp - p), "Dx");
+
+	cp = p;
+	while ((cp = strstr(cp + 1, "()")) != NULL) {
+		for (cpr = cp - 1; cpr >= p; cpr--)
+			if (*cpr != '_' && !isalnum((unsigned char)*cpr))
+				break;
+		if ((cpr < p || *cpr == ' ') && cpr + 1 < cp) {
+			cpr++;
+			mandoc_vmsg(MANDOCERR_FUNC, mdoc->parse,
+			    ln, pos + (cpr - p),
+			    "%.*s()", (int)(cp - cpr), cpr);
+		}
+	}
 }
 
 static void

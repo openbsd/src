@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.121 2017/06/10 01:48:31 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.122 2017/06/11 17:16:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2017 $
+.Dd $Mdocdate: June 11 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -799,10 +799,19 @@ Do not use punctuation at the end of an
 .Ic \&Nd
 block.
 .It Sy "no blank before trailing delimiter"
+.Pq mdoc
 The last argument of a macro that supports trailing delimiter
 arguments is longer than one byte and ends with a trailing delimiter.
 Consider inserting a blank such that the delimiter becomes a separate
 argument, thus moving it out of the scope of the macro.
+.It Sy "function name without markup"
+.Pq mdoc
+A word followed by an empty pair of parentheses occurs on a text line.
+Consider using an
+.Ic \&Fn
+or
+.Ic \&Xr
+macro.
 .El
 .Ss Warnings related to the document prologue
 .Bl -ohang
