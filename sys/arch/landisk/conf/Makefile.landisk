@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.64 2017/06/11 20:50:32 bluhm Exp $
+#	$OpenBSD: Makefile.landisk,v 1.65 2017/06/11 22:51:21 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -118,7 +118,7 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
