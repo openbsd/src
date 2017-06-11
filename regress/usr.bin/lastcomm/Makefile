@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2017/06/08 17:29:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2017/06/11 19:43:16 bluhm Exp $
 
 # Start with a clean /var/account/acct accounting file and turn on
 # process accounting with accton(8).  Each test executes a command
@@ -6,7 +6,7 @@
 # Run tests with fork, su, core, xsig, pledge, trap accounting.
 
 PROG=		crash
-CLEANFILES=	bin-* stamp-*
+CLEANFILES=	regress-* stamp-*
 
 .if make (regress) || make (all)
 .BEGIN:
@@ -30,51 +30,51 @@ TARGETS+=	fork
 run-regress-fork:
 	@echo '\n======== $@ ========'
 	# Create shell program, fork a sub shell, and check the -F flag.
-	cp -f /bin/sh bin-fork
-	./bin-fork -c '( : ) &'
-	lastcomm bin-fork | grep -q ' -F '
+	cp -f /bin/sh regress-fork
+	./regress-fork -c '( : ) &'
+	lastcomm regress-fork | grep -q ' -F '
 
 TARGETS+=	su
 run-regress-su:
 	@echo '\n======== $@ ========'
 	# Create shell program, run as super user, and check the -S flag.
-	cp -f /bin/sh bin-su
-	${SUDO} ./bin-su -c ':'
-	lastcomm bin-su | grep -q ' -S '
+	cp -f /bin/sh regress-su
+	${SUDO} ./regress-su -c ':'
+	lastcomm regress-su | grep -q ' -S '
 
 TARGETS+=	core
 run-regress-core:
 	@echo '\n======== $@ ========'
 	# Create shell program, abort sub shell, and check the -DX flag.
-	cp -f /bin/sh bin-core
-	rm -f bin-core.core
-	ulimit -c 100000; ./bin-core -c '( : ) & kill -SEGV $$!'
-	lastcomm bin-core | grep -q ' -FDX '
+	cp -f /bin/sh regress-core
+	rm -f regress-core.core
+	ulimit -c 100000; ./regress-core -c '( : ) & kill -SEGV $$!; wait'
+	lastcomm regress-core | grep -q ' -FDX '
 
 TARGETS+=	xsig
 run-regress-xsig:
 	@echo '\n======== $@ ========'
 	# Create shell program, kill sub shell, and check the -X flag.
-	cp -f /bin/sh bin-xsig
-	./bin-xsig -c '( : ) & kill -KILL $$!'
-	lastcomm bin-xsig | grep -q ' -FX '
+	cp -f /bin/sh regress-xsig
+	./regress-xsig -c '( : ) & kill -KILL $$!; wait'
+	lastcomm regress-xsig | grep -q ' -FX '
 
 TARGETS+=	pledge
 run-regress-pledge:
 	@echo '\n======== $@ ========'
-	# Create perl program, kill sub shell, and check the -X flag.
-	cp -f /usr/bin/perl bin-pledge
-	ulimit -c 0; ! ./bin-pledge -MOpenBSD::Pledge -e\
+	# Create perl program, violate pledge, and check the -P flag.
+	cp -f /usr/bin/perl regress-pledge
+	ulimit -c 0; ! ./regress-pledge -MOpenBSD::Pledge -e\
 	    'pledge("stdio") or die $$!; chdir("/")'
-	lastcomm bin-pledge | grep -q ' -S*XP '
+	lastcomm regress-pledge | grep -q ' -S*XP '
 
 TARGETS+=	trap
 run-regress-trap: ${PROG}
 	@echo '\n======== $@ ========'
-	# Create perl program, kill sub shell, and check the -X flag.
-	cp -f ${PROG} bin-trap
-	./bin-trap
-	lastcomm bin-trap | grep -q ' -S*T '
+	# Build crashing program, run SIGSEGV handler, and check the -T flag.
+	cp -f ${PROG} regress-trap
+	./regress-trap
+	lastcomm regress-trap | grep -q ' -S*T '
 
 REGRESS_TARGETS=	${TARGETS:S/^/run-regress-/}
 ${REGRESS_TARGETS}:	stamp-rotate
