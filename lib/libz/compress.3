@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.17 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: compress.3,v 1.18 2017/06/11 16:43:18 schwarze Exp $
 .\"
 .\"  Copyright (C) 1995-2005 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: June 11 2017 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -517,13 +517,13 @@ does not return
 then it must be called again as described above.
 .Pp
 .Fn deflate
-sets strm-\*(Gtadler to the Adler-32 checksum of all input read so far
+sets strm->adler to the Adler-32 checksum of all input read so far
 (that is,
 .Fa total_in
 bytes).
 .Pp
 .Fn deflate
-may update strm-\*(Gtdata_type
+may update strm->data_type
 if it can make a good guess about the input data type
 .Pq Z_BINARY or Z_TEXT .
 If in doubt, the data is considered binary.
@@ -737,15 +737,15 @@ The
 option assists in appending to or combining deflate streams.
 Also to assist in this, on return
 .Fn inflate
-will set strm-\*(Gtdata_type to the number of unused bits in the last byte
-taken from strm-\*(Gtnext_in, plus 64 if
+will set strm->data_type to the number of unused bits in the last byte
+taken from strm->next_in, plus 64 if
 .Fn inflate
 is currently decoding the last block in the deflate stream, plus 128 if
 .Fn inflate
 returned immediately after decoding an end-of-block code or decoding
 the complete header up to just before the first byte of the deflate stream.
 The end-of-block will not be indicated until all of the uncompressed data
-from that block has been written to strm-\*(Gtnext_out.
+from that block has been written to strm->next_out.
 The number of unused bits may in general be greater than seven,
 except when bit 7 of data_type is set,
 in which case the number of unused bits will be less than eight.
@@ -792,9 +792,9 @@ If a preset dictionary is needed after this call (see
 .Fn inflateSetDictionary
 below),
 .Fn inflate
-sets strm-\*(Gtadler to the Adler-32 checksum of the dictionary
+sets strm->adler to the Adler-32 checksum of the dictionary
 chosen by the compressor and returns Z_NEED_DICT; otherwise it sets
-strm-\*(Gtadler to the Adler-32 checksum of all output produced so far
+strm->adler to the Adler-32 checksum of all output produced so far
 (that is,
 .Fa total_out
 bytes) and returns
@@ -933,7 +933,7 @@ no modification time
 no header crc, and the operating system will be set to 255
 .Pq unknown .
 If a gzip stream is being written,
-strm-\*(Gtadler is a crc32 instead of an adler32.
+strm->adler is a crc32 instead of an adler32.
 .Pp
 The
 .Fa memLevel
@@ -1043,13 +1043,13 @@ In addition, the current implementation of
 .Fn deflate
 will use at most the window size minus 262 bytes of the provided dictionary.
 .Pp
-Upon return of this function, strm-\*(Gtadler is set to the Adler-32 value
+Upon return of this function, strm->adler is set to the Adler-32 value
 of the dictionary; the decompressor may later use this value to determine
 which dictionary has been used by the compressor.
 (The Adler-32 value applies to the whole dictionary even if only a subset
 of the dictionary is actually used by the compressor.)
 If a raw deflate was requested, then the Adler-32 value is not computed
-and strm-\*(Gtadler is not set.
+and strm->adler is not set.
 .Pp
 .Fn deflateSetDictionary
 returns
@@ -1147,7 +1147,7 @@ Before the call to
 the stream state must be set as for a call to
 .Fn deflate ,
 since the currently available input may have to be compressed and flushed.
-In particular, strm-\*(Gtavail_out must be non-zero.
+In particular, strm->avail_out must be non-zero.
 .Pp
 .Fn deflateParams
 returns
@@ -1156,7 +1156,7 @@ if successful,
 .Dv Z_STREAM_ERROR
 if the source stream state was inconsistent or if a parameter was invalid, or
 .Dv Z_BUF_ERROR
-if strm-\*(Gtavail_out was zero.
+if strm->avail_out was zero.
 .It Xo
 .Fa int
 .Fn deflateTune "z_streamp strm" "int good_length" "int max_lazy" "int nice_length" "int max_chain"
@@ -1353,7 +1353,7 @@ detection, or add 16 to decode only the gzip format
 (the zlib format will return a
 .Dv Z_DATA_ERROR ) .
 If a gzip stream is being decoded,
-strm-\*(Gtadler is a crc32 instead of an adler32.
+strm->adler is a crc32 instead of an adler32.
 .Pp
 .Fn inflateInit2
 returns
@@ -1546,10 +1546,10 @@ and before the first call of
 .Fn inflate .
 As
 .Fn inflate
-processes the gzip stream, head-\*(Gtdone is zero until the header
-is completed, at which time head-\*(Gtdone is set to one.
+processes the gzip stream, head->done is zero until the header
+is completed, at which time head->done is set to one.
 If a zlib stream is being decoded,
-then head-\*(Gtdone is set to \-1 to indicate that there will be
+then head->done is set to \-1 to indicate that there will be
 no gzip header information forthcoming.
 Note that
 .Dv Z_BLOCK
@@ -1750,24 +1750,24 @@ Any non-zero amount of input may be provided by
 .Pp
 For convenience,
 .Fn inflateBack
-can be provided input on the first call by setting strm-\*(Gtnext_in
-and strm-\*(Gtavail_in.
+can be provided input on the first call by setting strm->next_in
+and strm->avail_in.
 If that input is exhausted, then
 .Fn in
 will be called.
-Therefore strm-\*(Gtnext_in must be initialized before calling
+Therefore strm->next_in must be initialized before calling
 .Fn inflateBack .
-If strm-\*(Gtnext_in is
+If strm->next_in is
 .Dv Z_NULL ,
 then
 .Fn in
 will be called immediately for input.
-If strm-\*(Gtnext_in is not
+If strm->next_in is not
 .Dv Z_NULL ,
-then strm-\*(Gtavail_in must also be initialized,
-and then if strm-\*(Gtavail_in is not zero,
+then strm->avail_in must also be initialized,
+and then if strm->avail_in is not zero,
 input will initially be taken from
-strm-\*(Gtnext_in[0 .. strm-\*(Gtavail_in \- 1].
+strm->next_in[0 .. strm->avail_in \- 1].
 .Pp
 The
 .Fa in_desc
@@ -1789,7 +1789,7 @@ functions need to do their job.
 .Pp
 On return,
 .Fn inflateBack
-will set strm-\*(Gtnext_in and strm-\*(Gtavail_in to pass back any unused input
+will set strm->next_in and strm->avail_in to pass back any unused input
 that was provided by the last
 .Fn in
 call.
@@ -1806,27 +1806,33 @@ or
 returned an error,
 .Dv Z_DATA_ERROR
 if there was a format error in the deflate stream
-(in which case strm-\*(Gtmsg is set to indicate the nature of the error),
+(in which case strm->msg is set to indicate the nature of the error),
 or
 .Dv Z_STREAM_ERROR
 if the stream was not properly initialized.
 In the case of
 .Dv Z_BUF_ERROR ,
-an input or output error can be distinguished using strm-\*(Gtnext_in which
+an input or output error can be distinguished using strm->next_in which
 will be
 .Dv Z_NULL
 only if
 .Fn in
 returned an error.
-If strm-\*(Gtnext is not
+If strm->next is not
 .Dv Z_NULL ,
 then the
 .Dv Z_BUF_ERROR
 was due to
 .Fn out
 returning non-zero.
-(in() will always be called before out(),
-so strm-\*(Gtnext_in is assured to be defined if out() returns non-zero.)
+.Po
+.Fn in
+will always be called before
+.Fn out ,
+so strm->next_in is assured to be defined if
+.Fn out
+returns non-zero.
+.Pc
 Note that
 .Fn inflateBack
 cannot return
@@ -2716,7 +2722,7 @@ in a single step).
 #define Z_NULL  0  /* for initializing zalloc, zfree, opaque */
 
 #define zlib_version zlibVersion()
-/* for compatibility with versions \*(Lt 1.0.2 */
+/* for compatibility with versions < 1.0.2 */
 .Ed
 .Sh VARIOUS HACKS
 deflateInit and inflateInit are macros to allow checking the
