@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.170 2017/06/11 17:16:36 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.171 2017/06/11 19:36:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -46,6 +46,9 @@ enum	mandocerr {
 
 	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
 
+	MANDOCERR_MDOCDATE, /* Mdocdate found: Dd ... */
+	MANDOCERR_MDOCDATE_MISSING, /* Mdocdate missing: Dd ... */
+	MANDOCERR_DATE_LEGACY, /* legacy man(7) date format: Dd ... */
 	MANDOCERR_MACRO_USELESS, /* useless macro: macro */
 	MANDOCERR_BX, /* consider using OS macro: macro */
 	MANDOCERR_ER_ORDER, /* errnos out of order: Er ... */

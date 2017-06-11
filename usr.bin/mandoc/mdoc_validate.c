@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.251 2017/06/11 17:16:36 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.252 2017/06/11 19:36:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1775,9 +1775,8 @@ post_root(POST_ARGS)
 	/* Add missing prologue data. */
 
 	if (mdoc->meta.date == NULL)
-		mdoc->meta.date = mdoc->quick ?
-		    mandoc_strdup("") :
-		    mandoc_normdate(mdoc->parse, NULL, 0, 0);
+		mdoc->meta.date = mdoc->quick ? mandoc_strdup("") :
+		    mandoc_normdate(mdoc, NULL, 0, 0);
 
 	if (mdoc->meta.title == NULL) {
 		mandoc_msg(MANDOCERR_DT_NOTITLE,
@@ -2333,7 +2332,7 @@ post_dd(POST_ARGS)
 
 	if (n->child == NULL || n->child->string[0] == '\0') {
 		mdoc->meta.date = mdoc->quick ? mandoc_strdup("") :
-		    mandoc_normdate(mdoc->parse, NULL, n->line, n->pos);
+		    mandoc_normdate(mdoc, NULL, n->line, n->pos);
 		return;
 	}
 
@@ -2342,7 +2341,7 @@ post_dd(POST_ARGS)
 	if (mdoc->quick)
 		mdoc->meta.date = datestr;
 	else {
-		mdoc->meta.date = mandoc_normdate(mdoc->parse,
+		mdoc->meta.date = mandoc_normdate(mdoc,
 		    datestr, n->line, n->pos);
 		free(datestr);
 	}
@@ -2554,6 +2553,29 @@ post_os(POST_ARGS)
 out:	mdoc->meta.os_e = strstr(mdoc->meta.os, "OpenBSD") != NULL ?
 	    MDOC_OS_OPENBSD : strstr(mdoc->meta.os, "NetBSD") != NULL ?
 	    MDOC_OS_NETBSD : MDOC_OS_OTHER;
+
+	/*
+	 * This is the earliest point where we can check
+	 * Mdocdate conventions because we don't know
+	 * the operating system earlier.
+	 */
+
+	while (n->tok != MDOC_Dd)
+		if ((n = n->prev) == NULL)
+			return;
+	if ((n = n->child) == NULL)
+		return;
+	if (strcmp(n->string, "$" "Mdocdate")) {
+		if (mdoc->meta.os_e == MDOC_OS_OPENBSD)
+			mandoc_vmsg(MANDOCERR_MDOCDATE_MISSING,
+			    mdoc->parse, n->line, n->pos,
+			    "Dd %s", n->string);
+	} else {
+		if (mdoc->meta.os_e == MDOC_OS_NETBSD)
+			mandoc_vmsg(MANDOCERR_MDOCDATE,
+			    mdoc->parse, n->line, n->pos,
+			    "Dd %s", n->string);
+	}
 }
 
 enum roff_sec

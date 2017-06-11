@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.98 2017/05/05 15:16:25 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.99 2017/06/11 19:36:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -165,7 +165,7 @@ check_root(CHKARGS)
 		man->meta.title = mandoc_strdup("");
 		man->meta.msec = mandoc_strdup("");
 		man->meta.date = man->quick ? mandoc_strdup("") :
-		    mandoc_normdate(man->parse, NULL, n->line, n->pos);
+		    mandoc_normdate(man, NULL, n->line, n->pos);
 	}
 }
 
@@ -321,8 +321,7 @@ post_TH(CHKARGS)
 	if (n && n->string && '\0' != n->string[0]) {
 		man->meta.date = man->quick ?
 		    mandoc_strdup(n->string) :
-		    mandoc_normdate(man->parse, n->string,
-			n->line, n->pos);
+		    mandoc_normdate(man, n->string, n->line, n->pos);
 	} else {
 		man->meta.date = mandoc_strdup("");
 		mandoc_msg(MANDOCERR_DATE_MISSING, man->parse,
