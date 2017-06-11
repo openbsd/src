@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.82 2017/05/30 07:50:37 mpi Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.83 2017/06/11 19:59:57 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -151,7 +151,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		if ((m = *mp = m_pullup(m, hlen)) == NULL) {
 			DPRINTF(("%s: m_pullup() failed\n", __func__));
 			ipipstat_inc(ipips_hdrops);
-			return IPPROTO_DONE;
+			goto bad;
 		}
 	}
 
@@ -190,15 +190,13 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 #endif
 	default:
 		ipipstat_inc(ipips_family);
-		m_freem(m);
-		return IPPROTO_DONE;
+		goto bad;
 	}
 
 	/* Sanity check */
 	if (m->m_pkthdr.len < hlen) {
 		ipipstat_inc(ipips_hdrops);
-		m_freem(m);
-		return IPPROTO_DONE;
+		goto bad;
 	}
 
 	/*
@@ -208,7 +206,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		if ((m = *mp = m_pullup(m, hlen)) == NULL) {
 			DPRINTF(("%s: m_pullup() failed\n", __func__));
 			ipipstat_inc(ipips_hdrops);
-			return IPPROTO_DONE;
+			goto bad;
 		}
 	}
 
@@ -235,8 +233,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		if (!ip_ecn_egress(mode, &otos, &ip->ip_tos)) {
 			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
 			ipipstat_inc(ipips_pdrops);
-			m_freem(m);
-			return IPPROTO_DONE;
+			goto bad;
 		}
 		/* re-calculate the checksum if ip_tos was changed */
 		if (itos != ip->ip_tos) {
@@ -252,8 +249,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		if (!ip_ecn_egress(ECN_ALLOWED, &otos, &itos)) {
 			DPRINTF(("%s: ip_ecn_egress() failed\n", __func__));
 			ipipstat_inc(ipips_pdrops);
-			m_freem(m);
-			return IPPROTO_DONE;
+			goto bad;
 		}
 		ip6->ip6_flow &= ~htonl(0xff << 20);
 		ip6->ip6_flow |= htonl((u_int32_t) itos << 20);
@@ -288,9 +284,8 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		rt = rtalloc(sstosa(&ss), 0, m->m_pkthdr.ph_rtableid);
 		if ((rt != NULL) && (rt->rt_flags & RTF_LOCAL)) {
 			ipipstat_inc(ipips_spoof);
-			m_freem(m);
 			rtfree(rt);
-			return IPPROTO_DONE;
+			goto bad;
  		}
 		rtfree(rt);
  	} else {
@@ -319,16 +314,18 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	switch (proto) {
 	case IPPROTO_IPV4:
 		ipv4_input(ifp, m);
-		break;
+		*mp = NULL;
+		return IPPROTO_DONE;
 #ifdef INET6
 	case IPPROTO_IPV6:
 		ipv6_input(ifp, m);
-		break;
+		*mp = NULL;
+		return IPPROTO_DONE;
 #endif
-	default:
-		panic("%s: should never reach here", __func__);
 	}
-
+ bad:
+	m_freem(*mp);
+	*mp = NULL;
 	return IPPROTO_DONE;
 }
 
