@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.184 2017/06/10 18:14:10 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.185 2017/06/11 10:53:07 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -53,19 +53,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 #include <tls.h>
+#include <unistd.h>
+
 #include "atomicio.h"
 
 #define PORT_MAX	65535
 #define UNIX_DG_TMP_SOCKET_SIZE	19
 
-#define POLL_STDIN 0
-#define POLL_NETOUT 1
-#define POLL_NETIN 2
-#define POLL_STDOUT 3
-#define BUFSIZE 16384
-#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
+#define POLL_STDIN	0
+#define POLL_NETOUT	1
+#define POLL_NETIN	2
+#define POLL_STDOUT	3
+#define BUFSIZE		16384
+#define DEFAULT_CA_FILE	"/etc/ssl/cert.pem"
 
 #define TLS_ALL	(1 << 1)
 #define TLS_NOVERIFY	(1 << 2)
@@ -119,7 +120,7 @@ int minttl = -1;
 void	atelnet(int, unsigned char *, unsigned int);
 int	strtoport(char *portstr, int udp);
 void	build_ports(char *);
-void	help(void);
+void	help(void) __attribute__((noreturn));
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int, struct tls *);
 void	fdpass(int nfd) __attribute__((noreturn));
@@ -372,7 +373,7 @@ main(int argc, char *argv[])
 		host = argv[0];
 		uport = NULL;
 	} else if (argv[0] && !argv[1]) {
-		if  (!lflag)
+		if (!lflag)
 			usage(1);
 		uport = argv[0];
 		host = NULL;
@@ -622,7 +623,7 @@ main(int argc, char *argv[])
 
 		if (uflag)
 			unlink(unix_dg_tmp_socket);
-		exit(ret);
+		return ret;
 
 	} else {
 		int i = 0;
@@ -698,7 +699,7 @@ main(int argc, char *argv[])
 
 	tls_config_free(tls_cfg);
 
-	exit(ret);
+	return ret;
 }
 
 /*
@@ -714,7 +715,7 @@ unix_bind(char *path, int flags)
 	/* Create unix domain socket. */
 	if ((s = socket(AF_UNIX, flags | (uflag ? SOCK_DGRAM : SOCK_STREAM),
 	    0)) < 0)
-		return (-1);
+		return -1;
 
 	memset(&s_un, 0, sizeof(struct sockaddr_un));
 	s_un.sun_family = AF_UNIX;
@@ -723,16 +724,17 @@ unix_bind(char *path, int flags)
 	    sizeof(s_un.sun_path)) {
 		close(s);
 		errno = ENAMETOOLONG;
-		return (-1);
+		return -1;
 	}
 
 	if (bind(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
 		save_errno = errno;
 		close(s);
 		errno = save_errno;
-		return (-1);
+		return -1;
 	}
-	return (s);
+
+	return s;
 }
 
 int
@@ -759,7 +761,7 @@ timeout_tls(int s, struct tls *tls_ctx, int (*func)(struct tls *))
 			err(1, "poll failed");
 	}
 
-	return (ret);
+	return ret;
 }
 
 void
@@ -834,10 +836,10 @@ unix_connect(char *path)
 
 	if (uflag) {
 		if ((s = unix_bind(unix_dg_tmp_socket, SOCK_CLOEXEC)) < 0)
-			return (-1);
+			return -1;
 	} else {
 		if ((s = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) < 0)
-			return (-1);
+			return -1;
 	}
 
 	memset(&s_un, 0, sizeof(struct sockaddr_un));
@@ -847,15 +849,15 @@ unix_connect(char *path)
 	    sizeof(s_un.sun_path)) {
 		close(s);
 		errno = ENAMETOOLONG;
-		return (-1);
+		return -1;
 	}
 	if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
 		save_errno = errno;
 		close(s);
 		errno = save_errno;
-		return (-1);
+		return -1;
 	}
-	return (s);
+	return s;
 
 }
 
@@ -868,13 +870,13 @@ unix_listen(char *path)
 {
 	int s;
 	if ((s = unix_bind(path, 0)) < 0)
-		return (-1);
+		return -1;
 
 	if (listen(s, 5) < 0) {
 		close(s);
-		return (-1);
+		return -1;
 	}
-	return (s);
+	return s;
 }
 
 /*
@@ -933,7 +935,7 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 
 	freeaddrinfo(res0);
 
-	return (s);
+	return s;
 }
 
 int
@@ -961,7 +963,7 @@ timeout_connect(int s, const struct sockaddr *name, socklen_t namelen)
 			err(1, "poll failed");
 	}
 
-	return (ret);
+	return ret;
 }
 
 /*
@@ -1017,7 +1019,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 
 	freeaddrinfo(res0);
 
-	return (s);
+	return s;
 }
 
 /*
@@ -1444,7 +1446,7 @@ udptest(int s)
 		else
 			ret = -1;
 	}
-	return (ret);
+	return ret;
 }
 
 void
@@ -1544,11 +1546,11 @@ map_tos(char *s, int *val)
 	for (t = toskeywords; t->keyword != NULL; t++) {
 		if (strcmp(s, t->keyword) == 0) {
 			*val = t->val;
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1569,10 +1571,10 @@ map_tls(char *s, int *val)
 	for (t = tlskeywords; t->keyword != NULL; t++) {
 		if (strcmp(s, t->keyword) == 0) {
 			*val |= t->val;
-			return (1);
+			return 1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 void
