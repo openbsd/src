@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.185 2017/06/11 10:53:07 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.186 2017/06/11 14:38:52 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -350,11 +350,11 @@ main(int argc, char *argv[])
 	if (family == AF_UNIX) {
 		if (pledge("stdio rpath wpath cpath tmppath unix", NULL) == -1)
 			err(1, "pledge");
-	} else if (Fflag) {
-		if (Pflag) {
-			if (pledge("stdio inet dns sendfd tty", NULL) == -1)
-				err(1, "pledge");
-		} else if (pledge("stdio inet dns sendfd", NULL) == -1)
+	} else if (Fflag && Pflag) {
+		if (pledge("stdio inet dns sendfd tty", NULL) == -1)
+			err(1, "pledge");
+	} else if (Fflag) { 
+		if (pledge("stdio inet dns sendfd", NULL) == -1)
 			err(1, "pledge");
 	} else if (Pflag && usetls) {
 		if (pledge("stdio rpath inet dns tty", NULL) == -1)
@@ -507,8 +507,8 @@ main(int argc, char *argv[])
 			tls_config_insecure_noverifyname(tls_cfg);
 		if (TLSopt & TLS_NOVERIFY) {
 			if (tls_expecthash != NULL)
-				errx(1, "-H and -T noverify may not be used"
-				    " together");
+				errx(1, "-H and -T noverify may not be used "
+				    "together");
 			tls_config_insecure_noverifycert(tls_cfg);
 		}
 		if (TLSopt & TLS_MUSTSTAPLE)
