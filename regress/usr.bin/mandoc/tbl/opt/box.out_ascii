@@ -17,6 +17,13 @@ DDEESSCCRRIIPPTTIIOONN
        |a   b |
        |c   d |
        +------+
+       allbox:
+
+       +--+---+
+       |a | b |
+       +--+---+
+       |c | d |
+       +--+---+
        manual boxing:
 
        +--++--+
@@ -31,6 +38,16 @@ DDEESSCCRRIIPPTTIIOONN
        |a ||b |
        +--++--+
        |c ||d |
+       +--++--+
+       +--++--+
+       allbox and manual boxing:
+
+       +--++--+
+       |a ||b |
+       +--++--+
+       +--++--+
+       |c ||d |
+       +--++--+
        +--++--+
 
 

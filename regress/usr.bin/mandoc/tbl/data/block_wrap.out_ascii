@@ -1,0 +1,27 @@
+TBL-DATA-BLOCK_WRAP(1)      General Commands Manual     TBL-DATA-BLOCK_WRAP(1)
+
+NNAAMMEE
+     ttbbll--ddaattaa--bblloocckk__wwrraapp - line wrapping in text blocks
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+     +--------------------+------------------------+
+     |This is a very long | short                  |
+     |sentence.           |                        |
+     +--------------------+------------------------+
+     |short               | This is an even longer |
+     |                    | sentence.              |
+     +--------------------+------------------------+
+     +-----------+------------+
+     |This is a  | short      |
+     |very long  |            |
+     |sentence.  |            |
+     +-----------+------------+
+     |short      | This is an |
+     |           | even       |
+     |           | longer     |
+     |           | sentence.  |
+     +-----------+------------+
+     final text
+
+OpenBSD                          June 12, 2017                         OpenBSD

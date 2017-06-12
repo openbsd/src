@@ -18,6 +18,14 @@ a:b
 c:d
 .TE
 .sp
+allbox:
+.TS
+tab(:) allbox;
+l l.
+a:b
+c:d
+.TE
+.sp
 manual boxing:
 .TS
 tab(:);
@@ -36,4 +44,15 @@ tab(:) box;
 a:b
 _
 c:d
+_
+.TE
+.sp
+allbox and manual boxing:
+.TS
+tab(:) allbox;
+||l||l||.
+a:b
+_
+c:d
+_
 .TE
