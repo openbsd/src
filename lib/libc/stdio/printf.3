@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.75 2016/06/06 17:23:28 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.76 2017/06/12 18:37:12 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 6 2016 $
+.Dd $Mdocdate: June 12 2017 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -646,9 +646,11 @@ less than 0 is returned.
 .Pp
 The
 .Fn printf ,
+.Fn dprintf ,
 .Fn fprintf ,
 .Fn sprintf ,
 .Fn vprintf ,
+.Fn vdprintf ,
 .Fn vfprintf ,
 .Fn vsprintf ,
 .Fn asprintf ,
