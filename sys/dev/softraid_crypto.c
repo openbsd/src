@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.133 2017/02/07 17:25:46 patrick Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.134 2017/06/12 14:46:00 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -948,10 +948,11 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	cri.cri_klen = sd->mds.mdd_crypto.scr_klen;
 
 	/* Allocate a session for every 2^SR_CRYPTO_KEY_BLKSHIFT blocks. */
-	num_keys = sd->sd_meta->ssdi.ssd_size >> SR_CRYPTO_KEY_BLKSHIFT;
-	if (num_keys >= SR_CRYPTO_MAXKEYS)
+	num_keys = ((sd->sd_meta->ssdi.ssd_size - 1) >>
+	    SR_CRYPTO_KEY_BLKSHIFT) + 1;
+	if (num_keys > SR_CRYPTO_MAXKEYS)
 		return (EFBIG);
-	for (i = 0; i <= num_keys; i++) {
+	for (i = 0; i < num_keys; i++) {
 		cri.cri_key = sd->mds.mdd_crypto.scr_key[i];
 		if (crypto_newsession(&sd->mds.mdd_crypto.scr_sid[i],
 		    &cri, 0) != 0) {
