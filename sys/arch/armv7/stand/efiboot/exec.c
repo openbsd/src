@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.11 2017/06/08 19:40:49 patrick Exp $	*/
+/*	$OpenBSD: exec.c,v 1.12 2017/06/12 18:26:33 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -35,11 +35,30 @@ typedef void (*startfuncp)(void *, void *, void *) __attribute__ ((noreturn));
 void
 run_loadfile(u_long *marks, int howto)
 {
+	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
+	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);
 	u_long esym = marks[MARK_END] & 0x0fffffff;
+	u_long offset = 0;
 	char args[256];
 	char *cp;
 	void *fdt;
 	uint32_t board_id = 0;
+	int i;
+
+	/*
+	 * Tell locore.S where the symbol table ends by setting
+	 * 'esym', which should be the first word in the .data
+	 * section.
+	 */
+	for (i = 0; i < elf->e_shnum; i++) {
+		/* XXX Assume .data is the first writable segment. */
+		if (shp[i].sh_flags & SHF_WRITE) {
+			/* XXX We have to store the virtual address. */
+			esym |= shp[i].sh_addr & 0xf0000000;
+			*(u_long *)(LOADADDR(shp[i].sh_addr)) = esym;
+			break;
+		}
+	}
 
 	snprintf(args, sizeof(args) - 8, "%s:%s", cmd.bootdev, cmd.image);
 	cp = args + strlen(args);
