@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.37 2017/06/12 20:44:57 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.38 2017/06/12 22:48:52 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -240,7 +240,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 					cp = cp->next;
 				} else
 					vert = 0;
-				if (sp->opts->opts & TBL_OPT_ALLBOX)
+				if (vert == 0 &&
+				    sp->opts->opts & TBL_OPT_ALLBOX)
 					vert = 1;
 				if (vert == 0)
 					continue;
@@ -300,7 +301,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		free(tp->tbl.cols);
 		tp->tbl.cols = NULL;
 		tp->tcol->offset = offset;
-	} else if (horiz == 0 && sp->opts->opts & TBL_OPT_ALLBOX)
+	} else if (horiz == 0 && sp->opts->opts & TBL_OPT_ALLBOX &&
+	    (sp->next == NULL || sp->next->pos == TBL_SPAN_DATA ||
+	     sp->next->next != NULL))
 		tbl_hrule(tp, sp, 1);
 
 	tp->flags &= ~TERMP_NONOSPACE;
