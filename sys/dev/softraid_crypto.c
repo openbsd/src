@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.135 2017/06/12 15:09:07 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.136 2017/06/12 15:15:08 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -893,9 +893,11 @@ sr_crypto_free_sessions(struct sr_discipline *sd)
 {
 	u_int			i;
 
-	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
-		crypto_freesession(sd->mds.mdd_crypto.scr_sid[i]);
-		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++) {
+		if (sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1) {
+			crypto_freesession(sd->mds.mdd_crypto.scr_sid[i]);
+			sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+		}
 	}
 }
 
