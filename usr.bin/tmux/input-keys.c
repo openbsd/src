@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.60 2017/05/07 21:25:59 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.61 2017/06/12 07:04:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,6 +45,10 @@ struct input_key_ent {
 static const struct input_key_ent input_keys[] = {
 	/* Backspace key. */
 	{ KEYC_BSPACE,		"\177",		0 },
+
+	/* Paste keys. */
+	{ KEYC_PASTE_START,	"\033[200~",	0 },
+	{ KEYC_PASTE_END,	"\033[201~",	0 },
 
 	/* Function keys. */
 	{ KEYC_F1,		"\033OP",	0 },

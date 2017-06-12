@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.45 2017/02/22 09:01:32 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.46 2017/06/12 07:04:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -251,6 +251,10 @@ key_string_lookup_key(key_code key)
 		return ("FocusIn");
 	if (key == KEYC_FOCUS_OUT)
 		return ("FocusOut");
+	if (key == KEYC_PASTE_START)
+		return ("PasteStart");
+	if (key == KEYC_PASTE_END)
+		return ("PasteEnd");
 	if (key == KEYC_MOUSE)
 		return ("Mouse");
 	if (key == KEYC_DRAGGING)

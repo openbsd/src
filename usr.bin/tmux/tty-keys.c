@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.97 2017/05/07 21:25:59 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.98 2017/06/12 07:04:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -165,6 +165,10 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	/* Focus tracking. */
 	{ "\033[I", KEYC_FOCUS_IN },
 	{ "\033[O", KEYC_FOCUS_OUT },
+
+	/* Paste keys. */
+	{ "\033[200~", KEYC_PASTE_START },
+	{ "\033[201~", KEYC_PASTE_END },
 };
 
 /* Default terminfo(5) keys. */
