@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.25 2016/06/29 20:38:39 tb Exp $	*/
+/*	$OpenBSD: recover.c,v 1.26 2017/06/12 18:38:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -465,6 +465,7 @@ rcv_list(SCR *sp)
 	struct dirent *dp;
 	struct stat sb;
 	DIR *dirp;
+	int fd;
 	FILE *fp;
 	int found;
 	char *p, *t, file[PATH_MAX], path[PATH_MAX];
@@ -473,7 +474,7 @@ rcv_list(SCR *sp)
 	if (opts_empty(sp, O_RECDIR, 0))
 		return (1);
 	p = O_STR(sp, O_RECDIR);
-	if (chdir(p) || (dirp = opendir(".")) == NULL) {
+	if ((dirp = opendir(p)) == NULL) {
 		msgq_str(sp, M_SYSERR, p, "recdir: %s");
 		return (1);
 	}
@@ -485,16 +486,11 @@ rcv_list(SCR *sp)
 
 		/*
 		 * If it's readable, it's recoverable.
-		 *
-		 * XXX
-		 * Should be "r", we don't want to write the file.  However,
-		 * if we're using fcntl(2), there's no way to lock a file
-		 * descriptor that's not open for writing.
 		 */
-		if ((fp = fopen(dp->d_name, "r+")) == NULL)
+		if ((fd = openat(dirfd(dirp), dp->d_name, O_RDONLY)) == -1)
 			continue;
 
-		switch (file_lock(sp, NULL, NULL, fileno(fp), 1)) {
+		switch (file_lock(sp, NULL, NULL, fd, 1)) {
 		case LOCK_FAILED:
 			/*
 			 * XXX
@@ -508,11 +504,15 @@ rcv_list(SCR *sp)
 			break;
 		case LOCK_UNAVAIL:
 			/* If it's locked, it's live. */
-			(void)fclose(fp);
+			close(fd);
 			continue;
 		}
 
 		/* Check the headers. */
+		if ((fp = fdopen(fd, "r")) == NULL) {
+			close(fd);
+			continue;
+		}
 		if (fgets(file, sizeof(file), fp) == NULL ||
 		    strncmp(file, VI_FHEADER, sizeof(VI_FHEADER) - 1) ||
 		    (p = strchr(file, '\n')) == NULL ||
@@ -536,12 +536,12 @@ rcv_list(SCR *sp)
 		errno = 0;
 		if (stat(path + sizeof(VI_PHEADER) - 1, &sb) &&
 		    errno == ENOENT) {
-			(void)unlink(dp->d_name);
+			(void)unlinkat(dirfd(dirp), dp->d_name, 0);
 			goto next;
 		}
 
 		/* Get the last modification time and display. */
-		(void)fstat(fileno(fp), &sb);
+		(void)fstat(fd, &sb);
 		(void)printf("%.24s: %s\n",
 		    ctime(&sb.st_mtime), file + sizeof(VI_FHEADER) - 1);
 		found = 1;
