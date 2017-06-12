@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 2015/07/17 20:42:03 jasper Exp $
+#	$OpenBSD: Makefile,v 1.6 2017/06/12 16:58:31 otto Exp $
 #	$NetBSD: Makefile,v 1.1 2005/04/04 16:48:45 peter Exp $
 
 SED?=	/usr/bin/sed
 
 REGRESS_TARGETS= sedtest substitute hanoi math sierpinski negation \
-	inplace inplace2 inplace3
+	inplace inplace2 inplace3 commandl1 commandl2 commandc1 commandD1
 
 sedtest:
 	sh ${.CURDIR}/$@.sh ${SED} $@.out
@@ -43,6 +43,23 @@ inplace3:
 	cp -f ${.CURDIR}/$@.in $@.txt
 	${SED} -i 's/#PermitRootLogin no/PermitRootLogin yes/g' $@.txt
 	diff ${.CURDIR}/$@.expected $@.txt
+
+commandl1:
+	printf 'a\nbb\n' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
+commandl2:
+	printf 'abc' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
+commandc1:
+	printf 'abc' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
+commandD1:
+	printf 'a\nbb\n' | ${SED} -f ${.CURDIR}/$@.sed > $@.out
+	diff ${.CURDIR}/$@.expected $@.out
+
 
 CLEANFILES+=*.out lines* script* *.txt
 
