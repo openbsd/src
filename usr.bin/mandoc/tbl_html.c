@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_html.c,v 1.16 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: tbl_html.c,v 1.17 2017/06/12 20:14:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -81,7 +81,7 @@ html_tblopen(struct html *h, const struct tbl_span *sp)
 		h->tbl.len = html_tbl_len;
 		h->tbl.slen = html_tbl_strlen;
 		h->tbl.sulen = html_tbl_sulen;
-		tblcalc(&h->tbl, sp, 0);
+		tblcalc(&h->tbl, sp, 0, 0);
 	}
 
 	assert(NULL == h->tblt);

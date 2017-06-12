@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.37 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.38 2017/06/12 20:14:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -103,7 +103,7 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
  */
 void
 tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
-	size_t totalwidth)
+    size_t offset, size_t rmargin)
 {
 	struct roffsu		 su;
 	const struct tbl_opts	*opts;
@@ -154,8 +154,9 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 				    (*tbl->sulen)(&su, tbl->arg);
 			if (col->width < dp->layout->width)
 				col->width = dp->layout->width;
-			tblcalc_data(tbl, col, opts, dp, dp->block ?
-			    totalwidth / (sp->opts->cols + 1) : 0);
+			tblcalc_data(tbl, col, opts, dp,
+			    rmargin && dp->block ?
+			    rmargin / (sp->opts->cols + 1) : 0);
 		}
 	}
 
@@ -192,7 +193,7 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 				continue;
 			if (col->width == ewidth)
 				continue;
-			if (nxcol && totalwidth)
+			if (nxcol && rmargin)
 				xwidth += ewidth - col->width;
 			col->width = ewidth;
 		}
@@ -204,13 +205,13 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 	 * Distribute the available width evenly.
 	 */
 
-	if (nxcol && totalwidth) {
+	if (nxcol && rmargin) {
 		xwidth += 3*maxcol +
 		    (opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ?
 		     2 : !!opts->lvert + !!opts->rvert);
-		if (xwidth >= totalwidth)
+		if (rmargin <= offset + xwidth)
 			return;
-		xwidth = totalwidth - xwidth;
+		xwidth = rmargin - offset - xwidth;
 
 		/*
 		 * Emulate a bug in GNU tbl width calculation that
@@ -279,11 +280,13 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 	const char	*str;	/* Beginning of the first line. */
 	const char	*beg;	/* Beginning of the current line. */
 	char		*end;	/* End of the current line. */
-	size_t		 sz;	/* Length of the current line. */
+	size_t		 lsz;	/* Length of the current line. */
+	size_t		 wsz;	/* Length of the current word. */
 
 	if (dp->string == NULL || *dp->string == '\0')
 		return;
 	str = mw ? mandoc_strdup(dp->string) : dp->string;
+	lsz = 0;
 	for (beg = str; beg != NULL && *beg != '\0'; beg = end) {
 		end = mw ? strchr(beg, ' ') : NULL;
 		if (end != NULL) {
@@ -291,9 +294,13 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 			while (*end == ' ')
 				end++;
 		}
-		sz = (*tbl->slen)(beg, tbl->arg);
-		if (col->width < sz)
-			col->width = sz;
+		wsz = (*tbl->slen)(beg, tbl->arg);
+		if (mw && lsz && lsz + 1 + wsz <= mw)
+			lsz += 1 + wsz;
+		else
+			lsz = wsz;
+		if (col->width < lsz)
+			col->width = lsz;
 	}
 	if (mw)
 		free((void *)str);

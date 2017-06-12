@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.h,v 1.20 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: out.h,v 1.21 2017/06/12 20:14:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,4 +68,4 @@ struct	tbl_span;
 
 const char	 *a2roffsu(const char *, struct roffsu *, enum roffscale);
 void		  tblcalc(struct rofftbl *tbl,
-			const struct tbl_span *, size_t);
+			const struct tbl_span *, size_t, size_t);

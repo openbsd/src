@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.35 2017/06/12 18:55:42 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.36 2017/06/12 20:14:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -85,7 +85,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.sulen = term_tbl_sulen;
 		tp->tbl.arg = tp;
 
-		tblcalc(&tp->tbl, sp, tp->tcol->rmargin - tp->tcol->offset);
+		tblcalc(&tp->tbl, sp, tp->tcol->offset, tp->tcol->rmargin);
 
 		/* Center the table as a whole. */
 
