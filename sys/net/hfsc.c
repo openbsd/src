@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.39 2017/05/08 11:30:53 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.40 2017/06/12 23:20:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -817,7 +817,7 @@ hfsc_deferred(void *arg)
 	KASSERT(HFSC_ENABLED(ifq));
 
 	if (!ifq_empty(ifq))
-		(*ifp->if_qstart)(ifq);
+		ifq_start(ifq);
 
 	hif = ifq->ifq_q;
 
