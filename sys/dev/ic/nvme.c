@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.58 2017/05/29 12:58:37 jmatthew Exp $ */
+/*	$OpenBSD: nvme.c,v 1.59 2017/06/12 04:57:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -514,7 +514,7 @@ nvme_shutdown(struct nvme_softc *sc)
 		delay(1000);
 	}
 
-	printf("%s: unable to shudown, disabling\n", DEVNAME(sc));
+	printf("%s: unable to shutdown, disabling\n", DEVNAME(sc));
 
 disable:
 	nvme_disable(sc);
