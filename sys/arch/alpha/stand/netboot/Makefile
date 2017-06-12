@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/06/12 18:49:34 espie Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -47,9 +47,6 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG}.mop ${DESTDIR}${BINDIR}/${PROG}.mop
-
-# no lint here (yet?)
-lint:
 
 .include <bsd.prog.mk>
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.55 2016/09/29 09:16:21 natano Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.56 2017/06/12 18:49:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -63,9 +63,6 @@ clean cleandir:
 	rm -f ${CLEANFILES}
 
 depend:
-	# Nothing here so far...
-
-lint:
 	# Nothing here so far...
 
 tags:

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.45 2016/11/16 21:40:21 tb Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.46 2017/06/12 18:49:34 espie Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -68,9 +68,6 @@ clean cleandir:
 		$(FSFMAKE) distclean; fi
 
 depend:
-	# Nothing here so far...
-
-lint:
 	# Nothing here so far...
 
 tags:

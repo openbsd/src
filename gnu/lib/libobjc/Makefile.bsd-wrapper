@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2016/07/04 18:01:44 guenther Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2017/06/12 18:49:34 espie Exp $
 
 LIB=		objc
 
@@ -89,9 +89,6 @@ maninstall:
 .endif
 
 depend: 
-
-lint:
-	# Nothing here so far...
 
 tags:
 	# Nothing here so far...

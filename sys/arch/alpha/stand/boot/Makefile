@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.22 2017/06/12 18:49:34 espie Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -37,9 +37,6 @@ ${PROG}.nosym: ${PROG}.sym
 
 ${PROG}: ${PROG}.nosym
 	objcopy --output-target=binary ${PROG}.nosym ${PROG}
-
-# no lint here (yet?)
-lint:
 
 .include <bsd.prog.mk>
 

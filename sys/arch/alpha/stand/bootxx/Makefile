@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2016/07/30 03:25:48 guenther Exp $
+#	$OpenBSD: Makefile,v 1.17 2017/06/12 18:49:34 espie Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -33,9 +33,6 @@ ${PROG}.nosym: ${PROG}.sym
 ${PROG}: ${PROG}.nosym
 	objcopy --output-target=binary ${PROG}.nosym ${PROG}.trunc
 	dd if=${PROG}.trunc of=${PROG} obs=`expr 15 \* 512` conv=osync
-
-# no lint here (yet?)
-lint:
 
 .include <bsd.prog.mk>
 

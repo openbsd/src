@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.64 2016/03/30 06:38:40 jmc Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.65 2017/06/12 18:49:34 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 
@@ -168,9 +168,6 @@ includes:
 		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i ${DESTDIR}${GCCINC}/$$j; \
 		ln -sf ${GCCINC}/$$j ${DESTDIR}/usr/include/$$j; \
 	done
-
-lint:
-	# Nothing here so far...
 
 tags:
 	# Nothing here so far...

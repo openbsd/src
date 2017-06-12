@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 2017/03/05 00:26:08 jsg Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 2017/06/12 18:49:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -128,9 +128,6 @@ c++filt.1: binutils/doc/cxxfilt.man
 	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/doc/cxxfilt.man >$@
 
 depend:
-	# Nothing here so far...
-
-lint:
 	# Nothing here so far...
 
 tags:

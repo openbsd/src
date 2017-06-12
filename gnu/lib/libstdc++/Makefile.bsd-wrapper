@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2007/11/05 17:02:43 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2017/06/12 18:49:34 espie Exp $
 
 .include "${.CURDIR}/shlib_version"
 SHLIB_MAJOR=${major}
@@ -62,9 +62,6 @@ config.status:
 #CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/libstdc++/libmath
 #SRCS=libmath/stubs.c libmath/nan.c libmath/signbit.c libmath/signbitf.c
 depend:
-	# Nothing here so far...
-
-lint:
 	# Nothing here so far...
 
 tags:

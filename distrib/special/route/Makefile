@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2016/09/20 10:39:18 phessler Exp $
+#	$OpenBSD: Makefile,v 1.3 2017/06/12 18:49:33 espie Exp $
 
 PROG=	route
 MAN=	route.8
@@ -6,7 +6,7 @@ SRCS=	route.c show.c
 
 CFLAGS+=	-Wall -DSMALL
 
-route.o .depend lint tags: keywords.h
+route.o .depend tags: keywords.h
 
 .PATH:  ${.CURDIR}/../../../sbin/route
 .include <bsd.prog.mk>
