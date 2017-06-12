@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.56 2017/06/09 20:38:48 mikeb Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.57 2017/06/12 12:35:07 mikeb Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -494,9 +494,6 @@ xnf_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	int pkts = 0;
 	uint32_t prod, oprod;
-
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(ifq))
-		return;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
 	    BUS_DMASYNC_POSTREAD);
