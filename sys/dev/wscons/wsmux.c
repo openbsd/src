@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.31 2015/09/10 18:14:52 mpi Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.32 2017/06/12 13:45:39 deraadt Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -142,10 +142,10 @@ wsmux_getmux(int n)
 			bcopy(old, new, nwsmux * sizeof(*wsmuxdevs));
 		for (i = nwsmux; i < (n + 1); i++)
 			new[i] = NULL;
-		wsmuxdevs = new;
-		nwsmux = n + 1;
 		if (old != NULL)
 			free(old, M_DEVBUF, nwsmux * sizeof(*wsmuxdevs));
+		wsmuxdevs = new;
+		nwsmux = n + 1;
 	}
 
 	sc = wsmuxdevs[n];
