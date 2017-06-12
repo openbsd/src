@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.212 2017/06/07 20:53:59 bluhm Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.213 2017/06/12 21:55:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 #include <sys/ktrace.h>
 #include <sys/acct.h>
 
@@ -580,8 +581,8 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 			codes = pledgenames[i].name;
 			break;
 		}
-	printf("%s(%d): syscall %d \"%s\"\n", p->p_p->ps_comm, p->p_p->ps_pid,
-	    p->p_pledge_syscall, codes);
+	log(LOG_ERR, "%s(%d): syscall %d \"%s\"",
+	    p->p_p->ps_comm, p->p_p->ps_pid, p->p_pledge_syscall, codes);
 	p->p_p->ps_acflag |= APLEDGE;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PLEDGE))
@@ -893,6 +894,7 @@ pledge_sendfd(struct proc *p, struct file *fp)
 int
 pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 {
+	char	buf[80];
 	int	i;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
@@ -1057,10 +1059,13 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	    mib[0] == CTL_VM && mib[1] == VM_LOADAVG)
 		return (0);
 
-	printf("%s(%d): sysctl %d:", p->p_p->ps_comm, p->p_p->ps_pid, miblen);
-	for (i = 0; i < miblen; i++)
-		printf(" %d", mib[i]);
-	printf("\n");
+	snprintf(buf, sizeof(buf), "%s(%d): sysctl %d:",
+	    p->p_p->ps_comm, p->p_p->ps_pid, miblen);
+	for (i = 0; i < miblen; i++) {
+		char *p = buf + strlen(buf);
+		snprintf(p, sizeof(buf) - (p - buf), " %d", mib[i]);
+	}
+	log(LOG_ERR, "%s", buf);
 
 	return pledge_fail(p, EINVAL, 0);
 }
