@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.166 2016/12/24 22:49:38 yasuoka Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.167 2017/06/12 16:39:51 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -37,6 +37,8 @@
 #define SR_CRYPTO_KDFHINTBYTES	256	/* size of opaque KDF hint */
 #define SR_CRYPTO_CHECKBYTES	64	/* size of generic key chksum struct */
 #define SR_CRYPTO_KEY_BLKSHIFT	30	/* 0.5TB per key */
+#define SR_CRYPTO_KEY_BLKSIZE	(1ULL << SR_CRYPTO_KEY_BLKSHIFT)
+#define SR_CRYPTO_MAXSIZE	(SR_CRYPTO_KEY_BLKSIZE * SR_CRYPTO_MAXKEYS)
 
 /*
  * sr_crypto_genkdf is a generic hint for the KDF performed in userland and

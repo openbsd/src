@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.136 2017/06/12 15:15:08 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.137 2017/06/12 16:39:51 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -137,7 +137,13 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 		sr_error(sd->sd_sc, "%s requires exactly one chunk",
 		    sd->sd_name);
 		goto done;
-        }
+	}
+
+	if (coerced_size > SR_CRYPTO_MAXSIZE) {
+		sr_error(sd->sd_sc, "%s exceeds maximum size (%lli > %llu)",
+		    sd->sd_name, coerced_size, SR_CRYPTO_MAXSIZE);
+		goto done;
+	}
 
 	/* Create crypto optional metadata. */
 	omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
