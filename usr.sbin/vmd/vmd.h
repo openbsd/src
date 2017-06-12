@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.55 2017/05/30 17:56:47 tedu Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.56 2017/06/12 13:41:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -139,7 +139,7 @@ struct vmop_create_params {
 struct vmboot_params {
 	int			 vbp_fd;
 	off_t			 vbp_partoff;
-	char			 vbp_device[NAME_MAX];
+	char			 vbp_device[PATH_MAX];
 	char			 vbp_image[PATH_MAX];
 	uint32_t		 vbp_bootdev;
 	uint32_t		 vbp_howto;
