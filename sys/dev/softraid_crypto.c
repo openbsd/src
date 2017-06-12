@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.134 2017/06/12 14:46:00 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.135 2017/06/12 15:09:07 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -888,6 +888,17 @@ done:
 	return key_disk;
 }
 
+static void
+sr_crypto_free_sessions(struct sr_discipline *sd)
+{
+	u_int			i;
+
+	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
+		crypto_freesession(sd->mds.mdd_crypto.scr_sid[i]);
+		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+	}
+}
+
 int
 sr_crypto_alloc_resources(struct sr_discipline *sd)
 {
@@ -956,13 +967,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		cri.cri_key = sd->mds.mdd_crypto.scr_key[i];
 		if (crypto_newsession(&sd->mds.mdd_crypto.scr_sid[i],
 		    &cri, 0) != 0) {
-			for (i = 0;
-			     sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1;
-			     i++) {
-				crypto_freesession(
-				    sd->mds.mdd_crypto.scr_sid[i]);
-				sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
-			}
+			sr_crypto_free_sessions(sd);
 			return (EINVAL);
 		}
 	}
@@ -977,7 +982,6 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 {
 	struct sr_workunit	*wu;
 	struct sr_crypto_wu	*crwu;
-	u_int			i;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_free_resources\n",
 	    DEVNAME(sd->sd_sc));
@@ -991,10 +995,7 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 
 	sr_hotplug_unregister(sd, sr_crypto_hotplug);
 
-	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
-		crypto_freesession(sd->mds.mdd_crypto.scr_sid[i]);
-		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
-	}
+	sr_crypto_free_sessions(sd);
 
 	TAILQ_FOREACH(wu, &sd->sd_wu, swu_next) {
 		crwu = (struct sr_crypto_wu *)wu;
