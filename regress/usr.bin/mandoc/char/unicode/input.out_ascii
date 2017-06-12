@@ -22,7 +22,7 @@ DDEESSCCRRIIPPTTIIOONN
        U+007f   0xc1bf     ??         highest obfuscated ASCII
                 0xc278     ?x         ASCII continuation
        U+0080   0xc280     <80><80>   lowest two-byte
-                0xc2c380   ?`A       high continuation
+                0xc2c380   ?`A         high continuation
        U+07FF   0xdfbf     <?><?>     highest two-byte
 
    TThhrreeee--bbyyttee rraannggee

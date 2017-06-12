@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.70 2017/06/07 20:01:07 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.71 2017/06/12 18:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,6 +52,7 @@ struct	termp_tbl {
 struct	termp_col {
 	int		 *buf;		/* Output buffer. */
 	size_t		  maxcols;	/* Allocated bytes in buf. */
+	size_t		  lastcol;	/* Last byte in buf. */
 	size_t		  col;		/* Byte in buf to be written. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  offset;	/* Current left margin. */
@@ -69,7 +70,6 @@ struct	termp {
 	size_t		  lastrmargin;	/* Right margin before the last ll. */
 	size_t		  maxrmargin;	/* Max right margin. */
 	size_t		  col;		/* Byte position in buf. */
-	size_t		  lastcol;	/* Bytes in buf. */
 	size_t		  viscol;	/* Chars on current line. */
 	size_t		  trailspace;	/* See term_flushln(). */
 	size_t		  minbl;	/* Minimum blanks before next field. */
@@ -98,6 +98,7 @@ struct	termp {
 #define	TERMP_NOBUF	 (1 << 17)	/* Bypass output buffer. */
 #define	TERMP_NEWMC	 (1 << 18)	/* No .mc printed yet. */
 #define	TERMP_ENDMC	 (1 << 19)	/* Next break ends .mc mode. */
+#define	TERMP_MULTICOL	 (1 << 20)	/* Multiple column mode. */
 	enum termtype	  type;		/* Terminal, PS, or PDF. */
 	enum termenc	  enc;		/* Type of encoding. */
 	enum termfont	  fontl;	/* Last font set. */
@@ -128,6 +129,7 @@ void		  roff_term_pre(struct termp *, const struct roff_node *);
 void		  term_eqn(struct termp *, const struct eqn *);
 void		  term_tbl(struct termp *, const struct tbl_span *);
 void		  term_free(struct termp *);
+void		  term_setcol(struct termp *, size_t);
 void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
 void		  term_word(struct termp *, const char *);

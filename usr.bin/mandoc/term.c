@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.128 2017/06/08 12:54:40 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.129 2017/06/12 18:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -36,6 +36,18 @@ static	void		 encode(struct termp *, const char *, size_t);
 static	void		 encode1(struct termp *, int);
 static	void		 endline(struct termp *);
 
+
+void
+term_setcol(struct termp *p, size_t maxtcol)
+{
+	if (maxtcol > p->maxtcol) {
+		p->tcols = mandoc_recallocarray(p->tcols,
+		    p->maxtcol, maxtcol, sizeof(*p->tcols));
+		p->maxtcol = maxtcol;
+	}
+	p->lasttcol = maxtcol - 1;
+	p->tcol = p->tcols;
+}
 
 void
 term_free(struct termp *p)
@@ -114,9 +126,9 @@ term_flushln(struct termp *p)
 	    p->maxrmargin - p->viscol - vbl : 0;
 	vis = vend = 0;
 
-	if (p->lasttcol == 0)
+	if ((p->flags && TERMP_MULTICOL) == 0)
 		p->tcol->col = 0;
-	while (p->tcol->col < p->lastcol) {
+	while (p->tcol->col < p->tcol->lastcol) {
 
 		/*
 		 * Handle literal tab characters: collapse all
@@ -124,7 +136,7 @@ term_flushln(struct termp *p)
 		 */
 
 		ntab = 0;
-		while (p->tcol->col < p->lastcol &&
+		while (p->tcol->col < p->tcol->lastcol &&
 		    p->tcol->buf[p->tcol->col] == '\t') {
 			vend = term_tab_next(vis);
 			vbl += vend - vis;
@@ -141,7 +153,7 @@ term_flushln(struct termp *p)
 		 */
 
 		jhy = 0;
-		for (j = p->tcol->col; j < p->lastcol; j++) {
+		for (j = p->tcol->col; j < p->tcol->lastcol; j++) {
 			if (p->tcol->buf[j] == ' ' || p->tcol->buf[j] == '\t')
 				break;
 
@@ -176,7 +188,7 @@ term_flushln(struct termp *p)
 
 		if (vend > bp && jhy == 0 && vis > 0 &&
 		    (p->flags & TERMP_BRNEVER) == 0) {
-			if (p->lasttcol)
+			if (p->flags & TERMP_MULTICOL)
 				return;
 
 			endline(p);
@@ -204,14 +216,14 @@ term_flushln(struct termp *p)
 		 * Write out the rest of the word.
 		 */
 
-		for ( ; p->tcol->col < p->lastcol; p->tcol->col++) {
+		for ( ; p->tcol->col < p->tcol->lastcol; p->tcol->col++) {
 			if (vend > bp && jhy > 0 && p->tcol->col > jhy)
 				break;
 			if (p->tcol->buf[p->tcol->col] == '\t')
 				break;
 			if (p->tcol->buf[p->tcol->col] == ' ') {
 				j = p->tcol->col;
-				while (p->tcol->col < p->lastcol &&
+				while (p->tcol->col < p->tcol->lastcol &&
 				    p->tcol->buf[p->tcol->col] == ' ')
 					p->tcol->col++;
 				dv = (p->tcol->col - j) * (*p->width)(p, ' ');
@@ -258,9 +270,12 @@ term_flushln(struct termp *p)
 	else
 		vis = 0;
 
-	p->col = p->lastcol = 0;
+	p->col = p->tcol->col = p->tcol->lastcol = 0;
 	p->minbl = p->trailspace;
 	p->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE | TERMP_NOPAD);
+
+	if (p->flags & TERMP_MULTICOL)
+		return;
 
 	/* Trailing whitespace is significant in some columns. */
 
@@ -303,7 +318,7 @@ term_newln(struct termp *p)
 {
 
 	p->flags |= TERMP_NOSPACE;
-	if (p->lastcol || p->viscol)
+	if (p->tcol->lastcol || p->viscol)
 		term_flushln(p);
 }
 
@@ -563,12 +578,12 @@ term_word(struct termp *p, const char *word)
 				}
 			}
 			/* Trim trailing backspace/blank pair. */
-			if (p->lastcol > 2 &&
-			    (p->tcol->buf[p->lastcol - 1] == ' ' ||
-			     p->tcol->buf[p->lastcol - 1] == '\t'))
-				p->lastcol -= 2;
-			if (p->col > p->lastcol)
-				p->col = p->lastcol;
+			if (p->tcol->lastcol > 2 &&
+			    (p->tcol->buf[p->tcol->lastcol - 1] == ' ' ||
+			     p->tcol->buf[p->tcol->lastcol - 1] == '\t'))
+				p->tcol->lastcol -= 2;
+			if (p->col > p->tcol->lastcol)
+				p->col = p->tcol->lastcol;
 			continue;
 		default:
 			continue;
@@ -611,10 +626,10 @@ bufferc(struct termp *p, char c)
 	}
 	if (p->col + 1 >= p->tcol->maxcols)
 		adjbuf(p->tcol, p->col + 1);
-	if (p->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
+	if (p->tcol->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
 		p->tcol->buf[p->col] = c;
-	if (p->lastcol < ++p->col)
-		p->lastcol = p->col;
+	if (p->tcol->lastcol < ++p->col)
+		p->tcol->lastcol = p->col;
 }
 
 /*
@@ -657,10 +672,10 @@ encode1(struct termp *p, int c)
 			p->tcol->buf[p->col++] = c;
 		p->tcol->buf[p->col++] = '\b';
 	}
-	if (p->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
+	if (p->tcol->lastcol <= p->col || (c != ' ' && c != ASCII_NBRSP))
 		p->tcol->buf[p->col] = c;
-	if (p->lastcol < ++p->col)
-		p->lastcol = p->col;
+	if (p->tcol->lastcol < ++p->col)
+		p->tcol->lastcol = p->col;
 	if (p->flags & TERMP_BACKAFTER) {
 		p->flags |= TERMP_BACKBEFORE;
 		p->flags &= ~TERMP_BACKAFTER;
@@ -686,7 +701,7 @@ encode(struct termp *p, const char *word, size_t sz)
 		    isgraph((unsigned char)word[i]))
 			encode1(p, word[i]);
 		else {
-			if (p->lastcol <= p->col ||
+			if (p->tcol->lastcol <= p->col ||
 			    (word[i] != ' ' && word[i] != ASCII_NBRSP))
 				p->tcol->buf[p->col] = word[i];
 			p->col++;
@@ -703,8 +718,8 @@ encode(struct termp *p, const char *word, size_t sz)
 			}
 		}
 	}
-	if (p->lastcol < p->col)
-		p->lastcol = p->col;
+	if (p->tcol->lastcol < p->col)
+		p->tcol->lastcol = p->col;
 }
 
 void

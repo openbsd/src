@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.34 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.35 2017/06/12 18:55:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -66,12 +66,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	const struct tbl_cell	*cp;
 	const struct tbl_dat	*dp;
 	static size_t		 offset;
-	size_t			 tsz;
-	int			 ic, horiz, spans, vert;
+	size_t			 coloff, tsz;
+	int			 ic, horiz, spans, vert, more;
+	char			 fc;
 
 	/* Inhibit printing of spaces: we do padding ourselves. */
 
-	tp->flags |= TERMP_NOSPACE | TERMP_NONOSPACE | TERMP_BRNEVER;
+	tp->flags |= TERMP_NOSPACE | TERMP_NONOSPACE;
 
 	/*
 	 * The first time we're invoked for a given table block,
@@ -109,82 +110,181 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			tbl_hrule(tp, sp, 1);
 	}
 
-	/* Vertical frame at the start of each row. */
+	/* Set up the columns. */
 
-	horiz = sp->pos == TBL_SPAN_HORIZ || sp->pos == TBL_SPAN_DHORIZ;
+	tp->flags |= TERMP_MULTICOL;
+	horiz = 0;
+	switch (sp->pos) {
+	case TBL_SPAN_HORIZ:
+	case TBL_SPAN_DHORIZ:
+		horiz = 1;
+		term_setcol(tp, 1);
+		break;
+	case TBL_SPAN_DATA:
+		term_setcol(tp, sp->opts->cols + 2);
+		coloff = tp->tcol->offset;
 
-	if (sp->layout->vert ||
-	    (sp->prev != NULL && sp->prev->layout->vert) ||
-	    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX))
-		term_word(tp, horiz ? "+" : "|");
-	else if (sp->opts->lvert)
-		tbl_char(tp, horiz ? '-' : ASCII_NBRSP, 1);
+		/* Set up a column for a left vertical frame. */
 
-	/*
-	 * Now print the actual data itself depending on the span type.
-	 * Match data cells to column numbers.
-	 */
+		if (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
+		    sp->opts->lvert)
+			coloff++;
+		tp->tcol->rmargin = coloff;
 
-	if (sp->pos == TBL_SPAN_DATA) {
-		cp = sp->layout->first;
+		/* Set up the data columns. */
+
 		dp = sp->first;
 		spans = 0;
 		for (ic = 0; ic < sp->opts->cols; ic++) {
-
-			/*
-			 * Remeber whether we need a vertical bar
-			 * after this cell.
-			 */
-
-			vert = cp == NULL ? 0 : cp->vert;
-
-			/*
-			 * Print the data and advance to the next cell.
-			 */
-
 			if (spans == 0) {
-				tbl_data(tp, sp->opts, dp, tp->tbl.cols + ic);
-				if (dp != NULL) {
-					spans = dp->spans;
-					dp = dp->next;
-				}
-			} else
+				tp->tcol++;
+				tp->tcol->offset = coloff;
+			}
+			coloff += tp->tbl.cols[ic].width;
+			tp->tcol->rmargin = coloff;
+			coloff++;
+			if (ic + 1 < sp->opts->cols)
+				coloff += 2;
+			if (spans) {
 				spans--;
-			if (cp != NULL)
-				cp = cp->next;
-
-			/*
-			 * Separate columns, except in the middle
-			 * of spans and after the last cell.
-			 */
-
-			if (ic + 1 == sp->opts->cols || spans)
 				continue;
-
-			tbl_char(tp, ASCII_NBRSP, 1);
-			if (vert > 0)
-				tbl_char(tp, '|', vert);
-			if (vert < 2)
-				tbl_char(tp, ASCII_NBRSP, 2 - vert);
+			}
+			if (dp == NULL)
+				continue;
+			spans = dp->spans;
+			dp = dp->next;
 		}
-	} else if (horiz)
-		tbl_hrule(tp, sp, 0);
 
-	/* Vertical frame at the end of each row. */
+		/* Set up a column for a right vertical frame. */
 
-	if (sp->layout->last->vert ||
-	    (sp->prev != NULL && sp->prev->layout->last->vert) ||
-	    (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)))
-		term_word(tp, horiz ? "+" : " |");
-	else if (sp->opts->rvert)
-		tbl_char(tp, horiz ? '-' : ASCII_NBRSP, 1);
-	term_flushln(tp);
+		tp->tcol++;
+		tp->tcol->offset = coloff;
+		if (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
+		    sp->opts->rvert)
+			coloff++;
+		tp->tcol->rmargin = coloff;
+
+		/* Spans may have reduced the number of columns. */
+
+		tp->lasttcol = tp->tcol - tp->tcols;
+
+		/* Fill the buffers for all data columns. */
+
+		tp->tcol = tp->tcols;
+		dp = sp->first;
+		spans = 0;
+		for (ic = 0; ic < sp->opts->cols; ic++) {
+			if (spans) {
+				spans--;
+				continue;
+			}
+			tp->tcol++;
+			tp->col = 0;
+			tbl_data(tp, sp->opts, dp, tp->tbl.cols + ic);
+			if (dp == NULL)
+				continue;
+			spans = dp->spans;
+			dp = dp->next;
+		}
+		break;
+	}
+
+	do {
+		/* Print the vertical frame at the start of each row. */
+
+		tp->tcol = tp->tcols;
+		fc = '\0';
+		if (sp->layout->vert ||
+		    (sp->prev != NULL && sp->prev->layout->vert) ||
+		    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX))
+			fc = horiz ? '+' : '|';
+		else if (horiz && sp->opts->lvert)
+			fc = '-';
+		if (fc != '\0') {
+			(*tp->advance)(tp, tp->tcols->offset);
+			(*tp->letter)(tp, fc);
+			tp->viscol = tp->tcol->offset + 1;
+		}
+
+		/* Print the data cells. */
+
+		more = 0;
+		if (horiz) {
+			tbl_hrule(tp, sp, 0);
+			term_flushln(tp);
+		} else {
+			cp = sp->layout->first;
+			dp = sp->first;
+			spans = 0;
+			for (ic = 0; ic < sp->opts->cols; ic++) {
+				if (spans == 0) {
+					tp->tcol++;
+					if (dp != NULL) {
+						spans = dp->spans;
+						dp = dp->next;
+					}
+					if (tp->tcol->col < tp->tcol->lastcol)
+						term_flushln(tp);
+					if (tp->tcol->col < tp->tcol->lastcol)
+						more = 1;
+					if (tp->tcol + 1 ==
+					    tp->tcols + tp->lasttcol)
+						continue;
+				} else
+					spans--;
+
+				/* Vertical frames between data cells. */
+
+				if (cp != NULL) {
+					vert = cp->vert;
+					cp = cp->next;
+				} else
+					vert = 0;
+				if (vert == 0)
+					continue;
+
+				if (tp->tcol->rmargin + 1 > tp->viscol) {
+					(*tp->advance)(tp, tp->tcol->rmargin
+					   + 1 - tp->viscol);
+					tp->viscol = tp->tcol->rmargin + 1;
+				}
+				while (vert--) {
+					(*tp->letter)(tp, '|');
+					tp->viscol++;
+				}
+			}
+		}
+
+		/* Print the vertical frame at the end of each row. */
+
+		fc = '\0';
+		if (sp->layout->last->vert ||
+		    (sp->prev != NULL && sp->prev->layout->last->vert) ||
+		    (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)))
+			fc = horiz ? '+' : '|';
+		else if (horiz && sp->opts->rvert)
+			fc = '-';
+		if (fc != '\0') {
+			if (horiz == 0) {
+				tp->tcol++;
+				(*tp->advance)(tp,
+				    tp->tcol->offset > tp->viscol ?
+				    tp->tcol->offset - tp->viscol : 1);
+			}
+			(*tp->letter)(tp, fc);
+		}
+		(*tp->endline)(tp);
+		tp->viscol = 0;
+	} while (more);
 
 	/*
 	 * If we're the last row, clean up after ourselves: clear the
 	 * existing table configuration and set it to NULL.
 	 */
 
+	term_setcol(tp, 1);
+	tp->flags &= ~TERMP_MULTICOL;
+	tp->tcol->rmargin = tp->maxrmargin;
 	if (sp->next == NULL) {
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
 			tbl_hrule(tp, sp, 1);
@@ -199,7 +299,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.cols = NULL;
 		tp->tcol->offset = offset;
 	}
-	tp->flags &= ~(TERMP_NONOSPACE | TERMP_BRNEVER);
+	tp->flags &= ~TERMP_NONOSPACE;
 }
 
 /*
