@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2017/04/16 10:16:35 jsg Exp $
+#	$OpenBSD: Makefile,v 1.5 2017/06/12 18:51:53 espie Exp $
 
 PROG=		ldattach
 SRCS=		ldattach.c atomicio.c
@@ -7,7 +7,5 @@ MAN=		ldattach.8
 CFLAGS+=	-Wall
 CDIAGFLAGS=
 LDADD+=		-lutil
-
-BINDIR=		/sbin
 
 .include <bsd.prog.mk>
