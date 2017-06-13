@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.29 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.30 2017/06/13 16:11:58 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -296,6 +296,8 @@ tbl_layout(struct tbl_node *tbl, int ln, const char *p, int pos)
 				    tbl->parse, ln, pos, NULL);
 				cell_alloc(tbl, tbl->first_row,
 				    TBL_CELL_LEFT);
+				if (tbl->opts.lvert < tbl->first_row->vert)
+					tbl->opts.lvert = tbl->first_row->vert;
 				return;
 			}
 
