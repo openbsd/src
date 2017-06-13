@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.104 2017/06/13 13:41:15 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.105 2017/06/13 14:06:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1024,7 +1024,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
-	pt_entry_t **pde, *pte, npte;
+	pt_entry_t **pde, *pte, npte, opte;
 	vm_page_t pg;
 	struct cpu_info *ci = curcpu();
 	u_long cpuid = ci->ci_cpuid;
@@ -1134,9 +1134,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		/*
 		 * Update the same virtual address entry.
 		 */
+		opte = *pte;
 		*pte = npte;
 		pmap_update_kernel_page(va, npte);
-		pmap_shootdown_page(pmap_kernel(), va);
+		if ((opte & PG_V) != 0)
+			pmap_shootdown_page(pmap_kernel(), va);
 		if (pg != NULL)
 			mtx_leave(&pg->mdpage.pv_mtx);
 		pmap_unlock(pmap);
@@ -1236,9 +1238,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 #endif
 
+	opte = *pte;
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
-	pmap_shootdown_page(pmap, va);
+	if ((opte & PG_V) != 0)
+		pmap_shootdown_page(pmap, va);
 
 	/*
 	 * If mapping an executable page, invalidate ICache
@@ -1262,7 +1266,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pt_entry_t *pte, npte;
+	pt_entry_t *pte, npte, opte;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 		("pmap_kenter_pa(%p, %p, 0x%x)\n", (void *)va, (void *)pa, prot));
@@ -1288,9 +1292,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if ((*pte & PG_WIRED) == 0)
 			atomic_inc_long(&pmap_kernel()->pm_stats.wired_count);
 	}
+	opte = *pte;
 	*pte = npte;
 	pmap_update_kernel_page(va, npte);
-	pmap_shootdown_page(pmap_kernel(), va);
+	if ((opte & PG_V) != 0)
+		pmap_shootdown_page(pmap_kernel(), va);
 }
 
 /*
