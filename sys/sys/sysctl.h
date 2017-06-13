@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.172 2017/02/27 19:16:56 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.173 2017/06/13 06:16:31 dlg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -932,8 +932,8 @@ int sysctl_string(void *, size_t *, void *, size_t, char *, int);
 int sysctl_tstring(void *, size_t *, void *, size_t, char *, int);
 int sysctl__string(void *, size_t *, void *, size_t, char *, int, int);
 int sysctl_rdstring(void *, size_t *, void *, const char *);
-int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
-int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
+int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
+int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
 int sysctl_file(int *, u_int, char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
 struct rtentry;
