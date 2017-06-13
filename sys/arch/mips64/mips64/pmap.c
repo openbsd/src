@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2017/05/29 14:03:46 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2017/06/13 13:41:15 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1980,8 +1980,8 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 	}
 
-	if ((pg->pg_flags & (PGF_CACHED | PGF_UNCACHED)) == 0 &&
-	    cache_valias_mask != 0 && pv->pv_pmap != NULL) {
+	if (cache_valias_mask != 0 && pv->pv_pmap != NULL &&
+	    (pg->pg_flags & (PGF_CACHED | PGF_UNCACHED)) == 0) {
 		/*
 		 * If this page had been mapped uncached due to aliasing,
 		 * check if it can be mapped cached again after the current
