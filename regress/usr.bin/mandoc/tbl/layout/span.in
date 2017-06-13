@@ -38,3 +38,13 @@ s:c:d
 a:s:d
 a:b:s
 .TE
+.sp
+.TS
+allbox tab(:);
+L L L L L
+C S S C S
+R R R R R.
+a:b:c:d:e
+s1:s2
+a:b:c:d:e
+.TE
