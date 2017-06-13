@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.81 2017/06/06 19:47:22 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.82 2017/06/13 08:00:24 fcambus Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -54,7 +54,7 @@
 
 #define	WSSCREEN_NAME_SIZE	16
 #define	WSEMUL_NAME_SIZE	16
-#define	WSFONT_NAME_SIZE	16
+#define	WSFONT_NAME_SIZE	32
 
 /*
  * Common event structure (used by keyboard and mouse)
