@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.174 2017/06/13 15:49:32 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.175 2017/06/13 16:02:46 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -160,8 +160,7 @@ struct interface_info {
 	int		 flags;
 #define	IFI_VALID_LLADDR	0x00000001
 #define IFI_NEW_LLADDR		0x00000002
-#define IFI_NOMEDIA		0x00000004
-#define IFI_HUP			0x00000008
+#define IFI_HUP			0x00000003
 };
 
 struct dhcp_timeout {
