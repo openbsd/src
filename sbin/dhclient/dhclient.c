@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.418 2017/05/26 14:57:41 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.419 2017/06/13 15:49:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1132,6 +1132,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
     struct option_data *options, char *info)
 {
 	struct client_state *client = ifi->client;
+	struct dhcp_packet *packet = &client->recv_packet;
 	struct client_lease *lease, *lp;
 	time_t stop_selecting;
 
@@ -1146,7 +1147,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
 
 	/* If we've already seen this lease, don't record it again. */
 	TAILQ_FOREACH(lp, &client->offered_leases, next) {
-		if (!memcmp(&lp->address.s_addr, &client->packet.yiaddr,
+		if (!memcmp(&lp->address.s_addr, &packet->yiaddr,
 		    sizeof(in_addr_t))) {
 #ifdef DEBUG
 			log_debug("Duplicate %s.", info);
@@ -1222,6 +1223,7 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
     struct option_data *options)
 {
 	struct client_state *client = ifi->client;
+	struct dhcp_packet *packet = &client->recv_packet;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lease;
 	char *pretty, *buf;
@@ -1300,7 +1302,7 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
 	 * If this lease is trying to sell us an address we are already
 	 * using, blow it off.
 	 */
-	lease->address.s_addr = client->packet.yiaddr.s_addr;
+	lease->address.s_addr = packet->yiaddr.s_addr;
 	memset(ifname, 0, sizeof(ifname));
 	if (addressinuse(ifi, lease->address, ifname) &&
 	    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0) {
@@ -1310,19 +1312,18 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
 	}
 
 	/* Save the siaddr (a.k.a. next-server) info. */
-	lease->next_server.s_addr = client->packet.siaddr.s_addr;
+	lease->next_server.s_addr = packet->siaddr.s_addr;
 
 	/* If the server name was filled out, copy it. */
 	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 2)) &&
-	    client->packet.sname[0]) {
+	    packet->sname[0]) {
 		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
 		if (!lease->server_name) {
 			log_warnx("dhcpoffer: no memory for server name.");
 			lease->is_invalid = 1;
 		}
-		memcpy(lease->server_name, client->packet.sname,
-		    DHCP_SNAME_LEN);
+		memcpy(lease->server_name, packet->sname, DHCP_SNAME_LEN);
 		lease->server_name[DHCP_SNAME_LEN] = '\0';
 		if (!res_hnok(lease->server_name)) {
 			log_warnx("Bogus server name %s", lease->server_name);
@@ -1333,14 +1334,14 @@ packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
 	/* Ditto for the filename. */
 	if ((!lease->options[DHO_DHCP_OPTION_OVERLOAD].len ||
 	    !(lease->options[DHO_DHCP_OPTION_OVERLOAD].data[0] & 1)) &&
-	    client->packet.file[0]) {
+	    packet->file[0]) {
 		/* Don't count on the NUL terminator. */
 		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (!lease->filename) {
 			log_warnx("dhcpoffer: no memory for filename.");
 			lease->is_invalid = 1;
 		}
-		memcpy(lease->filename, client->packet.file, DHCP_FILE_LEN);
+		memcpy(lease->filename, packet->file, DHCP_FILE_LEN);
 		lease->filename[DHCP_FILE_LEN] = '\0';
 	}
 	return lease;
@@ -1396,6 +1397,7 @@ send_discover(void *xifi)
 {
 	struct interface_info *ifi = xifi;
 	struct client_state *client = ifi->client;
+	struct dhcp_packet *packet = &client->sent_packet;
 	time_t cur_time;
 	ssize_t rslt;
 	int interval;
@@ -1436,10 +1438,10 @@ send_discover(void *xifi)
 
 	/* Record the number of seconds since we started sending. */
 	if (interval < UINT16_MAX)
-		client->bootrequest_packet.secs = htons(interval);
+		packet->secs = htons(interval);
 	else
-		client->bootrequest_packet.secs = htons(UINT16_MAX);
-	client->secs = client->bootrequest_packet.secs;
+		packet->secs = htons(UINT16_MAX);
+	client->secs = packet->secs;
 
 	log_info("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
@@ -1487,6 +1489,7 @@ send_request(void *xifi)
 {
 	struct interface_info *ifi = xifi;
 	struct client_state *client = ifi->client;
+	struct dhcp_packet *packet = &client->sent_packet;
 	struct sockaddr_in destination;
 	struct in_addr from;
 	time_t cur_time;
@@ -1572,12 +1575,12 @@ send_request(void *xifi)
 
 	/* Record the number of seconds since we started sending. */
 	if (client->state == S_REQUESTING)
-		client->bootrequest_packet.secs = client->secs;
+		packet->secs = client->secs;
 	else {
 		if (interval < UINT16_MAX)
-			client->bootrequest_packet.secs = htons(interval);
+			packet->secs = htons(interval);
 		else
-			client->bootrequest_packet.secs = htons(UINT16_MAX);
+			packet->secs = htons(UINT16_MAX);
 	}
 
 	log_info("DHCPREQUEST on %s to %s", ifi->name,
@@ -1603,7 +1606,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->bootrequest_packet;
+	struct dhcp_packet *packet = &client->sent_packet;
 	unsigned char discover = DHCPDISCOVER;
 	int i;
 
@@ -1641,9 +1644,9 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDISCOVER packet.");
-	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->bootrequest_packet_length < BOOTP_MIN_LEN)
-		client->bootrequest_packet_length = BOOTP_MIN_LEN;
+	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (client->sent_packet_length < BOOTP_MIN_LEN)
+		client->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;
@@ -1667,7 +1670,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->bootrequest_packet;
+	struct dhcp_packet *packet = &client->sent_packet;
 	unsigned char request = DHCPREQUEST;
 	int i;
 
@@ -1713,9 +1716,9 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPREQUEST packet.");
-	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->bootrequest_packet_length < BOOTP_MIN_LEN)
-		client->bootrequest_packet_length = BOOTP_MIN_LEN;
+	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (client->sent_packet_length < BOOTP_MIN_LEN)
+		client->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;
@@ -1749,7 +1752,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->bootrequest_packet;
+	struct dhcp_packet *packet = &client->sent_packet;
 	unsigned char decline = DHCPDECLINE;
 	int i;
 
@@ -1782,9 +1785,9 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDECLINE packet.");
-	client->bootrequest_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->bootrequest_packet_length < BOOTP_MIN_LEN)
-		client->bootrequest_packet_length = BOOTP_MIN_LEN;
+	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (client->sent_packet_length < BOOTP_MIN_LEN)
+		client->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;

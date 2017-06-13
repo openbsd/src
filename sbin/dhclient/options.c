@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.88 2017/04/09 20:44:13 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.89 2017/06/13 15:49:32 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -163,7 +163,7 @@ int
 cons_options(struct interface_info *ifi, struct option_data *options)
 {
 	struct client_state *client = ifi->client;
-	unsigned char *buf = client->bootrequest_packet.options;
+	unsigned char *buf = client->sent_packet.options;
 	int buflen = 576 - DHCP_FIXED_LEN;
 	int ix, incr, length, bufix, code, lastopt = -1;
 
@@ -635,7 +635,7 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
     struct in_addr from, struct ether_addr *hfrom)
 {
 	struct client_state *client = ifi->client;
-	struct dhcp_packet *packet = &client->packet;
+	struct dhcp_packet *packet = &client->recv_packet;
 	struct option_data options[256];
 	struct reject_elem *ap;
 	void (*handler)(struct interface_info *, struct in_addr,
@@ -659,10 +659,10 @@ do_packet(struct interface_info *ifi, unsigned int from_port,
 		return;
 	}
 
-	if (client->xid != client->packet.xid) {
+	if (client->xid != packet->xid) {
 #ifdef DEBUG
 		log_debug("Discarding packet with XID != %u (%u)", client->xid,
-		    client->packet.xid);
+		    packet->xid);
 #endif	/* DEBUG */
 		return;
 	}
