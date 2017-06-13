@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.65 2017/06/11 22:51:21 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.66 2017/06/13 15:37:30 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -73,7 +73,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_TAIL}
 SYSTEM_HEAD=	locore0.o gap.o
 SYSTEM_OBJ=	${SYSTEM_HEAD} ${OBJS} param.o ioconf.o
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ld.script
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_HEAD} vers.o $${OBJS}'; \
 		umask 007; \
@@ -117,6 +117,9 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
+
+ld.script: ${_machdir}/conf/ld.script
+	cp ${_machdir}/conf/ld.script $@
 
 vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
