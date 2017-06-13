@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.20 2017/02/10 15:44:31 schwarze Exp $	*/
+/*	$OpenBSD: manpath.c,v 1.21 2017/06/13 15:05:22 schwarze Exp $	*/
 /*
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -298,7 +298,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 			mandoc_asprintf(&oldval, "%zu", conf->width);
 			break;
 		}
-		conf->width = strtonum(cp, 58, 1000, &errstr);
+		conf->width = strtonum(cp, 1, 1000, &errstr);
 		if (errstr == NULL)
 			return 0;
 		warnx("-O width=%s is %s", cp, errstr);
