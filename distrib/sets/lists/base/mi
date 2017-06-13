@@ -297,8 +297,8 @@
 ./sbin/savecore
 ./sbin/scan_ffs
 ./sbin/scsi
-./sbin/slaacd
 ./sbin/shutdown
+./sbin/slaacd
 ./sbin/swapctl
 ./sbin/swapon
 ./sbin/sysctl
