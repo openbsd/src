@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.13 2017/06/11 22:51:21 deraadt Exp $
+#	$OpenBSD: Makefile.arm64,v 1.14 2017/06/13 16:40:01 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -93,6 +93,12 @@ LINKFLAGS+=	-S
 .endif
 
 %LOAD
+
+newbsd:
+	${SYSTEM_LD_HEAD}
+	${SYSTEM_LD} swapgeneric.o
+	${SYSTEM_LD_TAIL}
+	mv -f newbsd bsd
 
 # cc's -MD puts the source and output paths in the dependency file;
 # since those are temp files here we need to fix it up.  It also
