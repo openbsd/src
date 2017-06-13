@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.457 2017/06/12 18:49:33 espie Exp $
+#	$OpenBSD: Makefile,v 1.458 2017/06/13 17:09:52 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,13 @@ kernels: ${ALL_KERNELS}
 	cp ../sys/arch/${MACHINE}/compile/${CONF}/obj/bsd ${RELEASEDIR}/$K
 	chmod a+r ${RELEASEDIR}/$K
 .endfor
+	cd ${.CURDIR}/../sys/arch/${MACHINE}/compile/ && \
+		tar -chzf ${DESTDIR}/usr/share/compile.tgz -s ',/obj/,/,' \
+		GENERIC*/obj/*.o GENERIC*/obj/Makefile \
+		GENERIC*/obj/ld.script GENERIC*/obj/gap.S \
+		GENERIC*/obj/machine
+	chown root:wheel ${DESTDIR}/usr/share/compile.tgz
+	chmod 644 ${DESTDIR}/usr/share/compile.tgz
 
 # -rw-r--r--
 BINOWN= root
