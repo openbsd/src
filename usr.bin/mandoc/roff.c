@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.179 2017/06/08 19:35:34 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.180 2017/06/13 13:50:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1546,10 +1546,11 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs)
 
 	/* Tables ignore most macros. */
 
-	if (r->tbl != NULL && (t == TOKEN_NONE || t == ROFF_TS)) {
+	if (r->tbl != NULL && (t == TOKEN_NONE || t == ROFF_TS ||
+	    t == ROFF_br || t == ROFF_ce || t == ROFF_sp)) {
 		mandoc_msg(MANDOCERR_TBLMACRO, r->parse,
 		    ln, pos, buf->buf + spos);
-		if (t == ROFF_TS)
+		if (t != TOKEN_NONE)
 			return ROFF_IGN;
 		while (buf->buf[pos] != '\0' && buf->buf[pos] != ' ')
 			pos++;
