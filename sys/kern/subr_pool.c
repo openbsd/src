@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.208 2017/04/20 14:13:00 visa Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.209 2017/06/13 11:41:11 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1608,7 +1608,8 @@ pool_cache_init(struct pool *pp)
 		    IPL_NONE, PR_WAITOK, "plcache", NULL);
 	}
 
-	KASSERT(pp->pr_size >= sizeof(*pc));
+        /* must be able to use the pool items as cache list items */
+	KASSERT(pp->pr_size >= sizeof(struct pool_cache_item));
 
 	cm = cpumem_get(&pool_caches);
 
