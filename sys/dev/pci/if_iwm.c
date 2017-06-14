@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.192 2017/06/09 13:47:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.193 2017/06/14 16:56:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3126,6 +3126,7 @@ iwm_load_ucode_wait_alive(struct iwm_softc *sc,
 int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
+	const int wait_flags = (IWM_INIT_COMPLETE | IWM_CALIB_COMPLETE);
 	int err;
 
 	if ((sc->sc_flags & IWM_FLAG_RFKILL) && !justnvm) {
@@ -3177,10 +3178,10 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 		return err;
 
 	/*
-	 * Nothing to do but wait for the init complete notification
-	 * from the firmware
+	 * Nothing to do but wait for the init complete and phy DB
+	 * notifications from the firmware.
 	 */
-	while (!sc->sc_init_complete) {
+	while ((sc->sc_init_complete & wait_flags) != wait_flags) {
 		err = tsleep(&sc->sc_init_complete, 0, "iwminit", 2*hz);
 		if (err)
 			break;
@@ -6680,6 +6681,8 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_calib_res_notif_phy_db *phy_db_notif;
 			SYNC_RESP_STRUCT(phy_db_notif, pkt);
 			iwm_phy_db_set_section(sc, phy_db_notif);
+			sc->sc_init_complete |= IWM_CALIB_COMPLETE;
+			wakeup(&sc->sc_init_complete);
 			break;
 		}
 
@@ -6746,7 +6749,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 
 		case IWM_INIT_COMPLETE_NOTIF:
-			sc->sc_init_complete = 1;
+			sc->sc_init_complete |= IWM_INIT_COMPLETE;
 			wakeup(&sc->sc_init_complete);
 			break;
 

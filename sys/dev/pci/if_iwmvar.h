@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.27 2017/05/28 09:59:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.28 2017/06/14 16:56:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -407,6 +407,8 @@ struct iwm_softc {
 
 	int sc_fw_chunk_done;
 	int sc_init_complete;
+#define IWM_INIT_COMPLETE	0x01
+#define IWM_CALIB_COMPLETE	0x02
 
 	struct iwm_ucode_status sc_uc;
 	enum iwm_ucode_type sc_uc_current;
