@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.420 2017/06/14 15:39:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.421 2017/06/14 15:57:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1132,7 +1132,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
     struct option_data *options, char *info)
 {
 	struct client_state *client = ifi->client;
-	struct dhcp_packet *packet = &client->recv_packet;
+	struct dhcp_packet *packet = &ifi->recv_packet;
 	struct client_lease *lease, *lp;
 	time_t stop_selecting;
 
@@ -1222,8 +1222,7 @@ struct client_lease *
 packet_to_lease(struct interface_info *ifi, struct in_addr client_addr,
     struct option_data *options)
 {
-	struct client_state *client = ifi->client;
-	struct dhcp_packet *packet = &client->recv_packet;
+	struct dhcp_packet *packet = &ifi->recv_packet;
 	char ifname[IF_NAMESIZE];
 	struct client_lease *lease;
 	char *pretty, *buf;
@@ -1397,7 +1396,7 @@ send_discover(void *xifi)
 {
 	struct interface_info *ifi = xifi;
 	struct client_state *client = ifi->client;
-	struct dhcp_packet *packet = &client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	time_t cur_time;
 	ssize_t rslt;
 	int interval;
@@ -1489,7 +1488,7 @@ send_request(void *xifi)
 {
 	struct interface_info *ifi = xifi;
 	struct client_state *client = ifi->client;
-	struct dhcp_packet *packet = &client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	struct sockaddr_in destination;
 	struct in_addr from;
 	time_t cur_time;
@@ -1606,7 +1605,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	unsigned char discover = DHCPDISCOVER;
 	int i;
 
@@ -1644,9 +1643,9 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDISCOVER packet.");
-	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->sent_packet_length < BOOTP_MIN_LEN)
-		client->sent_packet_length = BOOTP_MIN_LEN;
+	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
+		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;
@@ -1670,7 +1669,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	unsigned char request = DHCPREQUEST;
 	int i;
 
@@ -1716,9 +1715,9 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPREQUEST packet.");
-	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->sent_packet_length < BOOTP_MIN_LEN)
-		client->sent_packet_length = BOOTP_MIN_LEN;
+	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
+		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;
@@ -1752,7 +1751,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct client_state *client = ifi->client;
 	struct option_data options[256];
-	struct dhcp_packet *packet = &client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	unsigned char decline = DHCPDECLINE;
 	int i;
 
@@ -1785,9 +1784,9 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	i = cons_options(ifi, options);
 	if (i == -1 || packet->options[i] != DHO_END)
 		fatalx("options do not fit in DHCPDECLINE packet.");
-	client->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
-	if (client->sent_packet_length < BOOTP_MIN_LEN)
-		client->sent_packet_length = BOOTP_MIN_LEN;
+	ifi->sent_packet_length = DHCP_FIXED_NON_UDP+i+1;
+	if (ifi->sent_packet_length < BOOTP_MIN_LEN)
+		ifi->sent_packet_length = BOOTP_MIN_LEN;
 
 	packet->op = BOOTREQUEST;
 	packet->htype = HTYPE_ETHER ;

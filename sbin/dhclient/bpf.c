@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.51 2017/06/13 15:49:32 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.52 2017/06/14 15:57:25 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -262,9 +262,9 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	struct udphdr udp;
 	struct iovec iov[4];
 	struct msghdr msg;
-	struct dhcp_packet *packet = &ifi->client->sent_packet;
+	struct dhcp_packet *packet = &ifi->sent_packet;
 	ssize_t result;
-	int iovcnt = 0, len = ifi->client->sent_packet_length;
+	int iovcnt = 0, len = ifi->sent_packet_length;
 
 	memset(&dest, 0, sizeof(dest));
 	dest.sin_family = AF_INET;
@@ -331,7 +331,7 @@ ssize_t
 receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
     struct ether_addr *hfrom)
 {
-	struct dhcp_packet *packet = &ifi->client->recv_packet;
+	struct dhcp_packet *packet = &ifi->recv_packet;
 	int length = 0, offset = 0;
 	struct bpf_hdr hdr;
 
