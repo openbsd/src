@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.71 2017/06/12 18:55:42 schwarze Exp $ */
+/*	$OpenBSD: term.h,v 1.72 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -140,6 +140,7 @@ void		  term_end(struct termp *);
 
 void		  term_setwidth(struct termp *, const char *);
 int		  term_hspan(const struct termp *, const struct roffsu *);
+int		  term_hen(const struct termp *, const struct roffsu *);
 int		  term_vspan(const struct termp *, const struct roffsu *);
 size_t		  term_strlen(const struct termp *, const char *);
 size_t		  term_len(const struct termp *, size_t);

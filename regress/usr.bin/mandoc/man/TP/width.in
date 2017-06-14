@@ -8,7 +8,7 @@ tag
 indented
 .br
 text
-.TP -4n
+.TP -0.36i
 tag
 indented
 .br
@@ -23,7 +23,7 @@ tag
 indented
 .br
 text
-.TP 2n
+.TP 0.16i
 tag
 indented
 .br
@@ -51,7 +51,7 @@ text
 .PP
 Literal mode:
 .nf
-.TP -10n
+.TP -0.96i
 tag
 indented
 text
@@ -71,7 +71,7 @@ text
 tag
 indented
 text
-.TP 3n
+.TP 0.26i
 tag
 indented
 text

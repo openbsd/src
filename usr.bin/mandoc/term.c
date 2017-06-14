@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.130 2017/06/14 01:31:19 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.131 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -526,7 +526,7 @@ term_word(struct termp *p, const char *word)
 		case ESCAPE_HORIZ:
 			if (a2roffsu(seq, &su, SCALE_EM) == NULL)
 				continue;
-			uc = term_hspan(p, &su) / 24;
+			uc = term_hen(p, &su);
 			if (uc > 0)
 				while (uc-- > 0)
 					bufferc(p, ASCII_NBRSP);
@@ -547,7 +547,7 @@ term_word(struct termp *p, const char *word)
 		case ESCAPE_HLINE:
 			if ((seq = a2roffsu(seq, &su, SCALE_EM)) == NULL)
 				continue;
-			uc = term_hspan(p, &su) / 24;
+			uc = term_hen(p, &su);
 			if (uc <= 0) {
 				if (p->tcol->rmargin <= p->tcol->offset)
 					continue;
@@ -964,11 +964,25 @@ term_vspan(const struct termp *p, const struct roffsu *su)
 }
 
 /*
- * Convert a scaling width to basic units, rounding down.
+ * Convert a scaling width to basic units, rounding towards 0.
  */
 int
 term_hspan(const struct termp *p, const struct roffsu *su)
 {
 
 	return (*p->hspan)(p, su);
+}
+
+/*
+ * Convert a scaling width to basic units, rounding to closest.
+ */
+int
+term_hen(const struct termp *p, const struct roffsu *su)
+{
+	int bu;
+
+	if ((bu = (*p->hspan)(p, su)) >= 0)
+		return (bu + 11) / 24;
+	else
+		return -((-bu + 11) / 24);
 }

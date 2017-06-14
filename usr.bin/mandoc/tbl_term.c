@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.39 2017/06/13 14:38:38 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.40 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -45,7 +45,7 @@ static	void	tbl_word(struct termp *, const struct tbl_dat *);
 static size_t
 term_tbl_sulen(const struct roffsu *su, void *arg)
 {
-	return term_hspan((const struct termp *)arg, su) / 24;
+	return term_hen((const struct termp *)arg, su);
 }
 
 static size_t

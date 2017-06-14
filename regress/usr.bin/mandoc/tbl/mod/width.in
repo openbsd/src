@@ -5,7 +5,7 @@ tbl-mod-width \- width modifier in table layout
 normal text
 .TS
 box tab(:);
-lw2 | lw(2n) | lw(0.2i) | lw2 .
+lw2 | lw(2n) | lw(0.16i) | lw2 .
 a:abcd:T{
 a
 T}:T{

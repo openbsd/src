@@ -10,13 +10,13 @@ text
 .RE
 regular
 text
-.RS -4n
+.RS -0.36i
 indented
 text
 .RE
 regular
 text
-.RS 4n
+.RS 0.36i
 indented
 text
 .RE

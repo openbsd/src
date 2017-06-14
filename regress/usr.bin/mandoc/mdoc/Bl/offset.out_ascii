@@ -33,7 +33,7 @@ DDEESSCCRRIIPPTTIIOONN
 
                tag     Bl tag width Ds offset indent-two
 
-         tag     Bl tag width Ds offset 4n
+         tag     Bl tag width Ds offset 0.36i
 
              tag     Bl tag width Ds offset mystring
 
@@ -46,6 +46,6 @@ DDEESSCCRRIIPPTTIIOONN
                                                                                            offset
                                                                                            78n
 
-  tag     Bl tag width Ds offset -3n
+  tag     Bl tag width Ds offset -0.26i
 
 OpenBSD                        December 25, 2014                       OpenBSD

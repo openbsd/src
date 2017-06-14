@@ -7,7 +7,7 @@ Regular mode:
 indented
 .br
 text
-.IP tag -4n
+.IP tag -0.36i
 indented
 .br
 text
@@ -61,7 +61,7 @@ text
 .IP tag 2n
 indented
 text
-.IP tag 3n
+.IP tag 0.26i
 indented
 text
 .IP tag 4n

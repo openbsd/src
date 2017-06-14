@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.157 2017/06/08 12:54:40 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.158 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -375,7 +375,7 @@ pre_in(DECL_ARGS)
 	if (a2roffsu(++cp, &su, SCALE_EN) == NULL)
 		return 0;
 
-	v = (term_hspan(p, &su) + 11) / 24;
+	v = term_hen(p, &su);
 
 	if (less < 0)
 		p->tcol->offset -= p->tcol->offset > v ? v : p->tcol->offset;
@@ -424,7 +424,7 @@ pre_HP(DECL_ARGS)
 
 	if ((nn = n->parent->head->child) != NULL &&
 	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
-		len = term_hspan(p, &su) / 24;
+		len = term_hen(p, &su);
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
 		else if (len > SHRT_MAX)
@@ -509,7 +509,7 @@ pre_IP(DECL_ARGS)
 	if ((nn = n->parent->head->child) != NULL &&
 	    (nn = nn->next) != NULL &&
 	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
-		len = term_hspan(p, &su) / 24;
+		len = term_hen(p, &su);
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
 		else if (len > SHRT_MAX)
@@ -591,7 +591,7 @@ pre_TP(DECL_ARGS)
 	if ((nn = n->parent->head->child) != NULL &&
 	    nn->string != NULL && ! (NODE_LINE & nn->flags) &&
 	    a2roffsu(nn->string, &su, SCALE_EN) != NULL) {
-		len = term_hspan(p, &su) / 24;
+		len = term_hen(p, &su);
 		if (len < 0 && (size_t)(-len) > mt->offset)
 			len = -mt->offset;
 		else if (len > SHRT_MAX)
@@ -795,7 +795,7 @@ pre_RS(DECL_ARGS)
 	if (n->child == NULL)
 		n->aux = mt->lmargin[mt->lmargincur];
 	else if (a2roffsu(n->child->string, &su, SCALE_EN) != NULL)
-		n->aux = term_hspan(p, &su) / 24;
+		n->aux = term_hen(p, &su);
 	if (n->aux < 0 && (size_t)(-n->aux) > mt->offset)
 		n->aux = -mt->offset;
 	else if (n->aux > SHRT_MAX)

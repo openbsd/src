@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.11 2017/06/14 13:00:13 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.12 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -205,7 +205,7 @@ roff_term_pre_ti(ROFF_TERM_ARGS)
 
 	if (a2roffsu(cp, &su, SCALE_EM) == NULL)
 		return;
-	len = term_hspan(p, &su) / 24;
+	len = term_hen(p, &su);
 
 	if (sign == 0) {
 		p->ti = len - p->tcol->offset;

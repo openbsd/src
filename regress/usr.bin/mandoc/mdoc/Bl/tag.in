@@ -9,7 +9,7 @@
 .It tag
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
-.Bl -tag -width -3n
+.Bl -tag -width -0.26i
 .It tag
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
@@ -53,7 +53,7 @@ x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .It quint
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El
-.Bl -tag -width 5n
+.Bl -tag -width 0.46i
 .It indent
 x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
 .El

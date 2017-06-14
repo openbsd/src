@@ -6,9 +6,9 @@
 .Nd indenting display blocks
 .Sh DESCRIPTION
 regular text
-.Bd -ragged -offset 8n
+.Bd -ragged -offset 0.76i
 outer display
-.Bd -ragged -offset -5n
+.Bd -ragged -offset -0.46i
 inner display
 .Ed
 outer display

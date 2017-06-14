@@ -17,7 +17,7 @@ Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
 .br
 And a second line.
-.HP -4n
+.HP -0.36i
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
 .br
@@ -42,7 +42,7 @@ Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
 .br
 And a second line.
-.HP 8n
+.HP .76i
 Each hanged paragraph gets a sufficient amount of text
 to wrap to the next line.
 .br

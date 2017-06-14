@@ -57,9 +57,9 @@ Bl tag width Ds offset indent
 .It tag
 Bl tag width Ds offset indent-two
 .El
-.Bl -tag -width Ds -offset 4n
+.Bl -tag -width Ds -offset 0.36i
 .It tag
-Bl tag width Ds offset 4n
+Bl tag width Ds offset 0.36i
 .El
 .Bl -tag -width Ds -offset mystring
 .It tag
@@ -73,7 +73,7 @@ Bl tag width Ds offset Ds
 .It tag
 Bl tag width Ds offset 78n
 .El
-.Bl -tag -width Ds -offset -3n
+.Bl -tag -width Ds -offset -0.26i
 .It tag
-Bl tag width Ds offset -3n
+Bl tag width Ds offset -0.26i
 .El

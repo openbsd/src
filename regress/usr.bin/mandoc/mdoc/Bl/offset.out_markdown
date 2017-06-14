@@ -42,7 +42,7 @@ tag
 
 tag
 
-> Bl tag width Ds offset 4n
+> Bl tag width Ds offset 0.36i
 
 tag
 
@@ -58,6 +58,6 @@ tag
 
 tag
 
-> Bl tag width Ds offset -3n
+> Bl tag width Ds offset -0.26i
 
 OpenBSD - December 25, 2014

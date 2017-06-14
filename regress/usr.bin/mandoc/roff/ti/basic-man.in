@@ -3,14 +3,14 @@
 ti-basic-man \- temporary indentation in man(7)
 .SH DESCRIPTION
 initial text
-.ti 10n
+.ti 0.96i
 This text is indented.
 However, the indent is temporary,
 so as soon as the line wraps, it is gone.
 .ti +10n
 The temporary indent can be relative.
 All the same, it will expire in the usual way.
-.ti -3n
+.ti -0.26i
 It is also possible to temporarily reduce the indentation,
 but that will also last until the next line break only.
 .ti -10n

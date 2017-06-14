@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_tab.c,v 1.2 2017/06/08 12:54:40 schwarze Exp $ */
+/*	$OpenBSD: term_tab.c,v 1.3 2017/06/14 17:50:43 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -52,7 +52,7 @@ term_tab_set(const struct termp *p, const char *arg)
 		recording_period = 0;
 		if (tabs.d == 0) {
 			a2roffsu(".8i", &su, SCALE_IN);
-			tabs.d = term_hspan(p, &su) / 24;
+			tabs.d = term_hen(p, &su);
 		}
 		return;
 	}
@@ -81,7 +81,7 @@ term_tab_set(const struct termp *p, const char *arg)
 
 	/* Append the new position. */
 
-	pos = term_hspan(p, &su);
+	pos = term_hen(p, &su);
 	tl->t[tl->n] = pos;
 	if (add && tl->n)
 		tl->t[tl->n] += tl->t[tl->n - 1];
@@ -97,10 +97,6 @@ term_tab_next(size_t prev)
 		if (i == tabs.a.n) {
 			if (tabs.p.n == 0)
 				return prev;
-/*
-				return i ? prev :
-				    (prev / tabs.d + 1) * tabs.d;
- */
 			tabs.a.n += tabs.p.n;
 			if (tabs.a.s < tabs.a.n) {
 				tabs.a.s = tabs.a.n;
@@ -111,7 +107,7 @@ term_tab_next(size_t prev)
 				tabs.a.t[i + j] = tabs.p.t[j] +
 				    (i ? tabs.a.t[i - 1] : 0);
 		}
-		if (prev < tabs.a.t[i] / 24)
-			return tabs.a.t[i] / 24;
+		if (prev < tabs.a.t[i])
+			return tabs.a.t[i];
 	}
 }
