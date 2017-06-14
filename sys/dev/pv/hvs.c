@@ -31,8 +31,6 @@
  * The OpenBSD port was done under funding by Esdenera Networks GmbH.
  */
 
-#include "bio.h"
-
 /* #define HVS_DEBUG_IO */
 
 #include <sys/param.h>
@@ -153,13 +151,13 @@ struct hvs_srb {
 #define SRB_FLAGS_ADAPTER_CACHE_ENABLE	 0x00000200
 #define SRB_FLAGS_FREE_SENSE_BUFFER	 0x00000400
 
-/* for Win7 and older */
+/* SRB command for Win7 and older */
 struct hvs_cmd_io {
 	struct hvs_cmd_hdr	 cmd_hdr;
 	struct hvs_srb		 cmd_srb;
 } __packed;
 
-/* SCSI Request Block with Win8 extensions */
+/* SRB command with Win8 extensions */
 struct hvs_cmd_xio {
 	struct hvs_cmd_hdr	 cmd_hdr;
 	struct hvs_srb		 cmd_srb;
@@ -170,16 +168,6 @@ struct hvs_cmd_xio {
 	uint32_t		 cmd_timeout;
 	uint32_t		 cmd_qsortkey;
 } __packed;
-
-struct hvs_dma_mem {
-	bus_size_t		 dma_size;
-	bus_dma_tag_t		 dma_tag;
-	bus_dmamap_t		 dma_map;
-	bus_dma_segment_t	*dma_seg;
-	int			 dma_nsegs; /* total amount */
-	int			 dma_rsegs; /* used amount */
-	caddr_t			 dma_vaddr;
-};
 
 #define HVS_CMD_SIZE			 64
 
@@ -192,6 +180,8 @@ union hvs_cmd {
 	uint8_t			 pad[HVS_CMD_SIZE];
 } __packed;
 
+#define HVS_RING_SIZE			 (20 * PAGE_SIZE)
+#define HVS_MAX_CCB			 128
 #define HVS_MAX_SGE			 (MAXPHYS / PAGE_SIZE + 1)
 
 struct hvs_ccb {
@@ -245,10 +235,6 @@ void	hvs_intr(void *);
 void	hvs_complete_cmd(struct hvs_softc *, union hvs_cmd *, uint64_t);
 void	hvs_scsi_done(struct scsi_xfer *, int);
 
-int	hvs_dma_alloc(struct hvs_softc *, struct hvs_dma_mem *,
-	    bus_size_t, int, int);
-void	hvs_dma_free(struct hvs_softc *, struct hvs_dma_mem *);
-
 int	hvs_connect(struct hvs_softc *);
 int	hvs_cmd(struct hvs_softc *, void *, uint64_t, int);
 
@@ -291,11 +277,13 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	if (strcmp("scsi", aa->aa_ident) == 0)
 		sc->sc_flags |= HVSF_SCSI;
 
-	if (hv_channel_open(sc->sc_chan, 20 * PAGE_SIZE, &sc->sc_props,
+	if (hv_channel_open(sc->sc_chan, HVS_RING_SIZE, &sc->sc_props,
 	    sizeof(sc->sc_props), hvs_intr, sc)) {
 		printf(": failed to open channel\n");
 		return;
 	}
+
+	hv_evcount_attach(sc->sc_chan, sc->sc_dev.dv_xname);
 
 	printf(" channel %u: %s", sc->sc_chan->ch_id, aa->aa_ident);
 
@@ -805,89 +793,6 @@ hvs_cmd(struct hvs_softc *sc, void *xcmd, uint64_t tid, int timo)
 }
 
 int
-hvs_dma_alloc(struct hvs_softc *sc, struct hvs_dma_mem *dma,
-    bus_size_t size, int nsegs, int mapflags)
-{
-	int error;
-
-	dma->dma_tag = sc->sc_dmat;
-
-	dma->dma_seg = mallocarray(nsegs, sizeof(bus_dma_segment_t), M_DEVBUF,
-	    M_ZERO | M_NOWAIT);
-	if (dma->dma_seg == NULL) {
-		printf("%s: failed to allocate a segment array\n",
-		    sc->sc_dev.dv_xname);
-		return (ENOMEM);
-	}
-
-	error = bus_dmamap_create(dma->dma_tag, size, nsegs, PAGE_SIZE, 0,
-	    BUS_DMA_NOWAIT, &dma->dma_map);
-	if (error) {
-		printf("%s: failed to create a memory map (%d)\n",
-		    sc->sc_dev.dv_xname, error);
-		goto errout;
-	}
-
-	error = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0,
-	    dma->dma_seg, nsegs, &dma->dma_rsegs, BUS_DMA_ZERO |
-	    BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: failed to allocate DMA memory (%d)\n",
-		    sc->sc_dev.dv_xname, error);
-		goto destroy;
-	}
-
-	error = bus_dmamem_map(dma->dma_tag, dma->dma_seg, dma->dma_rsegs,
-	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: failed to map DMA memory (%d)\n",
-		    sc->sc_dev.dv_xname, error);
-		goto free;
-	}
-
-	error = bus_dmamap_load(dma->dma_tag, dma->dma_map, dma->dma_vaddr,
-	    size, NULL, mapflags | BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: failed to load DMA memory (%d)\n",
-		    sc->sc_dev.dv_xname, error);
-		goto unmap;
-	}
-
-	dma->dma_size = size;
-	dma->dma_nsegs = nsegs;
-	return (0);
-
- unmap:
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, size);
- free:
-	bus_dmamem_free(dma->dma_tag, dma->dma_seg, dma->dma_rsegs);
- destroy:
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
- errout:
-	free(dma->dma_seg, M_DEVBUF, nsegs * sizeof(bus_dma_segment_t));
-	dma->dma_map = NULL;
-	dma->dma_tag = NULL;
-	return (error);
-}
-
-void
-hvs_dma_free(struct hvs_softc *sc, struct hvs_dma_mem *dma)
-{
-	if (dma->dma_tag == NULL || dma->dma_map == NULL)
-		return;
-	bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0, dma->dma_size,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
-	bus_dmamem_free(dma->dma_tag, dma->dma_seg, dma->dma_rsegs);
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-	free(dma->dma_seg, M_DEVBUF, dma->dma_nsegs * sizeof(bus_dma_segment_t));
-	dma->dma_seg = NULL;
-	dma->dma_map = NULL;
-	dma->dma_size = 0;
-}
-
-int
 hvs_alloc_ccbs(struct hvs_softc *sc)
 {
 	int i, error;
@@ -895,7 +800,7 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 	SIMPLEQ_INIT(&sc->sc_ccb_fq);
 	mtx_init(&sc->sc_ccb_fqlck, IPL_BIO);
 
-	sc->sc_nccb = 16;	/* XXX */
+	sc->sc_nccb = HVS_MAX_CCB;
 
 	sc->sc_ccbs = mallocarray(sc->sc_nccb, sizeof(struct hvs_ccb),
 	    M_DEVBUF, M_ZERO | M_NOWAIT);
