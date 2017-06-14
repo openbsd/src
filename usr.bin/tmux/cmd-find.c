@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.52 2017/04/22 12:08:41 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.53 2017/06/14 07:37:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -977,8 +977,11 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 	} else if (cmd_find_from_client(&current, item->client) == 0) {
 		fs->current = &current;
 		log_debug("%s: current is from client", __func__);
-	} else
+	} else {
+		if (~flags & CMD_FIND_QUIET)
+			cmdq_error(item, "no current target");
 		goto error;
+	}
 	if (!cmd_find_valid_state(fs->current))
 		fatalx("invalid current find state");
 
