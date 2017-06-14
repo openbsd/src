@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.194 2017/06/14 16:56:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.195 2017/06/14 16:57:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6268,16 +6268,19 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct iwm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifreq *ifr;
-	int s, err = 0;
+	int s, err = 0, generation = sc->sc_generation;
 
 	/*
 	 * Prevent processes from entering this function while another
 	 * process is tsleep'ing in it.
 	 */
 	err = rw_enter(&sc->ioctl_rwl, RW_WRITE | RW_INTR);
+	if (err == 0 && generation != sc->sc_generation) {
+		rw_exit(&sc->ioctl_rwl);
+		return ENXIO;
+	}
 	if (err)
 		return err;
-
 	s = splnet();
 
 	switch (cmd) {
@@ -7438,8 +7441,13 @@ iwm_init_task(void *arg1)
 	struct iwm_softc *sc = arg1;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int s;
+	int generation = sc->sc_generation;
 
 	rw_enter_write(&sc->ioctl_rwl);
+	if (generation != sc->sc_generation) {
+		rw_exit(&sc->ioctl_rwl);
+		return;
+	}
 	s = splnet();
 
 	if (sc->sc_flags & IWM_FLAG_HW_INITED)
