@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.501 2017/06/06 13:59:37 florian Exp $
+#	$OpenBSD: rc,v 1.502 2017/06/14 21:39:53 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -217,6 +217,38 @@ reorder_libs() {
 	else
 		echo ' done.'
 	fi
+}
+
+# Re-link the kernel, placing the objects in a random order.
+# Replace current with relinked kernel and inform root about it.
+reorder_kernel() {
+	(
+	set -e
+	_compile_dir=/usr/share/compile
+	_kernel=$(sysctl -n kern.osversion)
+	_kernel=${_kernel%#*}
+	_kernel_dir=$_compile_dir/$_kernel
+	_sha256=$_kernel_dir/SHA256
+
+	if [[ -f /usr/share/compile.tgz ]]; then
+		rm -rf $_compile_dir
+		mkdir -m 700 -p $_compile_dir
+		tar -C $_compile_dir -xzf /usr/share/compile.tgz $_kernel
+		rm -f /usr/share/compile.tgz
+	fi
+
+	[[ -f $_sha256 ]] && sha256 -q -C $_sha256 /bsd
+
+	cd $_kernel_dir
+	make newbsd   >$_kernel_dir/log 2>&1
+	make install >>$_kernel_dir/log 2>&1
+	sha256 -h $_sha256 /bsd
+
+	(echo "Kernel has been relinked and is active on next reboot\n"; \
+		cat $_sha256; echo "\nRelink log:\n"; cat $_kernel_dir/log ) |
+		mail -Es "$(hostname) Kernel relink info" root >/dev/null
+
+	) >/dev/null 2>&1 &
 }
 
 # Run rc.* script and email output to root.
@@ -585,6 +617,8 @@ mixerctl_conf
 echo -n 'starting local daemons:'
 start_daemon apmd sensorsd hotplugd watchdogd cron wsmoused xenodm
 echo '.'
+
+reorder_kernel
 
 date
 exit 0
