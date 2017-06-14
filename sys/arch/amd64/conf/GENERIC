@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.443 2017/04/30 20:04:42 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.444 2017/06/14 22:35:43 mikeb Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -79,6 +79,7 @@ xbf*	at xen?			# Xen Blkfront
 
 hyperv0	at pvbus?		# Hyper-V guest
 hvn*	at hyperv?		# Hyper-V NetVSC
+hvs*	at hyperv?		# Hyper-V StorVSC
 
 option		PCIVERBOSE
 option		USBVERBOSE

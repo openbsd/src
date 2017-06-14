@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.167 2017/05/26 19:15:06 stsp Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.168 2017/06/14 22:35:43 mikeb Exp $
 
 machine		amd64
 maxusers	4
@@ -62,6 +62,7 @@ xspd0		at pci?			# XenSource Platform Device
 
 hyperv0		at pvbus?		# Hyper-V guest
 hvn*		at hyperv?		# Hyper-V NetVSC
+hvs*		at hyperv?		# Hyper-V StorVSC
 
 pchb*		at pci?			# PCI-Host bridges
 aapic*		at pci?			# AMD 8131 IO apic
