@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.132 2017/06/14 18:23:26 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.133 2017/06/14 23:23:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -524,9 +524,14 @@ term_word(struct termp *p, const char *word)
 				p->flags |= (TERMP_NOSPACE | TERMP_NONEWLINE);
 			continue;
 		case ESCAPE_HORIZ:
+			if (*seq == '|') {
+				seq++;
+				uc = -p->col;
+			} else
+				uc = 0;
 			if (a2roffsu(seq, &su, SCALE_EM) == NULL)
 				continue;
-			uc = term_hen(p, &su);
+			uc += term_hen(p, &su);
 			if (uc > 0)
 				while (uc-- > 0)
 					bufferc(p, ASCII_NBRSP);

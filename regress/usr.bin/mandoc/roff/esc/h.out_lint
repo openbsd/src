@@ -1,2 +1,2 @@
-mandoc: h.in:20:21: WARNING: invalid escape sequence: \h-
+mandoc: h.in:22:21: WARNING: invalid escape sequence: \h-
 mandoc: h.in:1:5: STYLE: Mdocdate missing: Dd May

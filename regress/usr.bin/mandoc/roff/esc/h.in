@@ -9,6 +9,8 @@ simple: >\h'0'<
 .br
 rounding: >\h'0.16i'<
 .br
+absolute: >\h'|12n'<
+.br
 escape only: >\h'\w'\&'M'<
 .br
 escape at the end: >\h'0+\w'\&''<

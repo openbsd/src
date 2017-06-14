@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.72 2017/06/14 22:50:37 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.73 2017/06/14 23:23:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1954,8 +1954,11 @@ and
 .Ss \eH\(aq Ns Oo +|- Oc Ns Ar number Ns \(aq
 Set the height of the current font; ignored by
 .Xr mandoc 1 .
-.Ss \eh\(aq Ns Ar width Ns \(aq
-Horizontal motion relative to the current position.
+.Ss \eh\(aq Ns Oo Cm \&| Oc Ns Ar width Ns \(aq
+Horizontal motion.
+If the vertical bar is given, the motion is relative to the current
+indentation.
+Otherwise, it is relative to the current position.
 The default scaling unit is
 .Cm m .
 .Ss \ek[ Ns Ar name ]
