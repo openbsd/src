@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.22 2015/12/28 16:27:28 jung Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.23 2017/06/14 16:32:11 anton Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -48,8 +48,6 @@ struct arglist {
 	char **argv;
 };
 
-int main(int, char *[], char *[]);
-
 static void initarg(struct arglist *);
 static void addarg(struct arglist *, const char *);
 
@@ -78,7 +76,7 @@ addarg(struct arglist *al, const char *arg)
 }
 
 int
-main(int argc, char *argv[], char *envp[])
+main(int argc, char *argv[])
 {
 	FILE *config;
 	char *line, *cp, *from, *to, *ap;
@@ -108,7 +106,7 @@ main(int argc, char *argv[], char *envp[])
 		syslog(LOG_INFO, "cannot open %s, using %s as default MTA",
 		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
 		closelog();
-		execve(_PATH_DEFAULTMTA, al.argv, envp);
+		execv(_PATH_DEFAULTMTA, al.argv);
 		err(1, "cannot exec %s", _PATH_DEFAULTMTA);
 		/*NOTREACHED*/
 	}
@@ -153,7 +151,7 @@ main(int argc, char *argv[], char *envp[])
 
 	addarg(&al, NULL);
 
-	execve(to, al.argv, envp);
+	execv(to, al.argv);
 	err(1, "cannot exec %s", to);
 	/*NOTREACHED*/
 parse_error:
