@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.424 2017/06/14 16:52:35 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.425 2017/06/14 20:27:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -130,16 +130,16 @@ void		 apply_ignore_list(char *);
 int compare_lease(struct client_lease *, struct client_lease *);
 void set_lease_times(struct client_lease *);
 
-void state_preboot(void *);
-void state_reboot(void *);
-void state_init(void *);
-void state_selecting(void *);
-void state_bound(void *);
-void state_panic(void *);
+void state_preboot(struct interface_info *);
+void state_reboot(struct interface_info *);
+void state_init(struct interface_info *);
+void state_selecting(struct interface_info *);
+void state_bound(struct interface_info *);
+void state_panic(struct interface_info *);
 
-void send_discover(void *);
-void send_request(void *);
-void send_decline(void *);
+void send_discover(struct interface_info *);
+void send_request(struct interface_info *);
+void send_decline(struct interface_info *);
 
 void bind_lease(struct interface_info *);
 
@@ -705,9 +705,8 @@ usage(void)
 }
 
 void
-state_preboot(void *xifi)
+state_preboot(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	static int preamble;
 	time_t cur_time;
 	int interval;
@@ -749,9 +748,8 @@ state_preboot(void *xifi)
  * Called when the interface link becomes active.
  */
 void
-state_reboot(void *xifi)
+state_reboot(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	char ifname[IF_NAMESIZE];
 	time_t cur_time;
 
@@ -791,10 +789,8 @@ state_reboot(void *xifi)
  * renew it.
  */
 void
-state_init(void *xifi)
+state_init(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
-
 	ifi->xid = arc4random();
 	make_discover(ifi, ifi->active);
 
@@ -811,9 +807,8 @@ state_init(void *xifi)
  * configurable period of time has passed.
  */
 void
-state_selecting(void *xifi)
+state_selecting(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	struct client_lease *lease, *picked;
 
 	cancel_timeout();
@@ -1092,9 +1087,8 @@ newlease:
  * the server that gave us our original lease.
  */
 void
-state_bound(void *xifi)
+state_bound(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	struct option_data *opt;
 	struct in_addr *dest;
 
@@ -1378,9 +1372,8 @@ dhcpnak(struct interface_info *ifi, struct in_addr client_addr,
  * the time we reach the panic interval, call the panic function.
  */
 void
-send_discover(void *xifi)
+send_discover(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	struct dhcp_packet *packet = &ifi->sent_packet;
 	time_t cur_time;
 	ssize_t rslt;
@@ -1443,9 +1436,8 @@ send_discover(void *xifi)
  * this happens, we try to use existing leases that haven't yet expired.
  */
 void
-state_panic(void *xifi)
+state_panic(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	struct client_lease *lp;
 
 	log_info("No acceptable DHCPOFFERS received.");
@@ -1468,9 +1460,8 @@ state_panic(void *xifi)
 }
 
 void
-send_request(void *xifi)
+send_request(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
 	struct dhcp_packet *packet = &ifi->sent_packet;
 	struct sockaddr_in destination;
 	struct in_addr from;
@@ -1574,10 +1565,8 @@ send_request(void *xifi)
 }
 
 void
-send_decline(void *xifi)
+send_decline(struct interface_info *ifi)
 {
-	struct interface_info *ifi = xifi;
-
 	log_info("DHCPDECLINE on %s", ifi->name);
 
 	send_packet(ifi, inaddr_any, inaddr_broadcast);

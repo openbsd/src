@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.180 2017/06/14 16:52:35 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.181 2017/06/14 20:27:08 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -160,9 +160,9 @@ struct interface_info {
 };
 
 struct dhcp_timeout {
-	time_t	 when;
-	void	 (*func)(void *);
-	void	*arg;
+	time_t			when;
+	void			(*func)(struct interface_info *);
+	struct interface_info	*ifi;
 };
 
 #define	_PATH_RESOLV_CONF	"/etc/resolv.conf"
@@ -216,8 +216,10 @@ ssize_t receive_packet(struct interface_info *, struct sockaddr_in *,
 
 /* dispatch.c */
 void dispatch(struct interface_info *);
-void set_timeout(time_t, void (*)(void *), void *);
-void set_timeout_interval(time_t, void (*)(void *), void *);
+void set_timeout(time_t, void (*)(struct interface_info *),
+    struct interface_info *);
+void set_timeout_interval(time_t, void (*)(struct interface_info *),
+    struct interface_info *);
 void cancel_timeout(void);
 void interface_link_forceup(char *);
 int interface_status(struct interface_info *);
