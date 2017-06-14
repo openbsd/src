@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.421 2017/06/14 15:57:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.422 2017/06/14 16:09:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -260,7 +260,7 @@ routehandler(struct interface_info *ifi)
 		    rtm->rtm_priority != RTP_PROPOSAL_DHCLIENT)
 			goto done;
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
-			if (rtm->rtm_seq == (int32_t)client->xid) {
+			if (rtm->rtm_seq == (int32_t)ifi->xid) {
 				ifi->flags |= IFI_IN_CHARGE;
 			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
 				rslt = asprintf(&errmsg, "yielding "
@@ -681,7 +681,7 @@ main(int argc, char *argv[])
 	}
 
 	setproctitle("%s", ifi->name);
-	time(&ifi->client->startup_time);
+	time(&ifi->startup_time);
 
 	if (ifi->linkstat) {
 		ifi->client->state = S_REBOOTING;
@@ -719,7 +719,7 @@ state_preboot(void *xifi)
 
 	time(&cur_time);
 
-	interval = (int)(cur_time - client->startup_time);
+	interval = (int)(cur_time - ifi->startup_time);
 
 	ifi->linkstat = interface_status(ifi);
 
@@ -782,11 +782,11 @@ state_reboot(void *xifi)
 		return;
 	}
 
-	client->xid = arc4random();
+	ifi->xid = arc4random();
 	make_request(ifi, client->active);
 
 	client->destination.s_addr = INADDR_BROADCAST;
-	client->first_sending = time(NULL);
+	ifi->first_sending = time(NULL);
 	client->interval = 0;
 
 	send_request(ifi);
@@ -802,12 +802,12 @@ state_init(void *xifi)
 	struct interface_info *ifi = xifi;
 	struct client_state *client = ifi->client;
 
-	client->xid = arc4random();
+	ifi->xid = arc4random();
 	make_discover(ifi, client->active);
 
 	client->destination.s_addr = INADDR_BROADCAST;
 	client->state = S_SELECTING;
-	client->first_sending = time(NULL);
+	ifi->first_sending = time(NULL);
 	client->interval = 0;
 
 	send_discover(ifi);
@@ -890,7 +890,7 @@ state_selecting(void *xifi)
 
 	client->destination.s_addr = INADDR_BROADCAST;
 	client->state = S_REQUESTING;
-	client->first_sending = time(NULL);
+	ifi->first_sending = time(NULL);
 
 	client->interval = 0;
 
@@ -1109,7 +1109,7 @@ state_bound(void *xifi)
 	struct option_data *opt;
 	struct in_addr *dest;
 
-	client->xid = arc4random();
+	ifi->xid = arc4random();
 	make_request(ifi, client->active);
 
 	dest = &client->destination;
@@ -1120,7 +1120,7 @@ state_bound(void *xifi)
 	else
 		dest->s_addr = INADDR_BROADCAST;
 
-	client->first_sending = time(NULL);
+	ifi->first_sending = time(NULL);
 	client->interval = 0;
 	client->state = S_RENEWING;
 
@@ -1166,7 +1166,7 @@ dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
 		lease->is_bootp = 1;
 
 	/* Figure out when we're supposed to stop selecting. */
-	stop_selecting = client->first_sending + config->select_interval;
+	stop_selecting = ifi->first_sending + config->select_interval;
 
 	if (TAILQ_EMPTY(&client->offered_leases)) {
 		TAILQ_INSERT_HEAD(&client->offered_leases, lease, next);
@@ -1404,7 +1404,7 @@ send_discover(void *xifi)
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
-	interval = cur_time - client->first_sending;
+	interval = cur_time - ifi->first_sending;
 
 	if (interval > config->timeout) {
 		state_panic(ifi);
@@ -1431,16 +1431,16 @@ send_discover(void *xifi)
 	/* If the backoff would take us to the panic timeout, just use that
 	   as the interval. */
 	if (cur_time + client->interval >
-	    client->first_sending + config->timeout)
-		client->interval = (client->first_sending +
-			 config->timeout) - cur_time + 1;
+	    ifi->first_sending + config->timeout)
+		client->interval = (ifi->first_sending +
+		    config->timeout) - cur_time + 1;
 
 	/* Record the number of seconds since we started sending. */
 	if (interval < UINT16_MAX)
 		packet->secs = htons(interval);
 	else
 		packet->secs = htons(UINT16_MAX);
-	client->secs = packet->secs;
+	ifi->secs = packet->secs;
 
 	log_info("DHCPDISCOVER on %s - interval %lld", ifi->name,
 	    (long long)client->interval);
@@ -1497,7 +1497,7 @@ send_request(void *xifi)
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
-	interval = (int)(cur_time - client->first_sending);
+	interval = (int)(cur_time - ifi->first_sending);
 
 	/*
 	 * If we're in the INIT-REBOOT state and we've been trying longer
@@ -1574,7 +1574,7 @@ send_request(void *xifi)
 
 	/* Record the number of seconds since we started sending. */
 	if (client->state == S_REQUESTING)
-		packet->secs = client->secs;
+		packet->secs = ifi->secs;
 	else {
 		if (interval < UINT16_MAX)
 			packet->secs = htons(interval);
@@ -1651,7 +1651,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 	packet->htype = HTYPE_ETHER ;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
-	packet->xid = client->xid;
+	packet->xid = ifi->xid;
 	packet->secs = 0; /* filled in by send_discover. */
 	packet->flags = 0;
 
@@ -1723,7 +1723,7 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 	packet->htype = HTYPE_ETHER ;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
-	packet->xid = client->xid;
+	packet->xid = ifi->xid;
 	packet->secs = 0; /* Filled in by send_request. */
 	packet->flags = 0;
 
@@ -1749,7 +1749,6 @@ make_request(struct interface_info *ifi, struct client_lease * lease)
 void
 make_decline(struct interface_info *ifi, struct client_lease *lease)
 {
-	struct client_state *client = ifi->client;
 	struct option_data options[256];
 	struct dhcp_packet *packet = &ifi->sent_packet;
 	unsigned char decline = DHCPDECLINE;
@@ -1792,7 +1791,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	packet->htype = HTYPE_ETHER ;
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
-	packet->xid = client->xid;
+	packet->xid = ifi->xid;
 	packet->secs = 0; /* Filled in by send_request. */
 	packet->flags = 0;
 
@@ -2604,7 +2603,7 @@ take_charge(struct interface_info *ifi)
 	rtm.rtm_msglen = sizeof(rtm);
 	rtm.rtm_tableid = ifi->rdomain;
 	rtm.rtm_index = ifi->index;
-	rtm.rtm_seq = ifi->client->xid = arc4random();
+	rtm.rtm_seq = ifi->xid = arc4random();
 	rtm.rtm_priority = RTP_PROPOSAL_DHCLIENT;
 	rtm.rtm_addrs = 0;
 	rtm.rtm_flags = RTF_UP | RTF_PROTO3;

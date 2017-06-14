@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.177 2017/06/14 15:57:25 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.178 2017/06/14 16:09:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -127,10 +127,6 @@ struct client_state {
 	TAILQ_HEAD(_leases, client_lease) leases;
 	enum dhcp_state		 state;
 	struct in_addr		 destination;
-	u_int32_t		 xid;
-	u_int16_t		 secs;
-	time_t			 first_sending;
-	time_t			 startup_time;
 	time_t			 interval;
 	struct in_addr		 requested_address;
 };
@@ -160,6 +156,10 @@ struct interface_info {
 	struct dhcp_packet	 recv_packet;
 	struct dhcp_packet	 sent_packet;
 	int			 sent_packet_length;
+	u_int32_t		 xid;
+	u_int16_t		 secs;
+	time_t			 first_sending;
+	time_t			 startup_time;
 };
 
 struct dhcp_timeout {
