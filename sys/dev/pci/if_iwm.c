@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.195 2017/06/14 16:57:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.196 2017/06/14 16:58:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6006,7 +6006,7 @@ iwm_init_hw(struct iwm_softc *sc)
 		goto err;
 	}
 
-	for (i = 0; i < IWM_NUM_PHY_CTX; i++) {
+	for (i = 0; i < 1; i++) {
 		/*
 		 * The channel used here isn't relevant as it's
 		 * going to be overwritten in the other flows.
