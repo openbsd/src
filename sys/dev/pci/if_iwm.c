@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.193 2017/06/14 16:56:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.194 2017/06/14 16:56:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5623,6 +5623,7 @@ iwm_newstate_task(void *psc)
 		sc->sc_flags |= IWM_FLAG_SCANNING;
 		ic->ic_state = nstate;
 		iwm_led_blink_start(sc);
+		wakeup(&ic->ic_state); /* wake iwm_init() */
 		return;
 
 	case IEEE80211_S_AUTH:
@@ -6102,7 +6103,8 @@ int
 iwm_init(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
-	int err;
+	struct ieee80211com *ic = &sc->sc_ic;
+	int err, generation;
 
 	if (sc->sc_flags & IWM_FLAG_HW_INITED) {
 		return 0;
@@ -6119,6 +6121,20 @@ iwm_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 
 	ieee80211_begin_scan(ifp);
+
+	/* 
+	 * ieee80211_begin_scan() ends up scheduling iwm_newstate_task().
+	 * Wait until the transition to SCAN state has completed.
+	 */
+	do {
+		generation = sc->sc_generation;
+		err = tsleep(&ic->ic_state, PCATCH, "iwminit", hz);
+		if (generation != sc->sc_generation)
+			return ENXIO;
+		if (err)
+			return err;
+	} while (ic->ic_state != IEEE80211_S_SCAN);
+
 	sc->sc_flags |= IWM_FLAG_HW_INITED;
 
 	return 0;
