@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.419 2017/06/13 15:49:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.420 2017/06/14 15:39:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -261,8 +261,8 @@ routehandler(struct interface_info *ifi)
 			goto done;
 		if ((rtm->rtm_flags & RTF_PROTO3) != 0) {
 			if (rtm->rtm_seq == (int32_t)client->xid) {
-				client->flags |= IN_CHARGE;
-			} else if ((client->flags & IN_CHARGE) != 0) {
+				ifi->flags |= IFI_IN_CHARGE;
+			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
 				rslt = asprintf(&errmsg, "yielding "
 				    "responsibility for %s",
 				    ifi->name);
@@ -297,11 +297,11 @@ routehandler(struct interface_info *ifi)
 			    inet_ntoa(client->active->address),
 			    (long long)(client->active->renewal -
 			    time(NULL)));
-			client->flags |= IS_RESPONSIBLE;
+			ifi->flags |= IFI_IS_RESPONSIBLE;
 			go_daemon();
 			break;
 		}
-		if ((client->flags & IS_RESPONSIBLE) == 0)
+		if ((ifi->flags & IFI_IS_RESPONSIBLE) == 0)
 			/* We're not responsible yet! */
 			break;
 		if (adding.s_addr != INADDR_ANY) {
@@ -336,7 +336,7 @@ routehandler(struct interface_info *ifi)
 			deleting.s_addr = INADDR_ANY;
 			break;
 		}
-		if ((client->flags & IS_RESPONSIBLE) == 0)
+		if ((ifi->flags & IFI_IS_RESPONSIBLE) == 0)
 			/* We're not responsible yet! */
 			break;
 		if (adding.s_addr == INADDR_ANY && client->active &&
@@ -347,7 +347,7 @@ routehandler(struct interface_info *ifi)
 			memset(&b, 0, sizeof(b));
 			add_address(b, b);
 			/* No need to write resolv.conf now. */
-			client->flags &= ~IS_RESPONSIBLE;
+			ifi->flags &= ~IFI_IS_RESPONSIBLE;
 			quit = INTERNALSIG;
 			break;
 		}
@@ -423,7 +423,7 @@ routehandler(struct interface_info *ifi)
 
 	/* Something has happened. Try to write out the resolv.conf. */
 	if (client->active && client->active->resolv_conf &&
-	    client->flags & IS_RESPONSIBLE)
+	    ifi->flags & IFI_IS_RESPONSIBLE)
 		write_resolv_conf(client->active->resolv_conf,
 		    strlen(client->active->resolv_conf));
 
@@ -978,7 +978,7 @@ bind_lease(struct interface_info *ifi)
 	 * A duplicate lease once we are responsible & S_RENEWING means we
 	 * don't need to change the interface, routing table or resolv.conf.
 	 */
-	if ((client->flags & IS_RESPONSIBLE) && client->state == S_RENEWING &&
+	if ((ifi->flags & IFI_IS_RESPONSIBLE) && client->state == S_RENEWING &&
 	    compare_lease(client->active, client->new) == 0) {
 		client->new->resolv_conf = client->active->resolv_conf;
 		client->active->resolv_conf = NULL;
@@ -2611,7 +2611,7 @@ take_charge(struct interface_info *ifi)
 	rtm.rtm_flags = RTF_UP | RTF_PROTO3;
 
 	retries = 0;
-	while ((ifi->client->flags & IN_CHARGE) == 0) {
+	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
 		if (write(routefd, &rtm, sizeof(rtm)) == -1)
 			fatal("tried to take charge");
 		time(&cur_time);

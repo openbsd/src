@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.175 2017/06/13 16:02:46 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.176 2017/06/14 15:39:55 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -127,9 +127,6 @@ struct client_state {
 	TAILQ_HEAD(_leases, client_lease) leases;
 	enum dhcp_state		 state;
 	struct in_addr		 destination;
-	int			 flags;
-#define IS_RESPONSIBLE	0x1
-#define IN_CHARGE	0x2
 	u_int32_t		 xid;
 	u_int16_t		 secs;
 	time_t			 first_sending;
@@ -142,25 +139,27 @@ struct client_state {
 };
 
 struct interface_info {
-	struct ether_addr	hw_address;
-	char		 name[IFNAMSIZ];
-	char		 ssid[32];
-	uint8_t		 ssid_len;
+	struct ether_addr	 hw_address;
+	char			 name[IFNAMSIZ];
+	char			 ssid[32];
+	uint8_t			 ssid_len;
 	struct client_state	*client;
-	int		 bfdesc; /* bpf - reading & broadcast writing*/
-	int		 ufdesc; /* udp - unicast writing */
-	unsigned char	*rbuf;
-	size_t		 rbuf_max;
-	size_t		 rbuf_offset;
-	size_t		 rbuf_len;
-	int		 errors;
-	u_int16_t	 index;
-	int		 linkstat;
-	int		 rdomain;
-	int		 flags;
-#define	IFI_VALID_LLADDR	0x00000001
-#define IFI_NEW_LLADDR		0x00000002
-#define IFI_HUP			0x00000003
+	int			 bfdesc; /* bpf - reading & broadcast writing*/
+	int			 ufdesc; /* udp - unicast writing */
+	unsigned char		*rbuf;
+	size_t			 rbuf_max;
+	size_t			 rbuf_offset;
+	size_t			 rbuf_len;
+	int			 errors;
+	u_int16_t		 index;
+	int			 linkstat;
+	int			 rdomain;
+	int			 flags;
+#define	IFI_VALID_LLADDR	0x01
+#define IFI_NEW_LLADDR		0x02
+#define IFI_HUP			0x04
+#define IFI_IS_RESPONSIBLE	0x08
+#define IFI_IN_CHARGE		0x10
 };
 
 struct dhcp_timeout {
