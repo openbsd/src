@@ -22,8 +22,7 @@
 #define TCPDUMP_MAGIC 0xa1b2c3d4
 
 /* file ids used by priv_getlines */
-#define FTAB_APPLETALK	0
-#define FTAB_PFOSFP	1
+#define FTAB_PFOSFP	0
 
 enum cmd_types {
 	PRIV_OPEN_BPF,		/* open a bpf descriptor */

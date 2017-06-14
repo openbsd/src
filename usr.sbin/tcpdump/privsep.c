@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.44 2017/01/23 04:25:05 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.45 2017/06/14 20:48:54 akfaew Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -101,8 +101,7 @@ struct ftab {
 	int count;
 };
 
-static struct ftab file_table[] = {{"/etc/appletalk.names", 1, 0},
-				   {PF_OSFP_FILE, 1, 0}};
+static struct ftab file_table[] = {{PF_OSFP_FILE, 1, 0}};
 
 #define NUM_FILETAB (sizeof(file_table) / sizeof(struct ftab))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.31 2016/10/28 12:54:05 jsg Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.32 2017/06/14 20:48:54 akfaew Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -554,51 +554,13 @@ struct hnamemem {
 
 static struct hnamemem hnametable[HASHNAMESIZE];
 
-/*
- * see if there's an AppleTalk number to name map file.
- */
-static void
-init_atalk(void)
-{
-	struct hnamemem *tp;
-	char nambuf[HOST_NAME_MAX+1 + 20];
-	char line[BUFSIZ];
-	int i1, i2, i3;
-
-	priv_getlines(FTAB_APPLETALK);
-	while (priv_getline(line, sizeof(line)) > 0) {
-		if (line[0] == '\n' || line[0] == 0 || line[0] == '#')
-			continue;
-		if (sscanf(line, "%d.%d.%d %255s", &i1, &i2, &i3, nambuf) == 4)
-			/* got a hostname. */
-			i3 |= ((i1 << 8) | i2) << 8;
-		else if (sscanf(line, "%d.%d %255s", &i1, &i2, nambuf) == 3)
-			/* got a net name */
-			i3 = (((i1 << 8) | i2) << 8) | 255;
-		else
-			continue;
-		
-		for (tp = &hnametable[i3 & (HASHNAMESIZE-1)];
-		     tp->nxt; tp = tp->nxt)
-			;
-		tp->addr = i3;
-		tp->nxt = newhnamemem();
-		tp->name = savestr(nambuf);
-	}
-}
-
 static const char *
 ataddr_string(u_short atnet, u_char athost)
 {
 	struct hnamemem *tp, *tp2;
 	int i = (atnet << 8) | athost;
 	char nambuf[HOST_NAME_MAX+1 + 20];
-	static int first = 1;
 
-	if (first) {
-		first = 0;
-		init_atalk();
-	}
 	for (tp = &hnametable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
 		if (tp->addr == i)
 			return (tp->name);
