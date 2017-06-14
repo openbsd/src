@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pvbus.4,v 1.12 2016/12/07 17:11:09 jmc Exp $
+.\"	$OpenBSD: pvbus.4,v 1.13 2017/06/14 10:36:37 mikeb Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2016 $
+.Dd $Mdocdate: June 14 2017 $
 .Dt PVBUS 4
 .Os
 .Sh NAME
@@ -66,6 +66,8 @@ information store
 .Bl -tag -width 13n -offset ind -compact
 .It Xr hvn 4
 Hyper-V virtual networking interface
+.It Xr hvs 4
+Hyper-V virtual disk interface
 .It Xr hyperv 4
 Hyper-V guest nexus device
 .El
