@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.111 2017/06/10 18:03:50 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.112 2017/06/14 16:52:35 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -469,7 +469,6 @@ void
 parse_client_lease_statement(FILE *cfile, unsigned int is_static,
     struct interface_info *ifi)
 {
-	struct client_state	*client = ifi->client;
 	struct client_lease	*lease, *lp, *pl;
 	int			 token;
 
@@ -503,7 +502,7 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
 	 * AND the same ssid AND the same Client Identifier AND the same
 	 * IP address.
 	 */
-	TAILQ_FOREACH_SAFE(lp, &client->leases, next, pl) {
+	TAILQ_FOREACH_SAFE(lp, &ifi->leases, next, pl) {
 		if (lp->is_static != is_static)
 			continue;
 		if (lp->ssid_len != lease->ssid_len)
@@ -520,7 +519,7 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
 		if (lp->address.s_addr != lease->address.s_addr)
 			continue;
 
-		TAILQ_REMOVE(&client->leases, lp, next);
+		TAILQ_REMOVE(&ifi->leases, lp, next);
 		lp->is_static = 0;	/* Else it won't be freed. */
 		free_client_lease(lp);
 	}
@@ -532,9 +531,9 @@ parse_client_lease_statement(FILE *cfile, unsigned int is_static,
 	 */
 	lease->is_static = is_static;
 	if (is_static)
-		TAILQ_INSERT_TAIL(&client->leases, lease, next);
+		TAILQ_INSERT_TAIL(&ifi->leases, lease, next);
 	else
-		TAILQ_INSERT_HEAD(&client->leases, lease,  next);
+		TAILQ_INSERT_HEAD(&ifi->leases, lease,  next);
 }
 
 /*

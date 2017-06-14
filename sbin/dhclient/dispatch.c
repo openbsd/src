@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.120 2017/05/28 14:37:48 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.121 2017/06/14 16:52:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,6 @@ get_hw_address(struct interface_info *ifi)
 void
 dispatch(struct interface_info *ifi)
 {
-	struct client_state *client = ifi->client;
 	int count, to_msec;
 	struct pollfd fds[3];
 	time_t cur_time, howlong;
@@ -190,7 +189,7 @@ dispatch(struct interface_info *ifi)
 
 	if (quit == SIGHUP) {
 		/* Tell [priv] process that HUP has occurred. */
-		sendhup(client->active);
+		sendhup(ifi->active);
 		log_warnx("%s; restarting", strsignal(quit));
 		exit (0);
 	} else if (quit != INTERNALSIG) {

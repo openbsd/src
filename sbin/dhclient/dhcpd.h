@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.179 2017/06/14 16:29:58 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.180 2017/06/14 16:52:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -120,13 +120,6 @@ struct client_config {
 	char			*server_name;
 };
 
-struct client_state {
-	struct client_lease	*active;
-	struct client_lease	*new;
-	TAILQ_HEAD(, client_lease) offered_leases;
-	TAILQ_HEAD(_leases, client_lease) leases;
-};
-
 struct interface_info {
 	struct ether_addr	 hw_address;
 	char			 name[IFNAMSIZ];
@@ -160,6 +153,10 @@ struct interface_info {
 	struct in_addr		 destination;
 	time_t			 interval;
 	struct in_addr		 requested_address;
+	struct client_lease	*active;
+	struct client_lease	*new;
+	TAILQ_HEAD(, client_lease) offered_leases;
+	TAILQ_HEAD(_leases, client_lease) leases;
 };
 
 struct dhcp_timeout {
