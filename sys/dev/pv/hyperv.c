@@ -1403,6 +1403,50 @@ hv_channel_send_sgl(struct hv_channel *ch, struct vmbus_gpa *sgl,
 }
 
 int
+hv_channel_send_prpl(struct hv_channel *ch, struct vmbus_gpa_range *prpl,
+    uint32_t nprp, void *data, uint32_t datalen, uint64_t rid)
+{
+	struct hv_softc *sc = ch->ch_sc;
+	struct vmbus_chanpkt_prplist cp;
+	struct iovec iov[4];
+	uint32_t buflen, pktlen, pktlen_aligned;
+	uint64_t zeropad = 0;
+	int rv, needsig = 0;
+
+	buflen = sizeof(struct vmbus_gpa_range) * (nprp + 1);
+	pktlen = sizeof(cp) + datalen + buflen;
+	pktlen_aligned = roundup(pktlen, sizeof(uint64_t));
+
+	cp.cp_hdr.cph_type = VMBUS_CHANPKT_TYPE_GPA;
+	cp.cp_hdr.cph_flags = VMBUS_CHANPKT_FLAG_RC;
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_hlen, sizeof(cp) + buflen);
+	VMBUS_CHANPKT_SETLEN(cp.cp_hdr.cph_tlen, pktlen_aligned);
+	cp.cp_hdr.cph_tid = rid;
+	cp.cp_range_cnt = 1;
+	cp.cp_rsvd = 0;
+
+	iov[0].iov_base = &cp;
+	iov[0].iov_len = sizeof(cp);
+
+	iov[1].iov_base = prpl;
+	iov[1].iov_len = buflen;
+
+	iov[2].iov_base = data;
+	iov[2].iov_len = datalen;
+
+	iov[3].iov_base = &zeropad;
+	iov[3].iov_len = pktlen_aligned - pktlen;
+
+	mtx_enter(&ch->ch_wrd.rd_lock);
+	rv = hv_ring_write(&ch->ch_wrd, iov, 4, &needsig);
+	mtx_leave(&ch->ch_wrd.rd_lock);
+	if (rv == 0 && needsig)
+		hv_channel_setevent(sc, ch);
+
+	return (rv);
+}
+
+int
 hv_ring_peek(struct hv_ring_data *rrd, void *data, uint32_t datalen)
 {
 	uint32_t avail;

@@ -212,6 +212,8 @@ int	hv_channel_send(struct hv_channel *, void *, uint32_t, uint64_t,
 	    int, uint32_t);
 int	hv_channel_send_sgl(struct hv_channel *, struct vmbus_gpa *,
 	    uint32_t, void *, uint32_t, uint64_t);
+int	hv_channel_send_prpl(struct hv_channel *, struct vmbus_gpa_range *,
+	    uint32_t, void *, uint32_t, uint64_t);
 int	hv_channel_recv(struct hv_channel *, void *, uint32_t, uint32_t *,
 	    uint64_t *, int);
 
