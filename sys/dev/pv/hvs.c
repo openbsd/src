@@ -185,12 +185,18 @@ union hvs_cmd {
 #define HVS_MAX_CCB			 128
 #define HVS_MAX_SGE			 (MAXPHYS / PAGE_SIZE + 1)
 
+struct hvs_softc;
+
 struct hvs_ccb {
+	struct hvs_softc	*ccb_softc;
+	union hvs_cmd		*ccb_cmd;   /* associated command */
 	struct scsi_xfer	*ccb_xfer;  /* associated transfer */
 	bus_dmamap_t		 ccb_dmap;  /* transfer map */
 	uint64_t		 ccb_rid;   /* request id */
 	struct vmbus_gpa_range	*ccb_sgl;
 	int			 ccb_nsge;
+	void			(*ccb_done)(struct hvs_ccb *);
+	void			*ccb_cookie;
 	SIMPLEQ_ENTRY(hvs_ccb)	 ccb_link;
 };
 SIMPLEQ_HEAD(hvs_ccb_queue, hvs_ccb);
@@ -231,13 +237,16 @@ int	hvs_match(struct device *, void *, void *);
 void	hvs_attach(struct device *, struct device *, void *);
 
 void	hvs_scsi_cmd(struct scsi_xfer *);
-void	hvs_scsi_probe(void *arg);
+void	hvs_scsi_cmd_done(struct hvs_ccb *);
+int	hvs_start(struct hvs_ccb *);
+int	hvs_poll(struct hvs_ccb *);
+void	hvs_poll_done(struct hvs_ccb *);
 void	hvs_intr(void *);
-void	hvs_complete_cmd(struct hvs_softc *, union hvs_cmd *, uint64_t);
+void	hvs_scsi_probe(void *arg);
 void	hvs_scsi_done(struct scsi_xfer *, int);
 
 int	hvs_connect(struct hvs_softc *);
-int	hvs_cmd(struct hvs_softc *, void *);
+void	hvs_empty_done(struct hvs_ccb *);
 
 int	hvs_alloc_ccbs(struct hvs_softc *);
 void	hvs_free_ccbs(struct hvs_softc *);
@@ -288,6 +297,9 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" channel %u: %s", sc->sc_chan->ch_id, aa->aa_ident);
 
+	if (hvs_alloc_ccbs(sc))
+		return;
+
 	if (hvs_connect(sc))
 		return;
 
@@ -296,9 +308,6 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_proto >= HVS_PROTO_VERSION_WIN8)
 		sc->sc_flags |= HVSF_XIO;
-
-	if (hvs_alloc_ccbs(sc))
-		return;
 
 	task_set(&sc->sc_probetask, hvs_scsi_probe, sc);
 
@@ -328,7 +337,6 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	struct hvs_cmd_xio *xio = &cmd.xio;
 	struct hvs_srb *srb = &io->cmd_srb;
 	int i, rv, flags = BUS_DMA_NOWAIT;
-	uint64_t rid;
 
 	if (xs->cmdlen > HVS_CMD_SIZE) {
 		printf("%s: CDB is too big: %d\n", sc->sc_dev.dv_xname,
@@ -386,8 +394,6 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	cmd.cmd_op = HVS_REQ_SCSIIO;
 	cmd.cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	rid = (uint64_t)ccb->ccb_rid << 32;
-
 	if (xs->datalen > 0) {
 		rv = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmap, xs->data,
 		    xs->datalen, NULL, flags);
@@ -405,74 +411,110 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 			ccb->ccb_sgl->gpa_page[i] =
 			    atop(ccb->ccb_dmap->dm_segs[i].ds_addr);
 		ccb->ccb_nsge = ccb->ccb_dmap->dm_nsegs;
-	}
+	} else
+		ccb->ccb_nsge = 0;
 
 	ccb->ccb_xfer = xs;
+	ccb->ccb_cmd = &cmd;
+	ccb->ccb_done = hvs_scsi_cmd_done;
 
-	if (xs->datalen > 0) {
-		rv = hv_channel_send_prpl(sc->sc_chan, ccb->ccb_sgl,
-		    ccb->ccb_nsge, &cmd, sizeof(cmd), rid);
-		if (rv) {
-			printf("%s: failed to submit operation %x via prpl\n",
-			    sc->sc_dev.dv_xname, xs->cmd->opcode);
-			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmap);
-		}
-	} else {
-		rv = hv_channel_send(sc->sc_chan, &cmd, sizeof(cmd), rid,
-		    VMBUS_CHANPKT_TYPE_INBAND, VMBUS_CHANPKT_FLAG_RC);
-		if (rv)
-			printf("%s: failed to submit operation %x\n",
-			    sc->sc_dev.dv_xname, xs->cmd->opcode);
-	}
+#ifdef HVS_DEBUG_IO
+	DPRINTF("%s: %u.%u: opcode %#x flags %#x datalen %d\n",
+	    sc->sc_dev.dv_xname, link->target, link->lun,
+	    xs->cmd->opcode, xs->flags, xs->datalen);
+#endif
+
+	if (xs->flags & SCSI_POLL)
+		rv = hvs_poll(ccb);
+	else
+		rv = hvs_start(ccb);
 	if (rv) {
 		KERNEL_LOCK();
 		hvs_scsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
 	}
 
-#ifdef HVS_DEBUG_IO
-	DPRINTF("%s: opcode %#x flags %#x datalen %d\n", sc->sc_dev.dv_xname,
-	    xs->cmd->opcode, xs->flags, xs->datalen);
-#endif
-
-	if (xs->flags & SCSI_POLL) {
-		int timo = 1000;
-
-		do {
-			if (xs->flags & ITSDONE)
-				break;
-			if (xs->flags & SCSI_NOSLEEP)
-				delay(100);
-			else
-				tsleep(xs, PRIBIO, "hvspoll", 1);
-			hvs_intr(sc);
-		} while(--timo > 0);
-
-		if (!(xs->flags & ITSDONE)) {
-			printf("%s: operation %#x datalen %d timed out\n",
-			    sc->sc_dev.dv_xname, xs->cmd->opcode, xs->datalen);
-			KERNEL_LOCK();
-			hvs_scsi_done(xs, XS_TIMEOUT);
-			return;
-		}
-	}
-
 	KERNEL_LOCK();
 }
 
-void
-hvs_scsi_probe(void *arg)
+int
+hvs_start(struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = arg;
+	struct hvs_softc *sc = ccb->ccb_softc;
+	union hvs_cmd *cmd = ccb->ccb_cmd;
+	int rv;
 
-	if (sc->sc_scsibus)
-		scsi_probe_bus((void *)sc->sc_scsibus);
+	ccb->ccb_cmd = NULL;
+
+	if (ccb->ccb_nsge > 0) {
+		rv = hv_channel_send_prpl(sc->sc_chan, ccb->ccb_sgl,
+		    ccb->ccb_nsge, cmd, HVS_CMD_SIZE, ccb->ccb_rid);
+		if (rv) {
+			printf("%s: failed to submit operation %x via prpl\n",
+			    sc->sc_dev.dv_xname, cmd->cmd_op);
+			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmap);
+		}
+	} else {
+		rv = hv_channel_send(sc->sc_chan, cmd, HVS_CMD_SIZE,
+		    ccb->ccb_rid, VMBUS_CHANPKT_TYPE_INBAND,
+		    VMBUS_CHANPKT_FLAG_RC);
+		if (rv)
+			printf("%s: failed to submit operation %x\n",
+			    sc->sc_dev.dv_xname, cmd->cmd_op);
+	}
+
+	return (rv);
+}
+
+void
+hvs_poll_done(struct hvs_ccb *ccb)
+{
+	struct hvs_softc *sc = ccb->ccb_softc;
+	int *rv = ccb->ccb_cookie;
+
+	if (ccb->ccb_cmd)
+		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
+
+	*rv = 0;
+}
+
+int
+hvs_poll(struct hvs_ccb *ccb)
+{
+	struct hvs_softc *sc = ccb->ccb_softc;
+	void (*done)(struct hvs_ccb *);
+	void *cookie;
+	int rv = 1;
+
+	done = ccb->ccb_done;
+	cookie = ccb->ccb_cookie;
+
+	ccb->ccb_done = hvs_poll_done;
+	ccb->ccb_cookie = &rv;
+
+	if (hvs_start(ccb)) {
+		ccb->ccb_cookie = cookie;
+		ccb->ccb_done = done;
+		return (-1);
+	}
+
+	while (rv == 1) {
+		hvs_intr(sc);
+		delay(10);
+	}
+
+	ccb->ccb_cookie = cookie;
+	ccb->ccb_done = done;
+	ccb->ccb_done(ccb);
+
+	return (0);
 }
 
 void
 hvs_intr(void *xsc)
 {
 	struct hvs_softc *sc = xsc;
+	struct hvs_ccb *ccb;
 	union hvs_cmd cmd;
 	uint64_t rid;
 	uint32_t rlen;
@@ -499,16 +541,16 @@ hvs_intr(void *xsc)
 		    cmd.cmd_status);
 #endif
 
-		/* Initialization */
-		if (rid == HVS_INIT_TID) {
-			memcpy(&sc->sc_resp, &cmd, sizeof(cmd));
-			wakeup_one(&sc->sc_resp);
-			continue;
-		}
-
 		switch (cmd.cmd_op) {
 		case HVS_MSG_IODONE:
-			hvs_complete_cmd(sc, &cmd, rid);
+			if (rid >= sc->sc_nccb) {
+				printf("%s: invalid response %#llx\n",
+				    sc->sc_dev.dv_xname, rid);
+				continue;
+			}
+			ccb = &sc->sc_ccbs[rid];
+			ccb->ccb_cmd = &cmd;
+			ccb->ccb_done(ccb);
 			break;
 		case HVS_MSG_ENUMERATE:
 			task_add(systq, &sc->sc_probetask);
@@ -564,21 +606,14 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 }
 
 void
-hvs_complete_cmd(struct hvs_softc *sc, union hvs_cmd *cmd, uint64_t rid)
+hvs_scsi_cmd_done(struct hvs_ccb *ccb)
 {
-	struct scsi_xfer *xs;
-	struct hvs_ccb *ccb;
+	struct scsi_xfer *xs = ccb->ccb_xfer;
+	struct hvs_softc *sc = xs->sc_link->adapter_softc;
+	union hvs_cmd *cmd = ccb->ccb_cmd;
 	struct hvs_srb *srb;
 	bus_dmamap_t map;
 	int error;
-
-	if ((rid & 0xffffffff) != 0 || rid >> 32 >= sc->sc_nccb) {
-		printf("%s: invalid response %#llx\n", sc->sc_dev.dv_xname,
-		    rid);
-		return;
-	}
-
-	ccb = &sc->sc_ccbs[rid >> 32];
 
 	map = ccb->ccb_dmap;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
@@ -620,6 +655,15 @@ hvs_complete_cmd(struct hvs_softc *sc, union hvs_cmd *cmd, uint64_t rid)
 }
 
 void
+hvs_scsi_probe(void *arg)
+{
+	struct hvs_softc *sc = arg;
+
+	if (sc->sc_scsibus)
+		scsi_probe_bus((void *)sc->sc_scsibus);
+}
+
+void
 hvs_scsi_done(struct scsi_xfer *xs, int error)
 {
 	int s;
@@ -646,9 +690,18 @@ hvs_connect(struct hvs_softc *sc)
 	union hvs_cmd ucmd;
 	struct hvs_cmd_ver *cmd;
 	struct hvs_chp *chp;
+	struct hvs_ccb *ccb;
 	int i;
 
 	mtx_init(&sc->sc_resplck, IPL_BIO);
+
+	ccb = scsi_io_get(&sc->sc_iopool, SCSI_POLL);
+	if (ccb == NULL) {
+		printf(": failed to allocate ccb\n");
+		return (-1);
+	}
+
+	ccb->ccb_done = hvs_empty_done;
 
 	cmd = (struct hvs_cmd_ver *)&ucmd;
 
@@ -661,14 +714,16 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_STARTINIT;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd)) {
+	ccb->ccb_cmd = &ucmd;
+	if (hvs_poll(ccb)) {
 		printf(": failed to send initialization command\n");
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
-	if (sc->sc_resp.cmd_op != HVS_MSG_IODONE ||
-	    sc->sc_resp.cmd_status != 0) {
+	if (sc->sc_resp.cmd_status != 0) {
 		printf(": failed to initialize, status %#x\n",
 		    sc->sc_resp.cmd_status);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
 
@@ -684,13 +739,10 @@ hvs_connect(struct hvs_softc *sc)
 	for (i = 0; i < nitems(protos); i++) {
 		cmd->cmd_ver = protos[i];
 
-		if (hvs_cmd(sc, cmd)) {
+		ccb->ccb_cmd = &ucmd;
+		if (hvs_poll(ccb)) {
 			printf(": failed to send protocol query\n");
-			return (-1);
-		}
-		if (sc->sc_resp.cmd_op != HVS_MSG_IODONE) {
-			printf(": failed to negotiate protocol, status %#x\n",
-			    sc->sc_resp.cmd_status);
+			scsi_io_put(&sc->sc_iopool, ccb);
 			return (-1);
 		}
 		if (sc->sc_resp.cmd_status == 0) {
@@ -700,6 +752,7 @@ hvs_connect(struct hvs_softc *sc)
 	}
 	if (!sc->sc_proto) {
 		printf(": failed to negotiate protocol version\n");
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
 
@@ -712,14 +765,17 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_QUERYPROPS;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd)) {
+	ccb->ccb_cmd = &ucmd;
+	if (hvs_poll(ccb)) {
 		printf(": failed to send channel properties query\n");
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
 	if (sc->sc_resp.cmd_op != HVS_MSG_IODONE ||
 	    sc->sc_resp.cmd_status != 0) {
 		printf(": failed to obtain channel properties, status %#x\n",
 		    sc->sc_resp.cmd_status);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
 	chp = &sc->sc_resp.chp.cmd_chp;
@@ -744,47 +800,29 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_FINISHINIT;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd)) {
+	ccb->ccb_cmd = &ucmd;
+	if (hvs_poll(ccb)) {
 		printf(": failed to send initialization finish\n");
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
 	if (sc->sc_resp.cmd_op != HVS_MSG_IODONE ||
 	    sc->sc_resp.cmd_status != 0) {
 		printf(": failed to finish initialization, status %#x\n",
 		    sc->sc_resp.cmd_status);
+		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
+
+	scsi_io_put(&sc->sc_iopool, ccb);
 
 	return (0);
 }
 
-int
-hvs_cmd(struct hvs_softc *sc, void *xcmd)
+void
+hvs_empty_done(struct hvs_ccb *ccb)
 {
-	union hvs_cmd *cmd = xcmd;
-	int tries = 10;
-	int rv;
-
-	do {
-		rv = hv_channel_send(sc->sc_chan, cmd, HVS_CMD_SIZE,
-		    HVS_INIT_TID, VMBUS_CHANPKT_TYPE_INBAND,
-		    VMBUS_CHANPKT_FLAG_RC);
-		if (rv == EAGAIN)
-			tsleep(cmd, PRIBIO, "hvsout", 1);
-		else if (rv) {
-			DPRINTF("%s: operation %u send error %d\n",
-			    sc->sc_dev.dv_xname, cmd->cmd_op, rv);
-			return (rv);
-		}
-	} while (rv != 0 && --tries > 0);
-
-	mtx_enter(&sc->sc_resplck);
-	rv = msleep(&sc->sc_resp, &sc->sc_resplck, PRIBIO, "hvscmd", 5 * hz);
-	mtx_leave(&sc->sc_resplck);
-	if (rv == EWOULDBLOCK)
-		printf("%s: operation %u timed out\n", sc->sc_dev.dv_xname,
-		    cmd->cmd_op);
-	return (rv);
+	/* nothing */
 }
 
 int
@@ -800,7 +838,7 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 	sc->sc_ccbs = mallocarray(sc->sc_nccb, sizeof(struct hvs_ccb),
 	    M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (sc->sc_ccbs == NULL) {
-		printf("%s: failed to allocate CCBs\n", sc->sc_dev.dv_xname);
+		printf(": failed to allocate CCBs\n");
 		return (-1);
 	}
 
@@ -809,19 +847,19 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 		    PAGE_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT,
 		    &sc->sc_ccbs[i].ccb_dmap);
 		if (error) {
-			printf("%s: failed to create a CCB memory map (%d)\n",
-			    sc->sc_dev.dv_xname, error);
+			printf(": failed to create a CCB memory map (%d)\n",
+			    error);
 			goto errout;
 		}
 
 		sc->sc_ccbs[i].ccb_sgl = malloc(sizeof(struct vmbus_gpa_range) *
 		    (HVS_MAX_SGE + 1), M_DEVBUF, M_ZERO | M_NOWAIT);
 		if (sc->sc_ccbs[i].ccb_sgl == NULL) {
-			printf("%s: failed to allocate SGL array\n",
-			    sc->sc_dev.dv_xname);
+			printf(": failed to allocate SGL array\n");
 			goto errout;
 		}
 
+		sc->sc_ccbs[i].ccb_softc = sc;
 		sc->sc_ccbs[i].ccb_rid = i;
 		hvs_put_ccb(sc, &sc->sc_ccbs[i]);
 	}
@@ -880,7 +918,11 @@ hvs_put_ccb(void *xsc, void *io)
 	struct hvs_softc *sc = xsc;
 	struct hvs_ccb *ccb = io;
 
+	ccb->ccb_cmd = NULL;
 	ccb->ccb_xfer = NULL;
+	ccb->ccb_done = NULL;
+	ccb->ccb_cookie = NULL;
+	ccb->ccb_nsge = 0;
 
 	mtx_enter(&sc->sc_ccb_fqlck);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_fq, ccb, ccb_link);
