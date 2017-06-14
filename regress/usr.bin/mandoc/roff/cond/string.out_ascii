@@ -1,0 +1,20 @@
+STRING(1)                   General Commands Manual                  STRING(1)
+
+
+
+NNAAMMEE
+       string - conditional testing whether a string is defined
+
+DDEESSCCRRIIPPTTIIOONN
+       mystr not yet defined
+       now defined
+
+       mymac not yet defined
+       now defined
+
+       myren not yet defined
+       now defined
+
+
+
+OpenBSD                          June 14, 2017                       STRING(1)

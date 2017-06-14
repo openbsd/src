@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.69 2017/06/14 13:00:13 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.70 2017/06/14 14:01:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1043,8 +1043,6 @@ If the first character of
 is
 .Sq c
 .Pq character available ,
-.Sq d
-.Pq string defined ,
 .Sq e
 .Pq even page ,
 .Sq t
@@ -1053,6 +1051,15 @@ or
 .Sq v
 .Pq vroff mode ,
 it evaluates to false.
+.It
+If the first character of
+.Ar condition
+is
+.Sq d ,
+it evaluates to true if the rest of
+.Ar condition
+is the name of an existing user defined macro or string;
+otherwise, it evaluates to false.
 .It
 If the first character of
 .Ar condition

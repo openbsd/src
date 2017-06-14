@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.181 2017/06/14 13:00:13 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.182 2017/06/14 14:01:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2063,7 +2063,7 @@ roff_evalcond(struct roff *r, int ln, char *v, int *pos)
 {
 	char	*cp, *name;
 	size_t	 sz;
-	int	 number, savepos, wanttrue;
+	int	 number, savepos, istrue, wanttrue;
 
 	if ('!' == v[*pos]) {
 		wanttrue = 0;
@@ -2079,17 +2079,23 @@ roff_evalcond(struct roff *r, int ln, char *v, int *pos)
 		(*pos)++;
 		return wanttrue;
 	case 'c':
-	case 'd':
 	case 'e':
 	case 't':
 	case 'v':
 		(*pos)++;
 		return !wanttrue;
+	case 'd':
 	case 'r':
-		cp = name = v + ++*pos;
-		sz = roff_getname(r, &cp, ln, *pos);
+		cp = v + *pos + 1;
+		while (*cp == ' ')
+			cp++;
+		name = cp;
+		sz = roff_getname(r, &cp, ln, cp - v);
+		istrue = sz && (v[*pos] == 'r' ? roff_hasregn(r, name, sz) :
+		    (roff_getstrn(r, name, sz) != NULL ||
+		     roff_getrenn(r, name, sz) != NULL));
 		*pos = cp - v;
-		return (sz && roff_hasregn(r, name, sz)) == wanttrue;
+		return istrue == wanttrue;
 	default:
 		break;
 	}

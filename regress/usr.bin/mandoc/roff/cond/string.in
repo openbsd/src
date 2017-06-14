@@ -1,0 +1,29 @@
+.TH STRING 1 "June 14, 2017" OpenBSD
+.SH NAME
+string \- conditional testing whether a string is defined
+.SH DESCRIPTION
+.ie d mystr OOPS
+.el mystr not yet defined
+.br
+.ds mystr mystrval
+.ie d mystr now defined
+.el OOPS
+.if !d mystr OOPS
+.PP
+.ie d mymac OOPS
+.el mymac not yet defined
+.br
+.de mymac
+mymacval
+..
+.ie dmymac now defined
+.el OOPS
+.if !d  mymac OOPS
+.PP
+.ie d myren OOPS
+.el myren not yet defined
+.br
+.rn SM myren
+.ie d myren now defined
+.el OOPS
+.if !d myren OOPS
