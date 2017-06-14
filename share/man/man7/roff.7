@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.71 2017/06/14 19:39:05 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.72 2017/06/14 22:50:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1439,8 +1439,15 @@ Currently ignored.
 Print all number registers on standard error output.
 Currently ignored.
 .It Ic \&po Op Oo Cm + Ns | Ns Cm - Oc Ns Ar offset
-Set horizontal page offset.
-Currently ignored.
+Set a horizontal page offset.
+If no argument is specified, the page offset is reverted to its
+previous value.
+If a sign is specified, the new page offset is calculated relative
+to the current one; otherwise, it is absolute.
+The argument follows the syntax of
+.Sx Scaling Widths
+and the default scaling unit is
+.Cm m .
 .It Ic \&ps Op Oo Cm + Ns | Ns Cm - Oc Ns size
 Change point size.
 Currently ignored.

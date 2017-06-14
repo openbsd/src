@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.119 2017/06/14 13:00:13 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.120 2017/06/14 22:50:37 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -128,6 +128,7 @@ static	const void_fp roff_manacts[ROFF_MAX] = {
 	pre_ft,		/* ft */
 	pre_onearg,	/* ll */
 	pre_onearg,	/* mc */
+	pre_onearg,	/* po */
 	pre_onearg,	/* rj */
 	pre_sp,		/* sp */
 	pre_ta,		/* ta */

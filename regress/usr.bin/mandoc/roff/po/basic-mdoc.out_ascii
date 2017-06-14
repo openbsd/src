@@ -1,0 +1,17 @@
+PO-BASIC-MDOC(1)            General Commands Manual           PO-BASIC-MDOC(1)
+
+NNAAMMEE
+     ppoo--bbaassiicc--mmddoocc - the roff page offset request
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+   shifted left
+
+        shifted right
+
+   shifted left
+
+     final text
+
+OpenBSD                          June 14, 2017                         OpenBSD

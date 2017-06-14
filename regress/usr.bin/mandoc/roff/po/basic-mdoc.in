@@ -1,0 +1,20 @@
+.Dd June 14, 2017
+.Dt PO-BASIC-MDOC 1
+.Os OpenBSD
+.Sh NAME
+.Nm po-basic-mdoc
+.Nd the roff page offset request
+.Sh DESCRIPTION
+initial text
+.Pp
+.po -2n
+shifted left
+.Pp
+.po +5n
+shifted right
+.Pp
+.po XXX
+shifted left
+.Pp
+.po 0
+final text

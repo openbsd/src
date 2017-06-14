@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.12 2017/06/14 17:50:43 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.13 2017/06/14 22:50:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -32,6 +32,7 @@ static	void	  roff_term_pre_ce(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ft(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ll(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_mc(ROFF_TERM_ARGS);
+static	void	  roff_term_pre_po(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_sp(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ta(ROFF_TERM_ARGS);
 static	void	  roff_term_pre_ti(ROFF_TERM_ARGS);
@@ -42,6 +43,7 @@ static	const roff_term_pre_fp roff_term_pre_acts[ROFF_MAX] = {
 	roff_term_pre_ft,  /* ft */
 	roff_term_pre_ll,  /* ll */
 	roff_term_pre_mc,  /* mc */
+	roff_term_pre_po,  /* po */
 	roff_term_pre_ce,  /* rj */
 	roff_term_pre_sp,  /* sp */
 	roff_term_pre_ta,  /* ta */
@@ -150,6 +152,28 @@ roff_term_pre_mc(ROFF_TERM_ARGS)
 		p->flags |= TERMP_NEWMC;
 	} else
 		p->flags |= TERMP_ENDMC;
+}
+
+static void
+roff_term_pre_po(ROFF_TERM_ARGS)
+{
+	struct roffsu	 su;
+	static int	 po, polast;
+	int		 ponew;
+
+	if (n->child != NULL &&
+	    a2roffsu(n->child->string, &su, SCALE_EM) != NULL) {
+		ponew = term_hen(p, &su);
+		if (*n->child->string == '+' ||
+		    *n->child->string == '-')
+			ponew += po;
+	} else
+		ponew = polast;
+	polast = po;
+	po = ponew;
+
+	ponew = po - polast + (int)p->tcol->offset;
+	p->tcol->offset = ponew > 0 ? ponew : 0;
 }
 
 static void
