@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.69 2017/06/11 19:36:31 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.70 2017/06/14 01:31:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -94,6 +94,8 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case ',':
 	case '/':
 		return ESCAPE_IGNORE;
+	case 'p':
+		return ESCAPE_BREAK;
 
 	/*
 	 * The \z escape is supposed to output the following

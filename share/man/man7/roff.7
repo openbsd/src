@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.67 2017/06/10 16:32:08 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.68 2017/06/14 01:31:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2017 $
+.Dd $Mdocdate: June 14 2017 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -1989,6 +1989,8 @@ Overstrike, writing all the characters contained in the
 to the same output position.
 In terminal and HTML output modes,
 only the last one of the characters is visible.
+.Ss \ep
+Break the output line at the end of the current word.
 .Ss \eR\(aq Ns Ar name Oo +|- Oc Ns Ar number Ns \(aq
 Set number register; ignored by
 .Xr mandoc 1 .

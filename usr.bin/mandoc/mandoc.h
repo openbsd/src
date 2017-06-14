@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.171 2017/06/11 19:36:31 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.172 2017/06/14 01:31:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -423,6 +423,7 @@ enum	mandoc_esc {
 	ESCAPE_FONTPREV, /* previous font mode */
 	ESCAPE_NUMBERED, /* a numbered glyph */
 	ESCAPE_UNICODE, /* a unicode codepoint */
+	ESCAPE_BREAK, /* break the output line */
 	ESCAPE_NOSPACE, /* suppress space if the last on a line */
 	ESCAPE_HORIZ, /* horizontal movement */
 	ESCAPE_HLINE, /* horizontal line drawing */

@@ -1,0 +1,15 @@
+.Dd June 14, 2017
+.Dt ESC-P 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-p
+.Nd line break escape sequence
+.Sh DESCRIPTION
+no blank: line one\pline two
+.Pp
+blank after esc: line one\p line two
+.Pp
+blank before esc: line one \pline two
+.Pp
+at eol: line one\p
+line two
