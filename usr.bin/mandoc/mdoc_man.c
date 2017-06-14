@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.118 2017/06/10 01:27:44 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.119 2017/06/14 13:00:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -123,14 +123,15 @@ static	void	  print_count(int *);
 static	void	  print_node(DECL_ARGS);
 
 static	const void_fp roff_manacts[ROFF_MAX] = {
-	pre_br,
-	pre_onearg,
-	pre_ft,
-	pre_onearg,
-	pre_onearg,
-	pre_sp,
-	pre_ta,
-	pre_onearg,
+	pre_br,		/* br */
+	pre_onearg,	/* ce */
+	pre_ft,		/* ft */
+	pre_onearg,	/* ll */
+	pre_onearg,	/* mc */
+	pre_onearg,	/* rj */
+	pre_sp,		/* sp */
+	pre_ta,		/* ta */
+	pre_onearg,	/* ti */
 };
 
 static	const struct manact __manacts[MDOC_MAX - MDOC_Dd] = {

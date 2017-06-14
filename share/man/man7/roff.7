@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.68 2017/06/14 01:31:19 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.69 2017/06/14 13:00:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010,2011,2013-2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1475,7 +1475,9 @@ This is a Heirloom extension and currently ignored.
 Justify the next
 .Ar N
 input lines to the right margin without filling.
-Currently ignored.
+.Ar N
+defaults to 1.
+An argument of 0 or less ends right adjustment.
 .It Ic \&rm Ar macroname
 Remove a request, macro or string.
 .It Ic \&rn Ar oldname newname
