@@ -1,0 +1,22 @@
+.Dd June 14, 2017
+.Dt ESC-L 1
+.Os OpenBSD
+.Sh NAME
+.Nm esc-l
+.Nd the roff escape l sequence: horizontal line
+.Sh DESCRIPTION
+explicit scaling unit and fill char: >\l'2nf'<
+.br
+explicit scaling unit and default char: >\l'3n'<
+.br
+default unit and explicit fill char: >\l'4x'<
+.br
+default unit and char: >\l'5'<
+.br
+explicit scaling unit and escape sequence: >\l'6n\(+-'<
+.br
+default unit and escape char: >\l'7n\(at'<
+.br
+rounding: >\l'0.26ix'<
+.br
+invalid delimiter: >\h-<

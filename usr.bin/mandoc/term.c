@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.131 2017/06/14 17:50:43 schwarze Exp $ */
+/*	$OpenBSD: term.c,v 1.132 2017/06/14 18:23:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -545,7 +545,7 @@ term_word(struct termp *p, const char *word)
 			}
 			continue;
 		case ESCAPE_HLINE:
-			if ((seq = a2roffsu(seq, &su, SCALE_EM)) == NULL)
+			if ((cp = a2roffsu(seq, &su, SCALE_EM)) == NULL)
 				continue;
 			uc = term_hen(p, &su);
 			if (uc <= 0) {
@@ -554,10 +554,10 @@ term_word(struct termp *p, const char *word)
 				lsz = p->tcol->rmargin - p->tcol->offset;
 			} else
 				lsz = uc;
-			if (*seq == '\0')
+			if (*cp == seq[-1])
 				uc = -1;
-			else if (*seq == '\\') {
-				seq++;
+			else if (*cp == '\\') {
+				seq = cp + 1;
 				esc = mandoc_escape(&seq, &cp, &sz);
 				switch (esc) {
 				case ESCAPE_UNICODE:
@@ -574,7 +574,7 @@ term_word(struct termp *p, const char *word)
 					break;
 				}
 			} else
-				uc = *seq;
+				uc = *cp;
 			if (uc < 0x20 || (uc > 0x7E && uc < 0xA0))
 				uc = '_';
 			if (p->enc == TERMENC_ASCII) {

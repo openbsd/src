@@ -1,0 +1,16 @@
+ESC-L(1)                    General Commands Manual                   ESC-L(1)
+
+NNAAMMEE
+     eesscc--ll - the roff escape l sequence: horizontal line
+
+DDEESSCCRRIIPPTTIIOONN
+     explicit scaling unit and fill char: >ff<
+     explicit scaling unit and default char: >___<
+     default unit and explicit fill char: >xxxx<
+     default unit and char: >_____<
+     explicit scaling unit and escape sequence: >+-+-+-<
+     default unit and escape char: >@@@@@@@<
+     rounding: >xxx<
+     invalid delimiter: ><
+
+OpenBSD                          June 14, 2017                         OpenBSD
