@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.28 2017/01/24 19:53:37 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.29 2017/06/14 07:42:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -159,21 +159,19 @@ cmd_string_parse(const char *s, const char *file, u_int line, char **cause)
 	char		**argv;
 
 	*cause = NULL;
-	if (cmd_string_split(s, &argc, &argv) != 0)
-		goto error;
+	if (cmd_string_split(s, &argc, &argv) != 0) {
+		xasprintf(cause, "invalid or unknown command: %s", s);
+		return (NULL);
+	}
 	if (argc != 0) {
 		cmdlist = cmd_list_parse(argc, argv, file, line, cause);
 		if (cmdlist == NULL) {
 			cmd_free_argv(argc, argv);
-			goto error;
+			return (NULL);
 		}
 	}
 	cmd_free_argv(argc, argv);
 	return (cmdlist);
-
-error:
-	xasprintf(cause, "invalid or unknown command: %s", s);
-	return (NULL);
 }
 
 static void
