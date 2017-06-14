@@ -169,6 +169,7 @@ struct hvs_cmd_xio {
 	uint32_t		 cmd_qsortkey;
 } __packed;
 
+#define HVS_INIT_TID			 0x1984
 #define HVS_CMD_SIZE			 64
 
 union hvs_cmd {
@@ -236,7 +237,7 @@ void	hvs_complete_cmd(struct hvs_softc *, union hvs_cmd *, uint64_t);
 void	hvs_scsi_done(struct scsi_xfer *, int);
 
 int	hvs_connect(struct hvs_softc *);
-int	hvs_cmd(struct hvs_softc *, void *, uint64_t, int);
+int	hvs_cmd(struct hvs_softc *, void *);
 
 int	hvs_alloc_ccbs(struct hvs_softc *);
 void	hvs_free_ccbs(struct hvs_softc *);
@@ -499,7 +500,7 @@ hvs_intr(void *xsc)
 #endif
 
 		/* Initialization */
-		if (rid == 0) {
+		if (rid == HVS_INIT_TID) {
 			memcpy(&sc->sc_resp, &cmd, sizeof(cmd));
 			wakeup_one(&sc->sc_resp);
 			continue;
@@ -660,7 +661,7 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_STARTINIT;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd, 0, 100)) {
+	if (hvs_cmd(sc, cmd)) {
 		printf(": failed to send initialization command\n");
 		return (-1);
 	}
@@ -683,7 +684,7 @@ hvs_connect(struct hvs_softc *sc)
 	for (i = 0; i < nitems(protos); i++) {
 		cmd->cmd_ver = protos[i];
 
-		if (hvs_cmd(sc, cmd, 0, 100)) {
+		if (hvs_cmd(sc, cmd)) {
 			printf(": failed to send protocol query\n");
 			return (-1);
 		}
@@ -711,7 +712,7 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_QUERYPROPS;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd, 0, 100)) {
+	if (hvs_cmd(sc, cmd)) {
 		printf(": failed to send channel properties query\n");
 		return (-1);
 	}
@@ -743,7 +744,7 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_op = HVS_REQ_FINISHINIT;
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
-	if (hvs_cmd(sc, cmd, 0, 100)) {
+	if (hvs_cmd(sc, cmd)) {
 		printf(": failed to send initialization finish\n");
 		return (-1);
 	}
@@ -758,7 +759,7 @@ hvs_connect(struct hvs_softc *sc)
 }
 
 int
-hvs_cmd(struct hvs_softc *sc, void *xcmd, uint64_t tid, int timo)
+hvs_cmd(struct hvs_softc *sc, void *xcmd)
 {
 	union hvs_cmd *cmd = xcmd;
 	int tries = 10;
@@ -766,29 +767,23 @@ hvs_cmd(struct hvs_softc *sc, void *xcmd, uint64_t tid, int timo)
 
 	do {
 		rv = hv_channel_send(sc->sc_chan, cmd, HVS_CMD_SIZE,
-		    tid, VMBUS_CHANPKT_TYPE_INBAND,
-		    timo ? VMBUS_CHANPKT_FLAG_RC : 0);
-		if (rv == EAGAIN) {
-			if (timo)
-				tsleep(cmd, PRIBIO, "hvsout", timo / 10);
-			else
-				delay(100);
-		} else if (rv) {
+		    HVS_INIT_TID, VMBUS_CHANPKT_TYPE_INBAND,
+		    VMBUS_CHANPKT_FLAG_RC);
+		if (rv == EAGAIN)
+			tsleep(cmd, PRIBIO, "hvsout", 1);
+		else if (rv) {
 			DPRINTF("%s: operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, cmd->cmd_op, rv);
 			return (rv);
 		}
 	} while (rv != 0 && --tries > 0);
 
-	if (timo) {
-		mtx_enter(&sc->sc_resplck);
-		rv = msleep(&sc->sc_resp, &sc->sc_resplck, PRIBIO, "hvscmd",
-		    timo);
-		mtx_leave(&sc->sc_resplck);
-		if (rv == EWOULDBLOCK)
-			printf("%s: operation %u timed out\n",
-			    sc->sc_dev.dv_xname, cmd->cmd_op);
-	}
+	mtx_enter(&sc->sc_resplck);
+	rv = msleep(&sc->sc_resp, &sc->sc_resplck, PRIBIO, "hvscmd", 5 * hz);
+	mtx_leave(&sc->sc_resplck);
+	if (rv == EWOULDBLOCK)
+		printf("%s: operation %u timed out\n", sc->sc_dev.dv_xname,
+		    cmd->cmd_op);
 	return (rv);
 }
 
