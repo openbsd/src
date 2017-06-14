@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.327 2017/06/13 06:16:31 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.328 2017/06/14 03:00:40 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -928,23 +928,24 @@ sysctl_rdquad(void *oldp, size_t *oldlenp, void *newp, int64_t val)
  */
 int
 sysctl_string(void *oldp, size_t *oldlenp, void *newp, size_t newlen, char *str,
-    int maxlen)
+    size_t maxlen)
 {
 	return sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, 0);
 }
 
 int
 sysctl_tstring(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
-    char *str, int maxlen)
+    char *str, size_t maxlen)
 {
 	return sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, 1);
 }
 
 int
 sysctl__string(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
-    char *str, int maxlen, int trunc)
+    char *str, size_t maxlen, int trunc)
 {
-	int len, error = 0;
+	size_t len;
+	int error = 0;
 
 	len = strlen(str) + 1;
 	if (oldp && *oldlenp < len) {
