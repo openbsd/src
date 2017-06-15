@@ -169,7 +169,6 @@ struct hvs_cmd_xio {
 	uint32_t		 cmd_qsortkey;
 } __packed;
 
-#define HVS_INIT_TID			 0x1984
 #define HVS_CMD_SIZE			 64
 
 union hvs_cmd {
@@ -246,7 +245,7 @@ void	hvs_scsi_probe(void *arg);
 void	hvs_scsi_done(struct scsi_xfer *, int);
 
 int	hvs_connect(struct hvs_softc *);
-void	hvs_empty_done(struct hvs_ccb *);
+void	hvs_cmd_done(struct hvs_ccb *);
 
 int	hvs_alloc_ccbs(struct hvs_softc *);
 void	hvs_free_ccbs(struct hvs_softc *);
@@ -316,8 +315,9 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &sc->sc_switch;
 	sc->sc_link.adapter_softc = self;
-	sc->sc_link.adapter_buswidth = sc->sc_flags & HVSF_SCSI ? 64 : 1;
-	sc->sc_link.adapter_target = sc->sc_flags & HVSF_SCSI ? 64 : 1;
+	sc->sc_link.luns = sc->sc_flags & HVSF_SCSI ? 64 : 1;
+	sc->sc_link.adapter_buswidth = 2;
+	sc->sc_link.adapter_target = 2;
 	sc->sc_link.openings = sc->sc_nccb;
 	sc->sc_link.pool = &sc->sc_iopool;
 
@@ -469,11 +469,7 @@ hvs_start(struct hvs_ccb *ccb)
 void
 hvs_poll_done(struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = ccb->ccb_softc;
 	int *rv = ccb->ccb_cookie;
-
-	if (ccb->ccb_cmd)
-		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
 
 	*rv = 0;
 }
@@ -701,7 +697,7 @@ hvs_connect(struct hvs_softc *sc)
 		return (-1);
 	}
 
-	ccb->ccb_done = hvs_empty_done;
+	ccb->ccb_done = hvs_cmd_done;
 
 	cmd = (struct hvs_cmd_ver *)&ucmd;
 
@@ -820,9 +816,12 @@ hvs_connect(struct hvs_softc *sc)
 }
 
 void
-hvs_empty_done(struct hvs_ccb *ccb)
+hvs_cmd_done(struct hvs_ccb *ccb)
 {
-	/* nothing */
+	struct hvs_softc *sc = ccb->ccb_softc;
+
+	if (ccb->ccb_cmd)
+		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
 }
 
 int
