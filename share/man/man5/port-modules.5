@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.219 2017/06/15 15:53:23 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.220 2017/06/15 16:03:52 zhuk Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -747,6 +747,11 @@ targets, unless port already defines one; also,
 will be set to
 .Sq Yes
 unless it's already set to some value.
+Also, unless
+.Ev NO_TEST
+is set, the
+.Ar do-test
+target will be defined.
 .Pp
 The following variables could be used in qmake-based ports:
 .Bl -tag -width 1234
@@ -764,6 +769,19 @@ see qmake documentation for details.
 Defaults to
 .Sq \&. ,
 which means the (only) project in WRKSRC directory.
+.It Ev MODQMAKE_RECURSIVE
+If
+.Sq Yes ,
+then qmake will be run recursively during configure stage;
+otherwise, only projects mentioned in
+.Ev MODQMAKE_PROJECTS
+will be processed during configure stage, and their descendants will
+be visited during main build phase.
+Sometimes a qmake project processing depends on files generated
+by other qmake project during build, and recursive builds break this.
+For Qt4+ defaults to
+.Sq Yes ,
+and Qt3 doesn't support recursive configuring.
 .It Ev MODQMAKE_build
 Actual commands that module will use to build all
 .Ev MODQMAKE_PROJECTS
