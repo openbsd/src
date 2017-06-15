@@ -94,7 +94,7 @@ struct rndis_cmd {
 	struct rndis_packet_msg		 rc_cmp;
 	uint32_t			 rc_cmplen;
 	uint8_t				 rc_cmpbuf[HVN_RNDIS_BUFSIZE];
-	struct mutex			 rc_mtx;
+	int				 rc_done;
 	TAILQ_ENTRY(rndis_cmd)		 rc_entry;
 };
 TAILQ_HEAD(rndis_queue, rndis_cmd);
@@ -143,7 +143,7 @@ struct hvn_softc {
 	uint32_t			 sc_nvstid;
 	uint8_t				 sc_nvsrsp[HVN_NVS_MSGSIZE];
 	uint8_t				*sc_nvsbuf;
-	struct mutex			 sc_nvslck;
+	int				 sc_nvsdone;
 
 	/* RNDIS protocol */
 	int				 sc_ndisver;
@@ -246,7 +246,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	DPRINTF("\n");
+	printf(" channel %u: ", sc->sc_chan->ch_id);
 
 	if (hvn_nvs_attach(sc)) {
 		printf(": failed to init NVSP\n");
@@ -577,7 +577,7 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	pktlen = pkt->rm_pktinfooffset + pkt->rm_pktinfolen;
 	pkt->rm_pktinfooffset -= RNDIS_HEADER_OFFSET;
 
-	/* Attach an RNDIS message into the first slot */
+	/* Attach an RNDIS message to the first slot */
 	txd->txd_sgl[0].gpa_page = txd->txd_gpa.gpa_page;
 	txd->txd_sgl[0].gpa_ofs = txd->txd_gpa.gpa_ofs;
 	txd->txd_sgl[0].gpa_len = pktlen;
@@ -902,8 +902,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 
 	hv_evcount_attach(sc->sc_chan, sc->sc_dev.dv_xname);
 
-	mtx_init(&sc->sc_nvslck, IPL_NET);
-
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.nvs_type = HVN_NVS_TYPE_INIT;
 	for (i = 0; i < nitems(protos); i++) {
@@ -983,6 +981,7 @@ hvn_nvs_intr(void *arg)
 			case HVN_NVS_TYPE_SUBCH_RESP:
 				/* copy the response back */
 				memcpy(&sc->sc_nvsrsp, nvs, HVN_NVS_MSGSIZE);
+				sc->sc_nvsdone = 1;
 				wakeup_one(&sc->sc_nvsrsp);
 				break;
 			case HVN_NVS_TYPE_RNDIS_ACK:
@@ -1018,17 +1017,21 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 {
 	struct hvn_nvs_hdr *hdr = cmd;
 	int tries = 10;
-	int rv;
+	int rv, s;
+
+	KERNEL_ASSERT_LOCKED();
+
+	sc->sc_nvsdone = 0;
 
 	do {
 		rv = hv_channel_send(sc->sc_chan, cmd, cmdsize,
 		    tid, VMBUS_CHANPKT_TYPE_INBAND,
 		    timo ? VMBUS_CHANPKT_FLAG_RC : 0);
 		if (rv == EAGAIN) {
-			if (timo)
-				tsleep(cmd, PRIBIO, "nvsout", timo / 10);
+			if (cold)
+				delay(1000);
 			else
-				delay(100);
+				tsleep(cmd, PRIBIO, "nvsout", 1);
 		} else if (rv) {
 			DPRINTF("%s: NVSP operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type, rv);
@@ -1036,16 +1039,28 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		}
 	} while (rv != 0 && --tries > 0);
 
-	if (timo) {
-		mtx_enter(&sc->sc_nvslck);
-		rv = msleep(&sc->sc_nvsrsp, &sc->sc_nvslck, PRIBIO, "nvscmd",
-		    timo);
-		mtx_leave(&sc->sc_nvslck);
-		if (rv == EWOULDBLOCK)
-			printf("%s: NVSP operation %u timed out\n",
-			    sc->sc_dev.dv_xname, hdr->nvs_type);
+	if (tries == 0 && rv != 0) {
+		printf("%s: NVSP operation %u send error %d\n",
+		    sc->sc_dev.dv_xname, hdr->nvs_type, rv);
+		return (rv);
 	}
-	return (rv);
+
+	do {
+		if (cold)
+			delay(1000);
+		else
+			tsleep(sc, PRIBIO | PCATCH, "nvscmd", 1);
+		s = splnet();
+		hvn_nvs_intr(sc);
+		splx(s);
+	} while (--timo > 0 && sc->sc_nvsdone != 1);
+
+	if (timo == 0 && sc->sc_nvsdone != 1) {
+		printf("%s: NVSP operation %u timed out\n",
+		    sc->sc_dev.dv_xname, hdr->nvs_type);
+		return (ETIMEDOUT);
+	}
+	return (0);
 }
 
 int
@@ -1061,7 +1076,7 @@ hvn_nvs_ack(struct hvn_softc *sc, uint64_t tid)
 		rv = hv_channel_send(sc->sc_chan, &cmd, sizeof(cmd),
 		    tid, VMBUS_CHANPKT_TYPE_COMP, 0);
 		if (rv == EAGAIN)
-			delay(100);
+			delay(10);
 		else if (rv) {
 			DPRINTF("%s: NVSP acknowledgement error %d\n",
 			    sc->sc_dev.dv_xname, rv);
@@ -1211,7 +1226,6 @@ hvn_rndis_attach(struct hvn_softc *sc)
 			goto errout;
 		}
 		rc->rc_gpa = atop(rc->rc_dmap->dm_segs[0].ds_addr);
-		mtx_init(&rc->rc_mtx, IPL_NET);
 		TAILQ_INSERT_TAIL(&sc->sc_cntl_fq, rc, rc_entry);
 	}
 
@@ -1307,7 +1321,9 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	struct rndis_msghdr *hdr = rc->rc_req;
 	struct vmbus_gpa sgl[1];
 	int tries = 10;
-	int rv;
+	int rv, s;
+
+	KERNEL_ASSERT_LOCKED();
 
 	KASSERT(timo > 0);
 
@@ -1319,14 +1335,19 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	sgl[0].gpa_len = hdr->rm_len;
 	sgl[0].gpa_ofs = 0;
 
+	rc->rc_done = 0;
+
 	hvn_submit_cmd(sc, rc);
 
 	do {
 		rv = hv_channel_send_sgl(sc->sc_chan, sgl, 1, &rc->rc_msg,
 		    sizeof(*msg), rc->rc_id);
-		if (rv == EAGAIN)
-			tsleep(rc, PRIBIO, "rndisout", timo / 10);
-		else if (rv) {
+		if (rv == EAGAIN) {
+			if (cold)
+				delay(100);
+			else
+				tsleep(rc, PRIBIO, "rndisout", 1);
+		} else if (rv) {
 			DPRINTF("%s: RNDIS operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type, rv);
 			hvn_rollback_cmd(sc, rc);
@@ -1334,32 +1355,42 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 		}
 	} while (rv != 0 && --tries > 0);
 
+	if (tries == 0 && rv != 0) {
+		printf("%s: RNDIS operation %u send error %d\n",
+		    sc->sc_dev.dv_xname, hdr->rm_type, rv);
+		return (rv);
+	}
+
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTWRITE);
 
-	mtx_enter(&rc->rc_mtx);
-	rv = msleep(rc, &rc->rc_mtx, PRIBIO | PCATCH, "rndiscmd", timo);
-	mtx_leave(&rc->rc_mtx);
+	do {
+		if (cold)
+			delay(1000);
+		else
+			tsleep(rc, PRIBIO | PCATCH, "rndiscmd", 1);
+		s = splnet();
+		hvn_nvs_intr(sc);
+		splx(s);
+	} while (--timo > 0 && rc->rc_done != 1);
 
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
 	    BUS_DMASYNC_POSTREAD);
 
-	switch (rv) {
-	case 0:
-		hvn_release_cmd(sc, rc);
-		break;
-	case EINTR:
-	case EWOULDBLOCK:
+	if (rc->rc_done != 1) {
+		rv = timo == 0 ? ETIMEDOUT : EINTR;
 		if (hvn_rollback_cmd(sc, rc)) {
 			hvn_release_cmd(sc, rc);
 			rv = 0;
-		} else if (rv == EWOULDBLOCK) {
+		} else if (rv == ETIMEDOUT) {
 			printf("%s: RNDIS operation %u timed out\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type);
 		}
-		break;
+		return (rv);
 	}
-	return (rv);
+
+	hvn_release_cmd(sc, rc);
+	return (0);
 }
 
 void
@@ -1535,6 +1566,7 @@ hvn_rndis_complete(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 		else if (len > rc->rc_cmplen)
 			memcpy(&rc->rc_cmpbuf, buf + rc->rc_cmplen,
 			    len - rc->rc_cmplen);
+		rc->rc_done = 1;
 		wakeup_one(rc);
 	} else
 		DPRINTF("%s: failed to complete RNDIS request id %u\n",
