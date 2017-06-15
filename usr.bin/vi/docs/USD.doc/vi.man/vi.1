@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.66 2016/08/08 15:09:33 sobrado Exp $
+.\"	$OpenBSD: vi.1,v 1.67 2017/06/15 06:44:47 bentley Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: August 8 2016 $
+.Dd $Mdocdate: June 15 2017 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2294,7 +2294,7 @@ suffixes to the
 .Cm substitute
 commands, instead of initializing them as unset for each new command.
 .It Cm escapetime Bq 1
-The 10th's of a second
+The tenths of a second
 .Nm ex Ns / Ns Nm vi
 waits for a subsequent key to complete an
 .Aq escape
@@ -2326,7 +2326,7 @@ as long as an upper-case letter does not appear in the search string.
 .It Cm ignorecase , ic Bq off
 Ignore case differences in regular expressions.
 .It Cm keytime Bq 6
-The 10th's of a second
+The tenths of a second
 .Nm ex Ns / Ns Nm vi
 waits for a subsequent key to complete a key mapping.
 .It Cm leftright Bq off
@@ -2358,7 +2358,7 @@ re-enables them.
 .It Cm matchtime Bq 7
 .Nm vi
 only.
-The 10th's of a second
+The tenths of a second
 .Nm ex Ns / Ns Nm vi
 pauses on the matching character when the
 .Cm showmatch
