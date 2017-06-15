@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.220 2017/06/15 16:03:52 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.221 2017/06/15 16:06:02 zhuk Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1728,6 +1728,12 @@ Some tools require the following goo in the PLIST:
 .Ed
 .It x11/gnustep
 .It x11/kde
+Used for building KDE3-enabled ports.
+Main variables there is
+.Ev MODKDE_VERSION ,
+which defines what patches and tweaks should be applied,
+depending of exact KDE version the ported software is build
+against of.
 .It x11/kde4
 Required for building KDE4-enabled ports.
 Main variables are: MODKDE4_USE,
