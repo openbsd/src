@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.221 2017/06/15 16:06:02 zhuk Exp $
+.\"	$OpenBSD: port-modules.5,v 1.222 2017/06/15 16:07:54 zhuk Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -1996,7 +1996,7 @@ as the global qt directory location,
 .Ev MODQT*_CONFIGURE_ARGS
 as standard GNU configure-style parameters to locate the include and libraries.
 .Pp
-The location of qt specific tools
+The location of Qt-specific tools
 .Nm lrelease ,
 .Nm moc ,
 .Nm qmake
@@ -2026,7 +2026,7 @@ qt4 includes
 .Xr pkg-config 1
 files under a specific location recorded in
 .Ev MODQT_PKG_CONFIG_PATH .
-qt3 requires the use of
+Qt3 requires the use of
 .Ev MODQT3_PLUGINS
 to correctly locate plugins.
 .Pp
@@ -2038,13 +2038,21 @@ They define appropriate
 .Ev MODQT*_LIB_DEPENDS
 and
 .Ev MODQT*_WANTLIB .
-Note that qt4 has split its code over several libraries, so the basic
+.Pp
+Note that Qt 4 and Qt 5 has their code split over several libraries.
+For the qt4 module the basic
 .Ev WANTLIB
-only refers to QtCore.
-Other libraries should be added as needed.
+only refers to QtCore, and other libraries should be added as needed.
 The qt5 module doesn't set
 .Ev MODQT*_WANTLIB
 at all.
+Also, Qt 5 consists of many so called Qt modules, and qt5 port module
+only refers to qtbase Qt 5 module; other Qt modules should be added to
+.Ev LIB_DEPENDS ,
+.Ev BUILD_DEPENDS
+or
+.Ev RUN_DEPENDS
+manually.
 .It x11/tk
 Sets
 .Ev MODTK_VERSION ,
