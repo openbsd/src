@@ -79,7 +79,6 @@ struct hv_softc *hv_sc;
 
 int 	hv_match(struct device *, void *, void *);
 void	hv_attach(struct device *, struct device *, void *);
-void	hv_deferred(void *);
 void	hv_set_version(struct hv_softc *);
 u_int	hv_gettime(struct timecounter *);
 int	hv_init_hypercall(struct hv_softc *);
@@ -318,16 +317,8 @@ hv_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach heartbeat, KVP and other "internal" services */
 	hv_attach_icdevs(sc);
 
-	startuphook_establish(hv_deferred, sc);
-}
-
-void
-hv_deferred(void *arg)
-{
-	struct hv_softc *sc = arg;
-
-	if (hv_attach_devices(sc))
-		return;
+	/* Attach devices with external drivers */
+	hv_attach_devices(sc);
 }
 
 void
