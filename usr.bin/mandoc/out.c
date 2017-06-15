@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.40 2017/06/14 18:23:26 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.41 2017/06/15 00:27:22 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -155,7 +155,8 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp,
 			tblcalc_data(tbl, col, opts, dp,
 			    dp->block == 0 ? 0 :
 			    dp->layout->width ? dp->layout->width :
-			    rmargin ? rmargin / (sp->opts->cols + 1) : 0);
+			    rmargin ? (rmargin + sp->opts->cols / 2)
+			    / (sp->opts->cols + 1) : 0);
 		}
 	}
 

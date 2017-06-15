@@ -1,0 +1,102 @@
+.Dd June 15, 2017
+.Dt TBL-DATA-BLOCK_WIDTH 1
+.Os OpenBSD
+.Sh NAME
+.Nm tbl-data-block_width
+.Nd default width of text blocks
+.Sh DESCRIPTION
+one column:
+.TS
+allbox tab(:);
+l.
+T{
+1234567890123456789012345678901234567 9
+T}
+T{
+1234567890123456789012345678901234567 90
+T}
+.TE
+.sp
+two columns:
+.TS
+allbox tab(:);
+l l.
+a:T{
+123456789012345678901234 6
+T}
+a:T{
+123456789012345678901234 67
+T}
+.TE
+.sp
+three columns:
+.TS
+allbox tab(:);
+l l l.
+a:b:T{
+12345678901234567 9
+T}
+a:b:T{
+12345678901234567 90
+T}
+.TE
+.sp
+four columns:
+.TS
+allbox tab(:);
+l l l l.
+a:b:c:T{
+12345678901234 6
+T}
+a:b:c:T{
+12345678901234 67
+T}
+.TE
+.sp
+five columns:
+.TS
+allbox tab(:);
+l l l l l.
+a:b:c:d:T{
+12345678901 3
+T}
+a:b:c:d:T{
+12345678901 34
+T}
+.TE
+.sp
+six columns:
+.TS
+allbox tab(:);
+l l l l l l.
+a:b:c:d:e:T{
+123456789 1
+T}
+a:b:c:d:e:T{
+123456789 12
+T}
+.TE
+.sp
+seven columns:
+.TS
+allbox tab(:);
+l l l l l l l.
+a:b:c:d:e:f:T{
+12345678 0
+T}
+a:b:c:d:e:f:T{
+12345678 01
+T}
+.TE
+.sp
+eight columns:
+.TS
+allbox tab(:);
+l l l l l l l l.
+a:b:c:d:e:f:g:T{
+1234567 9
+T}
+a:b:c:d:e:f:g:T{
+1234567 90
+T}
+.TE
