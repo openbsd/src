@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.16 2015/09/06 20:07:46 tobias Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.17 2017/06/15 11:48:49 fcambus Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -75,10 +75,6 @@ static const struct {
 } encodings[] = {
 	{"iso",  WSDISPLAY_FONTENC_ISO},
 	{"ibm",  WSDISPLAY_FONTENC_IBM},
-#if 0
-	{"pcvt", WSDISPLAY_FONTENC_PCVT},
-	{"iso7", WSDISPLAY_FONTENC_ISO7},
-#endif
 };
 
 int
