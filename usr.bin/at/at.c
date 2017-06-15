@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.80 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.81 2017/06/15 19:37:10 tb Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -991,9 +991,26 @@ main(int argc, char **argv)
 			if (setegid(spool_gid) != 0)
 				fatal("setegid(spool_gid)");
 		}
+
+		if (pledge("stdio rpath wpath cpath fattr getpw unix", NULL)
+		    == -1)
+			fatal("pledge");
 		break;
+
+	case ATQ:
+	case CAT:
+		if (pledge("stdio rpath getpw", NULL) == -1)
+			fatal("pledge");
+		break;
+
+	case ATRM:
+		if (pledge("stdio rpath cpath getpw unix", NULL) == -1)
+			fatal("pledge");
+		break;
+
 	default:
-		;
+		fatalx("internal error");
+		break;
 	}
 
 	if ((pw = getpwuid(user_uid)) == NULL)
