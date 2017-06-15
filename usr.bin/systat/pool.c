@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.11 2016/03/12 12:45:27 sthen Exp $	*/
+/*	$OpenBSD: pool.c,v 1.12 2017/06/15 03:47:07 dlg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -26,6 +26,19 @@
 
 #include "systat.h"
 
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
+static int sysctl_rdint(const int *, unsigned int);
+static int hw_ncpusfound(void);
+
+static int pool_get_npools(void);
+static int pool_get_name(int, char *, size_t);
+static int pool_get_cache(int, struct kinfo_pool_cache *);
+static int pool_get_cache_cpus(int, struct kinfo_pool_cache_cpu *,
+    unsigned int);
+
 void print_pool(void);
 int  read_pool(void);
 void  sort_pool(void);
@@ -44,11 +57,25 @@ struct pool_info {
 	struct kinfo_pool pool;
 };
 
+/*
+ * the kernel gives an array of ncpusfound * kinfo_pool_cache structs, but
+ * it's idea of how big that struct is may differ from here. we fetch both
+ * ncpusfound and the size it thinks kinfo_pool_cache is from sysctl, and
+ * then allocate the memory for this here.
+ */
+struct pool_cache_info {
+	char name[32];
+	struct kinfo_pool_cache cache;
+	struct kinfo_pool_cache_cpu *cache_cpus;
+};
 
 int print_all = 0;
 int num_pools = 0;
 struct pool_info *pools = NULL;
+int num_pool_caches = 0;
+struct pool_cache_info *pool_caches = NULL;
 
+int ncpusfound = 0;
 
 field_def fields_pool[] = {
 	{"NAME", 12, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
@@ -64,7 +91,6 @@ field_def fields_pool[] = {
 	{"MAXPG", 8, 24, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"IDLE", 8, 24, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0}
 };
-
 
 #define FLD_POOL_NAME	FIELD_ADDR(fields_pool,0)
 #define FLD_POOL_SIZE	FIELD_ADDR(fields_pool,1)
@@ -100,11 +126,80 @@ struct view_manager pool_mgr = {
 	print_pool, pool_keyboard_callback, pool_order_list, pool_order_list
 };
 
-field_view views_pool[] = {
-	{view_pool_0, "pool", '5', &pool_mgr},
+field_view pool_view = {
+	view_pool_0,
+	"pool",
+	'5',
+	&pool_mgr
+};
+
+void	pool_cache_print(void);
+int	pool_cache_read(void);
+void	pool_cache_sort(void);
+void	pool_cache_show(const struct pool_cache_info *);
+int	pool_cache_kbd_cb(int);
+
+field_def pool_cache_fields[] = {
+	{"NAME", 12, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"LEN", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"NL", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"NGC", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"CPU",  4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"REQ", 8, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"REL", 8, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"LREQ", 8, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"LREL", 8, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+};
+
+#define FLD_POOL_CACHE_NAME	FIELD_ADDR(pool_cache_fields, 0)
+#define FLD_POOL_CACHE_LEN	FIELD_ADDR(pool_cache_fields, 1)
+#define FLD_POOL_CACHE_NL	FIELD_ADDR(pool_cache_fields, 2)
+#define FLD_POOL_CACHE_NGC	FIELD_ADDR(pool_cache_fields, 3)
+#define FLD_POOL_CACHE_CPU	FIELD_ADDR(pool_cache_fields, 4)
+#define FLD_POOL_CACHE_GET	FIELD_ADDR(pool_cache_fields, 5)
+#define FLD_POOL_CACHE_PUT	FIELD_ADDR(pool_cache_fields, 6)
+#define FLD_POOL_CACHE_LGET	FIELD_ADDR(pool_cache_fields, 7)
+#define FLD_POOL_CACHE_LPUT	FIELD_ADDR(pool_cache_fields, 8)
+
+field_def *view_pool_cache_0[] = {
+	FLD_POOL_CACHE_NAME,
+	FLD_POOL_CACHE_LEN,
+	FLD_POOL_CACHE_NL,
+	FLD_POOL_CACHE_NGC,
+	FLD_POOL_CACHE_CPU,
+	FLD_POOL_CACHE_GET,
+	FLD_POOL_CACHE_PUT,
+	FLD_POOL_CACHE_LGET,
+	FLD_POOL_CACHE_LPUT,
+	NULL,
+};
+
+order_type pool_cache_order_list[] = {
+	{"name", "name", 'N', sort_name_callback},
+	{"requests", "requests", 'G', sort_req_callback},
+	{"releases", "releases", 'P', sort_req_callback},
 	{NULL, NULL, 0, NULL}
 };
 
+/* Define view managers */
+struct view_manager pool_cache_mgr = {
+	"PoolCache",
+	select_pool,
+	pool_cache_read,
+	pool_cache_sort,
+	print_header,
+	pool_cache_print,
+	pool_keyboard_callback,
+	pool_cache_order_list,
+	pool_cache_order_list
+};
+
+field_view pool_cache_view = {
+	view_pool_cache_0,
+	"pcaches",
+	'5',
+	&pool_cache_mgr
+};
 
 int
 sort_name_callback(const void *s1, const void *s2)
@@ -200,30 +295,31 @@ select_pool(void)
 int
 read_pool(void)
 {
-	int mib[4], np, i;
+	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_POOL, 0 };
+	struct pool_info *p;
+	int np, i;
 	size_t size;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_POOL;
-	mib[2] = KERN_POOL_NPOOLS;
-	size = sizeof(np);
-
-	if (sysctl(mib, 3, &np, &size, NULL, 0) < 0) {
+	np = pool_get_npools();
+	if (np == -1) {
 		error("sysctl(npools): %s", strerror(errno));
 		return (-1);
 	}
 
-	if (np <= 0) {
+	if (np == 0) {
+		free(pools);
+		pools = NULL;
 		num_pools = 0;
 		return (0);
 	}
 
 	if (np > num_pools || pools == NULL) {
-		struct pool_info *p = reallocarray(pools, np, sizeof(*pools));
+		p = reallocarray(pools, np, sizeof(*pools));
 		if (p == NULL) {
 			error("realloc: %s", strerror(errno));
 			return (-1);
 		}
+		/* commit */
 		pools = p;
 		num_pools = np;
 	}
@@ -231,26 +327,19 @@ read_pool(void)
 	num_disp = num_pools;
 
 	for (i = 0; i < num_pools; i++) {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_POOL;
-		mib[2] = KERN_POOL_POOL;
-		mib[3] = i + 1;
+		p = &pools[i];
+		np = i + 1;
+
+		mib[3] = np;
 		size = sizeof(pools[i].pool);
-		if (sysctl(mib, 4, &pools[i].pool, &size, NULL, 0) < 0) {
-			memset(&pools[i], 0, sizeof(pools[i]));
+		if (sysctl(mib, nitems(mib), &p->pool, &size, NULL, 0) < 0) {
+			p->name[0] = '\0';
 			num_disp--;
 			continue;
 		}
-		mib[2] = KERN_POOL_NAME;
-		size = sizeof(pools[i].name);
-		if (sysctl(mib, 4, &pools[i].name, &size, NULL, 0) < 0) {
-			snprintf(pools[i].name, size, "#%d#", mib[3]);
-		}
-	}
 
-	if (i != num_pools) {
-		memset(pools, 0, sizeof(*pools) * num_pools);
-		return (-1);
+		if (pool_get_name(np, p->name, sizeof(p->name)) < 0)
+			snprintf(p->name, sizeof(p->name), "#%d#", i + 1);
 	}
 
 	return 0;
@@ -289,10 +378,17 @@ initpool(void)
 {
 	field_view *v;
 
-	for (v = views_pool; v->name != NULL; v++)
-		add_view(v);
-
+	add_view(&pool_view);
 	read_pool();
+
+	ncpusfound = hw_ncpusfound();
+	if (ncpusfound == -1) {
+		error("sysctl(ncpusfound): %s", strerror(errno));
+		exit(1);
+	}
+
+	add_view(&pool_cache_view);
+	pool_cache_read();
 
 	return(0);
 }
@@ -340,4 +436,194 @@ pool_keyboard_callback(int ch)
 	};
 
 	return (1);
+}
+
+int
+pool_cache_read(void)
+{
+	struct pool_cache_info *pc;
+	int np, i;
+
+	np = pool_get_npools();
+	if (np == -1) {
+		error("sysctl(npools): %s", strerror(errno));
+		return (-1);
+	}
+
+	if (np > num_pool_caches) {
+		pc = reallocarray(pool_caches, np, sizeof(*pc));
+		if (pc == NULL) {
+			error("realloc: %s", strerror(errno));
+			return (-1);
+		}
+		/* commit to using the new memory */
+		pool_caches = pc;
+
+		for (i = num_pool_caches; i < np; i++) {
+			pc = &pool_caches[i];
+			pc->name[0] = '\0';
+
+			pc->cache_cpus = reallocarray(NULL, ncpusfound,
+			    sizeof(*pc->cache_cpus));
+			if (pc->cache_cpus == NULL) {
+				error("malloc cache cpus: %s", strerror(errno));
+				goto unalloc;
+			}
+		}
+
+		/* commit to using the new cache_infos */
+		num_pool_caches = np;
+	}
+
+	for (i = 0; i < num_pool_caches; i++) {
+		pc = &pool_caches[i];
+		np = i + 1;
+
+		if (pool_get_cache(np, &pc->cache) < 0 ||
+		    pool_get_cache_cpus(np, pc->cache_cpus, ncpusfound) < 0) {
+			pc->name[0] = '\0';
+			continue;
+		}
+
+		if (pool_get_name(np, pc->name, sizeof(pc->name)) < 0)
+			snprintf(pc->name, sizeof(pc->name), "#%d#", i + 1);
+	}
+
+	return 0;
+
+unalloc:
+	while (i > num_pool_caches) {
+		pc = &pool_caches[--i];
+		free(pc->cache_cpus);
+	}
+}
+
+void
+pool_cache_sort(void)
+{
+	/* XXX */
+	order_type *ordering;
+
+	if (curr_mgr == NULL)
+		return;
+
+	ordering = curr_mgr->order_curr;
+
+	if (ordering == NULL)
+		return;
+	if (ordering->func == NULL)
+		return;
+	if (pools == NULL)
+		return;
+	if (num_pools <= 0)
+		return;
+
+	mergesort(pools, num_pools, sizeof(struct pool_info), ordering->func);
+}
+
+void
+pool_cache_print(void)
+{
+	struct pool_cache_info *pc;
+	int i, n, count = 0;
+
+	if (pool_caches == NULL)
+		return;
+
+	for (n = i = 0; i < num_pool_caches; i++) {
+		pc = &pool_caches[i];
+		if (pc->name[0] == '\0')
+			continue;
+
+		if (n++ < dispstart)
+			continue;
+
+		pool_cache_show(pc);
+		count++;
+		if (maxprint > 0 && count >= maxprint)
+			break;
+	}
+}
+
+void
+pool_cache_show(const struct pool_cache_info *pc)
+{
+	const struct kinfo_pool_cache *kpc;
+	const struct kinfo_pool_cache_cpu *kpcc;
+	int cpu;
+
+	kpc = &pc->cache;
+
+	print_fld_str(FLD_POOL_CACHE_NAME, pc->name);
+	print_fld_uint(FLD_POOL_CACHE_LEN, kpc->pr_len);
+	print_fld_uint(FLD_POOL_CACHE_NL, kpc->pr_nlist);
+	print_fld_uint(FLD_POOL_CACHE_NGC, kpc->pr_ngc);
+
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
+		kpcc = &pc->cache_cpus[cpu];
+
+		print_fld_uint(FLD_POOL_CACHE_CPU, kpcc->pr_cpu);
+
+		print_fld_size(FLD_POOL_CACHE_GET, kpcc->pr_nget);
+		print_fld_size(FLD_POOL_CACHE_PUT, kpcc->pr_nput);
+		print_fld_size(FLD_POOL_CACHE_LGET, kpcc->pr_nlget);
+		print_fld_size(FLD_POOL_CACHE_LPUT, kpcc->pr_nlput);
+		end_line();
+	}
+
+}
+
+static int
+pool_get_npools(void)
+{
+	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_NPOOLS };
+
+	return (sysctl_rdint(mib, nitems(mib)));
+}
+
+static int
+pool_get_cache(int pool, struct kinfo_pool_cache *kpc)
+{
+	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_CACHE, pool };
+	size_t len = sizeof(*kpc);
+
+	return (sysctl(mib, nitems(mib), kpc, &len, NULL, 0));
+}
+
+static int
+pool_get_cache_cpus(int pool, struct kinfo_pool_cache_cpu *kpcc,
+    unsigned int ncpus)
+{
+	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_CACHE_CPUS, pool };
+	size_t len = sizeof(*kpcc) * ncpus;
+
+	return (sysctl(mib, nitems(mib), kpcc, &len, NULL, 0));
+}
+
+static int
+pool_get_name(int pool, char *name, size_t len)
+{
+	int mib[] = { CTL_KERN, KERN_POOL, KERN_POOL_NAME, pool };
+
+	return (sysctl(mib, nitems(mib), name, &len, NULL, 0));
+}
+
+static int
+hw_ncpusfound(void)
+{
+	int mib[] = { CTL_HW, HW_NCPUFOUND };
+
+	return (sysctl_rdint(mib, nitems(mib)));
+}
+
+static int
+sysctl_rdint(const int *mib, unsigned int nmib)
+{
+	int i;
+	size_t size = sizeof(i);
+
+	if (sysctl(mib, nmib, &i, &size, NULL, 0) == -1)
+		return (-1);
+
+	return (i);
 }

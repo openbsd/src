@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.101 2015/03/12 01:03:00 claudio Exp $
+.\"	$OpenBSD: systat.1,v 1.102 2017/06/15 03:47:07 dlg Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 12 2015 $
+.Dd $Mdocdate: June 15 2017 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -136,6 +136,7 @@ argument expects to be one of:
 .Ic queues ,
 .Ic pf ,
 .Ic pool ,
+.Ic pcache ,
 .Ic malloc ,
 .Ic buckets ,
 .Ic nfsclient ,
@@ -379,6 +380,10 @@ and
 By default only the statistics of active pools are displayed but pressing
 .Ic A
 changes the view to show all of them.
+.It Ic pcache
+Display kernel
+.Xr pool 9
+per CPU cache statistics.
 .It Ic queues
 Display statistics about the active queues,
 similar to the output of
