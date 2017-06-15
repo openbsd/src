@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.211 2017/06/15 03:48:50 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.212 2017/06/15 03:50:50 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1946,6 +1946,7 @@ pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
 	kpc.pr_ngc = 0; /* notyet */
 	kpc.pr_len = pp->pr_cache_items;
 	kpc.pr_nlist = pp->pr_cache_nlist;
+	kpc.pr_contention = pp->pr_cache_contention;
 	mtx_leave(&pp->pr_cache_mtx);
 
 	return (sysctl_rdstruct(oldp, oldlenp, NULL, &kpc, sizeof(kpc)));
