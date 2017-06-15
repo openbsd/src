@@ -180,9 +180,9 @@ union hvs_cmd {
 struct hvs_softc;
 
 struct hvs_ccb {
-	struct hvs_softc	*ccb_softc;
-	union hvs_cmd		*ccb_cmd;   /* associated command */
 	struct scsi_xfer	*ccb_xfer;  /* associated transfer */
+	union hvs_cmd		*ccb_cmd;   /* associated command */
+	union hvs_cmd		 ccb_rsp;   /* response */
 	bus_dmamap_t		 ccb_dmap;  /* transfer map */
 	uint64_t		 ccb_rid;   /* request id */
 	struct vmbus_gpa_range	*ccb_sgl;
@@ -205,10 +205,6 @@ struct hvs_softc {
 #define  HVSF_W8PLUS		  0x0002
 	struct hvs_chp		 sc_props;
 
-	union hvs_cmd		 sc_resp;
-	struct mutex		 sc_resplck;
-	uint32_t		 sc_rid;
-
 	/* CCBs */
 	int			 sc_nccb;
 	struct hvs_ccb		*sc_ccbs;
@@ -230,8 +226,8 @@ void	hvs_attach(struct device *, struct device *, void *);
 
 void	hvs_scsi_cmd(struct scsi_xfer *);
 void	hvs_scsi_cmd_done(struct hvs_ccb *);
-int	hvs_start(struct hvs_ccb *);
-int	hvs_poll(struct hvs_ccb *);
+int	hvs_start(struct hvs_softc *, struct hvs_ccb *);
+int	hvs_poll(struct hvs_softc *, struct hvs_ccb *);
 void	hvs_poll_done(struct hvs_ccb *);
 void	hvs_intr(void *);
 void	hvs_scsi_probe(void *arg);
@@ -418,9 +414,9 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 #endif
 
 	if (xs->flags & SCSI_POLL)
-		rv = hvs_poll(ccb);
+		rv = hvs_poll(sc, ccb);
 	else
-		rv = hvs_start(ccb);
+		rv = hvs_start(sc, ccb);
 	if (rv) {
 		KERNEL_LOCK();
 		hvs_scsi_done(xs, XS_DRIVER_STUFFUP);
@@ -431,9 +427,8 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 }
 
 int
-hvs_start(struct hvs_ccb *ccb)
+hvs_start(struct hvs_softc *sc, struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = ccb->ccb_softc;
 	union hvs_cmd *cmd = ccb->ccb_cmd;
 	int rv;
 
@@ -462,22 +457,20 @@ hvs_start(struct hvs_ccb *ccb)
 void
 hvs_poll_done(struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = ccb->ccb_softc;
 	int *rv = ccb->ccb_cookie;
 
 	if (ccb->ccb_cmd) {
-		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
-		ccb->ccb_cmd = &sc->sc_resp;
+		memcpy(&ccb->ccb_rsp, ccb->ccb_cmd, HVS_CMD_SIZE);
+		ccb->ccb_cmd = &ccb->ccb_rsp;
 	} else
-		memset(&sc->sc_resp, 0, HVS_CMD_SIZE);
+		memset(&ccb->ccb_rsp, 0, HVS_CMD_SIZE);
 
 	*rv = 0;
 }
 
 int
-hvs_poll(struct hvs_ccb *ccb)
+hvs_poll(struct hvs_softc *sc, struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = ccb->ccb_softc;
 	void (*done)(struct hvs_ccb *);
 	void *cookie;
 	int s, rv = 1;
@@ -488,7 +481,7 @@ hvs_poll(struct hvs_ccb *ccb)
 	ccb->ccb_done = hvs_poll_done;
 	ccb->ccb_cookie = &rv;
 
-	if (hvs_start(ccb)) {
+	if (hvs_start(sc, ccb)) {
 		ccb->ccb_cookie = cookie;
 		ccb->ccb_done = done;
 		return (-1);
@@ -691,8 +684,6 @@ hvs_connect(struct hvs_softc *sc)
 	struct hvs_ccb *ccb;
 	int i;
 
-	mtx_init(&sc->sc_resplck, IPL_BIO);
-
 	ccb = scsi_io_get(&sc->sc_iopool, SCSI_POLL);
 	if (ccb == NULL) {
 		printf(": failed to allocate ccb\n");
@@ -713,14 +704,14 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
 	ccb->ccb_cmd = &ucmd;
-	if (hvs_poll(ccb)) {
+	if (hvs_poll(sc, ccb)) {
 		printf(": failed to send initialization command\n");
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
-	if (sc->sc_resp.cmd_status != 0) {
+	if (ccb->ccb_rsp.cmd_status != 0) {
 		printf(": failed to initialize, status %#x\n",
-		    sc->sc_resp.cmd_status);
+		    ccb->ccb_rsp.cmd_status);
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
@@ -738,12 +729,12 @@ hvs_connect(struct hvs_softc *sc)
 		cmd->cmd_ver = protos[i];
 
 		ccb->ccb_cmd = &ucmd;
-		if (hvs_poll(ccb)) {
+		if (hvs_poll(sc, ccb)) {
 			printf(": failed to send protocol query\n");
 			scsi_io_put(&sc->sc_iopool, ccb);
 			return (-1);
 		}
-		if (sc->sc_resp.cmd_status == 0) {
+		if (ccb->ccb_rsp.cmd_status == 0) {
 			sc->sc_proto = protos[i];
 			break;
 		}
@@ -764,19 +755,19 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
 	ccb->ccb_cmd = &ucmd;
-	if (hvs_poll(ccb)) {
+	if (hvs_poll(sc, ccb)) {
 		printf(": failed to send channel properties query\n");
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
-	if (sc->sc_resp.cmd_op != HVS_MSG_IODONE ||
-	    sc->sc_resp.cmd_status != 0) {
+	if (ccb->ccb_rsp.cmd_op != HVS_MSG_IODONE ||
+	    ccb->ccb_rsp.cmd_status != 0) {
 		printf(": failed to obtain channel properties, status %#x\n",
-		    sc->sc_resp.cmd_status);
+		    ccb->ccb_rsp.cmd_status);
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
-	chp = &sc->sc_resp.chp.cmd_chp;
+	chp = &ccb->ccb_rsp.chp.cmd_chp;
 
 	DPRINTF(": proto %#x path %u target %u maxchan %u",
 	    chp->chp_proto, chp->chp_path, chp->chp_target,
@@ -799,15 +790,15 @@ hvs_connect(struct hvs_softc *sc)
 	cmd->cmd_flags = VMBUS_CHANPKT_FLAG_RC;
 
 	ccb->ccb_cmd = &ucmd;
-	if (hvs_poll(ccb)) {
+	if (hvs_poll(sc, ccb)) {
 		printf(": failed to send initialization finish\n");
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
-	if (sc->sc_resp.cmd_op != HVS_MSG_IODONE ||
-	    sc->sc_resp.cmd_status != 0) {
+	if (ccb->ccb_rsp.cmd_op != HVS_MSG_IODONE ||
+	    ccb->ccb_rsp.cmd_status != 0) {
 		printf(": failed to finish initialization, status %#x\n",
-		    sc->sc_resp.cmd_status);
+		    ccb->ccb_rsp.cmd_status);
 		scsi_io_put(&sc->sc_iopool, ccb);
 		return (-1);
 	}
@@ -857,7 +848,6 @@ hvs_alloc_ccbs(struct hvs_softc *sc)
 			goto errout;
 		}
 
-		sc->sc_ccbs[i].ccb_softc = sc;
 		sc->sc_ccbs[i].ccb_rid = i;
 		hvs_put_ccb(sc, &sc->sc_ccbs[i]);
 	}
