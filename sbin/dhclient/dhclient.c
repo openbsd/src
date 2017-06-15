@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.426 2017/06/15 16:56:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.427 2017/06/15 17:06:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -895,8 +895,7 @@ state_selecting(struct interface_info *ifi)
 }
 
 void
-dhcpack(struct interface_info *ifi, struct in_addr client_addr,
-    struct option_data *options, char *info)
+dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 {
 	struct client_lease *lease;
 
@@ -1111,8 +1110,7 @@ state_bound(struct interface_info *ifi)
 }
 
 void
-dhcpoffer(struct interface_info *ifi, struct in_addr client_addr,
-    struct option_data *options, char *info)
+dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 {
 	struct dhcp_packet *packet = &ifi->recv_packet;
 	struct client_lease *lease, *lp;
@@ -1328,8 +1326,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 }
 
 void
-dhcpnak(struct interface_info *ifi, struct in_addr client_addr,
-    struct option_data *options, char *info)
+dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 {
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&

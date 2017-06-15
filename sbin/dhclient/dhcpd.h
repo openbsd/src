@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.181 2017/06/14 20:27:08 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.182 2017/06/15 17:06:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -235,12 +235,9 @@ extern char *path_dhclient_db;
 extern int log_perror;
 extern int routefd;
 
-void dhcpoffer(struct interface_info *, struct in_addr, struct option_data *,
-    char *);
-void dhcpack(struct interface_info *, struct in_addr, struct option_data *,
-    char *);
-void dhcpnak(struct interface_info *, struct in_addr, struct option_data *,
-    char *);
+void dhcpoffer(struct interface_info *, struct option_data *, char *);
+void dhcpack(struct interface_info *, struct option_data *,char *);
+void dhcpnak(struct interface_info *, struct option_data *,char *);
 
 void free_client_lease(struct client_lease *);
 
