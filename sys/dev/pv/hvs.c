@@ -245,7 +245,7 @@ void	hvs_scsi_probe(void *arg);
 void	hvs_scsi_done(struct scsi_xfer *, int);
 
 int	hvs_connect(struct hvs_softc *);
-void	hvs_cmd_done(struct hvs_ccb *);
+void	hvs_empty_done(struct hvs_ccb *);
 
 int	hvs_alloc_ccbs(struct hvs_softc *);
 void	hvs_free_ccbs(struct hvs_softc *);
@@ -469,7 +469,14 @@ hvs_start(struct hvs_ccb *ccb)
 void
 hvs_poll_done(struct hvs_ccb *ccb)
 {
+	struct hvs_softc *sc = ccb->ccb_softc;
 	int *rv = ccb->ccb_cookie;
+
+	if (ccb->ccb_cmd) {
+		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
+		ccb->ccb_cmd = &sc->sc_resp;
+	} else
+		memset(&sc->sc_resp, 0, HVS_CMD_SIZE);
 
 	*rv = 0;
 }
@@ -480,7 +487,7 @@ hvs_poll(struct hvs_ccb *ccb)
 	struct hvs_softc *sc = ccb->ccb_softc;
 	void (*done)(struct hvs_ccb *);
 	void *cookie;
-	int rv = 1;
+	int s, rv = 1;
 
 	done = ccb->ccb_done;
 	cookie = ccb->ccb_cookie;
@@ -495,7 +502,9 @@ hvs_poll(struct hvs_ccb *ccb)
 	}
 
 	while (rv == 1) {
+		s = splbio();
 		hvs_intr(sc);
+		splx(s);
 		delay(10);
 	}
 
@@ -697,7 +706,7 @@ hvs_connect(struct hvs_softc *sc)
 		return (-1);
 	}
 
-	ccb->ccb_done = hvs_cmd_done;
+	ccb->ccb_done = hvs_empty_done;
 
 	cmd = (struct hvs_cmd_ver *)&ucmd;
 
@@ -816,12 +825,9 @@ hvs_connect(struct hvs_softc *sc)
 }
 
 void
-hvs_cmd_done(struct hvs_ccb *ccb)
+hvs_empty_done(struct hvs_ccb *ccb)
 {
-	struct hvs_softc *sc = ccb->ccb_softc;
-
-	if (ccb->ccb_cmd)
-		memcpy(&sc->sc_resp, ccb->ccb_cmd, HVS_CMD_SIZE);
+	/* nothing */
 }
 
 int
