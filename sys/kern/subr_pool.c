@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.210 2017/06/15 03:44:17 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.211 2017/06/15 03:48:50 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -763,7 +763,7 @@ pool_put(struct pool *pp, void *v)
 	if (ph->ph_nmissing == 0) {
 		/*
 		 * The page is now empty, so move it to the empty page list.
-	 	 */
+		 */
 		pp->pr_nidle++;
 
 		ph->ph_tick = ticks;
@@ -1623,7 +1623,7 @@ pool_cache_init(struct pool *pp)
 		    IPL_NONE, PR_WAITOK, "plcache", NULL);
 	}
 
-        /* must be able to use the pool items as cache list items */
+	/* must be able to use the pool items as cache list items */
 	KASSERT(pp->pr_size >= sizeof(struct pool_cache_item));
 
 	cm = cpumem_get(&pool_caches);
@@ -1830,7 +1830,7 @@ pool_cache_put(struct pool *pp, void *v)
 	if (nitems >= pp->pr_cache_items) {
 		if (pc->pc_prev != NULL)
 			pool_cache_list_free(pp, pc, pc->pc_prev);
-			
+
 		pc->pc_prev = pc->pc_actv;
 
 		pc->pc_actv = NULL;
