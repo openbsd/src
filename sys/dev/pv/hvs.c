@@ -151,16 +151,10 @@ struct hvs_srb {
 #define SRB_FLAGS_ADAPTER_CACHE_ENABLE	 0x00000200
 #define SRB_FLAGS_FREE_SENSE_BUFFER	 0x00000400
 
-/* SRB command for Win7 and older */
 struct hvs_cmd_io {
 	struct hvs_cmd_hdr	 cmd_hdr;
 	struct hvs_srb		 cmd_srb;
-} __packed;
-
-/* SRB command with Win8 extensions */
-struct hvs_cmd_xio {
-	struct hvs_cmd_hdr	 cmd_hdr;
-	struct hvs_srb		 cmd_srb;
+	/* Win8 extensions */
 	uint16_t		 _reserved;
 	uint8_t			 cmd_qtag;
 	uint8_t			 cmd_qaction;
@@ -176,7 +170,6 @@ union hvs_cmd {
 	struct hvs_cmd_ver	 ver;
 	struct hvs_cmd_chp	 chp;
 	struct hvs_cmd_io	 io;
-	struct hvs_cmd_xio	 xio;
 	uint8_t			 pad[HVS_CMD_SIZE];
 } __packed;
 
@@ -209,7 +202,7 @@ struct hvs_softc {
 	int			 sc_proto;
 	int			 sc_flags;
 #define  HVSF_SCSI		  0x0001
-#define  HVSF_XIO		  0x0002
+#define  HVSF_W8PLUS		  0x0002
 	struct hvs_chp		 sc_props;
 
 	union hvs_cmd		 sc_resp;
@@ -306,7 +299,7 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_proto & 0xff);
 
 	if (sc->sc_proto >= HVS_PROTO_VERSION_WIN8)
-		sc->sc_flags |= HVSF_XIO;
+		sc->sc_flags |= HVSF_W8PLUS;
 
 	task_set(&sc->sc_probetask, hvs_scsi_probe, sc);
 
@@ -334,7 +327,6 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	struct hvs_ccb *ccb = xs->io;
 	union hvs_cmd cmd;
 	struct hvs_cmd_io *io = &cmd.io;
-	struct hvs_cmd_xio *xio = &cmd.xio;
 	struct hvs_srb *srb = &io->cmd_srb;
 	int i, rv, flags = BUS_DMA_NOWAIT;
 
@@ -364,30 +356,31 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 	case SCSI_DATA_IN:
 		srb->srb_direction = SRB_DATA_READ;
-		if (sc->sc_flags & HVSF_XIO)
-			xio->cmd_srbflags |= SRB_FLAGS_DATA_IN;
+		if (sc->sc_flags & HVSF_W8PLUS)
+			io->cmd_srbflags |= SRB_FLAGS_DATA_IN;
 		flags |= BUS_DMA_WRITE;
 		break;
 	case SCSI_DATA_OUT:
 		srb->srb_direction = SRB_DATA_WRITE;
-		if (sc->sc_flags & HVSF_XIO)
-			xio->cmd_srbflags |= SRB_FLAGS_DATA_OUT;
+		if (sc->sc_flags & HVSF_W8PLUS)
+			io->cmd_srbflags |= SRB_FLAGS_DATA_OUT;
 		flags |= BUS_DMA_READ;
 		break;
 	default:
 		srb->srb_direction = SRB_DATA_NONE;
-		if (sc->sc_flags & HVSF_XIO)
-			xio->cmd_srbflags |= SRB_FLAGS_NO_DATA_TRANSFER;
+		if (sc->sc_flags & HVSF_W8PLUS)
+			io->cmd_srbflags |= SRB_FLAGS_NO_DATA_TRANSFER;
 		break;
 	}
 
 	srb->srb_datalen = xs->datalen;
 
-	if (sc->sc_flags & HVSF_XIO) {
-		srb->srb_reqlen = sizeof(*xio);
+	if (sc->sc_flags & HVSF_W8PLUS) {
+		srb->srb_reqlen = sizeof(*io);
 		srb->srb_senselen = SENSE_DATA_LEN;
 	} else {
-		srb->srb_reqlen = sizeof(*io);
+		srb->srb_reqlen = sizeof(struct hvs_cmd_hdr) +
+		    sizeof(struct hvs_srb);
 		srb->srb_senselen = SENSE_DATA_LEN_WIN7;
 	}
 
