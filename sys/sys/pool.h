@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.69 2017/02/07 05:39:17 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.70 2017/06/15 02:52:30 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -43,6 +43,8 @@
 #define KERN_POOL_NPOOLS	1
 #define KERN_POOL_NAME		2
 #define KERN_POOL_POOL		3
+#define KERN_POOL_CACHE		4	/* global pool cache info */
+#define KERN_POOL_CACHE_CPUS	5	/* all cpus cache info */
 
 struct kinfo_pool {
 	unsigned int	pr_size;	/* size of a pool item */
@@ -64,6 +66,31 @@ struct kinfo_pool {
 	unsigned long	pr_npagefree;	/* # of pages released */
 	unsigned int	pr_hiwat;	/* max # of pages in pool */
 	unsigned long	pr_nidle;	/* # of idle pages */
+};
+
+struct kinfo_pool_cache {
+	uint64_t	pr_ngc;		/* # of times a list has been gc'ed */
+	unsigned int	pr_len;		/* current target for list len */
+	unsigned int	pr_nlist;	/* # of lists in the pool */
+	unsigned int	pr_contention;	/* # of times mtx was busy */
+};
+
+/*
+ * KERN_POOL_CACHE_CPUS provides an array, not a single struct. ie, it
+ * provides struct kinfo_pool_cache_cpu kppc[ncpusfound].
+ */
+struct kinfo_pool_cache_cpu {
+	unsigned int	pr_cpu;		/* which cpu this cache is on */
+
+	/* counters for times items were handled by the cache */
+	uint64_t	pr_nget;	/* # of requests */
+	uint64_t	pr_nfail;	/* # of unsuccessful requests */
+	uint64_t	pr_nput;	/* # of releases */
+
+	/* counters for times the cache interacted with the pool */
+	uint64_t	pr_nlget;	/* # of list requests */
+	uint64_t	pr_nlfail;	/* # of unsuccessful list requests */
+	uint64_t	pr_nlput;	/* # of list releases */
 };
 
 #if defined(_KERNEL) || defined(_LIBKVM)
@@ -159,8 +186,8 @@ struct pool {
 	struct mutex	pr_cache_mtx;
 	struct pool_cache_lists
 			pr_cache_lists;
-	u_int		pr_cache_nlist;
-	u_int		pr_cache_items;
+	u_int		pr_cache_nlist;	/* # of lists */
+	u_int		pr_cache_items;	/* target list length */
 	u_int		pr_cache_contention;
 	int		pr_cache_nout;
 
