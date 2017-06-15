@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2016/11/01 00:35:34 tb Exp $
+#	$OpenBSD: Makefile,v 1.33 2017/06/15 13:48:42 bcallah Exp $
 
 FIBOMAX=25
 M4=m4
@@ -13,7 +13,7 @@ REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 \
     test-gnupatterns2 test-comments test-synch1 test-synch1bis \
     test-gnuformat test-includes test-dumpdef test-gnuprefix \
     test-translit test-translit2 test-gnutranslit2 \
-    test-gnueval test-gnusofterror
+    test-gnueval test-gnusofterror test-fatalwarnings test-fatalwarnings2
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -119,6 +119,12 @@ test-gnueval:
 test-gnusofterror:
 	${M4} -g ${.CURDIR}/gnusofterror.m4 2>/dev/null| diff -u - ${.CURDIR}/gnusofterror.out
 	! ${M4} -g ${.CURDIR}/gnusofterror.m4 2>/dev/null >/dev/null 
+
+test-fatalwarnings:
+	if ${M4} -E -g ${.CURDIR}/fatalwarnings.m4 >/dev/null 2>&1 || test $$? -ne 1; then false; fi
+
+test-fatalwarnings2:
+	${M4} -E -E -g ${.CURDIR}/fatalwarnings.m4 2>&1 | diff -u - ${.CURDIR}/fatalwarnings.out
 
 .PHONY:	${REGRESS_TARGETS}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.50 2015/04/29 00:13:26 millert Exp $ */
+/* $OpenBSD: gnum4.c,v 1.51 2017/06/15 13:48:42 bcallah Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -35,6 +35,7 @@
 #include <err.h>
 #include <paths.h>
 #include <regex.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -234,7 +235,7 @@ addchar(int c)
 }
 
 static char *
-getstring()
+getstring(void)
 {
 	addchar('\0');
 	current = 0;
@@ -255,11 +256,29 @@ exit_regerror(int er, regex_t *re, const char *source)
 	m4errx(1, "regular expression error in %s: %s.", source, errbuf);
 }
 
+/* warnx() plus check to see if we need to change exit code or exit.
+ * -E flag functionality.
+ */
+void
+m4_warnx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	va_end(ap);
+
+	if (fatal_warns)
+		exit(1);
+	if (error_warns)
+		exit_code = 1;
+}
+
 static void
 add_sub(int n, const char *string, regex_t *re, regmatch_t *pm)
 {
 	if (n > re->re_nsub)
-		warnx("No subexpression %d", n);
+		m4_warnx("No subexpression %d", n);
 	/* Subexpressions that did not match are
 	 * not an error.  */
 	else if (pm[n].rm_so != -1 &&
@@ -442,7 +461,7 @@ void
 dopatsubst(const char *argv[], int argc)
 {
 	if (argc <= 3) {
-		warnx("Too few arguments to patsubst");
+		m4_warnx("Too few arguments to patsubst");
 		return;
 	}
 	/* special case: empty regexp */
@@ -494,7 +513,7 @@ doregexp(const char *argv[], int argc)
 	const char *source;
 
 	if (argc <= 3) {
-		warnx("Too few arguments to regexp");
+		m4_warnx("Too few arguments to regexp");
 		return;
 	}
 	/* special gnu case */
