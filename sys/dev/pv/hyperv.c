@@ -1678,7 +1678,8 @@ hv_handle_free(struct hv_channel *ch, uint32_t handle)
 	cmd.chm_chanid = ch->ch_id;
 	cmd.chm_gpadl = handle;
 
-	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp), 0);
+	rv = hv_cmd(sc, &cmd, sizeof(cmd), &rsp, sizeof(rsp), cold ?
+	    HCF_NOSLEEP : 0);
 	if (rv)
 		DPRINTF("%s: GPADL_DISCONN failed with %d\n",
 		    sc->sc_dev.dv_xname, rv);
