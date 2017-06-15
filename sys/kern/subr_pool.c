@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.209 2017/06/13 11:41:11 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.210 2017/06/15 03:44:17 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -122,9 +122,12 @@ struct pool_cache {
 	struct pool_cache_item	*pc_prev;	/* previous list of items */
 
 	uint64_t		 pc_gen;	/* generation number */
-	uint64_t		 pc_gets;
-	uint64_t		 pc_puts;
-	uint64_t		 pc_fails;
+	uint64_t		 pc_nget;	/* # of successful requests */
+	uint64_t		 pc_nfail;	/* # of unsuccessful reqs */
+	uint64_t		 pc_nput;	/* # of releases */
+	uint64_t		 pc_nlget;	/* # of list requests */
+	uint64_t		 pc_nlfail;	/* # of fails getting a list */
+	uint64_t		 pc_nlput;	/* # of list releases */
 
 	int			 pc_nout;
 };
@@ -133,7 +136,9 @@ void	*pool_cache_get(struct pool *);
 void	 pool_cache_put(struct pool *, void *);
 void	 pool_cache_destroy(struct pool *);
 #endif
-void	 pool_cache_info(struct pool *, struct kinfo_pool *);
+void	 pool_cache_pool_info(struct pool *, struct kinfo_pool *);
+int	 pool_cache_info(struct pool *, void *, size_t *);
+int	 pool_cache_cpus_info(struct pool *, void *, size_t *);
 
 #ifdef POOL_DEBUG
 int	pool_debug = 1;
@@ -1379,6 +1384,8 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 
 	case KERN_POOL_NAME:
 	case KERN_POOL_POOL:
+	case KERN_POOL_CACHE:
+	case KERN_POOL_CACHE_CPUS:
 		break;
 	default:
 		return (EOPNOTSUPP);
@@ -1423,9 +1430,17 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 		pi.pr_nidle = pp->pr_nidle;
 		mtx_leave(&pp->pr_mtx);
 
-		pool_cache_info(pp, &pi);
+		pool_cache_pool_info(pp, &pi);
 
 		rv = sysctl_rdstruct(oldp, oldlenp, NULL, &pi, sizeof(pi));
+		break;
+
+	case KERN_POOL_CACHE:
+		rv = pool_cache_info(pp, oldp, oldlenp);
+		break;
+
+	case KERN_POOL_CACHE_CPUS:
+		rv = pool_cache_cpus_info(pp, oldp, oldlenp);
 		break;
 	}
 
@@ -1625,9 +1640,12 @@ pool_cache_init(struct pool *pp)
 		pc->pc_nactv = 0;
 		pc->pc_prev = NULL;
 
-		pc->pc_gets = 0;
-		pc->pc_puts = 0;
-		pc->pc_fails = 0;
+		pc->pc_nget = 0;
+		pc->pc_nfail = 0;
+		pc->pc_nput = 0;
+		pc->pc_nlget = 0;
+		pc->pc_nlfail = 0;
+		pc->pc_nlput = 0;
 		pc->pc_nout = 0;
 	}
 
@@ -1694,7 +1712,10 @@ pool_cache_list_alloc(struct pool *pp, struct pool_cache *pc)
 		pp->pr_cache_nlist--;
 
 		pool_cache_item_magic(pp, pl);
-	}
+
+		pc->pc_nlget++;
+	} else
+		pc->pc_nlfail++;
 
 	/* fold this cpus nout into the global while we have the lock */
 	pp->pr_cache_nout += pc->pc_nout;
@@ -1711,6 +1732,8 @@ pool_cache_list_free(struct pool *pp, struct pool_cache *pc,
 	pool_list_enter(pp);
 	TAILQ_INSERT_TAIL(&pp->pr_cache_lists, ci, ci_nextl);
 	pp->pr_cache_nlist++;
+
+	pc->pc_nlput++;
 
 	/* fold this cpus nout into the global while we have the lock */
 	pp->pr_cache_nout += pc->pc_nout;
@@ -1753,7 +1776,7 @@ pool_cache_get(struct pool *pp)
 		ci = pc->pc_prev;
 		pc->pc_prev = NULL;
 	} else if ((ci = pool_cache_list_alloc(pp, pc)) == NULL) {
-		pc->pc_fails++;
+		pc->pc_nfail++;
 		goto done;
 	}
 
@@ -1778,7 +1801,7 @@ pool_cache_get(struct pool *pp)
 
 	pc->pc_actv = ci->ci_next;
 	pc->pc_nactv = POOL_CACHE_ITEM_NITEMS(ci) - 1;
-	pc->pc_gets++;
+	pc->pc_nget++;
 	pc->pc_nout++;
 
 done:
@@ -1825,7 +1848,7 @@ pool_cache_put(struct pool *pp, void *v)
 	pc->pc_actv = ci;
 	pc->pc_nactv = nitems;
 
-	pc->pc_puts++;
+	pc->pc_nput++;
 	pc->pc_nout--;
 
 	pool_cache_leave(pp, pc, s);
@@ -1874,7 +1897,7 @@ pool_cache_destroy(struct pool *pp)
 }
 
 void
-pool_cache_info(struct pool *pp, struct kinfo_pool *pi)
+pool_cache_pool_info(struct pool *pp, struct kinfo_pool *pi)
 {
 	struct pool_cache *pc;
 	struct cpumem_iter i;
@@ -1892,8 +1915,8 @@ pool_cache_info(struct pool *pp, struct kinfo_pool *pi)
 			while ((gen = pc->pc_gen) & 1)
 				yield();
 
-			nget = pc->pc_gets;
-			nput = pc->pc_puts;
+			nget = pc->pc_nget;
+			nput = pc->pc_nput;
 		} while (gen != pc->pc_gen);
 
 		pi->pr_nget += nget;
@@ -1908,6 +1931,80 @@ pool_cache_info(struct pool *pp, struct kinfo_pool *pi)
 	pi->pr_nout += pp->pr_cache_nout;
 	mtx_leave(&pp->pr_cache_mtx);
 }
+
+int
+pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
+{
+	struct kinfo_pool_cache kpc;
+
+	if (pp->pr_cache == NULL)
+		return (EOPNOTSUPP);
+
+	memset(&kpc, 0, sizeof(kpc)); /* don't leak padding */
+
+	mtx_enter(&pp->pr_cache_mtx);
+	kpc.pr_ngc = 0; /* notyet */
+	kpc.pr_len = pp->pr_cache_items;
+	kpc.pr_nlist = pp->pr_cache_nlist;
+	mtx_leave(&pp->pr_cache_mtx);
+
+	return (sysctl_rdstruct(oldp, oldlenp, NULL, &kpc, sizeof(kpc)));
+}
+
+int
+pool_cache_cpus_info(struct pool *pp, void *oldp, size_t *oldlenp)
+{
+	struct pool_cache *pc;
+	struct kinfo_pool_cache_cpu *kpcc, *info;
+	unsigned int cpu = 0;
+	struct cpumem_iter i;
+	int error = 0;
+	size_t len;
+
+	if (pp->pr_cache == NULL)
+		return (EOPNOTSUPP);
+	if (*oldlenp % sizeof(*kpcc))
+		return (EINVAL);
+
+	kpcc = mallocarray(ncpusfound, sizeof(*kpcc), M_TEMP,
+	    M_WAITOK|M_CANFAIL|M_ZERO);
+	if (kpcc == NULL)
+		return (EIO);
+
+	len = ncpusfound * sizeof(*kpcc);
+
+	CPUMEM_FOREACH(pc, &i, pp->pr_cache) {
+		uint64_t gen;
+
+		if (cpu >= ncpusfound) {
+			error = EIO;
+			goto err;
+		}
+
+		info = &kpcc[cpu];
+		info->pr_cpu = cpu;
+
+		do {
+			while ((gen = pc->pc_gen) & 1)
+				yield();
+
+			info->pr_nget = pc->pc_nget;
+			info->pr_nfail = pc->pc_nfail;
+			info->pr_nput = pc->pc_nput;
+			info->pr_nlget = pc->pc_nlget;
+			info->pr_nlfail = pc->pc_nlfail;
+			info->pr_nlput = pc->pc_nlput;
+		} while (gen != pc->pc_gen);
+
+		cpu++;
+	}
+
+	error = sysctl_rdstruct(oldp, oldlenp, NULL, kpcc, len);
+err:
+	free(kpcc, M_TEMP, len);
+
+	return (error);
+}
 #else /* MULTIPROCESSOR */
 void
 pool_cache_init(struct pool *pp)
@@ -1916,8 +2013,20 @@ pool_cache_init(struct pool *pp)
 }
 
 void
-pool_cache_info(struct pool *pp, struct kinfo_pool *pi)
+pool_cache_pool_info(struct pool *pp, struct kinfo_pool *pi)
 {
 	/* nop */
+}
+
+int
+pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
+{
+	return (EOPNOTSUPP);
+}
+
+int
+pool_cache_cpus_info(struct pool *pp, void *oldp, size_t *oldlenp)
+{
+	return (EOPNOTSUPP);
 }
 #endif /* MULTIPROCESSOR */
