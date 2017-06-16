@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.344 2017/05/30 12:13:04 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.345 2017/06/16 19:59:13 awolk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,17 +61,17 @@ void	 usage(void);
 int	 pfctl_enable(int, int);
 int	 pfctl_disable(int, int);
 void	 pfctl_clear_queues(struct pf_qihead *);
-int	 pfctl_clear_stats(int, const char *, int);
-int	 pfctl_clear_interface_flags(int, int);
-int	 pfctl_clear_rules(int, int, char *);
-int	 pfctl_clear_src_nodes(int, int);
-int	 pfctl_clear_states(int, const char *, int);
+void	 pfctl_clear_stats(int, const char *, int);
+void	 pfctl_clear_interface_flags(int, int);
+void	 pfctl_clear_rules(int, int, char *);
+void	 pfctl_clear_src_nodes(int, int);
+void	 pfctl_clear_states(int, const char *, int);
 void	 pfctl_addrprefix(char *, struct pf_addr *);
-int	 pfctl_kill_src_nodes(int, const char *, int);
-int	 pfctl_net_kill_states(int, const char *, int, int);
-int	 pfctl_label_kill_states(int, const char *, int, int);
-int	 pfctl_id_kill_states(int, int);
-int	 pfctl_key_kill_states(int, const char *, int, int);
+void	 pfctl_kill_src_nodes(int, const char *, int);
+void	 pfctl_net_kill_states(int, const char *, int, int);
+void	 pfctl_label_kill_states(int, const char *, int, int);
+void	 pfctl_id_kill_states(int, int);
+void	 pfctl_key_kill_states(int, const char *, int, int);
 int	 pfctl_parse_host(char *, struct pf_rule_addr *);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
@@ -278,7 +278,7 @@ pfctl_disable(int dev, int opts)
 	return (0);
 }
 
-int
+void
 pfctl_clear_stats(int dev, const char *iface, int opts)
 {
 	struct pfioc_iface pi;
@@ -296,10 +296,9 @@ pfctl_clear_stats(int dev, const char *iface, int opts)
 			fprintf(stderr, " for interface %s", iface);
 		fprintf(stderr, "\n");
 	}
-	return (0);
 }
 
-int
+void
 pfctl_clear_interface_flags(int dev, int opts)
 {
 	struct pfioc_iface	pi;
@@ -313,10 +312,9 @@ pfctl_clear_interface_flags(int dev, int opts)
 		if ((opts & PF_OPT_QUIET) == 0)
 			fprintf(stderr, "pf: interface flags reset\n");
 	}
-	return (0);
 }
 
-int
+void
 pfctl_clear_rules(int dev, int opts, char *anchorname)
 {
 	struct pfr_buffer t;
@@ -329,20 +327,18 @@ pfctl_clear_rules(int dev, int opts, char *anchorname)
 		err(1, "pfctl_clear_rules");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "rules cleared\n");
-	return (0);
 }
 
-int
+void
 pfctl_clear_src_nodes(int dev, int opts)
 {
 	if (ioctl(dev, DIOCCLRSRCNODES))
 		err(1, "DIOCCLRSRCNODES");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "source tracking entries cleared\n");
-	return (0);
 }
 
-int
+void
 pfctl_clear_states(int dev, const char *iface, int opts)
 {
 	struct pfioc_state_kill psk;
@@ -356,7 +352,6 @@ pfctl_clear_states(int dev, const char *iface, int opts)
 		err(1, "DIOCCLRSTATES");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "%d states cleared\n", psk.psk_killed);
-	return (0);
 }
 
 void
@@ -409,7 +404,7 @@ pfctl_addrprefix(char *addr, struct pf_addr *mask)
 	freeaddrinfo(res);
 }
 
-int
+void
 pfctl_kill_src_nodes(int dev, const char *iface, int opts)
 {
 	struct pfioc_src_node_kill psnk;
@@ -509,10 +504,9 @@ pfctl_kill_src_nodes(int dev, const char *iface, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d src nodes from %d sources and %d "
 		    "destinations\n", killed, sources, dests);
-	return (0);
 }
 
-int
+void
 pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 {
 	struct pfioc_state_kill psk;
@@ -617,10 +611,9 @@ pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d states from %d sources and %d "
 		    "destinations\n", killed, sources, dests);
-	return (0);
 }
 
-int
+void
 pfctl_label_kill_states(int dev, const char *iface, int opts, int rdomain)
 {
 	struct pfioc_state_kill psk;
@@ -645,11 +638,9 @@ pfctl_label_kill_states(int dev, const char *iface, int opts, int rdomain)
 
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d states\n", psk.psk_killed);
-
-	return (0);
 }
 
-int
+void
 pfctl_id_kill_states(int dev, int opts)
 {
 	struct pfioc_state_kill psk;
@@ -680,11 +671,9 @@ pfctl_id_kill_states(int dev, int opts)
 
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d states\n", psk.psk_killed);
-
-	return (0);
 }
 
-int
+void
 pfctl_key_kill_states(int dev, const char *iface, int opts, int rdomain)
 {
 	struct pfioc_state_kill psk;
@@ -741,8 +730,6 @@ pfctl_key_kill_states(int dev, const char *iface, int opts, int rdomain)
 
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d states\n", psk.psk_killed);
-
-	return (0);
 }
 
 int
@@ -2558,13 +2545,11 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((rulesopt != NULL) && !anchorname[0])
-		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
-			error = 1;
-
-	if (rulesopt != NULL && !anchorname[0])
+	if (rulesopt != NULL && !anchorname[0]) {
+		pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET);
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
 			error = 1;
+	}
 
 	if (rulesopt != NULL) {
 		if (anchorname[0] == '_' || strstr(anchorname, "/_") != NULL)
