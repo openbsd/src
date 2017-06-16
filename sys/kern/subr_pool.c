@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.212 2017/06/15 03:50:50 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.213 2017/06/16 01:33:20 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -156,6 +156,7 @@ void	 pool_p_free(struct pool *, struct pool_page_header *);
 
 void	 pool_update_curpage(struct pool *);
 void	*pool_do_get(struct pool *, int, int *);
+void	 pool_do_put(struct pool *, void *);
 int	 pool_chk_page(struct pool *, struct pool_page_header *, int);
 int	 pool_chk(struct pool *);
 void	 pool_get_done(void *, void *);
@@ -711,7 +712,6 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 void
 pool_put(struct pool *pp, void *v)
 {
-	struct pool_item *pi = v;
 	struct pool_page_header *ph, *freeph = NULL;
 
 #ifdef DIAGNOSTIC
@@ -727,6 +727,37 @@ pool_put(struct pool *pp, void *v)
 #endif
 
 	mtx_enter(&pp->pr_mtx);
+
+	pool_do_put(pp, v);
+
+	pp->pr_nout--;
+	pp->pr_nput++;
+
+	/* is it time to free a page? */
+	if (pp->pr_nidle > pp->pr_maxpages &&
+	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
+	    (ticks - ph->ph_tick) > (hz * pool_wait_free)) {
+		freeph = ph;
+		pool_p_remove(pp, freeph);
+	}
+
+	mtx_leave(&pp->pr_mtx);
+
+	if (freeph != NULL)
+		pool_p_free(pp, freeph);
+
+	if (!TAILQ_EMPTY(&pp->pr_requests)) {
+		mtx_enter(&pp->pr_requests_mtx);
+		pool_runqueue(pp, PR_NOWAIT);
+		mtx_leave(&pp->pr_requests_mtx);
+	}
+}
+
+void
+pool_do_put(struct pool *pp, void *v)
+{
+	struct pool_item *pi = v;
+	struct pool_page_header *ph;
 
 	splassert(pp->pr_ipl);
 
@@ -770,27 +801,6 @@ pool_put(struct pool *pp, void *v)
 		TAILQ_REMOVE(&pp->pr_partpages, ph, ph_entry);
 		TAILQ_INSERT_TAIL(&pp->pr_emptypages, ph, ph_entry);
 		pool_update_curpage(pp);
-	}
-
-	pp->pr_nout--;
-	pp->pr_nput++;
-
-	/* is it time to free a page? */
-	if (pp->pr_nidle > pp->pr_maxpages &&
-	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
-	    (ticks - ph->ph_tick) > (hz * pool_wait_free)) {
-		freeph = ph;
-		pool_p_remove(pp, freeph);
-	}
-	mtx_leave(&pp->pr_mtx);
-
-	if (freeph != NULL)
-		pool_p_free(pp, freeph);
-
-	if (!TAILQ_EMPTY(&pp->pr_requests)) {
-		mtx_enter(&pp->pr_requests_mtx);
-		pool_runqueue(pp, PR_NOWAIT);
-		mtx_leave(&pp->pr_requests_mtx);
 	}
 }
 
@@ -1864,11 +1874,13 @@ pool_cache_list_put(struct pool *pp, struct pool_cache_item *pl)
 
 	rpl = TAILQ_NEXT(pl, ci_nextl);
 
+	mtx_enter(&pp->pr_mtx);
 	do {
 		next = pl->ci_next;
-		pool_put(pp, pl);
+		pool_do_put(pp, pl);
 		pl = next;
 	} while (pl != NULL);
+	mtx_leave(&pp->pr_mtx);
 
 	return (rpl);
 }
