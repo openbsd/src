@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.196 2017/06/14 16:58:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.197 2017/06/16 08:45:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6126,8 +6126,8 @@ iwm_init(struct ifnet *ifp)
 	 * ieee80211_begin_scan() ends up scheduling iwm_newstate_task().
 	 * Wait until the transition to SCAN state has completed.
 	 */
+	generation = sc->sc_generation;
 	do {
-		generation = sc->sc_generation;
 		err = tsleep(&ic->ic_state, PCATCH, "iwminit", hz);
 		if (generation != sc->sc_generation)
 			return ENXIO;
