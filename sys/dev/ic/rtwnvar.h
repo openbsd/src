@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.8 2017/01/30 21:54:30 stsp Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.9 2017/06/16 14:57:51 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -43,6 +43,10 @@ struct rtwn_ops {
 	void		(*next_scan)(void *);
 	void		(*cancel_scan)(void *);
 	void		(*wait_async)(void *);
+
+	void		(*get_txpower)(void *, int, struct ieee80211_channel *,
+			    struct ieee80211_channel *, uint16_t[]);
+	void		(*read_rom)(void *);
 };
 
 #define RTWN_LED_LINK	0
@@ -67,6 +71,7 @@ struct rtwn_softc {
 #define RTWN_FLAG_CCK_HIPWR		0x01
 #define RTWN_FLAG_BUSY			0x02
 #define RTWN_FLAG_FORCE_RAID_11B	0x04
+#define RTWN_FLAG_EXT_HDR		0x08
 
 	uint32_t		chip;
 #define RTWN_CHIP_92C		0x00000001
@@ -80,6 +85,7 @@ struct rtwn_softc {
 #define RTWN_CHIP_USB		0x80000000
 
 	uint8_t				board_type;
+	uint8_t				crystal_cap;
 	uint8_t				regulatory;
 	uint8_t				pa_setting;
 	int				avg_pwdb;
@@ -91,18 +97,17 @@ struct rtwn_softc {
 
 	int				sc_tx_timer;
 	int				fwcur;
-	struct r92c_rom			rom;
-
-	uint8_t				r88e_rom[512];
-	uint8_t				cck_tx_pwr[6];
-	uint8_t				ht40_tx_pwr[5];
-	int8_t				bw20_tx_pwr_diff;
-	int8_t				ofdm_tx_pwr_diff;
+	union {
+		struct r92c_rom		r92c_rom;
+		struct r88e_rom		r88e_rom;
+	} u;
+#define sc_r92c_rom	u.r92c_rom
+#define sc_r88e_rom	u.r88e_rom
 
 	uint32_t			rf_chnlbw[R92C_MAX_CHAINS];
 };
 
-int		rtwn_attach(struct device *, struct rtwn_softc *, uint32_t);
+int		rtwn_attach(struct device *, struct rtwn_softc *);
 int		rtwn_detach(struct rtwn_softc *, int);
 int		rtwn_activate(struct rtwn_softc *, int);
 int8_t		rtwn_get_rssi(struct rtwn_softc *, int, void *);

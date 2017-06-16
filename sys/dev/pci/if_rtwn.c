@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.28 2017/05/19 11:30:40 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.29 2017/06/16 14:57:51 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -371,8 +371,10 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.next_scan = rtwn_pci_next_scan;
 	sc->sc_sc.sc_ops.cancel_scan = rtwn_cancel_scan;
 	sc->sc_sc.sc_ops.wait_async = rtwn_wait_async;
-	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc,
-	    RTWN_CHIP_88C | RTWN_CHIP_PCI);
+
+	sc->sc_sc.chip = RTWN_CHIP_88C | RTWN_CHIP_PCI;
+
+	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc);
 	if (error != 0) {
 		rtwn_free_rx_list(sc);
 		for (i = 0; i < RTWN_NTXQUEUES; i++)
