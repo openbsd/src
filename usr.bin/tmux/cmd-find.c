@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.53 2017/06/14 07:37:17 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.54 2017/06/16 15:12:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -950,7 +950,7 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 	struct mouse_event	*m;
 	struct cmd_find_state	 current;
 	char			*colon, *period, *copy = NULL;
-	const char		*session, *window, *pane;
+	const char		*session, *window, *pane, *s;
 	int			 window_only = 0, pane_only = 0;
 
 	/* Can fail flag implies quiet. */
@@ -958,10 +958,18 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 		flags |= CMD_FIND_QUIET;
 
 	/* Log the arguments. */
-	if (target == NULL)
-		log_debug("%s: target none, type %d", __func__, type);
+	if (type == CMD_FIND_PANE)
+		s = "pane";
+	else if (type == CMD_FIND_WINDOW)
+		s = "window";
+	else if (type == CMD_FIND_SESSION)
+		s = "session";
 	else
-		log_debug("%s: target %s, type %d", __func__, target, type);
+		s = "unknown";
+	if (target == NULL)
+		log_debug("%s: target none, type %s", __func__, s);
+	else
+		log_debug("%s: target %s, type %s", __func__, target, s);
 	log_debug("%s: item %p, flags %#x", __func__, item, flags);
 
 	/* Clear new state. */

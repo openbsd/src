@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.56 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.57 2017/06/16 15:12:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -452,6 +452,8 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 	va_start(ap, fmt);
 	msglen = xvasprintf(&msg, fmt, ap);
 	va_end(ap);
+
+	log_debug("%s: %s", __func__, msg);
 
 	if (c == NULL)
 		cfg_add_cause("%s:%u: %s", cmd->file, cmd->line, msg);
