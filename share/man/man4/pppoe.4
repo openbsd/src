@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.33 2017/03/22 21:37:24 jmc Exp $
+.\"	$OpenBSD: pppoe.4,v 1.34 2017/06/16 10:58:43 stsp Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2017 $
+.Dd $Mdocdate: June 16 2017 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -113,17 +113,19 @@ The physical interface must also be marked
 .Pp
 Since this is a PPP interface, the addresses assigned to the interface
 may change during PPP negotiation.
-There is no fine grained control available for deciding
-which addresses are acceptable and which are not.
-For the local side and the remote address there is exactly one choice:
-hard coded address or wildcard.
-If a real address is assigned to one side of the connection,
-PPP negotiation will only agree to exactly this address.
-If one side is wildcarded,
-every address suggested by the peer will be accepted.
+In the above example, 0.0.0.0 and 0.0.0.1 serve as placeholders for
+dynamic address configuration.
 .Pp
-To wildcard the local address set it to 0.0.0.0; to wildcard the remote
-address set it to 0.0.0.1.
+If the local address is set to wildcard address 0.0.0.0, it will
+be changed to an address suggested by the peer.
+.Pp
+If the destination address is set to a wildcard address in the range
+from 0.0.0.1 to 0.0.0.255, it will be changed to an address suggested
+by the peer, and if a default route which uses this interface exists
+the gateway will be changed to the suggested address as well.
+.Pp
+Otherwise, PPP negotiation will only agree to exactly the IPv4 addresses
+which are configured on the interface.
 .Sh KERNEL OPTIONS
 .Nm
 does not interfere with other PPPoE implementations
@@ -254,3 +256,8 @@ The presence of a
 .Xr mygate 5
 file will interfere with the routing table.
 Make sure this file is either empty or does not exist.
+.Pp
+Two
+.Nm
+interfaces configured with the same wildcard destination address
+cannot share a routing table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.164 2017/05/30 07:50:37 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.165 2017/06/16 10:58:43 stsp Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -2632,7 +2632,7 @@ sppp_ipcp_tls(struct sppp *sp)
 		sp->ipcp.flags |= IPCP_MYADDR_DYN;
 		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
 	}
-	if (hisaddr == 1) {
+	if (hisaddr >= 1 && hisaddr <= 255) {
 		/*
 		 * XXX - remove this hack!
 		 * remote has no valid address, we need to get one assigned.
