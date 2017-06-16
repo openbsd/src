@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.14 2017/06/04 12:25:19 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.15 2017/06/16 10:20:52 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
@@ -51,6 +51,12 @@ tags:
 cleandir: cleandepend
 cleandepend:
 	rm -f .depend ${.CURDIR}/tags
+.endif
+
+BUILDFIRST ?=
+BUILDAFTER ?=
+.if !empty(BUILDFIRST) && !empty(BUILDAFTER)
+${BUILDAFTER}: ${BUILDFIRST}
 .endif
 
 .PHONY: beforedepend depend afterdepend cleandepend realdepend

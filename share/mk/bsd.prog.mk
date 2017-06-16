@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.70 2015/11/14 23:56:50 deraadt Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.71 2017/06/16 10:20:52 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -94,6 +94,8 @@ MAN=	${PROG}.1
 
 .MAIN: all
 all: ${PROG} _SUBDIRUSE
+
+BUILDAFTER += ${PROG} ${OBJS}
 
 .if !target(clean)
 clean: _SUBDIRUSE

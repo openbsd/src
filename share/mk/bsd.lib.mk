@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.83 2017/06/07 16:01:07 robert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.84 2017/06/16 10:20:52 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -164,7 +164,10 @@ LDADD+=	-Wl,--version-script=${VERSION_SCRIPT}
 
 all: ${_LIBS} _SUBDIRUSE
 
+BUILDAFTER += ${_LIBS}
+
 OBJS+=	${SRCS:N*.h:R:S/$/.o/}
+BUILDAFTER += ${OBJS}
 
 lib${LIB}.a: ${OBJS}
 	@echo building standard ${LIB} library
@@ -173,6 +176,7 @@ lib${LIB}.a: ${OBJS}
 	${RANLIB} lib${LIB}.a
 
 POBJS+=	${OBJS:.o=.po}
+BUILDAFTER += ${POBJS}
 lib${LIB}_p.a: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
@@ -180,6 +184,7 @@ lib${LIB}_p.a: ${POBJS}
 	${RANLIB} lib${LIB}_p.a
 
 SOBJS+=	${OBJS:.o=.so}
+BUILDAFTER += ${SOBJS}
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
@@ -200,6 +205,7 @@ ${FULLSHLIBNAME}.a: ${SOBJS}
 
 # all .do files...
 DOBJS+=	${OBJS:.o=.do}
+BUILDAFTER += ${DOBJS}
 
 # .do files that we actually need for where this dist lib will be used
 .if defined(DIST_OBJS)
