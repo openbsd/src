@@ -1,0 +1,108 @@
+TBL-LAYOUT-LINES-NOGROFF(1)                            General Commands Manual
+
+NNAAMMEE
+     ttbbll--llaayyoouutt--lliinneess - table cells containing lines, misformatting with groff
+
+DDEESSCCRRIIPPTTIIOONN
+     vline top left:
+
+     |11   12
+      21   22
+
+     hline and vline top left:
+
+     ---+ 12
+     21   22
+
+     vline and hline top left:
+
+     +---- 12
+      21   22
+
+     vline top:
+
+     11 | 12
+     21   22
+
+     vline and hline top:
+
+     11 +----- 13
+     21   22   23
+
+     hline and vline top:
+
+     11 -----+ 13
+     21   22   23
+
+     hline, vline, hline top:
+
+     11 -----+----- 13
+     21   22   23   24
+
+     vline top right:
+
+     11   12 |
+     21   22
+
+     vline and hline top right:
+
+     11 +----
+     21   22
+
+     hline and vline top right:
+
+     11 -----+
+     21   22
+
+     double vline top left:
+
+     |11   12
+      21   22
+
+     hline and double vline top left:
+
+     ---+|12
+     21   22
+
+     double vline and hline top left:
+
+     +---- 12
+      21   22
+
+     double vline top:
+
+     11 ||12
+     21   22
+
+     double vline and hline top:
+
+     11 ++---- 13
+     21   22   23
+
+     hline and double vline top:
+
+     11 -----+|13
+     21   22   23
+
+     hline, double vline, hline top:
+
+     11 -----++---- 13
+     21   22   23   24
+
+     double vline top right:
+
+     11   12 |
+     21   22
+
+     double vline and hline top right:
+
+     11 ++---
+     21   22
+
+     hline and double vline top right:
+
+     11 -----+
+     21   22
+
+
+OpenBSD                          June 15, 2017                         OpenBSD

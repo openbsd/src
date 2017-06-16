@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.29 2017/06/08 18:11:15 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.30 2017/06/16 20:00:41 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,17 +49,26 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		cp = cp->next;
 
 	/*
-	 * Stop processing when we reach the end of the available layout
-	 * cells.  This means that we have extra input.
+	 * If the current layout row is out of cells, allocate
+	 * a new cell if another row of the table has at least
+	 * this number of columns, or discard the input if we
+	 * are beyond the last column of the table as a whole.
 	 */
 
 	if (cp == NULL) {
-		mandoc_msg(MANDOCERR_TBLDATA_EXTRA, tbl->parse,
-		    ln, *pos, p + *pos);
-		/* Skip to the end... */
-		while (p[*pos])
-			(*pos)++;
-		return;
+		if (dp->layout->last->col + 1 < dp->opts->cols) {
+			cp = mandoc_calloc(1, sizeof(*cp));
+			cp->pos = TBL_CELL_LEFT;
+			dp->layout->last->next = cp;
+			cp->col = dp->layout->last->col + 1;
+			dp->layout->last = cp;
+		} else {
+			mandoc_msg(MANDOCERR_TBLDATA_EXTRA, tbl->parse,
+			    ln, *pos, p + *pos);
+			while (p[*pos])
+				(*pos)++;
+			return;
+		}
 	}
 
 	dat = mandoc_calloc(1, sizeof(*dat));
@@ -183,58 +192,78 @@ newspan(struct tbl_node *tbl, int line, struct tbl_row *rp)
 void
 tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 {
-	struct tbl_span	*dp;
 	struct tbl_row	*rp;
+	struct tbl_cell	*cp;
+	struct tbl_span	*sp, *spi;
+	struct tbl_dat	*dp;
+	int		 have_data, spans;
 
-	/*
-	 * Choose a layout row: take the one following the last parsed
-	 * span's.  If that doesn't exist, use the last parsed span's.
-	 * If there's no last parsed span, use the first row.  Lastly,
-	 * if the last span was a horizontal line, use the same layout
-	 * (it doesn't "consume" the layout).
-	 */
+	rp = (sp = tbl->last_span) == NULL ? tbl->first_row :
+	    sp->pos == TBL_SPAN_DATA && sp->layout->next != NULL ?
+	    sp->layout->next : sp->layout;
 
-	if (tbl->last_span != NULL) {
-		if (tbl->last_span->pos == TBL_SPAN_DATA) {
-			for (rp = tbl->last_span->layout->next;
-			     rp != NULL && rp->first != NULL;
-			     rp = rp->next) {
-				switch (rp->first->pos) {
-				case TBL_CELL_HORIZ:
-					dp = newspan(tbl, ln, rp);
-					dp->pos = TBL_SPAN_HORIZ;
-					continue;
-				case TBL_CELL_DHORIZ:
-					dp = newspan(tbl, ln, rp);
-					dp->pos = TBL_SPAN_DHORIZ;
-					continue;
-				default:
-					break;
-				}
-				break;
-			}
-		} else
-			rp = tbl->last_span->layout;
+	assert(rp != NULL);
 
-		if (rp == NULL)
-			rp = tbl->last_span->layout;
-	} else
-		rp = tbl->first_row;
-
-	assert(rp);
-
-	dp = newspan(tbl, ln, rp);
+	sp = newspan(tbl, ln, rp);
 
 	if ( ! strcmp(p, "_")) {
-		dp->pos = TBL_SPAN_HORIZ;
+		sp->pos = TBL_SPAN_HORIZ;
 		return;
 	} else if ( ! strcmp(p, "=")) {
-		dp->pos = TBL_SPAN_DHORIZ;
+		sp->pos = TBL_SPAN_DHORIZ;
 		return;
 	}
-
-	dp->pos = TBL_SPAN_DATA;
+	sp->pos = TBL_SPAN_DATA;
 
 	while (p[pos] != '\0')
-		getdata(tbl, dp, ln, p, &pos);
+		getdata(tbl, sp, ln, p, &pos);
+
+	/*
+	 * If this span contains some data,
+	 * make sure at least part of it gets printed.
+	 */
+
+	have_data = 0;
+	cp = rp->first;
+	for (dp = sp->first; dp != NULL; dp = dp->next) {
+		if (dp->pos == TBL_DATA_DATA && *dp->string != '\0') {
+			if (cp == NULL ||
+			    (cp->pos != TBL_CELL_HORIZ &&
+			     cp->pos != TBL_CELL_DHORIZ))
+				return;
+			have_data = 1;
+		}
+		spans = dp->spans;
+		while (spans-- >= 0) {
+			if (cp != NULL)
+				cp = cp->next;
+		}
+	}
+	if (have_data == 0 || rp->next == NULL)
+		return;
+
+	/*
+	 * There is some data, but it would all get lost
+	 * due to horizontal lines in the layout.
+	 * Insert an empty span to consume the layout row.
+	 */
+
+	tbl->last_span = sp->prev;
+	spi = newspan(tbl, ln, rp);
+	spi->pos = TBL_SPAN_DATA;
+	spi->next = sp;
+	tbl->last_span = sp;
+	sp->prev = spi;
+	sp->layout = rp->next;
+	cp = sp->layout->first;
+	for (dp = sp->first; dp != NULL; dp = dp->next) {
+		dp->layout = cp;
+		dp->spans = 0;
+		if (cp != NULL)
+			cp = cp->next;
+		while (cp != NULL && cp->pos == TBL_CELL_SPAN) {
+			dp->spans++;
+			cp = cp->next;
+		}
+	}
 }

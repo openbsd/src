@@ -1,0 +1,207 @@
+.Dd June 15, 2017
+.Dt TBL-LAYOUT-LINES-NOGROFF 1
+.Os OpenBSD
+.Sh NAME
+.Nm tbl-layout-lines
+.Nd table cells containing lines, misformatting with groff
+.Sh DESCRIPTION
+vline top left:
+.sp
+.TS
+tab(:);
+| l l
+  l l.
+11:12
+21:22
+.TE
+.sp
+hline and vline top left:
+.sp
+.TS
+tab(:);
+_| l
+l  l.
+:12
+21:22
+.TE
+.sp
+vline and hline top left:
+.sp
+.TS
+tab(:);
+| _ l
+  l l.
+:12
+21:22
+.TE
+.sp
+vline top:
+.sp
+.TS
+tab(:);
+l| l
+l  l.
+11:12
+21:22
+.TE
+.sp
+vline and hline top:
+.sp
+.TS
+tab(:);
+l| _ l
+l  l l.
+11::13
+21:22:23
+.TE
+.sp
+hline and vline top:
+.sp
+.TS
+tab(:);
+l _| l
+l l  l.
+11::13
+21:22:23
+.TE
+.sp
+hline, vline, hline top:
+.sp
+.TS
+tab(:);
+l _| _ l
+l l  l l.
+11:::13
+21:22:23:24
+.TE
+.sp
+vline top right:
+.sp
+.TS
+tab(:);
+l l|
+l l.
+11:12
+21:22
+.TE
+.sp
+vline and hline top right:
+.sp
+.TS
+tab(:);
+l| _
+l  l.
+11:
+21:22
+.TE
+.sp
+hline and vline top right:
+.sp
+.TS
+tab(:);
+l _|
+l l.
+11:
+21:22
+.TE
+.sp
+double vline top left:
+.sp
+.TS
+tab(:);
+|| l l
+   l l.
+11:12
+21:22
+.TE
+.sp
+hline and double vline top left:
+.sp
+.TS
+tab(:);
+_|| l
+l   l.
+:12
+21:22
+.TE
+.sp
+double vline and hline top left:
+.sp
+.TS
+tab(:);
+|| _ l
+   l l.
+:12
+21:22
+.TE
+.sp
+double vline top:
+.sp
+.TS
+tab(:);
+l|| l
+l   l.
+11:12
+21:22
+.TE
+.sp
+double vline and hline top:
+.sp
+.TS
+tab(:);
+l|| _ l
+l   l l.
+11::13
+21:22:23
+.TE
+.sp
+hline and double vline top:
+.sp
+.TS
+tab(:);
+l _|| l
+l l   l.
+11::13
+21:22:23
+.TE
+.sp
+hline, double vline, hline top:
+.sp
+.TS
+tab(:);
+l _|| _ l
+l l   l l.
+11:::13
+21:22:23:24
+.TE
+.sp
+double vline top right:
+.sp
+.TS
+tab(:);
+l l||
+l l.
+11:12
+21:22
+.TE
+.sp
+double vline and hline top right:
+.sp
+.TS
+tab(:);
+l|| _
+l   l.
+11:
+21:22
+.TE
+.sp
+hline and double vline top right:
+.sp
+.TS
+tab(:);
+l _||
+l l.
+11:
+21:22
+.TE
+.sp

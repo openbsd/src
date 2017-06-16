@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.40 2017/06/14 17:50:43 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.41 2017/06/16 20:00:41 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -26,11 +26,15 @@
 #include "out.h"
 #include "term.h"
 
+#define	IS_HORIZ(cp)	((cp)->pos == TBL_CELL_HORIZ || \
+			 (cp)->pos == TBL_CELL_DHORIZ)
+
 static	size_t	term_tbl_len(size_t, void *);
 static	size_t	term_tbl_strlen(const char *, void *);
 static	size_t	term_tbl_sulen(const struct roffsu *, void *);
 static	void	tbl_char(struct termp *, char, size_t);
 static	void	tbl_data(struct termp *, const struct tbl_opts *,
+			const struct tbl_cell *,
 			const struct tbl_dat *,
 			const struct roffcol *);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *,
@@ -63,7 +67,7 @@ term_tbl_len(size_t sz, void *arg)
 void
 term_tbl(struct termp *tp, const struct tbl_span *sp)
 {
-	const struct tbl_cell	*cp;
+	const struct tbl_cell	*cp, *cpn, *cpp;
 	const struct tbl_dat	*dp;
 	static size_t		 offset;
 	size_t			 coloff, tsz;
@@ -105,9 +109,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Horizontal frame at the start of boxed tables. */
 
 		if (sp->opts->opts & TBL_OPT_DBOX)
-			tbl_hrule(tp, sp, 2);
+			tbl_hrule(tp, sp, 3);
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX))
-			tbl_hrule(tp, sp, 1);
+			tbl_hrule(tp, sp, 2);
 	}
 
 	/* Set up the columns. */
@@ -159,10 +163,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		tp->tcol++;
 		tp->tcol->offset = coloff;
-		if (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
-		    sp->opts->rvert)
-			coloff++;
-		tp->tcol->rmargin = coloff;
+		tp->tcol->rmargin = tp->maxrmargin;
 
 		/* Spans may have reduced the number of columns. */
 
@@ -171,16 +172,21 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Fill the buffers for all data columns. */
 
 		tp->tcol = tp->tcols;
+		cp = cpn = sp->layout->first;
 		dp = sp->first;
 		spans = 0;
 		for (ic = 0; ic < sp->opts->cols; ic++) {
+			if (cpn != NULL) {
+				cp = cpn;
+				cpn = cpn->next;
+			}
 			if (spans) {
 				spans--;
 				continue;
 			}
 			tp->tcol++;
 			tp->col = 0;
-			tbl_data(tp, sp->opts, dp, tp->tbl.cols + ic);
+			tbl_data(tp, sp->opts, cp, dp, tp->tbl.cols + ic);
 			if (dp == NULL)
 				continue;
 			spans = dp->spans;
@@ -195,9 +201,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tcol = tp->tcols;
 		fc = '\0';
 		if (sp->layout->vert ||
-		    (sp->prev != NULL && sp->prev->layout->vert) ||
+		    (sp->next != NULL && sp->next->layout->vert &&
+		     sp->next->pos == TBL_SPAN_DATA) ||
+		    (sp->prev != NULL && sp->prev->layout->vert &&
+		     (horiz || (IS_HORIZ(sp->layout->first) &&
+		       !IS_HORIZ(sp->prev->layout->first)))) ||
 		    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX))
-			fc = horiz ? '+' : '|';
+			fc = horiz || IS_HORIZ(sp->layout->first) ? '+' : '|';
 		else if (horiz && sp->opts->lvert)
 			fc = '-';
 		if (fc != '\0') {
@@ -214,33 +224,79 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			term_flushln(tp);
 		} else {
 			cp = sp->layout->first;
+			cpn = sp->next == NULL ? NULL :
+			    sp->next->layout->first;
+			cpp = sp->prev == NULL ? NULL :
+			    sp->prev->layout->first;
 			dp = sp->first;
 			spans = 0;
 			for (ic = 0; ic < sp->opts->cols; ic++) {
 
-				/* Advance to next layout cell. */
+				/*
+				 * Figure out whether to print a
+				 * vertical line after this cell
+				 * and advance to next layout cell.
+				 */
 
 				if (cp != NULL) {
 					vert = cp->vert;
-					cp = cp->next;
-				} else
+					switch (cp->pos) {
+					case TBL_CELL_HORIZ:
+						fc = '-';
+						break;
+					case TBL_CELL_DHORIZ:
+						fc = '=';
+						break;
+					default:
+						fc = ' ';
+						break;
+					}
+				} else {
 					vert = 0;
+					fc = ' ';
+				}
+				if (cpp != NULL) {
+					if (vert == 0 &&
+					    cp != NULL &&
+					    ((IS_HORIZ(cp) &&
+					      !IS_HORIZ(cpp)) ||
+					     (cp->next != NULL &&
+					      cpp->next != NULL &&
+					      IS_HORIZ(cp->next) &&
+					      !IS_HORIZ(cpp->next))))
+						vert = cpp->vert;
+					cpp = cpp->next;
+				}
+				if (vert == 0 &&
+				    sp->opts->opts & TBL_OPT_ALLBOX)
+					vert = 1;
+				if (cpn != NULL) {
+					if (vert == 0)
+						vert = cpn->vert;
+					cpn = cpn->next;
+				}
+				if (cp != NULL)
+					cp = cp->next;
 
-				/* Skip later cells in a span. */
+				/*
+				 * Skip later cells in a span,
+				 * figure out whether to start a span,
+				 * and advance to next data cell.
+				 */
 
 				if (spans) {
 					spans--;
 					continue;
 				}
-
-				/* Advance to next data cell. */
-
 				if (dp != NULL) {
 					spans = dp->spans;
 					dp = dp->next;
 				}
 
-				/* Print one line of text in the cell. */
+				/*
+				 * Print one line of text in the cell
+				 * and remember whether there is more.
+				 */
 
 				tp->tcol++;
 				if (tp->tcol->col < tp->tcol->lastcol)
@@ -253,21 +309,55 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				 * but not after the last column.
 				 */
 
-				if (tp->tcol + 1 == tp->tcols + tp->lasttcol)
-					continue;
-				if (vert == 0 &&
-				    sp->opts->opts & TBL_OPT_ALLBOX)
-					vert = 1;
-				if (vert == 0)
+				if (fc == ' ' && ((vert == 0 &&
+				     (cp == NULL || !IS_HORIZ(cp))) ||
+				    tp->tcol + 1 == tp->tcols + tp->lasttcol))
 					continue;
 
-				if (tp->tcol->rmargin + 1 > tp->viscol) {
+				if (tp->tcol->rmargin > tp->viscol) {
 					(*tp->advance)(tp, tp->tcol->rmargin
-					   + 1 - tp->viscol);
-					tp->viscol = tp->tcol->rmargin + 1;
+					   - tp->viscol);
+					tp->viscol = tp->tcol->rmargin;
 				}
-				while (vert--) {
-					(*tp->letter)(tp, '|');
+
+				if (tp->tcol->rmargin + 1 > tp->viscol) {
+					(*tp->letter)(tp, fc);
+					tp->viscol++;
+				}
+
+				if (tp->tcol + 1 == tp->tcols + tp->lasttcol)
+					continue;
+
+				if (fc == ' ' && cp != NULL) {
+					switch (cp->pos) {
+					case TBL_CELL_HORIZ:
+						fc = '-';
+						break;
+					case TBL_CELL_DHORIZ:
+						fc = '=';
+						break;
+					default:
+						break;
+					}
+				}
+
+				(*tp->letter)(tp,
+				    fc == ' ' ? '|' : vert ? '+' : fc);
+				tp->viscol++;
+
+				if (fc != ' ') {
+					if (cp != NULL &&
+					    cp->pos == TBL_CELL_HORIZ)
+						fc = '-';
+					else if (cp != NULL &&
+					    cp->pos == TBL_CELL_DHORIZ)
+						fc = '=';
+					else
+						fc = ' ';
+				}
+				if (vert > 1 || fc != ' ') {
+					(*tp->letter)(tp, fc == ' ' ? '|' :
+					    vert > 1 ? '+' : fc);
 					tp->viscol++;
 				}
 			}
@@ -276,14 +366,23 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Print the vertical frame at the end of each row. */
 
 		fc = '\0';
-		if (sp->layout->last->vert ||
-		    (sp->prev != NULL && sp->prev->layout->last->vert) ||
+		if ((sp->layout->last->vert &&
+		     sp->layout->last->col + 1 == sp->opts->cols) ||
+		    (sp->next != NULL &&
+		     sp->next->layout->last->vert &&
+		     sp->next->layout->last->col + 1 == sp->opts->cols) ||
+		    (sp->prev != NULL &&
+		     sp->prev->layout->last->vert &&
+		     sp->prev->layout->last->col + 1 == sp->opts->cols &&
+		     (horiz || (IS_HORIZ(sp->layout->last) &&
+		      !IS_HORIZ(sp->prev->layout->last)))) ||
 		    (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)))
-			fc = horiz ? '+' : '|';
+			fc = horiz || IS_HORIZ(sp->layout->last) ? '+' : '|';
 		else if (horiz && sp->opts->rvert)
 			fc = '-';
 		if (fc != '\0') {
-			if (horiz == 0) {
+			if (horiz == 0 && (IS_HORIZ(sp->layout->last) == 0 ||
+			    sp->layout->last->col + 1 < sp->opts->cols)) {
 				tp->tcol++;
 				(*tp->advance)(tp,
 				    tp->tcol->offset > tp->viscol ?
@@ -296,8 +395,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	} while (more);
 
 	/*
-	 * If we're the last row, clean up after ourselves: clear the
-	 * existing table configuration and set it to NULL.
+	 * Clean up after this row.  If it is the last line
+	 * of the table, print the box line and clean up
+	 * column data; otherwise, print the allbox line.
 	 */
 
 	term_setcol(tp, 1);
@@ -305,11 +405,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	tp->tcol->rmargin = tp->maxrmargin;
 	if (sp->next == NULL) {
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
-			tbl_hrule(tp, sp, 1);
+			tbl_hrule(tp, sp, 2);
 			tp->skipvsp = 1;
 		}
 		if (sp->opts->opts & TBL_OPT_DBOX) {
-			tbl_hrule(tp, sp, 2);
+			tbl_hrule(tp, sp, 3);
 			tp->skipvsp = 2;
 		}
 		assert(tp->tbl.cols);
@@ -327,34 +427,43 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 /*
  * Kinds of horizontal rulers:
  * 0: inside the table (single or double line with crossings)
- * 1: inner frame (single line with crossings and ends)
- * 2: outer frame (single line without crossings with ends)
+ * 1: inside the table (single or double line with crossings and ends)
+ * 2: inner frame (single line with crossings and ends)
+ * 3: outer frame (single line without crossings with ends)
  */
 static void
 tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 {
-	const struct tbl_cell *c1, *c2;
+	const struct tbl_cell *cp, *cpn, *cpp;
 	int	 vert;
 	char	 line, cross;
 
-	line = (kind == 0 && TBL_SPAN_DHORIZ == sp->pos) ? '=' : '-';
-	cross = (kind < 2) ? '+' : '-';
+	line = (kind < 2 && TBL_SPAN_DHORIZ == sp->pos) ? '=' : '-';
+	cross = (kind < 3) ? '+' : '-';
 
 	if (kind)
 		term_word(tp, "+");
-	c1 = sp->layout->first;
-	c2 = sp->prev == NULL ? NULL : sp->prev->layout->first;
-	if (c2 == c1)
-		c2 = NULL;
+	cp = sp->layout->first;
+	cpp = kind || sp->prev == NULL ? NULL : sp->prev->layout->first;
+	if (cpp == cp)
+		cpp = NULL;
+	cpn = kind > 1 || sp->next == NULL ? NULL : sp->next->layout->first;
+	if (cpn == cp)
+		cpn = NULL;
 	for (;;) {
-		tbl_char(tp, line, tp->tbl.cols[c1->col].width + 1);
-		vert = c1->vert;
-		if ((c1 = c1->next) == NULL)
+		tbl_char(tp, line, tp->tbl.cols[cp->col].width + 1);
+		vert = cp->vert;
+		if ((cp = cp->next) == NULL)
 			 break;
-		if (c2 != NULL) {
-			if (vert < c2->vert)
-				vert = c2->vert;
-			c2 = c2->next;
+		if (cpp != NULL) {
+			if (vert < cpp->vert)
+				vert = cpp->vert;
+			cpp = cpp->next;
+		}
+		if (cpn != NULL) {
+			if (vert < cpn->vert)
+				vert = cpn->vert;
+			cpn = cpn->next;
 		}
 		if (sp->opts->opts & TBL_OPT_ALLBOX && !vert)
 			vert = 1;
@@ -371,9 +480,19 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 
 static void
 tbl_data(struct termp *tp, const struct tbl_opts *opts,
-	const struct tbl_dat *dp,
-	const struct roffcol *col)
+    const struct tbl_cell *cp, const struct tbl_dat *dp,
+    const struct roffcol *col)
 {
+	switch (cp->pos) {
+	case TBL_CELL_HORIZ:
+		tbl_char(tp, '-', col->width);
+		return;
+	case TBL_CELL_DHORIZ:
+		tbl_char(tp, '=', col->width);
+		return;
+	default:
+		break;
+	}
 
 	if (dp == NULL) {
 		tbl_char(tp, ASCII_NBRSP, col->width);
@@ -396,13 +515,7 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		break;
 	}
 
-	switch (dp->layout->pos) {
-	case TBL_CELL_HORIZ:
-		tbl_char(tp, '-', col->width);
-		break;
-	case TBL_CELL_DHORIZ:
-		tbl_char(tp, '=', col->width);
-		break;
+	switch (cp->pos) {
 	case TBL_CELL_LONG:
 	case TBL_CELL_CENTRE:
 	case TBL_CELL_LEFT:
