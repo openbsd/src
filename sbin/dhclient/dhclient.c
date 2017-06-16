@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.427 2017/06/15 17:06:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.428 2017/06/16 14:12:12 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -767,8 +767,8 @@ state_reboot(struct interface_info *ifi)
 	} else
 		ifi->active = get_recorded_lease(ifi);
 
-	/* If we don't remember an active lease, go straight to INIT. */
-	if (!ifi->active || ifi->active->is_bootp) {
+	/*  No active lease, or the lease is BOOTP, go straight to INIT. */
+	if (!ifi->active || BOOTP_LEASE(ifi->active)) {
 		ifi->state = S_INIT;
 		state_init(ifi);
 		return;
@@ -835,7 +835,7 @@ state_selecting(struct interface_info *ifi)
 	}
 
 	/* If it was a BOOTREPLY, we can just take the lease right now. */
-	if (!picked->options[DHO_DHCP_MESSAGE_TYPE].len) {
+	if (BOOTP_LEASE(picked)) {
 		struct option_data *option;
 
 		ifi->new = picked;
@@ -1137,13 +1137,6 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 	}
 
 	lease = packet_to_lease(ifi, options);
-
-	/*
-	 * If this lease was acquired through a BOOTREPLY, record that
-	 * fact.
-	 */
-	if (!options[DHO_DHCP_MESSAGE_TYPE].len)
-		lease->is_bootp = 1;
 
 	/* Figure out when we're supposed to stop selecting. */
 	stop_selecting = ifi->first_sending + config->select_interval;
@@ -1879,7 +1872,7 @@ lease_as_string(struct interface_info *ifi, char *type,
 
 	strlcat(string, type, sizeof(string));
 	strlcat(string, " {\n", sizeof(string));
-	strlcat(string, (lease->is_bootp) ? "  bootp;\n" : "", sizeof(string));
+	strlcat(string, BOOTP_LEASE(lease) ? "  bootp;\n" : "", sizeof(string));
 
 	buf = pretty_print_string(ifi->name, strlen(ifi->name), 1);
 	if (buf == NULL)
@@ -2355,7 +2348,6 @@ clone_lease(struct client_lease *oldlease)
 	newlease->renewal = oldlease->renewal;
 	newlease->rebind = oldlease->rebind;
 	newlease->is_static = oldlease->is_static;
-	newlease->is_bootp = oldlease->is_bootp;
 	newlease->address = oldlease->address;
 	newlease->next_server = oldlease->next_server;
 	memcpy(newlease->ssid, oldlease->ssid, sizeof(newlease->ssid));
@@ -2516,7 +2508,7 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 
 	if (active->address.s_addr != new->address.s_addr ||
 	    active->is_static != new->is_static ||
-	    active->is_bootp != new->is_bootp)
+	    BOOTP_LEASE(active) != BOOTP_LEASE(new))
 		return (1);
 
 	if (active->server_name != new->server_name) {

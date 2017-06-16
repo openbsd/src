@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.112 2017/06/14 16:52:35 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.113 2017/06/16 14:12:12 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -560,7 +560,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 
 	switch (token) {
 	case TOK_BOOTP:
-		lease->is_bootp = 1;
+		/* 'bootp' is just a comment. See BOOTP_LEASE(). */
 		break;
 	case TOK_INTERFACE:
 		token = next_token(&val, cfile);
