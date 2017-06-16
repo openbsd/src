@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2017/05/29 09:44:01 deraadt Exp $
+# $OpenBSD: Makefile,v 1.19 2017/06/16 10:25:54 espie Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -440,6 +440,7 @@ SRCS+= wp_block.c
 .endif
 
 all beforedepend: ${GENERATED}
+BUILDFIRST = ${GENERATED}
 
 .include <bsd.lib.mk>
 

@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libobjc/Makefile,v 1.34.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.5 2017/02/15 21:22:53 miod Exp $
+# $OpenBSD: Makefile,v 1.6 2017/06/16 10:25:54 espie Exp $
 
 OBJCDIR=${.CURDIR}/../../../gcc/libobjc
 GCCDIR=	${.CURDIR}/../../../gcc/gcc
@@ -51,6 +51,7 @@ includes: ${INCS}
 .endif
 
 ${OBJS}: ${GENHDRS}
+BUILDFIRST = ${GENHDRS}
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/10/26 21:57:42 naddy Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/06/16 10:25:54 espie Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -29,5 +29,6 @@ const.h: const.c
 	    sort >> $@
 
 .depend alloc.o: const.h error.h 
+BUILDFIRST = const.h error.h
 
 .include <bsd.prog.mk>

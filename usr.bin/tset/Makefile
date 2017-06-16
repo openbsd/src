@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2016/03/30 06:38:46 jmc Exp $
+#	$OpenBSD: Makefile,v 1.11 2017/06/16 10:25:54 espie Exp $
 
 PROG=	tset
 SRCS=	tset.c dump_entry.c
@@ -12,6 +12,8 @@ CLEANFILES+= termsort.c
 LINKS=	${BINDIR}/tset ${BINDIR}/reset
 
 beforedepend: termsort.c
+
+dump_entry.o: termsort.c
 
 termsort.c: ${TIC}/MKtermsort.sh
 	sh ${TIC}/MKtermsort.sh awk ${CURSES}/Caps > ${.TARGET}

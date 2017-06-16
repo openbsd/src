@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2015/10/26 10:12:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2017/06/16 10:25:54 espie Exp $
 
 PROG=	ypserv
 MAN=	ypserv.acl.5 securenet.5 ypserv.8
@@ -22,6 +22,7 @@ all:	ypserv
 beforedepend:	${HDRS}
 ypv1.c: ypv1.h
 
+BUILDFIRST =	${HDRS}
 
 ypv1.c: ypv1.x
 	rpcgen -C -c ${.CURDIR}/ypv1.x -o ypv1.c

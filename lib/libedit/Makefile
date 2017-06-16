@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2016/05/24 18:06:30 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.27 2017/06/16 10:25:54 espie Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -34,6 +34,7 @@ CLEANFILES+=	${AHDR} fcns.h func.h help.h
 HOST_SH=	sh
 
 .depend: ${AHDR} fcns.h func.h help.h
+BUILDFIRST = ${AHDR} fcns.h func.h help.h
 
 vi.h: vi.c makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c \

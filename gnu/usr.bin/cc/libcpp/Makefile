@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/libcpp/Makefile,v 1.1.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.2 2009/10/15 21:08:01 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2017/06/16 10:25:54 espie Exp $
 
 # Use our headers in preference to ones from ../cc_tools.
 CFLAGS+=	-I${.CURDIR} -I.
@@ -18,6 +18,8 @@ SRCS+=	charset.c directives.c errors.c expr.c files.c \
 
 NOPROFILE=	Yes
 NOPIC=		Yes
+
+BUILDFIRST =	localedir.h
 
 localedir.h:	Makefile
 	echo	'#define LOCALEDIR "/usr/share/locale"' > localedir.h

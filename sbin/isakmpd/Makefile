@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2016/09/03 23:14:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.86 2017/06/16 10:25:54 espie Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -82,6 +82,8 @@ isakmp_num.c isakmp_num.h: genconstants.sh isakmp_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/isakmp_num
 
 ${PROG} beforedepend: ${GENERATED}
+
+BUILDFIRST = ${GENERATED}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
