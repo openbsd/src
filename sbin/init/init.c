@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.64 2017/05/03 09:51:39 mestre Exp $	*/
+/*	$OpenBSD: init.c,v 1.65 2017/06/16 06:46:54 natano Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -1325,7 +1325,7 @@ f_nice_death(void)
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 	int status;
 
-#ifdef CPU_LIDSUSPEND
+#ifdef CPU_LIDACTION
 	int mib[] = {CTL_MACHDEP, CPU_LIDACTION};
 	int lidaction = 0;
 
