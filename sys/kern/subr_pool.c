@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.213 2017/06/16 01:33:20 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.214 2017/06/16 01:55:45 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -135,6 +135,7 @@ struct pool_cache {
 void	*pool_cache_get(struct pool *);
 void	 pool_cache_put(struct pool *, void *);
 void	 pool_cache_destroy(struct pool *);
+void	 pool_cache_gc(struct pool *);
 #endif
 void	 pool_cache_pool_info(struct pool *, struct kinfo_pool *);
 int	 pool_cache_info(struct pool *, void *, size_t *);
@@ -1476,6 +1477,11 @@ pool_gc_pages(void *null)
 	rw_enter_read(&pool_lock);
 	s = splvm(); /* XXX go to splvm until all pools _setipl properly */
 	SIMPLEQ_FOREACH(pp, &pool_head, pr_poollist) {
+#ifdef MULTIPROCESSOR
+		if (pp->pr_cache != NULL)
+			pool_cache_gc(pp);
+#endif
+
 		if (pp->pr_nidle <= pp->pr_minpages || /* guess */
 		    !mtx_enter_try(&pp->pr_mtx)) /* try */
 			continue;
@@ -1642,8 +1648,10 @@ pool_cache_init(struct pool *pp)
 	arc4random_buf(pp->pr_cache_magic, sizeof(pp->pr_cache_magic));
 	TAILQ_INIT(&pp->pr_cache_lists);
 	pp->pr_cache_nlist = 0;
+	pp->pr_cache_tick = ticks;
 	pp->pr_cache_items = 8;
 	pp->pr_cache_contention = 0;
+	pp->pr_cache_ngc = 0;
 
 	CPUMEM_FOREACH(pc, &i, cm) {
 		pc->pc_actv = NULL;
@@ -1658,6 +1666,8 @@ pool_cache_init(struct pool *pp)
 		pc->pc_nlput = 0;
 		pc->pc_nout = 0;
 	}
+
+	membar_producer();
 
 	pp->pr_cache = cm;
 }
@@ -1740,6 +1750,9 @@ pool_cache_list_free(struct pool *pp, struct pool_cache *pc,
     struct pool_cache_item *ci)
 {
 	pool_list_enter(pp);
+	if (TAILQ_EMPTY(&pp->pr_cache_lists))
+		pp->pr_cache_tick = ticks;
+
 	TAILQ_INSERT_TAIL(&pp->pr_cache_lists, ci, ci_nextl);
 	pp->pr_cache_nlist++;
 
@@ -1893,8 +1906,10 @@ pool_cache_destroy(struct pool *pp)
 	struct cpumem_iter i;
 	struct cpumem *cm;
 
+	rw_enter_write(&pool_lock); /* serialise with the gc */
 	cm = pp->pr_cache;
 	pp->pr_cache = NULL; /* make pool_put avoid the cache */
+	rw_exit_write(&pool_lock);
 
 	CPUMEM_FOREACH(pc, &i, cm) {
 		pool_cache_list_put(pp, pc->pc_actv);
@@ -1906,6 +1921,29 @@ pool_cache_destroy(struct pool *pp)
 	pl = TAILQ_FIRST(&pp->pr_cache_lists);
 	while (pl != NULL)
 		pl = pool_cache_list_put(pp, pl);
+}
+
+void
+pool_cache_gc(struct pool *pp)
+{
+	if ((ticks - pp->pr_cache_tick) > (hz * pool_wait_gc) &&
+	    !TAILQ_EMPTY(&pp->pr_cache_lists) &&
+	    mtx_enter_try(&pp->pr_cache_mtx)) {
+		struct pool_cache_item *pl = NULL;
+
+		pl = TAILQ_FIRST(&pp->pr_cache_lists);
+		if (pl != NULL) {
+			TAILQ_REMOVE(&pp->pr_cache_lists, pl, ci_nextl);
+			pp->pr_cache_tick = ticks;
+			pp->pr_cache_nlist--;
+
+			pp->pr_cache_ngc++;
+		}
+
+		mtx_leave(&pp->pr_cache_mtx);
+
+		pool_cache_list_put(pp, pl);
+	}
 }
 
 void
@@ -1955,7 +1993,7 @@ pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
 	memset(&kpc, 0, sizeof(kpc)); /* don't leak padding */
 
 	mtx_enter(&pp->pr_cache_mtx);
-	kpc.pr_ngc = 0; /* notyet */
+	kpc.pr_ngc = pp->pr_cache_ngc;
 	kpc.pr_len = pp->pr_cache_items;
 	kpc.pr_nlist = pp->pr_cache_nlist;
 	kpc.pr_contention = pp->pr_cache_contention;

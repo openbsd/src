@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.70 2017/06/15 02:52:30 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.71 2017/06/16 01:55:45 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -185,11 +185,13 @@ struct pool {
 	unsigned long	pr_cache_magic[2];
 	struct mutex	pr_cache_mtx;
 	struct pool_cache_lists
-			pr_cache_lists;
-	u_int		pr_cache_nlist;	/* # of lists */
+			pr_cache_lists;	/* list of idle item lists */
+	u_int		pr_cache_nlist;	/* # of idle lists */
 	u_int		pr_cache_items;	/* target list length */
 	u_int		pr_cache_contention;
+	int		pr_cache_tick;	/* time idle list was empty */
 	int		pr_cache_nout;
+	uint64_t	pr_cache_ngc;	/* # of times the gc released a list */
 
 	u_int		pr_align;
 	u_int		pr_maxcolors;	/* Cache coloring */
