@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.185 2017/06/17 22:40:27 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.186 2017/06/17 23:06:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1194,8 +1194,12 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		}
 		if (cp != NULL &&
 		    isalnum((unsigned char)*cp) == 0 &&
-		    strchr(cp, '$') != NULL)
+		    strchr(cp, '$') != NULL) {
+			if (r->man->meta.rcsids & (1 << os_e))
+				mandoc_msg(MANDOCERR_RCS_REP, r->parse,
+				    ln, stesc + 1 - buf->buf, stesc + 1);
 			r->man->meta.rcsids |= 1 << os_e;
+		}
 
 		/* Handle trailing whitespace. */
 
