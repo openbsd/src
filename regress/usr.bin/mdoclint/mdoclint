@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.68 2017/06/08 18:25:16 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.69 2017/06/17 19:17:41 schwarze Exp $
 # $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -42,14 +42,14 @@ use constant {
 };
 
 use vars qw(
-	$opt_D $opt_d $opt_F $opt_h
+	$opt_D $opt_F $opt_h
 	$opt_m $opt_o $opt_p $opt_r $opt_S $opt_v $opt_w $opt_x
 );
 
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="DdFhmoprSvwx";
+my $options="DFhmoprSvwx";
 
 sub usage
 {
@@ -57,7 +57,6 @@ sub usage
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
 	-D	warn about bad casing and archs in .Dt
-	-d	warn about bad date strings (in .Dd only)
 	-F	fix whitespace problems (asks before overwriting)
 	-h	display this help text
 	-m	warn about man pages that are not in mdoc(7) format
@@ -68,7 +67,7 @@ usage:	mdoclint [-$options] file ...
 	-v	verbose output
 	-w	show section header in warnings
 	-x	warn about cross-references with missing targets
-Default is -DdmoprSx if no flag is specified.
+Default is -DmoprSx if no flag is specified.
 EOF
 	exit(0);
 }
@@ -78,7 +77,7 @@ my %sections;
 my $arches_re;
 my $sections_re;
 my $esections_re;
-my $valid_date_re;
+
 # and the code that builds them
 {
 	my @sections = (
@@ -141,12 +140,6 @@ my $valid_date_re;
 		$sections_re = qr{[1-9](?:lua)?}o;
 		$esections_re = qr{[0-9](?:lua)?}o;
 	}
-	if (OPENBSD) {
-		$valid_date_re = qr{\$Mdocdate\b};
-	}
-	if (NETBSD) {
-		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[0-9]|201[0-7])$}o;
-	}
 }
 
 sub debug
@@ -171,9 +164,9 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_d or $opt_m
+	unless ($opt_D or $opt_m
 	    or $opt_o or $opt_p or $opt_r or $opt_S or $opt_x) {
-		$opt_D = $opt_d = $opt_m =
+		$opt_D = $opt_m =
 		    $opt_o = $opt_p = $opt_r = $opt_S = $opt_x = 1;
 	}
 }
@@ -370,9 +363,6 @@ sub process_line
 	if (/^\./o and /Ns [\.();,\[\]\{\}:]/o) {
 		$s->warning("possible Ns abuse: `$_'") if $opt_p;
 	}
-	if ((/^([^\.]\w+)\(\)/o or /^[^\.].*\s(\w+)\(\)/o) and not $s->{inliteral}) {
-		$s->warning("use .Fn or .Xr for functions: `$1()'") if $opt_p;
-	}
 
 	my $destruct = $_;
 	if ($s->{mandoc_p}) {
@@ -398,11 +388,6 @@ sub process_line
 			}
 		}
 	}
-
-	if (/^\.Dd/o and not /^\.Dd\s+$valid_date_re/o) {
-		$s->warning("Invalid date found: `$_'") if $opt_d;
-	}
-
 	if (/^\.Bd\b.*-(?:literal|unfilled)\b/o) {
 		$s->{inliteral} = 1;
 	}

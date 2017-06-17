@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoclint.1,v 1.26 2017/06/08 18:25:16 schwarze Exp $
+.\" $OpenBSD: mdoclint.1,v 1.27 2017/06/17 19:17:41 schwarze Exp $
 .\" $NetBSD: mdoclint.1,v 1.23 2017/06/08 10:19:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2017 $
+.Dd $Mdocdate: June 17 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdFhmoprSvwx
+.Op Fl DFhmoprSvwx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -41,7 +41,7 @@ is a man page verifier.
 It tries to automatically find as many common
 errors that occur when writing man pages as possible.
 If no flags are given,
-.Fl DdmoprSx
+.Fl DmoprSx
 is assumed (that is, everything except
 .Fl Fhvw ) .
 .Pp
@@ -49,8 +49,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl D
 Warn about bad casing and architectures in the .Dt macro.
-.It Fl d
-Warn about bad date strings (in the .Dd macro).
 .It Fl F
 Delete whitespace at the end of input lines.
 .It Fl h
