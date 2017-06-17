@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.159 2017/06/17 01:26:48 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.160 2017/06/17 13:05:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -870,7 +870,10 @@ print_man_node(DECL_ARGS)
 		 * before printing the line's data.
 		 */
 		if (*n->string == '\0') {
-			term_vspace(p);
+			if (p->flags & TERMP_NONEWLINE)
+				term_newln(p);
+			else
+				term_vspace(p);
 			return;
 		} else if (*n->string == ' ' && n->flags & NODE_LINE &&
 		    (p->flags & TERMP_NONEWLINE) == 0)

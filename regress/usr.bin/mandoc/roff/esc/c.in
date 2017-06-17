@@ -15,3 +15,12 @@ word
 one\c
 word
 .Ed
+Blank line after \ec:
+one\c
+
+word
+.Bd -literal
+one\c
+
+word
+.Ed

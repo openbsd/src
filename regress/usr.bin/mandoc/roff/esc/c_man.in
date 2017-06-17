@@ -9,4 +9,13 @@ word
 one\c
 word
 .fi
+Blank line after \ec:
+one\c
+
+word
+.nf
+one\c
+
+word
+.fi
 final text

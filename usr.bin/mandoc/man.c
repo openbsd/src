@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.122 2017/06/03 15:54:09 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.123 2017/06/17 13:05:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,6 +74,8 @@ static int
 man_ptext(struct roff_man *man, int line, char *buf, int offs)
 {
 	int		 i;
+	const char 	*cp, *sp;
+	char		*ep;
 
 	/* Literal free-form text whitespace is preserved. */
 
@@ -87,19 +89,36 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 		/* Skip leading whitespace. */ ;
 
 	/*
-	 * Blank lines are ignored in next line scope and right
-	 * after headings but add a single vertical space elsewhere.
+	 * Blank lines are ignored in next line scope
+	 * and right after headings and cancel preceding \c,
+	 * but add a single vertical space elsewhere.
 	 */
 
 	if (buf[i] == '\0') {
-		if (man->flags & (MAN_ELINE | MAN_BLINE))
+		if (man->flags & (MAN_ELINE | MAN_BLINE)) {
 			mandoc_msg(MANDOCERR_BLK_BLANK, man->parse,
 			    line, 0, NULL);
-		else if (man->last->tok != MAN_SH &&
-		    man->last->tok != MAN_SS) {
-			roff_elem_alloc(man, line, offs, ROFF_sp);
-			man->next = ROFF_NEXT_SIBLING;
+			return 1;
 		}
+		if (man->last->tok == MAN_SH || man->last->tok == MAN_SS)
+			return 1;
+		switch (man->last->type) {
+		case ROFFT_TEXT:
+			sp = man->last->string;
+			cp = ep = strchr(sp, '\0') - 2;
+			if (cp < sp || cp[0] != '\\' || cp[1] != 'c')
+				break;
+			while (cp > sp && cp[-1] == '\\')
+				cp--;
+			if ((ep - cp) % 2)
+				break;
+			*ep = '\0';
+			return 1;
+		default:
+			break;
+		}
+		roff_elem_alloc(man, line, offs, ROFF_sp);
+		man->next = ROFF_NEXT_SIBLING;
 		return 1;
 	}
 
