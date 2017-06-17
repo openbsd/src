@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 2017/03/20 19:37:54 miod Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.12 2017/06/17 00:28:18 aoyama Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@
  */
 struct lereg1 {
 	volatile uint16_t	ler1_rdp;	/* data port */
-	volatile unsigned	:16 ;		/* LUNA-88K2 has a 16 bit gap */
+	volatile unsigned	:16 ;		/* 16bit gap */
 	volatile uint16_t	ler1_rap;	/* register select port */
 };
 
