@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.431 2017/06/17 17:10:26 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.432 2017/06/17 20:23:17 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -874,6 +874,45 @@ state_selecting(struct interface_info *ifi)
 }
 
 void
+dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
+{
+	struct client_lease *lease;
+	time_t stop_selecting;
+
+	if (ifi->state != S_SELECTING) {
+#ifdef DEBUG
+		log_debug("Unexpected %s. State #%d.", info, client->state);
+#endif	/* DEBUG */
+		return;
+	}
+
+	log_info("%s", info);
+
+	lease = packet_to_lease(ifi, options);
+	if (lease != NULL) {
+		if (ifi->offer == NULL) {
+			ifi->offer = lease;
+		} else if (lease->address.s_addr ==
+		    ifi->requested_address.s_addr) {
+			free_client_lease(ifi->offer);
+			ifi->offer = lease;
+		}
+		if (ifi->offer != lease) {
+			make_decline(ifi, lease);
+			send_decline(ifi);
+			free_client_lease(lease);
+		}
+	}
+
+	/* Figure out when we're supposed to stop selecting. */
+	stop_selecting = ifi->first_sending + config->select_interval;
+	if (stop_selecting <= time(NULL))
+		state_selecting(ifi);
+	else
+		set_timeout(stop_selecting, state_selecting, ifi);
+}
+
+void
 dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 {
 	struct client_lease *lease;
@@ -905,6 +944,43 @@ dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 	cancel_timeout();
 
 	bind_lease(ifi);
+}
+
+void
+dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
+{
+	if (ifi->state != S_REBOOTING &&
+	    ifi->state != S_REQUESTING &&
+	    ifi->state != S_RENEWING &&
+	    ifi->state != S_REBINDING) {
+#ifdef DEBUG
+		log_debug("Unexpected %s. State #%d", info, client->state);
+#endif	/* DEBUG */
+		return;
+	}
+
+	if (!ifi->active) {
+#ifdef DEBUG
+		log_debug("Unexpected %s. No active lease.", info);
+#endif	/* DEBUG */
+		return;
+	}
+
+	log_info("%s", info);
+
+	/* XXX Do we really want to remove a NAK'd lease from the database? */
+	if (!ifi->active->is_static) {
+		TAILQ_REMOVE(&ifi->leases, ifi->active, next);
+		free_client_lease(ifi->active);
+	}
+
+	ifi->active = NULL;
+
+	/* Stop sending DHCPREQUEST packets. */
+	cancel_timeout();
+
+	ifi->state = S_INIT;
+	state_init(ifi);
 }
 
 void
@@ -1084,45 +1160,6 @@ state_bound(struct interface_info *ifi)
 	send_request(ifi);
 }
 
-void
-dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
-{
-	struct client_lease *lease;
-	time_t stop_selecting;
-
-	if (ifi->state != S_SELECTING) {
-#ifdef DEBUG
-		log_debug("Unexpected %s. State #%d.", info, client->state);
-#endif	/* DEBUG */
-		return;
-	}
-
-	log_info("%s", info);
-
-	lease = packet_to_lease(ifi, options);
-	if (lease != NULL) {
-		if (ifi->offer == NULL) {
-			ifi->offer = lease;
-		} else if (lease->address.s_addr ==
-		    ifi->requested_address.s_addr) {
-			free_client_lease(ifi->offer);
-			ifi->offer = lease;
-		}
-		if (ifi->offer != lease) {
-			make_decline(ifi, lease);
-			send_decline(ifi);
-			free_client_lease(lease);
-		}
-	}
-
-	/* Figure out when we're supposed to stop selecting. */
-	stop_selecting = ifi->first_sending + config->select_interval;
-	if (stop_selecting <= time(NULL))
-		state_selecting(ifi);
-	else
-		set_timeout(stop_selecting, state_selecting, ifi);
-}
-
 int
 addressinuse(struct interface_info *ifi, struct in_addr address, char *ifname)
 {
@@ -1293,43 +1330,6 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	send_decline(ifi);
 	free_client_lease(lease);
 	return NULL;
-}
-
-void
-dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
-{
-	if (ifi->state != S_REBOOTING &&
-	    ifi->state != S_REQUESTING &&
-	    ifi->state != S_RENEWING &&
-	    ifi->state != S_REBINDING) {
-#ifdef DEBUG
-		log_debug("Unexpected %s. State #%d", info, client->state);
-#endif	/* DEBUG */
-		return;
-	}
-
-	if (!ifi->active) {
-#ifdef DEBUG
-		log_debug("Unexpected %s. No active lease.", info);
-#endif	/* DEBUG */
-		return;
-	}
-
-	log_info("%s", info);
-
-	/* XXX Do we really want to remove a NAK'd lease from the database? */
-	if (!ifi->active->is_static) {
-		TAILQ_REMOVE(&ifi->leases, ifi->active, next);
-		free_client_lease(ifi->active);
-	}
-
-	ifi->active = NULL;
-
-	/* Stop sending DHCPREQUEST packets. */
-	cancel_timeout();
-
-	ifi->state = S_INIT;
-	state_init(ifi);
 }
 
 /*
