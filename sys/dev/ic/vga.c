@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.68 2015/09/09 18:23:39 deraadt Exp $ */
+/* $OpenBSD: vga.c,v 1.69 2017/06/17 19:20:30 fcambus Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -344,10 +344,6 @@ bad:
  * We want at least ASCII 32..127 be present in the
  * first font slot.
  */
-#define vga_valid_primary_font(f) \
-	(f->encoding == WSDISPLAY_FONTENC_IBM || \
-	f->encoding == WSDISPLAY_FONTENC_ISO)
-
 int
 vga_selectfont(struct vga_config *vc, struct vgascreen *scr, const char *name1,
     const char *name2) /* NULL: take first found */
@@ -362,9 +358,7 @@ vga_selectfont(struct vga_config *vc, struct vgascreen *scr, const char *name1,
 		struct vgafont *f = vc->vc_fonts[i];
 		if (!f || f->height != type->fontheight)
 			continue;
-		if (!f1 &&
-		    vga_valid_primary_font(f) &&
-		    (!name1 || !*name1 ||
+		if (!f1 && (!name1 || !*name1 ||
 		     !strncmp(name1, f->name, WSFONT_NAME_SIZE))) {
 			f1 = f;
 			continue;
