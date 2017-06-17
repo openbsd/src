@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.23 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: file.c,v 1.24 2017/06/17 18:14:47 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -224,14 +224,13 @@ filetype(Char *dir, Char *file)
     return (' ');
 }
 
-static struct winsize win;
-
 /*
  * Print sorted down columns
  */
 static void
 print_by_column(Char *dir, Char *items[], int count)
 {
+    struct winsize win;
     int i, rows, r, c, maxwidth = 0, columns;
 
     if (ioctl(SHOUT, TIOCGWINSZ, (ioctl_t) & win) < 0 || win.ws_col == 0)
