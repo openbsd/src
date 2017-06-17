@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2017/06/13 14:06:39 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2017/06/17 03:45:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,6 +59,13 @@ struct pool pmap_pg_pool;
 #endif
 int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
+/*
+ * Maximum number of pages that can be invalidated from remote TLBs at once.
+ * This limit prevents the IPI handler from blocking other high-priority
+ * interrupts for too long.
+ */
+#define SHOOTDOWN_MAX	128
+
 uint	 pmap_alloc_tlbpid(struct proc *);
 void	 pmap_do_page_cache(vm_page_t, u_int);
 void	 pmap_do_remove(pmap_t, vaddr_t, vaddr_t);
@@ -81,10 +88,10 @@ void	pmap_invalidate_icache(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
 void	pmap_invalidate_icache_action(void *);
-void	pmap_shootdown_page(pmap_t, vaddr_t);
-void	pmap_shootdown_page_action(void *);
+void	pmap_shootdown_range(pmap_t, vaddr_t, vaddr_t);
+void	pmap_shootdown_range_action(void *);
 #else
-#define	pmap_shootdown_page(pmap, va)	do { /* nothing */ } while (0)
+#define	pmap_shootdown_range(pmap, sva, eva)	do { /* nothing */ } while (0)
 #endif
 
 #ifdef PMAPDEBUG
@@ -255,17 +262,19 @@ pmap_invalidate_icache_action(void *arg)
 	Mips_InvalidateICache(ci, ii_args->va, PAGE_SIZE);
 }
 
-struct pmap_shootdown_page_arg {
+struct pmap_shootdown_range_arg {
 	pmap_t		pmap;
-	vaddr_t		va;
+	vaddr_t		sva;
+	vaddr_t		eva;
 };
 
 void
-pmap_shootdown_page(pmap_t pmap, vaddr_t va)
+pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	struct pmap_shootdown_page_arg sp_arg;
+	struct pmap_shootdown_range_arg sr_arg;
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
+	vaddr_t va;
 	unsigned int cpumask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
@@ -285,22 +294,31 @@ pmap_shootdown_page(pmap_t pmap, vaddr_t va)
 		cpumask |= 1 << ci->ci_cpuid;
 	}
 	if (cpumask != 0) {
-		sp_arg.pmap = pmap;
-		sp_arg.va = va;
-		smp_rendezvous_cpus(cpumask, pmap_shootdown_page_action,
-		    &sp_arg);
+		sr_arg.pmap = pmap;
+		for (va = sva; va < eva; va += SHOOTDOWN_MAX * PAGE_SIZE) {
+			sr_arg.sva = va;
+			sr_arg.eva = va + SHOOTDOWN_MAX * PAGE_SIZE;
+			if (sr_arg.eva > eva)
+				sr_arg.eva = eva;
+			smp_rendezvous_cpus(cpumask,
+			    pmap_shootdown_range_action, &sr_arg);
+		}
 	}
 }
 
 void
-pmap_shootdown_page_action(void *arg)
+pmap_shootdown_range_action(void *arg)
 {
-	struct pmap_shootdown_page_arg *sp_arg = arg;
+	struct pmap_shootdown_range_arg *sr_arg = arg;
+	vaddr_t va;
 
-	if (sp_arg->pmap == pmap_kernel())
-		pmap_invalidate_kernel_page(sp_arg->va);
-	else
-		pmap_invalidate_user_page(sp_arg->pmap, sp_arg->va);
+	if (sr_arg->pmap == pmap_kernel()) {
+		for (va = sr_arg->sva; va < sr_arg->eva; va += PAGE_SIZE)
+			pmap_invalidate_kernel_page(va);
+	} else {
+		for (va = sr_arg->sva; va < sr_arg->eva; va += PAGE_SIZE)
+			pmap_invalidate_user_page(sr_arg->pmap, va);
+	}
 }
 
 #else /* MULTIPROCESSOR */
@@ -593,7 +611,7 @@ pmap_collect(pmap_t pmap)
 
 	/*
 	 * When unlinking a directory page, the subsequent call to
-	 * pmap_shootdown_page() lets any parallel lockless directory
+	 * pmap_shootdown_range() lets any parallel lockless directory
 	 * traversals end before the page gets freed.
 	 */
 
@@ -614,7 +632,7 @@ pmap_collect(pmap_t pmap)
 			if (n == 0) {
 				pmpg = pde[j];
 				pde[j] = NULL;
-				pmap_shootdown_page(pmap, 0);
+				pmap_shootdown_range(pmap, 0, 0);
 				pool_put(&pmap_pg_pool, pmpg);
 			} else
 				m++;
@@ -622,7 +640,7 @@ pmap_collect(pmap_t pmap)
 		if (m == 0) {
 			pmpg = pmap->pm_segtab->seg_tab[i];
 			pmap->pm_segtab->seg_tab[i] = NULL;
-			pmap_shootdown_page(pmap, 0);
+			pmap_shootdown_range(pmap, 0, 0);
 			pool_put(&pmap_pg_pool, pmpg);
 		}
 	}
@@ -679,7 +697,7 @@ pmap_deactivate(struct proc *p)
 void
 pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	vaddr_t ndsva, nssva;
+	vaddr_t ndsva, nssva, va;
 	pt_entry_t ***seg, **pde, *pte, entry;
 	paddr_t pa;
 	struct cpu_info *ci = curcpu();
@@ -700,7 +718,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			    (void *)sva, (void *)eva);
 #endif
 		pte = kvtopte(sva);
-		for (; sva < eva; sva += PAGE_SIZE, pte++) {
+		for (va = sva; va < eva; va += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
@@ -709,16 +727,16 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			atomic_dec_long(&pmap->pm_stats.resident_count);
 			pa = pfn_to_pad(entry);
 			if ((entry & PG_CACHEMODE) == PG_CACHED)
-				Mips_HitSyncDCachePage(ci, sva, pa);
-			pmap_remove_pv(pmap, sva, pa);
+				Mips_HitSyncDCachePage(ci, va, pa);
+			pmap_remove_pv(pmap, va, pa);
 			*pte = PG_NV | PG_G;
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			pmap_invalidate_kernel_page(sva);
-			pmap_shootdown_page(pmap_kernel(), sva);
+			pmap_invalidate_kernel_page(va);
 			stat_count(remove_stats.flushes);
 		}
+		pmap_shootdown_range(pmap_kernel(), sva, eva);
 		return;
 	}
 
@@ -730,18 +748,18 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * Invalidate every valid mapping within the range.
 	 */
 	seg = &pmap_segmap(pmap, sva);
-	for ( ; sva < eva; sva = nssva, seg++) {
-		nssva = mips_trunc_seg(sva) + NBSEG;
+	for (va = sva ; va < eva; va = nssva, seg++) {
+		nssva = mips_trunc_seg(va) + NBSEG;
 		if (*seg == NULL)
 			continue;
-		pde = *seg + uvtopde(sva);
-		for ( ; sva < eva && sva < nssva; sva = ndsva, pde++) {
-			ndsva = mips_trunc_dir(sva) + NBDIR;
+		pde = *seg + uvtopde(va);
+		for ( ; va < eva && va < nssva; va = ndsva, pde++) {
+			ndsva = mips_trunc_dir(va) + NBDIR;
 			if (*pde == NULL)
 				continue;
-			pte = *pde + uvtopte(sva);
-			for ( ; sva < eva && sva < ndsva;
-			    sva += PAGE_SIZE, pte++) {
+			pte = *pde + uvtopte(va);
+			for ( ; va < eva && va < ndsva;
+			    va += PAGE_SIZE, pte++) {
 				entry = *pte;
 				if (!(entry & PG_V))
 					continue;
@@ -751,18 +769,18 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				atomic_dec_long(&pmap->pm_stats.resident_count);
 				pa = pfn_to_pad(entry);
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
-					Mips_SyncDCachePage(ci, sva, pa);
-				pmap_remove_pv(pmap, sva, pa);
+					Mips_SyncDCachePage(ci, va, pa);
+				pmap_remove_pv(pmap, va, pa);
 				*pte = PG_NV;
 				/*
 				 * Flush the TLB for the given address.
 				 */
-				pmap_invalidate_user_page(pmap, sva);
-				pmap_shootdown_page(pmap, sva);
+				pmap_invalidate_user_page(pmap, va);
 				stat_count(remove_stats.flushes);
 			}
 		}
 	}
+	pmap_shootdown_range(pmap, sva, eva);
 }
 
 void
@@ -806,7 +824,8 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 			entry = (entry & ~(PG_M | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_kernel_page(pv->pv_va, entry);
-			pmap_shootdown_page(pmap_kernel(), pv->pv_va);
+			pmap_shootdown_range(pmap_kernel(), pv->pv_va,
+			    pv->pv_va + PAGE_SIZE);
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
 			if (pte == NULL)
@@ -821,7 +840,8 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 			entry = (entry & ~(PG_M | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
-			pmap_shootdown_page(pv->pv_pmap, pv->pv_va);
+			pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
+			    pv->pv_va + PAGE_SIZE);
 		}
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
@@ -913,7 +933,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	vaddr_t ndsva, nssva;
+	vaddr_t ndsva, nssva, va;
 	pt_entry_t ***seg, **pde, *pte, entry, p;
 	struct cpu_info *ci = curcpu();
 
@@ -948,22 +968,22 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			    (void *)sva, (void *)eva);
 #endif
 		pte = kvtopte(sva);
-		for (; sva < eva; sva += PAGE_SIZE, pte++) {
+		for (va = sva; va < eva; va += PAGE_SIZE, pte++) {
 			entry = *pte;
 			if (!(entry & PG_V))
 				continue;
 			if ((entry & PG_M) != 0 /* && p != PG_M */)
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
-					Mips_HitSyncDCachePage(ci, sva,
+					Mips_HitSyncDCachePage(ci, va,
 					    pfn_to_pad(entry));
 			entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
 			*pte = entry;
 			/*
 			 * Update the TLB if the given address is in the cache.
 			 */
-			pmap_update_kernel_page(sva, entry);
-			pmap_shootdown_page(pmap_kernel(), sva);
+			pmap_update_kernel_page(va, entry);
 		}
+		pmap_shootdown_range(pmap_kernel(), sva, eva);
 		pmap_unlock(pmap);
 		return;
 	}
@@ -976,18 +996,18 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	 * Change protection on every valid mapping within the range.
 	 */
 	seg = &pmap_segmap(pmap, sva);
-	for ( ; sva < eva; sva = nssva, seg++) {
-		nssva = mips_trunc_seg(sva) + NBSEG;
+	for (va = sva ; va < eva; va = nssva, seg++) {
+		nssva = mips_trunc_seg(va) + NBSEG;
 		if (*seg == NULL)
 			continue;
-		pde = *seg + uvtopde(sva);
-		for ( ; sva < eva && sva < nssva; sva = ndsva, pde++) {
-			ndsva = mips_trunc_dir(sva) + NBDIR;
+		pde = *seg + uvtopde(va);
+		for ( ; va < eva && va < nssva; va = ndsva, pde++) {
+			ndsva = mips_trunc_dir(va) + NBDIR;
 			if (*pde == NULL)
 				continue;
-			pte = *pde + uvtopte(sva);
-			for ( ; sva < eva && sva < ndsva;
-			    sva += PAGE_SIZE, pte++) {
+			pte = *pde + uvtopte(va);
+			for ( ; va < eva && va < ndsva;
+			    va += PAGE_SIZE, pte++) {
 				entry = *pte;
 				if (!(entry & PG_V))
 					continue;
@@ -996,18 +1016,18 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					if (prot & PROT_EXEC) {
 						/* This will also sync D$. */
 						pmap_invalidate_icache(pmap,
-						    sva, entry);
+						    va, entry);
 					} else
-						Mips_SyncDCachePage(ci, sva,
+						Mips_SyncDCachePage(ci, va,
 						    pfn_to_pad(entry));
 				}
 				entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
 				*pte = entry;
-				pmap_update_user_page(pmap, sva, entry);
-				pmap_shootdown_page(pmap, sva);
+				pmap_update_user_page(pmap, va, entry);
 			}
 		}
 	}
+	pmap_shootdown_range(pmap, sva, eva);
 
 	pmap_unlock(pmap);
 }
@@ -1138,7 +1158,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		*pte = npte;
 		pmap_update_kernel_page(va, npte);
 		if ((opte & PG_V) != 0)
-			pmap_shootdown_page(pmap_kernel(), va);
+			pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
 		if (pg != NULL)
 			mtx_leave(&pg->mdpage.pv_mtx);
 		pmap_unlock(pmap);
@@ -1242,7 +1262,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
 	if ((opte & PG_V) != 0)
-		pmap_shootdown_page(pmap, va);
+		pmap_shootdown_range(pmap, va, va + PAGE_SIZE);
 
 	/*
 	 * If mapping an executable page, invalidate ICache
@@ -1296,7 +1316,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	*pte = npte;
 	pmap_update_kernel_page(va, npte);
 	if ((opte & PG_V) != 0)
-		pmap_shootdown_page(pmap_kernel(), va);
+		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
 }
 
 /*
@@ -1329,7 +1349,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			Mips_HitSyncDCachePage(ci, va, pfn_to_pad(entry));
 		*pte = PG_NV | PG_G;
 		pmap_invalidate_kernel_page(va);
-		pmap_shootdown_page(pmap_kernel(), va);
+		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
 		atomic_dec_long(&pmap_kernel()->pm_stats.wired_count);
 		atomic_dec_long(&pmap_kernel()->pm_stats.resident_count);
 	}
@@ -1582,7 +1602,8 @@ pmap_clear_modify(struct vm_page *pg)
 				entry &= ~PG_M;
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
-				pmap_shootdown_page(pmap_kernel(), pv->pv_va);
+				pmap_shootdown_range(pmap_kernel(), pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
@@ -1597,7 +1618,8 @@ pmap_clear_modify(struct vm_page *pg)
 				*pte = entry;
 				pmap_update_user_page(pv->pv_pmap, pv->pv_va,
 				    entry);
-				pmap_shootdown_page(pv->pv_pmap, pv->pv_va);
+				pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
 			}
 		}
 	}
@@ -1755,7 +1777,8 @@ pmap_do_page_cache(vm_page_t pg, u_int mode)
 				entry = (entry & ~PG_CACHEMODE) | newmode;
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
-				pmap_shootdown_page(pmap_kernel(), pv->pv_va);
+				pmap_shootdown_range(pmap_kernel(), pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
@@ -1767,7 +1790,8 @@ pmap_do_page_cache(vm_page_t pg, u_int mode)
 				*pte = entry;
 				pmap_update_user_page(pv->pv_pmap, pv->pv_va,
 				    entry);
-				pmap_shootdown_page(pv->pv_pmap, pv->pv_va);
+				pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
+				    pv->pv_va + PAGE_SIZE);
 			}
 		}
 	}
