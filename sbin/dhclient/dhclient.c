@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.429 2017/06/17 15:53:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.430 2017/06/17 16:58:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -564,7 +564,6 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&config->reject_list);
 
 	TAILQ_INIT(&ifi->leases);
-	TAILQ_INIT(&ifi->offered_leases);
 
 	read_client_conf(ifi);
 
@@ -809,33 +808,17 @@ state_init(struct interface_info *ifi)
 void
 state_selecting(struct interface_info *ifi)
 {
-	struct client_lease *lease, *picked;
+	struct option_data *option;
 
 	cancel_timeout();
 
-	if (TAILQ_EMPTY(&ifi->offered_leases)) {
+	if (ifi->new == NULL) {
 		state_panic(ifi);
 		return;
 	}
 
-	picked = TAILQ_FIRST(&ifi->offered_leases);
-	TAILQ_REMOVE(&ifi->offered_leases, picked, next);
-
-	/* DECLINE the rest of the offers. */
-	while (!TAILQ_EMPTY(&ifi->offered_leases)) {
-		lease = TAILQ_FIRST(&ifi->offered_leases);
-		TAILQ_REMOVE(&ifi->offered_leases, lease, next);
-		make_decline(ifi, lease);
-		send_decline(ifi);
-		free_client_lease(lease);
-	}
-
 	/* If it was a BOOTREPLY, we can just take the lease right now. */
-	if (BOOTP_LEASE(picked)) {
-		struct option_data *option;
-
-		ifi->new = picked;
-
+	if (BOOTP_LEASE(ifi->new)) {
 		/*
 		 * Set (unsigned 32 bit) options
 		 *
@@ -882,10 +865,10 @@ state_selecting(struct interface_info *ifi)
 	 * the current xid, as all offers should have had the same
 	 * one.
 	 */
-	make_request(ifi, picked);
+	make_request(ifi, ifi->new);
 
 	/* Toss the lease we picked - we'll get it back in a DHCPACK. */
-	free_client_lease(picked);
+	free_client_lease(ifi->new);
 
 	send_request(ifi);
 }
@@ -1104,8 +1087,7 @@ state_bound(struct interface_info *ifi)
 void
 dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 {
-	struct dhcp_packet *packet = &ifi->recv_packet;
-	struct client_lease *lease, *lp;
+	struct client_lease *lease;
 	time_t stop_selecting;
 
 	if (ifi->state != S_SELECTING) {
@@ -1117,28 +1099,19 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 
 	log_info("%s", info);
 
-	/* If we've already seen this lease, don't record it again. */
-	TAILQ_FOREACH(lp, &ifi->offered_leases, next) {
-		if (!memcmp(&lp->address.s_addr, &packet->yiaddr,
-		    sizeof(in_addr_t))) {
-#ifdef DEBUG
-			log_debug("Duplicate %s.", info);
-#endif	/* DEBUG */
-			return;
-		}
-	}
-
 	lease = packet_to_lease(ifi, options);
 	if (lease != NULL) {
-		if (TAILQ_EMPTY(&ifi->offered_leases)) {
-			TAILQ_INSERT_HEAD(&ifi->offered_leases, lease, next);
+		if (ifi->new == NULL) {
+			ifi->new = lease;
 		} else if (lease->address.s_addr ==
 		    ifi->requested_address.s_addr) {
-			/* The expected lease - put it first. */
-			TAILQ_INSERT_HEAD(&ifi->offered_leases, lease, next);
-		} else {
-			/* Put it at the end of the list. */
-			TAILQ_INSERT_TAIL(&ifi->offered_leases, lease, next);
+			free_client_lease(ifi->new);
+			ifi->new = lease;
+		}
+		if (ifi->new != lease) {
+			make_decline(ifi, lease);
+			send_decline(ifi);
+			free_client_lease(lease);
 		}
 	}
 
