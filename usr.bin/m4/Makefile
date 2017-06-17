@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2014/05/12 19:11:19 espie Exp $
+#	$OpenBSD: Makefile,v 1.14 2017/06/17 01:55:16 bcallah Exp $
 
 # -DEXTENDED 
 # 	if you want the paste & spaste macros.
@@ -8,8 +8,8 @@ CFLAGS+=-DEXTENDED -I.
 CDIAGFLAGS=-W -Wall -Wstrict-prototypes -pedantic \
 	-Wno-unused -Wno-char-subscripts -Wno-sign-compare
 
-LDADD= -ly -ll -lm -lutil
-DPADD= ${LIBY} ${LIBL} ${LIBM} ${LIBUTIL}
+LDADD= -lm -lutil
+DPADD= ${LIBM} ${LIBUTIL}
 
 SRCS=	eval.c expr.c look.c main.c misc.c gnum4.c trace.c tokenizer.l parser.y
 MAN=	m4.1

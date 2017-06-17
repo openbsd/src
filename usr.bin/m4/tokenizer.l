@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.9 2017/06/15 13:48:42 bcallah Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.10 2017/06/17 01:55:16 bcallah Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -36,6 +36,8 @@ hex	0[xX][0-9a-fA-F]+
 oct	0[0-7]*
 dec	[1-9][0-9]*
 radix	0[rR][0-9]+:[0-9a-zA-Z]+
+
+%option noyywrap
 
 %%
 {ws}			{/* just skip it */}
