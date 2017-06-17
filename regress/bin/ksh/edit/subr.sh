@@ -16,7 +16,7 @@
 testseq() {
 	stdin=$1
 	exp=$(echo "$2")
-	act=$(echo -n "$stdin" | ./edit)
+	act=$(echo -n "$stdin" | ./edit ksh -r)
 	[ "$exp" = "$act" ] && return 0
 
 	echo input:

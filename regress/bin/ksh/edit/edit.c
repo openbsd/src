@@ -19,17 +19,19 @@
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
 #include <util.h>
 
-static void	sigchld(int);
+static void		sigchld(int);
+static void __dead	usage(void);
 
 static volatile sig_atomic_t	gotsigchld;
 
 int
-main(void)
+main(int argc, char *argv[])
 {
 	char		in[BUFSIZ], out[BUFSIZ];
 	struct pollfd	pfd;
@@ -38,6 +40,9 @@ main(void)
 	ssize_t		n;
 	size_t		nin, nread, nwrite;
 	int		nready, ptyfd;
+
+	if (argc < 2)
+		usage();
 
 	nin = 0;
 	for (;;) {
@@ -64,9 +69,8 @@ main(void)
 	if (pid == -1)
 		err(1, "forkpty");
 	if (pid == 0) {
-		/* Run restricted shell ignoring ~/.profile. */
-		execlp("ksh", "ksh", "-r", NULL);
-		err(1, "ksh");
+		execvp(argv[1], &argv[1]);
+		err(1, "%s", argv[1]);
 	}
 
 	nread = nwrite = 0;
@@ -115,4 +119,11 @@ static void
 sigchld(int sig)
 {
 	gotsigchld = sig == SIGCHLD;
+}
+
+static void __dead
+usage(void)
+{
+	fprintf(stderr, "usage: edit command [args]\n");
+	exit(1);
 }
