@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.430 2017/06/17 16:58:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.431 2017/06/17 17:10:26 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -812,13 +812,13 @@ state_selecting(struct interface_info *ifi)
 
 	cancel_timeout();
 
-	if (ifi->new == NULL) {
+	if (ifi->offer == NULL) {
 		state_panic(ifi);
 		return;
 	}
 
 	/* If it was a BOOTREPLY, we can just take the lease right now. */
-	if (BOOTP_LEASE(ifi->new)) {
+	if (BOOTP_LEASE(ifi->offer)) {
 		/*
 		 * Set (unsigned 32 bit) options
 		 *
@@ -829,19 +829,19 @@ state_selecting(struct interface_info *ifi)
 		 * so bind_lease() can set the lease times. Note that the
 		 * values must be big-endian.
 		 */
-		option = &ifi->new->options[DHO_DHCP_LEASE_TIME];
+		option = &ifi->offer->options[DHO_DHCP_LEASE_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
 			memcpy(option->data, "\x00\x00\x2e\xe0", 4);
 		}
-		option = &ifi->new->options[DHO_DHCP_RENEWAL_TIME];
+		option = &ifi->offer->options[DHO_DHCP_RENEWAL_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
 			memcpy(option->data, "\x00\x00\x1f\x40", 4);
 		}
-		option = &ifi->new->options[DHO_DHCP_REBINDING_TIME];
+		option = &ifi->offer->options[DHO_DHCP_REBINDING_TIME];
 		option->data = malloc(4);
 		if (option->data) {
 			option->len = 4;
@@ -865,10 +865,10 @@ state_selecting(struct interface_info *ifi)
 	 * the current xid, as all offers should have had the same
 	 * one.
 	 */
-	make_request(ifi, ifi->new);
+	make_request(ifi, ifi->offer);
 
 	/* Toss the lease we picked - we'll get it back in a DHCPACK. */
-	free_client_lease(ifi->new);
+	free_client_lease(ifi->offer);
 
 	send_request(ifi);
 }
@@ -897,9 +897,9 @@ dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 		return;
 	}
 
-	ifi->new = lease;
-	memcpy(ifi->new->ssid, ifi->ssid, sizeof(ifi->new->ssid));
-	ifi->new->ssid_len = ifi->ssid_len;
+	ifi->offer = lease;
+	memcpy(ifi->offer->ssid, ifi->ssid, sizeof(ifi->offer->ssid));
+	ifi->offer->ssid_len = ifi->ssid_len;
 
 	/* Stop resending DHCPREQUEST. */
 	cancel_timeout();
@@ -921,41 +921,41 @@ bind_lease(struct interface_info *ifi)
 	 * Clear out any old resolv_conf in case the lease has been here
 	 * before (e.g. static lease).
 	 */
-	free(ifi->new->resolv_conf);
-	ifi->new->resolv_conf = NULL;
+	free(ifi->offer->resolv_conf);
+	ifi->offer->resolv_conf = NULL;
 
-	lease = apply_defaults(ifi->new);
+	lease = apply_defaults(ifi->offer);
 	options = lease->options;
 
 	set_lease_times(lease);
 
-	ifi->new->expiry = lease->expiry;
-	ifi->new->renewal = lease->renewal;
-	ifi->new->rebind = lease->rebind;
+	ifi->offer->expiry = lease->expiry;
+	ifi->offer->renewal = lease->renewal;
+	ifi->offer->rebind = lease->rebind;
 
 	/*
 	 * A duplicate lease once we are responsible & S_RENEWING means we
 	 * don't need to change the interface, routing table or resolv.conf.
 	 */
 	if ((ifi->flags & IFI_IS_RESPONSIBLE) && ifi->state == S_RENEWING &&
-	    compare_lease(ifi->active, ifi->new) == 0) {
-		ifi->new->resolv_conf = ifi->active->resolv_conf;
+	    compare_lease(ifi->active, ifi->offer) == 0) {
+		ifi->offer->resolv_conf = ifi->active->resolv_conf;
 		ifi->active->resolv_conf = NULL;
-		ifi->active = ifi->new;
-		ifi->new = NULL;
+		ifi->active = ifi->offer;
+		ifi->offer = NULL;
 		log_info("bound to %s -- renewal in %lld seconds.",
 		    inet_ntoa(ifi->active->address),
 		    (long long)(ifi->active->renewal - time(NULL)));
 		goto newlease;
 	}
 
-	ifi->new->resolv_conf = resolv_conf_contents(ifi,
+	ifi->offer->resolv_conf = resolv_conf_contents(ifi,
 	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS],
 	    &options[DHO_DOMAIN_SEARCH]);
 
-	/* Replace the old active lease with the new one. */
-	ifi->active = ifi->new;
-	ifi->new = NULL;
+	/* Replace the old active lease with the accepted offer. */
+	ifi->active = ifi->offer;
+	ifi->offer = NULL;
 
 	/* Deleting the addresses also clears out arp entries. */
 	delete_addresses(ifi);
@@ -1101,14 +1101,14 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 
 	lease = packet_to_lease(ifi, options);
 	if (lease != NULL) {
-		if (ifi->new == NULL) {
-			ifi->new = lease;
+		if (ifi->offer == NULL) {
+			ifi->offer = lease;
 		} else if (lease->address.s_addr ==
 		    ifi->requested_address.s_addr) {
-			free_client_lease(ifi->new);
-			ifi->new = lease;
+			free_client_lease(ifi->offer);
+			ifi->offer = lease;
 		}
-		if (ifi->new != lease) {
+		if (ifi->offer != lease) {
 			make_decline(ifi, lease);
 			send_decline(ifi);
 			free_client_lease(lease);
@@ -1404,13 +1404,10 @@ send_discover(struct interface_info *ifi)
 void
 state_panic(struct interface_info *ifi)
 {
-	struct client_lease *lp;
-
 	log_info("No acceptable DHCPOFFERS received.");
 
-	lp = get_recorded_lease(ifi);
-	if (lp) {
-		ifi->new = lp;
+	ifi->offer = get_recorded_lease(ifi);
+	if (ifi->offer) {
 		ifi->state = S_REQUESTING;
 		bind_lease(ifi);
 		return;
