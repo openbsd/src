@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.183 2017/06/16 14:12:12 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.184 2017/06/17 15:53:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,6 @@ struct client_lease {
 	char			 ssid[32];
 	uint8_t			 ssid_len;
 	unsigned int		 is_static;
-	unsigned int		 is_invalid;
 	struct option_data	 options[256];
 };
 #define BOOTP_LEASE(l)	((l)->options[DHO_DHCP_MESSAGE_TYPE].len == 0)
