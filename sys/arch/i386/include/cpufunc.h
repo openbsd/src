@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.25 2017/05/27 12:21:50 tedu Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.26 2017/06/17 09:32:26 jmatthew Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -215,6 +215,15 @@ static __inline void
 mfence(void)
 {
 	__asm volatile("mfence" : : : "memory");
+}
+
+static __inline u_int64_t
+rdtsc(void)
+{
+	uint64_t tsc;
+
+	__asm volatile("rdtsc" : "=A" (tsc));
+	return (tsc);
 }
 
 static __inline void
