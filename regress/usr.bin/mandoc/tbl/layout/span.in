@@ -48,3 +48,7 @@ a:b:c:d:e
 s1:s2
 a:b:c:d:e
 .TE
+.sp
+leaked tab settings:
+.br
+a	b	c	d	e	f

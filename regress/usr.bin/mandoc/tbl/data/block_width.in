@@ -100,3 +100,7 @@ a:b:c:d:e:f:g:T{
 1234567 90
 T}
 .TE
+.sp
+leaked tab settings:
+.br
+\&	b	c	d	e	f	g	h

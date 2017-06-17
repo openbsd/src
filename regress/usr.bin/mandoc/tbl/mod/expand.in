@@ -223,3 +223,9 @@ tab(:);
 lx lx lx lx lx l rx.
 x:x:x:x:x:123456789012345678901234567890123456789012:x
 .TE
+.sp
+.nf
+leaked tab settings:
+.br
+a	b	c	d	e	f	g	h
+.fi

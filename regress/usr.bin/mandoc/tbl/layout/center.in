@@ -20,3 +20,7 @@ r c l .
 ****:****:****
 *****:*****:*****
 .TE
+.sp
+leaked tab settings:
+.br
+a	b	c	de

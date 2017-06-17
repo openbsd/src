@@ -60,4 +60,7 @@ DDEESSCCRRIIPPTTIIOONN
      |a | b | c | d | e | f | g | 1234567   |
      |  |   |   |   |   |   |   | 90        |
      +--+---+---+---+---+---+---+-----------+
+     leaked tab settings:
+       b   c   d   e   f   g   h
+
 OpenBSD                          June 15, 2017                         OpenBSD

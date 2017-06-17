@@ -12,3 +12,7 @@ _
 italic:roman:bold
 and:so:on
 .TE
+.sp
+leaked tab settings:
+.br
+a	b	c	d	e
