@@ -17,3 +17,4 @@ mandoc: badargs.in:70:20: ERROR: skipping excess arguments: Bl ... -bogus
 mandoc: badargs.in:75:42: WARNING: duplicate argument: Bl -compact
 mandoc: badargs.in:75:51: WARNING: duplicate argument: Bl -offset 2n
 mandoc: badargs.in:75:62: WARNING: duplicate argument: Bl -width 6n
+mandoc: badargs.in: STYLE: RCS id missing

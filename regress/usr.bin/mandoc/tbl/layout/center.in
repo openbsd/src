@@ -1,4 +1,4 @@
-.TH TBL-LAYOUT-CENTER 1
+.TH TBL-LAYOUT-CENTER 1 "June 17, 2017" OpenBSD
 .SH NAME
 tbl-layout-center \- centering of table cells
 .SH DESCRIPTION

@@ -1,1 +1,2 @@
 mandoc: basic.in:12:6: ERROR: skipping excess arguments: cc ... bogus
+mandoc: basic.in: STYLE: RCS id missing

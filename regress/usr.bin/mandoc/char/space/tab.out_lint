@@ -41,3 +41,4 @@ mandoc: tab.in:81:7: WARNING: tab in filled text
 mandoc: tab.in:83:1: WARNING: tab in filled text
 mandoc: tab.in:85:1: WARNING: tab in filled text
 mandoc: tab.in:85:2: WARNING: tab in filled text
+mandoc: tab.in: STYLE: RCS id missing

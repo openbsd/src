@@ -4,3 +4,4 @@ mandoc: bareTa.in:18:5: ERROR: skipping column outside column list: Ta
 mandoc: bareTa.in:25:2: ERROR: skipping item outside list: It ignored arguments
 mandoc: bareTa.in:1:5: STYLE: Mdocdate missing: Dd November
 mandoc: bareTa.in:18:2: ERROR: skipping all arguments: It ignored arguments
+mandoc: bareTa.in: STYLE: RCS id missing

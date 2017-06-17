@@ -1,2 +1,3 @@
 mandoc: subbefore.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: subbefore.in: STYLE: RCS id missing
 mandoc: subbefore.in:4:2: WARNING: content before first section header: Ss

@@ -7,3 +7,4 @@ mandoc: man.in:90:27: WARNING: whitespace at end of input line
 mandoc: man.in:103:5: WARNING: unterminated quoted argument
 mandoc: man.in:106:9: WARNING: unterminated quoted argument
 mandoc: man.in:130:1: ERROR: escaped character not allowed in a name: IB\(
+mandoc: man.in: STYLE: RCS id missing

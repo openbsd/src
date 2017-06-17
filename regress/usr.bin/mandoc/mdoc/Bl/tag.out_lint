@@ -1,2 +1,3 @@
 mandoc: tag.in:1:5: STYLE: Mdocdate missing: Dd September
 mandoc: tag.in:131:2: WARNING: missing -width in -tag list, using 6n: Bl -tag
+mandoc: tag.in: STYLE: RCS id missing

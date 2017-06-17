@@ -22,3 +22,4 @@ mandoc: line.in:83:2: WARNING: skipping paragraph macro: Pp at the end of Sh
 mandoc: line.in:85:2: WARNING: skipping paragraph macro: Pp after Sh
 mandoc: line.in:88:2: WARNING: skipping paragraph macro: Pp after Ss
 mandoc: line.in:90:2: WARNING: skipping paragraph macro: Pp at the end of Ss
+mandoc: line.in: STYLE: RCS id missing

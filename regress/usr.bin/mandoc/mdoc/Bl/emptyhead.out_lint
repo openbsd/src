@@ -3,3 +3,4 @@ mandoc: emptyhead.in:12:2: WARNING: empty head in list item: Bl -hang It
 mandoc: emptyhead.in:21:2: WARNING: empty head in list item: Bl -ohang It
 mandoc: emptyhead.in:30:2: WARNING: empty head in list item: Bl -inset It
 mandoc: emptyhead.in:39:2: WARNING: empty head in list item: Bl -diag It
+mandoc: emptyhead.in: STYLE: RCS id missing

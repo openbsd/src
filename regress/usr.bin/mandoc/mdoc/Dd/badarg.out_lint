@@ -1,2 +1,3 @@
 mandoc: badarg.in:1:2: WARNING: cannot parse date, using it verbatim: bad date
 mandoc: badarg.in:1:5: STYLE: Mdocdate missing: Dd bad date
+mandoc: badarg.in: STYLE: RCS id missing

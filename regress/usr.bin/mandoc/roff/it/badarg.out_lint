@@ -1,3 +1,4 @@
 mandoc: badarg.in:12:2: ERROR: skipping request without numeric argument: it mytrap
 mandoc: badarg.in:15:2: ERROR: skipping request without numeric argument: it
 mandoc: badarg.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: badarg.in: STYLE: RCS id missing

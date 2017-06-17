@@ -1,3 +1,4 @@
 mandoc: args.in:6:2: WARNING: skipping empty request: tr
 mandoc: args.in:8:5: WARNING: odd number of characters in request: tr x
 mandoc: args.in:14:7: WARNING: odd number of characters in request: tr z
+mandoc: args.in: STYLE: RCS id missing

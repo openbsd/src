@@ -1,2 +1,3 @@
 mandoc: case.in:2:6: WARNING: lower case character in document title: Dt Dt-case
 mandoc: case.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: case.in: STYLE: RCS id missing

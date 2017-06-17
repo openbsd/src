@@ -1,2 +1,3 @@
 mandoc: position.in:1:5: STYLE: Mdocdate missing: Dd September
 mandoc: position.in:10:2: WARNING: skipping no-space macro
+mandoc: position.in: STYLE: RCS id missing

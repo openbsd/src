@@ -1,4 +1,4 @@
-.TH STRING-ESCAPE 1 "December 3, 2010"
+.TH STRING-ESCAPE 1 "December 3, 2010" OpenBSD
 .SH NAME
 string-escape - preventing string interpolation
 .SH DESCRIPTION

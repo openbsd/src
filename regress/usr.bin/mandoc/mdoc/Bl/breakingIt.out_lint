@@ -15,3 +15,4 @@ mandoc: breakingIt.in:41:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:42:2: WARNING: moving content out of list: Bd
 mandoc: breakingIt.in:48:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:49:2: WARNING: moving content out of list: Bd
+mandoc: breakingIt.in: STYLE: RCS id missing

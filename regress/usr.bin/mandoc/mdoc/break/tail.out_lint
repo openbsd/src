@@ -4,3 +4,4 @@ mandoc: tail.in:20:2: WARNING: blocks badly nested: Aq breaks Bo
 mandoc: tail.in:22:2: WARNING: blocks badly nested: Aq breaks Bo
 mandoc: tail.in:46:2: WARNING: blocks badly nested: Bro breaks Po
 mandoc: tail.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: tail.in: STYLE: RCS id missing

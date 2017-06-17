@@ -1,2 +1,3 @@
 mandoc: close.in:14:2: ERROR: appending missing end of block: if
 mandoc: close.in:14:9: WARNING: skipping paragraph macro: sp after PP
+mandoc: close.in: STYLE: RCS id missing

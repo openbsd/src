@@ -9,3 +9,4 @@ mandoc: arg.in:17:2: STYLE: useless macro: Ud
 mandoc: arg.in:17:2: ERROR: skipping all arguments: Ud one
 mandoc: arg.in:18:2: STYLE: useless macro: Bt
 mandoc: arg.in:18:2: ERROR: skipping all arguments: Bt one
+mandoc: arg.in: STYLE: RCS id missing

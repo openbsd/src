@@ -1,2 +1,3 @@
 mandoc: manarg.in:1:2: STYLE: legacy man(7) date format: Dd 2014-08-07
 mandoc: manarg.in:1:5: STYLE: Mdocdate missing: Dd 2014-08-07
+mandoc: manarg.in: STYLE: RCS id missing

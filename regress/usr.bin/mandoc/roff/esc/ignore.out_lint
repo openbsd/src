@@ -1,2 +1,3 @@
 mandoc: ignore.in:14:60: WARNING: invalid escape sequence: \s-
 mandoc: ignore.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: ignore.in: STYLE: RCS id missing

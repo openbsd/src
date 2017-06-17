@@ -25,3 +25,4 @@ mandoc: punct.in:75:7: WARNING: skipping empty macro: Li
 mandoc: punct.in:83:2: WARNING: skipping empty macro: Li
 mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: punct.in:86:6: STYLE: no blank before trailing delimiter: Li a.
+mandoc: punct.in: STYLE: RCS id missing

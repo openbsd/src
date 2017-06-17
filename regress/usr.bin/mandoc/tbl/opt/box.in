@@ -1,6 +1,6 @@
-.TH TBL-VERT 1
+.TH TBL-OPT-BOX 1 "June 12, 2017" OpenBSD
 .SH NAME
-tbl-vert \- vertical lines
+tbl-opt-box \- box table options
 .SH DESCRIPTION
 no boxing:
 .TS

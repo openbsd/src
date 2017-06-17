@@ -1,2 +1,3 @@
 mandoc: invalid.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: invalid.in:15:5: WARNING: unknown AT&T UNIX version: At murks
+mandoc: invalid.in: STYLE: RCS id missing

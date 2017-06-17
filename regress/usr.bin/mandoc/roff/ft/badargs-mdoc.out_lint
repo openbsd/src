@@ -1,3 +1,4 @@
 mandoc: badargs-mdoc.in:13:7: ERROR: skipping excess arguments: ft ... bogus
 mandoc: badargs-mdoc.in:1:5: STYLE: Mdocdate missing: Dd May
 mandoc: badargs-mdoc.in:11:2: WARNING: unknown font, skipping request: ft foo
+mandoc: badargs-mdoc.in: STYLE: RCS id missing

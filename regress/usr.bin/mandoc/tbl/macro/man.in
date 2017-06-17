@@ -1,4 +1,4 @@
-.TH TBL-MACRO-MAN 1 "December 16, 2014"
+.TH TBL-MACRO-MAN 1 "December 16, 2014" OpenBSD
 .SH NAME
 tbl-macro-man \- man macro in a table
 .SH DESCRIPTION

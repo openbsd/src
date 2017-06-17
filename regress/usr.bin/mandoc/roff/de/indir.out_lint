@@ -3,3 +3,4 @@ mandoc: indir.in:25:6: WARNING: undefined string, using "": myim
 mandoc: indir.in:25:2: WARNING: skipping empty request: dei
 mandoc: indir.in:29:2: WARNING: skipping empty request: dei
 mandoc: indir.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: indir.in: STYLE: RCS id missing

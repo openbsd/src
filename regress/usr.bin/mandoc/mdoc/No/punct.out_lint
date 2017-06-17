@@ -24,3 +24,4 @@ mandoc: punct.in:74:7: WARNING: skipping empty macro: No
 mandoc: punct.in:75:7: WARNING: skipping empty macro: No
 mandoc: punct.in:83:2: WARNING: skipping empty macro: No
 mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: punct.in: STYLE: RCS id missing

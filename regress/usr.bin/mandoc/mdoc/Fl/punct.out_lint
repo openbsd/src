@@ -1,2 +1,3 @@
 mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: punct.in:45:6: STYLE: no blank before trailing delimiter: Fl a.
+mandoc: punct.in: STYLE: RCS id missing

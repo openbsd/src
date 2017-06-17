@@ -1,2 +1,3 @@
 mandoc: badfont.in:8:7: WARNING: unknown font, skipping request: TS f
 mandoc: badfont.in:9:7: WARNING: unknown font, skipping request: TS f.
+mandoc: badfont.in: STYLE: RCS id missing

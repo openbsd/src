@@ -1,1 +1,2 @@
 mandoc: blank.in:7:1: WARNING: skipping blank line in line scope
+mandoc: blank.in: STYLE: RCS id missing

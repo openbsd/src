@@ -1,2 +1,3 @@
 mandoc: noarg.in:9:2: WARNING: missing eqn box, using "": over
 mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: noarg.in: STYLE: RCS id missing

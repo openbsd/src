@@ -1,3 +1,4 @@
 mandoc: noarg.in:12:2: WARNING: skipping empty macro: Er
 mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: noarg.in:10:8: STYLE: no blank before trailing delimiter: Er EIO.
+mandoc: noarg.in: STYLE: RCS id missing

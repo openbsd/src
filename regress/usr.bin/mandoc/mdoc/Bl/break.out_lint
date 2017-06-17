@@ -17,3 +17,4 @@ mandoc: break.in:74:2: ERROR: appending missing end of block: Bl
 mandoc: break.in:1:5: STYLE: Mdocdate missing: Dd August
 mandoc: break.in:75:2: WARNING: empty list item: Bl -enum It
 mandoc: break.in:75:2: ERROR: skipping all arguments: It before broken block
+mandoc: break.in: STYLE: RCS id missing

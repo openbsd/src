@@ -7,3 +7,4 @@ mandoc: emptyitem.in:28:2: WARNING: empty list item: Bl -enum It
 mandoc: emptyitem.in:29:2: ERROR: skipping all arguments: It head argument
 mandoc: emptyitem.in:34:2: ERROR: skipping all arguments: It Sy
 mandoc: emptyitem.in:36:2: WARNING: empty list item: Bl -hyphen It
+mandoc: emptyitem.in: STYLE: RCS id missing

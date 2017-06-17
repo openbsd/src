@@ -1,1 +1,2 @@
 mandoc: nested.in:12:4: UNSUPP: ignoring macro in table: TS
+mandoc: nested.in: STYLE: RCS id missing

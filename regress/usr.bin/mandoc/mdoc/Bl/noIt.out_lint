@@ -7,3 +7,4 @@ mandoc: noIt.in:17:2: WARNING: moving content out of list: Em
 mandoc: noIt.in:17:10: WARNING: moving content out of list: Sy
 mandoc: noIt.in:17:19: WARNING: moving content out of list: Em
 mandoc: noIt.in:23:1: WARNING: moving content out of list: text
+mandoc: noIt.in: STYLE: RCS id missing

@@ -1,2 +1,3 @@
 mandoc: args.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: args.in:15:9: STYLE: no blank before trailing delimiter: Bx nett.
+mandoc: args.in: STYLE: RCS id missing

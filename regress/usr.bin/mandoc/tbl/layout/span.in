@@ -1,4 +1,4 @@
-.TH TBL-LAYOUT-SPAN 1
+.TH TBL-LAYOUT-SPAN 1 "June 17, 2017" OpenBSD
 .SH NAME
 tbl-layout-span \- alignment of spanned cells
 .SH DESCRIPTION

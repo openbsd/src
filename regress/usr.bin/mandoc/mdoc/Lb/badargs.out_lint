@@ -2,3 +2,4 @@ mandoc: badargs.in:9:2: WARNING: skipping empty macro: Lb
 mandoc: badargs.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: badargs.in:8:10: STYLE: no blank before trailing delimiter: Lb murks.
 mandoc: badargs.in:10:18: STYLE: no blank before trailing delimiter: Lb ... another.
+mandoc: badargs.in: STYLE: RCS id missing

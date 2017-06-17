@@ -1,2 +1,3 @@
 mandoc: unclosed.in:9:2: ERROR: appending missing end of block: Eo
 mandoc: unclosed.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: unclosed.in: STYLE: RCS id missing

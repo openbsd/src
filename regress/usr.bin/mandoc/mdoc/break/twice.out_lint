@@ -10,3 +10,4 @@ mandoc: twice.in:36:8: WARNING: blocks badly nested: Bq breaks Po
 mandoc: twice.in:36:2: WARNING: blocks badly nested: Aq breaks Po
 mandoc: twice.in:1:5: STYLE: Mdocdate missing: Dd February
 mandoc: twice.in:36:2: WARNING: moving content out of list: Aq
+mandoc: twice.in: STYLE: RCS id missing

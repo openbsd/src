@@ -1,1 +1,2 @@
 mandoc: late.in:8:2: WARNING: late prologue macro: Os
+mandoc: late.in: STYLE: RCS id missing

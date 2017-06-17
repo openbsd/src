@@ -1,3 +1,4 @@
 mandoc: dupe.in:1:5: STYLE: Mdocdate missing: Dd August
 mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Dt
 mandoc: dupe.in:10:2: WARNING: skipping late title macro: Dt
+mandoc: dupe.in: STYLE: RCS id missing

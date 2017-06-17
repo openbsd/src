@@ -11,3 +11,4 @@ mandoc: badargs.in:33:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:38:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:43:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:48:2: ERROR: skipping display without arguments: Bd
+mandoc: badargs.in: STYLE: RCS id missing

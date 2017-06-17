@@ -1,3 +1,4 @@
 mandoc: badNAME.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: badNAME.in:5:2: ERROR: missing manual name, using "": Nm
 mandoc: badNAME.in:5:5: WARNING: bad NAME section content: Bx
+mandoc: badNAME.in: STYLE: RCS id missing

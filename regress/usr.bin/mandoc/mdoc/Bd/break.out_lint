@@ -1,2 +1,3 @@
 mandoc: break.in:12:2: WARNING: blocks badly nested: Bd breaks Bo
 mandoc: break.in:1:5: STYLE: Mdocdate missing: Dd November
+mandoc: break.in: STYLE: RCS id missing

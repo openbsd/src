@@ -1,3 +1,4 @@
 mandoc: emptyNAME.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: emptyNAME.in:4:2: WARNING: NAME section without Nm before Nd
 mandoc: emptyNAME.in:4:2: WARNING: NAME section without description
+mandoc: emptyNAME.in: STYLE: RCS id missing

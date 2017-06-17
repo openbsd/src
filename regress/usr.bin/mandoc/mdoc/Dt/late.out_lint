@@ -1,3 +1,4 @@
 mandoc: late.in:1:5: STYLE: Mdocdate missing: Dd August
 mandoc: late.in:8:2: WARNING: skipping late title macro: Dt
 mandoc: late.in: WARNING: missing manual title, using UNTITLED: EOF
+mandoc: late.in: STYLE: RCS id missing

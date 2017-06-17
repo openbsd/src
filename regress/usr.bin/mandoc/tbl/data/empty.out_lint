@@ -1,1 +1,2 @@
 mandoc: empty.in:6:2: ERROR: tbl without any data cells
+mandoc: empty.in: STYLE: RCS id missing

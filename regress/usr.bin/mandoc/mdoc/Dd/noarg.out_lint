@@ -1,1 +1,2 @@
 mandoc: noarg.in:1:2: WARNING: missing date, using today's date
+mandoc: noarg.in: STYLE: RCS id missing

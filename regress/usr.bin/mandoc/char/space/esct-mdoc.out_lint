@@ -2,3 +2,4 @@ mandoc: esct-mdoc.in:1:5: STYLE: Mdocdate missing: Dd June
 mandoc: esct-mdoc.in:10:7: WARNING: tab in filled text
 mandoc: esct-mdoc.in:14:7: WARNING: tab in filled text
 mandoc: esct-mdoc.in:14:8: WARNING: tab in filled text
+mandoc: esct-mdoc.in: STYLE: RCS id missing

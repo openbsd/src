@@ -1,2 +1,3 @@
 mandoc: noname.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: noname.in:5:2: ERROR: missing manual name, using "": Nm
+mandoc: noname.in: STYLE: RCS id missing

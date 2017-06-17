@@ -79,3 +79,4 @@ mandoc: input.in:66:35: ERROR: skipping bad character: 0x80
 mandoc: input.in:66:36: ERROR: skipping bad character: 0x80
 mandoc: input.in:66:37: ERROR: skipping bad character: 0x80
 mandoc: input.in:66:23: WARNING: invalid escape sequence: \[u200000]
+mandoc: input.in: STYLE: RCS id missing

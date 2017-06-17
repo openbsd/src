@@ -1,3 +1,4 @@
 mandoc: args.in:9:5: ERROR: skipping all arguments: Rs bogus
 mandoc: args.in:14:5: ERROR: skipping all arguments: Rs Sy
 mandoc: args.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: args.in: STYLE: RCS id missing

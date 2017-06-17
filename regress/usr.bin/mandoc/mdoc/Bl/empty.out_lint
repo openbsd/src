@@ -10,3 +10,4 @@ mandoc: empty.in:30:2: WARNING: empty block: Bl
 mandoc: empty.in:33:2: WARNING: empty block: Bl
 mandoc: empty.in:36:2: WARNING: empty block: Bl
 mandoc: empty.in:39:2: WARNING: empty block: Bl
+mandoc: empty.in: STYLE: RCS id missing

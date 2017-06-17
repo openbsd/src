@@ -1,4 +1,4 @@
-.TH TBL-LAYOUT-NUMBERS 1
+.TH TBL-LAYOUT-NUMBERS 1 "January 29, 2017" OpenBSD
 .SH NAME
 tbl-layout-numbers \- alignment of numbers in tables
 .SH DESCRIPTION

@@ -1,3 +1,4 @@
 mandoc: lonelyRE.in:11:2: ERROR: skipping end of block that is not open: RE
 mandoc: lonelyRE.in:15:2: ERROR: skipping end of block that is not open: RE
 mandoc: lonelyRE.in:20:2: ERROR: skipping end of block that is not open: RE
+mandoc: lonelyRE.in: STYLE: RCS id missing

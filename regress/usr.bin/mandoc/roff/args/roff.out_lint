@@ -14,3 +14,4 @@ mandoc: roff.in:68:7: WARNING: unterminated quoted argument
 mandoc: roff.in:68:13: WARNING: whitespace at end of input line
 mandoc: roff.in:69:11: WARNING: unterminated quoted argument
 mandoc: roff.in:69:17: WARNING: whitespace at end of input line
+mandoc: roff.in: STYLE: RCS id missing

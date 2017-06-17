@@ -1,2 +1,3 @@
 mandoc: comment.in:11:3: WARNING: bad comment style
 mandoc: comment.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: comment.in: STYLE: RCS id missing

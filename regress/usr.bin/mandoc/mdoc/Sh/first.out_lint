@@ -1,2 +1,3 @@
 mandoc: first.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: first.in:4:2: WARNING: first section is not "NAME": Sh DESCRIPTION
+mandoc: first.in: STYLE: RCS id missing

@@ -1,4 +1,4 @@
-.TH ARGS-MAN 1 "November 19, 2014"
+.TH ARGS-MAN 1 "November 19, 2014" OpenBSD
 .SH NAME
 args-man - arguments to man macros
 .SH DESCRIPTION

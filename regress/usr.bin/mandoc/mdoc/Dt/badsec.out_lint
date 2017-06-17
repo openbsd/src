@@ -1,2 +1,3 @@
 mandoc: badsec.in:2:15: WARNING: unknown manual section: Dt ... foo
 mandoc: badsec.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: badsec.in: STYLE: RCS id missing

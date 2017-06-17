@@ -9,3 +9,4 @@ mandoc: noarg.in:42:2: WARNING: skipping empty macro: Ft
 mandoc: noarg.in:43:2: WARNING: skipping empty macro: Fn
 mandoc: noarg.in:1:5: STYLE: Mdocdate missing: Dd July
 mandoc: noarg.in:12:10: ERROR: skipping excess arguments: Fo ... bogus
+mandoc: noarg.in: STYLE: RCS id missing
