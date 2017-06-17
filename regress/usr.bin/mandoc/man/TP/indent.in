@@ -1,0 +1,14 @@
+.TH TP-INDENT 1 "June 17, 2017" OpenBSD
+.SH NAME
+TP-indent \- indent request inside TP head
+.SH DESCRIPTION
+initial text
+.TP 2n
+tag
+indented
+.TP 8n
+.in 3n
+tag
+indented
+.PP
+final text
