@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.36 2017/06/14 22:50:37 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.37 2017/06/17 22:40:27 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -534,6 +534,7 @@ struct	roff_meta {
 	char		 *name;    /* Leading manual name. */
 	char		 *date;    /* Normalized date. */
 	int		  hasbody; /* Document is not empty. */
+	int		  rcsids;  /* Bits indexed by enum mdoc_os. */
 	enum mdoc_os	  os_e;    /* Operating system. */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.148 2017/06/11 19:36:31 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.149 2017/06/17 22:40:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -87,6 +87,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"Mdocdate found",
 	"Mdocdate missing",
 	"legacy man(7) date format",
+	"RCS id missing",
 	"useless macro",
 	"consider using OS macro",
 	"errnos out of order",

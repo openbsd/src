@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.253 2017/06/11 20:02:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.254 2017/06/17 22:40:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1791,7 +1791,10 @@ post_root(POST_ARGS)
 		mandoc_msg(MANDOCERR_OS_MISSING,
 		    mdoc->parse, 0, 0, NULL);
 		mdoc->meta.os = mandoc_strdup("");
-	}
+	} else if (mdoc->meta.os_e &&
+	    (mdoc->meta.rcsids & (1 << mdoc->meta.os_e)) == 0)
+		mandoc_msg(MANDOCERR_RCS_MISSING,
+		    mdoc->parse, 0, 0, NULL);
 
 	/* Check that we begin with a proper `Sh'. */
 

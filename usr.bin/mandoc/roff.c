@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.184 2017/06/14 22:50:37 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.185 2017/06/17 22:40:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1164,6 +1164,7 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 	size_t		 maxl;  /* expected length of the escape name */
 	size_t		 naml;	/* actual length of the escape name */
 	enum mandoc_esc	 esc;	/* type of the escape sequence */
+	enum mdoc_os	 os_e;	/* kind of RCS id seen */
 	int		 inaml;	/* length returned from mandoc_escape() */
 	int		 expand_count;	/* to avoid infinite loops */
 	int		 npos;	/* position in numeric expression */
@@ -1181,6 +1182,23 @@ roff_res(struct roff *r, struct buf *buf, int ln, int pos)
 		stesc++;
 		if (*stesc != '"' && *stesc != '#')
 			continue;
+
+		/* Comment found, look for RCS id. */
+
+		if ((cp = strstr(stesc, "$" "OpenBSD")) != NULL) {
+			os_e = MDOC_OS_OPENBSD;
+			cp += 8;
+		} else if ((cp = strstr(stesc, "$" "NetBSD")) != NULL) {
+			os_e = MDOC_OS_NETBSD;
+			cp += 7;
+		}
+		if (cp != NULL &&
+		    isalnum((unsigned char)*cp) == 0 &&
+		    strchr(cp, '$') != NULL)
+			r->man->meta.rcsids |= 1 << os_e;
+
+		/* Handle trailing whitespace. */
+
 		cp = strchr(stesc--, '\0') - 1;
 		if (*cp == '\n') {
 			done = 1;

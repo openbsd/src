@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_validate.c,v 1.100 2017/06/17 16:47:29 schwarze Exp $ */
+/*	$OpenBSD: man_validate.c,v 1.101 2017/06/17 22:40:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -168,6 +168,10 @@ check_root(CHKARGS)
 		man->meta.date = man->quick ? mandoc_strdup("") :
 		    mandoc_normdate(man, NULL, n->line, n->pos);
 	}
+
+	if (man->meta.os_e &&
+	    (man->meta.rcsids & (1 << man->meta.os_e)) == 0)
+		mandoc_msg(MANDOCERR_RCS_MISSING, man->parse, 0, 0, NULL);
 }
 
 static void
@@ -336,6 +340,10 @@ post_TH(CHKARGS)
 		man->meta.os = mandoc_strdup(n->string);
 	else if (man->defos != NULL)
 		man->meta.os = mandoc_strdup(man->defos);
+	man->meta.os_e = man->meta.os == NULL ? MDOC_OS_OTHER :
+	    strstr(man->meta.os, "OpenBSD") != NULL ? MDOC_OS_OPENBSD :
+	    strstr(man->meta.os, "NetBSD") != NULL ? MDOC_OS_NETBSD :
+	    MDOC_OS_OTHER;
 
 	/* TITLE MSEC DATE OS ->VOL<- */
 	/* If missing, use the default VOL name for MSEC. */
