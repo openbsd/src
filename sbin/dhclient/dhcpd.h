@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.186 2017/06/17 17:10:26 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.187 2017/06/18 11:21:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -124,7 +124,6 @@ struct interface_info {
 	char			 name[IFNAMSIZ];
 	char			 ssid[32];
 	uint8_t			 ssid_len;
-	struct client_state	*client;
 	int			 bfdesc; /* bpf - reading & broadcast writing*/
 	int			 ufdesc; /* udp - unicast writing */
 	unsigned char		*rbuf;
