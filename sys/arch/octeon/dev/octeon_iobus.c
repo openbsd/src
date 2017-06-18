@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.19 2017/04/24 14:10:19 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.20 2017/06/18 13:58:44 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -225,8 +225,6 @@ iobusattach(struct device *parent, struct device *self, void *aux)
 	iobus_found = 1;
 
 	printf("\n");
-
-	octeon_intr_init();
 
 	/* XXX */
 	oc.mc_iobus_bust = &iobus_tag;
