@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.76 2017/06/06 21:53:07 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.77 2017/06/18 13:34:03 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -114,17 +114,11 @@ struct alps_softc {
 	int mask;
 	int version;
 
-	int min_x, min_y;
-	int max_x, max_y;
-
 	u_int gesture;
 
 	u_int sec_buttons;	/* trackpoint */
 
-	/* Compat mode */
-	int wsmode;
 	int old_x, old_y;
-	u_int old_buttons;
 #define ALPS_PRESSURE		40
 };
 
@@ -234,6 +228,10 @@ static const struct alps_model {
 static struct wsmouse_param synaptics_params[] = {
 	{ WSMOUSECFG_PRESSURE_LO, SYNAPTICS_PRESSURE_LO },
 	{ WSMOUSECFG_PRESSURE_HI, SYNAPTICS_PRESSURE_HI }
+};
+
+static struct wsmouse_param alps_params[] = {
+	{ WSMOUSECFG_SMOOTHING, 3 }
 };
 
 int	pmsprobe(struct device *, void *, void *);
@@ -1114,7 +1112,6 @@ pms_ioctl_synaptics(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
 	int wsmode;
 
 	hw = wsmouse_get_hw(sc->sc_wsmousedev);
-
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = hw->type;
@@ -1310,6 +1307,7 @@ alps_get_hwinfo(struct pms_softc *sc)
 	struct alps_softc *alps = sc->alps;
 	u_char resp[3];
 	int i;
+	struct wsmousehw *hw;
 
 	if (pms_set_resolution(sc, 0) ||
 	    pms_set_scaling(sc, 2) ||
@@ -1326,6 +1324,15 @@ alps_get_hwinfo(struct pms_softc *sc)
 		if (alps->version == alps_models[i].version) {
 			alps->model = alps_models[i].model;
 			alps->mask = alps_models[i].mask;
+
+			hw = wsmouse_get_hw(sc->sc_wsmousedev);
+			hw->type = WSMOUSE_TYPE_ALPS;
+			hw->hw_type = WSMOUSEHW_TOUCHPAD;
+			hw->x_min = ALPS_XMIN_BEZEL;
+			hw->y_min = ALPS_YMIN_BEZEL;
+			hw->x_max = ALPS_XMAX_BEZEL;
+			hw->y_max = ALPS_YMAX_BEZEL;
+
 			return (0);
 		}
 
@@ -1364,16 +1371,18 @@ pms_enable_alps(struct pms_softc *sc)
 			goto err;
 		}
 
+		if (wsmouse_configure(sc->sc_wsmousedev, alps_params,
+		    nitems(alps_params))) {
+			free(sc->alps, M_DEVBUF, sizeof(struct alps_softc));
+			sc->alps = NULL;
+			printf("%s: setup failed\n", DEVNAME(sc));
+			goto err;
+		}
+
 		printf("%s: ALPS %s, version 0x%04x\n", DEVNAME(sc),
 		    (alps->model & ALPS_DUALPOINT ? "Dualpoint" : "Glidepoint"),
 		    alps->version);
 
-		alps->min_x = ALPS_XMIN_BEZEL;
-		alps->min_y = ALPS_YMIN_BEZEL;
-		alps->max_x = ALPS_XMAX_BEZEL;
-		alps->max_y = ALPS_YMAX_BEZEL;
-
-		alps->wsmode = WSMOUSE_COMPAT;
 
 		if (alps->model & ALPS_DUALPOINT) {
 			a.accessops = &pms_sec_accessops;
@@ -1434,26 +1443,27 @@ int
 pms_ioctl_alps(struct pms_softc *sc, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct alps_softc *alps = sc->alps;
 	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
 	int wsmode;
+	struct wsmousehw *hw;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_ALPS;
 		break;
 	case WSMOUSEIO_GCALIBCOORDS:
-		wsmc->minx = alps->min_x;
-		wsmc->maxx = alps->max_x;
-		wsmc->miny = alps->min_y;
-		wsmc->maxy = alps->max_y;
+		hw = wsmouse_get_hw(sc->sc_wsmousedev);
+		wsmc->minx = hw->x_min;
+		wsmc->maxx = hw->x_max;
+		wsmc->miny = hw->y_min;
+		wsmc->maxy = hw->y_max;
 		wsmc->swapxy = 0;
 		break;
 	case WSMOUSEIO_SETMODE:
 		wsmode = *(u_int *)data;
 		if (wsmode != WSMOUSE_COMPAT && wsmode != WSMOUSE_NATIVE)
 			return (EINVAL);
-		alps->wsmode = wsmode;
+		wsmouse_set_mode(sc->sc_wsmousedev, wsmode);
 		break;
 	default:
 		return (-1);
@@ -1533,49 +1543,29 @@ pms_proc_alps(struct pms_softc *sc)
 	 */
 	y = ALPS_YMAX_BEZEL - y + ALPS_YMIN_BEZEL;
 
-	if (alps->wsmode == WSMOUSE_NATIVE) {
-		if (alps->gesture == ALPS_TAP) {
-			/* Report a touch with the tap coordinates. */
+	if (alps->gesture == ALPS_TAP) {
+		/* Report a touch with the tap coordinates. */
+		WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons,
+		    alps->old_x, alps->old_y, ALPS_PRESSURE, 0);
+		if (z > 0) {
+			/*
+			 * The hardware doesn't send a null pressure
+			 * event when dragging starts.
+			 */
 			WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons,
-			    alps->old_x, alps->old_y, ALPS_PRESSURE, 0);
-			if (z > 0) {
-				/*
-				 * The hardware doesn't send a null pressure
-				 * event when dragging starts.
-				 */
-				WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons,
-				    alps->old_x, alps->old_y, 0, 0);
-			}
+			    alps->old_x, alps->old_y, 0, 0);
 		}
-
-		gesture = sc->packet[2] & 0x03;
-		if (gesture != ALPS_TAP)
-			WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons, x, y, z, 0);
-
-		if (alps->gesture != ALPS_DRAG || gesture != ALPS_TAP)
-			alps->gesture = gesture;
-
-		alps->old_x = x;
-		alps->old_y = y;
-
-	} else {
-		dx = dy = 0;
-		if (z > ALPS_PRESSURE) {
-			dx = x - alps->old_x;
-			dy = y - alps->old_y;
-
-			/* Prevent jump */
-			dx = abs(dx) > 50 ? 0 : dx;
-			dy = abs(dy) > 50 ? 0 : dy;
-		}
-
-		if (dx || dy || buttons != alps->old_buttons)
-			WSMOUSE_INPUT(sc->sc_wsmousedev, buttons, dx, dy, 0, 0);
-
-		alps->old_x = x;
-		alps->old_y = y;
-		alps->old_buttons = buttons;
 	}
+
+	gesture = sc->packet[2] & 0x03;
+	if (gesture != ALPS_TAP)
+		WSMOUSE_TOUCH(sc->sc_wsmousedev, buttons, x, y, z, 0);
+
+	if (alps->gesture != ALPS_DRAG || gesture != ALPS_TAP)
+		alps->gesture = gesture;
+
+	alps->old_x = x;
+	alps->old_y = y;
 }
 
 int
