@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.433 2017/06/18 11:26:14 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.434 2017/06/18 14:54:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1725,7 +1725,7 @@ make_decline(struct interface_info *ifi, struct client_lease *lease)
 	packet->hlen = ETHER_ADDR_LEN;
 	packet->hops = 0;
 	packet->xid = ifi->xid;
-	packet->secs = 0; /* Filled in by send_request. */
+	packet->secs = 0;
 	packet->flags = 0;
 
 	/* ciaddr must always be zero. */
