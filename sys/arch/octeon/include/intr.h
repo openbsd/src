@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2017/06/11 10:01:23 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.11 2017/06/18 11:05:20 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -188,7 +188,6 @@ void	dosoftint(void);
 #define ENABLEIPI() updateimask(~CR_INT_1) /* enable IPI interrupt level */
 #endif
 void	octeon_intr_init(void);
-void	octeon_setintrmask(int);
 void   *octeon_intr_establish(int, int, int (*)(void *),
 	    void *, const char *);
 void	octeon_intr_disestablish(void *);

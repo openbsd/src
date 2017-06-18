@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2017/06/11 03:35:30 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.91 2017/06/18 11:05:20 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -910,7 +910,6 @@ hw_cpu_hatch(struct cpu_info *ci)
 	cpuset_add(&cpus_running, ci);
 	octeon_intr_init();
 	mips64_ipi_init();
-	octeon_setintrmask(0);
 	spl0();
 	(void)updateimask(0);
 
