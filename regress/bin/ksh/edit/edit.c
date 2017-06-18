@@ -34,6 +34,7 @@ int
 main(int argc, char *argv[])
 {
 	char		in[BUFSIZ], out[BUFSIZ];
+	struct termios	tio;
 	struct pollfd	pfd;
 	struct winsize	ws;
 	pid_t		pid;
@@ -100,7 +101,12 @@ main(int argc, char *argv[])
 			if (nread == 0)
 				continue;
 
-			n = write(ptyfd, &in[nwrite], nin - nwrite);
+			if (tcgetattr(ptyfd, &tio) == -1)
+				err(1, "tcgetattr");
+			if ((tio.c_lflag & ICANON) == ICANON)
+				continue;
+
+			n = write(ptyfd, &in[nwrite], 1);
 			if (n == -1)
 				err(1, "write");
 			nwrite += n;
