@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.432 2017/06/17 20:23:17 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.433 2017/06/18 11:26:14 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -881,7 +881,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 
 	if (ifi->state != S_SELECTING) {
 #ifdef DEBUG
-		log_debug("Unexpected %s. State #%d.", info, client->state);
+		log_debug("Unexpected %s. State #%d.", info, ifi->state);
 #endif	/* DEBUG */
 		return;
 	}
@@ -922,7 +922,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 	    ifi->state != S_RENEWING &&
 	    ifi->state != S_REBINDING) {
 #ifdef DEBUG
-		log_debug("Unexpected %s. State #%d", info, client->state);
+		log_debug("Unexpected %s. State #%d", info, ifi->state);
 #endif	/* DEBUG */
 		return;
 	}
@@ -954,7 +954,7 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	    ifi->state != S_RENEWING &&
 	    ifi->state != S_REBINDING) {
 #ifdef DEBUG
-		log_debug("Unexpected %s. State #%d", info, client->state);
+		log_debug("Unexpected %s. State #%d", info, ifi->state);
 #endif	/* DEBUG */
 		return;
 	}
