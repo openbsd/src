@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.434 2017/06/18 14:54:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.435 2017/06/18 16:37:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -712,7 +712,7 @@ state_preboot(struct interface_info *ifi)
 
 	time(&cur_time);
 
-	interval = (int)(cur_time - ifi->startup_time);
+	interval = cur_time - ifi->startup_time;
 
 	ifi->linkstat = interface_status(ifi);
 
@@ -1434,7 +1434,7 @@ send_request(struct interface_info *ifi)
 	time(&cur_time);
 
 	/* Figure out how long it's been since we started transmitting. */
-	interval = (int)(cur_time - ifi->first_sending);
+	interval = cur_time - ifi->first_sending;
 
 	/*
 	 * If we're in the INIT-REBOOT state and we've been trying longer
