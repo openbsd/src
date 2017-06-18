@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.123 2017/06/18 17:01:46 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.124 2017/06/18 21:08:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -70,8 +70,6 @@
 #include "privsep.h"
 
 
-struct dhcp_timeout timeout;
-
 void packethandler(struct interface_info *ifi);
 void sendhup(struct client_lease *);
 
@@ -124,16 +122,14 @@ dispatch(struct interface_info *ifi)
 	struct pollfd fds[3];
 	time_t cur_time, howlong;
 	void (*func)(struct interface_info *);
-	struct interface_info *arg;
 
 	while (quit == 0) {
-		if (timeout.func) {
+		if (ifi->timeout_func) {
 			time(&cur_time);
-			if (timeout.when <= cur_time) {
-				func = timeout.func;
-				arg = timeout.ifi;
-				cancel_timeout();
-				(*(func))(arg);
+			if (ifi->timeout <= cur_time) {
+				func = ifi->timeout_func;
+				cancel_timeout(ifi);
+				(*(func))(ifi);
 				continue;
 			}
 			/*
@@ -142,7 +138,7 @@ dispatch(struct interface_info *ifi)
 			 * int for poll, while not polling with a
 			 * negative timeout and blocking indefinitely.
 			 */
-			howlong = timeout.when - cur_time;
+			howlong = ifi->timeout - cur_time;
 			if (howlong > INT_MAX / 1000)
 				howlong = INT_MAX / 1000;
 			to_msec = howlong * 1000;
@@ -283,17 +279,15 @@ void
 set_timeout(time_t secs, void (*where)(struct interface_info *),
     struct interface_info *ifi)
 {
-	timeout.when = time(NULL) + secs;
-	timeout.func = where;
-	timeout.ifi = ifi;
+	ifi->timeout = time(NULL) + secs;
+	ifi->timeout_func = where;
 }
 
 void
-cancel_timeout(void)
+cancel_timeout(struct interface_info *ifi)
 {
-	timeout.when = 0;
-	timeout.func = NULL;
-	timeout.ifi = NULL;
+	ifi->timeout = 0;
+	ifi->timeout_func = NULL;
 }
 
 int

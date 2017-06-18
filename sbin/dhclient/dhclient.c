@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.436 2017/06/18 17:01:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.437 2017/06/18 21:08:15 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -404,7 +404,7 @@ routehandler(struct interface_info *ifi)
 					ftruncate(fileno(optionDB), 0);
 				}
 				/* No need to wait for anything but link. */
-				cancel_timeout();
+				cancel_timeout(ifi);
 			}
 		}
 		break;
@@ -752,7 +752,7 @@ state_reboot(struct interface_info *ifi)
 	char ifname[IF_NAMESIZE];
 	time_t cur_time;
 
-	cancel_timeout();
+	cancel_timeout(ifi);
 	deleting.s_addr = INADDR_ANY;
 	adding.s_addr = INADDR_ANY;
 
@@ -810,7 +810,7 @@ state_selecting(struct interface_info *ifi)
 {
 	struct option_data *option;
 
-	cancel_timeout();
+	cancel_timeout(ifi);
 
 	if (ifi->offer == NULL) {
 		state_panic(ifi);
@@ -941,7 +941,7 @@ dhcpack(struct interface_info *ifi, struct option_data *options, char *info)
 	ifi->offer->ssid_len = ifi->ssid_len;
 
 	/* Stop resending DHCPREQUEST. */
-	cancel_timeout();
+	cancel_timeout(ifi);
 
 	bind_lease(ifi);
 }
@@ -977,7 +977,7 @@ dhcpnak(struct interface_info *ifi, struct option_data *options, char *info)
 	ifi->active = NULL;
 
 	/* Stop sending DHCPREQUEST packets. */
-	cancel_timeout();
+	cancel_timeout(ifi);
 
 	ifi->state = S_INIT;
 	state_init(ifi);
@@ -1451,7 +1451,7 @@ send_request(struct interface_info *ifi)
 	if (ifi->state == S_REBOOTING && interval >
 	    config->reboot_timeout) {
 		ifi->state = S_INIT;
-		cancel_timeout();
+		cancel_timeout(ifi);
 		state_init(ifi);
 		return;
 	}
