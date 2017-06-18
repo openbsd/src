@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.435 2017/06/18 16:37:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.436 2017/06/18 17:01:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -734,12 +734,12 @@ state_preboot(struct interface_info *ifi)
 
 	if (ifi->linkstat) {
 		ifi->state = S_REBOOTING;
-		set_timeout_interval(1, state_reboot, ifi);
+		set_timeout(1, state_reboot, ifi);
 	} else {
 		if (interval > config->link_timeout)
 			go_daemon();
 		ifi->state = S_PREBOOT;
-		set_timeout_interval(1, state_preboot, ifi);
+		set_timeout(1, state_preboot, ifi);
 	}
 }
 
@@ -1128,7 +1128,7 @@ newlease:
 	ifi->state = S_BOUND;
 
 	/* Set timeout to start the renewal process. */
-	set_timeout(ifi->active->renewal, state_bound, ifi);
+	set_timeout(ifi->active->renewal - cur_time, state_bound, ifi);
 }
 
 /*
@@ -1394,7 +1394,7 @@ send_discover(struct interface_info *ifi)
 		log_warnx("dhclient cannot be used on %s", ifi->name);
 		quit = INTERNALSIG;
 	} else
-		set_timeout_interval(ifi->interval, send_discover, ifi);
+		set_timeout(ifi->interval, send_discover, ifi);
 }
 
 /*
@@ -1418,7 +1418,7 @@ state_panic(struct interface_info *ifi)
 	 */
 	log_info("No working leases in persistent database - sleeping.");
 	ifi->state = S_INIT;
-	set_timeout_interval(config->retry_interval, state_init, ifi);
+	set_timeout(config->retry_interval, state_init, ifi);
 	go_daemon();
 }
 
@@ -1524,7 +1524,7 @@ send_request(struct interface_info *ifi)
 
 	send_packet(ifi, from, destination.sin_addr);
 
-	set_timeout_interval(ifi->interval, send_request, ifi);
+	set_timeout(ifi->interval, send_request, ifi);
 }
 
 void
