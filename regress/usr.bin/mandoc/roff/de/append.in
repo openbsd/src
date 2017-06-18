@@ -1,4 +1,4 @@
-.Dd July 7, 2014
+.Dd June 18, 2017
 .Dt DE-APPEND 1
 .Os OpenBSD
 .Sh NAME
@@ -23,3 +23,14 @@ ami:
 .mye
 .mym
 end
+.Pp
+standard macro:
+.Bo in brackets
+.Bc end
+.Pp
+append to standard macro:
+.am Bc
+.Pq appended words
+..
+.Bo in brackets
+.Bc end

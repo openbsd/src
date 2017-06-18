@@ -1,0 +1,10 @@
+.TH STRING-STD 1 "June 18, 2017" OpenBSD
+.SH NAME
+string-std - expanding standard macros as strings
+.SH DESCRIPTION
+expanding the DT macro as a string:
+>>>\*[DT]<<<
+.PP
+.rn DT myname
+the same after renaming it:
+>>>\*[myname]<<<

@@ -27,3 +27,7 @@ mymacval
 .ie d myren now defined
 .el OOPS
 .if !d myren OOPS
+.PP
+standard macro is
+.ie d PP defined
+.el not defined \(em OOPS

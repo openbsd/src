@@ -1,0 +1,23 @@
+.Dd June 18, 2017
+.Dt RN-APPEND 1
+.Os OpenBSD
+.Sh NAME
+.Nm rn-append
+.Nd append to renamed standard macro
+.Sh DESCRIPTION
+original macro:
+.Bo in brackets
+.Bc
+.Pp
+renamed macro:
+.rn Bc myBc
+.Bo in brackets
+.myBc
+.Pp
+appending to macro:
+.am myBc
+.Pq appended words
+..
+.Bo more in brackets
+.myBc
+final text

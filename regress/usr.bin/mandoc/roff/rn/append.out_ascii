@@ -1,0 +1,13 @@
+RN-APPEND(1)                General Commands Manual               RN-APPEND(1)
+
+NNAAMMEE
+     rrnn--aappppeenndd - append to renamed standard macro
+
+DDEESSCCRRIIPPTTIIOONN
+     original macro: [in brackets]
+
+     renamed macro: [in brackets]
+
+     appending to macro: [more in brackets] (appended words) final text
+
+OpenBSD                          June 18, 2017                         OpenBSD
