@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2017/06/18 11:05:20 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.92 2017/06/18 12:48:13 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -136,10 +136,6 @@ int		octeon_cpuspeed(int *);
 void		octeon_tlb_init(void);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
-
-#ifdef MULTIPROCESSOR
-uint32_t	ipi_intr(uint32_t, struct trapframe *);
-#endif
 
 extern void 	parse_uboot_root(void);
 
@@ -526,10 +522,6 @@ mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
 		db_enter();
 #endif
 
-#ifdef MULTIPROCESSOR
-	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
-#endif
-
 	ipdclock_timecounter.tc_frequency = octeon_ioclock_speed();
 	tc_init(&ipdclock_timecounter);
 
@@ -847,10 +839,6 @@ ipdclock_get_timecount(struct timecounter *arg)
 #ifdef MULTIPROCESSOR
 uint32_t cpu_spinup_mask = 0;
 uint64_t cpu_spinup_a0, cpu_spinup_sp;
-static int (*ipi_handler)(void *);
-
-extern bus_space_t iobus_tag;
-extern bus_space_handle_t iobus_h;
 
 void
 hw_cpu_boot_secondary(struct cpu_info *ci)
@@ -915,59 +903,5 @@ hw_cpu_hatch(struct cpu_info *ci)
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
-}
-
-/*
- * IPI dispatcher.
- */
-uint32_t
-ipi_intr(uint32_t hwpend, struct trapframe *frame)
-{
-	u_long cpuid = cpu_number();
-
-	/*
-	 * Mask all pending interrupts.
-	 */
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid), 0);
-
-	if (ipi_handler == NULL)
-		return hwpend;
-
-	ipi_handler((void *)cpuid);
-
-	/*
-	 * Reenable interrupts which have been serviced.
-	 */
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
-		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
-	return hwpend;
-}
-
-int
-hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
-{
-	if (cpuid == 0)
-		ipi_handler = func;
-
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid),
-		0xffffffff);
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
-		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
-
-	return 0;
-};
-
-void
-hw_ipi_intr_set(u_long cpuid)
-{
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_SET(cpuid), 1);
-}
-
-void
-hw_ipi_intr_clear(u_long cpuid)
-{
-	uint64_t clr =
-		bus_space_read_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid));
-	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid), clr);
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.20 2017/04/06 15:25:24 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.21 2017/06/18 12:48:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -78,6 +78,12 @@ uint64_t octeon_intem[MAXCPUS][NBANKS];
 uint64_t octeon_imask[MAXCPUS][NIPLS][NBANKS];
 struct intrbank octeon_ibank[MAXCPUS][NBANKS];
 
+#ifdef MULTIPROCESSOR
+uint32_t	ipi_intr(uint32_t, struct trapframe *);
+
+static int	(*ipi_handler)(void *);
+#endif
+
 void
 octeon_intr_init(void)
 {
@@ -96,6 +102,10 @@ octeon_intr_init(void)
 
 	set_intr(INTPRI_CIU_0, CR_INT_0, octeon_iointr);
 	register_splx_handler(octeon_splx);
+
+#ifdef MULTIPROCESSOR
+	set_intr(INTPRI_IPI, CR_INT_1, ipi_intr);
+#endif
 }
 
 /*
@@ -444,3 +454,60 @@ octeon_setintrmask(int level)
 	bus_space_write_8(&iobus_tag, iobus_h, octeon_ibank[cpuid][1].en,
 	    octeon_intem[cpuid][1] & ~octeon_imask[cpuid][level][1]);
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * Inter-processor interrupt control logic.
+ */
+
+uint32_t
+ipi_intr(uint32_t hwpend, struct trapframe *frame)
+{
+	u_long cpuid = cpu_number();
+
+	/*
+	 * Mask all pending interrupts.
+	 */
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid), 0);
+
+	if (ipi_handler == NULL)
+		return hwpend;
+
+	ipi_handler((void *)cpuid);
+
+	/*
+	 * Reenable interrupts which have been serviced.
+	 */
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
+		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
+	return hwpend;
+}
+
+int
+hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
+{
+	if (cpuid == 0)
+		ipi_handler = func;
+
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid),
+		0xffffffff);
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_IP3_EN0(cpuid),
+		(1ULL << CIU_INT_MBOX0)|(1ULL << CIU_INT_MBOX1));
+
+	return 0;
+};
+
+void
+hw_ipi_intr_set(u_long cpuid)
+{
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_SET(cpuid), 1);
+}
+
+void
+hw_ipi_intr_clear(u_long cpuid)
+{
+	uint64_t clr =
+		bus_space_read_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid));
+	bus_space_write_8(&iobus_tag, iobus_h, CIU_MBOX_CLR(cpuid), clr);
+}
+#endif /* MULTIPROCESSOR */
