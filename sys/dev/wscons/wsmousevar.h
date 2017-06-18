@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.14 2017/03/06 09:53:01 mpi Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.15 2017/06/18 13:21:48 bru Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -115,7 +115,8 @@ int	wsmousedevprint(void *, const char *);
  * recognize multiple contacts can always pass 0 as contact count to
  * wsmouse_touch).
  */
-#define WSMOUSE_DEFAULT_PRESSURE	-1
+/* Use a synaptics-compatible value. */
+#define WSMOUSE_DEFAULT_PRESSURE	45
 
 
 struct device;

@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.6 2017/06/06 19:47:22 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.7 2017/06/18 13:21:48 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -1152,13 +1152,11 @@ wstpad_compat_convert(struct wsmouseinput *input, struct evq_access *evq)
 
 	wstpad_filter(input, &dx, &dy);
 
-	if (dx || dy) {
-		input->motion.dx = dx;
-		input->motion.dy = dy;
-		if ((dx || dy) && !(input->motion.sync & SYNC_DELTAS)) {
-			input->motion.dz = input->motion.dw = 0;
-			input->motion.sync |= SYNC_DELTAS;
-		}
+	input->motion.dx = dx;
+	input->motion.dy = dy;
+	if ((dx || dy) && !(input->motion.sync & SYNC_DELTAS)) {
+		input->motion.dz = input->motion.dw = 0;
+		input->motion.sync |= SYNC_DELTAS;
 	}
 
 	if (input->tp != NULL)
