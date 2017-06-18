@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.10 2016/07/19 08:04:53 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.11 2017/06/18 12:03:47 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -135,20 +135,3 @@ enum	{ IFSD_EVTIMER_ADD, IFSD_EVTIMER_DEL };
 struct ifsd_config *parse_config(char *, int);
 int	cmdline_symset(char *);
 void	clear_config(struct ifsd_config *);
-
-/* log.c */
-void	log_init(int);
-void	log_warn(const char *, ...)
-		__attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-		__attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-		__attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-		__attribute__((__format__ (printf, 1, 2)));
-void	vlog(int, const char *, va_list)
-		__attribute__((__format__ (printf, 2, 0)));
-void	logit(int, const char *, ...)
-		__attribute__((__format__ (printf, 2, 3)));
-void fatal(const char *) __dead;
-void fatalx(const char *) __dead;

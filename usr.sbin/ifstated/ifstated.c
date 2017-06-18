@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.41 2013/05/30 19:22:48 henning Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.42 2017/06/18 12:03:47 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -36,12 +36,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <syslog.h>
 #include <err.h>
 #include <event.h>
 #include <unistd.h>
 #include <ifaddrs.h>
 
 #include "ifstated.h"
+#include "log.h"
 
 struct	 ifsd_config *conf = NULL, *newconf = NULL;
 
@@ -88,7 +90,8 @@ main(int argc, char *argv[])
 	int ch;
 	int debug = 0;
 
-	log_init(1);
+	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
+	log_setverbose(1);
 
 	while ((ch = getopt(argc, argv, "dD:f:hniv")) != -1) {
 		switch (ch) {
@@ -138,7 +141,8 @@ main(int argc, char *argv[])
 		daemon(1, 0);
 
 	event_init();
-	log_init(debug);
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
 	signal_add(&sigchld_ev, NULL);
@@ -169,12 +173,12 @@ startup_handler(int fd, short event, void *arg)
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
-		log_warn("startup_handler: setsockopt msgfilter");
+		log_warn("%s: setsockopt msgfilter", __func__);
 
 	rtfilter = RTABLE_ANY;
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
-		log_warn("startup_handler: setsockopt tablefilter");
+		log_warn("%s: setsockopt tablefilter", __func__);
 	
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
@@ -580,7 +584,7 @@ do_action(struct ifsd_action *action)
 		}
 		break;
 	default:
-		log_debug("do_action: unknown action %d", action->type);
+		log_debug("%s: unknown action %d", __func__, action->type);
 		break;
 	}
 }
