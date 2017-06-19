@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.57 2016/10/16 18:02:03 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.58 2017/06/19 17:35:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc > 1 || (eflag && argv[0] == NULL))
-
 		usage();
 	if (bflag) {
 		startdir = getcwd(dirbuffer, sizeof dirbuffer);
