@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.213 2017/06/12 21:55:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.214 2017/06/19 18:35:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -581,7 +581,7 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 			codes = pledgenames[i].name;
 			break;
 		}
-	log(LOG_ERR, "%s(%d): syscall %d \"%s\"",
+	log(LOG_ERR, "%s(%d): syscall %d \"%s\"\n",
 	    p->p_p->ps_comm, p->p_p->ps_pid, p->p_pledge_syscall, codes);
 	p->p_p->ps_acflag |= APLEDGE;
 #ifdef KTRACE
@@ -1065,7 +1065,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		char *p = buf + strlen(buf);
 		snprintf(p, sizeof(buf) - (p - buf), " %d", mib[i]);
 	}
-	log(LOG_ERR, "%s", buf);
+	log(LOG_ERR, "%s\n", buf);
 
 	return pledge_fail(p, EINVAL, 0);
 }
