@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.29 2016/11/14 08:56:12 mpi Exp $	*/
+/*	$OpenBSD: radix.h,v 1.30 2017/06/19 09:42:45 mpi Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -98,14 +98,10 @@ struct radix_node_head {
 
 void	rn_init(unsigned int);
 int	rn_inithead(void **, int);
-int	rn_inithead0(struct radix_node_head *, int);
-int	rn_refines(void *, void *);
-void	rn_link_dupedkey(struct radix_node *, struct radix_node *, int);
 
 int	rn_walktree(struct radix_node_head *,
 	    int (*)(struct radix_node *, void *, u_int), void *);
 
-struct radix_node	*rn_addmask(void *, int, int);
 struct radix_node	*rn_addroute(void *, void *, struct radix_node_head *,
 			    struct radix_node [2], u_int8_t);
 struct radix_node	*rn_delete(void *, void *, struct radix_node_head *,
