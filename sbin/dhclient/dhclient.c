@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.437 2017/06/18 21:08:15 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.438 2017/06/19 01:09:09 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1229,12 +1229,10 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			/* Must decode the option into text to check names. */
 			buf = pretty_print_domain_search(options[i].data,
 			    options[i].len);
-			if (buf == NULL)
+			if (buf == NULL || !res_hnok_list(buf)) {
+				log_warnx("Ignoring %s in offer: invalid host "
+				    "name(s)", dhcp_options[i].name);
 				continue;
-			if (!res_hnok_list(buf)) {
-				log_warnx("lease declined: invalid host "
-				    "name(s) in %s", dhcp_options[i].name);
-				goto decline;
 			}
 			break;
 		case DHO_DOMAIN_NAME:
@@ -1245,17 +1243,17 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			 * entries in the resolv.conf 'search' statement.
 			 */
 			if (!res_hnok_list(pretty)) {
-				log_warnx("lease declined: invalid host "
-				    "names in %s", dhcp_options[i].name);
-				goto decline;
+				log_warnx("Ignoring %s in offer: invalid host "
+				    "name(s)", dhcp_options[i].name);
+				continue;
 			}
 			break;
 		case DHO_HOST_NAME:
 		case DHO_NIS_DOMAIN:
 			if (!res_hnok(pretty)) {
-				log_warnx("lease declined: invalid host name "
-				    "in %s", dhcp_options[i].name);
-				goto decline;
+				log_warnx("Ignoring %s in offer: invalid host "
+				    "name", dhcp_options[i].name);
+				continue;
 			}
 			break;
 		default:
