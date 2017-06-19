@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.201 2017/01/24 03:57:34 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.202 2017/06/19 09:36:27 mpi Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2073,9 +2073,6 @@ re_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 	s = splnet();
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
-
-	re_txeof(sc);
-	re_rxeof(sc);
 
 	re_init(ifp);
 
