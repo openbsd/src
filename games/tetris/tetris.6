@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tetris.6,v 1.20 2015/12/04 19:46:04 tb Exp $
+.\"	$OpenBSD: tetris.6,v 1.21 2017/06/19 06:04:16 bentley Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)tetris.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: December 4 2015 $
+.Dd $Mdocdate: June 19 2017 $
 .Dt TETRIS 6
 .Os
 .Sh NAME
@@ -125,8 +125,7 @@ Completing a row rewards you with a bonus corresponding to the number
 of simultaneous rows completed.
 Your total score is the product of the level of play
 and your accumulated
-.ie t points\(em200
-.el points -- 200
+points \(em 200
 points on level 3 gives you a score of 600.
 Each player gets at most one entry on any level,
 for a total of nine scores in the high scores file.
