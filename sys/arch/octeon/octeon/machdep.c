@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2017/06/18 12:48:13 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.93 2017/06/19 13:54:55 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -129,7 +129,7 @@ struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
 void		dumpsys(void);
 void		dumpconf(void);
-vaddr_t		mips_init(__register_t, __register_t, __register_t, __register_t);
+vaddr_t		mips_init(register_t, register_t, register_t, register_t);
 boolean_t 	is_memory_range(paddr_t, psize_t, psize_t);
 void		octeon_memory_init(struct boot_info *);
 int		octeon_cpuspeed(int *);
@@ -219,8 +219,7 @@ octeon_memory_init(struct boot_info *boot_info)
  * Reset mapping and set up mapping to hardware and init "wired" reg.
  */
 vaddr_t
-mips_init(__register_t a0, __register_t a1, __register_t a2 __unused,
-	__register_t a3)
+mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 {
 	uint prid;
 	vaddr_t xtlb_handler;
