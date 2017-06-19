@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drv.c,v 1.101 2017/01/08 12:11:54 fcambus Exp $ */
+/* $OpenBSD: i915_drv.c,v 1.102 2017/06/19 11:00:18 fcambus Exp $ */
 /*
  * Copyright (c) 2008-2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -1037,11 +1037,20 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct drm_device *dev = dev_priv->dev;
+	struct rasops_info *ri = &dev_priv->ro;
+	struct wsdisplay_fbinfo *wdf;
 	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_INTELDRM;
+		return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->width = ri->ri_width;
+		wdf->height = ri->ri_height;
+		wdf->depth = ri->ri_depth;
+		wdf->cmsize = 0;
 		return 0;
 	case WSDISPLAYIO_GETPARAM:
 		if (ws_get_param && ws_get_param(dp) == 0)
