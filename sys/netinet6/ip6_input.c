@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.194 2017/05/31 05:59:09 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.195 2017/06/19 17:00:16 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -381,6 +381,8 @@ ipv6_input(struct ifnet *ifp, struct mbuf *m)
 
 #ifdef MROUTING
 		if (ip6_mforwarding && ip6_mrouter[ifp->if_rdomain]) {
+			int error;
+
 			if (ip6_hbhchcheck(m, &off, &nxt, &ours))
 				goto out;
 
@@ -395,16 +397,20 @@ ipv6_input(struct ifnet *ifp, struct mbuf *m)
 			 * must be discarded, else it may be accepted below.
 			 */
 			KERNEL_LOCK();
-			if (ip6_mforward(ip6, ifp, m)) {
-				ip6stat_inc(ip6s_cantforward);
-				m_freem(m);
-			} else if (ours) {
-				ip6_deliver(&m, &off, nxt, AF_INET6);
-			} else {
-				m_freem(m);
-			}
+			error = ip6_mforward(ip6, ifp, m);
 			KERNEL_UNLOCK();
-			goto out;
+			if (error) {
+				ip6stat_inc(ip6s_cantforward);
+				goto bad;
+			}
+
+			if (ours) {
+				KERNEL_LOCK();
+				ip6_deliver(&m, &off, nxt, AF_INET6);
+				KERNEL_UNLOCK();
+				goto out;
+			}
+			goto bad;
 		}
 #endif
 		if (!ours) {
