@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.1 2017/06/18 13:58:44 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.2 2017/06/19 13:31:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -121,16 +121,16 @@ octciu_match(struct device *parent, void *match, void *aux)
 void
 octciu_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct fdt_attach_args *fa = aux;
+	struct fdt_attach_args *faa = aux;
 	struct octciu_softc *sc = (struct octciu_softc *)self;
 
-	if (fa->fa_nreg != 1) {
-		printf(": expected one IO space, got %d\n", fa->fa_nreg);
+	if (faa->fa_nreg != 1) {
+		printf(": expected one IO space, got %d\n", faa->fa_nreg);
 		return;
 	}
 
-	sc->sc_iot = fa->fa_iot;
-	if (bus_space_map(sc->sc_iot, fa->fa_reg[0].addr, fa->fa_reg[0].size,
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh)) {
 		printf(": could not map IO space\n");
 		return;
@@ -139,7 +139,7 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_node = fa->fa_node;
+	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_init = octciu_init;
 	sc->sc_ic.ic_establish = octciu_intr_establish;
 	sc->sc_ic.ic_establish_fdt_idx = octciu_intr_establish_fdt_idx;
