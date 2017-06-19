@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.108 2017/06/19 17:58:49 bluhm Exp $
+.\"     $OpenBSD: mbuf.9,v 1.109 2017/06/19 18:36:13 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -105,7 +105,7 @@
 .Ft struct mbuf *
 .Fn m_freem "struct mbuf *m"
 .Ft struct mbuf *
-.Fn m_freem "struct mbuf **mp"
+.Fn m_freemp "struct mbuf **mp"
 .Ft void
 .Fn m_purge "struct mbuf *m"
 .Ft void
