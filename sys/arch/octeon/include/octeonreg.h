@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.6 2016/12/17 14:14:09 visa Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.7 2017/06/19 14:47:27 visa Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -164,6 +164,8 @@
 #define CIU_INT1_EN4_0          0x00000C90
 #define CIU_INT0_EN4_1          0x00000C88
 #define CIU_INT1_EN4_1          0x00000C98
+
+#define FPA3_CLK_COUNT		0x12800000000f0ULL
 
 /* OCTEON II */
 #define MIO_RST_BOOT		0x1180000001600ULL

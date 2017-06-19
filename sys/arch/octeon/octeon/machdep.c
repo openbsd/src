@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2017/06/19 14:25:53 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.95 2017/06/19 14:47:27 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -142,16 +142,18 @@ extern void 	parse_uboot_root(void);
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);
 
-u_int		ipdclock_get_timecount(struct timecounter *);
+u_int		ioclock_get_timecount(struct timecounter *);
 
-struct timecounter ipdclock_timecounter = {
-	.tc_get_timecount = ipdclock_get_timecount,
+struct timecounter ioclock_timecounter = {
+	.tc_get_timecount = ioclock_get_timecount,
 	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,	/* truncated to 32 bits */
 	.tc_frequency = 0,		/* determined at runtime */
-	.tc_name = "ipdclock",
-	.tc_quality = 0			/* ipdclock can be overridden
+	.tc_name = "ioclock",
+	.tc_quality = 0,		/* ioclock can be overridden
 					 * by cp0 counter */
+	.tc_priv = 0			/* clock register,
+					 * determined at runtime */
 };
 
 void
@@ -521,8 +523,16 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 		db_enter();
 #endif
 
-	ipdclock_timecounter.tc_frequency = octeon_ioclock_speed();
-	tc_init(&ipdclock_timecounter);
+	switch (octeon_model_family(prid)) {
+	case OCTEON_MODEL_FAMILY_CN73XX:
+		ioclock_timecounter.tc_priv = (void *)FPA3_CLK_COUNT;
+		break;
+	default:
+		ioclock_timecounter.tc_priv = (void *)IPD_CLK_COUNT;
+		break;
+	}
+	ioclock_timecounter.tc_frequency = octeon_ioclock_speed();
+	tc_init(&ioclock_timecounter);
 
 	/*
 	 * Return the new kernel stack pointer.
@@ -830,9 +840,11 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 }
 
 u_int
-ipdclock_get_timecount(struct timecounter *arg)
+ioclock_get_timecount(struct timecounter *tc)
 {
-        return octeon_xkphys_read_8(IPD_CLK_COUNT);
+	uint64_t reg = (uint64_t)tc->tc_priv;
+
+	return octeon_xkphys_read_8(reg);
 }
 
 #ifdef MULTIPROCESSOR
