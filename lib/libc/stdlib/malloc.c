@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.225 2017/05/13 07:11:29 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.226 2017/06/19 03:06:26 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2085,18 +2085,19 @@ struct malloc_leak {
 };
 
 struct leaknode {
-	RB_ENTRY(leaknode) entry;
+	RBT_ENTRY(leaknode) entry;
 	struct malloc_leak d;
 };
 
-static int
-leakcmp(struct leaknode *e1, struct leaknode *e2)
+static inline int
+leakcmp(const struct leaknode *e1, const struct leaknode *e2)
 {
 	return e1->d.f < e2->d.f ? -1 : e1->d.f > e2->d.f;
 }
 
-static RB_HEAD(leaktree, leaknode) leakhead;
-RB_GENERATE_STATIC(leaktree, leaknode, entry, leakcmp)
+static RBT_HEAD(leaktree, leaknode) leakhead;
+RBT_PROTOTYPE(leaktree, leaknode, entry, leakcmp);
+RBT_GENERATE(leaktree, leaknode, entry, leakcmp);
 
 static void
 putleakinfo(void *f, size_t sz, int cnt)
@@ -2109,7 +2110,7 @@ putleakinfo(void *f, size_t sz, int cnt)
 		return;
 
 	key.d.f = f;
-	p = RB_FIND(leaktree, &leakhead, &key);
+	p = RBT_FIND(leaktree, &leakhead, &key);
 	if (p == NULL) {
 		if (page == NULL ||
 		    used >= MALLOC_PAGESIZE / sizeof(struct leaknode)) {
@@ -2122,7 +2123,7 @@ putleakinfo(void *f, size_t sz, int cnt)
 		p->d.f = f;
 		p->d.total_size = sz * cnt;
 		p->d.count = cnt;
-		RB_INSERT(leaktree, &leakhead, p);
+		RBT_INSERT(leaktree, &leakhead, p);
 	} else {
 		p->d.total_size += sz * cnt;
 		p->d.count += cnt;
@@ -2151,7 +2152,7 @@ dump_leaks(int fd)
 		malloc_leaks = MMAP(MALLOC_PAGESIZE);
 	if (malloc_leaks != MAP_FAILED)
 		memset(malloc_leaks, 0, MALLOC_PAGESIZE);
-	RB_FOREACH(p, leaktree, &leakhead) {
+	RBT_FOREACH(p, leaktree, &leakhead) {
 		snprintf(buf, sizeof(buf), "%18p %7zu %6u %6zu\n", p->d.f,
 		    p->d.total_size, p->d.count, p->d.total_size / p->d.count);
 		write(fd, buf, strlen(buf));
@@ -2316,7 +2317,7 @@ malloc_dump(int fd, int poolno, struct dir_info *pool)
 		pool->delayed_chunks[i] = NULL;
 	}
 	/* XXX leak when run multiple times */
-	RB_INIT(&leakhead);
+	RBT_INIT(leaktree, &leakhead);
 	malloc_dump1(fd, poolno, pool);
 	errno = saved_errno;
 }

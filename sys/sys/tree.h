@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.27 2017/06/08 03:37:25 dlg Exp $	*/
+/*	$OpenBSD: tree.h,v 1.28 2017/06/19 03:06:26 dlg Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -788,8 +788,6 @@ struct _name {								\
 
 #define RBT_ENTRY(_type)	struct rb_entry
 
-#ifdef _KERNEL
-
 static inline void
 _rb_init(struct rb_tree *rbt)
 {
@@ -1004,7 +1002,5 @@ RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp, _name##_RBT_AUGMENT)
 	for ((_e) = RBT_MAX(_name, (_head));				\
 	     (_e) != NULL && ((_n) = RBT_PREV(_name, (_e)), 1);	\
 	     (_e) = (_n))
-
-#endif /* _KERNEL */
 
 #endif	/* _SYS_TREE_H_ */
