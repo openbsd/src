@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.164 2017/05/30 16:31:25 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.165 2017/06/19 12:53:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1320,12 +1320,16 @@ mdoc_lk_pre(MDOC_ARGS)
 	punct = punct->next;
 
 	/* Link target and link text. */
+	descr = link->next;
+	if (descr == punct)
+		descr = link;  /* no text */
 	t = print_otag(h, TAG_A, "cTh", "Lk", link->string);
-	for (descr = link->next; descr != punct; descr = descr->next) {
+	do {
 		if (descr->flags & (NODE_DELIMC | NODE_DELIMO))
 			h->flags |= HTML_NOSPACE;
 		print_text(h, descr->string);
-	}
+		descr = descr->next;
+	} while (descr != punct);
 	print_tagq(h, t);
 
 	/* Trailing punctuation. */
