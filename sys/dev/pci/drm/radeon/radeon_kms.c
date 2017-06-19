@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.49 2017/01/08 12:11:54 fcambus Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.50 2017/06/19 11:03:30 fcambus Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -354,9 +354,19 @@ struct wsdisplay_accessops radeondrm_accessops = {
 int
 radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct rasops_info *ri = v;
+	struct wsdisplay_fbinfo *wdf;
+
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_RADEONDRM;
+		return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->width = ri->ri_width;
+		wdf->height = ri->ri_height;
+		wdf->depth = ri->ri_depth;
+		wdf->cmsize = 0;
 		return 0;
 	default:
 		return -1;
