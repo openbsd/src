@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.2 2017/06/19 23:45:13 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.3 2017/06/19 23:45:42 dlg Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -190,7 +190,7 @@ all CPUs coordinate via shared data structures for handling
 and
 .Xr pool_put 9
 operations, any limits set on the pool with
-.Xr pool_set_hardlimit 9
+.Xr pool_sethardlimit 9
 are ignored.
 If limits on the memory used by a pool with per CPU caches enabled
 are needed, they must be enforced by a page allocator specified
