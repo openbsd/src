@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.3 2017/06/19 23:45:42 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.4 2017/06/19 23:48:49 dlg Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -34,7 +34,7 @@ The pool API provides support for caching free pool items on each
 CPU which can be enabled to mitigate against this contention.
 .Pp
 When per CPU caches are enabled on a pool, each CPU maintains an
-a active and inactive list of free pool items.
+an active and inactive list of free pool items.
 A global depot of free lists is initialised in the pool structure
 to store excess lists of free items that may accumulate on CPUs.
 .Pp
