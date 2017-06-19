@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.107 2017/05/19 05:59:27 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.108 2017/06/19 17:58:49 bluhm Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2017 $
+.Dd $Mdocdate: June 19 2017 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@
 .Nm m_copyback ,
 .Nm m_defrag ,
 .Nm m_freem ,
+.Nm m_freemp ,
 .Nm m_purge ,
 .Nm m_reclaim ,
 .Nm m_copydata ,
@@ -103,6 +104,8 @@
 .Fn m_defrag "struct mbuf *m" "int wait"
 .Ft struct mbuf *
 .Fn m_freem "struct mbuf *m"
+.Ft struct mbuf *
+.Fn m_freem "struct mbuf **mp"
 .Ft void
 .Fn m_purge "struct mbuf *m"
 .Ft void
@@ -637,6 +640,11 @@ is a
 pointer, no action occurs and
 .Dv NULL
 is returned.
+.It Fn m_freemp "struct mbuf **mp"
+Set the input mbuf pointer to
+.Dv NULL
+and call
+.Fn m_freem .
 .It Fn m_purge "struct mbuf *m"
 Free the list of mbufs linked by m_nextpkt that is pointed to by
 .Fa m .

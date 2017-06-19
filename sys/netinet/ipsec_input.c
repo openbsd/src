@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.154 2017/05/28 09:25:51 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.155 2017/06/19 17:58:49 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -867,8 +867,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("ah6_input(): bad offset\n"));
 		ahstat.ahs_hdrops++;
-		m_freem(*mp);
-		*mp = NULL;
+		m_freemp(mp);
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
@@ -898,8 +897,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if (protoff + l != *offp) {
 			DPRINTF(("ah6_input(): bad packet header chain\n"));
 			ahstat.ahs_hdrops++;
-			m_freem(*mp);
-			*mp = NULL;
+			m_freemp(mp);
 			return IPPROTO_DONE;
 		}
 		protoff += offsetof(struct ip6_ext, ip6e_nxt);
@@ -919,8 +917,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("esp6_input(): bad offset\n"));
 		espstat.esps_hdrops++;
-		m_freem(*mp);
-		*mp = NULL;
+		m_freemp(mp);
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
@@ -950,8 +947,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if (protoff + l != *offp) {
 			DPRINTF(("esp6_input(): bad packet header chain\n"));
 			espstat.esps_hdrops++;
-			m_freem(*mp);
-			*mp = NULL;
+			m_freemp(mp);
 			return IPPROTO_DONE;
 		}
 		protoff += offsetof(struct ip6_ext, ip6e_nxt);
@@ -972,8 +968,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("ipcomp6_input(): bad offset\n"));
 		ipcompstat.ipcomps_hdrops++;
-		m_freem(*mp);
-		*mp = NULL;
+		m_freemp(mp);
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
@@ -1002,8 +997,7 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto, int af)
 		if (protoff + l != *offp) {
 			DPRINTF(("ipcomp6_input(): bad packet header chain\n"));
 			ipcompstat.ipcomps_hdrops++;
-			m_freem(*mp);
-			*mp = NULL;
+			m_freemp(mp);
 			return IPPROTO_DONE;
 		}
 

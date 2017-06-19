@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.229 2017/05/30 12:09:27 friehm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.230 2017/06/19 17:58:49 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -462,6 +462,15 @@ int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 struct mbuf *m_dup_pkt(struct mbuf *, unsigned int, int);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
+
+static inline struct mbuf *
+m_freemp(struct mbuf **mp)
+{
+	struct mbuf *m = *mp;
+
+	*mp = NULL;
+	return m_freem(m);
+}
 
 /* Packet tag routines */
 struct m_tag *m_tag_get(int, int, int);

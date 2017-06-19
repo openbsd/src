@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.195 2017/06/19 17:00:16 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.196 2017/06/19 17:58:49 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ ip6_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 	}
 	return;
  bad:
-	m_freem(*mp);
+	m_freemp(mp);
 }
 
 int

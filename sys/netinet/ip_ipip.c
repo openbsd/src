@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.83 2017/06/11 19:59:57 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.84 2017/06/19 17:58:49 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -100,7 +100,7 @@ ipip_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("%s: dropped due to policy\n", __func__));
 		ipipstat_inc(ipips_pdrops);
-		m_freem(*mp);
+		m_freemp(mp);
 		return IPPROTO_DONE;
 	}
 
@@ -324,8 +324,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 #endif
 	}
  bad:
-	m_freem(*mp);
-	*mp = NULL;
+	m_freemp(mp);
 	return IPPROTO_DONE;
 }
 

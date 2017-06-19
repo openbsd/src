@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.96 2017/05/18 10:56:45 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.97 2017/06/19 17:58:49 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ gif_encap(struct ifnet *ifp, struct mbuf **mp, sa_family_t af)
 		break;
 #endif
 	default:
-		m_freem(*mp);
+		m_freemp(mp);
 		error = EAFNOSUPPORT;
 		break;
 	}

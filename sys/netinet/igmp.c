@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.68 2017/05/16 12:24:01 mpi Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.69 2017/06/19 17:58:49 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ igmp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
 	if (ifp == NULL) {
-		m_freem(*mp);
+		m_freemp(mp);
 		return IPPROTO_DONE;
 	}
 

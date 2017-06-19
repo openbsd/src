@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-deflate.c,v 1.12 2015/07/15 22:16:42 deraadt Exp $	*/
+/*	$OpenBSD: ppp-deflate.c,v 1.13 2017/06/19 17:58:49 bluhm Exp $	*/
 /*	$NetBSD: ppp-deflate.c,v 1.1 1996/03/15 02:28:09 paulus Exp $	*/
 
 /*
@@ -342,8 +342,7 @@ z_compress(arg, mret, mp, orig_len, maxolen)
 	state->stats.comp_bytes += olen;
 	state->stats.comp_packets++;
     } else {
-	m_freem(*mret);
-	*mret = NULL;
+	m_freemp(mret);
 
 	state->stats.inc_bytes += orig_len;
 	state->stats.inc_packets++;
