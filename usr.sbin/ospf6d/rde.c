@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.70 2017/05/30 12:42:31 friehm Exp $ */
+/*	$OpenBSD: rde.c,v 1.71 2017/06/19 19:55:57 friehm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -633,7 +633,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct lsa		*lsa;
 	struct vertex		*v;
-	struct rt_node		*rn;
 	ssize_t			 n;
 	int			 shut = 0, wasvalid;
 	unsigned int		 ifindex;
@@ -694,22 +693,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				else
 					free(lsa);
 			}
-			break;
-		case IMSG_KROUTE_GET:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
-				log_warnx("rde_dispatch_parent: "
-				    "wrong imsg len");
-				break;
-			}
-			memcpy(&kr, imsg.data, sizeof(kr));
-
-			if ((rn = rt_find(&kr.prefix, kr.prefixlen,
-			    DT_NET)) != NULL)
-				rde_send_change_kroute(rn);
-			else
-				/* should not happen */
-				imsg_compose_event(iev_main, IMSG_KROUTE_DELETE,
-				    0, 0, -1, &kr, sizeof(kr));
 			break;
 		case IMSG_IFINFO:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

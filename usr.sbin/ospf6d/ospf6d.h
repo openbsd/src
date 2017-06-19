@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.32 2017/05/30 12:42:31 friehm Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.33 2017/06/19 19:55:57 friehm Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -51,7 +51,6 @@
 
 #define	F_OSPFD_INSERTED	0x0001
 #define	F_KERNEL		0x0002
-#define	F_BGPD_INSERTED		0x0004
 #define	F_CONNECTED		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
@@ -101,7 +100,6 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
-	IMSG_KROUTE_GET,
 	IMSG_IFINFO,
 	IMSG_IFADD,
 	IMSG_IFDELETE,
@@ -396,6 +394,7 @@ struct kroute {
 	u_int16_t	rtlabel;
 	u_short		ifindex;
 	u_int8_t	prefixlen;
+	u_int8_t	priority;
 };
 
 /* name2id */
