@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.184 2017/04/18 14:03:08 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.185 2017/06/19 08:35:24 mpi Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -127,10 +127,6 @@ STATIC?=	-static ${STATICPIE}
 PICFLAG?=-fPIC
 .else
 PICFLAG?=-fpic
-.endif
-
-.if ${MACHINE_ARCH} == "sparc64"
-ASPICFLAG=-KPIC
 .endif
 
 .if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
