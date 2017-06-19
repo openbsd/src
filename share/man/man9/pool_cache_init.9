@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.1 2017/06/19 23:44:11 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.2 2017/06/19 23:45:13 dlg Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -175,7 +175,7 @@ the global depot.
 .Fn pool_cache_init
 and
 .Fn pool_cache_destroy
-can be from process context.
+can be called from process context.
 .Sh CODE REFERENCES
 The pool implementation is in the file
 .Pa sys/kern/subr_pool.c .
