@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2017/06/19 13:54:55 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.94 2017/06/19 14:25:53 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -275,18 +275,18 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 
 	bootcpu_hwinfo.clock = boot_desc->eclock;
 
-	switch ((prid >> 8) & 0xff) {
+	switch (octeon_model_family(prid)) {
 	default:
 		octeon_ver = OCTEON_1;
 		break;
-	case MIPS_CN50XX:
+	case OCTEON_MODEL_FAMILY_CN50XX:
 		octeon_ver = OCTEON_PLUS;
 		break;
-	case MIPS_CN61XX:
+	case OCTEON_MODEL_FAMILY_CN61XX:
 		octeon_ver = OCTEON_2;
 		break;
-	case MIPS_CN71XX:
-	case MIPS_CN73XX:
+	case OCTEON_MODEL_FAMILY_CN71XX:
+	case OCTEON_MODEL_FAMILY_CN73XX:
 		octeon_ver = OCTEON_3;
 		break;
 	}
