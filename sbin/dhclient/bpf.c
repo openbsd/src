@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.52 2017/06/14 15:57:25 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.53 2017/06/19 19:28:35 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -395,7 +395,7 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 
 		/* Decode the physical header. */
 		offset = decode_hw_header(ifi->rbuf + ifi->rbuf_offset,
-		   hdr.bh_caplen, hfrom);
+		    hdr.bh_caplen, hfrom);
 
 		/*
 		 * If a physical layer checksum failed (dunno of any
@@ -412,7 +412,7 @@ receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
 
 		/* Decode the IP and UDP headers. */
 		offset = decode_udp_ip_header(ifi->rbuf + ifi->rbuf_offset,
-		   hdr.bh_caplen, from);
+		    hdr.bh_caplen, from);
 
 		/* If the IP or UDP checksum was bad, skip the packet. */
 		if (offset < 0) {

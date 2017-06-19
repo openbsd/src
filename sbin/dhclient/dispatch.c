@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.124 2017/06/18 21:08:15 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.125 2017/06/19 19:28:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -297,12 +297,12 @@ get_rdomain(char *name)
 	struct ifreq ifr;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-	    fatal("get_rdomain socket");
+		fatal("get_rdomain socket");
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) != -1)
-	    rv = ifr.ifr_rdomainid;
+		rv = ifr.ifr_rdomainid;
 
 	close(s);
 	return rv;

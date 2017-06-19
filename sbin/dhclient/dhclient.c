@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.438 2017/06/19 01:09:09 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.439 2017/06/19 19:28:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -426,11 +426,11 @@ routehandler(struct interface_info *ifi)
 		write_resolv_conf(ifi->active->resolv_conf,
 		    strlen(ifi->active->resolv_conf));
 
- done:
+done:
 	free(rtmmsg);
 	return;
 
- die:
+die:
 	if (rslt == -1)
 		fatalx("no memory for errmsg");
 	fatalx("%s", errmsg);
@@ -1105,7 +1105,7 @@ newlease:
 		if (lease->is_static)
 			break;
 		if (ifi->active == NULL)
-		       continue;
+			continue;
 		if (ifi->active->ssid_len != lease->ssid_len)
 			continue;
 		if (memcmp(ifi->active->ssid, lease->ssid, lease->ssid_len)
@@ -1323,7 +1323,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	}
 	return lease;
 
- decline:
+decline:
 	make_decline(ifi, lease);
 	send_decline(ifi);
 	free_client_lease(lease);
@@ -2120,7 +2120,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	if (quit == SIGHUP) {
 		if (!(ifi->flags & IFI_HUP) &&
-		   (!(ifi->flags & IFI_NEW_LLADDR)))
+		    (!(ifi->flags & IFI_NEW_LLADDR)))
 			log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
