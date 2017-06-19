@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.22 2015/08/30 10:05:09 yasuoka Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.23 2017/06/19 22:50:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -131,6 +131,7 @@ typedef struct _bios_diskinfo {
 #define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
 #define BDI_BADLABEL	0x00000004	/* Had another disklabel */
 #define BDI_EL_TORITO	0x00000008	/* 2,048-byte sectors */
+#define BDI_HIBVALID	0x00000010	/* hibernate signiture valid */
 #define BDI_PICKED	0x80000000	/* kernel-only: cksum matched */
 
 } __packed bios_diskinfo_t;

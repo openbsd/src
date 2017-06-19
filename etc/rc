@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.502 2017/06/14 21:39:53 rpe Exp $
+#	$OpenBSD: rc,v 1.503 2017/06/19 22:50:50 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -377,6 +377,7 @@ mount -a -t nonfs,vnd
 # others aren't hurt.)
 mount -uw /
 chmod og-rwx /bsd
+ln -fh /bsd /bsd.booted
 
 rm -f /fastboot
 

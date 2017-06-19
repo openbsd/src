@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.41 2016/09/11 15:54:11 jsing Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.42 2017/06/19 22:50:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,6 +34,7 @@
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <sys/hibernate.h>
 
 #include <lib/libz/zlib.h>
 #include <machine/biosvar.h>
@@ -54,6 +55,9 @@
 
 /* Local Prototypes */
 static int disksum(int);
+static void check_hibernate(struct diskinfo *);
+
+int bootdev_has_hibernate(void);		/* export for loadfile() */
 
 /* List of disk devices we found/probed */
 struct disklist_lh disklist;
@@ -169,8 +173,9 @@ hardprobe(void)
 
 		dip->bios_info.checksum = 0; /* just in case */
 		/* Fill out best we can */
-		dip->bios_info.bsd_dev =
+		dip->bsddev = dip->bios_info.bsd_dev =
 		    MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
+		check_hibernate(dip);
 
 		/* Add to queue of disks */
 		TAILQ_INSERT_TAIL(&disklist, dip, list);
@@ -224,8 +229,9 @@ efi_hardprobe(void)
 
 		dip->bios_info.checksum = 0; /* just in case */
 		/* Fill out best we can */
-		dip->bios_info.bsd_dev =
+		dip->bsddev = dip->bios_info.bsd_dev =
 		    MAKEBOOTDEV(type, 0, 0, bsdunit, RAW_PART);
+		check_hibernate(dip);
 
 		/* Add to queue of disks */
 		TAILQ_INSERT_TAIL(&disklist, dip, list);
@@ -458,4 +464,32 @@ disksum(int blk)
 	}
 
 	return reprobe;
+}
+
+int
+bootdev_has_hibernate(void)
+{
+	return ((bootdev_dip->bios_info.flags & BDI_HIBVALID)? 1 : 0);
+}
+
+static void
+check_hibernate(struct diskinfo *dip)
+{
+	daddr_t sec;
+	int error;
+	union hibernate_info hib;
+
+	/* read hibernate */
+	if (dip->disklabel.d_partitions[1].p_fstype != FS_SWAP ||
+	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) == 0)
+		return;
+
+	sec = DL_GETPOFFSET(&dip->disklabel.d_partitions[1]) +
+	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) -
+            (sizeof(union hibernate_info) / DEV_BSIZE);
+
+	error = dip->strategy(dip, F_READ, (daddr32_t)sec, sizeof hib, &hib, NULL);
+	if (error == 0 && hib.magic == HIBERNATE_MAGIC)	/* Hibernate present */
+		dip->bios_info.flags |= BDI_HIBVALID;
+	printf("&");
 }

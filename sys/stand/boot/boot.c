@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.43 2014/02/19 22:02:15 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.44 2017/06/19 22:50:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -77,6 +77,16 @@ boot(dev_t bootdev)
 	cmd.timeout = boottimeout;
 
 	st = read_conf();
+
+#ifdef HIBERNATE
+	int bootdev_has_hibernate(void);
+
+	if (bootdev_has_hibernate()) {
+		strlcpy(cmd.image, "/bsd.booted", sizeof(cmd.image));
+		printf("unhibernate detected: switching to %s\n", cmd.image);
+	}
+#endif
+
 	if (!bootprompt)
 		snprintf(cmd.path, sizeof cmd.path, "%s:%s",
 		    cmd.bootdev, cmd.image);

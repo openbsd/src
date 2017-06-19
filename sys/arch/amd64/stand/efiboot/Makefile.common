@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.10 2016/09/18 16:34:59 jsing Exp $
+#	$OpenBSD: Makefile.common,v 1.11 2017/06/19 22:50:50 deraadt Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -68,7 +68,7 @@ ${PROG}: ${PROG.so}
 .include <bsd.prog.mk>
 CFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
-CPPFLAGS+=	-DHEAP_LIMIT=${EFI_HEAP_LIMIT}
+CPPFLAGS+=	-DHEAP_LIMIT=${EFI_HEAP_LIMIT} -DHIBERNATE
 
 ${PROG.so}: ${OBJS}
 	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LDADD}
