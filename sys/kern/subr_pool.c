@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.214 2017/06/16 01:55:45 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.215 2017/06/19 23:57:12 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1926,6 +1926,8 @@ pool_cache_destroy(struct pool *pp)
 void
 pool_cache_gc(struct pool *pp)
 {
+	unsigned int contention;
+
 	if ((ticks - pp->pr_cache_tick) > (hz * pool_wait_gc) &&
 	    !TAILQ_EMPTY(&pp->pr_cache_lists) &&
 	    mtx_enter_try(&pp->pr_cache_mtx)) {
@@ -1944,6 +1946,25 @@ pool_cache_gc(struct pool *pp)
 
 		pool_cache_list_put(pp, pl);
 	}
+
+	/*
+	 * if there's a lot of contention on the pr_cache_mtx then consider
+	 * growing the length of the list to reduce the need to access the
+	 * global pool.
+	 */
+
+	contention = pp->pr_cache_contention;
+	if ((contention - pp->pr_cache_contention_prev) > 8 /* magic */) {
+		unsigned int limit = pp->pr_npages * pp->pr_itemsperpage;
+		unsigned int items = pp->pr_cache_items + 8;
+		unsigned int cache = ncpusfound * items * 2;
+
+		/* are there enough items around so every cpu can hold some? */
+
+		if (cache < limit)
+			pp->pr_cache_items = items;
+	}
+	pp->pr_cache_contention_prev = contention;
 }
 
 void
