@@ -33,10 +33,10 @@ testseq "ab\bc" " $ ab\b \bc"
 testseq "ab\0177c" " $ ab\b \bc"
 
 # ^J, ^M: End of line.
-# XXX testseq "a\nab" " $ a\r\na"
-# XXX testseq "a\rab" " $ a\r\na"
-# XXX testseq "a\0033\nab" " $ a\b\r\na"
-# XXX testseq "a\0033\rab" " $ a\b\r\na"
+testseq "echo a\nb" " $ echo a\r\r\na\r\n $ b"
+testseq "echo a\rb" " $ echo a\r\r\na\r\n $ b"
+testseq "echo a\0033\nb" " $ echo a\b\r\r\na\r\n $ b"
+testseq "echo a\0033\rb" " $ echo a\b\r\r\na\r\n $ b"
 
 # ^U: Kill.
 testseq "ab\0033ic\0025d" " $ ab\bcb\b\b\bb  \b\b\bdb\b"
