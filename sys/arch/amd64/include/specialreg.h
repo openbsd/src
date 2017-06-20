@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.57 2017/06/20 05:34:41 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.58 2017/06/20 06:25:01 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1178,6 +1178,11 @@
 #define AMD_SVM_VMCB_CLEAN_CAP		(1 << 5)
 #define AMD_SVM_FLUSH_BY_ASID_CAP	(1 << 6)
 #define AMD_SVMDIS			0x10
+
+#define SVM_TLB_CONTROL_FLUSH_NONE	0
+#define SVM_TLB_CONTROL_FLUSH_ALL	1
+#define SVM_TLB_CONTROL_FLUSH_ASID	3
+#define SVM_TLB_CONTROL_FLUSH_ASID_GLB	7
 
 #define SVM_CLEANBITS_I			(1 << 0)
 #define SVM_CLEANBITS_IOPM		(1 << 1)

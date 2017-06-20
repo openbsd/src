@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.153 2017/06/20 05:34:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.154 2017/06/20 06:25:01 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1767,8 +1767,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmcb->v_asid = asid;
 	vcpu->vc_vpid = asid;
 
-	/* TLB Control */
-	vmcb->v_tlb_control = 1;	/* First time in, flush all */
+	/* TLB Control - First time in, flush all*/
+	vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_ALL;
 
 	/* INTR masking */
 	vmcb->v_intr_masking = 1;
@@ -5539,7 +5539,17 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
 
 			if (ci != vcpu->vc_last_pcpu) {
-				vmcb->v_tlb_control = 3; /* Flush TLB */
+				/*
+				 * Flush TLB by guest ASID if feature
+				 * available, flush entire TLB if not.
+				 */
+				if (ci->ci_vmm_cap.vcc_svm.svm_flush_by_asid)
+					vmcb->v_tlb_control =
+					    SVM_TLB_CONTROL_FLUSH_ASID;
+				else
+					vmcb->v_tlb_control =
+					    SVM_TLB_CONTROL_FLUSH_ALL;
+
 				svm_set_dirty(vcpu, SVM_CLEANBITS_ALL);
 			}
 
@@ -5660,7 +5670,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		enable_intr();
 
 		vcpu->vc_gueststate.vg_rip = vmcb->v_rip;
-		vmcb->v_tlb_control = 0;
+		vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_NONE;
 		svm_set_clean(vcpu, SVM_CLEANBITS_ALL);
 
 		if (ret || exit_reason != SVM_VMEXIT_INTR) {
