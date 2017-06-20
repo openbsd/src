@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.86 2017/05/30 15:11:32 deraadt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.87 2017/06/20 05:34:41 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -870,7 +870,7 @@ void
 cpu_check_vmm_cap(struct cpu_info *ci)
 {
 	uint64_t msr;
-	uint32_t cap, dummy;
+	uint32_t cap, dummy, edx;
 
 	/*
 	 * Check for workable VMX
@@ -949,11 +949,17 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		if (!(msr & AMD_SVMDIS))
 			ci->ci_vmm_flags |= CI_VMM_SVM;
 
-		CPUID(0x8000000A, dummy, ci->ci_vmm_cap.vcc_svm.svm_max_asid,
-		    dummy, dummy);
+		CPUID(CPUID_AMD_SVM_CAP, dummy,
+		    ci->ci_vmm_cap.vcc_svm.svm_max_asid, dummy, edx);
 
 		if (ci->ci_vmm_cap.vcc_svm.svm_max_asid > 0xFFF)
 			ci->ci_vmm_cap.vcc_svm.svm_max_asid = 0xFFF;
+
+		if (edx & AMD_SVM_FLUSH_BY_ASID_CAP)
+			ci->ci_vmm_cap.vcc_svm.svm_flush_by_asid = 1;
+
+		if (edx & AMD_SVM_VMCB_CLEAN_CAP)
+			ci->ci_vmm_cap.vcc_svm.svm_vmcb_clean = 1;
 	}
 
 	/*

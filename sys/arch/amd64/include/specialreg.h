@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.56 2017/05/30 17:49:47 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.57 2017/06/20 05:34:41 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -1174,8 +1174,29 @@
 #define MSR_AMD_VM_CR			0xc0010114
 #define MSR_AMD_VM_HSAVE_PA		0xc0010117
 #define CPUID_AMD_SVM_CAP		0x8000000A
-#define AMD_SVMDIS			0x10
 #define AMD_SVM_NESTED_PAGING_CAP	(1 << 0)
+#define AMD_SVM_VMCB_CLEAN_CAP		(1 << 5)
+#define AMD_SVM_FLUSH_BY_ASID_CAP	(1 << 6)
+#define AMD_SVMDIS			0x10
+
+#define SVM_CLEANBITS_I			(1 << 0)
+#define SVM_CLEANBITS_IOPM		(1 << 1)
+#define SVM_CLEANBITS_ASID		(1 << 2)
+#define SVM_CLEANBITS_TPR		(1 << 3)
+#define SVM_CLEANBITS_NP		(1 << 4)
+#define SVM_CLEANBITS_CR		(1 << 5)
+#define SVM_CLEANBITS_DR		(1 << 6)
+#define SVM_CLEANBITS_DT		(1 << 7)
+#define SVM_CLEANBITS_SEG		(1 << 8)
+#define SVM_CLEANBITS_CR2		(1 << 9)
+#define SVM_CLEANBITS_LBR		(1 << 10)
+#define SVM_CLEANBITS_AVIC		(1 << 11)
+
+#define SVM_CLEANBITS_ALL \
+	(SVM_CLEANBITS_I | SVM_CLEANBITS_IOPM | SVM_CLEANBITS_ASID | \
+	 SVM_CLEANBITS_TPR | SVM_CLEANBITS_NP | SVM_CLEANBITS_CR | \
+	 SVM_CLEANBITS_DR | SVM_CLEANBITS_DT | SVM_CLEANBITS_SEG | \
+	 SVM_CLEANBITS_CR2 | SVM_CLEANBITS_LBR | SVM_CLEANBITS_AVIC )
 
 /*
  * SVM : VMCB intercepts

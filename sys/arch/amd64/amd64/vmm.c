@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.152 2017/05/30 20:31:24 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.153 2017/06/20 05:34:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -190,6 +190,8 @@ void svm_setmsrbrw(struct vcpu *, uint32_t);
 void vmx_setmsrbr(struct vcpu *, uint32_t);
 void vmx_setmsrbw(struct vcpu *, uint32_t);
 void vmx_setmsrbrw(struct vcpu *, uint32_t);
+void svm_set_clean(struct vcpu *, uint32_t);
+void svm_set_dirty(struct vcpu *, uint32_t);
 
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
@@ -1974,6 +1976,63 @@ vmx_setmsrbrw(struct vcpu *vcpu, uint32_t msr)
 {
 	vmx_setmsrbr(vcpu, msr);
 	vmx_setmsrbw(vcpu, msr);
+}
+
+/*
+ * svm_set_clean
+ *
+ * Sets (mark as unmodified) the VMCB clean bit set in 'value'. 
+ * For example, to set the clean bit for the VMCB intercepts (bit position 0),
+ * the caller provides 'SVM_CLEANBITS_I' (0x1) for the 'value' argument.
+ * Multiple cleanbits can be provided in 'value' at the same time (eg,
+ * "SVM_CLEANBITS_I | SVM_CLEANBITS_TPR").
+ *
+ * Note that this function does not clear any bits; to clear bits in the
+ * vmcb cleanbits bitfield, use 'svm_set_dirty'.
+ *
+ * Paramters:
+ *  vmcs: the VCPU whose VMCB clean value should be set
+ *  value: the value(s) to enable in the cleanbits mask
+ */
+void
+svm_set_clean(struct vcpu *vcpu, uint32_t value)
+{
+	struct vmcb *vmcb;
+
+	/* If no cleanbits support, do nothing */
+	if (!curcpu()->ci_vmm_cap.vcc_svm.svm_vmcb_clean)
+		return;
+
+	vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	vmcb->v_vmcb_clean_bits |= value;
+}
+
+/*
+ * svm_set_dirty
+ *
+ * Clears (mark as modified) the VMCB clean bit set in 'value'. 
+ * For example, to clear the bit for the VMCB intercepts (bit position 0)
+ * the caller provides 'SVM_CLEANBITS_I' (0x1) for the 'value' argument.
+ * Multiple dirty bits can be provided in 'value' at the same time (eg,
+ * "SVM_CLEANBITS_I | SVM_CLEANBITS_TPR").
+ *
+ * Paramters:
+ *  vmcs: the VCPU whose VMCB dirty value should be set
+ *  value: the value(s) to dirty in the cleanbits mask
+ */
+void
+svm_set_dirty(struct vcpu *vcpu, uint32_t value)
+{
+	struct vmcb *vmcb;
+
+	/* If no cleanbits support, do nothing */
+	if (!curcpu()->ci_vmm_cap.vcc_svm.svm_vmcb_clean)
+		return;
+
+	vmcb = (struct vmcb *)vcpu->vc_control_va;
+
+	vmcb->v_vmcb_clean_bits &= ~value;
 }
 
 /*
@@ -4150,6 +4209,7 @@ svm_handle_exit(struct vcpu *vcpu)
 
 	/* Enable SVME in EFER (must always be set) */
 	vmcb->v_efer |= EFER_SVME;
+	svm_set_dirty(vcpu, SVM_CLEANBITS_CR);
 
 	return (ret);
 }
@@ -5480,7 +5540,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 			if (ci != vcpu->vc_last_pcpu) {
 				vmcb->v_tlb_control = 3; /* Flush TLB */
-				vmcb->v_vmcb_clean_bits = 0; /* Flush cleanbits cache */
+				svm_set_dirty(vcpu, SVM_CLEANBITS_ALL);
 			}
 
 			vcpu->vc_last_pcpu = ci;
@@ -5501,18 +5561,17 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 				vmcb->v_intr_misc = 0x10; /* XXX #define ign_tpr */
 				vmcb->v_intr_vector = 0;
 				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
-				vmcb->v_vmcb_clean_bits &= ~(1 << 3);
-				vmcb->v_vmcb_clean_bits &= ~(1 << 0);
+				svm_set_dirty(vcpu, SVM_CLEANBITS_TPR |
+				    SVM_CLEANBITS_I);
 			}
 
 			irq = 0xFFFF;
 		} else if (!vcpu->vc_intr) {
 			/* Disable interrupt window */
-			vmcb->v_intercept1 &= ~SVM_INTERCEPT_VINTR;
-			vmcb->v_vmcb_clean_bits &= ~(1 << 0);
-			vmcb->v_vmcb_clean_bits &= ~(1 << 3);
 			vmcb->v_irq = 0;
 			vmcb->v_intr_vector = 0;
+			vmcb->v_intercept1 &= ~SVM_INTERCEPT_VINTR;
+			svm_set_dirty(vcpu, SVM_CLEANBITS_TPR | SVM_CLEANBITS_I);
 		}
 
 		/* Inject event if present */
@@ -5600,10 +5659,9 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		enable_intr();
 
-
 		vcpu->vc_gueststate.vg_rip = vmcb->v_rip;
 		vmcb->v_tlb_control = 0;
-		vmcb->v_vmcb_clean_bits = 0xFFFFFFFF;
+		svm_set_clean(vcpu, SVM_CLEANBITS_ALL);
 
 		if (ret || exit_reason != SVM_VMEXIT_INTR) {
 			KERNEL_LOCK();
@@ -5641,8 +5699,8 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			if (vcpu->vc_irqready == 0 && vcpu->vc_intr) {
 				vmcb->v_intercept1 |= SVM_INTERCEPT_VINTR;
 				vmcb->v_irq = 1;
-				vmcb->v_vmcb_clean_bits &= ~(1 << 0);
-				vmcb->v_vmcb_clean_bits &= ~(1 << 3);
+				svm_set_dirty(vcpu, SVM_CLEANBITS_TPR |
+				    SVM_CLEANBITS_I);
 			}
 
 			/*
