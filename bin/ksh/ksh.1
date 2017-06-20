@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.187 2017/02/19 22:09:18 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.188 2017/06/20 17:32:20 brynet Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: February 19 2017 $
+.Dd $Mdocdate: June 20 2017 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4912,14 +4912,6 @@ The history buffer retains only a finite number of lines; the oldest
 are discarded as necessary.
 .It set-mark-command: ^[ Ns Aq space
 Set the mark at the cursor position.
-.It stuff:
-On systems supporting it, pushes the bound character back onto the terminal
-input where it may receive special processing by the terminal handler.
-This is useful for the BRL ^T mini-systat feature, for example.
-.It stuff-reset:
-Acts like
-.Ic stuff ,
-then aborts input the same as an interrupt.
 .It transpose-chars: ^T
 If at the end of line, or if the
 .Ic gmacs

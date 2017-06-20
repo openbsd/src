@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.67 2017/05/12 14:37:52 schwarze Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.68 2017/06/20 17:32:20 brynet Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -185,8 +185,6 @@ static int	x_search_char_forw(int);
 static int	x_search_char_back(int);
 static int	x_search_hist(int);
 static int	x_set_mark(int);
-static int	x_stuff(int);
-static int	x_stuffreset(int);
 static int	x_transpose(int);
 static int	x_version(int);
 static int	x_xchg_point_mark(int);
@@ -244,8 +242,6 @@ static const struct x_ftab x_ftab[] = {
 	{ x_search_char_back,	"search-character-backward",	XF_ARG },
 	{ x_search_hist,	"search-history",		0 },
 	{ x_set_mark,		"set-mark-command",		0 },
-	{ x_stuff,		"stuff",			0 },
-	{ x_stuffreset,		"stuff-reset",			0 },
 	{ x_transpose,		"transpose-chars",		0 },
 	{ x_version,		"version",			0 },
 	{ x_xchg_point_mark,	"exchange-point-and-mark",	0 },
@@ -1227,36 +1223,6 @@ x_error(int c)
 	return KSTD;
 }
 
-static int
-x_stuffreset(int c)
-{
-#ifdef TIOCSTI
-	(void)x_stuff(c);
-	return KINTR;
-#else
-	x_zotc(c);
-	xlp = xcp = xep = xbp = xbuf;
-	xlp_valid = true;
-	*xcp = 0;
-	x_redraw(-1);
-	return KSTD;
-#endif
-}
-
-static int
-x_stuff(int c)
-{
-#ifdef TIOCSTI
-	char	ch = c;
-	bool	savmode = x_mode(false);
-
-	(void)ioctl(TTY, TIOCSTI, &ch);
-	(void)x_mode(savmode);
-	x_redraw(-1);
-#endif
-	return KSTD;
-}
-
 static char *
 kb_encode(const char *s)
 {
@@ -1555,12 +1521,7 @@ x_init_emacs(void)
 	kb_add(x_search_char_forw,	NULL, CTRL(']'), 0);
 	kb_add(x_search_hist,		NULL, CTRL('R'), 0);
 	kb_add(x_set_mark,		NULL, CTRL('['), ' ', 0);
-#if defined(TIOCSTI)
-	kb_add(x_stuff,			NULL, CTRL('T'), 0);
-	/* stuff-reset */
-#else
 	kb_add(x_transpose,		NULL, CTRL('T'), 0);
-#endif
 	kb_add(x_prev_com,		NULL, CTRL('P'), 0);
 	kb_add(x_prev_com,		NULL, CTRL('X'), 'A', 0);
 	kb_add(x_fold_upper,		NULL, CTRL('['), 'U', 0);
