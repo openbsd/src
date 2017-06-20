@@ -2775,6 +2775,7 @@
 ./usr/share/man/man9/physio.9
 ./usr/share/man/man9/pmap.9
 ./usr/share/man/man9/pool.9
+./usr/share/man/man9/pool_cache_init.9
 ./usr/share/man/man9/ppsratecheck.9
 ./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
