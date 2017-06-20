@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.19 2016/08/14 19:45:24 guenther Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2017/06/20 16:44:06 anton Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include "csh.h"
 #include "extern.h"
 
+static int	fdcmp(int);
 static int	renum(int, int);
 
 int
@@ -163,6 +164,29 @@ lastchr(Char *cp)
 }
 
 /*
+ * Returns 0 if fd is in use, 1 if fd is greater than the largest used file
+ * descriptor and -1 otherwise.
+ */
+static int
+fdcmp(int fd)
+{
+    int fds[] = { SHIN, SHOUT, SHERR, OLDSTD, FSHTTY };
+    int i, max;
+
+    max = -1;
+    for (i = 0; i < sizeof(fds)/sizeof(fds[0]); i++) {
+	if (fd == fds[i])
+	    return (0);
+	if (fds[i] > max)
+	    max = fds[i];
+    }
+    if (fd > max)
+	return (1);
+
+    return (-1);
+}
+
+/*
  * This routine is called after an error to close up
  * any units which may have been left open accidentally.
  */
@@ -173,9 +197,15 @@ closem(void)
     int max = sysconf(_SC_OPEN_MAX);
 
     for (f = 0; f < max; f++)
-	if (f != SHIN && f != SHOUT && f != SHERR && f != OLDSTD &&
-	    f != FSHTTY)
-	    (void) close(f);
+	switch (fdcmp(f)) {
+	case 0:
+	    continue;
+	case 1:
+	    closefrom(f);
+	    return;
+	default:
+	    close(f);
+	}
 }
 
 void
