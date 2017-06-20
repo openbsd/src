@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.4 2017/06/19 23:48:49 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.5 2017/06/20 04:37:17 jmatthew Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2017 $
+.Dd $Mdocdate: June 20 2017 $
 .Dt POOL_CACHE_INIT 9
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ The pool API provides support for caching free pool items on each
 CPU which can be enabled to mitigate against this contention.
 .Pp
 When per CPU caches are enabled on a pool, each CPU maintains an
-an active and inactive list of free pool items.
+active and inactive list of free pool items.
 A global depot of free lists is initialised in the pool structure
 to store excess lists of free items that may accumulate on CPUs.
 .Pp
@@ -88,7 +88,7 @@ or displayed in the pcache view in
 .Pp
 The
 .Vt kinfo_pool_cache
-struct provides information about the global state of a pools caches
+struct provides information about the global state of a pool's caches
 via a node for each pool under the
 .Dv CTL_KERN ,
 .Dv KERN_POOL ,
