@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.144 2017/05/29 12:54:05 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.145 2017/06/20 18:05:44 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -291,6 +291,7 @@ sub parse_problems
 	my $notyet = 1;
 	my $broken = 0;
 	my $signify_error = 0;
+	$self->{last_error} = 0;
 	while(<$fh>) {
 		next if m/^(?:200|220|221|226|229|230|227|250|331|500|150)[\s\-]/o;
 		next if m/^EPSV command not understood/o;
@@ -316,6 +317,8 @@ sub parse_problems
 			} else {
 				$self->{lasterror} = 404;
 			}
+			# ignore errors for stable packages
+			next if $self->can_be_empty;
 		}
 
 		if (defined $hint && $hint == 0) {
@@ -323,6 +326,9 @@ sub parse_problems
 			next if m/^ftp: local: -: Broken pipe/o;
 			next if m/^421\s+/o;
 		}
+		# not retrieving the file => always the same message
+		# so it's superfluous
+		next if m/^signify:/ && $self->{lasterror};
 		if ($notyet) {
 			$self->{state}->errprint("#1: ", $url);
 			if (defined $object) {
