@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.61 2017/05/31 09:17:39 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.62 2017/06/20 13:51:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -156,6 +156,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 
 	if_addgroup(ifp, "wlan");
 	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
+
+	ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 }
 
 void
