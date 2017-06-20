@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.158 2017/03/01 17:08:01 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.159 2017/06/20 18:02:26 tj Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 1 2017 $
+.Dd $Mdocdate: June 20 2017 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -49,7 +49,7 @@ is assumed, otherwise type:
 .Pp
 .Dl $ help
 .Pp
-Complete instructions for correcting and fixing items is not provided.
+Complete instructions for correcting and fixing items are not provided.
 There are manual pages and other methodologies available for doing that.
 For example, to view the man page for the
 .Xr ls 1
@@ -61,7 +61,7 @@ Administrators will rapidly become more familiar with
 .Ox
 if they get used to using the high quality manual pages.
 .Ss Errata
-By the time that you have installed your system, it is quite likely that
+By the time that you have installed your system, it is possible that
 bugs in the release have been found.
 Any security or reliability fixes can be found at
 .Lk https://www.openbsd.org/errata.html .
@@ -109,7 +109,7 @@ Do not choose any word in any language.
 It is common for an intruder to use dictionary attacks.
 Type the following command to change it:
 .Pp
-.Dl $ doas passwd root
+.Dl # passwd root
 .Pp
 To avoid the possibility of rogue files placed in
 the superuser's
@@ -122,7 +122,7 @@ is used to automatically synchronize clocks with remote NTP servers.
 You can use
 .Xr ntpctl 8
 to check the status.
-To change the NTP server see
+To change the NTP server, see
 .Xr ntpd.conf 5 .
 .Pp
 Check the system date with the
@@ -344,8 +344,6 @@ respectively.
 .Sh FURTHER CHANGES
 The system should be usable now, but you may wish to do more customizing,
 such as adding users, etc.
-Many of the following sections may be skipped
-if you are not using that package.
 We suggest that you
 .Ic cd /etc
 and edit any files in that directory as necessary.
@@ -395,7 +393,7 @@ This script should not be changed by administrators.
 .Pa /etc/rc
 is in turn influenced by the configuration variables present in
 .Pa /etc/rc.conf .
-Again this script should not be changed by administrators:
+Again, this script should not be changed by administrators:
 site-specific changes should be made to
 .Pq freshly created if necessary
 .Pa /etc/rc.conf.local
