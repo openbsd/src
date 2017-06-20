@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.92 2017/04/19 00:59:32 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.93 2017/06/20 17:24:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@usta.de>
@@ -136,16 +136,16 @@ html_putchar(char c)
 {
 
 	switch (c) {
-	case ('"'):
+	case '"':
 		printf("&quot;");
 		break;
-	case ('&'):
+	case '&':
 		printf("&amp;");
 		break;
-	case ('>'):
+	case '>':
 		printf("&gt;");
 		break;
-	case ('<'):
+	case '<':
 		printf("&lt;");
 		break;
 	default:

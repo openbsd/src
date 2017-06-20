@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_html.c,v 1.7 2017/01/17 01:47:46 schwarze Exp $ */
+/*	$OpenBSD: eqn_html.c,v 1.8 2017/06/20 17:24:09 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -85,28 +85,28 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 	}
 
 	switch (bp->pos) {
-	case (EQNPOS_TO):
+	case EQNPOS_TO:
 		post = print_otag(p, TAG_MOVER, "");
 		break;
-	case (EQNPOS_SUP):
+	case EQNPOS_SUP:
 		post = print_otag(p, TAG_MSUP, "");
 		break;
-	case (EQNPOS_FROM):
+	case EQNPOS_FROM:
 		post = print_otag(p, TAG_MUNDER, "");
 		break;
-	case (EQNPOS_SUB):
+	case EQNPOS_SUB:
 		post = print_otag(p, TAG_MSUB, "");
 		break;
-	case (EQNPOS_OVER):
+	case EQNPOS_OVER:
 		post = print_otag(p, TAG_MFRAC, "");
 		break;
-	case (EQNPOS_FROMTO):
+	case EQNPOS_FROMTO:
 		post = print_otag(p, TAG_MUNDEROVER, "");
 		break;
-	case (EQNPOS_SUBSUP):
+	case EQNPOS_SUBSUP:
 		post = print_otag(p, TAG_MSUBSUP, "");
 		break;
-	case (EQNPOS_SQRT):
+	case EQNPOS_SQRT:
 		post = print_otag(p, TAG_MSQRT, "");
 		break;
 	default:
