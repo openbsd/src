@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.102 2017/05/31 19:18:18 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.103 2017/06/20 21:05:46 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -112,13 +112,13 @@ extern int	i386_has_xcrypt;
 void
 unmap_startup(void)
 {
-	extern void *kernel_text, *endboot;
-	vaddr_t p = (vaddr_t)&kernel_text;
+	extern int kernel_text[], endboot[];
+	vaddr_t p = (vaddr_t)kernel_text;
 
 	do {
 		pmap_kremove(p, PAGE_SIZE);
 		p += PAGE_SIZE;
-	} while (p < (vaddr_t)&endboot);
+	} while (p < (vaddr_t)endboot);
 }
 
 /*
