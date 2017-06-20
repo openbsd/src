@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.84 2017/06/19 17:58:49 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.85 2017/06/20 11:12:13 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -39,6 +39,8 @@
  * IP-inside-IP processing
  */
 
+#include "bpfilter.h"
+#include "gif.h"
 #include "pf.h"
 
 #include <sys/param.h>
@@ -48,6 +50,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/netisr.h>
@@ -63,8 +66,6 @@
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
-
-#include "bpfilter.h"
 
 #if NPF > 0
 #include <net/pfvar.h>
@@ -91,11 +92,13 @@ ipip_init(void)
 }
 
 /*
- * Really only a wrapper for ipip_input_gif(), for use with pr_input.
+ * Really only a wrapper for ipip_input_if(), for use with pr_input.
  */
 int
-ipip_input(struct mbuf **mp, int *offp, int proto, int af)
+ipip_input(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	struct ifnet *ifp;
+
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*mp)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("%s: dropped due to policy\n", __func__));
@@ -104,7 +107,15 @@ ipip_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	return ipip_input_gif(mp, offp, proto, af, NULL);
+	ifp = if_get((*mp)->m_pkthdr.ph_ifidx);
+	if (ifp == NULL) {
+		m_freemp(mp);
+		return IPPROTO_DONE;
+	}
+	nxt = ipip_input_if(mp, offp, nxt, af, ifp);
+	if_put(ifp);
+
+	return nxt;
 }
 
 /*
@@ -116,12 +127,11 @@ ipip_input(struct mbuf **mp, int *offp, int proto, int af)
  */
 
 int
-ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
-    struct ifnet *gifp)
+ipip_input_if(struct mbuf **mp, int *offp, int proto, int oaf,
+    struct ifnet *ifp)
 {
 	struct mbuf *m = *mp;
 	struct sockaddr_in *sin;
-	struct ifnet *ifp;
 	struct ip *ip;
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
@@ -224,8 +234,7 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 		hlen = ip->ip_hl << 2;
 		if (m->m_pkthdr.len < hlen) {
 			ipipstat_inc(ipips_hdrops);
-			m_freem(m);
-			return IPPROTO_DONE;
+			goto bad;
 		}
 		itos = ip->ip_tos;
 		mode = m->m_flags & (M_AUTH|M_CONF) ?
@@ -258,13 +267,9 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 	}
 
 	/* Check for local address spoofing. */
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (((ifp == NULL) || !(ifp->if_flags & IFF_LOOPBACK)) &&
-	    ipip_allow != 2) {
+	if (!(ifp->if_flags & IFF_LOOPBACK) && ipip_allow != 2) {
 		struct sockaddr_storage ss;
 		struct rtentry *rt;
-
-		if_put(ifp);
 
 		memset(&ss, 0, sizeof(ss));
 
@@ -288,16 +293,14 @@ ipip_input_gif(struct mbuf **mp, int *offp, int proto, int oaf,
 			goto bad;
  		}
 		rtfree(rt);
- 	} else {
-		if_put(ifp);
 	}
 
 	/* Statistics */
 	ipipstat_add(ipips_ibytes, m->m_pkthdr.len - hlen);
 
-#if NBPFILTER > 0
-	if (gifp && gifp->if_bpf)
-		bpf_mtap_af(gifp->if_bpf, iaf, m, BPF_DIRECTION_IN);
+#if NBPFILTER > 0 && NGIF > 0
+	if (ifp->if_type == IFT_GIF && ifp->if_bpf != NULL)
+		bpf_mtap_af(ifp->if_bpf, iaf, m, BPF_DIRECTION_IN);
 #endif
 #if NPF > 0
 	pf_pkt_addr_changed(m);
