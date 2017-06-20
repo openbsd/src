@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.328 2017/06/14 03:00:40 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.329 2017/06/20 14:11:46 gerhard Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1327,6 +1327,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 		FREF(fp);
 		do {
 			if (fp->f_count > 1 && /* 0, +1 for our FREF() */
+			    FILE_IS_USABLE(fp) &&
 			    (arg == 0 || fp->f_type == arg)) {
 				int af, skip = 0;
 				if (arg == DTYPE_SOCKET && fp->f_type == arg) {
