@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.57 2017/06/19 09:42:45 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.58 2017/06/20 09:03:39 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -763,8 +763,6 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 	struct radix_node *tt, *saved_tt, *tm = NULL;
 	int keyduplicated;
 
-	KERNEL_ASSERT_LOCKED();
-
 	/*
 	 * In dealing with non-contiguous masks, there may be
 	 * many different routes which have the same mask.
@@ -914,8 +912,6 @@ rn_delete(void *v_arg, void *n_arg, struct radix_node_head *head,
 	int off = top->rn_off;
 	int vlen;
 
-	KERNEL_ASSERT_LOCKED();
-
 	vlen = SALEN(v);
 
 	/*
@@ -1062,7 +1058,6 @@ rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *,
 	struct radix_node *base, *next;
 	struct radix_node *rn = h->rnh_treetop;
 
-	KERNEL_ASSERT_LOCKED();
 	/*
 	 * This gets complicated because we may delete the node
 	 * while applying the function f to it, so we need to calculate
