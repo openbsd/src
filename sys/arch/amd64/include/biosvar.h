@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.23 2017/06/19 22:50:50 deraadt Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.24 2017/06/20 12:39:20 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -107,7 +107,7 @@ typedef struct _bios_memmap {
  *
  * Also, do not bother with BIOSN*() macros, just parcel
  * the info out, and use it like this.  This makes for less
- * of a dependance on BIOSN*() macros having to be the same
+ * of a dependence on BIOSN*() macros having to be the same
  * across /boot, /bsd, and userland.
  */
 #define	BOOTARG_DISKINFO 1
@@ -131,7 +131,7 @@ typedef struct _bios_diskinfo {
 #define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
 #define BDI_BADLABEL	0x00000004	/* Had another disklabel */
 #define BDI_EL_TORITO	0x00000008	/* 2,048-byte sectors */
-#define BDI_HIBVALID	0x00000010	/* hibernate signiture valid */
+#define BDI_HIBVALID	0x00000010	/* hibernate signature valid */
 #define BDI_PICKED	0x80000000	/* kernel-only: cksum matched */
 
 } __packed bios_diskinfo_t;
