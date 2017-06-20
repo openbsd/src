@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.186 2017/05/31 08:55:10 markus Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.187 2017/06/20 09:10:04 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1157,7 +1157,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		so->so_idletv = *tv;
 	else
 		timerclear(&so->so_idletv);
-	timeout_set(&so->so_idleto, soidle, so);
+	timeout_set_proc(&so->so_idleto, soidle, so);
 	task_set(&so->so_splicetask, sotask, so);
 
 	/*
