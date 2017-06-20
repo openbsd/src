@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.197 2017/06/16 08:45:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.198 2017/06/20 13:52:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6106,9 +6106,6 @@ iwm_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int err, generation;
 
-	if (sc->sc_flags & IWM_FLAG_HW_INITED) {
-		return 0;
-	}
 	sc->sc_generation++;
 
 	err = iwm_init_hw(sc);
@@ -6134,8 +6131,6 @@ iwm_init(struct ifnet *ifp)
 		if (err)
 			return err;
 	} while (ic->ic_state != IEEE80211_S_SCAN);
-
-	sc->sc_flags |= IWM_FLAG_HW_INITED;
 
 	return 0;
 }
@@ -6214,7 +6209,6 @@ iwm_stop(struct ifnet *ifp, int disable)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
 
-	sc->sc_flags &= ~IWM_FLAG_HW_INITED;
 	sc->sc_generation++;
 	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -7450,7 +7444,7 @@ iwm_init_task(void *arg1)
 	}
 	s = splnet();
 
-	if (sc->sc_flags & IWM_FLAG_HW_INITED)
+	if (ifp->if_flags & IFF_RUNNING)
 		iwm_stop(ifp, 0);
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		iwm_init(ifp);

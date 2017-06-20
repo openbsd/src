@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.28 2017/06/14 16:56:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.29 2017/06/20 13:52:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -280,9 +280,8 @@ struct iwm_rx_ring {
 };
 
 #define IWM_FLAG_USE_ICT	0x01
-#define IWM_FLAG_HW_INITED	0x02
-#define IWM_FLAG_RFKILL		0x04
-#define IWM_FLAG_SCANNING	0x08
+#define IWM_FLAG_RFKILL		0x02
+#define IWM_FLAG_SCANNING	0x04
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
