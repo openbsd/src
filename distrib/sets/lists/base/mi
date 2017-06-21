@@ -2201,7 +2201,6 @@
 ./usr/libexec/ld.so
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
-./usr/libexec/locate.concatdb
 ./usr/libexec/locate.mklocatedb
 ./usr/libexec/locate.updatedb
 ./usr/libexec/lockspool
