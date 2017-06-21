@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.442 2017/06/21 15:49:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.443 2017/06/21 16:39:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2580,7 +2580,7 @@ get_recorded_lease(struct interface_info *ifi)
 		if (addressinuse(ifi, lp->address, ifname) &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
-		else if (lp->expiry <= cur_time)
+		if (lp->is_static == 0 && lp->expiry <= cur_time)
 			continue;
 
 		if (lp->is_static)
