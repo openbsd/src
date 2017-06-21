@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.458 2017/06/13 17:09:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.459 2017/06/21 23:52:55 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -273,6 +273,7 @@ do-release:
 release-sets:
 	su ${BUILDUSER} -c 'exec ${MAKE} distribution'
 	su ${BUILDUSER} -c 'exec ${MAKE} kernels'
+	cp -p ${DESTDIR}/usr/share/compile.tgz /usr/share/compile.tgz
 	${MAKE} bootblocks
 	cd ${RELEASEDIR} && rm -f SHA256
 	cd ../distrib/sets && exec su ${BUILDUSER} -c 'exec sh maketars ${OSrev}'
