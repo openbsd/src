@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.440 2017/06/21 12:37:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.441 2017/06/21 15:24:34 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -734,12 +734,12 @@ state_preboot(struct interface_info *ifi)
 
 	if (ifi->linkstat) {
 		ifi->state = S_REBOOTING;
-		set_timeout(1, state_reboot, ifi);
+		set_timeout(ifi, 1, state_reboot);
 	} else {
 		if (interval > config->link_timeout)
 			go_daemon();
 		ifi->state = S_PREBOOT;
-		set_timeout(1, state_preboot, ifi);
+		set_timeout(ifi, 1, state_preboot);
 	}
 }
 
@@ -777,7 +777,7 @@ state_reboot(struct interface_info *ifi)
 	make_request(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	ifi->first_sending = time(NULL);
+	time(&ifi->first_sending);
 	ifi->interval = 0;
 
 	send_request(ifi);
@@ -795,7 +795,7 @@ state_init(struct interface_info *ifi)
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
 	ifi->state = S_SELECTING;
-	ifi->first_sending = time(NULL);
+	time(&ifi->first_sending);
 	ifi->interval = 0;
 
 	send_discover(ifi);
@@ -856,7 +856,7 @@ state_selecting(struct interface_info *ifi)
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
 	ifi->state = S_REQUESTING;
-	ifi->first_sending = time(NULL);
+	time(&ifi->first_sending);
 
 	ifi->interval = 0;
 
@@ -909,7 +909,7 @@ dhcpoffer(struct interface_info *ifi, struct option_data *options, char *info)
 	if (stop_selecting <= time(NULL))
 		state_selecting(ifi);
 	else
-		set_timeout(stop_selecting, state_selecting, ifi);
+		set_timeout(ifi, stop_selecting, state_selecting);
 }
 
 void
@@ -1128,7 +1128,7 @@ newlease:
 	ifi->state = S_BOUND;
 
 	/* Set timeout to start the renewal process. */
-	set_timeout(ifi->active->renewal - cur_time, state_bound, ifi);
+	set_timeout(ifi, ifi->active->renewal - cur_time, state_bound);
 }
 
 /*
@@ -1153,7 +1153,7 @@ state_bound(struct interface_info *ifi)
 	else
 		dest->s_addr = INADDR_BROADCAST;
 
-	ifi->first_sending = time(NULL);
+	time(&ifi->first_sending);
 	ifi->interval = 0;
 	ifi->state = S_RENEWING;
 
@@ -1392,7 +1392,7 @@ send_discover(struct interface_info *ifi)
 		log_warnx("dhclient cannot be used on %s", ifi->name);
 		quit = INTERNALSIG;
 	} else
-		set_timeout(ifi->interval, send_discover, ifi);
+		set_timeout(ifi, ifi->interval, send_discover);
 }
 
 /*
@@ -1416,7 +1416,7 @@ state_panic(struct interface_info *ifi)
 	 */
 	log_info("No working leases in persistent database - sleeping.");
 	ifi->state = S_INIT;
-	set_timeout(config->retry_interval, state_init, ifi);
+	set_timeout(ifi, config->retry_interval, state_init);
 	go_daemon();
 }
 
@@ -1522,7 +1522,7 @@ send_request(struct interface_info *ifi)
 
 	send_packet(ifi, from, destination.sin_addr);
 
-	set_timeout(ifi->interval, send_request, ifi);
+	set_timeout(ifi, ifi->interval, send_request);
 }
 
 void
