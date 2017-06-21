@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.14 2016/09/01 11:03:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2017/06/21 00:10:23 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -533,7 +533,7 @@ CLEANFILES+=	${GENSRCS} ${GENONLY} ${GENOBJS} ${GNTOOLS}
 
 #-----------------------------------------------------------------------
 # Manual dependencies.
-.if !exists(${DEPENDFILE})
+.if !exists(.depend)
 .include  "Makefile.dep"
 .endif
 
