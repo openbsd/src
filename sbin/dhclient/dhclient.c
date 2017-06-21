@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.439 2017/06/19 19:28:35 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.440 2017/06/21 12:37:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1742,7 +1742,7 @@ free_client_lease(struct client_lease *lease)
 	int i;
 
 	/* Static leases are forever. */
-	if (lease->is_static)
+	if (lease == NULL || lease->is_static)
 		return;
 
 	free(lease->server_name);
