@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.24 2017/06/17 18:14:47 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.25 2017/06/21 18:55:15 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -36,8 +36,10 @@
 #include <sys/stat.h>
 #include <termios.h>
 #include <dirent.h>
+#include <errno.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -52,8 +54,6 @@
  *	Finally got around to adding to the Cshell., Ken Greer, Dec. 1981.
  */
 
-#define ON	1
-#define OFF	0
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -63,21 +63,51 @@
 
 #define ESC	'\033'
 
+#define	TABWIDTH	8
+
 typedef enum {
     LIST, RECOGNIZE
 }       COMMAND;
 
-static void	 setup_tty(int);
-static void	 back_to_col_1(void);
-static void	 pushback(Char *);
+struct cmdline {
+	int	 fdin;
+	int	 fdout;
+	int	 flags;
+#define	CL_ALTWERASE	0x1
+#define	CL_PROMPT	0x2
+	char	*buf;
+	size_t	 len;
+	size_t	 size;
+	size_t	 cursor;
+};
+
+/* Command line auxiliary functions. */
+static void	 cl_beep(struct cmdline *);
+static void	 cl_flush(struct cmdline *);
+static int	 cl_getc(struct cmdline *);
+static Char	*cl_lastw(struct cmdline *);
+static void	 cl_putc(struct cmdline *, int);
+static void	 cl_visc(struct cmdline *, int);
+
+/* Command line editing functions. */
+static int	cl_abort(struct cmdline *, int);
+static int	cl_erasec(struct cmdline *, int);
+static int	cl_erasew(struct cmdline *, int);
+static int	cl_insert(struct cmdline *, int);
+static int	cl_kill(struct cmdline *, int);
+static int	cl_list(struct cmdline *, int);
+static int	cl_literal(struct cmdline *, int);
+static int	cl_recognize(struct cmdline *, int);
+static int	cl_reprint(struct cmdline *, int);
+static int	cl_status(struct cmdline *, int);
+
+static const struct termios	*setup_tty(int);
+
 static void	 catn(Char *, Char *, int);
 static void	 copyn(Char *, Char *, int);
 static Char	 filetype(Char *, Char *);
 static void	 print_by_column(Char *, Char *[], int);
 static Char	*tilde(Char *, Char *);
-static void	 retype(void);
-static void	 beep(void);
-static void	 print_recognized_stuff(Char *);
 static void	 extract_dir_and_name(Char *, Char *, Char *);
 static Char	*getentry(DIR *, int);
 static void	 free_items(Char **, int);
@@ -95,74 +125,277 @@ static int	 ignored(Char *);
 bool    filec = 0;
 
 static void
+cl_flush(struct cmdline *cl)
+{
+	size_t	i, len;
+	int	c;
+
+	if (cl->flags & CL_PROMPT) {
+		cl->flags &= ~CL_PROMPT;
+		printprompt();
+	}
+
+	if (cl->cursor < cl->len) {
+		for (; cl->cursor < cl->len; cl->cursor++)
+			cl_visc(cl, cl->buf[cl->cursor]);
+	} else if (cl->cursor > cl->len) {
+		len = cl->cursor - cl->len;
+		for (i = len; i > 0; i--) {
+			c = cl->buf[--cl->cursor];
+			if (c == '\t')
+				len += TABWIDTH - 1;
+			else if (iscntrl(c))
+				len++;	/* account for leading ^ */
+		}
+		for (i = 0; i < len; i++)
+			cl_putc(cl, '\b');
+		for (i = 0; i < len; i++)
+			cl_putc(cl, ' ');
+		for (i = 0; i < len; i++)
+			cl_putc(cl, '\b');
+		cl->cursor = cl->len;
+	}
+}
+
+static int
+cl_getc(struct cmdline *cl)
+{
+	ssize_t	n;
+	int	c;
+
+	for (;;) {
+		n = read(cl->fdin, &c, 1);
+		switch (n) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			/* FALLTHROUGH */
+		case 0:
+			return 0;
+		default:
+			return c & 0x7F;
+		}
+	}
+}
+
+static Char *
+cl_lastw(struct cmdline *cl)
+{
+	static Char	 word[BUFSIZ];
+	const char	*delimiters = " '\"\t;&<>()|^%";
+	Char		*cp;
+	size_t		 i;
+
+	for (i = cl->len; i > 0; i--)
+		if (strchr(delimiters, cl->buf[i - 1]) != NULL)
+			break;
+
+	cp = word;
+	for (; i < cl->len; i++)
+		*cp++ = cl->buf[i];
+	*cp = '\0';
+
+	return word;
+}
+
+static void
+cl_putc(struct cmdline *cl, int c)
+{
+	write(cl->fdout, &c, 1);
+}
+
+static void
+cl_visc(struct cmdline *cl, int c)
+{
+#define	UNCNTRL(x)	((x) == 0x7F ? '?' : ((x) | 0x40))
+	int	i;
+
+	if (c == '\t') {
+		for (i = 0; i < TABWIDTH; i++)
+			cl_putc(cl, ' ');
+	} else if (c != '\n' && iscntrl(c)) {
+		cl_putc(cl, '^');
+		cl_putc(cl, UNCNTRL(c));
+	} else {
+		cl_putc(cl, c);
+	}
+}
+
+static int
+cl_abort(struct cmdline *cl, int c)
+{
+	cl_visc(cl, c);
+	cl_putc(cl, '\n');
+	cl->len = cl->cursor = 0;
+	cl->flags |= CL_PROMPT;
+
+	return 0;
+}
+
+static int
+cl_erasec(struct cmdline *cl, int c)
+{
+	if (cl->len > 0)
+		cl->len--;
+
+	return 0;
+}
+
+static int
+cl_erasew(struct cmdline *cl, int c)
+{
+	const char	*ws = " \t";
+
+	for (; cl->len > 0; cl->len--)
+		if (strchr(ws, cl->buf[cl->len - 1]) == NULL
+		    && ((cl->flags & CL_ALTWERASE) == 0
+			    || isalpha(cl->buf[cl->len - 1])))
+			break;
+	for (; cl->len > 0; cl->len--)
+		if (strchr(ws, cl->buf[cl->len - 1]) != NULL
+		    || ((cl->flags & CL_ALTWERASE)
+			    && !isalpha(cl->buf[cl->len - 1])))
+			break;
+
+	return 0;
+}
+
+static void
+cl_beep(struct cmdline *cl)
+{
+	if (adrof(STRnobeep) == 0)
+		cl_putc(cl, '\007');
+}
+
+static int
+cl_insert(struct cmdline *cl, int c)
+{
+	if (cl->len == cl->size)
+		return 1;
+
+	cl->buf[cl->len++] = c;
+
+	if (c == '\n')
+		return 1;
+
+	return 0;
+}
+
+static int
+cl_kill(struct cmdline *cl, int c)
+{
+	cl->len = 0;
+
+	return 0;
+}
+
+static int
+cl_list(struct cmdline *cl, int c)
+{
+	Char	*word;
+	size_t	 len;
+
+	if (adrof(STRignoreeof) || cl->len > 0)
+		cl_visc(cl, c);
+
+	if (cl->len == 0)
+		return 1;
+
+	cl_putc(cl, '\n');
+	cl->cursor = 0;
+	cl->flags |= CL_PROMPT;
+
+	word = cl_lastw(cl);
+	len = Strlen(word);
+	tsearch(word, LIST, BUFSIZ - len - 1);	/* NUL */
+
+	return 0;
+}
+
+static int
+cl_literal(struct cmdline *cl, int c)
+{
+	int	literal;
+
+	literal = cl_getc(cl);
+	if (literal == '\n')
+		literal = '\r';
+	cl_insert(cl, literal);
+
+	return 0;
+}
+
+static int
+cl_recognize(struct cmdline *cl, int c)
+{
+	Char	*word;
+	size_t	 len;
+	int	 nitems;
+
+	if (cl->len == 0) {
+		cl_beep(cl);
+		return 0;
+	}
+
+	word = cl_lastw(cl);
+	len = Strlen(word);
+	nitems = tsearch(word, RECOGNIZE, BUFSIZ - len - 1);	/* NUL */
+	for (word += len; *word != '\0'; word++)
+		cl_insert(cl, *word);
+	if (nitems != 1)
+		cl_beep(cl);
+
+	return 0;
+}
+
+static int
+cl_reprint(struct cmdline *cl, int c)
+{
+	cl_visc(cl, c);
+	cl_putc(cl, '\n');
+	cl->cursor = 0;
+
+	return 0;
+}
+
+static int
+cl_status(struct cmdline *cl, int c)
+{
+	int	nothing = 0;
+
+	cl->cursor = 0;
+	ioctl(cl->fdin, TIOCSTAT, &nothing);
+
+	return 0;
+}
+
+const struct termios *
 setup_tty(int on)
 {
-    struct termios tchars;
+	static struct termios	newtio, oldtio;
 
-    (void) tcgetattr(SHIN, &tchars);
+	if (on) {
+		tcgetattr(SHIN, &oldtio);
 
-    if (on) {
-	tchars.c_cc[VEOL] = ESC;
-	if (tchars.c_lflag & ICANON)
-	    on = TCSADRAIN;
-	else {
-	    tchars.c_lflag |= ICANON;
-	    on = TCSAFLUSH;
+		newtio = oldtio;
+		newtio.c_lflag &= ~(ECHO | ICANON | ISIG);
+		newtio.c_cc[VEOL] = ESC;
+		newtio.c_cc[VLNEXT] = _POSIX_VDISABLE;
+		newtio.c_cc[VMIN] = 1;
+		newtio.c_cc[VTIME] = 0;
+	} else {
+		newtio = oldtio;
 	}
-    }
-    else {
-	tchars.c_cc[VEOL] = _POSIX_VDISABLE;
-	on = TCSADRAIN;
-    }
 
-    (void) tcsetattr(SHIN, on, &tchars);
-}
+	tcsetattr(SHIN, TCSADRAIN, &newtio);
 
-/*
- * Move back to beginning of current line
- */
-static void
-back_to_col_1(void)
-{
-    struct termios tty, tty_normal;
-    sigset_t sigset, osigset;
+	/*
+	 * Since VLNEXT is disabled, restore its previous value in order to make
+	 * the key detectable.
+	 */
+	newtio.c_cc[VLNEXT] = oldtio.c_cc[VLNEXT];
 
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigprocmask(SIG_BLOCK, &sigset, &osigset);
-    (void) tcgetattr(SHOUT, &tty);
-    tty_normal = tty;
-    tty.c_iflag &= ~INLCR;
-    tty.c_oflag &= ~ONLCR;
-    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
-    (void) write(SHOUT, "\r", 1);
-    (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
-    sigprocmask(SIG_SETMASK, &osigset, NULL);
-}
-
-/*
- * Push string contents back into tty queue
- */
-static void
-pushback(Char *string)
-{
-    Char *p;
-    struct termios tty, tty_normal;
-    sigset_t sigset, osigset;
-    char    c;
-
-    sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigprocmask(SIG_BLOCK, &sigset, &osigset);
-    (void) tcgetattr(SHOUT, &tty);
-    tty_normal = tty;
-    tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
-    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
-
-    for (p = string; (c = *p) != '\0'; p++)
-	(void) ioctl(SHOUT, TIOCSTI, (ioctl_t) & c);
-    (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
-    sigprocmask(SIG_SETMASK, &osigset, NULL);
+	return &newtio;
 }
 
 /*
@@ -293,58 +526,6 @@ tilde(Char *new, Char *old)
     }
     (void) Strlcat(new, o, PATH_MAX);
     return (new);
-}
-
-/*
- * Cause pending line to be printed
- */
-static void
-retype(void)
-{
-    struct termios tty;
-
-    (void) tcgetattr(SHOUT, &tty);
-    tty.c_lflag |= PENDIN;
-    (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
-}
-
-static void
-beep(void)
-{
-    if (adrof(STRnobeep) == 0)
-	(void) write(SHOUT, "\007", 1);
-}
-
-/*
- * Erase that silly ^[ and
- * print the recognized part of the string
- */
-static void
-print_recognized_stuff(Char *recognized_part)
-{
-    /* An optimized erasing of that silly ^[ */
-    (void) fputc('\b', cshout);
-    (void) fputc('\b', cshout);
-    switch (Strlen(recognized_part)) {
-
-    case 0:			/* erase two Characters: ^[ */
-	(void) fputc(' ', cshout);
-	(void) fputc(' ', cshout);
-	(void) fputc('\b', cshout);
-	(void) fputc('\b', cshout);
-	break;
-
-    case 1:			/* overstrike the ^, erase the [ */
-	(void) fprintf(cshout, "%s", vis_str(recognized_part));
-	(void) fputc(' ', cshout);
-	(void) fputc('\b', cshout);
-	break;
-
-    default:			/* overstrike both Characters ^[ */
-	(void) fprintf(cshout, "%s", vis_str(recognized_part));
-	break;
-    }
-    (void) fflush(cshout);
 }
 
 /*
@@ -562,69 +743,57 @@ is_suffix(Char *check, Char *template)
 int
 tenex(Char *inputline, int inputline_size)
 {
-    int numitems, num_read;
-    char    tinputline[BUFSIZ];
+	static struct {
+		int	(*fn)(struct cmdline *, int);
+		int	idx;
+	}			 keys[] = {
+		{ cl_abort,	VINTR },
+		{ cl_erasec,	VERASE },
+		{ cl_erasew,	VWERASE },
+		{ cl_kill,	VKILL },
+		{ cl_list,	VEOF },
+		{ cl_literal,	VLNEXT },
+		{ cl_recognize,	VEOL },
+		{ cl_reprint,	VREPRINT },
+		{ cl_status,	VSTATUS },
+		{ cl_insert,	-1 }
+	};
+	char			 buf[BUFSIZ];
+	const struct termios	*tio;
+	struct cmdline		 cl;
+	size_t			 i;
+	int			 c, ret;
 
-    setup_tty(ON);
+	tio = setup_tty(1);
 
-    while ((num_read = read(SHIN, tinputline, BUFSIZ)) > 0) {
-	int     i;
-	static Char delims[] = {' ', '\'', '"', '\t', ';', '&', '<',
-	'>', '(', ')', '|', '^', '%', '\0'};
-	Char *str_end, *word_start, last_Char, should_retype;
-	int space_left;
-	COMMAND command;
+	memset(&cl, 0, sizeof(cl));
+	cl.fdin = SHIN;
+	cl.fdout = SHOUT;
+	cl.buf = buf;
+	cl.size = sizeof(buf);
+	if (tio->c_lflag & ALTWERASE)
+		cl.flags |= CL_ALTWERASE;
 
-	for (i = 0; i < num_read; i++)
-	    inputline[i] = (unsigned char) tinputline[i];
-	last_Char = inputline[num_read - 1] & ASCII;
+	for (;;) {
+		if ((c = cl_getc(&cl)) == 0)
+			break;
 
-	if (last_Char == '\n' || num_read == inputline_size)
-	    break;
-	command = (last_Char == ESC) ? RECOGNIZE : LIST;
-	if (command == LIST)
-	    (void) fputc('\n', cshout);
-	str_end = &inputline[num_read];
-	if (last_Char == ESC)
-	    --str_end;		/* wipeout trailing cmd Char */
-	*str_end = '\0';
-	/*
-	 * Find LAST occurrence of a delimiter in the inputline. The word start
-	 * is one Character past it.
-	 */
-	for (word_start = str_end; word_start > inputline; --word_start)
-	    if (Strchr(delims, word_start[-1]))
-		break;
-	space_left = inputline_size - (word_start - inputline) - 1;
-	numitems = tsearch(word_start, command, space_left);
-
-	if (command == RECOGNIZE) {
-	    /* print from str_end on */
-	    print_recognized_stuff(str_end);
-	    if (numitems != 1)	/* Beep = No match/ambiguous */
-		beep();
+		for (i = 0; keys[i].idx >= 0; i++)
+			if (CCEQ(tio->c_cc[keys[i].idx], c))
+				break;
+		ret = keys[i].fn(&cl, c);
+		cl_flush(&cl);
+		if (ret)
+			break;
 	}
 
-	/*
-	 * Tabs in the input line cause trouble after a pushback. tty driver
-	 * won't backspace over them because column positions are now
-	 * incorrect. This is solved by retyping over current line.
-	 */
-	should_retype = FALSE;
-	if (Strchr(inputline, '\t')) {	/* tab Char in input line? */
-	    back_to_col_1();
-	    should_retype = TRUE;
-	}
-	if (command == LIST)	/* Always retype after a LIST */
-	    should_retype = TRUE;
-	if (should_retype)
-	    printprompt();
-	pushback(inputline);
-	if (should_retype)
-	    retype();
-    }
-    setup_tty(OFF);
-    return (num_read);
+	setup_tty(0);
+
+	for (i = 0; i < cl.len; i++)
+		inputline[i] = cl.buf[i];
+	inputline[i] = '\0';
+
+	return cl.len;
 }
 
 static int
