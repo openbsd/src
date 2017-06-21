@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.51 2016/10/21 16:12:38 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.52 2017/06/21 00:11:36 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -291,6 +291,9 @@ CondDoExists(struct Name *arg)
 {
 	bool result;
 	char *path;
+
+	if (arg->s == arg->e)
+		Parse_Error(PARSE_FATAL, "Empty file name in .if exists()");
 
 	path = Dir_FindFilei(arg->s, arg->e, defaultPath);
 	if (path != NULL) {
