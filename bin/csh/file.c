@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.25 2017/06/21 18:55:15 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2017/06/21 19:36:23 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -30,19 +30,18 @@
  * SUCH DAMAGE.
  */
 
-
-#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <termios.h>
+#include <sys/types.h>
+
 #include <dirent.h>
 #include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
-#include <limits.h>
-#include <stdarg.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -61,13 +60,13 @@
 #define FALSE 0
 #endif
 
-#define ESC	'\033'
-
+#define	ESC		'\033'
 #define	TABWIDTH	8
 
 typedef enum {
-    LIST, RECOGNIZE
-}       COMMAND;
+	LIST,
+	RECOGNIZE
+} COMMAND;
 
 struct cmdline {
 	int	 fdin;
