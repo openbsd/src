@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.441 2017/06/21 15:24:34 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.442 2017/06/21 15:49:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -749,25 +749,17 @@ state_preboot(struct interface_info *ifi)
 void
 state_reboot(struct interface_info *ifi)
 {
-	char ifname[IF_NAMESIZE];
-	time_t cur_time;
-
 	cancel_timeout(ifi);
+
 	deleting.s_addr = INADDR_ANY;
 	adding.s_addr = INADDR_ANY;
 
-	time(&cur_time);
-	if (ifi->active) {
-		if (ifi->active->expiry <= cur_time)
-			ifi->active = NULL;
-		else if (addressinuse(ifi, ifi->active->address, ifname) &&
-		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
-			ifi->active = NULL;
-	} else
-		ifi->active = get_recorded_lease(ifi);
-
-	/*  No active lease, or the lease is BOOTP, go straight to INIT. */
-	if (!ifi->active || BOOTP_LEASE(ifi->active)) {
+	/*
+	 * If there is no recorded lease or the lease is BOOTP then
+	 * go straight to INIT and try to DISCOVER a new lease.
+	 */
+	ifi->active = get_recorded_lease(ifi);
+	if (ifi->active == NULL || BOOTP_LEASE(ifi->active)) {
 		ifi->state = S_INIT;
 		state_init(ifi);
 		return;
