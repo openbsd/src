@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1014 2017/06/03 22:27:41 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1015 2017/06/21 23:54:19 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2632,6 +2632,14 @@ finish_up() {
 		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
 		mv /mnt/bsd.mp /mnt/bsd
 	fi
+
+	# Create/update kernel.SHA256 matching the just installed kernel.
+	# Fix path in kernel.SHA256 to ensure it references the kernel as /bsd.
+	(
+		umask 077
+		sha256 -h /mnt/var/db/kernel.SHA256 /mnt/bsd
+		sed -i 's,(/mnt,(,' /mnt/var/db/kernel.SHA256
+	)
 
 	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
