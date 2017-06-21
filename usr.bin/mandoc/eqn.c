@@ -1,7 +1,7 @@
-/*	$OpenBSD: eqn.c,v 1.26 2017/06/20 17:24:09 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.27 2017/06/21 18:03:50 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,9 +78,10 @@ enum	eqn_tok {
 	EQN_TOK_TDEFINE,
 	EQN_TOK_NDEFINE,
 	EQN_TOK_UNDEF,
-	EQN_TOK_EOF,
 	EQN_TOK_ABOVE,
-	EQN_TOK__MAX
+	EQN_TOK__MAX,
+	EQN_TOK_FUNC,
+	EQN_TOK_EOF
 };
 
 static	const char *eqn_toks[EQN_TOK__MAX] = {
@@ -128,8 +129,14 @@ static	const char *eqn_toks[EQN_TOK__MAX] = {
 	"tdefine", /* EQN_TOK_TDEFINE */
 	"ndefine", /* EQN_TOK_NDEFINE */
 	"undef", /* EQN_TOK_UNDEF */
-	NULL, /* EQN_TOK_EOF */
 	"above", /* EQN_TOK_ABOVE */
+};
+
+static	const char *const eqn_func[] = {
+	"acos",	"acsc",	"and",	"arc",	"asec",	"asin", "atan",
+	"cos",	"cosh", "coth",	"csc",	"det",	"exp",	"for",
+	"if",	"lim",	"ln",	"log",	"max",	"min",
+	"sec",	"sin",	"sinh",	"tan",	"tanh",	"Im",	"Re",
 };
 
 enum	eqn_symt {
@@ -496,12 +503,12 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 	size_t		 i, sz;
 	int		 quoted;
 
-	if (NULL != p)
+	if (p != NULL)
 		*p = NULL;
 
 	quoted = ep->data[ep->cur] == '"';
 
-	if (NULL == (start = eqn_nexttok(ep, &sz)))
+	if ((start = eqn_nexttok(ep, &sz)) == NULL)
 		return EQN_TOK_EOF;
 
 	if (quoted) {
@@ -510,17 +517,18 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 		return EQN_TOK__MAX;
 	}
 
-	for (i = 0; i < EQN_TOK__MAX; i++) {
-		if (NULL == eqn_toks[i])
-			continue;
+	for (i = 0; i < EQN_TOK__MAX; i++)
 		if (STRNEQ(start, sz, eqn_toks[i], strlen(eqn_toks[i])))
-			break;
-	}
+			return i;
 
-	if (i == EQN_TOK__MAX && NULL != p)
+	if (p != NULL)
 		*p = mandoc_strndup(start, sz);
 
-	return i;
+	for (i = 0; i < sizeof(eqn_func)/sizeof(*eqn_func); i++)
+		if (STRNEQ(start, sz, eqn_func[i], strlen(eqn_func[i])))
+			return EQN_TOK_FUNC;
+
+	return EQN_TOK__MAX;
 }
 
 static void
@@ -1065,15 +1073,26 @@ this_tok:
 		 * TODO: make sure we're not in an open subexpression.
 		 */
 		return ROFF_EQN;
-	default:
-		assert(tok == EQN_TOK__MAX);
-		assert(NULL != p);
+	case EQN_TOK_FUNC:
+	case EQN_TOK__MAX:
+		assert(p != NULL);
 		/*
 		 * If we already have something in the stack and we're
 		 * in an expression, then rewind til we're not any more.
 		 */
 		while (parent->args == parent->expectargs)
 			parent = parent->parent;
+		if (tok == EQN_TOK_FUNC) {
+			for (cur = parent; cur != NULL; cur = cur->parent)
+				if (cur->font != EQNFONT_NONE)
+					break;
+			if (cur == NULL || cur->font != EQNFONT_ROMAN) {
+				parent = eqn_box_alloc(ep, parent);
+				parent->type = EQN_LISTONE;
+				parent->font = EQNFONT_ROMAN;
+				parent->expectargs = 1;
+			}
+		}
 		cur = eqn_box_alloc(ep, parent);
 		cur->type = EQN_TEXT;
 		for (i = 0; i < EQNSYM__MAX; i++)
@@ -1094,6 +1113,8 @@ this_tok:
 		    parent->args == parent->expectargs)
 			parent = parent->parent;
 		break;
+	default:
+		abort();
 	}
 	goto next_tok;
 }
