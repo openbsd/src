@@ -1045,6 +1045,9 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		return (rv);
 	}
 
+	if (timo == 0)
+		return (0);
+
 	do {
 		if (cold)
 			delay(1000);
