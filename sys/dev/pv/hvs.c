@@ -408,8 +408,8 @@ hvs_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_done = hvs_scsi_cmd_done;
 
 #ifdef HVS_DEBUG_IO
-	DPRINTF("%s: %u.%u: opcode %#x flags %#x datalen %d\n",
-	    sc->sc_dev.dv_xname, link->target, link->lun,
+	DPRINTF("%s: %u.%u: rid %llu opcode %#x flags %#x datalen %d\n",
+	    sc->sc_dev.dv_xname, link->target, link->lun, ccb->ccb_rid,
 	    xs->cmd->opcode, xs->flags, xs->datalen);
 #endif
 
@@ -527,8 +527,8 @@ hvs_intr(void *xsc)
 		}
 
 #ifdef HVS_DEBUG_IO
-		DPRINTF("%s: opertaion %u flags %#x status %#x\n",
-		    sc->sc_dev.dv_xname, cmd.cmd_op, cmd.cmd_flags,
+		DPRINTF("%s: rid %llu opertaion %u flags %#x status %#x\n",
+		    sc->sc_dev.dv_xname, rid, cmd.cmd_op, cmd.cmd_flags,
 		    cmd.cmd_status);
 #endif
 
