@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.18 2017/06/05 18:56:30 deraadt Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.19 2017/06/21 23:21:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -44,7 +44,7 @@ SECTIONS
 		*(.gnu.warning)
 		. = ALIGN(4096);
 		etext = ABSOLUTE(.);
-	} = 0x08000240	/* nop filled */
+	} =0x00000000
 
 	. = 0x600000;
 
@@ -58,7 +58,7 @@ SECTIONS
 		__unwind_end = .;
 		. = ALIGN(4096);
 		__rodata_end = .;
-	} = 0
+	} =0x00000000
 	__data_start = ABSOLUTE(.);
 
 	.data  :
@@ -69,7 +69,7 @@ SECTIONS
 		CONSTRUCTORS
 		. = ALIGN(4096);
 		edata = ABSOLUTE(.);
-	} = 0
+	} =0x00000000
 	.ctors	: { *(.ctors) }
 	.dtors	: { *(.dtors) }
 
