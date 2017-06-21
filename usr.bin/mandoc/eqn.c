@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.27 2017/06/21 18:03:50 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.28 2017/06/21 18:37:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -521,6 +521,14 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 		if (STRNEQ(start, sz, eqn_toks[i], strlen(eqn_toks[i])))
 			return i;
 
+	for (i = 0; i < EQNSYM__MAX; i++) {
+		if (STRNEQ(start, sz,
+		    eqnsyms[i].str, strlen(eqnsyms[i].str))) {
+			mandoc_asprintf(p, "\\[%s]", eqnsyms[i].sym);
+			return EQN_TOK__MAX;
+		}
+	}
+
 	if (p != NULL)
 		*p = mandoc_strndup(start, sz);
 
@@ -711,7 +719,7 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	struct eqn_box	*cur;
 	const char	*start;
 	char		*p;
-	size_t		 i, sz;
+	size_t		 sz;
 	enum eqn_tok	 tok, subtok;
 	enum eqn_post	 pos;
 	int		 size;
@@ -1095,17 +1103,8 @@ this_tok:
 		}
 		cur = eqn_box_alloc(ep, parent);
 		cur->type = EQN_TEXT;
-		for (i = 0; i < EQNSYM__MAX; i++)
-			if (0 == strcmp(eqnsyms[i].str, p)) {
-				(void)snprintf(sym, sizeof(sym),
-					"\\[%s]", eqnsyms[i].sym);
-				cur->text = mandoc_strdup(sym);
-				free(p);
-				break;
-			}
+		cur->text = p;
 
-		if (i == EQNSYM__MAX)
-			cur->text = p;
 		/*
 		 * Post-process list status.
 		 */
