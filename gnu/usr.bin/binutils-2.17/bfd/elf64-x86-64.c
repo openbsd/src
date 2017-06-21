@@ -350,7 +350,7 @@ static const bfd_byte elf64_x86_64_plt0_entry[PLT_ENTRY_SIZE] =
 {
   0xff, 0x35, 8, 0, 0, 0,	/* pushq GOT+8(%rip)  */
   0xff, 0x25, 16, 0, 0, 0,	/* jmpq *GOT+16(%rip) */
-  0x90, 0x90, 0x90, 0x90	/* pad out to 16 bytes with nops.  */
+  0xcc, 0xcc, 0xcc, 0xcc	/* pad out to 16 bytes with int3.  */
 };
 
 /* Subsequent entries in a procedure linkage table look like this.  */
