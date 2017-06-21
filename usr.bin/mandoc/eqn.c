@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.28 2017/06/21 18:37:38 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.29 2017/06/21 20:47:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -716,8 +717,8 @@ static enum rofferr
 eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 {
 	char		 sym[64];
-	struct eqn_box	*cur;
-	const char	*start;
+	struct eqn_box	*cur, *fontp, *nbox;
+	const char	*cp, *cpn, *start;
 	char		*p;
 	size_t		 sz;
 	enum eqn_tok	 tok, subtok;
@@ -1090,21 +1091,51 @@ this_tok:
 		 */
 		while (parent->args == parent->expectargs)
 			parent = parent->parent;
-		if (tok == EQN_TOK_FUNC) {
-			for (cur = parent; cur != NULL; cur = cur->parent)
-				if (cur->font != EQNFONT_NONE)
-					break;
-			if (cur == NULL || cur->font != EQNFONT_ROMAN) {
-				parent = eqn_box_alloc(ep, parent);
-				parent->type = EQN_LISTONE;
-				parent->font = EQNFONT_ROMAN;
-				parent->expectargs = 1;
-			}
+		/*
+		 * Wrap well-known function names in a roman box,
+		 * unless they already are in roman context.
+		 */
+		for (fontp = parent; fontp != NULL; fontp = fontp->parent)
+			if (fontp->font != EQNFONT_NONE)
+				break;
+		if (tok == EQN_TOK_FUNC &&
+		    (fontp == NULL || fontp->font != EQNFONT_ROMAN)) {
+			parent = fontp = eqn_box_alloc(ep, parent);
+			parent->type = EQN_LISTONE;
+			parent->font = EQNFONT_ROMAN;
+			parent->expectargs = 1;
 		}
 		cur = eqn_box_alloc(ep, parent);
 		cur->type = EQN_TEXT;
 		cur->text = p;
-
+		/*
+		 * If not inside any explicit font context,
+		 * give every letter its own box.
+		 */
+		if (fontp == NULL && *p != '\0') {
+			cp = p;
+			for (;;) {
+				cpn = cp + 1;
+				if (*cp == '\\')
+					mandoc_escape(&cpn, NULL, NULL);
+				if (*cpn == '\0')
+					break;
+				if (isalpha((unsigned char)*cp) == 0 &&
+				    isalpha((unsigned char)*cpn) == 0) {
+					cp = cpn;
+					continue;
+				}
+				nbox = eqn_box_alloc(ep, parent);
+				nbox->type = EQN_TEXT;
+				nbox->text = mandoc_strdup(cpn);
+				p = mandoc_strndup(cur->text,
+				    cpn - cur->text);
+				free(cur->text);
+				cur->text = p;
+				cur = nbox;
+				cp = nbox->text;
+			}
+		}
 		/*
 		 * Post-process list status.
 		 */
