@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.29 2017/06/21 20:47:46 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.30 2017/06/22 00:30:06 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,6 +82,8 @@ enum	eqn_tok {
 	EQN_TOK_ABOVE,
 	EQN_TOK__MAX,
 	EQN_TOK_FUNC,
+	EQN_TOK_QUOTED,
+	EQN_TOK_SYM,
 	EQN_TOK_EOF
 };
 
@@ -515,7 +517,7 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 	if (quoted) {
 		if (p != NULL)
 			*p = mandoc_strndup(start, sz);
-		return EQN_TOK__MAX;
+		return EQN_TOK_QUOTED;
 	}
 
 	for (i = 0; i < EQN_TOK__MAX; i++)
@@ -526,7 +528,7 @@ eqn_tok_parse(struct eqn_node *ep, char **p)
 		if (STRNEQ(start, sz,
 		    eqnsyms[i].str, strlen(eqnsyms[i].str))) {
 			mandoc_asprintf(p, "\\[%s]", eqnsyms[i].sym);
-			return EQN_TOK__MAX;
+			return EQN_TOK_SYM;
 		}
 	}
 
@@ -1082,8 +1084,10 @@ this_tok:
 		 * TODO: make sure we're not in an open subexpression.
 		 */
 		return ROFF_EQN;
-	case EQN_TOK_FUNC:
 	case EQN_TOK__MAX:
+	case EQN_TOK_FUNC:
+	case EQN_TOK_QUOTED:
+	case EQN_TOK_SYM:
 		assert(p != NULL);
 		/*
 		 * If we already have something in the stack and we're
@@ -1110,17 +1114,27 @@ this_tok:
 		cur->text = p;
 		/*
 		 * If not inside any explicit font context,
-		 * give every letter its own box.
+		 * quoted strings become italic, and every letter
+		 * of a bare string gets its own italic box.
 		 */
-		if (fontp == NULL && *p != '\0') {
+		do {
+			if (fontp != NULL || *p == '\0' ||
+			    tok == EQN_TOK_SYM)
+				break;
+			if (tok == EQN_TOK_QUOTED) {
+				cur->font = EQNFONT_ITALIC;
+				break;
+			}
 			cp = p;
 			for (;;) {
+				if (isalpha((unsigned char)*cp))
+					cur->font = EQNFONT_ITALIC;
 				cpn = cp + 1;
 				if (*cp == '\\')
 					mandoc_escape(&cpn, NULL, NULL);
 				if (*cpn == '\0')
 					break;
-				if (isalpha((unsigned char)*cp) == 0 &&
+				if (cur->font != EQNFONT_ITALIC &&
 				    isalpha((unsigned char)*cpn) == 0) {
 					cp = cpn;
 					continue;
@@ -1135,7 +1149,7 @@ this_tok:
 				cur = nbox;
 				cp = nbox->text;
 			}
-		}
+		} while (0);
 		/*
 		 * Post-process list status.
 		 */
