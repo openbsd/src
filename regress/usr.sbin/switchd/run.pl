@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: run.pl,v 1.10 2017/06/22 20:06:14 bluhm Exp $
+# $OpenBSD: run.pl,v 1.11 2017/06/22 20:17:22 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -134,8 +134,8 @@ sub ofp_hello {
 		$pkt->{version} = $self->{version};
 		$pkt->{type} = OFP_T_FEATURES_REPLY();
 		$pkt->{xid} = $features->{xid};
-		$pkt->{data} = pack('QNCCxxNN',
-		    0xFFAABBCCDDEEFF,		# datapath_id
+		$pkt->{data} = pack('NNNCCxxNN',
+		    0x00FFAABB, 0xCCDDEEFF,	# datapath_id
 		    0,				# nbuffers
 		    1,				# ntables
 		    0,				# aux_id
@@ -184,12 +184,12 @@ sub ofp_packet_in {
 			$match .= pack("x[$padding]");
 		}
 
-		$pkt = pack('NnCCQnna*xxa*',
+		$pkt = pack('NnCCNNnna*xxa*',
 		    OFP_PKTOUT_NO_BUFFER(),			# buffer_id
 		    length($data),				# total_len
 		    OFP_PKTIN_REASON_NO_MATCH(),		# reason
 		    0,						# table_id
-		    0x0000000000000000,				# cookie
+		    0x00000000, 0x00000000,			# cookie
 		    OFP_MATCH_OXM(),				# match_type
 		    $matchlen,					# match_len
 		    $match,					# OXM matches

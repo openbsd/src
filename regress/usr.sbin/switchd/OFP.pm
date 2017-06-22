@@ -258,12 +258,12 @@ sub ofp_table_features_reply {
 	#
 	# Finish
 	#
-	$tf_header = pack('nCx[5]a[32]QQNN',
+	$tf_header = pack('nCx[5]a[32]NNNNNN',
 	    64 + length($tf_payload),	# length
 	    0,				# tableid
 	    'start',			# name
-	    0x0000000000000000,		# metadata_match
-	    0x0000000000000000,		# metadata_write
+	    0x00000000, 0x00000000,	# metadata_match
+	    0x00000000, 0x00000000,	# metadata_write
 	    0x00000000,			# config
 	    10000			# max_entries
 	    );
