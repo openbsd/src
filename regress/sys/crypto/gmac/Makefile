@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2017/05/02 11:46:00 mikeb Exp $
+#	$OpenBSD: Makefile,v 1.4 2017/06/22 18:07:31 bluhm Exp $
 
 DIR=${.CURDIR}/../../../../sys
 
@@ -14,13 +14,8 @@ CDIAGFLAGS+=	-Wunused
 CDIAGFLAGS+=	-Wsign-compare
 #CDIAGFLAGS+=	-Wshadow
 
-REGRESS_TARGETS=	run-regress-${PROG}
-
 CFLAGS+=	-I${DIR}
 
 .PATH:	${DIR}/crypto
-
-run-regress-${PROG}: ${PROG}
-	./${PROG}
 
 .include <bsd.regress.mk>

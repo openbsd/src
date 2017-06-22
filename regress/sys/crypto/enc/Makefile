@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.9 2017/06/22 17:48:42 mikeb Exp $
+#       $OpenBSD: Makefile,v 1.10 2017/06/22 18:07:31 bluhm Exp $
 
 DIR=	${.CURDIR}/../../../../sys
 
@@ -9,14 +9,9 @@ SRCS=	des3.c
 LDADD=-lcrypto
 DPADD=${LIBCRYPTO}
 
-REGRESS_ROOT_TARGETS=	run-regress-${PROG}
-
 .PATH:	${DIR}/crypto
 SRCS+=	aes.c cast.c ecb_enc.c ecb3_enc.c gmac.c rijndael.c set_key.c
 SRCS+=	chachapoly.c poly1305.c
 SRCS+=	xform.c
-
-run-regress-${PROG}: ${PROG}
-	./${PROG}
 
 .include <bsd.regress.mk>

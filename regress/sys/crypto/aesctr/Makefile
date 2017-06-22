@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.5 2017/06/22 17:48:42 mikeb Exp $
+#       $OpenBSD: Makefile,v 1.6 2017/06/22 18:07:30 bluhm Exp $
 
 DIR=	${.CURDIR}/../../../../sys
 
@@ -17,14 +17,9 @@ CDIAGFLAGS+=	-Wunused
 CDIAGFLAGS+=	-Wsign-compare
 CDIAGFLAGS+=	-Wshadow
 
-REGRESS_ROOT_TARGETS=	run-regress-${PROG}
-
 .PATH:	${DIR}/crypto
 SRCS+=	cast.c ecb_enc.c ecb3_enc.c gmac.c aes.c rijndael.c set_key.c
 SRCS+=	chachapoly.c poly1305.c
 SRCS+=	xform.c
-
-run-regress-${PROG}: ${PROG}
-	./${PROG}
 
 .include <bsd.regress.mk>
