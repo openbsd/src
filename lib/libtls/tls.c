@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.64 2017/06/22 17:47:56 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.65 2017/06/22 17:55:48 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -297,7 +297,9 @@ tls_keypair_cert_hash(struct tls_keypair *keypair, char **hash)
 		goto err;
 
 	rv = tls_cert_hash(cert, hash);
+
  err:
+	X509_free(cert);
 	BIO_free(membio);
 
 	return (rv);
