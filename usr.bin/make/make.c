@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.72 2017/06/22 17:08:20 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.73 2017/06/22 17:09:10 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ static void random_setup(void);
 static bool randomize_queue;
 long random_delay = 0;
 
-bool 
+bool
 no_jobs_left()
 {
 	return Array_IsEmpty(&toBeMade);
@@ -131,7 +131,7 @@ random_setup()
 /* no random delay in the new engine for now */
 #if 0
 	if (Var_Definedi("RANDOM_DELAY", NULL))
-		random_delay = strtonum(Var_Value("RANDOM_DELAY"), 0, 1000, 
+		random_delay = strtonum(Var_Value("RANDOM_DELAY"), 0, 1000,
 		    NULL) * 1000000;
 #endif
 
@@ -170,7 +170,7 @@ has_unmade_predecessor(GNode *gn)
 
 		if (pgn->must_make && pgn->built_status == UNKNOWN) {
 			if (DEBUG(MAKE))
-				printf("predecessor %s not made yet.\n", 
+				printf("predecessor %s not made yet.\n",
 				    pgn->name);
 			return true;
 		}
@@ -189,7 +189,7 @@ requeue_successors(GNode *gn)
 	for (ln = Lst_First(&gn->successors); ln != NULL; ln = Lst_Adv(ln)) {
 		GNode	*succ = Lst_Datum(ln);
 
-		if (succ->must_make && succ->unmade == 0 
+		if (succ->must_make && succ->unmade == 0
 		    && succ->built_status == UNKNOWN)
 			Array_PushNew(&toBeMade, succ);
 	}
@@ -206,7 +206,7 @@ requeue(GNode *gn)
 			j--;
 			heldBack.a[i]->built_status = UNKNOWN;
 			if (DEBUG(HELDJOBS))
-				printf("%s finished, releasing: %s\n", 
+				printf("%s finished, releasing: %s\n",
 				    gn->name, heldBack.a[i]->name);
 			Array_Push(&toBeMade, heldBack.a[i]);
 			continue;
@@ -263,7 +263,7 @@ Make_Update(GNode *cgn)	/* the child node */
 		if (noExecute || is_out_of_date(Dir_MTime(cgn)))
 			clock_gettime(CLOCK_REALTIME, &cgn->mtime);
 		if (DEBUG(MAKE))
-			printf("update time: %s\n", 
+			printf("update time: %s\n",
 			    time_to_string(&cgn->mtime));
 	}
 
@@ -275,7 +275,7 @@ Make_Update(GNode *cgn)	/* the child node */
 		pgn->unmade--;
 		if (pgn->must_make) {
 			if (DEBUG(MAKE))
-				printf("%s--=%d ", 
+				printf("%s--=%d ",
 				    pgn->name, pgn->unmade);
 
 			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
@@ -348,7 +348,7 @@ try_to_make_node(GNode *gn)
 				gn->built_status = HELDBACK;
 				if (DEBUG(HELDJOBS))
 					printf("Holding back job %s, "
-					    "groupling to %s\n", 
+					    "groupling to %s\n",
 					    gn->name, gn2->name);
 				Array_Push(&heldBack, gn);
 				return false;
@@ -362,7 +362,7 @@ try_to_make_node(GNode *gn)
 				gn->built_status = HELDBACK;
 				if (DEBUG(HELDJOBS))
 					printf("Holding back job %s, "
-					    "sibling to %s\n", 
+					    "sibling to %s\n",
 					    gn->name, gn2->name);
 				Array_Push(&heldBack, gn);
 				return false;
@@ -454,7 +454,7 @@ MakeHandleUse(void *cgnp, void *pgnp)
 		Make_HandleUse(cgn, pgn);
 }
 
-/* Add stuff to the toBeMade queue. we try to sort things so that stuff 
+/* Add stuff to the toBeMade queue. we try to sort things so that stuff
  * that can be done directly is done right away.  This won't be perfect,
  * since some dependencies are only discovered later (e.g., SuffFindDeps).
  */
@@ -601,7 +601,7 @@ targets_contain_cycles(void)
 	bool cycle = false;
 	bool first = true;
 
-	for (gn = ohash_first(&targets, &i); gn != NULL; 
+	for (gn = ohash_first(&targets, &i); gn != NULL;
 	    gn = ohash_next(&targets, &i)) {
 	    	if (has_been_built(gn))
 			continue;
@@ -684,7 +684,7 @@ find_cycle(Lst l, struct growableArray *cycle)
 		if (gn->built_status == UPTODATE)
 			continue;
 		if (gn->unmade != 0) {
-			GNode *c; 
+			GNode *c;
 
 			gn->in_cycle = true;
 			Array_Push(cycle, gn);
