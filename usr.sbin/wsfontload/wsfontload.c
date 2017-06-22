@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.18 2017/06/17 19:27:54 fcambus Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.19 2017/06/22 20:38:32 fcambus Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -166,6 +166,7 @@ main(int argc, char *argv[])
 			i++;
 		} while(res == 0);
 
+		close(wsfd);
 		return (0);
 	}
 
