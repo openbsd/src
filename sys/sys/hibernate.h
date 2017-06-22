@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.40 2016/09/27 02:53:49 dlg Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.41 2017/06/22 15:56:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -93,6 +93,7 @@ union hibernate_info {
 		paddr_t				piglet_pa;
 		vaddr_t				piglet_va;
 		char				kernel_version[128];
+		u_int32_t			kernel_sum;
 		hibio_fn			io_func;
 		void				*io_page;
 #ifndef NO_PROPOLICE

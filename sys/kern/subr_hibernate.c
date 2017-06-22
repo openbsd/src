@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.121 2017/03/27 20:26:39 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.122 2017/06/22 15:56:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -546,6 +546,17 @@ uvm_page_rle(paddr_t addr)
 }
 
 /*
+ * Calculate a hopefully unique version # for this kernel, based upon
+ * how it was linked.
+ */
+u_int32_t
+hibsum(void)
+{
+	return ((long)malloc ^ (long)km_alloc ^ (long)printf ^ (long)strlen);
+}
+
+
+/*
  * Fills out the hibernate_info union pointed to by hib
  * with information about this machine (swap signature block
  * offsets, number of memory ranges, kernel in use, etc)
@@ -597,6 +608,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	memset(&hib->kernel_version, 0, 128);
 	bcopy(version, &hib->kernel_version,
 	    min(strlen(version), sizeof(hib->kernel_version)-1));
+	hib->kernel_sum = hibsum();
 
 	if (suspend) {
 		/* Grab the previously-allocated piglet addresses */
@@ -924,6 +936,12 @@ hibernate_compare_signature(union hibernate_info *mine,
 
 	if (strcmp(mine->kernel_version, disk->kernel_version) != 0) {
 		DPRINTF("hibernate kernel version mismatch\n");
+		return (1);
+	}
+
+	if (hibsum() != disk->kernel_sum) {
+		DPRINTF("hibernate sum version mismatch %x %x\n",
+		    hibsum(), disk->kernel_sum);
 		return (1);
 	}
 
