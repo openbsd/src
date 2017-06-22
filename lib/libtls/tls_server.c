@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.37 2017/05/06 20:59:28 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.38 2017/06/22 17:34:25 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -201,6 +201,7 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 	char *errstr = "unknown";
 	BIO *cert_bio = NULL;
 	int ssl_err;
+	int rv = -1;
 
 	X509_free(*cert);
 	*cert = NULL;
@@ -221,14 +222,12 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 		goto err;
 	}
 
-	BIO_free(cert_bio);
-
-	return (0);
+	rv = 0;
 
  err:
 	BIO_free(cert_bio);
 
-	return (-1);
+	return (rv);
 }
 
 static int
