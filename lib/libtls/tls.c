@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.63 2017/05/07 01:59:34 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.64 2017/06/22 17:47:56 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -309,7 +309,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
     struct tls_keypair *keypair, int required)
 {
 	EVP_PKEY *pkey = NULL;
-	X509 *cert = NULL;
 	BIO *bio = NULL;
 
 	if (!required &&
@@ -330,7 +329,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 		}
 		if (tls_keypair_cert_hash(keypair, &keypair->cert_hash) == -1)
 			goto err;
-		cert = NULL;
 	}
 
 	if (keypair->key_mem != NULL) {
@@ -379,7 +377,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 
  err:
 	EVP_PKEY_free(pkey);
-	X509_free(cert);
 	BIO_free(bio);
 
 	return (1);
