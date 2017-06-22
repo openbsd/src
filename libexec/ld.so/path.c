@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.6 2015/05/22 13:48:25 jsg Exp $	*/
+/*	$OpenBSD: path.c,v 1.7 2017/06/22 20:44:36 benno Exp $	*/
 
 /*
  * Copyright (c) 2013 Kurt Miller <kurt@intricatesoftware.com>
@@ -52,14 +52,7 @@ _dl_split_path(const char *searchpath)
 		while (*pp != '\0' && *pp != ':' && *pp != ';')
 			pp++;
 
-		/* interpret "" as curdir "." */
-		if (p_begin == pp) {
-			retval[pos] = _dl_malloc(2);
-			if (retval[pos] == NULL)
-				goto badret;
-
-			_dl_bcopy(".", retval[pos++], 2);
-		} else {
+		if (p_begin != pp) {
 			retval[pos] = _dl_malloc(pp - p_begin + 1);
 			if (retval[pos] == NULL)
 				goto badret;
@@ -68,7 +61,7 @@ _dl_split_path(const char *searchpath)
 			retval[pos++][pp - p_begin] = '\0';
 		}
 
-		if (*pp)	/* Try curdir if ':' at end */
+		if (*pp)
 			pp++;
 		else
 			pp = NULL;
