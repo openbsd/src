@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.42 2016/10/16 17:50:00 tb Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.43 2017/06/22 15:57:16 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ emitrules(FILE *fp)
 	    ".SUFFIXES:\n"
 	    ".SUFFIXES: .s .S .c .o\n\n"
 
-	    ".PHONY: depend all install clean tags\n\n"
+	    ".PHONY: depend all install clean tags newbsd update-link\n\n"
 
 	    ".c.o:\n"
 	    "\t${NORMAL_C}\n\n"
@@ -508,6 +508,27 @@ emitload(FILE *fp)
 				return (1);
 		}
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
+			return (1);
+
+		if (fprintf(fp, "new%s: gap.o\n", nm) < 0)
+			return (1);
+		if (fprintf(fp,
+		    "\t${SYSTEM_LD_HEAD}\n"
+		    "\t${SYSTEM_LD} swap%s.o\n"
+		    "\t${SYSTEM_LD_TAIL}\n"
+		    "\tmv -f new%s %s\n\n",
+		    swname, nm, nm) < 0)
+			return (1);
+
+		if (fprintf(fp, "update-link:\n") < 0)
+			return (1);
+		if (fprintf(fp,
+		    "\tmkdir -p -m 700 /usr/share/compile\n"
+		    "\trm -rf /usr/share/compile/%s /usr/share/compile.tgz\n"
+		    "\tmkdir /usr/share/compile/%s\n"
+		    "\ttar -chf - Makefile makegap.sh ld.script *.o | \\\n"
+		    "\t    tar -C /usr/share/compile/%s -xf -\n\n",
+		    last_component, last_component, last_component) < 0)
 			return (1);
 	}
 	return (0);

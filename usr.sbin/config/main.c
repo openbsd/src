@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2017/06/19 17:35:04 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2017/06/22 15:57:16 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ int
 main(int argc, char *argv[])
 {
 	char *p;
-	const char *last_component;
 	char *outfile = NULL;
 	int ch, eflag, uflag, fflag;
 	char dirbuffer[PATH_MAX];
