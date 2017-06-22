@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.38 2017/06/22 17:34:25 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.39 2017/06/22 18:03:57 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -215,7 +215,8 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 		tls_error_set(error, "failed to create certificate bio");
 		goto err;
 	}
-	if ((*cert = PEM_read_bio_X509(cert_bio, NULL, NULL, NULL)) == NULL) {
+	if ((*cert = PEM_read_bio_X509(cert_bio, NULL, tls_password_cb,
+	    NULL)) == NULL) {
 		if ((ssl_err = ERR_peek_error()) != 0)
 		    errstr = ERR_error_string(ssl_err, NULL);
 		tls_error_set(error, "failed to load certificate: %s", errstr);

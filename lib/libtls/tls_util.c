@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.8 2017/05/06 21:34:13 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.9 2017/06/22 18:03:57 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -86,7 +86,7 @@ tls_host_port(const char *hostport, char **host, char **port)
 	return (rv);
 }
 
-static int
+int
 tls_password_cb(char *buf, int size, int rwflag, void *u)
 {
 	size_t len;

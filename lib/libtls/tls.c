@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.66 2017/06/22 17:58:54 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.67 2017/06/22 18:03:57 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -289,11 +289,11 @@ tls_keypair_cert_hash(struct tls_keypair *keypair, char **hash)
 
 	*hash = NULL;
 
-	if ((membio = BIO_new_mem_buf(keypair->cert_mem, keypair->cert_len))
-	    == NULL)
+	if ((membio = BIO_new_mem_buf(keypair->cert_mem,
+	    keypair->cert_len)) == NULL)
 		goto err;
-
-	if ((cert = PEM_read_bio_X509_AUX(membio, NULL, NULL, NULL)) == NULL)
+	if ((cert = PEM_read_bio_X509_AUX(membio, NULL, tls_password_cb,
+	    NULL)) == NULL)
 		goto err;
 
 	rv = tls_cert_hash(cert, hash);
@@ -344,7 +344,7 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 			tls_set_errorx(ctx, "failed to create buffer");
 			goto err;
 		}
-		if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL,
+		if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, tls_password_cb,
 		    NULL)) == NULL) {
 			tls_set_errorx(ctx, "failed to read private key");
 			goto err;
