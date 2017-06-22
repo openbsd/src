@@ -1,6 +1,7 @@
-#!/usr/bin/perl -w
-# $OpenBSD: run.pl,v 1.9 2016/12/22 15:40:07 rzalamena Exp $
+#!/usr/bin/perl
+# $OpenBSD: run.pl,v 1.10 2017/06/22 20:06:14 bluhm Exp $
 
+# Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -17,21 +18,21 @@
 
 use strict;
 use warnings;
+use File::Basename;
+use IO::Socket::INET;
+use Net::Pcap;
+use NetPacket::Ethernet;
+use NetPacket::IP;
+use NetPacket::UDP;
+use Crypt::Random;
+
+use Switchd;
 
 BEGIN {
 	require OFP;
 	require 'ofp.ph';
 	require 'ofp10.ph';
-	require IO::Socket::INET;
 }
-
-use File::Basename;
-use Net::Pcap;
-use NetPacket::Ethernet;
-use NetPacket::IP;
-use NetPacket::UDP;
-use Data::Dumper;
-use Crypt::Random;
 
 sub fatal {
 	my $class = shift;
@@ -325,10 +326,17 @@ for (@ARGV) {
 	push(@test_files, glob($_));
 }
 
+my $sd = Switchd->new(
+    listenaddr          => "127.0.0.1",
+    listenport          => 6633,
+    testfile            => $test,
+);
+$sd->run->up;
+
 # Open connection to the controller
-my $sock = new IO::Socket::INET(
-	PeerHost => '127.0.0.1',
-	PeerPort => '6633',
+my $sock = IO::Socket::INET->new(
+	PeerHost => "127.0.0.1",
+	PeerPort => 6633,
 	Proto => 'tcp',
 ) or fatal("main", "ERROR in Socket Creation : $!\n");
 
@@ -338,5 +346,7 @@ for my $test_file (@test_files) {
 }
 
 $sock->close();
+
+$sd->kill_child->down;
 
 1;
