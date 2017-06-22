@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.77 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.78 2017/06/22 17:08:20 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ Targ_NewGNi(const char *name, const char *ename)
 	gn->unmade = 0;
 	gn->must_make = false;
 	gn->built_status = UNKNOWN;
+	gn->in_cycle = false;
 	gn->childMade =	false;
 	gn->order = 0;
 	ts_set_out_of_date(gn->mtime);

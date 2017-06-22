@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.28 2013/05/30 08:58:38 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.29 2017/06/22 17:08:20 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -129,19 +129,13 @@ struct GNode_ {
 			 *	made (used only in compat mode)
 			 *  ABORTED - The target was aborted due to
 			 *	an error making an inferior.
-			 *  CYCLE - Marked as potentially being part of
-			 *	a graph cycle. If we come back to a
-			 *	node marked this way, it is printed
-			 *	and 'built_status' is changed to ENDCYCLE.
-			 *  ENDCYCLE - the cycle has been completely
-			 *	printed. Go back and unmark all its
-			 *	members.
 			 */
     char *path;		/* The full pathname of the file */
     unsigned int type;	/* Its type (see the OP flags, below) */
     int order;		/* Its wait weight */
 
     int unmade;		/* The number of unmade children */
+    int in_cycle;	/* cycle detection */
 
     struct timespec mtime;	/* Its modification time */
     GNode *youngest;		/* Its youngest child */
