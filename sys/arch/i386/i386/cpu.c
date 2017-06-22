@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.84 2017/05/30 15:11:32 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.85 2017/06/22 06:21:12 jmatthew Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -67,6 +67,7 @@
 #include "lapic.h"
 #include "ioapic.h"
 #include "vmm.h"
+#include "pvbus.h"
 
 #include <sys/param.h>
 #include <sys/timeout.h>
@@ -102,6 +103,10 @@
 #if NIOAPIC > 0
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
+#endif
+
+#if NPVBUS > 0
+#include <dev/pv/pvvar.h>
 #endif
 
 #include <dev/ic/mc146818reg.h>
@@ -626,6 +631,9 @@ cpu_hatch(void *v)
 
 	ci->ci_curpmap = pmap_kernel();
 	cpu_init(ci);
+#if NPVBUS > 0
+	pvbus_init_cpu();
+#endif
 
 	/* Re-initialise memory range handling on AP */
 	if (mem_range_softc.mr_op != NULL)

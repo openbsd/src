@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvvar.h,v 1.9 2017/01/10 17:16:39 reyk Exp $	*/
+/*	$OpenBSD: pvvar.h,v 1.10 2017/06/22 06:21:12 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@ struct pvbus_hv {
 
 	void			*hv_arg;
 	int			(*hv_kvop)(void *, int, char *, char *, size_t);
+	void			(*hv_init_cpu)(struct pvbus_hv *);
 };
 
 struct pvbus_softc {
@@ -77,6 +78,7 @@ struct pv_attach_args {
 
 void	 pvbus_identify(void);
 int	 pvbus_probe(void);
+void	 pvbus_init_cpu(void);
 void	 pvbus_reboot(struct device *);
 void	 pvbus_shutdown(struct device *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.16 2017/01/10 17:16:39 reyk Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.17 2017/06/22 06:21:12 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -208,6 +208,19 @@ pvbus_identify(void)
  out:
 	if (cnt)
 		has_hv_cpuid = 1;
+}
+
+void
+pvbus_init_cpu(void)
+{
+	int i;
+
+	for (i = 0; i < PVBUS_MAX; i++) {
+		if (pvbus_hv[i].hv_base == 0)
+			continue;
+		if (pvbus_hv[i].hv_init_cpu != NULL)
+			(pvbus_hv[i].hv_init_cpu)(&pvbus_hv[i]);
+	}
 }
 
 int
