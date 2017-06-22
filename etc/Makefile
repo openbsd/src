@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.459 2017/06/21 23:52:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.460 2017/06/22 16:02:42 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -32,8 +32,7 @@ kernels: ${ALL_KERNELS}
 	cd ${.CURDIR}/../sys/arch/${MACHINE}/compile/ && \
 		tar -chzf ${DESTDIR}/usr/share/compile.tgz -s ',/obj/,/,' \
 		GENERIC*/obj/*.o GENERIC*/obj/Makefile \
-		GENERIC*/obj/ld.script GENERIC*/obj/gap.S \
-		GENERIC*/obj/machine
+		GENERIC*/obj/ld.script GENERIC*/obj/makegap.sh
 	chown root:wheel ${DESTDIR}/usr/share/compile.tgz
 	chmod 644 ${DESTDIR}/usr/share/compile.tgz
 
