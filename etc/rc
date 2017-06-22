@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.503 2017/06/19 22:50:50 deraadt Exp $
+#	$OpenBSD: rc,v 1.504 2017/06/22 16:03:36 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -228,7 +228,7 @@ reorder_kernel() {
 	_kernel=$(sysctl -n kern.osversion)
 	_kernel=${_kernel%#*}
 	_kernel_dir=$_compile_dir/$_kernel
-	_sha256=$_kernel_dir/SHA256
+	_sha256=/var/db/kernel.SHA256
 
 	if [[ -f /usr/share/compile.tgz ]]; then
 		rm -rf $_compile_dir
@@ -237,12 +237,12 @@ reorder_kernel() {
 		rm -f /usr/share/compile.tgz
 	fi
 
-	[[ -f $_sha256 ]] && sha256 -q -C $_sha256 /bsd
+	sha256 -q -C $_sha256 /bsd
 
 	cd $_kernel_dir
 	make newbsd   >$_kernel_dir/log 2>&1
-	make install >>$_kernel_dir/log 2>&1
-	sha256 -h $_sha256 /bsd
+	make newinstall >>$_kernel_dir/log 2>&1
+	(umask 077 && sha256 -h $_sha256 /bsd)
 
 	(echo "Kernel has been relinked and is active on next reboot\n"; \
 		cat $_sha256; echo "\nRelink log:\n"; cat $_kernel_dir/log ) |
