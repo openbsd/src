@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_tfp.c,v 1.6 2016/01/05 05:27:54 visa Exp $	*/
+/*	$OpenBSD: cache_tfp.c,v 1.7 2017/06/22 14:40:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -128,9 +128,11 @@ tfp_InvalidateICache(struct cpu_info *ci, vaddr_t _va, size_t _sz)
 	vsize_t sz;
 	void (*inval_subr)(vsize_t);
 
+	if (ci->ci_cachepending_l1i != 0)
+		return;
+
 	if (_sz >= ci->ci_l1inst.size) {
-		tfp_inval_icache(ci->ci_l1inst.size);
-		ci->ci_cachepending_l1i = 0;
+		ci->ci_cachepending_l1i = 1;
 	} else {
 		/* extend the range to multiple of 32 bytes */
 		va = _va & ~(32UL - 1);
