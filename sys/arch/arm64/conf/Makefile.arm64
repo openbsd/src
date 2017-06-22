@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.14 2017/06/13 16:40:01 deraadt Exp $
+#	$OpenBSD: Makefile.arm64,v 1.15 2017/06/22 16:01:48 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -94,12 +94,6 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-newbsd:
-	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} swapgeneric.o
-	${SYSTEM_LD_TAIL}
-	mv -f newbsd bsd
-
 # cc's -MD puts the source and output paths in the dependency file;
 # since those are temp files here we need to fix it up.  It also
 # puts the file in /tmp, so we use -MF to put it in the current
@@ -130,19 +124,23 @@ ld.script: ${_archdir}/conf/kern.ldscript
 	    sed -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' > ld.script
 
+gapdummy.o:
+	echo 'const char gapdummy;' > gapdummy.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
+
+makegap.sh: $S/conf/makegap.sh
+	cp $S/conf/makegap.sh $@
+
+gap.o:	Makefile makegap.sh gapdummy.o
+	sh makegap.sh 0xd4d4d4d4 gapdummy.o
+
 vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-gap.S:	${SYSTEM_SWAP_DEP} Makefile
-	umask 007; sh $S/conf/makegap.sh 0xd4 > gap.S
-
-gap.o:	gap.S
-	umask 007; ${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c gap.S
-
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* ${DB_STRUCTINFO} \
-	    gap.S lorder param.c
+	    gap.link ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
@@ -159,16 +157,12 @@ in_cksum_arm.o fiq_subr.o bcopyinout.o copystr.o sigcode.o copy.o: assym.h
 vectors.o cpuswitch.o exception.o bcopy_page.o irq_dispatch.o support.o: assym.h
 locore.o: assym.h
 
-# The install target can be redefined by putting a
-# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
-MACHINE_NAME!=  uname -n
-install: install-kernel-${MACHINE_NAME}
-.if !target(install-kernel-${MACHINE_NAME}})
-install-kernel-${MACHINE_NAME}:
+newinstall:
 	cmp -s bsd /bsd || ln -f /bsd /obsd
-	umask 077; cp bsd /nbsd
-	mv /nbsd /bsd
-.endif
+	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
+	    sha256 -h /var/db/kernel.SHA256 /bsd
+
+install: update-link newinstall
 
 # pull in the dependency information
 .if !empty(DB_STRUCTINFO) && !exists(${DB_STRUCTINFO})
