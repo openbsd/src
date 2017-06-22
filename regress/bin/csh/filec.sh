@@ -76,6 +76,7 @@ testseq "\t\0177" " %         \b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b"
 # VINTR: Abort line.
 testseq "\0003" " % ^C\r\n % "
 testseq "ab\0003" " % ab^C\r\n % "
+testseq "foreach i ()\n\0003a" " % foreach i ()\r\n? ^C\r\r\n % a"
 
 # VKILL: Kill line.
 testseq "\0025" " % "

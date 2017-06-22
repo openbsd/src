@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.26 2017/06/21 19:36:23 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.27 2017/06/22 18:05:31 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -224,6 +224,11 @@ static int
 cl_abort(struct cmdline *cl, int c)
 {
 	cl_visc(cl, c);
+
+	/* Abort while/foreach loop prematurely. */
+	if (whyles)
+		kill(getpid(), SIGINT);
+
 	cl_putc(cl, '\n');
 	cl->len = cl->cursor = 0;
 	cl->flags |= CL_PROMPT;
