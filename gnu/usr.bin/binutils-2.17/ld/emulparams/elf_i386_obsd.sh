@@ -1,6 +1,5 @@
 . ${srcdir}/emulparams/elf_i386.sh
 . ${srcdir}/emulparams/elf_obsd.sh
-NOP=0xcccccccc
 
 if test "${LD_FLAG#"${LD_FLAG%pie}"}" = "pie"; then
   TEXT_START_ADDR=0x0
