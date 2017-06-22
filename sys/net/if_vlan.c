@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.173 2017/05/31 05:14:51 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.174 2017/06/22 11:34:51 tom Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -760,7 +760,7 @@ vlan_iff(struct ifvlan *ifv)
 int
 vlan_setlladdr(struct ifvlan *ifv, struct ifreq *ifr)
 {
-	struct ifnet *ifp = &ifv->ifv_if;;
+	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifnet *ifp0;
 	uint8_t lladdr[ETHER_ADDR_LEN];
 	int flag;

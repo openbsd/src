@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.12 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.13 2017/06/22 11:34:51 tom Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_membus_space.bus_io = 0;
 	sc->sc_iobus_space.bus_base = SH4_PCIC_IO; /* XXX */
 	sc->sc_iobus_space.bus_size =  SH4_PCIC_IO_SIZE;
-	sc->sc_iobus_space.bus_io = 1;;
+	sc->sc_iobus_space.bus_io = 1;
 
 	io_ex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT | EX_FILLED);

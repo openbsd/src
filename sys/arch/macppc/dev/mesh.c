@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.32 2013/12/06 21:03:05 deraadt Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.33 2017/06/22 11:34:51 tom Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -1050,7 +1050,7 @@ mesh_scb_free(void *xsc, void *xscb)
 void
 mesh_scsi_cmd(struct scsi_xfer *xs)
 {
-	struct scsi_link *sc_link = xs->sc_link;;
+	struct scsi_link *sc_link = xs->sc_link;
 	struct mesh_softc *sc = sc_link->adapter_softc;
 	struct mesh_scb *scb;
 	u_int flags;

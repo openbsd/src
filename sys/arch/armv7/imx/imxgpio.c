@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.11 2016/08/06 18:12:13 patrick Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.12 2017/06/22 11:34:51 tom Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -198,7 +198,7 @@ imxgpio_get_pin(void *cookie, uint32_t *cells)
 	reg &= (1 << pin);
 	val = (reg >> pin) & 1;
 	if (flags & GPIO_ACTIVE_LOW)
-		val = !val;;
+		val = !val;
 	return val;
 }
 
