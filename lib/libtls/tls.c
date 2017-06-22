@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.65 2017/06/22 17:55:48 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.66 2017/06/22 17:58:54 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -640,7 +640,7 @@ tls_handshake(struct tls *ctx)
 		ctx->ssl_peer_cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		ctx->ssl_peer_chain = SSL_get_peer_cert_chain(ctx->ssl_conn);
 		if (tls_conninfo_populate(ctx) == -1)
-		    rv = -1;
+			rv = -1;
 		if (ctx->ocsp == NULL)
 			ctx->ocsp = tls_ocsp_setup_from_peer(ctx);
 	}
