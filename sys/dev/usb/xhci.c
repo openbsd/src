@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.72 2017/03/10 11:18:48 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.73 2017/06/22 02:44:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -225,7 +225,7 @@ usbd_dma_contig_alloc(struct usbd_bus *bus, struct usbd_dma_info *dma,
 	error = bus_dmamap_create(dma->tag, size, 1, size, boundary,
 	    BUS_DMA_NOWAIT, &dma->map);
 	if (error != 0)
-		return (error);;
+		return (error);
 
 	error = bus_dmamem_alloc(dma->tag, size, alignment, boundary, &dma->seg,
 	    1, &dma->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO);

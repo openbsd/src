@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.1 2017/01/21 08:26:49 patrick Exp $ */
+/* $OpenBSD: sximmc.c,v 1.2 2017/06/22 02:44:37 deraadt Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -611,7 +611,7 @@ sximmc_card_detect(sdmmc_chipset_handle_t sch)
 	val = gpio_controller_get_pin(sc->sc_gpio);
 
 	inverted = (OF_getproplen(sc->sc_node, "cd-inverted") == 0);
-	return inverted ? !val : val;;
+	return inverted ? !val : val;
 }
 
 int

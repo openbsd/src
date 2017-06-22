@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.6 2017/04/18 00:18:51 jmatthew Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.7 2017/06/22 02:44:37 deraadt Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -978,7 +978,7 @@ ure_init_fifo(struct ure_softc *sc)
 int
 ure_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct ure_softc	*sc = ifp->if_softc;;
+	struct ure_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
