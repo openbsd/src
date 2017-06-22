@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.52 2017/06/19 19:28:35 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.53 2017/06/22 15:08:53 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -399,14 +399,8 @@ parse_date(FILE *cfile)
 	memset(&tm, 0, sizeof(tm));	/* 'cuz strptime ignores tm_isdt. */
 	p = strptime(timestr, DB_TIMEFMT, &tm);
 	if (p == NULL || *p != '\0') {
-		p = strptime(timestr, OLD_DB_TIMEFMT, &tm);
-		if (p == NULL || *p != '\0') {
-			p = strptime(timestr, BAD_DB_TIMEFMT, &tm);
-			if (p == NULL || *p != '\0') {
-				parse_warn("unparseable time string");
-				return (0);
-			}
-		}
+		parse_warn("unparseable time string");
+		return (0);
 	}
 
 	guess = timegm(&tm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.190 2017/06/21 15:24:34 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.191 2017/06/22 15:08:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -43,8 +43,6 @@
 #define	REMOTE_PORT	67
 #define	INTERNALSIG	INT_MAX
 #define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
-#define BAD_DB_TIMEFMT	"%u %Y/%m/%d %T"
-#define OLD_DB_TIMEFMT	"%w %Y/%m/%d %T"
 
 struct option {
 	char *name;
