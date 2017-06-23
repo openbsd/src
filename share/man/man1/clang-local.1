@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.6 2017/06/06 09:42:09 jsg Exp $
+.\" $OpenBSD: clang-local.1,v 1.7 2017/06/23 06:07:51 tedu Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 6 2017 $
+.Dd $Mdocdate: June 23 2017 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -52,6 +52,10 @@ The
 option is turned off by default unless
 .Fl Ofast
 has been selected.
+.It
+.Nm clang
+does not store its version string in objects.
+There is no option to control this.
 .It
 The
 .Fl pg
