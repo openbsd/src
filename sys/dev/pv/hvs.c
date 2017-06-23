@@ -275,6 +275,11 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	if (strcmp("scsi", aa->aa_ident) == 0)
 		sc->sc_flags |= HVSF_SCSI;
 
+	if (hv_channel_setdeferred(sc->sc_chan, sc->sc_dev.dv_xname)) {
+		printf(": failed to create the interrupt thread\n");
+		return;
+	}
+
 	if (hv_channel_open(sc->sc_chan, HVS_RING_SIZE, &sc->sc_props,
 	    sizeof(sc->sc_props), hvs_intr, sc)) {
 		printf(": failed to open channel\n");
