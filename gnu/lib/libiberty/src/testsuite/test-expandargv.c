@@ -34,12 +34,9 @@
 #include "libiberty.h"
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
+#include <unistd.h>
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -172,7 +169,7 @@ writeout_test (int test, const char * test_data)
   if (parse == NULL)
     fatal_error (__LINE__, "Failed to malloc parse.", errno);
       
-  memcpy (parse, test_data, sizeof (char) * len);
+  memcpy (parse, test_data, sizeof (char) * (len + 1));
   /* Run all possible replaces */
   run_replaces (parse);
 

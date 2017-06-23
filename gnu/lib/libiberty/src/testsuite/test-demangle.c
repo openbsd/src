@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include "libiberty.h"
 #include "demangle.h"
+#include <string.h>
+#include <stdlib.h>
 
 struct line
 {
@@ -40,7 +42,7 @@ static unsigned int lineno;
 #define LINELEN 80
 
 static void
-getline(buf)
+get_line(buf)
      struct line *buf;
 {
   char *data = buf->data;
@@ -65,7 +67,7 @@ getline(buf)
      line: copy this line into the buffer and return.  */
   while (c != EOF && c != '\n')
     {
-      if (count >= alloc)
+      if (count + 1 >= alloc)
 	{
 	  alloc *= 2;
 	  data = xrealloc (data, alloc);
@@ -117,12 +119,12 @@ main(argc, argv)
 
   for (;;)
     {
-      getline (&format);
+      get_line (&format);
       if (feof (stdin))
 	break;
 
-      getline (&input);
-      getline (&expect);
+      get_line (&input);
+      get_line (&expect);
 
       tests++;
 

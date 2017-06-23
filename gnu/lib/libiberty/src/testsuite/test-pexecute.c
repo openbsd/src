@@ -27,25 +27,21 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <sys/types.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
-#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
-#endif
-#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#endif
+
+extern const char *pex_run (struct pex_obj *obj, int flags,
+                            const char *executable, char * const *argv,
+                            const char *outname, const char *errname,
+                            int *err);
+extern FILE *pex_read_output (struct pex_obj *, int binary);
+extern int pex_get_status (struct pex_obj *, int count, int *vector);
+extern void pex_free (struct pex_obj *);
 
 #ifndef WIFSIGNALED
 #define WIFSIGNALED(S) (((S) & 0xff) != 0 && ((S) & 0xff) != 0x7f)
