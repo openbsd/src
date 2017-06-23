@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.116 2017/05/31 17:56:48 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.117 2017/06/23 15:36:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -239,6 +239,12 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	if (strcmp(name, "key-table") == 0) {
 		TAILQ_FOREACH(loop, &clients, entry)
 			server_client_set_key_table(loop, NULL);
+	}
+	if (strcmp(name, "user-keys") == 0) {
+		TAILQ_FOREACH(loop, &clients, entry) {
+			if (loop->tty.flags & TTY_OPENED)
+				tty_keys_build(&loop->tty);
+		}
 	}
 	if (strcmp(name, "status") == 0 ||
 	    strcmp(name, "status-interval") == 0)

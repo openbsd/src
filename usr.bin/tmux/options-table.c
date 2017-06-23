@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.89 2017/06/03 17:43:01 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.90 2017/06/23 15:36:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -133,6 +133,13 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "xterm*:XT:Ms=\\E]52;%p1%s;%p2%s\\007"
 			 ":Cs=\\E]12;%p1%s\\007:Cr=\\E]112\\007"
 			 ":Ss=\\E[%p1%d q:Se=\\E[2 q,screen*:XT",
+	  .separator = ","
+	},
+
+	{ .name = "user-keys",
+	  .type = OPTIONS_TABLE_ARRAY,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_str = "",
 	  .separator = ","
 	},
 

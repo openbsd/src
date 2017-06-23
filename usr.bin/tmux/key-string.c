@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.46 2017/06/12 07:04:24 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.47 2017/06/23 15:36:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -110,12 +110,16 @@ static const struct {
 static key_code
 key_string_search_table(const char *string)
 {
-	u_int	i;
+	u_int	i, user;
 
 	for (i = 0; i < nitems(key_string_table); i++) {
 		if (strcasecmp(string, key_string_table[i].string) == 0)
 			return (key_string_table[i].key);
 	}
+
+	if (sscanf(string, "User%u", &user) == 1 && user < KEYC_NUSER)
+		return (KEYC_USER + user);
+
 	return (KEYC_UNKNOWN);
 }
 
@@ -265,6 +269,10 @@ key_string_lookup_key(key_code key)
 		return ("MouseMoveStatus");
 	if (key == KEYC_MOUSEMOVE_BORDER)
 		return ("MouseMoveBorder");
+	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {
+		snprintf(out, sizeof out, "User%u", (u_int)(key - KEYC_USER));
+		return (out);
+	}
 
 	/*
 	 * Special case: display C-@ as C-Space. Could do this below in

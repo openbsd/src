@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.786 2017/06/12 07:04:24 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.787 2017/06/23 15:36:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -87,6 +87,10 @@ struct tmuxproc;
 #define KEYC_NONE 0xffff00000000ULL
 #define KEYC_UNKNOWN 0xfffe00000000ULL
 #define KEYC_BASE 0x000010000000ULL
+#define KEYC_USER 0x000020000000ULL
+
+/* Available user keys. */
+#define KEYC_NUSER 1000
 
 /* Key modifier bits. */
 #define KEYC_ESCAPE 0x200000000000ULL
