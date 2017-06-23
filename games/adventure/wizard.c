@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.19 2016/03/08 10:48:39 mestre Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.20 2017/06/23 12:56:25 fcambus Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -44,24 +44,6 @@
 
 #include "extern.h"
 #include "hdr.h"
-
-#if 0
-void
-datime(int *d, int *t)
-{
-	time_t  tvec;
-	struct tm *tptr;
-
-	time(&tvec);
-	tptr = localtime(&tvec);
-	/* day since 1977  (mod leap)   */
-	*d = tptr->tm_yday + 365 * (tptr->tm_year - 77);
-	/* bug: this will overflow in the year 2066 AD                  */
-	/* it will be attributed to Wm the C's millenial celebration    */
-	/* and minutes since midnite */
-	*t = tptr->tm_hour * 60 + tptr->tm_min;
-}				/* pretty painless              */
-#endif
 
 char    magic[6];
 

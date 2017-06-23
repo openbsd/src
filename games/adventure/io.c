@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2016/12/21 18:28:19 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.23 2017/06/23 12:56:25 fcambus Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -88,27 +88,6 @@ getin(char *wrd1, size_t siz1, char *wrd2, size_t siz2)
 		}
 	}
 }
-
-
-#if 0		/* Not used */
-int
-confirm(char *mesg)		/* confirm irreversible action	*/
-{
-	int     result;
-	int     ch;
-
-	printf("%s", mesg);	/* tell him what he did		*/
-	if ((ch = getchar()) == 'y')	/* was his first letter a 'y'?	*/
-		result = 1;
-	else if (ch == EOF) {
-		printf("user closed input stream, quitting...\n");
-		exit(0);
-	} else
-		result = 0;
-	FLUSHLINE;
-	return (result);
-}
-#endif
 
 int
 yes(int x, int y, int z)	/* confirm with rspeak		*/
