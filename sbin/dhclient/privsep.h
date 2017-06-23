@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.35 2017/04/11 13:59:27 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.36 2017/06/23 15:40:56 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -69,7 +69,7 @@ void	priv_flush_routes(struct interface_info *, struct imsg_flush_routes *);
 char	*resolv_conf_contents(struct interface_info *ifi, struct option_data *,
 	    struct option_data *, struct option_data *);
 void	write_resolv_conf(u_int8_t *, size_t);
-void	priv_write_resolv_conf(struct interface_info *, struct imsg *);
+void	priv_write_resolv_conf(struct interface_info *, u_int8_t *, size_t);
 
 void	priv_delete_address(struct interface_info *,
 	    struct imsg_delete_address *);

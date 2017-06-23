@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.91 2017/04/12 12:22:25 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.92 2017/06/23 15:40:56 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -782,39 +782,29 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 }
 
 void
-priv_write_resolv_conf(struct interface_info *ifi, struct imsg *imsg)
+priv_write_resolv_conf(struct interface_info *ifi, u_int8_t *contents, size_t sz)
 {
-	u_int8_t *contents;
+	const char *path = "/etc/resolv.conf";
 	ssize_t n;
-	size_t sz;
 	int fd;
-
-
-	if (imsg->hdr.len < IMSG_HEADER_SIZE) {
-		log_warnx("short IMSG_WRITE_RESOLV_CONF");
-		return;
-	}
 
 	if (!resolv_conf_priority(ifi))
 		return;
 
-	contents = imsg->data;
-	sz = imsg->hdr.len - IMSG_HEADER_SIZE;
-
-	fd = open(_PATH_RESOLV_CONF, O_WRONLY | O_CREAT | O_TRUNC,
+	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd == -1) {
-		log_warn("Couldn't open '%s'", _PATH_RESOLV_CONF);
+		log_warn("Couldn't open '%s'", path);
 		return;
 	}
 
 	n = write(fd, contents, sz);
 	if (n == -1)
-		log_warn("Couldn't write contents to '%s'", _PATH_RESOLV_CONF);
+		log_warn("Couldn't write contents to '%s'", path);
 	else if ((size_t)n < sz)
 		log_warnx("Short contents write to '%s' (%zd vs %zu)",
-		    _PATH_RESOLV_CONF, n, sz);
+		    path, n, sz);
 
 	close(fd);
 }

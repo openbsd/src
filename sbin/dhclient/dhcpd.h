@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.191 2017/06/22 15:08:53 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.192 2017/06/23 15:40:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -157,7 +157,6 @@ struct interface_info {
 	TAILQ_HEAD(_leases, client_lease) leases;
 };
 
-#define	_PATH_RESOLV_CONF	"/etc/resolv.conf"
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
 

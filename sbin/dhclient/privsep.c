@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.46 2017/04/10 21:47:44 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.47 2017/06/23 15:40:56 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,12 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			break;
 
 		case IMSG_WRITE_RESOLV_CONF:
-			priv_write_resolv_conf(ifi, &imsg);
+			if (imsg.hdr.len <= IMSG_HEADER_SIZE) {
+				log_warnx("short IMSG_WRITE_RESOLV_CONF");
+				return;
+			} else
+				priv_write_resolv_conf(ifi, imsg.data,
+				    imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 
 		case IMSG_HUP:
