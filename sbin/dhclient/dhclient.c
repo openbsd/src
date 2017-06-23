@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.444 2017/06/23 16:09:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.445 2017/06/23 19:51:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -375,7 +375,6 @@ routehandler(struct interface_info *ifi)
 			get_hw_address(ifi);
 			if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 				log_warnx("LLADDR changed; restarting");
-				ifi->flags |= IFI_NEW_LLADDR;
 				quit = SIGHUP;
 				goto done;
 			}
@@ -2111,8 +2110,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	}
 
 	if (quit == SIGHUP) {
-		if (!(ifi->flags & IFI_HUP) &&
-		    (!(ifi->flags & IFI_NEW_LLADDR)))
+		if (!(ifi->flags & IFI_HUP))
 			log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);

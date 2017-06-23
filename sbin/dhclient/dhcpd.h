@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.192 2017/06/23 15:40:56 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.193 2017/06/23 19:51:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -135,7 +135,6 @@ struct interface_info {
 	int			 rdomain;
 	int			 flags;
 #define	IFI_VALID_LLADDR	0x01
-#define IFI_NEW_LLADDR		0x02
 #define IFI_HUP			0x04
 #define IFI_IS_RESPONSIBLE	0x08
 #define IFI_IN_CHARGE		0x10
