@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.22 2017/06/16 14:57:51 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.23 2017/06/23 14:41:54 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1820,16 +1820,18 @@ rtwn_write_txpower(struct rtwn_softc *sc, int chain,
 	    SM(R92C_TXAGC_MCS05,  power[RTWN_POWER_MCS( 5)]) |
 	    SM(R92C_TXAGC_MCS06,  power[RTWN_POWER_MCS( 6)]) |
 	    SM(R92C_TXAGC_MCS07,  power[RTWN_POWER_MCS( 7)]));
-	rtwn_bb_write(sc, R92C_TXAGC_MCS11_MCS08(chain),
-	    SM(R92C_TXAGC_MCS08,  power[RTWN_POWER_MCS( 8)]) |
-	    SM(R92C_TXAGC_MCS09,  power[RTWN_POWER_MCS( 9)]) |
-	    SM(R92C_TXAGC_MCS10,  power[RTWN_POWER_MCS(10)]) |
-	    SM(R92C_TXAGC_MCS11,  power[RTWN_POWER_MCS(11)]));
-	rtwn_bb_write(sc, R92C_TXAGC_MCS15_MCS12(chain),
-	    SM(R92C_TXAGC_MCS12,  power[RTWN_POWER_MCS(12)]) |
-	    SM(R92C_TXAGC_MCS13,  power[RTWN_POWER_MCS(13)]) |
-	    SM(R92C_TXAGC_MCS14,  power[RTWN_POWER_MCS(14)]) |
-	    SM(R92C_TXAGC_MCS15,  power[RTWN_POWER_MCS(15)]));
+	if (chain != 0) {
+		rtwn_bb_write(sc, R92C_TXAGC_MCS11_MCS08(chain),
+		    SM(R92C_TXAGC_MCS08,  power[RTWN_POWER_MCS( 8)]) |
+		    SM(R92C_TXAGC_MCS09,  power[RTWN_POWER_MCS( 9)]) |
+		    SM(R92C_TXAGC_MCS10,  power[RTWN_POWER_MCS(10)]) |
+		    SM(R92C_TXAGC_MCS11,  power[RTWN_POWER_MCS(11)]));
+		rtwn_bb_write(sc, R92C_TXAGC_MCS15_MCS12(chain),
+		    SM(R92C_TXAGC_MCS12,  power[RTWN_POWER_MCS(12)]) |
+		    SM(R92C_TXAGC_MCS13,  power[RTWN_POWER_MCS(13)]) |
+		    SM(R92C_TXAGC_MCS14,  power[RTWN_POWER_MCS(14)]) |
+		    SM(R92C_TXAGC_MCS15,  power[RTWN_POWER_MCS(15)]));
+	}
 }
 
 void
