@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn_html.c,v 1.9 2017/06/23 02:31:39 schwarze Exp $ */
+/*	$OpenBSD: eqn_html.c,v 1.10 2017/06/23 22:59:27 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,7 +32,7 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 {
 	struct tag	*post, *row, *cell, *t;
 	const struct eqn_box *child, *parent;
-	const unsigned char *cp;
+	const char	*cp;
 	size_t		 i, j, rows;
 	enum htmltag	 tag;
 	enum eqn_fontt	 font;
@@ -141,22 +141,28 @@ eqn_box(struct html *p, const struct eqn_box *bp)
 	if (bp->text != NULL) {
 		assert(post == NULL);
 		tag = TAG_MI;
-		cp = (unsigned char *)bp->text;
-		if (isdigit(cp[0]) || (cp[0] == '.' && isdigit(cp[1]))) {
+		cp = bp->text;
+		if (isdigit((unsigned char)cp[0]) ||
+		    (cp[0] == '.' && isdigit((unsigned char)cp[1]))) {
 			tag = TAG_MN;
 			while (*++cp != '\0') {
-				if (*cp != '.' && !isdigit(*cp)) {
+				if (*cp != '.' &&
+				    isdigit((unsigned char)*cp) == 0) {
 					tag = TAG_MI;
 					break;
 				}
 			}
-		} else if (*cp != '\0' && isalpha(*cp) == 0) {
+		} else if (*cp != '\0' && isalpha((unsigned char)*cp) == 0) {
 			tag = TAG_MO;
-			while (*++cp != '\0') {
-				if (isalnum(*cp)) {
+			while (*cp != '\0') {
+				if (cp[0] == '\\' && cp[1] != '\0') {
+					cp++;
+					mandoc_escape(&cp, NULL, NULL);
+				} else if (isalnum((unsigned char)*cp)) {
 					tag = TAG_MI;
 					break;
-				}
+				} else
+					cp++;
 			}
 		}
 		font = bp->font;
