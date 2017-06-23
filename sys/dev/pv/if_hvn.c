@@ -246,7 +246,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	printf(" channel %u: ", sc->sc_chan->ch_id);
+	printf(" channel %u", sc->sc_chan->ch_id);
 
 	if (hvn_nvs_attach(sc)) {
 		printf(": failed to init NVSP\n");
@@ -295,6 +295,10 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 		goto detach;
 	}
 
+	printf(": NVS %d.%d NDIS %d.%d", sc->sc_proto >> 16,
+	    sc->sc_proto & 0xffff, sc->sc_ndisver >> 16 ,
+	    sc->sc_ndisver & 0xffff);
+
 	if (hvn_set_capabilities(sc)) {
 		printf(": failed to setup offloading\n");
 		hvn_rndis_detach(sc);
@@ -307,11 +311,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 		goto detach;
 	}
 
-	DPRINTF("%s:", sc->sc_dev.dv_xname);
-	printf(" channel %u: NVS %d.%d NDIS %d.%d, address %s\n",
-	    sc->sc_chan->ch_id, sc->sc_proto >> 16, sc->sc_proto & 0xffff,
-	    sc->sc_ndisver >> 16 , sc->sc_ndisver & 0xffff,
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	ether_ifattach(ifp);
 	return;
@@ -891,6 +891,8 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	    (sizeof(struct hvn_nvs_rndis) + sizeof(struct vmbus_gpa)) +
 	    HVN_TX_DESC * (sizeof(struct hvn_nvs_rndis) +
 	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
+
+	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
 
 	/* Associate our interrupt handler with the channel */
 	if (hv_channel_open(sc->sc_chan, ringsize, NULL, 0,
