@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.216 2017/06/23 01:02:18 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.217 2017/06/23 01:21:55 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1635,8 +1635,8 @@ pool_cache_init(struct pool *pp)
 	struct cpumem_iter i;
 
 	if (pool_caches.pr_size == 0) {
-		pool_init(&pool_caches, sizeof(struct pool_cache), 64,
-		    IPL_NONE, PR_WAITOK, "plcache", NULL);
+		pool_init(&pool_caches, sizeof(struct pool_cache),
+		    CACHELINESIZE, IPL_NONE, PR_WAITOK, "plcache", NULL);
 	}
 
 	/* must be able to use the pool items as cache list items */
