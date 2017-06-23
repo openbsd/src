@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.31 2017/06/23 00:30:17 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.32 2017/06/23 21:04:34 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1137,7 +1137,25 @@ this_tok:
 					break;
 				if (ccln == ccl)
 					continue;
-				/* Boundary found, add a new box. */
+				/* Boundary found, split the text. */
+				if (parent->args == parent->expectargs) {
+					/* Remove the text from the tree. */
+					if (cur->prev == NULL)
+						parent->first = cur->next;
+					else
+						cur->prev->next = NULL;
+					parent->last = cur->prev;
+					parent->args--;
+					/* Set up a list instead. */
+					nbox = eqn_box_alloc(ep, parent);
+					nbox->type = EQN_LIST;
+					/* Insert the word into the list. */
+					nbox->first = nbox->last = cur;
+					cur->parent = nbox;
+					cur->prev = NULL;
+					parent = nbox;
+				}
+				/* Append a new text box. */
 				nbox = eqn_box_alloc(ep, parent);
 				nbox->type = EQN_TEXT;
 				nbox->text = mandoc_strdup(cpn);
