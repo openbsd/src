@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.70 2017/06/23 19:07:25 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.71 2017/06/23 19:16:49 schwarze Exp $
 # $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -334,11 +334,6 @@ sub process_line
 	}
 	if (/^\.Os\s+(.+)/o) {
 		$s->warning(".Os used with argument `$1'") if $opt_o;
-	}
-	if (/^\... .*[^\s][\.();,\[\]\{\}:]$/o
-	    and not /\s\.\.\.$/o and not /\\&.$/o) {
-		$s->warning("punctuation in format string ",
-		    "without space: `$_'") if $opt_p;
 	}
 	if (/^\./o and /Ns [\.();,\[\]\{\}:]/o) {
 		$s->warning("possible Ns abuse: `$_'") if $opt_p;
