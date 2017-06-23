@@ -730,7 +730,7 @@ hv_message_intr(struct hv_softc *sc)
 			    sc->sc_dev.dv_xname, hdr->chm_type);
  skip:
 		msg->msg_type = VMBUS_MSGTYPE_NONE;
-		membar_sync();
+		virtio_membar_sync();
 		if (msg->msg_flags & VMBUS_MSGFLAG_PENDING)
 			wrmsr(MSR_HV_EOM, 0);
 	}
@@ -1297,9 +1297,9 @@ hv_ring_write(struct hv_ring_data *wrd, struct iovec *iov, int iov_cnt,
 	indices = (uint64_t)oprod << 32;
 	hv_ring_put(wrd, (uint8_t *)&indices, sizeof(indices));
 
-	membar_sync();
+	virtio_membar_sync();
 	wrd->rd_ring->br_windex = wrd->rd_prod;
-	membar_sync();
+	virtio_membar_sync();
 
 	/* Signal when the ring transitions from being empty to non-empty */
 	if (wrd->rd_ring->br_imask == 0 &&
@@ -1476,7 +1476,7 @@ hv_ring_read(struct hv_ring_data *rrd, void *data, uint32_t datalen,
 	hv_ring_get(rrd, (uint8_t *)data, datalen, 0);
 	hv_ring_get(rrd, (uint8_t *)&indices, sizeof(indices), 0);
 
-	membar_sync();
+	virtio_membar_sync();
 	rrd->rd_ring->br_rindex = rrd->rd_cons;
 
 	return (0);
