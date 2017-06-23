@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.30 2017/06/22 00:30:06 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.31 2017/06/23 00:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -571,6 +571,7 @@ eqn_box_alloc(struct eqn_node *ep, struct eqn_box *parent)
 	bp->parent = parent;
 	bp->parent->args++;
 	bp->expectargs = UINT_MAX;
+	bp->font = bp->parent->font;
 	bp->size = ep->gsize;
 
 	if (NULL != parent->first) {
@@ -719,12 +720,13 @@ static enum rofferr
 eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 {
 	char		 sym[64];
-	struct eqn_box	*cur, *fontp, *nbox;
+	struct eqn_box	*cur, *nbox;
 	const char	*cp, *cpn, *start;
 	char		*p;
 	size_t		 sz;
 	enum eqn_tok	 tok, subtok;
 	enum eqn_post	 pos;
+	enum { CCL_LET, CCL_DIG, CCL_PUN } ccl, ccln;
 	int		 size;
 
 	assert(parent != NULL);
@@ -785,6 +787,7 @@ this_tok:
 		parent = eqn_box_makebinary(ep, EQNPOS_NONE, parent);
 		parent->type = EQN_LISTONE;
 		parent->expectargs = 1;
+		parent->font = EQNFONT_ROMAN;
 		switch (tok) {
 		case EQN_TOK_DOTDOT:
 			strlcpy(sym, "\\[ad]", sizeof(sym));
@@ -1095,61 +1098,62 @@ this_tok:
 		 */
 		while (parent->args == parent->expectargs)
 			parent = parent->parent;
-		/*
-		 * Wrap well-known function names in a roman box,
-		 * unless they already are in roman context.
-		 */
-		for (fontp = parent; fontp != NULL; fontp = fontp->parent)
-			if (fontp->font != EQNFONT_NONE)
-				break;
-		if (tok == EQN_TOK_FUNC &&
-		    (fontp == NULL || fontp->font != EQNFONT_ROMAN)) {
-			parent = fontp = eqn_box_alloc(ep, parent);
-			parent->type = EQN_LISTONE;
-			parent->font = EQNFONT_ROMAN;
-			parent->expectargs = 1;
-		}
 		cur = eqn_box_alloc(ep, parent);
 		cur->type = EQN_TEXT;
 		cur->text = p;
-		/*
-		 * If not inside any explicit font context,
-		 * quoted strings become italic, and every letter
-		 * of a bare string gets its own italic box.
-		 */
-		do {
-			if (fontp != NULL || *p == '\0' ||
-			    tok == EQN_TOK_SYM)
-				break;
-			if (tok == EQN_TOK_QUOTED) {
+		switch (tok) {
+		case EQN_TOK_FUNC:
+			cur->font = EQNFONT_ROMAN;
+			break;
+		case EQN_TOK_QUOTED:
+			if (cur->font == EQNFONT_NONE)
 				cur->font = EQNFONT_ITALIC;
+			break;
+		case EQN_TOK_SYM:
+			break;
+		default:
+			if (cur->font != EQNFONT_NONE || *p == '\0')
 				break;
-			}
-			cp = p;
+			cpn = p - 1;
+			ccln = CCL_LET;
 			for (;;) {
-				if (isalpha((unsigned char)*cp))
-					cur->font = EQNFONT_ITALIC;
-				cpn = cp + 1;
+				/* Advance to next character. */
+				cp = cpn++;
+				ccl = ccln;
+				ccln = isalpha((unsigned char)*cpn) ? CCL_LET :
+				    isdigit((unsigned char)*cpn) ||
+				    (*cpn == '.' && (ccl == CCL_DIG ||
+				     isdigit((unsigned char)cpn[1]))) ?
+				    CCL_DIG : CCL_PUN;
+				/* No boundary before first character. */
+				if (cp < p)
+					continue;
+				cur->font = ccl == CCL_LET ?
+				    EQNFONT_ITALIC : EQNFONT_ROMAN;
 				if (*cp == '\\')
 					mandoc_escape(&cpn, NULL, NULL);
+				/* No boundary after last character. */
 				if (*cpn == '\0')
 					break;
-				if (cur->font != EQNFONT_ITALIC &&
-				    isalpha((unsigned char)*cpn) == 0) {
-					cp = cpn;
+				if (ccln == ccl)
 					continue;
-				}
+				/* Boundary found, add a new box. */
 				nbox = eqn_box_alloc(ep, parent);
 				nbox->type = EQN_TEXT;
 				nbox->text = mandoc_strdup(cpn);
+				/* Truncate the old box. */
 				p = mandoc_strndup(cur->text,
 				    cpn - cur->text);
 				free(cur->text);
 				cur->text = p;
+				/* Setup to process the new box. */
 				cur = nbox;
-				cp = nbox->text;
+				p = nbox->text;
+				cpn = p - 1;
+				ccln = CCL_LET;
 			}
-		} while (0);
+			break;
+		}
 		/*
 		 * Post-process list status.
 		 */
