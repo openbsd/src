@@ -104,6 +104,8 @@ struct hv_channel *
 	hv_channel_lookup(struct hv_softc *, uint32_t);
 int	hv_channel_ring_create(struct hv_channel *, uint32_t);
 void	hv_channel_ring_destroy(struct hv_channel *);
+void	hv_channel_pause(struct hv_channel *);
+uint	hv_channel_unpause(struct hv_channel *);
 extern void hv_attach_icdevs(struct hv_softc *);
 int	hv_attach_devices(struct hv_softc *);
 
@@ -1225,6 +1227,51 @@ hv_channel_setevent(struct hv_softc *sc, struct hv_channel *ch)
 		hv_intr_signal(sc, &ch->ch_monprm);
 }
 
+void
+hv_channel_intr(void *arg)
+{
+	struct hv_channel *ch = arg;
+	extern int ticks;
+	int start = ticks;
+
+	do {
+		ch->ch_handler(ch->ch_ctx);
+
+		if (hv_channel_unpause(ch) == 0)
+			return;
+
+		hv_channel_pause(ch);
+
+#if (defined(__amd64__) || defined(__i386__))
+		__asm volatile("pause": : : "memory");
+#endif
+	} while (ticks < start + 1);
+
+	hv_channel_schedule(ch);
+}
+
+int
+hv_channel_setdeferred(struct hv_channel *ch, const char *name)
+{
+	ch->ch_taskq = taskq_create(name, 1, IPL_NET, TASKQ_MPSAFE);
+	if (ch->ch_taskq == NULL)
+		return (-1);
+	task_set(&ch->ch_task, hv_channel_intr, ch);
+	return (0);
+}
+
+void
+hv_channel_schedule(struct hv_channel *ch)
+{
+	if (ch->ch_handler) {
+		if (!cold && (ch->ch_flags & CHF_BATCHED)) {
+			hv_channel_pause(ch);
+			task_add(ch->ch_taskq, &ch->ch_task);
+		} else
+			ch->ch_handler(ch->ch_ctx);
+	}
+}
+
 static inline void
 hv_ring_put(struct hv_ring_data *wrd, uint8_t *data, uint32_t datalen)
 {
@@ -1516,6 +1563,39 @@ hv_channel_recv(struct hv_channel *ch, void *data, uint32_t datalen,
 	mtx_leave(&ch->ch_rrd.rd_lock);
 
 	return (rv);
+}
+
+static inline void
+hv_ring_mask(struct hv_ring_data *rd)
+{
+	virtio_membar_sync();
+	rd->rd_ring->br_imask = 1;
+	virtio_membar_sync();
+}
+
+static inline void
+hv_ring_unmask(struct hv_ring_data *rd)
+{
+	virtio_membar_sync();
+	rd->rd_ring->br_imask = 0;
+	virtio_membar_sync();
+}
+
+void
+hv_channel_pause(struct hv_channel *ch)
+{
+	hv_ring_mask(&ch->ch_rrd);
+}
+
+uint
+hv_channel_unpause(struct hv_channel *ch)
+{
+	uint32_t avail;
+
+	hv_ring_unmask(&ch->ch_rrd);
+	hv_ring_avail(&ch->ch_rrd, NULL, &avail);
+
+	return (avail);
 }
 
 /* How many PFNs can be referenced by the header */
