@@ -698,8 +698,7 @@ hv_event_intr(struct hv_softc *sc)
 				continue;
 			}
 			ch->ch_evcnt.ec_count++;
-			if (ch->ch_handler)
-				ch->ch_handler(ch->ch_ctx);
+			hv_channel_schedule(ch);
 		}
 	}
 }
