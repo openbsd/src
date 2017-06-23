@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2016/09/25 14:58:00 fcambus Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2017/06/23 09:55:10 mpi Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -81,7 +81,7 @@
 #define	_ENTRY(name) \
 	.align 4; .globl name; .proc 1; FTYPE(name); name:
 
-#ifdef GPROF
+#if defined(PROF) || defined(GPROF)
 #define _PROF_PROLOGUE \
 	.data; .align 8; 1: .uaword 0; .uaword 0; \
 	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call _mcount; \

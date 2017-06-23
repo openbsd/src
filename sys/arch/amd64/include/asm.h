@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2015/05/13 05:29:57 uebayasi Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2017/06/23 09:55:10 mpi Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@
 #endif
 
 
-#ifdef GPROF
+#if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE	\
 	pushq %rbp; leaq (%rsp),%rbp; call PIC_PLT(__mcount); popq %rbp
 #else

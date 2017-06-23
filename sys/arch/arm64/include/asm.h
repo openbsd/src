@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: asm.h,v 1.2 2017/06/23 09:55:10 mpi Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
-#ifdef GPROF
+#if defined(PROF) || defined(GPROF)
 #  define _PROF_PROLOGUE	\
 	stp	x29, x30, [sp, #-16]!; \
 	mov fp, sp;		\
