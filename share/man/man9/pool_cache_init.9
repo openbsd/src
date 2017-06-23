@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool_cache_init.9,v 1.6 2017/06/22 02:30:34 dlg Exp $
+.\"	$OpenBSD: pool_cache_init.9,v 1.7 2017/06/23 01:02:18 dlg Exp $
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 22 2017 $
+.Dd $Mdocdate: June 23 2017 $
 .Dt POOL_CACHE_INIT 9
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ MIB hierarchy.
 struct kinfo_pool_cache {
 	uint64_t	pr_ngc;
 	unsigned int	pr_len;
-	unsigned int	pr_nlist;
+	unsigned int	pr_nitems;
 	unsigned int	pr_contention;
 };
 .Ed
@@ -112,8 +112,8 @@ an idle item free list.
 shows the maximum number of items that can be cached on a CPU's
 active free list.
 .Pp
-.Va pr_nlist
-shows the number of free lists that are currently stored in the
+.Va pr_nitems
+shows the number of free items that are currently stored in the
 global depot.
 .Pp
 .Va pr_contention

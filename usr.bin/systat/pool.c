@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.12 2017/06/15 03:47:07 dlg Exp $	*/
+/*	$OpenBSD: pool.c,v 1.13 2017/06/23 01:02:18 dlg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -142,7 +142,7 @@ int	pool_cache_kbd_cb(int);
 field_def pool_cache_fields[] = {
 	{"NAME", 12, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"LEN", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"NL", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"IDLE", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"NGC", 4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"CPU",  4, 4, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"REQ", 8, 12, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
@@ -153,7 +153,7 @@ field_def pool_cache_fields[] = {
 
 #define FLD_POOL_CACHE_NAME	FIELD_ADDR(pool_cache_fields, 0)
 #define FLD_POOL_CACHE_LEN	FIELD_ADDR(pool_cache_fields, 1)
-#define FLD_POOL_CACHE_NL	FIELD_ADDR(pool_cache_fields, 2)
+#define FLD_POOL_CACHE_IDLE	FIELD_ADDR(pool_cache_fields, 2)
 #define FLD_POOL_CACHE_NGC	FIELD_ADDR(pool_cache_fields, 3)
 #define FLD_POOL_CACHE_CPU	FIELD_ADDR(pool_cache_fields, 4)
 #define FLD_POOL_CACHE_GET	FIELD_ADDR(pool_cache_fields, 5)
@@ -164,7 +164,7 @@ field_def pool_cache_fields[] = {
 field_def *view_pool_cache_0[] = {
 	FLD_POOL_CACHE_NAME,
 	FLD_POOL_CACHE_LEN,
-	FLD_POOL_CACHE_NL,
+	FLD_POOL_CACHE_IDLE,
 	FLD_POOL_CACHE_NGC,
 	FLD_POOL_CACHE_CPU,
 	FLD_POOL_CACHE_GET,
@@ -556,7 +556,7 @@ pool_cache_show(const struct pool_cache_info *pc)
 
 	print_fld_str(FLD_POOL_CACHE_NAME, pc->name);
 	print_fld_uint(FLD_POOL_CACHE_LEN, kpc->pr_len);
-	print_fld_uint(FLD_POOL_CACHE_NL, kpc->pr_nlist);
+	print_fld_uint(FLD_POOL_CACHE_IDLE, kpc->pr_nitems);
 	print_fld_uint(FLD_POOL_CACHE_NGC, kpc->pr_ngc);
 
 	for (cpu = 0; cpu < ncpusfound; cpu++) {

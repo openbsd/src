@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.215 2017/06/19 23:57:12 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.216 2017/06/23 01:02:18 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1647,7 +1647,7 @@ pool_cache_init(struct pool *pp)
 	mtx_init(&pp->pr_cache_mtx, pp->pr_ipl);
 	arc4random_buf(pp->pr_cache_magic, sizeof(pp->pr_cache_magic));
 	TAILQ_INIT(&pp->pr_cache_lists);
-	pp->pr_cache_nlist = 0;
+	pp->pr_cache_nitems = 0;
 	pp->pr_cache_tick = ticks;
 	pp->pr_cache_items = 8;
 	pp->pr_cache_contention = 0;
@@ -1729,7 +1729,7 @@ pool_cache_list_alloc(struct pool *pp, struct pool_cache *pc)
 	pl = TAILQ_FIRST(&pp->pr_cache_lists);
 	if (pl != NULL) {
 		TAILQ_REMOVE(&pp->pr_cache_lists, pl, ci_nextl);
-		pp->pr_cache_nlist--;
+		pp->pr_cache_nitems -= POOL_CACHE_ITEM_NITEMS(pl);
 
 		pool_cache_item_magic(pp, pl);
 
@@ -1753,8 +1753,8 @@ pool_cache_list_free(struct pool *pp, struct pool_cache *pc,
 	if (TAILQ_EMPTY(&pp->pr_cache_lists))
 		pp->pr_cache_tick = ticks;
 
+	pp->pr_cache_nitems += POOL_CACHE_ITEM_NITEMS(ci);
 	TAILQ_INSERT_TAIL(&pp->pr_cache_lists, ci, ci_nextl);
-	pp->pr_cache_nlist++;
 
 	pc->pc_nlput++;
 
@@ -1936,8 +1936,8 @@ pool_cache_gc(struct pool *pp)
 		pl = TAILQ_FIRST(&pp->pr_cache_lists);
 		if (pl != NULL) {
 			TAILQ_REMOVE(&pp->pr_cache_lists, pl, ci_nextl);
+			pp->pr_cache_nitems -= POOL_CACHE_ITEM_NITEMS(pl);
 			pp->pr_cache_tick = ticks;
-			pp->pr_cache_nlist--;
 
 			pp->pr_cache_ngc++;
 		}
@@ -1955,14 +1955,8 @@ pool_cache_gc(struct pool *pp)
 
 	contention = pp->pr_cache_contention;
 	if ((contention - pp->pr_cache_contention_prev) > 8 /* magic */) {
-		unsigned int limit = pp->pr_npages * pp->pr_itemsperpage;
-		unsigned int items = pp->pr_cache_items + 8;
-		unsigned int cache = ncpusfound * items * 2;
-
-		/* are there enough items around so every cpu can hold some? */
-
-		if (cache < limit)
-			pp->pr_cache_items = items;
+		if ((ncpusfound * 8 * 2) <= pp->pr_cache_nitems)
+			pp->pr_cache_items += 8;
 	}
 	pp->pr_cache_contention_prev = contention;
 }
@@ -2016,7 +2010,7 @@ pool_cache_info(struct pool *pp, void *oldp, size_t *oldlenp)
 	mtx_enter(&pp->pr_cache_mtx);
 	kpc.pr_ngc = pp->pr_cache_ngc;
 	kpc.pr_len = pp->pr_cache_items;
-	kpc.pr_nlist = pp->pr_cache_nlist;
+	kpc.pr_nitems = pp->pr_cache_nitems;
 	kpc.pr_contention = pp->pr_cache_contention;
 	mtx_leave(&pp->pr_cache_mtx);
 

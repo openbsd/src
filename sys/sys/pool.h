@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.72 2017/06/19 23:57:12 dlg Exp $	*/
+/*	$OpenBSD: pool.h,v 1.73 2017/06/23 01:02:18 dlg Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct kinfo_pool {
 struct kinfo_pool_cache {
 	uint64_t	pr_ngc;		/* # of times a list has been gc'ed */
 	unsigned int	pr_len;		/* current target for list len */
-	unsigned int	pr_nlist;	/* # of lists in the pool */
+	unsigned int	pr_nitems;	/* # of idle items in the depot */
 	unsigned int	pr_contention;	/* # of times mtx was busy */
 };
 
@@ -186,7 +186,7 @@ struct pool {
 	struct mutex	pr_cache_mtx;
 	struct pool_cache_lists
 			pr_cache_lists;	/* list of idle item lists */
-	u_int		pr_cache_nlist;	/* # of idle lists */
+	u_int		pr_cache_nitems; /* # of idle items */
 	u_int		pr_cache_items;	/* target list length */
 	u_int		pr_cache_contention;
 	u_int		pr_cache_contention_prev;
