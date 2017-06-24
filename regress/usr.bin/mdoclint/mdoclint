@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.72 2017/06/23 19:56:57 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.73 2017/06/24 16:10:01 schwarze Exp $
 # $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -42,14 +42,13 @@ use constant {
 };
 
 use vars qw(
-	$opt_D $opt_F $opt_h
-	$opt_m $opt_o $opt_p $opt_S $opt_v $opt_w $opt_x
+	$opt_D $opt_F $opt_h $opt_m $opt_p $opt_S $opt_v $opt_w $opt_x
 );
 
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="DFhmopSvwx";
+my $options="DFhmpSvwx";
 
 sub usage
 {
@@ -60,13 +59,12 @@ usage:	mdoclint [-$options] file ...
 	-F	fix whitespace problems (asks before overwriting)
 	-h	display this help text
 	-m	warn about man pages that are not in mdoc(7) format
-	-o	warn about non-empty .Os strings
 	-p	warn about punctuation problems
 	-S	warn about any .Sh weirdness
 	-v	verbose output
 	-w	show section header in warnings
 	-x	warn about cross-references with missing targets
-Default is -DmopSx if no flag is specified.
+Default is -DmpSx if no flag is specified.
 EOF
 	exit(0);
 }
@@ -163,8 +161,8 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_m or $opt_o or $opt_p or $opt_S or $opt_x) {
-		$opt_D = $opt_m = $opt_o = $opt_p = $opt_S = $opt_x = 1;
+	unless ($opt_D or $opt_m or $opt_p or $opt_S or $opt_x) {
+		$opt_D = $opt_m = $opt_p = $opt_S = $opt_x = 1;
 	}
 }
 
@@ -325,9 +323,6 @@ sub process_line
 		if (/^\.Nm\s+(\S+)/o) {
 			$s->{names}{$1.$s->{sec}} = 1;
 		}
-	}
-	if (/^\.Os\s+(.+)/o) {
-		$s->warning(".Os used with argument `$1'") if $opt_o;
 	}
 	if (/^\./o and /Ns [\.();,\[\]\{\}:]/o) {
 		$s->warning("possible Ns abuse: `$_'") if $opt_p;
