@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.255 2017/06/24 14:38:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.256 2017/06/24 15:59:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -2568,6 +2568,13 @@ out:
 	 * Mdocdate conventions because we don't know
 	 * the operating system earlier.
 	 */
+
+	if (n->child != NULL)
+		mandoc_vmsg(MANDOCERR_OS_ARG, mdoc->parse,
+		    n->child->line, n->child->pos,
+		    "Os %s (%s)", n->child->string,
+		    mdoc->meta.os_e == MANDOC_OS_OPENBSD ?
+		    "OpenBSD" : "NetBSD");
 
 	while (n->tok != MDOC_Dd)
 		if ((n = n->prev) == NULL)
