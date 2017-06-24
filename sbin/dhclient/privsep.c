@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.48 2017/06/23 16:18:02 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.49 2017/06/24 10:09:26 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,7 @@
 #include "log.h"
 #include "privsep.h"
 
-void
+int
 dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 {
 	struct imsg			 imsg;
@@ -102,8 +102,8 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			    sizeof(struct imsg_hup))
 				log_warnx("bad IMSG_HUP");
 			else {
-				ifi->flags |= IFI_HUP;
-				quit = SIGHUP;
+				imsg_free(&imsg);
+				return 1;
 			}
 			break;
 
@@ -114,4 +114,5 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 
 		imsg_free(&imsg);
 	}
+	return 0;
 }

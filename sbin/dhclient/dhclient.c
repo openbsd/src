@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.445 2017/06/23 19:51:07 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.446 2017/06/24 10:09:26 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2034,7 +2034,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	struct pollfd pfd[1];
 	struct imsgbuf *priv_ibuf;
 	ssize_t n;
-	int nfds, rslt;
+	int nfds, rslt, got_imsg_hup = 0;
 
 	switch (fork()) {
 	case -1:
@@ -2086,7 +2086,9 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			continue;
 		}
 
-		dispatch_imsg(ifi, priv_ibuf);
+		got_imsg_hup = dispatch_imsg(ifi, priv_ibuf);
+		if (got_imsg_hup)
+			quit = SIGHUP;
 	}
 
 	imsg_clear(priv_ibuf);
@@ -2110,7 +2112,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	}
 
 	if (quit == SIGHUP) {
-		if (!(ifi->flags & IFI_HUP))
+		if (!got_imsg_hup)
 			log_warnx("%s; restarting.", strsignal(quit));
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);
