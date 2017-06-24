@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.254 2017/06/17 22:40:27 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.255 2017/06/24 14:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1694,7 +1694,7 @@ post_bl(POST_ARGS)
 		nchild = nnext;
 	}
 
-	if (mdoc->meta.os_e != MDOC_OS_NETBSD)
+	if (mdoc->meta.os_e != MANDOC_OS_NETBSD)
 		return;
 
 	prev_Er = NULL;
@@ -1713,11 +1713,12 @@ post_bl(POST_ARGS)
 			if (order > 0)
 				mandoc_vmsg(MANDOCERR_ER_ORDER,
 				    mdoc->parse, nnext->line, nnext->pos,
-				    "Er %s %s", prev_Er, nnext->string);
+				    "Er %s %s (NetBSD)",
+				    prev_Er, nnext->string);
 			else if (order == 0)
 				mandoc_vmsg(MANDOCERR_ER_REP,
 				    mdoc->parse, nnext->line, nnext->pos,
-				    "Er %s", prev_Er);
+				    "Er %s (NetBSD)", prev_Er);
 		}
 		prev_Er = nnext->string;
 	}
@@ -1793,8 +1794,9 @@ post_root(POST_ARGS)
 		mdoc->meta.os = mandoc_strdup("");
 	} else if (mdoc->meta.os_e &&
 	    (mdoc->meta.rcsids & (1 << mdoc->meta.os_e)) == 0)
-		mandoc_msg(MANDOCERR_RCS_MISSING,
-		    mdoc->parse, 0, 0, NULL);
+		mandoc_msg(MANDOCERR_RCS_MISSING, mdoc->parse, 0, 0,
+		    mdoc->meta.os_e == MANDOC_OS_OPENBSD ?
+		    "(OpenBSD)" : "(NetBSD)");
 
 	/* Check that we begin with a proper `Sh'. */
 
@@ -2533,8 +2535,8 @@ post_os(POST_ARGS)
 	if (mdoc->meta.os)
 		goto out;
 
-	if (mdoc->defos) {
-		mdoc->meta.os = mandoc_strdup(mdoc->defos);
+	if (mdoc->os_s != NULL) {
+		mdoc->meta.os = mandoc_strdup(mdoc->os_s);
 		goto out;
 	}
 
@@ -2553,9 +2555,13 @@ post_os(POST_ARGS)
 	mdoc->meta.os = mandoc_strdup(defbuf);
 #endif /*!OSNAME*/
 
-out:	mdoc->meta.os_e = strstr(mdoc->meta.os, "OpenBSD") != NULL ?
-	    MDOC_OS_OPENBSD : strstr(mdoc->meta.os, "NetBSD") != NULL ?
-	    MDOC_OS_NETBSD : MDOC_OS_OTHER;
+out:
+	if (mdoc->meta.os_e == MANDOC_OS_OTHER) {
+		if (strstr(mdoc->meta.os, "OpenBSD") != NULL)
+			mdoc->meta.os_e = MANDOC_OS_OPENBSD;
+		else if (strstr(mdoc->meta.os, "NetBSD") != NULL)
+			mdoc->meta.os_e = MANDOC_OS_NETBSD;
+	}
 
 	/*
 	 * This is the earliest point where we can check
@@ -2569,15 +2575,15 @@ out:	mdoc->meta.os_e = strstr(mdoc->meta.os, "OpenBSD") != NULL ?
 	if ((n = n->child) == NULL)
 		return;
 	if (strncmp(n->string, "$" "Mdocdate", 9)) {
-		if (mdoc->meta.os_e == MDOC_OS_OPENBSD)
+		if (mdoc->meta.os_e == MANDOC_OS_OPENBSD)
 			mandoc_vmsg(MANDOCERR_MDOCDATE_MISSING,
 			    mdoc->parse, n->line, n->pos,
-			    "Dd %s", n->string);
+			    "Dd %s (OpenBSD)", n->string);
 	} else {
-		if (mdoc->meta.os_e == MDOC_OS_NETBSD)
+		if (mdoc->meta.os_e == MANDOC_OS_NETBSD)
 			mandoc_vmsg(MANDOCERR_MDOCDATE,
 			    mdoc->parse, n->line, n->pos,
-			    "Dd %s", n->string);
+			    "Dd %s (NetBSD)", n->string);
 	}
 }
 

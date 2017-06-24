@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.165 2017/06/19 12:53:50 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.166 2017/06/24 14:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "mandoc_aux.h"
+#include "mandoc.h"
 #include "roff.h"
 #include "mdoc.h"
 #include "out.h"

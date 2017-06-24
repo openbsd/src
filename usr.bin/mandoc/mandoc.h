@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.174 2017/06/17 23:06:43 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.175 2017/06/24 14:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -44,12 +44,15 @@ enum	mandoclevel {
 enum	mandocerr {
 	MANDOCERR_OK,
 
-	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
+	MANDOCERR_BASE, /* ===== start of base system conventions ===== */
 
 	MANDOCERR_MDOCDATE, /* Mdocdate found: Dd ... */
 	MANDOCERR_MDOCDATE_MISSING, /* Mdocdate missing: Dd ... */
-	MANDOCERR_DATE_LEGACY, /* legacy man(7) date format: Dd ... */
 	MANDOCERR_RCS_MISSING, /* RCS id missing */
+
+	MANDOCERR_STYLE, /* ===== start of style suggestions ===== */
+
+	MANDOCERR_DATE_LEGACY, /* legacy man(7) date format: Dd ... */
 	MANDOCERR_RCS_REP, /* duplicate RCS id: ... */
 	MANDOCERR_MACRO_USELESS, /* useless macro: macro */
 	MANDOCERR_BX, /* consider using OS macro: macro */
@@ -413,6 +416,12 @@ struct	eqn {
 #define	MPARSE_UTF8	16 /* accept UTF-8 input */
 #define	MPARSE_LATIN1	32 /* accept ISO-LATIN-1 input */
 
+enum	mandoc_os {
+	MANDOC_OS_OTHER = 0,
+	MANDOC_OS_NETBSD,
+	MANDOC_OS_OPENBSD
+};
+
 enum	mandoc_esc {
 	ESCAPE_ERROR = 0, /* bail! unparsable escape */
 	ESCAPE_IGNORE, /* escape to be ignored */
@@ -448,7 +457,8 @@ const char	 *mchars_uc2str(int);
 int		  mchars_num2uc(const char *, size_t);
 int		  mchars_spec2cp(const char *, size_t);
 const char	 *mchars_spec2str(const char *, size_t, size_t *);
-struct mparse	 *mparse_alloc(int, enum mandoclevel, mandocmsg, const char *);
+struct mparse	 *mparse_alloc(int, enum mandocerr, mandocmsg,
+			enum mandoc_os, const char *);
 void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 int		  mparse_open(struct mparse *, const char *);
