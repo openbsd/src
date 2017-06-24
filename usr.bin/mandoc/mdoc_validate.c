@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.256 2017/06/24 15:59:28 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.257 2017/06/24 18:58:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1771,7 +1771,29 @@ post_sm(POST_ARGS)
 static void
 post_root(POST_ARGS)
 {
+	const char *openbsd_arch[] = {
+		"alpha", "amd64", "arm64", "armv7", "hppa", "i386",
+		"landisk", "loongson", "luna88k", "macppc", "mips64",
+		"octeon", "sgi", "socppc", "sparc64", NULL
+	};
+	const char *netbsd_arch[] = {
+		"acorn26", "acorn32", "algor", "alpha", "amiga",
+		"arc", "atari",
+		"bebox", "cats", "cesfic", "cobalt", "dreamcast",
+		"emips", "evbarm", "evbmips", "evbppc", "evbsh3", "evbsh5",
+		"hp300", "hpcarm", "hpcmips", "hpcsh", "hppa",
+		"i386", "ibmnws", "luna68k",
+		"mac68k", "macppc", "mipsco", "mmeye", "mvme68k", "mvmeppc",
+		"netwinder", "news68k", "newsmips", "next68k",
+		"pc532", "playstation2", "pmax", "pmppc", "prep",
+		"sandpoint", "sbmips", "sgimips", "shark",
+		"sparc", "sparc64", "sun2", "sun3",
+		"vax", "walnut", "x68k", "x86", "x86_64", "xen", NULL
+        };
+	const char **arches[] = { NULL, netbsd_arch, openbsd_arch };
+
 	struct roff_node *n;
+	const char **arch;
 
 	/* Add missing prologue data. */
 
@@ -1797,6 +1819,23 @@ post_root(POST_ARGS)
 		mandoc_msg(MANDOCERR_RCS_MISSING, mdoc->parse, 0, 0,
 		    mdoc->meta.os_e == MANDOC_OS_OPENBSD ?
 		    "(OpenBSD)" : "(NetBSD)");
+
+	if (mdoc->meta.arch != NULL &&
+	    (arch = arches[mdoc->meta.os_e]) != NULL) {
+		while (*arch != NULL && strcmp(*arch, mdoc->meta.arch))
+			arch++;
+		if (*arch == NULL) {
+			n = mdoc->first->child;
+			while (n->tok != MDOC_Dt)
+				n = n->next;
+			n = n->child->next->next;
+			mandoc_vmsg(MANDOCERR_ARCH_BAD,
+			    mdoc->parse, n->line, n->pos,
+			    "Dt ... %s %s", mdoc->meta.arch,
+			    mdoc->meta.os_e == MANDOC_OS_OPENBSD ?
+			    "(OpenBSD)" : "(NetBSD)");
+		}
+	}
 
 	/* Check that we begin with a proper `Sh'. */
 
