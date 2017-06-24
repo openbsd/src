@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.126 2017/06/21 15:24:34 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.127 2017/06/24 23:32:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,6 @@
 
 
 void packethandler(struct interface_info *ifi);
-void sendhup(struct client_lease *);
 
 void
 get_hw_address(struct interface_info *ifi)
@@ -123,7 +122,12 @@ dispatch(struct interface_info *ifi)
 	time_t cur_time, howlong;
 	void (*func)(struct interface_info *);
 
-	while (quit == 0) {
+	while (quit == 0 || quit == SIGHUP) {
+		if (quit == SIGHUP) {
+			log_warnx("%s; restarting", strsignal(quit));
+			sendhup();
+		}
+
 		if (ifi->timeout_func) {
 			time(&cur_time);
 			if (ifi->timeout <= cur_time) {
@@ -183,14 +187,8 @@ dispatch(struct interface_info *ifi)
 		}
 	}
 
-	if (quit == SIGHUP) {
-		/* Tell [priv] process that HUP has occurred. */
-		sendhup(ifi->active);
-		log_warnx("%s; restarting", strsignal(quit));
-		exit (0);
-	} else if (quit != INTERNALSIG) {
+	if (quit != INTERNALSIG)
 		fatalx("%s", strsignal(quit));
-	}
 }
 
 void
@@ -310,21 +308,14 @@ get_rdomain(char *name)
 }
 
 /*
- * Inform the [priv] process a HUP was received and it should restart.
+ * Inform the [priv] process a HUP was received.
  */
 void
-sendhup(struct client_lease *active)
+sendhup(void)
 {
-	struct imsg_hup imsg;
 	int rslt;
 
-	if (active)
-		imsg.addr = active->address;
-	else
-		imsg.addr.s_addr = INADDR_ANY;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1,
-	    &imsg, sizeof(imsg));
+	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1, NULL, 0);
 	if (rslt == -1)
 		log_warn("sendhup: imsg_compose");
 
