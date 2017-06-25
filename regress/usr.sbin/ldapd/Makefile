@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2017/02/22 14:36:20 gsoares Exp $
+# $OpenBSD: Makefile,v 1.8 2017/06/25 22:06:06 bluhm Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -37,8 +37,12 @@ bootstrap:
 	@sleep 1
 	@grep -a startup ${.OBJDIR}/log |sed -e 's/.*\[// ; s/\].*//' > ${.OBJDIR}/ldapd.pid
 
+.if ! (make(clean) || make(cleandir) || make(obj))
 .END:
-	@[ -f ${.OBJDIR}/ldapd.pid ] && ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid) && rm ${.OBJDIR}/ldapd.pid
+	@[ -f ${.OBJDIR}/ldapd.pid ] &&\
+	    ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid) &&\
+	    rm ${.OBJDIR}/ldapd.pid
+.endif
 
 connect: bootstrap
 	-ldapsearch -x -H ldapi://%2ftmp%2fldapi | diff - ${OUT}/empty.log
