@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.h,v 1.38 2017/06/24 14:38:28 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.39 2017/06/25 07:23:53 bentley Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -467,6 +467,8 @@ enum	roff_tok {
 	MAN_EE,
 	MAN_UR,
 	MAN_UE,
+	MAN_MT,
+	MAN_ME,
 	MAN_MAX
 };
 

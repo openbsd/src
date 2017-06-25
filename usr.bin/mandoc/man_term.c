@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.160 2017/06/17 13:05:47 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.161 2017/06/25 07:23:53 bentley Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -126,6 +126,8 @@ static	const struct termact __termacts[MAN_MAX - MAN_TH] = {
 	{ pre_literal, NULL, 0 }, /* EE */
 	{ pre_UR, post_UR, 0 }, /* UR */
 	{ NULL, NULL, 0 }, /* UE */
+	{ pre_UR, post_UR, 0 }, /* MT */
+	{ NULL, NULL, 0 }, /* ME */
 };
 static	const struct termact *termacts = __termacts - MAN_TH;
 

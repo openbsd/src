@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.129 2017/06/24 21:08:28 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.130 2017/06/25 07:23:53 bentley Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2017 $
+.Dd $Mdocdate: June 25 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1278,6 +1278,7 @@ A
 .Ic \&Bl ,
 .Ic \&D1 ,
 .Ic \&Dl ,
+.Ic \&MT ,
 .Ic \&RS ,
 or
 .Ic \&UR
@@ -1413,6 +1414,8 @@ An empty pair of square brackets is shown.
 .It Sy "missing resource identifier, using \(dq\(dq"
 .Pq man
 The
+.Ic \&MT
+or
 .Ic \&UR
 macro is invoked without any argument.
 An empty pair of angle brackets is shown.
@@ -1765,7 +1768,7 @@ An
 .Xr mdoc 7
 block closing macro, a
 .Xr man 7
-.Ic \&RE
+.Ic \&ME , \&RE
 or
 .Ic \&UE
 macro, an
@@ -1799,7 +1802,7 @@ At the end of the document, an explicit
 block, a
 .Xr man 7
 next-line scope or
-.Ic \&RS
+.Ic \&MT , \&RS
 or
 .Ic \&UR
 block, an equation, table, or
@@ -1971,6 +1974,7 @@ A macro or request is invoked with too many arguments:
 .Bl -dash -offset 2n -width 2n -compact
 .It
 .Ic \&Fo ,
+.Ic \&MT ,
 .Ic \&PD ,
 .Ic \&RS ,
 .Ic \&UR ,
