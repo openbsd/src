@@ -1,6 +1,7 @@
-mandoc: column.in:1:5: STYLE: Mdocdate missing: Dd October
+mandoc: column.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: column.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
 mandoc: column.in:71:2: WARNING: wrong number of cells: 2 columns, 1 cells
 mandoc: column.in:74:2: WARNING: wrong number of cells: 2 columns, 4 cells
 mandoc: column.in:75:2: WARNING: wrong number of cells: 2 columns, 5 cells
 mandoc: column.in:103:18: WARNING: skipping -width argument: Bl -column
-mandoc: column.in: STYLE: RCS id missing
+mandoc: column.in: BASE: RCS id missing: (OpenBSD)

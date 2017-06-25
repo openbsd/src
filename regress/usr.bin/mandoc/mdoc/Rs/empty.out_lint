@@ -1,4 +1,5 @@
-mandoc: empty.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: empty.in:9:2: WARNING: empty reference block: Rs
 mandoc: empty.in:14:2: WARNING: empty reference block: Rs
-mandoc: empty.in: STYLE: RCS id missing
+mandoc: empty.in: BASE: RCS id missing: (OpenBSD)

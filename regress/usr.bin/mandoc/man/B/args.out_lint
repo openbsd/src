@@ -1,2 +1,2 @@
 mandoc: args.in:20:2: WARNING: line scope broken: EOF breaks B
-mandoc: args.in: STYLE: RCS id missing
+mandoc: args.in: BASE: RCS id missing: (OpenBSD)

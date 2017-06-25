@@ -1,3 +1,4 @@
-mandoc: simple.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: simple.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: simple.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: simple.in:12:26: STYLE: no blank before trailing delimiter: Mt punctuation@localhost.
-mandoc: simple.in: STYLE: RCS id missing
+mandoc: simple.in: BASE: RCS id missing: (OpenBSD)

@@ -1,3 +1,4 @@
 mandoc: broken.in:12:2: WARNING: blocks badly nested: Bo breaks Bd
-mandoc: broken.in:1:5: STYLE: Mdocdate missing: Dd November
-mandoc: broken.in: STYLE: RCS id missing
+mandoc: broken.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: broken.in:1:5: BASE: Mdocdate missing: Dd November (OpenBSD)
+mandoc: broken.in: BASE: RCS id missing: (OpenBSD)

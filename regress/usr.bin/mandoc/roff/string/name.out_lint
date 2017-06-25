@@ -15,5 +15,6 @@ mandoc: name.in:33:6: WARNING: undefined string, using "": ble
 mandoc: name.in:33:5: WARNING: whitespace at end of input line
 mandoc: name.in:35:5: WARNING: undefined string, using "": bl
 mandoc: name.in:35:4: WARNING: whitespace at end of input line
-mandoc: name.in:1:5: STYLE: Mdocdate missing: Dd January
-mandoc: name.in: STYLE: RCS id missing
+mandoc: name.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: name.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
+mandoc: name.in: BASE: RCS id missing: (OpenBSD)

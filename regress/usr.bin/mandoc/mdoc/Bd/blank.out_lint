@@ -5,6 +5,7 @@ mandoc: blank.in:21:36: WARNING: whitespace at end of input line
 mandoc: blank.in:22:37: WARNING: whitespace at end of input line
 mandoc: blank.in:23:32: WARNING: whitespace at end of input line
 mandoc: blank.in:30:8: WARNING: whitespace at end of input line
-mandoc: blank.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: blank.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: blank.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
 mandoc: blank.in:30:2: WARNING: empty block: Dl
-mandoc: blank.in: STYLE: RCS id missing
+mandoc: blank.in: BASE: RCS id missing: (OpenBSD)

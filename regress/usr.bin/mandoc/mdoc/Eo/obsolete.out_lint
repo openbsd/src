@@ -1,8 +1,9 @@
-mandoc: obsolete.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: obsolete.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: obsolete.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
 mandoc: obsolete.in:8:2: WARNING: obsolete macro: En
 mandoc: obsolete.in:10:2: WARNING: obsolete macro: Es
 mandoc: obsolete.in:12:2: WARNING: obsolete macro: En
 mandoc: obsolete.in:14:2: WARNING: obsolete macro: En
 mandoc: obsolete.in:17:2: WARNING: obsolete macro: Es
 mandoc: obsolete.in:19:2: WARNING: obsolete macro: En
-mandoc: obsolete.in: STYLE: RCS id missing
+mandoc: obsolete.in: BASE: RCS id missing: (OpenBSD)

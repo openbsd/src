@@ -1,7 +1,8 @@
 mandoc: notype.in:12:2: ERROR: skipping all arguments: El tail argument
-mandoc: notype.in:1:5: STYLE: Mdocdate missing: Dd August
+mandoc: notype.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: notype.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
 mandoc: notype.in:9:2: WARNING: list type is not the first argument: Bl -offset
 mandoc: notype.in:15:2: ERROR: missing list type, using -item: Bl
 mandoc: notype.in:15:20: WARNING: skipping -width argument: Bl -item
 mandoc: notype.in:21:2: ERROR: missing list type, using -item: Bl
-mandoc: notype.in: STYLE: RCS id missing
+mandoc: notype.in: BASE: RCS id missing: (OpenBSD)

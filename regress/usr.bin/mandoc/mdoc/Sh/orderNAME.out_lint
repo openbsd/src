@@ -1,4 +1,5 @@
-mandoc: orderNAME.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: orderNAME.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: orderNAME.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
 mandoc: orderNAME.in:5:2: WARNING: description not at the end of NAME
 mandoc: orderNAME.in:4:2: WARNING: NAME section without Nm before Nd
-mandoc: orderNAME.in: STYLE: RCS id missing
+mandoc: orderNAME.in: BASE: RCS id missing: (OpenBSD)

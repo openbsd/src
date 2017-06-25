@@ -1,4 +1,5 @@
-mandoc: warn.in:1:5: STYLE: Mdocdate missing: Dd October
+mandoc: warn.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: warn.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
 mandoc: warn.in:9:8: WARNING: parenthesis in function name: sin()
 mandoc: warn.in:13:19: WARNING: comma in function argument: double y, double x
-mandoc: warn.in: STYLE: RCS id missing
+mandoc: warn.in: BASE: RCS id missing: (OpenBSD)

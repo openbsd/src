@@ -7,7 +7,8 @@ mandoc: line.in:60:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:62:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:65:1: WARNING: blank line in fill mode, using .sp
 mandoc: line.in:66:1: WARNING: blank line in fill mode, using .sp
-mandoc: line.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: line.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: line.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: line.in:18:2: WARNING: skipping paragraph macro: br after br
 mandoc: line.in:20:2: WARNING: skipping paragraph macro: br before Pp
 mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after Pp
@@ -22,4 +23,4 @@ mandoc: line.in:83:2: WARNING: skipping paragraph macro: Pp at the end of Sh
 mandoc: line.in:85:2: WARNING: skipping paragraph macro: Pp after Sh
 mandoc: line.in:88:2: WARNING: skipping paragraph macro: Pp after Ss
 mandoc: line.in:90:2: WARNING: skipping paragraph macro: Pp at the end of Ss
-mandoc: line.in: STYLE: RCS id missing
+mandoc: line.in: BASE: RCS id missing: (OpenBSD)

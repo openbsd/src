@@ -1,4 +1,5 @@
 mandoc: infinite.in:13:5: ERROR: input stack limit exceeded, infinite loop?
 mandoc: infinite.in:19:5: ERROR: input stack limit exceeded, infinite loop?
-mandoc: infinite.in:1:5: STYLE: Mdocdate missing: Dd March
-mandoc: infinite.in: STYLE: RCS id missing
+mandoc: infinite.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: infinite.in:1:5: BASE: Mdocdate missing: Dd March (OpenBSD)
+mandoc: infinite.in: BASE: RCS id missing: (OpenBSD)

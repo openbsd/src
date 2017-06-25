@@ -1,5 +1,6 @@
 mandoc: spacing.in:24:2: WARNING: nothing follows prefix: Pf prefixed
 mandoc: spacing.in:27:9: WARNING: nothing follows prefix: Pf .
 mandoc: spacing.in:31:9: WARNING: nothing follows prefix: Pf at eol
-mandoc: spacing.in:1:5: STYLE: Mdocdate missing: Dd November
-mandoc: spacing.in: STYLE: RCS id missing
+mandoc: spacing.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: spacing.in:1:5: BASE: Mdocdate missing: Dd November (OpenBSD)
+mandoc: spacing.in: BASE: RCS id missing: (OpenBSD)

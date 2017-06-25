@@ -1,4 +1,5 @@
-mandoc: empty.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
 mandoc: empty.in:9:2: WARNING: empty block: Bl
 mandoc: empty.in:12:2: WARNING: empty block: Bl
 mandoc: empty.in:15:2: WARNING: empty block: Bl
@@ -10,4 +11,4 @@ mandoc: empty.in:30:2: WARNING: empty block: Bl
 mandoc: empty.in:33:2: WARNING: empty block: Bl
 mandoc: empty.in:36:2: WARNING: empty block: Bl
 mandoc: empty.in:39:2: WARNING: empty block: Bl
-mandoc: empty.in: STYLE: RCS id missing
+mandoc: empty.in: BASE: RCS id missing: (OpenBSD)

@@ -1,4 +1,5 @@
 mandoc: nohead.in:9:2: WARNING: skipping empty macro: Sh
 mandoc: nohead.in:11:2: WARNING: skipping empty macro: Ss
-mandoc: nohead.in:1:5: STYLE: Mdocdate missing: Dd February
-mandoc: nohead.in: STYLE: RCS id missing
+mandoc: nohead.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: nohead.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
+mandoc: nohead.in: BASE: RCS id missing: (OpenBSD)

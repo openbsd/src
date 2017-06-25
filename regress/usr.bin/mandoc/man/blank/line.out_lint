@@ -6,4 +6,4 @@ mandoc: line.in:38:2: WARNING: skipping paragraph macro: sp after PP
 mandoc: line.in:53:1: WARNING: skipping paragraph macro: sp after PP
 mandoc: line.in:81:2: WARNING: skipping paragraph macro: sp after SH
 mandoc: line.in:84:2: WARNING: skipping paragraph macro: sp after SS
-mandoc: line.in: STYLE: RCS id missing
+mandoc: line.in: BASE: RCS id missing: (OpenBSD)

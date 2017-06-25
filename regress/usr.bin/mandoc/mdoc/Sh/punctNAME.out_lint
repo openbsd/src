@@ -1,6 +1,7 @@
-mandoc: punctNAME.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: punctNAME.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: punctNAME.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
 mandoc: punctNAME.in:6:2: WARNING: missing comma before name: Nm second_name
 mandoc: punctNAME.in:6:17: WARNING: bad NAME section content: text
 mandoc: punctNAME.in:7:2: WARNING: missing comma before name: Nm third_name
 mandoc: punctNAME.in:7:16: WARNING: bad NAME section content: text
-mandoc: punctNAME.in: STYLE: RCS id missing
+mandoc: punctNAME.in: BASE: RCS id missing: (OpenBSD)

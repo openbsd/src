@@ -1,3 +1,4 @@
-mandoc: punct.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: punct.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: punct.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: punct.in:26:6: STYLE: no blank before trailing delimiter: Oo a.
-mandoc: punct.in: STYLE: RCS id missing
+mandoc: punct.in: BASE: RCS id missing: (OpenBSD)

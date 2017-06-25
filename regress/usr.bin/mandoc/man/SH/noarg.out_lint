@@ -12,4 +12,4 @@ mandoc: noarg.in:34:2: WARNING: line scope broken: UE breaks SH
 mandoc: noarg.in:35:2: ERROR: skipping end of block that is not open: UE
 mandoc: noarg.in:41:2: WARNING: fill mode already enabled, skipping: fi
 mandoc: noarg.in:44:1: WARNING: skipping blank line in line scope
-mandoc: noarg.in: STYLE: RCS id missing
+mandoc: noarg.in: BASE: RCS id missing: (OpenBSD)

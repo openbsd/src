@@ -1,5 +1,6 @@
-mandoc: esct-mdoc.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: esct-mdoc.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: esct-mdoc.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: esct-mdoc.in:10:7: WARNING: tab in filled text
 mandoc: esct-mdoc.in:14:7: WARNING: tab in filled text
 mandoc: esct-mdoc.in:14:8: WARNING: tab in filled text
-mandoc: esct-mdoc.in: STYLE: RCS id missing
+mandoc: esct-mdoc.in: BASE: RCS id missing: (OpenBSD)

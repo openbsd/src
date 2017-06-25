@@ -6,7 +6,8 @@ mandoc: breakingIt.in:44:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:51:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:59:2: ERROR: inserting missing end of block: It breaks Bd
 mandoc: breakingIt.in:67:2: ERROR: inserting missing end of block: It breaks Bd
-mandoc: breakingIt.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: breakingIt.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: breakingIt.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: breakingIt.in:10:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:11:2: WARNING: moving content out of list: Ao
 mandoc: breakingIt.in:17:1: WARNING: moving content out of list: text
@@ -15,4 +16,4 @@ mandoc: breakingIt.in:41:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:42:2: WARNING: moving content out of list: Bd
 mandoc: breakingIt.in:48:1: WARNING: moving content out of list: text
 mandoc: breakingIt.in:49:2: WARNING: moving content out of list: Bd
-mandoc: breakingIt.in: STYLE: RCS id missing
+mandoc: breakingIt.in: BASE: RCS id missing: (OpenBSD)

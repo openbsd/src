@@ -1,4 +1,7 @@
+mandoc: dupe.in:2:5: BASE: operating system explicitly specified: Os NetBSD (NetBSD)
 mandoc: dupe.in:3:2: WARNING: prologue macros out of order: Dt after Os
 mandoc: dupe.in:4:2: WARNING: duplicate prologue macro: Os
+mandoc: dupe.in:4:5: BASE: operating system explicitly specified: Os FreeBSD (NetBSD)
 mandoc: dupe.in:10:2: WARNING: duplicate prologue macro: Os
-mandoc: dupe.in: STYLE: RCS id missing
+mandoc: dupe.in:10:5: BASE: operating system explicitly specified: Os OpenBSD (NetBSD)
+mandoc: dupe.in: BASE: RCS id missing: (NetBSD)

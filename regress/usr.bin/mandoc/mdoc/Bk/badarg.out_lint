@@ -3,6 +3,7 @@ mandoc: badarg.in:22:5: ERROR: skipping excess arguments: Bk ... -lines
 mandoc: badarg.in:24:2: ERROR: skipping all arguments: Ek tail argument
 mandoc: badarg.in:31:5: ERROR: skipping excess arguments: Bk ... -line
 mandoc: badarg.in:49:12: ERROR: skipping excess arguments: Bk ... -murks
-mandoc: badarg.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: badarg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: badarg.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: badarg.in:54:2: WARNING: empty block: Bk
-mandoc: badarg.in: STYLE: RCS id missing
+mandoc: badarg.in: BASE: RCS id missing: (OpenBSD)

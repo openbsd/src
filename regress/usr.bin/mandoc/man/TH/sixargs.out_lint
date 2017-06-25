@@ -1,2 +1,2 @@
 mandoc: sixargs.in:1:53: ERROR: skipping excess arguments: TH ... SIX
-mandoc: sixargs.in: STYLE: RCS id missing
+mandoc: sixargs.in: BASE: RCS id missing: (OpenBSD)

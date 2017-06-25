@@ -6,5 +6,6 @@ mandoc: break.in:44:2: WARNING: blocks badly nested: Bo breaks Eo
 mandoc: break.in:51:2: WARNING: blocks badly nested: Bo breaks Eo
 mandoc: break.in:59:2: WARNING: blocks badly nested: Bo breaks Eo
 mandoc: break.in:66:2: WARNING: blocks badly nested: Bo breaks Eo
-mandoc: break.in:1:5: STYLE: Mdocdate missing: Dd February
-mandoc: break.in: STYLE: RCS id missing
+mandoc: break.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: break.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
+mandoc: break.in: BASE: RCS id missing: (OpenBSD)

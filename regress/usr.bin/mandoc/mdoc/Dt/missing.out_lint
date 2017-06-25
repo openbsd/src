@@ -1,3 +1,4 @@
-mandoc: missing.in:1:5: STYLE: Mdocdate missing: Dd August
+mandoc: missing.in:2:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: missing.in:1:5: BASE: Mdocdate missing: Dd August (OpenBSD)
 mandoc: missing.in: WARNING: missing manual title, using UNTITLED: EOF
-mandoc: missing.in: STYLE: RCS id missing
+mandoc: missing.in: BASE: RCS id missing: (OpenBSD)

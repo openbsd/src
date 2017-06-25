@@ -1,5 +1,6 @@
 mandoc: broken.in:28:11: WARNING: blocks badly nested: Bo breaks Pq
-mandoc: broken.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: broken.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: broken.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: broken.in:5:2: WARNING: bad NAME section content: Oo
 mandoc: broken.in:9:1: WARNING: bad NAME section content: text
 mandoc: broken.in:4:2: WARNING: NAME section without Nm before Nd
@@ -8,4 +9,4 @@ mandoc: broken.in:16:2: WARNING: description line outside NAME section: Nd
 mandoc: broken.in:13:2: WARNING: moving content out of list: Bl
 mandoc: broken.in:18:1: WARNING: moving content out of list: text
 mandoc: broken.in:27:2: WARNING: description line outside NAME section: Nd
-mandoc: broken.in: STYLE: RCS id missing
+mandoc: broken.in: BASE: RCS id missing: (OpenBSD)

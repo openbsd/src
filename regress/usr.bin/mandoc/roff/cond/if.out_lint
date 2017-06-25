@@ -1,3 +1,3 @@
 mandoc: if.in:14:2: WARNING: conditional request controls empty scope: if
 mandoc: if.in:16:2: WARNING: conditional request controls empty scope: if
-mandoc: if.in: STYLE: RCS id missing
+mandoc: if.in: BASE: RCS id missing: (OpenBSD)

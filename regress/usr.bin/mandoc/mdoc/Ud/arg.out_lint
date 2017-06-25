@@ -1,4 +1,5 @@
-mandoc: arg.in:1:5: STYLE: Mdocdate missing: Dd January
+mandoc: arg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: arg.in:1:5: BASE: Mdocdate missing: Dd January (OpenBSD)
 mandoc: arg.in:9:2: STYLE: useless macro: Ud
 mandoc: arg.in:11:2: STYLE: useless macro: Bt
 mandoc: arg.in:15:2: STYLE: useless macro: Ud
@@ -9,4 +10,4 @@ mandoc: arg.in:17:2: STYLE: useless macro: Ud
 mandoc: arg.in:17:2: ERROR: skipping all arguments: Ud one
 mandoc: arg.in:18:2: STYLE: useless macro: Bt
 mandoc: arg.in:18:2: ERROR: skipping all arguments: Bt one
-mandoc: arg.in: STYLE: RCS id missing
+mandoc: arg.in: BASE: RCS id missing: (OpenBSD)

@@ -1,5 +1,6 @@
 mandoc: brokenbreaker.in:10:2: WARNING: blocks badly nested: Po breaks Ao
 mandoc: brokenbreaker.in:12:2: ERROR: skipping end of block that is not open: Pc
 mandoc: brokenbreaker.in:13:2: WARNING: blocks badly nested: Ao breaks Bo
-mandoc: brokenbreaker.in:1:5: STYLE: Mdocdate missing: Dd December
-mandoc: brokenbreaker.in: STYLE: RCS id missing
+mandoc: brokenbreaker.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: brokenbreaker.in:1:5: BASE: Mdocdate missing: Dd December (OpenBSD)
+mandoc: brokenbreaker.in: BASE: RCS id missing: (OpenBSD)

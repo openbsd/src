@@ -2,5 +2,6 @@ mandoc: indir.in:18:11: WARNING: undefined string, using "": myie
 mandoc: indir.in:25:6: WARNING: undefined string, using "": myim
 mandoc: indir.in:25:2: WARNING: skipping empty request: dei
 mandoc: indir.in:29:2: WARNING: skipping empty request: dei
-mandoc: indir.in:1:5: STYLE: Mdocdate missing: Dd July
-mandoc: indir.in: STYLE: RCS id missing
+mandoc: indir.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: indir.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
+mandoc: indir.in: BASE: RCS id missing: (OpenBSD)

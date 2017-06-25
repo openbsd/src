@@ -1,2 +1,2 @@
 mandoc: eof.in:6:2: WARNING: line scope broken: EOF breaks TP
-mandoc: eof.in: STYLE: RCS id missing
+mandoc: eof.in: BASE: RCS id missing: (OpenBSD)

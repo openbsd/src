@@ -1,5 +1,6 @@
 mandoc: arg.in:11:5: ERROR: skipping all arguments: br drop this
 mandoc: arg.in:13:8: ERROR: skipping excess arguments: sp ... drop this
-mandoc: arg.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: arg.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: arg.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: arg.in:9:2: ERROR: skipping all arguments: Pp drop
-mandoc: arg.in: STYLE: RCS id missing
+mandoc: arg.in: BASE: RCS id missing: (OpenBSD)

@@ -1,2 +1,3 @@
+mandoc: late.in:2:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
 mandoc: late.in:8:2: WARNING: late prologue macro: Dd
-mandoc: late.in: STYLE: RCS id missing
+mandoc: late.in: BASE: RCS id missing: (OpenBSD)

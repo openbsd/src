@@ -1,2 +1,2 @@
 mandoc: args.in:26:7: ERROR: skipping excess arguments: PD ... zzz
-mandoc: args.in: STYLE: RCS id missing
+mandoc: args.in: BASE: RCS id missing: (OpenBSD)

@@ -1,6 +1,7 @@
 mandoc: badargs.in:12:2: ERROR: skipping all arguments: Ed tail argument
 mandoc: badargs.in:19:16: ERROR: skipping excess arguments: Bd ... -bogus
-mandoc: badargs.in:1:5: STYLE: Mdocdate missing: Dd October
+mandoc: badargs.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: badargs.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
 mandoc: badargs.in:9:13: WARNING: empty argument, using 0n: Bd -offset
 mandoc: badargs.in:14:34: WARNING: duplicate argument: Bd -compact
 mandoc: badargs.in:14:43: WARNING: duplicate argument: Bd -offset 6n
@@ -11,4 +12,4 @@ mandoc: badargs.in:33:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:38:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:43:2: ERROR: NOT IMPLEMENTED: Bd -file
 mandoc: badargs.in:48:2: ERROR: skipping display without arguments: Bd
-mandoc: badargs.in: STYLE: RCS id missing
+mandoc: badargs.in: BASE: RCS id missing: (OpenBSD)

@@ -1,5 +1,6 @@
-mandoc: nostd.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: nostd.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: nostd.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
 mandoc: nostd.in:9:2: WARNING: missing -std argument, adding it: Ex
 mandoc: nostd.in:12:2: WARNING: missing -std argument, adding it: Ex
 mandoc: nostd.in:15:2: WARNING: missing -std argument, adding it: Ex
-mandoc: nostd.in: STYLE: RCS id missing
+mandoc: nostd.in: BASE: RCS id missing: (OpenBSD)

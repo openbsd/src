@@ -8,6 +8,7 @@ mandoc: twice.in:32:11: WARNING: blocks badly nested: Bo breaks Aq
 mandoc: twice.in:32:17: WARNING: blocks badly nested: Bo breaks Aq
 mandoc: twice.in:36:8: WARNING: blocks badly nested: Bq breaks Po
 mandoc: twice.in:36:2: WARNING: blocks badly nested: Aq breaks Po
-mandoc: twice.in:1:5: STYLE: Mdocdate missing: Dd February
+mandoc: twice.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: twice.in:1:5: BASE: Mdocdate missing: Dd February (OpenBSD)
 mandoc: twice.in:36:2: WARNING: moving content out of list: Aq
-mandoc: twice.in: STYLE: RCS id missing
+mandoc: twice.in: BASE: RCS id missing: (OpenBSD)

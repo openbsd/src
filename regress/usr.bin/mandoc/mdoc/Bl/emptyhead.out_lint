@@ -1,6 +1,7 @@
-mandoc: emptyhead.in:1:5: STYLE: Mdocdate missing: Dd July
+mandoc: emptyhead.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: emptyhead.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
 mandoc: emptyhead.in:12:2: WARNING: empty head in list item: Bl -hang It
 mandoc: emptyhead.in:21:2: WARNING: empty head in list item: Bl -ohang It
 mandoc: emptyhead.in:30:2: WARNING: empty head in list item: Bl -inset It
 mandoc: emptyhead.in:39:2: WARNING: empty head in list item: Bl -diag It
-mandoc: emptyhead.in: STYLE: RCS id missing
+mandoc: emptyhead.in: BASE: RCS id missing: (OpenBSD)

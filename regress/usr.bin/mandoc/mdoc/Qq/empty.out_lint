@@ -1,4 +1,5 @@
-mandoc: empty.in:1:5: STYLE: Mdocdate missing: Dd June
+mandoc: empty.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: empty.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: empty.in:11:18: STYLE: no blank before trailing delimiter: Qq user@host)
 mandoc: empty.in:14:13: STYLE: no blank before trailing delimiter: Qo full)
-mandoc: empty.in: STYLE: RCS id missing
+mandoc: empty.in: BASE: RCS id missing: (OpenBSD)

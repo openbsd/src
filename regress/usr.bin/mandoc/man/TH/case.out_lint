@@ -1,2 +1,2 @@
 mandoc: case.in:1:8: WARNING: lower case character in document title: TH TH-case
-mandoc: case.in: STYLE: RCS id missing
+mandoc: case.in: BASE: RCS id missing: (OpenBSD)

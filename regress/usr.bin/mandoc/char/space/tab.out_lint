@@ -1,4 +1,5 @@
-mandoc: tab.in:1:5: STYLE: Mdocdate missing: Dd April
+mandoc: tab.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: tab.in:1:5: BASE: Mdocdate missing: Dd April (OpenBSD)
 mandoc: tab.in:10:2: WARNING: tab in filled text
 mandoc: tab.in:12:3: WARNING: tab in filled text
 mandoc: tab.in:14:4: WARNING: tab in filled text
@@ -41,4 +42,4 @@ mandoc: tab.in:81:7: WARNING: tab in filled text
 mandoc: tab.in:83:1: WARNING: tab in filled text
 mandoc: tab.in:85:1: WARNING: tab in filled text
 mandoc: tab.in:85:2: WARNING: tab in filled text
-mandoc: tab.in: STYLE: RCS id missing
+mandoc: tab.in: BASE: RCS id missing: (OpenBSD)

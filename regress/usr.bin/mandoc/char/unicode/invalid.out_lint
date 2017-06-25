@@ -7,5 +7,6 @@ mandoc: invalid.in:13:35: WARNING: invalid escape sequence: \[u1000000]
 mandoc: invalid.in:13:24: WARNING: invalid escape sequence: \[u200000]
 mandoc: invalid.in:13:13: WARNING: invalid escape sequence: \[u110000]
 mandoc: invalid.in:14:20: WARNING: invalid escape sequence: \[u1234g]
-mandoc: invalid.in:1:5: STYLE: Mdocdate missing: Dd October
-mandoc: invalid.in: STYLE: RCS id missing
+mandoc: invalid.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: invalid.in:1:5: BASE: Mdocdate missing: Dd October (OpenBSD)
+mandoc: invalid.in: BASE: RCS id missing: (OpenBSD)

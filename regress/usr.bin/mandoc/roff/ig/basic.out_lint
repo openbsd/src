@@ -1,5 +1,6 @@
 mandoc: basic.in:19:5: ERROR: skipping excess arguments: .ig ... excess
 mandoc: basic.in:24:2: ERROR: skipping end of block that is not open: ..
 mandoc: basic.in:26:2: ERROR: appending missing end of block: ig
-mandoc: basic.in:1:5: STYLE: Mdocdate missing: Dd July
-mandoc: basic.in: STYLE: RCS id missing
+mandoc: basic.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
+mandoc: basic.in:1:5: BASE: Mdocdate missing: Dd July (OpenBSD)
+mandoc: basic.in: BASE: RCS id missing: (OpenBSD)

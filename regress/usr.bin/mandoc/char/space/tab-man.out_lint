@@ -20,4 +20,4 @@ mandoc: tab-man.in:41:1: WARNING: tab in filled text
 mandoc: tab-man.in:41:2: WARNING: tab in filled text
 mandoc: tab-man.in:43:1: WARNING: tab in filled text
 mandoc: tab-man.in:44:1: WARNING: tab in filled text
-mandoc: tab-man.in: STYLE: RCS id missing
+mandoc: tab-man.in: BASE: RCS id missing: (OpenBSD)

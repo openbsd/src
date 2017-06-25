@@ -1,2 +1,2 @@
 mandoc: noRE.in:7:2: ERROR: appending missing end of block: RS
-mandoc: noRE.in: STYLE: RCS id missing
+mandoc: noRE.in: BASE: RCS id missing: (OpenBSD)
