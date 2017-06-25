@@ -1,0 +1,29 @@
+.TH MT-ARGS 1 "June 25, 2017" OpenBSD
+.SH NAME
+MT-args \- argument handling of the man-ext mailto macro
+.SH DESCRIPTION
+argument plus text:
+.MT test@example.com
+invalid
+address
+.ME
+.PP
+argument but no text:
+.MT test@example.com
+.ME
+.PP
+no argument, but text:
+.MT
+some text
+.ME
+.PP
+two arguments plus text:
+.MT first second
+some text
+.ME
+.PP
+two arguments, but no text:
+.MT first second
+.ME
+.PP
+final text

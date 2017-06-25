@@ -1,0 +1,11 @@
+.TH MT-NOME 1 "June 25, 2017" OpenBSD
+.SH NAME
+MT-noME \- unclosed mailto macro
+.SH DESCRIPTION
+lonely ME:
+.ME
+.PP
+argument plus text:
+.MT test@example.com
+invalid
+address

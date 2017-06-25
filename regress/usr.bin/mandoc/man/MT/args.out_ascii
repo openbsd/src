@@ -1,0 +1,23 @@
+MT-ARGS(1)                  General Commands Manual                 MT-ARGS(1)
+
+
+
+NNAAMMEE
+       MT-args - argument handling of the man-ext mailto macro
+
+DDEESSCCRRIIPPTTIIOONN
+       argument plus text: invalid address <test@example.com>
+
+       argument but no text: <test@example.com>
+
+       no argument, but text: some text <>
+
+       two arguments plus text: some text <first>
+
+       two arguments, but no text: <first>
+
+       final text
+
+
+
+OpenBSD                          June 25, 2017                      MT-ARGS(1)
