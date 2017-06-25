@@ -23,7 +23,7 @@ PHDRS {
 
 SECTIONS {
 	.text : ALIGN($PAGE_SIZE) {
-		LONG($PAD)
+		LONG($PAD);
 		. += $RANDOM1;
 		. = ALIGN($PAGE_SIZE);
 		endboot = .;
@@ -35,14 +35,14 @@ SECTIONS {
 	} :text =$PAD
 
 	.rodata : {
-		LONG($PAD)
+		LONG($PAD);
 		. += $RANDOM3;
 		. = ALIGN(16);
 		*(.rodata .rodata.*)
 	} :rodata =$PAD
 
 	.data : {
-		LONG($PAD)
+		LONG($PAD);
 		. = . + $RANDOM4;	/* fragment of page */
 		. = ALIGN(16);
 		*(.data .data.*)
