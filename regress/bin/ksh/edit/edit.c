@@ -25,10 +25,10 @@
 #include <unistd.h>
 #include <util.h>
 
-static void		sigchld(int);
+static void		sighandler(int);
 static void __dead	usage(void);
 
-static volatile sig_atomic_t	gotsigchld;
+static volatile sig_atomic_t	gotsig;
 
 int
 main(int argc, char *argv[])
@@ -59,8 +59,10 @@ main(int argc, char *argv[])
 		nin += n;
 	}
 
-	if (signal(SIGCHLD, sigchld) == SIG_ERR)
-		err(1, "signal");
+	if (signal(SIGCHLD, sighandler) == SIG_ERR)
+		err(1, "signal: SIGCHLD");
+	if (signal(SIGINT, sighandler) == SIG_ERR)
+		err(1, "signal: SIGINT");
 
 	memset(&ws, 0, sizeof(ws));
 	ws.ws_col = 80,
@@ -77,7 +79,7 @@ main(int argc, char *argv[])
 	nread = nwrite = 0;
 	pfd.fd = ptyfd;
 	pfd.events = (POLLIN | POLLOUT);
-	while (!gotsigchld) {
+	while (!gotsig) {
 		nready = poll(&pfd, 1, 10);
 		if (nready == -1) {
 			if (errno == EINTR)
@@ -122,9 +124,9 @@ main(int argc, char *argv[])
 }
 
 static void
-sigchld(int sig)
+sighandler(int sig)
 {
-	gotsigchld = sig == SIGCHLD;
+	gotsig = sig;
 }
 
 static void __dead
