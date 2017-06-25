@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2016/11/11 14:05:12 reyk Exp $
+# $OpenBSD: Makefile,v 1.5 2017/06/25 21:59:59 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -25,8 +25,7 @@ regress:
 ARGS !=			cd ${.CURDIR} && ls args-*.pm
 TARGETS ?=		${ARGS}
 REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
-CLEANFILES +=		*.log  ktrace.out stamp-*
-CLEANFILES +=		*.h *.ph
+CLEANFILES +=		stamp-* *.h *.ph *.conf *.log ktrace.out
 
 SRC_PATH =		${.CURDIR}/../../../usr.sbin/switchd
 SYS_PATH =		${.CURDIR}/../../../sys/net
