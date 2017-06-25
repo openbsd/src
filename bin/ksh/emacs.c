@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.68 2017/06/20 17:32:20 brynet Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.69 2017/06/25 08:51:52 anton Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -135,6 +135,7 @@ static void	x_push(int);
 static void	x_adjust(void);
 static void	x_e_ungetc(int);
 static int	x_e_getc(void);
+static int	x_e_getu8(char *, int);
 static void	x_e_putc(int);
 static void	x_e_puts(const char *);
 static int	x_comment(int);
@@ -273,7 +274,7 @@ x_emacs(char *buf, size_t len)
 {
 	struct kb_entry		*k, *kmatch = NULL;
 	char			line[LINE + 1];
-	int			at = 0, submatch, ret, c;
+	int			at = 0, ntries = 0, submatch, ret;
 	const char		*p;
 
 	xbp = xbuf = buf; xend = buf + len;
@@ -314,11 +315,9 @@ x_emacs(char *buf, size_t len)
 	x_last_command = NULL;
 	while (1) {
 		x_flush();
-		if ((c = x_e_getc()) < 0)
+		if ((at = x_e_getu8(line, at)) < 0)
 			return 0;
-
-		line[at++] = c;
-		line[at] = '\0';
+		ntries++;
 
 		if (x_arg == -1) {
 			x_arg = 1;
@@ -356,14 +355,18 @@ x_emacs(char *buf, size_t len)
 				macro_args = kmatch->args;
 				ret = KSTD;
 			} else
-				ret = kmatch->ftab->xf_func(c);
+				ret = kmatch->ftab->xf_func(line[at - 1]);
 		} else {
 			if (submatch)
 				continue;
-			if (at == 1)
-				ret = x_insert(c);
-			else
-				ret = x_error(c); /* not matched meta sequence */
+			if (ntries > 1) {
+				ret = x_error(0); /* unmatched meta sequence */
+			} else if (at > 1) {
+				x_ins(line);
+				ret = KSTD;
+			} else {
+				ret = x_insert(line[0]);
+			}
 		}
 
 		switch (ret) {
@@ -388,7 +391,7 @@ x_emacs(char *buf, size_t len)
 		}
 
 		/* reset meta sequence */
-		at = 0;
+		at = ntries = 0;
 		line[0] = '\0';
 		if (x_arg_set)
 			x_arg_set = 0; /* reset args next time around */
@@ -1852,6 +1855,43 @@ x_e_getc(void)
 		c = x_getc();
 
 	return c;
+}
+
+static int
+x_e_getu8(char *buf, int off)
+{
+	int	c, cc, len;
+
+	c = x_e_getc();
+	if (c == -1)
+		return -1;
+	buf[off++] = c;
+
+	if (c == 0xf4)
+		len = 4;
+	else if ((c & 0xf0) == 0xe0)
+		len = 3;
+	else if ((c & 0xe0) == 0xc0 && c > 0xc1)
+		len = 2;
+	else
+		len = 1;
+
+	for (; len > 1; len--) {
+		cc = x_e_getc();
+		if (cc == -1)
+			break;
+		if (isu8cont(cc) == 0 ||
+		    (c == 0xe0 && len == 3 && cc < 0xa0) ||
+		    (c == 0xed && len == 3 && cc & 0x20) ||
+		    (c == 0xf4 && len == 4 && cc & 0x30)) {
+			x_e_ungetc(cc);
+			break;
+		}
+		buf[off++] = cc;
+	}
+	buf[off] = '\0';
+
+	return off;
 }
 
 static void
