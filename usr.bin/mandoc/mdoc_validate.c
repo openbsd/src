@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.257 2017/06/24 18:58:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.258 2017/06/25 17:42:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -58,6 +58,7 @@ static	void	 check_toptext(struct roff_man *, int, int, const char *);
 static	int	 child_an(const struct roff_node *);
 static	size_t		macro2len(enum roff_tok);
 static	void	 rewrite_macro2len(struct roff_man *, char **);
+static	int	 similar(const char *, const char *);
 
 static	void	 post_an(POST_ARGS);
 static	void	 post_an_norm(POST_ARGS);
@@ -2133,11 +2134,54 @@ post_sh_authors(POST_ARGS)
 		    mdoc->last->line, mdoc->last->pos, NULL);
 }
 
+/*
+ * Return an upper bound for the string distance (allowing
+ * transpositions).  Not a full Levenshtein implementation
+ * because Levenshtein is quadratic in the string length
+ * and this function is called for every standard name,
+ * so the check for each custom name would be cubic.
+ * The following crude heuristics is linear, resulting
+ * in quadratic behaviour for checking one custom name,
+ * which does not cause measurable slowdown.
+ */
+static int
+similar(const char *s1, const char *s2)
+{
+	const int	maxdist = 3;
+	int		dist = 0;
+
+	while (s1[0] != '\0' && s2[0] != '\0') {
+		if (s1[0] == s2[0]) {
+			s1++;
+			s2++;
+			continue;
+		}
+		if (++dist > maxdist)
+			return INT_MAX;
+		if (s1[1] == s2[1]) {  /* replacement */
+			s1++;
+			s2++;
+		} else if (s1[0] == s2[1] && s1[1] == s2[0]) {
+			s1 += 2;	/* transposition */
+			s2 += 2;
+		} else if (s1[0] == s2[1])  /* insertion */
+			s2++;
+		else if (s1[1] == s2[0])  /* deletion */
+			s1++;
+		else
+			return INT_MAX;
+	}
+	dist += strlen(s1) + strlen(s2);
+	return dist > maxdist ? INT_MAX : dist;
+}
+
 static void
 post_sh_head(POST_ARGS)
 {
 	struct roff_node	*nch;
 	const char		*goodsec;
+	const char *const	*testsec;
+	int			 dist, mindist;
 	enum roff_sec		 sec;
 
 	/*
@@ -2175,8 +2219,25 @@ post_sh_head(POST_ARGS)
 
 	/* We don't care about custom sections after this. */
 
-	if (sec == SEC_CUSTOM)
+	if (sec == SEC_CUSTOM) {
+		if ((nch = mdoc->last->child) == NULL ||
+		    nch->type != ROFFT_TEXT || nch->next != NULL)
+			return;
+		goodsec = NULL;
+		mindist = INT_MAX;
+		for (testsec = secnames + 1; *testsec != NULL; testsec++) {
+			dist = similar(nch->string, *testsec);
+			if (dist < mindist) {
+				goodsec = *testsec;
+				mindist = dist;
+			}
+		}
+		if (goodsec != NULL)
+			mandoc_vmsg(MANDOCERR_SEC_TYPO, mdoc->parse,
+			    nch->line, nch->pos, "Sh %s instead of %s",
+			    nch->string, goodsec);
 		return;
+	}
 
 	/*
 	 * Check whether our non-custom section is being repeated or is
