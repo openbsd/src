@@ -1,27 +1,68 @@
-REGRESS_TARGETS=acme
+# $OpenBSD: Makefile,v 1.2 2017/06/25 21:33:23 bluhm Exp $
 
-acme: start_httpd
-	/usr/sbin/acme-client \
-	    -C ${.OBJDIR}/www/acme \
-	    -c ${.OBJDIR}/etc/ssl/acme \
-	    -f ${.OBJDIR}/etc/acme/privkey.pem \
-	    -k ${.OBJDIR}/etc/ssl/acme/private/privkey.pem \
-	    -nNv -s letsencrypt-staging `hostname`
-	/usr/sbin/acme-client \
-	    -C ${.OBJDIR}/www/acme \
-	    -c ${.OBJDIR}/etc/ssl/acme \
-	    -f ${.OBJDIR}/etc/acme/privkey.pem \
-	    -k ${.OBJDIR}/etc/ssl/acme/private/privkey.pem \
-	    -rv -s letsencrypt-staging `hostname`
-	pkill -xf "/usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf"
+# Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-start_httpd:
-	sh ${.CURDIR}/create-httpd-env.sh ${.OBJDIR}
-	/bin/echo `/bin/hostname`
-	/usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf
+# acme-client retrieves a certificate from letsencrypt.org.  For
+# that a domain must be registered and the local machine must be
+# reachable via this DNS name.
+
+DOMAIN ?=
+
+.if empty (DOMAIN)
+regress:
+	@echo This tests needs a domain reachable from letsencrypt.org.
+	@echo Set it with the DOMAIN variable.
+	@echo SKIPPED
+.endif
+
+clean: _SUBDIRUSE
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h ktrace.out
+	rm -rf etc www
+
+etc/acme-client.conf: acme-client.conf
+	mkdir -p etc
+	sed 's,$${.OBJDIR},${.OBJDIR},;s,$${DOMAIN},${DOMAIN},'\
+		${.CURDIR}/acme-client.conf >etc/acme-client.conf
+
+etc/httpd.conf: httpd.conf
+	mkdir -p etc
+	sed 's,$${.OBJDIR},${.OBJDIR},'\
+		${.CURDIR}/httpd.conf >etc/httpd.conf
+	mkdir -p www/htdocs www/acme www/logs etc/acme etc/ssl/acme/private
+
+httpd-start: etc/httpd.conf
+	${SUDO} /usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf
 	sleep .1 # give httpd some time to spin up
 	pgrep -xf "/usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf"
 
-.PHONY: ${REGRESS_TARGETS} start_httpd
+httpd-stop:
+	-${SUDO} pkill -xf "/usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf"
+
+REGRESS_TARGETS +=	run-regress-acme
+run-regress-acme: etc/acme-client.conf httpd-start
+	${SUDO} /usr/sbin/acme-client \
+	    -f ${.OBJDIR}/etc/acme-client.conf \
+	    -A -D -v ${DOMAIN}
+	${SUDO} /usr/sbin/acme-client \
+	    -f ${.OBJDIR}/etc/acme-client.conf \
+	    -r -v ${DOMAIN}
+
+REGRESS_TARGETS +=	run-regress-cleanup
+run-regress-cleanup:
+	${.MAKE} -C ${.CURDIR} httpd-stop
+
+.PHONY: ${REGRESS_TARGETS} httpd-start httpd-stop
 
 .include <bsd.regress.mk>
