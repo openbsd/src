@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.37 2017/06/22 16:01:48 deraadt Exp $
+#	$OpenBSD: Makefile.octeon,v 1.38 2017/06/25 14:02:23 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -131,7 +131,7 @@ gapdummy.o:
 	echo 'const char gapdummy;' > gapdummy.c
 	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
 
-makegap.sh: Makefile $S/conf/makegap.sh
+makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh gapdummy.o

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.85 2017/06/22 16:01:48 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.86 2017/06/25 14:02:23 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -124,7 +124,7 @@ ioconf.o: ioconf.c
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
-makegap.sh: $S/conf/makegap.sh
+makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh
