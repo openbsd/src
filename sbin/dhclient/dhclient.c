@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.447 2017/06/24 23:32:57 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.448 2017/06/25 00:38:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -340,10 +340,9 @@ routehandler(struct interface_info *ifi)
 			break;
 		if (adding.s_addr == INADDR_ANY && ifi->active &&
 		    a.s_addr == ifi->active->address.s_addr) {
-			/* Tell the priv process active_addr is gone. */
 			log_warnx("Active address (%s) deleted; exiting",
 			    inet_ntoa(ifi->active->address));
-			sendhup();
+			quit = INTERNALSIG;
 			goto done;
 		}
 		if (deleting.s_addr != INADDR_ANY) {
