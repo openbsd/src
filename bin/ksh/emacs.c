@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.69 2017/06/25 08:51:52 anton Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.70 2017/06/25 17:28:39 anton Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -309,7 +309,6 @@ x_emacs(char *buf, size_t len)
 		x_nextcmd = -1;
 	}
 
-	line[0] = '\0';
 	x_literal_set = 0;
 	x_arg = -1;
 	x_last_command = NULL;
@@ -392,7 +391,6 @@ x_emacs(char *buf, size_t len)
 
 		/* reset meta sequence */
 		at = ntries = 0;
-		line[0] = '\0';
 		if (x_arg_set)
 			x_arg_set = 0; /* reset args next time around */
 		else
