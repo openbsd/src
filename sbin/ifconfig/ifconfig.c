@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.344 2017/06/08 19:23:39 tedu Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.345 2017/06/25 22:22:06 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -803,9 +803,13 @@ nextarg:
 		/*
 		 * Aggregatable address architecture defines all prefixes
 		 * are 64. So, it is convenient to set prefixlen to 64 if
-		 * it is not specified.
+		 * it is not specified. If we are setting a destination
+		 * address on a point-to-point interface, 128 is required.
 		 */
-		setifprefixlen("64", 0);
+		if (setipdst && (flags & IFF_POINTOPOINT))
+			setifprefixlen("128", 0);
+		else
+			setifprefixlen("64", 0);
 		/* in6_getprefix("64", MASK) if MASK is available here... */
 	}
 
@@ -1241,6 +1245,7 @@ void
 setifdstaddr(const char *addr, int param)
 {
 	setaddr++;
+	setipdst++;
 	afp->af_getaddr(addr, DSTADDR);
 }
 
