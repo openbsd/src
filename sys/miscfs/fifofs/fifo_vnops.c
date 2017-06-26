@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.53 2016/12/19 08:36:49 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.54 2017/06/26 09:32:31 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ filt_fifowrite(struct knote *kn, long hint)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
 
-	kn->kn_data = sbspace(&so->so_snd);
+	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		return (1);

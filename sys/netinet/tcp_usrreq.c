@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.151 2017/05/18 11:38:07 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.152 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * marker if URG set.  Possibly send more data.
 	 */
 	case PRU_SEND:
-		sbappendstream(&so->so_snd, m);
+		sbappendstream(so, &so->so_snd, m);
 		error = tcp_output(tp);
 		break;
 
@@ -389,7 +389,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_SENDOOB:
-		if (sbspace(&so->so_snd) < -512) {
+		if (sbspace(so, &so->so_snd) < -512) {
 			m_freem(m);
 			error = ENOBUFS;
 			break;
@@ -402,7 +402,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * of data past the urgent section.
 		 * Otherwise, snd_up should be one lower.
 		 */
-		sbappendstream(&so->so_snd, m);
+		sbappendstream(so, &so->so_snd, m);
 		tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
 		tp->t_force = 1;
 		error = tcp_output(tp);
@@ -662,7 +662,7 @@ tcp_disconnect(struct tcpcb *tp)
 		tp = tcp_drop(tp, 0);
 	else {
 		soisdisconnecting(so);
-		sbflush(&so->so_rcv);
+		sbflush(so, &so->so_rcv);
 		tp = tcp_usrclosed(tp);
 		if (tp)
 			(void) tcp_output(tp);
@@ -1111,7 +1111,7 @@ tcp_update_sndspace(struct tcpcb *tp)
 		    tp->snd_una);
 
 	/* a writable socket must be preserved because of poll(2) semantics */
-	if (sbspace(&so->so_snd) >= so->so_snd.sb_lowat) {
+	if (sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat) {
 		if (nmax < so->so_snd.sb_cc + so->so_snd.sb_lowat)
 			nmax = so->so_snd.sb_cc + so->so_snd.sb_lowat;
 		if (nmax * 2 < so->so_snd.sb_mbcnt + so->so_snd.sb_lowat)
@@ -1122,7 +1122,7 @@ tcp_update_sndspace(struct tcpcb *tp)
 	nmax = roundup(nmax, tp->t_maxseg);
 
 	if (nmax != so->so_snd.sb_hiwat)
-		sbreserve(&so->so_snd, nmax);
+		sbreserve(so, &so->so_snd, nmax);
 }
 
 /*
@@ -1161,5 +1161,5 @@ tcp_update_rcvspace(struct tcpcb *tp)
 
 	/* round to MSS boundary */
 	nmax = roundup(nmax, tp->t_maxseg);
-	sbreserve(&so->so_rcv, nmax);
+	sbreserve(so, &so->so_rcv, nmax);
 }

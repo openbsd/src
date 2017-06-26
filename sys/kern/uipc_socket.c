@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.188 2017/06/20 17:13:21 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.189 2017/06/26 09:32:31 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ sofree(struct socket *so)
 		so->so_sp = NULL;
 	}
 #endif /* SOCKET_SPLICE */
-	sbrelease(&so->so_snd);
+	sbrelease(so, &so->so_snd);
 	sorflush(so);
 	pool_put(&socket_pool, so);
 }
@@ -440,7 +440,7 @@ restart:
 			} else if (addr == 0)
 				snderr(EDESTADDRREQ);
 		}
-		space = sbspace(&so->so_snd);
+		space = sbspace(so, &so->so_snd);
 		if (flags & MSG_OOB)
 			space += 1024;
 		if ((atomic && resid > so->so_snd.sb_hiwat) ||
@@ -1041,7 +1041,7 @@ sorflush(struct socket *so)
 	struct sockbuf *sb = &so->so_rcv;
 	struct protosw *pr = so->so_proto;
 	sa_family_t af = pr->pr_domain->dom_family;
-	struct sockbuf asb;
+	struct socket aso;
 
 	sb->sb_flags |= SB_NOINTR;
 	sblock(sb, M_WAITOK,
@@ -1049,16 +1049,17 @@ sorflush(struct socket *so)
 	    &netlock : NULL);
 	socantrcvmore(so);
 	sbunlock(sb);
-	asb = *sb;
+	aso.so_proto = pr;
+	aso.so_rcv = *sb;
 	memset(sb, 0, sizeof (*sb));
 	/* XXX - the memset stomps all over so_rcv */
-	if (asb.sb_flags & SB_KNOTE) {
-		sb->sb_sel.si_note = asb.sb_sel.si_note;
+	if (aso.so_rcv.sb_flags & SB_KNOTE) {
+		sb->sb_sel.si_note = aso.so_rcv.sb_sel.si_note;
 		sb->sb_flags = SB_KNOTE;
 	}
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
-		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
-	sbrelease(&asb);
+		(*pr->pr_domain->dom_dispose)(aso.so_rcv.sb_mb);
+	sbrelease(&aso, &aso.so_rcv);
 }
 
 #ifdef SOCKET_SPLICE
@@ -1270,7 +1271,7 @@ somove(struct socket *so, int wait)
 			maxreached = 1;
 		}
 	}
-	space = sbspace(&sosp->so_snd);
+	space = sbspace(sosp, &sosp->so_snd);
 	if (so->so_oobmark && so->so_oobmark < len &&
 	    so->so_oobmark < space + 1024)
 		space += 1024;
@@ -1635,7 +1636,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					goto bad;
 				}
 				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
-				    sbreserve(&so->so_snd, cnt)) {
+				    sbreserve(so, &so->so_snd, cnt)) {
 					error = ENOBUFS;
 					goto bad;
 				}
@@ -1648,7 +1649,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					goto bad;
 				}
 				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
-				    sbreserve(&so->so_rcv, cnt)) {
+				    sbreserve(so, &so->so_rcv, cnt)) {
 					error = ENOBUFS;
 					goto bad;
 				}
@@ -1990,8 +1991,13 @@ int
 filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
+	int s;
 
-	kn->kn_data = sbspace(&so->so_snd);
+	if (!(hint & NOTE_SUBMIT))
+		s = solock(so);
+	kn->kn_data = sbspace(so, &so->so_snd);
+	if (!(hint & NOTE_SUBMIT))
+		sounlock(s);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;

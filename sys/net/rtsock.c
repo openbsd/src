@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.238 2017/06/09 12:56:43 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.239 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * empty so that we can clear the flag.
 		 */
 		if (((rop->flags & ROUTECB_FLAG_FLUSH) != 0) &&
-		    ((sbspace(&rp->rcb_socket->so_rcv) ==
+		    ((sbspace(rp->rcb_socket, &rp->rcb_socket->so_rcv) ==
 		    rp->rcb_socket->so_rcv.sb_hiwat)))
 			rop->flags &= ~ROUTECB_FLAG_FLUSH;
 		break;
@@ -325,7 +325,8 @@ route_senddesync(void *data)
 	 */
 	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
-		if (sbappendaddr(&rp->rcb_socket->so_rcv, &route_src,
+		struct socket *so = rp->rcb_socket;
+		if (sbappendaddr(so, &so->so_rcv, &route_src,
 		    desync_mbuf, NULL) != 0) {
 			rop->flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rp->rcb_socket);
@@ -431,8 +432,8 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		if (last) {
 			struct mbuf *n;
 			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
-				    sbappendaddr(&last->so_rcv, sosrc,
+				if (sbspace(last, &last->so_rcv) < (2*MSIZE) ||
+				    sbappendaddr(last, &last->so_rcv, sosrc,
 				    n, (struct mbuf *)NULL) == 0) {
 					/*
 					 * Flag socket as desync'ed and
@@ -452,8 +453,8 @@ route_input(struct mbuf *m0, struct socket *so, sa_family_t sa_family)
 		last = rp->rcb_socket;
 	}
 	if (last) {
-		if (sbspace(&last->so_rcv) < (2 * MSIZE) ||
-		    sbappendaddr(&last->so_rcv, sosrc,
+		if (sbspace(last, &last->so_rcv) < (2 * MSIZE) ||
+		    sbappendaddr(last, &last->so_rcv, sosrc,
 		    m, (struct mbuf *)NULL) == 0) {
 			/* Flag socket as desync'ed and flush required */
 			sotoroutecb(last)->flags |=

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.47 2017/05/30 07:50:37 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.48 2017/06/26 09:32:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -223,7 +223,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 
 	if (inp) {
 		sa = inp->inp_socket;
-		if (sbappendaddr(&sa->so_rcv, sin6tosa(&addr), m, NULL) == 0) {
+		if (sbappendaddr(sa, &sa->so_rcv, sin6tosa(&addr), m, NULL) == 0) {
 			div6stat_inc(div6s_fullsock);
 			m_freem(m);
 			return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.114 2017/05/13 17:44:00 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.115 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -191,7 +191,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 					ip6_savecontrol(last, n, &opts);
 				/* strip intermediate headers */
 				m_adj(n, *offp);
-				if (sbappendaddr(&last->inp_socket->so_rcv,
+				if (sbappendaddr(last->inp_socket,
+				    &last->inp_socket->so_rcv,
 				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
@@ -209,7 +210,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 			ip6_savecontrol(last, m, &opts);
 		/* strip intermediate headers */
 		m_adj(m, *offp);
-		if (sbappendaddr(&last->inp_socket->so_rcv,
+		if (sbappendaddr(last->inp_socket, &last->inp_socket->so_rcv,
 		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			m_freem(opts);

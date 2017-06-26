@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.237 2017/05/06 16:35:59 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.238 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 						    ip, n);
 
 					m_adj(n, iphlen);
-					if (sbappendaddr(
+					if (sbappendaddr(last->inp_socket,
 					    &last->inp_socket->so_rcv,
 					    &srcsa.sa, n, opts) == 0) {
 						m_freem(n);
@@ -501,7 +501,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			ip_savecontrol(last, &opts, ip, m);
 
 		m_adj(m, iphlen);
-		if (sbappendaddr(&last->inp_socket->so_rcv,
+		if (sbappendaddr(last->inp_socket, &last->inp_socket->so_rcv,
 		    &srcsa.sa, m, opts) == 0) {
 			udpstat_inc(udps_fullsock);
 			goto bad;
@@ -654,7 +654,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	iphlen += sizeof(struct udphdr);
 	m_adj(m, iphlen);
-	if (sbappendaddr(&inp->inp_socket->so_rcv, &srcsa.sa, m, opts) == 0) {
+	if (sbappendaddr(inp->inp_socket, &inp->inp_socket->so_rcv, &srcsa.sa,
+	    m, opts) == 0) {
 		udpstat_inc(udps_fullsock);
 		goto bad;
 	}

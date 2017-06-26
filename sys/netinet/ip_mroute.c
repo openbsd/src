@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.119 2017/06/19 17:00:16 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.120 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ int
 socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 {
 	if (s != NULL) {
-		if (sbappendaddr(&s->so_rcv, sintosa(src), mm, NULL) != 0) {
+		if (sbappendaddr(s, &s->so_rcv, sintosa(src), mm, NULL) != 0) {
 			sorwakeup(s);
 			return (0);
 		}

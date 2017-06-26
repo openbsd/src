@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.78 2017/06/07 13:41:02 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.79 2017/06/26 09:32:31 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -436,9 +436,9 @@ int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
-	if (sbreserve(&so->so_snd, sndcc))
+	if (sbreserve(so, &so->so_snd, sndcc))
 		goto bad;
-	if (sbreserve(&so->so_rcv, rcvcc))
+	if (sbreserve(so, &so->so_rcv, rcvcc))
 		goto bad2;
 	so->so_snd.sb_wat = sndcc;
 	so->so_rcv.sb_wat = rcvcc;
@@ -450,7 +450,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
 bad2:
-	sbrelease(&so->so_snd);
+	sbrelease(so, &so->so_snd);
 bad:
 	return (ENOBUFS);
 }
@@ -461,8 +461,10 @@ bad:
  * if buffering efficiency is near the normal case.
  */
 int
-sbreserve(struct sockbuf *sb, u_long cc)
+sbreserve(struct socket *so, struct sockbuf *sb, u_long cc)
 {
+	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
+	soassertlocked(so);
 
 	if (cc == 0 || cc > sb_max)
 		return (1);
@@ -503,10 +505,10 @@ sbchecklowmem(void)
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
-sbrelease(struct sockbuf *sb)
+sbrelease(struct socket *so, struct sockbuf *sb)
 {
 
-	sbflush(sb);
+	sbflush(so, sb);
 	sb->sb_hiwat = sb->sb_mbmax = 0;
 }
 
@@ -597,7 +599,7 @@ do {									\
  * discarded and mbufs are compacted where possible.
  */
 void
-sbappend(struct sockbuf *sb, struct mbuf *m)
+sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 {
 	struct mbuf *n;
 
@@ -614,7 +616,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 		 */
 		do {
 			if (n->m_flags & M_EOR) {
-				sbappendrecord(sb, m); /* XXXXXX!!!! */
+				sbappendrecord(so, sb, m); /* XXXXXX!!!! */
 				return;
 			}
 		} while (n->m_next && (n = n->m_next));
@@ -635,9 +637,10 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
  * in the socket buffer, that is, a stream protocol (such as TCP).
  */
 void
-sbappendstream(struct sockbuf *sb, struct mbuf *m)
+sbappendstream(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 {
-
+	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
+	soassertlocked(so);
 	KDASSERT(m->m_nextpkt == NULL);
 	KASSERT(sb->sb_mb == sb->sb_lastrecord);
 
@@ -679,9 +682,12 @@ sbcheck(struct sockbuf *sb)
  * begins a new record.
  */
 void
-sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
+sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 {
 	struct mbuf *m;
+
+	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
+	soassertlocked(so);
 
 	if (m0 == NULL)
 		return;
@@ -759,8 +765,8 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
-    struct mbuf *control)
+sbappendaddr(struct socket *so, struct sockbuf *sb, struct sockaddr *asa,
+    struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf *m, *n, *nlast;
 	int space = asa->sa_len;
@@ -774,7 +780,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 		if (n->m_next == NULL)	/* keep pointer to last control buf */
 			break;
 	}
-	if (space > sbspace(sb))
+	if (space > sbspace(so, sb))
 		return (0);
 	if (asa->sa_len > MLEN)
 		return (0);
@@ -806,7 +812,8 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 }
 
 int
-sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
+sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
+    struct mbuf *control)
 {
 	struct mbuf *m, *mlast, *n;
 	int space = 0;
@@ -821,7 +828,7 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	n = m;			/* save pointer to last control buffer */
 	for (m = m0; m; m = m->m_next)
 		space += m->m_len;
-	if (space > sbspace(sb))
+	if (space > sbspace(so, sb))
 		return (0);
 	n->m_next = m0;			/* concatenate data to control */
 
@@ -902,13 +909,13 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
  * Check that all resources are reclaimed.
  */
 void
-sbflush(struct sockbuf *sb)
+sbflush(struct socket *so, struct sockbuf *sb)
 {
-
+	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	KASSERT((sb->sb_flags & SB_LOCK) == 0);
 
 	while (sb->sb_mbcnt)
-		sbdrop(sb, (int)sb->sb_cc);
+		sbdrop(so, sb, (int)sb->sb_cc);
 
 	KASSERT(sb->sb_cc == 0);
 	KASSERT(sb->sb_datacc == 0);
@@ -921,10 +928,13 @@ sbflush(struct sockbuf *sb)
  * Drop data from (the front of) a sockbuf.
  */
 void
-sbdrop(struct sockbuf *sb, int len)
+sbdrop(struct socket *so, struct sockbuf *sb, int len)
 {
 	struct mbuf *m, *mn;
 	struct mbuf *next;
+
+	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
+	soassertlocked(so);
 
 	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
 	while (len > 0) {

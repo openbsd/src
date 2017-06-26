@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.161 2017/06/26 09:17:55 patrick Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.162 2017/06/26 09:32:32 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -327,7 +327,7 @@ ret:
 }
 
 int
-pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
+pfkey_sendup(struct socket *so, struct mbuf *packet, int more)
 {
 	struct mbuf *packet2;
 
@@ -339,12 +339,12 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 	} else
 		packet2 = packet;
 
-	if (!sbappendaddr(&socket->so_rcv, &pfkey_addr, packet2, NULL)) {
+	if (!sbappendaddr(so, &so->so_rcv, &pfkey_addr, packet2, NULL)) {
 		m_freem(packet2);
 		return (ENOBUFS);
 	}
 
-	sorwakeup(socket);
+	sorwakeup(so);
 	return (0);
 }
 

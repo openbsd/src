@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.25 2017/05/31 14:52:05 mikeb Exp $	*/
+/*	$OpenBSD: event.h,v 1.26 2017/06/26 09:32:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -78,6 +78,13 @@ struct kevent {
 /* returned values */
 #define EV_EOF		0x8000		/* EOF detected */
 #define EV_ERROR	0x4000		/* error, data contains errno */
+
+/*
+ * hint flag for in-kernel use - must not equal any existing note
+ */
+#ifdef _KERNEL
+#define NOTE_SUBMIT	0x01000000		/* initial knote submission */
+#endif
 
 /*
  * data/hint flags for EVFILT_{READ|WRITE}, shared with userspace

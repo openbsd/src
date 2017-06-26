@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.117 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.118 2017/06/26 09:32:31 mpi Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				from = mtod(unp->unp_addr, struct sockaddr *);
 			else
 				from = &sun_noname;
-			if (sbappendaddr(&so2->so_rcv, from, m, control)) {
+			if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
 				sorwakeup(so2);
 				m = NULL;
 				control = NULL;
@@ -252,16 +252,16 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(rcv, m, control))
+				if (sbappendcontrol(so2, rcv, m, control))
 					control = NULL;
 				else {
 					error = ENOBUFS;
 					break;
 				}
 			} else if (so->so_type == SOCK_SEQPACKET)
-				sbappendrecord(rcv, m);
+				sbappendrecord(so2, rcv, m);
 			else
-				sbappend(rcv, m);
+				sbappend(so2, rcv, m);
 			snd->sb_mbcnt = rcv->sb_mbcnt;
 			snd->sb_cc = rcv->sb_cc;
 			sorwakeup(so2);

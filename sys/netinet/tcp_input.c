@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.345 2017/05/18 11:38:07 mpi Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.346 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ tcp_flush_queue(struct tcpcb *tp)
 		if (so->so_state & SS_CANTRCVMORE)
 			m_freem(q->tcpqe_m);
 		else
-			sbappendstream(&so->so_rcv, q->tcpqe_m);
+			sbappendstream(so, &so->so_rcv, q->tcpqe_m);
 		pool_put(&tcpqe_pool, q);
 		q = nq;
 	} while (q != NULL && q->tcpqe_tcp->th_seq == tp->rcv_nxt);
@@ -944,7 +944,7 @@ findpcb:
 				tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte,
 				    acked);
 				ND6_HINT(tp);
-				sbdrop(&so->so_snd, acked);
+				sbdrop(so, &so->so_snd, acked);
 
 				/*
 				 * If we had a pending ICMP message that
@@ -996,7 +996,7 @@ findpcb:
 					TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
 				tcp_update_sndspace(tp);
-				if (sb_notify(&so->so_snd)) {
+				if (sb_notify(so, &so->so_snd)) {
 					tp->t_flags |= TF_BLOCKOUTPUT;
 					sowwakeup(so);
 					tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -1008,7 +1008,7 @@ findpcb:
 			}
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_EMPTY(&tp->t_segq) &&
-		    tlen <= sbspace(&so->so_rcv)) {
+		    tlen <= sbspace(so, &so->so_rcv)) {
 			/*
 			 * This is a pure, in-sequence data packet
 			 * with nothing on the reassembly queue and
@@ -1043,7 +1043,7 @@ findpcb:
 						tp->rfbuf_cnt += tlen;
 				}
 				m_adj(m, iphlen + off);
-				sbappendstream(&so->so_rcv, m);
+				sbappendstream(so, &so->so_rcv, m);
 			}
 			tp->t_flags |= TF_BLOCKOUTPUT;
 			sorwakeup(so);
@@ -1067,7 +1067,7 @@ findpcb:
 	 */
 	{ int win;
 
-	win = sbspace(&so->so_rcv);
+	win = sbspace(so, &so->so_rcv);
 	if (win < 0)
 		win = 0;
 	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
@@ -1780,16 +1780,16 @@ trimthenstep6:
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
-			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
+			sbdrop(so, &so->so_snd, (int)so->so_snd.sb_cc);
 			ourfinisacked = 1;
 		} else {
-			sbdrop(&so->so_snd, acked);
+			sbdrop(so, &so->so_snd, acked);
 			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
 
 		tcp_update_sndspace(tp);
-		if (sb_notify(&so->so_snd)) {
+		if (sb_notify(so, &so->so_snd)) {
 			tp->t_flags |= TF_BLOCKOUTPUT;
 			sowwakeup(so);
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -1997,7 +1997,7 @@ dodata:							/* XXX */
 				m_freem(m);
 			else {
 				m_adj(m, hdroptlen);
-				sbappendstream(&so->so_rcv, m);
+				sbappendstream(so, &so->so_rcv, m);
 			}
 			tp->t_flags |= TF_BLOCKOUTPUT;
 			sorwakeup(so);
@@ -3107,7 +3107,7 @@ tcp_mss_update(struct tcpcb *tp)
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void)sbreserve(&so->so_snd, bufsize);
+		(void)sbreserve(so, &so->so_snd, bufsize);
 	}
 
 	bufsize = so->so_rcv.sb_hiwat;
@@ -3115,7 +3115,7 @@ tcp_mss_update(struct tcpcb *tp)
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
-		(void)sbreserve(&so->so_rcv, bufsize);
+		(void)sbreserve(so, &so->so_rcv, bufsize);
 	}
 
 }
@@ -3909,7 +3909,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	/*
 	 * Initialize some local state.
 	 */
-	win = sbspace(&so->so_rcv);
+	win = sbspace(so, &so->so_rcv);
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 

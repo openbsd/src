@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.99 2017/04/17 21:10:03 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.100 2017/06/26 09:32:32 mpi Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -168,7 +168,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 				if (last->inp_flags & INP_CONTROLOPTS ||
 				    last->inp_socket->so_options & SO_TIMESTAMP)
 					ip_savecontrol(last, &opts, ip, n);
-				if (sbappendaddr(&last->inp_socket->so_rcv,
+				if (sbappendaddr(last->inp_socket,
+				    &last->inp_socket->so_rcv,
 				    sintosa(&ripsrc), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
@@ -184,8 +185,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		if (last->inp_flags & INP_CONTROLOPTS ||
 		    last->inp_socket->so_options & SO_TIMESTAMP)
 			ip_savecontrol(last, &opts, ip, m);
-		if (sbappendaddr(&last->inp_socket->so_rcv, sintosa(&ripsrc), m,
-		    opts) == 0) {
+		if (sbappendaddr(last->inp_socket, &last->inp_socket->so_rcv,
+		    sintosa(&ripsrc), m, opts) == 0) {
 			m_freem(m);
 			m_freem(opts);
 		} else
