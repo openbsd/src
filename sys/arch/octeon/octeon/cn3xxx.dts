@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn3xxx.dts,v 1.1 2017/04/24 13:54:28 visa Exp $	*/
+/*	$OpenBSD: cn3xxx.dts,v 1.2 2017/06/26 16:54:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -40,11 +40,12 @@
 
 	soc@0 {
 		compatible = "simple-bus";
+		interrupt-parent = <&ciu>;
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
 
-		ciu@1070000000000 {
+		ciu: ciu@1070000000000 {
 			compatible = "cavium,octeon-3860-ciu";
 			interrupt-controller;
 			#interrupt-cells = <2>;
