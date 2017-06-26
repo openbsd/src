@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.311 2017/06/26 10:05:57 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.312 2017/06/26 10:08:06 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3023,10 +3023,6 @@ parsecommunity(struct filter_community *c, char *s)
 
 	if ((i = getcommunity(s)) == COMMUNITY_ERROR)
 		return (-1);
-	if (i == COMMUNITY_WELLKNOWN) {
-		yyerror("Bad community AS number");
-		return (-1);
-	}
 	as = i;
 
 	if ((i = getcommunity(p)) == COMMUNITY_ERROR)

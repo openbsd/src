@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.78 2017/06/26 10:05:57 phessler Exp $ */
+/*	$OpenBSD: parser.c,v 1.79 2017/06/26 10:08:06 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -999,10 +999,6 @@ done:
 		case COMMUNITY_BLACKHOLE:
 			/* valid */
 			break;
-		default:
-			/* unknown */
-			fprintf(stderr, "Unknown well-known community\n");
-			return (0);
 		}
 
 	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
