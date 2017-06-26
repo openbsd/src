@@ -272,6 +272,8 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_chan = aa->aa_chan;
 	sc->sc_dmat = aa->aa_dmat;
 
+	printf(" channel %u: %s", sc->sc_chan->ch_id, aa->aa_ident);
+
 	if (strcmp("scsi", aa->aa_ident) == 0)
 		sc->sc_flags |= HVSF_SCSI;
 
@@ -287,8 +289,6 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	hv_evcount_attach(sc->sc_chan, sc->sc_dev.dv_xname);
-
-	printf(" channel %u: %s", sc->sc_chan->ch_id, aa->aa_ident);
 
 	if (hvs_alloc_ccbs(sc))
 		return;
@@ -493,10 +493,10 @@ hvs_poll(struct hvs_softc *sc, struct hvs_ccb *ccb)
 	}
 
 	while (rv == 1) {
+		delay(10);
 		s = splbio();
 		hvs_intr(sc);
 		splx(s);
-		delay(10);
 	}
 
 	ccb->ccb_cookie = cookie;
@@ -519,11 +519,16 @@ hvs_intr(void *xsc)
 	for (;;) {
 		rv = hv_channel_recv(sc->sc_chan, &cmd, sizeof(cmd), &rlen,
 		    &rid, 0);
-		if (rv != 0 || rlen == 0) {
-			if (rv != EAGAIN)
-				printf("%s: failed to receive a packet (%d-%u)\n",
-				    sc->sc_dev.dv_xname, rv, rlen);
+		switch (rv) {
+		case 0:
 			break;
+		case EAGAIN:
+			/* No more messages to process */
+			return;
+		default:
+			printf("%s: error %d while receiving a reply\n",
+			    sc->sc_dev.dv_xname, rv);
+			return;
 		}
 		if (rlen != sizeof(cmd)) {
 			printf("%s: short read: %u\n", sc->sc_dev.dv_xname,
