@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.78 2017/05/31 05:59:09 mpi Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.79 2017/06/26 19:06:12 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -248,7 +248,8 @@ int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	    struct mbuf *);
 void	 ipintr(void);
-void	 ip_deliver(struct mbuf **, int *, int, int);
+int	 ip_input_if(struct mbuf **, int *, int, int, struct ifnet *);
+int	 ip_deliver(struct mbuf **, int *, int, int);
 void	 ip_forward(struct mbuf *, struct ifnet *, struct rtentry *, int);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	 rip_init(void);
