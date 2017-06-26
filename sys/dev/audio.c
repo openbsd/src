@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.164 2017/05/16 05:48:07 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.165 2017/06/26 07:02:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1741,10 +1741,9 @@ audiopoll(dev_t dev, int events, struct proc *p)
 		break;
 	case AUDIO_DEV_AUDIOCTL:
 	case AUDIO_DEV_MIXER:
-		revents = 0;
-		break;
 	default:
 		revents = 0;
+		break;
 	}
 	device_unref(&sc->dev);
 	return revents;
