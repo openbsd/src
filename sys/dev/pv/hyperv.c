@@ -106,6 +106,7 @@ int	hv_channel_ring_create(struct hv_channel *, uint32_t);
 void	hv_channel_ring_destroy(struct hv_channel *);
 void	hv_channel_pause(struct hv_channel *);
 uint	hv_channel_unpause(struct hv_channel *);
+uint	hv_channel_ready(struct hv_channel *);
 extern void hv_attach_icdevs(struct hv_softc *);
 int	hv_attach_devices(struct hv_softc *);
 
@@ -1230,22 +1231,14 @@ void
 hv_channel_intr(void *arg)
 {
 	struct hv_channel *ch = arg;
-	extern int ticks;
-	int start = ticks;
 
-	do {
+	if (hv_channel_ready(ch))
 		ch->ch_handler(ch->ch_ctx);
 
-		if (hv_channel_unpause(ch) == 0)
-			return;
+	if (hv_channel_unpause(ch) == 0)
+		return;
 
-		hv_channel_pause(ch);
-
-#if (defined(__amd64__) || defined(__i386__))
-		__asm volatile("pause": : : "memory");
-#endif
-	} while (ticks < start + 1);
-
+	hv_channel_pause(ch);
 	hv_channel_schedule(ch);
 }
 
@@ -1592,6 +1585,16 @@ hv_channel_unpause(struct hv_channel *ch)
 	uint32_t avail;
 
 	hv_ring_unmask(&ch->ch_rrd);
+	hv_ring_avail(&ch->ch_rrd, NULL, &avail);
+
+	return (avail);
+}
+
+uint
+hv_channel_ready(struct hv_channel *ch)
+{
+	uint32_t avail;
+
 	hv_ring_avail(&ch->ch_rrd, NULL, &avail);
 
 	return (avail);
