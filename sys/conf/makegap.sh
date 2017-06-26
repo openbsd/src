@@ -53,9 +53,6 @@ SECTIONS {
 		. = ALIGN(16);
 		*(.bss .bss.*)
 	} :bss
-
-	note.ABI-tag 0 : { *(.note.ABI-tag) }
-	.MIPS.options : { *(.MIPS.options) }
 }
 __EOF__
 
