@@ -1,4 +1,4 @@
-/*	$OpenBSD: libroff.h,v 1.17 2015/11/07 13:57:55 schwarze Exp $ */
+/*	$OpenBSD: libroff.h,v 1.18 2017/06/26 19:53:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -43,10 +43,11 @@ struct	eqn_node {
 	struct eqn_node  *next;   /* singly linked list of equations */
 	struct eqn_def	 *defs;   /* array of definitions */
 	char		 *data;   /* source code of this equation */
+	char		 *start;  /* first byte of the current token */
+	char		 *end;	  /* first byte of the next token */
 	size_t		  defsz;  /* number of definitions */
 	size_t		  sz;     /* length of the source code */
-	size_t		  cur;    /* parse point in the source code */
-	size_t		  rew;    /* beginning of the current token */
+	size_t		  toksz;  /* length of the current token */
 	int		  gsize;  /* default point size */
 	int		  delim;  /* in-line delimiters enabled */
 	char		  odelim; /* in-line opening delimiter */
