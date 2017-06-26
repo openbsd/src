@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.160 2017/05/29 20:31:12 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.161 2017/06/26 09:17:55 patrick Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1214,6 +1214,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			import_tag(sa2, headers[SADB_X_EXT_TAG]);
 			import_tap(sa2, headers[SADB_X_EXT_TAP]);
 #endif
+			if (headers[SADB_EXT_ADDRESS_SRC] ||
+			    headers[SADB_EXT_ADDRESS_PROXY]) {
+				tdb_unlink(sa2);
+				import_address((struct sockaddr *)&sa2->tdb_src,
+				    headers[SADB_EXT_ADDRESS_SRC]);
+				import_address((struct sockaddr *)&sa2->tdb_dst,
+				    headers[SADB_EXT_ADDRESS_PROXY]);
+				puttdb(sa2);
+			}
 		}
 
 		break;
