@@ -1,0 +1,17 @@
+.Dd June 25, 2017
+.Dt DEFINE-QUOTED 1
+.Os OpenBSD
+.Sh NAME
+.Nm define-quoted
+.Nd interaction of the define control statement with quoting
+.Sh DESCRIPTION
+initial text
+.EQ
+define unquoted 'sin'
+"unquoted"
+unquoted
+define quoted '"sin"'
+"quoted"
+quoted
+.EN
+final text

@@ -1,0 +1,9 @@
+DEFINE-QUOTED(1)            General Commands Manual           DEFINE-QUOTED(1)
+
+NNAAMMEE
+     ddeeffiinnee--qquuootteedd - interaction of the define control statement with quoting
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text _u_n_q_u_o_t_e_d sin _q_u_o_t_e_d _s_i_n final text
+
+OpenBSD                          June 25, 2017                         OpenBSD

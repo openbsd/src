@@ -7,6 +7,6 @@
 .Sh DESCRIPTION
 initial text
 .EQ
-r = sqrt { x sup 2 + y sup 2 } + sqrt { } + sqrt
+r = sqrt { x sup 2 + y sup 2 } + sqrt a+b + sqrt { } + sqrt
 .EN
 final text

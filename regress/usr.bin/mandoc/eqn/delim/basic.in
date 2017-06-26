@@ -1,0 +1,21 @@
+.Dd June 26, 2017
+.Dt DELIM-BASIC 1
+.Os OpenBSD
+.Sh NAME
+.Nm delim-basic
+.Nd inline eqn delimiters
+.Sh DESCRIPTION
+initial text
+.EQ
+delim <>alpha
+.EN
+inline <beta>
+.EQ
+delim offgamma
+.EN
+inline <delta>
+.EQ
+delim onepsilon
+.EN
+inline <zeta>
+final text

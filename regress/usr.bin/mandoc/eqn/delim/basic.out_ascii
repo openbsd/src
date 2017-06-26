@@ -1,0 +1,9 @@
+DELIM-BASIC(1)              General Commands Manual             DELIM-BASIC(1)
+
+NNAAMMEE
+     ddeelliimm--bbaassiicc - inline eqn delimiters
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text a inline B y inline <delta> e inline ,C final text
+
+OpenBSD                          June 26, 2017                         OpenBSD

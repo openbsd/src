@@ -1,14 +1,32 @@
-.Dd October 12, 2014
+.Dd June 25, 2017
 .Dt NULLARY-ROMAN 1
 .Os OpenBSD
 .Sh NAME
 .Nm nullary-roman
 .Nd equation tokens set in roman font
 .Sh DESCRIPTION
-initial text
+initial text \(em
 .EQ
-sin cos tan sinh cosh tanh arc
+roman "unquoted words:"
+sin cos tan sec csc asin acos atan asec acsc
+sinh cosh tanh coth arc
 max min lim log ln exp
 Re Im and if for det
+\(em
+roman "quoted words:"
+"sin" "cos" "tan" "sec" "csc" "asin" "acos" "atan" "asec" "acsc"
+"sinh" "cosh" "tanh" "coth" "arc"
+"max" "min" "lim" "log" "ln" "exp"
+"Re" "Im" "and" "if" "for" "det"
+\(em
+roman "font operations:"
+bold sin
+bold "sin"
+\(em
+roman "superstring:"
+sinus 
+\(em
+roman "composite word:"
+tan = sin/cos
 .EN
-final text
+\(em final text

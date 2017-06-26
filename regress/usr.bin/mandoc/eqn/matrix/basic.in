@@ -13,5 +13,8 @@ right )
 left (
 pile { b sub 1 above b sub 2 }
 right )
+left [
+bold pile { sin above "sin" }
+right ]
 .EN
 final text

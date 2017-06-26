@@ -4,7 +4,11 @@ NNAAMMEE
      nnuullllaarryy--rroommaann - equation tokens set in roman font
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text sin cos tan sinh cosh tanh arc max min lim log ln exp Re Im
-     and if for det final text
+     initial text -- unquoted words: sin cos tan sec csc asin acos atan asec
+     acsc sinh cosh tanh coth arc max min lim log ln exp Re Im and if for det
+     -- quoted words: _s_i_n _c_o_s _t_a_n _s_e_c _c_s_c _a_s_i_n _a_c_o_s _a_t_a_n _a_s_e_c _a_c_s_c _s_i_n_h _c_o_s_h
+     _t_a_n_h _c_o_t_h _a_r_c _m_a_x _m_i_n _l_i_m _l_o_g _l_n _e_x_p _R_e _I_m _a_n_d _i_f _f_o_r _d_e_t -- font
+     operations: sin ssiinn -- superstring: _s_i_n_u_s -- composite word: tan = _s_i_n /
+     _c_o_s -- final text
 
-OpenBSD                        October 12, 2014                        OpenBSD
+OpenBSD                          June 25, 2017                         OpenBSD

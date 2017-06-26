@@ -1,0 +1,19 @@
+.Dd June 25, 2017
+.Dt NULLARY-SYMBOL 1
+.Os OpenBSD
+.Sh NAME
+.Nm nullary-symbol
+.Nd equation tokens for symbols
+.Sh DESCRIPTION
+initial text \(em
+.EQ
+roman "unquoted words:"
+epsilon prime
+\(em
+roman "quoted words:"
+"epsilon" "prime"
+\(em
+roman "composite word:"
+epsilon-prime
+.EN
+\(em final text

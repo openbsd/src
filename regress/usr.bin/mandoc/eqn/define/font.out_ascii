@@ -1,0 +1,9 @@
+DEFINE-FONT(1)              General Commands Manual             DEFINE-FONT(1)
+
+NNAAMMEE
+     ddeeffiinnee--ffoonntt - font selection takes place after define resolution
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text sin _x _v_a_l_u_e final text
+
+OpenBSD                          June 25, 2017                         OpenBSD
