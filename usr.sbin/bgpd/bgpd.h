@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.308 2017/05/31 10:44:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.309 2017/06/26 10:05:57 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -750,6 +750,7 @@ struct filter_peers {
 #define	COMMUNITY_LOCAL_AS		-4
 #define	COMMUNITY_UNSET			-5
 #define	COMMUNITY_WELLKNOWN		0xffff
+#define	COMMUNITY_GRACEFUL_SHUTDOWN	0x0000  /* draft-ietf-grow-bgp-gshut */
 #define	COMMUNITY_BLACKHOLE		0x029A	/* RFC 7999 */
 #define	COMMUNITY_NO_EXPORT		0xff01
 #define	COMMUNITY_NO_ADVERTISE		0xff02

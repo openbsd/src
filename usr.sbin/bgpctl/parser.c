@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.77 2017/02/14 13:13:23 benno Exp $ */
+/*	$OpenBSD: parser.c,v 1.78 2017/06/26 10:05:57 phessler Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -950,7 +950,11 @@ parse_community(const char *word, struct parse_result *r)
 	int			 as, type;
 
 	/* Well-known communities */
-	if (strcasecmp(word, "NO_EXPORT") == 0) {
+	if (strcasecmp(word, "GRACEFUL_SHUTDOWN") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_GRACEFUL_SHUTDOWN;
+		goto done;
+	} else if (strcasecmp(word, "NO_EXPORT") == 0) {
 		as = COMMUNITY_WELLKNOWN;
 		type = COMMUNITY_NO_EXPORT;
 		goto done;
@@ -988,6 +992,7 @@ done:
 	}
 	if (as == COMMUNITY_WELLKNOWN)
 		switch (type) {
+		case COMMUNITY_GRACEFUL_SHUTDOWN:
 		case COMMUNITY_NO_EXPORT:
 		case COMMUNITY_NO_ADVERTISE:
 		case COMMUNITY_NO_EXPSUBCONFED:

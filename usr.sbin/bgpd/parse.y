@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.310 2017/06/26 10:04:21 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.311 2017/06/26 10:05:57 phessler Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2989,7 +2989,11 @@ parsecommunity(struct filter_community *c, char *s)
 	int i, as;
 
 	/* Well-known communities */
-	if (strcasecmp(s, "NO_EXPORT") == 0) {
+	if (strcasecmp(s, "GRACEFUL_SHUTDOWN") == 0) {
+		c->as = COMMUNITY_WELLKNOWN;
+		c->type = COMMUNITY_GRACEFUL_SHUTDOWN;
+		return (0);
+	} else if (strcasecmp(s, "NO_EXPORT") == 0) {
 		c->as = COMMUNITY_WELLKNOWN;
 		c->type = COMMUNITY_NO_EXPORT;
 		return (0);

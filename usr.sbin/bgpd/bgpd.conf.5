@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.160 2017/05/31 10:49:10 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.161 2017/06/26 10:05:57 phessler Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2017 $
+.Dd $Mdocdate: June 26 2017 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1173,6 +1173,7 @@ to do wildcard matching.
 Alternatively, well-known communities may be given by name instead and
 include
 .Ic BLACKHOLE ,
+.Ic GRACEFUL_SHUTDOWN ,
 .Ic NO_EXPORT ,
 .Ic NO_ADVERTISE ,
 .Ic NO_EXPORT_SUBCONFED ,
@@ -1444,6 +1445,7 @@ is an AS number and
 is a locally-significant number between zero and
 .Li 65535 .
 Alternately, well-known communities may be specified by name:
+.Ic GRACEFUL_SHUTDOWN ,
 .Ic NO_EXPORT ,
 .Ic NO_ADVERTISE ,
 .Ic NO_EXPORT_SUBCONFED ,
