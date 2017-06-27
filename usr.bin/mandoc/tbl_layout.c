@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.30 2017/06/13 16:11:58 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.31 2017/06/27 18:23:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -355,6 +356,7 @@ cell_alloc(struct tbl_node *tbl, struct tbl_row *rp, enum tbl_cellt pos)
 	struct tbl_cell	*p, *pp;
 
 	p = mandoc_calloc(1, sizeof(*p));
+	p->spacing = SIZE_MAX;
 	p->pos = pos;
 
 	if ((pp = rp->last) != NULL) {

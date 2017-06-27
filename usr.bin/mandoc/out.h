@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.h,v 1.21 2017/06/12 20:14:03 schwarze Exp $ */
+/*	$OpenBSD: out.h,v 1.22 2017/06/27 18:23:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,6 +33,7 @@ enum	roffscale {
 struct	roffcol {
 	size_t		 width; /* width of cell */
 	size_t		 decimal; /* decimal position in cell */
+	size_t		 spacing; /* spacing after the column */
 	int		 flags; /* layout flags, see tbl_cell */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.42 2017/06/17 14:55:02 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.43 2017/06/27 18:23:29 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2012,2014,2015,2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -99,7 +99,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		for (ic = 0; ic < sp->opts->cols; ic++) {
 			coloff += tp->tbl.cols[ic].width;
 			term_tab_iset(coloff);
-			coloff += 3;
+			coloff += tp->tbl.cols[ic].spacing;
 		}
 
 		/* Center the table as a whole. */
@@ -108,9 +108,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		if (sp->opts->opts & TBL_OPT_CENTRE) {
 			tsz = sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)
 			    ? 2 : !!sp->opts->lvert + !!sp->opts->rvert;
-			for (ic = 0; ic < sp->opts->cols; ic++)
-				tsz += tp->tbl.cols[ic].width + 3;
-			tsz -= 3;
+			for (ic = 0; ic + 1 < sp->opts->cols; ic++)
+				tsz += tp->tbl.cols[ic].width +
+				    tp->tbl.cols[ic].spacing;
+			if (sp->opts->cols)
+				tsz += tp->tbl.cols[sp->opts->cols - 1].width;
 			if (offset + tsz > tp->tcol->rmargin)
 				tsz -= 1;
 			tp->tcol->offset = offset + tp->tcol->rmargin > tsz ?
@@ -157,9 +159,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			}
 			coloff += tp->tbl.cols[ic].width;
 			tp->tcol->rmargin = coloff;
-			coloff++;
 			if (ic + 1 < sp->opts->cols)
-				coloff += 2;
+				coloff += tp->tbl.cols[ic].spacing;
 			if (spans) {
 				spans--;
 				continue;
@@ -173,7 +174,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Set up a column for a right vertical frame. */
 
 		tp->tcol++;
-		tp->tcol->offset = coloff;
+		tp->tcol->offset = coloff + 1;
 		tp->tcol->rmargin = tp->maxrmargin;
 
 		/* Spans may have reduced the number of columns. */
@@ -325,13 +326,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				    tp->tcol + 1 == tp->tcols + tp->lasttcol))
 					continue;
 
-				if (tp->tcol->rmargin > tp->viscol) {
+				if (tp->viscol < tp->tcol->rmargin) {
 					(*tp->advance)(tp, tp->tcol->rmargin
 					   - tp->viscol);
 					tp->viscol = tp->tcol->rmargin;
 				}
-
-				if (tp->tcol->rmargin + 1 > tp->viscol) {
+				while (tp->viscol < tp->tcol->rmargin +
+				    tp->tbl.cols[ic].spacing / 2) {
 					(*tp->letter)(tp, fc);
 					tp->viscol++;
 				}
@@ -351,10 +352,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 						break;
 					}
 				}
-
-				(*tp->letter)(tp,
-				    fc == ' ' ? '|' : vert ? '+' : fc);
-				tp->viscol++;
+				if (tp->tbl.cols[ic].spacing) {
+					(*tp->letter)(tp, fc == ' ' ? '|' :
+					    vert ? '+' : fc);
+					tp->viscol++;
+				}
 
 				if (fc != ' ') {
 					if (cp != NULL &&
@@ -366,7 +368,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 					else
 						fc = ' ';
 				}
-				if (vert > 1 || fc != ' ') {
+				if (tp->tbl.cols[ic].spacing > 2 &&
+				    (vert > 1 || fc != ' ')) {
 					(*tp->letter)(tp, fc == ' ' ? '|' :
 					    vert > 1 ? '+' : fc);
 					tp->viscol++;
@@ -446,6 +449,7 @@ static void
 tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 {
 	const struct tbl_cell *cp, *cpn, *cpp;
+	const struct roffcol *col;
 	int	 vert;
 	char	 line, cross;
 
@@ -462,7 +466,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 	if (cpn == cp)
 		cpn = NULL;
 	for (;;) {
-		tbl_char(tp, line, tp->tbl.cols[cp->col].width + 1);
+		col = tp->tbl.cols + cp->col;
+		tbl_char(tp, line, col->width + col->spacing / 2);
 		vert = cp->vert;
 		if ((cp = cp->next) == NULL)
 			 break;
@@ -478,10 +483,12 @@ tbl_hrule(struct termp *tp, const struct tbl_span *sp, int kind)
 		}
 		if (sp->opts->opts & TBL_OPT_ALLBOX && !vert)
 			vert = 1;
-		if (vert)
-			tbl_char(tp, cross, vert);
-		if (vert < 2)
-			tbl_char(tp, line, 2 - vert);
+		if (col->spacing)
+			tbl_char(tp, vert ? cross : line, 1);
+		if (col->spacing > 2)
+			tbl_char(tp, vert > 1 ? cross : line, 1);
+		if (col->spacing > 4)
+			tbl_char(tp, line, (col->spacing - 3) / 2);
 	}
 	if (kind) {
 		term_word(tp, "+");
