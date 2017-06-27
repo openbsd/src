@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.42 2017/06/18 12:03:47 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.43 2017/06/27 20:46:34 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <stdint.h>
 #include <syslog.h>
 #include <err.h>
 #include <event.h>
@@ -87,8 +88,9 @@ int
 main(int argc, char *argv[])
 {
 	struct timeval tv;
-	int ch;
+	int ch, rt_fd;
 	int debug = 0;
+	unsigned int rtfilter;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_setverbose(1);
@@ -144,31 +146,8 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
-	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
-	signal_add(&sigchld_ev, NULL);
-
-	/* Loading the config needs to happen in the event loop */
-	timerclear(&tv);
-	evtimer_set(&startup_ev, startup_handler, NULL);
-	evtimer_add(&startup_ev, &tv);
-
-	event_loop(0);
-	exit(0);
-}
-
-void
-startup_handler(int fd, short event, void *arg)
-{
-	int rt_fd;
-	unsigned int rtfilter;
-
 	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
 		err(1, "no routing socket");
-
-	if (load_config() != 0) {
-		log_warnx("unable to load config");
-		exit(1);
-	}
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
@@ -179,8 +158,30 @@ startup_handler(int fd, short event, void *arg)
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
+
+	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
+	signal_add(&sigchld_ev, NULL);
+
+	/* Loading the config needs to happen in the event loop */
+	timerclear(&tv);
+	evtimer_set(&startup_ev, startup_handler, (void *)(long)rt_fd);
+	evtimer_add(&startup_ev, &tv);
+
+	event_loop(0);
+	exit(0);
+}
+
+void
+startup_handler(int fd, short event, void *arg)
+{
+	int rfd = (int)(long)arg;
+
+	if (load_config() != 0) {
+		log_warnx("unable to load config");
+		exit(1);
+	}
 	
-	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
+	event_set(&rt_msg_ev, rfd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
 
 	signal_set(&sighup_ev, SIGHUP, sighup_handler, NULL);
