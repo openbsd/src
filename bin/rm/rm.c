@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.41 2017/06/27 21:43:46 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.42 2017/06/27 21:49:47 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@ rm_tree(char **argv)
 			if (!rmdir(p->fts_accpath) ||
 			    (fflag && errno == ENOENT)) {
 				if (vflag)
-					(void)fprintf(stdout, "%s\n", p->fts_path);
+					fprintf(stdout, "%s\n", p->fts_path);
 				continue;
 			}
 			break;
@@ -221,7 +221,7 @@ rm_tree(char **argv)
 			if (!unlink(p->fts_accpath) ||
 			    (fflag && errno == ENOENT)) {
 				if (vflag)
-					(void)fprintf(stdout, "%s\n", p->fts_path);
+					fprintf(stdout, "%s\n", p->fts_path);
 				continue;
 			}
 		}
@@ -396,7 +396,7 @@ check(char *path, char *name, struct stat *sp)
  * Since POSIX.2 defines basename as the final portion of a path after
  * trailing slashes have been removed, we'll remove them here.
  */
-#define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
+#define ISDOT(a) ((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
 void
 checkdot(char **argv)
 {

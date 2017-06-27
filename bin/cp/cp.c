@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.45 2017/06/27 21:43:46 tedu Exp $	*/
+/*	$OpenBSD: cp.c,v 1.46 2017/06/27 21:49:47 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -430,7 +430,8 @@ copy(char *argv[], enum op type, int fts_options)
 		case S_IFBLK:
 		case S_IFCHR:
 			if (Rflag) {
-				if (copy_special(curr->fts_statp, !fts_dne(curr)))
+				if (copy_special(curr->fts_statp,
+				    !fts_dne(curr)))
 					rval = 1;
 			} else
 				if (copy_file(curr, fts_dne(curr)))
@@ -458,7 +459,7 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 			else if (vflag)
 				(void)fprintf(stdout, "%s -> %s\n",
-					curr->fts_path, to.p_path);
+				    curr->fts_path, to.p_path);
 			break;
 		}
 	}
