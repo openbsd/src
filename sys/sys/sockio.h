@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.69 2016/11/28 10:12:49 reyk Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.70 2017/06/27 22:18:24 tedu Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -152,9 +152,6 @@
 
 #define	SIOCSIFRTLABEL	 _IOW('i', 130, struct ifreq)	/* set ifnet rtlabel */
 #define	SIOCGIFRTLABEL	_IOWR('i', 131, struct ifreq)	/* set ifnet rtlabel */
-
-#define	SIOCSIFTIMESLOT	 _IOW('i', 133, struct ifreq)	/* set ifnet timeslot */
-#define	SIOCGIFTIMESLOT	_IOWR('i', 134, struct ifreq)	/* get ifnet timeslot */
 
 #define	SIOCSETVLAN	 _IOW('i', 143, struct ifreq)	/* set vlan parent if */
 #define	SIOCGETVLAN	_IOWR('i', 144, struct ifreq)	/* get vlan parent if */
