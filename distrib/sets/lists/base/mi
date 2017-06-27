@@ -543,6 +543,7 @@
 ./usr/bin/ssh-keyscan
 ./usr/bin/stat
 ./usr/bin/strings
+./usr/bin/strip
 ./usr/bin/su
 ./usr/bin/systat
 ./usr/bin/tail
