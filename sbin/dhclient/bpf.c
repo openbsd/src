@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.53 2017/06/19 19:28:35 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.54 2017/06/27 15:56:15 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -65,14 +65,14 @@
 #include "dhcpd.h"
 #include "log.h"
 
-int if_register_bpf(struct interface_info *ifi);
+void if_register_bpf(struct interface_info *ifi);
 
 /*
  * Called by get_interface_list for each interface that's discovered.
  * Opens a packet filter for each interface and adds it to the select
  * mask.
  */
-int
+void
 if_register_bpf(struct interface_info *ifi)
 {
 	struct ifreq ifr;
@@ -86,7 +86,7 @@ if_register_bpf(struct interface_info *ifi)
 	if (ioctl(sock, BIOCSETIF, &ifr) < 0)
 		fatal("Can't attach interface %s to /dev/bpf", ifi->name);
 
-	return (sock);
+	ifi->bfdesc = sock;
 }
 
 void
@@ -192,7 +192,7 @@ if_register_receive(struct interface_info *ifi)
 	int flag = 1, sz;
 
 	/* Open a BPF device and hang it on this interface. */
-	ifi->bfdesc = if_register_bpf(ifi);
+	if_register_bpf(ifi);
 
 	/* Make sure the BPF version is in range. */
 	if (ioctl(ifi->bfdesc, BIOCVERSION, &v) < 0)
