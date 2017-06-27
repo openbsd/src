@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.37 2014/03/19 14:42:44 tedu Exp $
+.\"	$OpenBSD: cp.1,v 1.38 2017/06/27 21:43:46 tedu Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 19 2014 $
+.Dd $Mdocdate: June 27 2017 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -41,14 +41,14 @@
 .Nd copy files
 .Sh SYNOPSIS
 .Nm cp
-.Op Fl fip
+.Op Fl fipv
 .Oo
 .Fl R
 .Op Fl H | L | P
 .Oc
 .Ar source target
 .Nm cp
-.Op Fl fip
+.Op Fl fipv
 .Oo
 .Fl R
 .Op Fl H | L | P
@@ -145,6 +145,8 @@ use a utility such as
 or
 .Xr tar 1
 instead.
+.It Fl v
+Display the source and destination after each copy.
 .El
 .Pp
 For each destination file that already exists, its contents are

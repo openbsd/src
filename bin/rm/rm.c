@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.40 2016/10/14 10:51:57 schwarze Exp $	*/
+/*	$OpenBSD: rm.c,v 1.41 2017/06/27 21:43:46 tedu Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 
 extern char *__progname;
 
-int dflag, eval, fflag, iflag, Pflag, stdin_ok;
+int dflag, eval, fflag, iflag, Pflag, vflag, stdin_ok;
 
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	int ch, rflag;
 
 	Pflag = rflag = 0;
-	while ((ch = getopt(argc, argv, "dfiPRr")) != -1)
+	while ((ch = getopt(argc, argv, "dfiPRrv")) != -1)
 		switch(ch) {
 		case 'd':
 			dflag = 1;
@@ -92,6 +92,9 @@ main(int argc, char *argv[])
 		case 'R':
 		case 'r':			/* Compatibility. */
 			rflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		default:
 			usage();
@@ -201,8 +204,11 @@ rm_tree(char **argv)
 		case FTS_DP:
 		case FTS_DNR:
 			if (!rmdir(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			    (fflag && errno == ENOENT)) {
+				if (vflag)
+					(void)fprintf(stdout, "%s\n", p->fts_path);
 				continue;
+			}
 			break;
 
 		case FTS_F:
@@ -213,8 +219,11 @@ rm_tree(char **argv)
 			/* FALLTHROUGH */
 		default:
 			if (!unlink(p->fts_accpath) ||
-			    (fflag && errno == ENOENT))
+			    (fflag && errno == ENOENT)) {
+				if (vflag)
+					(void)fprintf(stdout, "%s\n", p->fts_path);
 				continue;
+			}
 		}
 		warn("%s", p->fts_path);
 		eval = 1;
@@ -262,7 +271,8 @@ rm_file(char **argv)
 		if (rval && (!fflag || errno != ENOENT)) {
 			warn("%s", f);
 			eval = 1;
-		}
+		} else if (vflag)
+			(void)fprintf(stdout, "%s\n", f);
 	}
 }
 
@@ -430,6 +440,6 @@ skip:
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-dfiPRr] file ...\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-dfiPRrv] file ...\n", __progname);
 	exit(1);
 }

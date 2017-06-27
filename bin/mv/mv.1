@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.31 2012/06/18 23:41:13 matthew Exp $
+.\"	$OpenBSD: mv.1,v 1.32 2017/06/27 21:43:46 tedu Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mv.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: June 18 2012 $
+.Dd $Mdocdate: June 27 2017 $
 .Dt MV 1
 .Os
 .Sh NAME
@@ -103,6 +103,8 @@ The
 option overrides any previous
 .Fl f
 options.
+.It Fl v
+Display the source and destination after each move.
 .El
 .Pp
 The

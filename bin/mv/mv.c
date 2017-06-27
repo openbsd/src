@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.44 2016/10/11 16:16:44 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.45 2017/06/27 21:43:46 tedu Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 
 extern char *__progname;
 
-int fflg, iflg;
+int fflg, iflg, vflg;
 int stdin_ok;
 
 extern int cpmain(int argc, char **argv);
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	int ch;
 	char path[PATH_MAX];
 
-	while ((ch = getopt(argc, argv, "if")) != -1)
+	while ((ch = getopt(argc, argv, "ifv")) != -1)
 		switch (ch) {
 		case 'i':
 			fflg = 0;
@@ -80,6 +80,9 @@ main(int argc, char *argv[])
 		case 'f':
 			iflg = 0;
 			fflg = 1;
+			break;
+		case 'v':
+			vflg = 1;
 			break;
 		default:
 			usage();
@@ -208,8 +211,11 @@ do_move(char *from, char *to)
 	 *	message to standard error, and do nothing more with the
 	 *	current source file...
 	 */
-	if (!rename(from, to))
+	if (!rename(from, to)) {
+		if (vflg)
+			(void)fprintf(stdout, "%s -> %s\n", from, to);
 		return (0);
+	}
 
 	if (errno != EXDEV) {
 		warn("rename %s to %s", from, to);
@@ -339,6 +345,10 @@ err:		if (unlink(to))
 		warn("%s: remove", from);
 		return (1);
 	}
+
+	if (vflg)
+		(void)fprintf(stdout, "%s -> %s\n", from, to);
+
 	return (0);
 }
 
@@ -362,14 +372,23 @@ mvcopy(char *from, char *to)
 		_exit(1);
 	}
 
+	/*
+	 * XXX
+	 * The external cpmain(), rmmain() approach (to avoid
+	 * fork+exec) hides some of the details on what was moved.
+	 * This can be improved upon during a refactor.
+	 */
+	if (vflg)
+		(void)fprintf(stdout, "%s -> %s\n", from, to);
+
 	return (0);
 }
 
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-fi] source target\n", __progname);
-	(void)fprintf(stderr, "       %s [-fi] source ... directory\n",
+	(void)fprintf(stderr, "usage: %s [-fiv] source target\n", __progname);
+	(void)fprintf(stderr, "       %s [-fiv] source ... directory\n",
 	    __progname);
 	exit(1);
 }

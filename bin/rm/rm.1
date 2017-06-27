@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.40 2016/04/15 23:09:57 tedu Exp $
+.\"	$OpenBSD: rm.1,v 1.41 2017/06/27 21:43:46 tedu Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd $Mdocdate: April 15 2016 $
+.Dd $Mdocdate: June 27 2017 $
 .Dt RM 1
 .Os
 .Sh NAME
@@ -95,6 +95,8 @@ that directory is skipped.
 .It Fl r
 Equivalent to
 .Fl R .
+.It Fl v
+Display each file name after it was removed.
 .El
 .Pp
 The
@@ -148,7 +150,7 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl dP
+.Op Fl dPv
 are extensions to that specification.
 .Sh HISTORY
 An

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.44 2016/10/14 10:51:57 schwarze Exp $	*/
+/*	$OpenBSD: cp.c,v 1.45 2017/06/27 21:43:46 tedu Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, fflag, iflag, pflag, rflag;
+int Rflag, fflag, iflag, pflag, rflag, vflag;
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	char *target;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1)
+	while ((ch = getopt(argc, argv, "HLPRfiprv")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -118,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		default:
 			usage();
@@ -394,6 +397,9 @@ copy(char *argv[], enum op type, int fts_options)
 		case S_IFLNK:
 			if (copy_link(curr, !fts_dne(curr)))
 				rval = 1;
+			else if (vflag)
+				(void)fprintf(stdout, "%s -> %s\n",
+				    curr->fts_path, to.p_path);
 			break;
 		case S_IFDIR:
 			if (!Rflag && !rflag) {
@@ -415,6 +421,9 @@ copy(char *argv[], enum op type, int fts_options)
 				if (mkdir(to.p_path,
 				    curr->fts_statp->st_mode | S_IRWXU) < 0)
 					err(1, "%s", to.p_path);
+				else if (vflag)
+					(void)fprintf(stdout, "%s -> %s\n",
+					    curr->fts_path, to.p_path);
 			} else if (!S_ISDIR(to_stat.st_mode))
 				errc(1, ENOTDIR, "%s", to.p_path);
 			break;
@@ -426,6 +435,9 @@ copy(char *argv[], enum op type, int fts_options)
 			} else
 				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
+			if (!rval && vflag)
+				(void)fprintf(stdout, "%s -> %s\n",
+				    curr->fts_path, to.p_path);
 			break;
 		case S_IFIFO:
 			if (Rflag) {
@@ -434,6 +446,9 @@ copy(char *argv[], enum op type, int fts_options)
 			} else
 				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
+			if (!rval && vflag)
+				(void)fprintf(stdout, "%s -> %s\n",
+				    curr->fts_path, to.p_path);
 			break;
 		case S_IFSOCK:
 			warnc(EOPNOTSUPP, "%s", curr->fts_path);
@@ -441,6 +456,9 @@ copy(char *argv[], enum op type, int fts_options)
 		default:
 			if (copy_file(curr, fts_dne(curr)))
 				rval = 1;
+			else if (vflag)
+				(void)fprintf(stdout, "%s -> %s\n",
+					curr->fts_path, to.p_path);
 			break;
 		}
 	}
