@@ -1,0 +1,14 @@
+.TH TBL-MOD-SPACING 1 "June 27, 2017" OpenBSD
+.SH NAME
+tbl-mod-spacing \- spacing modifier in table layout
+.SH DESCRIPTION
+normal text
+.TS
+box tab(:);
+l0 l1 |  l2 |  l3 |  l4 |  l5 |  l6 |  l7 |  l8
+l0 l1    l2    l3    l4    l5    l6    l7    l8
+l0 l1 |  l2 || l3 || l4    l5 || l6 |  l7 || l8.
+a:b:c:d:e:f:g:h:i
+a:b:c:d:e:f:g:h:i
+a:b:c:d:e:f:g:h:i
+.TE
