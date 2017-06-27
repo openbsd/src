@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.504 2017/06/22 16:03:36 deraadt Exp $
+#	$OpenBSD: rc,v 1.505 2017/06/27 03:42:00 tedu Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -381,7 +381,7 @@ ln -fh /bsd /bsd.booted
 
 rm -f /fastboot
 
-# Set flags on ttys. (Do early, in case they use tty for SLIP in netstart.)
+# Set flags on ttys.
 echo 'setting tty flags'
 ttyflags -a
 
@@ -433,12 +433,6 @@ echo 'starting network'
 # Set carp interlock by increasing the demotion counter.
 # Prevents carp from preempting until the system is booted.
 ifconfig -g carp carpdemote 128
-
-# Recover resolv.conf in case dhclient died hard.
-if [[ -f /etc/resolv.conf.save ]]; then
-	mv -f /etc/resolv.conf.save /etc/resolv.conf
-	touch /etc/resolv.conf
-fi
 
 sh /etc/netstart
 
