@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoclint.1,v 1.30 2017/06/24 16:10:01 schwarze Exp $
+.\" $OpenBSD: mdoclint.1,v 1.31 2017/06/27 11:48:00 schwarze Exp $
 .\" $NetBSD: mdoclint.1,v 1.23 2017/06/08 10:19:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2013 Thomas Klausner
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 24 2017 $
+.Dd $Mdocdate: June 27 2017 $
 .Dt MDOCLINT 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl DFhmpSvwx
+.Op Fl Fhmpvx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -41,14 +41,12 @@ is a man page verifier.
 It tries to automatically find as many common
 errors that occur when writing man pages as possible.
 If no flags are given,
-.Fl DmpSx
+.Fl mpx
 is assumed (that is, everything except
-.Fl Fhvw ) .
+.Fl Fhv ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl D
-Warn about bad casing and architectures in the .Dt macro.
 .It Fl F
 Delete whitespace at the end of input lines.
 .It Fl h
@@ -59,16 +57,8 @@ Warn if man page is not in
 format.
 .It Fl p
 Warn about abuse of .Ns to get punctuation directly next to a word.
-.It Fl S
-Warn about any unknown sections or about a section that comes in the
-wrong order (see
-.Xr mdoc 7 ) .
 .It Fl v
 Verbose output.
-.It Fl w
-Display the section name,
-in addition to the relevant line number,
-in warnings.
 .It Fl x
 Warn about cross-references whose target is missing, cross-references
 to itself, or plain bogus cross-references.
@@ -99,7 +89,7 @@ utility first appeared in
 .Sh BUGS
 The
 .Fl p
-flag currently produce too many bogus warnings.
+flag currently produces too many bogus warnings.
 .Pp
 The
 .Fl x

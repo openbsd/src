@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.73 2017/06/24 16:10:01 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.74 2017/06/27 11:48:00 schwarze Exp $
 # $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -41,94 +41,34 @@ use constant {
 	NETBSD => 0,
 };
 
-use vars qw(
-	$opt_D $opt_F $opt_h $opt_m $opt_p $opt_S $opt_v $opt_w $opt_x
-);
-
+use vars qw($opt_F $opt_h $opt_m $opt_p $opt_v $opt_x);
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="DFhmpSvwx";
+my $options="Fhmpvx";
 
 sub usage
 {
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
-	-D	warn about bad casing and archs in .Dt
 	-F	fix whitespace problems (asks before overwriting)
 	-h	display this help text
 	-m	warn about man pages that are not in mdoc(7) format
 	-p	warn about punctuation problems
-	-S	warn about any .Sh weirdness
 	-v	verbose output
-	-w	show section header in warnings
 	-x	warn about cross-references with missing targets
-Default is -DmpSx if no flag is specified.
+Default is -mpx if no flag is specified.
 EOF
 	exit(0);
 }
 
 # constants to build
-my %sections;
-my $arches_re;
 my $sections_re;
 my $esections_re;
 
 # and the code that builds them
 {
-	my @sections = (
-		"NAME",
-		NETBSD ? "LIBRARY" : undef,
-		"SYNOPSIS",
-		"DESCRIPTION",
-		OPENBSD ? "CONTEXT" : undef ,
-		NETBSD ? "IMPLEMENTATION NOTES" : undef,
-		"RETURN VALUES",
-		"ENVIRONMENT",
-		"FILES",
-		"EXIT STATUS",
-		"EXAMPLES",
-		"DIAGNOSTICS",
-		NETBSD ? "COMPATIBILITY" : undef,
-		"ERRORS",
-		NETBSD ? "CODE REFERENCES" : undef,
-		"SEE ALSO",
-		"STANDARDS",
-		"HISTORY",
-		"AUTHORS",
-		"CAVEATS",
-		"BUGS",
-		NETBSD ? "SECURITY CONSIDERATIONS" : undef
-	);
-
-	my $i = 1;
-	for my $sh (@sections) {
-		if (defined $sh) {
-			$sections{$sh} = $i++;
-		}
-	}
-	my @arches;
-	if (OPENBSD) {
-		@arches =
-		    (qw(alpha amd64 arm64 armv7 hppa i386
-		    landisk loongson luna88k macppc mips64 octeon sgi
-		    socppc sparc64));
-	}
-	if (NETBSD) {
-		@arches =
-		    (qw(acorn26 acorn32 algor alpha amiga arc atari
-		    bebox cats cesfic cobalt dreamcast
-		    emips evbarm evbmips evbppc
-		    evbsh3 evbsh5 hp300 hpcarm hpcmips hpcsh hppa
-		    i386 ibmnws luna68k mac68k macppc mipsco mmeye
-		    mvme68k mvmeppc netwinder news68k newsmips next68k
-		    pc532 playstation2 pmax pmppc prep sandpoint sbmips
-		    sgimips shark sparc sparc64 sun2 sun3 vax walnut
-		    x68k x86 x86_64 xen));
-	}
-	my $a = join('|', @arches);
-	$arches_re = qr{(?:$a)}o;
 	if (OPENBSD) {
 		$sections_re = qr{(?:3p|[1-9])}o;
 		$esections_re = qr{(?:3p|[0-9])}o;
@@ -148,11 +88,7 @@ sub debug
 sub warning
 {
 	my $self = shift;
-	my $extra = "";
-	if ($opt_w) {
-		$extra = $self->{current_section_header}.":";
-	}
-	print STDOUT "$self->{fn}:$extra$self->{ln}: ", join('', @_), "\n";
+	print STDOUT "$self->{fn}:$self->{ln}: ", join('', @_), "\n";
 }
 
 sub handle_options
@@ -161,11 +97,8 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_D or $opt_m or $opt_p or $opt_S or $opt_x) {
-		$opt_D = $opt_m = $opt_p = $opt_S = $opt_x = 1;
-	}
+	$opt_m = $opt_p = $opt_x = 1 unless $opt_m or $opt_p or $opt_x;
 }
-
 
 sub verify_xref
 {
@@ -208,8 +141,7 @@ sub new
 		mandoc_p => 1,
 		all => [],
 		changes => 0,
-		shseen => {},
-		current_section_header => '',
+		in_name => 0,
 		sec => '0',
 		names => { $fn => 1 },
 		fn => $fn
@@ -237,36 +169,6 @@ sub close
 	my ($self) = @_;
 
 	close($self->{file});
-}
-
-sub parse_macro_args
-{
-	my ($s, $string) = @_;
-	$_ = $string;
-	my @params = ();
-	while (!/^$/) {
-		if (s/^\"(.*?)\"\s*//) {
-			push(@params, $1);
-		} elsif (s/^(\S+)\s*//) {
-			push(@params, $1);
-		}
-	}
-	return @params;
-}
-
-sub set_section_header
-{
-	my ($s, $section_header) = @_;
-	$section_header = join(' ', $s->parse_macro_args($section_header));
-
-	if (not $sections{$section_header}) {
-		$s->warning("unknown section header: ",
-		    "`$section_header'") if $opt_S;
-	} else {
-		$s->{shseen}->{$section_header} = 1;
-	}
-
-	$s->{current_section_header} = $section_header;
 }
 
 sub process_and_save_line
@@ -297,29 +199,23 @@ sub process_line
 		$s->{mandoc_p} = 0;
 		return "$_\n";
 	}
-	if (/^\.Dt\s+/o) {
-		if (/^\.Dt\s+(?:[A-Z\d._-]+)\s+($sections_re)(?:\s+$arches_re)?$/o)  {
-			$s->{sec} = $1;
-		} else {
-			$s->warning("bad .Dt: `$_'") if $opt_D;
-		}
+	if (/^\.Dt\s+\S+\s+([1-9])/o) {
+		$s->{sec} = $1;
 	}
-
 	if ($s->{mandoc_p}) {
-		if (/^\.Sh\s+(.*)$/o) {
+		if (/^\.Sh\s+"?(.*?)"?\s*$/o) {
 			my $line = $_;
-			$s->set_section_header($1);
+			$s->{in_name} = $1 eq 'NAME';
 			return "$line\n";
 		}
 	} else {
-		if (/^\.SH\s+(.*)$/o) {
+		if (/^\.SH\s+"?(.*?)"?\s*$/o) {
 			my $line = $_;
-			$s->set_section_header($1);
+			$s->{in_name} = $1 eq 'NAME';
 			return "$line\n";
 		}
 	}
-
-	if ($s->{current_section_header} eq "NAME") {
+	if ($s->{in_name}) {
 		if (/^\.Nm\s+(\S+)/o) {
 			$s->{names}{$1.$s->{sec}} = 1;
 		}
@@ -355,19 +251,6 @@ sub process_line
 	return "$_\n";
 }
 
-sub finish
-{
-	my ($s) = @_;
-
-	if ($s->{mandoc_p}) {
-		foreach my $i (qw(NAME SYNOPSIS DESCRIPTION)) {
-			if (not ($s->{shseen}{$i})) {
-				$s->warning("missing $i section") if $opt_S;
-			}
-		}
-	}
-}
-
 package main;
 
 sub handle_file
@@ -377,8 +260,6 @@ sub handle_file
 	while ($_ = $parser->next_line) {
 		$parser->process_and_save_line($_);
 	}
-
-	$parser->finish;
 	$parser->close;
 	if ($Parser::opt_F and $parser->{changes}) {
 		open OUT, ">$_[0].new" or
