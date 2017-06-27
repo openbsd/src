@@ -325,28 +325,6 @@ void X86AsmBackend::relaxInstruction(const MCInst &Inst,
 /// bytes.
 /// \return - true on success, false on failure
 bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
-  static const uint8_t Nops[10][10] = {
-    // nop
-    {0x90},
-    // xchg %ax,%ax
-    {0x66, 0x90},
-    // nopl (%[re]ax)
-    {0x0f, 0x1f, 0x00},
-    // nopl 0(%[re]ax)
-    {0x0f, 0x1f, 0x40, 0x00},
-    // nopl 0(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopw 0(%[re]ax,%[re]ax,1)
-    {0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00},
-    // nopl 0L(%[re]ax)
-    {0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00},
-    // nopl 0L(%[re]ax,%[re]ax,1)
-    {0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-    // nopw 0L(%[re]ax,%[re]ax,1)
-    {0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-    // nopw %cs:0L(%[re]ax,%[re]ax,1)
-    {0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00},
-  };
 
   // This CPU doesn't support long nops. If needed add more.
   // FIXME: Can we get this from the subtarget somehow?
@@ -357,16 +335,22 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     return true;
   }
 
-  // 15 is the longest single nop instruction.  Emit as many 15-byte nops as
-  // needed, then emit a nop of the remaining length.
+  // Write 1 or 2 byte NOP sequences, or a longer trapsled, until 
+  // we have written Count bytes
   do {
-    const uint8_t ThisNopLength = (uint8_t) std::min(Count, MaxNopLength);
-    const uint8_t Prefixes = ThisNopLength <= 10 ? 0 : ThisNopLength - 10;
-    for (uint8_t i = 0; i < Prefixes; i++)
-      OW->write8(0x66);
-    const uint8_t Rest = ThisNopLength - Prefixes;
-    for (uint8_t i = 0; i < Rest; i++)
-      OW->write8(Nops[Rest - 1][i]);
+    const uint8_t ThisNopLength = (uint8_t) std::min(Count, (uint64_t)127);
+    switch (ThisNopLength) {
+      case 0: break;
+      case 1: OW->write8(0x90); 
+              break;
+      case 2: OW->write8(0x66); 
+              OW->write8(0x90); 
+              break;
+      default: OW->write8(0xEB);
+               OW->write8(ThisNopLength - 2);
+               for(uint8_t i = 2; i < ThisNopLength; ++i)
+                 OW->write8(0xCC);
+    }
     Count -= ThisNopLength;
   } while (Count != 0);
 
