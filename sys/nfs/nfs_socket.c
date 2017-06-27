@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.118 2017/06/26 09:32:32 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.119 2017/06/27 12:02:43 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -362,7 +362,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;
 	}
+	s = solock(so);
 	error = soreserve(so, sndreserve, rcvreserve);
+	sounlock(s);
 	if (error)
 		goto bad;
 	so->so_rcv.sb_flags |= SB_NOINTR;

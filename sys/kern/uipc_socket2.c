@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.79 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.80 2017/06/27 12:02:43 mpi Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -148,6 +148,11 @@ sonewconn(struct socket *head, int connstatus)
 	struct socket *so;
 	int soqueue = connstatus ? 1 : 0;
 
+	/*
+	 * XXXSMP as long as `so' and `head' share the same lock, we
+	 * can call soreserve() and pr_attach() below w/o expliclitly
+	 * locking `so'.
+	 */
 	soassertlocked(head);
 
 	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)

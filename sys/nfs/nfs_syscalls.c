@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.108 2017/05/17 08:59:05 mpi Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.109 2017/06/27 12:02:43 mpi Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 	struct nfssvc_sock *slp;
 	struct socket *so;
 	struct nfssvc_sock *tslp;
-	int error;
+	int s, error;
 
 	so = (struct socket *)fp->f_data;
 	tslp = NULL;
@@ -247,7 +247,9 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		siz = NFS_MAXPACKET + sizeof (u_long);
 	else
 		siz = NFS_MAXPACKET;
+	s = solock(so);
 	error = soreserve(so, siz, siz); 
+	sounlock(s);
 	if (error) {
 		m_freem(mynam);
 		return (error);

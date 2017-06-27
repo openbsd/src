@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.189 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.190 2017/06/27 12:02:43 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1635,11 +1635,14 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					error = EINVAL;
 					goto bad;
 				}
+				s = solock(so);
 				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
 				    sbreserve(so, &so->so_snd, cnt)) {
+				    	sounlock(s);
 					error = ENOBUFS;
 					goto bad;
 				}
+				sounlock(s);
 				so->so_snd.sb_wat = cnt;
 				break;
 
@@ -1648,11 +1651,14 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 					error = EINVAL;
 					goto bad;
 				}
+				s = solock(so);
 				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
 				    sbreserve(so, &so->so_rcv, cnt)) {
+					sounlock(s);
 					error = ENOBUFS;
 					goto bad;
 				}
+				sounlock(s);
 				so->so_rcv.sb_wat = cnt;
 				break;
 
