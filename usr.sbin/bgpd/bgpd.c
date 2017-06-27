@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.189 2017/05/28 15:16:33 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.190 2017/06/27 15:58:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,6 @@ int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *);
 
-int			 rfd = -1;
 int			 cflags;
 volatile sig_atomic_t	 mrtdump;
 volatile sig_atomic_t	 quit;
@@ -108,6 +107,7 @@ main(int argc, char *argv[])
 	char			*saved_argv0;
 	int			 debug = 0;
 	int			 rflag = 0, sflag = 0;
+	int			 rfd = -1;
 	int			 ch, timeout, status;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
