@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.27 2017/06/22 18:05:31 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.28 2017/06/27 14:37:08 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ static int
 cl_getc(struct cmdline *cl)
 {
 	ssize_t	n;
-	int	c;
+	unsigned char c;
 
 	for (;;) {
 		n = read(cl->fdin, &c, 1);
@@ -181,8 +181,8 @@ static Char *
 cl_lastw(struct cmdline *cl)
 {
 	static Char	 word[BUFSIZ];
-	const char	*delimiters = " '\"\t;&<>()|^%";
-	Char		*cp;
+	const unsigned char *delimiters = " '\"\t;&<>()|^%";
+	Char	*cp;
 	size_t		 i;
 
 	for (i = cl->len; i > 0; i--)
@@ -198,8 +198,10 @@ cl_lastw(struct cmdline *cl)
 }
 
 static void
-cl_putc(struct cmdline *cl, int c)
+cl_putc(struct cmdline *cl, int ci)
 {
+	unsigned char c = ci;
+
 	write(cl->fdout, &c, 1);
 }
 
@@ -248,7 +250,7 @@ cl_erasec(struct cmdline *cl, int c)
 static int
 cl_erasew(struct cmdline *cl, int c)
 {
-	const char	*ws = " \t";
+	const unsigned char	*ws = " \t";
 
 	for (; cl->len > 0; cl->len--)
 		if (strchr(ws, cl->buf[cl->len - 1]) == NULL
@@ -762,7 +764,7 @@ tenex(Char *inputline, int inputline_size)
 		{ cl_status,	VSTATUS },
 		{ cl_insert,	-1 }
 	};
-	char			 buf[BUFSIZ];
+	unsigned char		 buf[BUFSIZ];
 	const struct termios	*tio;
 	struct cmdline		 cl;
 	size_t			 i;
