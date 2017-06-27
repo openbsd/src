@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.448 2017/06/25 00:38:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.449 2017/06/27 13:24:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -535,7 +535,6 @@ main(int argc, char *argv[])
 	}
 
 	/* Put us into the correct rdomain */
-	ifi->rdomain = get_rdomain(ifi->name);
 	if (setrtable(ifi->rdomain) == -1)
 		fatal("setting routing table to %u", ifi->rdomain);
 

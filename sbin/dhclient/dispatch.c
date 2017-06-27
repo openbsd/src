@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.127 2017/06/24 23:32:57 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.128 2017/06/27 13:24:49 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -77,6 +77,7 @@ get_hw_address(struct interface_info *ifi)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
+	struct if_data *ifdata;
 	int found;
 
 	if (getifaddrs(&ifap) != 0)
@@ -99,6 +100,9 @@ get_hw_address(struct interface_info *ifi)
 		if (sdl->sdl_type != IFT_ETHER ||
 		    sdl->sdl_alen != ETHER_ADDR_LEN)
 			continue;
+
+		ifdata = ifa->ifa_data;
+		ifi->rdomain = ifdata->ifi_rdomain;
 
 		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
 		    ETHER_ADDR_LEN);
@@ -287,24 +291,6 @@ cancel_timeout(struct interface_info *ifi)
 {
 	ifi->timeout = 0;
 	ifi->timeout_func = NULL;
-}
-
-int
-get_rdomain(char *name)
-{
-	int rv = 0, s;
-	struct ifreq ifr;
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("get_rdomain socket");
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) != -1)
-		rv = ifr.ifr_rdomainid;
-
-	close(s);
-	return rv;
 }
 
 /*
