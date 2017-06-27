@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.30 2015/12/10 17:26:59 mmcc Exp $	*/
+/*	$OpenBSD: dir.c,v 1.31 2017/06/27 12:10:21 jsg Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -593,6 +593,8 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 			dirent.name[8] = '\0';
 			for (k = 7; k >= 0 && dirent.name[k] == ' '; k--)
 				dirent.name[k] = '\0';
+			if (k < 0)
+				k = 0;
 			if (dirent.name[k] != '\0')
 				k++;
 			if (dirent.name[0] == SLOT_E5)
