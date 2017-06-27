@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.85 2017/06/25 14:02:23 deraadt Exp $
+#	$OpenBSD: Makefile.macppc,v 1.86 2017/06/27 04:22:13 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -125,8 +125,7 @@ makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh
-	sh makegap.sh 0xcccccccc	# XXX choose a trap instruction
-
+	sh makegap.sh 0x00000000	# gauranteed illegal
 
 vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
