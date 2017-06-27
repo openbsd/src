@@ -97,6 +97,7 @@ void	hv_message_intr(struct hv_softc *);
 int	hv_vmbus_connect(struct hv_softc *);
 void	hv_channel_response(struct hv_softc *, struct vmbus_chanmsg_hdr *);
 void	hv_channel_offer(struct hv_softc *, struct vmbus_chanmsg_hdr *);
+void	hv_channel_rescind(struct hv_softc *, struct vmbus_chanmsg_hdr *);
 void	hv_channel_delivered(struct hv_softc *, struct vmbus_chanmsg_hdr *);
 int	hv_channel_scan(struct hv_softc *);
 void	hv_process_offer(struct hv_softc *, struct hv_offer *);
@@ -118,7 +119,7 @@ struct {
 } hv_msg_dispatch[] = {
 	{ 0,					0, NULL },
 	{ VMBUS_CHANMSG_CHOFFER,		0, hv_channel_offer },
-	{ VMBUS_CHANMSG_CHRESCIND,		0, NULL },
+	{ VMBUS_CHANMSG_CHRESCIND,		0, hv_channel_rescind },
 	{ VMBUS_CHANMSG_CHREQUEST,		VMBUS_CHANMSG_CHOFFER,
 	  NULL },
 	{ VMBUS_CHANMSG_CHOFFER_DONE,		0,
@@ -781,6 +782,16 @@ hv_channel_offer(struct hv_softc *sc, struct vmbus_chanmsg_hdr *hdr)
 	mtx_enter(&sc->sc_offerlck);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_offers, co, co_entry);
 	mtx_leave(&sc->sc_offerlck);
+}
+
+void
+hv_channel_rescind(struct hv_softc *sc, struct vmbus_chanmsg_hdr *hdr)
+{
+	const struct vmbus_chanmsg_chrescind *cmd;
+
+	cmd = (const struct vmbus_chanmsg_chrescind *)hdr;
+	printf("%s: revoking channel %u\n", sc->sc_dev.dv_xname,
+	    cmd->chm_chanid);
 }
 
 void
