@@ -1,4 +1,5 @@
 mandoc: position.in:3:5: BASE: operating system explicitly specified: Os OpenBSD (OpenBSD)
-mandoc: position.in:1:5: BASE: Mdocdate missing: Dd September (OpenBSD)
+mandoc: position.in:1:5: BASE: Mdocdate missing: Dd June (OpenBSD)
 mandoc: position.in:10:2: WARNING: skipping no-space macro
+mandoc: position.in:27:15: WARNING: skipping no-space macro
 mandoc: position.in: BASE: RCS id missing: (OpenBSD)

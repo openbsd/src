@@ -12,8 +12,12 @@ DDEESSCCRRIIPPTTIIOONN
 
      In the middle of a macro line: [before][after]
 
+     After closing punctuation: [before]:[after]
+
+     Before closing punctuation: [before]: [after]
+
      At the end of a macro line: [before][after]
 
      At the end of partial implicit: [before][after]
 
-OpenBSD                       September 15, 2013                       OpenBSD
+OpenBSD                          June 27, 2017                         OpenBSD

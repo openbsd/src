@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.258 2017/06/25 17:42:37 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.259 2017/06/27 12:17:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -1968,10 +1968,13 @@ post_hyph(POST_ARGS)
 static void
 post_ns(POST_ARGS)
 {
+	struct roff_node	*n;
 
-	if (mdoc->last->flags & NODE_LINE)
+	n = mdoc->last;
+	if (n->flags & NODE_LINE ||
+	    (n->next != NULL && n->next->flags & NODE_DELIMC))
 		mandoc_msg(MANDOCERR_NS_SKIP, mdoc->parse,
-		    mdoc->last->line, mdoc->last->pos, NULL);
+		    n->line, n->pos, NULL);
 }
 
 static void
