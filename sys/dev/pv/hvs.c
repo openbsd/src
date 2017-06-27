@@ -639,7 +639,7 @@ hvs_scsi_cmd_done(struct hvs_ccb *ccb)
 		printf("%s: status %#x iostatus %#x (busy)\n",
 		    sc->sc_dev.dv_xname, srb->srb_scsistatus,
 		    srb->srb_iostatus);
-		xs->error = XS_BUSY;
+		error = XS_BUSY;
 		break;
 	case SCSI_CHECK:
 		if (srb->srb_iostatus & SRB_STATUS_AUTOSENSE_VALID) {
