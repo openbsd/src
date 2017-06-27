@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.28 2017/06/27 14:37:08 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.29 2017/06/27 15:02:18 anton Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -159,8 +159,8 @@ cl_flush(struct cmdline *cl)
 static int
 cl_getc(struct cmdline *cl)
 {
-	ssize_t	n;
-	unsigned char c;
+	ssize_t		n;
+	unsigned char	c;
 
 	for (;;) {
 		n = read(cl->fdin, &c, 1);
@@ -198,11 +198,11 @@ cl_lastw(struct cmdline *cl)
 }
 
 static void
-cl_putc(struct cmdline *cl, int ci)
+cl_putc(struct cmdline *cl, int c)
 {
-	unsigned char c = ci;
+	unsigned char cc = c;
 
-	write(cl->fdout, &c, 1);
+	write(cl->fdout, &cc, 1);
 }
 
 static void
