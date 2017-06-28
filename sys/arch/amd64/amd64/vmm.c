@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.154 2017/06/20 06:25:01 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.155 2017/06/28 07:10:02 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5673,6 +5673,12 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_NONE;
 		svm_set_clean(vcpu, SVM_CLEANBITS_ALL);
 
+		/* Record the exit reason on successful exit */
+		if (ret == 0) {
+			exit_reason = vmcb->v_exitcode;
+			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
+		}	
+
 		if (ret || exit_reason != SVM_VMEXIT_INTR) {
 			KERNEL_LOCK();
 			locked = 1;
@@ -5682,9 +5688,6 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* If we exited successfully ... */
 		if (ret == 0) {
 			resume = 1;
-
-			exit_reason = vmcb->v_exitcode;
-			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
 
 			vcpu->vc_gueststate.vg_rflags = vmcb->v_rflags;
 
