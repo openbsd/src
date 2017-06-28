@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.463 2017/06/28 10:33:08 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.464 2017/06/28 10:34:10 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2387,6 +2387,9 @@ Defaults to
 .Pa ${PORTSDIR}:${PORTSDIR}/mystuff .
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, messages).
+.Cm update-plist
+may create it.
+Must be a valid directory.
 Default: pkg.
 .It Ev PKGFILE
 Full path to the created package for the given subpackage.
