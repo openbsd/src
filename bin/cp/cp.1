@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.38 2017/06/27 21:43:46 tedu Exp $
+.\"	$OpenBSD: cp.1,v 1.39 2017/06/28 06:24:38 jmc Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: June 27 2017 $
+.Dd $Mdocdate: June 28 2017 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -237,9 +237,13 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
+The flag
+.Op Fl v
+is an extension to that specification.
+.Pp
 Historic versions of the
 .Nm
-utility had a
+utility had an
 .Fl r
 option.
 This implementation supports that option; however, its use is strongly
