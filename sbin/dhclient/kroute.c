@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.96 2017/06/28 14:35:43 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.97 2017/06/28 15:23:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -77,6 +77,8 @@ int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
 void	delete_route(struct interface_info *, int, struct rt_msghdr *);
+int	resolv_conf_priority(int);
+
 
 #define	ROUTE_LABEL_NONE		1
 #define	ROUTE_LABEL_NOT_DHCLIENT	2
@@ -750,7 +752,7 @@ priv_write_resolv_conf(struct interface_info *ifi, u_int8_t *contents, size_t sz
 	ssize_t n;
 	int fd;
 
-	if (!resolv_conf_priority(ifi))
+	if (!resolv_conf_priority(ifi->rdomain))
 		return;
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
@@ -776,7 +778,7 @@ priv_write_resolv_conf(struct interface_info *ifi, u_int8_t *contents, size_t sz
  * suppy the contents of the resolv.conf file.
  */
 int
-resolv_conf_priority(struct interface_info *ifi)
+resolv_conf_priority(int rdomain)
 {
 	struct iovec iov[3];
 	struct {
@@ -807,7 +809,7 @@ resolv_conf_priority(struct interface_info *ifi)
 	m_rtmsg.m_rtm.rtm_msglen = sizeof(m_rtmsg.m_rtm);
 	m_rtmsg.m_rtm.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_UP;
 	m_rtmsg.m_rtm.rtm_seq = seq = arc4random();
-	m_rtmsg.m_rtm.rtm_tableid = ifi->rdomain;
+	m_rtmsg.m_rtm.rtm_tableid = rdomain;
 
 	iov[iovcnt].iov_base = &m_rtmsg.m_rtm;
 	iov[iovcnt++].iov_len = sizeof(m_rtmsg.m_rtm);
