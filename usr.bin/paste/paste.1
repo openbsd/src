@@ -1,4 +1,4 @@
-.\"	$OpenBSD: paste.1,v 1.14 2010/09/03 11:09:29 jmc Exp $
+.\"	$OpenBSD: paste.1,v 1.15 2017/06/28 14:49:26 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)paste.1	5.6 (Berkeley) 7/27/91
 .\"
-.Dd $Mdocdate: September 3 2010 $
+.Dd $Mdocdate: June 28 2017 $
 .Dt PASTE 1
 .Os
 .Sh NAME
@@ -111,21 +111,27 @@ for each instance of
 .Ex -std paste
 .Sh EXAMPLES
 List the files in the current directory in three columns:
-.Pp
-.Dl "$ ls | paste - - -"
+.Bd -literal -offset indent
+$ ls | paste - - -
+$ ls | paste -s -d '\et\et\en' -
+.Ed
 .Pp
 Combine pairs of lines from
 .Ar file
 into single lines:
-.Pp
-.Dl "$ paste -s -d '\et\en' file"
+.Bd -literal -offset indent
+$ paste - - < file
+$ paste -s -d '\et\en' file
+.Ed
 .Pp
 Number the lines in
 .Ar file ,
 similar to
 .Ql cat -n :
-.Pp
-.Dl "$ sed = file | paste -s -d '\et\en' - -"
+.Bd -literal -offset indent
+$ sed = file | paste - -
+$ sed = file | paste -s -d '\et\en' -
+.Ed
 .Pp
 Create a colon-separated list of directories named
 .Pa bin ,
