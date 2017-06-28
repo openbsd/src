@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.21 2017/04/26 21:07:21 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.22 2017/06/28 14:07:11 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 26 2017 $
+.Dd $Mdocdate: June 28 2017 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -220,9 +220,6 @@ option domain-name-servers ns1.isc.org, ns2.isc.org;
 .Pp
 As you can see in Example 2, it's legal to specify host addresses in
 parameters as hostnames rather than as numeric IP addresses.
-If a given hostname resolves to more than one IP address (for example, if
-that host has two Ethernet interfaces), both addresses are supplied to
-the client.
 .Pp
 In Example 1, you can see that both the shared-network statement and
 the subnet statements can have parameters.
