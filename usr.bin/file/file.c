@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.60 2017/06/28 13:37:56 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.61 2017/06/28 15:40:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -104,12 +104,13 @@ main(int argc, char **argv)
 	int			 opt, idx;
 	char			*home, *magicpath;
 	struct passwd		*pw;
-	FILE			*magicfp;
+	FILE			*magicfp = NULL;
 	struct magic		*m;
 	struct input_file	*inf = NULL;
 	size_t			 len, width = 0;
 
-	tzset();
+	if (pledge("stdio rpath getpw id", NULL) == -1)
+		err(1, "pledge");
 
 	for (;;) {
 		opt = getopt_long(argc, argv, "bchiLsW", longopts, NULL);
@@ -149,7 +150,6 @@ main(int argc, char **argv)
 	} else if (argc == 0)
 		usage();
 
-	magicfp = NULL;
 	if (geteuid() != 0 && !issetugid()) {
 		home = getenv("HOME");
 		if (home == NULL || *home == '\0') {
@@ -182,6 +182,8 @@ main(int argc, char **argv)
 			prepare_input(&inf[idx], argv[idx]);
 		}
 	}
+
+	tzset();
 
 	if (pledge("stdio getpw id", NULL) == -1)
 		err(1, "pledge");
