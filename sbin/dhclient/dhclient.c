@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.449 2017/06/27 13:24:49 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.450 2017/06/28 12:53:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -612,7 +612,7 @@ main(int argc, char *argv[])
 	if (ifi->linkstat == 0)
 		interface_link_forceup(ifi->name);
 
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET)) == -1)
 		fatal("socket(PF_ROUTE, SOCK_RAW)");
 
 	rtfilter = ROUTE_FILTER(RTM_PROPOSAL) | ROUTE_FILTER(RTM_NEWADDR) |
