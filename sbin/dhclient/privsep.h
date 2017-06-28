@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.39 2017/06/28 14:35:43 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.40 2017/06/28 16:31:52 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -55,17 +55,15 @@ void	add_direct_route(struct in_addr, struct in_addr, struct in_addr);
 void	add_default_route(struct in_addr, struct in_addr);
 void	add_static_routes(struct option_data *, struct in_addr);
 void	add_classless_static_routes(struct option_data *, struct in_addr);
-void	priv_add_route(struct interface_info *, struct imsg_add_route *);
-void	priv_flush_routes(struct interface_info *);
+void	priv_add_route(int, struct imsg_add_route *);
+void	priv_flush_routes(char *, int);
 
-char	*resolv_conf_contents(struct interface_info *ifi, struct option_data *,
-	    struct option_data *, struct option_data *);
+char	*resolv_conf_contents(char *, struct option_data *,
+    struct option_data *, struct option_data *);
 void	write_resolv_conf(u_int8_t *, size_t);
-void	priv_write_resolv_conf(struct interface_info *, u_int8_t *, size_t);
+void	priv_write_resolv_conf(int, u_int8_t *, size_t);
 
-void	priv_delete_address(struct interface_info *,
-	    struct imsg_delete_address *);
-void	priv_add_address(struct interface_info *, struct imsg_add_address *);
+void	priv_delete_address(char *, struct imsg_delete_address *);
+void	priv_add_address(char *, struct imsg_add_address *);
 
-void	priv_set_interface_mtu(struct interface_info *,
-	    struct imsg_set_interface_mtu *);
+void	priv_set_interface_mtu(char *, struct imsg_set_interface_mtu *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.451 2017/06/28 14:35:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.452 2017/06/28 16:31:52 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1005,7 +1005,7 @@ bind_lease(struct interface_info *ifi)
 		goto newlease;
 	}
 
-	ifi->offer->resolv_conf = resolv_conf_contents(ifi,
+	ifi->offer->resolv_conf = resolv_conf_contents(ifi->name,
 	    &options[DHO_DOMAIN_NAME], &options[DHO_DOMAIN_NAME_SERVERS],
 	    &options[DHO_DOMAIN_SEARCH]);
 
