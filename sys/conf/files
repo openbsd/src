@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.647 2017/05/29 12:58:37 jmatthew Exp $
+#	$OpenBSD: files,v 1.648 2017/06/28 18:24:02 mikeb Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -572,7 +572,8 @@ file	net/pf_table.c			pf
 file	net/pf_osfp.c			pf
 file	net/pf_if.c			pf
 file	net/pf_lb.c			pf
-file	net/hfsc.c			ifnet
+file	net/hfsc.c			pf
+file	net/fq_codel.c			pf
 
 pseudo-device pflog: ifnet
 file	net/if_pflog.c			pflog	needs-flag
@@ -763,7 +764,6 @@ file tmpfs/tmpfs_fifoops.c		tmpfs & fifo
 file net/art.c				art
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter
-file net/fq_codel.c			pf
 file net/if.c
 file net/ifq.c
 file net/if_ethersubr.c			ether			needs-flag
