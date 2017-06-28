@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.111 2017/05/12 20:49:20 schwarze Exp $
+.\" $OpenBSD: ports.7,v 1.112 2017/06/28 10:24:23 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: May 12 2017 $
+.Dd $Mdocdate: June 28 2017 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -296,6 +296,8 @@ This is the same as calling the
 target.
 .It Cm fake
 Pretend to install the port under a subdirectory of the work directory.
+.It Cm generate-readmes
+Create READMEs and rc scripts under the fake subdirectory.
 .It Cm package
 Create a binary package from the fake installation.
 The package is a .tgz file that can be used to
