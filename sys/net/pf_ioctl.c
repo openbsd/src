@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.316 2017/06/28 19:27:42 mikeb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.317 2017/06/28 19:30:24 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -692,6 +692,14 @@ pf_commit_queues(void)
         pf_free_queues(pf_queues_inactive);
 
 	return (0);
+}
+
+const struct pfq_ops *
+pf_queue_manager(struct pf_queuespec *q)
+{
+	if (q->flags & PFQS_FLOWQUEUE)
+		return pfq_fqcodel_ops;
+	return (/* pfq_default_ops */ NULL);
 }
 
 #define PF_MD5_UPD(st, elm)						\
