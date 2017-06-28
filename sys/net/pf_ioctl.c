@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.315 2017/06/05 22:18:28 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.316 2017/06/28 19:27:42 mikeb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -602,7 +602,7 @@ pf_create_queues(void)
 		qif = malloc(sizeof(*qif), M_TEMP, M_WAITOK);
 		qif->ifp = ifp;
 
-		if (q->flags & PFQS_FLOWQUEUE) {
+		if ((q->flags & PFQS_FLOWQUEUE) && !(q->flags & PFQS_DEFAULT)) {
 			qif->ifqops = ifq_fqcodel_ops;
 			qif->pfqops = pfq_fqcodel_ops;
 		} else {
@@ -1092,7 +1092,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(qs, &pq->queue, sizeof(pq->queue));
-		if (qs->flags & PFQS_FLOWQUEUE)
+		if ((qs->flags & PFQS_FLOWQUEUE) && qs->parent_qid == 0 &&
+		    !(qs->flags & PFQS_DEFAULT))
 			error = pfq_fqcodel_ops->pfq_qstats(qs, pq->buf,
 			    &nbytes);
 		else
