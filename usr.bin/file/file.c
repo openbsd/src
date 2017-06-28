@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.61 2017/06/28 15:40:54 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.62 2017/06/28 15:42:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -17,13 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
-#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
