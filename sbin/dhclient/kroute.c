@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.94 2017/06/25 00:44:49 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.95 2017/06/28 11:53:08 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -614,7 +614,7 @@ priv_delete_address(struct interface_info *ifi,
 	 * Delete specified address on specified interface.
 	 */
 
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket open failed");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
@@ -668,7 +668,7 @@ priv_set_interface_mtu(struct interface_info *ifi,
 	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = imsg->mtu;
 
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket open failed");
 	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
 		log_warn("SIOCSIFMTU failed (%d)", imsg->mtu);
@@ -707,7 +707,7 @@ priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 	struct sockaddr_in *in;
 	int s;
 
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		fatal("socket open failed");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
