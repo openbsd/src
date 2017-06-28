@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.43 2017/06/27 20:46:34 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.44 2017/06/28 10:38:16 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -53,28 +53,28 @@ int	 opt_inhibit = 0;
 char	*configfile = "/etc/ifstated.conf";
 struct event	rt_msg_ev, sighup_ev, startup_ev, sigchld_ev;
 
-void	startup_handler(int, short, void *);
-void	sighup_handler(int, short, void *);
-int	load_config(void);
-void	sigchld_handler(int, short, void *);
-void	rt_msg_handler(int, short, void *);
-void	external_handler(int, short, void *);
-void	external_exec(struct ifsd_external *, int);
-void	check_external_status(struct ifsd_state *);
-void	external_evtimer_setup(struct ifsd_state *, int);
-void	scan_ifstate(int, int, int);
-int	scan_ifstate_single(int, int, struct ifsd_state *);
-void	fetch_state(void);
-void	usage(void);
-void	adjust_expressions(struct ifsd_expression_list *, int);
-void	adjust_external_expressions(struct ifsd_state *);
-void	eval_state(struct ifsd_state *);
-int	state_change(void);
-void	do_action(struct ifsd_action *);
-void	remove_action(struct ifsd_action *, struct ifsd_state *);
-void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
+void		startup_handler(int, short, void *);
+void		sighup_handler(int, short, void *);
+int		load_config(void);
+void		sigchld_handler(int, short, void *);
+void		rt_msg_handler(int, short, void *);
+void		external_handler(int, short, void *);
+void		external_exec(struct ifsd_external *, int);
+void		check_external_status(struct ifsd_state *);
+void		external_evtimer_setup(struct ifsd_state *, int);
+void		scan_ifstate(int, int, int);
+int		scan_ifstate_single(int, int, struct ifsd_state *);
+void		fetch_state(void);
+__dead void	usage(void);
+void		adjust_expressions(struct ifsd_expression_list *, int);
+void		adjust_external_expressions(struct ifsd_state *);
+void		eval_state(struct ifsd_state *);
+int		state_change(void);
+void		do_action(struct ifsd_action *);
+void		remove_action(struct ifsd_action *, struct ifsd_state *);
+void		remove_expression(struct ifsd_expression *, struct ifsd_state *);
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
