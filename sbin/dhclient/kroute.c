@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.97 2017/06/28 15:23:19 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.98 2017/06/28 15:45:32 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -76,7 +76,7 @@ struct in_addr adding;
 int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
-void	delete_route(struct interface_info *, int, struct rt_msghdr *);
+void	delete_route(int, struct rt_msghdr *);
 int	resolv_conf_priority(int);
 
 
@@ -208,10 +208,10 @@ priv_flush_routes(struct interface_info *ifi)
 		switch (check_route_label(sa_rl)) {
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
-			delete_route(ifi, s, rtm);
+			delete_route(s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
-			delete_route(ifi, s, rtm);
+			delete_route(s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
@@ -225,7 +225,7 @@ priv_flush_routes(struct interface_info *ifi)
 			    sa_in->sin_addr.s_addr == INADDR_ANY &&
 			    rtm->rtm_tableid == ifi->rdomain &&
 			    strcmp(ifi->name, ifname) == 0)
-				delete_route(ifi, s, rtm);
+				delete_route(s, rtm);
 			break;
 		default:
 			break;
@@ -240,13 +240,12 @@ priv_flush_routes(struct interface_info *ifi)
  * delete_route deletes a single route from the routing table.
  */
 void
-delete_route(struct interface_info *ifi, int s, struct rt_msghdr *rtm)
+delete_route(int s, struct rt_msghdr *rtm)
 {
 	static int seqno;
 	ssize_t rlen;
 
 	rtm->rtm_type = RTM_DELETE;
-	rtm->rtm_tableid = ifi->rdomain;
 	rtm->rtm_seq = seqno++;
 
 	rlen = write(s, (char *)rtm, rtm->rtm_msglen);
