@@ -97,6 +97,9 @@ struct fqcodel {
 	struct flowq		 oldq;
 
 	struct flow		*flows;
+	unsigned int		 qlength;
+
+	struct ifnet		*ifp;
 
 	struct codel_params	 cparams;
 
@@ -115,10 +118,16 @@ struct fqcodel {
 unsigned int	 fqcodel_idx(unsigned int, const struct mbuf *);
 void		*fqcodel_alloc(unsigned int, void *);
 void		 fqcodel_free(unsigned int, void *);
-struct mbuf	*fqcodel_enq(struct ifqueue *, struct mbuf *);
-struct mbuf	*fqcodel_deq_begin(struct ifqueue *, void **);
-void		 fqcodel_deq_commit(struct ifqueue *, struct mbuf *, void *);
-void		 fqcodel_purge(struct ifqueue *, struct mbuf_list *);
+struct mbuf	*fqcodel_if_enq(struct ifqueue *, struct mbuf *);
+struct mbuf	*fqcodel_if_deq_begin(struct ifqueue *, void **);
+void		 fqcodel_if_deq_commit(struct ifqueue *, struct mbuf *, void *);
+void		 fqcodel_if_purge(struct ifqueue *, struct mbuf_list *);
+
+struct mbuf	*fqcodel_enq(struct fqcodel *, struct mbuf *);
+struct mbuf	*fqcodel_deq_begin(struct fqcodel *, void **,
+		    struct mbuf_list *);
+void		 fqcodel_deq_commit(struct fqcodel *, struct mbuf *, void *);
+void		 fqcodel_purge(struct fqcodel *, struct mbuf_list *);
 
 /*
  * ifqueue glue.
@@ -126,12 +135,12 @@ void		 fqcodel_purge(struct ifqueue *, struct mbuf_list *);
 
 static const struct ifq_ops fqcodel_ops = {
 	fqcodel_idx,
-	fqcodel_enq,
-	fqcodel_deq_begin,
-	fqcodel_deq_commit,
-	fqcodel_purge,
+	fqcodel_if_enq,
+	fqcodel_if_deq_begin,
+	fqcodel_if_deq_commit,
+	fqcodel_if_purge,
 	fqcodel_alloc,
-	fqcodel_free,
+	fqcodel_free
 };
 
 const struct ifq_ops * const ifq_fqcodel_ops = &fqcodel_ops;
@@ -140,6 +149,11 @@ void		*fqcodel_pf_alloc(struct ifnet *);
 int		 fqcodel_pf_addqueue(void *, struct pf_queuespec *);
 void		 fqcodel_pf_free(void *);
 int		 fqcodel_pf_qstats(struct pf_queuespec *, void *, int *);
+unsigned int	 fqcodel_pf_qlength(void *);
+struct mbuf *	 fqcodel_pf_enqueue(void *, struct mbuf *);
+struct mbuf *	 fqcodel_pf_deq_begin(void *, void **, struct mbuf_list *);
+void		 fqcodel_pf_deq_commit(void *, struct mbuf *, void *);
+void		 fqcodel_pf_purge(void *, struct mbuf_list *);
 
 /*
  * pf queue glue.
@@ -149,7 +163,12 @@ static const struct pfq_ops fqcodel_pf_ops = {
 	fqcodel_pf_alloc,
 	fqcodel_pf_addqueue,
 	fqcodel_pf_free,
-	fqcodel_pf_qstats
+	fqcodel_pf_qstats,
+	fqcodel_pf_qlength,
+	fqcodel_pf_enqueue,
+	fqcodel_pf_deq_begin,
+	fqcodel_pf_deq_commit,
+	fqcodel_pf_purge
 };
 
 const struct pfq_ops * const pfq_fqcodel_ops = &fqcodel_pf_ops;
@@ -513,9 +532,8 @@ classify_flow(struct fqcodel *fqc, struct mbuf *m)
 }
 
 struct mbuf *
-fqcodel_enq(struct ifqueue *ifq, struct mbuf *m)
+fqcodel_enq(struct fqcodel *fqc, struct mbuf *m)
 {
-	struct fqcodel *fqc = ifq->ifq_q;
 	struct flow *flow;
 	unsigned int backlog = 0;
 	int64_t now;
@@ -527,6 +545,7 @@ fqcodel_enq(struct ifqueue *ifq, struct mbuf *m)
 
 	codel_gettime(&now);
 	codel_enqueue(&flow->cd, now, m);
+	fqc->qlength++;
 
 	if (!flow->active) {
 		SIMPLEQ_INSERT_TAIL(&fqc->newq, flow, flowentry);
@@ -540,7 +559,7 @@ fqcodel_enq(struct ifqueue *ifq, struct mbuf *m)
 	 * Check the limit for all queues and remove a packet
 	 * from the longest one.
 	 */
-	if (ifq_len(ifq) >= fqcodel_qlimit) {
+	if (fqc->qlength >= fqcodel_qlimit) {
 		for (i = 0; i < fqc->nflows; i++) {
 			if (codel_backlog(&fqc->flows[i].cd) > backlog) {
 				flow = &fqc->flows[i];
@@ -553,6 +572,8 @@ fqcodel_enq(struct ifqueue *ifq, struct mbuf *m)
 
 		fqc->drop_cnt.packets++;
 		fqc->drop_cnt.bytes += m->m_pkthdr.len;
+
+		fqc->qlength--;
 
 		DPRINTF("%s: dropping from flow %u\n", __func__,
 		    flow->id);
@@ -617,27 +638,26 @@ next_flow(struct fqcodel *fqc, struct flow *flow, struct flowq **fq)
 }
 
 struct mbuf *
-fqcodel_deq_begin(struct ifqueue *ifq, void **cookiep)
+fqcodel_deq_begin(struct fqcodel *fqc, void **cookiep,
+    struct mbuf_list *free_ml)
 {
-	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
-	struct ifnet *ifp = ifq->ifq_if;
-	struct fqcodel *fqc = ifq->ifq_q;
 	struct flowq *fq;
 	struct flow *flow;
 	struct mbuf *m;
 	int64_t now;
 
 	if ((fqc->flags & FQCF_FIXED_QUANTUM) == 0)
-		fqc->quantum = ifp->if_mtu + max_linkhdr;
+		fqc->quantum = fqc->ifp->if_mtu + max_linkhdr;
 
 	codel_gettime(&now);
 
 	for (flow = first_flow(fqc, &fq); flow != NULL;
 	     flow = next_flow(fqc, flow, &fq)) {
-		m = codel_dequeue(&flow->cd, &fqc->cparams, now, &free_ml,
+		m = codel_dequeue(&flow->cd, &fqc->cparams, now, free_ml,
 		    &fqc->drop_cnt.packets, &fqc->drop_cnt.bytes);
 
-		ifq_mfreeml(ifq, &free_ml);
+		KASSERT(fqc->qlength >= ml_len(free_ml));
+		fqc->qlength -= ml_len(free_ml);
 
 		if (m != NULL) {
 			flow->deficit -= m->m_pkthdr.len;
@@ -652,10 +672,12 @@ fqcodel_deq_begin(struct ifqueue *ifq, void **cookiep)
 }
 
 void
-fqcodel_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+fqcodel_deq_commit(struct fqcodel *fqc, struct mbuf *m, void *cookie)
 {
-	struct fqcodel *fqc = ifq->ifq_q;
 	struct flow *flow = cookie;
+
+	KASSERT(fqc->qlength > 0);
+	fqc->qlength--;
 
 	fqc->xmit_cnt.packets++;
 	fqc->xmit_cnt.bytes += m->m_pkthdr.len;
@@ -664,13 +686,42 @@ fqcodel_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
 }
 
 void
-fqcodel_purge(struct ifqueue *ifq, struct mbuf_list *ml)
+fqcodel_purge(struct fqcodel *fqc, struct mbuf_list *ml)
 {
-	struct fqcodel *fqc = ifq->ifq_q;
 	unsigned int i;
 
 	for (i = 0; i < fqc->nflows; i++)
 		codel_purge(&fqc->flows[i].cd, ml);
+	fqc->qlength = 0;
+}
+
+struct mbuf *
+fqcodel_if_enq(struct ifqueue *ifq, struct mbuf *m)
+{
+	return fqcodel_enq(ifq->ifq_q, m);
+}
+
+struct mbuf *
+fqcodel_if_deq_begin(struct ifqueue *ifq, void **cookiep)
+{
+	struct mbuf_list free_ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
+
+	m = fqcodel_deq_begin(ifq->ifq_q, cookiep, &free_ml);
+	ifq_mfreeml(ifq, &free_ml);
+	return (m);
+}
+
+void
+fqcodel_if_deq_commit(struct ifqueue *ifq, struct mbuf *m, void *cookie)
+{
+	return fqcodel_deq_commit(ifq->ifq_q, m, cookie);
+}
+
+void
+fqcodel_if_purge(struct ifqueue *ifq, struct mbuf_list *ml)
+{
+	return fqcodel_purge(ifq->ifq_q, ml);
 }
 
 void *
@@ -680,6 +731,9 @@ fqcodel_pf_alloc(struct ifnet *ifp)
 
 	fqc = malloc(sizeof(struct fqcodel), M_DEVBUF, M_WAITOK | M_ZERO);
 
+	SIMPLEQ_INIT(&fqc->newq);
+	SIMPLEQ_INIT(&fqc->oldq);
+
 	return (fqc);
 }
 
@@ -688,9 +742,6 @@ fqcodel_pf_addqueue(void *arg, struct pf_queuespec *qs)
 {
 	struct ifnet *ifp = qs->kif->pfik_ifp;
 	struct fqcodel *fqc = arg;
-
-	if (qs->parent_qid != 0)
-		return (EINVAL);
 
 	if (qs->flowqueue.flows == 0 || qs->flowqueue.flows > M_FLOWID_MASK)
 		return (EINVAL);
@@ -720,6 +771,8 @@ fqcodel_pf_addqueue(void *arg, struct pf_queuespec *qs)
 			fqc->flows[i].id = i;
 	}
 #endif
+
+	fqc->ifp = ifp;
 
 	DPRINTF("fq-codel on %s: %d queues %d deep, quantum %d target %llums "
 	    "interval %llums\n", ifp->if_xname, fqc->nflows, fqc->qlimit,
@@ -791,6 +844,36 @@ fqcodel_pf_qstats(struct pf_queuespec *qs, void *ubuf, int *nbytes)
 }
 
 unsigned int
+fqcodel_pf_qlength(void *fqc)
+{
+	return ((struct fqcodel *)fqc)->qlength;
+}
+
+struct mbuf *
+fqcodel_pf_enqueue(void *fqc, struct mbuf *m)
+{
+	return fqcodel_enq(fqc, m);
+}
+
+struct mbuf *
+fqcodel_pf_deq_begin(void *fqc, void **cookiep, struct mbuf_list *free_ml)
+{
+	return fqcodel_deq_begin(fqc, cookiep, free_ml);
+}
+
+void
+fqcodel_pf_deq_commit(void *fqc, struct mbuf *m, void *cookie)
+{
+	return fqcodel_deq_commit(fqc, m, cookie);
+}
+
+void
+fqcodel_pf_purge(void *fqc, struct mbuf_list *ml)
+{
+	return fqcodel_purge(fqc, ml);
+}
+
+unsigned int
 fqcodel_idx(unsigned int nqueues, const struct mbuf *m)
 {
 	return (0);
@@ -799,12 +882,8 @@ fqcodel_idx(unsigned int nqueues, const struct mbuf *m)
 void *
 fqcodel_alloc(unsigned int idx, void *arg)
 {
-	struct fqcodel *fqc = arg;
-
-	SIMPLEQ_INIT(&fqc->newq);
-	SIMPLEQ_INIT(&fqc->oldq);
-
-	return (fqc);
+	/* Allocation is done in fqcodel_pf_alloc */
+	return (arg);
 }
 
 void
