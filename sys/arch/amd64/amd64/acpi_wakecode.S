@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.39 2016/12/19 20:03:15 kettenis Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.40 2017/06/28 07:16:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -97,7 +97,7 @@
 	.global _C_LABEL(acpi_tramp_data_start)
 	.global _C_LABEL(acpi_tramp_data_end)
 _C_LABEL(acpi_real_mode_resume):
-_ACPI_TRMP_OFFSET(acpi_s3_vector_real)
+_ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	nop
 	cli
 	cld
@@ -113,7 +113,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	movw	%ax, %ss
 	movw	%cs, %ax
 	movw	%ax, %es
-	addr32 lidtl	clean_idt
+	addr32 lidtl	.Lclean_idt
 
 	/*
 	 * Set up stack to grow down from offset 0x0FFE.
@@ -144,7 +144,7 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * time, until we restore the saved GDT that we had when we went
 	 * to sleep.
 	 */ 
-	addr32 lgdtl	tmp_gdt
+	addr32 lgdtl	.Ltmp_gdt
 
 	/*
 	 * Enable protected mode by setting the PE bit in CR0
@@ -158,11 +158,11 @@ _ACPI_TRMP_OFFSET(acpi_s3_vector_real)
 	 * ourselves, just a few lines down from here). We rely on the kernel
 	 * to fixup the jump target addres previously. 
 	 */
-	ljmpl	$0x8, $acpi_protected_mode_trampoline
+	ljmpl	$0x8, $.Lacpi_protected_mode_trampoline
 
 	.code32
 	.align 16, 0xcc
-_ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
+_ACPI_TRMP_LABEL(.Lacpi_protected_mode_trampoline)
 _C_LABEL(acpi_protected_mode_resume):
 	nop
 
@@ -196,12 +196,12 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * Set up a temporary long mode GDT describing 2
 	 * segments, one for code and one for data.
 	 */
-	lgdt 	tmp_gdt64	
+	lgdt 	.Ltmp_gdt64	
 
 	/* Restore saved EFER (LME, NXE, etc) */
 	movl	$MSR_EFER, %ecx
 	rdmsr
-	movl	acpi_saved_efer, %eax
+	movl	.Lacpi_saved_efer, %eax
 	andl 	$(EFER_LME | EFER_NXE | EFER_SCE), %eax	
 	wrmsr
 
@@ -226,18 +226,18 @@ _C_LABEL(acpi_protected_mode_resume):
 1:
 
 	/* Enter long mode by making another intersegment jump */
-	ljmp 	$0x8, $acpi_long_mode_trampoline
+	ljmp 	$0x8, $.Lacpi_long_mode_trampoline
 
 	.code64
 	.align 16, 0xcc
-_ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
+_ACPI_TRMP_LABEL(.Lacpi_long_mode_trampoline)
 _C_LABEL(acpi_long_mode_resume):
 
 	/* Reset stack */
 	movq	$(ACPI_TRAMP_DATA + 0x0FF8), %rsp
 
 	/* Load GDT based on our saved copy */
-	lgdt	acpi_saved_gdt
+	lgdt	.Lacpi_saved_gdt
 
 	/* Reset segment registers */
 	movw    $GSEL(GDATA_SEL, SEL_KPL),%ax
@@ -252,52 +252,52 @@ _C_LABEL(acpi_long_mode_resume):
 	/* Restore registers - start with the MSRs */
 #if NLAPIC > 0
 	movl	$MSR_APICBASE, %ecx
-	movl	acpi_saved_apicbase, %eax
-	movl	acpi_saved_apicbase+4, %edx
+	movl	.Lacpi_saved_apicbase, %eax
+	movl	.Lacpi_saved_apicbase+4, %edx
 	wrmsr
 #endif
 
 	movl	$MSR_STAR, %ecx
-	movl	acpi_saved_star, %eax
-	movl	acpi_saved_star+4, %edx
+	movl	.Lacpi_saved_star, %eax
+	movl	.Lacpi_saved_star+4, %edx
 	wrmsr
 
 	movl	$MSR_LSTAR, %ecx
-	movl	acpi_saved_lstar, %eax
-	movl	acpi_saved_lstar+4, %edx
+	movl	.Lacpi_saved_lstar, %eax
+	movl	.Lacpi_saved_lstar+4, %edx
 	wrmsr
 
 	movl	$MSR_CSTAR, %ecx
-	movl	acpi_saved_cstar, %eax
-	movl	acpi_saved_cstar+4, %edx
+	movl	.Lacpi_saved_cstar, %eax
+	movl	.Lacpi_saved_cstar+4, %edx
 	wrmsr
 
 	movl	$MSR_SFMASK, %ecx
-	movl	acpi_saved_sfmask, %eax
-	movl	acpi_saved_sfmask+4, %edx
+	movl	.Lacpi_saved_sfmask, %eax
+	movl	.Lacpi_saved_sfmask+4, %edx
 	wrmsr
 
 	movl	$MSR_FSBASE, %ecx
-	movl	acpi_saved_fsbase, %eax
-	movl	acpi_saved_fsbase+4, %edx
+	movl	.Lacpi_saved_fsbase, %eax
+	movl	.Lacpi_saved_fsbase+4, %edx
 	wrmsr
 
 	movl	$MSR_GSBASE, %ecx
-	movl	acpi_saved_gsbase, %eax
-	movl	acpi_saved_gsbase+4, %edx
+	movl	.Lacpi_saved_gsbase, %eax
+	movl	.Lacpi_saved_gsbase+4, %edx
 	wrmsr
 
 	movl	$MSR_KERNELGSBASE, %ecx
-	movl	acpi_saved_kgs, %eax
-	movl	acpi_saved_kgs+4, %edx
+	movl	.Lacpi_saved_kgs, %eax
+	movl	.Lacpi_saved_kgs+4, %edx
 	wrmsr
 
 	/* Restore control registers */
-	movq	acpi_saved_cr8, %rax
+	movq	.Lacpi_saved_cr8, %rax
 	movq	%rax, %cr8
-	movq	acpi_saved_cr4, %rax
+	movq	.Lacpi_saved_cr4, %rax
 	movq	%rax, %cr4
-	movq	acpi_saved_cr3, %rax
+	movq	.Lacpi_saved_cr3, %rax
 	movq	%rax, %cr3
 
 	/* Flush the prefetch queue again */
@@ -305,9 +305,9 @@ _C_LABEL(acpi_long_mode_resume):
 1:	jmp	1f
 1:
 
-	movq	acpi_saved_cr2, %rax
+	movq	.Lacpi_saved_cr2, %rax
 	movq	%rax, %cr2
-	movq	acpi_saved_cr0,	%rax
+	movq	.Lacpi_saved_cr0,	%rax
 	movq	%rax, %cr0
 
 	/* Flush the prefetch queue again */
@@ -315,42 +315,42 @@ _C_LABEL(acpi_long_mode_resume):
 1:	jmp	1f
 1:
 	
-	lldt	acpi_saved_ldt
-	lidt	acpi_saved_idt
+	lldt	.Lacpi_saved_ldt
+	lidt	.Lacpi_saved_idt
 
 	/* Restore the saved task register */
 	xorq	%rcx, %rcx
-	movw	acpi_saved_tr, %cx
-	movq	acpi_saved_gdt+2, %rax
+	movw	.Lacpi_saved_tr, %cx
+	movq	.Lacpi_saved_gdt+2, %rax
 	andb	$0xF9, 5(%rax,%rcx)
 	ltr	%cx
 
-	pushq 	acpi_saved_fl
+	pushq 	.Lacpi_saved_fl
 	popfq
 
-	movq    acpi_saved_rbx, %rbx
-	movq    acpi_saved_rcx, %rcx
-	movq    acpi_saved_rdx, %rdx
-	movq    acpi_saved_rbp, %rbp
-	movq    acpi_saved_rsi, %rsi
-	movq    acpi_saved_rdi, %rdi
-	movq    acpi_saved_rsp, %rsp
+	movq    .Lacpi_saved_rbx, %rbx
+	movq    .Lacpi_saved_rcx, %rcx
+	movq    .Lacpi_saved_rdx, %rdx
+	movq    .Lacpi_saved_rbp, %rbp
+	movq    .Lacpi_saved_rsi, %rsi
+	movq    .Lacpi_saved_rdi, %rdi
+	movq    .Lacpi_saved_rsp, %rsp
 
-	movq    acpi_saved_r8, %r8
-	movq    acpi_saved_r9, %r9
-	movq    acpi_saved_r10, %r10
-	movq    acpi_saved_r11, %r11
-	movq    acpi_saved_r12, %r12
-	movq    acpi_saved_r13, %r13
-	movq    acpi_saved_r14, %r14
-	movq    acpi_saved_r15, %r15
+	movq    .Lacpi_saved_r8, %r8
+	movq    .Lacpi_saved_r9, %r9
+	movq    .Lacpi_saved_r10, %r10
+	movq    .Lacpi_saved_r11, %r11
+	movq    .Lacpi_saved_r12, %r12
+	movq    .Lacpi_saved_r13, %r13
+	movq    .Lacpi_saved_r14, %r14
+	movq    .Lacpi_saved_r15, %r15
 
 	/* Poke CR3 one more time. Might not be necessary */	
-	movq	acpi_saved_cr3, %rax
+	movq	.Lacpi_saved_cr3, %rax
 	movq	%rax, %cr3
 
 	xorq	%rax, %rax	
-	jmp   	*acpi_saved_ret
+	jmp   	*.Lacpi_saved_ret
 
 #ifdef HIBERNATE
 	/*
@@ -361,17 +361,17 @@ _C_LABEL(acpi_long_mode_resume):
 NENTRY(hibernate_resume_machdep)
 	cli
 	/* Jump to the identity mapped version of ourself */
-	mov	$hibernate_resume_vector_2, %rax
+	mov	$.Lhibernate_resume_vector_2, %rax
 	jmp	*%rax
-_ACPI_TRMP_LABEL(hibernate_resume_vector_2)
+_ACPI_TRMP_LABEL(.Lhibernate_resume_vector_2)
 
 	/* Get out of 64 bit CS */
-	lgdtq	tmp_gdt6416
+	lgdtq	.Ltmp_gdt6416
 
 	/* Jump out of 64 bit mode, to hibernate_resume_vector_3 below */
-	ljmp	*(hibernate_indirect_16)
+	ljmp	*(.Lhibernate_indirect_16)
 
-_ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
+_ACPI_TRMP_OFFSET(.Lhibernate_resume_vector_3)
 	.code16
 
 	movl	%cr0, %eax
@@ -389,26 +389,26 @@ _ACPI_TRMP_OFFSET(hibernate_resume_vector_3)
 	movw	%ax, %fs
 	movw	%ax, %gs
 	movl	$0x0FFE, %esp
-	addr32 lidtl	clean_idt
+	addr32 lidtl	.Lclean_idt
 
 	/* Jump to the S3 resume vector */
-	ljmp	$(_ACPI_RM_CODE_SEG), $acpi_s3_vector_real
+	ljmp	$(_ACPI_RM_CODE_SEG), $.Lacpi_s3_vector_real
 
 NENTRY(hibernate_drop_to_real_mode)
 	.code64
 	cli
 	/* Jump to the identity mapped version of ourself */
-	mov	$hibernate_resume_vector_2b, %rax
+	mov	$.Lhibernate_resume_vector_2b, %rax
 	jmp	*%rax
-_ACPI_TRMP_LABEL(hibernate_resume_vector_2b)
+_ACPI_TRMP_LABEL(.Lhibernate_resume_vector_2b)
 
 	/* Get out of 64 bit CS */
-	lgdtq	tmp_gdt6416
+	lgdtq	.Ltmp_gdt6416
 
 	/* Jump out of 64 bit mode, to hibernate_resume_vector_3b below */
-	ljmp	*(hibernate_indirect_16b)
+	ljmp	*(.Lhibernate_indirect_16b)
 
-_ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
+_ACPI_TRMP_OFFSET(.Lhibernate_resume_vector_3b)
 	.code16
 
 	movl	%cr0, %eax
@@ -426,11 +426,11 @@ _ACPI_TRMP_OFFSET(hibernate_resume_vector_3b)
 	movw	%ax, %gs
 	movw	%ax, %ss
 	movl	$0x0FFE, %esp
-	addr32 lidtl	clean_idt
+	addr32 lidtl	.Lclean_idt
 
-_ACPI_TRMP_OFFSET(hib_hlt_real)
+_ACPI_TRMP_OFFSET(.Lhib_hlt_real)
 	hlt
-	ljmp	$(_ACPI_RM_CODE_SEG), $hib_hlt_real
+	ljmp	$(_ACPI_RM_CODE_SEG), $.Lhib_hlt_real
 
 	.code64
 	/* Switch to hibernate resume pagetable */
@@ -479,12 +479,12 @@ _C_LABEL(acpi_resume_end):
 	 */
 	.section .rodata
 _C_LABEL(acpi_tramp_data_start):
-_ACPI_TRMP_DATA_OFFSET(tmp_gdt)
-	.word	tmp_gdt_end - tmp_gdtable
-	.long	tmp_gdtable
+_ACPI_TRMP_DATA_OFFSET(.Ltmp_gdt)
+	.word	.Ltmp_gdt_end - .Ltmp_gdtable
+	.long	.Ltmp_gdtable
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(tmp_gdtable)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable)
 	/*
 	 * null
 	 */
@@ -521,122 +521,122 @@ _ACPI_TRMP_DATA_LABEL(tmp_gdtable)
 	 */ 
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
-_ACPI_TRMP_DATA_LABEL(tmp_gdt_end)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdt_end)
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_OFFSET(clean_idt)
+_ACPI_TRMP_DATA_OFFSET(.Lclean_idt)
 	.word	0xffff
 	.long	0
 	.word	0
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(tmp_gdt64)
-	.word 	tmp_gdt64_end - tmp_gdtable64
-	.long	tmp_gdtable64
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdt64)
+	.word 	.Ltmp_gdt64_end - .Ltmp_gdtable64
+	.long	.Ltmp_gdtable64
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(tmp_gdtable64)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable64)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
-_ACPI_TRMP_DATA_LABEL(tmp_gdt64_end)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdt64_end)
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(tmp_gdt6416)
-	.word 	tmp_gdt6416_end - tmp_gdtable6416
-	.quad	tmp_gdtable6416
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdt6416)
+	.word 	.Ltmp_gdt6416_end - .Ltmp_gdtable6416
+	.quad	.Ltmp_gdtable6416
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(tmp_gdtable6416)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdtable6416)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
 	.word	0x0fff, (ACPI_TRAMPOLINE % 0x10000)
 	.byte	(ACPI_TRAMPOLINE >> 16), 0x9a, 0, 0
-_ACPI_TRMP_DATA_LABEL(tmp_gdt6416_end)
+_ACPI_TRMP_DATA_LABEL(.Ltmp_gdt6416_end)
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rbx)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rbx)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rcx)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rcx)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rdx)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rdx)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rbp)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rbp)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rsi)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rsi)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rdi)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rdi)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_rsp)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_rsp)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r8)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r8)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r9)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r9)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r10)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r10)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r11)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r11)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r12)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r12)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r13)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r13)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r14)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r14)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_r15)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_r15)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_fl)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_fl)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cr0)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr0)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cr2)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr2)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cr3)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr3)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cr4)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr4)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cr8)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cr8)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_ret)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ret)
 	.quad 0
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_idt)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_idt)
 	.space 10
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_gdt)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_gdt)
 	.space 10
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_ldt)	
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ldt)	
 	.space 10
 	
-_ACPI_TRMP_DATA_LABEL(acpi_saved_tr)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_tr)
 	.short 0
 
 	.align 4, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_efer)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_efer)
 	.long 0
 
 	.align 8, 0xcc
-_ACPI_TRMP_DATA_LABEL(acpi_saved_fsbase)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_fsbase)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_gsbase)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_gsbase)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_kgs)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_kgs)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_star)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_star)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_lstar)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_lstar)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_cstar)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cstar)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_sfmask)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_sfmask)
 	.quad 0
 #if NLAPIC > 0
-_ACPI_TRMP_DATA_LABEL(acpi_saved_apicbase)
+_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_apicbase)
 	.quad 0
 #endif
 
@@ -644,11 +644,11 @@ _ACPI_TRMP_DATA_LABEL(acpi_saved_apicbase)
 _ACPI_TRMP_DATA_LABEL(acpi_pdirpa)
 	.long 0
 #ifdef HIBERNATE
-_ACPI_TRMP_DATA_LABEL(hibernate_indirect_16)
-	.long	hibernate_resume_vector_3
+_ACPI_TRMP_DATA_LABEL(.Lhibernate_indirect_16)
+	.long	.Lhibernate_resume_vector_3
 	.word	0x18
-_ACPI_TRMP_DATA_LABEL(hibernate_indirect_16b)
-	.long	hibernate_resume_vector_3b
+_ACPI_TRMP_DATA_LABEL(.Lhibernate_indirect_16b)
+	.long	.Lhibernate_resume_vector_3b
 	.word	0x18
 #endif /* HIBERNATE */
 
@@ -662,94 +662,94 @@ _C_LABEL(acpi_tramp_data_end):
 	.code64
 NENTRY(acpi_savecpu)
 	movq	(%rsp), %rax
-	movq	%rax, acpi_saved_ret
+	movq	%rax, .Lacpi_saved_ret
 
-	movq	%rbx, acpi_saved_rbx
-	movq	%rcx, acpi_saved_rcx
-	movq	%rdx, acpi_saved_rdx
-	movq	%rbp, acpi_saved_rbp
-	movq	%rsi, acpi_saved_rsi
-	movq	%rdi, acpi_saved_rdi
-	movq	%rsp, acpi_saved_rsp
-	addq	$0x8, acpi_saved_rsp
+	movq	%rbx, .Lacpi_saved_rbx
+	movq	%rcx, .Lacpi_saved_rcx
+	movq	%rdx, .Lacpi_saved_rdx
+	movq	%rbp, .Lacpi_saved_rbp
+	movq	%rsi, .Lacpi_saved_rsi
+	movq	%rdi, .Lacpi_saved_rdi
+	movq	%rsp, .Lacpi_saved_rsp
+	addq	$0x8, .Lacpi_saved_rsp
 
-	movq	%r8, acpi_saved_r8
-	movq	%r9, acpi_saved_r9
-	movq	%r10, acpi_saved_r10
-	movq	%r11, acpi_saved_r11
-	movq	%r12, acpi_saved_r12
-	movq	%r13, acpi_saved_r13
-	movq	%r14, acpi_saved_r14
-	movq	%r15, acpi_saved_r15
+	movq	%r8, .Lacpi_saved_r8
+	movq	%r9, .Lacpi_saved_r9
+	movq	%r10, .Lacpi_saved_r10
+	movq	%r11, .Lacpi_saved_r11
+	movq	%r12, .Lacpi_saved_r12
+	movq	%r13, .Lacpi_saved_r13
+	movq	%r14, .Lacpi_saved_r14
+	movq	%r15, .Lacpi_saved_r15
 
 	pushfq
-	popq	acpi_saved_fl
+	popq	.Lacpi_saved_fl
 
 	movq	%cr0, %rax
-	movq	%rax, acpi_saved_cr0
+	movq	%rax, .Lacpi_saved_cr0
 	movq	%cr2, %rax
-	movq	%rax, acpi_saved_cr2
+	movq	%rax, .Lacpi_saved_cr2
 	movq	%cr3, %rax
-	movq	%rax, acpi_saved_cr3
+	movq	%rax, .Lacpi_saved_cr3
 	movq	%cr4, %rax
-	movq	%rax, acpi_saved_cr4
+	movq	%rax, .Lacpi_saved_cr4
 	movq	%cr8, %rax
-	movq	%rax, acpi_saved_cr8
+	movq	%rax, .Lacpi_saved_cr8
 	
 	pushq	%rcx
 	pushq	%rdx
 #if NLAPIC > 0
 	movl	$MSR_APICBASE, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_apicbase
-	movl	%edx, acpi_saved_apicbase+4
+	movl	%eax, .Lacpi_saved_apicbase
+	movl	%edx, .Lacpi_saved_apicbase+4
 #endif
 
 	movl	$MSR_STAR, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_star
-	movl	%edx, acpi_saved_star+4
+	movl	%eax, .Lacpi_saved_star
+	movl	%edx, .Lacpi_saved_star+4
 
 	movl	$MSR_CSTAR, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_cstar
-	movl	%edx, acpi_saved_cstar+4
+	movl	%eax, .Lacpi_saved_cstar
+	movl	%edx, .Lacpi_saved_cstar+4
 
 	movl	$MSR_LSTAR, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_lstar
-	movl	%edx, acpi_saved_lstar+4
+	movl	%eax, .Lacpi_saved_lstar
+	movl	%edx, .Lacpi_saved_lstar+4
 
 	movl	$MSR_SFMASK, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_sfmask
-	movl	%edx, acpi_saved_sfmask+4
+	movl	%eax, .Lacpi_saved_sfmask
+	movl	%edx, .Lacpi_saved_sfmask+4
 
 	movl	$MSR_FSBASE, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_fsbase
-	movl	%edx, acpi_saved_fsbase+4
+	movl	%eax, .Lacpi_saved_fsbase
+	movl	%edx, .Lacpi_saved_fsbase+4
 
 	movl	$MSR_GSBASE, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_gsbase
-	movl	%edx, acpi_saved_gsbase+4
+	movl	%eax, .Lacpi_saved_gsbase
+	movl	%edx, .Lacpi_saved_gsbase+4
 
 	movl	$MSR_KERNELGSBASE, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_kgs
-	movl	%edx, acpi_saved_kgs+4
+	movl	%eax, .Lacpi_saved_kgs
+	movl	%edx, .Lacpi_saved_kgs+4
 	
 	movl	$MSR_EFER, %ecx
 	rdmsr
-	movl	%eax, acpi_saved_efer
+	movl	%eax, .Lacpi_saved_efer
 	popq 	%rdx
 	popq	%rcx
 
-	sgdt	acpi_saved_gdt
-	sidt	acpi_saved_idt
-	sldt	acpi_saved_ldt
-	str	acpi_saved_tr
+	sgdt	.Lacpi_saved_gdt
+	sidt	.Lacpi_saved_idt
+	sldt	.Lacpi_saved_ldt
+	str	.Lacpi_saved_tr
 
 	movl	$1, %eax
 	ret
