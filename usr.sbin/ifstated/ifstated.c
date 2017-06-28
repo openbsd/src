@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.44 2017/06/28 10:38:16 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.45 2017/06/28 11:10:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -72,7 +72,8 @@ void		eval_state(struct ifsd_state *);
 int		state_change(void);
 void		do_action(struct ifsd_action *);
 void		remove_action(struct ifsd_action *, struct ifsd_state *);
-void		remove_expression(struct ifsd_expression *, struct ifsd_state *);
+void		remove_expression(struct ifsd_expression *,
+		    struct ifsd_state *);
 
 __dead void
 usage(void)
@@ -151,12 +152,12 @@ main(int argc, char *argv[])
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
-	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
+	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt msgfilter", __func__);
 
 	rtfilter = RTABLE_ANY;
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
-	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
+	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
@@ -180,7 +181,7 @@ startup_handler(int fd, short event, void *arg)
 		log_warnx("unable to load config");
 		exit(1);
 	}
-	
+
 	event_set(&rt_msg_ev, rfd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
 
@@ -605,7 +606,7 @@ fetch_state(void)
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		struct ifreq ifr;
-		struct if_data  ifrdat;
+		struct if_data ifrdat;
 
 		if (oname && !strcmp(oname, ifa->ifa_name))
 			continue;
@@ -623,8 +624,6 @@ fetch_state(void)
 	freeifaddrs(ifap);
 	close(sock);
 }
-
-
 
 /*
  * Clear the config.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.11 2017/06/18 12:03:47 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.12 2017/06/28 11:10:08 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -28,7 +28,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-
 
 struct ifsd_expression;
 TAILQ_HEAD(ifsd_expression_list, ifsd_expression);
@@ -80,7 +79,6 @@ struct ifsd_action {
 #define IFSD_ACTION_CHANGESTATE		2
 #define IFSD_ACTION_CONDITION		3
 };
-
 
 struct ifsd_expression {
 	TAILQ_ENTRY(ifsd_expression)	 entries;
