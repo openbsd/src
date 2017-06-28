@@ -1,4 +1,4 @@
-/* $OpenBSD: alerts.c,v 1.19 2017/04/28 19:13:55 nicm Exp $ */
+/* $OpenBSD: alerts.c,v 1.20 2017/06/28 06:45:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -285,8 +285,7 @@ alerts_check_silence(struct window *w)
 
 		if (options_get_number(s->options, "bell-on-alert"))
 			alerts_ring_bell(s);
-
-		if (!options_get_number(s->options, "visual-silence"))
+		if (options_get_number(s->options, "visual-silence"))
 			alerts_set_message(s, "Silence in window %d", wl->idx);
 	}
 
