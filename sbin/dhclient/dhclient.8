@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.30 2017/06/28 14:35:43 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.31 2017/06/28 17:54:31 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -253,6 +253,7 @@ On receiving
 will restart itself, reading
 .Xr dhclient.conf 5
 and obtaining a new lease.
+.El
 .Sh FILES
 .Bl -tag -width "/var/db/dhclient.leases.<IFNAME>XXX" -compact
 .It Pa /etc/dhclient.conf
