@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.62 2017/06/28 15:42:49 deraadt Exp $ */
+/* $OpenBSD: file.c,v 1.63 2017/06/28 17:14:15 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -217,12 +217,16 @@ prepare_input(struct input_file *inf, const char *path)
 {
 	int	fd, mode, error;
 
+	inf->path = path;
+
 	if (strcmp(path, "-") == 0) {
 		if (fstat(STDIN_FILENO, &inf->sb) == -1) {
 			inf->error = errno;
 			inf->fd = -1;
+			return;
 		}
 		inf->fd = STDIN_FILENO;
+		return;
 	}
 
 	if (Lflag)
@@ -232,6 +236,7 @@ prepare_input(struct input_file *inf, const char *path)
 	if (error == -1) {
 		inf->error = errno;
 		inf->fd = -1;
+		return;
 	}
 
 	/* We don't need them, so don't open directories or symlinks. */
@@ -245,7 +250,6 @@ prepare_input(struct input_file *inf, const char *path)
 	if (S_ISLNK(mode))
 		read_link(inf, path);
 	inf->fd = fd;
-	inf->path = path;
 }
 
 static void
