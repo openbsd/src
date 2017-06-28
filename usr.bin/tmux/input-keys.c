@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.61 2017/06/12 07:04:24 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.62 2017/06/28 11:36:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,7 +177,7 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	 * If this is a normal 7-bit key, just send it, with a leading escape
 	 * if necessary. If it is a UTF-8 key, split it and send it.
 	 */
-	justkey = (key & ~KEYC_ESCAPE);
+	justkey = (key & ~(KEYC_XTERM|KEYC_ESCAPE));
 	if (justkey <= 0x7f) {
 		if (key & KEYC_ESCAPE)
 			bufferevent_write(wp->event, "\033", 1);

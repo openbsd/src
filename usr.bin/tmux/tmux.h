@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.787 2017/06/23 15:36:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.788 2017/06/28 11:36:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -94,8 +94,8 @@ struct tmuxproc;
 
 /* Key modifier bits. */
 #define KEYC_ESCAPE 0x200000000000ULL
-#define KEYC_CTRL   0x400000000000ULL
-#define KEYC_SHIFT  0x800000000000ULL
+#define KEYC_CTRL 0x400000000000ULL
+#define KEYC_SHIFT 0x800000000000ULL
 #define KEYC_XTERM 0x1000000000000ULL
 
 /* Mask to obtain key w/o modifiers. */
