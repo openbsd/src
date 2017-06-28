@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.123 2017/06/17 13:05:47 schwarze Exp $ */
+/*	$OpenBSD: man.c,v 1.124 2017/06/28 12:52:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -280,8 +280,10 @@ man_breakscope(struct roff_man *man, int tok)
 	if (man->flags & MAN_ELINE && (tok < MAN_TH ||
 	    ! (man_macros[tok].flags & MAN_NSCOPED))) {
 		n = man->last;
-		assert(n->type != ROFFT_TEXT);
-		if (man_macros[n->tok].flags & MAN_NSCOPED)
+		if (n->type == ROFFT_TEXT)
+			n = n->parent;
+		if (n->tok < MAN_TH ||
+		    man_macros[n->tok].flags & MAN_NSCOPED)
 			n = n->parent;
 
 		mandoc_vmsg(MANDOCERR_BLK_LINE, man->parse,
@@ -317,7 +319,8 @@ man_breakscope(struct roff_man *man, int tok)
 		n = man->last;
 		if (n->type == ROFFT_TEXT)
 			n = n->parent;
-		if ( ! (man_macros[n->tok].flags & MAN_BSCOPE))
+		if (n->tok < MAN_TH ||
+		    (man_macros[n->tok].flags & MAN_BSCOPE) == 0)
 			n = n->parent;
 
 		assert(n->type == ROFFT_HEAD);
