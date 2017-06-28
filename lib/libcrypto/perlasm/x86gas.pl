@@ -221,9 +221,6 @@ sub ::initseg
 PIC_PROLOGUE
 	call	PIC_PLT($f)
 PIC_EPILOGUE
-	jmp	.Linitalign
-.align	$align
-.Linitalign:
 ___
     } elsif ($::android)
     {	$initseg.=<<___;
