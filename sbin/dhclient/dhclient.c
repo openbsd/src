@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.450 2017/06/28 12:53:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.451 2017/06/28 14:35:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -392,11 +392,6 @@ routehandler(struct interface_info *ifi)
 					state_reboot(ifi);
 				}
 			} else {
-				/* Let monitoring programs see link loss. */
-				if (optionDB) {
-					rewind(optionDB);
-					ftruncate(fileno(optionDB), 0);
-				}
 				/* No need to wait for anything but link. */
 				cancel_timeout(ifi);
 			}
@@ -638,7 +633,7 @@ main(int argc, char *argv[])
 	close(fd);
 
 	if (strlen(path_option_db) != 0) {
-		if ((optionDB = fopen(path_option_db, "w")) == NULL)
+		if ((optionDB = fopen(path_option_db, "a")) == NULL)
 			fatal("can't open %s", path_option_db);
 	}
 
@@ -1919,13 +1914,7 @@ go_daemon(void)
 	if (rdaemon(nullfd) == -1)
 		fatal("Cannot daemonize");
 
-	/* Catch stuff that might be trying to terminate the program. */
 	signal(SIGHUP, sighdlr);
-	signal(SIGINT, sighdlr);
-	signal(SIGTERM, sighdlr);
-	signal(SIGUSR1, sighdlr);
-	signal(SIGUSR2, sighdlr);
-
 	signal(SIGPIPE, SIG_IGN);
 }
 
@@ -2027,7 +2016,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	struct pollfd pfd[1];
 	struct imsgbuf *priv_ibuf;
 	ssize_t n;
-	int nfds, rslt, got_imsg_hup = 0;
+	int nfds, got_imsg_hup = 0;
 
 	switch (fork()) {
 	case -1:
@@ -2086,21 +2075,6 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	imsg_clear(priv_ibuf);
 	close(fd);
-
-	if (strlen(path_option_db)) {
-		/* Truncate the file so monitoring process see exit. */
-		rslt = truncate(path_option_db, 0);
-		if (rslt == -1)
-			log_warn("Unable to truncate '%s'", path_option_db);
-	}
-
-	/*
-	 * SIGTERM is used by system at shut down. Be nice and don't cleanup
-	 * routes, possibly preventing NFS from properly shutting down.
-	 */
-	if (quit != SIGTERM) {
-		priv_cleanup(ifi);
-	}
 
 	if (quit == SIGHUP) {
 		if (!got_imsg_hup)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.95 2017/06/28 11:53:08 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.96 2017/06/28 14:35:43 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -70,7 +70,6 @@ flush_unpriv_ibuf(const char *who)
 	}
 }
 
-struct in_addr active_addr;
 struct in_addr deleting;
 struct in_addr adding;
 
@@ -130,13 +129,9 @@ check_route_label(struct sockaddr_rtlabel *label)
 void
 flush_routes(void)
 {
-	struct imsg_flush_routes imsg;
 	int			 rslt;
 
-	imsg.zapzombies = 1;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1,
-	    &imsg, sizeof(imsg));
+	rslt = imsg_compose(unpriv_ibuf, IMSG_FLUSH_ROUTES, 0, 0, -1, NULL, 0);
 	if (rslt == -1)
 		log_warn("flush_routes: imsg_compose");
 
@@ -144,7 +139,7 @@ flush_routes(void)
 }
 
 void
-priv_flush_routes(struct interface_info *ifi, struct imsg_flush_routes *imsg)
+priv_flush_routes(struct interface_info *ifi)
 {
 	char ifname[IF_NAMESIZE];
 	struct sockaddr *rti_info[RTAX_MAX];
@@ -214,8 +209,7 @@ priv_flush_routes(struct interface_info *ifi, struct imsg_flush_routes *imsg)
 			delete_route(ifi, s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
-			if (imsg->zapzombies)
-				delete_route(ifi, s, rtm);
+			delete_route(ifi, s, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
@@ -731,27 +725,6 @@ priv_add_address(struct interface_info *ifi, struct imsg_add_address *imsg)
 		log_warn("SIOCAIFADDR failed (%s)", inet_ntoa(imsg->addr));
 
 	close(s);
-
-	active_addr = imsg->addr;
-}
-
-/*
- * priv_cleanup removes dhclient installed routes and address.
- */
-void
-priv_cleanup(struct interface_info *ifi)
-{
-	struct imsg_flush_routes fimsg;
-	struct imsg_delete_address dimsg;
-
-	fimsg.zapzombies = 0;	/* Only zapzombies when binding a lease. */
-	priv_flush_routes(ifi, &fimsg);
-
-	if (active_addr.s_addr == INADDR_ANY)
-		return;
-
-	dimsg.addr = active_addr;
-	priv_delete_address(ifi, &dimsg);
 }
 
 /*

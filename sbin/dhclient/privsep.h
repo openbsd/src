@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.38 2017/06/24 23:32:57 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.39 2017/06/28 14:35:43 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -36,10 +36,6 @@ struct imsg_add_address {
 	struct	in_addr mask;
 };
 
-struct imsg_flush_routes {
-	int	zapzombies;
-};
-
 struct imsg_add_route {
 	struct in_addr	dest;
 	struct in_addr	netmask;
@@ -60,7 +56,7 @@ void	add_default_route(struct in_addr, struct in_addr);
 void	add_static_routes(struct option_data *, struct in_addr);
 void	add_classless_static_routes(struct option_data *, struct in_addr);
 void	priv_add_route(struct interface_info *, struct imsg_add_route *);
-void	priv_flush_routes(struct interface_info *, struct imsg_flush_routes *);
+void	priv_flush_routes(struct interface_info *);
 
 char	*resolv_conf_contents(struct interface_info *ifi, struct option_data *,
 	    struct option_data *, struct option_data *);
@@ -73,5 +69,3 @@ void	priv_add_address(struct interface_info *, struct imsg_add_address *);
 
 void	priv_set_interface_mtu(struct interface_info *,
 	    struct imsg_set_interface_mtu *);
-
-void	priv_cleanup(struct interface_info *);
