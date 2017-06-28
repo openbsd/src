@@ -91,8 +91,11 @@ void MCELFStreamer::InitSections(bool NoExecStack) {
   SwitchSection(Ctx.getObjectFileInfo()->getTextSection());
   EmitCodeAlignment(4);
 
-  if (NoExecStack)
-    SwitchSection(Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx));
+  if (NoExecStack) {
+    MCSection *s = Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx);
+    if (s) 
+	SwitchSection(s);
+  }
 }
 
 void MCELFStreamer::EmitLabel(MCSymbol *S) {
