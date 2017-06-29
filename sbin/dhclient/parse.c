@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.53 2017/06/22 15:08:53 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.54 2017/06/29 21:37:43 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -223,43 +223,6 @@ parse_ip_addr(FILE *cfile, struct in_addr *addr)
 		parse_warn("expecting decimal value.");
 		skip_to_semi(cfile);
 		return (0);
-	}
-}
-
-/*
- * ETHERNET :== 'ethernet' NUMBER:NUMBER:NUMBER:NUMBER:NUMBER:NUMBER
- */
-void
-parse_ethernet(FILE *cfile, struct ether_addr *hardware)
-{
-	struct ether_addr buf;
-	int len, token;
-
-	token = next_token(NULL, cfile);
-	if (token != TOK_ETHERNET) {
-		parse_warn("expecting 'ethernet'.");
-		if (token != ';')
-			skip_to_semi(cfile);
-		return;
-	}
-
-	len = 0;
-	for (token = ':'; token == ':'; token = next_token(NULL, cfile)) {
-		if (!parse_hex(cfile, &buf.ether_addr_octet[len]))
-			break;
-		if (++len == sizeof(buf.ether_addr_octet))
-			break;
-	}
-
-	if (len == 6) {
-		if (parse_semi(cfile))
-			memcpy(hardware, &buf, sizeof(*hardware));
-	} else if (token != ':') {
-		parse_warn("expecting ':'.");
-		skip_to_semi(cfile);
-	} else {
-		parse_warn("expecting hex value.");
-		skip_to_semi(cfile);
 	}
 }
 

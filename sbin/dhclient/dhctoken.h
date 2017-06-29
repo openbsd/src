@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.10 2016/08/16 21:57:51 krw Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.11 2017/06/29 21:37:43 krw Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -40,12 +40,10 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define TOK_FIRST_TOKEN	TOK_HARDWARE
-#define TOK_HARDWARE		257
-#define TOK_FILENAME		258
+#define TOK_FIRST_TOKEN	TOK_FILENAME
+#define TOK_FILENAME		257
 #define TOK_FIXED_ADDR		259
 #define TOK_OPTION		260
-#define TOK_ETHERNET		261
 #define TOK_STRING		262
 #define TOK_NUMBER		263
 #define TOK_NUMBER_OR_NAME	264
@@ -66,9 +64,6 @@
 #define TOK_BOOTP		280
 #define TOK_DENY		281
 #define TOK_DEFAULT		282
-#define TOK_MEDIA		283
-#define TOK_MEDIUM		284
-#define TOK_ALIAS		285
 #define TOK_REBOOT		286
 #define TOK_BACKOFF_CUTOFF	287
 #define TOK_INITIAL_INTERVAL	288

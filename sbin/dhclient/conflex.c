@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.39 2017/06/10 17:56:29 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.40 2017/06/29 21:37:43 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -321,24 +321,19 @@ static const struct keywords {
 	const char	*k_name;
 	int		k_val;
 } keywords[] = {
-	{ "alias",				TOK_ALIAS },
 	{ "append",				TOK_APPEND },
 	{ "backoff-cutoff",			TOK_BACKOFF_CUTOFF },
 	{ "bootp",				TOK_BOOTP },
 	{ "default",				TOK_DEFAULT },
 	{ "deny",				TOK_DENY },
-	{ "ethernet",				TOK_ETHERNET },
 	{ "expire",				TOK_EXPIRE },
 	{ "filename",				TOK_FILENAME },
 	{ "fixed-address",			TOK_FIXED_ADDR },
-	{ "hardware",				TOK_HARDWARE },
 	{ "ignore",				TOK_IGNORE },
 	{ "initial-interval",			TOK_INITIAL_INTERVAL },
 	{ "interface",				TOK_INTERFACE },
 	{ "lease",				TOK_LEASE },
 	{ "link-timeout",			TOK_LINK_TIMEOUT },
-	{ "media",				TOK_MEDIA },
-	{ "medium",				TOK_MEDIUM },
 	{ "next-server",			TOK_NEXT_SERVER },
 	{ "option",				TOK_OPTION },
 	{ "prepend",				TOK_PREPEND },

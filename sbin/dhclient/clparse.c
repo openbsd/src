@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.113 2017/06/16 14:12:12 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.114 2017/06/29 21:37:43 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -166,8 +166,6 @@ read_client_leases(struct interface_info *ifi)
  *	TOK_SUPERSEDE option-decl |
  *	TOK_APPEND option-decl |
  *	TOK_PREPEND option-decl |
- *	TOK_MEDIA string-list |
- *	hardware-declaration |
  *	TOK_REQUEST option-list |
  *	TOK_REQUIRE option-list |
  *	TOK_IGNORE option-list |
@@ -179,7 +177,6 @@ read_client_leases(struct interface_info *ifi)
  *	TOK_INITIAL_INTERVAL number |
  *	interface-declaration |
  *	TOK_LEASE client-lease-statement |
- *	TOK_ALIAS client-lease-statement |
  *	TOK_REJECT reject-statement
  */
 void
@@ -214,9 +211,6 @@ parse_client_statement(FILE *cfile, struct interface_info *ifi)
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_PREPEND;
-		break;
-	case TOK_HARDWARE:
-		parse_ethernet(cfile, &ifi->hw_address);
 		break;
 	case TOK_REQUEST:
 		count = parse_option_list(cfile, optlist, sizeof(optlist));
@@ -268,11 +262,6 @@ parse_client_statement(FILE *cfile, struct interface_info *ifi)
 		break;
 	case TOK_LEASE:
 		parse_client_lease_statement(cfile, 1, ifi);
-		break;
-	case TOK_ALIAS:
-	case TOK_MEDIA:
-		/* Deprecated and ignored. */
-		skip_to_semi(cfile);
 		break;
 	case TOK_REJECT:
 		parse_reject_statement(cfile);
@@ -585,9 +574,6 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		if (!parse_ip_addr(cfile, &lease->next_server))
 			return;
 		break;
-	case TOK_MEDIUM:
-		skip_to_semi(cfile);
-		return;
 	case TOK_FILENAME:
 		lease->filename = parse_string(cfile, NULL);
 		break;
