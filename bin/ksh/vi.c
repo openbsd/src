@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.47 2017/05/31 20:18:43 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.48 2017/06/29 16:49:59 martijn Exp $	*/
 
 /*
  *	vi command editing
@@ -18,7 +18,6 @@
 #include "sh.h"
 #include "edit.h"
 
-#define CMDLEN		2048
 #define CTRL(c)		(c & 0x1f)
 
 struct edstate {
@@ -143,24 +142,24 @@ const unsigned char	classify[128] = {
 #define VSEARCH		9		/* /, ? */
 #define VVERSION	10		/* <ESC> ^V */
 
-static char		undocbuf[CMDLEN];
+static char		undocbuf[LINE];
 
 static struct edstate	*save_edstate(struct edstate *old);
 static void		restore_edstate(struct edstate *old, struct edstate *new);
 static void		free_edstate(struct edstate *old);
 
 static struct edstate	ebuf;
-static struct edstate	undobuf = { undocbuf, CMDLEN, 0, 0, 0 };
+static struct edstate	undobuf = { undocbuf, LINE, 0, 0, 0 };
 
 static struct edstate	*es;			/* current editor state */
 static struct edstate	*undo;
 
-static char	ibuf[CMDLEN];		/* input buffer */
+static char	ibuf[LINE];		/* input buffer */
 static int	first_insert;		/* set when starting in insert mode */
 static int	saved_inslen;		/* saved inslen for first insert */
 static int	inslen;			/* length of input buffer */
 static int	srchlen;		/* number of bytes in search pattern */
-static char	ybuf[CMDLEN];		/* yank buffer */
+static char	ybuf[LINE];		/* yank buffer */
 static int	yanklen;		/* length of yank buffer */
 static int	fsavecmd = ' ';		/* last find command */
 static int	fsavech;		/* character to find */
@@ -196,7 +195,7 @@ x_vi(char *buf, size_t len)
 {
 	int	c;
 
-	vi_reset(buf, len > CMDLEN ? CMDLEN : len);
+	vi_reset(buf, len > LINE ? LINE : len);
 	vi_pprompt(1);
 	x_flush();
 	while (1) {
@@ -1368,7 +1367,7 @@ static char	*wbuf[2];		/* current & previous window buffer */
 static int	wbuf_len;		/* length of window buffers (x_cols-3)*/
 static int	win;			/* number of window buffer in use */
 static char	morec;			/* more character at right of window */
-static char	holdbuf[CMDLEN];	/* place to hold last edit buffer */
+static char	holdbuf[LINE];		/* place to hold last edit buffer */
 static int	holdlen;		/* length of holdbuf */
 
 static void
