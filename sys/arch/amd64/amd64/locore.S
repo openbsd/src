@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.85 2017/05/31 19:18:18 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.86 2017/06/29 17:17:28 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -472,12 +472,15 @@ ENTRY(cpu_idle_leave)
 
 #ifdef DIAGNOSTIC
 NENTRY(switch_pmcpu_set)
-	movabsq	$1f,%rdi
+	movabsq	$switch_active,%rdi
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-1:	.asciz	"activate already active pmap"
-#endif /* DIAGNOSTIC */
 
+	.section .rodata
+switch_active:
+	.asciz	"activate already active pmap"
+	.text
+#endif /* DIAGNOSTIC */
 /*
  * savectx(struct pcb *pcb);
  * Update pcb, saving current processor state.
@@ -583,7 +586,7 @@ IDTVEC(syscall)
 
 #ifdef DIAGNOSTIC
 .Lsyscall_spl_not_lowered:
-	movabsq	$4f, %rdi
+	movabsq	$spl_lowered, %rdi
 	movl	TF_RAX(%rsp),%esi
 	movl	TF_RDI(%rsp),%edx
 	movl	%ebx,%ecx
@@ -595,9 +598,12 @@ IDTVEC(syscall)
 #endif /* DDB */
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	jmp	.Lsyscall_check_asts
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
-#endif
 
+	.section .rodata
+spl_lowered:
+	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+	.text
+#endif
 
 NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR

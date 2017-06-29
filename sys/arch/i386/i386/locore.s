@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.175 2017/05/31 19:18:18 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.176 2017/06/29 17:17:28 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1087,7 +1087,7 @@ calltrap:
 	jne	3f
 	INTRFASTEXIT
 3:	sti
-	pushl	$4f
+	pushl	$spl_lowered
 	call	_C_LABEL(printf)
 	addl	$4,%esp
 #if defined(DDB) && 0
@@ -1095,9 +1095,13 @@ calltrap:
 #endif /* DDB */
 	movl	%ebx,CPL
 	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
+
+	.section .rodata
+spl_lowered:
+	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 
+	.text
 #if !defined(GPROF) && defined(DDBPROF)
 .Lprobe_fixup:
 	/* Restore all register unwinding the stack. */

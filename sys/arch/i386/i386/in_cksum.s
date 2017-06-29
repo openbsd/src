@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.s,v 1.8 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: in_cksum.s,v 1.9 2017/06/29 17:17:28 deraadt Exp $	*/
 /*	$NetBSD: in_cksum.S,v 1.2 2003/08/07 16:27:54 agc Exp $	*/
 
 /*-
@@ -355,9 +355,11 @@ ENTRY(in_cksum)
 	ret
 
 .Lout_of_mbufs:
-	pushl	$1f
+	pushl	$cksum_ood
 	call	_C_LABEL(printf)
 	leal	4(%esp), %esp
 	jmp	.Lreturn
-1:
+
+	.section	.rodata
+cksum_ood:
 	.asciz	"cksum: out of data\n"

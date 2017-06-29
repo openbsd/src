@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.12 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.13 2017/06/29 17:17:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -84,9 +84,13 @@ ENTRY(__mtx_enter)
 	jz	1b
 	jmp	3b
 #ifdef DIAGNOSTIC
-4:	movq	$5f, %rdi
+4:	movq	$mtx_lockingself, %rdi
 	call	_C_LABEL(panic)
-5:	.asciz	"mtx_enter: locking against myself"
+
+	.section .rodata
+mtx_lockingself:
+	.asciz	"mtx_enter: locking against myself"
+	.text
 #endif
 
 ENTRY(__mtx_enter_try)
@@ -127,9 +131,13 @@ ENTRY(__mtx_enter_try)
 	ret
 
 #ifdef DIAGNOSTIC
-3:	movq	$4f, %rdi
+3:	movq	$mtx_lockingtry, %rdi
 	call	_C_LABEL(panic)
-4:	.asciz	"mtx_enter_try: locking against myself"
+
+	.section .rodata
+mtx_lockingtry:
+	.asciz	"mtx_enter_try: locking against myself"
+	.text
 #endif
 
 
@@ -152,7 +160,11 @@ ENTRY(__mtx_leave)
 	ret
 
 #ifdef DIAGNOSTIC
-2:	movq	$3f, %rdi
+2:	movq	$mtx_leave_held, %rdi
 	call	_C_LABEL(panic)
-3:	.asciz	"mtx_leave: lock not held"
+
+	.section .rodata
+mtx_leave_held:
+	.asciz	"mtx_leave: lock not held"
+	.text
 #endif
