@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.97 2016/06/07 01:31:54 tedu Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.98 2017/06/29 03:48:44 tedu Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1094,6 +1094,7 @@ get_sdr_partial(struct ipmi_softc *sc, u_int16_t recordId, u_int16_t reserveId,
 	c.c_cmd = STORAGE_GET_SDR;
 	c.c_txlen = IPMI_SET_WDOG_MAX;
 	c.c_rxlen = 0;
+	c.c_maxrxlen = 8 + length;
 	c.c_data = cmd;
 	ipmi_cmd(&c);
 	len = c.c_rxlen;
