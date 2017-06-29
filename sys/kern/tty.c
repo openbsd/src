@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.133 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.134 2017/06/29 04:10:07 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -733,7 +733,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSETAW:
 	case  TIOCSPGRP:
 	case  TIOCSTAT:
-	case  TIOCSTI:
 	case  TIOCSWINSZ:
 		while (isbackground(pr, tp) &&
 		    (pr->ps_flags & PS_PPWAIT) == 0 &&
@@ -962,11 +961,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (p->p_ucred->cr_uid && (flag & FREAD) == 0)
-			return (EPERM);
-		if (p->p_ucred->cr_uid && !isctty(pr, tp))
-			return (EACCES);
-		(*linesw[tp->t_line].l_rint)(*(u_char *)data, tp);
+		return (EIO);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
 		s = spltty();

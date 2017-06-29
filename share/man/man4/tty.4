@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.47 2016/11/26 11:18:43 mpi Exp $
+.\"	$OpenBSD: tty.4,v 1.48 2017/06/29 04:10:07 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 26 2016 $
+.Dd $Mdocdate: June 29 2017 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -276,9 +276,8 @@ Place the current number of characters in the output queue in the
 integer pointed to by
 .Fa num .
 .It Dv TIOCSTI Fa char *cp
-Simulate typed input.
-Pretend as if the terminal received the character pointed to by
-.Fa cp .
+Performs no action and returns
+.Er EIO .
 .It Dv TIOCNOTTY Fa void
 This call is obsolete but left for compatibility.
 In the past, when a process that didn't have a controlling terminal
