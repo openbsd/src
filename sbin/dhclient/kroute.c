@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.99 2017/06/28 16:31:52 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.100 2017/06/29 13:55:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -548,7 +548,7 @@ priv_add_route(int rdomain, struct imsg_add_route *imsg)
  * interface.
  */
 void
-delete_addresses(struct interface_info *ifi)
+delete_addresses(char *name)
 {
 	struct in_addr addr;
 	struct ifaddrs *ifap, *ifa;
@@ -561,7 +561,7 @@ delete_addresses(struct interface_info *ifi)
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
 		    (!(ifa->ifa_flags & IFF_UP)) ||
 		    (ifa->ifa_addr->sa_family != AF_INET) ||
-		    (strcmp(ifi->name, ifa->ifa_name) != 0))
+		    (strcmp(name, ifa->ifa_name) != 0))
 			continue;
 
 		memcpy(&addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.452 2017/06/28 16:31:52 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.453 2017/06/29 13:55:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,7 @@ struct sockaddr	*get_ifa(char *, int);
 void		 usage(void);
 int		 res_hnok(const char *dn);
 int		 res_hnok_list(const char *dn);
-int		 addressinuse(struct interface_info *, struct in_addr, char *);
+int		 addressinuse(char *, struct in_addr, char *);
 
 void		 fork_privchld(struct interface_info *, int, int);
 void		 get_ifname(struct interface_info *, char *);
@@ -148,9 +148,8 @@ void make_request(struct interface_info *, struct client_lease *);
 void make_decline(struct interface_info *, struct client_lease *);
 
 void rewrite_client_leases(struct interface_info *);
-void rewrite_option_db(struct interface_info *, struct client_lease *,
-    struct client_lease *);
-char *lease_as_string(struct interface_info *, char *, struct client_lease *);
+void rewrite_option_db(char *, struct client_lease *, struct client_lease *);
+char *lease_as_string(char *, char *, struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
 
 struct client_lease *packet_to_lease(struct interface_info *,
@@ -375,7 +374,7 @@ routehandler(struct interface_info *ifi)
 			}
 		}
 
-		linkstat = interface_status(ifi);
+		linkstat = interface_status(ifi->name);
 		if (linkstat != ifi->linkstat) {
 #ifdef DEBUG
 			log_debug("link state %s -> %s",
@@ -603,7 +602,7 @@ main(int argc, char *argv[])
 	 * the routing socket is listening, the RTM_IFINFO message with the
 	 * RTF_UP flag reset will cause premature exit.
 	 */
-	ifi->linkstat = interface_status(ifi);
+	ifi->linkstat = interface_status(ifi->name);
 	if (ifi->linkstat == 0)
 		interface_link_forceup(ifi->name);
 
@@ -702,7 +701,7 @@ state_preboot(struct interface_info *ifi)
 
 	interval = cur_time - ifi->startup_time;
 
-	ifi->linkstat = interface_status(ifi);
+	ifi->linkstat = interface_status(ifi->name);
 
 	if (log_perror && interval > 3) {
 		if (!preamble && !ifi->linkstat) {
@@ -1014,7 +1013,7 @@ bind_lease(struct interface_info *ifi)
 	ifi->offer = NULL;
 
 	/* Deleting the addresses also clears out arp entries. */
-	delete_addresses(ifi);
+	delete_addresses(ifi->name);
 	flush_routes();
 
 	opt = &options[DHO_INTERFACE_MTU];
@@ -1072,7 +1071,7 @@ bind_lease(struct interface_info *ifi)
 	}
 
 newlease:
-	rewrite_option_db(ifi, ifi->active, lease);
+	rewrite_option_db(ifi->name, ifi->active, lease);
 	free_client_lease(lease);
 
 	/*
@@ -1141,7 +1140,7 @@ state_bound(struct interface_info *ifi)
 }
 
 int
-addressinuse(struct interface_info *ifi, struct in_addr address, char *ifname)
+addressinuse(char *name, struct in_addr address, char *ifname)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in *sin;
@@ -1161,7 +1160,7 @@ addressinuse(struct interface_info *ifi, struct in_addr address, char *ifname)
 		if (memcmp(&address, &sin->sin_addr, sizeof(address)) == 0) {
 			strlcpy(ifname, ifa->ifa_name, IF_NAMESIZE);
 			used = 1;
-			if (strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
+			if (strncmp(ifname, name, IF_NAMESIZE) != 0)
 				break;
 		}
 	}
@@ -1261,7 +1260,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	 */
 	lease->address.s_addr = packet->yiaddr.s_addr;
 	memset(ifname, 0, sizeof(ifname));
-	if (addressinuse(ifi, lease->address, ifname) &&
+	if (addressinuse(ifi->name, lease->address, ifname) &&
 	    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0) {
 		log_warnx("lease declined: %s already configured on %s",
 		    inet_ntoa(lease->address), ifname);
@@ -1761,7 +1760,7 @@ rewrite_client_leases(struct interface_info *ifi)
 			continue;
 		if (lp->expiry <= cur_time)
 			continue;
-		leasestr = lease_as_string(ifi, "lease", lp);
+		leasestr = lease_as_string(ifi->name, "lease", lp);
 		if (leasestr)
 			fprintf(leaseFile, "%s", leasestr);
 		else
@@ -1774,7 +1773,7 @@ rewrite_client_leases(struct interface_info *ifi)
 }
 
 void
-rewrite_option_db(struct interface_info *ifi, struct client_lease *offered,
+rewrite_option_db(char *name, struct client_lease *offered,
     struct client_lease *effective)
 {
 	char *leasestr;
@@ -1784,13 +1783,13 @@ rewrite_option_db(struct interface_info *ifi, struct client_lease *offered,
 
 	rewind(optionDB);
 
-	leasestr = lease_as_string(ifi, "offered", offered);
+	leasestr = lease_as_string(name, "offered", offered);
 	if (leasestr)
 		fprintf(optionDB, "%s", leasestr);
 	else
 		log_warnx("cannot make offered lease into string");
 
-	leasestr = lease_as_string(ifi, "effective", effective);
+	leasestr = lease_as_string(name, "effective", effective);
 	if (leasestr)
 		fprintf(optionDB, "%s", leasestr);
 	else
@@ -1810,8 +1809,7 @@ append_statement(char *string, size_t sz, char *s1, char *s2)
 }
 
 char *
-lease_as_string(struct interface_info *ifi, char *type,
-    struct client_lease *lease)
+lease_as_string(char *name, char *type, struct client_lease *lease)
 {
 	static char string[8192];
 	char timebuf[27];	/* to hold "6 2017/04/08 05:47:50 UTC;" */
@@ -1826,7 +1824,7 @@ lease_as_string(struct interface_info *ifi, char *type,
 	strlcat(string, " {\n", sizeof(string));
 	strlcat(string, BOOTP_LEASE(lease) ? "  bootp;\n" : "", sizeof(string));
 
-	buf = pretty_print_string(ifi->name, strlen(ifi->name), 1);
+	buf = pretty_print_string(name, strlen(name), 1);
 	if (buf == NULL)
 		return (NULL);
 	append_statement(string, sizeof(string), "  interface ", buf);
@@ -2542,7 +2540,7 @@ get_recorded_lease(struct interface_info *ifi)
 		    memcmp(lp->options[i].data, config->send_options[i].data,
 		    lp->options[i].len)))
 			continue;
-		if (addressinuse(ifi, lp->address, ifname) &&
+		if (addressinuse(ifi->name, lp->address, ifname) &&
 		    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0)
 			continue;
 		if (lp->is_static == 0 && lp->expiry <= cur_time)

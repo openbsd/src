@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.128 2017/06/27 13:24:49 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.129 2017/06/29 13:55:53 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -223,13 +223,13 @@ packethandler(struct interface_info *ifi)
 }
 
 void
-interface_link_forceup(char *ifname)
+interface_link_forceup(char *name)
 {
 	struct ifreq ifr;
 	extern int sock;
 
 	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
 		log_warn("SIOCGIFFLAGS");
 		return;
@@ -246,7 +246,7 @@ interface_link_forceup(char *ifname)
 }
 
 int
-interface_status(struct interface_info *ifi)
+interface_status(char *name)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct if_data *ifdata;
@@ -259,7 +259,7 @@ interface_status(struct interface_info *ifi)
 		    (ifa->ifa_flags & IFF_POINTOPOINT))
 			continue;
 
-		if (strcmp(ifi->name, ifa->ifa_name) != 0)
+		if (strcmp(name, ifa->ifa_name) != 0)
 			continue;
 
 		if (ifa->ifa_addr->sa_family != AF_LINK)

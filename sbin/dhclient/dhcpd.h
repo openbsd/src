@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.198 2017/06/28 15:23:19 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.199 2017/06/29 13:55:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -208,7 +208,7 @@ void set_timeout( struct interface_info *, time_t,
     void (*)(struct interface_info *));
 void cancel_timeout(struct interface_info *);
 void interface_link_forceup(char *);
-int interface_status(struct interface_info *);
+int interface_status(char *);
 void get_hw_address(struct interface_info *);
 void sendhup(void);
 
@@ -241,7 +241,7 @@ void read_client_conf(struct interface_info *);
 void read_client_leases(struct interface_info *);
 
 /* kroute.c */
-void delete_addresses(struct interface_info *);
+void delete_addresses(char *);
 void delete_address(struct in_addr);
 
 void set_interface_mtu(int);
