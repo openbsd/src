@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.14 2016/12/19 20:03:15 kettenis Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.15 2017/06/29 08:14:36 mlarkin Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -118,13 +118,13 @@ _C_LABEL(cpu_spinup_trampoline):
 	movw	%cs, %ax
 	movw    %ax, %es
 	movw    %ax, %ss
-	addr32 lgdtl (mptramp_gdt32_desc)   # load flat descriptor table
+	addr32 lgdtl (.Lmptramp_gdt32_desc)   # load flat descriptor table
 	movl    %cr0, %eax       # get cr0
 	orl     $0x1, %eax      # enable protected mode
 	movl    %eax, %cr0      # doit
-	ljmpl	$0x8, $mp_startup
+	ljmpl	$0x8, $.Lmp_startup
 
-_TRMP_LABEL(mp_startup)
+_TRMP_LABEL(.Lmp_startup)
 	.code32
 
 	movl    $0x10, %eax     # data segment
@@ -164,7 +164,7 @@ _TRMP_LABEL(mp_startup)
 	movl	$MSR_EFER,%ecx
 	wrmsr
 
-	movl	$mp_tramp_pdirpa, %ecx
+	movl	$mp_pdirpa, %ecx
 	movl	(%ecx), %ecx
         movl    %ecx,%cr3               # load ptd addr into mmu
 
@@ -173,10 +173,10 @@ _TRMP_LABEL(mp_startup)
 	movl    %eax,%es
 	movl    %eax,%ss
 
-	movl	$mptramp_gdt64_desc,%eax
+	movl	$.Lmptramp_gdt64_desc,%eax
 	lgdt	(%eax)
 
-	movl	$mptramp_jmp64,%eax
+	movl	$.Lmptramp_jmp64,%eax
 
 	movl    %cr0,%ecx               # get control word
 	orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP),%ecx
@@ -184,7 +184,7 @@ _TRMP_LABEL(mp_startup)
 
 	ljmp	*(%eax)
 
-_TRMP_LABEL(mptramp_longmode)
+_TRMP_LABEL(.Lmptramp_longmode)
 	.code64
 	movabsq	$_C_LABEL(cpu_spinup_trampoline_end),%rax
 	jmp	*%rax
@@ -237,29 +237,28 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 
 	.section .rodata
 _C_LABEL(mp_tramp_data_start):
-_TRMP_DATA_LABEL(mptramp_jmp64)
-	.long   mptramp_longmode
+_TRMP_DATA_LABEL(.Lmptramp_jmp64)
+	.long   .Lmptramp_longmode
 	.word   GSEL(GCODE_SEL, SEL_KPL)
 
 	.global mp_pdirpa
 _TRMP_DATA_LABEL(mp_pdirpa)
-_TRMP_DATA_LABEL(mp_tramp_pdirpa)
 	.long 0
 
 
-_TRMP_DATA_LABEL(mptramp_gdt32)
+_TRMP_DATA_LABEL(.Lmptramp_gdt32)
 	.quad 0x0000000000000000
 	.quad 0x00cf9f000000ffff
 	.quad 0x00cf93000000ffff
-_TRMP_DATA_OFFSET(mptramp_gdt32_desc)
+_TRMP_DATA_OFFSET(.Lmptramp_gdt32_desc)
 	.word 0x17
-	.long mptramp_gdt32
+	.long .Lmptramp_gdt32
 
-_TRMP_DATA_LABEL(mptramp_gdt64)
+_TRMP_DATA_LABEL(.Lmptramp_gdt64)
 	.quad 0x0000000000000000
 	.quad 0x00af9a000000ffff
 	.quad 0x00cf92000000ffff
-_TRMP_DATA_LABEL(mptramp_gdt64_desc)
+_TRMP_DATA_LABEL(.Lmptramp_gdt64_desc)
 	.word 0x17
-	.long mptramp_gdt64
+	.long .Lmptramp_gdt64
 _C_LABEL(mp_tramp_data_end):
