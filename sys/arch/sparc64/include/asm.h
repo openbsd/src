@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.12 2017/06/23 09:55:10 mpi Exp $	*/
+/*	$OpenBSD: asm.h,v 1.13 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -97,11 +97,6 @@
 #define	END(y)			.size y, . - y
 #define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
 				OTYPE(_C_LABEL(name)); _C_LABEL(name):
-
-
-#define ASMSTR			.asciz
-
-#define RCSID(name)		.asciz name
 
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\

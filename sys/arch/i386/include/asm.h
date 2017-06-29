@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2015/08/30 10:19:49 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.15 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -110,10 +110,6 @@
 #define	END(y)		.size y, . - y
 
 #define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
-
-#define	ASMSTR		.asciz
-
-#define RCSID(x)	.text; .asciz x
 
 #ifdef _KERNEL
 

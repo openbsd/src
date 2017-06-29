@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.18 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.19 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -41,11 +41,6 @@
  * This file contains the core HCD code, and implements the Linux hc_driver
  * API
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

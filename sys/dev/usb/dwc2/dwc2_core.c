@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_core.c,v 1.7 2017/01/29 16:44:11 stsp Exp $	*/
+/*	$OpenBSD: dwc2_core.c,v 1.8 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -42,11 +42,6 @@
  * DWC_otg hardware. These services are used by both the Host Controller
  * Driver and the Peripheral Controller Driver.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6 2014/04/03 06:34:58 skrll Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

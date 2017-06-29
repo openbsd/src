@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2017/06/23 09:55:10 mpi Exp $	*/
+/*	$OpenBSD: asm.h,v 1.14 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -91,10 +91,6 @@ _TMP_LABEL(y):; \
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE(y)
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE(y)
 #define	END(y)		.size y, . - y
-
-#define	ASMSTR		.asciz
-
-#define RCSID(x)	.text; .asciz x
 
 #define STRONG_ALIAS(alias,sym) \
 	.global alias; .set alias,sym

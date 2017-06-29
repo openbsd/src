@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2017/06/23 09:55:10 mpi Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -96,10 +96,6 @@
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	END(y)		.size y, . - y
-
-#define	ASMSTR		.asciz
-
-#define RCSID(x)	.text; .asciz x
 
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\

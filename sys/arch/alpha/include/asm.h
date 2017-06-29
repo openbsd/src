@@ -1,4 +1,4 @@
-/* $OpenBSD: asm.h,v 1.13 2016/05/27 16:32:38 deraadt Exp $ */
+/* $OpenBSD: asm.h,v 1.14 2017/06/29 17:36:16 deraadt Exp $ */
 /* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
 
 /* 
@@ -635,22 +635,3 @@ label:	ASCIZ msg;						\
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
-
-/*
- * Kernel RCS ID tag and copyright macros
- */
-
-#ifdef _KERNEL
-
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.section _sec ; .asciz _str ; .text
-
-#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
-#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
-
-#ifdef NO_KERNEL_RCSIDS
-#undef __KERNEL_RCSID
-#define	__KERNEL_RCSID(_n, _s)		/* nothing */
-#endif
-
-#endif /* _KERNEL */

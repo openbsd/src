@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.45 2017/05/15 10:52:08 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.46 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -29,11 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if 0
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $");
-#endif
 
 #if 0
 #include "opt_usb.h"

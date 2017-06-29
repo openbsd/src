@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.7 2017/05/21 11:52:04 kettenis Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.8 2017/06/29 17:36:16 deraadt Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -39,8 +39,6 @@
  *
  *  http://www.synopsys.com/dw/ipdir.php?ds=dwc_ether_mac10_100_1000_unive
  */
-
-/*__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $");*/
 
 /* #define	DWC_GMAC_DEBUG	1 */
 

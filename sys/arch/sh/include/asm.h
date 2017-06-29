@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2017/06/23 09:55:10 mpi Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2017/06/29 17:36:16 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
 
 /*-
@@ -178,9 +178,6 @@
 		.long	function
 
 #endif /* !PIC */
-
-
-#define	ASMSTR		.asciz
 
 #define	STRONG_ALIAS(alias,sym)						\
 	.global _C_LABEL(alias);					\
