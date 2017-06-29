@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.155 2017/06/28 07:10:02 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.156 2017/06/29 08:24:10 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1246,6 +1246,14 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
  * vm_impl_init
  *
  * Calls the architecture-specific VM init routine
+ *
+ * Parameters:
+ *  vm: the VM being initialized
+ *   p: vmd process owning the VM
+ *
+ * Return values (from architecture-specific init routines):
+ *  0: the initialization was successful
+ *  ENOMEM: the initialization failed (lack of resources)
  */
 int
 vm_impl_init(struct vm *vm, struct proc *p)
@@ -1264,6 +1272,9 @@ vm_impl_init(struct vm *vm, struct proc *p)
  * vm_impl_deinit_vmx
  *
  * Intel VMX specific VM initialization routine
+ *
+ * Parameters:
+ *  vm: VM to deinit
  */
 void
 vm_impl_deinit_vmx(struct vm *vm)
@@ -1275,6 +1286,9 @@ vm_impl_deinit_vmx(struct vm *vm)
  * vm_impl_deinit_svm
  *
  * AMD SVM specific VM initialization routine
+ *
+ * Parameters:
+ *  vm: VM to deinit
  */
 void
 vm_impl_deinit_svm(struct vm *vm)
@@ -1286,6 +1300,9 @@ vm_impl_deinit_svm(struct vm *vm)
  * vm_impl_deinit
  *
  * Calls the architecture-specific VM init routine
+ *
+ * Parameters:
+ *  vm: VM to deinit
  */
 void
 vm_impl_deinit(struct vm *vm)
