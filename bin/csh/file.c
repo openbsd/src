@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.29 2017/06/27 15:02:18 anton Exp $	*/
+/*	$OpenBSD: file.c,v 1.30 2017/06/29 04:23:12 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -367,10 +367,8 @@ cl_reprint(struct cmdline *cl, int c)
 static int
 cl_status(struct cmdline *cl, int c)
 {
-	int	nothing = 0;
-
 	cl->cursor = 0;
-	ioctl(cl->fdin, TIOCSTAT, &nothing);
+	ioctl(cl->fdin, TIOCSTAT);
 
 	return 0;
 }

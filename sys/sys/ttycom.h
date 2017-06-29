@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttycom.h,v 1.14 2016/09/02 18:11:28 tedu Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.15 2017/06/29 04:23:12 deraadt Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ struct tstamps {
 #define	TIOCGWINSZ	_IOR('t', 104, struct winsize)	/* get window size */
 #define	TIOCSWINSZ	_IOW('t', 103, struct winsize)	/* set window size */
 #define	TIOCUCNTL	_IOW('t', 102, int)	/* pty: set/clr usr cntl mode */
-#define	TIOCSTAT	_IOW('t', 101, int)	/* generate status message */
+#define	TIOCSTAT	_IO('t', 101)		/* generate status message */
 #define		UIOCCMD(n)	_IO('u', n)	/* usr cntl op "n" */
 #define	TIOCGSID	_IOR('t', 99, int)	/* get sid of tty */
 #define	TIOCCONS	_IOW('t', 98, int)	/* become virtual console */
