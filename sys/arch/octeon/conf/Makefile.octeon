@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.38 2017/06/25 14:02:23 deraadt Exp $
+#	$OpenBSD: Makefile.octeon,v 1.39 2017/06/29 16:51:35 espie Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -137,7 +137,7 @@ makegap.sh:
 gap.o:	Makefile makegap.sh gapdummy.o
 	sh makegap.sh 0xefefefef gapdummy.o
 
-vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 

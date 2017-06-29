@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.70 2017/06/11 22:51:21 deraadt Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.71 2017/06/29 16:51:35 espie Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -120,7 +120,7 @@ ioconf.o: ioconf.c
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
-vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
