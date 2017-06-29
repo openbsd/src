@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.29 2017/06/25 14:02:23 deraadt Exp $
+#	$OpenBSD: Makefile.armv7,v 1.30 2017/06/29 13:04:09 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -130,7 +130,7 @@ makegap.sh:
 	cp $S/conf/makegap.sh $@
 
 gap.o:	Makefile makegap.sh gapdummy.o
-	sh makegap.sh 0xd4d4d4d4 gapdummy.o
+	sh makegap.sh 0xffffffff gapdummy.o
 
 vers.o: ${SYSTEM_DEP:Ngap.o} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
