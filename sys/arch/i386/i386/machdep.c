@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.602 2017/05/30 15:11:32 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.603 2017/06/29 07:11:24 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3420,14 +3420,12 @@ cpu_reset(void)
 	lidt(&region);
 	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
 
-#if 1
 	/*
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space.
 	 */
 	bzero((caddr_t)PTD, NBPG);
 	tlbflush();
-#endif
 
 	for (;;)
 		continue;
