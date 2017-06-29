@@ -1,4 +1,4 @@
-/*	$OpenBSD: eqn.c,v 1.34 2017/06/26 19:53:00 schwarze Exp $ */
+/*	$OpenBSD: eqn.c,v 1.35 2017/06/29 16:30:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -681,7 +681,7 @@ eqn_parse(struct eqn_node *ep, struct eqn_box *parent)
 	if (ep->data == NULL)
 		return ROFF_IGN;
 
-	ep->start = ep->end = ep->data;
+	ep->start = ep->end = ep->data + strspn(ep->data, " ^~");
 
 next_tok:
 	tok = eqn_next(ep, MODE_TOK);
