@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.154 2017/06/24 13:49:19 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.155 2017/06/29 13:16:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2017 $
+.Dd $Mdocdate: June 29 2017 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1863,10 +1863,10 @@ The tab cell delimiter may only be used within the
 .Sx \&It
 line itself; on following lines, only the
 .Sx \&Ta
-macro can be used to delimit cells, and
+macro can be used to delimit cells, and portability requires that
 .Sx \&Ta
-is only recognised as a macro when called by other macros,
-not as the first macro on a line.
+is called by other macros: some parsers do not recognize it when
+it appears as the first macro on a line.
 .Pp
 Note that quoted strings may span tab-delimited cells on an
 .Sx \&It
