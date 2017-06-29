@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.132 2017/06/27 12:17:35 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.133 2017/06/29 15:21:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2017 $
+.Dd $Mdocdate: June 29 2017 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1218,6 +1218,12 @@ list block contains text or macros before the first
 .Ic \&It
 macro.
 The offending children are moved before the beginning of the list.
+.It Sy "first macro on line"
+Inside a
+.Ic \&Bl Fl column
+list, a
+.Ic \&Ta
+macro occurs as the first macro on a line, which is not portable.
 .It Sy "fill mode already enabled, skipping"
 .Pq man
 A
@@ -1363,6 +1369,17 @@ list, an
 .Ic \&It
 block is empty.
 An empty list item is shown.
+.It Sy "missing argument, using next line"
+.Pq mdoc
+An
+.Ic \&It
+macro in a
+.Ic \&Bd Fl column
+list has no arguments.
+While
+.Nm
+uses the text or macros of the following line, if any, for the cell,
+other formatters may misformat the list.
 .It Sy "missing font type, using \efR"
 .Pq mdoc
 A

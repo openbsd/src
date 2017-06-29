@@ -1,0 +1,18 @@
+BL-COLUMN\_NOGROFF(1) - General Commands Manual
+
+# NAME
+
+**Bl-column\_nogroff** - column lists mishandled by groff
+
+# DESCRIPTION
+
+Item macro without arguments:
+
+	text
+	macro           after tab
+
+Tab macro at the beginning of a line:
+
+	aa    bb
+
+OpenBSD - June 29, 2017

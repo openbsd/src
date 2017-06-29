@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.154 2017/06/25 17:42:37 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.155 2017/06/29 15:21:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,6 +147,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"blocks badly nested",
 	"nested displays are not portable",
 	"moving content out of list",
+	"first macro on line",
 	"fill mode already enabled, skipping",
 	"fill mode already disabled, skipping",
 	"line scope broken",
@@ -165,6 +166,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"missing function name, using \"\"",
 	"empty head in list item",
 	"empty list item",
+	"missing argument, using next line",
 	"missing font type, using \\fR",
 	"unknown font type, using \\fR",
 	"nothing follows prefix",

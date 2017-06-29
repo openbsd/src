@@ -1,0 +1,19 @@
+.Dd June 29, 2017
+.Dt BL-COLUMN_NOGROFF 1
+.Os OpenBSD
+.Sh NAME
+.Nm Bl-column_nogroff
+.Nd column lists mishandled by groff
+.Sh DESCRIPTION
+Item macro without arguments:
+.Bl -column "first column" "second column"
+.It
+text
+.No macro Ta after tab
+.El
+.Pp
+Tab macro at the beginning of a line:
+.Bl -column "aa" "bb"
+.It aa
+.Ta bb
+.El

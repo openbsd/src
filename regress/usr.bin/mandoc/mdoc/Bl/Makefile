@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.37 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.38 2017/06/29 15:21:46 schwarze Exp $
 
 REGRESS_TARGETS  = item inset diag ohang bullet dash enum hang tag
-REGRESS_TARGETS += column colNoIt extend nested offset secstart
+REGRESS_TARGETS += column column_nogroff colNoIt
+REGRESS_TARGETS += extend nested offset secstart
 
 REGRESS_TARGETS += notype multitype badargs
 REGRESS_TARGETS += empty noIt emptyhead emptytag emptyitem multitag
@@ -9,7 +10,7 @@ REGRESS_TARGETS += bareIt bareTa unclosed break breakingIt breakingTa broken
 
 UTF8_TARGETS	 = dash
 
-LINT_TARGETS	 = column notype badargs tag
+LINT_TARGETS	 = column column_nogroff notype badargs tag
 LINT_TARGETS	+= empty noIt emptyhead emptytag emptyitem
 LINT_TARGETS	+= bareIt bareTa break breakingIt broken
 
@@ -19,6 +20,8 @@ LINT_TARGETS	+= bareIt bareTa break breakingIt broken
 SKIP_GROFF ?= breakingTa
 
 # groff-1.22.3 defects:
+# - column list items with no args but multiple lines cause bogus breaks
+# - in column lists, the tab macro cannot be a line macro
 # - lists with missing or late type ruin indentation
 # - empty lists ruin indentation and sometimes cause empty lines
 # - breaking lists continue indefinitely
@@ -26,7 +29,7 @@ SKIP_GROFF ?= breakingTa
 # - breaking a list aborts processing
 # - empty -tag item heads lose the blank line and the indentation
 
-SKIP_GROFF += notype empty break breakingIt broken emptytag
+SKIP_GROFF += column_nogroff notype empty emptytag break breakingIt broken
 
 SKIP_TMAN ?= column colNoIt multitype multitag bareTa break breakingTa broken
 
@@ -38,7 +41,7 @@ SKIP_TMAN += tag
 
 # Empty heads are still mishandled by -Tman.
 
-SKIP_TMAN += emptyhead emptytag
+SKIP_TMAN += column_nogroff emptyhead emptytag
 
 # mandoc -T markdown still has issues with badly nested lists
 

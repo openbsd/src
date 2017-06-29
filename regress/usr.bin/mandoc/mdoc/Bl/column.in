@@ -68,11 +68,14 @@
 .El
 .\" Wrong number of columns.
 .Bl -column "a" "b"
+.It
 .It "a"
 .It "a" Ta "b"
+.It
 .It "a" Ta "b" Ta "c"
 .It "a" Ta "b" Ta "c" Ta "d"
 .It "a" Ta "b" Ta "c" Ta "d" Ta "e"
+.It
 .El
 .\" Mixed tab and Ta
 .Bl -column a b c d
