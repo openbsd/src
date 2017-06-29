@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/05/31 19:18:18 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2017/06/29 06:15:30 mlarkin Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Find out our CPU type. */
 
-try386:	/* Try to toggle alignment check flag; does not exist on 386. */
+.Ltry386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
@@ -130,7 +130,7 @@ try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	popfl
 
 	testl	%eax,%eax
-	jnz	try486
+	jnz	.Ltry486
 
 	/*
 	 * Try the test of a NexGen CPU -- ZF will not change on a DIV
@@ -141,9 +141,9 @@ try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	xorl	%edx,%edx
 	movl	$2,%ecx
 	divl	%ecx
-	jnz	is386
+	jnz	.Lis386
 
-isnx586:
+.Lisnx586:
 	/*
 	 * Don't try cpuid, as Nx586s reportedly don't support the
 	 * PSL_ID bit.
@@ -151,11 +151,11 @@ isnx586:
 	movl	$CPU_NX586,RELOC(_C_LABEL(cpu))
 	jmp	2f
 
-is386:
+.Lis386:
 	movl	$CPU_386,RELOC(_C_LABEL(cpu))
 	jmp	2f
 
-try486:	/* Try to toggle identification flag; does not exist on early 486s. */
+.Ltry486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
@@ -170,8 +170,8 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	popfl
 
 	testl	%eax,%eax
-	jnz	try586
-is486:	movl	$CPU_486,RELOC(_C_LABEL(cpu))
+	jnz	.Ltry586
+.Lis486:	movl	$CPU_486,RELOC(_C_LABEL(cpu))
 
 	/*
 	 * Check Cyrix CPU
@@ -186,10 +186,10 @@ is486:	movl	$CPU_486,RELOC(_C_LABEL(cpu))
 	movl	$2, %ecx
 	clc
 	divl	%ecx
-	jnc	trycyrix486
+	jnc	.Ltrycyrix486
 	popfl
 	jmp	2f
-trycyrix486:
+.Ltrycyrix486:
 	movl	$CPU_6x86,RELOC(_C_LABEL(cpu))	# set CPU type
 	/*
 	 * Check for Cyrix 486 CPU by seeing if the flags change during a
@@ -225,7 +225,7 @@ trycyrix486:
 
 	jmp	2f
 
-try586:	/* Use the `cpuid' instruction. */
+.Ltry586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(_C_LABEL(cpuid_level))
