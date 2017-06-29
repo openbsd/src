@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.34 2017/05/02 13:26:49 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.35 2017/06/29 10:56:18 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -578,7 +578,7 @@ cn30xxgmx_rx_frm_ctl_enable(struct cn30xxgmx_port_softc *sc,
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
 	unsigned int maxlen;
 
-	maxlen = roundup(ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+	maxlen = roundup(ifp->if_hardmtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
 	    ETHER_VLAN_ENCAP_LEN, 8);
 	_GMX_PORT_WR8(sc, GMX0_RX0_JABBER, maxlen);
 
