@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.57 2017/06/04 13:39:25 fcambus Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.58 2017/06/30 08:39:16 mestre Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -132,6 +132,7 @@ FILEDESC *
 	 pick_child(FILEDESC *);
 void	 print_file_list(void);
 void	 print_list(FILEDESC *, int);
+void	 rot13(char *, size_t);
 void	 sum_noprobs(FILEDESC *);
 void	 sum_tbl(STRFILE *, STRFILE *);
 __dead void	 usage(void);
