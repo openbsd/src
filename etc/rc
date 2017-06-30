@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.505 2017/06/27 03:42:00 tedu Exp $
+#	$OpenBSD: rc,v 1.506 2017/06/30 17:06:03 rpe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -222,33 +222,39 @@ reorder_libs() {
 # Re-link the kernel, placing the objects in a random order.
 # Replace current with relinked kernel and inform root about it.
 reorder_kernel() {
+	local _dkdev=$(df /usr/share | sed '1d;s/ .*//')
+
+	# Skip if /usr/share is on a nfs mounted filesystem.
+	[[ $(mount | grep "^$_dkdev") == *" type nfs "* ]] && return
+
 	(
 	set -e
-	_compile_dir=/usr/share/compile
+	trap 'trap - EXIT; mail -s "$(hostname) Kernel relink failed" root \
+		</var/log/kernel_relink.log' ERR
+	trap 'mail -s "$(hostname) Kernel relink info" root \
+		</var/log/kernel_relink.log' EXIT
+
+	_compile=/usr/share/compile
 	_kernel=$(sysctl -n kern.osversion)
 	_kernel=${_kernel%#*}
-	_kernel_dir=$_compile_dir/$_kernel
 	_sha256=/var/db/kernel.SHA256
 
-	if [[ -f /usr/share/compile.tgz ]]; then
-		rm -rf $_compile_dir
-		mkdir -m 700 -p $_compile_dir
-		tar -C $_compile_dir -xzf /usr/share/compile.tgz $_kernel
-		rm -f /usr/share/compile.tgz
+	if [[ -f $_compile.tgz ]]; then
+		rm -rf $_compile
+		mkdir -m 700 -p $_compile
+		tar -C $_compile -xzf $_compile.tgz $_kernel
+		rm -f $_compile.tgz
 	fi
 
 	sha256 -q -C $_sha256 /bsd
 
-	cd $_kernel_dir
-	make newbsd   >$_kernel_dir/log 2>&1
-	make newinstall >>$_kernel_dir/log 2>&1
-	(umask 077 && sha256 -h $_sha256 /bsd)
+	cd $_compile/$_kernel
+	make newbsd
+	make newinstall
 
-	(echo "Kernel has been relinked and is active on next reboot\n"; \
-		cat $_sha256; echo "\nRelink log:\n"; cat $_kernel_dir/log ) |
-		mail -Es "$(hostname) Kernel relink info" root >/dev/null
-
-	) >/dev/null 2>&1 &
+	echo "\nKernel has been relinked and is active on next reboot.\n"
+	cat $_sha256
+	) >/var/log/kernel_relink.log 2>&1 &
 }
 
 # Run rc.* script and email output to root.
