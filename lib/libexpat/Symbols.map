@@ -1,0 +1,4 @@
+{
+	local:
+		align_limit_to_full_utf8_characters;
+};

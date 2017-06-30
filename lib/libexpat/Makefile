@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2016/09/14 06:26:02 natano Exp $
+#	$OpenBSD: Makefile,v 1.12 2017/06/30 11:25:29 bluhm Exp $
 
 .PATH: ${.CURDIR}/lib
 
@@ -8,6 +8,8 @@ CFLAGS+=-I${.CURDIR} -DHAVE_EXPAT_CONFIG_H
 
 PC_FILES=expat.pc
 CLEANFILES+=${PC_FILES}
+
+VERSION_SCRIPT= ${.CURDIR}/Symbols.map
 
 includes:
 	cmp -s ${DESTDIR}/usr/include/expat.h ${.CURDIR}/lib/expat.h || \

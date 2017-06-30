@@ -1,7 +1,8 @@
-/* $OpenBSD: expat_config.h,v 1.2 2015/05/23 00:53:25 jsg Exp $ */
+/* $OpenBSD: expat_config.h,v 1.3 2017/06/30 11:25:29 bluhm Exp $ */
 
 /* quick and dirty conf for OpenBSD */
 
+#define HAVE_ARC4RANDOM_BUF 1
 #define HAVE_MEMMOVE 1
 #define XML_CONTEXT_BYTES 1024
 #define XML_DTD 1
