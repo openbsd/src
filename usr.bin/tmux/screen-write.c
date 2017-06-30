@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.128 2017/06/12 10:57:35 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.129 2017/06/30 22:24:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -387,9 +387,9 @@ screen_write_copy(struct screen_write_ctx *ctx, struct screen *src, u_int px,
 	}
 }
 
-/* Draw a line on screen. */
+/* Draw a horizontal line on screen. */
 void
-screen_write_line(struct screen_write_ctx *ctx, u_int nx, int left, int right)
+screen_write_hline(struct screen_write_ctx *ctx, u_int nx, int left, int right)
 {
 	struct screen		*s = ctx->s;
 	struct grid_cell	 gc;
@@ -405,6 +405,31 @@ screen_write_line(struct screen_write_ctx *ctx, u_int nx, int left, int right)
 	for (i = 1; i < nx - 1; i++)
 		screen_write_putc(ctx, &gc, 'q');
 	screen_write_putc(ctx, &gc, right ? 'u' : 'q');
+
+	screen_write_cursormove(ctx, cx, cy);
+}
+
+/* Draw a horizontal line on screen. */
+void
+screen_write_vline(struct screen_write_ctx *ctx, u_int ny, int top, int bottom) 
+{
+	struct screen		*s = ctx->s;
+	struct grid_cell	 gc;
+	u_int			 cx, cy, i;
+
+	cx = s->cx;
+	cy = s->cy;
+
+	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.attr |= GRID_ATTR_CHARSET;
+
+	screen_write_putc(ctx, &gc, top ? 'w' : 'x');
+	for (i = 1; i < ny - 1; i++) {
+		screen_write_cursormove(ctx, cx, cy + i);
+		screen_write_putc(ctx, &gc, 'x');
+	}
+	screen_write_cursormove(ctx, cx, cy + ny);
+	screen_write_putc(ctx, &gc, bottom ? 'v' : 'x');
 
 	screen_write_cursormove(ctx, cx, cy);
 }
