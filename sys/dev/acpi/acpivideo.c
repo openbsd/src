@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivideo.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: acpivideo.c,v 1.11 2017/06/30 06:25:29 mlarkin Exp $	*/
 /*
  * Copyright (c) 2008 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
@@ -132,7 +132,7 @@ acpivideo_set_policy(struct acpivideo_softc *sc, int policy)
 	args.type = AML_OBJTYPE_INTEGER;
 
 	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_DOS", 1, &args, &res);
-	DPRINTF(("%s: set policy to %X\n", DEVNAME(sc), aml_val2int(&res)));
+	DPRINTF(("%s: set policy to %lld\n", DEVNAME(sc), aml_val2int(&res)));
 
 	aml_freevalue(&res);
 }
