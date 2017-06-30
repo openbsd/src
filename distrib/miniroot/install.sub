@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1015 2017/06/21 23:54:19 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1016 2017/06/30 16:46:02 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2573,6 +2573,7 @@ store_random() {
 # Final steps common for installs and upgrades.
 finish_up() {
 	local _dev _mp _fstype _rest _d
+	local _compile=/mnt/usr/share/compile _kernel=${MDKERNEL:-GENERIC}
 
 	# Mount all known swap partitions.  This gives systems with little
 	# memory a better chance at running 'MAKEDEV all'.
@@ -2628,6 +2629,7 @@ finish_up() {
 
 	chmod og-rwx /mnt/bsd{,.mp,.rd} 2>/dev/null
 	if [[ -f /mnt/bsd.mp ]] && ((NCPU > 1)); then
+		_kernel=$_kernel.MP
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
 		mv /mnt/bsd /mnt/bsd.sp 2>/dev/null
 		mv /mnt/bsd.mp /mnt/bsd
@@ -2640,6 +2642,19 @@ finish_up() {
 		sha256 -h /mnt/var/db/kernel.SHA256 /mnt/bsd
 		sed -i 's,(/mnt,(,' /mnt/var/db/kernel.SHA256
 	)
+
+	if [[ -f $_compile.tgz ]]; then
+		echo -n "Relinking to create unique kernel..."
+		(
+		set -e
+		rm -rf $_compile
+		mkdir -m 700 -p $_compile
+		tar -C $_compile -xzf $_compile.tgz $_kernel
+		chroot /mnt /bin/ksh -e -c "cd ${_compile#/mnt}/$_kernel; \
+			make newbsd; make newinstall"
+		rm -f $_compile.tgz
+		) >/dev/null 2>&1 && echo "done." || echo "failed."
+	fi
 
 	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
@@ -3076,6 +3091,7 @@ done
 #	MDXAPERTURE - set machdep.allowaperture=value in sysctl.conf
 #	MDXDM       - ask if xdm should be started if set to 'y'
 #	NCPU	    - the number of cpus for mp capable arches
+#	MDKERNEL    - the name of the boot kernel
 . install.md
 
 # Start listener process looking for dmesg changes.
