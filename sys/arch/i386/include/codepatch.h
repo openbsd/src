@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.1 2015/04/19 06:27:17 sf Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.2 2017/07/01 19:42:59 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -41,7 +41,7 @@ void codepatch_call(uint16_t tag, void *func);
 #define	CODEPATCH_END(tag)			 \
 	999:					 \
 	.section .codepatch, "a"		;\
-	.int (998b - KERNBASE)			;\
+	.int 998b				;\
 	.short (999b - 998b)			;\
 	.short tag				;\
 	.previous

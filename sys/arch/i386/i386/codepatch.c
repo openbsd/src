@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.2 2017/03/26 23:27:44 jca Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.3 2017/07/01 19:42:59 sf Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -27,7 +27,7 @@
 #endif
 
 struct codepatch {
-	uint32_t offset;
+	vaddr_t addr;
 	uint16_t len;
 	uint16_t tag;
 };
@@ -132,7 +132,7 @@ codepatch_nop(uint16_t tag)
 {
 	struct codepatch *patch;
 	unsigned char *rwaddr;
-	vaddr_t addr, rwmap = 0;
+	vaddr_t rwmap = 0;
 	int i = 0;
 
 	DBGPRINT("patching tag %u", tag);
@@ -140,8 +140,7 @@ codepatch_nop(uint16_t tag)
 	for (patch = &codepatch_begin; patch < &codepatch_end; patch++) {
 		if (patch->tag != tag)
 			continue;
-		addr = KERNBASE + patch->offset;
-		rwaddr = codepatch_maprw(&rwmap, addr);
+		rwaddr = codepatch_maprw(&rwmap, patch->addr);
 		codepatch_fill_nop(rwaddr, patch->len);
 		i++;
 	}
@@ -155,7 +154,7 @@ codepatch_replace(uint16_t tag, void *code, size_t len)
 {
 	struct codepatch *patch;
 	unsigned char *rwaddr;
-	vaddr_t addr, rwmap = 0;
+	vaddr_t rwmap = 0;
 	int i = 0;
 
 	DBGPRINT("patching tag %u with %p", tag, code);
@@ -163,13 +162,12 @@ codepatch_replace(uint16_t tag, void *code, size_t len)
 	for (patch = &codepatch_begin; patch < &codepatch_end; patch++) {
 		if (patch->tag != tag)
 			continue;
-		addr = KERNBASE + patch->offset;
 
 		if (len > patch->len) {
 			panic("%s: can't replace len %u with %zu at %#lx",
-			    __func__, patch->len, len, addr);
+			    __func__, patch->len, len, patch->addr);
 		}
-		rwaddr = codepatch_maprw(&rwmap, addr);
+		rwaddr = codepatch_maprw(&rwmap, patch->addr);
 		memcpy(rwaddr, code, len);
 		codepatch_fill_nop(rwaddr + len, patch->len - len);
 		i++;
@@ -186,20 +184,19 @@ codepatch_call(uint16_t tag, void *func)
 	unsigned char *rwaddr;
 	int32_t offset;
 	int i = 0;
-	vaddr_t addr, rwmap = 0;
+	vaddr_t rwmap = 0;
 
 	DBGPRINT("patching tag %u with call %p", tag, func);
 
 	for (patch = &codepatch_begin; patch < &codepatch_end; patch++) {
 		if (patch->tag != tag)
 			continue;
-		addr = KERNBASE + patch->offset;
 		if (patch->len < 5)
 			panic("%s: can't replace len %u with call at %#lx",
-			    __func__, patch->len, addr);
+			    __func__, patch->len, patch->addr);
 
-		offset = (vaddr_t)func - (addr + 5);
-		rwaddr = codepatch_maprw(&rwmap, addr);
+		offset = (vaddr_t)func - (patch->addr + 5);
+		rwaddr = codepatch_maprw(&rwmap, patch->addr);
 		rwaddr[0] = 0xe8; /* call near */
 		memcpy(rwaddr + 1, &offset, sizeof(offset));
 		codepatch_fill_nop(rwaddr + 5, patch->len - 5);
