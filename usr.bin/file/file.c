@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.63 2017/06/28 17:14:15 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.64 2017/07/01 21:07:13 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -208,6 +208,8 @@ main(int argc, char **argv)
 	for (idx = 0; idx < argc; idx++) {
 		inf[idx].m = m;
 		test_file(&inf[idx], width);
+		if (inf[idx].fd != -1 && inf[idx].fd != STDIN_FILENO)
+			close(inf[idx].fd);
 	}
 	exit(0);
 }
