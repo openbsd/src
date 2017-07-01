@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.24 2017/04/18 14:16:48 nicm Exp $ */
+/* $OpenBSD: magic-load.c,v 1.25 2017/07/01 14:34:29 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1169,6 +1169,5 @@ magic_load(FILE *f, const char *path, int warnings)
 	}
 	free(tmp);
 
-	fclose(f);
 	return (m);
 }
