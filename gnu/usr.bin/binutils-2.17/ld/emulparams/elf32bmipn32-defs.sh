@@ -9,6 +9,8 @@ ARCH=mips
 OUTPUT_FORMAT="elf32-bigmips"
 BIG_OUTPUT_FORMAT="elf32-bigmips"
 LITTLE_OUTPUT_FORMAT="elf32-littlemips"
+NOP=0x00000000
+TRAP=0xefefefef
 
 TEMPLATE_NAME=elf32
 

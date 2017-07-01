@@ -13,3 +13,4 @@ PLT=".plt          ${RELOCATING-0} : SPECIAL { *(.plt) }"
 GOTPLT="${PLT}"
 OTHER_TEXT_SECTIONS="*(.glink)"
 EXTRA_EM_FILE=ppc32elf
+NOP=0x60000000

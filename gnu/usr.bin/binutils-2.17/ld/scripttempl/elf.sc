@@ -1,6 +1,7 @@
 #
 # Unusual variables checked by this code:
 #	NOP - four byte opcode for no-op (defaults to 0)
+#	TRAP - four byte opcode for death (defaults to $NOP)
 #	NO_SMALL_DATA - no .sbss/.sbss2/.sdata/.sdata2 sections if not
 #		empty.
 #	SMALL_DATA_CTOR - .ctors contains small data.
@@ -83,6 +84,7 @@
 #
 #  Each of these can also have corresponding .rel.* and .rela.* sections.
 
+test -z "$TRAP" && TRAP=$NOP
 test -z "$ENTRY" && ENTRY=_start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
@@ -284,7 +286,7 @@ SECTIONS
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
-  } =${NOP-0}
+  } =${TRAP-0}
   .fini         ${RELOCATING-0} :
   {
     ${RELOCATING+${FINI_START}}
