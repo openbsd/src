@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.71 2017/06/16 10:20:52 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.72 2017/07/01 14:41:54 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -72,6 +72,8 @@ LIBARCH?=
 SRCS?=	${PROG}.c
 .  if !empty(SRCS:N*.h:N*.sh)
 OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/}
+DEPS+=	${OBJS:R:S/$/.d/}
+
 _LEXINTM+=${SRCS:M*.l:.l=.c}
 _YACCINTM+=${SRCS:M*.y:.y=.c}
 .  endif
@@ -139,6 +141,15 @@ realinstall: beforeinstall
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>
+.endif
+
+# if we already got bsd.lib.mk we don't want to wreck that
+.if !defined(_LIBS)
+.s.o:
+	${COMPILE.S} -MD -MF ${.TARGET:R}.d -o $@ ${.IMPSRC}
+
+.S.o:
+	${COMPILE.S} -MD -MF ${.TARGET:R}.d -o $@ ${.IMPSRC}
 .endif
 
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.84 2017/06/16 10:20:52 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.85 2017/07/01 14:41:54 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -38,92 +38,107 @@ DIST_CFLAGS+=	-Os
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${.IMPSRC}  -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.po:
 	@echo "${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.so:
 	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.do:
 	@echo "${COMPILE.c} ${DIST_CFLAGS} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${DIST_CFLAGS} ${.IMPSRC}  -o ${.TARGET}.o
+	@${COMPILE.c} ${DFLAGS} ${DIST_CFLAGS} ${.IMPSRC}  -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.o .cpp.o .C.o .cxx.o:
 	@echo "${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.cc} ${DFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.po .cpp.po .C.po .cxx.po:
 	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.cc} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.so .cpp.so .C.so .cxx.so:
 	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.cc} ${DFLAGS} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 # Fortran 77
 .f.o:
 	@echo "${COMPILE.f} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.f} ${DFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .f.po:
 	@echo "${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.f} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .f.so:
 	@echo "${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.f} ${DFLAGS} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
 	@echo "${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@${COMPILE.S} ${DFLAGS} -MF $@.d ${CFLAGS:M-[IDM]*} ${AINC} \
+	    ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.po .s.po:
 	@echo "${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
 	    -o ${.TARGET}"
-	@${COMPILE.S} -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
-	    -o ${.TARGET}.o
+	@${COMPILE.S} ${DFLAGS} -MF $@.d -DPROF ${CFLAGS:M-[IDM]*} ${AINC} \
+	    ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
 	@echo "${COMPILE.S} ${PICFLAG} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
 	    -o ${.TARGET}"
-	@${COMPILE.S} ${PICFLAG} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
-	    -o ${.TARGET}.o
+	@${COMPILE.S} ${DFLAGS} -MF $@.d ${PICFLAG} ${CFLAGS:M-[IDM]*} \
+	    ${AINC} ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.do .s.do:
 	@echo "${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${DIST_CFLAGS} \
 	    ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.S} ${CFLAGS:M-[ID]*} ${AINC} ${DIST_CFLAGS} ${.IMPSRC} \
-	    -o ${.TARGET}.o
+	@${COMPILE.S} ${DFLAGS} -MF $@.d ${CFLAGS:M-[IDM]*} ${AINC} \
+	    ${DIST_CFLAGS} ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -167,6 +182,7 @@ all: ${_LIBS} _SUBDIRUSE
 BUILDAFTER += ${_LIBS}
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/}
+DEPS+=	${OBJS:S/$/.d/}
 BUILDAFTER += ${OBJS}
 
 lib${LIB}.a: ${OBJS}
@@ -177,6 +193,7 @@ lib${LIB}.a: ${OBJS}
 
 POBJS+=	${OBJS:.o=.po}
 BUILDAFTER += ${POBJS}
+
 lib${LIB}_p.a: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}_p.a
@@ -185,6 +202,7 @@ lib${LIB}_p.a: ${POBJS}
 
 SOBJS+=	${OBJS:.o=.so}
 BUILDAFTER += ${SOBJS}
+
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
@@ -237,10 +255,6 @@ clean: _SUBDIRUSE
 
 cleandir: _SUBDIRUSE clean
 
-.if defined(SRCS)
-afterdepend: .depend
-	@sed -i 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.do:/' .depend
-.endif
 
 .if !target(install)
 .if !target(beforeinstall)

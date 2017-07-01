@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.sys.mk,v 1.10 2012/04/08 15:56:28 jsg Exp $
+#	$OpenBSD: bsd.sys.mk,v 1.11 2017/07/01 14:41:54 espie Exp $
 #	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 #
 # Overrides used for OpenBSD source tree builds.
@@ -22,6 +22,7 @@ CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 	${LEX.l} -o${.TARGET:R}.yy.c ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.yy.c 
 	rm -f ${.TARGET:R}.yy.c
+	if test -f ${.TARGET:R}.d; then sed -i -e 's,${.TARGET:R}.yy.c,${.IMPSRC},' ${.TARGET:R}.d; fi
 
 # Yacc
 .y:
@@ -35,4 +36,5 @@ CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${COMPILE.c} -o ${.TARGET} ${.TARGET:R}.tab.c
 	rm -f ${.TARGET:R}.tab.c
+	if test -f ${.TARGET:R}.d; then sed -i -e 's,${.TARGET:R}.tab.c,${.IMPSRC},' ${.TARGET:R}.d; fi
 .endif
