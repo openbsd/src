@@ -1,4 +1,4 @@
-/* $OpenBSD: drm.h,v 1.22 2016/12/01 01:37:17 jsg Exp $ */
+/* $OpenBSD: drm.h,v 1.23 2017/07/01 16:00:25 kettenis Exp $ */
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -49,6 +49,14 @@
 
 #include <sys/ioccom.h>
 #include <sys/types.h>
+typedef int8_t   __s8;
+typedef uint8_t  __u8;
+typedef int16_t  __s16;
+typedef uint16_t __u16;
+typedef int32_t  __s32;
+typedef uint32_t __u32;
+typedef int64_t  __s64;
+typedef uint64_t __u64;
 typedef unsigned long drm_handle_t;
 
 #define DRM_IOCTL_NR(n)		((n) & 0xff)
@@ -720,7 +728,7 @@ struct drm_pciinfo {
 };
 #endif
 
-#include "drm_mode.h"
+#include <dev/pci/drm/drm_mode.h>
 
 #define DRM_IOCTL_BASE			'd'
 #define DRM_IO(nr)			_IO(DRM_IOCTL_BASE,nr)

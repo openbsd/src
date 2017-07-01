@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_edid.c,v 1.15 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
  * Copyright (c) 2007-2008 Intel Corporation
@@ -28,10 +27,16 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include "drmP.h"
-#include "drm_edid.h"
-
-#include <dev/i2c/i2cvar.h>
+#ifdef __linux__
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/hdmi.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#endif
+#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_edid.h>
+#include <dev/pci/drm/drm_displayid.h>
 
 #define version_greater(edid, maj, min) \
 	(((edid)->version > (maj)) || \
@@ -68,6 +73,12 @@
 #define EDID_QUIRK_FORCE_REDUCED_BLANKING	(1 << 7)
 /* Force 8bpc */
 #define EDID_QUIRK_FORCE_8BPC			(1 << 8)
+/* Force 12bpc */
+#define EDID_QUIRK_FORCE_12BPC			(1 << 9)
+/* Force 6bpc */
+#define EDID_QUIRK_FORCE_6BPC			(1 << 10)
+/* Force 10bpc */
+#define EDID_QUIRK_FORCE_10BPC			(1 << 11)
 
 struct detailed_mode_closure {
 	struct drm_connector *connector;
@@ -94,6 +105,9 @@ static struct edid_quirk {
 	/* Unknown Acer */
 	{ "ACR", 2423, EDID_QUIRK_FIRST_DETAILED_PREFERRED },
 
+	/* AEO model 0 reports 8 bpc, but is a 6 bpc panel */
+	{ "AEO", 0, EDID_QUIRK_FORCE_6BPC },
+
 	/* Belinea 10 15 55 */
 	{ "MAX", 1516, EDID_QUIRK_PREFER_LARGE_60 },
 	{ "MAX", 0x77e, EDID_QUIRK_PREFER_LARGE_60 },
@@ -106,6 +120,9 @@ static struct edid_quirk {
 	/* Funai Electronics PM36B */
 	{ "FCM", 13600, EDID_QUIRK_PREFER_LARGE_75 |
 	  EDID_QUIRK_DETAILED_IN_CM },
+
+	/* LGD panel of HP zBook 17 G2, eDP 10 bpc, but reports unknown bpc */
+	{ "LGD", 764, EDID_QUIRK_FORCE_10BPC },
 
 	/* LG Philips LCD LP154W01-A5 */
 	{ "LPL", 0, EDID_QUIRK_DETAILED_USE_MAXIMUM_SIZE },
@@ -123,6 +140,9 @@ static struct edid_quirk {
 	{ "SAM", 596, EDID_QUIRK_PREFER_LARGE_60 },
 	{ "SAM", 638, EDID_QUIRK_PREFER_LARGE_60 },
 
+	/* Sony PVM-2541A does up to 12 bpc, but only reports max 8 bpc */
+	{ "SNY", 0x2541, EDID_QUIRK_FORCE_12BPC },
+
 	/* ViewSonic VA2026w */
 	{ "VSC", 5020, EDID_QUIRK_FORCE_REDUCED_BLANKING },
 
@@ -131,6 +151,9 @@ static struct edid_quirk {
 
 	/* Panel in Samsung NP700G7A-S01PL notebook reports 6bpc */
 	{ "SEC", 0xd033, EDID_QUIRK_FORCE_8BPC },
+
+	/* Rotel RSX-1058 forwards sink's EDID but only does HDMI 1.1*/
+	{ "ETR", 13896, EDID_QUIRK_FORCE_8BPC },
 };
 
 /*
@@ -138,326 +161,358 @@ static struct edid_quirk {
  * This table is copied from xfree86/modes/xf86EdidModes.c.
  */
 static const struct drm_display_mode drm_dmt_modes[] = {
-	/* 640x350@85Hz */
+	/* 0x01 - 640x350@85Hz */
 	{ DRM_MODE("640x350", DRM_MODE_TYPE_DRIVER, 31500, 640, 672,
 		   736, 832, 0, 350, 382, 385, 445, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 640x400@85Hz */
+	/* 0x02 - 640x400@85Hz */
 	{ DRM_MODE("640x400", DRM_MODE_TYPE_DRIVER, 31500, 640, 672,
 		   736, 832, 0, 400, 401, 404, 445, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 720x400@85Hz */
+	/* 0x03 - 720x400@85Hz */
 	{ DRM_MODE("720x400", DRM_MODE_TYPE_DRIVER, 35500, 720, 756,
 		   828, 936, 0, 400, 401, 404, 446, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 640x480@60Hz */
+	/* 0x04 - 640x480@60Hz */
 	{ DRM_MODE("640x480", DRM_MODE_TYPE_DRIVER, 25175, 640, 656,
-		   752, 800, 0, 480, 489, 492, 525, 0,
+		   752, 800, 0, 480, 490, 492, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 640x480@72Hz */
+	/* 0x05 - 640x480@72Hz */
 	{ DRM_MODE("640x480", DRM_MODE_TYPE_DRIVER, 31500, 640, 664,
 		   704, 832, 0, 480, 489, 492, 520, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 640x480@75Hz */
+	/* 0x06 - 640x480@75Hz */
 	{ DRM_MODE("640x480", DRM_MODE_TYPE_DRIVER, 31500, 640, 656,
 		   720, 840, 0, 480, 481, 484, 500, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 640x480@85Hz */
+	/* 0x07 - 640x480@85Hz */
 	{ DRM_MODE("640x480", DRM_MODE_TYPE_DRIVER, 36000, 640, 696,
 		   752, 832, 0, 480, 481, 484, 509, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 800x600@56Hz */
+	/* 0x08 - 800x600@56Hz */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 36000, 800, 824,
 		   896, 1024, 0, 600, 601, 603, 625, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 800x600@60Hz */
+	/* 0x09 - 800x600@60Hz */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 40000, 800, 840,
 		   968, 1056, 0, 600, 601, 605, 628, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 800x600@72Hz */
+	/* 0x0a - 800x600@72Hz */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 50000, 800, 856,
 		   976, 1040, 0, 600, 637, 643, 666, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 800x600@75Hz */
+	/* 0x0b - 800x600@75Hz */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 49500, 800, 816,
 		   896, 1056, 0, 600, 601, 604, 625, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 800x600@85Hz */
+	/* 0x0c - 800x600@85Hz */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 56250, 800, 832,
 		   896, 1048, 0, 600, 601, 604, 631, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 800x600@120Hz RB */
+	/* 0x0d - 800x600@120Hz RB */
 	{ DRM_MODE("800x600", DRM_MODE_TYPE_DRIVER, 73250, 800, 848,
 		   880, 960, 0, 600, 603, 607, 636, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 848x480@60Hz */
+	/* 0x0e - 848x480@60Hz */
 	{ DRM_MODE("848x480", DRM_MODE_TYPE_DRIVER, 33750, 848, 864,
 		   976, 1088, 0, 480, 486, 494, 517, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1024x768@43Hz, interlace */
+	/* 0x0f - 1024x768@43Hz, interlace */
 	{ DRM_MODE("1024x768i", DRM_MODE_TYPE_DRIVER, 44900, 1024, 1032,
 		   1208, 1264, 0, 768, 768, 772, 817, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC |
-			DRM_MODE_FLAG_INTERLACE) },
-	/* 1024x768@60Hz */
+		   DRM_MODE_FLAG_INTERLACE) },
+	/* 0x10 - 1024x768@60Hz */
 	{ DRM_MODE("1024x768", DRM_MODE_TYPE_DRIVER, 65000, 1024, 1048,
 		   1184, 1344, 0, 768, 771, 777, 806, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1024x768@70Hz */
+	/* 0x11 - 1024x768@70Hz */
 	{ DRM_MODE("1024x768", DRM_MODE_TYPE_DRIVER, 75000, 1024, 1048,
 		   1184, 1328, 0, 768, 771, 777, 806, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1024x768@75Hz */
+	/* 0x12 - 1024x768@75Hz */
 	{ DRM_MODE("1024x768", DRM_MODE_TYPE_DRIVER, 78750, 1024, 1040,
 		   1136, 1312, 0, 768, 769, 772, 800, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1024x768@85Hz */
+	/* 0x13 - 1024x768@85Hz */
 	{ DRM_MODE("1024x768", DRM_MODE_TYPE_DRIVER, 94500, 1024, 1072,
 		   1168, 1376, 0, 768, 769, 772, 808, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1024x768@120Hz RB */
+	/* 0x14 - 1024x768@120Hz RB */
 	{ DRM_MODE("1024x768", DRM_MODE_TYPE_DRIVER, 115500, 1024, 1072,
 		   1104, 1184, 0, 768, 771, 775, 813, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1152x864@75Hz */
+	/* 0x15 - 1152x864@75Hz */
 	{ DRM_MODE("1152x864", DRM_MODE_TYPE_DRIVER, 108000, 1152, 1216,
 		   1344, 1600, 0, 864, 865, 868, 900, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x768@60Hz RB */
+	/* 0x55 - 1280x720@60Hz */
+	{ DRM_MODE("1280x720", DRM_MODE_TYPE_DRIVER, 74250, 1280, 1390,
+		   1430, 1650, 0, 720, 725, 730, 750, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x16 - 1280x768@60Hz RB */
 	{ DRM_MODE("1280x768", DRM_MODE_TYPE_DRIVER, 68250, 1280, 1328,
 		   1360, 1440, 0, 768, 771, 778, 790, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x768@60Hz */
+	/* 0x17 - 1280x768@60Hz */
 	{ DRM_MODE("1280x768", DRM_MODE_TYPE_DRIVER, 79500, 1280, 1344,
 		   1472, 1664, 0, 768, 771, 778, 798, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x768@75Hz */
+	/* 0x18 - 1280x768@75Hz */
 	{ DRM_MODE("1280x768", DRM_MODE_TYPE_DRIVER, 102250, 1280, 1360,
 		   1488, 1696, 0, 768, 771, 778, 805, 0,
-		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x768@85Hz */
+		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x19 - 1280x768@85Hz */
 	{ DRM_MODE("1280x768", DRM_MODE_TYPE_DRIVER, 117500, 1280, 1360,
 		   1496, 1712, 0, 768, 771, 778, 809, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x768@120Hz RB */
+	/* 0x1a - 1280x768@120Hz RB */
 	{ DRM_MODE("1280x768", DRM_MODE_TYPE_DRIVER, 140250, 1280, 1328,
 		   1360, 1440, 0, 768, 771, 778, 813, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x800@60Hz RB */
+	/* 0x1b - 1280x800@60Hz RB */
 	{ DRM_MODE("1280x800", DRM_MODE_TYPE_DRIVER, 71000, 1280, 1328,
 		   1360, 1440, 0, 800, 803, 809, 823, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x800@60Hz */
+	/* 0x1c - 1280x800@60Hz */
 	{ DRM_MODE("1280x800", DRM_MODE_TYPE_DRIVER, 83500, 1280, 1352,
 		   1480, 1680, 0, 800, 803, 809, 831, 0,
-		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x800@75Hz */
+		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x1d - 1280x800@75Hz */
 	{ DRM_MODE("1280x800", DRM_MODE_TYPE_DRIVER, 106500, 1280, 1360,
 		   1488, 1696, 0, 800, 803, 809, 838, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x800@85Hz */
+	/* 0x1e - 1280x800@85Hz */
 	{ DRM_MODE("1280x800", DRM_MODE_TYPE_DRIVER, 122500, 1280, 1360,
 		   1496, 1712, 0, 800, 803, 809, 843, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x800@120Hz RB */
+	/* 0x1f - 1280x800@120Hz RB */
 	{ DRM_MODE("1280x800", DRM_MODE_TYPE_DRIVER, 146250, 1280, 1328,
 		   1360, 1440, 0, 800, 803, 809, 847, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x960@60Hz */
+	/* 0x20 - 1280x960@60Hz */
 	{ DRM_MODE("1280x960", DRM_MODE_TYPE_DRIVER, 108000, 1280, 1376,
 		   1488, 1800, 0, 960, 961, 964, 1000, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x960@85Hz */
+	/* 0x21 - 1280x960@85Hz */
 	{ DRM_MODE("1280x960", DRM_MODE_TYPE_DRIVER, 148500, 1280, 1344,
 		   1504, 1728, 0, 960, 961, 964, 1011, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x960@120Hz RB */
+	/* 0x22 - 1280x960@120Hz RB */
 	{ DRM_MODE("1280x960", DRM_MODE_TYPE_DRIVER, 175500, 1280, 1328,
 		   1360, 1440, 0, 960, 963, 967, 1017, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1280x1024@60Hz */
+	/* 0x23 - 1280x1024@60Hz */
 	{ DRM_MODE("1280x1024", DRM_MODE_TYPE_DRIVER, 108000, 1280, 1328,
 		   1440, 1688, 0, 1024, 1025, 1028, 1066, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x1024@75Hz */
+	/* 0x24 - 1280x1024@75Hz */
 	{ DRM_MODE("1280x1024", DRM_MODE_TYPE_DRIVER, 135000, 1280, 1296,
 		   1440, 1688, 0, 1024, 1025, 1028, 1066, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x1024@85Hz */
+	/* 0x25 - 1280x1024@85Hz */
 	{ DRM_MODE("1280x1024", DRM_MODE_TYPE_DRIVER, 157500, 1280, 1344,
 		   1504, 1728, 0, 1024, 1025, 1028, 1072, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1280x1024@120Hz RB */
+	/* 0x26 - 1280x1024@120Hz RB */
 	{ DRM_MODE("1280x1024", DRM_MODE_TYPE_DRIVER, 187250, 1280, 1328,
 		   1360, 1440, 0, 1024, 1027, 1034, 1084, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1360x768@60Hz */
+	/* 0x27 - 1360x768@60Hz */
 	{ DRM_MODE("1360x768", DRM_MODE_TYPE_DRIVER, 85500, 1360, 1424,
 		   1536, 1792, 0, 768, 771, 777, 795, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1360x768@120Hz RB */
+	/* 0x28 - 1360x768@120Hz RB */
 	{ DRM_MODE("1360x768", DRM_MODE_TYPE_DRIVER, 148250, 1360, 1408,
 		   1440, 1520, 0, 768, 771, 776, 813, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1400x1050@60Hz RB */
+	/* 0x51 - 1366x768@60Hz */
+	{ DRM_MODE("1366x768", DRM_MODE_TYPE_DRIVER, 85500, 1366, 1436,
+		   1579, 1792, 0, 768, 771, 774, 798, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x56 - 1366x768@60Hz */
+	{ DRM_MODE("1366x768", DRM_MODE_TYPE_DRIVER, 72000, 1366, 1380,
+		   1436, 1500, 0, 768, 769, 772, 800, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x29 - 1400x1050@60Hz RB */
 	{ DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 101000, 1400, 1448,
 		   1480, 1560, 0, 1050, 1053, 1057, 1080, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1400x1050@60Hz */
+	/* 0x2a - 1400x1050@60Hz */
 	{ DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 121750, 1400, 1488,
 		   1632, 1864, 0, 1050, 1053, 1057, 1089, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1400x1050@75Hz */
+	/* 0x2b - 1400x1050@75Hz */
 	{ DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 156000, 1400, 1504,
 		   1648, 1896, 0, 1050, 1053, 1057, 1099, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1400x1050@85Hz */
+	/* 0x2c - 1400x1050@85Hz */
 	{ DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 179500, 1400, 1504,
 		   1656, 1912, 0, 1050, 1053, 1057, 1105, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1400x1050@120Hz RB */
+	/* 0x2d - 1400x1050@120Hz RB */
 	{ DRM_MODE("1400x1050", DRM_MODE_TYPE_DRIVER, 208000, 1400, 1448,
 		   1480, 1560, 0, 1050, 1053, 1057, 1112, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1440x900@60Hz RB */
+	/* 0x2e - 1440x900@60Hz RB */
 	{ DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 88750, 1440, 1488,
 		   1520, 1600, 0, 900, 903, 909, 926, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1440x900@60Hz */
+	/* 0x2f - 1440x900@60Hz */
 	{ DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 106500, 1440, 1520,
 		   1672, 1904, 0, 900, 903, 909, 934, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1440x900@75Hz */
+	/* 0x30 - 1440x900@75Hz */
 	{ DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 136750, 1440, 1536,
 		   1688, 1936, 0, 900, 903, 909, 942, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1440x900@85Hz */
+	/* 0x31 - 1440x900@85Hz */
 	{ DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 157000, 1440, 1544,
 		   1696, 1952, 0, 900, 903, 909, 948, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1440x900@120Hz RB */
+	/* 0x32 - 1440x900@120Hz RB */
 	{ DRM_MODE("1440x900", DRM_MODE_TYPE_DRIVER, 182750, 1440, 1488,
 		   1520, 1600, 0, 900, 903, 909, 953, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1600x1200@60Hz */
+	/* 0x53 - 1600x900@60Hz */
+	{ DRM_MODE("1600x900", DRM_MODE_TYPE_DRIVER, 108000, 1600, 1624,
+		   1704, 1800, 0, 900, 901, 904, 1000, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x33 - 1600x1200@60Hz */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 162000, 1600, 1664,
 		   1856, 2160, 0, 1200, 1201, 1204, 1250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1600x1200@65Hz */
+	/* 0x34 - 1600x1200@65Hz */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 175500, 1600, 1664,
 		   1856, 2160, 0, 1200, 1201, 1204, 1250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1600x1200@70Hz */
+	/* 0x35 - 1600x1200@70Hz */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 189000, 1600, 1664,
 		   1856, 2160, 0, 1200, 1201, 1204, 1250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1600x1200@75Hz */
+	/* 0x36 - 1600x1200@75Hz */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 202500, 1600, 1664,
 		   1856, 2160, 0, 1200, 1201, 1204, 1250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1600x1200@85Hz */
+	/* 0x37 - 1600x1200@85Hz */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 229500, 1600, 1664,
 		   1856, 2160, 0, 1200, 1201, 1204, 1250, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1600x1200@120Hz RB */
+	/* 0x38 - 1600x1200@120Hz RB */
 	{ DRM_MODE("1600x1200", DRM_MODE_TYPE_DRIVER, 268250, 1600, 1648,
 		   1680, 1760, 0, 1200, 1203, 1207, 1271, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1680x1050@60Hz RB */
+	/* 0x39 - 1680x1050@60Hz RB */
 	{ DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 119000, 1680, 1728,
 		   1760, 1840, 0, 1050, 1053, 1059, 1080, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1680x1050@60Hz */
+	/* 0x3a - 1680x1050@60Hz */
 	{ DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 146250, 1680, 1784,
 		   1960, 2240, 0, 1050, 1053, 1059, 1089, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1680x1050@75Hz */
+	/* 0x3b - 1680x1050@75Hz */
 	{ DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 187000, 1680, 1800,
 		   1976, 2272, 0, 1050, 1053, 1059, 1099, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1680x1050@85Hz */
+	/* 0x3c - 1680x1050@85Hz */
 	{ DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 214750, 1680, 1808,
 		   1984, 2288, 0, 1050, 1053, 1059, 1105, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1680x1050@120Hz RB */
+	/* 0x3d - 1680x1050@120Hz RB */
 	{ DRM_MODE("1680x1050", DRM_MODE_TYPE_DRIVER, 245500, 1680, 1728,
 		   1760, 1840, 0, 1050, 1053, 1059, 1112, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1792x1344@60Hz */
+	/* 0x3e - 1792x1344@60Hz */
 	{ DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 204750, 1792, 1920,
 		   2120, 2448, 0, 1344, 1345, 1348, 1394, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1792x1344@75Hz */
+	/* 0x3f - 1792x1344@75Hz */
 	{ DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 261000, 1792, 1888,
 		   2104, 2456, 0, 1344, 1345, 1348, 1417, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1792x1344@120Hz RB */
+	/* 0x40 - 1792x1344@120Hz RB */
 	{ DRM_MODE("1792x1344", DRM_MODE_TYPE_DRIVER, 333250, 1792, 1840,
 		   1872, 1952, 0, 1344, 1347, 1351, 1423, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1856x1392@60Hz */
+	/* 0x41 - 1856x1392@60Hz */
 	{ DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 218250, 1856, 1952,
 		   2176, 2528, 0, 1392, 1393, 1396, 1439, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1856x1392@75Hz */
+	/* 0x42 - 1856x1392@75Hz */
 	{ DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 288000, 1856, 1984,
-		   2208, 2560, 0, 1392, 1395, 1399, 1500, 0,
+		   2208, 2560, 0, 1392, 1393, 1396, 1500, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1856x1392@120Hz RB */
+	/* 0x43 - 1856x1392@120Hz RB */
 	{ DRM_MODE("1856x1392", DRM_MODE_TYPE_DRIVER, 356500, 1856, 1904,
 		   1936, 2016, 0, 1392, 1395, 1399, 1474, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1920x1200@60Hz RB */
+	/* 0x52 - 1920x1080@60Hz */
+	{ DRM_MODE("1920x1080", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
+		   2052, 2200, 0, 1080, 1084, 1089, 1125, 0,
+		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC) },
+	/* 0x44 - 1920x1200@60Hz RB */
 	{ DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 154000, 1920, 1968,
 		   2000, 2080, 0, 1200, 1203, 1209, 1235, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1920x1200@60Hz */
+	/* 0x45 - 1920x1200@60Hz */
 	{ DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 193250, 1920, 2056,
 		   2256, 2592, 0, 1200, 1203, 1209, 1245, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1920x1200@75Hz */
+	/* 0x46 - 1920x1200@75Hz */
 	{ DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 245250, 1920, 2056,
 		   2264, 2608, 0, 1200, 1203, 1209, 1255, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1920x1200@85Hz */
+	/* 0x47 - 1920x1200@85Hz */
 	{ DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 281250, 1920, 2064,
 		   2272, 2624, 0, 1200, 1203, 1209, 1262, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1920x1200@120Hz RB */
+	/* 0x48 - 1920x1200@120Hz RB */
 	{ DRM_MODE("1920x1200", DRM_MODE_TYPE_DRIVER, 317000, 1920, 1968,
 		   2000, 2080, 0, 1200, 1203, 1209, 1271, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 1920x1440@60Hz */
+	/* 0x49 - 1920x1440@60Hz */
 	{ DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 234000, 1920, 2048,
 		   2256, 2600, 0, 1440, 1441, 1444, 1500, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1920x1440@75Hz */
+	/* 0x4a - 1920x1440@75Hz */
 	{ DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 297000, 1920, 2064,
 		   2288, 2640, 0, 1440, 1441, 1444, 1500, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 1920x1440@120Hz RB */
+	/* 0x4b - 1920x1440@120Hz RB */
 	{ DRM_MODE("1920x1440", DRM_MODE_TYPE_DRIVER, 380500, 1920, 1968,
 		   2000, 2080, 0, 1440, 1443, 1447, 1525, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 2560x1600@60Hz RB */
+	/* 0x54 - 2048x1152@60Hz */
+	{ DRM_MODE("2048x1152", DRM_MODE_TYPE_DRIVER, 162000, 2048, 2074,
+		   2154, 2250, 0, 1152, 1153, 1156, 1200, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC) },
+	/* 0x4c - 2560x1600@60Hz RB */
 	{ DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 268500, 2560, 2608,
 		   2640, 2720, 0, 1600, 1603, 1609, 1646, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
-	/* 2560x1600@60Hz */
+	/* 0x4d - 2560x1600@60Hz */
 	{ DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 348500, 2560, 2752,
 		   3032, 3504, 0, 1600, 1603, 1609, 1658, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 2560x1600@75HZ */
+	/* 0x4e - 2560x1600@75Hz */
 	{ DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 443250, 2560, 2768,
 		   3048, 3536, 0, 1600, 1603, 1609, 1672, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 2560x1600@85HZ */
+	/* 0x4f - 2560x1600@85Hz */
 	{ DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 505250, 2560, 2768,
 		   3048, 3536, 0, 1600, 1603, 1609, 1682, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC) },
-	/* 2560x1600@120Hz RB */
+	/* 0x50 - 2560x1600@120Hz RB */
 	{ DRM_MODE("2560x1600", DRM_MODE_TYPE_DRIVER, 552750, 2560, 2608,
 		   2640, 2720, 0, 1600, 1603, 1609, 1694, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
+	/* 0x57 - 4096x2160@60Hz RB */
+	{ DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556744, 4096, 4104,
+		   4136, 4176, 0, 2160, 2208, 2216, 2222, 0,
+		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
+	/* 0x58 - 4096x2160@59.94Hz RB */
+	{ DRM_MODE("4096x2160", DRM_MODE_TYPE_DRIVER, 556188, 4096, 4104,
+		   4136, 4176, 0, 2160, 2208, 2216, 2222, 0,
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
 };
 
@@ -625,27 +680,27 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC |
 			DRM_MODE_FLAG_INTERLACE),
 	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 6 - 1440x480i@60Hz */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 6 - 720(1440)x480i@60Hz */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 13500, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 7 - 1440x480i@60Hz */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 7 - 720(1440)x480i@60Hz */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 13500, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 8 - 1440x240@60Hz */
-	{ DRM_MODE("1440x240", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1478,
-		   1602, 1716, 0, 240, 244, 247, 262, 0,
+	/* 8 - 720(1440)x240@60Hz */
+	{ DRM_MODE("720x240", DRM_MODE_TYPE_DRIVER, 13500, 720, 739,
+		   801, 858, 0, 240, 244, 247, 262, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 9 - 1440x240@60Hz */
-	{ DRM_MODE("1440x240", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1478,
-		   1602, 1716, 0, 240, 244, 247, 262, 0,
+	/* 9 - 720(1440)x240@60Hz */
+	{ DRM_MODE("720x240", DRM_MODE_TYPE_DRIVER, 13500, 720, 739,
+		   801, 858, 0, 240, 244, 247, 262, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 60, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
@@ -707,27 +762,27 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC |
 			DRM_MODE_FLAG_INTERLACE),
 	  .vrefresh = 50, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 21 - 1440x576i@50Hz */
-	{ DRM_MODE("1440x576i", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 21 - 720(1440)x576i@50Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 13500, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 50, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 22 - 1440x576i@50Hz */
-	{ DRM_MODE("1440x576i", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 22 - 720(1440)x576i@50Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 13500, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 50, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 23 - 1440x288@50Hz */
-	{ DRM_MODE("1440x288", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1464,
-		   1590, 1728, 0, 288, 290, 293, 312, 0,
+	/* 23 - 720(1440)x288@50Hz */
+	{ DRM_MODE("720x288", DRM_MODE_TYPE_DRIVER, 13500, 720, 732,
+		   795, 864, 0, 288, 290, 293, 312, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 50, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 24 - 1440x288@50Hz */
-	{ DRM_MODE("1440x288", DRM_MODE_TYPE_DRIVER, 27000, 1440, 1464,
-		   1590, 1728, 0, 288, 290, 293, 312, 0,
+	/* 24 - 720(1440)x288@50Hz */
+	{ DRM_MODE("720x288", DRM_MODE_TYPE_DRIVER, 13500, 720, 732,
+		   795, 864, 0, 288, 290, 293, 312, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 50, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
@@ -830,17 +885,17 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   796, 864, 0, 576, 581, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC),
 	  .vrefresh = 100, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 44 - 1440x576i@100Hz */
-	{ DRM_MODE("1440x576", DRM_MODE_TYPE_DRIVER, 54000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 44 - 720(1440)x576i@100Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 27000, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
-			DRM_MODE_FLAG_DBLCLK),
+			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 100, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 45 - 1440x576i@100Hz */
-	{ DRM_MODE("1440x576", DRM_MODE_TYPE_DRIVER, 54000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 45 - 720(1440)x576i@100Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 27000, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
-			DRM_MODE_FLAG_DBLCLK),
+			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 100, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
 	/* 46 - 1920x1080i@120Hz */
 	{ DRM_MODE("1920x1080i", DRM_MODE_TYPE_DRIVER, 148500, 1920, 2008,
@@ -863,15 +918,15 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   798, 858, 0, 480, 489, 495, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC),
 	  .vrefresh = 120, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 50 - 1440x480i@120Hz */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 54000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 50 - 720(1440)x480i@120Hz */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 27000, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 120, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 51 - 1440x480i@120Hz */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 54000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 51 - 720(1440)x480i@120Hz */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 27000, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 120, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
@@ -885,15 +940,15 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   796, 864, 0, 576, 581, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC),
 	  .vrefresh = 200, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 54 - 1440x576i@200Hz */
-	{ DRM_MODE("1440x576i", DRM_MODE_TYPE_DRIVER, 108000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 54 - 720(1440)x576i@200Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 54000, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 200, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 55 - 1440x576i@200Hz */
-	{ DRM_MODE("1440x576i", DRM_MODE_TYPE_DRIVER, 108000, 1440, 1464,
-		   1590, 1728, 0, 576, 580, 586, 625, 0,
+	/* 55 - 720(1440)x576i@200Hz */
+	{ DRM_MODE("720x576i", DRM_MODE_TYPE_DRIVER, 54000, 720, 732,
+		   795, 864, 0, 576, 580, 586, 625, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 200, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
@@ -907,15 +962,15 @@ static const struct drm_display_mode edid_cea_modes[] = {
 		   798, 858, 0, 480, 489, 495, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC),
 	  .vrefresh = 240, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
-	/* 58 - 1440x480i@240 */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 108000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 58 - 720(1440)x480i@240 */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 54000, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 240, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3, },
-	/* 59 - 1440x480i@240 */
-	{ DRM_MODE("1440x480i", DRM_MODE_TYPE_DRIVER, 108000, 1440, 1478,
-		   1602, 1716, 0, 480, 488, 494, 525, 0,
+	/* 59 - 720(1440)x480i@240 */
+	{ DRM_MODE("720x480i", DRM_MODE_TYPE_DRIVER, 54000, 720, 739,
+		   801, 858, 0, 480, 488, 494, 525, 0,
 		   DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC |
 			DRM_MODE_FLAG_INTERLACE | DRM_MODE_FLAG_DBLCLK),
 	  .vrefresh = 240, .picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9, },
@@ -982,9 +1037,13 @@ static const u8 edid_header[] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00
 };
 
- /*
- * Sanity check the header of the base EDID block.  Return 8 if the header
- * is perfect, down to 0 if it's totally wrong.
+/**
+ * drm_edid_header_is_valid - sanity check the header of the base EDID block
+ * @raw_edid: pointer to raw base EDID block
+ *
+ * Sanity check the header of the base EDID block.
+ *
+ * Return: 8 if the header is perfect, down to 0 if it's totally wrong.
  */
 int drm_edid_header_is_valid(const u8 *raw_edid)
 {
@@ -1003,14 +1062,43 @@ module_param_named(edid_fixup, edid_fixup, int, 0400);
 MODULE_PARM_DESC(edid_fixup,
 		 "Minimum number of valid EDID header bytes (0-8, default 6)");
 
-/*
- * Sanity check the EDID block (base or extension).  Return 0 if the block
- * doesn't check out, or 1 if it's valid.
- */
-bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
+static void drm_get_displayid(struct drm_connector *connector,
+			      struct edid *edid);
+
+static int drm_edid_block_checksum(const u8 *raw_edid)
 {
 	int i;
 	u8 csum = 0;
+	for (i = 0; i < EDID_LENGTH; i++)
+		csum += raw_edid[i];
+
+	return csum;
+}
+
+static bool drm_edid_is_zero(const u8 *in_edid, int length)
+{
+	if (memchr_inv(in_edid, 0, length))
+		return false;
+
+	return true;
+}
+
+/**
+ * drm_edid_block_valid - Sanity check the EDID block (base or extension)
+ * @raw_edid: pointer to raw EDID block
+ * @block: type of block to validate (0 for base, extension otherwise)
+ * @print_bad_edid: if true, dump bad EDID blocks to the console
+ * @edid_corrupt: if true, the header or checksum is invalid
+ *
+ * Validate a base or extension EDID block and optionally dump bad blocks to
+ * the console.
+ *
+ * Return: True if the block is valid, false otherwise.
+ */
+bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid,
+			  bool *edid_corrupt)
+{
+	u8 csum;
 	struct edid *edid = (struct edid *)raw_edid;
 
 	if (WARN_ON(!raw_edid))
@@ -1021,21 +1109,34 @@ bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
 
 	if (block == 0) {
 		int score = drm_edid_header_is_valid(raw_edid);
-		if (score == 8) ;
-		else if (score >= edid_fixup) {
+		if (score == 8) {
+			if (edid_corrupt)
+				*edid_corrupt = false;
+		} else if (score >= edid_fixup) {
+			/* Displayport Link CTS Core 1.2 rev1.1 test 4.2.2.6
+			 * The corrupt flag needs to be set here otherwise, the
+			 * fix-up code here will correct the problem, the
+			 * checksum is correct and the test fails
+			 */
+			if (edid_corrupt)
+				*edid_corrupt = true;
 			DRM_DEBUG("Fixing EDID header, your hardware may be failing\n");
 			memcpy(raw_edid, edid_header, sizeof(edid_header));
 		} else {
+			if (edid_corrupt)
+				*edid_corrupt = true;
 			goto bad;
 		}
 	}
 
-	for (i = 0; i < EDID_LENGTH; i++)
-		csum += raw_edid[i];
+	csum = drm_edid_block_checksum(raw_edid);
 	if (csum) {
 		if (print_bad_edid) {
 			DRM_ERROR("EDID checksum is invalid, remainder is %d\n", csum);
 		}
+
+		if (edid_corrupt)
+			*edid_corrupt = true;
 
 		/* allow CEA to slide through, switches mangle this */
 		if (raw_edid[0] != 0x02)
@@ -1062,15 +1163,13 @@ bool drm_edid_block_valid(u8 *raw_edid, int block, bool print_bad_edid)
 
 bad:
 	if (print_bad_edid) {
-		printf("Raw EDID:\n");
-		for (i = 0; i < EDID_LENGTH; i++) {
-			if (i % 16 == 0)
-				printf("\n");
-			else if (i % 8 == 0)
-				printf(" ");
-			printf("%02x ", raw_edid[i]);
+		if (drm_edid_is_zero(raw_edid, EDID_LENGTH)) {
+			printk(KERN_ERR "EDID block is all zeroes\n");
+		} else {
+			printk(KERN_ERR "Raw EDID:\n");
+			print_hex_dump(KERN_ERR, " \t", DUMP_PREFIX_NONE, 16, 1,
+			       raw_edid, EDID_LENGTH, false);
 		}
-		printf("\n");
 	}
 	return false;
 }
@@ -1081,6 +1180,8 @@ EXPORT_SYMBOL(drm_edid_block_valid);
  * @edid: EDID data
  *
  * Sanity-check an entire EDID record (including extensions)
+ *
+ * Return: True if the EDID data is valid, false otherwise.
  */
 bool drm_edid_is_valid(struct edid *edid)
 {
@@ -1091,7 +1192,7 @@ bool drm_edid_is_valid(struct edid *edid)
 		return false;
 
 	for (i = 0; i <= edid->extensions; i++)
-		if (!drm_edid_block_valid(raw + i * EDID_LENGTH, i, true))
+		if (!drm_edid_block_valid(raw + i * EDID_LENGTH, i, true, NULL))
 			return false;
 
 	return true;
@@ -1100,65 +1201,102 @@ EXPORT_SYMBOL(drm_edid_is_valid);
 
 #define DDC_SEGMENT_ADDR 0x30
 /**
- * Get EDID information via I2C.
+ * drm_do_probe_ddc_edid() - get EDID information via I2C
+ * @data: I2C device adapter
+ * @buf: EDID data buffer to be filled
+ * @block: 128 byte EDID block to start fetching from
+ * @len: EDID data buffer length to fetch
  *
- * \param adapter : i2c device adaptor
- * \param buf     : EDID data buffer to be filled
- * \param len     : EDID data buffer length
- * \return 0 on success or -1 on failure.
+ * Try to fetch EDID information by calling I2C driver functions.
  *
- * Try to fetch EDID information by calling i2c driver function.
+ * Return: 0 on success or -1 on failure.
  */
 static int
-drm_do_probe_ddc_edid(struct i2c_controller *adapter, unsigned char *buf,
-		      int block, int len)
+drm_do_probe_ddc_edid(void *data, u8 *buf, unsigned int block, size_t len)
 {
+	struct i2c_adapter *adapter = data;
 	unsigned char start = block * EDID_LENGTH;
 	unsigned char segment = block >> 1;
-	int ret = 0;
+	unsigned char xfers = segment ? 3 : 2;
+	int ret, retries = 5;
 
-	iic_acquire_bus(adapter, 0);
-	if (segment) {
-		ret = iic_exec(adapter, I2C_OP_WRITE,
-		    DDC_SEGMENT_ADDR, NULL, 0, &segment, 1, 0);
-		if (ret)
-			goto i2c_err;
-	}
-	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, DDC_ADDR,
-	    &start, 1, buf, len, 0);
+	/*
+	 * The core I2C driver will automatically retry the transfer if the
+	 * adapter reports EAGAIN. However, we find that bit-banging transfers
+	 * are susceptible to errors under a heavily loaded machine and
+	 * generate spurious NAKs and timeouts. Retrying the transfer
+	 * of the individual block a few times seems to overcome this.
+	 */
+	do {
+		struct i2c_msg msgs[] = {
+			{
+				.addr	= DDC_SEGMENT_ADDR,
+				.flags	= 0,
+				.len	= 1,
+				.buf	= &segment,
+			}, {
+				.addr	= DDC_ADDR,
+				.flags	= 0,
+				.len	= 1,
+				.buf	= &start,
+			}, {
+				.addr	= DDC_ADDR,
+				.flags	= I2C_M_RD,
+				.len	= len,
+				.buf	= buf,
+			}
+		};
 
-i2c_err:
-	iic_release_bus(adapter, 0);
+		/*
+		 * Avoid sending the segment addr to not upset non-compliant
+		 * DDC monitors.
+		 */
+		ret = i2c_transfer(adapter, &msgs[3 - xfers], xfers);
 
-	return (ret);
+		if (ret == -ENXIO) {
+			DRM_DEBUG_KMS("drm: skipping non-existent adapter %s\n",
+					adapter->name);
+			break;
+		}
+	} while (ret != xfers && --retries);
+
+	return ret == xfers ? 0 : -1;
 }
 
-static bool drm_edid_is_zero(u8 *in_edid, int length)
-{
-	int i;
-	u32 *raw_edid = (u32 *)in_edid;
-
-	for (i = 0; i < length / 4; i++)
-		if (*(raw_edid + i) != 0)
-			return false;
-	return true;
-}
-
-static u8 *
-drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
+/**
+ * drm_do_get_edid - get EDID data using a custom EDID block read function
+ * @connector: connector we're probing
+ * @get_edid_block: EDID block read function
+ * @data: private data passed to the block read function
+ *
+ * When the I2C adapter connected to the DDC bus is hidden behind a device that
+ * exposes a different interface to read EDID blocks this function can be used
+ * to get EDID data using a custom block read function.
+ *
+ * As in the general case the DDC bus is accessible by the kernel at the I2C
+ * level, drivers must make all reasonable efforts to expose it as an I2C
+ * adapter and use drm_get_edid() instead of abusing this function.
+ *
+ * Return: Pointer to valid EDID or NULL if we couldn't find any.
+ */
+struct edid *drm_do_get_edid(struct drm_connector *connector,
+	int (*get_edid_block)(void *data, u8 *buf, unsigned int block,
+			      size_t len),
+	void *data)
 {
 	int i, j = 0, valid_extensions = 0;
 	u8 *block, *new;
-	bool print_bad_edid = !connector->bad_edid_counter;
+	bool print_bad_edid = !connector->bad_edid_counter || (drm_debug & DRM_UT_KMS);
 
 	if ((block = kmalloc(EDID_LENGTH, GFP_KERNEL)) == NULL)
 		return NULL;
 
 	/* base block fetch */
 	for (i = 0; i < 4; i++) {
-		if (drm_do_probe_ddc_edid(adapter, block, 0, EDID_LENGTH))
+		if (get_edid_block(data, block, 0, EDID_LENGTH))
 			goto out;
-		if (drm_edid_block_valid(block, 0, print_bad_edid))
+		if (drm_edid_block_valid(block, 0, print_bad_edid,
+					 &connector->edid_corrupt))
 			break;
 		if (i == 0 && drm_edid_is_zero(block, EDID_LENGTH)) {
 			connector->null_edid_counter++;
@@ -1170,22 +1308,25 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 
 	/* if there's no extensions, we're done */
 	if (block[0x7e] == 0)
-		return block;
+		return (struct edid *)block;
 
-	new = malloc((block[0x7e] + 1) * EDID_LENGTH, M_DRM, M_WAITOK);
+	new = kmalloc((block[0x7e] + 1) * EDID_LENGTH, GFP_KERNEL);
 	if (!new)
 		goto out;
-	bcopy(block, new, EDID_LENGTH);
-	free(block, M_DRM, 0);
+	memcpy(new, block, EDID_LENGTH);
+	kfree(block);
 	block = new;
 
 	for (j = 1; j <= block[0x7e]; j++) {
 		for (i = 0; i < 4; i++) {
-			if (drm_do_probe_ddc_edid(adapter,
+			if (get_edid_block(data,
 				  block + (valid_extensions + 1) * EDID_LENGTH,
 				  j, EDID_LENGTH))
 				goto out;
-			if (drm_edid_block_valid(block + (valid_extensions + 1) * EDID_LENGTH, j, print_bad_edid)) {
+			if (drm_edid_block_valid(block + (valid_extensions + 1)
+						 * EDID_LENGTH, j,
+						 print_bad_edid,
+						 NULL)) {
 				valid_extensions++;
 				break;
 			}
@@ -1194,7 +1335,7 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 		if (i == 4 && print_bad_edid) {
 			dev_warn(connector->dev->dev,
 			 "%s: Ignoring invalid EDID block %d.\n",
-			 drm_get_connector_name(connector), j);
+			 connector->name, j);
 
 			connector->bad_edid_counter++;
 		}
@@ -1203,21 +1344,20 @@ drm_do_get_edid(struct drm_connector *connector, struct i2c_controller *adapter)
 	if (valid_extensions != block[0x7e]) {
 		block[EDID_LENGTH-1] += block[0x7e] - valid_extensions;
 		block[0x7e] = valid_extensions;
-		new = malloc((valid_extensions + 1) * EDID_LENGTH,
-		    M_DRM, M_WAITOK);
+		new = kmalloc((valid_extensions + 1) * EDID_LENGTH, GFP_KERNEL);
 		if (!new)
 			goto out;
-		bcopy(block, new, (valid_extensions + 1) * EDID_LENGTH);
-		free(block, M_DRM, 0);
+		memcpy(new, block, (valid_extensions + 1) * EDID_LENGTH);
+		kfree(block);
 		block = new;
 	}
 
-	return block;
+	return (struct edid *)block;
 
 carp:
 	if (print_bad_edid) {
 		dev_warn(connector->dev->dev, "%s: EDID block %d invalid.\n",
-			 drm_get_connector_name(connector), j);
+			 connector->name, j);
 	}
 	connector->bad_edid_counter++;
 
@@ -1227,13 +1367,13 @@ out:
 }
 
 /**
- * Probe DDC presence.
+ * drm_probe_ddc() - probe DDC presence
+ * @adapter: I2C adapter to probe
  *
- * \param adapter : i2c device adaptor
- * \return 1 on success
+ * Return: True on success, false on failure.
  */
 bool
-drm_probe_ddc(struct i2c_controller *adapter)
+drm_probe_ddc(struct i2c_adapter *adapter)
 {
 	unsigned char out;
 
@@ -1244,21 +1384,24 @@ EXPORT_SYMBOL(drm_probe_ddc);
 /**
  * drm_get_edid - get EDID data, if available
  * @connector: connector we're probing
- * @adapter: i2c adapter to use for DDC
+ * @adapter: I2C adapter to use for DDC
  *
- * Poke the given i2c channel to grab EDID data if possible.  If found,
+ * Poke the given I2C channel to grab EDID data if possible.  If found,
  * attach it to the connector.
  *
- * Return edid data or NULL if we couldn't find any.
+ * Return: Pointer to valid EDID or NULL if we couldn't find any.
  */
 struct edid *drm_get_edid(struct drm_connector *connector,
-			  struct i2c_controller *adapter)
+			  struct i2c_adapter *adapter)
 {
-	struct edid *edid = NULL;
+	struct edid *edid;
 
-	if (drm_probe_ddc(adapter))
-		edid = (struct edid *)drm_do_get_edid(connector, adapter);
+	if (!drm_probe_ddc(adapter))
+		return NULL;
 
+	edid = drm_do_get_edid(connector, drm_do_probe_ddc_edid, adapter);
+	if (edid)
+		drm_get_displayid(connector, edid);
 	return edid;
 }
 EXPORT_SYMBOL(drm_get_edid);
@@ -1267,7 +1410,7 @@ EXPORT_SYMBOL(drm_get_edid);
  * drm_edid_duplicate - duplicate an EDID and the extensions
  * @edid: EDID to duplicate
  *
- * Return duplicate edid or NULL on allocation failure.
+ * Return: Pointer to duplicated EDID or NULL on allocation failure.
  */
 struct edid *drm_edid_duplicate(const struct edid *edid)
 {
@@ -1390,7 +1533,8 @@ mode_is_rb(const struct drm_display_mode *mode)
  * @rb: Mode reduced-blanking-ness
  *
  * Walk the DMT mode list looking for a match for the given parameters.
- * Return a newly allocated copy of the mode, or NULL if not found.
+ *
+ * Return: A newly allocated copy of the mode, or NULL if not found.
  */
 struct drm_display_mode *drm_mode_find_dmt(struct drm_device *dev,
 					   int hsize, int vsize, int fresh,
@@ -1571,15 +1715,16 @@ bad_std_timing(u8 a, u8 b)
 
 /**
  * drm_mode_std - convert standard mode info (width, height, refresh) into mode
+ * @connector: connector of for the EDID block
+ * @edid: EDID block to scan
  * @t: standard timing params
- * @timing_level: standard timing level
  *
  * Take the standard timing params (in this case width, aspect, and refresh)
  * and convert them into a real mode using CVT/GTF/DMT.
  */
 static struct drm_display_mode *
 drm_mode_std(struct drm_connector *connector, struct edid *edid,
-	     struct std_timing *t, int revision)
+	     struct std_timing *t)
 {
 	struct drm_device *dev = connector->dev;
 	struct drm_display_mode *m, *mode = NULL;
@@ -1600,7 +1745,7 @@ drm_mode_std(struct drm_connector *connector, struct edid *edid,
 	vrefresh_rate = vfreq + 60;
 	/* the vdisplay is calculated based on the aspect ratio */
 	if (aspect_ratio == 0) {
-		if (revision < 3)
+		if (edid->revision < 3)
 			vsize = hsize;
 		else
 			vsize = (hsize * 10) / 16;
@@ -1917,7 +2062,7 @@ mode_in_range(const struct drm_display_mode *mode, struct edid *edid,
 static bool valid_inferred_mode(const struct drm_connector *connector,
 				const struct drm_display_mode *mode)
 {
-	struct drm_display_mode *m;
+	const struct drm_display_mode *m;
 	bool ok = false;
 
 	list_for_each_entry(m, &connector->probed_modes, head) {
@@ -2066,7 +2211,8 @@ static int
 add_inferred_modes(struct drm_connector *connector, struct edid *edid)
 {
 	struct detailed_mode_closure closure = {
-		connector, edid, 0, 0, 0
+		.connector = connector,
+		.edid = edid,
 	};
 
 	if (version_greater(edid, 1, 0))
@@ -2117,6 +2263,7 @@ do_established_modes(struct detailed_timing *timing, void *c)
 
 /**
  * add_established_modes - get est. modes from EDID and add them
+ * @connector: connector to add mode(s) to
  * @edid: EDID block to scan
  *
  * Each EDID block contains a bitmap of the supported "established modes" list
@@ -2131,7 +2278,8 @@ add_established_modes(struct drm_connector *connector, struct edid *edid)
 		((edid->established_timings.mfg_rsvd & 0x80) << 9);
 	int i, modes = 0;
 	struct detailed_mode_closure closure = {
-		connector, edid, 0, 0, 0
+		.connector = connector,
+		.edid = edid,
 	};
 
 	for (i = 0; i <= EDID_EST_TIMINGS; i++) {
@@ -2167,8 +2315,7 @@ do_standard_modes(struct detailed_timing *timing, void *c)
 			struct drm_display_mode *newmode;
 
 			std = &data->data.timings[i];
-			newmode = drm_mode_std(connector, edid, std,
-					       edid->revision);
+			newmode = drm_mode_std(connector, edid, std);
 			if (newmode) {
 				drm_mode_probed_add(connector, newmode);
 				closure->modes++;
@@ -2179,6 +2326,7 @@ do_standard_modes(struct detailed_timing *timing, void *c)
 
 /**
  * add_standard_modes - get std. modes from EDID and add them
+ * @connector: connector to add mode(s) to
  * @edid: EDID block to scan
  *
  * Standard modes can be calculated using the appropriate standard (DMT,
@@ -2189,15 +2337,15 @@ add_standard_modes(struct drm_connector *connector, struct edid *edid)
 {
 	int i, modes = 0;
 	struct detailed_mode_closure closure = {
-		connector, edid, 0, 0, 0
+		.connector = connector,
+		.edid = edid,
 	};
 
 	for (i = 0; i < EDID_STD_TIMINGS; i++) {
 		struct drm_display_mode *newmode;
 
 		newmode = drm_mode_std(connector, edid,
-				       &edid->standard_timings[i],
-				       edid->revision);
+				       &edid->standard_timings[i]);
 		if (newmode) {
 			drm_mode_probed_add(connector, newmode);
 			modes++;
@@ -2276,7 +2424,8 @@ static int
 add_cvt_modes(struct drm_connector *connector, struct edid *edid)
 {	
 	struct detailed_mode_closure closure = {
-		connector, edid, 0, 0, 0
+		.connector = connector,
+		.edid = edid,
 	};
 
 	if (version_greater(edid, 1, 2))
@@ -2286,6 +2435,8 @@ add_cvt_modes(struct drm_connector *connector, struct edid *edid)
 
 	return closure.modes;
 }
+
+static void fixup_detailed_cea_mode_clock(struct drm_display_mode *mode);
 
 static void
 do_detailed_mode(struct detailed_timing *timing, void *c)
@@ -2302,6 +2453,13 @@ do_detailed_mode(struct detailed_timing *timing, void *c)
 
 		if (closure->preferred)
 			newmode->type |= DRM_MODE_TYPE_PREFERRED;
+
+		/*
+		 * Detailed modes are limited to 10kHz pixel clock resolution,
+		 * so fix up anything that looks like CEA/HDMI mode, but the clock
+		 * is just slightly off.
+		 */
+		fixup_detailed_cea_mode_clock(newmode);
 
 		drm_mode_probed_add(closure->connector, newmode);
 		closure->modes++;
@@ -2320,11 +2478,10 @@ add_detailed_modes(struct drm_connector *connector, struct edid *edid,
 		   u32 quirks)
 {
 	struct detailed_mode_closure closure = {
-		connector,
-		edid,
-		1,
-		quirks,
-		0
+		.connector = connector,
+		.edid = edid,
+		.preferred = 1,
+		.quirks = quirks,
 	};
 
 	if (closure.preferred && !version_greater(edid, 1, 3))
@@ -2349,7 +2506,7 @@ add_detailed_modes(struct drm_connector *connector, struct edid *edid,
 /*
  * Search EDID for CEA extension block.
  */
-static u8 *drm_find_cea_extension(struct edid *edid)
+static u8 *drm_find_edid_extension(struct edid *edid, int ext_id)
 {
 	u8 *edid_ext = NULL;
 	int i;
@@ -2361,7 +2518,7 @@ static u8 *drm_find_cea_extension(struct edid *edid)
 	/* Find CEA extension */
 	for (i = 0; i < edid->extensions; i++) {
 		edid_ext = (u8 *)edid + EDID_LENGTH * (i + 1);
-		if (edid_ext[0] == CEA_EXT)
+		if (edid_ext[0] == ext_id)
 			break;
 	}
 
@@ -2369,6 +2526,16 @@ static u8 *drm_find_cea_extension(struct edid *edid)
 		return NULL;
 
 	return edid_ext;
+}
+
+static u8 *drm_find_cea_extension(struct edid *edid)
+{
+	return drm_find_edid_extension(edid, CEA_EXT);
+}
+
+static u8 *drm_find_displayid_extension(struct edid *edid)
+{
+	return drm_find_edid_extension(edid, DISPLAYID_EXT);
 }
 
 /*
@@ -2389,9 +2556,9 @@ cea_mode_alternate_clock(const struct drm_display_mode *cea_mode)
 	 * and the 60Hz variant otherwise.
 	 */
 	if (cea_mode->vdisplay == 240 || cea_mode->vdisplay == 480)
-		clock = clock * 1001 / 1000;
+		clock = DIV_ROUND_CLOSEST(clock * 1001, 1000);
 	else
-		clock = DIV_ROUND_UP(clock * 1000, 1001);
+		clock = DIV_ROUND_CLOSEST(clock * 1000, 1001);
 
 	return clock;
 }
@@ -2400,7 +2567,7 @@ cea_mode_alternate_clock(const struct drm_display_mode *cea_mode)
  * drm_match_cea_mode - look for a CEA mode matching given mode
  * @to_match: display mode
  *
- * Returns the CEA Video ID (VIC) of the mode or 0 if it isn't a CEA-861
+ * Return: The CEA Video ID (VIC) of the mode or 0 if it isn't a CEA-861
  * mode.
  */
 u8 drm_match_cea_mode(const struct drm_display_mode *to_match)
@@ -2426,6 +2593,22 @@ u8 drm_match_cea_mode(const struct drm_display_mode *to_match)
 	return 0;
 }
 EXPORT_SYMBOL(drm_match_cea_mode);
+
+/**
+ * drm_get_cea_aspect_ratio - get the picture aspect ratio corresponding to
+ * the input VIC from the CEA mode list
+ * @video_code: ID given to each of the CEA modes
+ *
+ * Returns picture aspect ratio
+ */
+enum hdmi_picture_aspect drm_get_cea_aspect_ratio(const u8 video_code)
+{
+	/* return picture aspect ratio for video_code - 1 to access the
+	 * right array element
+	*/
+	return edid_cea_modes[video_code-1].picture_aspect_ratio;
+}
+EXPORT_SYMBOL(drm_get_cea_aspect_ratio);
 
 /*
  * Calculate the alternate clock for HDMI modes (those from the HDMI vendor
@@ -2565,6 +2748,9 @@ drm_display_mode_from_vic_index(struct drm_connector *connector,
 		return NULL;
 
 	newmode = drm_mode_duplicate(dev, &edid_cea_modes[cea_mode]);
+	if (!newmode)
+		return NULL;
+
 	newmode->vrefresh = 0;
 
 	return newmode;
@@ -2944,6 +3130,45 @@ add_cea_modes(struct drm_connector *connector, struct edid *edid)
 	return modes;
 }
 
+static void fixup_detailed_cea_mode_clock(struct drm_display_mode *mode)
+{
+	const struct drm_display_mode *cea_mode;
+	int clock1, clock2, clock;
+	u8 mode_idx;
+	const char *type;
+
+	mode_idx = drm_match_cea_mode(mode) - 1;
+	if (mode_idx < ARRAY_SIZE(edid_cea_modes)) {
+		type = "CEA";
+		cea_mode = &edid_cea_modes[mode_idx];
+		clock1 = cea_mode->clock;
+		clock2 = cea_mode_alternate_clock(cea_mode);
+	} else {
+		mode_idx = drm_match_hdmi_mode(mode) - 1;
+		if (mode_idx < ARRAY_SIZE(edid_4k_modes)) {
+			type = "HDMI";
+			cea_mode = &edid_4k_modes[mode_idx];
+			clock1 = cea_mode->clock;
+			clock2 = hdmi_mode_alternate_clock(cea_mode);
+		} else {
+			return;
+		}
+	}
+
+	/* pick whichever is closest */
+	if (abs(mode->clock - clock1) < abs(mode->clock - clock2))
+		clock = clock1;
+	else
+		clock = clock2;
+
+	if (mode->clock == clock)
+		return;
+
+	DRM_DEBUG("detailed mode matches %s VIC %d, adjusting clock %d -> %d\n",
+		  type, mode_idx + 1, mode->clock, clock);
+	mode->clock = clock;
+}
+
 static void
 parse_hdmi_vsdb(struct drm_connector *connector, const u8 *db)
 {
@@ -2995,11 +3220,9 @@ monitor_name(struct detailed_timing *t, void *data)
  * @connector: connector corresponding to the HDMI/DP sink
  * @edid: EDID to parse
  *
- * Fill the ELD (EDID-Like Data) buffer for passing to the audio driver.
- * Some ELD fields are left to the graphics driver caller:
- * - Conn_Type
- * - HDCP
- * - Port_ID
+ * Fill the ELD (EDID-Like Data) buffer for passing to the audio driver. The
+ * Conn_Type, HDCP and Port_ID ELD fields are left for the graphics driver to
+ * fill in.
  */
 void drm_edid_to_eld(struct drm_connector *connector, struct edid *edid)
 {
@@ -3071,9 +3294,12 @@ void drm_edid_to_eld(struct drm_connector *connector, struct edid *edid)
 		}
 	}
 	eld[5] |= sad_count << 4;
-	eld[2] = (20 + mnl + sad_count * 3 + 3) / 4;
 
-	DRM_DEBUG_KMS("ELD size %d, SAD count %d\n", (int)eld[2], sad_count);
+	eld[DRM_ELD_BASELINE_ELD_LEN] =
+		DIV_ROUND_UP(drm_eld_calc_baseline_block_size(eld), 4);
+
+	DRM_DEBUG_KMS("ELD size %d, SAD count %d\n",
+		      drm_eld_size(eld), sad_count);
 }
 EXPORT_SYMBOL(drm_edid_to_eld);
 
@@ -3083,9 +3309,10 @@ EXPORT_SYMBOL(drm_edid_to_eld);
  * @sads: pointer that will be set to the extracted SADs
  *
  * Looks for CEA EDID block and extracts SADs (Short Audio Descriptors) from it.
- * Note: returned pointer needs to be kfreed
  *
- * Return number of found SADs or negative number on error.
+ * Note: The returned pointer needs to be freed using kfree().
+ *
+ * Return: The number of found SADs or negative number on error.
  */
 int drm_edid_to_sad(struct edid *edid, struct cea_sad **sads)
 {
@@ -3142,9 +3369,11 @@ EXPORT_SYMBOL(drm_edid_to_sad);
  * @sadb: pointer to the speaker block
  *
  * Looks for CEA EDID block and extracts the Speaker Allocation Data Block from it.
- * Note: returned pointer needs to be kfreed
  *
- * Return number of found Speaker Allocation Blocks or negative number on error.
+ * Note: The returned pointer needs to be freed using kfree().
+ *
+ * Return: The number of found Speaker Allocation Blocks or negative number on
+ * error.
  */
 int drm_edid_to_speaker_allocation(struct edid *edid, u8 **sadb)
 {
@@ -3176,10 +3405,9 @@ int drm_edid_to_speaker_allocation(struct edid *edid, u8 **sadb)
 
 			/* Speaker Allocation Data Block */
 			if (dbl == 3) {
-				*sadb = kmalloc(dbl, GFP_KERNEL);
+				*sadb = kmemdup(&db[1], dbl, GFP_KERNEL);
 				if (!*sadb)
 					return -ENOMEM;
-				memcpy(*sadb, &db[1], dbl);
 				count = dbl;
 				break;
 			}
@@ -3191,12 +3419,15 @@ int drm_edid_to_speaker_allocation(struct edid *edid, u8 **sadb)
 EXPORT_SYMBOL(drm_edid_to_speaker_allocation);
 
 /**
- * drm_av_sync_delay - HDMI/DP sink audio-video sync delay in millisecond
+ * drm_av_sync_delay - compute the HDMI/DP sink audio-video sync delay
  * @connector: connector associated with the HDMI/DP sink
  * @mode: the display mode
+ *
+ * Return: The HDMI/DP sink's audio-video sync delay in milliseconds or 0 if
+ * the sink doesn't support audio or video.
  */
 int drm_av_sync_delay(struct drm_connector *connector,
-		      struct drm_display_mode *mode)
+		      const struct drm_display_mode *mode)
 {
 	int i = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
 	int a, v;
@@ -3231,18 +3462,22 @@ EXPORT_SYMBOL(drm_av_sync_delay);
 /**
  * drm_select_eld - select one ELD from multiple HDMI/DP sinks
  * @encoder: the encoder just changed display mode
- * @mode: the adjusted display mode
  *
  * It's possible for one encoder to be associated with multiple HDMI/DP sinks.
  * The policy is now hard coded to simply use the first HDMI/DP sink's ELD.
+ *
+ * Return: The connector associated with the first HDMI/DP sink that has ELD
+ * attached to it.
  */
-struct drm_connector *drm_select_eld(struct drm_encoder *encoder,
-				     struct drm_display_mode *mode)
+struct drm_connector *drm_select_eld(struct drm_encoder *encoder)
 {
 	struct drm_connector *connector;
 	struct drm_device *dev = encoder->dev;
 
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head)
+	WARN_ON(!mutex_is_locked(&dev->mode_config.mutex));
+	WARN_ON(!drm_modeset_is_locked(&dev->mode_config.connection_mutex));
+
+	drm_for_each_connector(connector, dev)
 		if (connector->encoder == encoder && connector->eld[0])
 			return connector;
 
@@ -3251,11 +3486,12 @@ struct drm_connector *drm_select_eld(struct drm_encoder *encoder,
 EXPORT_SYMBOL(drm_select_eld);
 
 /**
- * drm_detect_hdmi_monitor - detect whether monitor is hdmi.
+ * drm_detect_hdmi_monitor - detect whether monitor is HDMI
  * @edid: monitor EDID information
  *
  * Parse the CEA extension according to CEA-861-B.
- * Return true if HDMI, false if not or unknown.
+ *
+ * Return: True if the monitor is HDMI, false if not or unknown.
  */
 bool drm_detect_hdmi_monitor(struct edid *edid)
 {
@@ -3285,6 +3521,7 @@ EXPORT_SYMBOL(drm_detect_hdmi_monitor);
 
 /**
  * drm_detect_monitor_audio - check monitor audio capability
+ * @edid: EDID block to scan
  *
  * Monitor should have CEA extension block.
  * If monitor has 'basic audio', but no CEA audio blocks, it's 'basic
@@ -3292,6 +3529,7 @@ EXPORT_SYMBOL(drm_detect_hdmi_monitor);
  * audio format, assume at least 'basic audio' support, even if 'basic
  * audio' is not defined in EDID.
  *
+ * Return: True if the monitor supports audio, false otherwise.
  */
 bool drm_detect_monitor_audio(struct edid *edid)
 {
@@ -3330,10 +3568,13 @@ EXPORT_SYMBOL(drm_detect_monitor_audio);
 
 /**
  * drm_rgb_quant_range_selectable - is RGB quantization range selectable?
+ * @edid: EDID block to scan
  *
  * Check whether the monitor reports the RGB quantization range selection
  * as supported. The AVI infoframe can then be used to inform the monitor
  * which quantization range (full or limited) is used.
+ *
+ * Return: True if the RGB quantization range is selectable, false otherwise.
  */
 bool drm_rgb_quant_range_selectable(struct edid *edid)
 {
@@ -3360,16 +3601,119 @@ bool drm_rgb_quant_range_selectable(struct edid *edid)
 EXPORT_SYMBOL(drm_rgb_quant_range_selectable);
 
 /**
+ * drm_assign_hdmi_deep_color_info - detect whether monitor supports
+ * hdmi deep color modes and update drm_display_info if so.
+ * @edid: monitor EDID information
+ * @info: Updated with maximum supported deep color bpc and color format
+ *        if deep color supported.
+ * @connector: DRM connector, used only for debug output
+ *
+ * Parse the CEA extension according to CEA-861-B.
+ * Return true if HDMI deep color supported, false if not or unknown.
+ */
+static bool drm_assign_hdmi_deep_color_info(struct edid *edid,
+                                            struct drm_display_info *info,
+                                            struct drm_connector *connector)
+{
+	u8 *edid_ext, *hdmi;
+	int i;
+	int start_offset, end_offset;
+	unsigned int dc_bpc = 0;
+
+	edid_ext = drm_find_cea_extension(edid);
+	if (!edid_ext)
+		return false;
+
+	if (cea_db_offsets(edid_ext, &start_offset, &end_offset))
+		return false;
+
+	/*
+	 * Because HDMI identifier is in Vendor Specific Block,
+	 * search it from all data blocks of CEA extension.
+	 */
+	for_each_cea_db(edid_ext, i, start_offset, end_offset) {
+		if (cea_db_is_hdmi_vsdb(&edid_ext[i])) {
+			/* HDMI supports at least 8 bpc */
+			info->bpc = 8;
+
+			hdmi = &edid_ext[i];
+			if (cea_db_payload_len(hdmi) < 6)
+				return false;
+
+			if (hdmi[6] & DRM_EDID_HDMI_DC_30) {
+				dc_bpc = 10;
+				info->edid_hdmi_dc_modes |= DRM_EDID_HDMI_DC_30;
+				DRM_DEBUG("%s: HDMI sink does deep color 30.\n",
+						  connector->name);
+			}
+
+			if (hdmi[6] & DRM_EDID_HDMI_DC_36) {
+				dc_bpc = 12;
+				info->edid_hdmi_dc_modes |= DRM_EDID_HDMI_DC_36;
+				DRM_DEBUG("%s: HDMI sink does deep color 36.\n",
+						  connector->name);
+			}
+
+			if (hdmi[6] & DRM_EDID_HDMI_DC_48) {
+				dc_bpc = 16;
+				info->edid_hdmi_dc_modes |= DRM_EDID_HDMI_DC_48;
+				DRM_DEBUG("%s: HDMI sink does deep color 48.\n",
+						  connector->name);
+			}
+
+			if (dc_bpc > 0) {
+				DRM_DEBUG("%s: Assigning HDMI sink color depth as %d bpc.\n",
+						  connector->name, dc_bpc);
+				info->bpc = dc_bpc;
+
+				/*
+				 * Deep color support mandates RGB444 support for all video
+				 * modes and forbids YCRCB422 support for all video modes per
+				 * HDMI 1.3 spec.
+				 */
+				info->color_formats = DRM_COLOR_FORMAT_RGB444;
+
+				/* YCRCB444 is optional according to spec. */
+				if (hdmi[6] & DRM_EDID_HDMI_DC_Y444) {
+					info->color_formats |= DRM_COLOR_FORMAT_YCRCB444;
+					DRM_DEBUG("%s: HDMI sink does YCRCB444 in deep color.\n",
+							  connector->name);
+				}
+
+				/*
+				 * Spec says that if any deep color mode is supported at all,
+				 * then deep color 36 bit must be supported.
+				 */
+				if (!(hdmi[6] & DRM_EDID_HDMI_DC_36)) {
+					DRM_DEBUG("%s: HDMI sink should do DC_36, but does not!\n",
+							  connector->name);
+				}
+
+				return true;
+			}
+			else {
+				DRM_DEBUG("%s: No deep color support on this HDMI sink.\n",
+						  connector->name);
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * drm_add_display_info - pull display info out if present
  * @edid: EDID data
  * @info: display info (attached to connector)
+ * @connector: connector whose edid is used to build display info
  *
  * Grab any available display info and stuff it into the drm_display_info
  * structure that's part of the connector.  Useful for tracking bpp and
  * color spaces.
  */
 static void drm_add_display_info(struct edid *edid,
-				 struct drm_display_info *info)
+                                 struct drm_display_info *info,
+                                 struct drm_connector *connector)
 {
 	u8 *edid_ext;
 
@@ -3398,6 +3742,9 @@ static void drm_add_display_info(struct edid *edid,
 		if (edid_ext[3] & EDID_CEA_YCRCB422)
 			info->color_formats |= DRM_COLOR_FORMAT_YCRCB422;
 	}
+
+	/* HDMI deep color modes supported? Assign to info, if so */
+	drm_assign_hdmi_deep_color_info(edid, info, connector);
 
 	/* Only defined for 1.4 with digital displays */
 	if (edid->revision < 4)
@@ -3428,6 +3775,9 @@ static void drm_add_display_info(struct edid *edid,
 		break;
 	}
 
+	DRM_DEBUG("%s: Assigning EDID-1.4 digital sink color depth as %d bpc.\n",
+			  connector->name, info->bpc);
+
 	info->color_formats |= DRM_COLOR_FORMAT_RGB444;
 	if (edid->features & DRM_EDID_FEATURE_RGB_YCRCB444)
 		info->color_formats |= DRM_COLOR_FORMAT_YCRCB444;
@@ -3438,11 +3788,11 @@ static void drm_add_display_info(struct edid *edid,
 /**
  * drm_add_edid_modes - add modes from EDID data, if available
  * @connector: connector we're probing
- * @edid: edid data
+ * @edid: EDID data
  *
  * Add the specified modes to the connector's mode list.
  *
- * Return number of modes added or 0 if we couldn't find any.
+ * Return: The number of modes added or 0 if we couldn't find any.
  */
 int drm_add_edid_modes(struct drm_connector *connector, struct edid *edid)
 {
@@ -3454,7 +3804,7 @@ int drm_add_edid_modes(struct drm_connector *connector, struct edid *edid)
 	}
 	if (!drm_edid_is_valid(edid)) {
 		dev_warn(connector->dev->dev, "%s: EDID invalid.\n",
-			 drm_get_connector_name(connector));
+			 connector->name);
 		return 0;
 	}
 
@@ -3478,18 +3828,27 @@ int drm_add_edid_modes(struct drm_connector *connector, struct edid *edid)
 	num_modes += add_cvt_modes(connector, edid);
 	num_modes += add_standard_modes(connector, edid);
 	num_modes += add_established_modes(connector, edid);
-	if (edid->features & DRM_EDID_FEATURE_DEFAULT_GTF)
-		num_modes += add_inferred_modes(connector, edid);
 	num_modes += add_cea_modes(connector, edid);
 	num_modes += add_alternate_cea_modes(connector, edid);
+	if (edid->features & DRM_EDID_FEATURE_DEFAULT_GTF)
+		num_modes += add_inferred_modes(connector, edid);
 
 	if (quirks & (EDID_QUIRK_PREFER_LARGE_60 | EDID_QUIRK_PREFER_LARGE_75))
 		edid_fixup_preferred(connector, quirks);
 
-	drm_add_display_info(edid, &connector->display_info);
+	drm_add_display_info(edid, &connector->display_info, connector);
+
+	if (quirks & EDID_QUIRK_FORCE_6BPC)
+		connector->display_info.bpc = 6;
 
 	if (quirks & EDID_QUIRK_FORCE_8BPC)
 		connector->display_info.bpc = 8;
+
+	if (quirks & EDID_QUIRK_FORCE_10BPC)
+		connector->display_info.bpc = 10;
+
+	if (quirks & EDID_QUIRK_FORCE_12BPC)
+		connector->display_info.bpc = 12;
 
 	return num_modes;
 }
@@ -3504,7 +3863,7 @@ EXPORT_SYMBOL(drm_add_edid_modes);
  * Add the specified modes to the connector's mode list. Only when the
  * hdisplay/vdisplay is not beyond the given limit, it will be added.
  *
- * Return number of modes added or 0 if we couldn't find any.
+ * Return: The number of modes added or 0 if we couldn't find any.
  */
 int drm_add_modes_noedid(struct drm_connector *connector,
 			int hdisplay, int vdisplay)
@@ -3513,7 +3872,7 @@ int drm_add_modes_noedid(struct drm_connector *connector,
 	struct drm_display_mode *mode;
 	struct drm_device *dev = connector->dev;
 
-	count = sizeof(drm_dmt_modes) / sizeof(struct drm_display_mode);
+	count = ARRAY_SIZE(drm_dmt_modes);
 	if (hdisplay < 0)
 		hdisplay = 0;
 	if (vdisplay < 0)
@@ -3543,14 +3902,23 @@ int drm_add_modes_noedid(struct drm_connector *connector,
 }
 EXPORT_SYMBOL(drm_add_modes_noedid);
 
+/**
+ * drm_set_preferred_mode - Sets the preferred mode of a connector
+ * @connector: connector whose mode list should be processed
+ * @hpref: horizontal resolution of preferred mode
+ * @vpref: vertical resolution of preferred mode
+ *
+ * Marks a mode as preferred if it matches the resolution specified by @hpref
+ * and @vpref.
+ */
 void drm_set_preferred_mode(struct drm_connector *connector,
 			   int hpref, int vpref)
 {
 	struct drm_display_mode *mode;
 
 	list_for_each_entry(mode, &connector->probed_modes, head) {
-		if (drm_mode_width(mode)  == hpref &&
-		    drm_mode_height(mode) == vpref)
+		if (mode->hdisplay == hpref &&
+		    mode->vdisplay == vpref)
 			mode->type |= DRM_MODE_TYPE_PREFERRED;
 	}
 }
@@ -3562,7 +3930,7 @@ EXPORT_SYMBOL(drm_set_preferred_mode);
  * @frame: HDMI AVI infoframe
  * @mode: DRM display mode
  *
- * Returns 0 on success or a negative error code on failure.
+ * Return: 0 on success or a negative error code on failure.
  */
 int
 drm_hdmi_avi_infoframe_from_display_mode(struct hdmi_avi_infoframe *frame,
@@ -3583,7 +3951,20 @@ drm_hdmi_avi_infoframe_from_display_mode(struct hdmi_avi_infoframe *frame,
 	frame->video_code = drm_match_cea_mode(mode);
 
 	frame->picture_aspect = HDMI_PICTURE_ASPECT_NONE;
+
+	/*
+	 * Populate picture aspect ratio from either
+	 * user input (if specified) or from the CEA mode list.
+	 */
+	if (mode->picture_aspect_ratio == HDMI_PICTURE_ASPECT_4_3 ||
+		mode->picture_aspect_ratio == HDMI_PICTURE_ASPECT_16_9)
+		frame->picture_aspect = mode->picture_aspect_ratio;
+	else if (frame->video_code > 0)
+		frame->picture_aspect = drm_get_cea_aspect_ratio(
+						frame->video_code);
+
 	frame->active_aspect = HDMI_ACTIVE_ASPECT_PICTURE;
+	frame->scan_mode = HDMI_SCAN_MODE_UNDERSCAN;
 
 	return 0;
 }
@@ -3626,7 +4007,7 @@ s3d_structure_from_display_mode(const struct drm_display_mode *mode)
  * 4k or stereoscopic 3D mode. So when giving any other mode as input this
  * function will return -EINVAL, error that can be safely ignored.
  *
- * Returns 0 on success or a negative error code on failure.
+ * Return: 0 on success or a negative error code on failure.
  */
 int
 drm_hdmi_vendor_infoframe_from_display_mode(struct hdmi_vendor_infoframe *frame,
@@ -3660,3 +4041,123 @@ drm_hdmi_vendor_infoframe_from_display_mode(struct hdmi_vendor_infoframe *frame,
 	return 0;
 }
 EXPORT_SYMBOL(drm_hdmi_vendor_infoframe_from_display_mode);
+
+static int drm_parse_display_id(struct drm_connector *connector,
+				u8 *displayid, int length,
+				bool is_edid_extension)
+{
+	/* if this is an EDID extension the first byte will be 0x70 */
+	int idx = 0;
+	struct displayid_hdr *base;
+	struct displayid_block *block;
+	u8 csum = 0;
+	int i;
+
+	if (is_edid_extension)
+		idx = 1;
+
+	base = (struct displayid_hdr *)&displayid[idx];
+
+	DRM_DEBUG_KMS("base revision 0x%x, length %d, %d %d\n",
+		      base->rev, base->bytes, base->prod_id, base->ext_count);
+
+	if (base->bytes + 5 > length - idx)
+		return -EINVAL;
+
+	for (i = idx; i <= base->bytes + 5; i++) {
+		csum += displayid[i];
+	}
+	if (csum) {
+		DRM_ERROR("DisplayID checksum invalid, remainder is %d\n", csum);
+		return -EINVAL;
+	}
+
+	block = (struct displayid_block *)&displayid[idx + 4];
+	DRM_DEBUG_KMS("block id %d, rev %d, len %d\n",
+		      block->tag, block->rev, block->num_bytes);
+
+	switch (block->tag) {
+	case DATA_BLOCK_TILED_DISPLAY: {
+		struct displayid_tiled_block *tile = (struct displayid_tiled_block *)block;
+
+		u16 w, h;
+		u8 tile_v_loc, tile_h_loc;
+		u8 num_v_tile, num_h_tile;
+		struct drm_tile_group *tg;
+
+		w = tile->tile_size[0] | tile->tile_size[1] << 8;
+		h = tile->tile_size[2] | tile->tile_size[3] << 8;
+
+		num_v_tile = (tile->topo[0] & 0xf) | (tile->topo[2] & 0x30);
+		num_h_tile = (tile->topo[0] >> 4) | ((tile->topo[2] >> 2) & 0x30);
+		tile_v_loc = (tile->topo[1] & 0xf) | ((tile->topo[2] & 0x3) << 4);
+		tile_h_loc = (tile->topo[1] >> 4) | (((tile->topo[2] >> 2) & 0x3) << 4);
+
+		connector->has_tile = true;
+		if (tile->tile_cap & 0x80)
+			connector->tile_is_single_monitor = true;
+
+		connector->num_h_tile = num_h_tile + 1;
+		connector->num_v_tile = num_v_tile + 1;
+		connector->tile_h_loc = tile_h_loc;
+		connector->tile_v_loc = tile_v_loc;
+		connector->tile_h_size = w + 1;
+		connector->tile_v_size = h + 1;
+
+		DRM_DEBUG_KMS("tile cap 0x%x\n", tile->tile_cap);
+		DRM_DEBUG_KMS("tile_size %d x %d\n", w + 1, h + 1);
+		DRM_DEBUG_KMS("topo num tiles %dx%d, location %dx%d\n",
+		       num_h_tile + 1, num_v_tile + 1, tile_h_loc, tile_v_loc);
+		DRM_DEBUG_KMS("vend %c%c%c\n", tile->topology_id[0], tile->topology_id[1], tile->topology_id[2]);
+
+		tg = drm_mode_get_tile_group(connector->dev, tile->topology_id);
+		if (!tg) {
+			tg = drm_mode_create_tile_group(connector->dev, tile->topology_id);
+		}
+		if (!tg)
+			return -ENOMEM;
+
+		if (connector->tile_group != tg) {
+			/* if we haven't got a pointer,
+			   take the reference, drop ref to old tile group */
+			if (connector->tile_group) {
+				drm_mode_put_tile_group(connector->dev, connector->tile_group);
+			}
+			connector->tile_group = tg;
+		} else
+			/* if same tile group, then release the ref we just took. */
+			drm_mode_put_tile_group(connector->dev, tg);
+	}
+		break;
+	default:
+		printk("unknown displayid tag %d\n", block->tag);
+		break;
+	}
+	return 0;
+}
+
+static void drm_get_displayid(struct drm_connector *connector,
+			      struct edid *edid)
+{
+	void *displayid = NULL;
+	int ret;
+	connector->has_tile = false;
+	displayid = drm_find_displayid_extension(edid);
+	if (!displayid) {
+		/* drop reference to any tile group we had */
+		goto out_drop_ref;
+	}
+
+	ret = drm_parse_display_id(connector, displayid, EDID_LENGTH, true);
+	if (ret < 0)
+		goto out_drop_ref;
+	if (!connector->has_tile)
+		goto out_drop_ref;
+	return;
+out_drop_ref:
+	if (connector->tile_group) {
+		drm_mode_put_tile_group(connector->dev, connector->tile_group);
+		connector->tile_group = NULL;
+	}
+	return;
+}

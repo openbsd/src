@@ -1,14 +1,6 @@
-/* $OpenBSD: drm_atomic.h,v 1.15 2017/01/24 02:28:17 visa Exp $ */
-/**
- * \file drm_atomic.h
- * Atomic operations used in the DRM which may or may not be provided by the OS.
- * 
- * \author Eric Anholt <anholt@FreeBSD.org>
- */
-
-/*-
- * Copyright 2004 Eric Anholt
- * All Rights Reserved.
+/*
+ * Copyright (C) 2014 Red Hat
+ * Copyright (C) 2014 Intel Corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -17,206 +9,169 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ * Rob Clark <robdclark@gmail.com>
+ * Daniel Vetter <daniel.vetter@ffwll.ch>
  */
 
-#include <sys/atomic.h>
+#ifndef DRM_ATOMIC_H_
+#define DRM_ATOMIC_H_
 
-typedef uint32_t atomic_t;
+#include <dev/pci/drm/drm_crtc.h>
 
-#define atomic_set(p, v)	(*(p) = (v))
-#define atomic_read(p)		(*(p))
-#define atomic_inc(p)		__sync_fetch_and_add(p, 1)
-#define atomic_dec(p)		__sync_fetch_and_sub(p, 1)
-#define atomic_add(n, p)	__sync_fetch_and_add(p, n)
-#define atomic_sub(n, p)	__sync_fetch_and_sub(p, n)
-#define atomic_add_return(n, p) __sync_add_and_fetch(p, n)
-#define atomic_sub_return(n, p) __sync_sub_and_fetch(p, n)
-#define atomic_inc_return(v)	atomic_add_return(1, (v))
-#define atomic_dec_return(v)	atomic_sub_return(1, (v))
-#define atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
-#define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
+struct drm_atomic_state * __must_check
+drm_atomic_state_alloc(struct drm_device *dev);
+void drm_atomic_state_clear(struct drm_atomic_state *state);
+void drm_atomic_state_free(struct drm_atomic_state *state);
 
-static __inline int
-atomic_xchg(volatile int *v, int n)
+int  __must_check
+drm_atomic_state_init(struct drm_device *dev, struct drm_atomic_state *state);
+void drm_atomic_state_default_clear(struct drm_atomic_state *state);
+void drm_atomic_state_default_release(struct drm_atomic_state *state);
+
+struct drm_crtc_state * __must_check
+drm_atomic_get_crtc_state(struct drm_atomic_state *state,
+			  struct drm_crtc *crtc);
+int drm_atomic_crtc_set_property(struct drm_crtc *crtc,
+		struct drm_crtc_state *state, struct drm_property *property,
+		uint64_t val);
+struct drm_plane_state * __must_check
+drm_atomic_get_plane_state(struct drm_atomic_state *state,
+			   struct drm_plane *plane);
+int drm_atomic_plane_set_property(struct drm_plane *plane,
+		struct drm_plane_state *state, struct drm_property *property,
+		uint64_t val);
+struct drm_connector_state * __must_check
+drm_atomic_get_connector_state(struct drm_atomic_state *state,
+			       struct drm_connector *connector);
+int drm_atomic_connector_set_property(struct drm_connector *connector,
+		struct drm_connector_state *state, struct drm_property *property,
+		uint64_t val);
+
+/**
+ * drm_atomic_get_existing_crtc_state - get crtc state, if it exists
+ * @state: global atomic state object
+ * @crtc: crtc to grab
+ *
+ * This function returns the crtc state for the given crtc, or NULL
+ * if the crtc is not part of the global atomic state.
+ */
+static inline struct drm_crtc_state *
+drm_atomic_get_existing_crtc_state(struct drm_atomic_state *state,
+				   struct drm_crtc *crtc)
 {
-	__sync_synchronize();
-	return __sync_lock_test_and_set(v, n);
+	return state->crtc_states[drm_crtc_index(crtc)];
 }
 
-static __inline int
-atomic_add_unless(volatile int *v, int n, int u)
+/**
+ * drm_atomic_get_existing_plane_state - get plane state, if it exists
+ * @state: global atomic state object
+ * @plane: plane to grab
+ *
+ * This function returns the plane state for the given plane, or NULL
+ * if the plane is not part of the global atomic state.
+ */
+static inline struct drm_plane_state *
+drm_atomic_get_existing_plane_state(struct drm_atomic_state *state,
+				    struct drm_plane *plane)
 {
-	int o = *v;
-
-	do {
-		o = *v;
-		if (o == u)
-			return 0;
-	} while (__sync_val_compare_and_swap(v, o, o +n) != o);
-
-	return 1;
+	return state->plane_states[drm_plane_index(plane)];
 }
 
-#ifdef __LP64__
-typedef uint64_t atomic64_t;
-
-#define atomic64_set(p, v)	(*(p) = (v))
-#define atomic64_read(p)	(*(p))
-
-static __inline int64_t
-atomic64_xchg(volatile int64_t *v, int64_t n)
+/**
+ * drm_atomic_get_existing_connector_state - get connector state, if it exists
+ * @state: global atomic state object
+ * @connector: connector to grab
+ *
+ * This function returns the connector state for the given connector,
+ * or NULL if the connector is not part of the global atomic state.
+ */
+static inline struct drm_connector_state *
+drm_atomic_get_existing_connector_state(struct drm_atomic_state *state,
+					struct drm_connector *connector)
 {
-	__sync_synchronize();
-	return __sync_lock_test_and_set(v, n);
+	int index = drm_connector_index(connector);
+
+	if (index >= state->num_connector)
+		return NULL;
+
+	return state->connector_states[index];
 }
 
-#else
+int __must_check
+drm_atomic_set_mode_for_crtc(struct drm_crtc_state *state,
+			     struct drm_display_mode *mode);
+int __must_check
+drm_atomic_set_mode_prop_for_crtc(struct drm_crtc_state *state,
+				  struct drm_property_blob *blob);
+int __must_check
+drm_atomic_set_crtc_for_plane(struct drm_plane_state *plane_state,
+			      struct drm_crtc *crtc);
+void drm_atomic_set_fb_for_plane(struct drm_plane_state *plane_state,
+				 struct drm_framebuffer *fb);
+int __must_check
+drm_atomic_set_crtc_for_connector(struct drm_connector_state *conn_state,
+				  struct drm_crtc *crtc);
+int __must_check
+drm_atomic_add_affected_connectors(struct drm_atomic_state *state,
+				   struct drm_crtc *crtc);
+int __must_check
+drm_atomic_add_affected_planes(struct drm_atomic_state *state,
+			       struct drm_crtc *crtc);
 
-typedef struct {
-	volatile uint64_t val;
-	struct mutex lock;
-} atomic64_t;
+int
+drm_atomic_connectors_for_crtc(struct drm_atomic_state *state,
+			       struct drm_crtc *crtc);
 
-static __inline void
-atomic64_set(atomic64_t *v, int64_t i)
+void drm_atomic_legacy_backoff(struct drm_atomic_state *state);
+
+void
+drm_atomic_clean_old_fb(struct drm_device *dev, unsigned plane_mask, int ret);
+
+int __must_check drm_atomic_check_only(struct drm_atomic_state *state);
+int __must_check drm_atomic_commit(struct drm_atomic_state *state);
+int __must_check drm_atomic_async_commit(struct drm_atomic_state *state);
+
+#define for_each_connector_in_state(state, connector, connector_state, __i) \
+	for ((__i) = 0;							\
+	     (__i) < (state)->num_connector &&				\
+	     ((connector) = (state)->connectors[__i],			\
+	     (connector_state) = (state)->connector_states[__i], 1); 	\
+	     (__i)++)							\
+		if (connector)
+
+#define for_each_crtc_in_state(state, crtc, crtc_state, __i)	\
+	for ((__i) = 0;						\
+	     (__i) < (state)->dev->mode_config.num_crtc &&	\
+	     ((crtc) = (state)->crtcs[__i],			\
+	     (crtc_state) = (state)->crtc_states[__i], 1);	\
+	     (__i)++)						\
+		if (crtc_state)
+
+#define for_each_plane_in_state(state, plane, plane_state, __i)		\
+	for ((__i) = 0;							\
+	     (__i) < (state)->dev->mode_config.num_total_plane &&	\
+	     ((plane) = (state)->planes[__i],				\
+	     (plane_state) = (state)->plane_states[__i], 1);		\
+	     (__i)++)							\
+		if (plane_state)
+static inline bool
+drm_atomic_crtc_needs_modeset(struct drm_crtc_state *state)
 {
-	mtx_init(&v->lock, IPL_HIGH);
-	v->val = i;
+	return state->mode_changed || state->active_changed ||
+	       state->connectors_changed;
 }
 
-static __inline int64_t
-atomic64_read(atomic64_t *v)
-{
-	int64_t val;
 
-	mtx_enter(&v->lock);
-	val = v->val;
-	mtx_leave(&v->lock);
-
-	return val;
-}
-
-static __inline int64_t
-atomic64_xchg(atomic64_t *v, int64_t n)
-{
-	int64_t val;
-
-	mtx_enter(&v->lock);
-	val = v->val;
-	v->val = n;
-	mtx_leave(&v->lock);
-
-	return val;
-}
-#endif
-
-static inline int
-atomic_inc_not_zero(atomic_t *p)
-{
-	if (*p == 0)
-		return (0);
-
-	*(p) += 1;
-	return (*p);
-}
-
-/* FIXME */
-#define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
-#define atomic_set_mask(bits, p)	atomic_setbits_int(p,bits)
-#define atomic_clear_int(p, bits)	atomic_clearbits_int(p,bits)
-#define atomic_clear_mask(bits, p)	atomic_clearbits_int(p,bits)
-#define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
-#define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
-
-#if defined(__i386__) || defined(__amd64__)
-static __inline int
-atomic_cmpset_int(volatile u_int *dst, u_int exp, u_int src)
-{
-	int res = exp;
-
-	__asm __volatile (
-	"	lock ;			"
-	"	cmpxchgl %1,%2 ;	"
-	"       setz	%%al ;		"
-	"	movzbl	%%al,%0 ;	"
-	"1:				"
-	"# atomic_cmpset_int"
-	: "+a" (res)			/* 0 (result) */
-	: "r" (src),			/* 1 */
-	  "m" (*(dst))			/* 2 */
-	: "memory");				 
-
-	return (res);
-}
-#else /* __i386__ */
-static __inline int
-atomic_cmpset_int(__volatile__ u_int *dst, u_int old, u_int new)
-{
-	int s = splhigh();
-	if (*dst==old) {
-		*dst = new;
-		splx(s);
-		return 1;
-	}
-	splx(s);
-	return 0;
-}
-#endif /* !__i386__ */
-
-static __inline atomic_t
-test_and_set_bit(u_int b, volatile void *p)
-{
-	int s = splhigh();
-	unsigned int m = 1<<b;
-	unsigned int r = *(volatile int *)p & m;
-	*(volatile int *)p |= m;
-	splx(s);
-	return r;
-}
-
-static __inline void
-clear_bit(u_int b, volatile void *p)
-{
-	atomic_clear_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
-}
-
-static __inline void
-set_bit(u_int b, volatile void *p)
-{
-	atomic_set_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
-}
-
-static __inline int
-test_bit(u_int b, volatile void *p)
-{
-	return !!(((volatile u_int *)p)[b >> 5] & (1 << (b & 0x1f)));
-}
-
-static __inline int
-find_first_zero_bit(volatile void *p, int max)
-{
-	int b;
-	volatile u_int *ptr = (volatile u_int *)p;
-
-	for (b = 0; b < max; b += 32) {
-		if (ptr[b >> 5] != ~0) {
-			for (;;) {
-				if ((ptr[b >> 5] & (1 << (b & 0x1f))) == 0)
-					return b;
-				b++;
-			}
-		}
-	}
-	return max;
-}
+#endif /* DRM_ATOMIC_H_ */
