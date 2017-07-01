@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.100 2017/06/29 13:55:53 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.101 2017/07/01 23:27:56 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -77,7 +77,7 @@ int	create_route_label(struct sockaddr_rtlabel *);
 int	check_route_label(struct sockaddr_rtlabel *);
 void	populate_rti_info(struct sockaddr **, struct rt_msghdr *);
 void	delete_route(int, struct rt_msghdr *);
-int	resolv_conf_priority(int);
+int	resolv_conf_priority(int, int);
 
 
 #define	ROUTE_LABEL_NONE		1
@@ -141,17 +141,16 @@ flush_routes(void)
 }
 
 void
-priv_flush_routes(char *name, int rdomain)
+priv_flush_routes(char *name, int routefd, int rdomain)
 {
-	char ifname[IF_NAMESIZE];
-	struct sockaddr *rti_info[RTAX_MAX];
-	int mib[7];
-	size_t needed;
-	char *lim, *buf = NULL, *bufp, *next, *errmsg = NULL;
-	struct rt_msghdr *rtm;
-	struct sockaddr_in *sa_in;
-	struct sockaddr_rtlabel *sa_rl;
-	int s;
+	int			 mib[7];
+	char			 ifname[IF_NAMESIZE];
+	struct sockaddr		*rti_info[RTAX_MAX];
+	char			*lim, *buf = NULL, *bufp, *next, *errmsg = NULL;
+	struct rt_msghdr	*rtm;
+	struct sockaddr_in	*sa_in;
+	struct sockaddr_rtlabel	*sa_rl;
+	size_t			 needed;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -191,9 +190,6 @@ priv_flush_routes(char *name, int rdomain)
 		return;
 	}
 
-	if ((s = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
-		fatal("opening socket to flush routes");
-
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -208,10 +204,10 @@ priv_flush_routes(char *name, int rdomain)
 		switch (check_route_label(sa_rl)) {
 		case ROUTE_LABEL_DHCLIENT_OURS:
 			/* Always delete routes we labeled. */
-			delete_route(s, rtm);
+			delete_route(routefd, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_DEAD:
-			delete_route(s, rtm);
+			delete_route(routefd, rtm);
 			break;
 		case ROUTE_LABEL_DHCLIENT_LIVE:
 		case ROUTE_LABEL_DHCLIENT_UNKNOWN:
@@ -225,14 +221,13 @@ priv_flush_routes(char *name, int rdomain)
 			    sa_in->sin_addr.s_addr == INADDR_ANY &&
 			    rtm->rtm_tableid == rdomain &&
 			    strcmp(name, ifname) == 0)
-				delete_route(s, rtm);
+				delete_route(routefd, rtm);
 			break;
 		default:
 			break;
 		}
 	}
 
-	close(s);
 	free(buf);
 }
 
@@ -598,18 +593,14 @@ delete_address(struct in_addr addr)
 }
 
 void
-priv_delete_address(char *name, struct imsg_delete_address *imsg)
+priv_delete_address(char *name, int ioctlfd, struct imsg_delete_address *imsg)
 {
-	struct ifaliasreq ifaliasreq;
-	struct sockaddr_in *in;
-	int s;
+	struct ifaliasreq	 ifaliasreq;
+	struct sockaddr_in	*in;
 
 	/*
 	 * Delete specified address on specified interface.
 	 */
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("socket open failed");
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, name, sizeof(ifaliasreq.ifra_name));
@@ -620,13 +611,11 @@ priv_delete_address(char *name, struct imsg_delete_address *imsg)
 	in->sin_addr.s_addr = imsg->addr.s_addr;
 
 	/* SIOCDIFADDR will result in a RTM_DELADDR message we must catch! */
-	if (ioctl(s, SIOCDIFADDR, &ifaliasreq) == -1) {
+	if (ioctl(ioctlfd, SIOCDIFADDR, &ifaliasreq) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			log_warn("SIOCDIFADDR failed (%s)",
 			    inet_ntoa(imsg->addr));
 	}
-
-	close(s);
 }
 
 /*
@@ -651,21 +640,18 @@ set_interface_mtu(int mtu)
 }
 
 void
-priv_set_interface_mtu(char *name, struct imsg_set_interface_mtu *imsg)
+priv_set_interface_mtu(char *name, int ioctlfd,
+    struct imsg_set_interface_mtu *imsg)
 {
 	struct ifreq ifr;
-	int s;
 
 	memset(&ifr, 0, sizeof(ifr));
 
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = imsg->mtu;
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("socket open failed");
-	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+	if (ioctl(ioctlfd, SIOCSIFMTU, &ifr) == -1)
 		log_warn("SIOCSIFMTU failed (%d)", imsg->mtu);
-	close(s);
 }
 
 /*
@@ -694,14 +680,10 @@ add_address(struct in_addr addr, struct in_addr mask)
 }
 
 void
-priv_add_address(char *name, struct imsg_add_address *imsg)
+priv_add_address(char *name, int ioctlfd, struct imsg_add_address *imsg)
 {
-	struct ifaliasreq ifaliasreq;
-	struct sockaddr_in *in;
-	int s;
-
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("socket open failed");
+	struct ifaliasreq	 ifaliasreq;
+	struct sockaddr_in	*in;
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 	strncpy(ifaliasreq.ifra_name, name, sizeof(ifaliasreq.ifra_name));
@@ -720,10 +702,8 @@ priv_add_address(char *name, struct imsg_add_address *imsg)
 
 	/* No need to set broadcast address. Kernel can figure it out. */
 
-	if (ioctl(s, SIOCAIFADDR, &ifaliasreq) == -1)
+	if (ioctl(ioctlfd, SIOCAIFADDR, &ifaliasreq) == -1)
 		log_warn("SIOCAIFADDR failed (%s)", inet_ntoa(imsg->addr));
-
-	close(s);
 }
 
 /*
@@ -743,14 +723,11 @@ write_resolv_conf(u_int8_t *contents, size_t sz)
 }
 
 void
-priv_write_resolv_conf(int rdomain, u_int8_t *contents, size_t sz)
+priv_write_resolv_conf(u_int8_t *contents, size_t sz)
 {
 	const char *path = "/etc/resolv.conf";
 	ssize_t n;
 	int fd;
-
-	if (!resolv_conf_priority(rdomain))
-		return;
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -775,7 +752,7 @@ priv_write_resolv_conf(int rdomain, u_int8_t *contents, size_t sz)
  * suppy the contents of the resolv.conf file.
  */
 int
-resolv_conf_priority(int rdomain)
+resolv_conf_priority(int rdomain, int routefd)
 {
 	struct iovec iov[3];
 	struct {
@@ -787,15 +764,9 @@ resolv_conf_priority(int rdomain)
 	struct sockaddr_rtlabel *sa_rl;
 	pid_t pid;
 	ssize_t len;
-	int s, seq, rslt, iovcnt = 0;
+	int seq, rslt, iovcnt = 0;
 
 	rslt = 0;
-
-	s = socket(PF_ROUTE, SOCK_RAW, AF_INET);
-	if (s == -1) {
-		log_warn("default route socket");
-		return (0);
-	}
 
 	/* Build RTM header */
 
@@ -826,7 +797,7 @@ resolv_conf_priority(int rdomain)
 
 	m_rtmsg.m_rtm.rtm_msglen += 2 * sizeof(sin);
 
-	if (writev(s, iov, iovcnt) == -1) {
+	if (writev(routefd, iov, iovcnt) == -1) {
 		if (errno != ESRCH)
 			log_warn("RTM_GET of default route");
 		goto done;
@@ -835,7 +806,7 @@ resolv_conf_priority(int rdomain)
 	pid = getpid();
 
 	do {
-		len = read(s, &m_rtmsg, sizeof(m_rtmsg));
+		len = read(routefd, &m_rtmsg, sizeof(m_rtmsg));
 		if (len == -1) {
 			log_warn("get default route read");
 			break;
@@ -864,7 +835,6 @@ resolv_conf_priority(int rdomain)
 		rslt = 1;
 
 done:
-	close(s);
 	return (rslt);
 }
 

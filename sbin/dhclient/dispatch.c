@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.129 2017/06/29 13:55:53 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.130 2017/07/01 23:27:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -119,12 +119,12 @@ get_hw_address(struct interface_info *ifi)
  * Loop waiting for packets, timeouts or routing messages.
  */
 void
-dispatch(struct interface_info *ifi)
+dispatch(struct interface_info *ifi, int routefd)
 {
-	int count, to_msec;
-	struct pollfd fds[3];
-	time_t cur_time, howlong;
-	void (*func)(struct interface_info *);
+	struct pollfd		 fds[3];
+	void			(*func)(struct interface_info *);
+	time_t			 cur_time, howlong;
+	int			 count, to_msec;
 
 	while (quit == 0 || quit == SIGHUP) {
 		if (quit == SIGHUP) {
@@ -182,7 +182,7 @@ dispatch(struct interface_info *ifi)
 		if ((fds[0].revents & (POLLIN | POLLHUP)))
 			packethandler(ifi);
 		if ((fds[1].revents & (POLLIN | POLLHUP)))
-			routehandler(ifi);
+			routehandler(ifi, routefd);
 		if (fds[2].revents & POLLOUT)
 			flush_unpriv_ibuf("dispatch");
 		if ((fds[2].revents & (POLLIN | POLLHUP))) {
@@ -223,14 +223,13 @@ packethandler(struct interface_info *ifi)
 }
 
 void
-interface_link_forceup(char *name)
+interface_link_forceup(char *name, int ioctlfd)
 {
 	struct ifreq ifr;
-	extern int sock;
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
+	if (ioctl(ioctlfd, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
 		log_warn("SIOCGIFFLAGS");
 		return;
 	}
@@ -238,7 +237,7 @@ interface_link_forceup(char *name)
 	/* Force it up if it isn't already. */
 	if ((ifr.ifr_flags & IFF_UP) == 0) {
 		ifr.ifr_flags |= IFF_UP;
-		if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
+		if (ioctl(ioctlfd, SIOCSIFFLAGS, (caddr_t)&ifr) == -1) {
 			log_warn("SIOCSIFFLAGS");
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.453 2017/06/29 13:55:53 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.454 2017/07/01 23:27:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,6 @@ int log_perror = 1;
 int nullfd = -1;
 int daemonize = 1;
 int unknown_ok = 1;
-int routefd = -1;
 
 volatile sig_atomic_t quit;
 
@@ -156,7 +155,7 @@ struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
 void go_daemon(void);
 int rdaemon(int);
-void	take_charge(struct interface_info *);
+void	take_charge(struct interface_info *, int);
 void	set_default_client_identifier(struct interface_info *);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
@@ -223,19 +222,19 @@ get_ifa(char *cp, int n)
 }
 
 void
-routehandler(struct interface_info *ifi)
+routehandler(struct interface_info *ifi, int routefd)
 {
-	char ntoabuf[INET_ADDRSTRLEN];
-	struct in_addr a;
-	struct sockaddr *sa;
-	struct ifa_msghdr *ifam;
-	struct ether_addr hw;
-	struct rt_msghdr *rtm;
-	struct if_msghdr *ifm;
-	struct if_announcemsghdr *ifan;
-	char *errmsg, *rtmmsg;
-	ssize_t n;
-	int linkstat, rslt;
+	char				 ntoabuf[INET_ADDRSTRLEN];
+	struct in_addr			 a;
+	struct ether_addr		 hw;
+	struct sockaddr			*sa;
+	struct ifa_msghdr		*ifam;
+	struct rt_msghdr		*rtm;
+	struct if_msghdr		*ifm;
+	struct if_announcemsghdr	*ifan;
+	char				*errmsg, *rtmmsg;
+	ssize_t				 n;
+	int				 linkstat, rslt;
 
 	rtmmsg = calloc(1, 2048);
 	if (rtmmsg == NULL)
@@ -426,21 +425,20 @@ die:
 
 char **saved_argv;
 
-int sock;
-
 int
 main(int argc, char *argv[])
 {
-	const char *tail_path = "/etc/resolv.conf.tail";
-	struct interface_info *ifi;
-	struct ifreq ifr;
-	struct ieee80211_nwid nwid;
-	struct stat sb;
-	int	 ch, fd, socket_fd[2];
-	struct passwd *pw;
-	char *ignore_list = NULL;
-	ssize_t tailn;
-	int rtfilter, tailfd, q_flag, d_flag;
+	struct ieee80211_nwid	 nwid;
+	struct ifreq		 ifr;
+	struct stat		 sb;
+	const char		*tail_path = "/etc/resolv.conf.tail";
+	struct interface_info	*ifi;
+	struct passwd		*pw;
+	char			*ignore_list = NULL;
+	ssize_t			 tailn;
+	int			 fd, socket_fd[2];
+	int			 rtfilter, ioctlfd, routefd, tailfd;
+	int			 ch, q_flag, d_flag;
 
 	saved_argv = argv;
 
@@ -516,13 +514,13 @@ main(int argc, char *argv[])
 	tzset();
 
 	/* Get the ssid if present. */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatalx("Can't create socket to get ssid");
+	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		fatalx("Can't create socket to do ioctl");
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&nwid, 0, sizeof(nwid));
 	ifr.ifr_data = (caddr_t)&nwid;
 	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCG80211NWID, (caddr_t)&ifr) == 0) {
+	if (ioctl(ioctlfd, SIOCG80211NWID, (caddr_t)&ifr) == 0) {
 		memset(ifi->ssid, 0, sizeof(ifi->ssid));
 		memcpy(ifi->ssid, nwid.i_nwid, nwid.i_len);
 		ifi->ssid_len = nwid.i_len;
@@ -604,7 +602,9 @@ main(int argc, char *argv[])
 	 */
 	ifi->linkstat = interface_status(ifi->name);
 	if (ifi->linkstat == 0)
-		interface_link_forceup(ifi->name);
+		interface_link_forceup(ifi->name, ioctlfd);
+	close(ioctlfd);
+	ioctlfd = -1;
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, AF_INET)) == -1)
 		fatal("socket(PF_ROUTE, SOCK_RAW)");
@@ -620,7 +620,7 @@ main(int argc, char *argv[])
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
-	take_charge(ifi);
+	take_charge(ifi, routefd);
 
 	if ((fd = open(path_dhclient_db,
 	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
@@ -673,7 +673,7 @@ main(int argc, char *argv[])
 		state_preboot(ifi);
 	}
 
-	dispatch(ifi);
+	dispatch(ifi, routefd);
 
 	/* not reached */
 	return (0);
@@ -2011,10 +2011,10 @@ res_hnok_list(const char *names)
 void
 fork_privchld(struct interface_info *ifi, int fd, int fd2)
 {
-	struct pollfd pfd[1];
-	struct imsgbuf *priv_ibuf;
-	ssize_t n;
-	int nfds, got_imsg_hup = 0;
+	struct pollfd	 pfd[1];
+	struct imsgbuf	*priv_ibuf;
+	ssize_t		 n;
+	int		 ioctlfd, routefd, nfds, got_imsg_hup = 0;
 
 	switch (fork()) {
 	case -1:
@@ -2039,6 +2039,11 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		fatalx("no memory for priv_ibuf");
 
 	imsg_init(priv_ibuf, fd);
+
+	if ((ioctlfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		fatal("socket open failed");
+	if ((routefd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
+		fatal("opening socket to flush routes");
 
 	while (quit == 0) {
 		pfd[0].fd = priv_ibuf->fd;
@@ -2066,10 +2071,12 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			continue;
 		}
 
-		got_imsg_hup = dispatch_imsg(ifi, priv_ibuf);
+		got_imsg_hup = dispatch_imsg(ifi, ioctlfd, routefd, priv_ibuf);
 		if (got_imsg_hup)
 			quit = SIGHUP;
 	}
+	close(routefd);
+	close(ioctlfd);
 
 	imsg_clear(priv_ibuf);
 	close(fd);
@@ -2464,12 +2471,12 @@ compare_lease(struct client_lease *active, struct client_lease *new)
 }
 
 void
-take_charge(struct interface_info *ifi)
+take_charge(struct interface_info *ifi, int routefd)
 {
-	struct	pollfd fds[1];
-	struct	rt_msghdr rtm;
-	time_t	start_time, cur_time;
-	int	retries;
+	struct pollfd		 fds[1];
+	struct rt_msghdr	 rtm;
+	time_t			 start_time, cur_time;
+	int			 retries;
 
 	if (time(&start_time) == -1)
 		fatal("time");
@@ -2514,7 +2521,7 @@ take_charge(struct interface_info *ifi)
 			fatal("routefd poll");
 		}
 		if ((fds[0].revents & (POLLIN | POLLHUP)))
-			routehandler(ifi);
+			routehandler(ifi, routefd);
 	}
 }
 

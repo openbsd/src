@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.200 2017/06/29 21:37:43 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.201 2017/07/01 23:27:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -202,11 +202,11 @@ ssize_t receive_packet(struct interface_info *, struct sockaddr_in *,
     struct ether_addr *);
 
 /* dispatch.c */
-void dispatch(struct interface_info *);
+void dispatch(struct interface_info *, int);
 void set_timeout( struct interface_info *, time_t,
     void (*)(struct interface_info *));
 void cancel_timeout(struct interface_info *);
-void interface_link_forceup(char *);
+void interface_link_forceup(char *, int);
 int interface_status(char *);
 void get_hw_address(struct interface_info *);
 void sendhup(void);
@@ -217,8 +217,6 @@ extern const struct option dhcp_options[256];
 /* dhclient.c */
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
-extern int log_perror;
-extern int routefd;
 
 void dhcpoffer(struct interface_info *, struct option_data *, char *);
 void dhcpack(struct interface_info *, struct option_data *,char *);
@@ -226,7 +224,7 @@ void dhcpnak(struct interface_info *, struct option_data *,char *);
 
 void free_client_lease(struct client_lease *);
 
-void routehandler(struct interface_info *);
+void routehandler(struct interface_info *, int);
 
 /* packet.c */
 void assemble_eh_header(struct interface_info *, struct ether_header *);

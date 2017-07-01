@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.52 2017/06/28 16:31:52 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.53 2017/07/01 23:27:56 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -36,10 +36,11 @@
 #include "privsep.h"
 
 int
-dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
+dispatch_imsg(struct interface_info *ifi, int ioctlfd, int routefd,
+    struct imsgbuf *ibuf)
 {
-	struct imsg			 imsg;
-	ssize_t				 n;
+	struct imsg	imsg;
+	ssize_t		n;
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -54,7 +55,8 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			    sizeof(struct imsg_delete_address))
 				log_warnx("bad IMSG_DELETE_ADDRESS");
 			else
-				priv_delete_address(ifi->name, imsg.data);
+				priv_delete_address(ifi->name, ioctlfd,
+				    imsg.data);
 			break;
 
 		case IMSG_ADD_ADDRESS:
@@ -62,14 +64,15 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			    sizeof(struct imsg_add_address))
 				log_warnx("bad IMSG_ADD_ADDRESS");
 			else
-				priv_add_address(ifi->name, imsg.data);
+				priv_add_address(ifi->name, ioctlfd, imsg.data);
 			break;
 
 		case IMSG_FLUSH_ROUTES:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE)
 				log_warnx("bad IMSG_FLUSH_ROUTES");
 			else
-				priv_flush_routes(ifi->name, ifi->rdomain);
+				priv_flush_routes(ifi->name, routefd,
+				    ifi->rdomain);
 			break;
 
 		case IMSG_ADD_ROUTE:
@@ -85,14 +88,15 @@ dispatch_imsg(struct interface_info *ifi, struct imsgbuf *ibuf)
 			    sizeof(struct imsg_set_interface_mtu))
 				log_warnx("bad IMSG_SET_INTERFACE_MTU");
 			else
-				priv_set_interface_mtu(ifi->name, imsg.data);
+				priv_set_interface_mtu(ifi->name, ioctlfd,
+				    imsg.data);
 			break;
 
 		case IMSG_WRITE_RESOLV_CONF:
 			if (imsg.hdr.len <= IMSG_HEADER_SIZE)
 				log_warnx("short IMSG_WRITE_RESOLV_CONF");
-			else
-				priv_write_resolv_conf(ifi->rdomain, imsg.data,
+			else if (resolv_conf_priority(ifi->rdomain))
+				priv_write_resolv_conf(imsg.data,
 				    imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 
