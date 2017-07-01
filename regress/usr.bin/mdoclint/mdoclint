@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.74 2017/06/27 11:48:00 schwarze Exp $
+# $OpenBSD: mdoclint,v 1.75 2017/07/01 13:17:09 schwarze Exp $
 # $NetBSD: mdoclint,v 1.77 2017/06/08 10:19:56 wiz Exp $
 #
 # Copyright (c) 2001-2017 Thomas Klausner
@@ -41,11 +41,11 @@ use constant {
 	NETBSD => 0,
 };
 
-use vars qw($opt_F $opt_h $opt_m $opt_p $opt_v $opt_x);
+use vars qw($opt_F $opt_h $opt_m $opt_v $opt_x);
 
 my $arch=`uname -m`;
 chomp($arch);
-my $options="Fhmpvx";
+my $options="Fhmvx";
 
 sub usage
 {
@@ -55,10 +55,9 @@ usage:	mdoclint [-$options] file ...
 	-F	fix whitespace problems (asks before overwriting)
 	-h	display this help text
 	-m	warn about man pages that are not in mdoc(7) format
-	-p	warn about punctuation problems
 	-v	verbose output
 	-x	warn about cross-references with missing targets
-Default is -mpx if no flag is specified.
+Default is -mx if no flag is specified.
 EOF
 	exit(0);
 }
@@ -97,7 +96,7 @@ sub handle_options
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	$opt_m = $opt_p = $opt_x = 1 unless $opt_m or $opt_p or $opt_x;
+	$opt_m = $opt_x = 1 unless $opt_m or $opt_x;
 }
 
 sub verify_xref
@@ -220,10 +219,6 @@ sub process_line
 			$s->{names}{$1.$s->{sec}} = 1;
 		}
 	}
-	if (/^\./o and /Ns [\.();,\[\]\{\}:]/o) {
-		$s->warning("possible Ns abuse: `$_'") if $opt_p;
-	}
-
 	my $destruct = $_;
 	if ($s->{mandoc_p}) {
 		$destruct =~ s/\\\&([\w\.])/$1/o;
