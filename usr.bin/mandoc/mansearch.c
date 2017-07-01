@@ -1,4 +1,4 @@
-/*	$OpenBSD: mansearch.c,v 1.56 2017/05/17 21:18:41 schwarze Exp $ */
+/*	$OpenBSD: mansearch.c,v 1.57 2017/07/01 09:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,7 +101,8 @@ mansearch(const struct mansearch *search,
 	}
 
 	cur = maxres = 0;
-	*res = NULL;
+	if (res != NULL)
+		*res = NULL;
 
 	outkey = KEY_Nd;
 	if (search->outkey != NULL)
@@ -170,6 +171,10 @@ mansearch(const struct mansearch *search,
 			    lstmatch(search->arch, page->arch) == 0)
 				continue;
 
+			if (res == NULL) {
+				cur = 1;
+				break;
+			}
 			if (cur + 1 > maxres) {
 				maxres += 1024;
 				*res = mandoc_reallocarray(*res,
@@ -201,12 +206,13 @@ mansearch(const struct mansearch *search,
 		if (cur && search->firstmatch)
 			break;
 	}
-	qsort(*res, cur, sizeof(struct manpage), manpage_compare);
+	if (res != NULL)
+		qsort(*res, cur, sizeof(struct manpage), manpage_compare);
 	if (chdir_status && getcwd_status && chdir(buf) == -1)
 		warn("%s", buf);
 	exprfree(e);
 	*sz = cur;
-	return 1;
+	return res != NULL || cur;
 }
 
 /*

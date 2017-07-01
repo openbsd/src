@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.155 2017/06/29 15:21:46 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.156 2017/07/01 09:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -89,6 +89,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown architecture",
 	"operating system explicitly specified",
 	"RCS id missing",
+	"referenced manual not found",
 
 	"generic style suggestion",
 

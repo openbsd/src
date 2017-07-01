@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.260 2017/06/29 15:21:46 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.261 2017/07/01 09:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,6 +31,7 @@
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
+#include "mandoc_xr.h"
 #include "roff.h"
 #include "mdoc.h"
 #include "libmandoc.h"
@@ -2321,8 +2322,11 @@ post_xr(POST_ARGS)
 	if (nch->next == NULL) {
 		mandoc_vmsg(MANDOCERR_XR_NOSEC, mdoc->parse,
 		    n->line, n->pos, "Xr %s", nch->string);
-	} else
+	} else {
 		assert(nch->next == n->last);
+		mandoc_xr_add(nch->next->string, nch->string,
+		    nch->line, nch->pos);
+	}
 	post_delim(mdoc);
 }
 

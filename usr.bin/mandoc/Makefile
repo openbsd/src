@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.110 2017/05/12 17:35:34 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.111 2017/07/01 09:47:23 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ CFLAGS  += -W -Wall -Wstrict-prototypes -Wno-unused-parameter
 DPADD += ${LIBUTIL}
 LDADD	+= -lutil -lz
 
-SRCS=	mandoc_aux.c mandoc_ohash.c mandoc.c chars.c preconv.c read.c \
+SRCS=	mandoc_aux.c mandoc_ohash.c mandoc.c mandoc_xr.c \
+	chars.c preconv.c read.c \
 	roff.c roff_validate.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
 SRCS+=	mdoc_macro.c mdoc.c \
 	mdoc_argv.c mdoc_state.c mdoc_validate.c att.c msec.c st.c
@@ -49,7 +50,7 @@ LIBMAN_OBJS =	man.o man_macro.o man_validate.o
 LIBROFF_OBJS =	roff.o roff_validate.o eqn.o \
 		tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
-		mandoc.o mandoc_aux.o mandoc_ohash.o \
+		mandoc.o mandoc_aux.o mandoc_ohash.o mandoc_xr.o \
 		chars.o msec.o preconv.o read.o
 HTML_OBJS =	html.o roff_html.o mdoc_html.o man_html.o \
 		tbl_html.o eqn_html.o out.o

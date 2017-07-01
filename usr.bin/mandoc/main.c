@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.196 2017/06/24 14:38:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.197 2017/07/01 09:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -37,6 +37,7 @@
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
+#include "mandoc_xr.h"
 #include "roff.h"
 #include "mdoc.h"
 #include "man.h"
@@ -80,6 +81,7 @@ struct	curparse {
 
 int			  mandocdb(int, char *[]);
 
+static	void		  check_xr(const char *);
 static	int		  fs_lookup(const struct manpaths *,
 				size_t ipath, const char *,
 				const char *, const char *,
@@ -487,6 +489,7 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+	mandoc_xr_free();
 	mparse_free(curp.mp);
 	mchars_free();
 
@@ -717,6 +720,8 @@ parse(struct curparse *curp, int fd, const char *file)
 
 	if (man == NULL)
 		return;
+	if (curp->mmin < MANDOCERR_STYLE)
+		mandoc_xr_reset();
 	if (man->macroset == MACROSET_MDOC) {
 		if (curp->outtype != OUTT_TREE || !curp->outopts->noval)
 			mdoc_validate(man);
@@ -768,7 +773,35 @@ parse(struct curparse *curp, int fd, const char *file)
 			break;
 		}
 	}
+	check_xr(file);
 	mparse_updaterc(curp->mp, &rc);
+}
+
+static void
+check_xr(const char *file)
+{
+	static struct manpaths	 paths;
+	struct mansearch	 search;
+	struct mandoc_xr	*xr;
+	char			*cp;
+	size_t			 sz;
+
+	if (paths.sz == 0)
+		manpath_base(&paths);
+
+	for (xr = mandoc_xr_get(); xr != NULL; xr = xr->next) {
+		search.arch = NULL;
+		search.sec = xr->sec;
+		search.outkey = NULL;
+		search.argmode = ARG_NAME;
+		search.firstmatch = 1;
+		if (mansearch(&search, &paths, 1, &xr->name, NULL, &sz))
+			continue;
+		mandoc_asprintf(&cp, "Xr %s %s", xr->name, xr->sec);
+		mmsg(MANDOCERR_XR_BAD, MANDOCLEVEL_STYLE,
+		    file, xr->line, xr->pos + 1, cp);
+		free(cp);
+	}
 }
 
 static void

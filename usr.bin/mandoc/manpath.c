@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.21 2017/06/13 15:05:22 schwarze Exp $	*/
+/*	$OpenBSD: manpath.c,v 1.22 2017/07/01 09:47:23 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -29,6 +29,7 @@
 #include "manconf.h"
 
 #define MAN_CONF_FILE	"/etc/man.conf"
+#define MANPATH_BASE	"/usr/share/man:/usr/X11R6/man"
 #define MANPATH_DEFAULT	"/usr/share/man:/usr/X11R6/man:/usr/local/man"
 
 static	void	 manconf_file(struct manconf *, const char *);
@@ -88,6 +89,13 @@ manconf_parse(struct manconf *conf, const char *file,
 
 	/* MANPATH overrides man.conf(5) completely. */
 	manpath_parseline(&conf->manpath, defp, 0);
+}
+
+void
+manpath_base(struct manpaths *dirs)
+{
+	char path_base[] = MANPATH_BASE;
+	manpath_parseline(dirs, path_base, 0);
 }
 
 /*
