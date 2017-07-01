@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.198 2017/07/01 12:00:12 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.199 2017/07/01 12:53:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -633,14 +633,23 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	if (globres == 0)
 		file = mandoc_strdup(*globinfo.gl_pathv);
 	globfree(&globinfo);
-	if (globres != 0)
+	if (globres == 0)
+		goto found;
+	if (res != NULL || ipath + 1 != paths->sz)
 		return 0;
+
+	mandoc_asprintf(&file, "%s.%s", name, sec);
+	globres = access(file, R_OK);
+	free(file);
+	return globres != -1;
 
 found:
 	warnx("outdated mandoc.db lacks %s(%s) entry, run makewhatis %s",
 	    name, sec, paths->paths[ipath]);
-	if (res == NULL)
+	if (res == NULL) {
+		free(file);
 		return 1;
+	}
 	*res = mandoc_reallocarray(*res, ++*ressz, sizeof(struct manpage));
 	page = *res + (*ressz - 1);
 	page->file = file;
