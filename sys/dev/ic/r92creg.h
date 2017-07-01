@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.10 2017/06/16 14:57:51 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.11 2017/07/01 15:56:11 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -527,6 +527,12 @@
 #define R92C_BCN_CTRL_TXBCN_RPT		0x04
 #define R92C_BCN_CTRL_EN_BCN		0x08
 #define R92C_BCN_CTRL_DIS_TSF_UDT0	0x10
+
+/* Bits for R92C_DRVERLYINT. */
+#define R92C_DRVERLYINT_INIT_TIME	0x05
+
+/* Bits for R92C_BCNDMATIM. */
+#define R92C_BCNDMATIM_INIT_TIME	0x02
 
 /* Bits for R92C_APSD_CTRL. */
 #define R92C_APSD_CTRL_OFF		0x40

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.23 2017/06/23 14:41:54 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.24 2017/07/01 15:56:11 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -125,6 +125,8 @@ void		rtwn_cam_init(struct rtwn_softc *);
 void		rtwn_pa_bias_init(struct rtwn_softc *);
 void		rtwn_rxfilter_init(struct rtwn_softc *);
 void		rtwn_edca_init(struct rtwn_softc *);
+void		rtwn_rate_fallback_init(struct rtwn_softc *);
+void		rtwn_usb_aggr_init(struct rtwn_softc *);
 void		rtwn_write_txpower(struct rtwn_softc *, int, uint16_t[]);
 void		rtwn_get_txpower(void *, int, struct ieee80211_channel *,
 		    struct ieee80211_channel *, uint16_t[]);
@@ -1767,9 +1769,56 @@ rtwn_edca_init(struct rtwn_softc *sc)
 		    sizeof(struct ieee80211_edca_ac_params));
 	rtwn_updateedca(ic);
 
-	rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666); /* linux magic */
+	if (sc->chip & RTWN_CHIP_PCI) {
+		/* linux magic */
+		rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666); 
+	}
 
 	rtwn_write_4(sc, R92C_EDCA_RANDOM_GEN, arc4random());
+}
+
+void
+rtwn_rate_fallback_init(struct rtwn_softc *sc)
+{
+	if (!(sc->chip & RTWN_CHIP_88E)) {
+		if (sc->chip & RTWN_CHIP_PCI) {
+			rtwn_write_4(sc, R92C_DARFRC + 0, 0x01000000);
+			rtwn_write_4(sc, R92C_DARFRC + 4, 0x07060504);
+			rtwn_write_4(sc, R92C_RARFRC + 0, 0x01000000);
+			rtwn_write_4(sc, R92C_RARFRC + 4, 0x07060504);
+		} else if (sc->chip & RTWN_CHIP_USB) {
+			rtwn_write_4(sc, R92C_DARFRC + 0, 0x00000000);
+			rtwn_write_4(sc, R92C_DARFRC + 4, 0x10080404);
+			rtwn_write_4(sc, R92C_RARFRC + 0, 0x04030201);
+			rtwn_write_4(sc, R92C_RARFRC + 4, 0x08070605);
+		}
+	}
+}
+
+void
+rtwn_usb_aggr_init(struct rtwn_softc *sc)
+{
+	uint32_t reg;
+	int dmasize, dmatiming, ndesc;
+
+	dmasize = 48;
+	dmatiming = 4;
+	ndesc = (sc->chip & RTWN_CHIP_88E) ? 1 : 6;
+
+	/* Tx aggregation setting. */
+	reg = rtwn_read_4(sc, R92C_TDECTRL);
+	reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, ndesc);
+	rtwn_write_4(sc, R92C_TDECTRL, reg);
+
+	/* Rx aggregation setting. */
+	rtwn_write_1(sc, R92C_TRXDMA_CTRL,
+	    rtwn_read_1(sc, R92C_TRXDMA_CTRL) |
+	    R92C_TRXDMA_CTRL_RXDMA_AGG_EN);
+	rtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH, dmasize);
+	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_88C))
+		rtwn_write_1(sc, R92C_USB_DMA_AGG_TO, dmatiming);
+	else
+		rtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, dmatiming);
 }
 
 void
@@ -1981,8 +2030,8 @@ rtwn_r88e_get_txpower(struct rtwn_softc *sc, int chain,
 			power[ridx] = R92C_MAX_TX_PWR;
 	}
 
-	if (group < 5)
-		htpow = rom->txpwr.ht40_tx_pwr[group];
+	htpow = (group == 5) ? rom->txpwr.ht40_tx_pwr[group - 1] :
+	    rom->txpwr.ht40_tx_pwr[group];
 
 	/* Compute per-OFDM rate Tx power. */
 	diff = RTWN_SIGN4TO8(MS(rom->txpwr.ht20_ofdm_tx_pwr_diff,
@@ -2654,20 +2703,7 @@ rtwn_init(struct ifnet *ifp)
 	rtwn_edca_init(sc);
 
 	/* Set data and response automatic rate fallback retry counts. */
-	if (!(sc->chip & RTWN_CHIP_88E)) {
-		/* XXX Use the same values for PCI and USB? */
-		if (sc->chip & RTWN_CHIP_PCI) {
-			rtwn_write_4(sc, R92C_DARFRC + 0, 0x01000000);
-			rtwn_write_4(sc, R92C_DARFRC + 4, 0x07060504);
-			rtwn_write_4(sc, R92C_RARFRC + 0, 0x01000000);
-			rtwn_write_4(sc, R92C_RARFRC + 4, 0x07060504);
-		} else if (sc->chip & RTWN_CHIP_USB) {
-			rtwn_write_4(sc, R92C_DARFRC + 0, 0x00000000);
-			rtwn_write_4(sc, R92C_DARFRC + 4, 0x10080404);
-			rtwn_write_4(sc, R92C_RARFRC + 0, 0x04030201);
-			rtwn_write_4(sc, R92C_RARFRC + 4, 0x08070605);
-		}
-	}
+	rtwn_rate_fallback_init(sc);
 
 	if (sc->chip & RTWN_CHIP_USB) {
 		rtwn_write_1(sc, R92C_FWHW_TXQ_CTRL,
@@ -2682,30 +2718,15 @@ rtwn_init(struct ifnet *ifp)
 
 	if (sc->chip & RTWN_CHIP_USB) {
 		/* Setup USB aggregation. */
-		reg = rtwn_read_4(sc, R92C_TDECTRL);
-		reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, 6);
-		rtwn_write_4(sc, R92C_TDECTRL, reg);
-		rtwn_write_1(sc, R92C_TRXDMA_CTRL,
-		    rtwn_read_1(sc, R92C_TRXDMA_CTRL) |
-		    R92C_TRXDMA_CTRL_RXDMA_AGG_EN);
-		rtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH, 48);
-		if (sc->chip & RTWN_CHIP_88E) {
-			rtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, 4);
-		} else {
-			rtwn_write_1(sc, R92C_USB_DMA_AGG_TO, 4);
-			rtwn_write_1(sc, R92C_USB_SPECIAL_OPTION,
-			    rtwn_read_1(sc, R92C_USB_SPECIAL_OPTION) |
-			    R92C_USB_SPECIAL_OPTION_AGG_EN);
-			rtwn_write_1(sc, R92C_USB_AGG_TH, 8);
-			rtwn_write_1(sc, R92C_USB_AGG_TO, 6);
-		}
+		rtwn_usb_aggr_init(sc);
 	}
 
 	/* Initialize beacon parameters. */
-	rtwn_write_2(sc, R92C_BCN_CTRL, 0x1010);
+	rtwn_write_2(sc, R92C_BCN_CTRL,
+	    (R92C_BCN_CTRL_DIS_TSF_UDT0 << 8) | R92C_BCN_CTRL_DIS_TSF_UDT0);
 	rtwn_write_2(sc, R92C_TBTT_PROHIBIT, 0x6404);
-	rtwn_write_1(sc, R92C_DRVERLYINT, 0x05);
-	rtwn_write_1(sc, R92C_BCNDMATIM, 0x02);
+	rtwn_write_1(sc, R92C_DRVERLYINT, R92C_DRVERLYINT_INIT_TIME);
+	rtwn_write_1(sc, R92C_BCNDMATIM, R92C_BCNDMATIM_INIT_TIME);
 	rtwn_write_2(sc, R92C_BCNTCFG, 0x660f);
 
 	if (!(sc->chip & RTWN_CHIP_88E)) {
@@ -2717,8 +2738,8 @@ rtwn_init(struct ifnet *ifp)
 		rtwn_write_1(sc, R92C_BCN_MAX_ERR, 0xff);
 	}
 
-	if (sc->chip & RTWN_CHIP_PCI) { /* also for USB? */
-		rtwn_write_4(sc, R92C_PIFS, 0x1c);
+	if (sc->chip & RTWN_CHIP_PCI) {
+		/* Reset H2C protection register. */
 		rtwn_write_4(sc, R92C_MCUTST_1, 0x0);
 	}
 
