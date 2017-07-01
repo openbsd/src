@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttm_bo_manager.c,v 1.6 2017/06/04 14:02:24 kettenis Exp $	*/
+/*	$OpenBSD: ttm_bo_manager.c,v 1.7 2017/07/01 16:14:10 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -54,6 +54,7 @@ static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
 	struct drm_mm *mm = &rman->mm;
 	struct drm_mm_node *node = NULL;
 	enum drm_mm_search_flags sflags = DRM_MM_SEARCH_BEST;
+	enum drm_mm_allocator_flags aflags = DRM_MM_CREATE_DEFAULT;
 	unsigned long lpfn;
 	int ret;
 
@@ -69,7 +70,7 @@ static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
 	ret = drm_mm_insert_node_in_range_generic(mm, node, mem->num_pages,
 					  mem->page_alignment, 0,
 					  placement->fpfn, lpfn,
-					  sflags);
+					  sflags, aflags);
 	spin_unlock(&rman->lock);
 
 	if (unlikely(ret)) {

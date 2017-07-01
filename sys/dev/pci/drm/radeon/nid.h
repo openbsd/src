@@ -1,4 +1,4 @@
-/*	$OpenBSD: nid.h,v 1.2 2014/02/15 14:28:13 jsg Exp $	*/
+/*	$OpenBSD: nid.h,v 1.3 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
  *
@@ -475,6 +475,52 @@
 #define VGT_EVENT_INITIATOR                             0x28a90
 #       define CACHE_FLUSH_AND_INV_EVENT_TS                     (0x14 << 0)
 #       define CACHE_FLUSH_AND_INV_EVENT                        (0x16 << 0)
+
+#define AUX_CONTROL					0x6200
+#define 	AUX_EN					(1 << 0)
+#define 	AUX_LS_READ_EN				(1 << 8)
+#define 	AUX_LS_UPDATE_DISABLE(x)		(((x) & 0x1) << 12)
+#define 	AUX_HPD_DISCON(x)			(((x) & 0x1) << 16)
+#define 	AUX_DET_EN				(1 << 18)
+#define 	AUX_HPD_SEL(x)				(((x) & 0x7) << 20)
+#define 	AUX_IMPCAL_REQ_EN			(1 << 24)
+#define 	AUX_TEST_MODE				(1 << 28)
+#define 	AUX_DEGLITCH_EN				(1 << 29)
+#define AUX_SW_CONTROL					0x6204
+#define 	AUX_SW_GO				(1 << 0)
+#define 	AUX_LS_READ_TRIG			(1 << 2)
+#define 	AUX_SW_START_DELAY(x)			(((x) & 0xf) << 4)
+#define 	AUX_SW_WR_BYTES(x)			(((x) & 0x1f) << 16)
+
+#define AUX_SW_INTERRUPT_CONTROL			0x620c
+#define 	AUX_SW_DONE_INT				(1 << 0)
+#define 	AUX_SW_DONE_ACK				(1 << 1)
+#define 	AUX_SW_DONE_MASK			(1 << 2)
+#define 	AUX_SW_LS_DONE_INT			(1 << 4)
+#define 	AUX_SW_LS_DONE_MASK			(1 << 6)
+#define AUX_SW_STATUS					0x6210
+#define 	AUX_SW_DONE				(1 << 0)
+#define 	AUX_SW_REQ				(1 << 1)
+#define 	AUX_SW_RX_TIMEOUT_STATE(x)		(((x) & 0x7) << 4)
+#define 	AUX_SW_RX_TIMEOUT			(1 << 7)
+#define 	AUX_SW_RX_OVERFLOW			(1 << 8)
+#define 	AUX_SW_RX_HPD_DISCON			(1 << 9)
+#define 	AUX_SW_RX_PARTIAL_BYTE			(1 << 10)
+#define 	AUX_SW_NON_AUX_MODE			(1 << 11)
+#define 	AUX_SW_RX_MIN_COUNT_VIOL		(1 << 12)
+#define 	AUX_SW_RX_INVALID_STOP			(1 << 14)
+#define 	AUX_SW_RX_SYNC_INVALID_L		(1 << 17)
+#define 	AUX_SW_RX_SYNC_INVALID_H		(1 << 18)
+#define 	AUX_SW_RX_INVALID_START			(1 << 19)
+#define 	AUX_SW_RX_RECV_NO_DET			(1 << 20)
+#define 	AUX_SW_RX_RECV_INVALID_H		(1 << 22)
+#define 	AUX_SW_RX_RECV_INVALID_V		(1 << 23)
+
+#define AUX_SW_DATA					0x6218
+#define AUX_SW_DATA_RW					(1 << 0)
+#define AUX_SW_DATA_MASK(x)				(((x) & 0xff) << 8)
+#define AUX_SW_DATA_INDEX(x)				(((x) & 0x1f) << 16)
+#define AUX_SW_AUTOINCREMENT_DISABLE			(1 << 31)
 
 /*
  * PM4

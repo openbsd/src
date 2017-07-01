@@ -1,4 +1,3 @@
-/*	$OpenBSD: intel_modes.c,v 1.7 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007, 2010 Intel Corporation
@@ -24,12 +23,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef __linux__
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/fb.h>
+#endif
+#include <dev/pci/drm/drm_edid.h>
 #include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/drm.h>
-#include <dev/pci/drm/i915_drm.h>
 #include "intel_drv.h"
 #include "i915_drv.h"
-#include <dev/pci/drm/drm_edid.h>
 
 /**
  * intel_connector_update_modes - update connector from edid
@@ -125,4 +127,13 @@ intel_attach_broadcast_rgb_property(struct drm_connector *connector)
 	}
 
 	drm_object_attach_property(&connector->base, prop, 0);
+}
+
+void
+intel_attach_aspect_ratio_property(struct drm_connector *connector)
+{
+	if (!drm_mode_create_aspect_ratio_property(connector->dev))
+		drm_object_attach_property(&connector->base,
+			connector->dev->mode_config.aspect_ratio_property,
+			DRM_MODE_PICTURE_ASPECT_NONE);
 }

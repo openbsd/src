@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_device.c,v 1.13 2015/04/12 03:54:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_device.c,v 1.14 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -1231,7 +1231,7 @@ int radeon_suspend_kms(struct drm_device *dev)
 
 	/* unpin the front buffers */
 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
-		struct radeon_framebuffer *rfb = to_radeon_framebuffer(crtc->fb);
+		struct radeon_framebuffer *rfb = to_radeon_framebuffer(crtc->primary->fb);
 		struct radeon_bo *robj;
 
 		if (rfb == NULL || rfb->obj == NULL) {

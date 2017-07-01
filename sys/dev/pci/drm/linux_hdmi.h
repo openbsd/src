@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdmi.h,v 1.1 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: linux_hdmi.h,v 1.2 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright (C) 2012 Avionic Design GmbH
  *
@@ -25,7 +25,7 @@
 #ifndef __LINUX_HDMI_H_
 #define __LINUX_HDMI_H_
 
-#include <sys/types.h>
+#include <dev/pci/drm/drm_linux.h>
 
 enum hdmi_infoframe_type {
 	HDMI_INFOFRAME_TYPE_VENDOR = 0x81,

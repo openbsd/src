@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_vma_manager.c,v 1.2 2016/04/05 20:50:44 kettenis Exp $	*/
+/*	$OpenBSD: drm_vma_manager.c,v 1.3 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
@@ -45,8 +45,7 @@
  *
  * You must not use multiple offset managers on a single address_space.
  * Otherwise, mm-core will be unable to tear down memory mappings as the VM will
- * no longer be linear. Please use VM_NONLINEAR in that case and implement your
- * own offset managers.
+ * no longer be linear.
  *
  * This offset manager works on page-based addresses. That is, every argument
  * and return code (with the exception of drm_vma_node_offset_addr()) is given

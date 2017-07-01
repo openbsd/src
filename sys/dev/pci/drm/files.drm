@@ -1,28 +1,38 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.35 2016/04/05 08:22:50 kettenis Exp $
+# $OpenBSD: files.drm,v 1.36 2017/07/01 16:14:10 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
 device drm: drmbase
 attach drm at drmbase
-file   dev/pci/drm/drm_agpsupport.c	drm & agp
-file   dev/pci/drm/drm_drv.c		drm	needs-flag
-file   dev/pci/drm/drm_global.c		drm
-file   dev/pci/drm/drm_hashtab.c	drm
-file   dev/pci/drm/drm_irq.c		drm
-file   dev/pci/drm/drm_memory.c		drm
-file   dev/pci/drm/drm_mm.c		drm
-file   dev/pci/drm/drm_crtc.c		drm
-file   dev/pci/drm/drm_modes.c		drm
-file   dev/pci/drm/drm_crtc_helper.c	drm
-file   dev/pci/drm/drm_edid.c		drm
-file   dev/pci/drm/drm_dp_helper.c	drm
-file   dev/pci/drm/drm_fb_helper.c	drm
-file   dev/pci/drm/drm_rect.c		drm
-file   dev/pci/drm/drm_gem.c		drm
-file   dev/pci/drm/drm_vma_manager.c	drm
-file   dev/pci/drm/drm_linux.c		drm
-file   dev/pci/drm/linux_hdmi.c		drm
+file	dev/pci/drm/drm_agpsupport.c		drm & agp
+file	dev/pci/drm/drm_drv.c			drm	needs-flag
+file	dev/pci/drm/drm_global.c		drm
+file	dev/pci/drm/drm_hashtab.c		drm
+file	dev/pci/drm/drm_irq.c			drm
+file	dev/pci/drm/drm_memory.c		drm
+file	dev/pci/drm/drm_mm.c			drm
+file	dev/pci/drm/drm_atomic.c		drm
+file	dev/pci/drm/drm_atomic_helper.c		drm
+file	dev/pci/drm/drm_crtc.c			drm
+file	dev/pci/drm/drm_modes.c			drm
+file	dev/pci/drm/drm_modeset_lock.c		drm
+file	dev/pci/drm/drm_crtc_helper.c		drm
+file	dev/pci/drm/drm_edid.c			drm
+file	dev/pci/drm/drm_dp_helper.c		drm
+file	dev/pci/drm/drm_fb_helper.c		drm
+file	dev/pci/drm/drm_plane_helper.c		drm
+file	dev/pci/drm/drm_probe_helper.c		drm
+file	dev/pci/drm/drm_rect.c			drm
+file	dev/pci/drm/drm_bridge.c		drm
+file	dev/pci/drm/drm_gem.c			drm
+file	dev/pci/drm/drm_vma_manager.c		drm
+file	dev/pci/drm/drm_linux.c			drm
+file	dev/pci/drm/drm_cache.c			drm & inteldrm
+#file	dev/pci/drm/drm_panel.c			drm
+file	dev/pci/drm/drm_dp_mst_topology.c	drm
+file	dev/pci/drm/linux_hdmi.c		drm
+file	dev/pci/drm/linux_list_sort.c		drm
 
 define	ttm
 file	dev/pci/drm/ttm/ttm_agp_backend.c	ttm & agp
@@ -39,34 +49,63 @@ file	dev/pci/drm/ttm/ttm_tt.c		ttm
 
 device	inteldrm: agpint, drmbase, wsemuldisplaydev, rasops32, i2cbus, i2c_bitbang
 attach	inteldrm at pci
+file	dev/pci/drm/i915/i915_cmd_parser.c	inteldrm
 file	dev/pci/drm/i915/i915_dma.c		inteldrm
 file	dev/pci/drm/i915/i915_drv.c		inteldrm
 file	dev/pci/drm/i915/i915_gem.c		inteldrm
 file	dev/pci/drm/i915/i915_gem_context.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_batch_pool.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_evict.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_execbuffer.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_fence.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_gtt.c		inteldrm
+file	dev/pci/drm/i915/i915_gem_render_state.c inteldrm
 file	dev/pci/drm/i915/i915_gem_stolen.c	inteldrm
 file	dev/pci/drm/i915/i915_gem_tiling.c	inteldrm
+file	dev/pci/drm/i915/i915_gem_userptr.c	inteldrm
 file	dev/pci/drm/i915/i915_gpu_error.c	inteldrm
+file	dev/pci/drm/i915/i915_guc_submission.c	inteldrm
 file	dev/pci/drm/i915/i915_irq.c		inteldrm
+file	dev/pci/drm/i915/i915_params.c		inteldrm
 file	dev/pci/drm/i915/i915_suspend.c		inteldrm
+file	dev/pci/drm/i915/i915_vgpu.c		inteldrm
+file	dev/pci/drm/i915/intel_atomic.c		inteldrm
+file	dev/pci/drm/i915/intel_atomic_plane.c	inteldrm
+file	dev/pci/drm/i915/intel_audio.c		inteldrm
+file	dev/pci/drm/i915/intel_csr.c		inteldrm
 file	dev/pci/drm/i915/intel_bios.c		inteldrm
 file	dev/pci/drm/i915/intel_crt.c		inteldrm
 file	dev/pci/drm/i915/intel_ddi.c		inteldrm
 file	dev/pci/drm/i915/intel_display.c	inteldrm
 file	dev/pci/drm/i915/intel_dp.c		inteldrm
+file	dev/pci/drm/i915/intel_dp_mst.c		inteldrm
+#file	dev/pci/drm/i915/intel_dsi.c		inteldrm
+#file	dev/pci/drm/i915/intel_dsi_panel_vbt.c	inteldrm
+#file	dev/pci/drm/i915/intel_dsi_pll.c	inteldrm
 file	dev/pci/drm/i915/intel_dvo.c		inteldrm
+file	dev/pci/drm/i915/intel_fbc.c		inteldrm
 file	dev/pci/drm/i915/intel_fbdev.c		inteldrm
+file	dev/pci/drm/i915/intel_fifo_underrun.c	inteldrm
+file	dev/pci/drm/i915/intel_frontbuffer.c	inteldrm
+file	dev/pci/drm/i915/intel_guc_loader.c	inteldrm
 file	dev/pci/drm/i915/intel_hdmi.c		inteldrm
+file	dev/pci/drm/i915/intel_hotplug.c	inteldrm
 file	dev/pci/drm/i915/intel_i2c.c		inteldrm
+file	dev/pci/drm/i915/intel_lrc.c		inteldrm
 file	dev/pci/drm/i915/intel_lvds.c		inteldrm
+file	dev/pci/drm/i915/intel_mocs.c		inteldrm
 file	dev/pci/drm/i915/intel_modes.c		inteldrm
 file	dev/pci/drm/i915/intel_opregion.c	inteldrm
 file	dev/pci/drm/i915/intel_overlay.c	inteldrm
 file	dev/pci/drm/i915/intel_panel.c		inteldrm
 file	dev/pci/drm/i915/intel_pm.c		inteldrm
+file	dev/pci/drm/i915/intel_psr.c		inteldrm
+file	dev/pci/drm/i915/intel_renderstate_gen6.c inteldrm
+file	dev/pci/drm/i915/intel_renderstate_gen7.c inteldrm
+file	dev/pci/drm/i915/intel_renderstate_gen8.c inteldrm
+file	dev/pci/drm/i915/intel_renderstate_gen9.c inteldrm
 file	dev/pci/drm/i915/intel_ringbuffer.c	inteldrm
+file	dev/pci/drm/i915/intel_runtime_pm.c	inteldrm
 file	dev/pci/drm/i915/intel_sdvo.c		inteldrm
 file	dev/pci/drm/i915/intel_sideband.c	inteldrm
 file	dev/pci/drm/i915/intel_sprite.c		inteldrm
@@ -78,6 +117,7 @@ file	dev/pci/drm/i915/dvo_ivch.c		inteldrm
 file	dev/pci/drm/i915/dvo_ns2501.c		inteldrm
 file	dev/pci/drm/i915/dvo_sil164.c		inteldrm
 file	dev/pci/drm/i915/dvo_tfp410.c		inteldrm
+file	dev/pci/drm/i915/intel_gtt.c		inteldrm
 
 device	radeondrm: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, i2cbus, i2c_bitbang
 attach	radeondrm at pci
@@ -117,6 +157,7 @@ file	dev/pci/drm/radeon/radeon_cs.c			radeondrm
 file	dev/pci/drm/radeon/radeon_cursor.c		radeondrm
 file	dev/pci/drm/radeon/radeon_device.c		radeondrm
 file	dev/pci/drm/radeon/radeon_display.c		radeondrm
+file	dev/pci/drm/radeon/radeon_dp_auxch.c		radeondrm
 file	dev/pci/drm/radeon/radeon_encoders.c		radeondrm
 file	dev/pci/drm/radeon/radeon_fb.c			radeondrm
 file	dev/pci/drm/radeon/radeon_fence.c		radeondrm

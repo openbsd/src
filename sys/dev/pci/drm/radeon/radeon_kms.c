@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_kms.c,v 1.50 2017/06/19 11:03:30 fcambus Exp $	*/
+/*	$OpenBSD: radeon_kms.c,v 1.51 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -74,11 +74,11 @@ void	radeon_driver_lastclose_kms(struct drm_device *);
 int	radeon_driver_open_kms(struct drm_device *, struct drm_file *);
 void	radeon_driver_postclose_kms(struct drm_device *, struct drm_file *);
 void	radeon_driver_preclose_kms(struct drm_device *, struct drm_file *);
-u32	radeon_get_vblank_counter_kms(struct drm_device *, int);
-int	radeon_enable_vblank_kms(struct drm_device *, int);
-void	radeon_disable_vblank_kms(struct drm_device *, int);
-int	radeon_get_vblank_timestamp_kms(struct drm_device *, int, int *,
-	    struct timeval *, unsigned);
+u32	radeon_get_vblank_counter_kms(struct drm_device *, unsigned int);
+int	radeon_enable_vblank_kms(struct drm_device *, unsigned int);
+void	radeon_disable_vblank_kms(struct drm_device *, unsigned int);
+int	radeon_get_vblank_timestamp_kms(struct drm_device *, unsigned int,
+	    int *, struct timeval *, unsigned);
 
 int	radeon_dma_ioctl_kms(struct drm_device *, struct drm_dma *, struct drm_file *);
 
@@ -146,6 +146,7 @@ int radeon_hw_i2c = 0;
 int radeon_pcie_gen2 = -1;
 int radeon_msi = -1;
 int radeon_lockup_timeout = 10000;
+int radeon_auxch = -1;
 
 MODULE_PARM_DESC(no_wb, "Disable AGP writeback for scratch registers");
 module_param_named(no_wb, radeon_no_wb, int, 0444);
@@ -208,7 +209,7 @@ const struct drm_pcidev radeondrm_pciidlist[] = {
 	radeon_PCI_IDS
 };
 
-static struct drm_driver_info kms_driver = {
+static struct drm_driver kms_driver = {
 	.driver_features =
 	    DRIVER_USE_AGP |
 	    DRIVER_HAVE_IRQ | DRIVER_IRQ_SHARED | DRIVER_GEM |
@@ -435,9 +436,7 @@ radeondrm_doswitch(void *v)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
-	drm_modeset_lock_all(rdev->ddev);
-	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
-	drm_modeset_unlock_all(rdev->ddev);
+	drm_fb_helper_restore_fbdev_mode_unlocked((void *)rdev->mode_info.rfbdev);
 
 	if (rdev->switchcb)
 		(rdev->switchcb)(rdev->switchcbarg, 0, 0);
@@ -636,6 +635,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		    rdev->dev.dv_xname);
 		return;
 	}
+	rdev->pdev->irq = -1;
 
 #ifdef __sparc64__
 {
@@ -727,6 +727,7 @@ radeondrm_attachhook(struct device *self)
 	}
 
 {
+	struct drm_fb_helper *fb_helper = (void *)rdev->mode_info.rfbdev;
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &rdev->ro;
 
@@ -738,9 +739,7 @@ radeondrm_attachhook(struct device *self)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
-	drm_modeset_lock_all(rdev->ddev);
-	drm_fb_helper_restore_fbdev_mode((void *)rdev->mode_info.rfbdev);
-	drm_modeset_unlock_all(rdev->ddev);
+	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 
 #ifndef __sparc64__
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
@@ -1117,11 +1116,8 @@ void radeon_driver_lastclose_kms(struct drm_device *dev)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
-	if (rdev->mode_info.mode_config_initialized) {
-		drm_modeset_lock_all(dev);
-		drm_fb_helper_restore_fbdev_mode(fb_helper);
-		drm_modeset_unlock_all(dev);
-	}
+	if (rdev->mode_info.mode_config_initialized)
+		drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 #ifdef notyet
 	vga_switcheroo_process_delayed_switch();
 #endif
@@ -1250,7 +1246,7 @@ void radeon_driver_preclose_kms(struct drm_device *dev,
  * Gets the frame count on the requested crtc (all asics).
  * Returns frame count on success, -EINVAL on failure.
  */
-u32 radeon_get_vblank_counter_kms(struct drm_device *dev, int crtc)
+u32 radeon_get_vblank_counter_kms(struct drm_device *dev, unsigned int crtc)
 {
 	struct radeon_device *rdev = dev->dev_private;
 
@@ -1271,7 +1267,7 @@ u32 radeon_get_vblank_counter_kms(struct drm_device *dev, int crtc)
  * Enable the interrupt on the requested crtc (all asics).
  * Returns 0 on success, -EINVAL on failure.
  */
-int radeon_enable_vblank_kms(struct drm_device *dev, int crtc)
+int radeon_enable_vblank_kms(struct drm_device *dev, unsigned int crtc)
 {
 	struct radeon_device *rdev = dev->dev_private;
 	unsigned long irqflags;
@@ -1297,7 +1293,7 @@ int radeon_enable_vblank_kms(struct drm_device *dev, int crtc)
  *
  * Disable the interrupt on the requested crtc (all asics).
  */
-void radeon_disable_vblank_kms(struct drm_device *dev, int crtc)
+void radeon_disable_vblank_kms(struct drm_device *dev, unsigned int crtc)
 {
 	struct radeon_device *rdev = dev->dev_private;
 	unsigned long irqflags;
@@ -1326,7 +1322,7 @@ void radeon_disable_vblank_kms(struct drm_device *dev, int crtc)
  * scanout position.  (all asics).
  * Returns postive status flags on success, negative error on failure.
  */
-int radeon_get_vblank_timestamp_kms(struct drm_device *dev, int crtc,
+int radeon_get_vblank_timestamp_kms(struct drm_device *dev, unsigned int crtc,
 				    int *max_error,
 				    struct timeval *vblank_time,
 				    unsigned flags)
@@ -1341,11 +1337,13 @@ int radeon_get_vblank_timestamp_kms(struct drm_device *dev, int crtc,
 
 	/* Get associated drm_crtc: */
 	drmcrtc = &rdev->mode_info.crtcs[crtc]->base;
+	if (!drmcrtc)
+		return -EINVAL;
 
 	/* Helper routine in DRM core does all the work: */
 	return drm_calc_vbltimestamp_from_scanoutpos(dev, crtc, max_error,
 						     vblank_time, flags,
-						     drmcrtc, &drmcrtc->hwmode);
+						     &drmcrtc->hwmode);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: r100.c,v 1.15 2015/04/06 14:10:59 jsg Exp $	*/
+/*	$OpenBSD: r100.c,v 1.16 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -3303,12 +3303,12 @@ void r100_bandwidth_update(struct radeon_device *rdev)
 
 	if (rdev->mode_info.crtcs[0]->base.enabled) {
 		mode1 = &rdev->mode_info.crtcs[0]->base.mode;
-		pixel_bytes1 = rdev->mode_info.crtcs[0]->base.fb->bits_per_pixel / 8;
+		pixel_bytes1 = rdev->mode_info.crtcs[0]->base.primary->fb->bits_per_pixel / 8;
 	}
 	if (!(rdev->flags & RADEON_SINGLE_CRTC)) {
 		if (rdev->mode_info.crtcs[1]->base.enabled) {
 			mode2 = &rdev->mode_info.crtcs[1]->base.mode;
-			pixel_bytes2 = rdev->mode_info.crtcs[1]->base.fb->bits_per_pixel / 8;
+			pixel_bytes2 = rdev->mode_info.crtcs[1]->base.primary->fb->bits_per_pixel / 8;
 		}
 	}
 

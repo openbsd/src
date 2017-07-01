@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon.h,v 1.17 2015/09/27 11:09:26 jsg Exp $	*/
+/*	$OpenBSD: radeon.h,v 1.18 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -99,6 +99,7 @@ extern int radeon_hw_i2c;
 extern int radeon_pcie_gen2;
 extern int radeon_msi;
 extern int radeon_lockup_timeout;
+extern int radeon_auxch;
 
 /*
  * Copy from radeon_drv.h so we don't have to include both and have conflicting
@@ -1570,7 +1571,7 @@ struct radeon_device {
 	int				console;
 
 	struct task			burner_task;
-	int				burner_dpms_mode;
+	int				burner_fblank;
 
 #ifdef __sparc64__
 	struct sunfb			sf;

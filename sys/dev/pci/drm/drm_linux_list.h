@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux_list.h,v 1.6 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux_list.h,v 1.7 2017/07/01 16:14:10 kettenis Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -37,7 +37,7 @@ struct list_head {
 	struct list_head *next, *prev;
 };
 
-#define list_entry(ptr, type, member) container_of(ptr,type,member)
+#define list_entry(ptr, type, member) container_of(ptr, type, member)
 
 static inline void
 INIT_LIST_HEAD(struct list_head *head) {
@@ -91,6 +91,13 @@ static inline void list_replace(struct list_head *old,
 	new->prev->next = new;
 }
 
+static inline void list_replace_init(struct list_head *old,
+				     struct list_head *new)
+{
+	list_replace(old, new);
+	INIT_LIST_HEAD(old);
+}
+
 static inline void list_move(struct list_head *list, struct list_head *head)
 {
 	list_del(list);
@@ -111,6 +118,9 @@ list_del_init(struct list_head *entry) {
 	INIT_LIST_HEAD(entry);
 }
 
+#define list_next_entry(pos, member)				\
+	list_entry(((pos)->member.next), typeof(*(pos)), member)
+
 #define list_for_each(entry, head)				\
     for (entry = (head)->next; entry != head; entry = (entry)->next)
 
@@ -130,6 +140,11 @@ list_del_init(struct list_head *entry) {
 
 #define list_for_each_entry(pos, head, member)				\
     for (pos = list_entry((head)->next, __typeof(*pos), member);	\
+	&pos->member != (head);					 	\
+	pos = list_entry(pos->member.next, __typeof(*pos), member))
+
+#define list_for_each_entry_continue(pos, head, member)				\
+    for (pos = list_entry((pos)->member.next, __typeof(*pos), member);	\
 	&pos->member != (head);					 	\
 	pos = list_entry(pos->member.next, __typeof(*pos), member))
 
@@ -154,6 +169,11 @@ list_del_init(struct list_head *entry) {
 #define list_first_entry(ptr, type, member) \
 	list_entry((ptr)->next, type, member)
 
+#define list_first_entry_or_null(ptr, type, member) \
+	(list_empty(ptr) ? NULL : list_first_entry(ptr, type, member))
+
+#define list_last_entry(ptr, type, member) \
+	list_entry((ptr)->prev, type, member)
 
 static inline void
 __list_splice(const struct list_head *list, struct list_head *prev,
@@ -187,18 +207,60 @@ list_splice_tail(const struct list_head *list, struct list_head *head)
 	__list_splice(list, head->prev, head);
 }
 
-void drm_list_sort(void *priv, struct list_head *head, int (*cmp)(void *priv,
-    struct list_head *a, struct list_head *b));
+void	list_sort(void *, struct list_head *,
+	    int (*)(void *, struct list_head *, struct list_head *));
 
 struct hlist_node {
-	LIST_ENTRY(hlist_node) link;
+	struct hlist_node *next, **prev;
 };
 
-LIST_HEAD(hlist_head, hlist_node);
+struct hlist_head {
+	struct hlist_node *first;
+};
 
-#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
+#define hlist_entry(ptr, type, member) \
+	((ptr) ? container_of(ptr, type, member) : NULL)
 
-#define hlist_add_head(elm, head) LIST_INSERT_HEAD(head, elm, link)
-#define hlist_for_each(var, head) LIST_FOREACH(var, head, link)
+static inline void
+INIT_HLIST_HEAD(struct hlist_head *head) {
+	head->first = NULL;
+}
+
+static inline int
+hlist_empty(const struct hlist_head *head) {
+	return head->first == NULL;
+}
+
+static inline void
+hlist_add_head(struct hlist_node *new, struct hlist_head *head)
+{
+	if ((new->next = head->first) != NULL)
+		head->first->prev = &new->next;
+	head->first = new;
+	new->prev = &head->first;
+}
+
+static inline void
+hlist_del_init(struct hlist_node *node)
+{
+	if (node->next != NULL)
+		node->next->prev = node->prev;
+	*(node->prev) = node->next;
+	node->next = NULL;
+	node->prev = NULL;
+}
+
+#define hlist_for_each(pos, head) \
+	for (pos = (head)->first; pos != NULL; pos = pos->next)
+
+#define hlist_for_each_entry(pos, head, member)				\
+	for (pos = hlist_entry((head)->first, __typeof(*pos), member);	\
+	     pos != NULL;						\
+	     pos = hlist_entry((pos)->member.next, __typeof(*pos), member))
+
+#define hlist_for_each_entry_safe(pos, n, head, member)			\
+	for (pos = hlist_entry((head)->first, __typeof(*pos), member);	\
+	     pos != NULL && (n = pos->member.next, 1);			\
+	     pos = hlist_entry(n, __typeof(*pos), member))
 
 #endif /* _DRM_LINUX_LIST_H_ */

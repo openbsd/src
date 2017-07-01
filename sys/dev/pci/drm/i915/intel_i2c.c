@@ -1,4 +1,4 @@
-/*	$OpenBSD: intel_i2c.c,v 1.9 2016/09/24 17:03:37 kettenis Exp $	*/
+/*	$OpenBSD: intel_i2c.c,v 1.10 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,54 +72,79 @@ enum disp_clk {
 	CZCLK
 };
 
-int	gmbus_ports[] = { GPIOB, GPIOA, GPIOC, GPIOD, GPIOE, GPIOF };
+struct gmbus_pin {
+	const char *name;
+	int reg;
+};
+
+/* Map gmbus pin pairs to names and registers. */
+static const struct gmbus_pin gmbus_pins[] = {
+	[GMBUS_PIN_SSC] = { "ssc", GPIOB },
+	[GMBUS_PIN_VGADDC] = { "vga", GPIOA },
+	[GMBUS_PIN_PANEL] = { "panel", GPIOC },
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
+
+static const struct gmbus_pin gmbus_pins_bdw[] = {
+	[GMBUS_PIN_VGADDC] = { "vga", GPIOA },
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
+
+static const struct gmbus_pin gmbus_pins_skl[] = {
+	[GMBUS_PIN_DPC] = { "dpc", GPIOD },
+	[GMBUS_PIN_DPB] = { "dpb", GPIOE },
+	[GMBUS_PIN_DPD] = { "dpd", GPIOF },
+};
+
+static const struct gmbus_pin gmbus_pins_bxt[] = {
+	[GMBUS_PIN_1_BXT] = { "dpb", PCH_GPIOB },
+	[GMBUS_PIN_2_BXT] = { "dpc", PCH_GPIOC },
+	[GMBUS_PIN_3_BXT] = { "misc", PCH_GPIOD },
+};
+
+/* pin is expected to be valid */
+static const struct gmbus_pin *get_gmbus_pin(struct drm_i915_private *dev_priv,
+					     unsigned int pin)
+{
+	if (IS_BROXTON(dev_priv))
+		return &gmbus_pins_bxt[pin];
+	else if (IS_SKYLAKE(dev_priv))
+		return &gmbus_pins_skl[pin];
+	else if (IS_BROADWELL(dev_priv))
+		return &gmbus_pins_bdw[pin];
+	else
+		return &gmbus_pins[pin];
+}
+
+bool intel_gmbus_is_valid_pin(struct drm_i915_private *dev_priv,
+			      unsigned int pin)
+{
+	unsigned int size;
+
+	if (IS_BROXTON(dev_priv))
+		size = ARRAY_SIZE(gmbus_pins_bxt);
+	else if (IS_SKYLAKE(dev_priv))
+		size = ARRAY_SIZE(gmbus_pins_skl);
+	else if (IS_BROADWELL(dev_priv))
+		size = ARRAY_SIZE(gmbus_pins_bdw);
+	else
+		size = ARRAY_SIZE(gmbus_pins);
+
+	return pin < size && get_gmbus_pin(dev_priv, pin)->reg;
+}
+
+/* Intel GPIO access functions */
+
+#define I2C_RISEFALL_TIME 10
 
 static inline struct intel_gmbus *
-to_intel_gmbus(struct i2c_controller *i2c)
+to_intel_gmbus(struct i2c_adapter *i2c)
 {
-	return container_of(i2c, struct intel_gmbus, controller);
-}
-
-static int get_disp_clk_div(struct drm_i915_private *dev_priv,
-			    enum disp_clk clk)
-{
-	u32 reg_val;
-	int clk_ratio;
-
-	reg_val = I915_READ(CZCLK_CDCLK_FREQ_RATIO);
-
-	if (clk == CDCLK)
-		clk_ratio =
-			((reg_val & CDCLK_FREQ_MASK) >> CDCLK_FREQ_SHIFT) + 1;
-	else
-		clk_ratio = (reg_val & CZCLK_FREQ_MASK) + 1;
-
-	return clk_ratio;
-}
-
-static void gmbus_set_freq(struct drm_i915_private *dev_priv)
-{
-	int vco, gmbus_freq = 0, cdclk_div;
-
-	BUG_ON(!IS_VALLEYVIEW(dev_priv->dev));
-
-	vco = valleyview_get_vco(dev_priv);
-
-	/* Get the CDCLK divide ratio */
-	cdclk_div = get_disp_clk_div(dev_priv, CDCLK);
-
-	/*
-	 * Program the gmbus_freq based on the cdclk frequency.
-	 * BSpec erroneously claims we should aim for 4MHz, but
-	 * in fact 1MHz is the correct frequency.
-	 */
-	if (cdclk_div)
-		gmbus_freq = (vco << 1) / cdclk_div;
-
-	if (WARN_ON(gmbus_freq == 0))
-		return;
-
-	I915_WRITE(GMBUSFREQ_VLV, gmbus_freq);
+	return container_of(i2c, struct intel_gmbus, adapter);
 }
 
 void
@@ -127,15 +152,8 @@ intel_i2c_reset(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-	/*
-	 * In BIOS-less system, program the correct gmbus frequency
-	 * before reading edid.
-	 */
-	if (IS_VALLEYVIEW(dev))
-		gmbus_set_freq(dev_priv);
-
-	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, 0);
-	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS4, 0);
+	I915_WRITE(GMBUS0, 0);
+	I915_WRITE(GMBUS4, 0);
 }
 
 int
@@ -144,9 +162,9 @@ intel_gmbus_acquire_bus(void *cookie, int flags)
 	struct intel_gmbus *bus = cookie;
 	struct inteldrm_softc *dev_priv = bus->dev_priv;
 
-	intel_aux_display_runtime_get(dev_priv);
+	intel_display_power_get(dev_priv, POWER_DOMAIN_GMBUS);
 
-	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, bus->reg0);
+	I915_WRITE(GMBUS0, bus->reg0);
 
 	return (0);
 }
@@ -157,9 +175,9 @@ intel_gmbus_release_bus(void *cookie, int flags)
 	struct intel_gmbus *bus = cookie;
 	struct inteldrm_softc *dev_priv = bus->dev_priv;
 
-	I915_WRITE(dev_priv->gpio_mmio_base + GMBUS0, 0);
+	I915_WRITE(GMBUS0, 0);
 
-	intel_aux_display_runtime_put(dev_priv);
+	intel_display_power_put(dev_priv, POWER_DOMAIN_GMBUS);
 }
 
 int
@@ -169,7 +187,6 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	struct intel_gmbus *bus = cookie;
 	struct inteldrm_softc *dev_priv = bus->dev_priv;
 	uint32_t reg, st, val;
-	int reg_offset = dev_priv->gpio_mmio_base;
 	uint8_t *b;
 	int i, retries;
 	uint16_t rem = len;
@@ -186,7 +203,7 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			val |= *b++ << (8 * i);
 		}
 
-		I915_WRITE(GMBUS3 + reg_offset, val);
+		I915_WRITE(GMBUS3, val);
 	}
 
 	reg = 0;
@@ -205,13 +222,13 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 	reg |= (addr << GMBUS_SLAVE_ADDR_SHIFT);
 	reg |= (len << GMBUS_BYTE_COUNT_SHIFT);
-	I915_WRITE(GMBUS1 + reg_offset, reg | GMBUS_SW_RDY);
+	I915_WRITE(GMBUS1, reg | GMBUS_SW_RDY);
 
 	if (I2C_OP_READ_P(op)) {
 		b = buf;
 		while (len > 0) {
 			for (retries = 50; retries > 0; retries--) {
-				st = I915_READ(GMBUS2 + reg_offset);
+				st = I915_READ(GMBUS2);
 				if (st & (GMBUS_SATOER | GMBUS_HW_RDY))
 					break;
 				DELAY(1000);
@@ -223,7 +240,7 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			if ((st & GMBUS_HW_RDY) == 0)
 				return (ETIMEDOUT);
 
-			val = I915_READ(GMBUS3 + reg_offset);
+			val = I915_READ(GMBUS3);
 			for (i = 0; i < 4 && len > 0; i++, len--) {
 				*b++ = val & 0xff;
 				val >>= 8;
@@ -234,7 +251,7 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		while (rem > 0) {
 			for (retries = 50; retries > 0; retries--) {
-				st = I915_READ(GMBUS2 + reg_offset);
+				st = I915_READ(GMBUS2);
 				if (st & (GMBUS_SATOER | GMBUS_HW_RDY))
 					break;
 				DELAY(1000);
@@ -250,14 +267,14 @@ intel_gmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			for (i = 0; i < 4 && rem > 0; i++, rem--) {
 				val |= *b++ << (8 * i);
 			}
-			I915_WRITE(GMBUS3 + reg_offset, val);
+			I915_WRITE(GMBUS3, val);
 		}
 	}
 
 out:
 	if (I2C_OP_STOP_P(op)) {
 		for (retries = 10; retries > 0; retries--) {
-			st = I915_READ(GMBUS2 + reg_offset);
+			st = I915_READ(GMBUS2);
 			if (st & GMBUS_SATOER)
 				bus_err = 1;
 			if ((st & GMBUS_ACTIVE) == 0)
@@ -268,7 +285,7 @@ out:
 			return (ETIMEDOUT);
 	} else {
 		for (retries = 10; retries > 0; retries--) {
-			st = I915_READ(GMBUS2 + reg_offset);
+			st = I915_READ(GMBUS2);
 			if (st & GMBUS_SATOER)
 				bus_err = 1;
 			if (st & GMBUS_HW_WAIT_PHASE)
@@ -281,9 +298,9 @@ out:
 
 	/* after the bus is idle clear the bus error */
 	if (bus_err) {
-		I915_WRITE(GMBUS1 + reg_offset, GMBUS_SW_CLR_INT);
-		I915_WRITE(GMBUS1 + reg_offset, 0);
-		I915_WRITE(GMBUS0 + reg_offset, 0);
+		I915_WRITE(GMBUS1, GMBUS_SW_CLR_INT);
+		I915_WRITE(GMBUS1, 0);
+		I915_WRITE(GMBUS0, 0);
 		return (ENXIO);
 	}
 
@@ -373,7 +390,8 @@ int
 intel_setup_gmbus(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	int i;
+	struct intel_gmbus *bus;
+	unsigned int pin;
 
 	if (HAS_PCH_NOP(dev))
 		return 0;
@@ -384,28 +402,30 @@ intel_setup_gmbus(struct drm_device *dev)
 	else
 		dev_priv->gpio_mmio_base = 0;
 
-	for (i = 0; i < GMBUS_NUM_PORTS; i++) {
-		struct intel_gmbus *bus = &dev_priv->gmbus[i];
+	for (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) {
+		if (!intel_gmbus_is_valid_pin(dev_priv, pin))
+			continue;
+
+		bus = &dev_priv->gmbus[pin];
 
 		bus->dev_priv = dev_priv;
 
-		bus->speed = GMBUS_RATE_100KHZ;
-		bus->port = i + 1;
-		bus->force_bit = 0;
-		bus->reg0 = bus->port | bus->speed;
+		/* By default use a conservative clock rate */
+		bus->reg0 = pin | GMBUS_RATE_100KHZ;
 
-		bus->controller.ic_cookie = bus;
-		bus->controller.ic_acquire_bus = intel_gmbus_acquire_bus;
-		bus->controller.ic_release_bus = intel_gmbus_release_bus;
-		bus->controller.ic_exec = intel_gmbus_exec;
+		bus->adapter.ic.ic_cookie = bus;
+		bus->adapter.ic.ic_acquire_bus = intel_gmbus_acquire_bus;
+		bus->adapter.ic.ic_release_bus = intel_gmbus_release_bus;
+		bus->adapter.ic.ic_exec = intel_gmbus_exec;
 
-		bus->gpio_reg = dev_priv->gpio_mmio_base + gmbus_ports[i];
+		bus->gpio_reg = dev_priv->gpio_mmio_base +
+			get_gmbus_pin(dev_priv, pin)->reg;
 
-		bus->controller.ic_send_start = intel_gpio_send_start;
-		bus->controller.ic_send_stop = intel_gpio_send_stop;
-		bus->controller.ic_initiate_xfer = intel_gpio_initiate_xfer;
-		bus->controller.ic_read_byte = intel_gpio_read_byte;
-		bus->controller.ic_write_byte = intel_gpio_write_byte;
+		bus->adapter.ic.ic_send_start = intel_gpio_send_start;
+		bus->adapter.ic.ic_send_stop = intel_gpio_send_stop;
+		bus->adapter.ic.ic_initiate_xfer = intel_gpio_initiate_xfer;
+		bus->adapter.ic.ic_read_byte = intel_gpio_read_byte;
+		bus->adapter.ic.ic_write_byte = intel_gpio_write_byte;
 	}
 
 	intel_i2c_reset(dev_priv->dev);
@@ -413,36 +433,34 @@ intel_setup_gmbus(struct drm_device *dev)
 	return (0);
 }
 
+struct i2c_adapter *intel_gmbus_get_adapter(struct drm_i915_private *dev_priv,
+					    unsigned int pin)
+{
+	if (WARN_ON(!intel_gmbus_is_valid_pin(dev_priv, pin)))
+		return NULL;
+
+	return &dev_priv->gmbus[pin].adapter;
+}
+
 void
 intel_teardown_gmbus(struct drm_device *dev)
 {
 }
 
-struct i2c_controller *
-intel_gmbus_get_adapter(drm_i915_private_t *dev_priv, unsigned port)
-{
-	/* -1 to map pin pair to gmbus index */
-	return (intel_gmbus_is_port_valid(port)) ?
-	    &dev_priv->gmbus[port - 1].controller : NULL;
-}
-
 void
-intel_gmbus_force_bit(struct i2c_controller *controller, bool force_bit)
+intel_gmbus_force_bit(struct i2c_adapter *adapter, bool force_bit)
 {
-	struct intel_gmbus *bus = to_intel_gmbus(controller);
+	struct intel_gmbus *bus = to_intel_gmbus(adapter);
 
 	if (force_bit)
 		bus->force_bit++;
 	else
 		bus->force_bit--;
 
-	KASSERT(bus->force_bit >= 0);
+	KASSERT(force_bit >= 0);
 
-	if (bus->force_bit) {
-		bus->controller.ic_exec = NULL;
-		bus->reg0 = 0;
-	} else {
-		bus->controller.ic_exec = intel_gmbus_exec;
-		bus->reg0 = bus->port | bus->speed;
-	}
+	if (bus->force_bit)
+		bus->adapter.ic.ic_exec = NULL;
+	else
+		bus->adapter.ic.ic_exec = intel_gmbus_exec;
 }

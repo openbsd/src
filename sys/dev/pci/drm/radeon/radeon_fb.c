@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_fb.c,v 1.9 2015/09/27 21:28:14 kettenis Exp $	*/
+/*	$OpenBSD: radeon_fb.c,v 1.10 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright © 2007 David Airlie
  *
@@ -407,7 +407,9 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 
 	rfbdev->rdev = rdev;
 	rdev->mode_info.rfbdev = rfbdev;
-	rfbdev->helper.funcs = &radeon_fb_helper_funcs;
+
+	drm_fb_helper_prepare(rdev->ddev, &rfbdev->helper,
+			      &radeon_fb_helper_funcs);
 
 	ret = drm_fb_helper_init(rdev->ddev, &rfbdev->helper,
 				 rdev->num_crtc,
@@ -432,7 +434,7 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 
 		fb_helper_conn = fb_helper->connector_info[i];
 		connector = fb_helper_conn->connector;
-		mode = &fb_helper_conn->cmdline_mode;
+		mode = &connector->cmdline_mode;
 
 		mode->specified = true;
 		mode->xres = rdev->sf.sf_width;
@@ -491,12 +493,12 @@ radeondrm_burner(void *v, u_int on, u_int flags)
 	task_del(systq, &rdev->burner_task);
 
 	if (on)
-		rdev->burner_dpms_mode = DRM_MODE_DPMS_ON;
+		rdev->burner_fblank = FB_BLANK_UNBLANK;
 	else {
 		if (flags & WSDISPLAY_BURN_VBLANK)
-			rdev->burner_dpms_mode = DRM_MODE_DPMS_OFF;
+			rdev->burner_fblank = FB_BLANK_VSYNC_SUSPEND;
 		else
-			rdev->burner_dpms_mode = DRM_MODE_DPMS_STANDBY;
+			rdev->burner_fblank = FB_BLANK_NORMAL;
 	}
 
 	/*
@@ -512,5 +514,5 @@ radeondrm_burner_cb(void *arg1)
 	struct radeon_device *rdev = arg1;
 	struct drm_fb_helper *helper = &rdev->mode_info.rfbdev->helper;
 
-	drm_fb_helper_dpms(helper, rdev->burner_dpms_mode);
+	drm_fb_helper_blank(rdev->burner_fblank, helper->fbdev);
 }

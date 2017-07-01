@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_display.c,v 1.12 2015/09/26 19:52:16 kettenis Exp $	*/
+/*	$OpenBSD: radeon_display.c,v 1.13 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -31,6 +31,7 @@
 #include "atom.h"
 
 #include <dev/pci/drm/drm_crtc_helper.h>
+#include <dev/pci/drm/drm_plane_helper.h>
 #include <dev/pci/drm/drm_edid.h>
 
 static void avivo_crtc_load_lut(struct drm_crtc *crtc)
@@ -298,8 +299,9 @@ void radeon_crtc_handle_flip(struct radeon_device *rdev, int crtc_id)
 	 * to complete in this vblank?
 	 */
 	if (update_pending &&
-	    (DRM_SCANOUTPOS_VALID & radeon_get_crtc_scanoutpos(rdev->ddev, crtc_id, 0,
-							       &vpos, &hpos, NULL, NULL)) &&
+	    (DRM_SCANOUTPOS_VALID & radeon_get_crtc_scanoutpos(rdev->ddev,
+							       crtc_id, 0,
+							       &vpos, &hpos, NULL, NULL, &rdev->mode_info.crtcs[crtc_id]->base.hwmode)) &&
 	    ((vpos >= (99 * rdev->mode_info.crtcs[crtc_id]->base.hwmode.crtc_vdisplay)/100) ||
 	     (vpos < 0 && !ASIC_IS_AVIVO(rdev)))) {
 		/* crtc didn't flip in this target vblank interval,
@@ -361,7 +363,7 @@ static int radeon_crtc_page_flip(struct drm_crtc *crtc,
 	work->event = event;
 	work->rdev = rdev;
 	work->crtc_id = radeon_crtc->crtc_id;
-	old_radeon_fb = to_radeon_framebuffer(crtc->fb);
+	old_radeon_fb = to_radeon_framebuffer(crtc->primary->fb);
 	new_radeon_fb = to_radeon_framebuffer(fb);
 	/* schedule unpin of the old buffer */
 	obj = old_radeon_fb->obj;
@@ -452,7 +454,7 @@ static int radeon_crtc_page_flip(struct drm_crtc *crtc,
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 
 	/* update crtc fb */
-	crtc->fb = fb;
+	crtc->primary->fb = fb;
 
 	r = drm_vblank_get(dev, radeon_crtc->crtc_id);
 	if (r) {
@@ -595,7 +597,7 @@ static void radeon_print_display_setup(struct drm_device *dev)
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		radeon_connector = to_radeon_connector(connector);
 		DRM_INFO("Connector %d:\n", i);
-		DRM_INFO("  %s\n", drm_get_connector_name(connector));
+		DRM_INFO("  %s\n", connector->name);
 		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
 			DRM_INFO("  %s\n", hpd_names[radeon_connector->hpd.hpd]);
 		if (radeon_connector->ddc_bus) {
@@ -1537,8 +1539,8 @@ bool radeon_crtc_scaling_mode_fixup(struct drm_crtc *crtc,
  * unknown small number of scanlines wrt. real scanout position.
  *
  */
-int radeon_get_crtc_scanoutpos(struct drm_device *dev, int crtc, unsigned int flags,
-			       int *vpos, int *hpos, ktime_t *stime, ktime_t *etime)
+int radeon_get_crtc_scanoutpos(struct drm_device *dev, unsigned int crtc, unsigned int flags,
+			       int *vpos, int *hpos, ktime_t *stime, ktime_t *etime, const struct drm_display_mode *mode)
 {
 	u32 stat_crtc = 0, vbl = 0, position = 0;
 	int vbl_start, vbl_end, vtotal, ret = 0;
@@ -1678,7 +1680,7 @@ int radeon_get_crtc_scanoutpos(struct drm_device *dev, int crtc, unsigned int fl
 
 	/* In vblank? */
 	if (in_vbl)
-		ret |= DRM_SCANOUTPOS_INVBL;
+		ret |= DRM_SCANOUTPOS_IN_VBLANK;
 
 	return ret;
 }

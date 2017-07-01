@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_mode.h,v 1.7 2015/07/15 22:39:20 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
  * Copyright (c) 2007 Jakob Bornecrantz <wallbraker@gmail.com>
@@ -27,6 +26,8 @@
 
 #ifndef _DRM_MODE_H
 #define _DRM_MODE_H
+
+#include <dev/pci/drm/linux_types.h>
 
 #define DRM_DISPLAY_INFO_LEN	32
 #define DRM_CONNECTOR_NAME_LEN	32
@@ -57,6 +58,10 @@
 #define DRM_MODE_FLAG_PIXMUX			(1<<11)
 #define DRM_MODE_FLAG_DBLCLK			(1<<12)
 #define DRM_MODE_FLAG_CLKDIV2			(1<<13)
+ /*
+  * When adding a new stereo mode don't forget to adjust DRM_MODE_FLAGS_3D_MAX
+  * (define not exposed to user space).
+  */
 #define DRM_MODE_FLAG_3D_MASK			(0x1f<<14)
 #define  DRM_MODE_FLAG_3D_NONE			(0<<14)
 #define  DRM_MODE_FLAG_3D_FRAME_PACKING		(1<<14)
@@ -83,6 +88,11 @@
 #define DRM_MODE_SCALE_CENTER		2 /* Centered, no scaling */
 #define DRM_MODE_SCALE_ASPECT		3 /* Full screen, preserve aspect */
 
+/* Picture aspect ratio options */
+#define DRM_MODE_PICTURE_ASPECT_NONE	0
+#define DRM_MODE_PICTURE_ASPECT_4_3	1
+#define DRM_MODE_PICTURE_ASPECT_16_9	2
+
 /* Dithering mode options */
 #define DRM_MODE_DITHERING_OFF	0
 #define DRM_MODE_DITHERING_ON	1
@@ -94,41 +104,52 @@
 #define DRM_MODE_DIRTY_ANNOTATE 2
 
 struct drm_mode_modeinfo {
-	uint32_t clock;
-	uint16_t hdisplay, hsync_start, hsync_end, htotal, hskew;
-	uint16_t vdisplay, vsync_start, vsync_end, vtotal, vscan;
+	__u32 clock;
+	__u16 hdisplay;
+	__u16 hsync_start;
+	__u16 hsync_end;
+	__u16 htotal;
+	__u16 hskew;
+	__u16 vdisplay;
+	__u16 vsync_start;
+	__u16 vsync_end;
+	__u16 vtotal;
+	__u16 vscan;
 
-	uint32_t vrefresh;
+	__u32 vrefresh;
 
-	uint32_t flags;
-	uint32_t type;
+	__u32 flags;
+	__u32 type;
 	char name[DRM_DISPLAY_MODE_LEN];
 };
 
 struct drm_mode_card_res {
-	uint64_t fb_id_ptr;
-	uint64_t crtc_id_ptr;
-	uint64_t connector_id_ptr;
-	uint64_t encoder_id_ptr;
-	uint32_t count_fbs;
-	uint32_t count_crtcs;
-	uint32_t count_connectors;
-	uint32_t count_encoders;
-	uint32_t min_width, max_width;
-	uint32_t min_height, max_height;
+	__u64 fb_id_ptr;
+	__u64 crtc_id_ptr;
+	__u64 connector_id_ptr;
+	__u64 encoder_id_ptr;
+	__u32 count_fbs;
+	__u32 count_crtcs;
+	__u32 count_connectors;
+	__u32 count_encoders;
+	__u32 min_width;
+	__u32 max_width;
+	__u32 min_height;
+	__u32 max_height;
 };
 
 struct drm_mode_crtc {
-	uint64_t set_connectors_ptr;
-	uint32_t count_connectors;
+	__u64 set_connectors_ptr;
+	__u32 count_connectors;
 
-	uint32_t crtc_id; /**< Id */
-	uint32_t fb_id; /**< Id of framebuffer */
+	__u32 crtc_id; /**< Id */
+	__u32 fb_id; /**< Id of framebuffer */
 
-	uint32_t x, y; /**< Position on the frameuffer */
+	__u32 x; /**< x Position on the framebuffer */
+	__u32 y; /**< y Position on the framebuffer */
 
-	uint32_t gamma_size;
-	uint32_t mode_valid;
+	__u32 gamma_size;
+	__u32 mode_valid;
 	struct drm_mode_modeinfo mode;
 };
 
@@ -137,36 +158,40 @@ struct drm_mode_crtc {
 
 /* Planes blend with or override other bits on the CRTC */
 struct drm_mode_set_plane {
-	uint32_t plane_id;
-	uint32_t crtc_id;
-	uint32_t fb_id; /* fb object contains surface format type */
-	uint32_t flags; /* see above flags */
+	__u32 plane_id;
+	__u32 crtc_id;
+	__u32 fb_id; /* fb object contains surface format type */
+	__u32 flags; /* see above flags */
 
 	/* Signed dest location allows it to be partially off screen */
-	int32_t crtc_x, crtc_y;
-	uint32_t crtc_w, crtc_h;
+	__s32 crtc_x;
+	__s32 crtc_y;
+	__u32 crtc_w;
+	__u32 crtc_h;
 
 	/* Source values are 16.16 fixed point */
-	uint32_t src_x, src_y;
-	uint32_t src_h, src_w;
+	__u32 src_x;
+	__u32 src_y;
+	__u32 src_h;
+	__u32 src_w;
 };
 
 struct drm_mode_get_plane {
-	uint32_t plane_id;
+	__u32 plane_id;
 
-	uint32_t crtc_id;
-	uint32_t fb_id;
+	__u32 crtc_id;
+	__u32 fb_id;
 
-	uint32_t possible_crtcs;
-	uint32_t gamma_size;
+	__u32 possible_crtcs;
+	__u32 gamma_size;
 
-	uint32_t count_format_types;
-	uint64_t format_type_ptr;
+	__u32 count_format_types;
+	__u64 format_type_ptr;
 };
 
 struct drm_mode_get_plane_res {
-	uint64_t plane_id_ptr;
-	uint32_t count_planes;
+	__u64 plane_id_ptr;
+	__u32 count_planes;
 };
 
 #define DRM_MODE_ENCODER_NONE	0
@@ -179,13 +204,13 @@ struct drm_mode_get_plane_res {
 #define DRM_MODE_ENCODER_DPMST	7
 
 struct drm_mode_get_encoder {
-	uint32_t encoder_id;
-	uint32_t encoder_type;
+	__u32 encoder_id;
+	__u32 encoder_type;
 
-	uint32_t crtc_id; /**< Id of crtc */
+	__u32 crtc_id; /**< Id of crtc */
 
-	uint32_t possible_crtcs;
-	uint32_t possible_clones;
+	__u32 possible_crtcs;
+	__u32 possible_clones;
 };
 
 /* This is for connectors with multiple signal types. */
@@ -219,23 +244,26 @@ struct drm_mode_get_encoder {
 
 struct drm_mode_get_connector {
 
-	uint64_t encoders_ptr;
-	uint64_t modes_ptr;
-	uint64_t props_ptr;
-	uint64_t prop_values_ptr;
+	__u64 encoders_ptr;
+	__u64 modes_ptr;
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
 
-	uint32_t count_modes;
-	uint32_t count_props;
-	uint32_t count_encoders;
+	__u32 count_modes;
+	__u32 count_props;
+	__u32 count_encoders;
 
-	uint32_t encoder_id; /**< Current Encoder */
-	uint32_t connector_id; /**< Id */
-	uint32_t connector_type;
-	uint32_t connector_type_id;
+	__u32 encoder_id; /**< Current Encoder */
+	__u32 connector_id; /**< Id */
+	__u32 connector_type;
+	__u32 connector_type_id;
 
-	uint32_t connection;
-	uint32_t mm_width, mm_height; /**< HxW in millimeters */
-	uint32_t subpixel;
+	__u32 connection;
+	__u32 mm_width;  /**< width in millimeters */
+	__u32 mm_height; /**< height in millimeters */
+	__u32 subpixel;
+
+	__u32 pad;
 };
 
 #define DRM_MODE_PROP_PENDING	(1<<0)
@@ -260,71 +288,83 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_OBJECT		DRM_MODE_PROP_TYPE(1)
 #define DRM_MODE_PROP_SIGNED_RANGE	DRM_MODE_PROP_TYPE(2)
 
+/* the PROP_ATOMIC flag is used to hide properties from userspace that
+ * is not aware of atomic properties.  This is mostly to work around
+ * older userspace (DDX drivers) that read/write each prop they find,
+ * witout being aware that this could be triggering a lengthy modeset.
+ */
+#define DRM_MODE_PROP_ATOMIC        0x80000000
+
 struct drm_mode_property_enum {
-	uint64_t value;
+	__u64 value;
 	char name[DRM_PROP_NAME_LEN];
 };
 
 struct drm_mode_get_property {
-	uint64_t values_ptr; /* values and blob lengths */
-	uint64_t enum_blob_ptr; /* enum and blob id ptrs */
+	__u64 values_ptr; /* values and blob lengths */
+	__u64 enum_blob_ptr; /* enum and blob id ptrs */
 
-	uint32_t prop_id;
-	uint32_t flags;
+	__u32 prop_id;
+	__u32 flags;
 	char name[DRM_PROP_NAME_LEN];
 
-	uint32_t count_values;
-	uint32_t count_enum_blobs;
+	__u32 count_values;
+	/* This is only used to count enum values, not blobs. The _blobs is
+	 * simply because of a historical reason, i.e. backwards compat. */
+	__u32 count_enum_blobs;
 };
 
 struct drm_mode_connector_set_property {
-	uint64_t value;
-	uint32_t prop_id;
-	uint32_t connector_id;
+	__u64 value;
+	__u32 prop_id;
+	__u32 connector_id;
 };
 
 struct drm_mode_obj_get_properties {
-	uint64_t props_ptr;
-	uint64_t prop_values_ptr;
-	uint32_t count_props;
-	uint32_t obj_id;
-	uint32_t obj_type;
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
+	__u32 count_props;
+	__u32 obj_id;
+	__u32 obj_type;
 };
 
 struct drm_mode_obj_set_property {
-	uint64_t value;
-	uint32_t prop_id;
-	uint32_t obj_id;
-	uint32_t obj_type;
+	__u64 value;
+	__u32 prop_id;
+	__u32 obj_id;
+	__u32 obj_type;
 };
 
 struct drm_mode_get_blob {
-	uint32_t blob_id;
-	uint32_t length;
-	uint64_t data;
+	__u32 blob_id;
+	__u32 length;
+	__u64 data;
 };
 
 struct drm_mode_fb_cmd {
-	uint32_t fb_id;
-	uint32_t width, height;
-	uint32_t pitch;
-	uint32_t bpp;
-	uint32_t depth;
+	__u32 fb_id;
+	__u32 width;
+	__u32 height;
+	__u32 pitch;
+	__u32 bpp;
+	__u32 depth;
 	/* driver specific handle */
-	uint32_t handle;
+	__u32 handle;
 };
 
 #define DRM_MODE_FB_INTERLACED	(1<<0) /* for interlaced framebuffers */
+#define DRM_MODE_FB_MODIFIERS	(1<<1) /* enables ->modifer[] */
 
 struct drm_mode_fb_cmd2 {
-	uint32_t fb_id;
-	uint32_t width, height;
-	uint32_t pixel_format; /* fourcc code from drm_fourcc.h */
-	uint32_t flags; /* see above flags */
+	__u32 fb_id;
+	__u32 width;
+	__u32 height;
+	__u32 pixel_format; /* fourcc code from drm_fourcc.h */
+	__u32 flags; /* see above flags */
 
 	/*
 	 * In case of planar formats, this ioctl allows up to 4
-	 * buffer objects with offets and pitches per plane.
+	 * buffer objects with offsets and pitches per plane.
 	 * The pitch and offset order is dictated by the fourcc,
 	 * e.g. NV12 (http://fourcc.org/yuv.php#NV12) is described as:
 	 *
@@ -332,13 +372,21 @@ struct drm_mode_fb_cmd2 {
 	 *   followed by an interleaved U/V plane containing
 	 *   8 bit 2x2 subsampled colour difference samples.
 	 *
-	 * So it would consist of Y as offset[0] and UV as
-	 * offeset[1].  Note that offset[0] will generally
-	 * be 0.
+	 * So it would consist of Y as offsets[0] and UV as
+	 * offsets[1].  Note that offsets[0] will generally
+	 * be 0 (but this is not required).
+	 *
+	 * To accommodate tiled, compressed, etc formats, a per-plane
+	 * modifier can be specified.  The default value of zero
+	 * indicates "native" format as specified by the fourcc.
+	 * Vendor specific modifier token.  This allows, for example,
+	 * different tiling/swizzling pattern on different planes.
+	 * See discussion above of DRM_FORMAT_MOD_xxx.
 	 */
-	uint32_t handles[4];
-	uint32_t pitches[4]; /* pitch for each plane */
-	uint32_t offsets[4]; /* offset of each plane */
+	__u32 handles[4];
+	__u32 pitches[4]; /* pitch for each plane */
+	__u32 offsets[4]; /* offset of each plane */
+	__u64 modifier[4]; /* ie, tiling, compressed (per plane) */
 };
 
 #define DRM_MODE_FB_DIRTY_ANNOTATE_COPY 0x01
@@ -375,15 +423,15 @@ struct drm_mode_fb_cmd2 {
  */
 
 struct drm_mode_fb_dirty_cmd {
-	uint32_t fb_id;
-	uint32_t flags;
-	uint32_t color;
-	uint32_t num_clips;
-	uint64_t clips_ptr;
+	__u32 fb_id;
+	__u32 flags;
+	__u32 color;
+	__u32 num_clips;
+	__u64 clips_ptr;
 };
 
 struct drm_mode_mode_cmd {
-	uint32_t connector_id;
+	__u32 connector_id;
 	struct drm_mode_modeinfo mode;
 };
 
@@ -395,48 +443,48 @@ struct drm_mode_mode_cmd {
  * depending on the value in flags different members are used.
  *
  * CURSOR_BO uses
- *    crtc
+ *    crtc_id
  *    width
  *    height
- *    handle - if 0 turns the cursor of
+ *    handle - if 0 turns the cursor off
  *
  * CURSOR_MOVE uses
- *    crtc
+ *    crtc_id
  *    x
  *    y
  */
 struct drm_mode_cursor {
-	uint32_t flags;
-	uint32_t crtc_id;
-	int32_t x;
-	int32_t y;
-	uint32_t width;
-	uint32_t height;
+	__u32 flags;
+	__u32 crtc_id;
+	__s32 x;
+	__s32 y;
+	__u32 width;
+	__u32 height;
 	/* driver specific handle */
-	uint32_t handle;
+	__u32 handle;
 };
 
 struct drm_mode_cursor2 {
-	uint32_t flags;
-	uint32_t crtc_id;
-	int32_t x;
-	int32_t y;
-	uint32_t width;
-	uint32_t height;
+	__u32 flags;
+	__u32 crtc_id;
+	__s32 x;
+	__s32 y;
+	__u32 width;
+	__u32 height;
 	/* driver specific handle */
-	uint32_t handle;
-	int32_t hot_x;
-	int32_t hot_y;
+	__u32 handle;
+	__s32 hot_x;
+	__s32 hot_y;
 };
 
 struct drm_mode_crtc_lut {
-	uint32_t crtc_id;
-	uint32_t gamma_size;
+	__u32 crtc_id;
+	__u32 gamma_size;
 
 	/* pointers to arrays */
-	uint64_t red;
-	uint64_t green;
-	uint64_t blue;
+	__u64 red;
+	__u64 green;
+	__u64 blue;
 };
 
 #define DRM_MODE_PAGE_FLIP_EVENT 0x01
@@ -455,22 +503,25 @@ struct drm_mode_crtc_lut {
  * flip is already pending as the ioctl is called, EBUSY will be
  * returned.
  *
- * The ioctl supports one flag, DRM_MODE_PAGE_FLIP_EVENT, which will
- * request that drm sends back a vblank event (see drm.h: struct
- * drm_event_vblank) when the page flip is done.  The user_data field
- * passed in with this ioctl will be returned as the user_data field
- * in the vblank event struct.
+ * Flag DRM_MODE_PAGE_FLIP_EVENT requests that drm sends back a vblank
+ * event (see drm.h: struct drm_event_vblank) when the page flip is
+ * done.  The user_data field passed in with this ioctl will be
+ * returned as the user_data field in the vblank event struct.
+ *
+ * Flag DRM_MODE_PAGE_FLIP_ASYNC requests that the flip happen
+ * 'as soon as possible', meaning that it not delay waiting for vblank.
+ * This may cause tearing on the screen.
  *
  * The reserved field must be zero until we figure out something
  * clever to use it for.
  */
 
 struct drm_mode_crtc_page_flip {
-	uint32_t crtc_id;
-	uint32_t fb_id;
-	uint32_t flags;
-	uint32_t reserved;
-	uint64_t user_data;
+	__u32 crtc_id;
+	__u32 fb_id;
+	__u32 flags;
+	__u32 reserved;
+	__u64 user_data;
 };
 
 /* create a dumb scanout buffer */
@@ -488,14 +539,14 @@ struct drm_mode_create_dumb {
 /* set up for mmap of a dumb scanout buffer */
 struct drm_mode_map_dumb {
 	/** Handle for the object being mapped. */
-	uint32_t handle;
-	uint32_t pad;
+	__u32 handle;
+	__u32 pad;
 	/**
 	 * Fake offset to use for subsequent mmap call
 	 *
 	 * This is a fixed-size type for 32/64 compatibility.
 	 */
-	uint64_t offset;
+	__u64 offset;
 };
 
 struct drm_mode_destroy_dumb {
@@ -503,19 +554,26 @@ struct drm_mode_destroy_dumb {
 };
 
 /* page-flip flags are valid, plus: */
-#define DRM_MODE_ATOMIC_TEST_ONLY	0x0100
-#define DRM_MODE_ATOMIC_NONBLOCK	0x0200
-#define DRM_MODE_ATOMIC_ALLOW_MODESET	0x0400
+#define DRM_MODE_ATOMIC_TEST_ONLY 0x0100
+#define DRM_MODE_ATOMIC_NONBLOCK  0x0200
+#define DRM_MODE_ATOMIC_ALLOW_MODESET 0x0400
+
+#define DRM_MODE_ATOMIC_FLAGS (\
+		DRM_MODE_PAGE_FLIP_EVENT |\
+		DRM_MODE_PAGE_FLIP_ASYNC |\
+		DRM_MODE_ATOMIC_TEST_ONLY |\
+		DRM_MODE_ATOMIC_NONBLOCK |\
+		DRM_MODE_ATOMIC_ALLOW_MODESET)
 
 struct drm_mode_atomic {
-	uint32_t flags;
-	uint32_t count_objs;
-	uint64_t objs_ptr;
-	uint64_t count_props_ptr;
-	uint64_t props_ptr;
-	uint64_t prop_values_ptr;
-	uint64_t reserved;
-	uint64_t user_data;
+	__u32 flags;
+	__u32 count_objs;
+	__u64 objs_ptr;
+	__u64 count_props_ptr;
+	__u64 props_ptr;
+	__u64 prop_values_ptr;
+	__u64 reserved;
+	__u64 user_data;
 };
 
 /**
@@ -524,19 +582,18 @@ struct drm_mode_atomic {
  */
 struct drm_mode_create_blob {
 	/** Pointer to data to copy. */
-	uint64_t data;
+	__u64 data;
 	/** Length of data to copy. */
-	uint32_t length;
+	__u32 length;
 	/** Return: new property ID. */
-	uint32_t blob_id;
+	__u32 blob_id;
 };
 
 /**
  * Destroy a user-created blob property.
  */
 struct drm_mode_destroy_blob {
-	uint32_t blob_id;
+	__u32 blob_id;
 };
-
 
 #endif

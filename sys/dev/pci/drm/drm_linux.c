@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.12 2016/09/15 02:00:17 dlg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.13 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,72 @@
 
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/ppbreg.h>
+
+void
+flush_barrier(void *arg)
+{
+	int *barrier = arg;
+
+	*barrier = 1;
+	wakeup(barrier);
+}
+
+void
+flush_workqueue(struct workqueue_struct *wq)
+{
+	struct sleep_state sls;
+	struct task task;
+	int barrier = 0;
+
+	if (cold)
+		return;
+
+	task_set(&task, flush_barrier, &barrier);
+	task_add((struct taskq *)wq, &task);
+	while (!barrier) {
+		sleep_setup(&sls, &barrier, PWAIT, "flwqbar");
+		sleep_finish(&sls, !barrier);
+	}
+}
+
+void
+flush_work(struct work_struct *work)
+{
+	struct sleep_state sls;
+	struct task task;
+	int barrier = 0;
+
+	if (cold)
+		return;
+
+	task_set(&task, flush_barrier, &barrier);
+	task_add(work->tq, &task);
+	while (!barrier) {
+		sleep_setup(&sls, &barrier, PWAIT, "flwkbar");
+		sleep_finish(&sls, !barrier);
+	}
+}
+
+void
+flush_delayed_work(struct delayed_work *dwork)
+{
+	struct sleep_state sls;
+	struct task task;
+	int barrier = 0;
+
+	if (cold)
+		return;
+
+	while (timeout_pending(&dwork->to))
+		tsleep(&barrier, PWAIT, "fldwto", 1);
+
+	task_set(&task, flush_barrier, &barrier);
+	task_add(dwork->tq, &task);
+	while (!barrier) {
+		sleep_setup(&sls, &barrier, PWAIT, "fldwbar");
+		sleep_finish(&sls, !barrier);
+	}
+}
 
 struct timespec
 ns_to_timespec(const int64_t nsec)
@@ -68,6 +134,12 @@ ns_to_timeval(const int64_t nsec)
 	}
 	tv.tv_usec = rem / 1000;
 	return (tv);
+}
+
+int64_t
+timeval_to_us(const struct timeval *tv)
+{
+	return ((int64_t)tv->tv_sec * 1000000) + tv->tv_usec;
 }
 
 extern char *hw_vendor, *hw_prod;
@@ -128,6 +200,8 @@ alloc_pages(unsigned int gfp_mask, unsigned int order)
 
 	if (gfp_mask & M_CANFAIL)
 		flags |= UVM_PLA_FAILOK;
+	if (gfp_mask & M_ZERO)
+		flags |= UVM_PLA_ZERO;
 
 	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(PAGE_SIZE << order, 0, -1, PAGE_SIZE, 0,
@@ -207,6 +281,38 @@ vunmap(void *addr, size_t size)
 	pmap_remove(pmap_kernel(), va, va + size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, size);
+}
+
+void
+print_hex_dump(const char *level, const char *prefix_str, int prefix_type,
+    int rowsize, int groupsize, const void *buf, size_t len, bool ascii)
+{
+	const uint8_t *cbuf = buf;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if ((i % rowsize) == 0)
+			printf("%s", prefix_str);
+		printf("%02x", cbuf[i]);
+		if ((i % rowsize) == (rowsize - 1))
+			printf("\n");
+		else
+			printf(" ");
+	}
+}
+
+void *
+memchr_inv(const void *s, int c, size_t n)
+{
+	if (n != 0) {
+		const unsigned char *p = s;
+
+		do {
+			if (*p++ != (unsigned char)c)
+				return ((void *)(p - 1));
+		}while (--n != 0);
+	}
+	return (NULL);
 }
 
 int
@@ -291,7 +397,11 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end,
 	if (end <= 0)
 		end = INT_MAX;
 
+#ifdef notyet
 	id->id = begin = start + arc4random_uniform(end - start);
+#else
+	id->id = begin = start;
+#endif
 	while (SPLAY_INSERT(idr_tree, &idr->tree, id)) {
 		if (++id->id == end)
 			id->id = start;
@@ -302,6 +412,21 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end,
 	}
 	id->ptr = ptr;
 	return id->id;
+}
+
+void *
+idr_replace(struct idr *idr, void *ptr, int id)
+{
+	struct idr_entry find, *res;
+	void *old;
+
+	find.id = id;
+	res = SPLAY_FIND(idr_tree, &idr->tree, &find);
+	if (res == NULL)
+		return ERR_PTR(-ENOENT);
+	old = res->ptr;
+	res->ptr = ptr;
+	return old;
 }
 
 void
@@ -329,6 +454,22 @@ idr_find(struct idr *idr, int id)
 	return res->ptr;
 }
 
+void *
+idr_get_next(struct idr *idr, int *id)
+{
+	struct idr_entry *res;
+
+	res = idr_find(idr, *id);
+	if (res == NULL)
+		res = SPLAY_MIN(idr_tree, &idr->tree);
+	else
+		res = SPLAY_NEXT(idr_tree, &idr->tree, res);
+	if (res == NULL)
+		return NULL;
+	*id = res->id;
+	return res->ptr;
+}
+
 int
 idr_for_each(struct idr *idr, int (*func)(int, void *, void *), void *data)
 {
@@ -351,6 +492,112 @@ idr_cmp(struct idr_entry *a, struct idr_entry *b)
 }
 
 SPLAY_GENERATE(idr_tree, idr_entry, entry, idr_cmp);
+
+void
+ida_init(struct ida *ida)
+{
+	ida->counter = 0;
+}
+
+void
+ida_destroy(struct ida *ida)
+{
+}
+
+void
+ida_remove(struct ida *ida, int id)
+{
+}
+
+int
+ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
+    int flags)
+{
+	if (end <= 0)
+		end = INT_MAX;
+
+	if (start > ida->counter)
+		ida->counter = start;
+
+	if (ida->counter >= end)
+		return -ENOSPC;
+
+	return ida->counter++;
+}
+
+int
+sg_alloc_table(struct sg_table *table, unsigned int nents, gfp_t gfp_mask)
+{
+	table->sgl = mallocarray(nents, sizeof(struct scatterlist),
+	    M_DRM, gfp_mask);
+	if (table->sgl == NULL)
+		return -ENOMEM;
+	table->nents = table->orig_nents = nents;
+	return 0;
+}
+
+void
+sg_free_table(struct sg_table *table)
+{
+	free(table->sgl, M_DRM,
+	    table->orig_nents * sizeof(struct scatterlist));
+}
+
+size_t
+sg_copy_from_buffer(struct scatterlist *sgl, unsigned int nents,
+    const void *buf, size_t buflen)
+{
+	panic("%s", __func__);
+}
+
+int
+i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+	void *cmd = NULL;
+	int cmdlen = 0;
+	int err, ret = 0;
+	int op;
+
+	if (adap->algo)
+		return adap->algo->master_xfer(adap, msgs, num);
+
+	iic_acquire_bus(&adap->ic, 0);
+
+	while (num > 2) {
+		op = (msgs->flags & I2C_M_RD) ? I2C_OP_READ : I2C_OP_WRITE;
+		err = iic_exec(&adap->ic, op, msgs->addr, NULL, 0,
+		    msgs->buf, msgs->len, 0);
+		if (err) {
+			ret = -err;
+			goto fail;
+		}
+		msgs++;
+		num--;
+		ret++;
+	}
+
+	if (num > 1) {
+		cmd = msgs->buf;
+		cmdlen = msgs->len;
+		msgs++;
+		num--;
+		ret++;
+	}
+
+	op = (msgs->flags & I2C_M_RD) ? I2C_OP_READ_WITH_STOP : I2C_OP_WRITE_WITH_STOP;
+	err = iic_exec(&adap->ic, op, msgs->addr, cmd, cmdlen, msgs->buf, msgs->len, 0);
+	if (err) {
+		ret = -err;
+		goto fail;
+	}
+	msgs++;
+	ret++;
+
+fail:
+	iic_release_bus(&adap->ic, 0);
+
+	return ret;
+}
 
 #if defined(__amd64__) || defined(__i386__)
 

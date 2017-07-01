@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_rect.c,v 1.1 2015/09/23 23:12:11 kettenis Exp $	*/
 /*
  * Copyright (C) 2011-2013 Intel Corporation
  *
@@ -22,6 +21,11 @@
  * SOFTWARE.
  */
 
+#ifdef __linux__
+#include <linux/errno.h>
+#include <linux/export.h>
+#include <linux/kernel.h>
+#endif
 #include <dev/pci/drm/drmP.h>
 #include <dev/pci/drm/drm_rect.h>
 
@@ -281,7 +285,6 @@ void drm_rect_debug_print(const struct drm_rect *r, bool fixed_point)
 #ifdef DRMDEBUG
 	int w = drm_rect_width(r);
 	int h = drm_rect_height(r);
-#endif
 
 	if (fixed_point)
 		DRM_DEBUG_KMS("%d.%06ux%d.%06u%+d.%06u%+d.%06u\n",
@@ -291,5 +294,146 @@ void drm_rect_debug_print(const struct drm_rect *r, bool fixed_point)
 			      r->y1 >> 16, ((r->y1 & 0xffff) * 15625) >> 10);
 	else
 		DRM_DEBUG_KMS("%dx%d%+d%+d\n", w, h, r->x1, r->y1);
+#endif
 }
 EXPORT_SYMBOL(drm_rect_debug_print);
+
+/**
+ * drm_rect_rotate - Rotate the rectangle
+ * @r: rectangle to be rotated
+ * @width: Width of the coordinate space
+ * @height: Height of the coordinate space
+ * @rotation: Transformation to be applied
+ *
+ * Apply @rotation to the coordinates of rectangle @r.
+ *
+ * @width and @height combined with @rotation define
+ * the location of the new origin.
+ *
+ * @width correcsponds to the horizontal and @height
+ * to the vertical axis of the untransformed coordinate
+ * space.
+ */
+void drm_rect_rotate(struct drm_rect *r,
+		     int width, int height,
+		     unsigned int rotation)
+{
+	struct drm_rect tmp;
+
+	if (rotation & (BIT(DRM_REFLECT_X) | BIT(DRM_REFLECT_Y))) {
+		tmp = *r;
+
+		if (rotation & BIT(DRM_REFLECT_X)) {
+			r->x1 = width - tmp.x2;
+			r->x2 = width - tmp.x1;
+		}
+
+		if (rotation & BIT(DRM_REFLECT_Y)) {
+			r->y1 = height - tmp.y2;
+			r->y2 = height - tmp.y1;
+		}
+	}
+
+	switch (rotation & DRM_ROTATE_MASK) {
+	case BIT(DRM_ROTATE_0):
+		break;
+	case BIT(DRM_ROTATE_90):
+		tmp = *r;
+		r->x1 = tmp.y1;
+		r->x2 = tmp.y2;
+		r->y1 = width - tmp.x2;
+		r->y2 = width - tmp.x1;
+		break;
+	case BIT(DRM_ROTATE_180):
+		tmp = *r;
+		r->x1 = width - tmp.x2;
+		r->x2 = width - tmp.x1;
+		r->y1 = height - tmp.y2;
+		r->y2 = height - tmp.y1;
+		break;
+	case BIT(DRM_ROTATE_270):
+		tmp = *r;
+		r->x1 = height - tmp.y2;
+		r->x2 = height - tmp.y1;
+		r->y1 = tmp.x1;
+		r->y2 = tmp.x2;
+		break;
+	default:
+		break;
+	}
+}
+EXPORT_SYMBOL(drm_rect_rotate);
+
+/**
+ * drm_rect_rotate_inv - Inverse rotate the rectangle
+ * @r: rectangle to be rotated
+ * @width: Width of the coordinate space
+ * @height: Height of the coordinate space
+ * @rotation: Transformation whose inverse is to be applied
+ *
+ * Apply the inverse of @rotation to the coordinates
+ * of rectangle @r.
+ *
+ * @width and @height combined with @rotation define
+ * the location of the new origin.
+ *
+ * @width correcsponds to the horizontal and @height
+ * to the vertical axis of the original untransformed
+ * coordinate space, so that you never have to flip
+ * them when doing a rotatation and its inverse.
+ * That is, if you do:
+ *
+ * drm_rotate(&r, width, height, rotation);
+ * drm_rotate_inv(&r, width, height, rotation);
+ *
+ * you will always get back the original rectangle.
+ */
+void drm_rect_rotate_inv(struct drm_rect *r,
+			 int width, int height,
+			 unsigned int rotation)
+{
+	struct drm_rect tmp;
+
+	switch (rotation & DRM_ROTATE_MASK) {
+	case BIT(DRM_ROTATE_0):
+		break;
+	case BIT(DRM_ROTATE_90):
+		tmp = *r;
+		r->x1 = width - tmp.y2;
+		r->x2 = width - tmp.y1;
+		r->y1 = tmp.x1;
+		r->y2 = tmp.x2;
+		break;
+	case BIT(DRM_ROTATE_180):
+		tmp = *r;
+		r->x1 = width - tmp.x2;
+		r->x2 = width - tmp.x1;
+		r->y1 = height - tmp.y2;
+		r->y2 = height - tmp.y1;
+		break;
+	case BIT(DRM_ROTATE_270):
+		tmp = *r;
+		r->x1 = tmp.y1;
+		r->x2 = tmp.y2;
+		r->y1 = height - tmp.x2;
+		r->y2 = height - tmp.x1;
+		break;
+	default:
+		break;
+	}
+
+	if (rotation & (BIT(DRM_REFLECT_X) | BIT(DRM_REFLECT_Y))) {
+		tmp = *r;
+
+		if (rotation & BIT(DRM_REFLECT_X)) {
+			r->x1 = width - tmp.x2;
+			r->x2 = width - tmp.x1;
+		}
+
+		if (rotation & BIT(DRM_REFLECT_Y)) {
+			r->y1 = height - tmp.y2;
+			r->y2 = height - tmp.y1;
+		}
+	}
+}
+EXPORT_SYMBOL(drm_rect_rotate_inv);

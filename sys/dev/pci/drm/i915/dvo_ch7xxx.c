@@ -1,4 +1,3 @@
-/*	$OpenBSD: dvo_ch7xxx.c,v 1.6 2016/02/24 21:06:13 jsg Exp $	*/
 /**************************************************************************
 
 Copyright © 2006 Dave Airlie
@@ -136,29 +135,36 @@ static char *ch7xxx_get_did(uint8_t did)
 static bool ch7xxx_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 {
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
-	struct i2c_controller *adapter = dvo->i2c_bus;
+	struct i2c_adapter *adapter = dvo->i2c_bus;
 	u8 out_buf[2];
 	u8 in_buf[2];
-	int ret;
+
+	struct i2c_msg msgs[] = {
+		{
+			.addr = dvo->slave_addr,
+			.flags = 0,
+			.len = 1,
+			.buf = out_buf,
+		},
+		{
+			.addr = dvo->slave_addr,
+			.flags = I2C_M_RD,
+			.len = 1,
+			.buf = in_buf,
+		}
+	};
 
 	out_buf[0] = addr;
 	out_buf[1] = 0;
 
-	iic_acquire_bus(adapter, 0);
-	ret = iic_exec(adapter, I2C_OP_READ_WITH_STOP, dvo->slave_addr,
-	    &out_buf, 1, in_buf, 1, 0);
-	if (ret)
-		goto read_err;
-	iic_release_bus(adapter, 0);
+	if (i2c_transfer(adapter, msgs, 2) == 2) {
+		*ch = in_buf[0];
+		return true;
+	}
 
-	*ch = in_buf[0];
-	return true;
-
-read_err:
-	iic_release_bus(adapter, 0);
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to read register 0x%02x from %02x.\n",
-			  addr, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to read register 0x%02x from %s:%02x.\n",
+			  addr, adapter->name, dvo->slave_addr);
 	}
 	return false;
 }
@@ -167,33 +173,31 @@ read_err:
 static bool ch7xxx_writeb(struct intel_dvo_device *dvo, int addr, uint8_t ch)
 {
 	struct ch7xxx_priv *ch7xxx = dvo->dev_priv;
-	struct i2c_controller *adapter = dvo->i2c_bus;
+	struct i2c_adapter *adapter = dvo->i2c_bus;
 	uint8_t out_buf[2];
-	int ret;
+	struct i2c_msg msg = {
+		.addr = dvo->slave_addr,
+		.flags = 0,
+		.len = 2,
+		.buf = out_buf,
+	};
 
 	out_buf[0] = addr;
 	out_buf[1] = ch;
 
-	iic_acquire_bus(adapter, 0);
-	ret = iic_exec(adapter, I2C_OP_WRITE_WITH_STOP, dvo->slave_addr,
-	    NULL, 0, out_buf, 2, 0);
-	iic_release_bus(adapter, 0);
-	if (ret)
-		goto write_err;
+	if (i2c_transfer(adapter, &msg, 1) == 1)
+		return true;
 
-	return true;
-
-write_err:
 	if (!ch7xxx->quiet) {
-		DRM_DEBUG_KMS("Unable to write register 0x%02x to %d.\n",
-			  addr, dvo->slave_addr);
+		DRM_DEBUG_KMS("Unable to write register 0x%02x to %s:%d.\n",
+			  addr, adapter->name, dvo->slave_addr);
 	}
 
 	return false;
 }
 
 static bool ch7xxx_init(struct intel_dvo_device *dvo,
-			struct i2c_controller *adapter)
+			struct i2c_adapter *adapter)
 {
 	/* this will detect the CH7xxx chip on the specified i2c bus */
 	struct ch7xxx_priv *ch7xxx;
@@ -213,9 +217,9 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 
 	name = ch7xxx_get_id(vendor);
 	if (!name) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from "
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
 				"slave %d.\n",
-			  vendor, dvo->slave_addr);
+			  vendor, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 
@@ -225,9 +229,9 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 
 	devid = ch7xxx_get_did(device);
 	if (!devid) {
-		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from "
+		DRM_DEBUG_KMS("ch7xxx not detected; got 0x%02x from %s "
 				"slave %d.\n",
-			  vendor, dvo->slave_addr);
+			  vendor, adapter->name, dvo->slave_addr);
 		goto out;
 	}
 
@@ -271,8 +275,8 @@ static enum drm_mode_status ch7xxx_mode_valid(struct intel_dvo_device *dvo,
 }
 
 static void ch7xxx_mode_set(struct intel_dvo_device *dvo,
-			    struct drm_display_mode *mode,
-			    struct drm_display_mode *adjusted_mode)
+			    const struct drm_display_mode *mode,
+			    const struct drm_display_mode *adjusted_mode)
 {
 	uint8_t tvco, tpcp, tpd, tlpf, idf;
 
@@ -336,9 +340,9 @@ static void ch7xxx_dump_regs(struct intel_dvo_device *dvo)
 	for (i = 0; i < CH7xxx_NUM_REGS; i++) {
 		uint8_t val;
 		if ((i % 8) == 0)
-			DRM_LOG_KMS("\n %02X: ", i);
+			DRM_DEBUG_KMS("\n %02X: ", i);
 		ch7xxx_readb(dvo, i, &val);
-		DRM_LOG_KMS("%02X ", val);
+		DRM_DEBUG_KMS("%02X ", val);
 	}
 }
 

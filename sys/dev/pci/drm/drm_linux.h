@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.50 2017/05/26 14:26:33 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.51 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -15,8 +15,31 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _DRM_LINUX_H_
+#define _DRM_LINUX_H_
+
+#include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/stdint.h>
+#include <sys/systm.h>
 #include <sys/task.h>
+#include <sys/time.h>
+#include <sys/timeout.h>
+#include <sys/tree.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <ddb/db_var.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+
+#include <dev/pci/drm/linux_types.h>
+#include <dev/pci/drm/drm_linux_atomic.h>
 
 /* The Linux code doesn't meet our usual standards! */
 #ifdef __clang__
@@ -27,19 +50,68 @@
 #pragma clang diagnostic ignored "-Wunused-const-variable"
 #endif
 
+struct i2c_algorithm;
+
+struct i2c_adapter {
+	struct i2c_controller ic;
+
+	char name[48];
+	const struct i2c_algorithm *algo;
+	void *algo_data;
+	int retries;
+
+	void *data;
+};
+
+#define I2C_NAME_SIZE	20
+
+struct i2c_msg {
+	uint16_t addr;
+	uint16_t flags;
+	uint16_t len;
+	uint8_t *buf;
+};
+
+#define I2C_M_RD	0x0001
+#define I2C_M_NOSTART	0x0002
+
+struct i2c_algorithm {
+	int (*master_xfer)(struct i2c_adapter *, struct i2c_msg *, int);
+};
+
+int i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
+#define i2c_add_adapter(x) 0
+#define i2c_del_adapter(x)
+
+static inline void *
+i2c_get_adapdata(struct i2c_adapter *adap)
+{
+	return adap->data;
+}
+
+static inline void
+i2c_set_adapdata(struct i2c_adapter *adap, void *data)
+{
+	adap->data = data;
+}
+
 typedef int irqreturn_t;
-#define IRQ_NONE	0
-#define IRQ_HANDLED	1
+enum irqreturn {
+	IRQ_NONE = 0,
+	IRQ_HANDLED = 1
+};
 
-typedef u_int64_t u64;
-typedef u_int32_t u32;
-typedef u_int16_t u16;
-typedef u_int8_t u8;
+typedef int8_t   s8;
+typedef uint8_t  u8;
+typedef int16_t  s16;
+typedef uint16_t u16;
+typedef int32_t  s32;
+typedef uint32_t u32;
+typedef int64_t  s64;
+typedef uint64_t u64;
 
-typedef int32_t s32;
-typedef int64_t s64;
-
-typedef uint64_t __u64;
+#define U64_C(x) UINT64_C(x)
+#define U64_MAX UINT64_MAX
 
 typedef uint16_t __le16;
 typedef uint16_t __be16;
@@ -49,6 +121,8 @@ typedef uint32_t __be32;
 typedef bus_addr_t dma_addr_t;
 typedef bus_addr_t phys_addr_t;
 
+typedef bus_addr_t resource_size_t;
+
 typedef off_t loff_t;
 
 #define __force
@@ -57,6 +131,9 @@ typedef off_t loff_t;
 #define __iomem
 #define __must_check
 #define __init
+#define __exit
+
+#define __printf(x, y)
 
 #define barrier()		__asm __volatile("" : : : "memory");
 
@@ -75,11 +152,111 @@ typedef off_t loff_t;
 
 #define be32_to_cpup(x) betoh32(*x)
 
+static inline uint8_t
+hweight8(uint32_t x)
+{
+	x = (x & 0x55) + ((x & 0xaa) >> 1);
+	x = (x & 0x33) + ((x & 0xcc) >> 2);
+	x = (x + (x >> 4)) & 0x0f;
+	return (x);
+}
+
+static inline uint16_t
+hweight16(uint32_t x)
+{
+	x = (x & 0x5555) + ((x & 0xaaaa) >> 1);
+	x = (x & 0x3333) + ((x & 0xcccc) >> 2);
+	x = (x + (x >> 4)) & 0x0f0f;
+	x = (x + (x >> 8)) & 0x00ff;
+	return (x);
+}
+
+static inline uint32_t
+hweight32(uint32_t x)
+{
+	x = (x & 0x55555555) + ((x & 0xaaaaaaaa) >> 1);
+	x = (x & 0x33333333) + ((x & 0xcccccccc) >> 2);
+	x = (x + (x >> 4)) & 0x0f0f0f0f;
+	x = (x + (x >> 8));
+	x = (x + (x >> 16)) & 0x000000ff;
+	return x;
+}
+
+static inline uint32_t
+hweight64(uint64_t x)
+{
+	x = (x & 0x5555555555555555ULL) + ((x & 0xaaaaaaaaaaaaaaaaULL) >> 1);
+	x = (x & 0x3333333333333333ULL) + ((x & 0xccccccccccccccccULL) >> 2);
+	x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
+	x = (x + (x >> 8));
+	x = (x + (x >> 16));
+	x = (x + (x >> 32)) & 0x000000ff;
+	return x;
+}
+
 #define lower_32_bits(n)	((u32)(n))
 #define upper_32_bits(_val)	((u32)(((_val) >> 16) >> 16))
 #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) -1)
-#define BIT(x)			(1 << x)
+#define BIT(x)			(1UL << x)
 #define BITS_TO_LONGS(x)	howmany((x), 8 * sizeof(long))
+
+#define DECLARE_BITMAP(x, y)	unsigned long x[BITS_TO_LONGS(y)];
+#define bitmap_empty(p, n)	(find_first_bit(p, n) == n)
+#define GENMASK(h, l)		((~0U >> (32 - h -1)) & (~0U << l))
+
+static inline void
+bitmap_set(void *p, int b, u_int n)
+{
+	u_int end = b + n;
+
+	for (; b < end; b++)
+		__set_bit(b, p);
+}
+
+static inline void
+bitmap_zero(void *p, u_int n)
+{
+	u_int *ptr = p;
+	u_int b;
+
+	for (b = 0; b < n; b += 32)
+		ptr[b >> 5] = 0;
+}
+
+static inline void
+bitmap_or(void *d, void *s1, void *s2, u_int n)
+{
+	u_int *dst = d;
+	u_int *src1 = s1;
+	u_int *src2 = s2;
+	u_int b;
+
+	for (b = 0; b < n; b += 32)
+		dst[b >> 5] = src1[b >> 5] | src2[b >> 5];
+}
+
+static inline int
+bitmap_weight(void *p, u_int n)
+{
+	u_int *ptr = p;
+	u_int b;
+	int sum = 0;
+
+	for (b = 0; b < n; b += 32)
+		sum += hweight32(ptr[b >> 5]);
+	return sum;
+}
+
+#define DECLARE_HASHTABLE(x, y) struct hlist_head x;
+
+#define hash_init(x)		INIT_HLIST_HEAD(&(x))
+#define hash_add(x, y, z)	hlist_add_head(y, &(x))
+#define hash_del(x)		hlist_del_init(x)
+#define hash_empty(x)		hlist_empty(&(x))
+#define hash_for_each_possible(a, b, c, d) \
+	hlist_for_each_entry(b, &(a), c)
+#define hash_for_each_safe(a, b, c, d, e) (void)(b); \
+	hlist_for_each_entry_safe(d, c, &(a), e)
 
 #define ACCESS_ONCE(x)		(x)
 
@@ -87,9 +264,31 @@ typedef off_t loff_t;
 
 #define IS_ENABLED(x) x - 0
 
+#define IS_BUILTIN(x) 1
+
+struct device_driver {
+	struct device *dev;
+};
+
+#define dev_get_drvdata(x)	NULL
+#define dev_set_drvdata(x, y)
+#define dev_name(dev)		""
+
+#define devm_kzalloc(x, y, z)	kzalloc(y, z)
+
+struct module;
+
+#define MODULE_AUTHOR(x)
+#define MODULE_DESCRIPTION(x)
+#define MODULE_LICENSE(x)
 #define MODULE_FIRMWARE(x)
+#define MODULE_DEVICE_TABLE(x, y)
 #define MODULE_PARM_DESC(parm, desc)
 #define module_param_named(name, value, type, perm)
+#define module_param_named_unsafe(name, value, type, perm)
+#define module_param_unsafe(name, type, perm)
+
+#define THIS_MODULE	NULL
 
 #define ARRAY_SIZE nitems
 
@@ -98,15 +297,21 @@ typedef off_t loff_t;
 #define EREMOTEIO	EIO
 #define EPROTO		EIO
 #define ENOTSUPP	ENOTSUP
+#define ENODATA		ENOTSUP
+#define ECHRNG		EINVAL
 
-#define KERN_INFO
-#define KERN_WARNING
-#define KERN_NOTICE
-#define KERN_DEBUG
-#define KERN_CRIT
-#define KERN_ERR
+#define KERN_INFO	""
+#define KERN_WARNING	""
+#define KERN_NOTICE	""
+#define KERN_DEBUG	""
+#define KERN_CRIT	""
+#define KERN_ERR	""
 
 #define KBUILD_MODNAME "drm"
+
+#define UTS_RELEASE	""
+
+#define TASK_COMM_LEN	(MAXCOMLEN + 1)
 
 #ifndef pr_fmt
 #define pr_fmt(fmt) fmt
@@ -163,6 +368,17 @@ typedef off_t loff_t;
 	    do { } while(0)
 #endif
 
+enum {
+	DUMP_PREFIX_NONE,
+	DUMP_PREFIX_ADDRESS,
+	DUMP_PREFIX_OFFSET
+};
+
+void print_hex_dump(const char *, const char *, int, int, int,
+	 const void *, size_t, bool);
+
+#define scnprintf(str, size, fmt, arg...) snprintf(str, size, fmt, ## arg)
+
 #define unlikely(x)	__builtin_expect(!!(x), 0)
 #define likely(x)	__builtin_expect(!!(x), 1)
 
@@ -177,8 +393,10 @@ do {									\
 #define BUG_ON(x)	KASSERT(!(x))
 #endif
 
+#define BUILD_BUG()
 #define BUILD_BUG_ON(x) CTASSERT(!(x))
 #define BUILD_BUG_ON_NOT_POWER_OF_2(x)
+#define BUILD_BUG_ON_MSG(x, y)
 
 #define WARN(condition, fmt...) ({ 					\
 	int __ret = !!(condition);					\
@@ -223,6 +441,9 @@ do {									\
 #define DEFINE_EVENT(template, name, proto, args) \
 static inline void trace_##name(proto) {}
 
+#define DEFINE_EVENT_PRINT(template, name, proto, args, print) \
+static inline void trace_##name(proto) {}
+
 #define TRACE_EVENT(name, proto, args, tstruct, assign, print) \
 static inline void trace_##name(proto) {}
 
@@ -257,6 +478,21 @@ IS_ERR_OR_NULL(const void *ptr)
 {
         return !ptr || IS_ERR_VALUE((unsigned long)ptr);
 }
+
+static inline void *
+ERR_CAST(const void *ptr)
+{
+	return (void *)ptr;
+}
+
+static inline int
+PTR_ERR_OR_ZERO(const void *ptr)
+{
+	return IS_ERR(ptr)? PTR_ERR(ptr) : 0;
+}
+
+#define swap(a, b) \
+	do { __typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while(0)
 
 #define container_of(ptr, type, member) ({                      \
 	__typeof( ((type *)0)->member ) *__mptr = (ptr);        \
@@ -300,8 +536,16 @@ spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
 #define write_lock(rwl)			rw_enter_write(rwl)
 #define write_unlock(rwl)		rw_exit_write(rwl)
 
+#define might_lock(lock)
+#define lockdep_assert_held(lock)	do { (void)(lock); } while(0)
+
 #define local_irq_save(x)		(x) = splhigh()
 #define local_irq_restore(x)		splx((x))
+
+#define synchronize_irq(x)
+
+#define fence_wait(x, y)
+#define fence_put(x)
 
 struct wait_queue_head {
 	struct mutex lock;
@@ -320,6 +564,7 @@ init_waitqueue_head(wait_queue_head_t *wq)
 do {						\
 	struct sleep_state sls;			\
 						\
+	KASSERT(!cold);				\
 	if (condition)				\
 		break;				\
 	atomic_inc_int(&(wq).count);		\
@@ -333,6 +578,7 @@ do {						\
 	struct sleep_state sls;			\
 	int deadline, __error;			\
 						\
+	KASSERT(!cold);				\
 	atomic_inc_int(&(wq).count);		\
 	sleep_setup(&sls, &wq, 0, "drmwet");	\
 	sleep_setup_timeout(&sls, ret);		\
@@ -360,8 +606,9 @@ do {						\
 #define __wait_event_interruptible_timeout(wq, condition, ret) \
 do {						\
 	struct sleep_state sls;			\
-	int deadline, __error, __error1;		\
+	int deadline, __error, __error1;	\
 						\
+	KASSERT(!cold);				\
 	atomic_inc_int(&(wq).count);		\
 	sleep_setup(&sls, &wq, PCATCH, "drmweti"); \
 	sleep_setup_timeout(&sls, ret);		\
@@ -374,9 +621,9 @@ do {						\
 	atomic_dec_int(&(wq).count);		\
 	if (ret < 0 || __error1 == EWOULDBLOCK)	\
 		ret = 0;			\
-	if (__error == ERESTART)			\
+	if (__error == ERESTART)		\
 		ret = -ERESTARTSYS;		\
-	else if (__error)				\
+	else if (__error)			\
 		ret = -__error;			\
 	if (ret == 0 && (condition)) {		\
 		ret = 1;			\
@@ -441,6 +688,9 @@ complete_all(struct completion *x)
 
 struct workqueue_struct;
 
+#define system_wq (struct workqueue_struct *)systq
+#define system_long_wq (struct workqueue_struct *)systq
+
 static inline struct workqueue_struct *
 alloc_ordered_workqueue(const char *name, int flags)
 {
@@ -467,6 +717,8 @@ INIT_WORK(struct work_struct *work, work_func_t func)
 	work->tq = systq;
 	task_set(&work->task, (void (*)(void *))func, work);
 }
+
+#define INIT_WORK_ONSTACK(x, y)	INIT_WORK((x), (y))
 
 static inline bool
 queue_work(struct workqueue_struct *wq, struct work_struct *work)
@@ -553,20 +805,42 @@ cancel_delayed_work_sync(struct delayed_work *dwork)
 	return task_del(dwork->tq, &dwork->work.task);
 }
 
-#define flush_workqueue(x)
-#define flush_scheduled_work(x)
-#define flush_delayed_work(x) (void)(x)
+void flush_workqueue(struct workqueue_struct *);
+void flush_work(struct work_struct *);
+void flush_delayed_work(struct delayed_work *);
+#define flush_scheduled_work()	flush_workqueue(system_wq)
+
+#define destroy_work_on_stack(x)
+
+typedef void *async_cookie_t;
+#define async_schedule(func, data)	(func)((data), NULL)
+
+#define local_irq_disable()	disable_intr()
+#define local_irq_enable()	enable_intr()
 
 #define setup_timer(x, y, z)	timeout_set((x), (void (*)(void *))(y), (void *)(z))
 #define mod_timer(x, y)		timeout_add((x), (y - jiffies))
+#define mod_timer_pinned(x, y)	timeout_add((x), (y - jiffies))
 #define del_timer_sync(x)	timeout_del((x))
+#define timer_pending(x)	timeout_pending((x))
+
+#define cond_resched()		sched_pause(yield)
+#define drm_need_resched() \
+    (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD)
+
+#define TASK_UNINTERRUPTIBLE	0
+#define TASK_INTERRUPTIBLE	PCATCH
+
+#define signal_pending_state(x, y) CURSIG(curproc)
 
 #define NSEC_PER_USEC	1000L
+#define NSEC_PER_MSEC	1000000L
 #define NSEC_PER_SEC	1000000000L
 #define KHZ2PICOS(a)	(1000000000UL/(a))
 
 extern struct timespec ns_to_timespec(const int64_t);
 extern int64_t timeval_to_ns(const struct timeval *);
+extern int64_t timeval_to_us(const struct timeval *);
 extern struct timeval ns_to_timeval(const int64_t);
 
 static inline struct timespec
@@ -600,7 +874,10 @@ round_jiffies_up_relative(unsigned long j)
 }
 
 #define jiffies_to_msecs(x)	(((int64_t)(x)) * 1000 / hz)
+#define jiffies_to_usecs(x)	(((int64_t)(x)) * 1000000 / hz)
 #define msecs_to_jiffies(x)	(((int64_t)(x)) * hz / 1000)
+#define nsecs_to_jiffies64(x)	(((int64_t)(x)) * hz / 1000000000)
+#define get_jiffies_64()	jiffies
 #define time_after(a,b)		((long)(b) - (long)(a) < 0)
 #define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
 #define get_seconds()		time_second
@@ -664,9 +941,21 @@ ktime_get_monotonic_offset(void)
 }
 
 static inline int64_t
+ktime_to_us(struct timeval tv)
+{
+	return timeval_to_us(&tv);
+}
+
+static inline int64_t
 ktime_to_ns(struct timeval tv)
 {
 	return timeval_to_ns(&tv);
+}
+
+static inline int64_t
+ktime_get_raw_ns(void)
+{
+	return ktime_to_ns(ktime_get());
 }
 
 #define ktime_to_timeval(tv) (tv)
@@ -691,12 +980,26 @@ ktime_sub_ns(struct timeval tv, int64_t ns)
 	return ns_to_timeval(timeval_to_ns(&tv) - ns);
 }
 
+static inline int64_t
+ktime_us_delta(struct timeval a, struct timeval b)
+{
+	return ktime_to_us(ktime_sub(a, b));
+}
+
+#define ktime_mono_to_real(x) (x)
+#define ktime_get_real() ktime_get()
+
+#define do_gettimeofday(tv) getmicrouptime(tv)
+
 #define GFP_ATOMIC	M_NOWAIT
 #define GFP_NOWAIT	M_NOWAIT
 #define GFP_KERNEL	(M_WAITOK | M_CANFAIL)
 #define GFP_TEMPORARY	(M_WAITOK | M_CANFAIL)
+#define GFP_HIGHUSER	0
+#define GFP_DMA32	0
 #define __GFP_NOWARN	0
 #define __GFP_NORETRY	0
+#define __GFP_ZERO	M_ZERO
 
 static inline void *
 kmalloc(size_t size, int flags)
@@ -727,9 +1030,9 @@ kzalloc(size_t size, int flags)
 }
 
 static inline void
-kfree(void *objp)
+kfree(const void *objp)
 {
-	free(objp, M_DRM, 0);
+	free((void *)objp, M_DRM, 0);
 }
 
 static inline void *
@@ -739,6 +1042,27 @@ kmemdup(const void *src, size_t len, int flags)
 	if (p)
 		memcpy(p, src, len);
 	return (p);
+}
+
+static inline char *
+kasprintf(int flags, const char *fmt, ...)
+{
+	char *buf;
+	size_t len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+
+	buf = kmalloc(len, flags);
+	if (buf) {
+		va_start(ap, fmt);
+		vsnprintf(buf, len, fmt, ap);
+		va_end(ap);
+	}
+
+	return buf;
 }
 
 static inline void *
@@ -792,6 +1116,23 @@ kref_sub(struct kref *ref, unsigned int v, void (*release)(struct kref *ref))
 {
 	if (atomic_sub_int_nv(&ref->refcount, v) == 0)
 		release(ref);
+}
+
+static inline int
+kref_put_mutex(struct kref *kref, void (*release)(struct kref *kref),
+    struct rwlock *lock)
+{
+	if (!atomic_add_unless(&kref->refcount, -1, 1)) {
+		rw_enter_write(lock);
+		if (likely(atomic_dec_and_test(&kref->refcount))) {
+			release(kref);
+			return 1;
+		}
+		rw_exit_write(lock);
+		return 0;
+	}
+
+	return 0;
 }
 
 struct kobject {
@@ -861,9 +1202,33 @@ void idr_preload(unsigned int);
 int idr_alloc(struct idr *, void *, int, int, unsigned int);
 #define idr_preload_end()
 void *idr_find(struct idr *, int);
+void *idr_replace(struct idr *, void *ptr, int);
 void idr_remove(struct idr *, int);
 void idr_destroy(struct idr *);
 int idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
+void *idr_get_next(struct idr *, int *);
+
+#define idr_for_each_entry(idp, entry, id) \
+	for (id = 0; ((entry) = idr_get_next(idp, &(id))) != NULL; id++)
+
+
+struct ida {
+	int counter;
+};
+
+void ida_init(struct ida *);
+void ida_destroy(struct ida *);
+int ida_simple_get(struct ida *, unsigned int, unsigned nt, int);
+void ida_remove(struct ida *, int);
+
+struct notifier_block {
+	void *notifier_call;
+};
+
+#define register_reboot_notifier(x)
+#define unregister_reboot_notifier(x)
+
+#define SYS_RESTART 0
 
 #define min_t(t, a, b) ({ \
 	t __min_a = (a); \
@@ -876,9 +1241,16 @@ int idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
 	__max_a > __max_b ? __max_a : __max_b; })
 
 #define clamp_t(t, x, a, b) min_t(t, max_t(t, x, a), b)
+#define clamp(x, a, b) clamp_t(__typeof(x), x, a, b)
 
-#define do_div(n, base) \
-	n = n / base
+#define min3(x, y, z) MIN(x, MIN(y, z))
+
+#define do_div(n, base) ({				\
+	uint32_t __base = (base);			\
+	uint32_t __rem = ((uint64_t)(n)) % __base;	\
+	(n) = ((uint64_t)(n)) / __base;			\
+	__rem;						\
+})
 
 static inline uint64_t
 div_u64(uint64_t x, uint32_t y)
@@ -886,9 +1258,22 @@ div_u64(uint64_t x, uint32_t y)
 	return (x / y);
 }
 
+static inline int64_t
+div_s64(int64_t x, int64_t y)
+{
+	return (x / y);
+}
+
 static inline uint64_t
 div64_u64(uint64_t x, uint64_t y)
 {
+	return (x / y);
+}
+
+static inline uint64_t
+div64_u64_rem(uint64_t x, uint64_t y, uint64_t *rem)
+{
+	*rem = x % y;
 	return (x / y);
 }
 
@@ -937,28 +1322,8 @@ copy_from_user(void *to, const void *from, unsigned len)
 #define get_user(x, ptr)	-copyin(ptr, &(x), sizeof(x))
 #define put_user(x, ptr)	-copyout(&(x), ptr, sizeof(x))
 
-static __inline uint16_t
-hweight16(uint32_t x)
-{
-	x = (x & 0x5555) + ((x & 0xaaaa) >> 1);
-	x = (x & 0x3333) + ((x & 0xcccc) >> 2);
-	x = (x + (x >> 4)) & 0x0f0f;
-	x = (x + (x >> 8)) & 0x00ff;
-	return (x);
-}
-
-static inline uint32_t
-hweight32(uint32_t x)
-{
-	x = (x & 0x55555555) + ((x & 0xaaaaaaaa) >> 1);
-	x = (x & 0x33333333) + ((x & 0xcccccccc) >> 2);
-	x = (x + (x >> 4)) & 0x0f0f0f0f;
-	x = (x + (x >> 8));
-	x = (x + (x >> 16)) & 0x000000ff;
-	return x;
-}
-
 #define console_lock()
+#define console_trylock()	1
 #define console_unlock()
 
 #ifndef PCI_MEM_START
@@ -1011,6 +1376,7 @@ struct resource {
 };
 
 struct pci_bus {
+	pci_chipset_tag_t pc;
 	unsigned char	number;
 };
 
@@ -1023,10 +1389,14 @@ struct pci_dev {
 	uint16_t	device;
 	uint16_t	subsystem_vendor;
 	uint16_t	subsystem_device;
+	uint8_t		revision;
 
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
 	struct pci_softc *pci;
+
+	int		irq;
+	int		msi_enabled;
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
 
@@ -1045,37 +1415,44 @@ struct pci_dev {
 #define PCI_SLOT(devfn)		((devfn) >> 3)
 #define PCI_FUNC(devfn)		((devfn) & 0x7)
 
-static inline void
+#define pci_dev_put(x)
+
+
+static inline int
 pci_read_config_dword(struct pci_dev *pdev, int reg, u32 *val)
 {
 	*val = pci_conf_read(pdev->pc, pdev->tag, reg);
+	return 0;
 } 
 
-static inline void
+static inline int
 pci_read_config_word(struct pci_dev *pdev, int reg, u16 *val)
 {
 	uint32_t v;
 
 	v = pci_conf_read(pdev->pc, pdev->tag, (reg & ~0x2));
 	*val = (v >> ((reg & 0x2) * 8));
+	return 0;
 } 
 
-static inline void
+static inline int
 pci_read_config_byte(struct pci_dev *pdev, int reg, u8 *val)
 {
 	uint32_t v;
 
 	v = pci_conf_read(pdev->pc, pdev->tag, (reg & ~0x3));
 	*val = (v >> ((reg & 0x3) * 8));
+	return 0;
 } 
 
-static inline void
+static inline int
 pci_write_config_dword(struct pci_dev *pdev, int reg, u32 val)
 {
 	pci_conf_write(pdev->pc, pdev->tag, reg, val);
+	return 0;
 } 
 
-static inline void
+static inline int
 pci_write_config_word(struct pci_dev *pdev, int reg, u16 val)
 {
 	uint32_t v;
@@ -1084,9 +1461,10 @@ pci_write_config_word(struct pci_dev *pdev, int reg, u16 val)
 	v &= ~(0xffff << ((reg & 0x2) * 8));
 	v |= (val << ((reg & 0x2) * 8));
 	pci_conf_write(pdev->pc, pdev->tag, (reg & ~0x2), v);
+	return 0;
 } 
 
-static inline void
+static inline int
 pci_write_config_byte(struct pci_dev *pdev, int reg, u8 val)
 {
 	uint32_t v;
@@ -1095,7 +1473,39 @@ pci_write_config_byte(struct pci_dev *pdev, int reg, u8 val)
 	v &= ~(0xff << ((reg & 0x3) * 8));
 	v |= (val << ((reg & 0x3) * 8));
 	pci_conf_write(pdev->pc, pdev->tag, (reg & ~0x3), v);
+	return 0;
 }
+
+static inline int
+pci_bus_read_config_word(struct pci_bus *bus, unsigned int devfn,
+    int reg, u16 *val)
+{
+	pcitag_t tag = pci_make_tag(bus->pc, bus->number,
+	    PCI_SLOT(devfn), PCI_FUNC(devfn));
+	uint32_t v;
+
+	v = pci_conf_read(bus->pc, tag, (reg & ~0x2));
+	*val = (v >> ((reg & 0x2) * 8));
+	return 0;
+}
+
+static inline int
+pci_bus_read_config_byte(struct pci_bus *bus, unsigned int devfn,
+    int reg, u8 *val)
+{
+	pcitag_t tag = pci_make_tag(bus->pc, bus->number,
+	    PCI_SLOT(devfn), PCI_FUNC(devfn));
+	uint32_t v;
+
+	v = pci_conf_read(bus->pc, tag, (reg & ~0x3));
+	*val = (v >> ((reg & 0x3) * 8));
+	return 0;
+}
+
+#define pci_set_master(x)
+
+#define pci_enable_msi(x)
+#define pci_disable_msi(x)
 
 typedef enum {
 	PCI_D0,
@@ -1105,7 +1515,14 @@ typedef enum {
 	PCI_D3cold
 } pci_power_t;
 
+#define pci_save_state(x)
+#define pci_enable_device(x)	0
+#define pci_disable_device(x)
+
 #if defined(__amd64__) || defined(__i386__)
+
+#define AGP_USER_MEMORY			0
+#define AGP_USER_CACHED_MEMORY		BUS_DMA_COHERENT
 
 #define PCI_DMA_BIDIRECTIONAL	0
 
@@ -1126,10 +1543,22 @@ pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
 	return 0;
 }
 
+#define dma_set_coherent_mask(x, y)
+
 #define VGA_RSRC_LEGACY_IO	0x01
 
 void vga_get_uninterruptible(struct pci_dev *, int);
 void vga_put(struct pci_dev *, int);
+
+static inline int
+vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
+{
+	return -ENODEV;
+}
+
+#define vga_switcheroo_register_client(a, b, c)	0
+#define vga_switcheroo_unregister_client(a)
+#define vga_switcheroo_process_delayed_switch()
 
 #endif
 
@@ -1195,6 +1624,7 @@ void	 vunmap(void *, size_t);
 #define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
 #define DIV_ROUND_UP_ULL(x, y)	DIV_ROUND_UP(x, y)
 #define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
+#define DIV_ROUND_CLOSEST_ULL(x, y)	DIV_ROUND_CLOSEST(x, y)
 
 static inline unsigned long
 roundup_pow_of_two(unsigned long x)
@@ -1233,6 +1663,20 @@ mdelay(unsigned long msecs)
 		DELAY(1000);
 }
 
+static __inline void
+cpu_relax(void)
+{
+	CPU_BUSY_CYCLE();
+	if (cold) {
+		delay(tick);
+		jiffies++;
+	}
+}
+
+#define cpu_relax_lowlatency() CPU_BUSY_CYCLE()
+#define cpu_has_pat	1
+#define cpu_has_clflush	1
+
 static inline uint32_t ror32(uint32_t word, unsigned int shift)
 {
 	return (word >> shift) | (word << (32 - shift));
@@ -1261,6 +1705,9 @@ power_supply_is_system_supplied(void)
 	/* XXX return 0 if on battery */
 	return (1);
 }
+
+#define pm_qos_update_request(x, y)
+#define pm_qos_remove_request(x)
 
 #define _U      0x01
 #define _L      0x02
@@ -1296,6 +1743,8 @@ of_machine_is_compatible(const char *model)
 }
 #endif
 
+typedef unsigned int gfp_t;
+
 struct vm_page *alloc_pages(unsigned int, unsigned int);
 void	__free_pages(struct vm_page *, unsigned int);
 
@@ -1319,6 +1768,12 @@ get_order(size_t size)
 
 #if defined(__i386__) || defined(__amd64__)
 
+#define _PAGE_PRESENT	PG_V
+#define _PAGE_RW	PG_RW
+#define _PAGE_PAT	PG_PAT
+#define _PAGE_PWT	PG_WT
+#define _PAGE_PCD	PG_N
+
 static inline void
 pagefault_disable(void)
 {
@@ -1334,7 +1789,7 @@ pagefault_enable(void)
 }
 
 static inline int
-in_atomic(void)
+pagefault_disabled(void)
 {
 	return curcpu()->ci_inatomic;
 }
@@ -1409,6 +1864,15 @@ struct fb_info {
 	void *par;
 };
 
+#define FB_BLANK_UNBLANK	0
+#define FB_BLANK_NORMAL		1
+#define FB_BLANK_HSYNC_SUSPEND	2
+#define FB_BLANK_VSYNC_SUSPEND	3
+#define FB_BLANK_POWERDOWN	4
+
+#define FBINFO_STATE_RUNNING	0
+#define FBINFO_STATE_SUSPENDED	1
+
 #define framebuffer_alloc(flags, device) \
 	kzalloc(sizeof(struct fb_info), GFP_KERNEL)
 
@@ -1429,3 +1893,150 @@ struct acpi_table_header;
 #define AE_NOT_FOUND	0x0005
 
 acpi_status acpi_get_table_with_size(const char *, int, struct acpi_table_header **, acpi_size *);
+
+#define acpi_video_register()
+#define acpi_video_unregister()
+
+#define MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM	0x03
+#define MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM	0x13
+#define MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM	0x23
+#define MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM	0x04
+#define MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM	0x14
+#define MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM	0x24
+#define MIPI_DSI_DCS_SHORT_WRITE		0x05
+#define MIPI_DSI_DCS_SHORT_WRITE_PARAM		0x15
+#define MIPI_DSI_DCS_READ			0x06
+#define MIPI_DSI_GENERIC_LONG_WRITE		0x29
+#define MIPI_DSI_DCS_LONG_WRITE			0x39
+
+struct pwm_device;
+
+static inline struct pwm_device *
+pwm_get(struct device *dev, const char *consumer)
+{
+	return ERR_PTR(-ENODEV);
+}
+
+static inline void
+pwm_put(struct pwm_device *pwm)
+{
+}
+
+static inline unsigned int
+pwm_get_duty_cycle(const struct pwm_device *pwm)
+{
+	return 0;
+}
+
+static inline int
+pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
+{
+	return -EINVAL;
+}
+
+static inline int
+pwm_enable(struct pwm_device *pwm)
+{
+	return -EINVAL;
+}
+
+static inline void
+pwm_disable(struct pwm_device *pwm)
+{
+}
+
+struct scatterlist {
+	dma_addr_t dma_address;
+	unsigned int offset;
+	unsigned int length;
+};
+
+struct sg_table {
+	struct scatterlist *sgl;
+	unsigned int nents;
+	unsigned int orig_nents;
+};
+
+struct sg_page_iter {
+	struct scatterlist *sg;
+	unsigned int sg_pgoffset;
+	unsigned int __nents;
+};
+
+int sg_alloc_table(struct sg_table *, unsigned int, gfp_t);
+void sg_free_table(struct sg_table *);
+
+#define sg_mark_end(x)
+
+static __inline void
+__sg_page_iter_start(struct sg_page_iter *iter, struct scatterlist *sgl,
+    unsigned int nents, unsigned long pgoffset)
+{
+	iter->sg = sgl;
+	iter->sg_pgoffset = pgoffset - 1;
+	iter->__nents = nents;
+}
+
+static inline bool
+__sg_page_iter_next(struct sg_page_iter *iter)
+{
+	iter->sg_pgoffset++;
+	while (iter->__nents > 0 && 
+	    iter->sg_pgoffset >= (iter->sg->length / PAGE_SIZE)) {
+		iter->sg_pgoffset -= (iter->sg->length / PAGE_SIZE);
+		iter->sg++;
+		iter->__nents--;
+	}
+
+	return (iter->__nents > 0);
+}
+
+static inline paddr_t
+sg_page_iter_dma_address(struct sg_page_iter *iter)
+{
+	return iter->sg->dma_address + (iter->sg_pgoffset << PAGE_SHIFT);
+}
+
+static inline struct vm_page *
+sg_page_iter_page(struct sg_page_iter *iter)
+{
+	return PHYS_TO_VM_PAGE(sg_page_iter_dma_address(iter));
+}
+
+static inline struct vm_page *
+sg_page(struct scatterlist *sgl)
+{
+	return PHYS_TO_VM_PAGE(sgl->dma_address);
+}
+
+#define sg_dma_address(sg)	((sg)->dma_address)
+#define sg_dma_len(sg)		((sg)->length)
+
+#define for_each_sg_page(sgl, iter, nents, pgoffset) \
+  __sg_page_iter_start((iter), (sgl), (nents), (pgoffset)); \
+  while (__sg_page_iter_next(iter))
+
+size_t sg_copy_from_buffer(struct scatterlist *, unsigned int,
+    const void *, size_t);
+
+struct firmware {
+	const u8 *data;
+};
+
+static inline int
+request_firmware(const struct firmware **fw, const char *name,
+    struct device *device)
+{
+	return -EINVAL;
+}
+
+#define request_firmware_nowait(a, b, c, d, e, f, g) -EINVAL
+
+static inline void
+release_firmware(const struct firmware *fw)
+{
+}
+
+void *memchr_inv(const void *, int, size_t);
+
+#endif

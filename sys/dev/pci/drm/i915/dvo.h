@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvo.h,v 1.2 2015/09/23 23:12:11 kettenis Exp $	*/
+/*	$OpenBSD: dvo.h,v 1.3 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright © 2006 Eric Anholt
  *
@@ -42,7 +42,7 @@ struct intel_dvo_device {
 
 	const struct intel_dvo_dev_ops *dev_ops;
 	void *dev_priv;
-	struct i2c_controller *i2c_bus;
+	struct i2c_adapter *i2c_bus;
 };
 
 struct intel_dvo_dev_ops {
@@ -51,7 +51,7 @@ struct intel_dvo_dev_ops {
 	 * Returns NULL if the device does not exist.
 	 */
 	bool (*init)(struct intel_dvo_device *dvo,
-		     struct i2c_controller *i2cbus);
+		     struct i2c_adapter *i2cbus);
 
 	/*
 	 * Called to allow the output a chance to create properties after the
@@ -97,8 +97,8 @@ struct intel_dvo_dev_ops {
 	 * after this function is called.
 	 */
 	void (*mode_set)(struct intel_dvo_device *dvo,
-			 struct drm_display_mode *mode,
-			 struct drm_display_mode *adjusted_mode);
+			 const struct drm_display_mode *mode,
+			 const struct drm_display_mode *adjusted_mode);
 
 	/*
 	 * Probe for a connected output, and return detect_status.

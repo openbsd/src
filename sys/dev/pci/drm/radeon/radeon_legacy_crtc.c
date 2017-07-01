@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_crtc.c,v 1.3 2014/02/10 01:22:10 jsg Exp $	*/
+/*	$OpenBSD: radeon_legacy_crtc.c,v 1.4 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -386,7 +386,7 @@ int radeon_crtc_do_set_base(struct drm_crtc *crtc,
 
 	DRM_DEBUG_KMS("\n");
 	/* no fb bound */
-	if (!atomic && !crtc->fb) {
+	if (!atomic && !crtc->primary->fb) {
 		DRM_DEBUG_KMS("No FB bound\n");
 		return 0;
 	}
@@ -396,8 +396,8 @@ int radeon_crtc_do_set_base(struct drm_crtc *crtc,
 		target_fb = fb;
 	}
 	else {
-		radeon_fb = to_radeon_framebuffer(crtc->fb);
-		target_fb = crtc->fb;
+		radeon_fb = to_radeon_framebuffer(crtc->primary->fb);
+		target_fb = crtc->primary->fb;
 	}
 
 	switch (target_fb->bits_per_pixel) {
@@ -445,7 +445,7 @@ retry:
 		 * We don't shutdown the display controller because new buffer
 		 * will end up in same spot.
 		 */
-		if (!atomic && fb && fb != crtc->fb) {
+		if (!atomic && fb && fb != crtc->primary->fb) {
 			struct radeon_bo *old_rbo;
 			unsigned long nsize, osize;
 
@@ -556,7 +556,7 @@ retry:
 	WREG32(RADEON_CRTC_OFFSET + radeon_crtc->crtc_offset, crtc_offset);
 	WREG32(RADEON_CRTC_PITCH + radeon_crtc->crtc_offset, crtc_pitch);
 
-	if (!atomic && fb && fb != crtc->fb) {
+	if (!atomic && fb && fb != crtc->primary->fb) {
 		radeon_fb = to_radeon_framebuffer(fb);
 		rbo = gem_to_radeon_bo(radeon_fb->obj);
 		r = radeon_bo_reserve(rbo, false);
@@ -600,7 +600,7 @@ static bool radeon_set_crtc_timing(struct drm_crtc *crtc, struct drm_display_mod
 		}
 	}
 
-	switch (crtc->fb->bits_per_pixel) {
+	switch (crtc->primary->fb->bits_per_pixel) {
 	case 8:
 		format = 2;
 		break;

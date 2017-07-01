@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_i2c.c,v 1.5 2015/04/06 07:38:49 jsg Exp $	*/
+/*	$OpenBSD: radeon_i2c.c,v 1.6 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -34,11 +34,9 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 
-#ifdef notyet
-extern int radeon_atom_hw_i2c_xfer(struct i2c_controller *i2c_adap,
+extern int radeon_atom_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 				   struct i2c_msg *msgs, int num);
-#endif
-extern u32 radeon_atom_hw_i2c_func(struct i2c_controller *adap);
+extern u32 radeon_atom_hw_i2c_func(struct i2c_adapter *adap);
 
 /**
  * radeon_ddc_probe
@@ -49,23 +47,32 @@ bool radeon_ddc_probe(struct radeon_connector *radeon_connector, bool use_aux)
 	u8 out = 0x0;
 	u8 buf[8];
 	int ret;
+	struct i2c_msg msgs[] = {
+		{
+			.addr = DDC_ADDR,
+			.flags = 0,
+			.len = 1,
+			.buf = &out,
+		},
+		{
+			.addr = DDC_ADDR,
+			.flags = I2C_M_RD,
+			.len = 8,
+			.buf = buf,
+		}
+	};
 
 	/* on hw with routers, select right port */
 	if (radeon_connector->router.ddc_valid)
 		radeon_router_select_ddc_port(radeon_connector);
 
 	if (use_aux) {
-		struct radeon_connector_atom_dig *dig = radeon_connector->con_priv;
-		iic_acquire_bus(&dig->dp_i2c_bus->adapter, 0);
-		ret = iic_exec(&dig->dp_i2c_bus->adapter, I2C_OP_READ_WITH_STOP, DDC_ADDR, &out, 1, buf, 8, 0);
-		iic_release_bus(&dig->dp_i2c_bus->adapter, 0);
+		ret = i2c_transfer(&radeon_connector->ddc_bus->aux.ddc, msgs, 2);
 	} else {
-		iic_acquire_bus(&radeon_connector->ddc_bus->adapter, 0);
-		ret = iic_exec(&radeon_connector->ddc_bus->adapter, I2C_OP_READ_WITH_STOP, DDC_ADDR, &out, 1, buf, 8, 0);
-		iic_release_bus(&radeon_connector->ddc_bus->adapter, 0);
+		ret = i2c_transfer(&radeon_connector->ddc_bus->adapter, msgs, 2);
 	}
 
-	if (ret)
+	if (ret != 2)
 		/* Couldn't find an accessible DDC on this connector */
 		return false;
 	/* Probe also for valid EDID header
@@ -315,7 +322,6 @@ radeon_write_byte(void *cookie, u_int8_t byte, int flags)
 
 /* hw i2c */
 
-#ifdef notyet
 static u32 radeon_get_i2c_prescale(struct radeon_device *rdev)
 {
 	u32 sclk = rdev->pm.current_sclk;
@@ -406,7 +412,7 @@ static u32 radeon_get_i2c_prescale(struct radeon_device *rdev)
 /* hw i2c engine for r1xx-4xx hardware
  * hw can buffer up to 15 bytes
  */
-static int r100_hw_i2c_xfer(struct i2c_controller *i2c_adap,
+static int r100_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 			    struct i2c_msg *msgs, int num)
 {
 	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
@@ -659,7 +665,7 @@ done:
 /* hw i2c engine for r5xx hardware
  * hw can buffer up to 15 bytes
  */
-static int r500_hw_i2c_xfer(struct i2c_controller *i2c_adap,
+static int r500_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 			    struct i2c_msg *msgs, int num)
 {
 	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
@@ -892,7 +898,7 @@ done:
 	return ret;
 }
 
-static int radeon_hw_i2c_xfer(struct i2c_controller *i2c_adap,
+static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 			      struct i2c_msg *msgs, int num)
 {
 	struct radeon_i2c_chan *i2c = i2c_get_adapdata(i2c_adap);
@@ -969,21 +975,26 @@ static int radeon_hw_i2c_xfer(struct i2c_controller *i2c_adap,
 	return ret;
 }
 
+#ifdef notyet
 static u32 radeon_hw_i2c_func(struct i2c_controller *adap)
 {
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
 }
+#endif
 
 static const struct i2c_algorithm radeon_i2c_algo = {
 	.master_xfer = radeon_hw_i2c_xfer,
+#ifdef notyet
 	.functionality = radeon_hw_i2c_func,
+#endif
 };
 
 static const struct i2c_algorithm radeon_atom_i2c_algo = {
 	.master_xfer = radeon_atom_hw_i2c_xfer,
+#ifdef notyet
 	.functionality = radeon_atom_hw_i2c_func,
+#endif
 };
-#endif // notyet
 
 struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 					  struct radeon_i2c_bus_rec *rec,
@@ -1006,32 +1017,19 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 	i2c->adapter.owner = THIS_MODULE;
 	i2c->adapter.class = I2C_CLASS_DDC;
 	i2c->adapter.dev.parent = &dev->pdev->dev;
-#else
-	i2c->adapter.ic_cookie = i2c;
-	i2c->adapter.ic_acquire_bus = radeon_acquire_bus;
-	i2c->adapter.ic_release_bus = radeon_release_bus;
-	i2c->adapter.ic_send_start = radeon_send_start;
-	i2c->adapter.ic_send_stop = radeon_send_stop;
-	i2c->adapter.ic_initiate_xfer = radeon_initiate_xfer;
-	i2c->adapter.ic_read_byte = radeon_read_byte;
-	i2c->adapter.ic_write_byte = radeon_write_byte;
 #endif
 	i2c->dev = dev;
-#ifdef notyet
 	i2c_set_adapdata(&i2c->adapter, i2c);
-#endif
 	if (rec->mm_i2c ||
 	    (rec->hw_capable &&
 	     radeon_hw_i2c &&
 	     ((rdev->family <= CHIP_RS480) ||
 	      ((rdev->family >= CHIP_RV515) && (rdev->family <= CHIP_R580))))) {
 		/* set the radeon hw i2c adapter */
-#ifdef notyet
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-#endif
 		if (ret) {
 			DRM_ERROR("Failed to register hw i2c %s\n", name);
 			goto out_free;
@@ -1040,21 +1038,19 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 		   radeon_hw_i2c &&
 		   ASIC_IS_DCE3(rdev)) {
 		/* hw i2c using atom */
-#ifdef notyet
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_atom_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-#endif
 		if (ret) {
 			DRM_ERROR("Failed to register hw i2c %s\n", name);
 			goto out_free;
 		}
 	} else {
 		/* set the radeon bit adapter */
-#ifdef notyet
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
 			 "Radeon i2c bit bus %s", name);
+#ifdef notyet
 		i2c->adapter.algo_data = &i2c->algo.bit;
 		i2c->algo.bit.pre_xfer = pre_xfer;
 		i2c->algo.bit.post_xfer = post_xfer;
@@ -1066,6 +1062,15 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 		i2c->algo.bit.timeout = usecs_to_jiffies(2200);	/* from VESA */
 		i2c->algo.bit.data = i2c;
 		ret = i2c_bit_add_bus(&i2c->adapter);
+#else
+		i2c->adapter.ic.ic_cookie = i2c;
+		i2c->adapter.ic.ic_acquire_bus = radeon_acquire_bus;
+		i2c->adapter.ic.ic_release_bus = radeon_release_bus;
+		i2c->adapter.ic.ic_send_start = radeon_send_start;
+		i2c->adapter.ic.ic_send_stop = radeon_send_stop;
+		i2c->adapter.ic.ic_initiate_xfer = radeon_initiate_xfer;
+		i2c->adapter.ic.ic_read_byte = radeon_read_byte;
+		i2c->adapter.ic.ic_write_byte = radeon_write_byte;
 #endif
 		if (ret) {
 			DRM_ERROR("Failed to register bit i2c %s\n", name);
@@ -1079,55 +1084,14 @@ out_free:
 	return NULL;
 }
 
-struct radeon_i2c_chan *radeon_i2c_create_dp(struct drm_device *dev,
-					     struct radeon_i2c_bus_rec *rec,
-					     const char *name)
-{
-	struct radeon_i2c_chan *i2c;
-	int ret = 0;
-
-	i2c = kzalloc(sizeof(struct radeon_i2c_chan), GFP_KERNEL);
-	if (i2c == NULL)
-		return NULL;
-
-	i2c->rec = *rec;
-#ifdef notyet
-	i2c->adapter.owner = THIS_MODULE;
-	i2c->adapter.class = I2C_CLASS_DDC;
-	i2c->adapter.dev.parent = &dev->pdev->dev;
-#endif
-	i2c->dev = dev;
-#ifdef notyet
-	snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
-		 "Radeon aux bus %s", name);
-	i2c_set_adapdata(&i2c->adapter, i2c);
-	i2c->adapter.algo_data = &i2c->algo.dp;
-#endif
-	i2c->adapter.ic_cookie = &i2c->algo.dp;
-	i2c->algo.dp.aux_ch = radeon_dp_i2c_aux_ch;
-	i2c->algo.dp.adapter = &i2c->adapter;
-	i2c->algo.dp.address = 0;
-	ret = i2c_dp_aux_add_bus(&i2c->adapter);
-	if (ret) {
-		DRM_INFO("Failed to register i2c %s\n", name);
-		goto out_free;
-	}
-
-	return i2c;
-out_free:
-	kfree(i2c);
-	return NULL;
-}
-
 void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 {
-	printf("%s stub\n", __func__);
-#ifdef notyet
 	if (!i2c)
 		return;
 	i2c_del_adapter(&i2c->adapter);
+	if (i2c->has_aux)
+		drm_dp_aux_unregister(&i2c->aux);
 	kfree(i2c);
-#endif
 }
 
 /* Add the default buses */
@@ -1196,8 +1160,6 @@ void radeon_i2c_get_byte(struct radeon_i2c_chan *i2c_bus,
 			 u8 addr,
 			 u8 *val)
 {
-	printf("%s stub\n", __func__);
-#ifdef notyet
 	u8 out_buf[2];
 	u8 in_buf[2];
 	struct i2c_msg msgs[] = {
@@ -1225,7 +1187,6 @@ void radeon_i2c_get_byte(struct radeon_i2c_chan *i2c_bus,
 		DRM_DEBUG("i2c 0x%02x 0x%02x read failed\n",
 			  addr, *val);
 	}
-#endif
 }
 
 void radeon_i2c_put_byte(struct radeon_i2c_chan *i2c_bus,
@@ -1233,8 +1194,6 @@ void radeon_i2c_put_byte(struct radeon_i2c_chan *i2c_bus,
 			 u8 addr,
 			 u8 val)
 {
-	printf("%s stub\n", __func__);
-#ifdef notyet
 	uint8_t out_buf[2];
 	struct i2c_msg msg = {
 		.addr = slave_addr,
@@ -1249,7 +1208,6 @@ void radeon_i2c_put_byte(struct radeon_i2c_chan *i2c_bus,
 	if (i2c_transfer(&i2c_bus->adapter, &msg, 1) != 1)
 		DRM_DEBUG("i2c 0x%02x 0x%02x write failed\n",
 			  addr, val);
-#endif
 }
 
 /* ddc router switching */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_legacy_encoders.c,v 1.4 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: radeon_legacy_encoders.c,v 1.5 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -38,7 +38,7 @@ void	 radeon_add_legacy_encoder(struct drm_device *, uint32_t, uint32_t);
 static void radeon_legacy_encoder_disable(struct drm_encoder *encoder)
 {
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct drm_encoder_helper_funcs *encoder_funcs;
+	const struct drm_encoder_helper_funcs *encoder_funcs;
 
 	encoder_funcs = encoder->helper_private;
 	encoder_funcs->dpms(encoder, DRM_MODE_DPMS_OFF);

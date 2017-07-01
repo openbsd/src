@@ -1,4 +1,3 @@
-/*	$OpenBSD: intel_sdvo_regs.h,v 1.2 2015/09/23 23:12:12 kettenis Exp $	*/
 /*
  * Copyright © 2006-2007 Intel Corporation
  *

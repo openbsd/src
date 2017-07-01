@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_irq_kms.c,v 1.9 2015/04/18 14:47:35 jsg Exp $	*/
+/*	$OpenBSD: radeon_irq_kms.c,v 1.10 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -265,7 +265,7 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 	}
 #endif
 	rdev->irq.installed = true;
-	r = drm_irq_install(rdev->ddev);
+	r = drm_irq_install(rdev->ddev, rdev->ddev->pdev->irq);
 	if (r) {
 		rdev->irq.installed = false;
 		return r;

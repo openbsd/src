@@ -1,4 +1,4 @@
-/* $OpenBSD: i915_drm.h,v 1.24 2015/09/23 23:12:11 kettenis Exp $ */
+/* $OpenBSD: i915_drm.h,v 1.25 2017/07/01 16:14:10 kettenis Exp $ */
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -313,7 +313,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_ALLOW_BATCHBUFFER     2
 #define I915_PARAM_LAST_DISPATCH         3
 #define I915_PARAM_CHIPSET_ID            4
-#define I915_PARAM_HAS_GEM		 5
+#define I915_PARAM_HAS_GEM               5
 #define I915_PARAM_NUM_FENCES_AVAIL      6
 #define I915_PARAM_HAS_OVERLAY           7
 #define I915_PARAM_HAS_PAGEFLIPPING	 8
@@ -325,7 +325,7 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_HAS_EXEC_CONSTANTS	 14
 #define I915_PARAM_HAS_RELAXED_DELTA	 15
 #define I915_PARAM_HAS_GEN7_SOL_RESET	 16
-#define I915_PARAM_HAS_LLC		 17
+#define I915_PARAM_HAS_LLC     	 	 17
 #define I915_PARAM_HAS_ALIASING_PPGTT	 18
 #define I915_PARAM_HAS_WAIT_TIMEOUT	 19
 #define I915_PARAM_HAS_SEMAPHORES	 20
@@ -343,6 +343,8 @@ typedef struct drm_i915_irq_wait {
 #define I915_PARAM_REVISION              32
 #define I915_PARAM_SUBSLICE_TOTAL	 33
 #define I915_PARAM_EU_TOTAL		 34
+#define I915_PARAM_HAS_GPU_RESET	 35
+#define I915_PARAM_HAS_RESOURCE_STREAMER 36
 
 typedef struct drm_i915_getparam {
 	int param;
@@ -623,8 +625,10 @@ struct drm_i915_gem_exec_object2 {
 #define EXEC_OBJECT_NEEDS_FENCE (1<<0)
 #define EXEC_OBJECT_NEEDS_GTT	(1<<1)
 #define EXEC_OBJECT_WRITE	(1<<2)
-#define __EXEC_OBJECT_UNKNOWN_FLAGS -(EXEC_OBJECT_WRITE<<1)
+#define EXEC_OBJECT_SUPPORTS_48B_ADDRESS (1<<3)
+#define __EXEC_OBJECT_UNKNOWN_FLAGS -(EXEC_OBJECT_SUPPORTS_48B_ADDRESS<<1)
 	u_int64_t flags;
+
 	u_int64_t rsvd1;
 	u_int64_t rsvd2;
 };
@@ -704,7 +708,12 @@ struct drm_i915_gem_execbuffer2 {
 #define I915_EXEC_BSD_RING1		(1<<13)
 #define I915_EXEC_BSD_RING2		(2<<13)
 
-#define __I915_EXEC_UNKNOWN_FLAGS -(1<<15)
+/** Tell the kernel that the batchbuffer is processed by
+ *  the resource streamer.
+ */
+#define I915_EXEC_RESOURCE_STREAMER     (1<<15)
+
+#define __I915_EXEC_UNKNOWN_FLAGS -(I915_EXEC_RESOURCE_STREAMER<<1)
 
 #define I915_EXEC_CONTEXT_ID_MASK	(0xffffffff)
 #define i915_execbuffer2_set_context_id(eb2, context) \
@@ -936,6 +945,7 @@ struct drm_intel_overlay_put_image {
 /* flags */
 #define I915_OVERLAY_UPDATE_ATTRS	(1<<0)
 #define I915_OVERLAY_UPDATE_GAMMA	(1<<1)
+#define I915_OVERLAY_DISABLE_DEST_COLORKEY	(1<<2)
 struct drm_intel_overlay_attrs {
 	uint32_t flags;
 	uint32_t color_key;
@@ -1041,6 +1051,7 @@ struct drm_i915_gem_context_param {
 	uint32_t size;
 	uint64_t param;
 #define I915_CONTEXT_PARAM_BAN_PERIOD 0x1
+#define I915_CONTEXT_PARAM_NO_ZEROMAP 0x2
 	uint64_t value;
 };
 

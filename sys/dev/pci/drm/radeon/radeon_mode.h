@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeon_mode.h,v 1.3 2015/09/23 23:12:12 kettenis Exp $	*/
+/*	$OpenBSD: radeon_mode.h,v 1.4 2017/07/01 16:14:10 kettenis Exp $	*/
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -184,11 +184,17 @@ struct radeon_pll {
 };
 
 struct radeon_i2c_chan {
-	struct i2c_controller adapter;
+	struct i2c_adapter adapter;
 	struct drm_device *dev;
+#if 0
 	union {
 		struct i2c_algo_dp_aux_data dp;
 	} algo;
+#else
+	struct drm_dp_aux aux;
+	bool has_aux;
+	struct rwlock mutex;
+#endif
 	struct radeon_i2c_bus_rec rec;
 };
 
@@ -520,6 +526,10 @@ extern u8 radeon_dp_getsinktype(struct radeon_connector *radeon_connector);
 extern bool radeon_dp_getdpcd(struct radeon_connector *radeon_connector);
 extern int radeon_dp_get_panel_mode(struct drm_encoder *encoder,
 				    struct drm_connector *connector);
+extern void radeon_dp_aux_init(struct radeon_connector *radeon_connector);
+extern ssize_t
+radeon_dp_aux_transfer_native(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg);
+
 extern void atombios_dig_encoder_setup(struct drm_encoder *encoder, int action, int panel_mode);
 extern void radeon_atom_encoder_init(struct radeon_device *rdev);
 extern void radeon_atom_disp_eng_pll_init(struct radeon_device *rdev);
@@ -629,10 +639,10 @@ extern int radeon_crtc_cursor_set(struct drm_crtc *crtc,
 extern int radeon_crtc_cursor_move(struct drm_crtc *crtc,
 				   int x, int y);
 
-extern int radeon_get_crtc_scanoutpos(struct drm_device *dev, int crtc,
-				      unsigned int flags,
-				      int *vpos, int *hpos, ktime_t *stime,
-				      ktime_t *etime);
+extern int radeon_get_crtc_scanoutpos(struct drm_device *dev, unsigned int pipe,
+				      unsigned int flags, int *vpos, int *hpos,
+				      ktime_t *stime, ktime_t *etime,
+				      const struct drm_display_mode *mode);
 
 extern bool radeon_combios_check_hardcoded_edid(struct radeon_device *rdev);
 extern struct edid *
