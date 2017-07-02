@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.46 2017/07/02 14:27:30 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.47 2017/07/02 14:28:45 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -527,7 +527,9 @@ adjust_expressions(struct ifsd_expression_list *expressions, int depth)
 void
 eval_state(struct ifsd_state *state)
 {
-	struct ifsd_external *external = TAILQ_FIRST(&state->external_tests);
+	struct ifsd_external *external;
+
+	external = TAILQ_FIRST(&state->external_tests);
 	if (external == NULL || external->lastexec >= state->entered ||
 	    external->lastexec == 0) {
 		do_action(state->body);
