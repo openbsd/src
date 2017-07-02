@@ -2684,7 +2684,6 @@
 ./usr/share/man/man3/wscanf.3
 ./usr/share/man/man3/xdr.3
 ./usr/share/man/man3/ypclnt.3
-./usr/share/man/man4/octeon/octmmc.4
 ./usr/share/man/man4/vmmci.4
 ./usr/share/man/man4/xbf.4
 ./usr/share/man/man9/RBT_INIT.9
