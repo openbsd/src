@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_xr.c,v 1.1 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: mandoc_xr.c,v 1.2 2017/07/02 15:31:48 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -59,17 +59,18 @@ mandoc_xr_reset(void)
 	xr_first = xr_last = NULL;
 }
 
-void
+int
 mandoc_xr_add(const char *sec, const char *name, int line, int pos)
 {
-	struct mandoc_xr	 *xr;
+	struct mandoc_xr	 *xr, *oxr;
 	const char		 *pend;
 	size_t			  ssz, nsz, tsz;
 	unsigned int		  slot;
+	int			  ret;
 	uint32_t		  hv;
 
 	if (xr_hash == NULL)
-		return;
+		return 0;
 
 	ssz = strlen(sec) + 1;
 	nsz = strlen(name) + 1;
@@ -86,15 +87,21 @@ mandoc_xr_add(const char *sec, const char *name, int line, int pos)
 	pend = xr->hashkey + tsz;
 	hv = ohash_interval(xr->hashkey, &pend);
 	slot = ohash_lookup_memory(xr_hash, xr->hashkey, tsz, hv);
-	if (ohash_find(xr_hash, slot) == NULL) {
+	if ((oxr = ohash_find(xr_hash, slot)) == NULL) {
 		ohash_insert(xr_hash, slot, xr);
 		if (xr_first == NULL)
 			xr_first = xr;
 		else
 			xr_last->next = xr;
 		xr_last = xr;
-	} else
-		free(xr);
+		return 0;
+	}
+
+	ret = (oxr->line == -1) ^ (xr->line == -1);
+	if (xr->line == -1)
+		oxr->line = -1;
+	free(xr);
+	return ret;
 }
 
 struct mandoc_xr *

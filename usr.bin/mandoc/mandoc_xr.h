@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_xr.h,v 1.1 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: mandoc_xr.h,v 1.2 2017/07/02 15:31:48 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,12 +19,12 @@ struct	mandoc_xr {
 	struct mandoc_xr *next;
 	char		 *sec;
 	char		 *name;
-	int		  line;
+	int		  line;  /* Or -1 for this page's own names. */
 	int		  pos;
 	char		  hashkey[];
 };
 
 void		  mandoc_xr_reset(void);
-void		  mandoc_xr_add(const char *, const char *, int, int);
+int		  mandoc_xr_add(const char *, const char *, int, int);
 struct mandoc_xr *mandoc_xr_get(void);
 void		  mandoc_xr_free(void);

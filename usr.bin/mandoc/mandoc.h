@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.180 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.181 2017/07/02 15:31:48 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -97,6 +97,7 @@ enum	mandocerr {
 	MANDOCERR_SEC_ORDER, /* sections out of conventional order: Sh title */
 	MANDOCERR_SEC_REP, /* duplicate section title: Sh title */
 	MANDOCERR_SEC_MSEC, /* unexpected section: Sh title for ... only */
+	MANDOCERR_XR_SELF,  /* cross reference to self: Xr name sec */
 	MANDOCERR_XR_ORDER, /* unusual Xr order: ... after ... */
 	MANDOCERR_XR_PUNCT, /* unusual Xr punctuation: ... after ... */
 	MANDOCERR_AN_MISSING, /* AUTHORS section without An macro */

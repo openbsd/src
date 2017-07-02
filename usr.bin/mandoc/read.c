@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.156 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.157 2017/07/02 15:31:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -135,6 +135,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"sections out of conventional order",
 	"duplicate section title",
 	"unexpected section",
+	"cross reference to self",
 	"unusual Xr order",
 	"unusual Xr punctuation",
 	"AUTHORS section without An macro",
