@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.24 2017/07/01 15:56:11 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.25 2017/07/02 14:48:19 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1076,7 +1076,7 @@ rtwn_updateslot(struct ieee80211com *ic)
 	
 	s = splnet();
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		rtwn_write_1(sc, R92C_SLOT, 9);
+		rtwn_write_1(sc, R92C_SLOT, IEEE80211_DUR_DS_SHSLOT);
 	else
 		rtwn_write_1(sc, R92C_SLOT, IEEE80211_DUR_DS_SLOT);
 	splx(s);
@@ -1097,7 +1097,7 @@ rtwn_updateedca(struct ieee80211com *ic)
 	uint8_t acm = 0;
 
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		slottime = 9; /* XXX needs a macro in ieee80211.h */
+		slottime = IEEE80211_DUR_DS_SHSLOT;
 	else
 		slottime = IEEE80211_DUR_DS_SLOT;
 	s = splnet();
