@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2017/06/18 12:03:47 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2017/07/02 14:27:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -245,9 +245,9 @@ init		: INIT {
 				curaction = conf->always.init;
 		} action_block {
 			if (curstate != NULL)
-				curaction = curstate->always;
+				curaction = curstate->body;
 			else
-				curaction = conf->always.always;
+				curaction = conf->always.body;
 		}
 		;
 
@@ -339,11 +339,11 @@ state		: STATE string {
 			init_state(state);
 			state->name = $2;
 			curstate = state;
-			curaction = state->always;
+			curaction = state->body;
 		} optnl '{' optnl stateopts_l '}' {
 			TAILQ_INSERT_TAIL(&conf->states, curstate, entries);
 			curstate = NULL;
-			curaction = conf->always.always;
+			curaction = conf->always.body;
 		}
 		;
 
@@ -747,7 +747,7 @@ parse_config(char *filename, int opts)
 	TAILQ_INIT(&conf->states);
 
 	init_state(&conf->always);
-	curaction = conf->always.always;
+	curaction = conf->always.body;
 	conf->opts = opts;
 
 	yyparse();
@@ -755,7 +755,7 @@ parse_config(char *filename, int opts)
 	/* Link states */
 	TAILQ_FOREACH(state, &conf->states, entries) {
 		link_states(state->init);
-		link_states(state->always);
+		link_states(state->body);
 	}
 
 	errors = file->errors;
@@ -928,10 +928,10 @@ init_state(struct ifsd_state *state)
 	state->init->type = IFSD_ACTION_CONDITION;
 	TAILQ_INIT(&state->init->act.c.actions);
 
-	if ((state->always = calloc(1, sizeof(*state->always))) == NULL)
+	if ((state->body = calloc(1, sizeof(*state->body))) == NULL)
 		err(1, "init_state: calloc");
-	state->always->type = IFSD_ACTION_CONDITION;
-	TAILQ_INIT(&state->always->act.c.actions);
+	state->body->type = IFSD_ACTION_CONDITION;
+	TAILQ_INIT(&state->body->act.c.actions);
 }
 
 struct ifsd_ifstate *

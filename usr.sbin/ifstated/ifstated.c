@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.45 2017/06/28 11:10:08 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.46 2017/07/02 14:27:30 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -218,7 +218,7 @@ load_config(void)
 		conf->nextstate = conf->curstate;
 		conf->curstate = NULL;
 		while (state_change())
-			do_action(conf->curstate->always);
+			do_action(conf->curstate->body);
 	}
 	return (0);
 }
@@ -530,9 +530,9 @@ eval_state(struct ifsd_state *state)
 	struct ifsd_external *external = TAILQ_FIRST(&state->external_tests);
 	if (external == NULL || external->lastexec >= state->entered ||
 	    external->lastexec == 0) {
-		do_action(state->always);
+		do_action(state->body);
 		while (state_change())
-			do_action(conf->curstate->always);
+			do_action(conf->curstate->body);
 	}
 }
 
@@ -639,12 +639,12 @@ clear_config(struct ifsd_config *oconf)
 	while ((state = TAILQ_FIRST(&oconf->states)) != NULL) {
 		TAILQ_REMOVE(&oconf->states, state, entries);
 		remove_action(state->init, state);
-		remove_action(state->always, state);
+		remove_action(state->body, state);
 		free(state->name);
 		free(state);
 	}
 	remove_action(oconf->always.init, &oconf->always);
-	remove_action(oconf->always.always, &oconf->always);
+	remove_action(oconf->always.body, &oconf->always);
 	free(oconf);
 }
 
