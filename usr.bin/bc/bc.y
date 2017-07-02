@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.50 2017/02/23 06:41:46 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.51 2017/07/02 23:19:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -1163,7 +1163,7 @@ main(int argc, char *argv[])
 			dup(p[0]);
 			close(p[0]);
 			close(p[1]);
-			
+
 			exit (dc_main(2, dc_argv));
 		}
 	}
