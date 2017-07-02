@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.156 2017/06/29 08:24:10 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.157 2017/07/02 19:49:31 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5233,7 +5233,6 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		 *  hyperthreading (CPUID_HTT)
 		 *  pending break enabled (CPUID_PBE)
 		 *  MTRR (CPUID_MTRR)
-		 *  PAT (CPUID_PAT)
 		 * plus:
 		 *  hypervisor (CPUIDECX_HV)
 		 */
@@ -5247,7 +5246,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		    ~(CPUID_ACPI | CPUID_TM | CPUID_TSC |
 		      CPUID_HTT | CPUID_DS | CPUID_APIC |
 		      CPUID_PSN | CPUID_SS | CPUID_PBE |
-		      CPUID_MTRR | CPUID_PAT);
+		      CPUID_MTRR);
 		break;
 	case 0x02:	/* Cache and TLB information */
 		*rax = eax;
