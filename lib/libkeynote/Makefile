@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2016/03/30 06:38:42 jmc Exp $
+#	$OpenBSD: Makefile,v 1.21 2017/07/02 18:11:28 espie Exp $
 
 LIB=	keynote
 MAN=	keynote.3 keynote.4 keynote.5
@@ -18,6 +18,8 @@ k.tab.c k.tab.h: keynote.y keynote.h signature.h
 
 lex.kn.c: keynote.l keynote.y keynote.h assertion.h signature.h
 	$(LEX.l) $(LEXFLAGS) ${.CURDIR}/keynote.l
+
+BUILDFIRST = k.tab.h
 
 includes:
 	@@cd ${.CURDIR}; for i in $(HDRS); do \
