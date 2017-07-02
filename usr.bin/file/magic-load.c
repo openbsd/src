@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-load.c,v 1.25 2017/07/01 14:34:29 brynet Exp $ */
+/* $OpenBSD: magic-load.c,v 1.26 2017/07/02 10:58:15 brynet Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <regex.h>
@@ -1071,6 +1072,7 @@ magic_load(FILE *f, const char *path, int warnings)
 	struct magic_line	*ml = NULL, *parent, *parent0;
 	char			*line, *tmp;
 	size_t			 size;
+	ssize_t			 slen;
 	u_int			 at, level, n, i;
 
 	m = xcalloc(1, sizeof *m);
@@ -1084,15 +1086,12 @@ magic_load(FILE *f, const char *path, int warnings)
 
 	at = 0;
 	tmp = NULL;
-	while ((line = fgetln(f, &size))) {
-		if (line[size - 1] == '\n')
-			line[size - 1] = '\0';
-		else {
-			tmp = xmalloc(size + 1);
-			memcpy(tmp, line, size);
-			tmp[size] = '\0';
-			line = tmp;
-		}
+	size = 0;
+	while ((slen = getline(&tmp, &size, f)) != -1) {
+		line = tmp;
+		if (line[slen - 1] == '\n')
+			line[slen - 1] = '\0';
+
 		at++;
 
 		while (isspace((u_char)*line))
@@ -1168,6 +1167,8 @@ magic_load(FILE *f, const char *path, int warnings)
 		parent0 = ml;
 	}
 	free(tmp);
+	if (ferror(f))
+		err(1, "%s", path);
 
 	return (m);
 }
