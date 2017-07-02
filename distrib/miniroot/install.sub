@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1016 2017/06/30 16:46:02 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1017 2017/07/02 11:52:44 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2719,9 +2719,8 @@ do_install() {
 	# Configure the network.
 	donetconfig
 
-	# If there's network connectivity, fetch list of mirror servers and
-	# installer choices from previous runs.
-	((NIFS)) && start_cgiinfo
+	# Fetch list of mirror servers and installer choices from previous runs.
+	start_cgiinfo
 
 	echo
 
