@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.51 2017/07/01 16:14:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.h,v 1.52 2017/07/02 20:58:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -266,6 +266,8 @@ bitmap_weight(void *p, u_int n)
 
 #define IS_BUILTIN(x) 1
 
+struct device_node;
+
 struct device_driver {
 	struct device *dev;
 };
@@ -505,6 +507,7 @@ PTR_ERR_OR_ZERO(const void *ptr)
 typedef struct rwlock rwlock_t;
 typedef struct mutex spinlock_t;
 #define DEFINE_SPINLOCK(x)	struct mutex x
+#define DEFINE_MUTEX(x)		struct rwlock x
 
 static inline void
 spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)
@@ -1897,6 +1900,14 @@ acpi_status acpi_get_table_with_size(const char *, int, struct acpi_table_header
 #define acpi_video_register()
 #define acpi_video_unregister()
 
+#define MIPI_DSI_V_SYNC_START			0x01
+#define MIPI_DSI_V_SYNC_END			0x11
+#define MIPI_DSI_H_SYNC_START			0x21
+#define MIPI_DSI_H_SYNC_END			0x31
+#define MIPI_DSI_COLOR_MODE_OFF			0x02
+#define MIPI_DSI_COLOR_MODE_ON			0x12
+#define MIPI_DSI_SHUTDOWN_PERIPHERAL		0x22
+#define MIPI_DSI_TURN_ON_PERIPHERAL		0x32
 #define MIPI_DSI_GENERIC_SHORT_WRITE_0_PARAM	0x03
 #define MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM	0x13
 #define MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM	0x23
@@ -1906,8 +1917,36 @@ acpi_status acpi_get_table_with_size(const char *, int, struct acpi_table_header
 #define MIPI_DSI_DCS_SHORT_WRITE		0x05
 #define MIPI_DSI_DCS_SHORT_WRITE_PARAM		0x15
 #define MIPI_DSI_DCS_READ			0x06
+#define MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE	0x37
+#define MIPI_DSI_END_OF_TRANSMISSION		0x08
+#define MIPI_DSI_NULL_PACKET			0x09
+#define MIPI_DSI_BLANKING_PACKET		0x19
 #define MIPI_DSI_GENERIC_LONG_WRITE		0x29
 #define MIPI_DSI_DCS_LONG_WRITE			0x39
+#define MIPI_DSI_LOOSELY_PACKED_PIXEL_STREAM_YCBCR20	0x0c
+#define MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR24	0x1c
+#define MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR16	0x2c
+#define MIPI_DSI_PACKED_PIXEL_STREAM_30		0x0d
+#define MIPI_DSI_PACKED_PIXEL_STREAM_36		0x1d
+#define MIPI_DSI_PACKED_PIXEL_STREAM_YCBCR12	0x3d
+#define MIPI_DSI_PACKED_PIXEL_STREAM_16		0x0e
+#define MIPI_DSI_PACKED_PIXEL_STREAM_18		0x1e
+#define MIPI_DSI_PIXEL_STREAM_3BYTE_18		0x2e
+#define MIPI_DSI_PACKED_PIXEL_STREAM_24		0x3e
+
+#define MIPI_DCS_NOP				0x00
+#define MIPI_DCS_SOFT_RESET			0x01
+#define MIPI_DCS_GET_POWER_MODE			0x0a
+#define MIPI_DCS_GET_PIXEL_FORMAT		0x0c
+#define MIPI_DCS_ENTER_SLEEP_MODE		0x10
+#define MIPI_DCS_EXIT_SLEEP_MODE		0x11
+#define MIPI_DCS_SET_DISPLAY_OFF		0x28
+#define MIPI_DCS_SET_DISPLAY_ON			0x29
+#define MIPI_DCS_SET_COLUMN_ADDRESS		0x2a
+#define MIPI_DCS_SET_PAGE_ADDRESS		0x2b
+#define MIPI_DCS_SET_TEAR_OFF			0x34
+#define MIPI_DCS_SET_TEAR_ON			0x35
+#define MIPI_DCS_SET_PIXEL_FORMAT		0x3a
 
 struct pwm_device;
 

@@ -14218,9 +14218,7 @@ static void intel_setup_outputs(struct drm_device *dev)
 				intel_hdmi_init(dev, CHV_HDMID, PORT_D);
 		}
 
-#ifdef notyet
 		intel_dsi_init(dev);
-#endif
 	} else if (!IS_GEN2(dev) && !IS_PINEVIEW(dev)) {
 		bool found = false;
 

@@ -24,15 +24,17 @@
  *
  */
 
-#include <drm/drmP.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_edid.h>
-#include <drm/i915_drm.h>
-#include <drm/drm_panel.h>
+#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_crtc.h>
+#include <dev/pci/drm/drm_edid.h>
+#include <dev/pci/drm/i915_drm.h>
+#include <dev/pci/drm/drm_panel.h>
+#ifdef __linux__
 #include <linux/slab.h>
 #include <video/mipi_display.h>
 #include <asm/intel-mid.h>
 #include <video/mipi_display.h>
+#endif
 #include "i915_drv.h"
 #include "intel_drv.h"
 #include "intel_dsi.h"

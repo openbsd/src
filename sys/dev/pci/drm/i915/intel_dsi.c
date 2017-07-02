@@ -23,15 +23,17 @@
  * Author: Jani Nikula <jani.nikula@intel.com>
  */
 
-#include <drm/drmP.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_edid.h>
-#include <drm/i915_drm.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_mipi_dsi.h>
+#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_atomic_helper.h>
+#include <dev/pci/drm/drm_crtc.h>
+#include <dev/pci/drm/drm_edid.h>
+#include <dev/pci/drm/i915_drm.h>
+#include <dev/pci/drm/drm_panel.h>
+#include <dev/pci/drm/drm_mipi_dsi.h>
+#ifdef __linux__
 #include <linux/slab.h>
 #include <linux/gpio/consumer.h>
+#endif
 #include "i915_drv.h"
 #include "intel_drv.h"
 #include "intel_dsi.h"

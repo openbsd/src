@@ -678,8 +678,6 @@ parse_psr(struct drm_i915_private *dev_priv, const struct bdb_header *bdb)
 	dev_priv->vbt.psr.tp2_tp3_wakeup_time = psr_table->tp2_tp3_wakeup_time;
 }
 
-#ifdef notyet
-
 static u8 *goto_next_sequence(u8 *data, int *size)
 {
 	u16 len;
@@ -903,8 +901,6 @@ err:
 	 * because of partial parsing */
 	memset(dev_priv->vbt.dsi.sequence, 0, sizeof(dev_priv->vbt.dsi.sequence));
 }
-
-#endif
 
 static u8 translate_iboost(u8 val)
 {
@@ -1155,7 +1151,6 @@ parse_device_mapping(struct drm_i915_private *dev_priv,
 			continue;
 		}
 
-#ifdef notyet
 		if (p_child->common.dvo_port >= DVO_PORT_MIPIA
 		    && p_child->common.dvo_port <= DVO_PORT_MIPID
 		    &&p_child->common.device_type & DEVICE_TYPE_MIPI_OUTPUT) {
@@ -1163,7 +1158,6 @@ parse_device_mapping(struct drm_i915_private *dev_priv,
 			dev_priv->vbt.has_mipi = 1;
 			dev_priv->vbt.dsi.port = p_child->common.dvo_port;
 		}
-#endif
 
 		child_dev_ptr = dev_priv->vbt.child_dev + count;
 		count++;
@@ -1370,9 +1364,7 @@ intel_parse_bios(struct drm_device *dev)
 	parse_driver_features(dev_priv, bdb);
 	parse_edp(dev_priv, bdb);
 	parse_psr(dev_priv, bdb);
-#ifdef notyet
 	parse_mipi(dev_priv, bdb);
-#endif
 	parse_ddi_ports(dev_priv, bdb);
 
 #ifdef __linux__

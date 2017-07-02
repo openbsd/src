@@ -25,7 +25,9 @@
  *	Yogesh Mohan Marimuthu <yogesh.mohan.marimuthu@intel.com>
  */
 
+#ifdef __linux__
 #include <linux/kernel.h>
+#endif
 #include "intel_drv.h"
 #include "i915_drv.h"
 #include "intel_dsi.h"

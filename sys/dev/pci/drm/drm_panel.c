@@ -21,14 +21,17 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef __linux__
 #include <linux/err.h>
 #include <linux/module.h>
+#endif
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_panel.h>
+#include <dev/pci/drm/drmP.h>
+#include <dev/pci/drm/drm_crtc.h>
+#include <dev/pci/drm/drm_panel.h>
 
 static DEFINE_MUTEX(panel_lock);
-static LIST_HEAD(panel_list);
+static DRM_LIST_HEAD(panel_list);
 
 void drm_panel_init(struct drm_panel *panel)
 {

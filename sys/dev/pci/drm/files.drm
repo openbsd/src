@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.36 2017/07/01 16:14:10 kettenis Exp $
+# $OpenBSD: files.drm,v 1.37 2017/07/02 20:58:55 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[console = -1]}
@@ -29,8 +29,9 @@ file	dev/pci/drm/drm_gem.c			drm
 file	dev/pci/drm/drm_vma_manager.c		drm
 file	dev/pci/drm/drm_linux.c			drm
 file	dev/pci/drm/drm_cache.c			drm & inteldrm
-#file	dev/pci/drm/drm_panel.c			drm
+file	dev/pci/drm/drm_panel.c			drm & inteldrm
 file	dev/pci/drm/drm_dp_mst_topology.c	drm
+file	dev/pci/drm/drm_mipi_dsi.c		drm & inteldrm
 file	dev/pci/drm/linux_hdmi.c		drm
 file	dev/pci/drm/linux_list_sort.c		drm
 
@@ -79,9 +80,9 @@ file	dev/pci/drm/i915/intel_ddi.c		inteldrm
 file	dev/pci/drm/i915/intel_display.c	inteldrm
 file	dev/pci/drm/i915/intel_dp.c		inteldrm
 file	dev/pci/drm/i915/intel_dp_mst.c		inteldrm
-#file	dev/pci/drm/i915/intel_dsi.c		inteldrm
-#file	dev/pci/drm/i915/intel_dsi_panel_vbt.c	inteldrm
-#file	dev/pci/drm/i915/intel_dsi_pll.c	inteldrm
+file	dev/pci/drm/i915/intel_dsi.c		inteldrm
+file	dev/pci/drm/i915/intel_dsi_panel_vbt.c	inteldrm
+file	dev/pci/drm/i915/intel_dsi_pll.c	inteldrm
 file	dev/pci/drm/i915/intel_dvo.c		inteldrm
 file	dev/pci/drm/i915/intel_fbc.c		inteldrm
 file	dev/pci/drm/i915/intel_fbdev.c		inteldrm
