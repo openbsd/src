@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.85 2017/07/01 14:41:54 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.86 2017/07/02 17:55:14 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -182,7 +182,7 @@ all: ${_LIBS} _SUBDIRUSE
 BUILDAFTER += ${_LIBS}
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/}
-DEPS+=	${OBJS:S/$/.d/}
+DEPS+=	${OBJS:R:S/$/.d/}
 BUILDAFTER += ${OBJS}
 
 lib${LIB}.a: ${OBJS}
