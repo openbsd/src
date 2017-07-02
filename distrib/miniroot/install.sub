@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1017 2017/07/02 11:52:44 rpe Exp $
+#	$OpenBSD: install.sub,v 1.1018 2017/07/02 11:53:35 rpe Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2995,8 +2995,7 @@ do_upgrade(){
 	# Configure the network.
 	enable_network
 
-	# Fetch the list of mirror servers and installer choices from previous
-	# runs.
+	# Fetch list of mirror servers and installer choices from previous runs.
 	start_cgiinfo
 
 	# Create a skeletal /etc/fstab which is usable for the upgrade process.
