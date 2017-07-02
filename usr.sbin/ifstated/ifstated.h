@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.14 2017/07/02 14:30:35 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.15 2017/07/02 15:28:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -117,7 +117,7 @@ struct ifsd_state {
 TAILQ_HEAD(ifsd_state_list, ifsd_state);
 
 struct ifsd_config {
-	struct ifsd_state		 always;
+	struct ifsd_state		 initstate;
 	struct ifsd_state_list		 states;
 	struct ifsd_state		*curstate;
 	struct ifsd_state		*nextstate;

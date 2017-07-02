@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.47 2017/07/02 14:28:45 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.48 2017/07/02 15:28:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -207,11 +207,11 @@ load_config(void)
 	if (conf != NULL)
 		clear_config(conf);
 	conf = newconf;
-	conf->always.entered = time(NULL);
+	conf->initstate.entered = time(NULL);
 	fetch_state();
-	external_evtimer_setup(&conf->always, IFSD_EVTIMER_ADD);
-	adjust_external_expressions(&conf->always);
-	eval_state(&conf->always);
+	external_evtimer_setup(&conf->initstate, IFSD_EVTIMER_ADD);
+	adjust_external_expressions(&conf->initstate);
+	eval_state(&conf->initstate);
 	if (conf->curstate != NULL) {
 		log_info("initial state: %s", conf->curstate->name);
 		conf->curstate->entered = time(NULL);
@@ -250,7 +250,7 @@ rt_msg_handler(int fd, short event, void *arg)
 void
 sigchld_handler(int fd, short event, void *arg)
 {
-	check_external_status(&conf->always);
+	check_external_status(&conf->initstate);
 	if (conf->curstate != NULL)
 		check_external_status(conf->curstate);
 }
@@ -463,8 +463,8 @@ scan_ifstate(int ifindex, int s, int do_eval)
 	struct ifsd_state *state;
 	int cur_eval = 0;
 
-	if (scan_ifstate_single(ifindex, s, &conf->always) && do_eval)
-		eval_state(&conf->always);
+	if (scan_ifstate_single(ifindex, s, &conf->initstate) && do_eval)
+		eval_state(&conf->initstate);
 	TAILQ_FOREACH(state, &conf->states, entries) {
 		if (scan_ifstate_single(ifindex, s, state) &&
 		    (do_eval && state == conf->curstate))
@@ -635,7 +635,7 @@ clear_config(struct ifsd_config *oconf)
 {
 	struct ifsd_state *state;
 
-	external_evtimer_setup(&conf->always, IFSD_EVTIMER_DEL);
+	external_evtimer_setup(&conf->initstate, IFSD_EVTIMER_DEL);
 	if (conf != NULL && conf->curstate != NULL)
 		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_DEL);
 	while ((state = TAILQ_FIRST(&oconf->states)) != NULL) {
@@ -645,8 +645,8 @@ clear_config(struct ifsd_config *oconf)
 		free(state->name);
 		free(state);
 	}
-	remove_action(oconf->always.init, &oconf->always);
-	remove_action(oconf->always.body, &oconf->always);
+	remove_action(oconf->initstate.init, &oconf->initstate);
+	remove_action(oconf->initstate.body, &oconf->initstate);
 	free(oconf);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2017/07/02 14:27:30 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.43 2017/07/02 15:28:26 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -242,12 +242,12 @@ init		: INIT {
 			if (curstate != NULL)
 				curaction = curstate->init;
 			else
-				curaction = conf->always.init;
+				curaction = conf->initstate.init;
 		} action_block {
 			if (curstate != NULL)
 				curaction = curstate->body;
 			else
-				curaction = conf->always.body;
+				curaction = conf->initstate.body;
 		}
 		;
 
@@ -343,7 +343,7 @@ state		: STATE string {
 		} optnl '{' optnl stateopts_l '}' {
 			TAILQ_INSERT_TAIL(&conf->states, curstate, entries);
 			curstate = NULL;
-			curaction = conf->always.body;
+			curaction = conf->initstate.body;
 		}
 		;
 
@@ -746,8 +746,8 @@ parse_config(char *filename, int opts)
 
 	TAILQ_INIT(&conf->states);
 
-	init_state(&conf->always);
-	curaction = conf->always.body;
+	init_state(&conf->initstate);
+	curaction = conf->initstate.body;
 	conf->opts = opts;
 
 	yyparse();
@@ -943,7 +943,7 @@ new_ifstate(u_short ifindex, int s)
 	if (curstate != NULL)
 		state = curstate;
 	else
-		state = &conf->always;
+		state = &conf->initstate;
 
 	TAILQ_FOREACH(ifstate, &state->interface_states, entries)
 		if (ifstate->ifindex == ifindex && ifstate->ifstate == s)
@@ -970,7 +970,7 @@ new_external(char *command, u_int32_t frequency)
 	if (curstate != NULL)
 		state = curstate;
 	else
-		state = &conf->always;
+		state = &conf->initstate;
 
 	TAILQ_FOREACH(external, &state->external_tests, entries)
 		if (strcmp(external->command, command) == 0 &&
