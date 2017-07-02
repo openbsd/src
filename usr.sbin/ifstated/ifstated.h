@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.13 2017/07/02 14:27:30 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.14 2017/07/02 14:30:35 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -70,7 +70,6 @@ struct ifsd_action {
 		struct {
 			struct ifsd_action_list	 actions;
 			struct ifsd_expression	*expression;
-			u_int8_t		 ignore_init;
 		} c;
 	} act;
 	u_int32_t			 type;
