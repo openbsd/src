@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.16 2017/07/01 14:41:54 espie Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.17 2017/07/03 07:54:18 espie Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -17,7 +17,7 @@ CFLAGS += -MD -MP
 CXXFLAGS += -MD -MP
 
 # libraries need some special love
-DFLAGS = -MT $*.o -MT $*.po -MT $*.so -MT $*.do
+DFLAGS = -MD -MP -MT $*.o -MT $*.po -MT $*.so -MT $*.do
 
 .if !target(tags)
 .  if defined(SRCS)
