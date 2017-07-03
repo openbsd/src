@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.84 2017/05/31 04:52:11 deraadt Exp $ */
+/* $OpenBSD: rebound.c,v 1.85 2017/07/03 09:39:48 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -190,6 +190,17 @@ randomcase(unsigned char *s)
 	}
 }
 
+static void
+freecacheent(struct dnscache *ent)
+{
+	cachecount -= 1;
+	RB_REMOVE(cachetree, &cachetree, ent);
+	TAILQ_REMOVE(&cachefifo, ent, fifo);
+	free(ent->req);
+	free(ent->resp);
+	free(ent);
+}
+
 static struct dnscache *
 cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 {
@@ -212,8 +223,13 @@ cachelookup(struct dnspacket *dnsreq, size_t reqlen)
 	key.reqlen = reqlen;
 	key.req = dnsreq;
 	hit = RB_FIND(cachetree, &cachetree, &key);
-	if (hit)
-		cachehits += 1;
+	if (hit) {
+		if (timespeccmp(&hit->ts, &now, <=)) {
+			freecacheent(hit);
+			hit = NULL;
+		} else
+			cachehits += 1;
+	}
 
 	memcpy(dnsreq->qname, origname, namelen + 1);
 	dnsreq->id = origid;
@@ -240,17 +256,6 @@ freerequest(struct request *req)
 		free(ent);
 	}
 	free(req);
-}
-
-static void
-freecacheent(struct dnscache *ent)
-{
-	cachecount -= 1;
-	RB_REMOVE(cachetree, &cachetree, ent);
-	TAILQ_REMOVE(&cachefifo, ent, fifo);
-	free(ent->req);
-	free(ent->resp);
-	free(ent);
 }
 
 static void
