@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.70 2017/07/03 07:01:14 bentley Exp $
+.\"	$OpenBSD: vi.1,v 1.71 2017/07/03 14:30:11 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -931,7 +931,7 @@ command.
 .Aq Li carriage-return
 .Xc
 .It Xo
-.Pf ? Ar RE Ns ?
+.Pf ? Ar RE Ns ?\&
 .Op Ar offset
 .Op Cm z
 .Aq Li carriage-return
@@ -2766,10 +2766,10 @@ The
 environment variable is ignored.
 .It
 In insert mode, entering
-.Ic Aq control-H ,
-.Ic Aq erase ,
+.Aq Ic control-H ,
+.Aq Ic erase ,
 or
-.Ic Aq kill
+.Aq Ic kill
 following a backslash will not embed the control character in the text.
 .El
 .Sh HISTORY
