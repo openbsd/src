@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.42 2017/07/03 08:23:36 visa Exp $
+.\"	$OpenBSD: com.4,v 1.43 2017/07/03 08:27:59 visa Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -61,6 +61,9 @@
 .Cd "# alpha and amd64"
 .Cd "com0 at isa? port 0x3f8 irq 4"
 .Cd "com1 at isa? port 0x2f8 irq 3"
+.Pp
+.Cd "# arm64 and armv7"
+.Cd "com* at fdt?"
 .Pp
 .Cd "# hppa"
 .Cd "com0 at gsc? offset 0x5000 irq 5"
