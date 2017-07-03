@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.182 2017/07/03 13:40:00 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.183 2017/07/03 17:33:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -62,8 +62,8 @@ enum	mandocerr {
 	MANDOCERR_BX, /* consider using OS macro: macro */
 	MANDOCERR_ER_ORDER, /* errnos out of order: Er ... */
 	MANDOCERR_ER_REP, /* duplicate errno: Er ... */
-	MANDOCERR_ND_DOT, /* description line ends with a full stop */
-	MANDOCERR_DELIM, /* no blank before trailing delimiter: macro ... */
+	MANDOCERR_DELIM, /* trailing delimiter: macro ... */
+	MANDOCERR_DELIM_NB, /* no blank before trailing delimiter: macro ... */
 	MANDOCERR_FUNC, /* function name without markup: name() */
 
 	MANDOCERR_WARNING, /* ===== start of warnings ===== */
