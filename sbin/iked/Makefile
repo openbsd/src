@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2015/10/23 09:13:00 tedu Exp $
+# $OpenBSD: Makefile,v 1.16 2017/07/03 22:21:47 espie Exp $
 
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
@@ -17,8 +17,10 @@ CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
-CLEANFILES+=	y.tab.h ikev2_map.c eap_map.c
+CLEANFILES+=	ikev2_map.c eap_map.c
 GENERATED=	ikev2_map.c eap_map.c
+
+YFLAGS=
 
 ikev2_map.c: genmap.sh ikev2.h
 	/bin/sh ${.CURDIR}/genmap.sh ${.CURDIR}/ikev2.h ikev2 > $@

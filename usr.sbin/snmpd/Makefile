@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2014/11/19 10:19:00 blambert Exp $
+#	$OpenBSD: Makefile,v 1.15 2017/07/03 22:21:47 espie Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
@@ -13,6 +13,6 @@ CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
-CLEANFILES+=	y.tab.h
+YFLAGS=
 
 .include <bsd.prog.mk>

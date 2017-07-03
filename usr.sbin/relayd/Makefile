@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2017/05/27 08:33:25 claudio Exp $
+#	$OpenBSD: Makefile,v 1.32 2017/07/03 22:21:47 espie Exp $
 
 PROG=		relayd
 SRCS=		parse.y
@@ -16,6 +16,6 @@ CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith
 CFLAGS+=	-Wsign-compare -Wcast-qual
-CLEANFILES+=	y.tab.h
+YFLAGS=
 
 .include <bsd.prog.mk>
