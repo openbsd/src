@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.85 2017/07/03 09:39:48 tedu Exp $ */
+/* $OpenBSD: rebound.c,v 1.86 2017/07/03 16:36:48 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -72,7 +72,7 @@ struct dnspacket {
 /*
  * requests will point to cache entries until a response is received.
  * until then, the request owns the entry and must free it.
- * after it's on the list, the request must not free it.
+ * after the response is set, the request must not free it.
  */
 struct dnscache {
 	TAILQ_ENTRY(dnscache) fifo;
@@ -433,16 +433,17 @@ sendreply(struct request *req)
 	}
 	sendto(req->client, buf, r, 0, &req->from.a, req->fromlen);
 	if ((ent = req->cacheent)) {
+		/* check that the response is worth caching */
+		ttl = minttl(resp, r);
+		if (ttl == -1 || ttl == 0)
+			return;
 		/*
-		 * we do this first, because there's a potential race against
+		 * we do this next, because there's a potential race against
 		 * other requests made at the same time. if we lose, abort.
 		 * if anything else goes wrong, though, we need to reverse.
 		 */
 		if (RB_INSERT(cachetree, &cachetree, ent))
 			return;
-		ttl = minttl(resp, r);
-		if (ttl == -1)
-			ttl = 0;
 		ent->ts = now;
 		ent->ts.tv_sec += MINIMUM(ttl, 300);
 		ent->resp = malloc(r);
