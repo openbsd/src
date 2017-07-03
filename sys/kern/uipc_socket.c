@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.190 2017/06/27 12:02:43 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.191 2017/07/03 08:29:24 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1997,35 +1997,44 @@ int
 filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int s;
+	int s, rv;
 
 	if (!(hint & NOTE_SUBMIT))
 		s = solock(so);
 	kn->kn_data = sbspace(so, &so->so_snd);
-	if (!(hint & NOTE_SUBMIT))
-		sounlock(s);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		kn->kn_fflags = so->so_error;
-		return (1);
+		rv = 1;
+	} else if (so->so_error) {	/* temporary udp error */
+		rv = 1;
+	} else if (((so->so_state & SS_ISCONNECTED) == 0) &&
+	    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
+		rv = 0;
+	} else if (kn->kn_sfflags & NOTE_LOWAT) {
+		rv = (kn->kn_data >= kn->kn_sdata);
+	} else {
+		rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	}
-	if (so->so_error)	/* temporary udp error */
-		return (1);
-	if (((so->so_state & SS_ISCONNECTED) == 0) &&
-	    (so->so_proto->pr_flags & PR_CONNREQUIRED))
-		return (0);
-	if (kn->kn_sfflags & NOTE_LOWAT)
-		return (kn->kn_data >= kn->kn_sdata);
-	return (kn->kn_data >= so->so_snd.sb_lowat);
+	if (!(hint & NOTE_SUBMIT))
+		sounlock(s);
+
+	return (rv);
 }
 
 int
 filt_solisten(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
+	int s;
 
+	if (!(hint & NOTE_SUBMIT))
+		s = solock(so);
 	kn->kn_data = so->so_qlen;
-	return (so->so_qlen != 0);
+	if (!(hint & NOTE_SUBMIT))
+		sounlock(s);
+
+	return (kn->kn_data != 0);
 }
 
 #ifdef DDB
