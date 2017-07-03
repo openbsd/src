@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.48 2017/07/02 15:28:26 benno Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.49 2017/07/03 18:45:34 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -217,8 +217,10 @@ load_config(void)
 		conf->curstate->entered = time(NULL);
 		conf->nextstate = conf->curstate;
 		conf->curstate = NULL;
-		while (state_change())
+		while (state_change()) {
+			do_action(conf->curstate->init);
 			do_action(conf->curstate->body);
+		}
 	}
 	return (0);
 }
@@ -533,14 +535,13 @@ eval_state(struct ifsd_state *state)
 	if (external == NULL || external->lastexec >= state->entered ||
 	    external->lastexec == 0) {
 		do_action(state->body);
-		while (state_change())
+		while (state_change()) {
+			do_action(conf->curstate->init);
 			do_action(conf->curstate->body);
+		}
 	}
 }
 
-/*
- *If a previous action included a state change, process it.
- */
 int
 state_change(void)
 {
@@ -556,7 +557,6 @@ state_change(void)
 		conf->curstate->entered = time(NULL);
 		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_ADD);
 		adjust_external_expressions(conf->curstate);
-		do_action(conf->curstate->init);
 		return (1);
 	}
 	return (0);
@@ -627,9 +627,6 @@ fetch_state(void)
 	close(sock);
 }
 
-/*
- * Clear the config.
- */
 void
 clear_config(struct ifsd_config *oconf)
 {
