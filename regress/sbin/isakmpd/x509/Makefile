@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/08 17:12:50 cloder Exp $
+#	$OpenBSD: Makefile,v 1.2 2017/07/03 18:19:55 bluhm Exp $
 #	$EOM: Makefile,v 1.16 2000/09/28 12:53:27 niklas Exp $
 
 #
@@ -39,14 +39,8 @@ PROG=		x509test
 SRCS=		x509test.c conf.c log.c libcrypto.c sysdep.c field.c util.c \
 		isakmp_fld.c ipsec_fld.c ipsec_num.c isakmp_num.c constants.c \
 		cert.c
-TOPSRC=		${.CURDIR}/../../../../sbin/isakmpd
-TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 FEATURES!=	awk '/^FEATURES=/ { print $$0 }' ${TOPSRC}/Makefile | sed 's/FEATURES=.//'
-.PATH:		${TOPSRC} ${TOPSRC}/sysdep/openbsd ${TOPOBJ}
-CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/openbsd -I${TOPOBJ} -Wall
-NOMAN=
-DEBUG=		-g
 
 .if ${FEATURES:Mgmp} == "gmp"
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
@@ -55,8 +49,6 @@ DPADD+=		${LIBGMP}
 .else
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 .endif
-
-.include "${TOPSRC}/sysdep/openbsd/Makefile.sysdep"
 
 X509=		x509.c
 POLICY=		policy.c

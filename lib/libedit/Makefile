@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2017/06/16 10:25:54 espie Exp $
+#	$OpenBSD: Makefile,v 1.28 2017/07/03 18:19:55 bluhm Exp $
 #	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -28,13 +28,15 @@ CPPFLAGS+=-I. -I${.CURDIR}
 AHDR=vi.h emacs.h common.h
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
 
-CLEANFILES+=	${AHDR} fcns.h func.h help.h
+GENERATED=	${AHDR} fcns.h func.h help.h
+CLEANFILES+=	${GENERATED}
 
 #SUBDIR+=	readline
 HOST_SH=	sh
 
-.depend: ${AHDR} fcns.h func.h help.h
-BUILDFIRST = ${AHDR} fcns.h func.h help.h
+.PHONY: generated
+.depend generated: ${GENERATED}
+BUILDFIRST = ${GENERATED}
 
 vi.h: vi.c makelist
 	${HOST_SH} ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c \
