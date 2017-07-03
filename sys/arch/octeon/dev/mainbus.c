@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2016/01/16 11:21:42 visa Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.9 2017/07/03 08:17:20 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -82,10 +82,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	caa.caa_maa.maa_name = "clock";
-	config_found(self, &caa.caa_maa, mainbus_print);
-
-	/* uart I/O */
-	caa.caa_maa.maa_name = "uartbus";
 	config_found(self, &caa.caa_maa, mainbus_print);
 
 	/* on-board I/O */

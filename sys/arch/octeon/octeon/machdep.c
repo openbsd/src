@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2017/06/19 14:47:27 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.96 2017/07/03 08:17:20 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -550,6 +550,7 @@ consinit()
 	static int console_ok = 0;
 
 	if (console_ok == 0) {
+		com_fdt_init_cons();
 		cninit();
 		console_ok = 1;
 	}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.37 2017/06/18 13:58:44 visa Exp $
+#	$OpenBSD: files.octeon,v 1.38 2017/07/03 08:17:20 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -115,12 +115,7 @@ device	cnmac: ether, ifnet, mii, ifmedia
 attach	cnmac at cn30xxgmx
 file	arch/octeon/dev/if_cnmac.c			cnmac
 
-define	uartbus {[base = -1]}
-device	uartbus
-attach	uartbus at mainbus
-file	arch/octeon/dev/octeon_uartbus.c		uartbus
-
-attach	com at uartbus with cn30xxuart
+attach	com at fdt with cn30xxuart
 file	arch/octeon/dev/cn30xxuart.c			cn30xxuart
 
 device	pcibus

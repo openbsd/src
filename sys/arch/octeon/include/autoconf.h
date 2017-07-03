@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 2017/04/07 13:30:43 visa Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.3 2017/07/03 08:17:20 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,6 +44,8 @@ extern char bootdev[];
 extern enum devclass bootdev_class;
 
 #include <mips64/autoconf.h>
+
+void	com_fdt_init_cons(void);
 
 extern unsigned int octeon_ver;
 #define OCTEON_1	0
