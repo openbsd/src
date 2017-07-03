@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.124 2017/05/30 15:39:04 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.125 2017/07/03 16:37:07 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -727,7 +727,7 @@ fault_common_no_miss:
 			va += 4;
 
 		/* Get the faulting instruction. */
-		if (copyin(va, &inst, sizeof(inst)) != 0) {
+		if (copyin32((void *)va, &inst.word) != 0) {
 			i = SIGBUS;
 			typ = BUS_OBJERR;
 			break;
