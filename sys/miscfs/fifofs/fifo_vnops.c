@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.54 2017/06/26 09:32:31 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.55 2017/07/03 08:27:07 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -356,18 +356,22 @@ fifo_close(void *v)
 
 	if (ap->a_fflag & FREAD) {
 		if (--fip->fi_readers == 0) {
-			NET_LOCK(s);
-			socantsendmore(fip->fi_writesock);
-			NET_UNLOCK(s);
+			struct socket *wso = fip->fi_writesock;
+
+			s = solock(wso);
+			socantsendmore(wso);
+			sounlock(s);
 		}
 	}
 	if (ap->a_fflag & FWRITE) {
 		if (--fip->fi_writers == 0) {
-			NET_LOCK(s);
+			struct socket *rso = fip->fi_readsock;
+
+			s = solock(rso);
 			/* SS_ISDISCONNECTED will result in POLLHUP */
-			fip->fi_readsock->so_state |= SS_ISDISCONNECTED;
-			socantrcvmore(fip->fi_readsock);
-			NET_UNLOCK(s);
+			rso->so_state |= SS_ISDISCONNECTED;
+			socantrcvmore(rso);
+			sounlock(s);
 		}
 	}
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {
