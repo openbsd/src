@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.182 2017/04/22 12:08:41 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.183 2017/07/03 08:08:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -196,7 +196,8 @@ main(int argc, char **argv)
 	int					 opt, flags, keys;
 	const struct options_table_entry	*oe;
 
-	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL) {
+	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL &&
+	    setlocale(LC_CTYPE, "C.UTF-8") == NULL) {
 		if (setlocale(LC_CTYPE, "") == NULL)
 			errx(1, "invalid LC_ALL, LC_CTYPE or LANG");
 		s = nl_langinfo(CODESET);
