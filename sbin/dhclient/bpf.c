@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.54 2017/06/27 15:56:15 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.55 2017/07/03 22:06:11 krw Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -316,7 +316,7 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to)
 	} else {
 		memset(&msg, 0, sizeof(msg));
 		msg.msg_name = (struct sockaddr *)&dest;
-		msg.msg_namelen = sizeof(to);
+		msg.msg_namelen = sizeof(dest);
 		msg.msg_iov = iov;
 		msg.msg_iovlen = iovcnt;
 		result = sendmsg(ifi->ufdesc, &msg, 0);
