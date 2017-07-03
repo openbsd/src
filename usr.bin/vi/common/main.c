@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2017/07/03 07:01:14 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -52,7 +52,7 @@ editor(GS *gp, int argc, char *argv[])
 	SCR *sp;
 	size_t len;
 	u_int flags;
-	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
+	int ch, flagchk, secure, startup, readonly, rval, silent;
 	char *tag_f, *wsizearg, path[256];
 
 	static const char *optstr[3] = {
@@ -114,7 +114,7 @@ editor(GS *gp, int argc, char *argv[])
 	/* Parse the arguments. */
 	flagchk = '\0';
 	tag_f = wsizearg = NULL;
-	lflag = secure = silent = 0;
+	secure = silent = 0;
 	startup = 1;
 
 	/* Set the file snapshot flag. */
@@ -162,9 +162,6 @@ editor(GS *gp, int argc, char *argv[])
 			break;
 		case 'F':		/* No snapshot. */
 			F_CLR(gp, G_SNAPSHOT);
-			break;
-		case 'l':		/* Set lisp, showmatch options. */
-			lflag = 1;
 			break;
 		case 'R':		/* Readonly. */
 			readonly = 1;
@@ -260,11 +257,7 @@ editor(GS *gp, int argc, char *argv[])
 		goto err;
 
 	{ int oargs[5], *oargp = oargs;
-	if (lflag) {			/* Command-line options. */
-		*oargp++ = O_LISP;
-		*oargp++ = O_SHOWMATCH;
-	}
-	if (readonly)
+	if (readonly)			/* Command-line options. */
 		*oargp++ = O_READONLY;
 	if (secure)
 		*oargp++ = O_SECURE;

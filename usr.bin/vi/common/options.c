@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.24 2017/06/30 14:42:05 bentley Exp $	*/
+/*	$OpenBSD: options.c,v 1.25 2017/07/03 07:01:14 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -89,12 +89,6 @@ OPTLIST const optlist[] = {
 	{"leftright",	f_reformat,	OPT_0BOOL,	0},
 /* O_LINES	  4.4BSD */
 	{"lines",	f_lines,	OPT_NUM,	OPT_NOSAVE},
-/* O_LISP	    4BSD
- *	XXX
- *	When the lisp option is implemented, delete the OPT_NOSAVE flag,
- *	so that :mkexrc dumps it.
- */
-	{"lisp",	f_lisp,		OPT_0BOOL,	OPT_NOSAVE},
 /* O_LIST	    4BSD */
 	{"list",	f_reformat,	OPT_0BOOL,	0},
 /* O_LOCKFILES	  4.4BSD
@@ -109,15 +103,6 @@ OPTLIST const optlist[] = {
 	{"matchtime",	NULL,		OPT_NUM,	0},
 /* O_MESG	    4BSD */
 	{"mesg",	NULL,		OPT_1BOOL,	0},
-/* O_MODELINE	    4BSD
- *	!!!
- *	This has been documented in historical systems as both "modeline"
- *	and as "modelines".  Regardless of the name, this option represents
- *	a security problem of mammoth proportions, not to mention a stunning
- *	example of what your intro CS professor referred to as the perils of
- *	mixing code and data.  Don't add it, or I will kill you.
- */
-	{"modeline",	NULL,		OPT_0BOOL,	OPT_NOSET},
 /* O_NOPRINT	  4.4BSD */
 	{"noprint",	f_print,	OPT_STR,	OPT_EARLYSET},
 /* O_NUMBER	    4BSD */
@@ -126,8 +111,6 @@ OPTLIST const optlist[] = {
 	{"octal",	f_print,	OPT_0BOOL,	OPT_EARLYSET},
 /* O_OPEN	    4BSD */
 	{"open",	NULL,		OPT_1BOOL,	0},
-/* O_OPTIMIZE	    4BSD */
-	{"optimize",	NULL,		OPT_1BOOL,	0},
 /* O_PARAGRAPHS	    4BSD */
 	{"paragraphs",	f_paragraph,	OPT_STR,	0},
 /* O_PATH	  4.4BSD */
@@ -140,8 +123,6 @@ OPTLIST const optlist[] = {
 	{"readonly",	f_readonly,	OPT_0BOOL,	OPT_ALWAYS},
 /* O_RECDIR	  4.4BSD */
 	{"recdir",	NULL,		OPT_STR,	0},
-/* O_REDRAW	    4BSD */
-	{"redraw",	NULL,		OPT_0BOOL,	0},
 /* O_REMAP	    4BSD */
 	{"remap",	NULL,		OPT_1BOOL,	0},
 /* O_REPORT	    4BSD */
@@ -168,17 +149,6 @@ OPTLIST const optlist[] = {
 	{"showmode",	NULL,		OPT_0BOOL,	0},
 /* O_SIDESCROLL	  4.4BSD */
 	{"sidescroll",	NULL,		OPT_NUM,	OPT_NOZERO},
-/* O_SLOWOPEN	    4BSD  */
-	{"slowopen",	NULL,		OPT_0BOOL,	0},
-/* O_SOURCEANY	    4BSD (undocumented)
- *	!!!
- *	Historic vi, on startup, source'd $HOME/.exrc and ./.exrc, if they
- *	were owned by the user.  The sourceany option was an undocumented
- *	feature of historic vi which permitted the startup source'ing of
- *	.exrc files the user didn't own.  This is an obvious security problem,
- *	and we ignore the option.
- */
-	{"sourceany",	NULL,		OPT_0BOOL,	OPT_NOSET},
 /* O_TABSTOP	    4BSD */
 	{"tabstop",	f_reformat,	OPT_NUM,	OPT_NOZERO},
 /* O_TAGLENGTH	    4BSD */
@@ -241,16 +211,12 @@ static OABBREV const abbrev[] = {
 	{"ht",		O_HARDTABS},		/*     4BSD */
 	{"ic",		O_IGNORECASE},		/*     4BSD */
 	{"li",		O_LINES},		/*   4.4BSD */
-	{"modelines",	O_MODELINE},		/*     HPUX */
 	{"nu",		O_NUMBER},		/*     4BSD */
-	{"opt",		O_OPTIMIZE},		/*     4BSD */
 	{"para",	O_PARAGRAPHS},		/*     4BSD */
-	{"re",		O_REDRAW},		/* O'Reilly */
 	{"ro",		O_READONLY},		/*     4BSD (undocumented) */
 	{"scr",		O_SCROLL},		/*     4BSD (undocumented) */
 	{"sect",	O_SECTIONS},		/* O'Reilly */
 	{"sh",		O_SHELL},		/*     4BSD */
-	{"slow",	O_SLOWOPEN},		/*     4BSD */
 	{"sm",		O_SHOWMATCH},		/*     4BSD */
 	{"smd",		O_SHOWMODE},		/*     4BSD */
 	{"sw",		O_SHIFTWIDTH},		/*     4BSD */
@@ -508,14 +474,6 @@ opts_set(SCR *sp, ARGS *argv[], char *usage)
 			if (F_ISSET(op, OPT_NOUNSET) && turnoff) {
 				msgq_str(sp, M_ERR, name,
 			    "set: the %s option may not be turned off");
-				rval = 1;
-				break;
-			}
-
-			/* Some options may not be set. */
-			if (F_ISSET(op, OPT_NOSET) && !turnoff) {
-				msgq_str(sp, M_ERR, name,
-			    "set: the %s option may never be turned on");
 				rval = 1;
 				break;
 			}

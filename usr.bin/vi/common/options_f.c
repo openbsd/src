@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_f.c,v 1.11 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: options_f.c,v 1.12 2017/07/03 07:01:14 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -117,16 +117,6 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 			o_set(sp, O_WINDOW, OS_DEF, NULL, *valp - 1);
 		}
 	}
-	return (0);
-}
-
-/*
- * PUBLIC: int f_lisp(SCR *, OPTION *, char *, u_long *);
- */
-int
-f_lisp(SCR *sp, OPTION *op, char *str, u_long *valp)
-{
-	msgq(sp, M_ERR, "The lisp option is not implemented");
 	return (0);
 }
 

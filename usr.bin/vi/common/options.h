@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.h,v 1.8 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: options.h,v 1.9 2017/07/03 07:01:14 bentley Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -88,7 +88,6 @@ struct _optlist {
 #define	OPT_ALWAYS	0x002		/* Always call the support function. */
 #define	OPT_NDISP	0x004		/* Never display the option. */
 #define	OPT_NOSAVE	0x008		/* Mkexrc command doesn't save. */
-#define	OPT_NOSET	0x010		/* Option may not be set. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
 #define	OPT_EARLYSET	0x080		/* Func called after value is set */
