@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.157 2017/07/02 15:31:48 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.158 2017/07/03 13:40:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -114,6 +114,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown manual section",
 	"missing date, using today's date",
 	"cannot parse date, using it verbatim",
+	"date in the future, using it anyway",
 	"missing Os macro, using \"\"",
 	"duplicate prologue macro",
 	"late prologue macro",

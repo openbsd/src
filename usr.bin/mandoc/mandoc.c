@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.70 2017/06/14 01:31:19 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.71 2017/07/03 13:40:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -518,6 +518,7 @@ fail:
 char *
 mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 {
+	char		*cp;
 	time_t		 t;
 
 	/* No date specified: use today's date. */
@@ -530,13 +531,20 @@ mandoc_normdate(struct roff_man *man, char *in, int ln, int pos)
 	/* Valid mdoc(7) date format. */
 
 	if (a2time(&t, "$" "Mdocdate: %b %d %Y $", in) ||
-	    a2time(&t, "%b %d, %Y", in))
-		return time2a(t);
+	    a2time(&t, "%b %d, %Y", in)) {
+		cp = time2a(t);
+		if (t > time(NULL) + 86400)
+			mandoc_msg(MANDOCERR_DATE_FUTURE, man->parse,
+			    ln, pos, cp);
+		return cp;
+	}
 
 	/* In man(7), do not warn about the legacy format. */
 
 	if (a2time(&t, "%Y-%m-%d", in) == 0)
 		mandoc_msg(MANDOCERR_DATE_BAD, man->parse, ln, pos, in);
+	else if (t > time(NULL) + 86400)
+		mandoc_msg(MANDOCERR_DATE_FUTURE, man->parse, ln, pos, in);
 	else if (man->macroset == MACROSET_MDOC)
 		mandoc_vmsg(MANDOCERR_DATE_LEGACY, man->parse,
 		    ln, pos, "Dd %s", in);
