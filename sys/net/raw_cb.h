@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.11 2017/01/23 16:31:24 bluhm Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.12 2017/07/03 19:23:47 claudio Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
  * to tie a socket to the generic raw interface.
  */
 struct rawcb {
-	LIST_ENTRY(rawcb) rcb_list;	/* doubly linked list */
 	struct	socket *rcb_socket;	/* back pointer to socket */
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
@@ -54,8 +53,6 @@ struct rawcb {
 #define	RAWRCVQ		8192
 
 #ifdef _KERNEL
-
-extern LIST_HEAD(rawcbhead, rawcb) rawcb;		/* head of list */
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
 int	 raw_attach(struct socket *, int);

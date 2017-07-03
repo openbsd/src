@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.31 2017/03/13 20:18:21 claudio Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.32 2017/07/03 19:23:47 claudio Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -45,15 +45,6 @@
 #include <net/raw_cb.h>
 
 #include <sys/stdarg.h>
-/*
- * Initialize raw connection block q.
- */
-void
-raw_init(void)
-{
-
-	LIST_INIT(&rawcb);
-}
 
 int
 raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
@@ -71,7 +62,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		m_freem(m);
 		return (EOPNOTSUPP);
 	}
-	if (rp == 0) {
+	if (rp == NULL) {
 		m_freem(m);
 		return (EINVAL);
 	}
@@ -81,10 +72,6 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * Flush data or not depending on the options.
 	 */
 	case PRU_DETACH:
-		if (rp == 0) {
-			error = ENOTCONN;
-			break;
-		}
 		raw_detach(rp);
 		break;
 
