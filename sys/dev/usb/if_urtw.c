@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.64 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.65 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2956,9 +2956,9 @@ urtw_8225_rf_set_chan(struct urtw_rf *rf, int chan)
 
 	if (sc->sc_state == IEEE80211_S_ASSOC &&
 	    ic->ic_flags & IEEE80211_F_SHSLOT)
-		urtw_write8_m(sc, URTW_SLOT, 0x9);
+		urtw_write8_m(sc, URTW_SLOT, IEEE80211_DUR_DS_SHSLOT);
 	else
-		urtw_write8_m(sc, URTW_SLOT, 0x14);
+		urtw_write8_m(sc, URTW_SLOT, IEEE80211_DUR_DS_SLOT);
 
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);
@@ -3386,9 +3386,9 @@ urtw_8225v2_rf_set_chan(struct urtw_rf *rf, int chan)
 
 	if(sc->sc_state == IEEE80211_S_ASSOC &&
 	    ic->ic_flags & IEEE80211_F_SHSLOT)
-		urtw_write8_m(sc, URTW_SLOT, 0x9);
+		urtw_write8_m(sc, URTW_SLOT, IEEE80211_DUR_DS_SHSLOT);
 	else
-		urtw_write8_m(sc, URTW_SLOT, 0x14);
+		urtw_write8_m(sc, URTW_SLOT, IEEE80211_DUR_DS_SLOT);
 
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.82 2017/01/22 10:17:38 dlg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.83 2017/07/03 09:21:09 kevlo Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -2356,7 +2356,8 @@ rt2560_set_slottime(struct rt2560_softc *sc)
 	uint16_t sifs, pifs, difs, eifs;
 	uint32_t tmp;
 
-	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 
 	/* define the MAC slot boundaries */
 	sifs = RAL_SIFS - RT2560_RXTX_TURNAROUND;

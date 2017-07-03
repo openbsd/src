@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.97 2017/05/18 08:35:56 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.98 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2619,7 +2619,8 @@ athn_updateslot(struct ieee80211com *ic)
 	struct athn_softc *sc = ic->ic_softc;
 	int slot;
 
-	slot = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slot = (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, slot * athn_clock_rate(sc));
 	AR_WRITE_BARRIER(sc);
 }

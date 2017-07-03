@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.57 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.58 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1640,7 +1640,8 @@ otus_updateslot_cb(struct otus_softc *sc, void *arg)
 {
 	uint32_t slottime;
 
-	slottime = (sc->sc_ic.ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slottime = (sc->sc_ic.ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT: IEEE80211_DUR_DS_SLOT;
 	otus_write(sc, AR_MAC_REG_SLOT_TIME, slottime << 10);
 	(void)otus_write_barrier(sc);
 }

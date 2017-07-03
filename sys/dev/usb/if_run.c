@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.119 2017/06/02 15:09:13 kevlo Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.120 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3756,7 +3756,8 @@ run_updateslot_cb(struct run_softc *sc, void *arg)
 
 	run_read(sc, RT2860_BKOFF_SLOT_CFG, &tmp);
 	tmp &= ~0xff;
-	tmp |= (sc->sc_ic.ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	tmp |= (sc->sc_ic.ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 	run_write(sc, RT2860_BKOFF_SLOT_CFG, tmp);
 }
 

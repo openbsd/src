@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.142 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.143 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1684,7 +1684,8 @@ ural_update_slot(struct ural_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t slottime, sifs, eifs;
 
-	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 
 	/*
 	 * These settings may sound a bit inconsistent but this is what the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.91 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.92 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2427,7 +2427,8 @@ rt2661_set_slottime(struct rt2661_softc *sc)
 	uint8_t slottime;
 	uint32_t tmp;
 
-	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT: IEEE80211_DUR_DS_SLOT;
 
 	tmp = RAL_READ(sc, RT2661_MAC_CSR9);
 	tmp = (tmp & ~0xff) | slottime;

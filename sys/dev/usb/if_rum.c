@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.121 2017/03/26 15:31:15 deraadt Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.122 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1764,7 +1764,8 @@ rum_update_slot(struct rum_softc *sc)
 	uint8_t slottime;
 	uint32_t tmp;
 
-	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ?
+	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 
 	tmp = rum_read(sc, RT2573_MAC_CSR9);
 	tmp = (tmp & ~0xff) | slottime;

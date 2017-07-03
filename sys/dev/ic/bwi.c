@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.124 2017/01/22 10:17:37 dlg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.125 2017/07/03 09:21:09 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -2441,9 +2441,6 @@ bwi_mac_get_property(struct bwi_mac *mac)
 	return (0);
 }
 
-#define IEEE80211_DUR_SLOT	20	/* DS/CCK slottime, ERP long slottime */
-#define IEEE80211_DUR_SHSLOT	9	/* ERP short slottime */
-
 void
 bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 {
@@ -2458,9 +2455,9 @@ bwi_mac_updateslot(struct bwi_mac *mac, int shslot)
 		return;
 
 	if (shslot)
-		slot_time = IEEE80211_DUR_SHSLOT;
+		slot_time = IEEE80211_DUR_DS_SHSLOT;
 	else
-		slot_time = IEEE80211_DUR_SLOT;
+		slot_time = IEEE80211_DUR_DS_SLOT;
 
 	CSR_WRITE_2(mac->mac_sc, BWI_MAC_SLOTTIME,
 	    slot_time + BWI_MAC_SLOTTIME_ADJUST);
