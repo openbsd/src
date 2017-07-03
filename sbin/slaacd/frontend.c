@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.2 2017/07/03 19:02:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -783,7 +783,7 @@ icmp6_receive(int fd, short events, void *arg)
 	}
 
 	if (*hlimp != 255) {
-		log_warn("invalid RA with hop limit of %d from %s on %s",
+		log_warnx("invalid RA with hop limit of %d from %s on %s",
 		    *hlimp, inet_ntop(AF_INET6, &icmp6ev.from.sin6_addr,
 		    ntopbuf, INET6_ADDRSTRLEN), if_indextoname(if_index,
 		    ifnamebuf));
@@ -791,7 +791,7 @@ icmp6_receive(int fd, short events, void *arg)
 	}
 
 	if ((size_t)len > sizeof(ra.packet)) {
-		log_warn("invalid RA with size %ld from %s on %s",
+		log_warnx("invalid RA with size %ld from %s on %s",
 		    len, inet_ntop(AF_INET6, &icmp6ev.from.sin6_addr,
 		    ntopbuf, INET6_ADDRSTRLEN), if_indextoname(if_index,
 		    ifnamebuf));

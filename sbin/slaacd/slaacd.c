@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.2 2017/07/03 19:02:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -655,7 +655,7 @@ configure_interface(struct imsg_configure_address *address)
 
 	if_name = if_indextoname(address->if_index, in6_addreq.ifra_name);
 	if (if_name == NULL) {
-		log_warn("%s: cannot find interface %d", __func__,
+		log_warnx("%s: cannot find interface %d", __func__,
 		    address->if_index);
 		return;
 	}

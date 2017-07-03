@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2017/06/03 10:00:29 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2017/07/03 19:02:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -507,7 +507,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			iface = get_slaacd_iface_by_id(if_index);
 			if (iface == NULL)
-				log_warn("requested to send solicitation on "
+				log_warnx("requested to send solicitation on "
 				    "non-autoconf interface: %u", if_index);
 			else
 				engine_imsg_compose_frontend(
@@ -705,7 +705,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		cei_ra.other = ra->other;
 		if (strlcpy(cei_ra.rpref, rpref_name[ra->rpref], sizeof(
 		    cei_ra.rpref)) >= sizeof(cei_ra.rpref))
-			log_warn("truncated router preference");
+			log_warnx("truncated router preference");
 		cei_ra.router_lifetime = ra->router_lifetime;
 		cei_ra.reachable_time = ra->reachable_time;
 		cei_ra.retrans_time = ra->retrans_time;
@@ -758,7 +758,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    proposal_state_name[addr_proposal->state],
 		    sizeof(cei_addr_proposal.state)) >=
 		    sizeof(cei_addr_proposal.state))
-			log_warn("truncated state name");
+			log_warnx("truncated state name");
 		cei_addr_proposal.next_timeout = addr_proposal->next_timeout;
 		cei_addr_proposal.timeout_count = addr_proposal->timeout_count;
 		cei_addr_proposal.when = addr_proposal->when;
@@ -788,7 +788,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    proposal_state_name[dfr_proposal->state],
 		    sizeof(cei_dfr_proposal.state)) >=
 		    sizeof(cei_dfr_proposal.state))
-			log_warn("truncated state name");
+			log_warnx("truncated state name");
 		cei_dfr_proposal.next_timeout = dfr_proposal->next_timeout;
 		cei_dfr_proposal.timeout_count = dfr_proposal->timeout_count;
 		cei_dfr_proposal.when = dfr_proposal->when;
@@ -801,7 +801,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    rpref_name[dfr_proposal->rpref],
 		    sizeof(cei_dfr_proposal.rpref)) >=
 		    sizeof(cei_dfr_proposal.rpref))
-			log_warn("truncated router preference");
+			log_warnx("truncated router preference");
 		engine_imsg_compose_frontend(
 		    IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSAL, pid,
 			    &cei_dfr_proposal, sizeof(cei_dfr_proposal));
@@ -928,17 +928,18 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 
 	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
-		log_warn("RA from non link local address %s", hbuf);
+		log_warnx("RA from non link local address %s", hbuf);
 		return;
 	}
 
 	if ((size_t)len < sizeof(struct nd_router_advert)) {
-		log_warn("received too short message (%ld) from %s", len, hbuf);
+		log_warnx("received too short message (%ld) from %s", len,
+		    hbuf);
 		return;
 	}
 
@@ -966,7 +967,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	}
 
 	if (nd_ra->nd_ra_code != 0) {
-		log_warn("invalid ICMPv6 code (%d) from %s", nd_ra->nd_ra_code,
+		log_warnx("invalid ICMPv6 code (%d) from %s", nd_ra->nd_ra_code,
 		    hbuf);
 		goto err;
 	}
@@ -1022,7 +1023,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		switch (nd_opt_hdr->nd_opt_type) {
 		case ND_OPT_PREFIX_INFORMATION:
 			if (nd_opt_hdr->nd_opt_len != 4) {
-				log_warn("invalid ND_OPT_PREFIX_INFORMATION: "
+				log_warnx("invalid ND_OPT_PREFIX_INFORMATION: "
 				   "len != 4");
 				goto err;
 			}
@@ -1099,7 +1100,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			if (strlcpy(ra_dnssl->dnssl, nssl,
 			    sizeof(ra_dnssl->dnssl)) >=
 			    sizeof(ra_dnssl->dnssl)) {
-				log_warn("dnssl too long");
+				log_warnx("dnssl too long");
 				goto err;
 			}
 			free(nssl);
@@ -1232,17 +1233,18 @@ debug_log_ra(struct imsg_ra *ra)
 
 	if (getnameinfo((struct sockaddr *)&ra->from, ra->from.sin6_len, hbuf,
 	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&ra->from.sin6_addr)) {
-		log_warn("RA from non link local address %s", hbuf);
+		log_warnx("RA from non link local address %s", hbuf);
 		return;
 	}
 
 	if ((size_t)len < sizeof(struct nd_router_advert)) {
-		log_warn("received too short message (%ld) from %s", len, hbuf);
+		log_warnx("received too short message (%ld) from %s", len,
+		    hbuf);
 		return;
 	}
 
@@ -1261,7 +1263,7 @@ debug_log_ra(struct imsg_ra *ra)
 	}
 
 	if (nd_ra->nd_ra_code != 0) {
-		log_warn("invalid ICMPv6 code (%d) from %s", nd_ra->nd_ra_code,
+		log_warnx("invalid ICMPv6 code (%d) from %s", nd_ra->nd_ra_code,
 		    hbuf);
 		return;
 	}
@@ -1332,7 +1334,7 @@ debug_log_ra(struct imsg_ra *ra)
 			break;
 		case ND_OPT_PREFIX_INFORMATION:
 			if (nd_opt_hdr->nd_opt_len != 4) {
-				log_warn("invalid ND_OPT_PREFIX_INFORMATION: "
+				log_warnx("invalid ND_OPT_PREFIX_INFORMATION: "
 				   "len != 4");
 				return;
 			}
@@ -1358,7 +1360,7 @@ debug_log_ra(struct imsg_ra *ra)
 			break;
 		case ND_OPT_MTU:
 			if (nd_opt_hdr->nd_opt_len != 1) {
-				log_warn("invalid ND_OPT_MTU: len != 1");
+				log_warnx("invalid ND_OPT_MTU: len != 1");
 				return;
 			}
 			mtu = (struct nd_opt_mtu*) nd_opt_hdr;
@@ -1493,8 +1495,9 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 				if (real_lifetime(&dfr_proposal->uptime,
 				    dfr_proposal->router_lifetime) >=
 				    ra->router_lifetime)
-					log_warn("ignoring router advertisement"
-					    " that lowers router lifetime");
+					log_warnx("ignoring router "
+					    "advertisement that lowers router "
+					    "lifetime");
 				else {
 					dfr_proposal->when = ra->when;
 					dfr_proposal->uptime = ra->uptime;
@@ -1522,7 +1525,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 						    sizeof(hbuf), NULL, 0,
 						    NI_NUMERICHOST |
 						    NI_NUMERICSERV)) {
-							log_warn("cannot get "
+							log_warnx("cannot get "
 							    "proposal IP");
 							strlcpy(hbuf, "unknown",
 							    sizeof(hbuf));
@@ -1584,8 +1587,8 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 
 				if (real_lifetime(&addr_proposal->uptime,
 				    addr_proposal->vltime) >= prefix->vltime) {
-					log_warn("ignoring router advertisement"
-					    " that lowers vltime");
+					log_warnx("ignoring router "
+					    "advertisement that lowers vltime");
 					continue;
 				}
 
@@ -1609,7 +1612,7 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 					    addr_proposal->addr.sin6_len, hbuf,
 					    sizeof(hbuf), NULL, 0,
 					    NI_NUMERICHOST | NI_NUMERICSERV)) {
-						log_warn("cannot get proposal "
+						log_warnx("cannot get proposal "
 						    "IP");
 						strlcpy(hbuf, "unknown",
 						    sizeof(hbuf));
@@ -1710,7 +1713,7 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
 	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
@@ -1748,7 +1751,7 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
 	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s: %lld s", __func__,
@@ -1866,7 +1869,7 @@ address_proposal_timeout(int fd, short events, void *arg)
 	if (getnameinfo((struct sockaddr *)&addr_proposal->addr,
 	    addr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s [%s], priv: %s", __func__,
@@ -1970,7 +1973,7 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 	if (getnameinfo((struct sockaddr *)&dfr_proposal->addr,
 	    dfr_proposal->addr.sin6_len, hbuf, sizeof(hbuf), NULL, 0,
 	    NI_NUMERICHOST | NI_NUMERICSERV)) {
-		log_warn("cannot get router IP");
+		log_warnx("cannot get router IP");
 		strlcpy(hbuf, "unknown", sizeof(hbuf));
 	}
 	log_debug("%s: iface %d: %s [%s]", __func__, dfr_proposal->if_index,
