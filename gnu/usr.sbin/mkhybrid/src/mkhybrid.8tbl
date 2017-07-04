@@ -2,7 +2,7 @@
 .\" To print, first run through tbl
 .\" -*- nroff -*-
 .\"
-.\" $Id: mkhybrid.8tbl,v 1.2 2004/06/22 22:58:06 tom Exp $
+.\" $Id: mkhybrid.8tbl,v 1.3 2017/07/04 23:07:40 schwarze Exp $
 .\"
 .TH MKHYBRID 8 "7 April 1999" "Version 1.12b5.1"
 .SH NAME
@@ -1021,10 +1021,10 @@ l l l l l .
 # Example filename mapping file
 #
 # EXTN/XLate/CREATOR/TYPE/Comment
-\.tif/Raw/'8BIM'/'TIFF'/"Photoshop TIFF image"
-\.hqx/Ascii/'BnHq'/'TEXT'/"BinHex file"
-\.doc/Raw/'MSWD'/'WDBN'/"Word file"
-\.mov/Raw/'TVOD'/'MooV'/"QuickTime Movie"
+\&.tif/Raw/'8BIM'/'TIFF'/"Photoshop TIFF image"
+\&.hqx/Ascii/'BnHq'/'TEXT'/"BinHex file"
+\&.doc/Raw/'MSWD'/'WDBN'/"Word file"
+\&.mov/Raw/'TVOD'/'MooV'/"QuickTime Movie"
 */Ascii/'ttxt'/'TEXT'/"Text file"
 .TE
 .LP
