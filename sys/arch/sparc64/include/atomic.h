@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.14 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.15 2017/07/04 09:00:12 mpi Exp $	*/
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -17,8 +17,6 @@
 
 #ifndef _MACHINE_ATOMIC_H_
 #define _MACHINE_ATOMIC_H_
-
-#if defined(_KERNEL)
 
 static inline unsigned int
 _atomic_cas_uint(volatile unsigned int *p, unsigned int e, unsigned int n)
@@ -53,7 +51,7 @@ _atomic_cas_ptr(volatile void *p, void *e, void *n)
 }
 #define atomic_cas_ptr(_p, _e, _n) _atomic_cas_ptr((_p), (_e), (_n))
 
-#define def_atomic_swap(_f, _t, _c)					\
+#define _def_atomic_swap(_f, _t, _c)					\
 static inline _t							\
 _f(volatile _t *p, _t v)						\
 {									\
@@ -69,9 +67,9 @@ _f(volatile _t *p, _t v)						\
 	return (r);							\
 }
 
-def_atomic_swap(_atomic_swap_uint, unsigned int, atomic_cas_uint)
-def_atomic_swap(_atomic_swap_ulong, unsigned long, atomic_cas_ulong)
-#undef def_atomic_swap
+_def_atomic_swap(_atomic_swap_uint, unsigned int, atomic_cas_uint)
+_def_atomic_swap(_atomic_swap_ulong, unsigned long, atomic_cas_ulong)
+#undef _def_atomic_swap
 
 static inline void *
 _atomic_swap_ptr(volatile void *p, void *v)
@@ -91,7 +89,7 @@ _atomic_swap_ptr(volatile void *p, void *v)
 #define atomic_swap_ulong(_p, _v)  _atomic_swap_ulong(_p, _v)
 #define atomic_swap_ptr(_p, _v)  _atomic_swap_ptr(_p, _v)
 
-#define def_atomic_op_nv(_f, _t, _c, _op)				\
+#define _def_atomic_op_nv(_f, _t, _c, _op)				\
 static inline _t							\
 _f(volatile _t *p, _t v)						\
 {									\
@@ -107,16 +105,26 @@ _f(volatile _t *p, _t v)						\
 	return (f);							\
 }
 
-def_atomic_op_nv(_atomic_add_int_nv, unsigned int, atomic_cas_uint, +)
-def_atomic_op_nv(_atomic_add_long_nv, unsigned long, atomic_cas_ulong, +)
-def_atomic_op_nv(_atomic_sub_int_nv, unsigned int, atomic_cas_uint, -)
-def_atomic_op_nv(_atomic_sub_long_nv, unsigned long, atomic_cas_ulong, -)
-#undef def_atomic_op_nv
+_def_atomic_op_nv(_atomic_add_int_nv, unsigned int, atomic_cas_uint, +)
+_def_atomic_op_nv(_atomic_add_long_nv, unsigned long, atomic_cas_ulong, +)
+_def_atomic_op_nv(_atomic_sub_int_nv, unsigned int, atomic_cas_uint, -)
+_def_atomic_op_nv(_atomic_sub_long_nv, unsigned long, atomic_cas_ulong, -)
+#undef _def_atomic_op_nv
 
 #define atomic_add_int_nv(_p, _v)  _atomic_add_int_nv(_p, _v)
 #define atomic_add_long_nv(_p, _v)  _atomic_add_long_nv(_p, _v)
 #define atomic_sub_int_nv(_p, _v)  _atomic_sub_int_nv(_p, _v)
 #define atomic_sub_long_nv(_p, _v)  _atomic_sub_long_nv(_p, _v)
+
+#define __membar(_m)		__asm volatile("membar " _m ::: "memory")
+
+#define membar_enter()		__membar("#StoreLoad|#StoreStore")
+#define membar_exit()		__membar("#LoadStore|#StoreStore")
+#define membar_producer()	__membar("#StoreStore")
+#define membar_consumer()	__membar("#LoadLoad")
+#define membar_sync()		__membar("#Sync")
+
+#if defined(_KERNEL)
 
 static __inline void
 atomic_setbits_int(volatile unsigned int *uip, unsigned int v)
@@ -141,14 +149,6 @@ atomic_clearbits_int(volatile unsigned int *uip, unsigned int v)
 		r = atomic_cas_uint(uip, e, e & ~v);
 	} while (r != e);
 }
-
-#define __membar(_m)		__asm volatile("membar " _m ::: "memory")
-
-#define membar_enter()		__membar("#StoreLoad|#StoreStore")
-#define membar_exit()		__membar("#LoadStore|#StoreStore")
-#define membar_producer()	__membar("#StoreStore")
-#define membar_consumer()	__membar("#LoadLoad")
-#define membar_sync()		__membar("#Sync")
 
 #endif /* defined(_KERNEL) */
 #endif /* _MACHINE_ATOMIC_H_ */
