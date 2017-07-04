@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.15 2017/07/02 15:28:26 benno Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.16 2017/07/04 21:04:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -92,9 +92,9 @@ struct ifsd_expression {
 	} u;
 	int				 depth;
 	u_int32_t			 type;
-#define IFSD_OPER_AND	1
-#define IFSD_OPER_OR	2
-#define IFSD_OPER_NOT	3
+#define IFSD_OPER_AND		1
+#define IFSD_OPER_OR		2
+#define IFSD_OPER_NOT		3
 #define IFSD_OPER_EXTERNAL	4
 #define IFSD_OPER_IFSTATE	5
 	u_int8_t			 truth;
