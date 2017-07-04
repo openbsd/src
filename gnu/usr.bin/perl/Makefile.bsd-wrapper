@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.108 2017/06/28 07:40:08 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.109 2017/07/04 13:10:13 espie Exp $
 #
 # Build wrapper for Perl
 #
@@ -25,7 +25,9 @@ ${GEN_AFTER}: config.sh
 
 CLEANFILES=	config.sh Policy.sh DynaLoader.c
 
-depend: depend.done
+# nothing!
+depend:
+	@:
 
 depend.done: ${GENERATED}
 	cd ${.OBJDIR} && exec ${MAKE} depend
